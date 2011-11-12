@@ -1,0 +1,56 @@
+Name:StaysOnTop
+-Always
+-Playing
+-Never
+
+Name:SeekingStep
+-Step1
+-Step2
+-Step3
+
+Name:Overlay
+-Auto-Auto
+-FramebufferObject-Framebuffer Object
+-Pixmap-Pixmap
+
+Name:GeneratePlaylist
+-Similar-Add files which have similar names
+-Folder-Add all files in the same folder
+-None-Do not add any other files
+
+Name:SubtitleAutoload
+-Matched-Subtitles which have the same name as that of playing file
+-Contain-Subtitles whose names contain the name of playing file
+-Folder-All subtitles in the folder where the playing file is located
+-None-Do not load any other subtitles
+
+Name:SubtitleAutoselect
+-Matched-Subtitle which has the same name as that of playing file
+-First-First subtitle from loaded ones
+-All-All loaded subtitles
+-EachLanguage-Each language subtitle
+
+Name:OsdAutoSize
+-Width-Fit to width of video
+-Height-Fit to height of video
+-Diagonal-Fit to diagonal of video
+
+Name:ClickAction
+-OpenFile-Open a file
+-Fullscreen-Toggle fullscreen mode
+-Pause-Toggle play/pause
+-Mute-Toggle mute/unmute
+
+Name:WheelAction
+-Seek1-Seek playback for step 1
+-Seek2-Seek playback for step 2
+-Seek3-Seek playback for step 3
+-PrevNext-Play previous/next
+-Volume-Volumn up/down
+-Amp-Amp. up/down
+
+Name:KeyModifier
+-None=Qt::NoModifier
+-Ctrl=Qt::ControlModifier
+-Shift=Qt::ShiftModifier
+-Alt=Qt::AltModifier

@@ -1,0 +1,30 @@
+libchardet Installsation Documentation
+
+Author: JoungKyun.Kim <http://oops.org>
+2009/02/22
+
+$Id: INSTALL,v 1.1.1.1 2009/02/21 20:08:02 oops Exp $
+
+
+1. Quick Install
+
+   shell> ./configure
+   shell> make
+   shell> make install
+
+2. configure
+
+   libchardet used GNU autoconf and no option except default option of gnu configure.
+   And, you can use follow environment variables.
+
+   CFLAGS, CPPFLAGS, DEFS, LIBS, LDFLAGS, CPPFLAGS, and so on.
+
+3. make
+
+   you can enable with -j option.
+
+4. make install
+
+   If use with DESTDIR environment, you can test install where you want.
+   for example, execute `make DESTDIR=PATH install`
+

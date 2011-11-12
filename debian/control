@@ -1,0 +1,11 @@
+Source: cmplayer
+Section: graphics
+Priority: optional
+Maintainer: xylosper <darklin20@gmail.com>
+Build-Depends: debhelper (>= 4.1.16), libqt4-dev (>= 4.6), libvlc-dev (>= 1.1), libvlccore-dev (>=1.1)
+
+Package: cmplayer
+Architecture: any
+Depends: ${shlibs:Depends}, vlc
+Description: CMPlayer - a multimedia player
+ CMPlayer is a multimedia player.

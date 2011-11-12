@@ -1,0 +1,6 @@
+?package(cmplayer): needs="X11" \
+	section="Applications/Video" \
+	title="CMPlayer" \
+	longtitle="CMPlayer - Multimedia Player" \
+	command="/usr/bin/cmplayer"
+ 

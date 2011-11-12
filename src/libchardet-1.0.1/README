@@ -1,0 +1,17 @@
+Mozilla's Universal Charset Detector C/C++ API (libchardet) Readme document
+
+$Id: README,v 1.1.1.1 2009/02/21 20:08:02 oops Exp $
+
+Author: JoungKyun.Kim <http://oops.org>
+2009/02/22
+
+libchardet is based on Mozilla Universal Charset Detector library and, detects
+the character set used to encode data.
+
+Original code was writed by Netscape Communications Corporation, and John
+Gardiner Myers <jgmyers@proofpoint.com> made independent Universal Detector
+code from Mozilla Browser.
+
+libchardet based on John Gardiner Myers's code that call Encode-Detect-1.01
+perl module, and added C wrapping API, and library build environment with libtool
+

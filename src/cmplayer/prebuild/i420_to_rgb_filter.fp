@@ -1,0 +1,34 @@
+!!ARBfp1.0
+ATTRIB coord = fragment.texcoord[0];
+OUTPUT output = result.color;
+PARAM param0 = program.local[0];
+PARAM coef_r = {1.16438356, 0.0, 1.59602679, 0.0625};
+PARAM coef_g = {1.16438356, -0.391762290, -0.812967647, 0.5};
+PARAM coef_b = {1.16438356, 2.01723214, 0.0, 0.5};
+PARAM param1 = program.local[1];
+PARAM param2 = program.local[2];
+TEMP ycc, tmp;
+TEX ycc.x, coord, texture[1], 2D;
+MOV ycc.y, ycc.x;
+TEX ycc.x, coord, texture[2], 2D;
+MOV ycc.z, ycc.x;
+TEX ycc.x, coord, texture[0], 2D;
+SUB ycc.x, ycc.x, param2.x;
+MUL ycc.x, ycc.x, param2.y;
+SUB ycc.x, ycc.x, coef_r.a;
+SUB ycc.y, ycc.y, coef_g.a;
+SUB ycc.z, ycc.z, coef_b.a;
+MOV tmp.x, ycc.x;
+MUL tmp.zw, ycc.xxyz, param0.z;
+MUL ycc.zw, ycc.xxzy, param0.w;
+ADD tmp.y, tmp.z, ycc.z;
+SUB tmp.z, tmp.w, ycc.w;
+MUL tmp, tmp, param0.xyyz;
+ADD tmp.x, tmp.x, coord.z;
+DP3_SAT ycc.r, tmp, coef_r;
+DP3_SAT ycc.g, tmp, coef_g;
+DP3_SAT ycc.b, tmp, coef_b;
+MUL ycc, ycc, param1;
+ADD output, param1.w, ycc;
+MOV output.a, 1.0;
+END

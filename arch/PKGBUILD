@@ -1,0 +1,26 @@
+# Maintainer: xylosper <darklin20@gmail.com>
+
+pkgname=('cmplayer')
+pkgver=0.5.3
+pkgrel=1
+arch=('i686' 'x86_64')
+url="http://kldp.net/projects/cmplayer/"
+license=('GPL')
+depends=('qt>=4.6' 'vlc>=1.1')
+makedepends=('svn')
+#source=(http://kldp.net/frs/download.php/5212/$pkgname-$pkgver-src.tar.gz)
+#source=($pkgname-$pkgver.tar.gz)
+#md5sums=('29caaed75294d5ab3773a6fe6dbcc824')
+
+build() {
+	cd $srcdir
+	svn export http://anonsvn:anonsvn@kldp.net/svn/$pkgname/trunk $pkgname-$pkgver
+	cd $pkgname-$pkgver
+	make PREFIX=/usr CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins -f Makefile.linux cmplayer || return 1
+}
+
+package() {
+	pkgdesc="CMPlayer is a multimedia player."
+	cd "$srcdir/$pkgname-$pkgver"
+	make DEST_DIR=$pkgdir CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins -f Makefile.linux install || return 1
+}

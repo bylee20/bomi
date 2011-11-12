@@ -1,0 +1,10 @@
+[Desktop Entry]
+X-KDE-Solid-Predicate=[[ StorageVolume.ignored == false AND OpticalDisc.availableContent == 'Data|VideoDvd' ] OR [ StorageVolume.ignored == false AND OpticalDisc.availableContent == 'Data|VideoDvd' ]]
+Type=Service
+Actions=open;
+
+[Desktop Action open]
+Name=Open Video DVD with CMPlayer
+Name[pl]=Otwórz Video DVD z CMPlayer
+Exec=cmplayer dvd://%d
+Icon=cmplayer

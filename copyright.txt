@@ -1,0 +1,29 @@
+Copyright (C) 2009 xylosper
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program; if not, see http://www.gnu.org/licenses.
+
+Read gpl.txt file.
+
+
+Exception:
+
+libchardet is distributed under Mozilla Public License(MPL). Read mpl.txt file.
+
+Mozilla's Universal Charset Detector C/C++ API (libchardet)
+Author: JoungKyun.Kim <http://oops.org>
+2009/02/22
+
+libchardet is based on Mozilla Universal Charset Detector library and, detects
+the character set used to encode data.
+
+Original code was writed by Netscape Communications Corporation, and John
+Gardiner Myers <jgmyers@proofpoint.com> made independent Universal Detector
+code from Mozilla Browser.
+
+libchardet based on John Gardiner Myers's code that call Encode-Detect-1.01
+perl module, and added C wrapping API, and library build environment with libtool
+
