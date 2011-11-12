@@ -20,10 +20,11 @@
  *
  */
 
-#include "application_mac.hpp"
-#include <QtCore/QAbstractEventDispatcher>
+#include "app_mac.hpp"
+
 #ifdef Q_WS_MAC
 
+#include <QtCore/QAbstractEventDispatcher>
 #include <QtCore/QDebug>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include "events.hpp"
@@ -36,14 +37,14 @@
 #include <IOKit/storage/IOMedia.h>
 #include <IOKit/IOBSD.h>
 
-@interface ApplicationObjC : NSObject {
+@interface AppObjC : NSObject {
 }
 
 - (id) init;
 - (void) appReopen:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent;
 @end
 
-@implementation ApplicationObjC
+@implementation AppObjC
 - (id) init
 {
 	NSAutoreleasePool *pool = [NSAutoreleasePool new];
@@ -73,29 +74,28 @@
 }
 @end
 
-struct ApplicationMacData {
-	ApplicationObjC *objc;
+struct AppMac::Data {
+	AppObjC *objc;
 	bool eventsLoaded;
 };
 
-ApplicationMac::ApplicationMac( QObject *parent )
-: QObject( parent )
-, d( new ApplicationMacData ) {
+AppMac::AppMac(QObject *parent)
+: QObject(parent), d(new Data) {
 	d->eventsLoaded = false;
-	d->objc = [[ApplicationObjC alloc] init];
+	d->objc = [[AppObjC alloc] init];
 	qApp->installEventFilter( this );
 }
 
-ApplicationMac::~ApplicationMac() {
+AppMac::~AppMac() {
 	[d->objc release];
 	delete d;
 }
 
 static void mac_install_event_handler(QObject *app) {
-	new ApplicationMac( app );
+	new AppMac( app );
 }
 
-bool ApplicationMac::eventFilter( QObject *o, QEvent *e ) {
+bool AppMac::eventFilter( QObject *o, QEvent *e ) {
 	// Load here because cocoa NSApplication overides events
 	if(!d->eventsLoaded && o == qApp && e->type() == QEvent::ApplicationActivate) {
 		mac_install_event_handler(this);
@@ -104,7 +104,7 @@ bool ApplicationMac::eventFilter( QObject *o, QEvent *e ) {
 	return QObject::eventFilter( o, e );
 }
 
-void ApplicationMac::setAlwaysOnTop(WId wid, bool onTop) {
+void AppMac::setAlwaysOnTop(WId wid, bool onTop) {
 	NSView *view = (NSView*)(void*)wid;
 	NSWindow *window = [view window];
 	if (onTop)
@@ -113,7 +113,7 @@ void ApplicationMac::setAlwaysOnTop(WId wid, bool onTop) {
 		[window setLevel:NSNormalWindowLevel];
 }
 
-QStringList ApplicationMac::devices() const {
+QStringList AppMac::devices() const {
 	mach_port_t port;
 	kern_return_t kernRet = IOMasterPort(MACH_PORT_NULL, &port);
 	if (kernRet != KERN_SUCCESS)
@@ -148,7 +148,7 @@ QStringList ApplicationMac::devices() const {
 	return devices;
 }
 
-void ApplicationMac::setScreensaverDisabled(bool disabled) {
+void AppMac::setScreensaverDisabled(bool disabled) {
 	static bool prev = false;
 	static IOPMAssertionID idle = 0;
 	static IOPMAssertionID display = 0;
@@ -165,7 +165,7 @@ void ApplicationMac::setScreensaverDisabled(bool disabled) {
 	}
 }
 
-QString ApplicationMac::test() {
+QString AppMac::test() {
 	int i; // Loop counter.
 
 	// Create the File Open Dialog class.

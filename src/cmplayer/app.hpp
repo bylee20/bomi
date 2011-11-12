@@ -1,16 +1,16 @@
-#ifndef APPLICATION_HPP
-#define APPLICATION_HPP
+#ifndef APP_HPP
+#define APP_HPP
 
 #include "qtsingleapplication/qtsingleapplication.h"
 
 class QUrl;		class Mrl;
 class MainWindow;	class QMenuBar;
 
-class Application : public QtSolution::QtSingleApplication {
+class App : public QtSolution::QtSingleApplication {
 	Q_OBJECT
 public:
-	Application(int &argc, char **argv);
-	~Application();
+	App(int &argc, char **argv);
+	~App();
 	static QIcon defaultIcon();
 	void setStyleName(const QString &name);
 	static Mrl getMrlFromCommandLine();
@@ -41,6 +41,6 @@ private:
 	Data *d;
 };
 
-static inline Application *app() {return static_cast<Application*>(qApp);}
+static inline App *app() {return static_cast<App*>(qApp);}
 
 #endif // APPLICATION_HPP

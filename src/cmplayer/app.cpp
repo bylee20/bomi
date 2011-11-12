@@ -1,4 +1,4 @@
-#include "application.hpp"
+#include "app.hpp"
 #include "events.hpp"
 #include "mainwindow.hpp"
 #include "mrl.hpp"
@@ -14,25 +14,25 @@
 #include <QtOpenGL/QGLFormat>
 
 #if defined(Q_WS_MAC)
-#include "application_mac.hpp"
+#include "app_mac.hpp"
 #elif defined(Q_WS_X11)
-#include "application_x11.hpp"
+#include "app_x11.hpp"
 #endif
 
-struct Application::Data {
+struct App::Data {
 	QStringList styleNames;
 	QMenuBar *mb;
 	QUrl url;
 	QProcess *cpu;
 	MainWindow *main;
 #if defined(Q_WS_MAC)
-	ApplicationMac helper;
+	AppMac helper;
 #elif defined(Q_WS_X11)
 	ApplicationX11 helper;
 #endif
 };
 
-void Application::messageHandler(QtMsgType type, const char *msg) {
+void App::messageHandler(QtMsgType type, const char *msg) {
 	FILE *output = stdout;
 	switch (type) {
 	case QtDebugMsg:
@@ -54,7 +54,7 @@ void Application::messageHandler(QtMsgType type, const char *msg) {
 }
 
 
-Application::Application(int &argc, char **argv)
+App::App(int &argc, char **argv)
 : QtSingleApplication("net.xylosper.CMPlayer", argc, argv), d(new Data) {
 	setOrganizationName("xylosper");
 	setOrganizationDomain("xylosper.net");
@@ -86,7 +86,7 @@ Application::Application(int &argc, char **argv)
 	QTimer::singleShot(0, this, SLOT(initialize()));
 }
 
-Application::~Application() {
+App::~App() {
 	delete d->mb;
 	delete d->main;
 	if (d->cpu->state() != QProcess::NotRunning)
@@ -94,7 +94,7 @@ Application::~Application() {
 	delete d;
 }
 
-QIcon Application::defaultIcon() {
+QIcon App::defaultIcon() {
 	static QIcon icon;
 	static bool init = false;
 	if (!init) {
@@ -112,11 +112,11 @@ QIcon Application::defaultIcon() {
 	return icon;
 }
 
-void Application::setAlwaysOnTop(QWidget *widget, bool onTop) {
+void App::setAlwaysOnTop(QWidget *widget, bool onTop) {
 	d->helper.setAlwaysOnTop(widget->effectiveWinId(), onTop);
 }
 
-QString Application::test() {
+QString App::test() {
 #ifdef Q_OS_MAC
 	return d->helper.test();
 #else
@@ -124,11 +124,11 @@ QString Application::test() {
 #endif
 }
 
-void Application::getProcInfo() {
+void App::getProcInfo() {
 	d->cpu->start("ps", QStringList() << "-p" << QString::number(getpid()) << "-o" << "pcpu,rss,pmem", QProcess::ReadOnly);
 }
 
-void Application::readProcInfo() {
+void App::readProcInfo() {
 	const QByteArray output = d->cpu->readAllStandardOutput();
 	const int br = qMax(output.indexOf('\n'), output.indexOf('\r'));
 	QList<QByteArray> cols;
@@ -144,11 +144,11 @@ void Application::readProcInfo() {
 		emit gotProcInfo(cols[0].toDouble(), cols[1].toInt(), cols[2].toDouble());
 }
 
-void Application::setScreensaverDisabled(bool disabled) {
+void App::setScreensaverDisabled(bool disabled) {
 	d->helper.setScreensaverDisabled(disabled);
 }
 
-bool Application::event(QEvent *event) {
+bool App::event(QEvent *event) {
 	switch ((int)event->type()) {
 	case QEvent::FileOpen: {
 		d->url = static_cast<QFileOpenEvent*>(event)->url().toString();
@@ -167,11 +167,11 @@ bool Application::event(QEvent *event) {
 	}
 }
 
-QStringList Application::devices() const {
+QStringList App::devices() const {
 	return d->helper.devices();
 }
 
-void Application::initialize() {
+void App::initialize() {
 	if (!QGLFormat::hasOpenGL()) {
 		QMessageBox::critical(0, "CMPlayer"
 			, tr("CMPlayer needs OpenGL to render video. Your system has no OpenGL support. Exit CMPlayer."));
@@ -240,22 +240,22 @@ void Application::initialize() {
 }
 
 #ifdef Q_WS_MAC
-QMenuBar *Application::globalMenuBar() const {
+QMenuBar *App::globalMenuBar() const {
 	return d->mb;
 }
 #endif
 
-Mrl Application::getMrlFromCommandLine() {
+Mrl App::getMrlFromCommandLine() {
 	const QStringList args = arguments();
 	return args.size() > 1 ? Mrl(args.last()) : Mrl();
 }
 
-void Application::open(const QString &mrl) {
+void App::open(const QString &mrl) {
 	if (!mrl.isEmpty() && d->main)
 		d->main->openMrl(mrl);
 }
 
-void Application::parseMessage(const QString &message) {
+void App::parseMessage(const QString &message) {
 	if (message == "wakeUp") {
 		activateWindow();
 	} else if (message.left(3) == "mrl") {
@@ -263,13 +263,13 @@ void Application::parseMessage(const QString &message) {
 	}
 }
 
-QStringList Application::availableStyleNames() const {
+QStringList App::availableStyleNames() const {
 	return d->styleNames;
 }
 
 #define APP_GROUP QLatin1String("application")
 
-void Application::setStyleName(const QString &name) {
+void App::setStyleName(const QString &name) {
 	if (!d->styleNames.contains(name, Qt::CaseInsensitive))
 		return;
 	if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
@@ -279,21 +279,21 @@ void Application::setStyleName(const QString &name) {
 	r.write("style", name);
 }
 
-void Application::setUnique(bool unique) {
+void App::setUnique(bool unique) {
 	Record r(APP_GROUP);
 	r.write("unique", unique);
 }
 
-QString Application::styleName() const {
+QString App::styleName() const {
 	return style()->objectName();
 }
 
-bool Application::isUnique() const {
+bool App::isUnique() const {
 	Record r(APP_GROUP);
 	return r.read("unique", true);
 }
 
-void Application::loadStyle() {
+void App::loadStyle() {
 	Record r(APP_GROUP);
 	const QString name = r.read("style", styleName());
 	if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)

@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_P_HPP
 #define MAINWINDOW_P_HPP
 
+#include "app.hpp"
 #include "avmisc.hpp"
 #include "timelineosdrenderer.hpp"
 #include "playinfoview.hpp"
@@ -15,7 +16,6 @@
 #include "audiocontroller.hpp"
 #include "controlwidget.hpp"
 #include "pref_dialog.hpp"
-#include "application.hpp"
 #include "recentinfo.hpp"
 #include "abrepeater.hpp"
 #include "mainwindow.hpp"

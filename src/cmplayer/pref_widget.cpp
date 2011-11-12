@@ -1,5 +1,5 @@
 #include "pref_widget.hpp"
-#include "application.hpp"
+#include "app.hpp"
 #include <QtCore/QDebug>
 #include "translator.hpp"
 #include "info.hpp"

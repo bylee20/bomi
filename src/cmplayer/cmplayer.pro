@@ -18,14 +18,14 @@ macx {
 	TARGET = CMPlayer
 
 	LIBS += -framework Cocoa -framework IOKit
-	HEADERS += application_mac.hpp
-	SOURCES += application_mac.mm
+	HEADERS +=
+	SOURCES +=
 } else:unix {
 	TARGET = cmplayer
 
 	LIBS += -lX11
-        HEADERS += application_x11.hpp
-        SOURCES += application_x11.cpp
+        HEADERS +=
+        SOURCES +=
 }
 
 !isEmpty(RELEASE) {
@@ -61,7 +61,6 @@ HEADERS += playengine.hpp \
     qtsingleapplication/qtlockedfile.h \
     qtsingleapplication/qtlocalpeer.h \
     qtsingleapplication/qtsinglecoreapplication.h \
-    application.hpp \
     translator.hpp \
     pref.hpp \
     videoframe.hpp \
@@ -117,7 +116,10 @@ HEADERS += playengine.hpp \
     richtext.hpp \
     record.hpp \
     actiongroup.hpp \
-    rootmenu.hpp
+    rootmenu.hpp \
+    app.hpp \
+    app_mac.hpp \
+    app_x11.hpp
 SOURCES += main.cpp \
     playengine.cpp \
     mainwindow.cpp \
@@ -132,7 +134,6 @@ SOURCES += main.cpp \
     qtsingleapplication/qtlockedfile.cpp \
     qtsingleapplication/qtlocalpeer.cpp \
     qtsingleapplication/qtsinglecoreapplication.cpp \
-    application.cpp \
     translator.cpp \
     pref.cpp \
     videoframe.cpp \
@@ -184,7 +185,10 @@ SOURCES += main.cpp \
     richtext.cpp \
     record.cpp \
     actiongroup.cpp \
-    rootmenu.cpp
+    rootmenu.cpp \
+    app.cpp \
+    app_mac.mm \
+    app_x11.cpp
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
     translations/cmplayer_ja.ts
@@ -193,3 +197,15 @@ FORMS += \
     ui/opendvddialog.ui \
     ui/snapshotdialog.ui \
     ui/pref_widget.ui
+
+
+
+
+
+
+
+
+
+
+
+

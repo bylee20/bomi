@@ -1,5 +1,5 @@
-#ifndef APPLICATION_MAC_HPP
-#define APPLICATION_MAC_HPP
+#ifndef APP_MAC_HPP
+#define APP_MAC_HPP
 /*
  * QEstEidCommon
  *
@@ -27,20 +27,19 @@
 
 #ifdef Q_WS_MAC
 
-struct ApplicationMacData;
-
-class ApplicationMac: public QObject {
+class AppMac: public QObject {
 	Q_OBJECT
 public:
-	ApplicationMac( QObject *parent = 0 );
-	~ApplicationMac();
+	AppMac( QObject *parent = 0 );
+	~AppMac();
 	void setAlwaysOnTop(WId wid, bool onTop);
 	QStringList devices() const;
 	void setScreensaverDisabled(bool disabled);
 	QString test();
 private:
 	bool eventFilter( QObject *o, QEvent *e );
-	ApplicationMacData *d;
+	struct Data;
+	Data *d;
 };
 
 #endif
