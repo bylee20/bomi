@@ -1,7 +1,5 @@
 # DYLD_FALLBACK_LIBRARY_PATH /Applications/VLC.app/Contents/MacOS/lib
 
-LRELEASE ?= lrelease
-
 kern := $(shell uname -s)
 os := $(shell if test $(kern) = "Darwin"; then echo "osx"; elif test $(kern) = "Linux"; then echo "linux"; else echo "unknown"; fi)
 qmake_vars := DESTDIR=\\\"../../bin\\\" RELEASE=\\\"yes\\\"
@@ -12,8 +10,10 @@ install_dir := sh install_dir.sh
 configured := $(shell cat configured)
 
 ifeq ($(os),osx)
-	QTSDK ?= /Users/xylosper/QtSDK/Desktop/Qt/473/gcc
-	QMAKE ?= /usr/bin/qmake -spec macx-g++
+	QTSDK ?= /Developer/QtSDKs/Desktop/Qt/474/gcc
+	QMAKE ?= $(QTSDK)/bin/qmake -spec macx-g++
+	MACDEPLOYQT ?= $(QTSDK)/bin/macdeployqt
+	LRELEASE ?= $(QTSDK)/bin/lrelease
 	VLC_INCLUDE_PATH ?= /Applications/VLC.app/Contents/MacOS/include
 	VLC_LIB_PATH ?= /Applications/VLC.app/Contents/MacOS/lib
 	VLC_PLUGINS_PATH ?= /Applications/VLC.app/Contents/MacOS/plugins
@@ -30,6 +30,7 @@ ifeq ($(os),osx)
 else
 	PREFIX ?= /usr/local
 	QMAKE ?= qmake
+	LRELEASE ?= lrelease
 	BIN_PATH ?= $(PREFIX)/bin
 	DATA_PATH ?= $(PREFIX)/share
 	ICON_PATH ?= $(DATA_PATH)/icons/hicolor
@@ -51,7 +52,7 @@ ifeq ($(os),osx)
 	$(install_file) $(VLC_PLUGINS_PATH)/*.dylib $(cmplayer_exec_path)/$(vlc_plugins_dir)
 	$(install_file) bin/$(vlc_plugins_dir)/*.dylib $(cmplayer_exec_path)/$(vlc_plugins_dir)
 #	$(install_dir) bin/skin $(cmplayer_exec_path)/skin
-	macdeployqt bin/$(cmplayer_exec).app
+	$(MACDEPLOYQT) bin/$(cmplayer_exec).app
 endif
 
 cmplayer: translations libchardet

@@ -1,47 +1,43 @@
-TARGET = cmplayer
-
-!isEmpty(RELEASE) {
-	CONFIG += release
-	macx {
-		CONFIG += app_bundle
-	}
-} else {
-	CONFIG += debug
-	macx {
-		CONFIG -= app_bundle
-	}
-}
-
 macx {
+	QMAKE_CXXFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, -arch, "")
+	QMAKE_CXXFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, x86_64, "")
+	QMAKE_CXXFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, Xarch_, m64)
+	#QMAKE_CFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, -arch, "")
+	#QMAKE_CFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, x86_64, "")
+	#QMAKE_CFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, Xarch_, m64)
 	QMAKE_CXXFLAGS += -std=c++0x
 	QMAKE_CXX = /opt/local/bin/g++-mp-4.6
-	#LIBS += -L/opt/local/lib/gcc46 -lstdc++
-	#INCLUDEPATH += /opt/local/include/gcc46/c++/x86_64-apple-darwin10
-	#INCLUDEPATH += /opt/local/include/gcc46/c++
-
-
 	QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
-	#QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.5.sdk
-	#INCLUDEPATH += /usr/include/c++/4.2.1
-	isEmpty(VLC_INCLUDE_PATH) {
-		VLC_INCLUDE_PATH = /Applications/VLC.app/Contents/MacOS/include
-	}
-	isEmpty(VLC_LIB_PATH) {
-		VLC_LIB_PATH = /Applications/VLC.app/Contents/MacOS/lib
-	}
-	ICON = ../../icons/cmplayer.icns
-	LIBS += -framework Cocoa -framework IOKit
-
+	QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
 	QMAKE_INFO_PLIST = Info.plist
+
+	isEmpty(VLC_INCLUDE_PATH):VLC_INCLUDE_PATH = /Applications/VLC.app/Contents/MacOS/include
+	isEmpty(VLC_LIB_PATH):VLC_LIB_PATH = /Applications/VLC.app/Contents/MacOS/lib
+
+	ICON = ../../icons/cmplayer.icns
 	TARGET = CMPlayer
+
+	LIBS += -framework Cocoa -framework IOKit
 	HEADERS += application_mac.hpp
 	SOURCES += application_mac.mm
-
 } else:unix {
+	TARGET = cmplayer
+
 	LIBS += -lX11
         HEADERS += application_x11.hpp
         SOURCES += application_x11.cpp
 }
+
+!isEmpty(RELEASE) {
+	CONFIG += release
+	macx:CONFIG += app_bundle
+} else {
+	CONFIG += debug
+	macx:CONFIG -= app_bundle
+}
+
+!isEmpty(VLC_INCLUDE_PATH):INCLUDEPATH += $${VLC_INCLUDE_PATH}
+!isEmpty(VLC_LIB_PATH):LIBS += -L$${VLC_LIB_PATH}
 
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release
@@ -51,13 +47,6 @@ QT = core gui opengl network
 INCLUDEPATH += ../libchardet-1.0.1/src
 
 LIBS += -lvlc -L../libchardet-1.0.1/src/.libs -lchardet
-
-!isEmpty(VLC_INCLUDE_PATH) {
-	INCLUDEPATH += $${VLC_INCLUDE_PATH}
-}
-!isEmpty(VLC_LIB_PATH) {
-	LIBS += -L$${VLC_LIB_PATH}
-}
 
 RESOURCES += rsclist.qrc
 HEADERS += playengine.hpp \
