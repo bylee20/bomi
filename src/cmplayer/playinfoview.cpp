@@ -5,7 +5,7 @@
 #include "avmisc.hpp"
 #include "videorenderer.hpp"
 #include "textosdrenderer.hpp"
-#include "application.hpp"
+#include "app.hpp"
 #include <stdio.h>
 #include <QtCore/QTimer>
 #include <QtCore/QDebug>

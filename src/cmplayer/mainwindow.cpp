@@ -70,7 +70,7 @@ MainWindow::MainWindow() {
 	CONNECT(video("aspect").g(), triggered(double), d->video, setAspectRatio(double));
 	CONNECT(video("crop").g(), triggered(double), d->video, setCropRatio(double));
 	CONNECT(video["snapshot"], triggered(), this, takeSnapshot());
-	CONNECT(video.g("color"), triggered(QAction*), this, setColorProperty(QAction*));
+	CONNECT(video("color").g(), triggered(QAction*), this, setColorProperty(QAction*));
 	CONNECT(&video("filter"), triggered(QAction*), this, setEffect(QAction*));
 	CONNECT(video("overlay").g(), triggered(int), d->video, setOverlayType(int));
 	CONNECT(audio("track").g(), triggered(QAction*), this, setAudioTrack(QAction*));

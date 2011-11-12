@@ -77,3 +77,14 @@ const KeyModifier KeyModifier::Shift(Qt::ShiftModifier, "Shift");
 const KeyModifier KeyModifier::Alt(Qt::AltModifier, "Alt");
 }
 
+namespace Enum {
+Position::Map Position::_map;
+const Position Position::Center(Qt::AlignCenter, "Center");
+const Position Position::Left(Qt::AlignLeft, "Left");
+const Position Position::HCenter(Qt::AlignHCenter, "HCenter");
+const Position Position::Right(Qt::AlignRight, "Right");
+const Position Position::Top(Qt::AlignTop, "Top");
+const Position Position::VCenter(Qt::AlignVCenter, "VCenter");
+const Position Position::Bottom(Qt::AlignBottom, "Bottom");
+}
+

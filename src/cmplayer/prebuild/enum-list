@@ -54,3 +54,12 @@ Name:KeyModifier
 -Ctrl=Qt::ControlModifier
 -Shift=Qt::ShiftModifier
 -Alt=Qt::AltModifier
+
+Name:Position
+-Center=Qt::AlignCenter
+-Left=Qt::AlignLeft
+-HCenter=Qt::AlignHCenter
+-Right=Qt::AlignRight
+-Top=Qt::AlignTop
+-VCenter=Qt::AlignVCenter
+-Bottom=Qt::AlignBottom

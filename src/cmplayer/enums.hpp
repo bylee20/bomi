@@ -645,4 +645,78 @@ private:
 inline bool operator == (int lhs, const Enum::KeyModifier &rhs) {return lhs == rhs.id();}
 inline bool operator != (int lhs, const Enum::KeyModifier &rhs) {return lhs != rhs.id();}
 
+namespace Enum {
+class Position {
+	Q_DECLARE_TR_FUNCTIONS(Position)
+public:
+	typedef QList<Position> List;
+	static const int count = 7;
+	static const Position Center;
+	static const Position Left;
+	static const Position HCenter;
+	static const Position Right;
+	static const Position Top;
+	static const Position VCenter;
+	static const Position Bottom;
+
+	Position(): m_id(Qt::AlignCenter) {}
+	Position(const Position &rhs): m_id(rhs.m_id) {}
+	Position &operator = (const Position &rhs) {m_id = rhs.m_id; return *this;}
+	bool operator == (const Position &rhs) const {return m_id == rhs.m_id;}
+	bool operator != (const Position &rhs) const {return m_id != rhs.m_id;}
+	bool operator == (int rhs) const {return m_id == rhs;}
+	bool operator != (int rhs) const {return m_id != rhs;}
+	bool operator < (const Position &rhs) const {return m_id < rhs.m_id;}
+	int id() const {return m_id;}
+	QString name() const {return map().name[m_id];}
+	QString description() const {return description(m_id);}
+	void set(int id) {if (isCompatible(id)) m_id = id;}
+	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	static bool isCompatible(int id) {return map().name.contains(id);}
+	static bool isCompatible(const QString &name) {return map().value.contains(name);}
+	static Position from(const QString &name, const Position &def = Position()) {
+		const QMap<QString, int>::const_iterator it = map().value.find(name);
+		return it != map().value.end() ? Position(*it) : def;
+	}
+	static Position from(int id, const Position &def = Position()) {
+		return isCompatible(id) ? Position(id) : def;
+	}
+	static QString description(int id) {
+		if (id == Center.m_id)
+			return QString();
+		if (id == Left.m_id)
+			return QString();
+		if (id == HCenter.m_id)
+			return QString();
+		if (id == Right.m_id)
+			return QString();
+		if (id == Top.m_id)
+			return QString();
+		if (id == VCenter.m_id)
+			return QString();
+		if (id == Bottom.m_id)
+			return QString();
+		return QString();
+	}
+	static const List &list() {return map().list;}
+private:
+	struct Map {
+		Map() {list.reserve(count);}
+		QMap<int, QString> name;
+		QMap<QString, int> value;
+		List list;
+	};
+	static Map _map;
+	static const Map &map() {return _map;}
+	Position(int id, const char *name): m_id(id) {
+		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+		_map.list.append(*this);
+	}
+	Position(int id): m_id(id) {}
+	int m_id;
+};
+}
+inline bool operator == (int lhs, const Enum::Position &rhs) {return lhs == rhs.id();}
+inline bool operator != (int lhs, const Enum::Position &rhs) {return lhs != rhs.id();}
+
 #endif

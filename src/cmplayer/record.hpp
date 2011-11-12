@@ -4,7 +4,8 @@
 #include <QtCore/QSettings>
 #include <QtGui/QKeySequence>
 
-typedef QLatin1String _LS;
+static inline QLatin1String _L(const char *s) {return QLatin1String(s);}
+static inline QLatin1Char _L(char c) {return QLatin1Char(c);}
 
 class Record : public QSettings {
 //	template<typename T>
@@ -50,13 +51,13 @@ public:
 //		}
 //		endArray();
 //	}
-	template <typename T> void write(const char *key, const T &value) {write<T>(_LS(key), value);}
-	template <typename T> void writeEnum(const char *key, const T &value) {write(_LS(key), value.name());}
+	template <typename T> void write(const char *key, const T &value) {write<T>(_L(key), value);}
+	template <typename T> void writeEnum(const char *key, const T &value) {write(_L(key), value.name());}
 //	template <typename T> void writeList(const char *key, const QList<T> &list) {write<T>(_LS(key), list);}
 
-	template <typename T> T read(const char *key) {return value(_LS(key)).template value<T>();}
+	template <typename T> T read(const char *key) {return value(_L(key)).template value<T>();}
 	template <typename T>
-	T read(const char *key, const T &def) {return value(_LS(key), toVariant<T>(def)).template value<T>();}
+	T read(const char *key, const T &def) {return value(_L(key), toVariant<T>(def)).template value<T>();}
 	template <typename T>
 	T readEnum(const char *key, const T &def = T()) {return T::from(read(key, def.name()));}
 //	template <typename T>
