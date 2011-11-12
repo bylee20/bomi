@@ -346,6 +346,7 @@ QSize VideoRenderer::sizeHint() const {
 void VideoRenderer::setAspectRatio(double ratio) {
 	if (!isSameRatio(d->aspect, ratio)) {
 		d->aspect = ratio;
+		updateSize();
 		update();
 	}
 }
@@ -357,6 +358,7 @@ double VideoRenderer::aspectRatio() const {
 void VideoRenderer::setCropRatio(double ratio) {
 	if (!isSameRatio(d->crop, ratio)) {
 		d->crop = ratio;
+		updateSize();
 		update();
 	}
 }
