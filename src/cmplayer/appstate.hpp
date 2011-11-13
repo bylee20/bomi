@@ -4,6 +4,7 @@
 #include "enums.hpp"
 #include <QtCore/QStringList>
 #include <QtCore/QPointF>
+#include "colorproperty.hpp"
 
 class AppState {
 public:
@@ -12,6 +13,8 @@ public:
 
 // video state
 	double aspect_ratio, crop_ratio;
+	int video_effects;
+	ColorProperty video_color;
 	Enum::Position screen_alignment;
 	QPoint screen_offset;
 	Enum::Overlay overlay;

@@ -17,6 +17,11 @@ AppState::AppState() {
 	RECORD_READ(r, crop_ratio, -1.0);
 	RECORD_READ_ENUM(r, screen_alignment, Enum::Position::CC);
 	RECORD_READ(r, screen_offset, QPoint(0, 0));
+	RECORD_READ(r, video_effects, 0);
+	video_color.brightness() = r.read("video_brightness", 0.0);
+	video_color.saturation() = r.read("video_saturation", 0.0);
+	video_color.contrast() = r.read("video_contrast", 0.0);
+	video_color.hue() = r.read("video_hue", 0.0);
 	RECORD_READ_ENUM(r, overlay, Enum::Overlay::Auto);
 
 	RECORD_READ(r, volume, 100);
@@ -47,6 +52,11 @@ void AppState::save() const {
 	RECORD_WRITE(r, crop_ratio);
 	RECORD_WRITE_ENUM(r, screen_alignment);
 	RECORD_WRITE(r, screen_offset);
+	RECORD_WRITE(r, video_effects)
+	r.write("video_brightness", video_color.brightness());
+	r.write("video_saturation", video_color.saturation());
+	r.write("video_contrast", video_color.contrast());
+	r.write("video_hue", video_color.hue());
 	RECORD_WRITE_ENUM(r, overlay);
 
 	RECORD_WRITE(r, volume);

@@ -108,26 +108,36 @@ class MainWindow::Data {
 
 	void load_state() {
 		dontShowMsg = true;
+
 		const AppState &as = AppState::get();
+
+		engine->setSpeed(as.speed);
+
 		menu("video")("aspect").g()->trigger(as.aspect_ratio);
 		menu("video")("crop").g()->trigger(as.crop_ratio);
 		menu("video")("overlay").g()->trigger(as.overlay.id());
 		menu("video")("align").g("horizontal")->trigger(as.screen_alignment.id() & 0x0f);
 		menu("video")("align").g("vertical")->trigger(as.screen_alignment.id() & 0xf0);
-		menu("subtitle").g("display")->trigger((int)as.sub_letterbox);
-		menu("subtitle").g("align")->trigger((int)as.sub_align_top);
-		menu("window").g("sot")->trigger(as.stays_on_top.id());
-
 		video->setOffset(as.screen_offset);
+		video->setEffects((VideoRenderer::Effects)as.video_effects);
+		for (int i=0; i<16; ++i) {
+			if ((as.video_effects >> i) & 1)
+				menu("video")("filter").g()->setChecked(1 << i, true);
+		}
+		video->setColorProperty(as.video_color);
 
 		audio->setVolume(as.volume);
 		audio->setMuted(as.muted);
 		audio->setPreAmp(as.amp);
 		audio->setVolumeNormalized(as.volume_normalized);
 
-		engine->setSpeed(as.speed);
+		menu("subtitle").g("display")->trigger((int)as.sub_letterbox);
+		menu("subtitle").g("align")->trigger((int)as.sub_align_top);
 		subtitle->setPos(as.sub_pos);
 		subtitle->setDelay(as.sub_sync_delay);
+
+		menu("window").g("sot")->trigger(as.stays_on_top.id());
+
 		dontShowMsg = false;
 	}
 
@@ -137,6 +147,8 @@ class MainWindow::Data {
 		as.crop_ratio = video->cropRatio();
 		as.screen_alignment.set(video->alignment());
 		as.screen_offset = video->offset();
+		as.video_effects = video->effects();
+		as.video_color = video->colorProperty();
 		as.volume = audio->volume();
 		as.volume_normalized = audio->isVolumeNormalized();
 		as.muted = audio->isMuted();

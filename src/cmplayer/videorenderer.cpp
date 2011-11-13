@@ -674,3 +674,7 @@ void VideoRenderer::setAlignment(int align) {
 int VideoRenderer::alignment() const {
 	return d->align;
 }
+
+VideoRenderer::Effects VideoRenderer::effects() const {
+	return d->effects;
+}

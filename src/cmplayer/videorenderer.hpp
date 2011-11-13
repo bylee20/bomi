@@ -50,6 +50,7 @@ public:
 	double outputFrameRate(bool reset = true) const;
 	QPoint offset() const;
 	int alignment() const;
+	Effects effects() const;
 public slots:
 	void setOffset(const QPoint &offset);
 	void setAlignment(int align);

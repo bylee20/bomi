@@ -48,11 +48,19 @@ public:
 	double saturation() const {return m_value[Saturation];}
 	double contrast() const {return m_value[Contrast];}
 	double hue() const {return m_value[Hue];}
+
+	double &value(Value v) {return m_value[v];}
+	double &brightness() {return m_value[Brightness];}
+	double &saturation() {return m_value[Saturation];}
+	double &contrast() {return m_value[Contrast];}
+	double &hue() {return m_value[Hue];}
+
 	void setValue(Value p, double val) {m_value[p] = qFuzzyCompare(val, 0.0) ? 0.0 : val;}
 	void setBrightness(double v) {m_value[Brightness] = v;}
 	void setSaturation(double v) {m_value[Saturation] = v;}
 	void setContrast(double v) {m_value[Contrast] = v;}
 	void setHue(double v) {m_value[Hue] = v;}
+
 	void clamp() {
 		m_value[Brightness] = qBound(-1.0, m_value[Brightness], 1.0);
 		m_value[Contrast] = qBound(-1.0, m_value[Contrast], 1.0);
