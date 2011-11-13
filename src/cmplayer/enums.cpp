@@ -79,12 +79,14 @@ const KeyModifier KeyModifier::Alt(Qt::AltModifier, "Alt");
 
 namespace Enum {
 Position::Map Position::_map;
-const Position Position::Center(Qt::AlignCenter, "Center");
-const Position Position::Left(Qt::AlignLeft, "Left");
-const Position Position::HCenter(Qt::AlignHCenter, "HCenter");
-const Position Position::Right(Qt::AlignRight, "Right");
-const Position Position::Top(Qt::AlignTop, "Top");
-const Position Position::VCenter(Qt::AlignVCenter, "VCenter");
-const Position Position::Bottom(Qt::AlignBottom, "Bottom");
+const Position Position::CC(Qt::AlignVCenter|Qt::AlignHCenter, "CC");
+const Position Position::TL(Qt::AlignTop|Qt::AlignLeft, "TL");
+const Position Position::TC(Qt::AlignTop|Qt::AlignHCenter, "TC");
+const Position Position::TR(Qt::AlignTop|Qt::AlignRight, "TR");
+const Position Position::CL(Qt::AlignVCenter|Qt::AlignLeft, "CL");
+const Position Position::CR(Qt::AlignVCenter|Qt::AlignRight, "CR");
+const Position Position::BL(Qt::AlignBottom|Qt::AlignLeft, "BL");
+const Position Position::BC(Qt::AlignBottom|Qt::AlignHCenter, "BC");
+const Position Position::BR(Qt::AlignBottom|Qt::AlignRight, "BR");
 }
 

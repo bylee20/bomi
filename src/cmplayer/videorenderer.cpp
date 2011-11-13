@@ -43,11 +43,11 @@ struct VideoRenderer::Data {
 	static const int i420ToRgbSimple = 0;
 	static const int i420ToRgbFilter = 1;
 	static const int i420ToRgbKernel = 2;
-	FrameRateMeasure fps;	int frameId;
+	FrameRateMeasure fps;	int frameId;		int align;
 	QMutex mutex;		QSize renderSize;	ColorProperty color;
 	LogoDrawer logo;	Overlay *overlay;	GLuint texture[3];
 	VideoFrame *buffer, *frame, *temp, buf[3];	VideoUtil *util;
-	QRectF vtx;		Effects effects;
+	QRectF vtx;		Effects effects;	QPoint offset;
 	void **planes[VIDEO_FRAME_MAX_PLANE_COUNT];	VideoFormat format;
 	QList<FragmentProgram*> shaders;		FragmentProgram *shader;
 	double rgb_base, rgb_c_r, rgb_c_g, rgb_c_b;
@@ -132,6 +132,7 @@ QGLFormat VideoRenderer::makeFormat() {
 VideoRenderer::VideoRenderer(VideoUtil *util, QWidget *parent)
 : QGLWidget(makeFormat(), parent), d(new Data) {
 	d->util = util;
+	d->align = Qt::AlignCenter;
 	makeCurrent();
 	glGenTextures(3, d->texture);
 #define GET_PROC_ADDRESS(func) func = (_##func)context()->getProcAddress(QLatin1String(#func))
@@ -151,6 +152,7 @@ VideoRenderer::VideoRenderer(VideoUtil *util, QWidget *parent)
 	d->frame = &d->buf[0];	d->temp = &d->buf[1];	d->buffer = &d->buf[2];
 	d->frameIsSet = d->logoOn = d->binding = d->hasKernel = d->prepared = false;
 	d->overlay = 0;
+	d->offset = QPoint(0, 0);
 
 	setMinimumSize(QSize(200, 100));
 	setAutoFillBackground(false);
@@ -486,11 +488,22 @@ void VideoRenderer::paintEvent(QPaintEvent */*event*/) {
 	QPainter painter(this);
 	const QSizeF widget = renderableSize();
 	if (!d->logoOn && d->hasPrograms && d->frameIsSet && d->prepared) {
-		const double aspect = targetAspectRatio();
-		QSizeF letter(targetCropRatio(aspect), 1.0);
+		QSizeF letter(targetCropRatio(targetAspectRatio()), 1.0);
 		letter.scale(widget, Qt::KeepAspectRatio);
-		const double hMargin = (widget.width() - letter.width())*0.5;
-		const double vMargin = (widget.height() - letter.height())*0.5;
+
+		QPointF offset = d->offset;
+		QPointF xy(widget.width(), widget.height());
+		xy.rx() -= letter.width(); xy.ry() -= letter.height();	xy *= 0.5;
+		if (d->align & Qt::AlignLeft)
+			offset.rx() -= xy.x();
+		else if (d->align & Qt::AlignRight)
+			offset.rx() += xy.x();
+		if (d->align & Qt::AlignTop)
+			offset.ry() -= xy.y();
+		else if (d->align & Qt::AlignBottom)
+			offset.ry() += xy.y();
+		xy += offset;
+
 		double top = 0.0, left = 0.0;
 		double bottom = (double)(d->frame->frameLines(0)-1)/(double)d->frame->dataLines(0);
 		double right = (double)(d->frame->framePitch(0)-1)/(double)d->frame->dataPitch(0);
@@ -529,10 +542,10 @@ void VideoRenderer::paintEvent(QPaintEvent */*event*/) {
 			(float)left,	(float)bottom, (float)d->brightness
 		};
 		const float vertexCoords[] = {
-			(float)d->vtx.left(),	(float)d->vtx.top(),
-			(float)d->vtx.right(),(float)	d->vtx.top(),
-			(float)d->vtx.right(),	(float)d->vtx.bottom(),
-			(float)d->vtx.left(),	(float)d->vtx.bottom()
+			(float)(d->vtx.left()+offset.x()),	(float)(d->vtx.top()+offset.y()),
+			(float)(d->vtx.right()+offset.x()),	(float)(d->vtx.top()+offset.y()),
+			(float)(d->vtx.right()+offset.x()),	(float)(d->vtx.bottom()+offset.y()),
+			(float)(d->vtx.left()+offset.x()),	(float)(d->vtx.bottom()+offset.y())
 		};
 
 		glEnableClientState(GL_VERTEX_ARRAY);
@@ -547,18 +560,16 @@ void VideoRenderer::paintEvent(QPaintEvent */*event*/) {
 
 		painter.endNativePainting();
 
-		if (vMargin >= 0.0) {
-			QRectF rect(0.0, 0.0, widget.width(), vMargin);
-			painter.fillRect(rect, Qt::black);
-			rect.moveTop(widget.height() - vMargin);
-			painter.fillRect(rect, Qt::black);
-		}
-		if (hMargin >= 0.0) {
-			QRectF rect(0.0, 0.0, hMargin, widget.height());
-			painter.fillRect(rect, Qt::black);
-			rect.moveLeft(widget.width() - hMargin);
-			painter.fillRect(rect, Qt::black);
-		}
+		if (0.0 <= xy.y() && xy.y() <= widget.height())
+			painter.fillRect(.0, .0, widget.width(), xy.y(), Qt::black);
+		xy.ry() += letter.height();
+		if (0.0 <= xy.y() && xy.y() <= widget.height())
+			painter.fillRect(.0, xy.y(), widget.width(), widget.height()-xy.y(), Qt::black);
+		if (0.0 <= xy.x() && xy.x() <= widget.width())
+			painter.fillRect(.0, .0, xy.x(), widget.height(), Qt::black);
+		xy.rx() += letter.width();
+		if (0.0 <= xy.x() && xy.x() <= widget.width())
+			painter.fillRect(xy.x(), .0, widget.width()-xy.x(), widget.height(), Qt::black);
 		d->fps.frameDrawn(d->frameId);
 	} else
 		d->logo.draw(&painter, QRectF(QPointF(0, 0), widget));
@@ -640,4 +651,26 @@ void VideoRenderer::setOverlayType(int hint) {
 		d->overlay->addOsd(osds[i]);
 	d->overlay->setArea(QRect(QPoint(0, 0), renderableSize()), d->vtx.toRect());
 	qDebug() << "Overlay:" << Overlay::typeToString(d->overlay->type());
+}
+
+void VideoRenderer::setOffset(const QPoint &offset) {
+	if (d->offset != offset) {
+		d->offset = offset;
+		update();
+	}
+}
+
+QPoint VideoRenderer::offset() const {
+	return d->offset;
+}
+
+void VideoRenderer::setAlignment(int align) {
+	if (d->align != align) {
+		d->align = align;
+		update();
+	}
+}
+
+int VideoRenderer::alignment() const {
+	return d->align;
 }

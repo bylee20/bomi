@@ -147,30 +147,30 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	crop->addActionToGroup(_L("2.35:1"), true)->setData(2.35);
 
 	Menu *align = video->addMenu(_L("align"));
-	align->addActionToGroup(_L("top"), true, _L("vertical"))->setData(Enum::Position::Top.id());
-	align->addActionToGroup(_L("v-center"), true, _L("vertical"))->setData(Enum::Position::VCenter.id());
-	align->addActionToGroup(_L("bottom"), true, _L("vertical"))->setData(Enum::Position::Bottom.id());
+	align->addActionToGroup(_L("top"), true, _L("vertical"))->setData((int)Qt::AlignTop);
+	align->addActionToGroup(_L("v-center"), true, _L("vertical"))->setData((int)Qt::AlignVCenter);
+	align->addActionToGroup(_L("bottom"), true, _L("vertical"))->setData((int)Qt::AlignBottom);
 	align->addSeparator();
-	align->addActionToGroup(_L("left"), true, _L("horizontal"))->setData(Enum::Position::Left.id());
-	align->addActionToGroup(_L("h-center"), true, _L("horizontal"))->setData(Enum::Position::HCenter.id());
-	align->addActionToGroup(_L("right"), true, _L("horizontal"))->setData(Enum::Position::Right.id());
+	align->addActionToGroup(_L("left"), true, _L("horizontal"))->setData((int)Qt::AlignLeft);
+	align->addActionToGroup(_L("h-center"), true, _L("horizontal"))->setData((int)Qt::AlignHCenter);
+	align->addActionToGroup(_L("right"), true, _L("horizontal"))->setData((int)Qt::AlignRight);
 
 	Menu *move = video->addMenu(_L("move"));
 	QAction *mact = move->addActionToGroup(_L("reset"));
-	mact->setData(Qt::NoArrow);
-	mact->setShortcut(Qt::SHIFT + Qt::Key_S);
-	move->addSeparator();
-	mact = move->addActionToGroup(_L("up"));
-	mact->setData(Qt::UpArrow);
-	mact->setShortcut(Qt::SHIFT + Qt::Key_W);
-	mact = move->addActionToGroup(_L("down"));
-	mact->setData(Qt::DownArrow);
+	mact->setData((int)Qt::NoArrow);
 	mact->setShortcut(Qt::SHIFT + Qt::Key_X);
-	mact = move->addActionToGroup(_L("left"));
-	mact->setData(Qt::LeftArrow);
+	move->addSeparator();
+	mact = move->addAction(_L("up"));
+	mact->setData((int)Qt::UpArrow);
+	mact->setShortcut(Qt::SHIFT + Qt::Key_W);
+	mact = move->addAction(_L("down"));
+	mact->setData((int)Qt::DownArrow);
+	mact->setShortcut(Qt::SHIFT + Qt::Key_S);
+	mact = move->addAction(_L("left"));
+	mact->setData((int)Qt::LeftArrow);
 	mact->setShortcut(Qt::SHIFT + Qt::Key_A);
-	mact = move->addActionToGroup(_L("right"));
-	mact->setData(Qt::RightArrow);
+	mact = move->addAction(_L("right"));
+	mact->setData((int)Qt::RightArrow);
 	mact->setShortcut(Qt::SHIFT + Qt::Key_D);
 
 	video->addSeparator();

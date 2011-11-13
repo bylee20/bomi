@@ -48,7 +48,11 @@ public:
 	void setEffects(Effects effect);
 	void setInfoVisible(bool visible);
 	double outputFrameRate(bool reset = true) const;
+	QPoint offset() const;
+	int alignment() const;
 public slots:
+	void setOffset(const QPoint &offset);
+	void setAlignment(int align);
 	void setAspectRatio(double ratio);
 	void setCropRatio(double ratio);
 	void setOverlayType(int type);

@@ -15,7 +15,9 @@ AppState::AppState() {
 
 	RECORD_READ(r, aspect_ratio, -1.0);
 	RECORD_READ(r, crop_ratio, -1.0);
-	RECORD_READ_ENUM(r, overlay, OverlayType::Auto);
+	RECORD_READ_ENUM(r, screen_alignment, Enum::Position::CC);
+	RECORD_READ(r, screen_offset, QPoint(0, 0));
+	RECORD_READ_ENUM(r, overlay, Enum::Overlay::Auto);
 
 	RECORD_READ(r, volume, 100);
 	RECORD_READ(r, volume_normalized, true);
@@ -43,6 +45,8 @@ void AppState::save() const {
 
 	RECORD_WRITE(r, aspect_ratio);
 	RECORD_WRITE(r, crop_ratio);
+	RECORD_WRITE_ENUM(r, screen_alignment);
+	RECORD_WRITE(r, screen_offset);
 	RECORD_WRITE_ENUM(r, overlay);
 
 	RECORD_WRITE(r, volume);

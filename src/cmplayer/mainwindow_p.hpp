@@ -112,9 +112,13 @@ class MainWindow::Data {
 		menu("video")("aspect").g()->trigger(as.aspect_ratio);
 		menu("video")("crop").g()->trigger(as.crop_ratio);
 		menu("video")("overlay").g()->trigger(as.overlay.id());
+		menu("video")("align").g("horizontal")->trigger(as.screen_alignment.id() & 0x0f);
+		menu("video")("align").g("vertical")->trigger(as.screen_alignment.id() & 0xf0);
 		menu("subtitle").g("display")->trigger((int)as.sub_letterbox);
 		menu("subtitle").g("align")->trigger((int)as.sub_align_top);
 		menu("window").g("sot")->trigger(as.stays_on_top.id());
+
+		video->setOffset(as.screen_offset);
 
 		audio->setVolume(as.volume);
 		audio->setMuted(as.muted);
@@ -131,6 +135,8 @@ class MainWindow::Data {
 		AppState &as = AppState::get();
 		as.aspect_ratio = video->aspectRatio();
 		as.crop_ratio = video->cropRatio();
+		as.screen_alignment.set(video->alignment());
+		as.screen_offset = video->offset();
 		as.volume = audio->volume();
 		as.volume_normalized = audio->isVolumeNormalized();
 		as.muted = audio->isMuted();

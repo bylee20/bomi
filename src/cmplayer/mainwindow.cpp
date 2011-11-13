@@ -70,9 +70,12 @@ MainWindow::MainWindow() {
 	CONNECT(video("aspect").g(), triggered(double), d->video, setAspectRatio(double));
 	CONNECT(video("crop").g(), triggered(double), d->video, setCropRatio(double));
 	CONNECT(video["snapshot"], triggered(), this, takeSnapshot());
-	CONNECT(video("color").g(), triggered(QAction*), this, setColorProperty(QAction*));
+	CONNECT(&video("align"), triggered(QAction*), this, alignScreen(QAction*));
+	CONNECT(&video("move"), triggered(QAction*), this, moveScreen(QAction*));
 	CONNECT(&video("filter"), triggered(QAction*), this, setEffect(QAction*));
+	CONNECT(video("color").g(), triggered(QAction*), this, setColorProperty(QAction*));
 	CONNECT(video("overlay").g(), triggered(int), d->video, setOverlayType(int));
+
 	CONNECT(audio("track").g(), triggered(QAction*), this, setAudioTrack(QAction*));
 	CONNECT(audio.g("volume"), triggered(int), this, setVolume(int));
 	CONNECT(audio["mute"], toggled(bool), this, setMuted(bool));
@@ -149,7 +152,6 @@ MainWindow::MainWindow() {
 	d->load_state();
 	d->menu.load();
 	d->apply_pref();
-
 
 	d->playlist->setPlaylist(d->recent.lastPlaylist());
 	d->engine->setMrl(d->recent.lastMrl());
@@ -836,4 +838,29 @@ void MainWindow::seekToSubtitle(int key) {
 		time = d->subtitle->current();
 	if (time >= 0)
 		d->engine->seek(time-100);
+}
+
+void MainWindow::moveScreen(QAction *action) {
+	QPoint offset = d->video->offset();
+	const Qt::ArrowType move = (Qt::ArrowType)action->data().toInt();
+	if (move == Qt::UpArrow)
+		offset.ry() -= 1;
+	else if (move == Qt::DownArrow)
+		offset.ry() += 1;
+	else if (move == Qt::LeftArrow)
+		offset.rx() -= 1;
+	else if (move == Qt::RightArrow)
+		offset.rx() += 1;
+	else
+		offset = QPoint(0, 0);
+	d->video->setOffset(offset);
+}
+
+void MainWindow::alignScreen(QAction */*action*/) {
+	int key = 0;
+	for (auto action : d->menu("video")("align").actions()) {
+		if (action->isChecked())
+			key |= action->data().toInt();
+	}
+	d->video->setAlignment(key);
 }

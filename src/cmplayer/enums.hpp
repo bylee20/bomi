@@ -650,16 +650,18 @@ class Position {
 	Q_DECLARE_TR_FUNCTIONS(Position)
 public:
 	typedef QList<Position> List;
-	static const int count = 7;
-	static const Position Center;
-	static const Position Left;
-	static const Position HCenter;
-	static const Position Right;
-	static const Position Top;
-	static const Position VCenter;
-	static const Position Bottom;
+	static const int count = 9;
+	static const Position CC;
+	static const Position TL;
+	static const Position TC;
+	static const Position TR;
+	static const Position CL;
+	static const Position CR;
+	static const Position BL;
+	static const Position BC;
+	static const Position BR;
 
-	Position(): m_id(Qt::AlignCenter) {}
+	Position(): m_id(Qt::AlignVCenter|Qt::AlignHCenter) {}
 	Position(const Position &rhs): m_id(rhs.m_id) {}
 	Position &operator = (const Position &rhs) {m_id = rhs.m_id; return *this;}
 	bool operator == (const Position &rhs) const {return m_id == rhs.m_id;}
@@ -682,19 +684,23 @@ public:
 		return isCompatible(id) ? Position(id) : def;
 	}
 	static QString description(int id) {
-		if (id == Center.m_id)
+		if (id == CC.m_id)
 			return QString();
-		if (id == Left.m_id)
+		if (id == TL.m_id)
 			return QString();
-		if (id == HCenter.m_id)
+		if (id == TC.m_id)
 			return QString();
-		if (id == Right.m_id)
+		if (id == TR.m_id)
 			return QString();
-		if (id == Top.m_id)
+		if (id == CL.m_id)
 			return QString();
-		if (id == VCenter.m_id)
+		if (id == CR.m_id)
 			return QString();
-		if (id == Bottom.m_id)
+		if (id == BL.m_id)
+			return QString();
+		if (id == BC.m_id)
+			return QString();
+		if (id == BR.m_id)
 			return QString();
 		return QString();
 	}

@@ -3,8 +3,7 @@
 
 #include "enums.hpp"
 #include <QtCore/QStringList>
-
-typedef Enum::Overlay OverlayType;
+#include <QtCore/QPointF>
 
 class AppState {
 public:
@@ -13,7 +12,9 @@ public:
 
 // video state
 	double aspect_ratio, crop_ratio;
-	OverlayType overlay;
+	Enum::Position screen_alignment;
+	QPoint screen_offset;
+	Enum::Overlay overlay;
 
 // audio state
 	double amp;

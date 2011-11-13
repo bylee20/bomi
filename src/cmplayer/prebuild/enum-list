@@ -56,10 +56,12 @@ Name:KeyModifier
 -Alt=Qt::AltModifier
 
 Name:Position
--Center=Qt::AlignCenter
--Left=Qt::AlignLeft
--HCenter=Qt::AlignHCenter
--Right=Qt::AlignRight
--Top=Qt::AlignTop
--VCenter=Qt::AlignVCenter
--Bottom=Qt::AlignBottom
+-CC=Qt::AlignVCenter|Qt::AlignHCenter
+-TL=Qt::AlignTop|Qt::AlignLeft
+-TC=Qt::AlignTop|Qt::AlignHCenter
+-TR=Qt::AlignTop|Qt::AlignRight
+-CL=Qt::AlignVCenter|Qt::AlignLeft
+-CR=Qt::AlignVCenter|Qt::AlignRight
+-BL=Qt::AlignBottom|Qt::AlignLeft
+-BC=Qt::AlignBottom|Qt::AlignHCenter
+-BR=Qt::AlignBottom|Qt::AlignRight

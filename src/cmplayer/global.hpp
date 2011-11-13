@@ -5,6 +5,7 @@
 #include <QtCore/QString>
 #include <QtCore/QTime>
 #include <QtCore/QSize>
+#include <QtCore/QPointF>
 
 #define CONNECT(a, b, c, d) (QObject::connect(a, SIGNAL(b), c, SLOT(d)))
 
@@ -58,6 +59,8 @@ static inline QString toString(const QSize &size) {
 	ret += QString::fromUtf8("\303\227"); ret += QString::number(size.height());
 	return ret;
 }
+
+static inline QPointF toPointF(const QSizeF &size) {return QPointF(size.width(), size.height());}
 
 QDialogButtonBox *makeButtonBox(QDialog *dlg);
 
