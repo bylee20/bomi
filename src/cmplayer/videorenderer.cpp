@@ -386,8 +386,7 @@ const ColorProperty &VideoRenderer::colorProperty() const {
 void VideoRenderer::setFixedRenderSize(const QSize &size) {
 	if (d->renderSize != size) {
 		d->renderSize = size;
-		if (this->size() != size)
-			updateSize();
+		updateSize();
 		update();
 	}
 }
