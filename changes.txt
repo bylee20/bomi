@@ -1,10 +1,15 @@
 0.5.4
 
-- 개선 사항
-* 25%, 50% 창 크기 조절 삭제, '적당한 크기로' 추가
+- Improvement
+* Delete window size 25%, 50% menus and add 'proper size' menu
+* Add 'screen alignment' menu
+* Add 'screen position' menu
+* Save the state of video color and filters
 
-- 버그 수정
-* SubRip(srt) 자막을 열면  freeze 되는 문제 해결
+- Bug fix
+* Freezed when SubRip(srt) subtitle is open
+* Filp filters were not ignored when 'ignore all filters' menu was checked
+* Mouse cursor was not visible when moving on control panel in fullscreen mode
 
 0.5.3
 

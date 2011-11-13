@@ -33,6 +33,7 @@ private slots:
 	void hideMessage();
 	void updateMuted(bool muted);
 private:
+	static void enableMouseTracking(QWidget *widget);
 	QString stateText() const;
 	static QVBoxLayout *vbox();
 	static QHBoxLayout *hbox();

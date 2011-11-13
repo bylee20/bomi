@@ -201,10 +201,20 @@ ControlWidget::ControlWidget(PlayEngine *engine, QWidget *parent)
 	adjustSize();
 	setFixedHeight(sizeHint().height());
 
+	enableMouseTracking(this);
 }
 
 ControlWidget::~ControlWidget() {
 	delete d;
+}
+
+void ControlWidget::enableMouseTracking(QWidget *widget) {
+	widget->setMouseTracking(true);
+	for (auto obj : widget->children()) {
+		QWidget *w = qobject_cast<QWidget*>(obj);
+		if (w)
+			enableMouseTracking(w);
+	}
 }
 
 void ControlWidget::paintEvent(QPaintEvent */*event*/) {

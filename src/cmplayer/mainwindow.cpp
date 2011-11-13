@@ -122,7 +122,7 @@ MainWindow::MainWindow() {
 	CONNECT(d->engine, tick(int), d->subtitle, render(int));
 	CONNECT(d->video, customContextMenuRequested(const QPoint&), this, showContextMenu(const QPoint&));
 	CONNECT(d->video, formatChanged(VideoFormat), this, updateVideoFormat(VideoFormat));
-	CONNECT(d->video, screenSizeChanged(QSize), this, onScreenSizeChanged(QSize));
+//	CONNECT(d->video, screenSizeChanged(QSize), this, onScreenSizeChanged(QSize));
 	CONNECT(d->audio, mutedChanged(bool), audio["mute"], setChecked(bool));
 	CONNECT(d->audio, volumeNormalizedChanged(bool), audio["volnorm"], setChecked(bool));
 
@@ -315,15 +315,15 @@ void MainWindow::openUrl() {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QMainWindow::resizeEvent(event);
-//	int width = d->center->width();
-//	int height = d->center->height();
-//	if (isFullScreen()) {
-//		d->video->setFixedRenderSize(QSize(width, height));
-//	} else {
-//		d->video->setFixedRenderSize(QSize());
-//		height -= d->control->height();
-//	}
-//	showMessage(QString("%1x%2").arg(width).arg(height), 1000);
+	int width = d->center->width();
+	int height = d->center->height();
+	if (isFullScreen()) {
+		d->video->setFixedRenderSize(QSize(width, height));
+	} else {
+		d->video->setFixedRenderSize(QSize());
+		height -= d->control->height();
+	}
+	showMessage(QString::fromUtf8("%1x%2").arg(width).arg(height), 1000);
 }
 
 void MainWindow::togglePlayPause() {
@@ -442,14 +442,12 @@ void MainWindow::setFullScreen(bool full) {
 		setWindowState(windowState() | Qt::WindowFullScreen);
 		if (d->pref.hide_cursor)
 			d->hider->start(d->pref.hide_cursor_delay);
-		d->video->setFixedRenderSize(size());
 	} else {
 		setWindowState(windowState() & ~Qt::WindowFullScreen);
 		d->hider->stop();
 		if (cursor().shape() == Qt::BlankCursor)
 			unsetCursor();
 		updateStaysOnTop();
-		d->video->setFixedRenderSize(QSize());
 	}
 	d->dontPause = false;
 	emit fullscreenChanged(full);
@@ -552,7 +550,7 @@ void MainWindow::moveSubtitle(int dy) {
 #define IS_BUTTON(b) (event->buttons() & (b))
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
-	QMainWindow::mouseMoveEvent(event);
+	QMainWindow::mousePressEvent(event);
 	if (!IS_IN_CENTER)
 		return;
 	if (IS_BUTTON(Qt::LeftButton) && !isFullScreen()) {
