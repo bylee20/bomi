@@ -179,7 +179,6 @@ SOURCES += main.cpp \
     events.cpp \
     listmodel.cpp \
     fragmentprogram.cpp \
-    mainwindow_p.cpp \
     pref_widget.cpp \
     playinfoview.cpp \
     widgets.cpp \
@@ -199,3 +198,4 @@ FORMS += \
     ui/opendvddialog.ui \
     ui/snapshotdialog.ui \
     ui/pref_widget.ui
+

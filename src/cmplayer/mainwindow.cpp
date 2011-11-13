@@ -442,12 +442,14 @@ void MainWindow::setFullScreen(bool full) {
 		setWindowState(windowState() | Qt::WindowFullScreen);
 		if (d->pref.hide_cursor)
 			d->hider->start(d->pref.hide_cursor_delay);
+		d->video->setFixedRenderSize(size());
 	} else {
 		setWindowState(windowState() & ~Qt::WindowFullScreen);
 		d->hider->stop();
 		if (cursor().shape() == Qt::BlankCursor)
 			unsetCursor();
 		updateStaysOnTop();
+		d->video->setFixedRenderSize(QSize());
 	}
 	d->dontPause = false;
 	emit fullscreenChanged(full);
