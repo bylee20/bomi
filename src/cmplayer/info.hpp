@@ -23,7 +23,7 @@ public:
 	static QStringList audioNameFilter() {return self.m_audioExt.toNameFilter();}
 	static QStringList subtitleNameFilter() {return self.m_subExt.toNameFilter();}
 	static QStringList playlistNameFilter() {return self.m_plExt.toNameFilter();}
-	static const char *version() {return "0.5.3";}
+	static const char *version() {return "0.5.4";}
 	static QString mediaExtFilter();
 	static QStringList mediaNameFilter() {return videoNameFilter() += audioNameFilter();}
 	static const char *pluginPath();
