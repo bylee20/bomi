@@ -195,6 +195,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	QAction *creset = color->addActionToGroup(_L("reset"), false);
 	creset->setShortcut(Qt::Key_O);
 	creset->setData(QList<QVariant>() << -1 << 0);
+	color->addSeparator();
 	color->addActionToGroup(_L("brightness+"))->setShortcut(Qt::Key_T);
 	color->addActionToGroup(_L("brightness-"))->setShortcut(Qt::Key_G);
 	color->addActionToGroup(_L("contrast+"))->setShortcut(Qt::Key_Y);

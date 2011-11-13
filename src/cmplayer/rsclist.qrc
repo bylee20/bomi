@@ -12,9 +12,6 @@
         <file>img/subtitle.png</file>
         <file>img/media-playback-pause.png</file>
         <file>img/media-playback-start.png</file>
-        <file>translations/cmplayer_ko</file>
-        <file>translations/cmplayer_en</file>
-        <file>translations/cmplayer_ja</file>
         <file>img/speaker.png</file>
         <file>img/cmplayer512.png</file>
         <file>gpl.html</file>
@@ -26,5 +23,8 @@
         <file>img/applications-multimedia.png</file>
         <file>img/speaker-large.png</file>
         <file>mpl.html</file>
+        <file>translations/cmplayer_en.qm</file>
+        <file>translations/cmplayer_ja.qm</file>
+        <file>translations/cmplayer_ko.qm</file>
     </qresource>
 </RCC>

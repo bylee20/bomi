@@ -4,6 +4,8 @@
 #include "menu.hpp"
 
 class RootMenu : public Menu {
+	Q_OBJECT
+private:
 	struct WheelActionPair {
 		WheelActionPair(QAction *up, QAction *down): up(up), down(down) {}
 		WheelActionPair(): up(0), down(0) {}

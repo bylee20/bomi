@@ -68,6 +68,7 @@ private:
 };
 
 class FontOptionWidget : public QWidget {
+	Q_OBJECT
 public:
 	FontOptionWidget(QWidget *parent = 0);
 	~FontOptionWidget();
@@ -83,6 +84,7 @@ private:
 };
 
 class ColorSelectWidget : public QWidget {
+	Q_OBJECT
 public:
 	ColorSelectWidget(QWidget *parent = 0);
 	~ColorSelectWidget();

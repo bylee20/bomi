@@ -33,6 +33,7 @@ private slots:
 	void hideMessage();
 	void updateMuted(bool muted);
 private:
+	QString stateText() const;
 	static QVBoxLayout *vbox();
 	static QHBoxLayout *hbox();
 	static QGridLayout *grid();

@@ -34,7 +34,7 @@ Translator::Translator()
 : d(new Data) {
 	d->def = ":/translations";
 	qApp->installTranslator(&d->trans);
-	d->locale += getLocales(d->def, "*", "(.*)");
+	d->locale += getLocales(d->def, "*.qm", "(.*).qm");
 	d->path = QString::fromLocal8Bit(qgetenv("CMPLAYER_TRANSLATION_PATH"));
 	if (!d->path.isEmpty())
 		d->locale += getLocales(d->path, "*.qm", "(.*).qm");

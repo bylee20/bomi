@@ -15,6 +15,7 @@
 #include <QtCore/QDebug>
 #include <QtCore/QEvent>
 #include <QtCore/QTimer>
+#include <QtCore/QStringBuilder>
 
 class ControlWidget::Lcd : public QFrame {
 public:
@@ -113,10 +114,13 @@ struct ControlWidget::Data {
 	Button *play, *prev, *next, *forward, *backward;
 	QBrush bg, light;
 	QPainterPath path;
+	MediaState state;
 };
 
 ControlWidget::ControlWidget(PlayEngine *engine, QWidget *parent)
 : QWidget(parent), d(new Data) {
+	d->state = StoppedState;
+
 	QLinearGradient grad(0.5, 0.0, 0.5, 1.0);
 	grad.setColorAt(0.0, qRgb(0, 0, 0));
 	grad.setColorAt(1.0, qRgb(60, 60, 60));
@@ -261,20 +265,12 @@ void ControlWidget::setMrl(const Mrl &mrl) {
 }
 
 void ControlWidget::setState(MediaState state) {
-	QString text;
-	if (state == PlayingState) {
-		text += tr("Playing");
+	d->state = state;
+	if (state == PlayingState)
 		d->play->setIcon(QIcon(":/img/media-playback-pause.png"));
-	} else {
-		if (state == StoppedState)
-			text += tr("Stopped");
-		else if (state == FinishedState)
-			text += tr("Finished");
-		else
-			text += tr("Paused");
+	else
 		d->play->setIcon(QIcon(":/img/media-playback-start.png"));
-	}
-	d->lcd->state->setText("(" + text + ") ");
+	d->lcd->state->setText("(" + stateText() + ") ");
 	hideMessage();
 }
 
@@ -302,7 +298,20 @@ void ControlWidget::hideMessage() {
 	d->lcd->stack->setCurrentIndex(Lcd::Info);
 }
 
+QString ControlWidget::stateText() const {
+	if (d->state == PlayingState)
+		return tr("Playing");
+	if (d->state == StoppedState)
+		return tr("Stopped");
+	if (d->state == FinishedState)
+		return tr("Finished");
+	return tr("Paused");
+}
+
 void ControlWidget::retranslateUi() {
+	d->lcd->state->setText("(" % stateText() % ") ");
+	hideMessage();
+
 	d->backward->setToolTip(tr("Backward"));
 	d->forward->setToolTip(tr("Forward"));
 	d->next->setToolTip(tr("Next"));

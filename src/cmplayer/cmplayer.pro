@@ -28,6 +28,8 @@ macx {
         SOURCES +=
 }
 
+DESTDIR = ../../bin
+
 !isEmpty(RELEASE) {
 	CONFIG += release
 	macx:CONFIG += app_bundle
@@ -197,15 +199,3 @@ FORMS += \
     ui/opendvddialog.ui \
     ui/snapshotdialog.ui \
     ui/pref_widget.ui
-
-
-
-
-
-
-
-
-
-
-
-
