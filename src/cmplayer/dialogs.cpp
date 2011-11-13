@@ -1,4 +1,5 @@
 #include "dialogs.hpp"
+#include "libvlc.hpp"
 #include <QtCore/QFile>
 #include "ui_aboutdialog.h"
 #include "info.hpp"
@@ -331,7 +332,7 @@ AboutDialog::AboutDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
 	d->ui.setupUi(this);
 #define UI_LABEL_ARG(label, arg) d->ui.label->setText(d->ui.label->text().arg)
-	UI_LABEL_ARG(version, arg(Info::version()));
+	UI_LABEL_ARG(version, arg(Info::version()).arg(LibVLC::version()));
 	UI_LABEL_ARG(copyright, arg(QDate::currentDate().year()));
 	UI_LABEL_ARG(contacts, arg("<a href=\"http://xylosper.net\">http://xylosper.net</a><br>")
 		.arg("<a href=\"mailto:darklin20@gmail.com\">darklin20@gmail.com</a><br>")
@@ -352,10 +353,12 @@ AboutDialog::AboutDialog(QWidget *parent)
 		"if not, see <a href=\"http://www.gnu.org/licenses\">http://www.gnu.org/licenses</a>.<br><br>"
 
 		"Exception:<br>"
-		"libchardet made by JoungKyun.Kim is distributed under Mozilla Public License(MPL).");
-	connect(d->ui.view_license, SIGNAL(clicked()), this, SLOT(showFullLicense()));
+		"libchardet made by JoungKyun.Kim is distributed under Mozilla Public License(MPL)."
+	);
+	connect(d->ui.view_gpl, SIGNAL(clicked()), this, SLOT(showFullLicense()));
+	connect(d->ui.view_mpl, SIGNAL(clicked()), this, SLOT(showFullLicense()));
 
-	setFixedHeight(400);
+	setFixedHeight(420);
 	setFixedWidth(width());
 }
 
@@ -376,7 +379,8 @@ void AboutDialog::showFullLicense() {
 	vbox->addLayout(hbox);
 	connect(close, SIGNAL(clicked()), &dlg, SLOT(accept()));
 
-	QFile file(":/gpl.html");
+	const QString fileName(sender() == d->ui.view_mpl ? ":/mpl.html" : ":/gpl.html");
+	QFile file(fileName);
 	file.open(QFile::ReadOnly);
 	text->setHtml(QLatin1String(file.readAll()));
 	dlg.resize(500, 400);

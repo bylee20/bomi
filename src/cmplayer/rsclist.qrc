@@ -25,5 +25,6 @@
         <file>img/format-text-underline.png</file>
         <file>img/applications-multimedia.png</file>
         <file>img/speaker-large.png</file>
+        <file>mpl.html</file>
     </qresource>
 </RCC>

@@ -21,6 +21,7 @@ public:
 	static libvlc_media_t *newMedia(const Mrl &mrl) {Q_ASSERT(d && m_inst);
 		return libvlc_media_new_location(m_inst, mrl.toString().toLocal8Bit());
 	}
+	static const char *version() {return libvlc_get_version();}
 	static void outputError() {qWarning("LibVLC error: %s", libvlc_errmsg());}
 private:
 	static void cbAudioPrepare(void *data, const AudioFormat *format);
