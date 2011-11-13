@@ -1,7 +1,6 @@
 macx {
-	QMAKE_CXXFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, -arch, "")
-	QMAKE_CXXFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, x86_64, "")
-	QMAKE_CXXFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, Xarch_, m64)
+	QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
+	QMAKE_CXXFLAGS_X86_64 += -m64
 	#QMAKE_CFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, -arch, "")
 	#QMAKE_CFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, x86_64, "")
 	#QMAKE_CFLAGS_X86_64 = $$replace(QMAKE_CXXFLAGS_X86_64, Xarch_, m64)
@@ -14,10 +13,12 @@ macx {
 	ICON = ../../icons/cmplayer.icns
 	TARGET = CMPlayer
 	LIBS += -framework Cocoa -framework IOKit
+	HEADERS += app_mac.hpp
 	SOURCES += app_mac.mm
 } else:unix {
 	TARGET = cmplayer
 	LIBS += -lX11
+	HEADERS += app_x11.hpp
 	SOURCES += app_x11.cpp
 }
 
@@ -114,9 +115,7 @@ HEADERS += playengine.hpp \
     record.hpp \
     actiongroup.hpp \
     rootmenu.hpp \
-    app.hpp \
-    app_mac.hpp \
-    app_x11.hpp
+    app.hpp
 SOURCES += main.cpp \
     playengine.cpp \
     mainwindow.cpp \
