@@ -20,7 +20,7 @@ build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
-	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr CMPLAYER_ACTION_PATH=/usr/share/kde4/apps/solid/actions CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins cmplayer
+	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr CMPLAYER_ACTION_PATH=/usr/share/kde4/apps/solid/actions CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins all
 
 	#touch build-stamp
 	touch $@
