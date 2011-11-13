@@ -65,9 +65,9 @@ vlc-plugins: bin_dir
 	$(install_file) src/$(vlc_plugins_dir)/libcmplayer-*_plugin.dylib bin/$(vlc_plugins_dir)
 
 translations:
-	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ko.ts -qm cmplayer_ko
-	cd src/cmplayer/translations && $(LRELEASE) cmplayer_en.ts -qm cmplayer_en
-	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ja.ts -qm cmplayer_ja
+	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ko.ts -qm cmplayer_ko.qm
+	cd src/cmplayer/translations && $(LRELEASE) cmplayer_en.ts -qm cmplayer_en.qm
+	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ja.ts -qm cmplayer_ja.qm
 
 libchardet:
 ifneq ($(configured),configured)
