@@ -28,7 +28,7 @@ struct App::Data {
 #if defined(Q_WS_MAC)
 	AppMac helper;
 #elif defined(Q_WS_X11)
-	ApplicationX11 helper;
+	AppX11 helper;
 #endif
 };
 
