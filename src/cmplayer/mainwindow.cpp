@@ -860,7 +860,7 @@ void MainWindow::moveScreen(QAction *action) {
 
 void MainWindow::alignScreen(QAction */*action*/) {
 	int key = 0;
-	for (QAction *action : d->menu("video")("align").actions()) {
+	for (auto action : d->menu("video")("align").actions()) {
 		if (action->isChecked())
 			key |= action->data().toInt();
 	}
