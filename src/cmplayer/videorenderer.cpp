@@ -507,10 +507,12 @@ void VideoRenderer::paintEvent(QPaintEvent */*event*/) {
 		double top = 0.0, left = 0.0;
 		double bottom = (double)(d->frame->frameLines(0)-1)/(double)d->frame->dataLines(0);
 		double right = (double)(d->frame->framePitch(0)-1)/(double)d->frame->dataPitch(0);
-		if (d->effects & FlipHorizontally)
-			qSwap(left, right);
-		if (d->effects & FlipVertically)
-			qSwap(top, bottom);
+		if (!(d->effects & IgnoreEffect)) {
+			if (d->effects & FlipHorizontally)
+				qSwap(left, right);
+			if (d->effects & FlipVertically)
+				qSwap(top, bottom);
+		}
 		painter.beginNativePainting();
 		makeCurrent();
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
