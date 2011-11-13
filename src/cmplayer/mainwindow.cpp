@@ -710,11 +710,11 @@ void MainWindow::handleTray(QSystemTrayIcon::ActivationReason reason) {
 
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-#ifndef Q_WS_MAC
+//#ifdef Q_WS_MAC
 	if (d->pref.enable_system_tray && d->pref.hide_rather_close) {
 		hide();
-		AppState as;
-		if (as[AppState::TrayFirst].toBool()) {
+		AppState &as = AppState::get();
+		if (as.ask_system_tray) {
 			CheckDialog dlg(this);
 			dlg.setChecked(true);
 			dlg.setLabelText(tr("CMPlayer will be running in the system tray "
@@ -723,7 +723,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 					"If you want to exit CMPlayer, please use 'Exit' menu."));
 			dlg.setCheckBoxText(tr("Do not display this message again"));
 			dlg.exec();
-			as[AppState::TrayFirst] = !dlg.isChecked();
+			as.ask_system_tray = !dlg.isChecked();
 		}
 		event->ignore();
 	} else {
