@@ -62,7 +62,11 @@ cmplayer: translations libchardet
 vlc-plugins: bin_dir
 	cd src/$(vlc_plugins_dir) && make
 	install -d bin/$(vlc_plugins_dir)
+ifeq ($(os),osx)
 	$(install_file) src/$(vlc_plugins_dir)/libcmplayer-*_plugin.dylib bin/$(vlc_plugins_dir)
+else
+	$(install_file) src/$(vlc_plugins_dir)/libcmplayer-*_plugin.so bin/$(vlc_plugins_dir)
+endif
 
 translations:
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ko.ts -qm cmplayer_ko.qm
@@ -105,7 +109,7 @@ ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/256x256/apps
 #	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/scalable/apps
 	$(install_exe) bin/$(cmplayer_exec) $(DEST_DIR)$(CMPLAYER_BIN_PATH)
-	$(install_file) bin/plugin/libcmplayer*_plugin.so $(DEST_DIR)$(CMPLAYER_PLUGIN_PATH) 
+	$(install_file) bin/$(vlc_plugins_dir)/libcmplayer*_plugin.so $(DEST_DIR)$(CMPLAYER_PLUGIN_PATH) 
 	$(install_file) cmplayer.desktop $(DEST_DIR)$(CMPLAYER_APP_PATH)
 	$(install_file) cmplayer-opendvd.desktop $(DEST_DIR)$(CMPLAYER_ACTION_PATH)
 	$(install_file) icons/cmplayer16.png $(DEST_DIR)$(CMPLAYER_ICON_PATH)/16x16/apps/cmplayer.png

@@ -19,6 +19,7 @@ else
 		cflags := $(cflags) -fPIC	
 	endif
 	lib_ext := so
+	post_build = echo "noop"
 endif
 
 #	otool -L $@.dylib | grep lib/libvlc | sed 
