@@ -96,56 +96,57 @@ clean:
 install: cmplayer
 ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(BIN_PATH)
-	-install -d $(DEST_DIR)$(PLUGIN_PATH)
-	-install -d $(DEST_DIR)$(CMPLAYER_APP_PATH)
-	-install -d $(DEST_DIR)$(CMPLAYER_ACTION_PATH)
-	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/16x16/apps
-	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/22x22/apps
-	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/24x24/apps
-	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/32x32/apps
-	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/48x48/apps
-	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/64x64/apps
-	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/128x128/apps
-	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/256x256/apps
-#	-install -d $(DEST_DIR)$(CMPLAYER_ICON_PATH)/scalable/apps
-	$(install_exe) bin/$(cmplayer_exec) $(DEST_DIR)$(CMPLAYER_BIN_PATH)
-	$(install_file) bin/$(vlc_plugins_dir)/libcmplayer*_plugin.so $(DEST_DIR)$(CMPLAYER_PLUGIN_PATH) 
-	$(install_file) cmplayer.desktop $(DEST_DIR)$(CMPLAYER_APP_PATH)
-	$(install_file) cmplayer-opendvd.desktop $(DEST_DIR)$(CMPLAYER_ACTION_PATH)
-	$(install_file) icons/cmplayer16.png $(DEST_DIR)$(CMPLAYER_ICON_PATH)/16x16/apps/cmplayer.png
-	$(install_file) icons/cmplayer22.png $(DEST_DIR)$(CMPLAYER_ICON_PATH)/22x22/apps/cmplayer.png
-	$(install_file) icons/cmplayer24.png $(DEST_DIR)$(CMPLAYER_ICON_PATH)/24x24/apps/cmplayer.png
-	$(install_file) icons/cmplayer32.png $(DEST_DIR)$(CMPLAYER_ICON_PATH)/32x32/apps/cmplayer.png
-	$(install_file) icons/cmplayer48.png $(DEST_DIR)$(CMPLAYER_ICON_PATH)/48x48/apps/cmplayer.png
-	$(install_file) icons/cmplayer64.png $(DEST_DIR)$(CMPLAYER_ICON_PATH)/64x64/apps/cmplayer.png
-	$(install_file) icons/cmplayer128.png $(DEST_DIR)$(CMPLAYER_ICON_PATH)/128x128/apps/cmplayer.png
-	$(install_file) icons/cmplayer256.png $(DEST_DIR)$(CMPLAYER_ICON_PATH)/256x256/apps/cmplayer.png
-#	$(install_file) icons/cmplayer.svg $(DEST_DIR)$(CMPLAYER_ICON_PATH)/scalable/apps/cmplayer.svg
+	-install -d $(DEST_DIR)$(CMPLAYER_VLC_PLUGINS_PATH)
+	-install -d $(DEST_DIR)$(APP_PATH)
+	-install -d $(DEST_DIR)$(ACTION_PATH)
+	-install -d $(DEST_DIR)$(ICON_PATH)/16x16/apps
+	-install -d $(DEST_DIR)$(ICON_PATH)/22x22/apps
+	-install -d $(DEST_DIR)$(ICON_PATH)/24x24/apps
+	-install -d $(DEST_DIR)$(ICON_PATH)/32x32/apps
+	-install -d $(DEST_DIR)$(ICON_PATH)/48x48/apps
+	-install -d $(DEST_DIR)$(ICON_PATH)/64x64/apps
+	-install -d $(DEST_DIR)$(ICON_PATH)/128x128/apps
+	-install -d $(DEST_DIR)$(ICON_PATH)/256x256/apps
+#	-install -d $(DEST_DIR)$(ICON_PATH)/scalable/apps
+	$(install_exe) bin/$(cmplayer_exec) $(DEST_DIR)$(BIN_PATH)
+	$(install_file) bin/$(vlc_plugins_dir)/libcmplayer*_plugin.so $(DEST_DIR)$(CMPLAYER_VLC_PLUGINS_PATH) 
+	$(install_file) cmplayer.desktop $(DEST_DIR)$(APP_PATH)
+	$(install_file) cmplayer-opendvd.desktop $(DEST_DIR)$(ACTION_PATH)
+	$(install_file) icons/cmplayer16.png $(DEST_DIR)$(ICON_PATH)/16x16/apps/cmplayer.png
+	$(install_file) icons/cmplayer22.png $(DEST_DIR)$(ICON_PATH)/22x22/apps/cmplayer.png
+	$(install_file) icons/cmplayer24.png $(DEST_DIR)$(ICON_PATH)/24x24/apps/cmplayer.png
+	$(install_file) icons/cmplayer32.png $(DEST_DIR)$(ICON_PATH)/32x32/apps/cmplayer.png
+	$(install_file) icons/cmplayer48.png $(DEST_DIR)$(ICON_PATH)/48x48/apps/cmplayer.png
+	$(install_file) icons/cmplayer64.png $(DEST_DIR)$(ICON_PATH)/64x64/apps/cmplayer.png
+	$(install_file) icons/cmplayer128.png $(DEST_DIR)$(ICON_PATH)/128x128/apps/cmplayer.png
+	$(install_file) icons/cmplayer256.png $(DEST_DIR)$(ICON_PATH)/256x256/apps/cmplayer.png
+#	$(install_file) icons/cmplayer.svg $(DEST_DIR)$(ICON_PATH)/scalable/apps/cmplayer.svg
 endif
 
 uninstall:
 ifeq ($(os),linux)
-	-rm -f $(CMPLAYER_BIN_PATH)/cmplayer
-	-rm -f $(CMPLAYER_PLUGIN_PATH)/libcmplayer*_plugin.so
-	-rm -f $(CMPLAYER_APP_PATH)/cmplayer.desktop
-	-rm -f $(CMPLAYER_ACTION_PATH)/cmplayer-opendvd.desktop
-	-rm -f $(CMPLAYER_ICON_PATH)/16x16/apps/cmplayer.png
-	-rm -f $(CMPLAYER_ICON_PATH)/22x22/apps/cmplayer.png
-	-rm -f $(CMPLAYER_ICON_PATH)/24x24/apps/cmplayer.png
-	-rm -f $(CMPLAYER_ICON_PATH)/32x32/apps/cmplayer.png
-	-rm -f $(CMPLAYER_ICON_PATH)/48x48/apps/cmplayer.png
-	-rm -f $(CMPLAYER_ICON_PATH)/64x64/apps/cmplayer.png
-	-rm -f $(CMPLAYER_ICON_PATH)/128x128/apps/cmplayer.png
-	-rm -f $(CMPLAYER_ICON_PATH)/256x256/apps/cmplayer.png
-	-rmdir $(CMPLAYER_BIN_PATH)
-	-rmdir $(CMPLAYER_PLUGIN_PATH)
-	-rmdir $(CMPLAYER_APP_PATH)
-	-rmdir $(CMPLAYER_ICON_PATH)/16x16/apps
-	-rmdir $(CMPLAYER_ICON_PATH)/22x22/apps
-	-rmdir $(CMPLAYER_ICON_PATH)/24x24/apps
-	-rmdir $(CMPLAYER_ICON_PATH)/32x32/apps
-	-rmdir $(CMPLAYER_ICON_PATH)/48x48/apps
-	-rmdir $(CMPLAYER_ICON_PATH)/64x64/apps
-	-rmdir $(CMPLAYER_ICON_PATH)/128x128/apps
-	-rmdir $(CMPLAYER_ICON_PATH)/256x256/apps
+	-rm -f $(BIN_PATH)/cmplayer
+	-rm -f $(CMPLAYER_VLC_PLUGINS_PATH)/libcmplayer*_plugin.so
+	-rm -f $(APP_PATH)/cmplayer.desktop
+	-rm -f $(ACTION_PATH)/cmplayer-opendvd.desktop
+	-rm -f $(ICON_PATH)/16x16/apps/cmplayer.png
+	-rm -f $(ICON_PATH)/22x22/apps/cmplayer.png
+	-rm -f $(ICON_PATH)/24x24/apps/cmplayer.png
+	-rm -f $(ICON_PATH)/32x32/apps/cmplayer.png
+	-rm -f $(ICON_PATH)/48x48/apps/cmplayer.png
+	-rm -f $(ICON_PATH)/64x64/apps/cmplayer.png
+	-rm -f $(ICON_PATH)/128x128/apps/cmplayer.png
+	-rm -f $(ICON_PATH)/256x256/apps/cmplayer.png
+	-rmdir $(BIN_PATH)
+	-rmdir $(CMPLAYER_VLC_PLUGINS_PATH)
+	-rmdir $(APP_PATH)
+	-rmdir $(ACTION_PATH)
+	-rmdir $(ICON_PATH)/16x16/apps
+	-rmdir $(ICON_PATH)/22x22/apps
+	-rmdir $(ICON_PATH)/24x24/apps
+	-rmdir $(ICON_PATH)/32x32/apps
+	-rmdir $(ICON_PATH)/48x48/apps
+	-rmdir $(ICON_PATH)/64x64/apps
+	-rmdir $(ICON_PATH)/128x128/apps
+	-rmdir $(ICON_PATH)/256x256/apps
 endif
