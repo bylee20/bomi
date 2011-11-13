@@ -14,9 +14,11 @@ macx {
 	ICON = ../../icons/cmplayer.icns
 	TARGET = CMPlayer
 	LIBS += -framework Cocoa -framework IOKit
+	SOURCES += app_mac.mm
 } else:unix {
 	TARGET = cmplayer
 	LIBS += -lX11
+	SOURCES += app_x11.cpp
 }
 
 QMAKE_CXXFLAGS += -std=c++0x
@@ -180,9 +182,7 @@ SOURCES += main.cpp \
     record.cpp \
     actiongroup.cpp \
     rootmenu.cpp \
-    app.cpp \
-    app_mac.mm \
-    app_x11.cpp
+    app.cpp
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
     translations/cmplayer_ja.ts
