@@ -20,7 +20,7 @@ build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
-	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr CMPLAYER_ACTION_PATH=/usr/share/kde4/apps/solid/actions CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins -f Makefile.linux cmplayer
+	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr CMPLAYER_ACTION_PATH=/usr/share/kde4/apps/solid/actions CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins cmplayer
 
 	#touch build-stamp
 	touch $@
@@ -31,7 +31,7 @@ clean:
 	rm -f build-stamp
 
 	# Add here commands to clean up after the build process.
-	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr CMPLAYER_ACTION_PATH=/usr/share/kde4/apps/solid/actions CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins -f Makefile.linux clean
+	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr CMPLAYER_ACTION_PATH=/usr/share/kde4/apps/solid/actions CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins clean
 
 	dh_clean
 
@@ -43,7 +43,7 @@ install: build
 
 	# Add here commands to install the package into debian/gentoo.
 	# The DESTDIR Has To Be Exactly /usr/src/packages/BUILD/debian/debian/<nameOfPackage>
-	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr CMPLAYER_ACTION_PATH=/usr/share/kde4/apps/solid/actions CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins DEST_DIR=$(CURDIR)/debian/cmplayer -f Makefile.linux install
+	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr CMPLAYER_ACTION_PATH=/usr/share/kde4/apps/solid/actions CMPLAYER_PLUGIN_PATH=/usr/lib/cmplayer/plugins DEST_DIR=$(CURDIR)/debian/cmplayer install
 
 # Build architecture-independent files here.
 binary-indep: build install
