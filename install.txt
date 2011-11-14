@@ -1,7 +1,7 @@
 To compile CMPlayer, you need next things:
 
-* Qt > 4.6
-* VLC > 1.1
+* Qt >= 4.7
+* VLC >= 1.1
 
 Also, you need OpenGL for rendering videos.
 Follow next steps for each OS:
@@ -9,16 +9,16 @@ Follow next steps for each OS:
 - For OS X
 
 Execute next command:
-$ make -f Makefile.osx cmplayer
+$ make
 This command makes application bundle in bin.
 
 - For Linux
 
 Execute next command:
-$ make -f Makefile.linux cmplayer
+$ make
 This command builds binaries into bin directory.
 You can specify the directory where you want to install CMPlayer with PREFIX, like:
-$ make -f Makefile.linux PREFIX=/usr cmplayer
+$ make PREFIX=/usr
 To install, execute next command:
-# make -f Makefile.linux install
-You have apply same option which you used for compile.
+# make PREFIX=/usr install
+You have to apply same option which you used for compile.
