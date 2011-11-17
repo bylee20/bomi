@@ -1,5 +1,6 @@
 To compile CMPlayer, you need next things:
 
+* g++ >= 4.6
 * Qt >= 4.7
 * VLC >= 1.1
 
