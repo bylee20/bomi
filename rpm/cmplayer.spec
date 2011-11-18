@@ -44,6 +44,7 @@ Packager: xylosper <darklin20@gmail.com>
 Distribution: %{distro}
 BuildRoot: %{_tmppath}/%{name}-buildroot
 BuildRequires: %{build_require}
+Requires: vlc
 Prefix: %{_prefix}
 Autoreqprov: on
 
