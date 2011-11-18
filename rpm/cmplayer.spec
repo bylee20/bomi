@@ -1,6 +1,6 @@
 # presteps build rpm in ${HOME}
 # $ mkdir -p ${HOME}/rpm/{BUILD,BUILDROOT,RPMS/$ARCH,RPMS/noarch,SOURCES,SRPMS,SPECS,tmp}
-# $ echo -e "%_topdir\t%(echo ${HOME})/rpm\n%_tmppath\t%(echo ${HOME})/rpm/tmp\n" >> ~/.rpmmacros
+# $ echo -e "%_topdir\t%(echo \${HOME})/rpm\n%_tmppath\t%(echo \${HOME})/rpm/tmp\n" >> ~/.rpmmacros
 # build rpm from spec
 # $ rpmbuild -ba cmplayer.spec
 # built rpms are in ${HOME}/rpm/RPMS and ${HOME}/rpm/SRPMS
