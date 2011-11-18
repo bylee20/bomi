@@ -9,8 +9,6 @@
 %define common_build_require gcc-c++ >= 4.6 qt4-devel >= 4.7 vlc-devel >= 1.1
 %define build_require %{common_build_require}
 
-%define _topdir %(echo ${HOME})/rpm
-%define _tmppath %{_topdir}/tmp
 %define _prefix /usr
 %define _actiondir %{_datadir}/kde4/apps/solid/actions
 %define _plugindir %{_libdir}/%{name}/plugins
@@ -20,11 +18,11 @@
 %define qmake qmake-qt4
 %define lrelease lrelease-qt4
 %endif
-%if %is_suse
-%define distro %(head -1 /etc/SuSE-release)
-%endif
 %if %is_mandrake
 %define distr %(head -1 /etc/mandrake-release)
+%endif
+%if %is_suse
+%define distro %(head -1 /etc/SuSE-release)
 %endif
 
 Name: %{name}
