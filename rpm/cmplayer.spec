@@ -1,3 +1,10 @@
+# presteps build rpm in ${HOME}
+# $ mkdir -p ${HOME}/rpm/{BUILD,BUILDROOT,RPMS/$ARCH,RPMS/noarch,SOURCES,SRPMS,SPECS,tmp}
+# $ echo -e "%_topdir\t%(echo ${HOME})/rpm\n%_tmppath\t%(echo ${HOME})/rpm/tmp\n" >> ~/.rpmmacros
+# build rpm from spec
+# $ rpmbuild -ba cmplayer.spec
+# built rpms are in ${HOME}/rpm/RPMS and ${HOME}/rpm/SRPMS
+
 %define is_fedora %(test -e /etc/fedora-release && echo 1 || echo 0)
 %define is_mandrake %(test -e /etc/mandrake-release && echo 1 || echo 0)
 %define is_suse %(test -e /etc/SuSE-release && echo 1 || echo 0)
@@ -62,19 +69,3 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %attr (-,root,root) /*
-
-#%defattr (-,root,root)
-#%{_bindir}/%{name}
-#%{_plugindir}/libcmplayer-vout_plugin.so
-#%{_plugindir}/libcmplayer-vfilter_plugin.so
-#%{_plugindir}/libcmplayer-afilter_plugin.so
-#%{_datadir}/applications/cmplayer.desktop
-#%{_actiondir}/cmplayer-opendvd.desktop
-#%{_datadir}/icons/hicolor/16x16/apps/cmplayer.png
-#%{_datadir}/icons/hicolor/22x22/apps/cmplayer.png
-#%{_datadir}/icons/hicolor/24x24/apps/cmplayer.png
-#%{_datadir}/icons/hicolor/32x32/apps/cmplayer.png
-#%{_datadir}/icons/hicolor/48x48/apps/cmplayer.png
-#%{_datadir}/icons/hicolor/64x64/apps/cmplayer.png
-#%{_datadir}/icons/hicolor/128x128/apps/cmplayer.png
-#%{_datadir}/icons/hicolor/256x256/apps/cmplayer.png
