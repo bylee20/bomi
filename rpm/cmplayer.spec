@@ -14,8 +14,9 @@
 %define version 0.5.4
 %define qmake qmake
 %define lrelease lrelease
-%define common_build_require gcc-c++ >= 4.6 qt4-devel >= 4.7 vlc-devel >= 1.1
-%define build_require %{common_build_require}
+%define gpp_pkg gcc-c++
+%define qt_dev libqt4-devel
+%define vlc_dev vlc-devel
 
 %define _prefix /usr
 %define _actiondir %{_datadir}/kde4/apps/solid/actions
@@ -31,6 +32,7 @@
 %endif
 %if %is_suse
 %define distro %(head -1 /etc/SuSE-release)
+%define 
 %endif
 
 Name: %{name}
@@ -43,7 +45,7 @@ Source: %{name}-%{version}-src.tar.gz
 Packager: xylosper <darklin20@gmail.com>
 Distribution: %{distro}
 BuildRoot: %{_tmppath}/%{name}-buildroot
-BuildRequires: %{build_require}
+BuildRequires: %{gpp_pkg} >= 4.6 %{qt_dev} >= 4.7 %{vlc_dev} >= 1.1
 Requires: vlc
 Prefix: %{_prefix}
 Autoreqprov: on
