@@ -51,7 +51,7 @@ CMPlayer is a multimedia player.
 make QMAKE=%{qmake} LRELEASE=%{lrelease} PREFIX=%{_prefix} all
 
 %install
-make QMAKE=%{qmake} LRELEASE=%{lrelease} PREFIX=%{_prefix} DESTDIR=%{?buildroot:%{buildroot}} install
+make QMAKE=%{qmake} LRELEASE=%{lrelease} PREFIX=%{_prefix} DEST_DIR=%{?buildroot:%{buildroot}} install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
