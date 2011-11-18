@@ -26,6 +26,7 @@
 %define distro %(head -1 /etc/fedora-release)
 %define qmake qmake-qt4
 %define lrelease lrelease-qt4
+%define qt_dev qt-devel
 %endif
 %if %is_mandrake
 %define distr %(head -1 /etc/mandrake-release)
