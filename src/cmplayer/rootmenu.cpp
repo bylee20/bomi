@@ -21,8 +21,6 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	url->setData(int('u'));
 	QAction *dvd = open->addAction(_L("dvd"));
 	dvd->setData(QUrl("dvd://"));
-	url->setDisabled(true);
-	url->setVisible(false);
 
 	open->addSeparator();
 

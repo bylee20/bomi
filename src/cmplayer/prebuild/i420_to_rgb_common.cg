@@ -1,0 +1,95 @@
+uniform sampler2D y, u, v;
+uniform float4 param0; //d->brightness, d->contrast, d->sat_coshue, d->sat_sinhue
+uniform float4 param1; //d->rgb_c_r, d->rgb_c_g, d->rgb_c_b, d->rgb_base
+uniform float4 param2; //y_tan, -d->y_min*y_tan
+uniform float4 param3; //dx, dy, -dx, 0.0f // 4th value must be zero
+uniform float4 param4; //d->kern_c, d->kern_n, d->kern_d
+
+float3 get_yuv(const float2 coord) {
+	float3 yuv;
+	yuv.x = tex2D(y, coord).x;
+	yuv.y = tex2D(u, coord).x;
+	yuv.z = tex2D(v, coord).x;
+	return yuv;
+}
+
+void convert(inout float3 yuv) {
+	const float3 yuv_0 = {0.0625, 0.5, 0.5};
+	yuv -= yuv_0;
+	
+	const float brightness = param0.x;
+	const float contrast = param0.y;
+	const float2x2 rotH = {
+		{param0.z,  param0.w},
+		{-param0.w, param0.z}
+	};
+	yuv.yz = mul(rotH, yuv.yz);
+	yuv *= contrast;
+	yuv.x += brightness;
+
+	const float3x3 coef = {
+		{1.16438356,  0.0,          1.59602679},
+		{1.16438356, -0.391762290, -0.812967647},
+		{1.16438356,  2.01723214,   0.0}
+	};
+	yuv = mul(coef, yuv);
+}
+
+void adjust_rgb(inout float3 rgb) {
+	const float3 rgb_c = param1.xyz;
+	const float rgb_0 = param1.w;
+	rgb *= rgb_c;
+	rgb += rgb_0;
+}
+
+void renormalize_y(inout float y) {
+	const float y_tan = param2.x;
+	const float y_b = param2.y;
+	y = y_tan*y + y_b;
+}
+
+void apply_filter_convert(inout float3 yuv) {
+	renormalize_y(yuv.x);
+	convert(yuv);
+	adjust_rgb(yuv);
+}
+
+float3 get_yuv_kernel_applied(const in float2 coord) {
+	const float kern_c = param4.x;
+	const float kern_n = param4.y;
+	const float kern_d = param4.z;
+	const float2 tl = coord + param3.zy;
+	const float2 tc = coord + param3.wy;
+	const float2 tr = coord + param3.xy;
+	const float2 cl = coord + param3.zw;
+	const float2 cc = coord;
+	const float2 cr = coord + param3.xw;
+	const float2 bl = coord - param3.xy;
+	const float2 bc = coord - param3.wy;
+	const float2 br = coord - param3.zy;
+	float3 c = get_yuv(cc)*kern_c;
+	c += (get_yuv(tc)+get_yuv(cl)+get_yuv(cr)+get_yuv(bc))*kern_n;
+	c += (get_yuv(tl)+get_yuv(tr)+get_yuv(bl)+get_yuv(br))*kern_d;
+	return c;
+}
+
+void main_simple(const in float2 coord, out float4 color) {
+	float3 c = get_yuv(coord);
+	convert(c);
+	color.xyz = c;
+	color.w = 1.0;
+}
+
+void main_filter(const in float2 coord, out float4 color) {
+	float3 c = get_yuv(coord);
+	apply_filter_convert(c);
+	color.xyz = c;
+	color.w = 1.0;
+}
+
+void main_kernel(const in float2 coord, out float4 color) {
+	float3 c = get_yuv_kernel_applied(coord);
+	apply_filter_convert(c);
+	color.xyz = c;
+	color.w = 1.0;
+}

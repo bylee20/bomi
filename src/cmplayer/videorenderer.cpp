@@ -16,10 +16,6 @@
 #include <QtCore/QCoreApplication>
 #include <math.h>
 
-#include "i420_to_rgb_simple.hpp"
-#include "i420_to_rgb_filter.hpp"
-#include "i420_to_rgb_kernel.hpp"
-
 class FrameRateMeasure {
 public:
 	FrameRateMeasure() {m_drawn = 0; m_prev = 0;}
@@ -53,7 +49,8 @@ struct VideoRenderer::Data {
 	double rgb_base, rgb_c_r, rgb_c_g, rgb_c_b;
 	double crop, aspect, kern_d, kern_c, kern_n;
 	double y_min, y_max; double y_min_buffer, y_max_buffer;
-	double brightness, contrast, sat_con, sinhue, coshue;
+//	double brightness, contrast, sat_con, sinhue, coshue;
+	double brightness, contrast, sat_sinhue, sat_coshue;
 	double cpu;
 	bool hasKernel, prepared, logoOn, frameIsSet, hasPrograms, binding;
 // methods
@@ -61,17 +58,26 @@ struct VideoRenderer::Data {
 		return width*height*bpp*fps/1024 + 0.5;
 	}
 
-	inline void update_sat_con() {
-		sat_con = (!(effects & IgnoreEffect) && (effects & Grayscale)) ? 0.0
-			: qBound(0.0, color.saturation() + 1.0, 2.0)*contrast;
+	inline void update_sat_hue() {
+		if (!(effects & IgnoreEffect) && (effects & Grayscale))
+			sat_sinhue = sat_coshue = 0.0;
+		else {
+			const double sat = qBound(0.0, color.saturation() + 1.0, 2.0);
+			const double hue = qBound(-M_PI, color.hue()*M_PI, M_PI);
+			sat_sinhue = sat*sin(hue);
+			sat_coshue = sat*cos(hue);
+		}
+//		sat_con = (!(effects & IgnoreEffect) && (effects & Grayscale)) ? 0.0
+//			: qBound(0.0, color.saturation() + 1.0, 2.0)*contrast;
 	}
 	inline void update_color_prop() {
 		color.clamp();
 		brightness = qBound(-1.0, color.brightness(), 1.0);
 		contrast = qBound(0., color.contrast() + 1., 2.);
-		update_sat_con();
-		const double hue = qBound(-M_PI, color.hue()*M_PI, M_PI);
-		sinhue = sin(hue);	coshue = cos(hue);
+		update_sat_hue();
+//		update_sat_con();
+//		const double hue = qBound(-M_PI, color.hue()*M_PI, M_PI);
+//		sinhue = sin(hue);	coshue = cos(hue);
 	}
 	inline void update_planes() {
 		*planes[0] = buffer->data(0);
@@ -111,14 +117,21 @@ struct VideoRenderer::Data {
 			}
 		}
 		shader = shaders.value(idx, shaders.first());
-		update_sat_con();
+		update_sat_hue();
 	}
 	void init_program() {
-#define GET_CODE(name) (QByteArray((char*)name##_fp, name##_fp_len))
-		shaders.push_back(new FragmentProgram(GET_CODE(i420_to_rgb_simple)));
-		shaders.push_back(new FragmentProgram(GET_CODE(i420_to_rgb_filter)));
-		shaders.push_back(new FragmentProgram(GET_CODE(i420_to_rgb_kernel)));
-#undef GET_CODE
+		static unsigned char i420_to_rgb_simple[] = {
+			#include "i420_to_rgb_simple.cgc"
+		, 0x0};
+		static unsigned char i420_to_rgb_kernel[] = {
+			#include "i420_to_rgb_kernel.cgc"
+		, 0x0};
+		static unsigned char i420_to_rgb_filter[] = {
+			#include "i420_to_rgb_filter.cgc"
+		, 0x0};
+		shaders.push_back(new FragmentProgram((char*)i420_to_rgb_simple));
+		shaders.push_back(new FragmentProgram((char*)i420_to_rgb_filter));
+		shaders.push_back(new FragmentProgram((char*)i420_to_rgb_kernel));
 		hasPrograms = (shader = shaders.value(0, 0));
 		Q_ASSERT(hasPrograms);
 	}
@@ -517,15 +530,16 @@ void VideoRenderer::paintEvent(QPaintEvent */*event*/) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		d->shader->bind();
-		d->shader->setLocalParam(0, d->contrast, d->sat_con, d->coshue, d->sinhue);
+		d->shader->setLocalParam(0, d->brightness, d->contrast, d->sat_coshue, d->sat_sinhue);
 		if (d->shader != d->shaders.first()) {
 			d->shader->setLocalParam(1, d->rgb_c_r, d->rgb_c_g, d->rgb_c_b, d->rgb_base);
-			d->shader->setLocalParam(2, d->y_min, 1.0/(d->y_max - d->y_min));
+			const double y_tan = 1.0/(d->y_max - d->y_min);
+			d->shader->setLocalParam(2, y_tan, -d->y_min*y_tan);
 			if (d->hasKernel) {
 				const double dx = 1.0/(double)d->frame->dataPitch(0);
 				const double dy = 1.0/(double)d->frame->dataLines(0);
 				d->shader->setLocalParam(3, dx, dy, -dx, 0.0f); // 4th value must be zero
-				d->shader->setLocalParam(4, d->kern_c, d->kern_n, d->kern_d, 0.0f);
+				d->shader->setLocalParam(4, d->kern_c, d->kern_n, d->kern_d);
 			}
 		}
 		glActiveTexture(GL_TEXTURE0);

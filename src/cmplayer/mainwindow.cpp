@@ -1,4 +1,5 @@
 #include "mainwindow_p.hpp"
+#include <QtCore/QBuffer>
 #include <QtGui/QDesktopWidget>
 
 #ifdef Q_WS_MAC
@@ -307,10 +308,25 @@ void MainWindow::openDvd() {
 	}
 }
 
+#include "downloader.hpp"
+
+QString youtube(const QUrl &url) {
+	QByteArray page;
+	QBuffer buffer(&page);
+	buffer.open(QBuffer::ReadWrite);
+	Downloader::get(url, &buffer, -1);
+	qDebug() << QString::fromUtf8(page.data());
+	return url.toString();
+}
+
 void MainWindow::openUrl() {
-//	GetUrlDialog dlg(this);
-//	if (dlg.exec())
-//		openMrl(dlg.url(), dlg.encoding());
+	GetUrlDialog dlg(this);
+	if (dlg.exec()) {
+		if (dlg.url().host().endsWith("youtube.com"))
+			openMrl(youtube(dlg.url()), QString());
+		else
+			openMrl(dlg.url().toString(), dlg.encoding());
+	}
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {

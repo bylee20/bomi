@@ -6,35 +6,35 @@ ActionGroup::ActionGroup(QObject *parent)
 }
 
 void ActionGroup::setChecked(const QVariant &data, bool checked) {
-	const QList<QAction*> acts = actions();
-	for (QAction *act : acts) {
-		if (act->data() == data) {
-			act->setChecked(checked);
+	const auto actions = this->actions();
+	for (auto action : actions) {
+		if (action->data() == data) {
+			action->setChecked(checked);
 			return;
 		}
 	}
 }
 
 void ActionGroup::trigger(const QVariant &data) {
-	const QList<QAction*> acts = actions();
-	for (QAction *act : acts) {
-		if (act->data() == data) {
-			act->trigger();
+	const auto actions = this->actions();
+	for (auto action : actions) {
+		if (action->data() == data) {
+			action->trigger();
 			return;
 		}
 	}
 }
 
 QVariant ActionGroup::data() const {
-	const QAction *act = checkedAction();
-	return act ? act->data() : QVariant();
+	const auto action = checkedAction();
+	return action ? action->data() : QVariant();
 }
 
 void ActionGroup::clear() {
-	const QList<QAction*> acts = actions();
-	for (QAction *act : acts) {
-		removeAction(act);
-		delete act;
+	const auto actions = this->actions();
+	for (auto action : actions) {
+		removeAction(action);
+		delete action;
 	}
 }
 

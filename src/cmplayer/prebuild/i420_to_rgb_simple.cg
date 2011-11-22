@@ -1,0 +1,5 @@
+#include "i420_to_rgb_common.cg"
+
+void main(const in float2 coord : TEXCOORD0, out float4 color : COLOR) {
+	main_simple(coord, color);
+}

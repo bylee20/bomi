@@ -315,6 +315,10 @@ QString ControlWidget::stateText() const {
 		return tr("Stopped");
 	if (d->state == FinishedState)
 		return tr("Finished");
+	if (d->state == BufferingState)
+		return tr("Buffering");
+	if (d->state == OpeningState)
+		return tr("Opening");
 	return tr("Paused");
 }
 

@@ -22,7 +22,7 @@ static inline const T& const_(T& t) {return t;}
 static const QTime __null_time;
 static inline QString _U8(const char *utf8) {return QString::fromUtf8(utf8);}
 
-enum MediaState {StoppedState = 0, PlayingState, PausedState, FinishedState};
+enum MediaState {StoppedState = 0, PlayingState, PausedState, FinishedState, OpeningState, BufferingState, ErrorState};
 enum MediaStatus {NoMediaStatus = 0, EosStatus, BufferedStatus};
 enum StreamType {UnknownStream = 0, VideoStream, AudioStream, SubPicStream};
 enum MediaMetaData {LanguageCode};

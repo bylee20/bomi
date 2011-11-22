@@ -103,9 +103,6 @@ HEADERS += playengine.hpp \
     events.hpp \
     listmodel.hpp \
     fragmentprogram.hpp \
-    i420_to_rgb_simple.hpp \
-    i420_to_rgb_filter.hpp \
-    i420_to_rgb_kernel.hpp \
     mainwindow_p.hpp \
     pref_widget.hpp \
     playinfoview.hpp \
@@ -115,7 +112,10 @@ HEADERS += playengine.hpp \
     record.hpp \
     actiongroup.hpp \
     rootmenu.hpp \
-    app.hpp
+    app.hpp \
+    i420_to_rgb_simple.cgc \
+    i420_to_rgb_filter.cgc \
+    i420_to_rgb_kernel.cgc
 SOURCES += main.cpp \
     playengine.cpp \
     mainwindow.cpp \

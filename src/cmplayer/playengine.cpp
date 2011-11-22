@@ -77,11 +77,18 @@ void PlayEngine::parseEvent(const libvlc_event_t *event) {
 	case libvlc_MediaPlayerEndReached:
 		emit _updateState(FinishedState);
 		break;
-	case libvlc_MediaPlayerOpening:
 	case libvlc_MediaPlayerBuffering:
+		emit _updateState(BufferingState);
+		break;
+	case libvlc_MediaPlayerOpening:
+		emit _updateState(OpeningState);
+		break;
 	case libvlc_MediaPlayerStopped:
-	case libvlc_MediaPlayerEncounteredError:
 		emit _updateState(StoppedState);
+		break;
+	case libvlc_MediaPlayerEncounteredError:
+		qDebug() << libvlc_MediaPlayerEncounteredError << event->type;
+		emit _updateState(ErrorState);
 		break;
 	case libvlc_MediaPlayerLengthChanged:
 		emit _updateDuration(event->u.media_player_length_changed.new_length);
@@ -140,6 +147,7 @@ PlayEngine::TrackList PlayEngine::parseTrackDesc(libvlc_track_description_t *des
 void PlayEngine::updateState(MediaState state) {
 	Q_ASSERT(d->mp != 0);
 	if (d->state != state) {
+		qDebug() << state;
 		const MediaState old = d->state;
 		d->state = state;
 //		qDebug() << libvlc_media_player_get_length(d->mp);

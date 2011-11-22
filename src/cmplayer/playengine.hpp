@@ -22,7 +22,6 @@ public:
 	void setSpeed(double speed);
 	double speed() const;
 	bool hasVideo() const;
-	MediaStatus status() const;
 	int duration() const;
 	bool atEnd() const;
 	Mrl mrl() const;

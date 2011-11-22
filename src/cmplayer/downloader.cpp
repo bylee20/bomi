@@ -28,7 +28,7 @@ Downloader::~Downloader() {
 	delete d;
 }
 
-bool Downloader::download(const QUrl &url, QFile *file, int timeout) {
+bool Downloader::download(const QUrl &url, QIODevice *file, int timeout) {
 	const bool open = file->isOpen();
 	if (!open && !file->open(QFile::WriteOnly))
 			return false;
