@@ -1,0 +1,44 @@
+# $Id: Makefile.in,v 1.1.1.1 2009/02/21 20:08:02 oops Exp $
+srcdir          = @srcdir@
+top_srcdir      = @top_srcdir@
+builddir        = @builddir@
+top_builddir    = .
+
+build           = @build@
+build_cpu       = @build_cpu@
+build_vendor    = @build_vendor@
+build_os        = @build_os@
+host            = @host@
+host_cpu        = @host_cpu@
+host_vendor     = @host_vendor@
+
+prefix          = @prefix@
+exec_prefix     = @exec_prefix@
+mandir          = @mandir@
+
+PROG            = @PACKAGE_NAME@
+VERSION         = @PACKAGE_VERSION@
+RM              = @RM@ -f
+MKDIR           = @MKDIR@ -p
+INSTALL         = @INSTALL@
+
+all: libs
+
+libs:
+	$(MAKE) -C src
+
+install: install-man
+	$(MAKE) -C src install
+
+install-man:
+	$(MKDIR) $(DESTDIR)$(mandir)/ko/man3
+	for i in `ls man/ko/*`; do \
+		$(INSTALL) -m644 $$i $(DESTDIR)$(mandir)/ko/man3/; \
+	done
+
+clean:
+	$(MAKE) -C src clean
+
+distclean: clean
+	-$(RM) -r libtool config.log config.status Makefile $(PROG)-config.h *~
+	-$(RM) -r src/{$(PROG)-config*,*~,Makefile}
