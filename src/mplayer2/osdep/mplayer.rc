@@ -1,0 +1,55 @@
+/*
+ * Windows resource file for MPlayer
+ *
+ * This file is part of MPlayer.
+ *
+ * MPlayer is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * MPlayer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with MPlayer; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+#include <winver.h>
+#include "version.h"
+
+1 VERSIONINFO
+FILEVERSION 2,0,0,0
+PRODUCTVERSION 2,0,0,0
+FILEOS VOS__WINDOWS32
+FILETYPE VFT_APP
+{
+    BLOCK "StringFileInfo"
+    {
+	    BLOCK "000004b0" // LANG_NEUTRAL,UNICODE_CP
+        {
+		    VALUE "Comments","mplayer2 is distributed under the terms of the GNU General Public License Version 3. Source code is available at http://www.mplayer2.org\000"
+            VALUE "CompanyName", "\000"
+            VALUE "FileDescription", "mplayer2 - Movie Player\000"
+            VALUE "FileVersion",VERSION
+            VALUE "LegalCopyright", " (C) 2000-2012 MPlayer Team\000"
+            //VALUE "LegalTrademarks"," \000";
+            VALUE "OriginalFilename", "mplayer.exe\000"
+            VALUE "ProductName", "mplayer2 - The Movie Player\000"
+            VALUE "ProductVersion",VERSION
+            //VALUE "SpecialBuild","\000"
+        }
+    }
+    BLOCK "VarFileInfo"
+    {
+	    VALUE "Translation",0,0x04b0
+    }
+}
+
+IDI_ICON1 ICON DISCARDABLE  "etc/mplayer.ico"
+
+// for some reason RT_MANIFEST does not work
+1 24 "mplayer.exe.manifest"
