@@ -36,7 +36,7 @@ int mpctx_cleanup_playback(struct MPContext *mpctx);
 int mpctx_prepare_playback(struct MPContext *mpctx);
 int mpctx_load_file(struct MPContext *mpctx);
 int mpctx_init(struct MPContext *mpctx, int argc, char **argv);
-int mpctx_playloop(struct MPContext *mpctx);
+int run_playloop(struct MPContext *mpctx);
 void mpctx_delete(struct MPContext *mpctx);
 void mpctx_new(struct MPContext *mpctx);
 int mpctx_idle_loop(struct MPContext *mpctx);
@@ -357,7 +357,7 @@ void PlayEngine::run() {
 		int res = Cmd::Unknown;
 		bool volHack = true;
 		while (d->mpctx->stop_play == KEEP_PLAYING && !d->quit) {
-			error = (MpError)mpctx_playloop(d->mpctx);
+			error = (MpError)run_playloop(d->mpctx);
 			if (error != MpError::None)
 				break;
 			// -1: quit 0: no seek 1: seek done

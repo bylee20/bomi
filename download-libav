@@ -1,0 +1,3 @@
+install -d src/libav
+cd src/libav && git archive --format tar --remote git://repo.or.cz/FFMpeg-mirror/mplayer-patches.git master | tar -vxf -
+

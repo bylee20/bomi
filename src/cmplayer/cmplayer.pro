@@ -7,7 +7,7 @@ macx {
         QMAKE_INFO_PLIST = Info.plist
         ICON = ../../icons/cmplayer.icns
         TARGET = CMPlayer
-        LIBS += -framework Cocoa -framework IOKit -framework AudioUnit -framework CoreAudio -lsigar-universal64-macosx
+        LIBS += -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa -framework IOKit -framework AudioUnit -framework CoreAudio -framework OpenAL -lsigar-universal64-macosx
         HEADERS += app_mac.hpp
         OBJECTIVE_SOURCES += app_mac.mm
         INCLUDEPATH += /opt/local/include /usr/local/include
@@ -18,19 +18,17 @@ macx {
         SOURCES += app_x11.cpp
 }
 
-INCLUDEPATH += ../mplayer2
+INCLUDEPATH += ../mplayer2 ../../build/include
 
-LIBS +=  -lpthread -lm -framework OpenAL -framework OpenGL -framework Cocoa \
-    -L../mplayer2 -lmplayer2-cmplayer \
-    -L/opt/local/lib -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnav -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lavutil -lavcodec -lavformat -lswscale -lcdio_paranoia -lcdio_cdda -lcdio
+LIBS += -L../../build/lib -L/opt/local/lib \
+    -lmplayer2-cmplayer -lz -lchardet -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lavutil -lavcodec -lavformat -lswscale -lcdio_paranoia -lcdio_cdda -lcdio
 
 
 QMAKE_CC = "gcc -std=c99 -ffast-math"
 
-
 QMAKE_CXXFLAGS += -std=c++11
 
-DESTDIR = ../../bin
+DESTDIR = ../../build
 
 !isEmpty(RELEASE) {
         CONFIG += release
@@ -40,17 +38,10 @@ DESTDIR = ../../bin
         macx:CONFIG -= app_bundle
 }
 
-#!isEmpty(VLC_INCLUDE_PATH):INCLUDEPATH += $${VLC_INCLUDE_PATH}
-#!isEmpty(VLC_LIB_PATH):LIBS += -L$${VLC_LIB_PATH}
-
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release
 
 QT = core gui opengl network
-
-INCLUDEPATH += ../libchardet-1.0.1/src
-
-LIBS += -L../libchardet-1.0.1/src/.libs -lchardet
 
 RESOURCES += rsclist.qrc
 HEADERS += playengine.hpp \

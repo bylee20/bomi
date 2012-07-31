@@ -1,0 +1,3 @@
+cd src/libchardet* && make distclean; \
+./configure --prefix=`pwd`/../../build --disable-shared --enable-static && \
+	make -j 6 && make -C src install

@@ -1,0 +1,7 @@
+cd src/libav && ./configure --prefix=../../build \
+	--enable-gpl --enable-runtime-cpudetect --disable-debug \
+	--enable-pthreads --disable-shared --enable-static \
+	--disable-devices --disable-vaapi --disable-avconv \
+	--disable-avplay --disable-avserver --disable-avprobe \
+	&& make -j 6 && make install
+	

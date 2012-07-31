@@ -1,5 +1,5 @@
 #include "charsetdetector.hpp"
-#include <chardet.h>
+#include <chardet/chardet.h>
 #include <QtCore/QString>
 #include <QtCore/QByteArray>
 #include <QtCore/QFile>

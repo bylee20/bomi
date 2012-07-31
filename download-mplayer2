@@ -1,0 +1,3 @@
+install -d src/mplayer2
+cd src/mplayer2 && git archive --format tar --remote git://repo.or.cz/mplayer.git master | tar -vxf -
+

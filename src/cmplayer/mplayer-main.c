@@ -16,8 +16,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-enum MpError {NoMpError = 0, UserInterrupted, OpenStreamError, NoStreamError, InitVideoFilterError, InitAudioFilterError};
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -351,9 +349,17 @@ int use_filename_title;
 
 #include "metadata.h"
 
-
+enum MpError {NoMpError = 0, UserInterrupted, OpenStreamError, NoStreamError, InitVideoFilterError, InitAudioFilterError};
+enum {Unknown = 0, Quit = 1, Load = 2, Stop = 4, VideoUpdate = 8, Break = Quit | Load | Stop};
 extern struct vo* vo_cmplayer;
-
+extern void (*mpctx_paused_changed)(MPContext *);
+extern int (*mpctx_update_video)(struct MPContext *mpctx);
+extern mp_cmd_t *(*mpctx_wait_cmd)(struct MPContext *ctx, int timeout, int peek);
+extern int (*mpctx_run_cmplayer_cmd)(struct MPContext *mpctx, mp_cmd_t *mpcmd);
+extern void mixer_setvolume2(mixer_t *mixer, float l, float r);
+static void exit_player(struct MPContext *mpctx, enum exit_reason how);
+void quit_player(struct MPContext *mpctx, enum exit_reason how) {exit_player(mpctx, how);}
+void mpctx_delete(struct MPContext *mpctx) {quit_player(mpctx, EXIT_NONE);}
 static float get_relative_time(struct MPContext *mpctx)
 {
     unsigned int new_time = GetTimer();
@@ -700,7 +706,8 @@ void uninit_player(struct MPContext *mpctx, unsigned int mask)
     current_module = NULL;
 }
 
-void quit_player(struct MPContext *mpctx, enum exit_reason how) {
+void exit_player_with_rc(struct MPContext *mpctx, enum exit_reason how, int rc)
+{
 	uninit_player(mpctx, INITIALIZED_ALL);
 #if defined(__MINGW32__) || defined(__CYGWIN__)
 	timeEndPeriod(1);
@@ -764,11 +771,8 @@ void quit_player(struct MPContext *mpctx, enum exit_reason how) {
 	mpctx->mconfig = NULL;
 
 	talloc_free(mpctx);
-}
 
-void exit_player_with_rc(struct MPContext *mpctx, enum exit_reason how, int rc) {
-	quit_player(mpctx, how);
-//    exit(rc);
+//	exit(rc);
 }
 
 static void exit_player(struct MPContext *mpctx, enum exit_reason how)
@@ -1778,13 +1782,10 @@ void reinit_audio_chain(struct MPContext *mpctx)
     }
     if (!(mpctx->initialized_flags & INITIALIZED_ACODEC)) {
         current_module = "init_audio_codec";
-        mp_msg(MSGT_CPLAYER, MSGL_INFO, "==========================================================================\n");
         if (!init_best_audio_codec(mpctx->sh_audio, audio_codec_list, audio_fm_list))
             goto init_error;
         mpctx->initialized_flags |= INITIALIZED_ACODEC;
-        mp_msg(MSGT_CPLAYER, MSGL_INFO, "==========================================================================\n");
     }
-
 
     current_module = "af_preinit";
     if (!(mpctx->initialized_flags & INITIALIZED_AO)) {
@@ -1854,6 +1855,8 @@ init_error:
 static double written_audio_pts(struct MPContext *mpctx)
 {
     sh_audio_t *sh_audio = mpctx->sh_audio;
+	if (!sh_audio)
+		return MP_NOPTS_VALUE;
     demux_stream_t *d_audio = mpctx->d_audio;
     // first calculate the end pts of audio that has been output by decoder
     double a_pts = sh_audio->pts;
@@ -2701,9 +2704,7 @@ int reinit_video_chain(struct MPContext *mpctx)
 
     current_module = "init_video_codec";
 
-    mp_msg(MSGT_CPLAYER, MSGL_INFO, "==========================================================================\n");
     init_best_video_codec(sh_video, video_codec_list, video_fm_list);
-    mp_msg(MSGT_CPLAYER, MSGL_INFO, "==========================================================================\n");
 
     if (!sh_video->initialized) {
         if (!opts->fixed_vo)
@@ -2795,8 +2796,8 @@ static double update_video_nocorrect_pts(struct MPContext *mpctx)
         decoded_frame = mp_dvdnav_restore_smpi(mpctx, &in_size, &packet, NULL);
         if (in_size >= 0 && !decoded_frame)
 #endif
-        decoded_frame = decode_video(sh_video, NULL, packet, in_size,
-                                     framedrop_type, sh_video->pts);
+		decoded_frame = decode_video(sh_video, sh_video->ds->current, packet,
+									 in_size, framedrop_type, sh_video->pts);
 #ifdef CONFIG_DVDNAV
         // Save last still frame for future display
         mp_dvdnav_save_smpi(mpctx, in_size, packet, decoded_frame);
@@ -2980,8 +2981,6 @@ static void update_pause_message(struct MPContext *mpctx)
 
     talloc_free(tmpmem);
 }
-
-extern void (*mpctx_paused_changed)(MPContext *);
 
 void pause_player(struct MPContext *mpctx)
 {
@@ -3425,16 +3424,8 @@ int seek_chapter(struct MPContext *mpctx, int chapter, double *seek_pts)
     return chapter;
 }
 
-static int run_playloop(struct MPContext *mpctx);
-int mpctx_playloop(struct MPContext *mpctx) {
 
-	return run_playloop(mpctx);
-}
-
-extern int (*mpctx_update_video)(struct MPContext *mpctx);
-extern mp_cmd_t *(*mpctx_wait_cmd)(struct MPContext *ctx, int timeout, int peek);
-
-static int run_playloop(struct MPContext *mpctx)
+int run_playloop(struct MPContext *mpctx)
 {
 	struct MPOpts *opts = &mpctx->opts;
     bool full_audio_buffers = false;
@@ -3477,7 +3468,7 @@ static int run_playloop(struct MPContext *mpctx)
     }
 
     double buffered_audio = -1;
-	while (mpctx->sh_video && !mpctx->paused) {   // never loops, for "break;" only
+	while (mpctx->sh_video) {   // never loops, for "break;" only
 		struct vo *vo = mpctx->video_out;
 		vo_pts = mpctx->sh_video->timer * 90000.0;
 		vo_fps = mpctx->sh_video->fps;
@@ -3770,16 +3761,11 @@ static int run_playloop(struct MPContext *mpctx)
             } else {
 			novideo:
 				mpctx_wait_cmd(mpctx, sleeptime * 1000, true);
-//					mp_input_get_cmd(mpctx->input, sleeptime * 1000, true);
             }
         }
     }
 	return NoMpError;
 }
-
-extern int (*mpctx_run_cmplayer_cmd)(struct MPContext *mpctx, mp_cmd_t *mpcmd);
-
-enum {Unknown = 0, Quit = 1, Load = 2, Stop = 4, VideoUpdate = 8, Break = Quit | Load | Stop};
 
 int mpctx_process_mp_cmds(struct MPContext *mpctx) {
 	struct MPOpts *opts = &mpctx->opts;
@@ -3926,16 +3912,11 @@ static void detach_ptw32(void)
 }
 #endif
 
-//struct MPContext *mpctx = NULL;
-//struct MPOpts *opts = NULL;
-//extern void *data;
-//extern int push_commands(void *data);
-
 /* This preprocessor directive is a hack to generate a mplayer-nomain.o object
  * file for some tools to link against. */
 #ifndef DISABLE_MAIN
-
-void mpctx_new(struct MPContext *mpctx) {
+void mpctx_new(struct MPContext *mpctx)
+{
 #ifdef PTW32_STATIC_LIB
 	pthread_win32_process_attach_np();
 	pthread_win32_thread_attach_np();
@@ -3964,10 +3945,6 @@ void mpctx_new(struct MPContext *mpctx) {
 #endif
 }
 
-void mpctx_delete(struct MPContext *mpctx) {
-	quit_player(mpctx, EXIT_NONE);
-}
-
 int mpctx_init(struct MPContext *mpctx, int argc, char **argv) {
 	if (argc > 1 && (!strcmp(argv[1], "-leak-report")
 					 || !strcmp(argv[1], "--leak-report")))
@@ -3992,6 +3969,7 @@ int mpctx_init(struct MPContext *mpctx, int argc, char **argv) {
     m_config_register_options(mpctx->mconfig, mplayer_opts);
     m_config_register_options(mpctx->mconfig, common_opts);
     mp_input_register_options(mpctx->mconfig);
+	m_config_initialize(mpctx->mconfig, opts);
 
     // Preparse the command line
     m_config_preparse_command_line(mpctx->mconfig, argc, argv, &verbose);
@@ -4015,11 +3993,13 @@ int mpctx_init(struct MPContext *mpctx, int argc, char **argv) {
             mpctx->playtree_iter = play_tree_iter_new(mpctx->playtree,
                                                       mpctx->mconfig);
             if (mpctx->playtree_iter) {
-				if (play_tree_iter_step(mpctx->playtree_iter, 0, 0) != PLAY_TREE_ITER_ENTRY) {
+				if (play_tree_iter_step(mpctx->playtree_iter, 0, 0) !=
+						PLAY_TREE_ITER_ENTRY) {
                     play_tree_iter_free(mpctx->playtree_iter);
                     mpctx->playtree_iter = NULL;
                 }
-				mpctx->filename = play_tree_iter_get_file(mpctx->playtree_iter, 1);
+				mpctx->filename = play_tree_iter_get_file(mpctx->playtree_iter,
+					1);
             }
         }
     }
@@ -4276,8 +4256,8 @@ int mpctx_idle_loop(struct MPContext *mpctx) {
 		uninit_player(mpctx, INITIALIZED_AO | INITIALIZED_VO);
 		play_tree_t *entry = NULL;
 		mp_cmd_t *cmd;
-		while (!(cmd = mp_input_get_cmd(mpctx->input, WAKEUP_PERIOD * 1000, false)))
-			;
+		while (!(cmd = mp_input_get_cmd(mpctx->input, WAKEUP_PERIOD * 1000,
+			false)));
 		switch (cmd->id) {
 		case MP_CMD_LOADFILE:
 			// prepare a tree entry with the new filename
@@ -4334,8 +4314,6 @@ int mpctx_idle_loop(struct MPContext *mpctx) {
 		}
 	}
 }
-
-extern void mixer_setvolume2(mixer_t *mixer, float l, float r);
 
 int mpctx_load_file(struct MPContext *mpctx) {
 	// ***************** Now, let's see the per-file stuff ******************
@@ -4811,7 +4789,6 @@ goto_enable_cache:
     // after reading video params we should load subtitles because
     // we know fps so now we can adjust subtitle time to ~6 seconds AST
     // check .sub
-
     current_module = "read_subtitles_file";
     double sub_fps = mpctx->sh_video ? mpctx->sh_video->fps : 25;
     if (opts->sub_name) {
@@ -4872,10 +4849,8 @@ goto_enable_cache:
     if (verbose)
         opts->term_osd = 0;
 
-    // Make sure old OSD does not stay around,
-    // e.g. with -fixed-vo and same-resolution files
+	// Make sure old OSD does not stay around
     clear_osd_msgs();
-    update_osd_msg(mpctx);
 
     //================ SETUP AUDIO ==========================
 
@@ -4894,10 +4869,9 @@ goto_enable_cache:
             audio_delay += mpctx->sh_video->stream_delay;
     }
     if (mpctx->sh_audio) {
-		if (start_volume >= 0) {
-//			printf("start_volume: %f\n", start_volume);
+		if (start_volume >= 0)
 			mixer_setvolume(&mpctx->mixer, start_volume, start_volume);
-		} if (!ignore_start)
+		if (!ignore_start)
             audio_delay -= mpctx->sh_audio->stream_delay;
     }
 
@@ -4938,6 +4912,7 @@ goto_enable_cache:
 int mpctx_prepare_playback(struct MPContext *mpctx) {
 	struct MPOpts *opts = &mpctx->opts;
 	//==================== START PLAYING =======================
+
 	if (opts->loop_times > 1)
 		opts->loop_times--;
 	else if (opts->loop_times == 1)
@@ -5007,16 +4982,8 @@ int mpctx_prepare_playback(struct MPContext *mpctx) {
 	return 1;
 }
 
-
-
-//int run_playback() {
-
-//	while (!mpctx->stop_play) {
-//		if (run_playloop(mpctx) == -1)
-//			return -1;
-//	}
-//	return 1;
-//}
+//	while (!mpctx->stop_play)
+//		run_playloop(mpctx);
 
 int mpctx_cleanup_playback(struct MPContext *mpctx) {
 	struct MPOpts *opts = &mpctx->opts;
@@ -5031,9 +4998,10 @@ int mpctx_cleanup_playback(struct MPContext *mpctx) {
 		goto goto_enable_cache;
 	}
 #endif
+
 //goto_next_file:  // don't jump here after ao/vo/getch initialization!
-	int i=0;
-    mp_msg(MSGT_CPLAYER, MSGL_INFO, "\n");
+
+	mp_msg(MSGT_CPLAYER, MSGL_INFO, "\n");
 
     if (opts->benchmark) {
         double tot = video_time_usage + vout_time_usage + audio_time_usage;
@@ -5075,7 +5043,7 @@ int mpctx_cleanup_playback(struct MPContext *mpctx) {
 
     if (mpctx->set_of_sub_size > 0) {
         current_module = "sub_free";
-        for (i = 0; i < mpctx->set_of_sub_size; ++i) {
+		for (int i = 0; i < mpctx->set_of_sub_size; ++i) {
             sub_free(mpctx->set_of_subtitles[i]);
 #ifdef CONFIG_ASS
             if (mpctx->set_of_ass_tracks[i])
