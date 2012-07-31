@@ -33,13 +33,13 @@ signals:
 	void stopped();
 	void started();
 private slots:
-	void slotTick(int time);
+	void onTick(int time);
 private:
-	PlayEngine *m_engine;
-	int m_a, m_b;
-	bool m_repeating;
-	int m_times, m_nth;
-	const SubtitleRenderer *m_sub;
+	PlayEngine *m_engine = nullptr;
+	const SubtitleRenderer *m_sub = nullptr;
+	int m_a = -1, m_b = -1;
+	bool m_repeating = false;
+	int m_times = 0, m_nth = 0;
 };
 
 #endif // ABREPEATER_HPP

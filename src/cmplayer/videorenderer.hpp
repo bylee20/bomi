@@ -1,34 +1,39 @@
-#ifndef GLRENDERER_H
-#define GLRENDERER_H
+#ifndef VIDEORENDERER_HPP
+#define VIDEORENDERER_HPP
 
 #include <QtOpenGL/QGLWidget>
+#include <QtOpenGL/QGLFunctions>
+#include <QtCore/QDebug>
+#include <QtGui/QMouseEvent>
+#include "mpmessage.hpp"
 
-class OsdRenderer;	class VideoFormat;
-class VideoUtil;	class ColorProperty;
+class OsdRenderer;			class VideoFormat;
+class ColorProperty;		class Overlay;
+class VideoFrame;			class PlayEngine;
+class VideoScreen;
 
-class VideoRenderer : public QGLWidget {
+class VideoRenderer : public QObject, public MpMessage {
 	Q_OBJECT
 public:
 	enum Effect {
-		NoEffect		= 0,
+		NoEffect			= 0,
 		FlipVertically		= 1 << 0,
 		FlipHorizontally	= 1 << 1,
-		Grayscale		= 1 << 2,
-		InvertColor		= 1 << 3,
-		Blur			= 1 << 4,
-		Sharpen			= 1 << 5,
-		RemapLuma		= 1 << 6,
-		AutoContrast		= 1 << 7,
+		Grayscale			= 1 << 2,
+		InvertColor			= 1 << 3,
+		Blur				= 1 << 4,
+		Sharpen				= 1 << 5,
+		RemapLuma			= 1 << 6,
 		IgnoreEffect		= 1 << 8
 	};
 	Q_DECLARE_FLAGS(Effects, Effect)
 private:
-	static const int FilterEffects = InvertColor | RemapLuma | AutoContrast;
+	static const int FilterEffects = InvertColor | RemapLuma;
 	static const int KernelEffects = Blur | Sharpen;
 public:
-	VideoRenderer(VideoUtil *util, QWidget *parent = 0);
+	VideoRenderer(PlayEngine *engine);
 	~VideoRenderer();
-	// takes ownership
+	double frameRate() const;
 	void addOsd(OsdRenderer *osd);
 	QSize sizeHint() const;
 	bool hasFrame() const;
@@ -51,55 +56,76 @@ public:
 	QPoint offset() const;
 	int alignment() const;
 	Effects effects() const;
+	void update();
+	StreamList streams() const;
+	int currentStreamId() const;
+	void setCurrentStream(int id);
+	bool needsToBeRendered() const;
+	int outputWidth() const;
 public slots:
 	void setOffset(const QPoint &offset);
 	void setAlignment(int align);
 	void setAspectRatio(double ratio);
 	void setCropRatio(double ratio);
-	void setOverlayType(int type);
 signals:
 	void formatChanged(const VideoFormat &format);
-	void screenSizeChanged(const QSize &size);
 protected:
-	void mouseMoveEvent(QMouseEvent *event);
-	void mousePressEvent(QMouseEvent *event);
-	void mouseReleaseEvent(QMouseEvent *event);
+	void setScreen(VideoScreen *gl);
+private slots:
+	void onAboutToOpen();
+	void onAboutToPlay();
 private:
-	static bool isSameRatio(double r1, double r2) {
-		return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);
-	}
-	double widgetRatio() const {return (double)width()/(double)height();}
-	static int translateButton(Qt::MouseButton qbutton);
-	void *lock(void ***planes);
-	void unlock(void *id, void *const *plane);
-	void display(void *id);
-	void process(void **planes);
-	void render(void **planes);
-	void prepare(const VideoFormat *format);
-	friend class LibVLC;
-
-	void updateSize();
-	QSize renderableSize() const;
-	static QGLFormat makeFormat();
-	void paintEvent(QPaintEvent *event);
-	void resizeEvent(QResizeEvent *event);
-	bool event(QEvent *event);
-	typedef void (*_glProgramStringARB) (GLenum, GLenum, GLsizei, const GLvoid *);
-	typedef void (*_glBindProgramARB) (GLenum, GLuint);
-	typedef void (*_glDeleteProgramsARB) (GLsizei, const GLuint *);
-	typedef void (*_glGenProgramsARB) (GLsizei, GLuint *);
-	typedef void (*_glProgramLocalParameter4fARB) (GLenum, GLuint, GLfloat, GLfloat, GLfloat, GLfloat);
-	typedef void (*_glActiveTexture) (GLenum);
-	_glProgramStringARB glProgramStringARB;
-	_glBindProgramARB glBindProgramARB;
-	_glDeleteProgramsARB glDeleteProgramsARB;
-	_glGenProgramsARB glGenProgramsARB;
-	_glActiveTexture glActiveTexture;
-	_glProgramLocalParameter4fARB glProgramLocalParameter4fARB;
 	struct Data;
+	class VideoShader;
+
+	bool parse(const Id &id);
+	bool parse(const QString &line);
+	void prepare(const VideoFormat &format);
+	VideoFrame &bufferFrame();
+	void uploadBufferFrame();
+	void render();
+	void updateSize();
+	void onMouseClicked(const QPointF &pos);
+	void onMouseMoved(const QPointF &pos);
+	QSize renderableSize() const;
+	static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
+	static void drawAlpha(void *p, int x, int y, int w, int h, uchar *src, uchar *srca, int stride);
+
 	Data *d;
+
+	friend class VideoOutput;
+	friend class VideoScreen;
+	friend class PlayEngine;
+	friend void plug(VideoRenderer *renderer, VideoScreen *screen);
+	friend void unplug(VideoRenderer *renderer, VideoScreen *screen);
 };
+
+class VideoScreen : public QGLWidget, public QGLFunctions {
+	Q_OBJECT
+public:
+	VideoScreen(): QGLFunctions(context()) {setAcceptDrops(false);}
+	QSize sizeHint() const {return r ? r->sizeHint() : QGLWidget::sizeHint();}
+	double aspectRatio() const {return (double)width()/(double)height();}
+	void redraw() {if (r) r->update();}
+signals:
+	void sizeChanged(const QSize &size);
+private:
+	void paintEvent(QPaintEvent *) {if (r) r->update();}
+	void resizeEvent(QResizeEvent *) {if (r) {r->updateSize(); r->update();} emit sizeChanged(size());}
+	void mouseMoveEvent(QMouseEvent *e) {QGLWidget::mouseMoveEvent(e); if (r) r->onMouseMoved(e->posF());}
+	void mousePressEvent(QMouseEvent *e) {QGLWidget::mousePressEvent(e); if (r && (e->buttons() & Qt::LeftButton)) r->onMouseClicked(e->posF());}
+
+	VideoRenderer *r = nullptr;
+
+	friend void plug(VideoRenderer *renderer, VideoScreen *screen);
+	friend void unplug(VideoRenderer *renderer, VideoScreen *screen);
+};
+
+void plug(VideoRenderer *renderer, VideoScreen *screen);
+void unplug(VideoRenderer *renderer, VideoScreen *screen);
+
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(VideoRenderer::Effects)
 
-#endif
+
+#endif // VIDEORENDERER_HPP

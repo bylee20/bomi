@@ -23,7 +23,7 @@ QString Mrl::fileName() const {
 QString Mrl::displayName() const {
 	if (isLocalFile())
 		return fileName();
-	if (isDVD())
+	if (isDvd())
 		return "DVD";
 	return toString();
 }

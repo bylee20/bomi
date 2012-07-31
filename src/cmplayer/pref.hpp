@@ -14,7 +14,7 @@ class QLocale;
 
 class Pref {
 public:
-	static const Pref &get() {Q_ASSERT(obj != 0); return *obj;}
+	static const Pref &get() {return *obj;}
 	template <typename Enum>
 	struct ActionEnumInfo {
 		typedef Enum EnumType;
@@ -70,6 +70,7 @@ public:
 
 	bool pause_minimized, pause_video_only;
 	bool remember_stopped, ask_record_found;
+	bool enable_generate_playist;
 	Enum::GeneratePlaylist generate_playlist;
 	bool hide_cursor, disable_screensaver;
 	int hide_cursor_delay;
@@ -81,6 +82,7 @@ public:
 
 	int normalizer_gain, normalizer_smoothness;
 
+	bool sub_enable_autoload, sub_enable_autoselect;
 	Enum::SubtitleAutoload sub_autoload;
 	Enum::SubtitleAutoselect sub_autoselect;
 	QString sub_enc, sub_ext;
@@ -100,10 +102,8 @@ public:
 
 	void save() const;
 	void load();
-	class Dialog;
-	class MacDialog;
-	class Widget;
 private:
+	friend class PrefDialog;
 	static Pref *obj;
 	Pref() {load();}
 	friend int main(int, char**);

@@ -11,7 +11,6 @@
 
 #include "audiocontroller.hpp"
 #include "playengine.hpp"
-#include "libvlc.hpp"
 #include <QtGui/QApplication>
 #include <QtGui/QMouseEvent>
 #include <QtGui/QAction>
@@ -20,7 +19,7 @@
 #include <QtCore/QDebug>
 
 struct Button::Data {
-	QAction *action;
+	QAction *action = nullptr;
 };
 
 Button::Button(QWidget *parent)
@@ -45,7 +44,6 @@ Button::~Button() {
 }
 
 void Button::init() {
-	d->action = 0;
 	setObjectName("flat");
 	setFocusPolicy(Qt::NoFocus);
 	setAutoRaise(true);
@@ -92,6 +90,30 @@ JumpSlider::JumpSlider(QWidget *parent)
 	setFocusPolicy(Qt::NoFocus);
 	setSingleStep(1);
 	setPageStep(1);
+
+	setStyleSheet("\
+	JumpSlider::groove:horizontal {\
+		border: 1px solid #6ad; height: 3px; margin: 0px 0px; padding: 0px;\
+		background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff, stop:1 #ccc);\
+	}\
+	JumpSlider::handle:horizontal {\
+		background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #aaa, stop:1 #999);\
+		border: 1px solid #5c5c5c; border-radius: 2px;\
+		width: 5px; margin: -2px 0px; padding: 1px;\
+	}\
+	JumpSlider::handle:horizontal:hover {\
+		background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff, stop:1 #ccc);\
+		border: 1px solid #6ad; padding: 1px;\
+	}\
+	JumpSlider::handle:horizontal:pressed {\
+		background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff, stop:1 #ccc);\
+		border: 2px solid #6ad; padding: 0px;\
+	}\
+	JumpSlider::add-page:horizontal {\
+		border: 1px solid #999; height: 3px; margin: 0px 0px; padding: 0px;\
+		background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #333, stop:1 #bbb);\
+	}"
+	);
 }
 
 void JumpSlider::mousePressEvent(QMouseEvent *event) {
@@ -106,8 +128,8 @@ void JumpSlider::mousePressEvent(QMouseEvent *event) {
 		QSlider::mousePressEvent(event);
 }
 
-SeekSlider::SeekSlider(QWidget *parent)
-: JumpSlider(parent), engine(LibVLC::engine()), tick(false) {
+SeekSlider::SeekSlider(PlayEngine *engine, QWidget *parent)
+: JumpSlider(parent), m_engine(engine), m_tick(false) {
 	setRange(0, engine->duration());
 	setValue(engine->position());
 	connect(this, SIGNAL(valueChanged(int)), this, SLOT(seek(int)));
@@ -118,29 +140,29 @@ SeekSlider::SeekSlider(QWidget *parent)
 }
 
 void SeekSlider::seek(int time) {
-	if (!tick && engine)
-		engine->seek(time);
+	if (!m_tick && m_engine)
+		m_engine->seek(time);
 }
 
 void SeekSlider::setDuration(int duration) {
-	tick = true;
+	m_tick = true;
 	setRange(0, duration);
-	tick = false;
+	m_tick = false;
 }
 
 void SeekSlider::slotTick(int time) {
-	tick = true;
+	m_tick = true;
 	setValue(time);
-	tick = false;
+	m_tick = false;
 }
 
-VolumeSlider::VolumeSlider(QWidget *parent)
+VolumeSlider::VolumeSlider(AudioController *audio, QWidget *parent)
 : JumpSlider(parent) {
 	setMaximumWidth(70);
 	setRange(0, 100);
-	setValue(LibVLC::audio()->volume());
-	connect(this, SIGNAL(valueChanged(int)), LibVLC::audio(), SLOT(setVolume(int)));
-	connect(LibVLC::audio(), SIGNAL(volumeChanged(int)), this, SLOT(setValue(int)));
+	setValue(audio->volume());
+	connect(this, SIGNAL(valueChanged(int)), audio, SLOT(setVolume(int)));
+	connect(audio, SIGNAL(volumeChanged(int)), this, SLOT(setValue(int)));
 }
 
 

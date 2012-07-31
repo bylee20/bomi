@@ -16,7 +16,7 @@ public:
 	bool operator < (const Mrl &rhs) const {return m_loc < rhs.m_loc;}
 	QString toString() const {return m_loc;}
 	bool isLocalFile() const {return m_loc.startsWith("file://", Qt::CaseInsensitive);}
-	bool isDVD() const {return m_loc.startsWith("dvd://", Qt::CaseInsensitive);}
+	bool isDvd() const {return m_loc.startsWith("dvdnav://", Qt::CaseInsensitive) || m_loc.startsWith("dvd://", Qt::CaseInsensitive);}
 	QString scheme() const {return m_loc.left(m_loc.indexOf("://"));}
 	QString toLocalFile() const {return isLocalFile() ? m_loc.right(m_loc.size() - 7) : QString();}
 	QString fileName() const;

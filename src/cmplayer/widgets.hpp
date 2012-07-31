@@ -23,20 +23,20 @@ protected:
 class SeekSlider : public JumpSlider {
 Q_OBJECT
 	public:
-	SeekSlider(QWidget *parent = 0);
+	SeekSlider(PlayEngine *engine, QWidget *parent = 0);
 private slots:
 	void setDuration(int duration);
 	void slotTick(int time);
 	void seek(int msec);
 private:
-	PlayEngine *engine;
-	bool tick;
+	PlayEngine *m_engine;
+	bool m_tick;
 };
 
 class VolumeSlider : public JumpSlider {
 	Q_OBJECT
 public:
-	VolumeSlider(QWidget *parent = 0);
+	VolumeSlider(AudioController *audio, QWidget *parent = 0);
 };
 
 class Button : public QToolButton {

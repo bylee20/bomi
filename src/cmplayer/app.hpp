@@ -12,29 +12,25 @@ public:
 	App(int &argc, char **argv);
 	~App();
 	static QIcon defaultIcon();
-	void setStyleName(const QString &name);
 	static Mrl getMrlFromCommandLine();
+
+	void setMainWindow(MainWindow *mw);
+	MainWindow *mainWindow() const;
 	QStringList devices() const;
-	void setAlwaysOnTop(QWidget *widget, bool onTop);
-	void setScreensaverDisabled(bool disabled);
-	void setUnique(bool unique);
 	QString styleName() const;
 	bool isUnique() const;
 	QStringList availableStyleNames() const;
-	QString test();
 #ifdef Q_WS_MAC
 	QMenuBar *globalMenuBar() const;
 #endif
-	void getProcInfo();
-signals:
-	void gotProcInfo(double cpu, int rss, double mem);
+	void setStyleName(const QString &name);
+	void setAlwaysOnTop(QWidget *widget, bool onTop);
+	void setScreensaverDisabled(bool disabled);
+	void setUnique(bool unique);
 private slots:
-	void readProcInfo();
-	void initialize();
 	void open(const QString &url);
-	void parseMessage(const QString &message);
+	void onMessageReceived(const QString &message);
 private:
-	void loadStyle();
 	static void messageHandler(QtMsgType type, const char *msg);
 	bool event(QEvent *event);
 	struct Data;

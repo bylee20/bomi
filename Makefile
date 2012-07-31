@@ -10,10 +10,9 @@ install_dir := sh install_dir.sh
 configured := $(shell cat configured)
 
 ifeq ($(os),osx)
-	QTSDK ?= /Developer/QtSDKs/Desktop/Qt/474/gcc
-	QMAKE ?= $(QTSDK)/bin/qmake -spec macx-g++
-	MACDEPLOYQT ?= $(QTSDK)/bin/macdeployqt
-	LRELEASE ?= $(QTSDK)/bin/lrelease
+	QMAKE ?= /Developer/Tools/Qt/qmake -spec macx-g++
+	MACDEPLOYQT ?= /Developer/Tools/Qt/macdeployqt
+	LRELEASE ?= /Developer/Tools/Qt/lrelease
 	VLC_INCLUDE_PATH ?= /Applications/VLC.app/Contents/MacOS/include
 	VLC_LIB_PATH ?= /Applications/VLC.app/Contents/MacOS/lib
 	VLC_PLUGINS_PATH ?= /Applications/VLC.app/Contents/MacOS/plugins

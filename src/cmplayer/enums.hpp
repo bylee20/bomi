@@ -195,10 +195,9 @@ class GeneratePlaylist {
 	Q_DECLARE_TR_FUNCTIONS(GeneratePlaylist)
 public:
 	typedef QList<GeneratePlaylist> List;
-	static const int count = 3;
+	static const int count = 2;
 	static const GeneratePlaylist Similar;
 	static const GeneratePlaylist Folder;
-	static const GeneratePlaylist None;
 
 	GeneratePlaylist(): m_id(0) {}
 	GeneratePlaylist(const GeneratePlaylist &rhs): m_id(rhs.m_id) {}
@@ -227,8 +226,6 @@ public:
 			return tr("Add files which have similar names");
 		if (id == Folder.m_id)
 			return tr("Add all files in the same folder");
-		if (id == None.m_id)
-			return tr("Do not add any other files");
 		return QString();
 	}
 	static const List &list() {return map().list;}
@@ -257,11 +254,10 @@ class SubtitleAutoload {
 	Q_DECLARE_TR_FUNCTIONS(SubtitleAutoload)
 public:
 	typedef QList<SubtitleAutoload> List;
-	static const int count = 4;
+	static const int count = 3;
 	static const SubtitleAutoload Matched;
 	static const SubtitleAutoload Contain;
 	static const SubtitleAutoload Folder;
-	static const SubtitleAutoload None;
 
 	SubtitleAutoload(): m_id(0) {}
 	SubtitleAutoload(const SubtitleAutoload &rhs): m_id(rhs.m_id) {}
@@ -292,8 +288,6 @@ public:
 			return tr("Subtitles whose names contain the name of playing file");
 		if (id == Folder.m_id)
 			return tr("All subtitles in the folder where the playing file is located");
-		if (id == None.m_id)
-			return tr("Do not load any other subtitles");
 		return QString();
 	}
 	static const List &list() {return map().list;}

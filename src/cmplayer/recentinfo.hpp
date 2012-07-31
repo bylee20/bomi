@@ -13,7 +13,7 @@ public:
 	QList<Mrl> openList() const;
 	int stoppedTime(const Mrl &mrl) const;
 	QDateTime stoppedDate(const Mrl &mrl)const ;
-	static RecentInfo &get() {Q_ASSERT(obj != 0); return *obj;}
+	static RecentInfo &get() {return *obj;}
 	void stack(const Mrl &mrl);
 	void setLastPlaylist(const Playlist &list);
 	void setLastMrl(const Mrl &mrl);
@@ -36,6 +36,7 @@ private:
 	struct Data;
 	Data *d;
 	static RecentInfo *obj;
+	friend int main(int argc, char **argv);
 };
 
 #endif // RECENTINFO_HPP

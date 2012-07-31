@@ -11,7 +11,6 @@ class Record;
 class OsdStyle {
 public:
 	typedef Enum::OsdAutoSize AutoSize;
-//	class Widget;
 	OsdStyle();
 	void save(Record &r, const QString &group) const;
 	void load(Record &r, const QString &group);
@@ -22,27 +21,7 @@ public:
 	AutoSize auto_size;
 	bool has_shadow;
 	QPointF shadow_offset;
-	int shadow_blur;
+	bool shadow_blur;
 };
-
-//class QLabel;
-
-//class OsdStyle::Widget : public QWidget {
-//	Q_OBJECT
-//public:
-//	Widget(QWidget *parent = 0);
-//	~Widget();
-//	void setStyle(const OsdStyle &style);
-//	const OsdStyle &style() const;
-//private slots:
-//	void updateFont(const QFont &font);
-//	static void setColor(QLabel *label, const QColor &color);
-//	void slotFont();
-//	void slotColor();
-//private:
-//	struct Data;
-//	Data *d;
-
-//};
 
 #endif // OSDSTYLE_HPP

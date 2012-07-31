@@ -1,30 +1,35 @@
 #include "app.hpp"
+#include "playengine.hpp"
 #include "events.hpp"
 #include "mainwindow.hpp"
 #include "mrl.hpp"
 #include "record.hpp"
-#include <QtGui/QMessageBox>
 #include <QtGui/QFileOpenEvent>
 #include <QtGui/QStyleFactory>
 #include <QtGui/QStyle>
+#include <QtCore/QUrl>
 #include <QtGui/QMenuBar>
-#include <QtCore/QTimer>
 #include <QtCore/QDebug>
-#include <QtCore/QProcess>
-#include <QtOpenGL/QGLFormat>
 
 #if defined(Q_WS_MAC)
 #include "app_mac.hpp"
 #elif defined(Q_WS_X11)
 #include "app_x11.hpp"
 #endif
+#include <unistd.h>
+
+#define APP_GROUP QLatin1String("application")
 
 struct App::Data {
 	QStringList styleNames;
-	QMenuBar *mb;
-	QUrl url;
-	QProcess *cpu;
-	MainWindow *main;
+#ifdef Q_WS_MAC
+	QMenuBar *mb = new QMenuBar;
+#else
+	QMenuBar *mb = nullptr;
+#endif
+//	QUrl url;
+//	QProcess cpu;
+	MainWindow *main = nullptr;
 #if defined(Q_WS_MAC)
 	AppMac helper;
 #elif defined(Q_WS_X11)
@@ -32,66 +37,79 @@ struct App::Data {
 #endif
 };
 
-void App::messageHandler(QtMsgType type, const char *msg) {
-	FILE *output = stdout;
-	switch (type) {
-	case QtDebugMsg:
-		fprintf(output, "%s\n", msg);
-		break;
-	case QtWarningMsg:
-		fprintf(output, "Warning: %s\n", msg);
-		break;
-	case QtCriticalMsg:
-		fprintf(output, "Critical: %s\n", msg);
-		break;
-	case QtFatalMsg:
-		fprintf(output, "Fatal: %s\n", msg);
-		abort();
-	default:
-		return;
-	}
-	fflush(output);
-}
-
-
 App::App(int &argc, char **argv)
 : QtSingleApplication("net.xylosper.CMPlayer", argc, argv), d(new Data) {
 	setOrganizationName("xylosper");
 	setOrganizationDomain("xylosper.net");
 	setApplicationName("CMPlayer");
-
-	d->styleNames = QStyleFactory::keys();
-	const QString def = style()->objectName();
-	for (int i=1; i<d->styleNames.size(); ++i) {
-		if (def.compare(d->styleNames[i], Qt::CaseInsensitive) == 0) {
-			d->styleNames.prepend(d->styleNames.takeAt(i));
-			break;
-		}
-	}
-
-	d->main = 0;
-	d->mb = 0;
-#ifdef Q_WS_MAC
-	d->mb = new QMenuBar;
-#endif
-	d->cpu = new QProcess(this);
-
 	setQuitOnLastWindowClosed(false);
 	setWindowIcon(defaultIcon());
-	loadStyle();
-//	qInstallMsgHandler(messageHandler);
 
-	connect(d->cpu, SIGNAL(readyReadStandardOutput()), this, SLOT(readProcInfo()));
+	auto makeStyleNameList = [this] () {
+		auto names = QStyleFactory::keys();
+		const auto defaultName = style()->objectName();
+		for (auto it = ++names.begin(); it != names.end(); ++it) {
+			if (defaultName.compare(*it, Qt::CaseInsensitive) == 0) {
+				const auto name = *it;
+				names.erase(it);
+				names.prepend(name);
+				break;
+			}
+		}
+		return names;
+	};
 
-	QTimer::singleShot(0, this, SLOT(initialize()));
+	auto makeStyle = [this]() {
+		Record r(APP_GROUP);
+		const auto name = r.read("style", styleName());
+		if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
+			return;
+		if (!d->styleNames.contains(name, Qt::CaseInsensitive))
+			return;
+		setStyle(QStyleFactory::create(name));
+	};
+
+	d->styleNames = makeStyleNameList();
+	makeStyle();
+
+	setStyleSheet("\
+		Button {\
+			margin:0px; padding: 2px;\
+		}\
+		Button#flat {\
+			border: none; border-radius: 3px;\
+		}\
+		Button#block {\
+			border: 1px solid #999; border-radius: 0px; padding: 1px;\
+			background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff, stop:1 #ccc);\
+		}\
+			Button#flat:hover, Button#flat:checked, Button#block:hover {\
+			border: 1px solid #6ad; padding: 1px;\
+		}\
+		Button#flat:pressed, Button#block:pressed {\
+			border: 2px solid #6ad; padding: 0px;\
+		}\
+		Button#block:checked, Button#block:pressed {\
+			background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #777, stop:1 #bbb);\
+		}\
+		"
+	);
+
+	connect(this, SIGNAL(messageReceived(QString)), this, SLOT(onMessageReceived(QString)));
 }
 
 App::~App() {
 	delete d->mb;
-	delete d->main;
-	if (d->cpu->state() != QProcess::NotRunning)
-	    d->cpu->kill();
 	delete d;
+}
+
+void App::setMainWindow(MainWindow *mw) {
+	d->main = mw;
+	setActivationWindow(d->main, false);
+}
+
+MainWindow *App::mainWindow() const {
+	return d->main;
 }
 
 QIcon App::defaultIcon() {
@@ -116,34 +134,6 @@ void App::setAlwaysOnTop(QWidget *widget, bool onTop) {
 	d->helper.setAlwaysOnTop(widget->effectiveWinId(), onTop);
 }
 
-QString App::test() {
-#ifdef Q_OS_MAC
-	return d->helper.test();
-#else
-	return QString();
-#endif
-}
-
-void App::getProcInfo() {
-	d->cpu->start("ps", QStringList() << "-p" << QString::number(getpid()) << "-o" << "pcpu,rss,pmem", QProcess::ReadOnly);
-}
-
-void App::readProcInfo() {
-	const QByteArray output = d->cpu->readAllStandardOutput();
-	const int br = qMax(output.indexOf('\n'), output.indexOf('\r'));
-	QList<QByteArray> cols;
-	cols.append(QByteArray());
-	for (int i=br; i<output.size(); ++i) {
-		if (isspace(output[i])) {
-			if (!cols.last().isEmpty())
-				cols.append(QByteArray());
-		} else
-			cols.last() += output[i];
-	}
-	if (cols.size() >= 3)
-		emit gotProcInfo(cols[0].toDouble(), cols[1].toInt(), cols[2].toDouble());
-}
-
 void App::setScreensaverDisabled(bool disabled) {
 	d->helper.setScreensaverDisabled(disabled);
 }
@@ -151,11 +141,8 @@ void App::setScreensaverDisabled(bool disabled) {
 bool App::event(QEvent *event) {
 	switch ((int)event->type()) {
 	case QEvent::FileOpen: {
-		d->url = static_cast<QFileOpenEvent*>(event)->url().toString();
-		if (d->main) {
-			d->main->openMrl(d->url.toString());
-			d->url.clear();
-		}
+		if (d->main)
+			d->main->openMrl(Mrl(static_cast<QFileOpenEvent*>(event)->url().toString()));
 		event->accept();
 		return true;
 	} case Event::Reopen:
@@ -169,74 +156,6 @@ bool App::event(QEvent *event) {
 
 QStringList App::devices() const {
 	return d->helper.devices();
-}
-
-void App::initialize() {
-	if (!QGLFormat::hasOpenGL()) {
-		QMessageBox::critical(0, "CMPlayer"
-			, tr("CMPlayer needs OpenGL to render video. Your system has no OpenGL support. Exit CMPlayer."));
-		quit();
-		return;
-	}
-	Mrl mrl = getMrlFromCommandLine();
-	if (mrl.isEmpty() && !d->url.isEmpty()) {
-		mrl = d->url.toString();
-		d->url.clear();
-	}
-	if (isUnique() && sendMessage("wakeUp")) {
-		if (!mrl.isEmpty())
-			sendMessage("mrl " + mrl.toString());
-		quit();
-	} else {
-		setStyleSheet("\
-			Button {\
-				margin:0px; padding: 2px;\
-			}\
-			Button#flat {\
-				border: none; border-radius: 3px;\
-			}\
-			Button#block {\
-				border: 1px solid #999; border-radius: 0px; padding: 1px;\
-				background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff, stop:1 #ccc);\
-			}\
-				Button#flat:hover, Button#flat:checked, Button#block:hover {\
-				border: 1px solid #6ad; padding: 1px;\
-			}\
-			Button#flat:pressed, Button#block:pressed {\
-				border: 2px solid #6ad; padding: 0px;\
-			}\
-			Button#block:checked, Button#block:pressed {\
-				background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #777, stop:1 #bbb);\
-			}\
-			JumpSlider::groove:horizontal {\
-				border: 1px solid #6ad; height: 3px; margin: 0px 0px; padding: 0px;\
-				background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff, stop:1 #ccc);\
-			}\
-			JumpSlider::handle:horizontal {\
-				background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #aaa, stop:1 #999);\
-				border: 1px solid #5c5c5c; border-radius: 2px;\
-				width: 5px; margin: -2px 0px; padding: 1px;\
-			}\
-			JumpSlider::handle:horizontal:hover {\
-				background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff, stop:1 #ccc);\
-				border: 1px solid #6ad; padding: 1px;\
-			}\
-			JumpSlider::handle:horizontal:pressed {\
-				background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff, stop:1 #ccc);\
-				border: 2px solid #6ad; padding: 0px;\
-			}\
-			JumpSlider::add-page:horizontal {\
-				border: 1px solid #999; height: 3px; margin: 0px 0px; padding: 0px;\
-				background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #333, stop:1 #bbb);\
-			}"
-		);
-		d->main = new MainWindow;
-		d->main->show();
-		if (!mrl.isEmpty())
-			d->main->openMrl(mrl);
-		setActivationWindow(d->main, false);
-		CONNECT(this, messageReceived(QString), this, parseMessage(QString));
-	}
 }
 
 #ifdef Q_WS_MAC
@@ -255,10 +174,14 @@ void App::open(const QString &mrl) {
 		d->main->openMrl(mrl);
 }
 
-void App::parseMessage(const QString &message) {
+void App::onMessageReceived(const QString &message) {
 	if (message == "wakeUp") {
 		activateWindow();
 	} else if (message.left(3) == "mrl") {
+		auto open = [this] (const QString &mrl) {
+			if (!mrl.isEmpty() && d->main)
+				d->main->openMrl(mrl);
+		};
 		open(message.right(message.size()-4));
 	}
 }
@@ -266,8 +189,6 @@ void App::parseMessage(const QString &message) {
 QStringList App::availableStyleNames() const {
 	return d->styleNames;
 }
-
-#define APP_GROUP QLatin1String("application")
 
 void App::setStyleName(const QString &name) {
 	if (!d->styleNames.contains(name, Qt::CaseInsensitive))
@@ -291,16 +212,6 @@ QString App::styleName() const {
 bool App::isUnique() const {
 	Record r(APP_GROUP);
 	return r.read("unique", true);
-}
-
-void App::loadStyle() {
-	Record r(APP_GROUP);
-	const QString name = r.read("style", styleName());
-	if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
-		return;
-	if (!d->styleNames.contains(name, Qt::CaseInsensitive))
-		return;
-	setStyle(QStyleFactory::create(name));
 }
 
 #undef APP_GROUP

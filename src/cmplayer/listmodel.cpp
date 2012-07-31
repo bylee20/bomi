@@ -131,7 +131,8 @@ ListModel::Item *ListModel::take(int row) {
 	if (row < 0 || row >= m_item.size())
 		return 0;
 	Item *item = m_item.takeAt(row);
-	m_item[row]->m_app = item->m_app;
+	if (row < m_item.size())
+		m_item[row]->m_app = item->m_app;
 	item->m_model = 0;
 	if (row == 0 || row == m_item.size()-1)
 		return item;

@@ -2,13 +2,19 @@
 #define AUDIOCONTROLLER_HPP
 
 #include <QtCore/QObject>
+#include <QtCore/QStringBuilder>
+#include "mpmessage.hpp"
 
 class PlayEngine;		class AudioFormat;
-class AudioBuffer;		class AudioUtil;
+class AudioController;
 
-class AudioController : public QObject {
+void plug(PlayEngine *engine, AudioController *audio);
+void unplug(PlayEngine *engine, AudioController *audio);
+
+class AudioController : public QObject, public MpMessage {
 	Q_OBJECT
 public:
+	AudioController();
 	~AudioController();
 	int volume() const;
 	bool isMuted() const;
@@ -16,11 +22,10 @@ public:
 	double preAmp() const;
 	bool isVolumeNormalized() const;
 	bool isTempoScaled() const;
-	double gain(int ch) const;
-	double gain() const;
-	double targetGain() const;
-	void setTargetGain(double gain);
-	void setNormalizerSmoothness(int smooth);
+	double realVolume() const;
+	StreamList streams() const;
+	void setCurrentStream(int id) const;
+	int currentStreamId() const;
 public slots:
 	void setVolumeNormalized(bool norm);
 	void setVolume(int volume);
@@ -32,12 +37,15 @@ signals:
 	void mutedChanged(bool muted);
 	void volumeNormalizedChanged(bool norm);
 	void tempoScaledChanged(bool scaled);
+private slots:
+	void onAboutToPlay();
+	void onAboutToOpen();
 private:
-	class Volume;
-	void prepare(const AudioFormat *format);
-	AudioController(AudioUtil *util);
-	AudioBuffer *process(AudioBuffer *in);
-	friend class LibVLC;
+	bool parse(const Id &id);
+	bool isRunning() const;
+	void apply();
+	friend void plug(PlayEngine *engine, AudioController *audio);
+	friend void unplug(PlayEngine *engine, AudioController *audio);
 	struct Data;
 	Data *d;
 };

@@ -6,13 +6,10 @@
 #include <QtCore/QDebug>
 #include "record.hpp"
 
-RootMenu *RootMenu::obj = 0;
+RootMenu *RootMenu::obj = nullptr;
 
 RootMenu::RootMenu(): Menu(_L("menu"), 0) {
-	Q_ASSERT(obj == 0);
-	obj = this;
-
-	Menu *open = obj->addMenu(_L("open"));
+	Menu *open = this->addMenu(_L("open"));
 
 	QAction *file = open->addAction(_L("file"));
 	file->setShortcut(Qt::CTRL + Qt::Key_F);
@@ -29,7 +26,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	recent->addSeparator();
 	recent->addAction(_L("clear"));
 
-	Menu *play = obj->addMenu(_L("play"));
+	Menu *play = this->addMenu(_L("play"));
 
 	QAction *pause = play->addAction(_L("pause"));
 	pause->setShortcut(Qt::Key_Space);
@@ -95,7 +92,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	play->addMenu(_L("title"))->setEnabled(false);
 	play->addMenu(_L("chapter"))->setEnabled(false);
 
-	Menu *subtitle = obj->addMenu(_L("subtitle"));
+	Menu *subtitle = this->addMenu(_L("subtitle"));
 	subtitle->addMenu(_L("spu"))->setEnabled(false);
 
 	Menu *sList = subtitle->addMenu(_L("list"));
@@ -122,7 +119,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	syncReset->setData(0);
 	subtitle->addActionToGroup(_L("sync-sub"), false, _L("sync"))->setShortcut(Qt::Key_A);
 
-	Menu *video = obj->addMenu(_L("video"));
+	Menu *video = this->addMenu(_L("video"));
 	video->addMenu(_L("track"))->setEnabled(false);
 	video->addSeparator();
 	video->addAction(_L("snapshot"))->setShortcut(Qt::CTRL + Qt::Key_S);
@@ -182,7 +179,6 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	effect->addActionToGroup(_L("sharpen"), true)->setData((int)VideoRenderer::Sharpen);
 	effect->addSeparator();
 	effect->addActionToGroup(_L("remap"), true)->setData((int)VideoRenderer::RemapLuma);
-	effect->addActionToGroup(_L("auto-contrast"), true)->setData((int)VideoRenderer::AutoContrast);
 	effect->addSeparator();
 	effect->addActionToGroup(_L("gray"), true)->setData((int)VideoRenderer::Grayscale);
 	effect->addActionToGroup(_L("invert"), true)->setData((int)VideoRenderer::InvertColor);
@@ -209,7 +205,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	overlay->addActionToGroup(_L("fbo"), true)->setData(Enum::Overlay::FramebufferObject.id());
 	overlay->addActionToGroup(_L("pixmap"), true)->setData(Enum::Overlay::Pixmap.id());
 
-	Menu *audio = obj->addMenu(_L("audio"));
+	Menu *audio = this->addMenu(_L("audio"));
 	audio->addMenu(_L("track"))->setEnabled(false);
 	audio->addSeparator();
 
@@ -229,7 +225,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	ampUp->setShortcut(Qt::CTRL + Qt::Key_Up);
 	ampDown->setShortcut(Qt::CTRL + Qt::Key_Down);
 
-	Menu *tool = obj->addMenu(_L("tool"));
+	Menu *tool = this->addMenu(_L("tool"));
 	tool->addAction(_L("playlist"))->setShortcut(Qt::Key_L);
 	tool->addAction(_L("favorites"))->setVisible(false);
 	tool->addAction(_L("history"))->setShortcut(Qt::Key_C);
@@ -243,7 +239,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	playInfo->setCheckable(true);
 	playInfo->setShortcut(Qt::Key_Tab);
 
-	Menu *window = obj->addMenu(_L("window"));
+	Menu *window = this->addMenu(_L("window"));
 	// sot == Stay On Top
 	window->addActionToGroup(_L("sot-always"), true, _L("sot"))->setData(Enum::StaysOnTop::Always.id());
 	window->addActionToGroup(_L("sot-playing"), true, _L("sot"))->setData(Enum::StaysOnTop::Playing.id());
@@ -273,11 +269,11 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	window->addAction(_L("maximize"));
 	window->addAction(_L("close"));
 
-	Menu *help = obj->addMenu(_L("help"));
+	Menu *help = this->addMenu(_L("help"));
 	QAction *about = help->addAction(_L("about"));
 	about->setMenuRole(QAction::AboutQtRole);
 
-	QAction *exit = obj->addAction(_L("exit"));
+	QAction *exit = this->addAction(_L("exit"));
 #ifdef Q_WS_MAC
 	exit->setShortcut(Qt::ALT + Qt::Key_F4);
 #else
@@ -294,11 +290,8 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	m_wheel[Enum::WheelAction::PrevNext] = WheelActionPair(prev, next);
 	m_wheel[Enum::WheelAction::Volume] = WheelActionPair(volUp, volDown);
 	m_wheel[Enum::WheelAction::Amp] = WheelActionPair(ampUp, ampDown);
-}
 
-RootMenu::~RootMenu() {
-	Q_ASSERT(obj == this);
-	obj = 0;
+	load();
 }
 
 void RootMenu::update() {
@@ -419,7 +412,6 @@ void RootMenu::update() {
 	effect["gray"]->setText(tr("Grayscale"));
 	effect["invert"]->setText(tr("Invert Color"));
 	effect["remap"]->setText(tr("Adjust Constrast"));
-	effect["auto-contrast"]->setText(tr("Auto Contrast"));
 	effect["ignore"]->setText(tr("Ignore All Filters"));
 
 	Menu &color = video("color");

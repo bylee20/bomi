@@ -7,14 +7,14 @@
 #include <QtGui/QWidget>
 #include "global.hpp"
 
-class PlayEngine;
+class PlayEngine;			class AudioController;
 class QVBoxLayout;			class QHBoxLayout;
 class QGridLayout;			class Mrl;
 
 class ControlWidget : public QWidget {
 	Q_OBJECT
 public:
-	ControlWidget(PlayEngine *engine, QWidget *parent = 0);
+	ControlWidget(PlayEngine *engine, AudioController *audio, QWidget *parent = 0);
 	~ControlWidget();
 	void connectMute(QAction *action);
 	void connectPlay(QAction *action);
@@ -25,7 +25,7 @@ public:
 public slots:
 	void showMessage(const QString &msg, int time = 3000);
 	void setMrl(const Mrl &mrl);
-	void setState(MediaState state);
+	void setState(State state);
 	void setDuration(int duration);
 	void setPlayTime(int time);
 	void setTrackNumber(int nth, int total);

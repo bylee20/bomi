@@ -6,14 +6,14 @@
 #include <QtCore/QObject>
 #include <QtCore/QtContainerFwd>
 
-class QDialog;			class Mrl;
+class QDialog;						class Mrl;
 class SubtitleComponentModel;
 
 class SubtitleRenderer : public QObject {
 	Q_OBJECT
 public:
-	typedef Subtitle::Component Comp;
-	typedef Comp::const_iterator CompIt;
+	typedef SubtitleComponent Comp;
+	typedef SubtitleComponent::const_iterator CompIt;
 
 	struct Loaded {
 		Loaded(): m_selected(false) {}
@@ -28,7 +28,7 @@ public:
 
 	SubtitleRenderer();
 	~SubtitleRenderer();
-	TextOsdRenderer *osd() const;
+	TextOsdRenderer &osd() const;
 	double frameRate() const;
 	int delay() const;
 	int start(int pos) const;

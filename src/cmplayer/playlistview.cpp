@@ -153,9 +153,9 @@ void PlaylistView::showContextMenu(const QPoint &/*pos*/) {
 }
 
 Playlist PlaylistView::generatePlaylist(const Mrl &mrl) {
-	const Enum::GeneratePlaylist mode = Pref::get().generate_playlist;
-	if (!mrl.isLocalFile() || mode == Enum::GeneratePlaylist::None)
+	if (!mrl.isLocalFile() || !Pref::get().enable_generate_playist)
 		return Playlist(mrl);
+	const Enum::GeneratePlaylist mode = Pref::get().generate_playlist;
 	const QFileInfo file(mrl.toLocalFile());
 	const QDir dir = file.dir();
 	if (mode == Enum::GeneratePlaylist::Folder)
@@ -214,9 +214,7 @@ void PlaylistView::setPlaylist(const Playlist &list) {
 }
 
 void PlaylistView::play(const Mrl &mrl) {
-	d->engine->stop();
-	d->engine->setMrl(mrl);
-	d->engine->play();
+	d->engine->setMrl(mrl, true);
 }
 
 void PlaylistView::playNext() {

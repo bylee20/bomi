@@ -8,8 +8,7 @@
 class CheckDialog : public QDialog {
 	Q_OBJECT
 public:
-	CheckDialog(QWidget *parent = 0
-		    , QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::Ok);
+	CheckDialog(QWidget *parent = 0, QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::Ok);
 	~CheckDialog();
 	void setButtonBox(QDialogButtonBox::StandardButtons buttons);
 	void setLabelText(const QString &text);
@@ -19,7 +18,7 @@ public:
 public slots:
 	int exec();
 private slots:
-	void slotButtonClicked(QAbstractButton *button);
+	void onButtonClicked(QAbstractButton *button);
 private:
 	struct Data;
 	Data *d;
@@ -29,7 +28,6 @@ class GetShortcutDialog : public QDialog {
 	Q_OBJECT
 public:
 	GetShortcutDialog(const QKeySequence &shortcut, QWidget *parent = 0);
-	GetShortcutDialog(QWidget *parent = 0);
 	~GetShortcutDialog();
 	QKeySequence shortcut() const;
 	void setShortcut(const QKeySequence &shortcut);
@@ -41,7 +39,6 @@ private slots:
 	void setGetting(bool on);
 	void erase();
 private:
-	void init();
 	static const int MaxKeyCount = 4;
 	void getShortcut(QKeyEvent *event);
 	struct Data;
@@ -114,11 +111,11 @@ private:
 	Data *d;
 };
 
-class OpenDVDDialog : public QDialog {
+class OpenDvdDialog : public QDialog {
 	Q_OBJECT
 public:
-	OpenDVDDialog(QWidget *parent = 0);
-	~OpenDVDDialog();
+	OpenDvdDialog(QWidget *parent = 0);
+	~OpenDvdDialog();
 	void setDevices(const QStringList &devices);
 	QString device() const;
 public slots:

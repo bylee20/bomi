@@ -54,22 +54,6 @@ QString Info::mediaExtFilter() {
 }
 
 const char *Info::pluginPath() {
-	static QByteArray path;
-	if (!path.isEmpty())
-		return path.constData();
-	path = qgetenv("CMPLAYER_VLC_PLUGINS_PATH");
-	if (!path.isEmpty() && QDir(QString::fromLocal8Bit(path.data())).exists())
-		return path.constData();
-#ifdef CMPLAYER_VLC_PLUGINS_PATH
-	path = CMPLAYER_VLC_PLUGINS_PATH;
-	if (!path.isEmpty() && QDir(QString::fromLocal8Bit(path.data())).exists())
-		return path.constData();
-#endif
-	path = QCoreApplication::applicationDirPath().toLocal8Bit();
-	if (path.isEmpty())
-		path = "./vlc-plugins";
-	else
-		path += "/vlc-plugins";
-	return path.constData();
+	return "";
 }
 

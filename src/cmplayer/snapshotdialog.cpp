@@ -14,6 +14,7 @@
 #include <QtGui/QApplication>
 #include <QtGui/QFileDialog>
 #include <QtGui/QClipboard>
+#include "richstring.hpp"
 
 struct SnapshotDialog::Data {
 	Ui::SnapshotDialog ui;
@@ -83,9 +84,9 @@ void SnapshotDialog::updateSnapshot(bool sub) {
 		painter.setRenderHint(QPainter::SmoothPixmapTransform);
 		painter.drawImage(d->rect, d->frame);
 		if (sub) {
-			d->osd->setBackgroundSize(pixmap.size(), pixmap.size());
-			d->osd->showText(d->text);
-			d->osd->render(&painter, d->osd->posHint());
+//			d->osd->setArea(pixmap.size(), pixmap.size());
+//			d->osd->show(d->text.toString());
+//			d->osd->render(&painter, d->osd->posHint(), 1);
 		}
 		d->ui.viewer->setImage(pixmap);
 	}
@@ -95,10 +96,10 @@ void SnapshotDialog::take() {
 	if (!d->video || !d->video->hasFrame())
 		return;
 	d->ui.take->setEnabled(false);
-	d->text = d->subtitle->osd()->text();
+	d->text = d->subtitle->osd().text();
 	d->frame = d->video->frameImage();
-	d->osd->setStyle(d->subtitle->osd()->style());
-	d->osd->setAlignment(d->subtitle->osd()->alignment());
+	d->osd->setStyle(d->subtitle->osd().style());
+	d->osd->setAlignment(d->subtitle->osd().alignment());
 	const double aspect = d->video->targetAspectRatio();
 	QSizeF size(aspect, 1.0);
 	size.scale(d->frame.size(), Qt::KeepAspectRatioByExpanding);

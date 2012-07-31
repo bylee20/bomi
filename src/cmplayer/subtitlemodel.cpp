@@ -15,7 +15,7 @@ struct SubtitleComponentModel::Item : public ListModel::Item {
 	Item(c_iterator it): m_end(-1), m_it(it) {}
 	int start() const {return m_it.key();}
 	int end() const {return m_end;}
-	QString text() const {return m_it->text.toPlain();}
+	QString text() const {return m_it->toPlainText();}
 	QVariant data(const int column, int role) const {
 		if (role == Qt::DisplayRole) {
 			switch (column) {
@@ -48,11 +48,11 @@ struct SubtitleComponentModel::Data {
 	int curRow;
 	QFont curFont, defFont;
 	bool visible;
-	const Subtitle::Component *comp;
-	const Subtitle::Node *pended;
+	const SubtitleComponent *comp;
+	const SubtitleCaption *pended;
 };
 
-SubtitleComponentModel::SubtitleComponentModel(const Subtitle::Component *comp, QObject *parent)
+SubtitleComponentModel::SubtitleComponentModel(const SubtitleComponent *comp, QObject *parent)
 : ListModel(ColumnCount, parent), d(new Data) {
 	d->comp = comp;
 	d->curRow = -1;
@@ -63,7 +63,7 @@ SubtitleComponentModel::SubtitleComponentModel(const Subtitle::Component *comp, 
 
 	c_iterator it = comp->begin();
 	for (; it != comp->end(); ++it) {
-		if (it->text.hasWords()) {
+		if (it->hasWords()) {
 			it->index = 0;
 			append(new Item(it));
 			break;
@@ -74,7 +74,7 @@ SubtitleComponentModel::SubtitleComponentModel(const Subtitle::Component *comp, 
 			Item *last = static_cast<Item*>(this->last());
 			if (last->m_end < 0)
 				last->m_end = it.key();
-			if (it->text.hasWords())
+			if (it->hasWords())
 				append(new Item(it));
 			it->index = size() - 1;
 		}
@@ -93,16 +93,16 @@ void SubtitleComponentModel::setVisible(bool visible) {
 	if (d->visible != visible) {
 		d->visible = visible;
 		if (d->visible && d->pended)
-			setCurrentNode(d->pended);
+			setCurrentCaption(d->pended);
 	}
 }
 
-void SubtitleComponentModel::setCurrentNode(const Subtitle::Node *node) {
+void SubtitleComponentModel::setCurrentCaption(const SubtitleCaption *caption) {
 	if (!d->visible) {
-		d->pended = node;
+		d->pended = caption;
 	} else {
 		d->pended = 0;
-		const int row = node ? node->index : -1;
+		const int row = caption ? caption->index : -1;
 		if (d->curRow == row)
 			return;
 		const int old = d->curRow;

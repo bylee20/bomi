@@ -3,13 +3,14 @@
 #include <QtCore/QList>
 #include <QtCore/QMap>
 #include <QtCore/QDateTime>
+#include <QtCore/QDebug>
 
-RecentInfo *RecentInfo::obj = 0;
+RecentInfo *RecentInfo::obj = nullptr;
 
 typedef QMap<Mrl, QPair<int, QDateTime> > StoppedMap;
 
 struct RecentInfo::Data {
-	int max;
+	int max = 10;
 	Playlist openList, lastList;
 	StoppedMap stopped;
 	Mrl lastMrl;
@@ -17,9 +18,6 @@ struct RecentInfo::Data {
 
 RecentInfo::RecentInfo()
 : d(new Data) {
-	Q_ASSERT(obj == 0);
-	obj = this;
-	d->max = 10;
 	load();
 }
 
@@ -35,10 +33,10 @@ QList<Mrl> RecentInfo::openList() const {
 }
 
 void RecentInfo::setStopped(const Mrl &mrl, int time, const QDateTime &date) {
-	if (time == -1)
+	if (time < 0)
 		setFinished(mrl);
 	else {
-		StoppedMap::iterator it = d->stopped.find(mrl);
+		auto it = d->stopped.find(mrl);
 		if (it != d->stopped.end()) {
 			it->first = time;
 			it->second = date;
@@ -52,7 +50,7 @@ void RecentInfo::setFinished(const Mrl &mrl) {
 }
 
 int RecentInfo::stoppedTime(const Mrl &mrl) const {
-	if (mrl.isDVD())
+	if (mrl.isDvd())
 		return 0;
 	StoppedMap::const_iterator it = d->stopped.find(mrl);
 	return it == d->stopped.end() ? 0 : it->first;

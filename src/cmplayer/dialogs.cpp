@@ -1,5 +1,4 @@
 #include "dialogs.hpp"
-#include "libvlc.hpp"
 #include <QtCore/QFile>
 #include "ui_aboutdialog.h"
 #include "info.hpp"
@@ -37,21 +36,19 @@ CheckDialog::CheckDialog(QWidget *parent, QDialogButtonBox::StandardButtons butt
 : QDialog(parent), d(new Data) {
 	d->check = new QCheckBox(this);
 	d->label = new QLabel(this);
-// 	d->label->setWordWrap(true);
 	d->button = new QDialogButtonBox(this);
 	d->button->setCenterButtons(true);
 	d->clicked = QDialogButtonBox::NoButton;
 
-	QVBoxLayout *vbox = new QVBoxLayout(this);
+	auto vbox = new QVBoxLayout(this);
 	vbox->addWidget(d->label);
 	vbox->addWidget(d->check);
-	QHBoxLayout *hbox = new QHBoxLayout;
+	auto hbox = new QHBoxLayout;
 	hbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
 	hbox->addWidget(d->button);
 	hbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
 	vbox->addLayout(hbox);
-	connect(d->button, SIGNAL(clicked(QAbstractButton*))
-		, this, SLOT(slotButtonClicked(QAbstractButton*)));
+	connect(d->button, SIGNAL(clicked(QAbstractButton*)), this, SLOT(onButtonClicked(QAbstractButton*)));
 	setButtonBox(buttons);
 }
 
@@ -84,7 +81,7 @@ int CheckDialog::exec() {
 	return d->clicked;
 }
 
-void CheckDialog::slotButtonClicked(QAbstractButton *button) {
+void CheckDialog::onButtonClicked(QAbstractButton *button) {
 	d->clicked = d->button->standardButton(button);
 	accept();
 }
@@ -100,21 +97,6 @@ struct GetShortcutDialog::Data {
 
 GetShortcutDialog::GetShortcutDialog(const QKeySequence &shortcut, QWidget *parent)
 : QDialog(parent) {
-	init();
-	setShortcut(shortcut);
-}
-
-GetShortcutDialog::GetShortcutDialog(QWidget *parent)
-: QDialog(parent) {
-	init();
-	erase();
-}
-
-GetShortcutDialog::~GetShortcutDialog() {
-	delete d;
-}
-
-void GetShortcutDialog::init() {
 	d = new Data;
 	d->curIdx = 0;
 	d->edit = new QLineEdit(this);
@@ -149,6 +131,12 @@ void GetShortcutDialog::init() {
 	connect(d->cancel, SIGNAL(clicked()), this, SLOT(reject()));
 	d->edit->installEventFilter(this);
 	d->begin->toggle();
+
+	setShortcut(shortcut);
+}
+
+GetShortcutDialog::~GetShortcutDialog() {
+	delete d;
 }
 
 void GetShortcutDialog::erase() {
@@ -208,7 +196,7 @@ void GetShortcutDialog::keyReleaseEvent(QKeyEvent *event) {
 EncodingFileDialog::EncodingFileDialog(QWidget *parent, const QString &caption
 		, const QString &directory, const QString &filter, const QString &encoding)
 : QFileDialog(parent, caption, directory, filter), combo(new EncodingComboBox(this)) {
-	QGridLayout *grid = qobject_cast<QGridLayout*>(layout());
+	auto grid = qobject_cast<QGridLayout*>(layout());
 	if (grid) {
 		const int row = grid->rowCount();
 		grid->addWidget(new QLabel("Encoding:", this), row, 0, 1, 1);
@@ -227,18 +215,13 @@ QString EncodingFileDialog::encoding() const {
 }
 
 QString EncodingFileDialog::getOpenFileName(QWidget *parent
-		, const QString &caption, const QString &dir
-		, const QString &filter, QString *enc) {
-	const QStringList files = getOpenFileNames(parent
-			, caption, dir, filter, enc, ExistingFile);
+		, const QString &caption, const QString &dir, const QString &filter, QString *enc) {
+	const auto files = getOpenFileNames(parent, caption, dir, filter, enc, ExistingFile);
 	return files.isEmpty() ? QString() : files[0];
 }
 
 QStringList EncodingFileDialog::getOpenFileNames(QWidget *parent
-		, const QString &caption
-		, const QString &dir
-		, const QString &filter
-		, QString *enc, FileMode mode) {
+		, const QString &caption, const QString &dir, const QString &filter, QString *enc, FileMode mode) {
 	EncodingFileDialog dlg(parent, caption, dir, filter);
 	if (enc && !enc->isEmpty())
 		dlg.setEncoding(*enc);
@@ -261,15 +244,15 @@ struct GetUrlDialog::Data {
 
 GetUrlDialog::GetUrlDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
-	const AppState &as = AppState::get();
+	const auto &as = AppState::get();
 	d->c = new QCompleter(as.open_url_list, this);
 	d->url = new QLineEdit(this);
 	d->url->setCompleter(d->c);
 	d->enc = new EncodingComboBox(this);
 	d->enc->setEncoding(as.url_enc);
 
-	QVBoxLayout *vbox = new QVBoxLayout(this);
-	QHBoxLayout *hbox = new QHBoxLayout;
+	auto vbox = new QVBoxLayout(this);
+	auto hbox = new QHBoxLayout;
 	hbox->addWidget(new QLabel(tr("URL"), this));
 	hbox->addWidget(d->url);
 	vbox->addLayout(hbox);
@@ -285,8 +268,8 @@ GetUrlDialog::~GetUrlDialog() {
 }
 
 void GetUrlDialog::accept() {
-	AppState &as = AppState::get();
-	const QString url = d->url->text().trimmed();
+	auto &as = AppState::get();
+	const auto url = d->url->text().trimmed();
 	const int idx = as.open_url_list.indexOf(url);
 	if (idx >= 0)
 		as.open_url_list.takeAt(idx);
@@ -332,7 +315,7 @@ AboutDialog::AboutDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
 	d->ui.setupUi(this);
 #define UI_LABEL_ARG(label, arg) d->ui.label->setText(d->ui.label->text().arg)
-	UI_LABEL_ARG(version, arg(Info::version()).arg(LibVLC::version()));
+//	UI_LABEL_ARG(version, arg(Info::version()).arg(LibVLC::version()));
 	UI_LABEL_ARG(copyright, arg(QDate::currentDate().year()));
 	UI_LABEL_ARG(contacts, arg("<a href=\"http://xylosper.net\">http://xylosper.net</a><br>")
 		.arg("<a href=\"mailto:darklin20@gmail.com\">darklin20@gmail.com</a><br>")
@@ -368,11 +351,11 @@ AboutDialog::~AboutDialog() {
 
 void AboutDialog::showFullLicense() {
 	QDialog dlg(this);
-	QTextBrowser *text = new QTextBrowser(&dlg);
-	QPushButton *close = new QPushButton(tr("Close"), &dlg);
-	QVBoxLayout *vbox = new QVBoxLayout(&dlg);
+	auto text = new QTextBrowser(&dlg);
+	auto close = new QPushButton(tr("Close"), &dlg);
+	auto vbox = new QVBoxLayout(&dlg);
 	vbox->addWidget(text);
-	QHBoxLayout *hbox = new QHBoxLayout;
+	auto hbox = new QHBoxLayout;
 	hbox->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
 	hbox->addWidget(close);
 	hbox->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
@@ -391,12 +374,12 @@ void AboutDialog::showFullLicense() {
 #include "ui_opendvddialog.h"
 #include <QtCore/QFileInfo>
 
-struct OpenDVDDialog::Data {
+struct OpenDvdDialog::Data {
 	Ui::OpenDVDDialog ui;
 	QPushButton *ok;
 };
 
-OpenDVDDialog::OpenDVDDialog(QWidget *parent)
+OpenDvdDialog::OpenDvdDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
 	d->ui.setupUi(this);
 	d->ok = d->ui.buttonBox->button(QDialogButtonBox::Ok);
@@ -404,28 +387,27 @@ OpenDVDDialog::OpenDVDDialog(QWidget *parent)
 	connect(d->ui.device, SIGNAL(editTextChanged(QString)), this, SLOT(checkDevice(QString)));
 }
 
-OpenDVDDialog::~OpenDVDDialog() {
+OpenDvdDialog::~OpenDvdDialog() {
 	delete d;
 }
 
-void OpenDVDDialog::setDevices(const QStringList &devices) {
+void OpenDvdDialog::setDevices(const QStringList &devices) {
 	d->ui.device->clear();
 	d->ui.device->addItems(devices);
 }
 
-void OpenDVDDialog::checkDevice(const QString &device) {
+void OpenDvdDialog::checkDevice(const QString &device) {
 	const QFileInfo info(device);
 	const bool exists = info.exists();
 	d->ok->setEnabled(exists);
 	if (exists)
 		d->ui.available->setText(tr("Selected device is available."));
 	else {
-		d->ui.available->setText(_LS("<font color='red'>")
-			% tr("Selected device doesn't exists.") % _LS("</font>"));
+		d->ui.available->setText(_LS("<font color='red'>") % tr("Selected device doesn't exists.") % _LS("</font>"));
 	}
 }
 
-QString OpenDVDDialog::device() const {
+QString OpenDvdDialog::device() const {
 	return d->ui.device->currentText();
 }
 

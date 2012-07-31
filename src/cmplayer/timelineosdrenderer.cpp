@@ -1,4 +1,5 @@
 #include "timelineosdrenderer.hpp"
+#include "global.hpp"
 #include <QtCore/QTimer>
 #include <QtCore/QPoint>
 #include <QtGui/QPainter>
@@ -6,14 +7,14 @@
 #include "osdstyle.hpp"
 
 struct TimeLineOsdRenderer::Data {
-	OsdStyle style;
 	int time, duration;
 	QTimer clearer;
 	QSizeF size;
-	QSizeF bg;
+	QSizeF renderable;
 };
 
-TimeLineOsdRenderer::TimeLineOsdRenderer(): d(new Data) {
+TimeLineOsdRenderer::TimeLineOsdRenderer()
+: d(new Data) {
 	d->time = d->duration = -1;
 	d->clearer.setSingleShot(true);
 	connect(&d->clearer, SIGNAL(timeout()), this, SLOT(clear()));
@@ -21,31 +22,23 @@ TimeLineOsdRenderer::TimeLineOsdRenderer(): d(new Data) {
 	style.color_fg.setAlphaF(0.5);
 	style.color_bg.setAlphaF(0.5);
 	setStyle(style);
+
 }
 
 TimeLineOsdRenderer::~TimeLineOsdRenderer() {
 	delete d;
 }
 
-void TimeLineOsdRenderer::setStyle(const OsdStyle &style) {
-	d->style = style;
-	emit styleChanged(style);
+bool TimeLineOsdRenderer::updateRenderableSize(const QSizeF &renderable) {
+	if (d->renderable == renderable)
+		return false;
+	d->renderable = renderable;
+	d->size.setWidth(d->renderable.width()*0.8);
+	d->size.setHeight(d->renderable.height()*0.05);
+	return true;
 }
 
-const OsdStyle &TimeLineOsdRenderer::style() const {
-	return d->style;
-}
-
-void TimeLineOsdRenderer::updateBackgroundSize(const QSizeF &bg) {
-	if (d->bg == bg)
-		return;
-	d->bg = bg;
-	d->size.setWidth(d->bg.width()*0.8);
-	d->size.setHeight(d->bg.height()*0.05);
-	emit sizeChanged(size());
-}
-
-void TimeLineOsdRenderer::render(QPainter *painter, const QPointF &pos) {
+void TimeLineOsdRenderer::render(QPainter *painter, const QPointF &pos, int /*layers*/) {
 	if (d->time < 0 || d->duration <= 0 || d->size.isEmpty() || d->size.isNull())
 		return;
 	const OsdStyle &style = this->style();
@@ -70,8 +63,8 @@ void TimeLineOsdRenderer::render(QPainter *painter, const QPointF &pos) {
 }
 
 QPointF TimeLineOsdRenderer::posHint() const {
-	const double x = ((double)d->bg.width() - d->size.width())*0.5;
-	const double y = ((double)d->bg.height() - d->size.height())*0.5;
+	const double x = ((double)d->renderable.width() - d->size.width())*0.5;
+	const double y = ((double)d->renderable.height() - d->size.height())*0.5;
 	return QPointF(x, y);
 }
 

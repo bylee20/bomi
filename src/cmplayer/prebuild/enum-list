@@ -1,47 +1,47 @@
-Name:StaysOnTop
++StaysOnTop
 -Always
 -Playing
 -Never
 
-Name:SeekingStep
++SeekingStep
 -Step1
 -Step2
 -Step3
 
-Name:Overlay
++Overlay
 -Auto-Auto
 -FramebufferObject-Framebuffer Object
 -Pixmap-Pixmap
 
-Name:GeneratePlaylist
++GeneratePlaylist
 -Similar-Add files which have similar names
 -Folder-Add all files in the same folder
--None-Do not add any other files
+#-None-Do not add any other files
 
-Name:SubtitleAutoload
++SubtitleAutoload
 -Matched-Subtitles which have the same name as that of playing file
 -Contain-Subtitles whose names contain the name of playing file
 -Folder-All subtitles in the folder where the playing file is located
--None-Do not load any other subtitles
+#-None-Do not load any other subtitles
 
-Name:SubtitleAutoselect
++SubtitleAutoselect
 -Matched-Subtitle which has the same name as that of playing file
 -First-First subtitle from loaded ones
 -All-All loaded subtitles
 -EachLanguage-Each language subtitle
 
-Name:OsdAutoSize
++OsdAutoSize
 -Width-Fit to width of video
 -Height-Fit to height of video
 -Diagonal-Fit to diagonal of video
 
-Name:ClickAction
++ClickAction
 -OpenFile-Open a file
 -Fullscreen-Toggle fullscreen mode
 -Pause-Toggle play/pause
 -Mute-Toggle mute/unmute
 
-Name:WheelAction
++WheelAction
 -Seek1-Seek playback for step 1
 -Seek2-Seek playback for step 2
 -Seek3-Seek playback for step 3
@@ -49,13 +49,13 @@ Name:WheelAction
 -Volume-Volumn up/down
 -Amp-Amp. up/down
 
-Name:KeyModifier
++KeyModifier
 -None=Qt::NoModifier
 -Ctrl=Qt::ControlModifier
 -Shift=Qt::ShiftModifier
 -Alt=Qt::AltModifier
 
-Name:Position
++Position
 -CC=Qt::AlignVCenter|Qt::AlignHCenter
 -TL=Qt::AlignTop|Qt::AlignLeft
 -TC=Qt::AlignTop|Qt::AlignHCenter

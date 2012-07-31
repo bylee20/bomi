@@ -1,8 +1,12 @@
 #include "logodrawer.hpp"
+#include <QtCore/QDebug>
 #include <QtGui/QPainter>
+#include <QtOpenGL/QGLWidget>
+#include <QtOpenGL/QGLFramebufferObject>
 
 LogoDrawer::LogoDrawer() {
 	m_logo.load(":/img/cmplayer512.png");
+	m_logo = m_logo.convertToFormat(QImage::Format_ARGB32_Premultiplied);
 	QLinearGradient grad(0.5, 1.0, 0.75, 0.13);
 	grad.setColorAt(0.0, qRgb(51, 131, 230));
 	grad.setColorAt(1.0, qRgb(110, 202, 247));
@@ -20,21 +24,38 @@ LogoDrawer::LogoDrawer() {
 	m_lightPath.cubicTo(0.6, oh, 0.8, oh*0.9, 1.0, oh*0.6);
 	m_lightPath.lineTo(1.0, 0.0);
 	m_lightPath.closeSubpath();
+
+	m_gl = nullptr;
 }
 
 LogoDrawer::~LogoDrawer() {
+	bind(nullptr);
 }
 
-void LogoDrawer::drawLogo(QPainter *painter, const QRectF &bg) {
-	const double w = bg.width();
-	const double h = bg.height();
-	const int len = qMin(qRound(qMin(w, h)*0.7), m_logo.width());
-	const QPoint pos((w-len)*0.5 + 0.5, (h-len)*0.5 + 0.5);
-	if (len != m_logo.width())
-		painter->drawPixmap(pos, m_logo.scaled(len, len
-				, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-	else
-		painter->drawPixmap(pos, m_logo);
+void LogoDrawer::bind(QGLWidget *gl) {
+	if (m_gl == gl)
+		return;
+	if (m_gl) {
+		m_gl->makeCurrent();
+		glDeleteTextures(1, &m_texture);
+		m_gl = nullptr;
+	}
+	if (gl) {
+		m_gl = gl;
+		m_gl->makeCurrent();
+		glGenTextures(1, &m_texture);
+		glBindTexture(GL_TEXTURE_2D, m_texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, 4, m_logo.width(), m_logo.height()
+			, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, m_logo.bits());
+	}
+}
+
+void LogoDrawer::drawLogo(QPainter */*painter*/, const QRectF &bg) {
+	const float w = bg.width(), h = bg.height();
+	const float len = qMin(qMin(w, h)*0.7f, (float)m_logo.width());
+	const float x = (w-len)*0.5, y = (h-len)*0.5;
+	if (m_gl)
+		m_gl->drawTexture(QRectF(x, y+len, len, -len), m_texture);
 }
 
 void LogoDrawer::draw(QPainter *painter, const QRectF &bg) {
@@ -43,7 +64,7 @@ void LogoDrawer::draw(QPainter *painter, const QRectF &bg) {
 
 	painter->save();
 	painter->setPen(Qt::NoPen);
-	painter->setRenderHint(QPainter::Antialiasing);
+	painter->setRenderHint(QPainter::SmoothPixmapTransform);
 
 	painter->save();
 	painter->scale(w, h);

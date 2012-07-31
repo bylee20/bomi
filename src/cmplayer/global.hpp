@@ -22,8 +22,7 @@ static inline const T& const_(T& t) {return t;}
 static const QTime __null_time;
 static inline QString _U8(const char *utf8) {return QString::fromUtf8(utf8);}
 
-enum MediaState {StoppedState = 0, PlayingState, PausedState, FinishedState, OpeningState, BufferingState, ErrorState};
-enum MediaStatus {NoMediaStatus = 0, EosStatus, BufferedStatus};
+enum class State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Opening = 16, Buffering = 32, Error = 64, Preparing = 128};
 enum StreamType {UnknownStream = 0, VideoStream, AudioStream, SubPicStream};
 enum MediaMetaData {LanguageCode};
 
@@ -60,12 +59,45 @@ static inline QString toString(const QSize &size) {
 	return ret;
 }
 
+static inline double diagonal(double w, double h) {return sqrt(w*w + h*h);}
+static inline double diagonal(const QSize &size) {return diagonal(size.width(), size.height());}
+static inline double diagonal(const QSizeF &size) {return diagonal(size.width(), size.height());}
+
 static inline QPointF toPointF(const QSizeF &size) {return QPointF(size.width(), size.height());}
 
 QDialogButtonBox *makeButtonBox(QDialog *dlg);
 
+enum PtrType {PtrObject, PtrArray};
+template<PtrType Type> struct __PtrDel {};
+template<> struct __PtrDel<PtrObject> {template<typename T>static void free(T *t) {delete t;}};
+template<> struct __PtrDel<PtrArray> {template<typename T>static void free(T *t) {delete []t;}};
 
 
+template <typename T, PtrType Type>
+class PtrDel {
+public:
+	PtrDel(): m_t(nullptr) {}
+	PtrDel(T *t): m_t(t) {}
+	~PtrDel() {free();}
+	PtrDel &operator = (T *t) {free(); m_t = t;}
+	T &operator[](int i) {return m_t[i];}
+	const T &operator[](int i) const {return m_t[i];}
+	inline T& operator *() {return *m_t;}
+	inline T* operator ->() {return m_t;}
+	inline const T& operator *() const {return *m_t;}
+	inline const T* operator ->() const {return m_t;}
+	const T*& get() const {return m_t;}
+	T*& get() {return m_t;}
+	inline bool isNull() const {return m_t == nullptr;}
+private:
+	T *m_t;
+	PtrDel(const PtrDel &);
+	PtrDel &operator = (const PtrDel &);
+	inline void free() {__PtrDel<Type>::free(m_t);}
+};
+
+template<typename T> class AutoObject : public PtrDel<T, PtrObject> {};
+template<typename T> class AutoArray : public PtrDel<T, PtrArray> {};
 }
 
 using namespace Global;

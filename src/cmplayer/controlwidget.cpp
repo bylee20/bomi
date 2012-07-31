@@ -2,7 +2,6 @@
 #include "widgets.hpp"
 #include "squeezedlabel.hpp"
 #include "playengine.hpp"
-#include "libvlc.hpp"
 #include "mrl.hpp"
 #include <QtGui/QLinearGradient>
 #include <QtGui/QStackedWidget>
@@ -75,7 +74,7 @@ public:
 
 class ControlWidget::Slider : public QWidget {
 public:
-	Slider(QWidget *parent = 0)
+	Slider(PlayEngine *engine, AudioController *audio, QWidget *parent = 0)
 	: QWidget(parent)
 	, muted(":/img/speaker-off.png")
 	, unmuted(":/img/speaker.png") {
@@ -87,9 +86,9 @@ public:
 		hbox->setSpacing(2);
 		hbox->setContentsMargins(0, 0, 0, 0);
 		setFixedHeight(15);
-		hbox->addWidget(new SeekSlider(this));
+		hbox->addWidget(new SeekSlider(engine, this));
 		hbox->addWidget(mute);
-		hbox->addWidget(new VolumeSlider(this));
+		hbox->addWidget(new VolumeSlider(audio, this));
 	}
 	QIcon muted, unmuted;
 	Button *mute;
@@ -114,13 +113,11 @@ struct ControlWidget::Data {
 	Button *play, *prev, *next, *forward, *backward;
 	QBrush bg, light;
 	QPainterPath path;
-	MediaState state;
+	State state = State::Stopped;
 };
 
-ControlWidget::ControlWidget(PlayEngine *engine, QWidget *parent)
+ControlWidget::ControlWidget(PlayEngine *engine, AudioController *audio, QWidget *parent)
 : QWidget(parent), d(new Data) {
-	d->state = StoppedState;
-
 	QLinearGradient grad(0.5, 0.0, 0.5, 1.0);
 	grad.setColorAt(0.0, qRgb(0, 0, 0));
 	grad.setColorAt(1.0, qRgb(60, 60, 60));
@@ -139,7 +136,7 @@ ControlWidget::ControlWidget(PlayEngine *engine, QWidget *parent)
 	d->engine = engine;
 	d->boundary = new Boundary(this);
 	d->lcd = new Lcd(this);
-	d->slider = new Slider(this);
+	d->slider = new Slider(engine, audio, this);
 	d->play = new Button(this);
 	d->prev = new Button(this);
 	d->next = new Button(this);
@@ -150,10 +147,9 @@ ControlWidget::ControlWidget(PlayEngine *engine, QWidget *parent)
 	d->play->setBlock(false);
 	d->prev->setBlock(false);
 	d->next->setBlock(false);
-	setState(StoppedState);
+	setState(State::Stopped);
 	connect(&d->lcd->hider, SIGNAL(timeout()), this, SLOT(hideMessage()));
-	connect(d->engine, SIGNAL(stateChanged(MediaState, MediaState))
-		, this, SLOT(setState(MediaState)));
+	connect(d->engine, SIGNAL(stateChanged(State, State)), this, SLOT(setState(State)));
 	connect(d->engine, SIGNAL(mrlChanged(Mrl)), this, SLOT(setMrl(Mrl)));
 	connect(d->engine, SIGNAL(durationChanged(int)), this, SLOT(setDuration(int)));
 	connect(d->engine, SIGNAL(tick(int)), this, SLOT(setPlayTime(int)));
@@ -274,9 +270,9 @@ void ControlWidget::setMrl(const Mrl &mrl) {
 	hideMessage();
 }
 
-void ControlWidget::setState(MediaState state) {
+void ControlWidget::setState(State state) {
 	d->state = state;
-	if (state == PlayingState)
+	if (state == State::Playing)
 		d->play->setIcon(QIcon(":/img/media-playback-pause.png"));
 	else
 		d->play->setIcon(QIcon(":/img/media-playback-start.png"));
@@ -309,17 +305,24 @@ void ControlWidget::hideMessage() {
 }
 
 QString ControlWidget::stateText() const {
-	if (d->state == PlayingState)
+	switch (d->state) {
+	case State::Playing:
 		return tr("Playing");
-	if (d->state == StoppedState)
+	case State::Stopped:
 		return tr("Stopped");
-	if (d->state == FinishedState)
+	case State::Finished:
 		return tr("Finished");
-	if (d->state == BufferingState)
+	case State::Buffering:
 		return tr("Buffering");
-	if (d->state == OpeningState)
+	case State::Opening:
 		return tr("Opening");
-	return tr("Paused");
+	case State::Error:
+		return tr("Error");
+	case State::Preparing:
+		return tr("Preparing");
+	default:
+		return tr("Paused");
+	}
 }
 
 void ControlWidget::retranslateUi() {

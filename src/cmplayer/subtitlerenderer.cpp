@@ -7,6 +7,7 @@
 #include "osdstyle.hpp"
 #include "subtitleview.hpp"
 #include <QtCore/QDebug>
+#include "timelineosdrenderer.hpp"
 
 SubtitleRenderer::Render::Render(const Comp &comp) {
 	this->comp = &comp;
@@ -19,15 +20,16 @@ SubtitleRenderer::Render::~Render() {
 }
 
 struct SubtitleRenderer::Data {
-	SubtitleView *view;
-	TextOsdRenderer *osd;
-	double fps;
-	int delay, ms;
-	double pos;
-	bool visible, empty, top;
+	SubtitleView *view = nullptr;
+	TextOsdRenderer osd = {Qt::AlignBottom | Qt::AlignCenter};
+	double	fps = 25.0,			pos = 1.0;
+	int		delay = 0,			ms = 0;
+	bool	visible = true,		empty = true;
+	bool	selecting = false,	top = false;
+
 	QList<Loaded> loaded;
 	RenderList order;
-	bool selecting;
+
 	void set_model_list() {
 		if (!view)
 			return;
@@ -51,7 +53,8 @@ struct SubtitleRenderer::Data {
 	}
 	QMap<QString, int> langMap;
 	int language_priority(const Render *r) const {
-		return langMap.value(r->comp->language().id(), -1);
+//		return langMap.value(r->comp->language().id(), -1);
+		return langMap.value(r->comp->language(), -1);
 	}
 	void reset_lang_map() {
 		const QStringList priority = Pref::get().sub_priority;
@@ -61,14 +64,6 @@ struct SubtitleRenderer::Data {
 };
 
 SubtitleRenderer::SubtitleRenderer(): d(new Data) {
-	d->top = d->selecting = false;
-	d->empty = d->visible = true;
-	d->osd = new TextOsdRenderer(Qt::AlignBottom | Qt::AlignCenter);
-//	d->osd->setLetterboxHint(true);
-	d->fps = 30;
-	d->ms = d->delay = 0;
-	d->pos = 1.0;
-	d->view = 0;
 	d->reset_lang_map();
 }
 
@@ -84,7 +79,7 @@ QWidget *SubtitleRenderer::view(QWidget *parent) const {
 	return d->view;
 }
 
-TextOsdRenderer *SubtitleRenderer::osd() const {
+TextOsdRenderer &SubtitleRenderer::osd() const {
 	return d->osd;
 }
 
@@ -106,19 +101,19 @@ void SubtitleRenderer::render(int ms) {
 		CompIt it = render.comp->start(ms - d->delay, d->fps);
 		if (it != render.prev) {
 			render.prev = it;
-			render.model->setCurrentNode(&(*it));
+			render.model->setCurrentCaption(&(*it));
 			changed = true;
 		}
 	}
 	if (changed) {
-		RichString text;
+		RichTextDocument doc;
 		for (o = d->order.begin(); o != d->order.end(); ++o) {
 			const Render &render = **o;
 			if (render.prev != render.comp->end()) {
-				text.merge(render.prev->text);
+				doc += render.prev.value();
 			}
 		}
-		d->osd->showText(text);
+		d->osd.show(doc, -1);
 	}
 }
 
@@ -134,7 +129,7 @@ void SubtitleRenderer::setVisible(bool visible) {
 
 void SubtitleRenderer::clear() {
 	d->reset_prev();
-	d->osd->clear();
+	d->osd.clear();
 }
 
 double SubtitleRenderer::frameRate() const {
@@ -222,9 +217,10 @@ bool SubtitleRenderer::load(const QString &fileName, const QString &enc, bool se
 
 QList<int> SubtitleRenderer::autoselection(const Mrl &mrl, const QList<Loaded> &loaded) {
 	QList<int> selected;
-	if (loaded.isEmpty() || !mrl.isLocalFile())
-		return selected;
 	const Pref &p = Pref::get();
+	if (loaded.isEmpty() || !mrl.isLocalFile() || !p.sub_enable_autoselect)
+		return selected;
+
 	QSet<QString> langSet;
 	const QString base = QFileInfo(mrl.toLocalFile()).completeBaseName();
 	for (int i=0; i<loaded.size(); ++i) {
@@ -234,7 +230,8 @@ QList<int> SubtitleRenderer::autoselection(const Mrl &mrl, const QList<Loaded> &
 		} else if (p.sub_autoselect == Enum::SubtitleAutoselect::All) {
 			select = true;
 		} else if (p.sub_autoselect == Enum::SubtitleAutoselect::EachLanguage) {
-			const QString lang = loaded[i].m_comp.language().id();
+//			const QString lang = loaded[i].m_comp.language().id();
+			const QString lang = loaded[i].m_comp.language();
 			if ((select = (!langSet.contains(lang))))
 				langSet.insert(lang);
 		}
@@ -260,7 +257,7 @@ QList<int> SubtitleRenderer::autoselection(const Mrl &mrl, const QList<Loaded> &
 int SubtitleRenderer::autoload(const Mrl &mrl, bool autoselect) {
 	unload();
 	const Pref &pref = Pref::get();
-	if (pref.sub_autoload == Enum::SubtitleAutoload::None)
+	if (!pref.sub_enable_autoload)
 		return 0;
 	const QStringList filter = Info::subtitleNameFilter();
 	const QFileInfo fileInfo(mrl.toLocalFile());
@@ -299,7 +296,7 @@ int SubtitleRenderer::start(int time) const {
 		const Comp *comp = (*it)->comp;
 		const CompIt it = comp->start(time - d->delay, d->fps);
 		if (it != comp->end())
-			s = qMax(s, comp->isBasedOnFrame() ? Subtitle::msec(it.key(), d->fps) : it.key());
+			s = qMax(s, comp->isBasedOnFrame() ? SubtitleComponent::msec(it.key(), d->fps) : it.key());
 	}
 	return s;
 }
@@ -309,9 +306,9 @@ int SubtitleRenderer::end(int time) const {
 	RenderList::const_iterator it = d->order.begin();
 	for (; it != d->order.end(); ++it) {
 		const Comp *comp = (*it)->comp;
-		const CompIt it = comp->end(time - d->delay, d->fps);
+		const CompIt it = comp->finish(time - d->delay, d->fps);
 		if (it != comp->end()) {
-			const int t = comp->isBasedOnFrame() ? Subtitle::msec(it.key(), d->fps) : it.key();
+			const int t = comp->isBasedOnFrame() ? SubtitleComponent::msec(it.key(), d->fps) : it.key();
 			e = e == -1 ? t : qMin(e, t);
 		}
 	}
@@ -333,9 +330,9 @@ void SubtitleRenderer::setPos(double pos) {
 	if (!qFuzzyCompare(pos, d->pos)) {
 		d->pos = qBound(0.0, pos, 1.0);
 		if (d->top)
-			d->osd->setMargin(d->pos, 0, 0, 0);
+			d->osd.setMargin(d->pos, 0, 0, 0);
 		else
-			d->osd->setMargin(0, 1.0 - d->pos, 0, 0);
+			d->osd.setMargin(0, 1.0 - d->pos, 0, 0);
 	}
 }
 
@@ -351,7 +348,7 @@ void SubtitleRenderer::setTopAlignment(bool top) {
 			alignment |= Qt::AlignTop;
 		else
 			alignment |= Qt::AlignBottom;
-		d->osd->setAlignment(alignment);
+		d->osd.setAlignment(alignment);
 		setPos(1.0 - d->pos);
 	}
 }
@@ -365,7 +362,7 @@ int SubtitleRenderer::current() const {
 	int time = -1;
 	for (; o != d->order.end(); ++o) {
 		Render &render = **o;
-		if (render.prev == render.comp->end() || !render.prev->text.hasWords())
+		if (render.prev == render.comp->end() || !render.prev->hasWords())
 			continue;
 		if (time < 0)
 			time = render.prev.key();
@@ -386,7 +383,7 @@ int SubtitleRenderer::previous() const {
 			continue;
 		CompIt it = r.prev;
 		while (it != r.comp->begin()) {
-			if ((--it)->text.hasWords()) {
+			if ((--it)->hasWords()) {
 				if (time < 0)
 					time = it.key();
 				else if (it.key() > time)
@@ -409,7 +406,7 @@ int SubtitleRenderer::next() const {
 			continue;
 		CompIt it = r.prev;
 		while (++it != r.comp->end()) {
-			if (it->text.hasWords()) {
+			if (it->hasWords()) {
 				if (time < 0)
 					time = it.key();
 				else if (it.key() < time)

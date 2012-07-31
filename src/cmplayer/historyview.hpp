@@ -16,13 +16,15 @@ public:
 	QList<Mrl> top(int count = 10) const;
 	int stoppedTime(const Mrl &mrl) const;
 	void save() const;
+	void setStopped(const Mrl &mrl, int pos, int duration) {onStopped(mrl, pos, duration);}
 signals:
 	void historyChanged();
 	void playRequested(const Mrl &mrl);
 private slots:
-	void handleStopped(Mrl mrl, int time, int duration);
-	void handleFinished(Mrl mrl);
-	void handleStateChanged(MediaState state, MediaState old);
+	void onStarted(Mrl mrl);
+	void onStopped(Mrl mrl, int time, int duration);
+	void onFinished(Mrl mrl);
+//	void onStateChanged(State state, State old);
 	void play(const QModelIndex &index);
 	void clearAll();
 	void showContextMenu();

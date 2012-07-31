@@ -25,7 +25,6 @@ namespace Enum {
 GeneratePlaylist::Map GeneratePlaylist::_map;
 const GeneratePlaylist GeneratePlaylist::Similar(0, "Similar");
 const GeneratePlaylist GeneratePlaylist::Folder(1, "Folder");
-const GeneratePlaylist GeneratePlaylist::None(2, "None");
 }
 
 namespace Enum {
@@ -33,7 +32,6 @@ SubtitleAutoload::Map SubtitleAutoload::_map;
 const SubtitleAutoload SubtitleAutoload::Matched(0, "Matched");
 const SubtitleAutoload SubtitleAutoload::Contain(1, "Contain");
 const SubtitleAutoload SubtitleAutoload::Folder(2, "Folder");
-const SubtitleAutoload SubtitleAutoload::None(3, "None");
 }
 
 namespace Enum {

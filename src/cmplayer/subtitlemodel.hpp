@@ -9,16 +9,16 @@ class SubtitleComponentModel : public ListModel {
 	Q_OBJECT
 public:
 	enum Column {Start = 0, End, Text, ColumnCount};
-	SubtitleComponentModel(const Subtitle::Component *comp, QObject *parent = 0);
-	void setCurrentNode(const Subtitle::Node *node);
+	SubtitleComponentModel(const SubtitleComponent *comp, QObject *parent = 0);
+	void setCurrentCaption(const SubtitleCaption *caption);
 	int currentRow() const;
 	void setVisible(bool visible);
 	QString name() const;
 signals:
 	void currentRowChanged(int row);
 private:
-	typedef Subtitle::Component::const_iterator c_iterator;
-	typedef Subtitle::Component::iterator iterator;
+	typedef SubtitleComponent::const_iterator c_iterator;
+	typedef SubtitleComponent::iterator iterator;
 	class Item;
 	struct Data;
 	Data *d;

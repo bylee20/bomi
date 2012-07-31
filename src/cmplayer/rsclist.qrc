@@ -26,5 +26,18 @@
         <file>translations/cmplayer_en.qm</file>
         <file>translations/cmplayer_ja.qm</file>
         <file>translations/cmplayer_ko.qm</file>
+        <file>shaders/i420_to_rgb_common.glsl</file>
+        <file>shaders/i420_to_rgb_filter.glsl</file>
+        <file>shaders/i420_to_rgb_kernel.glsl</file>
+        <file>shaders/i420_to_rgb_simple.glsl</file>
+        <file>img/application-x-subrip-32.png</file>
+        <file>img/cmplayer-32.png</file>
+        <file>img/format-text-color-32.png</file>
+        <file>img/games-config-background-32.png</file>
+        <file>img/input-mouse-32.png</file>
+        <file>img/media-playback-start-32.png</file>
+        <file>img/preferences-desktop-keyboard-32.png</file>
+        <file>img/view-sort-descending-32.png</file>
+        <file>img/run-build-32.png</file>
     </qresource>
 </RCC>

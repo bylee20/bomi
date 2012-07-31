@@ -14,11 +14,11 @@ class MainWindow : public QMainWindow {
 public:
 	MainWindow();
 	~MainWindow();
-	static MainWindow &get() {Q_ASSERT(obj != 0); return *obj;}
-//	PlayEngine *engine() const;
+	void unplug();
 public slots:
 	void openMrl(const Mrl &mrl, const QString &enc);
 	void openMrl(const Mrl &mrl);
+	void exit();
 signals:
 	void fullscreenChanged(bool full);
 private slots:
@@ -47,7 +47,7 @@ private slots:
 	void setVolume(int volume);
 	void setMuted(bool muted);
 	void setVideoSize(double times);
-	void updateState(MediaState state, MediaState old);
+	void updateState(State state, State old);
 	void setColorProperty(QAction *action);
 	void setSpeed(int speed);
 	void setAmp(int amp);
@@ -63,8 +63,8 @@ private slots:
 	void openSubFile();
 
 	void checkSubtitleMenu();
-	void checkSPUMenu();
-	void setSPU(QAction *act);
+	void checkSpuMenu();
+	void setSpu(QAction *act);
 
 	void checkPlayMenu();
 	void checkChapterMenu();
@@ -117,8 +117,6 @@ private:
 	void showMessage(const QString &cmd, bool value, int last = 2500);
 	struct Data;
 	Data *d;
-
-	static MainWindow *obj;
 };
 
 #endif // MAINWINDOW_HPP

@@ -53,6 +53,9 @@ void Pref::save() const {
 	RECORD_WRITE(r, normalizer_gain);
 	RECORD_WRITE(r, normalizer_smoothness);
 
+	RECORD_WRITE(r, enable_generate_playist);
+	RECORD_WRITE(r, sub_enable_autoload);
+	RECORD_WRITE(r, sub_enable_autoselect);
 	RECORD_WRITE_ENUM(r, generate_playlist);
 	RECORD_WRITE_ENUM(r, sub_autoload);
 	RECORD_WRITE_ENUM(r, sub_autoselect);
@@ -117,6 +120,9 @@ void Pref::load() {
 	RECORD_READ(r, normalizer_gain, 20);
 	RECORD_READ(r, normalizer_smoothness, 100);
 
+	RECORD_READ(r, enable_generate_playist, true);
+	RECORD_READ(r, sub_enable_autoload, true);
+	RECORD_READ(r, sub_enable_autoselect, true);
 	RECORD_READ_ENUM(r, generate_playlist, Enum::GeneratePlaylist::Folder);
 	RECORD_READ_ENUM(r, sub_autoload, Enum::SubtitleAutoload::Contain);
 	RECORD_READ_ENUM(r, sub_autoselect, Enum::SubtitleAutoselect::Matched);

@@ -202,9 +202,7 @@ void FavoritesView::slotDblClick(QTreeWidgetItem *i) {
 	if (item->isFolder())
 		item->setExpanded(item->isExpanded());
 	else {
-		d->engine->stop();
-		d->engine->setMrl(static_cast<MrlItem*>(item)->mrl());
-		d->engine->play();
+		d->engine->setMrl(static_cast<MrlItem*>(item)->mrl(), true);
 	}
 }
 
