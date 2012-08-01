@@ -1,5 +1,4 @@
 #include "osdstyle.hpp"
-//#include "ui_osdstyle_widget.h"
 #include <QtGui/QColorDialog>
 #include <QtGui/QFontDialog>
 #include <QtCore/QSettings>

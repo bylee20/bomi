@@ -34,7 +34,6 @@ public:
 	VideoRenderer(PlayEngine *engine);
 	~VideoRenderer();
 	double frameRate() const;
-	void addOsd(OsdRenderer *osd);
 	QSize sizeHint() const;
 	bool hasFrame() const;
 	QImage frameImage() const;
@@ -103,10 +102,12 @@ private:
 class VideoScreen : public QGLWidget, public QGLFunctions {
 	Q_OBJECT
 public:
-	VideoScreen(): QGLFunctions(context()) {setAcceptDrops(false);}
+	VideoScreen();
+	~VideoScreen();
 	QSize sizeHint() const {return r ? r->sizeHint() : QGLWidget::sizeHint();}
 	double aspectRatio() const {return (double)width()/(double)height();}
 	void redraw() {if (r) r->update();}
+	Overlay *overlay() const {return m_overlay;}
 signals:
 	void sizeChanged(const QSize &size);
 private:
@@ -116,6 +117,7 @@ private:
 	void mousePressEvent(QMouseEvent *e) {QGLWidget::mousePressEvent(e); if (r && (e->buttons() & Qt::LeftButton)) r->onMouseClicked(e->posF());}
 
 	VideoRenderer *r = nullptr;
+	Overlay *m_overlay;
 
 	friend void plug(VideoRenderer *renderer, VideoScreen *screen);
 	friend void unplug(VideoRenderer *renderer, VideoScreen *screen);

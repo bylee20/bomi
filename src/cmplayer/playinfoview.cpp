@@ -97,13 +97,11 @@ void PlayInfoView::onAboutToPlay() {
 		auto sh = mpctx->sh_audio;
 		auto ao = mpctx->ao;
 		d->ainput = codecInfo(tr("Audio codec"), sh->codec)
-			% _L("Input : ") % format(sh->format) % _L(" ") % bps(sh->i_bps) % _L("<br>")
-			% _L("&nbsp;&nbsp;&nbsp;=>&nbsp;&nbsp;&nbsp;") % af_fmt2str_short(sh->sample_format) % _L(" ")
-			% bps(sh->o_bps) % _L(" ")
+			% tr("Input") % _L(": ") % format(sh->format) % _L(" ") % bps(sh->i_bps) % _L(" ")
 			% _n(sh->samplerate/1000) % _L("kHz ")
 			% _n(sh->channels) % _L("ch ")
 			% _n(af_fmt2bits(sh->sample_format)) % _L("bits<br>")
-			% _L("Output: ") % af_fmt2str_short(mpctx->ao->format) % _L(" ")
+			% tr("Output") % _L(": ") % af_fmt2str_short(mpctx->ao->format) % _L(" ")
 			% bps(ao->bps) % _L(" ")
 			% _n(ao->samplerate/1000) % _L("kHz ")
 			% _n(ao->channels) % _L("ch ")
@@ -137,13 +135,11 @@ void PlayInfoView::update() {
 	QString text = _L("<p>")
 		% d->engine->mediaName() % _L("<br>")
 		% tr("CPU usage") % _L(": ") % toString(cpu.percent*100.0, 1) % _L("% ")
-		% tr("RAM usage") % _L(": ") % toString((double)mem.resident/(1024*1024), 1) % _L("MB</p>")
-		% _L("<p>")
+		% tr("RAM usage") % _L(": ") % toString((double)mem.resident/(1024*1024), 1) % _L("MB")
+		% _L("<br></p><p>")
 		% d->vinput % _L("<br>")
-		% d->voutput
-		% _n(fps, 1) % _L("fps ")
-		% _n(d->video->format().bps(fps)/1024.0, 1) % _L("kbps")
-		% _L("</p><p>")
+		% d->voutput % _n(fps, 1) % _L("fps ") % _n(d->video->format().bps(fps)/1024.0, 1) % _L("kbps")
+		% _L("<br></p><p>")
 		% d->ainput
 		% _L("</p>");
 	if (d->visible)

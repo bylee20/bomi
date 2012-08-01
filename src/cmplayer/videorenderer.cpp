@@ -54,18 +54,18 @@ struct MPlayerOsdWrapper : public OsdWrapper {
 		m_pos.rx() = x;
 		m_pos.ry() = y;
 		const int length = h*stride;
-		if ((empty = !(length > 0 && count() > 0 && m_shader)))
+		if ((m_empty = !(length > 0 && count() > 0 && m_shader)))
 			return;
 		m_alpha.resize(length);
 		char *data = m_alpha.data();
 		for (int i=0; i<length; ++i)
 			*data++ = -*srca++;
-		bind(QSize(stride, h), src, 0);
-		bind(QSize(stride, h), m_alpha.data(), 1);
+		upload(QSize(stride, h), src, 0);
+		upload(QSize(stride, h), m_alpha.data(), 1);
 	}
 
 	void render() {
-		if (empty)
+		if (m_empty)
 			return;
 		m_shader->bind();
 		m_shader->setUniformValue("tex_y", 4);
@@ -77,16 +77,16 @@ struct MPlayerOsdWrapper : public OsdWrapper {
 		glActiveTexture(GL_TEXTURE4);
 
 		float textureCoords[] = {
-			0.f, 0.f,					sub_x(), 0.f,
-			sub_x(), sub_y(),			0.f, sub_y()
+			0.f, 0.f,					sub_x(0), 0.f,
+			sub_x(0), sub_y(0),			0.f, sub_y(0)
 		};
 
 		const double expand_x = frameVtx.width()/frameSize.width();
 		const double expand_y = frameVtx.height()/frameSize.height();
 		const float x1 = m_pos.x()*expand_x + frameVtx.x();
 		const float y1 = m_pos.y()*expand_y + frameVtx.y();
-		const float x2 = x1 + width()*expand_x;
-		const float y2 = y1 + height()*expand_y;
+		const float x2 = x1 + width(0)*expand_x;
+		const float y2 = y1 + height(0)*expand_y;
 		float vertexCoords[] = {
 			x1, y1,			x2, y1,
 			x2, y2,			x1, y2
@@ -272,7 +272,6 @@ struct VideoRenderer::Data {
 	int align = Qt::AlignCenter;
 	QSize renderSize;
 	LogoDrawer logo;
-	Overlay overlay;
 	GLuint texture[3];
 	VideoFrame *buffer, *frame, buf[2];
 	QRectF vtx;
@@ -311,6 +310,7 @@ void VideoRenderer::drawAlpha(void *p, int x, int y, int w, int h, uchar *src, u
 	if (d->gl) {
 		d->gl->makeCurrent();
 		d->osd.draw(x, y, w, h, src, srca, stride);
+		d->gl->doneCurrent();
 	}
 }
 
@@ -361,7 +361,6 @@ void VideoRenderer::setCurrentStream(int id) {
 void VideoRenderer::setScreen(VideoScreen *gl) {
 	if (d->gl == gl)
 		return;
-	d->overlay.setScreen(gl);
 	if (d->gl) {
 		d->gl->makeCurrent();
 		qDeleteAll(d->shaders);
@@ -499,10 +498,6 @@ int VideoRenderer::outputWidth() const {
 	return d->dar > 0.01 ? (int)(d->dar*(double)d->format.height + 0.5) : d->format.width;
 }
 
-void VideoRenderer::addOsd(OsdRenderer *osd) {
-	d->overlay.add(osd);
-}
-
 double VideoRenderer::targetAspectRatio() const {
 	if (d->aspect > 0.0)
 		return d->aspect;
@@ -602,7 +597,8 @@ void VideoRenderer::updateSize() {
 	if (d->vtx != vtx) {
 		d->vtx = vtx;
 		d->osd.frameVtx = d->vtx;
-		d->overlay.setArea(QRect(QPoint(0, 0), widget.toSize()), d->vtx.toRect());
+		if (d->gl)
+			d->gl->overlay()->setArea(QRect(QPoint(0, 0), widget.toSize()), d->vtx.toRect());
 	}
 }
 
@@ -692,16 +688,18 @@ void VideoRenderer::render() {
 		if (0.0 <= xy.x() && xy.x() <= widget.width())
 			fillRect(xy.x(), .0, widget.width()-xy.x(), widget.height());
 
-		d->overlay.renderToScreen();
+		d->gl->overlay()->renderToScreen();
 		d->osd.render();
 		d->gl->swapBuffers();
 		d->fps.frameDrawn(d->frameId);
 	} else {
+		d->gl->makeCurrent();
 		QPainter painter(d->gl);
 		d->logo.draw(&painter, QRectF(QPointF(0, 0), widget));
 		painter.beginNativePainting();
-		d->overlay.renderToScreen();
+		d->gl->overlay()->renderToScreen();
 		painter.endNativePainting();
+		d->gl->doneCurrent();
 	}
 	if (d->render)
 		d->render = false;
@@ -784,6 +782,7 @@ void plug(VideoRenderer *renderer, VideoScreen *screen) {
 	screen->makeCurrent();
 	renderer->d->osd.alloc();
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	screen->doneCurrent();
 }
 
 void unplug(VideoRenderer *renderer, VideoScreen *screen) {
@@ -791,4 +790,17 @@ void unplug(VideoRenderer *renderer, VideoScreen *screen) {
 	renderer->d->osd.free();
 	renderer->setScreen(nullptr);
 	screen->r = nullptr;
+	screen->doneCurrent();
+}
+
+VideoScreen::VideoScreen()
+: QGLFunctions(context()) {
+	doneCurrent();
+	m_overlay = new Overlay(this);
+	setAcceptDrops(false);
+}
+
+VideoScreen::~VideoScreen() {
+	doneCurrent();
+	delete m_overlay;
 }

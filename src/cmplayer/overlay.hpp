@@ -1,6 +1,7 @@
 #ifndef OVERLAY_HPP
 #define OVERLAY_HPP
 
+#include <QtCore/QDebug>
 #include <QtCore/QObject>
 #include <QtOpenGL/QGLFunctions>
 
@@ -29,24 +30,24 @@ public:
 		m_size.resize(count);		m_size.fill(QSize(0, 0));
 		m_texSize = m_size;
 	}
-	GLuint texture(int i = 0) const {return m_texture[i];}
-	float dx(int i=0) const {return 1.0f/m_texSize[i].width();}
-	float dy(int i=0) const {return 1.0f/m_texSize[i].height();}
-	float sub_x(int i=0) const {return m_sub_x[i];}
-	float sub_y(int i=0) const {return m_sub_y[i];}
-	QSize size(int i=0) const {return m_size[i];}
-	int width(int i=0) const {return m_size[i].width();}
-	int height(int i=0) const {return m_size[i].height();}
-	void bind(const QSize &size, const GLvoid *data, int i = 0) {
+	GLuint texture(int i) const {return m_texture[i];}
+	float dx(int i) const {return 1.0f/m_texSize[i].width();}
+	float dy(int i) const {return 1.0f/m_texSize[i].height();}
+	float sub_x(int i) const {return m_sub_x[i];}
+	float sub_y(int i) const {return m_sub_y[i];}
+	QSize size(int i) const {return m_size[i];}
+	int width(int i) const {return m_size[i].width();}
+	int height(int i) const {return m_size[i].height();}
+	void upload(const QSize &size, const GLvoid *data, int i, bool alloc = false) {
 		glBindTexture(GL_TEXTURE_2D, m_texture[i]);
-		if (size.width() <= m_texSize[i].width() && size.height() <= m_texSize[i].height()) {
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.width(), size.height(), _format(i), _type(i), data);
-			m_sub_x[i] = (double)size.width()/m_texSize[i].width();
-			m_sub_y[i] = (double)size.height()/m_texSize[i].height();
-		} else {
+		if (alloc || size.width() > m_texSize[i].width() || size.height() > m_texSize[i].height()) {
 			glTexImage2D(GL_TEXTURE_2D, 0, _internalFormat(i), size.width(), size.height(), 0, _format(i), _type(i), data);
 			m_texSize[i] = size;
 			m_sub_x[i] = m_sub_y[i] = 1.0f;
+		} else {
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.width(), size.height(), _format(i), _type(i), data);
+			m_sub_x[i] = (double)size.width()/m_texSize[i].width();
+			m_sub_y[i] = (double)size.height()/m_texSize[i].height();
 		}
 		m_size[i] = size;
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -56,7 +57,6 @@ public:
 	}
 	bool isEmpty() const {return m_empty;}
 	int count() const {return m_texture.size();}
-	bool empty = true;
 protected:
 	virtual GLint _internalFormat(int idx) const = 0;
 	virtual GLenum _format(int idx) const = 0;
@@ -76,11 +76,11 @@ class Overlay: public QObject, public QGLFunctions {
 public:
 	Overlay(VideoScreen *screen = 0);
 	~Overlay();
-	void setScreen(VideoScreen *screen);
 	QGLWidget *screen() const;
 	void setArea(const QRect &renderable, const QRect &frame);
 	void add(OsdRenderer *osd);
 	void render(QPainter *painter);
+	// call from screen rendering only
 	void renderToScreen();
 	OsdRenderer *take(OsdRenderer *osd);
 private slots:

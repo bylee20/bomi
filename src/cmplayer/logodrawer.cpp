@@ -38,6 +38,7 @@ void LogoDrawer::bind(QGLWidget *gl) {
 	if (m_gl) {
 		m_gl->makeCurrent();
 		glDeleteTextures(1, &m_texture);
+		m_gl->doneCurrent();
 		m_gl = nullptr;
 	}
 	if (gl) {
@@ -47,6 +48,7 @@ void LogoDrawer::bind(QGLWidget *gl) {
 		glBindTexture(GL_TEXTURE_2D, m_texture);
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, m_logo.width(), m_logo.height()
 			, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, m_logo.bits());
+		m_gl->doneCurrent();
 	}
 }
 

@@ -3,43 +3,51 @@
 #include "osdrenderer.hpp"
 #include <QtOpenGL/QGLShaderProgram>
 #include <QtCore/QDebug>
+#include <QtCore/QTime>
 
 extern "C" void *fast_memcpy(void *to, const void *from, size_t len);
 
-static QGLShaderProgram *shader = nullptr;
+//static QGLShaderProgram *shader = nullptr;
 
 struct ScreenOsdWrapper : public OsdWrapper {
-	bool cached;
+	bool m_needToUpload = false;
 	ScreenOsdWrapper(OsdRenderer *renderer) {m_renderer = renderer;}
-	void free() {OsdWrapper::free(); cached = false;}
 	void cache() {
 		if (!m_renderer || !count())
 			return;
+		QByteArray &buffer = m_buffer[m_drawing];
 		m_renderer->prepareToRender(QPointF(0, 0));
-		const QSize size = m_renderer->size().toSize();
-		const int length = size.width()*size.height()*4;
-		if (!(empty = length <= 0)) {
-			if (m_buffer.length() < length || m_buffer.length() > length*2)
-				m_buffer.resize(length);
-			m_buffer.fill(0x0, length);
-			m_image = QImage((uchar*)m_buffer.data(), size.width(), size.height(), QImage::Format_ARGB32_Premultiplied);
-			if (!m_image.isNull()) {
-				QPainter painter(&m_image);
-				m_renderer->render(&painter, QPointF(0, 0));
-				painter.end();
-				bind(m_image.size(), m_image.bits());
-			}
+		m_size = m_renderer->size().toSize();
+		const int length = m_size.width()*m_size.height()*4;
+		m_empty = length <= 0;
+		if (!m_empty && (buffer.length() < length || buffer.length() > length*2))
+			buffer.resize(length);
+		if (!m_empty) {
+			buffer.fill(0x0, length);
+			QImage image((uchar*)buffer.data(), m_size.width(), m_size.height(), QImage::Format_ARGB32_Premultiplied);
+			Q_ASSERT(!image.isNull());
+			QPainter painter(&image);
+			m_renderer->render(&painter, QPointF(0, 0));
+			painter.end();
+			qSwap(m_drawing, m_interm);
+			if (!m_needToUpload)
+				m_needToUpload = true;
 		}
-		cached = true;
+
 	}
 	OsdRenderer *renderer() const {return m_renderer;}
-	void render(const QPointF &rpos, const QPointF &fpos) {
-		QGLShaderProgram *shader = ::shader;
-		if (!shader)
+	void render(QGLFunctions *func, const QPointF &rpos, const QPointF &fpos, QGLShaderProgram *shader) {
+		if (m_empty)
 			return;
+		if (m_needToUpload) {
+			m_needToUpload = false;
+			qSwap(m_interm, m_showing);
+			upload(m_size, m_buffer[m_showing].data(), 0);
+		}
+		const int idx = 0;
 		shader->bind();
-		shader->setUniformValue("tex", 4);
-		shader->setUniformValue("dxdy", dx(), dy());
+		shader->setUniformValue("tex", 0);
+		shader->setUniformValue("dxdy", dx(idx), dy(idx));
 		if (renderer()->style().has_shadow) {
 			shader->setUniformValue("shadow_color", renderer()->style().shadow_color);
 			QPointF pos;
@@ -49,14 +57,14 @@ struct ScreenOsdWrapper : public OsdWrapper {
 			shader->setUniformValue("shadow_color", 0.f, 0.f, 0.f, 0.f);
 			shader->setUniformValue("shadow_offset", 0.f, 0.f);
 		}
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, texture());
+		func->glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture(idx));
 		float textureCoords[] = {
-			0.f, 0.f,					sub_x(), 0.f,
-			sub_x(), sub_y(),			0.f, sub_y()
+			0.f, 0.f,						sub_x(idx), 0.f,
+			sub_x(idx), sub_y(idx),			0.f, sub_y(idx)
 		};
 		const QPointF pos = renderer()->posHint() + (renderer()->letterboxHint() ? rpos : fpos);
-		const QSizeF size = this->size();
+		const QSizeF size = this->size(idx);
 		const float x1 = pos.x(), y1 = pos.y();
 		const float x2 = x1 + size.width(), y2 = y1 + size.height();
 		float vertexCoords[] = {
@@ -84,9 +92,10 @@ private:
 	GLenum _format(int) const {return GL_BGRA;}
 	GLenum _type(int) const {return GL_UNSIGNED_INT_8_8_8_8_REV;}
 	int _count() const {return 1;}
-	QImage m_image;
-	QByteArray m_buffer;
+	QByteArray m_buffer[3];
 	OsdRenderer *m_renderer;
+	int m_drawing = 0, m_interm = 1, m_showing = 2;
+	QSize m_size;
 };
 
 
@@ -96,54 +105,47 @@ struct Overlay::Data {
 	VideoScreen *screen;
 	QRect renderable;
 	QRect frame;
-	bool pending;
+	bool pending = false;
+	QGLShaderProgram *shader;
 };
 
 
 Overlay::Overlay(VideoScreen *screen)
 : d(new Data) {
+	Q_ASSERT(screen);
 	d->screen = screen;
-	d->pending = false;
+	d->ctx = new QGLWidget(nullptr, screen);
+	d->ctx->makeCurrent();
+	initializeGLFunctions(d->ctx->context());
+	d->shader = new QGLShaderProgram(d->ctx->context());
+	d->shader->addShaderFromSourceCode(QGLShader::Fragment,
+		"uniform sampler2D tex;"
+		"uniform vec2 dxdy;"
+		"uniform vec2 shadow_offset;"
+		"uniform vec4 shadow_color;"
+		"void main() {"
+		"	vec4 top = texture2D(tex, gl_TexCoord[0].xy);"
+		"	float alpha = texture2D(tex, gl_TexCoord[0].xy - dxdy*shadow_offset).a;"
+		"	gl_FragColor = top + alpha*shadow_color*(1.0 - top.a);"
+		"}");
+	d->shader->link();
+	d->ctx->doneCurrent();
 }
 
 Overlay::~Overlay() {
+	d->ctx->makeCurrent();
+	for (auto osd : d->osds)
+		osd->free();
+	delete d->shader;
 	qDeleteAll(d->osds);
+	d->ctx->doneCurrent();
+	delete d->ctx;
 	delete d;
 }
 
 void Overlay::cache() {
 	for (auto osd : d->osds)
 		osd->cache();
-}
-
-void Overlay::setScreen(VideoScreen *screen) {
-	if (d->screen != screen) {
-		if (!screen) {
-			d->screen->makeCurrent();
-			for (auto osd : d->osds)
-				osd->free();
-			delete shader;
-			shader = nullptr;
-		}
-		if ((d->screen = screen)) {
-			d->screen->makeCurrent();
-			initializeGLFunctions(d->screen->context());
-			shader = new QGLShaderProgram(d->screen->context());
-			shader->addShaderFromSourceCode(QGLShader::Fragment,
-				"uniform sampler2D tex;"
-				"uniform vec2 dxdy;"
-				"uniform vec2 shadow_offset;"
-				"uniform vec4 shadow_color;"
-				"void main() {"
-				"	vec4 top = texture2D(tex, gl_TexCoord[0].xy);"
-				"	float alpha = texture2D(tex, gl_TexCoord[0].xy - dxdy*shadow_offset).a;"
-				"	gl_FragColor = top + alpha*shadow_color*(1.0 - top.a);"
-				"}");
-			shader->link();
-			for (auto osd : d->osds)
-				osd->alloc();
-		}
-	}
 }
 
 QGLWidget *Overlay::screen() const {
@@ -156,36 +158,36 @@ void Overlay::setArea(const QRect &renderable, const QRect &frame) {
 	d->pending = true;
 	d->renderable = renderable;
 	d->frame = frame;
-	d->pending = true;
+//	d->ctx->makeCurrent();
 	for (auto it = d->osds.begin(); it != d->osds.end(); ++it) {
 		if (it.key()->setArea(renderable.size(), frame.size()))
-			it.value()->cached = false;
+			it.value()->cache();
 	}
+//	d->ctx->doneCurrent();
 	d->pending = false;
-	if (d->screen)
-		d->screen->redraw();
+	d->screen->redraw();
 }
 
 void Overlay::update() {
-	if (d->pending)
-		return;
 	auto it = d->osds.find(qobject_cast<OsdRenderer*>(sender()));
-	if (it != d->osds.end())
-		it.value()->cached = false;
-	if (d->screen)
+	if (!d->pending  && it != d->osds.end()) {
+//		d->ctx->makeCurrent();
+		it.value()->cache();
+//		it.value()->texture(0);
+//		d->ctx->doneCurrent();
 		d->screen->redraw();
+	}
 }
 
 void Overlay::add(OsdRenderer *osd) {
 	osd->setArea(d->renderable.size(), d->frame.size());
 	connect(osd, SIGNAL(needToRerender()), this, SLOT(update()));
 	connect(osd, SIGNAL(destroyed()), this, SLOT(onOsdDeleted()));
+	d->ctx->makeCurrent();
 	auto wrapper = new ScreenOsdWrapper(osd);
 	d->osds.insert(osd, wrapper);
-	if (d->screen) {
-		d->screen->makeCurrent();
-		wrapper->alloc();
-	}
+	wrapper->alloc();
+	d->ctx->doneCurrent();
 }
 
 void Overlay::onOsdDeleted() {
@@ -193,7 +195,9 @@ void Overlay::onOsdDeleted() {
 }
 
 OsdRenderer *Overlay::take(OsdRenderer *osd) {
+	d->ctx->makeCurrent();
 	delete d->osds.take(osd);
+	d->ctx->doneCurrent();
 	return osd;
 }
 
@@ -203,19 +207,14 @@ void Overlay::render(QPainter *painter) {
 }
 
 void Overlay::renderToScreen() {
-	d->screen->makeCurrent();
 	const QPointF rpos = d->renderable.topLeft();
 	const QPointF fpos = d->frame.topLeft();
 	for (auto it = d->osds.begin(); it != d->osds.end(); ++it) {
 		auto osd = it.value();
-		if (!osd->cached)
-			osd->cache();
-		if (!osd->empty)
-			osd->render(rpos, fpos);
+		if (!osd->isEmpty())
+			osd->render(this, rpos, fpos, d->shader);
 	}
 }
-
-
 
 //#include <QtGui/QTextDocument>
 

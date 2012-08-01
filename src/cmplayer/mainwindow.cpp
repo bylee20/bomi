@@ -1,4 +1,5 @@
 #include "mainwindow_p.hpp"
+#include "overlay.hpp"
 #include "prefdialog.hpp"
 #include <QtCore/QBuffer>
 #include <QtGui/QDesktopWidget>
@@ -149,10 +150,10 @@ MainWindow::MainWindow(): d(new Data) {
 	mb->addMenu(&win);
 	mb->addMenu(&help);
 #endif
-	d->video.addOsd(&d->playInfo.osd());
-	d->video.addOsd(&d->subtitle.osd());
-	d->video.addOsd(&d->timeLine);
-	d->video.addOsd(&d->message);
+	d->screen->overlay()->add(&d->playInfo.osd());
+	d->screen->overlay()->add(&d->subtitle.osd());
+	d->screen->overlay()->add(&d->timeLine);
+	d->screen->overlay()->add(&d->message);
 }
 
 MainWindow::~MainWindow() {
