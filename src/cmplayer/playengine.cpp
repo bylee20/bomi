@@ -202,6 +202,7 @@ mp_cmd *PlayEngine::waitCmd(MPContext *mpctx, int timeout, int peek) {
 }
 
 int PlayEngine::runCmd(MPContext *mpctx, mp_cmd_t *mpcmd) {
+//	qDebug() << mpcmd->id << mpcmd->args[0].type;
 	if (!mpcmd || mpcmd->id != -1)
 		return 0;
 	PlayEngine *engine = reinterpret_cast<Context*>(mpctx)->p;
@@ -362,7 +363,6 @@ void PlayEngine::run() {
 				break;
 			// -1: quit 0: no seek 1: seek done
 			res = mpctx_process_mp_cmds(d->mpctx);
-
 			if (res & Cmd::Break)
 				break;
 			if (d->videoUpdate && d->mpctx->paused) {
@@ -444,7 +444,7 @@ void PlayEngine::run() {
 			break;
 		}
 	}
-		qDebug() << "finalization started";
+	qDebug() << "finalization started";
 	mpctx_delete(d->mpctx);
 	qDebug() << "mpctx deleted";
 	vo_cmplayer = nullptr;

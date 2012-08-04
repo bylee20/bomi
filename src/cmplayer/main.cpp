@@ -51,6 +51,7 @@ int main(int argc, char **argv) {
 	if (!mrl.isEmpty())
 		mw->openMrl(mrl);
 	const int ret = app.exec();
+	mw->exit();
 	qDebug() << "gui loop end";
 	PlayEngine::obj->wait();
 	qDebug() << "playing thread finished";

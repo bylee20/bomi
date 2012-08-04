@@ -3,6 +3,7 @@
 *.a
 *DS_Store
 *.qm
+moc_*.cpp
 build/*
 src/build-interm/*
 src/libav/.config
@@ -83,3 +84,7 @@ src/mplayer2/libmpdemux/ebml_types.h
 src/mplayer2/mplayer
 src/mplayer2/version.h
 src/cmplayer/cmplayer.pro.user
+*.user
+src/cmplayer_widgets/Makefile
+src/cmplayer_widgets/Makefile.Debug
+src/cmplayer_widgets/Makefile.Release

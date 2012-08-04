@@ -67,6 +67,7 @@ struct MainWindow::Data {
 #ifndef Q_WS_MAC
 	QSystemTrayIcon *tray;
 #endif
+	QString filePath;
 // methods
 	void sync_subtitle_file_menu() {
 		if (changingSub)

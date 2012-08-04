@@ -43,8 +43,9 @@ App::App(int &argc, char **argv)
 	setOrganizationDomain("xylosper.net");
 	setApplicationName("CMPlayer");
 	setQuitOnLastWindowClosed(false);
+#ifndef Q_WS_MAC
 	setWindowIcon(defaultIcon());
-
+#endif
 	auto makeStyleNameList = [this] () {
 		auto names = QStyleFactory::keys();
 		const auto defaultName = style()->objectName();

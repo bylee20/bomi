@@ -1,4 +1,5 @@
 #include "skin.hpp"
+#include "info.hpp"
 #include <QtCore/QMetaProperty>
 #include <QtGui/QLayout>
 #include "rootmenu.hpp"
@@ -14,7 +15,7 @@
 #include <QtCore/QDir>
 #include <QtGui/QWidget>
 #include <QtCore/QDebug>
-#include "../cmplayer-widgets/widgets.hpp"
+#include "../cmplayer_widgets/widgets.hpp"
 #include <QtPlugin>
 
 Q_IMPORT_PLUGIN(cmplayer_widgets)
@@ -36,7 +37,9 @@ static bool operator < (const QLatin1String &lhs, const QStringRef &rhs) {return
 
 // should be or
 enum Placeholder : int {
-	media_duration = 0,
+	app_name,
+	app_version,
+	media_duration,
 	media_name,
 	media_number,
 	media_position,
@@ -59,6 +62,8 @@ static bool operator < (const QStringRef &lhs, const PlaceholderInfo &rhs) {retu
 static QList<PlaceholderInfo> makePlaceholders() {
 	QList<PlaceholderInfo> list;
 #define add(a) {list << PlaceholderInfo(a, "[:" #a ":]");}
+	add(app_name);
+	add(app_version);
 	add(media_duration);
 	add(media_name);
 	add(media_number);
@@ -129,6 +134,7 @@ struct PlaceholderLabel {
 		return ph;
 	}
 	const QMap<Placeholder, QList<int> > placeholders() const {return m_phIdx;}
+	const Label *label() const {return m_label;}
 private:
 	QMap<Placeholder, QList<int> > m_phIdx;
 	QStringList m_tokens;
@@ -148,14 +154,19 @@ struct Skin::Data {
 	VideoRenderer *video = nullptr;
 	QMap<QAction*, QList<QAbstractButton*> > buttons;
 	QList<PlaceholderLabel*> uniqueLabelList;
+	Label *titleProxy;
 	QVector<QList<PlaceholderLabel*> > labels = decltype(labels)(PlaceholderMax);
 	int prevPos = -1, mediaNumber = 0, mediaCount = 0;
 };
 
 Skin::Skin(QObject *parent)
-: QObject (parent), d(new Data) {}
+: QObject (parent), d(new Data) {
+	d->titleProxy = new Label;
+	connect(d->titleProxy, SIGNAL(textChanged(QString)), this, SIGNAL(windowTitleChanged(QString)));
+}
 
 Skin::~Skin() {
+	delete d->titleProxy;
 	delete d->w;
 	delete d;
 }
@@ -217,6 +228,8 @@ void Skin::initializePlaceholders() {
 		setPlaceholder(media_name, tr("No media"));
 		setPlaceholder(media_state, tr("Unusable"));
 	}
+	setPlaceholder(app_name, Info::name());
+	setPlaceholder(app_version, Info::version());
 	setPlaceholder(media_number, QString::number(d->mediaNumber));
 	setPlaceholder(total_media_count, QString::number(d->mediaCount));
 }
@@ -321,6 +334,8 @@ bool Skin::load(const QString &path, QWidget *parent) {
 		}
 
 		auto labels = d->w->findChildren<Label*>();
+		labels << d->titleProxy;
+		d->titleProxy->setText(d->w->windowTitle());
 		for (auto label : labels) {
 			auto ph = PlaceholderLabel::make(label);
 			if (!ph)
@@ -331,8 +346,6 @@ bool Skin::load(const QString &path, QWidget *parent) {
 				d->labels[it.key()] << ph;
 		}
 	}
-	if (d->w && d->screen)
-		emit windowTitleChanged(d->w->windowTitle());
 	return d->w && d->screen;
 }
 
@@ -397,9 +410,18 @@ bool Skin::contains(const QPoint &gpos) const {
 }
 
 void Skin::setPlaceholder(Placeholder ph, const QString &text) {
-	if (!d->labels[ph].isEmpty()) {
-		for (auto label : d->labels[ph])
-			label->set(ph, text);
+	if (d->labels[ph].isEmpty())
+		return;
+	for (auto label : d->labels[ph]) {
+		label->set(ph, text);
+		if (label->label() != d->titleProxy || ph != media_name || !d->engine)
+			continue;
+		const auto file = d->engine->mrl().toLocalFile();
+		if (file.isEmpty())
+			continue;
+		QFileInfo info(file);
+		qDebug() << info.absoluteFilePath();
+		emit windowFilePathChanged(info.absoluteFilePath());
 	}
 }
 

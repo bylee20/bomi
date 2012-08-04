@@ -82,6 +82,8 @@ private slots:
 
 	void updateStaysOnTop();
 	void takeSnapshot();
+
+	void onWindowFilePathChanged(const QString &path);
 private:
 //	ControlWidget *createControlWidget();
 //	QWidget *createCentralWidget(QWidget *video, QWidget *control);

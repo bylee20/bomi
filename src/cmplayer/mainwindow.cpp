@@ -19,13 +19,10 @@ MainWindow::MainWindow(): d(new Data) {
 	setMouseTracking(true);
 	d->skin.load("/Users/xylosper/dev/cmplayer/src/cmplayer/skins/default/skin.ui");
 	d->skin.connectTo(&d->engine, &d->audio, &d->video);
-	d->skin.initializePlaceholders();
-	setCentralWidget(d->skin.widget());
 	auto screen = d->skin.screen();
 	d->screen->setParent(screen);
 	d->screen->move(0, 0);
 	d->screen->resize(screen->size());
-	setWindowTitle(QString("CMPlayer %1").arg(Info::version()));
 	setAcceptDrops(true);
 
 	plug(&d->engine, &d->audio);
@@ -119,6 +116,9 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(d->tray, activated(QSystemTrayIcon::ActivationReason), this, handleTray(QSystemTrayIcon::ActivationReason));
 #endif
 
+	CONNECT(&d->skin, windowTitleChanged(QString), this, setWindowTitle(QString));
+	CONNECT(&d->skin, windowFilePathChanged(QString), this, onWindowFilePathChanged(QString));
+
 	addActions(d->menu.actions());
 	auto makeContextMenu = [this, &open, &play, &video, &audio, &sub, &tool, &win] () {
 		auto menu = new QMenu(this);
@@ -162,11 +162,20 @@ MainWindow::MainWindow(): d(new Data) {
 	d->screen->overlay()->add(&d->timeLine);
 	d->screen->overlay()->add(&d->message);
 
+	d->skin.initializePlaceholders();
+	setCentralWidget(d->skin.widget());
+
 	resize(minimumSizeHint());
 }
 
 MainWindow::~MainWindow() {
 	delete d;
+}
+
+void MainWindow::onWindowFilePathChanged(const QString &path) {
+	d->filePath = path;
+	if (isVisible())
+		setWindowFilePath(path);
 }
 
 void MainWindow::unplug() {
@@ -175,17 +184,20 @@ void MainWindow::unplug() {
 }
 
 void MainWindow::exit() {
-	const auto stop = !d->engine.isStopped() && !d->engine.isFinished();
-	const auto mrl = d->engine.mrl();
-	const auto pos = d->engine.position();
-	const auto duration = d->engine.duration();
-	d->engine.quitRunning();
-	if (stop)
-		d->history->setStopped(mrl, pos, duration);
-	d->recent.setLastPlaylist(d->playlist->playlist());
-	d->recent.setLastMrl(d->engine.mrl());
-	d->save_state();
-	app()->quit();
+	static bool done = false;
+	if (!done) {
+		const auto stop = !d->engine.isStopped() && !d->engine.isFinished();
+		const auto mrl = d->engine.mrl();
+		const auto pos = d->engine.position();
+		const auto duration = d->engine.duration();
+		d->engine.quitRunning();
+		if (stop)
+			d->history->setStopped(mrl, pos, duration);
+		d->recent.setLastPlaylist(d->playlist->playlist());
+		d->recent.setLastMrl(d->engine.mrl());
+		d->save_state();
+		app()->quit();
+	}
 }
 
 void MainWindow::onScreenSizeChanged(const QSize &size) {
@@ -534,6 +546,7 @@ void MainWindow::setFullScreen(bool full) {
 	d->skin.setVisible(!full);
 	d->dontPause = false;
 	emit fullscreenChanged(full);
+	setWindowFilePath(full ? QString() : d->filePath);
 }
 
 void MainWindow::setVideoSize(double rate) {
@@ -752,18 +765,8 @@ void MainWindow::setSyncDelay(int diff) {
 #include <QtCore/QFile>
 
 void MainWindow::setPref() {
-	QFile file("/Users/xylosper/dev/cmplayer/src/cmplayer/skins/default/skin.ui");
-	QFileInfo info(file);
-
-	qDebug() << file.open(QFile::ReadOnly);
-	QUiLoader loader;
-	loader.setWorkingDirectory(info.absoluteDir());
-	QWidget *w = loader.load(&file, 0);//->show();
-//	w->setStyleSheet(w->styleSheet().replace("%d%", info.absolutePath()));
-	qDebug() << w;
-	w->show();
-//	PrefDialog dlg(this);
-//	dlg.exec();
+	PrefDialog dlg(this);
+	dlg.exec();
 //	static Pref::Dialog *dlg = 0;
 //	if (!dlg) {
 //		dlg = new Pref::Dialog(this);
@@ -782,6 +785,7 @@ void MainWindow::showEvent(QShowEvent *event) {
 		d->engine.play();
 		d->pausedByHiding = false;
 	}
+	setWindowFilePath(d->filePath);
 }
 
 void MainWindow::hideEvent(QHideEvent *event) {
@@ -831,7 +835,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 	}
 #else
 	event->accept();
-	exit();
+//	exit();
 #endif
 }
 

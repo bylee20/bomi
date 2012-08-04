@@ -27,6 +27,7 @@ public slots:
 	void setTotalMediaCount(int count);
 signals:
 	void windowTitleChanged(const QString &title);
+	void windowFilePathChanged(const QString &filePath);
 private slots:
 	void onDurationChanged(int duration);
 	void onTick(int tick);
