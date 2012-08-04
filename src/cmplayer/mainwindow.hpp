@@ -40,7 +40,7 @@ private slots:
 	void openDvd();
 	void openLocation(const QString &loc);
 	void openUrl();
-	void togglePlayPause();
+	void pause(bool pause);
 	void showContextMenu(const QPoint &pos);
 	void updateMrl(const Mrl &mrl);
 	void seek(int diff);

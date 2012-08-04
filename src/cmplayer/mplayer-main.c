@@ -349,7 +349,7 @@ int use_filename_title;
 
 #include "metadata.h"
 
-enum MpError {NoMpError = 0, UserInterrupted, OpenStreamError, NoStreamError, InitVideoFilterError, InitAudioFilterError};
+enum {NoMpError = 0, UserInterrupted, OpenStreamError, NoStreamError, InitVideoFilterError, InitAudioFilterError};
 enum {Unknown = 0, Quit = 1, Load = 2, Stop = 4, VideoUpdate = 8, Break = Quit | Load | Stop};
 extern struct vo* vo_cmplayer;
 extern void (*mpctx_paused_changed)(MPContext *);

@@ -1,7 +1,10 @@
 *.o
 *.d
 *.a
+*DS_Store
+*.qm
 build/*
+src/build-interm/*
 src/libav/.config
 src/libav/.version
 src/libav/config.asm
@@ -79,3 +82,4 @@ src/mplayer2/libmpdemux/ebml_defs.c
 src/mplayer2/libmpdemux/ebml_types.h
 src/mplayer2/mplayer
 src/mplayer2/version.h
+src/cmplayer/cmplayer.pro.user

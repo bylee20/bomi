@@ -20,6 +20,7 @@ extern "C" {
 #include <libmpcodecs/vd.h>
 #include <libvo/video_out.h>
 #include <libao2/audio_out.h>
+#include <libaf/af.h>
 }
 
 struct PlayInfoView::Data {
@@ -124,12 +125,31 @@ void PlayInfoView::setVisible(bool visible) {
 	}
 }
 
+struct mp_volnorm {
+	int method; // method used
+	float mul;
+};
+
 void PlayInfoView::update() {
 	sigar_proc_cpu_t cpu;	sigar_proc_mem_t mem;
 	const auto pid = sigar_pid_get(d->sigar);
 	sigar_proc_cpu_get(d->sigar, pid, &cpu);
 	sigar_proc_mem_get(d->sigar, pid, &mem);
 
+	QString normalized;
+	if (d->audio && d->audio->mixer() && d->audio->mixer()->afilter) {
+		auto af = d->audio->mixer()->afilter->first;
+		while (af) {
+			if (strcmp(af->info->name, "volnorm") == 0)
+				break;
+			af = af->next;
+		}
+		if (af) {
+			auto volnorm = reinterpret_cast<mp_volnorm*>(af->setup);
+			const double multiplied = volnorm->mul*100.0;
+			normalized = _L("<br>") % tr("Volum normalizer") % _L(": ") % _n(multiplied, 1) % _L("%");
+		}
+	}
 	const double fps = d->video->outputFrameRate();
 	typedef QLatin1String _L;
 	QString text = _L("<p>")
@@ -140,8 +160,7 @@ void PlayInfoView::update() {
 		% d->vinput % _L("<br>")
 		% d->voutput % _n(fps, 1) % _L("fps ") % _n(d->video->format().bps(fps)/1024.0, 1) % _L("kbps")
 		% _L("<br></p><p>")
-		% d->ainput
-		% _L("</p>");
+		% d->ainput % _L("<br>") % normalized % _L("</p>");
 	if (d->visible)
 		d->osd.show(text, -1);
 }

@@ -36,6 +36,11 @@ public:
 	void merge(const Playlist &playlist);
 public slots:
 	void clear() {m_list.clear(); m_current = -1; reset();}
+signals:
+	void currentRowChanged(int row);
+	void rowCountChanged(int count);
+private slots:
+	void onModelReset();
 private:
 	void emitRowChanged(int row) {
 		emit dataChanged(index(row, 0), index(row, ColumnCount));

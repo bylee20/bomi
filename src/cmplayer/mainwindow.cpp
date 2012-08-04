@@ -17,7 +17,14 @@ MainWindow::MainWindow(): d(new Data) {
 	d->hider.setSingleShot(true);
 
 	setMouseTracking(true);
-	setCentralWidget(d->center);
+	d->skin.load("/Users/xylosper/dev/cmplayer/src/cmplayer/skins/default/skin.ui");
+	d->skin.connectTo(&d->engine, &d->audio, &d->video);
+	d->skin.initializePlaceholders();
+	setCentralWidget(d->skin.widget());
+	auto screen = d->skin.screen();
+	d->screen->setParent(screen);
+	d->screen->move(0, 0);
+	d->screen->resize(screen->size());
 	setWindowTitle(QString("CMPlayer %1").arg(Info::version()));
 	setAcceptDrops(true);
 
@@ -37,7 +44,7 @@ MainWindow::MainWindow(): d(new Data) {
 
 	CONNECT(play["stop"], triggered(), &d->engine, stop());
 	CONNECT(play("speed").g(), triggered(int), this, setSpeed(int));
-	CONNECT(play["pause"], triggered(), this, togglePlayPause());
+	CONNECT(play["pause"], toggled(bool), this, pause(bool));
 	CONNECT(play("repeat").g(), triggered(int), this, doRepeat(int));
 	CONNECT(play["prev"], triggered(), d->playlist, playPrevious());
 	CONNECT(play["next"], triggered(), d->playlist, playNext());
@@ -154,6 +161,8 @@ MainWindow::MainWindow(): d(new Data) {
 	d->screen->overlay()->add(&d->subtitle.osd());
 	d->screen->overlay()->add(&d->timeLine);
 	d->screen->overlay()->add(&d->message);
+
+	resize(minimumSizeHint());
 }
 
 MainWindow::~MainWindow() {
@@ -389,19 +398,17 @@ void MainWindow::openUrl() {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QMainWindow::resizeEvent(event);
-	int width = d->center->width();
-	int height = d->center->height();
+	const QSize size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
 	if (isFullScreen()) {
-		d->video.setFixedRenderSize(QSize(width, height));
+		d->video.setFixedRenderSize(size);
 	} else {
 		d->video.setFixedRenderSize(QSize());
-		height -= d->control->height();
 	}
-	showMessage(QString::fromUtf8("%1x%2").arg(width).arg(height), 1000);
+	showMessage(QString::fromUtf8("%1x%2").arg(size.width()).arg(size.height()), 1000);
 }
 
-void MainWindow::togglePlayPause() {
-	if (d->engine.state() == State::Playing)
+void MainWindow::pause(bool pause) {
+	if (pause)
 		d->engine.pause();
 	else
 		d->engine.play();
@@ -418,8 +425,10 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 		clearSubtitles();
 	d->sync_subtitle_file_menu();
 	const int row = d->playlist->model()->currentRow() + 1;
-	if (row > 0)
-		d->control->setTrackNumber(row, d->playlist->model()->rowCount());
+	if (row > 0) {
+		d->skin.setMediaNumber(row + 1);
+		d->skin.setTotalMediaCount(d->playlist->model()->rowCount());
+	}
 }
 
 void MainWindow::clearSubtitles() {
@@ -510,7 +519,6 @@ void MainWindow::setFullScreen(bool full) {
 	d->dontPause = true;
 	d->moving = false;
 	d->prevPos = QPoint();
-	d->control->setHidden(full);
 	if (full) {
 		app()->setAlwaysOnTop(this, false);
 		setWindowState(windowState() | Qt::WindowFullScreen);
@@ -523,6 +531,7 @@ void MainWindow::setFullScreen(bool full) {
 			unsetCursor();
 		updateStaysOnTop();
 	}
+	d->skin.setVisible(!full);
 	d->dontPause = false;
 	emit fullscreenChanged(full);
 }
@@ -547,13 +556,19 @@ void MainWindow::setVideoSize(double rate) {
 void MainWindow::updateState(State state, State old) {
 	if (old == state)
 		return;
-	if (state == State::Playing) {
-		app()->setScreensaverDisabled(d->p.disable_screensaver);
-		d->menu("play")["pause"]->setText(tr("Pause"));
-	} else {
-		app()->setScreensaverDisabled(false);
+	switch (state) {
+	case State::Paused:
+	case State::Stopped:
+	case State::Finished:
+		d->menu("play")["pause"]->setChecked(true);
 		d->menu("play")["pause"]->setText(tr("Play"));
+		break;
+	default:
+		d->menu("play")["pause"]->setChecked(false);
+		d->menu("play")["pause"]->setText(tr("Pause"));
+		break;
 	}
+	app()->setScreensaverDisabled(d->p.disable_screensaver && state == State::Playing);
 	d->video.setLogoMode(state == State::Stopped);
 	updateStaysOnTop();
 }
@@ -648,10 +663,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 			d->moving = false;
 			d->prevPos = QPoint();
 		}
-		static const int h = d->control->height();
-		QRect rect = this->rect();
-		rect.setTop(rect.height() - h);
-		d->control->setVisible(rect.contains(event->pos()));
+		d->skin.setVisible(d->skin.contains(event->globalPos()));
 		if (d->p.hide_cursor)
 			d->hider.start(d->p.hide_cursor_delay);
 	} else {
@@ -736,9 +748,22 @@ void MainWindow::setSyncDelay(int diff) {
 
 }
 
+#include <QtUiTools/QUiLoader>
+#include <QtCore/QFile>
+
 void MainWindow::setPref() {
-	PrefDialog dlg(this);
-	dlg.exec();
+	QFile file("/Users/xylosper/dev/cmplayer/src/cmplayer/skins/default/skin.ui");
+	QFileInfo info(file);
+
+	qDebug() << file.open(QFile::ReadOnly);
+	QUiLoader loader;
+	loader.setWorkingDirectory(info.absoluteDir());
+	QWidget *w = loader.load(&file, 0);//->show();
+//	w->setStyleSheet(w->styleSheet().replace("%d%", info.absolutePath()));
+	qDebug() << w;
+	w->show();
+//	PrefDialog dlg(this);
+//	dlg.exec();
 //	static Pref::Dialog *dlg = 0;
 //	if (!dlg) {
 //		dlg = new Pref::Dialog(this);

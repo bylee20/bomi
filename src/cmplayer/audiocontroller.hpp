@@ -6,7 +6,7 @@
 #include "mpmessage.hpp"
 
 class PlayEngine;		class AudioFormat;
-class AudioController;
+class AudioController;	class mixer;
 
 void plug(PlayEngine *engine, AudioController *audio);
 void unplug(PlayEngine *engine, AudioController *audio);
@@ -26,6 +26,7 @@ public:
 	StreamList streams() const;
 	void setCurrentStream(int id) const;
 	int currentStreamId() const;
+	struct mixer *mixer() const;
 public slots:
 	void setVolumeNormalized(bool norm);
 	void setVolume(int volume);

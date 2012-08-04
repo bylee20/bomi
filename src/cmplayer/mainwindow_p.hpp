@@ -35,6 +35,7 @@
 #include <QtCore/QDebug>
 #include <QtCore/QTimer>
 #include <qmath.h>
+#include "skin.hpp"
 
 struct MainWindow::Data {
 	RootMenu &menu = RootMenu::get();
@@ -56,8 +57,9 @@ struct MainWindow::Data {
 	ABRepeater ab = {&engine, &subtitle};
 	PlayInfoView playInfo = {&engine, &audio, &video};
 	VideoScreen *screen = new VideoScreen;
-	ControlWidget *control = create_control_widget();
-	QWidget *center = create_central_widget();
+	Skin skin;
+//	ControlWidget *control = create_control_widget();
+//	QWidget *center = create_central_widget();
 	QMenu *context;
 	PlaylistView *playlist;
 	HistoryView *history;
@@ -164,33 +166,33 @@ struct MainWindow::Data {
 	#endif
 	}
 private:
-	ControlWidget *create_control_widget() {
-		ControlWidget *w = new ControlWidget(&engine, &audio, 0);
-		w->setAcceptDrops(false);
-		Menu &play = menu("play");
-		w->connectMute(menu("audio")["mute"]);
-		w->connectPlay(play["pause"]);
-		w->connectPrevious(play["prev"]);
-		w->connectNext(play["next"]);
-		w->connectForward(play("seek")["forward1"]);
-		w->connectBackward(play("seek")["backward1"]);
-		return w;
-	}
+//	ControlWidget *create_control_widget() {
+//		ControlWidget *w = new ControlWidget(&engine, &audio, 0);
+//		w->setAcceptDrops(false);
+//		Menu &play = menu("play");
+//		w->connectMute(menu("audio")["mute"]);
+//		w->connectPlay(play["pause"]);
+//		w->connectPrevious(play["prev"]);
+//		w->connectNext(play["next"]);
+//		w->connectForward(play("seek")["forward1"]);
+//		w->connectBackward(play("seek")["backward1"]);
+//		return w;
+//	}
 
-	QWidget *create_central_widget() {
-		QWidget *w = new QWidget;
-		w->setAcceptDrops(false);
-		w->setMouseTracking(true);
-		w->setAutoFillBackground(false);
-		w->setAttribute(Qt::WA_OpaquePaintEvent, true);
+//	QWidget *create_central_widget() {
+//		QWidget *w = new QWidget;
+//		w->setAcceptDrops(false);
+//		w->setMouseTracking(true);
+//		w->setAutoFillBackground(false);
+//		w->setAttribute(Qt::WA_OpaquePaintEvent, true);
 
-		QVBoxLayout *vbox = new QVBoxLayout(w);
-		vbox->addWidget(screen);
-		vbox->addWidget(control);
-		vbox->setContentsMargins(0, 0, 0, 0);
-		vbox->setSpacing(0);
-		return w;
-	}
+//		QVBoxLayout *vbox = new QVBoxLayout(w);
+//		vbox->addWidget(screen);
+//		vbox->addWidget(control);
+//		vbox->setContentsMargins(0, 0, 0, 0);
+//		vbox->setSpacing(0);
+//		return w;
+//	}
 };
 
 #endif // MAINWINDOW_P_HPP

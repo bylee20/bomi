@@ -9,6 +9,7 @@ PlaylistModel::PlaylistModel(QObject *parent)
 	m_curFont = m_defFont;
 	m_curFont.setBold(true);
 	m_curFont.setItalic(true);
+	connect(this, SIGNAL(modelReset()), this, SLOT(onModelReset()));
 }
 
 PlaylistModel::~PlaylistModel() {}
@@ -29,6 +30,11 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
 		return (row == m_current) ? m_curFont : m_defFont;
 	}
 	return QVariant();
+}
+
+void PlaylistModel::onModelReset() {
+	emit currentRowChanged(m_current);
+	emit rowCountChanged(rowCount());
 }
 
 Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
@@ -89,6 +95,7 @@ void PlaylistModel::append(const Playlist &list) {
 	beginInsertRows(QModelIndex(), m_list.size(), m_list.size() + list.size() - 1);
 	m_list += list;
 	endInsertRows();
+	emit rowCountChanged(rowCount());
 }
 
 void PlaylistModel::erase(int row) {
@@ -122,6 +129,7 @@ void PlaylistModel::setCurrentRow(int row) {
 		emitRowChanged(old);
 	if (m_current != -1)
 		emitRowChanged(m_current);
+	emit currentRowChanged(m_current);
 }
 
 bool PlaylistModel::swap(int r1, int r2) {
@@ -130,10 +138,13 @@ bool PlaylistModel::swap(int r1, int r2) {
 	if (r1 == r2)
 		return true;
 	m_list.swap(r1, r2);
-	if (r1 == m_current)
+	if (r1 == m_current) {
 		m_current = r2;
-	else if (r2 == m_current)
+		emit currentRowChanged(m_current);
+	} else if (r2 == m_current) {
 		m_current = r1;
+		emit currentRowChanged(m_current);
+	}
 	emitRowChanged(r1);
 	emitRowChanged(r2);
 	return true;

@@ -7,7 +7,11 @@ macx {
         QMAKE_INFO_PLIST = Info.plist
         ICON = ../../icons/cmplayer.icns
         TARGET = CMPlayer
-        LIBS += -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa -framework IOKit -framework AudioUnit -framework CoreAudio -framework OpenAL -lsigar-universal64-macosx
+        LIBS += -framework VideoDecodeAcceleration \
+            -framework CoreVideo -framework Cocoa \
+            -framework IOKit -framework AudioUnit \
+            -framework CoreAudio -framework OpenAL \
+            -lsigar-universal64-macosx
         HEADERS += app_mac.hpp
         OBJECTIVE_SOURCES += app_mac.mm
         INCLUDEPATH += /opt/local/include /usr/local/include
@@ -20,8 +24,10 @@ macx {
 
 INCLUDEPATH += ../mplayer2 ../../build/include
 
-LIBS += -L../../build/lib -L/opt/local/lib \
-    -lmplayer2-cmplayer -lz -lchardet -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lavutil -lavcodec -lavformat -lswscale -lcdio_paranoia -lcdio_cdda -lcdio
+LIBS += ../../build/lib/libcmplayer_widgets.a ../../build/lib/libmplayer2-cmplayer.a ../../build/lib/libchardet.a \
+    -L../../build/lib -L/opt/local/lib \
+    -lz -lbz2 -lpthread -lm \
+    -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini -lxvidcore -lvorbis -logg -ltheora -la52 -ldca ../../build/lib/libavutil.a ../../build/lib/libavcodec.a -lavformat -lswscale -lcdio_paranoia -lcdio_cdda -lcdio
 
 
 QMAKE_CC = "gcc -std=c99 -ffast-math"
@@ -39,7 +45,7 @@ DESTDIR = ../../build
 }
 
 TEMPLATE = app
-CONFIG += link_pkgconfig debug_and_release
+CONFIG += link_pkgconfig debug_and_release uitools
 
 QT = core gui opengl network
 
@@ -50,7 +56,6 @@ HEADERS += playengine.hpp \
     controlwidget.hpp \
     global.hpp \
     menu.hpp \
-    squeezedlabel.hpp \
     colorproperty.hpp \
     qtsingleapplication/qtsingleapplication.h \
     qtsingleapplication/qtlockedfile.h \
@@ -114,7 +119,8 @@ HEADERS += playengine.hpp \
     richtexthelper.hpp \
     richtextblock.hpp \
     richtextdocument.hpp \
-    mpmessage.hpp
+    mpmessage.hpp \
+    skin.hpp
 
 SOURCES += main.cpp \
     playengine.cpp \
@@ -186,7 +192,8 @@ SOURCES += main.cpp \
     richtexthelper.cpp \
     richtextblock.cpp \
     richtextdocument.cpp \
-    mpmessage.cpp
+    mpmessage.cpp \
+    skin.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -246,3 +246,7 @@ bool AudioController::parse(const Id &id) {
 		return true;
 	return false;
 }
+
+mixer *AudioController::mixer() const {
+	return d->mpctx ? &d->mpctx->mixer : nullptr;
+}

@@ -5,7 +5,7 @@
 #include <QtCore/QEvent>
 #include <QtCore/QByteArray>
 #include <QtCore/QSize>
-#include <QtCore/QList>
+#include <QtCore/QVector>
 #include "avmisc.hpp"
 #include <QtGui/QImage>
 
@@ -17,22 +17,35 @@ public:
 	VideoFormat format;
 //	int size() const {return m_data.size();}
 //	uchar *data() {return reinterpret_cast<uchar *>(m_data.data());}
-	uchar *y(int x, int y) {return data[0] + y*format.stride + x;}
+//	uchar *y(int x, int y) {return m_data[0].data() + y*format.stride + x;}
 //	const uchar *data() const {return reinterpret_cast<const uchar *>(m_data.data());}
 //	void check() {m_data.resize(getLength());}
+//	void alloc(int *length) {
+//		m_data[0].resize(length[0]);
+//		m_data[1].resize(length[1]);
+//		m_data[2].resize(length[2]);
+//	}
+
 	QImage toImage() const;
+//	uchar *y() {return reinterpret_cast<uchar*>(m_data[0].data());}
+//	const uchar *y() const {return reinterpret_cast<const uchar*>(m_data[0].data());}
+//	uchar *u() {return reinterpret_cast<uchar*>(m_data[1].data());}
+//	const uchar *u() const {return reinterpret_cast<const uchar*>(m_data[1].data());}
+//	uchar *v() {return reinterpret_cast<uchar*>(m_data[2].data());}
+//	const uchar *v() const {return reinterpret_cast<const uchar*>(m_data[2].data());}
 	uchar *y() {return data[0];}
 	const uchar *y() const {return data[0];}
 	uchar *u() {return data[1];}
 	const uchar *u() const {return data[1];}
 	uchar *v() {return data[2];}
 	const uchar *v() const {return data[2];}
+
 	uchar *data[4];
 	int size() const {return format.stride*format.height*3/2;}
+//	int size(int i) const {return m_data[i].size();}
 private:
-
 //	QByteArray m_data;
-//	QByteArray m_data[4];
+//	QVector<QByteArray> m_data = {4, QByteArray()};
 //	uchar *data[4];
 };
 

@@ -88,7 +88,6 @@ int VideoOutput::config(struct vo *vo, uint32_t w_s, uint32_t h_s, uint32_t, uin
 	d->format.width = w_s;
 	d->format.height = h_s;
 	d->format.fourcc = fmt;
-
 	return 0;
 }
 
@@ -110,10 +109,15 @@ void VideoOutput::drawImage(void *data) {
 	frame.format.width = mpi->width;
 	frame.format.height = mpi->height;
 
+//	int length[4] = {mpi->stride[0]*mpi->height, mpi->stride[1]*mpi->height/2, mpi->stride[2]*mpi->height/2, 0};
+//	frame.alloc(length);
+//	fast_memcpy(frame.y(), mpi->planes[0], length[0]);
+//	fast_memcpy(frame.u(), mpi->planes[1], length[1]);
+//	fast_memcpy(frame.v(), mpi->planes[2], length[2]);
 	frame.data[0] = mpi->planes[0];
 	frame.data[1] = mpi->planes[1];
 	frame.data[2] = mpi->planes[2];
-	frame.data[3] = mpi->planes[3];
+//	frame.data[3] = mpi->planes[3];
 
 	d->renderer->uploadBufferFrame();
 }

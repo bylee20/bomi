@@ -29,6 +29,8 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	Menu *play = this->addMenu(_L("play"));
 
 	QAction *pause = play->addAction(_L("pause"));
+	pause->setCheckable(true);
+	pause->setChecked(true);
 	pause->setShortcut(Qt::Key_Space);
 	play->addAction(_L("stop"));
 
@@ -482,8 +484,10 @@ QAction *RootMenu::action(const QString &id) const {
 	if (key.first() != this->id())
 		return 0;
 	const Menu *it = this;
-	for (int i=1; i<key.size()-1 && it; ++i)
-		it = it->m(key[i]);
+	for (int i=1; i<key.size()-1 && it; ++i) {
+		if (!(it = it->m(key[i])))
+			return nullptr;
+	}
 	QAction *action = it->a(key.last());
 	if (!action) {
 		Menu *menu = it->m(key.last());

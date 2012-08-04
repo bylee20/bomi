@@ -111,6 +111,8 @@ public:
 signals:
 	void sizeChanged(const QSize &size);
 private:
+	bool eventFilter(QObject *o, QEvent *e);
+	void changeEvent(QEvent *event);
 	void paintEvent(QPaintEvent *) {if (r) r->update();}
 	void resizeEvent(QResizeEvent *) {if (r) {r->updateSize(); r->update();} emit sizeChanged(size());}
 	void mouseMoveEvent(QMouseEvent *e) {QGLWidget::mouseMoveEvent(e); if (r) r->onMouseMoved(e->posF());}
@@ -118,7 +120,7 @@ private:
 
 	VideoRenderer *r = nullptr;
 	Overlay *m_overlay;
-
+	QWidget *m_parent = nullptr;
 	friend void plug(VideoRenderer *renderer, VideoScreen *screen);
 	friend void unplug(VideoRenderer *renderer, VideoScreen *screen);
 };
