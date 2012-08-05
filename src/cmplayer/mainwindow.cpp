@@ -17,7 +17,7 @@ MainWindow::MainWindow(): d(new Data) {
 	d->hider.setSingleShot(true);
 
 	setMouseTracking(true);
-	d->skin.load("/Users/xylosper/dev/cmplayer/src/cmplayer/skins/default/skin.ui");
+	d->skin.load("/Users/xylosper/dev/cmplayer/src/cmplayer/skins/simple/skin.ui");
 	d->skin.connectTo(&d->engine, &d->audio, &d->video);
 	auto screen = d->skin.screen();
 	d->screen->setParent(screen);

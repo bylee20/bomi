@@ -420,7 +420,6 @@ void Skin::setPlaceholder(Placeholder ph, const QString &text) {
 		if (file.isEmpty())
 			continue;
 		QFileInfo info(file);
-		qDebug() << info.absoluteFilePath();
 		emit windowFilePathChanged(info.absoluteFilePath());
 	}
 }

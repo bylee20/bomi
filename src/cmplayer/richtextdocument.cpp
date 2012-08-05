@@ -7,6 +7,10 @@ RichTextDocument::RichTextDocument() {
 	setChanged(false);
 }
 
+RichTextDocument::RichTextDocument(const QString &text) {
+	setText(text);
+}
+
 RichTextDocument::RichTextDocument(const RichTextDocument &rhs)
 : m_blocks(rhs.blocks()), m_option(rhs.m_option), m_format(rhs.m_format) {
 	setChanged(!m_blocks.isEmpty());

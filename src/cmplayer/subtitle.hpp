@@ -9,6 +9,8 @@
 
 struct SubtitleCaption : public RichTextDocument {
 	SubtitleCaption() {index = -1;}
+	RichTextDocument &doc() {return *this;}
+	const RichTextDocument &doc() const {return *this;}
 	inline SubtitleCaption &operator += (const SubtitleCaption &rhs) {RichTextDocument::operator += (rhs); return *this;}
 	inline SubtitleCaption &operator += (const RichTextDocument &rhs) {RichTextDocument::operator += (rhs); return *this;}
 	inline SubtitleCaption &operator += (const QList<RichTextBlock> &rhs) {RichTextDocument::operator += (rhs); return *this;}
@@ -40,7 +42,7 @@ public:
 	static int msec(int frame, double frameRate) {return qRound(frame/frameRate*1000.0);}
 	static int frame(int msec, double frameRate) {return qRound(msec*0.001*frameRate);}
 
-		QString m_klass;
+	QString m_klass;
 private:
 	friend class Parser;
 	QString m_file;

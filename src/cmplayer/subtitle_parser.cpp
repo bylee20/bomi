@@ -4,116 +4,16 @@
 #include <QtCore/QDebug>
 #include <QtCore/QFileInfo>
 
-//int Subtitle::Parser::msPerChar = -1;
-
-//bool Subtitle::Parser::save(const Subtitle &sub, const QString &fileName) {
-//	QString content;
-//	if (!_save(content, sub))
-//		return false;
-//	QFile file(fileName);
-//	if (!file.open(QFile::WriteOnly | QFile::Truncate))
-//		return false;
-//	QTextCodec *codec = QTextCodec::codecForName(m_enc.toLocal8Bit());
-//	if (!codec)
-//		return false;
-//	if (file.write(codec->fromUnicode(content)) < 0)
-//		return false;
-//	file.close();
-//	return true;
-//}
-
-//Subtitle Subtitle::Parser::parse(const QString &fileName) {
-//	Subtitle sub;
-//	QFile file(fileName);
-//	if (!file.open(QFile::ReadOnly))
-//		return sub;
-//	QTextStream in;
-//	in.setDevice(&file);
-//	in.setCodec(m_enc.toLocal8Bit());
-//	m_all = in.readAll();
-//	m_name = fileName;
-//	m_pos = 0;
-//	_parse(sub);
-//	return sub;
-//}
-
-//QStringRef Subtitle::Parser::trimmed(const QStringRef &ref) {
-//	int from = 0;
-//	for (; from <ref.size() && RichString::isSeperator(ref.at(from).unicode()); ++from) ;
-//	int to = -1;
-//	for (int p=from; p<ref.size(); ++p) {
-//		if (RichString::isSeperator(ref.at(p).unicode())) {
-//			if (to < 0)
-//				to = p;
-//		} else
-//			to = -1;
-//	}
-//	if (to < 0)
-//		return RichString::midRef(ref, from);
-//	return RichString::midRef(ref, from, to - from);
-//}
-
-//QStringRef Subtitle::Parser::processLine(int &idx, const QString &contents) {
-//	int from = idx;
-//	idx = contents.indexOf(QLatin1Char('\n'), from);
-//	if (idx < 0)
-//		idx = contents.indexOf(QLatin1Char('\r'), from);
-//	if (idx < 0) {
-//		idx = contents.size();
-//		return contents.midRef(from);
-//	} else {
-//		return contents.midRef(from, (idx++) - from);
-//	}
-//}
-
-//int Subtitle::Parser::predictEndTime(const Component::const_iterator &it) {
-//	if (msPerChar > 0)
-//		return it.value().text.size()*msPerChar + it.key();
-//	return -1;
-//}
-
-//QString &Subtitle::Parser::replaceEntity(QString &str) {
-//	return str.replace("<", "&lt;").replace(">", "&gt;").replace(" ", "&nbsp;");
-//}
-
-//Subtitle::Parser *Subtitle::Parser::create(const QString &fileName) {
-//	QFileInfo info(fileName);
-//	const QString ext = info.suffix();
-//#define EXT_IS(_ext) (ext.compare(QLatin1String(_ext), Qt::CaseInsensitive) == 0)
-//	if (EXT_IS("smi"))
-//		return new Sami;
-//	else if(EXT_IS("srt"))
-//		return new SubRip;
-//	else if (EXT_IS("sub") || EXT_IS("txt")) {
-//		QFile file(info.absoluteFilePath());
-//		if (!file.open(QFile::ReadOnly))
-//			return 0;
-//		QTextStream in(&file);
-//		for (int i=0; i<10 && !in.atEnd(); ++i) {
-//			const QString line = in.readLine();
-//			if (MicroDVD::rxLine.indexIn(line) != -1)
-//				return new MicroDVD;
-//			else if (TMPlayer::rxLine.indexIn(line) != -1)
-//				return new TMPlayer;
-//		}
-//	}
-//#undef EXT_IS
-//	return 0;
-//}
-
-
-
-
 int SubtitleParser::msPerChar = -1;
 
-bool SubtitleParser::save(const Subtitle &sub, const QString &fileName) {
+bool SubtitleParser::save(const Subtitle &sub, const QString &fileName, const QString &enc) {
 	QString content;
 	if (!_save(content, sub))
 		return false;
 	QFile file(fileName);
 	if (!file.open(QFile::WriteOnly | QFile::Truncate))
 		return false;
-	QTextCodec *codec = QTextCodec::codecForName(m_enc.toLocal8Bit());
+	QTextCodec *codec = QTextCodec::codecForName(enc.toLocal8Bit());
 	if (!codec)
 		return false;
 	if (file.write(codec->fromUnicode(content)) < 0)
@@ -122,19 +22,30 @@ bool SubtitleParser::save(const Subtitle &sub, const QString &fileName) {
 	return true;
 }
 
-Subtitle SubtitleParser::parse(const QString &fileName) {
-	Subtitle sub;
+Subtitle SubtitleParser::parse(const QString &fileName, const QString &enc) {
 	QFile file(fileName);
 	if (!file.open(QFile::ReadOnly) || file.size() > (1 << 20))
-		return sub;
+		return Subtitle();
 	QTextStream in;
 	in.setDevice(&file);
-	in.setCodec(m_enc.toLocal8Bit());
-	m_all = in.readAll();
-	m_name = fileName;
-	m_pos = 0;
-	_parse(sub);
-	return sub;
+	in.setCodec(enc.toLocal8Bit());
+	const QString all = in.readAll();
+	QFileInfo info(fileName);
+	Subtitle sub;
+
+	auto tryIt = [&sub, &all, &info] (SubtitleParser *p) {
+		p->m_all = all;
+		p->m_file = info;
+		const bool parsable = p->isParsable();
+		if (parsable)
+			p->_parse(sub);
+		delete p;
+		return parsable;
+	};
+
+	if (tryIt(new SamiParser) || tryIt(new SubRipParser) || tryIt(new MicroDVDParser) || tryIt(new TMPlayerParser))
+		return sub;
+	return Subtitle();
 }
 
 QStringRef SubtitleParser::processLine(int &idx, const QString &contents) {
@@ -150,38 +61,62 @@ QStringRef SubtitleParser::processLine(int &idx, const QString &contents) {
 	}
 }
 
+int SubtitleParser::predictEndTime(int start, const QString &text) {
+	if (msPerChar > 0)
+		return start + text.size()*msPerChar;
+	return -1;
+}
+
 int SubtitleParser::predictEndTime(const SubtitleComponent::const_iterator &it) {
 	if (msPerChar > 0)
 		return it.value().totalLength()*msPerChar + it.key();
 	return -1;
 }
 
-QString &SubtitleParser::replaceEntity(QString &str) {
-	return str.replace("<", "&lt;").replace(">", "&gt;").replace(" ", "&nbsp;");
+QString SubtitleParser::encodeEntity(const QStringRef &str) {
+	QString ret;
+	for (int i=0; i<str.size(); ++i) {
+		ushort c = str.at(i).unicode();
+		switch (c) {
+		case ' ':
+			ret += _L("&nbsp;");
+			break;
+		case '<':
+			ret += _L("&lt;");
+			break;
+		case '>':
+			ret += _L("&gt;");
+			break;
+		case '|':
+			ret += _L("<br>");
+			break;
+		default:
+			ret += str.at(i);
+			break;
+		}
+	}
+	return ret;
 }
 
-SubtitleParser *SubtitleParser::create(const QString &fileName) {
-	QFileInfo info(fileName);
-	const QString ext = info.suffix();
-#define EXT_IS(_ext) (ext.compare(QLatin1String(_ext), Qt::CaseInsensitive) == 0)
-	if (EXT_IS("smi"))
-		return new Sami;
-//	else if(EXT_IS("srt"))
-//		return new SubRip;
-//	else if (EXT_IS("sub") || EXT_IS("txt")) {
-//		QFile file(info.absoluteFilePath());
-//		if (!file.open(QFile::ReadOnly))
-//			return 0;
-//		QTextStream in(&file);
-//		for (int i=0; i<10 && !in.atEnd(); ++i) {
-//			const QString line = in.readLine();
-//			if (MicroDVD::rxLine.indexIn(line) != -1)
-//				return new MicroDVD;
-//			else if (TMPlayer::rxLine.indexIn(line) != -1)
-//				return new TMPlayer;
-//		}
-//	}
-#undef EXT_IS
-	return 0;
+QStringRef SubtitleParser::getLine() const {
+	int from = m_pos;
+	int end = -1;
+	while (m_pos < m_all.size()) {
+		if (at(m_pos) == '\r') {
+			end = m_pos;
+			++m_pos;
+			if (m_pos < m_all.size() && at(m_pos) == '\n')
+				++m_pos;
+			break;
+		} else if (at(m_pos) == '\n') {
+			end = m_pos;
+			++m_pos;
+			break;
+		}
+		++m_pos;
+	}
+	if (end < 0)
+		end = m_all.size();
+	return from < m_all.size() ? m_all.midRef(from, end - from) : QStringRef();
 }
 

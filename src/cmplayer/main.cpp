@@ -24,6 +24,8 @@ static bool checkOpenGL() {
 	return false;
 }
 
+
+
 int main(int argc, char **argv) {
 	qRegisterMetaType<State>("State");
 	qRegisterMetaType<Mrl>("Mrl");

@@ -218,7 +218,7 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent), d(new Data) {
 	};
 
 	auto general = addCategory(tr("General"));
-	auto playback = addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start.png", general);
+	auto playback = addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
 	addPage(tr("Video"), d->ui.video, ":/img/games-config-background-32.png", general);
 	addPage(tr("Application"), d->ui.application, ":/img/cmplayer-32.png", general);
 
@@ -231,6 +231,7 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent), d(new Data) {
 	addPage(tr("Keyboard shorcuts"), d->ui.ui_shortcut, ":/img/preferences-desktop-keyboard-32.png", ui);
 	addPage(tr("Mouse actions"), d->ui.ui_mouse, ":/img/input-mouse-32.png", ui);
 	addPage(tr("Control step"), d->ui.ui_step, ":/img/run-build-32.png", ui);
+	addPage(tr("Skin"), d->ui.ui_skin, ":/img/preferences-desktop-theme-32.png", ui);
 
 	playback->setSelected(true);
 

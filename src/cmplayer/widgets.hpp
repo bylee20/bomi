@@ -10,53 +10,6 @@
 #include <QtGui/QToolButton>
 #include <QtGui/QComboBox>
 
-class PlayEngine;		class AudioController;
-
-class JumpSlider : public QSlider {
-Q_OBJECT
-public:
-	JumpSlider(QWidget *parent = 0);
-protected:
-	virtual void mousePressEvent(QMouseEvent *event);
-};
-
-class SeekSlider : public JumpSlider {
-Q_OBJECT
-	public:
-	SeekSlider(PlayEngine *engine, QWidget *parent = 0);
-private slots:
-	void setDuration(int duration);
-	void slotTick(int time);
-	void seek(int msec);
-private:
-	PlayEngine *m_engine;
-	bool m_tick;
-};
-
-class VolumeSlider : public JumpSlider {
-	Q_OBJECT
-public:
-	VolumeSlider(AudioController *audio, QWidget *parent = 0);
-};
-
-class Button : public QToolButton {
-	Q_OBJECT
-public:
-	Button(QWidget *parent);
-	Button(const QIcon &icon, QWidget *parent);
-	Button(const QString &text, QWidget *parent);
-	~Button();
-	void setIconSize(int extent);
-	void setAction(QAction *action, bool update);
-	void setBlock(bool block);
-private slots:
-	void toggleAction(bool checked);
-private:
-	void init();
-	struct Data;
-	Data *d;
-};
-
 class EncodingComboBox : public QComboBox {
 	Q_OBJECT
 public:

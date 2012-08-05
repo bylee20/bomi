@@ -9,13 +9,17 @@
 #include <QtGui/QDesktopWidget>
 #include <QtCore/QStringBuilder>
 
+bool SamiParser::isParsable() const {
+	if (same(file().suffix(), "smi") || same(file().suffix(), "sami"))
+		return true;
+	if (skipSeperators())
+		return false;
+	if (all().startsWith("<sami", Qt::CaseInsensitive))
+		return true;
+	return false;
+}
 
-
-
-
-
-
-void SubtitleParser::Sami::_parse(Subtitle &sub) {
+void SamiParser::_parse(Subtitle &sub) {
 	const QString &text = this->all();
 	sub.clear();
 	int pos = 0;
@@ -28,6 +32,10 @@ void SubtitleParser::Sami::_parse(Subtitle &sub) {
 		Tag tag = parseTag(text, pos);
 		if (same(tag.name, "body"))
 			break;
+		if (same(tag.name, "sync")) {
+			pos = tag.pos;
+			break;
+		}
 	}
 	RichTextBlockParser parser(text.midRef(pos));
 	while (!parser.atEnd()) {
@@ -44,15 +52,15 @@ void SubtitleParser::Sami::_parse(Subtitle &sub) {
 		}
 		for (auto it = blocks.begin(); it != blocks.end(); ++it) {
 			SubtitleComponent *comp = nullptr;
+			auto &comps = components(sub);
 			for (int i=0; i<sub.count(); ++i) {
-				if (sub.m_comp[i].language() == it.key()) {
-					comp = &sub.m_comp[i];
+				if (comps[i].language() == it.key()) {
+					comp = &comps[i];
 					break;
 				}
 			}
 			if (!comp) {
-				sub.m_comp << SubtitleComponent(name(), SubtitleComponent::Time);
-				comp = &sub.m_comp.last();
+				comp = &append(sub);
 				comp->m_klass = it.key();
 			}
 			(*comp)[sync] += it.value();
@@ -60,324 +68,127 @@ void SubtitleParser::Sami::_parse(Subtitle &sub) {
 	}
 }
 
-//bool SubtitleV2::Parser::Sami::needToAddSharp(const QStringRef &name, const QStringRef &value) {
-//	if (value.size() != 6)
-//		return false;
-//	if (!TagIterator::opEq(name, "color"))
-//		return false;
-//	for (int i=0; i<6; ++i) {
-//		const ushort ucs = value.at(i).unicode();
-//		if (!RichString::isHexNumber(ucs))
-//			return false;
-//	}
-//	return true;
-//}
-
-//QString &SubtitleV2::Parser::Sami::appendTo(QString &rich, const TagIterator &tag) {
-//	if (tag.element().isEmpty())
-//		return rich;
-//	rich += '<';
-//	if (tag.elementIs("p"))
-//		rich += QLatin1String("span");
-//	else
-//		rich += tag.element();
-//	for (int i=0; i<tag.attributeCount(); ++i) {
-//		const TagIterator::Attr &attr = tag.attribute(i);
-//		rich += ' ';
-//		rich += attr.name;
-//		if (!attr.value.isEmpty()) {
-//			rich += QLatin1Char('=');
-//			if (attr.q.unicode() != '\0')
-//				rich += attr.q;
-//			if (needToAddSharp(attr.name, attr.value))
-//				rich += QLatin1Char('#');
-//			rich += attr.value;
-//			if (attr.q.unicode() != '\0')
-//				rich += attr.q;
-//		}
-//	}
-//	if (!tag.isOpen())
-//		rich += '>';
-//	return rich;
-//}
 
 
+bool SubRipParser::isParsable() const {
+	if (same(file().suffix(), "srt"))
+		return true;
+	return false;
+}
 
+void SubRipParser::_parse(Subtitle &sub) {
+	QRegExp rxCaption(
+		"(^|[\r\n]*)(\\d+)(\r|\r\n|\n)"
+		"(\\d\\d):(\\d\\d):(\\d\\d),(\\d\\d\\d) --> (\\d\\d):(\\d\\d):(\\d\\d),(\\d\\d\\d)"
+		"(.*)([\r\n]*$|\r\r|\r\n\r\n|\n\n)"
+	);
+	rxCaption.setMinimal(true);
 
+	QRegExp rxLineBreak("(\r[^\n]|\r\n|[^\r]\n)");
+	sub.clear();
+	auto &comp = append(sub);
+	int pos = 0;
+	auto toInt = [&rxCaption] (int nth) {return rxCaption.cap(nth).toInt();};
+	QLinkedList<SubtitleComponent> caps;
+	while (pos < all().size()) {
+		const int idx = rxCaption.indexIn(all(), pos);
+		if (idx < 0)
+			break;
+		caps.append(SubtitleComponent(file().fileName()));
+		auto &part = caps.last();
+		const int start = timeToMSec(toInt(4), toInt(5), toInt(6), toInt(7));
+		const int end = timeToMSec(toInt(8), toInt(9), toInt(10), toInt(11));
+		const QString text = _L("<p>") % rxCaption.cap(12).trimmed().replace(rxLineBreak, "<br>") % _L("</p>");
+		append(part, text, start, end);
+		comp.unite(part, 25);
+		pos = idx + rxCaption.matchedLength();
+	}
+}
 
+void  TMPlayerParser::_parse(Subtitle &sub) {
+	sub.clear();
+	auto &comp = append(sub);
+	int predictedEnd = -1;
+	auto toInt = [this] (int nth) {return rxLine.cap(nth).toInt();};
+	while (!atEnd()) {
+		auto line = getLine().toString();
+		if (line.indexOf(rxLine) == -1)
+			continue;
+		const int time = timeToMSec(toInt(1), toInt(2), toInt(3));
+		if (predictedEnd > 0 && time > predictedEnd)
+			comp[predictedEnd];
+		QString text = rxLine.cap(4);
+		predictedEnd = predictEndTime(time, text);
+		text = _L("<p>") % encodeEntity(trim(text.midRef(0))) % _L("</p>");
+		append(comp, text, time);
+	}
+}
 
+void MicroDVDParser::_parse(Subtitle &sub) {
+	QString line;
+	int begin = -1;
+	while (!atEnd() && begin == -1) {
+		line = trim(getLine()).toString();
+		begin = rxLine.indexIn(line);
+	}
+	if (begin == -1)
+		return;
+	bool ok = false;
+	const double fps = rxLine.cap(3).toDouble(&ok);
+	auto getKey = [ok, fps] (int frame) {return ok ? qRound((frame/fps)*1000.0) : frame;};
+	if (ok) {
+		append(sub, SubtitleComponent::Time);
+	} else {
+		seekTo(0);
+		append(sub, SubtitleComponent::Frame);
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//void Subtitle::Parser::Sami::_parse(Subtitle &sub) {
-//	int sync = -1;
-//	TagIterator tag(all());
-//	for (;;) {
-//		const int pos = tag.next();
-//		if (pos < 0)
-//			break;
-//		if (tag.elementIs("sync")) {
-//			sync = pos;
-//			break;
-//		}
-//	}
-//	if (sync < 0)
-//		return;
-
-//	QMap<QString, int> idxes;
-//	const QString header = all().left(sync);
-//	for (int i = 0;;) {
-//		static QRegExp rxLang("\\s*\\.(\\w+)\\s*\\{(.+)\\}");
-//		i = rxLang.indexIn(header, i);
-//		if (i < 0)
-//			break;
-//		static QRegExp rxParam("\\s*(\\S+)\\s*:\\s*(\\S+)\\s*;\\s*");
-//		int pos = 0;
-//		Component comp(name());
-//		comp.m_lang.m_klass = rxLang.cap(1);
-//		const QString text = rxLang.cap(2);
-//		while ((pos = rxParam.indexIn(text, pos)) != -1) {
-//			const QString key = rxParam.cap(1);
-//			if (!key.compare("name", Qt::CaseInsensitive))
-//				comp.m_lang.m_name = rxParam.cap(2);
-//			else if (!key.compare("lang", Qt::CaseInsensitive))
-//				comp.m_lang.m_locale = rxParam.cap(2);
-//			pos += rxParam.matchedLength();
-//		}
-//		const int idx = idxes.size();
-//		idxes.insert(comp.m_lang.m_klass, idx);
-//		sub.m_comp.push_back(comp);
-//		i += rxLang.matchedLength();
-//	}
-
-//	for (;;) {
-//		if (sync < 0)
-//			break;
-//		int time = tag.valueToInt("start");
-//		QString klass = tag.value("class").toString();
-//		QString text, plain;
-//		int brIdx = -1;
-//		QLinkedList<QStringRef> pair;
-//		for (;;) {
-//			int a = tag.pos();
-//			const bool br = tag.elementIs("br");
-//			if (br) {
-//				if (!text.isEmpty()) {
-//					if (brIdx == -1)
-//						brIdx = text.size();
-//					appendTo(text, tag);
-//					plain += '\n';
-//				}
-//			} else {
-//				brIdx = -1;
-//				appendTo(text, tag);
-//				if (tag.elementIs("p") || tag.elementIs("sync") || tag.elementIs("span") || tag.elementIs("font"))
-//					pair.push_front(tag.element());
-//				else if (!tag.element().isEmpty() && tag.element().at(0) == '/') {
-//					for (auto it=pair.begin(); it != pair.end(); ++it) {
-//						if (it->compare(RichString::midRef(tag.element(), 1), Qt::CaseInsensitive) == 0) {
-//							pair.erase(it);
-//							break;
-//						}
-//					}
-//				}
-//			}
-//			const int idx = tag.next();
-//			const int count = idx < 0 ? -1 : idx - a;
-//			const QStringRef ref = all().midRef(a, count);
-//			const int prev = text.size();
-//			RichString::process(ref, text, plain, false);
-//			if (brIdx != -1) {
-//				for (int i=text.size()-1; i>=prev; --i) {
-//					if (!isspace(text[i].unicode())) {
-//						brIdx = -1;
-//						break;
-//					}
-//				}
-//			}
-//			if (idx < 0) {
-//				sync = -1;
-//				break;
-//			}
-//			if (klass.isEmpty())
-//				klass = tag.value("class").toString();
-//			if (tag.elementIs("sync")) {
-//				sync = idx;
-//				break;
-//			} else if (tag.elementIs("/body")) {
-//				sync = -1;
-//				break;
-//			}
-//		}
-
-//		int chop = 0;
-//		for (int i=plain.size()-1; i>=0 && isspace(plain[i].unicode()); --i, ++chop) ;
-//		plain.chop(chop);
-//		if (brIdx != -1)
-//			text.chop(text.size() - brIdx);
-//		for (const QStringRef &one : const_(pair)) {
-//			text += QLatin1String("</");
-//			text += one;
-//			text += QLatin1Char('>');
-//		}
-
-//		Node node;
-//		node.text = RichString(text, plain);
-//		QMap<QString, int>::const_iterator it = idxes.find(klass);
-//		if (it == idxes.end()) {
-//			const int idx = idxes.size();
-//			idxes.insert(klass, idx);
-//			Component comp(name());
-//			comp.m_lang.m_klass = klass;
-//			sub.m_comp.push_back(comp);
-//		}
-//		if (!node.text.hasWords())
-//			node.text.clear();
-//		sub.m_comp[idxes[klass]].insert(time, node);
-//	}
-//	for (int i=0; i<sub.m_comp.size(); ++i) {
-//		Component &comp = sub.m_comp[i];
-//		if (comp.isEmpty())
-//			continue;
-//		const int end = predictEndTime(comp.end()-1);
-//		if (end >= 0)
-//			comp[end] = Node();
-//	}
-//}
-
-//bool Subtitle::Parser::Sami::needToAddSharp(const QStringRef &name, const QStringRef &value) {
-//	if (value.size() != 6)
-//		return false;
-//	if (!TagIterator::opEq(name, "color"))
-//		return false;
-//	for (int i=0; i<6; ++i) {
-//		const ushort ucs = value.at(i).unicode();
-//		if (!RichString::isHexNumber(ucs))
-//			return false;
-//	}
-//	return true;
-//}
-
-//QString &Subtitle::Parser::Sami::appendTo(QString &rich, const TagIterator &tag) {
-//	if (tag.element().isEmpty())
-//		return rich;
-//	rich += '<';
-//	if (tag.elementIs("p"))
-//		rich += QLatin1String("span");
-//	else
-//		rich += tag.element();
-//	for (int i=0; i<tag.attributeCount(); ++i) {
-//		const TagIterator::Attr &attr = tag.attribute(i);
-//		rich += ' ';
-//		rich += attr.name;
-//		if (!attr.value.isEmpty()) {
-//			rich += QLatin1Char('=');
-//			if (attr.q.unicode() != '\0')
-//				rich += attr.q;
-//			if (needToAddSharp(attr.name, attr.value))
-//				rich += QLatin1Char('#');
-//			rich += attr.value;
-//			if (attr.q.unicode() != '\0')
-//				rich += attr.q;
-//		}
-//	}
-//	if (!tag.isOpen())
-//		rich += '>';
-//	return rich;
-//}
-
-//QRegExp Subtitle::Parser::TMPlayer::rxLine("^\\s*(\\d?\\d)\\s*:\\s*(\\d\\d)\\s*:\\s*(\\d\\d)\\s*:\\s*(.*)$");
-
-//void  Subtitle::Parser::TMPlayer::_parse(Subtitle &sub) {
-//	sub.append(Component(name()));
-//	Component &comp = sub.m_comp[0];
-//	int predictedEnd = -1;
-//	while (!atEnd()) {
-//		const QString line = getLine();
-//		if (rxLine.indexIn(line) == -1)
-//			continue;
-//#define T_INT(nth) rxLine.cap(nth).toInt()
-//		const int time = timeToMSec(T_INT(1), T_INT(2), T_INT(3));
-//#undef T_INT
-//		Subtitle::Node node;
-//		if (predictedEnd > 0 && time > predictedEnd)
-//			comp.insert(predictedEnd, node);
-//		QString text = rxLine.cap(4);
-//		replaceEntity(text).replace('|', "<br>");
-//		node.text = RichString(text);
-//		predictedEnd = predictEndTime(comp.insert(time, node));
-//	}
-//}
-
-//QRegExp Subtitle::Parser::MicroDVD::rxLine("^\\{(\\d+)\\}\\{(\\d+)\\}(.*)$");
-
-//void Subtitle::Parser::MicroDVD::_parse(Subtitle &sub) {
-//	sub.append(Component(name(), Component::Frame));
-//	Component &comp = sub.m_comp[0];
-//	while (!atEnd()) {
-//		const QString line = getLine();
-//		if (rxLine.indexIn(line) == -1)
-//			continue;
-//		const int start = rxLine.cap(1).toInt();
-//		const int end = rxLine.cap(2).toInt();
-//		QString text = rxLine.cap(3).trimmed();
-//		text.replace('|', "<br>");
-//		Node node;
-//		node.text = RichString(text);
-//		comp.insert(start, node);
-//		comp.insert(end, Node());
-//	}
-//}
-
-//void Subtitle::Parser::SubRip::_parse(Subtitle &sub) {
-//	sub.append(Component(name()));
-//	Component &comp = sub.m_comp[0];
-//	QString line;
-//	while (!atEnd()) {
-//		line = getLine();
-//		static QRegExp rxNum("^(\\d+)$");
-//#define RX_TIME "(\\d\\d):(\\d\\d):(\\d\\d),(\\d\\d\\d)"
-//		static QRegExp rxTime("^" RX_TIME " --> " RX_TIME "$");
-//#undef RX_TIME
-//		if (rxNum.indexIn(line) == -1)
-//			continue;
-//		while (!atEnd()) {
-//			line = getLine();
-//			if (rxTime.indexIn(line) != -1)
-//				break;
-//		}
-//		if (atEnd())
-//			return;
-//#define T_INT(nth) rxTime.cap(nth).toInt()
-//		const int start = timeToMSec(T_INT(1), T_INT(2), T_INT(3), T_INT(4));
-//		const int end = timeToMSec(T_INT(5), T_INT(6), T_INT(7), T_INT(8));
-//#undef T_INT
-//		QString text;
-//		while (!atEnd()) {
-//			line = getLine().trimmed();
-//			if (line.isEmpty())
-//				break;
-//			text += line + '\n';
-//		}
-//		text.chop(1);
-//		text.replace('\n', "<br>");
-//		Node node;
-//		node.text = text;
-//		comp.insert(start, node);
-//		comp.insert(end, Node());
-//	}
-//}
+	QRegExp rxAttr("\\{([^\\}]+):([^\\}]+)\\}");
+	SubtitleComponent &comp = components(sub).first();
+	while (!atEnd()) {
+		line = trim(getLine()).toString();
+		if (rxLine.indexIn(line) == -1)
+			continue;
+		const int start = getKey(rxLine.cap(1).toInt());
+		const int end = getKey(rxLine.cap(2).toInt());
+		QString text = rxLine.cap(3);
+		QString parsed1, parsed2;
+		auto addTag0 = [&parsed1, &parsed2, this] (const QString &name) {
+			parsed1 += _L('<') % name % _L('>');
+			parsed2 += _L("</") % name % _L('>');
+		};
+		auto addTag1 = [&parsed1, &parsed2, this] (const QString &name, const QString &attr) {
+			parsed1 += _L('<') % name % _L(' ') % attr % _L('>');
+			parsed2 += _L("</") % name % _L('>');
+		};
+		int idx = 0;
+		QRegExp rxColor("\\$([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})");
+		while (text.indexOf(rxAttr, idx) != -1) {
+			const auto name = rxAttr.cap(1);
+			const auto value = rxAttr.cap(2);
+			if (same(name, "y")) {
+				if (value.contains(_L('i'), Qt::CaseInsensitive))
+					addTag0("i");
+				if (value.contains(_L('u'), Qt::CaseInsensitive))
+					addTag0("u");
+				if (value.contains(_L('s'), Qt::CaseInsensitive))
+					addTag0("s");
+				if (value.contains(_L('b'), Qt::CaseInsensitive))
+					addTag0("b");
+			} else if (same(name, "c")) {
+				if (rxColor.indexIn(value) != -1)
+					addTag1(_L("font"), _L("color=\"#") % rxColor.cap(3) % rxColor.cap(2) % rxColor.cap(1) %_L("\""));
+			}
+			idx = rxAttr.pos() + rxAttr.matchedLength();
+		}
+		if (idx < text.size()) {
+			if (text[idx] == _L('/')) {
+				addTag0("i");
+				++idx;
+			}
+			text = _L("<p>") % parsed1 % replace(text.midRef(idx), _L("|"), _L("<br>")) % parsed2 % _L("</p>");
+		} else
+			text = _L("<p>") % parsed1 % parsed2 % _L("</p>");
+		append(comp, text, start, end);
+	}
+}

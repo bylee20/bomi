@@ -6,6 +6,7 @@
 
 struct RichTextDocument : public RichTextHelper {
 	RichTextDocument();
+	RichTextDocument(const QString &text);
 	RichTextDocument(const RichTextDocument &rhs);
 	~RichTextDocument();
 	RichTextDocument &operator = (const RichTextDocument &rhs);

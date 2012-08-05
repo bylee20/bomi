@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string notr="true">[:media_name:] - [:app_name:] [:app_version:]</string>
+   <string notr="true">[:app_name:] - [:app_version:]</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QSlider::groove:horizontal {

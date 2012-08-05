@@ -1,27 +1,14 @@
 <RCC>
     <qresource prefix="/">
-        <file>img/multimedia-volume-control.png</file>
-        <file>img/preferences-desktop-wallpaper.png</file>
-        <file>img/arrow-left-double-gray.png</file>
-        <file>img/go-first-view-gray.png</file>
-        <file>img/arrow-right-double-gray.png</file>
-        <file>img/go-last-view-gray.png</file>
         <file>img/zoom-original.png</file>
         <file>img/zoom-in.png</file>
         <file>img/zoom-out.png</file>
-        <file>img/subtitle.png</file>
-        <file>img/media-playback-pause.png</file>
-        <file>img/media-playback-start.png</file>
-        <file>img/speaker.png</file>
         <file>img/cmplayer512.png</file>
         <file>gpl.html</file>
-        <file>img/speaker-off.png</file>
         <file>img/format-text-bold.png</file>
         <file>img/format-text-italic.png</file>
         <file>img/format-text-strikethrough.png</file>
         <file>img/format-text-underline.png</file>
-        <file>img/applications-multimedia.png</file>
-        <file>img/speaker-large.png</file>
         <file>mpl.html</file>
         <file>translations/cmplayer_en.qm</file>
         <file>translations/cmplayer_ja.qm</file>
@@ -30,7 +17,6 @@
         <file>shaders/i420_to_rgb_filter.glsl</file>
         <file>shaders/i420_to_rgb_kernel.glsl</file>
         <file>shaders/i420_to_rgb_simple.glsl</file>
-        <file>img/application-x-subrip-32.png</file>
         <file>img/cmplayer-32.png</file>
         <file>img/format-text-color-32.png</file>
         <file>img/games-config-background-32.png</file>
@@ -39,5 +25,7 @@
         <file>img/preferences-desktop-keyboard-32.png</file>
         <file>img/view-sort-descending-32.png</file>
         <file>img/run-build-32.png</file>
+        <file>img/application-x-subrip-32.png</file>
+        <file>img/preferences-desktop-theme-32.png</file>
     </qresource>
 </RCC>

@@ -10,6 +10,8 @@
 
 class RichTextHelper {
 public:
+	static QLatin1Char _L(char c) {return QLatin1Char(c);}
+	static QLatin1String _L(const char *str) {return QLatin1String(str);}
 	virtual ~RichTextHelper() {}
 
 	static inline int toInt(const QStringRef &text) {
@@ -45,13 +47,18 @@ public:
 		for (; pos < text.size() && isSeperator(text.at(pos).unicode()); ++pos) ;
 		return pos >= text.size(); // true for end
 	}
-	static inline bool same(const QStringRef &str1, const char *str2) {
-		return !str1.compare(QLatin1String(str2), Qt::CaseInsensitive);
+	static inline bool skipSeperator(int &pos, const QString &text) {return skipSeperator(pos, text.midRef(0));}
+	static QString replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s = Qt::CaseInsensitive);
+	static inline bool same(const QString &str, const char *latin1) {
+		return !str.compare(QLatin1String(latin1), Qt::CaseInsensitive);
+	}
+	static inline bool same(const QStringRef &str, const char *latin1) {
+		return !str.compare(QLatin1String(latin1), Qt::CaseInsensitive);
 	}
 	static inline QStringRef midRef(const QStringRef &ref, int from, int n = -1) {
 		return ref.string()->midRef(ref.position() + from, n < 0 ? ref.size() - from : n);
 	}
-	static int indexOf(const QStringRef &ref, QRegExp &rx, int from = -1);
+	static int indexOf(const QStringRef &ref, QRegExp &rx, int from = 0);
 	static inline QStringRef trim(const QStringRef &text) {
 		if (text.isEmpty()) return QStringRef();
 		int start = 0, end = text.size();
@@ -70,6 +77,7 @@ public:
 			Attr(const QStringRef &name, const QStringRef &value): name(name), value(value) {}
 
 		};
+		int pos = -1;
 		QStringRef name;
 		QList<Attr> attr;
 		int index(const char *attr) const {

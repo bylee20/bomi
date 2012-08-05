@@ -5,6 +5,24 @@
 #include <QtCore/QStringBuilder>
 #include <QtCore/QDebug>
 
+QString RichTextHelper::replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s) {
+	QString text;
+	int start = 0;
+	const int len = strlen(from.latin1());
+	for (;;) {
+		const int pos = str.indexOf(from, start, s);
+		if (pos < 0) {
+			text += midRef(str, start);
+			break;
+		} else {
+			text += midRef(str, start, pos - start);
+			text += to;
+			start = pos + len;
+		}
+	}
+	return text;
+}
+
 int RichTextHelper::pixelSizeToPointSize(double pt) {
 	const double dpi = QApplication::desktop()->logicalDpiY();
 	return pt*dpi/72.0 + 0.5;
@@ -32,9 +50,9 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 	auto at = [&text] (int idx) {return text.at(idx).unicode();};
 	if (at(pos) != '<')
 		return Tag();
-	++pos;
-
 	Tag tag;
+	tag.pos = pos;
+	++pos;
 	if (skipSeperator(pos, text))
 		return Tag();
 	if (at(pos) == '!') { // skip comment
@@ -176,6 +194,8 @@ RichTextBlock::Style RichTextHelper::Tag::style() const {
 		style[QTextFormat::FontUnderline] = true;
 	else if (same(name, "i"))
 		style[QTextFormat::FontItalic] = true;
+	else if (same(name, "s") || same(name, "strike"))
+		style[QTextFormat::FontStrikeOut] = true;
 	else if (same(name, "sup"))
 		style[QTextFormat::TextVerticalAlignment] = QTextCharFormat::AlignSuperScript;
 	else if (same(name, "sub"))
@@ -192,8 +212,6 @@ RichTextBlock::Style RichTextHelper::Tag::style() const {
 	}
 	return style;
 }
-
-
 
 QStringRef RichTextBlockParser::get(const char *open, const char *close, Tag *tag) {
 	Tag _tag;
