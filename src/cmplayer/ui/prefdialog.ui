@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Preferences</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -69,7 +69,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>9</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="playback">
         <property name="name" stdset="0">
@@ -1403,18 +1403,18 @@
          <item>
           <widget class="QGroupBox" name="groupBox_22">
            <property name="title">
-            <string>Size policy</string>
+            <string>Scale policy</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_17">
             <item>
              <widget class="QLabel" name="label_16">
               <property name="text">
-               <string>All scaled size is relative to base length</string>
+               <string>Each size is scaled relatively to base length</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="OsdAutoSizeComboBox" name="sub_auto_size">
+             <widget class="OsdScalePolicyComboBox" name="sub_auto_size">
               <property name="sizeAdjustPolicy">
                <enum>QComboBox::AdjustToContents</enum>
               </property>
@@ -1459,17 +1459,17 @@
                </widget>
               </item>
               <item>
-               <widget class="ColorSelectWidget" name="sub_color_fg" native="true"/>
+               <widget class="ColorSelectWidget" name="sub_text_color" native="true"/>
               </item>
               <item>
-               <widget class="QLabel" name="label_5">
+               <widget class="QCheckBox" name="sub_outline">
                 <property name="text">
                  <string>Outline</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="ColorSelectWidget" name="sub_color_bg" native="true"/>
+               <widget class="ColorSelectWidget" name="sub_outline_color" native="true"/>
               </item>
               <item>
                <spacer name="horizontalSpacer_8">
@@ -1494,43 +1494,26 @@
              </widget>
             </item>
             <item row="3" column="1">
-             <layout class="QHBoxLayout" name="horizontalLayout_7">
-              <item>
-               <widget class="QDoubleSpinBox" name="sub_size_scale">
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <double>99.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.500000000000000</double>
-                </property>
-                <property name="value">
-                 <double>10.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_7">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
+             <widget class="QDoubleSpinBox" name="sub_size_scale">
+              <property name="accelerated">
+               <bool>true</bool>
+              </property>
+              <property name="suffix">
+               <string notr="true">%</string>
+              </property>
+              <property name="decimals">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <double>99.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.500000000000000</double>
+              </property>
+              <property name="value">
+               <double>10.000000000000000</double>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -1540,98 +1523,70 @@
            <property name="title">
             <string>Line spacing</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_19">
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_9">
-              <item>
-               <widget class="QCheckBox" name="checkBox">
-                <property name="text">
-                 <string>Set new line spacing</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="sub_shadow_offset_x_3">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="minimum">
-                 <double>-99.900000000000006</double>
-                </property>
-                <property name="maximum">
-                 <double>99.900000000000006</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.500000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_13">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
+           <layout class="QFormLayout" name="formLayout_13">
+            <item row="0" column="1">
+             <widget class="QDoubleSpinBox" name="sub_new_line_spacing">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="accelerated">
+               <bool>true</bool>
+              </property>
+              <property name="suffix">
+               <string notr="true">%</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>-10.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+             </widget>
             </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_12">
-              <item>
-               <widget class="QCheckBox" name="checkBox_2">
-                <property name="text">
-                 <string>Set new paragraph spacing</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="sub_shadow_offset_x_2">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="suffix">
-                 <string notr="true">%</string>
-                </property>
-                <property name="decimals">
-                 <number>1</number>
-                </property>
-                <property name="minimum">
-                 <double>-99.900000000000006</double>
-                </property>
-                <property name="maximum">
-                 <double>99.900000000000006</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.500000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_14">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_17">
+              <property name="text">
+               <string>New paragraph spacing</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QDoubleSpinBox" name="sub_new_paragraph_spacing">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="accelerated">
+               <bool>true</bool>
+              </property>
+              <property name="suffix">
+               <string notr="true">%</string>
+              </property>
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>-10.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>New line spacing</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -1740,20 +1695,23 @@
                   <property name="enabled">
                    <bool>false</bool>
                   </property>
+                  <property name="accelerated">
+                   <bool>true</bool>
+                  </property>
                   <property name="suffix">
                    <string notr="true">%</string>
                   </property>
                   <property name="decimals">
-                   <number>1</number>
+                   <number>2</number>
                   </property>
                   <property name="minimum">
-                   <double>-99.900000000000006</double>
+                   <double>-1.000000000000000</double>
                   </property>
                   <property name="maximum">
-                   <double>99.900000000000006</double>
+                   <double>1.000000000000000</double>
                   </property>
                   <property name="singleStep">
-                   <double>0.500000000000000</double>
+                   <double>0.100000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -1772,20 +1730,23 @@
                   <property name="enabled">
                    <bool>false</bool>
                   </property>
+                  <property name="accelerated">
+                   <bool>true</bool>
+                  </property>
                   <property name="suffix">
                    <string notr="true">%</string>
                   </property>
                   <property name="decimals">
-                   <number>1</number>
+                   <number>2</number>
                   </property>
                   <property name="minimum">
-                   <double>-99.900000000000006</double>
+                   <double>-1.000000000000000</double>
                   </property>
                   <property name="maximum">
-                   <double>99.900000000000006</double>
+                   <double>1.000000000000000</double>
                   </property>
                   <property name="singleStep">
-                   <double>0.500000000000000</double>
+                   <double>0.100000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -2337,7 +2298,7 @@ e.g.: English, Korean</string>
       </widget>
      </item>
      <item>
-      <widget class="QDialogButtonBox" name="buttonBox">
+      <widget class="QDialogButtonBox" name="dbb">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -2390,12 +2351,12 @@ e.g.: English, Korean</string>
    <header>widgets.hpp</header>
   </customwidget>
   <customwidget>
-   <class>OsdAutoSizeComboBox</class>
+   <class>DataComboBox</class>
    <extends>QComboBox</extends>
    <header>widgets.hpp</header>
   </customwidget>
   <customwidget>
-   <class>DataComboBox</class>
+   <class>OsdScalePolicyComboBox</class>
    <extends>QComboBox</extends>
    <header>widgets.hpp</header>
   </customwidget>
@@ -2405,50 +2366,18 @@ e.g.: English, Korean</string>
  </resources>
  <connections>
   <connection>
-   <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>PrefDialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>673</x>
-     <y>590</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>157</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>PrefDialog</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>721</x>
-     <y>590</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>286</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>enable_generate_playlist</sender>
    <signal>toggled(bool)</signal>
    <receiver>generate_playlist</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>558</x>
-     <y>269</y>
+     <x>301</x>
+     <y>95</y>
     </hint>
     <hint type="destinationlabel">
-     <x>551</x>
-     <y>299</y>
+     <x>295</x>
+     <y>89</y>
     </hint>
    </hints>
   </connection>
@@ -2459,12 +2388,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>558</x>
-     <y>103</y>
+     <x>301</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>558</x>
-     <y>124</y>
+     <x>301</x>
+     <y>74</y>
     </hint>
    </hints>
   </connection>
@@ -2475,12 +2404,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>558</x>
-     <y>186</y>
+     <x>301</x>
+     <y>89</y>
     </hint>
     <hint type="destinationlabel">
-     <x>558</x>
-     <y>207</y>
+     <x>301</x>
+     <y>80</y>
     </hint>
    </hints>
   </connection>
@@ -2491,12 +2420,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>112</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>515</x>
-     <y>145</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2507,12 +2436,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>147</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>475</x>
-     <y>145</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2523,12 +2452,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>147</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>515</x>
-     <y>111</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2539,12 +2468,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>147</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>555</x>
-     <y>145</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2555,12 +2484,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>147</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>515</x>
-     <y>179</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2571,12 +2500,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>182</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>475</x>
-     <y>111</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2587,12 +2516,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>182</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>475</x>
-     <y>179</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2603,12 +2532,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>182</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>555</x>
-     <y>179</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2619,12 +2548,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>182</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>555</x>
-     <y>111</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2635,12 +2564,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>445</x>
-     <y>258</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>513</x>
-     <y>291</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2651,12 +2580,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>445</x>
-     <y>293</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>478</x>
-     <y>291</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2667,12 +2596,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>445</x>
-     <y>293</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>513</x>
-     <y>257</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2683,12 +2612,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>445</x>
-     <y>293</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>548</x>
-     <y>291</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2699,12 +2628,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>445</x>
-     <y>293</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>513</x>
-     <y>325</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2715,12 +2644,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>445</x>
-     <y>328</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>478</x>
-     <y>257</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2731,12 +2660,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>445</x>
-     <y>328</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>478</x>
-     <y>325</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2747,12 +2676,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>445</x>
-     <y>328</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>548</x>
-     <y>257</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2763,12 +2692,12 @@ e.g.: English, Korean</string>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>445</x>
-     <y>328</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>548</x>
-     <y>325</y>
+     <x>249</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2779,12 +2708,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>328</x>
-     <y>319</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>328</x>
-     <y>340</y>
+     <x>319</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2795,12 +2724,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>303</x>
+     <x>301</x>
      <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>303</x>
-     <y>83</y>
+     <x>295</x>
+     <y>77</y>
     </hint>
    </hints>
   </connection>
@@ -2811,11 +2740,11 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>303</x>
+     <x>319</x>
      <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>303</x>
+     <x>319</x>
      <y>83</y>
     </hint>
    </hints>
@@ -2827,12 +2756,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>303</x>
+     <x>319</x>
      <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>303</x>
-     <y>83</y>
+     <x>284</x>
+     <y>81</y>
     </hint>
    </hints>
   </connection>
@@ -2843,11 +2772,11 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>303</x>
+     <x>319</x>
      <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>303</x>
+     <x>319</x>
      <y>83</y>
     </hint>
    </hints>
@@ -2859,11 +2788,11 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>303</x>
+     <x>319</x>
      <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>303</x>
+     <x>319</x>
      <y>83</y>
     </hint>
    </hints>
@@ -2875,12 +2804,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>273</x>
-     <y>257</y>
+     <x>506</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>299</x>
-     <y>277</y>
+     <x>315</x>
+     <y>490</y>
     </hint>
    </hints>
   </connection>
@@ -2891,12 +2820,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>307</x>
-     <y>254</y>
+     <x>540</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>299</x>
-     <y>324</y>
+     <x>315</x>
+     <y>525</y>
     </hint>
    </hints>
   </connection>
@@ -2907,12 +2836,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>355</x>
-     <y>256</y>
+     <x>588</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>349</x>
-     <y>305</y>
+     <x>397</x>
+     <y>525</y>
     </hint>
    </hints>
   </connection>
@@ -2923,12 +2852,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>323</x>
-     <y>259</y>
+     <x>556</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>317</x>
-     <y>289</y>
+     <x>333</x>
+     <y>490</y>
     </hint>
    </hints>
   </connection>
@@ -2939,12 +2868,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>478</x>
-     <y>261</y>
+     <x>711</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>486</x>
-     <y>279</y>
+     <x>542</x>
+     <y>499</y>
     </hint>
    </hints>
   </connection>
@@ -2955,12 +2884,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>509</x>
-     <y>261</y>
+     <x>728</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>508</x>
-     <y>312</y>
+     <x>542</x>
+     <y>534</y>
     </hint>
    </hints>
   </connection>
@@ -2971,12 +2900,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>415</x>
-     <y>260</y>
+     <x>648</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>423</x>
-     <y>284</y>
+     <x>461</x>
+     <y>499</y>
     </hint>
    </hints>
   </connection>
@@ -2987,12 +2916,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>437</x>
-     <y>253</y>
+     <x>670</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>443</x>
-     <y>318</y>
+     <x>461</x>
+     <y>534</y>
     </hint>
    </hints>
   </connection>
@@ -3003,12 +2932,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>375</x>
-     <y>258</y>
+     <x>608</x>
+     <y>466</y>
     </hint>
     <hint type="destinationlabel">
-     <x>273</x>
-     <y>350</y>
+     <x>506</x>
+     <y>563</y>
     </hint>
    </hints>
   </connection>
@@ -3019,12 +2948,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>309</x>
-     <y>354</y>
+     <x>301</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>288</x>
-     <y>375</y>
+     <x>260</x>
+     <y>100</y>
     </hint>
    </hints>
   </connection>
@@ -3035,12 +2964,28 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>339</x>
-     <y>357</y>
+     <x>301</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>342</x>
-     <y>375</y>
+     <x>281</x>
+     <y>100</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sub_outline</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>sub_outline_color</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>470</x>
+     <y>242</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>506</x>
+     <y>252</y>
     </hint>
    </hints>
   </connection>

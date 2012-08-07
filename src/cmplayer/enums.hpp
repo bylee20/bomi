@@ -377,23 +377,23 @@ inline bool operator == (int lhs, const Enum::SubtitleAutoselect &rhs) {return l
 inline bool operator != (int lhs, const Enum::SubtitleAutoselect &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class OsdAutoSize {
-	Q_DECLARE_TR_FUNCTIONS(OsdAutoSize)
+class OsdScalePolicy {
+	Q_DECLARE_TR_FUNCTIONS(OsdScalePolicy)
 public:
-	typedef QList<OsdAutoSize> List;
+	typedef QList<OsdScalePolicy> List;
 	static const int count = 3;
-	static const OsdAutoSize Width;
-	static const OsdAutoSize Height;
-	static const OsdAutoSize Diagonal;
+	static const OsdScalePolicy Width;
+	static const OsdScalePolicy Height;
+	static const OsdScalePolicy Diagonal;
 
-	OsdAutoSize(): m_id(0) {}
-	OsdAutoSize(const OsdAutoSize &rhs): m_id(rhs.m_id) {}
-	OsdAutoSize &operator = (const OsdAutoSize &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const OsdAutoSize &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const OsdAutoSize &rhs) const {return m_id != rhs.m_id;}
+	OsdScalePolicy(): m_id(0) {}
+	OsdScalePolicy(const OsdScalePolicy &rhs): m_id(rhs.m_id) {}
+	OsdScalePolicy &operator = (const OsdScalePolicy &rhs) {m_id = rhs.m_id; return *this;}
+	bool operator == (const OsdScalePolicy &rhs) const {return m_id == rhs.m_id;}
+	bool operator != (const OsdScalePolicy &rhs) const {return m_id != rhs.m_id;}
 	bool operator == (int rhs) const {return m_id == rhs;}
 	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const OsdAutoSize &rhs) const {return m_id < rhs.m_id;}
+	bool operator < (const OsdScalePolicy &rhs) const {return m_id < rhs.m_id;}
 	int id() const {return m_id;}
 	QString name() const {return map().name[m_id];}
 	QString description() const {return description(m_id);}
@@ -401,12 +401,12 @@ public:
 	void set(const QString &name) {m_id = map().value.value(name, m_id);}
 	static bool isCompatible(int id) {return 0 <= id && id < count;}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static OsdAutoSize from(const QString &name, const OsdAutoSize &def = OsdAutoSize()) {
+	static OsdScalePolicy from(const QString &name, const OsdScalePolicy &def = OsdScalePolicy()) {
 		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? OsdAutoSize(*it) : def;
+		return it != map().value.end() ? OsdScalePolicy(*it) : def;
 	}
-	static OsdAutoSize from(int id, const OsdAutoSize &def = OsdAutoSize()) {
-		return isCompatible(id) ? OsdAutoSize(id) : def;
+	static OsdScalePolicy from(int id, const OsdScalePolicy &def = OsdScalePolicy()) {
+		return isCompatible(id) ? OsdScalePolicy(id) : def;
 	}
 	static QString description(int id) {
 		if (id == Width.m_id)
@@ -427,16 +427,16 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	OsdAutoSize(int id, const char *name): m_id(id) {
+	OsdScalePolicy(int id, const char *name): m_id(id) {
 		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
 		_map.list.append(*this);
 	}
-	OsdAutoSize(int id): m_id(id) {}
+	OsdScalePolicy(int id): m_id(id) {}
 	int m_id;
 };
 }
-inline bool operator == (int lhs, const Enum::OsdAutoSize &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::OsdAutoSize &rhs) {return lhs != rhs.id();}
+inline bool operator == (int lhs, const Enum::OsdScalePolicy &rhs) {return lhs == rhs.id();}
+inline bool operator != (int lhs, const Enum::OsdScalePolicy &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
 class ClickAction {

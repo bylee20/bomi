@@ -53,7 +53,7 @@ struct MainWindow::Data {
 	QPoint prevPos;		QTimer hider;
 	bool moving = false, changingSub = false;
 	bool pausedByHiding = false, dontShowMsg = false, dontPause = false;
-
+	bool stateChanging = false;
 	ABRepeater ab = {&engine, &subtitle};
 	PlayInfoView playInfo = {&engine, &audio, &video};
 	VideoScreen *screen = new VideoScreen;
@@ -97,14 +97,13 @@ struct MainWindow::Data {
 
 		const AppState &as = AppState::get();
 
-		engine.setSpeed(as.speed);
+		engine.setSpeed(as.play_speed);
 
-		menu("video")("aspect").g()->trigger(as.aspect_ratio);
-		menu("video")("crop").g()->trigger(as.crop_ratio);
-		menu("video")("overlay").g()->trigger(as.overlay.id());
-		menu("video")("align").g("horizontal")->trigger(as.screen_alignment.id() & 0x0f);
-		menu("video")("align").g("vertical")->trigger(as.screen_alignment.id() & 0xf0);
-		video.setOffset(as.screen_offset);
+		menu("video")("aspect").g()->trigger(as.video_aspect_ratio);
+		menu("video")("crop").g()->trigger(as.video_crop_ratio);
+		menu("video")("align").g("horizontal")->trigger(as.video_alignment.id() & 0x0f);
+		menu("video")("align").g("vertical")->trigger(as.video_alignment.id() & 0xf0);
+		video.setOffset(as.video_offset);
 		video.setEffects((VideoRenderer::Effects)as.video_effects);
 		for (int i=0; i<16; ++i) {
 			if ((as.video_effects >> i) & 1)
@@ -112,42 +111,42 @@ struct MainWindow::Data {
 		}
 		video.setColorProperty(as.video_color);
 
-		audio.setVolume(as.volume);
-		audio.setMuted(as.muted);
-		audio.setPreAmp(as.amp);
-		audio.setVolumeNormalized(as.volume_normalized);
+		audio.setVolume(as.audio_volume);
+		audio.setMuted(as.audio_muted);
+		audio.setPreAmp(as.audio_amp);
+		audio.setVolumeNormalized(as.audio_volume_normalized);
 
 		menu("subtitle").g("display")->trigger((int)as.sub_letterbox);
 		menu("subtitle").g("align")->trigger((int)as.sub_align_top);
 		subtitle.setPos(as.sub_pos);
 		subtitle.setDelay(as.sub_sync_delay);
 
-		menu("window").g("sot")->trigger(as.stays_on_top.id());
+		menu("window").g("sot")->trigger(as.screen_stays_on_top.id());
 
 		dontShowMsg = false;
 	}
 
 	void save_state() const {
 		AppState &as = AppState::get();
-		as.aspect_ratio = video.aspectRatio();
-		as.crop_ratio = video.cropRatio();
-		as.screen_alignment.set(video.alignment());
-		as.screen_offset = video.offset();
+		as.video_aspect_ratio = video.aspectRatio();
+		as.video_crop_ratio = video.cropRatio();
+		as.video_alignment.set(video.alignment());
+		as.video_offset = video.offset();
 		as.video_effects = video.effects();
 		as.video_color = video.colorProperty();
-		as.volume = audio.volume();
-		as.volume_normalized = audio.isVolumeNormalized();
-		as.muted = audio.isMuted();
-		as.amp = audio.preAmp();
-		as.speed = engine.speed();
+		as.audio_volume = audio.volume();
+		as.audio_volume_normalized = audio.isVolumeNormalized();
+		as.audio_muted = audio.isMuted();
+		as.audio_amp = audio.preAmp();
+		as.play_speed = engine.speed();
 		as.sub_pos = subtitle.pos();
 		as.sub_sync_delay = subtitle.delay();
-		as.stays_on_top = stay_on_top_mode();
+		as.screen_stays_on_top = stay_on_top_mode();
 		as.sub_letterbox = subtitle.osd().letterboxHint();
 		as.sub_align_top = subtitle.isTopAligned();
-		QAction *act = menu("video")("overlay").g()->checkedAction();
-		if (act)
-			as.overlay.set(act->data().toInt());
+//		QAction *act = menu("video")("overlay").g()->checkedAction();
+//		if (act)
+//			as.overlay.set(act->data().toInt());
 		as.save();
 	}
 

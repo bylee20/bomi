@@ -10,52 +10,49 @@ Pref *Pref::obj = 0;
 
 void Pref::save() const {
 	Record r(PREF_GROUP);
+#define WRITE(a) RECORD_WRITE(r, a)
+	WRITE(remember_stopped);
+	WRITE(ask_record_found);
+	WRITE(pause_minimized);
+	WRITE(pause_video_only);
+	WRITE(hide_cursor);
+	WRITE(hide_cursor_delay);
+	WRITE(enable_system_tray);
+	WRITE(hide_rather_close);
 
-	RECORD_WRITE(r, remember_stopped);
-	RECORD_WRITE(r, ask_record_found);
-	RECORD_WRITE(r, pause_minimized);
-	RECORD_WRITE(r, pause_video_only);
-	RECORD_WRITE(r, hide_cursor);
-	RECORD_WRITE(r, hide_cursor_delay);
-	RECORD_WRITE(r, enable_system_tray);
-	RECORD_WRITE(r, hide_rather_close);
+	WRITE(disable_screensaver);
+	WRITE(sub_enc);
+	WRITE(sub_priority);
+	WRITE(sub_enc_autodetection);
+	WRITE(sub_enc_accuracy);
+	WRITE(ms_per_char);
+	WRITE(seek_step1);
+	WRITE(seek_step2);
+	WRITE(seek_step3);
+	WRITE(speed_step);
+	WRITE(volume_step);
+	WRITE(amp_step);
+	WRITE(sub_pos_step);
+	WRITE(volume_step);
+	WRITE(sync_delay_step);
+	WRITE(brightness_step);
+	WRITE(saturation_step);
+	WRITE(contrast_step);
+	WRITE(hue_step);
+	WRITE(locale);
+	WRITE(sub_ext);
+	WRITE(blur_kern_c);
+	WRITE(blur_kern_n);
+	WRITE(blur_kern_d);
+	WRITE(sharpen_kern_c);
+	WRITE(sharpen_kern_n);
+	WRITE(sharpen_kern_d);
+	WRITE(adjust_contrast_min_luma);
+	WRITE(adjust_contrast_max_luma);
 
-	RECORD_WRITE(r, disable_screensaver);
-	RECORD_WRITE(r, sub_enc);
-	RECORD_WRITE(r, sub_priority);
-	RECORD_WRITE(r, sub_enc_autodetection);
-	RECORD_WRITE(r, sub_enc_accuracy);
-	RECORD_WRITE(r, ms_per_char);
-	RECORD_WRITE(r, seek_step1);
-	RECORD_WRITE(r, seek_step2);
-	RECORD_WRITE(r, seek_step3);
-	RECORD_WRITE(r, speed_step);
-	RECORD_WRITE(r, volume_step);
-	RECORD_WRITE(r, amp_step);
-	RECORD_WRITE(r, sub_pos_step);
-	RECORD_WRITE(r, volume_step);
-	RECORD_WRITE(r, sync_delay_step);
-	RECORD_WRITE(r, brightness_step);
-	RECORD_WRITE(r, saturation_step);
-	RECORD_WRITE(r, contrast_step);
-	RECORD_WRITE(r, hue_step);
-	RECORD_WRITE(r, locale);
-	RECORD_WRITE(r, sub_ext);
-	RECORD_WRITE(r, blur_kern_c);
-	RECORD_WRITE(r, blur_kern_n);
-	RECORD_WRITE(r, blur_kern_d);
-	RECORD_WRITE(r, sharpen_kern_c);
-	RECORD_WRITE(r, sharpen_kern_n);
-	RECORD_WRITE(r, sharpen_kern_d);
-	RECORD_WRITE(r, adjust_contrast_min_luma);
-	RECORD_WRITE(r, adjust_contrast_max_luma);
-	RECORD_WRITE(r, auto_contrast_threshold);
-	RECORD_WRITE(r, normalizer_gain);
-	RECORD_WRITE(r, normalizer_smoothness);
-
-	RECORD_WRITE(r, enable_generate_playist);
-	RECORD_WRITE(r, sub_enable_autoload);
-	RECORD_WRITE(r, sub_enable_autoselect);
+	WRITE(enable_generate_playist);
+	WRITE(sub_enable_autoload);
+	WRITE(sub_enable_autoselect);
 	RECORD_WRITE_ENUM(r, generate_playlist);
 	RECORD_WRITE_ENUM(r, sub_autoload);
 	RECORD_WRITE_ENUM(r, sub_autoselect);
@@ -67,87 +64,60 @@ void Pref::save() const {
 }
 
 void Pref::load() {
-	const int DefaultSeekingStep1 = 5000;
-	const int DefaultSeekingStep2 = 30000;
-	const int DefaultSeekingStep3 = 60000;
-	const int DefaultVolumeStep = 2;
-	const int DefaultSyncDelayStep = 500;
-	const int DefaultAmpStep = 10;
-	const int DefaultSubPosStep = 1;
-	const int DefaultSpeedStep = 10;
-	const int DefaultColorPropStep = 1;
-
 	Record r(PREF_GROUP);
+#define READ(a) r.read(a, #a)
+#define READ_ENUM(a) r.readEnum(a, #a)
+	READ(remember_stopped);
+	READ(ask_record_found);
+	READ(pause_minimized);
+	READ(pause_video_only);
+	READ(hide_cursor);
+	READ(hide_cursor_delay);
+	READ(blur_kern_c);
+	READ(blur_kern_n);
+	READ(blur_kern_d);
+	READ(sharpen_kern_c);
+	READ(sharpen_kern_n);
+	READ(sharpen_kern_d);
+	READ(adjust_contrast_min_luma);
+	READ(adjust_contrast_max_luma);
 
-	RECORD_READ(r, remember_stopped, true);
-	RECORD_READ(r, ask_record_found, true);
-	RECORD_READ(r, pause_minimized, true);
-	RECORD_READ(r, pause_video_only, true);
-	RECORD_READ(r, hide_cursor, true);
-	RECORD_READ(r, hide_cursor_delay, 3000);
-	RECORD_READ(r, blur_kern_c, 1);
-	RECORD_READ(r, blur_kern_n, 2);
-	RECORD_READ(r, blur_kern_d, 1);
-	RECORD_READ(r, sharpen_kern_c, 5);
-	RECORD_READ(r, sharpen_kern_n, -1);
-	RECORD_READ(r, sharpen_kern_d, 0);
-	RECORD_READ(r, adjust_contrast_min_luma, 16);
-	RECORD_READ(r, adjust_contrast_max_luma, 235);
-	RECORD_READ(r, auto_contrast_threshold, 0.5);
+	READ(enable_system_tray);
+	READ(hide_rather_close);
+	READ(disable_screensaver);
+	READ(locale);
+	READ(sub_enc);
+	READ(sub_enc_autodetection);
+	READ(sub_enc_accuracy);
+	READ(ms_per_char);
+	READ(sub_priority);
+	READ(seek_step1);
+	READ(seek_step2);
+	READ(seek_step3);
+	READ(speed_step);
+	READ(volume_step);
+	READ(amp_step);
+	READ(sub_pos_step);
+	READ(sync_delay_step);
+	READ(brightness_step);
+	READ(saturation_step);
+	READ(contrast_step);
+	READ(hue_step);
+	READ(sub_ext);
 
-	RECORD_READ(r, enable_system_tray, true);
-	RECORD_READ(r, hide_rather_close, true);
-	RECORD_READ(r, disable_screensaver, true);
-	RECORD_READ(r, locale, QLocale::system());
-	RECORD_READ(r, sub_enc, QString(locale.language() == QLocale::Korean ? "CP949" : "UTF-8"));
-	RECORD_READ(r, sub_enc_autodetection, true);
-	RECORD_READ(r, sub_enc_accuracy, 70);
-	RECORD_READ(r, ms_per_char, 500);
-	RECORD_READ(r, sub_priority, QStringList());
-	RECORD_READ(r, seek_step1, DefaultSeekingStep1);
-	RECORD_READ(r, seek_step2, DefaultSeekingStep2);
-	RECORD_READ(r, seek_step3, DefaultSeekingStep3);
-	RECORD_READ(r, speed_step, DefaultSpeedStep);
-	RECORD_READ(r, volume_step, DefaultVolumeStep);
-	RECORD_READ(r, amp_step, DefaultAmpStep);
-	RECORD_READ(r, sub_pos_step, DefaultSubPosStep);
-	RECORD_READ(r, sync_delay_step, DefaultSyncDelayStep);
-	RECORD_READ(r, brightness_step, DefaultColorPropStep);
-	RECORD_READ(r, saturation_step, DefaultColorPropStep);
-	RECORD_READ(r, contrast_step, DefaultColorPropStep);
-	RECORD_READ(r, hue_step, DefaultColorPropStep);
-	RECORD_READ(r, sub_ext, QString());
-	RECORD_READ(r, normalizer_gain, 20);
-	RECORD_READ(r, normalizer_smoothness, 100);
+	READ(enable_generate_playist);
+	READ(sub_enable_autoload);
+	READ(sub_enable_autoselect);
+	READ_ENUM(generate_playlist);
+	READ_ENUM(sub_autoload);
+	READ_ENUM(sub_autoselect);
+#undef READ
+#undef READ_ENUM
 
-	RECORD_READ(r, enable_generate_playist, true);
-	RECORD_READ(r, sub_enable_autoload, true);
-	RECORD_READ(r, sub_enable_autoselect, true);
-	RECORD_READ_ENUM(r, generate_playlist, Enum::GeneratePlaylist::Folder);
-	RECORD_READ_ENUM(r, sub_autoload, Enum::SubtitleAutoload::Contain);
-	RECORD_READ_ENUM(r, sub_autoselect, Enum::SubtitleAutoselect::Matched);
-
-	sub_style.border_width = 0.045;
-	sub_style.text_scale = 0.040;
-	sub_style.auto_size = OsdStyle::AutoSize::Width;
-	sub_style.has_shadow = true;
-	sub_style.shadow_color = Qt::black;
-	sub_style.shadow_offset = QPointF(0, 0);
-	sub_style.shadow_blur = 3;
-	sub_style.font.setBold(true);
 	sub_style.load(r, "sub_style");
-
-	ClickActionMap def_click(false, Enum::ClickAction::Fullscreen);
-	def_click[Enum::KeyModifier::None].enabled = true;
-	double_click_map.load(r, "double_click_map", def_click);
-	def_click = ClickActionMap(false, Enum::ClickAction::Fullscreen);
-	def_click[Enum::KeyModifier::None] = ClickActionInfo(true, Enum::ClickAction::Pause);
-	middle_click_map.load(r, "middle_click_map", def_click);
-
-	WheelActionMap def_wheel(false, Enum::WheelAction::Volume);
-	def_wheel[Enum::KeyModifier::None].enabled = true;
-	def_wheel[Enum::KeyModifier::Ctrl] = WheelActionInfo(true, Enum::WheelAction::Amp);
-	wheel_scroll_map.load(r, "wheel_scroll_map", def_wheel);
+	double_click_map.load(r, "double_click_map");
+	middle_click_map.load(r, "middle_click_map");
+	wheel_scroll_map.load(r, "wheel_scroll_map");
 }
 
 #undef PREF_GROUP

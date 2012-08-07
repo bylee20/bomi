@@ -199,10 +199,11 @@ public:
 				}
 			}
 			updateHS();
-			return idx;
+			return m_idx = idx;
 		}
 		Effects effects() const {return m_effects;}
 		void setYRange(float min, float max) {y_min = min; y_max = max;}
+		int id() const {return m_idx;}
 	private:
 		void updateHS() {
 			double sat_sinhue = 0.0, sat_coshue = 0.0;
@@ -220,6 +221,7 @@ public:
 		float y_min = 0.0f, y_max = 1.0f;
 		float brightness, contrast, sat_hue[2][2];
 		Effects m_effects = 0;
+		int m_idx = 0;
 		ColorProperty m_color;
 
 		friend class VideoShader;
@@ -257,20 +259,22 @@ public:
 		m_shader.setUniformValue(loc_brightness, var.brightness);
 		m_shader.setUniformValue(loc_contrast, var.contrast);
 		m_shader.setUniformValue(loc_sat_hue, var.sat_hue);
-		if (var.effects() & FilterEffects) {
+		const bool filter = var.effects() & FilterEffects;
+		const bool kernel = var.effects() & KernelEffects;
+		if (filter || kernel) {
 			m_shader.setUniformValue(loc_rgb_c, var.rgb_c[0], var.rgb_c[1], var.rgb_c[2]);
 			m_shader.setUniformValue(loc_rgb_0, var.rgb_0);
 			const float y_tan = 1.0/(var.y_max - var.y_min);
 			m_shader.setUniformValue(loc_y_tan, y_tan);
 			m_shader.setUniformValue(loc_y_b, (float)-var.y_min*y_tan);
-			if (var.effects() & KernelEffects) {
-				const float dx = 1.0/(double)format.stride;
-				const float dy = 1.0/(double)format.height;
-				m_shader.setUniformValue(loc_dxy, dx, dy, -dx, 0.f);
-				m_shader.setUniformValue(loc_kern_c, var.kern_c);
-				m_shader.setUniformValue(loc_kern_n, var.kern_n);
-				m_shader.setUniformValue(loc_kern_d, var.kern_d);
-			}
+		}
+		if (kernel) {
+			const float dx = 1.0/(double)format.stride;
+			const float dy = 1.0/(double)format.height;
+			m_shader.setUniformValue(loc_dxy, dx, dy, -dx, 0.f);
+			m_shader.setUniformValue(loc_kern_c, var.kern_c);
+			m_shader.setUniformValue(loc_kern_n, var.kern_n);
+			m_shader.setUniformValue(loc_kern_d, var.kern_d);
 		}
 	}
 private:
@@ -296,7 +300,7 @@ struct VideoRenderer::Data {
 	VideoScreen *gl = nullptr;
 	VideoShader::Var var;
 	PlayEngine *engine;
-	QList<VideoShader*> shaders; VideoShader *shader;
+	QList<VideoShader*> shaders;
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
 	double cpu = -1.0;
 	bool prepared = false, logoOn = false, frameIsSet = false, hasPrograms = false, binding = false;
@@ -378,7 +382,6 @@ void VideoRenderer::setScreen(VideoScreen *gl) {
 		d->gl->makeCurrent();
 		qDeleteAll(d->shaders);
 		d->shaders.clear();
-		d->shader = nullptr;
 		glDeleteTextures(3, d->texture);
 		d->gl->doneCurrent();
 	}
@@ -405,7 +408,7 @@ void VideoRenderer::setScreen(VideoScreen *gl) {
 		d->shaders << makeShader(":/shaders/i420_to_rgb_simple.glsl")
 			<< makeShader(":/shaders/i420_to_rgb_filter.glsl")
 			<< makeShader(":/shaders/i420_to_rgb_kernel.glsl");
-		d->hasPrograms = (d->shader = d->shaders.value(0, 0));
+		d->hasPrograms =  d->shaders[d->var.id()];
 		Q_ASSERT(d->hasPrograms);
 
 		d->gl->doneCurrent();
@@ -433,8 +436,6 @@ double VideoRenderer::frameRate() const {
 }
 
 double VideoRenderer::outputFrameRate(bool reset) const {
-//	d->engine->hasVideo()
-//	qDebug() << d->engine->context()->sh_video->fps;
 	const double ret = d->fps.frameRate();
 	if (reset)
 		d->fps.reset();
@@ -675,9 +676,11 @@ void VideoRenderer::render() {
 			glMatrixMode(GL_MODELVIEW);
 		}
 		glLoadIdentity();
+		auto shader = d->shaders[d->var.id()];
+
 //		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		d->shader->bind();
-		d->shader->setUniforms(d->var, d->frame->format);
+		shader->bind();
+		shader->setUniforms(d->var, d->frame->format);
 		const float textureCoords[] = {
 			(float)left,	(float)top,
 			(float)right,	(float)top,
@@ -707,7 +710,7 @@ void VideoRenderer::render() {
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
 
-		d->shader->release();
+		shader->release();
 
 		glColor3f(0.0f, 0.0f, 0.0f);
 		auto fillRect = [] (float x, float y, float w ,float h) {glRectf(x, y, x+w, y+h);};

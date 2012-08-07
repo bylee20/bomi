@@ -11,69 +11,70 @@ AppState &AppState::get() {
 AppState::AppState() {
 	Record r("app-state");
 
-	RECORD_READ(r, speed, 1.0);
+#define READ(a) RECORD_READ(r, a)
+	READ(play_speed);
+	READ(video_drop_frame);
+	READ(video_aspect_ratio);
+	READ(video_crop_ratio);
+	RECORD_READ_ENUM(r, video_alignment);
+	READ(video_offset)
+	READ(video_effects);
+	r.read(video_color.brightness(), "video_brightness");
+	r.read(video_color.saturation(), "video_saturation");
+	r.read(video_color.contrast(), "video_contrast");
+	r.read(video_color.hue(), "video_hue");
 
-	RECORD_READ(r, aspect_ratio, -1.0);
-	RECORD_READ(r, crop_ratio, -1.0);
-	RECORD_READ_ENUM(r, screen_alignment, Enum::Position::CC);
-	RECORD_READ(r, screen_offset, QPoint(0, 0));
-	RECORD_READ(r, video_effects, 0);
-	video_color.brightness() = r.read("video_brightness", 0.0);
-	video_color.saturation() = r.read("video_saturation", 0.0);
-	video_color.contrast() = r.read("video_contrast", 0.0);
-	video_color.hue() = r.read("video_hue", 0.0);
-	RECORD_READ_ENUM(r, overlay, Enum::Overlay::Auto);
+	READ(audio_volume);
+	READ(audio_volume_normalized);
+	READ(audio_muted);
+	READ(audio_amp);
 
-	RECORD_READ(r, volume, 100);
-	RECORD_READ(r, volume_normalized, true);
-	RECORD_READ(r, muted, false);
-	RECORD_READ(r, amp, 1.0);
+	READ(sub_pos);
+	READ(sub_letterbox);
+	READ(sub_align_top);
+	READ(sub_sync_delay);
 
-	RECORD_READ(r, sub_pos, 1.0);
-	RECORD_READ(r, sub_letterbox, true);
-	RECORD_READ(r, sub_align_top, false);
-	RECORD_READ(r, sub_sync_delay, 0);
+	RECORD_READ_ENUM(r, screen_stays_on_top);
 
-	RECORD_READ_ENUM(r, stays_on_top, Enum::StaysOnTop::Playing);
-
-	RECORD_READ(r, last_open_file, QString());
-	RECORD_READ(r, ask_system_tray, true);
-	RECORD_READ(r, open_url_list, QStringList());
-	RECORD_READ(r, url_enc, QString());
-
+	READ(open_last_file);
+	READ(open_url_list);
+	READ(open_url_enc);
+	READ(ask_system_tray);
+#undef READ
 }
 
 void AppState::save() const {
 	Record r("app-state");
+#define WRITE(a) RECORD_WRITE(r, a)
+	WRITE(play_speed);
 
-	RECORD_WRITE(r, speed);
-
-	RECORD_WRITE(r, aspect_ratio);
-	RECORD_WRITE(r, crop_ratio);
-	RECORD_WRITE_ENUM(r, screen_alignment);
-	RECORD_WRITE(r, screen_offset);
-	RECORD_WRITE(r, video_effects)
+	WRITE(video_drop_frame);
+	WRITE(video_aspect_ratio);
+	WRITE(video_crop_ratio);
+	RECORD_WRITE_ENUM(r, video_alignment);
+	WRITE(video_offset);
+	WRITE(video_effects)
 	r.write("video_brightness", video_color.brightness());
 	r.write("video_saturation", video_color.saturation());
 	r.write("video_contrast", video_color.contrast());
 	r.write("video_hue", video_color.hue());
-	RECORD_WRITE_ENUM(r, overlay);
 
-	RECORD_WRITE(r, volume);
-	RECORD_WRITE(r, volume_normalized);
-	RECORD_WRITE(r, muted);
-	RECORD_WRITE(r, amp);
+	WRITE(audio_volume);
+	WRITE(audio_volume_normalized);
+	WRITE(audio_muted);
+	WRITE(audio_amp);
 
-	RECORD_WRITE(r, sub_pos);
-	RECORD_WRITE(r, sub_letterbox);
-	RECORD_WRITE(r, sub_align_top);
-	RECORD_WRITE(r, sub_sync_delay);
+	WRITE(sub_pos);
+	WRITE(sub_letterbox);
+	WRITE(sub_align_top);
+	WRITE(sub_sync_delay);
 
-	RECORD_WRITE_ENUM(r, stays_on_top);
+	RECORD_WRITE_ENUM(r, screen_stays_on_top);
 
-	RECORD_WRITE(r, last_open_file);
-	RECORD_WRITE(r, ask_system_tray);
-	RECORD_WRITE(r, open_url_list);
-	RECORD_WRITE(r, url_enc);
+	WRITE(open_last_file);
+	WRITE(ask_system_tray);
+	WRITE(open_url_list);
+	WRITE(open_url_enc);
+#undef WRITE
 }
 

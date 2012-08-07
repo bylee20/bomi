@@ -89,12 +89,18 @@ public:
 	bool isMenu() const;
 	QString volumeName() const;
 	QString mediaName() const;
+	bool isInitialized() const;
+	bool isFrameDroppingEnabled() const;
+	static void msleep(unsigned long msec) {QThread::msleep(msec);}
+	static void usleep(unsigned long usec) {QThread::usleep(usec);}
 public slots:
 	void quitRunning();
 	void play();
 	void stop();
 	void pause();
 	void seek(int pos);
+	void relativeSeek(int pos);
+	void setFrameDroppingEnabled(bool enabled);
 signals:
 	void initialized();
 	void finalized();

@@ -182,7 +182,6 @@ private:
 	}
 };
 
-
 struct PrefDialog::Data {
 	Ui::PrefDialog ui;
 	QButtonGroup *shortcuts;
@@ -190,9 +189,7 @@ struct PrefDialog::Data {
 	PrefMouseGroup<Enum::WheelAction> *whl;
 };
 
-
-
-PrefDialog::PrefDialog(QWidget *parent): QDialog(parent), d(new Data) {
+PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) {
 	d->ui.setupUi(this);
 	d->ui.tree->setItemDelegate(new Delegate(d->ui.tree));
 	d->ui.tree->setIconSize(QSize(32, 32));
@@ -269,6 +266,9 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent), d(new Data) {
 	connect(d->ui.sharpen_kern_c, SIGNAL(valueChanged(int)), this, SLOT(onSharpenKernelChanged()));
 	connect(d->ui.sharpen_kern_n, SIGNAL(valueChanged(int)), this, SLOT(onSharpenKernelChanged()));
 	connect(d->ui.sharpen_kern_d, SIGNAL(valueChanged(int)), this, SLOT(onSharpenKernelChanged()));
+
+	connect(d->ui.dbb, SIGNAL(clicked(QAbstractButton*)), this, SLOT(onDialogButtonClicked(QAbstractButton*)));
+
 	retranslate();
 	fill();
 }
@@ -386,16 +386,19 @@ void PrefDialog::fill() {
 	d->ui.sub_enc_accuracy->setValue(p.sub_enc_accuracy);
 	d->ui.sub_font_family->setCurrentFont(p.sub_style.font);
 	d->ui.sub_font_option->set(p.sub_style.font);
-	d->ui.sub_color_fg->setColor(p.sub_style.color_fg, false);
-	d->ui.sub_color_bg->setColor(p.sub_style.color_bg, false);
-	d->ui.sub_auto_size->setCurrentData(p.sub_style.auto_size.id());
-	d->ui.sub_size_scale->setValue(p.sub_style.text_scale*100.);
+	d->ui.sub_text_color->setColor(p.sub_style.color, false);
+	d->ui.sub_outline_color->setColor(p.sub_style.outline_color, false);
+	d->ui.sub_outline->setChecked(p.sub_style.has_outline);
+	d->ui.sub_auto_size->setCurrentData(p.sub_style.scale.id());
+	d->ui.sub_size_scale->setValue(p.sub_style.size*100.0);
 	d->ui.sub_has_shadow->setChecked(p.sub_style.has_shadow);
 	d->ui.sub_shadow_color->setColor(p.sub_style.shadow_color, false);
 	d->ui.sub_shadow_opacity->setValue(p.sub_style.shadow_color.alphaF()*100.0);
-	d->ui.sub_shadow_offset_x->setValue(p.sub_style.shadow_offset.x());
-	d->ui.sub_shadow_offset_y->setValue(p.sub_style.shadow_offset.y());
-//	d->ui.sub_shadow_blur->setValue(p.sub_style.shadow_blur);
+	d->ui.sub_shadow_offset_x->setValue(p.sub_style.shadow_offset.x()*100.0);
+	d->ui.sub_shadow_offset_y->setValue(p.sub_style.shadow_offset.y()*100.0);
+	d->ui.sub_shadow_blur->setChecked(p.sub_style.shadow_blur);
+	d->ui.sub_new_line_spacing->setValue(p.sub_style.line_spacing*100.0);
+	d->ui.sub_new_paragraph_spacing->setValue(p.sub_style.paragraph_spacing*100.0);
 	d->ui.ms_per_char->setValue(p.ms_per_char);
 	d->ui.sub_priority->setValues(p.sub_priority);
 
@@ -450,10 +453,6 @@ void PrefDialog::apply() {
 	p.sharpen_kern_d = d->ui.sharpen_kern_d->value();
 	p.adjust_contrast_min_luma = d->ui.min_luma->value();
 	p.adjust_contrast_max_luma = d->ui.max_luma->value();
-//	p.auto_contrast_threshold = d->ui.auto_contrast_threshold->value();
-
-//	p.normalizer_gain = d->ui.normalizer_gain->value();
-//	p.normalizer_smoothness = d->ui.normalizer_smoothness->value();
 
 	p.sub_enable_autoload = d->ui.sub_enable_autoload->isChecked();
 	p.sub_enable_autoselect = d->ui.sub_enable_autoselect->isChecked();
@@ -468,16 +467,18 @@ void PrefDialog::apply() {
 	p.sub_style.font.setItalic(d->ui.sub_font_option->italic());
 	p.sub_style.font.setUnderline(d->ui.sub_font_option->underline());
 	p.sub_style.font.setStrikeOut(d->ui.sub_font_option->strikeOut());
-	p.sub_style.color_fg = d->ui.sub_color_fg->color();
-	p.sub_style.color_bg = d->ui.sub_color_bg->color();
-	p.sub_style.auto_size.set(d->ui.sub_auto_size->currentData().toInt());
-	p.sub_style.text_scale = d->ui.sub_size_scale->value()/100.0;
+	p.sub_style.color = d->ui.sub_text_color->color();
+	p.sub_style.outline_color = d->ui.sub_outline_color->color();
+	p.sub_style.scale.set(d->ui.sub_auto_size->currentData().toInt());
+	p.sub_style.size = d->ui.sub_size_scale->value()/100.0;
 	p.sub_style.has_shadow = d->ui.sub_has_shadow->isChecked();
+	p.sub_style.shadow_blur = d->ui.sub_shadow_blur->isChecked();
 	p.sub_style.shadow_color = d->ui.sub_shadow_color->color();
 	p.sub_style.shadow_color.setAlphaF(d->ui.sub_shadow_opacity->value()/100.0);
-	p.sub_style.shadow_offset.rx() = d->ui.sub_shadow_offset_x->value();
-	p.sub_style.shadow_offset.ry() = d->ui.sub_shadow_offset_y->value();
-	p.sub_style.shadow_blur = d->ui.sub_shadow_blur->isChecked();
+	p.sub_style.shadow_offset.rx() = d->ui.sub_shadow_offset_x->value()/100.0;
+	p.sub_style.shadow_offset.ry() = d->ui.sub_shadow_offset_y->value()/100.0;
+	p.sub_style.line_spacing = d->ui.sub_new_line_spacing->value()/100.0;
+	p.sub_style.paragraph_spacing = d->ui.sub_new_paragraph_spacing->value()/100.0;
 	p.ms_per_char = d->ui.ms_per_char->value();
 	p.sub_priority = d->ui.sub_priority->values();
 
@@ -517,3 +518,19 @@ void PrefDialog::changeEvent(QEvent *event) {
 		d->ui.retranslateUi(this);
 	}
 }
+
+void PrefDialog::onDialogButtonClicked(QAbstractButton *button) {
+	const auto role = d->ui.dbb->buttonRole(button);
+	if (role == QDialogButtonBox::AcceptRole || role == QDialogButtonBox::ApplyRole) {
+		apply();
+		emit applicationRequested();
+	}
+	if (role == QDialogButtonBox::AcceptRole || role == QDialogButtonBox::RejectRole)
+		hide();
+}
+
+void PrefDialog::showEvent(QShowEvent *event) {
+	QDialog::showEvent(event);
+	fill();
+}
+

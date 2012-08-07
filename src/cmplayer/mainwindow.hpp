@@ -22,6 +22,7 @@ public slots:
 signals:
 	void fullscreenChanged(bool full);
 private slots:
+	void setFrameDroppingEnabled(bool enabled);
 	void moveScreen(QAction *action);
 	void alignScreen(QAction *action);
 	void maximize();

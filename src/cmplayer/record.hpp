@@ -59,7 +59,11 @@ public:
 	template <typename T>
 	T read(const char *key, const T &def) {return value(_L(key), toVariant<T>(def)).template value<T>();}
 	template <typename T>
+	T &read(T &value, const char *key) {return value = this->value(_L(key), toVariant<T>(value)).template value<T>();}
+	template <typename T>
 	T readEnum(const char *key, const T &def = T()) {return T::from(read(key, def.name()));}
+	template <typename T>
+	T &readEnum(T &value, const char *key) {value.set(read(key, value.name())); return value;}
 //	template <typename T>
 //	T readList(const QString &key, const QList<T> &def = QList<T>()) {
 //		const int size = beginReadArray(key);
@@ -92,8 +96,8 @@ template<> inline QKeySequence Record::fromVariant(const QVariant &data) {return
 template<> inline QVariant Record::toVariant(const QKeySequence &seq) {return seq.toString();}
 
 
-#define RECORD_READ(rec, val, def) {val = rec.read(#val, def);}
-#define RECORD_READ_ENUM(rec, val, def) {val = rec.readEnum(#val, def);}
+#define RECORD_READ(rec, val) {val = rec.read(#val, val);}
+#define RECORD_READ_ENUM(rec, val) {val = rec.readEnum(#val, val);}
 #define RECORD_WRITE(rec, val) {rec.write(#val, val);}
 #define RECORD_WRITE_ENUM(rec, val) {rec.writeEnum(#val, val);}
 

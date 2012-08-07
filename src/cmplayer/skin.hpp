@@ -15,13 +15,15 @@ class Skin : public QObject {
 public:
 	Skin(QObject *parent = nullptr);
 	~Skin();
-	bool load(const QString &path, QWidget *parent = nullptr);
+	bool load(const QString &name, QWidget *parent = nullptr);
 	QWidget *widget() const;
 	QWidget *screen() const;
 	void setVisible(bool visible);
 	bool contains(const QPoint &pos) const;
 	void connectTo(PlayEngine *engine, AudioController *audio, VideoRenderer *video);
 	void initializePlaceholders();
+	static QStringList dirs();
+	static QStringList names(bool reload = false);
 public slots:
 	void setMediaNumber(int number);
 	void setTotalMediaCount(int count);
@@ -39,9 +41,13 @@ private slots:
 	void onMrlChanged(const Mrl &mrl);
 	void onStateChanged(State state);
 private:
+	void checkChildren(QWidget *p);
+	bool checkButton(QObject *obj);
+	bool checkLabel(QObject *obj);
+	bool checkVolumeSlider(QObject *obj);
+	bool checkSeekSlider(QObject *obj);
 	static QString mediaStateText(State state);
 	void setPlaceholder(Placeholder ph, const QString &text);
-	void addHidableWidgets(QWidget *parent);
 	static QWidget *topParentWidget(QWidget *widget);
 	struct Data;
 	Data *d;

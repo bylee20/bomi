@@ -30,7 +30,7 @@
 -All-All loaded subtitles
 -EachLanguage-Each language subtitle
 
-+OsdAutoSize
++OsdScalePolicy
 -Width-Fit to width of video
 -Height-Fit to height of video
 -Diagonal-Fit to diagonal of video

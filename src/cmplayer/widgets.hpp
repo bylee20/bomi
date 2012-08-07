@@ -113,7 +113,7 @@ private:
 typedef EnumComboBox<Enum::GeneratePlaylist> GeneratePlaylistComboBox;
 typedef EnumComboBox<Enum::SubtitleAutoload> SubtitleAutoloadComboBox;
 typedef EnumComboBox<Enum::SubtitleAutoselect> SubtitleAutoselectComboBox;
-typedef EnumComboBox<Enum::OsdAutoSize> OsdAutoSizeComboBox;
+typedef EnumComboBox<Enum::OsdScalePolicy> OsdScalePolicyComboBox;
 
 
 #endif // WIDGETS_HPP

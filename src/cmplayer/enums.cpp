@@ -43,10 +43,10 @@ const SubtitleAutoselect SubtitleAutoselect::EachLanguage(3, "EachLanguage");
 }
 
 namespace Enum {
-OsdAutoSize::Map OsdAutoSize::_map;
-const OsdAutoSize OsdAutoSize::Width(0, "Width");
-const OsdAutoSize OsdAutoSize::Height(1, "Height");
-const OsdAutoSize OsdAutoSize::Diagonal(2, "Diagonal");
+OsdScalePolicy::Map OsdScalePolicy::_map;
+const OsdScalePolicy OsdScalePolicy::Width(0, "Width");
+const OsdScalePolicy OsdScalePolicy::Height(1, "Height");
+const OsdScalePolicy OsdScalePolicy::Diagonal(2, "Diagonal");
 }
 
 namespace Enum {

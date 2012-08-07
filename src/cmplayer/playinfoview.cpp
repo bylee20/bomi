@@ -47,9 +47,9 @@ PlayInfoView::PlayInfoView(const PlayEngine *engine, const AudioController *audi
 	d->engine = engine;
 	d->audio = audio;
 	d->video = video;
-	OsdStyle style = d->osd.style();
-	style.color_fg = QColor(Qt::yellow);
-	style.text_scale = 0.02;
+	auto style = d->osd.style();
+	style.color = Qt::yellow;
+	style.size = 0.02;
 #ifdef Q_WS_MAC
 	style.font.setFamily("monaco");
 #elif defined(Q_WS_X11)

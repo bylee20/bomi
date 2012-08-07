@@ -15,14 +15,9 @@ MainWindow::MainWindow(): d(new Data) {
 	d->tray = new QSystemTrayIcon(app()->defaultIcon(), this);
 #endif
 	d->hider.setSingleShot(true);
+	d->skin.connectTo(&d->engine, &d->audio, &d->video);
 
 	setMouseTracking(true);
-	d->skin.load("/Users/xylosper/dev/cmplayer/src/cmplayer/skins/simple/skin.ui");
-	d->skin.connectTo(&d->engine, &d->audio, &d->video);
-	auto screen = d->skin.screen();
-	d->screen->setParent(screen);
-	d->screen->move(0, 0);
-	d->screen->resize(screen->size());
 	setAcceptDrops(true);
 
 	plug(&d->engine, &d->audio);
@@ -54,6 +49,7 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(video("aspect").g(), triggered(double), &d->video, setAspectRatio(double));
 	CONNECT(video("crop").g(), triggered(double), &d->video, setCropRatio(double));
 	CONNECT(video["snapshot"], triggered(), this, takeSnapshot());
+	CONNECT(video["drop-frame"], toggled(bool), this, setFrameDroppingEnabled(bool));
 	CONNECT(&video("align"), triggered(QAction*), this, alignScreen(QAction*));
 	CONNECT(&video("move"), triggered(QAction*), this, moveScreen(QAction*));
 	CONNECT(&video("filter"), triggered(QAction*), this, setEffect(QAction*));
@@ -162,10 +158,19 @@ MainWindow::MainWindow(): d(new Data) {
 	d->screen->overlay()->add(&d->timeLine);
 	d->screen->overlay()->add(&d->message);
 
-	d->skin.initializePlaceholders();
-	setCentralWidget(d->skin.widget());
+	if (d->skin.load("simple")) {
+		auto screen = d->skin.screen();
+		d->screen->setParent(screen);
+		d->screen->move(0, 0);
+		d->screen->resize(screen->size());
+		d->skin.initializePlaceholders();
+		setCentralWidget(d->skin.widget());
+		resize(minimumSizeHint());
+	} else {
+		setCentralWidget(d->screen);
+		adjustSize();
+	}
 
-	resize(minimumSizeHint());
 }
 
 MainWindow::~MainWindow() {
@@ -366,11 +371,11 @@ void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
 void MainWindow::openFile() {
 	AppState &as = AppState::get();
 	const QString filter = Info::mediaExtFilter();
-	const QString dir = QFileInfo(as.last_open_file).absolutePath();
+	const QString dir = QFileInfo(as.open_last_file).absolutePath();
 	const QString file = getOpenFileName(this, tr("Open File"), dir, filter);
 	if (!file.isEmpty()) {
 		openMrl(Mrl(file));
-		as.last_open_file = file;
+		as.open_last_file = file;
 	}
 }
 
@@ -387,30 +392,18 @@ void MainWindow::openDvd() {
 	}
 }
 
-#include "downloader.hpp"
-
-QString youtube(const QUrl &url) {
-	QByteArray page;
-	QBuffer buffer(&page);
-	buffer.open(QBuffer::ReadWrite);
-	Downloader::get(url, &buffer, -1);
-	qDebug() << QString::fromUtf8(page.data());
-	return url.toString();
-}
-
 void MainWindow::openUrl() {
 	GetUrlDialog dlg(this);
 	if (dlg.exec()) {
-		if (dlg.url().host().endsWith("youtube.com"))
-			openMrl(youtube(dlg.url()), QString());
-		else
 			openMrl(dlg.url().toString(), dlg.encoding());
 	}
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QMainWindow::resizeEvent(event);
-	const QSize size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
+	QSize size = d->screen->size();
+	if (d->skin.screen())
+		size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
 	if (isFullScreen()) {
 		d->video.setFixedRenderSize(size);
 	} else {
@@ -420,6 +413,8 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 }
 
 void MainWindow::pause(bool pause) {
+	if (d->stateChanging)
+		return;
 	if (pause)
 		d->engine.pause();
 	else
@@ -480,16 +475,15 @@ void MainWindow::updateSubtitle(QAction *action) {
 
 void MainWindow::maximize() {
 	setGeometry(QDesktopWidget().availableGeometry(this));
-//	move(0, 0);
-//	resize()
 }
 
 void MainWindow::seek(int diff) {
-	if (!diff || d->engine.state() == State::Stopped)
+	qDebug() << d->engine.isSeekable();
+	if (!diff || d->engine.state() == State::Stopped || !d->engine.isSeekable())
 		return;
 	const int target = qBound(0, d->engine.position() + diff, d->engine.duration());
 	if (d->engine.isSeekable()) {
-		d->engine.seek(target);
+		d->engine.relativeSeek(diff);
 		d->timeLine.show(target, d->engine.duration());
 		showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
 	}
@@ -554,21 +548,40 @@ void MainWindow::setVideoSize(double rate) {
 		const bool wasFull = isFullScreen();
 		setFullScreen(!wasFull);
 	} else {
+		// patched by Handrake
+		const QSizeF video = d->video.sizeHint();
+		const QSizeF desktop = QDesktopWidget().availableGeometry(this).size();
+		const double target = 0.15;
 		if (isFullScreen())
 			setFullScreen(false);
-		if (rate == 0.0) {
-			const QSizeF video = d->video.sizeHint();
-			const QSizeF desktop = QDesktopWidget().availableGeometry(this).size();
-			const double target = 0.15;
+		if (rate == 0.0)
 			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
+		const QSize size = this->size() - d->screen->size() + d->video.sizeHint()*qSqrt(rate);
+		if (size != this->size()) {
+			resize(size);
+			int dx = 0;
+			const int rightDiff = desktop.width() - (x() + width());
+			if (rightDiff < 10) {
+				if (rightDiff < 0)
+					dx = desktop.width() - x() - size.width();
+				else
+					dx = width() - size.width();
+			}
+			if (dx && !isFullScreen()) {
+				QPoint p = pos();
+				p.rx() += dx;
+				if (p.x() < 0)
+					p.rx() = 0;
+				move(p);
+			}
 		}
-		resize(size() - d->screen->size() + d->screen->sizeHint()*qSqrt(rate));
 	}
 }
 
 void MainWindow::updateState(State state, State old) {
 	if (old == state)
 		return;
+	d->stateChanging = true;
 	switch (state) {
 	case State::Paused:
 	case State::Stopped:
@@ -584,6 +597,7 @@ void MainWindow::updateState(State state, State old) {
 	app()->setScreensaverDisabled(d->p.disable_screensaver && state == State::Playing);
 	d->video.setLogoMode(state == State::Stopped);
 	updateStaysOnTop();
+	d->stateChanging = false;
 }
 
 void MainWindow::setSpeed(int diff) {
@@ -761,18 +775,13 @@ void MainWindow::setSyncDelay(int diff) {
 
 }
 
-#include <QtUiTools/QUiLoader>
-#include <QtCore/QFile>
-
 void MainWindow::setPref() {
-	PrefDialog dlg(this);
-	dlg.exec();
-//	static Pref::Dialog *dlg = 0;
-//	if (!dlg) {
-//		dlg = new Pref::Dialog(this);
-//		connect(dlg, SIGNAL(needToApplyPref()), this, SLOT(applyPref()));
-//	}
-//	dlg->show();
+	static PrefDialog *dlg = nullptr;
+	if (!dlg) {
+		dlg = new PrefDialog(this);
+		connect(dlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
+	}
+	dlg->show();
 }
 
 void MainWindow::applyPref() {
@@ -969,4 +978,9 @@ void MainWindow::alignScreen(QAction */*action*/) {
 			key |= action->data().toInt();
 	}
 	d->video.setAlignment(key);
+}
+
+void MainWindow::setFrameDroppingEnabled(bool enabled) {
+	d->engine.setFrameDroppingEnabled(enabled);
+	showMessage(tr("Drop Frame"), enabled);
 }

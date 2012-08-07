@@ -59,8 +59,19 @@ void LogoDrawer::drawLogo(QPainter */*painter*/, const QRectF &bg) {
 	if (m_gl)
 		m_gl->drawTexture(QRectF(x, y+len, len, -len), m_texture);
 }
+#include <QtSvg/QSvgRenderer>
 
 void LogoDrawer::draw(QPainter *painter, const QRectF &bg) {
+//	QSvgRenderer renderer(QString("/Users/xylosper/dev/cmplayer/icons/cmplayer.svg"));
+//	qDebug() << renderer.isValid();
+//	painter->setRenderHint(QPainter::Antialiasing);
+//	QImage image(bg.size().toSize(), QImage::Format_ARGB32_Premultiplied);
+//	QPainter p(&image);
+//	renderer.render(&p, image.rect());
+//	painter->fillRect(bg, Qt::white);
+////	renderer.render(painter, bg);
+//	painter->drawImage(bg, image);
+//	return;
 	const double w = bg.width();
 	const double h = bg.height();
 

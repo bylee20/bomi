@@ -19,8 +19,10 @@ TimeLineOsdRenderer::TimeLineOsdRenderer()
 	d->clearer.setSingleShot(true);
 	connect(&d->clearer, SIGNAL(timeout()), this, SLOT(clear()));
 	OsdStyle style = this->style();
-	style.color_fg.setAlphaF(0.5);
-	style.color_bg.setAlphaF(0.5);
+	style.scale = OsdStyle::Scale::Height;
+	style.color.setAlphaF(0.5);
+	style.outline_color.setAlphaF(0.5);
+	style.size = 0.05;
 	setStyle(style);
 
 }
@@ -41,9 +43,8 @@ bool TimeLineOsdRenderer::updateRenderableSize(const QSizeF &renderable) {
 void TimeLineOsdRenderer::render(QPainter *painter, const QPointF &pos, int /*layers*/) {
 	if (d->time < 0 || d->duration <= 0 || d->size.isEmpty() || d->size.isNull())
 		return;
-	const OsdStyle &style = this->style();
-	const double b = style.border_width * d->size.height();
-
+	const auto &style = this->style();
+	const double b = style.outline_width*d->renderable.height();
 	const double rate = (double)d->time/d->duration;
 	const double inner_w = (d->size.width()-2.0*b)*rate;
 	const QRectF left(0.0, b, b, d->size.height() - 2.0*b - 1.0);
@@ -54,11 +55,11 @@ void TimeLineOsdRenderer::render(QPainter *painter, const QPointF &pos, int /*la
 
 	painter->save();
 	painter->translate(pos);
-	painter->fillRect(top, style.color_bg);
-	painter->fillRect(bottom, style.color_bg);
-	painter->fillRect(left, style.color_bg);
-	painter->fillRect(right, style.color_bg);
-	painter->fillRect(inner, style.color_fg);
+	painter->fillRect(top, style.outline_color);
+	painter->fillRect(bottom, style.outline_color);
+	painter->fillRect(left, style.outline_color);
+	painter->fillRect(right, style.outline_color);
+	painter->fillRect(inner, style.color);
 	painter->restore();
 }
 

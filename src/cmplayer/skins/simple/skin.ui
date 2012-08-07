@@ -50,13 +50,13 @@
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>16</height>
+       <height>20</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>16</height>
+       <height>20</height>
       </size>
      </property>
      <property name="styleSheet">
@@ -69,7 +69,7 @@
 }
 
 QSlider::add-page:horizontal, QSlider::groove:horizontal {
-	border: 1px solid #999; height: 5px; margin: 0px 0px; padding: 0px;
+	border: 1px solid #999; height: 8px; margin: 0px 0px; padding: 0px;
 }
 
 QSlider::add-page:horizontal {
@@ -86,6 +86,7 @@ QSlider::handle:horizontal {
 
 QToolButton {
 	margin: 0px; padding: 0px; border: none;
+	margin-top: 2px;
 }
 
 QToolButton:hover {
@@ -115,16 +116,22 @@ QToolButton:pressed {
       </property>
       <item>
        <widget class="QToolButton" name="toolButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>14</horstretch>
+          <verstretch>10</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
-          <width>10</width>
-          <height>10</height>
+          <width>12</width>
+          <height>12</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>10</width>
-          <height>10</height>
+          <width>12</width>
+          <height>12</height>
          </size>
         </property>
         <property name="text">
@@ -152,7 +159,7 @@ QToolButton:pressed {
       <item>
        <widget class="QSlider" name="seek_slider">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -160,7 +167,7 @@ QToolButton:pressed {
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>10</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="orientation">
@@ -171,7 +178,7 @@ QToolButton:pressed {
       <item>
        <widget class="Label" name="label_3">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -179,13 +186,13 @@ QToolButton:pressed {
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>16</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="styleSheet">
          <string notr="true">font-family: monospace;
-font-size: 10px;
-margin-top: 1px;</string>
+font-size: 11px;
+margin-top: 2px;</string>
         </property>
         <property name="text">
          <string notr="true">[:media_position:]/[:media_duration:]</string>
@@ -195,7 +202,7 @@ margin-top: 1px;</string>
       <item>
        <widget class="QSlider" name="volume_slider">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -209,7 +216,7 @@ margin-top: 1px;</string>
         <property name="maximumSize">
          <size>
           <width>70</width>
-          <height>10</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="orientation">

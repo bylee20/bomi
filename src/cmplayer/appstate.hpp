@@ -9,35 +9,34 @@
 class AppState {
 public:
 // play state
-	double speed;
+	double play_speed{1.0};
 
 // video state
-	double aspect_ratio, crop_ratio;
-	int video_effects;
-	ColorProperty video_color;
-	Enum::Position screen_alignment;
-	QPoint screen_offset;
-	Enum::Overlay overlay;
+	bool video_drop_frame{false};
+	double video_aspect_ratio{-1.0}, video_crop_ratio{-1.0};
+	int video_effects{0};
+	ColorProperty video_color{0.0, 0.0, 0.0, 0.0};
+	Enum::Position video_alignment{Enum::Position::CC};
+	QPoint video_offset{0, 0};
 
 // audio state
-	double amp;
-	int volume;
-	bool muted, volume_normalized;
+	double audio_amp{1.0};
+	int audio_volume{100};
+	bool audio_muted{false}, audio_volume_normalized{true};
 
 // subtitle state
-	double sub_pos;
-	int sub_sync_delay;
-	bool sub_letterbox, sub_align_top;
+	double sub_pos{1.0};
+	int sub_sync_delay{0};
+	bool sub_letterbox{true}, sub_align_top{false};
 
 // window state
-	Enum::StaysOnTop stays_on_top;
+	Enum::StaysOnTop screen_stays_on_top{Enum::StaysOnTop::Playing};
 
 // misc
-	QString last_open_file;
-	bool ask_system_tray;
+	QString open_last_file;
+	QString open_url_enc;
 	QStringList open_url_list;
-	QString url_enc;
-
+	bool ask_system_tray{true};
 
 	void save() const;
 	static AppState &get();

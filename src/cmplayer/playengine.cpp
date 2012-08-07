@@ -20,6 +20,7 @@
 enum MpError {None = 0, UserInterrupted, CannotOpenStream, NoStream, InitVideoFilter, InitAudioFilter};
 extern "C" {
 #include <input/input.h>
+#include <stream/stream.h>
 #include <command.h>
 #include <playtree.h>
 #include <libmpdemux/demuxer.h>
@@ -46,6 +47,7 @@ int (*mpctx_update_video)(struct MPContext *mpctx) = nullptr;
 mp_cmd *(*mpctx_wait_cmd)(MPContext *ctx, int timeout, int peek) = nullptr;
 void mixer_setvolume2(mixer_t *mixer, float l, float r);
 extern char *dvd_device;
+extern int frame_dropping;
 }
 
 PlayEngine *PlayEngine::obj = nullptr;
@@ -61,7 +63,7 @@ struct PlayEngine::Data {
 	QTimer ticker;		VideoFormat vfmt;
 	State state = State::Stopped;
 	bool quit = false, playing = false, isMenu = false;
-	bool idling = false, videoUpdate = false;
+	bool idling = false, videoUpdate = false, init = false;
 	int duration = 0, initSeek = 0, title = 0;
 	double speed = 1.0;
 	Context *ctx = nullptr;
@@ -107,6 +109,14 @@ bool PlayEngine::isMenu() const {
 void PlayEngine::setDvdDevice(const QString &name) {
 	d->dvdDevice = name.toLocal8Bit();
 //	dvd_device = d->dvdDevice.data();
+}
+
+bool PlayEngine::isFrameDroppingEnabled() const {
+	return frame_dropping;
+}
+
+void PlayEngine::setFrameDroppingEnabled(bool enabled) {
+	tellmp("frame_drop", enabled ? 1 : 0);
 }
 
 void PlayEngine::clear() {
@@ -295,6 +305,10 @@ int PlayEngine::idle() {
 	return Cmd::Quit;
 }
 
+bool PlayEngine::isInitialized() const {
+	return d->init;
+}
+
 void PlayEngine::run() {
 	QList<QByteArray> args;
 	args << "cmplayer-mplayer2" << "-nofs" << "-fixed-vo" << "-softvol" << "-softvol-max" << "1000.0"
@@ -311,6 +325,7 @@ void PlayEngine::run() {
 	mpctx_new(d->mpctx);
 	mpctx_init(d->mpctx, argc, argv.get());
 	vo_cmplayer = d->video->vo_create(d->mpctx);
+	d->init = true;
 	emit initialized();
 
 	d->quit = false;
@@ -501,7 +516,7 @@ int PlayEngine::position() const {
 }
 
 bool PlayEngine::isSeekable() const {
-	return d->mpctx && d->mpctx->demuxer && d->mpctx->demuxer->seekable;
+	return d->mpctx && d->mpctx->stream && d->mpctx->stream->seek && (!d->mpctx->demuxer || d->mpctx->demuxer->seekable);
 }
 
 void PlayEngine::setSpeed(double speed) {
@@ -626,6 +641,10 @@ void PlayEngine::pause() {
 
 void PlayEngine::stop() {
 	enqueue(new Cmd(Cmd::Stop));
+}
+
+void PlayEngine::relativeSeek(int pos) {
+	tellmp("seek", (double)pos/1000.0, 0);
 }
 
 void PlayEngine::seek(int pos) {

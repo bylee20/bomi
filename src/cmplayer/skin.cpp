@@ -142,12 +142,11 @@ private:
 };
 
 struct Skin::Data {
-	QWidget *w = nullptr;
-	QWidget *screen = nullptr;
-	QString path;
-	QList<QWidget*> hidable;
-	QSlider *seek = nullptr;
-	QSlider *volume = nullptr;
+	QWidget *w = nullptr, *screen = nullptr;
+	QSlider *seek = nullptr, *volume = nullptr;
+	QWidgetList hidable;
+	QString name, path;
+	int prevPos = -1, mediaNumber = 0, mediaCount = 0;
 	bool ticking = false;
 	PlayEngine *engine = nullptr;
 	AudioController *audio = nullptr;
@@ -156,7 +155,7 @@ struct Skin::Data {
 	QList<PlaceholderLabel*> uniqueLabelList;
 	Label *titleProxy;
 	QVector<QList<PlaceholderLabel*> > labels = decltype(labels)(PlaceholderMax);
-	int prevPos = -1, mediaNumber = 0, mediaCount = 0;
+	QRegExp rxUrl{"url[\\s\\r\\n\\t]*\\([\\s\\r\\n\\t]*\"([^\"]+)\"[\\s\\r\\n\\t]*\\)"};
 };
 
 Skin::Skin(QObject *parent)
@@ -169,6 +168,39 @@ Skin::~Skin() {
 	delete d->titleProxy;
 	delete d->w;
 	delete d;
+}
+
+QStringList Skin::dirs() {
+	static QStringList dirs;
+	if (dirs.isEmpty()) {
+#ifdef CMPLAYER_SKINS_PATH
+		dirs << QString::fromLocal8Bit(CMPLAYER_SKINS_PATH);
+#endif
+		dirs << QDir::homePath() % _L("/.cmplayer/skins");
+		dirs << QCoreApplication::applicationDirPath().toLocal8Bit() % _L("/skins");
+		const QByteArray path = qgetenv("CMPLAYER_SKINS_PATH");
+		if (!path.isEmpty())
+			dirs << QString::fromLocal8Bit(path.data(), path.size());
+	}
+	return dirs;
+}
+
+static QMap<QString, QString> skins;
+
+QStringList Skin::names(bool reload) {
+	if (skins.isEmpty() || reload) {
+		skins.clear();
+		const auto dirs = Skin::dirs();
+		for (auto &d : dirs) {
+			const QDir dir(d);
+			if (dir.exists()) {
+				auto names = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+				for (auto &name : names)
+					skins[name] = dir.absolutePath();
+			}
+		}
+	}
+	return skins.keys();
 }
 
 void Skin::seek(int time) {
@@ -266,85 +298,145 @@ void Skin::onTick(int tick) {
 	}
 }
 
-bool Skin::load(const QString &path, QWidget *parent) {
+bool Skin::checkButton(QObject *obj) {
+	auto button = qobject_cast<QAbstractButton*>(obj);
+	if (!button)
+		return false;
+	const auto id = button->property("action").toString();
+	if (!id.isEmpty()) {
+		if (auto action = RootMenu::get().action(id)) {
+			d->buttons[action].append(button);
+			if (action->isCheckable()) {
+				button->setCheckable(true);
+				button->setChecked(action->isChecked());
+				connect(action, SIGNAL(toggled(bool)), button, SLOT(setChecked(bool)));
+				connect(button, SIGNAL(clicked(bool)), action, SLOT(setChecked(bool)));
+			} else {
+				connect(button, SIGNAL(clicked()), action, SLOT(trigger()));
+			}
+			button->setToolTip(action->text());
+			connect(action, SIGNAL(changed()), this, SLOT(onActionChanged()));
+		} else
+			qDebug() << "Cannot bind the button" << button->objectName() << "to" << id;
+	}
+	return true;
+}
+
+bool Skin::checkLabel(QObject *obj) {
+	auto label = qobject_cast<Label*>(obj);
+	if (!label)
+		return false;
+	if (auto ph = PlaceholderLabel::make(label)) {
+		d->uniqueLabelList << ph;
+		auto phs = ph->placeholders();
+		for (auto it = phs.begin(); it != phs.end(); ++it)
+			d->labels[it.key()] << ph;
+	}
+	return true;
+}
+
+bool Skin::checkSeekSlider(QObject *obj) {
+	if (d->seek)
+		return false;
+	if (obj->objectName().compare(_L("seek_slider")) != 0)
+		return false;
+	d->seek = qobject_cast<QSlider*>(obj);
+	if (!d->seek)
+		return false;
+	connect(d->seek, SIGNAL(valueChanged(int)), this, SLOT(seek(int)));
+	if (d->engine) {
+		d->ticking = true;
+		d->seek->setRange(0, d->engine->duration());
+		d->seek->setEnabled(d->engine->isSeekable());
+		d->seek->setValue(d->engine->position());
+		d->ticking = false;
+	}
+	return true;
+}
+
+bool Skin::checkVolumeSlider(QObject *obj) {
+	if (d->volume)
+		return false;
+	if (obj->objectName().compare(_L("volume_slider")) != 0)
+		return false;
+	d->volume = qobject_cast<QSlider*>(obj);
+	if (!d->volume)
+		return false;
+	d->volume->setRange(0, 100);
+	if (d->audio)
+		d->volume->setValue(d->audio->volume());
+	connect(d->volume, SIGNAL(valueChanged(int)), this, SLOT(setVolume(int)));
+	return true;
+}
+
+void Skin::checkChildren(QWidget *w) {
+	auto qss = w->styleSheet();
+	if (!qss.isEmpty()) {
+		qss.replace(d->rxUrl, _L("url(") % d->path %_L("/\\1)"));
+		w->setStyleSheet(qss);
+	}
+	if (!checkSeekSlider(w) && !checkVolumeSlider(w)) {
+		if (!d->screen && !w->objectName().compare(_L("screen")))
+			d->screen = w;
+		else
+			checkButton(w) || checkLabel(w);
+		const auto &children = w->children();
+		for (auto c : children) {
+			if (c->isWidgetType())
+				checkChildren(static_cast<QWidget*>(c));
+		}
+	}
+}
+
+bool Skin::load(const QString &name, QWidget *parent) {
+	if (skins.isEmpty())
+		names(true);
+	qDebug() << names() <<name;
+	auto it = skins.find(name);
+	if (it == skins.end())
+		return false;
+	QFile file(skins[name] % _L("/") % name % _L("/skin.ui"));
+	if (!file.exists() || !file.open(QFile::ReadOnly))
+		return false;
+	QUiLoader ui;
+	const auto &dir = QFileInfo(file).absoluteDir();
+	ui.setWorkingDirectory(dir);
+	auto skin = ui.load(&file, parent);
+	if (!skin)
+		return false;
 	if (d->w) {
 		delete d->w;
-		d->w = nullptr;
-		d->screen = nullptr;
-		d->hidable.clear();
+		d->w = d->screen = nullptr;
 		d->volume = d->seek = nullptr;
 		for (auto it = d->buttons.begin(); it != d->buttons.end(); ++it)
 			disconnect(it.key(), 0, this, 0);
-		d->buttons.clear();
 		qDeleteAll(d->uniqueLabelList);
-		d->labels.clear();
 		d->uniqueLabelList.clear();
+		d->buttons.clear();
+		d->labels.clear();
+		d->hidable.clear();
+		d->name.clear();
+		d->path.clear();
 	}
-	QFile file(path);
-	QFileInfo info(file);
-	if (!file.open(QFile::ReadOnly))
-		return false;
-	QUiLoader ui;
-	ui.setWorkingDirectory(info.absoluteDir());
-	if ((d->w = ui.load(&file, parent))) {
-		addHidableWidgets(d->w);
-		QWidget *parent = d->screen;
-		while (parent) {
-			parent->setMouseTracking(true);
-			parent = parent->parentWidget();
-		}
-		if ((d->seek = d->w->findChild<QSlider*>("seek_slider"))) {
-			connect(d->seek, SIGNAL(valueChanged(int)), this, SLOT(seek(int)));
-			if (d->engine) {
-				d->ticking = true;
-				d->seek->setRange(0, d->engine->duration());
-				d->seek->setEnabled(d->engine->isSeekable());
-				d->seek->setValue(d->engine->position());
-				d->ticking = false;
-			}
-		}
-		if ((d->volume = d->w->findChild<QSlider*>("volume_slider"))) {
-			d->volume->setRange(0, 100);
-			if (d->audio)
-				d->volume->setValue(d->audio->volume());
-			connect(d->volume, SIGNAL(valueChanged(int)), this, SLOT(setVolume(int)));
-		}
 
-		QList<QAbstractButton*> buttons = d->w->findChildren<QAbstractButton*>();
-		auto &root = RootMenu::get();
-		for (QAbstractButton *button : buttons) {
-			const auto id = button->property("action").toString();
-			if (!id.isEmpty()) {
-				QAction *action = root.action(id);
-				if (action) {
-					d->buttons[action].append(button);
-					if (action->isCheckable()) {
-						button->setCheckable(true);
-						button->setChecked(action->isChecked());
-						connect(action, SIGNAL(toggled(bool)), button, SLOT(setChecked(bool)));
-						connect(button, SIGNAL(clicked(bool)), action, SLOT(setChecked(bool)));
-					} else {
-						connect(button, SIGNAL(clicked()), action, SLOT(trigger()));
-					}
-					button->setToolTip(action->text());
-					connect(action, SIGNAL(changed()), this, SLOT(onActionChanged()));
-				} else
-					qDebug() << "Cannot bind the button" << button->objectName() << "to" << id;
-			}
+	d->w = skin;
+	d->path = dir.absolutePath();
+	d->name = dir.dirName();
+	d->titleProxy->setText(d->w->windowTitle());
+	checkChildren(d->w);
+	checkLabel(d->titleProxy);
+	QWidget *w = d->screen;
+	while (w) {
+		w->setMouseTracking(true);
+		auto parent = w->parentWidget();
+		if (!parent)
+			break;
+		const auto &objs = parent->children();
+		for (auto obj : objs) {
+			if (obj->isWidgetType() && obj != w)
+				d->hidable.append(static_cast<QWidget*>(obj));
 		}
-
-		auto labels = d->w->findChildren<Label*>();
-		labels << d->titleProxy;
-		d->titleProxy->setText(d->w->windowTitle());
-		for (auto label : labels) {
-			auto ph = PlaceholderLabel::make(label);
-			if (!ph)
-				continue;
-			d->uniqueLabelList << ph;
-			auto phs = ph->placeholders();
-			for (auto it = phs.begin(); it != phs.end(); ++it)
-				d->labels[it.key()] << ph;
-		}
+		w = parent;
 	}
 	return d->w && d->screen;
 }
@@ -358,28 +450,6 @@ void Skin::onActionChanged() {
 			button->setToolTip(action->text());
 		}
 	}
-}
-
-void Skin::addHidableWidgets(QWidget *parent) {
-	auto objs = parent->children();
-	parent = nullptr;
-	for (auto obj : objs) {
-		if (!obj->isWidgetType())
-			continue;
-		auto w = static_cast<QWidget*>(obj);
-		if (w->objectName() == "screen") {
-			d->screen = w;
-			continue;
-		}
-		if (!parent) {
-			if (w->findChild<QWidget*>("screen"))
-				parent = w;
-		}
-		if (w != parent)
-			d->hidable.append(w);
-	}
-	if (parent)
-		addHidableWidgets(parent);
 }
 
 QWidget *Skin::topParentWidget(QWidget *widget) {
@@ -457,7 +527,7 @@ QString Skin::mediaStateText(State state) {
 	default:
 		return tr("Paused");
 	}
-};
+}
 
 void Skin::onStateChanged(State state) {
 	setPlaceholder(media_state, mediaStateText(state));

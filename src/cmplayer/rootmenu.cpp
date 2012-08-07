@@ -125,6 +125,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	video->addMenu(_L("track"))->setEnabled(false);
 	video->addSeparator();
 	video->addAction(_L("snapshot"))->setShortcut(Qt::CTRL + Qt::Key_S);
+	video->addAction(_L("drop-frame"), true)->setShortcut(Qt::CTRL + Qt::Key_D);
 	video->addSeparator();
 
 	Menu *aspect = video->addMenu(_L("aspect"));
@@ -200,12 +201,6 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	color->addActionToGroup(_L("saturation-"))->setShortcut(Qt::Key_J);
 	color->addActionToGroup(_L("hue+"))->setShortcut(Qt::Key_I);
 	color->addActionToGroup(_L("hue-"))->setShortcut(Qt::Key_K);
-
-	video->addSeparator();
-	Menu *overlay = video->addMenu(_L("overlay"));
-	overlay->addActionToGroup(_L("auto"), true)->setData(Enum::Overlay::Auto.id());
-	overlay->addActionToGroup(_L("fbo"), true)->setData(Enum::Overlay::FramebufferObject.id());
-	overlay->addActionToGroup(_L("pixmap"), true)->setData(Enum::Overlay::Pixmap.id());
 
 	Menu *audio = this->addMenu(_L("audio"));
 	audio->addMenu(_L("track"))->setEnabled(false);
@@ -423,13 +418,9 @@ void RootMenu::update() {
 	setVideoPropStep(color, "saturation", ColorProperty::Saturation, tr("Saturation %1%"), p.brightness_step);
 	setVideoPropStep(color, "contrast", ColorProperty::Contrast, tr("Contrast %1%"), p.brightness_step);
 	setVideoPropStep(color, "hue", ColorProperty::Hue, tr("Hue %1%"), p.brightness_step);
-	video["snapshot"]->setText(tr("Take Snapshot"));
 
-	Menu &overlay = video("overlay");
-	overlay.setTitle(tr("Overlay"));
-	overlay["auto"]->setText(tr("Auto"));
-	overlay["fbo"]->setText(tr("Framebuffer Object"));
-	overlay["pixmap"]->setText(tr("Pixmap"));
+	video["snapshot"]->setText(tr("Take Snapshot"));
+	video["drop-frame"]->setText(tr("Drop Frame"));
 
 	Menu &audio = root("audio");
 	audio.setTitle(tr("Audio"));

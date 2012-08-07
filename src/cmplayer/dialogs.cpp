@@ -249,7 +249,7 @@ GetUrlDialog::GetUrlDialog(QWidget *parent)
 	d->url = new QLineEdit(this);
 	d->url->setCompleter(d->c);
 	d->enc = new EncodingComboBox(this);
-	d->enc->setEncoding(as.url_enc);
+	d->enc->setEncoding(as.open_url_enc);
 
 	auto vbox = new QVBoxLayout(this);
 	auto hbox = new QHBoxLayout;
@@ -274,7 +274,7 @@ void GetUrlDialog::accept() {
 	if (idx >= 0)
 		as.open_url_list.takeAt(idx);
 	as.open_url_list.prepend(url);
-	as.url_enc = d->enc->encoding();
+	as.open_url_enc = d->enc->encoding();
 	QDialog::accept();
 }
 

@@ -5,43 +5,42 @@
 #include <QtCore/QDebug>
 #include "record.hpp"
 
-OsdStyle::OsdStyle()
-	: color_bg(Qt::black), color_fg(Qt::white), shadow_color(Qt::black) {
-	border_width = 0.05;
-	text_scale = 0.03;
-	auto_size = AutoSize::Width;
-	has_shadow = false;
-	shadow_offset = QPointF(0, 0);
-	wrap_mode = QTextOption::WrapAtWordBoundaryOrAnywhere;
-	shadow_blur = 3;
-}
-
 void OsdStyle::save(Record &r, const QString &group) const {
 	r.beginGroup(group);
-	r.write("font", font);
-	r.write("color_bg", color_bg);
-	r.write("color_fg", color_fg);
-	r.write("border_width", border_width);
-	r.write("text_scale", text_scale);
-	r.write("auto_size", auto_size.name());
-	r.write("has_shadow", has_shadow);
-	r.write("shadow_color", shadow_color);
-	r.write("shadow_offset", shadow_offset);
-	r.write("shadow_blur", shadow_blur);
+#define WRITE(a) r.write(#a, a)
+	WRITE(color);
+	WRITE(outline_color);
+	WRITE(shadow_color);
+	WRITE(has_shadow);
+	WRITE(shadow_blur);
+	WRITE(has_outline);
+	r.write("scale", scale.name());
+	WRITE(shadow_offset);
+	WRITE(font);
+	WRITE(line_spacing);
+	WRITE(paragraph_spacing);
+#undef WRITE
 	r.endGroup();
 }
 
 void OsdStyle::load(Record &r, const QString &group) {
 	r.beginGroup(group);
-	font = r.read("font", font);
-	color_bg = r.read("color_bg", color_bg);
-	color_fg = r.read("color_fg", color_fg);
-	border_width = r.read("border_width", border_width);
-	text_scale = r.read("text_scale", text_scale);
-	auto_size = r.readEnum("auto_size", AutoSize::Width);
-	has_shadow = r.read("has_shadow", has_shadow);
-	shadow_color = r.read("shadow_color", shadow_color);
-	shadow_offset = r.read("shadow_offset", shadow_offset);
-	shadow_blur = r.read("shadow_blur", shadow_blur);
+#define READ(a) a = r.read(#a, a)
+	READ(color);
+	READ(outline_color);
+	READ(shadow_color);
+	READ(has_shadow);
+	READ(shadow_blur);
+	READ(has_outline);
+	r.readEnum(scale, "scale");
+	READ(shadow_offset);
+	READ(font);
+	READ(line_spacing);
+	READ(paragraph_spacing);
+#undef READ
 	r.endGroup();
+
+	// for < 0.6.0 compatibility
+	shadow_offset.rx() = qBound(-0.01, shadow_offset.x(), 0.01);
+	shadow_offset.ry() = qBound(-0.01, shadow_offset.y(), 0.01);
 }

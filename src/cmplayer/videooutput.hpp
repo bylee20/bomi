@@ -25,7 +25,7 @@ private:
 	static void flip_page(struct vo *vo);
 	static void check_events(struct vo *vo);
 	static void uninit(struct vo *vo);
-
+	static int draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, int h, int x, int y);
 	static int queryFormat(int format);
 	void drawImage(void *data);
 	struct Data;

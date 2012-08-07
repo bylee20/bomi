@@ -15,9 +15,17 @@ struct ScreenOsdWrapper : public OsdWrapper {
 	void cache() {
 		if (!m_renderer || !count())
 			return;
-		QByteArray &buffer = m_buffer[m_drawing];
-		m_renderer->prepareToRender(QPointF(0, 0));
+		QPointF pos(0, 0);
+		const QPointF shadow = renderer()->style().shadow_offset*renderer()->scale();
+		if (shadow.x() < 0)
+			pos.rx() = -shadow.x();
+		if (shadow.y() < 0)
+			pos.ry() = -shadow.y();
+		m_renderer->prepareToRender(pos);
 		m_size = m_renderer->size().toSize();
+		m_size.rwidth() += qAbs(shadow.x());
+		m_size.rheight() += qAbs(shadow.y());
+		QByteArray &buffer = m_buffer[m_drawing];
 		const int length = m_size.width()*m_size.height()*4;
 		m_empty = length <= 0;
 		if (!m_empty && (buffer.length() < length || buffer.length() > length*2))
@@ -27,13 +35,12 @@ struct ScreenOsdWrapper : public OsdWrapper {
 			QImage image((uchar*)buffer.data(), m_size.width(), m_size.height(), QImage::Format_ARGB32_Premultiplied);
 			Q_ASSERT(!image.isNull());
 			QPainter painter(&image);
-			m_renderer->render(&painter, QPointF(0, 0));
+			m_renderer->render(&painter, pos);
 			painter.end();
 			qSwap(m_drawing, m_interm);
 			if (!m_needToUpload)
 				m_needToUpload = true;
 		}
-
 	}
 	OsdRenderer *renderer() const {return m_renderer;}
 	void render(QGLFunctions *func, const QPointF &rpos, const QPointF &fpos, QGLShaderProgram *shader) {
@@ -50,8 +57,8 @@ struct ScreenOsdWrapper : public OsdWrapper {
 		shader->setUniformValue("dxdy", dx(idx), dy(idx));
 		if (renderer()->style().has_shadow) {
 			shader->setUniformValue("shadow_color", renderer()->style().shadow_color);
-			QPointF pos;
-			pos.rx() = pos.ry() = renderer()->scale()*0.05;
+			const QPointF pos = renderer()->style().shadow_offset*renderer()->scale();
+//			qDebug() << pos;
 			shader->setUniformValue("shadow_offset", pos);
 		} else {
 			shader->setUniformValue("shadow_color", 0.f, 0.f, 0.f, 0.f);

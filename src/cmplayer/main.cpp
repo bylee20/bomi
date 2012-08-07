@@ -25,14 +25,40 @@ static bool checkOpenGL() {
 }
 
 
+#include <QtSvg>
+
+class Widget : public QWidget {
+	void paintEvent(QPaintEvent *) {
+
+//		r.render(&p, rect());
+	}
+};
+
+Q_DECLARE_METATYPE(QTextOption::WrapMode);
 
 int main(int argc, char **argv) {
+//	QApplication a(argc, argv);
+
+//	QSvgRenderer r(QString("/Users/xylosper/dev/cmplayer/icons/cmplayer2.svg"));
+
+//	QImage image(512, 512, QImage::Format_ARGB32_Premultiplied);
+//	image.fill(0x0);
+//	QPainter p(&image);
+//	r.render(&p, image.rect());
+//	image.save("test.png");
+//	return 0;
+//	Widget w;
+//	w.show();;
+
+//	return a.exec();
 	qRegisterMetaType<State>("State");
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
+	qDebug() << "started app";
 	App app(argc, argv);
+	qDebug() << "app created";
 	if (!checkOpenGL())
 		return 1;
 	const auto mrl = app.getMrlFromCommandLine();
@@ -41,13 +67,18 @@ int main(int argc, char **argv) {
 			app.sendMessage(_L("mrl ") % mrl.toString());
 		return 0;
 	}
-
 	PlayEngine::obj = new PlayEngine;
 	PlayEngine::obj->start();
+	qDebug() << "engine created";
+	qDebug() << "engine started";
+	RootMenu::obj = new RootMenu;
 	Pref::obj = new Pref;
 	RecentInfo::obj = new RecentInfo;
-	RootMenu::obj = new RootMenu;
+	qDebug() << "global objs created";
+	while (!PlayEngine::obj->isInitialized())
+		PlayEngine::msleep(1);
 	MainWindow *mw = new MainWindow;
+	qDebug() << "mw created";
 	app.setMainWindow(mw);
 	mw->show();
 	if (!mrl.isEmpty())

@@ -30,7 +30,7 @@ public:
 	bool letterboxHint() const {return m_letterbox;}
 	QSizeF renderableSize() const {return m_letterbox ? m_screen : m_frame;}
 	virtual int layers() const {return 1;}
-	virtual double scale() const = 0;
+	double scale() const;
 public slots:
 	void setStyle(const OsdStyle &style);
 	virtual void clear() = 0;

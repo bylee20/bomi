@@ -49,15 +49,14 @@ public:
 			}
 			r.endGroup();
 		}
-		void load(Record &r, const QString &group, const KeyModifierMap &def) {
+		void load(Record &r, const QString &group) {
 			r.beginGroup(group);
 			const Modifier::List &list = Modifier::list();
 			for (int i=0; i<list.size(); ++i) {
 				InfoType &info = m_map[list[i].id()];
-				const InfoType &d = def[list[i]];
 				r.beginGroup(list[i].name());
-				info.enabled = r.read("enabled", d.enabled);
-				info.action = r.readEnum("action", d.action);
+				r.read(info.enabled, "enabled");
+				r.readEnum(info.action, "action");
 				r.endGroup();
 			}
 			r.endGroup();
@@ -68,41 +67,64 @@ public:
 	typedef KeyModifierMap<Enum::ClickAction> ClickActionMap;
 	typedef KeyModifierMap<Enum::WheelAction> WheelActionMap;
 
-	bool pause_minimized, pause_video_only;
-	bool remember_stopped, ask_record_found;
-	bool enable_generate_playist;
-	Enum::GeneratePlaylist generate_playlist;
-	bool hide_cursor, disable_screensaver;
-	int hide_cursor_delay;
+	bool pause_minimized{true}, pause_video_only{true};
+	bool remember_stopped{true}, ask_record_found{true};
+	bool enable_generate_playist{true};
+	Enum::GeneratePlaylist generate_playlist{Enum::GeneratePlaylist::Folder};
+	bool hide_cursor{true}, disable_screensaver{true};
+	int hide_cursor_delay{3000};
 
-	int blur_kern_c, blur_kern_n, blur_kern_d;
-	int sharpen_kern_c, sharpen_kern_n, sharpen_kern_d;
-	int adjust_contrast_min_luma, adjust_contrast_max_luma;
-	double auto_contrast_threshold;
+	int blur_kern_c{1}, blur_kern_n{2}, blur_kern_d{1};
+	int sharpen_kern_c{5}, sharpen_kern_n{-1}, sharpen_kern_d{0};
+	int adjust_contrast_min_luma{16}, adjust_contrast_max_luma{235};
 
-	int normalizer_gain, normalizer_smoothness;
+	bool sub_enable_autoload{true}, sub_enable_autoselect{true}, sub_enc_autodetection{true};
+	Enum::SubtitleAutoload sub_autoload{Enum::SubtitleAutoload::Contain};
+	Enum::SubtitleAutoselect sub_autoselect{Enum::SubtitleAutoselect::Matched};
+	QString sub_enc{QLocale::system().language() == QLocale::Korean ? "CP949" : "UTF-8"}, sub_ext;
+	int sub_enc_accuracy{70}, ms_per_char{500};
+	OsdStyle sub_style{defaultSubtitleStyle()};		QStringList sub_priority;
 
-	bool sub_enable_autoload, sub_enable_autoselect;
-	Enum::SubtitleAutoload sub_autoload;
-	Enum::SubtitleAutoselect sub_autoselect;
-	QString sub_enc, sub_ext;
-	bool sub_enc_autodetection;
-	int sub_enc_accuracy;
-	OsdStyle sub_style;
-	int ms_per_char;
-	QStringList sub_priority;
-
-	QLocale locale;
-	bool enable_system_tray, hide_rather_close;
-	ClickActionMap double_click_map, middle_click_map;
-	WheelActionMap wheel_scroll_map;
-	int seek_step1, seek_step2, seek_step3, speed_step;
-	int brightness_step, saturation_step, contrast_step, hue_step;
-	int volume_step, sync_delay_step, amp_step, sub_pos_step;
+	QLocale locale{QLocale::system()};
+	bool enable_system_tray{true}, hide_rather_close{true};
+	ClickActionMap double_click_map{defaultDoubleClick()}, middle_click_map{defaultMiddleClick()};
+	WheelActionMap wheel_scroll_map{defaultWheelAction()};
+	int seek_step1{5000}, seek_step2{30000}, seek_step3{60000}, speed_step{10};
+	int brightness_step{1}, saturation_step{1}, contrast_step{1}, hue_step{1};
+	int volume_step{2}, sync_delay_step{500}, amp_step{10}, sub_pos_step{1};
 
 	void save() const;
 	void load();
 private:
+	static ClickActionMap defaultDoubleClick() {
+		ClickActionMap map{false, Enum::ClickAction::Fullscreen};
+		map[Enum::KeyModifier::None].enabled = true;
+		return map;
+	}
+	static ClickActionMap defaultMiddleClick() {
+		ClickActionMap map{false, Enum::ClickAction::Fullscreen};
+		map[Enum::KeyModifier::None] = ClickActionInfo(true, Enum::ClickAction::Pause);
+		return map;
+	}
+	static WheelActionMap defaultWheelAction() {
+		WheelActionMap map(false, Enum::WheelAction::Volume);
+		map[Enum::KeyModifier::None].enabled = true;
+		map[Enum::KeyModifier::Ctrl] = WheelActionInfo(true, Enum::WheelAction::Amp);
+		return map;
+	}
+	static OsdStyle defaultSubtitleStyle() {
+		OsdStyle style;
+		style.color = Qt::white;
+		style.outline_color = Qt::black;
+		style.shadow_color = Qt::black;
+		style.has_shadow = style.shadow_blur = style.has_outline = true;
+		style.size = 0.04;
+		style.outline_width = 0.002;
+		style.scale = OsdStyle::Scale::Width;
+		style.shadow_offset = QPointF(0.003, 0.003);
+		return style;
+	}
+
 	friend class PrefDialog;
 	static Pref *obj;
 	Pref() {load();}

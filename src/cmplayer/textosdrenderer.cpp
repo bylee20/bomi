@@ -18,7 +18,7 @@ struct TextOsdRenderer::Data {
 	QString text;
 	Qt::Alignment alignment;
 //	RichTextParser parser[2];
-	double bw, top, bottom, left, right;
+	double outline, top, bottom, left, right, lineLeading{0}, paragraphLeading{0};
 	int px;
 	QTimer clearer;
 	QSizeF renderable;
@@ -30,16 +30,14 @@ TextOsdRenderer::TextOsdRenderer(Qt::Alignment align)
 : d(new Data ) {
 	d->pending = false;
 	d->alignment = 0;
-	d->bw = 1.0;
+	d->outline = 1.0;
 	d->px = 20;
 	d->top = d->bottom = d->left = d->right = 0.0;
 	d->styleChanged = d->textChanged = d->optionChanged = d->formatChanged = d->sizeChanged = false;
-	OsdStyle style = this->style();
-	style.auto_size = OsdStyle::AutoSize::Width;
-	setStyle(style);
 	setAlignment(align);
 	d->clearer.setSingleShot(true);
 	connect(&d->clearer, SIGNAL(timeout()), this, SLOT(clear()));
+	TextOsdRenderer::updateStyle(style());
 }
 
 TextOsdRenderer::~TextOsdRenderer() {
@@ -48,10 +46,6 @@ TextOsdRenderer::~TextOsdRenderer() {
 
 Qt::Alignment TextOsdRenderer::alignment() const {
 	return d->alignment;
-}
-
-double TextOsdRenderer::scale() const {
-	return d->px;
 }
 
 void TextOsdRenderer::setAlignment(Qt::Alignment alignment) {
@@ -71,40 +65,36 @@ void TextOsdRenderer::updateStyle(const OsdStyle &) {
 }
 
 void TextOsdRenderer::updateFont() {
-	int px = 0;
-	const OsdStyle::AutoSize size = style().auto_size;
-	if (size == OsdStyle::AutoSize::Diagonal)
-		px = qRound(diagonal(d->renderable)*style().text_scale);
-	else if (size == OsdStyle::AutoSize::Width)
-		px = qRound(d->renderable.width()*style().text_scale);
-	else
-		px = qRound(d->renderable.height()*style().text_scale);
-	px = qMax(1, px);
-	d->px = px;
-	d->bw = qMax(style().border_width*px, 1.0);
+	const auto scale = this->scale();
+	const auto &style = this->style();
+	d->px = qMax(1, qRound(scale*style.size));
+	d->outline = style.has_outline ? scale*style.outline_width : -1.0;
+	d->doc[0].setLeading(style.line_spacing*scale, style.paragraph_spacing*scale);
+	d->doc[1].setLeading(style.line_spacing*scale, style.paragraph_spacing*scale);
 	d->formatChanged = true;
 }
 
 void TextOsdRenderer::prepareToRender(const QPointF &) {
-	auto apply = [this] (RichTextDocument &doc) {
+	auto &style = this->style();
+	auto apply = [this, &style] (RichTextDocument &doc) {
 		if (d->optionChanged) {
 			doc.setAlignment(d->alignment);
-			doc.setWrapMode(style().wrap_mode);
+			doc.setWrapMode(style.wrap_mode);
 		}
 		if (d->formatChanged) {
 			doc.setFontPixelSize(d->px);
 		}
 		if (d->styleChanged) {
-			doc.setFormat(QTextFormat::ForegroundBrush, QBrush(style().color_fg));
-			doc.setFormat(QTextFormat::FontFamily, style().font.family());
-			doc.setFormat(QTextFormat::FontUnderline, style().font.underline());
-			doc.setFormat(QTextFormat::FontStrikeOut, style().font.strikeOut());
-			doc.setFormat(QTextFormat::FontWeight, style().font.weight());
-			doc.setFormat(QTextFormat::FontItalic, style().font.italic());
+			doc.setFormat(QTextFormat::ForegroundBrush, QBrush(style.color));
+			doc.setFormat(QTextFormat::FontFamily, style.font.family());
+			doc.setFormat(QTextFormat::FontUnderline, style.font.underline());
+			doc.setFormat(QTextFormat::FontStrikeOut, style.font.strikeOut());
+			doc.setFormat(QTextFormat::FontWeight, style.font.weight());
+			doc.setFormat(QTextFormat::FontItalic, style.font.italic());
 		}
 	};
 	if (d->formatChanged || d->styleChanged)
-		d->doc[1].setTextOutline(style().color_bg, d->bw*2.0);
+		d->doc[1].setTextOutline(style.outline_color, d->outline*2.0);
 	apply(d->doc[0]);		apply(d->doc[1]);
 	if (d->textChanged) {
 		d->doc[0] = d->pended;
@@ -118,7 +108,7 @@ void TextOsdRenderer::prepareToRender(const QPointF &) {
 }
 
 void TextOsdRenderer::render(QPainter *painter, const QPointF &pos, int layer) {
-	prepareToRender(pos);
+//	prepareToRender(pos);
 	const QPointF p(pos.x() - posHint().x(), pos.y());
 	if (0 <= layer && layer < 2)
 		d->doc[layer].draw(painter, p);

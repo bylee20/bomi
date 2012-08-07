@@ -72,30 +72,6 @@ App::App(int &argc, char **argv)
 
 	d->styleNames = makeStyleNameList();
 	makeStyle();
-
-	setStyleSheet("\
-		Button {\
-			margin:0px; padding: 2px;\
-		}\
-		Button#flat {\
-			border: none; border-radius: 3px;\
-		}\
-		Button#block {\
-			border: 1px solid #999; border-radius: 0px; padding: 1px;\
-			background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #fff, stop:1 #ccc);\
-		}\
-			Button#flat:hover, Button#flat:checked, Button#block:hover {\
-			border: 1px solid #6ad; padding: 1px;\
-		}\
-		Button#flat:pressed, Button#block:pressed {\
-			border: 2px solid #6ad; padding: 0px;\
-		}\
-		Button#block:checked, Button#block:pressed {\
-			background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #777, stop:1 #bbb);\
-		}\
-		"
-	);
-
 	connect(this, SIGNAL(messageReceived(QString)), this, SLOT(onMessageReceived(QString)));
 }
 

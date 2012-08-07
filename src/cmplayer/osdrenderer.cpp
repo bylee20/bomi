@@ -2,12 +2,23 @@
 #include "osdstyle.hpp"
 #include <math.h>
 #include <QtCore/QDebug>
+#include "global.hpp"
 
 OsdRenderer::OsdRenderer() {
 	m_letterbox = true;
 }
 
 OsdRenderer::~OsdRenderer() {
+}
+
+double OsdRenderer::scale() const {
+	const auto scale = style().scale;
+	const auto renderable = renderableSize();
+	if (scale == OsdStyle::Scale::Diagonal)
+		return diagonal(renderable);
+	if (scale == OsdStyle::Scale::Width)
+		return renderable.width();
+	return renderable.height();
 }
 
 void OsdRenderer::setStyle(const OsdStyle &style) {

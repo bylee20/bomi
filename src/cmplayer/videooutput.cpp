@@ -39,7 +39,7 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 	d->driver.preinit = preinit;
 	d->driver.config = config;
 	d->driver.control = control;
-//	d->driver.draw_slice = draw_slice;
+	d->driver.draw_slice = draw_slice;
 	d->driver.draw_osd = draw_osd;
 	d->driver.flip_page = flip_page;
 	d->driver.check_events = check_events;
@@ -89,6 +89,10 @@ int VideoOutput::config(struct vo *vo, uint32_t w_s, uint32_t h_s, uint32_t, uin
 	d->format.height = h_s;
 	d->format.fourcc = fmt;
 	return 0;
+}
+
+int VideoOutput::draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, int h, int x, int y) {
+	qDebug() << "draw_slice";
 }
 
 void VideoOutput::drawImage(void *data) {
@@ -168,6 +172,6 @@ int VideoOutput::queryFormat(int format) {
 	if (format != IMGFMT_YV12 && format != IMGFMT_I420)
 		return 0;
 	return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
-		| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;
+		| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE;// | VOCAP_NOSLICES;
 }
 

@@ -47,7 +47,7 @@ DESTDIR = ../../build
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release uitools
 
-QT = core gui opengl network
+QT = core gui opengl network svg
 
 RESOURCES += rsclist.qrc
 HEADERS += playengine.hpp \

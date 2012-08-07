@@ -21,7 +21,6 @@ public:
 	void setMargin(double top, double bottom, double right, double left);
 	bool isText() const {return true;}
 	int layers() const {return 2;}
-	double scale() const;
 public slots:
 	void clear();
 private:
