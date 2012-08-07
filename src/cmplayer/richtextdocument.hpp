@@ -28,6 +28,7 @@ struct RichTextDocument : public RichTextHelper {
 	void setFontPixelSize(int px);
 	void setTextOutline(const QColor &color, double width);
 	QSizeF naturalSize() const {return m_natural.size();}
+	void setLeading(double newLine, double paragraph);
 private:
 	struct Layout {
 		QTextLayout *block;
@@ -42,6 +43,7 @@ private:
 	QTextCharFormat m_format;
 	bool m_blockChanged, m_formatChanged, m_optionChanged, m_pxChanged;
 	bool m_dirty;
+	double m_lineLeading = 0, m_paragraphLeading = 0;
 	QRectF m_natural;
 };
 

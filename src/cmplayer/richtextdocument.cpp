@@ -1,4 +1,5 @@
 #include "richtextdocument.hpp"
+#include <QtGui/QFontMetricsF>
 #include <QtCore/QLinkedList>
 #include <QtCore/QDebug>
 #include <QtGui/QTextLayout>
@@ -78,6 +79,15 @@ void RichTextDocument::setFormat(QTextFormat::Property property, const QVariant 
 	}
 }
 
+void RichTextDocument::setLeading(double newLine, double paragraph) {
+	if (!qFuzzyCompare(newLine, m_lineLeading) || !qFuzzyCompare(paragraph, m_paragraphLeading)) {
+		m_lineLeading = newLine;
+		m_paragraphLeading = paragraph;
+		m_dirty = true;
+	}
+}
+
+
 void RichTextDocument::setFontPixelSize(int px) {
 	if (m_format.intProperty(QTextFormat::FontPixelSize) != px) {
 		m_format.setProperty(QTextFormat::FontPixelSize, px);
@@ -86,7 +96,9 @@ void RichTextDocument::setFontPixelSize(int px) {
 }
 
 void RichTextDocument::setTextOutline(const QColor &color, double width) {
-	const QPen pen(color, width);
+	QPen pen(Qt::NoPen);
+	if (width > 0.0)
+		pen = QPen(color, width);
 	if (m_format.penProperty(QTextFormat::TextOutline) != pen) {
 		m_format.setProperty(QTextFormat::TextOutline, pen);
 		m_dirty = m_pxChanged = true;
@@ -115,7 +127,6 @@ void RichTextDocument::doLayout(double maxWidth) {
 	if (!m_dirty)
 		return;
 	double width = -1;
-	double leading = 0;
 	const int px = m_format.intProperty(QTextFormat::FontPixelSize);
 	QPointF pos(0, 0);
 	for (int i=0; i<m_layouts.size(); ++i) {
@@ -157,7 +168,7 @@ void RichTextDocument::doLayout(double maxWidth) {
 				if (width < 0) {// first line
 					pos.ry() += rt_height;
 				} else {
-					leading = line.leading();
+					const auto leading = m_blocks[i].paragraph ? m_paragraphLeading : m_lineLeading;
 					pos.ry() += qMax(rt_height, leading);
 				}
 				line.setPosition(pos);
