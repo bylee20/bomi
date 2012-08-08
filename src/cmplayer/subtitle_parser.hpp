@@ -31,7 +31,7 @@ protected:
 	static void append(SubtitleComponent &c, const QString &text, int start, int end) {append(c, text, start); c[end];}
 	const QFileInfo &file() const {return m_file;}
 	bool skipSeperators() const {return RichTextHelper::skipSeperator(m_pos, m_all);}
-	SubtitleComponent &append(Subtitle &sub, SubtitleComponent::Base base = SubtitleComponent::Time) {
+	SubtitleComponent &append(Subtitle &sub, SubtitleComponent::SyncType base = SubtitleComponent::Time) {
 		sub.m_comp.append(SubtitleComponent(m_file.fileName(), base));
 		return sub.m_comp.last();
 	}

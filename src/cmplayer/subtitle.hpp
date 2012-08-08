@@ -20,21 +20,32 @@ struct SubtitleCaption : public RichTextDocument {
 class SubtitleComponent : public QMap<int, SubtitleCaption> {
 	typedef QMap<int, SubtitleCaption> Super;
 public:
-	enum Base {Time, Frame};
-	SubtitleComponent(const QString &file = QString(), Base base = Time);
+	struct Lang {
+		QString id() const {
+			if (!name.isEmpty())
+				return name;
+			if (!locale.isEmpty())
+				return locale;
+			return klass;
+		}
+		QString name, locale, klass;
+	};
+
+	enum SyncType {Time, Frame};
+	SubtitleComponent(const QString &file = QString(), SyncType base = Time);
 	SubtitleComponent &unite(const SubtitleComponent &other, double frameRate);
 	SubtitleComponent united(const SubtitleComponent &other, double frameRate) const;
 	bool operator == (const SubtitleComponent &rhs) const {return name() == rhs.name();}
 	bool operator != (const SubtitleComponent &rhs) const {return !operator==(rhs);}
 	QString name() const;
 	const QString &fileName() const {return m_file;}
-	Base base() const {return m_base;}
+	SyncType base() const {return m_base;}
 	bool isBasedOnFrame() const {return m_base == Frame;}
 //	const Language &language() const {return m_lang;}
 	QString language() const {return m_klass;}
 	const_iterator start(int time, double frameRate) const;
 	const_iterator finish(int time, double frameRate) const;
-	static int convertKeyBase(int key, Base from, Base to, double frameRate) {
+	static int convertKeyBase(int key, SyncType from, SyncType to, double frameRate) {
 		return  (from == to) ? key : ((to == Time) ? msec(key, frameRate) : frame(key, frameRate));
 	}
 	bool flag() const;
@@ -46,7 +57,7 @@ public:
 private:
 	friend class Parser;
 	QString m_file;
-	Base m_base;
+	SyncType m_base;
 //	Language m_lang;
 
 	mutable bool m_flag;
@@ -57,23 +68,6 @@ typedef QMapIterator<int, SubtitleCaption> SubtitleComponentIterator;
 
 class Subtitle {
 public:
-//	class Language {
-//	public:
-//		Language() {}
-//		const QString &id() const {
-//			if (!m_name.isEmpty())
-//				return m_name;
-//			if (!m_locale.isEmpty())
-//				return m_locale;
-//			return m_klass;
-//		}
-//		const QString &name() const {return m_name;}
-//		const QString &locale() const {return m_locale;}
-//		const QString &klass() const {return m_klass;}
-//	private:
-//		friend class Parser;
-//		QString m_name, m_locale, m_klass;
-//	};
 	const SubtitleComponent &operator[] (int rhs) const {return m_comp[rhs];}
 	Subtitle &operator += (const Subtitle &rhs) {m_comp += rhs.m_comp; return *this;}
 	int count() const {return m_comp.size();}

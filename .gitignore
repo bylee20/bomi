@@ -4,8 +4,9 @@
 *DS_Store
 *.qm
 moc_*.cpp
+a.out
 build/*
-src/build-interm/*
+src/build-interm*
 src/libav/.config
 src/libav/.version
 src/libav/config.asm

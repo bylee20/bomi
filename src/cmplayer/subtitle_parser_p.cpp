@@ -38,6 +38,7 @@ void SamiParser::_parse(Subtitle &sub) {
 		}
 	}
 	RichTextBlockParser parser(text.midRef(pos));
+	auto &comps = components(sub);
 	while (!parser.atEnd()) {
 		Tag tag;
 		const QStringRef block_sync = parser.get("sync", "/?sync|/body|/sami", &tag);
@@ -52,7 +53,6 @@ void SamiParser::_parse(Subtitle &sub) {
 		}
 		for (auto it = blocks.begin(); it != blocks.end(); ++it) {
 			SubtitleComponent *comp = nullptr;
-			auto &comps = components(sub);
 			for (int i=0; i<sub.count(); ++i) {
 				if (comps[i].language() == it.key()) {
 					comp = &comps[i];
@@ -66,6 +66,10 @@ void SamiParser::_parse(Subtitle &sub) {
 			(*comp)[sync] += it.value();
 		}
 	}
+
+//	for (SubtitleComponent &comp : comps) {
+//		if (comp.size() < 3)
+//	}
 }
 
 

@@ -169,7 +169,7 @@ SubtitleComponent Subtitle::component(double frameRate) const {
 }
 
 
-SubtitleComponent::SubtitleComponent(const QString &file, Base base)
+SubtitleComponent::SubtitleComponent(const QString &file, SyncType base)
 : m_file(file), m_base(base) {
 	(*this)[0].index = 0;
 	m_flag = false;
