@@ -158,7 +158,7 @@ MainWindow::MainWindow(): d(new Data) {
 	d->screen->overlay()->add(&d->timeLine);
 	d->screen->overlay()->add(&d->message);
 
-	if (d->skin.load("simple")) {
+	if (d->skin.load(d->p.skin_name)) {
 		auto screen = d->skin.screen();
 		d->screen->setParent(screen);
 		d->screen->move(0, 0);
@@ -171,6 +171,7 @@ MainWindow::MainWindow(): d(new Data) {
 		adjustSize();
 	}
 
+	d->screen->installEventFilter(this);
 }
 
 MainWindow::~MainWindow() {
@@ -399,17 +400,36 @@ void MainWindow::openUrl() {
 	}
 }
 
+bool MainWindow::eventFilter(QObject *o, QEvent *e) {
+	if (o == d->screen && e->type() == QEvent::Resize) {
+		static QSize prev;
+		QSize size = d->screen->size();
+		if (d->skin.screen())
+			size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
+		if (isFullScreen()) {
+			d->video.setFixedRenderSize(size);
+		} else {
+			d->video.setFixedRenderSize(QSize());
+		}
+		if (prev != size) {
+			showMessage(QString::fromUtf8("%1x%2").arg(size.width()).arg(size.height()), 1000);
+			prev = size;
+		}
+	}
+	return QMainWindow::eventFilter(o, e);
+}
+
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QMainWindow::resizeEvent(event);
-	QSize size = d->screen->size();
-	if (d->skin.screen())
-		size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
-	if (isFullScreen()) {
-		d->video.setFixedRenderSize(size);
-	} else {
-		d->video.setFixedRenderSize(QSize());
-	}
-	showMessage(QString::fromUtf8("%1x%2").arg(size.width()).arg(size.height()), 1000);
+//	QSize size = d->screen->size();
+//	if (d->skin.screen())
+//		size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
+//	if (isFullScreen()) {
+//		d->video.setFixedRenderSize(size);
+//	} else {
+//		d->video.setFixedRenderSize(QSize());
+//	}
+//	showMessage(QString::fromUtf8("%1x%2").arg(size.width()).arg(size.height()), 1000);
 }
 
 void MainWindow::pause(bool pause) {
@@ -431,9 +451,9 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 	else
 		clearSubtitles();
 	d->sync_subtitle_file_menu();
-	const int row = d->playlist->model()->currentRow() + 1;
-	if (row > 0) {
-		d->skin.setMediaNumber(row + 1);
+	const int number = d->playlist->model()->currentRow() + 1;
+	if (number > 0) {
+		d->skin.setMediaNumber(number);
 		d->skin.setTotalMediaCount(d->playlist->model()->rowCount());
 	}
 }
@@ -522,6 +542,8 @@ void MainWindow::setMuted(bool muted) {
 void MainWindow::setFullScreen(bool full) {
 	if (full == isFullScreen())
 		return;
+	QTime t;
+	t.start();
 	d->dontPause = true;
 	d->moving = false;
 	d->prevPos = QPoint();
@@ -785,7 +807,31 @@ void MainWindow::setPref() {
 }
 
 void MainWindow::applyPref() {
+	int time = -1;
+	switch (d->engine.state()) {
+	case State::Playing:
+	case State::Buffering:
+	case State::Paused:
+		time = d->engine.position();
+		break;
+	default:
+		break;
+	}
 	d->apply_pref();
+	if (d->skin.name() != d->p.skin_name) {
+		d->screen->setParent(0);
+		if (d->skin.load(d->p.skin_name)) {
+			auto screen = d->skin.screen();
+			d->screen->setParent(screen);
+			d->screen->move(0, 0);
+			d->screen->resize(screen->size());
+			d->skin.initializePlaceholders();
+			setCentralWidget(d->skin.widget());
+		} else
+			setCentralWidget(d->screen);
+	}
+	if (time >= 0)
+		d->engine.play(time);
 }
 
 void MainWindow::showEvent(QShowEvent *event) {

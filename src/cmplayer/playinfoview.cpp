@@ -23,23 +23,41 @@ extern "C" {
 #include <libaf/af.h>
 }
 
+//class ProcInfo : public QThread {
+//public:
+//};
+
+enum PlayInfoViewOsd {
+	MediaName,
+	RealTimeInfo,
+	VideoCodec,
+	AudioCodec,
+	OsdCount
+};
+
 struct PlayInfoView::Data {
+	TextOsdRenderer *osds[OsdCount];
 	sigar_t *sigar = nullptr;
 	QTimer timer;
 	const PlayEngine *engine = nullptr;
 	const VideoRenderer *video = nullptr;
 	const AudioController *audio = nullptr;
-	TextOsdRenderer osd = {Qt::AlignTop | Qt::AlignLeft};
+//	TextOsdRenderer osd = {Qt::AlignTop | Qt::AlignLeft};
+	int time = -1;
+	double sync = 0;
 	bool visible = false;
-	QString vinput = {"--"}, voutput = {"--"};
-	QString size = {"--"}, vfps = {"--"}, cpu = {"--"}, mem = {"--"};
-	QString ainput = {"--"};
+	QString vc = {"--"};
+	QString size = {"--"}, media = {"--"}, cpu = {"--"}, mem = {"--"};
+	QString ac = {"--"};
+	QString rinfo = {"--"};
+//	TextOsdRenderer osds[OsdCount];
+	void show(int idx, const QString &string) {
+		osds[idx]->show(string, -1);
+	}
+	static QString codecInfo (const QString &name, codecs *codec) {
+		return name % _L(": ") % _8(codec->info) % _L("<br>");
+	}
 };
-
-static inline QString toString(double value, int n = 1) {
-	char fmt[10];	sprintf(fmt, "%%.%df", n);
-	return value > 0 ? QString().sprintf(fmt, value) : QLatin1String("--");
-}
 
 PlayInfoView::PlayInfoView(const PlayEngine *engine, const AudioController *audio, const VideoRenderer *video)
 : d(new Data) {
@@ -47,7 +65,12 @@ PlayInfoView::PlayInfoView(const PlayEngine *engine, const AudioController *audi
 	d->engine = engine;
 	d->audio = audio;
 	d->video = video;
-	auto style = d->osd.style();
+	for (int i=0; i<OsdCount; ++i) {
+		d->osds[i] = new TextOsdRenderer{Qt::AlignTop | Qt::AlignLeft};
+		if (i > 0)
+			d->osds[i-1]->chaining(d->osds[i]);
+	}
+	auto style = d->osds[0]->style();
 	style.color = Qt::yellow;
 	style.size = 0.02;
 #ifdef Q_WS_MAC
@@ -55,10 +78,10 @@ PlayInfoView::PlayInfoView(const PlayEngine *engine, const AudioController *audi
 #elif defined(Q_WS_X11)
 	style.font.setFamily("monospace");
 #endif
-	d->osd.setStyle(style);
+	for (int i=0; i<OsdCount; ++i)
+		d->osds[i]->setStyle(style);
 
-	d->timer.setInterval(2000);
-	connect(&d->timer, SIGNAL(timeout()), this, SLOT(update()));
+	connect(d->engine, SIGNAL(tick(int)), this, SLOT(onTick(int)));
 	connect(d->video, SIGNAL(formatChanged(VideoFormat)), this, SLOT(onVideoFormatChanged(VideoFormat)));
 	connect(d->audio, SIGNAL(formatChanged(AudioFormat)), this, SLOT(setAudioFormat(AudioFormat)));
 	connect(d->engine, SIGNAL(aboutToPlay()), this, SLOT(onAboutToPlay()));
@@ -70,34 +93,18 @@ PlayInfoView::~PlayInfoView() {
 }
 
 OsdRenderer &PlayInfoView::osd() const {
-	return d->osd;
+	return *d->osds[0];
 }
 
 void PlayInfoView::onAboutToPlay() {
-
-	d->vinput.clear();
-	d->voutput.clear();
+	d->ac.clear();
+	d->media.clear();
+	d->media = _L("<p>") % d->engine->mediaName() % _L("</p>");
 	MPContext *mpctx = d->engine->context();
-	if (!mpctx)
-		return;
-
-	auto codecInfo = [this] (const QString &name, codecs *codec) -> QString {
-		return name % _L(": ") % _8(codec->info) % _L("<br>");
-	};
-
-	if (mpctx->sh_video) {
-		sh_video *sh = mpctx->sh_video;
-		d->vinput = codecInfo(tr("Video codec"), sh->codec)
-			% tr("Input") % _L(": ") % format(sh->format) % _L(" ")
-			% resolution(sh->disp_w, sh->disp_h) % _L(" ")
-			% _n(sh->fps) % _L("fps ")
-			% bps(mpctx->sh_video->i_bps)
-		;
-	}
-	if (mpctx->sh_audio && mpctx->ao) {
+	if (mpctx && mpctx->sh_audio && mpctx->ao) {
 		auto sh = mpctx->sh_audio;
 		auto ao = mpctx->ao;
-		d->ainput = codecInfo(tr("Audio codec"), sh->codec)
+		d->ac = _L("<p>&nbsp;<br>") % d->codecInfo(tr("Audio codec"), sh->codec)
 			% tr("Input") % _L(": ") % format(sh->format) % _L(" ") % bps(sh->i_bps) % _L(" ")
 			% _n(sh->samplerate/1000) % _L("kHz ")
 			% _n(sh->channels) % _L("ch ")
@@ -107,7 +114,14 @@ void PlayInfoView::onAboutToPlay() {
 			% _n(ao->samplerate/1000) % _L("kHz ")
 			% _n(ao->channels) % _L("ch ")
 			% _n(af_fmt2bits(ao->format)) % _L("bits")
+			% _L("</p>")
 		;
+	}
+	d->time = 0;
+	d->sync = 0;
+	if (d->visible) {
+		d->show(MediaName, d->media);
+		d->show(AudioCodec, d->ac);
 	}
 }
 
@@ -115,12 +129,13 @@ void PlayInfoView::setVisible(bool visible) {
 	if (d->visible != visible) {
 		d->visible = visible;
 		if (visible) {
-			update();
-			d->timer.start();
+			d->show(MediaName, d->media);
+			d->show(VideoCodec, d->vc);
+			d->show(AudioCodec, d->ac);
 		} else {
 			d->timer.stop();
-			d->osd.clear();
-			d->cpu = d->vfps = -1;
+			for (auto osd : d->osds)
+				osd->clear();
 		}
 	}
 }
@@ -130,15 +145,23 @@ struct mp_volnorm {
 	float mul;
 };
 
-void PlayInfoView::update() {
+void PlayInfoView::onTick(int pos) {
+	if (!d->visible)
+		return;
+	if (d->time == pos/1000)
+		return;
+	d->time = pos/1000;
+	MPContext *mpctx = d->engine->context();
+	if (!mpctx)
+		return;
 	sigar_proc_cpu_t cpu;	sigar_proc_mem_t mem;
 	const auto pid = sigar_pid_get(d->sigar);
 	sigar_proc_cpu_get(d->sigar, pid, &cpu);
 	sigar_proc_mem_get(d->sigar, pid, &mem);
+	QString normalized, sync;
 
-	QString normalized;
-	if (d->audio && d->audio->mixer() && d->audio->mixer()->afilter) {
-		auto af = d->audio->mixer()->afilter->first;
+	if (mpctx->mixer.afilter) {
+		auto af = mpctx->mixer.afilter->first;
 		while (af) {
 			if (strcmp(af->info->name, "volnorm") == 0)
 				break;
@@ -150,25 +173,45 @@ void PlayInfoView::update() {
 			normalized = _L("<br>") % tr("Volum normalizer") % _L(": ") % _n(multiplied, 1) % _L("%");
 		}
 	}
+	if (mpctx->sh_audio && mpctx->sh_video) {
+		const int diff = (mpctx->total_avsync_change - d->sync)*1000000 + 0.5;
+		sync = _L("Average A-V sync: ") % (diff < 0 ? _L("") : _L("+")) % _n(diff) % _L("us<br>");
+		d->sync = mpctx->total_avsync_change;
+	}
+
 	const double fps = d->video->outputFrameRate();
-	typedef QLatin1String _L;
-	QString text = _L("<p>")
-		% d->engine->mediaName() % _L("<br>")
-		% tr("CPU usage") % _L(": ") % toString(cpu.percent*100.0, 1) % _L("% ")
-		% tr("RAM usage") % _L(": ") % toString((double)mem.resident/(1024*1024), 1) % _L("MB")
-		% _L("<br></p><p>")
-		% d->vinput % _L("<br>")
-		% d->voutput % _n(fps, 1) % _L("fps ") % _n(d->video->format().bps(fps)/1024.0, 1) % _L("kbps")
-		% _L("<br></p><p>")
-		% d->ainput % _L("<br>") % normalized % _L("</p>");
+	const int duration = d->engine->duration();
+	const double percent = (double)pos/duration*1e2;
+	d->rinfo = _L("<p>") % tr("CPU") % _L(": ") % _n(cpu.percent*100.0, 1) % _L("% ")
+			% tr("RAM") % _L(": ") % _n((double)mem.resident/(1024*1024), 1) % _L("MB<br>")
+			% tr("Time") % _L(": ") % secToString(d->time) % _L("/") % msecToString(duration) % _L("(") % _n(percent, 1) % _L("%)<br>")
+			% sync
+			% tr("Average frame rate") % _L(": ") % _n(fps, 3) % _L("fps ") % _n(d->video->format().bps(fps)/(1024.0*1024.0), 1) % _L("Mbps")
+			% normalized
+			% _L("</p>");
 	if (d->visible)
-		d->osd.show(text, -1);
+		d->show(RealTimeInfo, d->rinfo);
 }
 
 void PlayInfoView::onVideoFormatChanged(const VideoFormat &vfmt) {
-	d->voutput = tr("Output") % _L(": ") % format(vfmt.fourcc) % _L(" ")
-		% resolution(d->video->outputWidth(), vfmt.height) % _L(" ");
-
+	d->vc.clear();
+	MPContext *mpctx = d->engine->context();
+	if (mpctx && mpctx->sh_video) {
+		sh_video *sh = mpctx->sh_video;
+		d->vc = _L("<p>&nbsp;<br>") % d->codecInfo(tr("Video codec"), sh->codec)
+			% tr("Input") % _L(": ") % format(sh->format) % _L(" ")
+			% resolution(sh->disp_w, sh->disp_h) % _L(" ")
+			% _n(sh->fps, 3) % _L("fps ")
+			% bps(mpctx->sh_video->i_bps) % _L("<br>")
+			% tr("Output") % _L(": ") % format(vfmt.type) % _L(" ")
+			% resolution(d->video->outputWidth(), vfmt.height) % _L(" ")
+			% _n(sh->fps, 3) % _L("fps ")
+			% _n(d->video->format().bps(sh->fps)/(1024.0*1024.0), 1) % _L("Mbps")
+			% _L("</p>")
+		;
+	}
+	if (d->visible)
+		d->show(VideoCodec, d->vc);
 }
 
 void PlayInfoView::setAudioFormat(const AudioFormat &afmt) {

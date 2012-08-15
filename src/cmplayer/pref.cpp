@@ -57,6 +57,10 @@ void Pref::save() const {
 	RECORD_WRITE_ENUM(r, sub_autoload);
 	RECORD_WRITE_ENUM(r, sub_autoselect);
 
+	WRITE(enable_hwaccel);
+	WRITE(skin_name);
+	r.write("hwaccel_format", _fToString(hwaccel_format));
+
 	sub_style.save(r, "sub_style");
 	double_click_map.save(r, "double_click_map");
 	middle_click_map.save(r, "middle_click_map");
@@ -104,6 +108,10 @@ void Pref::load() {
 	READ(contrast_step);
 	READ(hue_step);
 	READ(sub_ext);
+
+	READ(skin_name);
+	READ(enable_hwaccel);
+	hwaccel_format = static_cast<VideoFormat::Type>(_f(r.read("hwaccel_format", _fToString(hwaccel_format))));
 
 	READ(enable_generate_playist);
 	READ(sub_enable_autoload);

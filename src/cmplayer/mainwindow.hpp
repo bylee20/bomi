@@ -104,6 +104,7 @@ private:
 		}
 		return def;
 	}
+	bool eventFilter(QObject *o, QEvent *e);
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseDoubleClickEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
@@ -121,5 +122,48 @@ private:
 	struct Data;
 	Data *d;
 };
+
+//#include <QtWebKit/QWebFrame>
+//#include <QtWebKit/QWebPage>
+//#include <QtGui/QPainter>
+//#include <QtGui/QPicture>
+//#include <QtCore/QDebug>
+
+//class Widget : public QWidget {
+//	Q_OBJECT
+//public slots:
+//	void onLoaded(bool ok) {
+//		if (ok) {
+//			m_size = m_page.mainFrame()->contentsSize();
+//			m_page.setViewportSize(m_size);
+//			qDebug() << m_page.mainFrame()->toHtml();
+//			update();
+//		}
+//	}
+
+//public:
+//	QSize m_size;
+//	QWebPage m_page;
+//	Widget() {
+//		QPalette palette = m_page.palette();
+//		palette.setBrush(QPalette::Base, Qt::transparent);
+//		m_page.setPalette(palette);
+//		m_page.mainFrame()->load(QUrl::fromLocalFile("/Users/xylosper/dev/cmplayer/icons/cmplayer2.svg"));
+//		connect(m_page.mainFrame(), SIGNAL(loadFinished(bool)), this, SLOT(onLoaded(bool)));
+//	}
+//	~Widget() {}
+//	void paintEvent(QPaintEvent *) {
+//		if (m_size.isEmpty())
+//			return;
+//		QPainter painter(this);
+//		painter.fillRect(rect(), Qt::white);
+//		painter.setRenderHint(QPainter::SmoothPixmapTransform);
+//		const double sx = (double)width()/m_size.width();
+//		const double sy = (double)height()/m_size.width();
+//		painter.scale(sx, sy);
+//		m_page.mainFrame()->render(&painter, QWebFrame::ContentsLayer);
+//	}
+//};
+
 
 #endif // MAINWINDOW_HPP

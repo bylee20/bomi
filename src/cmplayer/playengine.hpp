@@ -93,6 +93,7 @@ public:
 	bool isFrameDroppingEnabled() const;
 	static void msleep(unsigned long msec) {QThread::msleep(msec);}
 	static void usleep(unsigned long usec) {QThread::usleep(usec);}
+	void play(int time);
 public slots:
 	void quitRunning();
 	void play();

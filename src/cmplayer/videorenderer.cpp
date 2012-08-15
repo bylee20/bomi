@@ -133,22 +133,65 @@ private:
 	QGLShaderProgram *m_shader = nullptr;
 };
 
+template <typename T>
+class RingBuffer {
+public:
+	RingBuffer(int capacity): m_capacity(capacity), m_t(new T[capacity]) {}
+	~RingBuffer() {delete []m_t;}
+	const T &front() const {return m_t[m_front];}
+	T &front() {return m_t[m_front];}
+	const T &back() const {return m_t[m_back];}
+	T &back() {return m_t[m_back];}
+	void append(const T &t) {
+		++m_back;
+		if (m_back == m_capacity) {
+			m_back = 0;
+			m_over = true;
+		}
+		if (m_over) {
+			++m_front;
+			if (m_front == m_capacity)
+				m_front = 0;
+		} else
+			++m_size;
+		m_t[m_back] = t;
+	}
+	int capacity() const {return m_capacity;}
+	int size() const {return m_size;}
+	bool isEmpty() const {return m_size <= 0;}
+	void reset() {m_size = m_back = m_front = 0; m_over = false;}
+private:
+	bool m_over = false;
+	int m_back = 0;
+	int m_front = 0;
+	int m_capacity = 0;
+	int m_size = 0;
+	T *m_t = nullptr;
+};
+
+
 class FrameRateMeasure {
 public:
-	FrameRateMeasure() {m_drawn = 0; m_prev = 0;}
-	void reset() {m_time.restart(); m_drawn = 0; m_prev = 0;}
+	FrameRateMeasure() {m_time.start();}
+	void reset() {
+		m_time.restart();
+		m_prev = 0;
+		m_times.reset();
+	}
 	int elapsed() const {return m_time.elapsed();}
 	void frameDrawn(int id) {
 		if (m_prev != id) {
-			++m_drawn;
 			m_prev = id;
+			m_times.append(m_time.elapsed());
+			++m_drawn;
 		}
 	}
-	int drawnFrames() const {return m_drawn;}
-	double frameRate() const {return (double)m_drawn/(double)m_time.elapsed()*1e3;}
+	double frameRate() const {return m_times.isEmpty() ? 0.0 : (double)(m_times.size())*1e3/(double)(m_times.back() - m_times.front());}
 private:
-	int m_drawn = 0, m_prev = 0;
+	RingBuffer<int> m_times{50};
+	int m_prev = 0;
 	QTime m_time;
+	quint64 m_drawn;
 };
 
 class VideoRenderer::VideoShader {
@@ -259,6 +302,10 @@ public:
 		m_shader.setUniformValue(loc_brightness, var.brightness);
 		m_shader.setUniformValue(loc_contrast, var.contrast);
 		m_shader.setUniformValue(loc_sat_hue, var.sat_hue);
+		const float dx = 1.0/(double)format.stride;
+		const float dy = 1.0/(double)format.height;
+		m_shader.setUniformValue(loc_dxy, dx, dy, -dx, 0.f);
+
 		const bool filter = var.effects() & FilterEffects;
 		const bool kernel = var.effects() & KernelEffects;
 		if (filter || kernel) {
@@ -269,9 +316,6 @@ public:
 			m_shader.setUniformValue(loc_y_b, (float)-var.y_min*y_tan);
 		}
 		if (kernel) {
-			const float dx = 1.0/(double)format.stride;
-			const float dy = 1.0/(double)format.height;
-			m_shader.setUniformValue(loc_dxy, dx, dy, -dx, 0.f);
 			m_shader.setUniformValue(loc_kern_c, var.kern_c);
 			m_shader.setUniformValue(loc_kern_n, var.kern_n);
 			m_shader.setUniformValue(loc_kern_d, var.kern_d);
@@ -390,6 +434,7 @@ void VideoRenderer::setScreen(VideoScreen *gl) {
 		d->gl->makeCurrent();
 		auto exts = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
 		d->clientStorage = strstr(exts, "GL_APPLE_client_storage") && strstr(exts, "GL_APPLE_texture_range");
+		qDebug() << (bool)strstr(exts, "GL_MESA_ycbcr_texture");
 		glGenTextures(3, d->texture);
 		auto readAll = [] (const QString &fileName) -> QByteArray {
 			QFile file(fileName);
@@ -437,8 +482,8 @@ double VideoRenderer::frameRate() const {
 
 double VideoRenderer::outputFrameRate(bool reset) const {
 	const double ret = d->fps.frameRate();
-	if (reset)
-		d->fps.reset();
+//	if (reset)
+//		d->fps.reset();
 	return ret;
 }
 
@@ -453,8 +498,6 @@ bool VideoRenderer::hasFrame() const {
 void VideoRenderer::uploadBufferFrame() {
 //	qSwap(d->buffer, d->frame);
 	auto &frame = *d->frame;
-	if (!d->prepared || d->format != frame.format)
-		prepare(frame.format);
 	if (!d->gl || !(d->frameIsSet = !frame.format.isEmpty()))
 		return;
 	auto min = 0, max = 255;
@@ -480,12 +523,26 @@ void VideoRenderer::uploadBufferFrame() {
 //		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 //		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w/2, h/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.v());
 //	} else{
+	switch (frame.format.type) {
+	case VideoFormat::I420:
+	case VideoFormat::YV12:
 		glBindTexture(GL_TEXTURE_2D, d->texture[0]);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.y());
 		glBindTexture(GL_TEXTURE_2D, d->texture[1]);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w/2, h/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.u());
 		glBindTexture(GL_TEXTURE_2D, d->texture[2]);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w/2, h/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.v());
+		break;
+	case VideoFormat::YUY2:
+		glBindTexture(GL_TEXTURE_2D, d->texture[0]);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.format.pitch, h, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, frame.y());
+		glBindTexture(GL_TEXTURE_2D, d->texture[1]);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.format.pitch/2, h, GL_RGBA, GL_UNSIGNED_BYTE, frame.y());
+		break;
+	default:
+		d->frameIsSet = false;
+		break;
+	}
 //	}
 	++d->frameId;
 	d->gl->doneCurrent();
@@ -506,8 +563,25 @@ void VideoRenderer::prepare(const VideoFormat &format) {
 		const int w[3] = {d->format.stride, d->format.stride/2, d->format.stride/2};
 		const int h[3] = {d->format.height, d->format.height/2, d->format.height/2};
 		d->gl->makeCurrent();
-		for (int i=0; i<3; ++i) {
-			glBindTexture(GL_TEXTURE_2D, d->texture[i]);
+		switch (d->format.type) {
+		case VideoFormat::I420:
+		case VideoFormat::YV12:
+			for (int i=0; i<3; ++i) {
+				glBindTexture(GL_TEXTURE_2D, d->texture[i]);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//			if (d->clientStorage) {
+	//				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+	//				glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+	//			}
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, w[i], h[i], 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
+
+			}
+			break;
+		case VideoFormat::YUY2:
+			glBindTexture(GL_TEXTURE_2D, d->texture[0]);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -516,8 +590,16 @@ void VideoRenderer::prepare(const VideoFormat &format) {
 //				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
 //				glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 //			}
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, w[i], h[i], 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
-
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, d->format.pitch, h[0], 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, nullptr);
+			glBindTexture(GL_TEXTURE_2D, d->texture[1]);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->format.pitch/2, h[0], 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			break;
+		default:
+			break;
 		}
 		d->gl->doneCurrent();
 		d->fps.reset();
@@ -658,7 +740,7 @@ void VideoRenderer::render() {
 		xy += offset;
 		double top = 0.0, left = 0.0;
 		double bottom = (double)(d->format.height-1)/(double)d->format.height;
-		double right = (double)(d->format.width-1)/(double)d->format.stride;
+		double right = (double)(d->format.width-1)/(double)(d->format.pitch);
 		const Effects effects = d->var.effects();
 		if (!(effects & IgnoreEffect)) {
 			if (effects & FlipHorizontally)
@@ -848,7 +930,8 @@ void VideoScreen::changeEvent(QEvent *event) {
 		if (m_parent)
 			m_parent->removeEventFilter(this);
 		m_parent = parentWidget();
-		m_parent->installEventFilter(this);
+		if (m_parent)
+			m_parent->installEventFilter(this);
 	}
 }
 

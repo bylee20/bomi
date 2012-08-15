@@ -21,9 +21,11 @@ public:
 	void setVisible(bool visible);
 	bool contains(const QPoint &pos) const;
 	void connectTo(PlayEngine *engine, AudioController *audio, VideoRenderer *video);
+	QString name() const;
 	void initializePlaceholders();
 	static QStringList dirs();
 	static QStringList names(bool reload = false);
+	static QString path(const QString &name);
 public slots:
 	void setMediaNumber(int number);
 	void setTotalMediaCount(int count);

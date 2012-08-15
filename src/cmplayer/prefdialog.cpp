@@ -10,6 +10,7 @@
 #include <QtCore/QDebug>
 #include "pref.hpp"
 #include "rootmenu.hpp"
+#include "skin.hpp"
 
 // from clementine's preferences dialog
 
@@ -216,8 +217,8 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) 
 
 	auto general = addCategory(tr("General"));
 	auto playback = addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
-	addPage(tr("Video"), d->ui.video, ":/img/games-config-background-32.png", general);
 	addPage(tr("Application"), d->ui.application, ":/img/cmplayer-32.png", general);
+	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
 
 	auto subtitle = addCategory(tr("Subtitle"));
 	addPage(tr("Load"), d->ui.sub_load, ":/img/application-x-subrip-32.png", subtitle);
@@ -231,6 +232,10 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) 
 	addPage(tr("Skin"), d->ui.ui_skin, ":/img/preferences-desktop-theme-32.png", ui);
 
 	playback->setSelected(true);
+
+	auto addFormat = [this] (VideoFormat::Type type) {d->ui.hwaccel_format->addItem(_fToDescription(type), type);};
+	addFormat(VideoFormat::YV12);
+//	addFormat(VideoFormat::YUY2);
 
 	d->ui.sub_ext->addItem(QString(), QString());
 	d->ui.sub_ext->addItemTextData(Info::subtitleExt());
@@ -254,6 +259,10 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) 
 	d->ui.sub_priority->setAddingAndErasingEnabled(true);
 	checkSubAutoselect(d->ui.sub_autoselect->currentData());
 
+	d->ui.skin_name->addItems(Skin::names(true));
+	onSkinIndexChanged(d->ui.skin_name->currentIndex());
+
+	connect(d->ui.skin_name, SIGNAL(currentIndexChanged(int)), this, SLOT(onSkinIndexChanged(int)));
 	connect(d->ui.sub_autoselect, SIGNAL(currentDataChanged(QVariant)), this, SLOT(checkSubAutoselect(QVariant)));
 	connect(d->ui.sub_autoload, SIGNAL(currentDataChanged(QVariant)), this, SLOT(checkSubAutoselect(QVariant)));
 	connect(d->shortcuts, SIGNAL(buttonClicked(int)), this, SLOT(getShortcut(int)));
@@ -270,11 +279,27 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) 
 	connect(d->ui.dbb, SIGNAL(clicked(QAbstractButton*)), this, SLOT(onDialogButtonClicked(QAbstractButton*)));
 
 	retranslate();
-	fill();
+	fill(Pref::get());
 }
 
 PrefDialog::~PrefDialog() {
 	delete d;
+}
+
+void PrefDialog::onSkinIndexChanged(int idx) {
+	if (idx >= 0) {
+		const auto name = d->ui.skin_name->itemText(idx);
+		const auto path = Skin::path(name);
+		d->ui.skin_path->setText(path % '/' % name);
+		QSize size(200, 200);
+		QPixmap pixmap;
+		if (pixmap.load(path % '/' % name % "/preview.png")) {
+			d->ui.skin_preview->setPixmap(pixmap);
+			size = pixmap.size();
+		} else
+			d->ui.skin_preview->setText(tr("No preview!"));
+		d->ui.skin_preview->setFixedSize(size);
+	}
 }
 
 void PrefDialog::getShortcut(int id) {
@@ -354,9 +379,7 @@ void PrefDialog::retranslate() {
 		d->ui.locale->setItemText(i, toString(d->ui.locale->itemData(i).toLocale()));
 }
 
-void PrefDialog::fill() {
-	const Pref &p = Pref::get();
-
+void PrefDialog::fill(const Pref &p) {
 	d->ui.pause_minimized->setChecked(p.pause_minimized);
 	d->ui.pause_video_only->setChecked(p.pause_video_only);
 	d->ui.remember_stopped->setChecked(p.remember_stopped);
@@ -366,6 +389,9 @@ void PrefDialog::fill() {
 	d->ui.hide_cursor->setChecked(p.hide_cursor);
 	d->ui.hide_delay->setValue(p.hide_cursor_delay/1000);
 	d->ui.disable_screensaver->setChecked(p.disable_screensaver);
+
+	d->ui.enable_hwaccel->setChecked(p.enable_hwaccel);
+	d->ui.hwaccel_format->setCurrentData(p.hwaccel_format);
 
 	d->ui.blur_kern_c->setValue(p.blur_kern_c);
 	d->ui.blur_kern_n->setValue(p.blur_kern_n);
@@ -424,11 +450,8 @@ void PrefDialog::fill() {
 	d->ui.amp_step->setValue(p.amp_step);
 	d->ui.sub_pos_step->setValue(p.sub_pos_step);
 	d->ui.sync_delay_step->setValue(p.sync_delay_step*0.001);
-}
 
-void PrefDialog::accept() {
-	apply();
-	QDialog::accept();
+	d->ui.skin_name->setCurrentText(p.skin_name);
 }
 
 void PrefDialog::apply() {
@@ -444,6 +467,9 @@ void PrefDialog::apply() {
 	p.hide_cursor = d->ui.hide_cursor->isChecked();
 	p.hide_cursor_delay = d->ui.hide_delay->value()*1000;
 	p.disable_screensaver = d->ui.disable_screensaver->isChecked();
+
+	p.enable_hwaccel = d->ui.enable_hwaccel->isChecked();
+	p.hwaccel_format = static_cast<VideoFormat::Type>(d->ui.hwaccel_format->currentData().toInt());
 
 	p.blur_kern_c = d->ui.blur_kern_c->value();
 	p.blur_kern_n = d->ui.blur_kern_n->value();
@@ -508,7 +534,11 @@ void PrefDialog::apply() {
 	p.sub_pos_step = d->ui.sub_pos_step->value();
 	p.sync_delay_step = qRound(d->ui.sync_delay_step->value()*1000.0);
 
+	p.skin_name = d->ui.skin_name->currentText();
+
 	p.save();
+
+	emit applicationRequested();
 }
 
 void PrefDialog::changeEvent(QEvent *event) {
@@ -520,17 +550,30 @@ void PrefDialog::changeEvent(QEvent *event) {
 }
 
 void PrefDialog::onDialogButtonClicked(QAbstractButton *button) {
-	const auto role = d->ui.dbb->buttonRole(button);
-	if (role == QDialogButtonBox::AcceptRole || role == QDialogButtonBox::ApplyRole) {
-		apply();
-		emit applicationRequested();
-	}
-	if (role == QDialogButtonBox::AcceptRole || role == QDialogButtonBox::RejectRole)
+	auto reset = [this] () {fill(Pref::get());};
+	auto restore = [this] () {fill(Pref());};
+
+	typedef QDialogButtonBox DBB;
+	switch (d->ui.dbb->standardButton(button)) {
+	case DBB::Ok:
 		hide();
+	case DBB::Apply:
+		apply();
+		break;
+	case DBB::Cancel:
+		hide();
+	case DBB::Reset:
+		reset();
+		break;
+	case DBB::RestoreDefaults:
+		restore();
+		break;
+	default:
+		break;
+	}
 }
 
 void PrefDialog::showEvent(QShowEvent *event) {
 	QDialog::showEvent(event);
-	fill();
 }
 

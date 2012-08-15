@@ -68,6 +68,16 @@ public:
 		if (idx >= 0)
 			setCurrentIndex(idx);
 	}
+	void setCurrentText(const QString &text) {
+		const int idx = findText(text);
+		if (idx >= 0)
+			setCurrentIndex(idx);
+	}
+	template<typename T>
+	T currentValue(int role = Qt::UserRole) const {
+		const int idx = currentIndex();
+		return idx < 0 ? T() : itemData(idx, role).value<T>();
+	}
 	QVariant currentData(int role = Qt::UserRole) const {
 		const int idx = currentIndex();
 		return idx < 0 ? QVariant() : itemData(idx, role);

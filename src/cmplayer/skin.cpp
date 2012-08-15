@@ -203,6 +203,10 @@ QStringList Skin::names(bool reload) {
 	return skins.keys();
 }
 
+QString Skin::path(const QString &name) {
+	return skins.value(name);
+}
+
 void Skin::seek(int time) {
 	if (!d->ticking && d->engine)
 		d->engine->seek(time);
@@ -329,8 +333,9 @@ bool Skin::checkLabel(QObject *obj) {
 	if (auto ph = PlaceholderLabel::make(label)) {
 		d->uniqueLabelList << ph;
 		auto phs = ph->placeholders();
-		for (auto it = phs.begin(); it != phs.end(); ++it)
+		for (auto it = phs.begin(); it != phs.end(); ++it) {
 			d->labels[it.key()] << ph;
+		}
 	}
 	return true;
 }
@@ -388,10 +393,13 @@ void Skin::checkChildren(QWidget *w) {
 	}
 }
 
+QString Skin::name() const {
+	return d->name;
+}
+
 bool Skin::load(const QString &name, QWidget *parent) {
 	if (skins.isEmpty())
 		names(true);
-	qDebug() << names() <<name;
 	auto it = skins.find(name);
 	if (it == skins.end())
 		return false;
@@ -413,7 +421,8 @@ bool Skin::load(const QString &name, QWidget *parent) {
 		qDeleteAll(d->uniqueLabelList);
 		d->uniqueLabelList.clear();
 		d->buttons.clear();
-		d->labels.clear();
+		for (auto &label : d->labels)
+			label.clear();
 		d->hidable.clear();
 		d->name.clear();
 		d->path.clear();

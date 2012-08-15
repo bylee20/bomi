@@ -7,6 +7,7 @@
 #include <QtCore/QMap>
 #include "global.hpp"
 #include "enums.hpp"
+#include "avmisc.hpp"
 #include "record.hpp"
 #include "osdstyle.hpp"
 
@@ -93,6 +94,11 @@ public:
 	int brightness_step{1}, saturation_step{1}, contrast_step{1}, hue_step{1};
 	int volume_step{2}, sync_delay_step{500}, amp_step{10}, sub_pos_step{1};
 
+	bool enable_hwaccel{false};
+	VideoFormat::Type hwaccel_format{VideoFormat::YV12};
+
+	QString skin_name{"simple"};
+
 	void save() const;
 	void load();
 private:
@@ -117,9 +123,10 @@ private:
 		style.color = Qt::white;
 		style.outline_color = Qt::black;
 		style.shadow_color = Qt::black;
+		style.shadow_color.setAlphaF(0.3);
 		style.has_shadow = style.shadow_blur = style.has_outline = true;
-		style.size = 0.04;
-		style.outline_width = 0.002;
+		style.size = 0.035;
+		style.outline_width = 0.0015;
 		style.scale = OsdStyle::Scale::Width;
 		style.shadow_offset = QPointF(0.003, 0.003);
 		return style;
@@ -127,7 +134,7 @@ private:
 
 	friend class PrefDialog;
 	static Pref *obj;
-	Pref() {load();}
+//	Pref() {load();}
 	friend int main(int, char**);
 };
 

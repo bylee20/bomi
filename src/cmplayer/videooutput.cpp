@@ -83,11 +83,37 @@ int VideoOutput::preinit(struct vo */*vo*/, const char */*arg*/) {
 void VideoOutput::uninit(struct vo */*vo*/) {
 }
 
+static void fillFormat(VideoFormat &format, uint32_t imgfmt, int w, int h, int s = 0) {
+	format.width = w;
+	format.height = h;
+	format.stride = 0;
+	switch (imgfmt) {
+	case IMGFMT_YV12:
+	case IMGFMT_I420:
+		format.bpp = 12;
+		format.pitch = format.stride = ((w >> 5) + 1) << 5;
+		format.type = VideoFormat::YV12;
+		break;
+	case IMGFMT_YUY2:
+		format.bpp = 16;
+		format.type = VideoFormat::YUY2;
+		break;
+	default:
+		format.bpp = 0;
+		format.type = VideoFormat::Unknown;
+		break;
+	}
+	if (!format.stride) {
+		const int Bpp = format.bpp >> 3;
+		format.stride = (format.width*Bpp << 4) >> 4;
+		format.pitch = format.stride/Bpp;
+	}
+}
+
 int VideoOutput::config(struct vo *vo, uint32_t w_s, uint32_t h_s, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
 	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
-	d->format.width = w_s;
-	d->format.height = h_s;
-	d->format.fourcc = fmt;
+	fillFormat(d->format, fmt, w_s, h_s);
+	d->renderer->prepare(d->format);
 	return 0;
 }
 
@@ -98,31 +124,19 @@ int VideoOutput::draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, 
 void VideoOutput::drawImage(void *data) {
 	mp_image_t *mpi = reinterpret_cast<mp_image_t*>(data);
 	VideoFrame &frame = d->renderer->bufferFrame();
-	frame.format.bpp = mpi->bpp;
-	switch (mpi->imgfmt) {
-	case IMGFMT_I420:
-		frame.format.fourcc = VideoFormat::I420;
-		break;
-	case IMGFMT_YV12:
-		frame.format.fourcc = VideoFormat::YV12;
-		break;
-	default:
-		return;
-	}
-	frame.format.stride = mpi->stride[0];
-	frame.format.width = mpi->width;
-	frame.format.height = mpi->height;
-
-//	int length[4] = {mpi->stride[0]*mpi->height, mpi->stride[1]*mpi->height/2, mpi->stride[2]*mpi->height/2, 0};
-//	frame.alloc(length);
-//	fast_memcpy(frame.y(), mpi->planes[0], length[0]);
-//	fast_memcpy(frame.u(), mpi->planes[1], length[1]);
-//	fast_memcpy(frame.v(), mpi->planes[2], length[2]);
+	frame.format = d->format;
+	frame.format.pitch = frame.format.stride = mpi->stride[0];
+	if (!(mpi->flags & MP_IMGFLAG_PLANAR))
+		frame.format.pitch /= mpi->bpp >> 3;
 	frame.data[0] = mpi->planes[0];
 	frame.data[1] = mpi->planes[1];
 	frame.data[2] = mpi->planes[2];
-//	frame.data[3] = mpi->planes[3];
-
+	frame.data[3] = mpi->planes[3];
+	if (d->format.stride < frame.format.stride) {
+		qDebug() << "expand stride:" << d->format.stride << "->" << frame.format.stride;
+		d->format = frame.format;
+		d->renderer->prepare(d->format);
+	}
 	d->renderer->uploadBufferFrame();
 }
 
@@ -169,9 +183,14 @@ void VideoOutput::flip_page(struct vo *vo) {
 void VideoOutput::check_events(struct vo */*vo*/) {}
 
 int VideoOutput::queryFormat(int format) {
-	if (format != IMGFMT_YV12 && format != IMGFMT_I420)
+	switch (format) {
+	case IMGFMT_I420:
+	case IMGFMT_YV12:
+	case IMGFMT_YUY2:
+		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
+			| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE;// | VOCAP_NOSLICES;
+	default:
 		return 0;
-	return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
-		| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE;// | VOCAP_NOSLICES;
+	}
 }
 

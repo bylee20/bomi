@@ -4,6 +4,7 @@
 #include <QtOpenGL/QGLShaderProgram>
 #include <QtCore/QDebug>
 #include <QtCore/QTime>
+#include <QtCore/QLinkedList>
 
 extern "C" void *fast_memcpy(void *to, const void *from, size_t len);
 
@@ -11,7 +12,7 @@ extern "C" void *fast_memcpy(void *to, const void *from, size_t len);
 
 struct ScreenOsdWrapper : public OsdWrapper {
 	bool m_needToUpload = false;
-	ScreenOsdWrapper(OsdRenderer *renderer) {m_renderer = renderer;}
+	ScreenOsdWrapper(OsdRenderer *renderer) {m_renderer = renderer; m_renderer->setWrapper(this);}
 	void cache() {
 		if (!m_renderer || !count())
 			return;
@@ -22,17 +23,17 @@ struct ScreenOsdWrapper : public OsdWrapper {
 		if (shadow.y() < 0)
 			pos.ry() = -shadow.y();
 		m_renderer->prepareToRender(pos);
-		m_size = m_renderer->size().toSize();
-		m_size.rwidth() += qAbs(shadow.x());
-		m_size.rheight() += qAbs(shadow.y());
+		m_size[m_drawing] = m_renderer->size().toSize();
+		m_size[m_drawing].rwidth() += qAbs(shadow.x());
+		m_size[m_drawing].rheight() += qAbs(shadow.y());
 		QByteArray &buffer = m_buffer[m_drawing];
-		const int length = m_size.width()*m_size.height()*4;
+		const int length = m_size[m_drawing].width()*m_size[m_drawing].height()*4;
 		m_empty = length <= 0;
 		if (!m_empty && (buffer.length() < length || buffer.length() > length*2))
 			buffer.resize(length);
 		if (!m_empty) {
 			buffer.fill(0x0, length);
-			QImage image((uchar*)buffer.data(), m_size.width(), m_size.height(), QImage::Format_ARGB32_Premultiplied);
+			QImage image((uchar*)buffer.data(), m_size[m_drawing].width(), m_size[m_drawing].height(), QImage::Format_ARGB32_Premultiplied);
 			Q_ASSERT(!image.isNull());
 			QPainter painter(&image);
 			m_renderer->render(&painter, pos);
@@ -49,7 +50,9 @@ struct ScreenOsdWrapper : public OsdWrapper {
 		if (m_needToUpload) {
 			m_needToUpload = false;
 			qSwap(m_interm, m_showing);
-			upload(m_size, m_buffer[m_showing].data(), 0);
+			if (m_size[m_showing].isEmpty())
+				return;
+			upload(m_size[m_showing], m_buffer[m_showing].data(), 0);
 		}
 		const int idx = 0;
 		shader->bind();
@@ -102,13 +105,13 @@ private:
 	QByteArray m_buffer[3];
 	OsdRenderer *m_renderer;
 	int m_drawing = 0, m_interm = 1, m_showing = 2;
-	QSize m_size;
+	QSize m_size[3];
 };
 
 
 struct Overlay::Data {
 	QGLWidget *ctx;
-	QMap<OsdRenderer*, ScreenOsdWrapper*> osds;
+	QLinkedList<QLinkedList<ScreenOsdWrapper*> > osds;
 	VideoScreen *screen;
 	QRect renderable;
 	QRect frame;
@@ -141,18 +144,16 @@ Overlay::Overlay(VideoScreen *screen)
 
 Overlay::~Overlay() {
 	d->ctx->makeCurrent();
-	for (auto osd : d->osds)
-		osd->free();
+	for (auto wrappers : d->osds) {
+		for (auto wrapper : wrappers) {
+			wrapper->free();
+			delete wrapper;
+		}
+	}
 	delete d->shader;
-	qDeleteAll(d->osds);
 	d->ctx->doneCurrent();
 	delete d->ctx;
 	delete d;
-}
-
-void Overlay::cache() {
-	for (auto osd : d->osds)
-		osd->cache();
 }
 
 QGLWidget *Overlay::screen() const {
@@ -166,9 +167,11 @@ void Overlay::setArea(const QRect &renderable, const QRect &frame) {
 	d->renderable = renderable;
 	d->frame = frame;
 //	d->ctx->makeCurrent();
-	for (auto it = d->osds.begin(); it != d->osds.end(); ++it) {
-		if (it.key()->setArea(renderable.size(), frame.size()))
-			it.value()->cache();
+	for (auto wrappers : d->osds) {
+		for (auto wrapper : wrappers) {
+			if (wrapper->renderer()->setArea(renderable.size(), frame.size()))
+				wrapper->cache();
+		}
 	}
 //	d->ctx->doneCurrent();
 	d->pending = false;
@@ -176,25 +179,29 @@ void Overlay::setArea(const QRect &renderable, const QRect &frame) {
 }
 
 void Overlay::update() {
-	auto it = d->osds.find(qobject_cast<OsdRenderer*>(sender()));
-	if (!d->pending  && it != d->osds.end()) {
-//		d->ctx->makeCurrent();
-		it.value()->cache();
-//		it.value()->texture(0);
-//		d->ctx->doneCurrent();
+	auto osd = qobject_cast<OsdRenderer*>(sender());
+	if (osd && !d->pending) {
+		auto wrapper = osd->wrapper();
+		wrapper->cache();
 		d->screen->redraw();
 	}
 }
 
 void Overlay::add(OsdRenderer *osd) {
-	osd->setArea(d->renderable.size(), d->frame.size());
-	connect(osd, SIGNAL(needToRerender()), this, SLOT(update()));
-	connect(osd, SIGNAL(destroyed()), this, SLOT(onOsdDeleted()));
 	d->ctx->makeCurrent();
-	auto wrapper = new ScreenOsdWrapper(osd);
-	d->osds.insert(osd, wrapper);
-	wrapper->alloc();
+	OsdRenderer *next = osd;
+	d->osds.push_back(QLinkedList<ScreenOsdWrapper*>());
+	auto &list = d->osds.last();
+	while (next) {
+		next->setArea(d->renderable.size(), d->frame.size());
+		connect(next, SIGNAL(needToRerender()), this, SLOT(update()));
+		auto wrapper = new ScreenOsdWrapper(next);
+		wrapper->alloc();
+		list.push_back(wrapper);
+		next = next->next();
+	}
 	d->ctx->doneCurrent();
+	connect(osd, SIGNAL(destroyed()), this, SLOT(onOsdDeleted()));
 }
 
 void Overlay::onOsdDeleted() {
@@ -203,23 +210,41 @@ void Overlay::onOsdDeleted() {
 
 OsdRenderer *Overlay::take(OsdRenderer *osd) {
 	d->ctx->makeCurrent();
-	delete d->osds.take(osd);
+	for (auto it = d->osds.begin(); it != d->osds.end(); ++it) {
+		if (it->first()->renderer() == osd) {
+			delete osd;
+			d->osds.erase(it);
+			break;
+		}
+	}
 	d->ctx->doneCurrent();
 	return osd;
 }
 
 void Overlay::render(QPainter *painter) {
-	for (auto it = d->osds.begin(); it != d->osds.end(); ++it)
-		it.key()->render(painter, it.key()->posHint());
+	for (auto wrappers : d->osds) {
+		QPointF o(0.0, 0.0);
+		for (auto wrapper : wrappers) {
+			if (!wrapper->isEmpty())  {
+				auto osd = wrapper->renderer();
+				osd->render(painter, osd->posHint() + o);
+				o.ry() += osd->height();
+			}
+		}
+	}
 }
 
 void Overlay::renderToScreen() {
 	const QPointF rpos = d->renderable.topLeft();
 	const QPointF fpos = d->frame.topLeft();
-	for (auto it = d->osds.begin(); it != d->osds.end(); ++it) {
-		auto osd = it.value();
-		if (!osd->isEmpty())
-			osd->render(this, rpos, fpos, d->shader);
+	for (auto wrappers : d->osds) {
+		QPointF o(0.0, 0.0);
+		for (auto wrapper : wrappers) {
+			if (!wrapper->isEmpty()) {
+				wrapper->render(this, rpos + o, fpos + o, d->shader);
+				o.ry() += wrapper->renderer()->height();
+			}
+		}
 	}
 }
 

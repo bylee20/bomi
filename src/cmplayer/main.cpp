@@ -25,28 +25,14 @@ static bool checkOpenGL() {
 }
 
 
-#include <QtSvg>
 
-class Widget : public QWidget {
-	void paintEvent(QPaintEvent *) {
 
-//		r.render(&p, rect());
-	}
-};
 
 Q_DECLARE_METATYPE(QTextOption::WrapMode);
 
 int main(int argc, char **argv) {
 //	QApplication a(argc, argv);
 
-//	QSvgRenderer r(QString("/Users/xylosper/dev/cmplayer/icons/cmplayer2.svg"));
-
-//	QImage image(512, 512, QImage::Format_ARGB32_Premultiplied);
-//	image.fill(0x0);
-//	QPainter p(&image);
-//	r.render(&p, image.rect());
-//	image.save("test.png");
-//	return 0;
 //	Widget w;
 //	w.show();;
 
@@ -73,6 +59,7 @@ int main(int argc, char **argv) {
 	qDebug() << "engine started";
 	RootMenu::obj = new RootMenu;
 	Pref::obj = new Pref;
+	Pref::obj->load();
 	RecentInfo::obj = new RecentInfo;
 	qDebug() << "global objs created";
 	while (!PlayEngine::obj->isInitialized())

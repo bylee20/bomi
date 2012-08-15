@@ -87,8 +87,6 @@ private slots:
 	void update();
 	void onOsdDeleted();
 private:
-//	struct Osd;
-	void cache();
 	struct Data;
 	Data *d;
 };

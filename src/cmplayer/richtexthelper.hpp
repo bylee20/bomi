@@ -62,8 +62,8 @@ public:
 	static inline QStringRef trim(const QStringRef &text) {
 		if (text.isEmpty()) return QStringRef();
 		int start = 0, end = text.size();
-		while (isSeperator(text.at(start).unicode()) && start < end) ++start;
-		while (isSeperator(text.at(end-1).unicode()) && end > start) --end;
+		while (start < end && isSeperator(text.at(start).unicode())) ++start;
+		while (end > start && isSeperator(text.at(end-1).unicode())) --end;
 		return start < end ? midRef(text, start, end-start) : QStringRef();
 	}
 	static QChar entityCharacter(const QStringRef &entity);

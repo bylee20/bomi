@@ -24,7 +24,7 @@ macx {
 
 INCLUDEPATH += ../mplayer2 ../../build/include
 
-LIBS += ../../build/lib/libcmplayer_widgets.a ../../build/lib/libmplayer2-cmplayer.a ../../build/lib/libchardet.a \
+LIBS += ../../build/lib/libcmplayer_widgets.a ../../build/lib/libchardet.a ../../build/lib/libmplayer2-cmplayer.a \
     -L../../build/lib -L/opt/local/lib \
     -lz -lbz2 -lpthread -lm \
     -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini -lxvidcore -lvorbis -logg -ltheora -la52 -ldca ../../build/lib/libavutil.a ../../build/lib/libavcodec.a -lavformat -lswscale -lcdio_paranoia -lcdio_cdda -lcdio
@@ -47,7 +47,7 @@ DESTDIR = ../../build
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release uitools
 
-QT = core gui opengl network svg
+QT = core gui opengl network svg webkit
 
 RESOURCES += rsclist.qrc
 HEADERS += playengine.hpp \
@@ -81,7 +81,6 @@ HEADERS += playengine.hpp \
     recentinfo.hpp \
     historyview.hpp \
     subtitleview.hpp \
-    pref_dialog.hpp \
     osdstyle.hpp \
     simplelistwidget.hpp \
     appstate.hpp \
@@ -104,7 +103,6 @@ HEADERS += playengine.hpp \
     listmodel.hpp \
     fragmentprogram.hpp \
     mainwindow_p.hpp \
-    pref_widget.hpp \
     playinfoview.hpp \
     widgets.hpp \
     qtcolorpicker.hpp \
@@ -120,7 +118,8 @@ HEADERS += playengine.hpp \
     richtextblock.hpp \
     richtextdocument.hpp \
     mpmessage.hpp \
-    skin.hpp
+    skin.hpp \
+    vdadecoder.hpp
 
 SOURCES += main.cpp \
     playengine.cpp \
@@ -156,7 +155,6 @@ SOURCES += main.cpp \
     recentinfo.cpp \
     historyview.cpp \
     subtitleview.cpp \
-    pref_dialog.cpp \
     osdstyle.cpp \
     simplelistwidget.cpp \
     appstate.cpp \
@@ -177,7 +175,6 @@ SOURCES += main.cpp \
     events.cpp \
     listmodel.cpp \
     fragmentprogram.cpp \
-    pref_widget.cpp \
     playinfoview.cpp \
     widgets.cpp \
     qtcolorpicker.cpp \
@@ -193,7 +190,8 @@ SOURCES += main.cpp \
     richtextblock.cpp \
     richtextdocument.cpp \
     mpmessage.cpp \
-    skin.cpp
+    skin.cpp \
+    mplayer-vd_ffmpeg.c
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

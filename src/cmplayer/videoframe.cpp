@@ -1,5 +1,26 @@
 #include "videoframe.hpp"
 #include <stdlib.h>
+extern "C" {
+#include <libmpcodecs/img_format.h>
+}
+
+uint32_t _fToImgFmt(VideoFormat::Type type) {
+	switch (type) {
+	case VideoFormat::YV12:
+		return IMGFMT_YV12;
+	case VideoFormat::I420:
+		return IMGFMT_I420;
+	case VideoFormat::YUY2:
+		return IMGFMT_YUY2;
+	default:
+		return 0;
+	}
+}
+
+QString _fToDescription(VideoFormat::Type type) {
+	return QLatin1String(vo_format_name(_fToImgFmt(type)));
+}
+
 
 QImage VideoFrame::toImage() const {
 	QImage img(format.stride, format.height, QImage::Format_RGB888);

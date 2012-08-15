@@ -5,7 +5,7 @@
 #include <QtCore/QRectF>
 #include "osdstyle.hpp"
 
-class QPainter;
+class QPainter;			class ScreenOsdWrapper;
 
 class OsdRenderer : public QObject {
 	Q_OBJECT
@@ -31,6 +31,13 @@ public:
 	QSizeF renderableSize() const {return m_letterbox ? m_screen : m_frame;}
 	virtual int layers() const {return 1;}
 	double scale() const;
+	const QSizeF &frameSize() const {return m_frame;}
+	const QSize &screenSize() const {return m_screen;}
+	OsdRenderer *previous() const {return m_prev;}
+	OsdRenderer *next() const {return m_next;}
+	void chaining(OsdRenderer *osd) {m_next = osd; osd->m_prev = this;}
+	void setWrapper(ScreenOsdWrapper *wrapper) {m_wrapper = wrapper;}
+	ScreenOsdWrapper *wrapper() const {return m_wrapper;}
 public slots:
 	void setStyle(const OsdStyle &style);
 	virtual void clear() = 0;
@@ -46,6 +53,8 @@ private:
 	QSizeF m_frame;
 	QSize m_screen;
 	OsdStyle m_style;
+	OsdRenderer *m_prev{nullptr}, *m_next{nullptr};
+	ScreenOsdWrapper *m_wrapper{nullptr};
 };
 
 #endif // OSDRENDERER_HPP

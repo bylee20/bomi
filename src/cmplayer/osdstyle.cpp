@@ -14,6 +14,8 @@ void OsdStyle::save(Record &r, const QString &group) const {
 	WRITE(has_shadow);
 	WRITE(shadow_blur);
 	WRITE(has_outline);
+	WRITE(size);
+	WRITE(outline_width);
 	r.write("scale", scale.name());
 	WRITE(shadow_offset);
 	WRITE(font);
@@ -32,6 +34,8 @@ void OsdStyle::load(Record &r, const QString &group) {
 	READ(has_shadow);
 	READ(shadow_blur);
 	READ(has_outline);
+	READ(size);
+	READ(outline_width);
 	r.readEnum(scale, "scale");
 	READ(shadow_offset);
 	READ(font);

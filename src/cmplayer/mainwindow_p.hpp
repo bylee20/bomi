@@ -15,7 +15,6 @@
 #include "subtitle_parser.hpp"
 #include "audiocontroller.hpp"
 #include "controlwidget.hpp"
-#include "pref_dialog.hpp"
 #include "recentinfo.hpp"
 #include "abrepeater.hpp"
 #include "mainwindow.hpp"
@@ -36,6 +35,8 @@
 #include <QtCore/QTimer>
 #include <qmath.h>
 #include "skin.hpp"
+
+quint32 HWACCEL_FORMAT = 0;
 
 struct MainWindow::Data {
 	RootMenu &menu = RootMenu::get();
@@ -164,6 +165,7 @@ struct MainWindow::Data {
 	#ifndef Q_WS_MAC
 		tray->setVisible(p.enable_system_tray);
 	#endif
+		HWACCEL_FORMAT = p.enable_hwaccel ? _fToImgFmt(p.hwaccel_format) : 0;
 	}
 private:
 //	ControlWidget *create_control_widget() {

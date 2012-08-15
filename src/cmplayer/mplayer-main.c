@@ -23,6 +23,7 @@
 #include <assert.h>
 
 #include <libavutil/intreadwrite.h>
+#include <libavcodec/avcodec.h>
 
 #include "config.h"
 #include "talloc.h"

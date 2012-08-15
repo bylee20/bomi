@@ -312,9 +312,8 @@ bool PlayEngine::isInitialized() const {
 void PlayEngine::run() {
 	QList<QByteArray> args;
 	args << "cmplayer-mplayer2" << "-nofs" << "-fixed-vo" << "-softvol" << "-softvol-max" << "1000.0"
-	<< "-noautosub" << "-osdlevel" << "0" << "-quiet" << "-idle" << "-identify"// << "-framedrop"
-		<< "-input" << "nodefault-bindings" << "-noconsolecontrols" << "-nomouseinput";
-
+		<< "-noautosub" << "-osdlevel" << "0" << "-quiet" << "-idle" << "-identify"// << "-framedrop"
+		<< "-input" << "nodefault-bindings" << "-noconsolecontrols" << "-nomouseinput" << "-codecs-file" << "/Users/xylosper/dev/cmplayer/src/mplayer2/etc/codecs.conf";
 	const int argc = args.size();
 	PtrDel<char*, PtrArray> argv(new char*[argc]);
 	for (int i=0; i<argc; ++i)
@@ -496,10 +495,14 @@ void PlayEngine::quitRunning() {
 	enqueue(new Cmd(Cmd::Quit));
 }
 
-void PlayEngine::load() {
-	d->initSeek = getStartTime();
+void PlayEngine::play(int time) {
+	d->initSeek = time;
 	d->next_filename = d->mrl.toString().toLocal8Bit();
 	enqueue(new Cmd(Cmd::Load));
+}
+
+void PlayEngine::load() {
+	play(getStartTime());
 }
 
 void PlayEngine::setMrl(const Mrl &mrl, bool play) {
