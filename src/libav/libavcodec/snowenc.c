@@ -1529,7 +1529,7 @@ static void update_last_header_values(SnowContext *s){
 }
 
 static int qscale2qlog(int qscale){
-    return rint(QROOT*log(qscale / (float)FF_QP2LAMBDA)/log(2))
+    return rint(QROOT*log2(qscale / (float)FF_QP2LAMBDA))
            + 61*QROOT/8; ///< 64 > 60
 }
 
@@ -1928,7 +1928,7 @@ static const AVClass snowenc_class = {
 AVCodec ff_snow_encoder = {
     .name           = "snow",
     .type           = AVMEDIA_TYPE_VIDEO,
-    .id             = CODEC_ID_SNOW,
+    .id             = AV_CODEC_ID_SNOW,
     .priv_data_size = sizeof(SnowContext),
     .init           = encode_init,
     .encode2        = encode_frame,

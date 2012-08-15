@@ -49,6 +49,7 @@ static const AVOption options[] = {
     { "min_delta",  "Minimum difference between timestamps and audio data "
                     "(in seconds) to trigger padding/trimmin the data.",        OFFSET(min_delta_sec), AV_OPT_TYPE_FLOAT, { 0.1 }, 0, INT_MAX, A },
     { "max_comp",   "Maximum compensation in samples per second.",              OFFSET(max_comp),      AV_OPT_TYPE_INT,   { 500 }, 0, INT_MAX, A },
+    { "first_pts",  "Assume the first pts should be this value.",               OFFSET(pts),           AV_OPT_TYPE_INT64, { AV_NOPTS_VALUE }, INT64_MIN, INT64_MAX, A },
     { NULL },
 };
 
@@ -72,8 +73,6 @@ static int init(AVFilterContext *ctx, const char *args)
         return ret;
     }
     av_opt_free(s);
-
-    s->pts = AV_NOPTS_VALUE;
 
     return 0;
 }
@@ -187,7 +186,7 @@ static int filter_samples(AVFilterLink *inlink, AVFilterBufferRef *buf)
 
     if (labs(delta) > s->min_delta) {
         av_log(ctx, AV_LOG_VERBOSE, "Discontinuity - %"PRId64" samples.\n", delta);
-        out_size += delta;
+        out_size = av_clipl_int32((int64_t)out_size + delta);
     } else {
         if (s->resample) {
             int comp = av_clip(delta, -s->max_comp, s->max_comp);

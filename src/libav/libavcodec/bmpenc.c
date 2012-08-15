@@ -162,7 +162,7 @@ static int bmp_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
 AVCodec ff_bmp_encoder = {
     .name           = "bmp",
     .type           = AVMEDIA_TYPE_VIDEO,
-    .id             = CODEC_ID_BMP,
+    .id             = AV_CODEC_ID_BMP,
     .priv_data_size = sizeof(BMPContext),
     .init           = bmp_encode_init,
     .encode2        = bmp_encode_frame,
@@ -173,5 +173,5 @@ AVCodec ff_bmp_encoder = {
         PIX_FMT_MONOBLACK,
         PIX_FMT_NONE
     },
-    .long_name      = NULL_IF_CONFIG_SMALL("BMP image"),
+    .long_name      = NULL_IF_CONFIG_SMALL("BMP (Windows and OS/2 bitmap)"),
 };

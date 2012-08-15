@@ -298,8 +298,8 @@ static int tscc2_decode_frame(AVCodecContext *avctx, void *data,
         if (!size) {
             int skip_row = 1, j, off = i * c->mb_width;
             for (j = 0; j < c->mb_width; j++) {
-                if (c->slice_quants[off + i] == 1 ||
-                    c->slice_quants[off + i] == 2) {
+                if (c->slice_quants[off + j] == 1 ||
+                    c->slice_quants[off + j] == 2) {
                     skip_row = 0;
                     break;
                 }
@@ -372,7 +372,7 @@ static av_cold int tscc2_decode_end(AVCodecContext *avctx)
 AVCodec ff_tscc2_decoder = {
     .name           = "tscc2",
     .type           = AVMEDIA_TYPE_VIDEO,
-    .id             = CODEC_ID_TSCC2,
+    .id             = AV_CODEC_ID_TSCC2,
     .priv_data_size = sizeof(TSCC2Context),
     .init           = tscc2_decode_init,
     .close          = tscc2_decode_end,

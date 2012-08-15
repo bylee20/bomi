@@ -205,6 +205,13 @@ adding/dropping samples.
 @item max_comp
 Maximum compensation in samples per second.
 
+@item first_pts
+Assume the first pts should be this value.
+This allows for padding/trimming at the start of stream. By default, no
+assumption is made about the first frame's expected pts, so no padding or
+trimming is done. For example, this could be set to 0 to pad the beginning with
+silence if an audio stream starts after the video stream.
+
 @end table
 
 @section channelsplit
@@ -2170,6 +2177,11 @@ to the pad with identifier "in".
 @section movie
 
 Read a video stream from a movie container.
+
+Note that this source is a hack that bypasses the standard input path. It can be
+useful in applications that do not support arbitrary filter graphs, but its use
+is discouraged in those that do. Specifically in @command{avconv} this filter
+should never be used, the @option{-filter_complex} option fully replaces it.
 
 It accepts the syntax: @var{movie_name}[:@var{options}] where
 @var{movie_name} is the name of the resource to read (not necessarily

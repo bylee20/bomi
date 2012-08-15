@@ -1,7 +1,7 @@
 /*
- * VDA hardware acceleration
- *
- * copyright (c) 2011 Sebastien Zwickert
+ * Flash Compatible Streaming Format
+ * Copyright (c) 2000 Fabrice Bellard
+ * Copyright (c) 2003 Tinic Uro
  *
  * This file is part of Libav.
  *
@@ -20,23 +20,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef AVCODEC_VDA_INTERNAL_H
-#define AVCODEC_VDA_INTERNAL_H
+#include "internal.h"
 
-#include "vda.h"
-
-/**
- * @addtogroup VDA_Decoding
- *
- * @{
- */
-
-/** Send frame data to the hardware decoder. */
-int ff_vda_decoder_decode(struct vda_context *vda_ctx,
-                          uint8_t *bitstream,
-                          int bitstream_size,
-                          int64_t frame_pts);
-
-/* @} */
-
-#endif /* AVCODEC_VDA_INTERNAL_H */
+const AVCodecTag ff_swf_codec_tags[] = {
+    { CODEC_ID_FLV1, 0x02 },
+    { CODEC_ID_VP6F, 0x04 },
+    { CODEC_ID_NONE,    0 },
+};

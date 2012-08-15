@@ -10,8 +10,8 @@ vpath %.texi $(SRC_PATH)
 ifndef V
 Q      = @
 ECHO   = printf "$(1)\t%s\n" $(2)
-BRIEF  = CC AS YASM AR LD HOSTCC
-SILENT = DEPCC YASMDEP RM RANLIB
+BRIEF  = CC HOSTCC AS YASM AR LD
+SILENT = DEPCC DEPHOSTCC DEPAS DEPYASM RANLIB RM
 MSG    = $@
 M      = @$(call ECHO,$(TAG),$@);
 $(foreach VAR,$(BRIEF), \
@@ -25,14 +25,15 @@ ALLFFLIBS = avcodec avdevice avfilter avformat avresample avutil swscale
 IFLAGS     := -I. -I$(SRC_PATH)
 CPPFLAGS   := $(IFLAGS) $(CPPFLAGS)
 CFLAGS     += $(ECFLAGS)
-CCFLAGS     = $(CFLAGS)
-YASMFLAGS  += $(IFLAGS) -I$(SRC_PATH)/libavutil/x86/ -Pconfig.asm
-HOSTCFLAGS += $(IFLAGS)
+CCFLAGS     = $(CPPFLAGS) $(CFLAGS)
+ASFLAGS    := $(CPPFLAGS) $(ASFLAGS)
+YASMFLAGS  += $(IFLAGS:%=%/) -I$(SRC_PATH)/libavutil/x86/ -Pconfig.asm
+HOSTCCFLAGS = $(IFLAGS) $(HOSTCFLAGS)
 LDFLAGS    := $(ALLFFLIBS:%=-Llib%) $(LDFLAGS)
 
 define COMPILE
-	$($(1)DEP)
-	$($(1)) $(CPPFLAGS) $($(1)FLAGS) $($(1)_DEPFLAGS) -c $($(1)_O) $<
+	$(call $(1)DEP,$(1))
+	$($(1)) $($(1)FLAGS) $($(1)_DEPFLAGS) $($(1)_C) $($(1)_O) $<
 endef
 
 COMPILE_C = $(call COMPILE,CC)
@@ -44,8 +45,8 @@ COMPILE_S = $(call COMPILE,AS)
 %.o: %.S
 	$(COMPILE_S)
 
-%.ho: %.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ -x c $<
+%.h.c:
+	$(Q)echo '#include "$*.h"' >$@
 
 %.ver: %.v
 	$(Q)sed 's/$$MAJOR/$($(basename $(@F))_VERSION_MAJOR)/' $^ > $@
@@ -58,7 +59,8 @@ PROGS-$(CONFIG_AVPROBE)  += avprobe
 PROGS-$(CONFIG_AVSERVER) += avserver
 
 PROGS      := $(PROGS-yes:%=%$(EXESUF))
-OBJS        = $(PROGS-yes:%=%.o) cmdutils.o
+OBJS        = cmdutils.o
+OBJS-avconv = avconv_opt.o avconv_filter.o
 TESTTOOLS   = audiogen videogen rotozoom tiny_psnr base64
 HOSTPROGS  := $(TESTTOOLS:%=tests/%) doc/print_options
 TOOLS       = qt-faststart trasher
@@ -101,9 +103,10 @@ config.h: .config
 
 SUBDIR_VARS := CLEANFILES EXAMPLES FFLIBS HOSTPROGS TESTPROGS TOOLS      \
                ARCH_HEADERS BUILT_HEADERS SKIPHEADERS                    \
-               ALTIVEC-OBJS ARMV5TE-OBJS ARMV6-OBJS ARMVFP-OBJS MMI-OBJS \
-               MMX-OBJS NEON-OBJS VIS-OBJS YASM-OBJS                     \
-               OBJS TESTOBJS
+               ARMV5TE-OBJS ARMV6-OBJS ARMVFP-OBJS NEON-OBJS             \
+               MMI-OBJS ALTIVEC-OBJS VIS-OBJS                            \
+               MMX-OBJS YASM-OBJS                                        \
+               OBJS HOSTOBJS TESTOBJS
 
 define RESET
 $(1) :=
@@ -120,12 +123,19 @@ endef
 
 $(foreach D,$(FFLIBS),$(eval $(call DOSUBDIR,lib$(D))))
 
-avplay.o: CFLAGS += $(SDL_CFLAGS)
-avplay$(EXESUF): FF_EXTRALIBS += $(SDL_LIBS)
-avserver$(EXESUF): LDFLAGS += $(AVSERVERLDFLAGS)
+define DOPROG
+OBJS-$(1) += $(1).o
+$(1)$(EXESUF): $(OBJS-$(1))
+$$(OBJS-$(1)): CFLAGS  += $(CFLAGS-$(1))
+$(1)$(EXESUF): LDFLAGS += $(LDFLAGS-$(1))
+$(1)$(EXESUF): FF_EXTRALIBS += $(LIBS-$(1))
+-include $$(OBJS-$(1):.o=.d)
+endef
+
+$(foreach P,$(PROGS-yes),$(eval $(call DOPROG,$(P))))
 
 $(PROGS): %$(EXESUF): %.o cmdutils.o $(FF_DEP_LIBS)
-	$(LD) $(LDFLAGS) -o $@ $< cmdutils.o $(FF_EXTRALIBS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS-$*) cmdutils.o $(FF_EXTRALIBS)
 
 OBJDIRS += tools
 

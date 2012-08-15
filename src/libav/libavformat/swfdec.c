@@ -23,6 +23,15 @@
 #include "libavutil/intreadwrite.h"
 #include "swf.h"
 
+static const AVCodecTag swf_audio_codec_tags[] = {
+    { CODEC_ID_PCM_S16LE,  0x00 },
+    { CODEC_ID_ADPCM_SWF,  0x01 },
+    { CODEC_ID_MP3,        0x02 },
+    { CODEC_ID_PCM_S16LE,  0x03 },
+//  { CODEC_ID_NELLYMOSER, 0x06 },
+    { CODEC_ID_NONE,          0 },
+};
+
 static int get_swf_tag(AVIOContext *pb, int *len_ptr)
 {
     int tag, len;
@@ -111,7 +120,7 @@ static int swf_read_packet(AVFormatContext *s, AVPacket *pkt)
                 return -1;
             vst->id = ch_id;
             vst->codec->codec_type = AVMEDIA_TYPE_VIDEO;
-            vst->codec->codec_id = ff_codec_get_id(swf_codec_tags, avio_r8(pb));
+            vst->codec->codec_id = ff_codec_get_id(ff_swf_codec_tags, avio_r8(pb));
             avpriv_set_pts_info(vst, 16, 256, swf->frame_rate);
             len -= 8;
         } else if (tag == TAG_STREAMHEAD || tag == TAG_STREAMHEAD2) {
@@ -158,7 +167,7 @@ static int swf_read_packet(AVFormatContext *s, AVPacket *pkt)
             for (i = 0; i < s->nb_streams; i++) {
                 st = s->streams[i];
                 if (st->codec->codec_type == AVMEDIA_TYPE_AUDIO && st->id == -1) {
-            if (st->codec->codec_id == CODEC_ID_MP3) {
+            if (st->codec->codec_id == AV_CODEC_ID_MP3) {
                 avio_skip(pb, 4);
                 if ((res = av_get_packet(pb, pkt, len-4)) < 0)
                     return res;
@@ -174,7 +183,7 @@ static int swf_read_packet(AVFormatContext *s, AVPacket *pkt)
         } else if (tag == TAG_JPEG2) {
             for (i=0; i<s->nb_streams; i++) {
                 st = s->streams[i];
-                if (st->codec->codec_id == CODEC_ID_MJPEG && st->id == -2)
+                if (st->codec->codec_id == AV_CODEC_ID_MJPEG && st->id == -2)
                     break;
             }
             if (i == s->nb_streams) {
@@ -183,7 +192,7 @@ static int swf_read_packet(AVFormatContext *s, AVPacket *pkt)
                     return -1;
                 vst->id = -2; /* -2 to avoid clash with video stream and audio stream */
                 vst->codec->codec_type = AVMEDIA_TYPE_VIDEO;
-                vst->codec->codec_id = CODEC_ID_MJPEG;
+                vst->codec->codec_id = AV_CODEC_ID_MJPEG;
                 avpriv_set_pts_info(vst, 64, 256, swf->frame_rate);
                 st = vst;
             }
@@ -211,7 +220,7 @@ static int swf_read_packet(AVFormatContext *s, AVPacket *pkt)
 
 AVInputFormat ff_swf_demuxer = {
     .name           = "swf",
-    .long_name      = NULL_IF_CONFIG_SMALL("Flash format"),
+    .long_name      = NULL_IF_CONFIG_SMALL("SWF (ShockWave Flash)"),
     .priv_data_size = sizeof(SWFContext),
     .read_probe     = swf_probe,
     .read_header    = swf_read_header,

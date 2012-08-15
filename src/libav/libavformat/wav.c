@@ -207,12 +207,12 @@ static const AVClass wav_muxer_class = {
 
 AVOutputFormat ff_wav_muxer = {
     .name              = "wav",
-    .long_name         = NULL_IF_CONFIG_SMALL("WAV format"),
+    .long_name         = NULL_IF_CONFIG_SMALL("WAV / WAVE (Waveform Audio)"),
     .mime_type         = "audio/x-wav",
     .extensions        = "wav",
     .priv_data_size    = sizeof(WAVContext),
-    .audio_codec       = CODEC_ID_PCM_S16LE,
-    .video_codec       = CODEC_ID_NONE,
+    .audio_codec       = AV_CODEC_ID_PCM_S16LE,
+    .video_codec       = AV_CODEC_ID_NONE,
     .write_header      = wav_write_header,
     .write_packet      = wav_write_packet,
     .write_trailer     = wav_write_trailer,
@@ -574,10 +574,10 @@ static int wav_read_seek(AVFormatContext *s,
 
     st = s->streams[0];
     switch (st->codec->codec_id) {
-    case CODEC_ID_MP2:
-    case CODEC_ID_MP3:
-    case CODEC_ID_AC3:
-    case CODEC_ID_DTS:
+    case AV_CODEC_ID_MP2:
+    case AV_CODEC_ID_MP3:
+    case AV_CODEC_ID_AC3:
+    case AV_CODEC_ID_DTS:
         /* use generic seeking with dynamically generated indexes */
         return -1;
     default:
@@ -588,7 +588,7 @@ static int wav_read_seek(AVFormatContext *s,
 
 AVInputFormat ff_wav_demuxer = {
     .name           = "wav",
-    .long_name      = NULL_IF_CONFIG_SMALL("WAV format"),
+    .long_name      = NULL_IF_CONFIG_SMALL("WAV / WAVE (Waveform Audio)"),
     .priv_data_size = sizeof(WAVContext),
     .read_probe     = wav_probe,
     .read_header    = wav_read_header,
@@ -676,7 +676,7 @@ static int w64_read_header(AVFormatContext *s)
 
 AVInputFormat ff_w64_demuxer = {
     .name           = "w64",
-    .long_name      = NULL_IF_CONFIG_SMALL("Sony Wave64 format"),
+    .long_name      = NULL_IF_CONFIG_SMALL("Sony Wave64"),
     .priv_data_size = sizeof(WAVContext),
     .read_probe     = w64_probe,
     .read_header    = w64_read_header,

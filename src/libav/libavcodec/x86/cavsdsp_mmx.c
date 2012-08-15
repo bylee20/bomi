@@ -24,7 +24,7 @@
 
 #include "libavutil/common.h"
 #include "libavutil/cpu.h"
-#include "libavutil/x86_cpu.h"
+#include "libavutil/x86/asm.h"
 #include "libavcodec/dsputil.h"
 #include "libavcodec/cavsdsp.h"
 #include "dsputil_mmx.h"
@@ -486,7 +486,7 @@ void ff_cavsdsp_init_mmx(CAVSDSPContext *c, AVCodecContext *avctx)
     int mm_flags = av_get_cpu_flags();
 
 #if HAVE_INLINE_ASM
-    if (mm_flags & AV_CPU_FLAG_MMX2)  ff_cavsdsp_init_mmx2 (c, avctx);
+    if (mm_flags & AV_CPU_FLAG_MMXEXT) ff_cavsdsp_init_mmx2(c, avctx);
     if (mm_flags & AV_CPU_FLAG_3DNOW) ff_cavsdsp_init_3dnow(c, avctx);
 #endif /* HAVE_INLINE_ASM */
 }

@@ -33,6 +33,8 @@ typedef struct AACContext {
     int afterburner;
     int eld_sbr;
     int signaling;
+    int latm;
+    int header_period;
 
     AudioFrameQueue afq;
 } AACContext;
@@ -45,6 +47,8 @@ static const AVOption aac_enc_options[] = {
     { "implicit", "Implicit backwards compatible signaling", 0, AV_OPT_TYPE_CONST, { 0 }, 0, 0, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM, "signaling" },
     { "explicit_sbr", "Explicit SBR, implicit PS signaling", 0, AV_OPT_TYPE_CONST, { 1 }, 0, 0, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM, "signaling" },
     { "explicit_hierarchical", "Explicit hierarchical signaling", 0, AV_OPT_TYPE_CONST, { 2 }, 0, 0, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM, "signaling" },
+    { "latm", "Output LATM/LOAS encapsulated data", offsetof(AACContext, latm), AV_OPT_TYPE_INT, { 0 }, 0, 1, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM },
+    { "header_period", "StreamMuxConfig and PCE repetition period (in frames)", offsetof(AACContext, header_period), AV_OPT_TYPE_INT, { 0 }, 0, 0xffff, AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_ENCODING_PARAM },
     { NULL }
 };
 
@@ -204,10 +208,19 @@ static av_cold int aac_encode_init(AVCodecContext *avctx)
     /* Choose bitstream format - if global header is requested, use
      * raw access units, otherwise use ADTS. */
     if ((err = aacEncoder_SetParam(s->handle, AACENC_TRANSMUX,
-                                   avctx->flags & CODEC_FLAG_GLOBAL_HEADER ? 0 : 2)) != AACENC_OK) {
+                                   avctx->flags & CODEC_FLAG_GLOBAL_HEADER ? 0 : s->latm ? 10 : 2)) != AACENC_OK) {
         av_log(avctx, AV_LOG_ERROR, "Unable to set the transmux format: %s\n",
                aac_get_error(err));
         goto error;
+    }
+
+    if (s->latm && s->header_period) {
+        if ((err = aacEncoder_SetParam(s->handle, AACENC_HEADER_PERIOD,
+                                       s->header_period)) != AACENC_OK) {
+             av_log(avctx, AV_LOG_ERROR, "Unable to set header period: %s\n",
+                    aac_get_error(err));
+             goto error;
+        }
     }
 
     /* If no signaling mode is chosen, use explicit hierarchical signaling
@@ -382,7 +395,7 @@ static const uint64_t aac_channel_layout[] = {
 AVCodec ff_libfdk_aac_encoder = {
     .name            = "libfdk_aac",
     .type            = AVMEDIA_TYPE_AUDIO,
-    .id              = CODEC_ID_AAC,
+    .id              = AV_CODEC_ID_AAC,
     .priv_data_size  = sizeof(AACContext),
     .init            = aac_encode_init,
     .encode2         = aac_encode_frame,

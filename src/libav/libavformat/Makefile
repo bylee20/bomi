@@ -47,7 +47,7 @@ OBJS-$(CONFIG_AU_MUXER)                  += au.o
 OBJS-$(CONFIG_AVI_DEMUXER)               += avidec.o
 OBJS-$(CONFIG_AVI_MUXER)                 += avienc.o
 OBJS-$(CONFIG_AVISYNTH)                  += avisynth.o
-OBJS-$(CONFIG_AVM2_MUXER)                += swfenc.o
+OBJS-$(CONFIG_AVM2_MUXER)                += swfenc.o swf.o
 OBJS-$(CONFIG_AVS_DEMUXER)               += avs.o vocdec.o voc.o
 OBJS-$(CONFIG_BETHSOFTVID_DEMUXER)       += bethsoftvid.o
 OBJS-$(CONFIG_BFI_DEMUXER)               += bfi.o
@@ -277,9 +277,10 @@ OBJS-$(CONFIG_RTPDEC)                    += rdt.o         \
                                             rtpdec_svq3.o \
                                             rtpdec_vp8.o  \
                                             rtpdec_xiph.o
-OBJS-$(CONFIG_RTSP_DEMUXER)              += rtsp.o rtspdec.o httpauth.o
+OBJS-$(CONFIG_RTSP_DEMUXER)              += rtsp.o rtspdec.o httpauth.o \
+                                            urldecode.o
 OBJS-$(CONFIG_RTSP_MUXER)                += rtsp.o rtspenc.o httpauth.o \
-                                            rtpenc_chain.o
+                                            rtpenc_chain.o urldecode.o
 OBJS-$(CONFIG_SAP_DEMUXER)               += sapdec.o
 OBJS-$(CONFIG_SAP_MUXER)                 += sapenc.o rtpenc_chain.o
 OBJS-$(CONFIG_SDP_DEMUXER)               += rtsp.o
@@ -298,8 +299,8 @@ OBJS-$(CONFIG_SPDIF_MUXER)               += spdif.o spdifenc.o
 OBJS-$(CONFIG_SRT_DEMUXER)               += srtdec.o
 OBJS-$(CONFIG_SRT_MUXER)                 += rawenc.o
 OBJS-$(CONFIG_STR_DEMUXER)               += psxstr.o
-OBJS-$(CONFIG_SWF_DEMUXER)               += swfdec.o
-OBJS-$(CONFIG_SWF_MUXER)                 += swfenc.o
+OBJS-$(CONFIG_SWF_DEMUXER)               += swfdec.o swf.o
+OBJS-$(CONFIG_SWF_MUXER)                 += swfenc.o swf.o
 OBJS-$(CONFIG_THP_DEMUXER)               += thp.o
 OBJS-$(CONFIG_TIERTEXSEQ_DEMUXER)        += tiertexseq.o
 OBJS-$(CONFIG_TMV_DEMUXER)               += tmv.o
@@ -346,9 +347,9 @@ OBJS-$(CONFIG_FFRTMPHTTP_PROTOCOL)       += rtmphttp.o
 OBJS-$(CONFIG_FILE_PROTOCOL)             += file.o
 OBJS-$(CONFIG_GOPHER_PROTOCOL)           += gopher.o
 OBJS-$(CONFIG_HLS_PROTOCOL)              += hlsproto.o
-OBJS-$(CONFIG_HTTP_PROTOCOL)             += http.o httpauth.o
-OBJS-$(CONFIG_HTTPPROXY_PROTOCOL)        += http.o httpauth.o
-OBJS-$(CONFIG_HTTPS_PROTOCOL)            += http.o httpauth.o
+OBJS-$(CONFIG_HTTP_PROTOCOL)             += http.o httpauth.o urldecode.o
+OBJS-$(CONFIG_HTTPPROXY_PROTOCOL)        += http.o httpauth.o urldecode.o
+OBJS-$(CONFIG_HTTPS_PROTOCOL)            += http.o httpauth.o urldecode.o
 OBJS-$(CONFIG_MMSH_PROTOCOL)             += mmsh.o mms.o asf.o
 OBJS-$(CONFIG_MMST_PROTOCOL)             += mmst.o mms.o asf.o
 OBJS-$(CONFIG_MD5_PROTOCOL)              += md5proto.o

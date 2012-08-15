@@ -335,6 +335,11 @@ static av_cold int decode_init(AVCodecContext *avctx)
         return AVERROR_INVALIDDATA;
     }
 
+    if (s->avctx->sample_rate <= 0) {
+        av_log(avctx, AV_LOG_ERROR, "invalid sample rate\n");
+        return AVERROR_INVALIDDATA;
+    }
+
     s->num_channels = avctx->channels;
 
     if (s->num_channels < 0) {
@@ -1618,7 +1623,7 @@ static void flush(AVCodecContext *avctx)
 AVCodec ff_wmapro_decoder = {
     .name           = "wmapro",
     .type           = AVMEDIA_TYPE_AUDIO,
-    .id             = CODEC_ID_WMAPRO,
+    .id             = AV_CODEC_ID_WMAPRO,
     .priv_data_size = sizeof(WMAProDecodeCtx),
     .init           = decode_init,
     .close          = decode_end,

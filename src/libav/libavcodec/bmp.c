@@ -364,11 +364,11 @@ static av_cold int bmp_decode_end(AVCodecContext *avctx)
 AVCodec ff_bmp_decoder = {
     .name           = "bmp",
     .type           = AVMEDIA_TYPE_VIDEO,
-    .id             = CODEC_ID_BMP,
+    .id             = AV_CODEC_ID_BMP,
     .priv_data_size = sizeof(BMPContext),
     .init           = bmp_decode_init,
     .close          = bmp_decode_end,
     .decode         = bmp_decode_frame,
     .capabilities   = CODEC_CAP_DR1,
-    .long_name      = NULL_IF_CONFIG_SMALL("BMP image"),
+    .long_name      = NULL_IF_CONFIG_SMALL("BMP (Windows and OS/2 bitmap)"),
 };

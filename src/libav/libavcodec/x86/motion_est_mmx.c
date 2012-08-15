@@ -22,9 +22,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "libavutil/x86_cpu.h"
+#include "libavutil/x86/asm.h"
 #include "libavcodec/dsputil.h"
 #include "dsputil_mmx.h"
+
+#if HAVE_INLINE_ASM
 
 DECLARE_ASM_CONST(8, uint64_t, round_tab)[3]={
 0x0000000000000000ULL,
@@ -422,8 +424,11 @@ static int sad16_xy2_ ## suf(void *v, uint8_t *blk2, uint8_t *blk1, int stride, 
 PIX_SAD(mmx)
 PIX_SAD(mmx2)
 
+#endif /* HAVE_INLINE_ASM */
+
 void ff_dsputil_init_pix_mmx(DSPContext* c, AVCodecContext *avctx)
 {
+#if HAVE_INLINE_ASM
     int mm_flags = av_get_cpu_flags();
 
     if (mm_flags & AV_CPU_FLAG_MMX) {
@@ -439,7 +444,7 @@ void ff_dsputil_init_pix_mmx(DSPContext* c, AVCodecContext *avctx)
         c->sad[0]= sad16_mmx;
         c->sad[1]= sad8_mmx;
     }
-    if (mm_flags & AV_CPU_FLAG_MMX2) {
+    if (mm_flags & AV_CPU_FLAG_MMXEXT) {
         c->pix_abs[0][0] = sad16_mmx2;
         c->pix_abs[1][0] = sad8_mmx2;
 
@@ -455,7 +460,8 @@ void ff_dsputil_init_pix_mmx(DSPContext* c, AVCodecContext *avctx)
             c->pix_abs[1][3] = sad8_xy2_mmx2;
         }
     }
-    if ((mm_flags & AV_CPU_FLAG_SSE2) && !(mm_flags & AV_CPU_FLAG_3DNOW) && avctx->codec_id != CODEC_ID_SNOW) {
+    if ((mm_flags & AV_CPU_FLAG_SSE2) && !(mm_flags & AV_CPU_FLAG_3DNOW) && avctx->codec_id != AV_CODEC_ID_SNOW) {
         c->sad[0]= sad16_sse2;
     }
+#endif /* HAVE_INLINE_ASM */
 }

@@ -162,7 +162,7 @@ static int mp3_read_header(AVFormatContext *s)
         return AVERROR(ENOMEM);
 
     st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
-    st->codec->codec_id = CODEC_ID_MP3;
+    st->codec->codec_id = AV_CODEC_ID_MP3;
     st->need_parsing = AVSTREAM_PARSE_FULL;
     st->start_time = 0;
 
@@ -185,17 +185,13 @@ static int mp3_read_header(AVFormatContext *s)
 
 static int mp3_read_packet(AVFormatContext *s, AVPacket *pkt)
 {
-    int ret, size;
-    //    AVStream *st = s->streams[0];
+    int ret;
 
-    size= MP3_PACKET_SIZE;
-
-    ret= av_get_packet(s->pb, pkt, size);
+    ret = av_get_packet(s->pb, pkt, MP3_PACKET_SIZE);
+    if (ret < 0)
+        return ret;
 
     pkt->stream_index = 0;
-    if (ret <= 0) {
-        return AVERROR(EIO);
-    }
 
     if (ret > ID3v1_TAG_SIZE &&
         memcmp(&pkt->data[ret - ID3v1_TAG_SIZE], "TAG", 3) == 0)
@@ -209,7 +205,7 @@ static int mp3_read_packet(AVFormatContext *s, AVPacket *pkt)
 
 AVInputFormat ff_mp3_demuxer = {
     .name           = "mp3",
-    .long_name      = NULL_IF_CONFIG_SMALL("MPEG audio layer 2/3"),
+    .long_name      = NULL_IF_CONFIG_SMALL("MP2/3 (MPEG audio layer 2/3)"),
     .read_probe     = mp3_read_probe,
     .read_header    = mp3_read_header,
     .read_packet    = mp3_read_packet,

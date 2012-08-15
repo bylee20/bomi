@@ -49,9 +49,10 @@ static const int mpc8_rate[8] = { 44100, 48000, 37800, 32000, -1, -1, -1, -1 };
 
 typedef struct {
     int ver;
-    int frame;
     int64_t header_pos;
     int64_t samples;
+
+    int64_t apetag_start;
 } MPCContext;
 
 static inline int64_t bs_get_v(uint8_t **bs)
@@ -200,7 +201,7 @@ static int mpc8_read_header(AVFormatContext *s)
     c->header_pos = avio_tell(pb);
     if(avio_rl32(pb) != TAG_MPCK){
         av_log(s, AV_LOG_ERROR, "Not a Musepack8 file\n");
-        return -1;
+        return AVERROR_INVALIDDATA;
     }
 
     while(!pb->eof_reached){
@@ -212,14 +213,14 @@ static int mpc8_read_header(AVFormatContext *s)
     }
     if(tag != TAG_STREAMHDR){
         av_log(s, AV_LOG_ERROR, "Stream header not found\n");
-        return -1;
+        return AVERROR_INVALIDDATA;
     }
     pos = avio_tell(pb);
     avio_skip(pb, 4); //CRC
     c->ver = avio_r8(pb);
     if(c->ver != 8){
         av_log(s, AV_LOG_ERROR, "Unknown stream version %d\n", c->ver);
-        return -1;
+        return AVERROR_PATCHWELCOME;
     }
     c->samples = ffio_read_varlen(pb);
     ffio_read_varlen(pb); //silence samples at the beginning
@@ -228,7 +229,7 @@ static int mpc8_read_header(AVFormatContext *s)
     if (!st)
         return AVERROR(ENOMEM);
     st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
-    st->codec->codec_id = CODEC_ID_MUSEPACK8;
+    st->codec->codec_id = AV_CODEC_ID_MUSEPACK8;
     st->codec->bits_per_coded_sample = 16;
 
     st->codec->extradata_size = 2;
@@ -238,12 +239,13 @@ static int mpc8_read_header(AVFormatContext *s)
     st->codec->channels = (st->codec->extradata[1] >> 4) + 1;
     st->codec->sample_rate = mpc8_rate[st->codec->extradata[0] >> 5];
     avpriv_set_pts_info(st, 32, 1152  << (st->codec->extradata[1]&3)*2, st->codec->sample_rate);
+    st->start_time = 0;
     st->duration = c->samples / (1152 << (st->codec->extradata[1]&3)*2);
     size -= avio_tell(pb) - pos;
 
     if (pb->seekable) {
         int64_t pos = avio_tell(s->pb);
-        ff_ape_parse_tag(s);
+        c->apetag_start = ff_ape_parse_tag(s);
         avio_seek(s->pb, pos, SEEK_SET);
     }
 
@@ -258,6 +260,11 @@ static int mpc8_read_packet(AVFormatContext *s, AVPacket *pkt)
 
     while(!s->pb->eof_reached){
         pos = avio_tell(s->pb);
+
+        /* don't return bogus packets with the ape tag data */
+        if (c->apetag_start && pos >= c->apetag_start)
+            return AVERROR_EOF;
+
         mpc8_get_chunk_header(s->pb, &tag, &size);
         if (size < 0)
             return -1;
@@ -265,7 +272,7 @@ static int mpc8_read_packet(AVFormatContext *s, AVPacket *pkt)
             if(av_get_packet(s->pb, pkt, size) < 0)
                 return AVERROR(ENOMEM);
             pkt->stream_index = 0;
-            pkt->pts = c->frame;
+            pkt->duration     = 1;
             return 0;
         }
         if(tag == TAG_STREAMEND)
@@ -278,13 +285,12 @@ static int mpc8_read_packet(AVFormatContext *s, AVPacket *pkt)
 static int mpc8_read_seek(AVFormatContext *s, int stream_index, int64_t timestamp, int flags)
 {
     AVStream *st = s->streams[stream_index];
-    MPCContext *c = s->priv_data;
     int index = av_index_search_timestamp(st, timestamp, flags);
 
     if(index < 0) return -1;
     if (avio_seek(s->pb, st->index_entries[index].pos, SEEK_SET) < 0)
         return -1;
-    c->frame = st->index_entries[index].timestamp;
+    ff_update_cur_dts(s, st, st->index_entries[index].timestamp);
     return 0;
 }
 

@@ -819,7 +819,7 @@ static const AVClass aacenc_class = {
 AVCodec ff_aac_encoder = {
     .name           = "aac",
     .type           = AVMEDIA_TYPE_AUDIO,
-    .id             = CODEC_ID_AAC,
+    .id             = AV_CODEC_ID_AAC,
     .priv_data_size = sizeof(AACEncContext),
     .init           = aac_encode_init,
     .encode2        = aac_encode_frame,
@@ -828,6 +828,6 @@ AVCodec ff_aac_encoder = {
                       CODEC_CAP_EXPERIMENTAL,
     .sample_fmts    = (const enum AVSampleFormat[]){ AV_SAMPLE_FMT_FLT,
                                                      AV_SAMPLE_FMT_NONE },
-    .long_name      = NULL_IF_CONFIG_SMALL("Advanced Audio Coding"),
+    .long_name      = NULL_IF_CONFIG_SMALL("AAC (Advanced Audio Coding)"),
     .priv_class     = &aacenc_class,
 };

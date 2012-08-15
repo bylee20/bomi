@@ -365,7 +365,7 @@ static void push_output_configuration(AACContext *ac) {
  * configuration is unlocked.
  */
 static void pop_output_configuration(AACContext *ac) {
-    if (ac->oc[1].status != OC_LOCKED) {
+    if (ac->oc[1].status != OC_LOCKED && ac->oc[0].status != OC_NONE) {
         ac->oc[1] = ac->oc[0];
         ac->avctx->channels = ac->oc[1].channels;
         ac->avctx->channel_layout = ac->oc[1].channel_layout;
@@ -2841,7 +2841,7 @@ static av_cold int latm_decode_init(AVCodecContext *avctx)
 AVCodec ff_aac_decoder = {
     .name            = "aac",
     .type            = AVMEDIA_TYPE_AUDIO,
-    .id              = CODEC_ID_AAC,
+    .id              = AV_CODEC_ID_AAC,
     .priv_data_size  = sizeof(AACContext),
     .init            = aac_decode_init,
     .close           = aac_decode_close,
@@ -2862,12 +2862,12 @@ AVCodec ff_aac_decoder = {
 AVCodec ff_aac_latm_decoder = {
     .name            = "aac_latm",
     .type            = AVMEDIA_TYPE_AUDIO,
-    .id              = CODEC_ID_AAC_LATM,
+    .id              = AV_CODEC_ID_AAC_LATM,
     .priv_data_size  = sizeof(struct LATMContext),
     .init            = latm_decode_init,
     .close           = aac_decode_close,
     .decode          = latm_decode_frame,
-    .long_name       = NULL_IF_CONFIG_SMALL("AAC LATM (Advanced Audio Codec LATM syntax)"),
+    .long_name       = NULL_IF_CONFIG_SMALL("AAC LATM (Advanced Audio Coding LATM syntax)"),
     .sample_fmts     = (const enum AVSampleFormat[]) {
         AV_SAMPLE_FMT_FLT, AV_SAMPLE_FMT_S16, AV_SAMPLE_FMT_NONE
     },

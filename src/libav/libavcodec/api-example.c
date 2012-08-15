@@ -37,12 +37,67 @@
 #endif
 
 #include "libavcodec/avcodec.h"
+#include "libavutil/audioconvert.h"
+#include "libavutil/imgutils.h"
 #include "libavutil/mathematics.h"
 #include "libavutil/samplefmt.h"
 
 #define INBUF_SIZE 4096
 #define AUDIO_INBUF_SIZE 20480
 #define AUDIO_REFILL_THRESH 4096
+
+/* check that a given sample format is supported by the encoder */
+static int check_sample_fmt(AVCodec *codec, enum AVSampleFormat sample_fmt)
+{
+    const enum AVSampleFormat *p = codec->sample_fmts;
+
+    while (*p != AV_SAMPLE_FMT_NONE) {
+        if (*p == sample_fmt)
+            return 1;
+        p++;
+    }
+    return 0;
+}
+
+/* just pick the highest supported samplerate */
+static int select_sample_rate(AVCodec *codec)
+{
+    const int *p;
+    int best_samplerate = 0;
+
+    if (!codec->supported_samplerates)
+        return 44100;
+
+    p = codec->supported_samplerates;
+    while (*p) {
+        best_samplerate = FFMAX(*p, best_samplerate);
+        p++;
+    }
+    return best_samplerate;
+}
+
+/* select layout with the highest channel count */
+static int select_channel_layout(AVCodec *codec)
+{
+    const uint64_t *p;
+    uint64_t best_ch_layout = 0;
+    int best_nb_channells   = 0;
+
+    if (!codec->channel_layouts)
+        return AV_CH_LAYOUT_STEREO;
+
+    p = codec->channel_layouts;
+    while (*p) {
+        int nb_channels = av_get_channel_layout_nb_channels(*p);
+
+        if (nb_channels > best_nb_channells) {
+            best_ch_layout    = *p;
+            best_nb_channells = nb_channels;
+        }
+        p++;
+    }
+    return best_ch_layout;
+}
 
 /*
  * Audio encoding example
@@ -51,16 +106,18 @@ static void audio_encode_example(const char *filename)
 {
     AVCodec *codec;
     AVCodecContext *c= NULL;
-    int frame_size, i, j, out_size, outbuf_size;
+    AVFrame *frame;
+    AVPacket pkt;
+    int i, j, k, ret, got_output;
+    int buffer_size;
     FILE *f;
-    short *samples;
+    uint16_t *samples;
     float t, tincr;
-    uint8_t *outbuf;
 
     printf("Audio encoding\n");
 
     /* find the MP2 encoder */
-    codec = avcodec_find_encoder(CODEC_ID_MP2);
+    codec = avcodec_find_encoder(AV_CODEC_ID_MP2);
     if (!codec) {
         fprintf(stderr, "codec not found\n");
         exit(1);
@@ -70,8 +127,19 @@ static void audio_encode_example(const char *filename)
 
     /* put sample parameters */
     c->bit_rate = 64000;
-    c->sample_rate = 44100;
-    c->channels = 2;
+
+    /* check that the encoder supports s16 pcm input */
+    c->sample_fmt = AV_SAMPLE_FMT_S16;
+    if (!check_sample_fmt(codec, c->sample_fmt)) {
+        fprintf(stderr, "encoder does not support %s",
+                av_get_sample_fmt_name(c->sample_fmt));
+        exit(1);
+    }
+
+    /* select other audio parameters supported by the encoder */
+    c->sample_rate    = select_sample_rate(codec);
+    c->channel_layout = select_channel_layout(codec);
+    c->channels       = av_get_channel_layout_nb_channels(c->channel_layout);
 
     /* open it */
     if (avcodec_open2(c, codec, NULL) < 0) {
@@ -79,15 +147,38 @@ static void audio_encode_example(const char *filename)
         exit(1);
     }
 
-    /* the codec gives us the frame size, in samples */
-    frame_size = c->frame_size;
-    samples = malloc(frame_size * 2 * c->channels);
-    outbuf_size = 10000;
-    outbuf = malloc(outbuf_size);
-
     f = fopen(filename, "wb");
     if (!f) {
         fprintf(stderr, "could not open %s\n", filename);
+        exit(1);
+    }
+
+    /* frame containing input raw audio */
+    frame = avcodec_alloc_frame();
+    if (!frame) {
+        fprintf(stderr, "could not allocate audio frame\n");
+        exit(1);
+    }
+
+    frame->nb_samples     = c->frame_size;
+    frame->format         = c->sample_fmt;
+    frame->channel_layout = c->channel_layout;
+
+    /* the codec gives us the frame size, in samples,
+     * we calculate the size of the samples buffer in bytes */
+    buffer_size = av_samples_get_buffer_size(NULL, c->channels, c->frame_size,
+                                             c->sample_fmt, 0);
+    samples = av_malloc(buffer_size);
+    if (!samples) {
+        fprintf(stderr, "could not allocate %d bytes for samples buffer\n",
+                buffer_size);
+        exit(1);
+    }
+    /* setup the data pointers in the AVFrame */
+    ret = avcodec_fill_audio_frame(frame, c->channels, c->sample_fmt,
+                                   (const uint8_t*)samples, buffer_size, 0);
+    if (ret < 0) {
+        fprintf(stderr, "could not setup audio frame\n");
         exit(1);
     }
 
@@ -95,19 +186,32 @@ static void audio_encode_example(const char *filename)
     t = 0;
     tincr = 2 * M_PI * 440.0 / c->sample_rate;
     for(i=0;i<200;i++) {
-        for(j=0;j<frame_size;j++) {
+        av_init_packet(&pkt);
+        pkt.data = NULL; // packet data will be allocated by the encoder
+        pkt.size = 0;
+
+        for (j = 0; j < c->frame_size; j++) {
             samples[2*j] = (int)(sin(t) * 10000);
-            samples[2*j+1] = samples[2*j];
+
+            for (k = 1; k < c->channels; k++)
+                samples[2*j + k] = samples[2*j];
             t += tincr;
         }
         /* encode the samples */
-        out_size = avcodec_encode_audio(c, outbuf, outbuf_size, samples);
-        fwrite(outbuf, 1, out_size, f);
+        ret = avcodec_encode_audio2(c, &pkt, frame, &got_output);
+        if (ret < 0) {
+            fprintf(stderr, "error encoding audio frame\n");
+            exit(1);
+        }
+        if (got_output) {
+            fwrite(pkt.data, 1, pkt.size, f);
+            av_free_packet(&pkt);
+        }
     }
     fclose(f);
-    free(outbuf);
-    free(samples);
 
+    av_freep(&samples);
+    av_freep(&frame);
     avcodec_close(c);
     av_free(c);
 }
@@ -130,7 +234,7 @@ static void audio_decode_example(const char *outfilename, const char *filename)
     printf("Audio decoding\n");
 
     /* find the mpeg audio decoder */
-    codec = avcodec_find_decoder(CODEC_ID_MP2);
+    codec = avcodec_find_decoder(AV_CODEC_ID_MP2);
     if (!codec) {
         fprintf(stderr, "codec not found\n");
         exit(1);
@@ -213,15 +317,16 @@ static void video_encode_example(const char *filename)
 {
     AVCodec *codec;
     AVCodecContext *c= NULL;
-    int i, out_size, size, x, y, outbuf_size;
+    int i, ret, x, y, got_output;
     FILE *f;
     AVFrame *picture;
-    uint8_t *outbuf, *picture_buf;
+    AVPacket pkt;
+    uint8_t endcode[] = { 0, 0, 1, 0xb7 };
 
     printf("Video encoding\n");
 
     /* find the mpeg1 video encoder */
-    codec = avcodec_find_encoder(CODEC_ID_MPEG1VIDEO);
+    codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
     if (!codec) {
         fprintf(stderr, "codec not found\n");
         exit(1);
@@ -253,21 +358,22 @@ static void video_encode_example(const char *filename)
         exit(1);
     }
 
-    /* alloc image and output buffer */
-    outbuf_size = 100000;
-    outbuf = malloc(outbuf_size);
-    size = c->width * c->height;
-    picture_buf = malloc((size * 3) / 2); /* size for YUV 420 */
-
-    picture->data[0] = picture_buf;
-    picture->data[1] = picture->data[0] + size;
-    picture->data[2] = picture->data[1] + size / 4;
-    picture->linesize[0] = c->width;
-    picture->linesize[1] = c->width / 2;
-    picture->linesize[2] = c->width / 2;
+    ret = av_image_alloc(picture->data, picture->linesize, c->width, c->height,
+                         c->pix_fmt, 32);
+    if (ret < 0) {
+        fprintf(stderr, "could not alloc raw picture buffer\n");
+        exit(1);
+    }
+    picture->format = c->pix_fmt;
+    picture->width  = c->width;
+    picture->height = c->height;
 
     /* encode 1 second of video */
     for(i=0;i<25;i++) {
+        av_init_packet(&pkt);
+        pkt.data = NULL;    // packet data will be allocated by the encoder
+        pkt.size = 0;
+
         fflush(stdout);
         /* prepare a dummy image */
         /* Y */
@@ -285,33 +391,46 @@ static void video_encode_example(const char *filename)
             }
         }
 
+        picture->pts = i;
+
         /* encode the image */
-        out_size = avcodec_encode_video(c, outbuf, outbuf_size, picture);
-        printf("encoding frame %3d (size=%5d)\n", i, out_size);
-        fwrite(outbuf, 1, out_size, f);
+        ret = avcodec_encode_video2(c, &pkt, picture, &got_output);
+        if (ret < 0) {
+            fprintf(stderr, "error encoding frame\n");
+            exit(1);
+        }
+
+        if (got_output) {
+            printf("encoding frame %3d (size=%5d)\n", i, pkt.size);
+            fwrite(pkt.data, 1, pkt.size, f);
+            av_free_packet(&pkt);
+        }
     }
 
     /* get the delayed frames */
-    for(; out_size; i++) {
+    for (got_output = 1; got_output; i++) {
         fflush(stdout);
 
-        out_size = avcodec_encode_video(c, outbuf, outbuf_size, NULL);
-        printf("write frame %3d (size=%5d)\n", i, out_size);
-        fwrite(outbuf, 1, out_size, f);
+        ret = avcodec_encode_video2(c, &pkt, NULL, &got_output);
+        if (ret < 0) {
+            fprintf(stderr, "error encoding frame\n");
+            exit(1);
+        }
+
+        if (got_output) {
+            printf("encoding frame %3d (size=%5d)\n", i, pkt.size);
+            fwrite(pkt.data, 1, pkt.size, f);
+            av_free_packet(&pkt);
+        }
     }
 
     /* add sequence end code to have a real mpeg file */
-    outbuf[0] = 0x00;
-    outbuf[1] = 0x00;
-    outbuf[2] = 0x01;
-    outbuf[3] = 0xb7;
-    fwrite(outbuf, 1, 4, f);
+    fwrite(endcode, 1, sizeof(endcode), f);
     fclose(f);
-    free(picture_buf);
-    free(outbuf);
 
     avcodec_close(c);
     av_free(c);
+    av_freep(&picture->data[0]);
     av_free(picture);
     printf("\n");
 }
@@ -352,7 +471,7 @@ static void video_decode_example(const char *outfilename, const char *filename)
     printf("Video decoding\n");
 
     /* find the mpeg1 video decoder */
-    codec = avcodec_find_decoder(CODEC_ID_MPEG1VIDEO);
+    codec = avcodec_find_decoder(AV_CODEC_ID_MPEG1VIDEO);
     if (!codec) {
         fprintf(stderr, "codec not found\n");
         exit(1);

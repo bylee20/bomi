@@ -249,12 +249,13 @@ static void get_quants(VP8Context *s)
         } else
             base_qi = yac_qi;
 
-        s->qmat[i].luma_qmul[0]    =       vp8_dc_qlookup[av_clip_uintp2(base_qi + ydc_delta , 7)];
-        s->qmat[i].luma_qmul[1]    =       vp8_ac_qlookup[av_clip_uintp2(base_qi             , 7)];
-        s->qmat[i].luma_dc_qmul[0] =   2 * vp8_dc_qlookup[av_clip_uintp2(base_qi + y2dc_delta, 7)];
-        s->qmat[i].luma_dc_qmul[1] = 155 * vp8_ac_qlookup[av_clip_uintp2(base_qi + y2ac_delta, 7)] / 100;
-        s->qmat[i].chroma_qmul[0]  =       vp8_dc_qlookup[av_clip_uintp2(base_qi + uvdc_delta, 7)];
-        s->qmat[i].chroma_qmul[1]  =       vp8_ac_qlookup[av_clip_uintp2(base_qi + uvac_delta, 7)];
+        s->qmat[i].luma_qmul[0]    =           vp8_dc_qlookup[av_clip_uintp2(base_qi + ydc_delta , 7)];
+        s->qmat[i].luma_qmul[1]    =           vp8_ac_qlookup[av_clip_uintp2(base_qi             , 7)];
+        s->qmat[i].luma_dc_qmul[0] =       2 * vp8_dc_qlookup[av_clip_uintp2(base_qi + y2dc_delta, 7)];
+        /* 101581>>16 is equivalent to 155/100 */
+        s->qmat[i].luma_dc_qmul[1] = (101581 * vp8_ac_qlookup[av_clip_uintp2(base_qi + y2ac_delta, 7)]) >> 16;
+        s->qmat[i].chroma_qmul[0]  =           vp8_dc_qlookup[av_clip_uintp2(base_qi + uvdc_delta, 7)];
+        s->qmat[i].chroma_qmul[1]  =           vp8_ac_qlookup[av_clip_uintp2(base_qi + uvac_delta, 7)];
 
         s->qmat[i].luma_dc_qmul[1] = FFMAX(s->qmat[i].luma_dc_qmul[1], 8);
         s->qmat[i].chroma_qmul[0]  = FFMIN(s->qmat[i].chroma_qmul[0], 132);
@@ -750,7 +751,7 @@ void decode_mb_mode(VP8Context *s, VP8Macroblock *mb, int mb_x, int mb_y,
 
 #ifndef decode_block_coeffs_internal
 /**
- * @param c arithmetic bitstream reader context
+ * @param r arithmetic bitstream reader context
  * @param block destination for block coefficients
  * @param probs probabilities to use when reading trees from the bitstream
  * @param i initial coeff index, 0 unless a separate DC block is coded
@@ -2018,7 +2019,7 @@ static av_cold int vp8_decode_init(AVCodecContext *avctx)
     avctx->pix_fmt = PIX_FMT_YUV420P;
 
     ff_dsputil_init(&s->dsp, avctx);
-    ff_h264_pred_init(&s->hpc, CODEC_ID_VP8, 8, 1);
+    ff_h264_pred_init(&s->hpc, AV_CODEC_ID_VP8, 8, 1);
     ff_vp8dsp_init(&s->vp8dsp);
 
     return 0;
@@ -2072,7 +2073,7 @@ static int vp8_decode_update_thread_context(AVCodecContext *dst, const AVCodecCo
 AVCodec ff_vp8_decoder = {
     .name                  = "vp8",
     .type                  = AVMEDIA_TYPE_VIDEO,
-    .id                    = CODEC_ID_VP8,
+    .id                    = AV_CODEC_ID_VP8,
     .priv_data_size        = sizeof(VP8Context),
     .init                  = vp8_decode_init,
     .close                 = vp8_decode_free,

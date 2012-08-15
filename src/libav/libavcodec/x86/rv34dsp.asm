@@ -46,10 +46,10 @@ SECTION .text
 %endmacro
 
 %macro rv34_idct 1
-cglobal rv34_idct_%1_mmx2, 1, 2, 0
+cglobal rv34_idct_%1, 1, 2, 0
     movsx   r1, word [r0]
     IDCT_DC r1
-    movd    m0, r1
+    movd    m0, r1d
     pshufw  m0, m0, 0
     movq    [r0+ 0], m0
     movq    [r0+ 8], m0
@@ -58,18 +58,19 @@ cglobal rv34_idct_%1_mmx2, 1, 2, 0
     REP_RET
 %endmacro
 
-INIT_MMX
+INIT_MMX mmx2
 %define IDCT_DC IDCT_DC_ROUND
 rv34_idct dc
 %define IDCT_DC IDCT_DC_NOROUND
 rv34_idct dc_noround
 
 ; ff_rv34_idct_dc_add_mmx(uint8_t *dst, int stride, int dc);
-cglobal rv34_idct_dc_add_mmx, 3, 3
+INIT_MMX mmx
+cglobal rv34_idct_dc_add, 3, 3
     ; calculate DC
     IDCT_DC_ROUND r2
     pxor       m1, m1
-    movd       m0, r2
+    movd       m0, r2d
     psubw      m1, m0
     packuswb   m0, m0
     packuswb   m1, m1
@@ -167,14 +168,14 @@ cglobal rv34_idct_add, 3,3,0, d, s, b
     ret
 
 ; ff_rv34_idct_dc_add_sse4(uint8_t *dst, int stride, int dc);
-INIT_XMM
-cglobal rv34_idct_dc_add_sse4, 3, 3, 6
+INIT_XMM sse4
+cglobal rv34_idct_dc_add, 3, 3, 6
     ; load data
     IDCT_DC_ROUND r2
     pxor       m1, m1
 
     ; calculate DC
-    movd       m0, r2
+    movd       m0, r2d
     lea        r2, [r0+r1*2]
     movd       m2, [r0]
     movd       m3, [r0+r1]

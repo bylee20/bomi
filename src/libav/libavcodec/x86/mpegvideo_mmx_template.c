@@ -48,7 +48,7 @@
 #define MMREG_WIDTH "8"
 #define MM "%%mm"
 #define MOVQ "movq"
-#if HAVE_MMX2
+#if HAVE_MMXEXT
 #define SPREADW(a) "pshufw $0, "a", "a" \n\t"
 #define PMAXW(a,b) "pmaxsw "a", "b"     \n\t"
 #define PMAX(a,b) \
@@ -357,13 +357,5 @@ static int RENAME(dct_quantize)(MpegEncContext *s,
         block[0x3E] = temp_block[0x3E]; block[0x3F] = temp_block[0x3F];
     }
     end:
-/*
-    for(i=0; i<last_non_zero_p1; i++)
-    {
-       int j= zigzag_direct_noperm[i];
-       block[block_permute_op(j)]= temp_block[j];
-    }
-*/
-
     return last_non_zero_p1 - 1;
 }

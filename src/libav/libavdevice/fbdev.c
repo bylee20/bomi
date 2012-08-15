@@ -39,6 +39,7 @@
 #include "libavutil/log.h"
 #include "libavutil/mem.h"
 #include "libavutil/opt.h"
+#include "libavutil/time.h"
 #include "libavutil/parseutils.h"
 #include "libavutil/pixdesc.h"
 #include "libavformat/avformat.h"
@@ -159,7 +160,7 @@ static av_cold int fbdev_read_header(AVFormatContext *avctx)
     }
 
     st->codec->codec_type = AVMEDIA_TYPE_VIDEO;
-    st->codec->codec_id   = CODEC_ID_RAWVIDEO;
+    st->codec->codec_id   = AV_CODEC_ID_RAWVIDEO;
     st->codec->width      = fbdev->width;
     st->codec->height     = fbdev->height;
     st->codec->pix_fmt    = pix_fmt;

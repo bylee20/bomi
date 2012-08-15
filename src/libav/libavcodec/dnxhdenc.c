@@ -31,7 +31,6 @@
 #include "dsputil.h"
 #include "internal.h"
 #include "mpegvideo.h"
-#include "mpegvideo_common.h"
 #include "dnxhdenc.h"
 
 #define VE AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM
@@ -1001,7 +1000,7 @@ static int dnxhd_encode_end(AVCodecContext *avctx)
 AVCodec ff_dnxhd_encoder = {
     .name           = "dnxhd",
     .type           = AVMEDIA_TYPE_VIDEO,
-    .id             = CODEC_ID_DNXHD,
+    .id             = AV_CODEC_ID_DNXHD,
     .priv_data_size = sizeof(DNXHDEncContext),
     .init           = dnxhd_encode_init,
     .encode2        = dnxhd_encode_picture,

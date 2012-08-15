@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef AVUTIL_X86_CPU_H
-#define AVUTIL_X86_CPU_H
+#ifndef AVUTIL_X86_ASM_H
+#define AVUTIL_X86_ASM_H
 
 #include <stdint.h>
 #include "config.h"
@@ -95,4 +95,16 @@ typedef int x86_reg;
 #    define XMM_CLOBBERS_ONLY(...)
 #endif
 
-#endif /* AVUTIL_X86_CPU_H */
+/* Use to export labels from asm. */
+#define LABEL_MANGLE(a) EXTERN_PREFIX #a
+
+// Use rip-relative addressing if compiling PIC code on x86-64.
+#if ARCH_X86_64 && defined(PIC)
+#    define LOCAL_MANGLE(a) #a "(%%rip)"
+#else
+#    define LOCAL_MANGLE(a) #a
+#endif
+
+#define MANGLE(a) EXTERN_PREFIX LOCAL_MANGLE(a)
+
+#endif /* AVUTIL_X86_ASM_H */

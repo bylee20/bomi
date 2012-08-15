@@ -388,12 +388,16 @@ cglobal add_hfyu_median_prediction_mmx2, 6,6,0, dst, top, diff, w, left, left_to
     RET
 
 
-%macro ADD_HFYU_LEFT_LOOP 1 ; %1 = is_aligned
+%macro ADD_HFYU_LEFT_LOOP 2 ; %1 = dst_is_aligned, %2 = src_is_aligned
     add     srcq, wq
     add     dstq, wq
     neg     wq
 %%.loop:
+%if %2
     mova    m1, [srcq+wq]
+%else
+    movu    m1, [srcq+wq]
+%endif
     mova    m2, m1
     psllw   m1, 8
     paddb   m1, m2
@@ -435,7 +439,7 @@ cglobal add_hfyu_left_prediction_ssse3, 3,3,7, dst, src, w, left
     mova    m3, [pb_zz11zz55zz99zzdd]
     movd    m0, leftm
     psllq   m0, 56
-    ADD_HFYU_LEFT_LOOP 1
+    ADD_HFYU_LEFT_LOOP 1, 1
 
 INIT_XMM
 cglobal add_hfyu_left_prediction_sse4, 3,3,7, dst, src, w, left
@@ -446,12 +450,14 @@ cglobal add_hfyu_left_prediction_sse4, 3,3,7, dst, src, w, left
     movd    m0, leftm
     pslldq  m0, 15
     test    srcq, 15
-    jnz add_hfyu_left_prediction_ssse3.skip_prologue
+    jnz .src_unaligned
     test    dstq, 15
-    jnz .unaligned
-    ADD_HFYU_LEFT_LOOP 1
-.unaligned:
-    ADD_HFYU_LEFT_LOOP 0
+    jnz .dst_unaligned
+    ADD_HFYU_LEFT_LOOP 1, 1
+.dst_unaligned:
+    ADD_HFYU_LEFT_LOOP 0, 1
+.src_unaligned:
+    ADD_HFYU_LEFT_LOOP 0, 0
 
 
 ; float scalarproduct_float_sse(const float *v1, const float *v2, int len)
@@ -1137,7 +1143,7 @@ VECTOR_CLIP_INT32 6, 1, 0, 0
 cglobal vector_fmul_reverse, 4,4,2, dst, src0, src1, len
     lea       lenq, [lend*4 - 2*mmsize]
 ALIGN 16
-.loop
+.loop:
 %if cpuflag(avx)
     vmovaps     xmm0, [src1q + 16]
     vinsertf128 m0, m0, [src1q], 1
@@ -1158,12 +1164,7 @@ ALIGN 16
     add     src1q, 2*mmsize
     sub     lenq,  2*mmsize
     jge     .loop
-%if mmsize == 32
-    vzeroupper
-    RET
-%else
     REP_RET
-%endif
 %endmacro
 
 INIT_XMM sse
@@ -1181,7 +1182,7 @@ VECTOR_FMUL_REVERSE
 cglobal vector_fmul_add, 5,5,2, dst, src0, src1, src2, len
     lea       lenq, [lend*4 - 2*mmsize]
 ALIGN 16
-.loop
+.loop:
     mova    m0,   [src0q + lenq]
     mova    m1,   [src0q + lenq + mmsize]
     mulps   m0, m0, [src1q + lenq]
@@ -1193,12 +1194,7 @@ ALIGN 16
 
     sub     lenq,   2*mmsize
     jge     .loop
-%if mmsize == 32
-    vzeroupper
-    RET
-%else
     REP_RET
-%endif
 %endmacro
 
 INIT_XMM sse
@@ -1243,10 +1239,6 @@ cglobal butterflies_float_interleave, 4,4,3, dst, src0, src1, len
 %endif
     add       lenq, mmsize
     jl .loop
-%if mmsize == 32
-    vzeroupper
-    RET
-%endif
 .end:
     REP_RET
 %endmacro
@@ -1321,7 +1313,7 @@ cglobal bswap32_buf, 3,4,5
     add      r0, 4
     dec      r2
     jnz      .loop2
-.end
+.end:
     RET
 
 ; %1 = aligned/unaligned

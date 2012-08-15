@@ -419,14 +419,14 @@ static const AVCodecDefault xavs_defaults[] = {
 AVCodec ff_libxavs_encoder = {
     .name           = "libxavs",
     .type           = AVMEDIA_TYPE_VIDEO,
-    .id             = CODEC_ID_CAVS,
+    .id             = AV_CODEC_ID_CAVS,
     .priv_data_size = sizeof(XavsContext),
     .init           = XAVS_init,
     .encode2        = XAVS_frame,
     .close          = XAVS_close,
     .capabilities   = CODEC_CAP_DELAY | CODEC_CAP_AUTO_THREADS,
     .pix_fmts       = (const enum PixelFormat[]) { PIX_FMT_YUV420P, PIX_FMT_NONE },
-    .long_name      = NULL_IF_CONFIG_SMALL("libxavs - the Chinese Audio Video Standard Encoder"),
+    .long_name      = NULL_IF_CONFIG_SMALL("libxavs Chinese AVS (Audio Video Standard)"),
     .priv_class     = &class,
     .defaults       = xavs_defaults,
 };

@@ -17,10 +17,10 @@ $(SUBDIR)%-test.o: $(SUBDIR)%.c
 	$(COMPILE_C)
 
 $(SUBDIR)x86/%.o: $(SUBDIR)x86/%.asm
-	$(YASMDEP) $(YASMFLAGS) -I $(<D)/ -M -o $@ $< > $(@:.o=.d)
+	$(DEPYASM) $(YASMFLAGS) -I $(<D)/ -M -o $@ $< > $(@:.o=.d)
 	$(YASM) $(YASMFLAGS) -I $(<D)/ -o $@ $<
 
-$(OBJS) $(SUBDIR)%.ho $(TESTOBJS): CPPFLAGS += -DHAVE_AV_CONFIG_H
+$(OBJS) $(SUBDIR)%.h.o $(TESTOBJS): CPPFLAGS += -DHAVE_AV_CONFIG_H
 $(TESTOBJS): CPPFLAGS += -DTEST
 
 $(SUBDIR)$(LIBNAME): $(OBJS)
@@ -82,9 +82,9 @@ uninstall-libs::
 	-$(RM) "$(LIBDIR)/$(LIBNAME)"
 
 uninstall-headers::
-	$(RM) $(addprefix "$(INCINSTDIR)/",$(HEADERS))
+	$(RM) $(addprefix "$(INCINSTDIR)/",$(HEADERS) $(BUILT_HEADERS))
 	$(RM) "$(LIBDIR)/pkgconfig/lib$(NAME).pc"
-	-rmdir "$(INCDIR)"
+	-rmdir "$(INCINSTDIR)"
 endef
 
 $(eval $(RULES))

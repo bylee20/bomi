@@ -62,7 +62,8 @@ static int decode_frame(AVCodecContext *avctx,
     AVFrame *const p = &s->picture;
     uint8_t *ptr;
 
-    int magic_num, offset, endian;
+    unsigned int offset;
+    int magic_num, endian;
     int x, y;
     int w, h, stride, bits_per_color, descriptor, elements, target_packet_size, source_packet_size;
 
@@ -236,7 +237,7 @@ static av_cold int decode_end(AVCodecContext *avctx)
 AVCodec ff_dpx_decoder = {
     .name           = "dpx",
     .type           = AVMEDIA_TYPE_VIDEO,
-    .id             = CODEC_ID_DPX,
+    .id             = AV_CODEC_ID_DPX,
     .priv_data_size = sizeof(DPXContext),
     .init           = decode_init,
     .close          = decode_end,

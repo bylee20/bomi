@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "libavutil/x86_cpu.h"
+#include "libavutil/x86/asm.h"
 #include "dsputil_mmx.h"
 #include "libavcodec/ac3dsp.h"
 
@@ -65,7 +65,7 @@ av_cold void ff_ac3dsp_init_x86(AC3DSPContext *c, int bit_exact)
             c->float_to_fixed24 = ff_float_to_fixed24_3dnow;
         }
     }
-    if (mm_flags & AV_CPU_FLAG_MMX2 && HAVE_MMX2) {
+    if (mm_flags & AV_CPU_FLAG_MMXEXT && HAVE_MMXEXT) {
         c->ac3_exponent_min = ff_ac3_exponent_min_mmxext;
         c->ac3_max_msb_abs_int16 = ff_ac3_max_msb_abs_int16_mmx2;
     }

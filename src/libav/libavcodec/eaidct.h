@@ -1,7 +1,4 @@
 /*
- * FFT/MDCT transform with 3DNow! optimizations
- * Copyright (c) 2008 Loren Merritt
- *
  * This file is part of Libav.
  *
  * Libav is free software; you can redistribute it and/or
@@ -19,5 +16,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#define EMULATE_3DNOWEXT
-#include "fft_3dn2.c"
+#ifndef AVCODEC_EAIDCT_H
+#define AVCODEC_EAIDCT_H
+
+#include <stdint.h>
+#include "dsputil.h"
+
+void ff_ea_idct_put_c(uint8_t *dest, int linesize, DCTELEM *block);
+
+#endif /* AVCODEC_EAIDCT_H */

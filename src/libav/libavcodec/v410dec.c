@@ -30,10 +30,10 @@ static av_cold int v410_decode_init(AVCodecContext *avctx)
 
     if (avctx->width & 1) {
         if (avctx->err_recognition & AV_EF_EXPLODE) {
-            av_log(avctx, AV_LOG_ERROR, "v410 requires width to be even, continuing anyway.\n");
+            av_log(avctx, AV_LOG_ERROR, "v410 requires width to be even.\n");
             return AVERROR_INVALIDDATA;
         } else {
-            av_log(avctx, AV_LOG_WARNING, "v410 requires width to be even.\n");
+            av_log(avctx, AV_LOG_WARNING, "v410 requires width to be even, continuing anyway.\n");
         }
     }
 
@@ -113,7 +113,7 @@ static av_cold int v410_decode_close(AVCodecContext *avctx)
 AVCodec ff_v410_decoder = {
     .name         = "v410",
     .type         = AVMEDIA_TYPE_VIDEO,
-    .id           = CODEC_ID_V410,
+    .id           = AV_CODEC_ID_V410,
     .init         = v410_decode_init,
     .decode       = v410_decode_frame,
     .close        = v410_decode_close,

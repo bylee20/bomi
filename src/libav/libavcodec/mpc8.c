@@ -411,6 +411,8 @@ static int mpc8_decode_frame(AVCodecContext * avctx, void *data,
     c->cur_frame++;
 
     c->last_bits_used = get_bits_count(gb);
+    if(get_bits_left(gb) < 8) // we have only padding left
+        c->last_bits_used = buf_size << 3;
     if(c->cur_frame >= c->frames)
         c->cur_frame = 0;
 
@@ -420,13 +422,20 @@ static int mpc8_decode_frame(AVCodecContext * avctx, void *data,
     return c->cur_frame ? c->last_bits_used >> 3 : buf_size;
 }
 
+static av_cold void mpc8_decode_flush(AVCodecContext *avctx)
+{
+    MPCContext *c = avctx->priv_data;
+    c->cur_frame = 0;
+}
+
 AVCodec ff_mpc8_decoder = {
     .name           = "mpc8",
     .type           = AVMEDIA_TYPE_AUDIO,
-    .id             = CODEC_ID_MUSEPACK8,
+    .id             = AV_CODEC_ID_MUSEPACK8,
     .priv_data_size = sizeof(MPCContext),
     .init           = mpc8_decode_init,
     .decode         = mpc8_decode_frame,
+    .flush          = mpc8_decode_flush,
     .capabilities   = CODEC_CAP_DR1,
     .long_name      = NULL_IF_CONFIG_SMALL("Musepack SV8"),
 };

@@ -379,7 +379,7 @@ static int decode_stream_header(NUTContext *nut)
         av_log(s, AV_LOG_ERROR, "unknown stream class (%d)\n", class);
         return -1;
     }
-    if (class < 3 && st->codec->codec_id == CODEC_ID_NONE)
+    if (class < 3 && st->codec->codec_id == AV_CODEC_ID_NONE)
         av_log(s, AV_LOG_ERROR,
                "Unknown codec tag '0x%04x' for stream number %d\n",
                (unsigned int) tmp, stream_id);
@@ -991,7 +991,7 @@ static int nut_read_close(AVFormatContext *s)
 
 AVInputFormat ff_nut_demuxer = {
     .name           = "nut",
-    .long_name      = NULL_IF_CONFIG_SMALL("NUT format"),
+    .long_name      = NULL_IF_CONFIG_SMALL("NUT"),
     .priv_data_size = sizeof(NUTContext),
     .read_probe     = nut_probe,
     .read_header    = nut_read_header,
