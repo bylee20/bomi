@@ -89,3 +89,6 @@ src/cmplayer/cmplayer.pro.user
 src/cmplayer_widgets/Makefile
 src/cmplayer_widgets/Makefile.Debug
 src/cmplayer_widgets/Makefile.Release
+src/cmplayer_skin/Makefile
+src/cmplayer_skin/Makefile.Debug
+src/cmplayer_skin/Makefile.Release
