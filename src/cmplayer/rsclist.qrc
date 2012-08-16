@@ -11,7 +11,6 @@
         <file>img/format-text-underline.png</file>
         <file>mpl.html</file>
         <file>translations/cmplayer_en.qm</file>
-        <file>translations/cmplayer_ja.qm</file>
         <file>translations/cmplayer_ko.qm</file>
         <file>shaders/i420_to_rgb_common.glsl</file>
         <file>shaders/i420_to_rgb_filter.glsl</file>

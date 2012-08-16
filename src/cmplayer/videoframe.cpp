@@ -23,7 +23,7 @@ QString _fToDescription(VideoFormat::Type type) {
 
 
 QImage VideoFrame::toImage() const {
-	QImage img(format.stride, format.height, QImage::Format_RGB888);
+	QImage img(format.width, format.height, QImage::Format_RGB888);
 	const int dy = format.stride;
 	const int dy2 = dy << 1;
 	const int dr = img.bytesPerLine();

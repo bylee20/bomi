@@ -315,7 +315,7 @@ AboutDialog::AboutDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
 	d->ui.setupUi(this);
 #define UI_LABEL_ARG(label, arg) d->ui.label->setText(d->ui.label->text().arg)
-//	UI_LABEL_ARG(version, arg(Info::version()).arg(LibVLC::version()));
+	UI_LABEL_ARG(version, arg(Info::version()));
 	UI_LABEL_ARG(copyright, arg(QDate::currentDate().year()));
 	UI_LABEL_ARG(contacts, arg("<a href=\"http://xylosper.net\">http://xylosper.net</a><br>")
 		.arg("<a href=\"mailto:darklin20@gmail.com\">darklin20@gmail.com</a><br>")

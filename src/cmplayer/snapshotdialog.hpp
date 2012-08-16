@@ -19,6 +19,7 @@ private slots:
 	void updateSnapshot(bool sub);
 	void save();
 	void copyToClipboard();
+	void onTook(QImage image);
 private:
 	struct Data;
 	Data *d;

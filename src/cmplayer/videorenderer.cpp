@@ -353,6 +353,7 @@ struct VideoRenderer::Data {
 	StreamList streams;
 	QString codec;
 	QSize viewport;
+	bool takeSnapshot = false;
 	bool clientStorage = false;
 };
 
@@ -476,11 +477,16 @@ QImage VideoRenderer::frameImage() const {
 	return d->frame->toImage();
 }
 
+void VideoRenderer::takeSnapshot() const {
+	d->takeSnapshot = true;
+	const_cast<VideoRenderer*>(this)->update();
+}
+
 double VideoRenderer::frameRate() const {
 	return d->engine->hasVideo() ? d->engine->context()->sh_video->fps : 25;
 }
 
-double VideoRenderer::outputFrameRate(bool reset) const {
+double VideoRenderer::outputFrameRate(bool /*reset*/) const {
 	const double ret = d->fps.frameRate();
 //	if (reset)
 //		d->fps.reset();
@@ -492,7 +498,7 @@ const VideoFormat &VideoRenderer::format() const {
 }
 
 bool VideoRenderer::hasFrame() const {
-	return d->frameIsSet;
+	return (!d->logoOn && d->hasPrograms && d->frameIsSet && d->prepared);
 }
 
 void VideoRenderer::uploadBufferFrame() {
@@ -722,7 +728,7 @@ void VideoRenderer::render() {
 	if (!d->gl)
 		return;
 	const QSizeF widget = renderableSize();
-	if (!d->logoOn && d->hasPrograms && d->frameIsSet && d->prepared) {
+	if (hasFrame()) {
 		QSizeF letter(targetCropRatio(targetAspectRatio()), 1.0);
 		letter.scale(widget, Qt::KeepAspectRatio);
 
@@ -811,6 +817,11 @@ void VideoRenderer::render() {
 		d->osd.render();
 		d->gl->swapBuffers();
 		d->fps.frameDrawn(d->frameId);
+
+		if (d->takeSnapshot) {
+			emit tookSnapshot(frameImage());
+			d->takeSnapshot = false;
+		}
 	} else {
 		d->gl->makeCurrent();
 		QPainter painter(d->gl);

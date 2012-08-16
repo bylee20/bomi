@@ -61,6 +61,7 @@ public:
 	void setCurrentStream(int id);
 	bool needsToBeRendered() const;
 	int outputWidth() const;
+	void takeSnapshot() const;
 public slots:
 	void setOffset(const QPoint &offset);
 	void setAlignment(int align);
@@ -68,6 +69,7 @@ public slots:
 	void setCropRatio(double ratio);
 signals:
 	void formatChanged(const VideoFormat &format);
+	void tookSnapshot(QImage image);
 protected:
 	void setScreen(VideoScreen *gl);
 private slots:

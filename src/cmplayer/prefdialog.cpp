@@ -280,6 +280,11 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) 
 
 	retranslate();
 	fill(Pref::get());
+
+	d->ui.sub_shadow_blur->hide();
+#ifdef Q_WS_MAC
+	d->ui.system_tray_group->hide();
+#endif
 }
 
 PrefDialog::~PrefDialog() {

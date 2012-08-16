@@ -186,9 +186,9 @@ int VideoOutput::queryFormat(int format) {
 	switch (format) {
 	case IMGFMT_I420:
 	case IMGFMT_YV12:
-	case IMGFMT_YUY2:
+	//case IMGFMT_YUY2:
 		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
-			| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE;// | VOCAP_NOSLICES;
+			| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;
 	default:
 		return 0;
 	}

@@ -1,10 +1,10 @@
 QT       += core gui
 
-TARGET = cmplayer_widgets
+TARGET = cmplayer_skin
 TEMPLATE = lib
 CONFIG += debug_and_release designer plugin release
 
-!isEmpty(TEST) {
+!isEmpty(BUILD_STATIC) {
 DESTDIR = ../../build/lib
 CONFIG += static
 } else {

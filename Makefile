@@ -13,19 +13,8 @@ ifeq ($(os),osx)
 	QMAKE ?= /Developer/Tools/Qt/qmake -spec macx-g++
 	MACDEPLOYQT ?= /Developer/Tools/Qt/macdeployqt
 	LRELEASE ?= /Developer/Tools/Qt/lrelease
-	VLC_INCLUDE_PATH ?= /Applications/VLC.app/Contents/MacOS/include
-	VLC_LIB_PATH ?= /Applications/VLC.app/Contents/MacOS/lib
-	VLC_PLUGINS_PATH ?= /Applications/VLC.app/Contents/MacOS/plugins
 	cmplayer_exec := CMPlayer
 	cmplayer_exec_path := bin/$(cmplayer_exec).app/Contents/MacOS
-	qmake_vars := $(qmake_vars) \
-		VLC_INCLUDE_PATH=\\\"$(VLC_INCLUDE_PATH)\\\" VLC_LIB_PATH=$(VLC_LIB_PATH)
-	copy_qt = \
-		install -d $(cmplayer_exec_path)/../Frameworks/$@.framework/Versions/4 && \
-		$(install_file) $(QTSDK)/lib/$@.framework/Versions/4/$@ \
-			$(cmplayer_exec_path)/../Frameworks/$@.framework/Versions/4/$@ && \
-		install_name_tool -change $(QTSDK)/lib/$@.framework/Versions/Current/$@ \
-			@executable_path/../Frameworks/$@.framework/Versions/4/$@
 else
 	PREFIX ?= /usr/local
 	QMAKE ?= qmake
@@ -46,7 +35,7 @@ endif
 all: vlc-plugins skin cmplayer
 ifeq ($(os),osx)
 	install -d $(cmplayer_exec_path)/lib
-	install -d $(cmplayer_exec_path)/$(vlc_plugins_dir)
++	install -d $(cmplayer_exec_path)/$(vlc_plugins_dir)
 	$(install_file) $(VLC_LIB_PATH)/*.dylib* $(cmplayer_exec_path)/lib
 	$(install_file) $(VLC_PLUGINS_PATH)/*.dylib $(cmplayer_exec_path)/$(vlc_plugins_dir)
 	$(install_file) bin/$(vlc_plugins_dir)/*.dylib $(cmplayer_exec_path)/$(vlc_plugins_dir)
@@ -54,7 +43,7 @@ ifeq ($(os),osx)
 	$(MACDEPLOYQT) bin/$(cmplayer_exec).app
 endif
 
-cmplayer: translations libchardet
+cmplayer: translations
 	cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro 
 	cd src/cmplayer && make
 
@@ -70,14 +59,6 @@ endif
 translations:
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ko.ts -qm cmplayer_ko.qm
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_en.ts -qm cmplayer_en.qm
-	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ja.ts -qm cmplayer_ja.qm
-
-libchardet:
-ifneq ($(configured),configured)
-	cd src/libchardet* && ./configure --enable-shared=no --enable-static=yes
-	echo configured > configured
-endif
-	cd src/libchardet* && make
 
 skin: bin_dir
 #	$(install_dir) src/skin bin/skin

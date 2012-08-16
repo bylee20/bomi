@@ -2,7 +2,7 @@ macx {
         QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
         QMAKE_CXXFLAGS_X86_64 += -m64
         QMAKE_CXX = /opt/local/bin/g++-mp-4.7
-        #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
+        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
         #QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
         QMAKE_INFO_PLIST = Info.plist
         ICON = ../../icons/cmplayer.icns
@@ -25,8 +25,7 @@ macx {
 INCLUDEPATH += ../mplayer2 ../../build/include
 
 LIBS += ../../build/lib/libcmplayer_widgets.a ../../build/lib/libchardet.a ../../build/lib/libmplayer2-cmplayer.a \
-    -L../../build/lib -L/opt/local/lib \
-    -lz -lbz2 -lpthread -lm \
+    -L../../build/lib -L/opt/local/lib -lz -lbz2 -lpthread -lm \
     -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini -lxvidcore -lvorbis -logg -ltheora -la52 -ldca ../../build/lib/libavutil.a ../../build/lib/libavcodec.a -lavformat -lswscale -lcdio_paranoia -lcdio_cdda -lcdio
 
 
@@ -118,8 +117,7 @@ HEADERS += playengine.hpp \
     richtextblock.hpp \
     richtextdocument.hpp \
     mpmessage.hpp \
-    skin.hpp \
-    vdadecoder.hpp
+    skin.hpp
 
 SOURCES += main.cpp \
     playengine.cpp \
@@ -194,8 +192,8 @@ SOURCES += main.cpp \
     mplayer-vd_ffmpeg.c
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
-    translations/cmplayer_en.ts \
-    translations/cmplayer_ja.ts
+    translations/cmplayer_en.ts
+
 FORMS += \
     ui/aboutdialog.ui \
     ui/opendvddialog.ui \

@@ -45,7 +45,7 @@
      </property>
      <column>
       <property name="text">
-       <string>1</string>
+       <string notr="true">1</string>
       </property>
      </column>
     </widget>
@@ -69,7 +69,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>9</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="playback">
         <property name="name" stdset="0">
@@ -262,7 +262,7 @@
          <item>
           <widget class="QTabWidget" name="tabWidget">
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="tab">
             <attribute name="title">
@@ -580,14 +580,14 @@
                   <item row="1" column="3">
                    <widget class="QLabel" name="label_41">
                     <property name="text">
-                     <string>/</string>
+                     <string notr="true">/</string>
                     </property>
                    </widget>
                   </item>
                   <item row="1" column="4">
                    <widget class="QLabel" name="blur_sum">
                     <property name="text">
-                     <string>sum</string>
+                     <string notr="true">sum</string>
                     </property>
                    </widget>
                   </item>
@@ -931,14 +931,14 @@
                   <item row="1" column="3">
                    <widget class="QLabel" name="label_44">
                     <property name="text">
-                     <string>/</string>
+                     <string notr="true">/</string>
                     </property>
                    </widget>
                   </item>
                   <item row="1" column="4">
                    <widget class="QLabel" name="sharpen_sum">
                     <property name="text">
-                     <string>sum</string>
+                     <string notr="true">sum</string>
                     </property>
                    </widget>
                   </item>
@@ -1105,11 +1105,6 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="tab_3">
-            <attribute name="title">
-             <string>Audio filter</string>
-            </attribute>
-           </widget>
           </widget>
          </item>
         </layout>
@@ -1169,9 +1164,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_14">
+          <widget class="QGroupBox" name="system_tray_group">
            <property name="title">
-            <string>System tray (Linux only)</string>
+            <string>System tray</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
@@ -1757,7 +1752,7 @@
                    <bool>false</bool>
                   </property>
                   <property name="suffix">
-                   <string>%</string>
+                   <string notr="true">%</string>
                   </property>
                   <property name="decimals">
                    <number>1</number>
@@ -2129,7 +2124,7 @@ e.g.: English, Korean</string>
                 <item row="0" column="1">
                  <widget class="QSpinBox" name="speed_step">
                   <property name="suffix">
-                   <string>%</string>
+                   <string notr="true">%</string>
                   </property>
                   <property name="minimum">
                    <number>1</number>
@@ -2165,7 +2160,7 @@ e.g.: English, Korean</string>
                 <item row="0" column="1">
                  <widget class="QSpinBox" name="volume_step">
                   <property name="suffix">
-                   <string>%</string>
+                   <string notr="true">%</string>
                   </property>
                   <property name="minimum">
                    <number>1</number>
@@ -2191,7 +2186,7 @@ e.g.: English, Korean</string>
                 <item row="1" column="1">
                  <widget class="QSpinBox" name="amp_step">
                   <property name="suffix">
-                   <string>%</string>
+                   <string notr="true">%</string>
                   </property>
                   <property name="minimum">
                    <number>1</number>
@@ -2223,7 +2218,7 @@ e.g.: English, Korean</string>
                 <item row="0" column="1">
                  <widget class="QSpinBox" name="sub_pos_step">
                   <property name="suffix">
-                   <string>%</string>
+                   <string notr="true">%</string>
                   </property>
                   <property name="minimum">
                    <number>1</number>
@@ -2279,7 +2274,7 @@ e.g.: English, Korean</string>
                 <item row="0" column="1">
                  <widget class="QSpinBox" name="brightness_step">
                   <property name="suffix">
-                   <string>%</string>
+                   <string notr="true">%</string>
                   </property>
                   <property name="minimum">
                    <number>1</number>
@@ -2299,7 +2294,7 @@ e.g.: English, Korean</string>
                 <item row="1" column="1">
                  <widget class="QSpinBox" name="contrast_step">
                   <property name="suffix">
-                   <string>%</string>
+                   <string notr="true">%</string>
                   </property>
                   <property name="minimum">
                    <number>1</number>
@@ -2323,7 +2318,7 @@ e.g.: English, Korean</string>
                 <item row="0" column="1">
                  <widget class="QSpinBox" name="saturation_step">
                   <property name="suffix">
-                   <string>%</string>
+                   <string notr="true">%</string>
                   </property>
                   <property name="minimum">
                    <number>1</number>
@@ -2343,7 +2338,7 @@ e.g.: English, Korean</string>
                 <item row="1" column="1">
                  <widget class="QSpinBox" name="hue_step">
                   <property name="suffix">
-                   <string>%</string>
+                   <string notr="true">%</string>
                   </property>
                   <property name="minimum">
                    <number>1</number>

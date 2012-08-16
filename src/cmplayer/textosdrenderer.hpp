@@ -16,10 +16,9 @@ public:
 	QPointF posHint() const;
 	QSizeF size() const;
 	void setAlignment(Qt::Alignment alignment);
+	RichTextDocument doc() const;
 	Qt::Alignment alignment() const;
-	QString text() const;
 	void setMargin(double top, double bottom, double right, double left);
-	bool isText() const {return true;}
 	int layers() const {return 2;}
 public slots:
 	void clear();

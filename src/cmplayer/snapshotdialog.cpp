@@ -21,7 +21,7 @@ struct SnapshotDialog::Data {
 	const VideoRenderer *video;
 	const SubtitleRenderer *subtitle;
 	TextOsdRenderer *osd;
-	RichString text;
+	RichTextDocument doc;
 	QImage frame;
 	QSize size;
 	QRectF rect;
@@ -68,7 +68,11 @@ void SnapshotDialog::copyToClipboard() {
 }
 
 void SnapshotDialog::setVideoRenderer(const VideoRenderer *video) {
+	if (d->video)
+		disconnect(d->video, 0, this, 0);
 	d->video = video;
+	if (d->video)
+		connect(d->video, SIGNAL(tookSnapshot(QImage)), this, SLOT(onTook(QImage)));
 }
 
 void SnapshotDialog::setSubtitleRenderer(const SubtitleRenderer *subtitle) {
@@ -84,20 +88,20 @@ void SnapshotDialog::updateSnapshot(bool sub) {
 		painter.setRenderHint(QPainter::SmoothPixmapTransform);
 		painter.drawImage(d->rect, d->frame);
 		if (sub) {
-//			d->osd->setArea(pixmap.size(), pixmap.size());
-//			d->osd->show(d->text.toString());
-//			d->osd->render(&painter, d->osd->posHint(), 1);
+			d->osd->setArea(pixmap.size(), pixmap.size());
+			d->osd->show(d->doc);
+			d->osd->prepareToRender(QPointF());
+			const auto pos = d->osd->posHint();
+			d->osd->render(&painter, pos, 1);
+			d->osd->render(&painter, pos, 0);
 		}
 		d->ui.viewer->setImage(pixmap);
 	}
 }
 
-void SnapshotDialog::take() {
-	if (!d->video || !d->video->hasFrame())
-		return;
-	d->ui.take->setEnabled(false);
-	d->text = d->subtitle->osd().text();
-	d->frame = d->video->frameImage();
+void SnapshotDialog::onTook(QImage image) {
+	d->doc = d->subtitle->osd().doc();
+	d->frame = image;
 	d->osd->setStyle(d->subtitle->osd().style());
 	d->osd->setAlignment(d->subtitle->osd().alignment());
 	const double aspect = d->video->targetAspectRatio();
@@ -113,6 +117,13 @@ void SnapshotDialog::take() {
 	updateSnapshot(d->ui.subtitle->isChecked());
 	d->ui.save->setEnabled(!d->frame.isNull());
 	d->ui.take->setEnabled(true);
+}
+
+void SnapshotDialog::take() {
+	if (!d->video || !d->video->hasFrame())
+		return;
+	d->ui.take->setEnabled(false);
+	d->video->takeSnapshot();
 }
 
 struct ImageViewer::Data {

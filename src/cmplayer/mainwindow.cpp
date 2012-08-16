@@ -960,8 +960,10 @@ void MainWindow::takeSnapshot() {
 	dlg->setVideoRenderer(&d->video);
 	dlg->setSubtitleRenderer(&d->subtitle);
 	dlg->take();
-	dlg->adjustSize();
-	dlg->show();
+	if (!dlg->isVisible()) {
+		dlg->adjustSize();
+		dlg->show();
+	}
 }
 
 void MainWindow::about() {

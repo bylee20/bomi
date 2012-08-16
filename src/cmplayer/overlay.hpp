@@ -46,7 +46,7 @@ public:
 			m_sub_x[i] = m_sub_y[i] = 1.0f;
 		} else {
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.width(), size.height(), _format(i), _type(i), data);
-			m_sub_x[i] = (double)size.width()/m_texSize[i].width();
+			m_sub_x[i] = (double)qMax(0, size.width()-1)/m_texSize[i].width();
 			m_sub_y[i] = (double)size.height()/m_texSize[i].height();
 		}
 		m_size[i] = size;

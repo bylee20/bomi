@@ -6,10 +6,10 @@
 #include <QtGui/QPainter>
 #include "richtextdocument.hpp"
 
-struct BlockLayout {
-	QTextLayout *block;
-	QList<QTextLayout*> rubies;
-};
+//struct BlockLayout {
+//	QTextLayout *block;
+//	QList<QTextLayout*> rubies;
+//};
 
 struct TextOsdRenderer::Data {
 //	QVector<BlockLayout> layout;
@@ -123,6 +123,12 @@ void TextOsdRenderer::show(const RichTextDocument &doc, int last) {
 		d->clearer.start(last);
 }
 
+RichTextDocument TextOsdRenderer::doc() const {
+	RichTextDocument doc;
+	doc += d->pended;
+	return doc;
+}
+
 void TextOsdRenderer::show(const QString &text, int last) {
 	d->clearer.stop();
 	{
@@ -134,10 +140,6 @@ void TextOsdRenderer::show(const QString &text, int last) {
 	emit needToRerender();
 	if (last >= 0)
 		d->clearer.start(last);
-}
-
-QString TextOsdRenderer::text() const {
-	return d->text;
 }
 
 QPointF TextOsdRenderer::posHint() const {

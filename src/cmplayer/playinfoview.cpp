@@ -175,7 +175,7 @@ void PlayInfoView::onTick(int pos) {
 	}
 	if (mpctx->sh_audio && mpctx->sh_video) {
 		const int diff = (mpctx->total_avsync_change - d->sync)*1000000 + 0.5;
-		sync = _L("Average A-V sync: ") % (diff < 0 ? _L("") : _L("+")) % _n(diff) % _L("us<br>");
+		sync = tr("Average A-V sync") % _L(": ") % (diff < 0 ? _L("") : _L("+")) % _n(diff) % _L("us<br>");
 		d->sync = mpctx->total_avsync_change;
 	}
 
