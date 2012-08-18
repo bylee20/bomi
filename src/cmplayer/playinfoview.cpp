@@ -1,18 +1,17 @@
 #include "playinfoview.hpp"
 #include "osdstyle.hpp"
-#include "richstring.hpp"
 #include "playengine.hpp"
 #include "audiocontroller.hpp"
 #include "avmisc.hpp"
 #include "videorenderer.hpp"
 #include "textosdrenderer.hpp"
 #include "app.hpp"
+#include "mpcore.hpp"
 #include <stdio.h>
+#include <sigar.h>
+#include <libavcodec/avcodec.h>
 #include <QtCore/QTimer>
 #include <QtCore/QDebug>
-#include <sigar.h>
-#include "mpcore.hpp"
-#include <libavcodec/avcodec.h>
 
 extern "C" {
 #include <libmpdemux/stheader.h>
@@ -22,10 +21,6 @@ extern "C" {
 #include <libao2/audio_out.h>
 #include <libaf/af.h>
 }
-
-//class ProcInfo : public QThread {
-//public:
-//};
 
 enum PlayInfoViewOsd {
 	MediaName,

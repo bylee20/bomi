@@ -46,10 +46,10 @@
 //	inline ushort ucs() const {return m_text.at(m_pos).unicode();}
 //	inline QChar qchar() const {return m_text.at(m_pos);}
 //	inline bool isRightBracket() const {return ucs() == '>';}
-//	inline bool isSeperator() const {return RichString::isSeperator(ucs());}
+//	inline bool isSeparator() const {return RichString::isSeparator(ucs());}
 //	inline bool isQuotationMark() const {const ushort c = ucs(); return c == '\'' || c == '"';}
 //	inline bool checkRightBracket() {return !(m_open = !isRightBracket());}
-//	inline bool skipSeperator() {return RichString::skipSeperator(m_pos, m_text);}
+//	inline bool skipSeparator() {return RichString::skipSeparator(m_pos, m_text);}
 
 //	QStringRef m_text;
 //	int m_pos, m_begin;

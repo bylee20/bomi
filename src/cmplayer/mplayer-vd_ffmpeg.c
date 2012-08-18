@@ -35,8 +35,8 @@
 #include "mpbswap.h"
 #include "fmt-conversion.h"
 
-#include <libmpcodecs/vd.h>
-#include <libmpcodecs/img_format.h>
+#include "libmpcodecs/vd.h"
+#include "libmpcodecs/img_format.h"
 #include "libmpdemux/stheader.h"
 #include "libmpdemux/demux_packet.h"
 #include "codec-cfg.h"
@@ -52,8 +52,6 @@ static const vd_info_t info = {
 };
 
 #include "libavcodec/avcodec.h"
-#include <libavcodec/vda.h>
-extern uint32_t HWACCEL_FORMAT;
 
 #if AVPALETTE_SIZE > 1024
 #error palette too large, adapt libmpcodecs/vf.c:vf_get_image
@@ -74,15 +72,17 @@ typedef struct {
 	int b_count;
 	AVRational last_sample_aspect_ratio;
 	enum AVDiscard skip_frame;
-	struct vda_context vda;
+	void *hwaccel;
 } vd_ffmpeg_ctx;
 
-#include "m_option.h"
+extern uint32_t HWACCEL_FORMAT;
+extern void *cmplayer_hwaccel_create(AVCodecContext *avctx);
+extern void cmplayer_hwaccel_delete(void **hwaccel);
+extern uint32_t cmplayer_hwaccel_setup(void *hwaccel);
+extern int cmplayer_hwaccel_fill_image(void *hwaccel, mp_image_t *image, AVFrame *frame);
+void *cmplayer_hwaccel_get(AVCodecContext *avctx) {return ((vd_ffmpeg_ctx*)(((sh_video_t*)avctx->opaque)->context))->hwaccel;}
 
-extern enum PixelFormat get_format_vda(struct AVCodecContext *avctx, const enum PixelFormat *pix_fmt);
-extern int get_buffer_vda(AVCodecContext *avctx, AVFrame *pic);
-extern int reget_buffer_vda(AVCodecContext *avctx, AVFrame *pic);
-extern void release_buffer_vda(AVCodecContext *avctx, AVFrame *pic);
+#include "m_option.h"
 
 static int get_buffer(AVCodecContext *avctx, AVFrame *pic);
 static void release_buffer(AVCodecContext *avctx, AVFrame *pic);
@@ -222,18 +222,14 @@ static int init(sh_video_t *sh)
 				"%d threads if supported.\n", lavc_param->threads);
 	}
 
-	if (HWACCEL_FORMAT && strstr(sh->codec->name, "ffh264")) {
+	ctx->hwaccel = cmplayer_hwaccel_create(avctx);
+	if (ctx->hwaccel) {
 		ctx->do_dr1 = false;
 		ctx->do_slices = false;
 		lavc_param->threads = 1;
-		avctx->get_format = get_format_vda;
-		avctx->get_buffer = get_buffer_vda;
-		avctx->release_buffer = release_buffer_vda;
-		avctx->reget_buffer = reget_buffer_vda;
-		avctx->draw_horiz_band = NULL;
 	}
 
-	if (ctx->do_dr1) {
+    if (ctx->do_dr1) {
 		avctx->flags |= CODEC_FLAG_EMU_EDGE;
 		avctx->get_buffer = get_buffer;
 		avctx->release_buffer = release_buffer;
@@ -380,9 +376,7 @@ static void uninit(sh_video_t *sh)
 	if (avctx) {
 		if (avctx->codec && avcodec_close(avctx) < 0)
 			mp_tmsg(MSGT_DECVIDEO, MSGL_ERR, "Could not close codec.\n");
-		if (avctx->hwaccel_context)
-			ff_vda_destroy_decoder(avctx->hwaccel_context);
-		avctx->hwaccel_context = NULL;
+		cmplayer_hwaccel_delete(&ctx->hwaccel);
 		av_freep(&avctx->extradata);
 		av_freep(&avctx->slice_offset);
 	}
@@ -420,7 +414,7 @@ static void draw_slice(struct AVCodecContext *s,
 }
 
 
-static int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
+int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
 {
 	vd_ffmpeg_ctx *ctx = sh->context;
 	AVCodecContext *avctx = ctx->avctx;
@@ -473,6 +467,10 @@ static int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
 			};
 		else
 			supported_fmts = (const unsigned int[]){ctx->best_csp, 0xffffffff};
+		if (ctx->hwaccel) {
+			ctx->best_csp = cmplayer_hwaccel_setup(ctx->hwaccel);
+			supported_fmts = (const unsigned int[]){ctx->best_csp, 0xffffffff};
+		}
 		if (!mpcodecs_config_vo2(sh, sh->disp_w, sh->disp_h, supported_fmts,
 								 ctx->best_csp))
 			return -1;
@@ -784,18 +782,8 @@ static struct mp_image *decode(struct sh_video *sh, struct demux_packet *packet,
 			mpi->stride[1] = pic->linesize[1];
 			mpi->stride[2] = pic->linesize[2];
 			mpi->stride[3] = pic->linesize[3];
-		} else {
-//			struct vda_context *vda = avctx->hwaccel_context;
-			CVPixelBufferRef buffer = (CVPixelBufferRef)(pic->data[3]);
-			CVPixelBufferLockBaseAddress(buffer, 0);
-			mpi->planes[0] = CVPixelBufferGetBaseAddressOfPlane(buffer, 0);
-			mpi->stride[0] = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0);
-			mpi->planes[1] = CVPixelBufferGetBaseAddressOfPlane(buffer, 1);
-			mpi->stride[1] = CVPixelBufferGetBytesPerRowOfPlane(buffer, 1);
-			mpi->planes[2] = CVPixelBufferGetBaseAddressOfPlane(buffer, 2);
-			mpi->stride[2] = CVPixelBufferGetBytesPerRowOfPlane(buffer, 2);
-			CVPixelBufferUnlockBaseAddress(buffer, 0);
-		}
+		} else
+			cmplayer_hwaccel_fill_image(ctx->hwaccel, mpi, pic);
 	}
 
 	if (!mpi->planes[0])
@@ -892,122 +880,4 @@ const struct vd_functions mpcodecs_vd_ffmpeg = {
 	.control = control,
 	.decode2 = decode
 };
-
-static int setup_vda(sh_video_t *sh) {
-	vd_ffmpeg_ctx *ctx = sh->context;
-	AVCodecContext *avctx = ctx->avctx;
-	avctx->hwaccel_context = &ctx->vda;
-	if (avctx->width == ctx->vda.width && avctx->height == ctx->vda.height && ctx->vda.decoder)
-		return 1;
-	if (ctx->vda.decoder) {
-		if (avctx->width == ctx->vda.width && avctx->height == ctx->vda.height)
-			return 1;
-		ff_vda_destroy_decoder(&ctx->vda);
-	}
-	memset(&ctx->vda, 0, sizeof(ctx->vda));
-	ctx->vda.decoder = NULL;
-	ctx->vda.width = avctx->width;
-	ctx->vda.height = avctx->height;
-	ctx->vda.format = 'avc1';
-	ctx->vda.cv_pix_fmt_type = HWACCEL_FORMAT == IMGFMT_YUY2 ? kCVPixelFormatType_422YpCbCr8_yuvs : kCVPixelFormatType_420YpCbCr8Planar;
-	ctx->vda.use_sync_decoding = 1;
-	if (ff_vda_create_decoder(&ctx->vda, avctx->extradata, avctx->extradata_size))
-		avctx->hwaccel_context = NULL;
-	return avctx->hwaccel_context != NULL;
-}
-
-static int init_vo_vda(sh_video_t *sh, enum PixelFormat pix_fmt) {
-	if (pix_fmt != PIX_FMT_VDA_VLD)
-		return -1;
-	vd_ffmpeg_ctx *ctx = sh->context;
-	AVCodecContext *avctx = ctx->avctx;
-	float aspect = av_q2d(avctx->sample_aspect_ratio) *
-				   avctx->width / avctx->height;
-	int width, height;
-
-	width = avctx->width;
-	height = avctx->height;
-
-	// HACK!
-	// if sh->ImageDesc is non-NULL, it means we decode QuickTime(tm) video.
-	// use dimensions from BIH to avoid black borders at the right and bottom.
-	if (sh->bih && sh->ImageDesc) {
-		width = sh->bih->biWidth >> avctx->lowres;
-		height = sh->bih->biHeight >> avctx->lowres;
-	}
-
-	/* Reconfiguring filter/VO chain may invalidate direct rendering buffers
-	 * we have allocated for libavcodec (including the VDPAU HW decoding
-	 * case). Is it guaranteed that the code below only triggers in a situation
-	 * with no busy direct rendering buffers for reference frames?
-	 */
-	if (av_cmp_q(avctx->sample_aspect_ratio, ctx->last_sample_aspect_ratio) ||
-			width != sh->disp_w || height != sh->disp_h ||
-			pix_fmt != ctx->pix_fmt || !ctx->vo_initialized) {
-		ctx->vo_initialized = 0;
-		mp_msg(MSGT_DECVIDEO, MSGL_V, "[ffmpeg] aspect_ratio: %f\n", aspect);
-
-		// Do not overwrite s->aspect on the first call, so that a container
-		// aspect if available is preferred.
-		// But set it even if the sample aspect did not change, since a
-		// resolution change can cause an aspect change even if the
-		// _sample_ aspect is unchanged.
-		if (sh->aspect == 0 || ctx->last_sample_aspect_ratio.den)
-			sh->aspect = aspect;
-		ctx->last_sample_aspect_ratio = avctx->sample_aspect_ratio;
-		sh->disp_w = width;
-		sh->disp_h = height;
-		ctx->pix_fmt = pix_fmt;
-		ctx->best_csp = HWACCEL_FORMAT;
-		const unsigned int supported_fmts[] = {ctx->best_csp, 0xffffffff};
-		if (!mpcodecs_config_vo2(sh, sh->disp_w, sh->disp_h, supported_fmts, ctx->best_csp))
-			return -1;
-		setup_vda(sh);
-		ctx->vo_initialized = 1;
-	}
-	return 0;
-}
-
-#include <libavcodec/vda.h>
-
-enum PixelFormat get_format_vda(struct AVCodecContext *avctx, const enum PixelFormat *fmt) {
-	sh_video_t *sh = avctx->opaque;
-	int i = 0;
-	for (; fmt[i] != PIX_FMT_NONE; i++) {
-		if (init_vo_vda(sh, fmt[i]) >= 0) {
-			printf("Found VDA\n");
-			fflush(stdout);
-			break;
-		}
-	}
-	return fmt[i];
-}
-
-int get_buffer_vda(AVCodecContext *avctx, AVFrame *pic) {
-	pic->reordered_opaque = avctx->reordered_opaque;
-	pic->opaque = NULL;
-	sh_video_t *sh = avctx->opaque;
-	setup_vda(sh);
-	for (int i=0; i<4; ++i) {
-		pic->data[i] = NULL;
-		pic->linesize[i] = 0;
-	}
-	pic->data[0] = (uint8_t*)1; // dummy
-	pic->data[3] = (uint8_t*)1; // dummy
-	pic->type = FF_BUFFER_TYPE_USER;
-	return 0;
-}
-
-int reget_buffer_vda(AVCodecContext *avctx, AVFrame *pic) {
-	pic->reordered_opaque = avctx->reordered_opaque;
-	return avcodec_default_reget_buffer(avctx, pic);
-}
-
-void release_buffer_vda(AVCodecContext *avctx, AVFrame *pic) {
-	(void)avctx;
-	CVPixelBufferRef cv_buffer = (CVPixelBufferRef)pic->data[3];
-	if (cv_buffer)
-		CFRelease(cv_buffer);
-	pic->data[0] = pic->data[1] = pic->data[2] = pic->data[3] = NULL;
-}
 

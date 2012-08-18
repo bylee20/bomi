@@ -15,7 +15,7 @@ struct RichTextDocument : public RichTextHelper {
 	RichTextDocument &operator += (const QList<RichTextBlock> &rhs);
 	inline bool isEmpty() const {return m_blocks.isEmpty();}
 	inline int totalLength() const {int ret = 0; for (auto &block : m_blocks) {ret += block.text.size();} return ret;}
-	inline bool hasWords() const {for (auto &block : m_blocks) {for (auto &c : block.text) {if (!isSeperator(c.unicode())) return true;}}	return false;}
+	inline bool hasWords() const {for (auto &block : m_blocks) {for (auto &c : block.text) {if (!isSeparator(c.unicode())) return true;}}	return false;}
 	inline QString toPlainText() const {QString ret; for (auto &block : m_blocks) {ret += block.text;} return ret;}
 	inline const QList<RichTextBlock> &blocks() const {return m_blocks;}
 	void setAlignment(Qt::Alignment alignment);

@@ -25,7 +25,7 @@ class LineParser : public SubtitleParser {
 public:
 	LineParser(const QString expr): rxLine(expr) {}
 	bool isParsable() const {
-		if (skipSeperators())
+		if (skipSeparators())
 			return false;
 		const int pos = this->pos();
 		if (rxLine.indexIn(trim(getLine()).toString()) == -1)

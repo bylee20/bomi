@@ -4,16 +4,17 @@ TARGET = cmplayer_skin
 TEMPLATE = lib
 CONFIG += debug_and_release designer plugin release
 
-!isEmpty(BUILD_STATIC) {
 DESTDIR = ../../build/lib
-CONFIG += static
+!isEmpty(DO_INSTALL) {
+	target.path = $$[QT_INSTALL_PLUGINS]/designer
+	INSTALLS += target
 } else {
-DESTDIR = $$[QT_INSTALL_PLUGINS]/designer
+	CONFIG += static
 }
 
 HEADERS += \
-    widgets.hpp
+	widgets.hpp
 
 SOURCES += \
-    widgets.cpp
+	widgets.cpp
 

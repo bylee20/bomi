@@ -1,4 +1,6 @@
-cd src/mplayer2 && make distclean ; ./configure --cc=gcc-4.2 --enable-runtime-cpudetection\
+#!/bin/sh
+
+args="--enable-debug=3 --enable-runtime-cpudetection \
   --disable-termcap --disable-termios --disable-iconv --disable-langinfo \
   --disable-lirc --disable-lircc --disable-joystick --disable-apple-remote --disable-apple-ir \
   --disable-vm --disable-xf86keysym --disable-radio --disable-radio-capture --disable-radio-v4l2 \
@@ -15,25 +17,23 @@ cd src/mplayer2 && make distclean ; ./configure --cc=gcc-4.2 --enable-runtime-cp
   --disable-libnut --enable-libav --enable-libvorbis --disable-tremor --disable-speex \
   --enable-theora --enable-faad --disable-ladspa --disable-libbs2b --enable-libdv \
   --disable-mpg123 --enable-mad --disable-xmms --enable-libdca --enable-liba52 --disable-musepack \
-  --enable-gl --enable-cocoa --disable-corevideo\
-  --disable-x11 --disable-dga2 --disable-dga1 --disable-vesa --disable-svga --disable-sdl \
+  --disable-gl --disable-corevideo --disable-x11 --disable-cocoa \
+  --disable-dga2 --disable-dga1 --disable-vesa --disable-svga --disable-sdl \
   --disable-aa --disable-caca --disable-ggi --disable-ggiwmh --disable-direct3d --disable-directx \
   --disable-dxr3 --disable-ivtv --disable-v4l2 --disable-dvb --disable-mga --disable-xmga \
   --disable-xv --disable-vdpau --disable-vm --disable-xinerama --disable-xshape \
   --disable-xss --disable-fbdev --disable-3dfx --disable-tdfxfb --disable-s3fb --disable-wii \
   --disable-directfb --disable-bl --disable-tdfxvid --disable-xvr100 --disable-tga --disable-pnm \
-  --disable-md5sum --disable-yuv4mpeg --disable-sharedbuffer \
-  --disable-alsa --disable-ossaudio --disable-rsound --disable-pulse --disable-portaudio \
-  --disable-jack --enable-openal --disable-nas --disable-sunaudio --disable-win32waveout \
-  --enable-coreaudio --disable-select --disable-translation --disable-static \
-  --extra-libs="../../build/lib/libavutil.a ../../build/lib/libavcodec.a ../../build/lib/libavformat.a ../../build/lib/libswscale.a -L../../build/lib -lz -lbz2 -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio -framework OpenAL -framework OpenGL -framework VideoDecodeAcceleration -framework CoreVideo" \
-  --extra-cflags="-I../../build/include" \
-  && make -j 6 && ar rcsv ../../build/lib/libmplayer2-cmplayer.a command.o m_property.o mixer.o mp_fifo.o parser-mpcmd.o \
+  --disable-md5sum --disable-yuv4mpeg --disable-sharedbuffer --enable-openal \
+  --disable-ossaudio --disable-rsound --disable-pulse --disable-portaudio \
+  --disable-jack --disable-nas --disable-sunaudio --disable-win32waveout \
+  --disable-select --disable-translation --disable-static"
+cflags="-I../../build/include"
+objs="command.o m_property.o mixer.o mp_fifo.o parser-mpcmd.o \
   screenshot.o input/input.o libao2/ao_mpegpes.o libao2/ao_null.o libao2/ao_pcm.o \
   libao2/audio_out.o libvo/aspect.o libvo/csputils.o libvo/geometry.o libvo/old_vo_wrapper.o \
-  libvo/spuenc.o libvo/video_out.o libvo/vo_mpegpes.o libvo/vo_null.o libvo/vo_png.o \
-  libvo/gl_common.o libvo/vo_gl.o pnm_loader.o libao2/ao_coreaudio.o libao2/ao_openal.o asxparser.o av_log.o \
-  av_opts.o bstr.o codec-cfg.o cpudetect.o defaultopts.o fmt-conversion.o m_config.o \
+  libvo/spuenc.o libvo/video_out.o libvo/vo_mpegpes.o libvo/vo_null.o libvo/vo_png.o libao2/ao_openal.o \
+  asxparser.o av_log.o av_opts.o bstr.o codec-cfg.o cpudetect.o defaultopts.o fmt-conversion.o m_config.o \
   m_option.o m_struct.o mpcommon.o parser-cfg.o path.o playtree.o playtreeparser.o \
   subopt-helper.o talloc.o libaf/af.o libaf/af_center.o libaf/af_channels.o libaf/af_comp.o \
   libaf/af_delay.o libaf/af_dummy.o libaf/af_equalizer.o libaf/af_extrastereo.o \
@@ -84,7 +84,7 @@ cd src/mplayer2 && make distclean ; ./configure --cc=gcc-4.2 --enable-runtime-cp
   libmpdemux/mp3_hdr.o libmpdemux/mp_taglists.o libmpdemux/mpeg_hdr.o \
   libmpdemux/mpeg_packetizer.o libmpdemux/parse_es.o libmpdemux/parse_mp4.o \
   libmpdemux/video.o libmpdemux/yuv4mpeg.o libmpdemux/yuv4mpeg_ratio.o libvo/osd.o \
-  osdep/numcores.o osdep/io.o osdep/getch2.o osdep/timer-darwin.o stream/open.o \
+  osdep/numcores.o osdep/io.o osdep/getch2.o stream/open.o \
   stream/stream.o stream/stream_cue.o stream/stream_ffmpeg.o stream/stream_file.o \
   stream/stream_mf.o stream/stream_null.o stream/url.o sub/av_sub.o sub/dec_sub.o \
   sub/find_sub.o sub/find_subfiles.o sub/spudec.o sub/sub.o sub/sub_cc.o sub/subassconvert.o \
@@ -93,14 +93,38 @@ cd src/mplayer2 && make distclean ; ./configure --cc=gcc-4.2 --enable-runtime-cp
   stream/stream_dvd.o stream/stream_dvd_common.o libmpcodecs/ad_faad.o libvo/aclib.o \
   stream/stream_ftp.o libmpcodecs/vf_bmovl.o libaf/af_export.o osdep/mmap_anon.o \
   libmpcodecs/ad_liba52.o libmpcodecs/ad_libdca.o libmpcodecs/ad_libdv.o libmpcodecs/vd_libdv.o \
-  libmpdemux/demux_rawdv.o libmpcodecs/ad_libmad.o libmpcodecs/vd_theora.o libvo/osx_common.o \
-  libvo/cocoa_common.o osdep/cocoa_events.o stream/stream_rtsp.o stream/freesdp/common.o \
+  libmpdemux/demux_rawdv.o libmpcodecs/ad_libmad.o libmpcodecs/vd_theora.o \
+  stream/stream_rtsp.o stream/freesdp/common.o \
   stream/freesdp/errorlist.o stream/freesdp/parser.o stream/librtsp/rtsp.o \
   stream/librtsp/rtsp_rtp.o stream/librtsp/rtsp_session.o osdep/shmem.o \
   stream/stream_netstream.o stream/asf_mmst_streaming.o stream/asf_streaming.o stream/cookies.o \
   stream/http.o stream/network.o stream/pnm.o stream/rtp.o stream/udp.o stream/tcp.o \
   stream/stream_rtp.o stream/stream_udp.o stream/realrtsp/asmrp.o stream/realrtsp/real.o \
   stream/realrtsp/rmff.o stream/realrtsp/sdpplin.o stream/realrtsp/xbuffer.o stream/cache2.o \
-  libmpcodecs/ad_libvorbis.o libmpdemux/demux_ogg.o libmpcodecs/vd_xvid4.o
+  libmpcodecs/ad_libvorbis.o libmpdemux/demux_ogg.o libmpcodecs/vd_xvid4.o"
 
-#-ffast-math  -ldvdread -lmad -lvorbis -logg -lfaad -ldv    -L/opt/local/lib -ldvdnavmini -lpthread  -lm -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lavutil -lavcodec -lavformat -lswscale -lcdio_paranoia -lcdio_cdda -lcdio -framework OpenAL -framework OpenGL -framework Cocoa -framework OpenGL
+libs="-lz -lbz2 -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio"
+
+kern=`uname -s`
+if test $kern = "Darwin"
+then
+  echo "Build for OS X"
+  args="--cc=gcc-4.2 $args --enable-coreaudio --disable-alsa"
+  libs="../../build/lib/libavformat.a ../../build/lib/libavcodec.a \
+  	../../build/lib/libavutil.a ../../build/lib/libswscale.a $libs \
+  	-framework OpenAL -framework VideoDecodeAcceleration -framework CoreVideo -framework CoreFoundation -framework Cocoa"
+  objs="$objs libao2/ao_coreaudio.o osdep/timer-darwin.o"
+elif test $kern = "Linux"
+then
+  echo "Build for Linux"
+  args="--cc=gcc $args --disable-coreaudio --enable-alsa"
+  libs="$libs -lopenal -lasound -lva"
+  libs="-L../../build/lib -lcmplayer_av -lz -lbz2 -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio"
+  objs="$objs libao2/ao_alsa.o osdep/timer-linux.o"
+else
+  echo "Not supported!"
+  exit
+fi
+
+cd src/mplayer2 && make distclean ; ./configure $args --extra-cflags="$cflags" --extra-libs="$libs" \
+  && make -j 6 && ar rcsv ../../build/lib/libcmplayer_mplayer2.a $objs

@@ -552,8 +552,9 @@ static void print_file_properties(struct MPContext *mpctx, const char *filename)
            && (!mpctx->demuxer || mpctx->demuxer->seekable));
     if (mpctx->demuxer) {
         int chapter_count = get_chapter_count(mpctx);
+        int i;
         mp_msg(MSGT_IDENTIFY, MSGL_INFO, "ID_CHAPTERS=%d\n", chapter_count);
-        for (int i = 0; i < chapter_count; i++) {
+        for (i = 0; i < chapter_count; i++) {
             mp_msg(MSGT_IDENTIFY, MSGL_INFO, "ID_CHAPTER_ID=%d\n", i);
             // in milliseconds
             mp_msg(MSGT_IDENTIFY, MSGL_INFO, "ID_CHAPTER_%d_START=%"PRIu64"\n",
@@ -982,6 +983,10 @@ static int try_load_config(m_config_t *conf, const char *file)
     m_config_parse_config_file(conf, file);
     return 1;
 }
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 static void load_per_file_config(m_config_t *conf, const char * const file)
 {
@@ -2068,9 +2073,8 @@ void update_subtitles(struct MPContext *mpctx, double refpts_tl, bool reset)
                 if (duration < 0)
                     sub_clear_text(&subs, MP_NOPTS_VALUE);
                 if (type == 'a') { // ssa/ass subs without libass => convert to plaintext
-                    int i;
                     unsigned char *p = packet;
-                    for (i = 0; i < 8 && *p != '\0'; p++)
+                    for (int i = 0; i < 8 && *p != '\0'; p++)
                         if (*p == ',')
                             i++;
                     if (*p == '\0')  /* Broken line? */
@@ -2890,6 +2894,8 @@ static double update_video(struct MPContext *mpctx)
                              check_framedrop(mpctx, sh_video->frametime);
         void *decoded_frame = decode_video(sh_video, pkt, buf, in_size,
                                            framedrop_type, pts);
+//		printf("decoded frame: 0x%p", decoded_frame);
+		fflush(stdout);
         if (decoded_frame) {
             determine_frame_pts(mpctx);
             current_module = "filter video";

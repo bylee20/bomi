@@ -93,10 +93,19 @@ static void fillFormat(VideoFormat &format, uint32_t imgfmt, int w, int h, int s
 		format.bpp = 12;
 		format.pitch = format.stride = ((w >> 5) + 1) << 5;
 		format.type = VideoFormat::YV12;
+		format.planes = 3;
 		break;
 	case IMGFMT_YUY2:
 		format.bpp = 16;
 		format.type = VideoFormat::YUY2;
+		format.planes = 1;
+		break;
+	case IMGFMT_NV12:
+	case IMGFMT_NV21:
+		format.bpp = 12;
+		format.type = imgfmt == IMGFMT_NV12 ? VideoFormat::NV12 : VideoFormat::NV21;
+		format.planes = 2;
+		format.pitch = format.stride = ((w >> 5) + 1) << 5;
 		break;
 	default:
 		format.bpp = 0;
@@ -186,6 +195,8 @@ int VideoOutput::queryFormat(int format) {
 	switch (format) {
 	case IMGFMT_I420:
 	case IMGFMT_YV12:
+	case IMGFMT_NV12:
+	case IMGFMT_NV21:
 	//case IMGFMT_YUY2:
 		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
 			| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;

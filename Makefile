@@ -14,7 +14,7 @@ ifeq ($(os),osx)
 	MACDEPLOYQT ?= /Developer/Tools/Qt/macdeployqt
 	LRELEASE ?= /Developer/Tools/Qt/lrelease
 	cmplayer_exec := CMPlayer
-	cmplayer_exec_path := bin/$(cmplayer_exec).app/Contents/MacOS
+	cmplayer_exec_path := build/$(cmplayer_exec).app/Contents/MacOS
 else
 	PREFIX ?= /usr/local
 	QMAKE ?= qmake
@@ -24,47 +24,46 @@ else
 	ICON_PATH ?= $(DATA_PATH)/icons/hicolor
 	APP_PATH ?= $(DATA_PATH)/applications
 	ACTION_PATH ?= $(DATA_PATH)/apps/solid/actions
-	CMPLAYER_VLC_PLUGINS_PATH ?= $(PREFIX)/lib/cmplayer/$(vlc_plugins_dir)
-#	CMPLAYER_SKIN_PATH ?= $(DATA_PATH)/cmplayer/skin
+	CMPLAYER_SKIN_PATH ?= $(DATA_PATH)/cmplayer/skin
 	cmplayer_exec := cmplayer
 	qmake_vars := $(qmake_vars) \
-		DEFINES+="CMPLAYER_VLC_PLUGINS_PATH=\\\\\\\"$(CMPLAYER_VLC_PLUGINS_PATH)\\\\\\\"" #\
-#		DEFINES+="CMPLAYER_SKIN_PATH=\\\\\\\"$(CMPLAYER_SKIN_PATH)\\\\\\\""
+		DEFINES+="CMPLAYER_SKINS_PATH=\\\\\\\"$(CMPLAYER_SKINS_PATH)\\\\\\\""
 endif
 
-all: vlc-plugins skin cmplayer
-ifeq ($(os),osx)
-	install -d $(cmplayer_exec_path)/lib
-+	install -d $(cmplayer_exec_path)/$(vlc_plugins_dir)
-	$(install_file) $(VLC_LIB_PATH)/*.dylib* $(cmplayer_exec_path)/lib
-	$(install_file) $(VLC_PLUGINS_PATH)/*.dylib $(cmplayer_exec_path)/$(vlc_plugins_dir)
-	$(install_file) bin/$(vlc_plugins_dir)/*.dylib $(cmplayer_exec_path)/$(vlc_plugins_dir)
-#	$(install_dir) bin/skin $(cmplayer_exec_path)/skin
-	$(MACDEPLOYQT) bin/$(cmplayer_exec).app
-endif
+# all: cmplayer
+# ifeq ($(os),osx)
+# 	install -d $(cmplayer_exec_path)/lib
+# +	install -d $(cmplayer_exec_path)/$(vlc_plugins_dir)
+# 	$(install_file) $(VLC_LIB_PATH)/*.dylib* $(cmplayer_exec_path)/lib
+# 	$(install_file) $(VLC_PLUGINS_PATH)/*.dylib $(cmplayer_exec_path)/$(vlc_plugins_dir)
+# 	$(install_file) bin/$(vlc_plugins_dir)/*.dylib $(cmplayer_exec_path)/$(vlc_plugins_dir)
+# #	$(install_dir) bin/skin $(cmplayer_exec_path)/skin
+# 	$(MACDEPLOYQT) bin/$(cmplayer_exec).app
+# endif
 
-cmplayer: translations
-	cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro 
-	cd src/cmplayer && make
+cmplayer: translations skin
+	cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make release
 
-vlc-plugins: bin_dir
-	cd src/$(vlc_plugins_dir) && make
-	install -d bin/$(vlc_plugins_dir)
-ifeq ($(os),osx)
-	$(install_file) src/$(vlc_plugins_dir)/libcmplayer-*_plugin.dylib bin/$(vlc_plugins_dir)
-else
-	$(install_file) src/$(vlc_plugins_dir)/libcmplayer-*_plugin.so bin/$(vlc_plugins_dir)
-endif
+# vlc-plugins: bin_dir
+# 	cd src/$(vlc_plugins_dir) && make
+# 	install -d bin/$(vlc_plugins_dir)
+# ifeq ($(os),osx)
+# 	$(install_file) src/$(vlc_plugins_dir)/libcmplayer-*_plugin.dylib bin/$(vlc_plugins_dir)
+# else
+# 	$(install_file) src/$(vlc_plugins_dir)/libcmplayer-*_plugin.so bin/$(vlc_plugins_dir)
+# endif
 
 translations:
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ko.ts -qm cmplayer_ko.qm
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_en.ts -qm cmplayer_en.qm
 
-skin: bin_dir
+skin: build_dir
+	cd src/cmplayer_skin && $(QMAKE) cmplayer_skin.pro && make release
+	cp -r src/cmplayer_skin/skins build
 #	$(install_dir) src/skin bin/skin
 
-bin_dir:
-	install -d bin
+build_dir:
+	install -d build
 
 clean:
 	-cd src/$(vlc_plugins_dir) && make clean
@@ -73,7 +72,7 @@ clean:
 	-rm -rf bin/*
 	-rm configured
 	
-install: cmplayer
+install: cmplayerstatic
 ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(BIN_PATH)
 	-install -d $(DEST_DIR)$(CMPLAYER_VLC_PLUGINS_PATH)

@@ -12,7 +12,7 @@
 bool SamiParser::isParsable() const {
 	if (same(file().suffix(), "smi") || same(file().suffix(), "sami"))
 		return true;
-	if (skipSeperators())
+	if (skipSeparators())
 		return false;
 	if (all().startsWith("<sami", Qt::CaseInsensitive))
 		return true;

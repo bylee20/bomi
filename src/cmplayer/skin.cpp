@@ -15,7 +15,7 @@
 #include <QtCore/QDir>
 #include <QtGui/QWidget>
 #include <QtCore/QDebug>
-#include "../cmplayer_widgets/widgets.hpp"
+#include "../cmplayer_skin/widgets.hpp"
 #include <QtPlugin>
 
 Q_IMPORT_PLUGIN(cmplayer_widgets)

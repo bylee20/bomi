@@ -14,7 +14,6 @@
 #include <QtGui/QApplication>
 #include <QtGui/QFileDialog>
 #include <QtGui/QClipboard>
-#include "richstring.hpp"
 
 struct SnapshotDialog::Data {
 	Ui::SnapshotDialog ui;

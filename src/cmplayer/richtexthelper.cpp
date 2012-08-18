@@ -53,7 +53,7 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 	Tag tag;
 	tag.pos = pos;
 	++pos;
-	if (skipSeperator(pos, text))
+	if (skipSeparator(pos, text))
 		return Tag();
 	if (at(pos) == '!') { // skip comment
 		pos = text.indexOf(QLatin1String("!--"), pos);
@@ -68,7 +68,7 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 		return tag;
 	}
 	int start = pos;
-	while (pos < text.size() && !isSeperator(at(pos)) && at(pos) != '>')
+	while (pos < text.size() && !isSeparator(at(pos)) && at(pos) != '>')
 		++pos;
 	tag.name = midRef(text, start, pos - start);
 	if (tag.name.startsWith('/')) {
@@ -79,11 +79,11 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 		++pos;
 		return tag;
 	}
-	if (skipSeperator(pos, text))
+	if (skipSeparator(pos, text))
 		return Tag();
 	ushort q = 0;
 	while (pos < text.size()) {
-		if (skipSeperator(pos, text))
+		if (skipSeparator(pos, text))
 			return Tag();
 		const ushort c = at(pos);
 		if (c == '>') {
@@ -93,17 +93,17 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 		start = pos;
 		while (pos < text.size()) {
 			const ushort c = at(pos);
-			if (isSeperator(c) || c == '=')
+			if (isSeparator(c) || c == '=')
 				break;
 			++pos;
 		}
 		Tag::Attr attr;
 		attr.name = midRef(text, start, pos - start);
-		if (skipSeperator(pos, text))
+		if (skipSeparator(pos, text))
 			return Tag();
 		if (at(pos) == '=') {
 			// find value
-			if (skipSeperator(++pos, text))
+			if (skipSeparator(++pos, text))
 				return Tag();
 			if (at(pos) == '\'') {
 				q = '\'';
@@ -117,7 +117,7 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 			while (pos < text.size()) {
 				const ushort c = at(pos);
 				const bool q_end = (q && c == q && at(pos-1) != '\\');
-				if (q_end || (!q && (isSeperator(c) || c == '>'))) {
+				if (q_end || (!q && (isSeparator(c) || c == '>'))) {
 					if (q_end)
 						++pos;
 					attr.value = midRef(text, start, pos - start);
@@ -258,9 +258,9 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 		int pos = 0;
 		while (pos < text.size()) {
 			const QChar c = text.at(pos);
-			if (isSeperator(c.unicode())) {
+			if (isSeparator(c.unicode())) {
 				ret.last().text.append(c);
-				if (skipSeperator(pos, text))
+				if (skipSeparator(pos, text))
 					break;
 			} else {
 				if (c.unicode() == '&') {

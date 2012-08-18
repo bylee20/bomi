@@ -5,6 +5,7 @@
 *.qm
 moc_*.cpp
 a.out
+*-build-*
 build/*
 src/build-interm*
 src/libav/.config

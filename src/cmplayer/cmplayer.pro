@@ -1,35 +1,39 @@
+TEMPLATE = app
+CONFIG += link_pkgconfig debug_and_release uitools
+QT = core gui opengl network svg webkit
+
+LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
+	-lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
+
 macx {
-        QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
-        QMAKE_CXXFLAGS_X86_64 += -m64
-        QMAKE_CXX = /opt/local/bin/g++-mp-4.7
-        QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-        #QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
-        QMAKE_INFO_PLIST = Info.plist
-        ICON = ../../icons/cmplayer.icns
-        TARGET = CMPlayer
-        LIBS += -framework VideoDecodeAcceleration \
-            -framework CoreVideo -framework Cocoa \
-            -framework IOKit -framework AudioUnit \
-            -framework CoreAudio -framework OpenAL \
-            -lsigar-universal64-macosx
-        HEADERS += app_mac.hpp
-        OBJECTIVE_SOURCES += app_mac.mm
-        INCLUDEPATH += /opt/local/include /usr/local/include
+    QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
+    QMAKE_CXXFLAGS_X86_64 += -m64
+    QMAKE_CXX = /opt/local/bin/g++-mp-4.7
+    #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    #QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+    QMAKE_INFO_PLIST = Info.plist
+    ICON = ../../icons/cmplayer.icns
+    TARGET = CMPlayer
+    LIBS +=  ../../build/lib/libcmplayer_skin.a ../../build/lib/libavcodec.a ../../build/lib/libavformat.a ../../build/lib/libavutil.a \
+        ../../build/lib/libswscale.a ../../build/lib/libcmplayer_mplayer2.a ../../build/lib/libchardet.a ../../build/lib/libcmplayer_sigar.a \
+        -L/opt/local/lib \
+        -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
+        -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
+        -framework IOKit
+    HEADERS += app_mac.hpp
+    OBJECTIVE_SOURCES += app_mac.mm
+    INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
-        TARGET = cmplayer
-        LIBS += -lX11
-        HEADERS += app_x11.hpp
-        SOURCES += app_x11.cpp
+    TARGET = cmplayer
+    LIBS += -lX11 -lopenal -lasound -lva -lva-x11 \
+        -L../../build/lib -lcmplayer_skin -lcmplayer_mplayer2 -lcmplayer_sigar -lchardet -lcmplayer_av
+    HEADERS += app_x11.hpp
+    SOURCES += app_x11.cpp
 }
 
-INCLUDEPATH += ../mplayer2 ../../build/include
+INCLUDEPATH += ../mplayer2 ../../build/include ../sigar/include
 
-LIBS += ../../build/lib/libcmplayer_widgets.a ../../build/lib/libchardet.a ../../build/lib/libmplayer2-cmplayer.a \
-    -L../../build/lib -L/opt/local/lib -lz -lbz2 -lpthread -lm \
-    -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini -lxvidcore -lvorbis -logg -ltheora -la52 -ldca ../../build/lib/libavutil.a ../../build/lib/libavcodec.a -lavformat -lswscale -lcdio_paranoia -lcdio_cdda -lcdio
-
-
-QMAKE_CC = "gcc -std=c99 -ffast-math"
+QMAKE_CC = "gcc-4.2 -std=c99 -ffast-math"
 
 QMAKE_CXXFLAGS += -std=c++11
 
@@ -42,11 +46,6 @@ DESTDIR = ../../build
         CONFIG += debug
         macx:CONFIG -= app_bundle
 }
-
-TEMPLATE = app
-CONFIG += link_pkgconfig debug_and_release uitools
-
-QT = core gui opengl network svg webkit
 
 RESOURCES += rsclist.qrc
 HEADERS += playengine.hpp \
@@ -65,7 +64,6 @@ HEADERS += playengine.hpp \
     videoframe.hpp \
     osdrenderer.hpp \
     subtitle.hpp \
-    richstring.hpp \
     subtitle_parser.hpp \
     subtitlerenderer.hpp \
     textosdrenderer.hpp \
@@ -105,7 +103,6 @@ HEADERS += playengine.hpp \
     playinfoview.hpp \
     widgets.hpp \
     qtcolorpicker.hpp \
-    richtext.hpp \
     record.hpp \
     actiongroup.hpp \
     rootmenu.hpp \
@@ -117,7 +114,9 @@ HEADERS += playengine.hpp \
     richtextblock.hpp \
     richtextdocument.hpp \
     mpmessage.hpp \
-    skin.hpp
+	skin.hpp \
+    hwaccel.hpp \
+    videoshader.hpp
 
 SOURCES += main.cpp \
     playengine.cpp \
@@ -138,7 +137,6 @@ SOURCES += main.cpp \
     videoframe.cpp \
     osdrenderer.cpp \
     subtitle.cpp \
-    richstring.cpp \
     subtitle_parser.cpp \
     subtitlerenderer.cpp \
     textosdrenderer.cpp \
@@ -176,7 +174,6 @@ SOURCES += main.cpp \
     playinfoview.cpp \
     widgets.cpp \
     qtcolorpicker.cpp \
-    richtext.cpp \
     record.cpp \
     actiongroup.cpp \
     rootmenu.cpp \
@@ -189,7 +186,9 @@ SOURCES += main.cpp \
     richtextdocument.cpp \
     mpmessage.cpp \
     skin.cpp \
-    mplayer-vd_ffmpeg.c
+	mplayer-vd_ffmpeg.c \
+    hwaccel.cpp \
+    videoshader.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts

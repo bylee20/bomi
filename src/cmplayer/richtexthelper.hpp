@@ -37,17 +37,17 @@ public:
 	}
 
 	static inline bool isRightBracket(ushort c) {return c == '>';}
-	static inline bool isSeperator(ushort c) {return c == ' ' || c == '\t' || c == '\r' || c== '\n';}
+	static inline bool isSeparator(ushort c) {return c == ' ' || c == '\t' || c == '\r' || c== '\n';}
 	static inline bool isWhitespace(ushort c) {return c == ' ' || c == '\t';}
 	static inline bool inRange(ushort min, ushort c, ushort max) {return min <= c && c <= max;}
 	static inline bool isNumber(ushort c) {return inRange('0', c, '9');}
 	static inline bool isAlphabet(ushort c) {return inRange('a', c, 'z') || inRange('A', c, 'Z');}
 	static inline bool isHexNumber(ushort c) {return isNumber(c) || inRange('a', c, 'f') || inRange('A', c, 'F');}
-	static inline bool skipSeperator(int &pos, const QStringRef &text) {
-		for (; pos < text.size() && isSeperator(text.at(pos).unicode()); ++pos) ;
+	static inline bool skipSeparator(int &pos, const QStringRef &text) {
+		for (; pos < text.size() && isSeparator(text.at(pos).unicode()); ++pos) ;
 		return pos >= text.size(); // true for end
 	}
-	static inline bool skipSeperator(int &pos, const QString &text) {return skipSeperator(pos, text.midRef(0));}
+	static inline bool skipSeparator(int &pos, const QString &text) {return skipSeparator(pos, text.midRef(0));}
 	static QString replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s = Qt::CaseInsensitive);
 	static inline bool same(const QString &str, const char *latin1) {
 		return !str.compare(QLatin1String(latin1), Qt::CaseInsensitive);
@@ -62,8 +62,8 @@ public:
 	static inline QStringRef trim(const QStringRef &text) {
 		if (text.isEmpty()) return QStringRef();
 		int start = 0, end = text.size();
-		while (start < end && isSeperator(text.at(start).unicode())) ++start;
-		while (end > start && isSeperator(text.at(end-1).unicode())) --end;
+		while (start < end && isSeparator(text.at(start).unicode())) ++start;
+		while (end > start && isSeparator(text.at(end-1).unicode())) --end;
 		return start < end ? midRef(text, start, end-start) : QStringRef();
 	}
 	static QChar entityCharacter(const QStringRef &entity);

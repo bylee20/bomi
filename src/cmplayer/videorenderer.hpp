@@ -27,9 +27,10 @@ public:
 		IgnoreEffect		= 1 << 8
 	};
 	Q_DECLARE_FLAGS(Effects, Effect)
-private:
 	static const int FilterEffects = InvertColor | RemapLuma;
 	static const int KernelEffects = Blur | Sharpen;
+private:
+
 public:
 	VideoRenderer(PlayEngine *engine);
 	~VideoRenderer();
@@ -77,7 +78,7 @@ private slots:
 	void onAboutToPlay();
 private:
 	struct Data;
-	class VideoShader;
+//	class VideoShader;
 
 	bool parse(const Id &id);
 	bool parse(const QString &line);

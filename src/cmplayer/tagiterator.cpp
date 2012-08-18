@@ -28,7 +28,7 @@
 //	m_open = true;
 //	m_begin = m_pos;
 //	++m_pos;
-//	if (skipSeperator())
+//	if (skipSeparator())
 //		return m_begin;
 //	if (checkRightBracket()) {
 //		++m_pos;
@@ -37,25 +37,25 @@
 
 //	int count = 0;
 //	int from = m_pos;
-//	for (; !atEnd() && !isSeperator() && !checkRightBracket(); ++m_pos, ++count) ;
+//	for (; !atEnd() && !isSeparator() && !checkRightBracket(); ++m_pos, ++count) ;
 //	m_elem = midRef(from, count);
 
 //	if (!m_open) {
 //		++m_pos;
 //		return m_begin;
-//	} else if (skipSeperator())
+//	} else if (skipSeparator())
 //		return m_begin;
 
 //	bool equal = false;
 //	int attrIdx = -1;
 //	while (!atEnd() && m_open) {
-//		if (skipSeperator() || checkRightBracket())
+//		if (skipSeparator() || checkRightBracket())
 //			break;
 //		from = m_pos;
 //		count = 0;
 //		if (!equal) {
 //			while (!atEnd()) {
-//				if (checkRightBracket() || isSeperator())
+//				if (checkRightBracket() || isSeparator())
 //					break;
 //				equal = ucs() == '=';
 //				if (equal)
@@ -87,7 +87,7 @@
 //				}
 //			} else {
 //				while (!atEnd()) {
-//					if (isSeperator() || checkRightBracket())
+//					if (isSeparator() || checkRightBracket())
 //						break;
 //					++count;
 //					++m_pos;

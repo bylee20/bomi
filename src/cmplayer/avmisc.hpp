@@ -27,23 +27,26 @@ struct VideoFormat {
 		Unknown = 0,
 		I420	= _f('I', '4', '2', '0'),
 		YV12	= _f('Y', 'V', '1', '2'),
-		YUY2	= _f('Y', 'U', 'Y', '2'),
-		RV16	= _f('R', 'V', '1', '6')
+		NV12	= _f('N', 'V', '1', '2'),
+		NV21	= _f('N', 'V', '2', '1'),
+		YUY2	= _f('Y', 'U', 'Y', '2')
+
 	};
 	VideoFormat() {
-		pitch = bpp = width = height = stride = 0;
+		planes = pitch = bpp = width = height = stride = 0;
 	}
 	inline bool isCompatibleWith(const VideoFormat &other) const {
-		return type == other.type && bpp == other.bpp && other.height < height && other.stride < stride;
+		return planes == other.planes && type == other.type && bpp == other.bpp && other.height < height && other.stride < stride;
 	}
 	inline bool operator == (const VideoFormat &rhs) const {
-		return type == rhs.type && bpp == rhs.bpp && width == rhs.width && height == rhs.height && stride == rhs.stride && pitch == rhs.pitch;
+		return planes == rhs.planes && type == rhs.type && bpp == rhs.bpp && width == rhs.width && height == rhs.height && stride == rhs.stride && pitch == rhs.pitch;
 	}
 	inline bool operator != (const VideoFormat &rhs) const {return !operator == (rhs);}
 	inline QSize size() const {return QSize(width, height);}
 	inline bool isEmpty() const {return width < 1 || height < 1;}
 	inline double bps(double fps) const {return fps*width*height*bpp;}
 	Type type = Unknown;
+	int planes;
 	int bpp, width, height, stride, pitch;
 };
 

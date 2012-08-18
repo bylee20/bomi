@@ -19,6 +19,7 @@
 #include <QtOpenGL/QGLShader>
 #include <QtOpenGL/QGLShaderProgram>
 #include "mpcore.hpp"
+#include "videoshader.hpp"
 
 #ifndef GL_UNPACK_CLIENT_STORAGE_APPLE
 #define GL_UNPACK_CLIENT_STORAGE_APPLE 34226
@@ -194,138 +195,138 @@ private:
 	quint64 m_drawn;
 };
 
-class VideoRenderer::VideoShader {
-public:
-	struct Var {
-		Var() {
-			setColor(m_color);
-			setEffects(m_effects);
-		}
-		inline const ColorProperty &color() const {return m_color;}
-		inline void setColor(const ColorProperty &color) {
-			m_color = color;
-			brightness = qBound(-1.0, m_color.brightness(), 1.0);
-			contrast = qBound(0., m_color.contrast() + 1., 2.);
-			updateHS();
-		}
-		inline int setEffects(Effects effects) {
-			m_effects = effects;
-			int idx = 0;
-			rgb_0 = 0.0;
-			rgb_c[0] = rgb_c[1] = rgb_c[2] = 1.0;
-			kern_c = kern_d = kern_n = 0.0;
-			if (!(effects & IgnoreEffect)) {
-				if (effects & FilterEffects) {
-					idx = 1;
-					if (effects & InvertColor) {
-						rgb_0 = 1.0;
-						rgb_c[0] = rgb_c[1] = rgb_c[2] = -1.0;
-					}
-				}
-				if (effects & KernelEffects) {
-					idx = 2;
-					const Pref &p = Pref::get();
-					if (effects & Blur) {
-						kern_c += p.blur_kern_c;
-						kern_n += p.blur_kern_n;
-						kern_d += p.blur_kern_d;
-					}
-					if (effects & Sharpen) {
-						kern_c += p.sharpen_kern_c;
-						kern_n += p.sharpen_kern_n;
-						kern_d += p.sharpen_kern_d;
-					}
-					const double den = 1.0/(kern_c + kern_n*4.0 + kern_d*4.0);
-					kern_c *= den;
-					kern_d *= den;
-					kern_n *= den;
-				}
-			}
-			updateHS();
-			return m_idx = idx;
-		}
-		Effects effects() const {return m_effects;}
-		void setYRange(float min, float max) {y_min = min; y_max = max;}
-		int id() const {return m_idx;}
-	private:
-		void updateHS() {
-			double sat_sinhue = 0.0, sat_coshue = 0.0;
-			if (!(!(m_effects & IgnoreEffect) && (m_effects & Grayscale))) {
-				const double sat = qBound(0.0, m_color.saturation() + 1.0, 2.0);
-				const double hue = qBound(-M_PI, m_color.hue()*M_PI, M_PI);
-				sat_sinhue = sat*sin(hue);
-				sat_coshue = sat*cos(hue);
-			}
-			sat_hue[0][0] = sat_hue[1][1] = sat_coshue;
-			sat_hue[1][0] = -(sat_hue[0][1] = sat_sinhue);
-		}
-		float rgb_0, rgb_c[3];
-		float kern_d, kern_c, kern_n;
-		float y_min = 0.0f, y_max = 1.0f;
-		float brightness, contrast, sat_hue[2][2];
-		Effects m_effects = 0;
-		int m_idx = 0;
-		ColorProperty m_color;
+//class VideoRenderer::VideoShader {
+//public:
+//	struct Var {
+//		Var() {
+//			setColor(m_color);
+//			setEffects(m_effects);
+//		}
+//		inline const ColorProperty &color() const {return m_color;}
+//		inline void setColor(const ColorProperty &color) {
+//			m_color = color;
+//			brightness = qBound(-1.0, m_color.brightness(), 1.0);
+//			contrast = qBound(0., m_color.contrast() + 1., 2.);
+//			updateHS();
+//		}
+//		inline int setEffects(Effects effects) {
+//			m_effects = effects;
+//			int idx = 0;
+//			rgb_0 = 0.0;
+//			rgb_c[0] = rgb_c[1] = rgb_c[2] = 1.0;
+//			kern_c = kern_d = kern_n = 0.0;
+//			if (!(effects & IgnoreEffect)) {
+//				if (effects & FilterEffects) {
+//					idx = 1;
+//					if (effects & InvertColor) {
+//						rgb_0 = 1.0;
+//						rgb_c[0] = rgb_c[1] = rgb_c[2] = -1.0;
+//					}
+//				}
+//				if (effects & KernelEffects) {
+//					idx = 2;
+//					const Pref &p = Pref::get();
+//					if (effects & Blur) {
+//						kern_c += p.blur_kern_c;
+//						kern_n += p.blur_kern_n;
+//						kern_d += p.blur_kern_d;
+//					}
+//					if (effects & Sharpen) {
+//						kern_c += p.sharpen_kern_c;
+//						kern_n += p.sharpen_kern_n;
+//						kern_d += p.sharpen_kern_d;
+//					}
+//					const double den = 1.0/(kern_c + kern_n*4.0 + kern_d*4.0);
+//					kern_c *= den;
+//					kern_d *= den;
+//					kern_n *= den;
+//				}
+//			}
+//			updateHS();
+//			return m_idx = idx;
+//		}
+//		Effects effects() const {return m_effects;}
+//		void setYRange(float min, float max) {y_min = min; y_max = max;}
+//		int id() const {return m_idx;}
+//	private:
+//		void updateHS() {
+//			double sat_sinhue = 0.0, sat_coshue = 0.0;
+//			if (!(!(m_effects & IgnoreEffect) && (m_effects & Grayscale))) {
+//				const double sat = qBound(0.0, m_color.saturation() + 1.0, 2.0);
+//				const double hue = qBound(-M_PI, m_color.hue()*M_PI, M_PI);
+//				sat_sinhue = sat*sin(hue);
+//				sat_coshue = sat*cos(hue);
+//			}
+//			sat_hue[0][0] = sat_hue[1][1] = sat_coshue;
+//			sat_hue[1][0] = -(sat_hue[0][1] = sat_sinhue);
+//		}
+//		float rgb_0, rgb_c[3];
+//		float kern_d, kern_c, kern_n;
+//		float y_min = 0.0f, y_max = 1.0f;
+//		float brightness, contrast, sat_hue[2][2];
+//		Effects m_effects = 0;
+//		int m_idx = 0;
+//		ColorProperty m_color;
 
-		friend class VideoShader;
-	};
+//		friend class VideoShader;
+//	};
 
-	VideoShader(const QGLContext *ctx): m_shader(ctx) {}
-	bool add(const QString &fileName) {return m_shader.addShaderFromSourceFile(QGLShader::Fragment, fileName);}
-	bool add(const QByteArray &code) {return m_shader.addShaderFromSourceCode(QGLShader::Fragment, code);}
-	bool bind() {return m_shader.bind();}
-	void release() {m_shader.release();}
-	bool link() {
-		const bool ret = m_shader.link();
-		if (ret) {
-			loc_y = m_shader.uniformLocation("y");
-			loc_u = m_shader.uniformLocation("u");
-			loc_v = m_shader.uniformLocation("v");
-			loc_brightness = m_shader.uniformLocation("brightness");
-			loc_contrast = m_shader.uniformLocation("contrast");
-			loc_sat_hue = m_shader.uniformLocation("sat_hue");
-			loc_rgb_c = m_shader.uniformLocation("rgb_c");
-			loc_rgb_0 = m_shader.uniformLocation("rgb_0");
-			loc_y_tan = m_shader.uniformLocation("y_tan");
-			loc_y_b = m_shader.uniformLocation("y_b");
-			loc_dxy = m_shader.uniformLocation("dxy");
-			loc_kern_c = m_shader.uniformLocation("kern_c");
-			loc_kern_d = m_shader.uniformLocation("kern_d");
-			loc_kern_n = m_shader.uniformLocation("kern_n");
-		}
-		return ret;
-	}
-	void setUniforms(const Var &var, const VideoFormat &format) {
-		m_shader.setUniformValue(loc_y, 0);
-		m_shader.setUniformValue(loc_u, 1);
-		m_shader.setUniformValue(loc_v, 2);
-		m_shader.setUniformValue(loc_brightness, var.brightness);
-		m_shader.setUniformValue(loc_contrast, var.contrast);
-		m_shader.setUniformValue(loc_sat_hue, var.sat_hue);
-		const float dx = 1.0/(double)format.stride;
-		const float dy = 1.0/(double)format.height;
-		m_shader.setUniformValue(loc_dxy, dx, dy, -dx, 0.f);
+//	VideoShader(const QGLContext *ctx): m_shader(ctx) {}
+//	bool add(const QString &fileName) {return m_shader.addShaderFromSourceFile(QGLShader::Fragment, fileName);}
+//	bool add(const QByteArray &code) {return m_shader.addShaderFromSourceCode(QGLShader::Fragment, code);}
+//	bool bind() {return m_shader.bind();}
+//	void release() {m_shader.release();}
+//	bool link() {
+//		const bool ret = m_shader.link();
+//		if (ret) {
+//			loc_y = m_shader.uniformLocation("y");
+//			loc_u = m_shader.uniformLocation("u");
+//			loc_v = m_shader.uniformLocation("v");
+//			loc_brightness = m_shader.uniformLocation("brightness");
+//			loc_contrast = m_shader.uniformLocation("contrast");
+//			loc_sat_hue = m_shader.uniformLocation("sat_hue");
+//			loc_rgb_c = m_shader.uniformLocation("rgb_c");
+//			loc_rgb_0 = m_shader.uniformLocation("rgb_0");
+//			loc_y_tan = m_shader.uniformLocation("y_tan");
+//			loc_y_b = m_shader.uniformLocation("y_b");
+//			loc_dxy = m_shader.uniformLocation("dxy");
+//			loc_kern_c = m_shader.uniformLocation("kern_c");
+//			loc_kern_d = m_shader.uniformLocation("kern_d");
+//			loc_kern_n = m_shader.uniformLocation("kern_n");
+//		}
+//		return ret;
+//	}
+//	void setUniforms(const Var &var, const VideoFormat &format) {
+//		m_shader.setUniformValue(loc_y, 0);
+//		m_shader.setUniformValue(loc_u, 1);
+//		m_shader.setUniformValue(loc_v, 2);
+//		m_shader.setUniformValue(loc_brightness, var.brightness);
+//		m_shader.setUniformValue(loc_contrast, var.contrast);
+//		m_shader.setUniformValue(loc_sat_hue, var.sat_hue);
+//		const float dx = 1.0/(double)format.stride;
+//		const float dy = 1.0/(double)format.height;
+//		m_shader.setUniformValue(loc_dxy, dx, dy, -dx, 0.f);
 
-		const bool filter = var.effects() & FilterEffects;
-		const bool kernel = var.effects() & KernelEffects;
-		if (filter || kernel) {
-			m_shader.setUniformValue(loc_rgb_c, var.rgb_c[0], var.rgb_c[1], var.rgb_c[2]);
-			m_shader.setUniformValue(loc_rgb_0, var.rgb_0);
-			const float y_tan = 1.0/(var.y_max - var.y_min);
-			m_shader.setUniformValue(loc_y_tan, y_tan);
-			m_shader.setUniformValue(loc_y_b, (float)-var.y_min*y_tan);
-		}
-		if (kernel) {
-			m_shader.setUniformValue(loc_kern_c, var.kern_c);
-			m_shader.setUniformValue(loc_kern_n, var.kern_n);
-			m_shader.setUniformValue(loc_kern_d, var.kern_d);
-		}
-	}
-private:
-	QGLShaderProgram m_shader;
-	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
-	int loc_brightness, loc_contrast, loc_sat_hue, loc_y, loc_u, loc_v, loc_dxy;
-};
+//		const bool filter = var.effects() & FilterEffects;
+//		const bool kernel = var.effects() & KernelEffects;
+//		if (filter || kernel) {
+//			m_shader.setUniformValue(loc_rgb_c, var.rgb_c[0], var.rgb_c[1], var.rgb_c[2]);
+//			m_shader.setUniformValue(loc_rgb_0, var.rgb_0);
+//			const float y_tan = 1.0/(var.y_max - var.y_min);
+//			m_shader.setUniformValue(loc_y_tan, y_tan);
+//			m_shader.setUniformValue(loc_y_b, (float)-var.y_min*y_tan);
+//		}
+//		if (kernel) {
+//			m_shader.setUniformValue(loc_kern_c, var.kern_c);
+//			m_shader.setUniformValue(loc_kern_n, var.kern_n);
+//			m_shader.setUniformValue(loc_kern_d, var.kern_d);
+//		}
+//	}
+//private:
+//	QGLShaderProgram m_shader;
+//	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
+//	int loc_brightness, loc_contrast, loc_sat_hue, loc_y, loc_u, loc_v, loc_dxy;
+//};
 
 struct VideoRenderer::Data {
 	static const int i420ToRgbSimple = 0;
@@ -344,10 +345,10 @@ struct VideoRenderer::Data {
 	VideoScreen *gl = nullptr;
 	VideoShader::Var var;
 	PlayEngine *engine;
-	QList<VideoShader*> shaders;
+	VideoShader *shader = nullptr;
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
 	double cpu = -1.0;
-	bool prepared = false, logoOn = false, frameIsSet = false, hasPrograms = false, binding = false;
+	bool prepared = false, logoOn = false, frameIsSet = false, binding = false;
 	bool render = false;
 	MPlayerOsdWrapper osd;
 	StreamList streams;
@@ -425,8 +426,8 @@ void VideoRenderer::setScreen(VideoScreen *gl) {
 		return;
 	if (d->gl) {
 		d->gl->makeCurrent();
-		qDeleteAll(d->shaders);
-		d->shaders.clear();
+		delete d->shader;
+		d->shader = nullptr;
 		glDeleteTextures(3, d->texture);
 		d->gl->doneCurrent();
 	}
@@ -443,19 +444,18 @@ void VideoRenderer::setScreen(VideoScreen *gl) {
 				return file.readAll();
 			return QByteArray();
 		};
-		const auto common = readAll(":/shaders/i420_to_rgb_common.glsl");
-		auto makeShader = [gl, &common, &readAll] (const QString &fileName) -> VideoShader* {
-			auto shader = new VideoShader(gl->context());
-			shader->add(common);
-			shader->add(readAll(fileName));
-			shader->link();
-			return shader;
-		};
-		d->shaders << makeShader(":/shaders/i420_to_rgb_simple.glsl")
-			<< makeShader(":/shaders/i420_to_rgb_filter.glsl")
-			<< makeShader(":/shaders/i420_to_rgb_kernel.glsl");
-		d->hasPrograms =  d->shaders[d->var.id()];
-		Q_ASSERT(d->hasPrograms);
+//		const auto common = readAll(":/shaders/i420_to_rgb_common.glsl");
+//		auto makeShader = [gl, &common, &readAll] (const QString &fileName) -> VideoShader* {
+//			auto shader = new VideoShader(gl->context());
+//			shader->add(common);
+//			shader->add(readAll(fileName));
+//			shader->link();
+//			return shader;
+//		};
+//		d->shaders << makeShader(":/shaders/i420_to_rgb_simple.glsl")
+//			<< makeShader(":/shaders/i420_to_rgb_filter.glsl")
+//			<< makeShader(":/shaders/i420_to_rgb_kernel.glsl");
+		d->shader = new VideoShader(d->gl->context());
 
 		d->gl->doneCurrent();
 
@@ -498,7 +498,7 @@ const VideoFormat &VideoRenderer::format() const {
 }
 
 bool VideoRenderer::hasFrame() const {
-	return (!d->logoOn && d->hasPrograms && d->frameIsSet && d->prepared);
+	return (!d->logoOn && d->frameIsSet && d->prepared);
 }
 
 void VideoRenderer::uploadBufferFrame() {
@@ -517,27 +517,23 @@ void VideoRenderer::uploadBufferFrame() {
 	d->var.setYRange((float)min/255.0f, (float)max/255.0f);
 
 	d->gl->makeCurrent();
-	const auto w = frame.format.stride, h = frame.format.height;
-//	if (d->clientStorage) {
-//		glBindTexture(GL_TEXTURE_2D, d->texture[0]);
-//		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-//		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.y());
-//		glBindTexture(GL_TEXTURE_2D, d->texture[1]);
-//		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-//		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w/2, h/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.u());
-//		glBindTexture(GL_TEXTURE_2D, d->texture[2]);
-//		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-//		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w/2, h/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.v());
-//	} else{
+	const auto h = frame.format.height;
+	auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
+		glBindTexture(GL_TEXTURE_2D, d->texture[idx]);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
+	};
+
 	switch (frame.format.type) {
 	case VideoFormat::I420:
 	case VideoFormat::YV12:
-		glBindTexture(GL_TEXTURE_2D, d->texture[0]);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.y());
-		glBindTexture(GL_TEXTURE_2D, d->texture[1]);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w/2, h/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.u());
-		glBindTexture(GL_TEXTURE_2D, d->texture[2]);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w/2, h/2, GL_LUMINANCE, GL_UNSIGNED_BYTE, frame.v());
+		setTex(0, GL_LUMINANCE, frame.format.pitch, frame.format.height, frame.y());
+		setTex(1, GL_LUMINANCE, frame.format.pitch >> 1, frame.format.height >> 1, frame.u());
+		setTex(2, GL_LUMINANCE, frame.format.pitch >> 1, frame.format.height >> 1, frame.v());
+		break;
+	case VideoFormat::NV12:
+	case VideoFormat::NV21:
+		setTex(0, GL_LUMINANCE, frame.format.pitch, frame.format.height, frame.y());
+		setTex(1, GL_LUMINANCE_ALPHA, frame.format.pitch >> 1, frame.format.height >> 1, frame.u());
 		break;
 	case VideoFormat::YUY2:
 		glBindTexture(GL_TEXTURE_2D, d->texture[0]);
@@ -549,7 +545,6 @@ void VideoRenderer::uploadBufferFrame() {
 		d->frameIsSet = false;
 		break;
 	}
-//	}
 	++d->frameId;
 	d->gl->doneCurrent();
 }
@@ -569,22 +564,26 @@ void VideoRenderer::prepare(const VideoFormat &format) {
 		const int w[3] = {d->format.stride, d->format.stride/2, d->format.stride/2};
 		const int h[3] = {d->format.height, d->format.height/2, d->format.height/2};
 		d->gl->makeCurrent();
+		if (d->shader)
+			d->shader->link(format.type);
+		auto initTex = [this] (int idx, GLenum fmt, int width, int height) {
+			glBindTexture(GL_TEXTURE_2D, d->texture[idx]);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexImage2D(GL_TEXTURE_2D, 0, fmt, width, height, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
+		};
 		switch (d->format.type) {
 		case VideoFormat::I420:
 		case VideoFormat::YV12:
-			for (int i=0; i<3; ++i) {
-				glBindTexture(GL_TEXTURE_2D, d->texture[i]);
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	//			if (d->clientStorage) {
-	//				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-	//				glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-	//			}
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, w[i], h[i], 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, nullptr);
-
-			}
+			initTex(0, GL_LUMINANCE, d->format.pitch, d->format.height);
+			initTex(1, GL_LUMINANCE, d->format.pitch >> 1, d->format.height >> 1);
+			initTex(2, GL_LUMINANCE, d->format.pitch >> 1, d->format.height >> 1);
+			break;
+		case VideoFormat::NV12:
+			initTex(0, GL_LUMINANCE, d->format.pitch, d->format.height);
+			initTex(1, GL_LUMINANCE_ALPHA, d->format.pitch >> 1, d->format.height >> 1);
 			break;
 		case VideoFormat::YUY2:
 			glBindTexture(GL_TEXTURE_2D, d->texture[0]);
@@ -706,7 +705,7 @@ QSize VideoRenderer::renderableSize() const {
 void VideoRenderer::updateSize() {
 	const QSizeF widget = renderableSize();
 	QRectF vtx(QPointF(0, 0), widget);
-	if (!d->logoOn && d->hasPrograms && d->prepared) {
+	if (!d->logoOn && d->prepared) {
 		const double aspect = targetAspectRatio();
 		QSizeF frame(aspect, 1.0);
 		QSizeF letter(targetCropRatio(aspect), 1.0);
@@ -728,7 +727,7 @@ void VideoRenderer::render() {
 	if (!d->gl)
 		return;
 	const QSizeF widget = renderableSize();
-	if (hasFrame()) {
+	if (hasFrame() && d->shader) {
 		QSizeF letter(targetCropRatio(targetAspectRatio()), 1.0);
 		letter.scale(widget, Qt::KeepAspectRatio);
 
@@ -764,11 +763,8 @@ void VideoRenderer::render() {
 			glMatrixMode(GL_MODELVIEW);
 		}
 		glLoadIdentity();
-		auto shader = d->shaders[d->var.id()];
-
+		d->shader->bind(d->var, d->format);
 //		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		shader->bind();
-		shader->setUniforms(d->var, d->frame->format);
 		const float textureCoords[] = {
 			(float)left,	(float)top,
 			(float)right,	(float)top,
@@ -798,7 +794,7 @@ void VideoRenderer::render() {
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
 
-		shader->release();
+		d->shader->release();
 
 		glColor3f(0.0f, 0.0f, 0.0f);
 		auto fillRect = [] (float x, float y, float w ,float h) {glRectf(x, y, x+w, y+h);};

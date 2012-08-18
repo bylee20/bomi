@@ -5,7 +5,7 @@
 #include "app.hpp"
 #include "ui_prefdialog.h"
 #include <QtGui/QStyledItemDelegate>
-#include <QtGui/Qpainter>
+#include <QtGui/QPainter>
 #include <QtCore/QStringBuilder>
 #include <QtCore/QDebug>
 #include "pref.hpp"

@@ -1,23 +1,15 @@
 #include "textosdrenderer.hpp"
-#include "richtext.hpp"
 #include "global.hpp"
 #include <QtCore/QTimer>
 #include <QtCore/QDebug>
 #include <QtGui/QPainter>
 #include "richtextdocument.hpp"
 
-//struct BlockLayout {
-//	QTextLayout *block;
-//	QList<QTextLayout*> rubies;
-//};
-
 struct TextOsdRenderer::Data {
-//	QVector<BlockLayout> layout;
 	QList<RichTextBlock> pended;
 	RichTextDocument doc[2];
 	QString text;
 	Qt::Alignment alignment;
-//	RichTextParser parser[2];
 	double outline, top, bottom, left, right, lineLeading{0}, paragraphLeading{0};
 	int px;
 	QTimer clearer;
