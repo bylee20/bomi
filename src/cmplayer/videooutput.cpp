@@ -6,6 +6,12 @@
 #include "videoframe.hpp"
 #include "videorenderer.hpp"
 #include "mpcore.hpp"
+#include "hwaccel.hpp"
+
+#ifdef Q_WS_X11
+extern HwAccel *hwaccel;
+#include <va/va_glx.h>
+#endif
 
 extern "C" {
 #include <libvo/video_out.h>
@@ -147,6 +153,11 @@ void VideoOutput::drawImage(void *data) {
 		d->renderer->prepare(d->format);
 	}
 	d->renderer->uploadBufferFrame();
+
+	const auto id = (VASurfaceID)(uintptr_t)mpi->priv;
+	if (hwaccel) {
+//		qDebug() << hwaccel->copyTexture(id);
+	}
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
@@ -196,8 +207,7 @@ int VideoOutput::queryFormat(int format) {
 	case IMGFMT_I420:
 	case IMGFMT_YV12:
 	case IMGFMT_NV12:
-	case IMGFMT_NV21:
-	//case IMGFMT_YUY2:
+	case IMGFMT_YUY2:
 		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
 			| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;
 	default:

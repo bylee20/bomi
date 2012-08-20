@@ -259,13 +259,14 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 		while (pos < text.size()) {
 			const QChar c = text.at(pos);
 			if (isSeparator(c.unicode())) {
-				ret.last().text.append(c);
+				if (!ret.last().text.isEmpty())
+					ret.last().text.append(c);
 				if (skipSeparator(pos, text))
 					break;
 			} else {
 				if (c.unicode() == '&') {
 					const int idx = text.indexOf(';', ++pos);
-					if (Q_UNLIKELY(idx < 0))
+					if (idx < 0)
 						ret.last().text.append(c);
 					else {
 						ret.last().text.append(entityCharacter(midRef(text, pos, idx - pos)));

@@ -26,6 +26,7 @@ public:
 	static QStringList dirs();
 	static QStringList names(bool reload = false);
 	static QString path(const QString &name);
+	static QString mediaStateText(State state);
 public slots:
 	void setMediaNumber(int number);
 	void setTotalMediaCount(int count);
@@ -48,7 +49,6 @@ private:
 	bool checkLabel(QObject *obj);
 	bool checkVolumeSlider(QObject *obj);
 	bool checkSeekSlider(QObject *obj);
-	static QString mediaStateText(State state);
 	void setPlaceholder(Placeholder ph, const QString &text);
 	static QWidget *topParentWidget(QWidget *widget);
 	struct Data;

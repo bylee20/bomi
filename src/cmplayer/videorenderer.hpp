@@ -52,7 +52,6 @@ public:
 	void setEffect(Effect effect, bool on);
 	void setEffects(Effects effect);
 	void setInfoVisible(bool visible);
-	double outputFrameRate(bool reset = true) const;
 	QPoint offset() const;
 	int alignment() const;
 	Effects effects() const;
@@ -63,9 +62,10 @@ public:
 	bool needsToBeRendered() const;
 	int outputWidth() const;
 	void takeSnapshot() const;
+	quint64 drawnFrames() const;
 public slots:
 	void setOffset(const QPoint &offset);
-	void setAlignment(int align);
+	void setAlignment(int alignment);
 	void setAspectRatio(double ratio);
 	void setCropRatio(double ratio);
 signals:

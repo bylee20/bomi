@@ -134,207 +134,12 @@ private:
 	QGLShaderProgram *m_shader = nullptr;
 };
 
-template <typename T>
-class RingBuffer {
-public:
-	RingBuffer(int capacity): m_capacity(capacity), m_t(new T[capacity]) {}
-	~RingBuffer() {delete []m_t;}
-	const T &front() const {return m_t[m_front];}
-	T &front() {return m_t[m_front];}
-	const T &back() const {return m_t[m_back];}
-	T &back() {return m_t[m_back];}
-	void append(const T &t) {
-		++m_back;
-		if (m_back == m_capacity) {
-			m_back = 0;
-			m_over = true;
-		}
-		if (m_over) {
-			++m_front;
-			if (m_front == m_capacity)
-				m_front = 0;
-		} else
-			++m_size;
-		m_t[m_back] = t;
-	}
-	int capacity() const {return m_capacity;}
-	int size() const {return m_size;}
-	bool isEmpty() const {return m_size <= 0;}
-	void reset() {m_size = m_back = m_front = 0; m_over = false;}
-private:
-	bool m_over = false;
-	int m_back = 0;
-	int m_front = 0;
-	int m_capacity = 0;
-	int m_size = 0;
-	T *m_t = nullptr;
-};
-
-
-class FrameRateMeasure {
-public:
-	FrameRateMeasure() {m_time.start();}
-	void reset() {
-		m_time.restart();
-		m_prev = 0;
-		m_times.reset();
-	}
-	int elapsed() const {return m_time.elapsed();}
-	void frameDrawn(int id) {
-		if (m_prev != id) {
-			m_prev = id;
-			m_times.append(m_time.elapsed());
-			++m_drawn;
-		}
-	}
-	double frameRate() const {return m_times.isEmpty() ? 0.0 : (double)(m_times.size())*1e3/(double)(m_times.back() - m_times.front());}
-private:
-	RingBuffer<int> m_times{50};
-	int m_prev = 0;
-	QTime m_time;
-	quint64 m_drawn;
-};
-
-//class VideoRenderer::VideoShader {
-//public:
-//	struct Var {
-//		Var() {
-//			setColor(m_color);
-//			setEffects(m_effects);
-//		}
-//		inline const ColorProperty &color() const {return m_color;}
-//		inline void setColor(const ColorProperty &color) {
-//			m_color = color;
-//			brightness = qBound(-1.0, m_color.brightness(), 1.0);
-//			contrast = qBound(0., m_color.contrast() + 1., 2.);
-//			updateHS();
-//		}
-//		inline int setEffects(Effects effects) {
-//			m_effects = effects;
-//			int idx = 0;
-//			rgb_0 = 0.0;
-//			rgb_c[0] = rgb_c[1] = rgb_c[2] = 1.0;
-//			kern_c = kern_d = kern_n = 0.0;
-//			if (!(effects & IgnoreEffect)) {
-//				if (effects & FilterEffects) {
-//					idx = 1;
-//					if (effects & InvertColor) {
-//						rgb_0 = 1.0;
-//						rgb_c[0] = rgb_c[1] = rgb_c[2] = -1.0;
-//					}
-//				}
-//				if (effects & KernelEffects) {
-//					idx = 2;
-//					const Pref &p = Pref::get();
-//					if (effects & Blur) {
-//						kern_c += p.blur_kern_c;
-//						kern_n += p.blur_kern_n;
-//						kern_d += p.blur_kern_d;
-//					}
-//					if (effects & Sharpen) {
-//						kern_c += p.sharpen_kern_c;
-//						kern_n += p.sharpen_kern_n;
-//						kern_d += p.sharpen_kern_d;
-//					}
-//					const double den = 1.0/(kern_c + kern_n*4.0 + kern_d*4.0);
-//					kern_c *= den;
-//					kern_d *= den;
-//					kern_n *= den;
-//				}
-//			}
-//			updateHS();
-//			return m_idx = idx;
-//		}
-//		Effects effects() const {return m_effects;}
-//		void setYRange(float min, float max) {y_min = min; y_max = max;}
-//		int id() const {return m_idx;}
-//	private:
-//		void updateHS() {
-//			double sat_sinhue = 0.0, sat_coshue = 0.0;
-//			if (!(!(m_effects & IgnoreEffect) && (m_effects & Grayscale))) {
-//				const double sat = qBound(0.0, m_color.saturation() + 1.0, 2.0);
-//				const double hue = qBound(-M_PI, m_color.hue()*M_PI, M_PI);
-//				sat_sinhue = sat*sin(hue);
-//				sat_coshue = sat*cos(hue);
-//			}
-//			sat_hue[0][0] = sat_hue[1][1] = sat_coshue;
-//			sat_hue[1][0] = -(sat_hue[0][1] = sat_sinhue);
-//		}
-//		float rgb_0, rgb_c[3];
-//		float kern_d, kern_c, kern_n;
-//		float y_min = 0.0f, y_max = 1.0f;
-//		float brightness, contrast, sat_hue[2][2];
-//		Effects m_effects = 0;
-//		int m_idx = 0;
-//		ColorProperty m_color;
-
-//		friend class VideoShader;
-//	};
-
-//	VideoShader(const QGLContext *ctx): m_shader(ctx) {}
-//	bool add(const QString &fileName) {return m_shader.addShaderFromSourceFile(QGLShader::Fragment, fileName);}
-//	bool add(const QByteArray &code) {return m_shader.addShaderFromSourceCode(QGLShader::Fragment, code);}
-//	bool bind() {return m_shader.bind();}
-//	void release() {m_shader.release();}
-//	bool link() {
-//		const bool ret = m_shader.link();
-//		if (ret) {
-//			loc_y = m_shader.uniformLocation("y");
-//			loc_u = m_shader.uniformLocation("u");
-//			loc_v = m_shader.uniformLocation("v");
-//			loc_brightness = m_shader.uniformLocation("brightness");
-//			loc_contrast = m_shader.uniformLocation("contrast");
-//			loc_sat_hue = m_shader.uniformLocation("sat_hue");
-//			loc_rgb_c = m_shader.uniformLocation("rgb_c");
-//			loc_rgb_0 = m_shader.uniformLocation("rgb_0");
-//			loc_y_tan = m_shader.uniformLocation("y_tan");
-//			loc_y_b = m_shader.uniformLocation("y_b");
-//			loc_dxy = m_shader.uniformLocation("dxy");
-//			loc_kern_c = m_shader.uniformLocation("kern_c");
-//			loc_kern_d = m_shader.uniformLocation("kern_d");
-//			loc_kern_n = m_shader.uniformLocation("kern_n");
-//		}
-//		return ret;
-//	}
-//	void setUniforms(const Var &var, const VideoFormat &format) {
-//		m_shader.setUniformValue(loc_y, 0);
-//		m_shader.setUniformValue(loc_u, 1);
-//		m_shader.setUniformValue(loc_v, 2);
-//		m_shader.setUniformValue(loc_brightness, var.brightness);
-//		m_shader.setUniformValue(loc_contrast, var.contrast);
-//		m_shader.setUniformValue(loc_sat_hue, var.sat_hue);
-//		const float dx = 1.0/(double)format.stride;
-//		const float dy = 1.0/(double)format.height;
-//		m_shader.setUniformValue(loc_dxy, dx, dy, -dx, 0.f);
-
-//		const bool filter = var.effects() & FilterEffects;
-//		const bool kernel = var.effects() & KernelEffects;
-//		if (filter || kernel) {
-//			m_shader.setUniformValue(loc_rgb_c, var.rgb_c[0], var.rgb_c[1], var.rgb_c[2]);
-//			m_shader.setUniformValue(loc_rgb_0, var.rgb_0);
-//			const float y_tan = 1.0/(var.y_max - var.y_min);
-//			m_shader.setUniformValue(loc_y_tan, y_tan);
-//			m_shader.setUniformValue(loc_y_b, (float)-var.y_min*y_tan);
-//		}
-//		if (kernel) {
-//			m_shader.setUniformValue(loc_kern_c, var.kern_c);
-//			m_shader.setUniformValue(loc_kern_n, var.kern_n);
-//			m_shader.setUniformValue(loc_kern_d, var.kern_d);
-//		}
-//	}
-//private:
-//	QGLShaderProgram m_shader;
-//	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
-//	int loc_brightness, loc_contrast, loc_sat_hue, loc_y, loc_u, loc_v, loc_dxy;
-//};
-
 struct VideoRenderer::Data {
 	static const int i420ToRgbSimple = 0;
 	static const int i420ToRgbFilter = 1;
 	static const int i420ToRgbKernel = 2;
-	FrameRateMeasure fps;
-	int frameId;
-	int align = Qt::AlignCenter;
+	int frameId = 0;
+	int alignment = Qt::AlignCenter;
 	QSize renderSize;
 	LogoDrawer logo;
 	GLuint texture[3];
@@ -356,7 +161,11 @@ struct VideoRenderer::Data {
 	QSize viewport;
 	bool takeSnapshot = false;
 	bool clientStorage = false;
+	int prevFrameId = -1;
+	quint64 drawnFrames = 0;
 };
+
+QGLWidget *glContext = nullptr;
 
 VideoRenderer::VideoRenderer(PlayEngine *engine)
 : d(new Data) {
@@ -436,25 +245,7 @@ void VideoRenderer::setScreen(VideoScreen *gl) {
 		d->gl->makeCurrent();
 		auto exts = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
 		d->clientStorage = strstr(exts, "GL_APPLE_client_storage") && strstr(exts, "GL_APPLE_texture_range");
-		qDebug() << (bool)strstr(exts, "GL_MESA_ycbcr_texture");
 		glGenTextures(3, d->texture);
-		auto readAll = [] (const QString &fileName) -> QByteArray {
-			QFile file(fileName);
-			if (file.open(QFile::ReadOnly))
-				return file.readAll();
-			return QByteArray();
-		};
-//		const auto common = readAll(":/shaders/i420_to_rgb_common.glsl");
-//		auto makeShader = [gl, &common, &readAll] (const QString &fileName) -> VideoShader* {
-//			auto shader = new VideoShader(gl->context());
-//			shader->add(common);
-//			shader->add(readAll(fileName));
-//			shader->link();
-//			return shader;
-//		};
-//		d->shaders << makeShader(":/shaders/i420_to_rgb_simple.glsl")
-//			<< makeShader(":/shaders/i420_to_rgb_filter.glsl")
-//			<< makeShader(":/shaders/i420_to_rgb_kernel.glsl");
 		d->shader = new VideoShader(d->gl->context());
 
 		d->gl->doneCurrent();
@@ -482,15 +273,12 @@ void VideoRenderer::takeSnapshot() const {
 	const_cast<VideoRenderer*>(this)->update();
 }
 
-double VideoRenderer::frameRate() const {
-	return d->engine->hasVideo() ? d->engine->context()->sh_video->fps : 25;
+quint64 VideoRenderer::drawnFrames() const {
+	return d->drawnFrames;
 }
 
-double VideoRenderer::outputFrameRate(bool /*reset*/) const {
-	const double ret = d->fps.frameRate();
-//	if (reset)
-//		d->fps.reset();
-	return ret;
+double VideoRenderer::frameRate() const {
+	return d->engine->hasVideo() ? d->engine->context()->sh_video->fps : 25;
 }
 
 const VideoFormat &VideoRenderer::format() const {
@@ -556,13 +344,12 @@ VideoFrame &VideoRenderer::bufferFrame() {
 
 void VideoRenderer::prepare(const VideoFormat &format) {
 	if (d->format != format) {
+		d->drawnFrames = 0;
 		d->prepared = false;
 		d->var.setYRange(0.0f, 1.0f);
 		d->frame->format = format;
 		d->format = format;
 		emit formatChanged(d->format);
-		const int w[3] = {d->format.stride, d->format.stride/2, d->format.stride/2};
-		const int h[3] = {d->format.height, d->format.height/2, d->format.height/2};
 		d->gl->makeCurrent();
 		if (d->shader)
 			d->shader->link(format.type);
@@ -586,28 +373,13 @@ void VideoRenderer::prepare(const VideoFormat &format) {
 			initTex(1, GL_LUMINANCE_ALPHA, d->format.pitch >> 1, d->format.height >> 1);
 			break;
 		case VideoFormat::YUY2:
-			glBindTexture(GL_TEXTURE_2D, d->texture[0]);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-//			if (d->clientStorage) {
-//				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
-//				glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-//			}
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE_ALPHA, d->format.pitch, h[0], 0, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, nullptr);
-			glBindTexture(GL_TEXTURE_2D, d->texture[1]);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->format.pitch/2, h[0], 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+			initTex(0, GL_LUMINANCE_ALPHA, d->format.pitch, d->format.height);
+			initTex(1, GL_RGBA, d->format.pitch >> 1, d->format.height);
 			break;
 		default:
 			break;
 		}
 		d->gl->doneCurrent();
-		d->fps.reset();
 		d->osd.frameSize = d->format.size();
 		d->prepared = true;
 		updateSize();
@@ -734,13 +506,13 @@ void VideoRenderer::render() {
 		QPointF offset = d->offset;
 		QPointF xy(widget.width(), widget.height());
 		xy.rx() -= letter.width(); xy.ry() -= letter.height();	xy *= 0.5;
-		if (d->align & Qt::AlignLeft)
+		if (d->alignment & Qt::AlignLeft)
 			offset.rx() -= xy.x();
-		else if (d->align & Qt::AlignRight)
+		else if (d->alignment & Qt::AlignRight)
 			offset.rx() += xy.x();
-		if (d->align & Qt::AlignTop)
+		if (d->alignment & Qt::AlignTop)
 			offset.ry() -= xy.y();
-		else if (d->align & Qt::AlignBottom)
+		else if (d->alignment & Qt::AlignBottom)
 			offset.ry() += xy.y();
 		xy += offset;
 		double top = 0.0, left = 0.0;
@@ -812,8 +584,10 @@ void VideoRenderer::render() {
 		d->gl->overlay()->renderToScreen();
 		d->osd.render();
 		d->gl->swapBuffers();
-		d->fps.frameDrawn(d->frameId);
-
+		if (d->prevFrameId != d->frameId) {
+			++d->drawnFrames;
+			d->prevFrameId = d->frameId;
+		}
 		if (d->takeSnapshot) {
 			emit tookSnapshot(frameImage());
 			d->takeSnapshot = false;
@@ -887,15 +661,15 @@ QPoint VideoRenderer::offset() const {
 	return d->offset;
 }
 
-void VideoRenderer::setAlignment(int align) {
-	if (d->align != align) {
-		d->align = align;
+void VideoRenderer::setAlignment(int alignment) {
+	if (d->alignment != alignment) {
+		d->alignment = alignment;
 		update();
 	}
 }
 
 int VideoRenderer::alignment() const {
-	return d->align;
+	return d->alignment;
 }
 
 VideoRenderer::Effects VideoRenderer::effects() const {
@@ -921,6 +695,7 @@ void unplug(VideoRenderer *renderer, VideoScreen *screen) {
 
 VideoScreen::VideoScreen()
 : QGLFunctions(context()) {
+	glContext = this;
 	doneCurrent();
 	m_overlay = new Overlay(this);
 	setAcceptDrops(false);

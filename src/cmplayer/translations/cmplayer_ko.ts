@@ -1957,7 +1957,7 @@ Do you want to start from where it&apos;s stopped?
     <message>
         <location filename="../playinfoview.cpp" line="189"/>
         <source>Average frame rate</source>
-        <translation>평균 프레임 레이<byte value="x1d"/>트</translation>
+        <translation>평균 프레임 레이트</translation>
     </message>
     <message>
         <location filename="../playinfoview.cpp" line="201"/>

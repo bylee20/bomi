@@ -21,12 +21,14 @@ private slots:
 	void onVideoFormatChanged(const VideoFormat &vfmt);
 	void setAudioFormat(const AudioFormat &afmt);
 	void onAboutToPlay();
+	void updateResourceUsage();
 private:
 	typedef QLatin1String _L;
 	static auto _8(const char *str, int len = -1) -> QString {return QString::fromLocal8Bit(str, len);}
 //	static auto _n(int n, int base = 10) -> QString {return QString::number(n, base);}
 	static auto _n(int n, int base = 10, int width = 0, const QChar &c = QLatin1Char(' ')) -> QString {return QString("%1").arg(n, width, base, c);}
 	static auto _n(quint32 n, int base = 10) -> QString {return QString::number(n, base);}
+	static auto _n(quint64 n, int base = 10) -> QString {return QString::number(n, base);}
 	static auto _n(double n, int dec = 1) -> QString {return QString::number(n, 'f', dec);}
 	static auto _n(double n, int dec, int width, const QChar &c = QLatin1Char(' ')) -> QString {return QString("%1").arg(n, width, 'f', dec, c);}
 	auto bps(int Bps) -> QString {return (Bps ? _n(Bps*8/1000) : tr("Unknown")) % _L("kbps");}

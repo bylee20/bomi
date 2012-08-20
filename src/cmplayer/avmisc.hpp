@@ -51,7 +51,7 @@ struct VideoFormat {
 };
 
 uint32_t _fToImgFmt(VideoFormat::Type type);
-static inline QString _fToString(VideoFormat::Type fourcc) {
+static inline QString _fToString(uint32_t fourcc) {
 	char str[5] = {0};	memcpy(str, &fourcc, 4);	return QString::fromAscii(str);
 }
 

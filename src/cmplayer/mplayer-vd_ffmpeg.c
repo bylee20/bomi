@@ -227,6 +227,7 @@ static int init(sh_video_t *sh)
 		ctx->do_dr1 = false;
 		ctx->do_slices = false;
 		lavc_param->threads = 1;
+		avctx->active_thread_type = 0;
 	}
 
     if (ctx->do_dr1) {

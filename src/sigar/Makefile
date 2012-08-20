@@ -8,11 +8,14 @@ OBJS := $(patsubst %.c, %.o, $(SRCS))
 
 ifeq ($(kern),darwin)
 	CFLAGS := $(CFLAGS) -I/System/Library/Frameworks/CoreFoundation.framework/Headers \
-		-I/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/CarbonCore.framework/Headers -DDARWIN -DDARWIN_HAS_LIBPROC_H
+		-I/System/Library/Frameworks/CoreServices.framework/Versions/Current/Frameworks/CarbonCore.framework/Headers \
+		-DDARWIN -DDARWIN_HAS_LIBPROC_H
+else
+
 endif
 
-sigar: $(OBJS)
-	ar rcvs ../../build/lib/libcmplayer_$@.a $^ 
+all: $(OBJS)
+	ar rcvs ../../build/lib/libcmplayer_sigar.a $^ 
 
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
