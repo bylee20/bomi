@@ -86,7 +86,9 @@ src/mplayer2/libmpdemux/ebml_defs.c
 src/mplayer2/libmpdemux/ebml_types.h
 src/mplayer2/mplayer
 src/mplayer2/version.h
-src/cmplayer/cmplayer.pro.user
+src/cmplayer/release
+src/cmplayer/debug
+ui_*.h
 *.user
 src/cmplayer_widgets/Makefile
 src/cmplayer_widgets/Makefile.Debug
@@ -94,3 +96,6 @@ src/cmplayer_widgets/Makefile.Release
 src/cmplayer_skin/Makefile
 src/cmplayer_skin/Makefile.Debug
 src/cmplayer_skin/Makefile.Release
+src/cmplayer/Makefile
+src/cmplayer/Makefile.Debug
+src/cmplayer/Makefile.Release

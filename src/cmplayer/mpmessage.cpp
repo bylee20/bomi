@@ -2,8 +2,6 @@
 #include "richtexthelper.hpp"
 #include <QtCore/QDebug>
 
-void mp_msg_va2(int mod, int lev, const char *format, va_list va);
-
 extern "C" {
 #include <stdio.h>
 #include <stdlib.h>

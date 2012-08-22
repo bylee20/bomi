@@ -8,13 +8,34 @@
 extern "C" int is_hwaccel_available(AVCodecContext *avctx) {
 	if (!Pref::get().enable_hwaccel || !Pref::get().hwaccel_codecs.contains(avctx->codec->id))
 		return false;
-#ifdef Q_WS_X11
-	int count;
-	if (HwAccelInfo::get().find(avctx, count) == HwAccelInfo::NoProfile)
+	if (!HwAccelInfo::get().supports(avctx))
 		return false;
-#endif
 	qDebug() << "HwAccel is available!";
 	return true;
+}
+
+static void (*vd_ffmpeg_release_buffer)(AVCodecContext *, AVFrame*) = nullptr;
+
+#ifdef Q_WS_MAC
+extern "C" void hwaccel_vda_release_buffer(AVCodecContext *avctx, AVFrame *frame) {
+	mp_image_t *mpi = reinterpret_cast<mp_image_t*>(avctx->opaque);
+	if (mpi->priv && avctx->hwaccel_context)
+		reinterpret_cast<HwAccel::Context*>(avctx->hwaccel_context)->hwaccel->releaseBuffer(frame->data[3]);
+	if (vd_ffmpeg_release_buffer)
+		vd_ffmpeg_release_buffer(avctx, frame);
+	else
+		frame->data[0] = frame->data[1] = frame->data[2] = frame->data[3] = nullptr;
+}
+#endif
+
+extern "C" int register_hwaccel_callbacks(AVCodecContext *avctx) {
+#ifdef Q_WS_MAC
+	vd_ffmpeg_release_buffer = avctx->release_buffer;
+	avctx->release_buffer = hwaccel_vda_release_buffer;
+	avctx->draw_horiz_band = nullptr;
+	return true;
+#endif
+	return false;
 }
 
 HwAccelInfo *HwAccelInfo::obj = nullptr;
@@ -53,18 +74,16 @@ QList<CodecID> HwAccelInfo::fullCodecList() const {
 }
 
 bool HwAccelInfo::supports(CodecID codec) const {
+#ifdef Q_WS_MAC
+	return codec == CODEC_ID_H264;
+#endif
 #ifdef Q_WS_X11
 	int count = 0;
 	return find(codec, count) != NoProfile;
 #endif
 }
 
-VAProfile HwAccelInfo::find(AVCodecContext *avctx, int &surfaceCount) const {
-	const auto profile = find(avctx->codec->id, surfaceCount);
-	m_avctx = profile != NoProfile ? avctx : nullptr;
-	return profile;
-}
-
+#ifdef Q_WS_X11
 VAProfile HwAccelInfo::find(CodecID codec, int &surfaceCount) const {
 	static const QVector<VAProfile> mpeg2s = {VAProfileMPEG2Main, VAProfileMPEG2Simple};
 	static const QVector<VAProfile> mpeg4s = {VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple};
@@ -108,23 +127,26 @@ VAProfile HwAccelInfo::findMatchedProfile(const QVector<VAProfile> &needs) const
 	}
 	return NoProfile;
 }
+#endif
 
 HwAccel::HwAccel(AVCodecContext *avctx) {
+	m_ctx.hwaccel = this;
 	const auto &info = HwAccelInfo::get();
 	if (!info.isAvailable())
 		return;
-	memset(&m_ctx, 0, sizeof(m_ctx));
+	memset(&m_ctx.ctx, 0, sizeof(m_ctx.ctx));
 	m_width = avctx->width;
 	m_height = avctx->height;
 	if (m_width <= 0 || m_height <= 0)
 		return;
 #ifdef Q_WS_MAC
-	m_ctx.width = avctx->width;
-	m_ctx.height = avctx->height;
-	m_ctx.format = 'avc1';
-	m_ctx.cv_pix_fmt_type = kCVPixelFormatType_420YpCbCr8Planar;
-	m_ctx.use_sync_decoding = 1;
-	if (ff_vda_create_decoder(&m_ctx, avctx->extradata, avctx->extradata_size))
+	m_ctx.ctx.decoder = nullptr;
+	m_ctx.ctx.width = avctx->width;
+	m_ctx.ctx.height = avctx->height;
+	m_ctx.ctx.format = 'avc1';
+	m_ctx.ctx.cv_pix_fmt_type = kCVPixelFormatType_420YpCbCr8Planar;
+	m_ctx.ctx.use_sync_decoding = 1;
+	if (ff_vda_create_decoder(&m_ctx.ctx, avctx->extradata, avctx->extradata_size))
 		return;
 #endif
 #ifdef Q_WS_X11
@@ -141,20 +163,19 @@ HwAccel::HwAccel(AVCodecContext *avctx) {
 	if(!(attr.value & VA_RT_FORMAT_YUV420))
 		return;
 
-	m_ctx.display = info.display();
-	m_ctx.config_id = VA_INVALID_ID;
-	m_ctx.context_id = VA_INVALID_ID;
-	if(vaCreateConfig(info.display(), m_profile, VAEntrypointVLD, &attr, 1, &m_ctx.config_id))
+	m_ctx.ctx.display = info.display();
+	m_ctx.ctx.config_id = VA_INVALID_ID;
+	m_ctx.ctx.context_id = VA_INVALID_ID;
+	if(vaCreateConfig(info.display(), m_profile, VAEntrypointVLD, &attr, 1, &m_ctx.ctx.config_id))
 		return;
-	if (vaCreateSurfaces(m_ctx.display, m_width, m_height, VA_RT_FORMAT_YUV420, m_ids.size(), m_ids.data()))
+	if (vaCreateSurfaces(m_ctx.ctx.display, m_width, m_height, VA_RT_FORMAT_YUV420, m_ids.size(), m_ids.data()))
 		return;
-	if (vaCreateContext(m_ctx.display, m_ctx.config_id, m_width, m_height, VA_PROGRESSIVE, m_ids.data(), m_ids.size(), &m_ctx.context_id))
+	if (vaCreateContext(m_ctx.ctx.display, m_ctx.ctx.config_id, m_width, m_height, VA_PROGRESSIVE, m_ids.data(), m_ids.size(), &m_ctx.ctx.context_id))
 		return;
 	for (auto id : m_ids)
 		m_freeIds.push_back(id);
 #endif
 	m_avctx = avctx;
-	m_avctx->hwaccel_context = &m_ctx;
 	m_usable = true;
 }
 
@@ -163,44 +184,57 @@ HwAccel::~HwAccel() {
 	if (!info.isAvailable())
 		return;
 #ifdef Q_WS_MAC
-	if (m_ctx.decoder)
-		ff_vda_destroy_decoder(&m_ctx);
+	if (m_ctx.ctx.decoder)
+		ff_vda_destroy_decoder(&m_ctx.ctx);
 #endif
 #ifdef Q_WS_X11
-	if (m_ctx.display) {
+	if (m_ctx.ctx.display) {
 		if (m_glSurface)
-			vaDestroySurfaceGLX(m_ctx.display, &m_glSurface);
-		if (m_ctx.context_id != VA_INVALID_ID)
-			vaDestroyContext(m_ctx.display, m_ctx.context_id);
+			vaDestroySurfaceGLX(m_ctx.ctx.display, &m_glSurface);
+		if (m_ctx.ctx.context_id != VA_INVALID_ID)
+			vaDestroyContext(m_ctx.ctx.display, m_ctx.ctx.context_id);
 		for (auto id : m_ids) {
 			if (id != VA_INVALID_SURFACE)
-				vaDestroySurfaces(m_ctx.display, &id, 1);
+				vaDestroySurfaces(m_ctx.ctx.display, &id, 1);
 		}
-		if (m_ctx.config_id != VA_INVALID_ID)
-			vaDestroyConfig(m_ctx.display, m_ctx.config_id);
+		if (m_ctx.ctx.config_id != VA_INVALID_ID)
+			vaDestroyConfig(m_ctx.ctx.display, m_ctx.ctx.config_id);
 	}
 #endif
 }
 
 VideoFormat HwAccel::format() const {
+#ifdef Q_WS_MAC
+	return VideoFormat::fromType(VideoFormat::YV12, m_width, m_height);
+#endif
+#ifdef Q_WS_X11
 	auto format = VideoFormat::fromType(VideoFormat::BGRA, m_width, m_height);
 	format.width_stride = format.stride = m_width;
 	return format;
+#endif
 }
 
 bool HwAccel::isCompatibleWith(const AVCodecContext *avctx) const {
 	if (!m_usable || m_width != avctx->width || m_height != avctx->height)
 		return false;
+#ifdef Q_WS_MAC
+	return false;
+#endif
+#ifdef Q_WS_X11
 	int count = 0;
 	auto profile = HwAccelInfo::get().find(avctx->codec->id, count);
 	return profile != HwAccelInfo::NoProfile && profile == m_profile && m_ids.size() == count;
+#endif
 }
 
 bool HwAccel::createSurface(GLuint *textures) {
 	m_textures = textures;
+#ifdef Q_WS_MAC
+	return true;
+#endif
 #ifdef Q_WS_X11
 	glBindTexture(GL_TEXTURE_2D, m_textures[0]);
-	int status = vaCreateSurfaceGLX(m_ctx.display, GL_TEXTURE_2D, m_textures[0], &m_glSurface);
+	int status = vaCreateSurfaceGLX(m_ctx.ctx.display, GL_TEXTURE_2D, m_textures[0], &m_glSurface);
 	qDebug() << "vaCreatteSurfaceGLX():" << vaErrorStr(status);
 	return status == VA_STATUS_SUCCESS;
 #endif
@@ -208,42 +242,39 @@ bool HwAccel::createSurface(GLuint *textures) {
 
 bool HwAccel::copySurface(mp_image_t *mpi) {
 #ifdef Q_WS_MAC
-	CVPixelBufferRef buffer = (CVPixelBufferRef)(mpi->data[3]);
+	CVPixelBufferRef buffer = (CVPixelBufferRef)(mpi->planes[3]);
 	CVPixelBufferLockBaseAddress(buffer, 0);
-	auto setTex = [this] (int idx, int width, int height, const uchar *data) {
-		glBindTexture(GL_TEXTURE_2D, m_texture(idx));
+	auto setTex = [this] (int idx, int width, int height, const void *data) {
+		glBindTexture(GL_TEXTURE_2D, m_textures[idx]);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
 	};
 	setTex(0, m_width, m_height, CVPixelBufferGetBaseAddressOfPlane(buffer, 0));
 	setTex(1, m_width >> 1, m_height >> 1, CVPixelBufferGetBaseAddressOfPlane(buffer, 1));
 	setTex(2, m_width >> 1, m_height >> 1, CVPixelBufferGetBaseAddressOfPlane(buffer, 2));
-//	image->stride[0] = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0);
-//	image->stride[1] = CVPixelBufferGetBytesPerRowOfPlane(buffer, 1);
-//	image->stride[2] = CVPixelBufferGetBytesPerRowOfPlane(buffer, 2);
+//	const int stride = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0);
 	CVPixelBufferUnlockBaseAddress(buffer, 0);
+	return true;
 #endif
 #ifdef Q_WS_X11
 	glBindTexture(GL_TEXTURE_2D, m_textures[0]);
 	VASurfaceID id = (VASurfaceID)(uintptr_t)mpi->planes[3];
-	const auto status = vaCopySurfaceGLX(m_ctx.display, m_glSurface, id, 0);
+	const auto status = vaCopySurfaceGLX(m_ctx.ctx.display, m_glSurface, id, 0);
 	if (status != VA_STATUS_SUCCESS)
 		qDebug() << "vaCopySurfaceGLX():" << vaErrorStr(status);
-	vaSyncSurface(m_ctx.display, id);
+	vaSyncSurface(m_ctx.ctx.display, id);
 	return status == VA_STATUS_SUCCESS;
 #endif
 }
 
 bool HwAccel::setBuffer(mp_image_t *mpi) {
+	if (mpi->type != MP_IMGTYPE_NUMBERED || mpi->imgfmt != IMGFMT_VDPAU)
+		return false;
+	if (mpi->priv)
+		releaseBuffer(mpi->planes[3]);
 #ifdef Q_WS_MAC
 	uchar *dummy = reinterpret_cast<uint8_t*>(1);
 #endif
 #ifdef Q_WS_X11
-	if (mpi->type != MP_IMGTYPE_NUMBERED)
-		return false;
-	if (mpi->imgfmt != IMGFMT_VDPAU)
-		return false;
-	if (mpi->priv)
-		m_usingIds.push_front((VASurfaceID)(uintptr_t)mpi->priv);
 	VASurfaceID id = VA_INVALID_SURFACE;
 	if (!m_usingIds.isEmpty())
 		id = m_usingIds.takeLast();
@@ -259,6 +290,17 @@ bool HwAccel::setBuffer(mp_image_t *mpi) {
 	mpi->flags |= MP_IMGFLAG_DIRECT;
 	mpi->stride[0] = mpi->stride[1] = mpi->stride[2] = mpi->stride[3] = 0;
 	mpi->planes[0] = mpi->planes[1] = mpi->planes[2] = mpi->planes[3] = nullptr;
-	mpi->planes[0] = mpi->planes[3] = dummy;
+	mpi->priv = mpi->planes[0] = mpi->planes[3] = dummy;
 	return true;
+}
+
+void HwAccel::releaseBuffer(void *data) {
+#ifdef Q_WS_MAC
+	auto cv_buffer = reinterpret_cast<CVPixelBufferRef>(data);
+	if (cv_buffer)
+		CFRelease(cv_buffer);
+#endif
+#ifdef Q_WS_X11
+	m_usingIds.push_front((VASurfaceID)(uintptr_t)data);
+#endif
 }

@@ -5,6 +5,8 @@
 #include <QtCore/QPair>
 #include <QtCore/QStringBuilder>
 
+void mp_msg_va2(int mod, int lev, const char *format, va_list va);
+
 struct Stream {
 	QString name() const {
 		QString name = m_title;

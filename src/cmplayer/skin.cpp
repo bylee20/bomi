@@ -20,8 +20,8 @@
 
 Q_IMPORT_PLUGIN(cmplayer_widgets)
 
-template<typename T1RandomAccessIterator, typename T2, typename T1LessThanT2, typename T2LessThanT1>
-T1RandomAccessIterator binarySearch(T1RandomAccessIterator begin, T1RandomAccessIterator end, const T2 &value, T1LessThanT2 t1t2, T2LessThanT1 t2t1) {
+template<typename T1RAIt, typename T2, typename T1LessThanT2, typename T2LessThanT1>
+T1RAIt binarySearch(T1RAIt begin, T1RAIt end, const T2 &value, T1LessThanT2 t1t2, T2LessThanT1 t2t1) {
 	const auto it = qLowerBound(begin, end, value, t1t2);	return (it == end || t2t1(value, *it)) ? end : it;
 }
 

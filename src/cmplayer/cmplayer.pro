@@ -1,16 +1,24 @@
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release uitools
-QT = core gui opengl network svg webkit
+QT = core gui opengl network
 
 LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
     -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
+
+!isEmpty(RELEASE) {
+        CONFIG += release
+        macx:CONFIG += app_bundle
+} else {
+        CONFIG += debug
+        macx:CONFIG -= app_bundle
+}
 
 macx {
     QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
     QMAKE_CXXFLAGS_X86_64 += -m64
     QMAKE_CXX = /opt/local/bin/g++-mp-4.7
-    #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
-    #QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.6.sdk
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    QMAKE_MAC_SDK = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
@@ -40,19 +48,12 @@ LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldv
 
 INCLUDEPATH += ../mplayer2 ../../build/include ../sigar/include ../mplayer2/libmpcodecs
 
-QMAKE_CC = "gcc -std=c99 -ffast-math"
+QMAKE_CC = "gcc -std=c99 -ffast-math -w"
 
-QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -std=c++11 -Wno-uninitialized -Wno-multichar
 
 DESTDIR = ../../build
 
-!isEmpty(RELEASE) {
-        CONFIG += release
-        macx:CONFIG += app_bundle
-} else {
-        CONFIG += debug
-        macx:CONFIG -= app_bundle
-}
 
 RESOURCES += rsclist.qrc
 HEADERS += playengine.hpp \

@@ -58,6 +58,7 @@ static const vd_info_t info = {
 #endif
 
 extern int is_hwaccel_available(AVCodecContext *avctx);
+extern int register_hwaccel_callbacks(AVCodecContext *avctx);
 static inline int pixfmt_to_imgfmt(enum PixelFormat pixfmt) {
 #ifdef __APPLE__
 	if (pixfmt == PIX_FMT_VDA_VLD) {
@@ -189,8 +190,7 @@ static int init(sh_video_t *sh)
 	avctx->codec_type = AVMEDIA_TYPE_VIDEO;
 	avctx->codec_id = lavc_codec->id;
 
-	if (is_hwaccel_available(avctx) || lavc_codec->capabilities & CODEC_CAP_HWACCEL   // XvMC
-		|| lavc_codec->capabilities & CODEC_CAP_HWACCEL_VDPAU) {
+	if (is_hwaccel_available(avctx)) {
 		ctx->do_dr1    = true;
 		ctx->do_slices = true;
 		lavc_param->threads    = 1;
@@ -206,6 +206,8 @@ static int init(sh_video_t *sh)
 			mp_msg(MSGT_DECVIDEO, MSGL_V, "[VD_FFMPEG] VDPAU hardware "
 				   "decoding.\n");
 		avctx->slice_flags = SLICE_FLAG_CODED_ORDER | SLICE_FLAG_ALLOW_FIELD;
+		if (register_hwaccel_callbacks(avctx))
+			ctx->do_dr1 = ctx->do_slices = false;
 	}
 
 	if (lavc_param->threads == 0) {

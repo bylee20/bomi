@@ -124,7 +124,10 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	Menu *video = this->addMenu(_L("video"));
 	video->addMenu(_L("track"))->setEnabled(false);
 	video->addSeparator();
-	video->addAction(_L("snapshot"))->setShortcut(Qt::CTRL + Qt::Key_S);
+	QAction *snapshot = video->addAction(_L("snapshot"));
+	snapshot->setShortcut(Qt::CTRL + Qt::Key_S);
+	snapshot->setEnabled(false);
+	snapshot->setVisible(false);
 	video->addAction(_L("drop-frame"), true)->setShortcut(Qt::CTRL + Qt::Key_D);
 	video->addSeparator();
 
