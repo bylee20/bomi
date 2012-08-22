@@ -118,7 +118,7 @@ elif test $kern = "Linux"
 then
   echo "Build for Linux"
   args="--cc=gcc $args --disable-coreaudio --enable-alsa"
-  libs="$libs -lopenal -lasound -lva -L../../build/lib -lcmplayer_av"
+  libs="-L../../build/lib -lcmplayer_av $libs -lopenal -lasound -lva"
   objs="$objs libao2/ao_alsa.o osdep/timer-linux.o"
 else
   echo "Not supported!"
