@@ -11,12 +11,11 @@
 %define is_suse %(test -e /etc/SuSE-release && echo 1 || echo 0)
 
 %define name cmplayer
-%define version 0.5.4
+%define version 0.6.0
 %define qmake qmake
 %define lrelease lrelease
 %define gpp_pkg gcc-c++
 %define qt_dev libqt4-devel
-%define vlc_dev vlc-devel
 
 %define _prefix /usr
 %define _actiondir %{_datadir}/kde4/apps/solid/actions
@@ -46,7 +45,7 @@ Source: %{name}-%{version}-src.tar.gz
 Packager: xylosper <darklin20@gmail.com>
 Distribution: %{distro}
 BuildRoot: %{_tmppath}/%{name}-buildroot
-BuildRequires: %{gpp_pkg} >= 4.6 %{qt_dev} >= 4.7 %{vlc_dev} >= 1.1
+BuildRequires: %{gpp_pkg} >= 4.7 %{qt_dev} >= 4.8
 Requires: vlc
 Prefix: %{_prefix}
 Autoreqprov: on
@@ -58,7 +57,11 @@ CMPlayer is a multimedia player.
 %setup -q
 
 %build
-make QMAKE=%{qmake} LRELEASE=%{lrelease} PREFIX=%{_prefix} all
+./build-libchardet
+./build-sigar
+./build-libav
+./build-mplayer2
+make QMAKE=%{qmake} LRELEASE=%{lrelease} PREFIX=%{_prefix} cmplayer
 
 %install
 make QMAKE=%{qmake} LRELEASE=%{lrelease} PREFIX=%{_prefix} DEST_DIR=%{?buildroot:%{buildroot}} install

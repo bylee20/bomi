@@ -1,3 +1,13 @@
+cmplayer (0.6.0-1) unstable; urgency=low
+
+  * Released
+
+<<<<<<< HEAD
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Wed, 22 Aug 2012 11:11:00 +0900
+=======
+ -- xylosper <darklin20@gmail.com>  Wed, 22 Aug 2012 11:11:00 +0900
+>>>>>>> d5189c85c539f7af9a421d09fa084e178a945749
+
 cmplayer (0.5.4-1) unstable; urgency=low
 
   * Released

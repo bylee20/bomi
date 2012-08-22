@@ -8,6 +8,8 @@ install_file := install -m 644
 install_exe := install -m 755
 install_dir := sh install_dir.sh
 
+CXX ?= g++
+
 ifeq ($(os),osx)
 	QMAKE ?= /Developer/Tools/Qt/qmake -spec macx-g++
 	MACDEPLOYQT ?= /Developer/Tools/Qt/macdeployqt
@@ -26,7 +28,7 @@ else
 	CMPLAYER_SKINS_PATH ?= $(DATA_PATH)/cmplayer/skins
 	cmplayer_exec := cmplayer
 	qmake_vars := $(qmake_vars) \
-		DEFINES+="CMPLAYER_SKINS_PATH=\\\\\\\"$(CMPLAYER_SKINS_PATH)\\\\\\\""
+		DEFINES+="CMPLAYER_SKINS_PATH=\\\\\\\"$(CMPLAYER_SKINS_PATH)\\\\\\\"" QMAKE_CXX=$(CXX)
 endif
 
 cmplayer: translations skin
@@ -54,7 +56,7 @@ clean:
 	-rm -rf build/skins
 	-rm -f src/cmplayer/translations/*.qm
 
-install:
+install: cmplayer
 ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(BIN_PATH)
 	-install -d $(DEST_DIR)$(APP_PATH)

@@ -15,13 +15,19 @@ else
 CFLAGS += -O2
 endif
 
+MAKE_VARS = CXX=g++-4.7 QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr \
+		ACTION_PATH=/usr/share/kde4/apps/solid/actions
+
 build: build-stamp
 build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
-	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr \
-		ACTION_PATH=/usr/share/kde4/apps/solid/actions all
+	./build-libchardet
+	./build-sigar
+	./build-libav
+	./build-mplayer2
+	make $(MAKE_VARS) cmplayer
 
 	#touch build-stamp
 	touch $@
@@ -32,8 +38,7 @@ clean:
 	rm -f build-stamp
 
 	# Add here commands to clean up after the build process.
-	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr \
-		ACTION_PATH=/usr/share/kde4/apps/solid/actions clean
+	make $(MAKE_VARS) clean
 
 	dh_clean
 
@@ -45,9 +50,7 @@ install: build
 
 	# Add here commands to install the package into debian/gentoo.
 	# The DESTDIR Has To Be Exactly /usr/src/packages/BUILD/debian/debian/<nameOfPackage>
-	make QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr \
-		ACTION_PATH=/usr/share/kde4/apps/solid/actions \
-		DEST_DIR=$(CURDIR)/debian/cmplayer install
+	make $(MAKE_VARS) DEST_DIR=$(CURDIR)/debian/cmplayer install
 
 # Build architecture-independent files here.
 binary-indep: build install

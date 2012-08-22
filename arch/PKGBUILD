@@ -9,7 +9,7 @@ license=('GPL')
 depends=('qt>=4.8' 'libdvdnav' ' libdvdread' 'libcdio' 'openal' 'alsa-lib'
 	'libva' 'libmad' 'faad2' 'libdv' 'xvidcore' 'libvorbis' 'libogg' 'libtheora'
 	'a52dec' 'libdca' 'libgl' 'yasm')
-makedepends=('git' 'gcc>=4.7')
+makedepends=('git' 'mesa' 'gcc>=4.7' 'python>=3.0')
 
 build() {
 	cd $srcdir
@@ -17,7 +17,7 @@ build() {
 	echo $pkgname-$pkgver
 	git clone $url $pkgname-$pkgver
 	cd $pkgname-$pkgver
-#	git checkout $pkgver
+	git checkout $pkgver
 	./build-libchardet && ./build-sigar && ./build-libav && ./build-mplayer2 && \
 	make PREFIX=/usr cmplayer || return 1
 }

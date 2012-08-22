@@ -13,6 +13,8 @@ LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldv
         macx:CONFIG -= app_bundle
 }
 
+QMAKE_CXX = g++-4.7
+
 macx {
     QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
     QMAKE_CXXFLAGS_X86_64 += -m64
@@ -50,7 +52,7 @@ INCLUDEPATH += ../mplayer2 ../../build/include ../sigar/include ../mplayer2/libm
 
 QMAKE_CC = "gcc -std=c99 -ffast-math -w"
 
-QMAKE_CXXFLAGS += -std=c++11 -Wno-uninitialized -Wno-multichar
+QMAKE_CXXFLAGS += -std=c++11
 
 DESTDIR = ../../build
 
