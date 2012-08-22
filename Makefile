@@ -2,7 +2,7 @@
 
 kern := $(shell uname -s)
 os := $(shell if test $(kern) = "Darwin"; then echo "osx"; elif test $(kern) = "Linux"; then echo "linux"; else echo "unknown"; fi)
-qmake_vars := DESTDIR=\\\"../../bin\\\" RELEASE=\\\"yes\\\"
+qmake_vars := RELEASE=\\\"yes\\\"
 vlc_plugins_dir := vlc-plugins
 install_file := install -m 644
 install_exe := install -m 755
@@ -23,7 +23,7 @@ else
 	ICON_PATH ?= $(DATA_PATH)/icons/hicolor
 	APP_PATH ?= $(DATA_PATH)/applications
 	ACTION_PATH ?= $(DATA_PATH)/apps/solid/actions
-	CMPLAYER_SKIN_PATH ?= $(DATA_PATH)/cmplayer/skin
+	CMPLAYER_SKINS_PATH ?= $(DATA_PATH)/cmplayer/skins
 	cmplayer_exec := cmplayer
 	qmake_vars := $(qmake_vars) \
 		DEFINES+="CMPLAYER_SKINS_PATH=\\\\\\\"$(CMPLAYER_SKINS_PATH)\\\\\\\""
@@ -57,7 +57,6 @@ clean:
 install:
 ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(BIN_PATH)
-	-install -d $(DEST_DIR)$(CMPLAYER_VLC_PLUGINS_PATH)
 	-install -d $(DEST_DIR)$(APP_PATH)
 	-install -d $(DEST_DIR)$(ACTION_PATH)
 	-install -d $(DEST_DIR)$(ICON_PATH)/16x16/apps
@@ -68,9 +67,9 @@ ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(ICON_PATH)/64x64/apps
 	-install -d $(DEST_DIR)$(ICON_PATH)/128x128/apps
 	-install -d $(DEST_DIR)$(ICON_PATH)/256x256/apps
+	-install -d $(DEST_DIR)$(CMPLAYER_SKINS_PATH)
 #	-install -d $(DEST_DIR)$(ICON_PATH)/scalable/apps
-	$(install_exe) bin/$(cmplayer_exec) $(DEST_DIR)$(BIN_PATH)
-	$(install_file) bin/$(vlc_plugins_dir)/libcmplayer*_plugin.so $(DEST_DIR)$(CMPLAYER_VLC_PLUGINS_PATH) 
+	$(install_exe) build/$(cmplayer_exec) $(DEST_DIR)$(BIN_PATH)
 	$(install_file) cmplayer.desktop $(DEST_DIR)$(APP_PATH)
 	$(install_file) cmplayer-opendvd.desktop $(DEST_DIR)$(ACTION_PATH)
 	$(install_file) icons/cmplayer16.png $(DEST_DIR)$(ICON_PATH)/16x16/apps/cmplayer.png
@@ -82,32 +81,5 @@ ifeq ($(os),linux)
 	$(install_file) icons/cmplayer128.png $(DEST_DIR)$(ICON_PATH)/128x128/apps/cmplayer.png
 	$(install_file) icons/cmplayer256.png $(DEST_DIR)$(ICON_PATH)/256x256/apps/cmplayer.png
 #	$(install_file) icons/cmplayer.svg $(DEST_DIR)$(ICON_PATH)/scalable/apps/cmplayer.svg
-endif
-
-uninstall:
-ifeq ($(os),linux)
-	-rm -f $(BIN_PATH)/cmplayer
-	-rm -f $(CMPLAYER_VLC_PLUGINS_PATH)/libcmplayer*_plugin.so
-	-rm -f $(APP_PATH)/cmplayer.desktop
-	-rm -f $(ACTION_PATH)/cmplayer-opendvd.desktop
-	-rm -f $(ICON_PATH)/16x16/apps/cmplayer.png
-	-rm -f $(ICON_PATH)/22x22/apps/cmplayer.png
-	-rm -f $(ICON_PATH)/24x24/apps/cmplayer.png
-	-rm -f $(ICON_PATH)/32x32/apps/cmplayer.png
-	-rm -f $(ICON_PATH)/48x48/apps/cmplayer.png
-	-rm -f $(ICON_PATH)/64x64/apps/cmplayer.png
-	-rm -f $(ICON_PATH)/128x128/apps/cmplayer.png
-	-rm -f $(ICON_PATH)/256x256/apps/cmplayer.png
-	-rmdir $(BIN_PATH)
-	-rmdir $(CMPLAYER_VLC_PLUGINS_PATH)
-	-rmdir $(APP_PATH)
-	-rmdir $(ACTION_PATH)
-	-rmdir $(ICON_PATH)/16x16/apps
-	-rmdir $(ICON_PATH)/22x22/apps
-	-rmdir $(ICON_PATH)/24x24/apps
-	-rmdir $(ICON_PATH)/32x32/apps
-	-rmdir $(ICON_PATH)/48x48/apps
-	-rmdir $(ICON_PATH)/64x64/apps
-	-rmdir $(ICON_PATH)/128x128/apps
-	-rmdir $(ICON_PATH)/256x256/apps
+	-cp -r build/skins/* $(DEST_DIR)$(CMPLAYER_SKINS_PATH)/
 endif

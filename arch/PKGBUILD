@@ -1,20 +1,25 @@
 # Maintainer: xylosper <darklin20@gmail.com>
 
 pkgname=('cmplayer')
-pkgver=0.5.4
+pkgver=0.6.0
 pkgrel=1
 arch=('i686' 'x86_64')
 url="http://code.google.com/p/$pkgname"
 license=('GPL')
-depends=('qt>=4.8' 'libdvdnav' ' libdvdread' 'libcdio' 'openal' 'alsa-lib')
+depends=('qt>=4.8' 'libdvdnav' ' libdvdread' 'libcdio' 'openal' 'alsa-lib'
+	'libva' 'libmad' 'faad2' 'libdv' 'xvidcore' 'libvorbis' 'libogg' 'libtheora'
+	'a52dec' 'libdca' 'libgl' 'yasm')
 makedepends=('git' 'gcc>=4.7')
 
 build() {
 	cd $srcdir
+	echo $url
+	echo $pkgname-$pkgver
 	git clone $url $pkgname-$pkgver
 	cd $pkgname-$pkgver
-	git checkout $pkgver
-	make PREFIX=/usr all || return 1
+#	git checkout $pkgver
+	./build-libchardet && ./build-sigar && ./build-libav && ./build-mplayer2 && \
+	make PREFIX=/usr cmplayer || return 1
 }
 
 package() {
