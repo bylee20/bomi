@@ -43,16 +43,18 @@ translations:
 skin: build_dir
 	cd src/cmplayer_skin && $(QMAKE) cmplayer_skin.pro && make release
 	cp -r src/cmplayer_skin/skins build
-#	$(install_dir) src/skin bin/skin
 
 build_dir:
 	install -d build
 
 clean:
+	-cd src/cmplayer_skin && $(QMAKE) cmplayer_skin.pro && make clean
 	-cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make clean
 	-rm -rf build/CMPlayer*
+	-rm -rf build/skins
+	-rm -f src/cmplayer/translations/*.qm
 
-install: cmplayerstatic
+install:
 ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(BIN_PATH)
 	-install -d $(DEST_DIR)$(CMPLAYER_VLC_PLUGINS_PATH)

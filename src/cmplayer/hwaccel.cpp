@@ -16,8 +16,7 @@ extern "C" int is_hwaccel_available(AVCodecContext *avctx) {
 
 static void (*vd_ffmpeg_release_buffer)(AVCodecContext *, AVFrame*) = nullptr;
 
-#ifdef Q_WS_MAC
-extern "C" void hwaccel_vda_release_buffer(AVCodecContext *avctx, AVFrame *frame) {
+void hwaccel_release_buffer(AVCodecContext *avctx, AVFrame *frame) {
 	mp_image_t *mpi = reinterpret_cast<mp_image_t*>(avctx->opaque);
 	if (mpi->priv && avctx->hwaccel_context)
 		reinterpret_cast<HwAccel::Context*>(avctx->hwaccel_context)->hwaccel->releaseBuffer(frame->data[3]);
@@ -26,12 +25,11 @@ extern "C" void hwaccel_vda_release_buffer(AVCodecContext *avctx, AVFrame *frame
 	else
 		frame->data[0] = frame->data[1] = frame->data[2] = frame->data[3] = nullptr;
 }
-#endif
 
 extern "C" int register_hwaccel_callbacks(AVCodecContext *avctx) {
-#ifdef Q_WS_MAC
 	vd_ffmpeg_release_buffer = avctx->release_buffer;
-	avctx->release_buffer = hwaccel_vda_release_buffer;
+	avctx->release_buffer = hwaccel_release_buffer;
+#ifdef Q_WS_MAC
 	avctx->draw_horiz_band = nullptr;
 	return true;
 #endif

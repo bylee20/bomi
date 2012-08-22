@@ -4959,7 +4959,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="423"/>
         <source>Drop Frame</source>
-        <translation>드롭 프레<byte value="x1c"/>임</translation>
+        <translation>드롭 프레임</translation>
     </message>
     <message>
         <source>Auto Contrast</source>

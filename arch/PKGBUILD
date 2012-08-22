@@ -6,8 +6,8 @@ pkgrel=1
 arch=('i686' 'x86_64')
 url="http://code.google.com/p/$pkgname"
 license=('GPL')
-depends=('qt>=4.7' 'vlc>=1.1')
-makedepends=('git' 'gcc>=4.6')
+depends=('qt>=4.8' 'libdvdnav' ' libdvdread' 'libcdio' 'openal' 'alsa-lib')
+makedepends=('git' 'gcc>=4.7')
 
 build() {
 	cd $srcdir

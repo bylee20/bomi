@@ -420,15 +420,7 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QMainWindow::resizeEvent(event);
-//	QSize size = d->screen.size();
-//	if (d->skin.screen())
-//		size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
-//	if (isFullScreen()) {
-//		d->video.setFixedRenderSize(size);
-//	} else {
-//		d->video.setFixedRenderSize(QSize());
-//	}
-//	showMessage(QString::fromUtf8("%1x%2").arg(size.width()).arg(size.height()), 1000);
+	d->skin.setVisible(!isFullScreen());
 }
 
 void MainWindow::pause(bool pause) {
@@ -558,7 +550,6 @@ void MainWindow::setFullScreen(bool full) {
 			unsetCursor();
 		updateStaysOnTop();
 	}
-	d->skin.setVisible(!full);
 	d->dontPause = false;
 	emit fullscreenChanged(full);
 	setWindowFilePath(full ? QString() : d->filePath);

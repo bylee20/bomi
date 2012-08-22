@@ -542,7 +542,6 @@ void VideoRenderer::render() {
 			(float)(d->vtx.right()+offset.x()),	(float)(d->vtx.bottom()+offset.y()),
 			(float)(d->vtx.left()+offset.x()),	(float)(d->vtx.bottom()+offset.y())
 		};
-
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, d->textures[0]);
 		glActiveTexture(GL_TEXTURE1);
