@@ -148,7 +148,7 @@ void AudioController::onAboutToOpen() {
 
 void AudioController::onAboutToPlay() {
 	if (d->engine && d->engine->context()) {
-		MPContext *mpctx = d->engine->context();
+//		MPContext *mpctx = d->engine->context();
 		auto mixer = &d->engine->context()->mixer;
 //		mixer_setvolume2(mixer, 0.0f, 0.0f); mplayer bug? when volume < 1.0, no sound output
 		mixer_setmute(mixer, d->muted);

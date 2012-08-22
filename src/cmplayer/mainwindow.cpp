@@ -21,7 +21,6 @@ MainWindow::MainWindow(): d(new Data) {
 	setAcceptDrops(true);
 
 	plug(&d->engine, &d->audio);
-	plug(&d->video, d->screen);
 
 	Menu &open = d->menu("open");		Menu &play = d->menu("play");
 	Menu &video = d->menu("video");		Menu &audio = d->menu("audio");
@@ -99,7 +98,7 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(&d->engine, mrlChanged(Mrl), this, updateMrl(Mrl));
 	CONNECT(&d->engine, stateChanged(State,State), this, updateState(State,State));
 	CONNECT(&d->engine, tick(int), &d->subtitle, render(int));
-	CONNECT(d->screen, customContextMenuRequested(const QPoint&), this, showContextMenu(const QPoint&));
+	CONNECT(&d->screen, customContextMenuRequested(const QPoint&), this, showContextMenu(const QPoint&));
 	CONNECT(&d->video, formatChanged(VideoFormat), this, updateVideoFormat(VideoFormat));
 //	CONNECT(d->video, screenSizeChanged(QSize), this, onScreenSizeChanged(QSize));
 	CONNECT(&d->audio, mutedChanged(bool), audio["mute"], setChecked(bool));
@@ -153,28 +152,29 @@ MainWindow::MainWindow(): d(new Data) {
 	mb->addMenu(&win);
 	mb->addMenu(&help);
 #endif
-	d->screen->overlay()->add(&d->playInfo.osd());
-	d->screen->overlay()->add(&d->subtitle.osd());
-	d->screen->overlay()->add(&d->timeLine);
-	d->screen->overlay()->add(&d->message);
+	d->screen.overlay()->add(&d->playInfo.osd());
+	d->screen.overlay()->add(&d->subtitle.osd());
+	d->screen.overlay()->add(&d->timeLine);
+	d->screen.overlay()->add(&d->message);
 
 	if (d->skin.load(d->p.skin_name)) {
 		auto screen = d->skin.screen();
-		d->screen->setParent(screen);
-		d->screen->move(0, 0);
-		d->screen->resize(screen->size());
+		d->screen.setParent(screen);
+		d->screen.move(0, 0);
+		d->screen.resize(screen->size());
 		d->skin.initializePlaceholders();
 		setCentralWidget(d->skin.widget());
 		resize(minimumSizeHint());
 	} else {
-		setCentralWidget(d->screen);
+		setCentralWidget(&d->screen);
 		adjustSize();
 	}
 
-	d->screen->installEventFilter(this);
+	d->screen.installEventFilter(this);
 }
 
 MainWindow::~MainWindow() {
+	d->screen.setParent(nullptr);
 	delete d;
 }
 
@@ -186,7 +186,6 @@ void MainWindow::onWindowFilePathChanged(const QString &path) {
 
 void MainWindow::unplug() {
 	::unplug(&d->engine, &d->audio);
-	::unplug(&d->video, d->screen);
 }
 
 void MainWindow::exit() {
@@ -401,9 +400,9 @@ void MainWindow::openUrl() {
 }
 
 bool MainWindow::eventFilter(QObject *o, QEvent *e) {
-	if (o == d->screen && e->type() == QEvent::Resize) {
+	if (o == &d->screen && e->type() == QEvent::Resize) {
 		static QSize prev;
-		QSize size = d->screen->size();
+		QSize size = d->screen.size();
 		if (d->skin.screen())
 			size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
 		if (isFullScreen()) {
@@ -421,7 +420,7 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QMainWindow::resizeEvent(event);
-//	QSize size = d->screen->size();
+//	QSize size = d->screen.size();
 //	if (d->skin.screen())
 //		size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
 //	if (isFullScreen()) {
@@ -578,7 +577,7 @@ void MainWindow::setVideoSize(double rate) {
 			setFullScreen(false);
 		if (rate == 0.0)
 			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
-		const QSize size = this->size() - d->screen->size() + d->video.sizeHint()*qSqrt(rate);
+		const QSize size = this->size() - d->screen.size() + d->video.sizeHint()*qSqrt(rate);
 		if (size != this->size()) {
 			resize(size);
 			int dx = 0;
@@ -684,7 +683,7 @@ void MainWindow::moveSubtitle(int dy) {
 	showMessage(tr("Subtitle Position"), newPos, "%");
 }
 
-#define IS_IN_CENTER (d->screen->geometry().contains(d->screen->mapFrom(this, event->pos())))
+#define IS_IN_CENTER (d->screen.geometry().contains(d->screen.mapFrom(this, event->pos())))
 #define IS_BUTTON(b) (event->buttons() & (b))
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
@@ -819,16 +818,16 @@ void MainWindow::applyPref() {
 	}
 	d->apply_pref();
 	if (d->skin.name() != d->p.skin_name) {
-		d->screen->setParent(0);
+		d->screen.setParent(0);
 		if (d->skin.load(d->p.skin_name)) {
 			auto screen = d->skin.screen();
-			d->screen->setParent(screen);
-			d->screen->move(0, 0);
-			d->screen->resize(screen->size());
+			d->screen.setParent(screen);
+			d->screen.move(0, 0);
+			d->screen.resize(screen->size());
 			d->skin.initializePlaceholders();
 			setCentralWidget(d->skin.widget());
 		} else
-			setCentralWidget(d->screen);
+			setCentralWidget(&d->screen);
 	}
 	if (time >= 0)
 		d->engine.play(time);

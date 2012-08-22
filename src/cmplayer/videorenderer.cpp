@@ -20,6 +20,8 @@
 #include <QtOpenGL/QGLShaderProgram>
 #include "mpcore.hpp"
 #include "videoshader.hpp"
+#include <X11/Xlib.h>
+#include <QtGui/QX11Info>
 
 #ifndef GL_UNPACK_CLIENT_STORAGE_APPLE
 #define GL_UNPACK_CLIENT_STORAGE_APPLE 34226
@@ -142,12 +144,12 @@ struct VideoRenderer::Data {
 	int alignment = Qt::AlignCenter;
 	QSize renderSize;
 	LogoDrawer logo;
-	GLuint texture[3];
+	GLuint textures[3];
 	VideoFrame *buffer, *frame, buf[2];
 	QRectF vtx;
 	QPoint offset = {0, 0};
 	VideoFormat format;
-	VideoScreen *gl = nullptr;
+	VideoScreen screen;
 	VideoShader::Var var;
 	PlayEngine *engine;
 	VideoShader *shader = nullptr;
@@ -163,6 +165,7 @@ struct VideoRenderer::Data {
 	bool clientStorage = false;
 	int prevFrameId = -1;
 	quint64 drawnFrames = 0;
+	GLuint vaTexture = GL_NONE;
 };
 
 QGLWidget *glContext = nullptr;
@@ -172,23 +175,55 @@ VideoRenderer::VideoRenderer(PlayEngine *engine)
 	d->engine = engine;
 	d->frame = &d->buf[0];
 	d->buffer = &d->buf[1];
-
+	d->screen.r = this;
+	d->screen.setMinimumSize(QSize(200, 100));
+	d->screen.setAutoFillBackground(false);
+	d->screen.setAttribute(Qt::WA_OpaquePaintEvent, true);
+	d->screen.setAttribute(Qt::WA_NoSystemBackground, true);
+	d->screen.setAttribute(Qt::WA_PaintOutsidePaintEvent, true);
+	d->screen.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	d->screen.setMouseTracking(true);
+	d->screen.setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(engine, SIGNAL(aboutToOpen()), this, SLOT(onAboutToOpen()));
 	connect(engine, SIGNAL(aboutToPlay()), this, SLOT(onAboutToPlay()));
+
+	gl = &d->screen;
+	makeCurrent();
+	glGenTextures(3, d->textures);
+	d->shader = new VideoShader(gl->context());
+	auto exts = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
+	d->clientStorage = strstr(exts, "GL_APPLE_client_storage") && strstr(exts, "GL_APPLE_texture_range");
+	d->osd.alloc();
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	d->logo.bind(gl);
+	doneCurrent();
 }
 
 VideoRenderer::~VideoRenderer() {
-	setScreen(nullptr);
+	makeCurrent();
+	d->osd.free();
+	delete d->shader;
+	glDeleteTextures(3, d->textures);
+	d->logo.bind(nullptr);
+	doneCurrent();
 	delete d;
 }
 
+void VideoRenderer::makeCurrent() {
+//	XLockDisplay(QX11Info::display());
+	gl->makeCurrent();
+}
+void VideoRenderer::doneCurrent() {
+	gl->doneCurrent();
+//	XUnlockDisplay(QX11Info::display());
+}
+
+
 void VideoRenderer::drawAlpha(void *p, int x, int y, int w, int h, uchar *src, uchar *srca, int stride) {
-	Data *d = reinterpret_cast<VideoRenderer*>(p)->d;
-	if (d->gl) {
-		d->gl->makeCurrent();
-		d->osd.draw(x, y, w, h, src, srca, stride);
-		d->gl->doneCurrent();
-	}
+	auto r = reinterpret_cast<VideoRenderer*>(p);
+	r->makeCurrent();
+	r->d->osd.draw(x, y, w, h, src, srca, stride);
+	r->doneCurrent();
 }
 
 void VideoRenderer::onAboutToPlay() {
@@ -230,36 +265,8 @@ void VideoRenderer::setCurrentStream(int id) {
 	d->engine->tellmp("switch_video", id);
 }
 
-void VideoRenderer::setScreen(VideoScreen *gl) {
-	if (d->gl == gl)
-		return;
-	if (d->gl) {
-		d->gl->makeCurrent();
-		delete d->shader;
-		d->shader = nullptr;
-		glDeleteTextures(3, d->texture);
-		d->gl->doneCurrent();
-	}
-	d->gl = gl;
-	if (d->gl) {
-		d->gl->makeCurrent();
-		auto exts = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
-		d->clientStorage = strstr(exts, "GL_APPLE_client_storage") && strstr(exts, "GL_APPLE_texture_range");
-		glGenTextures(3, d->texture);
-		d->shader = new VideoShader(d->gl->context());
-
-		d->gl->doneCurrent();
-
-		d->gl->setMinimumSize(QSize(200, 100));
-		d->gl->setAutoFillBackground(false);
-		d->gl->setAttribute(Qt::WA_OpaquePaintEvent, true);
-		d->gl->setAttribute(Qt::WA_NoSystemBackground, true);
-		d->gl->setAttribute(Qt::WA_PaintOutsidePaintEvent, true);
-		d->gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-		d->gl->setMouseTracking(true);
-		d->gl->setContextMenuPolicy(Qt::CustomContextMenu);
-	}
-	d->logo.bind(d->gl);
+GLuint VideoRenderer::texture(int idx) const {
+	return d->textures[idx];
 }
 
 QImage VideoRenderer::frameImage() const {
@@ -289,11 +296,9 @@ bool VideoRenderer::hasFrame() const {
 	return (!d->logoOn && d->frameIsSet && d->prepared);
 }
 
-void VideoRenderer::uploadBufferFrame() {
-//	qSwap(d->buffer, d->frame);
-	auto &frame = *d->frame;
-	if (!d->gl || !(d->frameIsSet = !frame.format.isEmpty()))
-		return;
+bool VideoRenderer::beginUploadingTextures() {
+	if (!(d->frameIsSet = !d->format.isEmpty()))
+		return false;
 	auto min = 0, max = 255;
 	const auto effects = d->var.effects();
 	if (!(effects & IgnoreEffect)) {
@@ -303,38 +308,13 @@ void VideoRenderer::uploadBufferFrame() {
 		}
 	}
 	d->var.setYRange((float)min/255.0f, (float)max/255.0f);
+	makeCurrent();
+	return true;
+}
 
-	d->gl->makeCurrent();
-	const auto h = frame.format.height;
-	auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
-		glBindTexture(GL_TEXTURE_2D, d->texture[idx]);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
-	};
-
-	switch (frame.format.type) {
-	case VideoFormat::I420:
-	case VideoFormat::YV12:
-		setTex(0, GL_LUMINANCE, frame.format.pitch, frame.format.height, frame.y());
-		setTex(1, GL_LUMINANCE, frame.format.pitch >> 1, frame.format.height >> 1, frame.u());
-		setTex(2, GL_LUMINANCE, frame.format.pitch >> 1, frame.format.height >> 1, frame.v());
-		break;
-	case VideoFormat::NV12:
-	case VideoFormat::NV21:
-		setTex(0, GL_LUMINANCE, frame.format.pitch, frame.format.height, frame.y());
-		setTex(1, GL_LUMINANCE_ALPHA, frame.format.pitch >> 1, frame.format.height >> 1, frame.u());
-		break;
-	case VideoFormat::YUY2:
-		glBindTexture(GL_TEXTURE_2D, d->texture[0]);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.format.pitch, h, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, frame.y());
-		glBindTexture(GL_TEXTURE_2D, d->texture[1]);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.format.pitch/2, h, GL_RGBA, GL_UNSIGNED_BYTE, frame.y());
-		break;
-	default:
-		d->frameIsSet = false;
-		break;
-	}
+void VideoRenderer::endUploadingTextures() {
 	++d->frameId;
-	d->gl->doneCurrent();
+	doneCurrent();
 }
 
 VideoFrame &VideoRenderer::bufferFrame() {
@@ -350,36 +330,49 @@ void VideoRenderer::prepare(const VideoFormat &format) {
 		d->frame->format = format;
 		d->format = format;
 		emit formatChanged(d->format);
-		d->gl->makeCurrent();
+		makeCurrent();
 		if (d->shader)
 			d->shader->link(format.type);
-		auto initTex = [this] (int idx, GLenum fmt, int width, int height) {
-			glBindTexture(GL_TEXTURE_2D, d->texture[idx]);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		auto bindTex = [this] (int idx) {
+				glBindTexture(GL_TEXTURE_2D, d->textures[idx]);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		};
+		auto initTex = [this, &bindTex] (int idx, GLenum fmt, int width, int height) {
+			bindTex(idx);
 			glTexImage2D(GL_TEXTURE_2D, 0, fmt, width, height, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
+		};
+		auto initRgbTex = [this, &bindTex] (int idx, GLenum fmt) {
+			bindTex(idx);
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, d->format.width_stride, d->format.height, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
 		};
 		switch (d->format.type) {
 		case VideoFormat::I420:
 		case VideoFormat::YV12:
-			initTex(0, GL_LUMINANCE, d->format.pitch, d->format.height);
-			initTex(1, GL_LUMINANCE, d->format.pitch >> 1, d->format.height >> 1);
-			initTex(2, GL_LUMINANCE, d->format.pitch >> 1, d->format.height >> 1);
+			initTex(0, GL_LUMINANCE, d->format.width_stride, d->format.height);
+			initTex(1, GL_LUMINANCE, d->format.width_stride >> 1, d->format.height >> 1);
+			initTex(2, GL_LUMINANCE, d->format.width_stride >> 1, d->format.height >> 1);
 			break;
 		case VideoFormat::NV12:
-			initTex(0, GL_LUMINANCE, d->format.pitch, d->format.height);
-			initTex(1, GL_LUMINANCE_ALPHA, d->format.pitch >> 1, d->format.height >> 1);
+			initTex(0, GL_LUMINANCE, d->format.width_stride, d->format.height);
+			initTex(1, GL_LUMINANCE_ALPHA, d->format.width_stride >> 1, d->format.height >> 1);
 			break;
 		case VideoFormat::YUY2:
-			initTex(0, GL_LUMINANCE_ALPHA, d->format.pitch, d->format.height);
-			initTex(1, GL_RGBA, d->format.pitch >> 1, d->format.height);
+			initTex(0, GL_LUMINANCE_ALPHA, d->format.width_stride, d->format.height);
+			initTex(1, GL_RGBA, d->format.width_stride >> 1, d->format.height);
+			break;
+		case VideoFormat::RGBA:
+			initRgbTex(0, GL_RGBA);
+			break;
+		case VideoFormat::BGRA:
+			initRgbTex(0, GL_BGRA);
 			break;
 		default:
 			break;
 		}
-		d->gl->doneCurrent();
+		doneCurrent();
 		d->osd.frameSize = d->format.size();
 		d->prepared = true;
 		updateSize();
@@ -395,7 +388,7 @@ double VideoRenderer::targetAspectRatio() const {
 	if (d->aspect > 0.0)
 		return d->aspect;
 	if (d->aspect == 0.0)
-		return d->gl ? d->gl->aspectRatio() : 1.0;
+		return d->screen.aspectRatio();
 	return d->dar > 0.01 ? d->dar : (double)d->format.width/(double)d->format.height;
 }
 
@@ -403,7 +396,7 @@ double VideoRenderer::targetCropRatio(double fallback) const {
 	if (d->crop > 0.0)
 		return d->crop;
 	if (d->crop == 0.0)
-		return d->gl ? d->gl->aspectRatio() : 1.0;
+		return d->screen.aspectRatio();
 	return fallback;
 }
 
@@ -421,8 +414,7 @@ QSize VideoRenderer::sizeHint() const {
 void VideoRenderer::update() {
 	if (!d->render)
 		d->render = true;
-	if (d->gl)
-		PlayEngine::get().enqueue(new PlayEngine::Cmd(PlayEngine::Cmd::VideoUpdate));
+	PlayEngine::get().enqueue(new PlayEngine::Cmd(PlayEngine::Cmd::VideoUpdate));
 }
 
 void VideoRenderer::setAspectRatio(double ratio) {
@@ -471,7 +463,7 @@ void VideoRenderer::setFixedRenderSize(const QSize &size) {
 }
 
 QSize VideoRenderer::renderableSize() const {
-	return d->renderSize.isEmpty() ? (d->gl ? d->gl->size() : QSize(100, 100)) : d->renderSize;
+	return d->renderSize.isEmpty() ? d->screen.size() : d->renderSize;
 }
 
 void VideoRenderer::updateSize() {
@@ -490,14 +482,15 @@ void VideoRenderer::updateSize() {
 	if (d->vtx != vtx) {
 		d->vtx = vtx;
 		d->osd.frameVtx = d->vtx;
-		if (d->gl)
-			d->gl->overlay()->setArea(QRect(QPoint(0, 0), widget.toSize()), d->vtx.toRect());
+		d->screen.overlay()->setArea(QRect(QPoint(0, 0), widget.toSize()), d->vtx.toRect());
 	}
 }
 
+GLuint *VideoRenderer::textures() const {
+	return d->textures;
+}
+
 void VideoRenderer::render() {
-	if (!d->gl)
-		return;
 	const QSizeF widget = renderableSize();
 	if (hasFrame() && d->shader) {
 		QSizeF letter(targetCropRatio(targetAspectRatio()), 1.0);
@@ -517,7 +510,7 @@ void VideoRenderer::render() {
 		xy += offset;
 		double top = 0.0, left = 0.0;
 		double bottom = (double)(d->format.height-1)/(double)d->format.height;
-		double right = (double)(d->format.width-1)/(double)(d->format.pitch);
+		double right = (double)(d->format.width-1)/(double)(d->format.width_stride);
 		const Effects effects = d->var.effects();
 		if (!(effects & IgnoreEffect)) {
 			if (effects & FlipHorizontally)
@@ -525,9 +518,9 @@ void VideoRenderer::render() {
 			if (effects & FlipVertically)
 				qSwap(top, bottom);
 		}
-		d->gl->makeCurrent();
-		if (d->viewport != d->gl->size()) {
-			d->viewport = d->gl->size();
+		makeCurrent();
+		if (d->viewport != d->screen.size()) {
+			d->viewport = d->screen.size();
 			glViewport(0, 0, d->viewport.width(), d->viewport.height());
 			glMatrixMode(GL_PROJECTION);
 			glLoadIdentity();
@@ -551,11 +544,11 @@ void VideoRenderer::render() {
 		};
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, d->texture[0]);
+		glBindTexture(GL_TEXTURE_2D, d->textures[0]);
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, d->texture[1]);
+		glBindTexture(GL_TEXTURE_2D, d->textures[1]);
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, d->texture[2]);
+		glBindTexture(GL_TEXTURE_2D, d->textures[2]);
 		glActiveTexture(GL_TEXTURE0);
 
 		glEnableClientState(GL_VERTEX_ARRAY);
@@ -581,9 +574,9 @@ void VideoRenderer::render() {
 		if (0.0 <= xy.x() && xy.x() <= widget.width())
 			fillRect(xy.x(), .0, widget.width()-xy.x(), widget.height());
 
-		d->gl->overlay()->renderToScreen();
+		d->screen.overlay()->renderToScreen();
 		d->osd.render();
-		d->gl->swapBuffers();
+		gl->swapBuffers();
 		if (d->prevFrameId != d->frameId) {
 			++d->drawnFrames;
 			d->prevFrameId = d->frameId;
@@ -592,14 +585,15 @@ void VideoRenderer::render() {
 			emit tookSnapshot(frameImage());
 			d->takeSnapshot = false;
 		}
+		doneCurrent();
 	} else {
-		d->gl->makeCurrent();
-		QPainter painter(d->gl);
+		makeCurrent();
+		QPainter painter(&d->screen);
 		d->logo.draw(&painter, QRectF(QPointF(0, 0), widget));
 		painter.beginNativePainting();
-		d->gl->overlay()->renderToScreen();
+		d->screen.overlay()->renderToScreen();
 		painter.endNativePainting();
-		d->gl->doneCurrent();
+		doneCurrent();
 	}
 	if (d->render)
 		d->render = false;
@@ -676,32 +670,21 @@ VideoRenderer::Effects VideoRenderer::effects() const {
 	return d->var.effects();
 }
 
-void plug(VideoRenderer *renderer, VideoScreen *screen) {
-	renderer->setScreen(screen);
-	screen->r = renderer;
-	screen->makeCurrent();
-	renderer->d->osd.alloc();
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	screen->doneCurrent();
-}
-
-void unplug(VideoRenderer *renderer, VideoScreen *screen) {
-	screen->makeCurrent();
-	renderer->d->osd.free();
-	renderer->setScreen(nullptr);
-	screen->r = nullptr;
-	screen->doneCurrent();
+VideoScreen &VideoRenderer::screen() const {
+	return d->screen;
 }
 
 VideoScreen::VideoScreen()
 : QGLFunctions(context()) {
 	glContext = this;
+	makeCurrent();
 	doneCurrent();
 	m_overlay = new Overlay(this);
 	setAcceptDrops(false);
 }
 
 VideoScreen::~VideoScreen() {
+	makeCurrent();
 	doneCurrent();
 	delete m_overlay;
 }

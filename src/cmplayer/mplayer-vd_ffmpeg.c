@@ -35,8 +35,8 @@
 #include "mpbswap.h"
 #include "fmt-conversion.h"
 
-#include "libmpcodecs/vd.h"
-#include "libmpcodecs/img_format.h"
+#include "vd.h"
+#include "img_format.h"
 #include "libmpdemux/stheader.h"
 #include "libmpdemux/demux_packet.h"
 #include "codec-cfg.h"
@@ -57,6 +57,19 @@ static const vd_info_t info = {
 #error palette too large, adapt libmpcodecs/vf.c:vf_get_image
 #endif
 
+extern int is_hwaccel_available(AVCodecContext *avctx);
+static inline int pixfmt_to_imgfmt(enum PixelFormat pixfmt) {
+#ifdef __APPLE__
+	if (pixfmt == PIX_FMT_VDA_VLD) {
+#endif
+#ifdef __linux__
+	if (pixfmt == PIX_FMT_VAAPI_VLD) {
+#endif
+		return IMGFMT_VDPAU;
+	} else
+		return pixfmt2imgfmt(pixfmt);
+}
+
 typedef struct {
 	AVCodecContext *avctx;
 	AVFrame *pic;
@@ -72,15 +85,7 @@ typedef struct {
 	int b_count;
 	AVRational last_sample_aspect_ratio;
 	enum AVDiscard skip_frame;
-	void *hwaccel;
 } vd_ffmpeg_ctx;
-
-extern uint32_t HWACCEL_FORMAT;
-extern void *cmplayer_hwaccel_create(AVCodecContext *avctx);
-extern void cmplayer_hwaccel_delete(void **hwaccel);
-extern uint32_t cmplayer_hwaccel_setup(void *hwaccel);
-extern int cmplayer_hwaccel_fill_image(void *hwaccel, mp_image_t *image, AVFrame *frame);
-void *cmplayer_hwaccel_get(AVCodecContext *avctx) {return ((vd_ffmpeg_ctx*)(((sh_video_t*)avctx->opaque)->context))->hwaccel;}
 
 #include "m_option.h"
 
@@ -184,7 +189,7 @@ static int init(sh_video_t *sh)
 	avctx->codec_type = AVMEDIA_TYPE_VIDEO;
 	avctx->codec_id = lavc_codec->id;
 
-	if (lavc_codec->capabilities & CODEC_CAP_HWACCEL   // XvMC
+	if (is_hwaccel_available(avctx) || lavc_codec->capabilities & CODEC_CAP_HWACCEL   // XvMC
 		|| lavc_codec->capabilities & CODEC_CAP_HWACCEL_VDPAU) {
 		ctx->do_dr1    = true;
 		ctx->do_slices = true;
@@ -222,15 +227,7 @@ static int init(sh_video_t *sh)
 				"%d threads if supported.\n", lavc_param->threads);
 	}
 
-	ctx->hwaccel = cmplayer_hwaccel_create(avctx);
-	if (ctx->hwaccel) {
-		ctx->do_dr1 = false;
-		ctx->do_slices = false;
-		lavc_param->threads = 1;
-		avctx->active_thread_type = 0;
-	}
-
-    if (ctx->do_dr1) {
+	if (ctx->do_dr1) {
 		avctx->flags |= CODEC_FLAG_EMU_EDGE;
 		avctx->get_buffer = get_buffer;
 		avctx->release_buffer = release_buffer;
@@ -377,7 +374,7 @@ static void uninit(sh_video_t *sh)
 	if (avctx) {
 		if (avctx->codec && avcodec_close(avctx) < 0)
 			mp_tmsg(MSGT_DECVIDEO, MSGL_ERR, "Could not close codec.\n");
-		cmplayer_hwaccel_delete(&ctx->hwaccel);
+
 		av_freep(&avctx->extradata);
 		av_freep(&avctx->slice_offset);
 	}
@@ -415,7 +412,7 @@ static void draw_slice(struct AVCodecContext *s,
 }
 
 
-int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
+static int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
 {
 	vd_ffmpeg_ctx *ctx = sh->context;
 	AVCodecContext *avctx = ctx->avctx;
@@ -456,7 +453,7 @@ int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
 		sh->disp_w = width;
 		sh->disp_h = height;
 		ctx->pix_fmt = pix_fmt;
-		ctx->best_csp = pixfmt2imgfmt(pix_fmt);
+		ctx->best_csp = pixfmt_to_imgfmt(pix_fmt);
 		const unsigned int *supported_fmts;
 		if (ctx->best_csp == IMGFMT_YV12)
 			supported_fmts = (const unsigned int[]){
@@ -468,10 +465,6 @@ int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
 			};
 		else
 			supported_fmts = (const unsigned int[]){ctx->best_csp, 0xffffffff};
-		if (ctx->hwaccel) {
-			ctx->best_csp = cmplayer_hwaccel_setup(ctx->hwaccel);
-			supported_fmts = (const unsigned int[]){ctx->best_csp, 0xffffffff};
-		}
 		if (!mpcodecs_config_vo2(sh, sh->disp_w, sh->disp_h, supported_fmts,
 								 ctx->best_csp))
 			return -1;
@@ -774,17 +767,14 @@ static struct mp_image *decode(struct sh_video *sh, struct demux_packet *packet,
 	}
 
 	if (!dr1) {
-		if (!avctx->hwaccel_context) {
-			mpi->planes[0] = pic->data[0];
-			mpi->planes[1] = pic->data[1];
-			mpi->planes[2] = pic->data[2];
-			mpi->planes[3] = pic->data[3];
-			mpi->stride[0] = pic->linesize[0];
-			mpi->stride[1] = pic->linesize[1];
-			mpi->stride[2] = pic->linesize[2];
-			mpi->stride[3] = pic->linesize[3];
-		} else
-			cmplayer_hwaccel_fill_image(ctx->hwaccel, mpi, pic);
+		mpi->planes[0] = pic->data[0];
+		mpi->planes[1] = pic->data[1];
+		mpi->planes[2] = pic->data[2];
+		mpi->planes[3] = pic->data[3];
+		mpi->stride[0] = pic->linesize[0];
+		mpi->stride[1] = pic->linesize[1];
+		mpi->stride[2] = pic->linesize[2];
+		mpi->stride[3] = pic->linesize[3];
 	}
 
 	if (!mpi->planes[0])
@@ -824,7 +814,7 @@ static enum PixelFormat get_format(struct AVCodecContext *avctx,
 	int i;
 
 	for (i = 0; fmt[i] != PIX_FMT_NONE; i++) {
-		int imgfmt = pixfmt2imgfmt(fmt[i]);
+		int imgfmt = pixfmt_to_imgfmt(fmt[i]);
 		if (!IMGFMT_IS_HWACCEL(imgfmt))
 			continue;
 		mp_msg(MSGT_DECVIDEO, MSGL_V, "[VD_FFMPEG] Trying pixfmt=%d.\n", i);
@@ -881,4 +871,3 @@ const struct vd_functions mpcodecs_vd_ffmpeg = {
 	.control = control,
 	.decode2 = decode
 };
-

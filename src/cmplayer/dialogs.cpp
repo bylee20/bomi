@@ -89,16 +89,15 @@ void CheckDialog::onButtonClicked(QAbstractButton *button) {
 /*******************************************************************************************/
 
 struct GetShortcutDialog::Data {
-	QLineEdit *edit;
-	QPushButton *begin, *erase, *ok, *cancel;
-	int curIdx;
+	QLineEdit *edit = nullptr;
+	QPushButton *begin = nullptr, *erase = nullptr, *ok = nullptr, *cancel = nullptr;
+	int curIdx = 0;
 	int codes[MaxKeyCount];
 };
 
 GetShortcutDialog::GetShortcutDialog(const QKeySequence &shortcut, QWidget *parent)
 : QDialog(parent) {
 	d = new Data;
-	d->curIdx = 0;
 	d->edit = new QLineEdit(this);
 	d->edit->setReadOnly(true);
 	d->begin = new QPushButton(tr("Get Shortcut"), this);

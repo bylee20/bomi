@@ -55,7 +55,23 @@ void main() {
 	gl_FragColor.w = 1.0;
 }
 	)");
+// ***** shader for no effect *****
+//m_programs[0] = new Program(ctx, R"(
+//uniform sampler2D p1;
+//vec3 get_yuv(const vec2 coord);
+//void convert(inout vec3 yuv);
 
+//void main() {
+//	gl_FragColor = texture2D(p1, gl_TexCoord[0].xy);
+//}
+//)");
+
+	m_rgbProgram = new Program(ctx, R"(
+uniform sampler2D p1;
+void main() {
+	gl_FragColor = texture2D(p1, gl_TexCoord[0].xy);
+}
+	)");
 	// ***** shader for no kernel effects *****
 	m_programs[1] = new Program(ctx, R"(
 vec3 get_yuv(const vec2 coord);
@@ -134,6 +150,7 @@ VideoShader::~VideoShader() {
 	delete m_programs[0];
 	delete m_programs[1];
 	delete m_programs[2];
+	delete m_rgbProgram;
 }
 
 bool VideoShader::link(VideoFormat::Type type) {
@@ -142,6 +159,7 @@ bool VideoShader::link(VideoFormat::Type type) {
 	if (type == VideoFormat::Unknown)
 		return false;
 	m_type = type;
+	bool rgb = false;
 	switch (type) {
 	case VideoFormat::YV12:
 	case VideoFormat::I420:
@@ -153,14 +171,23 @@ bool VideoShader::link(VideoFormat::Type type) {
 	case VideoFormat::NV21:
 		m_yuv.compileSourceCode(m_codes[NV21]);
 		break;
+	case VideoFormat::BGRA:
+	case VideoFormat::RGBA:
+		rgb = true;
+		break;
 	default:
 		return false;
 	}
-	if (!m_yuv.isCompiled())
-		return false;
-	for (auto &program : m_programs)
-		if (!program->link())
+	if (rgb) {
+		if (!m_rgbProgram->link())
 			return false;
+	} else {
+		if (!m_yuv.isCompiled())
+			return false;
+		for (auto &program : m_programs)
+			if (!program->link())
+				return false;
+	}
 	qDebug() << "shader linked!";
 	return true;
 }

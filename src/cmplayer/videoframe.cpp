@@ -4,6 +4,60 @@ extern "C" {
 #include <libmpcodecs/img_format.h>
 }
 
+VideoFormat VideoFormat::fromType(Type type, int width, int height) {
+	VideoFormat format;
+	format.width = width;
+	format.height = height;
+	format.planes = 1;
+	format.type = type;
+	switch (type) {
+	case YV12:
+	case I420:
+		format.planes = 3;
+		break;
+	case NV12:
+	case NV21:
+		format.planes = 2;
+		break;
+	case YUY2:
+		format.bpp = 16;
+		break;
+	case RGBA:
+	case BGRA:
+		format.bpp = 32;
+		break;
+	default:
+		return VideoFormat();
+	}
+	format.width_stride = ((width >> 5) + 1) << 5;
+	if (format.planes > 1) {
+		format.bpp = 12;
+		format.stride = format.width_stride;
+	} else {
+		format.stride = format.width_stride * (format.bpp >> 3);
+	}
+	return format;
+}
+
+VideoFormat VideoFormat::fromImgFmt(uint32_t imgfmt, int width, int height) {
+	switch (imgfmt) {
+	case IMGFMT_YV12:
+		return fromType(YV12, width, height);
+	case IMGFMT_I420:
+		return fromType(I420, width, height);
+	case IMGFMT_YUY2:
+		return fromType(YUY2, width, height);
+	case IMGFMT_NV12:
+		return fromType(NV12, width, height);
+	case IMGFMT_NV21:
+		return fromType(NV21, width, height);
+	case IMGFMT_RGBA:
+		return fromType(RGBA, width, height);
+	default:
+		return VideoFormat();
+	}
+}
+
 uint32_t _fToImgFmt(VideoFormat::Type type) {
 	switch (type) {
 	case VideoFormat::YV12:

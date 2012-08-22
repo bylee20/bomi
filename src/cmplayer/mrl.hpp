@@ -24,7 +24,7 @@ public:
 	QString displayName() const;
 	bool isEmpty() const {return m_loc.isEmpty();}
 private:
-	QString m_loc;
+	QString m_loc = {};
 };
 
 #endif // MRL_HPP

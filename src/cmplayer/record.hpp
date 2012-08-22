@@ -3,6 +3,7 @@
 
 #include <QtCore/QSettings>
 #include <QtGui/QKeySequence>
+#include <QtCore/QStringBuilder>
 
 static inline QLatin1String _L(const char *s) {return QLatin1String(s);}
 static inline QLatin1Char _L(char c) {return QLatin1Char(c);}
@@ -52,8 +53,29 @@ public:
 //		endArray();
 //	}
 	template <typename T> void write(const char *key, const T &value) {write<T>(_L(key), value);}
+	template <typename T> void write(const char *key, const QList<T> &value) {
+		setValue(_L(key) % _L("_exists"), true);
+		beginWriteArray(key, value.size());
+		for (int i=0; i<value.size(); ++i) {setArrayIndex(i); write<T>("data", value[i]);}
+		endArray();
+	}
 	template <typename T> void writeEnum(const char *key, const T &value) {write(_L(key), value.name());}
 //	template <typename T> void writeList(const char *key, const QList<T> &list) {write<T>(_LS(key), list);}
+	template <typename T> QList<T> read(QList<T> &v, const char *key) {
+		if (value(_L(key) % _L("_exists"), false).toBool()) {
+			v.clear();
+			const int size = beginReadArray(key);
+			v.reserve(size);
+			T t;
+			for (int i=0; i<size; ++i) {
+				setArrayIndex(i);
+				read<T>(t, "data");
+				v.append(t);
+			}
+			endArray();
+		}
+		return v;
+	}
 
 	template <typename T> T read(const char *key) {return value(_L(key)).template value<T>();}
 	template <typename T>
@@ -89,7 +111,7 @@ private:
 
 	template <typename T> T fromVariant(const QVariant &data) {return data.value<T>();}
 	template <typename T> QVariant toVariant(const T &t) {return QVariant::fromValue(t);}
-	const QString m_root;
+	const QString m_root = {};
 };
 
 template<> inline QKeySequence Record::fromVariant(const QVariant &data) {return QKeySequence::fromString(data.toString());}

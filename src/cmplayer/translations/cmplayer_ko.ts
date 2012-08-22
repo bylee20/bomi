@@ -1101,7 +1101,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../mainwindow.cpp" line="1033"/>
         <source>Drop Frame</source>
-        <translation>드롭 프레<byte value="x1c"/>임</translation>
+        <translation>드롭 프레임</translation>
     </message>
     <message>
         <source>Track</source>

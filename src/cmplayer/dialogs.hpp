@@ -21,7 +21,7 @@ private slots:
 	void onButtonClicked(QAbstractButton *button);
 private:
 	struct Data;
-	Data *d;
+	Data *d = nullptr;
 };
 
 class GetShortcutDialog : public QDialog {
@@ -42,7 +42,7 @@ private:
 	static const int MaxKeyCount = 4;
 	void getShortcut(QKeyEvent *event);
 	struct Data;
-	Data *d;
+	Data *d = nullptr;
 };
 
 class EncodingComboBox;
@@ -68,7 +68,7 @@ private:
 			, const QString &encoding = QString::null);
 	void setEncoding(const QString &encoding);
 	QString encoding() const;
-	EncodingComboBox *combo;
+	EncodingComboBox *combo = nullptr;
 };
 
 class Playlist;
@@ -108,7 +108,7 @@ private slots:
 	void showFullLicense();
 private:
 	struct Data;
-	Data *d;
+	Data *d = nullptr;
 };
 
 class OpenDvdDialog : public QDialog {
@@ -122,7 +122,7 @@ public slots:
 	void checkDevice(const QString &device);
 private:
 	struct Data;
-	Data *d;
+	Data *d = nullptr;
 };
 
 

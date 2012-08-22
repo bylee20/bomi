@@ -15,6 +15,7 @@
 #include <QtGui/QMessageBox>
 #include <QtCore/QStringBuilder>
 #include <sigar.h>
+#include "hwaccel.hpp"
 
 static bool checkOpenGL() {
 	if (Q_LIKELY(QGLFormat::hasOpenGL() && (QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_0)))
@@ -26,21 +27,18 @@ static bool checkOpenGL() {
 
 
 
+#include <X11/Xlib.h>
 
 
 Q_DECLARE_METATYPE(QTextOption::WrapMode);
 
 int main(int argc, char **argv) {
-//	QApplication a(argc, argv);
+	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
-//	Widget w;
-//	w.show();;
-
-//	return a.exec();
 	qRegisterMetaType<State>("State");
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
-	QApplication::setAttribute(Qt::AA_X11InitThreads);
+
 
 	qDebug() << "started app";
 	App app(argc, argv);
@@ -53,6 +51,7 @@ int main(int argc, char **argv) {
 			app.sendMessage(_L("mrl ") % mrl.toString());
 		return 0;
 	}
+	HwAccelInfo::obj = new HwAccelInfo;
 	PlayEngine::obj = new PlayEngine;
 	PlayEngine::obj->start();
 	qDebug() << "engine created";
@@ -87,5 +86,6 @@ int main(int argc, char **argv) {
 	qDebug() << "pref deleted";
 	delete RootMenu::obj;
 	qDebug() << "menu deleted";
+	delete HwAccelInfo::obj;
 	return ret;
 }

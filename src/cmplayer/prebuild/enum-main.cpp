@@ -164,10 +164,10 @@ static void generate() {
 		replace(hpp, "__DEF_DESCRIPTION", defa_desc);
 		replace(cpp, "__INIT_ENUM_VALUES", init_values);
 		if (it->continuous) {
-			replace(hpp, "__DEC_NAME_ARRAY", "QString name[count];");
+			replace(hpp, "__DEC_NAME_ARRAY", "QString name[count] = {};");
 			replace(hpp, "__DEF_ID_COMPATIBLE", "return 0 <= id && id < count;");
 		} else {
-			replace(hpp, "__DEC_NAME_ARRAY", "QMap<int, QString> name;");
+			replace(hpp, "__DEC_NAME_ARRAY", "QMap<int, QString> name = {};");
 			replace(hpp, "__DEF_ID_COMPATIBLE", "return map().name.contains(id);");
 		}
 		s_hpp << hpp << endl;

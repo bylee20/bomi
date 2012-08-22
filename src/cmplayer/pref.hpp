@@ -68,40 +68,41 @@ public:
 	typedef KeyModifierMap<Enum::ClickAction> ClickActionMap;
 	typedef KeyModifierMap<Enum::WheelAction> WheelActionMap;
 
-	bool pause_minimized{true}, pause_video_only{true};
-	bool remember_stopped{true}, ask_record_found{true};
-	bool enable_generate_playist{true};
-	Enum::GeneratePlaylist generate_playlist{Enum::GeneratePlaylist::Folder};
-	bool hide_cursor{true}, disable_screensaver{true};
-	int hide_cursor_delay{3000};
+	bool pause_minimized = true, pause_video_only = true;
+	bool remember_stopped = true, ask_record_found = true;
+	bool enable_generate_playist = true;
+	Enum::GeneratePlaylist generate_playlist = Enum::GeneratePlaylist::Folder;
+	bool hide_cursor = true, disable_screensaver = true;
+	int hide_cursor_delay = 3000;
 
-	int blur_kern_c{1}, blur_kern_n{2}, blur_kern_d{1};
-	int sharpen_kern_c{5}, sharpen_kern_n{-1}, sharpen_kern_d{0};
-	int adjust_contrast_min_luma{16}, adjust_contrast_max_luma{235};
+	int blur_kern_c = 1, blur_kern_n = 2, blur_kern_d = 1;
+	int sharpen_kern_c = 5, sharpen_kern_n = -1, sharpen_kern_d = 0;
+	int adjust_contrast_min_luma = 16, adjust_contrast_max_luma = 235;
 
-	bool sub_enable_autoload{true}, sub_enable_autoselect{true}, sub_enc_autodetection{true};
-	Enum::SubtitleAutoload sub_autoload{Enum::SubtitleAutoload::Contain};
-	Enum::SubtitleAutoselect sub_autoselect{Enum::SubtitleAutoselect::Matched};
-	QString sub_enc{QLocale::system().language() == QLocale::Korean ? "CP949" : "UTF-8"}, sub_ext;
-	int sub_enc_accuracy{70}, ms_per_char{500};
-	OsdStyle sub_style{defaultSubtitleStyle()};		QStringList sub_priority;
+	bool sub_enable_autoload = true, sub_enable_autoselect = true, sub_enc_autodetection = true;
+	Enum::SubtitleAutoload sub_autoload = Enum::SubtitleAutoload::Contain;
+	Enum::SubtitleAutoselect sub_autoselect = Enum::SubtitleAutoselect::Matched;
+	QString sub_enc = {QLocale::system().language() == QLocale::Korean ? "CP949" : "UTF-8"}, sub_ext;
+	int sub_enc_accuracy = 70, ms_per_char = 500;
+	OsdStyle sub_style = defaultSubtitleStyle();		QStringList sub_priority;
 
-	QLocale locale{QLocale::system()};
-	bool enable_system_tray{true}, hide_rather_close{true};
-	ClickActionMap double_click_map{defaultDoubleClick()}, middle_click_map{defaultMiddleClick()};
-	WheelActionMap wheel_scroll_map{defaultWheelAction()};
-	int seek_step1{5000}, seek_step2{30000}, seek_step3{60000}, speed_step{10};
-	int brightness_step{1}, saturation_step{1}, contrast_step{1}, hue_step{1};
-	int volume_step{2}, sync_delay_step{500}, amp_step{10}, sub_pos_step{1};
+	QLocale locale = QLocale::system();
+	bool enable_system_tray = true, hide_rather_close = true;
+	ClickActionMap double_click_map = defaultDoubleClick(), middle_click_map = defaultMiddleClick();
+	WheelActionMap wheel_scroll_map = defaultWheelAction();
+	int seek_step1 = 5000, seek_step2 = 30000, seek_step3 = 60000, speed_step = 10;
+	int brightness_step = 1, saturation_step = 1, contrast_step = 1, hue_step = 1;
+	int volume_step = 2, sync_delay_step = 500, amp_step = 10, sub_pos_step = 1;
 
-	bool enable_hwaccel{false};
-	VideoFormat::Type hwaccel_format{VideoFormat::YV12};
+	bool enable_hwaccel = false;
+	QList<int> hwaccel_codecs = defaultHwAccelCodecs();
 
-	QString skin_name{"simple"};
+	QString skin_name = "simple";
 
 	void save() const;
 	void load();
 private:
+	static QList<int> defaultHwAccelCodecs();
 	static ClickActionMap defaultDoubleClick() {
 		ClickActionMap map{false, Enum::ClickAction::Fullscreen};
 		map[Enum::KeyModifier::None].enabled = true;

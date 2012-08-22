@@ -110,7 +110,7 @@ struct PlayInfoView::Data {
 	int time = -1;
 	bool visible = false;
 	void show(int idx, const QString &string) {osds[idx]->show(string, -1);}
-	static QString codecInfo (const QString &n, codecs *c) {return n % _L(": ") % _8(c->info) % _L("<br>");}
+	static QString codecInfo (const QString &n, codecs *c) {return n % _L(": ") % _8(c->info);}
 	quint64 getProcCpuTime() {return stat.readProcStat() ? (stat.utime + stat.stime) : 0;}
 	quint64 getTotalCpuTime() {return stat.readStat() ? (stat.user + stat.nice + stat.system + stat.idle) : 0;}
 };
@@ -171,7 +171,7 @@ void PlayInfoView::onAboutToPlay() {
 	if (mpctx && mpctx->sh_audio && mpctx->ao) {
 		auto sh = mpctx->sh_audio;
 		auto ao = mpctx->ao;
-		const QString audio = _L("<p>&nbsp;<br>") % d->codecInfo(tr("Audio codec"), sh->codec)
+		const QString audio = _L("<p>&nbsp;<br>") % d->codecInfo(tr("Audio codec"), sh->codec) % _L("<br>")
 			% tr("Input") % _L(": ") % format(sh->format) % _L(" ") % bps(sh->i_bps) % _L(" ")
 			% _n(sh->samplerate/1000) % _L("kHz ")
 			% _n(sh->channels) % _L("ch ")
@@ -187,6 +187,7 @@ void PlayInfoView::onAboutToPlay() {
 	}
 	d->time = 0;
 	d->sync = 0;
+	onVideoFormatChanged(d->video->format());
 }
 
 void PlayInfoView::setVisible(bool visible) {
@@ -244,8 +245,8 @@ void PlayInfoView::updateResourceUsage() {
 		d->procCpuTime = procCpuTime;
 		d->totalCpuTime = totalCpuTime;
 	}
-	const auto frames = d->video->drawnFrames();
 	const auto frameTime = GetTimerMS();
+	const auto frames = d->video->drawnFrames();
 	double fps = 0.0;
 	if (frameTime > d->frameTime) {
 		fps = double(frames - d->drawnFrames)*1000.0/(frameTime - d->frameTime);
@@ -256,12 +257,12 @@ void PlayInfoView::updateResourceUsage() {
 	}
 	sigar_proc_mem_t mem;
 	sigar_proc_mem_get(d->sigar, d->pid, &mem);
-	const double usingRam = (double)mem.resident/(1024*1024);
-	const double totalRam = (double)d->mem.total/(1024*1024);
+	const auto usingRam = _n((double)mem.resident/(1024*1024), 1);
+	const auto totalRam = _n((double)d->mem.total/(1024*1024*1024), 2);
+	const auto ramUsage = _n((double)mem.resident*100.0/(double)d->mem.total, 1);
 	const QString info = _L("<p>&nbsp;<br>")
 			% tr("CPU usage") % _L(": ") % _n(d->cpuUsage, 1) % _L("%(") % tr("average per-core") % _L(")<br>")
-			% tr("RAM usage") % _L(": ") % _n(usingRam, 1) % _L("MB(")
-				% _n(usingRam*100.0/totalRam, 1) % _L("%)<br>") % sync
+			% tr("RAM usage") % _L(": ") % usingRam % _L("MB(") % ramUsage % _L("% of ") % totalRam % _L("GB)<br>") % sync
 			% tr("Average frame rate") % _L(": ") % _n(fps, 3) % _L("fps(") % _n(d->video->format().bps(fps)/(1024.0*1024.0), 1) % _L("Mbps)")
 			% normalized % _L("</p>");
 	d->show(ResourceUsage, info);
@@ -292,8 +293,10 @@ void PlayInfoView::onVideoFormatChanged(const VideoFormat &vfmt) {
 		return;
 	MPContext *mpctx = d->engine->context();
 	if (mpctx && mpctx->sh_video) {
+		const auto hwaccel = d->engine->isHardwareAccelerated()
+			? QString(_L("[") % tr("hardware-accelerated") % _L("]<br>")) : _L("<br>");
 		sh_video *sh = mpctx->sh_video;
-		const QString video = _L("<p>&nbsp;<br>") % d->codecInfo(tr("Video codec"), sh->codec)
+		const QString video = _L("<p>&nbsp;<br>") % d->codecInfo(tr("Video codec"), sh->codec) % hwaccel
 			% tr("Input") % _L(": ") % format(sh->format) % _L(" ")
 			% resolution(sh->disp_w, sh->disp_h) % _L(" ")
 			% _n(sh->fps, 3) % _L("fps ")

@@ -29,7 +29,12 @@ public:
 	static void add(MpMessage *parser);
 	static void clear();
 protected:
-	struct Id {Id() {} Id(const QString &name, const QString &value): name(name), value(value) {} QString name, value;};
+	struct Id {
+		Id() {}
+		Id(const QString &name, const QString &value)
+			: name(name), value(value) {}
+		QString name = {}, value = {};
+	};
 	static auto same(const QString &s1, const char *l1) -> bool {
 		return s1.compare(QLatin1String(l1), Qt::CaseSensitive) == 0;
 	}

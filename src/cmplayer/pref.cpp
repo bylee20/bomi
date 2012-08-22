@@ -3,6 +3,7 @@
 #include <QtCore/QSettings>
 #include <QtCore/QDebug>
 #include <QtCore/QLocale>
+#include "hwaccel.hpp"
 
 Pref *Pref::obj = 0;
 
@@ -59,7 +60,7 @@ void Pref::save() const {
 
 	WRITE(enable_hwaccel);
 	WRITE(skin_name);
-	r.write("hwaccel_format", _fToString(hwaccel_format));
+	WRITE(hwaccel_codecs);
 
 	sub_style.save(r, "sub_style");
 	double_click_map.save(r, "double_click_map");
@@ -111,7 +112,7 @@ void Pref::load() {
 
 	READ(skin_name);
 	READ(enable_hwaccel);
-	hwaccel_format = static_cast<VideoFormat::Type>(_f(r.read("hwaccel_format", _fToString(hwaccel_format))));
+	READ(hwaccel_codecs);
 
 	READ(enable_generate_playist);
 	READ(sub_enable_autoload);
@@ -126,6 +127,16 @@ void Pref::load() {
 	double_click_map.load(r, "double_click_map");
 	middle_click_map.load(r, "middle_click_map");
 	wheel_scroll_map.load(r, "wheel_scroll_map");
+}
+
+QList<int> Pref::defaultHwAccelCodecs() {
+	const auto all = HwAccelInfo::get().fullCodecList();
+	QList<int> codecs;
+	for (auto codec : all) {
+		if (HwAccelInfo::get().supports(codec))
+			codecs.push_back(codec);
+	}
+	return codecs;
 }
 
 #undef PREF_GROUP

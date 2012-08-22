@@ -20,16 +20,16 @@ struct SubtitleCaption : public RichTextDocument {
 class SubtitleComponent : public QMap<int, SubtitleCaption> {
 	typedef QMap<int, SubtitleCaption> Super;
 public:
-	struct Lang {
-		QString id() const {
-			if (!name.isEmpty())
-				return name;
-			if (!locale.isEmpty())
-				return locale;
-			return klass;
-		}
-		QString name, locale, klass;
-	};
+//	struct Lang {
+//		QString id() const {
+//			if (!name.isEmpty())
+//				return name;
+//			if (!locale.isEmpty())
+//				return locale;
+//			return klass;
+//		}
+//		QString name, locale, klass;
+//	};
 
 	enum SyncType {Time, Frame};
 	SubtitleComponent(const QString &file = QString(), SyncType base = Time);

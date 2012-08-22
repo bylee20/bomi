@@ -35,6 +35,8 @@ signals:
 private slots:
 	void onTick(int time);
 private:
+	ABRepeater(const ABRepeater&) = delete;
+	ABRepeater &operator = (const ABRepeater&) = delete;
 	PlayEngine *m_engine = nullptr;
 	const SubtitleRenderer *m_sub = nullptr;
 	int m_a = -1, m_b = -1;

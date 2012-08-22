@@ -74,7 +74,7 @@ class VideoScreen;
 class Overlay: public QObject, public QGLFunctions {
 	Q_OBJECT
 public:
-	Overlay(VideoScreen *screen = 0);
+	Overlay(VideoScreen *screen);
 	~Overlay();
 	QGLWidget *screen() const;
 	void setArea(const QRect &renderable, const QRect &frame);

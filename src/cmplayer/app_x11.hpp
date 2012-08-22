@@ -16,8 +16,10 @@ public:
 private slots:
 	void ss_reset();
 private:
+	AppX11(const AppX11&) = delete;
+	AppX11 &operator = (const AppX11&) = delete;
 	struct Data;
-	Data *d;
+	Data *d = nullptr;
 };
 
 #endif

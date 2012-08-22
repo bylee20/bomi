@@ -8,8 +8,6 @@
 
 extern "C" void *fast_memcpy(void *to, const void *from, size_t len);
 
-//static QGLShaderProgram *shader = nullptr;
-
 struct ScreenOsdWrapper : public OsdWrapper {
 	bool m_needToUpload = false;
 	ScreenOsdWrapper(OsdRenderer *renderer) {m_renderer = renderer; m_renderer->setWrapper(this);}
@@ -119,7 +117,6 @@ struct Overlay::Data {
 	QGLShaderProgram *shader;
 };
 
-
 Overlay::Overlay(VideoScreen *screen)
 : d(new Data) {
 	Q_ASSERT(screen);
@@ -212,7 +209,7 @@ OsdRenderer *Overlay::take(OsdRenderer *osd) {
 	d->ctx->makeCurrent();
 	for (auto it = d->osds.begin(); it != d->osds.end(); ++it) {
 		if (it->first()->renderer() == osd) {
-			delete osd;
+			qDeleteAll(*it);
 			d->osds.erase(it);
 			break;
 		}
@@ -247,86 +244,3 @@ void Overlay::renderToScreen() {
 		}
 	}
 }
-
-//#include <QtGui/QTextDocument>
-
-//struct TextDrawerV2 {
-//	TextDrawerV2(const OsdStyle *style, QTextDocument *doc)
-//	: m_style(style), m_doc(doc), m_border(-1) {}
-//	QSizeF size() const {return m_size;}
-//	void update(double border, double width, const RichString &text) {
-//		m_text = text;
-//		m_doc->setHtml(text.toString());
-//		double w = m_border*2.0;
-//		double h = m_border*2.0;
-//		m_doc->setTextWidth(width - w);
-//		if (width > 0.0) {
-//			m_size.setWidth(m_doc->idealWidth() + w);
-//			m_size.setHeight(m_doc->size().height() + h);
-//		} else
-//			m_size = QSizeF();
-//		postUpdate();
-//	}
-//	virtual ~TextDrawer() {}
-//	virtual void draw(QPainter *painter, const QPointF &pos);
-//protected:
-//	virtual void postUpdate() {}
-//	QVector<QPointF> m_points;
-//	void drawTextTo(QPainter *painter, const QPointF &origin, const QColor &color, bool overwrite = true) {
-//		painter->save();
-//		painter->translate(origin);
-//		m_doc->setHtml(coloredHtml(color, overwrite));
-//		m_doc->drawContents(painter);
-//		painter->restore();
-//	}
-//	void drawThickTo(QPaintDevice *dev, QPixmap &buffer
-//			, const QPointF &origin, const QPointF &offset, const QColor &color) {
-//		buffer.fill(Qt::transparent);
-//		QPainter painter(&buffer);
-//		drawTextTo(&painter, origin, color);
-//		painter.end();
-//		painter.begin(dev);
-//		painter.translate(offset);
-//		for (int i=0; i<m_points.size(); ++i)
-//			painter.drawPixmap(m_points[i], buffer);
-//	}
-//	void drawThickTo(QPaintDevice *dev, QImage &buffer
-//			, const QPointF &origin, const QPointF &offset, const QColor &color) {
-//		buffer.fill(0x0);
-//		QPainter painter(&buffer);
-//		drawTextTo(&painter, origin, color);
-//		painter.end();
-//		painter.begin(dev);
-//		painter.translate(offset);
-//		for (int i=0; i<m_points.size(); ++i)
-//			painter.drawImage(m_points[i], buffer);
-//	}
-//	QString coloredHtml(const QColor &color, bool overwrite) const {
-//		QString html = QString("<font color='%1'>").arg(color.name());
-//		if (overwrite) {
-//			static const QRegExp rxColor("\\s+[cC][oO][lL][oO][rR]\\s*=\\s*[^>\\s\\t]+");
-//			html += QString(m_text.toString()).remove(rxColor);
-//		} else
-//			html += m_text.toString();
-//		html += "</font>";
-//		return html;
-//	}
-//	QPointF origin() const {
-//		double x = 0.0;
-//		const Qt::Alignment alignment = m_doc->defaultTextOption().alignment();
-//		if (alignment & Qt::AlignLeft) {
-//			x += m_border;
-//		} else if (alignment & Qt::AlignRight) {
-//			x -= m_border;
-//			x -= (m_doc->textWidth() - m_doc->idealWidth());
-//		} else
-//			x -= (m_doc->textWidth() - m_doc->idealWidth())*0.5;
-//		double y = m_border;
-//		return QPointF(x, y);
-//	}
-//	const OsdStyle *m_style;
-//	QTextDocument *m_doc;
-//	double m_border;
-//	QSizeF m_size;
-//	RichString m_text;
-//};

@@ -5,11 +5,6 @@
 #include <QtCore/QSize>
 #include <QtCore/QString>
 
-struct AudioFormat {
-	int channels;
-	int sample_rate;
-};
-
 constexpr static inline quint32 _f(char a, char b, char c, char d) {
 #if (Q_BYTE_ORDER == Q_BIG_ENDIAN)
 	return (((quint32)d)|(((quint32)c)<<8)|(((quint32)b)<<16)|(((quint32)a)<<24));
@@ -29,25 +24,28 @@ struct VideoFormat {
 		YV12	= _f('Y', 'V', '1', '2'),
 		NV12	= _f('N', 'V', '1', '2'),
 		NV21	= _f('N', 'V', '2', '1'),
-		YUY2	= _f('Y', 'U', 'Y', '2')
-
+		YUY2	= _f('Y', 'U', 'Y', '2'),
+		RGBA	= _f('R', 'G', 'B', 'A'),
+		BGRA	= _f('B', 'G', 'R', 'A')
 	};
-	VideoFormat() {
-		planes = pitch = bpp = width = height = stride = 0;
-	}
-	inline bool isCompatibleWith(const VideoFormat &other) const {
-		return planes == other.planes && type == other.type && bpp == other.bpp && other.height < height && other.stride < stride;
+	VideoFormat() {}
+	static VideoFormat fromType(Type type, int width, int height);
+	static VideoFormat fromImgFmt(uint32_t imgfmt, int width, int height);
+#define CHECK(a) (a == rhs.a)
+	inline bool isCompatibleWith(const VideoFormat &rhs) const {
+		return CHECK(type) && rhs.height < height && rhs.stride < stride;
 	}
 	inline bool operator == (const VideoFormat &rhs) const {
-		return planes == rhs.planes && type == rhs.type && bpp == rhs.bpp && width == rhs.width && height == rhs.height && stride == rhs.stride && pitch == rhs.pitch;
+		return CHECK(type) && CHECK(stride) && CHECK(width) && CHECK(height);
 	}
+#undef CHECK
 	inline bool operator != (const VideoFormat &rhs) const {return !operator == (rhs);}
 	inline QSize size() const {return QSize(width, height);}
 	inline bool isEmpty() const {return width < 1 || height < 1;}
 	inline double bps(double fps) const {return fps*width*height*bpp;}
+	bool planar = false;
+	int planes = 0, bpp = 0, width = 0, height = 0, stride = 0, width_stride = 0;
 	Type type = Unknown;
-	int planes;
-	int bpp, width, height, stride, pitch;
 };
 
 uint32_t _fToImgFmt(VideoFormat::Type type);

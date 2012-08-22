@@ -6,16 +6,8 @@
 class ColorProperty {
 public:
 	enum Value {Brightness = 0, Saturation, Contrast, Hue, PropMax};
-	ColorProperty(double b, double s, double c, double h) {
-		m_value[Brightness] = b;
-		m_value[Saturation] = s;
-		m_value[Contrast] = c;
-		m_value[Hue] = h;
-	}
-	ColorProperty() {
-		m_value[Brightness] = m_value[Saturation]
-			= m_value[Contrast] = m_value[Hue] = 0.0;
-	}
+	ColorProperty(double b, double s, double c, double h): m_value{b, s, c, h} {}
+	ColorProperty() {}
 	ColorProperty(const ColorProperty &other) {
 		m_value[Brightness] = other.m_value[Brightness];
 		m_value[Saturation] = other.m_value[Saturation];
@@ -74,7 +66,7 @@ public:
 			&& qFuzzyCompare(m_value[Hue], 0.0);
 	}
 private:
-	double m_value[4];
+	double m_value[4] = {0.0, 0.0, 0.0, 0.0};
 };
 
 #endif // COLORPROPERTY_HPP

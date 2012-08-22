@@ -86,10 +86,11 @@ public:
 	};
 
 	VideoShader(const QGLContext *ctx);
-//	bool add(const QString &fileName) {return m_shader.addShaderFromSourceFile(QGLShader::Fragment, fileName);}
-//	bool add(const QByteArray &code) {return m_shader.addShaderFromSourceCode(QGLShader::Fragment, code);}
 	bool bind(const Var &var, const VideoFormat &format) {
-		m_currentProgram = m_programs[var.id()];
+		if (format.type == VideoFormat::BGRA || format.type == VideoFormat::RGBA)
+			m_currentProgram = m_rgbProgram;
+		else
+			m_currentProgram = m_programs[var.id()];
 		const bool ret = m_currentProgram && m_currentProgram->bind();
 		if (ret)
 			m_currentProgram->setUniforms(var, format);
@@ -166,8 +167,9 @@ private:
 
 	Program *m_currentProgram = nullptr;
 	Program *m_programs[3];
+	Program *m_rgbProgram;
 	QGLShader m_common, m_filter, m_kernel, m_simple;
-	enum TextureType {YV12 = 0, YUY2, NV12, NV21, TypeMax};
+	enum TextureType {YV12 = 0, YUY2, NV12, NV21, RGB, TypeMax};
 	VideoFormat::Type m_type = VideoFormat::Unknown;
 //	QVector<QGLShader*> m_shaders{QVector<QGLShader*>(TypeMax, nullptr)};
 	QGLShader m_yuv;

@@ -9,6 +9,8 @@ class Playlist;		class QDateTime;
 class RecentInfo : public QObject {
 	Q_OBJECT
 public:
+	RecentInfo(const RecentInfo&) = delete;
+	RecentInfo &operator = (const RecentInfo&) = delete;
 	~RecentInfo();
 	QList<Mrl> openList() const;
 	int stoppedTime(const Mrl &mrl) const;

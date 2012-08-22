@@ -58,9 +58,9 @@ struct PlayEngine::Context {
 };
 
 struct PlayEngine::Data {
-	Mrl mrl, playingMrl;
-	QByteArray filename, next_filename;
-	QTimer ticker;		VideoFormat vfmt;
+	Mrl mrl = {}, playingMrl = {};
+	QByteArray filename = {}, next_filename = {};
+	QTimer ticker = {};		VideoFormat vfmt = {};
 	State state = State::Stopped;
 	bool quit = false, playing = false, isMenu = false;
 	bool idling = false, videoUpdate = false, init = false;
@@ -69,11 +69,11 @@ struct PlayEngine::Data {
 	Context *ctx = nullptr;
 	MPContext *mpctx = nullptr;
 	VideoOutput *video = nullptr;
-	StreamList spus;
-	DvdInfo dvd;
-	QMutex q_mutex;
-	QWaitCondition q_wait;
-	QByteArray dvdDevice;
+	StreamList spus = {};
+	DvdInfo dvd = {};
+	QMutex q_mutex = {};
+	QWaitCondition q_wait = {};
+	QByteArray dvdDevice = {};
 };
 
 PlayEngine::PlayEngine()
@@ -91,6 +91,10 @@ PlayEngine::PlayEngine()
 PlayEngine::~PlayEngine() {
 	delete d->video;
 	delete d;
+}
+
+bool PlayEngine::isHardwareAccelerated() const {
+	return d->video->usingHwAccel();
 }
 
 int PlayEngine::updateVideo(struct MPContext *mpctx) {
@@ -237,13 +241,16 @@ int PlayEngine::runCmd(MPContext *mpctx, mp_cmd_t *mpcmd) {
 }
 
 void PlayEngine::enqueue(Cmd *cmd) {
-	mp_cmd_t *mpcmd = talloc_ptrtype(NULL, mpcmd);
-	mpcmd->id = -1;
-	mpcmd->args[0].type = cmd->type;
-	if (cmd->type == Cmd::Volume)
-		mpcmd->args[0].v.f = cmd->var.toDouble();
-	delete cmd;
-	mp_input_queue_cmd(d->mpctx->input, mpcmd);
+	if (d->mpctx) {
+		mp_cmd_t *mpcmd = talloc_ptrtype(NULL, mpcmd);
+		mpcmd->id = -1;
+		mpcmd->args[0].type = cmd->type;
+		if (cmd->type == Cmd::Volume)
+			mpcmd->args[0].v.f = cmd->var.toDouble();
+		delete cmd;
+		mp_input_queue_cmd(d->mpctx->input, mpcmd);
+	} else
+		delete cmd;
 	d->q_wait.wakeAll();
 }
 
@@ -460,6 +467,7 @@ void PlayEngine::run() {
 	}
 	qDebug() << "finalization started";
 	mpctx_delete(d->mpctx);
+	d->mpctx = nullptr;
 	qDebug() << "mpctx deleted";
 	vo_cmplayer = nullptr;
 	emit finalized();
@@ -491,8 +499,8 @@ void PlayEngine::tellmp(const QString &cmd, const QStringList &args) {
 }
 
 void PlayEngine::quitRunning() {
-	d->quit = true;
 	enqueue(new Cmd(Cmd::Quit));
+	d->quit = true;
 }
 
 void PlayEngine::play(int time) {

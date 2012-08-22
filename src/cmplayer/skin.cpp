@@ -170,6 +170,27 @@ Skin::~Skin() {
 	delete d;
 }
 
+bool Skin::eventFilter(QObject *o, QEvent *e) {
+	if (o == d->seek || o == d->volume) {
+		QSlider *slider = static_cast<QSlider*>(o);
+		if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseMove) {
+			const auto event = static_cast<QMouseEvent*>(e);
+			if (event->buttons() & Qt::LeftButton) {
+				const int x = event->x();
+				qint64 min = slider->minimum();
+				qint64 max = slider->maximum();
+				const int xmin = slider->contentsRect().left();
+				const int xmax = slider->contentsRect().right();
+				const double rate = double(x - xmin)/double(xmax - xmin);
+				int value = min + double(max - min)*rate;
+				slider->setValue(value);
+				return true;
+			}
+		}
+	}
+	return QObject::eventFilter(o, e);
+}
+
 QStringList Skin::dirs() {
 	static QStringList dirs;
 	if (dirs.isEmpty()) {
@@ -348,6 +369,7 @@ bool Skin::checkSeekSlider(QObject *obj) {
 	d->seek = qobject_cast<QSlider*>(obj);
 	if (!d->seek)
 		return false;
+	d->seek->installEventFilter(this);
 	connect(d->seek, SIGNAL(valueChanged(int)), this, SLOT(seek(int)));
 	if (d->engine) {
 		d->ticking = true;
@@ -367,6 +389,7 @@ bool Skin::checkVolumeSlider(QObject *obj) {
 	d->volume = qobject_cast<QSlider*>(obj);
 	if (!d->volume)
 		return false;
+	d->volume->installEventFilter(this);
 	d->volume->setRange(0, 100);
 	if (d->audio)
 		d->volume->setValue(d->audio->volume());

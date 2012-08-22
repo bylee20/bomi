@@ -1,7 +1,7 @@
 #include "prefdialog.hpp"
+#include "translator.hpp"
 #include "dialogs.hpp"
 #include "info.hpp"
-#include "translator.hpp"
 #include "app.hpp"
 #include "ui_prefdialog.h"
 #include <QtGui/QStyledItemDelegate>
@@ -11,6 +11,7 @@
 #include "pref.hpp"
 #include "rootmenu.hpp"
 #include "skin.hpp"
+#include "hwaccel.hpp"
 
 // from clementine's preferences dialog
 
@@ -188,6 +189,7 @@ struct PrefDialog::Data {
 	QButtonGroup *shortcuts;
 	PrefMouseGroup<Enum::ClickAction> *dbl, *mdl;
 	PrefMouseGroup<Enum::WheelAction> *whl;
+	QMap<int, QCheckBox*> hwaccel;
 };
 
 PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) {
@@ -233,9 +235,22 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) 
 
 	playback->setSelected(true);
 
-	auto addFormat = [this] (VideoFormat::Type type) {d->ui.hwaccel_format->addItem(_fToDescription(type), type);};
-	addFormat(VideoFormat::YV12);
-//	addFormat(VideoFormat::YUY2);
+	auto vbox = new QVBoxLayout;
+	vbox->setContentsMargins(20, 0, 0, 0);
+	const auto codecs = HwAccelInfo::get().fullCodecList();
+	for (const auto codec : codecs) {
+		QCheckBox *ch = new QCheckBox;
+		const auto supports = HwAccelInfo::get().supports(codec);
+		const auto desc = avcodec_descriptor_get(codec)->long_name;
+		if (supports)
+			ch->setText(desc);
+		else
+			ch->setText(_L(desc) % " (" % tr("Not supported") % ')');
+		ch->setEnabled(supports);
+		vbox->addWidget(ch);
+		d->hwaccel[codec] = ch;
+	}
+	d->ui.hwaccel_list->setLayout(vbox);
 
 	d->ui.sub_ext->addItem(QString(), QString());
 	d->ui.sub_ext->addItemTextData(Info::subtitleExt());
@@ -285,6 +300,7 @@ PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) 
 #ifdef Q_WS_MAC
 	d->ui.system_tray_group->hide();
 #endif
+	adjustSize();
 }
 
 PrefDialog::~PrefDialog() {
@@ -396,7 +412,11 @@ void PrefDialog::fill(const Pref &p) {
 	d->ui.disable_screensaver->setChecked(p.disable_screensaver);
 
 	d->ui.enable_hwaccel->setChecked(p.enable_hwaccel);
-	d->ui.hwaccel_format->setCurrentData(p.hwaccel_format);
+	for (auto codec : p.hwaccel_codecs) {
+		auto ch = d->hwaccel[codec];
+		if (ch)
+			ch->setChecked(true);
+	}
 
 	d->ui.blur_kern_c->setValue(p.blur_kern_c);
 	d->ui.blur_kern_n->setValue(p.blur_kern_n);
@@ -474,7 +494,11 @@ void PrefDialog::apply() {
 	p.disable_screensaver = d->ui.disable_screensaver->isChecked();
 
 	p.enable_hwaccel = d->ui.enable_hwaccel->isChecked();
-	p.hwaccel_format = static_cast<VideoFormat::Type>(d->ui.hwaccel_format->currentData().toInt());
+	p.hwaccel_codecs.clear();
+	for (auto it = d->hwaccel.begin(); it != d->hwaccel.end(); ++it) {
+		if ((*it)->isChecked())
+			p.hwaccel_codecs.append(it.key());
+	}
 
 	p.blur_kern_c = d->ui.blur_kern_c->value();
 	p.blur_kern_n = d->ui.blur_kern_n->value();

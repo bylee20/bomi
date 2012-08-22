@@ -27,9 +27,9 @@ macx {
     INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
     TARGET = cmplayer
-    LIBS += -lX11 -lva -lva-x11 -lva-glx \
+    LIBS += -lX11 \
         -L../../build/lib -lcmplayer_skin -lcmplayer_mplayer2 -lcmplayer_sigar -lchardet -lcmplayer_av \
-        -lz -lopenal -lasound
+        -lz -lopenal -lasound -lva -lva-x11 -lva-glx
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }
@@ -38,7 +38,7 @@ LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldv
     -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
 
 
-INCLUDEPATH += ../mplayer2 ../../build/include ../sigar/include
+INCLUDEPATH += ../mplayer2 ../../build/include ../sigar/include ../mplayer2/libmpcodecs
 
 QMAKE_CC = "gcc -std=c99 -ffast-math"
 
@@ -58,7 +58,6 @@ RESOURCES += rsclist.qrc
 HEADERS += playengine.hpp \
     mainwindow.hpp \
     mrl.hpp \
-    controlwidget.hpp \
     global.hpp \
     menu.hpp \
     colorproperty.hpp \
@@ -92,9 +91,6 @@ HEADERS += playengine.hpp \
     favoritesview.hpp \
     downloader.hpp \
     logodrawer.hpp \
-    framebufferobjectoverlay.hpp \
-    pixelbufferoverlay.hpp \
-    pixmapoverlay.hpp \
     overlay.hpp \
     videorenderer.hpp \
     avmisc.hpp \
@@ -105,7 +101,6 @@ HEADERS += playengine.hpp \
     snapshotdialog.hpp \
     events.hpp \
     listmodel.hpp \
-    fragmentprogram.hpp \
     mainwindow_p.hpp \
     playinfoview.hpp \
     widgets.hpp \
@@ -129,7 +124,6 @@ SOURCES += main.cpp \
     playengine.cpp \
     mainwindow.cpp \
     mrl.cpp \
-    controlwidget.cpp \
     global.cpp \
     menu.cpp \
     colorproperty.cpp \
@@ -165,9 +159,6 @@ SOURCES += main.cpp \
     favoritesview.cpp \
     downloader.cpp \
     logodrawer.cpp \
-    framebufferobjectoverlay.cpp \
-    pixelbufferoverlay.cpp \
-    pixmapoverlay.cpp \
     overlay.cpp \
     videorenderer.cpp \
     subtitlemodel.cpp \
@@ -177,7 +168,6 @@ SOURCES += main.cpp \
     snapshotdialog.cpp \
     events.cpp \
     listmodel.cpp \
-    fragmentprogram.cpp \
     playinfoview.cpp \
     widgets.cpp \
     qtcolorpicker.cpp \

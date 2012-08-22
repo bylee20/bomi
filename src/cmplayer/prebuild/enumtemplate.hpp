@@ -49,8 +49,8 @@ private:
 	struct Map {
 		Map() {list.reserve(count);}
 		__DEC_NAME_ARRAY
-		QMap<QString, int> value;
-		List list;
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}

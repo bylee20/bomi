@@ -44,6 +44,7 @@ private slots:
 	void onMrlChanged(const Mrl &mrl);
 	void onStateChanged(State state);
 private:
+	bool eventFilter(QObject *o, QEvent *e);
 	void checkChildren(QWidget *p);
 	bool checkButton(QObject *obj);
 	bool checkLabel(QObject *obj);

@@ -49,9 +49,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QString name[count];
-		QMap<QString, int> value;
-		List list;
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -111,9 +111,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QString name[count];
-		QMap<QString, int> value;
-		List list;
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -173,9 +173,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QString name[count];
-		QMap<QString, int> value;
-		List list;
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -232,9 +232,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QString name[count];
-		QMap<QString, int> value;
-		List list;
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -294,9 +294,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QString name[count];
-		QMap<QString, int> value;
-		List list;
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -359,9 +359,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QString name[count];
-		QMap<QString, int> value;
-		List list;
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -421,9 +421,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QString name[count];
-		QMap<QString, int> value;
-		List list;
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -486,9 +486,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QString name[count];
-		QMap<QString, int> value;
-		List list;
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -557,9 +557,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QString name[count];
-		QMap<QString, int> value;
-		List list;
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -622,9 +622,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QMap<int, QString> name;
-		QMap<QString, int> value;
-		List list;
+		QMap<int, QString> name = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
@@ -702,9 +702,9 @@ public:
 private:
 	struct Map {
 		Map() {list.reserve(count);}
-		QMap<int, QString> name;
-		QMap<QString, int> value;
-		List list;
+		QMap<int, QString> name = {};
+		QMap<QString, int> value = {};
+		List list = {};
 	};
 	static Map _map;
 	static const Map &map() {return _map;}

@@ -17,12 +17,12 @@ class AudioController;	struct MPContext;
 class VideoFormat;		struct mp_cmd;
 
 struct DvdInfo {
-	QString volume;
+	QString volume = {};
 	struct Title {
-		QString name;
-		QStringList chapters;
+		QString name = {};
+		QStringList chapters = {};
 	};
-	QMap<int, Title> titles;
+	QMap<int, Title> titles = {};
 	void clear() {titles.clear(); volume.clear();}
 };
 
@@ -33,7 +33,7 @@ struct Track {
 	QString title() const {return m_title;}
 	QString language() const {return m_lang;}
 private:
-	QString m_title, m_lang;
+	QString m_title = {}, m_lang = {};
 };
 
 typedef QList<Track> TrackList;
@@ -42,13 +42,15 @@ typedef QList<Track> TrackList;
 class PlayEngine : public QThread, public MpMessage {
 	Q_OBJECT
 public:
+	PlayEngine(const PlayEngine&) = delete;
+	PlayEngine &operator = (const PlayEngine &) = delete;
 	struct Cmd {
 		enum Type {Unknown = 0, Quit = 1, Load = 2, Stop = 4, VideoUpdate = 8, Volume = 16, Break = Quit | Load | Stop};
-		Cmd(): type(Unknown) {}
+		Cmd() {}
 		Cmd(Type type): type(type) {}
 		Cmd(Type type, const QVariant &var): type(type), var(var) {}
-		Type type;
-		QVariant var;
+		Type type = Unknown;
+		QVariant var = {};
 	};
 	~PlayEngine();
 	void tellmp(const QString &cmd);
@@ -94,6 +96,7 @@ public:
 	static void msleep(unsigned long msec) {QThread::msleep(msec);}
 	static void usleep(unsigned long usec) {QThread::usleep(usec);}
 	void play(int time);
+	bool isHardwareAccelerated() const;
 public slots:
 	void quitRunning();
 	void play();

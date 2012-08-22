@@ -14,7 +14,6 @@
 #include "snapshotdialog.hpp"
 #include "subtitle_parser.hpp"
 #include "audiocontroller.hpp"
-#include "controlwidget.hpp"
 #include "recentinfo.hpp"
 #include "abrepeater.hpp"
 #include "mainwindow.hpp"
@@ -57,7 +56,7 @@ struct MainWindow::Data {
 	bool stateChanging = false;
 	ABRepeater ab = {&engine, &subtitle};
 	PlayInfoView playInfo = {&engine, &audio, &video};
-	VideoScreen *screen = new VideoScreen;
+	VideoScreen &screen = video.screen();
 	Skin skin;
 //	ControlWidget *control = create_control_widget();
 //	QWidget *center = create_central_widget();
@@ -165,7 +164,6 @@ struct MainWindow::Data {
 	#ifndef Q_WS_MAC
 		tray->setVisible(p.enable_system_tray);
 	#endif
-		HWACCEL_FORMAT = p.enable_hwaccel ? _fToImgFmt(p.hwaccel_format) : 0;
 	}
 private:
 //	ControlWidget *create_control_widget() {

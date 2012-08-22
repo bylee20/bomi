@@ -13,6 +13,8 @@ class MainWindow : public QMainWindow {
 	Q_OBJECT
 public:
 	MainWindow();
+	MainWindow(const MainWindow &) = delete;
+	MainWindow &operator = (const MainWindow &) = delete;
 	~MainWindow();
 	void unplug();
 public slots:

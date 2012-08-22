@@ -5119,6 +5119,6 @@ int mpctx_cleanup_playback(struct MPContext *mpctx) {
 	return 0;
     exit_player_with_rc(mpctx, EXIT_EOF, 0);
 
-    return 1;
+	return 1;
 }
 #endif /* DISABLE_MAIN */

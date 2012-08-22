@@ -8,11 +8,6 @@
 #include "mpcore.hpp"
 #include "hwaccel.hpp"
 
-#ifdef Q_WS_X11
-extern HwAccel *hwaccel;
-#include <va/va_glx.h>
-#endif
-
 extern "C" {
 #include <libvo/video_out.h>
 #include <libmpcodecs/img_format.h>
@@ -22,6 +17,7 @@ extern "C" {
 #include <input/input.h>
 #include <libvo/osd.h>
 #include <sub/sub.h>
+#include <libmpdemux/stheader.h>
 }
 
 struct VideoOutput::Data {
@@ -29,6 +25,15 @@ struct VideoOutput::Data {
 	vo_info_t info;
 	VideoFormat format;
 	VideoRenderer *renderer;
+	HwAccel *hwaccel = nullptr;
+	bool hwaccelActivated = false;
+	void deleteHwAccel() {
+		renderer->makeCurrent();
+		glBindTexture(GL_TEXTURE_2D, renderer->texture(0));
+		delete hwaccel;
+		renderer->doneCurrent();
+		hwaccel = nullptr;
+	}
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -45,17 +50,17 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 	d->driver.preinit = preinit;
 	d->driver.config = config;
 	d->driver.control = control;
-	d->driver.draw_slice = draw_slice;
-	d->driver.draw_osd = draw_osd;
-	d->driver.flip_page = flip_page;
-	d->driver.check_events = check_events;
+	d->driver.draw_slice = drawSlice;
+	d->driver.draw_osd = drawOsd;
+	d->driver.flip_page = flipPage;
+	d->driver.check_events = checkEvents;
 	d->driver.uninit = uninit;
 
 	d->renderer = new VideoRenderer(engine);
-//	d->renderer->m_redraw = &d->driver.wants_redraw;
 }
 
 VideoOutput::~VideoOutput() {
+	d->deleteHwAccel();
 	delete d->renderer;
 	delete d;
 }
@@ -82,82 +87,99 @@ struct vo *VideoOutput::vo_create(MPContext *mpctx) {
 	return nullptr;
 }
 
-int VideoOutput::preinit(struct vo */*vo*/, const char */*arg*/) {
-	return 0;
-}
-
-void VideoOutput::uninit(struct vo */*vo*/) {
-}
-
-static void fillFormat(VideoFormat &format, uint32_t imgfmt, int w, int h, int s = 0) {
-	format.width = w;
-	format.height = h;
-	format.stride = 0;
-	switch (imgfmt) {
-	case IMGFMT_YV12:
-	case IMGFMT_I420:
-		format.bpp = 12;
-		format.pitch = format.stride = ((w >> 5) + 1) << 5;
-		format.type = VideoFormat::YV12;
-		format.planes = 3;
-		break;
-	case IMGFMT_YUY2:
-		format.bpp = 16;
-		format.type = VideoFormat::YUY2;
-		format.planes = 1;
-		break;
-	case IMGFMT_NV12:
-	case IMGFMT_NV21:
-		format.bpp = 12;
-		format.type = imgfmt == IMGFMT_NV12 ? VideoFormat::NV12 : VideoFormat::NV21;
-		format.planes = 2;
-		format.pitch = format.stride = ((w >> 5) + 1) << 5;
-		break;
-	default:
-		format.bpp = 0;
-		format.type = VideoFormat::Unknown;
-		break;
-	}
-	if (!format.stride) {
-		const int Bpp = format.bpp >> 3;
-		format.stride = (format.width*Bpp << 4) >> 4;
-		format.pitch = format.stride/Bpp;
-	}
+bool VideoOutput::usingHwAccel() const {
+	return d->hwaccelActivated;
 }
 
 int VideoOutput::config(struct vo *vo, uint32_t w_s, uint32_t h_s, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
 	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
-	fillFormat(d->format, fmt, w_s, h_s);
+	auto avctx = HwAccelInfo::get().avctx();
+	d->hwaccelActivated = false;
+	if (fmt == IMGFMT_VDPAU && avctx) {
+		if (d->hwaccel) {
+			if (!d->hwaccel->isCompatibleWith(avctx))
+				d->deleteHwAccel();
+		}
+		if (!d->hwaccel)
+			d->hwaccel = new HwAccel(avctx);
+		if (!d->hwaccel->isUsable()) {
+			d->deleteHwAccel();
+			return -1;
+		}
+		avctx->hwaccel_context = d->hwaccel->context();
+		d->format = d->hwaccel->format();
+		d->format.stride = avctx->width*4;
+		d->format.width_stride = avctx->width;
+		d->format.height = avctx->height;
+		d->hwaccelActivated = true;
+	} else
+		d->format = VideoFormat::fromImgFmt(fmt, w_s, h_s);
 	d->renderer->prepare(d->format);
+	if (d->hwaccelActivated && d->hwaccel && d->hwaccel->isUsable()) {
+		d->renderer->makeCurrent();
+		d->hwaccel->createSurface(d->renderer->textures());
+		d->renderer->doneCurrent();
+	}
+	qDebug() << "vo configured";
 	return 0;
 }
 
-int VideoOutput::draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, int h, int x, int y) {
-	qDebug() << "draw_slice";
+
+bool VideoOutput::getImage(void *data) {
+	auto mpi = reinterpret_cast<mp_image_t*>(data);
+	return d->hwaccel && d->hwaccel->isUsable() && d->hwaccel->setBuffer(mpi);
 }
 
 void VideoOutput::drawImage(void *data) {
+	if (!d->renderer->beginUploadingTextures())
+		return;
 	mp_image_t *mpi = reinterpret_cast<mp_image_t*>(data);
-	VideoFrame &frame = d->renderer->bufferFrame();
-	frame.format = d->format;
-	frame.format.pitch = frame.format.stride = mpi->stride[0];
-	if (!(mpi->flags & MP_IMGFLAG_PLANAR))
-		frame.format.pitch /= mpi->bpp >> 3;
-	frame.data[0] = mpi->planes[0];
-	frame.data[1] = mpi->planes[1];
-	frame.data[2] = mpi->planes[2];
-	frame.data[3] = mpi->planes[3];
-	if (d->format.stride < frame.format.stride) {
-		qDebug() << "expand stride:" << d->format.stride << "->" << frame.format.stride;
-		d->format = frame.format;
-		d->renderer->prepare(d->format);
+	if (d->hwaccelActivated) {
+		if (d->hwaccel && d->hwaccel->isUsable()) {
+			d->hwaccel->copySurface(mpi);
+		}
+	} else {
+		const int stride = mpi->stride[0];
+		if (d->format.stride < stride) {
+			qDebug() << "expand stride:" << d->format.stride << "->" << stride;
+			d->format.width_stride = d->format.stride = stride;
+			if (!(mpi->flags & MP_IMGFLAG_PLANAR))
+				d->format.width_stride /= (mpi->bpp >> 3);
+			d->renderer->prepare(d->format);
+		}
+		const auto h = d->format.height;
+		const auto w = d->format.width_stride;
+		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
+			glBindTexture(GL_TEXTURE_2D, d->renderer->texture(idx));
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
+		};
+		switch (d->format.type) {
+		case VideoFormat::I420:
+		case VideoFormat::YV12:
+			setTex(0, GL_LUMINANCE, w, h, mpi->planes[0]);
+			setTex(1, GL_LUMINANCE, w >> 1, h >> 1, mpi->planes[1]);
+			setTex(2, GL_LUMINANCE, w >> 1, h >> 1, mpi->planes[2]);
+			break;
+		case VideoFormat::NV12:
+		case VideoFormat::NV21:
+			setTex(0, GL_LUMINANCE, w, h, mpi->planes[0]);
+			setTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1, mpi->planes[1]);
+			break;
+		case VideoFormat::YUY2:
+			setTex(0, GL_LUMINANCE_ALPHA, w, h, mpi->planes[0]);
+			setTex(1, GL_BGRA, w >> 1, h, mpi->planes[0]);
+			break;
+		case VideoFormat::RGBA:
+			setTex(0, GL_RGBA, w, h, mpi->planes[0]);
+			break;
+		case VideoFormat::BGRA:
+			setTex(0, GL_BGRA, w, h, mpi->planes[0]);
+			break;
+		default:
+			break;
+		}
 	}
-	d->renderer->uploadBufferFrame();
-
-	const auto id = (VASurfaceID)(uintptr_t)mpi->priv;
-	if (hwaccel) {
-//		qDebug() << hwaccel->copyTexture(id);
-	}
+	d->renderer->endUploadingTextures();
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
@@ -176,6 +198,8 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	case VOCTRL_UPDATE_SCREENINFO:
 //		update_xinerama_info(vo);
 		return VO_TRUE;
+	case VOCTRL_GET_IMAGE:
+		return v->getImage(data);
 	case VOCTRL_PAUSE:
 	case VOCTRL_RESUME:
 	case VOCTRL_GET_PANSCAN:
@@ -190,17 +214,22 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	}
 }
 
-void VideoOutput::draw_osd(struct vo *vo, struct osd_state *osd) {
+int VideoOutput::drawSlice(struct vo */*vo*/, uint8_t */*src*/[], int /*stride*/[], int w, int h, int x, int y) {
+	qDebug() << "drawSlice();" << x << y << w << h;
+	return true;
+}
+
+void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
 	osd_draw_text(osd, d->format.width, d->format.height, VideoRenderer::drawAlpha, d->renderer);
 }
 
-void VideoOutput::flip_page(struct vo *vo) {
+void VideoOutput::flipPage(struct vo *vo) {
 	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
 	d->renderer->render();
 }
 
-void VideoOutput::check_events(struct vo */*vo*/) {}
+void VideoOutput::checkEvents(struct vo */*vo*/) {}
 
 int VideoOutput::queryFormat(int format) {
 	switch (format) {
@@ -208,6 +237,7 @@ int VideoOutput::queryFormat(int format) {
 	case IMGFMT_YV12:
 	case IMGFMT_NV12:
 	case IMGFMT_YUY2:
+	case IMGFMT_VDPAU:
 		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
 			| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;
 	default:

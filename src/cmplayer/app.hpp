@@ -31,10 +31,12 @@ private slots:
 	void open(const QString &url);
 	void onMessageReceived(const QString &message);
 private:
+	App(const App&) = delete;
+	App &operator = (const App&) = delete;
 	static void messageHandler(QtMsgType type, const char *msg);
 	bool event(QEvent *event);
 	struct Data;
-	Data *d;
+	Data *d = nullptr;
 };
 
 static inline App *app() {return static_cast<App*>(qApp);}
