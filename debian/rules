@@ -38,7 +38,12 @@ clean:
 	rm -f build-stamp
 
 	# Add here commands to clean up after the build process.
-	make $(MAKE_VARS) clean
+	-make $(MAKE_VARS) clean
+	-cd src/libchardet* && make distclean
+	-cd src/libav && make distclean
+	-cd src/mplayer2 && make distclean
+	-cd src/sigar && make clean
+	-rm -rf build
 
 	dh_clean
 
@@ -51,7 +56,7 @@ install: build
 	# Add here commands to install the package into debian/gentoo.
 	# The DESTDIR Has To Be Exactly /usr/src/packages/BUILD/debian/debian/<nameOfPackage>
 	make $(MAKE_VARS) DEST_DIR=$(CURDIR)/debian/cmplayer install
-
+	
 # Build architecture-independent files here.
 binary-indep: build install
 	# We have nothing to do by default.

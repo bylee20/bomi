@@ -50,8 +50,8 @@ build_dir:
 	install -d build
 
 clean:
-	-cd src/cmplayer_skin && $(QMAKE) cmplayer_skin.pro && make clean
-	-cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make clean
+	-cd src/cmplayer_skin && $(QMAKE) cmplayer_skin.pro && make clean && rm -rf Makefile* debug release
+	-cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make clean && rm -rf Makefile* debug release
 	-rm -rf build/CMPlayer*
 	-rm -rf build/skins
 	-rm -f src/cmplayer/translations/*.qm
