@@ -19,11 +19,11 @@ build() {
 	cd $pkgname-$pkgver
 	git checkout $pkgver
 	./build-libchardet && ./build-sigar && ./build-libav && ./build-mplayer2 && \
-	make PREFIX=/usr cmplayer || return 1
+	make PREFIX=/usr CXX=g++ cmplayer || return 1
 }
 
 package() {
 	pkgdesc="CMPlayer is a multimedia player."
 	cd "$srcdir/$pkgname-$pkgver"
-	make DEST_DIR=$pkgdir PREFIX=/usr install || return 1
+	make DEST_DIR=$pkgdir PREFIX=/usr CXX=g++ install || return 1
 }

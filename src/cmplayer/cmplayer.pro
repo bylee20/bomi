@@ -13,8 +13,6 @@ LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldv
         macx:CONFIG -= app_bundle
 }
 
-QMAKE_CXX = g++-4.7
-
 macx {
     QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
     QMAKE_CXXFLAGS_X86_64 += -m64
