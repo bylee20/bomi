@@ -9,23 +9,18 @@ struct TextOsdRenderer::Data {
 	QList<RichTextBlock> pended;
 	RichTextDocument doc[2];
 	QString text;
-	Qt::Alignment alignment;
-	double outline, top, bottom, left, right, lineLeading{0}, paragraphLeading{0};
-	int px;
+	Qt::Alignment alignment = 0;
+	double outline = 1.0, lineLeading = 0.0, paragraphLeading = 0.0;
+	double top = 0.0, bottom = 0.0, left = 0.0, right = 0.0;
+	int px = 20;
 	QTimer clearer;
 	QSizeF renderable;
-	bool textChanged, optionChanged, formatChanged, sizeChanged, styleChanged;
-	bool pending;
+	bool textChanged = false, optionChanged = false, formatChanged = false, sizeChanged = false, styleChanged = false;
+	bool pending = false;
 };
 
 TextOsdRenderer::TextOsdRenderer(Qt::Alignment align)
 : d(new Data ) {
-	d->pending = false;
-	d->alignment = 0;
-	d->outline = 1.0;
-	d->px = 20;
-	d->top = d->bottom = d->left = d->right = 0.0;
-	d->styleChanged = d->textChanged = d->optionChanged = d->formatChanged = d->sizeChanged = false;
 	setAlignment(align);
 	d->clearer.setSingleShot(true);
 	connect(&d->clearer, SIGNAL(timeout()), this, SLOT(clear()));
@@ -122,16 +117,9 @@ RichTextDocument TextOsdRenderer::doc() const {
 }
 
 void TextOsdRenderer::show(const QString &text, int last) {
-	d->clearer.stop();
-	{
-		RichTextDocument doc;
-		doc.setText(text);
-		d->pended = doc.blocks();
-	}
-	d->textChanged = true;
-	emit needToRerender();
-	if (last >= 0)
-		d->clearer.start(last);
+	RichTextDocument doc;
+	doc.setText(text);
+	show(doc, last);
 }
 
 QPointF TextOsdRenderer::posHint() const {
@@ -186,35 +174,3 @@ void TextOsdRenderer::setMargin(double top, double bottom, double right, double 
 	}
 	emit needToRerender();
 }
-
-//QPointF origin() const {
-//	double x = 0.0;
-//	const Qt::Alignment alignment = m_doc->defaultTextOption().alignment();
-//	if (alignment & Qt::AlignLeft) {
-//		x += m_border;
-//		if (m_style->has_shadow) {
-//			if (m_style->shadow_offset.x() < 0)
-//				x += -m_style->shadow_offset.x() + m_style->shadow_blur;
-//			else if (m_style->shadow_blur > m_style->shadow_offset.x())
-//				x += m_style->shadow_blur - m_style->shadow_offset.x();
-//		}
-//	} else if (alignment & Qt::AlignRight) {
-//		x -= m_border;
-//		if (m_style->has_shadow) {
-//			if (m_style->shadow_offset.x() > 0)
-//				x -= m_style->shadow_offset.x() + m_style->shadow_blur;
-//			else if (m_style->shadow_blur > -m_style->shadow_offset.x())
-//				x -= m_style->shadow_blur - -m_style->shadow_offset.x();
-//		}
-//		x -= (m_doc->textWidth() - m_doc->idealWidth());
-//	} else
-//		x -= (m_doc->textWidth() - m_doc->idealWidth())*0.5;
-//	double y = m_border;
-//	if (m_style->has_shadow) {
-//		if (m_style->shadow_offset.y() < 0)
-//			y += -m_style->shadow_offset.y() + m_style->shadow_blur;
-//		else if (m_style->shadow_blur > m_style->shadow_offset.y())
-//			y += m_style->shadow_blur - m_style->shadow_offset.y();
-//	}
-//	return QPointF(x, y);
-//}

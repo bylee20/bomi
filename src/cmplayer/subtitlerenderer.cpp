@@ -109,9 +109,8 @@ void SubtitleRenderer::render(int ms) {
 		RichTextDocument doc;
 		for (o = d->order.begin(); o != d->order.end(); ++o) {
 			const Render &render = **o;
-			if (render.prev != render.comp->end()) {
+			if (render.prev != render.comp->end())
 				doc += render.prev.value();
-			}
 		}
 		d->osd.show(doc, -1);
 	}

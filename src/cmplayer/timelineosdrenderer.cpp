@@ -70,7 +70,7 @@ QPointF TimeLineOsdRenderer::posHint() const {
 }
 
 QSizeF TimeLineOsdRenderer::size() const {
-	return d->size;
+	return d->time < 0 ? QSizeF(0, 0) : d->size;
 }
 
 void TimeLineOsdRenderer::show(int time, int duration, int last) {
@@ -85,5 +85,6 @@ void TimeLineOsdRenderer::show(int time, int duration, int last) {
 
 void TimeLineOsdRenderer::clear() {
 	d->time = d->duration = -1;
+//	d->size = QSize(0, 0);
 	emit needToRerender();
 }

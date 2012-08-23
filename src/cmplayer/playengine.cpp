@@ -84,7 +84,7 @@ PlayEngine::PlayEngine()
 	mpctx_update_video = updateVideo;
 	mpctx_wait_cmd = waitCmd;
 	connect(&d->ticker, SIGNAL(timeout()), this, SLOT(emitTick()));
-	d->ticker.setInterval(100);
+	d->ticker.setInterval(20);
 	d->ticker.start();
 }
 

@@ -118,10 +118,10 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 				const ushort c = at(pos);
 				const bool q_end = (q && c == q && at(pos-1) != '\\');
 				if (q_end || (!q && (isSeparator(c) || c == '>'))) {
-					if (q_end)
-						++pos;
 					attr.value = midRef(text, start, pos - start);
 					tag.attr.push_back(attr);
+					if (q_end)
+						++pos;
 					break;
 				}
 				++pos;

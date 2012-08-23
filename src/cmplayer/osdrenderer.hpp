@@ -53,8 +53,8 @@ private:
 	QSizeF m_frame;
 	QSize m_screen;
 	OsdStyle m_style;
-	OsdRenderer *m_prev{nullptr}, *m_next{nullptr};
-	ScreenOsdWrapper *m_wrapper{nullptr};
+	OsdRenderer *m_prev = nullptr, *m_next = nullptr;
+	ScreenOsdWrapper *m_wrapper = nullptr;
 };
 
 #endif // OSDRENDERER_HPP
