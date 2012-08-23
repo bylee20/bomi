@@ -1,25 +1,79 @@
 To compile CMPlayer, you need next things:
 
-* g++ >= 4.6
-* Qt >= 4.7
-* VLC >= 1.1
+* g++ >= 4.7
+* Qt >= 4.8
+* python >= 3.0
+* yasm
+* zlib
+* libbz2
+* libdts
+* libdvdnav
+* libdvdread
+* libcdio
+* libcdio-paranoia
+* libcdio-cdda
+* libopenal
+* libasound
+* libva
+* libmad
+* libfaad
+* libxvidcore
+* libdv
+* libvorbis
+* libtheora
+* libogg
+* liba52
+* libdca
 
-Also, you need OpenGL for rendering videos.
-Follow next steps for each OS:
+Also, you need VGA(graphics board) and driver which support OpenGL 2.0 or later.
 
-- For OS X
 
-Execute next command:
-$ make
-This command makes application bundle in bin.
+Follow next steps to build and install CMPlayer:
 
-- For Linux
+- On Linux
 
-Execute next command:
-$ make
-This command builds binaries into bin directory.
-You can specify the directory where you want to install CMPlayer with PREFIX, like:
-$ make PREFIX=/usr
-To install, execute next command:
-# make PREFIX=/usr install
-You have to apply same option which you used for compile.
+There exist some package scripts to build .deb, .rpm or pkg.tar.xz(for Arch Linux).
+You can modify and use theses ones to build your own package  for your system. 
+
+If you want build cmplayer, follow next:
+
+1. Run next command to build the libraries included in source tree,
+
+$ ./build-libchardet && ./build-sigar && ./build-libav && ./build-mplayer2
+
+2. Run next command to build cmplayer excutable,
+
+$ make <args> cmplayer 
+
+where <args> means arguments to build and install cmplayer succesufully .
+
+Here's some usefule arguments:
+
+PREFIX=<prefix>			CMPlayer will be built to install in <prefix> (default: /usr/local)
+CXX=<cxx>				CMPlayer will be complied with the C++ compiler <cxx> (default:g++)
+QMAKE=<qmake>		CMPlayer will be compiled with Qt which is proveded by the qmake <qmake> (default:qmake)
+LRELEASE=<lrelease>	CMPlayer's translations will be generated with <lrelease> (default:lrelease)
+
+You may build cmplayer with no argument if you're satisfied with the default values.
+
+Now, you have the executable 'cmplayer' in build directory.
+If you want to install cmplayer, proceed next.
+
+3. To install cmplayer, run next command,
+
+$ make <args> install
+
+where you have to use exactly same <args> specified when building cmplayer.
+
+- On OS X
+
+1. Run next command to build the libraries included in source tree,
+
+./build-libchardet && ./build-sigar && ./build-libav && ./build-mplayer2
+
+2. Run next command to build cmplayer excutable,
+
+make cmplayer 
+
+Now you have the application bundle 'CMPlayer.app' on OS X in buid directory.
+If you want to install cmplayer, All you have to is just copying the bundle into /Applications.
