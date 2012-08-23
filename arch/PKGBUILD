@@ -6,7 +6,7 @@ pkgrel=1
 arch=('i686' 'x86_64')
 url="http://code.google.com/p/$pkgname"
 license=('GPL')
-depends=('qt>=4.8' 'libdvdnav' ' libdvdread' 'libcdio' 'openal' 'alsa-lib'
+depends=('qt>=4.8' 'libdvdnav' 'libdvdread' 'libcdio' 'openal' 'alsa-lib'
 	'libva' 'libmad' 'faad2' 'libdv' 'xvidcore' 'libvorbis' 'libogg' 'libtheora'
 	'a52dec' 'libdca' 'libgl' 'yasm')
 makedepends=('git' 'mesa' 'gcc>=4.7' 'python>=3.0')
