@@ -203,7 +203,11 @@ RichTextBlock::Style RichTextHelper::Tag::style() const {
 	else if (same(name, "font")) {
 		for (int i=0; i<attr.size(); ++i) {
 			if (same(attr[i].name, "color")) {
-				style[QTextFormat::ForegroundBrush] = QBrush(toColor(trim(attr[i].value)));
+				const auto color = toColor(trim(attr[i].value));
+				if (color.isValid())
+					style[QTextFormat::ForegroundBrush] = QBrush(color);
+				else
+					qDebug() << trim(attr[i].value) << "is not a valid color name";
 			} else if (same(attr[i].name, "face"))
 				style[QTextFormat::FontFamily] = trim(attr[i].value).toString();
 			else if (same(attr[i].name, "size"))

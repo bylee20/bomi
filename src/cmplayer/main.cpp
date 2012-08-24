@@ -25,11 +25,6 @@ static bool checkOpenGL() {
 	return false;
 }
 
-
-
-#include <X11/Xlib.h>
-
-
 Q_DECLARE_METATYPE(QTextOption::WrapMode);
 
 int main(int argc, char **argv) {
@@ -38,7 +33,6 @@ int main(int argc, char **argv) {
 	qRegisterMetaType<State>("State");
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
-
 
 	qDebug() << "started app";
 	App app(argc, argv);

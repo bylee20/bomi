@@ -29,7 +29,7 @@ macx {
         -L/opt/local/lib \
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
-        -framework IOKit
+        -framework IOKit -framework Carbon
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += /opt/local/include /usr/local/include

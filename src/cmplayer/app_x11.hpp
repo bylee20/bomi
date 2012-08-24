@@ -13,6 +13,7 @@ public:
 	void setScreensaverDisabled(bool disabled);
 	void setAlwaysOnTop(WId wid, bool onTop);
 	QStringList devices() const;
+	bool shutdown();
 private slots:
 	void ss_reset();
 private:

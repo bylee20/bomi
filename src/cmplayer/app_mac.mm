@@ -24,6 +24,8 @@
 
 #ifdef Q_WS_MAC
 
+#include <CoreServices/CoreServices.h>
+#include <Carbon/Carbon.h>
 #include <QtCore/QAbstractEventDispatcher>
 #include <QtCore/QDebug>
 #include <IOKit/pwr_mgt/IOPMLib.h>
@@ -163,6 +165,34 @@ void AppMac::setScreensaverDisabled(bool disabled) {
 		IOPMAssertionRelease(display);
 		idle = display = 0;
 	}
+}
+
+static OSStatus sendAE(AEEventID EventToSend) {
+	OSStatus status = noErr;
+	do {
+		AEAddressDesc desc;
+		static const ProcessSerialNumber psn = { 0, kSystemProcess };
+		OSStatus status = AECreateDesc(typeProcessSerialNumber, &psn, sizeof(psn), &desc);
+		if (status != noErr)
+			break;
+		AppleEvent event = {typeNull, NULL};
+		status = AECreateAppleEvent(kCoreEventClass, EventToSend, &desc, kAutoGenerateReturnID, kAnyTransactionID, &event);
+		AEDisposeDesc(&desc);
+		if (status != noErr)
+			break;
+		AppleEvent reply = {typeNull, NULL};
+		status = AESend(&event, &reply, kAENoReply, kAENormalPriority, kAEDefaultTimeout, NULL, NULL);
+		AEDisposeDesc(&event);
+		if (status != noErr)
+			break;
+		AEDisposeDesc(&reply);
+
+	} while (false);
+	return status;
+}
+
+bool AppMac::shutdown() {
+	return sendAE(kAEShutDown) != noErr;
 }
 
 #endif

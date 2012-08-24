@@ -54,4 +54,8 @@ QStringList AppX11::devices() const {
 	return QStringList();
 }
 
+bool AppX11::shutdown() {
+	return false;
+}
+
 #endif

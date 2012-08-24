@@ -35,6 +35,7 @@ public:
 	void setAlwaysOnTop(WId wid, bool onTop);
 	QStringList devices() const;
 	void setScreensaverDisabled(bool disabled);
+	bool shutdown();
 private:
 	bool eventFilter( QObject *o, QEvent *e );
 	struct Data;

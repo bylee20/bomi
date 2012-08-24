@@ -27,6 +27,7 @@ public:
 	void setAlwaysOnTop(QWidget *widget, bool onTop);
 	void setScreensaverDisabled(bool disabled);
 	void setUnique(bool unique);
+	bool shutdown();
 private slots:
 	void open(const QString &url);
 	void onMessageReceived(const QString &message);
