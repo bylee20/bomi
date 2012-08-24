@@ -1,3 +1,9 @@
+cmplayer (0.6.0-2) precise; urgency=low
+
+  * Add build dependency on libx11-dev
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 24 Aug 2012 11:11:00 +0900
+
 cmplayer (0.6.0-1) precise; urgency=low
 
   * Released

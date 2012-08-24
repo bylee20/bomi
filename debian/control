@@ -2,7 +2,8 @@ Source: cmplayer
 Section: graphics
 Priority: optional
 Maintainer: xylosper <darklin20@gmail.com>
-Build-Depends: g++-4.7(>= 4.7), debhelper (>= 4.1.16), libqt4-dev (>= 4.8), python3, zlib1g-dev, libdts-dev
+Build-Depends: g++-4.7(>= 4.7), debhelper (>= 4.1.16), libqt4-dev (>= 4.8)
+	, python3, zlib1g-dev, libx11-dev, libdts-dev
 	, libdvdnav-dev, libdvdread-dev, libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
 	, libopenal-dev, libasound2-dev, libva-dev, libmad0-dev, libfaad-dev, libxvidcore-dev, libdv4-dev
 	, libvorbis-dev, libtheora-dev, libogg-dev, liba52-dev, libdca-dev,  libbz2-dev, yasm
