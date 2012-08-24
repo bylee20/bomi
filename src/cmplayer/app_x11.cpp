@@ -6,6 +6,10 @@
 #include <QtCore/QDebug>
 #include <QtCore/QTimer>
 #include <QtGui/QX11Info>
+#include <QtDBus/QDBusConnection>
+#include <QtDBus/QDBusMessage>
+#include <QtDBus/QDBusInterface>
+#include <QtCore/QProcess>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 
@@ -55,6 +59,31 @@ QStringList AppX11::devices() const {
 }
 
 bool AppX11::shutdown() {
+	qDebug() << "Start to try shutdown";
+	QDBusInterface kde("org.kde.ksmserver", "/KSMServer", "org.kde.KSMServerInterface", QDBusConnection::sessionBus());
+	auto response = kde.call("logout", 0, 2, 2);
+	if (response.type() != QDBusMessage::ErrorMessage)
+		return true;
+	qDebug() << "KDE session manager does not work!" << response.errorName() << ":" << response.errorMessage();
+	QDBusInterface gnome("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager", QDBusConnection::sessionBus());
+	response = gnome.call("RequestShutdown");
+	if (response.type() != QDBusMessage::ErrorMessage)
+		return true;
+	qDebug() << "Gnome session manager does not work!" << response.errorName() << ":" << response.errorMessage();
+	if (QProcess::startDetached("gnome-power-cmd.sh shutdown") || QProcess::startDetached("gnome-power-cmd shutdown"))
+		return true;
+	qDebug() << "gnome-power-cmd does not work!";
+	QDBusInterface hal("org.freedesktop.Hal", "/org/freedesktop/Hal/devices/computer", "org.freedesktop.Hal.Device.SystemPowerManagement", QDBusConnection::systemBus());
+	response = hal.call("Shutdown");
+	if (response.type() != QDBusMessage::ErrorMessage)
+		return true;
+	qDebug() << "HAL does not work!";
+	QDBusInterface consoleKit("org.freedesktop.ConsoleKit", "/org/freedesktop/ConsoleKit/Manager", "org.freedesktop.ConsoleKit.Manager", QDBusConnection::systemBus());
+	response = consoleKit.call("Stop");
+	if (response.type() != QDBusMessage::ErrorMessage)
+		return true;
+	qDebug() << "ConsoleKit does not work!";
+	qDebug() << "Sorry, there's nothing I can do.";
 	return false;
 }
 

@@ -34,10 +34,11 @@ macx {
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
+    QT += qdbus
     TARGET = cmplayer
     LIBS += -lX11 \
         -L../../build/lib -lcmplayer_skin -lcmplayer_mplayer2 -lcmplayer_sigar -lchardet -lcmplayer_av \
-        -lz -lopenal -lasound -lva -lva-x11 -lva-glx
+        -lz -lopenal -lasound -lva -lva-x11 -lva-glx -lQtDBus
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }
