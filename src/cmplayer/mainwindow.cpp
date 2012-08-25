@@ -171,8 +171,10 @@ MainWindow::MainWindow(): d(new Data) {
 
 	d->screen.installEventFilter(this);
 
+	// hack for bug of XCB in multithreaded-OpenGL
 #ifdef Q_WS_X11
 	d->prefDlg = new PrefDialog(this);
+	connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
 	d->prefDlg->show();
 	QTimer::singleShot(1, d->prefDlg, SLOT(hide()));
 #endif

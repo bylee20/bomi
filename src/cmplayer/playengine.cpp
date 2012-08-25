@@ -319,8 +319,8 @@ bool PlayEngine::isInitialized() const {
 void PlayEngine::run() {
 	QList<QByteArray> args;
 	args << "cmplayer-mplayer2" << "-nofs" << "-fixed-vo" << "-softvol" << "-softvol-max" << "1000.0"
-		<< "-noautosub" << "-osdlevel" << "0" << "-quiet" << "-idle" << "-identify"// << "-framedrop"
-		<< "-input" << "nodefault-bindings" << "-noconsolecontrols" << "-nomouseinput" << "-codecs-file" << "/Users/xylosper/dev/cmplayer/src/mplayer2/etc/codecs.conf";
+		<< "-noautosub" << "-osdlevel" << "0" << "-quiet" << "-idle" << "-identify"
+		<< "-input" << "nodefault-bindings" << "-noconsolecontrols" << "-nomouseinput" << "-noconfig" << "all";
 	const int argc = args.size();
 	PtrDel<char*, PtrArray> argv(new char*[argc]);
 	for (int i=0; i<argc; ++i)
