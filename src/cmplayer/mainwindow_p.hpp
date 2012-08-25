@@ -34,6 +34,7 @@
 #include <QtCore/QTimer>
 #include <qmath.h>
 #include "skin.hpp"
+#include "prefdialog.hpp"
 
 quint32 HWACCEL_FORMAT = 0;
 
@@ -63,6 +64,7 @@ struct MainWindow::Data {
 	QMenu *context;
 	PlaylistView *playlist;
 	HistoryView *history;
+	PrefDialog *prefDlg = nullptr;
 //	FavoritesView *favorite;
 #ifndef Q_WS_MAC
 	QSystemTrayIcon *tray;

@@ -576,6 +576,7 @@ void VideoRenderer::render() {
 		d->screen.overlay()->renderToScreen();
 		d->osd.render();
 		gl->swapBuffers();
+		doneCurrent();
 		if (d->prevFrameId != d->frameId) {
 			++d->drawnFrames;
 			d->prevFrameId = d->frameId;
@@ -584,7 +585,6 @@ void VideoRenderer::render() {
 			emit tookSnapshot(frameImage());
 			d->takeSnapshot = false;
 		}
-		doneCurrent();
 	} else {
 		makeCurrent();
 		QPainter painter(&d->screen);

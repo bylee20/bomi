@@ -192,7 +192,13 @@ struct PrefDialog::Data {
 	QMap<int, QCheckBox*> hwaccel;
 };
 
-PrefDialog::PrefDialog(QWidget *parent): QDialog(parent, Qt::Tool), d(new Data) {
+PrefDialog::PrefDialog(QWidget *parent)
+#ifdef Q_WS_MAC
+: QDialog(parent, Qt::Tool)
+#else
+: QDialog(parent)
+#endif
+, d(new Data) {
 	d->ui.setupUi(this);
 	d->ui.tree->setItemDelegate(new Delegate(d->ui.tree));
 	d->ui.tree->setIconSize(QSize(32, 32));
@@ -605,4 +611,3 @@ void PrefDialog::onDialogButtonClicked(QAbstractButton *button) {
 void PrefDialog::showEvent(QShowEvent *event) {
 	QDialog::showEvent(event);
 }
-

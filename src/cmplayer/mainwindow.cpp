@@ -1,6 +1,5 @@
 #include "mainwindow_p.hpp"
 #include "overlay.hpp"
-#include "prefdialog.hpp"
 #include <QtCore/QBuffer>
 #include <QtGui/QDesktopWidget>
 
@@ -171,6 +170,12 @@ MainWindow::MainWindow(): d(new Data) {
 	}
 
 	d->screen.installEventFilter(this);
+
+#ifdef Q_WS_X11
+	d->prefDlg = new PrefDialog(this);
+	d->prefDlg->show();
+	QTimer::singleShot(1, d->prefDlg, SLOT(hide()));
+#endif
 }
 
 MainWindow::~MainWindow() {
@@ -788,12 +793,11 @@ void MainWindow::setSyncDelay(int diff) {
 }
 
 void MainWindow::setPref() {
-	static PrefDialog *dlg = nullptr;
-	if (!dlg) {
-		dlg = new PrefDialog(this);
-		connect(dlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
+	if (!d->prefDlg) {
+		d->prefDlg = new PrefDialog(this);
+		connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
 	}
-	dlg->show();
+	d->prefDlg->show();
 }
 
 void MainWindow::applyPref() {

@@ -28,6 +28,8 @@ public:
 	void setScreensaverDisabled(bool disabled);
 	void setUnique(bool unique);
 	bool shutdown();
+public slots:
+	void xSync() {syncX();}
 private slots:
 	void open(const QString &url);
 	void onMessageReceived(const QString &message);
