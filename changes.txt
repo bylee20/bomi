@@ -9,6 +9,7 @@
 - Bug fix
 * Wrong parsing font color in subtitle
 * Crash when open a dialog after playing
+* Now CMPlayer ignores the config files of mplayer
 
 0.6.0
 

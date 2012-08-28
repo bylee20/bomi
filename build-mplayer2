@@ -1,6 +1,6 @@
 #!/bin/sh
 
-args="--enable-debug=3 --enable-runtime-cpudetection \
+args="--enable-runtime-cpudetection \
   --disable-termcap --disable-termios --disable-iconv --disable-langinfo \
   --disable-lirc --disable-lircc --disable-joystick --disable-apple-remote --disable-apple-ir \
   --disable-vm --disable-xf86keysym --disable-radio --disable-radio-capture --disable-radio-v4l2 \

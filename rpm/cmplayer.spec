@@ -11,7 +11,7 @@
 %define is_suse %(test -e /etc/SuSE-release && echo 1 || echo 0)
 
 %define name cmplayer
-%define version 0.6.0
+%define version 0.6.1
 %define qmake qmake
 %define lrelease lrelease
 %define gpp_pkg gcc-c++
@@ -46,7 +46,6 @@ Packager: xylosper <darklin20@gmail.com>
 Distribution: %{distro}
 BuildRoot: %{_tmppath}/%{name}-buildroot
 BuildRequires: %{gpp_pkg} >= 4.7 %{qt_dev} >= 4.8
-Requires: vlc
 Prefix: %{_prefix}
 Autoreqprov: on
 

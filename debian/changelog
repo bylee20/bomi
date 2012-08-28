@@ -1,3 +1,13 @@
+cmplayer (0.6.1-1) precise; urgency=low
+
+  * Add open mode for 'from file manager' and 'by drag and drop'
+  * Add auto-exit and auto-shutdown when playlist finished
+  * Fix: Wrong parsing font color in subtitle
+  * Fix: Crash when open a dialog after playing
+  * Fix: Now CMPlayer ignores the config files of mplayer
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Wed, 28 Aug 2012 18:42:00 +0900
+
 cmplayer (0.6.0-3) precise; urgency=low
 
   * Add build dependency on libqt4-opengl-dev
