@@ -99,3 +99,9 @@ src/cmplayer_skin/Makefile.Release
 src/cmplayer/Makefile
 src/cmplayer/Makefile.Debug
 src/cmplayer/Makefile.Release
+src/cmplayer/make
+src/cmplayer/make -j6
+src/cmplayer/make -j6.Debug
+src/cmplayer/make -j6.Release
+src/cmplayer/make.Debug
+src/cmplayer/make.Release

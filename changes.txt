@@ -1,3 +1,29 @@
+0.6.1
+
+- Improvement
+* Add open mode for 'from file manager'
+  and 'by drag and drop'
+* Add auto-exit and auto-shutdown
+  when playlist finished
+
+- Bug fix
+* Wrong parsing font color in subtitle
+* Crash when open a dialog after playing
+
+0.6.0
+
+- Improvement
+* Seek to non-keyframe position
+* Hardware-accelerated decoding
+* Ruby tag in subtitle formatting
+* Snap to right side of the monitor
+  when the window excesses the screen
+  by being enlarged - patched by Handrake
+* Drop-frame
+* Line spacing for subtitle
+* Proxy icon for OS X
+* Separate the video rendering from main GUI thread
+
 0.5.4
 
 - Improvement
