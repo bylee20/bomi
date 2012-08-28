@@ -7,7 +7,7 @@
 
 void OsdStyle::save(Record &r, const QString &group) const {
 	r.beginGroup(group);
-#define WRITE(a) r.write(#a, a)
+#define WRITE(a) r.write(a, #a)
 	WRITE(color);
 	WRITE(outline_color);
 	WRITE(shadow_color);
@@ -16,7 +16,7 @@ void OsdStyle::save(Record &r, const QString &group) const {
 	WRITE(has_outline);
 	WRITE(size);
 	WRITE(outline_width);
-	r.write("scale", scale.name());
+	WRITE(scale);
 	WRITE(shadow_offset);
 	WRITE(font);
 	WRITE(line_spacing);
@@ -27,7 +27,7 @@ void OsdStyle::save(Record &r, const QString &group) const {
 
 void OsdStyle::load(Record &r, const QString &group) {
 	r.beginGroup(group);
-#define READ(a) a = r.read(#a, a)
+#define READ(a) r.read(a, #a)
 	READ(color);
 	READ(outline_color);
 	READ(shadow_color);
@@ -36,7 +36,7 @@ void OsdStyle::load(Record &r, const QString &group) {
 	READ(has_outline);
 	READ(size);
 	READ(outline_width);
-	r.readEnum(scale, "scale");
+	READ(scale);
 	READ(shadow_offset);
 	READ(font);
 	READ(line_spacing);

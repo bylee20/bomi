@@ -139,8 +139,8 @@ HwAccel::HwAccel(AVCodecContext *avctx) {
 		return;
 #ifdef Q_WS_MAC
 	m_ctx.ctx.decoder = nullptr;
-	m_ctx.ctx.width = avctx->width;
-	m_ctx.ctx.height = avctx->height;
+	m_ctx.ctx.width = m_width;
+	m_ctx.ctx.height = m_height;
 	m_ctx.ctx.format = 'avc1';
 	m_ctx.ctx.cv_pix_fmt_type = kCVPixelFormatType_420YpCbCr8Planar;
 	m_ctx.ctx.use_sync_decoding = 1;
@@ -245,17 +245,21 @@ bool HwAccel::copySurface(mp_image_t *mpi) {
 	auto setTex = [this] (int idx, int width, int height, const void *data) {
 		glBindTexture(GL_TEXTURE_2D, m_textures[idx]);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+//		glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, width, height, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
 	};
-	setTex(0, m_width, m_height, CVPixelBufferGetBaseAddressOfPlane(buffer, 0));
-	setTex(1, m_width >> 1, m_height >> 1, CVPixelBufferGetBaseAddressOfPlane(buffer, 1));
-	setTex(2, m_width >> 1, m_height >> 1, CVPixelBufferGetBaseAddressOfPlane(buffer, 2));
-//	const int stride = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0);
+	const int width = m_width;
+	setTex(0, width, m_height, CVPixelBufferGetBaseAddressOfPlane(buffer, 0));
+	setTex(1, width >> 1, m_height >> 1, CVPixelBufferGetBaseAddressOfPlane(buffer, 1));
+	setTex(2, width >> 1, m_height >> 1, CVPixelBufferGetBaseAddressOfPlane(buffer, 2));
+//	qDebug() << CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
+//		<< CVPixelBufferGetWidth(buffer);
+//	qDebug() << stride << format().stride;
 	CVPixelBufferUnlockBaseAddress(buffer, 0);
 	return true;
 #endif
 #ifdef Q_WS_X11
 	glBindTexture(GL_TEXTURE_2D, m_textures[0]);
-	VASurfaceID id = (VASurfaceID)(uintptr_t)mpi->planes[3];
+	const auto id = (VASurfaceID)(uintptr_t)mpi->planes[3];
 	const auto status = vaCopySurfaceGLX(m_ctx.ctx.display, m_glSurface, id, 0);
 	if (status != VA_STATUS_SUCCESS)
 		qDebug() << "vaCopySurfaceGLX():" << vaErrorStr(status);

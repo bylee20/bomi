@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>843</width>
-    <height>731</height>
+    <width>662</width>
+    <height>676</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout_13">
+  <layout class="QHBoxLayout" name="horizontalLayout_14">
    <item>
     <widget class="QTreeWidget" name="tree">
      <property name="minimumSize">
@@ -75,8 +75,60 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
+       <widget class="QWidget" name="open_media">
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QGroupBox" name="groupBox_3">
+           <property name="title">
+            <string>Generating playlist</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_21">
+            <item>
+             <widget class="QCheckBox" name="enable_generate_playlist">
+              <property name="text">
+               <string>Generate the playlist when a media file is open</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="GeneratePlaylistComboBox" name="generate_playlist">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="focusPolicy">
+               <enum>Qt::TabFocus</enum>
+              </property>
+              <property name="toolTip">
+               <string>Add next files to playlist when opening a file.</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_9">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>453</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="playback">
         <property name="name" stdset="0">
          <string>Play</string>
@@ -91,7 +143,7 @@
            <property name="title">
             <string>Stopped playback</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout">
+           <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
              <widget class="QCheckBox" name="remember_stopped">
               <property name="text">
@@ -135,110 +187,6 @@
               </property>
               <property name="checked">
                <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_3">
-           <property name="title">
-            <string>Playlist</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
-            <item>
-             <widget class="QCheckBox" name="enable_generate_playlist">
-              <property name="text">
-               <string>Generate the playlist when a media is open</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="GeneratePlaylistComboBox" name="generate_playlist">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::TabFocus</enum>
-              </property>
-              <property name="toolTip">
-               <string>Add next files to playlist when opening a file.</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_4">
-           <property name="title">
-            <string>etc.</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_7">
-            <item>
-             <widget class="QCheckBox" name="hide_cursor">
-              <property name="text">
-               <string>Hide the mouse cursor which doesn't move for a while</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout">
-              <item>
-               <widget class="QLabel" name="label_23">
-                <property name="text">
-                 <string>Timeout</string>
-                </property>
-                <property name="indent">
-                 <number>20</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="hide_delay">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string>sec</string>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="value">
-                 <number>3</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="disable_screensaver">
-              <property name="text">
-               <string>Disable screensaver while playing</string>
               </property>
              </widget>
             </item>
@@ -1086,11 +1034,71 @@
         </layout>
        </widget>
        <widget class="QWidget" name="application">
-        <layout class="QVBoxLayout" name="verticalLayout_21">
+        <layout class="QVBoxLayout" name="verticalLayout_7">
          <item>
           <widget class="QCheckBox" name="single_app">
            <property name="text">
             <string>Run only single CMPlayer application at the same time</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="hide_cursor">
+           <property name="text">
+            <string>Hide the mouse cursor which doesn't move for a while</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QLabel" name="label_23">
+             <property name="text">
+              <string>Timeout</string>
+             </property>
+             <property name="indent">
+              <number>20</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="hide_delay">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="accelerated">
+              <bool>true</bool>
+             </property>
+             <property name="suffix">
+              <string>sec</string>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="value">
+              <number>3</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="disable_screensaver">
+           <property name="text">
+            <string>Disable screensaver while playing</string>
            </property>
           </widget>
          </item>
@@ -1179,6 +1187,13 @@
           </spacer>
          </item>
         </layout>
+        <zorder>single_app</zorder>
+        <zorder>hide_cursor</zorder>
+        <zorder>disable_screensaver</zorder>
+        <zorder>verticalSpacer_5</zorder>
+        <zorder>system_tray_group</zorder>
+        <zorder>groupBox_16</zorder>
+        <zorder>groupBox_15</zorder>
        </widget>
        <widget class="QWidget" name="sub_load">
         <property name="name" stdset="0">
@@ -2525,50 +2540,18 @@ e.g.: English, Korean</string>
  </resources>
  <connections>
   <connection>
-   <sender>enable_generate_playlist</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>generate_playlist</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>317</x>
-     <y>73</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>317</x>
-     <y>65</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>remember_stopped</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>ask_record_found</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>317</x>
-     <y>62</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>317</x>
-     <y>54</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>pause_minimized</sender>
    <signal>toggled(bool)</signal>
    <receiver>pause_video_only</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>68</y>
+     <x>590</x>
+     <y>103</y>
     </hint>
     <hint type="destinationlabel">
-     <x>317</x>
-     <y>59</y>
+     <x>590</x>
+     <y>124</y>
     </hint>
    </hints>
   </connection>
@@ -2579,12 +2562,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>99</y>
     </hint>
     <hint type="destinationlabel">
-     <x>317</x>
-     <y>70</y>
+     <x>329</x>
+     <y>91</y>
     </hint>
    </hints>
   </connection>
@@ -2595,12 +2578,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>62</y>
+     <x>329</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>317</x>
-     <y>54</y>
+     <x>323</x>
+     <y>77</y>
     </hint>
    </hints>
   </connection>
@@ -2611,12 +2594,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>68</y>
+     <x>329</x>
+     <y>89</y>
     </hint>
     <hint type="destinationlabel">
-     <x>317</x>
-     <y>62</y>
+     <x>323</x>
+     <y>85</y>
     </hint>
    </hints>
   </connection>
@@ -2627,12 +2610,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>68</y>
+     <x>329</x>
+     <y>89</y>
     </hint>
     <hint type="destinationlabel">
      <x>312</x>
-     <y>56</y>
+     <y>81</y>
     </hint>
    </hints>
   </connection>
@@ -2643,12 +2626,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>67</y>
+     <x>329</x>
+     <y>90</y>
     </hint>
     <hint type="destinationlabel">
-     <x>312</x>
-     <y>61</y>
+     <x>309</x>
+     <y>88</y>
     </hint>
    </hints>
   </connection>
@@ -2659,12 +2642,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>67</y>
+     <x>329</x>
+     <y>90</y>
     </hint>
     <hint type="destinationlabel">
-     <x>274</x>
-     <y>61</y>
+     <x>288</x>
+     <y>88</y>
     </hint>
    </hints>
   </connection>
@@ -2675,12 +2658,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>250</x>
-     <y>74</y>
+     <x>291</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2691,12 +2674,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>250</x>
-     <y>77</y>
+     <x>291</x>
+     <y>107</y>
     </hint>
    </hints>
   </connection>
@@ -2707,12 +2690,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>277</x>
-     <y>77</y>
+     <x>299</x>
+     <y>107</y>
     </hint>
    </hints>
   </connection>
@@ -2723,12 +2706,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>264</x>
-     <y>84</y>
+     <x>309</x>
+     <y>109</y>
     </hint>
    </hints>
   </connection>
@@ -2739,12 +2722,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>311</x>
-     <y>74</y>
+     <x>314</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2755,12 +2738,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>311</x>
-     <y>77</y>
+     <x>314</x>
+     <y>107</y>
     </hint>
    </hints>
   </connection>
@@ -2771,12 +2754,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>283</x>
-     <y>74</y>
+     <x>306</x>
+     <y>99</y>
     </hint>
    </hints>
   </connection>
@@ -2787,12 +2770,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>283</x>
-     <y>77</y>
+     <x>306</x>
+     <y>107</y>
     </hint>
    </hints>
   </connection>
@@ -2803,44 +2786,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
+     <x>329</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>317</x>
-     <y>66</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>hide_cursor</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>label_23</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>274</x>
-     <y>74</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>hide_cursor</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>hide_delay</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>317</x>
-     <y>79</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>312</x>
-     <y>74</y>
+     <x>329</x>
+     <y>90</y>
     </hint>
    </hints>
   </connection>
@@ -2851,12 +2802,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>308</x>
-     <y>57</y>
+     <x>310</x>
+     <y>81</y>
     </hint>
     <hint type="destinationlabel">
-     <x>312</x>
-     <y>57</y>
+     <x>311</x>
+     <y>84</y>
     </hint>
    </hints>
   </connection>
@@ -2867,12 +2818,28 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>323</x>
-     <y>91</y>
+     <x>321</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>321</x>
-     <y>120</y>
+     <x>312</x>
+     <y>80</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>enable_generate_playlist</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>generate_playlist</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>294</x>
+     <y>75</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>316</x>
+     <y>93</y>
     </hint>
    </hints>
   </connection>

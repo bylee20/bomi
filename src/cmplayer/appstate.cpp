@@ -11,18 +11,15 @@ AppState &AppState::get() {
 AppState::AppState() {
 	Record r("app-state");
 
-#define READ(a) RECORD_READ(r, a)
+#define READ(a) r.read(a, #a)
 	READ(play_speed);
 	READ(video_drop_frame);
 	READ(video_aspect_ratio);
 	READ(video_crop_ratio);
-	RECORD_READ_ENUM(r, video_alignment);
-	READ(video_offset)
+	READ(video_alignment);
+	READ(video_offset);
 	READ(video_effects);
-	r.read(video_color.brightness(), "video_brightness");
-	r.read(video_color.saturation(), "video_saturation");
-	r.read(video_color.contrast(), "video_contrast");
-	r.read(video_color.hue(), "video_hue");
+	READ(video_color);
 
 	READ(audio_volume);
 	READ(audio_volume_normalized);
@@ -34,30 +31,29 @@ AppState::AppState() {
 	READ(sub_align_top);
 	READ(sub_sync_delay);
 
-	RECORD_READ_ENUM(r, screen_stays_on_top);
+	READ(screen_stays_on_top);
 
 	READ(open_last_file);
 	READ(open_url_list);
 	READ(open_url_enc);
 	READ(ask_system_tray);
+
+	READ(auto_exit);
 #undef READ
 }
 
 void AppState::save() const {
 	Record r("app-state");
-#define WRITE(a) RECORD_WRITE(r, a)
+#define WRITE(a) r.write(a, #a);
 	WRITE(play_speed);
 
 	WRITE(video_drop_frame);
 	WRITE(video_aspect_ratio);
 	WRITE(video_crop_ratio);
-	RECORD_WRITE_ENUM(r, video_alignment);
+	WRITE(video_alignment);
 	WRITE(video_offset);
-	WRITE(video_effects)
-	r.write("video_brightness", video_color.brightness());
-	r.write("video_saturation", video_color.saturation());
-	r.write("video_contrast", video_color.contrast());
-	r.write("video_hue", video_color.hue());
+	WRITE(video_effects);
+	WRITE(video_color);
 
 	WRITE(audio_volume);
 	WRITE(audio_volume_normalized);
@@ -69,12 +65,14 @@ void AppState::save() const {
 	WRITE(sub_align_top);
 	WRITE(sub_sync_delay);
 
-	RECORD_WRITE_ENUM(r, screen_stays_on_top);
+	WRITE(screen_stays_on_top);
 
 	WRITE(open_last_file);
 	WRITE(ask_system_tray);
 	WRITE(open_url_list);
 	WRITE(open_url_enc);
+
+	WRITE(auto_exit);
 #undef WRITE
 }
 

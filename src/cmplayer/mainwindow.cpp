@@ -2,6 +2,7 @@
 #include "overlay.hpp"
 #include <QtCore/QBuffer>
 #include <QtGui/QDesktopWidget>
+#include <QtGui/QMessageBox>
 
 #ifdef Q_WS_MAC
 void qt_mac_set_dock_menu(QMenu *menu);
@@ -74,6 +75,8 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(tool["subtitle"], triggered(), d->subtitle.view(), toggle());
 	CONNECT(tool["pref"], triggered(), this, setPref());
 	CONNECT(tool["playinfo"], toggled(bool), &d->playInfo, setVisible(bool));
+	CONNECT(tool["auto-exit"], toggled(bool), this, setAutoExit(bool));
+	CONNECT(tool["auto-shutdown"], toggled(bool), this, setAutoShutdown(bool));
 
 	CONNECT(win.g("sot"), triggered(int), this, updateStaysOnTop());
 	CONNECT(win.g("size"), triggered(double), this, setVideoSize(double));
@@ -106,6 +109,7 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(&d->recent, openListChanged(QList<Mrl>), this, updateRecentActions(QList<Mrl>));
 	CONNECT(&d->hider, timeout(), this, hideCursor());
 	CONNECT(d->history, playRequested(Mrl), this, openMrl(Mrl));
+	CONNECT(d->playlist, finished(), this, onPlaylistFinished());
 #ifndef Q_WS_MAC
 	CONNECT(d->tray, activated(QSystemTrayIcon::ActivationReason), this, handleTray(QSystemTrayIcon::ActivationReason));
 #endif
@@ -173,16 +177,57 @@ MainWindow::MainWindow(): d(new Data) {
 
 	// hack for bug of XCB in multithreaded-OpenGL
 #ifdef Q_WS_X11
-	d->prefDlg = new PrefDialog(this);
-	connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
-	d->prefDlg->show();
-	QTimer::singleShot(1, d->prefDlg, SLOT(hide()));
+	auto dlg = getPrefDialog();
+	dlg->show();
+	QTimer::singleShot(1, dlg, SLOT(hide()));
 #endif
 }
 
 MainWindow::~MainWindow() {
 	d->screen.setParent(nullptr);
 	delete d;
+}
+
+void MainWindow::openFromFileManager(const Mrl &mrl) {
+	d->openWith(d->p.open_media_from_file_manager, mrl);
+}
+
+PrefDialog *MainWindow::getPrefDialog() {
+	static PrefDialog *dlg = nullptr;
+	if (!dlg) {
+		dlg = new PrefDialog(this);
+		connect(dlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
+	}
+	return dlg;
+}
+
+void MainWindow::setAutoExit(bool enabled) {
+	auto &as = AppState::get();
+	as.auto_exit = enabled;
+	if (enabled)
+		showMessage(tr("Exit CMPlayer when the playlist has finished."));
+	else
+		showMessage(tr("Auto-exit is canceled."));
+}
+
+void MainWindow::setAutoShutdown(bool enabled) {
+	if (enabled) {
+		if (QMessageBox::warning(this, tr("Auto-shutdown"), tr("The system will shut down when the play list has finished."), QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Cancel) {
+			d->menu("tool")["auto-shutdown"]->setChecked(false);
+			return;
+		}
+		showMessage("The system will shut down when the play list has finished.");
+	} else
+		showMessage("Auto-shutdown is canceled.");
+}
+
+void MainWindow::onPlaylistFinished() {
+	const bool exit = d->menu("tool")["auto-exit"]->isChecked();
+	const bool shutdown = d->menu("tool")["auto-shutdown"]->isChecked();
+	if (exit)
+		this->exit();
+	if (shutdown)
+		app()->shutdown();
 }
 
 void MainWindow::onWindowFilePathChanged(const QString &path) {
@@ -496,7 +541,6 @@ void MainWindow::maximize() {
 }
 
 void MainWindow::seek(int diff) {
-	qDebug() << d->engine.isSeekable();
 	if (!diff || d->engine.state() == State::Stopped || !d->engine.isSeekable())
 		return;
 	const int target = qBound(0, d->engine.position() + diff, d->engine.duration());
@@ -781,8 +825,15 @@ void MainWindow::dropEvent(QDropEvent *event) {
 		}
 	}
 	if (!playlist.isEmpty()) {
-		d->playlist->append(playlist);
-		d->playlist->play(playlist.first());
+		const Pref::OpenMedia &mode = d->p.open_media_by_drag_and_drop;
+		const auto mrl = playlist.first();
+		if (mode.playlist_behavior != Enum::PlaylistBehaviorWhenOpenMedia::AppendToPlaylist) {
+			d->playlist->clear();
+			if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist && playlist.size() == 1)
+				playlist = d->playlist->generatePlaylist(mrl);
+		}
+		d->playlist->merge(playlist);
+		d->engine.setMrl(mrl, mode.start_playback);
 	} else if (!subList.isEmpty())
 		appendSubFiles(subList, true, d->p.sub_enc);
 }
@@ -795,11 +846,7 @@ void MainWindow::setSyncDelay(int diff) {
 }
 
 void MainWindow::setPref() {
-	if (!d->prefDlg) {
-		d->prefDlg = new PrefDialog(this);
-		connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
-	}
-	d->prefDlg->show();
+	getPrefDialog()->show();
 }
 
 void MainWindow::applyPref() {

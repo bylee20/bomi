@@ -8,15 +8,15 @@
 -Step2
 -Step3
 
-+Overlay
--Auto-Auto
--FramebufferObject-Framebuffer Object
--Pixmap-Pixmap
-
 +GeneratePlaylist
 -Similar-Add files which have similar names
 -Folder-Add all files in the same folder
 #-None-Do not add any other files
+
++PlaylistBehaviorWhenOpenMedia
+-AppendToPlaylist-Append the open media to the playlist
+-ClearAndAppendToPlaylist-Clear the playlist and append the open media to the playlist
+-ClearAndGenerateNewPlaylist-Clear the playlist and generate new playlist
 
 +SubtitleAutoload
 -Matched-Subtitles which have the same name as that of playing file

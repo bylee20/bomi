@@ -20,9 +20,11 @@ public:
 	void merge(const Playlist &list);
 	const PlaylistModel *model() const;
 	static PlaylistView &get() {Q_ASSERT(obj != 0); return *obj;}
+	static Playlist generatePlaylist(const Mrl &mrl);
 public slots:
 	void playNext();
 	void playPrevious();
+	void clear();
 signals:
 	void finished();
 private slots:
@@ -34,12 +36,10 @@ private slots:
 	void erase();
 	void up();
 	void down();
-	void clear();
 	void open();
 	void save();
 	void handleDoubleClick(const QModelIndex &index);
 private:
-	static Playlist generatePlaylist(const Mrl &mrl);
 	void move(bool up);
 	void setCurrentIndex(int idx);
 	class Item;

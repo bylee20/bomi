@@ -13,25 +13,20 @@
 #define __DEFAULT_ID 0
 namespace Enum {
 
-class __ENUM_CLASS {
+class __ENUM_CLASS : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(__ENUM_CLASS)
 public:
 	typedef QList<__ENUM_CLASS> List;
 	static const int count = __ENUM_COUNT;
 __DEC_ENUM_VALUES
-	__ENUM_CLASS(): m_id(__DEFAULT_ID) {}
-	__ENUM_CLASS(const __ENUM_CLASS &rhs): m_id(rhs.m_id) {}
-	__ENUM_CLASS &operator = (const __ENUM_CLASS &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const __ENUM_CLASS &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const __ENUM_CLASS &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const __ENUM_CLASS &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	__ENUM_CLASS(): EnumClass(__DEFAULT_ID) {}
+	__ENUM_CLASS(const __ENUM_CLASS &rhs): EnumClass(rhs) {}
+	__ENUM_CLASS &operator = (const __ENUM_CLASS &rhs) {setId(rhs.id()); return *this;}
+	__ENUM_CLASS &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {__DEF_ID_COMPATIBLE}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static __ENUM_CLASS from(const QString &name, const __ENUM_CLASS &def = __ENUM_CLASS()) {
@@ -54,17 +49,13 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	__ENUM_CLASS(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	__ENUM_CLASS(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	__ENUM_CLASS(int id): m_id(id) {}
-	int m_id;
+	__ENUM_CLASS(int id): EnumClass(id) {}
 };
 
 }
-
-inline bool operator == (int lhs, const Enum::__ENUM_CLASS &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::__ENUM_CLASS &rhs) {return lhs != rhs.id();}
 
 #endif // ENUMTEMPLATE_HPP

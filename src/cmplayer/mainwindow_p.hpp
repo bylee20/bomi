@@ -59,18 +59,44 @@ struct MainWindow::Data {
 	PlayInfoView playInfo = {&engine, &audio, &video};
 	VideoScreen &screen = video.screen();
 	Skin skin;
-//	ControlWidget *control = create_control_widget();
-//	QWidget *center = create_central_widget();
 	QMenu *context;
 	PlaylistView *playlist;
 	HistoryView *history;
-	PrefDialog *prefDlg = nullptr;
 //	FavoritesView *favorite;
 #ifndef Q_WS_MAC
 	QSystemTrayIcon *tray;
 #endif
 	QString filePath;
 // methods
+	bool checkAndPlay(const Mrl &mrl) {
+		if (mrl != engine.mrl())
+			return false;
+		if (!engine.isPlaying())
+			engine.play();
+		return true;
+	}
+
+	void openWith(const Pref::OpenMedia &mode, const Mrl &mrl) {
+		auto d = this;
+		if (d->checkAndPlay(mrl))
+			return;
+		Playlist playlist;
+		if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::AppendToPlaylist) {
+			playlist.append(mrl);
+		} else if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist) {
+			d->playlist->clear();
+			playlist.append(mrl);
+		} else if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist) {
+			d->playlist->clear();
+			playlist = PlaylistView::generatePlaylist(mrl);
+		} else
+			return;
+		d->playlist->merge(playlist);
+		d->engine.setMrl(mrl, mode.start_playback);
+		if (!mrl.isDvd())
+			RecentInfo::get().stack(mrl);
+	}
+
 	void sync_subtitle_file_menu() {
 		if (changingSub)
 			return;
@@ -123,6 +149,8 @@ struct MainWindow::Data {
 		subtitle.setPos(as.sub_pos);
 		subtitle.setDelay(as.sub_sync_delay);
 
+		menu("tool")["auto-exit"]->setChecked(as.auto_exit);
+
 		menu("window").g("sot")->trigger(as.screen_stays_on_top.id());
 
 		dontShowMsg = false;
@@ -132,7 +160,7 @@ struct MainWindow::Data {
 		AppState &as = AppState::get();
 		as.video_aspect_ratio = video.aspectRatio();
 		as.video_crop_ratio = video.cropRatio();
-		as.video_alignment.set(video.alignment());
+		as.video_alignment = video.alignment();
 		as.video_offset = video.offset();
 		as.video_effects = video.effects();
 		as.video_color = video.colorProperty();
@@ -146,9 +174,6 @@ struct MainWindow::Data {
 		as.screen_stays_on_top = stay_on_top_mode();
 		as.sub_letterbox = subtitle.osd().letterboxHint();
 		as.sub_align_top = subtitle.isTopAligned();
-//		QAction *act = menu("video")("overlay").g()->checkedAction();
-//		if (act)
-//			as.overlay.set(act->data().toInt());
 		as.save();
 	}
 
@@ -167,34 +192,6 @@ struct MainWindow::Data {
 		tray->setVisible(p.enable_system_tray);
 	#endif
 	}
-private:
-//	ControlWidget *create_control_widget() {
-//		ControlWidget *w = new ControlWidget(&engine, &audio, 0);
-//		w->setAcceptDrops(false);
-//		Menu &play = menu("play");
-//		w->connectMute(menu("audio")["mute"]);
-//		w->connectPlay(play["pause"]);
-//		w->connectPrevious(play["prev"]);
-//		w->connectNext(play["next"]);
-//		w->connectForward(play("seek")["forward1"]);
-//		w->connectBackward(play("seek")["backward1"]);
-//		return w;
-//	}
-
-//	QWidget *create_central_widget() {
-//		QWidget *w = new QWidget;
-//		w->setAcceptDrops(false);
-//		w->setMouseTracking(true);
-//		w->setAutoFillBackground(false);
-//		w->setAttribute(Qt::WA_OpaquePaintEvent, true);
-
-//		QVBoxLayout *vbox = new QVBoxLayout(w);
-//		vbox->addWidget(screen);
-//		vbox->addWidget(control);
-//		vbox->setContentsMargins(0, 0, 0, 0);
-//		vbox->setSpacing(0);
-//		return w;
-//	}
 };
 
 #endif // MAINWINDOW_P_HPP

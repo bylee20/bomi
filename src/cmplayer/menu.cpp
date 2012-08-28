@@ -30,7 +30,7 @@ void Menu::save(Record &r) const {
 	r.beginGroup(m_id);
 	for (ActionHash::const_iterator it = m_a.begin(); it != m_a.end(); ++it) {
 		r.beginGroup(it.key());
-		r.write("shortcut", toStringList((*it)->shortcuts()));
+		r.write(toStringList((*it)->shortcuts()), "shortcut");
 		r.endGroup();
 	}
 	for (MenuHash::const_iterator it = m_m.begin(); it != m_m.end(); ++it)
@@ -42,7 +42,8 @@ void Menu::load(Record &r) {
 	r.beginGroup(m_id);
 	for (ActionHash::const_iterator it = m_a.begin(); it != m_a.end(); ++it) {
 		r.beginGroup(it.key());
-		const QStringList keys = r.read("shortcut", QStringList(_LS("none")));
+		QStringList keys = {_LS("none")};
+		r.read(keys, "shortcut");
 		if (keys.size() != 1 || keys[0] != _LS("none"))
 			(*it)->setShortcuts(fromStringList<QKeySequence>(keys));
 		r.endGroup();

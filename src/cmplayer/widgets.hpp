@@ -73,11 +73,11 @@ public:
 		if (idx >= 0)
 			setCurrentIndex(idx);
 	}
-	template<typename T>
-	T currentValue(int role = Qt::UserRole) const {
-		const int idx = currentIndex();
-		return idx < 0 ? T() : itemData(idx, role).value<T>();
-	}
+//	template<typename T>
+//	T currentValue(int role = Qt::UserRole) const {
+//		const int idx = currentIndex();
+//		return idx < 0 ? T() : itemData(idx, role).value<T>();
+//	}
 	QVariant currentData(int role = Qt::UserRole) const {
 		const int idx = currentIndex();
 		return idx < 0 ? QVariant() : itemData(idx, role);
@@ -112,6 +112,13 @@ public:
 		for (int i=0; i<list.size(); ++i)
 			combo->setItemText(i, list[i].description());
 	}
+	EnumType currentValue() const {
+		return EnumType::from(currentData().toInt());
+	}
+	void setCurrentValue(const EnumType &e) {
+		setCurrentData(e.id());
+	}
+
 private:
 	void changeEvent(QEvent *event) {
 		QComboBox::changeEvent(event);

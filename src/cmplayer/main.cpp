@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
 	app.setMainWindow(mw);
 	mw->show();
 	if (!mrl.isEmpty())
-		mw->openMrl(mrl);
+		mw->openFromFileManager(mrl);
 	const int ret = app.exec();
 	mw->exit();
 	qDebug() << "gui loop end";

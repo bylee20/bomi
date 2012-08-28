@@ -4,123 +4,107 @@
 #include <QtCore/QSettings>
 #include <QtGui/QKeySequence>
 #include <QtCore/QStringBuilder>
+#include <QtCore/QLocale>
+#include "colorproperty.hpp"
+#include "enums.hpp"
 
 static inline QLatin1String _L(const char *s) {return QLatin1String(s);}
 static inline QLatin1Char _L(char c) {return QLatin1Char(c);}
 
-class Record : public QSettings {
-//	template<typename T>
-//	QStringList toStringList(const QList<T> &list) {
-//		QStringList ret;
-//		ret.reserve(list.size());
-//		for (int i=0; i<list.size(); ++i)
-//			ret.push_back(list[i].toString());
-//		return ret;
-//	}
+template <typename T> static inline T fromVariant(const QVariant &data) {return data.value<T>();}
+template <typename T> static inline QVariant toVariant(const T &t) {return QVariant::fromValue(t);}
 
-//	template<typename T>
-//	QList<T> fromStringList(const QStringList &list) {
-//		QList<T> ret;
-//		ret.reserve(list.size());
-//		for (int i=0; i<list.size(); ++i)
-//			ret.push_back(T::fromString(list[i]));
-//		return ret;
-//	}
+enum class RecordType : quint32 {Normal, Enum, List};
+
+template <typename T1, typename T2> struct IsSame {constexpr static bool value = false;};
+template <typename T> struct IsSame<T, T> {constexpr static bool value = true;};
+
+template <typename T>
+struct RecordInfo {
+	static T *make(); struct No {}; struct Yes {No no[3];};
+	static Yes check(EnumClass *);	static No check(...);
+	constexpr static RecordType type = (sizeof(check(make())) == sizeof(Yes)) ? RecordType::Enum : RecordType::Normal;
+	constexpr static bool builtIn = type == RecordType::Normal && (QMetaTypeId2<T>::Defined || QMetaTypeId<T>::Defined);
+};
+
+template <>
+struct RecordInfo<QStringList> {
+	constexpr static RecordType type = RecordType::List;
+	constexpr static bool builtIn = true;
+};
+
+template <typename T>
+struct RecordInfo<QList<T> > {
+	constexpr static RecordType type = IsSame<T, QVariant>::value ? RecordType::Normal : RecordType::List;
+	constexpr static bool builtIn = IsSame<T, QVariant>::value;
+};
+
+template <typename T, RecordType type = RecordInfo<T>::type, bool builtIn = RecordInfo<T>::builtIn>
+struct RecordIo {
+	static_assert(builtIn, "Wrong specialization!");
+	static void read(QSettings &r, T &value, const char *key) {value = fromVariant<T>(r.value(_L(key), toVariant<T>(value)));}
+	static void write(QSettings &r, const T &value, const char *key) {r.setValue(_L(key), toVariant<T>(value));}
+};
+
+template <typename T>
+struct RecordIo<T, RecordType::Enum, false> {
+	static void read(QSettings &r, EnumClass &value, const char *key) {value.setByName(r.value(_L(key), value.name()).toString());}
+	static void write(QSettings &r, const EnumClass &value, const char *key) {r.setValue(_L(key), value.name());}
+};
+
+template <typename T>
+struct RecordIo<QList<T>, RecordType::List, false> {
+	static void read(QSettings &r, QList<T> &values, const char *key) {
+		if (!r.value(_L(key) % _L("_exists"), false).toBool())
+			return;
+		const int size = r.beginReadArray(key);
+		values.clear();	values.reserve(size);
+		T t; for (int i = 0; i<size; ++i) {values.append(t);}
+		for (int i=0; i<size; ++i) {
+			r.setArrayIndex(i);
+			RecordIo<T>::read(r, values[i], "data");
+		}
+		r.endArray();
+	}
+	static void write(QSettings &r, const QList<T> &values, const char *key) {
+		r.setValue(_L(key) % _L("_exists"), true);
+		r.beginWriteArray(key, values.size());
+		for (int i=0; i<values.size(); ++i) {
+			r.setArrayIndex(i);
+			RecordIo<T>::write(r, values[i], "data");
+		}
+		r.endArray();
+	}
+};
+
+template <>
+struct RecordIo<ColorProperty, RecordType::Normal, false> {
+	static void write(QSettings &r, const ColorProperty &value, const char *key) {
+		r.setValue(_L(key) % _L("_brightness"), value.brightness());
+		r.setValue(_L(key) % _L("_contrast"), value.contrast());
+		r.setValue(_L(key) % _L("_saturation"), value.saturation());
+		r.setValue(_L(key) % _L("_hue"), value.hue());
+	}
+	static void read(QSettings &r, ColorProperty &value, const char *key) {
+		value.brightness() = r.value(_L(key) % _L("_brightness"), value.brightness()).toDouble();
+		value.contrast() = r.value(_L(key) % _L("_contrast"), value.contrast()).toDouble();
+		value.saturation() = r.value(_L(key) % _L("_saturation"), value.saturation()).toDouble();
+		value.hue() = r.value(_L(key) % _L("_hue"), value.hue()).toDouble();
+	}
+};
+
+class Record : public QSettings {
 public:
 	Record() {}
-	Record(const QString &root): m_root(root) {
-		if (!m_root.isEmpty())
-			beginGroup(root);
-	}
-	~Record() {
-		if (!m_root.isEmpty())
-			endGroup();
-	}
-	template <typename T>
-	void write(const QString &key, const T &value) {setValue(key, toVariant<T>(value));}
-	template <typename T>
-	void writeEnum(const QString &key, const T &value) {setValue(key, value.name());}
-//	template <typename T>
-//	void writeList(const QString &key, const QList<T> &list) {
-//		QList<QVariant> values;
-//		values.reserve(list);
-//		for (int i=0; i<values.size(); ++i)
-//		beginWriteArray(key, list.size());
-//		for (int i=0; i<list.size(); ++i) {
-//			setArrayIndex(i);
-//			write<T>(key, list[i]);
-//		}
-//		endArray();
-//	}
-	template <typename T> void write(const char *key, const T &value) {write<T>(_L(key), value);}
-	template <typename T> void write(const char *key, const QList<T> &value) {
-		setValue(_L(key) % _L("_exists"), true);
-		beginWriteArray(key, value.size());
-		for (int i=0; i<value.size(); ++i) {setArrayIndex(i); write<T>("data", value[i]);}
-		endArray();
-	}
-	template <typename T> void writeEnum(const char *key, const T &value) {write(_L(key), value.name());}
-//	template <typename T> void writeList(const char *key, const QList<T> &list) {write<T>(_LS(key), list);}
-	template <typename T> QList<T> read(QList<T> &v, const char *key) {
-		if (value(_L(key) % _L("_exists"), false).toBool()) {
-			v.clear();
-			const int size = beginReadArray(key);
-			v.reserve(size);
-			T t;
-			for (int i=0; i<size; ++i) {
-				setArrayIndex(i);
-				read<T>(t, "data");
-				v.append(t);
-			}
-			endArray();
-		}
-		return v;
-	}
-
-	template <typename T> T read(const char *key) {return value(_L(key)).template value<T>();}
-	template <typename T>
-	T read(const char *key, const T &def) {return value(_L(key), toVariant<T>(def)).template value<T>();}
-	template <typename T>
-	T &read(T &value, const char *key) {return value = this->value(_L(key), toVariant<T>(value)).template value<T>();}
-	template <typename T>
-	T readEnum(const char *key, const T &def = T()) {return T::from(read(key, def.name()));}
-	template <typename T>
-	T &readEnum(T &value, const char *key) {value.set(read(key, value.name())); return value;}
-//	template <typename T>
-//	T readList(const QString &key, const QList<T> &def = QList<T>()) {
-//		const int size = beginReadArray(key);
-//		if (size <= 0)
-//			return def;
-//		const QStringList keys = set.value(_LS("shortcut"), QStringList(_LS("none"))).toStringList();
-//		if (keys.size() != 1 || keys[0] != _LS("none"))
-//			(*it)->setShortcuts(fromStringList<QKeySequence>(keys));
-//		set.endGroup();
-//	}
-
+	Record(const QString &root): m_root(root) {if (!m_root.isEmpty()) beginGroup(root);}
+	~Record() {if (!m_root.isEmpty()) endGroup();}
+	template <typename T> void write(const T &value, const char *key) {RecordIo<T>::write(*this, value, key);}
+	template <typename T> void read(T &value, const char *key) {RecordIo<T>::read(*this, value, key);}
 private:
-//	template <typename T>
-//	QList<T> fromVariant(const QVariant &data) {
-//		if (data.type() != QVariant::List)
-//			return QList<T>();
-//		const QList<QVariant> list = data.toList();
-//		QList<T> ret;
-//		ret.reserve(list.size());
-//		for (int i=0; i<ret.size(); ++i)
-
-//	}
-
-	template <typename T> T fromVariant(const QVariant &data) {return data.value<T>();}
-	template <typename T> QVariant toVariant(const T &t) {return QVariant::fromValue(t);}
 	const QString m_root = {};
 };
 
-template<> inline QKeySequence Record::fromVariant(const QVariant &data) {return QKeySequence::fromString(data.toString());}
-template<> inline QVariant Record::toVariant(const QKeySequence &seq) {return seq.toString();}
-
-
-#define RECORD_READ(rec, val) {val = rec.read(#val, val);}
-#define RECORD_READ_ENUM(rec, val) {val = rec.readEnum(#val, val);}
-#define RECORD_WRITE(rec, val) {rec.write(#val, val);}
-#define RECORD_WRITE_ENUM(rec, val) {rec.writeEnum(#val, val);}
+inline QKeySequence fromVariant(const QVariant &data) {return QKeySequence::fromString(data.toString());}
+inline QVariant toVariant(const QKeySequence &seq) {return seq.toString();}
 
 #endif // RECORD_HPP

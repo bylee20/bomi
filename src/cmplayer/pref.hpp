@@ -44,8 +44,8 @@ public:
 			for (int i=0; i<list.size(); ++i) {
 				const InfoType &info = m_map[list[i].id()];
 				r.beginGroup(list[i].name());
-				r.write("enabled", info.enabled);
-				r.writeEnum("action", info.action);
+				r.write(info.enabled, "enabled");
+				r.write(info.action, "action");
 				r.endGroup();
 			}
 			r.endGroup();
@@ -57,7 +57,7 @@ public:
 				InfoType &info = m_map[list[i].id()];
 				r.beginGroup(list[i].name());
 				r.read(info.enabled, "enabled");
-				r.readEnum(info.action, "action");
+				r.read(info.action, "action");
 				r.endGroup();
 			}
 			r.endGroup();
@@ -65,8 +65,31 @@ public:
 	private:
 		Map m_map;
 	};
+
+	struct OpenMedia {
+		OpenMedia(bool sp, const Enum::PlaylistBehaviorWhenOpenMedia &pb)
+		: start_playback(sp), playlist_behavior(pb) {}
+		bool start_playback = true;
+		Enum::PlaylistBehaviorWhenOpenMedia playlist_behavior = Enum::PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist;
+		void save(Record &r, const QString &group) const {
+			r.beginGroup(group);
+			r.write(start_playback, "start_playback");
+			r.write(playlist_behavior, "playlist_behavior");
+			r.endGroup();
+		}
+		void load(Record &r, const QString &group) {
+			r.beginGroup(group);
+			r.read(start_playback, "start_playback");
+			r.read(playlist_behavior, "playlist_behavior");
+			r.endGroup();
+		}
+	};
+
 	typedef KeyModifierMap<Enum::ClickAction> ClickActionMap;
 	typedef KeyModifierMap<Enum::WheelAction> WheelActionMap;
+
+	OpenMedia open_media_from_file_manager = {true, Enum::PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist};
+	OpenMedia open_media_by_drag_and_drop = {true, Enum::PlaylistBehaviorWhenOpenMedia::AppendToPlaylist};
 
 	bool pause_minimized = true, pause_video_only = true;
 	bool remember_stopped = true, ask_record_found = true;

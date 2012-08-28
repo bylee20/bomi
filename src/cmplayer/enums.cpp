@@ -15,16 +15,16 @@ const SeekingStep SeekingStep::Step3(2, "Step3");
 }
 
 namespace Enum {
-Overlay::Map Overlay::_map;
-const Overlay Overlay::Auto(0, "Auto");
-const Overlay Overlay::FramebufferObject(1, "FramebufferObject");
-const Overlay Overlay::Pixmap(2, "Pixmap");
-}
-
-namespace Enum {
 GeneratePlaylist::Map GeneratePlaylist::_map;
 const GeneratePlaylist GeneratePlaylist::Similar(0, "Similar");
 const GeneratePlaylist GeneratePlaylist::Folder(1, "Folder");
+}
+
+namespace Enum {
+PlaylistBehaviorWhenOpenMedia::Map PlaylistBehaviorWhenOpenMedia::_map;
+const PlaylistBehaviorWhenOpenMedia PlaylistBehaviorWhenOpenMedia::AppendToPlaylist(0, "AppendToPlaylist");
+const PlaylistBehaviorWhenOpenMedia PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist(1, "ClearAndAppendToPlaylist");
+const PlaylistBehaviorWhenOpenMedia PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist(2, "ClearAndGenerateNewPlaylist");
 }
 
 namespace Enum {

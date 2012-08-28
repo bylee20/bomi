@@ -4,8 +4,35 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QMap>
 
+class EnumClass {
+	Q_DECLARE_TR_FUNCTIONS(EnumClass)
+public:
+	EnumClass(const EnumClass &rhs): m_id(rhs.m_id) {}
+	virtual ~EnumClass() {}
+	EnumClass &operator = (const EnumClass &rhs) {m_id = rhs.m_id; return *this;}
+	bool operator == (const EnumClass &rhs) const {return m_id == rhs.m_id;}
+	bool operator != (const EnumClass &rhs) const {return m_id != rhs.m_id;}
+	bool operator < (const EnumClass &rhs) const {return m_id < rhs.m_id;}
+	bool operator == (int rhs) const {return m_id == rhs;}
+	bool operator != (int rhs) const {return m_id != rhs;}
+	bool operator < (int rhs) const {return m_id < rhs;}
+	int id() const {return m_id;}
+	virtual QString name() const = 0;
+	virtual QString description() const = 0;
+	virtual void setById(int id) = 0;
+	virtual void setByName(const QString &name) = 0;
+protected:
+	EnumClass(int id): m_id(id) {}
+	void setId(int id) {m_id = id;}
+private:
+	int m_id = 0;
+};
+
+static inline bool operator == (int lhs, const EnumClass &rhs) {return rhs == lhs;}
+static inline bool operator != (int lhs, const EnumClass &rhs) {return rhs != lhs;}
+
 namespace Enum {
-class StaysOnTop {
+class StaysOnTop : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(StaysOnTop)
 public:
 	typedef QList<StaysOnTop> List;
@@ -14,19 +41,14 @@ public:
 	static const StaysOnTop Playing;
 	static const StaysOnTop Never;
 
-	StaysOnTop(): m_id(0) {}
-	StaysOnTop(const StaysOnTop &rhs): m_id(rhs.m_id) {}
-	StaysOnTop &operator = (const StaysOnTop &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const StaysOnTop &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const StaysOnTop &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const StaysOnTop &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	StaysOnTop(): EnumClass(0) {}
+	StaysOnTop(const StaysOnTop &rhs): EnumClass(rhs) {}
+	StaysOnTop &operator = (const StaysOnTop &rhs) {setId(rhs.id()); return *this;}
+	StaysOnTop &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return 0 <= id && id < count;}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static StaysOnTop from(const QString &name, const StaysOnTop &def = StaysOnTop()) {
@@ -37,11 +59,11 @@ public:
 		return isCompatible(id) ? StaysOnTop(id) : def;
 	}
 	static QString description(int id) {
-		if (id == Always.m_id)
+		if (id == Always.id())
 			return QString();
-		if (id == Playing.m_id)
+		if (id == Playing.id())
 			return QString();
-		if (id == Never.m_id)
+		if (id == Never.id())
 			return QString();
 		return QString();
 	}
@@ -55,19 +77,16 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	StaysOnTop(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	StaysOnTop(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	StaysOnTop(int id): m_id(id) {}
-	int m_id;
+	StaysOnTop(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::StaysOnTop &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::StaysOnTop &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class SeekingStep {
+class SeekingStep : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(SeekingStep)
 public:
 	typedef QList<SeekingStep> List;
@@ -76,19 +95,14 @@ public:
 	static const SeekingStep Step2;
 	static const SeekingStep Step3;
 
-	SeekingStep(): m_id(0) {}
-	SeekingStep(const SeekingStep &rhs): m_id(rhs.m_id) {}
-	SeekingStep &operator = (const SeekingStep &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const SeekingStep &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const SeekingStep &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const SeekingStep &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	SeekingStep(): EnumClass(0) {}
+	SeekingStep(const SeekingStep &rhs): EnumClass(rhs) {}
+	SeekingStep &operator = (const SeekingStep &rhs) {setId(rhs.id()); return *this;}
+	SeekingStep &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return 0 <= id && id < count;}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static SeekingStep from(const QString &name, const SeekingStep &def = SeekingStep()) {
@@ -99,11 +113,11 @@ public:
 		return isCompatible(id) ? SeekingStep(id) : def;
 	}
 	static QString description(int id) {
-		if (id == Step1.m_id)
+		if (id == Step1.id())
 			return QString();
-		if (id == Step2.m_id)
+		if (id == Step2.id())
 			return QString();
-		if (id == Step3.m_id)
+		if (id == Step3.id())
 			return QString();
 		return QString();
 	}
@@ -117,81 +131,16 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	SeekingStep(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	SeekingStep(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	SeekingStep(int id): m_id(id) {}
-	int m_id;
+	SeekingStep(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::SeekingStep &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::SeekingStep &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class Overlay {
-	Q_DECLARE_TR_FUNCTIONS(Overlay)
-public:
-	typedef QList<Overlay> List;
-	static const int count = 3;
-	static const Overlay Auto;
-	static const Overlay FramebufferObject;
-	static const Overlay Pixmap;
-
-	Overlay(): m_id(0) {}
-	Overlay(const Overlay &rhs): m_id(rhs.m_id) {}
-	Overlay &operator = (const Overlay &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const Overlay &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const Overlay &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const Overlay &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static Overlay from(const QString &name, const Overlay &def = Overlay()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? Overlay(*it) : def;
-	}
-	static Overlay from(int id, const Overlay &def = Overlay()) {
-		return isCompatible(id) ? Overlay(id) : def;
-	}
-	static QString description(int id) {
-		if (id == Auto.m_id)
-			return tr("Auto");
-		if (id == FramebufferObject.m_id)
-			return tr("Framebuffer Object");
-		if (id == Pixmap.m_id)
-			return tr("Pixmap");
-		return QString();
-	}
-	static const List &list() {return map().list;}
-private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	Overlay(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
-		_map.list.append(*this);
-	}
-	Overlay(int id): m_id(id) {}
-	int m_id;
-};
-}
-inline bool operator == (int lhs, const Enum::Overlay &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::Overlay &rhs) {return lhs != rhs.id();}
-
-namespace Enum {
-class GeneratePlaylist {
+class GeneratePlaylist : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(GeneratePlaylist)
 public:
 	typedef QList<GeneratePlaylist> List;
@@ -199,19 +148,14 @@ public:
 	static const GeneratePlaylist Similar;
 	static const GeneratePlaylist Folder;
 
-	GeneratePlaylist(): m_id(0) {}
-	GeneratePlaylist(const GeneratePlaylist &rhs): m_id(rhs.m_id) {}
-	GeneratePlaylist &operator = (const GeneratePlaylist &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const GeneratePlaylist &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const GeneratePlaylist &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const GeneratePlaylist &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	GeneratePlaylist(): EnumClass(0) {}
+	GeneratePlaylist(const GeneratePlaylist &rhs): EnumClass(rhs) {}
+	GeneratePlaylist &operator = (const GeneratePlaylist &rhs) {setId(rhs.id()); return *this;}
+	GeneratePlaylist &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return 0 <= id && id < count;}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static GeneratePlaylist from(const QString &name, const GeneratePlaylist &def = GeneratePlaylist()) {
@@ -222,9 +166,9 @@ public:
 		return isCompatible(id) ? GeneratePlaylist(id) : def;
 	}
 	static QString description(int id) {
-		if (id == Similar.m_id)
+		if (id == Similar.id())
 			return tr("Add files which have similar names");
-		if (id == Folder.m_id)
+		if (id == Folder.id())
 			return tr("Add all files in the same folder");
 		return QString();
 	}
@@ -238,19 +182,70 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	GeneratePlaylist(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	GeneratePlaylist(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	GeneratePlaylist(int id): m_id(id) {}
-	int m_id;
+	GeneratePlaylist(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::GeneratePlaylist &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::GeneratePlaylist &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class SubtitleAutoload {
+class PlaylistBehaviorWhenOpenMedia : public EnumClass {
+	Q_DECLARE_TR_FUNCTIONS(PlaylistBehaviorWhenOpenMedia)
+public:
+	typedef QList<PlaylistBehaviorWhenOpenMedia> List;
+	static const int count = 3;
+	static const PlaylistBehaviorWhenOpenMedia AppendToPlaylist;
+	static const PlaylistBehaviorWhenOpenMedia ClearAndAppendToPlaylist;
+	static const PlaylistBehaviorWhenOpenMedia ClearAndGenerateNewPlaylist;
+
+	PlaylistBehaviorWhenOpenMedia(): EnumClass(0) {}
+	PlaylistBehaviorWhenOpenMedia(const PlaylistBehaviorWhenOpenMedia &rhs): EnumClass(rhs) {}
+	PlaylistBehaviorWhenOpenMedia &operator = (const PlaylistBehaviorWhenOpenMedia &rhs) {setId(rhs.id()); return *this;}
+	PlaylistBehaviorWhenOpenMedia &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
+	static bool isCompatible(int id) {return 0 <= id && id < count;}
+	static bool isCompatible(const QString &name) {return map().value.contains(name);}
+	static PlaylistBehaviorWhenOpenMedia from(const QString &name, const PlaylistBehaviorWhenOpenMedia &def = PlaylistBehaviorWhenOpenMedia()) {
+		const QMap<QString, int>::const_iterator it = map().value.find(name);
+		return it != map().value.end() ? PlaylistBehaviorWhenOpenMedia(*it) : def;
+	}
+	static PlaylistBehaviorWhenOpenMedia from(int id, const PlaylistBehaviorWhenOpenMedia &def = PlaylistBehaviorWhenOpenMedia()) {
+		return isCompatible(id) ? PlaylistBehaviorWhenOpenMedia(id) : def;
+	}
+	static QString description(int id) {
+		if (id == AppendToPlaylist.id())
+			return tr("Append the open media to the playlist");
+		if (id == ClearAndAppendToPlaylist.id())
+			return tr("Clear the playlist and append the open media to the playlist");
+		if (id == ClearAndGenerateNewPlaylist.id())
+			return tr("Clear the playlist and generate new playlist");
+		return QString();
+	}
+	static const List &list() {return map().list;}
+private:
+	struct Map {
+		Map() {list.reserve(count);}
+		QString name[count] = {};
+		QMap<QString, int> value = {};
+		List list = {};
+	};
+	static Map _map;
+	static const Map &map() {return _map;}
+	PlaylistBehaviorWhenOpenMedia(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
+		_map.list.append(*this);
+	}
+	PlaylistBehaviorWhenOpenMedia(int id): EnumClass(id) {}
+};
+}
+
+namespace Enum {
+class SubtitleAutoload : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(SubtitleAutoload)
 public:
 	typedef QList<SubtitleAutoload> List;
@@ -259,19 +254,14 @@ public:
 	static const SubtitleAutoload Contain;
 	static const SubtitleAutoload Folder;
 
-	SubtitleAutoload(): m_id(0) {}
-	SubtitleAutoload(const SubtitleAutoload &rhs): m_id(rhs.m_id) {}
-	SubtitleAutoload &operator = (const SubtitleAutoload &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const SubtitleAutoload &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const SubtitleAutoload &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const SubtitleAutoload &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	SubtitleAutoload(): EnumClass(0) {}
+	SubtitleAutoload(const SubtitleAutoload &rhs): EnumClass(rhs) {}
+	SubtitleAutoload &operator = (const SubtitleAutoload &rhs) {setId(rhs.id()); return *this;}
+	SubtitleAutoload &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return 0 <= id && id < count;}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static SubtitleAutoload from(const QString &name, const SubtitleAutoload &def = SubtitleAutoload()) {
@@ -282,11 +272,11 @@ public:
 		return isCompatible(id) ? SubtitleAutoload(id) : def;
 	}
 	static QString description(int id) {
-		if (id == Matched.m_id)
+		if (id == Matched.id())
 			return tr("Subtitles which have the same name as that of playing file");
-		if (id == Contain.m_id)
+		if (id == Contain.id())
 			return tr("Subtitles whose names contain the name of playing file");
-		if (id == Folder.m_id)
+		if (id == Folder.id())
 			return tr("All subtitles in the folder where the playing file is located");
 		return QString();
 	}
@@ -300,19 +290,16 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	SubtitleAutoload(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	SubtitleAutoload(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	SubtitleAutoload(int id): m_id(id) {}
-	int m_id;
+	SubtitleAutoload(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::SubtitleAutoload &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::SubtitleAutoload &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class SubtitleAutoselect {
+class SubtitleAutoselect : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(SubtitleAutoselect)
 public:
 	typedef QList<SubtitleAutoselect> List;
@@ -322,19 +309,14 @@ public:
 	static const SubtitleAutoselect All;
 	static const SubtitleAutoselect EachLanguage;
 
-	SubtitleAutoselect(): m_id(0) {}
-	SubtitleAutoselect(const SubtitleAutoselect &rhs): m_id(rhs.m_id) {}
-	SubtitleAutoselect &operator = (const SubtitleAutoselect &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const SubtitleAutoselect &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const SubtitleAutoselect &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const SubtitleAutoselect &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	SubtitleAutoselect(): EnumClass(0) {}
+	SubtitleAutoselect(const SubtitleAutoselect &rhs): EnumClass(rhs) {}
+	SubtitleAutoselect &operator = (const SubtitleAutoselect &rhs) {setId(rhs.id()); return *this;}
+	SubtitleAutoselect &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return 0 <= id && id < count;}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static SubtitleAutoselect from(const QString &name, const SubtitleAutoselect &def = SubtitleAutoselect()) {
@@ -345,13 +327,13 @@ public:
 		return isCompatible(id) ? SubtitleAutoselect(id) : def;
 	}
 	static QString description(int id) {
-		if (id == Matched.m_id)
+		if (id == Matched.id())
 			return tr("Subtitle which has the same name as that of playing file");
-		if (id == First.m_id)
+		if (id == First.id())
 			return tr("First subtitle from loaded ones");
-		if (id == All.m_id)
+		if (id == All.id())
 			return tr("All loaded subtitles");
-		if (id == EachLanguage.m_id)
+		if (id == EachLanguage.id())
 			return tr("Each language subtitle");
 		return QString();
 	}
@@ -365,19 +347,16 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	SubtitleAutoselect(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	SubtitleAutoselect(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	SubtitleAutoselect(int id): m_id(id) {}
-	int m_id;
+	SubtitleAutoselect(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::SubtitleAutoselect &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::SubtitleAutoselect &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class OsdScalePolicy {
+class OsdScalePolicy : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(OsdScalePolicy)
 public:
 	typedef QList<OsdScalePolicy> List;
@@ -386,19 +365,14 @@ public:
 	static const OsdScalePolicy Height;
 	static const OsdScalePolicy Diagonal;
 
-	OsdScalePolicy(): m_id(0) {}
-	OsdScalePolicy(const OsdScalePolicy &rhs): m_id(rhs.m_id) {}
-	OsdScalePolicy &operator = (const OsdScalePolicy &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const OsdScalePolicy &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const OsdScalePolicy &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const OsdScalePolicy &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	OsdScalePolicy(): EnumClass(0) {}
+	OsdScalePolicy(const OsdScalePolicy &rhs): EnumClass(rhs) {}
+	OsdScalePolicy &operator = (const OsdScalePolicy &rhs) {setId(rhs.id()); return *this;}
+	OsdScalePolicy &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return 0 <= id && id < count;}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static OsdScalePolicy from(const QString &name, const OsdScalePolicy &def = OsdScalePolicy()) {
@@ -409,11 +383,11 @@ public:
 		return isCompatible(id) ? OsdScalePolicy(id) : def;
 	}
 	static QString description(int id) {
-		if (id == Width.m_id)
+		if (id == Width.id())
 			return tr("Fit to width of video");
-		if (id == Height.m_id)
+		if (id == Height.id())
 			return tr("Fit to height of video");
-		if (id == Diagonal.m_id)
+		if (id == Diagonal.id())
 			return tr("Fit to diagonal of video");
 		return QString();
 	}
@@ -427,19 +401,16 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	OsdScalePolicy(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	OsdScalePolicy(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	OsdScalePolicy(int id): m_id(id) {}
-	int m_id;
+	OsdScalePolicy(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::OsdScalePolicy &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::OsdScalePolicy &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class ClickAction {
+class ClickAction : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(ClickAction)
 public:
 	typedef QList<ClickAction> List;
@@ -449,19 +420,14 @@ public:
 	static const ClickAction Pause;
 	static const ClickAction Mute;
 
-	ClickAction(): m_id(0) {}
-	ClickAction(const ClickAction &rhs): m_id(rhs.m_id) {}
-	ClickAction &operator = (const ClickAction &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const ClickAction &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const ClickAction &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const ClickAction &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	ClickAction(): EnumClass(0) {}
+	ClickAction(const ClickAction &rhs): EnumClass(rhs) {}
+	ClickAction &operator = (const ClickAction &rhs) {setId(rhs.id()); return *this;}
+	ClickAction &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return 0 <= id && id < count;}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static ClickAction from(const QString &name, const ClickAction &def = ClickAction()) {
@@ -472,13 +438,13 @@ public:
 		return isCompatible(id) ? ClickAction(id) : def;
 	}
 	static QString description(int id) {
-		if (id == OpenFile.m_id)
+		if (id == OpenFile.id())
 			return tr("Open a file");
-		if (id == Fullscreen.m_id)
+		if (id == Fullscreen.id())
 			return tr("Toggle fullscreen mode");
-		if (id == Pause.m_id)
+		if (id == Pause.id())
 			return tr("Toggle play/pause");
-		if (id == Mute.m_id)
+		if (id == Mute.id())
 			return tr("Toggle mute/unmute");
 		return QString();
 	}
@@ -492,19 +458,16 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	ClickAction(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	ClickAction(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	ClickAction(int id): m_id(id) {}
-	int m_id;
+	ClickAction(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::ClickAction &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::ClickAction &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class WheelAction {
+class WheelAction : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(WheelAction)
 public:
 	typedef QList<WheelAction> List;
@@ -516,19 +479,14 @@ public:
 	static const WheelAction Volume;
 	static const WheelAction Amp;
 
-	WheelAction(): m_id(0) {}
-	WheelAction(const WheelAction &rhs): m_id(rhs.m_id) {}
-	WheelAction &operator = (const WheelAction &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const WheelAction &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const WheelAction &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const WheelAction &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	WheelAction(): EnumClass(0) {}
+	WheelAction(const WheelAction &rhs): EnumClass(rhs) {}
+	WheelAction &operator = (const WheelAction &rhs) {setId(rhs.id()); return *this;}
+	WheelAction &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return 0 <= id && id < count;}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static WheelAction from(const QString &name, const WheelAction &def = WheelAction()) {
@@ -539,17 +497,17 @@ public:
 		return isCompatible(id) ? WheelAction(id) : def;
 	}
 	static QString description(int id) {
-		if (id == Seek1.m_id)
+		if (id == Seek1.id())
 			return tr("Seek playback for step 1");
-		if (id == Seek2.m_id)
+		if (id == Seek2.id())
 			return tr("Seek playback for step 2");
-		if (id == Seek3.m_id)
+		if (id == Seek3.id())
 			return tr("Seek playback for step 3");
-		if (id == PrevNext.m_id)
+		if (id == PrevNext.id())
 			return tr("Play previous/next");
-		if (id == Volume.m_id)
+		if (id == Volume.id())
 			return tr("Volumn up/down");
-		if (id == Amp.m_id)
+		if (id == Amp.id())
 			return tr("Amp. up/down");
 		return QString();
 	}
@@ -563,19 +521,16 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	WheelAction(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	WheelAction(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	WheelAction(int id): m_id(id) {}
-	int m_id;
+	WheelAction(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::WheelAction &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::WheelAction &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class KeyModifier {
+class KeyModifier : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(KeyModifier)
 public:
 	typedef QList<KeyModifier> List;
@@ -585,19 +540,14 @@ public:
 	static const KeyModifier Shift;
 	static const KeyModifier Alt;
 
-	KeyModifier(): m_id(Qt::NoModifier) {}
-	KeyModifier(const KeyModifier &rhs): m_id(rhs.m_id) {}
-	KeyModifier &operator = (const KeyModifier &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const KeyModifier &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const KeyModifier &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const KeyModifier &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	KeyModifier(): EnumClass(Qt::NoModifier) {}
+	KeyModifier(const KeyModifier &rhs): EnumClass(rhs) {}
+	KeyModifier &operator = (const KeyModifier &rhs) {setId(rhs.id()); return *this;}
+	KeyModifier &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return map().name.contains(id);}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static KeyModifier from(const QString &name, const KeyModifier &def = KeyModifier()) {
@@ -608,13 +558,13 @@ public:
 		return isCompatible(id) ? KeyModifier(id) : def;
 	}
 	static QString description(int id) {
-		if (id == None.m_id)
+		if (id == None.id())
 			return QString();
-		if (id == Ctrl.m_id)
+		if (id == Ctrl.id())
 			return QString();
-		if (id == Shift.m_id)
+		if (id == Shift.id())
 			return QString();
-		if (id == Alt.m_id)
+		if (id == Alt.id())
 			return QString();
 		return QString();
 	}
@@ -628,19 +578,16 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	KeyModifier(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	KeyModifier(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	KeyModifier(int id): m_id(id) {}
-	int m_id;
+	KeyModifier(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::KeyModifier &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::KeyModifier &rhs) {return lhs != rhs.id();}
 
 namespace Enum {
-class Position {
+class Position : public EnumClass {
 	Q_DECLARE_TR_FUNCTIONS(Position)
 public:
 	typedef QList<Position> List;
@@ -655,19 +602,14 @@ public:
 	static const Position BC;
 	static const Position BR;
 
-	Position(): m_id(Qt::AlignVCenter|Qt::AlignHCenter) {}
-	Position(const Position &rhs): m_id(rhs.m_id) {}
-	Position &operator = (const Position &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const Position &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const Position &rhs) const {return m_id != rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (const Position &rhs) const {return m_id < rhs.m_id;}
-	int id() const {return m_id;}
-	QString name() const {return map().name[m_id];}
-	QString description() const {return description(m_id);}
-	void set(int id) {if (isCompatible(id)) m_id = id;}
-	void set(const QString &name) {m_id = map().value.value(name, m_id);}
+	Position(): EnumClass(Qt::AlignVCenter|Qt::AlignHCenter) {}
+	Position(const Position &rhs): EnumClass(rhs) {}
+	Position &operator = (const Position &rhs) {setId(rhs.id()); return *this;}
+	Position &operator = (int rhs) {setById(rhs); return *this;}
+	QString name() const {return map().name[id()];}
+	QString description() const {return description(id());}
+	void setById(int id) {if (isCompatible(id)) setId(id);}
+	void setByName(const QString &name) {setId(map().value.value(name, id()));}
 	static bool isCompatible(int id) {return map().name.contains(id);}
 	static bool isCompatible(const QString &name) {return map().value.contains(name);}
 	static Position from(const QString &name, const Position &def = Position()) {
@@ -678,23 +620,23 @@ public:
 		return isCompatible(id) ? Position(id) : def;
 	}
 	static QString description(int id) {
-		if (id == CC.m_id)
+		if (id == CC.id())
 			return QString();
-		if (id == TL.m_id)
+		if (id == TL.id())
 			return QString();
-		if (id == TC.m_id)
+		if (id == TC.id())
 			return QString();
-		if (id == TR.m_id)
+		if (id == TR.id())
 			return QString();
-		if (id == CL.m_id)
+		if (id == CL.id())
 			return QString();
-		if (id == CR.m_id)
+		if (id == CR.id())
 			return QString();
-		if (id == BL.m_id)
+		if (id == BL.id())
 			return QString();
-		if (id == BC.m_id)
+		if (id == BC.id())
 			return QString();
-		if (id == BR.m_id)
+		if (id == BR.id())
 			return QString();
 		return QString();
 	}
@@ -708,15 +650,12 @@ private:
 	};
 	static Map _map;
 	static const Map &map() {return _map;}
-	Position(int id, const char *name): m_id(id) {
-		_map.value.insert(_map.name[m_id] = QLatin1String(name), m_id);
+	Position(int id, const char *name): EnumClass(id) {
+		_map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
-	Position(int id): m_id(id) {}
-	int m_id;
+	Position(int id): EnumClass(id) {}
 };
 }
-inline bool operator == (int lhs, const Enum::Position &rhs) {return lhs == rhs.id();}
-inline bool operator != (int lhs, const Enum::Position &rhs) {return lhs != rhs.id();}
 
 #endif

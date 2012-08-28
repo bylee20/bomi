@@ -11,7 +11,7 @@ Pref *Pref::obj = 0;
 
 void Pref::save() const {
 	Record r(PREF_GROUP);
-#define WRITE(a) RECORD_WRITE(r, a)
+#define WRITE(a) r.write(a, #a);
 	WRITE(remember_stopped);
 	WRITE(ask_record_found);
 	WRITE(pause_minimized);
@@ -54,24 +54,28 @@ void Pref::save() const {
 	WRITE(enable_generate_playist);
 	WRITE(sub_enable_autoload);
 	WRITE(sub_enable_autoselect);
-	RECORD_WRITE_ENUM(r, generate_playlist);
-	RECORD_WRITE_ENUM(r, sub_autoload);
-	RECORD_WRITE_ENUM(r, sub_autoselect);
+	WRITE(generate_playlist);
+	WRITE(sub_autoload);
+	WRITE(sub_autoselect);
 
 	WRITE(enable_hwaccel);
 	WRITE(skin_name);
 	WRITE(hwaccel_codecs);
+#undef WRITE
 
-	sub_style.save(r, "sub_style");
-	double_click_map.save(r, "double_click_map");
-	middle_click_map.save(r, "middle_click_map");
-	wheel_scroll_map.save(r, "wheel_scroll_map");
+#define WRITE2(a) a.save(r, #a);
+	WRITE2(open_media_from_file_manager);
+	WRITE2(open_media_by_drag_and_drop);
+	WRITE2(sub_style);
+	WRITE2(double_click_map);
+	WRITE2(middle_click_map);
+	WRITE2(wheel_scroll_map);
+#undef WRITE2
 }
 
 void Pref::load() {
 	Record r(PREF_GROUP);
 #define READ(a) r.read(a, #a)
-#define READ_ENUM(a) r.readEnum(a, #a)
 	READ(remember_stopped);
 	READ(ask_record_found);
 	READ(pause_minimized);
@@ -117,12 +121,10 @@ void Pref::load() {
 	READ(enable_generate_playist);
 	READ(sub_enable_autoload);
 	READ(sub_enable_autoselect);
-	READ_ENUM(generate_playlist);
-	READ_ENUM(sub_autoload);
-	READ_ENUM(sub_autoselect);
+	READ(generate_playlist);
+	READ(sub_autoload);
+	READ(sub_autoselect);
 #undef READ
-#undef READ_ENUM
-
 	sub_style.load(r, "sub_style");
 	double_click_map.load(r, "double_click_map");
 	middle_click_map.load(r, "middle_click_map");

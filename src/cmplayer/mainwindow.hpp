@@ -7,7 +7,7 @@
 
 class Mrl;		class PlayEngine;
 class Track;		class ControlWidget;
-class VideoFormat;
+class VideoFormat;	class PrefDialog;
 
 class MainWindow : public QMainWindow {
 	Q_OBJECT
@@ -17,6 +17,7 @@ public:
 	MainWindow &operator = (const MainWindow &) = delete;
 	~MainWindow();
 	void unplug();
+	void openFromFileManager(const Mrl &mrl);
 public slots:
 	void openMrl(const Mrl &mrl, const QString &enc);
 	void openMrl(const Mrl &mrl);
@@ -24,6 +25,9 @@ public slots:
 signals:
 	void fullscreenChanged(bool full);
 private slots:
+	void setAutoExit(bool enabled);
+	void setAutoShutdown(bool enabled);
+	void onPlaylistFinished();
 	void setFrameDroppingEnabled(bool enabled);
 	void moveScreen(QAction *action);
 	void alignScreen(QAction *action);
@@ -88,6 +92,7 @@ private slots:
 
 	void onWindowFilePathChanged(const QString &path);
 private:
+	PrefDialog *getPrefDialog();
 //	ControlWidget *createControlWidget();
 //	QWidget *createCentralWidget(QWidget *video, QWidget *control);
 	void appendSubFiles(const QStringList &files, bool checked, const QString &enc);

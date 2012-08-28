@@ -238,6 +238,9 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	QAction *playInfo = tool->addAction(_L("playinfo"));
 	playInfo->setCheckable(true);
 	playInfo->setShortcut(Qt::Key_Tab);
+	tool->addSeparator();
+	tool->addAction(_L("auto-exit"), true);
+	tool->addAction(_L("auto-shutdown"), true);
 
 	Menu *window = this->addMenu(_L("window"));
 	// sot == Stay On Top
@@ -443,6 +446,8 @@ void RootMenu::update() {
 	tool["subtitle"]->setText(tr("Subtitle View"));
 	tool["pref"]->setText(tr("Preferences"));
 	tool["playinfo"]->setText(tr("Play Information"));
+	tool["auto-exit"]->setText(tr("Auto-exit"));
+	tool["auto-shutdown"]->setText(tr("Auto-shutdown"));
 
 	Menu &window = root("window");
 	window.setTitle(tr("Window"));

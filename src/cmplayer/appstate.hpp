@@ -29,6 +29,9 @@ public:
 	int sub_sync_delay = 0;
 	bool sub_letterbox = true, sub_align_top = false;
 
+// tool state
+	bool auto_exit = false;
+
 // window state
 	Enum::StaysOnTop screen_stays_on_top = Enum::StaysOnTop::Playing;
 

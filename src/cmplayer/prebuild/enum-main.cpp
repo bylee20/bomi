@@ -137,7 +137,32 @@ static void generate() {
 	assert(s_hpp.is_open() && s_cpp.is_open());
 
 	s_hpp << "#ifndef ENUMS_HPP\n#define ENUMS_HPP\n\n"
-		"#include <QtCore/QCoreApplication>\n#include <QtCore/QMap>\n\n";
+		"#include <QtCore/QCoreApplication>\n#include <QtCore/QMap>\n\n"
+		"class EnumClass {\n"
+		"	Q_DECLARE_TR_FUNCTIONS(EnumClass)\n"
+		"public:\n"
+		"	EnumClass(const EnumClass &rhs): m_id(rhs.m_id) {}\n"
+		"	virtual ~EnumClass() {}\n"
+		"	EnumClass &operator = (const EnumClass &rhs) {m_id = rhs.m_id; return *this;}\n"
+		"	bool operator == (const EnumClass &rhs) const {return m_id == rhs.m_id;}\n"
+		"	bool operator != (const EnumClass &rhs) const {return m_id != rhs.m_id;}\n"
+		"	bool operator < (const EnumClass &rhs) const {return m_id < rhs.m_id;}\n"
+		"	bool operator == (int rhs) const {return m_id == rhs;}\n"
+		"	bool operator != (int rhs) const {return m_id != rhs;}\n"
+		"	bool operator < (int rhs) const {return m_id < rhs;}\n"
+		"	int id() const {return m_id;}\n"
+		"	virtual QString name() const = 0;\n"
+		"	virtual QString description() const = 0;\n"
+		"	virtual void setById(int id) = 0;\n"
+		"	virtual void setByName(const QString &name) = 0;\n"
+		"protected:\n"
+		"	EnumClass(int id): m_id(id) {}\n"
+		"	void setId(int id) {m_id = id;}\n"
+		"private:\n"
+		"	int m_id = 0;\n"
+		"};\n\n"
+		"static inline bool operator == (int lhs, const EnumClass &rhs) {return rhs == lhs;}\n"
+		"static inline bool operator != (int lhs, const EnumClass &rhs) {return rhs != lhs;}\n\n";
 	s_cpp << "#include \"enums.hpp\"\n\n";
 
 	for (vector<EnumData>::const_iterator it = data.begin(); it != data.end(); ++it) {
@@ -152,7 +177,7 @@ static void generate() {
 			string tmp1("\tstatic const %1 %2;\n");
 			decl_values += replace(replace(tmp1, "%1", it->name), "%2", iit->name);
 
-			defa_desc += "\t\tif (id == " + iit->name + ".m_id)\n\t\t\treturn ";
+			defa_desc += "\t\tif (id == " + iit->name + ".id())\n\t\t\treturn ";
 			defa_desc += iit->desc.empty() ? "QString();\n" : "tr(\"" + iit->desc + "\");\n";
 
 			string tmp2("const %1 %1::%2(%3, \"%2\");\n");

@@ -14,9 +14,33 @@
 #include "hwaccel.hpp"
 
 // from clementine's preferences dialog
+typedef QDialogButtonBox DBB;
 
 static const int CategoryRole = Qt::UserRole + 1;
 static const int WidgetRole = Qt::UserRole + 1;
+
+class PrefOpenMediaGroup : public QGroupBox {
+	Q_DECLARE_TR_FUNCTIONS(PrefOpenMediaGroup)
+public:
+	PrefOpenMediaGroup(const QString &title, QWidget *parent)
+	: QGroupBox(title, parent) {
+		auto layout = new QVBoxLayout(this);
+		start = new QCheckBox(tr("Start the playback"), this);
+		playlist = new EnumComboBox<Enum::PlaylistBehaviorWhenOpenMedia>(this);
+		layout->addWidget(start);
+		layout->addWidget(playlist);
+		auto vbox = static_cast<QVBoxLayout*>(parent->layout());
+		vbox->insertWidget(vbox->count()-1, this);
+	}
+	void setValue(const Pref::OpenMedia &open) {
+		start->setChecked(open.start_playback);
+		playlist->setCurrentValue(open.playlist_behavior);
+	}
+	Pref::OpenMedia value() const {return Pref::OpenMedia(start->isChecked(), playlist->currentValue());}
+private:
+	QCheckBox *start;
+	EnumComboBox<Enum::PlaylistBehaviorWhenOpenMedia> *playlist;
+};
 
 template <typename Enum>
 class PrefMouseGroup : public QGroupBox {
@@ -40,6 +64,7 @@ public:
 			grid->addWidget(check, i, 0, 1, 1);
 			grid->addWidget(combo, i, 1, 1, 1);
 			combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+			combo->setEnabled(check->isChecked());
 			connect(check, SIGNAL(toggled(bool)), combo, SLOT(setEnabled(bool)));
 		}
 		form->addWidget(this);
@@ -58,7 +83,7 @@ public:
 		for (int i=0; i<mods.size(); ++i) {
 			ActionInfo &info = map[mods[i]];
 			info.enabled = checks[i]->isChecked();
-			info.action.set(combos[i]->itemData(combos[i]->currentIndex()).toInt());
+			info.action = combos[i]->currentValue();
 		}
 		return map;
 	}
@@ -190,6 +215,8 @@ struct PrefDialog::Data {
 	PrefMouseGroup<Enum::ClickAction> *dbl, *mdl;
 	PrefMouseGroup<Enum::WheelAction> *whl;
 	QMap<int, QCheckBox*> hwaccel;
+	PrefOpenMediaGroup *open_media_from_file_manager;
+	PrefOpenMediaGroup *open_media_by_drag_and_drop;
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
@@ -224,7 +251,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 	};
 
 	auto general = addCategory(tr("General"));
-	auto playback = addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
+	auto open = addPage(tr("Open"), d->ui.open_media, ":/img/document-open-32.png", general);
+	addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
 	addPage(tr("Application"), d->ui.application, ":/img/cmplayer-32.png", general);
 	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
 
@@ -239,7 +267,10 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Control step"), d->ui.ui_step, ":/img/run-build-32.png", ui);
 	addPage(tr("Skin"), d->ui.ui_skin, ":/img/preferences-desktop-theme-32.png", ui);
 
-	playback->setSelected(true);
+	open->setSelected(true);
+
+	d->open_media_from_file_manager = new PrefOpenMediaGroup(tr("Open from file manager"), d->ui.open_media);
+	d->open_media_by_drag_and_drop = new PrefOpenMediaGroup(tr("Open by drag-and-drop"), d->ui.open_media);
 
 	auto vbox = new QVBoxLayout;
 	vbox->setContentsMargins(20, 0, 0, 0);
@@ -404,9 +435,17 @@ void PrefDialog::retranslate() {
 	d->ui.sub_ext->setItemText(0, tr("All"));
 	for (int i=0; i<d->ui.locale->count(); ++i)
 		d->ui.locale->setItemText(i, toString(d->ui.locale->itemData(i).toLocale()));
+	d->ui.dbb->button(DBB::Ok)->setText(tr("Ok"));
+	d->ui.dbb->button(DBB::Cancel)->setText(tr("Cancel"));
+	d->ui.dbb->button(DBB::Apply)->setText(tr("Apply"));
+	d->ui.dbb->button(DBB::RestoreDefaults)->setText(tr("Restore Defaults"));
+	d->ui.dbb->button(DBB::Reset)->setText(tr("Reset"));
 }
 
 void PrefDialog::fill(const Pref &p) {
+	d->open_media_from_file_manager->setValue(p.open_media_from_file_manager);
+	d->open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
+
 	d->ui.pause_minimized->setChecked(p.pause_minimized);
 	d->ui.pause_video_only->setChecked(p.pause_video_only);
 	d->ui.remember_stopped->setChecked(p.remember_stopped);
@@ -489,12 +528,15 @@ void PrefDialog::apply() {
 	Q_ASSERT(Pref::obj != 0);
 	Pref &p = *Pref::obj;
 
+	p.open_media_from_file_manager = d->open_media_from_file_manager->value();
+	p.open_media_by_drag_and_drop = d->open_media_by_drag_and_drop->value();
+
 	p.pause_minimized = d->ui.pause_minimized->isChecked();
 	p.pause_video_only = d->ui.pause_video_only->isChecked();
 	p.remember_stopped = d->ui.remember_stopped->isChecked();
 	p.ask_record_found = d->ui.ask_record_found->isChecked();
 	p.enable_generate_playist = d->ui.enable_generate_playlist->isChecked();
-	p.generate_playlist.set(d->ui.generate_playlist->currentData().toInt());
+	p.generate_playlist = d->ui.generate_playlist->currentValue();
 	p.hide_cursor = d->ui.hide_cursor->isChecked();
 	p.hide_cursor_delay = d->ui.hide_delay->value()*1000;
 	p.disable_screensaver = d->ui.disable_screensaver->isChecked();
@@ -517,8 +559,8 @@ void PrefDialog::apply() {
 
 	p.sub_enable_autoload = d->ui.sub_enable_autoload->isChecked();
 	p.sub_enable_autoselect = d->ui.sub_enable_autoselect->isChecked();
-	p.sub_autoload.set(d->ui.sub_autoload->currentData().toInt());
-	p.sub_autoselect.set(d->ui.sub_autoselect->currentData().toInt());
+	p.sub_autoload = d->ui.sub_autoload->currentValue();
+	p.sub_autoselect = d->ui.sub_autoselect->currentValue();
 	p.sub_ext = d->ui.sub_ext->currentData().toString();
 	p.sub_enc = d->ui.sub_enc->encoding();
 	p.sub_enc_autodetection = d->ui.sub_enc_autodetection->isChecked();
@@ -530,7 +572,7 @@ void PrefDialog::apply() {
 	p.sub_style.font.setStrikeOut(d->ui.sub_font_option->strikeOut());
 	p.sub_style.color = d->ui.sub_text_color->color();
 	p.sub_style.outline_color = d->ui.sub_outline_color->color();
-	p.sub_style.scale.set(d->ui.sub_auto_size->currentData().toInt());
+	p.sub_style.scale = d->ui.sub_auto_size->currentValue();
 	p.sub_style.size = d->ui.sub_size_scale->value()/100.0;
 	p.sub_style.has_shadow = d->ui.sub_has_shadow->isChecked();
 	p.sub_style.shadow_blur = d->ui.sub_shadow_blur->isChecked();
@@ -579,8 +621,8 @@ void PrefDialog::apply() {
 void PrefDialog::changeEvent(QEvent *event) {
 	QWidget::changeEvent(event);
 	if (event->type() == QEvent::LanguageChange) {
-		retranslate();
 		d->ui.retranslateUi(this);
+		retranslate();
 	}
 }
 
@@ -588,7 +630,6 @@ void PrefDialog::onDialogButtonClicked(QAbstractButton *button) {
 	auto reset = [this] () {fill(Pref::get());};
 	auto restore = [this] () {fill(Pref());};
 
-	typedef QDialogButtonBox DBB;
 	switch (d->ui.dbb->standardButton(button)) {
 	case DBB::Ok:
 		hide();

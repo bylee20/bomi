@@ -62,7 +62,7 @@ App::App(int &argc, char **argv)
 
 	auto makeStyle = [this]() {
 		Record r(APP_GROUP);
-		const auto name = r.read("style", styleName());
+		auto name = r.value("style", styleName()).toString();
 		if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
 			return;
 		if (!d->styleNames.contains(name, Qt::CaseInsensitive))
@@ -119,7 +119,7 @@ bool App::event(QEvent *event) {
 	switch ((int)event->type()) {
 	case QEvent::FileOpen: {
 		if (d->main)
-			d->main->openMrl(Mrl(static_cast<QFileOpenEvent*>(event)->url().toString()));
+			d->main->openFromFileManager(Mrl(static_cast<QFileOpenEvent*>(event)->url().toString()));
 		event->accept();
 		return true;
 	} case Event::Reopen:
@@ -174,12 +174,12 @@ void App::setStyleName(const QString &name) {
 		return;
 	setStyle(QStyleFactory::create(name));
 	Record r(APP_GROUP);
-	r.write("style", name);
+	r.write(name, "style");
 }
 
 void App::setUnique(bool unique) {
 	Record r(APP_GROUP);
-	r.write("unique", unique);
+	r.write(unique, "unique");
 }
 
 QString App::styleName() const {
@@ -188,7 +188,7 @@ QString App::styleName() const {
 
 bool App::isUnique() const {
 	Record r(APP_GROUP);
-	return r.read("unique", true);
+	return r.value("unique", true).toBool();
 }
 
 #undef APP_GROUP
