@@ -140,15 +140,17 @@ void VideoOutput::drawImage(void *data) {
 		}
 	} else {
 		const int stride = mpi->stride[0];
+		int width_stride = stride;
+		if (!(mpi->flags & MP_IMGFLAG_PLANAR))
+			width_stride /= (mpi->bpp >> 3);
 		if (d->format.stride < stride) {
 			qDebug() << "expand stride:" << d->format.stride << "->" << stride;
-			d->format.width_stride = d->format.stride = stride;
-			if (!(mpi->flags & MP_IMGFLAG_PLANAR))
-				d->format.width_stride /= (mpi->bpp >> 3);
+			d->format.width_stride = width_stride;
+			d->format.stride = stride;
 			d->renderer->prepare(d->format);
 		}
 		const auto h = d->format.height;
-		const auto w = d->format.width_stride;
+		const auto w = width_stride;
 		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
 			glBindTexture(GL_TEXTURE_2D, d->renderer->texture(idx));
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);

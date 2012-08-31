@@ -19,7 +19,6 @@ public:
 	QWidget *widget() const;
 	QWidget *screen() const;
 	void setVisible(bool visible);
-	bool contains(const QPoint &pos) const;
 	void connectTo(PlayEngine *engine, AudioController *audio, VideoRenderer *video);
 	QString name() const;
 	void initializePlaceholders();

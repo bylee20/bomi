@@ -62,6 +62,7 @@ struct MainWindow::Data {
 	QMenu *context;
 	PlaylistView *playlist;
 	HistoryView *history;
+	QRect screenRect;
 //	FavoritesView *favorite;
 #ifndef Q_WS_MAC
 	QSystemTrayIcon *tray;

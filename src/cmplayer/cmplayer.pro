@@ -55,6 +55,7 @@ QMAKE_CXXFLAGS += -std=c++11
 
 DESTDIR = ../../build
 
+DEFINES += _LARGEFILE_SOURCE "_FILE_OFFSET_BITS=64" _LARGEFILE64_SOURCE
 
 RESOURCES += rsclist.qrc
 HEADERS += playengine.hpp \

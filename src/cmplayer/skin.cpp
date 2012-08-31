@@ -503,14 +503,6 @@ void Skin::setVisible(bool visible) {
 	}
 }
 
-bool Skin::contains(const QPoint &gpos) const {
-	for (auto w : d->hidable) {
-		if (w->rect().contains(w->mapFromGlobal(gpos)))
-			return true;
-	}
-	return false;
-}
-
 void Skin::setPlaceholder(Placeholder ph, const QString &text) {
 	if (d->labels[ph].isEmpty())
 		return;

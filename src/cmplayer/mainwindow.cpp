@@ -455,8 +455,17 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 	if (o == &d->screen && e->type() == QEvent::Resize) {
 		static QSize prev;
 		QSize size = d->screen.size();
-		if (d->skin.screen())
-			size = isFullScreen() ? d->skin.widget()->size() : d->skin.screen()->size();
+		if (d->skin.screen()) {
+			auto screen = d->skin.screen();
+			size = isFullScreen() ? d->skin.widget()->size() : screen->size();
+			if (isFullScreen() && d->screenRect.isEmpty()) {
+				d->screenRect = QRect(screen->mapToGlobal(QPoint(0, 0)), screen->size());
+				d->skin.setVisible(false);
+			} else if (!isFullScreen() && !d->screenRect.isEmpty()) {
+				d->screenRect = QRect();
+				d->skin.setVisible(true);
+			}
+		}
 		if (isFullScreen()) {
 			d->video.setFixedRenderSize(size);
 		} else {
@@ -472,7 +481,7 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QMainWindow::resizeEvent(event);
-	d->skin.setVisible(!isFullScreen());
+//	d->skin.setVisible(!isFullScreen());
 }
 
 void MainWindow::pause(bool pause) {
@@ -753,7 +762,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 			d->moving = false;
 			d->prevPos = QPoint();
 		}
-		d->skin.setVisible(d->skin.contains(event->globalPos()));
+		d->skin.setVisible(!d->screenRect.isEmpty() && !d->screenRect.contains(event->globalPos()));
 		if (d->p.hide_cursor)
 			d->hider.start(d->p.hide_cursor_delay);
 	} else {
