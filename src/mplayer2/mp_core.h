@@ -86,7 +86,6 @@ struct chapter {
 typedef struct MPContext {
     struct MPOpts opts;
     struct m_config *mconfig;
-    struct vo_x11_state *x11_state;
     struct mp_fifo *key_fifo;
     struct input_ctx *input;
     struct osd_state *osd;
@@ -103,6 +102,7 @@ typedef struct MPContext {
     struct play_tree *playtree;
     struct play_tree_iter *playtree_iter;
     char *filename; // currently playing file
+    struct mp_resolve_result *resolve_result;
     enum stop_play_reason stop_play;
     int play_tree_step;
     unsigned int initialized_flags;  // which subsystems have been initialized
@@ -195,9 +195,8 @@ typedef struct MPContext {
     int sub_counts[SUB_SOURCES];
     // set_of_ass_tracks[i] contains subtitles from set_of_subtitles[i]
     // parsed by libass or NULL if format unsupported
-    struct ass_track *set_of_ass_tracks[MAX_SUBTITLE_FILES];
+    struct sh_sub *set_of_ass_tracks[MAX_SUBTITLE_FILES];
     sub_data* set_of_subtitles[MAX_SUBTITLE_FILES];
-    bool track_was_native_ass[MAX_SUBTITLE_FILES];
     struct ass_library *ass_library;
 
     int file_format;

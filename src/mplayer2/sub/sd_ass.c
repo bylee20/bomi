@@ -23,6 +23,7 @@
 
 #include "talloc.h"
 
+#include "options.h"
 #include "mpcommon.h"
 #include "mp_msg.h"
 #include "libmpdemux/stheader.h"
@@ -33,6 +34,7 @@
 
 struct sd_ass_priv {
     struct ass_track *ass_track;
+    bool vsfilter_aspect;
     bool incomplete_event;
 };
 
@@ -43,7 +45,7 @@ static void free_last_event(ASS_Track *track)
     track->n_events--;
 }
 
-static void init(struct sh_sub *sh, struct osd_state *osd)
+static int init(struct sh_sub *sh, struct osd_state *osd)
 {
     struct sd_ass_priv *ctx;
 
@@ -61,10 +63,8 @@ static void init(struct sh_sub *sh, struct osd_state *osd)
             ctx->ass_track = mp_ass_default_track(osd->ass_library, sh->opts);
     }
 
-    assert(osd->ass_track == NULL);
-    osd->ass_track = ctx->ass_track;
-    osd->vsfilter_aspect = sh->type == 'a';
-    osd->ass_track_changed = true;
+    ctx->vsfilter_aspect = sh->type == 'a';
+    return 0;
 }
 
 static void decode(struct sh_sub *sh, struct osd_state *osd, void *data,
@@ -125,18 +125,37 @@ static void decode(struct sh_sub *sh, struct osd_state *osd, void *data,
     event->Text = strdup(buf);
 }
 
+static void get_bitmaps(struct sh_sub *sh, struct osd_state *osd,
+                        struct sub_bitmaps *res)
+{
+    struct sd_ass_priv *ctx = sh->context;
+    struct MPOpts *opts = osd->opts;
+
+    if (osd->sub_pts == MP_NOPTS_VALUE)
+        return;
+
+    double scale = osd->normal_scale;
+    if (ctx->vsfilter_aspect && opts->ass_vsfilter_aspect_compat)
+        scale = osd->vsfilter_scale;
+    ASS_Renderer *renderer = osd->ass_renderer;
+    mp_ass_configure(renderer, opts, &osd->dim, osd->unscaled);
+    ass_set_aspect_ratio(renderer, scale, 1);
+    int changed;
+    res->imgs = ass_render_frame(renderer, ctx->ass_track,
+                                 osd->sub_pts * 1000 + .5, &changed);
+    if (changed == 2)
+        res->bitmap_id = ++res->bitmap_pos_id;
+    else if (changed)
+        res->bitmap_pos_id++;
+    res->type = SUBBITMAP_LIBASS;
+}
+
 static void reset(struct sh_sub *sh, struct osd_state *osd)
 {
     struct sd_ass_priv *ctx = sh->context;
     if (ctx->incomplete_event)
         free_last_event(ctx->ass_track);
     ctx->incomplete_event = false;
-}
-
-static void switch_off(struct sh_sub *sh, struct osd_state *osd)
-{
-    reset(sh, osd);
-    osd->ass_track = NULL;
 }
 
 static void uninit(struct sh_sub *sh)
@@ -150,7 +169,26 @@ static void uninit(struct sh_sub *sh)
 const struct sd_functions sd_ass = {
     .init = init,
     .decode = decode,
+    .get_bitmaps = get_bitmaps,
     .reset = reset,
-    .switch_off = switch_off,
+    .switch_off = reset,
     .uninit = uninit,
 };
+
+
+struct sh_sub *sd_ass_create_from_track(struct ass_track *track,
+                                        bool vsfilter_aspect,
+                                        struct MPOpts *opts)
+{
+    struct sh_sub *sh = talloc(NULL, struct sh_sub);
+    sh->opts = opts;
+    sh->type = 'a';
+    sh->title = track->name;
+    sh->sd_driver = &sd_ass;
+    struct sd_ass_priv *ctx = talloc_zero(sh, struct sd_ass_priv);
+    sh->context = ctx;
+    ctx->ass_track = track;
+    ctx->vsfilter_aspect = vsfilter_aspect;
+    sh->initialized = true;
+    return sh;
+}

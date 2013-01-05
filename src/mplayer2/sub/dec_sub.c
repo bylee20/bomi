@@ -27,17 +27,24 @@
 #include "options.h"
 
 extern const struct sd_functions sd_ass;
+extern const struct sd_functions sd_lavc;
 
 void sub_init(struct sh_sub *sh, struct osd_state *osd)
 {
     struct MPOpts *opts = sh->opts;
 
+    assert(!osd->sh_sub);
 #ifdef CONFIG_ASS
     if (opts->ass_enabled && is_text_sub(sh->type))
         sh->sd_driver = &sd_ass;
 #endif
+    if (strchr("bpx", sh->type))
+        sh->sd_driver = &sd_lavc;
     if (sh->sd_driver) {
-        sh->sd_driver->init(sh, osd);
+        if (sh->sd_driver->init(sh, osd) < 0)
+            return;
+        osd->sh_sub = sh;
+        osd->bitmap_id = ++osd->bitmap_pos_id;
         sh->initialized = true;
         sh->active = true;
     }
@@ -50,6 +57,30 @@ void sub_decode(struct sh_sub *sh, struct osd_state *osd, void *data,
         sh->sd_driver->decode(sh, osd, data, data_len, pts, duration);
 }
 
+void sub_get_bitmaps(struct osd_state *osd, struct sub_bitmaps *res)
+{
+    struct MPOpts *opts = osd->opts;
+
+    *res = (struct sub_bitmaps){ .type = SUBBITMAP_EMPTY,
+                                 .bitmap_id = osd->bitmap_id,
+                                 .bitmap_pos_id = osd->bitmap_pos_id };
+    if (!opts->sub_visibility || !osd->sh_sub || !osd->sh_sub->active) {
+        /* Change ID in case we just switched from visible subtitles
+         * to current state. Hopefully, unnecessarily claiming that
+         * things may have changed is harmless for empty contents.
+         * Increase osd-> values ahead so that _next_ returned id
+         * is also guaranteed to differ from this one.
+         */
+        res->bitmap_id = ++res->bitmap_pos_id;
+        osd->bitmap_id = osd->bitmap_pos_id += 2;
+        return;
+    }
+    if (osd->sh_sub->sd_driver->get_bitmaps)
+        osd->sh_sub->sd_driver->get_bitmaps(osd->sh_sub, osd, res);
+    osd->bitmap_id = res->bitmap_id;
+    osd->bitmap_pos_id = res->bitmap_pos_id;
+}
+
 void sub_reset(struct sh_sub *sh, struct osd_state *osd)
 {
     if (sh->active && sh->sd_driver->reset)
@@ -58,9 +89,12 @@ void sub_reset(struct sh_sub *sh, struct osd_state *osd)
 
 void sub_switchoff(struct sh_sub *sh, struct osd_state *osd)
 {
-    if (sh->active && sh->sd_driver->switch_off)
+    if (sh->active && sh->sd_driver->switch_off) {
+        assert(osd->sh_sub == sh);
         sh->sd_driver->switch_off(sh, osd);
+    }
     sh->active = false;
+    osd->sh_sub = NULL;
 }
 
 void sub_uninit(struct sh_sub *sh)

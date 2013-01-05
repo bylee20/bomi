@@ -19,7 +19,10 @@
 #ifndef MPLAYER_IMG_FORMAT_H
 #define MPLAYER_IMG_FORMAT_H
 
+#include <stdbool.h>
+
 #include "config.h"
+#include "bstr.h"
 
 /* RGB/BGR Formats */
 
@@ -49,6 +52,10 @@
 #define IMGFMT_BGR24 (IMGFMT_BGR|24)
 #define IMGFMT_BGR32 (IMGFMT_BGR|32)
 
+#define IMGFMT_GBRP (('G'<<24)|('B'<<16)|('R'<<8)|24)
+#define IMGFMT_GBRP9 (('G'<<24)|('B'<<16)|('R'<<8)|27)
+#define IMGFMT_GBRP10 (('G'<<24)|('B'<<16)|('R'<<8)|30)
+
 #if HAVE_BIGENDIAN
 #define IMGFMT_ABGR IMGFMT_RGB32
 #define IMGFMT_BGRA (IMGFMT_RGB32|64)
@@ -67,6 +74,10 @@
 #define IMGFMT_BGR15LE (IMGFMT_BGR15|64)
 #define IMGFMT_BGR16BE IMGFMT_BGR16
 #define IMGFMT_BGR16LE (IMGFMT_BGR16|64)
+#define IMGFMT_GBRP9BE IMGFMT_GBRP9
+#define IMGFMT_GBRP9LE (IMGFMT_GBRP9 | 64)
+#define IMGFMT_GBRP10BE IMGFMT_GBRP10
+#define IMGFMT_GBRP10LE (IMGFMT_GBRP10 | 64)
 #else
 #define IMGFMT_ABGR (IMGFMT_BGR32|64)
 #define IMGFMT_BGRA IMGFMT_BGR32
@@ -85,6 +96,10 @@
 #define IMGFMT_BGR15LE IMGFMT_BGR15
 #define IMGFMT_BGR16BE (IMGFMT_BGR16|64)
 #define IMGFMT_BGR16LE IMGFMT_BGR16
+#define IMGFMT_GBRP9BE (IMGFMT_GBRP9 | 64)
+#define IMGFMT_GBRP9LE IMGFMT_GBRP9
+#define IMGFMT_GBRP10BE (IMGFMT_GBRP10 | 64)
+#define IMGFMT_GBRP10LE IMGFMT_GBRP10
 #endif
 
 /* old names for compatibility */
@@ -93,6 +108,7 @@
 
 #define IMGFMT_IS_RGB(fmt) (((fmt)&IMGFMT_RGB_MASK)==IMGFMT_RGB)
 #define IMGFMT_IS_BGR(fmt) (((fmt)&IMGFMT_BGR_MASK)==IMGFMT_BGR)
+#define IMGFMT_IS_GBRP(fmt) (((fmt)&0xffffff00) == (IMGFMT_GBRP&0xffffff00))
 
 #define IMGFMT_RGB_DEPTH(fmt) ((fmt)&0x3F)
 #define IMGFMT_BGR_DEPTH(fmt) ((fmt)&0x3F)
@@ -131,6 +147,8 @@
 #define IMGFMT_422P16_BE 0x34323251
 #define IMGFMT_422P10_LE 0x52323234
 #define IMGFMT_422P10_BE 0x34323252
+#define IMGFMT_422P9_LE  0x53323234
+#define IMGFMT_422P9_BE  0x34323253
 #define IMGFMT_420P16_LE 0x51303234
 #define IMGFMT_420P16_BE 0x34323051
 #define IMGFMT_420P10_LE 0x52303234
@@ -143,6 +161,7 @@
 #define IMGFMT_444P9 IMGFMT_444P9_BE
 #define IMGFMT_422P16 IMGFMT_422P16_BE
 #define IMGFMT_422P10 IMGFMT_422P10_BE
+#define IMGFMT_422P9  IMGFMT_422P9_BE
 #define IMGFMT_420P16 IMGFMT_420P16_BE
 #define IMGFMT_420P10 IMGFMT_420P10_BE
 #define IMGFMT_420P9 IMGFMT_420P9_BE
@@ -153,6 +172,7 @@
 #define IMGFMT_444P9 IMGFMT_444P9_LE
 #define IMGFMT_422P16 IMGFMT_422P16_LE
 #define IMGFMT_422P10 IMGFMT_422P10_LE
+#define IMGFMT_422P9  IMGFMT_422P9_LE
 #define IMGFMT_420P16 IMGFMT_420P16_LE
 #define IMGFMT_420P10 IMGFMT_420P10_LE
 #define IMGFMT_420P9 IMGFMT_420P9_LE
@@ -191,14 +211,6 @@
 #define IMGFMT_MPEGPES (('M'<<24)|('P'<<16)|('E'<<8)|('S'))
 #define IMGFMT_MJPEG (('M')|('J'<<8)|('P'<<16)|('G'<<24))
 
-// I think that this code could not be used by any other codec/format
-#define IMGFMT_XVMC 0x1DC70000
-#define IMGFMT_XVMC_MASK 0xFFFF0000
-#define IMGFMT_IS_XVMC(fmt) (((fmt)&IMGFMT_XVMC_MASK)==IMGFMT_XVMC)
-//these are chroma420
-#define IMGFMT_XVMC_MOCO_MPEG2 (IMGFMT_XVMC|0x02)
-#define IMGFMT_XVMC_IDCT_MPEG2 (IMGFMT_XVMC|0x82)
-
 // VDPAU specific format.
 #define IMGFMT_VDPAU               0x1DC80000
 #define IMGFMT_VDPAU_MASK          0xFFFF0000
@@ -210,7 +222,15 @@
 #define IMGFMT_VDPAU_VC1           (IMGFMT_VDPAU|0x05)
 #define IMGFMT_VDPAU_MPEG4         (IMGFMT_VDPAU|0x06)
 
-#define IMGFMT_IS_HWACCEL(fmt) (IMGFMT_IS_VDPAU(fmt) || IMGFMT_IS_XVMC(fmt))
+#define IMGFMT_IS_HWACCEL(fmt) IMGFMT_IS_VDPAU(fmt)
+
+struct imgfmt_name {
+    char *name;
+    unsigned int fmt;
+};
+
+extern const struct imgfmt_name mp_imgfmt_list[];
+unsigned int imgfmt_parse(struct bstr name, bool special_fmts);
 
 typedef struct {
     void* data;

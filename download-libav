@@ -1,3 +1,0 @@
-install -d src
-cd src && git clone --depth 1 git://github.com/libav/libav.git libav && find . -name .git* | xargs rm -rf
-

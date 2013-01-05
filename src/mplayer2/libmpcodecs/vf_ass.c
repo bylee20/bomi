@@ -33,7 +33,7 @@
 #include "img_format.h"
 #include "mp_image.h"
 #include "vf.h"
-#include "sub/sub.h"
+#include "sub/dec_sub.h"
 
 #include "libvo/fastmemcpy.h"
 
@@ -61,8 +61,7 @@ static const struct vf_priv_s {
     int auto_insert;
 
     struct osd_state *osd;
-    ASS_Renderer *renderer_realaspect;
-    ASS_Renderer *renderer_vsfilter;
+    double aspect_correction;
 
     unsigned char *planes[3];
     struct line_limits {
@@ -70,8 +69,6 @@ static const struct vf_priv_s {
         uint16_t end;
     } *line_limits;
 } vf_priv_dflt;
-
-extern float sub_delay;
 
 static int config(struct vf_instance *vf,
                   int width, int height, int d_width, int d_height,
@@ -93,15 +90,7 @@ static int config(struct vf_instance *vf,
     vf->priv->planes[2]   = malloc(vf->priv->outw * vf->priv->outh);
     vf->priv->line_limits = malloc((vf->priv->outh + 1) / 2 * sizeof(*vf->priv->line_limits));
 
-    if (vf->priv->renderer_realaspect) {
-        mp_ass_configure(vf->priv->renderer_realaspect, opts,
-                         vf->priv->outw, vf->priv->outh, 0);
-        mp_ass_configure(vf->priv->renderer_vsfilter, opts,
-                         vf->priv->outw, vf->priv->outh, 0);
-        ass_set_aspect_ratio(vf->priv->renderer_realaspect,
-                             (double)width / height * d_height / d_width, 1);
-        ass_set_aspect_ratio(vf->priv->renderer_vsfilter, 1, 1);
-    }
+    vf->priv->aspect_correction = (double)width / height * d_height / d_width;
 
     return vf_next_config(vf, vf->priv->outw, vf->priv->outh, d_width,
 			  d_height, flags, outfmt);
@@ -361,25 +350,26 @@ static int render_frame(struct vf_instance *vf, mp_image_t *mpi,
 
 static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
 {
-    struct osd_state *osd = vf->priv->osd;
+    struct vf_priv_s *priv = vf->priv;
+    struct MPOpts *opts = vf->opts;
+    struct osd_state *osd = priv->osd;
     ASS_Image *images = 0;
-    ASS_Renderer *renderer = osd->vsfilter_aspect
-            && vf->opts->ass_vsfilter_aspect_compat
-            ? vf->priv->renderer_vsfilter : vf->priv->renderer_realaspect;
-    if (sub_visibility && renderer && osd->ass_track
-            && (pts != MP_NOPTS_VALUE)) {
-        if (osd->ass_force_reload) {
-            mp_ass_reload_options(vf->priv->renderer_realaspect, vf->opts);
-            mp_ass_reload_options(vf->priv->renderer_vsfilter, vf->opts);
-        }
-        osd->ass_force_reload = false;
-        images = ass_render_frame(renderer, osd->ass_track,
-                        (pts - osd->sub_offset + sub_delay) * 1000 + .5, NULL);
+    if (pts != MP_NOPTS_VALUE) {
+        osd->dim = (struct mp_eosd_res){ .w = vf->priv->outw,
+                                         .h = vf->priv->outh,
+                                         .mt = opts->ass_top_margin,
+                                         .mb = opts->ass_bottom_margin };
+        osd->normal_scale = vf->priv->aspect_correction;
+        osd->vsfilter_scale = 1;
+        osd->sub_pts = pts - osd->sub_offset;
+        osd->support_rgba = false;
+        struct sub_bitmaps b;
+        sub_get_bitmaps(osd, &b);
+        images = b.imgs;
     }
 
     prepare_image(vf, mpi);
-    if (images)
-        render_frame(vf, mpi, images);
+    render_frame(vf, mpi, images);
 
     return vf_next_put_image(vf, vf->dmpi, pts);
 }
@@ -402,31 +392,15 @@ static int control(vf_instance_t *vf, int request, void *data)
         vf->priv->osd = data;
         break;
     case VFCTRL_INIT_EOSD:
-        vf->priv->renderer_realaspect = ass_renderer_init((ASS_Library *)data);
-        if (!vf->priv->renderer_realaspect)
-            return CONTROL_FALSE;
-        vf->priv->renderer_vsfilter = ass_renderer_init((ASS_Library *)data);
-        if (!vf->priv->renderer_vsfilter) {
-            ass_renderer_done(vf->priv->renderer_realaspect);
-            return CONTROL_FALSE;
-        }
-        mp_ass_configure_fonts(vf->priv->renderer_realaspect);
-        mp_ass_configure_fonts(vf->priv->renderer_vsfilter);
         return CONTROL_TRUE;
     case VFCTRL_DRAW_EOSD:
-        if (vf->priv->renderer_realaspect)
-            return CONTROL_TRUE;
-        break;
+        return CONTROL_TRUE;
     }
     return vf_next_control(vf, request, data);
 }
 
 static void uninit(struct vf_instance *vf)
 {
-    if (vf->priv->renderer_realaspect) {
-        ass_renderer_done(vf->priv->renderer_realaspect);
-        ass_renderer_done(vf->priv->renderer_vsfilter);
-    }
     free(vf->priv->planes[1]);
     free(vf->priv->planes[2]);
     free(vf->priv->line_limits);

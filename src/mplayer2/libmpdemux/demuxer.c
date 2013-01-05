@@ -87,8 +87,6 @@ extern const demuxer_desc_t demuxer_desc_mpc;
 extern const demuxer_desc_t demuxer_desc_audio;
 extern const demuxer_desc_t demuxer_desc_xmms;
 extern const demuxer_desc_t demuxer_desc_mpeg_ty;
-extern const demuxer_desc_t demuxer_desc_rtp;
-extern const demuxer_desc_t demuxer_desc_rtp_nemesi;
 extern const demuxer_desc_t demuxer_desc_lavf;
 extern const demuxer_desc_t demuxer_desc_lavf_preferred;
 extern const demuxer_desc_t demuxer_desc_aac;
@@ -142,12 +140,6 @@ const demuxer_desc_t *const demuxer_list[] = {
     &demuxer_desc_h264_es,
     &demuxer_desc_audio,
     &demuxer_desc_mpeg_ty,
-#ifdef CONFIG_LIVE555
-    &demuxer_desc_rtp,
-#endif
-#ifdef CONFIG_LIBNEMESI
-    &demuxer_desc_rtp_nemesi,
-#endif
     &demuxer_desc_lavf,
 #ifdef CONFIG_MUSEPACK
     &demuxer_desc_mpc,
@@ -1081,28 +1073,22 @@ struct demuxer *demux_open_withparams(struct MPOpts *opts, stream_t *vs,
     }
 
     if (opts->audio_stream) {
-        as = open_stream(opts->audio_stream, 0, &afmt);
+        as = open_stream(opts->audio_stream, opts, &afmt);
         if (!as) {
             mp_tmsg(MSGT_DEMUXER, MSGL_ERR, "Cannot open audio stream: %s\n",
                    opts->audio_stream);
             return NULL;
         }
-        if (opts->audio_stream_cache) {
-            if (!stream_enable_cache
-                (as, opts->audio_stream_cache * 1024,
-                 opts->audio_stream_cache * 1024 *
-                            (opts->stream_cache_min_percent / 100.0),
-                 opts->audio_stream_cache * 1024 *
-                            (opts->stream_cache_seek_min_percent / 100.0))) {
-                free_stream(as);
-                mp_msg(MSGT_DEMUXER, MSGL_ERR,
-                       "Can't enable audio stream cache\n");
-                return NULL;
-            }
+        if (!stream_enable_cache_percent(as, opts->audio_stream_cache,
+                                         opts->stream_cache_min_percent,
+                                         opts->stream_cache_seek_min_percent)) {
+            free_stream(as);
+            mp_msg(MSGT_DEMUXER, MSGL_ERR, "Can't enable audio stream cache\n");
+            return NULL;
         }
     }
     if (opts->sub_stream) {
-        ss = open_stream(opts->sub_stream, 0, &sfmt);
+        ss = open_stream(opts->sub_stream, opts, &sfmt);
         if (!ss) {
             mp_tmsg(MSGT_DEMUXER, MSGL_ERR, "Cannot open subtitle stream: %s\n",
                    opts->sub_stream);

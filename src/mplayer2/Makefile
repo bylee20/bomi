@@ -26,7 +26,6 @@ include config.mak
 SRCS_AUDIO_INPUT-$(ALSA)             += stream/ai_alsa1x.c
 SRCS_AUDIO_INPUT-$(OSS)              += stream/ai_oss.c
 SRCS_COMMON-$(AUDIO_INPUT)           += $(SRCS_AUDIO_INPUT-yes)
-SRCS_COMMON-$(BITMAP_FONT)           += sub/font_load.c
 SRCS_COMMON-$(CDDA)                  += stream/stream_cdda.c \
                                         stream/cdinfo.c
 SRCS_COMMON-$(CDDB)                  += stream/stream_cddb.c
@@ -63,7 +62,6 @@ SRCS_COMMON-$(FASTMEMCPY)            += libvo/aclib.c
 SRCS_COMMON-$(FFMPEG_INTERNALS)      += libmpcodecs/vf_mcdeint.c \
                                         libmpcodecs/vf_spp.c \
 
-SRCS_COMMON-$(FREETYPE)              += sub/font_load_ft.c
 SRCS_COMMON-$(FTP)                   += stream/stream_ftp.c
 SRCS_COMMON-$(GIF)                   += libmpdemux/demux_gif.c
 SRCS_COMMON-$(HAVE_POSIX_SELECT)     += libmpcodecs/vf_bmovl.c
@@ -73,7 +71,11 @@ SRCS_COMMON-$(LADSPA)                += libaf/af_ladspa.c
 SRCS_COMMON-$(LIBA52)                += libmpcodecs/ad_liba52.c
 SRCS_COMMON-$(LIBASS)                += libmpcodecs/vf_ass.c \
                                         sub/ass_mp.c \
+                                        sub/osd_libass.c \
                                         sub/sd_ass.c \
+
+# compiled if libass is NOT enabled
+SRCS_COMMON-NEGATED-$(LIBASS)        += sub/osd_dummy.c
 
 SRCS_COMMON-$(LIBBLURAY)             += stream/stream_bluray.c
 SRCS_COMMON-$(LIBBS2B)               += libaf/af_bs2b.c
@@ -89,16 +91,11 @@ SRCS_COMMON-$(LIBDVDCSS_INTERNAL)    += libdvdcss/css.c \
 
 SRCS_COMMON-$(LIBMAD)                += libmpcodecs/ad_libmad.c
 
-SRCS_COMMON-$(LIBNEMESI)             += libmpdemux/demux_nemesi.c \
-                                        stream/stream_nemesi.c
 SRCS_COMMON-$(LIBNUT)                += libmpdemux/demux_nut.c
 SRCS_COMMON-$(LIBPOSTPROC)           += libmpcodecs/vf_pp.c
 SRCS_COMMON-$(LIBSMBCLIENT)          += stream/stream_smb.c
 
 SRCS_COMMON-$(LIBTHEORA)             += libmpcodecs/vd_theora.c
-SRCS_COMMON-$(LIVE555)               += libmpdemux/demux_rtp.cpp \
-                                        libmpdemux/demux_rtp_codec.cpp \
-                                        stream/stream_live555.c
 SRCS_COMMON-$(MACOSX_FINDER)         += osdep/macosx_finder_args.m
 SRCS_COMMON-$(COCOA)                 += libvo/osx_common.c \
                                         libvo/cocoa_common.m \
@@ -108,13 +105,6 @@ SRCS_COMMON-$(MPG123)                += libmpcodecs/ad_mpg123.c
 
 SRCS_COMMON-$(MUSEPACK)              += libmpcodecs/ad_mpc.c \
                                         libmpdemux/demux_mpc.c
-SRCS_COMMON-$(NATIVE_RTSP)           += stream/stream_rtsp.c \
-                                        stream/freesdp/common.c \
-                                        stream/freesdp/errorlist.c \
-                                        stream/freesdp/parser.c \
-                                        stream/librtsp/rtsp.c \
-                                        stream/librtsp/rtsp_rtp.c \
-                                        stream/librtsp/rtsp_session.c \
 
 SRCS_COMMON-$(NEED_GETTIMEOFDAY)     += osdep/gettimeofday.c
 SRCS_COMMON-$(NEED_GLOB)             += osdep/glob-win.c
@@ -135,12 +125,6 @@ SRCS_COMMON-$(NETWORKING)            += stream/stream_netstream.c \
                                         stream/tcp.c \
                                         stream/stream_rtp.c \
                                         stream/stream_udp.c \
-                                        stream/librtsp/rtsp.c \
-                                        stream/realrtsp/asmrp.c \
-                                        stream/realrtsp/real.c \
-                                        stream/realrtsp/rmff.c \
-                                        stream/realrtsp/sdpplin.c \
-                                        stream/realrtsp/xbuffer.c \
 
 SRCS_COMMON-$(PNG)                   += libmpcodecs/vd_mpng.c
 SRCS_COMMON-$(PRIORITY)              += osdep/priority.c
@@ -213,6 +197,7 @@ SRCS_COMMON-$(WIN32DLL)              += libmpcodecs/ad_acm.c \
 SRCS_COMMON-$(XANIM_CODECS)          += libmpcodecs/vd_xanim.c
 SRCS_COMMON-$(XMMS_PLUGINS)          += libmpdemux/demux_xmms.c
 SRCS_COMMON-$(XVID4)                 += libmpcodecs/vd_xvid4.c
+
 SRCS_COMMON = asxparser.c \
               av_log.c \
               av_opts.c \
@@ -403,11 +388,11 @@ SRCS_COMMON = asxparser.c \
               libmpdemux/yuv4mpeg.c \
               libmpdemux/yuv4mpeg_ratio.c \
               libvo/osd.c \
+              libvo/bitmap_packer.c \
               osdep/numcores.c \
               osdep/io.c \
               osdep/$(GETCH) \
               osdep/$(TIMER) \
-              stream/open.c \
               stream/stream.c \
               stream/stream_cue.c \
               stream/stream_ffmpeg.c \
@@ -415,10 +400,10 @@ SRCS_COMMON = asxparser.c \
               stream/stream_mf.c \
               stream/stream_null.c \
               stream/url.c \
-              sub/av_sub.c \
               sub/dec_sub.c \
               sub/find_sub.c \
               sub/find_subfiles.c \
+              sub/sd_lavc.c \
               sub/spudec.c \
               sub/sub.c \
               sub/sub_cc.c \
@@ -427,66 +412,47 @@ SRCS_COMMON = asxparser.c \
               sub/vobsub.c \
               timeline/tl_edl.c \
               timeline/tl_matroska.c \
-              $(SRCS_COMMON-yes)
+              $(SRCS_COMMON-yes) \
+              $(SRCS_COMMON-NEGATED-no)
 
 
-SRCS_MPLAYER-$(3DFX)         += libvo/vo_3dfx.c
-SRCS_MPLAYER-$(AA)           += libvo/vo_aa.c
 SRCS_MPLAYER-$(ALSA)         += libao2/ao_alsa.c
 SRCS_MPLAYER-$(APPLE_IR)     += input/appleir.c
 SRCS_MPLAYER-$(APPLE_REMOTE) += input/ar.c
-SRCS_MPLAYER-$(BL)           += libvo/vo_bl.c
 SRCS_MPLAYER-$(CACA)         += libvo/vo_caca.c
 SRCS_MPLAYER-$(COREAUDIO)    += libao2/ao_coreaudio.c
 SRCS_MPLAYER-$(COREVIDEO)    += libvo/vo_corevideo.m
 SRCS_MPLAYER-$(SHAREDBUFFER) += libvo/vo_sharedbuffer.m
-SRCS_MPLAYER-$(DGA)          += libvo/vo_dga.c
 SRCS_MPLAYER-$(DIRECT3D)     += libvo/vo_direct3d.c libvo/w32_common.c
-SRCS_MPLAYER-$(DIRECTFB)     += libvo/vo_directfb2.c libvo/vo_dfbmga.c
+SRCS_MPLAYER-$(DIRECTFB)     += libvo/vo_directfb2.c
 SRCS_MPLAYER-$(DIRECTX)      += libao2/ao_dsound.c libvo/vo_directx.c
-SRCS_MPLAYER-$(DXR3)         += libvo/vo_dxr3.c
-SRCS_MPLAYER-$(FBDEV)        += libvo/vo_fbdev.c libvo/vo_fbdev2.c
-SRCS_MPLAYER-$(GGI)          += libvo/vo_ggi.c
 SRCS_MPLAYER-$(GIF)          += libvo/vo_gif89a.c
-SRCS_MPLAYER-$(GL)           += libvo/gl_common.c libvo/vo_gl.c \
+SRCS_MPLAYER-$(GL)           += libvo/gl_common.c libvo/vo_gl.c libvo/vo_gl3.c \
                                 pnm_loader.c
 SRCS_MPLAYER-$(GL_SDL)       += libvo/sdl_common.c
 SRCS_MPLAYER-$(GL_WIN32)     += libvo/w32_common.c
 SRCS_MPLAYER-$(GL_X11)       += libvo/x11_common.c
 
-SRCS_MPLAYER-$(IVTV)         += libao2/ao_ivtv.c libvo/vo_ivtv.c
 SRCS_MPLAYER-$(JACK)         += libao2/ao_jack.c
 SRCS_MPLAYER-$(JOYSTICK)     += input/joystick.c
 SRCS_MPLAYER-$(JPEG)         += libvo/vo_jpeg.c
+SRCS_MPLAYER-$(LIBQUVI)       += stream/quvi.c
 SRCS_MPLAYER-$(LIRC)          += input/lirc.c
 SRCS_MPLAYER-$(MD5SUM)        += libvo/vo_md5sum.c
-SRCS_MPLAYER-$(MGA)           += libvo/vo_mga.c
-SRCS_MPLAYER-$(NAS)           += libao2/ao_nas.c
 SRCS_MPLAYER-$(OPENAL)        += libao2/ao_openal.c
 SRCS_MPLAYER-$(OSS)           += libao2/ao_oss.c
 SRCS_MPLAYER-$(PNM)           += libvo/vo_pnm.c
 SRCS_MPLAYER-$(PULSE)         += libao2/ao_pulse.c
 SRCS_MPLAYER-$(PORTAUDIO)     += libao2/ao_portaudio.c
 SRCS_MPLAYER-$(RSOUND)        += libao2/ao_rsound.c
-SRCS_MPLAYER-$(S3FB)          += libvo/vo_s3fb.c
 SRCS_MPLAYER-$(SDL)           += libao2/ao_sdl.c libvo/vo_sdl.c libvo/sdl_common.c
-SRCS_MPLAYER-$(SUNAUDIO)      += libao2/ao_sun.c
-SRCS_MPLAYER-$(SVGA)          += libvo/vo_svga.c
-SRCS_MPLAYER-$(TDFXFB)        += libvo/vo_tdfxfb.c
-SRCS_MPLAYER-$(TDFXVID)       += libvo/vo_tdfx_vid.c
 SRCS_MPLAYER-$(TGA)           += libvo/vo_tga.c
 SRCS_MPLAYER-$(V4L2)          += libvo/vo_v4l2.c
 SRCS_MPLAYER-$(V4L2)          += libao2/ao_v4l2.c
 SRCS_MPLAYER-$(VDPAU)         += libvo/vo_vdpau.c
-SRCS_MPLAYER-$(VESA)          += libvo/gtf.c libvo/vo_vesa.c libvo/vesa_lvo.c
 
-SRCS_MPLAYER-$(WII)           += libvo/vo_wii.c
-SRCS_MPLAYER-$(WIN32WAVEOUT)  += libao2/ao_win32.c
-SRCS_MPLAYER-$(X11)           += libvo/vo_x11.c libvo/vo_xover.c \
-                                 libvo/x11_common.c
-SRCS_MPLAYER-$(XMGA)          += libvo/vo_xmga.c
+SRCS_MPLAYER-$(X11)           += libvo/vo_x11.c libvo/x11_common.c
 SRCS_MPLAYER-$(XV)            += libvo/vo_xv.c
-SRCS_MPLAYER-$(XVR100)        += libvo/vo_xvr100.c
 SRCS_MPLAYER-$(YUV4MPEG)      += libvo/vo_yuv4mpeg.c
 
 SRCS_MPLAYER = command.c \
@@ -497,17 +463,15 @@ SRCS_MPLAYER = command.c \
                parser-mpcmd.c \
                screenshot.c \
                input/input.c \
-               libao2/ao_mpegpes.c \
                libao2/ao_null.c \
                libao2/ao_pcm.c \
                libao2/audio_out.c \
                libvo/aspect.c \
                libvo/csputils.c \
+               libvo/filter_kernels.c \
                libvo/geometry.c \
                libvo/old_vo_wrapper.c \
-               libvo/spuenc.c \
                libvo/video_out.c \
-               libvo/vo_mpegpes.c \
                libvo/vo_null.c \
                libvo/vo_png.c \
                $(SRCS_MPLAYER-yes)
@@ -520,12 +484,13 @@ OBJS_MPLAYER-$(PE_EXECUTABLE) += osdep/mplayer-rc.o
 OBJS_MPLAYER   += $(OBJS_MPLAYER-yes)
 
 MPLAYER_DEPS  = $(OBJS_MPLAYER)  $(OBJS_COMMON) $(COMMON_LIBS)
-DEP_FILES = $(patsubst %.S,%.d,$(patsubst %.cpp,%.d,$(patsubst %.c,%.d,$(SRCS_COMMON:.m=.d) $(SRCS_MPLAYER:.m=.d))))
+DEP_FILES = $(patsubst %.S,%.d,$(patsubst %.c,%.d,$(SRCS_COMMON:.m=.d) $(SRCS_MPLAYER:.m=.d)))
 
-ALL_PRG-$(MPLAYER)  += mplayer$(EXESUF)
-
-INSTALL_TARGETS-$(MPLAYER)  += install-mplayer \
+INSTALL_TARGETS             += install-mplayer \
                                install-mplayer-man \
+                               install-mplayer-msg
+
+INSTALL_NO_MAN_TARGETS      += install-mplayer \
                                install-mplayer-msg
 
 DIRS =  . \
@@ -546,9 +511,6 @@ DIRS =  . \
         loader/wine \
         osdep \
         stream \
-        stream/freesdp \
-        stream/librtsp \
-        stream/realrtsp \
         sub \
         timeline \
         TOOLS \
@@ -570,16 +532,17 @@ endif
 
 ###### generic rules #######
 
-all: $(ALL_PRG-yes) locales
+all: mplayer$(EXESUF) locales
+
+%.1: %.rst
+	@which $(RST2MAN) >/dev/null 2>&1 || (printf "\n\trst2man not found. You need the Docutils system to generate the manpages (preferably version >= 0.9; 0.8 and older are known to corrupt the arguments shown in some option descriptions). Alternatively you can use 'install-no-man' rule.\n\n" && exit 1)
+	$(RST2MAN) $< $@
 
 %.o: %.S
 	$(CC) $(DEPFLAGS) $(CFLAGS) -c -o $@ $<
 
 %.o: %.c
 	$(CC) $(DEPFLAGS) $(CFLAGS) -c -o $@ $<
-
-%.o: %.cpp
-	$(CC) $(DEPFLAGS) $(CXXFLAGS) -c -o $@ $<
 
 %.o: %.m
 	$(CC) $(DEPFLAGS) $(CFLAGS) -c -o $@ $<
@@ -595,14 +558,23 @@ mplayer$(EXESUF):
 codecs.conf.h: TOOLS/file2string.py etc/codecs.conf
 	./$^ >$@
 
+input/input.conf.h: TOOLS/file2string.py etc/input.conf
+	./$^ >$@
+
 libvo/vdpau_template.c: TOOLS/vdpau_functions.py
 	./$< > $@
+
+libvo/vo_gl3_shaders.h: TOOLS/file2string.py libvo/vo_gl3_shaders.glsl
+	./$^ >$@
 
 libmpdemux/ebml_types.h: TOOLS/matroska.py
 	./$< --generate-header > $@
 
 libmpdemux/ebml_defs.c: TOOLS/matroska.py
 	./$< --generate-definitions > $@
+
+sub/osd_font.h: TOOLS/file2string.py sub/osd_font.pfb
+	./$^ >$@
 
 # ./configure must be rerun if it changed
 config.mak: configure
@@ -637,9 +609,12 @@ checkheaders: $(ALLHEADERS:.h=.ho)
 # Make sure all generated header files are created.
 codec-cfg.o: codecs.conf.h
 mpcommon.o osdep/mplayer-rc.o: version.h
+input/input.o: input/input.conf.h
+libvo/vo_gl3.o: libvo/vo_gl3_shaders.h
 libvo/vo_vdpau.o: libvo/vdpau_template.c
 libmpdemux/ebml.o libmpdemux/demux_mkv.o: libmpdemux/ebml_types.h
 libmpdemux/ebml.o: libmpdemux/ebml_defs.c
+sub/osd_libass.o: sub/osd_font.h
 
 # Files that depend on libavcodec internals
 libmpcodecs/vf_fspp.o libmpcodecs/vf_mcdeint.o libmpcodecs/vf_spp.o: CFLAGS := -I$(FFMPEG_SOURCE_PATH) $(CFLAGS)
@@ -660,7 +635,9 @@ stream/stream_dvdnav%: CFLAGS := $(CFLAGS_LIBDVDNAV) $(CFLAGS)
 
 ###### installation / clean / generic rules #######
 
-install: $(INSTALL_TARGETS-yes)
+install: $(INSTALL_TARGETS)
+
+install-no-man: $(INSTALL_NO_MAN_TARGETS)
 
 install-dirs:
 	if test ! -d $(BINDIR) ; then $(INSTALL) -d $(BINDIR) ; fi
@@ -673,12 +650,14 @@ install-%: %$(EXESUF) install-dirs
 install-mplayer-man:  $(foreach lang,$(MAN_LANGS),install-mplayer-man-$(lang))
 install-mplayer-msg:  $(foreach lang,$(MSG_LANGS),install-mplayer-msg-$(lang))
 
-install-mplayer-man-en:
+DOCS/man/en/mplayer.1: DOCS/man/en/*.rst
+install-mplayer-man-en: DOCS/man/en/mplayer.1
 	if test ! -d $(MANDIR)/man1 ; then $(INSTALL) -d $(MANDIR)/man1 ; fi
 	$(INSTALL) -m 644 DOCS/man/en/mplayer.1 $(MANDIR)/man1/
 
 define MPLAYER_MAN_RULE
-install-mplayer-man-$(lang):
+DOCS/man/$(lang)/mplayer.1: DOCS/man/$(lang)/*.rst
+install-mplayer-man-$(lang): DOCS/man/$(lang)/mplayer.1
 	if test ! -d $(MANDIR)/$(lang)/man1 ; then $(INSTALL) -d $(MANDIR)/$(lang)/man1 ; fi
 	$(INSTALL) -m 644 DOCS/man/$(lang)/mplayer.1 $(MANDIR)/$(lang)/man1/
 endef
@@ -706,12 +685,16 @@ clean:
 	-$(RM) $(call ADD_ALL_EXESUFS,mplayer)
 	-$(RM) $(MOFILES)
 
-distclean: clean testsclean toolsclean driversclean
+distclean: clean testsclean toolsclean
 	-$(RM) -r DOCS/tech/doxygen
 	-$(RM) -r locale
+	-$(RM) $(foreach lang,$(MAN_LANGS),$(foreach man,mplayer.1,DOCS/man/$(lang)/$(man)))
 	-$(RM) config.log config.mak config.h codecs.conf.h version.h TAGS tags
+	-$(RM) input/input.conf.h
 	-$(RM) libvo/vdpau_template.c
+	-$(RM) libvo/vo_gl3_shaders.h
 	-$(RM) libmpdemux/ebml_types.h libmpdemux/ebml_defs.c
+	-$(RM) sub/osd_font.h
 	-$(RM) $(call ADD_ALL_EXESUFS,cpuinfo)
 
 doxygen:
@@ -782,44 +765,13 @@ realcodecs: CFLAGS += -g
 %.so.6.0: %.o
 	ld -shared -o $@ $< -ldl -lc
 
-
-
-###### drivers #######
-
-KERNEL_INC = /lib/modules/`uname -r`/build/include
-KERNEL_VERSION = $(shell grep RELEASE $(KERNEL_INC)/linux/version.h | cut -d'"' -f2)
-KERNEL_CFLAGS = -O2 -D__KERNEL__ -DMODULE -Wall -I$(KERNEL_INC) -include $(KERNEL_INC)/linux/modversions.h
-KERNEL_OBJS = $(addprefix drivers/, mga_vid.o tdfx_vid.o radeon_vid.o rage128_vid.o)
-MODULES_DIR = /lib/modules/$(KERNEL_VERSION)/misc
-DRIVER_OBJS = $(KERNEL_OBJS) drivers/mga_vid_test drivers/tdfx_vid_test
-
-drivers: $(DRIVER_OBJS)
-
-$(DRIVER_OBJS): CFLAGS = $(KERNEL_CFLAGS)
-drivers/mga_vid.o: drivers/mga_vid.c drivers/mga_vid.h
-drivers/tdfx_vid.o: drivers/tdfx_vid.c drivers/3dfx.h
-drivers/radeon_vid.o drivers/rage128_vid.o: CFLAGS += -fomit-frame-pointer -fno-strict-aliasing -fno-common -ffast-math
-drivers/radeon_vid.o: drivers/radeon_vid.c drivers/radeon.h drivers/radeon_vid.h
-drivers/rage128_vid.o: drivers/radeon_vid.c drivers/radeon.h drivers/radeon_vid.h
-	$(CC) $(CFLAGS) -DRAGE128 -c $< -o $@
-
-install-drivers: $(DRIVER_OBJS)
-	-mkdir -p $(MODULES_DIR)
-	install -m 644 $(KERNEL_OBJS) $(MODULES_DIR)
-	depmod -a
-	-mknod /dev/mga_vid    c 178 0
-	-mknod /dev/tdfx_vid   c 178 0
-	-mknod /dev/radeon_vid c 178 0
-	-ln -s /dev/radeon_vid /dev/rage128_vid
-
-driversclean:
-	-$(RM) $(DRIVER_OBJS) drivers/*~
-
+osxbundle:
+	@TOOLS/osxbundle.py mplayer
 
 
 -include $(DEP_FILES)
 
-.PHONY: all doxygen locales *install* *tools drivers
+.PHONY: all doxygen locales *install* *tools
 .PHONY: checkheaders *clean tests .version
 
 # Disable suffix rules.  Most of the builtin rules are suffix rules,

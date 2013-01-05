@@ -30,7 +30,6 @@
 #include "libmpdemux/demuxer.h"
 #include "asxparser.h"
 #include "mp_msg.h"
-#include "m_config.h"
 
 ////// List utils
 
@@ -78,10 +77,10 @@ asx_attrib_to_enum(const char* val,char** valid_vals) {
 #define asx_warning_body_parse_error(p,e) mp_msg(MSGT_PLAYTREE,MSGL_WARN,"At line %d : error while parsing %s body",p->line,e)
 
 ASX_Parser_t*
-asx_parser_new(struct m_config *mconfig)
+asx_parser_new(struct MPOpts *opts)
 {
   ASX_Parser_t* parser = calloc(1,sizeof(ASX_Parser_t));
-  parser->mconfig = mconfig;
+  parser->opts = opts;
   return parser;
 }
 
@@ -433,7 +432,7 @@ asx_parse_entryref(ASX_Parser_t* parser,char* buffer,char** _attribs) {
     asx_warning_attrib_required(parser,"ENTRYREF" ,"HREF" );
     return NULL;
   }
-  stream=open_stream(href,0,&f);
+  stream=open_stream(href, parser->opts, &f);
   if(!stream) {
     mp_msg(MSGT_PLAYTREE,MSGL_WARN,"Can't open playlist %s\n",href);
     free(href);
@@ -442,7 +441,7 @@ asx_parse_entryref(ASX_Parser_t* parser,char* buffer,char** _attribs) {
 
   mp_msg(MSGT_PLAYTREE,MSGL_V,"Adding playlist %s to element entryref\n",href);
 
-  ptp = play_tree_parser_new(stream, parser->mconfig, parser->deep+1);
+  ptp = play_tree_parser_new(stream, parser->opts, parser->deep+1);
 
   pt = play_tree_parser_get_play_tree(ptp, 1);
 
@@ -557,11 +556,11 @@ asx_parse_repeat(ASX_Parser_t* parser,char* buffer,char** _attribs) {
 
 
 play_tree_t*
-asx_parser_build_tree(struct m_config *mconfig, char* buffer,int deep) {
+asx_parser_build_tree(struct MPOpts *opts, char* buffer,int deep) {
   char *element,*asx_body,**asx_attribs,*body = NULL, **attribs;
   int r;
   play_tree_t *asx,*entry,*list = NULL;
-  ASX_Parser_t* parser = asx_parser_new(mconfig);
+  ASX_Parser_t* parser = asx_parser_new(opts);
 
   parser->line = 1;
   parser->deep = deep;

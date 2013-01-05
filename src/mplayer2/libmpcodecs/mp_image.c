@@ -119,8 +119,13 @@ void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
 	mpi->flags|=MP_IMGFLAG_SWAPPED;
 	return;
     }
-    mpi->flags|=MP_IMGFLAG_YUV;
     mpi->num_planes=3;
+    if (IMGFMT_IS_GBRP(out_fmt)) {
+        mpi->bpp = IMGFMT_RGB_DEPTH(out_fmt);
+        mpi->flags |= MP_IMGFLAG_PLANAR;
+        return;
+    }
+    mpi->flags|=MP_IMGFLAG_YUV;
     if (mp_get_chroma_shift(out_fmt, NULL, NULL, NULL)) {
         mpi->flags|=MP_IMGFLAG_PLANAR;
         mpi->bpp = mp_get_chroma_shift(out_fmt, &mpi->chroma_x_shift, &mpi->chroma_y_shift, NULL);
@@ -151,6 +156,8 @@ void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
     case IMGFMT_422P16_BE:
     case IMGFMT_422P10_LE:
     case IMGFMT_422P10_BE:
+    case IMGFMT_422P9_LE:
+    case IMGFMT_422P9_BE:
     case IMGFMT_420P16_LE:
     case IMGFMT_420P16_BE:
     case IMGFMT_420P10_LE:

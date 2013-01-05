@@ -26,7 +26,6 @@
 #import "talloc.h"
 #import "video_out.h"
 #import "aspect.h"
-#import "sub/font_load.h"
 #import "sub/sub.h"
 #import "subopt-helper.h"
 
@@ -100,7 +99,6 @@ static void resize(struct vo *vo, int width, int height)
     gl->MatrixMode(GL_MODELVIEW);
     gl->LoadIdentity();
 
-    force_load_font = 1;
     vo_osd_changed(OSDTYPE_OSD);
 
     gl->Clear(GL_COLOR_BUFFER_BIT);
@@ -322,8 +320,8 @@ static uint32_t draw_image(struct vo *vo, mp_image_t *mpi)
     CVReturn error;
 
     if (!p->textureCache || !p->pixelBuffer) {
-        error = CVOpenGLTextureCacheCreate(NULL, 0, vo_cocoa_cgl_context(),
-                    vo_cocoa_cgl_pixel_format(), 0, &p->textureCache);
+        error = CVOpenGLTextureCacheCreate(NULL, 0, vo_cocoa_cgl_context(vo),
+                    vo_cocoa_cgl_pixel_format(vo), 0, &p->textureCache);
         if(error != kCVReturnSuccess)
             mp_msg(MSGT_VO, MSGL_ERR,"[vo_corevideo] Failed to create OpenGL"
                                      " texture Cache(%d)\n", error);
@@ -425,6 +423,16 @@ static int control(struct vo *vo, uint32_t request, void *data)
             return query_format(vo, *(uint32_t*)data);
         case VOCTRL_ONTOP:
             p->mpglctx->ontop(vo);
+            return VO_TRUE;
+        case VOCTRL_PAUSE:
+            if (!p->mpglctx->pause)
+                break;
+            p->mpglctx->pause(vo);
+            return VO_TRUE;
+        case VOCTRL_RESUME:
+            if (!p->mpglctx->resume)
+                break;
+            p->mpglctx->resume(vo);
             return VO_TRUE;
         case VOCTRL_FULLSCREEN:
             p->mpglctx->fullscreen(vo);

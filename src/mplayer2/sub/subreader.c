@@ -47,12 +47,8 @@
 #include <iconv.h>
 char *sub_cp=NULL;
 #endif
-#ifdef CONFIG_FRIBIDI
-#include <fribidi/fribidi.h>
-char *fribidi_charset = NULL;   ///character set that will be passed to FriBiDi
-int flip_hebrew = 1;            ///flip subtitles using fribidi
-int fribidi_flip_commas = 0;    ///flip comma when fribidi is used
-#endif
+
+int suboverlap_enabled = 1;
 
 // Parameter struct for the format-specific readline functions
 struct readline_args {
@@ -167,7 +163,7 @@ static subtitle *sub_read_line_sami(stream_t* st, subtitle *current,
 	    s++;
 	    if (*s == 'P' || *s == 'p') { s++; state = 2; continue; } /* found '<P' */
 	    for (; *s != '>' && *s != '\0'; s++); /* skip remains of non-<P> TAG */
-	    if (s == '\0')
+	    if (*s == '\0')
 	      break;
 	    s++;
 	    continue;
@@ -643,19 +639,14 @@ static subtitle *sub_read_line_rt(stream_t *st,subtitle *current,
 static subtitle *sub_read_line_ssa(stream_t *st,subtitle *current,
                                     struct readline_args *args)
 {
-/*
- * Sub Station Alpha v4 (and v2?) scripts have 9 commas before subtitle
- * other Sub Station Alpha scripts have only 8 commas before subtitle
- * Reading the "ScriptType:" field is not reliable since many scripts appear
- * w/o it
- *
- * http://www.scriptclub.org is a good place to find more examples
- * http://www.eswat.demon.co.uk is where the SSA specs can be found
- */
+    /* Instead of hardcoding the expected fields and their order on
+     * each dialogue line, this code should parse the "Format: " line
+     * which lists the fields used in the script. As is, this may not
+     * work correctly with all scripts.
+     */
+
         int utf16 = args->utf16;
         int comma;
-        static int max_comma = 32; /* let's use 32 for the case that the */
-                    /*  amount of commas increase with newer SSA versions */
 
 	int hour1, min1, sec1, hunsec1,
 	    hour2, min2, sec2, hunsec2, nothing;
@@ -683,18 +674,10 @@ static subtitle *sub_read_line_ssa(stream_t *st,subtitle *current,
         line2=strchr(line3, ',');
         if (!line2) return NULL;
 
-        for (comma = 4; comma < max_comma; comma ++)
-          {
-            tmp = line2;
-            if(!(tmp=strchr(++tmp, ','))) break;
-            if(*(++tmp) == ' ') break;
-                  /* a space after a comma means we're already in a sentence */
-            line2 = tmp;
-          }
-
-        if(comma < max_comma)max_comma = comma;
-	/* eliminate the trailing comma */
-	if(*line2 == ',') line2++;
+        for (comma = 3; comma < 9; comma ++)
+            if (!(line2 = strchr(++line2, ',')))
+                return NULL;
+        line2++;
 
 	current->lines=0;num=0;
 	current->start = 360000*hour1 + 6000*min1 + 100*sec1 + hunsec1;
@@ -716,25 +699,18 @@ static subtitle *sub_read_line_ssa(stream_t *st,subtitle *current,
 	return current;
 }
 
-static void sub_pp_ssa(subtitle *sub) {
-	int l=sub->lines;
-	char *so,*de,*start;
-
-	while (l){
-            	/* eliminate any text enclosed with {}, they are font and color settings */
-            	so=de=sub->text[--l];
-            	while (*so) {
-            		if(*so == '{' && so[1]=='\\') {
-            			for (start=so; *so && *so!='}'; so++);
-            			if(*so) so++; else so=start;
-            		}
-            		if(*so) {
-            			*de=*so;
-            			so++; de++;
-            		}
-            	}
-            	*de=*so;
+static void sub_pp_ssa(subtitle *sub)
+{
+    for (int i = 0; i < sub->lines; i++) {
+        char *s, *d;
+        s = d = sub->text[i];
+        while (1) {
+            while (*s == '{')
+                while (*s && *s++ != '}');
+            if (!(*d++ = *s++))
+                break;
         }
+    }
 }
 
 /*
@@ -1135,9 +1111,11 @@ static subtitle *sub_read_line_jacosub(stream_t* st, subtitle * current,
 	    }			//-- switch
 	}			//-- for
 	*q = '\0';
-	current->text[current->lines] = strdup(line1);
+	if (current->lines < SUB_MAX_TEXT)
+	    current->text[current->lines] = strdup(line1);
     }				//-- while
-    current->lines++;
+    if (current->lines < SUB_MAX_TEXT)
+        current->lines++;
     return current;
 }
 
@@ -1193,9 +1171,6 @@ static int sub_autodetect (stream_t* st, int *uses_time, int utf16) {
     return SUB_INVALID;  // too many bad lines
 }
 
-extern int sub_utf8;
-int sub_utf8_prev=0;
-
 extern float sub_delay;
 extern float sub_fps;
 
@@ -1223,7 +1198,6 @@ void	subcp_open (stream_t *st)
 #endif
 		if ((icdsc = iconv_open (tocp, cp_tmp)) != (iconv_t)(-1)){
 			mp_msg(MSGT_SUBREADER,MSGL_V,"SUB: opened iconv descriptor.\n");
-			sub_utf8 = 2;
 		} else
 			mp_msg(MSGT_SUBREADER,MSGL_ERR,"SUB: error opening iconv descriptor.\n");
 	}
@@ -1250,10 +1224,8 @@ subtitle* subcp_recode (subtitle *sub)
 		ileft = strlen(ip);
 		oleft = 4 * ileft;
 
-		if (!(ot = malloc(oleft + 1))){
-			mp_msg(MSGT_SUBREADER,MSGL_WARN,"SUB: error allocating mem.\n");
-		   	continue;
-		}
+		if (!(ot = malloc(oleft + 1)))
+                    abort();
 		op = ot;
 		if (iconv(icdsc, &ip, &ileft,
 			  &op, &oleft) == (size_t)(-1)) {
@@ -1272,71 +1244,6 @@ subtitle* subcp_recode (subtitle *sub)
 	}
 	return sub;
 }
-#endif
-
-#ifdef CONFIG_FRIBIDI
-/**
- * Do conversion necessary for right-to-left language support via fribidi.
- * @param sub subtitle to convert
- * @param sub_utf8 whether the subtitle is encoded in UTF-8
- * @param from first new subtitle, all lines before this are assumed to be already converted
- */
-static subtitle* sub_fribidi (subtitle *sub, int sub_utf8, int from)
-{
-  FriBidiChar logical[LINE_LEN+1], visual[LINE_LEN+1]; // Hopefully these two won't smash the stack
-  char        *ip      = NULL, *op     = NULL;
-  size_t len,orig_len;
-  int l=sub->lines;
-  int char_set_num;
-  fribidi_boolean log2vis;
-  if (!flip_hebrew)
-    return sub;
-  fribidi_set_mirroring(1);
-  fribidi_set_reorder_nsm(0);
-
-  if( sub_utf8 == 0 ) {
-    char_set_num = fribidi_parse_charset (fribidi_charset?fribidi_charset:"ISO8859-8");
-  }else {
-    char_set_num = fribidi_parse_charset ("UTF-8");
-  }
-  while (l > from) {
-    ip = sub->text[--l];
-    orig_len = len = strlen( ip ); // We assume that we don't use full unicode, only UTF-8 or ISO8859-x
-    if(len > LINE_LEN) {
-      mp_msg(MSGT_SUBREADER,MSGL_WARN,"SUB: sub->text is longer than LINE_LEN.\n");
-      l++;
-      break;
-    }
-    len = fribidi_charset_to_unicode (char_set_num, ip, len, logical);
-#if FRIBIDI_INTERFACE_VERSION < 3
-    FriBidiCharType base = fribidi_flip_commas?FRIBIDI_TYPE_ON:FRIBIDI_TYPE_L;
-#else
-    FriBidiParType base = fribidi_flip_commas?FRIBIDI_TYPE_ON:FRIBIDI_TYPE_L;
-#endif
-    log2vis = fribidi_log2vis (logical, len, &base,
-			       /* output */
-			       visual, NULL, NULL, NULL);
-    if(log2vis) {
-      len = fribidi_remove_bidi_marks (visual, len, NULL, NULL,
-				       NULL);
-      if((op = malloc((FFMAX(2*orig_len,2*len) + 1))) == NULL) {
-	mp_msg(MSGT_SUBREADER,MSGL_WARN,"SUB: error allocating mem.\n");
-	l++;
-	break;
-      }
-      fribidi_unicode_to_charset ( char_set_num, visual, len,op);
-      free (ip);
-      sub->text[l] = op;
-    }
-  }
-  if (!from && l){
-    for (l = sub->lines; l;)
-      free (sub->text[--l]);
-    return ERR;
-  }
-  return sub;
-}
-
 #endif
 
 static void adjust_subs_time(subtitle* sub, float subtime, float fps, int block,
@@ -1494,7 +1401,7 @@ sub_data* sub_read_file(char *filename, float fps, struct MPOpts *opts)
     const struct subreader *srp;
 
     if(filename==NULL) return NULL; //qnx segfault
-    fd=open_stream (filename, NULL, NULL); if (!fd) return NULL;
+    fd=open_stream (filename, opts, NULL); if (!fd) return NULL;
 
     sub_format = SUB_INVALID;
     for (utf16 = 0; sub_format == SUB_INVALID && utf16 < 3; utf16++) {
@@ -1510,7 +1417,6 @@ sub_data* sub_read_file(char *filename, float fps, struct MPOpts *opts)
     mp_msg(MSGT_SUBREADER, MSGL_V, "SUB: Detected subtitle file format: %s\n", srp->name);
 
 #ifdef CONFIG_ICONV
-    sub_utf8_prev=sub_utf8;
     {
 	    int l,k;
 	    k = -1;
@@ -1518,7 +1424,6 @@ sub_data* sub_read_file(char *filename, float fps, struct MPOpts *opts)
 		    char *exts[] = {".utf", ".utf8", ".utf-8" };
 		    for (k=3;--k>=0;)
 			if (l >= strlen(exts[k]) && !strcasecmp(filename+(l - strlen(exts[k])), exts[k])){
-			    sub_utf8 = 1;
 			    break;
 			}
 	    }
@@ -1528,13 +1433,8 @@ sub_data* sub_read_file(char *filename, float fps, struct MPOpts *opts)
 
     sub_num=0;n_max=32;
     first=malloc(n_max*sizeof(subtitle));
-    if(!first){
-#ifdef CONFIG_ICONV
-	  subcp_close();
-          sub_utf8=sub_utf8_prev;
-#endif
-	    return NULL;
-    }
+    if (!first)
+        abort();
 
 #ifdef CONFIG_SORTSUB
     alloced_sub =
@@ -1555,13 +1455,7 @@ sub_data* sub_read_file(char *filename, float fps, struct MPOpts *opts)
         sub=srp->read(fd, sub, &(struct readline_args){utf16, opts});
         if(!sub) break;   // EOF
 #ifdef CONFIG_ICONV
-	if ((sub!=ERR) && sub_utf8 == 2) sub=subcp_recode(sub);
-#endif
-#ifdef CONFIG_FRIBIDI
-        /* Libass has its own BiDi handling now, and running this before
-         * giving the subtitle to libass would only break things. */
-	if (sub != ERR && !opts->ass_enabled)
-            sub = sub_fribidi(sub, sub_utf8, 0);
+	if (sub!=ERR) sub=subcp_recode(sub);
 #endif
 	if ( sub == ERR )
 	 {
@@ -2149,9 +2043,6 @@ void sub_add_text(subtitle *sub, const char *txt, int len, double endpts) {
   int double_newline = 1; // ignore newlines at the beginning
   int i, pos;
   char *buf;
-#ifdef CONFIG_FRIBIDI
-  int orig_lines = sub->lines;
-#endif
   if (sub->lines >= SUB_MAX_TEXT) return;
   pos = 0;
   buf = malloc(MAX_SUBLINE + 1);
@@ -2196,9 +2087,6 @@ void sub_add_text(subtitle *sub, const char *txt, int len, double endpts) {
   if (sub->lines < SUB_MAX_TEXT &&
       strlen(sub->text[sub->lines]))
     sub->lines++;
-#ifdef CONFIG_FRIBIDI
-  sub = sub_fribidi(sub, sub_utf8, orig_lines);
-#endif
 }
 
 /**

@@ -30,7 +30,6 @@
 #include "aspect.h"
 #include "w32_common.h"
 #include "libavutil/common.h"
-#include "sub/font_load.h"
 #include "sub/sub.h"
 
 static const vo_info_t info =
@@ -505,10 +504,6 @@ static int resize_d3d(void)
 
     calc_fs_rect();
 
-#ifdef CONFIG_FREETYPE
-    // font needs to be adjusted
-    force_load_font = 1;
-#endif
     // OSD needs to be drawn fresh for new size
     vo_osd_changed(OSDTYPE_OSD);
 

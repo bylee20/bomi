@@ -260,10 +260,8 @@ int m_property_int_range(const m_option_t *prop, int action,
         M_PROPERTY_CLAMP(prop, *(int *)arg);
         *var = *(int *)arg;
         return 1;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-        *var += (arg ? *(int *)arg : 1) *
-                (action == M_PROPERTY_STEP_DOWN ? -1 : 1);
+    case M_PROPERTY_STEP:
+        *var += (arg ? *(int *)arg : 1);
         M_PROPERTY_CLAMP(prop, *var);
         return 1;
     }
@@ -274,9 +272,8 @@ int m_property_choice(const m_option_t *prop, int action,
                       void *arg, int *var)
 {
     switch (action) {
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-        *var += action == M_PROPERTY_STEP_UP ? 1 : prop->max;
+    case M_PROPERTY_STEP:
+        *var += (!arg || *(int *)arg >= 0) ? 1 : prop->max;
         *var %= (int)prop->max + 1;
         return 1;
     }
@@ -301,8 +298,7 @@ int m_property_flag(const m_option_t *prop, int action,
                     void *arg, int *var)
 {
     switch (action) {
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         *var = *var == prop->min ? prop->max : prop->min;
         return 1;
     case M_PROPERTY_PRINT:
@@ -339,10 +335,8 @@ int m_property_float_range(const m_option_t *prop, int action,
         M_PROPERTY_CLAMP(prop, *(float *)arg);
         *var = *(float *)arg;
         return 1;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-        *var += (arg ? *(float *)arg : 0.1) *
-                (action == M_PROPERTY_STEP_DOWN ? -1 : 1);
+    case M_PROPERTY_STEP:
+        *var += (arg ? *(float *)arg : 0.1);
         M_PROPERTY_CLAMP(prop, *var);
         return 1;
     }
@@ -381,6 +375,16 @@ int m_property_double_ro(const m_option_t *prop, int action,
     return M_PROPERTY_NOT_IMPLEMENTED;
 }
 
+static char *format_time(double time)
+{
+    int h, m, s = time;
+    h = s / 3600;
+    s -= h * 3600;
+    m = s / 60;
+    s -= m * 60;
+    return talloc_asprintf(NULL, "%02d:%02d:%02d", h, m, s);
+}
+
 int m_property_time_ro(const m_option_t *prop, int action,
                        void *arg, double var)
 {
@@ -389,17 +393,7 @@ int m_property_time_ro(const m_option_t *prop, int action,
         if (!arg)
             return M_PROPERTY_ERROR;
         else {
-            int h, m, s = var;
-            h = s / 3600;
-            s -= h * 3600;
-            m = s / 60;
-            s -= m * 60;
-            if (h > 0)
-                *(char **)arg = talloc_asprintf(NULL, "%d:%02d:%02d", h, m, s);
-            else if (m > 0)
-                *(char **)arg = talloc_asprintf(NULL, "%d:%02d", m, s);
-            else
-                *(char **)arg = talloc_asprintf(NULL, "%d", s);
+            *(char **)arg = format_time(var);
             return M_PROPERTY_OK;
         }
     }

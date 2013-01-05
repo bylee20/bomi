@@ -34,8 +34,6 @@ struct bstr {
     size_t len;
 };
 
-// demux_rtp.cpp (live555) C++ compilation workaround
-#ifndef __cplusplus
 // If str.start is NULL, return NULL.
 static inline char *bstrdup0(void *talloc_ctx, struct bstr str)
 {
@@ -141,7 +139,6 @@ static inline int bstr_eatstart0(struct bstr *s, char *prefix)
     return bstr_eatstart(s, bstr(prefix));
 }
 
-#endif
 
 // create a pair (not single value!) for "%.*s" printf syntax
 #define BSTR_P(bstr) (int)((bstr).len), (bstr).start

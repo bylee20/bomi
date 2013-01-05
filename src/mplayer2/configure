@@ -62,10 +62,6 @@ cc_check() {
   compile_check $TMPC $@
 }
 
-cxx_check() {
-  compile_check $TMPCPP $@ -lstdc++
-}
-
 cflag_check() {
   cat > $TMPC << EOF
 int main(void) { return 0; }
@@ -190,7 +186,7 @@ die () {
   echo
   echo "Error: $@" >&2
   echo >&2
-  rm -f "$TMPEXE" "$TMPC" "$TMPS" "$TMPCPP"
+  rm -f "$TMPEXE" "$TMPC" "$TMPS"
   echo "Check \"$TMPLOG\" if you do not understand why it failed."
   exit 1
 }
@@ -215,7 +211,6 @@ morphos()   { issystem "MorphOS"; }
 netbsd()    { issystem "NetBSD"; }
 openbsd()   { issystem "OpenBSD"; }
 qnx()       { issystem "QNX"; }
-sunos()     { issystem "SunOS"; }
 win32()     { cygwin || mingw32; }
 
 # arch test boolean functions
@@ -286,7 +281,7 @@ esac
 
 msg_lang_all=''
 ls po/*.po >/dev/null 2>&1 && msg_lang_all=$(echo po/*.po | sed -e 's:po/\([^[:space:]]*\)\.po:\1:g')
-man_lang_all=$(echo DOCS/man/??/mplayer.1 DOCS/man/??_??/mplayer.1 | sed -e "s:DOCS/man/\(..\)/mplayer.1:\1:g" -e "s:DOCS/man/\(.._..\)/mplayer.1:\1:g")
+man_lang_all=$(echo DOCS/man/*/mplayer.rst | sed -e "s:DOCS/man/\(..\)/mplayer.rst:\1:g" -e "s:DOCS/man/\(.._..\)/mplayer.rst:\1:g")
 doc_lang_all=$(echo DOCS/xml/??/ DOCS/xml/??_??/ | sed -e "s:DOCS/xml/\(..\)/:\1:g" -e "s:DOCS/xml/\(.._..\)/:\1:g")
 
 show_help(){
@@ -334,8 +329,8 @@ Optional features:
   --disable-networking   disable networking [enable]
   --enable-winsock2_h    enable winsock2_h [autodetect]
   --enable-smb           enable Samba (SMB) input [autodetect]
-  --enable-live          enable LIVE555 Streaming Media [disable]
-  --enable-nemesi        enable Nemesi Streaming Media [autodetect]
+  --enable-libquvi       enable libquvi [autodetect]
+  --enable-lcms2         enable LCMS2 support [autodetect]
   --disable-vcd          disable VCD support [autodetect]
   --disable-bluray       disable Blu-ray support [autodetect]
   --disable-dvdnav       disable libdvdnav [autodetect]
@@ -343,12 +338,8 @@ Optional features:
   --disable-dvdread-internal  disable internal libdvdread [autodetect]
   --disable-libdvdcss-internal  disable internal libdvdcss [autodetect]
   --disable-cddb         disable cddb [autodetect]
-  --disable-bitmap-font  disable bitmap font support [enable]
-  --disable-freetype     disable FreeType 2 font rendering [autodetect]
-  --disable-fontconfig   disable fontconfig font lookup [autodetect]
   --disable-unrarexec    disable using of UnRAR executable [enabled]
   --disable-sortsub      disable subtitle sorting [enabled]
-  --enable-fribidi       enable the FriBiDi libs [autodetect]
   --disable-enca         disable ENCA charset oracle library [autodetect]
   --enable-macosx-finder enable Mac OS X Finder invocation parameter
                          parsing [disabled]
@@ -362,6 +353,7 @@ Optional features:
   --disable-libass       disable subtitle rendering with libass [autodetect]
   --enable-rpath         enable runtime linker path for extra libs [disabled]
   --disable-libpostproc  disable postprocess filter (vf_pp) [autodetect]
+  --disable-libavresample disable libavresample (sample format conversion) [autodetect]
 
 Codecs:
   --enable-gif              enable GIF support [autodetect]
@@ -394,23 +386,12 @@ Codecs:
 
 Video output:
   --enable-gl              enable OpenGL video output [autodetect]
-  --enable-dga2            enable DGA 2 support [autodetect]
-  --enable-dga1            enable DGA 1 support [autodetect]
-  --enable-vesa            enable VESA video output [autodetect]
-  --enable-svga            enable SVGAlib video output [autodetect]
   --enable-sdl             enable SDL video output [autodetect]
-  --enable-aa              enable AAlib video output [autodetect]
   --enable-caca            enable CACA  video output [autodetect]
-  --enable-ggi             enable GGI video output [autodetect]
-  --enable-ggiwmh          enable GGI libggiwmh extension [autodetect]
   --enable-direct3d        enable Direct3D video output [autodetect]
   --enable-directx         enable DirectX video output [autodetect]
-  --enable-dxr3            enable DXR3/H+ video output [autodetect]
-  --enable-ivtv            enable IVTV TV-Out video output [autodetect]
   --enable-v4l2            enable V4L2 Decoder audio/video output [autodetect]
-  --enable-dvb             enable DVB video output [autodetect]
-  --enable-mga             enable mga_vid video output [autodetect]
-  --enable-xmga            enable mga_vid X11 video output [autodetect]
+  --enable-dvb             enable DVB video input [autodetect]
   --enable-xv              enable Xv video output [autodetect]
   --enable-vdpau           enable VDPAU acceleration [autodetect]
   --enable-vm              enable XF86VidMode support [autodetect]
@@ -418,15 +399,7 @@ Video output:
   --enable-x11             enable X11 video output [autodetect]
   --enable-xshape          enable XShape support [autodetect]
   --disable-xss            disable screensaver support via xss [autodetect]
-  --enable-fbdev           enable FBDev video output [autodetect]
-  --enable-3dfx            enable obsolete /dev/3dfx video output [disable]
-  --enable-tdfxfb          enable tdfxfb video output [disable]
-  --enable-s3fb            enable s3fb (S3 ViRGE) video output [disable]
-  --enable-wii             enable Nintendo Wii/GameCube video output [disable]
   --enable-directfb        enable DirectFB video output [autodetect]
-  --enable-bl              enable Blinkenlights video output [disable]
-  --enable-tdfxvid         enable tdfx_vid video output [disable]
-  --enable-xvr100          enable SUN XVR-100 video output [autodetect]
   --disable-tga            disable Targa video output [enable]
   --disable-pnm            disable PNM video output [enable]
   --disable-md5sum         disable md5sum video output [enable]
@@ -443,9 +416,6 @@ Audio output:
   --disable-portaudio    disable PortAudio audio output [autodetect]
   --disable-jack         disable JACK audio output [autodetect]
   --enable-openal        enable OpenAL audio output [disable]
-  --disable-nas          disable NAS audio output [autodetect]
-  --disable-sunaudio     disable Sun audio output [autodetect]
-  --disable-win32waveout disable Windows waveout audio output [autodetect]
   --disable-coreaudio    disable CoreAudio audio output [autodetect]
   --disable-select       disable using select() on the audio device [enable]
 
@@ -558,18 +528,14 @@ _cross_compile=no
 _prefix="/usr/local"
 ffmpeg=auto
 ffmpeg_internals=no
-_mplayer=yes
 _x11=auto
 _xshape=auto
 _xss=auto
-_dga1=auto
-_dga2=auto
 _xv=auto
 _vdpau=auto
 _sdl=auto
 _direct3d=auto
 _directx=auto
-_win32waveout=auto
 _nas=auto
 _png=auto
 _mng=auto
@@ -579,16 +545,9 @@ _md5sum=yes
 _yuv4mpeg=yes
 _gif=auto
 _gl=auto
-_ggi=auto
-_ggiwmh=auto
 _aa=auto
 _caca=auto
-_svga=auto
-_vesa=auto
-_fbdev=auto
 _dvb=auto
-_dxr3=auto
-_ivtv=auto
 _v4l2=auto
 _iconv=auto
 _langinfo=auto
@@ -622,15 +581,10 @@ _dvdread_internal=auto
 _libdvdcss_internal=auto
 _xanim=auto
 _real=auto
-_live=no
-_nemesi=auto
-_native_rtsp=yes
+_lcms2=auto
 _xinerama=auto
-_mga=auto
-_xmga=auto
 _vm=auto
 _xf86keysym=auto
-_sunaudio=auto
 _alsa=auto
 _fastmemcpy=yes
 _unrar_exec=auto
@@ -650,6 +604,7 @@ _pvr=auto
 networking=yes
 _winsock2_h=auto
 _smb=auto
+_libquvi=auto
 _joystick=no
 _xvid=auto
 _libnut=auto
@@ -659,15 +614,8 @@ _apple_remote=auto
 _apple_ir=auto
 _termcap=auto
 _termios=auto
-_3dfx=no
-_s3fb=no
-_wii=no
-_tdfxfb=no
-_tdfxvid=no
-_xvr100=auto
 _tga=yes
 _directfb=auto
-_bl=no
 #language=en
 _shm=auto
 _translation=no
@@ -678,9 +626,6 @@ _libdv=auto
 _cdda=auto
 _cddb=auto
 _big_endian=auto
-_bitmap_font=yes
-_freetype=auto
-_fontconfig=auto
 _qtx=auto
 _coreaudio=auto
 _corevideo=auto
@@ -690,7 +635,6 @@ quicktime=auto
 _macosx_finder=no
 _macosx_bundle=auto
 _sortsub=yes
-_fribidi=auto
 _enca=auto
 _inet6=auto
 _gethostbyname2=auto
@@ -702,6 +646,7 @@ _w32threads=auto
 _ass=auto
 _rpath=no
 libpostproc=auto
+libavresample=auto
 _asmalign_pot=auto
 _stream_cache=yes
 _priority=no
@@ -837,8 +782,6 @@ for ac_option do
   --disable-runtime-cpudetection)   _runtime_cpudetection=no    ;;
   --enable-cross-compile)           _cross_compile=yes          ;;
   --disable-cross-compile)          _cross_compile=no           ;;
-  --enable-mplayer)     _mplayer=yes    ;;
-  --disable-mplayer)    _mplayer=no     ;;
   --enable-x11)         _x11=yes        ;;
   --disable-x11)        _x11=no         ;;
   --enable-xshape)      _xshape=yes     ;;
@@ -855,10 +798,6 @@ for ac_option do
   --disable-direct3d)   _direct3d=no    ;;
   --enable-directx)     _directx=yes    ;;
   --disable-directx)    _directx=no     ;;
-  --enable-win32waveout)  _win32waveout=yes ;;
-  --disable-win32waveout) _win32waveout=no  ;;
-  --enable-nas)         _nas=yes        ;;
-  --disable-nas)        _nas=no         ;;
   --enable-png)         _png=yes        ;;
   --disable-png)        _png=no         ;;
   --enable-mng)         _mng=yes        ;;
@@ -875,26 +814,10 @@ for ac_option do
   --disable-gif)        _gif=no         ;;
   --enable-gl)          _gl=yes         ;;
   --disable-gl)         _gl=no          ;;
-  --enable-ggi)         _ggi=yes        ;;
-  --disable-ggi)        _ggi=no         ;;
-  --enable-ggiwmh)      _ggiwmh=yes     ;;
-  --disable-ggiwmh)     _ggiwmh=no      ;;
-  --enable-aa)          _aa=yes         ;;
-  --disable-aa)         _aa=no          ;;
   --enable-caca)        _caca=yes       ;;
   --disable-caca)       _caca=no        ;;
-  --enable-svga)        _svga=yes       ;;
-  --disable-svga)       _svga=no        ;;
-  --enable-vesa)        _vesa=yes       ;;
-  --disable-vesa)       _vesa=no        ;;
-  --enable-fbdev)       _fbdev=yes      ;;
-  --disable-fbdev)      _fbdev=no       ;;
   --enable-dvb)         _dvb=yes        ;;
   --disable-dvb)        _dvb=no         ;;
-  --enable-dxr3)        _dxr3=yes       ;;
-  --disable-dxr3)       _dxr3=no        ;;
-  --enable-ivtv)        _ivtv=yes       ;;
-  --disable-ivtv)       _ivtv=no        ;;
   --enable-v4l2)        _v4l2=yes       ;;
   --disable-v4l2)       _v4l2=no        ;;
   --enable-iconv)       _iconv=yes      ;;
@@ -961,22 +884,14 @@ for ac_option do
   --disable-xanim)      _xanim=no       ;;
   --enable-real)        _real=yes       ;;
   --disable-real)       _real=no        ;;
-  --enable-live)        _live=yes       ;;
-  --disable-live)       _live=no        ;;
-  --enable-nemesi)      _nemesi=yes     ;;
-  --disable-nemesi)     _nemesi=no      ;;
+  --enable-lcms2)       _lcms2=yes      ;;
+  --disable-lcms2)      _lcms2=no       ;;
   --enable-xinerama)    _xinerama=yes   ;;
   --disable-xinerama)   _xinerama=no    ;;
-  --enable-mga)         _mga=yes        ;;
-  --disable-mga)        _mga=no         ;;
-  --enable-xmga)        _xmga=yes       ;;
-  --disable-xmga)       _xmga=no        ;;
   --enable-vm)          _vm=yes         ;;
   --disable-vm)         _vm=no          ;;
   --enable-xf86keysym)  _xf86keysym=yes ;;
   --disable-xf86keysym) _xf86keysym=no  ;;
-  --enable-sunaudio)    _sunaudio=yes   ;;
-  --disable-sunaudio)   _sunaudio=no    ;;
   --enable-alsa)        _alsa=yes       ;;
   --disable-alsa)       _alsa=no        ;;
   --enable-tv)          _tv=yes         ;;
@@ -1009,6 +924,8 @@ for ac_option do
   --disable-winsock2_h) _winsock2_h=no  ;;
   --enable-smb)         _smb=yes        ;;
   --disable-smb)        _smb=no ;;
+  --enable-libquvi)     _libquvi=yes    ;;
+  --disable-libquvi)    _libquvi=no     ;;
   --enable-joystick)    _joystick=yes   ;;
   --disable-joystick)   _joystick=no    ;;
   --enable-xvid)        _xvid=yes       ;;
@@ -1031,24 +948,10 @@ for ac_option do
   --disable-termcap)    _termcap=no     ;;
   --enable-termios)     _termios=yes    ;;
   --disable-termios)    _termios=no     ;;
-  --enable-3dfx)        _3dfx=yes       ;;
-  --disable-3dfx)       _3dfx=no        ;;
-  --enable-s3fb)        _s3fb=yes       ;;
-  --disable-s3fb)       _s3fb=no        ;;
-  --enable-wii)         _wii=yes        ;;
-  --disable-wii)        _wii=no         ;;
-  --enable-tdfxfb)      _tdfxfb=yes     ;;
-  --disable-tdfxfb)     _tdfxfb=no      ;;
-  --disable-tdfxvid)    _tdfxvid=no     ;;
-  --enable-tdfxvid)     _tdfxvid=yes    ;;
-  --disable-xvr100)     _xvr100=no      ;;
-  --enable-xvr100)      _xvr100=yes     ;;
   --disable-tga)        _tga=no         ;;
   --enable-tga)         _tga=yes        ;;
   --enable-directfb)    _directfb=yes   ;;
   --disable-directfb)   _directfb=no    ;;
-  --enable-bl)          _bl=yes         ;;
-  --disable-bl)         _bl=no          ;;
   --enable-shm)         _shm=yes        ;;
   --disable-shm)        _shm=no         ;;
   --enable-select)      _select=yes     ;;
@@ -1057,12 +960,6 @@ for ac_option do
   --disable-cddb)       _cddb=no        ;;
   --enable-big-endian)  _big_endian=yes ;;
   --disable-big-endian) _big_endian=no  ;;
-  --enable-bitmap-font)    _bitmap_font=yes   ;;
-  --disable-bitmap-font)   _bitmap_font=no    ;;
-  --enable-freetype)    _freetype=yes   ;;
-  --disable-freetype)   _freetype=no    ;;
-  --enable-fontconfig)  _fontconfig=yes ;;
-  --disable-fontconfig) _fontconfig=no  ;;
   --enable-unrarexec)   _unrar_exec=yes ;;
   --disable-unrarexec)  _unrar_exec=no  ;;
   --enable-ftp)         _ftp=yes        ;;
@@ -1079,9 +976,8 @@ for ac_option do
   --disable-rpath)      _rpath=no       ;;
   --enable-libpostproc) libpostproc=yes ;;
   --disable-libpostproc) libpostproc=no ;;
-
-  --enable-fribidi)     _fribidi=yes    ;;
-  --disable-fribidi)    _fribidi=no     ;;
+  --enable-libavresample) libavresample=yes ;;
+  --disable-libavresample) libavresample=no ;;
 
   --enable-enca)        _enca=yes       ;;
   --disable-enca)       _enca=no        ;;
@@ -1091,11 +987,6 @@ for ac_option do
 
   --enable-gethostbyname2)      _gethostbyname2=yes     ;;
   --disable-gethostbyname2)     _gethostbyname2=no      ;;
-
-  --enable-dga1) _dga1=yes ;;
-  --disable-dga1) _dga1=no ;;
-  --enable-dga2) _dga2=yes ;;
-  --disable-dga2) _dga2=no ;;
 
   --enable-qtx) _qtx=yes ;;
   --disable-qtx) _qtx=no ;;
@@ -1231,7 +1122,7 @@ if test -z "$_target" ; then
   # OS name
   system_name=$(uname -s 2>&1)
   case "$system_name" in
-  Linux|FreeBSD|NetBSD|OpenBSD|DragonFly|BSD/OS|Darwin|SunOS|QNX|GNU|BeOS|MorphOS|AIX|AmigaOS)
+  Linux|FreeBSD|NetBSD|OpenBSD|DragonFly|BSD/OS|Darwin|QNX|GNU|BeOS|MorphOS|AIX|AmigaOS)
     ;;
   Haiku)
     system_name=BeOS
@@ -1303,7 +1194,6 @@ else # if test -z "$_target"
       bsd/os) system_name=BSD/OS ;;
       openbsd) system_name=OpenBSD ;;
       dragonfly) system_name=DragonFly ;;
-      sunos) system_name=SunOS ;;
       qnx) system_name=QNX ;;
       morphos) system_name=MorphOS ;;
       amigaos) system_name=AmigaOS ;;
@@ -1376,7 +1266,6 @@ if qnx ; then
 fi
 
 TMPC="$mplayer_tmpdir/tmp.c"
-TMPCPP="$mplayer_tmpdir/tmp.cpp"
 TMPEXE="$mplayer_tmpdir/tmp$_exesuf"
 TMPH="$mplayer_tmpdir/tmp.h"
 TMPS="$mplayer_tmpdir/tmp.S"
@@ -1385,6 +1274,10 @@ if test "$_runtime_cpudetection" = yes && ! x86 && ! ppc; then
   die "Runtime CPU detection only works for x86, x86-64 and PPC!"
 fi
 
+_rst2man=rst2man
+if [ -f "$(which rst2man.py)" ] ; then
+  _rst2man=rst2man.py
+fi
 
 # Checking CC version...
 # Intel C++ Compilers (no autoselect, use CC=/some/binary ./configure)
@@ -1440,14 +1333,6 @@ else
       break
     fi
     cc_name_tmp=$($_cc -V 2>&1 | head -n 1 | cut -d ' ' -f 2,3)
-    if test "$cc_name_tmp" = "Sun C"; then
-      echocheck "$_cc version"
-      cc_vendor=sun
-      cc_version=$($_cc -V 2>&1 | head -n 1 | cut -d ' ' -f 4)
-      res_comment="experimental support only"
-      echores "Sun C $cc_version"
-      break
-    fi
   done
 fi # icc
 test "$cc_fail" = yes && die "unsupported compiler version"
@@ -1941,19 +1826,6 @@ case "$host_arch" in
       _vis='yes'
       proc='ultrasparc'
       def_fast_64bit='#define HAVE_FAST_64BIT 1'
-    elif sunos ; then
-        echocheck "CPU type"
-        karch=$(uname -m)
-        case "$(echo $karch)" in
-            sun4) proc=v7 ;;
-            sun4c) proc=v7 ;;
-            sun4d) proc=v8 ;;
-            sun4m) proc=v8 ;;
-            sun4u) proc=ultrasparc _vis='yes' ;;
-            sun4v) proc=v9 ;;
-            *) proc=v8 ;;
-        esac
-        echores "$proc"
     else
         proc=v8
     fi
@@ -2273,8 +2145,6 @@ if test -z "$CFLAGS" ; then
   if test "$cc_vendor" = "intel" ; then
     CFLAGS="-O2 $_debug $_profile $_march $_mcpu $_pipe -fomit-frame-pointer"
     WARNFLAGS="-wd167 -wd556 -wd144"
-  elif test "$cc_vendor" = "sun" ; then
-    CFLAGS="-O2 $_debug $_profile $_march $_mcpu $_pipe -xc99 -xregs=frameptr"
   elif test "$cc_vendor" = "clang"; then
     CFLAGS="-O2 $_debug $_profile $_march $_pipe"
     WARNFLAGS="-Wall -Wno-switch-enum -Wno-logical-op-parentheses -Wpointer-arith -Wundef -Wno-pointer-sign -Wmissing-prototypes"
@@ -3292,21 +3162,6 @@ echores "$_hpux_scsi_h"
 fi #if hpux
 
 
-if sunos; then
-echocheck "userspace SCSI headers (Solaris)"
-_sol_scsi_h=no
-header_check sys/scsi/scsi_types.h &&
-  header_check_broken sys/types.h sys/scsi/impl/uscsi.h &&
-   _sol_scsi_h=yes
-if test "$_sol_scsi_h" = yes ; then
-  def_sol_scsi_h='#define SOLARIS_USCSI 1'
-else
-  def_sol_scsi_h='#undef SOLARIS_USCSI'
-fi
-echores "$_sol_scsi_h"
-fi #if sunos
-
-
 echocheck "termcap"
 if test "$_termcap" = auto ; then
   _termcap=no
@@ -3480,20 +3335,6 @@ statement_check io.h 'setmode(0, 0)' && _setmode=yes && def_setmode='#define HAV
 echores "$_setmode"
 
 
-if sunos; then
-echocheck "sysi86()"
-_sysi86=no
-statement_check sys/sysi86.h 'sysi86(0)' && _sysi86=yes
-if test "$_sysi86" = yes ; then
-  def_sysi86='#define HAVE_SYSI86 1'
-  statement_check sys/sysi86.h 'int sysi86(int, void*); sysi86(0)' && def_sysi86_iv='#define HAVE_SYSI86_iv 1'
-else
-  def_sysi86='#undef HAVE_SYSI86'
-fi
-echores "$_sysi86"
-fi #if sunos
-
-
 echocheck "sys/sysinfo.h"
 _sys_sysinfo=no
 statement_check sys/sysinfo.h 'struct sysinfo s_info; s_info.mem_unit=0; sysinfo(&s_info)' && _sys_sysinfo=yes
@@ -3610,77 +3451,24 @@ else
 fi
 echores "$_smb"
 
+echocheck "libquvi support"
+if test "$_libquvi" = auto ; then
+    _libquvi=no
+    if pkg_config_add 'libquvi >= 0.4.1' ; then
+        _libquvi=yes
+    fi
+fi
+if test "$_libquvi" = yes; then
+    def_libquvi="#define CONFIG_LIBQUVI 1"
+else
+    def_libquvi="#undef CONFIG_LIBQUVI"
+fi
+echores "$_libquvi"
 
 #########
 # VIDEO #
 #########
 
-
-echocheck "tdfxfb"
-if test "$_tdfxfb" = yes ; then
-  def_tdfxfb='#define CONFIG_TDFXFB 1'
-  vomodules="tdfxfb $vomodules"
-else
-  def_tdfxfb='#undef CONFIG_TDFXFB'
-  novomodules="tdfxfb $novomodules"
-fi
-echores "$_tdfxfb"
-
-echocheck "s3fb"
-if test "$_s3fb" = yes ; then
-  def_s3fb='#define CONFIG_S3FB 1'
-  vomodules="s3fb $vomodules"
-else
-  def_s3fb='#undef CONFIG_S3FB'
-  novomodules="s3fb $novomodules"
-fi
-echores "$_s3fb"
-
-echocheck "wii"
-if test "$_wii" = yes ; then
-  def_wii='#define CONFIG_WII 1'
-  vomodules="wii $vomodules"
-else
-  def_wii='#undef CONFIG_WII'
-  novomodules="wii $novomodules"
-fi
-echores "$_wii"
-
-echocheck "tdfxvid"
-if test "$_tdfxvid" = yes ; then
-  def_tdfxvid='#define CONFIG_TDFX_VID 1'
-  vomodules="tdfx_vid $vomodules"
-else
-  def_tdfxvid='#undef CONFIG_TDFX_VID'
-  novomodules="tdfx_vid $novomodules"
-fi
-echores "$_tdfxvid"
-
-echocheck "xvr100"
-if test "$_xvr100" = auto ; then
-cat > $TMPC << EOF
-#include <unistd.h>
-#include <sys/fbio.h>
-#include <sys/visual_io.h>
-int main(void) {
-struct vis_identifier ident;
-struct fbgattr attr;
-ioctl(0, VIS_GETIDENTIFIER, &ident);
-ioctl(0, FBIOGATTR, &attr);
-return 0;
-}
-EOF
-  _xvr100=no
-  cc_check && _xvr100=yes
-fi
-if test "$_xvr100" = yes ; then
-  def_xvr100='#define CONFIG_XVR100 1'
-  vomodules="xvr100 $vomodules"
-else
-  def_tdfxvid='#undef CONFIG_XVR100'
-  novomodules="xvr100 $novomodules"
-fi
-echores "$_xvr100"
 
 echocheck "tga"
 if test "$_tga" = yes ; then
@@ -3715,17 +3503,6 @@ fi
 echores "$_yuv4mpeg"
 
 
-echocheck "bl"
-if test "$_bl" = yes ; then
-  def_bl='#define CONFIG_BL 1'
-  vomodules="bl $vomodules"
-else
-  def_bl='#undef CONFIG_BL'
-  novomodules="bl $novomodules"
-fi
-echores "$_bl"
-
-
 echocheck "DirectFB"
 if test "$_directfb" = auto ; then
   _directfb=no
@@ -3744,11 +3521,11 @@ EOF
 fi
 if test "$_directfb" = yes ; then
   def_directfb='#define CONFIG_DIRECTFB 1'
-  vomodules="directfb dfbmga $vomodules"
+  vomodules="directfb $vomodules"
   libs_mplayer="$libs_mplayer -ldirectfb"
 else
   def_directfb='#undef CONFIG_DIRECTFB'
-  novomodules="directfb dfbmga $novomodules"
+  novomodules="directfb $novomodules"
 fi
 echores "$_directfb"
 
@@ -3778,10 +3555,10 @@ int main(void) {
 }
 EOF
   _cocoa=no
-  cc_check -framework Cocoa -framework OpenGL && _cocoa=yes
+  cc_check -framework IOKit -framework Cocoa -framework OpenGL && _cocoa=yes
 fi
 if test "$_cocoa" = yes ; then
-  libs_mplayer="$libs_mplayer -framework Cocoa -framework OpenGL"
+  libs_mplayer="$libs_mplayer -framework IOKit -framework Cocoa -framework OpenGL"
   def_cocoa='#define CONFIG_COCOA 1'
 else
   def_cocoa='#undef CONFIG_COCOA'
@@ -3887,7 +3664,7 @@ if test "$_x11" = auto && test "$_x11_headers" = yes ; then
 fi
 if test "$_x11" = yes ; then
   def_x11='#define CONFIG_X11 1'
-  vomodules="x11 xover $vomodules"
+  vomodules="x11 $vomodules"
 else
   _x11=no
   def_x11='#undef CONFIG_X11'
@@ -4022,113 +3799,6 @@ else
 fi
 echores "$_xf86keysym"
 
-echocheck "DGA"
-if test "$_dga2" = auto && test "$_x11" = yes ; then
-  _dga2=no
-  statement_check_broken X11/Xlib.h X11/extensions/Xxf86dga.h 'XDGASetViewport(0, 0, 0, 0, 0)' -lXxf86dga && _dga2=yes
-fi
-if test "$_dga1" = auto && test "$_dga2" = no && test "$_vm" = yes ; then
-  _dga1=no
-  statement_check_broken X11/Xlib.h X11/extensions/Xxf86dga.h 'XF86DGASetViewPort(0, 0, 0, 0)' -lXxf86dga -lXxf86vm && _dga1=yes
-fi
-
-_dga=no
-def_dga='#undef CONFIG_DGA'
-def_dga1='#undef CONFIG_DGA1'
-def_dga2='#undef CONFIG_DGA2'
-if test "$_dga1" = yes ; then
-  _dga=yes
-  def_dga1='#define CONFIG_DGA1 1'
-  res_comment="using DGA 1.0"
-elif test "$_dga2" = yes ; then
-  _dga=yes
-  def_dga2='#define CONFIG_DGA2 1'
-  res_comment="using DGA 2.0"
-fi
-if test "$_dga" = yes ; then
-  def_dga='#define CONFIG_DGA 1'
-  libs_mplayer="$libs_mplayer -lXxf86dga"
-  vomodules="dga $vomodules"
-else
-  novomodules="dga $novomodules"
-fi
-echores "$_dga"
-
-
-echocheck "3dfx"
-if test "$_3dfx" = yes && test "$_dga" = yes ; then
-  def_3dfx='#define CONFIG_3DFX 1'
-  vomodules="3dfx $vomodules"
-else
-  _3dfx=no
-  def_3dfx='#undef CONFIG_3DFX'
-  novomodules="3dfx $novomodules"
-fi
-echores "$_3dfx"
-
-
-echocheck "GGI"
-if test "$_ggi" = auto ; then
-  _ggi=no
-  statement_check ggi/ggi.h 'ggiInit()' -lggi && _ggi=yes
-fi
-if test "$_ggi" = yes ; then
-  def_ggi='#define CONFIG_GGI 1'
-  libs_mplayer="$libs_mplayer -lggi"
-  vomodules="ggi $vomodules"
-else
-  def_ggi='#undef CONFIG_GGI'
-  novomodules="ggi $novomodules"
-fi
-echores "$_ggi"
-
-echocheck "GGI extension: libggiwmh"
-if test "$_ggiwmh" = auto ; then
-  _ggiwmh=no
-  statement_check ggi/wmh.h 'ggiWmhInit()' -lggi -lggiwmh && _ggiwmh=yes
-fi
-# needed to get right output on obscure combination
-# like --disable-ggi --enable-ggiwmh
-if test "$_ggi" = yes && test "$_ggiwmh" = yes ; then
-  def_ggiwmh='#define CONFIG_GGIWMH 1'
-  libs_mplayer="$libs_mplayer -lggiwmh"
-else
-  _ggiwmh=no
-  def_ggiwmh='#undef CONFIG_GGIWMH'
-fi
-echores "$_ggiwmh"
-
-
-echocheck "AA"
-if test "$_aa" = auto ; then
-  cat > $TMPC << EOF
-#include <aalib.h>
-int main(void) {
-aa_context *c;
-aa_renderparams *p;
-aa_init(0, 0, 0);
-c = aa_autoinit(&aa_defparams);
-p = aa_getrenderparams();
-aa_autoinitkbd(c, 0);
-return 0; }
-EOF
-  _aa=no
-  for _ld_tmp in "-laa" ; do
-    cc_check $_ld_tmp && libs_mplayer="$libs_mplayer $_ld_tmp" && _aa=yes && break
-  done
-fi
-if test "$_aa" = yes ; then
-  def_aa='#define CONFIG_AA 1'
-  if cygwin ; then
-    libs_mplayer="$libs_mplayer $(aalib-config --libs | cut -d " " -f 2,5,6)"
-  fi
-  vomodules="aa $vomodules"
-else
-  def_aa='#undef CONFIG_AA'
-  novomodules="aa $novomodules"
-fi
-echores "$_aa"
-
 
 echocheck "CACA"
 if test "$_caca" = auto ; then
@@ -4156,38 +3826,6 @@ fi
 echores "$_caca"
 
 
-echocheck "SVGAlib"
-if test "$_svga" = auto ; then
-  _svga=no
-  header_check vga.h -lvga $_ld_lm && _svga=yes
-fi
-if test "$_svga" = yes ; then
-  def_svga='#define CONFIG_SVGALIB 1'
-  libs_mplayer="$libs_mplayer -lvga"
-  vomodules="svga $vomodules"
-else
-  def_svga='#undef CONFIG_SVGALIB'
-  novomodules="svga $novomodules"
-fi
-echores "$_svga"
-
-
-echocheck "FBDev"
-if test "$_fbdev" = auto ; then
-  _fbdev=no
-  linux && _fbdev=yes
-fi
-if test "$_fbdev" = yes ; then
-  def_fbdev='#define CONFIG_FBDEV 1'
-  vomodules="fbdev $vomodules"
-else
-  def_fbdev='#undef CONFIG_FBDEV'
-  novomodules="fbdev $novomodules"
-fi
-echores "$_fbdev"
-
-
-
 echocheck "DVB"
 if test "$_dvb" = auto ; then
   _dvb=no
@@ -4212,17 +3850,11 @@ echores "$_dvb"
 if test "$_dvb" = yes ; then
   _dvbin=yes
   inputmodules="dvb $inputmodules"
-  def_dvb='#define CONFIG_DVB 1'
   def_dvbin='#define CONFIG_DVBIN 1'
-  aomodules="mpegpes(dvb) $aomodules"
-  vomodules="mpegpes(dvb) $vomodules"
 else
   _dvbin=no
   noinputmodules="dvb $noinputmodules"
-  def_dvb='#undef CONFIG_DVB'
   def_dvbin='#undef CONFIG_DVBIN '
-  aomodules="mpegpes(file) $aomodules"
-  vomodules="mpegpes(file) $vomodules"
 fi
 
 
@@ -4378,21 +4010,6 @@ EOF
   ;;
 esac
 
-
-echocheck "VESA support"
-if test "$_vesa" = auto ; then
-  _vesa=no
-  statement_check vbe.h 'vbeInit()' -lvbe -llrmi && _vesa=yes
-fi
-if test "$_vesa" = yes ; then
-  def_vesa='#define CONFIG_VESA 1'
-  libs_mplayer="$libs_mplayer -lvbe -llrmi"
-  vomodules="vesa $vomodules"
-else
-  def_vesa='#undef CONFIG_VESA'
-  novomodules="vesa $novomodules"
-fi
-echores "$_vesa"
 
 #################
 # VIDEO + AUDIO #
@@ -4578,21 +4195,6 @@ echores "$_gl"
 
 if win32; then
 
-echocheck "Windows waveout"
-if test "$_win32waveout" = auto ; then
-  _win32waveout=no
-  header_check_broken windows.h mmsystem.h -lwinmm && _win32waveout=yes
-fi
-if test "$_win32waveout" = yes ; then
-  def_win32waveout='#define CONFIG_WIN32WAVEOUT 1'
-  libs_mplayer="$libs_mplayer -lwinmm"
-  aomodules="win32 $aomodules"
-else
-  def_win32waveout='#undef CONFIG_WIN32WAVEOUT'
-  noaomodules="win32 $noaomodules"
-fi
-echores "$_win32waveout"
-
 echocheck "Direct3D"
 if test "$_direct3d" = auto ; then
   _direct3d=no
@@ -4630,50 +4232,6 @@ fi
 echores "$_directx"
 
 fi #if win32; then
-
-
-echocheck "DXR3/H+"
-if test "$_dxr3" = auto ; then
-  _dxr3=no
-  header_check linux/em8300.h && _dxr3=yes
-fi
-if test "$_dxr3" = yes ; then
-  def_dxr3='#define CONFIG_DXR3 1'
-  vomodules="dxr3 $vomodules"
-else
-  def_dxr3='#undef CONFIG_DXR3'
-  novomodules="dxr3 $novomodules"
-fi
-echores "$_dxr3"
-
-
-echocheck "IVTV TV-Out (pre linux-2.6.24)"
-if test "$_ivtv" = auto ; then
-  cat > $TMPC << EOF
-#include <sys/time.h>
-#include <linux/videodev2.h>
-#include <linux/ivtv.h>
-#include <sys/ioctl.h>
-int main(void) {
-struct ivtv_cfg_stop_decode sd;
-struct ivtv_cfg_start_decode sd1;
-ioctl(0, IVTV_IOC_START_DECODE, &sd1);
-ioctl(0, IVTV_IOC_STOP_DECODE, &sd);
-return 0; }
-EOF
-  _ivtv=no
-  cc_check && _ivtv=yes
-fi
-if test "$_ivtv" = yes ; then
-  def_ivtv='#define CONFIG_IVTV 1'
-  vomodules="ivtv $vomodules"
-  aomodules="ivtv $aomodules"
-else
-  def_ivtv='#undef CONFIG_IVTV'
-  novomodules="ivtv $novomodules"
-  noaomodules="ivtv $noaomodules"
-fi
-echores "$_ivtv"
 
 
 echocheck "V4L2 MPEG Decoder"
@@ -4772,22 +4330,6 @@ else
    def_rsound='#undef CONFIG_RSOUND'
    noaomodules="rsound $noaomodules"
 fi
-
-
-echocheck "NAS"
-if test "$_nas" = auto ; then
-  _nas=no
-  header_check audio/audiolib.h $_ld_lm -laudio -lXt && _nas=yes
-fi
-if test "$_nas" = yes ; then
-  def_nas='#define CONFIG_NAS 1'
-  libs_mplayer="$libs_mplayer -laudio -lXt"
-  aomodules="nas $aomodules"
-else
-  noaomodules="nas $noaomodules"
-  def_nas='#undef CONFIG_NAS'
-fi
-echores "$_nas"
 
 
 echocheck "pulse"
@@ -4896,26 +4438,6 @@ fi
 echores "$_alsa"
 
 
-echocheck "Sun audio"
-if test "$_sunaudio" = auto ; then
-  cat > $TMPC << EOF
-#include <sys/types.h>
-#include <sys/audioio.h>
-int main(void) { audio_info_t info; AUDIO_INITINFO(&info); return 0; }
-EOF
-  _sunaudio=no
-  cc_check && _sunaudio=yes
-fi
-if test "$_sunaudio" = yes ; then
-  def_sunaudio='#define CONFIG_SUN_AUDIO 1'
-  aomodules="sun $aomodules"
-else
-  def_sunaudio='#undef CONFIG_SUN_AUDIO'
-  noaomodules="sun $noaomodules"
-fi
-echores "$_sunaudio"
-
-
 if darwin; then
 echocheck "CoreAudio"
 if test "$_coreaudio" = auto ; then
@@ -4951,18 +4473,13 @@ elif freebsd ; then
   default_cdrom_device="/dev/acd0"
 elif openbsd ; then
   default_cdrom_device="/dev/rcd0c"
-elif sunos ; then
-  default_cdrom_device="/vol/dev/aliases/cdrom0"
-  # Modern Solaris versions use HAL instead of the vold daemon, the volfs
-  # file system and the volfs service.
-  test -r "/cdrom/cdrom0" && default_cdrom_device="/cdrom/cdrom0"
 elif amigaos ; then
   default_cdrom_device="a1ide.device:2"
 else
   default_cdrom_device="/dev/cdrom"
 fi
 
-if win32 || dragonfly || freebsd || openbsd || sunos || amigaos ; then
+if win32 || dragonfly || freebsd || openbsd || amigaos ; then
   default_dvd_device=$default_cdrom_device
 elif darwin ; then
   default_dvd_device="/dev/rdiskN"
@@ -4974,7 +4491,7 @@ fi
 echocheck "VCD support"
 if test "$_vcd" = auto; then
   _vcd=no
-  if linux || freebsd || netbsd || openbsd || dragonfly || bsdos || darwin || sunos; then
+  if linux || freebsd || netbsd || openbsd || dragonfly || bsdos || darwin ; then
     _vcd=yes
   elif mingw32; then
   header_check ddk/ntddcdrm.h && _vcd=yes
@@ -5013,7 +4530,7 @@ fi
 if test "$_dvdread_internal" = auto ; then
   _dvdread_internal=no
   _dvdread=no
-  if (linux || freebsd || netbsd || openbsd || dragonfly || sunos || hpux) &&
+  if (linux || freebsd || netbsd || openbsd || dragonfly || hpux) &&
      (test "$_dvd" = yes || test "$_cdrom" = yes || test "$_cdio" = yes ||
       test "$_dvdio" = yes || test "$_bsdi_dvd" = yes) ||
      darwin || win32; then
@@ -5109,56 +4626,6 @@ else
     noinputmodules="cddb $noinputmodules"
 fi
 
-echocheck "bitmap font support"
-if test "$_bitmap_font" = yes ; then
-  def_bitmap_font="#define CONFIG_BITMAP_FONT 1"
-else
-  def_bitmap_font="#undef CONFIG_BITMAP_FONT"
-fi
-echores "$_bitmap_font"
-
-
-echocheck "freetype >= 2.0.9"
-
-# freetype depends on iconv
-if test "$_iconv" = no ; then
-    _freetype=no
-    res_comment="iconv support needed"
-fi
-
-if test "$_freetype" = auto ; then
-    if pkg_config_add freetype2 ; then
-        _freetype=yes
-    else
-        die "Unable to find development files for libfreetype. Aborting. If you really mean to compile without FreeType support use --disable-freetype."
-    fi
-fi
-if test "$_freetype" = yes ; then
-    def_freetype='#define CONFIG_FREETYPE 1'
-else
-    def_freetype='#undef CONFIG_FREETYPE'
-fi
-echores "$_freetype"
-
-if test "$_freetype" = no ; then
-    _fontconfig=no
-    res_comment="FreeType support needed"
-fi
-echocheck "fontconfig"
-if test "$_fontconfig" = auto ; then
-    if pkg_config_add 'fontconfig >= 2.4.2' ; then
-        _fontconfig=yes
-    else
-        die "Unable to find development files for libfontconfig. Aborting. If you really mean to compile without fontconfig support use --disable-fontconfig."
-    fi
-fi
-if test "$_fontconfig" = yes ; then
-    def_fontconfig='#define CONFIG_FONTCONFIG 1'
-else
-    def_fontconfig='#undef CONFIG_FONTCONFIG'
-fi
-echores "$_fontconfig"
-
 
 echocheck "SSA/ASS support"
 if test "$_ass" = auto ; then
@@ -5172,21 +4639,6 @@ else
     def_ass='#undef CONFIG_ASS'
 fi
 echores "$_ass"
-
-
-echocheck "fribidi with charsets"
-if test "$_fribidi" = auto ; then
-    _fribidi=no
-    if pkg_config_add fribidi ; then
-        _fribidi=yes
-    fi
-fi
-if test "$_fribidi" = yes ; then
-    def_fribidi='#define CONFIG_FRIBIDI 1'
-else
-    def_fribidi='#undef CONFIG_FRIBIDI'
-fi
-echores "$_fribidi"
 
 
 echocheck "ENCA"
@@ -5544,75 +4996,19 @@ else
 fi
 echores "$_qtx"
 
-echocheck "Nemesi Streaming Media libraries"
-if test "$_nemesi" = auto  && test "$networking" = yes ; then
-    _nemesi=no
-    if pkg_config_add libnemesi ; then
-        _nemesi=yes
+echocheck "LCMS2 support"
+if test "$_lcms2" = auto ; then
+    _lcms2=no
+    if pkg_config_add lcms2 ; then
+        _lcms2=yes
     fi
 fi
-if test "$_nemesi" = yes; then
-    _native_rtsp=no
-    def_nemesi='#define CONFIG_LIBNEMESI 1'
-    inputmodules="nemesi $inputmodules"
+if test "$_lcms2" = yes; then
+    def_lcms2="#define CONFIG_LCMS2 1"
 else
-    _native_rtsp="$networking"
-    _nemesi=no
-    def_nemesi='#undef CONFIG_LIBNEMESI'
-    noinputmodules="nemesi $noinputmodules"
+    def_lcms2="#undef CONFIG_LCMS2"
 fi
-echores "$_nemesi"
-
-echocheck "LIVE555 Streaming Media libraries"
-if test "$_live" != no  && test "$networking" = yes ; then
-  cat > $TMPCPP << EOF
-#include <liveMedia.hh>
-#if (LIVEMEDIA_LIBRARY_VERSION_INT < 1141257600)
-#error Please upgrade to version 2006.03.03 or later of the "LIVE555 Streaming Media" libraries - available from <www.live555.com/liveMedia/>
-#endif
-int main(void) { return 0; }
-EOF
-
-  _live=no
-  for I in $extra_cflags "-I$_libdir/live" "-I/usr/lib/live" "-I/usr/lib64/live" "-I/usr/local/live" "-I/usr/local/lib/live" ; do
-    cxx_check $I/liveMedia/include $I/UsageEnvironment/include $I/groupsock/include &&
-        _livelibdir=$(echo $I| sed s/-I//) &&
-      extra_ldflags="$_livelibdir/liveMedia/libliveMedia.a \
-                 $_livelibdir/groupsock/libgroupsock.a \
-                 $_livelibdir/UsageEnvironment/libUsageEnvironment.a \
-                 $_livelibdir/BasicUsageEnvironment/libBasicUsageEnvironment.a \
-                 $extra_ldflags  -lstdc++" \
-      extra_cxxflags="-I$_livelibdir/liveMedia/include \
-                  -I$_livelibdir/UsageEnvironment/include \
-                  -I$_livelibdir/BasicUsageEnvironment/include \
-                  -I$_livelibdir/groupsock/include" &&
-      _live=yes && break
-  done
-  if test "$_live" != yes ; then
-      ld_tmp="-lliveMedia -lgroupsock -lUsageEnvironment -lBasicUsageEnvironment -lstdc++"
-      if cxx_check -I/usr/include/liveMedia -I/usr/include/UsageEnvironment -I/usr/include/groupsock $ld_tmp; then
-          _live_dist=yes
-      fi
-  fi
-fi
-if test "$_live" = yes && test "$networking" = yes; then
-  test $_livelibdir && res_comment="using $_livelibdir"
-  def_live='#define CONFIG_LIVE555 1'
- inputmodules="live555 $inputmodules"
-elif test "$_live_dist" = yes && test "$networking" = yes; then
-  res_comment="using distribution version"
-  _live="yes"
-  def_live='#define CONFIG_LIVE555 1'
-  extra_ldflags="$extra_ldflags $ld_tmp"
-  extra_cxxflags="-I/usr/include/liveMedia -I/usr/include/UsageEnvironment -I/usr/include/BasicUsageEnvironment -I/usr/include/groupsock"
- inputmodules="live555 $inputmodules"
-else
-  _live=no
-  def_live='#undef CONFIG_LIVE555'
-  noinputmodules="live555 $noinputmodules"
-fi
-echores "$_live"
-
+echores "$_lcms2"
 
 
 # Test with > against Libav 0.8 versions which will NOT work rather than
@@ -5646,6 +5042,19 @@ else
 fi
 echores "$libpostproc"
 
+echocheck "libavresample >= 1.0.0"
+if test "$libavresample" = auto ; then
+    libavresample=no
+    if pkg_config_add "libavresample >= 1.0.0" ; then
+        libavresample=yes
+    fi
+fi
+if test "$libavresample" = yes ; then
+    def_libavresample='#define CONFIG_LIBAVRESAMPLE 1'
+else
+    def_libavresample='#undef CONFIG_LIBAVRESAMPLE'
+fi
+echores "$libavresample"
 
 echocheck "libdv-0.9.5+"
 if test "$_libdv" = auto ; then
@@ -5695,36 +5104,6 @@ else
   def_libnut='#undef CONFIG_LIBNUT'
 fi
 echores "$_libnut"
-
-# These VO checks must be done after the FFmpeg one
-echocheck "/dev/mga_vid"
-if test "$_mga" = auto ; then
-  _mga=no
-  test -c /dev/mga_vid && _mga=yes
-fi
-if test "$_mga" = yes ; then
-  def_mga='#define CONFIG_MGA 1'
-  vomodules="mga $vomodules"
-else
-  def_mga='#undef CONFIG_MGA'
-  novomodules="mga $novomodules"
-fi
-echores "$_mga"
-
-
-echocheck "xmga"
-if test "$_xmga" = auto ; then
-  _xmga=no
-  test "$_x11" = yes && test "$_mga" = yes && _xmga=yes
-fi
-if test "$_xmga" = yes ; then
-  def_xmga='#define CONFIG_XMGA 1'
-  vomodules="xmga $vomodules"
-else
-  def_xmga='#undef CONFIG_XMGA'
-  novomodules="xmga $novomodules"
-fi
-echores "$_xmga"
 
 
 echocheck "UnRAR executable"
@@ -6088,7 +5467,7 @@ fi
 # (FIXME: 'echocheck "dynamic linking"' above and modify here accordingly)
 _ld_dl_dynamic=''
 freebsd || netbsd || openbsd || dragonfly || bsdos && _ld_dl_dynamic='-rdynamic'
-if test "$_real" = yes || test "$_xanim" = yes && ! win32 && ! qnx && ! darwin && ! sunos; then
+if test "$_real" = yes || test "$_xanim" = yes && ! win32 && ! qnx && ! darwin ; then
   _ld_dl_dynamic='-rdynamic'
 fi
 
@@ -6142,8 +5521,6 @@ echores "$_lircc"
 #############################################################################
 
 CFLAGS="$CFLAGS -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE"
-
-CXXFLAGS=" $CFLAGS -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS"
 
 # This must be the last test to be performed. Any other tests following it
 # could fail due to linker errors. libdvdnavmini is intentionally not linked
@@ -6229,13 +5606,11 @@ LOCALEDIR = \$(DESTDIR)$_localedir
 AR      = $_ar
 AS      = $_cc
 CC      = $_cc
-CXX     = $_cc
 INSTALL = $_install
 INSTALLSTRIP = $_install_strip
 WINDRES = $_windres
 
 CFLAGS   = $WARNFLAGS $ERRORFLAGS $WARN_CFLAGS $CFLAGS $extra_cflags
-CXXFLAGS = $WARNFLAGS $ERRORFLAGS $CXXFLAGS $extra_cflags $extra_cxxflags
 DEPFLAGS = $DEPFLAGS
 
 CFLAGS_LIBDVDCSS         = $cflags_libdvdcss
@@ -6249,6 +5624,7 @@ EXTRALIBS_MPLAYER  = $libs_mplayer
 
 GETCH = $_getch
 TIMER = $_timer
+RST2MAN = $_rst2man
 
 EXESUF      = $_exesuf
 EXESUFS_ALL = .exe
@@ -6257,8 +5633,6 @@ ARCH = $arch
 $(mak_enable "$arch_all"    "$arch"    ARCH)
 $(mak_enable "$subarch_all" "$subarch" ARCH)
 $(mak_enable "$cpuexts_all" "$cpuexts" HAVE)
-
-MPLAYER  = $_mplayer
 
 NEED_GETTIMEOFDAY = $need_gettimeofday
 NEED_GLOB         = $need_glob
@@ -6269,14 +5643,10 @@ NEED_SWAB         = $need_swab
 NEED_VSSCANF      = $need_vsscanf
 
 # features
-3DFX = $_3dfx
-AA = $_aa
 ALSA = $_alsa
 APPLE_IR = $_apple_ir
 APPLE_REMOTE = $_apple_remote
 AUDIO_INPUT = $_audio_input
-BITMAP_FONT = $_bitmap_font
-BL = $_bl
 CACA = $_caca
 CDDA = $_cdda
 CDDB = $_cddb
@@ -6284,7 +5654,6 @@ COCOA = $_cocoa
 COREAUDIO = $_coreaudio
 COREVIDEO = $_corevideo
 SHAREDBUFFER = $_sharedbuffer
-DGA = $_dga
 DIRECT3D = $_direct3d
 DIRECTFB = $_directfb
 DIRECTX = $_directx
@@ -6296,11 +5665,8 @@ DVDREAD_INTERNAL = $_dvdread_internal
 DXR3 = $_dxr3
 FAAD = $_faad
 FASTMEMCPY = $_fastmemcpy
-FBDEV = $_fbdev
-FREETYPE = $_freetype
 FTP = $_ftp
 GIF = $_gif
-GGI = $_ggi
 GL = $_gl
 GL_COCOA = $_gl_cocoa
 GL_WIN32 = $_gl_win32
@@ -6308,7 +5674,6 @@ GL_X11 = $_gl_x11
 GL_SDL = $_gl_sdl
 HAVE_POSIX_SELECT = $_posix_select
 HAVE_SYS_MMAN_H = $_mman
-IVTV = $_ivtv
 JACK = $_jack
 JOYSTICK = $_joystick
 JPEG = $_jpeg
@@ -6321,21 +5686,19 @@ LIBDCA = $_libdca
 LIBDV = $_libdv
 LIBDVDCSS_INTERNAL = $_libdvdcss_internal
 LIBMAD = $_mad
-LIBNEMESI = $_nemesi
+LCMS2 = $_lcms2
 LIBNUT = $_libnut
 LIBPOSTPROC = $libpostproc
+LIBAVRESAMPLE = $libavresample
 LIBSMBCLIENT = $_smb
+LIBQUVI = $_libquvi
 LIBTHEORA = $_theora
 LIRC = $_lirc
-LIVE555 = $_live
 MACOSX_FINDER = $_macosx_finder
 MD5SUM = $_md5sum
-MGA = $_mga
 MNG = $_mng
 MPG123 = $_mpg123
 MUSEPACK = $_musepack
-NAS = $_nas
-NATIVE_RTSP = $_native_rtsp
 NETWORKING = $networking
 OPENAL = $_openal
 OSS = $_ossaudio
@@ -6353,14 +5716,9 @@ RADIO=$_radio
 RADIO_CAPTURE=$_radio_capture
 REAL_CODECS = $_real
 RSOUND = $_rsound
-S3FB = $_s3fb
 SDL = $_sdl
 SPEEX = $_speex
 STREAM_CACHE = $_stream_cache
-SUNAUDIO = $_sunaudio
-SVGA = $_svga
-TDFXFB = $_tdfxfb
-TDFXVID = $_tdfxvid
 TGA = $_tga
 TV = $_tv
 TV_BSDBT848 = $_tv_bsdbt848
@@ -6372,20 +5730,15 @@ UNRAR_EXEC = $_unrar_exec
 V4L2 = $_v4l2
 VCD = $_vcd
 VDPAU = $_vdpau
-VESA = $_vesa
 VORBIS = $_vorbis
 VSTREAM = $_vstream
-WII = $_wii
 WIN32DLL = $_win32dll
-WIN32WAVEOUT = $_win32waveout
 WIN32_EMULATION = $_win32_emulation
 X11 = $_x11
 XANIM_CODECS = $_xanim
-XMGA = $_xmga
 XMMS_PLUGINS = $_xmms
 XV = $_xv
 XVID4 = $_xvid
-XVR100 = $_xvr100
 YUV4MPEG = $_yuv4mpeg
 
 # FFmpeg
@@ -6433,22 +5786,6 @@ cat > $TMPH << EOF
 
 #ifndef MPLAYER_CONFIG_H
 #define MPLAYER_CONFIG_H
-
-/* Undefine this if you do not want to select mono audio (left or right)
-   with a stereo MPEG layer 2/3 audio stream. The command line option
-   -stereo has three possible values (0 for stereo, 1 for left-only, 2 for
-   right-only), with 0 being the default.
-   */
-#define CONFIG_FAKE_MONO 1
-
-/* set up audio OUTBURST. Do not change this! */
-#define OUTBURST 512
-
-/* Enable fast OSD/SUB renderer (looks ugly, but uses less CPU power) */
-#undef FAST_OSD
-#undef FAST_OSD_TABLE
-
-
 
 #define CONFIGURATION "$configuration"
 
@@ -6592,6 +5929,7 @@ $def_xvid
 $def_zlib
 
 $def_libpostproc
+$def_libavresample
 $def_libnut
 
 
@@ -6620,8 +5958,6 @@ $def_ossaudio_devmixer
 $def_pulse
 $def_portaudio
 $def_rsound
-$def_sunaudio
-$def_win32waveout
 
 $def_ladspa
 $def_libbs2b
@@ -6651,12 +5987,7 @@ $def_tv_v4l2
 
 /* font stuff */
 $def_ass
-$def_bitmap_font
 $def_enca
-$def_fontconfig
-$def_freetype
-$def_fribidi
-
 
 /* networking */
 $def_closesocket
@@ -6664,34 +5995,24 @@ $def_ftp
 $def_inet6
 $def_inet_aton
 $def_inet_pton
-$def_live
-$def_nemesi
 $def_networking
 $def_smb
+$def_libquvi
 $def_socklen_t
 $def_vstream
 
+$def_lcms2
+
 
 /* libvo options */
-$def_3dfx
-$def_aa
-$def_bl
 $def_caca
 $def_corevideo
 $def_cocoa
 $def_sharedbuffer
-$def_dga
-$def_dga1
-$def_dga2
 $def_direct3d
 $def_directfb
 $def_directx
-$def_dvb
 $def_dvbin
-$def_dxr3
-$def_fbdev
-$def_ggi
-$def_ggiwmh
 $def_gif
 $def_gif_4
 $def_gif_tvt_hack
@@ -6700,33 +6021,23 @@ $def_gl_cocoa
 $def_gl_win32
 $def_gl_x11
 $def_gl_sdl
-$def_ivtv
 $def_jpeg
 $def_md5sum
-$def_mga
 $def_mng
 $def_png
 $def_pnm
-$def_s3fb
 $def_sdl
 $def_sdl_sdl_h
-$def_svga
-$def_tdfxfb
-$def_tdfxvid
 $def_tga
 $def_v4l2
 $def_vdpau
-$def_vesa
 $def_vm
-$def_wii
 $def_x11
 $def_xdpms
 $def_xf86keysym
 $def_xinerama
-$def_xmga
 $def_xss
 $def_xv
-$def_xvr100
 $def_yuv4mpeg
 
 

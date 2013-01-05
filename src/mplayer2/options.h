@@ -50,6 +50,7 @@ typedef struct MPOpts {
     int chapter_merge_threshold;
     int quiet;
     int noconfig;
+    int stream_cache_size;
     float stream_cache_min_percent;
     float stream_cache_seek_min_percent;
     int chapterrange[2];
@@ -77,7 +78,9 @@ typedef struct MPOpts {
     int sub_id;
     char **audio_lang;
     char **sub_lang;
+    int sub_visibility;
     int hr_mp3_seek;
+    char *quvi_format;
 
     char *audio_stream;
     int audio_stream_cache;

@@ -15,10 +15,8 @@ Libraries specific to particular video output methods
 general:
  - libasound   (ALSA audio output)
  - various general X development libraries
- - libfreetype
- - libfontconfig
- - libass
- - FFmpeg libraries (libavutil libavcodec libavformat libswscale libpostproc)
+ - libass   (subtitle/OSD rendering)
+ - Libav libraries (libavutil libavcodec libavformat libswscale)
 
 Most of the above libraries are available in suitable versions on normal
 Linux distributions. However FFmpeg is an exception (distro versions may be

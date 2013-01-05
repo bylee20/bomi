@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <assert.h>
 
 #include "af.h"
 #include "libavutil/common.h"
@@ -104,6 +105,7 @@ static int fill_queue(struct af_instance_s* af, af_data_t* data, int offset)
 
   if (bytes_in > 0) {
     int bytes_copy = FFMIN(s->bytes_queue - s->bytes_queued, bytes_in);
+    assert(bytes_copy >= 0);
     memcpy(s->buf_queue + s->bytes_queued,
            (int8_t*)data->audio + offset,
            bytes_copy);
@@ -304,6 +306,8 @@ static int control(struct af_instance_s* af, int cmd, void* arg)
       if (s->speed_tempo && s->speed_pitch)
         return AF_DETACH;
       memcpy(af->data, data, sizeof(af_data_t));
+      af->delay = 0;
+      af->mul = 1;
       return af_test_output(af, data);
     }
 
@@ -325,12 +329,14 @@ static int control(struct af_instance_s* af, int cmd, void* arg)
     s->frames_stride_scaled = s->scale * frames_stride;
     s->frames_stride_error  = 0;
     af->mul = (double)s->bytes_stride / s->bytes_stride_scaled;
+    af->delay = 0;
 
     frames_overlap = frames_stride * s->percent_overlap;
     if (frames_overlap <= 0) {
       s->bytes_standing   = s->bytes_stride;
       s->samples_standing = s->bytes_standing / bps;
       s->output_overlap   = NULL;
+      s->bytes_overlap    = 0;
     } else {
       s->samples_overlap  = frames_overlap * nch;
       s->bytes_overlap    = frames_overlap * nch * bps;
@@ -418,6 +424,9 @@ static int control(struct af_instance_s* af, int cmd, void* arg)
       mp_msg(MSGT_AFILTER, MSGL_FATAL, "[scaletempo] Out of memory\n");
       return AF_ERROR;
     }
+
+    s->bytes_queued = 0;
+    s->bytes_to_slide = 0;
 
     mp_msg (MSGT_AFILTER, MSGL_DBG2, "[scaletempo] "
             "%.2f stride_in, %i stride_out, %i standing, "

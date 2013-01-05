@@ -308,12 +308,11 @@ speed_mult <value>
 speed_set <value>
     Set the speed to <value>.
 
-step_property <property> [value] [direction]
+step_property <property> [value]
     Change a property by value, or increase by a default if value is
-    not given or zero. The direction is reversed if direction is less
-    than zero.
+    not given.
 
-step_property_osd <property> [value] [direction]
+step_property_osd <property> [value]
     Same as above, but show the new value on the OSD in the standard
     manner defined for that property (if any).
 
@@ -367,21 +366,21 @@ sub_source [source]
     of each currently available source (forward or backward respectively).
 
 sub_file [value]
-    Display subtitle specifid by [value] for file subs. The [value] is
+    Display subtitle specified by [value] for file subs. The [value] is
     corresponding to ID_FILE_SUB_ID values reported by '-identify'.
     If [value] is -1, will turn off subtitle display.
     If [value] is omitted or less than -1, will cycle all file subs
     (forward or backward respectively).
 
 sub_vob [value]
-    Display subtitle specifid by [value] for vobsubs. The [value] is
+    Display subtitle specified by [value] for vobsubs. The [value] is
     corresponding to ID_VOBSUB_ID values reported by '-identify'.
     If [value] is -1, will turn off subtitle display.
     If [value] is omitted or less than -1, will cycle all vobsubs
     (forward or backward respectively).
 
 sub_demux [value]
-    Display subtitle specifid by [value] for subtitles from DVD or embedded
+    Display subtitle specified by [value] for subtitles from DVD or embedded
     in media file. The [value] is corresponding to ID_SUBTITLE_ID values
     reported by '-identify'. If [value] is -1, will turn off subtitle display.
     If [value] is omitted or less than -1, will cycle all DVD subs or embedded subs
@@ -428,7 +427,7 @@ switch_vsync [value]
 teletext_add_digit <value>
     Enter/leave teletext page number editing mode and append given digit to
     previously entered one.
-    0..9 - Append apropriate digit. (Enables editing mode if called from normal
+    0..9 - Append appropriate digit. (Enables editing mode if called from normal
            mode, and switches to normal mode when third digit is entered.)
     -    - Delete last digit from page number. (Backspace emulation, works only
            in page number editing mode.)
@@ -475,9 +474,6 @@ tv_set_hue <-100 - 100> [abs]
 tv_set_saturation <-100 - 100> [abs]
     Set TV tuner saturation or adjust it if [abs] is set to 0.
 
-use_master
-    Switch volume control between master and PCM.
-
 vo_border [value]
     Toggle/set borderless display.
 
@@ -507,7 +503,9 @@ pts_association_mode string                  X   X   X    as -pts-association-mo
 pause              flag      0       1       X            1 if paused
 filename           string                    X            file playing wo path
 path               string                    X            file playing
+media_title        string                    X            filename or libquvi QUVIPROP_PAGETITLE
 demuxer            string                    X            demuxer used
+stream_path        string                    X            filename (full path) of stream layer filename
 stream_pos         pos       0               X   X        position in stream
 stream_start       pos       0               X            start pos in stream
 stream_end         pos       0               X            end pos in stream

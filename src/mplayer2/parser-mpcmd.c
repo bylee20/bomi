@@ -184,7 +184,8 @@ play_tree_t *m_config_parse_mp_command_line(m_config_t *config, int argc,
             } else if (bstrcasecmp0(opt, "playlist") == 0) {
                 if (param.len <= 0)
                     goto print_err;
-                struct play_tree *entry = parse_playlist_file(config, param);
+                struct play_tree *entry = parse_playlist_file(config->optstruct,
+                                                              param);
                 if (!entry)
                     goto print_err;
                 add_entry(&last_parent, &last_entry, entry);

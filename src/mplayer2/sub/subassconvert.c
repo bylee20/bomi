@@ -95,13 +95,29 @@ static const struct {
     char *s;
     uint32_t v;
 } subrip_web_colors[] = {
-    /* 16 named HTML colors in BGR format */
-    {"red",     0x0000ff}, {"blue",   0xff0000}, {"lime",   0x00ff00},
-    {"aqua",    0xffff00}, {"purple", 0x800080}, {"yellow", 0x00ffff},
-    {"fuchsia", 0xff00ff}, {"white",  0xffffff}, {"gray",   0x808080},
-    {"maroon",  0x000080}, {"olive",  0x008080}, {"black",  0x000000},
-    {"silver",  0xc0c0c0}, {"teal",   0x808000}, {"green",  0x008000},
-    {"navy",    0x800000}
+    /* Named CSS3 colors in BGR format; a subset of those
+       at http://www.w3.org/TR/css3-color/#svg-color */
+    {"aqua",    0xffff00},
+    {"black",   0x000000},
+    {"blue",    0xff0000},
+    {"cyan",    0xffff00},
+    {"fuchsia", 0xff00ff},
+    {"gray",    0x808080},
+    {"green",   0x008000},
+    {"grey",    0x808080},
+    {"lime",    0x00ff00},
+    {"magenta", 0xff00ff},
+    {"maroon",  0x000080},
+    {"navy",    0x800000},
+    {"olive",   0x008080},
+    {"orange",  0x00a5ff},
+    {"pink",    0xcbc0ff},
+    {"purple",  0x800080},
+    {"red",     0x0000ff},
+    {"silver",  0xc0c0c0},
+    {"teal",    0x808000},
+    {"white",   0xffffff},
+    {"yellow",  0x00ffff},
 };
 
 #define SUBRIP_MAX_STACKED_FONT_TAGS    16
@@ -215,35 +231,34 @@ void subassconvert_subrip(const char *orig, char *dest, int dest_buffer_size)
                     tag->has_size = true;
                     has_valid_attr = true;
                 } else if (!bstrcmp0(attr, "color")) {
-                    if (bstr_eatstart(&val, bstr("#"))) {
-                        // #RRGGBB format
-                        tag->color = bstrtoll(val, &val, 16) & 0x00ffffff;
-                        if (val.len)
-                            break;
-                        tag->color = ((tag->color & 0xff) << 16)
-                            | (tag->color & 0xff00)
-                            | ((tag->color & 0xff0000) >> 16);
-                    } else {
-                        // Standard web colors
-                        for (int i = 0; i < FF_ARRAY_ELEMS(subrip_web_colors); i++) {
-                            char *color = subrip_web_colors[i].s;
-                            if (bstrcasecmp(val, bstr(color)) == 0) {
-                                tag->color = subrip_web_colors[i].v;
-                                goto foundcolor;
-                            }
-                        }
-
-                        /* We didn't find any matching color */
-                        mp_tmsg(MSGT_SUBREADER, MSGL_WARN,
-                                "SubRip: unknown font color in subtitle: %s\n", orig);
-                        append_text(&new_line, "{\\c}");
-                        continue;
-
-                    foundcolor: ;
-                    }
-                    append_text(&new_line, "{\\c&H%06X&}", tag->color);
+                    // Treat unrecognized color names as valid attributes
                     tag->has_color = true;
                     has_valid_attr = true;
+                    // Standard web colors
+                    for (int i = 0; i < FF_ARRAY_ELEMS(subrip_web_colors); i++) {
+                        char *color = subrip_web_colors[i].s;
+                        if (bstrcasecmp(val, bstr(color)) == 0) {
+                            tag->color = subrip_web_colors[i].v;
+                            goto foundcolor;
+                        }
+                    }
+                    // Try to parse as hex even if there is no '#'
+                    bstr_eatstart(&val, bstr("#"));
+                    // #RRGGBB format
+                    tag->color = bstrtoll(val, &val, 16) & 0x00ffffff;
+                    tag->color = ((tag->color & 0xff) << 16)
+                        | (tag->color & 0xff00)
+                        | ((tag->color & 0xff0000) >> 16);
+                    if (val.len) {
+                        /* We didn't find any matching color */
+                        mp_tmsg(MSGT_SUBREADER, MSGL_WARN,
+                                "SubRip: unknown font color in subtitle: %s\n",
+                                orig);
+                        append_text(&new_line, "{\\c}");
+                    } else {
+                    foundcolor:
+                        append_text(&new_line, "{\\c&H%06X&}", tag->color);
+                    }
                 } else if (!bstrcmp0(attr, "face")) {
                     /* Font face attribute */
                     tag->face = val;

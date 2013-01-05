@@ -20,9 +20,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-//#define FAST_OSD
-//#define FAST_OSD_TABLE
-
 #include "config.h"
 #include "osd.h"
 #include "mp_msg.h"
@@ -193,36 +190,6 @@ void vo_draw_alpha_yuy2(int w,int h, unsigned char* src, unsigned char *srca, in
 #endif //!CONFIG_RUNTIME_CPUDETECT
 }
 
-void vo_draw_alpha_uyvy(int w,int h, unsigned char* src, unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
-#if CONFIG_RUNTIME_CPUDETECT
-#if ARCH_X86
-	// ordered by speed / fastest first
-	if(gCpuCaps.hasMMX2)
-		vo_draw_alpha_uyvy_MMX2(w, h, src, srca, srcstride, dstbase, dststride);
-	else if(gCpuCaps.has3DNow)
-		vo_draw_alpha_uyvy_3DNow(w, h, src, srca, srcstride, dstbase, dststride);
-	else if(gCpuCaps.hasMMX)
-		vo_draw_alpha_uyvy_MMX(w, h, src, srca, srcstride, dstbase, dststride);
-	else
-		vo_draw_alpha_uyvy_X86(w, h, src, srca, srcstride, dstbase, dststride);
-#else
-		vo_draw_alpha_uyvy_C(w, h, src, srca, srcstride, dstbase, dststride);
-#endif
-#else //CONFIG_RUNTIME_CPUDETECT
-#if HAVE_MMX2
-		vo_draw_alpha_uyvy_MMX2(w, h, src, srca, srcstride, dstbase, dststride);
-#elif HAVE_AMD3DNOW
-		vo_draw_alpha_uyvy_3DNow(w, h, src, srca, srcstride, dstbase, dststride);
-#elif HAVE_MMX
-		vo_draw_alpha_uyvy_MMX(w, h, src, srca, srcstride, dstbase, dststride);
-#elif ARCH_X86
-		vo_draw_alpha_uyvy_X86(w, h, src, srca, srcstride, dstbase, dststride);
-#else
-		vo_draw_alpha_uyvy_C(w, h, src, srca, srcstride, dstbase, dststride);
-#endif
-#endif //!CONFIG_RUNTIME_CPUDETECT
-}
-
 void vo_draw_alpha_rgb24(int w,int h, unsigned char* src, unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
 #if CONFIG_RUNTIME_CPUDETECT
 #if ARCH_X86
@@ -283,21 +250,7 @@ void vo_draw_alpha_rgb32(int w,int h, unsigned char* src, unsigned char *srca, i
 #endif //!CONFIG_RUNTIME_CPUDETECT
 }
 
-#ifdef FAST_OSD_TABLE
-static unsigned short fast_osd_12bpp_table[256];
-static unsigned short fast_osd_15bpp_table[256];
-static unsigned short fast_osd_16bpp_table[256];
-#endif
-
 void vo_draw_alpha_init(void){
-#ifdef FAST_OSD_TABLE
-    int i;
-    for(i=0;i<256;i++){
-        fast_osd_12bpp_table[i]=((i>>4)<< 8)|((i>>4)<<4)|(i>>4);
-        fast_osd_15bpp_table[i]=((i>>3)<<10)|((i>>3)<<5)|(i>>3);
-        fast_osd_16bpp_table[i]=((i>>3)<<11)|((i>>2)<<5)|(i>>3);
-    }
-#endif
 //FIXME the optimized stuff is a lie for 15/16bpp as they aren't optimized yet
 	if( mp_msg_test(MSGT_OSD,MSGL_V) )
 	{
@@ -339,14 +292,6 @@ void vo_draw_alpha_rgb12(int w, int h, unsigned char* src, unsigned char *srca,
         register int x;
         for (x = 0; x < w; x++) {
             if(srca[x]){
-#ifdef FAST_OSD
-#ifdef FAST_OSD_TABLE
-                dst[x] = fast_osd_12bpp_table[src[x]];
-#else
-                register unsigned int a = src[x] >> 4;
-                dst[x] = (a << 8) | (a << 4) | a;
-#endif
-#else
                 unsigned char r = dst[x] & 0x0F;
                 unsigned char g = (dst[x] >> 4) & 0x0F;
                 unsigned char b = (dst[x] >> 8) & 0x0F;
@@ -354,7 +299,6 @@ void vo_draw_alpha_rgb12(int w, int h, unsigned char* src, unsigned char *srca,
                 g = (((g*srca[x]) >> 4) + src[x]) >> 4;
                 b = (((b*srca[x]) >> 4) + src[x]) >> 4;
                 dst[x] = (b << 8) | (g << 4) | r;
-#endif
             }
         }
         src += srcstride;
@@ -371,14 +315,6 @@ void vo_draw_alpha_rgb15(int w,int h, unsigned char* src, unsigned char *srca, i
         register int x;
         for(x=0;x<w;x++){
             if(srca[x]){
-#ifdef FAST_OSD
-#ifdef FAST_OSD_TABLE
-                dst[x]=fast_osd_15bpp_table[src[x]];
-#else
-		register unsigned int a=src[x]>>3;
-                dst[x]=(a<<10)|(a<<5)|a;
-#endif
-#else
                 unsigned char r=dst[x]&0x1F;
                 unsigned char g=(dst[x]>>5)&0x1F;
                 unsigned char b=(dst[x]>>10)&0x1F;
@@ -386,7 +322,6 @@ void vo_draw_alpha_rgb15(int w,int h, unsigned char* src, unsigned char *srca, i
                 g=(((g*srca[x])>>5)+src[x])>>3;
                 b=(((b*srca[x])>>5)+src[x])>>3;
                 dst[x]=(b<<10)|(g<<5)|r;
-#endif
             }
         }
         src+=srcstride;
@@ -403,13 +338,6 @@ void vo_draw_alpha_rgb16(int w,int h, unsigned char* src, unsigned char *srca, i
         register int x;
         for(x=0;x<w;x++){
             if(srca[x]){
-#ifdef FAST_OSD
-#ifdef FAST_OSD_TABLE
-                dst[x]=fast_osd_16bpp_table[src[x]];
-#else
-                dst[x]=((src[x]>>3)<<11)|((src[x]>>2)<<5)|(src[x]>>3);
-#endif
-#else
                 unsigned char r=dst[x]&0x1F;
                 unsigned char g=(dst[x]>>5)&0x3F;
                 unsigned char b=(dst[x]>>11)&0x1F;
@@ -417,7 +345,6 @@ void vo_draw_alpha_rgb16(int w,int h, unsigned char* src, unsigned char *srca, i
                 g=(((g*srca[x])>>6)+src[x])>>2;
                 b=(((b*srca[x])>>5)+src[x])>>3;
                 dst[x]=(b<<11)|(g<<5)|r;
-#endif
             }
         }
         src+=srcstride;

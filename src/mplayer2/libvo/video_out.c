@@ -65,7 +65,6 @@ int64_t WinID = -1;
 int vo_pts=0; // for hw decoding
 float vo_fps=0;
 
-char *vo_subdevice = NULL;
 int vo_directrendering=0;
 
 int vo_colorkey = 0x0000ff00; // default colorkey is green
@@ -75,45 +74,23 @@ int vo_colorkey = 0x0000ff00; // default colorkey is green
 //
 // Externally visible list of all vo drivers
 //
-extern struct vo_driver video_out_mga;
-extern struct vo_driver video_out_xmga;
 extern struct vo_driver video_out_x11;
-extern struct vo_driver video_out_xover;
 extern struct vo_driver video_out_vdpau;
 extern struct vo_driver video_out_xv;
 extern struct vo_driver video_out_gl_nosw;
 extern struct vo_driver video_out_gl;
-extern struct vo_driver video_out_gl_sdl;
-extern struct vo_driver video_out_dga;
+extern struct vo_driver video_out_gl3;
 extern struct vo_driver video_out_sdl;
-extern struct vo_driver video_out_3dfx;
-extern struct vo_driver video_out_tdfxfb;
-extern struct vo_driver video_out_s3fb;
-extern struct vo_driver video_out_wii;
 extern struct vo_driver video_out_null;
-extern struct vo_driver video_out_bl;
-extern struct vo_driver video_out_fbdev;
-extern struct vo_driver video_out_fbdev2;
-extern struct vo_driver video_out_svga;
 extern struct vo_driver video_out_png;
-extern struct vo_driver video_out_ggi;
-extern struct vo_driver video_out_aa;
 extern struct vo_driver video_out_caca;
-extern struct vo_driver video_out_mpegpes;
 extern struct vo_driver video_out_yuv4mpeg;
 extern struct vo_driver video_out_direct3d;
 extern struct vo_driver video_out_directx;
-extern struct vo_driver video_out_kva;
-extern struct vo_driver video_out_dxr3;
-extern struct vo_driver video_out_ivtv;
 extern struct vo_driver video_out_v4l2;
 extern struct vo_driver video_out_jpeg;
 extern struct vo_driver video_out_gif89a;
-extern struct vo_driver video_out_vesa;
 extern struct vo_driver video_out_directfb;
-extern struct vo_driver video_out_dfbmga;
-extern struct vo_driver video_out_tdfx_vid;
-extern struct vo_driver video_out_xvr100;
 extern struct vo_driver video_out_tga;
 extern struct vo_driver video_out_corevideo;
 extern struct vo_driver video_out_sharedbuffer;
@@ -122,20 +99,11 @@ extern struct vo_driver video_out_md5sum;
 
 const struct vo_driver *video_out_drivers[] =
 {
-#ifdef CONFIG_XVR100
-        &video_out_xvr100,
-#endif
-#ifdef CONFIG_TDFX_VID
-        &video_out_tdfx_vid,
-#endif
 #ifdef CONFIG_DIRECTX
         &video_out_directx,
 #endif
 #ifdef CONFIG_DIRECT3D
         &video_out_direct3d,
-#endif
-#ifdef CONFIG_KVA
-        &video_out_kva,
 #endif
 #ifdef CONFIG_GL_COCOA
         &video_out_gl,
@@ -143,82 +111,29 @@ const struct vo_driver *video_out_drivers[] =
 #ifdef CONFIG_COREVIDEO
         &video_out_corevideo,
 #endif
-#ifdef CONFIG_XMGA
-        &video_out_xmga,
-#endif
-#ifdef CONFIG_MGA
-        &video_out_mga,
-#endif
-#ifdef CONFIG_TDFXFB
-        &video_out_tdfxfb,
-#endif
-#ifdef CONFIG_S3FB
-        &video_out_s3fb,
-#endif
-#ifdef CONFIG_WII
-        &video_out_wii,
-#endif
-#ifdef CONFIG_3DFX
-        &video_out_3dfx,
-#endif
 #if CONFIG_VDPAU
         &video_out_vdpau,
 #endif
 #ifdef CONFIG_XV
         &video_out_xv,
 #endif
-#ifdef CONFIG_X11
 #ifdef CONFIG_GL
-        &video_out_gl_nosw,
+        &video_out_gl3,
+#ifndef CONFIG_GL_COCOA
+        &video_out_gl,
 #endif
+#endif
+#ifdef CONFIG_X11
         &video_out_x11,
-        &video_out_xover,
 #endif
 #ifdef CONFIG_SDL
         &video_out_sdl,
 #endif
-#if (defined CONFIG_GL && !defined CONFIG_GL_COCOA)
-        &video_out_gl,
-#endif
-#ifdef CONFIG_GL_SDL
-        &video_out_gl_sdl,
-#endif
-#ifdef CONFIG_DGA
-        &video_out_dga,
-#endif
-#ifdef CONFIG_GGI
-        &video_out_ggi,
-#endif
-#ifdef CONFIG_FBDEV
-        &video_out_fbdev,
-        &video_out_fbdev2,
-#endif
-#ifdef CONFIG_SVGALIB
-        &video_out_svga,
-#endif
-#ifdef CONFIG_AA
-        &video_out_aa,
-#endif
 #ifdef CONFIG_CACA
         &video_out_caca,
 #endif
-#ifdef CONFIG_DXR3
-        &video_out_dxr3,
-#endif
-#ifdef CONFIG_IVTV
-        &video_out_ivtv,
-#endif
 #ifdef CONFIG_V4L2_DECODER
         &video_out_v4l2,
-#endif
-#ifdef CONFIG_BL
-        &video_out_bl,
-#endif
-#ifdef CONFIG_VESA
-        &video_out_vesa,
-#endif
-#ifdef CONFIG_DIRECTFB
-        &video_out_dfbmga,
 #endif
         &video_out_null,
         // should not be auto-selected
@@ -226,7 +141,6 @@ const struct vo_driver *video_out_drivers[] =
         // vo directfb can call exit() if initialization fails
         &video_out_directfb,
 #endif
-        &video_out_mpegpes,
 #ifdef CONFIG_YUV4MPEG
         &video_out_yuv4mpeg,
 #endif
@@ -248,6 +162,11 @@ const struct vo_driver *video_out_drivers[] =
 #endif
 #ifdef CONFIG_SHAREDBUFFER
         &video_out_sharedbuffer,
+#endif
+#ifdef CONFIG_X11
+#ifdef CONFIG_GL
+        &video_out_gl_nosw,
+#endif
 #endif
         NULL
 };
@@ -414,8 +333,7 @@ void list_video_out(void)
     mp_msg(MSGT_GLOBAL, MSGL_INFO,"\n");
 }
 
-struct vo *init_best_video_out(struct MPOpts *opts, struct vo_x11_state *x11,
-                               struct mp_fifo *key_fifo,
+struct vo *init_best_video_out(struct MPOpts *opts, struct mp_fifo *key_fifo,
                                struct input_ctx *input_ctx)
 {
     char **vo_list = opts->video_driver_list;
@@ -423,7 +341,6 @@ struct vo *init_best_video_out(struct MPOpts *opts, struct vo_x11_state *x11,
     struct vo *vo = talloc_ptrtype(NULL, vo);
     struct vo initial_values = {
         .opts = opts,
-        .x11 = x11,
         .key_fifo = key_fifo,
         .input_ctx = input_ctx,
         .event_fd = -1,
@@ -433,7 +350,7 @@ struct vo *init_best_video_out(struct MPOpts *opts, struct vo_x11_state *x11,
     if (vo_list && vo_list[0])
         while (vo_list[0][0]) {
             char *name = strdup(vo_list[0]);
-            vo_subdevice = strchr(name,':');
+            char *vo_subdevice = strchr(name,':');
             if (!strcmp(name, "pgm"))
                 mp_tmsg(MSGT_CPLAYER, MSGL_ERR, "The pgm video output driver has been replaced by -vo pnm:pgmyuv.\n");
             if (!strcmp(name, "md5"))
@@ -459,20 +376,21 @@ struct vo *init_best_video_out(struct MPOpts *opts, struct vo_x11_state *x11,
             // continue...
             free(name);
             ++vo_list;
-            if (!(vo_list[0]))
+            if (!(vo_list[0])) {
+                talloc_free(vo);
                 return NULL; // do NOT fallback to others
+            }
 	}
     // now try the rest...
-    vo_subdevice = NULL;
     for (i = 0; video_out_drivers[i]; i++) {
         const struct vo_driver *video_driver = video_out_drivers[i];
         *vo = initial_values;
         vo->driver = video_driver;
-        if (!vo_preinit(vo, vo_subdevice))
+        if (!vo_preinit(vo, NULL))
             return vo; // success!
         talloc_free_children(vo);
     }
-    free(vo);
+    talloc_free(vo);
     return NULL;
 }
 
@@ -631,84 +549,3 @@ void vo_mouse_movement(struct vo *vo, int posx, int posy)
   snprintf(cmd_str, sizeof(cmd_str), "set_mouse_pos %i %i", posx, posy);
   mp_input_queue_cmd(vo->input_ctx, mp_input_parse_cmd(cmd_str));
 }
-
-#if defined(CONFIG_FBDEV) || defined(CONFIG_VESA)
-/* Borrowed from vo_fbdev.c
-Monitor ranges related functions*/
-
-char *monitor_hfreq_str = NULL;
-char *monitor_vfreq_str = NULL;
-char *monitor_dotclock_str = NULL;
-
-float range_max(range_t *r)
-{
-float max = 0;
-
-	for (/* NOTHING */; (r->min != -1 && r->max != -1); r++)
-		if (max < r->max) max = r->max;
-	return max;
-}
-
-
-int in_range(range_t *r, float f)
-{
-	for (/* NOTHING */; (r->min != -1 && r->max != -1); r++)
-		if (f >= r->min && f <= r->max)
-			return 1;
-	return 0;
-}
-
-range_t *str2range(char *s)
-{
-	float tmp_min, tmp_max;
-	char *endptr = s;	// to start the loop
-	range_t *r = NULL;
-	int i;
-
-	if (!s)
-		return NULL;
-	for (i = 0; *endptr; i++) {
-		if (*s == ',')
-			goto out_err;
-		if (!(r = realloc(r, sizeof(*r) * (i + 2)))) {
-			mp_msg(MSGT_GLOBAL, MSGL_WARN,"can't realloc 'r'\n");
-			return NULL;
-		}
-		tmp_min = strtod(s, &endptr);
-		if (*endptr == 'k' || *endptr == 'K') {
-			tmp_min *= 1000.0;
-			endptr++;
-		} else if (*endptr == 'm' || *endptr == 'M') {
-			tmp_min *= 1000000.0;
-			endptr++;
-		}
-		if (*endptr == '-') {
-			tmp_max = strtod(endptr + 1, &endptr);
-			if (*endptr == 'k' || *endptr == 'K') {
-				tmp_max *= 1000.0;
-				endptr++;
-			} else if (*endptr == 'm' || *endptr == 'M') {
-				tmp_max *= 1000000.0;
-				endptr++;
-			}
-			if (*endptr != ',' && *endptr)
-				goto out_err;
-		} else if (*endptr == ',' || !*endptr) {
-			tmp_max = tmp_min;
-		} else
-			goto out_err;
-		r[i].min = tmp_min;
-		r[i].max = tmp_max;
-		if (r[i].min < 0 || r[i].max < 0)
-			goto out_err;
-		s = endptr + 1;
-	}
-	r[i].min = r[i].max = -1;
-	return r;
-out_err:
-	free(r);
-	return NULL;
-}
-
-/* Borrowed from vo_fbdev.c END */
-#endif

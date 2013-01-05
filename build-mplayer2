@@ -6,33 +6,25 @@ args="--enable-runtime-cpudetection \
   --disable-vm --disable-xf86keysym --disable-radio --disable-radio-capture --disable-radio-v4l2 \
   --disable-radio-bsdbt848 --disable-tv --disable-tv-v4l1 --disable-tv-v4l2 --disable-tv-bsdbt848 \
   --disable-pvr --disable-rtc --enable-networking --disable-winsock2_h --disable-smb \
-  --disable-live --disable-nemesi --disable-vcd --disable-bluray \
-  --enable-dvdnav --enable-dvdread --disable-dvdread-internal --disable-libdvdcss-internal \
-  --enable-cddb --enable-bitmap-font --disable-freetype --disable-fontconfig --disable-unrarexec \
-  --disable-sortsub --disable-fribidi --disable-enca --disable-macosx-finder \
-  --disable-macosx-bundle --enable-inet6 --enable-gethostbyname2 --enable-ftp --disable-vstream \
-  --enable-pthreads --disable-w32threads --disable-libass --disable-rpath --disable-libpostproc \
-  --disable-gif --disable-png --disable-mng --disable-jpeg --enable-libcdio \
-  --disable-win32dll --disable-qtx --disable-xanim --disable-real --enable-xvid \
-  --disable-libnut --enable-libav --enable-libvorbis --disable-tremor --disable-speex \
-  --enable-theora --enable-faad --disable-ladspa --disable-libbs2b --enable-libdv \
-  --disable-mpg123 --enable-mad --disable-xmms --enable-libdca --enable-liba52 --disable-musepack \
-  --disable-gl --disable-corevideo --disable-x11 --disable-cocoa \
-  --disable-dga2 --disable-dga1 --disable-vesa --disable-svga --disable-sdl \
-  --disable-aa --disable-caca --disable-ggi --disable-ggiwmh --disable-direct3d --disable-directx \
-  --disable-dxr3 --disable-ivtv --disable-v4l2 --disable-dvb --disable-mga --disable-xmga \
-  --disable-xv --disable-vdpau --disable-vm --disable-xinerama --disable-xshape \
-  --disable-xss --disable-fbdev --disable-3dfx --disable-tdfxfb --disable-s3fb --disable-wii \
-  --disable-directfb --disable-bl --disable-tdfxvid --disable-xvr100 --disable-tga --disable-pnm \
-  --disable-md5sum --disable-yuv4mpeg --disable-sharedbuffer --enable-openal \
-  --disable-ossaudio --disable-rsound --disable-pulse --disable-portaudio \
-  --disable-jack --disable-nas --disable-sunaudio --disable-win32waveout \
-  --disable-select --disable-translation --disable-static"
+  --disable-vcd --disable-bluray --enable-dvdnav --enable-dvdread --disable-dvdread-internal \
+  --disable-libdvdcss-internal --enable-cddb --disable-unrarexec --disable-sortsub --disable-enca \
+  --disable-macosx-finder --disable-macosx-bundle --enable-inet6 --enable-gethostbyname2 --enable-ftp \
+  --disable-vstream --enable-pthreads --disable-w32threads --disable-libass --disable-rpath \
+  --disable-libpostproc --disable-gif --disable-png --disable-mng --disable-jpeg --enable-libcdio \
+  --disable-win32dll --disable-qtx --disable-xanim --disable-real --enable-xvid --disable-libnut \
+  --enable-libav --enable-libvorbis --disable-tremor --disable-speex --enable-theora --enable-faad \
+  --disable-ladspa --disable-libbs2b --enable-libdv --disable-mpg123 --enable-mad --disable-xmms \
+  --enable-libdca --enable-liba52 --disable-musepack --disable-gl --disable-corevideo --disable-cocoa \
+  --disable-x11 --disable-sdl --disable-caca --disable-direct3d --disable-directx --disable-v4l2 \
+  --disable-dvb --disable-xv --disable-vdpau --disable-vm --disable-xinerama --disable-xshape \
+  --disable-xss --disable-directfb --disable-tga --disable-pnm --disable-md5sum --disable-yuv4mpeg \
+  --disable-sharedbuffer --enable-openal --disable-ossaudio --disable-rsound --disable-pulse \
+  --disable-portaudio --disable-jack --disable-select --disable-translation --disable-static"
 cflags="-I../../build/include"
 objs="command.o m_property.o mixer.o mp_fifo.o parser-mpcmd.o \
-  screenshot.o input/input.o libao2/ao_mpegpes.o libao2/ao_null.o libao2/ao_pcm.o \
+  screenshot.o input/input.o libao2/ao_null.o libao2/ao_pcm.o \
   libao2/audio_out.o libvo/aspect.o libvo/csputils.o libvo/geometry.o libvo/old_vo_wrapper.o \
-  libvo/spuenc.o libvo/video_out.o libvo/vo_mpegpes.o libvo/vo_null.o libvo/vo_png.o libao2/ao_openal.o \
+  libvo/video_out.o libvo/vo_null.o libvo/vo_png.o libao2/ao_openal.o \
   asxparser.o av_log.o av_opts.o bstr.o codec-cfg.o cpudetect.o defaultopts.o fmt-conversion.o m_config.o \
   m_option.o m_struct.o mpcommon.o parser-cfg.o path.o playtree.o playtreeparser.o \
   subopt-helper.o talloc.o libaf/af.o libaf/af_center.o libaf/af_channels.o libaf/af_comp.o \
@@ -84,23 +76,19 @@ objs="command.o m_property.o mixer.o mp_fifo.o parser-mpcmd.o \
   libmpdemux/mp3_hdr.o libmpdemux/mp_taglists.o libmpdemux/mpeg_hdr.o \
   libmpdemux/mpeg_packetizer.o libmpdemux/parse_es.o libmpdemux/parse_mp4.o \
   libmpdemux/video.o libmpdemux/yuv4mpeg.o libmpdemux/yuv4mpeg_ratio.o libvo/osd.o \
-  osdep/numcores.o osdep/io.o osdep/getch2.o stream/open.o \
+  osdep/numcores.o osdep/io.o osdep/getch2.o \
   stream/stream.o stream/stream_cue.o stream/stream_ffmpeg.o stream/stream_file.o \
-  stream/stream_mf.o stream/stream_null.o stream/url.o sub/av_sub.o sub/dec_sub.o \
+  stream/stream_mf.o stream/stream_null.o stream/url.o sub/dec_sub.o \
   sub/find_sub.o sub/find_subfiles.o sub/spudec.o sub/sub.o sub/sub_cc.o sub/subassconvert.o \
-  sub/subreader.o sub/vobsub.o timeline/tl_edl.o timeline/tl_matroska.o sub/font_load.o \
+  sub/subreader.o sub/vobsub.o sub/osd_dummy.o sub/sd_lavc.o timeline/tl_edl.o timeline/tl_matroska.o \
   stream/stream_cdda.o stream/cdinfo.o stream/stream_cddb.o stream/stream_dvdnav.o \
   stream/stream_dvd.o stream/stream_dvd_common.o libmpcodecs/ad_faad.o libvo/aclib.o \
   stream/stream_ftp.o libmpcodecs/vf_bmovl.o libaf/af_export.o osdep/mmap_anon.o \
   libmpcodecs/ad_liba52.o libmpcodecs/ad_libdca.o libmpcodecs/ad_libdv.o libmpcodecs/vd_libdv.o \
   libmpdemux/demux_rawdv.o libmpcodecs/ad_libmad.o libmpcodecs/vd_theora.o \
-  stream/stream_rtsp.o stream/freesdp/common.o \
-  stream/freesdp/errorlist.o stream/freesdp/parser.o stream/librtsp/rtsp.o \
-  stream/librtsp/rtsp_rtp.o stream/librtsp/rtsp_session.o osdep/shmem.o \
-  stream/stream_netstream.o stream/asf_mmst_streaming.o stream/asf_streaming.o stream/cookies.o \
+  osdep/shmem.o stream/stream_netstream.o stream/asf_mmst_streaming.o stream/asf_streaming.o stream/cookies.o \
   stream/http.o stream/network.o stream/pnm.o stream/rtp.o stream/udp.o stream/tcp.o \
-  stream/stream_rtp.o stream/stream_udp.o stream/realrtsp/asmrp.o stream/realrtsp/real.o \
-  stream/realrtsp/rmff.o stream/realrtsp/sdpplin.o stream/realrtsp/xbuffer.o stream/cache2.o \
+  stream/stream_rtp.o stream/stream_udp.o stream/cache2.o stream/quvi.o stream/stream.o \
   libmpcodecs/ad_libvorbis.o libmpdemux/demux_ogg.o libmpcodecs/vd_xvid4.o"
 
 libs="-lz -lbz2 -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio"
@@ -125,5 +113,5 @@ else
   exit
 fi
 
-cd src/mplayer2 && make distclean ; ./configure $args --extra-cflags="$cflags" --extra-libs="$libs" \
+cd src/mplayer2 && make distclean; ./configure $args --extra-cflags="$cflags" --extra-libs="$libs" \
   && make -j 6 && ar rcsv ../../build/lib/libcmplayer_mplayer2.a $objs

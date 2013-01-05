@@ -27,12 +27,20 @@
 #include <assert.h>
 
 #include <libavcodec/avcodec.h>
+#include <libavutil/audioconvert.h>
+#include <libavutil/error.h>
 #include <libavutil/intreadwrite.h>
+#include <libavutil/mem.h>
+#include <libavutil/opt.h>
+#include <libavutil/samplefmt.h>
 
 #include "config.h"
 #include "af.h"
 #include "reorder_ch.h"
 
+#ifdef CONFIG_LIBAVRESAMPLE
+#include <libavresample/avresample.h>
+#endif
 
 #define AC3_MAX_CHANNELS 6
 #define AC3_MAX_CODED_FRAME_SIZE 3840
@@ -44,6 +52,12 @@ const uint16_t ac3_bitrate_tab[19] = {
 
 // Data for specific instances of this filter
 typedef struct af_ac3enc_s {
+#ifdef CONFIG_LIBAVRESAMPLE
+    AVAudioResampleContext *avr;
+    uint8_t *resample_buf[AC3_MAX_CHANNELS];
+    int linesize;
+#endif
+    AVFrame *frame;
     struct AVCodec        *lavc_acodec;
     struct AVCodecContext *lavc_actx;
     int add_iec61937_header;
@@ -100,6 +114,47 @@ static int control(struct af_instance_s *af, int cmd, void *arg)
                 s->lavc_actx->bit_rate != bit_rate) {
 
             avcodec_close(s->lavc_actx);
+
+#ifdef CONFIG_LIBAVRESAMPLE
+            if (s->avr) {
+                uint64_t ch_layout =
+                    av_get_default_channel_layout(af->data->nch);
+                enum AVSampleFormat in_sample_fmt =
+                    av_get_packed_sample_fmt(s->lavc_actx->sample_fmt);
+                int ret;
+
+                avresample_close(s->avr);
+
+                if (af->data->nch != s->lavc_actx->channels) {
+                    av_freep(&s->resample_buf[0]);
+                    ret = av_samples_alloc(s->resample_buf, &s->linesize,
+                                           af->data->nch, AC3_FRAME_SIZE,
+                                           s->lavc_actx->sample_fmt, 0);
+                    if (ret < 0) {
+                        uint8_t error[128];
+                        av_strerror(ret, error, sizeof(error));
+                        mp_msg(MSGT_AFILTER, MSGL_ERR, "Error allocating "
+                               "resample buffer: %s\n", error);
+                        return AF_ERROR;
+                    }
+                }
+
+                av_opt_set_int(s->avr, "in_channel_layout",   ch_layout, 0);
+                av_opt_set_int(s->avr, "out_channel_layout",  ch_layout, 0);
+                av_opt_set_int(s->avr, "in_sample_rate",    af->data->rate, 0);
+                av_opt_set_int(s->avr, "out_sample_rate",   af->data->rate, 0);
+                av_opt_set_int(s->avr, "in_sample_fmt",     in_sample_fmt, 0);
+                av_opt_set_int(s->avr, "out_sample_fmt",    s->lavc_actx->sample_fmt, 0);
+
+                if ((ret = avresample_open(s->avr)) < 0) {
+                    uint8_t error[128];
+                    av_strerror(ret, error, sizeof(error));
+                    mp_msg(MSGT_AFILTER, MSGL_ERR, "Error configuring "
+                           "libavresample: %s\n", error);
+                    return AF_ERROR;
+                }
+            }
+#endif
 
             // Put sample parameters
             s->lavc_actx->channels = af->data->nch;
@@ -163,9 +218,69 @@ static void uninit(struct af_instance_s* af)
             avcodec_close(s->lavc_actx);
             av_free(s->lavc_actx);
         }
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(54, 28, 0)
+        avcodec_free_frame(&s->frame);
+#else
+        av_freep(&s->frame);
+#endif
+#ifdef CONFIG_LIBAVRESAMPLE
+        avresample_free(&s->avr);
+        av_freep(&s->resample_buf[0]);
+#endif
         free(s->pending_data);
         free(s);
     }
+}
+
+static int encode_data(af_ac3enc_t *s, uint8_t *src, uint8_t *dst, int dst_len)
+{
+    AVPacket pkt;
+    uint8_t error[128];
+    int total_samples = AC3_FRAME_SIZE * s->lavc_actx->channels;
+    int bps = av_get_bytes_per_sample(s->lavc_actx->sample_fmt);
+    int ret, got_frame;
+
+    if (s->lavc_actx->channels >= 5)
+        reorder_channel_nch(src, AF_CHANNEL_LAYOUT_MPLAYER_DEFAULT,
+                            AF_CHANNEL_LAYOUT_LAVC_DEFAULT,
+                            s->lavc_actx->channels,
+                            total_samples, bps);
+
+    s->frame->nb_samples  = AC3_FRAME_SIZE;
+    s->frame->data[0]     = src;
+    s->frame->linesize[0] = total_samples * bps;
+
+#ifdef CONFIG_LIBAVRESAMPLE
+    if (s->avr) {
+        ret = avresample_convert(s->avr, s->resample_buf, s->linesize,
+                                 AC3_FRAME_SIZE, &src, total_samples * bps,
+                                 AC3_FRAME_SIZE);
+        if (ret < 0) {
+            av_strerror(ret, error, sizeof(error));
+            mp_msg(MSGT_AFILTER, MSGL_ERR, "Error converting audio sample "
+                   "format: %s\n", error);
+            return AF_ERROR;
+        } else if (ret != AC3_FRAME_SIZE) {
+            mp_msg(MSGT_AFILTER, MSGL_ERR, "Not enough converted data.\n");
+            return -1;
+        }
+
+        memcpy(s->frame->data, s->resample_buf, sizeof(s->resample_buf));
+        s->frame->linesize[0] = s->linesize;
+    }
+#endif
+
+    av_init_packet(&pkt);
+    pkt.data = dst;
+    pkt.size = dst_len;
+
+    ret = avcodec_encode_audio2(s->lavc_actx, &pkt, s->frame, &got_frame);
+    if (ret < 0) {
+        av_strerror(ret, error, sizeof(error));
+        mp_msg(MSGT_AFILTER, MSGL_ERR, "Error encoding audio: %s\n", error);
+        return ret;
+    }
+    return got_frame ? pkt.size : 0;
 }
 
 // Filter data through filter
@@ -178,7 +293,6 @@ static af_data_t* play(struct af_instance_s* af, af_data_t* data)
     char *buf, *src, *dest;
     int max_output_len;
     int frame_num = (data->len + s->pending_len) / s->expect_len;
-    int samplesize = af_fmt2bits(s->in_sampleformat) / 8;
 
     if (s->add_iec61937_header)
         max_output_len = AC3_FRAME_SIZE * 2 * 2 * frame_num;
@@ -224,28 +338,17 @@ static af_data_t* play(struct af_instance_s* af, af_data_t* data)
                 left -= needs;
             }
 
-            if (c->nch >= 5)
-                reorder_channel_nch(s->pending_data,
-                                    AF_CHANNEL_LAYOUT_MPLAYER_DEFAULT,
-                                    AF_CHANNEL_LAYOUT_LAVC_DEFAULT,
-                                    c->nch,
-                                    s->expect_len / samplesize, samplesize);
-
-            len = avcodec_encode_audio(s->lavc_actx, dest, destsize,
-                                       (void *)s->pending_data);
+            len = encode_data(s, s->pending_data, dest, destsize);
             s->pending_len = 0;
         }
         else {
-            if (c->nch >= 5)
-                reorder_channel_nch(src,
-                                    AF_CHANNEL_LAYOUT_MPLAYER_DEFAULT,
-                                    AF_CHANNEL_LAYOUT_LAVC_DEFAULT,
-                                    c->nch,
-                                    s->expect_len / samplesize, samplesize);
-            len = avcodec_encode_audio(s->lavc_actx,dest,destsize,(void *)src);
+            len = encode_data(s, src, dest, destsize);
             src += s->expect_len;
             left -= s->expect_len;
         }
+        if (len <= 0)
+            return NULL;
+
         mp_msg(MSGT_AFILTER, MSGL_DBG2, "avcodec_encode_audio got %d, pending %d.\n",
                len, s->pending_len);
 
@@ -295,21 +398,40 @@ static int af_open(af_instance_t* af){
         mp_tmsg(MSGT_AFILTER, MSGL_ERR, "Audio LAVC, couldn't allocate context!\n");
         return AF_ERROR;
     }
+    s->frame = avcodec_alloc_frame();
+    if (!s->frame)
+        return AF_ERROR;
     const enum AVSampleFormat *fmts = s->lavc_acodec->sample_fmts;
     for (int i = 0; ; i++) {
         if (fmts[i] == AV_SAMPLE_FMT_NONE) {
             mp_msg(MSGT_AFILTER, MSGL_ERR, "Audio LAVC, encoder doesn't "
                    "support expected sample formats!\n");
             return AF_ERROR;
-        } else if (fmts[i] == AV_SAMPLE_FMT_S16) {
+        }
+        enum AVSampleFormat fmt_packed = fmts[i];
+#ifdef CONFIG_LIBAVRESAMPLE
+        fmt_packed = av_get_packed_sample_fmt(fmt_packed);
+#endif
+        if (fmt_packed == AV_SAMPLE_FMT_S16) {
             s->in_sampleformat = AF_FORMAT_S16_NE;
             s->lavc_actx->sample_fmt = fmts[i];
             break;
-        } else if (fmts[i] == AV_SAMPLE_FMT_FLT) {
+        } else if (fmt_packed == AV_SAMPLE_FMT_FLT) {
             s->in_sampleformat = AF_FORMAT_FLOAT_NE;
             s->lavc_actx->sample_fmt = fmts[i];
             break;
         }
+    }
+    if (av_sample_fmt_is_planar(s->lavc_actx->sample_fmt)) {
+#ifdef CONFIG_LIBAVRESAMPLE
+        s->avr = avresample_alloc_context();
+        if (!s->avr)
+            abort();
+#else
+        mp_msg(MSGT_AFILTER, MSGL_ERR, "Libavresample is required for this "
+               "filter to work with this libavcodec version.\n");
+        return AF_ERROR;
+#endif
     }
     char buf[100];
     mp_msg(MSGT_AFILTER, MSGL_V, "[af_lavcac3enc]: in sample format: %s\n",

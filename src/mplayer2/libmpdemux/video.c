@@ -45,10 +45,6 @@
 /* biCompression constant */
 #define BI_RGB        0L
 
-#ifdef CONFIG_LIVE555
-#include "demux_rtp.h"
-#endif
-
 static mp_mpeg_header_t picture;
 
 static int telecine=0;
@@ -77,9 +73,6 @@ static video_codec_t find_video_codec(sh_video_t *sh_video)
       ((! sh_video->format) || (sh_video->format==0x10000001) || (sh_video->format==0x10000002))
     ) ||
     (fmt == DEMUXER_TYPE_MPEG_TY)
-#ifdef CONFIG_LIVE555
-    || ((fmt == DEMUXER_TYPE_RTP) && demux_is_mpeg_rtp_stream(d_video->demuxer))
-#endif
   )
     return VIDEO_MPEG12;
   else if((fmt == DEMUXER_TYPE_MPEG4_ES) ||

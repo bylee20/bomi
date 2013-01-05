@@ -43,7 +43,6 @@
 #include "demuxer.h"
 #include "stheader.h"
 #include "m_option.h"
-#include "sub/sub.h"
 
 #include "mp_taglists.h"
 
@@ -198,7 +197,8 @@ static int lavf_check_file(demuxer_t *demuxer)
             mp_msg(MSGT_DEMUX, MSGL_WARN, "Stream url is not set!\n");
             avpd.filename = "";
         }
-        if (!strncmp(avpd.filename, "ffmpeg://", 9))
+        if (!strncmp(avpd.filename, "ffmpeg://", 9) ||
+                !strncmp(avpd.filename, "lavf://", 7))
             avpd.filename += 9;
         avpd.buf_size = probe_data_size;
 
@@ -315,6 +315,8 @@ static void handle_stream(demuxer_t *demuxer, AVFormatContext *avfc, int i)
             codec->codec_tag = 0;
         if (!codec->codec_tag)
             codec->codec_tag = mp_taglist_audio(codec->codec_id);
+        if (!codec->codec_tag)
+            codec->codec_tag = -1;
         wf->wFormatTag = codec->codec_tag;
         wf->nChannels = codec->channels;
         wf->nSamplesPerSec = codec->sample_rate;
@@ -343,16 +345,6 @@ static void handle_stream(demuxer_t *demuxer, AVFormatContext *avfc, int i)
         sh_audio->samplerate = codec->sample_rate;
         sh_audio->i_bps = codec->bit_rate / 8;
         switch (codec->codec_id) {
-        case CODEC_ID_PCM_S8:
-        case CODEC_ID_PCM_U8:
-            sh_audio->samplesize = 1;
-            break;
-        case CODEC_ID_PCM_S16LE:
-        case CODEC_ID_PCM_S16BE:
-        case CODEC_ID_PCM_U16LE:
-        case CODEC_ID_PCM_U16BE:
-            sh_audio->samplesize = 2;
-            break;
         case CODEC_ID_PCM_ALAW:
             sh_audio->format = 0x6;
             break;
@@ -460,13 +452,7 @@ static void handle_stream(demuxer_t *demuxer, AVFormatContext *avfc, int i)
             memcpy(sh_video->bih + 1, codec->extradata, codec->extradata_size);
         if ( mp_msg_test(MSGT_HEADER, MSGL_V))
             print_video_header(sh_video->bih, MSGL_V);
-        if (demuxer->video->id != priv->video_streams
-            && demuxer->video->id != -1)
-            st->discard = AVDISCARD_ALL;
-        else {
-            demuxer->video->id = i;
-            demuxer->video->sh = demuxer->v_streams[i];
-        }
+        st->discard = AVDISCARD_ALL;
         stream_id = priv->video_streams++;
         break;
     }
@@ -600,10 +586,12 @@ static demuxer_t *demux_open_lavf(demuxer_t *demuxer)
     }
 
     if (demuxer->stream->url) {
-        if (!strncmp(demuxer->stream->url, "ffmpeg://rtsp:", 14))
-            av_strlcpy(mp_filename, demuxer->stream->url + 9,
-                       sizeof(mp_filename));
-        else
+        if (demuxer->stream->lavf_type && !strcmp(demuxer->stream->lavf_type,
+                                                  "rtsp")) {
+            // Remove possible leading ffmpeg:// or lavf://
+            char *name = strstr(demuxer->stream->url, "rtsp:");
+            av_strlcpy(mp_filename, name, sizeof(mp_filename));
+        } else
             av_strlcat(mp_filename, demuxer->stream->url, sizeof(mp_filename));
     } else
         av_strlcat(mp_filename, "foobar.dummy", sizeof(mp_filename));
@@ -665,16 +653,17 @@ static demuxer_t *demux_open_lavf(demuxer_t *demuxer)
 
     mp_msg(MSGT_HEADER, MSGL_V, "LAVF: %d audio and %d video streams found\n",
            priv->audio_streams, priv->video_streams);
-    mp_msg(MSGT_HEADER, MSGL_V, "LAVF: build %d\n", LIBAVFORMAT_BUILD);
     demuxer->audio->id = -2;  // wait for higher-level code to select track
-    if (!priv->video_streams) {
-        if (!priv->audio_streams) {
-            mp_msg(MSGT_HEADER, MSGL_ERR,
-                   "LAVF: no audio or video headers found - broken file?\n");
-            return NULL;
-        }
-        demuxer->video->id = -2; // audio-only
-    }
+    /* There's still no global video track selection, so we have to pick
+     * the default video track in the demuxer.
+     * Note that the interface doesn't make sense: demuxer->video->id
+     * is initialized to --vid value, but after demuxer initialization
+     * it contains either -2 for disabled or v_streams[] index. */
+    int vid = demuxer->video->id;
+    demuxer->video->id = -2;
+    demuxer->desc->control(demuxer, DEMUXER_CTRL_SWITCH_VIDEO, &vid);
+    if (demuxer->video->id >= 0)
+        demuxer->video->sh = demuxer->v_streams[demuxer->video->id];
 
     // disabled because unreliable per-stream bitrate values returned
     // by libavformat trigger this heuristic incorrectly and break things
@@ -771,23 +760,12 @@ static int demux_lavf_fill_buffer(demuxer_t *demux, demux_stream_t *dsds)
     if (id == demux->audio->id || priv->internet_radio_hack) {
         // audio
         ds = demux->audio;
-        if (!ds->sh) {
-            ds->sh = demux->a_streams[id];
-            mp_msg(MSGT_DEMUX, MSGL_V, "Auto-selected LAVF audio ID = %d\n",
-                   ds->id);
-        }
     } else if (id == demux->video->id) {
         // video
         ds = demux->video;
-        if (!ds->sh) {
-            ds->sh = demux->v_streams[id];
-            mp_msg(MSGT_DEMUX, MSGL_V, "Auto-selected LAVF video ID = %d\n",
-                   ds->id);
-        }
     } else if (id == demux->sub->id) {
         // subtitle
         ds = demux->sub;
-        sub_utf8 = 1;
     } else {
         talloc_free(pkt);
         return 1;

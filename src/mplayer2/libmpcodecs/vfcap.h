@@ -26,8 +26,6 @@
 #define VFCAP_CSP_SUPPORTED_BY_HW 0x2
 // set if the driver/filter can draw OSD
 #define VFCAP_OSD 0x4
-// set if the driver/filter can handle compressed SPU stream
-#define VFCAP_SPU 0x8
 // scaling up/down by hardware, or software:
 #define VFCAP_HWSCALE_UP 0x10
 #define VFCAP_HWSCALE_DOWN 0x20
@@ -54,5 +52,6 @@
 #define VOCAP_NOSLICES 0x8000
 #define VFCAP_OSD_FILTER  0x10000 // OSD is drawn in filter chain
 #define VFCAP_EOSD_FILTER 0x20000 // EOSD is drawn in filter chain
+#define VFCAP_EOSD_RGBA 0x40000
 
 #endif /* MPLAYER_VFCAP_H */

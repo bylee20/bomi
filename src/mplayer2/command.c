@@ -42,7 +42,6 @@
 #include "mp_osd.h"
 #include "libvo/video_out.h"
 #include "libvo/csputils.h"
-#include "sub/font_load.h"
 #include "playtree.h"
 #include "libao2/audio_out.h"
 #include "mpcommon.h"
@@ -239,7 +238,7 @@ static int mp_property_generic_option(struct m_option *prop, int action,
     case M_PROPERTY_SET:
         m_option_copy(opt, valptr, arg);
         return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
+    case M_PROPERTY_STEP:
         if (opt->type == &m_option_type_choice) {
             int v = *(int *) valptr;
             int best = v;
@@ -294,14 +293,18 @@ static int mp_property_playback_speed(m_option_t *prop, int action,
             return M_PROPERTY_ERROR;
         opts->playback_speed = *(float *) arg;
         goto set;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-        opts->playback_speed += (arg ? *(float *) arg : 0.1) *
-                                (action == M_PROPERTY_STEP_DOWN ? -1 : 1);
+    case M_PROPERTY_STEP:
+        opts->playback_speed += (arg ? *(float *) arg : 0.1);
     set:
         M_PROPERTY_CLAMP(prop, opts->playback_speed);
+        if (opts->playback_speed == orig_speed)
+            return M_PROPERTY_OK;
         // Adjust time until next frame flip for nosound mode
         mpctx->time_frame *= orig_speed / opts->playback_speed;
+        if (mpctx->sh_audio) {
+            double a = ao_get_delay(mpctx->ao);
+            mpctx->delay += (opts->playback_speed - orig_speed) * a;
+        }
         reinit_audio_chain(mpctx);
         return M_PROPERTY_OK;
     }
@@ -312,6 +315,8 @@ static int mp_property_playback_speed(m_option_t *prop, int action,
 static int mp_property_path(m_option_t *prop, int action, void *arg,
                             MPContext *mpctx)
 {
+    if (!mpctx->filename)
+        return M_PROPERTY_UNAVAILABLE;
     return m_property_string_ro(prop, action, arg, mpctx->filename);
 }
 
@@ -326,6 +331,26 @@ static int mp_property_filename(m_option_t *prop, int action, void *arg,
     if (!*f)
         f = mpctx->filename;
     return m_property_string_ro(prop, action, arg, f);
+}
+
+static int mp_property_media_title(m_option_t *prop, int action, void *arg,
+                                   MPContext *mpctx)
+{
+    char *name = NULL;
+    if (mpctx->resolve_result)
+        name = mpctx->resolve_result->title;
+    if (name && name[0])
+        return m_property_string_ro(prop, action, arg, name);
+    return mp_property_filename(prop, action, arg, mpctx);
+}
+
+static int mp_property_stream_path(m_option_t *prop, int action, void *arg,
+                                   MPContext *mpctx)
+{
+    struct stream *stream = mpctx->stream;
+    if (!stream || !stream->url)
+        return M_PROPERTY_UNAVAILABLE;
+    return m_property_string_ro(prop, action, arg, stream->url);
 }
 
 /// Demuxer name (RO)
@@ -441,11 +466,9 @@ static int mp_property_percent_pos(m_option_t *prop, int action,
         M_PROPERTY_CLAMP(prop, *(int *)arg);
         pos = *(int *)arg;
         break;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         pos = get_percent_pos(mpctx);
-        pos += (arg ? *(int *)arg : 10) *
-               (action == M_PROPERTY_STEP_UP ? 1 : -1);
+        pos += (arg ? *(int *)arg : 10);
         M_PROPERTY_CLAMP(prop, pos);
         break;
     default:
@@ -470,10 +493,8 @@ static int mp_property_time_pos(m_option_t *prop, int action,
         M_PROPERTY_CLAMP(prop, *(double *)arg);
         queue_seek(mpctx, MPSEEK_ABSOLUTE, *(double *)arg, 0);
         return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-        queue_seek(mpctx, MPSEEK_RELATIVE, (arg ? *(double *)arg : 10.0) *
-                   (action == M_PROPERTY_STEP_UP ? 1.0 : -1.0), 0);
+    case M_PROPERTY_STEP:
+        queue_seek(mpctx, MPSEEK_RELATIVE, (arg ? *(double *)arg : 10.0), 0);
         return M_PROPERTY_OK;
     }
     return m_property_time_ro(prop, action, arg, get_current_time(mpctx));
@@ -515,10 +536,8 @@ static int mp_property_chapter(m_option_t *prop, int action, void *arg,
         step_all = *(int *)arg - chapter;
         chapter += step_all;
         break;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN: {
-        step_all = (arg && *(int *)arg != 0 ? *(int *)arg : 1)
-                   * (action == M_PROPERTY_STEP_UP ? 1 : -1);
+    case M_PROPERTY_STEP: {
+        step_all = (arg && *(int *)arg != 0 ? *(int *)arg : 1);
         chapter += step_all;
         if (chapter < 0)
             chapter = 0;
@@ -590,14 +609,12 @@ static int mp_property_angle(m_option_t *prop, int action, void *arg,
         angle = *(int *)arg;
         M_PROPERTY_CLAMP(prop, angle);
         break;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN: {
+    case M_PROPERTY_STEP: {
         int step = 0;
         if (arg)
             step = *(int *)arg;
         if (!step)
             step = 1;
-        step *= (action == M_PROPERTY_STEP_UP ? 1 : -1);
         angle += step;
         if (angle < 1) //cycle
             angle = angles;
@@ -676,8 +693,7 @@ static int mp_property_pause(m_option_t *prop, int action, void *arg,
             return M_PROPERTY_ERROR;
         if (mpctx->paused == (bool) * (int *)arg)
             return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         if (mpctx->paused) {
             unpause_player(mpctx);
         } else {
@@ -711,35 +727,21 @@ static int mp_property_volume(m_option_t *prop, int action, void *arg,
         mixer_getbothvolume(&mpctx->mixer, &vol);
         return m_property_float_range(prop, action, arg, &vol);
     }
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-    case M_PROPERTY_SET:
-        break;
-    default:
-        return M_PROPERTY_NOT_IMPLEMENTED;
-    }
-
-    switch (action) {
     case M_PROPERTY_SET:
         if (!arg)
             return M_PROPERTY_ERROR;
         M_PROPERTY_CLAMP(prop, *(float *) arg);
         mixer_setvolume(&mpctx->mixer, *(float *) arg, *(float *) arg);
         return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
+    case M_PROPERTY_STEP:
         if (arg && *(float *) arg <= 0)
             mixer_decvolume(&mpctx->mixer);
         else
             mixer_incvolume(&mpctx->mixer);
         return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_DOWN:
-        if (arg && *(float *) arg <= 0)
-            mixer_incvolume(&mpctx->mixer);
-        else
-            mixer_decvolume(&mpctx->mixer);
-        return M_PROPERTY_OK;
+    default:
+        return M_PROPERTY_NOT_IMPLEMENTED;
     }
-    return M_PROPERTY_NOT_IMPLEMENTED;
 }
 
 /// Mute (RW)
@@ -756,8 +758,7 @@ static int mp_property_mute(m_option_t *prop, int action, void *arg,
             return M_PROPERTY_ERROR;
         mixer_setmute(&mpctx->mixer, *(int *) arg);
         return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         mixer_setmute(&mpctx->mixer, !mixer_getmute(&mpctx->mixer));
         return M_PROPERTY_OK;
     default:
@@ -774,8 +775,7 @@ static int mp_property_audio_delay(m_option_t *prop, int action,
         return M_PROPERTY_UNAVAILABLE;
     switch (action) {
     case M_PROPERTY_SET:
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN: {
+    case M_PROPERTY_STEP: {
         int ret;
         float delay = audio_delay;
         ret = m_property_delay(prop, action, arg, &audio_delay);
@@ -891,11 +891,9 @@ static int mp_property_balance(m_option_t *prop, int action, void *arg,
         }
         return M_PROPERTY_OK;
     }
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         mixer_getbalance(&mpctx->mixer, &bal);
-        bal += (arg ? *(float *)arg : .1f) *
-               (action == M_PROPERTY_STEP_UP ? 1.f : -1.f);
+        bal += (arg ? *(float *)arg : .1f);
         M_PROPERTY_CLAMP(prop, bal);
         mixer_setbalance(&mpctx->mixer, bal);
         return M_PROPERTY_OK;
@@ -962,7 +960,7 @@ static int mp_property_audio(m_option_t *prop, int action, void *arg,
         }
         return M_PROPERTY_OK;
 
-    case M_PROPERTY_STEP_UP:
+    case M_PROPERTY_STEP:
     case M_PROPERTY_SET:
         if (action == M_PROPERTY_SET && arg)
             tmp = *((int *) arg);
@@ -1014,7 +1012,7 @@ static int mp_property_video(m_option_t *prop, int action, void *arg,
         }
         return M_PROPERTY_OK;
 
-    case M_PROPERTY_STEP_UP:
+    case M_PROPERTY_STEP:
     case M_PROPERTY_SET:
         if (action == M_PROPERTY_SET && arg)
             tmp = *((int *) arg);
@@ -1045,7 +1043,7 @@ static int mp_property_program(m_option_t *prop, int action, void *arg,
     demux_program_t prog;
 
     switch (action) {
-    case M_PROPERTY_STEP_UP:
+    case M_PROPERTY_STEP:
     case M_PROPERTY_SET:
         if (action == M_PROPERTY_SET && arg)
             prog.progid = *((int *) arg);
@@ -1085,8 +1083,7 @@ static int mp_property_fullscreen(m_option_t *prop, int action, void *arg,
         M_PROPERTY_CLAMP(prop, *(int *) arg);
         if (vo_fs == !!*(int *) arg)
             return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         if (mpctx->video_out->config_ok)
             vo_control(mpctx->video_out, VOCTRL_FULLSCREEN, 0);
         mpctx->opts.fullscreen = vo_fs;
@@ -1116,8 +1113,7 @@ static int mp_property_deinterlace(m_option_t *prop, int action,
         M_PROPERTY_CLAMP(prop, *(int *) arg);
         vf->control(vf, VFCTRL_SET_DEINTERLACE, arg);
         return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         vf->control(vf, VFCTRL_GET_DEINTERLACE, &deinterlace);
         deinterlace = !deinterlace;
         vf->control(vf, VFCTRL_SET_DEINTERLACE, &deinterlace);
@@ -1135,8 +1131,7 @@ static int colormatrix_property_helper(m_option_t *prop, int action,
     // testing for an actual change is too much effort
     switch (action) {
     case M_PROPERTY_SET:
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         if (mpctx->sh_video)
             set_video_colorspace(mpctx->sh_video);
         break;
@@ -1289,10 +1284,8 @@ static int mp_property_panscan(m_option_t *prop, int action, void *arg,
         vo_panscan = *(float *) arg;
         vo_control(mpctx->video_out, VOCTRL_SET_PANSCAN, NULL);
         return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-        vo_panscan += (arg ? *(float *) arg : 0.1) *
-                      (action == M_PROPERTY_STEP_DOWN ? -1 : 1);
+    case M_PROPERTY_STEP:
+        vo_panscan += (arg ? *(float *) arg : 0.1);
         if (vo_panscan > 1)
             vo_panscan = 1;
         else if (vo_panscan < 0)
@@ -1321,8 +1314,7 @@ static int mp_property_vo_flag(m_option_t *prop, int action, void *arg,
         M_PROPERTY_CLAMP(prop, *(int *) arg);
         if (*vo_var == !!*(int *) arg)
             return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         if (mpctx->video_out->config_ok)
             vo_control(mpctx->video_out, vo_ctrl, 0);
         return M_PROPERTY_OK;
@@ -1410,10 +1402,8 @@ static int mp_property_gamma(m_option_t *prop, int action, void *arg,
             return M_PROPERTY_OK;
         }
         break;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-        *gamma += (arg ? *(int *) arg : 1) *
-                  (action == M_PROPERTY_STEP_DOWN ? -1 : 1);
+    case M_PROPERTY_STEP:
+        *gamma += (arg ? *(int *) arg : 1);
         M_PROPERTY_CLAMP(prop, *gamma);
         r = set_video_colors(mpctx->sh_video, prop->name, *gamma);
         if (r <= 0)
@@ -1544,8 +1534,7 @@ static int mp_property_sub_pos(m_option_t *prop, int action, void *arg,
     case M_PROPERTY_SET:
         if (!arg)
             return M_PROPERTY_ERROR;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         vo_osd_changed(OSDTYPE_SUBTITLE);
     default:
         return m_property_int_range(prop, action, arg, &sub_pos);
@@ -1579,10 +1568,8 @@ static int mp_property_sub(m_option_t *prop, int action, void *arg,
         char *sub_name = NULL;
         if (mpctx->subdata)
             sub_name = mpctx->subdata->filename;
-#ifdef CONFIG_ASS
-        if (mpctx->osd->ass_track)
-            sub_name = mpctx->osd->ass_track->name;
-#endif
+        if (sub_source(mpctx) == SUB_SOURCE_SUBS && mpctx->osd->sh_sub)
+            sub_name = mpctx->osd->sh_sub->title;
         if (!sub_name && mpctx->subdata)
             sub_name = mpctx->subdata->filename;
         if (sub_name) {
@@ -1661,15 +1648,16 @@ static int mp_property_sub(m_option_t *prop, int action, void *arg,
             *(int *) arg = global_sub_size - 1;
         mpctx->global_sub_pos = *(int *) arg;
         break;
-    case M_PROPERTY_STEP_UP:
-        mpctx->global_sub_pos += 2;
-        mpctx->global_sub_pos =
-            (mpctx->global_sub_pos % (global_sub_size + 1)) - 1;
-        break;
-    case M_PROPERTY_STEP_DOWN:
-        mpctx->global_sub_pos += global_sub_size + 1;
-        mpctx->global_sub_pos =
-            (mpctx->global_sub_pos % (global_sub_size + 1)) - 1;
+    case M_PROPERTY_STEP:
+        if (!arg || *(int *)arg >= 0) {
+            mpctx->global_sub_pos += 2;
+            mpctx->global_sub_pos =
+                (mpctx->global_sub_pos % (global_sub_size + 1)) - 1;
+        } else {
+            mpctx->global_sub_pos += global_sub_size + 1;
+            mpctx->global_sub_pos =
+                (mpctx->global_sub_pos % (global_sub_size + 1)) - 1;
+        }
         break;
     default:
         return M_PROPERTY_NOT_IMPLEMENTED;
@@ -1698,27 +1686,20 @@ static int mp_property_sub(m_option_t *prop, int action, void *arg,
             reset_spu = 1;
         d_sub->id = -2;
     }
-    mpctx->osd->ass_track = NULL;
     uninit_player(mpctx, INITIALIZED_SUB);
 
     if (source == SUB_SOURCE_VOBSUB)
         vobsub_id = vobsub_get_id_by_index(vo_vobsub, source_pos);
     else if (source == SUB_SOURCE_SUBS) {
         mpctx->set_of_sub_pos = source_pos;
-#ifdef CONFIG_ASS
         if (opts->ass_enabled
-            && mpctx->set_of_ass_tracks[mpctx->set_of_sub_pos]) {
-            mpctx->osd->ass_track =
-                mpctx->set_of_ass_tracks[mpctx->set_of_sub_pos];
-            mpctx->osd->ass_track_changed = true;
-            mpctx->osd->vsfilter_aspect =
-                mpctx->track_was_native_ass[mpctx->set_of_sub_pos];
+                && mpctx->set_of_ass_tracks[mpctx->set_of_sub_pos]) {
+            sub_init(mpctx->set_of_ass_tracks[mpctx->set_of_sub_pos],
+                     mpctx->osd);
+            mpctx->initialized_flags |= INITIALIZED_SUB;
         } else
-#endif
-        {
             mpctx->subdata = mpctx->set_of_subtitles[mpctx->set_of_sub_pos];
-            vo_osd_changed(OSDTYPE_SUBTITLE);
-        }
+        vo_osd_changed(OSDTYPE_SUBTITLE);
     } else if (source == SUB_SOURCE_DEMUX) {
         opts->sub_id = source_pos;
         if (d_sub && opts->sub_id < MAX_S_STREAMS) {
@@ -1811,10 +1792,8 @@ static int mp_property_sub_source(m_option_t *prop, int action, void *arg,
             mpctx->global_sub_pos = new_pos;
         }
         break;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN: {
-        int step_all = (arg && *(int *)arg != 0 ? *(int *)arg : 1)
-                       * (action == M_PROPERTY_STEP_UP ? 1 : -1);
+    case M_PROPERTY_STEP: {
+        int step_all = (arg && *(int *)arg != 0 ? *(int *)arg : 1);
         int step = (step_all > 0) ? 1 : -1;
         int cur_source = sub_source(mpctx);
         source = cur_source;
@@ -1840,7 +1819,7 @@ static int mp_property_sub_source(m_option_t *prop, int action, void *arg,
         return M_PROPERTY_NOT_IMPLEMENTED;
     }
     --mpctx->global_sub_pos;
-    return mp_property_sub(prop, M_PROPERTY_STEP_UP, NULL, mpctx);
+    return mp_property_sub(prop, M_PROPERTY_STEP, NULL, mpctx);
 }
 
 /// Selected subtitles from specific source (RW)
@@ -1900,10 +1879,8 @@ static int mp_property_sub_by_type(m_option_t *prop, int action, void *arg,
         } else
             new_pos = -1;
         break;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN: {
-        int step_all = (arg && *(int *)arg != 0 ? *(int *)arg : 1)
-                       * (action == M_PROPERTY_STEP_UP ? 1 : -1);
+    case M_PROPERTY_STEP: {
+        int step_all = (arg && *(int *)arg != 0 ? *(int *)arg : 1);
         int step = (step_all > 0) ? 1 : -1;
         int max_sub_pos_for_source = -1;
         if (!is_cur_source)
@@ -1967,8 +1944,7 @@ static int mp_property_sub_alignment(m_option_t *prop, int action,
     case M_PROPERTY_SET:
         if (!arg)
             return M_PROPERTY_ERROR;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         vo_osd_changed(OSDTYPE_SUBTITLE);
     default:
         return m_property_choice(prop, action, arg, &sub_alignment);
@@ -1979,6 +1955,8 @@ static int mp_property_sub_alignment(m_option_t *prop, int action,
 static int mp_property_sub_visibility(m_option_t *prop, int action,
                                       void *arg, MPContext *mpctx)
 {
+    struct MPOpts *opts = &mpctx->opts;
+
     if (!mpctx->sh_video)
         return M_PROPERTY_UNAVAILABLE;
 
@@ -1986,13 +1964,12 @@ static int mp_property_sub_visibility(m_option_t *prop, int action,
     case M_PROPERTY_SET:
         if (!arg)
             return M_PROPERTY_ERROR;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         vo_osd_changed(OSDTYPE_SUBTITLE);
         if (vo_spudec)
             vo_osd_changed(OSDTYPE_SPU);
     default:
-        return m_property_flag(prop, action, arg, &sub_visibility);
+        return m_property_flag(prop, action, arg, &opts->sub_visibility);
     }
 }
 
@@ -2009,9 +1986,8 @@ static int mp_property_ass_use_margins(m_option_t *prop, int action,
     case M_PROPERTY_SET:
         if (!arg)
             return M_PROPERTY_ERROR;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-        mpctx->osd->ass_force_reload = true;
+    case M_PROPERTY_STEP:
+        vo_osd_changed(OSDTYPE_SUBTITLE);
     default:
         return m_property_flag(prop, action, arg, &opts->ass_use_margins);
     }
@@ -2027,10 +2003,8 @@ static int mp_property_ass_vsfilter_aspect_compat(m_option_t *prop, int action,
     case M_PROPERTY_SET:
         if (!arg)
             return M_PROPERTY_ERROR;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-        //has to re-render subs with new aspect ratio
-        mpctx->osd->ass_force_reload = 1;
+    case M_PROPERTY_STEP:
+        vo_osd_changed(OSDTYPE_SUBTITLE);
     default:
         return m_property_flag(prop, action, arg,
                                &mpctx->opts.ass_vsfilter_aspect_compat);
@@ -2050,8 +2024,7 @@ static int mp_property_sub_forced_only(m_option_t *prop, int action,
     case M_PROPERTY_SET:
         if (!arg)
             return M_PROPERTY_ERROR;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         m_property_flag(prop, action, arg, &forced_subs_only);
         spudec_set_forced_subs_only(vo_spudec, forced_subs_only);
         return M_PROPERTY_OK;
@@ -2061,7 +2034,6 @@ static int mp_property_sub_forced_only(m_option_t *prop, int action,
 
 }
 
-#ifdef CONFIG_FREETYPE
 /// Subtitle scale (RW)
 static int mp_property_sub_scale(m_option_t *prop, int action, void *arg,
                                  MPContext *mpctx)
@@ -2073,42 +2045,27 @@ static int mp_property_sub_scale(m_option_t *prop, int action, void *arg,
         if (!arg)
             return M_PROPERTY_ERROR;
         M_PROPERTY_CLAMP(prop, *(float *) arg);
-#ifdef CONFIG_ASS
-        if (opts->ass_enabled) {
+        if (opts->ass_enabled)
             opts->ass_font_scale = *(float *) arg;
-            mpctx->osd->ass_force_reload = true;
-        }
-#endif
         text_font_scale_factor = *(float *) arg;
-        force_load_font = 1;
         vo_osd_changed(OSDTYPE_SUBTITLE);
         return M_PROPERTY_OK;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
-#ifdef CONFIG_ASS
+    case M_PROPERTY_STEP:
         if (opts->ass_enabled) {
-            opts->ass_font_scale += (arg ? *(float *) arg : 0.1) *
-                              (action == M_PROPERTY_STEP_UP ? 1.0 : -1.0);
+            opts->ass_font_scale += (arg ? *(float *) arg : 0.1);
             M_PROPERTY_CLAMP(prop, opts->ass_font_scale);
-            mpctx->osd->ass_force_reload = true;
         }
-#endif
-        text_font_scale_factor += (arg ? *(float *) arg : 0.1) *
-                                  (action == M_PROPERTY_STEP_UP ? 1.0 : -1.0);
+        text_font_scale_factor += (arg ? *(float *) arg : 0.1);
         M_PROPERTY_CLAMP(prop, text_font_scale_factor);
-        force_load_font = 1;
         vo_osd_changed(OSDTYPE_SUBTITLE);
         return M_PROPERTY_OK;
     default:
-#ifdef CONFIG_ASS
         if (opts->ass_enabled)
             return m_property_float_ro(prop, action, arg, opts->ass_font_scale);
         else
-#endif
-        return m_property_float_ro(prop, action, arg, text_font_scale_factor);
+            return m_property_float_ro(prop, action, arg, text_font_scale_factor);
     }
 }
-#endif
 
 
 #ifdef CONFIG_TV
@@ -2130,13 +2087,11 @@ static int mp_property_tv_color(m_option_t *prop, int action, void *arg,
         return tv_set_color_options(tvh, prop->offset, *(int *) arg);
     case M_PROPERTY_GET:
         return tv_get_color_options(tvh, prop->offset, arg);
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         if ((r = tv_get_color_options(tvh, prop->offset, &val)) >= 0) {
             if (!r)
                 return M_PROPERTY_ERROR;
-            val += (arg ? *(int *) arg : 1) *
-                   (action == M_PROPERTY_STEP_DOWN ? -1 : 1);
+            val += (arg ? *(int *) arg : 1);
             M_PROPERTY_CLAMP(prop, val);
             return tv_set_color_options(tvh, prop->offset, val);
         }
@@ -2175,11 +2130,9 @@ static int mp_property_teletext_common(m_option_t *prop, int action, void *arg,
         result = teletext_control(mpctx->demuxer->teletext, base_ioctl + 1,
                                   arg);
         break;
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         result = teletext_control(mpctx->demuxer->teletext, base_ioctl, &val);
-        val += (arg ? *(int *) arg : 1) * (action == M_PROPERTY_STEP_DOWN ?
-                                           -1 : 1);
+        val += (arg ? *(int *) arg : 1);
         result = teletext_control(mpctx->demuxer->teletext, base_ioctl + 1,
                                   &val);
         break;
@@ -2217,11 +2170,9 @@ static int mp_property_teletext_page(m_option_t *prop, int action, void *arg,
     if (!mpctx->demuxer->teletext)
         return M_PROPERTY_UNAVAILABLE;
     switch (action) {
-    case M_PROPERTY_STEP_UP:
-    case M_PROPERTY_STEP_DOWN:
+    case M_PROPERTY_STEP:
         //This should be handled separately
-        val = (arg ? *(int *) arg : 1) * (action == M_PROPERTY_STEP_DOWN ?
-                                          -1 : 1);
+        val = (arg ? *(int *) arg : 1);
         result = teletext_control(mpctx->demuxer->teletext,
                                   TV_VBI_CONTROL_STEP_PAGE, &val);
         break;
@@ -2246,6 +2197,10 @@ static const m_option_t mp_properties[] = {
     { "filename", mp_property_filename, CONF_TYPE_STRING,
       0, 0, 0, NULL },
     { "path", mp_property_path, CONF_TYPE_STRING,
+      0, 0, 0, NULL },
+    { "media_title", mp_property_media_title, CONF_TYPE_STRING,
+      0, 0, 0, NULL },
+    { "stream_path", mp_property_stream_path, CONF_TYPE_STRING,
       0, 0, 0, NULL },
     { "demuxer", mp_property_demuxer, CONF_TYPE_STRING,
       0, 0, 0, NULL },
@@ -2377,10 +2332,8 @@ static const m_option_t mp_properties[] = {
       M_OPT_RANGE, 0, 1, NULL },
     { "sub_forced_only", mp_property_sub_forced_only, CONF_TYPE_FLAG,
       M_OPT_RANGE, 0, 1, NULL },
-#ifdef CONFIG_FREETYPE
     { "sub_scale", mp_property_sub_scale, CONF_TYPE_FLOAT,
       M_OPT_RANGE, 0, 100, NULL },
-#endif
 #ifdef CONFIG_ASS
     { "ass_use_margins", mp_property_ass_use_margins, CONF_TYPE_FLAG,
       M_OPT_RANGE, 0, 1, NULL },
@@ -2496,9 +2449,7 @@ static struct property_osd_display {
     { "sub_delay", 0, OSD_MSG_SUB_DELAY, _("Sub delay: %s") },
     { "sub_visibility", 0, -1, _("Subtitles: %s") },
     { "sub_forced_only", 0, -1, _("Forced sub only: %s") },
-#ifdef CONFIG_FREETYPE
     { "sub_scale", 0, -1, _("Sub Scale: %s")},
-#endif
     { "ass_vsfilter_aspect_compat", 0, -1,
       _("Subtitle VSFilter aspect compat: %s")},
 #ifdef CONFIG_TV
@@ -2623,9 +2574,7 @@ static struct {
     { "sub_delay", MP_CMD_SUB_DELAY, 0},
     { "sub_visibility", MP_CMD_SUB_VISIBILITY, 1},
     { "sub_forced_only", MP_CMD_SUB_FORCED_ONLY, 1},
-#ifdef CONFIG_FREETYPE
     { "sub_scale", MP_CMD_SUB_SCALE, 0},
-#endif
 #ifdef CONFIG_ASS
     { "ass_use_margins", MP_CMD_ASS_USE_MARGINS, 1},
 #endif
@@ -2660,14 +2609,16 @@ static bool set_property_command(MPContext *mpctx, mp_cmd_t *cmd)
         // set to value
         if (cmd->nargs > 0 && cmd->args[0].v.i >= prop->min)
             r = mp_property_do(pname, M_PROPERTY_SET, &cmd->args[0].v.i, mpctx);
-        else if (cmd->nargs > 0)
-            r = mp_property_do(pname, M_PROPERTY_STEP_DOWN, NULL, mpctx);
-        else
-            r = mp_property_do(pname, M_PROPERTY_STEP_UP, NULL, mpctx);
+        else {
+            int dir = 1;
+            if (cmd->nargs > 0)
+                dir = -1;
+            r = mp_property_do(pname, M_PROPERTY_STEP, &dir, mpctx);
+        }
     } else if (cmd->args[1].v.i)        //set
         r = mp_property_do(pname, M_PROPERTY_SET, &cmd->args[0].v, mpctx);
     else                        // adjust
-        r = mp_property_do(pname, M_PROPERTY_STEP_UP, &cmd->args[0].v, mpctx);
+        r = mp_property_do(pname, M_PROPERTY_STEP, &cmd->args[0].v, mpctx);
 
     if (r <= 0)
         return 1;
@@ -2730,9 +2681,7 @@ static void remove_subtitle_range(MPContext *mpctx, int start, int count)
     int end = start + count;
     int after = mpctx->set_of_sub_size - end;
     sub_data **subs = mpctx->set_of_subtitles;
-#ifdef CONFIG_ASS
-    struct ass_track **ass_tracks = mpctx->set_of_ass_tracks;
-#endif
+    struct sh_sub **ass_tracks = mpctx->set_of_ass_tracks;
     if (count < 0 || count > mpctx->set_of_sub_size ||
         start < 0 || start > mpctx->set_of_sub_size - count) {
         mp_msg(MSGT_CPLAYER, MSGL_ERR,
@@ -2744,20 +2693,19 @@ static void remove_subtitle_range(MPContext *mpctx, int start, int count)
         char *filename = "";
         if (subd)
             filename = subd->filename;
-#ifdef CONFIG_ASS
         if (!subd)
-            filename = ass_tracks[idx]->name;
-#endif
+            filename = ass_tracks[idx]->title;
         mp_msg(MSGT_CPLAYER, MSGL_STATUS,
                "SUB: Removed subtitle file (%d): %s\n", idx + 1,
                filename_recode(filename));
         sub_free(subd);
         subs[idx] = NULL;
-#ifdef CONFIG_ASS
-        if (ass_tracks[idx])
-            ass_free_track(ass_tracks[idx]);
+        if (ass_tracks[idx]) {
+            sub_switchoff(ass_tracks[idx], mpctx->osd);
+            sub_uninit(ass_tracks[idx]);
+        }
+        talloc_free(ass_tracks[idx]);
         ass_tracks[idx] = NULL;
-#endif
     }
 
     mpctx->global_sub_size -= count;
@@ -2767,15 +2715,12 @@ static void remove_subtitle_range(MPContext *mpctx, int start, int count)
 
     memmove(subs + start, subs + end, after * sizeof(*subs));
     memset(subs + start + after, 0, count * sizeof(*subs));
-#ifdef CONFIG_ASS
     memmove(ass_tracks + start, ass_tracks + end, after * sizeof(*ass_tracks));
     memset(ass_tracks + start + after, 0, count * sizeof(*ass_tracks));
-#endif
 
     if (mpctx->set_of_sub_pos >= start && mpctx->set_of_sub_pos < end) {
         mpctx->global_sub_pos = -2;
         mpctx->subdata = NULL;
-        mpctx->osd->ass_track = NULL;
         mp_input_queue_cmd(mpctx->input, mp_input_parse_cmd("sub_select"));
     } else if (mpctx->set_of_sub_pos >= end) {
         mpctx->set_of_sub_pos -= count;
@@ -2862,9 +2807,7 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
                        "Ignoring step size stepping property '%s'.\n",
                        cmd->args[0].v.s);
         }
-        r = mp_property_do(cmd->args[0].v.s,
-                           cmd->args[2].v.i < 0 ?
-                           M_PROPERTY_STEP_DOWN : M_PROPERTY_STEP_UP,
+        r = mp_property_do(cmd->args[0].v.s, M_PROPERTY_STEP,
                            arg, mpctx);
       step_prop_err:
         if (r == M_PROPERTY_UNKNOWN)
@@ -2933,7 +2876,7 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
 
     case MP_CMD_SPEED_INCR: {
         float v = cmd->args[0].v.f;
-        mp_property_do("speed", M_PROPERTY_STEP_UP, &v, mpctx);
+        mp_property_do("speed", M_PROPERTY_STEP, &v, mpctx);
         show_property_osd(mpctx, "speed");
         break;
     }
@@ -3010,7 +2953,8 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
         if (sh_video) {
             int movement = cmd->args[0].v.i;
             step_sub(mpctx->subdata, mpctx->video_pts, movement);
-#ifdef CONFIG_ASS
+#if 0
+            // currently not implemented with libass
             if (mpctx->osd->ass_track)
                 sub_delay +=
                     ass_step_sub(mpctx->osd->ass_track,
@@ -3090,7 +3034,7 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
     }
 
     case MP_CMD_LOADLIST: {
-        play_tree_t *e = parse_playlist_file(mpctx->mconfig,
+        play_tree_t *e = parse_playlist_file(&mpctx->opts,
                                              bstr(cmd->args[0].v.s));
         if (!e)
             mp_tmsg(MSGT_CPLAYER, MSGL_ERR,
@@ -3121,13 +3065,8 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
         break;
 
     case MP_CMD_OSD_SHOW_PROGRESSION: {
-        int len = get_time_length(mpctx);
-        int pts = get_current_time(mpctx);
         set_osd_bar(mpctx, 0, "Position", 0, 100, get_percent_pos(mpctx));
-        set_osd_msg(OSD_MSG_TEXT, 1, osd_duration,
-                    "%c %02d:%02d:%02d / %02d:%02d:%02d",
-                    mpctx->osd_function, pts / 3600, (pts / 60) % 60, pts % 60,
-                    len / 3600, (len / 60) % 60, len % 60);
+        set_osd_progressmsg(OSD_MSG_TEXT, 1, osd_duration);
         break;
     }
 
@@ -3355,7 +3294,7 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
     case MP_CMD_GET_SUB_VISIBILITY:
         if (sh_video) {
             mp_msg(MSGT_GLOBAL, MSGL_INFO,
-                   "ANS_SUB_VISIBILITY=%d\n", sub_visibility);
+                   "ANS_SUB_VISIBILITY=%d\n", opts->sub_visibility);
         }
         break;
 

@@ -189,6 +189,9 @@ static int demux_control_mf(demuxer_t *demuxer, int cmd, void *arg) {
   sh_video_t *sh_video = demuxer->video->sh;
 
   switch(cmd) {
+  case DEMUXER_CTRL_CORRECT_PTS:
+      return DEMUXER_CTRL_OK;
+
     case DEMUXER_CTRL_GET_TIME_LENGTH:
       *((double *)arg) = (double)mf->nr_of_files / sh_video->fps;
       return DEMUXER_CTRL_OK;

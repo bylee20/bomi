@@ -34,12 +34,12 @@ struct ASX_Parser_t {
   int ret_stack_size;
   char* last_body;
   int deep;
-  struct m_config *mconfig;
+  struct MPOpts *opts;
 };
 
 struct m_config;
 ASX_Parser_t*
-asx_parser_new(struct m_config *mconfig);
+asx_parser_new(struct MPOpts *opts);
 
 void
 asx_parser_free(ASX_Parser_t* parser);
@@ -72,6 +72,6 @@ void
 asx_list_free(void* list_ptr,ASX_FreeFunc free_func);
 
 play_tree_t*
-asx_parser_build_tree(struct m_config *mconfig, char* buffer, int ref);
+asx_parser_build_tree(struct MPOpts *opts, char* buffer, int ref);
 
 #endif /* MPLAYER_ASXPARSER_H */

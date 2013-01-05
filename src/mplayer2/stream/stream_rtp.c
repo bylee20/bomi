@@ -101,7 +101,6 @@ rtp_stream_open (stream_t *stream, int mode, void *opts, int *file_format)
   }
 
   stream->type = STREAMTYPE_STREAM;
-  fixup_network_stream_cache (stream);
 
   return STREAM_OK;
 }

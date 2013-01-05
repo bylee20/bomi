@@ -34,7 +34,8 @@
 #include "m_option.h"
 #include "mp_msg.h"
 #include "stream/url.h"
-#include "libavutil/avstring.h"
+#include "libmpcodecs/img_format.h"
+
 
 char *m_option_strerror(int code)
 {
@@ -913,99 +914,18 @@ const m_option_type_t m_option_type_subconfig = {
     .parse = parse_subconf,
 };
 
-#include "libmpcodecs/img_format.h"
-
-/* FIXME: snyc with img_format.h */
-static struct {
-    const char *name;
-    unsigned int fmt;
-} mp_imgfmt_list[] = {
-    {"444p16le", IMGFMT_444P16_LE},
-    {"444p16be", IMGFMT_444P16_BE},
-    {"444p10le", IMGFMT_444P10_LE},
-    {"444p10be", IMGFMT_444P10_BE},
-    {"444p9le", IMGFMT_444P9_LE},
-    {"444p9be", IMGFMT_444P9_BE},
-    {"422p16le", IMGFMT_422P16_LE},
-    {"422p16be", IMGFMT_422P16_BE},
-    {"422p10le", IMGFMT_422P10_LE},
-    {"422p10be", IMGFMT_422P10_BE},
-    {"420p16le", IMGFMT_420P16_LE},
-    {"420p16be", IMGFMT_420P16_BE},
-    {"420p10le", IMGFMT_420P10_LE},
-    {"420p10be", IMGFMT_420P10_BE},
-    {"420p9le", IMGFMT_420P9_LE},
-    {"420p9be", IMGFMT_420P9_BE},
-    {"444p16", IMGFMT_444P16},
-    {"444p10", IMGFMT_444P10},
-    {"444p9", IMGFMT_444P9},
-    {"422p16", IMGFMT_422P16},
-    {"422p10", IMGFMT_422P10},
-    {"420p10", IMGFMT_420P10},
-    {"420p9", IMGFMT_420P9},
-    {"420p16", IMGFMT_420P16},
-    {"420a", IMGFMT_420A},
-    {"444p", IMGFMT_444P},
-    {"422p", IMGFMT_422P},
-    {"411p", IMGFMT_411P},
-    {"440p", IMGFMT_440P},
-    {"yuy2", IMGFMT_YUY2},
-    {"yvyu", IMGFMT_YVYU},
-    {"uyvy", IMGFMT_UYVY},
-    {"yvu9", IMGFMT_YVU9},
-    {"if09", IMGFMT_IF09},
-    {"yv12", IMGFMT_YV12},
-    {"i420", IMGFMT_I420},
-    {"iyuv", IMGFMT_IYUV},
-    {"clpl", IMGFMT_CLPL},
-    {"hm12", IMGFMT_HM12},
-    {"y800", IMGFMT_Y800},
-    {"y8", IMGFMT_Y8},
-    {"nv12", IMGFMT_NV12},
-    {"nv21", IMGFMT_NV21},
-    {"bgr24", IMGFMT_BGR24},
-    {"bgr32", IMGFMT_BGR32},
-    {"bgr16", IMGFMT_BGR16},
-    {"bgr15", IMGFMT_BGR15},
-    {"bgr12", IMGFMT_BGR12},
-    {"bgr8", IMGFMT_BGR8},
-    {"bgr4", IMGFMT_BGR4},
-    {"bg4b", IMGFMT_BG4B},
-    {"bgr1", IMGFMT_BGR1},
-    {"rgb48be", IMGFMT_RGB48BE},
-    {"rgb48le", IMGFMT_RGB48LE},
-    {"rgb48ne", IMGFMT_RGB48NE},
-    {"rgb24", IMGFMT_RGB24},
-    {"rgb32", IMGFMT_RGB32},
-    {"rgb16", IMGFMT_RGB16},
-    {"rgb15", IMGFMT_RGB15},
-    {"rgb12", IMGFMT_RGB12},
-    {"rgb8", IMGFMT_RGB8},
-    {"rgb4", IMGFMT_RGB4},
-    {"rg4b", IMGFMT_RG4B},
-    {"rgb1", IMGFMT_RGB1},
-    {"rgba", IMGFMT_RGBA},
-    {"argb", IMGFMT_ARGB},
-    {"bgra", IMGFMT_BGRA},
-    {"abgr", IMGFMT_ABGR},
-    {"mjpeg", IMGFMT_MJPEG},
-    {"mjpg", IMGFMT_MJPEG},
-    { NULL, 0 }
-};
-
 static int parse_imgfmt(const m_option_t *opt, struct bstr name,
                         struct bstr param, bool ambiguous_param, void *dst,
                         void *talloc_ctx)
 {
     uint32_t fmt = 0;
-    int i;
 
     if (param.len == 0)
         return M_OPT_MISSING_PARAM;
 
     if (!bstrcmp0(param, "help")) {
         mp_msg(MSGT_CFGPARSER, MSGL_INFO, "Available formats:");
-        for (i = 0; mp_imgfmt_list[i].name; i++)
+        for (int i = 0; mp_imgfmt_list[i].name; i++)
             mp_msg(MSGT_CFGPARSER, MSGL_INFO, " %s", mp_imgfmt_list[i].name);
         mp_msg(MSGT_CFGPARSER, MSGL_INFO, "\n");
         return M_OPT_EXIT - 1;
@@ -1014,13 +934,8 @@ static int parse_imgfmt(const m_option_t *opt, struct bstr name,
     if (bstr_startswith0(param, "0x"))
         fmt = bstrtoll(param, NULL, 16);
     else {
-        for (i = 0; mp_imgfmt_list[i].name; i++) {
-            if (!bstrcasecmp0(param, mp_imgfmt_list[i].name)) {
-                fmt = mp_imgfmt_list[i].fmt;
-                break;
-            }
-        }
-        if (!mp_imgfmt_list[i].name) {
+        fmt = imgfmt_parse(param, false);
+        if (!fmt) {
             mp_msg(MSGT_CFGPARSER, MSGL_ERR,
                    "Option %.*s: unknown format name: '%.*s'\n",
                    BSTR_P(name), BSTR_P(param));
@@ -1916,6 +1831,8 @@ static int parse_custom_url(const m_option_t *opt, struct bstr name,
     struct bstr path = bstr_cut(ptr1, idx);
     idx = bstrchr(hostpart, '@');
     if (idx >= 0) {
+        struct bstr userpass = bstr_splice(hostpart, 0, idx);
+        hostpart = bstr_cut(hostpart, idx + 1);
         // We got something, at least a username...
         if (!m_option_list_find(desc->fields, "username")) {
             mp_msg(MSGT_CFGPARSER, MSGL_WARN,
@@ -1923,7 +1840,6 @@ static int parse_custom_url(const m_option_t *opt, struct bstr name,
                    BSTR_P(name));
             // skip
         } else {
-            struct bstr userpass = bstr_splice(hostpart, 0, idx);
             idx = bstrchr(userpass, ':');
             if (idx >= 0) {
                 // We also have a password
@@ -1963,7 +1879,6 @@ static int parse_custom_url(const m_option_t *opt, struct bstr name,
                 }
             }
         }
-        hostpart = bstr_cut(hostpart, idx + 1);
     }
 
     // Before looking for a port number check if we have an IPv6 type

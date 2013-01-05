@@ -852,7 +852,6 @@ static int open_s(stream_t *stream,int mode, void* opts, int* file_format) {
   stream->streaming_ctrl->buffering = 1;
   stream->streaming_ctrl->status = streaming_playing_e;
   *file_format = DEMUXER_TYPE_REAL;
-  fixup_network_stream_cache(stream);
   return STREAM_OK;
 
 fail:

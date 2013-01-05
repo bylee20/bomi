@@ -34,7 +34,6 @@
 
 #include "talloc.h"
 #include "asxparser.h"
-#include "m_config.h"
 #include "playtree.h"
 #include "playtreeparser.h"
 #include "stream/stream.h"
@@ -224,7 +223,7 @@ parse_asx(play_tree_parser_t* p) {
     /* NOTHING */;
 
  mp_msg(MSGT_PLAYTREE,MSGL_DBG3,"Parsing asx file: [%s]\n",p->buffer);
- return asx_parser_build_tree(p->mconfig, p->buffer,p->deep);
+ return asx_parser_build_tree(p->opts, p->buffer,p->deep);
 }
 
 static char*
@@ -614,14 +613,14 @@ parse_smil(play_tree_parser_t* p) {
 }
 
 static play_tree_t*
-embedded_playlist_parse(struct m_config *mconfig, char *line) {
+embedded_playlist_parse(struct MPOpts *opts, char *line) {
   int f=DEMUXER_TYPE_PLAYLIST;
   stream_t* stream;
   play_tree_parser_t* ptp;
   play_tree_t* entry;
 
   // Get stream opened to link
-  stream=open_stream(line,0,&f);
+  stream=open_stream(line, opts, &f);
   if(!stream) {
     mp_msg(MSGT_PLAYTREE,MSGL_WARN,"Can't open playlist %s\n",line);
     return NULL;
@@ -630,7 +629,7 @@ embedded_playlist_parse(struct m_config *mconfig, char *line) {
   //add new playtree
   mp_msg(MSGT_PLAYTREE,MSGL_V,"Adding playlist %s to element entryref\n",line);
 
-  ptp = play_tree_parser_new(stream, mconfig, 1);
+  ptp = play_tree_parser_new(stream, opts, 1);
   entry = play_tree_parser_get_play_tree(ptp, 1);
   play_tree_parser_free(ptp);
   free_stream(stream);
@@ -665,7 +664,7 @@ parse_textplain(play_tree_parser_t* p) {
           ( ((tolower(c[1]) == 's') && (tolower(c[2])== 'm') && (tolower(c[3]) == 'i')) ||
             ((tolower(c[1]) == 'r') && (tolower(c[2])== 'a') && (tolower(c[3]) == 'm')) )
            && (!c[4] || c[4] == '?' || c[4] == '&')) ){
-            entry=embedded_playlist_parse(p->mconfig, line);
+            entry=embedded_playlist_parse(p->opts, line);
           embedded = 1;
           break;
         }
@@ -801,13 +800,13 @@ out:
 }
 
 play_tree_t*
-parse_playtree(stream_t *stream, struct m_config *mconfig, int forced) {
+parse_playtree(stream_t *stream, struct MPOpts *opts, int forced) {
   play_tree_parser_t* p;
   play_tree_t* ret;
 
   assert(stream != NULL);
 
-  p = play_tree_parser_new(stream, mconfig, 0);
+  p = play_tree_parser_new(stream, opts, 0);
   if(!p)
     return NULL;
 
@@ -874,13 +873,13 @@ void play_tree_add_bpf(play_tree_t *pt, struct bstr filename)
 }
 
 play_tree_t*
-parse_playlist_file(struct m_config *mconfig, struct bstr file) {
+parse_playlist_file(struct MPOpts *opts, struct bstr file) {
   stream_t *stream;
   play_tree_t* ret;
   int f=DEMUXER_TYPE_PLAYLIST;
 
   char *file0 = bstrdup0(NULL, file);
-  stream = open_stream(file0, 0, &f);
+  stream = open_stream(file0, opts, &f);
   talloc_free(file0);
 
   if(!stream) {
@@ -893,7 +892,7 @@ parse_playlist_file(struct m_config *mconfig, struct bstr file) {
   mp_msg(MSGT_PLAYTREE, MSGL_V,
          "Parsing playlist file %.*s...\n", BSTR_P(file));
 
-  ret = parse_playtree(stream, mconfig, 1);
+  ret = parse_playtree(stream, opts, 1);
   free_stream(stream);
 
   play_tree_add_bpf(ret, file);
@@ -904,14 +903,14 @@ parse_playlist_file(struct m_config *mconfig, struct bstr file) {
 
 
 play_tree_parser_t*
-play_tree_parser_new(stream_t* stream, struct m_config *mconfig, int deep) {
+play_tree_parser_new(stream_t* stream, struct MPOpts *opts, int deep) {
   play_tree_parser_t* p;
 
   p = calloc(1,sizeof(play_tree_parser_t));
   if(!p)
     return NULL;
   p->stream = stream;
-  p->mconfig = mconfig;
+  p->opts = opts;
   p->deep = deep;
   p->keep = 1;
 

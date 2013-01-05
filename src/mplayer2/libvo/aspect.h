@@ -22,7 +22,6 @@
 
 struct vo;
 void panscan_init(struct vo *vo);
-void panscan_calc(struct vo *vo);
 void panscan_calc_windowed(struct vo *vo);
 
 void aspect_save_orig(struct vo *vo, int orgw, int orgh);
@@ -46,7 +45,6 @@ void aspect_fit(struct vo *vo, int *srcw, int *srch, int fitw, int fith);
 #define monitor_aspect global_vo->monitor_aspect
 
 #define panscan_init() panscan_init(global_vo)
-#define panscan_calc() panscan_calc(global_vo)
 #define panscan_calc_windowed() panscan_calc_windowed(global_vo)
 #define aspect_save_orig(...) aspect_save_orig(global_vo, __VA_ARGS__)
 #define aspect_save_prescale(...) aspect_save_prescale(global_vo, __VA_ARGS__)

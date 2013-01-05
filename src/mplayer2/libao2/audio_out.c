@@ -34,25 +34,15 @@ char *ao_subdevice = NULL;
 
 extern const struct ao_driver audio_out_oss;
 extern const struct ao_driver audio_out_coreaudio;
-extern const struct ao_driver audio_out_arts;
 extern const struct ao_driver audio_out_rsound;
-extern const struct ao_driver audio_out_esd;
 extern const struct ao_driver audio_out_pulse;
 extern const struct ao_driver audio_out_jack;
 extern const struct ao_driver audio_out_openal;
 extern const struct ao_driver audio_out_null;
 extern const struct ao_driver audio_out_alsa;
-extern const struct ao_driver audio_out_nas;
 extern const struct ao_driver audio_out_sdl;
-extern const struct ao_driver audio_out_sun;
-extern const struct ao_driver audio_out_sgi;
-extern const struct ao_driver audio_out_win32;
 extern const struct ao_driver audio_out_dsound;
-extern const struct ao_driver audio_out_kai;
-extern const struct ao_driver audio_out_dart;
-extern const struct ao_driver audio_out_ivtv;
 extern const struct ao_driver audio_out_v4l2;
-extern const struct ao_driver audio_out_mpegpes;
 extern const struct ao_driver audio_out_pcm;
 extern const struct ao_driver audio_out_pss;
 extern const struct ao_driver audio_out_portaudio;
@@ -61,15 +51,6 @@ static const struct ao_driver * const audio_out_drivers[] = {
 // native:
 #ifdef CONFIG_DIRECTX
     &audio_out_dsound,
-#endif
-#ifdef CONFIG_WIN32WAVEOUT
-    &audio_out_win32,
-#endif
-#ifdef CONFIG_KAI
-    &audio_out_kai,
-#endif
-#ifdef CONFIG_DART
-    &audio_out_dart,
 #endif
 #ifdef CONFIG_COREAUDIO
     &audio_out_coreaudio,
@@ -86,25 +67,15 @@ static const struct ao_driver * const audio_out_drivers[] = {
 #ifdef CONFIG_PORTAUDIO
     &audio_out_portaudio,
 #endif
-#ifdef CONFIG_SUN_AUDIO
-    &audio_out_sun,
-#endif
     // wrappers:
 #ifdef CONFIG_JACK
     &audio_out_jack,
-#endif
-#ifdef CONFIG_NAS
-    &audio_out_nas,
 #endif
 #ifdef CONFIG_OPENAL
     &audio_out_openal,
 #endif
 #ifdef CONFIG_SDL
     &audio_out_sdl,
-#endif
-    &audio_out_mpegpes,
-#ifdef CONFIG_IVTV
-    &audio_out_ivtv,
 #endif
 #ifdef CONFIG_V4L2_DECODER
     &audio_out_v4l2,
@@ -134,7 +105,7 @@ void list_audio_out(void)
 struct ao *ao_create(struct MPOpts *opts, struct input_ctx *input)
 {
     struct ao *r = talloc(NULL, struct ao);
-    *r = (struct ao){.outburst = OUTBURST, .buffersize = -1,
+    *r = (struct ao){.outburst = 512, .buffersize = -1,
                      .opts = opts, .input_ctx = input };
     return r;
 }

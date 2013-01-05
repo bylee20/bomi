@@ -35,9 +35,6 @@
 #include "stream/stream_radio.h"
 #include "libvo/csputils.h"
 
-extern char *fb_mode_cfgfile;
-extern char *fb_mode_name;
-
 extern char *lirc_configfile;
 
 /* only used at startup (setting these values from configfile) */
@@ -197,13 +194,6 @@ const m_option_t pvropts_conf[]={
 
 extern const m_option_t dvbin_opts_conf[];
 extern const m_option_t lavfdopts_conf[];
-
-extern int rtsp_transport_tcp;
-extern int rtsp_transport_http;
-extern int rtsp_transport_sctp;
-extern int rtsp_port;
-extern char *rtsp_destination;
-
 
 extern int sws_chr_vshift;
 extern int sws_chr_hshift;
@@ -393,8 +383,9 @@ const m_option_t common_opts[] = {
 // ------------------------- stream options --------------------
 
 #ifdef CONFIG_STREAM_CACHE
-    {"cache", &stream_cache_size, CONF_TYPE_INT, CONF_RANGE, 32, 1048576, NULL},
-    {"nocache", &stream_cache_size, CONF_TYPE_FLAG, 0, 1, 0, NULL},
+    OPT_INTRANGE("cache", stream_cache_size, 0, 32, 1048576, OPTDEF_INT(-1)),
+    OPT_FLAG_CONSTANTS("nocache", stream_cache_size, 0, -1, 0),
+
     OPT_FLOATRANGE("cache-min", stream_cache_min_percent, 0, 0, 99),
     OPT_FLOATRANGE("cache-seek-min", stream_cache_seek_min_percent, 0, 0, 99),
 #else
@@ -453,29 +444,6 @@ const m_option_t common_opts[] = {
     {"user-agent", "MPlayer was compiled without streaming (network) support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
 #endif /* CONFIG_NETWORKING */
 
-#ifdef CONFIG_LIVE555
-    {"rtsp-stream-over-http", &rtsp_transport_http, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-#else
-    {"rtsp-stream-over-http", "-rtsp-stream-over-http requires the \"LIVE555 Streaming Media\" library.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-#endif /* CONFIG_LIVE555 */
-#if defined(CONFIG_LIBNEMESI) || defined(CONFIG_LIVE555)
-    // -rtsp-stream-over-tcp option, specifying TCP streaming of RTP/RTCP
-    {"rtsp-stream-over-tcp", &rtsp_transport_tcp, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-#else
-    {"rtsp-stream-over-tcp", "-rtsp-stream-over-tcp requires the \"LIVE555 Streaming Media\" or \"libnemesi\" libraries.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-#endif /* defined(CONFIG_LIBNEMESI) || defined(CONFIG_LIVE555) */
-#ifdef CONFIG_LIBNEMESI
-    {"rtsp-stream-over-sctp", &rtsp_transport_sctp, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-#else
-    {"rtsp-stream-over-sctp", "-rtsp-stream-over-sctp requires the \"libnemesi\" library\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-#endif /* CONFIG_LIBNEMESI */
-#ifdef CONFIG_NETWORKING
-    {"rtsp-port", &rtsp_port, CONF_TYPE_INT, CONF_RANGE, -1, 65535, NULL},
-    {"rtsp-destination", &rtsp_destination, CONF_TYPE_STRING, CONF_MIN, 0, 0, NULL},
-#else
-    {"rtsp-port", "MPlayer was compiled without networking support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-    {"rtsp-destination", "MPlayer was compiled without networking support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-#endif /* CONFIG_NETWORKING */
 
 // ------------------------- demuxer options --------------------
 
@@ -516,6 +484,8 @@ const m_option_t common_opts[] = {
     OPT_STRINGLIST("slang", sub_lang, 0),
 
     OPT_MAKE_FLAGS("hr-mp3-seek", hr_mp3_seek, 0),
+
+    OPT_STRING("quvi-format", quvi_format, 0, OPTDEF_STR("best")),
 
     { "rawaudio", (void *)&demux_rawaudio_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},
     { "rawvideo", (void *)&demux_rawvideo_opts, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},
@@ -582,9 +552,7 @@ const m_option_t common_opts[] = {
 // ------------------------- codec/vfilter options --------------------
 
     // MP3-only: select stereo/left/right
-#ifdef CONFIG_FAKE_MONO
     {"stereo", &fakemono, CONF_TYPE_INT, CONF_RANGE, 0, 2, NULL},
-#endif
 
     {"af*", &af_cfg.list, CONF_TYPE_STRING_LIST, 0, 0, 0, NULL},
     {"af-adv", (void *) audio_filter_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},
@@ -631,29 +599,12 @@ const m_option_t common_opts[] = {
 
     OPT_STRINGLIST("sub", sub_name, 0),
     OPT_PATHLIST("sub-paths", sub_paths, 0),
-#ifdef CONFIG_FRIBIDI
-    {"fribidi-charset", &fribidi_charset, CONF_TYPE_STRING, 0, 0, 0, NULL},
-    {"flip-hebrew", &flip_hebrew, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-    {"noflip-hebrew", &flip_hebrew, CONF_TYPE_FLAG, 0, 1, 0, NULL},
-    {"flip-hebrew-commas", &fribidi_flip_commas, CONF_TYPE_FLAG, 0, 1, 0, NULL},
-    {"noflip-hebrew-commas", &fribidi_flip_commas, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-#else
-    {"fribidi-charset", "MPlayer was compiled without FriBiDi support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-    {"flip-hebrew", "MPlayer was compiled without FriBiDi support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-    {"noflip-hebrew", "MPlayer was compiled without FriBiDi support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-    {"flip-hebrew-commas", "MPlayer was compiled without FriBiDi support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-    {"noflip-hebrew-commas", "MPlayer was compiled without FriBiDi support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-#endif /* CONFIG_FRIBIDI */
 #ifdef CONFIG_ICONV
     {"subcp", &sub_cp, CONF_TYPE_STRING, 0, 0, 0, NULL},
 #endif
     {"subdelay", &sub_delay, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL},
     {"subfps", &sub_fps, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL},
     OPT_MAKE_FLAGS("autosub", sub_auto, 0),
-    {"unicode", &sub_unicode, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-    {"nounicode", &sub_unicode, CONF_TYPE_FLAG, 0, 1, 0, NULL},
-    {"utf8", &sub_utf8, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-    {"noutf8", &sub_utf8, CONF_TYPE_FLAG, 0, 1, 0, NULL},
     {"forcedsubsonly", &forced_subs_only, CONF_TYPE_FLAG, 0, 0, 1, NULL},
     // specify IFO file for VOBSUB subtitle
     {"ifo", &spudec_ifo, CONF_TYPE_STRING, 0, 0, 0, NULL},
@@ -675,14 +626,12 @@ const m_option_t common_opts[] = {
     {"spualign", &spu_alignment, CONF_TYPE_INT, CONF_RANGE, -1, 2, NULL},
     {"spuaa", &spu_aamode, CONF_TYPE_INT, CONF_RANGE, 0, 31, NULL},
     {"spugauss", &spu_gaussvar, CONF_TYPE_FLOAT, CONF_RANGE, 0.0, 3.0, NULL},
-#ifdef CONFIG_FREETYPE
     {"subfont-encoding", &subtitle_font_encoding, CONF_TYPE_STRING, 0, 0, 0, NULL},
     {"subfont-text-scale", &text_font_scale_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0, 100, NULL},
     {"subfont-osd-scale", &osd_font_scale_factor, CONF_TYPE_FLOAT, CONF_RANGE, 0, 100, NULL},
     {"subfont-blur", &subtitle_font_radius, CONF_TYPE_FLOAT, CONF_RANGE, 0, 8, NULL},
     {"subfont-outline", &subtitle_font_thickness, CONF_TYPE_FLOAT, CONF_RANGE, 0, 8, NULL},
     {"subfont-autoscale", &subtitle_autoscale, CONF_TYPE_INT, CONF_RANGE, 0, 3, NULL},
-#endif
     OPT_START_CONDITIONAL(CONFIG_ASS, "libass"),
     OPT_MAKE_FLAGS("ass", ass_enabled, 0),
     OPT_FLOATRANGE("ass-font-scale", ass_font_scale, 0, 0, 100),
@@ -698,13 +647,6 @@ const m_option_t common_opts[] = {
     OPT_STRING("ass-styles", ass_styles_file, 0),
     OPT_INTRANGE("ass-hinting", ass_hinting, 0, 0, 7),
     OPT_START_CONDITIONAL(1, ""),
-#ifdef CONFIG_FONTCONFIG
-    {"fontconfig", &font_fontconfig, CONF_TYPE_FLAG, 0, -1, 1, NULL},
-    {"nofontconfig", &font_fontconfig, CONF_TYPE_FLAG, 0, 1, -1, NULL},
-#else
-    {"fontconfig", "MPlayer was compiled without fontconfig support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-    {"nofontconfig", "MPlayer was compiled without fontconfig support.\n", CONF_TYPE_PRINT, CONF_NOCFG, 0, 0, NULL},
-#endif /* CONFIG_FONTCONFIG */
     {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
@@ -743,17 +685,6 @@ const m_option_t mplayer_opts[]={
 
 #ifdef CONFIG_X11
     {"display", &mDisplayName, CONF_TYPE_STRING, 0, 0, 0, NULL},
-#endif
-
-#if defined(CONFIG_FBDEV) || defined(CONFIG_VESA)
-    {"monitor-hfreq", &monitor_hfreq_str, CONF_TYPE_STRING, 0, 0, 0, NULL},
-    {"monitor-vfreq", &monitor_vfreq_str, CONF_TYPE_STRING, 0, 0, 0, NULL},
-    {"monitor-dotclock", &monitor_dotclock_str, CONF_TYPE_STRING, 0, 0, 0, NULL},
-#endif
-
-#ifdef CONFIG_FBDEV
-    {"fbmode", &fb_mode_name, CONF_TYPE_STRING, 0, 0, 0, NULL},
-    {"fbmodeconfig", &fb_mode_cfgfile, CONF_TYPE_STRING, 0, 0, 0, NULL},
 #endif
 
     // force window width/height or resolution (with -vm)

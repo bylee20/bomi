@@ -27,13 +27,15 @@
 #include <string.h>
 #include <errno.h>
 
+#include <libavcodec/avcodec.h>
+#include <libavutil/common.h>
+
 #include "config.h"
 #include "mp_msg.h"
 #include "mp_msg.h"
 #include "video_out.h"
 #include "video_out_internal.h"
 #include "subopt-helper.h"
-#include "libavcodec/avcodec.h"
 #include "fmt-conversion.h"
 
 static const vo_info_t info =

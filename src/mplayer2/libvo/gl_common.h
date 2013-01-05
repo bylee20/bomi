@@ -33,220 +33,24 @@
 #include "video_out.h"
 #include "csputils.h"
 
-#ifdef CONFIG_GL_WIN32
-#include <windows.h>
-#include "w32_common.h"
-#endif
-#ifdef CONFIG_GL_X11
-#include <X11/Xlib.h>
-#include <GL/glx.h>
-#include "x11_common.h"
-// This old-vo wrapper macro would conflict with the struct member
-#undef update_xinerama_info
-#endif
-#include <GL/gl.h>
-
-// workaround for some gl.h headers
-#ifndef GLAPIENTRY
-#ifdef APIENTRY
-#define GLAPIENTRY APIENTRY
-#elif defined(CONFIG_GL_WIN32)
-#define GLAPIENTRY __stdcall
+#if defined(CONFIG_GL_COCOA) && !defined(CONFIG_GL_X11)
+#ifdef GL_VERSION_3_0
+#include <OpenGL/gl3.h>
 #else
-#define GLAPIENTRY
+#include <OpenGL/gl.h>
 #endif
+#include <OpenGL/glext.h>
+#else
+#include <GL/gl.h>
+#include <GL/glext.h>
 #endif
 
-/**
- * \defgroup glextdefines OpenGL extension defines
- *
- * conditionally define all extension defines used.
- * vendor specific extensions should be marked as such
- * (e.g. _NV), _ARB is not used to ease readability.
- * \{
- */
-#ifndef GL_TEXTURE_3D
-#define GL_TEXTURE_3D 0x806F
-#endif
-#ifndef GL_TEXTURE_WRAP_R
-#define GL_TEXTURE_WRAP_R 0x8072
-#endif
-#ifndef GL_CLAMP_TO_EDGE
-#define GL_CLAMP_TO_EDGE 0x812F
-#endif
-#ifndef GL_GENERATE_MIPMAP
-#define GL_GENERATE_MIPMAP 0x8191
-#endif
-#ifndef GL_TEXT_FRAGMENT_SHADER_ATI
-#define GL_TEXT_FRAGMENT_SHADER_ATI 0x8200
-#endif
-#ifndef GL_FRAGMENT_SHADER_ATI
-#define GL_FRAGMENT_SHADER_ATI 0x8920
-#endif
-#ifndef GL_NUM_FRAGMENT_REGISTERS_ATI
-#define GL_NUM_FRAGMENT_REGISTERS_ATI 0x896E
-#endif
-#ifndef GL_REG_0_ATI
-#define GL_REG_0_ATI 0x8921
-#endif
-#ifndef GL_REG_1_ATI
-#define GL_REG_1_ATI 0x8922
-#endif
-#ifndef GL_REG_2_ATI
-#define GL_REG_2_ATI 0x8923
-#endif
-#ifndef GL_CON_0_ATI
-#define GL_CON_0_ATI 0x8941
-#endif
-#ifndef GL_CON_1_ATI
-#define GL_CON_1_ATI 0x8942
-#endif
-#ifndef GL_CON_2_ATI
-#define GL_CON_2_ATI 0x8943
-#endif
-#ifndef GL_CON_3_ATI
-#define GL_CON_3_ATI 0x8944
-#endif
-#ifndef GL_ADD_ATI
-#define GL_ADD_ATI 0x8963
-#endif
-#ifndef GL_MUL_ATI
-#define GL_MUL_ATI 0x8964
-#endif
-#ifndef GL_MAD_ATI
-#define GL_MAD_ATI 0x8968
-#endif
-#ifndef GL_SWIZZLE_STR_ATI
-#define GL_SWIZZLE_STR_ATI 0x8976
-#endif
-#ifndef GL_4X_BIT_ATI
-#define GL_4X_BIT_ATI 2
-#endif
-#ifndef GL_8X_BIT_ATI
-#define GL_8X_BIT_ATI 4
-#endif
-#ifndef GL_BIAS_BIT_ATI
-#define GL_BIAS_BIT_ATI 8
-#endif
-#ifndef GL_MAX_TEXTURE_UNITS
-#define GL_MAX_TEXTURE_UNITS 0x84E2
-#endif
-#ifndef GL_TEXTURE0
-#define GL_TEXTURE0 0x84C0
-#endif
-#ifndef GL_TEXTURE1
-#define GL_TEXTURE1 0x84C1
-#endif
-#ifndef GL_TEXTURE2
-#define GL_TEXTURE2 0x84C2
-#endif
-#ifndef GL_TEXTURE3
-#define GL_TEXTURE3 0x84C3
-#endif
-#ifndef GL_TEXTURE_RECTANGLE
-#define GL_TEXTURE_RECTANGLE 0x84F5
-#endif
-#ifndef GL_PIXEL_UNPACK_BUFFER
-#define GL_PIXEL_UNPACK_BUFFER 0x88EC
-#endif
-#ifndef GL_STREAM_DRAW
-#define GL_STREAM_DRAW 0x88E0
-#endif
-#ifndef GL_DYNAMIC_DRAW
-#define GL_DYNAMIC_DRAW 0x88E8
-#endif
-#ifndef GL_WRITE_ONLY
-#define GL_WRITE_ONLY 0x88B9
-#endif
-#ifndef GL_BGR
-#define GL_BGR 0x80E0
-#endif
-#ifndef GL_BGRA
-#define GL_BGRA 0x80E1
-#endif
-#ifndef GL_UNSIGNED_BYTE_3_3_2
-#define GL_UNSIGNED_BYTE_3_3_2 0x8032
-#endif
-#ifndef GL_UNSIGNED_BYTE_2_3_3_REV
-#define GL_UNSIGNED_BYTE_2_3_3_REV 0x8362
-#endif
-#ifndef GL_UNSIGNED_SHORT_4_4_4_4
-#define GL_UNSIGNED_SHORT_4_4_4_4 0x8033
-#endif
-#ifndef GL_UNSIGNED_SHORT_4_4_4_4_REV
-#define GL_UNSIGNED_SHORT_4_4_4_4_REV 0x8365
-#endif
-#ifndef GL_UNSIGNED_SHORT_5_6_5
-#define GL_UNSIGNED_SHORT_5_6_5 0x8363
-#endif
-#ifndef GL_UNSIGNED_INT_8_8_8_8
-#define GL_UNSIGNED_INT_8_8_8_8 0x8035
-#endif
-#ifndef GL_UNSIGNED_INT_8_8_8_8_REV
-#define GL_UNSIGNED_INT_8_8_8_8_REV 0x8367
-#endif
-#ifndef GL_UNSIGNED_SHORT_5_6_5_REV
-#define GL_UNSIGNED_SHORT_5_6_5_REV 0x8364
-#endif
-#ifndef GL_UNSIGNED_INT_10_10_10_2
-#define GL_UNSIGNED_INT_10_10_10_2 0x8036
-#endif
-#ifndef GL_UNSIGNED_INT_2_10_10_10_REV
-#define GL_UNSIGNED_INT_2_10_10_10_REV 0x8368
-#endif
-#ifndef GL_UNSIGNED_SHORT_5_5_5_1
-#define GL_UNSIGNED_SHORT_5_5_5_1 0x8034
-#endif
-#ifndef GL_UNSIGNED_SHORT_1_5_5_5_REV
-#define GL_UNSIGNED_SHORT_1_5_5_5_REV 0x8366
-#endif
-#ifndef GL_UNSIGNED_SHORT_8_8
-#define GL_UNSIGNED_SHORT_8_8 0x85BA
-#endif
-#ifndef GL_UNSIGNED_SHORT_8_8_REV
-#define GL_UNSIGNED_SHORT_8_8_REV 0x85BB
-#endif
-#ifndef GL_YCBCR_MESA
-#define GL_YCBCR_MESA 0x8757
-#endif
-#ifndef GL_RGB32F
-#define GL_RGB32F 0x8815
-#endif
-#ifndef GL_FLOAT_RGB32_NV
-#define GL_FLOAT_RGB32_NV 0x8889
-#endif
-#ifndef GL_LUMINANCE16
-#define GL_LUMINANCE16 0x8042
-#endif
-#ifndef GL_R16
-#define GL_R16 0x822A
-#endif
-#ifndef GL_UNPACK_CLIENT_STORAGE_APPLE
-#define GL_UNPACK_CLIENT_STORAGE_APPLE 0x85B2
-#endif
-#ifndef GL_FRAGMENT_PROGRAM
-#define GL_FRAGMENT_PROGRAM 0x8804
-#endif
-#ifndef GL_PROGRAM_FORMAT_ASCII
-#define GL_PROGRAM_FORMAT_ASCII 0x8875
-#endif
-#ifndef GL_PROGRAM_ERROR_POSITION
-#define GL_PROGRAM_ERROR_POSITION 0x864B
-#endif
-#ifndef GL_MAX_TEXTURE_IMAGE_UNITS
-#define GL_MAX_TEXTURE_IMAGE_UNITS 0x8872
-#endif
-#ifndef GL_PROGRAM_ERROR_STRING
-#define GL_PROGRAM_ERROR_STRING 0x8874
-#endif
-/** \} */ // end of glextdefines group
+#include "libvo/gl_header_fixes.h"
 
 struct GL;
 typedef struct GL GL;
 
 void glAdjustAlignment(GL *gl, int stride);
-
-const char *glValName(GLint value);
 
 int glFindFormat(uint32_t format, int have_texture_rg, int *bpp,
                  GLint *gl_texfmt, GLenum *gl_format, GLenum *gl_type);
@@ -265,6 +69,7 @@ void glDrawTex(GL *gl, GLfloat x, GLfloat y, GLfloat w, GLfloat h,
                GLfloat tx, GLfloat ty, GLfloat tw, GLfloat th,
                int sx, int sy, int rect_tex, int is_yv12, int flip);
 int loadGPUProgram(GL *gl, GLenum target, char *prog);
+void glCheckError(GL *gl, const char *info);
 
 /** \addtogroup glconversion
  * \{ */
@@ -335,6 +140,7 @@ typedef struct {
     int chrom_texw;
     int chrom_texh;
     float filter_strength;
+    float noise_strength;
 } gl_conversion_params_t;
 
 int glAutodetectYUVConversion(GL *gl);
@@ -368,38 +174,56 @@ enum MPGLType {
     GLTYPE_SDL,
 };
 
+enum {
+    MPGLFLAG_DEBUG = 1,
+};
+
+#define MPGL_VER(major, minor) (((major) << 16) | (minor))
+#define MPGL_VER_GET_MAJOR(ver) ((ver) >> 16)
+#define MPGL_VER_GET_MINOR(ver) ((ver) & ((1 << 16) - 1))
+
 typedef struct MPGLContext {
     GL *gl;
     enum MPGLType type;
     struct vo *vo;
-    union {
-        int w32;
-#ifdef CONFIG_GL_X11
-        XVisualInfo *x11;
-#endif
-    } vinfo;
-    union {
-#ifdef CONFIG_GL_WIN32
-        HGLRC w32;
-#endif
-#ifdef CONFIG_GL_X11
-        GLXContext x11;
-#endif
-    } context;
+    void *priv;
+    // Bit size of each component in the created framebuffer. 0 if unknown.
+    int depth_r, depth_g, depth_b;
     int (*create_window)(struct MPGLContext *ctx, uint32_t d_width,
                          uint32_t d_height, uint32_t flags);
     int (*setGlWindow)(struct MPGLContext *);
     void (*releaseGlContext)(struct MPGLContext *);
     void (*swapGlBuffers)(struct MPGLContext *);
-    void (*update_xinerama_info)(struct vo *vo);
-    void (*border)(struct vo *vo);
     int (*check_events)(struct vo *vo);
     void (*fullscreen)(struct vo *vo);
+    void (*vo_uninit)(struct vo *vo);
+    // only available if GL3 context creation is supported
+    // gl_flags: bitfield of MPGLFLAG_* constants
+    // gl_version: requested OpenGL version number (use MPGL_VER())
+    // return value is one of the SET_WINDOW_* constants
+    int (*create_window_gl3)(struct MPGLContext *ctx, int gl_flags,
+                             int gl_version, uint32_t d_width,
+                             uint32_t d_height, uint32_t flags);
+    // optional
+    void (*pause)(struct vo *vo);
+    void (*resume)(struct vo *vo);
     void (*ontop)(struct vo *vo);
+    void (*border)(struct vo *vo);
+    void (*update_xinerama_info)(struct vo *vo);
 } MPGLContext;
+
+int mpgl_find_backend(const char *name);
 
 MPGLContext *init_mpglcontext(enum MPGLType type, struct vo *vo);
 void uninit_mpglcontext(MPGLContext *ctx);
+
+// calls create_window_gl3 or create_window+setGlWindow
+int create_mpglcontext(struct MPGLContext *ctx, int gl_flags, int gl_version,
+                       uint32_t d_width, uint32_t d_height, uint32_t flags);
+
+// print a multi line string with line numbers (e.g. for shader sources)
+// mod, lev: module and log level, as in mp_msg()
+void mp_log_source(int mod, int lev, const char *src);
 
 //function pointers loaded from the OpenGL library
 struct GL {
@@ -411,7 +235,6 @@ struct GL {
     void (GLAPIENTRY *Translated)(double, double, double);
     void (GLAPIENTRY *Scaled)(double, double, double);
     void (GLAPIENTRY *Ortho)(double, double, double, double, double,double);
-    void (GLAPIENTRY *Frustum)(double, double, double, double, double, double);
     void (GLAPIENTRY *PushMatrix)(void);
     void (GLAPIENTRY *PopMatrix)(void);
     void (GLAPIENTRY *Clear)(GLbitfield);
@@ -423,14 +246,10 @@ struct GL {
     void (GLAPIENTRY *CallLists)(GLsizei, GLenum, const GLvoid *);
     void (GLAPIENTRY *GenTextures)(GLsizei, GLuint *);
     void (GLAPIENTRY *DeleteTextures)(GLsizei, const GLuint *);
-    void (GLAPIENTRY *TexEnvf)(GLenum, GLenum, GLfloat);
     void (GLAPIENTRY *TexEnvi)(GLenum, GLenum, GLint);
     void (GLAPIENTRY *Color4ub)(GLubyte, GLubyte, GLubyte, GLubyte);
-    void (GLAPIENTRY *Color3f)(GLfloat, GLfloat, GLfloat);
     void (GLAPIENTRY *Color4f)(GLfloat, GLfloat, GLfloat, GLfloat);
     void (GLAPIENTRY *ClearColor)(GLclampf, GLclampf, GLclampf, GLclampf);
-    void (GLAPIENTRY *ClearDepth)(GLclampd);
-    void (GLAPIENTRY *DepthFunc)(GLenum);
     void (GLAPIENTRY *Enable)(GLenum);
     void (GLAPIENTRY *Disable)(GLenum);
     const GLubyte *(GLAPIENTRY * GetString)(GLenum);
@@ -454,16 +273,20 @@ struct GL {
     void (GLAPIENTRY *TexCoord2f)(GLfloat, GLfloat);
     void (GLAPIENTRY *TexCoord2fv)(const GLfloat *);
     void (GLAPIENTRY *Vertex2f)(GLfloat, GLfloat);
-    void (GLAPIENTRY *Vertex3f)(GLfloat, GLfloat, GLfloat);
-    void (GLAPIENTRY *Normal3f)(GLfloat, GLfloat, GLfloat);
-    void (GLAPIENTRY *Lightfv)(GLenum, GLenum, const GLfloat *);
-    void (GLAPIENTRY *ColorMaterial)(GLenum, GLenum);
-    void (GLAPIENTRY *ShadeModel)(GLenum);
     void (GLAPIENTRY *GetIntegerv)(GLenum, GLint *);
+    void (GLAPIENTRY *GetBooleanv)(GLenum, GLboolean *);
     void (GLAPIENTRY *ColorMask)(GLboolean, GLboolean, GLboolean, GLboolean);
     void (GLAPIENTRY *ReadPixels)(GLint, GLint, GLsizei, GLsizei, GLenum,
                                   GLenum, GLvoid *);
     void (GLAPIENTRY *ReadBuffer)(GLenum);
+    void (GLAPIENTRY *VertexPointer)(GLint, GLenum, GLsizei, const GLvoid *);
+    void (GLAPIENTRY *ColorPointer)(GLint, GLenum, GLsizei, const GLvoid *);
+    void (GLAPIENTRY *TexCoordPointer)(GLint, GLenum, GLsizei, const GLvoid *);
+    void (GLAPIENTRY *DrawArrays)(GLenum, GLint, GLsizei);
+    void (GLAPIENTRY *EnableClientState)(GLenum);
+    void (GLAPIENTRY *DisableClientState)(GLenum);
+    GLenum (GLAPIENTRY *GetError)(void);
+
 
     // OpenGL extension functions
     void (GLAPIENTRY *GenBuffers)(GLsizei, GLuint *);
@@ -472,6 +295,22 @@ struct GL {
     GLvoid * (GLAPIENTRY * MapBuffer)(GLenum, GLenum);
     GLboolean (GLAPIENTRY *UnmapBuffer)(GLenum);
     void (GLAPIENTRY *BufferData)(GLenum, intptr_t, const GLvoid *, GLenum);
+    void (GLAPIENTRY *ActiveTexture)(GLenum);
+    void (GLAPIENTRY *BindTexture)(GLenum, GLuint);
+    void (GLAPIENTRY *MultiTexCoord2f)(GLenum, GLfloat, GLfloat);
+    void (GLAPIENTRY *GenPrograms)(GLsizei, GLuint *);
+    void (GLAPIENTRY *DeletePrograms)(GLsizei, const GLuint *);
+    void (GLAPIENTRY *BindProgram)(GLenum, GLuint);
+    void (GLAPIENTRY *ProgramString)(GLenum, GLenum, GLsizei, const GLvoid *);
+    void (GLAPIENTRY *GetProgramivARB)(GLenum, GLenum, GLint *);
+    void (GLAPIENTRY *ProgramEnvParameter4f)(GLenum, GLuint, GLfloat, GLfloat,
+                                             GLfloat, GLfloat);
+    int (GLAPIENTRY *SwapInterval)(int);
+    void (GLAPIENTRY *TexImage3D)(GLenum, GLint, GLenum, GLsizei, GLsizei,
+                                  GLsizei, GLint, GLenum, GLenum,
+                                  const GLvoid *);
+
+    // ancient ATI extensions
     void (GLAPIENTRY *BeginFragmentShader)(void);
     void (GLAPIENTRY *EndFragmentShader)(void);
     void (GLAPIENTRY *SampleMap)(GLuint, GLuint, GLenum);
@@ -481,20 +320,48 @@ struct GL {
                                         GLuint, GLuint, GLuint, GLuint, GLuint,
                                         GLuint, GLuint, GLuint);
     void (GLAPIENTRY *SetFragmentShaderConstant)(GLuint, const GLfloat *);
-    void (GLAPIENTRY *ActiveTexture)(GLenum);
-    void (GLAPIENTRY *BindTexture)(GLenum, GLuint);
-    void (GLAPIENTRY *MultiTexCoord2f)(GLenum, GLfloat, GLfloat);
-    void (GLAPIENTRY *GenPrograms)(GLsizei, GLuint *);
-    void (GLAPIENTRY *DeletePrograms)(GLsizei, const GLuint *);
-    void (GLAPIENTRY *BindProgram)(GLenum, GLuint);
-    void (GLAPIENTRY *ProgramString)(GLenum, GLenum, GLsizei, const GLvoid *);
+
+
+    // GL 3, possibly in GL 2.x as well in form of extensions
+    void (GLAPIENTRY *GenVertexArrays)(GLsizei, GLuint *);
+    void (GLAPIENTRY *BindVertexArray)(GLuint);
+    GLint (GLAPIENTRY *GetAttribLocation)(GLuint, const GLchar *);
+    void (GLAPIENTRY *EnableVertexAttribArray)(GLuint);
+    void (GLAPIENTRY *DisableVertexAttribArray)(GLuint);
+    void (GLAPIENTRY *VertexAttribPointer)(GLuint, GLint, GLenum, GLboolean,
+                                           GLsizei, const GLvoid *);
+    void (GLAPIENTRY *DeleteVertexArrays)(GLsizei, const GLuint *);
+    void (GLAPIENTRY *UseProgram)(GLuint);
+    GLint (GLAPIENTRY *GetUniformLocation)(GLuint, const GLchar *);
+    void (GLAPIENTRY *CompileShader)(GLuint);
+    GLuint (GLAPIENTRY *CreateProgram)(void);
+    GLuint (GLAPIENTRY *CreateShader)(GLenum);
+    void (GLAPIENTRY *ShaderSource)(GLuint, GLsizei, const GLchar **,
+                                    const GLint *);
+    void (GLAPIENTRY *LinkProgram)(GLuint);
+    void (GLAPIENTRY *AttachShader)(GLuint, GLuint);
+    void (GLAPIENTRY *DeleteShader)(GLuint);
+    void (GLAPIENTRY *DeleteProgram)(GLuint);
+    void (GLAPIENTRY *GetShaderInfoLog)(GLuint, GLsizei, GLsizei *, GLchar *);
+    void (GLAPIENTRY *GetShaderiv)(GLuint, GLenum, GLint *);
+    void (GLAPIENTRY *GetProgramInfoLog)(GLuint, GLsizei, GLsizei *, GLchar *);
     void (GLAPIENTRY *GetProgramiv)(GLenum, GLenum, GLint *);
-    void (GLAPIENTRY *ProgramEnvParameter4f)(GLenum, GLuint, GLfloat, GLfloat,
-                                             GLfloat, GLfloat);
-    int (GLAPIENTRY *SwapInterval)(int);
-    void (GLAPIENTRY *TexImage3D)(GLenum, GLint, GLenum, GLsizei, GLsizei,
-                                  GLsizei, GLint, GLenum, GLenum,
-                                  const GLvoid *);
+    const GLubyte* (GLAPIENTRY *GetStringi)(GLenum, GLuint);
+    void (GLAPIENTRY *BindAttribLocation)(GLuint, GLuint, const GLchar *);
+    void (GLAPIENTRY *BindFramebuffer)(GLenum, GLuint);
+    void (GLAPIENTRY *GenFramebuffers)(GLsizei, GLuint *);
+    void (GLAPIENTRY *DeleteFramebuffers)(GLsizei, const GLuint *);
+    GLenum (GLAPIENTRY *CheckFramebufferStatus)(GLenum);
+    void (GLAPIENTRY *FramebufferTexture2D)(GLenum, GLenum, GLenum, GLuint,
+                                            GLint);
+
+    void (GLAPIENTRY *Uniform1f)(GLint, GLfloat);
+    void (GLAPIENTRY *Uniform3f)(GLint, GLfloat, GLfloat, GLfloat);
+    void (GLAPIENTRY *Uniform1i)(GLint, GLint);
+    void (GLAPIENTRY *UniformMatrix3fv)(GLint, GLsizei, GLboolean,
+                                        const GLfloat *);
+    void (GLAPIENTRY *UniformMatrix4x3fv)(GLint, GLsizei, GLboolean,
+                                          const GLfloat *);
 };
 
 #endif /* MPLAYER_GL_COMMON_H */

@@ -46,9 +46,6 @@
 
 static inline void RENAME(vo_draw_alpha_yv12)(int w,int h, unsigned char* src, unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
     int y;
-#if defined(FAST_OSD) && !HAVE_MMX
-    w=w>>1;
-#endif
 #if HAVE_MMX
     __asm__ volatile(
         "pcmpeqb %%mm5, %%mm5\n\t" // F..F
@@ -96,12 +93,7 @@ static inline void RENAME(vo_draw_alpha_yv12)(int w,int h, unsigned char* src, u
 	}
 #else
         for(x=0;x<w;x++){
-#ifdef FAST_OSD
-            if(srca[2*x+0]) dstbase[2*x+0]=src[2*x+0];
-            if(srca[2*x+1]) dstbase[2*x+1]=src[2*x+1];
-#else
             if(srca[x]) dstbase[x]=((dstbase[x]*srca[x])>>8)+src[x];
-#endif
         }
 #endif
         src+=srcstride;
@@ -116,9 +108,6 @@ static inline void RENAME(vo_draw_alpha_yv12)(int w,int h, unsigned char* src, u
 
 static inline void RENAME(vo_draw_alpha_yuy2)(int w,int h, unsigned char* src, unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
     int y;
-#if defined(FAST_OSD) && !HAVE_MMX
-    w=w>>1;
-#endif
 #if HAVE_MMX
     __asm__ volatile(
         "pxor %%mm7, %%mm7\n\t"
@@ -165,15 +154,10 @@ static inline void RENAME(vo_draw_alpha_yuy2)(int w,int h, unsigned char* src, u
 	}
 #else
         for(x=0;x<w;x++){
-#ifdef FAST_OSD
-            if(srca[2*x+0]) dstbase[4*x+0]=src[2*x+0];
-            if(srca[2*x+1]) dstbase[4*x+2]=src[2*x+1];
-#else
             if(srca[x]) {
                dstbase[2*x]=((dstbase[2*x]*srca[x])>>8)+src[x];
                dstbase[2*x+1]=((((signed)dstbase[2*x+1]-128)*srca[x])>>8)+128;
            }
-#endif
         }
 #endif
 	src+=srcstride;
@@ -184,30 +168,6 @@ static inline void RENAME(vo_draw_alpha_yuy2)(int w,int h, unsigned char* src, u
 	__asm__ volatile(EMMS:::"memory");
 #endif
     return;
-}
-
-static inline void RENAME(vo_draw_alpha_uyvy)(int w,int h, unsigned char* src, unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
-  int y;
-#if defined(FAST_OSD)
-  w=w>>1;
-#endif
-  for(y=0;y<h;y++){
-    register int x;
-    for(x=0;x<w;x++){
-#ifdef FAST_OSD
-      if(srca[2*x+0]) dstbase[4*x+2]=src[2*x+0];
-      if(srca[2*x+1]) dstbase[4*x+0]=src[2*x+1];
-#else
-      if(srca[x]) {
-	dstbase[2*x+1]=((dstbase[2*x+1]*srca[x])>>8)+src[x];
-	dstbase[2*x]=((((signed)dstbase[2*x]-128)*srca[x])>>8)+128;
-      }
-#endif
-    }
-    src+=srcstride;
-    srca+=srcstride;
-    dstbase+=dststride;
-  }
 }
 
 static inline void RENAME(vo_draw_alpha_rgb24)(int w,int h, unsigned char* src, unsigned char *srca, int srcstride, unsigned char* dstbase,int dststride){
@@ -297,13 +257,9 @@ static inline void RENAME(vo_draw_alpha_rgb24)(int w,int h, unsigned char* src, 
 #else /*non x86 arch or x86_64 with MMX disabled */
         for(x=0;x<w;x++){
             if(srca[x]){
-#ifdef FAST_OSD
-		dst[0]=dst[1]=dst[2]=src[x];
-#else
 		dst[0]=((dst[0]*srca[x])>>8)+src[x];
 		dst[1]=((dst[1]*srca[x])>>8)+src[x];
 		dst[2]=((dst[2]*srca[x])>>8)+src[x];
-#endif
             }
             dst+=3; // 24bpp
         }
@@ -463,13 +419,9 @@ static inline void RENAME(vo_draw_alpha_rgb32)(int w,int h, unsigned char* src, 
 #else /*non x86 arch or x86_64 with MMX disabled */
         for(x=0;x<w;x++){
             if(srca[x]){
-#ifdef FAST_OSD
-		dstbase[4*x+0]=dstbase[4*x+1]=dstbase[4*x+2]=src[x];
-#else
 		dstbase[4*x+0]=((dstbase[4*x+0]*srca[x])>>8)+src[x];
 		dstbase[4*x+1]=((dstbase[4*x+1]*srca[x])>>8)+src[x];
 		dstbase[4*x+2]=((dstbase[4*x+2]*srca[x])>>8)+src[x];
-#endif
             }
         }
 #endif /* arch_x86 */

@@ -20,8 +20,6 @@
 #define MPLAYER_OSX_COMMON_H
 
 int convert_key(unsigned key, unsigned charcode);
-void change_movie_aspect(float new_aspect);
-void config_movie_aspect(float config_aspect);
-void osx_foreground_hack(void);
+int is_osx_version_at_least(int majorv, int minorv, int bugfixv);
 
 #endif /* MPLAYER_OSX_COMMON_H */

@@ -1354,7 +1354,6 @@ static void lschunks(demuxer_t* demuxer,int level,off_t endpos,mov_track_t* trak
 				init_vobsub(sh, trak);
 			else {
 				sh->type = 'm';
-				sub_utf8 = 1;
 			}
 		} else
 		mp_msg(MSGT_DEMUX, MSGL_V, "Generic track - not completely understood! (id: %d)\n",

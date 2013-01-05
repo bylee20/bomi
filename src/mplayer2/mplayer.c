@@ -80,14 +80,13 @@
 #include "sub/subreader.h"
 #include "sub/find_subfiles.h"
 #include "sub/dec_sub.h"
+#include "sub/sub_cc.h"
 
 #include "mp_osd.h"
 #include "libvo/video_out.h"
 #include "screenshot.h"
 
-#include "sub/font_load.h"
 #include "sub/sub.h"
-#include "sub/av_sub.h"
 #include "libmpcodecs/dec_teletext.h"
 #include "cpudetect.h"
 #include "version.h"
@@ -304,9 +303,6 @@ int vobsub_id = -1;
 static char *spudec_ifo = NULL;
 int forced_subs_only = 0;
 
-// cache2:
-int stream_cache_size = -1;
-
 // dump:
 int stream_dump_type = 0;
 
@@ -320,16 +316,6 @@ static int force_srate = 0;
 int frame_dropping = 0;      // option  0=no drop  1= drop vo  2= drop decode
 static int play_n_frames = -1;
 static int play_n_frames_mf = -1;
-
-// sub:
-char *font_name = NULL;
-char *sub_font_name = NULL;
-extern int font_fontconfig;
-float font_factor = 0.75;
-float sub_delay = 0;
-float sub_fps = 0;
-int subcc_enabled = 0;
-int suboverlap_enabled = 1;
 
 #include "sub/ass_mp.h"
 
@@ -598,8 +584,8 @@ void uninit_player(struct MPContext *mpctx, unsigned int mask)
 
     if (mask & INITIALIZED_SUB) {
         mpctx->initialized_flags &= ~INITIALIZED_SUB;
-        if (mpctx->d_sub->sh)
-            sub_switchoff(mpctx->d_sub->sh, mpctx->osd);
+        if (mpctx->osd->sh_sub)
+            sub_switchoff(mpctx->osd->sh_sub, mpctx->osd);
     }
 
     if (mask & INITIALIZED_VCODEC) {
@@ -685,10 +671,9 @@ void uninit_player(struct MPContext *mpctx, unsigned int mask)
     if (mask & INITIALIZED_AO) {
         mpctx->initialized_flags &= ~INITIALIZED_AO;
         current_module = "uninit_ao";
-        if (mpctx->ao) {
-            mixer_uninit(&mpctx->mixer);
+        mixer_uninit(&mpctx->mixer);
+        if (mpctx->ao)
             ao_uninit(mpctx->ao, mpctx->stop_play != AT_END_OF_FILE);
-        }
         mpctx->ao = NULL;
     }
 
@@ -701,21 +686,10 @@ void exit_player_with_rc(struct MPContext *mpctx, enum exit_reason how, int rc)
 #if defined(__MINGW32__) || defined(__CYGWIN__)
     timeEndPeriod(1);
 #endif
-#ifdef CONFIG_X11
-    vo_uninit(mpctx->x11_state); // Close the X11 connection (if any is open).
-#endif
 
     current_module = "uninit_input";
     mp_input_uninit(mpctx->input);
 
-#ifdef CONFIG_FREETYPE
-    current_module = "uninit_font";
-    if (mpctx->osd && mpctx->osd->sub_font != vo_font)
-        free_font_desc(mpctx->osd->sub_font);
-    free_font_desc(vo_font);
-    vo_font = NULL;
-    done_freetype();
-#endif
     osd_free(mpctx->osd);
 
 #ifdef CONFIG_ASS
@@ -1065,20 +1039,20 @@ void add_subtitles(struct MPContext *mpctx, char *filename, float fps,
 {
     struct MPOpts *opts = &mpctx->opts;
     sub_data *subd = NULL;
-    struct ass_track *asst = NULL;
-    bool is_native_ass = false;
+    struct sh_sub *sh = NULL;
 
     if (filename == NULL || mpctx->set_of_sub_size >= MAX_SUBTITLE_FILES)
         return;
 
-#ifdef CONFIG_ASS
     if (opts->ass_enabled) {
+#ifdef CONFIG_ASS
+        struct ass_track *asst;
 #ifdef CONFIG_ICONV
-        asst = mp_ass_read_stream(mpctx->ass_library, filename, sub_cp);
+        asst = mp_ass_read_stream(mpctx->ass_library, opts, filename, sub_cp);
 #else
-        asst = mp_ass_read_stream(mpctx->ass_library, filename, 0);
+        asst = mp_ass_read_stream(mpctx->ass_library, opts, filename, 0);
 #endif
-        is_native_ass = asst;
+        bool is_native_ass = asst;
         if (!asst) {
             subd = sub_read_file(filename, fps, &mpctx->opts);
             if (subd) {
@@ -1087,20 +1061,21 @@ void add_subtitles(struct MPContext *mpctx, char *filename, float fps,
                 subd = NULL;
             }
         }
-    } else
+        if (asst)
+            sh = sd_ass_create_from_track(asst, is_native_ass, opts);
 #endif
-    subd = sub_read_file(filename, fps, &mpctx->opts);
+    } else
+        subd = sub_read_file(filename, fps, &mpctx->opts);
 
 
-    if (!asst && !subd) {
+    if (!sh && !subd) {
         mp_tmsg(MSGT_CPLAYER, noerr ? MSGL_WARN : MSGL_ERR,
                 "Cannot load subtitles: %s\n", filename_recode(filename));
         return;
     }
 
-    mpctx->set_of_ass_tracks[mpctx->set_of_sub_size] = asst;
+    mpctx->set_of_ass_tracks[mpctx->set_of_sub_size] = sh;
     mpctx->set_of_subtitles[mpctx->set_of_sub_size] = subd;
-    mpctx->track_was_native_ass[mpctx->set_of_sub_size] = is_native_ass;
     mp_msg(MSGT_IDENTIFY, MSGL_INFO,
            "ID_FILE_SUB_ID=%d\n", mpctx->set_of_sub_size);
     mp_msg(MSGT_IDENTIFY, MSGL_INFO, "ID_FILE_SUB_FILENAME=%s\n",
@@ -1321,7 +1296,7 @@ static void print_status(struct MPContext *mpctx, double a_pos, bool at_frame)
 
 #ifdef CONFIG_STREAM_CACHE
     // cache stats
-    if (stream_cache_size > 0)
+    if (mpctx->stream->cached)
         saddf(line, &pos, width, "%d%% ", cache_fill_status(mpctx->stream));
 #endif
 
@@ -1436,6 +1411,8 @@ struct mp_osd_msg {
     int id, level, started;
     /// Display duration in ms.
     unsigned time;
+    // Show full OSD for duration of message instead of static text ('P' key)
+    bool show_position;
 };
 
 /// OSD message stack.
@@ -1448,8 +1425,8 @@ static mp_osd_msg_t *osd_msg_stack = NULL;
  *  it is pulled on top of the stack, otherwise a new message is created.
  *
  */
-static void set_osd_msg_va(int id, int level, int time, const char *fmt,
-                           va_list ap)
+static void set_osd_msg_va(int id, int level, int time, bool show_position,
+                           const char *fmt, va_list ap)
 {
     mp_osd_msg_t *msg, *last = NULL;
 
@@ -1473,14 +1450,14 @@ static void set_osd_msg_va(int id, int level, int time, const char *fmt,
     msg->id = id;
     msg->level = level;
     msg->time = time;
-
+    msg->show_position = show_position;
 }
 
 void set_osd_msg(int id, int level, int time, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    set_osd_msg_va(id, level, time, fmt, ap);
+    set_osd_msg_va(id, level, time, false, fmt, ap);
     va_end(ap);
 }
 
@@ -1488,7 +1465,15 @@ void set_osd_tmsg(int id, int level, int time, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    set_osd_msg_va(id, level, time, mp_gtext(fmt), ap);
+    set_osd_msg_va(id, level, time, false, mp_gtext(fmt), ap);
+    va_end(ap);
+}
+
+void set_osd_progressmsg(int id, int level, int time, ...)
+{
+    va_list ap;
+    va_start(ap, time);
+    set_osd_msg_va(id, level, time, true, "", ap);
     va_end(ap);
 }
 
@@ -1665,7 +1650,6 @@ static void update_osd_msg(struct MPContext *mpctx)
     struct MPOpts *opts = &mpctx->opts;
     mp_osd_msg_t *msg;
     struct osd_state *osd = mpctx->osd;
-    char osd_text_timer[128];
 
     if (mpctx->add_osd_seek_info) {
         double percentage = get_percent_pos(mpctx);
@@ -1676,7 +1660,7 @@ static void update_osd_msg(struct MPContext *mpctx)
     }
 
     // Look if we have a msg
-    if ((msg = get_osd_msg(mpctx))) {
+    if ((msg = get_osd_msg(mpctx)) && !msg->show_position) {
         if (strcmp(osd->osd_text, msg->msg)) {
             osd_set_text(osd, msg->msg);
             if (mpctx->sh_video)
@@ -1688,9 +1672,14 @@ static void update_osd_msg(struct MPContext *mpctx)
         return;
     }
 
+    int osdlevel = opts->osd_level;
+    if (msg && msg->show_position)
+        osdlevel = 3;
+
     if (mpctx->sh_video) {
         // fallback on the timer
-        if (opts->osd_level >= 2) {
+        char osd_text_timer[128] = {0};
+        if (osdlevel >= 2) {
             int len = get_time_length(mpctx);
             int percentage = -1;
             char percentage_text[10];
@@ -1731,19 +1720,22 @@ static void update_osd_msg(struct MPContext *mpctx)
                 fractions_text[0] = 0;
             }
 
-            if (opts->osd_level == 3)
-                snprintf(osd_text_timer, sizeof(osd_text_timer),
-                         "%c %02d:%02d:%02d%s / %02d:%02d:%02d%s",
-                         mpctx->osd_function, pts / 3600, (pts / 60) % 60, pts % 60,
-                         fractions_text, len / 3600, (len / 60) % 60, len % 60,
+            osd_get_function_sym(osd_text_timer, sizeof(osd_text_timer),
+                                 mpctx->osd_function);
+            size_t blen = strlen(osd_text_timer);
+
+            if (osdlevel == 3)
+                snprintf(osd_text_timer + blen, sizeof(osd_text_timer) - blen,
+                         " %02d:%02d:%02d%s / %02d:%02d:%02d%s",
+                         pts / 3600, (pts / 60) % 60, pts % 60, fractions_text,
+                         len / 3600, (len / 60) % 60, len % 60,
                          percentage_text);
             else
-                snprintf(osd_text_timer, sizeof(osd_text_timer),
-                         "%c %02d:%02d:%02d%s%s",
-                         mpctx->osd_function, pts / 3600, (pts / 60) % 60,
-                         pts % 60, fractions_text, percentage_text);
-        } else
-            osd_text_timer[0] = 0;
+                snprintf(osd_text_timer + blen, sizeof(osd_text_timer) - blen,
+                         " %02d:%02d:%02d%s%s",
+                         pts / 3600, (pts / 60) % 60, pts % 60, fractions_text,
+                         percentage_text);
+        }
 
         if (strcmp(osd->osd_text, osd_text_timer)) {
             osd_set_text(osd, osd_text_timer);
@@ -1932,8 +1924,6 @@ void update_subtitles(struct MPContext *mpctx, double refpts_tl, bool reset)
             spudec_reset(vo_spudec);
             vo_osd_changed(OSDTYPE_SPU);
         }
-        if (is_av_sub(type))
-            reset_avsub(sh_sub);
         return;
     }
     // find sub
@@ -2018,13 +2008,6 @@ void update_subtitles(struct MPContext *mpctx, double refpts_tl, bool reset)
             }
             double duration = d_sub->first->duration;
             len = ds_get_packet_sub(d_sub, &packet);
-            if (is_av_sub(type)) {
-                int ret = decode_avsub(sh_sub, packet, len, subpts_s, duration);
-                if (ret < 0)
-                    mp_msg(MSGT_SPUDEC, MSGL_WARN, "lavc failed decoding "
-                           "subtitle\n");
-                continue;
-            }
             if (type == 'm') {
                 if (len < 2)
                     continue;
@@ -2628,8 +2611,7 @@ int reinit_video_chain(struct MPContext *mpctx)
 
         //shouldn't we set dvideo->id=-2 when we fail?
         //if((mpctx->video_out->preinit(vo_subdevice))!=0){
-        if (!(mpctx->video_out = init_best_video_out(opts, mpctx->x11_state,
-                                                     mpctx->key_fifo,
+        if (!(mpctx->video_out = init_best_video_out(opts, mpctx->key_fifo,
                                                      mpctx->input))) {
             mp_tmsg(MSGT_CPLAYER, MSGL_FATAL, "Error opening/initializing "
                     "the selected video_out (-vo) device.\n");
@@ -2685,11 +2667,9 @@ int reinit_video_chain(struct MPContext *mpctx)
 
     sh_video->vfilter = append_filters(sh_video->vfilter, opts->vf_settings);
 
-#ifdef CONFIG_ASS
     if (opts->ass_enabled)
         sh_video->vfilter->control(sh_video->vfilter, VFCTRL_INIT_EOSD,
                                    mpctx->ass_library);
-#endif
 
     current_module = "init_video_codec";
 
@@ -2932,7 +2912,7 @@ static double update_video(struct MPContext *mpctx)
 static int get_cache_fill(struct MPContext *mpctx)
 {
 #ifdef CONFIG_STREAM_CACHE
-    if (stream_cache_size > 0)
+    if (mpctx->stream && mpctx->stream->cached)
         return cache_fill_status(mpctx->stream);
 #endif
     return -1;
@@ -3018,7 +2998,10 @@ static int redraw_osd(struct MPContext *mpctx)
         return -1;
     if (vo_redraw_frame(mpctx->video_out) < 0)
         return -1;
-    mpctx->osd->pts = mpctx->video_pts - mpctx->osd->sub_offset;
+    mpctx->osd->sub_pts = mpctx->video_pts;
+    if (mpctx->osd->sub_pts != MP_NOPTS_VALUE)
+        mpctx->osd->sub_pts += sub_delay - mpctx->osd->sub_offset;
+
     if (!(sh_video->output_flags & VFCAP_EOSD_FILTER))
         vf->control(vf, VFCTRL_DRAW_EOSD, mpctx->osd);
     vf->control(vf, VFCTRL_DRAW_OSD, mpctx->osd);
@@ -3487,10 +3470,8 @@ static void run_playloop(struct MPContext *mpctx)
         vo_check_events(vo);
 
 #ifdef CONFIG_X11
-        if (stop_xscreensaver) {
-            current_module = "stop_xscreensaver";
-            xscreensaver_heartbeat(mpctx->x11_state);
-        }
+        if (stop_xscreensaver && vo->x11)
+            xscreensaver_heartbeat(vo->x11);
 #endif
         if (heartbeat_cmd) {
             static unsigned last_heartbeat;
@@ -3558,7 +3539,9 @@ static void run_playloop(struct MPContext *mpctx)
         update_teletext(sh_video, mpctx->demuxer, 0);
         update_osd_msg(mpctx);
         struct vf_instance *vf = sh_video->vfilter;
-        mpctx->osd->pts = mpctx->video_pts - mpctx->osd->sub_offset;
+        mpctx->osd->sub_pts = mpctx->video_pts;
+        if (mpctx->osd->sub_pts != MP_NOPTS_VALUE)
+            mpctx->osd->sub_pts += sub_delay - mpctx->osd->sub_offset;
         vf->control(vf, VFCTRL_DRAW_EOSD, mpctx->osd);
         vf->control(vf, VFCTRL_DRAW_OSD, mpctx->osd);
         vo_osd_changed(0);
@@ -3929,9 +3912,6 @@ int main(int argc, char *argv[])
     mp_msg_init();
     init_libav();
 
-#ifdef CONFIG_X11
-    mpctx->x11_state = vo_x11_init_state();
-#endif
     struct MPOpts *opts = &mpctx->opts;
     set_default_mplayer_options(opts);
     // Create the config context and register the options
@@ -4013,10 +3993,10 @@ int main(int argc, char *argv[])
     }
 
     /* Check codecs.conf. */
-    if (!codecs_file || !parse_codec_cfg(codecs_file)) {
-        if (!parse_codec_cfg(mem_ptr = get_path("codecs.conf"))) {
-            if (!parse_codec_cfg(MPLAYER_CONFDIR "/codecs.conf")) {
-                if (!parse_codec_cfg(NULL))
+    if (!codecs_file || !parse_codec_cfg(codecs_file, opts)) {
+        if (!parse_codec_cfg(mem_ptr = get_path("codecs.conf"), opts)) {
+            if (!parse_codec_cfg(MPLAYER_CONFDIR "/codecs.conf", opts)) {
+                if (!parse_codec_cfg(NULL, opts))
                     exit_player_with_rc(mpctx, EXIT_NONE, 0);
                 mp_tmsg(MSGT_CPLAYER, MSGL_V,
                         "Using built-in default codecs.conf.\n");
@@ -4095,44 +4075,11 @@ int main(int argc, char *argv[])
 
     //------ load global data first ------
 
-    mpctx->osd = osd_create();
-
-    // check font
-#ifdef CONFIG_FREETYPE
-    init_freetype();
-#endif
-#ifdef CONFIG_FONTCONFIG
-    if (font_fontconfig <= 0) {
-#endif
-#ifdef CONFIG_BITMAP_FONT
-    if (font_name) {
-        vo_font = read_font_desc(font_name, font_factor, verbose > 1);
-        if (!vo_font)
-            mp_tmsg(MSGT_CPLAYER, MSGL_ERR, "Cannot load bitmap font: %s\n",
-                    filename_recode(font_name));
-    } else {
-        // try default:
-        vo_font = read_font_desc(mem_ptr = get_path("font/font.desc"),
-                                 font_factor, verbose > 1);
-        free(mem_ptr); // release the buffer created by get_path()
-        if (!vo_font)
-            vo_font = read_font_desc(MPLAYER_DATADIR "/font/font.desc",
-                                     font_factor, verbose > 1);
-    }
-    if (sub_font_name)
-        mpctx->osd->sub_font = read_font_desc(sub_font_name, font_factor,
-                                              verbose > 1);
-    else
-        mpctx->osd->sub_font = vo_font;
-#endif
-#ifdef CONFIG_FONTCONFIG
-}
-#endif
-
 #ifdef CONFIG_ASS
     mpctx->ass_library = mp_ass_init(opts);
-    mpctx->osd->ass_library = mpctx->ass_library;
 #endif
+
+    mpctx->osd = osd_create(opts, mpctx->ass_library);
 
 #ifdef HAVE_RTC
     if (opts->rtc) {
@@ -4176,7 +4123,7 @@ int main(int argc, char *argv[])
 
     // Init input system
     current_module = "init_input";
-    mpctx->input = mp_input_init(&opts->input);
+    mpctx->input = mp_input_init(opts);
     mpctx->key_fifo = mp_fifo_create(mpctx->input, opts);
     if (slave_mode)
         mp_input_add_cmd_fd(mpctx->input, 0, USE_FD0_CMD_SELECT, MP_INPUT_SLAVE_CMD_FUNC, NULL);
@@ -4265,7 +4212,7 @@ play_next_file:
             // The entry is added to the main playtree after the switch().
             break;
         case MP_CMD_LOADLIST:
-            entry = parse_playlist_file(mpctx->mconfig, bstr(cmd->args[0].v.s));
+            entry = parse_playlist_file(&mpctx->opts, bstr(cmd->args[0].v.s));
             break;
         case MP_CMD_QUIT:
             exit_player_with_rc(mpctx, EXIT_QUIT,
@@ -4375,7 +4322,13 @@ play_next_file:
     mpctx->sh_video = NULL;
 
     current_module = "open_stream";
-    mpctx->stream = open_stream(mpctx->filename, opts, &mpctx->file_format);
+    char *stream_filename = mpctx->filename;
+#ifdef CONFIG_LIBQUVI
+    mpctx->resolve_result = mp_resolve_quvi(stream_filename, opts);
+#endif
+    if (mpctx->resolve_result)
+        stream_filename = mpctx->resolve_result->url;
+    mpctx->stream = open_stream(stream_filename, opts, &mpctx->file_format);
     if (!mpctx->stream) { // error...
         mpctx->stop_play = libmpdemux_was_interrupted(mpctx, PT_NEXT_ENTRY);
         goto goto_next_file;
@@ -4477,18 +4430,16 @@ play_next_file:
 
     // CACHE2: initial prefill: 20%  later: 5%  (should be set by -cacheopts)
 goto_enable_cache:
-    if (stream_cache_size > 0) {
-        int res;
-        float stream_cache_min_percent = opts->stream_cache_min_percent;
-        float stream_cache_seek_min_percent = opts->stream_cache_seek_min_percent;
-        current_module = "enable_cache";
-        res = stream_enable_cache(mpctx->stream, stream_cache_size * 1024,
-                                  stream_cache_size * 1024 * (stream_cache_min_percent / 100.0),
-                                  stream_cache_size * 1024 * (stream_cache_seek_min_percent / 100.0));
-        if (res == 0)
-            if ((mpctx->stop_play = libmpdemux_was_interrupted(mpctx, PT_NEXT_ENTRY)))
-                goto goto_next_file;
-    }
+    current_module = "enable_cache";
+    int res = stream_enable_cache_percent(mpctx->stream,
+                                      opts->stream_cache_size,
+                                      opts->stream_cache_min_percent,
+                                      opts->stream_cache_seek_min_percent);
+    if (res == 0)
+        if ((mpctx->stop_play = libmpdemux_was_interrupted(mpctx,
+                                                           PT_NEXT_ENTRY)))
+            goto goto_next_file;
+
 
     //============ Open DEMUXERS --- DETECT file type =======================
     current_module = "demux_open";
@@ -4605,7 +4556,7 @@ goto_enable_cache:
     mpctx->initialized_flags |= INITIALIZED_DEMUXER;
 
 #ifdef CONFIG_ASS
-    if (opts->ass_enabled && mpctx->ass_library) {
+    if (opts->ass_enabled) {
         for (int j = 0; j < mpctx->num_sources; j++) {
             struct demuxer *d = mpctx->sources[j].demuxer;
             for (int i = 0; i < d->num_attachments; i++) {
@@ -4616,6 +4567,16 @@ goto_enable_cache:
             }
         }
     }
+    /* libass seems to misbehave if fonts are changed while a renderer
+     * exists, so we (re)create the renderer after fonts are set.
+     */
+    assert(!mpctx->osd->ass_renderer);
+    mpctx->osd->ass_renderer = ass_renderer_init(mpctx->osd->ass_library);
+    if (!mpctx->osd->ass_renderer) {
+        mp_msg(MSGT_OSD, MSGL_FATAL, "Failed to create libass renderer\n");
+        exit_player(mpctx, EXIT_ERROR);
+    }
+    mp_ass_configure_fonts(mpctx->osd->ass_renderer);
 #endif
 
     current_module = "demux_open2";
@@ -4791,13 +4752,7 @@ goto_enable_cache:
     print_file_properties(mpctx, mpctx->filename);
 
     reinit_video_chain(mpctx);
-    if (mpctx->sh_video) {
-        if (mpctx->sh_video->output_flags & VFCAP_SPU && vo_spudec)
-            spudec_set_hw_spu(vo_spudec, mpctx->video_out);
-#ifdef CONFIG_FREETYPE
-        force_load_font = 1;
-#endif
-    } else if (!mpctx->sh_audio)
+    if (!mpctx->sh_video && !mpctx->sh_audio)
         goto goto_next_file;
 
     //================== MAIN: ==========================
@@ -4998,23 +4953,25 @@ goto_next_file:  // don't jump here after ao/vo/getch initialization!
         uninitialize_parts -= INITIALIZED_AO;
     uninit_player(mpctx, uninitialize_parts);
 
+    mpctx->file_format = DEMUXER_TYPE_UNKNOWN;
+    talloc_free(mpctx->resolve_result);
+    mpctx->resolve_result = NULL;
+
     if (mpctx->set_of_sub_size > 0) {
         current_module = "sub_free";
         for (i = 0; i < mpctx->set_of_sub_size; ++i) {
             sub_free(mpctx->set_of_subtitles[i]);
-#ifdef CONFIG_ASS
-            if (mpctx->set_of_ass_tracks[i])
-                ass_free_track(mpctx->set_of_ass_tracks[i]);
-#endif
+            talloc_free(mpctx->set_of_ass_tracks[i]);
         }
         mpctx->set_of_sub_size = 0;
     }
     mpctx->vo_sub_last = vo_sub = NULL;
     mpctx->subdata = NULL;
 #ifdef CONFIG_ASS
-    mpctx->osd->ass_track = NULL;
-    if (mpctx->ass_library)
-        ass_clear_fonts(mpctx->ass_library);
+    if (mpctx->osd->ass_renderer)
+        ass_renderer_done(mpctx->osd->ass_renderer);
+    mpctx->osd->ass_renderer = NULL;
+    ass_clear_fonts(mpctx->ass_library);
 #endif
 
     if (!mpctx->stop_play) // In case some goto jumped here...

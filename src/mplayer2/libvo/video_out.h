@@ -49,7 +49,6 @@ enum mp_voctrl {
     /* libmpcodecs direct rendering */
     VOCTRL_GET_IMAGE,
     VOCTRL_DRAW_IMAGE,
-    VOCTRL_SET_SPU_PALETTE,
     VOCTRL_GET_PANSCAN,
     VOCTRL_SET_PANSCAN,
     VOCTRL_SET_EQUALIZER,               // struct voctrl_set_equalizer_args
@@ -57,11 +56,6 @@ enum mp_voctrl {
     VOCTRL_DUPLICATE_FRAME,
 
     VOCTRL_START_SLICE,
-
-    // Vo can be used by xover
-    VOCTRL_XOVERLAY_SUPPORT,
-    VOCTRL_XOVERLAY_SET_COLORKEY,       // mp_colorkey_t
-    VOCTRL_XOVERLAY_SET_WIN,
 
     VOCTRL_NEWFRAME,
     VOCTRL_SKIPFRAME,
@@ -95,18 +89,6 @@ struct voctrl_get_equalizer_args {
     const char *name;
     int *valueptr;
 };
-
-// VOCTRL_XOVERLAY_SET_COLORKEY
-typedef struct {
-    uint32_t x11; // The raw x11 color
-    uint16_t r,g,b;
-} mp_colorkey_t;
-
-// VOCTRL_GET_EOSD_RES
-typedef struct mp_eosd_res {
-    int w, h; // screen dimensions, including black borders
-    int mt, mb, ml, mr; // borders (top, bottom, left, right)
-} mp_eosd_res_t;
 
 // VOCTRL_SCREENSHOT
 struct voctrl_screenshot_args {
@@ -142,13 +124,12 @@ typedef struct {
 #define VOFLAG_FLIPPING		0x08
 #define VOFLAG_HIDDEN		0x10  //< Use to create a hidden window
 #define VOFLAG_STEREO		0x20  //< Use to create a stereo-capable window
-#define VOFLAG_XOVERLAY_SUB_VO  0x10000
 
 typedef struct vo_info_s
 {
     /* driver name ("Matrox Millennium G200/G400" */
     const char *name;
-    /* short name (for config strings) ("mga") */
+    /* short name (for config strings) ("vdpau") */
     const char *short_name;
     /* author ("Aaron Holtzman <aholtzma@ess.engr.uvic.ca>") */
     const char *author;
@@ -279,6 +260,7 @@ struct vo {
     void *priv;
     struct MPOpts *opts;
     struct vo_x11_state *x11;
+    struct vo_cocoa_state *cocoa;
     struct mp_fifo *key_fifo;
     struct input_ctx *input_ctx;
     int event_fd;  // check_events() should be called when this has input
@@ -305,8 +287,7 @@ struct vo {
     } aspdat;
 };
 
-struct vo *init_best_video_out(struct MPOpts *opts, struct vo_x11_state *x11,
-                               struct mp_fifo *key_fifo,
+struct vo *init_best_video_out(struct MPOpts *opts, struct mp_fifo *key_fifo,
                                struct input_ctx *input_ctx);
 int vo_config(struct vo *vo, uint32_t width, uint32_t height,
                      uint32_t d_width, uint32_t d_height, uint32_t flags,
@@ -355,23 +336,9 @@ extern int enable_mouse_movements;
 extern int vo_pts;
 extern float vo_fps;
 
-extern char *vo_subdevice;
-
 extern int vo_colorkey;
 
 extern int64_t WinID;
-
-typedef struct {
-        float min;
-	float max;
-	} range_t;
-
-float range_max(range_t *r);
-int in_range(range_t *r, float f);
-range_t *str2range(char *s);
-extern char *monitor_hfreq_str;
-extern char *monitor_vfreq_str;
-extern char *monitor_dotclock_str;
 
 struct mp_keymap {
   int from;

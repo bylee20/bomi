@@ -611,10 +611,8 @@ static int query_format(uint32_t format)
 
 static void uninit(void)
 {
-    if (!myximage)
-        return;
-
-    freeMyXImage();
+    if (myximage)
+        freeMyXImage();
 
 #ifdef CONFIG_XF86VM
     vo_vm_close();

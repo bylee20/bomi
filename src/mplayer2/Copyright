@@ -43,22 +43,6 @@ Copyright:  2001-2002 Dave Chapman <dave@dchapman.com>
 License:    GNU General Public License
 
 
-Name:       librtsp
-Version:    xine CVS 2003/04/10 + patches
-URL:        http://www.xinehq.de
-Directory:  stream/librtsp/
-Copyright:  2000-2002 the xine project
-License:    GNU General Public License
-
-
-Name:       realrtsp
-Version:    xine CVS 2003/04/17 + patches
-URL:        http://www.xinehq.de
-Directory:  stream/realrtsp/
-Copyright:  2002 the xine project
-License:    GNU General Public License
-
-
 Name:       pnm protocol implementation
 Version:    xine CVS 2002/12/26 + patches
 URL:        http://www.xinehq.de
@@ -72,14 +56,6 @@ Version:    1.9 + patches
 URL:        http://id3edit.sourceforge.net/
 Directory:  libmpdemux/genres.h
 Copyright:  2001 Jason Carter
-License:    GNU General Public License
-
-
-Name:       FreeSDP
-Version:    0.4.1
-URL:        https://savannah.nongnu.org/projects/freesdp/
-Directory:  stream/freesdp/
-Copyright:  2001-2003 Federico Montesino Pouzols <fedemp@suidzer0.org>
 License:    GNU General Public License
 
 

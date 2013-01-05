@@ -50,8 +50,6 @@
 
 #include "mp_msg.h"
 
-#include "sub/sub.h"
-
 
 #ifdef CONFIG_QTX_CODECS
 #include "loader/qtx/qtxsdk/components.h"
@@ -885,6 +883,7 @@ static int demux_mkv_read_tags(demuxer_t *demuxer)
             demux_info_add_bstr(demuxer, tag.simple_tag[j].tag_name, tag.simple_tag[j].tag_string);
     }
 
+    talloc_free(parse_ctx.talloc_ctx);
     return 0;
 }
 
@@ -1391,13 +1390,10 @@ static int demux_mkv_open_audio(demuxer_t *demuxer, mkv_track_t *track,
     sh_a->samplerate = (uint32_t) track->a_sfreq;
     sh_a->container_out_samplerate = track->a_osfreq;
     sh_a->wf->nSamplesPerSec = (uint32_t) track->a_sfreq;
-    if (track->a_bps == 0) {
-        sh_a->samplesize = 2;
+    if (track->a_bps == 0)
         sh_a->wf->wBitsPerSample = 16;
-    } else {
-        sh_a->samplesize = track->a_bps / 8;
+    else
         sh_a->wf->wBitsPerSample = track->a_bps;
-    }
     if (track->a_formattag == 0x0055) { /* MP3 || MP2 */
         sh_a->wf->nAvgBytesPerSec = 16000;
         sh_a->wf->nBlockAlign = 1152;
@@ -2050,7 +2046,6 @@ static int handle_block(demuxer_t *demuxer, uint8_t *block, uint64_t length,
                    "lacing. This is abnormal and not supported.\n");
             use_this_block = 0;
         }
-        sub_utf8 = 1; // XXX this variable should be eventually removed
     } else
         use_this_block = 0;
 

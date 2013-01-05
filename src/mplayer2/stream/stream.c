@@ -47,11 +47,16 @@
 #include "network.h"
 #include "stream.h"
 #include "libmpdemux/demuxer.h"
+#include "options.h"
 
 #include "m_option.h"
 #include "m_struct.h"
 
 #include "cache2.h"
+
+char* cdrom_device=NULL;
+char* dvd_device=NULL;
+int dvd_title=0;
 
 struct input_ctx;
 static int (*stream_check_interrupt_cb)(struct input_ctx *ctx, int time);
@@ -62,7 +67,6 @@ extern const stream_info_t stream_info_cdda;
 extern const stream_info_t stream_info_netstream;
 extern const stream_info_t stream_info_pnm;
 extern const stream_info_t stream_info_asf;
-extern const stream_info_t stream_info_rtsp;
 extern const stream_info_t stream_info_rtp;
 extern const stream_info_t stream_info_udp;
 extern const stream_info_t stream_info_http1;
@@ -75,8 +79,6 @@ extern const stream_info_t stream_info_ftp;
 extern const stream_info_t stream_info_vstream;
 extern const stream_info_t stream_info_dvdnav;
 extern const stream_info_t stream_info_smb;
-extern const stream_info_t stream_info_sdp;
-extern const stream_info_t stream_info_rtsp_sip;
 
 extern const stream_info_t stream_info_cue;
 extern const stream_info_t stream_info_null;
@@ -94,16 +96,12 @@ static const stream_info_t* const auto_open_streams[] = {
 #ifdef CONFIG_CDDA
   &stream_info_cdda,
 #endif
+  &stream_info_ffmpeg,  // use for rstp:// before http fallback
 #ifdef CONFIG_NETWORKING
   &stream_info_netstream,
   &stream_info_http1,
   &stream_info_asf,
   &stream_info_pnm,
-  &stream_info_rtsp,
-#ifdef CONFIG_LIVE555
-  &stream_info_sdp,
-  &stream_info_rtsp_sip,
-#endif
   &stream_info_rtp,
   &stream_info_udp,
   &stream_info_http2,
@@ -140,7 +138,6 @@ static const stream_info_t* const auto_open_streams[] = {
 #ifdef CONFIG_LIBBLURAY
   &stream_info_bluray,
 #endif
-  &stream_info_ffmpeg,
 
   &stream_info_null,
   &stream_info_mf,
@@ -191,6 +188,16 @@ static stream_t *open_stream_plugin(const stream_info_t *sinfo,
     free(s);
     return NULL;
   }
+
+    s->cache_size = 0;
+    if (s->streaming_ctrl && s->streaming_ctrl->buffering) {
+        // Set default cache size to use if user does not specify it.
+        // buffer in KBytes, *5 assuming the prefill is 20% of the buffer.
+        s->cache_size = s->streaming_ctrl->prebuffer_size / 1024 * 5;
+        if (s->cache_size < 64)
+            s->cache_size = 64;
+    }
+
   if(s->type <= -2)
     mp_msg(MSGT_OPEN,MSGL_WARN, "Warning streams need a type !!!!\n");
   if(s->flags & MP_STREAM_SEEK && !s->seek)
@@ -209,8 +216,8 @@ static stream_t *open_stream_plugin(const stream_info_t *sinfo,
 }
 
 
-stream_t *open_stream_full(const char *filename, int mode,
-                           struct MPOpts *options, int *file_format)
+static stream_t *open_stream_full(const char *filename, int mode,
+                                  struct MPOpts *options, int *file_format)
 {
   int i,j,l,r;
   const stream_info_t* sinfo;
@@ -251,6 +258,17 @@ stream_t *open_stream_full(const char *filename, int mode,
 
   mp_tmsg(MSGT_OPEN,MSGL_ERR, "No stream found to handle url %s\n", filename);
   return NULL;
+}
+
+stream_t *open_stream(const char *filename, struct MPOpts *options,
+                      int *file_format)
+{
+    if (!file_format)
+        file_format = &(int){DEMUXER_TYPE_UNKNOWN};
+    if (*file_format != DEMUXER_TYPE_PLAYLIST)
+        *file_format = DEMUXER_TYPE_UNKNOWN;
+
+    return open_stream_full(filename, STREAM_READ, options, file_format);
 }
 
 stream_t *open_output_stream(const char *filename, struct MPOpts *options)

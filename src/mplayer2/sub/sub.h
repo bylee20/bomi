@@ -21,6 +21,9 @@
 
 #include <stdbool.h>
 
+#include "subreader.h"
+#include "dec_sub.h"
+
 typedef struct mp_osd_bbox_s {
     int x1,y1,x2,y2;
 } mp_osd_bbox_t;
@@ -66,22 +69,9 @@ typedef struct mp_osd_obj_s {
     int allocated;
     unsigned char *alpha_buffer;
     unsigned char *bitmap_buffer;
+
+    struct ass_track *osd_track;
 } mp_osd_obj_t;
-
-struct osd_state {
-    struct ass_library *ass_library;
-    // flag to signal reinitialization due to ass-related option changes
-    bool ass_force_reload;
-    char *osd_text;
-    struct font_desc *sub_font;
-    struct ass_track *ass_track;
-    double pts;
-    double sub_offset;
-    bool ass_track_changed;
-    bool vsfilter_aspect;
-};
-
-#include "subreader.h"
 
 extern subtitle* vo_sub;
 
@@ -119,19 +109,30 @@ extern void* vo_vobsub;
 extern char * const sub_osd_names[];
 extern char * const sub_osd_names_short[];
 
-extern int sub_unicode;
-extern int sub_utf8;
-
 extern char *sub_cp;
 extern int sub_pos;
 extern int sub_width_p;
 extern int sub_alignment;
-extern int sub_visibility;
 extern int sub_bg_color; /* subtitles background color */
 extern int sub_bg_alpha;
 extern int spu_alignment;
 extern int spu_aamode;
 extern float spu_gaussvar;
+
+extern char *subtitle_font_encoding;
+extern float text_font_scale_factor;
+extern float osd_font_scale_factor;
+extern float subtitle_font_radius;
+extern float subtitle_font_thickness;
+extern int subtitle_autoscale;
+
+extern char *font_name;
+extern char *sub_font_name;
+extern float font_factor;
+extern float sub_delay;
+extern float sub_fps;
+
+extern int sub_justify;
 
 void osd_draw_text(struct osd_state *osd, int dxs, int dys,
                    void (*draw_alpha)(void *ctx, int x0, int y0, int w, int h,
@@ -146,19 +147,13 @@ void osd_draw_text_ext(struct osd_state *osd, int dxs, int dys,
                                           unsigned char *srca,
                                           int stride),
                        void *ctx);
-void osd_remove_text(struct osd_state *osd, int dxs, int dys,
-                     void (*remove)(int x0, int y0, int w, int h));
 
-struct osd_state *osd_create(void);
+struct osd_state *osd_create(struct MPOpts *opts, struct ass_library *asslib);
 void osd_set_text(struct osd_state *osd, const char *text);
 int osd_update(struct osd_state *osd, int dxs, int dys);
 int vo_osd_changed(int new_value);
 int vo_osd_check_range_update(int,int,int,int);
 void osd_free(struct osd_state *osd);
-
-extern int vo_osd_changed_flag;
-
-unsigned utf8_get_char(const char **str);
 
 #ifdef CONFIG_DVDNAV
 #include <inttypes.h>
@@ -166,8 +161,16 @@ void osd_set_nav_box (uint16_t sx, uint16_t sy, uint16_t ex, uint16_t ey);
 #endif
 
 
-#ifdef IS_OLD_VO
-#define vo_remove_text(...) osd_remove_text(global_osd, __VA_ARGS__)
-#endif
+// used only by osd_libass.c
+void osd_alloc_buf(mp_osd_obj_t* obj);
+
+// defined in osd_libass.c or osd_dummy.c
+void vo_update_text_osd(struct osd_state *osd, mp_osd_obj_t *obj);
+void vo_update_text_teletext(struct osd_state *osd, mp_osd_obj_t *obj);
+void vo_update_text_progbar(struct osd_state *osd, mp_osd_obj_t *obj);
+void vo_update_text_sub(struct osd_state *osd, mp_osd_obj_t *obj);
+void osd_get_function_sym(char *buffer, size_t buffer_size, int osd_function);
+void osd_init_backend(struct osd_state *osd);
+void osd_destroy_backend(struct osd_state *osd);
 
 #endif /* MPLAYER_SUB_H */

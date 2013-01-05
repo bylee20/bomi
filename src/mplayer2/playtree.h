@@ -26,6 +26,7 @@
 
 struct stream;
 struct m_config;
+struct MPOpts;
 
 /// \defgroup PlaytreeIterReturn Playtree iterator return code
 /// \ingroup PlaytreeIter
@@ -249,7 +250,7 @@ play_tree_iter_get_file(play_tree_iter_t* iter, int d);
  */
 struct m_config;
 play_tree_t*
-parse_playtree(struct stream *stream, struct m_config *mconfig, int forced);
+parse_playtree(struct stream *stream, struct MPOpts *opts, int forced);
 
 /// Clean a tree by destroying all empty elements.
 play_tree_t*
@@ -259,7 +260,7 @@ play_tree_cleanup(play_tree_t* pt);
 /** \ingroup PlaytreeParser
  */
 play_tree_t*
-parse_playlist_file(struct m_config *mconfig, struct bstr file);
+parse_playlist_file(struct MPOpts *opts, struct bstr file);
 
 /// \defgroup PtAPI Playtree highlevel API
 /// \ingroup Playtree

@@ -27,14 +27,12 @@ enum mp_command_type {
     MP_CMD_AUDIO_DELAY,
     MP_CMD_QUIT,
     MP_CMD_PAUSE,
-    MP_CMD_GRAB_FRAMES, // deprecated: was a no-op command for years
     MP_CMD_PLAY_TREE_STEP,
     MP_CMD_PLAY_TREE_UP_STEP,
     MP_CMD_PLAY_ALT_SRC_STEP,
     MP_CMD_SUB_DELAY,
     MP_CMD_OSD,
     MP_CMD_VOLUME,
-    MP_CMD_MIXER_USEMASTER,
     MP_CMD_CONTRAST,
     MP_CMD_BRIGHTNESS,
     MP_CMD_HUE,
@@ -55,7 +53,6 @@ enum mp_command_type {
     MP_CMD_VF_CHANGE_RECTANGLE,
     MP_CMD_GAMMA,
     MP_CMD_SUB_VISIBILITY,
-    MP_CMD_VOBSUB_LANG, // deprecated: combined with SUB_SELECT
     MP_CMD_GET_TIME_LENGTH,
     MP_CMD_GET_PERCENT_POS,
     MP_CMD_SUB_STEP,
@@ -244,12 +241,6 @@ struct mp_cmd *mp_input_get_cmd(struct input_ctx *ictx, int time,
 /* Parse text and return corresponding struct mp_cmd. */
 struct mp_cmd *mp_input_parse_cmd(char *str);
 
-/**
- * Parse and queue commands separated by '\n'.
- * Return number of commands queued.
- */
-int mp_input_parse_and_queue_cmds(struct input_ctx *ictx, const char *str);
-
 // After getting a command from mp_input_get_cmd you need to free it using this
 // function
 void mp_cmd_free(struct mp_cmd *cmd);
@@ -260,12 +251,9 @@ struct mp_cmd *mp_cmd_clone(struct mp_cmd *cmd);
 // Set current input section
 void mp_input_set_section(struct input_ctx *ictx, char *name);
 
-// Get current input section
-char *mp_input_get_section(struct input_ctx *ictx);
-
 // Initialize the input system
-struct input_conf;
-struct input_ctx *mp_input_init(struct input_conf *input_conf);
+struct MPOpts;
+struct input_ctx *mp_input_init(struct MPOpts *opts);
 
 void mp_input_uninit(struct input_ctx *ictx);
 

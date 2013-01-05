@@ -74,7 +74,8 @@ typedef struct codecs {
     bool anyinput;
 } codecs_t;
 
-int parse_codec_cfg(const char *cfgfile);
+struct MPOpts;
+int parse_codec_cfg(const char *cfgfile, struct MPOpts *opts);
 codecs_t* find_video_codec(unsigned int fourcc, unsigned int *fourccmap,
                            codecs_t *start, int force);
 codecs_t* find_audio_codec(unsigned int fourcc, unsigned int *fourccmap,
