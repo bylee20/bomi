@@ -45,13 +45,13 @@ static inline struct bstr bstrdup(void *talloc_ctx, struct bstr str)
 {
     struct bstr r = { NULL, str.len };
     if (str.start)
-        r.start = talloc_memdup(talloc_ctx, str.start, str.len);
+		r.start = (unsigned char*)talloc_memdup(talloc_ctx, str.start, str.len);
     return r;
 }
 
 static inline struct bstr bstr(const unsigned char *s)
 {
-    return (struct bstr){(unsigned char *)s, s ? strlen(s) : 0};
+	return (struct bstr){(unsigned char *)s, s ? strlen((const char*)s) : 0};
 }
 
 int bstrcmp(struct bstr str1, struct bstr str2);
@@ -104,7 +104,7 @@ static inline bool bstr_startswith(struct bstr str, struct bstr prefix)
 
 static inline bool bstr_startswith0(struct bstr str, const char *prefix)
 {
-    return bstr_startswith(str, bstr(prefix));
+	return bstr_startswith(str, bstr((const unsigned char*)prefix));
 }
 
 static inline bool bstr_endswith(struct bstr str, struct bstr suffix)
@@ -116,27 +116,27 @@ static inline bool bstr_endswith(struct bstr str, struct bstr suffix)
 
 static inline bool bstr_endswith0(struct bstr str, const char *suffix)
 {
-    return bstr_endswith(str, bstr(suffix));
+	return bstr_endswith(str, bstr((const unsigned char*)suffix));
 }
 
 static inline int bstrcmp0(struct bstr str1, const char *str2)
 {
-    return bstrcmp(str1, bstr(str2));
+	return bstrcmp(str1, bstr((const unsigned char*)str2));
 }
 
 static inline int bstrcasecmp0(struct bstr str1, const char *str2)
 {
-    return bstrcasecmp(str1, bstr(str2));
+	return bstrcasecmp(str1, bstr((const unsigned char*)str2));
 }
 
 static inline int bstr_find0(struct bstr haystack, const char *needle)
 {
-    return bstr_find(haystack, bstr(needle));
+	return bstr_find(haystack, bstr((const unsigned char*)needle));
 }
 
 static inline int bstr_eatstart0(struct bstr *s, char *prefix)
 {
-    return bstr_eatstart(s, bstr(prefix));
+	return bstr_eatstart(s, bstr((const unsigned char*)prefix));
 }
 
 
