@@ -28,8 +28,8 @@ public:
 	~HwAccelInfo();
 	bool isAvailable() const {return m_ok;}
 	AVCodecContext *avctx() const {return m_avctx;}
-	QList<CodecID> fullCodecList() const;
-	bool supports(CodecID codec) const;
+	QList<AVCodecID> fullCodecList() const;
+	bool supports(AVCodecID codec) const;
 #ifdef Q_WS_X11
 	VADisplay display() const {return m_display;}
 	VAProfile find(CodecID codec, int &surfaceCount) const;
@@ -39,7 +39,7 @@ public:
 private:
 	HwAccelInfo();
 	static HwAccelInfo *obj;
-	bool supports(AVCodecContext *avctx) const {return (m_avctx = (supports(avctx->codec->id) ? avctx : nullptr));}
+	bool supports(AVCodecContext *avctx) const {return (m_avctx = (supports(avctx->codec_id) ? avctx : nullptr));}
 #ifdef Q_WS_X11
 	VAProfile findMatchedProfile(const QVector<VAProfile> &needs) const;
 	VADisplay m_display = 0;

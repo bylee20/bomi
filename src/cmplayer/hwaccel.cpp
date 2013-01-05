@@ -6,7 +6,7 @@
 #endif
 
 extern "C" int is_hwaccel_available(AVCodecContext *avctx) {
-	if (!Pref::get().enable_hwaccel || !Pref::get().hwaccel_codecs.contains(avctx->codec->id))
+	if (!Pref::get().enable_hwaccel || !Pref::get().hwaccel_codecs.contains(avctx->codec_id))
 		return false;
 	if (!HwAccelInfo::get().supports(avctx))
 		return false;
@@ -61,19 +61,19 @@ HwAccelInfo::~HwAccelInfo() {
 #endif
 }
 
-QList<CodecID> HwAccelInfo::fullCodecList() const {
-	return QList<CodecID>()
-		<< CODEC_ID_MPEG1VIDEO
-		<< CODEC_ID_MPEG2VIDEO
-		<< CODEC_ID_MPEG4
-		<< CODEC_ID_WMV3
-		<< CODEC_ID_VC1
-		<< CODEC_ID_H264;
+QList<AVCodecID> HwAccelInfo::fullCodecList() const {
+	return QList<AVCodecID>()
+		<< AV_CODEC_ID_MPEG1VIDEO
+		<< AV_CODEC_ID_MPEG2VIDEO
+		<< AV_CODEC_ID_MPEG4
+		<< AV_CODEC_ID_WMV3
+		<< AV_CODEC_ID_VC1
+		<< AV_CODEC_ID_H264;
 }
 
-bool HwAccelInfo::supports(CodecID codec) const {
+bool HwAccelInfo::supports(AVCodecID codec) const {
 #ifdef Q_WS_MAC
-	return codec == CODEC_ID_H264;
+	return codec == AV_CODEC_ID_H264;
 #endif
 #ifdef Q_WS_X11
 	int count = 0;
@@ -93,20 +93,20 @@ VAProfile HwAccelInfo::find(CodecID codec, int &surfaceCount) const {
 #define NUM_VIDEO_SURFACES_H264  21 /* 1 decode frame, up to 20 references */
 #define NUM_VIDEO_SURFACES_VC1    3 /* 1 decode frame, up to  2 references */
 	switch(codec) {
-	case CODEC_ID_MPEG1VIDEO:
-	case CODEC_ID_MPEG2VIDEO:
+	case AV_CODEC_ID_MPEG1VIDEO:
+	case AV_CODEC_ID_MPEG2VIDEO:
 		surfaceCount = NUM_VIDEO_SURFACES_MPEG2;
 		return findMatchedProfile(mpeg2s);
-	case CODEC_ID_MPEG4:
+	case AV_CODEC_ID_MPEG4:
 		surfaceCount = NUM_VIDEO_SURFACES_MPEG4;
 		return findMatchedProfile(mpeg4s);
-	case CODEC_ID_WMV3:
+	case AV_CODEC_ID_WMV3:
 		surfaceCount = NUM_VIDEO_SURFACES_VC1;
 		return findMatchedProfile(wmv3s);
-	case CODEC_ID_VC1:
+	case AV_CODEC_ID_VC1:
 		surfaceCount = NUM_VIDEO_SURFACES_VC1;
 		return findMatchedProfile(vc1s);
-	case CODEC_ID_H264:
+	case AV_CODEC_ID_H264:
 		surfaceCount = NUM_VIDEO_SURFACES_H264;
 		return findMatchedProfile(h264s);
 	default:
