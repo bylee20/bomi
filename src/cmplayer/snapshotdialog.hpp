@@ -1,8 +1,7 @@
 #ifndef SNAPSHOTDIALOG_H
 #define SNAPSHOTDIALOG_H
 
-#include <QtGui/QDialog>
-#include <QtGui/QScrollArea>
+#include "stdafx.hpp"
 
 class VideoRenderer;		class SubtitleRenderer;
 

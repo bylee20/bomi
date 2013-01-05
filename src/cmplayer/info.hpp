@@ -1,7 +1,7 @@
 #ifndef INFO_HPP
 #define INFO_HPP
 
-#include <QtCore/QStringList>
+#include "stdafx.hpp"
 
 class Info {
 public:

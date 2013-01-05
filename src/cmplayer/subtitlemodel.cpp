@@ -1,11 +1,5 @@
 #include "subtitlemodel.hpp"
 #include "global.hpp"
-#include <QtGui/QFont>
-#include <QtGui/QApplication>
-#include <QtCore/QDebug>
-#include <QtCore/QTime>
-#include <QtCore/QVector>
-#include <QtGui/QHeaderView>
 
 #define ITEM(row) (static_cast<SubtitleComponentModel::Item*>(at(row)))
 #define C_ITEM(row) (static_cast<const SubtitleComponentModel::Item*>(at(row)))

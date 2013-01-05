@@ -1,8 +1,4 @@
 #include "richtextdocument.hpp"
-#include <QtGui/QFontMetricsF>
-#include <QtCore/QLinkedList>
-#include <QtCore/QDebug>
-#include <QtGui/QTextLayout>
 
 RichTextDocument::RichTextDocument() {
 	setChanged(false);

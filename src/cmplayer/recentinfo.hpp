@@ -1,7 +1,7 @@
 #ifndef RECENTINFO_HPP
 #define RECENTINFO_HPP
 
-#include <QtCore/QObject>
+#include "stdafx.hpp"
 #include "mrl.hpp"
 
 class Playlist;		class QDateTime;

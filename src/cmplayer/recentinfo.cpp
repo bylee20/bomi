@@ -1,9 +1,5 @@
 #include "recentinfo.hpp"
 #include "playlist.hpp"
-#include <QtCore/QList>
-#include <QtCore/QMap>
-#include <QtCore/QDateTime>
-#include <QtCore/QDebug>
 
 RecentInfo *RecentInfo::obj = nullptr;
 

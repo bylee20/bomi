@@ -1,6 +1,7 @@
 #ifndef HISTORYVIEW_HPP
 #define HISTORYVIEW_HPP
 
+#include "stdafx.hpp"
 #include "dialogs.hpp"
 #include "global.hpp"
 #include "mrl.hpp"

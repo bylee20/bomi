@@ -1,15 +1,11 @@
 #ifndef MENU_HPP
 #define MENU_HPP
 
+#include "stdafx.hpp"
 #include "global.hpp"
 #include "actiongroup.hpp"
 #include "enums.hpp"
 #include "colorproperty.hpp"
-#include <QtGui/QMenu>
-#include <QtCore/QHash>
-
-typedef QLatin1String _LS;
-typedef QLatin1Char _LC;
 
 class Record;
 

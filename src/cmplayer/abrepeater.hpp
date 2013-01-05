@@ -1,7 +1,7 @@
 #ifndef ABREPEATER_HPP
 #define ABREPEATER_HPP
 
-#include <QtCore/QObject>
+#include "stdafx.hpp"
 
 class PlayEngine;		class Subtitle;
 class SubtitleRenderer;

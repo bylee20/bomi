@@ -1,14 +1,8 @@
 #ifndef WIDGETS_HPP
 #define WIDGETS_HPP
 
-#include <QtGui/QWidget>
-#include <QtGui/QComboBox>
-#include <QtCore/QEvent>
+#include "stdafx.hpp"
 #include "enums.hpp"
-
-#include <QtGui/QSlider>
-#include <QtGui/QToolButton>
-#include <QtGui/QComboBox>
 
 class EncodingComboBox : public QComboBox {
 	Q_OBJECT

@@ -1,7 +1,7 @@
 #ifndef SKIN_HPP
 #define SKIN_HPP
 
-#include <QtCore/QObject>
+#include "stdafx.hpp"
 #include "global.hpp"
 
 class QWidget;		class QPoint;

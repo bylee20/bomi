@@ -1,10 +1,6 @@
 #include "overlay.hpp"
 #include "videorenderer.hpp"
 #include "osdrenderer.hpp"
-#include <QtOpenGL/QGLShaderProgram>
-#include <QtCore/QDebug>
-#include <QtCore/QTime>
-#include <QtCore/QLinkedList>
 
 extern "C" void *fast_memcpy(void *to, const void *from, size_t len);
 

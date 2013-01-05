@@ -1,13 +1,6 @@
 #include "subtitle_parser_p.hpp"
 #include "tagiterator.hpp"
-#include <QtCore/QRegExp>
 #include "global.hpp"
-#include <QtCore/QDebug>
-#include <QtCore/QLinkedList>
-#include <QtGui/QTextFormat>
-#include <QtGui/QApplication>
-#include <QtGui/QDesktopWidget>
-#include <QtCore/QStringBuilder>
 
 bool SamiParser::isParsable() const {
 	if (same(file().suffix(), "smi") || same(file().suffix(), "sami"))

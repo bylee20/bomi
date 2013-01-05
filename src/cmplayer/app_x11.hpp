@@ -1,7 +1,7 @@
 #ifndef APP_X11_HPP
 #define APP_X11_HPP
 
-#include <QtGui/QWidget>
+#include "stdafx.hpp"
 
 #ifdef Q_WS_X11
 

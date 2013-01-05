@@ -1,8 +1,7 @@
 #ifndef ACTIONGROUP_HPP
 #define ACTIONGROUP_HPP
 
-#include <QtGui/QActionGroup>
-#include <QtCore/QUrl>
+#include "stdafx.hpp"
 
 class Mrl;
 

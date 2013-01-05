@@ -1,9 +1,8 @@
 #ifndef APPSTATE_HPP
 #define APPSTATE_HPP
 
+#include "stdafx.hpp"
 #include "enums.hpp"
-#include <QtCore/QStringList>
-#include <QtCore/QPointF>
 #include "colorproperty.hpp"
 
 class AppState {

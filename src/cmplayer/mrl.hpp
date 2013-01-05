@@ -1,7 +1,7 @@
 #ifndef MRL_HPP
 #define MRL_HPP
 
-#include <QtCore/QUrl>
+#include "stdafx.hpp"
 
 class Record;
 

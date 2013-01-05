@@ -1,20 +1,13 @@
 #include "app.hpp"
 #include "rootmenu.hpp"
-#include <QtCore/QDebug>
 #include "pref.hpp"
 #include "videorenderer.hpp"
 #include "global.hpp"
 #include "mrl.hpp"
 #include "avmisc.hpp"
 #include "mainwindow.hpp"
-#include <QtCore/QMetaObject>
-#include <QtOpenGL/QGLWidget>
 #include "playengine.hpp"
 #include "recentinfo.hpp"
-#include <QtOpenGL/QGLContext>
-#include <QtGui/QMessageBox>
-#include <QtCore/QStringBuilder>
-#include <sigar.h>
 #include "hwaccel.hpp"
 
 static bool checkOpenGL() {

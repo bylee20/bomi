@@ -1,9 +1,7 @@
 #ifndef TRANSLATOR_HPP
 #define TRANSLATOR_HPP
 
-#include <QtCore/QObject>
-#include <QtCore/QString>
-#include <QtCore/QLocale>
+#include "stdafx.hpp"
 
 typedef QList<QLocale> LocaleList;
 

@@ -1,9 +1,7 @@
 #ifndef AVMISC_HPP
 #define AVMISC_HPP
 
-#include <QtCore/QtGlobal>
-#include <QtCore/QSize>
-#include <QtCore/QString>
+#include "stdafx.hpp"
 
 constexpr static inline quint32 _f(char a, char b, char c, char d) {
 #if (Q_BYTE_ORDER == Q_BIG_ENDIAN)

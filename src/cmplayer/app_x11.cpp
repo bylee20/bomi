@@ -2,10 +2,6 @@
 
 #ifdef Q_WS_X11
 
-#include <QtGui/QApplication>
-#include <QtCore/QDebug>
-#include <QtCore/QTimer>
-#include <QtGui/QX11Info>
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusInterface>

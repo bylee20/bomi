@@ -1,7 +1,7 @@
 #ifndef PREFDIALOG_HPP
 #define PREFDIALOG_HPP
 
-#include <QtGui/QDialog>
+#include "stdafx.hpp"
 
 class QTreeWidgetItem;		class QAbstractButton;
 class Pref;

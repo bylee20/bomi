@@ -1,13 +1,8 @@
 #ifndef VIDEOFRAME_HPP
 #define VIDEOFRAME_HPP
 
-#include <QtCore/QDebug>
-#include <QtCore/QEvent>
-#include <QtCore/QByteArray>
-#include <QtCore/QSize>
-#include <QtCore/QVector>
+#include "stdafx.hpp"
 #include "avmisc.hpp"
-#include <QtGui/QImage>
 
 class VideoFrame {
 	VideoFrame(const VideoFrame&);

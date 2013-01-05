@@ -1,17 +1,7 @@
 #include "subtitleview.hpp"
 #include "subtitlemodel.hpp"
-#include <QtGui/QTreeView>
-#include <QtGui/QTableView>
 #include "playengine.hpp"
 #include "subtitle.hpp"
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QTreeWidget>
-#include <QtGui/QScrollArea>
-#include <QtGui/QLabel>
-#include <QtCore/QDebug>
-#include <QtCore/QTime>
-#include <QtGui/QSplitter>
-#include <QtGui/QCheckBox>
 
 class SubtitleView::CompView : public QWidget {
 public:

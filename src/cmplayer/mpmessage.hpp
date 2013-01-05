@@ -1,9 +1,7 @@
 #ifndef MPMESSAGE_HPP
 #define MPMESSAGE_HPP
 
-#include <QtCore/QString>
-#include <QtCore/QPair>
-#include <QtCore/QStringBuilder>
+#include "stdafx.hpp"
 
 void mp_msg_va2(int mod, int lev, const char *format, va_list va);
 

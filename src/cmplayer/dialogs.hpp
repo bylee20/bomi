@@ -1,9 +1,7 @@
 #ifndef DIALOGS_HPP
 #define DIALOGS_HPP
 
-#include <QtGui/QDialog>
-#include <QtGui/QDialogButtonBox>
-#include <QtGui/QFileDialog>
+#include "stdafx.hpp"
 
 class CheckDialog : public QDialog {
 	Q_OBJECT

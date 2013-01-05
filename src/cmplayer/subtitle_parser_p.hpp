@@ -1,9 +1,8 @@
 #ifndef SUBTITLE_PARSER_P_HPP
 #define SUBTITLE_PARSER_P_HPP
 
+#include "stdafx.hpp"
 #include "subtitle_parser.hpp"
-#include <QtCore/QRegExp>
-#include <QtGui/QTextCharFormat>
 #include "richtexthelper.hpp"
 
 class TagFormat;

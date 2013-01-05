@@ -3,7 +3,6 @@
 #include "enums.hpp"
 #include "pref.hpp"
 #include "colorproperty.hpp"
-#include <QtCore/QDebug>
 #include "record.hpp"
 
 RootMenu *RootMenu::obj = nullptr;

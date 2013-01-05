@@ -1,7 +1,7 @@
 #ifndef EVENTS_HPP
 #define EVENTS_HPP
 
-#include <QtCore/QEvent>
+#include "stdafx.hpp"
 
 class Event : public QEvent {
 public:

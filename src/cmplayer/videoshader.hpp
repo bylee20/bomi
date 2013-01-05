@@ -1,8 +1,8 @@
 #ifndef VIDEOSHADER_HPP
 #define VIDEOSHADER_HPP
 
+#include "stdafx.hpp"
 #include "videoframe.hpp"
-#include <QtOpenGL/QGLShaderProgram>
 #include "colorproperty.hpp"
 #include "pref.hpp"
 #include "videorenderer.hpp"

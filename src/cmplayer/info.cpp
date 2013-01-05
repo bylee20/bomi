@@ -1,7 +1,4 @@
 #include "info.hpp"
-#include <QtCore/QDir>
-#include <QtCore/QCoreApplication>
-#include <QtCore/QDebug>
 
 Info Info::self;
 

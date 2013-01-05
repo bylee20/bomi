@@ -1,6 +1,7 @@
 #ifndef SUBTITLEVIEW_HPP
 #define SUBTITLEVIEW_HPP
 
+#include "stdafx.hpp"
 #include "dialogs.hpp"
 
 class PlayEngine;		class Subtitle;

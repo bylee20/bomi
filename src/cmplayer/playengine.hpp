@@ -1,15 +1,10 @@
 #ifndef PLAYENGINE_HPP
 #define PLAYENGINE_HPP
 
-#include <QtCore/QThread>
-#include <QtCore/QList>
-#include <QtCore/QString>
-#include <QtCore/QStringBuilder>
-#include <QtCore/QVariant>
+#include "stdafx.hpp"
 #include "mrl.hpp"
 #include "mpmessage.hpp"
 #include "global.hpp"
-#include <QtCore/QStringList>
 
 class QString;			class QVariant;
 class VideoRenderer;

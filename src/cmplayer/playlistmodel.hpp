@@ -1,8 +1,7 @@
 #ifndef PLAYLISTMODEL_HPP
 #define PLAYLISTMODEL_HPP
 
-#include <QtCore/QAbstractItemModel>
-#include <QtGui/QFont>
+#include "stdafx.hpp"
 #include "playlist.hpp"
 
 class PlaylistModel : public QAbstractItemModel {

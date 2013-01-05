@@ -1,8 +1,7 @@
 #ifndef OSDRENDERER_HPP
 #define OSDRENDERER_HPP
 
-#include <QtCore/QObject>
-#include <QtCore/QRectF>
+#include "stdafx.hpp"
 #include "osdstyle.hpp"
 
 class QPainter;			class ScreenOsdWrapper;

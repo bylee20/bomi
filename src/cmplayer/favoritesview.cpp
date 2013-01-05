@@ -1,18 +1,5 @@
 #include "favoritesview.hpp"
 #include "playengine.hpp"
-#include <QtGui/QTreeWidget>
-#include <QtCore/QSettings>
-#include <QtCore/QCoreApplication>
-#include <QtCore/QFileInfo>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QMenu>
-#include <QtGui/QDialog>
-#include <QtGui/QGridLayout>
-#include <QtGui/QLabel>
-#include <QtGui/QLineEdit>
-#include <QtGui/QDialogButtonBox>
-#include <QtGui/QCheckBox>
 
 class FavoritesView::Item : public QTreeWidgetItem {
 public:

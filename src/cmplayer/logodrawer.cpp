@@ -1,8 +1,4 @@
 #include "logodrawer.hpp"
-#include <QtCore/QDebug>
-#include <QtGui/QPainter>
-#include <QtOpenGL/QGLWidget>
-#include <QtOpenGL/QGLFramebufferObject>
 
 LogoDrawer::LogoDrawer() {
 	m_logo.load(":/img/cmplayer512.png");

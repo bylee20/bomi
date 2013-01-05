@@ -1,8 +1,7 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
-#include <QtGui/QMainWindow>
-#include <QtGui/QSystemTrayIcon>
+#include "stdafx.hpp"
 #include "global.hpp"
 
 class Mrl;		class PlayEngine;

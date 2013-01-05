@@ -1,8 +1,7 @@
 #ifndef LISTMODEL_HPP
 #define LISTMODEL_HPP
 
-#include <QtCore/QAbstractItemModel>
-#include <QtCore/QStringList>
+#include "stdafx.hpp"
 
 class ListModel : public QAbstractItemModel {
 	Q_OBJECT

@@ -3,9 +3,6 @@
 #include "global.hpp"
 #include "pref.hpp"
 #include "charsetdetector.hpp"
-#include <QtCore/QStringBuilder>
-#include <QtCore/QFileInfo>
-#include <QtCore/QDebug>
 
 QString SubtitleComponent::name() const {
 	return m_klass.isEmpty() ? fileName() : fileName() % _L("(") % m_klass % _L(")");

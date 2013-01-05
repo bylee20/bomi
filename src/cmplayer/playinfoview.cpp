@@ -8,11 +8,7 @@
 #include "app.hpp"
 #include "mpcore.hpp"
 #include <stdio.h>
-#include <sigar.h>
 #include <libavcodec/avcodec.h>
-#include <QtCore/QTimer>
-#include <QtCore/QDebug>
-#include <QtCore/QCoreApplication>
 #include <fcntl.h>
 #include <unistd.h>
 #include "skin.hpp"

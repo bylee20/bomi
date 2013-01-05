@@ -4,16 +4,6 @@
 #include "videorenderer.hpp"
 #include "ui_snapshotdialog.h"
 #include "info.hpp"
-#include <QtCore/QDebug>
-#include <QtCore/QDateTime>
-#include <QtCore/QFileInfo>
-#include <QtGui/QImage>
-#include <QtGui/QPixmap>
-#include <QtGui/QLabel>
-#include <QtGui/QScrollBar>
-#include <QtGui/QApplication>
-#include <QtGui/QFileDialog>
-#include <QtGui/QClipboard>
 
 struct SnapshotDialog::Data {
 	Ui::SnapshotDialog ui;

@@ -1,6 +1,7 @@
 #ifndef TIMELINEOSDRENDERER_HPP
 #define TIMELINEOSDRENDERER_HPP
 
+#include "stdafx.hpp"
 #include "osdrenderer.hpp"
 
 class TimeLineOsdRenderer : public OsdRenderer {

@@ -1,6 +1,5 @@
 #include "mpmessage.hpp"
 #include "richtexthelper.hpp"
-#include <QtCore/QDebug>
 
 extern "C" {
 #include <stdio.h>

@@ -1,9 +1,15 @@
 TEMPLATE = app
-CONFIG += link_pkgconfig debug_and_release uitools
+CONFIG += link_pkgconfig debug_and_release uitools precompile_header
 QT = core gui opengl network
 
 LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
-    -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
+    -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio -lquvi
+
+PRECOMPILED_HEADER = stdafx.hpp
+
+precompile_header:!isEmpty(PRECOMPILED_HEADER) {
+    DEFINES += USING_PCH
+}
 
 !isEmpty(RELEASE) {
         CONFIG += release
@@ -16,15 +22,15 @@ LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldv
 macx {
     QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
     QMAKE_CXXFLAGS_X86_64 += -m64
-    QMAKE_CXX = /opt/local/bin/g++-mp-4.7
+    QMAKE_CXX = /opt/local/bin/g++-mp-4.8
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
     QMAKE_MAC_SDK = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
     LIBS +=  ../../build/lib/libcmplayer_skin.a ../../build/lib/libavcodec.a \
-        ../../build/lib/libavformat.a ../../build/lib/libavutil.a \
-        ../../build/lib/libswscale.a ../../build/lib/libcmplayer_mplayer2.a \
+	../../build/lib/libavformat.a ../../build/lib/libavutil.a \
+	../../build/lib/libswscale.a ../../build/lib/libcmplayer_mplayer2.a \
         ../../build/lib/libchardet.a ../../build/lib/libcmplayer_sigar.a \
         -L/opt/local/lib \
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
@@ -121,10 +127,10 @@ HEADERS += playengine.hpp \
     mpmessage.hpp \
 	skin.hpp \
     hwaccel.hpp \
-    videoshader.hpp
+    videoshader.hpp \
+    stdafx.hpp
 
 SOURCES += main.cpp \
-    playengine.cpp \
     mainwindow.cpp \
     mrl.cpp \
     global.cpp \
@@ -188,7 +194,8 @@ SOURCES += main.cpp \
     skin.cpp \
 	mplayer-vd_ffmpeg.c \
     hwaccel.cpp \
-    videoshader.cpp
+    videoshader.cpp \
+    playengine.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts

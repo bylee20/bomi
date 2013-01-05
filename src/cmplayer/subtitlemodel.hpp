@@ -1,9 +1,9 @@
 #ifndef SUBTITLECOMPONENTMODEL_HPP
 #define SUBTITLECOMPONENTMODEL_HPP
 
+#include "stdafx.hpp"
 #include "subtitle.hpp"
 #include "listmodel.hpp"
-#include <QtGui/QTreeView>
 
 class SubtitleComponentModel : public ListModel {
 	Q_OBJECT

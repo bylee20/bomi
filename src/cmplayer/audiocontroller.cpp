@@ -1,10 +1,5 @@
 #include "audiocontroller.hpp"
-#include <QtCore/QStringList>
-#include <QtCore/QMetaType>
-#include <QtCore/QVector>
 #include "avmisc.hpp"
-#include <cmath>
-#include <QtCore/QDebug>
 #include "playengine.hpp"
 #include "mpcore.hpp"
 

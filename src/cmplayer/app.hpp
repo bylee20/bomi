@@ -1,6 +1,7 @@
 #ifndef APP_HPP
 #define APP_HPP
 
+#include "stdafx.hpp"
 #include "qtsingleapplication/qtsingleapplication.h"
 
 class QUrl;		class Mrl;

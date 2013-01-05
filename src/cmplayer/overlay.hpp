@@ -1,9 +1,7 @@
 #ifndef OVERLAY_HPP
 #define OVERLAY_HPP
 
-#include <QtCore/QDebug>
-#include <QtCore/QObject>
-#include <QtOpenGL/QGLFunctions>
+#include "stdafx.hpp"
 
 class QGLWidget;
 

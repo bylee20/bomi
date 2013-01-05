@@ -1,9 +1,7 @@
 #ifndef OSDSTYLE_HPP
 #define OSDSTYLE_HPP
 
-#include <QtGui/QWidget>
-#include <QtGui/QTextOption>
-#include <QtCore/QPointF>
+#include "stdafx.hpp"
 #include "enums.hpp"
 
 class Record;

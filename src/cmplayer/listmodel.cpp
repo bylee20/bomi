@@ -1,6 +1,4 @@
 #include "listmodel.hpp"
-#include <set>
-#include <QtCore/QDebug>
 
 void ListModel::Item::emitDataChanged() {
 	if (m_model)

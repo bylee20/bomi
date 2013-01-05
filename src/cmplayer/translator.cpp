@@ -1,10 +1,4 @@
 #include "translator.hpp"
-#include <QtCore/QTranslator>
-#include <QtGui/QApplication>
-#include <QtCore/QDebug>
-#include <QtCore/QRegExp>
-#include <QtCore/QDir>
-#include <QtCore/QSet>
 
 struct Translator::Data {
 	bool succ = false;

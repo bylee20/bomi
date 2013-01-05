@@ -1,6 +1,4 @@
 #include "playlistmodel.hpp"
-#include <QtCore/QDebug>
-#include <QtGui/QStyleOptionViewItem>
 
 PlaylistModel::PlaylistModel(QObject *parent)
 : QAbstractItemModel(parent) {

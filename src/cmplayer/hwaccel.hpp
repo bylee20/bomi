@@ -1,8 +1,7 @@
 #ifndef HWACCEL_HPP
 #define HWACCEL_HPP
 
-#include <QtCore/QLinkedList>
-#include <QtCore/QList>
+#include "stdafx.hpp"
 
 extern "C" {
 #ifdef Q_WS_MAC

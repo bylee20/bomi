@@ -1,6 +1,4 @@
 #include "mrl.hpp"
-#include <QtCore/QFileInfo>
-#include <QtCore/QRegExp>
 
 Mrl::Mrl(const QString &location) {
 	const int idx = location.indexOf("://");

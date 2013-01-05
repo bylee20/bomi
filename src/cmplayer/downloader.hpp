@@ -1,7 +1,7 @@
 #ifndef DOWNLOADER_HPP
 #define DOWNLOADER_HPP
 
-#include <QtCore/QObject>
+#include "stdafx.hpp"
 
 class QUrl;					class QIODevice;
 

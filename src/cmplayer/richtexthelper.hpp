@@ -1,12 +1,8 @@
 #ifndef RICHTEXTHELPER_HPP
 #define RICHTEXTHELPER_HPP
 
-#include <QtCore/QString>
-#include <QtCore/QList>
-#include <QtCore/QMap>
-#include <QtCore/QVariant>
+#include "stdafx.hpp"
 #include "richtextblock.hpp"
-#include <QtCore/QStringBuilder>
 
 class RichTextHelper {
 public:

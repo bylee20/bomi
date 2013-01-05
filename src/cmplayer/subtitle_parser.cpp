@@ -1,8 +1,4 @@
 #include "subtitle_parser_p.hpp"
-#include <QtCore/QTextCodec>
-#include <QtCore/QFile>
-#include <QtCore/QDebug>
-#include <QtCore/QFileInfo>
 
 int SubtitleParser::msPerChar = -1;
 

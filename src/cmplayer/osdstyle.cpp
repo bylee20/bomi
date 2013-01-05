@@ -1,8 +1,4 @@
 #include "osdstyle.hpp"
-#include <QtGui/QColorDialog>
-#include <QtGui/QFontDialog>
-#include <QtCore/QSettings>
-#include <QtCore/QDebug>
 #include "record.hpp"
 
 void OsdStyle::save(Record &r, const QString &group) const {

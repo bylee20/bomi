@@ -1,8 +1,7 @@
 #ifndef PLAYINFOVIEW_HPP
 #define PLAYINFOVIEW_HPP
 
-#include <QtCore/QObject>
-#include <QtCore/QStringBuilder>
+#include "stdafx.hpp"
 
 class VideoFormat;		class OsdRenderer;
 class VideoRenderer;		class AudioFormat;

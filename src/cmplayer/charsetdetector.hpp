@@ -1,7 +1,7 @@
 #ifndef CHARSETDETECTOR_HPP
 #define CHARSETDETECTOR_HPP
 
-class QString;			class QByteArray;
+#include "stdafx.hpp"
 
 class CharsetDetector{
 public:

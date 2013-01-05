@@ -1,12 +1,10 @@
 #include "subtitlerenderer.hpp"
-#include <QtCore/QLinkedList>
 #include "info.hpp"
 #include "mrl.hpp"
 #include "pref.hpp"
 #include "subtitlemodel.hpp"
 #include "osdstyle.hpp"
 #include "subtitleview.hpp"
-#include <QtCore/QDebug>
 #include "timelineosdrenderer.hpp"
 
 SubtitleRenderer::Render::Render(const Comp &comp) {

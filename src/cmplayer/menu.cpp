@@ -1,7 +1,5 @@
 #include "menu.hpp"
 #include "record.hpp"
-#include <QtGui/QMouseEvent>
-#include <QtGui/QApplication>
 
 template<typename T>
 QStringList toStringList(const QList<T> &list) {
@@ -42,9 +40,9 @@ void Menu::load(Record &r) {
 	r.beginGroup(m_id);
 	for (ActionHash::const_iterator it = m_a.begin(); it != m_a.end(); ++it) {
 		r.beginGroup(it.key());
-		QStringList keys = {_LS("none")};
+		QStringList keys = {_L("none")};
 		r.read(keys, "shortcut");
-		if (keys.size() != 1 || keys[0] != _LS("none"))
+		if (keys.size() != 1 || keys[0] != _L("none"))
 			(*it)->setShortcuts(fromStringList<QKeySequence>(keys));
 		r.endGroup();
 	}

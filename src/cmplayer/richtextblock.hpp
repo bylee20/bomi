@@ -1,7 +1,7 @@
 #ifndef RICHTEXTBLOCK_HPP
 #define RICHTEXTBLOCK_HPP
 
-#include <QtGui/QTextLayout>
+#include "stdafx.hpp"
 
 struct RichTextBlock {
 	RichTextBlock(bool paragraph = true): paragraph(paragraph) {}

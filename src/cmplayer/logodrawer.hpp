@@ -1,11 +1,7 @@
 #ifndef LOGOVIEW_HPP
 #define LOGOVIEW_HPP
 
-#include <QtGui/QPixmap>
-#include <QtGui/QImage>
-#include <QtGui/QBrush>
-#include <QtGui/QPainterPath>
-#include <QtOpenGL/QGLContext>
+#include "stdafx.hpp"
 
 class QGLWidget;			class QGLFramebufferObject;
 

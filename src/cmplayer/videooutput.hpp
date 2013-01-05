@@ -1,7 +1,7 @@
 #ifndef VIDEOOUTPUT_HPP
 #define VIDEOOUTPUT_HPP
 
-#include <QtCore/QString>
+#include "stdafx.hpp"
 
 struct MPContext;
 struct vo_driver;

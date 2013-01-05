@@ -1,29 +1,11 @@
 #include "dialogs.hpp"
-#include <QtCore/QFile>
 #include "ui_aboutdialog.h"
 #include "info.hpp"
-#include <QtCore/QDate>
-#include <QtGui/QTextBrowser>
-#include <QtCore/QStringBuilder>
 #include "widgets.hpp"
 #include "global.hpp"
 #include "playlist.hpp"
 #include "info.hpp"
-#include <QtCore/QFileInfo>
-#include <QtCore/QDebug>
-#include <QtGui/QGridLayout>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QLabel>
-#include <QtGui/QCheckBox>
-#include <QtGui/QPushButton>
-#include <QtGui/QSpacerItem>
-#include <QtGui/QKeyEvent>
-#include <QtGui/QPushButton>
-#include <QtGui/QLineEdit>
-#include <QtGui/QDialogButtonBox>
 #include "appstate.hpp"
-#include <QtGui/QCompleter>
 
 struct CheckDialog::Data {
 	QCheckBox *check;
@@ -302,10 +284,6 @@ QString GetUrlDialog::encoding() const {
 
 ToggleDialog::ToggleDialog(QWidget *parent): QDialog(parent, Qt::Tool) {}
 
-
-typedef QLatin1Char _LC;
-typedef QLatin1String _LS;
-
 struct AboutDialog::Data {
 	Ui::AboutDialog ui;
 };
@@ -402,7 +380,7 @@ void OpenDvdDialog::checkDevice(const QString &device) {
 	if (exists)
 		d->ui.available->setText(tr("Selected device is available."));
 	else {
-		d->ui.available->setText(_LS("<font color='red'>") % tr("Selected device doesn't exists.") % _LS("</font>"));
+		d->ui.available->setText(_L("<font color='red'>") % tr("Selected device doesn't exists.") % _L("</font>"));
 	}
 }
 

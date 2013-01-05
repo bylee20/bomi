@@ -1,20 +1,10 @@
 #include "skin.hpp"
 #include "info.hpp"
-#include <QtCore/QMetaProperty>
-#include <QtGui/QLayout>
 #include "rootmenu.hpp"
 #include "playengine.hpp"
 #include "audiocontroller.hpp"
 #include "videorenderer.hpp"
-#include <QtGui/QSlider>
 #include <QtUiTools/QUiLoader>
-#include <QtGui/QAbstractButton>
-#include <QtGui/QLabel>
-#include <QtCore/QFile>
-#include <QtCore/QFileInfo>
-#include <QtCore/QDir>
-#include <QtGui/QWidget>
-#include <QtCore/QDebug>
 #include "../cmplayer_skin/widgets.hpp"
 #include <QtPlugin>
 
@@ -47,8 +37,6 @@ enum Placeholder : int {
 	total_media_count,
 	PlaceholderMax
 };
-
-typedef QLatin1String _L;
 
 struct PlaceholderInfo {
 	PlaceholderInfo(Placeholder ph, const char *text): ph(ph), text(text) {}

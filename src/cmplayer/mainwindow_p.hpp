@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_P_HPP
 #define MAINWINDOW_P_HPP
 
+#include "stdafx.hpp"
 #include "app.hpp"
 #include "avmisc.hpp"
 #include "timelineosdrenderer.hpp"
@@ -27,12 +28,6 @@
 #include "toolbox.hpp"
 #include "rootmenu.hpp"
 #include "info.hpp"
-#include <QtGui/QMouseEvent>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QMenuBar>
-#include <QtCore/QDebug>
-#include <QtCore/QTimer>
-#include <qmath.h>
 #include "skin.hpp"
 #include "prefdialog.hpp"
 

@@ -1,11 +1,5 @@
 #include "listmodel.hpp"
-#include <set>
-#include <QtGui/QTreeView>
-#include <QtGui/QVBoxLayout>
 #include "historyview.hpp"
-#include <QtCore/QDebug>
-#include <QtGui/QMenu>
-#include <QtCore/QSettings>
 #include "playengine.hpp"
 #include "recentinfo.hpp"
 

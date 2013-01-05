@@ -1,10 +1,7 @@
 #ifndef VIDEORENDERER_HPP
 #define VIDEORENDERER_HPP
 
-#include <QtOpenGL/QGLWidget>
-#include <QtOpenGL/QGLFunctions>
-#include <QtCore/QDebug>
-#include <QtGui/QMouseEvent>
+#include "stdafx.hpp"
 #include "mpmessage.hpp"
 
 
@@ -12,6 +9,7 @@ class OsdRenderer;			class VideoFormat;
 class ColorProperty;		class Overlay;
 class VideoFrame;			class PlayEngine;
 class VideoScreen;
+namespace Core {class PlayEngine;}
 
 class VideoRenderer : public QObject, public MpMessage {
 	Q_OBJECT
@@ -106,7 +104,7 @@ private:
 	friend class VideoOutput;
 	friend class VideoScreen;
 	friend class PlayEngine;
-
+	friend class Core::PlayEngine;
 	QGLWidget *gl = nullptr;
 };
 

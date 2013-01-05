@@ -1,8 +1,5 @@
 #include "textosdrenderer.hpp"
 #include "global.hpp"
-#include <QtCore/QTimer>
-#include <QtCore/QDebug>
-#include <QtGui/QPainter>
 #include "richtextdocument.hpp"
 
 struct TextOsdRenderer::Data {

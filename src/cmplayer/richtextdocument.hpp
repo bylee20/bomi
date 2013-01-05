@@ -1,6 +1,7 @@
 #ifndef RICHTEXTDOCUMENT_HPP
 #define RICHTEXTDOCUMENT_HPP
 
+#include "stdafx.hpp"
 #include "richtextblock.hpp"
 #include "richtexthelper.hpp"
 

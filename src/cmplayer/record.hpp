@@ -1,15 +1,9 @@
 #ifndef RECORD_HPP
 #define RECORD_HPP
 
-#include <QtCore/QSettings>
-#include <QtGui/QKeySequence>
-#include <QtCore/QStringBuilder>
-#include <QtCore/QLocale>
+#include "stdafx.hpp"
 #include "colorproperty.hpp"
 #include "enums.hpp"
-
-static inline QLatin1String _L(const char *s) {return QLatin1String(s);}
-static inline QLatin1Char _L(char c) {return QLatin1Char(c);}
 
 template <typename T> static inline T fromVariant(const QVariant &data) {return data.value<T>();}
 template <typename T> static inline QVariant toVariant(const T &t) {return QVariant::fromValue(t);}

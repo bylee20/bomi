@@ -1,8 +1,5 @@
 #include "mainwindow_p.hpp"
 #include "overlay.hpp"
-#include <QtCore/QBuffer>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QMessageBox>
 
 #ifdef Q_WS_MAC
 void qt_mac_set_dock_menu(QMenu *menu);

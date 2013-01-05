@@ -1,10 +1,9 @@
 #ifndef SUBTITLERENDERER_HPP
 #define SUBTITLERENDERER_HPP
 
+#include "stdafx.hpp"
 #include "subtitle.hpp"
 #include "textosdrenderer.hpp"
-#include <QtCore/QObject>
-#include <QtCore/QtContainerFwd>
 
 class QDialog;						class Mrl;
 class SubtitleComponentModel;

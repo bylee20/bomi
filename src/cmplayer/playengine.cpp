@@ -1,21 +1,12 @@
 #include "playengine.hpp"
-#include <QtCore/QDebug>
 #include "avmisc.hpp"
 #include "recentinfo.hpp"
 #include "pref.hpp"
 #include "videooutput.hpp"
 #include "videorenderer.hpp"
 #include "audiocontroller.hpp"
-#include <QtGui/QMessageBox>
 #include <libmpdemux/stheader.h>
-#include <QtCore/QStringBuilder>
-#include <QtGui/QApplication>
-#include <QtCore/QVariant>
-#include <QtCore/QTimer>
-#include <QtCore/QWaitCondition>
-#include <QtCore/QMutex>
 #include "mpcore.hpp"
-#include <QtCore/QFileInfo>
 
 enum MpError {None = 0, UserInterrupted, CannotOpenStream, NoStream, InitVideoFilter, InitAudioFilter};
 extern "C" {
@@ -28,7 +19,8 @@ int mp_main(int argc, char *argv[]);
 int play_next_file();
 int run_playback();
 int goto_next_file();
-int mp_input_parse_and_queue_cmds(struct input_ctx *ictx, const char *str);
+struct mp_cmd *mp_input_parse_cmd(char *str);
+int mp_input_queue_cmd(struct input_ctx *ictx, struct mp_cmd *cmd);
 void quit_player(MPContext *mpctx, exit_reason how);
 struct vo *vo_cmplayer = nullptr;
 int mpctx_process_mp_cmds(struct MPContext *mpctx);
@@ -49,6 +41,8 @@ void mixer_setvolume2(mixer_t *mixer, float l, float r);
 extern char *dvd_device;
 extern int frame_dropping;
 }
+
+int mp_input_parse_and_queue_cmds(struct input_ctx *ictx, const char *str) {return mp_input_queue_cmd(ictx, mp_input_parse_cmd((char*)str));}
 
 PlayEngine *PlayEngine::obj = nullptr;
 

@@ -1,8 +1,7 @@
 #ifndef AUDIOCONTROLLER_HPP
 #define AUDIOCONTROLLER_HPP
 
-#include <QtCore/QObject>
-#include <QtCore/QStringBuilder>
+#include "stdafx.hpp"
 #include "mpmessage.hpp"
 
 class PlayEngine;		class AudioFormat;

@@ -1,8 +1,8 @@
 #ifndef SUBTITLE_PARSER_HPP
 #define SUBTITLE_PARSER_HPP
 
+#include "stdafx.hpp"
 #include "subtitle.hpp"
-#include <QtCore/QFileInfo>
 
 class SubtitleParser : public RichTextHelper {
 public:

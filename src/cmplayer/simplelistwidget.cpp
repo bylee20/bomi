@@ -1,11 +1,4 @@
 #include "simplelistwidget.hpp"
-#include <QtGui/QListWidget>
-#include <QtGui/QPushButton>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QDialog>
-#include <QtGui/QLineEdit>
-#include <QtGui/QPushButton>
 
 struct SimpleListWidget::Data {
 	QListWidget *list;

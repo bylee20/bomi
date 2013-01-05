@@ -41,6 +41,7 @@
 #include "libmpdemux/demux_packet.h"
 #include "codec-cfg.h"
 #include "osdep/numcores.h"
+#include "libvo/csputils.h"
 
 static const vd_info_t info = {
 	"libavcodec video codecs",
@@ -199,9 +200,6 @@ static int init(sh_video_t *sh)
 		avctx->release_buffer  = release_buffer;
 		avctx->reget_buffer    = get_buffer;
 		avctx->draw_horiz_band = draw_slice;
-		if (lavc_codec->capabilities & CODEC_CAP_HWACCEL)
-			mp_msg(MSGT_DECVIDEO, MSGL_V, "[VD_FFMPEG] XVMC-accelerated "
-				   "MPEG-2.\n");
 		if (lavc_codec->capabilities & CODEC_CAP_HWACCEL_VDPAU)
 			mp_msg(MSGT_DECVIDEO, MSGL_V, "[VD_FFMPEG] VDPAU hardware "
 				   "decoding.\n");
@@ -382,7 +380,11 @@ static void uninit(sh_video_t *sh)
 	}
 
 	av_freep(&avctx);
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(54,28,0)
+	avcodec_free_frame(&ctx->pic);
+#else
 	av_freep(&ctx->pic);
+#endif
 	talloc_free(ctx);
 }
 
@@ -413,6 +415,37 @@ static void draw_slice(struct AVCodecContext *s,
 	}
 }
 
+static enum mp_csp avcol_spc_to_mp_csp(enum AVColorSpace colorspace)
+{
+	switch (colorspace) {
+	case AVCOL_SPC_BT709:
+		return MP_CSP_BT_709;
+		break;
+	case AVCOL_SPC_BT470BG:
+	case AVCOL_SPC_SMPTE170M:
+		return MP_CSP_BT_601;
+		break;
+	case AVCOL_SPC_SMPTE240M:
+		return MP_CSP_SMPTE_240M;
+		break;
+	default:
+		return MP_CSP_AUTO;
+	}
+}
+
+static enum mp_csp_levels avcol_range_to_mp_csp_levels(enum AVColorRange range)
+{
+	switch (range) {
+	case AVCOL_RANGE_MPEG:
+		return MP_CSP_LEVELS_TV;
+		break;
+	case AVCOL_RANGE_JPEG:
+		return MP_CSP_LEVELS_PC;
+		break;
+	default:
+		return MP_CSP_LEVELS_AUTO;
+	}
+}
 
 static int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
 {
@@ -467,6 +500,10 @@ static int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
 			};
 		else
 			supported_fmts = (const unsigned int[]){ctx->best_csp, 0xffffffff};
+
+		sh->colorspace = avcol_spc_to_mp_csp(avctx->colorspace);
+		sh->color_range = avcol_range_to_mp_csp_levels(avctx->color_range);
+
 		if (!mpcodecs_config_vo2(sh, sh->disp_w, sh->disp_h, supported_fmts,
 								 ctx->best_csp))
 			return -1;

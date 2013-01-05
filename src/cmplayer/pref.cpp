@@ -1,8 +1,4 @@
 #include "pref.hpp"
-#include <QtCore/QMap>
-#include <QtCore/QSettings>
-#include <QtCore/QDebug>
-#include <QtCore/QLocale>
 #include "hwaccel.hpp"
 
 Pref *Pref::obj = 0;

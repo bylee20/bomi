@@ -4,19 +4,12 @@
 #include "mainwindow.hpp"
 #include "mrl.hpp"
 #include "record.hpp"
-#include <QtGui/QFileOpenEvent>
-#include <QtGui/QStyleFactory>
-#include <QtGui/QStyle>
-#include <QtCore/QUrl>
-#include <QtGui/QMenuBar>
-#include <QtCore/QDebug>
 
 #if defined(Q_WS_MAC)
 #include "app_mac.hpp"
 #elif defined(Q_WS_X11)
 #include "app_x11.hpp"
 #endif
-#include <unistd.h>
 
 #define APP_GROUP QLatin1String("application")
 

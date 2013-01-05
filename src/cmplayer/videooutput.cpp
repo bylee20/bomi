@@ -1,8 +1,5 @@
 #include "videooutput.hpp"
 #include "overlay.hpp"
-#include <QtCore/QDebug>
-#include <QtCore/QSize>
-#include <QtGui/QImage>
 #include "videoframe.hpp"
 #include "videorenderer.hpp"
 #include "mpcore.hpp"
@@ -73,7 +70,7 @@ struct vo *VideoOutput::vo_create(MPContext *mpctx) {
 	struct vo *vo = reinterpret_cast<struct vo*>(talloc_ptrtype(NULL, vo));
 	memset(vo, 0, sizeof(*vo));
 	vo->opts = &mpctx->opts;
-	vo->x11 = mpctx->x11_state;
+//	vo->x11 = mpctx->x11_state;
 	vo->key_fifo = mpctx->key_fifo;
 	vo->input_ctx = mpctx->input;
 	vo->event_fd = -1;
@@ -83,7 +80,7 @@ struct vo *VideoOutput::vo_create(MPContext *mpctx) {
 	if (!vo->driver->preinit(vo, NULL))
 		return vo;
 	talloc_free_children(vo);
-	free(vo);
+	talloc_free(vo);
 	return nullptr;
 }
 

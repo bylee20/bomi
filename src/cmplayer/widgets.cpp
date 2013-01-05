@@ -1,22 +1,7 @@
 #include "widgets.hpp"
-#include <QtGui/QDoubleSpinBox>
-#include "qtcolorpicker.hpp"
-#include <QtGui/QColorDialog>
-#include <QtGui/QMouseEvent>
-#include <QtCore/QDebug>
-#include <QtGui/QLabel>
-#include <QtGui/QPushButton>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QToolButton>
-
 #include "audiocontroller.hpp"
 #include "playengine.hpp"
-#include <QtGui/QApplication>
-#include <QtGui/QMouseEvent>
-#include <QtGui/QAction>
-#include <QtGui/QStyle>
-#include <QtCore/QRegExp>
-#include <QtCore/QDebug>
+#include "qtcolorpicker.hpp"
 
 EncodingComboBox::EncodingComboBox(QWidget *parent)
 : QComboBox(parent) {

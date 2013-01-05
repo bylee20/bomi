@@ -1,12 +1,6 @@
 #include "playlist.hpp"
 #include "downloader.hpp"
 #include "info.hpp"
-#include <QtCore/QFileInfo>
-#include <QtCore/QTemporaryFile>
-#include <QtCore/QTextStream>
-#include <QtCore/QRegExp>
-#include <QtCore/QTextCodec>
-#include <QtCore/QDir>
 
 Playlist::Playlist()
 : QList<Mrl>() {}

@@ -1,9 +1,4 @@
 #include "richtexthelper.hpp"
-#include <QtGui/QApplication>
-#include <QtGui/QDesktopWidget>
-#include <QtCore/QLinkedList>
-#include <QtCore/QStringBuilder>
-#include <QtCore/QDebug>
 
 QString RichTextHelper::replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s) {
 	QString text;

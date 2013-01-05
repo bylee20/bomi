@@ -1,7 +1,7 @@
 #ifndef SIMPLELISTWIDGET_HPP
 #define SIMPLELISTWIDGET_HPP
 
-#include <QtGui/QWidget>
+#include "stdafx.hpp"
 
 class QListWidgetItem;
 

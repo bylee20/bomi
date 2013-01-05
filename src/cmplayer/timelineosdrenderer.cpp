@@ -1,9 +1,5 @@
 #include "timelineosdrenderer.hpp"
 #include "global.hpp"
-#include <QtCore/QTimer>
-#include <QtCore/QPoint>
-#include <QtGui/QPainter>
-#include <QtCore/QDebug>
 #include "osdstyle.hpp"
 
 struct TimeLineOsdRenderer::Data {

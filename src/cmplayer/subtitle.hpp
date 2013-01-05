@@ -1,10 +1,7 @@
 #ifndef SUBTITLE_HPP
 #define SUBTITLE_HPP
 
-#include <QtCore/QMap>
-#include <QtCore/QList>
-#include <QtGui/QTextFormat>
-#include <QtGui/QTextLayout>
+#include "stdafx.hpp"
 #include "richtextdocument.hpp"
 
 struct SubtitleCaption : public RichTextDocument {

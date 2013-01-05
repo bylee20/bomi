@@ -6,23 +6,11 @@
 #include "videoframe.hpp"
 #include "pref.hpp"
 #include "logodrawer.hpp"
-#include <QtGui/QPainter>
-#include <QtGui/QMouseEvent>
-#include <QtCore/QTime>
-#include <QtCore/QDebug>
-#include <QtCore/QMutex>
-#include <QtCore/QSize>
-#include <QtCore/QRegExp>
-#include <QtCore/QCoreApplication>
-#include <math.h>
-#include <QtCore/QFile>
-#include <QtOpenGL/QGLShader>
-#include <QtOpenGL/QGLShaderProgram>
 #include "mpcore.hpp"
 #include "videoshader.hpp"
+#ifdef Q_WS_X11
 #include <X11/Xlib.h>
-#include <QtGui/QX11Info>
-
+#endif
 #ifndef GL_UNPACK_CLIENT_STORAGE_APPLE
 #define GL_UNPACK_CLIENT_STORAGE_APPLE 34226
 #endif

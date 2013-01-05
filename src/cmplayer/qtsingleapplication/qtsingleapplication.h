@@ -1,3 +1,6 @@
+#ifndef QTSINGLEAPPLICATION_H
+#define QTSINGLEAPPLICATION_H
+
 /****************************************************************************
 **
 ** This file is part of a Qt Solutions component.
@@ -107,3 +110,5 @@ private:
 };
 
 }
+
+#endif

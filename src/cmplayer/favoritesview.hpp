@@ -1,7 +1,7 @@
 #ifndef FAVORITESVIEW_HPP
 #define FAVORITESVIEW_HPP
 
-#include <QtGui/QWidget>
+#include "stdafx.hpp"
 
 class PlayEngine;			class QTreeWidgetItem;
 class QSettings;

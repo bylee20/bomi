@@ -1,6 +1,7 @@
 #ifndef TEXTOSDRENDERER_HPP
 #define TEXTOSDRENDERER_HPP
 
+#include "stdafx.hpp"
 #include "osdrenderer.hpp"
 #include "subtitle.hpp"
 

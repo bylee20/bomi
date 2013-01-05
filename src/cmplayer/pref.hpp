@@ -1,10 +1,7 @@
 #ifndef PREF_HPP
 #define PREF_HPP
 
-#include <QtCore/QString>
-#include <QtCore/QLocale>
-#include <QtCore/QStringList>
-#include <QtCore/QMap>
+#include "stdafx.hpp"
 #include "global.hpp"
 #include "enums.hpp"
 #include "avmisc.hpp"
