@@ -1,11 +1,8 @@
 #include "playengine.hpp"
 #include "avmisc.hpp"
-#include "recentinfo.hpp"
-#include "pref.hpp"
 #include "videooutput.hpp"
 #include "videorenderer.hpp"
 #include "audiocontroller.hpp"
-#include <libmpdemux/stheader.h>
 #include "mpcore.hpp"
 
 enum MpError {None = 0, UserInterrupted, CannotOpenStream, NoStream, InitVideoFilter, InitAudioFilter};
@@ -16,6 +13,7 @@ extern "C" {
 #include <playtree.h>
 #include <codec-cfg.h>
 #include <libmpdemux/demuxer.h>
+#include <libmpdemux/stheader.h>
 int mp_main(int argc, char *argv[]);
 int play_next_file();
 int run_playback();
@@ -60,6 +58,7 @@ struct PlayEngine::Data {
 	bool quit = false, playing = false, isMenu = false;
 	bool idling = false, videoUpdate = false, init = false;
 	int duration = 0, initSeek = 0, title = 0;
+	int start = 0;
 	double speed = 1.0;
 	Context *ctx = nullptr;
 	MPContext *mpctx = nullptr;
@@ -507,16 +506,13 @@ void PlayEngine::play(int time) {
 	enqueue(new Cmd(Cmd::Load));
 }
 
-void PlayEngine::load() {
-	play(getStartTime());
-}
-
-void PlayEngine::setMrl(const Mrl &mrl, bool play) {
+void PlayEngine::setMrl(const Mrl &mrl, int start, bool play) {
 	if (mrl != d->mrl) {
 		d->mrl = mrl;
+		d->start = start;
 		emit mrlChanged(d->mrl);
 		if (play)
-			load();
+			this->play(d->start);
 	}
 }
 
@@ -608,26 +604,6 @@ void PlayEngine::onPausedChanged(MPContext *mpctx) {
 		engine->updateState(mpctx->paused ? State::Paused : State::Playing);
 }
 
-int PlayEngine::getStartTime() const {
-	const RecentInfo &recent = RecentInfo::get();
-	const int seek = recent.stoppedTime(d->mrl);
-	if (seek <= 0)
-		return 0;
-	if (Pref::get().ask_record_found) {
-		const QDateTime date = recent.stoppedDate(d->mrl);
-		const QString title = tr("Stopped Record Found");
-		const QString text = tr("This file was stopped during its playing before.\n"
-			"Played Date: %1\nStopped Time: %2\n"
-			"Do you want to start from where it's stopped?\n"
-			"(You can configure not to ask anymore in the preferecences.)")
-			.arg(date.toString(Qt::ISODate)).arg(msecToString(seek, "h:mm:ss"));
-		const QMessageBox::StandardButtons b = QMessageBox::Yes | QMessageBox::No;
-		if (QMessageBox::question(QApplication::activeWindow(), title, text, b) != QMessageBox::Yes)
-			return 0;
-	}
-	return seek;
-}
-
 void PlayEngine::play() {
 	switch (d->state) {
 	case State::Paused:
@@ -635,7 +611,8 @@ void PlayEngine::play() {
 		break;
 	case State::Stopped:
 	case State::Finished:
-		load();
+		play(d->start);
+//		load();
 		break;
 	default:
 		break;

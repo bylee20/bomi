@@ -43,7 +43,7 @@ private:
 };
 
 HistoryView::Item::Item(const Mrl &mrl, const QDateTime &date)
-: m_mrl(mrl), m_date(m_date) {
+: m_mrl(mrl), m_date(date) {
 	setMrl(mrl);
 	update(date);
 	m_stopped = -1;

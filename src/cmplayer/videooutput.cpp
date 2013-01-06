@@ -176,6 +176,7 @@ void VideoOutput::drawImage(void *data) {
 			setTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1, mpi->planes[1]);
 			break;
 		case VideoFormat::YUY2:
+		case VideoFormat::UYVY:
 			setTex(0, GL_LUMINANCE_ALPHA, w, h, mpi->planes[0]);
 			setTex(1, GL_BGRA, w >> 1, h, mpi->planes[0]);
 			break;
@@ -245,11 +246,14 @@ void VideoOutput::checkEvents(struct vo */*vo*/) {}
 
 int VideoOutput::queryFormat(int format) {
 	switch (format) {
-	case IMGFMT_I420:
-	case IMGFMT_YV12:
-	case IMGFMT_NV12:
+//	case IMGFMT_I420:
+//	case IMGFMT_YV12:
+//	case IMGFMT_NV12:
 //	case IMGFMT_YUY2:
+	case IMGFMT_UYVY:
+#ifdef Q_WS_X11
 	case IMGFMT_VDPAU:
+#endif
 		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
 			| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;
 	default:

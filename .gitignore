@@ -105,3 +105,24 @@ src/cmplayer/make -j6.Debug
 src/cmplayer/make -j6.Release
 src/cmplayer/make.Debug
 src/cmplayer/make.Release
+src/cmplayer/cmplayer.pro.user.2.6pre1
+src/ffmpeg/.config
+src/ffmpeg/.version
+src/ffmpeg/config.asm
+src/ffmpeg/config.fate
+src/ffmpeg/config.h
+src/ffmpeg/config.log
+src/ffmpeg/config.mak
+src/ffmpeg/doc/examples/pc-uninstalled/libavcodec.pc
+src/ffmpeg/doc/examples/pc-uninstalled/libavformat.pc
+src/ffmpeg/doc/examples/pc-uninstalled/libavutil.pc
+src/ffmpeg/doc/examples/pc-uninstalled/libswscale.pc
+src/ffmpeg/libavcodec/libavcodec.pc
+src/ffmpeg/libavformat/libavformat.pc
+src/ffmpeg/libavutil/avconfig.h
+src/ffmpeg/libavutil/libavutil.pc
+src/ffmpeg/libswscale/libswscale.pc
+src/ffmpeg/version.h
+src/mplayer2/input/input.conf.h
+src/ffmpeg/doc/examples/pc-uninstalled/libavresample.pc
+src/ffmpeg/libavresample/libavresample.pc

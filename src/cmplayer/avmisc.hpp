@@ -23,6 +23,7 @@ struct VideoFormat {
 		NV12	= _f('N', 'V', '1', '2'),
 		NV21	= _f('N', 'V', '2', '1'),
 		YUY2	= _f('Y', 'U', 'Y', '2'),
+		UYVY	= _f('U', 'Y', 'V', 'Y'),
 		RGBA	= _f('R', 'G', 'B', 'A'),
 		BGRA	= _f('B', 'G', 'R', 'A')
 	};

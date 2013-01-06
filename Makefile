@@ -41,7 +41,8 @@ endif
 translations:
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ko.ts -qm cmplayer_ko.qm
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_en.ts -qm cmplayer_en.qm
-
+	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ru.ts -qm cmplayer_ru.qm
+	
 skin: build_dir
 	cd src/cmplayer_skin && $(QMAKE) cmplayer_skin.pro && make release
 	cp -r src/cmplayer_skin/skins build

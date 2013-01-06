@@ -136,14 +136,31 @@ vec3 get_yuv(const vec2 coord) {
 	)";
 	m_codes[NV21] = R"(
 uniform sampler2D p1, p2;
-	vec3 get_yuv(const vec2 coord) {
+vec3 get_yuv(const vec2 coord) {
 	vec3 yuv;
 	yuv.x = texture2D(p1, coord).x;
 	yuv.yz = texture2D(p2, coord).wx;
 	return yuv;
 }
 	)";
-
+	m_codes[YUY2] = R"(
+uniform sampler2D p1, p2;
+vec3 get_yuv(const vec2 coord) {
+	vec3 yuv;
+	yuv.x = texture2D(p1, coord).x;
+	yuv.yz = texture2D(p2, coord).yw;
+	return yuv;
+}
+	)";
+	m_codes[UYVY] = R"(
+uniform sampler2D p1, p2;
+vec3 get_yuv(const vec2 coord) {
+	vec3 yuv;
+	yuv.x = texture2D(p1, coord).a;
+	yuv.yz = texture2D(p2, coord).zx;
+	return yuv;
+}
+)";
 }
 
 VideoShader::~VideoShader() {
@@ -170,6 +187,12 @@ bool VideoShader::link(VideoFormat::Type type) {
 		break;
 	case VideoFormat::NV21:
 		m_yuv.compileSourceCode(m_codes[NV21]);
+		break;
+	case VideoFormat::YUY2:
+		m_yuv.compileSourceCode(m_codes[YUY2]);
+		break;
+	case VideoFormat::UYVY:
+		m_yuv.compileSourceCode(m_codes[UYVY]);
 		break;
 	case VideoFormat::BGRA:
 	case VideoFormat::RGBA:

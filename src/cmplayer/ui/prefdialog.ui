@@ -1190,7 +1190,6 @@
         <zorder>single_app</zorder>
         <zorder>hide_cursor</zorder>
         <zorder>disable_screensaver</zorder>
-        <zorder>verticalSpacer_5</zorder>
         <zorder>system_tray_group</zorder>
         <zorder>groupBox_16</zorder>
         <zorder>groupBox_15</zorder>

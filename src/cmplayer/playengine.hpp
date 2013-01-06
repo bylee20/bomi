@@ -57,7 +57,6 @@ public:
 	VideoRenderer &renderer() const;
 
 	MPContext *context() const;
-	void setMrl(const Mrl &mrl, bool play);
 	int position() const;
 	State state() const;
 	bool isSeekable() const;
@@ -92,6 +91,8 @@ public:
 	static void usleep(unsigned long usec) {QThread::usleep(usec);}
 	void play(int time);
 	bool isHardwareAccelerated() const;
+	void clearQueue();
+	void setMrl(const Mrl &mrl, int start, bool play);
 public slots:
 	void quitRunning();
 	void play();
@@ -128,8 +129,8 @@ private:
 //	Cmd *dequeue(int time = -1);
 	friend void plug(PlayEngine *engine, AudioController *audio);
 	friend void unplug(PlayEngine *engine, AudioController *audio);
-	void load();
-	int getStartTime() const;
+//	void load();
+//	int getStartTime() const;
 	PlayEngine();
 	void updateState(State state);
 	void run();

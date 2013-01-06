@@ -5,6 +5,7 @@
 #include "mrl.hpp"
 
 class Playlist;		class QDateTime;
+class PlayEngine;
 
 class RecentInfo : public QObject {
 	Q_OBJECT
@@ -14,6 +15,8 @@ public:
 	~RecentInfo();
 	QList<Mrl> openList() const;
 	int stoppedTime(const Mrl &mrl) const;
+	int askStartTime(const Mrl &mrl) const;
+//	void play(PlayEngine *engine, const Mrl &mrl, bool ask = true);
 	QDateTime stoppedDate(const Mrl &mrl)const ;
 	static RecentInfo &get() {return *obj;}
 	void stack(const Mrl &mrl);

@@ -20,6 +20,7 @@ VideoFormat VideoFormat::fromType(Type type, int width, int height) {
 		format.planes = 2;
 		break;
 	case YUY2:
+	case UYVY:
 		format.bpp = 16;
 		break;
 	case RGBA:
@@ -47,6 +48,8 @@ VideoFormat VideoFormat::fromImgFmt(uint32_t imgfmt, int width, int height) {
 		return fromType(I420, width, height);
 	case IMGFMT_YUY2:
 		return fromType(YUY2, width, height);
+	case IMGFMT_UYVY:
+		return fromType(UYVY, width, height);
 	case IMGFMT_NV12:
 		return fromType(NV12, width, height);
 	case IMGFMT_NV21:
@@ -66,6 +69,8 @@ uint32_t _fToImgFmt(VideoFormat::Type type) {
 		return IMGFMT_I420;
 	case VideoFormat::YUY2:
 		return IMGFMT_YUY2;
+	case VideoFormat::UYVY:
+		return IMGFMT_UYVY;
 	default:
 		return 0;
 	}

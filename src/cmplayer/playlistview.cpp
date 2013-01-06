@@ -1,4 +1,5 @@
 #include "playlistview.hpp"
+#include "recentinfo.hpp"
 #include "playengine.hpp"
 #include "info.hpp"
 #include "playlist.hpp"
@@ -214,7 +215,7 @@ void PlaylistView::setPlaylist(const Playlist &list) {
 }
 
 void PlaylistView::play(const Mrl &mrl) {
-	d->engine->setMrl(mrl, true);
+	d->engine->setMrl(mrl, RecentInfo::get().askStartTime(mrl), true);
 }
 
 void PlaylistView::playNext() {

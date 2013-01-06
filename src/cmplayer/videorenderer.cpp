@@ -344,10 +344,12 @@ void VideoRenderer::prepare(const VideoFormat &format) {
 			initTex(2, GL_LUMINANCE, d->format.width_stride >> 1, d->format.height >> 1);
 			break;
 		case VideoFormat::NV12:
+		case VideoFormat::NV21:
 			initTex(0, GL_LUMINANCE, d->format.width_stride, d->format.height);
 			initTex(1, GL_LUMINANCE_ALPHA, d->format.width_stride >> 1, d->format.height >> 1);
 			break;
 		case VideoFormat::YUY2:
+		case VideoFormat::UYVY:
 			initTex(0, GL_LUMINANCE_ALPHA, d->format.width_stride, d->format.height);
 			initTex(1, GL_RGBA, d->format.width_stride >> 1, d->format.height);
 			break;
@@ -497,8 +499,8 @@ void VideoRenderer::render() {
 			offset.ry() += xy.y();
 		xy += offset;
 		double top = 0.0, left = 0.0;
-		double bottom = (double)(d->format.height-1)/(double)d->format.height;
-		double right = (double)(d->format.width-1)/(double)(d->format.width_stride);
+		double bottom = (double)(d->format.height)/(double)d->format.height;
+		double right = (double)(d->format.width)/(double)(d->format.width_stride);
 		const Effects effects = d->var.effects();
 		if (!(effects & IgnoreEffect)) {
 			if (effects & FlipHorizontally)
@@ -526,8 +528,8 @@ void VideoRenderer::render() {
 		};
 		const float vertexCoords[] = {
 			(float)(d->vtx.left()+offset.x()),	(float)(d->vtx.top()+offset.y()),
-			(float)(d->vtx.right()+offset.x()),	(float)(d->vtx.top()+offset.y()),
-			(float)(d->vtx.right()+offset.x()),	(float)(d->vtx.bottom()+offset.y()),
+			(float)(d->vtx.right()+offset.x())+1.f,	(float)(d->vtx.top()+offset.y()),
+			(float)(d->vtx.right()+offset.x())+1.f,	(float)(d->vtx.bottom()+offset.y()),
 			(float)(d->vtx.left()+offset.x()),	(float)(d->vtx.bottom()+offset.y())
 		};
 		glActiveTexture(GL_TEXTURE0);

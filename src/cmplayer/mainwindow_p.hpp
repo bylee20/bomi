@@ -88,7 +88,7 @@ struct MainWindow::Data {
 		} else
 			return;
 		d->playlist->merge(playlist);
-		d->engine.setMrl(mrl, mode.start_playback);
+		d->engine.setMrl(mrl, RecentInfo::get().askStartTime(mrl), mode.start_playback);
 		if (!mrl.isDvd())
 			RecentInfo::get().stack(mrl);
 	}

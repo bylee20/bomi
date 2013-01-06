@@ -137,7 +137,7 @@ MainWindow::MainWindow(): d(new Data) {
 	d->apply_pref();
 
 	d->playlist->setPlaylist(d->recent.lastPlaylist());
-	d->engine.setMrl(d->recent.lastMrl(), false);
+	d->engine.setMrl(d->recent.lastMrl(), d->recent.askStartTime(d->recent.lastMrl()), false);
 	updateRecentActions(d->recent.openList());
 
 #ifdef Q_WS_MAC
@@ -839,7 +839,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
 				playlist = d->playlist->generatePlaylist(mrl);
 		}
 		d->playlist->merge(playlist);
-		d->engine.setMrl(mrl, mode.start_playback);
+		d->engine.setMrl(mrl, d->recent.askStartTime(mrl), mode.start_playback);
 	} else if (!subList.isEmpty())
 		appendSubFiles(subList, true, d->p.sub_enc);
 }

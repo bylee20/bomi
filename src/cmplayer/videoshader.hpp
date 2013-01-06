@@ -137,6 +137,8 @@ private:
 		bool bind() {return program.bind();}
 		void release() {return program.release();}
 		void setUniforms(const Var &var, const VideoFormat &format) {
+			program.setUniformValue("dx", 1.0f/(float)format.stride);
+			program.setUniformValue("stride", (float)format.stride);
 			program.setUniformValue(loc_p1, 0);
 			program.setUniformValue(loc_p2, 1);
 			program.setUniformValue(loc_p3, 2);
@@ -169,7 +171,7 @@ private:
 	Program *m_programs[3];
 	Program *m_rgbProgram;
 	QGLShader m_common, m_filter, m_kernel, m_simple;
-	enum TextureType {YV12 = 0, YUY2, NV12, NV21, RGB, TypeMax};
+	enum TextureType {YV12 = 0, YUY2, UYVY, NV12, NV21, RGB, TypeMax};
 	VideoFormat::Type m_type = VideoFormat::Unknown;
 //	QVector<QGLShader*> m_shaders{QVector<QGLShader*>(TypeMax, nullptr)};
 	QGLShader m_yuv;

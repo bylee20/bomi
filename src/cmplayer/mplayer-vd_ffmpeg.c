@@ -372,7 +372,6 @@ static void uninit(sh_video_t *sh)
 			1.0 / (ctx->inv_qp_sum / avctx->coded_frame->coded_picture_number));
 	}
 
-	printf("avctx %x %x", avctx, avctx->codec);
 	if (avctx) {
 		if (avctx->codec && avcodec_close(avctx) < 0)
 			mp_tmsg(MSGT_DECVIDEO, MSGL_ERR, "Could not close codec.\n");

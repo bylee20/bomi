@@ -1,5 +1,7 @@
 #include "recentinfo.hpp"
 #include "playlist.hpp"
+#include "pref.hpp"
+#include "playengine.hpp"
 
 RecentInfo *RecentInfo::obj = nullptr;
 
@@ -15,6 +17,32 @@ struct RecentInfo::Data {
 RecentInfo::RecentInfo()
 : d(new Data) {
 	load();
+}
+
+//void RecentInfo::play(PlayEngine *engine, const Mrl &mrl, bool ask) {
+//	int start = 0;
+//	if (ask)
+//		start = askStartTime(mrl);
+//	engine->setMrl(mrl, start);
+//}
+
+int RecentInfo::askStartTime(const Mrl &mrl) const {
+	const int start = stoppedTime(mrl);
+	if (start <= 0)
+		return 0;
+	if (Pref::get().ask_record_found) {
+		const QDateTime date = stoppedDate(mrl);
+		const QString title = tr("Stopped Record Found");
+		const QString text = tr("This file was stopped during its playing before.\n"
+			"Played Date: %1\nStopped Time: %2\n"
+			"Do you want to start from where it's stopped?\n"
+			"(You can configure not to ask anymore in the preferecences.)")
+			.arg(date.toString(Qt::ISODate)).arg(msecToString(start, "h:mm:ss"));
+		const QMessageBox::StandardButtons b = QMessageBox::Yes | QMessageBox::No;
+		if (QMessageBox::question(QApplication::activeWindow(), title, text, b) != QMessageBox::Yes)
+			return 0;
+	}
+	return start;
 }
 
 RecentInfo::~RecentInfo() {
