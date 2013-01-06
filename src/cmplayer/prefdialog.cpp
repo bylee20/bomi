@@ -415,6 +415,9 @@ QString PrefDialog::toString(const QLocale &locale) {
 	case QLocale::Korean:
 		text = tr("Korean");
 		break;
+	case QLocale::Russian:
+		text = tr("Russian");
+		break;
 	default:
 		text = QLocale::languageToString(locale.language());
 		break;

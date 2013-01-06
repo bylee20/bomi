@@ -11,7 +11,8 @@
         <file>img/format-text-underline.png</file>
         <file>mpl.html</file>
         <file>translations/cmplayer_en.qm</file>
-        <file>translations/cmplayer_ko.qm</file>
+	<file>translations/cmplayer_ko.qm</file>
+	<file>translations/cmplayer_ru.qm</file>
         <file>img/cmplayer-32.png</file>
         <file>img/format-text-color-32.png</file>
         <file>img/games-config-background-32.png</file>

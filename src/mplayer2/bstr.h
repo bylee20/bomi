@@ -90,7 +90,7 @@ bool bstr_eatstart(struct bstr *s, struct bstr prefix);
 
 static inline struct bstr bstr_cut(struct bstr str, int n)
 {
-    if (n > str.len)
+	if ((unsigned int)n > str.len)
         n = str.len;
     return (struct bstr){str.start + n, str.len - n};
 }

@@ -141,7 +141,7 @@ void mp_tmsg(int mod, int lev, const char *format, ... ) PRINTF_ATTRIBUTE(3, 4);
 static inline void mp_dbg(int mod, int lev, const char *format, ...) PRINTF_ATTRIBUTE(3, 4);
 
 static inline void mp_dbg(int mod, int lev, const char *format, ...)
-{
+{(void)mod; (void)lev; (void)format;
 #ifdef MP_DEBUG
     va_list va;
     va_start(va, format);
