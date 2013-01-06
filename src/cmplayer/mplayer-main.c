@@ -344,6 +344,9 @@ extern int (*mpctx_update_video)(struct MPContext *mpctx);
 extern mp_cmd_t *(*mpctx_wait_cmd)(struct MPContext *ctx, int timeout, int peek);
 extern int (*mpctx_run_cmplayer_cmd)(struct MPContext *mpctx, mp_cmd_t *mpcmd);
 extern void mixer_setvolume2(mixer_t *mixer, float l, float r);
+#ifdef __APPLE__
+extern int is_hwaccel_available(const char *);
+#endif
 static void exit_player(struct MPContext *mpctx, enum exit_reason how);
 void quit_player(struct MPContext *mpctx, enum exit_reason how) {exit_player(mpctx, how);}
 void mpctx_delete(struct MPContext *mpctx) {quit_player(mpctx, EXIT_NONE);}
@@ -2690,7 +2693,13 @@ int reinit_video_chain(struct MPContext *mpctx)
 
     current_module = "init_video_codec";
 
-    init_best_video_codec(sh_video, video_codec_list, video_fm_list);
+#ifdef __APPLE__
+	if (is_hwaccel_available("ffh264vda")) {
+		char *vcl[2] = {"ffh264vda", "", NULL};
+		init_best_video_codec(sh_video, vcl, video_fm_list);
+	} else
+#endif
+	init_best_video_codec(sh_video, video_codec_list, video_fm_list);
 
     if (!sh_video->initialized) {
         if (!opts->fixed_vo)

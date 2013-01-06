@@ -70,7 +70,6 @@ struct vo *VideoOutput::vo_create(MPContext *mpctx) {
 	struct vo *vo = reinterpret_cast<struct vo*>(talloc_ptrtype(NULL, vo));
 	memset(vo, 0, sizeof(*vo));
 	vo->opts = &mpctx->opts;
-//	vo->x11 = mpctx->x11_state;
 	vo->key_fifo = mpctx->key_fifo;
 	vo->input_ctx = mpctx->input;
 	vo->event_fd = -1;
@@ -90,8 +89,9 @@ bool VideoOutput::usingHwAccel() const {
 
 int VideoOutput::config(struct vo *vo, uint32_t w_s, uint32_t h_s, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
 	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
-	auto avctx = HwAccelInfo::get().avctx();
 	d->hwaccelActivated = false;
+#ifdef Q_WS_X11
+	auto avctx = HwAccelInfo::get().avctx();
 	if (fmt == IMGFMT_VDPAU && avctx) {
 		if (d->hwaccel) {
 			if (!d->hwaccel->isCompatibleWith(avctx))
@@ -110,32 +110,43 @@ int VideoOutput::config(struct vo *vo, uint32_t w_s, uint32_t h_s, uint32_t, uin
 		d->format.height = avctx->height;
 		d->hwaccelActivated = true;
 	} else
+#endif
 		d->format = VideoFormat::fromImgFmt(fmt, w_s, h_s);
 	d->renderer->prepare(d->format);
+#ifdef Q_WS_X11
 	if (d->hwaccelActivated && d->hwaccel && d->hwaccel->isUsable()) {
 		d->renderer->makeCurrent();
 		d->hwaccel->createSurface(d->renderer->textures());
 		d->renderer->doneCurrent();
 	}
+#endif
 	qDebug() << "vo configured";
 	return 0;
 }
 
 
 bool VideoOutput::getImage(void *data) {
+#ifdef Q_WS_MAC
+	Q_UNUSED(data);
+	return false;
+#endif
+#ifdef Q_WS_X11
 	auto mpi = reinterpret_cast<mp_image_t*>(data);
 	return d->hwaccel && d->hwaccel->isUsable() && d->hwaccel->setBuffer(mpi);
+#endif
 }
 
 void VideoOutput::drawImage(void *data) {
 	if (!d->renderer->beginUploadingTextures())
 		return;
 	mp_image_t *mpi = reinterpret_cast<mp_image_t*>(data);
+#ifdef Q_WS_X11
 	if (d->hwaccelActivated) {
 		if (d->hwaccel && d->hwaccel->isUsable()) {
 			d->hwaccel->copySurface(mpi);
 		}
 	} else {
+#endif
 		const int stride = mpi->stride[0];
 		int width_stride = stride;
 		if (!(mpi->flags & MP_IMGFLAG_PLANAR))
@@ -177,7 +188,9 @@ void VideoOutput::drawImage(void *data) {
 		default:
 			break;
 		}
+#ifdef Q_WS_X11
 	}
+#endif
 	d->renderer->endUploadingTextures();
 }
 
@@ -235,7 +248,7 @@ int VideoOutput::queryFormat(int format) {
 	case IMGFMT_I420:
 	case IMGFMT_YV12:
 	case IMGFMT_NV12:
-	case IMGFMT_YUY2:
+//	case IMGFMT_YUY2:
 	case IMGFMT_VDPAU:
 		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
 			| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;

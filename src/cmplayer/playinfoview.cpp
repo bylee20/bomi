@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "skin.hpp"
+#include <sigar.h>
 
 extern "C" {
 #include <libmpdemux/stheader.h>
@@ -234,8 +235,8 @@ void PlayInfoView::updateResourceUsage() {
 		}
 	}
 	if (mpctx->sh_audio && mpctx->sh_video) {
-		const int diff = (mpctx->total_avsync_change - d->sync)*1000000 + 0.5;
-		sync = tr("Average A-V sync") % _L(": ") % (diff < 0 ? _L("") : _L("+")) % _n(diff) % _L("us<br>");
+		const int diff = (mpctx->total_avsync_change - d->sync)*1000 + 0.5;
+		sync = tr("Average A-V sync") % _L(": ") % (diff < 0 ? _L("") : _L("+")) % _n(diff) % _L("ms<br>");
 		d->sync = mpctx->total_avsync_change;
 	}
 

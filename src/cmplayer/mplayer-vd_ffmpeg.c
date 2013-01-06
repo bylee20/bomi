@@ -58,17 +58,16 @@ static const vd_info_t info = {
 #error palette too large, adapt libmpcodecs/vf.c:vf_get_image
 #endif
 
-extern int is_hwaccel_available(AVCodecContext *avctx);
+#ifdef __linux__
 extern int register_hwaccel_callbacks(AVCodecContext *avctx);
-static inline int pixfmt_to_imgfmt(enum PixelFormat pixfmt) {
-#ifdef __APPLE__
-	if (pixfmt == PIX_FMT_VDA_VLD) {
+extern int is_hwaccel_available(AVCodecContext *avctx);
 #endif
+static inline int pixfmt_to_imgfmt(enum PixelFormat pixfmt) {
 #ifdef __linux__
 	if (pixfmt == PIX_FMT_VAAPI_VLD) {
-#endif
 		return IMGFMT_VDPAU;
 	} else
+#endif
 		return pixfmt2imgfmt(pixfmt);
 }
 
@@ -191,6 +190,7 @@ static int init(sh_video_t *sh)
 	avctx->codec_type = AVMEDIA_TYPE_VIDEO;
 	avctx->codec_id = lavc_codec->id;
 
+#ifdef __linux__
 	if (is_hwaccel_available(avctx)) {
 		ctx->do_dr1    = true;
 		ctx->do_slices = true;
@@ -207,6 +207,7 @@ static int init(sh_video_t *sh)
 		if (register_hwaccel_callbacks(avctx))
 			ctx->do_dr1 = ctx->do_slices = false;
 	}
+#endif
 
 	if (lavc_param->threads == 0) {
 		int threads = default_thread_count();
@@ -371,6 +372,7 @@ static void uninit(sh_video_t *sh)
 			1.0 / (ctx->inv_qp_sum / avctx->coded_frame->coded_picture_number));
 	}
 
+	printf("avctx %x %x", avctx, avctx->codec);
 	if (avctx) {
 		if (avctx->codec && avcodec_close(avctx) < 0)
 			mp_tmsg(MSGT_DECVIDEO, MSGL_ERR, "Could not close codec.\n");

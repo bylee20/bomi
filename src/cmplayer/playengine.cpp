@@ -14,6 +14,7 @@ extern "C" {
 #include <stream/stream.h>
 #include <command.h>
 #include <playtree.h>
+#include <codec-cfg.h>
 #include <libmpdemux/demuxer.h>
 int mp_main(int argc, char *argv[]);
 int play_next_file();
@@ -88,6 +89,9 @@ PlayEngine::~PlayEngine() {
 }
 
 bool PlayEngine::isHardwareAccelerated() const {
+#ifdef Q_WS_MAC
+	return d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->codec && !strcmp(d->mpctx->sh_video->codec->name, "ffh264vda");
+#endif
 	return d->video->usingHwAccel();
 }
 
@@ -314,7 +318,7 @@ void PlayEngine::run() {
 	QList<QByteArray> args;
 	args << "cmplayer-mplayer2" << "-nofs" << "-fixed-vo" << "-softvol" << "-softvol-max" << "1000.0"
 		<< "-noautosub" << "-osdlevel" << "0" << "-quiet" << "-idle" << "-identify"
-		<< "-input" << "nodefault-bindings" << "-noconsolecontrols" << "-nomouseinput" << "-noconfig" << "all";
+	<< "-input" << "nodefault-bindings" << "-noconsolecontrols" << "-nomouseinput" << "-noconfig" << "all";
 	const int argc = args.size();
 	PtrDel<char*, PtrArray> argv(new char*[argc]);
 	for (int i=0; i<argc; ++i)
