@@ -29,7 +29,7 @@ macx {
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
     LIBS +=  ../../build/lib/libcmplayer_skin.a ../../build/lib/libavcodec.a \
-	../../build/lib/libavformat.a ../../build/lib/libavutil.a \
+	../../build/lib/libavformat.a ../../build/lib/libavutil.a ../../build/lib/libavresample.a \
 	../../build/lib/libswscale.a ../../build/lib/libcmplayer_mplayer2.a \
         ../../build/lib/libchardet.a ../../build/lib/libcmplayer_sigar.a \
         -L/opt/local/lib \
@@ -40,7 +40,7 @@ macx {
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
-    QT += qdbus
+    QT += dbus
     TARGET = cmplayer
     LIBS += -lX11 \
         -L../../build/lib -lcmplayer_skin -lcmplayer_mplayer2 -lcmplayer_sigar -lchardet -lcmplayer_av \
@@ -198,7 +198,8 @@ SOURCES += main.cpp \
     playengine.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
-    translations/cmplayer_en.ts
+    translations/cmplayer_en.ts \
+    translations/cmplayer_ru.ts
 
 FORMS += \
     ui/aboutdialog.ui \

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 args="--enable-runtime-cpudetection \
-  --disable-termcap --disable-termios --disable-iconv --disable-langinfo \
+  --enable-libavresample --disable-termcap --disable-termios --disable-iconv --disable-langinfo \
   --disable-lirc --disable-lircc --disable-joystick --disable-apple-remote --disable-apple-ir \
   --disable-vm --disable-xf86keysym --disable-radio --disable-radio-capture --disable-radio-v4l2 \
   --disable-radio-bsdbt848 --disable-tv --disable-tv-v4l1 --disable-tv-v4l2 --disable-tv-bsdbt848 \
@@ -99,7 +99,7 @@ then
   echo "Build for OS X"
   args="--cc=gcc-4.2 $args --enable-coreaudio --disable-alsa"
   libs="../../build/lib/libavformat.a ../../build/lib/libavcodec.a \
-  	../../build/lib/libavutil.a ../../build/lib/libswscale.a $libs \
+  	../../build/lib/libavutil.a ../../build/lib/libswscale.a ../../build/lib/libavresample.a $libs \
   	-framework OpenAL -framework VideoDecodeAcceleration -framework CoreVideo -framework CoreFoundation -framework Cocoa"
   objs="$objs libao2/ao_coreaudio.o osdep/timer-darwin.o"
 elif test $kern = "Linux"
