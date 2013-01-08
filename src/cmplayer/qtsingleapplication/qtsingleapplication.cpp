@@ -47,7 +47,7 @@
 
 #include "qtsingleapplication.h"
 #include "qtlocalpeer.h"
-#include <QtGui/QWidget>
+#include <QWidget>
 
 namespace QtSolution {
 
@@ -178,19 +178,7 @@ QtSingleApplication::QtSingleApplication(const QString &appId, int &argc, char *
 }
 
 
-/*!
-    Creates a QtSingleApplication object. The application identifier
-    will be QCoreApplication::applicationFilePath(). \a argc, \a
-    argv, and \a type are passed on to the QAppliation constructor.
-*/
-QtSingleApplication::QtSingleApplication(int &argc, char **argv, Type type)
-    : QApplication(argc, argv, type)
-{
-    sysInit();
-}
-
-
-#if defined(Q_WS_X11)
+#if defined(Q_OS_X11)
 /*!
   Special constructor for X11, ref. the documentation of
   QApplication's corresponding constructor. The application identifier
@@ -289,7 +277,7 @@ QString QtSingleApplication::id() const
   \sa activateWindow(), messageReceived()
 */
 
-void QtSingleApplication::setActivationWindow(QWidget* aw, bool activateOnMessage)
+void QtSingleApplication::setActivationWindow(QWindow* aw, bool activateOnMessage)
 {
     actWin = aw;
     if (activateOnMessage)
@@ -305,7 +293,7 @@ void QtSingleApplication::setActivationWindow(QWidget* aw, bool activateOnMessag
 
     \sa setActivationWindow()
 */
-QWidget* QtSingleApplication::activationWindow() const
+QWindow *QtSingleApplication::activationWindow() const
 {
     return actWin;
 }
@@ -328,9 +316,9 @@ QWidget* QtSingleApplication::activationWindow() const
 void QtSingleApplication::activateWindow()
 {
     if (actWin) {
-        actWin->setWindowState(actWin->windowState() & ~Qt::WindowMinimized);
+		actWin->setVisible(true);
         actWin->raise();
-        actWin->activateWindow();
+		actWin->requestActivate();
     }
 }
 

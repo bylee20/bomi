@@ -1,6 +1,6 @@
 #include "app_x11.hpp"
 
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>

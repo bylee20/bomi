@@ -5,9 +5,9 @@
 #include "mrl.hpp"
 #include "record.hpp"
 
-#if defined(Q_WS_MAC)
+#if defined(Q_OS_MAC)
 #include "app_mac.hpp"
-#elif defined(Q_WS_X11)
+#elif defined(Q_OS_X11)
 #include "app_x11.hpp"
 #endif
 
@@ -15,7 +15,7 @@
 
 struct App::Data {
 	QStringList styleNames;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	QMenuBar *mb = new QMenuBar;
 #else
 	QMenuBar *mb = nullptr;
@@ -23,9 +23,9 @@ struct App::Data {
 //	QUrl url;
 //	QProcess cpu;
 	MainWindow *main = nullptr;
-#if defined(Q_WS_MAC)
+#if defined(Q_OS_MAC)
 	AppMac helper;
-#elif defined(Q_WS_X11)
+#elif defined(Q_OS_X11)
 	AppX11 helper;
 #endif
 };
@@ -36,7 +36,7 @@ App::App(int &argc, char **argv)
 	setOrganizationDomain("xylosper.net");
 	setApplicationName("CMPlayer");
 	setQuitOnLastWindowClosed(false);
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	setWindowIcon(defaultIcon());
 #endif
 	auto makeStyleNameList = [this] () {
@@ -100,8 +100,8 @@ QIcon App::defaultIcon() {
 	return icon;
 }
 
-void App::setAlwaysOnTop(QWidget *widget, bool onTop) {
-	d->helper.setAlwaysOnTop(widget->effectiveWinId(), onTop);
+void App::setAlwaysOnTop(QWindow *window, bool onTop) {
+	d->helper.setAlwaysOnTop(window->winId(), onTop);
 }
 
 void App::setScreensaverDisabled(bool disabled) {
@@ -128,7 +128,7 @@ QStringList App::devices() const {
 	return d->helper.devices();
 }
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 QMenuBar *App::globalMenuBar() const {
 	return d->mb;
 }

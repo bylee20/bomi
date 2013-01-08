@@ -245,3 +245,19 @@ bool AudioController::parse(const Id &id) {
 mixer *AudioController::mixer() const {
 	return d->mpctx ? &d->mpctx->mixer : nullptr;
 }
+
+struct mp_volnorm {int method;	float mul;};
+
+double AudioController::volumeNormalizer() const {
+	if (d->volnorm && d->mpctx && d->mpctx->mixer.afilter) {
+		auto af = d->mpctx->mixer.afilter->first;
+		while (af) {
+			if (strcmp(af->info->name, "volnorm") == 0)
+				break;
+			af = af->next;
+		}
+		if (af)
+			return reinterpret_cast<mp_volnorm*>(af->setup)->mul;
+	}
+	return 1.0;
+}

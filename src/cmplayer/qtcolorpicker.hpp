@@ -47,21 +47,14 @@
 **
 ****************************************************************************/
 
-#include <QtGui/QPushButton>
-#include <QtGui/QToolButton>
-#include <QtCore/QString>
-#include <QtGui/QColor>
-
-#include <QtGui/QLabel>
-#include <QtCore/QEvent>
-#include <QtGui/QFocusEvent>
+#include "stdafx.hpp"
 
 class QGridLayout;
 class QEventLoop;
 
 namespace QtSolution {
 
-#if defined(Q_WS_WIN)
+#if defined(Q_OS_WIN)
 #  if !defined(QT_QTCOLORPICKER_EXPORT) && !defined(QT_QTCOLORPICKER_IMPORT)
 #    define QT_QTCOLORPICKER_EXPORT
 #  elif defined(QT_QTCOLORPICKER_IMPORT)

@@ -9,6 +9,9 @@
 #include "playengine.hpp"
 #include "recentinfo.hpp"
 #include "hwaccel.hpp"
+#include "videorendereritem.hpp"
+#include "playinfoitem.hpp"
+#include "subtitlerendereritem.hpp"
 
 static bool checkOpenGL() {
 	if (Q_LIKELY(QGLFormat::hasOpenGL() && (QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_0)))
@@ -26,6 +29,12 @@ int main(int argc, char **argv) {
 	qRegisterMetaType<State>("State");
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
+	qmlRegisterType<VideoRendererItem>("CMPlayer", 1, 0, "VideoRenderer");
+	qmlRegisterType<PlayInfoItem>("CMPlayer", 1, 0, "PlayInfo");
+	qmlRegisterType<AvInfoObject>();
+	qmlRegisterType<AvIoFormat>();
+	qmlRegisterType<MediaInfoObject>();
+	qmlRegisterType<SubtitleRendererItem>("CMPlayer", 1, 0, "SubtitleRenderer");
 
 	qDebug() << "started app";
 	App app(argc, argv);

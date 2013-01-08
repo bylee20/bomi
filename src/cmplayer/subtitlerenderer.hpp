@@ -6,7 +6,7 @@
 #include "textosdrenderer.hpp"
 
 class QDialog;						class Mrl;
-class SubtitleComponentModel;
+class SubtitleComponentModel;		class SubtitleRendererItem;
 
 class SubtitleRenderer : public QObject {
 	Q_OBJECT
@@ -24,10 +24,9 @@ public:
 		bool m_selected;
 		Comp m_comp;
 	};
-
+	void setItem(SubtitleRendererItem *item);
 	SubtitleRenderer();
 	~SubtitleRenderer();
-	TextOsdRenderer &osd() const;
 	double frameRate() const;
 	int delay() const;
 	int start(int pos) const;

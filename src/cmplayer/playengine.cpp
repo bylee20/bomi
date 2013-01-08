@@ -1,7 +1,7 @@
 #include "playengine.hpp"
 #include "avmisc.hpp"
 #include "videooutput.hpp"
-#include "videorenderer.hpp"
+#include "videorendereritem.hpp"
 #include "audiocontroller.hpp"
 #include "mpcore.hpp"
 
@@ -34,7 +34,6 @@ void mpctx_new(struct MPContext *mpctx);
 int mpctx_idle_loop(struct MPContext *mpctx);
 void (*mpctx_paused_changed)(MPContext *) = nullptr;
 int (*mpctx_run_cmplayer_cmd)(struct MPContext *mpctx, mp_cmd_t *mpcmd) = nullptr;
-int (*mpctx_update_video)(struct MPContext *mpctx) = nullptr;
 mp_cmd *(*mpctx_wait_cmd)(MPContext *ctx, int timeout, int peek) = nullptr;
 void mixer_setvolume2(mixer_t *mixer, float l, float r);
 extern char *dvd_device;
@@ -56,7 +55,7 @@ struct PlayEngine::Data {
 	QTimer ticker = {};		VideoFormat vfmt = {};
 	State state = State::Stopped;
 	bool quit = false, playing = false, isMenu = false;
-	bool idling = false, videoUpdate = false, init = false;
+	bool idling = false, init = false;
 	int duration = 0, initSeek = 0, title = 0;
 	int start = 0;
 	double speed = 1.0;
@@ -75,7 +74,6 @@ PlayEngine::PlayEngine()
 	d->video = new VideoOutput(this);
 	mpctx_paused_changed = onPausedChanged;
 	mpctx_run_cmplayer_cmd = runCmd;
-	mpctx_update_video = updateVideo;
 	mpctx_wait_cmd = waitCmd;
 	connect(&d->ticker, SIGNAL(timeout()), this, SLOT(emitTick()));
 	d->ticker.setInterval(20);
@@ -88,19 +86,10 @@ PlayEngine::~PlayEngine() {
 }
 
 bool PlayEngine::isHardwareAccelerated() const {
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	return d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->codec && !strcmp(d->mpctx->sh_video->codec->name, "ffh264vda");
 #endif
 	return d->video->usingHwAccel();
-}
-
-int PlayEngine::updateVideo(struct MPContext *mpctx) {
-	Data *d = reinterpret_cast<Context*>(mpctx)->p->d;
-	if (d->video->renderer()->needsToBeRendered()) {
-		d->video->renderer()->render();
-		return true;
-	} else
-		return false;
 }
 
 bool PlayEngine::isMenu() const {
@@ -188,10 +177,6 @@ MPContext *PlayEngine::context() const {
 	return d->mpctx;
 }
 
-VideoRenderer &PlayEngine::renderer() const {
-	return *d->video->renderer();
-}
-
 void PlayEngine::updateState(State state) {
 	if (d->state == state)
 		return;
@@ -223,9 +208,6 @@ int PlayEngine::runCmd(MPContext *mpctx, mp_cmd_t *mpcmd) {
 	case Cmd::Quit:
 		engine->d->quit = true;
 		return Cmd::Quit;
-	case Cmd::VideoUpdate:
-		engine->d->videoUpdate = true;
-		break;
 	case Cmd::Stop:
 		return Cmd::Stop;
 	case Cmd::Volume:
@@ -285,16 +267,6 @@ int PlayEngine::idle() {
 				break;
 			case Cmd::Quit:
 				ret = Cmd::Quit;
-				break;
-			case Cmd::VideoUpdate:
-				for (;;) {
-					auto cmd = mp_input_get_cmd(d->mpctx->input, 0, true);
-					if (!cmd || cmd->id != -1 || cmd->args[0].type != Cmd::VideoUpdate)
-						break;
-					cmd = mp_input_get_cmd(d->mpctx->input, 0, false);
-					mp_cmd_free(cmd);
-				}
-				d->video->renderer()->render();
 				break;
 			default:
 				break;
@@ -383,10 +355,6 @@ void PlayEngine::run() {
 			res = mpctx_process_mp_cmds(d->mpctx);
 			if (res & Cmd::Break)
 				break;
-			if (d->videoUpdate && d->mpctx->paused) {
-				d->video->renderer()->render();
-				d->videoUpdate = false;
-			}
 			if (Q_UNLIKELY(volHack && m_audio)) {
 				const float volume = m_audio->realVolume();
 				mixer_setvolume2(&d->mpctx->mixer, volume, volume);

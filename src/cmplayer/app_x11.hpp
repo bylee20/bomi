@@ -3,7 +3,7 @@
 
 #include "stdafx.hpp"
 
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 
 class AppX11 : public QObject {
 	Q_OBJECT

@@ -26,6 +26,7 @@ public:
 	void setCurrentStream(int id) const;
 	int currentStreamId() const;
 	struct mixer *mixer() const;
+	double volumeNormalizer() const;
 public slots:
 	void setVolumeNormalized(bool norm);
 	void setVolume(int volume);

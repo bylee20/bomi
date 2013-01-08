@@ -46,27 +46,6 @@
 **
 ****************************************************************************/
 
-#include <QtCore/QDebug>
-#include <QtGui/QApplication>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QPainter>
-#include <QtGui/QPushButton>
-#include <QtGui/QColorDialog>
-#include <QtCore/QMap>
-#include <QtGui/QLayout>
-#include <QtGui/QStyle>
-#include <QtGui/QLabel>
-#include <QtGui/QToolTip>
-#include <QtGui/QPixmap>
-#include <QtGui/QFocusEvent>
-#include <QtGui/QPaintEvent>
-#include <QtGui/QGridLayout>
-#include <QtGui/QHideEvent>
-#include <QtGui/QKeyEvent>
-#include <QtGui/QShowEvent>
-#include <QtGui/QMouseEvent>
-#include <math.h>
-
 namespace QtSolution {
 
 /*! \class QtColorPicker

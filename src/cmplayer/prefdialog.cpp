@@ -216,7 +216,7 @@ struct PrefDialog::Data {
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 : QDialog(parent, Qt::Tool)
 #else
 : QDialog(parent)
@@ -307,7 +307,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	d->ui.sub_priority->setAddingAndErasingEnabled(true);
 	checkSubAutoselect(d->ui.sub_autoselect->currentData());
 
-	d->ui.skin_name->addItems(Skin::names(true));
+//	d->ui.skin_name->addItems(Skin::names(true));
 	onSkinIndexChanged(d->ui.skin_name->currentIndex());
 
 	connect(d->ui.skin_name, SIGNAL(currentIndexChanged(int)), this, SLOT(onSkinIndexChanged(int)));
@@ -330,7 +330,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	fill(Pref::get());
 
 	d->ui.sub_shadow_blur->hide();
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	d->ui.system_tray_group->hide();
 #endif
 	adjustSize();
@@ -342,17 +342,17 @@ PrefDialog::~PrefDialog() {
 
 void PrefDialog::onSkinIndexChanged(int idx) {
 	if (idx >= 0) {
-		const auto name = d->ui.skin_name->itemText(idx);
-		const auto path = Skin::path(name);
-		d->ui.skin_path->setText(path % '/' % name);
-		QSize size(200, 200);
-		QPixmap pixmap;
-		if (pixmap.load(path % '/' % name % "/preview.png")) {
-			d->ui.skin_preview->setPixmap(pixmap);
-			size = pixmap.size();
-		} else
-			d->ui.skin_preview->setText(tr("No preview!"));
-		d->ui.skin_preview->setFixedSize(size);
+//		const auto name = d->ui.skin_name->itemText(idx);
+//		const auto path = Skin::path(name);
+//		d->ui.skin_path->setText(path % '/' % name);
+//		QSize size(200, 200);
+//		QPixmap pixmap;
+//		if (pixmap.load(path % '/' % name % "/preview.png")) {
+//			d->ui.skin_preview->setPixmap(pixmap);
+//			size = pixmap.size();
+//		} else
+//			d->ui.skin_preview->setText(tr("No preview!"));
+//		d->ui.skin_preview->setFixedSize(size);
 	}
 }
 

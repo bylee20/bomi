@@ -340,7 +340,6 @@ enum {NoMpError = 0, UserInterrupted, OpenStreamError, NoStreamError, InitVideoF
 enum {Unknown = 0, Quit = 1, Load = 2, Stop = 4, VideoUpdate = 8, Break = Quit | Load | Stop};
 extern struct vo* vo_cmplayer;
 extern void (*mpctx_paused_changed)(MPContext *);
-extern int (*mpctx_update_video)(struct MPContext *mpctx);
 extern mp_cmd_t *(*mpctx_wait_cmd)(struct MPContext *ctx, int timeout, int peek);
 extern int (*mpctx_run_cmplayer_cmd)(struct MPContext *mpctx, mp_cmd_t *mpcmd);
 extern void mixer_setvolume2(mixer_t *mixer, float l, float r);

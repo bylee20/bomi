@@ -1,23 +1,232 @@
-#include "mainwindow_p.hpp"
 #include "overlay.hpp"
+#include "stdafx.hpp"
+#include "app.hpp"
+#include "avmisc.hpp"
+#include "playinfoview.hpp"
+#include "colorproperty.hpp"
+#include "playlistview.hpp"
+#include "historyview.hpp"
+#include "playlistmodel.hpp"
+#include "subtitlerenderer.hpp"
+#include "charsetdetector.hpp"
+#include "snapshotdialog.hpp"
+#include "subtitle_parser.hpp"
+#include "audiocontroller.hpp"
+#include "recentinfo.hpp"
+#include "abrepeater.hpp"
+#include "mainwindow.hpp"
+#include "playengine.hpp"
+#include "translator.hpp"
+#include "videorendereritem.hpp"
+#include "appstate.hpp"
+#include "pref.hpp"
+#include "playlist.hpp"
+#include "dialogs.hpp"
+#include "toolbox.hpp"
+#include "rootmenu.hpp"
+#include "subtitlerendereritem.hpp"
+#include "info.hpp"
+#include "skin.hpp"
+#include "prefdialog.hpp"
+#include "playinfoitem.hpp"
 
-#ifdef Q_WS_MAC
+struct MainWindow::Data {
+	RootMenu &menu = RootMenu::get();
+	RecentInfo &recent = RecentInfo::get();
+	const Pref &p = Pref::get();
+
+	PlayEngine &engine = PlayEngine::get();
+	AudioController audio;
+	VideoRendererItem *video = nullptr;
+
+	SubtitleRenderer subtitle;
+	QQuickItem *timeline = nullptr;
+	QQuickItem *message = nullptr;
+	QPoint prevPos;		QTimer hider;
+	Qt::WindowState prevWinState = Qt::WindowNoState;
+	bool moving = false, changingSub = false;
+	bool pausedByHiding = false, dontShowMsg = false, dontPause = false;
+	bool stateChanging = false;
+	ABRepeater ab = {&engine, &subtitle};
+//	PlayInfoView *playInfo = nullptr;
+//	Skin skin;
+	QMenu contextMenu;
+	PlaylistView *playlist;
+	HistoryView *history;
+	QRect screenRect;
+//	FavoritesView *favorite;
+#ifndef Q_OS_MAC
+	QSystemTrayIcon *tray;
+#endif
+	QString filePath;
+// methods
+	bool checkAndPlay(const Mrl &mrl) {
+		if (mrl != engine.mrl())
+			return false;
+		if (!engine.isPlaying())
+			engine.play();
+		return true;
+	}
+
+	void openWith(const Pref::OpenMedia &mode, const Mrl &mrl) {
+		auto d = this;
+		if (d->checkAndPlay(mrl))
+			return;
+		Playlist playlist;
+		if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::AppendToPlaylist) {
+			playlist.append(mrl);
+		} else if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist) {
+			d->playlist->clear();
+			playlist.append(mrl);
+		} else if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist) {
+			d->playlist->clear();
+			playlist = PlaylistView::generatePlaylist(mrl);
+		} else
+			return;
+		d->playlist->merge(playlist);
+		d->engine.setMrl(mrl, RecentInfo::get().askStartTime(mrl), mode.start_playback);
+		if (!mrl.isDvd())
+			RecentInfo::get().stack(mrl);
+	}
+
+	void sync_subtitle_file_menu() {
+		if (changingSub)
+			return;
+		changingSub = true;
+		Menu &list = menu("subtitle")("list");
+		ActionGroup *g = list.g();
+		const QList<SubtitleRenderer::Loaded> loaded = subtitle.loaded();
+		while (g->actions().size() < loaded.size()) {
+			list.addActionToGroupWithoutKey("", true);
+		}
+		while (g->actions().size() > loaded.size()) {
+			delete g->actions().last();
+		}
+		const QList<QAction*> actions = g->actions();
+		Q_ASSERT(loaded.size() == actions.size());
+		for (int i=0; i<actions.size(); ++i) {
+			actions[i]->setText(loaded[i].name());
+			actions[i]->setData(i);
+			actions[i]->setChecked(loaded[i].isSelected());
+		}
+		changingSub = false;
+	}
+
+	void load_state() {
+		dontShowMsg = true;
+
+		const AppState &as = AppState::get();
+
+		engine.setSpeed(as.play_speed);
+
+		menu("video")("aspect").g()->trigger(as.video_aspect_ratio);
+		menu("video")("crop").g()->trigger(as.video_crop_ratio);
+		menu("video")("align").g("horizontal")->trigger(as.video_alignment.id() & 0x0f);
+		menu("video")("align").g("vertical")->trigger(as.video_alignment.id() & 0xf0);
+		video->setOffset(as.video_offset);
+		video->setEffects((VideoRendererItem::Effects)as.video_effects);
+		for (int i=0; i<16; ++i) {
+			if ((as.video_effects >> i) & 1)
+				menu("video")("filter").g()->setChecked(1 << i, true);
+		}
+		video->setColor(as.video_color);
+
+		audio.setVolume(as.audio_volume);
+		audio.setMuted(as.audio_muted);
+		audio.setPreAmp(as.audio_amp);
+		audio.setVolumeNormalized(as.audio_volume_normalized);
+
+		menu("subtitle").g("display")->trigger((int)as.sub_letterbox);
+		menu("subtitle").g("align")->trigger((int)as.sub_align_top);
+		subtitle.setPos(as.sub_pos);
+		subtitle.setDelay(as.sub_sync_delay);
+
+		menu("tool")["auto-exit"]->setChecked(as.auto_exit);
+
+		menu("window").g("sot")->trigger(as.screen_stays_on_top.id());
+
+		dontShowMsg = false;
+	}
+
+	void save_state() const {
+		AppState &as = AppState::get();
+		as.video_aspect_ratio = video->aspectRatio();
+		as.video_crop_ratio = video->cropRatio();
+		as.video_alignment = video->alignment();
+		as.video_offset = video->offset();
+		as.video_effects = video->effects();
+		as.video_color = video->color();
+		as.audio_volume = audio.volume();
+		as.audio_volume_normalized = audio.isVolumeNormalized();
+		as.audio_muted = audio.isMuted();
+		as.audio_amp = audio.preAmp();
+		as.play_speed = engine.speed();
+		as.sub_pos = subtitle.pos();
+		as.sub_sync_delay = subtitle.delay();
+		as.screen_stays_on_top = stay_on_top_mode();
+//		as.sub_letterbox = subtitle.osd().letterboxHint();
+		as.sub_align_top = subtitle.isTopAligned();
+		as.save();
+	}
+
+	Enum::StaysOnTop stay_on_top_mode() const {
+		const int id = menu("window").g("sot")->checkedAction()->data().toInt();
+		return Enum::StaysOnTop::from(id, Enum::StaysOnTop::Playing);
+	}
+
+	void apply_pref() {
+		SubtitleParser::setMsPerCharactor(p.ms_per_char);
+		Translator::load(p.locale);
+//		subtitle.osd().setStyle(p.sub_style);
+		menu.update();
+		menu.save();
+	#ifndef Q_OS_MAC
+		tray->setVisible(p.enable_system_tray);
+	#endif
+	}
+};
+
+#ifdef Q_OS_MAC
 void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
+
+
 MainWindow::MainWindow(): d(new Data) {
-	d->playlist = new PlaylistView(&d->engine, this);
-	d->history = new HistoryView(&d->engine, this);
-#ifndef Q_WS_MAC
+	engine()->addImportPath("/Users/xylosper/dev/cmplayer/src/cmplayer");
+	qDebug() << engine()->importPathList();
+	setFlags(flags() | Qt::WindowFullscreenButtonHint);
+	setSource(QUrl::fromLocalFile("/Users/xylosper/dev/cmplayer/src/cmplayer/test.qml"));
+	setResizeMode(QQuickView::SizeRootObjectToView);
+	resize(500, 500);
+
+	d->video = rootObject()->findChild<VideoRendererItem*>();
+	for (QQuickItem *item : d->video->childItems()) {
+		if (item->property("name").toString() == _L("message")) {
+			d->message = item;
+		}
+		if (item->property("name").toString() == _L("timeline"))
+			d->timeline = item;
+	}
+	qDebug() << d->message << d->timeline;
+	Q_ASSERT(d->video != nullptr);
+	d->subtitle.setItem(rootObject()->findChild<SubtitleRendererItem*>());
+
+	d->playlist = new PlaylistView(&d->engine, nullptr);
+	d->history = new HistoryView(&d->engine, nullptr);
+#ifndef Q_OS_MAC
 	d->tray = new QSystemTrayIcon(app()->defaultIcon(), this);
 #endif
 	d->hider.setSingleShot(true);
-	d->skin.connectTo(&d->engine, &d->audio, &d->video);
+//	d->skin.connectTo(&d->engine, &d->audio, d->video);
 
-	setMouseTracking(true);
-	setAcceptDrops(true);
+//	setAcceptDrops(true);
 
 	plug(&d->engine, &d->audio);
+	plug(&d->engine, d->video);
+	auto playinfo = rootObject()->findChild<PlayInfoItem*>();
+	playinfo->set(&d->engine, d->video, &d->audio);
+//	d->playInfo = new PlayInfoView(&d->engine, &d->audio, d->video);
 
 	Menu &open = d->menu("open");		Menu &play = d->menu("play");
 	Menu &video = d->menu("video");		Menu &audio = d->menu("audio");
@@ -42,8 +251,8 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(play("chapter").g(), triggered(QAction*), this, setChapter(QAction*));
 
 	CONNECT(video("track").g(), triggered(QAction*), this, setVideoTrack(QAction*));
-	CONNECT(video("aspect").g(), triggered(double), &d->video, setAspectRatio(double));
-	CONNECT(video("crop").g(), triggered(double), &d->video, setCropRatio(double));
+	CONNECT(video("aspect").g(), triggered(double), d->video, setAspectRatio(double));
+	CONNECT(video("crop").g(), triggered(double), d->video, setCropRatio(double));
 	CONNECT(video["snapshot"], triggered(), this, takeSnapshot());
 	CONNECT(video["drop-frame"], toggled(bool), this, setFrameDroppingEnabled(bool));
 	CONNECT(&video("align"), triggered(QAction*), this, alignScreen(QAction*));
@@ -71,7 +280,7 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(tool["history"], triggered(), d->history, toggle());
 	CONNECT(tool["subtitle"], triggered(), d->subtitle.view(), toggle());
 	CONNECT(tool["pref"], triggered(), this, setPref());
-	CONNECT(tool["playinfo"], toggled(bool), &d->playInfo, setVisible(bool));
+	connect(tool["playinfo"], &QAction::toggled, [playinfo](bool v) {playinfo->setVisible(v);});
 	CONNECT(tool["auto-exit"], toggled(bool), this, setAutoExit(bool));
 	CONNECT(tool["auto-shutdown"], toggled(bool), this, setAutoShutdown(bool));
 
@@ -96,9 +305,13 @@ MainWindow::MainWindow(): d(new Data) {
 
 	CONNECT(&d->engine, mrlChanged(Mrl), this, updateMrl(Mrl));
 	CONNECT(&d->engine, stateChanged(State,State), this, updateState(State,State));
-	CONNECT(&d->engine, tick(int), &d->subtitle, render(int));
-	CONNECT(&d->screen, customContextMenuRequested(const QPoint&), this, showContextMenu(const QPoint&));
-	CONNECT(&d->video, formatChanged(VideoFormat), this, updateVideoFormat(VideoFormat));
+	connect(&d->engine, &PlayEngine::tick, &d->subtitle, &SubtitleRenderer::render);
+	connect(&d->engine, &PlayEngine::tick, [this] (int pos) {
+		if (d->timeline)
+			d->timeline->setProperty("value", (double)pos/d->engine.duration());
+	});
+//	CONNECT(&d->screen, customContextMenuRequested(const QPoint&), this, showContextMenu(const QPoint&));
+	CONNECT(d->video, formatChanged(VideoFormat), this, updateVideoFormat(VideoFormat));
 //	CONNECT(d->video, screenSizeChanged(QSize), this, onScreenSizeChanged(QSize));
 	CONNECT(&d->audio, mutedChanged(bool), audio["mute"], setChecked(bool));
 	CONNECT(&d->audio, volumeNormalizedChanged(bool), audio["volnorm"], setChecked(bool));
@@ -107,31 +320,29 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(&d->hider, timeout(), this, hideCursor());
 	CONNECT(d->history, playRequested(Mrl), this, openMrl(Mrl));
 	CONNECT(d->playlist, finished(), this, onPlaylistFinished());
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	CONNECT(d->tray, activated(QSystemTrayIcon::ActivationReason), this, handleTray(QSystemTrayIcon::ActivationReason));
 #endif
 
-	CONNECT(&d->skin, windowTitleChanged(QString), this, setWindowTitle(QString));
-	CONNECT(&d->skin, windowFilePathChanged(QString), this, onWindowFilePathChanged(QString));
+//	CONNECT(&d->skin, windowTitleChanged(QString), this, setWindowTitle(QString));
+//	CONNECT(&d->skin, windowFilePathChanged(QString), this, onWindowFilePathChanged(QString));
 
-	addActions(d->menu.actions());
+//   	addActions(d->menu.actions());
 	auto makeContextMenu = [this, &open, &play, &video, &audio, &sub, &tool, &win] () {
-		auto menu = new QMenu(this);
-		menu->addMenu(&open);
-		menu->addSeparator();
-		menu->addMenu(&play);
-		menu->addMenu(&video);
-		menu->addMenu(&audio);
-		menu->addMenu(&sub);
-		menu->addSeparator();
-		menu->addMenu(&tool);
-		menu->addMenu(&win);
-		menu->addSeparator();
-		menu->addAction(d->menu("help")["about"]);
-		menu->addAction(d->menu["exit"]);
-		return menu;
+		d->contextMenu.addMenu(&open);
+		d->contextMenu.addSeparator();
+		d->contextMenu.addMenu(&play);
+		d->contextMenu.addMenu(&video);
+		d->contextMenu.addMenu(&audio);
+		d->contextMenu.addMenu(&sub);
+		d->contextMenu.addSeparator();
+		d->contextMenu.addMenu(&tool);
+		d->contextMenu.addMenu(&win);
+		d->contextMenu.addSeparator();
+		d->contextMenu.addAction(d->menu("help")["about"]);
+		d->contextMenu.addAction(d->menu["exit"]);
 	};
-	d->context = makeContextMenu();
+	makeContextMenu();
 
 	d->load_state();
 	d->apply_pref();
@@ -139,49 +350,49 @@ MainWindow::MainWindow(): d(new Data) {
 	d->playlist->setPlaylist(d->recent.lastPlaylist());
 	d->engine.setMrl(d->recent.lastMrl(), d->recent.askStartTime(d->recent.lastMrl()), false);
 	updateRecentActions(d->recent.openList());
-
-#ifdef Q_WS_MAC
-//	qt_mac_set_dock_menu(&d->menu);
-	QMenuBar *mb = app()->globalMenuBar();
-	mb->addMenu(&open);
-	mb->addMenu(&play);
-	mb->addMenu(&video);
-	mb->addMenu(&audio);
-	mb->addMenu(&sub);
-	mb->addMenu(&tool);
-	mb->addMenu(&win);
-	mb->addMenu(&help);
+#ifdef Q_OS_MAC
+////	qt_mac_set_dock_menu(&d->menu);
+//	QMenuBar *mb = app()->globalMenuBar();
+//	mb->addMenu(&d->menu);
+//	mb->addMenu(&open);
+//	mb->addMenu(&play);
+//	mb->addMenu(&video);
+//	mb->addMenu(&audio);
+//	mb->addMenu(&sub);
+//	mb->addMenu(&tool);
+//	mb->addMenu(&win);
+//	mb->addMenu(&help);
 #endif
-	d->screen.overlay()->add(&d->playInfo.osd());
-	d->screen.overlay()->add(&d->subtitle.osd());
-	d->screen.overlay()->add(&d->timeLine);
-	d->screen.overlay()->add(&d->message);
+//	d->screen.overlay()->add(&d->playInfo.osd());
+//	d->screen.overlay()->add(&d->subtitle.osd());
+//	d->screen.overlay()->add(&d->timeLine);
+//	d->screen.overlay()->add(&d->message);
 
-	if (d->skin.load(d->p.skin_name)) {
-		auto screen = d->skin.screen();
-		d->screen.setParent(screen);
-		d->screen.move(0, 0);
-		d->screen.resize(screen->size());
-		d->skin.initializePlaceholders();
-		setCentralWidget(d->skin.widget());
-		resize(minimumSizeHint());
-	} else {
-		setCentralWidget(&d->screen);
-		adjustSize();
-	}
+//	if (d->skin.load(d->p.skin_name)) {
+//		auto screen = d->skin.screen();
+//		d->screen.setParent(screen);
+//		d->screen.move(0, 0);
+//		d->screen.resize(screen->size());
+//		d->skin.initializePlaceholders();
+//		setCentralWidget(d->skin.widget());
+//		resize(minimumSizeHint());
+//	} else {
+//		setCentralWidget(&d->screen);
+//		adjustSize();
+//	}
 
-	d->screen.installEventFilter(this);
+//	d->screen.installEventFilter(this);
 
 	// hack for bug of XCB in multithreaded-OpenGL
-#ifdef Q_WS_X11
-	auto dlg = getPrefDialog();
-	dlg->show();
-	QTimer::singleShot(1, dlg, SLOT(hide()));
-#endif
+//#ifdef Q_OS_X11
+//	auto dlg = getPrefDialog();
+//	dlg->show();
+//	QTimer::singleShot(1, dlg, SLOT(hide()));
+//#endif
 }
 
 MainWindow::~MainWindow() {
-	d->screen.setParent(nullptr);
+//	d->screen.setParent(nullptr);
 	delete d;
 }
 
@@ -192,7 +403,7 @@ void MainWindow::openFromFileManager(const Mrl &mrl) {
 PrefDialog *MainWindow::getPrefDialog() {
 	static PrefDialog *dlg = nullptr;
 	if (!dlg) {
-		dlg = new PrefDialog(this);
+		dlg = new PrefDialog;
 		connect(dlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
 	}
 	return dlg;
@@ -209,7 +420,9 @@ void MainWindow::setAutoExit(bool enabled) {
 
 void MainWindow::setAutoShutdown(bool enabled) {
 	if (enabled) {
-		if (QMessageBox::warning(this, tr("Auto-shutdown"), tr("The system will shut down when the play list has finished."), QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Cancel) {
+		if (QMessageBox::warning(nullptr, tr("Auto-shutdown")
+				, tr("The system will shut down when the play list has finished.")
+				, QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Cancel) {
 			d->menu("tool")["auto-shutdown"]->setChecked(false);
 			return;
 		}
@@ -227,14 +440,12 @@ void MainWindow::onPlaylistFinished() {
 		app()->shutdown();
 }
 
-void MainWindow::onWindowFilePathChanged(const QString &path) {
-	d->filePath = path;
-	if (isVisible())
-		setWindowFilePath(path);
+void MainWindow::handleWindowFilePathChanged(const QString &path) {//		label->set(ph, text);
 }
 
 void MainWindow::unplug() {
 	::unplug(&d->engine, &d->audio);
+	::unplug(&d->engine, d->video);
 }
 
 void MainWindow::exit() {
@@ -273,7 +484,7 @@ void MainWindow::checkSubtitleMenu() {
 }
 
 void MainWindow::checkVideoMenu() {
-	d->menu("video")("track").setEnabled(d->video.streams().size() > 0);
+	d->menu("video")("track").setEnabled(d->video->streams().size() > 0);
 }
 
 void MainWindow::checkAudioMenu() {
@@ -318,12 +529,12 @@ void MainWindow::setSpu(QAction *act) {
 }
 
 void MainWindow::checkVideoTrackMenu() {
-	checkStreamMenu(d->menu("video")("track"), d->video.streams(), d->video.currentStreamId(), tr("Video %1"));
+	checkStreamMenu(d->menu("video")("track"), d->video->streams(), d->video->currentStreamId(), tr("Video %1"));
 }
 
 void MainWindow::setVideoTrack(QAction *act) {
 	act->setChecked(true);
-	d->video.setCurrentStream(act->data().toInt());
+	d->video->setCurrentStream(act->data().toInt());
 	showMessage(tr("Current Video Track"), act->text());
 }
 
@@ -421,7 +632,7 @@ void MainWindow::openFile() {
 	AppState &as = AppState::get();
 	const QString filter = Info::mediaExtFilter();
 	const QString dir = QFileInfo(as.open_last_file).absolutePath();
-	const QString file = getOpenFileName(this, tr("Open File"), dir, filter);
+	const QString file = getOpenFileName(nullptr, tr("Open File"), dir, filter);
 	if (!file.isEmpty()) {
 		openMrl(Mrl(file));
 		as.open_last_file = file;
@@ -429,7 +640,7 @@ void MainWindow::openFile() {
 }
 
 void MainWindow::openDvd() {
-	OpenDvdDialog dlg(this);
+	OpenDvdDialog dlg;
 	dlg.setDevices(app()->devices());
 	if (dlg.exec()) {
 //		d->engine.setDvdDevice(dlg.device());
@@ -442,42 +653,42 @@ void MainWindow::openDvd() {
 }
 
 void MainWindow::openUrl() {
-	GetUrlDialog dlg(this);
+	GetUrlDialog dlg;
 	if (dlg.exec()) {
 			openMrl(dlg.url().toString(), dlg.encoding());
 	}
 }
 
 bool MainWindow::eventFilter(QObject *o, QEvent *e) {
-	if (o == &d->screen && e->type() == QEvent::Resize) {
-		static QSize prev;
-		QSize size = d->screen.size();
-		if (d->skin.screen()) {
-			auto screen = d->skin.screen();
-			size = isFullScreen() ? d->skin.widget()->size() : screen->size();
-			if (isFullScreen() && d->screenRect.isEmpty()) {
-				d->screenRect = QRect(screen->mapToGlobal(QPoint(0, 0)), screen->size());
-				d->skin.setVisible(false);
-			} else if (!isFullScreen() && !d->screenRect.isEmpty()) {
-				d->screenRect = QRect();
-				d->skin.setVisible(true);
-			}
-		}
-		if (isFullScreen()) {
-			d->video.setFixedRenderSize(size);
-		} else {
-			d->video.setFixedRenderSize(QSize());
-		}
-		if (prev != size) {
-			showMessage(QString::fromUtf8("%1x%2").arg(size.width()).arg(size.height()), 1000);
-			prev = size;
-		}
-	}
-	return QMainWindow::eventFilter(o, e);
+//	if (o == &d->screen && e->type() == QEvent::Resize) {
+//		static QSize prev;
+//		QSize size = d->screen.size();
+////		if (d->skin.screen()) {
+////			auto screen = d->skin.screen();
+////			size = isFullScreen() ? d->skin.widget()->size() : screen->size();
+////			if (isFullScreen() && d->screenRect.isEmpty()) {
+////				d->screenRect = QRect(screen->mapToGlobal(QPoint(0, 0)), screen->size());
+////				d->skin.setVisible(false);
+////			} else if (!isFullScreen() && !d->screenRect.isEmpty()) {
+////				d->screenRect = QRect();
+////				d->skin.setVisible(true);
+////			}
+////		}
+//		if (isFullScreen()) {
+//			d->video.setFixedRenderSize(size);
+//		} else {
+//			d->video.setFixedRenderSize(QSize());
+//		}
+//		if (prev != size) {
+//			showMessage(QString::fromUtf8("%1x%2").arg(size.width()).arg(size.height()), 1000);
+//			prev = size;
+//		}
+//	}
+	return QQuickView::eventFilter(o, e);
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
-	QMainWindow::resizeEvent(event);
+	QQuickView::resizeEvent(event);
 //	d->skin.setVisible(!isFullScreen());
 }
 
@@ -491,19 +702,27 @@ void MainWindow::pause(bool pause) {
 }
 
 void MainWindow::showContextMenu(const QPoint &pos) {
-	d->context->exec(mapToGlobal(pos));
+//	d->context->exec(mapToGlobal(pos));
 }
 
 void MainWindow::updateMrl(const Mrl &mrl) {
-	if (mrl.isLocalFile())
+	QString title;
+	if (mrl.isLocalFile()) {
 		d->subtitle.autoload(mrl, true);
-	else
+		QFileInfo file(mrl.toLocalFile());
+		d->filePath = file.absoluteFilePath();
+		title += file.fileName();
+		if (isVisible())
+			setFilePath(d->filePath);
+	} else
 		clearSubtitles();
+	title += _L(" - ") % Info::name() % " " % Info::version();
+	QWindow::setTitle(title);
 	d->sync_subtitle_file_menu();
 	const int number = d->playlist->model()->currentRow() + 1;
 	if (number > 0) {
-		d->skin.setMediaNumber(number);
-		d->skin.setTotalMediaCount(d->playlist->model()->rowCount());
+//		d->skin.setMediaNumber(number);
+//		d->skin.setTotalMediaCount(d->playlist->model()->rowCount());
 	}
 }
 
@@ -515,13 +734,12 @@ void MainWindow::clearSubtitles() {
 }
 
 void MainWindow::openSubFile() {
-	const QString filter = tr("Subtitle Files") +' '+ Info::subtitleExt().toFilter();
+	const QString filter = tr("Subtitle Files") % ' ' % Info::subtitleExt().toFilter();
 	QString enc = d->p.sub_enc;
 	QString dir;
 	if (d->engine.mrl().isLocalFile())
 		dir = QFileInfo(d->engine.mrl().toLocalFile()).absolutePath();
-	const QStringList files = EncodingFileDialog::getOpenFileNames(this
-			, tr("Open Subtitle"), dir, filter, &enc);
+	const QStringList files = EncodingFileDialog::getOpenFileNames(nullptr, tr("Open Subtitle"), dir, filter, &enc);
 	if (!files.isEmpty())
 		appendSubFiles(files, true, enc);
 }
@@ -543,16 +761,16 @@ void MainWindow::updateSubtitle(QAction *action) {
 }
 
 void MainWindow::maximize() {
-	setGeometry(QDesktopWidget().availableGeometry(this));
+	showMaximized();
 }
 
 void MainWindow::seek(int diff) {
 	if (!diff || d->engine.state() == State::Stopped || !d->engine.isSeekable())
 		return;
-	const int target = qBound(0, d->engine.position() + diff, d->engine.duration());
 	if (d->engine.isSeekable()) {
 		d->engine.relativeSeek(diff);
-		d->timeLine.show(target, d->engine.duration());
+		if (d->timeline)
+			QMetaObject::invokeMethod(d->timeline, "show");
 		showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
 	}
 }
@@ -570,8 +788,11 @@ void MainWindow::showMessage(const QString &cmd, const QString &description, int
 }
 
 void MainWindow::showMessage(const QString &message, int last) {
-	if (!d->dontShowMsg)
-		d->message.show("<p>" % message % "</p>", last);
+	if (!d->dontShowMsg && d->message) {
+		d->message->setProperty("text", message);
+		d->message->setProperty("duration", last);
+		QMetaObject::invokeMethod(d->message, "show");
+	}
 }
 
 void MainWindow::setVolume(int diff) {
@@ -588,7 +809,8 @@ void MainWindow::setMuted(bool muted) {
 }
 
 void MainWindow::setFullScreen(bool full) {
-	if (full == isFullScreen())
+	auto winState = windowState();
+	if (full == (winState == Qt::WindowFullScreen))
 		return;
 	QTime t;
 	t.start();
@@ -596,12 +818,15 @@ void MainWindow::setFullScreen(bool full) {
 	d->moving = false;
 	d->prevPos = QPoint();
 	if (full) {
+		d->prevWinState = winState;
 		app()->setAlwaysOnTop(this, false);
-		setWindowState(windowState() | Qt::WindowFullScreen);
+		setWindowState(Qt::WindowFullScreen);
+		setVisible(true);
 		if (d->p.hide_cursor)
 			d->hider.start(d->p.hide_cursor_delay);
 	} else {
-		setWindowState(windowState() & ~Qt::WindowFullScreen);
+		setWindowState(d->prevWinState);
+		setVisible(true);
 		d->hider.stop();
 		if (cursor().shape() == Qt::BlankCursor)
 			unsetCursor();
@@ -609,7 +834,7 @@ void MainWindow::setFullScreen(bool full) {
 	}
 	d->dontPause = false;
 	emit fullscreenChanged(full);
-	setWindowFilePath(full ? QString() : d->filePath);
+	setFilePath(full ? QString() : d->filePath);
 }
 
 void MainWindow::setVideoSize(double rate) {
@@ -618,14 +843,14 @@ void MainWindow::setVideoSize(double rate) {
 		setFullScreen(!wasFull);
 	} else {
 		// patched by Handrake
-		const QSizeF video = d->video.sizeHint();
-		const QSizeF desktop = QDesktopWidget().availableGeometry(this).size();
+		const QSizeF video = d->video->sizeHint();
+		const QSizeF desktop = screen()->availableVirtualSize();
 		const double target = 0.15;
 		if (isFullScreen())
 			setFullScreen(false);
 		if (rate == 0.0)
 			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
-		const QSize size = this->size() - d->screen.size() + d->video.sizeHint()*qSqrt(rate);
+		const QSize size = (this->size() - d->video->size() + d->video->sizeHint()*qSqrt(rate)).toSize();
 		if (size != this->size()) {
 			resize(size);
 			int dx = 0;
@@ -637,11 +862,10 @@ void MainWindow::setVideoSize(double rate) {
 					dx = width() - size.width();
 			}
 			if (dx && !isFullScreen()) {
-				QPoint p = pos();
-				p.rx() += dx;
-				if (p.x() < 0)
-					p.rx() = 0;
-				move(p);
+				int x = this->x() + dx;
+				if (x < 0)
+					x = 0;
+				setX(x);
 			}
 		}
 	}
@@ -664,7 +888,7 @@ void MainWindow::updateState(State state, State old) {
 		break;
 	}
 	app()->setScreensaverDisabled(d->p.disable_screensaver && state == State::Playing);
-	d->video.setLogoMode(state == State::Stopped);
+//	d->video.setLogoMode(state == State::Stopped);
 	updateStaysOnTop();
 	d->stateChanging = false;
 }
@@ -731,47 +955,53 @@ void MainWindow::moveSubtitle(int dy) {
 	showMessage(tr("Subtitle Position"), newPos, "%");
 }
 
-#define IS_IN_CENTER (d->screen.geometry().contains(d->screen.mapFrom(this, event->pos())))
-#define IS_BUTTON(b) (event->buttons() & (b))
-
 void MainWindow::mousePressEvent(QMouseEvent *event) {
-	QMainWindow::mousePressEvent(event);
-	if (!IS_IN_CENTER)
+	QQuickView::mousePressEvent(event);
+	if (event->isAccepted())
 		return;
-	if (IS_BUTTON(Qt::LeftButton) && !isFullScreen()) {
-		d->moving = true;
-		d->prevPos = event->globalPos();
-	}
-	if (IS_BUTTON(Qt::MidButton)) {
+	bool showContextMenu = false;
+	switch (event->button()) {
+	case Qt::LeftButton:
+		if (!isFullScreen()) {
+			d->moving = true;
+			d->prevPos = event->globalPos();
+		}
+		break;
+	case Qt::MiddleButton:
 		if (QAction *action = d->menu.middleClickAction(event->modifiers()))
 			action->trigger();
+		break;
+	case Qt::RightButton:
+		showContextMenu = true;
+		break;
+	default:
+		break;
 	}
+	if (showContextMenu)
+		d->menu.exec(event->globalPos());
+	else
+		d->menu.hide();
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 	d->hider.stop();
 	if (cursor().shape() == Qt::BlankCursor)
 		unsetCursor();
-	QMainWindow::mouseMoveEvent(event);
+	QQuickView::mouseMoveEvent(event);
 	const bool full = isFullScreen();
 	if (full) {
 		if (d->moving) {
 			d->moving = false;
 			d->prevPos = QPoint();
 		}
-		d->skin.setVisible(!d->screenRect.isEmpty() && !d->screenRect.contains(event->globalPos()));
+//		d->skin.setVisible(!d->screenRect.isEmpty() && !d->screenRect.contains(event->globalPos()));
 		if (d->p.hide_cursor)
 			d->hider.start(d->p.hide_cursor_delay);
 	} else {
 		if (d->moving) {
-			if (event->buttons() != Qt::LeftButton) {
-				d->moving = false;
-				d->prevPos = QPoint();
-			} else {
-				const QPoint pos = event->globalPos();
-				move(this->pos() + pos - d->prevPos);
-				d->prevPos = pos;
-			}
+			const QPoint pos = event->globalPos();
+			setPosition(this->position() + pos - d->prevPos);
+			d->prevPos = pos;
 		}
 	}
 }
@@ -781,26 +1011,26 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
 		d->moving = false;
 		d->prevPos = QPoint();
 	}
-	QMainWindow::mouseReleaseEvent(event);
+	QQuickView::mouseReleaseEvent(event);
 }
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
-	QMainWindow::mouseDoubleClickEvent(event);
-	if (IS_BUTTON(Qt::LeftButton) && IS_IN_CENTER) {
+	QQuickView::mouseDoubleClickEvent(event);
+	if (!event->isAccepted() && event->button() == Qt::LeftButton) {
 		if (QAction *action = d->menu.doubleClickAction(event->modifiers()))
 			action->trigger();
 	}
 }
 
 void MainWindow::wheelEvent(QWheelEvent *event) {
-	if (IS_IN_CENTER && event->delta()) {
+	QQuickView::wheelEvent(event);
+	if (!event->isAccepted() && event->delta()) {
 		if (QAction *action = d->menu.wheelScrollAction(event->modifiers(), event->delta() > 0)) {
 			action->trigger();
 			event->accept();
-			return;
 		}
 	}
-	QMainWindow::wheelEvent(event);
+
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
@@ -867,33 +1097,33 @@ void MainWindow::applyPref() {
 		break;
 	}
 	d->apply_pref();
-	if (d->skin.name() != d->p.skin_name) {
-		d->screen.setParent(0);
-		if (d->skin.load(d->p.skin_name)) {
-			auto screen = d->skin.screen();
-			d->screen.setParent(screen);
-			d->screen.move(0, 0);
-			d->screen.resize(screen->size());
-			d->skin.initializePlaceholders();
-			setCentralWidget(d->skin.widget());
-		} else
-			setCentralWidget(&d->screen);
-	}
+//	if (d->skin.name() != d->p.skin_name) {
+//		d->screen.setParent(0);
+//		if (d->skin.load(d->p.skin_name)) {
+//			auto screen = d->skin.screen();
+//			d->screen.setParent(screen);
+//			d->screen.move(0, 0);
+//			d->screen.resize(screen->size());
+//			d->skin.initializePlaceholders();
+//			setCentralWidget(d->skin.widget());
+//		} else
+//			setCentralWidget(&d->screen);
+//	}
 	if (time >= 0)
 		d->engine.play(time);
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
-	QMainWindow::showEvent(event);
+	QQuickView::showEvent(event);
 	if (d->pausedByHiding && d->engine.isPaused()) {
 		d->engine.play();
 		d->pausedByHiding = false;
 	}
-	setWindowFilePath(d->filePath);
+	setFilePath(d->filePath);
 }
 
 void MainWindow::hideEvent(QHideEvent *event) {
-	QMainWindow::hideEvent(event);
+	QQuickView::hideEvent(event);
 	if (!d->p.pause_minimized || d->dontPause)
 		return;
 	if (!d->engine.isPlaying() || (d->p.pause_video_only && !d->engine.hasVideo()))
@@ -911,13 +1141,13 @@ void MainWindow::handleTray(QSystemTrayIcon::ActivationReason reason) {
 	if (reason == QSystemTrayIcon::Trigger)
 		setVisible(!isVisible());
 	else if (reason == QSystemTrayIcon::Context)
-		d->context->exec(QCursor::pos());
+		d->contextMenu.exec(QCursor::pos());
 }
 
 
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	if (d->p.enable_system_tray && d->p.hide_rather_close) {
 		hide();
 		AppState &as = AppState::get();
@@ -961,12 +1191,12 @@ void MainWindow::setColorProperty(QAction *action) {
 	const QList<QVariant> data = action->data().toList();
 	const ColorProperty::Value prop = ColorProperty::Value(data[0].toInt());
 	if ((int)prop == -1) {
-		d->video.setColorProperty(ColorProperty());
+		d->video->setColor(ColorProperty());
 		showMessage(tr("Reset brightness, contrast, saturation and hue"));
 	} else {
-		ColorProperty color = d->video.colorProperty();
+		ColorProperty color = d->video->color();
 		color.setValue(prop, color.value(prop) + data[1].toInt()*0.01);
-		d->video.setColorProperty(color);
+		d->video->setColor(color);
 		QString cmd;
 		switch(prop) {
 		case ColorProperty::Brightness:
@@ -984,7 +1214,7 @@ void MainWindow::setColorProperty(QAction *action) {
 		default:
 			return;
 		}
-		const double v = d->video.colorProperty()[prop]*100.0;
+		const double v = d->video->color()[prop]*100.0;
 		const int value = v + (v < 0 ? -0.5 : 0.5);
 		showMessage(cmd, value, "%", true);
 	}
@@ -1005,18 +1235,18 @@ void MainWindow::updateStaysOnTop() {
 }
 
 void MainWindow::takeSnapshot() {
-	static SnapshotDialog *dlg = new SnapshotDialog(this);
-	dlg->setVideoRenderer(&d->video);
-	dlg->setSubtitleRenderer(&d->subtitle);
-	dlg->take();
-	if (!dlg->isVisible()) {
-		dlg->adjustSize();
-		dlg->show();
-	}
+//	static SnapshotDialog *dlg = new SnapshotDialog(this);
+//	dlg->setVideoRenderer(d->video);
+//	dlg->setSubtitleRenderer(&d->subtitle);
+//	dlg->take();
+//	if (!dlg->isVisible()) {
+//		dlg->adjustSize();
+//		dlg->show();
+//	}
 }
 
 void MainWindow::about() {
-	AboutDialog dlg(this);
+	AboutDialog dlg;
 	dlg.exec();
 }
 
@@ -1024,12 +1254,12 @@ void MainWindow::setEffect(QAction *act) {
 	if (!act)
 		return;
 	const QList<QAction*> acts = d->menu("video")("filter").actions();
-	VideoRenderer::Effects effects = 0;
+	VideoRendererItem::Effects effects = 0;
 	for (int i=0; i<acts.size(); ++i) {
 		if (acts[i]->isChecked())
-			effects |= static_cast<VideoRenderer::Effect>(acts[i]->data().toInt());
+			effects |= static_cast<VideoRendererItem::Effect>(acts[i]->data().toInt());
 	}
-	d->video.setEffects(effects);
+	d->video->setEffects(effects);
 }
 
 void MainWindow::setSubtitleAlign(int data) {
@@ -1037,7 +1267,7 @@ void MainWindow::setSubtitleAlign(int data) {
 }
 
 void MainWindow::setSubtitleDisplay(int data) {
-	d->subtitle.osd().setLetterboxHint(data);
+//	d->subtitle.osd().setLetterboxHint(data);
 }
 
 void MainWindow::seekToSubtitle(int key) {
@@ -1053,7 +1283,7 @@ void MainWindow::seekToSubtitle(int key) {
 }
 
 void MainWindow::moveScreen(QAction *action) {
-	QPoint offset = d->video.offset();
+	QPoint offset = d->video->offset();
 	const Qt::ArrowType move = (Qt::ArrowType)action->data().toInt();
 	if (move == Qt::UpArrow)
 		offset.ry() -= 1;
@@ -1065,7 +1295,7 @@ void MainWindow::moveScreen(QAction *action) {
 		offset.rx() += 1;
 	else
 		offset = QPoint(0, 0);
-	d->video.setOffset(offset);
+	d->video->setOffset(offset);
 }
 
 void MainWindow::alignScreen(QAction */*action*/) {
@@ -1074,10 +1304,29 @@ void MainWindow::alignScreen(QAction */*action*/) {
 		if (action->isChecked())
 			key |= action->data().toInt();
 	}
-	d->video.setAlignment(key);
+	d->video->setAlignment(key);
 }
 
 void MainWindow::setFrameDroppingEnabled(bool enabled) {
 	d->engine.setFrameDroppingEnabled(enabled);
 	showMessage(tr("Drop Frame"), enabled);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event) {
+	QQuickView::keyPressEvent(event);
+	if (event->isAccepted())
+		return;
+	constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
+	auto action = RootMenu::get().action(QKeySequence(event->key() + (event->modifiers() & modMask)));
+	if (action) {
+		if (action->isCheckable())
+			action->toggle();
+		else
+			action->trigger();
+	}
+}
+
+bool MainWindow::nativeEvent(const QByteArray &eventType, void *message, long *result) {
+	qDebug() << eventType;
+	return QQuickView::nativeEvent(eventType, message, result);
 }

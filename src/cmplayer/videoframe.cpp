@@ -2,11 +2,35 @@
 #include <stdlib.h>
 extern "C" {
 #include <libmpcodecs/img_format.h>
+#include <mp_image.h>
+}
+
+extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
+
+
+
+void VideoFormat::setStride(int s) {
+	if (stride != s) {
+		stride = s;
+		switch (type) {
+		case VideoFormat::YUY2:
+		case VideoFormat::UYVY:
+			fullWidth = stride >> 1;
+			break;
+		case VideoFormat::RGBA:
+		case VideoFormat::BGRA:
+			fullWidth = stride >> 2;
+			break;
+		default:
+			fullWidth = stride;
+			break;
+		}
+	}
 }
 
 VideoFormat VideoFormat::fromType(Type type, int width, int height) {
 	VideoFormat format;
-	format.width = width;
+	format.stride = format.fullWidth = format.width = width;
 	format.height = height;
 	format.planes = 1;
 	format.type = type;
@@ -14,28 +38,25 @@ VideoFormat VideoFormat::fromType(Type type, int width, int height) {
 	case YV12:
 	case I420:
 		format.planes = 3;
+		format.bpp = 12;
 		break;
 	case NV12:
 	case NV21:
 		format.planes = 2;
+		format.bpp = 12;
 		break;
 	case YUY2:
 	case UYVY:
 		format.bpp = 16;
+		format.stride = width << 1;
 		break;
 	case RGBA:
 	case BGRA:
 		format.bpp = 32;
+		format.stride = width << 2;
 		break;
 	default:
 		return VideoFormat();
-	}
-	format.width_stride = ((width >> 5) + 1) << 5;
-	if (format.planes > 1) {
-		format.bpp = 12;
-		format.stride = format.width_stride;
-	} else {
-		format.stride = format.width_stride * (format.bpp >> 3);
 	}
 	return format;
 }
@@ -82,14 +103,14 @@ QString _fToDescription(VideoFormat::Type type) {
 
 
 QImage VideoFrame::toImage() const {
-	QImage img(format.width, format.height, QImage::Format_RGB888);
-	const int dy = format.stride;
+	QImage img(d->format.width, d->format.height, QImage::Format_RGB888);
+	const int dy = d->format.stride;
 	const int dy2 = dy << 1;
 	const int dr = img.bytesPerLine();
-	const int duv = format.stride/2;
-	const uchar *y0 = y();
-	const uchar *u0 = u();
-	const uchar *v0 = v();
+	const int duv = d->format.stride/2;
+	const uchar *y0 = data(0);
+	const uchar *u0 = data(1);
+	const uchar *v0 = data(2);
 	uchar *r1 = img.bits();
 
 	auto setRgbFromYuv = [](uchar *&r, int y, int u, int v) -> void {

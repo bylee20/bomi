@@ -3,45 +3,67 @@
 
 #include "stdafx.hpp"
 #include "avmisc.hpp"
+extern "C" {
+#include <mp_image.h>
+}
+
+struct mp_image;
 
 class VideoFrame {
 	VideoFrame(const VideoFrame&);
 	VideoFrame &operator=(const VideoFrame&);
 public:
-	VideoFrame() {}
-	VideoFormat format;
-//	int size() const {return m_data.size();}
-//	uchar *data() {return reinterpret_cast<uchar *>(m_data.data());}
-//	uchar *y(int x, int y) {return m_data[0].data() + y*format.stride + x;}
-//	const uchar *data() const {return reinterpret_cast<const uchar *>(m_data.data());}
-//	void check() {m_data.resize(getLength());}
-//	void alloc(int *length) {
-//		m_data[0].resize(length[0]);
-//		m_data[1].resize(length[1]);
-//		m_data[2].resize(length[2]);
-//	}
-
+	VideoFrame(): d(new Data) {}
+	bool copy(mp_image *mpi) {
+		bool ret = false;
+		if (d->format.stride != mpi->stride[0]) {
+			d->format.setStride(mpi->stride[0]);
+			ret = true;
+		}
+		d->copy(0, mpi);d->copy(1, mpi);d->copy(2, mpi);d->copy(3, mpi);
+		return ret;
+	}
+	void setFormat(const VideoFormat &format) {d->format = format;}
+	const VideoFormat &format() const {return d->format;}
+	VideoFormat &rformat() {return d->format;}
 	QImage toImage() const;
-//	uchar *y() {return reinterpret_cast<uchar*>(m_data[0].data());}
-//	const uchar *y() const {return reinterpret_cast<const uchar*>(m_data[0].data());}
-//	uchar *u() {return reinterpret_cast<uchar*>(m_data[1].data());}
-//	const uchar *u() const {return reinterpret_cast<const uchar*>(m_data[1].data());}
-//	uchar *v() {return reinterpret_cast<uchar*>(m_data[2].data());}
-//	const uchar *v() const {return reinterpret_cast<const uchar*>(m_data[2].data());}
-	uchar *y() {return data[0];}
-	const uchar *y() const {return data[0];}
-	uchar *u() {return data[1];}
-	const uchar *u() const {return data[1];}
-	uchar *v() {return data[2];}
-	const uchar *v() const {return data[2];}
-
-	uchar *data[4];
-	int size() const {return format.stride*format.height*3/2;}
-//	int size(int i) const {return m_data[i].size();}
+	int stride(int i) const {return d->stride[i];}
+	uchar *data(int i) {return reinterpret_cast<uchar*>(d->data[i].data());}
+	const uchar *data(int i) const {return reinterpret_cast<const uchar*>(d->data[i].data());}
+	inline void swap(VideoFrame &other) {d.swap(other.d);}
 private:
-//	QByteArray m_data;
-//	QVector<QByteArray> m_data = {4, QByteArray()};
-//	uchar *data[4];
+	struct Data : public QSharedData {
+		Data() {}
+		Data(const Data &other): QSharedData(other) {
+			data[0] = other.data[0];
+			data[1] = other.data[1];
+			data[2] = other.data[2];
+			data[3] = other.data[3];
+			stride[0] = other.stride[0];
+			stride[1] = other.stride[1];
+			stride[2] = other.stride[2];
+			stride[3] = other.stride[3];
+		}
+		void copy(int idx, mp_image *mpi) {
+			stride[idx] = mpi->stride[idx];
+			data[idx].resize(stride[idx]*mpi->height);
+			fast_memcpy(data[idx].data(), mpi->planes[idx], data[idx].size());
+		}
+		VideoFormat format;
+		QByteArray data[4];
+		int stride[4];
+	};
+
+	QSharedDataPointer<Data> d;
+//	struct Plane {
+//		void copy(const uchar *data, int stride, int height) {
+//			this->data.resize(stride*height);
+//			this->stride = stride;
+//			fast_memcpy(this->data.data(), data, this->data.size());
+//		}
+//		QByteArray data; int stride;
+//	};
+//	QVector<Plane> m_planes = {4, Plane()};
 };
 
 //class VideoFrame {

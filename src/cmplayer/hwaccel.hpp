@@ -4,7 +4,7 @@
 #include "stdafx.hpp"
 
 extern "C" {
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 #include <libavcodec/vaapi.h>
 #include <va/va_glx.h>
 #endif
@@ -14,10 +14,10 @@ extern "C" {
 #ifdef None
 #undef None
 #endif
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 int is_hwaccel_available(AVCodecContext*);
 #endif
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 int is_hwaccel_available(const char *);
 #endif
 }
@@ -32,7 +32,7 @@ public:
 	AVCodecContext *avctx() const {return m_avctx;}
 	QList<AVCodecID> fullCodecList() const;
 	bool supports(AVCodecID codec) const;
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	VADisplay display() const {return m_display;}
 	VAProfile find(CodecID codec, int &surfaceCount) const;
 	static const PixelFormat PixFmt = PIX_FMT_VAAPI_VLD;
@@ -42,7 +42,7 @@ public:
 private:
 	HwAccelInfo();
 	static HwAccelInfo *obj;
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	VAProfile findMatchedProfile(const QVector<VAProfile> &needs) const;
 	VADisplay m_display = 0;
 	QVector<VAProfile> m_profiles;
@@ -50,10 +50,10 @@ private:
 	mutable AVCodecContext *m_avctx = nullptr;
 	bool m_ok = false;
 	friend int main(int, char**);
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	friend int is_hwaccel_available(AVCodecContext *avctx);
 #endif
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	friend int is_hwaccel_available(const char *dll, AVCodecID codec);
 #endif
 };
@@ -61,7 +61,7 @@ private:
 class HwAccel {
 public:
 	struct Context {
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 		vaapi_context ctx;
 #endif
 		HwAccel *hwaccel;
@@ -71,7 +71,7 @@ public:
 	void *context() {return &m_ctx;}
 	bool isUsable() const {return m_usable;}
 	bool isCompatibleWith(const AVCodecContext *avctx) const;
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	bool createSurface(GLuint *texture);
 	bool setBuffer(mp_image_t *mpi);
 	void releaseBuffer(void *data);
@@ -83,7 +83,7 @@ private:
 	AVCodecContext *m_avctx = nullptr;
 	int m_width = 0, m_height = 0;
 	bool m_usable = false;
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	GLuint *m_textures = nullptr;
 	QVector<VASurfaceID> m_ids;
 	QLinkedList<VASurfaceID> m_freeIds;

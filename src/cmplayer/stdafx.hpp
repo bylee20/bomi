@@ -5,16 +5,32 @@
 
 #include <QtCore>
 #include <QtGui>
+#include <QtWidgets>
+#include <QtQuick>
 #include <QtOpenGL>
 #include <set>
 #include <qmath.h>
 
+#ifdef Q_WS_MAC
+#define Q_OS_MAC
+#endif
+#ifdef Q_WS_X11
+#define Q_OS_X11
+#endif
+
+extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
+
 namespace Pch {
 static inline QLatin1String _L(const char *str) {return QLatin1String(str);}
 static inline QLatin1Char _L(char c) {return QLatin1Char(c);}
-static inline QString _u(const char *utf8) {return QString::fromUtf8(utf8);}
+static inline QString _u(const char *utf8, int len = -1) {return QString::fromUtf8(utf8, len);}
+static inline QString _n(int n, int base = 10, int width = 0, const QChar &c = _L(' ')) {return QString("%1").arg(n, width, base, c);}
+static inline QString _n(quint32 n, int base = 10) {return QString::number(n, base);}
+static inline QString _n(quint64 n, int base = 10) {return QString::number(n, base);}
+static inline QString _n(double n, int dec = 1) {return QString::number(n, 'f', dec);}
+static inline QString _n(double n, int dec, int width, const QChar &c = QChar(QChar::Nbsp)) {return QString("%1").arg(n, width, 'f', dec, c);}
 template<typename T> static inline const T& _c(T& t) {return t;}
-static const QTime __null_time;
+static const QTime __null_time(0, 0, 0, 0);
 static inline QTime secToTime(int sec) {return __null_time.addSecs(sec);}
 static inline QTime msecToTime(qint64 ms) {return __null_time.addMSecs(ms);}
 static inline QString msecToString(qint64 ms, const QString &fmt = _L("hh:mm:ss")) {return msecToTime(ms).toString(fmt);}

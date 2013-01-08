@@ -64,10 +64,11 @@ bool Playlist::load(QFile *file, const QString &enc, Type type) {
 bool Playlist::load(const Mrl &mrl, const QString &enc, Type type) {
 	if (mrl.isLocalFile())
 		return load(mrl.toLocalFile(), enc, type);
-	QTemporaryFile file(QDir::tempPath() + "/cmplayer_temp_XXXXXX_" + mrl.fileName());
-	if (!file.open() || !Downloader::get(mrl.toString(), &file, 30000))
-		return false;
-	return load(&file, enc, type);
+	return false;
+//	QTemporaryFile file(QDir::tempPath() + "/cmplayer_temp_XXXXXX_" + mrl.fileName());
+//	if (!file.open() || !Downloader::get(mrl.toString(), &file, 30000))
+//		return false;
+//	return load(&file, enc, type);
 }
 
 Playlist::Type Playlist::getType(const QString &fileName) {

@@ -1,4 +1,5 @@
 #include "menu.hpp"
+#include "rootmenu.hpp"
 #include "record.hpp"
 
 template<typename T>
@@ -19,7 +20,7 @@ QList<T> fromStringList(const QStringList &list) {
 	return ret;
 }
 
-Menu::Menu(const QString &id, Menu *parent)
+Menu::Menu(const QString &id, QWidget *parent)
 : QMenu(parent), m_id(id) {
 	addGroup("");
 }

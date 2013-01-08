@@ -7,7 +7,7 @@
 #include "global.hpp"
 
 class QString;			class QVariant;
-class VideoRenderer;
+class VideoRendererItem;
 class AudioController;	struct MPContext;
 class VideoFormat;		struct mp_cmd;
 
@@ -40,7 +40,7 @@ public:
 	PlayEngine(const PlayEngine&) = delete;
 	PlayEngine &operator = (const PlayEngine &) = delete;
 	struct Cmd {
-		enum Type {Unknown = 0, Quit = 1, Load = 2, Stop = 4, VideoUpdate = 8, Volume = 16, Break = Quit | Load | Stop};
+		enum Type {Unknown = 0, Quit = 1, Load = 2, Stop = 4, Volume = 16, Break = Quit | Load | Stop};
 		Cmd() {}
 		Cmd(Type type): type(type) {}
 		Cmd(Type type, const QVariant &var): type(type), var(var) {}
@@ -53,8 +53,6 @@ public:
 	void tellmp(const QString &cmd, const QVariant &arg1, const QVariant &arg2);
 	void tellmp(const QString &cmd, const QVariant &arg1, const QVariant &arg2, const QVariant &arg3);
 	void tellmp(const QString &cmd, const QStringList &args);
-
-	VideoRenderer &renderer() const;
 
 	MPContext *context() const;
 	int position() const;
@@ -121,7 +119,6 @@ private:
 	struct Context;
 	static int runCmd(MPContext *mpctx, mp_cmd *mpcmd);
 	static void onPausedChanged(MPContext *mpctx);
-	static int updateVideo(struct MPContext *mpctx);
 	static mp_cmd *waitCmd(MPContext *mpctx, int timeout, int peek);
 	int processCmds();
 	int idle();
@@ -129,6 +126,8 @@ private:
 //	Cmd *dequeue(int time = -1);
 	friend void plug(PlayEngine *engine, AudioController *audio);
 	friend void unplug(PlayEngine *engine, AudioController *audio);
+	friend void plug(PlayEngine *engine, VideoRendererItem *video);
+	friend void unplug(PlayEngine *engine, VideoRendererItem *video);
 //	void load();
 //	int getStartTime() const;
 	PlayEngine();
@@ -141,6 +140,8 @@ private:
 	friend int main(int argc, char **argv);
 	Data *d;
 	AudioController *m_audio = nullptr;
+	VideoRendererItem *m_video = nullptr;
+	friend class VideoOutput;
 };
 
 #endif // PLAYENGINE_HPP

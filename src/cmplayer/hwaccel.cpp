@@ -1,11 +1,11 @@
 #include "videoframe.hpp"
 #include "pref.hpp"
 #include "hwaccel.hpp"
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 #include <QtGui/QX11Info>
 #endif
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 extern "C" int is_hwaccel_available(const char *name) {
 	if (!Pref::get().enable_hwaccel)
 		return false;
@@ -19,7 +19,7 @@ extern "C" int is_hwaccel_available(const char *name) {
 }
 #endif
 
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 extern "C" int is_hwaccel_available(AVCodecContext *avctx) {
 	if (!Pref::get().enable_hwaccel || !Pref::get().hwaccel_codecs.contains(avctx->codec_id))
 		return false;
@@ -52,7 +52,7 @@ extern "C" int register_hwaccel_callbacks(AVCodecContext *avctx) {
 HwAccelInfo *HwAccelInfo::obj = nullptr;
 
 HwAccelInfo::HwAccelInfo() {
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	if (!(m_display = vaGetDisplayGLX(QX11Info::display())))
 		return;
 	int major, minor;
@@ -68,7 +68,7 @@ HwAccelInfo::HwAccelInfo() {
 }
 
 HwAccelInfo::~HwAccelInfo() {
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	if (m_display)
 		vaTerminate(m_display);
 #endif
@@ -85,16 +85,16 @@ QList<AVCodecID> HwAccelInfo::fullCodecList() const {
 }
 
 bool HwAccelInfo::supports(AVCodecID codec) const {
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	return codec == AV_CODEC_ID_H264;
 #endif
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	int count = 0;
 	return find(codec, count) != NoProfile;
 #endif
 }
 
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 VAProfile HwAccelInfo::find(CodecID codec, int &surfaceCount) const {
 	static const QVector<VAProfile> mpeg2s = {VAProfileMPEG2Main, VAProfileMPEG2Simple};
 	static const QVector<VAProfile> mpeg4s = {VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple};
@@ -145,7 +145,7 @@ HwAccel::HwAccel(AVCodecContext *avctx) {
 	const auto &info = HwAccelInfo::get();
 	if (!info.isAvailable())
 		return;
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	memset(&m_ctx.ctx, 0, sizeof(m_ctx.ctx));
 	m_width = avctx->width;
 	m_height = avctx->height;
@@ -184,7 +184,7 @@ HwAccel::~HwAccel() {
 	const auto &info = HwAccelInfo::get();
 	if (!info.isAvailable())
 		return;
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	if (m_ctx.ctx.display) {
 		if (m_glSurface)
 			vaDestroySurfaceGLX(m_ctx.ctx.display, &m_glSurface);
@@ -201,10 +201,10 @@ HwAccel::~HwAccel() {
 }
 
 VideoFormat HwAccel::format() const {
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	return VideoFormat::fromType(VideoFormat::YV12, m_width, m_height);
 #endif
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	auto format = VideoFormat::fromType(VideoFormat::BGRA, m_width, m_height);
 	format.width_stride = format.stride = m_width;
 	return format;
@@ -214,17 +214,17 @@ VideoFormat HwAccel::format() const {
 bool HwAccel::isCompatibleWith(const AVCodecContext *avctx) const {
 	if (!m_usable || m_width != avctx->width || m_height != avctx->height)
 		return false;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	return false;
 #endif
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 	int count = 0;
 	auto profile = HwAccelInfo::get().find(avctx->codec->id, count);
 	return profile != HwAccelInfo::NoProfile && profile == m_profile && m_ids.size() == count;
 #endif
 }
 
-#ifdef Q_WS_X11
+#ifdef Q_OS_X11
 bool HwAccel::createSurface(GLuint *textures) {
 	m_textures = textures;
 	glBindTexture(GL_TEXTURE_2D, m_textures[0]);

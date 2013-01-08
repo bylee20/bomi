@@ -22,10 +22,9 @@
  *
  */
 
-#include <QtGui/QWidget>
-#include <QtCore/QEvent>
+#include "stdafx.hpp"
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 
 class AppMac: public QObject {
 	Q_OBJECT

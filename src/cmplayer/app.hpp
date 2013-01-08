@@ -21,16 +21,16 @@ public:
 	QString styleName() const;
 	bool isUnique() const;
 	QStringList availableStyleNames() const;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	QMenuBar *globalMenuBar() const;
 #endif
 	void setStyleName(const QString &name);
-	void setAlwaysOnTop(QWidget *widget, bool onTop);
+	void setAlwaysOnTop(QWindow *window, bool onTop);
 	void setScreensaverDisabled(bool disabled);
 	void setUnique(bool unique);
 	bool shutdown();
 public slots:
-	void xSync() {syncX();}
+//	void xSync() {syncX();}
 private slots:
 	void open(const QString &url);
 	void onMessageReceived(const QString &message);

@@ -1,6 +1,7 @@
 TEMPLATE = app
-CONFIG += link_pkgconfig debug_and_release uitools precompile_header
-QT = core gui opengl network
+CONFIG += link_pkgconfig debug_and_release precompile_header
+QT = core gui opengl network uitools
+QT += quick widgets
 
 LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
     -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio -lquvi
@@ -28,7 +29,7 @@ macx {
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
-    LIBS +=  ../../build/lib/libcmplayer_skin.a ../../build/lib/libavcodec.a \
+    LIBS +=  ../../build/lib/libavcodec.a \
 	../../build/lib/libavformat.a ../../build/lib/libavutil.a ../../build/lib/libavresample.a \
 	../../build/lib/libswscale.a ../../build/lib/libcmplayer_mplayer2.a \
         ../../build/lib/libchardet.a ../../build/lib/libcmplayer_sigar.a \
@@ -36,6 +37,7 @@ macx {
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
         -framework IOKit -framework Carbon
+#    LIBS += ../../build/lib/libcmplayer_skin.a
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += /opt/local/include /usr/local/include
@@ -82,7 +84,6 @@ HEADERS += playengine.hpp \
     subtitle_parser.hpp \
     subtitlerenderer.hpp \
     textosdrenderer.hpp \
-    timelineosdrenderer.hpp \
     audiocontroller.hpp \
     info.hpp \
     charsetdetector.hpp \
@@ -125,10 +126,12 @@ HEADERS += playengine.hpp \
     richtextblock.hpp \
     richtextdocument.hpp \
     mpmessage.hpp \
-	skin.hpp \
     hwaccel.hpp \
-    videoshader.hpp \
-    stdafx.hpp
+    stdafx.hpp \
+    videorendereritem.hpp \
+    playinfoitem.hpp \
+    texturerendereritem.hpp \
+    subtitlerendereritem.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -150,7 +153,6 @@ SOURCES += main.cpp \
     subtitle_parser.cpp \
     subtitlerenderer.cpp \
     textosdrenderer.cpp \
-    timelineosdrenderer.cpp \
     audiocontroller.cpp \
     info.cpp \
     charsetdetector.cpp \
@@ -191,11 +193,16 @@ SOURCES += main.cpp \
     richtextblock.cpp \
     richtextdocument.cpp \
     mpmessage.cpp \
-    skin.cpp \
-	mplayer-vd_ffmpeg.c \
+    mplayer-vd_ffmpeg.c \
     hwaccel.cpp \
-    videoshader.cpp \
-    playengine.cpp
+    playengine.cpp \
+    videorendereritem.cpp \
+    playinfoitem.cpp \
+    texturerendereritem.cpp \
+    subtitlerendereritem.cpp
+
+HEADERS += skin.hpp
+SOURCES += skin.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -206,4 +213,11 @@ FORMS += \
     ui/opendvddialog.ui \
     ui/snapshotdialog.ui \
     ui/prefdialog.ui
+
+OTHER_FILES += \
+    test.qml \
+    qml/TextOsd.qml \
+    qml/Osd.qml \
+    qml/ProgressOsd.qml \
+    qml/PlayInfoOsd.qml
 

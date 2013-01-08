@@ -24,6 +24,7 @@ public:
 	}
 	static inline RootMenu &get() {return *obj;}
 	QAction *action(const QString &id) const;
+	QAction *action(const QKeySequence &shortcut) const {return m_keymap.value(shortcut);}
 	QAction *doubleClickAction(Qt::KeyboardModifiers mod) const;
 	QAction *middleClickAction(Qt::KeyboardModifiers mod) const;
 	QAction *wheelScrollAction(Qt::KeyboardModifiers mod, bool up) const;
@@ -54,9 +55,12 @@ private:
 		setActionAttr(menu[key + "+"], QList<QVariant>() << prop << step, text, step);
 		setActionAttr(menu[key + "-"], QList<QVariant>() << prop << -step, text, -step);
 	}
+	void resetKeyMap() {m_keymap.clear(); fillKeyMap(this);}
+	void fillKeyMap(Menu *menu);
 	static RootMenu *obj;
 	ClickActionMap m_click;
 	WheelActionMap m_wheel;
+	QMap<QKeySequence, QAction*> m_keymap;
 	friend int main(int, char**);
 };
 

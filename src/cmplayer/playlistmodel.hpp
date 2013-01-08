@@ -17,7 +17,7 @@ public:
 	QModelIndex parent(const QModelIndex &index) const;
 	int rowCount(const QModelIndex &parent = QModelIndex()) const;
 	int columnCount(const QModelIndex &parent = QModelIndex()) const;
-	void setPlaylist(const Playlist &list) {m_list = list; m_current = -1; reset();}
+	void setPlaylist(const Playlist &list) {beginResetModel(); m_list = list; m_current = -1; endResetModel();}
 	const Playlist &playlist() const {return m_list;}
 	void append(const Mrl &mrl);
 	void append(const Playlist &list);
@@ -34,7 +34,7 @@ public:
 	Mrl current() const {return m_list.value(m_current);}
 	void merge(const Playlist &playlist);
 public slots:
-	void clear() {m_list.clear(); m_current = -1; reset();}
+	void clear() {beginResetModel(); m_list.clear(); m_current = -1; endResetModel();}
 signals:
 	void currentRowChanged(int row);
 	void rowCountChanged(int count);

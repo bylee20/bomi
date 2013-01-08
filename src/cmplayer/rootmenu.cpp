@@ -1,5 +1,5 @@
 #include "rootmenu.hpp"
-#include "videorenderer.hpp"
+#include "videorendereritem.hpp"
 #include "enums.hpp"
 #include "pref.hpp"
 #include "colorproperty.hpp"
@@ -8,6 +8,8 @@
 RootMenu *RootMenu::obj = nullptr;
 
 RootMenu::RootMenu(): Menu(_L("menu"), 0) {
+	setTitle("Root Menu");
+
 	Menu *open = this->addMenu(_L("open"));
 
 	QAction *file = open->addAction(_L("file"));
@@ -177,18 +179,18 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 
 	Menu *effect = video->addMenu(_L("filter"));
 	effect->g()->setExclusive(false);
-	effect->addActionToGroup(_L("flip-v"), true)->setData((int)VideoRenderer::FlipVertically);
-	effect->addActionToGroup(_L("flip-h"), true)->setData((int)VideoRenderer::FlipHorizontally);
+	effect->addActionToGroup(_L("flip-v"), true)->setData((int)VideoRendererItem::FlipVertically);
+	effect->addActionToGroup(_L("flip-h"), true)->setData((int)VideoRendererItem::FlipHorizontally);
 	effect->addSeparator();
-	effect->addActionToGroup(_L("blur"), true)->setData((int)VideoRenderer::Blur);
-	effect->addActionToGroup(_L("sharpen"), true)->setData((int)VideoRenderer::Sharpen);
+	effect->addActionToGroup(_L("blur"), true)->setData((int)VideoRendererItem::Blur);
+	effect->addActionToGroup(_L("sharpen"), true)->setData((int)VideoRendererItem::Sharpen);
 	effect->addSeparator();
-	effect->addActionToGroup(_L("remap"), true)->setData((int)VideoRenderer::RemapLuma);
+	effect->addActionToGroup(_L("remap"), true)->setData((int)VideoRendererItem::RemapLuma);
 	effect->addSeparator();
-	effect->addActionToGroup(_L("gray"), true)->setData((int)VideoRenderer::Grayscale);
-	effect->addActionToGroup(_L("invert"), true)->setData((int)VideoRenderer::InvertColor);
+	effect->addActionToGroup(_L("gray"), true)->setData((int)VideoRendererItem::Grayscale);
+	effect->addActionToGroup(_L("invert"), true)->setData((int)VideoRendererItem::InvertColor);
 	effect->addSeparator();
-	effect->addActionToGroup(_L("ignore"), true)->setData((int)VideoRenderer::IgnoreEffect);
+	effect->addActionToGroup(_L("ignore"), true)->setData((int)VideoRendererItem::IgnoreEffect);
 
 	Menu *color = video->addMenu(_L("color"));
 	QAction *creset = color->addActionToGroup(_L("reset"), false);
@@ -276,7 +278,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	about->setMenuRole(QAction::AboutQtRole);
 
 	QAction *exit = this->addAction(_L("exit"));
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	exit->setShortcut(Qt::ALT + Qt::Key_F4);
 #else
 	exit->setShortcut(Qt::CTRL + Qt::Key_Q);
@@ -465,14 +467,27 @@ void RootMenu::update() {
 	root["exit"]->setText(tr("Exit"));
 }
 
+void RootMenu::fillKeyMap(Menu *menu) {
+	for (QAction *action : menu->actions()) {
+		if (action->menu())
+			fillKeyMap(static_cast<Menu*>(action->menu()));
+		else {
+			for (auto key : action->shortcuts())
+				m_keymap[key] = action;
+		}
+	}
+}
+
 void RootMenu::save() {
 	Record r;
 	Menu::save(r);
+	resetKeyMap();
 }
 
 void RootMenu::load() {
 	Record r;
 	Menu::load(r);
+	resetKeyMap();
 }
 
 QAction *RootMenu::action(const QString &id) const {

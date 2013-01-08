@@ -5,13 +5,7 @@
 #include "playlist.hpp"
 #include "dialogs.hpp"
 #include "pref.hpp"
-#include <QtCore/QDebug>
-#include <QtCore/QDir>
-#include <QtCore/QFileInfo>
-#include <QtGui/QTreeView>
 #include "playlistmodel.hpp"
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QMenu>
 
 PlaylistView *PlaylistView::obj = 0;
 

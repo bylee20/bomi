@@ -52,7 +52,7 @@ public:
 	void setSaturation(double v) {m_value[Saturation] = v;}
 	void setContrast(double v) {m_value[Contrast] = v;}
 	void setHue(double v) {m_value[Hue] = v;}
-
+#undef clamp
 	void clamp() {
 		m_value[Brightness] = qBound(-1.0, m_value[Brightness], 1.0);
 		m_value[Contrast] = qBound(-1.0, m_value[Contrast], 1.0);

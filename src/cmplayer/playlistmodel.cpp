@@ -76,6 +76,7 @@ void PlaylistModel::append(const Mrl &mrl) {
 }
 
 void PlaylistModel::merge(const Playlist &playlist) {
+	beginResetModel();
 	if (m_list.isEmpty())
 		m_list = playlist;
 	else {
@@ -84,7 +85,7 @@ void PlaylistModel::merge(const Playlist &playlist) {
 				m_list.append(playlist[i]);
 		}
 	}
-	reset();
+	endResetModel();
 }
 
 void PlaylistModel::append(const Playlist &list) {
@@ -104,6 +105,7 @@ void PlaylistModel::erase(int row) {
 void PlaylistModel::erase(const QModelIndexList &indexes) {
 	if (indexes.isEmpty())
 		return;
+	beginResetModel();
 	std::map<int, int> map;
 	for (int i=0; i<indexes.size(); ++i)
 		map[indexes[i].row()] = indexes[i].column();
@@ -113,7 +115,7 @@ void PlaylistModel::erase(const QModelIndexList &indexes) {
 	}
 	if (map.count(m_current) > 0)
 		m_current = -1;
-	reset();
+	endResetModel();
 }
 
 void PlaylistModel::setCurrentRow(int row) {

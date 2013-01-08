@@ -22,15 +22,12 @@
 
 #include "app_mac.hpp"
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 
 #include <CoreServices/CoreServices.h>
 #include <Carbon/Carbon.h>
-#include <QtCore/QAbstractEventDispatcher>
-#include <QtCore/QDebug>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 #include "events.hpp"
-#include <QtGui/QApplication>
 #include <Cocoa/Cocoa.h>
 #include <mach/mach_port.h>
 #include <sys/param.h>

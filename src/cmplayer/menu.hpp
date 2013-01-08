@@ -55,7 +55,7 @@ public:
 	inline QString id(Menu *menu) const {return m_m.key(menu, QString());}
 	inline QString id() const {return m_id;}
 protected:
-	Menu(const QString &id, Menu *parent);
+	Menu(const QString &id, QWidget *parent);
 	void save(Record &set) const;
 	void load(Record &set);
 private:
@@ -63,6 +63,8 @@ private:
 	ActionHash m_a;
 	MenuHash m_m;
 	const QString m_id;
+
+	friend class MenuBar;
 };
 
 #endif // MENU_HPP

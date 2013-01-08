@@ -3,12 +3,13 @@
 
 #include "stdafx.hpp"
 #include "global.hpp"
+#include "rootmenu.hpp"
 
 class Mrl;		class PlayEngine;
 class Track;		class ControlWidget;
 class VideoFormat;	class PrefDialog;
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QQuickView {
 	Q_OBJECT
 public:
 	MainWindow();
@@ -17,6 +18,7 @@ public:
 	~MainWindow();
 	void unplug();
 	void openFromFileManager(const Mrl &mrl);
+	bool isFullScreen() const {return windowState() == Qt::WindowFullScreen;}
 public slots:
 	void openMrl(const Mrl &mrl, const QString &enc);
 	void openMrl(const Mrl &mrl);
@@ -89,7 +91,7 @@ private slots:
 	void updateStaysOnTop();
 	void takeSnapshot();
 
-	void onWindowFilePathChanged(const QString &path);
+	void handleWindowFilePathChanged(const QString &path);
 private:
 	PrefDialog *getPrefDialog();
 //	ControlWidget *createControlWidget();
@@ -110,8 +112,11 @@ private:
 		}
 		return def;
 	}
+	void keyPressEvent(QKeyEvent *event);
+
 	bool eventFilter(QObject *o, QEvent *e);
 	void mouseMoveEvent(QMouseEvent *event);
+	bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 	void mouseDoubleClickEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
 	void mousePressEvent(QMouseEvent *event);

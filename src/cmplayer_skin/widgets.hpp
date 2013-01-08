@@ -2,7 +2,7 @@
 #define WIDGETS_HPP
 
 #include <QtDesigner/QDesignerCustomWidgetCollectionInterface>
-#include <QtGui/QFrame>
+#include <QFrame>
 
 class WidgetPlugin : public QDesignerCustomWidgetInterface {
 	Q_INTERFACES(QDesignerCustomWidgetInterface)

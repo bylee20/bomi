@@ -5,7 +5,7 @@
 #include "subtitlemodel.hpp"
 #include "osdstyle.hpp"
 #include "subtitleview.hpp"
-#include "timelineosdrenderer.hpp"
+#include "subtitlerendereritem.hpp"
 
 SubtitleRenderer::Render::Render(const Comp &comp) {
 	this->comp = &comp;
@@ -19,12 +19,13 @@ SubtitleRenderer::Render::~Render() {
 
 struct SubtitleRenderer::Data {
 	SubtitleView *view = nullptr;
-	TextOsdRenderer osd = {Qt::AlignBottom | Qt::AlignCenter};
+//	TextOsdRenderer osd = {Qt::AlignBottom | Qt::AlignCenter};
+
 	double	fps = 25.0,			pos = 1.0;
 	int		delay = 0,			ms = 0;
 	bool	visible = true,		empty = true;
 	bool	selecting = false,	top = false;
-
+	SubtitleRendererItem *item = nullptr;
 	QList<Loaded> loaded;
 	RenderList order;
 
@@ -61,6 +62,10 @@ struct SubtitleRenderer::Data {
 	}
 };
 
+void SubtitleRenderer::setItem(SubtitleRendererItem *item) {
+	d->item = item;
+}
+
 SubtitleRenderer::SubtitleRenderer(): d(new Data) {
 	d->reset_lang_map();
 }
@@ -77,9 +82,9 @@ QWidget *SubtitleRenderer::view(QWidget *parent) const {
 	return d->view;
 }
 
-TextOsdRenderer &SubtitleRenderer::osd() const {
-	return d->osd;
-}
+//TextOsdRenderer &SubtitleRenderer::osd() const {
+//	return d->osd;
+//}
 
 void SubtitleRenderer::setFrameRate(double fps) {
 	if (d->fps != fps) {
@@ -93,24 +98,24 @@ void SubtitleRenderer::render(int ms) {
 	if (!d->visible || d->empty || ms == 0)
 		return;
 	bool changed = false;
-	RenderList::const_iterator o = d->order.begin();
-	for (; o != d->order.end(); ++o) {
-		Render &render = **o;
-		CompIt it = render.comp->start(ms - d->delay, d->fps);
-		if (it != render.prev) {
-			render.prev = it;
-			render.model->setCurrentCaption(&(*it));
+	for (Render *render : d->order) {
+		CompIt it = render->comp->start(ms - d->delay, d->fps);
+		if (it != render->prev) {
+			render->prev = it;
+			render->model->setCurrentCaption(&(*it));
 			changed = true;
 		}
 	}
 	if (changed) {
 		RichTextDocument doc;
-		for (o = d->order.begin(); o != d->order.end(); ++o) {
+		for (auto o = d->order.begin(); o != d->order.end(); ++o) {
 			const Render &render = **o;
 			if (render.prev != render.comp->end())
 				doc += render.prev.value();
 		}
-		d->osd.show(doc, -1);
+		if (d->item) {
+			d->item->setText(doc);
+		}
 	}
 }
 
@@ -126,7 +131,7 @@ void SubtitleRenderer::setVisible(bool visible) {
 
 void SubtitleRenderer::clear() {
 	d->reset_prev();
-	d->osd.clear();
+//	d->osd.clear();
 }
 
 double SubtitleRenderer::frameRate() const {
@@ -326,10 +331,10 @@ bool SubtitleRenderer::hasSubtitle() const {
 void SubtitleRenderer::setPos(double pos) {
 	if (!qFuzzyCompare(pos, d->pos)) {
 		d->pos = qBound(0.0, pos, 1.0);
-		if (d->top)
-			d->osd.setMargin(d->pos, 0, 0, 0);
-		else
-			d->osd.setMargin(0, 1.0 - d->pos, 0, 0);
+//		if (d->top)
+//			d->osd.setMargin(d->pos, 0, 0, 0);
+//		else
+//			d->osd.setMargin(0, 1.0 - d->pos, 0, 0);
 	}
 }
 
@@ -345,7 +350,7 @@ void SubtitleRenderer::setTopAlignment(bool top) {
 			alignment |= Qt::AlignTop;
 		else
 			alignment |= Qt::AlignBottom;
-		d->osd.setAlignment(alignment);
+//		d->osd.setAlignment(alignment);
 		setPos(1.0 - d->pos);
 	}
 }

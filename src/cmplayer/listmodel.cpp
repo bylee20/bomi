@@ -76,19 +76,21 @@ void ListModel::emitRowDataChanged(int row) {
 }
 
 void ListModel::clear() {
+	beginResetModel();
 	qDeleteAll(m_item);
 	m_item.clear();
-	reset();
+	endResetModel();
 }
 
 void ListModel::setItems(const QList<Item*> &item) {
+	beginResetModel();
 	qDeleteAll(m_item);
 	m_item = item;
 	for (int i=0; i<m_item.size(); ++i) {
 		m_item[i]->m_app = i;
 		m_item[i]->m_model = this;
 	}
-	reset();
+	endResetModel();
 }
 
 void ListModel::insertItem(int row, Item *item) {
@@ -195,6 +197,7 @@ void ListModel::removeItem(const QModelIndexList &indexes) {
 		rows.insert(indexes[i].row());
 	if (rows.empty())
 		return;
+	beginResetModel();
 	const int min = *rows.begin() - 1;
 	const int max = *rows.rbegin() - rows.size() + 1;
 	std::set<int>::const_reverse_iterator it = rows.rbegin();
@@ -204,5 +207,5 @@ void ListModel::removeItem(const QModelIndexList &indexes) {
 		sync(max, 0);
 	else
 		sync(min, m_item.size()-1);
-	reset();
+	endResetModel();
 }
