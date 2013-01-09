@@ -29,6 +29,7 @@ static inline QString _n(quint32 n, int base = 10) {return QString::number(n, ba
 static inline QString _n(quint64 n, int base = 10) {return QString::number(n, base);}
 static inline QString _n(double n, int dec = 1) {return QString::number(n, 'f', dec);}
 static inline QString _n(double n, int dec, int width, const QChar &c = QChar(QChar::Nbsp)) {return QString("%1").arg(n, width, 'f', dec, c);}
+static inline QString chopped(const QString &str, int n) {QString ret = str; ret.chop(n); return ret;}
 template<typename T> static inline const T& _c(T& t) {return t;}
 static const QTime __null_time(0, 0, 0, 0);
 static inline QTime secToTime(int sec) {return __null_time.addSecs(sec);}

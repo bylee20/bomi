@@ -2,7 +2,7 @@
 
 ActionGroup::ActionGroup(QObject *parent)
 : QActionGroup(parent) {
-	connect(this, SIGNAL(triggered(QAction*)), this, SLOT(emitData(QAction*)));
+//	connect(this, SIGNAL(triggered(QAction*)), this, SLOT(emitData(QAction*)));
 }
 
 void ActionGroup::setChecked(const QVariant &data, bool checked) {
@@ -38,15 +38,15 @@ void ActionGroup::clear() {
 	}
 }
 
-void ActionGroup::emitData(QAction *action) {
-	const QVariant data = action->data();
-	emit triggered(data);
-	if (data.type() == QVariant::Int)
-		emit triggered(data.toInt());
-	else if (data.type() == QVariant::Double)
-		emit triggered(data.toDouble());
-	else if (data.type() == QVariant::String)
-		emit triggered(data.toString());
-	else if (data.type() == QVariant::Url)
-		emit triggered(data.toUrl().toString());
-}
+//void ActionGroup::emitData(QAction *action) {
+//	const QVariant data = action->data();
+//	emit triggered(data);
+//	if (data.type() == QVariant::Int)
+//		emit triggered(data.toInt());
+//	else if (data.type() == QVariant::Double)
+//		emit triggered(data.toDouble());
+//	else if (data.type() == QVariant::String)
+//		emit triggered(data.toString());
+//	else if (data.type() == QVariant::Url)
+//		emit triggered(data.toUrl().toString());
+//}

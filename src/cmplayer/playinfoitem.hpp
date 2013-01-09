@@ -95,6 +95,7 @@ private:
 	Q_PROPERTY(QString stateText READ stateText)
 	Q_PROPERTY(QString monospace READ monospace)
 	Q_PROPERTY(int volume READ volume NOTIFY volumeChanged)
+	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
 public:
 	PlayInfoItem(QQuickItem *parent = nullptr);
 	~PlayInfoItem();
@@ -123,6 +124,7 @@ public:
 	QString stateText() const;
 	QString monospace() const;
 	int volume() const {return m_volume;}
+	bool isFullScreen() const {return m_fullScreen;}
 signals:
 	void nameChanged(const QString &name);
 	void durationChanged(int duration);
@@ -134,6 +136,7 @@ signals:
 	void mediaChanged();
 	void volumeNormalizedChanged(bool volnorm);
 	void volumeChanged(int volume);
+	void fullScreenChanged(bool full);
 private slots:
 //	void updateResourceUsage();
 private:
@@ -151,6 +154,7 @@ private:
 	double m_totmem = 1, m_mem = 0; // MB
 	double m_bps = 0;
 	int m_volume = 0;
+	bool m_fullScreen = false;
 };
 
 #endif // PLAYINFOITEM_HPP

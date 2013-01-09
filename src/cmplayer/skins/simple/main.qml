@@ -4,14 +4,15 @@ import "qml"
 
 Rectangle {
 	id: main
-	readonly property real margin: 5
 	Player {
 		id: player
-		anchors.fill: parent
+		anchors.top: parent.top
+		anchors.left: parent.left
+		anchors.right: parent.right
+		anchors.bottom: controls.top
 		infoView: PlayInfoOsd {
 			parent: player
 			info: player.info
-
 		}
 		TextOsd {
 			id: msgosd
@@ -33,28 +34,20 @@ Rectangle {
 			else
 				logo.visible = false
 		}
-		Rectangle {
+		info.onFullScreenChanged: {
+			anchors.bottom = info.fullScreen ? parent.bottom : controls.top;
+			controls.visible = !info.fullScreen
+		}
+
+		Logo {
 			id: logo
 			anchors.fill: parent
-			Image {
-				anchors.fill: parent
-				source: "bg.svg"
-				sourceSize.height: parent.height
-				sourceSize.width: parent.width
-			}
-			Image {
-				id: logoImage
-				anchors.centerIn: parent
-				source: "qrc:/img/cmplayer512.png"
-				smooth: true
-				width: Math.min(logo.width*0.7, logo.height*0.7, 512)
-				height:width
-			}
 		}
 	}
 
 	Rectangle {
 		id: controls
+		visible: !player.info.fullScreen
 		anchors.left: parent.left
 		anchors.right: parent.right
 		anchors.bottom: parent.bottom
@@ -93,7 +86,7 @@ Rectangle {
 			anchors.bottom: parent.bottom
 			anchors.right: timetext.left
 			anchors.left: playPause.right
-			anchors.margins: main.margin
+			anchors.margins: 5
 			anchors.leftMargin: 2
 			value: player.info.time/player.info.duration
 			onPressed: player.seek(Math.floor(player.info.duration*target))
@@ -108,7 +101,7 @@ Rectangle {
 			text: "%1/%2".arg(player.info.msecToString(secs*1000.0)).arg(player.info.msecToString(player.info.duration))
 			font.family: player.info.monospace
 			font.pixelSize: 10
-			anchors.margins: main.margin
+			anchors.margins: timeslider.anchors.margins
 			verticalAlignment: Text.AlignVCenter
 		}
 		Slider {
@@ -116,11 +109,24 @@ Rectangle {
 			anchors.top: parent.top
 			anchors.bottom: parent.bottom
 			anchors.right: parent.right
-			anchors.margins: main.margin
+			anchors.margins: timeslider.anchors.margins
 			width: 100
 			value: player.info.volume*1e-2
 			onPressed: player.setVolume(Math.floor(100.0*target))
 			onDragged: player.setVolume(Math.floor(100.0*target))
+		}
+	}
+	MouseArea {
+		anchors.fill: parent
+		hoverEnabled: player.info.fullScreen
+		onPressed: {mouse.accepted = false}
+		onPositionChanged: {
+			if (player.info.fullScreen) {
+				var my = parent.height - mouse.y;
+				controls.visible = 0 <= my && my <= controls.height;
+			} else
+				controls.visible = true
+			mouse.accepted = false
 		}
 	}
 }

@@ -195,7 +195,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	Menu *color = video->addMenu(_L("color"));
 	QAction *creset = color->addActionToGroup(_L("reset"), false);
 	creset->setShortcut(Qt::Key_O);
-	creset->setData(QList<QVariant>() << -1 << 0);
+	creset->setData(QList<QVariant>() << (int)ColorProperty::PropMax << 0);
 	color->addSeparator();
 	color->addActionToGroup(_L("brightness+"))->setShortcut(Qt::Key_T);
 	color->addActionToGroup(_L("brightness-"))->setShortcut(Qt::Key_G);
@@ -216,9 +216,12 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	volDown->setShortcut(Qt::Key_Down);
 	QAction *mute = audio->addAction(_L("mute"), true);
 	mute->setShortcut(Qt::Key_M);
+
+	audio->addSeparator();
 	QAction *volnorm = audio->addAction(_L("volnorm"), true);
 	volnorm->setShortcut(Qt::Key_N);
-
+	QAction *scaleTempo = audio->addAction(_L("scale-tempo"), true);
+	scaleTempo->setShortcut(Qt::Key_Z);
 	audio->addSeparator();
 
 	QAction *ampUp = audio->addActionToGroup(_L("amp-up"), false, _L("amp"));
@@ -434,6 +437,7 @@ void RootMenu::update() {
 	audio("track").setTitle(tr("Audio Track"));
 	audio["mute"]->setText(tr("Mute"));
 	audio["volnorm"]->setText(tr("Normalize Volume"));
+	audio["scale-tempo"]->setText(tr("Auto-scale Tempo"));
 	setActionStep(audio["volume-up"], audio["volume-down"]
 			, tr("Volume %1%"), p.volume_step);
 	setActionStep(audio["amp-up"], audio["amp-down"]

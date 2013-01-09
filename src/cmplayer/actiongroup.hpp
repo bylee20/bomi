@@ -13,14 +13,14 @@ public:
 	void trigger(const QVariant &data);
 	QVariant data() const;
 	void clear();
-signals:
-	void triggered(const QVariant &data);
-	void triggered(int data);
-	void triggered(double data);
-	void triggered(const QString &data);
-	void triggered(const Mrl &data);
+//signals:
+//	void varTriggered(const QVariant &data);
+//	void intTriggered(int data);
+//	void doubleTriggered(double data);
+//	void stringTriggered(const QString &data);
+//	void mrlTriggered(const Mrl &data);
 private slots:
-	void emitData(QAction *action);
+//	void emitData(QAction *action);
 };
 
 #endif // ACTIONGROUP_HPP

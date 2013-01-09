@@ -206,10 +206,10 @@ VideoFrame &VideoRendererItem::getNextFrame() const {
 
 void VideoRendererItem::next() {
 	if (!d->frameChanged) {
-		d->mutex.lock();
+		QMutexLocker locker(&d->mutex);
+		Q_UNUSED(locker);
 		d->frameChanged = true;
 		d->frame.swap(d->next);
-		d->mutex.unlock();
 	}
 	update();
 }
@@ -580,7 +580,8 @@ bool VideoRendererItem::beforeUpdate() {
 	}
 	if (d->format.isEmpty() || !d->frameChanged)
 		return reset;
-	d->mutex.lock();
+	QMutexLocker locker(&d->mutex);
+	Q_UNUSED(locker);
 	const auto h = d->format.height;
 	const auto w = d->format.stride;
 	auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
@@ -615,7 +616,6 @@ bool VideoRendererItem::beforeUpdate() {
 	}
 	++(d->drawnFrames);
 	d->frameChanged = false;
-	d->mutex.unlock();
 	return reset;
 }
 

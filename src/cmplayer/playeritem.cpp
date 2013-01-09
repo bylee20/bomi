@@ -26,7 +26,6 @@ void PlayerItem::plug(PlayEngine *engine) {
 	::plug(m_engine, m_video);
 	::plug(m_engine, m_audio);
 	m_info->set(m_engine, m_video, m_audio);
-
 }
 
 PlayEngine *PlayerItem::unplug() {

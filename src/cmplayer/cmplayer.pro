@@ -110,7 +110,6 @@ HEADERS += playengine.hpp \
     snapshotdialog.hpp \
     events.hpp \
     listmodel.hpp \
-    mainwindow_p.hpp \
     widgets.hpp \
     qtcolorpicker.hpp \
     record.hpp \
@@ -218,5 +217,13 @@ OTHER_FILES += \
     skins/simple/qml/Osd.qml \
     skins/simple/qml/ProgressOsd.qml \
     skins/simple/qml/PlayInfoOsd.qml \
-    skins/simple/qml/Slider.qml
+    skins/simple/qml/Slider.qml \
+    skins/simple/qml/Logo.qml \
+    skins/classic/main.qml \
+    skins/classic/qml/TextOsd.qml \
+    skins/classic/qml/Slider.qml \
+    skins/classic/qml/ProgressOsd.qml \
+    skins/classic/qml/PlayInfoOsd.qml \
+    skins/classic/qml/Osd.qml \
+    skins/classic/qml/Logo.qml
 

@@ -1,6 +1,0 @@
-#ifndef MAINWINDOW_P_HPP
-#define MAINWINDOW_P_HPP
-
-
-
-#endif // MAINWINDOW_P_HPP

@@ -20,7 +20,7 @@ private:
 struct TextureRendererItem::Material : public QSGMaterial {
 	Material(TextureRendererItem *item): m_item(item) {if (item->blending()) setFlag(Blending);}
 	QSGMaterialType *type() const {return &m_type;}
-	QSGMaterialShader *createShader() const {return new Shader(m_item);}
+	QSGMaterialShader *createShader() const {qDebug() << "new shader"; return new Shader(m_item);}
 private:
 	TextureRendererItem *m_item = nullptr;
 	mutable QSGMaterialType m_type;
@@ -76,6 +76,7 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 		node = nullptr;
 	}
 	if (!node) {
+		qDebug() << "new node";
 		node = new Node(this);
 		d->dirtyGeomerty = true;
 	}

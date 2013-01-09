@@ -54,6 +54,7 @@ public:
 	inline QString id(QAction *action) const {return m_a.key(action, QString());}
 	inline QString id(Menu *menu) const {return m_m.key(menu, QString());}
 	inline QString id() const {return m_id;}
+	QMenu *duplicated(QWidget *parent = nullptr) const;
 protected:
 	Menu(const QString &id, QWidget *parent);
 	void save(Record &set) const;

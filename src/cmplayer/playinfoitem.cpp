@@ -162,6 +162,16 @@ QString PlayInfoItem::monospace() const {
 }
 
 void PlayInfoItem::set(const PlayEngine *engine, const VideoRendererItem *video, const AudioController *audio) {
+	auto fullScreen = window()->windowState() == Qt::WindowFullScreen;
+	if (fullScreen != m_fullScreen)
+		emit fullScreenChanged(m_fullScreen = fullScreen);
+
+	connect(window(), &QWindow::windowStateChanged, [this] (Qt::WindowState state) {
+		auto fullScreen = state == Qt::WindowFullScreen;
+		if (fullScreen != m_fullScreen)
+			emit fullScreenChanged(m_fullScreen = fullScreen);
+	});
+
 	d->engine = engine;
 	d->video = video;
 	d->audio = audio;
