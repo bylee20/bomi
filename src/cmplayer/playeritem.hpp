@@ -13,7 +13,7 @@ class PlayerItem : public QQuickItem {
 	Q_OBJECT
 	Q_PROPERTY(SubtitleRendererItem *subtitle READ subtitle)
 	Q_PROPERTY(VideoRendererItem *video READ video)
-	Q_PROPERTY(PlayInfoItem *info READ info)
+	Q_PROPERTY(PlayInfoItem *info READ info NOTIFY infoChanged)
 	Q_PROPERTY(QQuickItem *infoView READ infoView WRITE setInfoView NOTIFY infoViewChanged)
 	Q_PROPERTY(QString message READ message)
 public:
@@ -33,10 +33,14 @@ public:
 	void requestMessage(const QString &message) {emit messageRequested(m_message = message);}
 	void doneSeeking() {emit sought();}
 	QString message() const {return m_message;}
+	Q_INVOKABLE bool execute(const QString &key);
+	Q_INVOKABLE void seek(int time);
+	Q_INVOKABLE void setVolume(int volume);
 signals:
 	void messageRequested(const QString &message);
 	void infoViewChanged(QQuickItem *item);
 	void sought();
+	void infoChanged();
 private:
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	SubtitleRendererItem *m_subtitle = nullptr;

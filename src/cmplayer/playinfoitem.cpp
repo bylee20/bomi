@@ -161,13 +161,6 @@ QString PlayInfoItem::monospace() const {
 #endif
 }
 
-//void PlayInfoItem::setRunning(bool run) {
-//	if (m_running != run) {
-//		m_running = run;
-//		emit runningChanged(m_running);
-//	}
-//}
-
 void PlayInfoItem::set(const PlayEngine *engine, const VideoRendererItem *video, const AudioController *audio) {
 	d->engine = engine;
 	d->video = video;
@@ -193,12 +186,13 @@ void PlayInfoItem::set(const PlayEngine *engine, const VideoRendererItem *video,
 		emit audioChanged();
 		d->time = 0;
 		d->sync = 0;
-		qDebug() << "media changed!";
 		emit mediaChanged();
 	});
 	connect(d->audio, &AudioController::volumeNormalizedChanged, [this] (bool volnorm) {
-		m_volnorm = volnorm;
-		emit volumeNormalizedChanged(volnorm);
+		emit volumeNormalizedChanged(m_volnorm = volnorm);
+	});
+	connect(d->audio, &AudioController::volumeChanged, [this](int volume) {
+		emit volumeChanged(m_volume = volume);
 	});
 	m_volnorm = d->audio->isVolumeNormalized();
 	d->drawnFrames = d->video->drawnFrames();

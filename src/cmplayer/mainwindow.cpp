@@ -202,10 +202,10 @@ void qt_mac_set_dock_menu(QMenu *menu);
 
 
 MainWindow::MainWindow(): d(new Data) {
-	engine()->addImportPath("/Users/xylosper/dev/cmplayer/src/cmplayer");
+	engine()->addImportPath("/Users/xylosper/dev/cmplayer/src/cmplayer/skins/simple");
 	qDebug() << engine()->importPathList();
 	setFlags(flags() | Qt::WindowFullscreenButtonHint);
-	setSource(QUrl::fromLocalFile("/Users/xylosper/dev/cmplayer/src/cmplayer/test.qml"));
+	setSource(QUrl::fromLocalFile("/Users/xylosper/dev/cmplayer/src/cmplayer/skins/simple/main.qml"));
 	setResizeMode(QQuickView::SizeRootObjectToView);
 	resize(500, 500);
 	d->player = rootObject()->findChild<PlayerItem*>();

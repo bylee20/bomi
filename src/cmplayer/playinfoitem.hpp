@@ -90,15 +90,17 @@ private:
 	Q_PROPERTY(double totalMemory READ totalMemory)
 	Q_PROPERTY(double memory READ memory)
 	Q_PROPERTY(double cpu READ cpu)
-	Q_PROPERTY(double avgbps READ bps)
+	Q_PROPERTY(double avgbps READ avgbps)
 	Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
 	Q_PROPERTY(QString stateText READ stateText)
 	Q_PROPERTY(QString monospace READ monospace)
+	Q_PROPERTY(int volume READ volume NOTIFY volumeChanged)
 public:
 	PlayInfoItem(QQuickItem *parent = nullptr);
 	~PlayInfoItem();
 	double avgsync() const {return m_avSync;}
 	double avgfps() const {return m_fps;}
+	double avgbps() const {return m_bps;}
 	int duration() const {return m_duration;}
 	int position() const {return m_position;}
 	AvInfoObject *audio() const {return m_audio;}
@@ -120,7 +122,7 @@ public:
 	QString name() const {return m_name;}
 	QString stateText() const;
 	QString monospace() const;
-	double bps() const {return m_bps;}
+	int volume() const {return m_volume;}
 signals:
 	void nameChanged(const QString &name);
 	void durationChanged(int duration);
@@ -131,6 +133,7 @@ signals:
 	void stateChanged(State state);
 	void mediaChanged();
 	void volumeNormalizedChanged(bool volnorm);
+	void volumeChanged(int volume);
 private slots:
 //	void updateResourceUsage();
 private:
@@ -138,7 +141,7 @@ private:
 	Data *d;
 	int m_duration = 0, m_position = 0;
 	bool m_volnorm = false;
-	State m_state;
+	State m_state = Stopped;
 	QString m_name;
 	AvInfoObject *m_audio = new AvInfoObject(this);
 	AvInfoObject *m_video = new AvInfoObject(this);
@@ -147,6 +150,7 @@ private:
 	double m_avSync = 0;
 	double m_totmem = 1, m_mem = 0; // MB
 	double m_bps = 0;
+	int m_volume = 0;
 };
 
 #endif // PLAYINFOITEM_HPP

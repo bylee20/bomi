@@ -1,4 +1,5 @@
 #include "playeritem.hpp"
+#include "playengine.hpp"
 #include "videorendereritem.hpp"
 #include "playinfoitem.hpp"
 #include "audiocontroller.hpp"
@@ -50,4 +51,25 @@ void PlayerItem::registerItems() {
 	qmlRegisterType<MediaInfoObject>();
 	qmlRegisterType<SubtitleRendererItem>("CMPlayer", 1, 0, "SubtitleRenderer");
 	qmlRegisterType<PlayerItem>("CMPlayer", 1, 0, "Player");
+}
+
+bool PlayerItem::execute(const QString &key) {
+	auto action = RootMenu::get().action(key);
+	if (!action)
+		return false;
+	if (action->menu())
+		action->menu()->exec(QCursor::pos());
+	else
+		action->trigger();
+	return true;
+}
+
+void PlayerItem::seek(int time) {
+	if (m_engine) {
+		m_engine->seek(time);
+	}
+}
+
+void PlayerItem::setVolume(int volume) {
+	m_audio->setVolume(volume);
 }

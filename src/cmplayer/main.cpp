@@ -9,6 +9,7 @@
 #include "recentinfo.hpp"
 #include "hwaccel.hpp"
 #include "playeritem.hpp"
+#include "logodrawer.hpp"
 
 static bool checkOpenGL() {
 	if (Q_LIKELY(QGLFormat::hasOpenGL() && (QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_0)))
@@ -19,6 +20,8 @@ static bool checkOpenGL() {
 }
 
 Q_DECLARE_METATYPE(QTextOption::WrapMode);
+#include <QSvgRenderer>
+#include <QSvgGenerator>
 
 int main(int argc, char **argv) {
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
@@ -31,6 +34,21 @@ int main(int argc, char **argv) {
 	qDebug() << "started app";
 	App app(argc, argv);
 	qDebug() << "app created";
+	{
+		QRect rect(0, 0, 20, 20);
+		QSvgGenerator svg;
+		svg.setFileName("bg.svg");
+		svg.setSize(rect.size());
+		svg.setViewBox(rect);
+		svg.setTitle("CMPlayer logo background");
+		svg.setDescription("CMPlayer logo background");
+//		QImage image(512, 512, QImage::Format_ARGB32_Premultiplied);
+		QPainter painter(&svg);
+		LogoDrawer logo;
+		logo.draw(&painter, rect);
+//		image.save("testlogo.png");
+	}
+
 	if (!checkOpenGL())
 		return 1;
 	const auto mrl = app.getMrlFromCommandLine();

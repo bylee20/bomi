@@ -1,7 +1,7 @@
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header
 QT = core gui opengl network uitools
-QT += quick widgets
+QT += quick widgets svg
 
 LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
     -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio -lquvi
@@ -213,9 +213,10 @@ FORMS += \
     ui/prefdialog.ui
 
 OTHER_FILES += \
-    test.qml \
-    qml/TextOsd.qml \
-    qml/Osd.qml \
-    qml/ProgressOsd.qml \
-    qml/PlayInfoOsd.qml
+    skins/simple/main.qml \
+    skins/simple/qml/TextOsd.qml \
+    skins/simple/qml/Osd.qml \
+    skins/simple/qml/ProgressOsd.qml \
+    skins/simple/qml/PlayInfoOsd.qml \
+    skins/simple/qml/Slider.qml
 

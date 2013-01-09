@@ -206,8 +206,10 @@ VideoFrame &VideoRendererItem::getNextFrame() const {
 
 void VideoRendererItem::next() {
 	if (!d->frameChanged) {
+		d->mutex.lock();
 		d->frameChanged = true;
 		d->frame.swap(d->next);
+		d->mutex.unlock();
 	}
 	update();
 }
@@ -576,42 +578,44 @@ bool VideoRendererItem::beforeUpdate() {
 		emit formatChanged(d->format);
 		updateGeometry();
 	}
-	if (!d->frame.format().isEmpty() && d->frameChanged) {
-		const auto h = d->format.height;
-		const auto w = d->format.stride;
-		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
-			glBindTexture(GL_TEXTURE_2D, texture(idx));
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
-		};
-		switch (d->format.type) {
-		case VideoFormat::I420:
-		case VideoFormat::YV12:
-			setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
-			setTex(1, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(1));
-			setTex(2, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(2));
-			break;
-		case VideoFormat::NV12:
-		case VideoFormat::NV21:
-			setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
-			setTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1, d->frame.data(1));
-			break;
-		case VideoFormat::YUY2:
-		case VideoFormat::UYVY:
-			setTex(0, GL_LUMINANCE_ALPHA, w >> 1, h, d->frame.data(0));
-			setTex(1, GL_BGRA, w >> 2, h, d->frame.data(0));
-			break;
-		case VideoFormat::RGBA:
-			setTex(0, GL_RGBA, w, h, d->frame.data(0));
-			break;
-		case VideoFormat::BGRA:
-			setTex(0, GL_BGRA, w, h, d->frame.data(0));
-			break;
-		default:
-			break;
-		}
-		++(d->drawnFrames);
+	if (d->format.isEmpty() || !d->frameChanged)
+		return reset;
+	d->mutex.lock();
+	const auto h = d->format.height;
+	const auto w = d->format.stride;
+	auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
+		glBindTexture(GL_TEXTURE_2D, texture(idx));
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
+	};
+	switch (d->format.type) {
+	case VideoFormat::I420:
+	case VideoFormat::YV12:
+		setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
+		setTex(1, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(1));
+		setTex(2, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(2));
+		break;
+	case VideoFormat::NV12:
+	case VideoFormat::NV21:
+		setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
+		setTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1, d->frame.data(1));
+		break;
+	case VideoFormat::YUY2:
+	case VideoFormat::UYVY:
+		setTex(0, GL_LUMINANCE_ALPHA, w >> 1, h, d->frame.data(0));
+		setTex(1, GL_BGRA, w >> 2, h, d->frame.data(0));
+		break;
+	case VideoFormat::RGBA:
+		setTex(0, GL_RGBA, w, h, d->frame.data(0));
+		break;
+	case VideoFormat::BGRA:
+		setTex(0, GL_BGRA, w, h, d->frame.data(0));
+		break;
+	default:
+		break;
 	}
+	++(d->drawnFrames);
 	d->frameChanged = false;
+	d->mutex.unlock();
 	return reset;
 }
 
