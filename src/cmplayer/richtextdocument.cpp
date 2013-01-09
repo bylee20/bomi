@@ -93,6 +93,7 @@ void RichTextDocument::setFontPixelSize(int px) {
 
 void RichTextDocument::setTextOutline(const QColor &color, double width) {
 	QPen pen(Qt::NoPen);
+	qDebug() <<width;
 	if (width > 0.0)
 		pen = QPen(color, width);
 	if (m_format.penProperty(QTextFormat::TextOutline) != pen) {
@@ -176,8 +177,7 @@ void RichTextDocument::doLayout(double maxWidth) {
 		}
 		block->endLayout();
 	}
-//	m_natural = QRectF(0.0, 0.0, width, pos.ry());
-	m_natural = QRectF(0, 0, width, pos.ry());
+	m_natural = QRectF(0.0, 0.0, width, pos.ry());
 	m_dirty = false;
 }
 

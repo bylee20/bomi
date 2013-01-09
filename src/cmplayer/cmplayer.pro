@@ -83,7 +83,6 @@ HEADERS += playengine.hpp \
     subtitle.hpp \
     subtitle_parser.hpp \
     subtitlerenderer.hpp \
-    textosdrenderer.hpp \
     audiocontroller.hpp \
     info.hpp \
     charsetdetector.hpp \
@@ -112,7 +111,6 @@ HEADERS += playengine.hpp \
     events.hpp \
     listmodel.hpp \
     mainwindow_p.hpp \
-    playinfoview.hpp \
     widgets.hpp \
     qtcolorpicker.hpp \
     record.hpp \
@@ -131,7 +129,8 @@ HEADERS += playengine.hpp \
     videorendereritem.hpp \
     playinfoitem.hpp \
     texturerendereritem.hpp \
-    subtitlerendereritem.hpp
+    subtitlerendereritem.hpp \
+    playeritem.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -152,7 +151,6 @@ SOURCES += main.cpp \
     subtitle.cpp \
     subtitle_parser.cpp \
     subtitlerenderer.cpp \
-    textosdrenderer.cpp \
     audiocontroller.cpp \
     info.cpp \
     charsetdetector.cpp \
@@ -179,7 +177,6 @@ SOURCES += main.cpp \
     snapshotdialog.cpp \
     events.cpp \
     listmodel.cpp \
-    playinfoview.cpp \
     widgets.cpp \
     qtcolorpicker.cpp \
     record.cpp \
@@ -199,7 +196,8 @@ SOURCES += main.cpp \
     videorendereritem.cpp \
     playinfoitem.cpp \
     texturerendereritem.cpp \
-    subtitlerendereritem.cpp
+    subtitlerendereritem.cpp \
+    playeritem.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp

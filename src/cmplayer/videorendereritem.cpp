@@ -1,4 +1,5 @@
 #include "videorendereritem.hpp"
+#include "subtitlerendereritem.hpp"
 #include "playengine.hpp"
 #include "mpcore.hpp"
 #include "pref.hpp"
@@ -161,11 +162,12 @@ struct VideoRendererItem::Data {
 	StreamList streams;
 	PlayEngine *engine = nullptr;
 	QMutex mutex;
-	LetterboxItem *letterbox;
+	LetterboxItem *letterbox = nullptr;
 	QByteArray shader;
 	int width = 0;
 	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
 	int loc_brightness, loc_contrast, loc_sat_hue, loc_dxy, loc_p1, loc_p2, loc_p3;
+	SubtitleRendererItem *subtitle = nullptr;
 };
 
 void plug(PlayEngine *engine, VideoRendererItem *video) {
@@ -187,10 +189,15 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 : TextureRendererItem(3, parent), d(new Data) {
 	setFlags(ItemHasContents | ItemAcceptsDrops);
 	d->letterbox = new LetterboxItem(this);
+	d->subtitle = new SubtitleRendererItem(this);
 }
 
 VideoRendererItem::~VideoRendererItem() {
 	delete d;
+}
+
+SubtitleRendererItem *VideoRendererItem::subtitle() const {
+	return d->subtitle;
 }
 
 VideoFrame &VideoRendererItem::getNextFrame() const {
@@ -204,63 +211,6 @@ void VideoRendererItem::next() {
 	}
 	update();
 }
-
-//QSGNode *VideoRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
-//	Q_UNUSED(data);
-//	auto node = static_cast<VideoRendererNode*>(old);
-//	if (node && (d->resetNode || d->frame.format() != node->format())) {
-//		delete node;
-//		node = nullptr;
-//		d->format = d->frame.format();
-//		emit formatChanged(d->format);
-//	}
-//	if (!node) {
-//		node = new VideoRendererNode(d->frame.format());
-//		if (!d->dirtyGeomerty)
-//			updateGeometry();
-//		d->drawnFrames = 0;
-//	}
-//	d->resetNode = false;
-//	if (d->frameChanged) {
-////		d->mutex.lock();
-//		node->material()->upload(d->frame);
-//		d->frameChanged = false;
-////		d->mutex.unlock();
-//		++(d->drawnFrames);
-//	}
-//	if (d->dirtyGeomerty) {
-//		QSizeF letter(targetCropRatio(targetAspectRatio()), 1.0);
-//		letter.scale(width(), height(), Qt::KeepAspectRatio);
-//		QPointF offset = d->offset;
-//		QPointF xy(width(), height());
-//		xy.rx() -= letter.width(); xy.ry() -= letter.height();	xy *= 0.5;
-//		if (d->alignment & Qt::AlignLeft)
-//			offset.rx() -= xy.x();
-//		else if (d->alignment & Qt::AlignRight)
-//			offset.rx() += xy.x();
-//		if (d->alignment & Qt::AlignTop)
-//			offset.ry() -= xy.y();
-//		else if (d->alignment & Qt::AlignBottom)
-//			offset.ry() += xy.y();
-//		xy += offset;
-
-//		constexpr double top = 0.0, left = 0.0, bottom = 1.0;
-//		const double right = (double)(d->format.width)/(double)(d->format.fullWidth);
-
-//		auto vtx = node->geometry()->vertexDataAsTexturedPoint2D();
-//		vtx->set(d->vtx.left() + offset.x(), d->vtx.top() + offset.y(), left, top);
-//		(++vtx)->set(d->vtx.left() + offset.x(), d->vtx.bottom() + offset.y(), left, bottom);
-//		(++vtx)->set(d->vtx.right() + offset.x(), d->vtx.top() + offset.y(), right, top);
-//		(++vtx)->set(d->vtx.right() + offset.y(), d->vtx.bottom() + offset.y(), right, bottom);
-
-//		node->markDirty(QSGNode::DirtyGeometry);
-//		d->dirtyGeomerty = false;
-
-//		d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter));
-//	}
-////	node->setFlag(QSGNode::OwnsGeometry);
-//	return node;
-//}
 
 int VideoRendererItem::alignment() const {
 	return d->alignment;
@@ -295,6 +245,8 @@ void VideoRendererItem::geometryChanged(const QRectF &newOne, const QRectF &old)
 	QQuickItem::geometryChanged(newOne, old);
 	d->letterbox->setWidth(width());
 	d->letterbox->setHeight(height());
+	d->subtitle->setPosition(QPointF(0, 0));
+	d->subtitle->setSize(QSizeF(width(), height()));
 	updateGeometry();
 }
 

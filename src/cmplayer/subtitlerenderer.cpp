@@ -19,7 +19,6 @@ SubtitleRenderer::Render::~Render() {
 
 struct SubtitleRenderer::Data {
 	SubtitleView *view = nullptr;
-//	TextOsdRenderer osd = {Qt::AlignBottom | Qt::AlignCenter};
 
 	double	fps = 25.0,			pos = 1.0;
 	int		delay = 0,			ms = 0;
@@ -81,10 +80,6 @@ QWidget *SubtitleRenderer::view(QWidget *parent) const {
 	}
 	return d->view;
 }
-
-//TextOsdRenderer &SubtitleRenderer::osd() const {
-//	return d->osd;
-//}
 
 void SubtitleRenderer::setFrameRate(double fps) {
 	if (d->fps != fps) {
@@ -331,10 +326,12 @@ bool SubtitleRenderer::hasSubtitle() const {
 void SubtitleRenderer::setPos(double pos) {
 	if (!qFuzzyCompare(pos, d->pos)) {
 		d->pos = qBound(0.0, pos, 1.0);
-//		if (d->top)
-//			d->osd.setMargin(d->pos, 0, 0, 0);
-//		else
-//			d->osd.setMargin(0, 1.0 - d->pos, 0, 0);
+		if (d->item) {
+			if (d->top)
+				d->item->setMargin(d->pos, 0, 0, 0);
+			else
+				d->item->setMargin(0, 1.0 - d->pos, 0, 0);
+		}
 	}
 }
 

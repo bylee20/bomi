@@ -13,7 +13,7 @@ void unplug(PlayEngine *engine, AudioController *audio);
 class AudioController : public QObject, public MpMessage {
 	Q_OBJECT
 public:
-	AudioController();
+	AudioController(QObject *parent = nullptr);
 	~AudioController();
 	int volume() const;
 	bool isMuted() const;

@@ -193,6 +193,7 @@ void PlayInfoItem::set(const PlayEngine *engine, const VideoRendererItem *video,
 		emit audioChanged();
 		d->time = 0;
 		d->sync = 0;
+		qDebug() << "media changed!";
 		emit mediaChanged();
 	});
 	connect(d->audio, &AudioController::volumeNormalizedChanged, [this] (bool volnorm) {

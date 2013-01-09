@@ -3,7 +3,6 @@ import QtQuick 2.0
 Item {
 	id: osd
 	visible: false
-	property string name: ""
 	property int duration: 2500
 	Timer {
 		id: timer

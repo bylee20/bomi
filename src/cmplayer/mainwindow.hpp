@@ -16,7 +16,7 @@ public:
 	MainWindow(const MainWindow &) = delete;
 	MainWindow &operator = (const MainWindow &) = delete;
 	~MainWindow();
-	void unplug();
+//	void unplug();
 	void openFromFileManager(const Mrl &mrl);
 	bool isFullScreen() const {return windowState() == Qt::WindowFullScreen;}
 public slots:
@@ -91,7 +91,6 @@ private slots:
 	void updateStaysOnTop();
 	void takeSnapshot();
 
-	void handleWindowFilePathChanged(const QString &path);
 private:
 	PrefDialog *getPrefDialog();
 //	ControlWidget *createControlWidget();

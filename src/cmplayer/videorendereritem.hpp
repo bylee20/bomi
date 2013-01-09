@@ -20,12 +20,14 @@ private:
 };
 
 class VideoRendererItem;		class PlayEngine;
+class SubtitleRendererItem;
 
 void plug(PlayEngine *engine, VideoRendererItem *video);
 void unplug(PlayEngine *engine, VideoRendererItem *video);
 
 class VideoRendererItem : public TextureRendererItem, public MpMessage {
 	Q_OBJECT
+	Q_PROPERTY(SubtitleRendererItem *subtitle READ subtitle)
 public:
 	enum Effect {
 		NoEffect			= 0,
@@ -43,6 +45,7 @@ public:
 	static const int KernelEffects = Blur | Sharpen;
 	VideoRendererItem(QQuickItem *parent = 0);
 	~VideoRendererItem();
+	SubtitleRendererItem *subtitle() const;
 	double targetAspectRatio() const;
 	double targetCropRatio(double fallback) const;
 	double targetCropRatio() const {return targetCropRatio(targetAspectRatio());}

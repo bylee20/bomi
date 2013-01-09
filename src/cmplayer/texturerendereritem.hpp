@@ -21,22 +21,23 @@ protected:
 	virtual QRectF textureRect() const {return QRectF(0.0, 0.0, 1.0, 1.0);}
 	virtual bool beforeUpdate() {return false;}
 	virtual void updateTexturedPoint2D(TexturedPoint2D *tp) {
-		const auto vtx = vertexRect();
-		const auto txt = textureRect();
+		set(tp, vertexRect(), textureRect());
+	}
+	static void set(TexturedPoint2D *tp, const QRectF &vtx, const QRectF &txt) {
 		set(tp, vtx.topLeft(), txt.topLeft());
 		set(++tp, vtx.bottomLeft(), txt.bottomLeft());
 		set(++tp, vtx.topRight(), txt.topRight());
 		set(++tp, vtx.bottomRight(), txt.bottomRight());
 	}
-	void set(TexturedPoint2D *tp, const QPointF &vtx, const QPointF &txt) {
+	static void set(TexturedPoint2D *tp, const QPointF &vtx, const QPointF &txt) {
 		tp->set(vtx.x(), vtx.y(), txt.x(), txt.y());
 	}
 	GLuint texture(int i) const {return m_textures[i];}
 	virtual bool blending() const {return false;}
+	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 private:
 	struct Shader;	struct Material;	struct Node;
 	QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) final;
-	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	GLuint *m_textures = nullptr;
 	struct Data;
 	Data *d;

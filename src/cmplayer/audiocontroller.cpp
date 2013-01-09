@@ -125,8 +125,8 @@ void unplug(PlayEngine *engine, AudioController *audio) {
 }
 
 
-AudioController::AudioController()
-: d(new Data) {
+AudioController::AudioController(QObject *parent)
+: QObject(parent), d(new Data) {
 }
 
 AudioController::~AudioController() {

@@ -2,7 +2,6 @@
 #include "stdafx.hpp"
 #include "app.hpp"
 #include "avmisc.hpp"
-#include "playinfoview.hpp"
 #include "colorproperty.hpp"
 #include "playlistview.hpp"
 #include "historyview.hpp"
@@ -18,6 +17,8 @@
 #include "playengine.hpp"
 #include "translator.hpp"
 #include "videorendereritem.hpp"
+#include "playeritem.hpp"
+
 #include "appstate.hpp"
 #include "pref.hpp"
 #include "playlist.hpp"
@@ -31,17 +32,20 @@
 #include "playinfoitem.hpp"
 
 struct MainWindow::Data {
+	PlayerItem *player = nullptr;
 	RootMenu &menu = RootMenu::get();
 	RecentInfo &recent = RecentInfo::get();
 	const Pref &p = Pref::get();
 
 	PlayEngine &engine = PlayEngine::get();
-	AudioController audio;
+	AudioController *audio = nullptr;
 	VideoRendererItem *video = nullptr;
+//	AudioController audio;
+//	VideoRendererItem *video = nullptr;
 
 	SubtitleRenderer subtitle;
-	QQuickItem *timeline = nullptr;
-	QQuickItem *message = nullptr;
+//	QQuickItem *timeline = nullptr;
+//	QQuickItem *message = nullptr;
 	QPoint prevPos;		QTimer hider;
 	Qt::WindowState prevWinState = Qt::WindowNoState;
 	bool moving = false, changingSub = false;
@@ -131,11 +135,12 @@ struct MainWindow::Data {
 		}
 		video->setColor(as.video_color);
 
-		audio.setVolume(as.audio_volume);
-		audio.setMuted(as.audio_muted);
-		audio.setPreAmp(as.audio_amp);
-		audio.setVolumeNormalized(as.audio_volume_normalized);
-
+		if (audio) {
+			audio->setVolume(as.audio_volume);
+			audio->setMuted(as.audio_muted);
+			audio->setPreAmp(as.audio_amp);
+			audio->setVolumeNormalized(as.audio_volume_normalized);
+		}
 		menu("subtitle").g("display")->trigger((int)as.sub_letterbox);
 		menu("subtitle").g("align")->trigger((int)as.sub_align_top);
 		subtitle.setPos(as.sub_pos);
@@ -150,16 +155,20 @@ struct MainWindow::Data {
 
 	void save_state() const {
 		AppState &as = AppState::get();
-		as.video_aspect_ratio = video->aspectRatio();
-		as.video_crop_ratio = video->cropRatio();
-		as.video_alignment = video->alignment();
-		as.video_offset = video->offset();
-		as.video_effects = video->effects();
-		as.video_color = video->color();
-		as.audio_volume = audio.volume();
-		as.audio_volume_normalized = audio.isVolumeNormalized();
-		as.audio_muted = audio.isMuted();
-		as.audio_amp = audio.preAmp();
+		if (video) {
+			as.video_aspect_ratio = video->aspectRatio();
+			as.video_crop_ratio = video->cropRatio();
+			as.video_alignment = video->alignment();
+			as.video_offset = video->offset();
+			as.video_effects = video->effects();
+			as.video_color = video->color();
+		}
+		if (audio) {
+			as.audio_volume = audio->volume();
+			as.audio_volume_normalized = audio->isVolumeNormalized();
+			as.audio_muted = audio->isMuted();
+			as.audio_amp = audio->preAmp();
+		}
 		as.play_speed = engine.speed();
 		as.sub_pos = subtitle.pos();
 		as.sub_sync_delay = subtitle.delay();
@@ -199,18 +208,10 @@ MainWindow::MainWindow(): d(new Data) {
 	setSource(QUrl::fromLocalFile("/Users/xylosper/dev/cmplayer/src/cmplayer/test.qml"));
 	setResizeMode(QQuickView::SizeRootObjectToView);
 	resize(500, 500);
-
-	d->video = rootObject()->findChild<VideoRendererItem*>();
-	for (QQuickItem *item : d->video->childItems()) {
-		if (item->property("name").toString() == _L("message")) {
-			d->message = item;
-		}
-		if (item->property("name").toString() == _L("timeline"))
-			d->timeline = item;
-	}
-	qDebug() << d->message << d->timeline;
-	Q_ASSERT(d->video != nullptr);
-	d->subtitle.setItem(rootObject()->findChild<SubtitleRendererItem*>());
+	d->player = rootObject()->findChild<PlayerItem*>();
+	d->video = d->player->video();
+	d->audio = d->player->audio();
+	d->subtitle.setItem(d->video->subtitle());
 
 	d->playlist = new PlaylistView(&d->engine, nullptr);
 	d->history = new HistoryView(&d->engine, nullptr);
@@ -221,11 +222,11 @@ MainWindow::MainWindow(): d(new Data) {
 //	d->skin.connectTo(&d->engine, &d->audio, d->video);
 
 //	setAcceptDrops(true);
-
-	plug(&d->engine, &d->audio);
-	plug(&d->engine, d->video);
-	auto playinfo = rootObject()->findChild<PlayInfoItem*>();
-	playinfo->set(&d->engine, d->video, &d->audio);
+	d->player->plug(&d->engine);
+//	plug(&d->engine, &d->audio);
+//	plug(&d->engine, d->video);
+//	auto playinfo = rootObject()->findChild<PlayInfoItem*>();
+//	playinfo->set(&d->engine, d->video, &d->audio);
 //	d->playInfo = new PlayInfoView(&d->engine, &d->audio, d->video);
 
 	Menu &open = d->menu("open");		Menu &play = d->menu("play");
@@ -280,7 +281,7 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(tool["history"], triggered(), d->history, toggle());
 	CONNECT(tool["subtitle"], triggered(), d->subtitle.view(), toggle());
 	CONNECT(tool["pref"], triggered(), this, setPref());
-	connect(tool["playinfo"], &QAction::toggled, [playinfo](bool v) {playinfo->setVisible(v);});
+	connect(tool["playinfo"], &QAction::toggled, [this](bool v) {d->player->setInfoVisible(v);});
 	CONNECT(tool["auto-exit"], toggled(bool), this, setAutoExit(bool));
 	CONNECT(tool["auto-shutdown"], toggled(bool), this, setAutoShutdown(bool));
 
@@ -306,15 +307,14 @@ MainWindow::MainWindow(): d(new Data) {
 	CONNECT(&d->engine, mrlChanged(Mrl), this, updateMrl(Mrl));
 	CONNECT(&d->engine, stateChanged(State,State), this, updateState(State,State));
 	connect(&d->engine, &PlayEngine::tick, &d->subtitle, &SubtitleRenderer::render);
-	connect(&d->engine, &PlayEngine::tick, [this] (int pos) {
-		if (d->timeline)
-			d->timeline->setProperty("value", (double)pos/d->engine.duration());
-	});
+//	connect(&d->engine, &PlayEngine::tick, [this] (int pos) {
+//		if (d->timeline)
+//			d->timeline->setProperty("value", (double)pos/d->engine.duration());
+//	});
 //	CONNECT(&d->screen, customContextMenuRequested(const QPoint&), this, showContextMenu(const QPoint&));
 	CONNECT(d->video, formatChanged(VideoFormat), this, updateVideoFormat(VideoFormat));
 //	CONNECT(d->video, screenSizeChanged(QSize), this, onScreenSizeChanged(QSize));
-	CONNECT(&d->audio, mutedChanged(bool), audio["mute"], setChecked(bool));
-	CONNECT(&d->audio, volumeNormalizedChanged(bool), audio["volnorm"], setChecked(bool));
+
 
 	CONNECT(&d->recent, openListChanged(QList<Mrl>), this, updateRecentActions(QList<Mrl>));
 	CONNECT(&d->hider, timeout(), this, hideCursor());
@@ -392,6 +392,8 @@ MainWindow::MainWindow(): d(new Data) {
 }
 
 MainWindow::~MainWindow() {
+	if (d->player)
+		d->player->unplug();
 //	d->screen.setParent(nullptr);
 	delete d;
 }
@@ -440,13 +442,6 @@ void MainWindow::onPlaylistFinished() {
 		app()->shutdown();
 }
 
-void MainWindow::handleWindowFilePathChanged(const QString &path) {//		label->set(ph, text);
-}
-
-void MainWindow::unplug() {
-	::unplug(&d->engine, &d->audio);
-	::unplug(&d->engine, d->video);
-}
 
 void MainWindow::exit() {
 	static bool done = false;
@@ -488,7 +483,9 @@ void MainWindow::checkVideoMenu() {
 }
 
 void MainWindow::checkAudioMenu() {
-	d->menu("audio")("track").setEnabled(d->audio.streams().size() > 0);
+	if (d->audio) {
+		d->menu("audio")("track").setEnabled(d->audio->streams().size() > 0);
+	}
 }
 
 static void checkStreamMenu(Menu &menu, const StreamList &streams, int current, const QString &text) {
@@ -509,12 +506,13 @@ static void checkStreamMenu(Menu &menu, const StreamList &streams, int current, 
 }
 
 void MainWindow::checkAudioTrackMenu() {
-	checkStreamMenu(d->menu("audio")("track"), d->audio.streams(), d->audio.currentStreamId(), tr("Audio %1"));
+	if (d->audio)
+		checkStreamMenu(d->menu("audio")("track"), d->audio->streams(), d->audio->currentStreamId(), tr("Audio %1"));
 }
 
 void MainWindow::setAudioTrack(QAction *act) {
 	act->setChecked(true);
-	d->audio.setCurrentStream(act->data().toInt());
+	d->audio->setCurrentStream(act->data().toInt());
 	showMessage(tr("Current Audio Track"), act->text());
 }
 
@@ -769,9 +767,9 @@ void MainWindow::seek(int diff) {
 		return;
 	if (d->engine.isSeekable()) {
 		d->engine.relativeSeek(diff);
-		if (d->timeline)
-			QMetaObject::invokeMethod(d->timeline, "show");
 		showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
+		if (d->player)
+			d->player->doneSeeking();
 	}
 }
 
@@ -788,23 +786,25 @@ void MainWindow::showMessage(const QString &cmd, const QString &description, int
 }
 
 void MainWindow::showMessage(const QString &message, int last) {
-	if (!d->dontShowMsg && d->message) {
-		d->message->setProperty("text", message);
-		d->message->setProperty("duration", last);
-		QMetaObject::invokeMethod(d->message, "show");
-	}
+	if (!d->dontShowMsg && d->player)
+		d->player->requestMessage(message);
+//	if (!d->dontShowMsg && d->message) {
+//		d->message->setProperty("text", message);
+//		d->message->setProperty("duration", last);
+//		QMetaObject::invokeMethod(d->message, "show");
+//	}
 }
 
 void MainWindow::setVolume(int diff) {
 	if (!diff)
 		return;
-	const int volume = qBound(0, d->audio.volume() + diff, 100);
-	d->audio.setVolume(volume);
+	const int volume = qBound(0, d->audio->volume() + diff, 100);
+	d->audio->setVolume(volume);
 	showMessage(tr("Volume"), volume, "%");
 }
 
 void MainWindow::setMuted(bool muted) {
-	d->audio.setMuted(muted);
+	d->audio->setMuted(muted);
 	showMessage(tr("Mute"), muted);
 }
 
@@ -902,8 +902,8 @@ void MainWindow::setSpeed(int diff) {
 }
 
 void MainWindow::setAmp(int amp) {
-	const int newAmp = qBound(0, qRound(d->audio.preAmp()*100 + amp), 1000);
-	d->audio.setPreAmp(newAmp*0.01);
+	const int newAmp = qBound(0, qRound(d->audio->preAmp()*100 + amp), 1000);
+	d->audio->setPreAmp(newAmp*0.01);
 	showMessage(tr("Amp"), newAmp, "%");
 }
 
@@ -1178,12 +1178,12 @@ void MainWindow::showMessage(const QString &cmd, bool value, int last) {
 }
 
 void MainWindow::setVolumeNormalized(bool norm) {
-	d->audio.setVolumeNormalized(norm);
+	d->audio->setVolumeNormalized(norm);
 	showMessage(tr("Normalize Volume"), norm);
 }
 
 void MainWindow::setTempoScaled(bool scaled) {
-	d->audio.setTempoScaled(scaled);
+	d->audio->setTempoScaled(scaled);
 	showMessage(tr("Autoscale Pitch"), scaled);
 }
 

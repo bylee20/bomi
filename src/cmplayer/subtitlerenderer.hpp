@@ -3,7 +3,6 @@
 
 #include "stdafx.hpp"
 #include "subtitle.hpp"
-#include "textosdrenderer.hpp"
 
 class QDialog;						class Mrl;
 class SubtitleComponentModel;		class SubtitleRendererItem;
