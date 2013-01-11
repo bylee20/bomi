@@ -22,6 +22,8 @@ int is_hwaccel_available(const char *);
 #endif
 }
 
+class VideoFormat;
+
 class HwAccelInfo {
 public:
 	HwAccelInfo(const HwAccelInfo&) = delete;
@@ -77,7 +79,7 @@ public:
 	void releaseBuffer(void *data);
 	bool copySurface(mp_image_t *mpi);
 #endif
-	VideoFormat format() const;
+//	VideoFormat format() const;
 private:
 	Context m_ctx;
 	AVCodecContext *m_avctx = nullptr;

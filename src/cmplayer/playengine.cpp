@@ -1,8 +1,7 @@
 #include "playengine.hpp"
-#include "avmisc.hpp"
+#include "videoframe.hpp"
 #include "videooutput.hpp"
 #include "videorendereritem.hpp"
-#include "audiocontroller.hpp"
 #include "mpcore.hpp"
 
 enum MpError {None = 0, UserInterrupted, CannotOpenStream, NoStream, InitVideoFilter, InitAudioFilter};
@@ -38,11 +37,118 @@ mp_cmd *(*mpctx_wait_cmd)(MPContext *ctx, int timeout, int peek) = nullptr;
 void mixer_setvolume2(mixer_t *mixer, float l, float r);
 extern char *dvd_device;
 extern int frame_dropping;
+
+static void checkvolume(struct mixer *mixer)
+{
+	if (!mixer->ao)
+		return;
+
+	ao_control_vol_t vol;
+	if (mixer->softvol || CONTROL_OK != ao_control(mixer->ao, AOCONTROL_GET_VOLUME, &vol)) {
+		mixer->softvol = true;
+		if (!mixer->afilter)
+			return;
+		float db_vals[AF_NCH];
+		if (!af_control_any_rev(mixer->afilter,
+						AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_GET, db_vals))
+			db_vals[0] = db_vals[1] = 1.0;
+		else
+			af_from_dB(2, db_vals, db_vals, 20.0, -200.0, 60.0);
+		vol.left = (db_vals[0] / (mixer->softvol_max / 100.0)) * 100.0;
+		vol.right = (db_vals[1] / (mixer->softvol_max / 100.0)) * 100.0;
+	}
+	float l = mixer->vol_l;
+	float r = mixer->vol_r;
+	if (mixer->muted_using_volume)
+		l = r = 0;
+	/* Try to detect cases where the volume has been changed by some external
+	 * action (such as something else changing a shared system-wide volume).
+	 * We don't test for exact equality, as some AOs may round the value
+	 * we last set to some nearby supported value. 3 has been the default
+	 * volume step for increase/decrease keys, and is apparently big enough
+	 * to step to the next possible value in most setups.
+	 */
+	if (FFABS(vol.left - l) >= 3 || FFABS(vol.right - r) >= 3) {
+		mixer->vol_l = vol.left;
+		mixer->vol_r = vol.right;
+		if (mixer->muted_using_volume)
+			mixer->muted = false;
+	}
+	if (!mixer->softvol)
+		// Rely on the value not changing if the query is not supported
+		ao_control(mixer->ao, AOCONTROL_GET_MUTE, &mixer->muted);
+	mixer->muted_by_us &= mixer->muted;
+	mixer->muted_using_volume &= mixer->muted;
 }
 
-int mp_input_parse_and_queue_cmds(struct input_ctx *ictx, const char *str) {return mp_input_queue_cmd(ictx, mp_input_parse_cmd((char*)str));}
+static void setvolume_internal(mixer_t *mixer, float l, float r)
+{
+	struct ao_control_vol vol = {.left = l, .right = r};
+	if (!mixer->softvol) {
+		// relies on the driver data being permanent (so ptr stays valid)
+		mixer->restore_volume = mixer->ao->no_persistent_volume ?
+			mixer->ao->driver->info->short_name : NULL;
+		if (ao_control(mixer->ao, AOCONTROL_SET_VOLUME, &vol) != CONTROL_OK)
+			mp_tmsg(MSGT_GLOBAL, MSGL_ERR,
+					"[Mixer] Failed to change audio output volume.\n");
+		return;
+	}
+	mixer->restore_volume = "softvol";
+	if (!mixer->afilter)
+		return;
+	// af_volume uses values in dB
+	float db_vals[AF_NCH];
+	int i;
+	db_vals[0] = (l / 100.0) * (mixer->softvol_max / 100.0);
+	db_vals[1] = (r / 100.0) * (mixer->softvol_max / 100.0);
+	for (i = 2; i < AF_NCH; i++)
+		db_vals[i] = ((l + r) / 100.0) * (mixer->softvol_max / 100.0) / 2.0;
+	af_to_dB(AF_NCH, db_vals, db_vals, 20.0);
+	if (!af_control_any_rev(mixer->afilter,
+							AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET,
+							db_vals)) {
+		mp_tmsg(MSGT_GLOBAL, MSGL_INFO,
+				"[Mixer] No hardware mixing, inserting volume filter.\n");
+		if (!(af_add(mixer->afilter, (char*)"volume")
+			  && af_control_any_rev(mixer->afilter,
+									AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET,
+									db_vals)))
+			mp_tmsg(MSGT_GLOBAL, MSGL_ERR,
+					"[Mixer] No volume control available.\n");
+	}
+}
+
+void mixer_setvolume2(mixer_t *mixer, float l, float r) {
+	checkvolume(mixer);  // to check mute status and AO support for volume
+	mixer->vol_l = qBound(0.0f, l, 100.0f);//av_clip(l, 0, 100);
+	mixer->vol_r = qBound(0.0f, r, 100.0f);//av_clip(r, 0, 100);
+	if (!mixer->ao || mixer->muted)
+		return;
+	setvolume_internal(mixer, mixer->vol_l, mixer->vol_r);
+}
+
+}
+
+struct mp_volnorm {int method;	float mul;};
+
+static double volnorm_mul(MPContext *mpctx) {
+	if (mpctx && mpctx->mixer.afilter) {
+		auto af = mpctx->mixer.afilter->first;
+		while (af) {
+			if (strcmp(af->info->name, "volnorm") == 0)
+				break;
+			af = af->next;
+		}
+		if (af)
+			return reinterpret_cast<mp_volnorm*>(af->setup)->mul;
+	}
+	return 1.0;
+}
+
 
 PlayEngine *PlayEngine::obj = nullptr;
+
+
 
 struct PlayEngine::Context {
 	MPContext mp;
@@ -50,23 +156,18 @@ struct PlayEngine::Context {
 };
 
 struct PlayEngine::Data {
-	Mrl mrl = {}, playingMrl = {};
-	QByteArray filename = {}, next_filename = {};
-	QTimer ticker = {};		VideoFormat vfmt = {};
-	State state = State::Stopped;
-	bool quit = false, playing = false, isMenu = false;
-	bool idling = false, init = false;
-	int duration = 0, initSeek = 0, title = 0;
-	int start = 0;
-	double speed = 1.0;
-	Context *ctx = nullptr;
+	Mrl playingMrl;
+	QByteArray fileName, nextFileName;
+	QTimer ticker = {};
+	bool quit = false, playing = false, idling = false, init = false;
+	int initSeek = 0, start = 0;
+
+	PlayEngine::Context *ctx = nullptr;
 	MPContext *mpctx = nullptr;
 	VideoOutput *video = nullptr;
-	StreamList spus = {};
-	DvdInfo dvd = {};
-	QMutex q_mutex = {};
-	QWaitCondition q_wait = {};
-	QByteArray dvdDevice = {};
+	QMutex q_mutex;		QWaitCondition q_wait;
+
+	double videoAspect = 0.0;
 };
 
 PlayEngine::PlayEngine()
@@ -75,9 +176,19 @@ PlayEngine::PlayEngine()
 	mpctx_paused_changed = onPausedChanged;
 	mpctx_run_cmplayer_cmd = runCmd;
 	mpctx_wait_cmd = waitCmd;
-	connect(&d->ticker, SIGNAL(timeout()), this, SLOT(emitTick()));
+	connect(&d->ticker, &QTimer::timeout, [this] () {
+		if (d->mpctx && (isPaused() || isPlaying())) {
+			const int duration = qRound(get_time_length(d->mpctx)*1000.0);
+			if (m_duration != duration)
+				emit durationChanged(m_duration = duration);
+			emit tick(position());
+		}
+	});
 	d->ticker.setInterval(20);
 	d->ticker.start();
+
+	connect(d->video, &VideoOutput::formatChanged, this, &PlayEngine::videoFormatChanged, Qt::QueuedConnection);
+//	Skin::plug(renderer, &VideoRendererItem::formatChanged, this, &PlayEngine::videoFormatChanged);
 }
 
 PlayEngine::~PlayEngine() {
@@ -85,47 +196,55 @@ PlayEngine::~PlayEngine() {
 	delete d;
 }
 
-bool PlayEngine::isHardwareAccelerated() const {
+double PlayEngine::volumeNormalizer() const {
+	return volnorm_mul(d->mpctx);
+}
+
+bool PlayEngine::usingHwAcc() const {
 #ifdef Q_OS_MAC
 	return d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->codec && !strcmp(d->mpctx->sh_video->codec->name, "ffh264vda");
 #endif
 	return d->video->usingHwAccel();
 }
 
-bool PlayEngine::isMenu() const {
-	return d->isMenu;
-}
-
-void PlayEngine::setDvdDevice(const QString &name) {
-	d->dvdDevice = name.toLocal8Bit();
-//	dvd_device = d->dvdDevice.data();
-}
-
-bool PlayEngine::isFrameDroppingEnabled() const {
-	return frame_dropping;
-}
-
-void PlayEngine::setFrameDroppingEnabled(bool enabled) {
-	tellmp("frame_drop", enabled ? 1 : 0);
+void PlayEngine::updateVideoAspect(double ratio) {
+	d->videoAspect = ratio;
+	if (m_renderer)
+		m_renderer->setVideoAspectRaito(ratio);
 }
 
 void PlayEngine::clear() {
-	d->dvd.clear();
-	d->spus.clear();
-	d->title = 0;
-	d->isMenu = false;
+	m_videoStreams.clear();
+	updateVideoAspect(0.0);
+	m_dvd.clear();
+	m_subtitleStreams.clear();
+	m_audiosStreams.clear();
+	m_title = 0;
+	m_isInDvdMenu = false;
 }
 
 bool PlayEngine::parse(const Id &id) {
-	if (getStream(id, "SUBTITLE", "SID", d->spus))
+	if (getStream(id, "AUDIO", "AID", m_audiosStreams))
 		return true;
-	else if (id.name.startsWith(_L("DVD_"))) {
-		if (same(id.name, "DVD_VOLUME_ID")) {
-			d->dvd.volume = id.value;
-			d->dvd.titles[0].name = tr("DVD Menu");
+	if (getStream(id, "VIDEO", "VID", m_videoStreams))
+		return true;
+	if (getStream(id, "SUBTITLE", "SID", m_subtitleStreams))
+		return true;
+	else if (!id.name.isEmpty()) {
+		if (id.name.startsWith(_L("DVD_"))) {
+			if (same(id.name, "DVD_VOLUME_ID")) {
+				m_dvd.volume = id.value;
+				m_dvd.titles[0].name = tr("DVD Menu");
+			} else if (same(id.name, "DVD_CURRENT_TITLE")) {
+				m_title = id.value.toInt();
+			} else
+				return false;
 			return true;
-		} else if (same(id.name, "DVD_CURRENT_TITLE")) {
-			d->title = id.value.toInt();
+		} else if (id.name.startsWith("VIDEO")) {
+			if (same(id.name, "VIDEO_ASPECT")) {
+				updateVideoAspect(id.value.toDouble());
+			} else
+				return false;
 			return true;
 		}
 //		static QRegExp rxTitle("DVD_TITLE_(\\d+)_(LENGTH|CHAPTERS)");
@@ -137,53 +256,30 @@ bool PlayEngine::parse(const QString &line) {
 	static QRegExp rxTitle("^TITLE (\\d+), CHAPTERS: (.+)$");
 	if (rxTitle.indexIn(line) != -1) {
 		const int idx = rxTitle.cap(1).toInt();
-		auto &title = d->dvd.titles[idx];
+		auto &title = m_dvd.titles[idx];
 		title.name = tr("Title %1").arg(idx);
 		title.chapters.clear();
 		title.chapters << "00:00:00";
 		title.chapters += rxTitle.cap(2).split(',', QString::SkipEmptyParts);
 		title.chapters.pop_back();
-		return true;
 	} else if (same(line, "DVDNAV_TITLE_IS_MOVIE")) {
-		d->isMenu = false;
-		return true;
+		m_isInDvdMenu = false;
 	} else if (same(line, "DVDNAV_TITLE_IS_MENU")) {
-		d->isMenu = true;
-		return true;
+		m_isInDvdMenu = true;
 	} else if (line.startsWith(_L("DVDNAV, switched to title: "))) {
-		d->title = line.mid(27).toInt();
-		return true;
-	}
-	return false;
+		m_title = line.mid(27).toInt();
+	} else
+		return false;
+	return true;
 }
 
-void PlayEngine::emitTick() {
-	if (!d->mpctx)
-		return;
-	switch (d->state) {
-	case State::Playing:
-	case State::Paused: {
-		const int duration = qRound(get_time_length(d->mpctx)*1000.0);
-		if (d->duration != duration)
-			emit durationChanged(d->duration = duration);
-		emit tick(position());
-		break;
-	} default:
-		break;
-	}
-}
+
 
 MPContext *PlayEngine::context() const {
 	return d->mpctx;
 }
 
-void PlayEngine::updateState(State state) {
-	if (d->state == state)
-		return;
-	const State old = d->state;
-	d->state = state;
-	emit stateChanged(d->state, old);
-}
+
 
 mp_cmd *PlayEngine::waitCmd(MPContext *mpctx, int timeout, int peek) {
 	Data *d = reinterpret_cast<Context*>(mpctx)->p->d;
@@ -257,7 +353,7 @@ int PlayEngine::idle() {
 			ret = Cmd::Quit;
 			break;
 		case MP_CMD_LOADFILE:
-			d->next_filename = mpcmd->args[0].v.s;
+			d->nextFileName = mpcmd->args[0].v.s;
 			ret = Cmd::Load;
 			break;
 		case -1: {
@@ -306,14 +402,14 @@ void PlayEngine::run() {
 	d->quit = false;
 
 	auto getFileName = [this] () -> Cmd::Type {
-		if (d->filename.isEmpty()) {
+		if (d->fileName.isEmpty()) {
 			int cmd = idle();
 			if (cmd == Cmd::Quit) {
 				d->quit = true;
 				return Cmd::Quit;
 			} else if (cmd == Cmd::Load) {
-				d->filename = d->next_filename;
-				d->next_filename.clear();
+				d->fileName = d->nextFileName;
+				d->nextFileName.clear();
 				return Cmd::Load;
 			} else
 				Q_ASSERT_X(false, "PlayEngine::run()", "Invalid command is returned from idle state.");
@@ -340,13 +436,13 @@ void PlayEngine::run() {
 	auto play = [this] () -> MpError {
 		MpError error = MpError::None;
 		d->playing = true;
-		d->playingMrl = d->mrl;
+		d->playingMrl = m_mrl;
 		if (d->mpctx->paused)
 			run_mp_cmd("pause");
-		updateState(State::Playing);
-		emit started(d->mrl);
+		setState(EnginePlaying);
+		emit started(m_mrl);
 		int res = Cmd::Unknown;
-		bool volHack = true;
+//		bool volHack = true;
 		while (d->mpctx->stop_play == KEEP_PLAYING && !d->quit) {
 			error = (MpError)run_playloop(d->mpctx);
 			if (error != MpError::None)
@@ -355,24 +451,24 @@ void PlayEngine::run() {
 			res = mpctx_process_mp_cmds(d->mpctx);
 			if (res & Cmd::Break)
 				break;
-			if (Q_UNLIKELY(volHack && m_audio)) {
-				const float volume = m_audio->realVolume();
-				mixer_setvolume2(&d->mpctx->mixer, volume, volume);
-				volHack = false;
-			}
+//			if (Q_UNLIKELY(volHack && m_audio)) {
+//				const float volume = mpVolume();
+//				mixer_setvolume2(&d->mpctx->mixer, volume, volume);
+//				volHack = false;
+//			}
 		}
 		if (res & Cmd::Break) {
-			updateState(State::Stopped);
+			setState(EngineStopped);
 			emit stopped(d->playingMrl, position(), duration());
 			run_mp_cmd("stop");
 			if (res == Cmd::Quit)
 				d->quit = true;
 		} else {
 			if (d->mpctx->stop_play == AT_END_OF_FILE) {
-				updateState(State::Finished);
+				setState(EngineFinished);
 				emit finished(d->playingMrl);
 			} else
-				updateState(State::Error);
+				setState(EngineError);
 		}
 		d->playing = false;
 		return error;
@@ -384,11 +480,11 @@ void PlayEngine::run() {
 		d->idling = false;
 		if (idle == Cmd::Quit)
 			break;
-		updateState(State::Buffering);
-		d->isMenu = false;
+		setState(EngineBuffering);
+		m_isInDvdMenu = false;
 		if (idle == Cmd::Load) {
 			play_tree_t *entry = play_tree_new();
-			play_tree_add_file(entry, d->filename.data());
+			play_tree_add_file(entry, d->fileName.data());
 			if (d->mpctx->playtree)
 				play_tree_free_list(d->mpctx->playtree->child, true);
 			else
@@ -399,32 +495,40 @@ void PlayEngine::run() {
 			if (play_tree_iter_step(d->mpctx->playtree_iter, 0, 0) != PLAY_TREE_ITER_ENTRY) {
 				play_tree_iter_free(d->mpctx->playtree_iter);
 				d->mpctx->playtree_iter = nullptr;
-				updateState(State::Error);
+				setState(EngineError);
 				continue;
 			}
 			d->mpctx->filename = play_tree_iter_get_file(d->mpctx->playtree_iter, 1);
 		}
-		d->mpctx->filename = d->filename.data();
+		d->mpctx->filename = d->fileName.data();
 
 		clear();
 		emit aboutToOpen();
+
 		MpError error = loadOpenFile();
 		if (error == MpError::None) {
-			tellmp("speed_set", d->speed);
+			tellmp("speed_set", m_speed);
 			if (d->initSeek > 0)
 				d->mpctx->opts.seek_to_sec = (double)d->initSeek/1000.0;
 			emit seekableChanged(isSeekable());
+
+			auto mixer = &d->mpctx->mixer;
+	//		mixer_setvolume2(mixer, 0.0f, 0.0f); mplayer bug? when volume < 1.0, no sound output
+			mixer_setmute(mixer, m_muted);
+			if (!m_af.isEmpty())
+				tellmp("af_add", m_af);
+
 			emit aboutToPlay();
 			mpctx_prepare_playback(d->mpctx);
 			if (play() != MpError::None)
-				updateState(State::Error);
+				setState(EngineError);
 		} else
-			updateState(State::Error);
+			setState(EngineError);
 		if (d->quit && d->mpctx->stop_play == KEEP_PLAYING)
-			updateState(State::Stopped);
+			setState(EngineStopped);
 		mpctx_cleanup_playback(d->mpctx);
-		d->filename = d->next_filename;
-		d->next_filename.clear();
+		d->fileName = d->nextFileName;
+		d->nextFileName.clear();
 		if (d->quit) {
 			qDebug() << "quit!";
 			break;
@@ -439,28 +543,8 @@ void PlayEngine::run() {
 }
 
 void PlayEngine::tellmp(const QString &cmd) {
-	mp_input_parse_and_queue_cmds(d->mpctx->input, cmd.toLocal8Bit());
-}
-
-void PlayEngine::tellmp(const QString &cmd, const QVariant &arg) {
-	tellmp(cmd % ' ' % arg.toString());
-}
-
-void PlayEngine::tellmp(const QString &cmd, const QVariant &arg1, const QVariant &arg2) {
-	tellmp(cmd % ' ' % arg1.toString() % ' ' % arg2.toString());
-}
-
-void PlayEngine::tellmp(const QString &cmd, const QVariant &arg1, const QVariant &arg2, const QVariant &arg3) {
-	tellmp(cmd % ' ' % arg1.toString() % ' ' % arg2.toString() % ' ' % arg3.toString());
-}
-
-void PlayEngine::tellmp(const QString &cmd, const QStringList &args) {
-	QString full = cmd;
-	for (int i=0; i<args.size(); ++i) {
-		full += ' ';
-		full += args[i];
-	}
-	tellmp(full);
+	if (d->mpctx && d->mpctx->input)
+		mp_input_queue_cmd(d->mpctx->input, mp_input_parse_cmd(cmd.toLocal8Bit().data()));
 }
 
 void PlayEngine::quitRunning() {
@@ -470,15 +554,15 @@ void PlayEngine::quitRunning() {
 
 void PlayEngine::play(int time) {
 	d->initSeek = time;
-	d->next_filename = d->mrl.toString().toLocal8Bit();
+	d->nextFileName = m_mrl.toString().toLocal8Bit();
 	enqueue(new Cmd(Cmd::Load));
 }
 
 void PlayEngine::setMrl(const Mrl &mrl, int start, bool play) {
-	if (mrl != d->mrl) {
-		d->mrl = mrl;
+	if (mrl != m_mrl) {
+		m_mrl = mrl;
 		d->start = start;
-		emit mrlChanged(d->mrl);
+		emit mrlChanged(m_mrl);
 		if (play)
 			this->play(d->start);
 	}
@@ -493,8 +577,8 @@ bool PlayEngine::isSeekable() const {
 }
 
 void PlayEngine::setSpeed(double speed) {
-	if (d->speed != speed) {
-		d->speed = speed;
+	if (m_speed != speed) {
+		m_speed = speed;
 		if (d->playing)
 			tellmp("speed_set", speed);
 	}
@@ -504,111 +588,78 @@ bool PlayEngine::hasVideo() const {
 	return d->mpctx && d->mpctx->sh_video;
 }
 
-State PlayEngine::state() const {
-	return d->state;
-}
-
-double PlayEngine::speed() const {
-	return d->speed;
-}
-
-int PlayEngine::duration() const {
-	return d->duration;
-}
-
 bool PlayEngine::atEnd() const {
 	return d->mpctx->stop_play == AT_END_OF_FILE;
 }
 
-Mrl PlayEngine::mrl() const {
-	return d->mrl;
-}
 
-int PlayEngine::currentTitleId() const {
-	return d->isMenu ? 0 : d->title;
-}
-
-int PlayEngine::currentChapterId() const {
+int PlayEngine::currentChapter() const {
 	if (d->playing)
 		return get_current_chapter(d->mpctx);
 	return -2;
 }
 
-int PlayEngine::currentSpuId() const {
+int PlayEngine::currentSubtitleStream() const {
 	return d->mpctx->global_sub_pos;
-}
-
-QStringList PlayEngine::chapters() const {
-	auto it = d->dvd.titles.find(currentTitleId());
-	return it != d->dvd.titles.end() ? it->chapters : QStringList();
-}
-
-QMap<int, DvdInfo::Title> PlayEngine::titles() const {
-	return d->dvd.titles;
-}
-
-StreamList PlayEngine::spus() const {
-	return d->spus;
-}
-
-void PlayEngine::setCurrentTitle(int id) {
-	if (id > 0)
-		tellmp("switch_title", id);
-	else
-		tellmp("dvdnav menu");
-}
-
-void PlayEngine::setCurrentChapter(int id) {
-	tellmp("seek_chapter", id, 1);
-}
-
-void PlayEngine::setCurrentSpu(int id) {
-	tellmp("sub_demux", id);
 }
 
 void PlayEngine::onPausedChanged(MPContext *mpctx) {
 	PlayEngine *engine = reinterpret_cast<Context*>(mpctx)->p;
 	if (mpctx->stop_play == KEEP_PLAYING)
-		engine->updateState(mpctx->paused ? State::Paused : State::Playing);
+		engine->setState(mpctx->paused ? EnginePaused : EnginePlaying);
 }
 
 void PlayEngine::play() {
-	switch (d->state) {
-	case State::Paused:
+	switch (m_state) {
+	case EnginePaused:
 		tellmp("pause");
 		break;
-	case State::Stopped:
-	case State::Finished:
+	case EngineStopped:
+	case EngineFinished:
 		play(d->start);
-//		load();
 		break;
 	default:
 		break;
 	}
 }
 
-void PlayEngine::pause() {
-	if (!isPaused()) {
-		tellmp("pause");
+QString PlayEngine::mediaName() const {
+	if (m_mrl.isLocalFile())
+		return tr("File") % _L(": ") % QFileInfo(m_mrl.toLocalFile()).fileName();
+	if (m_mrl.isDvd() && !m_dvd.volume.isEmpty())
+		return _L("DVD") % _L(": ") % m_dvd.volume;
+	return _L("URL") % _L(": ") % m_mrl.toString();
+}
+
+int PlayEngine::currentAudioStream() const {
+	if (d->mpctx && d->mpctx->sh_audio)
+		return d->mpctx->sh_audio->aid;
+	return -1;
+}
+
+int PlayEngine::currentVideoStream() const {
+	return hasVideo() ? d->mpctx->sh_video->vid : -1;
+}
+
+double PlayEngine::fps() const {
+	return hasVideo() ? d->mpctx->sh_video->fps : 25;
+}
+
+void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
+	if (_Change(m_renderer, renderer)) {
+		updateVideoAspect(d->videoAspect);
 	}
 }
 
-void PlayEngine::stop() {
-	enqueue(new Cmd(Cmd::Stop));
+VideoFormat PlayEngine::videoFormat() const {
+	return d->video->format();
 }
 
-void PlayEngine::relativeSeek(int pos) {
-	tellmp("seek", (double)pos/1000.0, 0);
-}
-
-void PlayEngine::seek(int pos) {
-	tellmp("seek", (double)pos/1000.0, 2);
-}
-
-QString PlayEngine::mediaName() const {
-	if (d->mrl.isLocalFile())
-		return tr("File name: ") % QFileInfo(d->mrl.toLocalFile()).fileName();
-	if (d->mrl.isDvd() && !d->dvd.volume.isEmpty())
-		return _L("DVD: ") % d->dvd.volume;
-	return _L("URL: ") % d->mrl.toString();
+void PlayEngine::setAudioFilter(const QString &af, bool on) {
+	auto it = qFind(m_af.begin(), m_af.end(), af);	const bool prev = it != m_af.end();
+	if (prev != on) {
+		if (on) {m_af.append(af); tellmp("af_add", af);}
+		else {m_af.erase(it); tellmp("af_del", af);}
+		emit audioFilterChanged(af, on);
+	}
 }

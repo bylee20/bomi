@@ -2,9 +2,12 @@
 #define PLAYINFOITEM_HPP
 
 #include "stdafx.hpp"
+#include "mrl.hpp"
+#include "skin.hpp"
 
 class PlayEngine;		class VideoFormat;
 class VideoRendererItem;class AudioController;
+class PlaylistModel;
 
 class AvIoFormat : public QObject {
 	Q_OBJECT
@@ -47,13 +50,13 @@ public:
 	bool hwaccel() const {return m_hwaccel;}
 	AvIoFormat *input() const {return m_input;}
 	AvIoFormat *output() const {return m_output;}
-	void setVideo(const VideoFormat &format, const PlayEngine *engine);
+	void setVideo(const PlayEngine *engine);
 	void setAudio(const PlayEngine *engine);
 private:
 	static QString format(quint32 fmt) {
-		return fmt >= 0x20202020 ? _u((const char*)&fmt, 4) : _L("0x") % _n(fmt, 16);
+		return fmt >= 0x20202020 ? _U((const char*)&fmt, 4) : _L("0x") % _N(fmt, 16);
 	}
-	static QString bps(int Bps) {return (Bps ? _n(Bps*8/1000) % _L("kbps") : QString());}
+	static QString bps(int Bps) {return (Bps ? _N(Bps*8/1000) % _L("kbps") : QString());}
 	AvIoFormat *m_input = new AvIoFormat(this);
 	AvIoFormat *m_output = new AvIoFormat(this);
 	bool m_hwaccel = false;
@@ -65,13 +68,19 @@ class MediaInfoObject : public QObject {
 	Q_PROPERTY(QString name READ name)
 public:
 	MediaInfoObject(QObject *parent): QObject(parent) {}
+	void setMrl (const Mrl &mrl) {m_mrl = mrl;}
 	QString name() const {return m_name;}
+	QString display() const {return m_mrl.displayName();}
+	int nth() const {return m_nth;}
+	int count() const {return m_count;}
 private:
 	friend class PlayInfoItem;
 	QString m_name;
+	Mrl m_mrl;
+	int m_nth = 0, m_count = 0;
 };
 
-class PlayInfoItem : public QQuickItem {
+class PlayInfoItem : public QQuickItem, public Skin {
 	Q_OBJECT
 public:
 	Q_ENUMS(State)
@@ -96,6 +105,7 @@ private:
 	Q_PROPERTY(QString monospace READ monospace)
 	Q_PROPERTY(int volume READ volume NOTIFY volumeChanged)
 	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
+	Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
 public:
 	PlayInfoItem(QQuickItem *parent = nullptr);
 	~PlayInfoItem();
@@ -108,7 +118,7 @@ public:
 	AvInfoObject *video() const {return m_video;}
 	MediaInfoObject *media() const {return m_media;}
 	State state() const {return m_state;}
-	void set(const PlayEngine *engine, const VideoRendererItem *video, const AudioController *audio);
+	void set(const PlayEngine *engine);
 	void setDuration(int duration) {if (m_duration != duration) emit durationChanged(m_duration = duration);}
 	void setPosition(int pos) {if (m_position != pos) emit tick(m_position = pos);}
 	void setState(State state) {if (m_state != state) emit stateChanged(m_state = state);}
@@ -125,7 +135,10 @@ public:
 	QString monospace() const;
 	int volume() const {return m_volume;}
 	bool isFullScreen() const {return m_fullScreen;}
+	bool isMuted() const {return m_muted;}
+	void setPlaylist(const PlaylistModel *playlist);
 signals:
+	void mutedChanged(bool muted);
 	void nameChanged(const QString &name);
 	void durationChanged(int duration);
 	void tick(int pos);
@@ -140,6 +153,7 @@ signals:
 private slots:
 //	void updateResourceUsage();
 private:
+	VideoRendererItem *renderer() const;
 	struct Data;
 	Data *d;
 	int m_duration = 0, m_position = 0;
@@ -154,7 +168,7 @@ private:
 	double m_totmem = 1, m_mem = 0; // MB
 	double m_bps = 0;
 	int m_volume = 0;
-	bool m_fullScreen = false;
+	bool m_fullScreen = false, m_muted = false;
 };
 
 #endif // PLAYINFOITEM_HPP

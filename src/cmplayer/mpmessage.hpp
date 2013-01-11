@@ -29,15 +29,8 @@ public:
 	static void add(MpMessage *parser);
 	static void clear();
 protected:
-	struct Id {
-		Id() {}
-		Id(const QString &name, const QString &value)
-			: name(name), value(value) {}
-		QString name = {}, value = {};
-	};
-	static auto same(const QString &s1, const char *l1) -> bool {
-		return s1.compare(QLatin1String(l1), Qt::CaseSensitive) == 0;
-	}
+	struct Id {Id() {}	Id(const QString &name, const QString &value): name(name), value(value) {} QString name, value;};
+	static auto same(const QString &s1, const char *l1) -> bool {return s1.compare(_L(l1), Qt::CaseSensitive) == 0;}
 	static Id id(const QString &line);
 	virtual bool parse(const QString &line);
 	virtual bool parse(const Id &id);

@@ -7,13 +7,13 @@
 
 namespace Global {
 
-enum class State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Opening = 16, Buffering = 32, Error = 64, Preparing = 128};
+enum EngineState {EngineStopped = 1, EnginePlaying = 2, EnginePaused = 4, EngineFinished = 8, EngineOpening = 16, EngineBuffering = 32, EngineError = 64, EnginePreparing = 128};
 enum StreamType {UnknownStream = 0, VideoStream, AudioStream, SubPicStream};
 enum MediaMetaData {LanguageCode};
 
 static inline QString toString(int value, bool sign) {
 	if (!sign || value < 0) return QString::number(value);
-	return (value > 0 ? _L("+") : _u("±")) += QString::number(value);
+	return (value > 0 ? _L("+") : _U("±")) += QString::number(value);
 }
 
 static inline QString toString(double value, bool sign, int n = 1) {
@@ -21,7 +21,7 @@ static inline QString toString(double value, bool sign, int n = 1) {
 		return toString(qRound(value), sign);
 	QString ret;
 	if (sign && value >= 0)
-		ret = (value > 0 ? _L("+") : _u("±"));
+		ret = (value > 0 ? _L("+") : _U("±"));
 	QByteArray fmt("%.");	fmt.reserve(10);
 	fmt.append(QByteArray::number(n)).append("f");
 	return ret += QString().sprintf(fmt.data(), value);

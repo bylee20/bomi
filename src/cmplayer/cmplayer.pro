@@ -79,11 +79,9 @@ HEADERS += playengine.hpp \
     translator.hpp \
     pref.hpp \
     videoframe.hpp \
-    osdrenderer.hpp \
     subtitle.hpp \
     subtitle_parser.hpp \
     subtitlerenderer.hpp \
-    audiocontroller.hpp \
     info.hpp \
     charsetdetector.hpp \
     abrepeater.hpp \
@@ -99,10 +97,7 @@ HEADERS += playengine.hpp \
     dialogs.hpp \
     favoritesview.hpp \
     downloader.hpp \
-    logodrawer.hpp \
-    overlay.hpp \
     videorenderer.hpp \
-    avmisc.hpp \
     subtitlemodel.hpp \
     tagiterator.hpp \
     subtitle_parser_p.hpp \
@@ -129,7 +124,9 @@ HEADERS += playengine.hpp \
     playinfoitem.hpp \
     texturerendereritem.hpp \
     subtitlerendereritem.hpp \
-    playeritem.hpp
+    playeritem.hpp \
+    videoformat.hpp \
+    qwindowwidget.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -146,11 +143,9 @@ SOURCES += main.cpp \
     translator.cpp \
     pref.cpp \
     videoframe.cpp \
-    osdrenderer.cpp \
     subtitle.cpp \
     subtitle_parser.cpp \
     subtitlerenderer.cpp \
-    audiocontroller.cpp \
     info.cpp \
     charsetdetector.cpp \
     abrepeater.cpp \
@@ -166,8 +161,6 @@ SOURCES += main.cpp \
     dialogs.cpp \
     favoritesview.cpp \
     downloader.cpp \
-    logodrawer.cpp \
-    overlay.cpp \
     videorenderer.cpp \
     subtitlemodel.cpp \
     tagiterator.cpp \
@@ -196,7 +189,8 @@ SOURCES += main.cpp \
     playinfoitem.cpp \
     texturerendereritem.cpp \
     subtitlerendereritem.cpp \
-    playeritem.cpp
+    playeritem.cpp \
+    qwindowwidget.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp
@@ -212,18 +206,19 @@ FORMS += \
     ui/prefdialog.ui
 
 OTHER_FILES += \
-    skins/simple/main.qml \
     skins/simple/qml/TextOsd.qml \
     skins/simple/qml/Osd.qml \
     skins/simple/qml/ProgressOsd.qml \
     skins/simple/qml/PlayInfoOsd.qml \
     skins/simple/qml/Slider.qml \
     skins/simple/qml/Logo.qml \
-    skins/classic/main.qml \
     skins/classic/qml/TextOsd.qml \
     skins/classic/qml/Slider.qml \
     skins/classic/qml/ProgressOsd.qml \
     skins/classic/qml/PlayInfoOsd.qml \
     skins/classic/qml/Osd.qml \
-    skins/classic/qml/Logo.qml
+    skins/classic/qml/Logo.qml \
+    skins/classic/qml/ImageButton.qml \
+    skins/classic/cmplayer.qml \
+    skins/simple/cmplayer.qml
 

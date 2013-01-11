@@ -1,5 +1,4 @@
 #include "widgets.hpp"
-#include "audiocontroller.hpp"
 #include "playengine.hpp"
 #include "qtcolorpicker.hpp"
 

@@ -37,7 +37,7 @@ int RecentInfo::askStartTime(const Mrl &mrl) const {
 			"Played Date: %1\nStopped Time: %2\n"
 			"Do you want to start from where it's stopped?\n"
 			"(You can configure not to ask anymore in the preferecences.)")
-			.arg(date.toString(Qt::ISODate)).arg(msecToString(start, "h:mm:ss"));
+			.arg(date.toString(Qt::ISODate)).arg(_MSecToString(start, "h:mm:ss"));
 		const QMessageBox::StandardButtons b = QMessageBox::Yes | QMessageBox::No;
 		if (QMessageBox::question(QApplication::activeWindow(), title, text, b) != QMessageBox::Yes)
 			return 0;

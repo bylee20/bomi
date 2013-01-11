@@ -7,7 +7,7 @@ struct SubtitleRendererItem::Data {
 	bool redraw = false;
 	int loc_tex = 0, loc_shadowColor = 0, loc_shadowOffset = 0, loc_dxdy = 0;
 	QImage image, next, blank = {1, 1, QImage::Format_ARGB32_Premultiplied};
-	QRectF area = {0, 0, 0, 0};
+	QRectF screen = {0, 0, 0, 0};
 	QPointF shadowOffset = {0, 0};
 	bool empty = true;
 	QSize textureSize = {0, 0};
@@ -27,7 +27,18 @@ SubtitleRendererItem::~SubtitleRendererItem() {
 }
 
 QRectF SubtitleRendererItem::drawArea() const {
-	return d->area.isEmpty() ? boundingRect() : d->area;
+	return m_letterbox ? boundingRect() : d->screen;
+}
+
+void SubtitleRendererItem::setScreenRect(const QRectF &screen) {
+	if (d->screen != screen) {
+		d->screen = screen;
+		if (!m_letterbox) {
+			setGeometryDirty();
+			prepare();
+			update();
+		}
+	}
 }
 
 void SubtitleRendererItem::updateStyle() {
@@ -72,7 +83,7 @@ double SubtitleRendererItem::scale() const {
 	const auto policy = m_style->font()->scale();
 	double px = m_style->font()->size();
 	if (policy == m_style->font()->Diagonal)
-		px *= diagonal(area.size());
+		px *= _Diagonal(area.size());
 	else if (policy == m_style->font()->Width)
 		px *= area.width();
 	else
@@ -134,7 +145,7 @@ void SubtitleRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *
 }
 
 void SubtitleRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
-	QRectF area = d->area.isEmpty() ? boundingRect() : d->area;
+	const auto area = drawArea();
 	const QSizeF size = d->image.size();
 	QPointF pos(0.0, 0.0);
 	if (m_alignment & Qt::AlignBottom) {
@@ -159,25 +170,33 @@ void SubtitleRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	set(tp, QRectF(pos, size), QRectF(0, 0, 1, 1));
 }
 
-bool SubtitleRendererItem::beforeUpdate() {
-	if (d->redraw) {
+void SubtitleRendererItem::initializeTextures() {
+	if (!d->empty) {
 		glBindTexture(GL_TEXTURE_2D, texture(0));
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, d->image.width(), d->image.height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, d->image.bits());
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		d->redraw = false;
-		setGeometryDirty();
 	}
-	return false;
+	setGeometryDirty();
+}
+
+void SubtitleRendererItem::beforeUpdate() {
+	if (d->redraw) {
+		initializeTextures();
+		setGeometryDirty();
+		d->redraw = false;
+	}
 }
 
 void SubtitleRendererItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) {
 	TextureRendererItem::geometryChanged(newGeometry, oldGeometry);
-	setGeometryDirty();
-	prepare();
-	update();
+	if (m_letterbox) {
+		setGeometryDirty();
+		prepare();
+		update();
+	}
 }
 
 const char *SubtitleRendererItem::fragmentShader() const {
@@ -205,4 +224,14 @@ void SubtitleRendererItem::setMargin(double top, double bottom, double right, do
 	}
 	setGeometryDirty();
 	update();
+}
+
+void SubtitleRendererItem::setLetterboxHint(bool hint) {
+	if (m_letterbox != hint) {
+		m_letterbox = hint;
+		if (d->screen != boundingRect()) {
+			prepare();
+			update();
+		}
+	}
 }

@@ -213,6 +213,8 @@ struct PrefDialog::Data {
 	QMap<int, QCheckBox*> hwaccel;
 	PrefOpenMediaGroup *open_media_from_file_manager;
 	PrefOpenMediaGroup *open_media_by_drag_and_drop;
+	QQuickView *preview = new QQuickView;
+	QStringList imports;
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
@@ -222,9 +224,15 @@ PrefDialog::PrefDialog(QWidget *parent)
 : QDialog(parent)
 #endif
 , d(new Data) {
+
+//	d->preview->resize(400, 300);
+//		d->preview->show();
+	d->preview->setResizeMode(QQuickView::SizeRootObjectToView);
+//	d->imports = d->preview->engine()->importPathList();
 	d->ui.setupUi(this);
 	d->ui.tree->setItemDelegate(new Delegate(d->ui.tree));
 	d->ui.tree->setIconSize(QSize(32, 32));
+	d->ui.skin_preview->setEmbeddedWindow(d->preview);
 
 	connect(d->ui.tree, SIGNAL(itemSelectionChanged()), this, SLOT(onCategoryChanged()));
 	auto addCategory = [this] (const QString &name) {
@@ -307,7 +315,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	d->ui.sub_priority->setAddingAndErasingEnabled(true);
 	checkSubAutoselect(d->ui.sub_autoselect->currentData());
 
-//	d->ui.skin_name->addItems(Skin::names(true));
+	d->ui.skin_name->addItems(Skin::names(true));
 	onSkinIndexChanged(d->ui.skin_name->currentIndex());
 
 	connect(d->ui.skin_name, SIGNAL(currentIndexChanged(int)), this, SLOT(onSkinIndexChanged(int)));
@@ -329,6 +337,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 	retranslate();
 	fill(Pref::get());
 
+//	d->ui.skin_prev->setWindow
+
 	d->ui.sub_shadow_blur->hide();
 #ifdef Q_OS_MAC
 	d->ui.system_tray_group->hide();
@@ -337,22 +347,17 @@ PrefDialog::PrefDialog(QWidget *parent)
 }
 
 PrefDialog::~PrefDialog() {
+	delete d->preview;
 	delete d;
 }
 
 void PrefDialog::onSkinIndexChanged(int idx) {
 	if (idx >= 0) {
-//		const auto name = d->ui.skin_name->itemText(idx);
-//		const auto path = Skin::path(name);
-//		d->ui.skin_path->setText(path % '/' % name);
-//		QSize size(200, 200);
-//		QPixmap pixmap;
-//		if (pixmap.load(path % '/' % name % "/preview.png")) {
-//			d->ui.skin_preview->setPixmap(pixmap);
-//			size = pixmap.size();
-//		} else
-//			d->ui.skin_preview->setText(tr("No preview!"));
-//		d->ui.skin_preview->setFixedSize(size);
+		const auto name = d->ui.skin_name->itemText(idx);
+		const auto skin = Skin::source(name);
+		d->ui.skin_path->setText(skin.absolutePath());
+//		view->engine()->addImportPath(skin.absolutePath());
+		d->preview->setSource(QUrl::fromLocalFile(skin.absoluteFilePath()));
 	}
 }
 

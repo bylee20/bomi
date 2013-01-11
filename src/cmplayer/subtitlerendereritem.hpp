@@ -138,9 +138,11 @@ public:
 	SubtitleStyleObject *style() const {return m_style;}
 	QSizeF contentSize() const {return m_size;}
 	void setText(const RichTextDocument &doc);
-	void setDrawArea(const QRectF &area);
+	void setScreenRect(const QRectF &screen);
 	void setAlignment(Qt::Alignment alignment);
-//	RichTextDocument doc() const;
+	double fps() const;
+	void setLetterboxHint(bool hint);
+	bool letterboxHint() const {return m_letterbox;}
 	Qt::Alignment alignment() const {return m_alignment;}
 	void setMargin(double top, double bottom, double right, double left);
 signals:
@@ -156,12 +158,14 @@ private:
 	void link(QOpenGLShaderProgram *program);
 	void bind(const RenderState &state, QOpenGLShaderProgram *program);
 	void updateTexturedPoint2D(TexturedPoint2D *tp);
-	bool beforeUpdate() override;
+	void beforeUpdate();
+	void initializeTextures();
 	const char *fragmentShader() const;
 	struct Data;
 	Data *d;
 	SubtitleStyleObject *m_style = new SubtitleStyleObject(this);
 	QSizeF m_size;
+	bool m_letterbox = true;
 	Qt::Alignment m_alignment = Qt::AlignBottom | Qt::AlignHCenter;
 };
 

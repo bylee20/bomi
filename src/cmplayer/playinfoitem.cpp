@@ -1,9 +1,9 @@
 #include "playinfoitem.hpp"
-#include "audiocontroller.hpp"
+#include "playlistmodel.hpp"
 #include "videorendereritem.hpp"
 #include "playengine.hpp"
 #include "mpcore.hpp"
-#include "avmisc.hpp"
+#include "videoformat.hpp"
 #include <sigar.h>
 
 extern "C" {
@@ -73,20 +73,20 @@ struct ProcStat {
 #endif
 
 
-void AvInfoObject::setVideo(const VideoFormat &fmt, const PlayEngine *engine) {
+void AvInfoObject::setVideo(const PlayEngine *engine) {
 	auto mpctx = engine->context();
 	if (!mpctx || !mpctx->sh_video)
 		return;
+	const auto fmt = engine->videoFormat();
 	auto sh = mpctx->sh_video;
 
-	m_hwaccel = engine->isHardwareAccelerated();
-	qDebug() << "hw acc?" << m_hwaccel;
-	m_codec = _u(sh->codec->info);
+	m_hwaccel = engine->usingHwAcc();
+	m_codec = _U(sh->codec->info);
 	m_input->m_type = format(sh->format);
 	m_input->m_size = QSize(sh->disp_w, sh->disp_h);
 	m_input->m_fps = sh->fps;
 	m_input->m_bps = sh->i_bps*8;
-	m_output->m_type = format(fmt.type);
+	m_output->m_type = format(fmt.type());
 	m_output->m_size = fmt.size();
 	m_output->m_fps = sh->fps;
 	m_output->m_bps = fmt.bps(sh->fps);
@@ -99,7 +99,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 	auto sh = mpctx->sh_audio;
 	auto ao = mpctx->ao;
 	m_hwaccel = false;
-	m_codec = _u(sh->codec->info);
+	m_codec = _U(sh->codec->info);
 
 	m_input->m_type = format(sh->format);
 	m_input->m_bps = sh->i_bps*8;
@@ -107,7 +107,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 	m_input->m_channels = sh->channels;
 	m_input->m_bits = af_fmt2bits(sh->sample_format);
 
-	m_output->m_type = _u(af_fmt2str_short(ao->format));
+	m_output->m_type = _U(af_fmt2str_short(ao->format));
 	m_output->m_bps = ao->bps*8;
 	m_output->m_samplerate = ao->samplerate/1000.0;
 	m_output->m_channels = ao->channels;
@@ -127,14 +127,15 @@ struct PlayInfoItem::Data {
 	const int cores = default_thread_count();
 
 	const PlayEngine *engine = nullptr;
-	const VideoRendererItem *video = nullptr;
-	const AudioController *audio = nullptr;
 
-	Global::State state = Global::State::Stopped;
+	EngineState state = EngineStopped;
 	quint64 frameTime = 0, drawnFrames = 0;
 	double cpuUsage = 0.0, sync = 0.0;
 	QTimer timer;
 	int time = -1;
+	quint64 getDrawnFrames() {
+		return engine && engine->videoRenderer() ? engine->videoRenderer()->drawnFrames() : 0;
+	}
 };
 
 PlayInfoItem::PlayInfoItem(QQuickItem *parent)
@@ -161,7 +162,22 @@ QString PlayInfoItem::monospace() const {
 #endif
 }
 
-void PlayInfoItem::set(const PlayEngine *engine, const VideoRendererItem *video, const AudioController *audio) {
+void PlayInfoItem::setPlaylist(const PlaylistModel *playlist) {
+	connect(playlist, &PlaylistModel::currentRowChanged, [this] (int row) {
+		m_media->m_nth = row+1;
+		emit mediaChanged();
+	});
+	connect(playlist, &PlaylistModel::rowCountChanged, [this] (int count) {
+		m_media->m_count = count;
+		emit mediaChanged();
+	});
+}
+
+VideoRendererItem *PlayInfoItem::renderer() const {
+	return d->engine ? d->engine->videoRenderer() : nullptr;
+}
+
+void PlayInfoItem::set(const PlayEngine *engine) {
 	auto fullScreen = window()->windowState() == Qt::WindowFullScreen;
 	if (fullScreen != m_fullScreen)
 		emit fullScreenChanged(m_fullScreen = fullScreen);
@@ -173,10 +189,8 @@ void PlayInfoItem::set(const PlayEngine *engine, const VideoRendererItem *video,
 	});
 
 	d->engine = engine;
-	d->video = video;
-	d->audio = audio;
 
-	connect(d->engine, &PlayEngine::tick, [this] (int pos) {
+	plug(d->engine, &PlayEngine::tick, [this] (int pos) {
 		if (isVisible()) {
 			setPosition(pos);
 			if (d->state != d->engine->state()) {
@@ -186,11 +200,13 @@ void PlayInfoItem::set(const PlayEngine *engine, const VideoRendererItem *video,
 			}
 		}
 	});
-	connect(d->video, &VideoRendererItem::formatChanged, [this] (const VideoFormat &format) {
-		m_video->setVideo(format, d->engine);
+
+	plug(d->engine, &PlayEngine::videoFormatChanged, [this] () {
+		m_video->setVideo(d->engine);
 		emit videoChanged();
 	});
-	connect(d->engine, &PlayEngine::aboutToPlay, [this] () {
+	plug(d->engine, &PlayEngine::aboutToPlay, [this] () {
+		m_media->m_mrl = d->engine->mrl();
 		m_media->m_name = d->engine->mediaName();
 		m_audio->setAudio(d->engine);
 		emit audioChanged();
@@ -198,22 +214,30 @@ void PlayInfoItem::set(const PlayEngine *engine, const VideoRendererItem *video,
 		d->sync = 0;
 		emit mediaChanged();
 	});
-	connect(d->audio, &AudioController::volumeNormalizedChanged, [this] (bool volnorm) {
-		emit volumeNormalizedChanged(m_volnorm = volnorm);
+	plug(d->engine, &PlayEngine::audioFilterChanged, [this] (const QString &af, bool on) {
+		if (af == _L("volnorm"))
+			emit volumeNormalizedChanged(m_volnorm = on);
 	});
-	connect(d->audio, &AudioController::volumeChanged, [this](int volume) {
+
+	plug(d->engine, &PlayEngine::volumeChanged, [this](int volume) {
 		emit volumeChanged(m_volume = volume);
 	});
-	m_volnorm = d->audio->isVolumeNormalized();
-	d->drawnFrames = d->video->drawnFrames();
-	d->frameTime = GetTimerMS();
+	plug(d->engine, &PlayEngine::mutedChanged, [this] (bool muted) {
+		emit mutedChanged(m_muted = muted);
+	});
+	emit volumeChanged(m_volume = d->engine->volume());
+	emit mutedChanged(m_muted = d->engine->isMuted());
+	emit volumeNormalizedChanged(m_volnorm = d->engine->hasAudioFilter("volnorm"));
+	if (d->engine->videoRenderer()) {
+		d->drawnFrames = d->getDrawnFrames();
+		d->frameTime = GetTimerMS();
+	}
 }
 
 void PlayInfoItem::collect() {
 	if (!isVisible() || !d->engine || !d->engine->context())
 		return;
-	if (d->audio)
-		m_norm = d->audio->volumeNormalizer();
+	m_norm = d->engine->volumeNormalizer();
 	auto mpctx = d->engine->context();
 	if (mpctx->sh_audio && mpctx->sh_video) {
 		m_avSync = (mpctx->total_avsync_change - d->sync)*1000.0;
@@ -235,7 +259,7 @@ void PlayInfoItem::collect() {
 	}
 #endif
 	const auto frameTime = GetTimerMS();
-	const auto frames = d->video->drawnFrames();
+	const auto frames = d->getDrawnFrames();
 	m_fps = 0.0;
 	if (frameTime > d->frameTime) {
 		m_fps = double(frames - d->drawnFrames)*1000.0/(frameTime - d->frameTime);
@@ -244,7 +268,7 @@ void PlayInfoItem::collect() {
 		d->drawnFrames = frames;
 		d->frameTime = frameTime;
 	}
-	m_bps = d->video ? d->video->format().bps(m_fps) : 0.0;
+	m_bps = d->engine->videoFormat().bps(m_fps);
 
 	sigar_proc_mem_t mem;
 	sigar_proc_mem_get(d->sigar, d->pid, &mem);

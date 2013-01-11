@@ -14,9 +14,9 @@ struct SubtitleComponentModel::Item : public ListModel::Item {
 		if (role == Qt::DisplayRole) {
 			switch (column) {
 			case Start:
-				return msecToString(start());
+				return _MSecToString(start());
 			case End:
-				return msecToString(end());
+				return _MSecToString(end());
 			case Text:
 				return text();
 			default:

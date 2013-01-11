@@ -21,10 +21,10 @@ AppState::AppState() {
 	READ(video_effects);
 	READ(video_color);
 
-	READ(audio_volume);
-	READ(audio_volume_normalized);
-	READ(audio_muted);
-	READ(audio_amp);
+	READ(volume);
+	READ(af_volnorm);
+	READ(muted);
+	READ(preamp);
 
 	READ(sub_pos);
 	READ(sub_letterbox);
@@ -55,10 +55,10 @@ void AppState::save() const {
 	WRITE(video_effects);
 	WRITE(video_color);
 
-	WRITE(audio_volume);
-	WRITE(audio_volume_normalized);
-	WRITE(audio_muted);
-	WRITE(audio_amp);
+	WRITE(volume);
+	WRITE(af_volnorm);
+	WRITE(muted);
+	WRITE(preamp);
 
 	WRITE(sub_pos);
 	WRITE(sub_letterbox);

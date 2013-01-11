@@ -1,15 +1,14 @@
 #include "app.hpp"
 #include "rootmenu.hpp"
 #include "pref.hpp"
-//#include "global.hpp"
 #include "mrl.hpp"
-#include "avmisc.hpp"
+//#include "avmisc.hpp"
 #include "mainwindow.hpp"
 #include "playengine.hpp"
 #include "recentinfo.hpp"
 #include "hwaccel.hpp"
 #include "playeritem.hpp"
-#include "logodrawer.hpp"
+#include "videoformat.hpp"
 
 static bool checkOpenGL() {
 	if (Q_LIKELY(QGLFormat::hasOpenGL() && (QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_0)))
@@ -19,35 +18,20 @@ static bool checkOpenGL() {
 	return false;
 }
 
-Q_DECLARE_METATYPE(QTextOption::WrapMode);
-#include <QSvgRenderer>
-#include <QSvgGenerator>
+Q_DECLARE_METATYPE(QTextOption::WrapMode)
 
 int main(int argc, char **argv) {
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
-	qRegisterMetaType<State>("State");
+	qRegisterMetaType<EngineState>("State");
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
 	PlayerItem::registerItems();
 
 	qDebug() << "started app";
-	App app(argc, argv);
+	App *papp = new App(argc, argv);
+	App &app = *papp;
 	qDebug() << "app created";
-	{
-		QRect rect(0, 0, 20, 20);
-		QSvgGenerator svg;
-		svg.setFileName("bg.svg");
-		svg.setSize(rect.size());
-		svg.setViewBox(rect);
-		svg.setTitle("CMPlayer logo background");
-		svg.setDescription("CMPlayer logo background");
-//		QImage image(512, 512, QImage::Format_ARGB32_Premultiplied);
-		QPainter painter(&svg);
-		LogoDrawer logo;
-		logo.draw(&painter, rect);
-//		image.save("testlogo.png");
-	}
 
 	if (!checkOpenGL())
 		return 1;
@@ -92,5 +76,6 @@ int main(int argc, char **argv) {
 	delete RootMenu::obj;
 	qDebug() << "menu deleted";
 	delete HwAccelInfo::obj;
+	delete papp;
 	return ret;
 }

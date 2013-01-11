@@ -200,16 +200,16 @@ HwAccel::~HwAccel() {
 #endif
 }
 
-VideoFormat HwAccel::format() const {
-#ifdef Q_OS_MAC
-	return VideoFormat::fromType(VideoFormat::YV12, m_width, m_height);
-#endif
-#ifdef Q_OS_X11
-	auto format = VideoFormat::fromType(VideoFormat::BGRA, m_width, m_height);
-	format.width_stride = format.stride = m_width;
-	return format;
-#endif
-}
+//VideoFormat HwAccel::format() const {
+//#ifdef Q_OS_MAC
+//	return VideoFormat::fromType(VideoFormat::YV12, m_width, m_height);
+//#endif
+//#ifdef Q_OS_X11
+//	auto format = VideoFormat::fromType(VideoFormat::BGRA, m_width, m_height);
+//	format.width_stride = format.stride = m_width;
+//	return format;
+//#endif
+//}
 
 bool HwAccel::isCompatibleWith(const AVCodecContext *avctx) const {
 	if (!m_usable || m_width != avctx->width || m_height != avctx->height)

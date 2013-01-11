@@ -1,12 +1,24 @@
-//#include "skin.hpp"
-//#include "info.hpp"
-//#include "rootmenu.hpp"
-//#include "playengine.hpp"
-//#include "audiocontroller.hpp"
-//#include "videorenderer.hpp"
-//#include <QtUiTools/QUiLoader>
-//#include "../cmplayer_skin/widgets.hpp"
-//#include <QtPlugin>
+#include "skin.hpp"
+
+QStringList Skin::names(bool reload/* = false*/) {
+	auto d = data();
+	if (d->skins.isEmpty() || reload) {
+		d->skins.clear();
+		for (auto &dirName : d->dirs) {
+			const QDir dir(dirName);
+			if (dir.exists()) {
+				auto names = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+				for (auto &name : names) {
+					const QFileInfo source(dir.filePath(name + "/cmplayer.qml"));
+					if (source.exists())
+						d->skins[name] = source;
+				}
+			}
+		}
+	}
+	return d->skins.keys();
+}
+
 
 //Q_IMPORT_PLUGIN(cmplayer_widgets)
 

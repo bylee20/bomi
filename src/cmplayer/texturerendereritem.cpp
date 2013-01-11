@@ -13,7 +13,7 @@ struct TextureRendererItem::Shader : public QSGMaterialShader {
 private:
 	char const *const *attributeNames() const {return m_item->attributeNames();}
 	const char *vertexShader() const {return m_item->vertexShader();}
-	const char *fragmentShader() const {return m_item->fragmentShader();}
+	const char *fragmentShader() const {qDebug() << "new fragment shader"; return m_item->fragmentShader();}
 	TextureRendererItem *m_item = nullptr;
 };
 
@@ -27,35 +27,41 @@ private:
 };
 
 struct TextureRendererItem::Node : public QSGGeometryNode {
-	Node(TextureRendererItem *item) {
+	Node(TextureRendererItem *item): m_item(item) {
 		setFlags(OwnsGeometry | OwnsMaterial);
 		setMaterial(new Material(item));
 		setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4));
+		markDirty(DirtyMaterial | DirtyGeometry);
+
+		item->setGeometryDirty();
+		Q_ASSERT(!item->m_textures);
+		item->m_textures = new GLuint[item->textureCount()];
+		glGenTextures(item->textureCount(), item->m_textures);
+		item->initializeTextures();
+	}
+	~Node() {
+		if (m_item->m_textures) {
+			glDeleteTextures(m_item->textureCount(), m_item->m_textures);
+			m_item->m_textures = nullptr;
+		}
 	}
 private:
+	TextureRendererItem *m_item;
 };
 
 struct TextureRendererItem::Data {
-	bool frameChanged = false;
+	Node *node = nullptr;
 	bool dirtyGeomerty = false;
-	QRectF contentRect;
-	QRectF vtx;
-	QPoint offset = {0, 0};
 	int loc_matrix = 0;
-	int texCount = 0;
 };
 
 TextureRendererItem::TextureRendererItem(int textures, QQuickItem *parent)
 : QQuickItem(parent), d(new Data) {
 	setFlag(ItemHasContents);
-	d->texCount = textures;
+	m_count = textures;
 }
 
 TextureRendererItem::~TextureRendererItem() {
-	if (m_textures) {
-		glDeleteTextures(d->texCount, m_textures);
-		delete []m_textures;
-	}
 	delete d;
 }
 
@@ -63,29 +69,27 @@ void TextureRendererItem::setGeometryDirty(bool dirty) {
 	d->dirtyGeomerty = dirty;
 }
 
+void TextureRendererItem::resetNode() {
+	if (d->node) {
+		delete d->node;
+		d->node = nullptr;
+	}
+	if (!d->node)
+		d->node = new Node(this);
+}
+
 QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
 	Q_UNUSED(data);
-	if (!m_textures) {
-		m_textures = new GLuint[d->texCount];
-		glGenTextures(3, m_textures);
-	}
-	auto node = static_cast<Node*>(old);
-	const bool reset = beforeUpdate();
-	if (node && reset) {
-		delete node;
-		node = nullptr;
-	}
-	if (!node) {
-		qDebug() << "new node";
-		node = new Node(this);
-		d->dirtyGeomerty = true;
-	}
+	d->node = static_cast<Node*>(old);
+	if (!d->node)
+		d->node = new Node(this);
+	beforeUpdate();
 	if (d->dirtyGeomerty) {
-		updateTexturedPoint2D(node->geometry()->vertexDataAsTexturedPoint2D());
-		node->markDirty(QSGNode::DirtyGeometry);
+		updateTexturedPoint2D(d->node->geometry()->vertexDataAsTexturedPoint2D());
+		d->node->markDirty(QSGNode::DirtyGeometry);
 		d->dirtyGeomerty = false;
 	}
-	return node;
+	return d->node;
 }
 
 void TextureRendererItem::geometryChanged(const QRectF &newOne, const QRectF &old) {

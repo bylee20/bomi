@@ -21,13 +21,13 @@
     <widget class="QTreeWidget" name="tree">
      <property name="minimumSize">
       <size>
-       <width>150</width>
+       <width>200</width>
        <height>0</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>220</width>
+       <width>200</width>
        <height>16777215</height>
       </size>
      </property>
@@ -75,7 +75,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>0</number>
+        <number>10</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2382,22 +2382,9 @@ e.g.: English, Korean</string>
             <number>0</number>
            </property>
            <item>
-            <spacer name="horizontalSpacer_14">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="skin_preview">
+            <widget class="QWindowFrame" name="skin_preview">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2408,56 +2395,15 @@ e.g.: English, Korean</string>
                <height>200</height>
               </size>
              </property>
-             <property name="maximumSize">
-              <size>
-               <width>200</width>
-               <height>200</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">background-color: white;</string>
-             </property>
              <property name="frameShape">
               <enum>QFrame::Box</enum>
              </property>
              <property name="frameShadow">
               <enum>QFrame::Plain</enum>
              </property>
-             <property name="text">
-              <string notr="true"/>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
             </widget>
            </item>
-           <item>
-            <spacer name="horizontalSpacer_13">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>0</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
           </layout>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>228</height>
-            </size>
-           </property>
-          </spacer>
          </item>
         </layout>
        </widget>
@@ -2532,6 +2478,12 @@ e.g.: English, Korean</string>
    <class>OsdScalePolicyComboBox</class>
    <extends>QComboBox</extends>
    <header>widgets.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>QWindowFrame</class>
+   <extends>QFrame</extends>
+   <header>qwindowwidget.hpp</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

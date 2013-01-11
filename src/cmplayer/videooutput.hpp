@@ -14,8 +14,10 @@ public:
 	~VideoOutput();
 	struct vo *vo_create(MPContext *mpctx);
 	bool usingHwAccel() const;
+	const VideoFormat &format() const;
+signals:
+	void formatChanged(const VideoFormat &format);
 private:
-	bool event(QEvent *ev);
 	static int preinit(struct vo */*vo*/, const char */*arg*/) {return 0;}
 	static void uninit(struct vo */*vo*/) {}
 	static int config(struct vo *vo, uint32_t w, uint32_t h, uint32_t , uint32_t , uint32_t , uint32_t fmt);

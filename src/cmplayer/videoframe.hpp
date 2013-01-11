@@ -2,7 +2,7 @@
 #define VIDEOFRAME_HPP
 
 #include "stdafx.hpp"
-#include "avmisc.hpp"
+#include "videoformat.hpp"
 extern "C" {
 #include <mp_image.h>
 }
@@ -16,8 +16,9 @@ public:
 	VideoFrame(): d(new Data) {}
 	bool copy(mp_image *mpi) {
 		bool ret = false;
-		if (d->format.stride != mpi->stride[0]) {
-			d->format.setStride(mpi->stride[0]);
+		if (d->format.stride() != mpi->stride[0]) {
+			d->format = VideoFormat::fromMpImage(mpi);
+//			qDebug() << d->format.width() << d->format.storedWidth() << d->format.stride();
 			ret = true;
 		}
 		d->copy(0, mpi);d->copy(1, mpi);d->copy(2, mpi);d->copy(3, mpi);

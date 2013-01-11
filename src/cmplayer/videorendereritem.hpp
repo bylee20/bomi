@@ -2,6 +2,7 @@
 #define VIDEORENDERERITEM_HPP
 
 #include "stdafx.hpp"
+#include "skin.hpp"
 #include "videoframe.hpp"
 #include "colorproperty.hpp"
 #include "mpmessage.hpp"
@@ -13,19 +14,17 @@ class LetterboxItem : public QQuickItem {
 public:
 	LetterboxItem(QQuickItem *parent = 0);
 	QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *data);
-	void set(const QRectF &outer, const QRectF &inner);
+	bool set(const QRectF &outer, const QRectF &inner);
+	const QRectF &screen() {return m_screen;}
 private:
-	QRectF m_outer, m_inner;
+	QRectF m_outer, m_inner, m_screen;
 	bool m_rectChanged;
 };
 
 class VideoRendererItem;		class PlayEngine;
 class SubtitleRendererItem;
 
-void plug(PlayEngine *engine, VideoRendererItem *video);
-void unplug(PlayEngine *engine, VideoRendererItem *video);
-
-class VideoRendererItem : public TextureRendererItem, public MpMessage {
+class VideoRendererItem : public TextureRendererItem, public Skin {
 	Q_OBJECT
 	Q_PROPERTY(SubtitleRendererItem *subtitle READ subtitle)
 public:
@@ -50,47 +49,44 @@ public:
 	double targetCropRatio(double fallback) const;
 	double targetCropRatio() const {return targetCropRatio(targetAspectRatio());}
 	double itemAspectRatio() const {return width()/height();}
+	QRectF screenRect() const;
 	QPoint offset() const;
 	quint64 drawnFrames() const;
-	const VideoFormat &format() const;
+//	const VideoFormat &format() const;
 	const ColorProperty &color() const;
 	double aspectRatio() const;
 	double cropRatio() const;
 	int alignment() const;
+	double fps() const;
 	Effects effects() const;
-	StreamList streams() const;
-	int currentStreamId() const;
 	int outputWidth() const;
 	QSize sizeHint() const;
 	QSizeF size() const {return QSizeF(width(), height());}
+	void setVideoAspectRaito(double ratio);
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
 	void setColor(const ColorProperty &prop);
 	void setOffset(const QPoint &offset);
-	void setCurrentStream(int id);
 	void setCropRatio(double ratio);
 	void setAspectRatio(double ratio);
 signals:
 	void effectsChanged(Effects effects);
 	void offsetChanged(const QPoint &pos);
 	void formatChanged(const VideoFormat &format);
-private slots:
-	void handleAboutToPlay() {}
-	void handleAboutToOpen();
-private:
-	QByteArray shader() const;
+private: // for VideoOutput
 	VideoFrame &getNextFrame() const;
+	void next();
+private:
+	void initializeTextures();
+	QByteArray shader() const;
 
 	const char *fragmentShader() const;
 	void link(QOpenGLShaderProgram *program);
 	void bind(const RenderState &state, QOpenGLShaderProgram *program);
 	void updateTexturedPoint2D(TexturedPoint2D *tp);
-	bool prepare(const VideoFormat &format);
-	bool beforeUpdate() override;
-	void next();
-	bool parse(const Id &id);
-	bool parse(const QString &/*line*/) {return false;}
+	void beforeUpdate() override;
+
 	void updateGeometry();
 	static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
@@ -98,8 +94,6 @@ private:
 	Data *d;
 
 	friend class VideoOutput;
-	friend void plug(PlayEngine *engine, VideoRendererItem *video);
-	friend void unplug(PlayEngine *engine, VideoRendererItem *video);
 };
 
 extern VideoRendererItem *item;

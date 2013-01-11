@@ -91,13 +91,16 @@ LetterboxItem::LetterboxItem(QQuickItem *parent)
 	setFlag(ItemHasContents, true);
 }
 
-void LetterboxItem::set(const QRectF &outer, const QRectF &inner) {
+bool LetterboxItem::set(const QRectF &outer, const QRectF &inner) {
 	if (m_outer != outer || m_inner != inner) {
 		m_outer = outer;
 		m_inner = inner;
+		m_screen = outer & inner;
 		m_rectChanged = true;
 		update();
-	}
+		return true;
+	} else
+		return false;
 }
 
 QSGNode *LetterboxItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
@@ -115,6 +118,7 @@ QSGNode *LetterboxItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data)
 		material->setColor(Qt::black);
 		node->setMaterial(material);
 		node->setFlag(QSGNode::OwnsMaterial);
+		m_rectChanged = true;
 	} else {
 		geometry = node->geometry();
 	}
@@ -159,8 +163,6 @@ struct VideoRendererItem::Data {
 	quint64 drawnFrames = 0;
 	bool resetNode = false;
 	ShaderVar shaderVar;
-	StreamList streams;
-	PlayEngine *engine = nullptr;
 	QMutex mutex;
 	LetterboxItem *letterbox = nullptr;
 	QByteArray shader;
@@ -169,21 +171,6 @@ struct VideoRendererItem::Data {
 	int loc_brightness, loc_contrast, loc_sat_hue, loc_dxy, loc_p1, loc_p2, loc_p3;
 	SubtitleRendererItem *subtitle = nullptr;
 };
-
-void plug(PlayEngine *engine, VideoRendererItem *video) {
-	video->d->engine = engine;
-	engine->m_video = video;
-	QObject::connect(engine, SIGNAL(aboutToOpen()), video, SLOT(handleAboutToOpen()));
-	QObject::connect(engine, SIGNAL(aboutToPlay()), video, SLOT(handleAboutToPlay()));
-}
-
-void unplug(PlayEngine *engine, VideoRendererItem *video) {
-	Q_ASSERT(video->d->engine == engine);
-	video->d->engine = nullptr;
-	engine->m_video = nullptr;
-	QObject::disconnect(engine, SIGNAL(aboutToOpen()), video, SLOT(handleAboutToOpen()));
-	QObject::disconnect(engine, SIGNAL(aboutToPlay()), video, SLOT(handleAboutToPlay()));
-}
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 : TextureRendererItem(3, parent), d(new Data) {
@@ -214,6 +201,10 @@ void VideoRendererItem::next() {
 	update();
 }
 
+QRectF VideoRendererItem::screenRect() const {
+	return d->letterbox->screen();
+}
+
 int VideoRendererItem::alignment() const {
 	return d->alignment;
 }
@@ -231,7 +222,7 @@ double VideoRendererItem::targetAspectRatio() const {
 		return d->aspect;
 	if (d->aspect == 0.0)
 		return itemAspectRatio();
-	return d->dar > 0.01 ? d->dar : (double)d->format.width/(double)d->format.height;
+	return d->dar > 0.01 ? d->dar : _Ratio(d->format.size());
 }
 
 double VideoRendererItem::targetCropRatio(double fallback) const {
@@ -267,9 +258,9 @@ quint64 VideoRendererItem::drawnFrames() const {
 	return d->drawnFrames;
 }
 
-const VideoFormat &VideoRendererItem::format() const {
-	return d->format;
-}
+//const VideoFormat &VideoRendererItem::format() const {
+//	return d->format;
+//}
 
 VideoRendererItem::Effects VideoRendererItem::effects() const {
 	return d->shaderVar.effects();
@@ -338,22 +329,10 @@ double VideoRendererItem::cropRatio() const {
 	return d->crop;
 }
 
-void VideoRendererItem::handleAboutToOpen() {
-	d->streams.clear();
-	d->dar = 0.0;
+void VideoRendererItem::setVideoAspectRaito(double ratio) {
+	d->dar = ratio;
 }
 
-bool VideoRendererItem::parse(const Id &id) {
-	if (getStream(id, "VIDEO", "VID", d->streams))
-		return true;
-	if (!id.name.isEmpty()) {
-		if (same(id.name, "VIDEO_ASPECT")) {
-			d->dar = id.value.toDouble();
-			return true;
-		}
-	}
-	return false;
-}
 
 QSize VideoRendererItem::sizeHint() const {
 	if (d->format.isEmpty())
@@ -366,26 +345,8 @@ QSize VideoRendererItem::sizeHint() const {
 	return crop.toSize();
 }
 
-StreamList VideoRendererItem::streams() const {
-	return d->streams;
-}
-
-int VideoRendererItem::currentStreamId() const {
-	if (d->engine) {
-		MPContext *mpctx = d->engine->context();
-		if (mpctx && mpctx->sh_video)
-			return mpctx->sh_video->vid;
-	}
-	return -1;
-}
-
-void VideoRendererItem::setCurrentStream(int id) {
-	if (d->engine)
-		d->engine->tellmp("switch_video", id);
-}
-
 int VideoRendererItem::outputWidth() const {
-	return d->dar > 0.01 ? (int)(d->dar*(double)d->format.height + 0.5) : d->format.width;
+	return d->dar > 0.01 ? (int)(d->dar*(double)d->format.height() + 0.5) : d->format.width();
 }
 
 QByteArray VideoRendererItem::shader() const {
@@ -437,7 +398,7 @@ QByteArray VideoRendererItem::shader() const {
 				adjust_rgb(yuv);
 			}
 		)");
-		switch (d->format.type) {
+		switch (d->format.type()) {
 		case VideoFormat::YV12:
 		case VideoFormat::I420:
 			shader.append(R"(
@@ -513,6 +474,7 @@ QByteArray VideoRendererItem::shader() const {
 
 const char *VideoRendererItem::fragmentShader() const {
 	d->shader = shader();
+	qDebug() << "shader for " << _fToDescription(d->format.type());
 	return d->shader.constData();
 }
 
@@ -542,8 +504,8 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 	program->setUniformValue(d->loc_brightness, d->shaderVar.brightness);
 	program->setUniformValue(d->loc_contrast, d->shaderVar.contrast);
 	program->setUniformValue(d->loc_sat_hue, d->shaderVar.sat_hue);
-	const float dx = 1.0/(double)d->format.fullWidth;
-	const float dy = 1.0/(double)d->format.height;
+	const float dx = 1.0/(double)d->format.storedWidth();
+	const float dy = 1.0/(double)d->format.storedHeight();
 	program->setUniformValue(d->loc_dxy, dx, dy, -dx, 0.f);
 
 	const bool filter = d->shaderVar.effects() & FilterEffects;
@@ -572,51 +534,55 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 	}
 }
 
-bool VideoRendererItem::beforeUpdate() {
-	const bool reset = prepare(d->frame.format());
-	if (reset) {
+void VideoRendererItem::beforeUpdate() {
+	if (!d->frameChanged)
+		return;
+
+	QMutexLocker locker(&d->mutex);		Q_UNUSED(locker);
+	if (d->format != d->frame.format()) {
+		d->format = d->frame.format();
+		if (!d->format.isEmpty()) {
+			resetNode();
+			updateGeometry();
+		}
 		emit formatChanged(d->format);
-		updateGeometry();
 	}
-	if (d->format.isEmpty() || !d->frameChanged)
-		return reset;
-	QMutexLocker locker(&d->mutex);
-	Q_UNUSED(locker);
-	const auto h = d->format.height;
-	const auto w = d->format.stride;
-	auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
-		glBindTexture(GL_TEXTURE_2D, texture(idx));
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
-	};
-	switch (d->format.type) {
-	case VideoFormat::I420:
-	case VideoFormat::YV12:
-		setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
-		setTex(1, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(1));
-		setTex(2, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(2));
-		break;
-	case VideoFormat::NV12:
-	case VideoFormat::NV21:
-		setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
-		setTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1, d->frame.data(1));
-		break;
-	case VideoFormat::YUY2:
-	case VideoFormat::UYVY:
-		setTex(0, GL_LUMINANCE_ALPHA, w >> 1, h, d->frame.data(0));
-		setTex(1, GL_BGRA, w >> 2, h, d->frame.data(0));
-		break;
-	case VideoFormat::RGBA:
-		setTex(0, GL_RGBA, w, h, d->frame.data(0));
-		break;
-	case VideoFormat::BGRA:
-		setTex(0, GL_BGRA, w, h, d->frame.data(0));
-		break;
-	default:
-		break;
+	if (!d->format.isEmpty()) {
+		const auto w = d->format.storedWidth();
+		const auto h = d->format.storedHeight();
+		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
+			glBindTexture(GL_TEXTURE_2D, texture(idx));
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
+		};
+		switch (d->format.type()) {
+		case VideoFormat::I420:
+		case VideoFormat::YV12:
+			setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
+			setTex(1, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(1));
+			setTex(2, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(2));
+			break;
+		case VideoFormat::NV12:
+		case VideoFormat::NV21:
+			setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
+			setTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1, d->frame.data(1));
+			break;
+		case VideoFormat::YUY2:
+		case VideoFormat::UYVY:
+			setTex(0, GL_LUMINANCE_ALPHA, w >> 1, h, d->frame.data(0));
+			setTex(1, GL_BGRA, w >> 2, h, d->frame.data(0));
+			break;
+		case VideoFormat::RGBA:
+			setTex(0, GL_RGBA, w, h, d->frame.data(0));
+			break;
+		case VideoFormat::BGRA:
+			setTex(0, GL_BGRA, w, h, d->frame.data(0));
+			break;
+		default:
+			break;
+		}
+		++(d->drawnFrames);
 	}
-	++(d->drawnFrames);
 	d->frameChanged = false;
-	return reset;
 }
 
 void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
@@ -634,23 +600,20 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	else if (d->alignment & Qt::AlignBottom)
 		offset.ry() += xy.y();
 	xy += offset;
-	d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter));
+	if (d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter)))
+		d->subtitle->setScreenRect(d->letterbox->screen());
 
 	constexpr double top = 0.0, left = 0.0, bottom = 1.0;
-	const double right = (double)(d->format.width)/(double)(d->format.fullWidth);
+	const double right = _Ratio(d->format.width(), d->format.storedWidth());
 	set(tp, d->vtx.topLeft() += offset, QPointF(left, top));
 	set(++tp, d->vtx.bottomLeft() += offset, QPointF(left, bottom));
 	set(++tp, d->vtx.topRight() += offset, QPointF(right, top));
 	set(++tp, d->vtx.bottomRight() += offset, QPointF(right, bottom));
 }
 
-bool VideoRendererItem::prepare(const VideoFormat &format) {
-	if (d->format == format)
-		return false;
-	d->format = format;
-	qDebug() << d->format.isEmpty();
+void VideoRendererItem::initializeTextures() {
 	if (d->format.isEmpty())
-		return true;
+		return;
 	auto bindTex = [this] (int idx) {
 			glBindTexture(GL_TEXTURE_2D, this->texture(idx));
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -658,31 +621,32 @@ bool VideoRendererItem::prepare(const VideoFormat &format) {
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	};
+	const auto w = d->format.storedWidth();
+	const auto h = d->format.storedHeight();
 	auto initTex = [this, &bindTex] (int idx, GLenum fmt, int width, int height) {
 		bindTex(idx);
 		glTexImage2D(GL_TEXTURE_2D, 0, fmt, width, height, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
 	};
-	auto initRgbTex = [this, &bindTex] (int idx, GLenum fmt) {
+	auto initRgbTex = [this, &bindTex, w, h] (int idx, GLenum fmt) {
 		bindTex(idx);
-		glTexImage2D(GL_TEXTURE_2D, 0, 4, d->format.stride, d->format.height, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
 	};
-
-	switch (d->format.type) {
+	switch (d->format.type()) {
 	case VideoFormat::I420:
 	case VideoFormat::YV12:
-		initTex(0, GL_LUMINANCE, d->format.stride, d->format.height);
-		initTex(1, GL_LUMINANCE, d->format.stride >> 1, d->format.height >> 1);
-		initTex(2, GL_LUMINANCE, d->format.stride >> 1, d->format.height >> 1);
+		initTex(0, GL_LUMINANCE, w, h);
+		initTex(1, GL_LUMINANCE, w >> 1, h >> 1);
+		initTex(2, GL_LUMINANCE, w >> 1, h >> 1);
 		break;
 	case VideoFormat::NV12:
 	case VideoFormat::NV21:
-		initTex(0, GL_LUMINANCE, d->format.stride, d->format.height);
-		initTex(1, GL_LUMINANCE_ALPHA, d->format.stride >> 1, d->format.height >> 1);
+		initTex(0, GL_LUMINANCE, w, h);
+		initTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1);
 		break;
 	case VideoFormat::YUY2:
 	case VideoFormat::UYVY:
-		initTex(0, GL_LUMINANCE_ALPHA, d->format.stride >> 1, d->format.height);
-		initTex(1, GL_RGBA, d->format.stride >> 2, d->format.height);
+		initTex(0, GL_LUMINANCE_ALPHA, w >> 1, h);
+		initTex(1, GL_RGBA, w >> 2, h);
 		break;
 	case VideoFormat::RGBA:
 		initRgbTex(0, GL_RGBA);
@@ -693,5 +657,4 @@ bool VideoRendererItem::prepare(const VideoFormat &format) {
 	default:
 		break;
 	}
-	return true;
 }

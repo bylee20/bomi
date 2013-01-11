@@ -26,7 +26,6 @@ private slots:
 	void clearSubtitles();
 	void updateRecentActions(const QList<Mrl> &list);
 	void hideCursor();
-	void handleTray(QSystemTrayIcon::ActivationReason reason);
 	void updateStaysOnTop();
 private:
 	PrefDialog *getPrefDialog();
@@ -41,7 +40,6 @@ private:
 	void showEvent(QShowEvent *event);
 	void hideEvent(QHideEvent *event);
 	void keyPressEvent(QKeyEvent *event);
-	bool eventFilter(QObject *o, QEvent *e);
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseDoubleClickEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
@@ -49,7 +47,8 @@ private:
 	void wheelEvent(QWheelEvent *event);
 	void dropEvent(QDropEvent *event);
 	void dragEnterEvent(QDragEnterEvent *event);
-
+	void resizeEvent(QResizeEvent *event);
+	void exposeEvent(QExposeEvent *event);
 	struct Data;
 	Data *d;
 };

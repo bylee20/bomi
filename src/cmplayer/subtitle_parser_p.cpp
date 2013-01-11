@@ -93,8 +93,8 @@ void SubRipParser::_parse(Subtitle &sub) {
 			break;
 		caps.append(SubtitleComponent(file().fileName()));
 		auto &part = caps.last();
-		const int start = timeToMSec(toInt(4), toInt(5), toInt(6), toInt(7));
-		const int end = timeToMSec(toInt(8), toInt(9), toInt(10), toInt(11));
+		const int start = _TimeToMSec(toInt(4), toInt(5), toInt(6), toInt(7));
+		const int end = _TimeToMSec(toInt(8), toInt(9), toInt(10), toInt(11));
 		const QString text = _L("<p>") % rxCaption.cap(12).trimmed().replace(rxLineBreak, "<br>") % _L("</p>");
 		append(part, text, start, end);
 		comp.unite(part, 25);
@@ -111,7 +111,7 @@ void  TMPlayerParser::_parse(Subtitle &sub) {
 		auto line = getLine().toString();
 		if (line.indexOf(rxLine) == -1)
 			continue;
-		const int time = timeToMSec(toInt(1), toInt(2), toInt(3));
+		const int time = _TimeToMSec(toInt(1), toInt(2), toInt(3));
 		if (predictedEnd > 0 && time > predictedEnd)
 			comp[predictedEnd];
 		QString text = rxLine.cap(4);

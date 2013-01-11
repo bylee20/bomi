@@ -73,7 +73,7 @@ PlaylistView::~PlaylistView() {
 
 void PlaylistView::addFile() {
 	const QString filter = Info::mediaExtFilter();
-	QStringList files = getOpenFileNames(this, tr("Open File"), QString(), filter);
+	QStringList files = _GetOpenFileNames(this, tr("Open File"), QString(), filter);
 	Playlist list;
 	for (int i=0; i<files.size(); ++i)
 		list << Mrl(files[i]);
@@ -135,7 +135,7 @@ void PlaylistView::save() {
 	const Playlist &list = d->model->playlist();
 	if (list.isEmpty())
 		return;
-	QString file = getSaveFileName(this, tr("Save File"), QString(), tr("Playlist") + " (*.pls)");
+	QString file = _GetSaveFileName(this, tr("Save File"), QString(), tr("Playlist") + " (*.pls)");
 	if (!file.isEmpty()) {
 		if (QFileInfo(file).suffix().compare("pls", Qt::CaseInsensitive) != 0)
 			file += ".pls";

@@ -7,82 +7,133 @@ extern "C" {
 
 extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
 
+//void VideoFormat::setStride(int s) {
+//	if (m_stride != s) {
+//		m_stride = s;
+//		switch (m_type) {
+//		case VideoFormat::YUY2:
+//		case VideoFormat::UYVY:
+//			fullWidth = m_stride >> 1;
+//			break;
+//		case VideoFormat::RGBA:
+//		case VideoFormat::BGRA:
+//			fullWidth = m_stride >> 2;
+//			break;
+//		default:
+//			fullWidth = m_stride;
+//			break;
+//		}
+//	}
+//}
 
+//VideoFormat VideoFormat::fromType(Type type, int width, int height) {
+//	VideoFormat format;
+//	format.stride = format.fullWidth = format.width = width;
+//	format.height = height;
+//	format.planes = 1;
+//	format.type = type;
+//	switch (type) {
+//	case YV12:
+//	case I420:
+//		format.planes = 3;
+//		format.bpp = 12;
+//		break;
+//	case NV12:
+//	case NV21:
+//		format.planes = 2;
+//		format.bpp = 12;
+//		break;
+//	case YUY2:
+//	case UYVY:
+//		format.bpp = 16;
+//		format.stride = width << 1;
+//		break;
+//	case RGBA:
+//	case BGRA:
+//		format.bpp = 32;
+//		format.stride = width << 2;
+//		break;
+//	default:
+//		return VideoFormat();
+//	}
+//	return format;
+//}
 
-void VideoFormat::setStride(int s) {
-	if (stride != s) {
-		stride = s;
-		switch (type) {
-		case VideoFormat::YUY2:
-		case VideoFormat::UYVY:
-			fullWidth = stride >> 1;
-			break;
-		case VideoFormat::RGBA:
-		case VideoFormat::BGRA:
-			fullWidth = stride >> 2;
-			break;
-		default:
-			fullWidth = stride;
-			break;
-		}
+VideoFormat::Type imgfmtToVideoFormatType(unsigned int imgfmt) {
+	switch (imgfmt) {
+	case IMGFMT_YV12:
+		return VideoFormat::YV12;
+	case IMGFMT_I420:
+		return VideoFormat::I420;
+	case IMGFMT_YUY2:
+		return VideoFormat::YUY2;
+	case IMGFMT_UYVY:
+		return VideoFormat::UYVY;
+	case IMGFMT_NV12:
+		return VideoFormat::NV12;
+	case IMGFMT_NV21:
+		return VideoFormat::NV21;
+	case IMGFMT_RGBA:
+		return VideoFormat::RGBA;
+	case IMGFMT_BGRA:
+		return VideoFormat::BGRA;
+	default:
+		return VideoFormat::Unknown;
 	}
 }
 
-VideoFormat VideoFormat::fromType(Type type, int width, int height) {
+VideoFormat VideoFormat::fromMpImage(mp_image *mpi) {
 	VideoFormat format;
-	format.stride = format.fullWidth = format.width = width;
-	format.height = height;
-	format.planes = 1;
-	format.type = type;
-	switch (type) {
-	case YV12:
-	case I420:
-		format.planes = 3;
-		format.bpp = 12;
+	format.m_size = QSize(mpi->w, mpi->h);
+	format.m_storedSize = QSize(mpi->stride[0], mpi->height);
+	format.m_stride = mpi->stride[0];
+	format.m_bpp = mpi->bpp;
+	format.m_planes = mpi->num_planes;
+	format.m_type = imgfmtToVideoFormatType(mpi->imgfmt);
+
+	switch (mpi->imgfmt) {
+	case IMGFMT_YV12:
+	case IMGFMT_I420:
+	case IMGFMT_NV12:
+	case IMGFMT_NV21:
 		break;
-	case NV12:
-	case NV21:
-		format.planes = 2;
-		format.bpp = 12;
+	case IMGFMT_YUY2:
+	case IMGFMT_UYVY:
+		format.m_storedSize.rwidth() = mpi->stride[0] >> 1;
 		break;
-	case YUY2:
-	case UYVY:
-		format.bpp = 16;
-		format.stride = width << 1;
-		break;
-	case RGBA:
-	case BGRA:
-		format.bpp = 32;
-		format.stride = width << 2;
+	case IMGFMT_RGBA:
+	case IMGFMT_BGRA:
+		format.m_storedSize.rwidth() = mpi->stride[0] >> 2;
 		break;
 	default:
-		return VideoFormat();
+		break;
 	}
+
 	return format;
 }
 
-VideoFormat VideoFormat::fromImgFmt(uint32_t imgfmt, int width, int height) {
-	switch (imgfmt) {
-	case IMGFMT_YV12:
-		return fromType(YV12, width, height);
-	case IMGFMT_I420:
-		return fromType(I420, width, height);
-	case IMGFMT_YUY2:
-		return fromType(YUY2, width, height);
-	case IMGFMT_UYVY:
-		return fromType(UYVY, width, height);
-	case IMGFMT_NV12:
-		return fromType(NV12, width, height);
-	case IMGFMT_NV21:
-		return fromType(NV21, width, height);
-	case IMGFMT_RGBA:
-		return fromType(RGBA, width, height);
-	default:
-		return VideoFormat();
-	}
-}
+//VideoFormat VideoFormat::fromImgFmt(uint32_t imgfmt, int width, int height) {
+//	switch (imgfmt) {
+//	case IMGFMT_YV12:
+//		return fromType(YV12, width, height);
+//	case IMGFMT_I420:
+//		return fromType(I420, width, height);
+//	case IMGFMT_YUY2:
+//		return fromType(YUY2, width, height);
+//	case IMGFMT_UYVY:
+//		return fromType(UYVY, width, height);
+//	case IMGFMT_NV12:
+//		return fromType(NV12, width, height);
+//	case IMGFMT_NV21:
+//		return fromType(NV21, width, height);
+//	case IMGFMT_RGBA:
+//		return fromType(RGBA, width, height);
+//	default:
+//		return VideoFormat();
+//	}
+//}
 
-uint32_t _fToImgFmt(VideoFormat::Type type) {
+uint32_t videoFormatTypeToImgfmt(VideoFormat::Type type) {
 	switch (type) {
 	case VideoFormat::YV12:
 		return IMGFMT_YV12;
@@ -92,22 +143,30 @@ uint32_t _fToImgFmt(VideoFormat::Type type) {
 		return IMGFMT_YUY2;
 	case VideoFormat::UYVY:
 		return IMGFMT_UYVY;
+	case VideoFormat::NV12:
+		return IMGFMT_NV12;
+	case VideoFormat::NV21:
+		return IMGFMT_NV21;
+	case VideoFormat::BGRA:
+		return IMGFMT_BGRA;
+	case VideoFormat::RGBA:
+		return IMGFMT_RGBA;
 	default:
 		return 0;
 	}
 }
 
 QString _fToDescription(VideoFormat::Type type) {
-	return QLatin1String(vo_format_name(_fToImgFmt(type)));
+	return QLatin1String(vo_format_name(videoFormatTypeToImgfmt(type)));
 }
 
 
 QImage VideoFrame::toImage() const {
-	QImage img(d->format.width, d->format.height, QImage::Format_RGB888);
-	const int dy = d->format.stride;
+	QImage img(d->format.size(), QImage::Format_RGB888);
+	const int dy = d->format.stride();
 	const int dy2 = dy << 1;
 	const int dr = img.bytesPerLine();
-	const int duv = d->format.stride/2;
+	const int duv = d->format.stride()/2;
 	const uchar *y0 = data(0);
 	const uchar *u0 = data(1);
 	const uchar *v0 = data(2);

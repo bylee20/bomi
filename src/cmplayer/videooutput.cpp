@@ -1,8 +1,5 @@
 #include "videooutput.hpp"
-#include "events.hpp"
-#include "overlay.hpp"
 #include "videoframe.hpp"
-#include "videorenderer.hpp"
 #include "mpcore.hpp"
 #include "hwaccel.hpp"
 #include "videorendereritem.hpp"
@@ -85,20 +82,8 @@ struct vo *VideoOutput::vo_create(MPContext *mpctx) {
 	return nullptr;
 }
 
-static const int Prepare = QEvent::User + 1000;
-static const int DrawImage = QEvent::User + 1001;
-
-bool VideoOutput::event(QEvent *ev) {
-//	if (ev->type() == Prepare) {
-//		ev->accept();
-//		d->renderer->prepare(d->format);
-//		return true;
-//	} else if (ev->type() == DrawImage) {
-//		drawImage(d->mpimg);
-//		ev->accept();
-//		return true;
-//	}
-	return QObject::event(ev);
+const VideoFormat &VideoOutput::format() const {
+	return d->format;
 }
 
 bool VideoOutput::usingHwAccel() const {
@@ -130,15 +115,7 @@ int VideoOutput::config(struct vo *vo, uint32_t w_s, uint32_t h_s, uint32_t, uin
 		d->hwaccelActivated = true;
 	} else
 #endif
-		d->format = VideoFormat::fromImgFmt(fmt, w_s, h_s);
-	qApp->postEvent(self, new QEvent((QEvent::Type)Prepare), Qt::HighEventPriority);
-//	d->mutex.lock();
-//	d->renderer->metaObject()->method(d->renderer->metaObject()->indexOfMethod("prepare(VideoFormat)")).invoke(d->renderer, Qt::QueuedConnection, Q_ARG(VideoFormat, d->format));
-//	qDebug() << "go to wait!!";
-//	d->cond.wait(&d->mutex);
-//	qDebug() << "waiting done";
-//	d->renderer->prepare(d->format);
-//	d->mutex.unlock();
+	d->format = VideoFormat(imgfmtToVideoFormatType(fmt));
 #ifdef Q_OS_X11
 	if (d->hwaccelActivated && d->hwaccel && d->hwaccel->isUsable()) {
 		d->renderer->makeCurrent();
@@ -149,7 +126,6 @@ int VideoOutput::config(struct vo *vo, uint32_t w_s, uint32_t h_s, uint32_t, uin
 	qDebug() << "vo configured";
 	return 0;
 }
-
 
 bool VideoOutput::getImage(void *data) {
 #ifdef Q_OS_MAC
@@ -164,74 +140,13 @@ bool VideoOutput::getImage(void *data) {
 
 void VideoOutput::drawImage(void *data) {
 	mp_image_t *mpi = reinterpret_cast<mp_image_t*>(data);
-	auto renderer = d->engine->m_video;
-	if (!renderer)
-		return;
-	VideoFrame &frame = renderer->getNextFrame();
-	frame.setFormat(d->format);
-	if (frame.copy(mpi))
-		d->format = frame.format();
+	if (auto renderer = d->engine->videoRenderer()) {
+		VideoFrame &frame = renderer->getNextFrame();
+		frame.setFormat(d->format);
+		if (frame.copy(mpi))
+			emit formatChanged(d->format = frame.format());
+	}
 }
-
-
-//void VideoOutput::drawImage(void *data) {
-//	if (!d->renderer->beginUploadingTextures())
-//		return;
-//	mp_image_t *mpi = reinterpret_cast<mp_image_t*>(data);
-//#ifdef Q_OS_X11
-//	if (d->hwaccelActivated) {
-//		if (d->hwaccel && d->hwaccel->isUsable()) {
-//			d->hwaccel->copySurface(mpi);
-//		}
-//	} else {
-//#endif
-//		const int stride = mpi->stride[0];
-//		int width_stride = stride;
-//		if (!(mpi->flags & MP_IMGFLAG_PLANAR))
-//			width_stride /= (mpi->bpp >> 3);
-//		if (d->format.stride < stride) {
-//			qDebug() << "expand stride:" << d->format.stride << "->" << stride;
-//			d->format.width_stride = width_stride;
-//			d->format.stride = stride;
-//			d->renderer->prepare(d->format);
-//		}
-//		const auto h = d->format.height;
-//		const auto w = width_stride;
-//		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
-//			glBindTexture(GL_TEXTURE_2D, d->renderer->texture(idx));
-//			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
-//		};
-//		switch (d->format.type) {
-//		case VideoFormat::I420:
-//		case VideoFormat::YV12:
-//			setTex(0, GL_LUMINANCE, w, h, mpi->planes[0]);
-//			setTex(1, GL_LUMINANCE, w >> 1, h >> 1, mpi->planes[1]);
-//			setTex(2, GL_LUMINANCE, w >> 1, h >> 1, mpi->planes[2]);
-//			break;
-//		case VideoFormat::NV12:
-//		case VideoFormat::NV21:
-//			setTex(0, GL_LUMINANCE, w, h, mpi->planes[0]);
-//			setTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1, mpi->planes[1]);
-//			break;
-//		case VideoFormat::YUY2:
-//		case VideoFormat::UYVY:
-//			setTex(0, GL_LUMINANCE_ALPHA, w, h, mpi->planes[0]);
-//			setTex(1, GL_BGRA, w >> 1, h, mpi->planes[0]);
-//			break;
-//		case VideoFormat::RGBA:
-//			setTex(0, GL_RGBA, w, h, mpi->planes[0]);
-//			break;
-//		case VideoFormat::BGRA:
-//			setTex(0, GL_BGRA, w, h, mpi->planes[0]);
-//			break;
-//		default:
-//			break;
-//		}
-//#ifdef Q_OS_X11
-//	}
-//#endif
-//	d->renderer->endUploadingTextures();
-//}
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	VideoOutput *v = reinterpret_cast<VideoOutput*>(vo->priv);
@@ -239,13 +154,12 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	case VOCTRL_QUERY_FORMAT:
 		return v->queryFormat(*reinterpret_cast<uint32_t*>(data));
 	case VOCTRL_DRAW_IMAGE:
-//		v->d->mpimg = reinterpret_cast<mp_image_t*>(data);
-//		qApp->postEvent(v, new QEvent((QEvent::Type)DrawImage), Qt::HighEventPriority);
 		v->drawImage(data);
 		return VO_TRUE;
-//	case VOCTRL_REDRAW_FRAME:
-//		v->d->renderer->render();
-//		return VO_TRUE;
+	case VOCTRL_REDRAW_FRAME:
+		if (auto renderer = v->d->engine->videoRenderer())
+			renderer->update();
+		return VO_TRUE;
 	case VOCTRL_FULLSCREEN:
 		return VO_TRUE;
 	case VOCTRL_UPDATE_SCREENINFO:
@@ -279,8 +193,7 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 
 void VideoOutput::flipPage(struct vo *vo) {
 	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
-	auto renderer = d->engine->m_video;
-	if (renderer)
+	if (auto renderer = d->engine->videoRenderer())
 		renderer->next();
 }
 
