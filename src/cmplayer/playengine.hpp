@@ -19,17 +19,19 @@ struct DvdInfo {
 	void clear() {titles.clear(); volume.clear();}
 };
 
-struct Track {
-	Track() {}
-	Track(const QString &lang, const QString &title): m_title(title), m_lang(lang) {}
-	QString name() const {return m_title % ' ' % m_lang;}
-	QString title() const {return m_title;}
-	QString language() const {return m_lang;}
-private:
-	QString m_title = {}, m_lang = {};
-};
+//struct Track {
 
-typedef QList<Track> TrackList;
+//	Track() {}
+//	Track(const QString &lang, const QString &title): m_title(title), m_lang(lang) {}
+//	QString name() const {return m_title % ' ' % m_lang;}
+//	QString title() const {return m_title;}
+//	QString language() const {return m_lang;}
+//	Type type() const {return m_type;}
+//private:
+//	QString m_title = {}, m_lang = {};
+//	Type m_type = Unknown;
+//};
+
 typedef QLinkedList<QString> FilterList;
 
 class PlayEngine : public QThread, public MpMessage {
@@ -62,6 +64,7 @@ public:
 	bool handleMousePressed(const QPoint &pos);
 	bool handleMouseMoved(const QPoint &pos);
 
+	const DvdInfo &dvd() const {return m_dvd;}
 	bool isInDvdMenu() const {return m_isInDvdMenu;}
 	int currentTitle() const {return m_isInDvdMenu ? 0 : m_title;}
 	int currentChapter() const;
@@ -92,14 +95,12 @@ public:
 	bool isMuted() const {return m_muted;}
 	double volumeNormalizer() const;
 	double preamp() const {return m_preamp;}
-	StreamList audioStreams() const {return m_audiosStreams;}
+	StreamList audioStreams() const {return m_audioStreams;}
 	void setCurrentAudioStream(int id) {tellmp("switch_audio", id);}
 public slots:
 	void setVolume(int volume) {
 		if (_Change(m_volume, qBound(0, volume, 100))) {
-//			enqueue(new Cmd(Cmd::Volume, mpVolume()));
-			tellmp("volume", mpVolume(), 1);
-			emit volumeChanged(m_volume);
+			setMpVolume();	emit volumeChanged(m_volume);
 		}
 	}
 	void setMuted(bool muted) {
@@ -109,9 +110,7 @@ public slots:
 	}
 	void setPreamp(double preamp) {
 		if (_ChangeF(m_preamp, qFuzzyCompare(preamp, 1.0) ? 1.0 : qBound(0.0, preamp, 10.0))) {
-			tellmp("volume", mpVolume(), 1);
-//			enqueue(new Cmd(Cmd::Volume, mpVolume()));
-			emit preampChanged(m_preamp);
+			setMpVolume();	emit preampChanged(m_preamp);
 		}
 	}
 	void setVideoRenderer(VideoRendererItem *renderer);
@@ -140,11 +139,15 @@ signals:
 	void audioFilterChanged(const QString &af, bool on);
 	void videoFormatChanged(const VideoFormat &format);
 	void videoAspectRatioChanged(double ratio);
+	void audioStreamFound(const StreamList &audioStreams);
+	void videoStreamFound(const StreamList &videoStreams);
+	void subtitleStreamFound(const StreamList &subtitleStreams);
 private:
 	struct Cmd;	struct Context;
 	static int runCmd(MPContext *mpctx, mp_cmd *mpcmd);
 	static void onPausedChanged(MPContext *mpctx);
 	static mp_cmd *waitCmd(MPContext *mpctx, int timeout, int peek);
+	void setMpVolume();
 	void clear();
 	void enqueue(Cmd *cmd);
 	void clearQueue();
@@ -164,13 +167,14 @@ private:
 	void run();
 	bool parse(const Id &id);
 	bool parse(const QString &line);
+	void customEvent(QEvent *event);
 	static PlayEngine *obj;
 	friend int main(int argc, char **argv);
 	int m_duration = 0, m_title = 0, m_volume = 100;
 	EngineState m_state = EngineStopped;
 	double m_speed = 1.0, m_preamp = 1.0;
 	bool m_framedrop = false, m_isInDvdMenu = false,m_muted = false;
-	StreamList m_subtitleStreams, m_audiosStreams, m_videoStreams;
+	StreamList m_subtitleStreams, m_audioStreams, m_videoStreams;
 	VideoRendererItem *m_renderer = nullptr;
 	DvdInfo m_dvd;	FilterList m_af;	Mrl m_mrl;
 	struct Data; Data *d;

@@ -35,6 +35,7 @@ private slots:
 	void open(const QString &url);
 	void onMessageReceived(const QString &message);
 private:
+	static constexpr int ReopenEvent = QEvent::User + 1;
 	App(const App&) = delete;
 	App &operator = (const App&) = delete;
 	static void messageHandler(QtMsgType type, const char *msg);

@@ -1,6 +1,5 @@
 #include "app.hpp"
 #include "playengine.hpp"
-#include "events.hpp"
 #include "mainwindow.hpp"
 #include "mrl.hpp"
 #include "record.hpp"
@@ -115,7 +114,7 @@ bool App::event(QEvent *event) {
 			d->main->openFromFileManager(Mrl(static_cast<QFileOpenEvent*>(event)->url().toString()));
 		event->accept();
 		return true;
-	} case Event::Reopen:
+	} case ReopenEvent:
 		d->main->show();
 		event->accept();
 		return true;

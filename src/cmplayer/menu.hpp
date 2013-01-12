@@ -54,7 +54,8 @@ public:
 	inline QString id(QAction *action) const {return m_a.key(action, QString());}
 	inline QString id(Menu *menu) const {return m_m.key(menu, QString());}
 	inline QString id() const {return m_id;}
-	QMenu *duplicated(QWidget *parent = nullptr) const;
+	QMenu *copied(QWidget *parent = nullptr);
+	QList<QMenu*> copies() const {return m_copies;}
 protected:
 	Menu(const QString &id, QWidget *parent);
 	void save(Record &set) const;
@@ -63,6 +64,7 @@ private:
 	GroupHash m_g;
 	ActionHash m_a;
 	MenuHash m_m;
+	QList<QMenu*> m_copies;
 	const QString m_id;
 
 	friend class MenuBar;

@@ -6,6 +6,7 @@
 void mp_msg_va2(int mod, int lev, const char *format, va_list va);
 
 struct Stream {
+	enum Type {Unknown, Audio, Video, Subtitle};
 	QString name() const {
 		QString name = m_title;
 		if (!m_lang.isEmpty())

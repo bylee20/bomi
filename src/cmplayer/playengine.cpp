@@ -121,8 +121,8 @@ static void setvolume_internal(mixer_t *mixer, float l, float r)
 
 void mixer_setvolume2(mixer_t *mixer, float l, float r) {
 	checkvolume(mixer);  // to check mute status and AO support for volume
-	mixer->vol_l = qBound(0.0f, l, 100.0f);//av_clip(l, 0, 100);
-	mixer->vol_r = qBound(0.0f, r, 100.0f);//av_clip(r, 0, 100);
+	mixer->vol_l = av_clipf(l, 0, 100);
+	mixer->vol_r = av_clipf(r, 0, 100);
 	if (!mixer->ao || mixer->muted)
 		return;
 	setvolume_internal(mixer, mixer->vol_l, mixer->vol_r);
@@ -201,6 +201,10 @@ PlayEngine::~PlayEngine() {
 	delete d;
 }
 
+void PlayEngine::setMpVolume() {
+	enqueue(new Cmd(Cmd::Volume, mpVolume()));
+}
+
 double PlayEngine::volumeNormalizer() const {
 	return volnorm_mul(d->mpctx);
 }
@@ -220,22 +224,46 @@ void PlayEngine::setVideoAspect(double ratio) {
 }
 
 void PlayEngine::clear() {
-	m_videoStreams.clear();
 	setVideoAspect(0.0);
 	m_dvd.clear();
+	m_audioStreams.clear();
+	m_videoStreams.clear();
 	m_subtitleStreams.clear();
-	m_audiosStreams.clear();
+//	emit audioStreamFound(m_audioStreams);
+//	emit audioStreamFound(m_videoStreams);
+//	emit audioStreamFound(m_subtitleStreams);
 	m_title = 0;
 	m_isInDvdMenu = false;
 }
 
+class StreamChangeEvent : public QEvent {
+public:
+	static constexpr int Type = QEvent::User+1;
+	StreamChangeEvent(Stream::Type stream): QEvent((QEvent::Type)Type), m_stream(stream) {}
+	Stream::Type stream() const {return m_stream;}
+private:
+	Stream::Type m_stream = Stream::Unknown;
+};
+
+void PlayEngine::customEvent(QEvent *event) {
+	if (event->type() == StreamChangeEvent::Type) {
+		auto stream = static_cast<StreamChangeEvent*>(event)->stream();
+		if (stream == Stream::Audio)
+			emit audioStreamFound(m_audioStreams);
+		else if (stream == Stream::Video)
+			emit videoStreamFound(m_videoStreams);
+		else if (stream == Stream::Subtitle)
+			emit subtitleStreamFound(m_subtitleStreams);
+	}
+}
+
 bool PlayEngine::parse(const Id &id) {
-	if (getStream(id, "AUDIO", "AID", m_audiosStreams))
-		return true;
-	if (getStream(id, "VIDEO", "VID", m_videoStreams))
-		return true;
-	if (getStream(id, "SUBTITLE", "SID", m_subtitleStreams))
-		return true;
+	if (getStream(id, "AUDIO", "AID", m_audioStreams))
+		qApp->postEvent(this, new StreamChangeEvent(Stream::Audio));
+	else if (getStream(id, "VIDEO", "VID", m_videoStreams))
+		qApp->postEvent(this, new StreamChangeEvent(Stream::Video));
+	else if (getStream(id, "SUBTITLE", "SID", m_subtitleStreams))
+		qApp->postEvent(this, new StreamChangeEvent(Stream::Subtitle));
 	else if (!id.name.isEmpty()) {
 		if (id.name.startsWith(_L("DVD_"))) {
 			if (same(id.name, "DVD_VOLUME_ID")) {
@@ -254,8 +282,9 @@ bool PlayEngine::parse(const Id &id) {
 			return true;
 		}
 //		static QRegExp rxTitle("DVD_TITLE_(\\d+)_(LENGTH|CHAPTERS)");
-	}
-	return false;
+	} else
+		return false;
+	return true;
 }
 
 bool PlayEngine::parse(const QString &line) {

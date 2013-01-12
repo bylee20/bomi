@@ -157,19 +157,19 @@ Rectangle {
 		}
 		NumberAnimation { id: hider; target: controls; property: "opacity"; from: 1.0; to: 0.0; duration: 200; }
 	}
-//	MouseArea {
-//		anchors.fill: parent
-//		hoverEnabled: true || player.info.fullScreen
-//		onPressed: mouse.accepted = false;
-//		onPositionChanged: {
-//			if (player.info.fullScreen) {
-//				if (0.0 <= mouse.x && mouse.x <= width && parent.height - controls.height <= mouse.y && mouse.y <= parent.height)
-//					controls.opacity = 1.0
-//				else if (controls.opacity == 1.0)
-//					controls.hide();
-//			} else
-//				controls.opacity = 1.0
-//			mouse.accepted = false
-//		}
-//	}
+	MouseArea {
+		anchors.fill: parent
+		hoverEnabled: true || player.info.fullScreen
+		onPressed: mouse.accepted = false;
+		onPositionChanged: {
+			if (player.info.fullScreen) {
+				if (0.0 <= mouse.x && mouse.x <= width && parent.height - controls.height <= mouse.y && mouse.y <= parent.height)
+					controls.opacity = 1.0
+				else if (controls.opacity == 1.0)
+					controls.hide();
+			} else
+				controls.opacity = 1.0
+			mouse.accepted = false
+		}
+	}
 }

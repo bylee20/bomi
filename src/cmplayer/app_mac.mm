@@ -27,7 +27,6 @@
 #include <CoreServices/CoreServices.h>
 #include <Carbon/Carbon.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
-#include "events.hpp"
 #include <Cocoa/Cocoa.h>
 #include <mach/mach_port.h>
 #include <sys/param.h>
@@ -35,6 +34,8 @@
 #include <IOKit/storage/IODVDMedia.h>
 #include <IOKit/storage/IOMedia.h>
 #include <IOKit/IOBSD.h>
+
+static const int ReopenEvent = QEvent::User + 1;
 
 @interface AppObjC : NSObject {
 }
@@ -69,7 +70,7 @@
 {
 	Q_UNUSED(event);
 	Q_UNUSED(replyEvent);
-	QApplication::postEvent( qApp, new ReopenEvent );
+	QApplication::postEvent( qApp, new QEvent((QEvent::Type)ReopenEvent));
 }
 @end
 

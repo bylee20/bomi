@@ -52,15 +52,16 @@ void Menu::load(Record &r) {
 	r.endGroup();
 }
 
-QMenu *Menu::duplicated(QWidget *parent) const {
+QMenu *Menu::copied(QWidget *parent) {
 	QMenu *menu = new QMenu(parent);
 	menu->setTitle(title());
 	for (QAction *action : actions()) {
 		auto sub = static_cast<Menu*>(action->menu());
 		if (sub)
-			menu->addMenu(sub->duplicated(menu));
+			menu->addMenu(sub->copied(menu));
 		else
 			menu->QMenu::addAction(action);
 	}
+	m_copies << menu;
 	return menu;
 }

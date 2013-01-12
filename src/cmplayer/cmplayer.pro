@@ -103,7 +103,6 @@ HEADERS += playengine.hpp \
     subtitle_parser_p.hpp \
     enums.hpp \
     snapshotdialog.hpp \
-    events.hpp \
     listmodel.hpp \
     widgets.hpp \
     qtcolorpicker.hpp \
@@ -168,7 +167,6 @@ SOURCES += main.cpp \
     subtitle_parser_p.cpp \
     enums.cpp \
     snapshotdialog.cpp \
-    events.cpp \
     listmodel.cpp \
     widgets.cpp \
     qtcolorpicker.cpp \

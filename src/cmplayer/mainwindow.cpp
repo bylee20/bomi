@@ -431,34 +431,49 @@ MainWindow::MainWindow(): d(new Data) {
 		}
 	});
 
-	auto checkStreamMenu = [this] (Menu &menu, const StreamList &streams, int current, const QString &text) {
+	connect(&audio, &Menu::aboutToShow, [this] () {d->menu("audio")("track").setEnabled(d->engine.audioStreams().size() > 0);});
+	connect(&video, &Menu::aboutToShow, [this] () {d->menu("video")("track").setEnabled(d->engine.videoStreams().size() > 0);});
+	connect(&sub, &Menu::aboutToShow, [this] () {d->menu("subtitle")("spu").setEnabled(d->engine.subtitleStreams().size() > 0);});
+	auto updateStreamMenu = [this] (Menu &menu, const StreamList &streams, const QString &text) {
 		menu.g()->clear();
 		if (!streams.isEmpty()) {
 			int nth = 1;
 			for (auto it = streams.begin(); it != streams.end(); ++it, ++nth) {
 				auto atext = text.arg(nth);
 				const auto name = it->name();
-				if (!name.isEmpty())
-					atext += " - " % name;
-				auto act = menu.addActionToGroupWithoutKey(atext, true);
-				const int id = it.key();
-				act->setData(id);
-				act->setChecked(current == id);
+				if (!name.isEmpty()) atext += " - " % name;
+				menu.addActionToGroupWithoutKey(atext, true)->setData(it.key());
 			}
 		}
+		auto actions = menu.actions();
+		if (actions.isEmpty()) menu.menuAction()->setEnabled(false);
+		auto copies = menu.copies();
+		for (auto copy : copies) {
+			copy->clear(); copy->addActions(actions);
+			copy->menuAction()->setEnabled(menu.menuAction()->isEnabled());
+		}
 	};
-	connect(&video, &Menu::aboutToShow, [this] () {d->menu("video")("track").setEnabled(d->engine.videoStreams().size() > 0);});
-	connect(&video("track"), &Menu::aboutToShow, [this, checkStreamMenu] () {
-		checkStreamMenu(d->menu("video")("track"), d->engine.videoStreams(), d->engine.currentVideoStream(), tr("Video %1"));
+	connect(&d->engine, &PlayEngine::audioStreamFound, [this, updateStreamMenu] (const StreamList &as) {
+		qDebug() << "audio" << as.size();
+		updateStreamMenu(d->menu("audio")("track"), as, tr("Audio %1"));
 	});
-	connect(&audio, &Menu::aboutToShow, [this] () {d->menu("audio")("track").setEnabled(d->engine.audioStreams().size() > 0);});
-	connect(&audio("track"), &Menu::aboutToShow, [this, checkStreamMenu] () {
-		checkStreamMenu(d->menu("audio")("track"), d->engine.audioStreams(), d->engine.currentAudioStream(), tr("Audio %1"));
+	connect(&d->engine, &PlayEngine::videoStreamFound, [this, updateStreamMenu] (const StreamList &as) {
+		updateStreamMenu(d->menu("video")("track"), as, tr("Video %1"));
 	});
-
-	connect(&sub, &Menu::aboutToShow, [this] () {d->menu("subtitle")("spu").setEnabled(d->engine.subtitleStreams().size() > 0);});
-	connect(&sub("spu"), &Menu::aboutToShow, [this, checkStreamMenu] () {
-		checkStreamMenu(d->menu("subtitle")("spu"), d->engine.subtitleStreams(), d->engine.currentSubtitleStream(), tr("Subtitle %1"));
+	connect(&d->engine, &PlayEngine::subtitleStreamFound, [this, updateStreamMenu] (const StreamList &as) {
+		updateStreamMenu(d->menu("subtitle")("track"), as, tr("Subtitle %1"));
+	});
+	auto checkCurrentStreamAction = [this] (Menu &menu, int id) {
+		for (auto action : menu.actions()) {if (action->data().toInt() == id) {action->setChecked(true); break;}}
+	};
+	connect(&audio("track"), &Menu::aboutToShow, [this, checkCurrentStreamAction] () {
+		checkCurrentStreamAction(d->menu("audio")("track"), d->engine.currentAudioStream());
+	});
+	connect(&video("track"), &Menu::aboutToShow, [this, checkCurrentStreamAction] () {
+		checkCurrentStreamAction(d->menu("video")("track"), d->engine.currentVideoStream());
+	});
+	connect(&sub("spu"), &Menu::aboutToShow, [this, checkCurrentStreamAction] () {
+		checkCurrentStreamAction(d->menu("subtitle")("spu"), d->engine.currentSubtitleStream());
 	});
 
 	connect(&d->engine, &PlayEngine::mrlChanged, this, &MainWindow::updateMrl);
@@ -506,6 +521,9 @@ MainWindow::MainWindow(): d(new Data) {
 
 	d->load_state();
 	applyPref();
+	updateStreamMenu(d->menu("audio")("track"), d->engine.audioStreams(), tr("Audio %1"));
+	updateStreamMenu(d->menu("video")("track"), d->engine.videoStreams(), tr("Video %1"));
+	updateStreamMenu(d->menu("subtitle")("spu"), d->engine.subtitleStreams(), tr("Subtitle %1"));
 
 	d->playlist->setPlaylist(d->recent.lastPlaylist());
 	d->engine.setMrl(d->recent.lastMrl(), d->recent.askStartTime(d->recent.lastMrl()), false);
@@ -800,7 +818,7 @@ void MainWindow::applyPref() {
 	d->menu.update();
 	d->menu.save();
 
-	auto addContextMenu = [this] (Menu &menu) {d->contextMenu->addMenu(menu.duplicated(d->contextMenu));};
+	auto addContextMenu = [this] (Menu &menu) {d->contextMenu->addMenu(menu.copied(d->contextMenu));};
 
 	delete d->contextMenu;
 	d->contextMenu = new QMenu;
@@ -820,7 +838,7 @@ void MainWindow::applyPref() {
 ////	qt_mac_set_dock_menu(&d->menu);
 	QMenuBar *mb = app()->globalMenuBar();
 	qDeleteAll(mb->actions());
-	auto addMenuBar = [this, mb] (Menu &menu) {mb->addMenu(menu.duplicated(mb));};
+	auto addMenuBar = [this, mb] (Menu &menu) {mb->addMenu(menu.copied(mb));};
 	addMenuBar(d->menu("open"));
 	addMenuBar(d->menu("play"));
 	addMenuBar(d->menu("video"));
@@ -939,8 +957,14 @@ auto MainWindow::updateMrl(const Mrl &mrl) -> void {
 		title += file.fileName();
 		if (isVisible())
 			setFilePath(d->filePath);
-	} else
+	} else {
 		clearSubtitles();
+		if (mrl.isDvd()) {
+			title += d->engine.dvd().volume;
+			if (title.isEmpty())
+				title += "DVD";
+		}
+	}
 	title += _L(" - ") % Info::name() % " " % Info::version();
 	setTitle(title);
 	d->sync_subtitle_file_menu();

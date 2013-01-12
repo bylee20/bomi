@@ -147,23 +147,19 @@ QSGNode *LetterboxItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data)
 struct VideoRendererItem::Data {
 	VideoFrame frame, next;
 	bool frameChanged = false;
-	QRectF contentRect;
 	QRectF vtx;
 	QPoint offset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
 	VideoFormat format;
 	int alignment = Qt::AlignCenter;
 	quint64 drawnFrames = 0;
-	bool resetNode = false;
 	ShaderVar shaderVar;
-//	QMutex mutex;
 	LetterboxItem *letterbox = nullptr;
-	QByteArray shader;
-	int width = 0;
-	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
-	int loc_brightness, loc_contrast, loc_sat_hue, loc_dxy, loc_p1, loc_p2, loc_p3;
 	SubtitleRendererItem *subtitle = nullptr;
 	MpOsdItem *mposd = nullptr;
+	QByteArray shader;
+	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
+	int loc_brightness, loc_contrast, loc_sat_hue, loc_dxy, loc_p1, loc_p2, loc_p3;
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
@@ -260,8 +256,8 @@ VideoRendererItem::Effects VideoRendererItem::effects() const {
 
 void VideoRendererItem::setEffects(Effects effects) {
 	if (d->shaderVar.effects() != effects) {
-		const int old = d->shaderVar.id();
-		d->resetNode = d->shaderVar.setEffects(effects) != old;
+//		const int old = d->shaderVar.id();
+		d->shaderVar.setEffects(effects);
 		update();
 	}
 }

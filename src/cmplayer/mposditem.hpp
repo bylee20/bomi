@@ -13,7 +13,8 @@ public:
 	void setFrameChanged();
 	QMutex &mutex() const;
 private:
-	static const int DrawnEvent = QEvent::User + 1;
+	static const int ShowEvent = QEvent::User + 1;
+	static const int HideEvent = QEvent::User + 2;
 	void customEvent(QEvent *event);
 	bool blending() const override {return true;}
 	void prepare();
