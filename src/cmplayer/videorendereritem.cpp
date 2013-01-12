@@ -1,15 +1,8 @@
 #include "videorendereritem.hpp"
 #include "subtitlerendereritem.hpp"
-#include "playengine.hpp"
-#include "mpcore.hpp"
+#include "mposditem.hpp"
 #include "pref.hpp"
-
-extern "C" {
-#include <stream/stream_dvdnav.h>
-#include <input/input.h>
-#include <libmpdemux/stheader.h>
-#include <libmpcodecs/vd.h>
-}
+#include "videoframe.hpp"
 
 struct ShaderVar {
 	ShaderVar() {
@@ -163,18 +156,20 @@ struct VideoRendererItem::Data {
 	quint64 drawnFrames = 0;
 	bool resetNode = false;
 	ShaderVar shaderVar;
-	QMutex mutex;
+//	QMutex mutex;
 	LetterboxItem *letterbox = nullptr;
 	QByteArray shader;
 	int width = 0;
 	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
 	int loc_brightness, loc_contrast, loc_sat_hue, loc_dxy, loc_p1, loc_p2, loc_p3;
 	SubtitleRendererItem *subtitle = nullptr;
+	MpOsdItem *mposd = nullptr;
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 : TextureRendererItem(3, parent), d(new Data) {
 	setFlags(ItemHasContents | ItemAcceptsDrops);
+	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
 	d->subtitle = new SubtitleRendererItem(this);
 }
@@ -193,10 +188,11 @@ VideoFrame &VideoRendererItem::getNextFrame() const {
 
 void VideoRendererItem::next() {
 	if (!d->frameChanged) {
-		QMutexLocker locker(&d->mutex);
-		Q_UNUSED(locker);
+		d->mposd->mutex().lock();
 		d->frameChanged = true;
 		d->frame.swap(d->next);
+		d->mposd->setFrameChanged();
+		d->mposd->mutex().unlock();
 	}
 	update();
 }
@@ -258,10 +254,6 @@ quint64 VideoRendererItem::drawnFrames() const {
 	return d->drawnFrames;
 }
 
-//const VideoFormat &VideoRendererItem::format() const {
-//	return d->format;
-//}
-
 VideoRendererItem::Effects VideoRendererItem::effects() const {
 	return d->shaderVar.effects();
 }
@@ -288,9 +280,10 @@ void VideoRendererItem::updateGeometry() {
 	}
 	if (d->vtx != vtx) {
 		d->vtx = vtx;
+		d->mposd->setPosition(d->vtx.topLeft());
+		d->mposd->setSize(d->vtx.size());
 		setGeometryDirty();
 //		d->osd.frameVtx = d->vtx;
-//		d->screen.overlay()->setArea(QRect(QPoint(0, 0), widget.toSize()), d->vtx.toRect());
 	}
 }
 
@@ -474,7 +467,7 @@ QByteArray VideoRendererItem::shader() const {
 
 const char *VideoRendererItem::fragmentShader() const {
 	d->shader = shader();
-	qDebug() << "shader for " << _fToDescription(d->format.type());
+	qDebug() << "shader for " << cc4ToDescription(d->format.type());
 	return d->shader.constData();
 }
 
@@ -496,6 +489,10 @@ void VideoRendererItem::link(QOpenGLShaderProgram *program) {
 	d->loc_p3 = program->uniformLocation("p3");
 }
 
+void VideoRendererItem::drawMpOsd(void *p, int x, int y, int w, int h, uchar *src, uchar *srca, int stride) {
+	reinterpret_cast<VideoRendererItem*>(p)->d->mposd->draw(x, y, w, h, src, srca, stride);
+}
+
 void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
 	TextureRendererItem::bind(state, program);
 	program->setUniformValue(d->loc_p1, 0);
@@ -504,8 +501,8 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 	program->setUniformValue(d->loc_brightness, d->shaderVar.brightness);
 	program->setUniformValue(d->loc_contrast, d->shaderVar.contrast);
 	program->setUniformValue(d->loc_sat_hue, d->shaderVar.sat_hue);
-	const float dx = 1.0/(double)d->format.storedWidth();
-	const float dy = 1.0/(double)d->format.storedHeight();
+	const float dx = 1.0/(double)d->format.drawWidth();
+	const float dy = 1.0/(double)d->format.drawHeight();
 	program->setUniformValue(d->loc_dxy, dx, dy, -dx, 0.f);
 
 	const bool filter = d->shaderVar.effects() & FilterEffects;
@@ -538,18 +535,17 @@ void VideoRendererItem::beforeUpdate() {
 	if (!d->frameChanged)
 		return;
 
-	QMutexLocker locker(&d->mutex);		Q_UNUSED(locker);
+	QMutexLocker locker(&d->mposd->mutex());		Q_UNUSED(locker);
 	if (d->format != d->frame.format()) {
+		qDebug() << "format change" << cc4ToString(d->format.type()) << cc4ToString(d->frame.format().type());
 		d->format = d->frame.format();
-		if (!d->format.isEmpty()) {
-			resetNode();
-			updateGeometry();
-		}
+		d->mposd->setFrameSize(d->format.size());
+		resetNode();
+		updateGeometry();
 		emit formatChanged(d->format);
 	}
 	if (!d->format.isEmpty()) {
-		const auto w = d->format.storedWidth();
-		const auto h = d->format.storedHeight();
+		const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
 		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
 			glBindTexture(GL_TEXTURE_2D, texture(idx));
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
@@ -604,7 +600,7 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 		d->subtitle->setScreenRect(d->letterbox->screen());
 
 	constexpr double top = 0.0, left = 0.0, bottom = 1.0;
-	const double right = _Ratio(d->format.width(), d->format.storedWidth());
+	const double right = _Ratio(d->format.width(), d->format.drawWidth());
 	set(tp, d->vtx.topLeft() += offset, QPointF(left, top));
 	set(++tp, d->vtx.bottomLeft() += offset, QPointF(left, bottom));
 	set(++tp, d->vtx.topRight() += offset, QPointF(right, top));
@@ -621,8 +617,7 @@ void VideoRendererItem::initializeTextures() {
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	};
-	const auto w = d->format.storedWidth();
-	const auto h = d->format.storedHeight();
+	const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
 	auto initTex = [this, &bindTex] (int idx, GLenum fmt, int width, int height) {
 		bindTex(idx);
 		glTexImage2D(GL_TEXTURE_2D, 0, fmt, width, height, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
@@ -657,4 +652,8 @@ void VideoRendererItem::initializeTextures() {
 	default:
 		break;
 	}
+}
+
+QQuickItem *VideoRendererItem::osd() const {
+	return d->mposd;
 }

@@ -75,7 +75,7 @@ struct ProcStat {
 
 void AvInfoObject::setVideo(const PlayEngine *engine) {
 	auto mpctx = engine->context();
-	if (!mpctx || !mpctx->sh_video)
+	if (!mpctx || !mpctx->sh_video || !mpctx->sh_video->codec)
 		return;
 	const auto fmt = engine->videoFormat();
 	auto sh = mpctx->sh_video;
@@ -88,6 +88,8 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	m_input->m_bps = sh->i_bps*8;
 	m_output->m_type = format(fmt.type());
 	m_output->m_size = fmt.size();
+	if (engine->videoAspectRatio() > 0.1)
+		m_output->m_size.rwidth() = fmt.height()*engine->videoAspectRatio();
 	m_output->m_fps = sh->fps;
 	m_output->m_bps = fmt.bps(sh->fps);
 }
@@ -128,7 +130,6 @@ struct PlayInfoItem::Data {
 
 	const PlayEngine *engine = nullptr;
 
-	EngineState state = EngineStopped;
 	quint64 frameTime = 0, drawnFrames = 0;
 	double cpuUsage = 0.0, sync = 0.0;
 	QTimer timer;
@@ -182,7 +183,7 @@ void PlayInfoItem::set(const PlayEngine *engine) {
 	if (fullScreen != m_fullScreen)
 		emit fullScreenChanged(m_fullScreen = fullScreen);
 
-	connect(window(), &QWindow::windowStateChanged, [this] (Qt::WindowState state) {
+	plug(window(), &QWindow::windowStateChanged, [this] (Qt::WindowState state) {
 		auto fullScreen = state == Qt::WindowFullScreen;
 		if (fullScreen != m_fullScreen)
 			emit fullScreenChanged(m_fullScreen = fullScreen);
@@ -193,15 +194,16 @@ void PlayInfoItem::set(const PlayEngine *engine) {
 	plug(d->engine, &PlayEngine::tick, [this] (int pos) {
 		if (isVisible()) {
 			setPosition(pos);
-			if (d->state != d->engine->state()) {
-				d->state = d->engine->state();
-				setState((State)(int)d->state);
-				setDuration(d->engine->duration());
-			}
+			setState((State)d->engine->state());
+			setDuration(d->engine->duration());
 		}
 	});
 
 	plug(d->engine, &PlayEngine::videoFormatChanged, [this] () {
+		m_video->setVideo(d->engine);
+		emit videoChanged();
+	});
+	plug(d->engine, &PlayEngine::videoAspectRatioChanged, [this] () {
 		m_video->setVideo(d->engine);
 		emit videoChanged();
 	});
@@ -225,13 +227,22 @@ void PlayInfoItem::set(const PlayEngine *engine) {
 	plug(d->engine, &PlayEngine::mutedChanged, [this] (bool muted) {
 		emit mutedChanged(m_muted = muted);
 	});
-	emit volumeChanged(m_volume = d->engine->volume());
-	emit mutedChanged(m_muted = d->engine->isMuted());
-	emit volumeNormalizedChanged(m_volnorm = d->engine->hasAudioFilter("volnorm"));
+
 	if (d->engine->videoRenderer()) {
 		d->drawnFrames = d->getDrawnFrames();
 		d->frameTime = GetTimerMS();
 	}
+
+	emit mutedChanged(m_muted = d->engine->isMuted());
+	emit durationChanged(m_duration = d->engine->duration());
+	emit tick(m_position = d->engine->position());
+	emit videoChanged();
+	emit audioChanged();
+	emit mediaChanged();
+	emit stateChanged(m_state = (State)d->engine->state());
+	emit volumeNormalizedChanged(m_volnorm = d->engine->hasAudioFilter("volnorm"));
+	emit volumeChanged(m_volume = d->engine->volume());
+	emit fullScreenChanged(m_fullScreen = (window()->windowState() == Qt::WindowFullScreen));
 }
 
 void PlayInfoItem::collect() {

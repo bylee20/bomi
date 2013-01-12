@@ -4,6 +4,10 @@
 #include "stdafx.hpp"
 #include "playlist.hpp"
 
+class PlaylistModelV2 : public QAbstractItemModel {
+
+};
+
 class PlaylistModel : public QAbstractItemModel {
 	Q_OBJECT
 public:

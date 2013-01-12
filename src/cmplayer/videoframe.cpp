@@ -7,57 +7,24 @@ extern "C" {
 
 extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
 
-//void VideoFormat::setStride(int s) {
-//	if (m_stride != s) {
-//		m_stride = s;
-//		switch (m_type) {
-//		case VideoFormat::YUY2:
-//		case VideoFormat::UYVY:
-//			fullWidth = m_stride >> 1;
-//			break;
-//		case VideoFormat::RGBA:
-//		case VideoFormat::BGRA:
-//			fullWidth = m_stride >> 2;
-//			break;
-//		default:
-//			fullWidth = m_stride;
-//			break;
-//		}
-//	}
-//}
+void VideoFrame::setFormat(const VideoFormat &format) {
+	d->format = format;
+	for (int i=0; i<3; ++i)
+		d->data[i].resize(format.byteWidth(i)*format.byteHeight(i));
+}
 
-//VideoFormat VideoFormat::fromType(Type type, int width, int height) {
-//	VideoFormat format;
-//	format.stride = format.fullWidth = format.width = width;
-//	format.height = height;
-//	format.planes = 1;
-//	format.type = type;
-//	switch (type) {
-//	case YV12:
-//	case I420:
-//		format.planes = 3;
-//		format.bpp = 12;
-//		break;
-//	case NV12:
-//	case NV21:
-//		format.planes = 2;
-//		format.bpp = 12;
-//		break;
-//	case YUY2:
-//	case UYVY:
-//		format.bpp = 16;
-//		format.stride = width << 1;
-//		break;
-//	case RGBA:
-//	case BGRA:
-//		format.bpp = 32;
-//		format.stride = width << 2;
-//		break;
-//	default:
-//		return VideoFormat();
-//	}
-//	return format;
-//}
+bool VideoFrame::copy(mp_image *mpi) {
+	bool ret = d->format.imgfmt() != mpi->imgfmt || d->format.byteWidth(0) != mpi->stride[0] || d->format.byteHeight(0) != mpi->height;
+	if (ret) {
+		setFormat(VideoFormat::fromMpImage(mpi));
+		qDebug() << "new format" << cc4ToString(d->format.type());
+		qDebug() << d->data[0].size() << d->data[1].size() << d->data[2].size();
+		qDebug() << (d->data[0].size() + d->data[1].size() + d->data[2].size())*8/_Area(d->format.drawSize());
+	}
+	for (int i=0; i<3; ++i)
+		fast_memcpy(d->data[i].data(), mpi->planes[i], d->data[i].size());
+	return ret;
+}
 
 VideoFormat::Type imgfmtToVideoFormatType(unsigned int imgfmt) {
 	switch (imgfmt) {
@@ -84,26 +51,36 @@ VideoFormat::Type imgfmtToVideoFormatType(unsigned int imgfmt) {
 
 VideoFormat VideoFormat::fromMpImage(mp_image *mpi) {
 	VideoFormat format;
-	format.m_size = QSize(mpi->w, mpi->h);
-	format.m_storedSize = QSize(mpi->stride[0], mpi->height);
-	format.m_stride = mpi->stride[0];
+	format.m_type = imgfmtToVideoFormatType(mpi->imgfmt);
 	format.m_bpp = mpi->bpp;
 	format.m_planes = mpi->num_planes;
-	format.m_type = imgfmtToVideoFormatType(mpi->imgfmt);
 
+	format.m_size = QSize(mpi->w, mpi->h);
+	format.m_drawSize = QSize(mpi->stride[0], mpi->height);
+	format.m_byteSize.fill(QSize(0, 0));
+	for (int i=0; i<format.m_planes; ++i) {
+		format.m_byteSize[i].rwidth() = mpi->stride[i];
+		format.m_byteSize[i].rheight() = mpi->height;
+	}
+
+	format.m_imgfmt = mpi->imgfmt;
 	switch (mpi->imgfmt) {
 	case IMGFMT_YV12:
 	case IMGFMT_I420:
+		format.m_byteSize[1].rheight() >>= 1;
+		format.m_byteSize[2].rheight() >>= 1;
+		break;
 	case IMGFMT_NV12:
 	case IMGFMT_NV21:
+		format.m_byteSize[1].rheight() >>= 1;
 		break;
 	case IMGFMT_YUY2:
 	case IMGFMT_UYVY:
-		format.m_storedSize.rwidth() = mpi->stride[0] >> 1;
+		format.m_drawSize.rwidth() >>= 1;
 		break;
 	case IMGFMT_RGBA:
 	case IMGFMT_BGRA:
-		format.m_storedSize.rwidth() = mpi->stride[0] >> 2;
+		format.m_drawSize.rwidth() >>= 2;
 		break;
 	default:
 		break;
@@ -156,17 +133,17 @@ uint32_t videoFormatTypeToImgfmt(VideoFormat::Type type) {
 	}
 }
 
-QString _fToDescription(VideoFormat::Type type) {
+QString cc4ToDescription(VideoFormat::Type type) {
 	return QLatin1String(vo_format_name(videoFormatTypeToImgfmt(type)));
 }
 
 
 QImage VideoFrame::toImage() const {
 	QImage img(d->format.size(), QImage::Format_RGB888);
-	const int dy = d->format.stride();
+	const int dy = d->format.drawWidth();
 	const int dy2 = dy << 1;
 	const int dr = img.bytesPerLine();
-	const int duv = d->format.stride()/2;
+	const int duv = d->format.drawWidth()/2;
 	const uchar *y0 = data(0);
 	const uchar *u0 = data(1);
 	const uchar *v0 = data(2);

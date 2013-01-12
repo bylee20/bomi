@@ -6,64 +6,38 @@ Rectangle {
 	id: main
 	Player {
 		id: player
-		anchors.top: parent.top
-		anchors.left: parent.left
-		anchors.right: parent.right
-		anchors.bottom: controls.top
-		infoView: PlayInfoOsd {
-			parent: player
-			info: player.info
-		}
-		TextOsd {
-			id: msgosd
-			anchors.fill: parent
-		}
-		ProgressOsd {
-			id: timeline
-			anchors.fill: parent
-		}
-		info.onTick: {
-			timeline.value = info.time/info.duration
-			timetext.secs = (info.time*1e-3).toFixed(0)
-		}
-		onMessageRequested: {msgosd.text = message; msgosd.show();}
+		anchors.top: parent.top; anchors.bottom: controls.top;
+		anchors.left: parent.left; anchors.right: parent.right;
+		infoView: PlayInfoOsd {	parent: player;	info: player.info }
+		TextOsd { id: msgosd; anchors.fill: parent }
+		ProgressOsd { id: timeline;  anchors.fill: parent }
+		info.onTick: { timeline.value = info.time/info.duration; timetext.secs = (info.time*1e-3).toFixed(0) }
+		onMessageRequested: { msgosd.text = message; msgosd.show(); }
 		onSought: {timeline.show();}
-		info.onStateChanged: {
-			if (info.state == PlayInfo.Stopped)
-				logo.visible = true
-			else
-				logo.visible = false
-		}
 		info.onFullScreenChanged: {
-			anchors.bottom = info.fullScreen ? parent.bottom : controls.top;
-			controls.visible = !info.fullScreen
+			if (info.fullScreen) { anchors.bottom = parent.bottom; controls.hide(); }
+			else { anchors.bottom = controls.top; controls.show() }
 		}
-
-		Logo {
-			id: logo
-			anchors.fill: parent
-		}
+		Logo { id: logo; anchors.fill: parent; visible: player.info.state == PlayInfo.Stopped }
+		function showSize() { msgosd.text = "%1x%2".arg(width).arg(height); msgosd.show() }
+		onWidthChanged: showSize()
+		onHeightChanged: showSize()
 	}
 
 	Rectangle {
 		id: controls
-		visible: !player.info.fullScreen
-		anchors.left: parent.left
-		anchors.right: parent.right
-		anchors.bottom: parent.bottom
-		height: 20
+		anchors.bottom: parent.bottom; height: 20
+		anchors.left: parent.left; anchors.right: parent.right
 		gradient: Gradient {
-			GradientStop {position: 0.0; color: "#aaa"}
-			GradientStop {position: 0.1; color: "#eee"}
-			GradientStop {position: 1.0; color: "#aaa"}
+			GradientStop { position: 0.0; color: "#aaa" }
+			GradientStop { position: 0.1; color: "#eee" }
+			GradientStop { position: 1.0; color: "#aaa" }
 		}
 		Item {
 			id: playPause
 			width: height
-			anchors.top: parent.top
-			anchors.bottom: parent.bottom
-			anchors.left: parent.left
-			anchors.margins: 3
+			anchors.top: parent.top; anchors.bottom: parent.bottom
+			anchors.left: parent.left; anchors.margins: 3
 			Image {
 				id: playPauseImage
 				anchors.fill: parent
@@ -115,6 +89,18 @@ Rectangle {
 			onPressed: player.setVolume(Math.floor(100.0*target))
 			onDragged: player.setVolume(Math.floor(100.0*target))
 		}
+		property bool __hidden: false
+		function show() {
+			controls.anchors.bottomMargin = 0
+			controls.__hidden = false
+		}
+		function hide() {
+			console.log(controls.__hidden)
+			if (!controls.__hidden) {
+				hider.start()
+				controls.__hidden = true
+			}
+		}
 	}
 	MouseArea {
 		anchors.fill: parent
@@ -123,10 +109,18 @@ Rectangle {
 		onPositionChanged: {
 			if (player.info.fullScreen) {
 				var my = parent.height - mouse.y;
-				controls.visible = 0 <= my && my <= controls.height;
+				var contains = 0 <= my && my <= controls.height;
+				if (contains)
+					controls.show()
+				else
+					controls.hide()
 			} else
-				controls.visible = true
+				controls.show()
 			mouse.accepted = false
 		}
+	}
+	NumberAnimation {
+		id: hider; target: controls; property: "anchors.bottomMargin"
+		duration: 200; from: 0; to: -controls.height
 	}
 }

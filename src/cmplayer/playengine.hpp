@@ -35,80 +35,71 @@ typedef QLinkedList<QString> FilterList;
 class PlayEngine : public QThread, public MpMessage {
 	Q_OBJECT
 public:
-	struct Cmd {
-		enum Type {Unknown = 0, Quit = 1, Load = 2, Stop = 4, Volume = 16, Break = Quit | Load | Stop};
-		Cmd() {} Cmd(Type type): type(type) {} Cmd(Type type, const QVariant &var): type(type), var(var) {}
-		Type type = Unknown; QVariant var;
-	};
+	static PlayEngine &get() {return *obj;}
+	static void msleep(unsigned long msec) {QThread::msleep(msec);}
+	static void usleep(unsigned long usec) {QThread::usleep(usec);}
+
 	PlayEngine(const PlayEngine&) = delete;
 	PlayEngine &operator = (const PlayEngine &) = delete;
 	~PlayEngine();
 	MPContext *context() const;
 	int position() const;
-
-	bool hasVideo() const;
+	int duration() const {return m_duration;}
+	Mrl mrl() const {return m_mrl;}
 	bool atEnd() const;
 	bool isSeekable() const;
 	bool isPlaying() const {return state() == EnginePlaying;}
 	bool isPaused() const {return state() == EnginePaused;}
 	bool isStopped() const {return state() == EngineStopped;}
 	bool isFinished() const {return state() == EngineFinished;}
-	EngineState state() const {return m_state;}
+	bool isInitialized() const;
 	double speed() const {return m_speed;}
-	int duration() const {return m_duration;}
-	Mrl mrl() const {return m_mrl;}
+	QString mediaName() const;
+	EngineState state() const {return m_state;}
+	void play(int time);
+	void setMrl(const Mrl &mrl, int start, bool play);
+	void setSpeed(double speed);
+	bool handleMousePressed(const QPoint &pos);
+	bool handleMouseMoved(const QPoint &pos);
+
+	bool isInDvdMenu() const {return m_isInDvdMenu;}
 	int currentTitle() const {return m_isInDvdMenu ? 0 : m_title;}
-	QMap<int, DvdInfo::Title> titles() const {return m_dvd.titles;}
 	int currentChapter() const;
-	int currentSubtitleStream() const;
+	QMap<int, DvdInfo::Title> titles() const {return m_dvd.titles;}
 	QStringList chapters() const {auto it = m_dvd.titles.find(currentTitle()); return it != m_dvd.titles.end() ? it->chapters : QStringList();}
+	int currentSubtitleStream() const;
 	StreamList subtitleStreams() const {return m_subtitleStreams;}
+	void setCurrentSubtitleStream(int id) {tellmp("sub_demux", id);}
 	void setCurrentTitle(int id) {if (id > 0) tellmp("switch_title", id); else tellmp("dvdnav menu");}
 	void setCurrentChapter(int id) {tellmp("seek_chapter", id, 1);}
-	void setCurrentSubtitleStream(int id) {tellmp("sub_demux", id);}
-	static PlayEngine &get() {return *obj;}
-	void enqueue(Cmd *cmd);
-	bool isInDvdMenu() const {return m_isInDvdMenu;}
-	QString mediaName() const;
-	bool isInitialized() const;
-	bool frameDrop() const {return m_framedrop;}
-	void setFrameDrop(bool on) {tellmp("frame_drop", (m_framedrop = on) ? 1 : 0);}
-	static void msleep(unsigned long msec) {QThread::msleep(msec);}
-	static void usleep(unsigned long usec) {QThread::usleep(usec);}
-	void play(int time);
-	bool usingHwAcc() const;
-	void clearQueue();
-	void setMrl(const Mrl &mrl, int start, bool play);
 
-	void setSpeed(double speed);
+	bool hasVideo() const;
+	bool frameDrop() const {return m_framedrop;}
+	bool usingHwAcc() const;
+	void setFrameDrop(bool on) {tellmp("frame_drop", (m_framedrop = on) ? 1 : 0);}
 	void setAudioFilter(const QString &af, bool on);
 	bool hasAudioFilter(const QString &af) const {return m_af.contains(af);}
-	double volumeNormalizer() const;
-
-	int volume() const {return m_volume;}
-	bool isMuted() const {return m_muted;}
-	double preamp() const {return m_preamp;}
-
-	double mpVolume() const {return qBound(0.0, m_preamp*m_volume, 1000.0)/10.0;}
-
 	double fps() const;
-
+	double videoAspectRatio() const;
 	VideoRendererItem *videoRenderer() const {return m_renderer;}
-
 	VideoFormat videoFormat() const;
-	StreamList audioStreams() const {return m_audiosStreams;}
-	void setCurrentAudioStream(int id) {tellmp("switch_audio", id);}
-	int currentAudioStream() const;
-
-
 	StreamList videoStreams() const {return m_videoStreams;}
 	void setCurrentVideoStream(int id) {tellmp("switch_video", id);}
 	int currentVideoStream() const;
 
+	int volume() const {return m_volume;}
+	int currentAudioStream() const;
+	bool isMuted() const {return m_muted;}
+	double volumeNormalizer() const;
+	double preamp() const {return m_preamp;}
+	StreamList audioStreams() const {return m_audiosStreams;}
+	void setCurrentAudioStream(int id) {tellmp("switch_audio", id);}
 public slots:
 	void setVolume(int volume) {
 		if (_Change(m_volume, qBound(0, volume, 100))) {
-			enqueue(new Cmd(Cmd::Volume, mpVolume())); emit volumeChanged(m_volume);
+//			enqueue(new Cmd(Cmd::Volume, mpVolume()));
+			tellmp("volume", mpVolume(), 1);
+			emit volumeChanged(m_volume);
 		}
 	}
 	void setMuted(bool muted) {
@@ -118,19 +109,16 @@ public slots:
 	}
 	void setPreamp(double preamp) {
 		if (_ChangeF(m_preamp, qFuzzyCompare(preamp, 1.0) ? 1.0 : qBound(0.0, preamp, 10.0))) {
-			enqueue(new Cmd(Cmd::Volume, mpVolume())); emit preampChanged(m_preamp);
+			tellmp("volume", mpVolume(), 1);
+//			enqueue(new Cmd(Cmd::Volume, mpVolume()));
+			emit preampChanged(m_preamp);
 		}
 	}
-//	void setVolumeNormalized(bool norm);
-//	void setTempoScaled(bool scaled);
-
 	void setVideoRenderer(VideoRendererItem *renderer);
-public slots:
 	void quitRunning();
 	void play();
-	void stop() {enqueue(new Cmd(Cmd::Stop));}
+	void stop();
 	void pause() {if (!isPaused()) tellmp("pause");}
-
 	void seek(int pos) {tellmp("seek", (double)pos/1000.0, 2);}
 	void relativeSeek(int pos) {tellmp("seek", (double)pos/1000.0, 0);}
 signals:
@@ -151,19 +139,24 @@ signals:
 	void mutedChanged(bool muted);
 	void audioFilterChanged(const QString &af, bool on);
 	void videoFormatChanged(const VideoFormat &format);
+	void videoAspectRatioChanged(double ratio);
 private:
+	struct Cmd;	struct Context;
+	static int runCmd(MPContext *mpctx, mp_cmd *mpcmd);
+	static void onPausedChanged(MPContext *mpctx);
+	static mp_cmd *waitCmd(MPContext *mpctx, int timeout, int peek);
+	void clear();
+	void enqueue(Cmd *cmd);
+	void clearQueue();
+	double mpVolume() const {return qBound(0.0, m_preamp*m_volume, 1000.0)/10.0;}
+	QPoint mapToFrameFromTop(const QPoint &pos);
 	void tellmp(const QString &cmd);
 	void tellmp(const QString &cmd, const QVariant &arg) {tellmp(cmd % _L(' ') % arg.toString());}
 	void tellmp(const QString &cmd, const QVariant &a1, const QVariant &a2) {tellmp(cmd % ' ' % a1.toString() % ' ' % a2.toString());}
 	void tellmp(const QString &cmd, const QVariant &a1, const QVariant &a2, const QVariant &a3) {tellmp(cmd % ' ' % a1.toString() % ' ' % a2.toString() % ' ' % a3.toString());}
 	template<template <typename> class T> void tellmp(const QString &cmd, const T<QString> &args) {QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);}
-	void updateVideoAspect(double ratio);
+	void setVideoAspect(double ratio);
 	void setState(EngineState state) {if (m_state != state) {const auto prev = m_state; m_state = state; emit stateChanged(m_state, prev);}}
-	void clear();
-	struct Context;
-	static int runCmd(MPContext *mpctx, mp_cmd *mpcmd);
-	static void onPausedChanged(MPContext *mpctx);
-	static mp_cmd *waitCmd(MPContext *mpctx, int timeout, int peek);
 	int processCmds();
 	int idle();
 	void run_mp_cmd(const char *str);
@@ -171,28 +164,16 @@ private:
 	void run();
 	bool parse(const Id &id);
 	bool parse(const QString &line);
-	struct Data;
 	static PlayEngine *obj;
 	friend int main(int argc, char **argv);
-	Data *d;
-	VideoRendererItem *m_renderer = nullptr;
-//	friend class VideoOutput;
-	Mrl m_mrl;
-	int m_duration = 0;
+	int m_duration = 0, m_title = 0, m_volume = 100;
 	EngineState m_state = EngineStopped;
-	double m_speed = 1.0;
-	bool m_framedrop = false;
-	bool m_isInDvdMenu = false;
+	double m_speed = 1.0, m_preamp = 1.0;
+	bool m_framedrop = false, m_isInDvdMenu = false,m_muted = false;
 	StreamList m_subtitleStreams, m_audiosStreams, m_videoStreams;
-	int m_title = 0;
-	DvdInfo m_dvd;
-
-	FilterList m_af;
-	int m_volume = 100;
-	double m_preamp = 1.0;
-	bool m_muted = false;
-
-
+	VideoRendererItem *m_renderer = nullptr;
+	DvdInfo m_dvd;	FilterList m_af;	Mrl m_mrl;
+	struct Data; Data *d;
 };
 
 #endif // PLAYENGINE_HPP

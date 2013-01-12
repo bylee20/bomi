@@ -95,7 +95,7 @@ void MpMessage::_parse(const QString &line) {
 			if (p->parse(id))
 				return;
 	}
-	qDebug() << "unfiltered" << line;
+//	qDebug() << "unfiltered" << line;
 }
 
 bool MpMessage::parse(const QString &) {return false;}

@@ -35,11 +35,11 @@ void PlayerItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeo
 }
 
 void PlayerItem::registerItems() {
-	qmlRegisterType<VideoRendererItem>("CMPlayer", 1, 0, "VideoRenderer");
-	qmlRegisterType<PlayInfoItem>("CMPlayer", 1, 0, "PlayInfo");
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();
+	qmlRegisterType<VideoRendererItem>("CMPlayer", 1, 0, "VideoRenderer");
+	qmlRegisterType<PlayInfoItem>("CMPlayer", 1, 0, "PlayInfo");
 	qmlRegisterType<SubtitleRendererItem>("CMPlayer", 1, 0, "SubtitleRenderer");
 	qmlRegisterType<PlayerItem>("CMPlayer", 1, 0, "Player");
 }

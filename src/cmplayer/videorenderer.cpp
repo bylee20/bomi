@@ -595,31 +595,6 @@
 //	return d->render;
 //}
 
-//void VideoRenderer::onMouseMoved(const QPointF &p) {
-//	auto mpctx = d->engine->context();
-//	if (mpctx && mpctx->stream && mpctx->stream->type == STREAMTYPE_DVDNAV && d->vtx.isValid() && !d->frame->format.isEmpty()) {
-//		auto pos = p;
-//		pos -= d->vtx.topLeft();
-//		pos.rx() *= (double)d->format.width/d->vtx.width();
-//		pos.ry() *= (double)d->format.height/d->vtx.height();
-//		auto button = 0;
-//		mp_dvdnav_update_mouse_pos(mpctx->stream, pos.x() + 0.5, pos.y() + 0.5, &button);
-//	}
-//}
-
-//void VideoRenderer::onMouseClicked(const QPointF &p) {
-//	auto mpctx = d->engine->context();
-//	if (mpctx && mpctx->stream && mpctx->stream->type == STREAMTYPE_DVDNAV && d->vtx.isValid() && !d->frame->format.isEmpty()) {
-//		auto pos = p;
-//		pos -= d->vtx.topLeft();
-//		pos.rx() *= (double)d->format.width/d->vtx.width();
-//		pos.ry() *= (double)d->format.height/d->vtx.height();
-//		auto button = 0;
-//		mp_dvdnav_update_mouse_pos(mpctx->stream, pos.x() + 0.5, pos.y() + 0.5, &button);
-//		mp_dvdnav_handle_input(mpctx->stream, MP_CMD_DVDNAV_MOUSECLICK, &button);
-//	}
-//}
-
 //void VideoRenderer::clearEffects() {
 //	d->var.setEffects(0);
 //	update();

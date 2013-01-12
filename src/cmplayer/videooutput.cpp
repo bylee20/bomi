@@ -35,6 +35,7 @@ struct VideoOutput::Data {
 	mp_image_t *mpimg = nullptr;
 	VideoFrame *frame = nullptr;
 	PlayEngine *engine = nullptr;
+	bool flip = false;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -90,7 +91,7 @@ bool VideoOutput::usingHwAccel() const {
 	return d->hwaccelActivated;
 }
 
-int VideoOutput::config(struct vo *vo, uint32_t w_s, uint32_t h_s, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
+int VideoOutput::config(struct vo *vo, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
 	auto self = reinterpret_cast<VideoOutput*>(vo->priv);
 	Data *d = self->d;
 	d->hwaccelActivated = false;
@@ -146,6 +147,7 @@ void VideoOutput::drawImage(void *data) {
 		if (frame.copy(mpi))
 			emit formatChanged(d->format = frame.format());
 	}
+	d->flip = true;
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
@@ -188,13 +190,17 @@ int VideoOutput::drawSlice(struct vo */*vo*/, uint8_t */*src*/[], int /*stride*/
 
 void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
-//	osd_draw_text(osd, d->format.width, d->format.height, VideoRenderer::drawAlpha, d->renderer);
+	if (auto r = d->engine->videoRenderer())
+		osd_draw_text(osd, d->format.width(), d->format.height(), VideoRendererItem::drawMpOsd, r);
 }
 
 void VideoOutput::flipPage(struct vo *vo) {
 	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
+	if (!d->flip)
+		return;
 	if (auto renderer = d->engine->videoRenderer())
 		renderer->next();
+	d->flip = false;
 }
 
 void VideoOutput::checkEvents(struct vo */*vo*/) {}

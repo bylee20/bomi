@@ -3,16 +3,12 @@
 
 #include "stdafx.hpp"
 #include "skin.hpp"
-class SubtitleRendererItem;
-class VideoRendererItem;
-class PlayInfoItem;
-class AudioController;
-class PlayEngine;
+
+class SubtitleRendererItem;		class VideoRendererItem;
+class PlayInfoItem;				class PlayEngine;
 
 class PlayerItem : public QQuickItem, public Skin {
 	Q_OBJECT
-//	Q_PROPERTY(SubtitleRendererItem *subtitle READ subtitle)
-//	Q_PROPERTY(VideoRendererItem *video READ video)
 	Q_PROPERTY(PlayInfoItem *info READ info NOTIFY infoChanged)
 	Q_PROPERTY(QQuickItem *infoView READ infoView WRITE setInfoView NOTIFY infoViewChanged)
 	Q_PROPERTY(QString message READ message)
@@ -22,8 +18,7 @@ public:
 
 	PlayerItem(QQuickItem *parent = nullptr);
 	SubtitleRendererItem *subtitle() const {return m_subtitle;}
-	VideoRendererItem *video() const {return m_renderer;}
-	AudioController *audio() const {return m_audio;}
+	VideoRendererItem *renderer() const {return m_renderer;}
 	PlayInfoItem *info() const {return m_info;}
 	PlayEngine *engine() const {return m_engine;}
 	QQuickItem *infoView() const {return m_infoView;}
@@ -46,7 +41,6 @@ private:
 	SubtitleRendererItem *m_subtitle = nullptr;
 	VideoRendererItem *m_renderer = nullptr;
 	PlayInfoItem *m_info = nullptr;
-	AudioController *m_audio = nullptr;
 	QQuickItem *m_infoView = nullptr;
 	PlayEngine *m_engine = nullptr;
 	QString m_message;

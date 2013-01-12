@@ -27,8 +27,7 @@ struct MainWindow::Data {
 	RecentInfo &recent = RecentInfo::get();
 	const Pref &p = Pref::get();
 	PlayEngine &engine = PlayEngine::get();
-	AudioController *audio = nullptr;
-	VideoRendererItem *video = nullptr;
+	VideoRendererItem *renderer = nullptr;
 	SubtitleRenderer subtitle;
 	QPoint prevPos;		QTimer hider;
 	Qt::WindowState winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
@@ -38,6 +37,7 @@ struct MainWindow::Data {
 	ABRepeater ab = {&engine, &subtitle};
 	QMenu *contextMenu = nullptr;
 	PlaylistView *playlist;
+	PrefDialog *prefDlg = nullptr;
 	HistoryView *history;
 	QRect screenRect;
 //	FavoritesView *favorite;
@@ -115,17 +115,14 @@ struct MainWindow::Data {
 		menu("video")("crop").g()->trigger(as.video_crop_ratio);
 		menu("video")("align").g("horizontal")->trigger(as.video_alignment.id() & 0x0f);
 		menu("video")("align").g("vertical")->trigger(as.video_alignment.id() & 0xf0);
-		video->setOffset(as.video_offset);
-		video->setEffects((VideoRendererItem::Effects)as.video_effects);
+		renderer->setOffset(as.video_offset);
+		renderer->setEffects((VideoRendererItem::Effects)as.video_effects);
 		for (int i=0; i<16; ++i) {
 			if ((as.video_effects >> i) & 1)
 				menu("video")("filter").g()->setChecked(1 << i, true);
 		}
-		video->setColor(as.video_color);
+		renderer->setColor(as.video_color);
 
-		if (audio) {
-
-		}
 		menu("subtitle").g("display")->trigger((int)as.sub_letterbox);
 		menu("subtitle").g("align")->trigger((int)as.sub_align_top);
 		subtitle.setPos(as.sub_pos);
@@ -144,17 +141,13 @@ struct MainWindow::Data {
 		as.muted = engine.isMuted();
 		as.preamp = engine.preamp();
 		as.af_volnorm = engine.hasAudioFilter("volnorm");
-		if (video) {
-			as.video_aspect_ratio = video->aspectRatio();
-			as.video_crop_ratio = video->cropRatio();
-			as.video_alignment = video->alignment();
-			as.video_offset = video->offset();
-			as.video_effects = video->effects();
-			as.video_color = video->color();
-		}
-		if (audio) {
-
-
+		if (renderer) {
+			as.video_aspect_ratio = renderer->aspectRatio();
+			as.video_crop_ratio = renderer->cropRatio();
+			as.video_alignment = renderer->alignment();
+			as.video_offset = renderer->offset();
+			as.video_effects = renderer->effects();
+			as.video_color = renderer->color();
 		}
 		as.play_speed = engine.speed();
 		as.sub_pos = subtitle.pos();
@@ -188,9 +181,8 @@ MainWindow::MainWindow(): d(new Data) {
 
 	d->player = rootObject()->findChild<PlayerItem*>();
 	d->player->create();
-	d->video = d->player->video();
-	d->audio = d->player->audio();
-	d->subtitle.setItem(d->video->subtitle());
+	d->renderer = d->player->renderer();
+	d->subtitle.setItem(d->player->subtitle());
 	setVideoSize(1.0);
 	d->playlist = new PlaylistView(&d->engine, nullptr);
 	d->history = new HistoryView(&d->engine, nullptr);
@@ -270,8 +262,8 @@ MainWindow::MainWindow(): d(new Data) {
 	connect(video("track").g(), &ActionGroup::triggered, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentVideoStream(a->data().toInt()); showMessage(tr("Current Video Track"), a->text());
 	});
-	connect(video("aspect").g(), &ActionGroup::triggered, [this] (QAction *a) {d->video->setAspectRatio(a->data().toDouble());});
-	connect(video("crop").g(), &ActionGroup::triggered, [this] (QAction *a) {d->video->setCropRatio(a->data().toDouble());});
+	connect(video("aspect").g(), &ActionGroup::triggered, [this] (QAction *a) {d->renderer->setAspectRatio(a->data().toDouble());});
+	connect(video("crop").g(), &ActionGroup::triggered, [this] (QAction *a) {d->renderer->setCropRatio(a->data().toDouble());});
 	connect(video["snapshot"], &QAction::triggered, [this] () {
 		//	static SnapshotDialog *dlg = new SnapshotDialog(this);
 		//	dlg->setVideoRenderer(d->video); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
@@ -283,30 +275,30 @@ MainWindow::MainWindow(): d(new Data) {
 	connect(&video("align"), &Menu::triggered, [this] () {
 		int key = 0;
 		for (auto a : d->menu("video")("align").actions()) {if (a->isChecked()) key |= a->data().toInt();}
-		d->video->setAlignment(key);
+		d->renderer->setAlignment(key);
 	});
 
 	connect(&video("move"), &Menu::triggered, [this] (QAction *action) {
 		const int move = action->data().toInt();
 		if (move == Qt::NoArrow) {
-			d->video->setOffset(QPoint(0, 0));
+			d->renderer->setOffset(QPoint(0, 0));
 		} else {
 			const double x = move == Qt::LeftArrow ? -1 : (move == Qt::RightArrow ? 1 : 0);
 			const double y = move == Qt::UpArrow ? -1 : (move == Qt::DownArrow ? 1 : 0);
-			d->video->setOffset(d->video->offset() += QPoint(x, y));
+			d->renderer->setOffset(d->renderer->offset() += QPoint(x, y));
 		}
 	});
 	connect(&video("filter"), &Menu::triggered, [this] () {
 		VideoRendererItem::Effects effects = 0;
 		for (auto act : d->menu("video")("filter").actions()) {
 			if (act->isChecked()) effects |= static_cast<VideoRendererItem::Effect>(act->data().toInt());
-		} d->video->setEffects(effects);
+		} d->renderer->setEffects(effects);
 	});
 	connect(video("color").g(), &ActionGroup::triggered, [this] (QAction *action) {
 		const auto data = action->data().toList();
 		const auto prop = ColorProperty::Value(data[0].toInt());
 		if (prop == ColorProperty::PropMax) {
-			d->video->setColor(ColorProperty());
+			d->renderer->setColor(ColorProperty());
 			showMessage(tr("Reset brightness, contrast, saturation and hue"));
 		} else {
 			QString cmd;
@@ -316,10 +308,10 @@ MainWindow::MainWindow(): d(new Data) {
 			case ColorProperty::Hue: cmd = tr("Hue"); break;
 			case ColorProperty::Contrast: cmd = tr("Contrast"); break;
 			default: return;}
-			ColorProperty color = d->video->color();
+			ColorProperty color = d->renderer->color();
 			color.setValue(prop, color.value(prop) + data[1].toInt()*0.01);
-			d->video->setColor(color);
-			showMessage(cmd, qRound(d->video->color()[prop]*100.0), "%", true);
+			d->renderer->setColor(color);
+			showMessage(cmd, qRound(d->renderer->color()[prop]*100.0), "%", true);
 		}
 	});
 
@@ -379,8 +371,8 @@ MainWindow::MainWindow(): d(new Data) {
 	connect(tool["playlist"], &QAction::triggered, d->playlist, &PlaylistView::toggle);
 	connect(tool["history"], &QAction::triggered, d->history, &HistoryView::toggle);
 	connect(tool["subtitle"], &QAction::triggered, static_cast<ToggleDialog*>(d->subtitle.view()), &ToggleDialog::toggle);
-	connect(tool["pref"], &QAction::triggered, [this] () {static PrefDialog *dlg = nullptr;
-		if (!dlg) {dlg = new PrefDialog; connect(dlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));} dlg->show();
+	connect(tool["pref"], &QAction::triggered, [this] () {
+		if (!d->prefDlg) {d->prefDlg = new PrefDialog; connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));} d->prefDlg->show();
 	});
 	connect(tool["playinfo"], &QAction::toggled, [this](bool v) {d->player->setInfoVisible(v);});
 	connect(tool["auto-exit"], &QAction::toggled, [this] (bool on) {
@@ -461,7 +453,7 @@ MainWindow::MainWindow(): d(new Data) {
 	});
 	connect(&audio, &Menu::aboutToShow, [this] () {d->menu("audio")("track").setEnabled(d->engine.audioStreams().size() > 0);});
 	connect(&audio("track"), &Menu::aboutToShow, [this, checkStreamMenu] () {
-		if (d->audio) checkStreamMenu(d->menu("audio")("track"), d->engine.audioStreams(), d->engine.currentAudioStream(), tr("Audio %1"));
+		checkStreamMenu(d->menu("audio")("track"), d->engine.audioStreams(), d->engine.currentAudioStream(), tr("Audio %1"));
 	});
 
 	connect(&sub, &Menu::aboutToShow, [this] () {d->menu("subtitle")("spu").setEnabled(d->engine.subtitleStreams().size() > 0);});
@@ -555,6 +547,7 @@ MainWindow::MainWindow(): d(new Data) {
 
 MainWindow::~MainWindow() {
 	delete d->contextMenu;
+	delete d->prefDlg;
 	delete d;
 }
 
@@ -639,14 +632,14 @@ void MainWindow::setVideoSize(double rate) {
 		setFullScreen(!isFullScreen());
 	} else {
 		// patched by Handrake
-		const QSizeF video = d->video->sizeHint();
+		const QSizeF video = d->renderer->sizeHint();
 		const QSizeF desktop = screen()->availableVirtualSize();
 		const double target = 0.15;
 		if (isFullScreen())
 			setFullScreen(false);
 		if (rate == 0.0)
 			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
-		const QSize size = (this->size() - d->video->size() + d->video->sizeHint()*qSqrt(rate)).toSize();
+		const QSize size = (this->size() - d->renderer->size() + d->renderer->sizeHint()*qSqrt(rate)).toSize();
 		if (size != this->size()) {
 			resize(size);
 			setGeometry(QRect(position(), size));
@@ -675,10 +668,12 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 	bool showContextMenu = false;
 	switch (event->button()) {
 	case Qt::LeftButton:
-		if (!isFullScreen()) {
-			d->moving = true;
-			d->prevPos = event->globalPos();
-		}
+		if (d->engine.handleMousePressed(event->pos()))
+			break;
+		if (isFullScreen())
+			break;
+		d->moving = true;
+		d->prevPos = event->globalPos();
 		break;
 	case Qt::MiddleButton:
 		if (QAction *action = d->menu.middleClickAction(event->modifiers()))
@@ -690,6 +685,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 	default:
 		break;
 	}
+	qDebug() << "show" << showContextMenu;
 	if (showContextMenu)
 		d->contextMenu->exec(event->globalPos());
 	else
@@ -700,6 +696,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 	d->hider.stop();
 	if (cursor().shape() == Qt::BlankCursor)
 		unsetCursor();
+	d->engine.handleMouseMoved(event->pos());
 	QQuickView::mouseMoveEvent(event);
 	const bool full = isFullScreen();
 	if (full) {

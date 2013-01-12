@@ -5,9 +5,8 @@
 #include "mrl.hpp"
 #include "skin.hpp"
 
-class PlayEngine;		class VideoFormat;
-class VideoRendererItem;class AudioController;
-class PlaylistModel;
+class PlayEngine;			class VideoFormat;
+class VideoRendererItem;	class PlaylistModel;
 
 class AvIoFormat : public QObject {
 	Q_OBJECT
@@ -86,26 +85,25 @@ public:
 	Q_ENUMS(State)
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Opening = 16, Buffering = 32, Error = 64, Preparing = 128};
 private:
-	Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
-	Q_PROPERTY(int time READ position NOTIFY tick)
 	Q_PROPERTY(MediaInfoObject *media READ media NOTIFY mediaChanged)
 	Q_PROPERTY(AvInfoObject *audio READ audio NOTIFY videoChanged)
 	Q_PROPERTY(AvInfoObject *video READ video NOTIFY audioChanged)
+	Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
+	Q_PROPERTY(int time READ position NOTIFY tick)
+	Q_PROPERTY(int volume READ volume NOTIFY volumeChanged)
+	Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
 	Q_PROPERTY(bool volumeNormalized READ isVolumeNormalized NOTIFY volumeNormalizedChanged)
+	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
 	Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
-	Q_PROPERTY(State state READ state NOTIFY stateChanged)
 	Q_PROPERTY(double avgsync READ avgsync)
 	Q_PROPERTY(double avgfps READ avgfps)
 	Q_PROPERTY(double totalMemory READ totalMemory)
 	Q_PROPERTY(double memory READ memory)
 	Q_PROPERTY(double cpu READ cpu)
 	Q_PROPERTY(double avgbps READ avgbps)
-	Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
+	Q_PROPERTY(State state READ state NOTIFY stateChanged)
 	Q_PROPERTY(QString stateText READ stateText)
 	Q_PROPERTY(QString monospace READ monospace)
-	Q_PROPERTY(int volume READ volume NOTIFY volumeChanged)
-	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
-	Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
 public:
 	PlayInfoItem(QQuickItem *parent = nullptr);
 	~PlayInfoItem();
@@ -129,8 +127,6 @@ public:
 	bool isVolumeNormalized() const {return m_volnorm;}
 	double volumeNormalizer() const {return m_norm;}
 	double cpu() const {return m_cpu;}
-	void setName(const QString &name) {if (m_name != name) {emit nameChanged(m_name = name);}}
-	QString name() const {return m_name;}
 	QString stateText() const;
 	QString monospace() const;
 	int volume() const {return m_volume;}
@@ -150,8 +146,6 @@ signals:
 	void volumeNormalizedChanged(bool volnorm);
 	void volumeChanged(int volume);
 	void fullScreenChanged(bool full);
-private slots:
-//	void updateResourceUsage();
 private:
 	VideoRendererItem *renderer() const;
 	struct Data;
@@ -159,7 +153,6 @@ private:
 	int m_duration = 0, m_position = 0;
 	bool m_volnorm = false;
 	State m_state = Stopped;
-	QString m_name;
 	AvInfoObject *m_audio = new AvInfoObject(this);
 	AvInfoObject *m_video = new AvInfoObject(this);
 	MediaInfoObject *m_media = new MediaInfoObject(this);

@@ -3,9 +3,6 @@
 
 #include "stdafx.hpp"
 #include "skin.hpp"
-#include "videoframe.hpp"
-#include "colorproperty.hpp"
-#include "mpmessage.hpp"
 #include "texturerendereritem.hpp"
 
 
@@ -21,8 +18,9 @@ private:
 	bool m_rectChanged;
 };
 
-class VideoRendererItem;		class PlayEngine;
-class SubtitleRendererItem;
+class VideoRendererItem;		class ColorProperty;
+class SubtitleRendererItem;		class VideoFrame;
+class VideoFormat;
 
 class VideoRendererItem : public TextureRendererItem, public Skin {
 	Q_OBJECT
@@ -52,7 +50,6 @@ public:
 	QRectF screenRect() const;
 	QPoint offset() const;
 	quint64 drawnFrames() const;
-//	const VideoFormat &format() const;
 	const ColorProperty &color() const;
 	double aspectRatio() const;
 	double cropRatio() const;
@@ -63,13 +60,14 @@ public:
 	QSize sizeHint() const;
 	QSizeF size() const {return QSizeF(width(), height());}
 	void setVideoAspectRaito(double ratio);
+	QQuickItem *osd() const;
+	void setAspectRatio(double ratio);
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
 	void setColor(const ColorProperty &prop);
 	void setOffset(const QPoint &offset);
 	void setCropRatio(double ratio);
-	void setAspectRatio(double ratio);
 signals:
 	void effectsChanged(Effects effects);
 	void offsetChanged(const QPoint &pos);
@@ -80,13 +78,12 @@ private: // for VideoOutput
 private:
 	void initializeTextures();
 	QByteArray shader() const;
-
+	static void drawMpOsd(void *p, int x, int y, int w, int h, uchar *src, uchar *srca, int stride);
 	const char *fragmentShader() const;
 	void link(QOpenGLShaderProgram *program);
 	void bind(const RenderState &state, QOpenGLShaderProgram *program);
 	void updateTexturedPoint2D(TexturedPoint2D *tp);
 	void beforeUpdate() override;
-
 	void updateGeometry();
 	static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);

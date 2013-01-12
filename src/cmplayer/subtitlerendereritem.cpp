@@ -11,6 +11,7 @@ struct SubtitleRendererItem::Data {
 	QPointF shadowOffset = {0, 0};
 	bool empty = true;
 	QSize textureSize = {0, 0};
+	QSize imageSize = {0, 0};
 };
 
 SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
@@ -101,22 +102,30 @@ void SubtitleRendererItem::prepare() {
 		d->back.doLayout(width()/scale);
 
 		d->shadowOffset = m_style->shadow()->offset()*m_style->font()->height()*scale;
-		d->image = QImage(width() + qAbs(d->shadowOffset.x()), d->front.naturalSize().height()*scale + qAbs(d->shadowOffset.y()), QImage::Format_ARGB32_Premultiplied);
+		d->imageSize.rwidth() = width();
+		d->imageSize.rheight() = d->front.naturalSize().height()*scale + qAbs(d->shadowOffset.y());
+
+		double dpr = 1.0;
+		if (window() && window()->screen()) {
+			auto screen = window()->screen();
+			dpr = screen->logicalDotsPerInch()/screen->physicalDotsPerInch();
+		}
+
+		d->image = QImage(d->imageSize*dpr, QImage::Format_ARGB32_Premultiplied);
 		d->empty = d->image.isNull();
+		d->image.setDevicePixelRatio(dpr);
 		if (!d->empty) {
 			d->image.fill(0x0);
 			QPainter painter(&d->image);
-			if (d->shadowOffset.x() < 0)
-				painter.translate(-d->shadowOffset.x(), 0);
 			if (d->shadowOffset.y() < 0)
-				painter.translate(0, -d->shadowOffset.x());
-			painter.scale(scale, scale);
+				painter.translate(0, -d->shadowOffset.y());
+			painter.scale(scale*dpr, scale*dpr);
 			d->back.draw(&painter, QPointF(0, 0));
 			d->front.draw(&painter, QPointF(0, 0));
 			painter.end();
 			d->redraw = true;
-			d->shadowOffset.rx() /= (double)d->image.width();
-			d->shadowOffset.ry() /= (double)d->image.height();
+			d->shadowOffset.rx() /= (double)d->imageSize.width();
+			d->shadowOffset.ry() /= (double)d->imageSize.height();
 		}
 	}
 	setVisible(!d->empty);
@@ -146,7 +155,7 @@ void SubtitleRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *
 
 void SubtitleRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	const auto area = drawArea();
-	const QSizeF size = d->image.size();
+	const QSizeF size = d->imageSize;
 	QPointF pos(0.0, 0.0);
 	if (m_alignment & Qt::AlignBottom) {
 		pos.ry() = qMax(0.0, area.height()*(1.0 - d->bottom) - size.height());

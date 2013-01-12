@@ -13,6 +13,7 @@ extern "C" {
 #include <codec-cfg.h>
 #include <libmpdemux/demuxer.h>
 #include <libmpdemux/stheader.h>
+#include <stream/stream_dvdnav.h>
 int mp_main(int argc, char *argv[]);
 int play_next_file();
 int run_playback();
@@ -148,7 +149,11 @@ static double volnorm_mul(MPContext *mpctx) {
 
 PlayEngine *PlayEngine::obj = nullptr;
 
-
+struct PlayEngine::Cmd {
+	enum Type {Unknown = 0, Quit = 1, Load = 2, Stop = 4, Volume = 16, Break = Quit | Load | Stop};
+	Cmd() {} Cmd(Type type): type(type) {} Cmd(Type type, const QVariant &var): type(type), var(var) {}
+	Type type = Unknown; QVariant var;
+};
 
 struct PlayEngine::Context {
 	MPContext mp;
@@ -207,15 +212,16 @@ bool PlayEngine::usingHwAcc() const {
 	return d->video->usingHwAccel();
 }
 
-void PlayEngine::updateVideoAspect(double ratio) {
-	d->videoAspect = ratio;
+void PlayEngine::setVideoAspect(double ratio) {
+	if (d->videoAspect != ratio)
+		emit videoAspectRatioChanged(d->videoAspect = ratio);
 	if (m_renderer)
 		m_renderer->setVideoAspectRaito(ratio);
 }
 
 void PlayEngine::clear() {
 	m_videoStreams.clear();
-	updateVideoAspect(0.0);
+	setVideoAspect(0.0);
 	m_dvd.clear();
 	m_subtitleStreams.clear();
 	m_audiosStreams.clear();
@@ -242,7 +248,7 @@ bool PlayEngine::parse(const Id &id) {
 			return true;
 		} else if (id.name.startsWith("VIDEO")) {
 			if (same(id.name, "VIDEO_ASPECT")) {
-				updateVideoAspect(id.value.toDouble());
+				setVideoAspect(id.value.toDouble());
 			} else
 				return false;
 			return true;
@@ -279,6 +285,11 @@ MPContext *PlayEngine::context() const {
 	return d->mpctx;
 }
 
+double PlayEngine::videoAspectRatio() const {
+	return d->videoAspect;
+}
+
+
 
 
 mp_cmd *PlayEngine::waitCmd(MPContext *mpctx, int timeout, int peek) {
@@ -307,6 +318,7 @@ int PlayEngine::runCmd(MPContext *mpctx, mp_cmd_t *mpcmd) {
 	case Cmd::Stop:
 		return Cmd::Stop;
 	case Cmd::Volume:
+		qDebug() << "set volume to" << mpcmd->args[0].v.f;
 		mixer_setvolume2(&mpctx->mixer, mpcmd->args[0].v.f, mpcmd->args[0].v.f);
 		return Cmd::Volume;
 	default:
@@ -647,7 +659,7 @@ double PlayEngine::fps() const {
 
 void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
 	if (_Change(m_renderer, renderer)) {
-		updateVideoAspect(d->videoAspect);
+		setVideoAspect(d->videoAspect);
 	}
 }
 
@@ -663,3 +675,46 @@ void PlayEngine::setAudioFilter(const QString &af, bool on) {
 		emit audioFilterChanged(af, on);
 	}
 }
+
+void PlayEngine::stop() {
+	enqueue(new Cmd(Cmd::Stop));
+}
+
+QPoint PlayEngine::mapToFrameFromTop(const QPoint &pos) {
+	if (d->mpctx && d->mpctx->stream && d->mpctx->stream->type == STREAMTYPE_DVDNAV && m_renderer) {
+		auto p = m_renderer->osd()->mapFromScene(pos);
+		p.rx() /= m_renderer->osd()->width()/d->video->format().width();
+		p.ry() /= m_renderer->osd()->height()/d->video->format().height();
+		return p.toPoint();
+	}
+	return QPoint(-1, -1);
+}
+
+bool PlayEngine::handleMousePressed(const QPoint &pos) {
+	const auto p = mapToFrameFromTop(pos);
+	if (p.x() < 0 || p.y() < 0)
+		return false;
+	auto button = 0;
+	mp_dvdnav_update_mouse_pos(d->mpctx->stream, p.x(), p.y(), &button);
+	if (button < 0)
+		return false;
+	mp_dvdnav_handle_input(d->mpctx->stream, MP_CMD_DVDNAV_MOUSECLICK, &button);
+	return true;
+}
+
+bool PlayEngine::handleMouseMoved(const QPoint &pos) {
+	const auto p = mapToFrameFromTop(pos);
+	if (p.x() < 0 || p.y() < 0)
+		return false;
+	auto button = 0;
+	mp_dvdnav_update_mouse_pos(d->mpctx->stream, p.x(), p.y(), &button);
+	return true;
+}
+
+//void VideoRenderer::onMouseMoved(const QPointF &p) {
+//}
+
+//void VideoRenderer::onMouseClicked(const QPointF &p) {
+//	auto mpctx = d->engine->context();
+
+//}

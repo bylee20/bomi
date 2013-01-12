@@ -126,7 +126,8 @@ HEADERS += playengine.hpp \
     subtitlerendereritem.hpp \
     playeritem.hpp \
     videoformat.hpp \
-    qwindowwidget.hpp
+    qwindowwidget.hpp \
+    mposditem.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -190,7 +191,8 @@ SOURCES += main.cpp \
     texturerendereritem.cpp \
     subtitlerendereritem.cpp \
     playeritem.cpp \
-    qwindowwidget.cpp
+    qwindowwidget.cpp \
+    mposditem.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp
