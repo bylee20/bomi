@@ -3,7 +3,7 @@
 args="--prefix=../../build --enable-gpl --disable-debug \
   --disable-shared --enable-static --enable-runtime-cpudetect \
   --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffprobe --disable-ffserver \
-  --disable-avdevice --disable-avfilter --disable-swresample --enable-avresample --enable-pthreads \
+  --disable-avdevice --disable-avfilter --disable-swresample --disable-avresample --enable-pthreads \
   --disable-dxva2 --disable-vdpau --disable-postproc \
   --disable-encoders --disable-muxers --disable-devices --disable-filters"
   
@@ -18,6 +18,6 @@ then
   echo "Build for Linux"
   args="$args --disable-vda --enable-vaapi"
   cd src/ffmpeg && make distclean; ./configure $args && make -j 6 && make install && \
-  cd ../../build/lib && ar qTsv libcmplayer_av.a libavutil.a libavcodec.a libavformat.a libswscale.a libavresample.a
+  cd ../../build/lib && ar qTsv libcmplayer_av.a libavutil.a libavcodec.a libavformat.a libswscale.a
 fi
 

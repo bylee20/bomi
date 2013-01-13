@@ -126,3 +126,12 @@ src/ffmpeg/version.h
 src/mplayer2/input/input.conf.h
 src/ffmpeg/doc/examples/pc-uninstalled/libavresample.pc
 src/ffmpeg/libavresample/libavresample.pc
+src/mpv/config.h
+src/mpv/config.log
+src/mpv/config.mak
+src/mpv/core/codecs.conf.h
+src/mpv/core/input/input_conf.h
+src/mpv/demux/ebml_defs.c
+src/mpv/demux/ebml_types.h
+src/mpv/mpv
+src/mpv/version.h
