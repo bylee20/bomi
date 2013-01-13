@@ -19,24 +19,12 @@ struct DvdInfo {
 	void clear() {titles.clear(); volume.clear();}
 };
 
-//struct Track {
-
-//	Track() {}
-//	Track(const QString &lang, const QString &title): m_title(title), m_lang(lang) {}
-//	QString name() const {return m_title % ' ' % m_lang;}
-//	QString title() const {return m_title;}
-//	QString language() const {return m_lang;}
-//	Type type() const {return m_type;}
-//private:
-//	QString m_title = {}, m_lang = {};
-//	Type m_type = Unknown;
-//};
-
 typedef QLinkedList<QString> FilterList;
 
 class PlayEngine : public QThread, public MpMessage {
 	Q_OBJECT
 public:
+	struct Context;
 	static PlayEngine &get() {return *obj;}
 	static void msleep(unsigned long msec) {QThread::msleep(msec);}
 	static void usleep(unsigned long usec) {QThread::usleep(usec);}
@@ -61,18 +49,15 @@ public:
 	void play(int time);
 	void setMrl(const Mrl &mrl, int start, bool play);
 	void setSpeed(double speed);
-	bool handleMousePressed(const QPoint &pos);
-	bool handleMouseMoved(const QPoint &pos);
 
 	const DvdInfo &dvd() const {return m_dvd;}
-	bool isInDvdMenu() const {return m_isInDvdMenu;}
-	int currentTitle() const {return m_isInDvdMenu ? 0 : m_title;}
+	int currentTitle() const {return m_title;}
 	int currentChapter() const;
 	QMap<int, DvdInfo::Title> titles() const {return m_dvd.titles;}
 	QStringList chapters() const {auto it = m_dvd.titles.find(currentTitle()); return it != m_dvd.titles.end() ? it->chapters : QStringList();}
 	int currentSubtitleStream() const;
 	StreamList subtitleStreams() const {return m_subtitleStreams;}
-	void setCurrentSubtitleStream(int id) {tellmp("sub_demux", id);}
+	void setCurrentSubtitleStream(int id) {setmp("sub", id);}
 	void setCurrentTitle(int id) {if (id > 0) tellmp("switch_title", id); else tellmp("dvdnav menu");}
 	void setCurrentChapter(int id) {tellmp("seek_chapter", id, 1);}
 
@@ -87,7 +72,7 @@ public:
 	VideoRendererItem *videoRenderer() const {return m_renderer;}
 	VideoFormat videoFormat() const;
 	StreamList videoStreams() const {return m_videoStreams;}
-	void setCurrentVideoStream(int id) {tellmp("switch_video", id);}
+	void setCurrentVideoStream(int id) {setmp("video", id);}
 	int currentVideoStream() const;
 
 	int volume() const {return m_volume;}
@@ -96,23 +81,11 @@ public:
 	double volumeNormalizer() const;
 	double preamp() const {return m_preamp;}
 	StreamList audioStreams() const {return m_audioStreams;}
-	void setCurrentAudioStream(int id) {tellmp("switch_audio", id);}
+	void setCurrentAudioStream(int id) {setmp("audio", id);}
 public slots:
-	void setVolume(int volume) {
-		if (_Change(m_volume, qBound(0, volume, 100))) {
-			setMpVolume();	emit volumeChanged(m_volume);
-		}
-	}
-	void setMuted(bool muted) {
-		if (_Change(m_muted, muted)) {
-			tellmp("mute", (int)m_muted); emit mutedChanged(m_muted);
-		}
-	}
-	void setPreamp(double preamp) {
-		if (_ChangeF(m_preamp, qFuzzyCompare(preamp, 1.0) ? 1.0 : qBound(0.0, preamp, 10.0))) {
-			setMpVolume();	emit preampChanged(m_preamp);
-		}
-	}
+	void setVolume(int volume) {if (_Change(m_volume, qBound(0, volume, 100))) {setMpVolume(); emit volumeChanged(m_volume);}}
+	void setPreamp(double preamp) {if (_ChangeF(m_preamp, qBound(0.0, preamp, 10.0))) {	setMpVolume();	emit preampChanged(m_preamp);}}
+	void setMuted(bool muted) {if (_Change(m_muted, muted)) {setmp("mute", m_muted); emit mutedChanged(m_muted);}}
 	void setVideoRenderer(VideoRendererItem *renderer);
 	void quitRunning();
 	void play();
@@ -120,6 +93,7 @@ public slots:
 	void pause() {if (!isPaused()) tellmp("pause");}
 	void seek(int pos) {tellmp("seek", (double)pos/1000.0, 2);}
 	void relativeSeek(int pos) {tellmp("seek", (double)pos/1000.0, 0);}
+	void runCommand(mp_cmd *cmd);
 signals:
 	void initialized();
 	void finalized();
@@ -128,7 +102,7 @@ signals:
 	void finished(Mrl mrl);
 	void tick(int pos);
 	void mrlChanged(const Mrl &mrl);
-	void stateChanged(EngineState newState, EngineState oldState);
+	void stateChanged(EngineState state);
 	void seekableChanged(bool seekable);
 	void durationChanged(int duration);
 	void aboutToPlay();
@@ -143,15 +117,13 @@ signals:
 	void videoStreamFound(const StreamList &videoStreams);
 	void subtitleStreamFound(const StreamList &subtitleStreams);
 private:
-	struct Cmd;	struct Context;
-	static int runCmd(MPContext *mpctx, mp_cmd *mpcmd);
 	static void onPausedChanged(MPContext *mpctx);
-	static mp_cmd *waitCmd(MPContext *mpctx, int timeout, int peek);
-	void setMpVolume();
+	static void onPlayStarted(MPContext *mpctx);
 	void clear();
-	void enqueue(Cmd *cmd);
-	void clearQueue();
-	double mpVolume() const {return qBound(0.0, m_preamp*m_volume, 1000.0)/10.0;}
+	void setmp(const char *name, int value);
+	void setmp(const char *name, float value);
+	void setMpVolume() {setmp("volume", mpVolume());}
+	float mpVolume() const {return qBound(0.0, m_preamp*m_volume, 1000.0)/10.0;}
 	QPoint mapToFrameFromTop(const QPoint &pos);
 	void tellmp(const QString &cmd);
 	void tellmp(const QString &cmd, const QVariant &arg) {tellmp(cmd % _L(' ') % arg.toString());}
@@ -159,7 +131,7 @@ private:
 	void tellmp(const QString &cmd, const QVariant &a1, const QVariant &a2, const QVariant &a3) {tellmp(cmd % ' ' % a1.toString() % ' ' % a2.toString() % ' ' % a3.toString());}
 	template<template <typename> class T> void tellmp(const QString &cmd, const T<QString> &args) {QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);}
 	void setVideoAspect(double ratio);
-	void setState(EngineState state) {if (m_state != state) {const auto prev = m_state; m_state = state; emit stateChanged(m_state, prev);}}
+	void setState(EngineState state) {if (_Change(m_state, state)) {emit stateChanged(m_state);}}
 	int processCmds();
 	int idle();
 	void run_mp_cmd(const char *str);
@@ -173,7 +145,7 @@ private:
 	int m_duration = 0, m_title = 0, m_volume = 100;
 	EngineState m_state = EngineStopped;
 	double m_speed = 1.0, m_preamp = 1.0;
-	bool m_framedrop = false, m_isInDvdMenu = false,m_muted = false;
+	bool m_framedrop = false, m_muted = false;
 	StreamList m_subtitleStreams, m_audioStreams, m_videoStreams;
 	VideoRendererItem *m_renderer = nullptr;
 	DvdInfo m_dvd;	FilterList m_af;	Mrl m_mrl;

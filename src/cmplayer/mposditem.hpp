@@ -4,13 +4,16 @@
 #include "stdafx.hpp"
 #include "texturerendereritem.hpp"
 
+struct sub_bitmaps;
+
 class MpOsdItem : public TextureRendererItem {
 public:
 	MpOsdItem(QQuickItem *parent = nullptr);
 	~MpOsdItem();
-	void draw(int x, int y, int w, int h, uchar *src, uchar *srca, int stride);
+	void draw(sub_bitmaps *imgs);
 	void setFrameSize(const QSize &size);
-	void setFrameChanged();
+	void beginNewFrame();
+	void endNewFrame();
 	QMutex &mutex() const;
 private:
 	static const int ShowEvent = QEvent::User + 1;

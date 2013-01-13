@@ -6,7 +6,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include "mp_msg.h"
+#include <core/mp_msg.h>
 #define MSGSIZE_MAX 3072
 int mp_msg_levels[MSGT_MAX]; // verbose level of this module. initialized to -2
 int mp_msg_level_all = MSGL_STATUS;
@@ -86,6 +86,7 @@ MpMessage::~MpMessage() {
 
 void MpMessage::_parse(const QString &line) {
 	auto id = MpMessage::id(line);
+	qDebug() << "mpv:" << qPrintable(line);
 	if (id.name.isEmpty()) {
 		for (auto p : parsers)
 			if (p->parse(line))
@@ -95,7 +96,6 @@ void MpMessage::_parse(const QString &line) {
 			if (p->parse(id))
 				return;
 	}
-//	qDebug() << "unfiltered" << line;
 }
 
 bool MpMessage::parse(const QString &) {return false;}

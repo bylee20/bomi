@@ -6,15 +6,9 @@
 #include "playengine.hpp"
 
 extern "C" {
-#include <libvo/video_out.h>
-#include <libmpcodecs/img_format.h>
-#include <libmpcodecs/vfcap.h>
-#include <libmpcodecs/mp_image.h>
-#include <libvo/fastmemcpy.h>
-#include <input/input.h>
-#include <libvo/osd.h>
+#include <video/out/vo.h>
+#include <video/vfcap.h>
 #include <sub/sub.h>
-#include <libmpdemux/stheader.h>
 }
 
 struct VideoOutput::Data {
@@ -32,6 +26,7 @@ struct VideoOutput::Data {
 	}
 	QMutex mutex;
 	QWaitCondition cond;
+	mp_osd_res osd;
 	mp_image_t *mpimg = nullptr;
 	VideoFrame *frame = nullptr;
 	PlayEngine *engine = nullptr;
@@ -41,6 +36,7 @@ struct VideoOutput::Data {
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 	memset(&d->info, 0, sizeof(d->info));
 	memset(&d->driver, 0, sizeof(d->driver));
+	memset(&d->osd, 0, sizeof(d->osd));
 
 	d->info.name = "CMPlayer video output";
 	d->info.short_name = "cmp";
@@ -190,8 +186,14 @@ int VideoOutput::drawSlice(struct vo */*vo*/, uint8_t */*src*/[], int /*stride*/
 
 void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
-	if (auto r = d->engine->videoRenderer())
-		osd_draw_text(osd, d->format.width(), d->format.height(), VideoRendererItem::drawMpOsd, r);
+	if (auto r = d->engine->videoRenderer()) {
+		d->osd.w = d->format.width();
+		d->osd.h = d->format.height();
+		d->osd.display_par = 1.0;//vo->monitor_par;
+		d->osd.video_par = vo->aspdat.par;
+		static bool format[SUBBITMAP_COUNT] = {0, 0, 1, 1};
+		osd_draw(osd, d->osd, osd->vo_pts, 0, format,  VideoRendererItem::drawMpOsd, r);
+	}
 }
 
 void VideoOutput::flipPage(struct vo *vo) {
@@ -215,8 +217,7 @@ int VideoOutput::queryFormat(int format) {
 #ifdef Q_OS_X11
 	case IMGFMT_VDPAU:
 #endif
-		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
-			| VFCAP_HWSCALE_UP | VFCAP_HWSCALE_DOWN | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;
+		return VFCAP_OSD | VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;
 	default:
 		return 0;
 	}

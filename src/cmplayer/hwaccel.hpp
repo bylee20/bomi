@@ -9,8 +9,8 @@ extern "C" {
 #include <va/va_glx.h>
 #endif
 #include <libavcodec/avcodec.h>
-#include <libmpcodecs/mp_image.h>
-#include <libmpcodecs/img_format.h>
+#include <video/mp_image.h>
+#include <video/img_format.h>
 #ifdef None
 #undef None
 #endif

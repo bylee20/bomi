@@ -3,8 +3,9 @@ CONFIG += link_pkgconfig debug_and_release precompile_header
 QT = core gui opengl network uitools
 QT += quick widgets svg
 
-LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
-    -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio -lquvi
+LIBS += -lmpg123 -lquvi
+#LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
+#    -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio -lquvi
 
 PRECOMPILED_HEADER = stdafx.hpp
 
@@ -30,8 +31,8 @@ macx {
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
     LIBS +=  ../../build/lib/libavcodec.a \
-	../../build/lib/libavformat.a ../../build/lib/libavutil.a ../../build/lib/libavresample.a \
-	../../build/lib/libswscale.a ../../build/lib/libcmplayer_mplayer2.a \
+	../../build/lib/libavformat.a ../../build/lib/libavutil.a \
+	../../build/lib/libswscale.a ../../build/lib/libcmplayer_mpv.a \
         ../../build/lib/libchardet.a ../../build/lib/libcmplayer_sigar.a \
         -L/opt/local/lib \
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
@@ -55,7 +56,7 @@ LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldv
     -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
 
 
-INCLUDEPATH += ../mplayer2 ../../build/include ../sigar/include ../mplayer2/libmpcodecs
+INCLUDEPATH += ../mpv ../../build/include ../sigar/include
 
 QMAKE_CC = "gcc -std=c99 -ffast-math -w"
 

@@ -1,8 +1,8 @@
 #include "videoframe.hpp"
 #include <stdlib.h>
 extern "C" {
-#include <libmpcodecs/img_format.h>
-#include <mp_image.h>
+#include <video/img_format.h>
+#include <video/mp_image.h>
 }
 
 extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
@@ -22,7 +22,7 @@ bool VideoFrame::copy(mp_image *mpi) {
 		qDebug() << (d->data[0].size() + d->data[1].size() + d->data[2].size())*8/_Area(d->format.drawSize());
 	}
 	for (int i=0; i<3; ++i)
-		fast_memcpy(d->data[i].data(), mpi->planes[i], d->data[i].size());
+		memcpy(d->data[i].data(), mpi->planes[i], d->data[i].size());
 	return ret;
 }
 

@@ -179,6 +179,7 @@ SubtitleRendererItem *VideoRendererItem::subtitle() const {
 }
 
 VideoFrame &VideoRendererItem::getNextFrame() const {
+	d->mposd->beginNewFrame();
 	return d->next;
 }
 
@@ -187,7 +188,7 @@ void VideoRendererItem::next() {
 		d->mposd->mutex().lock();
 		d->frameChanged = true;
 		d->frame.swap(d->next);
-		d->mposd->setFrameChanged();
+		d->mposd->endNewFrame();
 		d->mposd->mutex().unlock();
 	}
 	update();
@@ -485,8 +486,8 @@ void VideoRendererItem::link(QOpenGLShaderProgram *program) {
 	d->loc_p3 = program->uniformLocation("p3");
 }
 
-void VideoRendererItem::drawMpOsd(void *p, int x, int y, int w, int h, uchar *src, uchar *srca, int stride) {
-	reinterpret_cast<VideoRendererItem*>(p)->d->mposd->draw(x, y, w, h, src, srca, stride);
+void VideoRendererItem::drawMpOsd(void *pctx, sub_bitmaps *imgs) {
+	reinterpret_cast<VideoRendererItem*>(pctx)->d->mposd->draw(imgs);
 }
 
 void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {

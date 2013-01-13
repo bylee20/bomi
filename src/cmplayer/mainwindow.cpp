@@ -209,7 +209,7 @@ MainWindow::MainWindow(): d(new Data) {
 	});
 	connect(open["dvd"], &QAction::triggered, [this] () {
 		OpenDvdDialog dlg; dlg.setDevices(app()->devices());
-		if (dlg.exec()) {openMrl(Mrl(_L("dvdnav://") % (dlg.device().isEmpty() ? QString("") : ("/" % dlg.device()))));}
+		if (dlg.exec()) {openMrl(Mrl(_L("dvd://") % (dlg.device().isEmpty() ? QString("") : ("/" % dlg.device()))));}
 	});
 	connect(open("recent").g(), &ActionGroup::triggered, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
 	connect(open("recent")["clear"], &QAction::triggered, &d->recent, &RecentInfo::clear);
@@ -446,7 +446,7 @@ MainWindow::MainWindow(): d(new Data) {
 			}
 		}
 		auto actions = menu.actions();
-		if (actions.isEmpty()) menu.menuAction()->setEnabled(false);
+		menu.menuAction()->setEnabled(!actions.isEmpty());
 		auto copies = menu.copies();
 		for (auto copy : copies) {
 			copy->clear(); copy->addActions(actions);
@@ -454,14 +454,13 @@ MainWindow::MainWindow(): d(new Data) {
 		}
 	};
 	connect(&d->engine, &PlayEngine::audioStreamFound, [this, updateStreamMenu] (const StreamList &as) {
-		qDebug() << "audio" << as.size();
 		updateStreamMenu(d->menu("audio")("track"), as, tr("Audio %1"));
 	});
 	connect(&d->engine, &PlayEngine::videoStreamFound, [this, updateStreamMenu] (const StreamList &as) {
 		updateStreamMenu(d->menu("video")("track"), as, tr("Video %1"));
 	});
 	connect(&d->engine, &PlayEngine::subtitleStreamFound, [this, updateStreamMenu] (const StreamList &as) {
-		updateStreamMenu(d->menu("subtitle")("track"), as, tr("Subtitle %1"));
+		updateStreamMenu(d->menu("subtitle")("spu"), as, tr("Subtitle %1"));
 	});
 	auto checkCurrentStreamAction = [this] (Menu &menu, int id) {
 		for (auto action : menu.actions()) {if (action->data().toInt() == id) {action->setChecked(true); break;}}
@@ -686,8 +685,6 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 	bool showContextMenu = false;
 	switch (event->button()) {
 	case Qt::LeftButton:
-		if (d->engine.handleMousePressed(event->pos()))
-			break;
 		if (isFullScreen())
 			break;
 		d->moving = true;
@@ -714,7 +711,6 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 	d->hider.stop();
 	if (cursor().shape() == Qt::BlankCursor)
 		unsetCursor();
-	d->engine.handleMouseMoved(event->pos());
 	QQuickView::mouseMoveEvent(event);
 	const bool full = isFullScreen();
 	if (full) {

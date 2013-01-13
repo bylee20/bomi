@@ -7,12 +7,12 @@
 #include <sigar.h>
 
 extern "C" {
-#include <libmpdemux/stheader.h>
-#include <codec-cfg.h>
-#include <libmpcodecs/vd.h>
-#include <libvo/video_out.h>
-#include <libao2/audio_out.h>
-#include <libaf/af.h>
+#include <demux/stheader.h>
+#include <core/codec-cfg.h>
+#include <video/decode//vd.h>
+#include <video/out/vo.h>
+#include <audio/out/ao.h>
+#include <audio/filter/af.h>
 #include <osdep/timer.h>
 #include <osdep/numcores.h>
 }

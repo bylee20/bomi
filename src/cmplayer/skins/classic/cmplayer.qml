@@ -12,9 +12,9 @@ Rectangle {
 		info.onTick: { timeline.value = info.time/info.duration; timetext.secs = (info.time*1e-3).toFixed(0) }
 		onMessageRequested: { msgosd.text = message; msgosd.show(); }
 		onSought: { timeline.show(); }
+		Logo { id: logo; anchors.fill: parent; visible: player.info.state == PlayInfo.Stopped }
 		TextOsd { id: msgosd; anchors.fill: parent }
 		ProgressOsd { id: timeline; anchors.fill: parent}
-		Logo { id: logo; anchors.fill: parent; visible: player.info.state == PlayInfo.Stopped }
 		info.onFullScreenChanged: {
 			player.anchors.bottom = info.fullScreen ? parent.bottom : controls.top
 			if (info.fullScreen)

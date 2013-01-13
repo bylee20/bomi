@@ -4,7 +4,7 @@
 #include "stdafx.hpp"
 #include "videoformat.hpp"
 extern "C" {
-#include <mp_image.h>
+#include <video/mp_image.h>
 }
 
 struct mp_image;
