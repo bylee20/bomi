@@ -129,6 +129,7 @@ Rectangle {
 						id: timeslider
 						anchors { verticalCenter: parent.verticalCenter; left: parent.left; right: mute.left; rightMargin: 2 }
 						onPressed: player.seek(Math.floor(player.info.duration*target))
+						onDragged: player.seek(Math.floor(player.info.duration*target))
 						value: player.info.time/player.info.duration
 					}
 					ImageButton {

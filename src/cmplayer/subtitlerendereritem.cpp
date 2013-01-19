@@ -109,6 +109,8 @@ void SubtitleRendererItem::prepare() {
 		if (window() && window()->screen()) {
 			auto screen = window()->screen();
 			dpr = screen->logicalDotsPerInch()/screen->physicalDotsPerInch();
+			if (dpr < 1.0)
+				dpr = 1.0;
 		}
 
 		d->image = QImage(d->imageSize*dpr, QImage::Format_ARGB32_Premultiplied);

@@ -8,7 +8,7 @@ void mp_msg_va2(int mod, int lev, const char *format, va_list va);
 struct Stream {
 	enum Type {Unknown, Audio, Video, Subtitle};
 	QString name() const {
-		QString name = m_title;
+		QString name = m_title.isEmpty() ? m_name : m_title;
 		if (!m_lang.isEmpty())
 			name += name.isEmpty() ? m_lang : " (" % m_lang % ")";
 		return name;
@@ -19,6 +19,7 @@ private:
 	int m_id = -1;
 	QString m_title;
 	QString m_lang;
+	QString m_name;
 };
 
 typedef QMap<int, Stream> StreamList;
@@ -31,11 +32,10 @@ public:
 	static void clear();
 protected:
 	struct Id {Id() {}	Id(const QString &name, const QString &value): name(name), value(value) {} QString name, value;};
-	static auto same(const QString &s1, const char *l1) -> bool {return s1.compare(_L(l1), Qt::CaseSensitive) == 0;}
 	static Id id(const QString &line);
 	virtual bool parse(const QString &line);
 	virtual bool parse(const Id &id);
-	static bool getStream(const Id &id, const char *category, const char *idtext, StreamList &streams);
+	static bool getStream(const Id &id, const char *category, const char *idtext, StreamList &streams, const QString &trans);
 private:
 	static void _parse(const QString &line);
 	friend void mp_msg_va2(int mod, int lev, const char *format, va_list va);

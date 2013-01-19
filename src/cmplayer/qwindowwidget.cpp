@@ -8,12 +8,22 @@ QWindowFrame::QWindowFrame(QWidget *parent)
 //	m_top = topLevelWidget()
 }
 
+QWindowFrame::~QWindowFrame() {
+//	if (m_EmbeddedWindow) {
+//		delete m_EmbeddedWindow;
+//		m_EmbeddedWindow = nullptr;
+//	}
+}
+
 void QWindowFrame::setEmbeddedWindow(QWindow *window)
 {
 	m_EmbeddedWindow = window;
 
 	this->window()->winId(); // force parent (top-level) creation
-	m_EmbeddedWindow->setParent(this->window()->windowHandle());
+	if (m_EmbeddedWindow) {
+		m_EmbeddedWindow->setParent(this->window()->windowHandle());
+		connect(m_EmbeddedWindow, &QWindow::destroyed, [this]() {m_EmbeddedWindow = nullptr;});
+	}
 }
 
 QWindow *QWindowFrame::embeddedWindow() const

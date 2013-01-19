@@ -12,7 +12,7 @@ class QLocale;
 
 class Pref {
 public:
-	static const Pref &get() {return *obj;}
+	static const Pref &instance() {return get();}
 	template <typename Enum>
 	struct ActionEnumInfo {
 		typedef Enum EnumType;
@@ -122,6 +122,8 @@ public:
 	void save() const;
 	void load();
 private:
+	static Pref &get();
+	Pref() {load();}
 	static QList<int> defaultHwAccelCodecs();
 	static ClickActionMap defaultDoubleClick() {
 		ClickActionMap map{false, Enum::ClickAction::Fullscreen};
@@ -154,10 +156,8 @@ private:
 	}
 
 	friend class PrefDialog;
-	static Pref *obj;
-//	Pref() {load();}
-	friend int main(int, char**);
 };
 
+#define cPref (Pref::instance())
 
 #endif // PREF_HPP

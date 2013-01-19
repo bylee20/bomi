@@ -41,9 +41,9 @@
 //			<< "bmp" << "jpg" << "jpeg" << "png" << "ppm" << "tiff" << "xbm" << "xpm";
 //	const QString filter = tr("Images") + ' ' + ext.toFilter();
 
-//	QString fileName = QLatin1String("cmplayer-snapshot-");
+//	QString fileName = _L("cmplayer-snapshot-");
 //	fileName += QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss");
-//	fileName += QLatin1String(".png");
+//	fileName += _L(".png");
 //	QString file = getSaveFileName(this, tr("Save File"), fileName, filter);
 //	if (file.isEmpty())
 //		return;

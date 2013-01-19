@@ -93,7 +93,6 @@ void RichTextDocument::setFontPixelSize(int px) {
 
 void RichTextDocument::setTextOutline(const QColor &color, double width) {
 	QPen pen(Qt::NoPen);
-	qDebug() <<width;
 	if (width > 0.0)
 		pen = QPen(color, width);
 	if (m_format.penProperty(QTextFormat::TextOutline) != pen) {

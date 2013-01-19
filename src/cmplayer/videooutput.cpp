@@ -120,7 +120,6 @@ int VideoOutput::config(struct vo *vo, uint32_t /*w_s*/, uint32_t /*h_s*/, uint3
 		d->renderer->doneCurrent();
 	}
 #endif
-	qDebug() << "vo configured";
 	return 0;
 }
 

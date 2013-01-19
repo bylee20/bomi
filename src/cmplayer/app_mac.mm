@@ -140,7 +140,7 @@ QStringList AppMac::devices() const {
 		sprintf(path, "%sr", _PATH_DEV);
 		const size_t len = qstrlen(path);
 		if (CFStringGetCString(name, path + len, sizeof(path) - len, kCFStringEncodingASCII))
-			devices.push_back(QLatin1String(path));
+			devices.push_back(_L(path));
 		CFRelease(name);
 		IOObjectRelease(device);
 	}

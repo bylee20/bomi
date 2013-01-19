@@ -1,8 +1,6 @@
 #include "appstate.hpp"
 #include "record.hpp"
 
-typedef QLatin1String _L;
-
 AppState &AppState::get() {
 	static AppState obj;
 	return obj;

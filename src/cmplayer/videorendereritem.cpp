@@ -32,7 +32,7 @@ struct ShaderVar {
 			}
 			if (effects & VideoRendererItem::KernelEffects) {
 				idx = 2;
-				const Pref &p = Pref::get();
+				const Pref &p = cPref;
 				if (effects & VideoRendererItem::Blur) {
 					kern_c += p.blur_kern_c;
 					kern_n += p.blur_kern_n;
@@ -160,6 +160,7 @@ struct VideoRendererItem::Data {
 	QByteArray shader;
 	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
 	int loc_brightness, loc_contrast, loc_sat_hue, loc_dxy, loc_p1, loc_p2, loc_p3;
+	VideoFormat::Type shaderType = VideoFormat::BGRA;
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
@@ -168,6 +169,7 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
 	d->subtitle = new SubtitleRendererItem(this);
+	setZ(-1);
 }
 
 VideoRendererItem::~VideoRendererItem() {
@@ -339,17 +341,10 @@ int VideoRendererItem::outputWidth() const {
 	return d->dar > 0.01 ? (int)(d->dar*(double)d->format.height() + 0.5) : d->format.width();
 }
 
-QByteArray VideoRendererItem::shader() const {
-	QByteArray shader = (R"(
-		uniform sampler2D p1;
-		varying highp vec2 qt_TexCoord;
-		void main() {
-			gl_FragColor = texture2D(p1, qt_TexCoord);
-		}
-	)");
-	if (d->format.isYCbCr()) {
+QByteArray VideoRendererItem::shader(int type) {
+	if (VideoFormat::isYCbCr(type)) {
 		// **** common shader *****
-		shader = (R"(
+		QByteArray shader = (R"(
 			uniform float brightness, contrast;
 			uniform mat2 sat_hue;
 			uniform vec3 rgb_c;
@@ -388,7 +383,7 @@ QByteArray VideoRendererItem::shader() const {
 				adjust_rgb(yuv);
 			}
 		)");
-		switch (d->format.type()) {
+		switch (type) {
 		case VideoFormat::YV12:
 		case VideoFormat::I420:
 			shader.append(R"(
@@ -458,13 +453,22 @@ QByteArray VideoRendererItem::shader() const {
 				gl_FragColor.w = 1.0;
 			}
 		)");
+		return shader;
+	} else {
+		QByteArray shader = (R"(
+			uniform sampler2D p1;
+			varying highp vec2 qt_TexCoord;
+			void main() {
+				gl_FragColor = texture2D(p1, qt_TexCoord);
+			}
+		)");
+		return shader;
 	}
-	return shader;
 }
 
 const char *VideoRendererItem::fragmentShader() const {
-	d->shader = shader();
-	qDebug() << "shader for " << cc4ToDescription(d->format.type());
+	d->shaderType = d->format.type();
+	d->shader = shader(d->shaderType);
 	return d->shader.constData();
 }
 
@@ -529,18 +533,20 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 }
 
 void VideoRendererItem::beforeUpdate() {
+	qDebug() << d->frameChanged;
 	if (!d->frameChanged)
 		return;
-
-	QMutexLocker locker(&d->mposd->mutex());		Q_UNUSED(locker);
+	QMutexLocker locker(&d->mposd->mutex());
+//	qDebug() << "new frame" << d->frame.format().isEmpty() << d->frame.format().width() << d->frame.format().height();
 	if (d->format != d->frame.format()) {
-		qDebug() << "format change" << cc4ToString(d->format.type()) << cc4ToString(d->frame.format().type());
 		d->format = d->frame.format();
 		d->mposd->setFrameSize(d->format.size());
 		resetNode();
 		updateGeometry();
 		emit formatChanged(d->format);
 	}
+	if (d->shaderType != d->format.type())
+		resetNode();
 	if (!d->format.isEmpty()) {
 		const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
 		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {

@@ -1,11 +1,6 @@
 #include "app.hpp"
-#include "rootmenu.hpp"
-#include "pref.hpp"
 #include "mrl.hpp"
-//#include "avmisc.hpp"
 #include "mainwindow.hpp"
-#include "playengine.hpp"
-#include "recentinfo.hpp"
 #include "hwaccel.hpp"
 #include "playeritem.hpp"
 #include "videoformat.hpp"
@@ -23,16 +18,13 @@ Q_DECLARE_METATYPE(QTextOption::WrapMode)
 int main(int argc, char **argv) {
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
+
 	qRegisterMetaType<EngineState>("State");
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
 	PlayerItem::registerItems();
 
-	qDebug() << "started app";
-	App *papp = new App(argc, argv);
-	App &app = *papp;
-	qDebug() << "app created";
-
+	App app(argc, argv);
 	if (!checkOpenGL())
 		return 1;
 	const auto mrl = app.getMrlFromCommandLine();
@@ -41,41 +33,14 @@ int main(int argc, char **argv) {
 			app.sendMessage(_L("mrl ") % mrl.toString());
 		return 0;
 	}
-	HwAccelInfo::obj = new HwAccelInfo;
-	PlayEngine::obj = new PlayEngine;
-	PlayEngine::obj->start();
-	qDebug() << "engine created";
-	qDebug() << "engine started";
-	RootMenu::obj = new RootMenu;
-	Pref::obj = new Pref;
-	Pref::obj->load();
-	RecentInfo::obj = new RecentInfo;
-	qDebug() << "global objs created";
-	while (!PlayEngine::obj->isInitialized())
-		PlayEngine::msleep(1);
 	MainWindow *mw = new MainWindow;
-	qDebug() << "mw created";
 	app.setMainWindow(mw);
 	mw->show();
 	if (!mrl.isEmpty())
 		mw->openFromFileManager(mrl);
 	const int ret = app.exec();
 	mw->exit();
-	qDebug() << "gui loop end";
-	PlayEngine::obj->wait();
-	qDebug() << "playing thread finished";
-	qDebug() << "unplugged";
 	delete mw;
-	qDebug() << "main window deleted";
-	delete PlayEngine::obj;
-	qDebug() << "engine deleted";
-	delete RecentInfo::obj;
-	qDebug() << "recent deleted";
-	delete Pref::obj;
-	qDebug() << "pref deleted";
-	delete RootMenu::obj;
-	qDebug() << "menu deleted";
-	delete HwAccelInfo::obj;
-	delete papp;
+	HwAccelInfo::finalize();
 	return ret;
 }

@@ -8,6 +8,9 @@
 RootMenu *RootMenu::obj = nullptr;
 
 RootMenu::RootMenu(): Menu(_L("menu"), 0) {
+	Q_ASSERT(obj == nullptr);
+	obj = this;
+
 	setTitle("Root Menu");
 
 	Menu *open = this->addMenu(_L("open"));
@@ -238,6 +241,8 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	QAction *pref = tool->addAction(_L("pref"));
 	pref->setShortcut(Qt::Key_P);
 	pref->setMenuRole(QAction::PreferencesRole);
+	QAction *skin = tool->addAction(_L("reload-skin"));
+	skin->setShortcut(Qt::Key_R + Qt::CTRL);
 	tool->addSeparator();
 	QAction *playInfo = tool->addAction(_L("playinfo"));
 	playInfo->setCheckable(true);
@@ -248,9 +253,9 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 
 	Menu *window = this->addMenu(_L("window"));
 	// sot == Stay On Top
-	window->addActionToGroup(_L("sot-always"), true, _L("sot"))->setData(Enum::StaysOnTop::Always.id());
-	window->addActionToGroup(_L("sot-playing"), true, _L("sot"))->setData(Enum::StaysOnTop::Playing.id());
-	window->addActionToGroup(_L("sot-never"), true, _L("sot"))->setData(Enum::StaysOnTop::Never.id());
+	window->addActionToGroup(_L("sot-always"), true, _L("stays-on-top"))->setData(Enum::StaysOnTop::Always.id());
+	window->addActionToGroup(_L("sot-playing"), true, _L("stays-on-top"))->setData(Enum::StaysOnTop::Playing.id());
+	window->addActionToGroup(_L("sot-never"), true, _L("stays-on-top"))->setData(Enum::StaysOnTop::Never.id());
 	window->addSeparator();
 	QAction *proper = window->addActionToGroup(_L("proper"), false, _L("size"));
 	QAction *to100 = window->addActionToGroup(_L("100%"), false, _L("size"));
@@ -278,9 +283,10 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 
 	Menu *help = this->addMenu(_L("help"));
 	QAction *about = help->addAction(_L("about"));
-	about->setMenuRole(QAction::AboutQtRole);
+	about->setMenuRole(QAction::AboutRole);
 
 	QAction *exit = this->addAction(_L("exit"));
+	exit->setMenuRole(QAction::QuitRole);
 #ifdef Q_OS_MAC
 	exit->setShortcut(Qt::ALT + Qt::Key_F4);
 #else
@@ -303,7 +309,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 
 void RootMenu::update() {
 	Menu &root = *this;
-	const Pref &p = Pref::get();
+	const Pref &p = cPref;
 
 	Menu &open = root("open");
 	open.setTitle(tr("Open"));
@@ -450,6 +456,7 @@ void RootMenu::update() {
 	tool["history"]->setText(tr("Play History"));
 	tool["subtitle"]->setText(tr("Subtitle View"));
 	tool["pref"]->setText(tr("Preferences"));
+	tool["reload-skin"]->setText(tr("Reload Skin"));
 	tool["playinfo"]->setText(tr("Play Information"));
 	tool["auto-exit"]->setText(tr("Auto-exit"));
 	tool["auto-shutdown"]->setText(tr("Auto-shutdown"));
@@ -485,13 +492,11 @@ void RootMenu::fillKeyMap(Menu *menu) {
 void RootMenu::save() {
 	Record r;
 	Menu::save(r);
-	resetKeyMap();
 }
 
 void RootMenu::load() {
 	Record r;
 	Menu::load(r);
-	resetKeyMap();
 }
 
 QAction *RootMenu::action(const QString &id) const {
@@ -515,21 +520,21 @@ QAction *RootMenu::action(const QString &id) const {
 }
 
 QAction *RootMenu::doubleClickAction(Qt::KeyboardModifiers mod) const {
-	const Pref::ClickActionInfo info = Pref::get().double_click_map[mod];
+	const Pref::ClickActionInfo info = cPref.double_click_map[mod];
 	if (info.enabled)
 		return m_click[info.action];
 	return 0;
 }
 
 QAction *RootMenu::middleClickAction(Qt::KeyboardModifiers mod) const {
-	const Pref::ClickActionInfo info = Pref::get().middle_click_map[mod];
+	const Pref::ClickActionInfo info = cPref.middle_click_map[mod];
 	if (info.enabled)
 		return m_click[info.action];
 	return 0;
 }
 
 QAction *RootMenu::wheelScrollAction(Qt::KeyboardModifiers mod, bool up) const {
-	const Pref::WheelActionInfo info = Pref::get().wheel_scroll_map[mod];
+	const Pref::WheelActionInfo info = cPref.wheel_scroll_map[mod];
 	if (info.enabled)
 		return up ? m_wheel[info.action].up : m_wheel[info.action].down;
 	return 0;

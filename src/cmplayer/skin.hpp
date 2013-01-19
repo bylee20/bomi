@@ -14,6 +14,7 @@ public:
 			return it.value();
 		return QFileInfo();
 	}
+	static void apply(QQuickView *view, const QString &name);
 protected:
 	Skin() {}
 	static void plug(const QObject *sender, const char *signal, const QObject *receiver, const char *member, Qt::ConnectionType type = Qt::AutoConnection) {
@@ -32,6 +33,11 @@ protected:
 	plug(const typename QtPrivate::FunctionPointer<Func1>::Object *sender, Func1 signal, Func2 slot) {
 		data()->connections << QObject::connect(sender, signal, slot); return data()->connections.last();
 	}
+	static void unplug() {
+		for (auto &connection : data()->connections)
+			QObject::disconnect(connection);
+		data()->connections.clear();
+	}
 private:
 	struct Data {
 		Data();
@@ -40,12 +46,6 @@ private:
 		QMap<QString, QFileInfo> skins;
 	};
 	static Data *data() { static Data data;	return &data; }
-	void unplug() {
-		for (auto &connection : data()->connections)
-			QObject::disconnect(connection);
-		data()->connections.clear();
-	}
-
 };
 
 #endif // SKIN_HPP

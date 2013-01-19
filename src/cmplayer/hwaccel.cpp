@@ -7,12 +7,12 @@
 
 #ifdef Q_OS_MAC
 extern "C" int is_hwaccel_available(const char *name) {
-	if (!Pref::get().enable_hwaccel)
+	if (!cPref.enable_hwaccel)
 		return false;
 	AVCodecID codec = AV_CODEC_ID_NONE;
 	if (strstr(name, "ffh264vda"))
 		codec = AV_CODEC_ID_H264;
-	if (!Pref::get().hwaccel_codecs.contains(codec) || !HwAccelInfo::get().supports(codec))
+	if (!cPref.hwaccel_codecs.contains(codec) || !HwAccelInfo().supports(codec))
 		return false;
 	qDebug() << "HwAccel is available!";
 	return true;
@@ -21,7 +21,7 @@ extern "C" int is_hwaccel_available(const char *name) {
 
 #ifdef Q_OS_X11
 extern "C" int is_hwaccel_available(AVCodecContext *avctx) {
-	if (!Pref::get().enable_hwaccel || !Pref::get().hwaccel_codecs.contains(avctx->codec_id))
+	if (!cPref.enable_hwaccel || !cPref.hwaccel_codecs.contains(avctx->codec_id))
 		return false;
 	if (!HwAccelInfo::get().supports(avctx))
 		return false;
@@ -49,25 +49,30 @@ extern "C" int register_hwaccel_callbacks(AVCodecContext *avctx) {
 
 #endif
 
-HwAccelInfo *HwAccelInfo::obj = nullptr;
+AVCodecContext *HwAccelInfo::m_avctx = nullptr;
+bool HwAccelInfo::m_ok = false;
 
 HwAccelInfo::HwAccelInfo() {
+	static bool first = false;
+	if (first) {
 #ifdef Q_OS_X11
-	if (!(m_display = vaGetDisplayGLX(QX11Info::display())))
-		return;
-	int major, minor;
-	if (vaInitialize(m_display, &major, &minor))
-		return;
-	auto count = vaMaxNumProfiles(m_display);
-	m_profiles.resize(count);
-	if (vaQueryConfigProfiles(m_display, m_profiles.data(), &count))
-		return;
-	m_profiles.resize(count);
+		if (!(m_display = vaGetDisplayGLX(QX11Info::display())))
+			return;
+		int major, minor;
+		if (vaInitialize(m_display, &major, &minor))
+			return;
+		auto count = vaMaxNumProfiles(m_display);
+		m_profiles.resize(count);
+		if (vaQueryConfigProfiles(m_display, m_profiles.data(), &count))
+			return;
+		m_profiles.resize(count);
+
 #endif
-	m_ok = true;
+		m_ok = true;
+	}
 }
 
-HwAccelInfo::~HwAccelInfo() {
+void HwAccelInfo::finalize() {
 #ifdef Q_OS_X11
 	if (m_display)
 		vaTerminate(m_display);
@@ -142,7 +147,7 @@ VAProfile HwAccelInfo::findMatchedProfile(const QVector<VAProfile> &needs) const
 
 HwAccel::HwAccel(AVCodecContext *avctx) {
 	m_ctx.hwaccel = this;
-	const auto &info = HwAccelInfo::get();
+	HwAccelInfo info;
 	if (!info.isAvailable())
 		return;
 #ifdef Q_OS_X11
@@ -181,7 +186,7 @@ HwAccel::HwAccel(AVCodecContext *avctx) {
 }
 
 HwAccel::~HwAccel() {
-	const auto &info = HwAccelInfo::get();
+	HwAccelInfo info;
 	if (!info.isAvailable())
 		return;
 #ifdef Q_OS_X11

@@ -7,10 +7,10 @@ QString RichTextHelper::replace(const QStringRef &str, const QLatin1String &from
 	for (;;) {
 		const int pos = str.indexOf(from, start, s);
 		if (pos < 0) {
-			text += midRef(str, start);
+			text += _MidRef(str, start);
 			break;
 		} else {
-			text += midRef(str, start, pos - start);
+			text += _MidRef(str, start, pos - start);
 			text += to;
 			start = pos + len;
 		}
@@ -35,7 +35,7 @@ int RichTextHelper::toFontPixelSize(const QStringRef &size) {
 	}
 	if (i >= size.size())
 		return px;
-	const QStringRef unit = midRef(size, i);
+	const QStringRef unit = _MidRef(size, i);
 	if (unit.size() == 2 && unit.compare("pt", Qt::CaseInsensitive) == 0)
 		px = pixelSizeToPointSize(px);
 	return px;
@@ -51,12 +51,12 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 	if (skipSeparator(pos, text))
 		return Tag();
 	if (at(pos) == '!') { // skip comment
-		pos = text.indexOf(QLatin1String("!--"), pos);
+		pos = text.indexOf(_L("!--"), pos);
 		if (pos < 0) {
 			pos = text.size();
 			return Tag();
 		}
-		tag.name = midRef(text, pos, 3);
+		tag.name = _MidRef(text, pos, 3);
 		pos = text.indexOf('>', pos);
 		if (pos < 0)
 			pos = text.size();
@@ -65,7 +65,7 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 	int start = pos;
 	while (pos < text.size() && !isSeparator(at(pos)) && at(pos) != '>')
 		++pos;
-	tag.name = midRef(text, start, pos - start);
+	tag.name = _MidRef(text, start, pos - start);
 	if (tag.name.startsWith('/')) {
 		while (at(pos) != '>' && pos < text.size())
 			++pos;
@@ -93,7 +93,7 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 			++pos;
 		}
 		Tag::Attr attr;
-		attr.name = midRef(text, start, pos - start);
+		attr.name = _MidRef(text, start, pos - start);
 		if (skipSeparator(pos, text))
 			return Tag();
 		if (at(pos) == '=') {
@@ -113,7 +113,7 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 				const ushort c = at(pos);
 				const bool q_end = (q && c == q && at(pos-1) != '\\');
 				if (q_end || (!q && (isSeparator(c) || c == '>'))) {
-					attr.value = midRef(text, start, pos - start);
+					attr.value = _MidRef(text, start, pos - start);
 					tag.attr.push_back(attr);
 					if (q_end)
 						++pos;
@@ -130,7 +130,7 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 
 QChar RichTextHelper::entityCharacter(const QStringRef &entity) {
 	Q_UNUSED(entity);
-#define RETURN(ent, c) {if (same(entity, ent)) return QChar(c);}
+#define RETURN(ent, c) {if (_Same(entity, ent)) return QChar(c);}
 	RETURN("nbsp", ' ');
 	RETURN("amp", '&');
 	RETURN("lt", '<');
@@ -151,7 +151,7 @@ int RichTextHelper::innerText(const char *open, const char *close, const QString
 		const QChar c = text.at(pos);
 		if (c.unicode() == '<') {
 			tag = parseTag(text, pos);
-			if (same(tag.name, open))
+			if (_Same(tag.name, open))
 				break;
 		} else
 			++pos;
@@ -159,7 +159,6 @@ int RichTextHelper::innerText(const char *open, const char *close, const QString
 	if (pos >= text.size() || tag.name.isEmpty())
 		return 0;
 	int ret = 1;
-	typedef QLatin1String _L;
 	QRegExp rx(_L("<[\\s\\n\\r]*(") % _L(close) % _L(")(>|[^0-9a-zA-Z>]+[^>]*>)"));
 	rx.setCaseSensitivity(Qt::CaseInsensitive);
 	int start = pos;
@@ -171,41 +170,41 @@ int RichTextHelper::innerText(const char *open, const char *close, const QString
 		const QString cap = rx.cap(1);
 		if (Q_UNLIKELY(cap.startsWith('/'))) {
 			const QStringRef closer = cap.midRef(1, -1);
-			if (same(closer, open))
+			if (_Same(closer, open))
 				pos += rx.matchedLength();
-			if (same(closer, "body") || same(closer, "sami"))
+			if (_Same(closer, "body") || _Same(closer, "sami"))
 				ret = -1;
 		}
 	}
-	block = midRef(text, start, end - start);
+	block = _MidRef(text, start, end - start);
 	return ret;
 }
 
 RichTextBlock::Style RichTextHelper::Tag::style() const {
 	RichTextBlock::Style style;
-	if (same(name, "b"))
+	if (_Same(name, "b"))
 		style[QTextFormat::FontWeight] = QFont::Bold;
-	else if (same(name, "u"))
+	else if (_Same(name, "u"))
 		style[QTextFormat::FontUnderline] = true;
-	else if (same(name, "i"))
+	else if (_Same(name, "i"))
 		style[QTextFormat::FontItalic] = true;
-	else if (same(name, "s") || same(name, "strike"))
+	else if (_Same(name, "s") || _Same(name, "strike"))
 		style[QTextFormat::FontStrikeOut] = true;
-	else if (same(name, "sup"))
+	else if (_Same(name, "sup"))
 		style[QTextFormat::TextVerticalAlignment] = QTextCharFormat::AlignSuperScript;
-	else if (same(name, "sub"))
+	else if (_Same(name, "sub"))
 		style[QTextFormat::TextVerticalAlignment] = QTextCharFormat::AlignSubScript;
-	else if (same(name, "font")) {
+	else if (_Same(name, "font")) {
 		for (int i=0; i<attr.size(); ++i) {
-			if (same(attr[i].name, "color")) {
+			if (_Same(attr[i].name, "color")) {
 				const auto color = toColor(trim(attr[i].value));
 				if (color.isValid())
 					style[QTextFormat::ForegroundBrush] = QBrush(color);
 				else
 					qDebug() << trim(attr[i].value) << "is not a valid color name";
-			} else if (same(attr[i].name, "face"))
+			} else if (_Same(attr[i].name, "face"))
 				style[QTextFormat::FontFamily] = trim(attr[i].value).toString();
-			else if (same(attr[i].name, "size"))
+			else if (_Same(attr[i].name, "size"))
 				style[QTextFormat::FontPixelSize] = toFontPixelSize(trim(attr[i].value));
 		}
 	}
@@ -268,7 +267,7 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 					if (idx < 0)
 						ret.last().text.append(c);
 					else {
-						ret.last().text.append(entityCharacter(midRef(text, pos, idx - pos)));
+						ret.last().text.append(entityCharacter(_MidRef(text, pos, idx - pos)));
 						pos = idx + 1;
 					}
 				} else {
@@ -282,25 +281,25 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 	while (pos <text.size()) {
 		const int idx = text.indexOf('<', pos);
 		if (idx < 0) {
-			add_text(midRef(text, pos, -1));
+			add_text(_MidRef(text, pos, -1));
 			break;
 		} else {
-			add_text(midRef(text, pos, idx - pos));
+			add_text(_MidRef(text, pos, idx - pos));
 			pos = idx;
 		}
-		Tag tag = parseTag(midRef(text, 0, -1), pos);
+		Tag tag = parseTag(_MidRef(text, 0, -1), pos);
 		if (tag.name.isEmpty())
 			continue;
 		ret.last().formats.last().end = ret.last().text.size();
 
-		if (same(tag.name, "br")) { // new block
+		if (_Same(tag.name, "br")) { // new block
 			add_block(false, ret.last().formats.last().style);
 		} else {
 			if (tag.name.startsWith('/')) { // restore format
 				auto fmtIt = fmtStack.begin();
 				auto tagIt = tagStack.begin();
 				for (; tagIt != tagStack.end(); ++tagIt, ++fmtIt) {
-					if (tagIt->compare(midRef(tag.name, 1)) == 0) {
+					if (tagIt->compare(_MidRef(tag.name, 1)) == 0) {
 						add_format(*fmtIt);
 						fmtStack.erase(fmtIt);
 						tagStack.erase(tagIt);
@@ -308,7 +307,7 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 					}
 				}
 			} else { // new format
-				if (same(tag.name, "ruby")) {
+				if (_Same(tag.name, "ruby")) {
 					QRegExp rx("(<\\s*rb\\s*>)?([^<]*)(<\\s*/rb\\s*>)?<\\s*rt\\s*>([^<]*)(<\\s*/rt\\s*>)?(<\\s*/ruby\\s*>|$)");
 					const int idx = indexOf(text, rx, pos);
 					if (idx < 0)

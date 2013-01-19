@@ -41,6 +41,7 @@ class QWindowFrame : public QFrame
 {
 public:
 	QWindowFrame(QWidget *parent = nullptr);
+	~QWindowFrame();
 	void setEmbeddedWindow(QWindow *embeddedWindow);
 	QWindow *embeddedWindow() const;
 	bool event(QEvent *event);

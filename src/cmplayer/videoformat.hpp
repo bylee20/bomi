@@ -38,7 +38,8 @@ struct VideoFormat {
 	inline QSize size() const {return m_size;}
 	inline bool isEmpty() const {return m_size.isEmpty() || m_type == Unknown;}
 	inline double bps(double fps) const {return fps*_Area(m_size)*m_bpp;}
-	bool isYCbCr() const {return m_type != RGBA && m_type != BGRA && m_type != Unknown;}
+	bool isYCbCr() const {return isYCbCr(m_type);}
+	static bool isYCbCr(Type type) {return type != RGBA && type != BGRA && type != Unknown;}
 	Type type() const {return m_type;}
 	int bpp() const {return m_bpp;}
 	int planes() const {return m_planes;}

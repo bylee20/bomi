@@ -13,18 +13,21 @@ struct TextureRendererItem::Shader : public QSGMaterialShader {
 private:
 	char const *const *attributeNames() const {return m_item->attributeNames();}
 	const char *vertexShader() const {return m_item->vertexShader();}
-	const char *fragmentShader() const {qDebug() << "new fragment shader"; return m_item->fragmentShader();}
+	const char *fragmentShader() const {return m_item->fragmentShader();}
 	TextureRendererItem *m_item = nullptr;
 };
 
 struct TextureRendererItem::Material : public QSGMaterial {
 	Material(TextureRendererItem *item): m_item(item) {if (item->blending()) setFlag(Blending);}
-	QSGMaterialType *type() const {return &m_type;}
-	QSGMaterialShader *createShader() const {qDebug() << "new shader"; return new Shader(m_item);}
+	QSGMaterialType *type() const;
+	QSGMaterialShader *createShader() const;
 private:
 	TextureRendererItem *m_item = nullptr;
 	mutable QSGMaterialType m_type;
 };
+
+QSGMaterialType *TextureRendererItem::Material::type() const {return &m_type;}
+QSGMaterialShader *TextureRendererItem::Material::createShader() const {return new Shader(m_item);}
 
 struct TextureRendererItem::Node : public QSGGeometryNode {
 	Node(TextureRendererItem *item): m_item(item) {
@@ -41,6 +44,7 @@ struct TextureRendererItem::Node : public QSGGeometryNode {
 	}
 	~Node() {
 		if (m_item->m_textures) {
+			Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
 			glDeleteTextures(m_item->textureCount(), m_item->m_textures);
 			m_item->m_textures = nullptr;
 		}

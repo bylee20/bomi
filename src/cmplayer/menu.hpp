@@ -56,6 +56,9 @@ public:
 	inline QString id() const {return m_id;}
 	QMenu *copied(QWidget *parent = nullptr);
 	QList<QMenu*> copies() const {return m_copies;}
+	void setEnabledSync(bool enabled) {setEnabled(enabled); for (QMenu *m : m_copies) m->setEnabled(enabled);}
+	void syncTitle() {for (QMenu *m : m_copies) m->setTitle(title()); for (Menu *m : m_m) m->syncTitle();}
+	void syncActions() {for (QMenu *m : m_copies) {m->addActions(actions());}}
 protected:
 	Menu(const QString &id, QWidget *parent);
 	void save(Record &set) const;

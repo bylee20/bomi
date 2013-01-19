@@ -1,9 +1,12 @@
 #include "pref.hpp"
 #include "hwaccel.hpp"
 
-Pref *Pref::obj = 0;
+Pref &Pref::get() {
+	static Pref pref;
+	return pref;
+}
 
-#define PREF_GROUP QLatin1String("preference")
+#define PREF_GROUP _L("preference")
 
 void Pref::save() const {
 	Record r(PREF_GROUP);
@@ -128,10 +131,10 @@ void Pref::load() {
 }
 
 QList<int> Pref::defaultHwAccelCodecs() {
-	const auto all = HwAccelInfo::get().fullCodecList();
+	HwAccelInfo hwacc;
 	QList<int> codecs;
-	for (auto codec : all) {
-		if (HwAccelInfo::get().supports(codec))
+	for (auto codec : hwacc.fullCodecList()) {
+		if (hwacc.supports(codec))
 			codecs.push_back(codec);
 	}
 	return codecs;

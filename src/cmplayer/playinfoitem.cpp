@@ -164,11 +164,11 @@ QString PlayInfoItem::monospace() const {
 }
 
 void PlayInfoItem::setPlaylist(const PlaylistModel *playlist) {
-	connect(playlist, &PlaylistModel::currentRowChanged, [this] (int row) {
+	connect(playlist, &PlaylistModel::loadedChanged, [this] (int row) {
 		m_media->m_nth = row+1;
 		emit mediaChanged();
 	});
-	connect(playlist, &PlaylistModel::rowCountChanged, [this] (int count) {
+	connect(playlist, &PlaylistModel::countChanged, [this] (int count) {
 		m_media->m_count = count;
 		emit mediaChanged();
 	});

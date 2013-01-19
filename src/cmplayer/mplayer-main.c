@@ -4150,7 +4150,7 @@ enum MpError start_to_play_current_file(struct MPContext *mpctx) {
 		goto goto_enable_cache;
 	}
 #endif
-	return terminate_playback(mpctx, NoMpError);
+	return NoMpError;
 }
 
 enum MpError terminate_playback(MPContext *mpctx, enum MpError error) {struct MPOpts *opts = &mpctx->opts;// don't jump here after ao/vo/getch initialization!

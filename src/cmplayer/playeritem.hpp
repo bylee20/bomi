@@ -15,7 +15,7 @@ class PlayerItem : public QQuickItem, public Skin {
 public:
 	static void registerItems();
 	void plugTo(PlayEngine *engine);
-
+	void unplug();
 	PlayerItem(QQuickItem *parent = nullptr);
 	SubtitleRendererItem *subtitle() const {return m_subtitle;}
 	VideoRendererItem *renderer() const {return m_renderer;}
@@ -30,7 +30,6 @@ public:
 	Q_INVOKABLE bool execute(const QString &key);
 	Q_INVOKABLE void seek(int time);
 	Q_INVOKABLE void setVolume(int volume);
-	void create();
 signals:
 	void messageRequested(const QString &message);
 	void infoViewChanged(QQuickItem *item);

@@ -27,6 +27,7 @@ private slots:
 	void updateRecentActions(const QList<Mrl> &list);
 	void hideCursor();
 	void updateStaysOnTop();
+	void reloadSkin();
 private:
 	void showMessage(const QString &message);
 	void showMessage(const QString &cmd, int value, const QString &unit, bool sign = false) {showMessage(cmd, toString(value, sign) + unit);}

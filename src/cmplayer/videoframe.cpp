@@ -15,12 +15,8 @@ void VideoFrame::setFormat(const VideoFormat &format) {
 
 bool VideoFrame::copy(mp_image *mpi) {
 	bool ret = d->format.imgfmt() != mpi->imgfmt || d->format.byteWidth(0) != mpi->stride[0] || d->format.byteHeight(0) != mpi->height;
-	if (ret) {
+	if (ret)
 		setFormat(VideoFormat::fromMpImage(mpi));
-		qDebug() << "new format" << cc4ToString(d->format.type());
-		qDebug() << d->data[0].size() << d->data[1].size() << d->data[2].size();
-		qDebug() << (d->data[0].size() + d->data[1].size() + d->data[2].size())*8/_Area(d->format.drawSize());
-	}
 	for (int i=0; i<3; ++i)
 		memcpy(d->data[i].data(), mpi->planes[i], d->data[i].size());
 	return ret;
@@ -134,7 +130,7 @@ uint32_t videoFormatTypeToImgfmt(VideoFormat::Type type) {
 }
 
 QString cc4ToDescription(VideoFormat::Type type) {
-	return QLatin1String(vo_format_name(videoFormatTypeToImgfmt(type)));
+	return _L(vo_format_name(videoFormatTypeToImgfmt(type)));
 }
 
 

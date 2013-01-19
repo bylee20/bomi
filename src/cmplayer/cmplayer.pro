@@ -38,7 +38,6 @@ macx {
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
         -framework IOKit -framework Carbon
-#    LIBS += ../../build/lib/libcmplayer_skin.a
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += /opt/local/include /usr/local/include
@@ -90,7 +89,6 @@ HEADERS += playengine.hpp \
     playlistmodel.hpp \
     playlistview.hpp \
     recentinfo.hpp \
-    historyview.hpp \
     subtitleview.hpp \
     osdstyle.hpp \
     simplelistwidget.hpp \
@@ -98,7 +96,6 @@ HEADERS += playengine.hpp \
     dialogs.hpp \
     favoritesview.hpp \
     downloader.hpp \
-    videorenderer.hpp \
     subtitlemodel.hpp \
     tagiterator.hpp \
     subtitle_parser_p.hpp \
@@ -127,7 +124,9 @@ HEADERS += playengine.hpp \
     playeritem.hpp \
     videoformat.hpp \
     qwindowwidget.hpp \
-    mposditem.hpp
+    mposditem.hpp \
+    globalqmlobject.hpp \
+    historymodel.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -154,7 +153,6 @@ SOURCES += main.cpp \
     playlistmodel.cpp \
     playlistview.cpp \
     recentinfo.cpp \
-    historyview.cpp \
     subtitleview.cpp \
     osdstyle.cpp \
     simplelistwidget.cpp \
@@ -162,7 +160,6 @@ SOURCES += main.cpp \
     dialogs.cpp \
     favoritesview.cpp \
     downloader.cpp \
-    videorenderer.cpp \
     subtitlemodel.cpp \
     tagiterator.cpp \
     subtitle_parser_p.cpp \
@@ -191,7 +188,9 @@ SOURCES += main.cpp \
     subtitlerendereritem.cpp \
     playeritem.cpp \
     qwindowwidget.cpp \
-    mposditem.cpp
+    mposditem.cpp \
+    globalqmlobject.cpp \
+    historymodel.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp
@@ -221,5 +220,11 @@ OTHER_FILES += \
     skins/classic/qml/Logo.qml \
     skins/classic/qml/ImageButton.qml \
     skins/classic/cmplayer.qml \
-    skins/simple/cmplayer.qml
+    skins/simple/cmplayer.qml \
+    skins/simple/PlaylistView.qml \
+    skins/simple/qml/ScrollBar.qml \
+    skins/simple/HistoryView.qml \
+    skins/simple/qml/FlickableListView.qml \
+    skins/simple/qml/ColumnHeader.qml \
+    skins/simple/qml/Dock.qml
 

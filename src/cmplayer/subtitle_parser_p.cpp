@@ -3,7 +3,7 @@
 #include "global.hpp"
 
 bool SamiParser::isParsable() const {
-	if (same(file().suffix(), "smi") || same(file().suffix(), "sami"))
+	if (_Same(file().suffix(), "smi") || _Same(file().suffix(), "sami"))
 		return true;
 	if (skipSeparators())
 		return false;
@@ -23,9 +23,9 @@ void SamiParser::_parse(Subtitle &sub) {
 			continue;
 		}
 		Tag tag = parseTag(text, pos);
-		if (same(tag.name, "body"))
+		if (_Same(tag.name, "body"))
 			break;
-		if (same(tag.name, "sync")) {
+		if (_Same(tag.name, "sync")) {
 			pos = tag.pos;
 			break;
 		}
@@ -68,7 +68,7 @@ void SamiParser::_parse(Subtitle &sub) {
 
 
 bool SubRipParser::isParsable() const {
-	if (same(file().suffix(), "srt"))
+	if (_Same(file().suffix(), "srt"))
 		return true;
 	return false;
 }
@@ -163,7 +163,7 @@ void MicroDVDParser::_parse(Subtitle &sub) {
 		while (text.indexOf(rxAttr, idx) != -1) {
 			const auto name = rxAttr.cap(1);
 			const auto value = rxAttr.cap(2);
-			if (same(name, "y")) {
+			if (_Same(name, "y")) {
 				if (value.contains(_L('i'), Qt::CaseInsensitive))
 					addTag0("i");
 				if (value.contains(_L('u'), Qt::CaseInsensitive))
@@ -172,7 +172,7 @@ void MicroDVDParser::_parse(Subtitle &sub) {
 					addTag0("s");
 				if (value.contains(_L('b'), Qt::CaseInsensitive))
 					addTag0("b");
-			} else if (same(name, "c")) {
+			} else if (_Same(name, "c")) {
 				if (rxColor.indexIn(value) != -1)
 					addTag1(_L("font"), _L("color=\"#") % rxColor.cap(3) % rxColor.cap(2) % rxColor.cap(1) %_L("\""));
 			}

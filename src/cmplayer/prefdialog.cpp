@@ -107,7 +107,7 @@ public:
 		m_action->setShortcuts(m_shortcuts);
 	}
 	static void makeRoot(QTreeWidget *parent) {
-		RootMenu &root = RootMenu::get();
+		RootMenu &root = cMenu;
 		QList<QAction*> actions = root.actions();
 		for (int i=0; i<actions.size(); ++i) {
 			QAction *const act = actions[i];
@@ -278,10 +278,11 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	auto vbox = new QVBoxLayout;
 	vbox->setContentsMargins(20, 0, 0, 0);
-	const auto codecs = HwAccelInfo::get().fullCodecList();
+	HwAccelInfo hwacc;
+	const auto codecs = hwacc.fullCodecList();
 	for (const auto codec : codecs) {
 		QCheckBox *ch = new QCheckBox;
-		const auto supports = HwAccelInfo::get().supports(codec);
+		const auto supports = hwacc.supports(codec);
 		const auto desc = avcodec_descriptor_get(codec)->long_name;
 		if (supports)
 			ch->setText(desc);
@@ -296,7 +297,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	d->ui.sub_ext->addItem(QString(), QString());
 	d->ui.sub_ext->addItemTextData(Info::subtitleExt());
 	d->ui.locale->addItemData(Translator::availableLocales());
-	d->ui.window_style->addItemTextData(app()->availableStyleNames());
+	d->ui.window_style->addItemTextData(cApp.availableStyleNames());
 
 	d->dbl = new PrefMouseGroup<Enum::ClickAction>(d->ui.ui_mouse_layout);
 	d->mdl = new PrefMouseGroup<Enum::ClickAction>(d->ui.ui_mouse_layout);
@@ -335,7 +336,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	connect(d->ui.dbb, SIGNAL(clicked(QAbstractButton*)), this, SLOT(onDialogButtonClicked(QAbstractButton*)));
 
 	retranslate();
-	fill(Pref::get());
+	fill(cPref);
 
 //	d->ui.skin_prev->setWindow
 
@@ -356,7 +357,6 @@ void PrefDialog::onSkinIndexChanged(int idx) {
 		const auto name = d->ui.skin_name->itemText(idx);
 		const auto skin = Skin::source(name);
 		d->ui.skin_path->setText(skin.absolutePath());
-//		view->engine()->addImportPath(skin.absolutePath());
 		d->preview->setSource(QUrl::fromLocalFile(skin.absoluteFilePath()));
 	}
 }
@@ -502,9 +502,9 @@ void PrefDialog::fill(const Pref &p) {
 	d->ui.ms_per_char->setValue(p.ms_per_char);
 	d->ui.sub_priority->setValues(p.sub_priority);
 
-	d->ui.single_app->setChecked(app()->isUnique());
+	d->ui.single_app->setChecked(cApp.isUnique());
 	d->ui.locale->setCurrentData(p.locale);
-	d->ui.window_style->setCurrentData(app()->styleName());
+	d->ui.window_style->setCurrentData(cApp.styleName());
 	d->ui.enable_system_tray->setChecked(p.enable_system_tray);
 	d->ui.hide_rather_close->setChecked(p.hide_rather_close);
 
@@ -529,8 +529,7 @@ void PrefDialog::fill(const Pref &p) {
 }
 
 void PrefDialog::apply() {
-	Q_ASSERT(Pref::obj != 0);
-	Pref &p = *Pref::obj;
+	Pref &p = Pref::get();
 
 	p.open_media_from_file_manager = d->open_media_from_file_manager->value();
 	p.open_media_by_drag_and_drop = d->open_media_by_drag_and_drop->value();
@@ -589,9 +588,9 @@ void PrefDialog::apply() {
 	p.ms_per_char = d->ui.ms_per_char->value();
 	p.sub_priority = d->ui.sub_priority->values();
 
-	app()->setUnique(d->ui.single_app->isChecked());
+	cApp.setUnique(d->ui.single_app->isChecked());
 	p.locale = d->ui.locale->currentData().toLocale();
-	app()->setStyleName(d->ui.window_style->currentData().toString());
+	cApp.setStyleName(d->ui.window_style->currentData().toString());
 	p.enable_system_tray = d->ui.enable_system_tray->isChecked();
 	p.hide_rather_close = d->ui.hide_rather_close->isChecked();
 
@@ -631,7 +630,7 @@ void PrefDialog::changeEvent(QEvent *event) {
 }
 
 void PrefDialog::onDialogButtonClicked(QAbstractButton *button) {
-	auto reset = [this] () {fill(Pref::get());};
+	auto reset = [this] () {fill(cPref);};
 	auto restore = [this] () {fill(Pref());};
 
 	switch (d->ui.dbb->standardButton(button)) {

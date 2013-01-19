@@ -3,6 +3,29 @@
 
 #include "stdafx.hpp"
 
+class BaseListModel : public QAbstractItemModel {
+	Q_OBJECT
+	Q_PROPERTY(int columns READ columns CONSTANT)
+public:
+	typedef QHash<int, QByteArray> RoleHash;
+	BaseListModel(QObject *parent = nullptr, int columns = 1)
+	: QAbstractItemModel(parent), m_columns(columns) {
+		connect(this, &BaseListModel::rowChanged, [this](int row) {
+			emit dataChanged(index(row, 0), index(row, columnCount()));
+		});
+	}
+	QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const {
+		return parent.isValid() ? QModelIndex() : createIndex(row, column);
+	}
+	QModelIndex parent(const QModelIndex &child = QModelIndex()) const {Q_UNUSED(child); return QModelIndex();}
+	int columnCount(const QModelIndex &parent = QModelIndex()) const {Q_UNUSED(parent); return m_columns;}
+	int columns() const {return m_columns;}
+signals:
+	void rowChanged(int row);
+private:
+	const int m_columns;
+};
+
 class ListModel : public QAbstractItemModel {
 	Q_OBJECT
 public:

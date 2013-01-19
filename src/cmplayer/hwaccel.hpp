@@ -26,12 +26,9 @@ class VideoFormat;
 
 class HwAccelInfo {
 public:
-	HwAccelInfo(const HwAccelInfo&) = delete;
-	HwAccelInfo &operator = (const HwAccelInfo&) = delete;
-	static HwAccelInfo &get() {return *obj;}
-	~HwAccelInfo();
+	HwAccelInfo();
 	bool isAvailable() const {return m_ok;}
-	AVCodecContext *avctx() const {return m_avctx;}
+	AVCodecContext *avctx() const {return HwAccelInfo::m_avctx;}
 	QList<AVCodecID> fullCodecList() const;
 	bool supports(AVCodecID codec) const;
 #ifdef Q_OS_X11
@@ -41,17 +38,15 @@ public:
 	static const VAProfile NoProfile = (VAProfile)(-1);
 	bool supports(AVCodecContext *avctx) const {return (m_avctx = (supports(avctx->codec_id) ? avctx : nullptr));}
 #endif
+	static void finalize();
 private:
-	HwAccelInfo();
-	static HwAccelInfo *obj;
 #ifdef Q_OS_X11
 	VAProfile findMatchedProfile(const QVector<VAProfile> &needs) const;
-	VADisplay m_display = 0;
-	QVector<VAProfile> m_profiles;
+	static VADisplay m_display = 0;
+	static QVector<VAProfile> m_profiles;
 #endif
-	mutable AVCodecContext *m_avctx = nullptr;
-	bool m_ok = false;
-	friend int main(int, char**);
+	static AVCodecContext *m_avctx;
+	static bool m_ok;
 #ifdef Q_OS_X11
 	friend int is_hwaccel_available(AVCodecContext *avctx);
 #endif

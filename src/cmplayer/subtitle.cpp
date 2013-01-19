@@ -109,10 +109,9 @@ RichTextDocument Subtitle::caption(int time, double fps) const {
 }
 
 bool Subtitle::load(const QString &file, const QString &enc) {
-	const Pref &p = Pref::get();
-	const double acc = p.sub_enc_accuracy*0.01;
+	const double acc = cPref.sub_enc_accuracy*0.01;
 	QString encoding;
-	if (p.sub_enc_autodetection)
+	if (cPref.sub_enc_autodetection)
 		encoding = CharsetDetector::detect(file, acc);
 	if (encoding.isEmpty())
 		encoding = enc;

@@ -55,7 +55,7 @@ struct SubtitleRenderer::Data {
 		return langMap.value(r->comp->language(), -1);
 	}
 	void reset_lang_map() {
-		const QStringList priority = Pref::get().sub_priority;
+		const QStringList priority = cPref.sub_priority;
 		for (int i=0; i< priority.size(); ++i)
 			langMap[priority[i]] = priority.size()-i;
 	}
@@ -214,7 +214,7 @@ bool SubtitleRenderer::load(const QString &fileName, const QString &enc, bool se
 
 QList<int> SubtitleRenderer::autoselection(const Mrl &mrl, const QList<Loaded> &loaded) {
 	QList<int> selected;
-	const Pref &p = Pref::get();
+	const Pref &p = cPref;
 	if (loaded.isEmpty() || !mrl.isLocalFile() || !p.sub_enable_autoselect)
 		return selected;
 
@@ -253,7 +253,7 @@ QList<int> SubtitleRenderer::autoselection(const Mrl &mrl, const QList<Loaded> &
 
 int SubtitleRenderer::autoload(const Mrl &mrl, bool autoselect) {
 	unload();
-	const Pref &pref = Pref::get();
+	const Pref &pref = cPref;
 	if (!pref.sub_enable_autoload)
 		return 0;
 	const QStringList filter = Info::subtitleNameFilter();

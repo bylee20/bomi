@@ -10,7 +10,7 @@
 #include "app_x11.hpp"
 #endif
 
-#define APP_GROUP QLatin1String("application")
+#define APP_GROUP _L("application")
 
 struct App::Data {
 	QStringList styleNames;

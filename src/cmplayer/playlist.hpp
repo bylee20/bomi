@@ -13,6 +13,7 @@ public:
 	Playlist(const Playlist &rhs);
 	Playlist(const Mrl &mrl);
 	Playlist(const QList<Mrl> &rhs);
+	Playlist(const Mrl &mrl, const QString &enc);
 	void save(const QString &prefix, QSettings *set) const;
 	void load(const QString &prefix, QSettings *set);
 	bool save(const QString &filePath, Type type = Unknown) const;

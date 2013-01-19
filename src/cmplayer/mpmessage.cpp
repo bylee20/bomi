@@ -86,7 +86,7 @@ MpMessage::~MpMessage() {
 
 void MpMessage::_parse(const QString &line) {
 	auto id = MpMessage::id(line);
-	qDebug() << "mpv:" << qPrintable(line);
+//	qDebug() << "mpv:" << qPrintable(line);
 	if (id.name.isEmpty()) {
 		for (auto p : parsers)
 			if (p->parse(line))
@@ -106,21 +106,22 @@ MpMessage::Id MpMessage::id(const QString &line) {
 	return rx.indexIn(line) != -1 ? Id(rx.cap(1), rx.cap(2)) : Id();
 }
 
-bool MpMessage::getStream(const Id &id, const char *category, const char *idtext, StreamList &streams) {
+bool MpMessage::getStream(const Id &id, const char *category, const char *idtext, StreamList &streams, const QString &trans) {
 	static QRegExp rxCategory("^(AUDIO|VIDEO|SUBTITLE)_ID$");
 	if (rxCategory.indexIn(id.name) != -1) {
-		if (same(rxCategory.cap(1), category)) {
-			streams[id.value.toInt()];
+		if (_Same(rxCategory.cap(1), category)) {
+			auto &name = streams[id.value.toInt()].m_name;
+			name = trans.arg(streams.size());
 			return true;
 		}
 	} else {
 		static QRegExp rxId("^(AID|SID|VID)_(\\d+)_(LANG|NAME)$");
 		if (rxId.indexIn(id.name) != -1) {
-			if (same(rxId.cap(1), idtext)) {
+			if (_Same(rxId.cap(1), idtext)) {
 				const int streamId = rxId.cap(2).toInt();
 				const auto attr = rxId.cap(3);
 				const auto value = id.value;
-				if (same(attr, "LANG"))
+				if (_Same(attr, "LANG"))
 					streams[streamId].m_lang = value;
 				else
 					streams[streamId].m_title = value;

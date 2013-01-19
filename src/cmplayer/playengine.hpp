@@ -5,18 +5,32 @@
 #include "mrl.hpp"
 #include "mpmessage.hpp"
 #include "global.hpp"
+#include <functional>
 
 class VideoRendererItem;	struct MPContext;
 class VideoFormat;			struct mp_cmd;
+class PlaylistModel;		class Playlist;
+typedef std::function<int(const Mrl&)> GetStartTime;
 
 struct DvdInfo {
-	QString volume = {};
 	struct Title {
-		QString name = {};
-		QStringList chapters = {};
+		QString name() const {return m_name;}
+		int number = 0, chapters = 0, angles = 0, length = 0;
+	private:
+		friend class PlayEngine;
+		QString m_name;
 	};
-	QMap<int, Title> titles = {};
-	void clear() {titles.clear(); volume.clear();}
+	void clear() {titles.clear(); titles.clear(); id.clear();}
+	QMap<int, Title> titles;
+	QString volume;
+	QString id = 0;
+};
+
+struct Chapter {
+	QString name() const {return m_name;}
+private:
+	friend class PlayEngine;
+	QString m_name;
 };
 
 typedef QLinkedList<QString> FilterList;
@@ -25,17 +39,17 @@ class PlayEngine : public QThread, public MpMessage {
 	Q_OBJECT
 public:
 	struct Context;
-	static PlayEngine &get() {return *obj;}
 	static void msleep(unsigned long msec) {QThread::msleep(msec);}
 	static void usleep(unsigned long usec) {QThread::usleep(usec);}
-
+	PlayEngine();
 	PlayEngine(const PlayEngine&) = delete;
 	PlayEngine &operator = (const PlayEngine &) = delete;
 	~PlayEngine();
 	MPContext *context() const;
 	int position() const;
 	int duration() const {return m_duration;}
-	Mrl mrl() const {return m_mrl;}
+	void setPlaylist(const Playlist &playlist);
+	Mrl mrl() const;
 	bool atEnd() const;
 	bool isSeekable() const;
 	bool isPlaying() const {return state() == EnginePlaying;}
@@ -48,19 +62,17 @@ public:
 	EngineState state() const {return m_state;}
 	void play(int time);
 	void setMrl(const Mrl &mrl, int start, bool play);
-	void setSpeed(double speed);
-
+	bool setMrl(int row, int start, bool play);
+	void setSpeed(double speed) {if (_ChangeZ(m_speed, speed)) {setmp("speed", speed);}}
 	const DvdInfo &dvd() const {return m_dvd;}
-	int currentTitle() const {return m_title;}
+	int currentDvdTitle() const {return m_title;}
 	int currentChapter() const;
-	QMap<int, DvdInfo::Title> titles() const {return m_dvd.titles;}
-	QStringList chapters() const {auto it = m_dvd.titles.find(currentTitle()); return it != m_dvd.titles.end() ? it->chapters : QStringList();}
+	QList<Chapter> chapters() const {return m_chapters;}
 	int currentSubtitleStream() const;
 	StreamList subtitleStreams() const {return m_subtitleStreams;}
 	void setCurrentSubtitleStream(int id) {setmp("sub", id);}
-	void setCurrentTitle(int id) {if (id > 0) tellmp("switch_title", id); else tellmp("dvdnav menu");}
-	void setCurrentChapter(int id) {tellmp("seek_chapter", id, 1);}
-
+	void setCurrentDvdTitle(int id);
+	void setCurrentChapter(int id) {setmp("chapter", id);}
 	bool hasVideo() const;
 	bool frameDrop() const {return m_framedrop;}
 	bool usingHwAcc() const;
@@ -74,6 +86,9 @@ public:
 	StreamList videoStreams() const {return m_videoStreams;}
 	void setCurrentVideoStream(int id) {setmp("video", id);}
 	int currentVideoStream() const;
+	void setGetStartTimeFunction(const GetStartTime &func);
+	const PlaylistModel &playlist() const;
+	PlaylistModel &playlist();
 
 	int volume() const {return m_volume;}
 	int currentAudioStream() const;
@@ -84,12 +99,12 @@ public:
 	void setCurrentAudioStream(int id) {setmp("audio", id);}
 public slots:
 	void setVolume(int volume) {if (_Change(m_volume, qBound(0, volume, 100))) {setMpVolume(); emit volumeChanged(m_volume);}}
-	void setPreamp(double preamp) {if (_ChangeF(m_preamp, qBound(0.0, preamp, 10.0))) {	setMpVolume();	emit preampChanged(m_preamp);}}
+	void setPreamp(double preamp) {if (_ChangeZ(m_preamp, qBound(0.0, preamp, 10.0))) {	setMpVolume();	emit preampChanged(m_preamp);}}
 	void setMuted(bool muted) {if (_Change(m_muted, muted)) {setmp("mute", m_muted); emit mutedChanged(m_muted);}}
 	void setVideoRenderer(VideoRendererItem *renderer);
-	void quitRunning();
 	void play();
 	void stop();
+	void quit();
 	void pause() {if (!isPaused()) tellmp("pause");}
 	void seek(int pos) {tellmp("seek", (double)pos/1000.0, 2);}
 	void relativeSeek(int pos) {tellmp("seek", (double)pos/1000.0, 0);}
@@ -113,15 +128,14 @@ signals:
 	void audioFilterChanged(const QString &af, bool on);
 	void videoFormatChanged(const VideoFormat &format);
 	void videoAspectRatioChanged(double ratio);
-	void audioStreamFound(const StreamList &audioStreams);
-	void videoStreamFound(const StreamList &videoStreams);
-	void subtitleStreamFound(const StreamList &subtitleStreams);
+	void dvdInfoChanged();
 private:
 	static void onPausedChanged(MPContext *mpctx);
 	static void onPlayStarted(MPContext *mpctx);
 	void clear();
 	void setmp(const char *name, int value);
 	void setmp(const char *name, float value);
+	void setmp(const char *name, double value) {setmp(name, (float)value);}
 	void setMpVolume() {setmp("volume", mpVolume());}
 	float mpVolume() const {return qBound(0.0, m_preamp*m_volume, 1000.0)/10.0;}
 	QPoint mapToFrameFromTop(const QPoint &pos);
@@ -132,23 +146,18 @@ private:
 	template<template <typename> class T> void tellmp(const QString &cmd, const T<QString> &args) {QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);}
 	void setVideoAspect(double ratio);
 	void setState(EngineState state) {if (_Change(m_state, state)) {emit stateChanged(m_state);}}
-	int processCmds();
-	int idle();
-	void run_mp_cmd(const char *str);
-	PlayEngine();
 	void run();
 	bool parse(const Id &id);
 	bool parse(const QString &line);
 	void customEvent(QEvent *event);
-	static PlayEngine *obj;
-	friend int main(int argc, char **argv);
 	int m_duration = 0, m_title = 0, m_volume = 100;
 	EngineState m_state = EngineStopped;
 	double m_speed = 1.0, m_preamp = 1.0;
 	bool m_framedrop = false, m_muted = false;
 	StreamList m_subtitleStreams, m_audioStreams, m_videoStreams;
 	VideoRendererItem *m_renderer = nullptr;
-	DvdInfo m_dvd;	FilterList m_af;	Mrl m_mrl;
+	DvdInfo m_dvd;	FilterList m_af;//	Mrl m_mrl;
+	QList<Chapter> m_chapters;
 	struct Data; Data *d;
 };
 

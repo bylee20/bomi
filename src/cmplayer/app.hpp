@@ -44,6 +44,6 @@ private:
 	Data *d = nullptr;
 };
 
-static inline App *app() {return static_cast<App*>(qApp);}
+#define cApp (*static_cast<App*>(qApp))
 
 #endif // APPLICATION_HPP

@@ -3,7 +3,7 @@
 Mrl::Mrl(const QString &location) {
 	const int idx = location.indexOf("://");
 	if (idx < 0) {
-		m_loc = QLatin1String("file://");
+		m_loc = _L("file://");
 		m_loc += location;
 	} else
 		m_loc = location;

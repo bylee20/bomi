@@ -12,6 +12,10 @@ Playlist::Playlist(const Mrl &mrl): QList<Mrl>() {
 	push_back(mrl);
 }
 
+Playlist::Playlist(const Mrl &mrl, const QString &enc) {
+	load(mrl, enc);
+}
+
 Playlist::Playlist(const QList<Mrl> &rhs)
 : QList<Mrl>(rhs) {}
 

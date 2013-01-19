@@ -8,6 +8,7 @@ class TextureRendererItem : public QQuickItem {
 public:
 	TextureRendererItem(int textures, QQuickItem *parent = 0);
 	~TextureRendererItem();
+	void setGeometry(const QPointF &pos, const QSizeF &size) {setPosition(pos); setSize(size);}
 protected:
 	typedef QSGGeometry::TexturedPoint2D TexturedPoint2D;
 	typedef QSGMaterialShader::RenderState RenderState;

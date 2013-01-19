@@ -77,7 +77,7 @@ private: // for VideoOutput
 	void next();
 private:
 	void initializeTextures();
-	QByteArray shader() const;
+	static QByteArray shader(int type);
 	static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
 //	static void drawMpOsd(void *p, int x, int y, int w, int h, uchar *src, uchar *srca, int stride);
 	const char *fragmentShader() const;

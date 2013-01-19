@@ -29,3 +29,11 @@ QStringList Skin::names(bool reload/* = false*/) {
 	}
 	return d->skins.keys();
 }
+
+void Skin::apply(QQuickView *view, const QString &name) {
+	if (data()->skins.isEmpty())
+		names(true);
+	const auto skin = Skin::source(name);
+	view->setResizeMode(QQuickView::SizeRootObjectToView);
+	view->setSource(QUrl::fromLocalFile(skin.absoluteFilePath()));
+}

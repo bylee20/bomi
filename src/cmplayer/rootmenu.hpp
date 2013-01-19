@@ -15,6 +15,9 @@ private:
 	typedef QMap<Enum::ClickAction, QAction*> ClickActionMap;
 	typedef QMap<Enum::WheelAction, WheelActionPair> WheelActionMap;
 public:
+	RootMenu();
+	RootMenu(const RootMenu &) = delete;
+	~RootMenu() {obj = nullptr;}
 	void save();
 	void load();
 	void update();
@@ -22,14 +25,14 @@ public:
 	inline QAction *wheelAction(const Enum::WheelAction &a, bool up) const {
 		return up ? m_wheel[a].up : m_wheel[a].down;
 	}
-	static inline RootMenu &get() {return *obj;}
+	static inline RootMenu &instance() {return *obj;}
 	QAction *action(const QString &id) const;
 	QAction *action(const QKeySequence &shortcut) const {return m_keymap.value(shortcut);}
 	QAction *doubleClickAction(Qt::KeyboardModifiers mod) const;
 	QAction *middleClickAction(Qt::KeyboardModifiers mod) const;
 	QAction *wheelScrollAction(Qt::KeyboardModifiers mod, bool up) const;
+	inline void resetKeyMap() {m_keymap.clear(); fillKeyMap(this);}
 private:
-	RootMenu();
 	template<typename N>
 	inline static void setActionAttr(QAction *act, const QVariant &data
 			, const QString &text, N textValue, bool sign = true) {
@@ -55,13 +58,13 @@ private:
 		setActionAttr(menu[key + "+"], QList<QVariant>() << prop << step, text, step);
 		setActionAttr(menu[key + "-"], QList<QVariant>() << prop << -step, text, -step);
 	}
-	void resetKeyMap() {m_keymap.clear(); fillKeyMap(this);}
 	void fillKeyMap(Menu *menu);
 	static RootMenu *obj;
 	ClickActionMap m_click;
 	WheelActionMap m_wheel;
 	QMap<QKeySequence, QAction*> m_keymap;
-	friend int main(int, char**);
 };
+
+#define cMenu (RootMenu::instance())
 
 #endif // ROOTMENU_HPP

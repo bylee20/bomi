@@ -4,24 +4,28 @@
 #include "playinfoitem.hpp"
 #include "subtitlerendereritem.hpp"
 #include "rootmenu.hpp"
+#include "globalqmlobject.hpp"
+
+static QObject *utilProvider(QQmlEngine *, QJSEngine *) {return new GlobalQmlObject;}
 
 PlayerItem::PlayerItem(QQuickItem *parent)
 : QQuickItem(parent) {
 	m_info = new PlayInfoItem(this);
 }
 
-void PlayerItem::create() {
-	if (!m_renderer) {
-		m_renderer = new VideoRendererItem(this);
-		m_subtitle = m_renderer->subtitle();
-		m_renderer->setZ(-1);
-	}
+void PlayerItem::unplug() {
+	Skin::unplug();
+	if (m_renderer)
+		m_renderer->setParentItem(nullptr);
 }
 
 void PlayerItem::plugTo(PlayEngine *engine) {
 	if (m_engine != engine) {
 		m_engine = engine;
-		m_engine->setVideoRenderer(m_renderer);
+		m_renderer = engine->videoRenderer();
+		m_subtitle = m_renderer->subtitle();
+		m_renderer->setParentItem(this);
+		m_renderer->setGeometry(QPointF(0, 0), QSizeF(width(), height()));
 		m_info->set(m_engine);
 	}
 }
@@ -42,10 +46,11 @@ void PlayerItem::registerItems() {
 	qmlRegisterType<PlayInfoItem>("CMPlayer", 1, 0, "PlayInfo");
 	qmlRegisterType<SubtitleRendererItem>("CMPlayer", 1, 0, "SubtitleRenderer");
 	qmlRegisterType<PlayerItem>("CMPlayer", 1, 0, "Player");
+	qmlRegisterSingletonType<GlobalQmlObject>("CMPlayer", 1, 0, "Util", utilProvider);
 }
 
 bool PlayerItem::execute(const QString &key) {
-	auto action = RootMenu::get().action(key);
+	auto action = cMenu.action(key);
 	if (!action)
 		return false;
 	if (m_engine) {
