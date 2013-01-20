@@ -225,6 +225,5 @@ OTHER_FILES += \
     skins/simple/qml/ScrollBar.qml \
     skins/simple/HistoryView.qml \
     skins/simple/qml/FlickableListView.qml \
-    skins/simple/qml/ColumnHeader.qml \
-    skins/simple/qml/Dock.qml
+    skins/simple/qml/ColumnHeader.qml
 

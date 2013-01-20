@@ -161,6 +161,9 @@ struct VideoRendererItem::Data {
 	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
 	int loc_brightness, loc_contrast, loc_sat_hue, loc_dxy, loc_p1, loc_p2, loc_p3;
 	VideoFormat::Type shaderType = VideoFormat::BGRA;
+	QMutex mutex;
+	QWaitCondition wait;
+	bool quit = false;
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
@@ -187,13 +190,17 @@ VideoFrame &VideoRendererItem::getNextFrame() const {
 
 void VideoRendererItem::next() {
 	if (!d->frameChanged) {
-		d->mposd->mutex().lock();
+		d->mutex.lock();
 		d->frameChanged = true;
 		d->frame.swap(d->next);
 		d->mposd->endNewFrame();
-		d->mposd->mutex().unlock();
+		update();
+		if (!d->quit) {
+			if (!d->wait.wait(&d->mutex, 10000u))
+				qDebug() << "maybe a frame dropped?";
+		}
+		d->mutex.unlock();
 	}
-	update();
 }
 
 QRectF VideoRendererItem::screenRect() const {
@@ -284,6 +291,11 @@ void VideoRendererItem::updateGeometry() {
 		setGeometryDirty();
 //		d->osd.frameVtx = d->vtx;
 	}
+}
+
+void VideoRendererItem::quit() {
+	d->quit = true;
+	d->wait.wakeAll();
 }
 
 void VideoRendererItem::setColor(const ColorProperty &prop) {
@@ -533,10 +545,13 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 }
 
 void VideoRendererItem::beforeUpdate() {
-	qDebug() << d->frameChanged;
+//	qDebug() << d->frameChanged << "check";
 	if (!d->frameChanged)
 		return;
-	QMutexLocker locker(&d->mposd->mutex());
+//	qDebug() << d->frameChanged << "try lock";
+//	QMutexLocker locker(&d->mposd->mutex());
+	d->mutex.lock();
+//	qDebug() << d->frameChanged << "lock acquired";
 //	qDebug() << "new frame" << d->frame.format().isEmpty() << d->frame.format().width() << d->frame.format().height();
 	if (d->format != d->frame.format()) {
 		d->format = d->frame.format();
@@ -548,6 +563,7 @@ void VideoRendererItem::beforeUpdate() {
 	if (d->shaderType != d->format.type())
 		resetNode();
 	if (!d->format.isEmpty()) {
+//		qDebug() << d->frameChanged << "bind";
 		const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
 		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
 			glBindTexture(GL_TEXTURE_2D, texture(idx));
@@ -582,6 +598,9 @@ void VideoRendererItem::beforeUpdate() {
 		++(d->drawnFrames);
 	}
 	d->frameChanged = false;
+	d->wait.wakeAll();
+	d->mutex.unlock();
+//	qDebug() << d->frameChanged << "unlock";
 }
 
 void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {

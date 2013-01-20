@@ -649,6 +649,7 @@ void MainWindow::openFromFileManager(const Mrl &mrl) {
 void MainWindow::exit() {
 	static bool done = false;
 	if (!done) {
+		d->renderer.quit();
 		d->engine.quit();
 		d->engine.wait();
 		cApp.processEvents();

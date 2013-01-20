@@ -15,7 +15,7 @@ Item {
 	property Component header: Component {Item {width: view.width}}
 	Flickable {
 		id: headerflick
-		anchors {left: parent.left; right: parent.right}
+		anchors { left: parent.left; right: parent.right }
 		height: headeritem.height
 		contentWidth: flick.contentWidth
 		flickableDirection: Flickable.HorizontalFlick
@@ -31,25 +31,11 @@ Item {
 	}
 	Flickable {
 		id: flick
-		anchors {top: parent.top; topMargin: headerItem.height; bottom: parent.bottom; left: parent.left; right: parent.right}
-		contentWidth: proxy.width
-		contentHeight: proxy.height
-		Item {
-			id: proxy
-			height: contentHeight
-			width: contentWidth
-		}
-		onContentYChanged: {
-			if (contentY<0) {
-				view.y = -contentY
-			} else
-				view.y = contentY
-		}
-		onContentXChanged: {
-			if (movingHorizontally)
-				headerflick.contentX = contentX
-			view.x = contentX
-		}
+		anchors { top: parent.top; topMargin: headerItem.height; bottom: parent.bottom; left: parent.left; right: parent.right }
+		contentWidth: proxy.width; contentHeight: proxy.height
+		Item { id: proxy; height: contentHeight; width: contentWidth }
+		onContentYChanged: { view.y = contentY<0 ? -contentY : contentY }
+		onContentXChanged: { if (movingHorizontally) {headerflick.contentX = contentX} view.x = contentX }
 		ListView {
 			id: view
 			clip:true

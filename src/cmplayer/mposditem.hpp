@@ -14,7 +14,6 @@ public:
 	void setFrameSize(const QSize &size);
 	void beginNewFrame();
 	void endNewFrame();
-	QMutex &mutex() const;
 private:
 	static const int ShowEvent = QEvent::User + 1;
 	static const int HideEvent = QEvent::User + 2;

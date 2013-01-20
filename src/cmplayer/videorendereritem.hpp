@@ -62,6 +62,7 @@ public:
 	void setVideoAspectRaito(double ratio);
 	QQuickItem *osd() const;
 	void setAspectRatio(double ratio);
+	void quit();
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);

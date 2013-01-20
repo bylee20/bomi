@@ -96,17 +96,13 @@ void MpOsdItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeom
 	update();
 }
 
-QMutex &MpOsdItem::mutex() const {
-	return d->mutex;
-}
-
 void MpOsdItem::draw(sub_bitmaps *imgs) {
 	d->called = true;
 	if (imgs->num_parts > 0) {
 		auto &img = imgs->parts[0];
 		if (d->prevId == imgs->bitmap_id && d->prevPosId == imgs->bitmap_pos_id)
 			return;
-		QMutexLocker locker(&d->mutex);
+		d->mutex.lock();
 		if (d->prevId != imgs->bitmap_id) {
 			d->osd.format = imgs->format;
 			d->osd.w = img.dw;
@@ -140,6 +136,7 @@ void MpOsdItem::draw(sub_bitmaps *imgs) {
 			d->osd.y = img.y;
 			d->reposition = true;
 		}
+		d->mutex.unlock();
 		qApp->postEvent(this, new QEvent((QEvent::Type)(ShowEvent)));
 	}
 }

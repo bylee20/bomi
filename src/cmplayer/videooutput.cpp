@@ -24,8 +24,6 @@ struct VideoOutput::Data {
 //		renderer->doneCurrent();
 		hwaccel = nullptr;
 	}
-	QMutex mutex;
-	QWaitCondition cond;
 	mp_osd_res osd;
 	mp_image_t *mpimg = nullptr;
 	VideoFrame *frame = nullptr;

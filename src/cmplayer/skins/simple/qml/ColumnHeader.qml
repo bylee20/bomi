@@ -14,6 +14,7 @@ Item {
 		height: root.height
 		elide: Text.ElideRight
 		anchors {left: parent.left; right: separator.left}
+		verticalAlignment: Text.AlignVCenter
 	}
 	Item {
 		id: separator

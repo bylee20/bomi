@@ -84,55 +84,5 @@ Rectangle {
 		model: playlist
 		delegate: delegate
 	}
-
-	Rectangle {
-		id: vscrollbar
-		anchors.right: view.right
-		anchors.rightMargin: 3
-		y: view.visibleArea.yPosition * (view.height - 6)+3
-		width: 6
-		height: view.visibleArea.heightRatio * (view.height - 6)
-		color: "white"
-		radius: 3
-		smooth: true
-		visible: view.height < view.contentHeight
-		MouseArea {
-			anchors.fill: parent
-			preventStealing: true
-			drag.axis: Drag.YAxis
-			drag.target: vscrollbar
-			drag.minimumY: 3
-			drag.maximumY: view.height-vscrollbar.height-3
-			onPositionChanged: view.contentY = (vscrollbar.y-3)*view.contentHeight/(view.height-6)
-		}
-	}
-//	Rectangle {
-//		id: scrollbar
-//		anchors.right: view.right
-//		y: view.visibleArea.yPosition * view.height
-//		width: 10
-//		height: view.visibleArea.heightRatio * view.height
-//		color: "yellow"
-//		onYChanged: {
-//			view.contentWidth = playlist.contentWidth+10
-//			console.log(view.width/(-(view.width - view.contentWidth - view.rightMargin)+view.leftMargin+view.width))
-//			console.log(view.visibleArea.xPosition + "," + view.visibleArea.widthRatio)
-//		}
-//	}
-//	Rectangle {
-//		id: scrollbar2
-//		anchors.bottom: view.bottom
-//		x: view.visibleArea.xPosition * view.width
-//		height: 10
-//		width: view.visibleArea.widthRatio * view.width
-//		color: "yellow"
-//	}
-//	Rectangle {
-//		id: scrollbar
-//		anchors.right: view.right
-//		y: view.visibleArea.yPosition * view.height
-//		width: 10
-//		height: view.visibleArea.heightRatio * view.height
-//		color: "black"
-//	}
+	ScrollBar { flickable: view }
 }
