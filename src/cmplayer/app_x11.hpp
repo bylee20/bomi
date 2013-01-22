@@ -11,7 +11,7 @@ public:
 	AppX11(QObject *parent = 0);
 	~AppX11();
 	void setScreensaverDisabled(bool disabled);
-	void setAlwaysOnTop(WId wid, bool onTop);
+	void setAlwaysOnTop(QWindow *window, bool onTop);
 	QStringList devices() const;
 	bool shutdown();
 private slots:

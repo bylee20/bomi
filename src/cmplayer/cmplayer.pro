@@ -1,6 +1,6 @@
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header
-QT = core gui network quick widgets
+QT = core gui network quick widgets gui-private
 
 LIBS += -lmpg123 -lquvi  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lfaad -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
 #LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
@@ -43,7 +43,7 @@ macx {
 } else:unix {
     QT += dbus
     TARGET = cmplayer
-    LIBS += -lX11 \
+    LIBS += -lX11 -lxcb \
         -L../../build/lib -lcmplayer_mpv -lcmplayer_sigar -lchardet -lcmplayer_av \
         -lopenal -lasound -ldl -lva -lva-x11
     HEADERS += app_x11.hpp

@@ -100,7 +100,12 @@ QIcon App::defaultIcon() {
 }
 
 void App::setAlwaysOnTop(QWindow *window, bool onTop) {
-	d->helper.setAlwaysOnTop(window->winId(), onTop);
+//	if (onTop)
+//		window->setFlags(window->flags() | Qt::WindowStaysOnTopHint);
+//	else
+//		window->setFlags(window->flags() & ~Qt::WindowStaysOnTopHint);
+//	qDebug() << window->flags() | Qt::WindowStaysOnTopHint
+	d->helper.setAlwaysOnTop(window, onTop);
 }
 
 void App::setScreensaverDisabled(bool disabled) {
