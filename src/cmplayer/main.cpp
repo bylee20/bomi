@@ -5,24 +5,10 @@
 #include "playeritem.hpp"
 #include "videoformat.hpp"
 
-static bool checkOpenGL() {
-	if (Q_LIKELY(QGLFormat::hasOpenGL() && (QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_2_0)))
-		return true;
-	QMessageBox::critical(0, "CMPlayer"
-		, App::tr("CMPlayer needs OpenGL to render video. Your system has no OpenGL support. Exit CMPlayer."));
-	return false;
-}
-
 Q_DECLARE_METATYPE(QTextOption::WrapMode)
 
 int main(int argc, char **argv) {
-//    qDebug() << "good?";
-//    QApplication a(argc, argv);
-
-//    return 0;
-
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
-
 
 	qRegisterMetaType<EngineState>("State");
 	qRegisterMetaType<Mrl>("Mrl");
@@ -32,8 +18,6 @@ int main(int argc, char **argv) {
     HwAccelInfo hwacc;
 
 	App app(argc, argv);
-	if (!checkOpenGL())
-		return 1;
 	const auto mrl = app.getMrlFromCommandLine();
 	if (app.isUnique() && app.sendMessage("wakeUp")) {
 		if (!mrl.isEmpty())

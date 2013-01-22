@@ -7,7 +7,6 @@
 #include <QtGui>
 #include <QtWidgets>
 #include <QtQuick>
-#include <QtOpenGL>
 #include <set>
 #include <qmath.h>
 

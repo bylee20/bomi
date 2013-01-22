@@ -1,6 +1,6 @@
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header
-QT = core gui opengl network quick widgets
+QT = core gui network quick widgets
 
 LIBS += -lmpg123 -lquvi  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lfaad -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
 #LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
