@@ -18,10 +18,7 @@ struct VideoOutput::Data {
 	HwAccel *hwaccel = nullptr;
 	bool hwaccelActivated = false;
 	void deleteHwAccel() {
-//		renderer->makeCurrent();
-//		glBindTexture(GL_TEXTURE_2D, renderer->texture(0));
 		delete hwaccel;
-//		renderer->doneCurrent();
 		hwaccel = nullptr;
 	}
 	mp_osd_res osd;
@@ -32,6 +29,13 @@ struct VideoOutput::Data {
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
+	Q_ASSERT(VideoFormat::YV12 == IMGFMT_YV12);
+	Q_ASSERT(VideoFormat::I420 == IMGFMT_I420);
+	Q_ASSERT(VideoFormat::YUY2 == IMGFMT_YUY2);
+	Q_ASSERT(VideoFormat::NV12 == IMGFMT_NV12);
+	Q_ASSERT(VideoFormat::NV21 == IMGFMT_NV21);
+	Q_ASSERT(VideoFormat::UYVY == IMGFMT_UYVY);
+
 	memset(&d->info, 0, sizeof(d->info));
 	memset(&d->driver, 0, sizeof(d->driver));
 	memset(&d->osd, 0, sizeof(d->osd));
@@ -57,7 +61,6 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 
 VideoOutput::~VideoOutput() {
 	d->deleteHwAccel();
-	delete d;
 }
 
 struct vo *VideoOutput::vo_create(MPContext *mpctx) {
@@ -77,6 +80,10 @@ struct vo *VideoOutput::vo_create(MPContext *mpctx) {
 	return nullptr;
 }
 
+void VideoOutput::release() {
+	d->deleteHwAccel();
+}
+
 const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
@@ -89,35 +96,25 @@ int VideoOutput::config(struct vo *vo, uint32_t /*w_s*/, uint32_t /*h_s*/, uint3
 	auto self = reinterpret_cast<VideoOutput*>(vo->priv);
 	Data *d = self->d;
 	d->hwaccelActivated = false;
-#ifdef Q_OS_X11
-	auto avctx = HwAccelInfo::get().avctx();
-	if (fmt == IMGFMT_VDPAU && avctx) {
-		if (d->hwaccel) {
-			if (!d->hwaccel->isCompatibleWith(avctx))
-				d->deleteHwAccel();
-		}
-		if (!d->hwaccel)
-			d->hwaccel = new HwAccel(avctx);
-		if (!d->hwaccel->isUsable()) {
-			d->deleteHwAccel();
-			return -1;
-		}
-		avctx->hwaccel_context = d->hwaccel->context();
-		d->format = d->hwaccel->format();
-		d->format.stride = avctx->width*4;
-		d->format.width_stride = avctx->width;
-		d->format.height = avctx->height;
+#ifdef Q_OS_LINUX
+    HwAccelInfo info;
+    auto avctx = info.avctx();
+	if (fmt == IMGFMT_VDPAU && avctx && d->engine->videoRenderer()) {
+        if (d->hwaccel) {
+            if (!d->hwaccel->isCompatibleWith(avctx))
+                d->deleteHwAccel();
+        }
+        if (!d->hwaccel)
+            d->hwaccel = new HwAccel(avctx);
+        if (!d->hwaccel->isUsable()) {
+            d->deleteHwAccel();
+            return -1;
+        }
+        avctx->hwaccel_context = d->hwaccel->context();
 		d->hwaccelActivated = true;
-	} else
+    } else
 #endif
-	d->format = VideoFormat(imgfmtToVideoFormatType(fmt));
-#ifdef Q_OS_X11
-	if (d->hwaccelActivated && d->hwaccel && d->hwaccel->isUsable()) {
-		d->renderer->makeCurrent();
-		d->hwaccel->createSurface(d->renderer->textures());
-		d->renderer->doneCurrent();
-	}
-#endif
+		d->format = VideoFormat(imgfmtToVideoFormatType(fmt));
 	return 0;
 }
 
@@ -126,10 +123,11 @@ bool VideoOutput::getImage(void *data) {
 	Q_UNUSED(data);
 	return false;
 #endif
-#ifdef Q_OS_X11
+#ifdef Q_OS_LINUX
 	auto mpi = reinterpret_cast<mp_image_t*>(data);
 	return d->hwaccel && d->hwaccel->isUsable() && d->hwaccel->setBuffer(mpi);
 #endif
+    return false;
 }
 
 void VideoOutput::drawImage(void *data) {
@@ -137,8 +135,15 @@ void VideoOutput::drawImage(void *data) {
 	if (auto renderer = d->engine->videoRenderer()) {
 		VideoFrame &frame = renderer->getNextFrame();
 		frame.setFormat(d->format);
+#ifdef Q_OS_LINUX
+		if (d->hwaccelActivated) {
+			if (d->hwaccel->copyTo(mpi, frame))
+				emit formatChanged(d->format = frame.format());
+		} else
+#endif
 		if (frame.copy(mpi))
 			emit formatChanged(d->format = frame.format());
+
 	}
 	d->flip = true;
 }
@@ -211,7 +216,7 @@ int VideoOutput::queryFormat(int format) {
 	case IMGFMT_NV12:
 	case IMGFMT_YUY2:
 	case IMGFMT_UYVY:
-#ifdef Q_OS_X11
+#ifdef Q_OS_LINUX
 	case IMGFMT_VDPAU:
 #endif
 		return VFCAP_OSD | VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;

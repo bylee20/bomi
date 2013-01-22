@@ -14,7 +14,8 @@ class VideoFrame {
 	VideoFrame &operator=(const VideoFrame&) = delete;
 public:
 	VideoFrame(): d(new Data) {}
-	bool copy(mp_image *mpi);
+	bool copy(const mp_image *mpi);
+	bool copy(GLuint *texture, GLenum fmt);
 	const VideoFormat &format() {return d->format;}
 	void setFormat(const VideoFormat &format);
 	QImage toImage() const;

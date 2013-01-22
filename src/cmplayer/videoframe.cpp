@@ -13,7 +13,15 @@ void VideoFrame::setFormat(const VideoFormat &format) {
 		d->data[i].resize(format.byteWidth(i)*format.byteHeight(i));
 }
 
-bool VideoFrame::copy(mp_image *mpi) {
+bool VideoFrame::copy(GLuint *textures, GLenum fmt) {
+	Q_ASSERT(fmt == GL_BGRA);
+	Q_ASSERT(d->data[0].size() == d->format.width()*d->format.height()*4);
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glGetTexImage(GL_TEXTURE_2D, 0, fmt, GL_UNSIGNED_BYTE, d->data[0].data());
+	return false;
+}
+
+bool VideoFrame::copy(const mp_image *mpi) {
 	bool ret = d->format.imgfmt() != mpi->imgfmt || d->format.byteWidth(0) != mpi->stride[0] || d->format.byteHeight(0) != mpi->height;
 	if (ret)
 		setFormat(VideoFormat::fromMpImage(mpi));
@@ -45,7 +53,7 @@ VideoFormat::Type imgfmtToVideoFormatType(unsigned int imgfmt) {
 	}
 }
 
-VideoFormat VideoFormat::fromMpImage(mp_image *mpi) {
+VideoFormat VideoFormat::fromMpImage(const mp_image *mpi) {
 	VideoFormat format;
 	format.m_type = imgfmtToVideoFormatType(mpi->imgfmt);
 	format.m_bpp = mpi->bpp;

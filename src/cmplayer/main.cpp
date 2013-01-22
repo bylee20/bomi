@@ -16,6 +16,11 @@ static bool checkOpenGL() {
 Q_DECLARE_METATYPE(QTextOption::WrapMode)
 
 int main(int argc, char **argv) {
+//    qDebug() << "good?";
+//    QApplication a(argc, argv);
+
+//    return 0;
+
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
 
@@ -23,6 +28,8 @@ int main(int argc, char **argv) {
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
 	PlayerItem::registerItems();
+
+    HwAccelInfo hwacc;
 
 	App app(argc, argv);
 	if (!checkOpenGL())
@@ -41,6 +48,6 @@ int main(int argc, char **argv) {
 	const int ret = app.exec();
 	mw->exit();
 	delete mw;
-	HwAccelInfo::finalize();
+    hwacc.finalize();
 	return ret;
 }

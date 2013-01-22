@@ -3,7 +3,7 @@
 
 #include "stdafx.hpp"
 
-#ifdef Q_OS_X11
+//#ifdef Q_OS_LINUX
 
 class AppX11 : public QObject {
 	Q_OBJECT
@@ -23,6 +23,6 @@ private:
 	Data *d = nullptr;
 };
 
-#endif
+//#endif
 
 #endif // APPLICATION_X11_HPP

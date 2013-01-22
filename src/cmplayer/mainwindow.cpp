@@ -277,8 +277,6 @@ MainWindow::MainWindow(): d(new Data) {
 	d->subtitle.setItem(d->renderer.subtitle());
 
 	resize(400, 300);
-	rootContext()->setContextProperty("history", &d->history);
-	rootContext()->setContextProperty("playlist", &d->playlist);
 #ifndef Q_OS_MAC
 	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
 #endif
@@ -567,7 +565,7 @@ MainWindow::MainWindow(): d(new Data) {
 		if (reason == QSystemTrayIcon::Trigger)
 			setVisible(!isVisible());
 		else if (reason == QSystemTrayIcon::Context)
-			d->contextMenu->exec(QCursor::pos());
+            d->contextMenu.exec(QCursor::pos());
 	});
 #endif
 
@@ -635,8 +633,6 @@ MainWindow::MainWindow(): d(new Data) {
 }
 
 MainWindow::~MainWindow() {
-	if (d->player)
-		d->player->unplug();
 	exit();
 	delete d->prefDlg;
 	delete d;
@@ -656,6 +652,8 @@ void MainWindow::exit() {
 		d->recent.setLastPlaylist(d->playlist.playlist());
 		d->recent.setLastMrl(d->engine.mrl());
 		d->save_state();
+		if (d->player)
+			d->player->unplug();
 		cApp.quit();
 	}
 }
@@ -875,6 +873,8 @@ void MainWindow::reloadSkin() {
 		d->player->unplug();
 	d->player = nullptr;
 	engine()->clearComponentCache();
+	rootContext()->setContextProperty("history", &d->history);
+	rootContext()->setContextProperty("playlist", &d->playlist);
 	Skin::apply(this, d->p.skin_name);
 	if (status() == Error) {
 		auto errors = this->errors();
@@ -909,7 +909,7 @@ void MainWindow::applyPref() {
 	d->menu.syncTitle();
 	d->menu.resetKeyMap();
 #ifndef Q_OS_MAC
-	tray->setVisible(p.enable_system_tray);
+    d->tray->setVisible(d->p.enable_system_tray);
 #endif
 	if (time >= 0)
 		d->engine.play(time);
@@ -968,7 +968,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 		hide();
 		AppState &as = AppState::get();
 		if (as.ask_system_tray) {
-			CheckDialog dlg(this);
+            CheckDialog dlg;//(this);
 			dlg.setChecked(true);
 			dlg.setLabelText(tr("CMPlayer will be running in the system tray "
 					"when the window closed.<br>"

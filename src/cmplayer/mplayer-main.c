@@ -795,6 +795,10 @@ static int try_load_config(m_config_t *conf, const char *file)
 	return 1;
 }
 
+#ifndef PATH_MAX
+#define PATH_MAX   4096
+#endif
+
 static void load_per_file_config(m_config_t *conf, const char * const file)
 {
 	char *confpath;

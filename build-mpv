@@ -15,7 +15,7 @@ args="--disable-encoding --disable-termcap --disable-termios --disable-iconv \
   --disable-sdl2 --disable-caca --disable-direct3d --disable-dvb --disable-xv --disable-vdpau \
   --disable-vm --disable-xinerama --disable-xshape --disable-xss --enable-openal \
   --disable-ossaudio --disable-rsound --disable-pulse --disable-portaudio \
-  --disable-jack --disable-dsound --disable-select --enable-gettext --disable-static"
+  --disable-jack --disable-dsound --disable-select --disable-gettext --disable-static"
 cflags="-I../../build/include"
 objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   audio/decode/ad_spdif.o audio/decode/dec_audio.o audio/filter/af.o \
@@ -28,7 +28,7 @@ objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   audio/filter/af_surround.o audio/filter/af_sweep.o audio/filter/af_tools.o \
   audio/filter/af_volnorm.o audio/filter/af_volume.o audio/filter/filter.o \
   audio/filter/window.o audio/format.o audio/mixer.o audio/out/ao.o \
-  audio/out/ao_coreaudio.o audio/out/ao_null.o audio/out/ao_pcm.o audio/reorder_ch.o \
+  audio/out/ao_null.o audio/out/ao_pcm.o audio/reorder_ch.o \
   core/asxparser.o core/av_log.o core/av_opts.o core/bstr.o core/codec-cfg.o \
   core/command.o core/cpudetect.o core/defaultopts.o core/input/input.o \
   core/m_config.o core/m_option.o core/m_property.o core/m_struct.o core/mp_common.o \
@@ -41,7 +41,7 @@ objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   demux/demux_mpg.o demux/demux_rawaudio.o demux/demux_rawvideo.o demux/demux_ts.o \
   demux/ebml.o demux/extension.o demux/mf.o demux/mp3_hdr.o demux/mp_taglists.o \
   demux/mpeg_hdr.o demux/parse_es.o demux/video.o osdep/getch2.o \
-  osdep/mmap_anon.o osdep/numcores.o osdep/shmem.o osdep/timer-darwin.o \
+  osdep/mmap_anon.o osdep/numcores.o osdep/shmem.o \
   stream/asf_mmst_streaming.o stream/asf_streaming.o stream/cache2.o stream/cdinfo.o \
   stream/cookies.o stream/http.o stream/network.o stream/stream.o \
   stream/stream_avdevice.o stream/stream_cdda.o stream/stream_cddb.o \
@@ -51,7 +51,7 @@ objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   sub/dec_sub.o sub/draw_bmp.o sub/find_sub.o sub/find_subfiles.o sub/img_convert.o \
   sub/osd_dummy.o sub/sd_lavc.o sub/spudec.o sub/sub.o sub/subassconvert.o \
   sub/subreader.o talloc.o video/csputils.o video/decode/dec_video.o video/decode/vd.o \
-  video/decode/vd_lavc.o video/filter/pullup.o video/filter/vf.o \
+  video/filter/pullup.o video/filter/vf.o \
   video/filter/vf_crop.o video/filter/vf_delogo.o video/filter/vf_divtc.o \
   video/filter/vf_dlopen.o video/filter/vf_down3dright.o video/filter/vf_dsize.o \
   video/filter/vf_eq.o video/filter/vf_expand.o video/filter/vf_flip.o \
@@ -67,23 +67,23 @@ objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   video/out/vo.o video/out/vo_image.o \
   video/out/vo_null.o video/sws_utils.o"
 
-libs="-ldvdread -lbz2 -lcdio_cdda -lcdio_paranoia -lcdio -lmpg123 -lintl"
+libs="-ldvdread -lbz2 -lcdio_cdda -lcdio_paranoia -lcdio -lmpg123"
 
-#osdep/io.o
+#osdep/io.o video/decode/vd_lavc.o 
 
 kern=`uname -s`
 if test $kern = "Darwin"
 then
   echo "Build for OS X"
   args="$args --enable-coreaudio --disable-alsa"
-  libs="$libs -framework OpenAL -framework VideoDecodeAcceleration -framework CoreVideo -framework CoreFoundation -framework Cocoa"
-  objs="$objs osdep/timer-darwin.o"
+  libs="$libs -lintl -framework OpenAL -framework VideoDecodeAcceleration -framework CoreVideo -framework CoreFoundation -framework Cocoa"
+  objs="$objs audio/out/ao_coreaudio.o osdep/timer-darwin.o"
 elif test $kern = "Linux"
 then
   echo "Build for Linux"
   args="--cc=gcc $args --disable-coreaudio --enable-alsa"
   libs="-L../../build/lib -lcmplayer_av $libs -lopenal -lasound -lva"
-  objs="$objs libao2/ao_alsa.o osdep/timer-linux.o"
+  objs="$objs audio/out/ao_alsa.o audio/out/ao_openal.o osdep/timer-linux.o"
 else
   echo "Not supported!"
   exit

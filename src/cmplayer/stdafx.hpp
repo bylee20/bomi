@@ -15,7 +15,7 @@
 #define Q_OS_MAC
 #endif
 #ifdef Q_WS_X11
-#define Q_OS_X11
+#define Q_OS_LINUX
 #endif
 
 extern "C" void *fast_memcpy(void * to, const void * from, size_t len);

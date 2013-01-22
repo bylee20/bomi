@@ -1,41 +1,37 @@
 #include "texturerendereritem.hpp"
 
 struct TextureRendererItem::Shader : public QSGMaterialShader {
-	Shader(TextureRendererItem *item): m_item(item) {}
+    Shader(TextureRendererItem *item): m_item(item) {}
 	void updateState(const RenderState &state, QSGMaterial *newOne, QSGMaterial *old) {
-		Q_UNUSED(old);
-		Q_UNUSED(newOne);
-		m_item->bind(state, program());
+        Q_UNUSED(old); Q_UNUSED(newOne); m_item->bind(state, program());
 	}
-	void initialize() {
-		m_item->link(program());
-	}
+    void initialize() { m_item->link(program()); }
 private:
-	char const *const *attributeNames() const {return m_item->attributeNames();}
-	const char *vertexShader() const {return m_item->vertexShader();}
-	const char *fragmentShader() const {return m_item->fragmentShader();}
-	TextureRendererItem *m_item = nullptr;
+    char const *const *attributeNames() const {return m_item->attributeNames();}
+    const char *vertexShader() const {return m_item->vertexShader();}
+    const char *fragmentShader() const {return m_item->fragmentShader();}
+    TextureRendererItem *m_item = nullptr;
 };
+
+
+static int MaterialId = 0;
+static QVector<QSGMaterialType> MaterialTypes = QVector<QSGMaterialType>(50);
 
 struct TextureRendererItem::Material : public QSGMaterial {
-	Material(TextureRendererItem *item): m_item(item) {if (item->blending()) setFlag(Blending);}
-	QSGMaterialType *type() const;
-	QSGMaterialShader *createShader() const;
+    Material(TextureRendererItem *item): m_item(item) { if (item->blending()) setFlag(Blending); }
+    QSGMaterialType *type() const { return &MaterialTypes[m_id]; }
+    QSGMaterialShader *createShader() const { return new Shader(m_item); }
 private:
-	TextureRendererItem *m_item = nullptr;
-	mutable QSGMaterialType m_type;
+    int m_id = ++MaterialId%MaterialTypes.size();
+    TextureRendererItem *m_item = nullptr;
 };
-
-QSGMaterialType *TextureRendererItem::Material::type() const {return &m_type;}
-QSGMaterialShader *TextureRendererItem::Material::createShader() const {return new Shader(m_item);}
 
 struct TextureRendererItem::Node : public QSGGeometryNode {
 	Node(TextureRendererItem *item): m_item(item) {
 		setFlags(OwnsGeometry | OwnsMaterial);
-		setMaterial(new Material(item));
+        setMaterial(new Material(item));
 		setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4));
 		markDirty(DirtyMaterial | DirtyGeometry);
-
 		item->setGeometryDirty();
 		Q_ASSERT(!item->m_textures);
 		item->m_textures = new GLuint[item->textureCount()];
@@ -44,8 +40,8 @@ struct TextureRendererItem::Node : public QSGGeometryNode {
 	}
 	~Node() {
 		if (m_item->m_textures) {
-			Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
 			glDeleteTextures(m_item->textureCount(), m_item->m_textures);
+			delete [] m_item->m_textures;
 			m_item->m_textures = nullptr;
 		}
 	}

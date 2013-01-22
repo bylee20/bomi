@@ -4,21 +4,15 @@
 #include "stdafx.hpp"
 
 extern "C" {
-#ifdef Q_OS_X11
+#ifdef Q_OS_LINUX
 #include <libavcodec/vaapi.h>
-#include <va/va_glx.h>
+#include <va/va_x11.h>
 #endif
 #include <libavcodec/avcodec.h>
 #include <video/mp_image.h>
 #include <video/img_format.h>
 #ifdef None
 #undef None
-#endif
-#ifdef Q_OS_X11
-int is_hwaccel_available(AVCodecContext*);
-#endif
-#ifdef Q_OS_MAC
-int is_hwaccel_available(const char *);
 #endif
 }
 
@@ -31,36 +25,32 @@ public:
 	AVCodecContext *avctx() const {return HwAccelInfo::m_avctx;}
 	QList<AVCodecID> fullCodecList() const;
 	bool supports(AVCodecID codec) const;
-#ifdef Q_OS_X11
-	VADisplay display() const {return m_display;}
-	VAProfile find(CodecID codec, int &surfaceCount) const;
-	static const PixelFormat PixFmt = PIX_FMT_VAAPI_VLD;
-	static const VAProfile NoProfile = (VAProfile)(-1);
-	bool supports(AVCodecContext *avctx) const {return (m_avctx = (supports(avctx->codec_id) ? avctx : nullptr));}
+#ifdef Q_OS_LINUX
+    VADisplay display() const {return m_display;}
+    VAProfile find(CodecID codec, int &surfaceCount) const;
+    static const VAProfile NoProfile = (VAProfile)(-1);
+    bool supports(AVCodecContext *avctx) const {return (m_avctx = (supports(avctx->codec_id) ? avctx : nullptr));}
 #endif
 	static void finalize();
 private:
-#ifdef Q_OS_X11
-	VAProfile findMatchedProfile(const QVector<VAProfile> &needs) const;
-	static VADisplay m_display = 0;
-	static QVector<VAProfile> m_profiles;
+#ifdef Q_OS_LINUX
+    static VADisplay m_display;
+    static QVector<VAProfile> m_profiles;
+    static AVCodecContext *m_avctx;
 #endif
-	static AVCodecContext *m_avctx;
 	static bool m_ok;
-#ifdef Q_OS_X11
-	friend int is_hwaccel_available(AVCodecContext *avctx);
-#endif
 #ifdef Q_OS_MAC
 	friend int is_hwaccel_available(const char *dll, AVCodecID codec);
 #endif
 };
 
+#ifdef Q_OS_LINUX
+class VideoFrame;
+
 class HwAccel {
 public:
 	struct Context {
-#ifdef Q_OS_X11
 		vaapi_context ctx;
-#endif
 		HwAccel *hwaccel;
 	};
 	HwAccel(AVCodecContext *avctx);
@@ -68,26 +58,23 @@ public:
 	void *context() {return &m_ctx;}
 	bool isUsable() const {return m_usable;}
 	bool isCompatibleWith(const AVCodecContext *avctx) const;
-#ifdef Q_OS_X11
-	bool createSurface(GLuint *texture);
 	bool setBuffer(mp_image_t *mpi);
 	void releaseBuffer(void *data);
-	bool copySurface(mp_image_t *mpi);
-#endif
-//	VideoFormat format() const;
+	bool copyTo(mp_image_t *mpi, VideoFrame &frame);
 private:
 	Context m_ctx;
 	AVCodecContext *m_avctx = nullptr;
 	int m_width = 0, m_height = 0;
 	bool m_usable = false;
-#ifdef Q_OS_X11
 	GLuint *m_textures = nullptr;
 	QVector<VASurfaceID> m_ids;
 	QLinkedList<VASurfaceID> m_freeIds;
 	QLinkedList<VASurfaceID> m_usingIds;
-	void *m_glSurface = nullptr;
 	VAProfile m_profile = HwAccelInfo::NoProfile;
-#endif
+	mp_image m_mpi;
+	VAImage m_vaImage;
 };
+
+#endif
 
 #endif // HWACCEL_HPP

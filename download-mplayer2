@@ -1,2 +1,0 @@
-install -d src
-cd src && git clone --depth 1 git://git.mplayer2.org/mplayer2 && cd mplayer2 && find . -name '.git*' | xargs rm -rf

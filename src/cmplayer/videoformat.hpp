@@ -30,7 +30,7 @@ struct VideoFormat {
 	static constexpr quint32 BGRA = cc4('B', 'G', 'R', 'A');
 
 	VideoFormat(quint32 type = Unknown): m_type(type) {}
-	static VideoFormat fromMpImage(mp_image *mpi);
+    static VideoFormat fromMpImage(const mp_image *mpi);
 	inline bool operator == (const VideoFormat &rhs) const {
 		return m_type == rhs.m_type && m_size == rhs.m_size && m_drawSize == rhs.m_drawSize;
 	}

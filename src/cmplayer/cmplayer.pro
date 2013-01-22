@@ -1,9 +1,8 @@
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header
-QT = core gui opengl network uitools
-QT += quick widgets svg
+QT = core gui opengl network quick widgets
 
-LIBS += -lmpg123 -lquvi
+LIBS += -lmpg123 -lquvi  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lfaad -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
 #LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
 #    -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio -lquvi
 
@@ -45,15 +44,11 @@ macx {
     QT += dbus
     TARGET = cmplayer
     LIBS += -lX11 \
-        -L../../build/lib -lcmplayer_skin -lcmplayer_mplayer2 -lcmplayer_sigar -lchardet -lcmplayer_av \
-        -lz -lopenal -lasound -lva -lva-x11 -lva-glx -lQtDBus
+        -L../../build/lib -lcmplayer_mpv -lcmplayer_sigar -lchardet -lcmplayer_av \
+        -lopenal -lasound -ldl -lva -lva-x11
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }
-
-LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
-    -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
-
 
 INCLUDEPATH += ../mpv ../../build/include ../sigar/include
 
@@ -190,7 +185,8 @@ SOURCES += main.cpp \
     qwindowwidget.cpp \
     mposditem.cpp \
     globalqmlobject.cpp \
-    historymodel.cpp
+    historymodel.cpp \
+    mpv-vd.c
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp

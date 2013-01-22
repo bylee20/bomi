@@ -1,7 +1,7 @@
 #include "app_x11.hpp"
 
-#ifdef Q_OS_X11
-
+#ifdef Q_OS_LINUX
+#include "app.hpp"
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusInterface>
@@ -33,21 +33,25 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 }
 
 void AppX11::ss_reset() {
-	XResetScreenSaver(QX11Info::display());
+//	XResetScreenSaver(QX11Info::display());
 }
 
 void AppX11::setAlwaysOnTop(WId wid, bool onTop) {
-	XEvent e;
-	memset(&e, 0, sizeof(e));
-	e.xclient.type = ClientMessage;
-	e.xclient.message_type = XInternAtom(QX11Info::display(), "_NET_WM_STATE", False);
-	e.xclient.display = QX11Info::display();
-	e.xclient.window = wid;
-	e.xclient.format = 32;
-	e.xclient.data.l[0] = onTop ? 1 : 0;
-	e.xclient.data.l[1] = XInternAtom(QX11Info::display(), "_NET_WM_STATE_ABOVE", False);
-	e.xclient.data.l[2] = XInternAtom(QX11Info::display(), "_NET_WM_STATE_STAYS_ON_TOP", False);
-	XSendEvent(QX11Info::display(), QX11Info::appRootWindow(), False, SubstructureRedirectMask, &e);
+    return;
+    XEvent e;
+//    QWindow::handle()
+    memset(&e, 0, sizeof(e));
+    auto display = XOpenDisplay(NULL);
+    qDebug() << display;
+    e.xclient.type = ClientMessage;
+    e.xclient.message_type = XInternAtom(display, "_NET_WM_STATE", False);
+    e.xclient.display = display;
+    e.xclient.window = wid;
+    e.xclient.format = 32;
+    e.xclient.data.l[0] = onTop ? 1 : 0;
+    e.xclient.data.l[1] = XInternAtom(display, "_NET_WM_STATE_ABOVE", False);
+    e.xclient.data.l[2] = XInternAtom(display, "_NET_WM_STATE_STAYS_ON_TOP", False);
+    qDebug() << XSendEvent(display, wid, False, SubstructureRedirectMask, &e);
 }
 
 QStringList AppX11::devices() const {

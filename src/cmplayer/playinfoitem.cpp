@@ -17,7 +17,9 @@ extern "C" {
 #include <osdep/numcores.h>
 }
 
-#ifdef Q_OS_X11
+#ifdef Q_OS_LINUX
+#include <fcntl.h>
+#include <unistd.h>
 struct ProcStat {
 	ProcStat() {
 		const QString path = _L("/proc/") + QString::number(QCoreApplication::applicationPid()) + _L("/stat");
@@ -117,7 +119,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 }
 
 struct PlayInfoItem::Data {
-#ifdef Q_OS_X11
+#ifdef Q_OS_LINUX
 	ProcStat stat;
 	quint64 procCpuTime = 0, totalCpuTime = 0;
 	quint64 getProcCpuTime() {return stat.readProcStat() ? (stat.utime + stat.stime) : 0;}
@@ -144,7 +146,7 @@ PlayInfoItem::PlayInfoItem(QQuickItem *parent)
 	sigar_open(&d->sigar);
 	sigar_mem_get(d->sigar, &d->mem);
 	m_totmem = (double)d->mem.total/(1024.*1024.);
-#ifdef Q_OS_X11
+#ifdef Q_OS_LINUX
 	d->procCpuTime = d->getProcCpuTime();
 	d->totalCpuTime = d->getTotalCpuTime();
 #endif
@@ -158,7 +160,7 @@ PlayInfoItem::~PlayInfoItem() {
 QString PlayInfoItem::monospace() const {
 #ifdef Q_OS_MAC
 	return _L("monaco");
-#elif defined(Q_OS_X11)
+#elif defined(Q_OS_LINUX)
 	return _L("monospace");
 #endif
 }
@@ -260,7 +262,7 @@ void PlayInfoItem::collect() {
 	sigar_proc_cpu_get(d->sigar, d->pid, &cpu);
 	m_cpu = cpu.percent*100.0/d->cores;
 #endif
-#ifdef Q_OS_X11
+#ifdef Q_OS_LINUX
 	const auto procCpuTime = d->getProcCpuTime();
 	const auto totalCpuTime = d->getTotalCpuTime();
 	if (procCpuTime > d->procCpuTime && totalCpuTime > d->totalCpuTime) {

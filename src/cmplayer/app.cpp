@@ -6,7 +6,7 @@
 
 #if defined(Q_OS_MAC)
 #include "app_mac.hpp"
-#elif defined(Q_OS_X11)
+#elif defined(Q_OS_LINUX)
 #include "app_x11.hpp"
 #endif
 
@@ -24,7 +24,7 @@ struct App::Data {
 	MainWindow *main = nullptr;
 #if defined(Q_OS_MAC)
 	AppMac helper;
-#elif defined(Q_OS_X11)
+#elif defined(Q_OS_LINUX)
 	AppX11 helper;
 #endif
 };
@@ -74,7 +74,7 @@ App::~App() {
 
 void App::setMainWindow(MainWindow *mw) {
 	d->main = mw;
-	setActivationWindow(d->main, false);
+    setActivationWindow(d->main, false);
 }
 
 MainWindow *App::mainWindow() const {
@@ -123,6 +123,10 @@ bool App::event(QEvent *event) {
 	}
 }
 
+QWindow *App::topWindow() const {
+    return d->main;
+}
+
 QStringList App::devices() const {
 	return d->helper.devices();
 }
@@ -145,7 +149,7 @@ void App::open(const QString &mrl) {
 
 void App::onMessageReceived(const QString &message) {
 	if (message == "wakeUp") {
-		activateWindow();
+        activateWindow();
 	} else if (message.left(3) == "mrl") {
 		auto open = [this] (const QString &mrl) {
 			if (!mrl.isEmpty() && d->main)

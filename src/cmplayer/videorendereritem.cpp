@@ -266,7 +266,6 @@ VideoRendererItem::Effects VideoRendererItem::effects() const {
 
 void VideoRendererItem::setEffects(Effects effects) {
 	if (d->shaderVar.effects() != effects) {
-//		const int old = d->shaderVar.id();
 		d->shaderVar.setEffects(effects);
 		update();
 	}
@@ -471,7 +470,7 @@ QByteArray VideoRendererItem::shader(int type) {
 			uniform sampler2D p1;
 			varying highp vec2 qt_TexCoord;
 			void main() {
-				gl_FragColor = texture2D(p1, qt_TexCoord);
+                gl_FragColor = texture2D(p1, qt_TexCoord);
 			}
 		)");
 		return shader;
@@ -479,8 +478,8 @@ QByteArray VideoRendererItem::shader(int type) {
 }
 
 const char *VideoRendererItem::fragmentShader() const {
-	d->shaderType = d->format.type();
-	d->shader = shader(d->shaderType);
+    d->shaderType = d->format.type();
+    d->shader = shader(d->shaderType);
 	return d->shader.constData();
 }
 
@@ -560,7 +559,7 @@ void VideoRendererItem::beforeUpdate() {
 		updateGeometry();
 		emit formatChanged(d->format);
 	}
-	if (d->shaderType != d->format.type())
+    if (d->shaderType != d->format.type())
 		resetNode();
 	if (!d->format.isEmpty()) {
 //		qDebug() << d->frameChanged << "bind";
@@ -587,10 +586,10 @@ void VideoRendererItem::beforeUpdate() {
 			setTex(1, GL_BGRA, w >> 2, h, d->frame.data(0));
 			break;
 		case VideoFormat::RGBA:
-			setTex(0, GL_RGBA, w, h, d->frame.data(0));
+			setTex(0, GL_RGBA, w >> 2, h, d->frame.data(0));
 			break;
 		case VideoFormat::BGRA:
-			setTex(0, GL_BGRA, w, h, d->frame.data(0));
+			setTex(0, GL_BGRA, w >> 2, h, d->frame.data(0));
 			break;
 		default:
 			break;
@@ -646,7 +645,7 @@ void VideoRendererItem::initializeTextures() {
 	};
 	auto initRgbTex = [this, &bindTex, w, h] (int idx, GLenum fmt) {
 		bindTex(idx);
-		glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, 4, w >> 2, h, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
 	};
 	switch (d->format.type()) {
 	case VideoFormat::I420:

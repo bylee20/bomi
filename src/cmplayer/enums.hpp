@@ -78,7 +78,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	StaysOnTop(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	StaysOnTop(int id): EnumClass(id) {}
@@ -132,7 +132,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	SeekingStep(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	SeekingStep(int id): EnumClass(id) {}
@@ -183,7 +183,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	GeneratePlaylist(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	GeneratePlaylist(int id): EnumClass(id) {}
@@ -237,7 +237,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	PlaylistBehaviorWhenOpenMedia(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	PlaylistBehaviorWhenOpenMedia(int id): EnumClass(id) {}
@@ -291,7 +291,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	SubtitleAutoload(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	SubtitleAutoload(int id): EnumClass(id) {}
@@ -348,7 +348,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	SubtitleAutoselect(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	SubtitleAutoselect(int id): EnumClass(id) {}
@@ -402,7 +402,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	OsdScalePolicy(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	OsdScalePolicy(int id): EnumClass(id) {}
@@ -459,7 +459,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	ClickAction(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	ClickAction(int id): EnumClass(id) {}
@@ -522,7 +522,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	WheelAction(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	WheelAction(int id): EnumClass(id) {}
@@ -579,7 +579,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	KeyModifier(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	KeyModifier(int id): EnumClass(id) {}
@@ -651,7 +651,7 @@ private:
 	static Map _map;
 	static const Map &map() {return _map;}
 	Position(int id, const char *name): EnumClass(id) {
-		_map.value.insert(_map.name[id] = _L(name), id);
+        _map.value.insert(_map.name[id] = QLatin1String(name), id);
 		_map.list.append(*this);
 	}
 	Position(int id): EnumClass(id) {}

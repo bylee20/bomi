@@ -302,7 +302,8 @@ bool PlayEngine::isInitialized() const {
 
 void PlayEngine::run() {
 	QList<QByteArray> args;
-	args << "cmplayer-mpv" << "--no-config=all" << "--idle" << "--no-fs" << "--fixed-vo" << "--softvol=yes" << "--softvol-max=1000.0"
+	args << "cmplayer-mpv" << "--no-config=all" << "--idle" << "--no-fs"
+		<< "--fixed-vo" << "--softvol=yes" << "--softvol-max=1000.0"
 		<< "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--input=no-default-bindings" << "--no-consolecontrols" << "--no-mouseinput";
 	const int argc = args.size();
@@ -325,7 +326,7 @@ void PlayEngine::run() {
 			mp_cmd_t *cmd;
 			while (!(cmd = mp_input_get_cmd(mpctx->input, get_wakeup_period(d->mpctx)*1000, false)))
 				;
-			run_command(mpctx, cmd);
+			mpctx_run_command(mpctx, cmd);
 			mp_cmd_free(cmd);
 		}
 	};
@@ -394,10 +395,10 @@ void PlayEngine::run() {
 	}
 	qDebug() << "finalization started";
 //	vo_destroy(vo_cmplayer);
+	d->video->release();
 	mpctx_delete(d->mpctx);
 	d->mpctx = nullptr;
 	qDebug() << "mpctx deleted";
-
 	vo_cmplayer = nullptr;
 	emit finalized();
 }
