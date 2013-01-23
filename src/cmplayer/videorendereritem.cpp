@@ -1,154 +1,15 @@
 #include "videorendereritem.hpp"
 #include "subtitlerendereritem.hpp"
 #include "mposditem.hpp"
-#include "pref.hpp"
 #include "videoframe.hpp"
-
-struct ShaderVar {
-	ShaderVar() {
-		setColor(m_color);
-		setEffects(m_effects);
-	}
-	inline const ColorProperty &color() const {return m_color;}
-	inline void setColor(const ColorProperty &color) {
-		m_color = color;
-		brightness = qBound(-1.0, m_color.brightness(), 1.0);
-		contrast = qBound(0., m_color.contrast() + 1., 2.);
-		updateHS();
-	}
-	inline int setEffects(VideoRendererItem::Effects effects) {
-		m_effects = effects;
-		int idx = 0;
-		rgb_0 = 0.0;
-		rgb_c[0] = rgb_c[1] = rgb_c[2] = 1.0;
-		kern_c = kern_d = kern_n = 0.0;
-		if (!(effects & VideoRendererItem::IgnoreEffect)) {
-			if (effects & VideoRendererItem::FilterEffects) {
-				idx = 1;
-				if (effects & VideoRendererItem::InvertColor) {
-					rgb_0 = 1.0;
-					rgb_c[0] = rgb_c[1] = rgb_c[2] = -1.0;
-				}
-			}
-			if (effects & VideoRendererItem::KernelEffects) {
-				idx = 2;
-				const Pref &p = cPref;
-				if (effects & VideoRendererItem::Blur) {
-					kern_c += p.blur_kern_c;
-					kern_n += p.blur_kern_n;
-					kern_d += p.blur_kern_d;
-				}
-				if (effects & VideoRendererItem::Sharpen) {
-					kern_c += p.sharpen_kern_c;
-					kern_n += p.sharpen_kern_n;
-					kern_d += p.sharpen_kern_d;
-				}
-				const double den = 1.0/(kern_c + kern_n*4.0 + kern_d*4.0);
-				kern_c *= den;
-				kern_d *= den;
-				kern_n *= den;
-			}
-		}
-		updateHS();
-		return m_idx = idx;
-	}
-	VideoRendererItem::Effects effects() const {return m_effects;}
-	void setYRange(float min, float max) {y_min = min; y_max = max;}
-	int id() const {return m_idx;}
-private:
-	void updateHS() {
-		double sat_sinhue = 0.0, sat_coshue = 0.0;
-		if (!(!(m_effects & VideoRendererItem::IgnoreEffect) && (m_effects & VideoRendererItem::Grayscale))) {
-			const double sat = qBound(0.0, m_color.saturation() + 1.0, 2.0);
-			const double hue = qBound(-M_PI, m_color.hue()*M_PI, M_PI);
-			sat_sinhue = sat*sin(hue);
-			sat_coshue = sat*cos(hue);
-		}
-		sat_hue[0][0] = sat_hue[1][1] = sat_coshue;
-		sat_hue[1][0] = -(sat_hue[0][1] = sat_sinhue);
-	}
-	float rgb_0, rgb_c[3];
-	float kern_d, kern_c, kern_n;
-	float y_min = 0.0f, y_max = 1.0f;
-	float brightness, contrast, sat_hue[2][2];
-	VideoRendererItem::Effects m_effects = 0;
-	int m_idx = 0;
-	ColorProperty m_color;
-
-	friend class VideoRendererMaterialShader;
-	friend class VideoRendererItem;
-};
-
-LetterboxItem::LetterboxItem(QQuickItem *parent)
-: QQuickItem(parent) {
-	setFlag(ItemHasContents, true);
-}
-
-bool LetterboxItem::set(const QRectF &outer, const QRectF &inner) {
-	if (m_outer != outer || m_inner != inner) {
-		m_outer = outer;
-		m_inner = inner;
-		m_screen = outer & inner;
-		m_rectChanged = true;
-		update();
-		return true;
-	} else
-		return false;
-}
-
-QSGNode *LetterboxItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
-	Q_UNUSED(data);
-	QSGGeometryNode *node = static_cast<QSGGeometryNode*>(old);
-	QSGGeometry *geometry = 0;
-
-	if (!node) {
-		node = new QSGGeometryNode;
-		geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 16);
-		geometry->setDrawingMode(GL_QUADS);
-		node->setGeometry(geometry);
-		node->setFlag(QSGNode::OwnsGeometry);
-		QSGFlatColorMaterial *material = new QSGFlatColorMaterial;
-		material->setColor(Qt::black);
-		node->setMaterial(material);
-		node->setFlag(QSGNode::OwnsMaterial);
-		m_rectChanged = true;
-	} else {
-		geometry = node->geometry();
-	}
-
-	if (m_rectChanged) {
-		auto vtx = geometry->vertexDataAsPoint2D();
-			vtx->set(m_outer.left(), m_outer.top());
-		(++vtx)->set(m_outer.right(), m_outer.top());
-		(++vtx)->set(m_outer.right(), m_inner.top());
-		(++vtx)->set(m_outer.left(), m_inner.top());
-
-		(++vtx)->set(m_outer.left(), m_inner.bottom());
-		(++vtx)->set(m_outer.right(), m_inner.bottom());
-		(++vtx)->set(m_outer.right(), m_outer.bottom());
-		(++vtx)->set(m_outer.left(), m_outer.bottom());
-
-		(++vtx)->set(m_outer.left(), m_outer.top());
-		(++vtx)->set(m_inner.left(), m_outer.top());
-		(++vtx)->set(m_inner.left(), m_outer.bottom());
-		(++vtx)->set(m_outer.left(), m_outer.bottom());
-
-		(++vtx)->set(m_inner.right(), m_outer.top());
-		(++vtx)->set(m_outer.right(), m_outer.top());
-		(++vtx)->set(m_outer.right(), m_outer.bottom());
-		(++vtx)->set(m_inner.right(), m_outer.bottom());
-
-		m_rectChanged = false;
-		node->markDirty(QSGNode::DirtyGeometry);
-	}
-	return node;
-}
+#include "shadervar.h"
 
 struct VideoRendererItem::Data {
 	VideoFrame frame, next;
 	bool frameChanged = false;
 	QRectF vtx;
 	QPoint offset = {0, 0};
+    QPointF vtxOffset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
 	VideoFormat format;
 	int alignment = Qt::AlignCenter;
@@ -249,6 +110,8 @@ void VideoRendererItem::setOffset(const QPoint &offset) {
 	if (d->offset != offset) {
 		d->offset = offset;
 		emit offsetChanged(d->offset);
+        setGeometryDirty();
+        update();
 	}
 }
 
@@ -287,8 +150,7 @@ void VideoRendererItem::updateGeometry() {
 		d->vtx = vtx;
 		d->mposd->setPosition(d->vtx.topLeft());
 		d->mposd->setSize(d->vtx.size());
-		setGeometryDirty();
-//		d->osd.frameVtx = d->vtx;
+        setGeometryDirty();
 	}
 }
 
@@ -606,6 +468,8 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	QSizeF letter(targetCropRatio(targetAspectRatio()), 1.0);
 	letter.scale(width(), height(), Qt::KeepAspectRatio);
 	QPointF offset = d->offset;
+    offset.rx() *= letter.width()/100.0;
+    offset.ry() *= letter.height()/100.0;
 	QPointF xy(width(), height());
 	xy.rx() -= letter.width(); xy.ry() -= letter.height();	xy *= 0.5;
 	if (d->alignment & Qt::AlignLeft)
@@ -620,12 +484,9 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	if (d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter)))
 		d->subtitle->setScreenRect(d->letterbox->screen());
 
-	constexpr double top = 0.0, left = 0.0, bottom = 1.0;
-	const double right = _Ratio(d->format.width(), d->format.drawWidth());
-	set(tp, d->vtx.topLeft() += offset, QPointF(left, top));
-	set(++tp, d->vtx.bottomLeft() += offset, QPointF(left, bottom));
-	set(++tp, d->vtx.topRight() += offset, QPointF(right, top));
-	set(++tp, d->vtx.bottomRight() += offset, QPointF(right, bottom));
+//	constexpr double top = 0.0, left = 0.0, bottom = 1.0;
+//	const double right = _Ratio(d->format.width(), d->format.drawWidth());
+    set(tp, d->vtx.translated(offset), QRectF(0.0, 0.0,  _Ratio(d->format.width(), d->format.drawWidth()), 1.0));
 }
 
 void VideoRendererItem::initializeTextures() {

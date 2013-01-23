@@ -17,8 +17,13 @@
  */
 
 #include "config.h"
+#if  LIBCIDO_VERSION_NUM <= 83
+#include <cdio/cdda.h>
+#include <cdio/paranoia.h>
+#else
 #include <cdio/paranoia/cdda.h>
 #include <cdio/paranoia/paranoia.h>
+#endif
 #include <cdio/cdio.h>
 
 #include <stdio.h>
@@ -117,6 +122,16 @@ const m_option_t cdda_opts[] = {
 };
 
 static const char *cdtext_name[] = {
+#if  LIBCIDO_VERSION_NUM <= 83
+    [CDTEXT_ARRANGER] = "Arranger",
+    [CDTEXT_COMPOSER] = "Composer",
+    [CDTEXT_MESSAGE]  =  "Message",
+    [CDTEXT_ISRC] =  "ISRC",
+    [CDTEXT_PERFORMER] = "Performer",
+    [CDTEXT_SONGWRITER] =  "Songwriter",
+    [CDTEXT_TITLE] =  "Title",
+    [CDTEXT_UPC_EAN] = "UPC_EAN",
+#else
     [CDTEXT_FIELD_ARRANGER] = "Arranger",
     [CDTEXT_FIELD_COMPOSER] = "Composer",
     [CDTEXT_FIELD_MESSAGE]  =  "Message",
@@ -125,17 +140,26 @@ static const char *cdtext_name[] = {
     [CDTEXT_FIELD_SONGWRITER] =  "Songwriter",
     [CDTEXT_FIELD_TITLE] =  "Title",
     [CDTEXT_FIELD_UPC_EAN] = "UPC_EAN",
+#endif
 };
 
 static bool print_cdtext(stream_t *s, int track)
 {
     cdda_priv* p = (cdda_priv*)s->priv;
+#if  LIBCIDO_VERSION_NUM <= 83
+    cdtext_t *text = cdio_get_cdtext(p->cd->p_cdio, track);
+#else
     cdtext_t *text = cdio_get_cdtext(p->cd->p_cdio);
+#endif
     if (text) {
         mp_msg(MSGT_SEEK, MSGL_INFO, "CD-Text (%s):\n", track ? "track" : "CD");
         for (int i = 0; i < sizeof(cdtext_name) / sizeof(cdtext_name[0]); i++) {
             const char *name = cdtext_name[i];
+#if  LIBCIDO_VERSION_NUM <= 83
+            const char *value = cdtext_get_const(i, text);
+#else
             const char *value = cdtext_get_const(text, i, track);
+#endif
             if (name && value)
                 mp_msg(MSGT_SEEK, MSGL_INFO, "  %s: '%s'\n", name, value);
         }

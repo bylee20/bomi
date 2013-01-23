@@ -30,7 +30,7 @@ struct MainWindow::Data {
 	const Pref &p = cPref;
 	PlayEngine engine;
 	VideoRendererItem renderer;
-	SubtitleRenderer subtitle;
+	SubtitleRendererItem subtitle;
 	QPoint prevPos;		QTimer hider;
 	Qt::WindowState winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
 	bool moving = false, changingSub = false;
@@ -38,7 +38,6 @@ struct MainWindow::Data {
 	bool stateChanging = false;
 	ABRepeater ab = {&engine, &subtitle};
 	QMenu contextMenu;
-//	PlaylistModel playlist;
 	PrefDialog *prefDlg = nullptr;
 	HistoryModel history;
 	PlaylistModel &playlist = engine.playlist();
@@ -148,7 +147,7 @@ struct MainWindow::Data {
 		changingSub = true;
 		Menu &list = menu("subtitle")("list");
 		ActionGroup *g = list.g();
-		const QList<SubtitleRenderer::Loaded> loaded = subtitle.loaded();
+		const auto loaded = subtitle.loaded();
 		while (g->actions().size() < loaded.size()) {
 			list.addActionToGroupWithoutKey("", true);
 		}
@@ -258,6 +257,80 @@ struct MainWindow::Data {
 	}
 
 
+	QList<int> autoselection(const Mrl &mrl, const QList<LoadedSubtitle> &loaded) {
+		QList<int> selected;
+		const Pref &p = cPref;
+		if (loaded.isEmpty() || !mrl.isLocalFile() || !p.sub_enable_autoselect)
+			return selected;
+
+		QSet<QString> langSet;
+		const QString base = QFileInfo(mrl.toLocalFile()).completeBaseName();
+		for (int i=0; i<loaded.size(); ++i) {
+			bool select = false;
+			if (p.sub_autoselect == Enum::SubtitleAutoselect::Matched) {
+				select = QFileInfo(loaded[i].component().fileName()).completeBaseName() == base;
+			} else if (p.sub_autoselect == Enum::SubtitleAutoselect::All) {
+				select = true;
+			} else if (p.sub_autoselect == Enum::SubtitleAutoselect::EachLanguage) {
+	//			const QString lang = loaded[i].m_comp.language().id();
+				const QString lang = loaded[i].component().language();
+				if ((select = (!langSet.contains(lang))))
+					langSet.insert(lang);
+			}
+			if (select)
+				selected.append(i);
+		}
+		if (p.sub_autoselect == Enum::SubtitleAutoselect::Matched
+				&& !selected.isEmpty() && !p.sub_ext.isEmpty()) {
+			for (int i=0; i<selected.size(); ++i) {
+				const QString fileName = loaded[selected[i]].component().fileName();
+				const QString suffix = QFileInfo(fileName).suffix().toLower();
+				if (p.sub_ext == suffix) {
+					const int idx = selected[i];
+					selected.clear();
+					selected.append(idx);
+					break;
+				}
+			}
+		}
+		return selected;
+	}
+
+	QList<LoadedSubtitle> autoload(const Mrl &mrl, bool autoselect) {
+		QList<LoadedSubtitle> loaded;
+		if (!p.sub_enable_autoload)
+			return loaded;
+		const QStringList filter = Info::subtitleNameFilter();
+		const QFileInfo fileInfo(mrl.toLocalFile());
+		const QFileInfoList all = fileInfo.dir().entryInfoList(filter, QDir::Files, QDir::Name);
+		const QString base = fileInfo.completeBaseName();
+		for (int i=0; i<all.size(); ++i) {
+			if (p.sub_autoload != Enum::SubtitleAutoload::Folder) {
+				if (p.sub_autoload == Enum::SubtitleAutoload::Matched) {
+					if (base != all[i].completeBaseName())
+						continue;
+				} else if (!all[i].fileName().contains(base))
+					continue;
+			}
+			Subtitle sub;
+			if (sub.load(all[i].absoluteFilePath(), p.sub_enc)) {
+				for (int i=0; i<sub.size(); ++i)
+					loaded.push_back(LoadedSubtitle(sub[i]));
+			}
+		}
+		if (autoselect) {
+			const QList<int> selected = autoselection(mrl, loaded);
+//			d->selecting = true;
+			for (int i=0; i<selected.size(); ++i) {
+				loaded[selected[i]].selection() = true;
+//				select(selected[i], true);
+			}
+//			d->selecting = false;
+//			applySelection();
+		}
+		return loaded;
+	}
+
 };
 
 #ifdef Q_OS_MAC
@@ -274,7 +347,7 @@ MainWindow::MainWindow(): d(new Data) {
 	setFlags(flags() | Qt::WindowFullscreenButtonHint);
 	setResizeMode(QQuickView::SizeRootObjectToView);
 	d->engine.setVideoRenderer(&d->renderer);
-	d->subtitle.setItem(d->renderer.subtitle());
+//	d->subtitle.setItem(d->renderer.subtitle());
 
 	resize(400, 300);
 #ifndef Q_OS_MAC
@@ -436,7 +509,7 @@ MainWindow::MainWindow(): d(new Data) {
 		d->engine.setAudioFilter("scaletempo", on); showMessage(tr("Auto-scale tempo"), on);
 	});
 
-	connect(sub("list")["hide"], &QAction::toggled, &d->subtitle, &SubtitleRenderer::setHidden);
+	connect(sub("list")["hide"], &QAction::toggled, &d->subtitle, &SubtitleRendererItem::setHidden);
 	connect(sub("list")["open"], &QAction::triggered, [this] () {
 		const QString filter = tr("Subtitle Files") % ' ' % Info::subtitleExt().toFilter();
 		const auto dir = d->engine.mrl().isLocalFile() ? QFileInfo(d->engine.mrl().toLocalFile()).absolutePath() : _L("");
@@ -480,7 +553,7 @@ MainWindow::MainWindow(): d(new Data) {
 				view->setProperty("visible", !view->property("visible").toBool());
 		}
 	});
-	connect(tool["subtitle"], &QAction::triggered, static_cast<ToggleDialog*>(d->subtitle.view()), &ToggleDialog::toggle);
+//	connect(tool["subtitle"], &QAction::triggered, static_cast<ToggleDialog*>(d->subtitle.view()), &ToggleDialog::toggle);
 	connect(tool["pref"], &QAction::triggered, [this] () {
 		if (!d->prefDlg) {d->prefDlg = new PrefDialog; connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));} d->prefDlg->show();
 	});
@@ -528,7 +601,7 @@ MainWindow::MainWindow(): d(new Data) {
 		updateStaysOnTop();
 		d->stateChanging = false;
 	});
-	connect(&d->engine, &PlayEngine::tick, &d->subtitle, &SubtitleRenderer::render);
+	connect(&d->engine, &PlayEngine::tick, &d->subtitle, &SubtitleRendererItem::render);
 	connect(&d->engine, &PlayEngine::audioFilterChanged, [this, &audio] (const QString &af, bool on) {
 		if (af == _L("volnorm"))
 			audio["volnorm"]->setChecked(on);
@@ -645,6 +718,9 @@ void MainWindow::openFromFileManager(const Mrl &mrl) {
 void MainWindow::exit() {
 	static bool done = false;
 	if (!done) {
+#ifndef Q_OS_MAC
+		d->tray->hide();
+#endif
 		d->renderer.quit();
 		d->engine.quit();
 		d->engine.wait();
@@ -890,7 +966,7 @@ void MainWindow::reloadSkin() {
 }
 
 void MainWindow::applyPref() {
-	reloadSkin();
+
 	int time = -1;
 	switch (d->engine.state()) {
 	case EnginePlaying:
@@ -903,6 +979,7 @@ void MainWindow::applyPref() {
 	}
 	SubtitleParser::setMsPerCharactor(d->p.ms_per_char);
 	Translator::load(d->p.locale);
+	reloadSkin();
 //		subtitle.osd().setStyle(p.sub_style);
 	d->menu.update();
 	d->menu.save();
@@ -1019,7 +1096,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 auto MainWindow::updateMrl(const Mrl &mrl) -> void {
 	QString title;
 	if (mrl.isLocalFile()) {
-		d->subtitle.autoload(mrl, true);
+		d->subtitle.setLoaded(d->autoload(mrl, true));//->subtitle.autoload(mrl, true);
 		const QFileInfo file(mrl.toLocalFile());
 		d->filePath = file.absoluteFilePath();
 		title += file.fileName();

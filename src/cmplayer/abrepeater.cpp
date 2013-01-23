@@ -1,9 +1,9 @@
 #include "abrepeater.hpp"
 #include "subtitle.hpp"
 #include "playengine.hpp"
-#include "subtitlerenderer.hpp"
+#include "subtitlerendereritem.hpp"
 
-ABRepeater::ABRepeater(PlayEngine *engine, const SubtitleRenderer *sub)
+ABRepeater::ABRepeater(PlayEngine *engine, const SubtitleRendererItem *sub)
 : QObject(engine) {
 	m_engine = engine;
 	m_sub = sub;

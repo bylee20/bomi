@@ -2,7 +2,6 @@ TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header
 QT = core gui network quick widgets gui-private
 
-LIBS += -lmpg123 -lquvi  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lfaad -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
 #LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
 #    -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio -lquvi
 
@@ -49,6 +48,7 @@ macx {
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }
+LIBS += -lz -lbz2 -lmpg123 -lquvi -lpthread -lm -ldvdread -lmad -lfaad -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
 
 INCLUDEPATH += ../mpv ../../build/include ../sigar/include
 
@@ -121,7 +121,9 @@ HEADERS += playengine.hpp \
     qwindowwidget.hpp \
     mposditem.hpp \
     globalqmlobject.hpp \
-    historymodel.hpp
+    historymodel.hpp \
+    shadervar.h \
+    subtitlestyle.h
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -167,14 +169,12 @@ SOURCES += main.cpp \
     actiongroup.cpp \
     rootmenu.cpp \
     app.cpp \
-    mplayer-main.c \
     videooutput.cpp \
     prefdialog.cpp \
     richtexthelper.cpp \
     richtextblock.cpp \
     richtextdocument.cpp \
     mpmessage.cpp \
-    mplayer-vd_ffmpeg.c \
     hwaccel.cpp \
     playengine.cpp \
     videorendereritem.cpp \
@@ -186,7 +186,10 @@ SOURCES += main.cpp \
     mposditem.cpp \
     globalqmlobject.cpp \
     historymodel.cpp \
-    mpv-vd.c
+    mpv-vd.c \
+    mpv-main.c \
+    shadervar.cpp \
+    subtitlestyle.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp

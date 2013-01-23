@@ -4,12 +4,12 @@
 #include "stdafx.hpp"
 
 class PlayEngine;		class Subtitle;
-class SubtitleRenderer;
+class SubtitleRendererItem;
 
 class ABRepeater : public QObject {
 	Q_OBJECT
 public:
-	ABRepeater(PlayEngine *engine, const SubtitleRenderer *sub);
+	ABRepeater(PlayEngine *engine, const SubtitleRendererItem *sub);
 	~ABRepeater();
 	bool repeat(int a, int b, int times = -1) {m_a = a; m_b = b; return start(times);}
 	bool isRepeating() {return m_repeating;}
@@ -38,7 +38,7 @@ private:
 	ABRepeater(const ABRepeater&) = delete;
 	ABRepeater &operator = (const ABRepeater&) = delete;
 	PlayEngine *m_engine = nullptr;
-	const SubtitleRenderer *m_sub = nullptr;
+	const SubtitleRendererItem *m_sub = nullptr;
 	int m_a = -1, m_b = -1;
 	bool m_repeating = false;
 	int m_times = 0, m_nth = 0;

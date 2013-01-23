@@ -21,7 +21,7 @@ Rectangle {
 		model: history
 		contentWidth: nameWidth + latestPlayWidth + locationWidth + 3*sepWidth + (sepWidth-1)*0.5
 		anchors { fill: parent; margins: parent.border.width }
-		highlight: Rectangle { width: Math.min(view.contentWidth, view.width); color: Qt.rgba(0.0, 0.0, 1.0, 0.8); radius: 5 }
+        highlight: Rectangle { width: view.contentWidth; color: Qt.rgba(0.0, 0.0, 1.0, 0.8); radius: 5 }
 		Component { id: pad; Item { width: (sepWidth-1)*0.5 } }
 		Component { id: itemSep; Item { width: sepWidth } }
 		header: Component {

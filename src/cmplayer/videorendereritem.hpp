@@ -5,19 +5,6 @@
 #include "skin.hpp"
 #include "texturerendereritem.hpp"
 
-
-class LetterboxItem : public QQuickItem {
-	Q_OBJECT
-public:
-	LetterboxItem(QQuickItem *parent = 0);
-	QSGNode *updatePaintNode(QSGNode *node, UpdatePaintNodeData *data);
-	bool set(const QRectF &outer, const QRectF &inner);
-	const QRectF &screen() {return m_screen;}
-private:
-	QRectF m_outer, m_inner, m_screen;
-	bool m_rectChanged;
-};
-
 class VideoRendererItem;		class ColorProperty;
 class SubtitleRendererItem;		class VideoFrame;
 class VideoFormat;
@@ -79,8 +66,7 @@ private: // for VideoOutput
 private:
 	void initializeTextures();
 	static QByteArray shader(int type);
-	static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
-//	static void drawMpOsd(void *p, int x, int y, int w, int h, uchar *src, uchar *srca, int stride);
+    static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
 	const char *fragmentShader() const;
 	void link(QOpenGLShaderProgram *program);
 	void bind(const RenderState &state, QOpenGLShaderProgram *program);

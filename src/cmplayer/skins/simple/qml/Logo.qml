@@ -4,9 +4,8 @@ Rectangle {
 	id: logo
 	Image {
 		anchors.fill: parent
-		source: "bg.svg"
-		sourceSize.height: parent.height
-		sourceSize.width: parent.width
+        source: "bg.png"
+        smooth: true
 	}
 	Image {
 		id: logoImage

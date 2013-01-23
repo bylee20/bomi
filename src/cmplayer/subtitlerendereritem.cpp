@@ -1,7 +1,24 @@
 #include "subtitlerendereritem.hpp"
 #include "richtextdocument.hpp"
+#include "subtitlemodel.hpp"
+
+struct SubtitleRender {
+	SubtitleRender() {comp = 0; model = 0;}
+	SubtitleRender(const SubtitleComponent &comp): comp(&comp) {
+		model = new SubtitleComponentModel(this->comp);
+		prev = this->comp->end();
+	}
+	~SubtitleRender() { delete this->model; }
+
+	const SubtitleComponent *comp;
+	SubtitleComponent::const_iterator prev;
+	SubtitleComponentModel *model;
+};
+
+typedef QList<SubtitleRender*> RenderList;
 
 struct SubtitleRendererItem::Data {
+	bool docempty = true;
 	RichTextDocument front, back;
 	double top = 0.0, bottom = 0.0, left = 0.0, right = 0.0;
 	bool redraw = false;
@@ -9,9 +26,35 @@ struct SubtitleRendererItem::Data {
 	QImage image, next, blank = {1, 1, QImage::Format_ARGB32_Premultiplied};
 	QRectF screen = {0, 0, 0, 0};
 	QPointF shadowOffset = {0, 0};
-	bool empty = true;
 	QSize textureSize = {0, 0};
 	QSize imageSize = {0, 0};
+
+
+	bool	selecting = false;
+	SubtitleRendererItem *item = nullptr;
+	RenderList order;
+
+	void reset_prev() {
+		RenderList::const_iterator it = order.begin();
+		for (; it!=order.end(); ++it) {
+			SubtitleRender *r = *it;
+			r->prev = r->comp->end();
+		}
+	}
+
+	QMap<QString, int> langMap;
+	int language_priority(const SubtitleRender *r) const {
+//		return langMap.value(r->comp->language().id(), -1);
+		return langMap.value(r->comp->language(), -1);
+	}
+
+	bool hasComponent() const {
+		for (auto render : order) {
+			if (!render->comp->isEmpty())
+				return true;
+		}
+		return false;
+	}
 };
 
 SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
@@ -93,8 +136,8 @@ double SubtitleRendererItem::scale() const {
 }
 
 void SubtitleRendererItem::prepare() {
-	d->empty = !d->front.hasWords();
-	if (!d->empty) {
+	d->docempty = !d->front.hasWords();
+	if (!d->docempty) {
 		double scale = this->scale();
 		d->front.updateLayoutInfo();
 		d->back.updateLayoutInfo();
@@ -114,9 +157,9 @@ void SubtitleRendererItem::prepare() {
 		}
 
 		d->image = QImage(d->imageSize*dpr, QImage::Format_ARGB32_Premultiplied);
-		d->empty = d->image.isNull();
+		d->docempty = d->image.isNull();
 		d->image.setDevicePixelRatio(dpr);
-		if (!d->empty) {
+		if (!d->docempty) {
 			d->image.fill(0x0);
 			QPainter painter(&d->image);
 			if (d->shadowOffset.y() < 0)
@@ -130,8 +173,8 @@ void SubtitleRendererItem::prepare() {
 			d->shadowOffset.ry() /= (double)d->imageSize.height();
 		}
 	}
-	setVisible(!d->empty);
-	if (d->empty)
+	setVisible(!d->docempty);
+	if (d->docempty)
 		d->shadowOffset = QPointF(0, 0);
 }
 
@@ -182,7 +225,7 @@ void SubtitleRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 }
 
 void SubtitleRendererItem::initializeTextures() {
-	if (!d->empty) {
+	if (!d->docempty) {
 		glBindTexture(GL_TEXTURE_2D, texture(0));
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, d->image.width(), d->image.height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, d->image.bits());
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -246,3 +289,261 @@ void SubtitleRendererItem::setLetterboxHint(bool hint) {
 		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//struct SubtitleRendererItem::Data {
+//	SubtitleView *view = nullptr;
+
+//	double	fps = 25.0,			pos = 1.0;
+//	int		delay = 0,			ms = 0;
+//	bool	visible = true,		empty = true;
+//	bool	selecting = false,	top = false;
+//	SubtitleRendererItem *item = nullptr;
+//	QList<Loaded> loaded;
+//	RenderList order;
+
+
+
+
+////	void reset_lang_map() {
+////		const QStringList priority = cPref.sub_priority;
+////		for (int i=0; i< priority.size(); ++i)
+////			langMap[priority[i]] = priority.size()-i;
+////	}
+//};
+
+//QWidget *SubtitleRendererItem::view(QWidget *parent) const {
+//	if (!d->view) {
+//		d->view = new SubtitleView(parent);
+//		d->set_model_list();
+//	}
+//	return d->view;
+//}
+
+void SubtitleRendererItem::setFps(double fps) {
+	if (m_fps != fps) {
+		m_fps = fps;
+		d->reset_prev();
+	}
+}
+
+void SubtitleRendererItem::render(int ms) {
+	m_ms = ms;
+	if (!m_visible || m_compempty || ms == 0)
+		return;
+	bool changed = false;
+	for (SubtitleRender *render : d->order) {
+		auto it = render->comp->start(ms - m_delay, m_fps);
+		if (it != render->prev) {
+			render->prev = it;
+			render->model->setCurrentCaption(&(*it));
+			changed = true;
+		}
+	}
+	if (changed) {
+		RichTextDocument doc;
+		for (auto o = d->order.begin(); o != d->order.end(); ++o) {
+			const SubtitleRender &render = **o;
+			if (render.prev != render.comp->end())
+				doc += render.prev.value();
+		}
+		if (d->item) {
+			d->item->setText(doc);
+		}
+	}
+}
+
+void SubtitleRendererItem::clear() {
+	d->reset_prev();
+//	d->osd.clear();
+}
+
+void SubtitleRendererItem::unload() {
+	qDeleteAll(d->order);
+	d->order.clear();
+	m_loaded.clear();
+//	d->set_model_list();
+	m_compempty = true;
+	clear();
+}
+
+void SubtitleRendererItem::select(int idx, bool selected) {
+	if (0 <= idx && idx < m_loaded.size() && m_loaded[idx].isSelected() != selected) {
+		m_loaded[idx].selection() = selected;
+		RenderList::iterator o = d->order.begin();
+		const auto comp = &m_loaded[idx].component();
+		SubtitleRender *render = 0;
+		for (; o!= d->order.end(); ++o) {
+			if ((*o)->comp == comp) {
+				render = *o;
+				d->order.erase(o);
+				render->prev = comp->end();
+				break;
+			}
+		}
+		if (selected) {
+			if (!render)
+				render = new SubtitleRender(*comp);
+			d->order.prepend(render);
+			o = d->order.begin();
+			while (o != d->order.end()) {
+				SubtitleRender *&prev = *o;
+				if (++o == d->order.end())
+					break;
+				SubtitleRender *&next = *o;
+				if (d->language_priority(prev) >= d->language_priority(next))
+					break;
+				qSwap(prev, next);
+			}
+		}
+		if (!d->selecting)
+			applySelection();
+	}
+}
+
+void SubtitleRendererItem::applySelection() {
+	m_compempty = !d->hasComponent();
+	rerender();
+}
+
+bool SubtitleRendererItem::load(const QString &fileName, const QString &enc, bool select) {
+	const int idx = m_loaded.size();
+	Subtitle sub;
+	if (!sub.load(fileName, enc))
+		return false;
+	for (int i=0; i<sub.size(); ++i) {
+		m_loaded.append(LoadedSubtitle(sub[i]));
+	}
+	if (select) {
+		d->selecting = true;
+		for (int i=m_loaded.size()-1; i>=idx; --i) {
+			this->select(i, select);
+		}
+		d->selecting = false;
+		applySelection();
+	}
+	return true;
+}
+
+int SubtitleRendererItem::start(int time) const {
+	int s = -1;
+	RenderList::const_iterator it = d->order.begin();
+	for (; it != d->order.end(); ++it) {
+		const auto comp = (*it)->comp;
+		const auto it = comp->start(time - m_delay, m_fps);
+		if (it != comp->end())
+			s = qMax(s, comp->isBasedOnFrame() ? SubtitleComponent::msec(it.key(), m_fps) : it.key());
+	}
+	return s;
+}
+
+int SubtitleRendererItem::end(int time) const {
+	int e = -1;
+	RenderList::const_iterator it = d->order.begin();
+	for (; it != d->order.end(); ++it) {
+		const auto comp = (*it)->comp;
+		const auto it = comp->finish(time - m_delay, m_fps);
+		if (it != comp->end()) {
+			const int t = comp->isBasedOnFrame() ? SubtitleComponent::msec(it.key(), m_fps) : it.key();
+			e = e == -1 ? t : qMin(e, t);
+		}
+	}
+	return e;
+}
+
+void SubtitleRendererItem::setTopAlignment(bool top) {
+	if (_Change(m_alignTop, top)) {
+		setAlignment(Qt::AlignHCenter | (m_alignTop ? Qt::AlignTop : Qt::AlignBottom));
+		setPos(1.0 - m_pos);
+	}
+}
+
+int SubtitleRendererItem::current() const {
+	RenderList::const_iterator o = d->order.begin();
+	int time = -1;
+	for (; o != d->order.end(); ++o) {
+		SubtitleRender &render = **o;
+		if (render.prev == render.comp->end() || !render.prev->hasWords())
+			continue;
+		if (time < 0)
+			time = render.prev.key();
+		else if (render.prev.key() > time)
+			time = render.prev.key();
+	}
+	return time;
+}
+
+int SubtitleRendererItem::previous() const {
+	RenderList::const_iterator o = d->order.begin();
+	int time = -1;
+	QList<SubtitleComponent::const_iterator> its;
+	its.reserve(d->order.size());
+	for (; o != d->order.end(); ++o) {
+		SubtitleRender &r = **o;
+		if (r.prev == r.comp->end())
+			continue;
+		auto it = r.prev;
+		while (it != r.comp->begin()) {
+			if ((--it)->hasWords()) {
+				if (time < 0)
+					time = it.key();
+				else if (it.key() > time)
+					time = it.key();
+				break;
+			}
+		}
+	}
+	return time;
+}
+
+int SubtitleRendererItem::next() const {
+	RenderList::const_iterator o = d->order.begin();
+	int time = -1;
+	QList<SubtitleComponent::const_iterator> its;
+	its.reserve(d->order.size());
+	for (; o != d->order.end(); ++o) {
+		SubtitleRender &r = **o;
+		if (r.prev == r.comp->end())
+			continue;
+		auto it = r.prev;
+		while (++it != r.comp->end()) {
+			if (it->hasWords()) {
+				if (time < 0)
+					time = it.key();
+				else if (it.key() < time)
+					time = it.key();
+				break;
+			}
+		}
+	}
+	return time;
+}
+
+void SubtitleRendererItem::setLoaded(const QList<LoadedSubtitle> &loaded) {
+	unload();
+	m_loaded = loaded;
+
+	for (const auto &loaded : m_loaded) {
+		if (loaded.isSelected())
+			d->order.prepend(new SubtitleRender(loaded.component()));
+	}
+	qSort(d->order.begin(), d->order.end(), [this] (const SubtitleRender *lhs, const SubtitleRender *rhs) {
+		return d->language_priority(lhs) > d->language_priority(rhs);
+	});
+	applySelection();
+}
+

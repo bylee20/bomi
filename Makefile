@@ -44,16 +44,15 @@ translations:
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ru.ts -qm cmplayer_ru.qm
 	
 skin: build_dir
-	cd src/cmplayer_skin && $(QMAKE) cmplayer_skin.pro && make release
-	cp -r src/cmplayer_skin/skins build
+	cp -r src/cmplayer/skins build
 
 build_dir:
 	install -d build
 
 clean:
-	-cd src/cmplayer_skin && $(QMAKE) cmplayer_skin.pro && make clean && rm -rf Makefile* debug release
 	-cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make clean && rm -rf Makefile* debug release
 	-rm -rf build/CMPlayer*
+	-rm -rf build/cmplayer*
 	-rm -rf build/skins
 	-rm -f src/cmplayer/translations/*.qm
 
