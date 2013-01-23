@@ -25,9 +25,11 @@ private:
 };
 
 struct SubtitleView::Data {
+	QVector<SubtitleComponentModel*> models;
 	QList<CompView*> comp;
 	QSplitter *splitter;
 	QCheckBox *timeVisible, *autoScroll;
+	bool needToUpdate = false;
 };
 
 SubtitleView::SubtitleView(QWidget *parent)
@@ -60,19 +62,39 @@ SubtitleView::~SubtitleView() {
 	delete d;
 }
 
-void SubtitleView::setModel(const QVector<SubtitleComponentModel*> &model) {
-	while (d->comp.size() > model.size())
-		delete d->comp.takeLast();
-	while (d->comp.size() < model.size()) {
-		CompView *comp = new CompView(d->splitter);
-		d->splitter->addWidget(comp);
-		d->comp.push_back(comp);
+void SubtitleView::updateModels() {
+	if (d->models.isEmpty()) {
+		d->splitter->setVisible(false);
+		for (int i=0; i<d->comp.size(); ++i) {
+			d->comp[i]->setModel(nullptr);
+//			d->comp[i]->setModel(d->pended[i]);
+//			d->comp[i]->view()->setAutoScrollEnabled(d->autoScroll->isChecked());
+//			d->comp[i]->view()->setTimeVisible(d->timeVisible->isChecked());
+		}
+	} else  {
+		while (d->comp.size() > d->models.size())
+			delete d->comp.takeLast();
+		while (d->comp.size() < d->models.size()) {
+			CompView *comp = new CompView(d->splitter);
+			d->splitter->addWidget(comp);
+			d->comp.push_back(comp);
+		}
+		for (int i=0; i<d->comp.size(); ++i) {
+			d->comp[i]->setModel(d->models[i]);
+			d->comp[i]->view()->setAutoScrollEnabled(d->autoScroll->isChecked());
+			d->comp[i]->view()->setTimeVisible(d->timeVisible->isChecked());
+		}
+		d->models.clear();
 	}
-	for (int i=0; i<d->comp.size(); ++i) {
-		d->comp[i]->setModel(model[i]);
-		d->comp[i]->view()->setAutoScrollEnabled(d->autoScroll->isChecked());
-		d->comp[i]->view()->setTimeVisible(d->timeVisible->isChecked());
-	}
+	d->needToUpdate = false;
+}
+
+void SubtitleView::setModels(const QVector<SubtitleComponentModel*> &models) {
+	d->models = models;
+	if (isVisible())
+		updateModels();
+	else
+		d->needToUpdate = true;
 }
 
 void SubtitleView::setTimeVisible(bool visible) {
@@ -85,3 +107,13 @@ void SubtitleView::setAutoScrollEnabled(bool enabled) {
 		d->comp[i]->view()->setAutoScrollEnabled(enabled);
 }
 
+void SubtitleView::showEvent(QShowEvent *event) {
+	ToggleDialog::showEvent(event);
+	if (d->needToUpdate)
+		updateModels();
+}
+
+void SubtitleView::hideEvent(QHideEvent *event) {
+	ToggleDialog::hideEvent(event);
+
+}

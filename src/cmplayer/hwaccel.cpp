@@ -50,10 +50,10 @@ extern "C" int register_hwaccel_callbacks(AVCodecContext *avctx) {
     avctx->release_buffer = hwaccel_release_buffer;
     return false;
 }
-
+AVCodecContext *HwAccelInfo::m_avctx = nullptr;
 #endif
 
-AVCodecContext *HwAccelInfo::m_avctx = nullptr;
+
 bool HwAccelInfo::m_ok = false;
 
 HwAccelInfo::HwAccelInfo() {

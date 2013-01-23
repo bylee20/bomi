@@ -17,6 +17,7 @@
 #include "prefdialog.hpp"
 #include "app.hpp"
 #include "globalqmlobject.hpp"
+#include "subtitleview.hpp"
 #include <functional>
 
 #include "playlistmodel.hpp"
@@ -39,6 +40,7 @@ struct MainWindow::Data {
 	ABRepeater ab = {&engine, &subtitle};
 	QMenu contextMenu;
 	PrefDialog *prefDlg = nullptr;
+	SubtitleView subtitleView;
 	HistoryModel history;
 	PlaylistModel &playlist = engine.playlist();
 	QRect screenRect;
@@ -161,6 +163,7 @@ struct MainWindow::Data {
 			actions[i]->setData(i);
 			actions[i]->setChecked(loaded[i].isSelected());
 		}
+		list.syncActions();
 		changingSub = false;
 	}
 
@@ -217,7 +220,7 @@ struct MainWindow::Data {
 		as.sub_pos = subtitle.pos();
 		as.sub_sync_delay = subtitle.delay();
 		as.screen_stays_on_top = stay_on_top_mode();
-		as.sub_letterbox = renderer.subtitle()->letterboxHint();
+		as.sub_letterbox = subtitle.letterboxHint();
 		as.sub_align_top = subtitle.isTopAligned();
 		as.save();
 	}
@@ -337,8 +340,6 @@ struct MainWindow::Data {
 void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
-
-
 MainWindow::MainWindow(): d(new Data) {
 	d->engine.start();
 	if (!d->engine.isInitialized())
@@ -347,7 +348,7 @@ MainWindow::MainWindow(): d(new Data) {
 	setFlags(flags() | Qt::WindowFullscreenButtonHint);
 	setResizeMode(QQuickView::SizeRootObjectToView);
 	d->engine.setVideoRenderer(&d->renderer);
-//	d->subtitle.setItem(d->renderer.subtitle());
+	d->renderer.setOverlay(&d->subtitle);
 
 	resize(400, 300);
 #ifndef Q_OS_MAC
@@ -528,7 +529,7 @@ MainWindow::MainWindow(): d(new Data) {
 		a->setChecked(true); d->engine.setCurrentSubtitleStream(a->data().toInt());
 		showMessage(tr("Current Subtitle Track"), a->text());
 	});
-	connect(sub.g("display"), &ActionGroup::triggered, [this] (QAction *a) {if (d->player) d->player->subtitle()->setLetterboxHint(a->data().toInt());});
+	connect(sub.g("display"), &ActionGroup::triggered, [this] (QAction *a) {d->subtitle.setLetterboxHint(a->data().toInt());});
 	connect(sub.g("align"), &ActionGroup::triggered, [this] (QAction *a) {d->subtitle.setTopAlignment(a->data().toInt());});
 	connect(sub.g("pos"), &ActionGroup::triggered, [this] (QAction *a) {
 		const int pos = qBound(0, qRound(d->subtitle.pos()*100.0 + a->data().toInt()), 100);
@@ -553,7 +554,9 @@ MainWindow::MainWindow(): d(new Data) {
 				view->setProperty("visible", !view->property("visible").toBool());
 		}
 	});
-//	connect(tool["subtitle"], &QAction::triggered, static_cast<ToggleDialog*>(d->subtitle.view()), &ToggleDialog::toggle);
+	connect(tool["subtitle"], &QAction::triggered, [this] () {
+		d->subtitleView.setVisible(!d->subtitleView.isVisible());
+	});
 	connect(tool["pref"], &QAction::triggered, [this] () {
 		if (!d->prefDlg) {d->prefDlg = new PrefDialog; connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));} d->prefDlg->show();
 	});
@@ -616,6 +619,7 @@ MainWindow::MainWindow(): d(new Data) {
 		if (d->menu("tool")["auto-exit"]->isChecked()) exit();
 		if (d->menu("tool")["auto-shutdown"]->isChecked()) cApp.shutdown();
 	});
+	connect(&d->subtitle, &SubtitleRendererItem::modelsChanged, &d->subtitleView, &SubtitleView::setModels);
 	connect(&d->engine, &PlayEngine::aboutToPlay, [this] () {
 		d->updateListMenu(d->menu("play")("title"), d->engine.dvd().titles, d->engine.currentDvdTitle());
 		d->updateListMenu(d->menu("play")("chapter"), d->engine.chapters(), d->engine.currentChapter());
@@ -626,7 +630,9 @@ MainWindow::MainWindow(): d(new Data) {
 	connect(&d->engine, &PlayEngine::started, &d->history, &HistoryModel::setStarted);
 	connect(&d->engine,	&PlayEngine::stopped, &d->history, &HistoryModel::setStopped);
 	connect(&d->engine, &PlayEngine::finished, &d->history, &HistoryModel::setFinished);
-
+	connect(&d->engine, &PlayEngine::videoFormatChanged, [this] () { d->subtitle.setFps(d->engine.fps()); });
+	connect(&d->renderer, &VideoRendererItem::screenRectChanged, &d->subtitle, &SubtitleRendererItem::setScreenRect);
+	connect(&d->engine, &PlayEngine::videoAspectRatioChanged, &d->renderer, &VideoRendererItem::setVideoAspectRaito);
 	d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentDvdTitle);
 	d->connectCurrentStreamActions(&d->menu("play")("chapter"), &PlayEngine::currentChapter);
 	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);
@@ -1096,7 +1102,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 auto MainWindow::updateMrl(const Mrl &mrl) -> void {
 	QString title;
 	if (mrl.isLocalFile()) {
-		d->subtitle.setLoaded(d->autoload(mrl, true));//->subtitle.autoload(mrl, true);
+		d->subtitle.setLoaded(d->autoload(mrl, true));
 		const QFileInfo file(mrl.toLocalFile());
 		d->filePath = file.absoluteFilePath();
 		title += file.fileName();

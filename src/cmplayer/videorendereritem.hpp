@@ -6,12 +6,10 @@
 #include "texturerendereritem.hpp"
 
 class VideoRendererItem;		class ColorProperty;
-class SubtitleRendererItem;		class VideoFrame;
-class VideoFormat;
+class VideoFrame;				class VideoFormat;
 
 class VideoRendererItem : public TextureRendererItem, public Skin {
 	Q_OBJECT
-	Q_PROPERTY(SubtitleRendererItem *subtitle READ subtitle)
 public:
 	enum Effect {
 		NoEffect			= 0,
@@ -29,7 +27,6 @@ public:
 	static const int KernelEffects = Blur | Sharpen;
 	VideoRendererItem(QQuickItem *parent = 0);
 	~VideoRendererItem();
-	SubtitleRendererItem *subtitle() const;
 	double targetAspectRatio() const;
 	double targetCropRatio(double fallback) const;
 	double targetCropRatio() const {return targetCropRatio(targetAspectRatio());}
@@ -50,6 +47,8 @@ public:
 	QQuickItem *osd() const;
 	void setAspectRatio(double ratio);
 	void quit();
+	void setOverlay(QQuickItem *overlay);
+	QQuickItem *overlay() const;
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -60,6 +59,7 @@ signals:
 	void effectsChanged(Effects effects);
 	void offsetChanged(const QPoint &pos);
 	void formatChanged(const VideoFormat &format);
+	void screenRectChanged(const QRectF rect);
 private: // for VideoOutput
 	VideoFrame &getNextFrame() const;
 	void next();

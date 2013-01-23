@@ -7,6 +7,8 @@ extern "C" {
 
 extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
 
+quint32 VideoFrame::UniqueId = 0;
+
 void VideoFrame::setFormat(const VideoFormat &format) {
 	d->format = format;
 	for (int i=0; i<3; ++i)

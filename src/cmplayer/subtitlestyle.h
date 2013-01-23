@@ -22,7 +22,7 @@ public:
 private:
     bool m_enabled = true, m_blur = false;
     QColor m_color = {0, 0, 0, 255/2};
-    QPointF m_offset = {0.2, 0.2};
+	QPointF m_offset = {0.1, 0.1};
 };
 
 class SubtitleOutlineObject : public QObject {
@@ -40,7 +40,7 @@ public:
     void setWidth(double width) {m_width = width;}
 private:
     QColor m_color = {Qt::black};
-    double m_width = 0.1;
+	double m_width = 0.05;
     bool m_enabled = true;
 };
 
@@ -74,7 +74,7 @@ private:
     Q_PROPERTY(Scale scale READ scale WRITE setScale)
 public:
     SubtitleFontObject(QObject *parent): QObject(parent) {
-        m_font.setPixelSize(height());
+		m_font.setPixelSize(height());
     }
     QString family() const {return m_font.family();}
     bool bold() const {return m_font.bold();}

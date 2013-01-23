@@ -1,21 +1,11 @@
 #include "subtitlerendereritem.hpp"
 #include "richtextdocument.hpp"
 #include "subtitlemodel.hpp"
+#include "subtitlestyle.h"
 
-struct SubtitleRender {
-	SubtitleRender() {comp = 0; model = 0;}
-	SubtitleRender(const SubtitleComponent &comp): comp(&comp) {
-		model = new SubtitleComponentModel(this->comp);
-		prev = this->comp->end();
-	}
-	~SubtitleRender() { delete this->model; }
-
-	const SubtitleComponent *comp;
-	SubtitleComponent::const_iterator prev;
-	SubtitleComponentModel *model;
-};
-
-typedef QList<SubtitleRender*> RenderList;
+SubtitleRendererItem::Render::Render(const SubtitleComponent &comp)
+: comp(&comp), prev(comp.end()), model(new SubtitleComponentModel(&comp)) {}
+SubtitleRendererItem::Render::~Render() { delete this->model; }
 
 struct SubtitleRendererItem::Data {
 	bool docempty = true;
@@ -24,65 +14,26 @@ struct SubtitleRendererItem::Data {
 	bool redraw = false;
 	int loc_tex = 0, loc_shadowColor = 0, loc_shadowOffset = 0, loc_dxdy = 0;
 	QImage image, next, blank = {1, 1, QImage::Format_ARGB32_Premultiplied};
-	QRectF screen = {0, 0, 0, 0};
 	QPointF shadowOffset = {0, 0};
 	QSize textureSize = {0, 0};
 	QSize imageSize = {0, 0};
-
-
-	bool	selecting = false;
-	SubtitleRendererItem *item = nullptr;
-	RenderList order;
-
-	void reset_prev() {
-		RenderList::const_iterator it = order.begin();
-		for (; it!=order.end(); ++it) {
-			SubtitleRender *r = *it;
-			r->prev = r->comp->end();
-		}
-	}
-
+	bool selecting = false;
 	QMap<QString, int> langMap;
-	int language_priority(const SubtitleRender *r) const {
+	int language_priority(const Render *r) const {
 //		return langMap.value(r->comp->language().id(), -1);
 		return langMap.value(r->comp->language(), -1);
-	}
-
-	bool hasComponent() const {
-		for (auto render : order) {
-			if (!render->comp->isEmpty())
-				return true;
-		}
-		return false;
 	}
 };
 
 SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
 : TextureRendererItem(1, parent), d(new Data) {
+	m_style = new SubtitleStyleObject(this);
 	d->blank.fill(0x0);
-	updateAlignment();
-	updateStyle();
-	prepare();
-	update();
+	updateAlignment();	updateStyle();	prepare();	update();
 }
 
 SubtitleRendererItem::~SubtitleRendererItem() {
 	delete d;
-}
-
-QRectF SubtitleRendererItem::drawArea() const {
-	return m_letterbox ? boundingRect() : d->screen;
-}
-
-void SubtitleRendererItem::setScreenRect(const QRectF &screen) {
-	if (d->screen != screen) {
-		d->screen = screen;
-		if (!m_letterbox) {
-			setGeometryDirty();
-			prepare();
-			update();
-		}
-	}
 }
 
 void SubtitleRendererItem::updateStyle() {
@@ -106,20 +57,22 @@ void SubtitleRendererItem::updateAlignment() {
 	d->front.setAlignment(m_alignment);
 }
 
+void SubtitleRendererItem::setTopAlignment(bool top) {
+	if (_Change(m_top, top)) {
+		if (_Change(m_alignment, Qt::AlignHCenter | (m_top ? Qt::AlignTop : Qt::AlignBottom))) {
+			updateAlignment();
+			prepare();
+			update();
+		}
+		setPos(1.0 - m_pos);
+	}
+}
+
 void SubtitleRendererItem::setText(const RichTextDocument &doc) {
 	d->front = doc.blocks();
 	d->back = doc.blocks();
 	prepare();
 	update();
-}
-
-void SubtitleRendererItem::setAlignment(Qt::Alignment alignment) {
-	if (alignment != m_alignment) {
-		m_alignment = alignment;
-		updateAlignment();
-		prepare();
-		update();
-	}
 }
 
 double SubtitleRendererItem::scale() const {
@@ -280,73 +233,12 @@ void SubtitleRendererItem::setMargin(double top, double bottom, double right, do
 	update();
 }
 
-void SubtitleRendererItem::setLetterboxHint(bool hint) {
-	if (m_letterbox != hint) {
-		m_letterbox = hint;
-		if (d->screen != boundingRect()) {
-			prepare();
-			update();
-		}
-	}
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//struct SubtitleRendererItem::Data {
-//	SubtitleView *view = nullptr;
-
-//	double	fps = 25.0,			pos = 1.0;
-//	int		delay = 0,			ms = 0;
-//	bool	visible = true,		empty = true;
-//	bool	selecting = false,	top = false;
-//	SubtitleRendererItem *item = nullptr;
-//	QList<Loaded> loaded;
-//	RenderList order;
-
-
-
-
-////	void reset_lang_map() {
-////		const QStringList priority = cPref.sub_priority;
-////		for (int i=0; i< priority.size(); ++i)
-////			langMap[priority[i]] = priority.size()-i;
-////	}
-//};
-
-//QWidget *SubtitleRendererItem::view(QWidget *parent) const {
-//	if (!d->view) {
-//		d->view = new SubtitleView(parent);
-//		d->set_model_list();
-//	}
-//	return d->view;
-//}
-
-void SubtitleRendererItem::setFps(double fps) {
-	if (m_fps != fps) {
-		m_fps = fps;
-		d->reset_prev();
-	}
-}
-
 void SubtitleRendererItem::render(int ms) {
 	m_ms = ms;
 	if (!m_visible || m_compempty || ms == 0)
 		return;
 	bool changed = false;
-	for (SubtitleRender *render : d->order) {
+	for (auto render : m_order) {
 		auto it = render->comp->start(ms - m_delay, m_fps);
 		if (it != render->prev) {
 			render->prev = it;
@@ -356,55 +248,36 @@ void SubtitleRendererItem::render(int ms) {
 	}
 	if (changed) {
 		RichTextDocument doc;
-		for (auto o = d->order.begin(); o != d->order.end(); ++o) {
-			const SubtitleRender &render = **o;
-			if (render.prev != render.comp->end())
-				doc += render.prev.value();
+		for (auto render : m_order) {
+			if (render->prev != render->comp->end())
+				doc += render->prev.value();
 		}
-		if (d->item) {
-			d->item->setText(doc);
-		}
+		setText(doc);
 	}
-}
-
-void SubtitleRendererItem::clear() {
-	d->reset_prev();
-//	d->osd.clear();
-}
-
-void SubtitleRendererItem::unload() {
-	qDeleteAll(d->order);
-	d->order.clear();
-	m_loaded.clear();
-//	d->set_model_list();
-	m_compempty = true;
-	clear();
 }
 
 void SubtitleRendererItem::select(int idx, bool selected) {
 	if (0 <= idx && idx < m_loaded.size() && m_loaded[idx].isSelected() != selected) {
 		m_loaded[idx].selection() = selected;
-		RenderList::iterator o = d->order.begin();
 		const auto comp = &m_loaded[idx].component();
-		SubtitleRender *render = 0;
-		for (; o!= d->order.end(); ++o) {
-			if ((*o)->comp == comp) {
-				render = *o;
-				d->order.erase(o);
+		Render *render = nullptr;
+		for (auto it = m_order.begin(); it!= m_order.end(); ++it) {
+			if ((*it)->comp == comp) {
+				render = *it;
+				m_order.erase(it);
 				render->prev = comp->end();
 				break;
 			}
 		}
 		if (selected) {
 			if (!render)
-				render = new SubtitleRender(*comp);
-			d->order.prepend(render);
-			o = d->order.begin();
-			while (o != d->order.end()) {
-				SubtitleRender *&prev = *o;
-				if (++o == d->order.end())
+				render = new Render(*comp);
+			m_order.prepend(render);
+			for (auto it = m_order.begin(); it != m_order.end(); ) {
+				Render *&prev = *it;
+				if (++it == m_order.end())
 					break;
-				SubtitleRender *&next = *o;
+				Render *&next = *it;
 				if (d->language_priority(prev) >= d->language_priority(next))
 					break;
 				qSwap(prev, next);
@@ -415,19 +288,13 @@ void SubtitleRendererItem::select(int idx, bool selected) {
 	}
 }
 
-void SubtitleRendererItem::applySelection() {
-	m_compempty = !d->hasComponent();
-	rerender();
-}
-
 bool SubtitleRendererItem::load(const QString &fileName, const QString &enc, bool select) {
 	const int idx = m_loaded.size();
 	Subtitle sub;
 	if (!sub.load(fileName, enc))
 		return false;
-	for (int i=0; i<sub.size(); ++i) {
+	for (int i=0; i<sub.size(); ++i)
 		m_loaded.append(LoadedSubtitle(sub[i]));
-	}
 	if (select) {
 		d->selecting = true;
 		for (int i=m_loaded.size()-1; i>=idx; --i) {
@@ -440,70 +307,55 @@ bool SubtitleRendererItem::load(const QString &fileName, const QString &enc, boo
 }
 
 int SubtitleRendererItem::start(int time) const {
-	int s = -1;
-	RenderList::const_iterator it = d->order.begin();
-	for (; it != d->order.end(); ++it) {
-		const auto comp = (*it)->comp;
-		const auto it = comp->start(time - m_delay, m_fps);
-		if (it != comp->end())
-			s = qMax(s, comp->isBasedOnFrame() ? SubtitleComponent::msec(it.key(), m_fps) : it.key());
+	int ret = -1;
+	for (auto it = m_order.begin(); it != m_order.end(); ++it) {
+		const auto &comp = *(*it)->comp;
+		const auto sIt = comp.start(time - m_delay, m_fps);
+		if (sIt != comp.end())
+			ret = qMax(ret, comp.isBasedOnFrame() ? comp.msec(sIt.key(), m_fps) : sIt.key());
 	}
-	return s;
+	return ret;
 }
 
-int SubtitleRendererItem::end(int time) const {
-	int e = -1;
-	RenderList::const_iterator it = d->order.begin();
-	for (; it != d->order.end(); ++it) {
-		const auto comp = (*it)->comp;
-		const auto it = comp->finish(time - m_delay, m_fps);
-		if (it != comp->end()) {
-			const int t = comp->isBasedOnFrame() ? SubtitleComponent::msec(it.key(), m_fps) : it.key();
-			e = e == -1 ? t : qMin(e, t);
+int SubtitleRendererItem::finish(int time) const {
+	int ret = -1;
+	for (auto it = m_order.begin(); it != m_order.end(); ++it) {
+		const auto &comp = *(*it)->comp;
+		const auto sIt = comp.finish(time - m_delay, m_fps);
+		if (sIt != comp.end()) {
+			const int t = comp.isBasedOnFrame() ? comp.msec(sIt.key(), m_fps) : sIt.key();
+			ret = ret == -1 ? t : qMin(ret, t);
 		}
 	}
-	return e;
-}
-
-void SubtitleRendererItem::setTopAlignment(bool top) {
-	if (_Change(m_alignTop, top)) {
-		setAlignment(Qt::AlignHCenter | (m_alignTop ? Qt::AlignTop : Qt::AlignBottom));
-		setPos(1.0 - m_pos);
-	}
+	return ret;
 }
 
 int SubtitleRendererItem::current() const {
-	RenderList::const_iterator o = d->order.begin();
 	int time = -1;
-	for (; o != d->order.end(); ++o) {
-		SubtitleRender &render = **o;
-		if (render.prev == render.comp->end() || !render.prev->hasWords())
-			continue;
-		if (time < 0)
-			time = render.prev.key();
-		else if (render.prev.key() > time)
-			time = render.prev.key();
+	for (auto render : m_order) {
+		if (render->prev != render->comp->end() && render->prev->hasWords()) {
+			if (time < 0)
+				time = render->prev.key();
+			else if (render->prev.key() > time)
+				time = render->prev.key();
+		}
 	}
 	return time;
 }
 
 int SubtitleRendererItem::previous() const {
-	RenderList::const_iterator o = d->order.begin();
 	int time = -1;
-	QList<SubtitleComponent::const_iterator> its;
-	its.reserve(d->order.size());
-	for (; o != d->order.end(); ++o) {
-		SubtitleRender &r = **o;
-		if (r.prev == r.comp->end())
-			continue;
-		auto it = r.prev;
-		while (it != r.comp->begin()) {
-			if ((--it)->hasWords()) {
-				if (time < 0)
-					time = it.key();
-				else if (it.key() > time)
-					time = it.key();
-				break;
+	for (auto render : m_order) {
+		if (render->prev != render->comp->end()) {
+			auto it = render->prev;
+			while (it != render->comp->begin()) {
+				if ((--it)->hasWords()) {
+					if (time < 0)
+						time = it.key();
+					else if (it.key() > time)
+						time = it.key();
+					break;
+				}
 			}
 		}
 	}
@@ -511,22 +363,18 @@ int SubtitleRendererItem::previous() const {
 }
 
 int SubtitleRendererItem::next() const {
-	RenderList::const_iterator o = d->order.begin();
 	int time = -1;
-	QList<SubtitleComponent::const_iterator> its;
-	its.reserve(d->order.size());
-	for (; o != d->order.end(); ++o) {
-		SubtitleRender &r = **o;
-		if (r.prev == r.comp->end())
-			continue;
-		auto it = r.prev;
-		while (++it != r.comp->end()) {
-			if (it->hasWords()) {
-				if (time < 0)
-					time = it.key();
-				else if (it.key() < time)
-					time = it.key();
-				break;
+	for (auto render : m_order) {
+		if (render->prev != render->comp->end()) {
+			auto it = render->prev;
+			while (++it != render->comp->end()) {
+				if (it->hasWords()) {
+					if (time < 0)
+						time = it.key();
+					else if (it.key() < time)
+						time = it.key();
+					break;
+				}
 			}
 		}
 	}
@@ -536,14 +384,20 @@ int SubtitleRendererItem::next() const {
 void SubtitleRendererItem::setLoaded(const QList<LoadedSubtitle> &loaded) {
 	unload();
 	m_loaded = loaded;
-
 	for (const auto &loaded : m_loaded) {
 		if (loaded.isSelected())
-			d->order.prepend(new SubtitleRender(loaded.component()));
+			m_order.prepend(new Render(loaded.component()));
 	}
-	qSort(d->order.begin(), d->order.end(), [this] (const SubtitleRender *lhs, const SubtitleRender *rhs) {
+	qSort(m_order.begin(), m_order.end(), [this] (const Render *lhs, const Render *rhs) {
 		return d->language_priority(lhs) > d->language_priority(rhs);
 	});
 	applySelection();
 }
 
+QVector<SubtitleComponentModel*> SubtitleRendererItem::models() const {
+	QVector<SubtitleComponentModel*> models;
+	models.reserve(m_order.size());
+	for (const auto render : m_order)
+		models.push_back(render->model);
+	return models;
+}

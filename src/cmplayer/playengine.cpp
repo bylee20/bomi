@@ -1,7 +1,7 @@
 #include "playengine.hpp"
 #include "videoframe.hpp"
 #include "videooutput.hpp"
-#include "videorendereritem.hpp"
+//#include "videorendereritem.hpp"
 #include "playlistmodel.hpp"
 #define PLAY_ENGINE_P
 #include "mpcore.hpp"
@@ -149,8 +149,8 @@ bool PlayEngine::usingHwAcc() const {
 void PlayEngine::setVideoAspect(double ratio) {
 	if (d->videoAspect != ratio)
 		emit videoAspectRatioChanged(d->videoAspect = ratio);
-	if (m_renderer)
-		m_renderer->setVideoAspectRaito(ratio);
+//	if (m_renderer)
+//		m_renderer->setVideoAspectRaito(ratio);
 }
 
 int PlayEngine::currentSubtitleStream() const {
@@ -527,7 +527,7 @@ double PlayEngine::fps() const {
 
 void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
 	if (_Change(m_renderer, renderer)) {
-		setVideoAspect(d->videoAspect);
+//		setVideoAspect(d->videoAspect);
 	}
 }
 

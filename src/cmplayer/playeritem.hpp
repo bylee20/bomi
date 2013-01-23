@@ -4,7 +4,7 @@
 #include "stdafx.hpp"
 #include "skin.hpp"
 
-class SubtitleRendererItem;		class VideoRendererItem;
+class VideoRendererItem;
 class PlayInfoItem;				class PlayEngine;
 
 class PlayerItem : public QQuickItem, public Skin {
@@ -17,7 +17,6 @@ public:
 	void plugTo(PlayEngine *engine);
 	void unplug();
 	PlayerItem(QQuickItem *parent = nullptr);
-	SubtitleRendererItem *subtitle() const {return m_subtitle;}
 	VideoRendererItem *renderer() const {return m_renderer;}
 	PlayInfoItem *info() const {return m_info;}
 	PlayEngine *engine() const {return m_engine;}
@@ -37,7 +36,6 @@ signals:
 	void infoChanged();
 private:
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
-	SubtitleRendererItem *m_subtitle = nullptr;
 	VideoRendererItem *m_renderer = nullptr;
 	PlayInfoItem *m_info = nullptr;
 	QQuickItem *m_infoView = nullptr;

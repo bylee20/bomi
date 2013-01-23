@@ -1,30 +1,28 @@
 #include "videorendereritem.hpp"
-#include "subtitlerendereritem.hpp"
 #include "mposditem.hpp"
 #include "videoframe.hpp"
 #include "shadervar.h"
 
 struct VideoRendererItem::Data {
 	VideoFrame frame, next;
-	bool frameChanged = false;
+	bool frameChanged = false, quit = false;
 	QRectF vtx;
 	QPoint offset = {0, 0};
-    QPointF vtxOffset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
 	VideoFormat format;
 	int alignment = Qt::AlignCenter;
 	quint64 drawnFrames = 0;
 	ShaderVar shaderVar;
 	LetterboxItem *letterbox = nullptr;
-	SubtitleRendererItem *subtitle = nullptr;
 	MpOsdItem *mposd = nullptr;
+	QQuickItem *overlay = nullptr;
 	QByteArray shader;
 	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
 	int loc_brightness, loc_contrast, loc_sat_hue, loc_dxy, loc_p1, loc_p2, loc_p3;
 	VideoFormat::Type shaderType = VideoFormat::BGRA;
 	QMutex mutex;
 	QWaitCondition wait;
-	bool quit = false;
+	quint64 frameId = -1;
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
@@ -32,7 +30,6 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 	setFlags(ItemHasContents | ItemAcceptsDrops);
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
-	d->subtitle = new SubtitleRendererItem(this);
 	setZ(-1);
 }
 
@@ -40,12 +37,13 @@ VideoRendererItem::~VideoRendererItem() {
 	delete d;
 }
 
-SubtitleRendererItem *VideoRendererItem::subtitle() const {
-	return d->subtitle;
+QQuickItem *VideoRendererItem::overlay() const {
+	return d->overlay;
 }
 
 VideoFrame &VideoRendererItem::getNextFrame() const {
 	d->mposd->beginNewFrame();
+	d->next.newId();
 	return d->next;
 }
 
@@ -56,7 +54,7 @@ void VideoRendererItem::next() {
 		d->frame.swap(d->next);
 		d->mposd->endNewFrame();
 		update();
-		if (!d->quit) {
+		if (!d->quit && d->frame.id() != d->frameId) {
 			if (!d->wait.wait(&d->mutex, 10000u))
 				qDebug() << "maybe a frame dropped?";
 		}
@@ -96,13 +94,23 @@ double VideoRendererItem::targetCropRatio(double fallback) const {
 	return fallback;
 }
 
+void VideoRendererItem::setOverlay(QQuickItem *overlay) {
+	if (d->overlay != overlay) {
+		if (d->overlay)
+			d->overlay->setParentItem(nullptr);
+		if ((d->overlay = overlay))
+			d->overlay->setParentItem(this);
+	}
+}
 
 void VideoRendererItem::geometryChanged(const QRectF &newOne, const QRectF &old) {
 	QQuickItem::geometryChanged(newOne, old);
 	d->letterbox->setWidth(width());
 	d->letterbox->setHeight(height());
-	d->subtitle->setPosition(QPointF(0, 0));
-	d->subtitle->setSize(QSizeF(width(), height()));
+	if (d->overlay) {
+		d->overlay->setPosition(QPointF(0, 0));
+		d->overlay->setSize(QSizeF(width(), height()));
+	}
 	updateGeometry();
 }
 
@@ -157,6 +165,7 @@ void VideoRendererItem::updateGeometry() {
 void VideoRendererItem::quit() {
 	d->quit = true;
 	d->wait.wakeAll();
+	setOverlay(nullptr);
 }
 
 void VideoRendererItem::setColor(const ColorProperty &prop) {
@@ -407,8 +416,12 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 
 void VideoRendererItem::beforeUpdate() {
 //	qDebug() << d->frameChanged << "check";
-	if (!d->frameChanged)
+//	if (!d->frameChanged)
+//		return;
+	if (d->frame.id() == d->frameId) {
 		return;
+	}
+
 //	qDebug() << d->frameChanged << "try lock";
 //	QMutexLocker locker(&d->mposd->mutex());
 	d->mutex.lock();
@@ -459,6 +472,7 @@ void VideoRendererItem::beforeUpdate() {
 		++(d->drawnFrames);
 	}
 	d->frameChanged = false;
+	d->frameId = d->frame.id();
 	d->wait.wakeAll();
 	d->mutex.unlock();
 //	qDebug() << d->frameChanged << "unlock";
@@ -482,10 +496,7 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 		offset.ry() += xy.y();
 	xy += offset;
 	if (d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter)))
-		d->subtitle->setScreenRect(d->letterbox->screen());
-
-//	constexpr double top = 0.0, left = 0.0, bottom = 1.0;
-//	const double right = _Ratio(d->format.width(), d->format.drawWidth());
+		emit screenRectChanged(d->letterbox->screen());
     set(tp, d->vtx.translated(offset), QRectF(0.0, 0.0,  _Ratio(d->format.width(), d->format.drawWidth()), 1.0));
 }
 

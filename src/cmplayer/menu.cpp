@@ -55,6 +55,7 @@ void Menu::load(Record &r) {
 QMenu *Menu::copied(QWidget *parent) {
 	QMenu *menu = new QMenu(parent);
 	menu->setTitle(title());
+	menu->setEnabled(isEnabled());
 	for (QAction *action : actions()) {
 		auto sub = static_cast<Menu*>(action->menu());
 		if (sub)

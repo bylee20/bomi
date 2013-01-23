@@ -2,7 +2,6 @@
 #include "playengine.hpp"
 #include "videorendereritem.hpp"
 #include "playinfoitem.hpp"
-#include "subtitlerendereritem.hpp"
 #include "rootmenu.hpp"
 #include "globalqmlobject.hpp"
 
@@ -23,7 +22,6 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	if (m_engine != engine) {
 		m_engine = engine;
 		m_renderer = engine->videoRenderer();
-		m_subtitle = m_renderer->subtitle();
 		m_renderer->setParentItem(this);
 		m_renderer->setGeometry(QPointF(0, 0), QSizeF(width(), height()));
 		m_info->set(m_engine);
@@ -42,9 +40,7 @@ void PlayerItem::registerItems() {
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();
-	qmlRegisterType<VideoRendererItem>("CMPlayer", 1, 0, "VideoRenderer");
 	qmlRegisterType<PlayInfoItem>("CMPlayer", 1, 0, "PlayInfo");
-	qmlRegisterType<SubtitleRendererItem>("CMPlayer", 1, 0, "SubtitleRenderer");
 	qmlRegisterType<PlayerItem>("CMPlayer", 1, 0, "Player");
 	qmlRegisterSingletonType<GlobalQmlObject>("CMPlayer", 1, 0, "Util", utilProvider);
 }

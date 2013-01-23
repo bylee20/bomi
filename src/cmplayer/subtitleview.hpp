@@ -12,11 +12,15 @@ class SubtitleView : public ToggleDialog {
 public:
 	SubtitleView(QWidget *parent = 0);
 	~SubtitleView();
-	void setModel(const QVector<SubtitleComponentModel*> &model);
+public slots:
+	void setModels(const QVector<SubtitleComponentModel*> &model);
 private slots:
 	void setTimeVisible(bool visible);
 	void setAutoScrollEnabled(bool enabled);
 private:
+	void showEvent(QShowEvent *event);
+	void hideEvent(QHideEvent *event);
+	void updateModels();
 	class CompView;
 	struct Data;
 	Data *d;

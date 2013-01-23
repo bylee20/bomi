@@ -3,10 +3,10 @@
 
 #include "stdafx.hpp"
 #include "texturerendereritem.hpp"
-#include "subtitlestyle.h"
 #include "subtitle.hpp"
 
 class RichTextDocument;		class SubtitleComponentModel;
+class SubtitleStyleObject;
 
 class LoadedSubtitle {
 public:
@@ -28,57 +28,57 @@ class SubtitleRendererItem : public TextureRendererItem  {
 public:
 	SubtitleRendererItem(QQuickItem *parent = nullptr);
 	~SubtitleRendererItem();
-	void setLetterboxHint(bool hint);
-	bool letterboxHint() const {return m_letterbox;}
-	double fps() const { return m_fps; }
-	int delay() const { return m_delay; }
-	void setDelay(int delay) { if (_Change(m_delay, delay)) render(m_ms); }
-	const QList<LoadedSubtitle> &loaded() const { return m_loaded; }
-	void setPos(double pos) {
-		if (_ChangeF(m_pos, qBound(0.0, pos, 1.0)))
-			setMargin(m_alignTop ? m_pos : 0, m_alignTop ? 0.0 : 1.0 - m_pos, 0, 0);
-	}
-	double pos() const { return m_pos; }
-	bool isTopAligned() const { return m_alignTop; }
-	bool load(const QString &fileName, const QString &enc, bool select);
-
-	void setLoaded(const QList<LoadedSubtitle> &loaded);
 	int previous() const;
 	int next() const;
 	int current() const;
 	int start(int pos) const;
-	int end(int pos) const;
-	void unload();
+	int finish(int pos) const;
+	int delay() const { return m_delay; }
+	double fps() const { return m_fps; }
+	double pos() const { return m_pos; }
+	bool letterboxHint() const {return m_letterbox;}
+	bool hasSubtitles() const { return !m_compempty; }
+	bool isTopAligned() const { return m_top; }
+	QVector<SubtitleComponentModel*> models() const;
+	const QList<LoadedSubtitle> &loaded() const { return m_loaded; }
+	void setLoaded(const QList<LoadedSubtitle> &loaded);
+	void setPos(double pos) { if (_ChangeF(m_pos, qBound(0.0, pos, 1.0))) setMargin(m_top ? m_pos : 0, m_top ? 0.0 : 1.0 - m_pos, 0, 0); }
+	void setLetterboxHint(bool hint) { if (_Change(m_letterbox, hint) && m_screen != boundingRect()) { prepare(); update(); } }
+	void setDelay(int delay) { if (_Change(m_delay, delay)) render(m_ms); }
+	bool load(const QString &fileName, const QString &enc, bool select);
+	void unload() { qDeleteAll(m_order); m_order.clear(); m_loaded.clear(); m_compempty = true; resetIterators(); emit modelsChanged(models()); }
 	void select(int idx, bool selected = true);
-
-	bool hasSubtitle() const { return !m_compempty; }
 public slots:
-	void setScreenRect(const QRectF &screen);
+	void setScreenRect(const QRectF &screen) { if (_Change(m_screen, screen) && !m_letterbox) { setGeometryDirty(); prepare(); update(); } }
 	void setHidden(bool hidden) { if (_Change(m_visible, !hidden)) rerender(); }
 	void render(int ms);
 	void setTopAlignment(bool top);
+	void setFps(double fps) { if (_Change(m_fps, fps)) resetIterators(); }
+signals:
+	void modelsChanged(const QVector<SubtitleComponentModel*> &models);
 private:
 	SubtitleStyleObject *style() const {return m_style;}
 	QSizeF contentSize() const {return m_size;}
 	void setText(const RichTextDocument &doc);
-	void setAlignment(Qt::Alignment alignment);
-	Qt::Alignment alignment() const {return m_alignment;}
 	void setMargin(double top, double bottom, double right, double left);
 private:
-	void rerender() { if (m_compempty) clear(); else render(m_ms); }
-	void applySelection();
-
-	void clear();
-	void setFps(double fps);
-	QWidget *view(QWidget *parent = 0) const;
-	void select(const QList<int> &idx, bool selected = true);
+	struct Render {
+		Render(const SubtitleComponent &comp); ~Render();
+		const SubtitleComponent *comp = nullptr;
+		SubtitleComponent::const_iterator prev;
+		SubtitleComponentModel *model = nullptr;
+	};
+	double scale() const;
+	QRectF drawArea() const { return m_letterbox ? boundingRect() : m_screen; }
+	void resetIterators() { for (auto render : m_order) render->prev = render->comp->end(); }
+	bool hasComponents() const { for (auto render : m_order) {if (!render->comp->isEmpty()) return true;} return false; }
+	void rerender() { if (m_compempty) resetIterators(); render(m_ms); }
+	void applySelection() { m_compempty = !hasComponents(); rerender(); emit modelsChanged(models()); }
 	void updateStyle();
 	void updateAlignment();
 	bool blending() const override {return true;}
 	void prepare();
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
-	QRectF drawArea() const;
-	double scale() const;
 	void link(QOpenGLShaderProgram *program);
 	void bind(const RenderState &state, QOpenGLShaderProgram *program);
 	void updateTexturedPoint2D(TexturedPoint2D *tp);
@@ -87,20 +87,14 @@ private:
 	const char *fragmentShader() const;
 	struct Data;
 	Data *d;
-	SubtitleStyleObject *m_style = new SubtitleStyleObject(this);
-	QSizeF m_size;
-	bool m_letterbox = true;
+	SubtitleStyleObject *m_style = nullptr;
+	QSizeF m_size;	QRectF m_screen = {0, 0, 0, 0};
+	bool m_letterbox = true, m_visible = true, m_compempty = true, m_top = false;
 	Qt::Alignment m_alignment = Qt::AlignBottom | Qt::AlignHCenter;
-
-
-
-
-
-	double	m_fps = 25.0,			m_pos = 1.0;
-	int		m_delay = 0,			m_ms = 0;
-	bool	m_visible = true,		m_compempty = true;
-	bool	m_alignTop = false;
+	double m_fps = 25.0, m_pos = 1.0;
+	int m_delay = 0, m_ms = 0;
 	QList<LoadedSubtitle> m_loaded;
+	QList<Render*> m_order;
 };
 
 #endif // SUBTITLERENDERERITEM_HPP

@@ -15,12 +15,16 @@ struct VideoOutput::Data {
 	vo_driver driver;
 	vo_info_t info;
 	VideoFormat format;
+#ifdef Q_OS_LINUX
 	HwAccel *hwaccel = nullptr;
-	bool hwaccelActivated = false;
 	void deleteHwAccel() {
 		delete hwaccel;
 		hwaccel = nullptr;
 	}
+#else
+	void deleteHwAccel() {}
+#endif
+	bool hwaccelActivated = false;
 	mp_osd_res osd;
 	mp_image_t *mpimg = nullptr;
 	VideoFrame *frame = nullptr;

@@ -22,10 +22,10 @@ class HwAccelInfo {
 public:
 	HwAccelInfo();
 	bool isAvailable() const {return m_ok;}
-	AVCodecContext *avctx() const {return HwAccelInfo::m_avctx;}
 	QList<AVCodecID> fullCodecList() const;
 	bool supports(AVCodecID codec) const;
 #ifdef Q_OS_LINUX
+	AVCodecContext *avctx() const {return m_avctx;}
     VADisplay display() const {return m_display;}
     VAProfile find(CodecID codec, int &surfaceCount) const;
     static const VAProfile NoProfile = (VAProfile)(-1);

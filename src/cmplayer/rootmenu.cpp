@@ -304,6 +304,12 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	m_wheel[Enum::WheelAction::Volume] = WheelActionPair(volUp, volDown);
 	m_wheel[Enum::WheelAction::Amp] = WheelActionPair(ampUp, ampDown);
 
+	play->m("title")->setEnabled(false);
+	play->m("chapter")->setEnabled(false);
+	video->m("track")->setEnabled(false);
+	audio->m("track")->setEnabled(false);
+	subtitle->m("spu")->setEnabled(false);
+
 	load();
 }
 
