@@ -9,27 +9,37 @@ extern "C" {
 #include <video/out/vo.h>
 #include <video/vfcap.h>
 #include <sub/sub.h>
+#include <video/filter/vf.h>
+#ifdef Q_OS_LINUX
+extern vf_info_t vf_info_vo;
+struct vf_priv_s { struct vo *vo; };
+void prepare_hwaccel(sh_video *sh, AVCodecContext *avctx) {
+	auto vf = sh->vfilter;
+	while (vf) {
+		if (vf->info == &vf_info_vo)
+			break;
+		vf = vf->next;
+	}
+	if (vf)
+		static_cast<VideoOutput*>(vf->priv->vo->priv)->setAVCodecContext(avctx);
 }
+#endif
+}
+
 
 struct VideoOutput::Data {
 	vo_driver driver;
 	vo_info_t info;
 	VideoFormat format;
 #ifdef Q_OS_LINUX
-	HwAccel *hwaccel = nullptr;
-	void deleteHwAccel() {
-		delete hwaccel;
-		hwaccel = nullptr;
-	}
-#else
-	void deleteHwAccel() {}
+	HwAccel hwAcc;
 #endif
-	bool hwaccelActivated = false;
 	mp_osd_res osd;
 	mp_image_t *mpimg = nullptr;
 	VideoFrame *frame = nullptr;
 	PlayEngine *engine = nullptr;
 	bool flip = false;
+//	AVCodecContext *avctx = nullptr;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -44,10 +54,10 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 	memset(&d->driver, 0, sizeof(d->driver));
 	memset(&d->osd, 0, sizeof(d->osd));
 
-	d->info.name = "CMPlayer video output";
-	d->info.short_name = "cmp";
-	d->info.author = "xylosper <darklin20@gmail.com>";
-	d->info.comment = "";
+	d->info.name		= "CMPlayer video output";
+	d->info.short_name	= "cmp";
+	d->info.author		= "xylosper <darklin20@gmail.com>";
+	d->info.comment		= "";
 
 	d->driver.is_new = true,
 	d->driver.info = &d->info;
@@ -64,7 +74,7 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 }
 
 VideoOutput::~VideoOutput() {
-	d->deleteHwAccel();
+	d->hwAcc.finalize();
 }
 
 struct vo *VideoOutput::vo_create(MPContext *mpctx) {
@@ -85,7 +95,7 @@ struct vo *VideoOutput::vo_create(MPContext *mpctx) {
 }
 
 void VideoOutput::release() {
-	d->deleteHwAccel();
+
 }
 
 const VideoFormat &VideoOutput::format() const {
@@ -93,32 +103,16 @@ const VideoFormat &VideoOutput::format() const {
 }
 
 bool VideoOutput::usingHwAccel() const {
-	return d->hwaccelActivated;
+	return d->hwAcc.isUsable();
 }
 
-int VideoOutput::config(struct vo *vo, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
-	auto self = reinterpret_cast<VideoOutput*>(vo->priv);
-	Data *d = self->d;
-	d->hwaccelActivated = false;
-#ifdef Q_OS_LINUX
-    HwAccelInfo info;
-    auto avctx = info.avctx();
-	if (fmt == IMGFMT_VDPAU && avctx && d->engine->videoRenderer()) {
-        if (d->hwaccel) {
-            if (!d->hwaccel->isCompatibleWith(avctx))
-                d->deleteHwAccel();
-        }
-        if (!d->hwaccel)
-            d->hwaccel = new HwAccel(avctx);
-        if (!d->hwaccel->isUsable()) {
-            d->deleteHwAccel();
-            return -1;
-        }
-        avctx->hwaccel_context = d->hwaccel->context();
-		d->hwaccelActivated = true;
-    } else
-#endif
-		d->format = VideoFormat(imgfmtToVideoFormatType(fmt));
+void VideoOutput::setAVCodecContext(void *avctx) {
+	 d->hwAcc.set(static_cast<AVCodecContext*>(avctx));
+}
+
+int VideoOutput::config(struct vo */*vo*/, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t /*fmt*/) {
+//	auto self = reinterpret_cast<VideoOutput*>(vo->priv);
+//	Data *d = self->d;
 	return 0;
 }
 
@@ -128,10 +122,8 @@ bool VideoOutput::getImage(void *data) {
 	return false;
 #endif
 #ifdef Q_OS_LINUX
-	auto mpi = reinterpret_cast<mp_image_t*>(data);
-	return d->hwaccel && d->hwaccel->isUsable() && d->hwaccel->setBuffer(mpi);
+	return d->hwAcc.isUsable() && d->hwAcc.setBuffer(static_cast<mp_image_t*>(data));
 #endif
-    return false;
 }
 
 void VideoOutput::drawImage(void *data) {
@@ -140,14 +132,15 @@ void VideoOutput::drawImage(void *data) {
 		VideoFrame &frame = renderer->getNextFrame();
 		frame.setFormat(d->format);
 #ifdef Q_OS_LINUX
-		if (d->hwaccelActivated) {
-			if (d->hwaccel->copyTo(mpi, frame))
-				emit formatChanged(d->format = frame.format());
-		} else
+		if (d->hwAcc.isUsable())
+			mpi = &d->hwAcc.extract(mpi);
 #endif
 		if (frame.copy(mpi))
 			emit formatChanged(d->format = frame.format());
-
+#ifdef Q_OS_LINUX
+		if (d->hwAcc.isUsable())
+			d->hwAcc.clean();
+#endif
 	}
 	d->flip = true;
 }

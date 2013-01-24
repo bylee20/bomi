@@ -13,6 +13,7 @@ public:
 	VideoOutput(PlayEngine *engine);
 	~VideoOutput();
 	struct vo *vo_create(MPContext *mpctx);
+	void setAVCodecContext(void *avctx);
 	void release();
 	bool usingHwAccel() const;
 	const VideoFormat &format() const;

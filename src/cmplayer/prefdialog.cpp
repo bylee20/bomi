@@ -278,11 +278,10 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	auto vbox = new QVBoxLayout;
 	vbox->setContentsMargins(20, 0, 0, 0);
-	HwAccelInfo hwacc;
-	const auto codecs = hwacc.fullCodecList();
+	const auto codecs = HwAccel::fullCodecList();
 	for (const auto codec : codecs) {
 		QCheckBox *ch = new QCheckBox;
-		const auto supports = hwacc.supports(codec);
+		const auto supports = HwAccel::supports(codec);
 		const auto desc = avcodec_descriptor_get(codec)->long_name;
 		if (supports)
 			ch->setText(desc);

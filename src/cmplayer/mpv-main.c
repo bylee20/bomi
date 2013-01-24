@@ -2417,12 +2417,12 @@ int reinit_video_chain(struct MPContext *mpctx)
 			= vf->control(vf, VFCTRL_INIT_OSD, NULL) == VO_TRUE;
 
 #ifdef __APPLE__
-	if (is_hwaccel_available("ffh264vda")) {
+	if (is_hwaccel_available(AV_CODEC_ID_H264)) {
 		char *vcl[2] = {"ffh264vda", "", NULL};
 		init_best_video_codec(sh_video, vcl, video_fm_list);
 	} else
 #endif
-	init_best_video_codec(sh_video, video_codec_list, video_fm_list);
+		init_best_video_codec(sh_video, video_codec_list, video_fm_list);
 
 	if (!sh_video->initialized)
 		goto err_out;

@@ -131,10 +131,9 @@ void Pref::load() {
 }
 
 QList<int> Pref::defaultHwAccelCodecs() {
-	HwAccelInfo hwacc;
 	QList<int> codecs;
-	for (auto codec : hwacc.fullCodecList()) {
-		if (hwacc.supports(codec))
+	for (auto codec : HwAccel::fullCodecList()) {
+		if (HwAccel::supports(codec))
 			codecs.push_back(codec);
 	}
 	return codecs;

@@ -10,6 +10,8 @@ enum seek_type {MPSEEK_NONE, MPSEEK_RELATIVE, MPSEEK_ABSOLUTE, MPSEEK_FACTOR};
 #include <core/mp_core.h>
 
 #ifdef __cplusplus
+//#undef bswap_16
+//#undef bswap_32
 #undef new
 #endif
 

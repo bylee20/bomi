@@ -1,221 +1,211 @@
-#include "videoframe.hpp"
 #include "pref.hpp"
 #include "hwaccel.hpp"
+
+extern "C" int is_hwaccel_activated(CodecID codec) {
+	return cPref.enable_hwaccel && cPref.hwaccel_codecs.contains(codec) && HwAccel::supports(codec);
+}
+
+QList<AVCodecID> HwAccel::fullCodecList() {
+	return QList<AVCodecID>()
+		<< AV_CODEC_ID_MPEG1VIDEO << AV_CODEC_ID_MPEG2VIDEO << AV_CODEC_ID_MPEG4
+		<< AV_CODEC_ID_WMV3 << AV_CODEC_ID_VC1 << AV_CODEC_ID_H264;
+}
+
+HwAccel::Info &HwAccel::Info::get() { static Info info; return info; }
+
+#ifdef Q_OS_MAC
+HwAccel::HwAccel() { m_usable = true; }
+bool HwAccel::supports(AVCodecID codec) { return codec == AV_CODEC_ID_H264; }
+#endif
+
 #ifdef Q_OS_LINUX
 #include "videoframe.hpp"
-#endif
 
-#ifdef Q_OS_MAC
-extern "C" int is_hwaccel_available(const char *name) {
-	if (!cPref.enable_hwaccel)
-		return false;
-	AVCodecID codec = AV_CODEC_ID_NONE;
-	if (strstr(name, "ffh264vda"))
-		codec = AV_CODEC_ID_H264;
-	if (!cPref.hwaccel_codecs.contains(codec) || !HwAccelInfo().supports(codec))
-		return false;
-	qDebug() << "HwAccel is available!";
-	return true;
-}
-#endif
-
-#ifdef Q_OS_LINUX
-
-VADisplay HwAccelInfo::m_display = 0;
-QVector<VAProfile> HwAccelInfo::m_profiles;
-
-extern "C" int is_hwaccel_available(AVCodecContext *avctx) {
-    if (!cPref.enable_hwaccel || !cPref.hwaccel_codecs.contains(avctx->codec_id))
-        return false;
-    if (!HwAccelInfo().supports(avctx))
-        return false;
-    qDebug() << "HwAccel is available!";
-    return true;
-}
-
+extern "C" {
 static void (*vd_ffmpeg_release_buffer)(AVCodecContext *, AVFrame*) = nullptr;
-
 void hwaccel_release_buffer(AVCodecContext *avctx, AVFrame *frame) {
-    mp_image_t *mpi = reinterpret_cast<mp_image_t*>(avctx->opaque);
-    if (mpi->priv && avctx->hwaccel_context)
-        reinterpret_cast<HwAccel::Context*>(avctx->hwaccel_context)->hwaccel->releaseBuffer(frame->data[3]);
-    if (vd_ffmpeg_release_buffer)
-        vd_ffmpeg_release_buffer(avctx, frame);
-    else
-        frame->data[0] = frame->data[1] = frame->data[2] = frame->data[3] = nullptr;
+	mp_image_t *mpi = static_cast<mp_image_t*>(avctx->opaque);
+	if (mpi->priv && avctx->hwaccel_context)
+		static_cast<HwAccel::Context*>(avctx->hwaccel_context)->hwaccel->releaseBuffer(frame->data[3]);
+	if (vd_ffmpeg_release_buffer)
+		vd_ffmpeg_release_buffer(avctx, frame);
+	else
+		frame->data[0] = frame->data[1] = frame->data[2] = frame->data[3] = nullptr;
+}
+int register_hwaccel_callbacks(AVCodecContext *avctx) {
+	vd_ffmpeg_release_buffer = avctx->release_buffer;
+	avctx->release_buffer = hwaccel_release_buffer;
+	return false;
+}
 }
 
-extern "C" int register_hwaccel_callbacks(AVCodecContext *avctx) {
-    vd_ffmpeg_release_buffer = avctx->release_buffer;
-    avctx->release_buffer = hwaccel_release_buffer;
-    return false;
-}
-AVCodecContext *HwAccelInfo::m_avctx = nullptr;
-#endif
+HwAccel::Info::Info() {
+	do {
+		if (!(xdpy = XOpenDisplay(NULL)))
+			break;
+		if (!(display = vaGetDisplay(xdpy)))
+			break;
+		int major, minor;
+		if (vaInitialize(display, &major, &minor))
+			break;
+		auto size = vaMaxNumProfiles(display);
+		profiles.resize(size);
+		if (vaQueryConfigProfiles(display, profiles.data(), &size))
+			break;
+		profiles.resize(size);
+		ok = true;
 
-
-bool HwAccelInfo::m_ok = false;
-
-HwAccelInfo::HwAccelInfo() {
-    static bool first = true;
-	if (first) {
-#ifdef Q_OS_LINUX
-        auto dpy = XOpenDisplay(NULL);
-		if (!(m_display = vaGetDisplay(dpy)))
-            return;
-        int major, minor;
-        if (vaInitialize(m_display, &major, &minor))
-            return;
-        auto count = vaMaxNumProfiles(m_display);
-        m_profiles.resize(count);
-        if (vaQueryConfigProfiles(m_display, m_profiles.data(), &count))
-            return;
-        m_profiles.resize(count);
-
-#endif
-        m_ok = true;
-	}
-}
-
-void HwAccelInfo::finalize() {
-#ifdef Q_OS_LINUX
-    if (m_display)
-        vaTerminate(m_display);
-#endif
-}
-
-QList<AVCodecID> HwAccelInfo::fullCodecList() const {
-	return QList<AVCodecID>()
-		<< AV_CODEC_ID_MPEG1VIDEO
-		<< AV_CODEC_ID_MPEG2VIDEO
-		<< AV_CODEC_ID_MPEG4
-		<< AV_CODEC_ID_WMV3
-		<< AV_CODEC_ID_VC1
-		<< AV_CODEC_ID_H264;
-}
-
-bool HwAccelInfo::supports(AVCodecID codec) const {
-#ifdef Q_OS_MAC
-	return codec == AV_CODEC_ID_H264;
-#endif
-#ifdef Q_OS_LINUX
-    int count = 0;
-    return find(codec, count) != NoProfile;
-#endif
-    return false;
-}
-
-#ifdef Q_OS_LINUX
-VAProfile HwAccelInfo::find(CodecID codec, int &surfaceCount) const {
-	if (!m_ok)
-		return NoProfile;
-    static const QVector<VAProfile> mpeg2s = {VAProfileMPEG2Main, VAProfileMPEG2Simple};
-    static const QVector<VAProfile> mpeg4s = {VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple};
-    static const QVector<VAProfile> h264s = {VAProfileH264High, VAProfileH264Main, VAProfileH264Baseline};
-    static const QVector<VAProfile> wmv3s = {VAProfileVC1Main, VAProfileVC1Simple};
-    static const QVector<VAProfile> vc1s = {VAProfileVC1Advanced};
-	auto matched = [this](const QVector<VAProfile> &needs) {
-		for (auto need : needs) { if (m_profiles.contains(need)) return need; } return NoProfile;
-	};
+		auto supports = [this](const QVector<VAProfile> &candidates, int count) {
+			ProfileInfo info;
+			for (auto one : candidates) {
+				if (profiles.contains(one))
+					info.profiles.push_back(one);
+			}
+			if (!info.profiles.isEmpty())
+				info.surfaceCount = count;
+			return info;
+		};
 #define NUM_VIDEO_SURFACES_MPEG2  3 /* 1 decode frame, up to  2 references */
 #define NUM_VIDEO_SURFACES_MPEG4  3 /* 1 decode frame, up to  2 references */
 #define NUM_VIDEO_SURFACES_H264  21 /* 1 decode frame, up to 20 references */
 #define NUM_VIDEO_SURFACES_VC1    3 /* 1 decode frame, up to  2 references */
-    switch(codec) {
-    case AV_CODEC_ID_MPEG1VIDEO:
-    case AV_CODEC_ID_MPEG2VIDEO:
-        surfaceCount = NUM_VIDEO_SURFACES_MPEG2;
-		return matched(mpeg2s);
-    case AV_CODEC_ID_MPEG4:
-        surfaceCount = NUM_VIDEO_SURFACES_MPEG4;
-		return matched(mpeg4s);
-    case AV_CODEC_ID_WMV3:
-        surfaceCount = NUM_VIDEO_SURFACES_VC1;
-		return matched(wmv3s);
-    case AV_CODEC_ID_VC1:
-        surfaceCount = NUM_VIDEO_SURFACES_VC1;
-		return matched(vc1s);
-    case AV_CODEC_ID_H264:
-        surfaceCount = NUM_VIDEO_SURFACES_H264;
-		return matched(h264s);
-    default:
-        break;
-    }
-    m_avctx = nullptr;
-    return NoProfile;
+		const QVector<VAProfile> mpeg2s = {VAProfileMPEG2Main, VAProfileMPEG2Simple};
+		const QVector<VAProfile> mpeg4s = {VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple};
+		const QVector<VAProfile> h264s = {VAProfileH264High, VAProfileH264Main, VAProfileH264Baseline};
+		const QVector<VAProfile> wmv3s = {VAProfileVC1Main, VAProfileVC1Simple};
+		const QVector<VAProfile> vc1s = {VAProfileVC1Advanced};
+		supported[AV_CODEC_ID_MPEG1VIDEO] = supported[AV_CODEC_ID_MPEG2VIDEO] = supports(mpeg2s, NUM_VIDEO_SURFACES_MPEG2);
+		supported[AV_CODEC_ID_MPEG4] = supports(mpeg4s, NUM_VIDEO_SURFACES_MPEG4);
+		supported[AV_CODEC_ID_WMV3] = supports(wmv3s, NUM_VIDEO_SURFACES_VC1);
+		supported[AV_CODEC_ID_VC1] = supports(vc1s, NUM_VIDEO_SURFACES_VC1);
+		supported[AV_CODEC_ID_H264] = supports(h264s, NUM_VIDEO_SURFACES_H264);
+	} while (0);
+	if (!ok)
+		profiles.clear();
 }
-#endif
 
-#ifdef Q_OS_LINUX
+void HwAccel::finalize() {
+	auto &info = Info::get();
+	if (info.display)
+		vaTerminate(info.display);
+	if (info.xdpy)
+		XCloseDisplay(info.xdpy);
+}
 
-HwAccel::HwAccel(AVCodecContext *avctx) {
+bool HwAccel::supports(AVCodecID codec) { return find(codec) != nullptr; }
+
+const HwAccel::ProfileInfo *HwAccel::find(AVCodecID codec) {
+	const auto &info = Info::get();
+	auto it = info.supported.find(codec);
+	return it != info.supported.end() && !it->profiles.isEmpty() ? &(*it) : nullptr;
+}
+
+HwAccel::HwAccel() {
+	memset(&m_ctx.ctx, 0, sizeof(m_ctx.ctx));
 	m_ctx.hwaccel = this;
-	m_vaImage.image_id = VA_INVALID_ID;
-	HwAccelInfo info;
-	if (!info.isAvailable())
-		return;
-    memset(&m_ctx.ctx, 0, sizeof(m_ctx.ctx));
-    m_width = avctx->width;
-    m_height = avctx->height;
-    if (m_width <= 0 || m_height <= 0)
-        return;
-    int count = 0;
-    m_profile = info.find(avctx->codec->id, count);
-    if (m_profile == HwAccelInfo::NoProfile)
-        return;
-    m_ids = QVector<VASurfaceID>(count, VA_INVALID_SURFACE);
-    VAConfigAttrib attr;
-    memset(&attr, 0, sizeof(attr));
-    attr.type = VAConfigAttribRTFormat;
-    if(vaGetConfigAttributes(info.display(), m_profile, VAEntrypointVLD, &attr, 1))
-        return;
-	if(!(attr.value & VA_RT_FORMAT_YUV420) && !(attr.value & VA_RT_FORMAT_YUV422))
-        return;
-    m_ctx.ctx.display = info.display();
-    m_ctx.ctx.config_id = VA_INVALID_ID;
-    m_ctx.ctx.context_id = VA_INVALID_ID;
-    if(vaCreateConfig(info.display(), m_profile, VAEntrypointVLD, &attr, 1, &m_ctx.ctx.config_id))
-        return;
-	if (vaCreateSurfaces(m_ctx.ctx.display, m_width, m_height, VA_RT_FORMAT_YUV420, m_ids.size(), m_ids.data())
-			&& vaCreateSurfaces(m_ctx.ctx.display, m_width, m_height, VA_RT_FORMAT_YUV422, m_ids.size(), m_ids.data()))
-		return;
-    if (vaCreateContext(m_ctx.ctx.display, m_ctx.ctx.config_id, m_width, m_height, VA_PROGRESSIVE, m_ids.data(), m_ids.size(), &m_ctx.ctx.context_id))
-        return;
-	VAImage vaImage;
-	if (vaDeriveImage(info.display(), m_ids[0], &vaImage) != VA_STATUS_SUCCESS) {
-		qDebug() << "vaDeriveImage() is not supported! CMPlayer supports vaDeriveImage() only.";
-		return;
+	m_ctx.ctx.config_id = m_ctx.ctx.context_id = m_vaImage.image_id = VA_INVALID_ID;
+	m_init = Info::get().ok && (m_ctx.ctx.display = Info::get().display);
+}
+
+void HwAccel::free() {
+	if (m_ctx.ctx.display) {
+		if (m_ctx.ctx.context_id != VA_INVALID_ID)
+			vaDestroyContext(m_ctx.ctx.display, m_ctx.ctx.context_id);
+		for (auto id : m_ids) {
+			if (id != VA_INVALID_SURFACE)
+				vaDestroySurfaces(m_ctx.ctx.display, &id, 1);
+		}
+		if (m_ctx.ctx.config_id != VA_INVALID_ID)
+			vaDestroyConfig(m_ctx.ctx.display, m_ctx.ctx.config_id);
 	}
-	vaDestroyImage(info.display(), vaImage.image_id);
-    for (auto id : m_ids)
-		m_freeIds.push_back(id);
-	m_avctx = avctx;
-	m_usable = true;
+	m_ctx.ctx.context_id = m_ctx.ctx.config_id = VA_INVALID_ID;
+	m_profile = (VAProfile)(-1);
+	m_ids.clear();
+	m_freeIds.clear();
+	m_usingIds.clear();
 }
 
-HwAccel::~HwAccel() {
-	HwAccelInfo info;
-	if (!info.isAvailable())
-		return;
-    if (m_ctx.ctx.display) {
-        if (m_ctx.ctx.context_id != VA_INVALID_ID)
-            vaDestroyContext(m_ctx.ctx.display, m_ctx.ctx.context_id);
-        for (auto id : m_ids) {
-            if (id != VA_INVALID_SURFACE)
-                vaDestroySurfaces(m_ctx.ctx.display, &id, 1);
-        }
-        if (m_ctx.ctx.config_id != VA_INVALID_ID)
-            vaDestroyConfig(m_ctx.ctx.display, m_ctx.ctx.config_id);
-    }
-}
-
-bool HwAccel::isCompatibleWith(const AVCodecContext *avctx) const {
-	if (!m_usable || m_width != avctx->width || m_height != avctx->height)
+bool HwAccel::set(AVCodecContext *avctx) {
+	avctx->hwaccel_context = nullptr;
+	m_usable = false;
+	if (!m_init)
 		return false;
-    HwAccelInfo info;
-	int count = 0;
-    auto profile = info.find(avctx->codec->id, count);
-    return profile != HwAccelInfo::NoProfile && profile == m_profile && m_ids.size() == count;
+	auto info = find(avctx->codec_id);
+	if (!info)
+		return false;
+	if (m_width != avctx->width || m_height != avctx->height || info->profiles.front() != m_profile) {
+		free();
+		m_width = avctx->width; m_height = avctx->height;
+		m_profile = info->profiles.front();
+		if (m_width <= 0 || m_height <= 0)
+			return false;
+		VAStatus status = VA_STATUS_SUCCESS;
+		do {
+			VAConfigAttrib attr = { VAConfigAttribRTFormat, 0 };
+			if((status = vaGetConfigAttributes(m_ctx.ctx.display, m_profile, VAEntrypointVLD, &attr, 1)) != VA_STATUS_SUCCESS)
+				break;
+			if(!(attr.value & VA_RT_FORMAT_YUV420) && !(attr.value & VA_RT_FORMAT_YUV422))
+				{ status = VA_STATUS_ERROR_FLAG_NOT_SUPPORTED; break; }
+			if((status = vaCreateConfig(m_ctx.ctx.display, m_profile, VAEntrypointVLD, &attr, 1, &m_ctx.ctx.config_id)) != VA_STATUS_SUCCESS)
+				break;
+			m_ids = QVector<VASurfaceID>(info->surfaceCount, VA_INVALID_SURFACE);
+			if ((status =vaCreateSurfaces(m_ctx.ctx.display, m_width, m_height, VA_RT_FORMAT_YUV420, m_ids.size(), m_ids.data())) != VA_STATUS_SUCCESS
+					&& (status = vaCreateSurfaces(m_ctx.ctx.display, m_width, m_height, VA_RT_FORMAT_YUV422, m_ids.size(), m_ids.data())) != VA_STATUS_SUCCESS)
+				break;
+			if ((status = vaCreateContext(m_ctx.ctx.display, m_ctx.ctx.config_id, m_width, m_height, VA_PROGRESSIVE, m_ids.data(), m_ids.size(), &m_ctx.ctx.context_id)) != VA_STATUS_SUCCESS)
+				break;
+			VAImage vaImage;
+			if ((status = vaDeriveImage(m_ctx.ctx.display, m_ids[0], &vaImage)) != VA_STATUS_SUCCESS)
+				break;
+			vaDestroyImage(m_ctx.ctx.display, vaImage.image_id);
+			for (auto id : m_ids)
+				m_freeIds.push_back(id);
+		} while(0);
+		if (status != VA_STATUS_SUCCESS) {
+			qDebug() << "vaapi:" << vaErrorStr(status);
+			return false;
+		}
+	}
+	avctx->hwaccel_context = &m_ctx.ctx;
+	m_usable = true;
+	return true;
+}
+
+mp_image &HwAccel::extract(mp_image *mpi) {
+	const auto id = (VASurfaceID)(uintptr_t)mpi->planes[3];
+	vaSyncSurface(m_ctx.ctx.display, id);
+	VAStatus status;
+	memset(&m_mpi, 0, sizeof(m_mpi));
+	do {
+		if ((status = vaDeriveImage(m_ctx.ctx.display, id, &m_vaImage)) != VA_STATUS_SUCCESS)
+			break;
+		uchar *temp = nullptr;
+		if ((status = vaMapBuffer(m_ctx.ctx.display, m_vaImage.buf, (void**)&temp)) != VA_STATUS_SUCCESS)
+			break;
+		m_mpi.imgfmt = m_vaImage.format.fourcc;
+		m_mpi.stride[0] = m_vaImage.pitches[0];
+		m_mpi.stride[1] = m_vaImage.pitches[1];
+		m_mpi.stride[2] = m_vaImage.pitches[2];
+		m_mpi.num_planes = m_vaImage.num_planes;
+		m_mpi.w = m_mpi.width = m_vaImage.width;
+		m_mpi.h = m_mpi.height = m_vaImage.height;
+		m_mpi.planes[0] = temp + m_vaImage.offsets[0];
+		m_mpi.planes[1] = temp + m_vaImage.offsets[1];
+		m_mpi.planes[2] = temp + m_vaImage.offsets[2];
+	} while (0);
+	if (status != VA_STATUS_SUCCESS)
+		qDebug() << "va(DeriveImage|MapBuffer)():" << vaErrorStr(status);
+	return m_mpi;
+}
+
+void HwAccel::clean() {
+	VAStatus status;
+	if ((status = vaUnmapBuffer(m_ctx.ctx.display, m_vaImage.buf)) != VA_STATUS_SUCCESS)
+		qDebug() << "va(UnmapBuffer)():" << vaErrorStr(status);
+	if (m_vaImage.image_id != VA_INVALID_ID) {
+		vaDestroyImage(m_ctx.ctx.display, m_vaImage.image_id);
+		m_vaImage.image_id = VA_INVALID_ID;
+	}
 }
 
 bool HwAccel::copyTo(mp_image_t *mpi, VideoFrame &frame) {
@@ -289,4 +279,5 @@ void HwAccel::releaseBuffer(void *data) {
 	}
 	m_freeIds.push_back(id);
 }
+
 #endif

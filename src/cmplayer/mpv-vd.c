@@ -61,18 +61,6 @@ static const vd_info_t info = {
 #error palette too large, adapt libmpcodecs/vf.c:vf_get_image
 #endif
 
-#ifdef __linux__
-extern int register_hwaccel_callbacks(AVCodecContext *avctx);
-extern int is_hwaccel_available(AVCodecContext *avctx);
-static inline int pixfmt_to_imgfmt(enum PixelFormat pixfmt) {
-    if (pixfmt == PIX_FMT_VAAPI_VLD) {
-        return IMGFMT_VDPAU;
-    } else
-        return pixfmt2imgfmt(pixfmt);
-}
-#define pixfmt2imgfmt pixfmt_to_imgfmt
-#endif
-
 typedef struct {
     AVCodecContext *avctx;
     AVFrame *pic;
@@ -89,6 +77,23 @@ typedef struct {
     AVRational last_sample_aspect_ratio;
     enum AVDiscard skip_frame;
 } vd_ffmpeg_ctx;
+
+#ifdef __linux__
+extern int register_hwaccel_callbacks(AVCodecContext *avctx);
+extern int is_hwaccel_activated(enum CodecID codec);
+extern void prepare_hwaccel(sh_video_t *sh, AVCodecContext *avctx);
+static inline int pixfmt_to_imgfmt(enum PixelFormat pixfmt) {
+	return (pixfmt == PIX_FMT_VAAPI_VLD) ? IMGFMT_VDPAU : pixfmt2imgfmt(pixfmt);
+}
+static int mpv_mpcodecs_config_vo(sh_video_t *sh, int w, int h, const unsigned int *outfmts, unsigned int preferred_outfmt) {
+	vd_ffmpeg_ctx *ctx = sh->context;
+	AVCodecContext *avctx = ctx->avctx;
+	prepare_hwaccel(sh, avctx);
+	return mpcodecs_config_vo(sh, w, h, outfmts, preferred_outfmt);
+}
+#define mpcodecs_config_vo mpv_mpcodecs_config_vo
+#define pixfmt2imgfmt pixfmt_to_imgfmt
+#endif
 
 #include "core/m_option.h"
 
@@ -199,8 +204,7 @@ static int init(sh_video_t *sh)
     avctx->codec_id = lavc_codec->id;
 
 #ifdef __linux__
-
-    if (is_hwaccel_available(avctx)) {
+	if (is_hwaccel_activated(avctx->codec_id)) {
         ctx->do_dr1    = true;
         ctx->do_slices = true;
         lavc_param->threads    = 1;
@@ -416,6 +420,7 @@ static void draw_slice(struct AVCodecContext *s,
 
 static int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
 {
+
     vd_ffmpeg_ctx *ctx = sh->context;
     AVCodecContext *avctx = ctx->avctx;
     float aspect = av_q2d(avctx->sample_aspect_ratio) *
@@ -464,8 +469,8 @@ static int init_vo(sh_video_t *sh, enum PixelFormat pix_fmt)
         sh->color_range = avcol_range_to_mp_csp_levels(avctx->color_range);
 
         if (!mpcodecs_config_vo(sh, sh->disp_w, sh->disp_h, supported_fmts,
-                                ctx->best_csp))
-            return -1;
+								ctx->best_csp))
+			return -1;
         ctx->vo_initialized = 1;
     }
     return 0;

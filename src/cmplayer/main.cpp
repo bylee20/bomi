@@ -1,11 +1,10 @@
 #include "app.hpp"
 #include "mrl.hpp"
 #include "mainwindow.hpp"
-#include "hwaccel.hpp"
 #include "playeritem.hpp"
 #include "videoformat.hpp"
 
-Q_DECLARE_METATYPE(QTextOption::WrapMode)
+//Q_DECLARE_METATYPE(QTextOption::WrapMode)
 
 int main(int argc, char **argv) {
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
@@ -14,8 +13,6 @@ int main(int argc, char **argv) {
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
 	PlayerItem::registerItems();
-
-    HwAccelInfo hwacc;
 
 	App app(argc, argv);
 	const auto mrl = app.getMrlFromCommandLine();
@@ -32,6 +29,5 @@ int main(int argc, char **argv) {
 	const int ret = app.exec();
 	mw->exit();
 	delete mw;
-    hwacc.finalize();
 	return ret;
 }
