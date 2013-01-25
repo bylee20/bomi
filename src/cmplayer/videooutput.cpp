@@ -21,7 +21,7 @@ void prepare_hwaccel(sh_video *sh, AVCodecContext *avctx) {
 		vf = vf->next;
 	}
 	if (vf)
-		static_cast<VideoOutput*>(vf->priv->vo->priv)->setAVCodecContext(avctx);
+		static_cast<VideoOutput*>(vf->priv->vo->priv)->prepare(avctx);
 }
 #endif
 }
@@ -106,7 +106,7 @@ bool VideoOutput::usingHwAccel() const {
 	return d->hwAcc.isUsable();
 }
 
-void VideoOutput::setAVCodecContext(void *avctx) {
+void VideoOutput::prepare(void *avctx) {
 	 d->hwAcc.set(static_cast<AVCodecContext*>(avctx));
 }
 
@@ -127,7 +127,7 @@ bool VideoOutput::getImage(void *data) {
 }
 
 void VideoOutput::drawImage(void *data) {
-	mp_image_t *mpi = reinterpret_cast<mp_image_t*>(data);
+	mp_image_t *mpi = static_cast<mp_image_t*>(data);
 	if (auto renderer = d->engine->videoRenderer()) {
 		VideoFrame &frame = renderer->getNextFrame();
 		frame.setFormat(d->format);
@@ -146,10 +146,10 @@ void VideoOutput::drawImage(void *data) {
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
-	VideoOutput *v = reinterpret_cast<VideoOutput*>(vo->priv);
+	VideoOutput *v = static_cast<VideoOutput*>(vo->priv);
 	switch (req) {
 	case VOCTRL_QUERY_FORMAT:
-		return v->queryFormat(*reinterpret_cast<uint32_t*>(data));
+		return v->queryFormat(*static_cast<uint32_t*>(data));
 	case VOCTRL_DRAW_IMAGE:
 		v->drawImage(data);
 		return VO_TRUE;
@@ -184,7 +184,7 @@ int VideoOutput::drawSlice(struct vo */*vo*/, uint8_t */*src*/[], int /*stride*/
 }
 
 void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
-	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
+	Data *d = static_cast<VideoOutput*>(vo->priv)->d;
 	if (auto r = d->engine->videoRenderer()) {
 		d->osd.w = d->format.width();
 		d->osd.h = d->format.height();
@@ -196,7 +196,7 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 }
 
 void VideoOutput::flipPage(struct vo *vo) {
-	Data *d = reinterpret_cast<VideoOutput*>(vo->priv)->d;
+	Data *d = static_cast<VideoOutput*>(vo->priv)->d;
 	if (!d->flip)
 		return;
 	if (auto renderer = d->engine->videoRenderer())
