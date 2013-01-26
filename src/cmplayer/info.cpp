@@ -11,7 +11,7 @@ Info::Info() {
 		dir.cd(".cmplayer");
 		m_privPath = dir.absolutePath();
 	}
-	m_videoExt << "asf" << "avi" << "dvix" << "flv" << "mkv" << "mov"
+	m_videoExt << "asf" << "avi" << "dvix" << "flv" << "m4v" << "mkv" << "mov"
 			<< "mp4" << "mpeg" << "mpg" << "vob"
 			<< "ogg" << "ogm"<< "qt" << "rm" << "rmvb" << "wmv";
 	m_audioExt << "mp3" << "ogg" << "ra" << "wav" << "wma";
