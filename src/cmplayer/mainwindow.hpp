@@ -37,6 +37,8 @@ private:
 	void appendSubFiles(const QStringList &files, bool checked, const QString &enc);
 	void setFullScreen(bool full);
 	void closeEvent(QCloseEvent *event);
+	void customEvent(QEvent *event);
+	int getStartTime(const Mrl &mrl);
 	void showEvent(QShowEvent *event);
 	void hideEvent(QHideEvent *event);
 	void keyPressEvent(QKeyEvent *event);

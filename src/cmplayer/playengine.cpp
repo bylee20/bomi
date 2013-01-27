@@ -53,11 +53,11 @@ template<> inline int &getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.
 template<> inline char *&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.s;}
 
 struct PlayEngine::Data {
-//	Mrl playingMrl;
+	QMutex mutex;
 	QByteArray fileName;
 	QTimer ticker = {};
 	bool quit = false, playing = false, init = false;
-	int initSeek = 0, start = 0, tick = 0;
+	int start = 0, tick = 0;
 	bool wasPlaying = false;
 	PlayEngine::Context *ctx = nullptr;
 	MPContext *mpctx = nullptr;
@@ -109,7 +109,7 @@ PlayEngine::PlayEngine()
 
 	connect(d->video, &VideoOutput::formatChanged, this, &PlayEngine::videoFormatChanged, Qt::QueuedConnection);
 	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
-		setMrl(row, d->getStartTime(d->playlist[row]), true);
+		load(row, d->getStartTime(d->playlist[row]));
 	});
 
 }
@@ -139,18 +139,16 @@ double PlayEngine::volumeNormalizer() const {
 	return volnorm_mul(d->mpctx);
 }
 
-bool PlayEngine::usingHwAcc() const {
-#ifdef Q_OS_MAC
-	return d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->codec && !strcmp(d->mpctx->sh_video->codec->name, "ffh264vda");
-#endif
-	return d->video->usingHwAccel();
+bool PlayEngine::isHwAccActivated() const {
+//#ifdef Q_OS_MAC
+//	return d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->codec && !strcmp(d->mpctx->sh_video->codec->name, "ffh264vda");
+//#endif
+	return d->video->isHwAccActivated();
 }
 
 void PlayEngine::setVideoAspect(double ratio) {
 	if (d->videoAspect != ratio)
 		emit videoAspectRatioChanged(d->videoAspect = ratio);
-//	if (m_renderer)
-//		m_renderer->setVideoAspectRaito(ratio);
 }
 
 int PlayEngine::currentSubtitleStream() const {
@@ -180,6 +178,7 @@ void PlayEngine::customEvent(QEvent *event) {
 	if (event->type() == StreamOpenEvent::Type) {
 		emit aboutToPlay();
 		emit started(d->playlist.loadedMrl());
+		d->start = 0;
 	}
 }
 
@@ -322,7 +321,7 @@ void PlayEngine::run() {
 
 	auto idle = [this, mpctx] () {
 		while (mpctx->opts.player_idle_mode && !mpctx->playlist->current && d->mpctx->stop_play != PT_QUIT) {
-			uninit_player(mpctx, INITIALIZED_AO);
+			uninit_player(mpctx, 0);
 			mp_cmd_t *cmd;
 			while (!(cmd = mp_input_get_cmd(mpctx->input, get_wakeup_period(d->mpctx)*1000, false)))
 				;
@@ -344,7 +343,7 @@ void PlayEngine::run() {
 		if (error == NoMpError) {
 			d->playing = true;
 			emit seekableChanged(isSeekable());
-			d->mpctx->opts.play_start.pos = d->initSeek*1e-3;
+			d->mpctx->opts.play_start.pos = d->start*1e-3;
 			d->mpctx->opts.play_start.type = REL_TIME_ABSOLUTE;
 			setmp("speed", (float)m_speed);
 			mixer_setvolume(&d->mpctx->mixer, mpVolume(), mpVolume());
@@ -372,8 +371,13 @@ void PlayEngine::run() {
 			setState(EngineFinished);
 			emit finished(mrl);
 			playlist_clear(mpctx->playlist);
-			auto mrl = d->playlist.nextMrl();
-			if (setMrl(d->playlist.next(), d->getStartTime(mrl), false)) {
+			if (d->playlist.hasNext()) {
+				const auto prev = d->playlist.loadedMrl();
+				d->playlist.setLoaded(d->playlist.next());
+				const auto mrl = d->playlist.loadedMrl();
+				if (prev != mrl)
+					emit mrlChanged(mrl);
+				d->start = d->getStartTime(mrl);
 				playlist_add(mpctx->playlist, playlist_entry_new(mrl.toString().toLocal8Bit()));
 				entry = mpctx->playlist->first;
 			} else
@@ -393,12 +397,9 @@ void PlayEngine::run() {
 		if (!mpctx->playlist->current && !mpctx->opts.player_idle_mode)
 			break;
 	}
-	qDebug() << "finalization started";
-//	vo_destroy(vo_cmplayer);
 	d->video->release();
 	mpctx_delete(d->mpctx);
 	d->mpctx = nullptr;
-	qDebug() << "mpctx deleted";
 	vo_cmplayer = nullptr;
 	emit finalized();
 }
@@ -414,32 +415,36 @@ void PlayEngine::quit() {
 }
 
 void PlayEngine::play(int time) {
-	d->initSeek = time;
+	d->start = time;
 	tellmp("loadfile", d->setFileName(d->playlist.loadedMrl()), 0);
 }
 
-bool PlayEngine::setMrl(int row, int start, bool play) {
+bool PlayEngine::load(int row, int start) {
 	if (!d->playlist.isValidRow(row))
 		return false;
-	if (d->playlist.loaded() != row) {
+	if (d->playlist.loaded() == row) {
+		if (start >= 0 && !d->playing)
+			play(start);
+	} else {
 		d->playlist.setLoaded(row);
-		d->start = start;
 		emit mrlChanged(d->playlist.loadedMrl());
-		if (play)
-			this->play(d->start);
-	} else if (play && !d->playing)
-		this->play(d->start);
+		if (start < 0)
+			stop();
+		else
+			play(start);
+	}
 	return true;
 }
 
-void PlayEngine::setMrl(const Mrl &mrl, int start, bool play) {
+void PlayEngine::load(const Mrl &mrl, bool play) {
+	load(mrl, play ? d->getStartTime(mrl) : -1);
+}
+
+void PlayEngine::load(const Mrl &mrl, int start) {
 	auto row = d->playlist.rowOf(mrl);
 	if (row < 0)
 		row = d->playlist.append(mrl);
-	setMrl(row, start, play);
-//	if (d->playlist.current() != mrl) {
-//		setMrl(row, start, play);
-//	}
+	load(row, start);
 }
 
 int PlayEngine::position() const {
@@ -458,13 +463,11 @@ bool PlayEngine::atEnd() const {
 	return d->mpctx->stop_play == AT_END_OF_FILE;
 }
 
-
 int PlayEngine::currentChapter() const {
 	if (d->playing)
 		return get_current_chapter(d->mpctx);
 	return -2;
 }
-
 
 void PlayEngine::onPausedChanged(MPContext *mpctx) {
 	PlayEngine *engine = reinterpret_cast<Context*>(mpctx)->p;
@@ -479,7 +482,7 @@ void PlayEngine::play() {
 		break;
 	case EngineStopped:
 	case EngineFinished:
-		play(d->start);
+		play(d->getStartTime(d->playlist.loadedMrl()));
 		break;
 	default:
 		break;
@@ -527,7 +530,6 @@ double PlayEngine::fps() const {
 
 void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
 	if (_Change(m_renderer, renderer)) {
-//		setVideoAspect(d->videoAspect);
 	}
 }
 

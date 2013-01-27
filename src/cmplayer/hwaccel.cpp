@@ -1,7 +1,7 @@
 #include "pref.hpp"
 #include "hwaccel.hpp"
 
-extern "C" int is_hwaccel_activated(CodecID codec) {
+extern "C" int is_hwaccel_usable(CodecID codec) {
 	return cPref.enable_hwaccel && cPref.hwaccel_codecs.contains(codec) && HwAccel::supports(codec);
 }
 
@@ -11,15 +11,16 @@ QList<AVCodecID> HwAccel::fullCodecList() {
 		<< AV_CODEC_ID_WMV3 << AV_CODEC_ID_VC1 << AV_CODEC_ID_H264;
 }
 
-HwAccel::Info &HwAccel::Info::get() { static Info info; return info; }
-
 #ifdef Q_OS_MAC
-HwAccel::HwAccel() { m_usable = true; }
+HwAccel::HwAccel() { m_init = true; }
 bool HwAccel::supports(AVCodecID codec) { return codec == AV_CODEC_ID_H264; }
+bool HwAccel::set(AVCodecContext *avctx) { return m_on = (avctx->codec && !strcmp(avctx->codec->name, "h264_vda")); }
 #endif
 
 #ifdef Q_OS_LINUX
 #include "videoframe.hpp"
+
+HwAccel::Info &HwAccel::Info::get() { static Info info; return info; }
 
 extern "C" {
 static void (*vd_ffmpeg_release_buffer)(AVCodecContext *, AVFrame*) = nullptr;

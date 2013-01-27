@@ -78,13 +78,7 @@ typedef struct {
     enum AVDiscard skip_frame;
 } vd_ffmpeg_ctx;
 
-#ifdef __linux__
-extern int register_hwaccel_callbacks(AVCodecContext *avctx);
-extern int is_hwaccel_activated(enum CodecID codec);
 extern void prepare_hwaccel(sh_video_t *sh, AVCodecContext *avctx);
-static inline int pixfmt_to_imgfmt(enum PixelFormat pixfmt) {
-	return (pixfmt == PIX_FMT_VAAPI_VLD) ? IMGFMT_VDPAU : pixfmt2imgfmt(pixfmt);
-}
 static int mpv_mpcodecs_config_vo(sh_video_t *sh, int w, int h, const unsigned int *outfmts, unsigned int preferred_outfmt) {
 	vd_ffmpeg_ctx *ctx = sh->context;
 	AVCodecContext *avctx = ctx->avctx;
@@ -92,6 +86,12 @@ static int mpv_mpcodecs_config_vo(sh_video_t *sh, int w, int h, const unsigned i
 	return mpcodecs_config_vo(sh, w, h, outfmts, preferred_outfmt);
 }
 #define mpcodecs_config_vo mpv_mpcodecs_config_vo
+#ifdef __linux__
+extern int register_hwaccel_callbacks(AVCodecContext *avctx);
+extern int is_hwaccel_activated(enum CodecID codec);
+static inline int pixfmt_to_imgfmt(enum PixelFormat pixfmt) {
+	return (pixfmt == PIX_FMT_VAAPI_VLD) ? IMGFMT_VDPAU : pixfmt2imgfmt(pixfmt);
+}
 #define pixfmt2imgfmt pixfmt_to_imgfmt
 #endif
 

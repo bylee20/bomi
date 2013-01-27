@@ -86,7 +86,7 @@ MpMessage::~MpMessage() {
 
 void MpMessage::_parse(const QString &line) {
 	auto id = MpMessage::id(line);
-//	qDebug() << "mpv:" << qPrintable(line);
+	qDebug() << "mpv:" << qPrintable(line);
 	if (id.name.isEmpty()) {
 		for (auto p : parsers)
 			if (p->parse(line))

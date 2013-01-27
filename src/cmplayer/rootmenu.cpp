@@ -245,7 +245,6 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	skin->setShortcut(Qt::Key_R + Qt::CTRL);
 	tool->addSeparator();
 	QAction *playInfo = tool->addAction(_L("playinfo"));
-	playInfo->setCheckable(true);
 	playInfo->setShortcut(Qt::Key_Tab);
 	tool->addSeparator();
 	tool->addAction(_L("auto-exit"), true);

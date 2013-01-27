@@ -33,6 +33,8 @@ public:
 	int previous() const {return m_loaded-1;}
 	Mrl nextMrl() const {return m_list.value(m_loaded + 1);}
 	Mrl previousMrl() const {return m_list.value(m_loaded - 1);}
+	bool hasNext() const {return isValidRow(next());}
+	bool hasPrevious() const {return isValidRow(previous());}
 	bool swap(int r1, int r2);
 	Mrl loadedMrl() const {return m_list.value(m_loaded);}
 	void merge(const Playlist &playlist);

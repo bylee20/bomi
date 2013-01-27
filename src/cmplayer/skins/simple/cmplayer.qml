@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import CMPlayer 1.0
+import CMPlayerCore 1.0
 import "qml"
 
 Rectangle {
@@ -7,20 +7,25 @@ Rectangle {
 	Player {
 		id: player
 		anchors { top: parent.top; bottom: controls.top; left: parent.left; right: parent.right }
-		infoView: PlayInfoOsd {	parent: player;	info: player.info }
 
 		TextOsd { id: msgosd; anchors.fill: parent }
 		onMessageRequested: { msgosd.text = message; msgosd.show(); }
 
 		ProgressOsd { id: timeline;  anchors.fill: parent }
-		info.onTick: { timeline.value = info.time/info.duration; timetext.secs = (info.time*1e-3).toFixed(0) }
+		onTick: { timeline.value = time/duration; timetext.secs = (time*1e-3).toFixed(0) }
 		onSought: {timeline.show();}
 
-		info.onFullScreenChanged: {
-			if (info.fullScreen) { anchors.bottom = parent.bottom; controls.hide(); }
+		onFullScreenChanged: {
+			if (fullScreen) { anchors.bottom = parent.bottom; controls.hide(); }
 			else { anchors.bottom = controls.top; controls.show() }
 		}
-		Logo { id: logo; anchors.fill: parent; visible: player.info.state == PlayInfo.Stopped }
+
+		PlayInfoOsd {
+			objectName: "playinfo"; parent: player; player: player
+			visible: true
+		}
+
+		Logo { id: logo; anchors.fill: parent; visible: player.state == Player.Stopped }
 
 		function showSize() { msgosd.text = "%1x%2".arg(width).arg(height); msgosd.show() }
 		onHeightChanged: showSize()
@@ -29,7 +34,7 @@ Rectangle {
 //playlistview.width = Math.min(width*0.4, playlistview.contentWidth())
 		Rectangle {
 			id: playlistcontrol
-			objectName: "playlistview"
+			objectName: "playlist"
 			y: 20
 			color: "gray"
 			opacity: 0.8
@@ -62,7 +67,7 @@ Rectangle {
 
 		Rectangle {
 			id: historycontrol
-			objectName: "historyview"
+			objectName: "history"
 			y: 20
 			color: "gray"
 			opacity: 0.8
@@ -107,7 +112,7 @@ Rectangle {
 				anchors.fill: parent
 				anchors.margins: 2
 				smooth: true
-				source: (player.info.state == PlayInfo.Playing) ? "pause.png" : "play.png"
+				source: (player.state == Player.Playing) ? "pause.png" : "play.png"
 			}
 			MouseArea {
 				anchors.fill: parent
@@ -126,8 +131,8 @@ Rectangle {
 			anchors.left: playPause.right
 			anchors.margins: 5
 			anchors.leftMargin: 2
-			value: player.info.time/player.info.duration
-			onPressed: player.seek(Math.floor(player.info.duration*target))
+			value: player.time/player.duration
+			onPressed: player.seek(Math.floor(player.duration*target))
 		}
 		Text {
 			id: timetext
@@ -136,8 +141,8 @@ Rectangle {
 			anchors.bottom: parent.bottom
 			anchors.right: volumeslider.left
 			width: contentWidth
-			text: "%1/%2".arg(player.info.msecToString(secs*1000.0)).arg(player.info.msecToString(player.info.duration))
-			font.family: player.info.monospace
+			text: "%1/%2".arg(Util.msecToString(secs*1000.0)).arg(Util.msecToString(player.duration))
+			font.family: Util.monospace
 			font.pixelSize: 10
 			anchors.margins: timeslider.anchors.margins
 			verticalAlignment: Text.AlignVCenter
@@ -149,7 +154,7 @@ Rectangle {
 			anchors.right: parent.right
 			anchors.margins: timeslider.anchors.margins
 			width: 100
-			value: player.info.volume*1e-2
+			value: player.volume*1e-2
 			onPressed: player.setVolume(Math.floor(100.0*target))
 			onDragged: player.setVolume(Math.floor(100.0*target))
 		}
@@ -168,10 +173,10 @@ Rectangle {
 
 	MouseArea {
 		anchors.fill: parent
-		hoverEnabled: player.info.fullScreen
+		hoverEnabled: player.fullScreen
 		onPressed: {mouse.accepted = false}
 		onPositionChanged: {
-			if (player.info.fullScreen) {
+			if (player.fullScreen) {
 				var my = parent.height - mouse.y;
 				var contains = 0 <= my && my <= controls.height;
 				if (contains)

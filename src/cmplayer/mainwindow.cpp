@@ -25,11 +25,20 @@
 #include "playlist.hpp"
 #include "subtitle_parser.hpp"
 
+class AskStartTimeEvent : public QEvent {
+public:
+	static const QEvent::Type Type = (QEvent::Type)(QEvent::User + 1);
+	AskStartTimeEvent(const Mrl &mrl, int start): QEvent(Type), mrl(mrl), start(start) {}
+	Mrl mrl;
+	int start;
+};
+
 struct MainWindow::Data {
 	PlayerItem *player = nullptr;
 	RootMenu menu;	RecentInfo recent;
 	const Pref &p = cPref;
 	PlayEngine engine;
+	bool middleClicked = false;
 	VideoRendererItem renderer;
 	SubtitleRendererItem subtitle;
 	QPoint prevPos;		QTimer hider;
@@ -50,29 +59,7 @@ struct MainWindow::Data {
 #endif
 	QString filePath;
 // methods
-
-	int getStartTime(const Mrl &mrl) const {
-		if (!p.remember_stopped)
-			return 0;
-		const int start = history.stoppedTime(mrl);
-		if (start <= 0)
-			return 0;
-		if (p.ask_record_found) {
-			const QDateTime date = history.stoppedDate(mrl);
-			const QString title = tr("Stopped Record Found");
-			const QString text = tr("This file was stopped during its playing before.\n"
-				"Played Date: %1\nStopped Time: %2\n"
-				"Do you want to start from where it's stopped?\n"
-				"(You can configure not to ask anymore in the preferecences.)")
-				.arg(date.toString(Qt::ISODate)).arg(_MSecToString(start, "h:mm:ss"));
-			const QMessageBox::StandardButtons b = QMessageBox::Yes | QMessageBox::No;
-			if (QMessageBox::question(QApplication::activeWindow(), title, text, b) != QMessageBox::Yes)
-				return 0;
-		}
-		qDebug() << start << mrl.displayName();
-		return start;
-	}
-
+	int startFromStopped = -1;
 	Playlist generatePlaylist(const Mrl &mrl) {
 		if (!mrl.isLocalFile() || !cPref.enable_generate_playist)
 			return Playlist(mrl);
@@ -138,7 +125,7 @@ struct MainWindow::Data {
 		} else
 			return;
 		d->playlist.merge(playlist);
-		d->engine.setMrl(mrl, getStartTime(mrl), mode.start_playback);
+		d->engine.load(mrl, mode.start_playback);
 		if (!mrl.isDvd())
 			d->recent.stack(mrl);
 	}
@@ -344,7 +331,7 @@ MainWindow::MainWindow(): d(new Data) {
 	d->engine.start();
 	if (!d->engine.isInitialized())
 		d->engine.msleep(1);
-	d->engine.setGetStartTimeFunction([this] (const Mrl &mrl){return d->getStartTime(mrl);});
+	d->engine.setGetStartTimeFunction([this] (const Mrl &mrl){return getStartTime(mrl);});
 	setFlags(flags() | Qt::WindowFullscreenButtonHint);
 	setResizeMode(QQuickView::SizeRootObjectToView);
 	d->engine.setVideoRenderer(&d->renderer);
@@ -388,10 +375,8 @@ MainWindow::MainWindow(): d(new Data) {
 		if (!d->stateChanging) {
 			if (pause)
 				d->engine.pause();
-			else if (d->engine.isPaused())
-				d->engine.play();
 			else
-				d->engine.play(d->getStartTime(d->engine.mrl()));
+				d->engine.play();
 		}
 	});
 	connect(play("repeat").g(), &ActionGroup::triggered, [this] (QAction *a) {
@@ -539,29 +524,21 @@ MainWindow::MainWindow(): d(new Data) {
 		const int diff = a->data().toInt(); const int delay = diff ? d->subtitle.delay() + diff : 0;
 		d->subtitle.setDelay(delay); showMessage("Subtitle Sync", delay*0.001, "sec", true);
 	});
-
-	connect(tool["playlist"], &QAction::triggered, [this] () {
+	auto toggleItem = [this] (const char *name) {
 		if (d->player) {
-			auto view = rootObject()->findChild<QObject*>("playlistview");
-			if (view)
-				view->setProperty("visible", !view->property("visible").toBool());
+			auto item = rootObject()->findChild<QObject*>(name);
+			if (item)
+				item->setProperty("visible", !item->property("visible").toBool());
 		}
-	});
-	connect(tool["history"], &QAction::triggered, [this] () {
-		if (d->player) {
-			auto view = rootObject()->findChild<QObject*>("historyview");
-			if (view)
-				view->setProperty("visible", !view->property("visible").toBool());
-		}
-	});
-	connect(tool["subtitle"], &QAction::triggered, [this] () {
-		d->subtitleView.setVisible(!d->subtitleView.isVisible());
-	});
+	};
+	connect(tool["playlist"], &QAction::triggered, [toggleItem] () {toggleItem("playlist");});
+	connect(tool["history"], &QAction::triggered, [toggleItem] () {toggleItem("history");});
+	connect(tool["playinfo"], &QAction::triggered, [toggleItem] () {toggleItem("playinfo");});
+	connect(tool["subtitle"], &QAction::triggered, [this] () {d->subtitleView.setVisible(!d->subtitleView.isVisible());});
 	connect(tool["pref"], &QAction::triggered, [this] () {
 		if (!d->prefDlg) {d->prefDlg = new PrefDialog; connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));} d->prefDlg->show();
 	});
 	connect(tool["reload-skin"], &QAction::triggered, this, &MainWindow::reloadSkin);
-	connect(tool["playinfo"], &QAction::toggled, [this](bool v) {if (d->player) d->player->setInfoVisible(v);});
 	connect(tool["auto-exit"], &QAction::toggled, [this] (bool on) {
 		showMessage((AppState::get().auto_exit = on) ? tr("Exit CMPlayer when the playlist has finished.") : tr("Auto-exit is canceled."));
 	});
@@ -680,7 +657,7 @@ MainWindow::MainWindow(): d(new Data) {
 	applyPref();
 
 	d->engine.setPlaylist(d->recent.lastPlaylist());
-	d->engine.setMrl(d->recent.lastMrl(), d->getStartTime(d->recent.lastMrl()), false);
+	d->engine.load(d->recent.lastMrl());
 	updateRecentActions(d->recent.openList());
 
 	d->winState = d->prevWinState = windowState();
@@ -779,7 +756,7 @@ void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
 			d->engine.setPlaylist(Playlist(mrl, enc));
 		} else {
 			d->engine.setPlaylist(d->generatePlaylist(mrl));
-			d->engine.setMrl(mrl, d->getStartTime(mrl), true);
+			d->engine.load(mrl, true);
 			if (!mrl.isDvd())
 				d->recent.stack(mrl);
 		}
@@ -832,6 +809,7 @@ void MainWindow::setVideoSize(double rate) {
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event) {
+	d->middleClicked = false;
 	QQuickView::mousePressEvent(event);
 	if (event->isAccepted())
 		return;
@@ -844,8 +822,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 		d->prevPos = event->globalPos();
 		break;
 	case Qt::MiddleButton:
-		if (QAction *action = d->menu.middleClickAction(event->modifiers()))
-			action->trigger();
+		d->middleClicked = true;
 		break;
 	case Qt::RightButton:
 		showContextMenu = true;
@@ -885,6 +862,11 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
 	if (d->moving) {
 		d->moving = false;
 		d->prevPos = QPoint();
+	}
+	const auto rect = geometry();
+	if (d->middleClicked && event->button() == Qt::MiddleButton && rect.contains(event->localPos().toPoint()+rect.topLeft())) {
+		if (QAction *action = d->menu.middleClickAction(event->modifiers()))
+			action->trigger();
 	}
 	QQuickView::mouseReleaseEvent(event);
 }
@@ -945,7 +927,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
 				playlist = d->generatePlaylist(mrl);
 		}
 		d->playlist.merge(playlist);
-		d->engine.setMrl(mrl, d->getStartTime(mrl), mode.start_playback);
+		d->engine.load(mrl, mode.start_playback);
 	} else if (!subList.isEmpty())
 		appendSubFiles(subList, true, d->p.sub_enc);
 }
@@ -972,7 +954,6 @@ void MainWindow::reloadSkin() {
 }
 
 void MainWindow::applyPref() {
-
 	int time = -1;
 	switch (d->engine.state()) {
 	case EnginePlaying:
@@ -995,7 +976,7 @@ void MainWindow::applyPref() {
     d->tray->setVisible(d->p.enable_system_tray);
 #endif
 	if (time >= 0)
-		d->engine.play(time);
+		d->engine.load(d->engine.mrl(), time);
 }
 
 template<typename Slot>
@@ -1132,4 +1113,44 @@ void MainWindow::appendSubFiles(const QStringList &files, bool checked, const QS
 			d->subtitle.load(file, enc, checked);
 		d->sync_subtitle_file_menu();
 	}
+}
+
+void MainWindow::customEvent(QEvent *event) {
+	if (event->type() == AskStartTimeEvent::Type) {
+		const auto ev = static_cast<AskStartTimeEvent*>(event);
+		const QDateTime date = d->history.stoppedDate(ev->mrl);
+		const QString title = tr("Stopped Record Found");
+		const QString text = tr("This file was stopped during its playing before.\n"
+			"Played Date: %1\nStopped Time: %2\n"
+			"Do you want to start from where it's stopped?\n"
+			"(You can configure not to ask anymore in the preferecences.)")
+			.arg(date.toString(Qt::ISODate)).arg(_MSecToString(ev->start, "h:mm:ss"));
+		const QMessageBox::StandardButtons b = QMessageBox::Yes | QMessageBox::No;
+		if (QMessageBox::question(QApplication::activeWindow(), title, text, b, QMessageBox::Yes) == QMessageBox::Yes)
+			d->startFromStopped = 1;
+		else
+			d->startFromStopped = 0;
+	}
+}
+
+int MainWindow::getStartTime(const Mrl &mrl) {
+	if (!d->p.remember_stopped)
+		return 0;
+	const int start = d->history.stoppedTime(mrl);
+	if (start <= 0)
+		return 0;
+	if (d->p.ask_record_found) {
+		if (QThread::currentThread() == &d->engine) {
+			d->startFromStopped = -1;
+			qApp->postEvent(this, new AskStartTimeEvent(mrl, start));
+			while (d->startFromStopped == -1)
+				d->engine.msleep(50);
+		} else {
+			AskStartTimeEvent event(mrl, start);
+			qApp->sendEvent(this, &event);
+		}
+		if (d->startFromStopped <= 0)
+			return 0;
+	}
+	return start;
 }

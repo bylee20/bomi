@@ -123,7 +123,8 @@ HEADERS += playengine.hpp \
     globalqmlobject.hpp \
     historymodel.hpp \
     shadervar.h \
-    subtitlestyle.h
+    subtitlestyle.h \
+    resourcemonitor.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -189,7 +190,8 @@ SOURCES += main.cpp \
     mpv-vd.c \
     mpv-main.c \
     shadervar.cpp \
-    subtitlestyle.cpp
+    subtitlestyle.cpp \
+    resourcemonitor.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp

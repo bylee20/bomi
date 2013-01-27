@@ -22,19 +22,19 @@ class HwAccel {
 public:
 	static QList<AVCodecID> fullCodecList();
 	static bool supports(AVCodecID codec);
+	bool isActivated() const {return m_on;}
+	bool set(AVCodecContext *avctx);
+	HwAccel();
 #ifdef Q_OS_LINUX
 	static void finalize();
 	struct Context { vaapi_context ctx; HwAccel *hwaccel = nullptr; };
-	HwAccel();
 	~HwAccel() { free(); }
-	bool isUsable() const {return m_usable;}
 	bool setBuffer(mp_image_t *mpi);
 	void releaseBuffer(void *data);
 	mp_image &extract(mp_image *mpi);
 	void clean();
 	void afterCopy();
 	bool copyTo(mp_image_t *mpi, VideoFrame &frame);
-	bool set(AVCodecContext *avctx);
 private:
 	struct ProfileInfo { QVector<VAProfile> profiles; int surfaceCount = 0; };
 	struct Info {
@@ -46,13 +46,13 @@ private:
 	void free();
 	Context m_ctx;
 	int m_width = 0, m_height = 0;
-	bool m_usable = false, m_init = false;
 	QVector<VASurfaceID> m_ids;
 	QLinkedList<VASurfaceID> m_freeIds, m_usingIds;
 	VAProfile m_profile = (VAProfile)(-1);
 	VAImage m_vaImage;
 	mp_image m_mpi;
 #endif
+	bool m_on = false, m_init = false;
 };
 
 #endif // HWACCEL_HPP

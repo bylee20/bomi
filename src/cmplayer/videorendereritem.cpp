@@ -5,7 +5,7 @@
 
 struct VideoRendererItem::Data {
 	VideoFrame frame, next;
-	bool frameChanged = false, quit = false;
+	bool /*frameChanged = false, */quit = false;
 	QRectF vtx;
 	QPoint offset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
@@ -48,18 +48,13 @@ VideoFrame &VideoRendererItem::getNextFrame() const {
 }
 
 void VideoRendererItem::next() {
-	if (!d->frameChanged) {
-		d->mutex.lock();
-		d->frameChanged = true;
-		d->frame.swap(d->next);
-		d->mposd->endNewFrame();
-		update();
-		if (!d->quit && d->frame.id() != d->frameId) {
-			if (!d->wait.wait(&d->mutex, 10000u))
-				qDebug() << "maybe a frame dropped?";
-		}
-		d->mutex.unlock();
-	}
+	d->mutex.lock();
+	d->frame.swap(d->next);
+	d->mposd->endNewFrame();
+	d->mutex.unlock();
+	update();
+//	while (!d->quit && d->frame.id() != d->frameId && !d->wait.wait(&d->mutex, 500u)) ;
+
 }
 
 QRectF VideoRendererItem::screenRect() const {
@@ -415,18 +410,9 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 }
 
 void VideoRendererItem::beforeUpdate() {
-//	qDebug() << d->frameChanged << "check";
-//	if (!d->frameChanged)
-//		return;
-	if (d->frame.id() == d->frameId) {
+	QMutexLocker locker(&d->mutex);
+	if (d->frame.id() == d->frameId)
 		return;
-	}
-
-//	qDebug() << d->frameChanged << "try lock";
-//	QMutexLocker locker(&d->mposd->mutex());
-	d->mutex.lock();
-//	qDebug() << d->frameChanged << "lock acquired";
-//	qDebug() << "new frame" << d->frame.format().isEmpty() << d->frame.format().width() << d->frame.format().height();
 	if (d->format != d->frame.format()) {
 		d->format = d->frame.format();
 		d->mposd->setFrameSize(d->format.size());
@@ -437,7 +423,6 @@ void VideoRendererItem::beforeUpdate() {
     if (d->shaderType != d->format.type())
 		resetNode();
 	if (!d->format.isEmpty()) {
-//		qDebug() << d->frameChanged << "bind";
 		const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
 		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
 			glBindTexture(GL_TEXTURE_2D, texture(idx));
@@ -471,11 +456,8 @@ void VideoRendererItem::beforeUpdate() {
 		}
 		++(d->drawnFrames);
 	}
-	d->frameChanged = false;
 	d->frameId = d->frame.id();
 	d->wait.wakeAll();
-	d->mutex.unlock();
-//	qDebug() << d->frameChanged << "unlock";
 }
 
 void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
@@ -497,7 +479,7 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	xy += offset;
 	if (d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter)))
 		emit screenRectChanged(d->letterbox->screen());
-    set(tp, d->vtx.translated(offset), QRectF(0.0, 0.0,  _Ratio(d->format.width(), d->format.drawWidth()), 1.0));
+	set(tp, d->vtx.translated(offset), QRectF(0.0, 0.0, _Ratio(d->format.width(), d->format.drawWidth()), 1.0));
 }
 
 void VideoRendererItem::initializeTextures() {

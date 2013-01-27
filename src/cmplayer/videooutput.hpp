@@ -15,7 +15,7 @@ public:
 	struct vo *vo_create(MPContext *mpctx);
 	void prepare(void *avctx);
 	void release();
-	bool usingHwAccel() const;
+	bool isHwAccActivated() const;
 	const VideoFormat &format() const;
 signals:
 	void formatChanged(const VideoFormat &format);

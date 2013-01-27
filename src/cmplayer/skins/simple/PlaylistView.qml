@@ -1,11 +1,10 @@
 import QtQuick 2.0
-import CMPlayer 1.0
+import CMPlayerCore 1.0
 import "qml"
 
 Rectangle {
 	id: frame
 	border {width: 1; color: "black"}
-//	color: "transparent"
 	gradient: Gradient {
 		GradientStop {position: 0.0; color: "#ccc"}
 		GradientStop {position: 1.0; color: "#333"}

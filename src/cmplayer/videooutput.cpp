@@ -11,6 +11,8 @@ extern "C" {
 #include <sub/sub.h>
 #include <video/filter/vf.h>
 #ifdef Q_OS_LINUX
+
+#endif
 extern vf_info_t vf_info_vo;
 struct vf_priv_s { struct vo *vo; };
 void prepare_hwaccel(sh_video *sh, AVCodecContext *avctx) {
@@ -23,7 +25,6 @@ void prepare_hwaccel(sh_video *sh, AVCodecContext *avctx) {
 	if (vf)
 		static_cast<VideoOutput*>(vf->priv->vo->priv)->prepare(avctx);
 }
-#endif
 }
 
 
@@ -31,9 +32,7 @@ struct VideoOutput::Data {
 	vo_driver driver;
 	vo_info_t info;
 	VideoFormat format;
-#ifdef Q_OS_LINUX
 	HwAccel hwAcc;
-#endif
 	mp_osd_res osd;
 	mp_image_t *mpimg = nullptr;
 	VideoFrame *frame = nullptr;
@@ -74,7 +73,9 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 }
 
 VideoOutput::~VideoOutput() {
+#ifdef Q_OS_LINUX
 	d->hwAcc.finalize();
+#endif
 }
 
 struct vo *VideoOutput::vo_create(MPContext *mpctx) {
@@ -102,8 +103,8 @@ const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
-bool VideoOutput::usingHwAccel() const {
-	return d->hwAcc.isUsable();
+bool VideoOutput::isHwAccActivated() const {
+	return d->hwAcc.isActivated();
 }
 
 void VideoOutput::prepare(void *avctx) {

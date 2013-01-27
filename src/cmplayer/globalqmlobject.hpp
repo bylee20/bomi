@@ -12,6 +12,7 @@ public:
 	Q_INVOKABLE double textWidth(const QString &text, int size) const;
 	Q_INVOKABLE double textWidth(const QString &text, int size, const QString &family) const;
 	QString monospace() const;
+	Q_INVOKABLE QString msecToString(int ms) {return Pch::__null_time.addSecs(qRound((double)ms*1e-3)).toString(_L("h:mm:ss"));}
 	static bool isDoubleClicked() {return m_dbc;}
 	static void setDoubleClicked(bool dbc) {m_dbc = dbc;}
 private:

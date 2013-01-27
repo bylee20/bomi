@@ -60,9 +60,8 @@ public:
 	double speed() const {return m_speed;}
 	QString mediaName() const;
 	EngineState state() const {return m_state;}
-	void play(int time);
-	void setMrl(const Mrl &mrl, int start, bool play);
-	bool setMrl(int row, int start, bool play);
+	void load(const Mrl &mrl, int start = -1);
+	void load(const Mrl &mrl, bool play);
 	void setSpeed(double speed) {if (_ChangeZ(m_speed, speed)) {setmp("speed", speed);}}
 	const DvdInfo &dvd() const {return m_dvd;}
 	int currentDvdTitle() const {return m_title;}
@@ -75,7 +74,7 @@ public:
 	void setCurrentChapter(int id) {setmp("chapter", id);}
 	bool hasVideo() const;
 	bool frameDrop() const {return m_framedrop;}
-	bool usingHwAcc() const;
+	bool isHwAccActivated() const;
 	void setFrameDrop(bool on) {tellmp("frame_drop", (m_framedrop = on) ? 1 : 0);}
 	void setAudioFilter(const QString &af, bool on);
 	bool hasAudioFilter(const QString &af) const {return m_af.contains(af);}
@@ -132,6 +131,8 @@ signals:
 private:
 	static void onPausedChanged(MPContext *mpctx);
 	static void onPlayStarted(MPContext *mpctx);
+	bool load(int row, int start = -1);
+	void play(int time);
 	void clear();
 	void setmp(const char *name, int value);
 	void setmp(const char *name, float value);

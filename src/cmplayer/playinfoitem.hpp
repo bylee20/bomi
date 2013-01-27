@@ -73,95 +73,95 @@ public:
 	int nth() const {return m_nth;}
 	int count() const {return m_count;}
 private:
-	friend class PlayInfoItem;
+	friend class PlayerItem;
 	QString m_name;
 	Mrl m_mrl;
 	int m_nth = 0, m_count = 0;
 };
 
-class PlayInfoItem : public QQuickItem, public Skin {
-	Q_OBJECT
-public:
-	Q_ENUMS(State)
-	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Opening = 16, Buffering = 32, Error = 64, Preparing = 128};
-private:
-	Q_PROPERTY(MediaInfoObject *media READ media NOTIFY mediaChanged)
-	Q_PROPERTY(AvInfoObject *audio READ audio NOTIFY videoChanged)
-	Q_PROPERTY(AvInfoObject *video READ video NOTIFY audioChanged)
-	Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
-	Q_PROPERTY(int time READ position NOTIFY tick)
-	Q_PROPERTY(int volume READ volume NOTIFY volumeChanged)
-	Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
-	Q_PROPERTY(bool volumeNormalized READ isVolumeNormalized NOTIFY volumeNormalizedChanged)
-	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
-	Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
-	Q_PROPERTY(double avgsync READ avgsync)
-	Q_PROPERTY(double avgfps READ avgfps)
-	Q_PROPERTY(double totalMemory READ totalMemory)
-	Q_PROPERTY(double memory READ memory)
-	Q_PROPERTY(double cpu READ cpu)
-	Q_PROPERTY(double avgbps READ avgbps)
-	Q_PROPERTY(State state READ state NOTIFY stateChanged)
-	Q_PROPERTY(QString stateText READ stateText)
-	Q_PROPERTY(QString monospace READ monospace)
-public:
-	PlayInfoItem(QQuickItem *parent = nullptr);
-	~PlayInfoItem();
-	double avgsync() const {return m_avSync;}
-	double avgfps() const {return m_fps;}
-	double avgbps() const {return m_bps;}
-	int duration() const {return m_duration;}
-	int position() const {return m_position;}
-	AvInfoObject *audio() const {return m_audio;}
-	AvInfoObject *video() const {return m_video;}
-	MediaInfoObject *media() const {return m_media;}
-	State state() const {return m_state;}
-	void set(const PlayEngine *engine);
-	void setDuration(int duration) {if (m_duration != duration) emit durationChanged(m_duration = duration);}
-	void setPosition(int pos) {if (m_position != pos) emit tick(m_position = pos);}
-	void setState(State state) {if (m_state != state) emit stateChanged(m_state = state);}
-	int totalMemory() const {return m_totmem;}
-	int memory() const {return m_mem;}
-	Q_INVOKABLE void collect();
-	Q_INVOKABLE QString msecToString(int ms) {return Pch::__null_time.addSecs(qRound((double)ms*1e-3)).toString(_L("h:mm:ss"));}
-	bool isVolumeNormalized() const {return m_volnorm;}
-	double volumeNormalizer() const {return m_norm;}
-	double cpu() const {return m_cpu;}
-	QString stateText() const;
-	QString monospace() const;
-	int volume() const {return m_volume;}
-	bool isFullScreen() const {return m_fullScreen;}
-	bool isMuted() const {return m_muted;}
-	void setPlaylist(const PlaylistModel *playlist);
-signals:
-	void mutedChanged(bool muted);
-	void nameChanged(const QString &name);
-	void durationChanged(int duration);
-	void tick(int pos);
-	void videoChanged();
-	void audioChanged();
-	void runningChanged(bool);
-	void stateChanged(State state);
-	void mediaChanged();
-	void volumeNormalizedChanged(bool volnorm);
-	void volumeChanged(int volume);
-	void fullScreenChanged(bool full);
-private:
-	VideoRendererItem *renderer() const;
-	struct Data;
-	Data *d;
-	int m_duration = 0, m_position = 0;
-	bool m_volnorm = false;
-	State m_state = Stopped;
-	AvInfoObject *m_audio = new AvInfoObject(this);
-	AvInfoObject *m_video = new AvInfoObject(this);
-	MediaInfoObject *m_media = new MediaInfoObject(this);
-	double m_norm = 1.0, m_fps = 1.0, m_cpu = 0;
-	double m_avSync = 0;
-	double m_totmem = 1, m_mem = 0; // MB
-	double m_bps = 0;
-	int m_volume = 0;
-	bool m_fullScreen = false, m_muted = false;
-};
+//class PlayInfoItem : public QQuickItem, public Skin {
+//	Q_OBJECT
+//public:
+//	Q_ENUMS(State)
+//	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Opening = 16, Buffering = 32, Error = 64, Preparing = 128};
+//private:
+//	Q_PROPERTY(MediaInfoObject *media READ media NOTIFY mediaChanged)
+//	Q_PROPERTY(AvInfoObject *audio READ audio NOTIFY videoChanged)
+//	Q_PROPERTY(AvInfoObject *video READ video NOTIFY audioChanged)
+//	Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
+//	Q_PROPERTY(int time READ position NOTIFY tick)
+//	Q_PROPERTY(int volume READ volume NOTIFY volumeChanged)
+//	Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
+//	Q_PROPERTY(bool volumeNormalized READ isVolumeNormalized NOTIFY volumeNormalizedChanged)
+//	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
+//	Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
+//	Q_PROPERTY(double avgsync READ avgsync)
+//	Q_PROPERTY(double avgfps READ avgfps)
+//	Q_PROPERTY(double totalMemory READ totalMemory)
+//	Q_PROPERTY(double memory READ memory)
+//	Q_PROPERTY(double cpu READ cpu)
+//	Q_PROPERTY(double avgbps READ avgbps)
+//	Q_PROPERTY(State state READ state NOTIFY stateChanged)
+//	Q_PROPERTY(QString stateText READ stateText)
+//	Q_PROPERTY(QString monospace READ monospace)
+//public:
+//	PlayInfoItem(QQuickItem *parent = nullptr);
+//	~PlayInfoItem();
+//	double avgsync() const {return m_avSync;}
+//	double avgfps() const {return m_fps;}
+//	double avgbps() const {return m_bps;}
+//	int duration() const {return m_duration;}
+//	int position() const {return m_position;}
+//	AvInfoObject *audio() const {return m_audio;}
+//	AvInfoObject *video() const {return m_video;}
+//	MediaInfoObject *media() const {return m_media;}
+//	State state() const {return m_state;}
+//	void set(const PlayEngine *engine);
+//	void setDuration(int duration) {if (m_duration != duration) emit durationChanged(m_duration = duration);}
+//	void setPosition(int pos) {if (m_position != pos) emit tick(m_position = pos);}
+//	void setState(State state) {if (m_state != state) emit stateChanged(m_state = state);}
+//	int totalMemory() const {return m_totmem;}
+//	int memory() const {return m_mem;}
+//	Q_INVOKABLE void collect();
+//	Q_INVOKABLE QString msecToString(int ms) {return Pch::__null_time.addSecs(qRound((double)ms*1e-3)).toString(_L("h:mm:ss"));}
+//	bool isVolumeNormalized() const {return m_volnorm;}
+//	double volumeNormalizer() const {return m_norm;}
+//	double cpu() const {return m_cpu;}
+//	QString stateText() const;
+//	QString monospace() const;
+//	int volume() const {return m_volume;}
+//	bool isFullScreen() const {return m_fullScreen;}
+//	bool isMuted() const {return m_muted;}
+//	void setPlaylist(const PlaylistModel *playlist);
+//signals:
+//	void mutedChanged(bool muted);
+//	void nameChanged(const QString &name);
+//	void durationChanged(int duration);
+//	void tick(int pos);
+//	void videoChanged();
+//	void audioChanged();
+//	void runningChanged(bool);
+//	void stateChanged(State state);
+//	void mediaChanged();
+//	void volumeNormalizedChanged(bool volnorm);
+//	void volumeChanged(int volume);
+//	void fullScreenChanged(bool full);
+//private:
+//	VideoRendererItem *renderer() const;
+//	struct Data;
+//	Data *d;
+//	int m_duration = 0, m_position = 0;
+//	bool m_volnorm = false;
+//	State m_state = Stopped;
+//	AvInfoObject *m_audio = new AvInfoObject(this);
+//	AvInfoObject *m_video = new AvInfoObject(this);
+//	MediaInfoObject *m_media = new MediaInfoObject(this);
+//	double m_norm = 1.0, m_fps = 1.0, m_cpu = 0;
+//	double m_avSync = 0;
+//	double m_totmem = 1, m_mem = 0; // MB
+//	double m_bps = 0;
+//	int m_volume = 0;
+//	bool m_fullScreen = false, m_muted = false;
+//};
 
 #endif // PLAYINFOITEM_HPP

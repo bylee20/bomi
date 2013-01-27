@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>662</width>
+    <width>712</width>
     <height>676</height>
    </rect>
   </property>
@@ -75,7 +75,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>10</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2497,12 +2497,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>590</x>
-     <y>103</y>
+     <x>352</x>
+     <y>186</y>
     </hint>
     <hint type="destinationlabel">
-     <x>590</x>
-     <y>124</y>
+     <x>352</x>
+     <y>207</y>
     </hint>
    </hints>
   </connection>
@@ -2513,12 +2513,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>99</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>329</x>
-     <y>91</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2529,7 +2529,7 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
+     <x>327</x>
      <y>83</y>
     </hint>
     <hint type="destinationlabel">
@@ -2545,12 +2545,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>89</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>323</x>
-     <y>85</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2561,8 +2561,8 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>89</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
      <x>312</x>
@@ -2577,12 +2577,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>90</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>309</x>
-     <y>88</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2593,12 +2593,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>90</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>288</x>
-     <y>88</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2609,12 +2609,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>101</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>291</x>
-     <y>99</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2625,12 +2625,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>101</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>291</x>
-     <y>107</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2641,12 +2641,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>101</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>299</x>
-     <y>107</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2657,12 +2657,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>101</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>309</x>
-     <y>109</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2673,12 +2673,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>101</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>314</x>
-     <y>99</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2689,12 +2689,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>101</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>314</x>
-     <y>107</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2705,12 +2705,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>101</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>306</x>
-     <y>99</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2721,12 +2721,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>101</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>306</x>
-     <y>107</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2737,12 +2737,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>329</x>
-     <y>101</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
     <hint type="destinationlabel">
-     <x>329</x>
-     <y>90</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2757,8 +2757,8 @@ e.g.: English, Korean</string>
      <y>81</y>
     </hint>
     <hint type="destinationlabel">
-     <x>311</x>
-     <y>84</y>
+     <x>327</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -2785,12 +2785,28 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>294</x>
-     <y>75</y>
+     <x>307</x>
+     <y>103</y>
     </hint>
     <hint type="destinationlabel">
-     <x>316</x>
-     <y>93</y>
+     <x>351</x>
+     <y>133</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>remember_stopped</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ask_record_found</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>292</x>
+     <y>99</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>295</x>
+     <y>109</y>
     </hint>
    </hints>
   </connection>
