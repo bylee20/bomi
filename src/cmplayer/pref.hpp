@@ -125,12 +125,12 @@ private:
 	Pref() {load();}
 	static QList<int> defaultHwAccelCodecs();
 	static ClickActionMap defaultDoubleClick() {
-		ClickActionMap map{false, Enum::ClickAction::Fullscreen};
+		ClickActionMap map = {false, Enum::ClickAction::Fullscreen};
 		map[Enum::KeyModifier::None].enabled = true;
 		return map;
 	}
 	static ClickActionMap defaultMiddleClick() {
-		ClickActionMap map{false, Enum::ClickAction::Fullscreen};
+		ClickActionMap map = {false, Enum::ClickAction::Fullscreen};
 		map[Enum::KeyModifier::None] = ClickActionInfo(true, Enum::ClickAction::Pause);
 		return map;
 	}

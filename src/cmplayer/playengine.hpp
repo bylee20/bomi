@@ -52,13 +52,13 @@ public:
 	Mrl mrl() const;
 	bool atEnd() const;
 	bool isSeekable() const;
+	void setHwAccCodecs(const QList<int> &codecs);
 	bool isPlaying() const {return state() == EnginePlaying;}
 	bool isPaused() const {return state() == EnginePaused;}
 	bool isStopped() const {return state() == EngineStopped;}
 	bool isFinished() const {return state() == EngineFinished;}
 	bool isInitialized() const;
 	double speed() const {return m_speed;}
-	QString mediaName() const;
 	EngineState state() const {return m_state;}
 	void load(const Mrl &mrl, int start = -1);
 	void load(const Mrl &mrl, bool play);
@@ -104,6 +104,7 @@ public slots:
 	void play();
 	void stop();
 	void quit();
+	void reload();
 	void pause() {if (!isPaused()) tellmp("pause");}
 	void seek(int pos) {tellmp("seek", (double)pos/1000.0, 2);}
 	void relativeSeek(int pos) {tellmp("seek", (double)pos/1000.0, 0);}

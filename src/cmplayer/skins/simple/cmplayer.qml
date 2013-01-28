@@ -20,27 +20,17 @@ Rectangle {
 			else { anchors.bottom = controls.top; controls.show() }
 		}
 
-		PlayInfoOsd {
-			objectName: "playinfo"; parent: player; player: player
-			visible: true
-		}
-
 		Logo { id: logo; anchors.fill: parent; visible: player.state == Player.Stopped }
+
+		PlayInfoOsd { objectName: "playinfo"; parent: player; player: player }
 
 		function showSize() { msgosd.text = "%1x%2".arg(width).arg(height); msgosd.show() }
 		onHeightChanged: showSize()
 		onWidthChanged: {showSize(); playlistcontrol.updateWidth(); playlistcontrol.x = playlistcontrol.dest;}
-
-//playlistview.width = Math.min(width*0.4, playlistview.contentWidth())
 		Rectangle {
-			id: playlistcontrol
-			objectName: "playlist"
-			y: 20
-			color: "gray"
-			opacity: 0.8
-			height: parent.height-40
-			radius: 10
-			visible: false
+			objectName: "playlist"; id: playlistcontrol
+			y: 20; height: parent.height-40; visible: false
+			color: "gray"; opacity: 0.8; radius: 10
 			onVisibleChanged: if (visible) {updateWidth(); playlistslide.start(); }
 			function updateWidth() {
 				if (visible) {

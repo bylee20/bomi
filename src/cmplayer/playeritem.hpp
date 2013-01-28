@@ -4,7 +4,6 @@
 #include "stdafx.hpp"
 #include "playinfoitem.hpp"
 #include "skin.hpp"
-#include "resourcemonitor.hpp"
 
 class VideoRendererItem;
 class PlayEngine;
@@ -29,17 +28,13 @@ class PlayerItem : public QQuickItem, public Skin {
 	Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
 	Q_PROPERTY(double avgsync READ avgsync)
 	Q_PROPERTY(double avgfps READ avgfps)
-	Q_PROPERTY(double totalMemory READ totalMemory)
-	Q_PROPERTY(double memory READ memory)
-	Q_PROPERTY(double cpu READ cpu)
-	Q_PROPERTY(double avgbps READ avgbps)
 	Q_PROPERTY(State state READ state NOTIFY stateChanged)
 	Q_PROPERTY(QString stateText READ stateText)
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Opening = 16, Buffering = 32, Error = 64, Preparing = 128};
-	double avgsync() const {return m_avSync;}
-	double avgfps() const {return m_fps;}
-	double avgbps() const {return m_bps;}
+	double avgsync() const;
+	double avgfps() const;
+	Q_INVOKABLE double bps(double fps) const;
 	int duration() const {return m_duration;}
 	int position() const {return m_position;}
 	AvInfoObject *audio() const {return m_audio;}
@@ -50,12 +45,8 @@ public:
 	void setDuration(int duration) {if (m_duration != duration) emit durationChanged(m_duration = duration);}
 	void setPosition(int pos) {if (m_position != pos) emit tick(m_position = pos);}
 	void setState(State state) {if (m_state != state) emit stateChanged(m_state = state);}
-	int totalMemory() const {return m_totmem;}
-	int memory() const {return m_mem;}
-	Q_INVOKABLE void collect();
 	bool isVolumeNormalized() const {return m_volnorm;}
 	double volumeNormalizer() const {return m_norm;}
-	double cpu() const {return m_cpu;}
 	QString stateText() const;
 	int volume() const {return m_volume;}
 	bool isFullScreen() const {return m_fullScreen;}
@@ -67,8 +58,6 @@ public:
 	PlayerItem(QQuickItem *parent = nullptr);
 	VideoRendererItem *renderer() const {return m_renderer;}
 	PlayEngine *engine() const {return m_engine;}
-//	void setInfoView(QQuickItem *item) {if (m_infoView != item) emit infoViewChanged(m_infoView = item);}
-//	void setInfoVisible(bool v) {if (m_infoView) m_infoView->setVisible(v);}
 	void requestMessage(const QString &message) {emit messageRequested(m_message = message);}
 	void doneSeeking() {emit sought();}
 	QString message() const {return m_message;}
@@ -101,10 +90,7 @@ private:
 	AvInfoObject *m_audio = new AvInfoObject(this);
 	AvInfoObject *m_video = new AvInfoObject(this);
 	MediaInfoObject *m_media = new MediaInfoObject(this);
-	double m_norm = 1.0, m_fps = 1.0, m_cpu = 0;
-	double m_avSync = 0;
-	double m_totmem = 1, m_mem = 0; // MB
-	double m_bps = 0;
+	double m_norm = 1.0;
 	int m_volume = 0;
 	bool m_fullScreen = false, m_muted = false;
 	VideoRendererItem *m_renderer = nullptr;

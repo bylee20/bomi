@@ -75,18 +75,22 @@ VideoFormat VideoFormat::fromMpImage(const mp_image *mpi) {
 	case IMGFMT_I420:
 		format.m_byteSize[1].rheight() >>= 1;
 		format.m_byteSize[2].rheight() >>= 1;
+		format.m_bpp = 12;
 		break;
 	case IMGFMT_NV12:
 	case IMGFMT_NV21:
 		format.m_byteSize[1].rheight() >>= 1;
+		format.m_bpp = 12;
 		break;
 	case IMGFMT_YUY2:
 	case IMGFMT_UYVY:
 		format.m_drawSize.rwidth() >>= 1;
+		format.m_bpp = 16;
 		break;
 	case IMGFMT_RGBA:
 	case IMGFMT_BGRA:
 		format.m_drawSize.rwidth() >>= 2;
+		format.m_bpp = 32;
 		break;
 	default:
 		break;

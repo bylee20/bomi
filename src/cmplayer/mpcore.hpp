@@ -7,11 +7,12 @@ extern "C" {
 enum seek_type {MPSEEK_NONE, MPSEEK_RELATIVE, MPSEEK_ABSOLUTE, MPSEEK_FACTOR};
 #endif
 
+#undef bswap_16
+#undef bswap_32
 #include <core/mp_core.h>
 
 #ifdef __cplusplus
-//#undef bswap_16
-//#undef bswap_32
+
 #undef new
 #endif
 
@@ -34,9 +35,6 @@ extern int play_next_file();
 extern int run_playback();
 #else
 extern struct vo* vo_cmplayer;
-#ifdef __APPLE__
-extern int is_hwaccel_available(const char *);
-#endif
 extern void mpctx_run_command(struct MPContext *, struct mp_cmd *);
 extern void (*mpctx_paused_changed)(struct MPContext *);
 extern void (*mpctx_play_started)(struct MPContext *);

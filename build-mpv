@@ -51,7 +51,7 @@ objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   sub/dec_sub.o sub/draw_bmp.o sub/find_sub.o sub/find_subfiles.o sub/img_convert.o \
   sub/osd_dummy.o sub/sd_lavc.o sub/spudec.o sub/sub.o sub/subassconvert.o \
   sub/subreader.o talloc.o video/csputils.o video/decode/dec_video.o video/decode/vd.o \
-  video/filter/pullup.o video/filter/vf.o \
+  video/decode/vd_lavc.o video/filter/pullup.o video/filter/vf.o \
   video/filter/vf_crop.o video/filter/vf_delogo.o video/filter/vf_divtc.o \
   video/filter/vf_dlopen.o video/filter/vf_down3dright.o video/filter/vf_dsize.o \
   video/filter/vf_eq.o video/filter/vf_expand.o video/filter/vf_flip.o \

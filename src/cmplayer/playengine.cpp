@@ -1,6 +1,7 @@
 #include "playengine.hpp"
 #include "videoframe.hpp"
 #include "videooutput.hpp"
+#include "hwaccel.hpp"
 //#include "videorendereritem.hpp"
 #include "playlistmodel.hpp"
 #define PLAY_ENGINE_P
@@ -17,6 +18,37 @@ extern "C" {
 #include <audio/filter/af.h>
 #include <stream/stream.h>
 }
+
+struct CharArrayList {
+	CharArrayList() {}
+	CharArrayList(const QStringList &list) {
+		m_list.resize(list.size());
+		m_arrays.resize(list.size());
+		for (int i=0; i<list.size(); ++i) {
+			m_arrays[i] = list[i].toLocal8Bit();
+			m_list[i] = m_arrays[i].data();
+		}
+	}
+	char **data() {return m_list.data();}
+	bool contains(const char *string) {
+		for (int i=0; i<m_list.size(); ++i) {
+			if (qstrcmp(m_list[i], string) == 0)
+				return true;
+		}
+		return false;
+	}
+	bool isEmpty() const {return m_list.isEmpty();}
+	int size() const {return m_list.size();}
+	void append(const char *string) {
+		m_arrays.append(QByteArray(string));
+		m_list.append(m_arrays.last().data());
+
+	}
+	void clear() {m_list.clear(); m_arrays.clear();}
+private:
+	QVector<char *> m_list;
+	QVector<QByteArray> m_arrays;
+};
 
 enum MpCmd {MpSetProperty = -1};
 
@@ -42,10 +74,7 @@ static double volnorm_mul(MPContext *mpctx) {
 	return 1.0;
 }
 
-struct PlayEngine::Context {
-	MPContext mp;
-	PlayEngine *p;
-};
+struct PlayEngine::Context { MPContext mp; PlayEngine *p; };
 
 template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0);
 template<> inline float &getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.f;}
@@ -69,6 +98,7 @@ struct PlayEngine::Data {
 	int getStartTime(const Mrl &mrl) {
 		return getStartTimeFunc ? getStartTimeFunc(mrl) : 0;
 	}
+	CharArrayList hwAccCodecs;
 
 	QByteArray &setFileName(const Mrl &mrl) {
 		fileName = "\"";
@@ -140,10 +170,15 @@ double PlayEngine::volumeNormalizer() const {
 }
 
 bool PlayEngine::isHwAccActivated() const {
-//#ifdef Q_OS_MAC
-//	return d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->codec && !strcmp(d->mpctx->sh_video->codec->name, "ffh264vda");
-//#endif
-	return d->video->isHwAccActivated();
+	if (!d->mpctx || !d->mpctx->sh_video || !d->mpctx->sh_video->codec)
+		return false;
+	return d->hwAccCodecs.contains(d->mpctx->sh_video->codec->name);
+}
+
+void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
+	d->hwAccCodecs.clear();
+	for (auto id : codecs)
+		d->hwAccCodecs.append(HwAccel::codecName((AVCodecID)id));
 }
 
 void PlayEngine::setVideoAspect(double ratio) {
@@ -299,26 +334,23 @@ bool PlayEngine::isInitialized() const {
 	return d->init;
 }
 
+extern char **video_codec_list;
+
 void PlayEngine::run() {
-	QList<QByteArray> args;
-	args << "cmplayer-mpv" << "--no-config=all" << "--idle" << "--no-fs"
+	CharArrayList args = QStringList()
+		<< "cmplayer-mpv" << "--no-config=all" << "--idle" << "--no-fs"
 		<< "--fixed-vo" << "--softvol=yes" << "--softvol-max=1000.0"
 		<< "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--input=no-default-bindings" << "--no-consolecontrols" << "--no-mouseinput";
-	const int argc = args.size();
-	QSharedPointer<char*> argv(new char*[argc], [](char **argv){delete[] argv;});
-	for (int i=0; i<argc; ++i)
-		argv.data()[i] = args[i].data();
 	d->ctx = reinterpret_cast<Context*>(talloc_named_const(0, sizeof(*d->ctx), "MPContext"));
 	d->ctx->p = this;
 	auto mpctx = d->mpctx = &d->ctx->mp;
-	mpv_init(d->mpctx, argc, argv.data());
+	mpv_init(d->mpctx, args.size(), args.data());
 	vo_cmplayer = d->video->vo_create(d->mpctx);
 	d->init = true;
 	emit initialized();
-
+	HwAccel hwAcc; (void)hwAcc;
 	d->quit = false;
-
 	auto idle = [this, mpctx] () {
 		while (mpctx->opts.player_idle_mode && !mpctx->playlist->current && d->mpctx->stop_play != PT_QUIT) {
 			uninit_player(mpctx, 0);
@@ -337,6 +369,9 @@ void PlayEngine::run() {
 		clear();
 		setState(EngineBuffering);
 		emit aboutToOpen();
+		CharArrayList codecs = d->hwAccCodecs;
+		codecs.append(""); codecs.append(nullptr);
+		video_codec_list = codecs.data();
 		auto error = prepare_to_play_current_file(mpctx);
 		int terminated = 0, duration = 0;
 		Mrl mrl = d->playlist.loadedMrl();
@@ -397,7 +432,7 @@ void PlayEngine::run() {
 		if (!mpctx->playlist->current && !mpctx->opts.player_idle_mode)
 			break;
 	}
-	d->video->release();
+	video_codec_list = nullptr;
 	mpctx_delete(d->mpctx);
 	d->mpctx = nullptr;
 	vo_cmplayer = nullptr;
@@ -434,6 +469,10 @@ bool PlayEngine::load(int row, int start) {
 			play(start);
 	}
 	return true;
+}
+
+void PlayEngine::reload() {
+	play(position());
 }
 
 void PlayEngine::load(const Mrl &mrl, bool play) {
@@ -495,15 +534,6 @@ void PlayEngine::setPlaylist(const Playlist &playlist) {
 
 Mrl PlayEngine::mrl() const {
 	return d->playlist.loadedMrl();
-}
-
-QString PlayEngine::mediaName() const {
-	const auto mrl = d->playlist.loadedMrl();
-	if (mrl.isLocalFile())
-		return tr("File") % _L(": ") % QFileInfo(mrl.toLocalFile()).fileName();
-	if (mrl.isDvd() && !m_dvd.volume.isEmpty())
-		return _L("DVD") % _L(": ") % m_dvd.volume;
-	return _L("URL") % _L(": ") % mrl.toString();
 }
 
 int PlayEngine::currentAudioStream() const {

@@ -1,7 +1,6 @@
 #include "videooutput.hpp"
 #include "videoframe.hpp"
 #include "mpcore.hpp"
-#include "hwaccel.hpp"
 #include "videorendereritem.hpp"
 #include "playengine.hpp"
 
@@ -9,22 +8,6 @@ extern "C" {
 #include <video/out/vo.h>
 #include <video/vfcap.h>
 #include <sub/sub.h>
-#include <video/filter/vf.h>
-#ifdef Q_OS_LINUX
-
-#endif
-extern vf_info_t vf_info_vo;
-struct vf_priv_s { struct vo *vo; };
-void prepare_hwaccel(sh_video *sh, AVCodecContext *avctx) {
-	auto vf = sh->vfilter;
-	while (vf) {
-		if (vf->info == &vf_info_vo)
-			break;
-		vf = vf->next;
-	}
-	if (vf)
-		static_cast<VideoOutput*>(vf->priv->vo->priv)->prepare(avctx);
-}
 }
 
 
@@ -32,13 +15,12 @@ struct VideoOutput::Data {
 	vo_driver driver;
 	vo_info_t info;
 	VideoFormat format;
-	HwAccel hwAcc;
 	mp_osd_res osd;
 	mp_image_t *mpimg = nullptr;
 	VideoFrame *frame = nullptr;
 	PlayEngine *engine = nullptr;
 	bool flip = false;
-//	AVCodecContext *avctx = nullptr;
+	bool hwAcc = false;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -72,11 +54,7 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 	d->engine = engine;
 }
 
-VideoOutput::~VideoOutput() {
-#ifdef Q_OS_LINUX
-	d->hwAcc.finalize();
-#endif
-}
+VideoOutput::~VideoOutput() {}
 
 struct vo *VideoOutput::vo_create(MPContext *mpctx) {
 	struct vo *vo = reinterpret_cast<struct vo*>(talloc_ptrtype(NULL, vo));
@@ -95,52 +73,48 @@ struct vo *VideoOutput::vo_create(MPContext *mpctx) {
 	return nullptr;
 }
 
-void VideoOutput::release() {
-
-}
-
 const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
-bool VideoOutput::isHwAccActivated() const {
-	return d->hwAcc.isActivated();
-}
-
-void VideoOutput::prepare(void *avctx) {
-	 d->hwAcc.set(static_cast<AVCodecContext*>(avctx));
-}
-
-int VideoOutput::config(struct vo */*vo*/, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t /*fmt*/) {
-//	auto self = reinterpret_cast<VideoOutput*>(vo->priv);
-//	Data *d = self->d;
+int VideoOutput::config(struct vo *vo, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
+	auto d = static_cast<VideoOutput*>(vo->priv)->d;
+	d->hwAcc = fmt == IMGFMT_VDPAU;
 	return 0;
 }
 
 bool VideoOutput::getImage(void *data) {
+	if (!d->hwAcc)
+		return false;
+	static_cast<mp_image_t*>(data)->flags |= MP_IMGFLAG_DIRECT;
+	return true;
 #ifdef Q_OS_MAC
 	Q_UNUSED(data);
 	return false;
 #endif
+	static_cast<mp_image_t*>(data)->flags |= MP_IMGFLAG_DIRECT;
+	return true;
 #ifdef Q_OS_LINUX
-	return d->hwAcc.isUsable() && d->hwAcc.setBuffer(static_cast<mp_image_t*>(data));
+//	return d->hwAcc.isActivated() && d->hwAcc.setBuffer(static_cast<mp_image_t*>(data));
 #endif
 }
+
+//extern HwAccel *ha;
 
 void VideoOutput::drawImage(void *data) {
 	mp_image_t *mpi = static_cast<mp_image_t*>(data);
 	if (auto renderer = d->engine->videoRenderer()) {
 		VideoFrame &frame = renderer->getNextFrame();
 		frame.setFormat(d->format);
-#ifdef Q_OS_LINUX
-		if (d->hwAcc.isUsable())
-			mpi = &d->hwAcc.extract(mpi);
-#endif
+//#ifdef Q_OS_LINUX
+//		if (ha->isActivated())
+//			mpi = &ha->extract(mpi);
+//#endif
 		if (frame.copy(mpi))
 			emit formatChanged(d->format = frame.format());
 #ifdef Q_OS_LINUX
-		if (d->hwAcc.isUsable())
-			d->hwAcc.clean();
+//		if (ha->isActivated())
+//			ha->clean();
 #endif
 	}
 	d->flip = true;
@@ -164,6 +138,7 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 //		update_xinerama_info(vo);
 		return VO_TRUE;
 	case VOCTRL_GET_IMAGE:
+		return VO_NOTIMPL;
 		return v->getImage(data);
 	case VOCTRL_PAUSE:
 	case VOCTRL_RESUME:

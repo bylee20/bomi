@@ -3,10 +3,6 @@
 #include "mainwindow.hpp"
 #include "playeritem.hpp"
 #include "videoformat.hpp"
-#include "resourcemonitor.hpp"
-#include <sys/types.h>
-#include <unistd.h>
-//Q_DECLARE_METATYPE(QTextOption::WrapMode)
 
 int main(int argc, char **argv) {
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
@@ -23,7 +19,6 @@ int main(int argc, char **argv) {
 			app.sendMessage(_L("mrl ") % mrl.toString());
 		return 0;
 	}
-	qDebug() << ResourceMonitor::coreCount();
 	MainWindow *mw = new MainWindow;
 	app.setMainWindow(mw);
 	mw->show();

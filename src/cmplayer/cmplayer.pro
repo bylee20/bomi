@@ -31,7 +31,7 @@ macx {
     LIBS +=  ../../build/lib/libavcodec.a \
 	../../build/lib/libavformat.a ../../build/lib/libavutil.a \
 	../../build/lib/libswscale.a ../../build/lib/libcmplayer_mpv.a \
-        ../../build/lib/libchardet.a ../../build/lib/libcmplayer_sigar.a \
+        ../../build/lib/libchardet.a \
         -L/opt/local/lib \
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
@@ -43,14 +43,14 @@ macx {
     QT += dbus
     TARGET = cmplayer
     LIBS += -lX11 -lxcb \
-        -L../../build/lib -lcmplayer_mpv -lcmplayer_sigar -lchardet -lcmplayer_av \
+        -L../../build/lib -lcmplayer_mpv -lchardet -lcmplayer_av \
         -lopenal -lasound -ldl -lva -lva-x11
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }
 LIBS += -lz -lbz2 -lmpg123 -lquvi -lpthread -lm -ldvdread -lmad -lfaad -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
 
-INCLUDEPATH += ../mpv ../../build/include ../sigar/include
+INCLUDEPATH += ../mpv ../../build/include
 
 QMAKE_CC = "gcc -std=c99 -ffast-math -w"
 
@@ -124,7 +124,7 @@ HEADERS += playengine.hpp \
     historymodel.hpp \
     shadervar.h \
     subtitlestyle.h \
-    resourcemonitor.hpp
+    mpv-vaapi.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -187,11 +187,10 @@ SOURCES += main.cpp \
     mposditem.cpp \
     globalqmlobject.cpp \
     historymodel.cpp \
-    mpv-vd.c \
     mpv-main.c \
     shadervar.cpp \
     subtitlestyle.cpp \
-    resourcemonitor.cpp
+    mpv-vaapi.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp

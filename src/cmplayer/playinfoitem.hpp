@@ -64,19 +64,19 @@ private:
 
 class MediaInfoObject : public QObject {
 	Q_OBJECT
-	Q_PROPERTY(QString name READ name)
+	Q_PROPERTY(QString name READ name NOTIFY nameChanged)
 public:
 	MediaInfoObject(QObject *parent): QObject(parent) {}
 	void setMrl (const Mrl &mrl) {m_mrl = mrl;}
 	QString name() const {return m_name;}
 	QString display() const {return m_mrl.displayName();}
-	int nth() const {return m_nth;}
-	int count() const {return m_count;}
+	void setName(const QString &name) { if (_Change(m_name, name)) emit nameChanged(m_name); }
+signals:
+	void nameChanged(const QString &name);
 private:
 	friend class PlayerItem;
 	QString m_name;
 	Mrl m_mrl;
-	int m_nth = 0, m_count = 0;
 };
 
 //class PlayInfoItem : public QQuickItem, public Skin {

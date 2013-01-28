@@ -29,8 +29,7 @@ class AskStartTimeEvent : public QEvent {
 public:
 	static const QEvent::Type Type = (QEvent::Type)(QEvent::User + 1);
 	AskStartTimeEvent(const Mrl &mrl, int start): QEvent(Type), mrl(mrl), start(start) {}
-	Mrl mrl;
-	int start;
+	Mrl mrl;	int start;
 };
 
 struct MainWindow::Data {
@@ -38,12 +37,11 @@ struct MainWindow::Data {
 	RootMenu menu;	RecentInfo recent;
 	const Pref &p = cPref;
 	PlayEngine engine;
-	bool middleClicked = false;
 	VideoRendererItem renderer;
 	SubtitleRendererItem subtitle;
 	QPoint prevPos;		QTimer hider;
 	Qt::WindowState winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
-	bool moving = false, changingSub = false;
+	bool middleClicked = false, moving = false, changingSub = false;
 	bool pausedByHiding = false, dontShowMsg = false, dontPause = false;
 	bool stateChanging = false;
 	ABRepeater ab = {&engine, &subtitle};
@@ -52,11 +50,8 @@ struct MainWindow::Data {
 	SubtitleView subtitleView;
 	HistoryModel history;
 	PlaylistModel &playlist = engine.playlist();
-	QRect screenRect;
 //	FavoritesView *favorite;
-#ifndef Q_OS_MAC
-	QSystemTrayIcon *tray;
-#endif
+	QSystemTrayIcon *tray = nullptr;
 	QString filePath;
 // methods
 	int startFromStopped = -1;
@@ -329,8 +324,6 @@ void qt_mac_set_dock_menu(QMenu *menu);
 
 MainWindow::MainWindow(): d(new Data) {
 	d->engine.start();
-	if (!d->engine.isInitialized())
-		d->engine.msleep(1);
 	d->engine.setGetStartTimeFunction([this] (const Mrl &mrl){return getStartTime(mrl);});
 	setFlags(flags() | Qt::WindowFullscreenButtonHint);
 	setResizeMode(QQuickView::SizeRootObjectToView);
@@ -615,7 +608,31 @@ MainWindow::MainWindow(): d(new Data) {
 	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);
 	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
 	d->connectCurrentStreamActions(&d->menu("subtitle")("spu"), &PlayEngine::currentSubtitleStream);
-
+	connect(this, &MainWindow::windowStateChanged, [this] (Qt::WindowState state) {
+		d->dontPause = true;
+		d->moving = false;
+		d->prevPos = QPoint();
+		if (state != d->winState) {
+			d->prevWinState = d->winState;
+			d->winState = state;
+		}
+		switch (state) {
+		case Qt::WindowFullScreen:
+			cApp.setAlwaysOnTop(this, false);
+			setVisible(true);
+			if (d->p.hide_cursor)
+				d->hider.start(d->p.hide_cursor_delay);
+			break;
+		default:
+			d->hider.stop();
+			if (cursor().shape() == Qt::BlankCursor)
+				unsetCursor();
+			updateStaysOnTop();
+			setVisible(true);
+		}
+		d->dontPause = false;
+		setFilePath(d->filePath);
+	});
 #ifndef Q_OS_MAC
 	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
 		if (reason == QSystemTrayIcon::Trigger)
@@ -652,7 +669,8 @@ MainWindow::MainWindow(): d(new Data) {
 	addMenuBar(d->menu("window"));
 	addMenuBar(d->menu("help"));
 #endif
-
+	while (!d->engine.isInitialized())
+		d->engine.msleep(1);
 	d->load_state();
 	applyPref();
 
@@ -661,31 +679,7 @@ MainWindow::MainWindow(): d(new Data) {
 	updateRecentActions(d->recent.openList());
 
 	d->winState = d->prevWinState = windowState();
-	connect(this, &MainWindow::windowStateChanged, [this] (Qt::WindowState state) {
-		d->dontPause = true;
-		d->moving = false;
-		d->prevPos = QPoint();
-		if (state != d->winState) {
-			d->prevWinState = d->winState;
-			d->winState = state;
-		}
-		switch (state) {
-		case Qt::WindowFullScreen:
-			cApp.setAlwaysOnTop(this, false);
-			setVisible(true);
-			if (d->p.hide_cursor)
-				d->hider.start(d->p.hide_cursor_delay);
-			break;
-		default:
-			d->hider.stop();
-			if (cursor().shape() == Qt::BlankCursor)
-				unsetCursor();
-			updateStaysOnTop();
-			setVisible(true);
-		}
-		d->dontPause = false;
-		setFilePath(d->filePath);
-	});
+
 }
 
 MainWindow::~MainWindow() {
@@ -701,18 +695,18 @@ void MainWindow::openFromFileManager(const Mrl &mrl) {
 void MainWindow::exit() {
 	static bool done = false;
 	if (!done) {
+		d->renderer.quit();
+		d->engine.quit();
 #ifndef Q_OS_MAC
 		d->tray->hide();
 #endif
-		d->renderer.quit();
-		d->engine.quit();
-		d->engine.wait();
-		cApp.processEvents();
 		d->recent.setLastPlaylist(d->playlist.playlist());
 		d->recent.setLastMrl(d->engine.mrl());
 		d->save_state();
 		if (d->player)
 			d->player->unplug();
+		d->engine.wait();
+		cApp.processEvents();
 		cApp.quit();
 	}
 }
@@ -873,11 +867,11 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
 	QQuickView::mouseDoubleClickEvent(event);
-	if (!GlobalQmlObject::isDoubleClicked() && (event->buttons() & Qt::LeftButton)) {
+	if (!UtilObject::isDoubleClicked() && (event->buttons() & Qt::LeftButton)) {
 		if (QAction *action = d->menu.doubleClickAction(event->modifiers()))
 			action->trigger();
 	}
-	GlobalQmlObject::setDoubleClicked(false);
+	UtilObject::setDoubleClicked(false);
 }
 
 void MainWindow::wheelEvent(QWheelEvent *event) {
@@ -954,6 +948,7 @@ void MainWindow::reloadSkin() {
 }
 
 void MainWindow::applyPref() {
+	d->engine.setHwAccCodecs(d->p.enable_hwaccel ? d->p.hwaccel_codecs : QList<int>());
 	int time = -1;
 	switch (d->engine.state()) {
 	case EnginePlaying:
@@ -976,7 +971,8 @@ void MainWindow::applyPref() {
     d->tray->setVisible(d->p.enable_system_tray);
 #endif
 	if (time >= 0)
-		d->engine.load(d->engine.mrl(), time);
+		d->engine.reload();
+//		d->engine.load(d->engine.mrl(), time);
 }
 
 template<typename Slot>

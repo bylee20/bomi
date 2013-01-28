@@ -11,7 +11,6 @@
 #include "playengine.hpp"
 #include "mpcore.hpp"
 #include "videoformat.hpp"
-#include <sigar.h>
 
 extern "C" {
 #include <demux/stheader.h>
@@ -20,103 +19,23 @@ extern "C" {
 #include <video/out/vo.h>
 #include <audio/out/ao.h>
 #include <audio/filter/af.h>
-#include <osdep/timer.h>
-#include <osdep/numcores.h>
 }
 
-#ifdef Q_OS_LINUX
-#include <fcntl.h>
-#include <unistd.h>
-struct ProcStat {
-	ProcStat() {
-		const QString path = _L("/proc/") + QString::number(QCoreApplication::applicationPid()) + _L("/stat");
-		statFilePath = path.toLocal8Bit();
-		buffer.resize(BUFSIZ);
-	}
-	QByteArray buffer, statFilePath;
-	int pid, ppid, pgrp, session, tty_nr, tpgid;
-	uint flags;
-	unsigned long int minflt, cminflt, majflt, cmajflt, utime, stime;
-	char comm[256];
-	char state;
-	bool readProcStat() {
-		const auto fd = open(statFilePath.data(), O_RDONLY);
-		if (fd < 0)
-			return false;
-		int len = ::read(fd, buffer.data(), buffer.size());
-		if (len > 0) {
-			buffer[len] = '\0';
-			len = sscanf(buffer.data()
-				, "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu"
-				, &pid, comm, &state, &ppid, &pgrp, &session, &tty_nr, &tpgid, &flags
-				, &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime);
-		}
-		close(fd);
-		return len > 0;
-	}
-	quint64 user, nice, system, idle;
-	bool readStat() {
-		const auto fd = open("/proc/stat", O_RDONLY);
-		if (fd < 0)
-			return false;
-		int len = -1;
-		for (;;) {
-			len = ::read(fd, buffer.data(), buffer.size());
-			if (len < 0)
-				break;
-			buffer[len] = '\0';
-			const char *str = strstr(buffer.data(), "cpu");
-			if (!str)
-				continue;
-			str += 3;
-			len = sscanf(str, "%llu %llu %llu %llu", &user, &nice, &system, &idle);
-			break;
-		}
-		close(fd);
-		return len > 0;
-	}
-};
-#endif
-
-static QObject *utilProvider(QQmlEngine *, QJSEngine *) {return new GlobalQmlObject;}
+static QObject *utilProvider(QQmlEngine *, QJSEngine *) {return new UtilObject;}
 
 struct PlayerItem::Data {
-#ifdef Q_OS_LINUX
-	ProcStat stat;
-	quint64 procCpuTime = 0, totalCpuTime = 0;
-	quint64 getProcCpuTime() {return stat.readProcStat() ? (stat.utime + stat.stime) : 0;}
-	quint64 getTotalCpuTime() {return stat.readStat() ? (stat.user + stat.nice + stat.system + stat.idle) : 0;}
-#endif
-	qint64 pid = QCoreApplication::applicationPid();
-	sigar_t *sigar = nullptr;
-	sigar_mem_t mem;
-	const int cores = default_thread_count();
-
-	const PlayEngine *engine = nullptr;
-
+	const int cores = UtilObject::cores();
 	quint64 frameTime = 0, drawnFrames = 0;
-	double cpuUsage = 0.0, sync = 0.0;
+	double sync = 0.0;
 	QTimer timer;
 	int time = -1;
-	quint64 getDrawnFrames() {
-		return engine && engine->videoRenderer() ? engine->videoRenderer()->drawnFrames() : 0;
-	}
 };
 
 PlayerItem::PlayerItem(QQuickItem *parent)
 : QQuickItem(parent), d(new Data) {
-	sigar_open(&d->sigar);
-	sigar_mem_get(d->sigar, &d->mem);
-//	m_totmem = (double)d->mem.total/(1024.*1024.);
-	m_totmem = ResourceMonitor::totalMemory();
-#ifdef Q_OS_LINUX
-	d->procCpuTime = d->getProcCpuTime();
-	d->totalCpuTime = d->getTotalCpuTime();
-#endif
 }
 
 PlayerItem::~PlayerItem() {
-	sigar_close(d->sigar);
 	delete d;
 }
 
@@ -133,18 +52,6 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	m_renderer = engine->videoRenderer();
 	m_renderer->setParentItem(this);
 	m_renderer->setGeometry(QPointF(0, 0), QSizeF(width(), height()));
-//		m_info->set(m_engine);
-
-		//void PlayInfoItem::setPlaylist(const PlaylistModel *playlist) {
-		//	connect(playlist, &PlaylistModel::loadedChanged, [this] (int row) {
-		//		m_media->m_nth = row+1;
-		//		emit mediaChanged();
-		//	});
-		//	connect(playlist, &PlaylistModel::countChanged, [this] (int count) {
-		//		m_media->m_count = count;
-		//		emit mediaChanged();
-		//	});
-		//}
 	auto fullScreen = window()->windowState() == Qt::WindowFullScreen;
 	if (fullScreen != m_fullScreen)
 		emit fullScreenChanged(m_fullScreen = fullScreen);
@@ -155,59 +62,74 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 			emit fullScreenChanged(m_fullScreen = fullScreen);
 	});
 
-	d->engine = engine;
 
-	plug(d->engine, &PlayEngine::tick, [this] (int pos) {
+	auto mediaName = [this] (const Mrl &mrl) -> QString {
+		if (mrl.isLocalFile())
+			return tr("File") % _L(": ") % QFileInfo(mrl.toLocalFile()).fileName();
+		else if (mrl.isDvd()) {
+			if (m_engine && !m_engine->dvd().volume.isEmpty())
+				return _L("DVD: ") % m_engine->dvd().volume;
+			return _L("DVD: ") % mrl.toLocalFile();
+		} else
+			return _L("URL: ") % mrl.toString();
+	};
+
+	m_media->m_mrl = m_engine->mrl();
+	m_media->setName(mediaName(m_media->m_mrl));
+	plug(m_engine, &PlayEngine::mrlChanged, [this, mediaName] (const Mrl &mrl) {
+		m_media->m_mrl = mrl;
+		m_media->setName(mediaName(mrl));
+	});
+	plug(m_engine, &PlayEngine::tick, [this] (int pos) {
 		if (isVisible()) {
 			setPosition(pos);
-			setState((State)d->engine->state());
-			setDuration(d->engine->duration());
+			setState((State)m_engine->state());
+			setDuration(m_engine->duration());
 		}
 	});
 
-	plug(d->engine, &PlayEngine::videoFormatChanged, [this] () {
-		m_video->setVideo(d->engine);
+	plug(m_engine, &PlayEngine::videoFormatChanged, [this] () {
+		m_video->setVideo(m_engine);
 		emit videoChanged();
 	});
-	plug(d->engine, &PlayEngine::videoAspectRatioChanged, [this] () {
-		m_video->setVideo(d->engine);
+	plug(m_engine, &PlayEngine::videoAspectRatioChanged, [this] () {
+		m_video->setVideo(m_engine);
 		emit videoChanged();
 	});
-	plug(d->engine, &PlayEngine::aboutToPlay, [this] () {
-		m_media->m_mrl = d->engine->mrl();
-		m_media->m_name = d->engine->mediaName();
-		m_audio->setAudio(d->engine);
+	plug(m_engine, &PlayEngine::aboutToPlay, [this, mediaName] () {
+		m_media->setName(mediaName(m_media->m_mrl));
+		m_audio->setAudio(m_engine);
 		emit audioChanged();
 		d->time = 0;
 		d->sync = 0;
 		emit mediaChanged();
 	});
-	plug(d->engine, &PlayEngine::audioFilterChanged, [this] (const QString &af, bool on) {
+	plug(m_engine, &PlayEngine::audioFilterChanged, [this] (const QString &af, bool on) {
 		if (af == _L("volnorm"))
 			emit volumeNormalizedChanged(m_volnorm = on);
 	});
 
-	plug(d->engine, &PlayEngine::volumeChanged, [this](int volume) {
+	plug(m_engine, &PlayEngine::volumeChanged, [this](int volume) {
 		emit volumeChanged(m_volume = volume);
 	});
-	plug(d->engine, &PlayEngine::mutedChanged, [this] (bool muted) {
+	plug(m_engine, &PlayEngine::mutedChanged, [this] (bool muted) {
 		emit mutedChanged(m_muted = muted);
 	});
 
-	if (d->engine->videoRenderer()) {
-		d->drawnFrames = d->getDrawnFrames();
-		d->frameTime = GetTimerMS();
+	if (m_renderer) {
+		d->drawnFrames = m_renderer->drawnFrames();
+		d->frameTime = UtilObject::systemTime();
 	}
 
-	emit mutedChanged(m_muted = d->engine->isMuted());
-	emit durationChanged(m_duration = d->engine->duration());
-	emit tick(m_position = d->engine->position());
+	emit mutedChanged(m_muted = m_engine->isMuted());
+	emit durationChanged(m_duration = m_engine->duration());
+	emit tick(m_position = m_engine->position());
 	emit videoChanged();
 	emit audioChanged();
 	emit mediaChanged();
-	emit stateChanged(m_state = (State)d->engine->state());
-	emit volumeNormalizedChanged(m_volnorm = d->engine->hasAudioFilter("volnorm"));
-	emit volumeChanged(m_volume = d->engine->volume());
+	emit stateChanged(m_state = (State)m_engine->state());
+	emit volumeNormalizedChanged(m_volnorm = m_engine->hasAudioFilter("volnorm"));
+	emit volumeChanged(m_volume = m_engine->volume());
 	emit fullScreenChanged(m_fullScreen = (window()->windowState() == Qt::WindowFullScreen));
 }
 
@@ -223,9 +145,8 @@ void PlayerItem::registerItems() {
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();
-//	qmlRegisterType<PlayInfoItem>("CMPlayerCore", 1, 0, "PlayInfo");
 	qmlRegisterType<PlayerItem>("CMPlayerCore", 1, 0, "Player");
-	qmlRegisterSingletonType<GlobalQmlObject>("CMPlayerCore", 1, 0, "Util", utilProvider);
+	qmlRegisterSingletonType<UtilObject>("CMPlayerCore", 1, 0, "Util", utilProvider);
 }
 
 bool PlayerItem::execute(const QString &key) {
@@ -299,46 +220,34 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 	m_output->m_bits = af_fmt2bits(ao->format);
 }
 
-void PlayerItem::collect() {
+double PlayerItem::avgfps() const {
+	if (!m_renderer)
+		return 0.0;
+	const auto frameTime = UtilObject::systemTime();
+	const auto drawnFrames = m_renderer->drawnFrames();
+	double fps = 0.0;
+	if (frameTime > d->frameTime && drawnFrames > d->drawnFrames)
+		fps = double(drawnFrames - d->drawnFrames)/(double(frameTime - d->frameTime)*1e-6);
+	d->drawnFrames = drawnFrames;
+	d->frameTime = frameTime;
+	return fps;
+}
+
+double PlayerItem::bps(double fps) const {
+	return m_engine ? m_engine->videoFormat().bps(fps) : 0.0;
+}
+
+double PlayerItem::avgsync() const {
 	if (!m_engine || !m_engine->context())
-		return;
-	m_norm = d->engine->volumeNormalizer();
-	auto mpctx = d->engine->context();
+		return 0.0;
+//	m_norm = m_engine->volumeNormalizer();
+	auto mpctx = m_engine->context();
+	double sync = 0.0;
 	if (mpctx->sh_audio && mpctx->sh_video) {
-		m_avSync = (mpctx->total_avsync_change - d->sync)*1000.0;
+		sync = (mpctx->total_avsync_change - d->sync)*1000.0;
 		d->sync = mpctx->total_avsync_change;
 	}
-
-#ifdef Q_OS_MAC
-//	sigar_proc_cpu_t cpu;
-//	sigar_proc_cpu_get(d->sigar, d->pid, &cpu);
-//	m_cpu = cpu.percent*100.0/d->cores;
-	m_cpu = ResourceMonitor::cpuUsage();
-#endif
-#ifdef Q_OS_LINUX
-	const auto procCpuTime = d->getProcCpuTime();
-	const auto totalCpuTime = d->getTotalCpuTime();
-	if (procCpuTime > d->procCpuTime && totalCpuTime > d->totalCpuTime) {
-		m_cpu = double(procCpuTime - d->procCpuTime)/double(totalCpuTime - d->totalCpuTime)*100.0;
-		d->procCpuTime = procCpuTime;
-		d->totalCpuTime = totalCpuTime;
-	}
-#endif
-	const auto frameTime = GetTimerMS();
-	const auto frames = d->getDrawnFrames();
-	m_fps = 0.0;
-	if (frameTime > d->frameTime) {
-		m_fps = double(frames - d->drawnFrames)*1000.0/(frameTime - d->frameTime);
-		if (m_fps < 0.0)
-			m_fps = 0.0;
-		d->drawnFrames = frames;
-		d->frameTime = frameTime;
-	}
-	m_bps = d->engine->videoFormat().bps(m_fps);
-
-	sigar_proc_mem_t mem;
-	sigar_proc_mem_get(d->sigar, d->pid, &mem);
-	m_mem = ResourceMonitor::usingMemory();
+	return sync;
 }
 
 QString PlayerItem::stateText() const {

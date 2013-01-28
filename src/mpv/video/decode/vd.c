@@ -38,6 +38,7 @@
 #include "video/out/vo.h"
 
 extern const vd_functions_t mpcodecs_vd_ffmpeg;
+vd_functions_t cmplayer_vd_vaapi = {0};
 
 /* Please do not add any new decoders here. If you want to implement a new
  * decoder, add it to libavcodec, except for wrappers around external
@@ -45,6 +46,7 @@ extern const vd_functions_t mpcodecs_vd_ffmpeg;
 
 const vd_functions_t * const mpcodecs_vd_drivers[] = {
     &mpcodecs_vd_ffmpeg,
+    &cmplayer_vd_vaapi,
     /* Please do not add any new decoders here. If you want to implement a new
      * decoder, add it to libavcodec, except for wrappers around external
      * libraries and decoders requiring binary support. */

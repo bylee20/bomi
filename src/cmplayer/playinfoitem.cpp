@@ -165,16 +165,6 @@
 //#endif
 //}
 
-//void PlayInfoItem::setPlaylist(const PlaylistModel *playlist) {
-//	connect(playlist, &PlaylistModel::loadedChanged, [this] (int row) {
-//		m_media->m_nth = row+1;
-//		emit mediaChanged();
-//	});
-//	connect(playlist, &PlaylistModel::countChanged, [this] (int count) {
-//		m_media->m_count = count;
-//		emit mediaChanged();
-//	});
-//}
 
 //VideoRendererItem *PlayInfoItem::renderer() const {
 //	return d->engine ? d->engine->videoRenderer() : nullptr;
