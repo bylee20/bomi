@@ -1,8 +1,7 @@
 #include "playengine.hpp"
 #include "videoframe.hpp"
 #include "videooutput.hpp"
-#include "hwaccel.hpp"
-//#include "videorendereritem.hpp"
+#include "hwacc.hpp"
 #include "playlistmodel.hpp"
 #define PLAY_ENGINE_P
 #include "mpcore.hpp"
@@ -69,7 +68,7 @@ static double volnorm_mul(MPContext *mpctx) {
 			af = af->next;
 		}
 		if (af)
-			return reinterpret_cast<mp_volnorm*>(af->setup)->mul;
+			return static_cast<mp_volnorm*>(af->setup)->mul;
 	}
 	return 1.0;
 }
@@ -141,7 +140,6 @@ PlayEngine::PlayEngine()
 	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
 		load(row, d->getStartTime(d->playlist[row]));
 	});
-
 }
 
 PlayEngine::~PlayEngine() {
@@ -177,8 +175,10 @@ bool PlayEngine::isHwAccActivated() const {
 
 void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
 	d->hwAccCodecs.clear();
-	for (auto id : codecs)
-		d->hwAccCodecs.append(HwAccel::codecName((AVCodecID)id));
+	for (auto id : codecs) {
+		if (const char *name = HwAcc::codecName((AVCodecID)id))
+			d->hwAccCodecs.append(name);
+	}
 }
 
 void PlayEngine::setVideoAspect(double ratio) {
@@ -349,7 +349,7 @@ void PlayEngine::run() {
 	vo_cmplayer = d->video->vo_create(d->mpctx);
 	d->init = true;
 	emit initialized();
-	HwAccel hwAcc; (void)hwAcc;
+	HwAcc hwAcc; (void)hwAcc;
 	d->quit = false;
 	auto idle = [this, mpctx] () {
 		while (mpctx->opts.player_idle_mode && !mpctx->playlist->current && d->mpctx->stop_play != PT_QUIT) {

@@ -1,5 +1,5 @@
 #include "pref.hpp"
-#include "hwaccel.hpp"
+#include "hwacc.hpp"
 
 Pref &Pref::get() {
 	static Pref pref;
@@ -124,7 +124,7 @@ void Pref::load() {
 	READ(sub_autoload);
 	READ(sub_autoselect);
 #undef READ
-	sub_style.load(r, "sub_style");
+//	sub_style.load(r, "sub_style");
 	double_click_map.load(r, "double_click_map");
 	middle_click_map.load(r, "middle_click_map");
 	wheel_scroll_map.load(r, "wheel_scroll_map");
@@ -132,8 +132,8 @@ void Pref::load() {
 
 QList<int> Pref::defaultHwAccelCodecs() {
 	QList<int> codecs;
-	for (auto codec : HwAccel::fullCodecList()) {
-		if (HwAccel::supports(codec))
+	for (auto codec : HwAcc::fullCodecList()) {
+		if (HwAcc::supports(codec))
 			codecs.push_back(codec);
 	}
 	return codecs;

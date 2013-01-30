@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import CMPlayerCore 1.0
+import CMPlayerSkin 1.0
 
 Item {
 	id: root
@@ -37,7 +37,7 @@ Item {
 			onDoubleClicked: {
 				if (contentWidthHint > 0) {
 					contentWidth = contentWidthHint
-					Util.doubleClicked = true
+					Util.filterDoubleClick()
 				}
 			}
 		}

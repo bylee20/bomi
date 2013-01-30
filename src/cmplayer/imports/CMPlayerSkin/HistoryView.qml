@@ -1,6 +1,5 @@
 import QtQuick 2.0
-import CMPlayerCore 1.0
-import "qml"
+import CMPlayerSkin 1.0
 
 Rectangle {
 	id: root
@@ -77,7 +76,7 @@ Rectangle {
 				MouseArea {
 					anchors.fill: parent
 					onClicked: { view.currentIndex = index }
-					onDoubleClicked: { Util.doubleClicked = true; history.play(index) }
+					onDoubleClicked: { Util.filterDoubleClick(); history.play(index) }
 				}
 			}
 		}

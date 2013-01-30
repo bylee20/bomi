@@ -6,14 +6,14 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-class HwAccel {
+class HwAcc {
 public:
 	static QList<AVCodecID> fullCodecList();
 	static bool supports(AVCodecID codec);
 	static const char *codecName(AVCodecID id);
-	~HwAccel();
+	~HwAcc();
 private:
-	HwAccel();
+	HwAcc();
 	friend class PlayEngine;
 };
 

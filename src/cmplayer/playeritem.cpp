@@ -24,7 +24,6 @@ extern "C" {
 static QObject *utilProvider(QQmlEngine *, QJSEngine *) {return new UtilObject;}
 
 struct PlayerItem::Data {
-	const int cores = UtilObject::cores();
 	quint64 frameTime = 0, drawnFrames = 0;
 	double sync = 0.0;
 	QTimer timer;
@@ -39,10 +38,29 @@ PlayerItem::~PlayerItem() {
 	delete d;
 }
 
+void PlayerItem::setState(State state) {
+	if (_Change(m_state, state)) {
+		emit stateChanged(m_state);
+		bool running = false, playing = false;
+		if (m_engine) {
+			emit stateTextChanged(stateText());
+			const auto state = m_engine->state();
+			running = state != EngineStopped && state != EngineFinished && state != EngineError;
+			playing = running && state != EnginePaused;
+		}
+		if (_Change(m_running, running))
+			emit runningChanged(m_running);
+		if (_Change(m_playing, playing))
+			emit playingChanged(m_playing);
+	}
+}
+
 void PlayerItem::unplug() {
-	Skin::unplug();
-	if (m_renderer)
-		m_renderer->setParentItem(nullptr);
+	if (m_engine) {
+		Skin::unplug();
+		if (m_renderer)
+			m_renderer->setParentItem(nullptr);
+	}
 }
 
 void PlayerItem::plugTo(PlayEngine *engine) {
@@ -115,19 +133,23 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	plug(m_engine, &PlayEngine::mutedChanged, [this] (bool muted) {
 		emit mutedChanged(m_muted = muted);
 	});
+//	plug(m_engine, &PlayEngine::stateChanged, [this] (EngineState state) {
+
+//	});
 
 	if (m_renderer) {
 		d->drawnFrames = m_renderer->drawnFrames();
 		d->frameTime = UtilObject::systemTime();
 	}
 
+	setState((State)m_engine->state());
 	emit mutedChanged(m_muted = m_engine->isMuted());
 	emit durationChanged(m_duration = m_engine->duration());
 	emit tick(m_position = m_engine->position());
 	emit videoChanged();
 	emit audioChanged();
 	emit mediaChanged();
-	emit stateChanged(m_state = (State)m_engine->state());
+//	emit stateChanged(m_state = (State)m_engine->state());
 	emit volumeNormalizedChanged(m_volnorm = m_engine->hasAudioFilter("volnorm"));
 	emit volumeChanged(m_volume = m_engine->volume());
 	emit fullScreenChanged(m_fullScreen = (window()->windowState() == Qt::WindowFullScreen));
@@ -145,21 +167,12 @@ void PlayerItem::registerItems() {
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();
-	qmlRegisterType<PlayerItem>("CMPlayerCore", 1, 0, "Player");
-	qmlRegisterSingletonType<UtilObject>("CMPlayerCore", 1, 0, "Util", utilProvider);
+	qmlRegisterType<PlayerItem>("CMPlayerSkin", 1, 0, "Engine");
+	qmlRegisterSingletonType<UtilObject>("CMPlayerSkin", 1, 0, "Util", utilProvider);
 }
 
-bool PlayerItem::execute(const QString &key) {
-	auto action = cMenu.action(key);
-	if (!action)
-		return false;
-	if (m_engine) {
-		if (action->menu())
-			action->menu()->exec(QCursor::pos());
-		else
-			action->trigger();
-	}
-	return true;
+void PlayerItem::updateStateInfo() {
+
 }
 
 void PlayerItem::seek(int time) {

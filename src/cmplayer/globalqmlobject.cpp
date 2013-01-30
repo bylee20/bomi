@@ -1,30 +1,36 @@
 #include "globalqmlobject.hpp"
+#include "rootmenu.hpp"
 #include <unistd.h>
 
-bool UtilObject::m_dbc = false;
+bool UtilObject::m_filterDoubleClick = false;
+bool UtilObject::m_pressed = false;
+QLinkedList<UtilObject*> UtilObject::objs;
 
 UtilObject::UtilObject(QObject *parent)
 : QObject(parent) {
-	m_font = qApp->font();
+	objs.append(this);
+	qDebug() << "ctor";
 }
 
-QString UtilObject::monospace() const {
-#ifdef Q_OS_MAC
-	return "monaco";
-#else
-	return "monospace";
-#endif
+UtilObject::~UtilObject() {
+	objs.removeOne(this);
+	qDebug() << "dtor";
 }
 
-double UtilObject::textWidth(const QString &text, int size, const QString &family) const {
+void UtilObject::setMouseReleased(const QPointF &scenePos) {
+	for (auto obj : objs)
+		emit obj->mouseReleased(scenePos);
+}
+
+double UtilObject::textWidth(const QString &text, int size, const QString &family) {
 	QFont font(family);
 	font.setPixelSize(size);
 	QFontMetricsF metrics(font);
 	return metrics.width(text);
 }
 
-double UtilObject::textWidth(const QString &text, int size) const {
-	return textWidth(text, size, m_font.family());
+double UtilObject::textWidth(const QString &text, int size) {
+	return textWidth(text, size, qApp->font().family());
 }
 
 double UtilObject::cpuUsage() {
@@ -35,11 +41,37 @@ double UtilObject::cpuUsage() {
 	return (ptime1 == quint64(-1) || stime1 == quint64(-1)) ? 0.0 : percent;
 }
 
+QPointF UtilObject::mousePos(QQuickItem *item) {
+	if (item && item->window())
+		return item->mapFromScene(item->window()->mapFromGlobal(QCursor::pos()));
+	return QPointF();
+}
+
+QPointF UtilObject::mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) const {
+	qDebug() << item << scenePos;
+	return item ? item->mapFromScene(scenePos) : scenePos;
+}
+
+
+bool UtilObject::execute(const QString &key) {
+	auto action = cMenu.action(key);
+	if (!action)
+		return false;
+//	if (m_engine) {
+		if (action->menu())
+			action->menu()->exec(QCursor::pos());
+		else
+			action->trigger();
+//	}
+	return true;
+}
+
 #ifdef Q_OS_MAC
 #include <sys/sysctl.h>
 #include <mach/mach_host.h>
 #include <mach/task.h>
 #include <libproc.h>
+QString UtilObject::monospace() { return "monaco"; }
 template<typename T>
 static T getSysctl(int name, const T def) {
 	T ret; int names[] = {CTL_HW, name}; size_t len = sizeof(def);
@@ -49,7 +81,7 @@ double UtilObject::totalMemory(MemoryUnit unit) {
 	static const quint64 total = getSysctl(HW_MEMSIZE, (quint64)0);
 	return total/(double)unit;
 }
-int UtilObject::coreCount() { static const int count = getSysctl(HW_NCPU, 1); return count; }
+int UtilObject::cores() { static const int count = getSysctl(HW_NCPU, 1); return count; }
 double UtilObject::usingMemory(MemoryUnit unit) {
 	task_basic_info info; memset(&info, 0, sizeof(info));
 	mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
@@ -68,6 +100,7 @@ quint64 UtilObject::processTime() {
 
 #ifdef Q_OS_LINUX
 #include <fcntl.h>
+QString UtilObject::monospace() const { return "monospace"; }
 static int getField(const char *fileName, const char *fieldName, char *buffer, int size = BUFSIZ) {
 	const auto fd = open(fileName, O_RDONLY);
 	if (fd < 0)

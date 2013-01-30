@@ -27,7 +27,8 @@ struct RichTextDocument : public RichTextHelper {
 	void updateLayoutInfo();
 	void setText(const QString &text);
 	void setFontPixelSize(int px);
-	void setTextOutline(const QColor &color, double width);
+	void setTextOutline(const QColor &color, double width) {setTextOutline(QPen(color, width));}
+	void setTextOutline(const QPen &pen);
 	QSizeF naturalSize() const {return m_natural.size();}
 	void setLeading(double newLine, double paragraph);
 private:

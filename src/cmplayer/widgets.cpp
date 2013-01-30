@@ -99,6 +99,13 @@ bool FontOptionWidget::strikeOut() const {
 	return d->strikeout->isChecked();
 }
 
+void FontOptionWidget::apply(QFont &font) {
+	font.setBold(d->bold->isChecked());
+	font.setItalic(d->italic->isChecked());
+	font.setUnderline(d->underline->isChecked());
+	font.setStrikeOut(d->strikeout->isChecked());
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////
 
 struct ColorSelectWidget::Data {

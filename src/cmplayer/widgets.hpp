@@ -25,6 +25,7 @@ public:
 	bool italic() const;
 	bool underline() const;
 	bool strikeOut() const;
+	void apply(QFont &font);
 private:
 	struct Data;
 	Data *d;

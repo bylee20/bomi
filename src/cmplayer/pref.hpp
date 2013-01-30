@@ -5,7 +5,7 @@
 #include "global.hpp"
 #include "enums.hpp"
 #include "record.hpp"
-#include "osdstyle.hpp"
+#include "subtitlestyle.hpp"
 
 class QLocale;
 
@@ -103,7 +103,7 @@ public:
 	Enum::SubtitleAutoselect sub_autoselect = Enum::SubtitleAutoselect::Matched;
 	QString sub_enc = {QLocale::system().language() == QLocale::Korean ? "CP949" : "UTF-8"}, sub_ext;
 	int sub_enc_accuracy = 70, ms_per_char = 500;
-	OsdStyle sub_style = defaultSubtitleStyle();		QStringList sub_priority;
+	SubtitleStyle sub_style;		QStringList sub_priority;
 
 	QLocale locale = QLocale::system();
 	bool enable_system_tray = true, hide_rather_close = true;
@@ -140,20 +140,6 @@ private:
 		map[Enum::KeyModifier::Ctrl] = WheelActionInfo(true, Enum::WheelAction::Amp);
 		return map;
 	}
-	static OsdStyle defaultSubtitleStyle() {
-		OsdStyle style;
-		style.color = Qt::white;
-		style.outline_color = Qt::black;
-		style.shadow_color = Qt::black;
-		style.shadow_color.setAlphaF(0.3);
-		style.has_shadow = style.shadow_blur = style.has_outline = true;
-		style.size = 0.035;
-		style.outline_width = 0.0015;
-		style.scale = OsdStyle::Scale::Width;
-		style.shadow_offset = QPointF(0.003, 0.003);
-		return style;
-	}
-
 	friend class PrefDialog;
 };
 

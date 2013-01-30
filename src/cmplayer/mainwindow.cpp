@@ -4,7 +4,6 @@
 #include "rootmenu.hpp"
 #include "recentinfo.hpp"
 #include "pref.hpp"
-#include "subtitlerenderer.hpp"
 #include "abrepeater.hpp"
 #include "playlistview.hpp"
 #include "playlistmodel.hpp"
@@ -19,7 +18,6 @@
 #include "globalqmlobject.hpp"
 #include "subtitleview.hpp"
 #include <functional>
-
 #include "playlistmodel.hpp"
 #include "translator.hpp"
 #include "playlist.hpp"
@@ -863,15 +861,16 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
 			action->trigger();
 	}
 	QQuickView::mouseReleaseEvent(event);
+	UtilObject::setMouseReleased(event->localPos());
 }
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
+	UtilObject::resetDoubleClickFilter();
 	QQuickView::mouseDoubleClickEvent(event);
-	if (!UtilObject::isDoubleClicked() && (event->buttons() & Qt::LeftButton)) {
+	if (!UtilObject::isDoubleClickFiltered() && (event->buttons() & Qt::LeftButton)) {
 		if (QAction *action = d->menu.doubleClickAction(event->modifiers()))
 			action->trigger();
 	}
-	UtilObject::setDoubleClicked(false);
 }
 
 void MainWindow::wheelEvent(QWheelEvent *event) {
@@ -931,6 +930,7 @@ void MainWindow::reloadSkin() {
 		d->player->unplug();
 	d->player = nullptr;
 	engine()->clearComponentCache();
+	PlayerItem::registerItems();
 	rootContext()->setContextProperty("history", &d->history);
 	rootContext()->setContextProperty("playlist", &d->playlist);
 	Skin::apply(this, d->p.skin_name);
@@ -944,7 +944,6 @@ void MainWindow::reloadSkin() {
 		if (d->player)
 			d->player->plugTo(&d->engine);
 	}
-
 }
 
 void MainWindow::applyPref() {
@@ -962,7 +961,8 @@ void MainWindow::applyPref() {
 	SubtitleParser::setMsPerCharactor(d->p.ms_per_char);
 	Translator::load(d->p.locale);
 	reloadSkin();
-//		subtitle.osd().setStyle(p.sub_style);
+	d->subtitle.setPriority(d->p.sub_priority);
+	d->subtitle.setStyle(d->p.sub_style);
 	d->menu.update();
 	d->menu.save();
 	d->menu.syncTitle();
@@ -972,7 +972,6 @@ void MainWindow::applyPref() {
 #endif
 	if (time >= 0)
 		d->engine.reload();
-//		d->engine.load(d->engine.mrl(), time);
 }
 
 template<typename Slot>

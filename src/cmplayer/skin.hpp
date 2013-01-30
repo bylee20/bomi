@@ -42,7 +42,7 @@ private:
 	struct Data {
 		Data();
 		QList<QMetaObject::Connection> connections;
-		QStringList dirs;
+		QStringList dirs, qmls;
 		QMap<QString, QFileInfo> skins;
 	};
 	static Data *data() { static Data data;	return &data; }

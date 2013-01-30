@@ -1,6 +1,5 @@
 import QtQuick 2.0
-import CMPlayerCore 1.0
-import "qml"
+import CMPlayerSkin 1.0
 
 Rectangle {
 	id: frame
@@ -73,7 +72,7 @@ Rectangle {
 					anchors.fill: parent
 					onClicked: view.currentIndex = index;
 					onDoubleClicked: {
-						Util.doubleClicked = true;
+						Util.filterDoubleClick();
 						playlist.play(index);
 					}
 				}

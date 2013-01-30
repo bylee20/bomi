@@ -251,7 +251,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	tool->addAction(_L("auto-shutdown"), true);
 
 	Menu *window = this->addMenu(_L("window"));
-	// sot == Stay On Top
+	// sot == Stays On Top
 	window->addActionToGroup(_L("sot-always"), true, _L("stays-on-top"))->setData(Enum::StaysOnTop::Always.id());
 	window->addActionToGroup(_L("sot-playing"), true, _L("stays-on-top"))->setData(Enum::StaysOnTop::Playing.id());
 	window->addActionToGroup(_L("sot-never"), true, _L("stays-on-top"))->setData(Enum::StaysOnTop::Never.id());

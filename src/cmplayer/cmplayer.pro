@@ -45,8 +45,8 @@ macx {
     LIBS += -lX11 -lxcb \
         -L../../build/lib -lcmplayer_mpv -lchardet -lcmplayer_av \
         -lopenal -lasound -ldl -lva -lva-x11
-    HEADERS += app_x11.hpp
-    SOURCES += app_x11.cpp
+    HEADERS += app_x11.hpp mpv-vaapi.hpp
+    SOURCES += app_x11.cpp mpv-vaapi.cpp
 }
 LIBS += -lz -lbz2 -lmpg123 -lquvi -lpthread -lm -ldvdread -lmad -lfaad -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
 
@@ -76,7 +76,6 @@ HEADERS += playengine.hpp \
     videoframe.hpp \
     subtitle.hpp \
     subtitle_parser.hpp \
-    subtitlerenderer.hpp \
     info.hpp \
     charsetdetector.hpp \
     abrepeater.hpp \
@@ -110,7 +109,6 @@ HEADERS += playengine.hpp \
     richtextblock.hpp \
     richtextdocument.hpp \
     mpmessage.hpp \
-    hwaccel.hpp \
     stdafx.hpp \
     videorendereritem.hpp \
     playinfoitem.hpp \
@@ -123,8 +121,8 @@ HEADERS += playengine.hpp \
     globalqmlobject.hpp \
     historymodel.hpp \
     shadervar.h \
-    subtitlestyle.h \
-    mpv-vaapi.hpp
+    hwacc.hpp \
+    subtitlestyle.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -143,7 +141,6 @@ SOURCES += main.cpp \
     videoframe.cpp \
     subtitle.cpp \
     subtitle_parser.cpp \
-    subtitlerenderer.cpp \
     info.cpp \
     charsetdetector.cpp \
     abrepeater.cpp \
@@ -176,7 +173,6 @@ SOURCES += main.cpp \
     richtextblock.cpp \
     richtextdocument.cpp \
     mpmessage.cpp \
-    hwaccel.cpp \
     playengine.cpp \
     videorendereritem.cpp \
     playinfoitem.cpp \
@@ -190,7 +186,7 @@ SOURCES += main.cpp \
     mpv-main.c \
     shadervar.cpp \
     subtitlestyle.cpp \
-    mpv-vaapi.cpp
+    hwacc.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp
@@ -206,24 +202,25 @@ FORMS += \
     ui/prefdialog.ui
 
 OTHER_FILES += \
-    skins/simple/qml/TextOsd.qml \
-    skins/simple/qml/Osd.qml \
-    skins/simple/qml/ProgressOsd.qml \
-    skins/simple/qml/PlayInfoOsd.qml \
-    skins/simple/qml/Slider.qml \
-    skins/simple/qml/Logo.qml \
-    skins/classic/qml/TextOsd.qml \
-    skins/classic/qml/Slider.qml \
-    skins/classic/qml/ProgressOsd.qml \
-    skins/classic/qml/PlayInfoOsd.qml \
-    skins/classic/qml/Osd.qml \
-    skins/classic/qml/Logo.qml \
-    skins/classic/qml/ImageButton.qml \
-    skins/classic/cmplayer.qml \
+    imports/CMPlayerSkin/qmldir \
+    imports/CMPlayerSkin/TextOsd.qml \
+    imports/CMPlayerSkin/ScrollBar.qml \
+    imports/CMPlayerSkin/ProgressOsd.qml \
+    imports/CMPlayerSkin/PlaylistView.qml \
+    imports/CMPlayerSkin/PlayInfoOsd.qml \
+    imports/CMPlayerSkin/Osd.qml \
+    imports/CMPlayerSkin/Logo.qml \
+    imports/CMPlayerSkin/HistoryView.qml \
+    imports/CMPlayerSkin/FlickableListView.qml \
+    imports/CMPlayerSkin/ColumnHeader.qml \
+    skins/simple/Slider.qml \
     skins/simple/cmplayer.qml \
-    skins/simple/PlaylistView.qml \
-    skins/simple/qml/ScrollBar.qml \
-    skins/simple/HistoryView.qml \
-    skins/simple/qml/FlickableListView.qml \
-    skins/simple/qml/ColumnHeader.qml
-
+    imports/CMPlayerSkin/PlaylistDock.qml \
+    imports/CMPlayerSkin/HistoryDock.qml \
+    imports/CMPlayerSkin/HorizontalLayout.qml \
+    imports/CMPlayerSkin/Button.qml \
+    imports/CMPlayerSkin/Player.qml \
+    imports/CMPlayerSkin/MouseCatcher.qml \
+    skins/classic/Slider.qml \
+    skins/classic/FramedButton.qml \
+    skins/classic/cmplayer.qml

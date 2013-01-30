@@ -1,13 +1,15 @@
 #include "subtitlerendereritem.hpp"
 #include "richtextdocument.hpp"
 #include "subtitlemodel.hpp"
-#include "subtitlestyle.h"
+#include "subtitlestyle.hpp"
 
 SubtitleRendererItem::Render::Render(const SubtitleComponent &comp)
 : comp(&comp), prev(comp.end()), model(new SubtitleComponentModel(&comp)) {}
+
 SubtitleRendererItem::Render::~Render() { delete this->model; }
 
 struct SubtitleRendererItem::Data {
+	SubtitleStyle style;
 	bool docempty = true;
 	RichTextDocument front, back;
 	double top = 0.0, bottom = 0.0, left = 0.0, right = 0.0;
@@ -27,7 +29,6 @@ struct SubtitleRendererItem::Data {
 
 SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
 : TextureRendererItem(1, parent), d(new Data) {
-	m_style = new SubtitleStyleObject(this);
 	d->blank.fill(0x0);
 	updateAlignment();	updateStyle();	prepare();	update();
 }
@@ -36,20 +37,35 @@ SubtitleRendererItem::~SubtitleRendererItem() {
 	delete d;
 }
 
+void SubtitleRendererItem::setPriority(const QStringList &priority) {
+	for (int i=0; i< priority.size(); ++i)
+		d->langMap[priority[i]] = priority.size()-i;
+}
+
+void SubtitleRendererItem::setStyle(const SubtitleStyle &style) {
+	d->style = style;
+	updateStyle();
+}
+
 void SubtitleRendererItem::updateStyle() {
 	auto update = [this] (RichTextDocument &doc) {
-		doc.setFontPixelSize(m_style->font()->height());
-		doc.setWrapMode(m_style->wrap_mode);
-		doc.setFormat(QTextFormat::ForegroundBrush, QBrush(m_style->font()->color()));
-		doc.setFormat(QTextFormat::FontFamily, m_style->font()->family());
-		doc.setFormat(QTextFormat::FontUnderline, m_style->font()->underline());
-		doc.setFormat(QTextFormat::FontStrikeOut, m_style->font()->strikeOut());
-		doc.setFormat(QTextFormat::FontWeight, m_style->font()->weight());
-		doc.setFormat(QTextFormat::FontItalic, m_style->font()->italic());
-		doc.setLeading(m_style->spacing()->line(), m_style->spacing()->paragraph());
+		doc.setFontPixelSize(d->style.font.height());
+		doc.setWrapMode(d->style.wrapMode);
+		doc.setFormat(QTextFormat::ForegroundBrush, QBrush(d->style.font.color));
+		doc.setFormat(QTextFormat::FontFamily, d->style.font.family());
+		doc.setFormat(QTextFormat::FontUnderline, d->style.font.underline());
+		doc.setFormat(QTextFormat::FontStrikeOut, d->style.font.strikeOut());
+		doc.setFormat(QTextFormat::FontWeight, d->style.font.weight());
+		doc.setFormat(QTextFormat::FontItalic, d->style.font.italic());
+		doc.setLeading(d->style.spacing.line, d->style.spacing.paragraph);
 	};
 	update(d->front);	update(d->back);		setGeometryDirty();
-	d->back.setTextOutline(m_style->outline()->color(), m_style->font()->height()*m_style->outline()->width()*2.0);
+	if (d->style.outline.enabled)
+		d->back.setTextOutline(d->style.outline.color, d->style.font.height()*d->style.outline.width*2.0);
+	else
+		d->back.setTextOutline(Qt::NoPen);
+	prepare();
+	this->update();
 }
 
 void SubtitleRendererItem::updateAlignment() {
@@ -77,15 +93,15 @@ void SubtitleRendererItem::setText(const RichTextDocument &doc) {
 
 double SubtitleRendererItem::scale() const {
 	auto area = drawArea();
-	const auto policy = m_style->font()->scale();
-	double px = m_style->font()->size();
-	if (policy == m_style->font()->Diagonal)
+	const auto policy = d->style.font.scale;
+	double px = d->style.font.size;
+	if (policy == SubtitleStyle::Font::Scale::Diagonal)
 		px *= _Diagonal(area.size());
-	else if (policy == m_style->font()->Width)
+	else if (policy == SubtitleStyle::Font::Scale::Width)
 		px *= area.width();
 	else
 		px *= area.height();
-	return px/m_style->font()->height();
+	return px/d->style.font.height();
 }
 
 void SubtitleRendererItem::prepare() {
@@ -97,7 +113,7 @@ void SubtitleRendererItem::prepare() {
 		d->front.doLayout(width()/scale);
 		d->back.doLayout(width()/scale);
 
-		d->shadowOffset = m_style->shadow()->offset()*m_style->font()->height()*scale;
+		d->shadowOffset = d->style.shadow.offset*d->style.font.height()*scale;
 		d->imageSize.rwidth() = width();
 		d->imageSize.rheight() = d->front.naturalSize().height()*scale + qAbs(d->shadowOffset.y());
 
@@ -143,7 +159,7 @@ void SubtitleRendererItem::link(QOpenGLShaderProgram *program) {
 void SubtitleRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
 	TextureRendererItem::bind(state, program);
 	program->setUniformValue(d->loc_tex, 0);
-	program->setUniformValue(d->loc_shadowColor, m_style->shadow()->color());
+	program->setUniformValue(d->loc_shadowColor, d->style.shadow.color);
 	program->setUniformValue(d->loc_shadowOffset, d->shadowOffset);
 	program->setUniformValue(d->loc_dxdy, 1.0/(d->image.width()), 1.0/(d->image.height()));
 	auto f = QOpenGLContext::currentContext()->functions();

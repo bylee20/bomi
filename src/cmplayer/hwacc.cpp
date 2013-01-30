@@ -1,6 +1,6 @@
-#include "hwaccel.hpp"
+#include "hwacc.hpp"
 
-QList<AVCodecID> HwAccel::fullCodecList() {
+QList<AVCodecID> HwAcc::fullCodecList() {
 	static const QList<AVCodecID> list = QList<AVCodecID>()
 		<< AV_CODEC_ID_MPEG1VIDEO << AV_CODEC_ID_MPEG2VIDEO << AV_CODEC_ID_MPEG4
 		<< AV_CODEC_ID_WMV3 << AV_CODEC_ID_VC1 << AV_CODEC_ID_H264;
@@ -8,10 +8,10 @@ QList<AVCodecID> HwAccel::fullCodecList() {
 }
 
 #ifdef Q_OS_MAC
-HwAccel::HwAccel() {}
-HwAccel::~HwAccel() {}
-bool HwAccel::supports(AVCodecID codec) { return codec == AV_CODEC_ID_H264; }
-const char *HwAccel::codecName(AVCodecID id) {
+HwAcc::HwAcc() {}
+HwAcc::~HwAcc() {}
+bool HwAcc::supports(AVCodecID codec) { return codec == AV_CODEC_ID_H264; }
+const char *HwAcc::codecName(AVCodecID id) {
 	switch (id) {
 	case AV_CODEC_ID_H264:
 		return "ffh264vda";

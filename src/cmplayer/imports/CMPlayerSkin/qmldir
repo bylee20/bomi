@@ -1,0 +1,16 @@
+module CMPlayerSkin
+TextOsd			1.0 TextOsd.qml
+ProgressOsd		1.0 ProgressOsd.qml
+Logo			1.0 Logo.qml
+PlayInfoOsd		1.0 PlayInfoOsd.qml
+ScrollBar		1.0 ScrollBar.qml
+ColumnHeader		1.0 ColumnHeader.qml
+FlickableListView	1.0 FlickableListView.qml
+PlaylistView		1.0 PlaylistView.qml
+PlaylistDock		1.0 PlaylistDock.qml
+HistoryView		1.0 HistoryView.qml
+HistoryDock		1.0 HistoryDock.qml
+HorizontalLayout	1.0 HorizontalLayout.qml
+Button			1.0 Button.qml
+Player			1.0 Player.qml
+MouseCatcher		1.0 MouseCatcher.qml

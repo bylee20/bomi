@@ -2,6 +2,7 @@ import QtQuick 2.0
 
 Rectangle {
 	id: slider
+	anchors.verticalCenter: parent.verticalCenter
 	property real value: 0.0
 	color: "#fff"
 	border.color: "#999"

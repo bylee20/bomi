@@ -7,7 +7,7 @@
 #include "pref.hpp"
 #include "rootmenu.hpp"
 #include "skin.hpp"
-#include "hwaccel.hpp"
+#include "hwacc.hpp"
 
 // from clementine's preferences dialog
 typedef QDialogButtonBox DBB;
@@ -278,10 +278,10 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	auto vbox = new QVBoxLayout;
 	vbox->setContentsMargins(20, 0, 0, 0);
-	const auto codecs = HwAccel::fullCodecList();
+	const auto codecs = HwAcc::fullCodecList();
 	for (const auto codec : codecs) {
 		QCheckBox *ch = new QCheckBox;
-		const auto supports = HwAccel::supports(codec);
+		const auto supports = HwAcc::supports(codec);
 		const auto desc = avcodec_descriptor_get(codec)->long_name;
 		if (supports)
 			ch->setText(desc);
@@ -339,7 +339,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 //	d->ui.skin_prev->setWindow
 
-	d->ui.sub_shadow_blur->hide();
+//	d->ui.sub_shadow_blur->hide();
 #ifdef Q_OS_MAC
 	d->ui.system_tray_group->hide();
 #endif
@@ -483,21 +483,22 @@ void PrefDialog::fill(const Pref &p) {
 	d->ui.sub_enc->setEncoding(p.sub_enc);
 	d->ui.sub_enc_autodetection->setChecked(p.sub_enc_autodetection);
 	d->ui.sub_enc_accuracy->setValue(p.sub_enc_accuracy);
-	d->ui.sub_font_family->setCurrentFont(p.sub_style.font);
-	d->ui.sub_font_option->set(p.sub_style.font);
-	d->ui.sub_text_color->setColor(p.sub_style.color, false);
-	d->ui.sub_outline_color->setColor(p.sub_style.outline_color, false);
-	d->ui.sub_outline->setChecked(p.sub_style.has_outline);
-	d->ui.sub_auto_size->setCurrentData(p.sub_style.scale.id());
-	d->ui.sub_size_scale->setValue(p.sub_style.size*100.0);
-	d->ui.sub_has_shadow->setChecked(p.sub_style.has_shadow);
-	d->ui.sub_shadow_color->setColor(p.sub_style.shadow_color, false);
-	d->ui.sub_shadow_opacity->setValue(p.sub_style.shadow_color.alphaF()*100.0);
-	d->ui.sub_shadow_offset_x->setValue(p.sub_style.shadow_offset.x()*100.0);
-	d->ui.sub_shadow_offset_y->setValue(p.sub_style.shadow_offset.y()*100.0);
-	d->ui.sub_shadow_blur->setChecked(p.sub_style.shadow_blur);
-	d->ui.sub_new_line_spacing->setValue(p.sub_style.line_spacing*100.0);
-	d->ui.sub_new_paragraph_spacing->setValue(p.sub_style.paragraph_spacing*100.0);
+	d->ui.sub_font_family->setCurrentFont(p.sub_style.font.family());
+	d->ui.sub_font_option->set(p.sub_style.font.qfont);
+	d->ui.sub_font_color->setColor(p.sub_style.font.color, false);
+	d->ui.sub_outline->setChecked(p.sub_style.outline.enabled);
+	d->ui.sub_outline_color->setColor(p.sub_style.outline.color, false);
+	d->ui.sub_outline_width->setValue(p.sub_style.outline.width*100.0);
+	d->ui.sub_font_scale->setCurrentData(p.sub_style.font.scale.id());
+	d->ui.sub_font_size->setValue(p.sub_style.font.size*100.0);
+	d->ui.sub_shadow->setChecked(p.sub_style.shadow.enabled);
+	d->ui.sub_shadow_color->setColor(p.sub_style.shadow.color, false);
+	d->ui.sub_shadow_opacity->setValue(p.sub_style.shadow.color.alphaF()*100.0);
+	d->ui.sub_shadow_offset_x->setValue(p.sub_style.shadow.offset.x()*100.0);
+	d->ui.sub_shadow_offset_y->setValue(p.sub_style.shadow.offset.y()*100.0);
+//	d->ui.sub_shadow_blur->setChecked(p.sub_style.shadow_blur);
+	d->ui.sub_spacing_line->setValue(p.sub_style.spacing.line*100.0);
+	d->ui.sub_spacing_paragraph->setValue(p.sub_style.spacing.paragraph*100.0);
 	d->ui.ms_per_char->setValue(p.ms_per_char);
 	d->ui.sub_priority->setValues(p.sub_priority);
 
@@ -567,23 +568,22 @@ void PrefDialog::apply() {
 	p.sub_enc = d->ui.sub_enc->encoding();
 	p.sub_enc_autodetection = d->ui.sub_enc_autodetection->isChecked();
 	p.sub_enc_accuracy = d->ui.sub_enc_accuracy->value();
-	p.sub_style.font = d->ui.sub_font_family->currentFont();
-	p.sub_style.font.setBold(d->ui.sub_font_option->bold());
-	p.sub_style.font.setItalic(d->ui.sub_font_option->italic());
-	p.sub_style.font.setUnderline(d->ui.sub_font_option->underline());
-	p.sub_style.font.setStrikeOut(d->ui.sub_font_option->strikeOut());
-	p.sub_style.color = d->ui.sub_text_color->color();
-	p.sub_style.outline_color = d->ui.sub_outline_color->color();
-	p.sub_style.scale = d->ui.sub_auto_size->currentValue();
-	p.sub_style.size = d->ui.sub_size_scale->value()/100.0;
-	p.sub_style.has_shadow = d->ui.sub_has_shadow->isChecked();
-	p.sub_style.shadow_blur = d->ui.sub_shadow_blur->isChecked();
-	p.sub_style.shadow_color = d->ui.sub_shadow_color->color();
-	p.sub_style.shadow_color.setAlphaF(d->ui.sub_shadow_opacity->value()/100.0);
-	p.sub_style.shadow_offset.rx() = d->ui.sub_shadow_offset_x->value()/100.0;
-	p.sub_style.shadow_offset.ry() = d->ui.sub_shadow_offset_y->value()/100.0;
-	p.sub_style.line_spacing = d->ui.sub_new_line_spacing->value()/100.0;
-	p.sub_style.paragraph_spacing = d->ui.sub_new_paragraph_spacing->value()/100.0;
+	p.sub_style.font.setFamily(d->ui.sub_font_family->currentFont().family());
+	d->ui.sub_font_option->apply(p.sub_style.font.qfont);
+	p.sub_style.font.color = d->ui.sub_font_color->color();
+	p.sub_style.font.scale = d->ui.sub_font_scale->currentValue();
+	p.sub_style.font.size = d->ui.sub_font_size->value()/100.0;
+	p.sub_style.outline.enabled = d->ui.sub_outline->isChecked();
+	p.sub_style.outline.color = d->ui.sub_outline_color->color();
+	p.sub_style.outline.width = d->ui.sub_outline_width->value()/100.0;
+	p.sub_style.shadow.enabled = d->ui.sub_shadow->isChecked();
+	p.sub_style.shadow.color = d->ui.sub_shadow_color->color();
+	p.sub_style.shadow.color.setAlphaF(d->ui.sub_shadow_opacity->value()/100.0);
+	p.sub_style.shadow.offset.rx() = d->ui.sub_shadow_offset_x->value()/100.0;
+	p.sub_style.shadow.offset.ry() = d->ui.sub_shadow_offset_y->value()/100.0;
+//	p.sub_style.shadow_blur = d->ui.sub_shadow_blur->isChecked();
+	p.sub_style.spacing.line = d->ui.sub_spacing_line->value()/100.0;
+	p.sub_style.spacing.paragraph = d->ui.sub_spacing_paragraph->value()/100.0;
 	p.ms_per_char = d->ui.ms_per_char->value();
 	p.sub_priority = d->ui.sub_priority->values();
 

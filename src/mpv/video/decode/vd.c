@@ -46,7 +46,9 @@ vd_functions_t cmplayer_vd_vaapi = {0};
 
 const vd_functions_t * const mpcodecs_vd_drivers[] = {
     &mpcodecs_vd_ffmpeg,
+#ifdef __linux__
     &cmplayer_vd_vaapi,
+#endif
     /* Please do not add any new decoders here. If you want to implement a new
      * decoder, add it to libavcodec, except for wrappers around external
      * libraries and decoders requiring binary support. */

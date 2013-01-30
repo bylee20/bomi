@@ -93,7 +93,7 @@ QIcon App::defaultIcon() {
 		icon.addFile(":/img/cmplayer64.png", QSize(64, 64));
 		icon.addFile(":/img/cmplayer128.png", QSize(128, 128));
 		icon.addFile(":/img/cmplayer256.png", QSize(256, 256));
-		icon.addFile(":/img/cmplayer512.png", QSize(512, 512));
+		icon.addFile(":/img/cmplayer-logo.png", QSize(512, 512));
 		init = true;
 	}
 	return icon;

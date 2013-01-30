@@ -6,7 +6,7 @@
 #include "subtitle.hpp"
 
 class RichTextDocument;		class SubtitleComponentModel;
-class SubtitleStyleObject;
+class SubtitleStyle;
 
 class LoadedSubtitle {
 public:
@@ -24,7 +24,6 @@ private:
 
 class SubtitleRendererItem : public TextureRendererItem  {
 	Q_OBJECT
-	Q_PROPERTY(SubtitleStyleObject *style READ style)
 public:
 	SubtitleRendererItem(QQuickItem *parent = nullptr);
 	~SubtitleRendererItem();
@@ -42,12 +41,15 @@ public:
 	QVector<SubtitleComponentModel*> models() const;
 	const QList<LoadedSubtitle> &loaded() const { return m_loaded; }
 	void setLoaded(const QList<LoadedSubtitle> &loaded);
+	void setPriority(const QStringList &priority);
 	void setPos(double pos) { if (_ChangeF(m_pos, qBound(0.0, pos, 1.0))) setMargin(m_top ? m_pos : 0, m_top ? 0.0 : 1.0 - m_pos, 0, 0); }
 	void setLetterboxHint(bool hint) { if (_Change(m_letterbox, hint) && m_screen != boundingRect()) { prepare(); update(); } }
 	void setDelay(int delay) { if (_Change(m_delay, delay)) render(m_ms); }
 	bool load(const QString &fileName, const QString &enc, bool select);
 	void unload() { qDeleteAll(m_order); m_order.clear(); m_loaded.clear(); m_compempty = true; resetIterators(); emit modelsChanged(models()); }
 	void select(int idx, bool selected = true);
+	const SubtitleStyle &style() const;
+	void setStyle(const SubtitleStyle &style);
 public slots:
 	void setScreenRect(const QRectF &screen) { if (_Change(m_screen, screen) && !m_letterbox) { setGeometryDirty(); prepare(); update(); } }
 	void setHidden(bool hidden) { if (_Change(m_visible, !hidden)) rerender(); }
@@ -57,7 +59,6 @@ public slots:
 signals:
 	void modelsChanged(const QVector<SubtitleComponentModel*> &models);
 private:
-	SubtitleStyleObject *style() const {return m_style;}
 	QSizeF contentSize() const {return m_size;}
 	void setText(const RichTextDocument &doc);
 	void setMargin(double top, double bottom, double right, double left);
@@ -87,7 +88,6 @@ private:
 	const char *fragmentShader() const;
 	struct Data;
 	Data *d;
-	SubtitleStyleObject *m_style = nullptr;
 	QSizeF m_size;	QRectF m_screen = {0, 0, 0, 0};
 	bool m_letterbox = true, m_visible = true, m_compempty = true, m_top = false;
 	Qt::Alignment m_alignment = Qt::AlignBottom | Qt::AlignHCenter;

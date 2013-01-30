@@ -6,9 +6,17 @@ Skin::Data::Data() {
 #endif
 	dirs << QDir::homePath() % _L("/.cmplayer/skins");
 	dirs << QCoreApplication::applicationDirPath().toLocal8Bit() % _L("/skins");
-	const QByteArray path = qgetenv("CMPLAYER_SKINS_PATH");
+	auto path = qgetenv("CMPLAYER_SKINS_PATH");
 	if (!path.isEmpty())
 		dirs << QString::fromLocal8Bit(path.data(), path.size());
+#ifdef CMPLAYER_IMPORTS_PATH
+	qmls << QString::fromLocal8Bit(CMPLAYER_IMPORTS_PATH);
+#endif
+	qmls << QDir::homePath() % _L("/.cmplayer/imports");
+	qmls << QCoreApplication::applicationDirPath().toLocal8Bit() % _L("/imports");
+	path = qgetenv("CMPLAYER_IMPORTS_PATH");
+	if (!path.isEmpty())
+		qmls << QString::fromLocal8Bit(path.data(), path.size());
 }
 
 QStringList Skin::names(bool reload/* = false*/) {
@@ -33,6 +41,11 @@ QStringList Skin::names(bool reload/* = false*/) {
 void Skin::apply(QQuickView *view, const QString &name) {
 	if (data()->skins.isEmpty())
 		names(true);
+	auto imports = view->engine()->importPathList();
+	for (auto path : data()->qmls) {
+		if (!imports.contains(path))
+			view->engine()->addImportPath(path);
+	}
 	const auto skin = Skin::source(name);
 	view->setResizeMode(QQuickView::SizeRootObjectToView);
 	view->setSource(QUrl::fromLocalFile(skin.absoluteFilePath()));

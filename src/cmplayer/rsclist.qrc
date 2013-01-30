@@ -3,7 +3,6 @@
         <file>img/zoom-original.png</file>
         <file>img/zoom-in.png</file>
         <file>img/zoom-out.png</file>
-        <file>img/cmplayer512.png</file>
         <file>gpl.html</file>
         <file>img/format-text-bold.png</file>
         <file>img/format-text-italic.png</file>
@@ -11,8 +10,8 @@
         <file>img/format-text-underline.png</file>
         <file>mpl.html</file>
         <file>translations/cmplayer_en.qm</file>
-	<file>translations/cmplayer_ko.qm</file>
-	<file>translations/cmplayer_ru.qm</file>
+        <file>translations/cmplayer_ko.qm</file>
+        <file>translations/cmplayer_ru.qm</file>
         <file>img/cmplayer-32.png</file>
         <file>img/format-text-color-32.png</file>
         <file>img/games-config-background-32.png</file>
@@ -25,5 +24,8 @@
         <file>img/preferences-desktop-theme-32.png</file>
         <file>img/applications-education-miscellaneous-32.png</file>
         <file>img/document-open-32.png</file>
+        <file>img/cmplayer-logo.png</file>
+        <file>img/logo-background.png</file>
+        <file>img/logo-background.svg</file>
     </qresource>
 </RCC>
