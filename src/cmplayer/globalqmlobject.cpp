@@ -2,8 +2,20 @@
 #include "rootmenu.hpp"
 #include <unistd.h>
 
+void SettingsObject::open(const QString &name) {
+	if (m_name != name) {
+		close();
+		m_set.beginGroup("skin");
+		m_set.beginGroup(name);
+		m_open = true;
+		m_name = name;
+	}
+}
+
 bool UtilObject::m_filterDoubleClick = false;
 bool UtilObject::m_pressed = false;
+bool UtilObject::m_cursor = true;
+
 QLinkedList<UtilObject*> UtilObject::objs;
 
 UtilObject::UtilObject(QObject *parent)
@@ -15,11 +27,6 @@ UtilObject::UtilObject(QObject *parent)
 UtilObject::~UtilObject() {
 	objs.removeOne(this);
 	qDebug() << "dtor";
-}
-
-void UtilObject::setMouseReleased(const QPointF &scenePos) {
-	for (auto obj : objs)
-		emit obj->mouseReleased(scenePos);
 }
 
 double UtilObject::textWidth(const QString &text, int size, const QString &family) {

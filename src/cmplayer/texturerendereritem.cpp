@@ -57,7 +57,7 @@ struct TextureRendererItem::Data {
 
 TextureRendererItem::TextureRendererItem(int textures, QQuickItem *parent)
 : QQuickItem(parent), d(new Data) {
-	setFlag(ItemHasContents);
+	setFlag(ItemHasContents, true);
 	m_count = textures;
 }
 
@@ -74,8 +74,9 @@ void TextureRendererItem::resetNode() {
 		delete d->node;
 		d->node = nullptr;
 	}
-	if (!d->node)
+	if (!d->node) {
 		d->node = new Node(this);
+	}
 }
 
 QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
@@ -89,6 +90,7 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 		d->node->markDirty(QSGNode::DirtyGeometry);
 		d->dirtyGeomerty = false;
 	}
+	d->node->markDirty(QSGNode::DirtyMaterial);
 	return d->node;
 }
 

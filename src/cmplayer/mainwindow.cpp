@@ -329,6 +329,7 @@ MainWindow::MainWindow(): d(new Data) {
 	d->renderer.setOverlay(&d->subtitle);
 
 	resize(400, 300);
+	setMinimumSize(QSize(400, 300));
 #ifndef Q_OS_MAC
 	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
 #endif
@@ -581,7 +582,7 @@ MainWindow::MainWindow(): d(new Data) {
 	});
 	connect(&d->engine, &PlayEngine::mutedChanged, d->menu("audio")["mute"], &QAction::setChecked);
 	connect(&d->recent, &RecentInfo::openListChanged, this, &MainWindow::updateRecentActions);
-	connect(&d->hider, &QTimer::timeout, [this] () {if (cursor().shape() != Qt::BlankCursor) setCursor(Qt::BlankCursor);});
+	connect(&d->hider, &QTimer::timeout, [this] () {setCursorVisible(false);});
 	connect(&d->history, &HistoryModel::playRequested, [this] (const Mrl &mrl) {openMrl(mrl);});
 	connect(&d->playlist, &PlaylistModel::finished, [this] () {
 		if (d->menu("tool")["auto-exit"]->isChecked()) exit();
@@ -623,8 +624,7 @@ MainWindow::MainWindow(): d(new Data) {
 			break;
 		default:
 			d->hider.stop();
-			if (cursor().shape() == Qt::BlankCursor)
-				unsetCursor();
+			setCursorVisible(true);
 			updateStaysOnTop();
 			setVisible(true);
 		}
@@ -830,8 +830,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 	d->hider.stop();
-	if (cursor().shape() == Qt::BlankCursor)
-		unsetCursor();
+	setCursorVisible(true);
 	QQuickView::mouseMoveEvent(event);
 	const bool full = isFullScreen();
 	if (full) {
@@ -940,7 +939,8 @@ void MainWindow::reloadSkin() {
 			qDebug() << error.toString();
 		}
 	} else {
-		d->player = rootObject()->findChild<PlayerItem*>();
+		if (!(d->player = qobject_cast<PlayerItem*>(rootObject())))
+			d->player = rootObject()->findChild<PlayerItem*>();
 		if (d->player)
 			d->player->plugTo(&d->engine);
 	}
@@ -1014,11 +1014,6 @@ void MainWindow::hideEvent(QHideEvent *event) {
 		return;
 	d->pausedByHiding = true;
 	d->engine.pause();
-}
-
-void MainWindow::hideCursor() {
-	if (cursor().shape() != Qt::BlankCursor)
-		setCursor(Qt::BlankCursor);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -1148,4 +1143,14 @@ int MainWindow::getStartTime(const Mrl &mrl) {
 			return 0;
 	}
 	return start;
+}
+
+void MainWindow::setCursorVisible(bool visible) {
+	if (visible && cursor().shape() == Qt::BlankCursor) {
+		unsetCursor();
+		UtilObject::setCursorVisible(true);
+	} else if (!visible && cursor().shape() != Qt::BlankCursor) {
+		setCursor(Qt::BlankCursor);
+		UtilObject::setCursorVisible(false);
+	}
 }

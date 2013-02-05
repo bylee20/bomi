@@ -4,8 +4,8 @@
 #include "shadervar.h"
 
 struct VideoRendererItem::Data {
-	VideoFrame frame, next;
-	bool /*frameChanged = false, */quit = false;
+	VideoFrame frame, next, temp;
+	bool quit = false;
 	QRectF vtx;
 	QPoint offset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
@@ -31,6 +31,7 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
 	setZ(-1);
+	setObjectName("VideoRendererItem");
 }
 
 VideoRendererItem::~VideoRendererItem() {
@@ -53,8 +54,10 @@ void VideoRendererItem::next() {
 	d->mposd->endNewFrame();
 	d->mutex.unlock();
 	update();
+	if (window())
+		window()->update();
+//	qDebug() << "update!";
 //	while (!d->quit && d->frame.id() != d->frameId && !d->wait.wait(&d->mutex, 500u)) ;
-
 }
 
 QRectF VideoRendererItem::screenRect() const {
@@ -410,6 +413,7 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 }
 
 void VideoRendererItem::beforeUpdate() {
+	qDebug() << "update?" << (d->frameId != d->frame.id()) << d->frameId;
 	QMutexLocker locker(&d->mutex);
 	if (d->frame.id() == d->frameId)
 		return;
@@ -458,6 +462,7 @@ void VideoRendererItem::beforeUpdate() {
 	}
 	d->frameId = d->frame.id();
 	d->wait.wakeAll();
+	qDebug() << "update done";
 }
 
 void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {

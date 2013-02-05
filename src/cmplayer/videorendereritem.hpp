@@ -8,7 +8,7 @@
 class VideoRendererItem;		class ColorProperty;
 class VideoFrame;				class VideoFormat;
 
-class VideoRendererItem : public TextureRendererItem, public Skin {
+class VideoRendererItem : public TextureRendererItem {
 	Q_OBJECT
 public:
 	enum Effect {

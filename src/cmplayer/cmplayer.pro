@@ -2,9 +2,6 @@ TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header
 QT = core gui network quick widgets gui-private
 
-#LIBS +=  -lz -lbz2 -lpthread -lm -ldvdread -lmad -lvorbis -logg -lfaad -ldv -ldvdnavmini \
-#    -lxvidcore -lvorbis -logg -ltheora -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio -lquvi
-
 PRECOMPILED_HEADER = stdafx.hpp
 
 precompile_header:!isEmpty(PRECOMPILED_HEADER) {
@@ -48,7 +45,9 @@ macx {
     HEADERS += app_x11.hpp mpv-vaapi.hpp
     SOURCES += app_x11.cpp mpv-vaapi.cpp
 }
-LIBS += -lz -lbz2 -lmpg123 -lquvi -lpthread -lm -ldvdread -lmad -lfaad -la52 -ldca -lcdio_paranoia -lcdio_cdda -lcdio
+
+LIBS += -lmpg123 -lquvi -ldvdread -lbz2 -lcdio_paranoia -lcdio_cdda -lcdio -lz
+# +=  -lpthread -lm -lmad -lfaad -la52 -ldca
 
 INCLUDEPATH += ../mpv ../../build/include
 
@@ -57,6 +56,8 @@ QMAKE_CC = "gcc -std=c99 -ffast-math -w"
 QMAKE_CXXFLAGS += -std=c++11
 
 DESTDIR = ../../build
+
+QML_IMPORT_PATH += imports
 
 DEFINES += _LARGEFILE_SOURCE "_FILE_OFFSET_BITS=64" _LARGEFILE64_SOURCE
 
@@ -221,6 +222,10 @@ OTHER_FILES += \
     imports/CMPlayerSkin/Button.qml \
     imports/CMPlayerSkin/Player.qml \
     imports/CMPlayerSkin/MouseCatcher.qml \
+    imports/CMPlayerSkin/func.js \
     skins/classic/Slider.qml \
     skins/classic/FramedButton.qml \
-    skins/classic/cmplayer.qml
+    skins/classic/cmplayer.qml \
+    skins/modern/cmplayer.qml \
+    skins/modern/Slider.qml \
+    skins/modern/TimeText.qml

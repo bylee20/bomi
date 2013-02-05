@@ -14,3 +14,4 @@ HorizontalLayout	1.0 HorizontalLayout.qml
 Button			1.0 Button.qml
 Player			1.0 Player.qml
 MouseCatcher		1.0 MouseCatcher.qml
+Func			1.0 func.js

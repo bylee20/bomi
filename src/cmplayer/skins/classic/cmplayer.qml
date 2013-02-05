@@ -62,7 +62,7 @@ Rectangle {
 								GradientStop { position: 1.0; color: "#fff" }
 							}
 							HorizontalLayout {
-								anchors.fill: parent; fillers: [medianame]; paddings: 3; centering: true
+								anchors.fill: parent; fillers: [medianame]; paddings: 3
 								Text {
 									id: medianumber
 									width: contentWidth; verticalAlignment: Text.AlignVCenter

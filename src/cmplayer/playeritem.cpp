@@ -4,7 +4,6 @@
 #include "playinfoitem.hpp"
 #include "rootmenu.hpp"
 #include "globalqmlobject.hpp"
-
 #include "playinfoitem.hpp"
 #include "playlistmodel.hpp"
 #include "videorendereritem.hpp"
@@ -22,6 +21,7 @@ extern "C" {
 }
 
 static QObject *utilProvider(QQmlEngine *, QJSEngine *) {return new UtilObject;}
+static QObject *settingsProvider(QQmlEngine *, QJSEngine *) {return new SettingsObject;}
 
 struct PlayerItem::Data {
 	quint64 frameTime = 0, drawnFrames = 0;
@@ -167,8 +167,9 @@ void PlayerItem::registerItems() {
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();
-	qmlRegisterType<PlayerItem>("CMPlayerSkin", 1, 0, "Engine");
-	qmlRegisterSingletonType<UtilObject>("CMPlayerSkin", 1, 0, "Util", utilProvider);
+	qmlRegisterType<PlayerItem>("CMPlayerCore", 1, 0, "Engine");
+	qmlRegisterSingletonType<UtilObject>("CMPlayerCore", 1, 0, "Util", utilProvider);
+	qmlRegisterSingletonType<SettingsObject>("CMPlayerCore", 1, 0, "Settings", settingsProvider);
 }
 
 void PlayerItem::updateStateInfo() {

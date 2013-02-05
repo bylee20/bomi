@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import CMPlayerSkin 1.0
-
+import CMPlayerCore 1.0 as Core
 Rectangle {
 	id: main
 	Player {
@@ -23,11 +23,11 @@ Rectangle {
 			}
 			HorizontalLayout {
 				anchors.fill: parent; spacing: 3; paddings: 4
-				fillers: [timeslider]; centering: true
+				fillers: [timeslider]
 				Button {
 					id: playPause
 					width: parent.contentHeight; height: parent.contentHeight
-					icon: (player.state === Engine.Playing) ? "pause.png" : "play.png"
+					icon: (player.state === Core.Engine.Playing) ? "pause.png" : "play.png"
 					action: "menu/play/pause"
 					paddings: pressed ? 2 : (hovered ? 0 : 1)
 				}
@@ -39,9 +39,9 @@ Rectangle {
 				Text {
 					id: timetext
 					width: contentWidth; height: contentHeight
-					font { family: Util.monospace; pixelSize: 10 }
+					font { family: Core.Util.monospace; pixelSize: 10 }
 					property int secs: 0
-					text: "%1/%2".arg(Util.msecToString(secs*1000.0)).arg(Util.msecToString(player.duration))
+					text: "%1/%2".arg(Core.Util.msecToString(secs*1000.0)).arg(Core.Util.msecToString(player.duration))
 				}
 				Slider {
 					id: volumeslider

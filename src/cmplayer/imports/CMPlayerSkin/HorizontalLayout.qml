@@ -9,50 +9,52 @@ Item {
 	property real rightPadding: paddings
 	property real paddings: 0
 	property real contentHeight: height - topPadding - bottomPadding
-	property bool centering: false
 	property var fillers: []
-	property bool __doing: false
+	onLeftPaddingChanged: layout()
+	onRightPaddingChanged: layout()
+	onPaddingsChanged: layout()
 	function layout() {
 		if (children.length === 0)
 			return
-		var w = 0, hMax = height - topPadding - bottomPadding
+		var w = 0, h = height - topPadding - bottomPadding
 		for (var i=0; i < children.length; ++i) {
 			var child = children[i];
-			child.height = hMax
-			child.y = topPadding
+			child.height = h
 			if (fillers.indexOf(child) === -1)
 				w += child.width
 		}
 		if (fillers.length > 0) {
 			w += spacing*(children.length-1)
 			w = (width - w - leftPadding - rightPadding)/fillers.length
-			for (i=0; i<fillers.length; ++i)
+			for (var i=0; i<fillers.length; ++i)
 				fillers[i].width = w
 		}
 		var x = leftPadding
-		for (i=0; i<children.length; ++i) {
-			child = children[i]
+		for (var i=0; i<children.length; ++i) {
+			var child = children[i]
 			child.x = x
+			child.y = topPadding
 			x += child.width + spacing
 		}
 	}
-	function center() {
-		if (centering) {
-			for (var i=0; i<children.length; ++i) {
-				children[i].anchors.verticalCenter = verticalCenter
-			}
-		}
-	}
-	onHeightChanged: center()
+	onHeightChanged: layout();
 	onWidthChanged: layout()
+	onChildrenChanged: layout()
+	onSpacingChanged: layout()
+	onVisibleChanged: layout()
 	Component.onCompleted: {
-		layout(); center();
-		childrenChanged.connect(center)
-		childrenChanged.connect(layout)
+		layout();
 		for (var i=0; i<children.length; ++i) {
 			var child = children[i]
 			if (fillers.indexOf(child) === -1)
 				child.widthChanged.connect(layout)
+		}
+	}
+	Component.onDestruction: {
+		for (var i=0; i<children.length; ++i) {
+			var child = children[i]
+			if (fillers.indexOf(child) === -1)
+				child.widthChanged.disconnect(layout)
 		}
 	}
 }

@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import CMPlayerSkin 1.0
+import CMPlayerCore 1.0 as Core
 
 MouseArea {
 	id: root
@@ -9,9 +9,9 @@ MouseArea {
 	onPressed: { mouse.accepted = false; }
 	onEntered: catched = true
 	onExited: if (!pressed) catched = false
-	Component.onCompleted: Util.mouseReleased.connect(check)
+	Component.onCompleted: Core.Util.mouseReleased.connect(check)
 	function check(scenePos) {
-		if (!contains(Util.mapFromSceneTo(root, scenePos)))
+		if (!contains(Core.Util.mapFromSceneTo(root, scenePos)))
 			catched = false
 	}
 }

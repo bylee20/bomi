@@ -17,7 +17,7 @@ class PlayerItem : public QQuickItem, public Skin {
 	Q_PROPERTY(AvInfoObject *video READ video NOTIFY audioChanged)
 	Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
 	Q_PROPERTY(int time READ position NOTIFY tick)
-	Q_PROPERTY(int volume READ volume NOTIFY volumeChanged)
+	Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
 	Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
 	Q_PROPERTY(bool volumeNormalized READ isVolumeNormalized NOTIFY volumeNormalizedChanged)
 	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)

@@ -1,22 +1,25 @@
 #include "skin.hpp"
 
 Skin::Data::Data() {
+	auto append = [] (const QString &dir, QStringList &dirs) { if (!dirs.contains(dir)) dirs << dir; };
+
 #ifdef CMPLAYER_SKINS_PATH
-	dirs << QString::fromLocal8Bit(CMPLAYER_SKINS_PATH);
+	append(QString::fromLocal8Bit(CMPLAYER_SKINS_PATH), dirs);
 #endif
-	dirs << QDir::homePath() % _L("/.cmplayer/skins");
-	dirs << QCoreApplication::applicationDirPath().toLocal8Bit() % _L("/skins");
+	append(QDir::homePath() % _L("/.cmplayer/skins"), dirs);
+	append(QCoreApplication::applicationDirPath().toLocal8Bit() % _L("/skins"), dirs);
 	auto path = qgetenv("CMPLAYER_SKINS_PATH");
 	if (!path.isEmpty())
-		dirs << QString::fromLocal8Bit(path.data(), path.size());
+		append(QString::fromLocal8Bit(path.data(), path.size()), dirs);
+
 #ifdef CMPLAYER_IMPORTS_PATH
-	qmls << QString::fromLocal8Bit(CMPLAYER_IMPORTS_PATH);
+	append(QString::fromLocal8Bit(CMPLAYER_IMPORTS_PATH), qmls);
 #endif
-	qmls << QDir::homePath() % _L("/.cmplayer/imports");
-	qmls << QCoreApplication::applicationDirPath().toLocal8Bit() % _L("/imports");
+	append(QDir::homePath() % _L("/.cmplayer/imports"), qmls);
+	append(QCoreApplication::applicationDirPath().toLocal8Bit() % _L("/imports"), qmls);
 	path = qgetenv("CMPLAYER_IMPORTS_PATH");
 	if (!path.isEmpty())
-		qmls << QString::fromLocal8Bit(path.data(), path.size());
+		append(QString::fromLocal8Bit(path.data(), path.size()), qmls);
 }
 
 QStringList Skin::names(bool reload/* = false*/) {
@@ -46,6 +49,7 @@ void Skin::apply(QQuickView *view, const QString &name) {
 		if (!imports.contains(path))
 			view->engine()->addImportPath(path);
 	}
+	qDebug() << view->engine()->importPathList();
 	const auto skin = Skin::source(name);
 	view->setResizeMode(QQuickView::SizeRootObjectToView);
 	view->setSource(QUrl::fromLocalFile(skin.absoluteFilePath()));
