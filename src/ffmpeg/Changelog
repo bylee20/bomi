@@ -2,6 +2,24 @@ Entries are sorted chronologically from oldest to youngest within each release,
 releases are sorted from youngest to oldest.
 
 version <next>:
+- VDPAU hardware acceleration through normal hwaccel
+- SRTP support
+- Error diffusion dither in Swscale
+- Chained Ogg support
+- Theora Midstream reconfiguration support
+- EVRC decoder
+- audio fade filter
+- filtering audio with unknown channel layout
+- allpass, bass, bandpass, bandreject, biquad, equalizer, highpass, lowpass
+  and treble audio filter
+- improved showspectrum filter, with multichannel support and sox-like colors
+- histogram filter
+- tee muxer
+- il filter ported from libmpcodecs
+- support ID3v2 tags in ASF files
+
+
+version 1.1:
 
 - stream disposition information printing in ffprobe
 - filter for loudness analysis following EBU R128
@@ -57,6 +75,9 @@ version <next>:
 - support building on the Plan 9 operating system
 - kerndeint filter ported from MPlayer
 - histeq filter ported from VirtualDub
+- Megalux Frame demuxer
+- 012v decoder
+- Improved AVC Intra decoding support
 
 
 version 1.0:

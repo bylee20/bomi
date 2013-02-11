@@ -16,243 +16,128 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "config.h"
-#include "video/img_format.h"
-#include "stdio.h"
-#include "compat/mpbswap.h"
-
+#include <assert.h>
 #include <string.h>
 
-const char *vo_format_name(int format)
-{
-    const char *name = mp_imgfmt_to_name(format);
-    if (name)
-        return name;
-    static char unknown_format[20];
-    snprintf(unknown_format, 20, "Unknown 0x%04x", format);
-    return unknown_format;
-}
+#include <libavutil/pixfmt.h>
+#include <libavutil/pixdesc.h>
 
-int mp_get_chroma_shift(int format, int *x_shift, int *y_shift,
-                        int *component_bits)
-{
-    int xs = 0, ys = 0;
-    int bpp;
-    int err = 0;
-    int bits = 8;
-    if ((format & 0xff0000f0) == 0x34000050)
-        format = bswap_32(format);
-    if ((format & 0xf00000ff) == 0x50000034) {
-        switch (format >> 24) {
-        case 0x50:
-            break;
-        case 0x51:
-            bits = 16;
-            break;
-        case 0x55:
-            bits = 14;
-            break;
-        case 0x54:
-            bits = 12;
-            break;
-        case 0x52:
-            bits = 10;
-            break;
-        case 0x53:
-            bits = 9;
-            break;
-        default:
-            err = 1;
-            break;
-        }
-        switch (format & 0x00ffffff) {
-        case 0x00343434: // 444
-            xs = 0;
-            ys = 0;
-            break;
-        case 0x00323234: // 422
-            xs = 1;
-            ys = 0;
-            break;
-        case 0x00303234: // 420
-            xs = 1;
-            ys = 1;
-            break;
-        case 0x00313134: // 411
-            xs = 2;
-            ys = 0;
-            break;
-        case 0x00303434: // 440
-            xs = 0;
-            ys = 1;
-            break;
-        default:
-            err = 1;
-            break;
-        }
-    } else
-        switch (format) {
-        case IMGFMT_420A:
-        case IMGFMT_I420:
-        case IMGFMT_IYUV:
-        case IMGFMT_YV12:
-            xs = 1;
-            ys = 1;
-            break;
-        case IMGFMT_IF09:
-        case IMGFMT_YVU9:
-            xs = 2;
-            ys = 2;
-            break;
-        case IMGFMT_Y8:
-        case IMGFMT_Y800:
-            xs = 31;
-            ys = 31;
-            break;
-        case IMGFMT_Y16BE:
-        case IMGFMT_Y16LE:
-            bits = 16;
-            xs = 31;
-            ys = 31;
-            break;
-        default:
-            err = 1;
-            break;
-        }
-    if (x_shift)
-        *x_shift = xs;
-    if (y_shift)
-        *y_shift = ys;
-    if (component_bits)
-        *component_bits = bits;
-    bpp = 8 + ((16 >> xs) >> ys);
-    if (format == IMGFMT_420A)
-        bpp += 8;
-    bpp *= (bits + 7) >> 3;
-    return err ? 0 : bpp;
-}
+#include "video/img_format.h"
+#include "video/mp_image.h"
+#include "video/fmt-conversion.h"
+
+#define FMT(string, id)                                 \
+    {string,            id},
+
+#define FMT_ENDIAN(string, id)                          \
+    {string,            id},                            \
+    {string "le",       MP_CONCAT(id, _LE)},            \
+    {string "be",       MP_CONCAT(id, _BE)},            \
 
 struct mp_imgfmt_entry mp_imgfmt_list[] = {
-    {"444p16le", IMGFMT_444P16_LE},
-    {"444p16be", IMGFMT_444P16_BE},
-    {"444p14le", IMGFMT_444P14_LE},
-    {"444p14be", IMGFMT_444P14_BE},
-    {"444p12le", IMGFMT_444P12_LE},
-    {"444p12be", IMGFMT_444P12_BE},
-    {"444p10le", IMGFMT_444P10_LE},
-    {"444p10be", IMGFMT_444P10_BE},
-    {"444p9le", IMGFMT_444P9_LE},
-    {"444p9be", IMGFMT_444P9_BE},
-    {"422p16le", IMGFMT_422P16_LE},
-    {"422p16be", IMGFMT_422P16_BE},
-    {"422p14le", IMGFMT_422P14_LE},
-    {"422p14be", IMGFMT_422P14_BE},
-    {"422p12le", IMGFMT_422P12_LE},
-    {"422p12be", IMGFMT_422P12_BE},
-    {"422p10le", IMGFMT_422P10_LE},
-    {"422p10be", IMGFMT_422P10_BE},
-    {"422p9le",  IMGFMT_422P9_LE},
-    {"422p9be",  IMGFMT_422P9_BE},
-    {"420p16le", IMGFMT_420P16_LE},
-    {"420p16be", IMGFMT_420P16_BE},
-    {"420p14le", IMGFMT_420P14_LE},
-    {"420p14be", IMGFMT_420P14_BE},
-    {"420p12le", IMGFMT_420P12_LE},
-    {"420p12be", IMGFMT_420P12_BE},
-    {"420p10le", IMGFMT_420P10_LE},
-    {"420p10be", IMGFMT_420P10_BE},
-    {"420p9le", IMGFMT_420P9_LE},
-    {"420p9be", IMGFMT_420P9_BE},
-    {"444p16", IMGFMT_444P16},
-    {"444p14", IMGFMT_444P14},
-    {"444p12", IMGFMT_444P12},
-    {"444p10", IMGFMT_444P10},
-    {"444p9", IMGFMT_444P9},
-    {"422p16", IMGFMT_422P16},
-    {"422p14", IMGFMT_422P14},
-    {"422p12", IMGFMT_422P12},
-    {"422p10", IMGFMT_422P10},
-    {"420p14", IMGFMT_420P14},
-    {"420p12", IMGFMT_420P12},
-    {"420p10", IMGFMT_420P10},
-    {"420p9", IMGFMT_420P9},
-    {"420p16", IMGFMT_420P16},
-    {"420a", IMGFMT_420A},
-    {"444p", IMGFMT_444P},
-    {"422p", IMGFMT_422P},
-    {"411p", IMGFMT_411P},
-    {"440p", IMGFMT_440P},
-    {"yuy2", IMGFMT_YUY2},
-    {"yvyu", IMGFMT_YVYU},
-    {"uyvy", IMGFMT_UYVY},
-    {"yvu9", IMGFMT_YVU9},
-    {"if09", IMGFMT_IF09},
-    {"yv12", IMGFMT_YV12},
-    {"i420", IMGFMT_I420},
-    {"iyuv", IMGFMT_IYUV},
-    {"clpl", IMGFMT_CLPL},
-    {"hm12", IMGFMT_HM12},
-    {"y800", IMGFMT_Y800},
-    {"y8", IMGFMT_Y8},
-    {"y16ne", IMGFMT_Y16},
-    {"y16le", IMGFMT_Y16LE},
-    {"y16be", IMGFMT_Y16BE},
-    {"nv12", IMGFMT_NV12},
-    {"nv21", IMGFMT_NV21},
-    {"bgr24", IMGFMT_BGR24},
-    {"bgr32", IMGFMT_BGR32},
-    {"bgr16", IMGFMT_BGR16},
-    {"bgr15", IMGFMT_BGR15},
-    {"bgr12", IMGFMT_BGR12},
-    {"bgr8", IMGFMT_BGR8},
-    {"bgr4", IMGFMT_BGR4},
-    {"bg4b", IMGFMT_BG4B},
-    {"bgr1", IMGFMT_BGR1},
-    {"rgb48be", IMGFMT_RGB48BE},
-    {"rgb48le", IMGFMT_RGB48LE},
-    {"rgb48ne", IMGFMT_RGB48NE},
-    {"rgb24", IMGFMT_RGB24},
-    {"rgb32", IMGFMT_RGB32},
-    {"rgb16", IMGFMT_RGB16},
-    {"rgb15", IMGFMT_RGB15},
-    {"rgb12", IMGFMT_RGB12},
-    {"rgb8", IMGFMT_RGB8},
-    {"rgb4", IMGFMT_RGB4},
-    {"rg4b", IMGFMT_RG4B},
-    {"rgb1", IMGFMT_RGB1},
-    {"rgba", IMGFMT_RGBA},
-    {"argb", IMGFMT_ARGB},
-    {"bgra", IMGFMT_BGRA},
-    {"abgr", IMGFMT_ABGR},
-    {"bgr0", IMGFMT_BGR0},
-    {"gbrp", IMGFMT_GBRP},
-    {"mjpeg", IMGFMT_MJPEG},
-    {"mjpg", IMGFMT_MJPEG},
-    {"vdpau_h264", IMGFMT_VDPAU_H264},
-    {"vdpau_mpeg1", IMGFMT_VDPAU_MPEG1},
-    {"vdpau_mpeg2", IMGFMT_VDPAU_MPEG2},
-    {"vdpau_mpeg4", IMGFMT_VDPAU_MPEG4},
-    {"vdpau_wmv3", IMGFMT_VDPAU_WMV3},
-    {"vdpau_vc1", IMGFMT_VDPAU_VC1},
+    FMT("y8",                   IMGFMT_Y8)
+    FMT_ENDIAN("y16",           IMGFMT_Y16)
+    FMT("ya8",                  IMGFMT_YA8)
+    FMT("yuyv",                 IMGFMT_YUYV)
+    FMT("uyvy",                 IMGFMT_UYVY)
+    FMT("nv12",                 IMGFMT_NV12)
+    FMT("nv21",                 IMGFMT_NV21)
+    FMT("444p",                 IMGFMT_444P)
+    FMT("422p",                 IMGFMT_422P)
+    FMT("440p",                 IMGFMT_440P)
+    FMT("420p",                 IMGFMT_420P)
+    FMT("411p",                 IMGFMT_411P)
+    FMT("410p",                 IMGFMT_410P)
+    FMT_ENDIAN("444p16",        IMGFMT_444P16)
+    FMT_ENDIAN("444p14",        IMGFMT_444P14)
+    FMT_ENDIAN("444p12",        IMGFMT_444P12)
+    FMT_ENDIAN("444p10",        IMGFMT_444P10)
+    FMT_ENDIAN("444p9",         IMGFMT_444P9)
+    FMT_ENDIAN("422p16",        IMGFMT_422P16)
+    FMT_ENDIAN("422p14",        IMGFMT_422P14)
+    FMT_ENDIAN("422p12",        IMGFMT_422P12)
+    FMT_ENDIAN("422p10",        IMGFMT_422P10)
+    FMT_ENDIAN("422p9",         IMGFMT_422P9)
+    FMT_ENDIAN("420p16",        IMGFMT_420P16)
+    FMT_ENDIAN("420p14",        IMGFMT_420P14)
+    FMT_ENDIAN("420p12",        IMGFMT_420P12)
+    FMT_ENDIAN("420p10",        IMGFMT_420P10)
+    FMT_ENDIAN("420p9",         IMGFMT_420P9)
+    FMT("444ap",                IMGFMT_444AP)
+    FMT("422ap",                IMGFMT_422AP)
+    FMT("420ap",                IMGFMT_420AP)
+    FMT_ENDIAN("444ap9",        IMGFMT_444AP9)
+    FMT_ENDIAN("444ap10",       IMGFMT_444AP10)
+    FMT_ENDIAN("444ap16",       IMGFMT_444AP16)
+    FMT_ENDIAN("422ap9",        IMGFMT_422AP9)
+    FMT_ENDIAN("422ap10",       IMGFMT_422AP10)
+    FMT_ENDIAN("422ap16",       IMGFMT_422AP16)
+    FMT_ENDIAN("420ap9",        IMGFMT_420AP9)
+    FMT_ENDIAN("420ap10",       IMGFMT_420AP10)
+    FMT_ENDIAN("420ap16",       IMGFMT_420AP16)
+    FMT("argb",                 IMGFMT_ARGB)
+    FMT("0rgb",                 IMGFMT_0RGB)
+    FMT("bgra",                 IMGFMT_BGRA)
+    FMT("bgr0",                 IMGFMT_BGR0)
+    FMT("abgr",                 IMGFMT_ABGR)
+    FMT("0bgr",                 IMGFMT_0BGR)
+    FMT("rgba",                 IMGFMT_RGBA)
+    FMT("rgb0",                 IMGFMT_RGB0)
+    FMT("rgb32",                IMGFMT_RGB32)
+    FMT("bgr32",                IMGFMT_BGR32)
+    FMT("bgr24",                IMGFMT_BGR24)
+    FMT("rgb24",                IMGFMT_RGB24)
+    FMT_ENDIAN("rgb48",         IMGFMT_RGB48)
+    FMT_ENDIAN("rgba64",        IMGFMT_RGBA64)
+    FMT_ENDIAN("bgra64",        IMGFMT_BGRA64)
+    FMT("rgb8",                 IMGFMT_RGB8)
+    FMT("bgr8",                 IMGFMT_BGR8)
+    FMT("rgb4_byte",            IMGFMT_RGB4_BYTE)
+    FMT("bgr4_byte",            IMGFMT_BGR4_BYTE)
+    FMT("rgb4",                 IMGFMT_RGB4)
+    FMT("bgr4",                 IMGFMT_BGR4)
+    FMT("mono",                 IMGFMT_MONO)
+    FMT_ENDIAN("rgb12",         IMGFMT_RGB12)
+    FMT_ENDIAN("rgb15",         IMGFMT_RGB15)
+    FMT_ENDIAN("rgb16",         IMGFMT_RGB16)
+    FMT_ENDIAN("bgr12",         IMGFMT_BGR12)
+    FMT_ENDIAN("bgr15",         IMGFMT_BGR15)
+    FMT_ENDIAN("bgr16",         IMGFMT_BGR16)
+    FMT("pal8",                 IMGFMT_PAL8)
+    FMT("gbrp",                 IMGFMT_GBRP)
+    FMT_ENDIAN("gbrp9",         IMGFMT_GBRP9)
+    FMT_ENDIAN("gbrp10",        IMGFMT_GBRP10)
+    FMT_ENDIAN("gbrp12",        IMGFMT_GBRP12)
+    FMT_ENDIAN("gbrp14",        IMGFMT_GBRP14)
+    FMT_ENDIAN("gbrp16",        IMGFMT_GBRP16)
+    FMT("vdpau_mpeg1",          IMGFMT_VDPAU_MPEG1)
+    FMT("vdpau_mpeg2",          IMGFMT_VDPAU_MPEG2)
+    FMT("vdpau_h264",           IMGFMT_VDPAU_H264)
+    FMT("vdpau_wmv3",           IMGFMT_VDPAU_WMV3)
+    FMT("vdpau_vc1",            IMGFMT_VDPAU_VC1)
+    FMT("vdpau_mpeg4",          IMGFMT_VDPAU_MPEG4)
     {0}
 };
 
 unsigned int mp_imgfmt_from_name(bstr name, bool allow_hwaccel)
 {
-    if (bstr_startswith0(name, "0x")) {
-        bstr rest;
-        unsigned int fmt = bstrtoll(name, &rest, 16);
-        if (rest.len == 0)
-            return fmt;
-    }
+    int img_fmt = 0;
     for(struct mp_imgfmt_entry *p = mp_imgfmt_list; p->name; ++p) {
-        if(!bstrcasecmp0(name, p->name)) {
-            if (!allow_hwaccel && IMGFMT_IS_HWACCEL(p->fmt))
-                return 0;
-            return p->fmt;
+        if(bstr_equals0(name, p->name)) {
+            img_fmt = p->fmt;
+            break;
         }
     }
-    return 0;
+    if (!img_fmt) {
+        char *t = bstrdup0(NULL, name);
+        img_fmt = pixfmt2imgfmt(av_get_pix_fmt(t));
+        talloc_free(t);
+    }
+    if (!img_fmt && bstr_equals0(name, "yv12"))
+        img_fmt = IMGFMT_420P; // old alias for UI
+    if (!allow_hwaccel && IMGFMT_IS_HWACCEL(img_fmt))
+        return 0;
+    return img_fmt;
 }
 
 const char *mp_imgfmt_to_name(unsigned int fmt)
@@ -263,4 +148,124 @@ const char *mp_imgfmt_to_name(unsigned int fmt)
             return p->name;
     }
     return NULL;
+}
+
+static struct mp_imgfmt_desc get_avutil_fmt(enum PixelFormat fmt)
+{
+    const AVPixFmtDescriptor *pd = &av_pix_fmt_descriptors[fmt];
+    int mpfmt = pixfmt2imgfmt(fmt);
+    if (!pd || !mpfmt)
+        return (struct mp_imgfmt_desc) {0};
+
+    struct mp_imgfmt_desc desc = {
+        .id = mpfmt,
+        .avformat = fmt,
+        .name = mp_imgfmt_to_name(desc.id),
+        .chroma_xs = pd->log2_chroma_w,
+        .chroma_ys = pd->log2_chroma_h,
+    };
+
+    int planedepth[4] = {0};
+    int el_size = (pd->flags & PIX_FMT_BITSTREAM) ? 1 : 8;
+    for (int c = 0; c < pd->nb_components; c++) {
+        AVComponentDescriptor d = pd->comp[c];
+        // multiple components per plane -> Y is definitive, ignore chroma
+        if (!desc.bpp[d.plane])
+            desc.bpp[d.plane] = (d.step_minus1 + 1) * el_size;
+        planedepth[d.plane] += d.depth_minus1 + 1;
+    }
+
+    for (int p = 0; p < 4; p++) {
+        if (desc.bpp[p])
+            desc.num_planes++;
+    }
+
+    // Packed RGB formats are the only formats that have less than 8 bits per
+    // component, and still require endian dependent access.
+    if (pd->comp[0].depth_minus1 + 1 <= 8 &&
+        !(mpfmt >= IMGFMT_RGB12_LE || mpfmt <= IMGFMT_BGR16_BE))
+    {
+        desc.flags |= MP_IMGFLAG_LE | MP_IMGFLAG_BE;
+    } else {
+        desc.flags |= (pd->flags & PIX_FMT_BE) ? MP_IMGFLAG_BE : MP_IMGFLAG_LE;
+    }
+
+    desc.plane_bits = planedepth[0];
+
+    if (!(pd->flags & PIX_FMT_RGB) && fmt != PIX_FMT_MONOBLACK &&
+        fmt != PIX_FMT_PAL8)
+    {
+        desc.flags |= MP_IMGFLAG_YUV;
+    } else {
+        desc.flags |= MP_IMGFLAG_RGB;
+    }
+
+#ifdef PIX_FMT_ALPHA
+    if (pd->flags & PIX_FMT_ALPHA)
+        desc.flags |= MP_IMGFLAG_ALPHA;
+#else
+    if (desc.num_planes > 3)
+        desc.flags |= MP_IMGFLAG_ALPHA;
+#endif
+
+    if (desc.num_planes == pd->nb_components)
+        desc.flags |= MP_IMGFLAG_PLANAR;
+
+    if (!(pd->flags & PIX_FMT_HWACCEL) && !(pd->flags & PIX_FMT_BITSTREAM)) {
+        desc.flags |= MP_IMGFLAG_BYTE_ALIGNED;
+        for (int p = 0; p < desc.num_planes; p++)
+            desc.bytes[p] = desc.bpp[p] / 8;
+    }
+
+    if ((desc.flags & MP_IMGFLAG_YUV) && (desc.flags & MP_IMGFLAG_BYTE_ALIGNED))
+    {
+        bool same_depth = true;
+        for (int p = 0; p < desc.num_planes; p++) {
+            same_depth &= planedepth[p] == planedepth[0] &&
+                          desc.bpp[p] == desc.bpp[0];
+        }
+        if (same_depth && pd->nb_components == desc.num_planes)
+            desc.flags |= MP_IMGFLAG_YUV_P;
+    }
+
+    for (int p = 0; p < desc.num_planes; p++) {
+        desc.xs[p] = (p == 1 || p == 2) ? desc.chroma_xs : 0;
+        desc.ys[p] = (p == 1 || p == 2) ? desc.chroma_ys : 0;
+    }
+
+    desc.align_x = 1 << desc.chroma_xs;
+    desc.align_y = 1 << desc.chroma_ys;
+
+    if ((desc.bpp[0] % 8) != 0)
+        desc.align_x = 8 / desc.bpp[0]; // expect power of 2
+
+    return desc;
+}
+
+struct mp_imgfmt_desc mp_imgfmt_get_desc(unsigned int out_fmt)
+{
+    struct mp_imgfmt_desc fmt = {0};
+    enum PixelFormat avfmt = imgfmt2pixfmt(out_fmt);
+    if (avfmt != PIX_FMT_NONE)
+        fmt = get_avutil_fmt(avfmt);
+    if (!fmt.id) {
+        mp_msg(MSGT_DECVIDEO, MSGL_V, "mp_image: unknown out_fmt: 0x%X\n",
+               out_fmt);
+    }
+    return fmt;
+}
+
+// Find a format that is MP_IMGFLAG_YUV_P with the following configuration.
+int mp_imgfmt_find_yuv_planar(int xs, int ys, int planes, int component_bits)
+{
+    for (int n = IMGFMT_START + 1; n < IMGFMT_END; n++) {
+        struct mp_imgfmt_desc desc = mp_imgfmt_get_desc(n);
+        if (desc.id && (desc.flags & MP_IMGFLAG_YUV_P)) {
+            if (desc.num_planes == planes && desc.chroma_xs == xs &&
+                desc.chroma_ys == ys && desc.plane_bits == component_bits &&
+                (desc.flags & MP_IMGFLAG_NE))
+                return desc.id;
+        }
+    }
+    return 0;
 }

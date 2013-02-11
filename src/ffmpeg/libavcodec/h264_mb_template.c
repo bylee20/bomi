@@ -52,7 +52,7 @@ static av_noinline void FUNC(hl_decode_mb)(H264Context *h)
     const int transform_bypass = !SIMPLE && (s->qscale == 0 && h->sps.transform_bypass);
     /* is_h264 should always be true if SVQ3 is disabled. */
     const int is_h264 = !CONFIG_SVQ3_DECODER || SIMPLE || s->codec_id == AV_CODEC_ID_H264;
-    void (*idct_add)(uint8_t *dst, DCTELEM *block, int stride);
+    void (*idct_add)(uint8_t *dst, int16_t *block, int stride);
     const int block_h   = 16 >> s->chroma_y_shift;
     const int chroma422 = CHROMA422;
 
@@ -173,14 +173,14 @@ static av_noinline void FUNC(hl_decode_mb)(H264Context *h)
         } else if (is_h264) {
             if (chroma422) {
                 FUNC(hl_motion_422)(h, dest_y, dest_cb, dest_cr,
-                              s->me.qpel_put, s->dsp.put_h264_chroma_pixels_tab,
-                              s->me.qpel_avg, s->dsp.avg_h264_chroma_pixels_tab,
+                              s->me.qpel_put, h->h264chroma.put_h264_chroma_pixels_tab,
+                              s->me.qpel_avg, h->h264chroma.avg_h264_chroma_pixels_tab,
                               h->h264dsp.weight_h264_pixels_tab,
                               h->h264dsp.biweight_h264_pixels_tab);
             } else {
                 FUNC(hl_motion_420)(h, dest_y, dest_cb, dest_cr,
-                              s->me.qpel_put, s->dsp.put_h264_chroma_pixels_tab,
-                              s->me.qpel_avg, s->dsp.avg_h264_chroma_pixels_tab,
+                              s->me.qpel_put, h->h264chroma.put_h264_chroma_pixels_tab,
+                              s->me.qpel_avg, h->h264chroma.avg_h264_chroma_pixels_tab,
                               h->h264dsp.weight_h264_pixels_tab,
                               h->h264dsp.biweight_h264_pixels_tab);
             }
@@ -357,8 +357,8 @@ static av_noinline void FUNC(hl_decode_mb_444)(H264Context *h)
                                linesize, 0, 1, SIMPLE, PIXEL_SHIFT);
         } else {
             FUNC(hl_motion_444)(h, dest[0], dest[1], dest[2],
-                      s->me.qpel_put, s->dsp.put_h264_chroma_pixels_tab,
-                      s->me.qpel_avg, s->dsp.avg_h264_chroma_pixels_tab,
+                      s->me.qpel_put, h->h264chroma.put_h264_chroma_pixels_tab,
+                      s->me.qpel_avg, h->h264chroma.avg_h264_chroma_pixels_tab,
                       h->h264dsp.weight_h264_pixels_tab,
                       h->h264dsp.biweight_h264_pixels_tab);
         }

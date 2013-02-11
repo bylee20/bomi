@@ -250,7 +250,7 @@ static av_cold int aac_encode_init(AVCodecContext *avctx)
     }
 
     if (avctx->cutoff > 0) {
-        if (avctx->cutoff < (avctx->sample_rate + 255) >> 8) {
+        if (avctx->cutoff < (avctx->sample_rate + 255) >> 8 || avctx->cutoff > 20000) {
             av_log(avctx, AV_LOG_ERROR, "cutoff valid range is %d-20000\n",
                    (avctx->sample_rate + 255) >> 8);
             goto error;
@@ -334,7 +334,7 @@ static int aac_encode_frame(AVCodecContext *avctx, AVPacket *avpkt,
         in_buf.bufElSizes        = &in_buffer_element_size;
 
         /* add current frame to the queue */
-        if ((ret = ff_af_queue_add(&s->afq, frame) < 0))
+        if ((ret = ff_af_queue_add(&s->afq, frame)) < 0)
             return ret;
     }
 

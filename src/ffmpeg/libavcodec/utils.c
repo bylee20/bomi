@@ -1018,6 +1018,9 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
             && avctx->bit_rate>0 && avctx->bit_rate<1000) {
             av_log(avctx, AV_LOG_WARNING, "Bitrate %d is extreemly low, did you mean %dk\n", avctx->bit_rate, avctx->bit_rate);
         }
+
+        if (!avctx->rc_initial_buffer_occupancy)
+            avctx->rc_initial_buffer_occupancy = avctx->rc_buffer_size * 3 / 4;
     }
 
     avctx->pts_correction_num_faulty_pts =
@@ -1806,7 +1809,7 @@ int attribute_align_arg avcodec_decode_audio4(AVCodecContext *avctx,
      * extended_data are doing it correctly */
     if (*got_frame_ptr) {
         planar   = av_sample_fmt_is_planar(frame->format);
-        channels = av_get_channel_layout_nb_channels(frame->channel_layout);
+        channels = frame->channels;
         if (!(planar && channels > AV_NUM_DATA_POINTERS))
             frame->extended_data = frame->data;
     } else {
@@ -2117,6 +2120,15 @@ void avcodec_string(char *buf, int buf_size, AVCodecContext *enc, int encode)
                      ", %s", av_get_sample_fmt_name(enc->sample_fmt));
         }
         break;
+    case AVMEDIA_TYPE_DATA:
+        if (av_log_get_level() >= AV_LOG_DEBUG) {
+            int g = av_gcd(enc->time_base.num, enc->time_base.den);
+            if (g)
+                snprintf(buf + strlen(buf), buf_size - strlen(buf),
+                         ", %d/%d",
+                         enc->time_base.num / g, enc->time_base.den / g);
+        }
+        break;
     default:
         return;
     }
@@ -2336,6 +2348,7 @@ int av_get_audio_frame_duration(AVCodecContext *avctx, int frame_bytes)
     case AV_CODEC_ID_ADPCM_IMA_QT: return   64;
     case AV_CODEC_ID_ADPCM_EA_XAS: return  128;
     case AV_CODEC_ID_AMR_NB:
+    case AV_CODEC_ID_EVRC:
     case AV_CODEC_ID_GSM:
     case AV_CODEC_ID_QCELP:
     case AV_CODEC_ID_RA_288:       return  160;

@@ -36,6 +36,7 @@ struct m_struct_st;
 
 // Simple types
 extern const m_option_type_t m_option_type_flag;
+extern const m_option_type_t m_option_type_store;
 extern const m_option_type_t m_option_type_int;
 extern const m_option_type_t m_option_type_int64;
 extern const m_option_type_t m_option_type_intpair;
@@ -53,8 +54,11 @@ extern const m_option_type_t m_option_type_print_func_param;
 extern const m_option_type_t m_option_type_subconfig;
 extern const m_option_type_t m_option_type_subconfig_struct;
 extern const m_option_type_t m_option_type_imgfmt;
+extern const m_option_type_t m_option_type_fourcc;
 extern const m_option_type_t m_option_type_afmt;
 extern const m_option_type_t m_option_type_color;
+extern const m_option_type_t m_option_type_geometry;
+extern const m_option_type_t m_option_type_size_box;
 
 // Callback used by m_option_type_print_func options.
 typedef int (*m_opt_func_full_t)(const m_option_t *, const char *, const char *);
@@ -75,6 +79,16 @@ struct m_rel_time {
 struct m_color {
     uint8_t r, g, b, a;
 };
+
+struct m_geometry {
+    int x, y, w, h;
+    bool xy_valid : 1, wh_valid : 1;
+    bool w_per : 1, h_per : 1;
+    bool x_sign : 1, y_sign : 1, x_per : 1, y_per : 1;
+};
+
+void m_geometry_apply(int *xpos, int *ypos, int *widw, int *widh,
+                      int scrw, int scrh, struct m_geometry *gm);
 
 // Extra definition needed for \ref m_option_type_obj_settings_list options.
 typedef struct {
@@ -167,6 +181,7 @@ struct m_sub_options {
 
 // FIXME: backward compatibility
 #define CONF_TYPE_FLAG          (&m_option_type_flag)
+#define CONF_TYPE_STORE         (&m_option_type_store)
 #define CONF_TYPE_INT           (&m_option_type_int)
 #define CONF_TYPE_INT64         (&m_option_type_int64)
 #define CONF_TYPE_FLOAT         (&m_option_type_float)
@@ -177,6 +192,7 @@ struct m_sub_options {
 #define CONF_TYPE_SUBCONFIG     (&m_option_type_subconfig)
 #define CONF_TYPE_STRING_LIST   (&m_option_type_string_list)
 #define CONF_TYPE_IMGFMT        (&m_option_type_imgfmt)
+#define CONF_TYPE_FOURCC        (&m_option_type_fourcc)
 #define CONF_TYPE_AFMT          (&m_option_type_afmt)
 #define CONF_TYPE_SPAN          (&m_option_type_span)
 #define CONF_TYPE_OBJ_SETTINGS_LIST (&m_option_type_obj_settings_list)
@@ -191,6 +207,7 @@ struct m_sub_options {
 // size/alignment requirements for option values in general.
 union m_option_value {
     int flag; // not the C type "bool"!
+    int store;
     int int_;
     int64_t int64;
     float float_;
@@ -198,12 +215,15 @@ union m_option_value {
     char *string;
     char **string_list;
     int imgfmt;
+    unsigned int fourcc;
     int afmt;
     m_span_t span;
     m_obj_settings_t *obj_settings_list;
     double time;
     struct m_rel_time rel_time;
     struct m_color color;
+    struct m_geometry geometry;
+    struct m_geometry size_box;
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -343,6 +363,9 @@ struct m_option {
 // (e.g. "--parent=child=value" becomes "--child=value")
 #define M_OPT_MERGE             (1 << 9)
 
+// See M_OPT_TYPE_OPTIONAL_PARAM.
+#define M_OPT_OPTIONAL_PARAM    (1 << 10)
+
 // These are kept for compatibility with older code.
 #define CONF_MIN                M_OPT_MIN
 #define CONF_MAX                M_OPT_MAX
@@ -377,10 +400,11 @@ struct m_option {
  */
 #define M_OPT_TYPE_DYNAMIC              (1 << 2)
 
-// The parameter is optional and by default no parameter is preferred. If the
-// "old syntax" is used, the command line parser will assume that the argument
-// takes no parameter.
-#define M_OPT_TYPE_OLD_SYNTAX_NO_PARAM  (1 << 3)
+// The parameter is optional and by default no parameter is preferred. If
+// ambiguous syntax is used ("--opt value"), the command line parser will
+// assume that the argument takes no parameter. In config files, these
+// options can be used without "=" and value.
+#define M_OPT_TYPE_OPTIONAL_PARAM       (1 << 3)
 
 // modify M_OPT_TYPE_HAS_CHILD so that m_option::p points to
 // struct m_sub_options, instead of a direct m_option array.
@@ -388,7 +412,9 @@ struct m_option {
 
 ///////////////////////////// Parser flags /////////////////////////////////
 
-// On success parsers return the number of arguments consumed: 0 or 1.
+// OptionParserReturn
+//
+// On success parsers return a number >= 0.
 //
 // To indicate that MPlayer should exit without playing anything,
 // parsers return M_OPT_EXIT minus the number of parameters they
@@ -409,13 +435,16 @@ struct m_option {
 // vary from type to type.
 #define M_OPT_OUT_OF_RANGE      -4
 
+// The option doesn't take a parameter.
+#define M_OPT_DISALLOW_PARAM    -5
+
 // Returned if the parser failed for any other reason than a bad parameter.
-#define M_OPT_PARSER_ERR        -5
+#define M_OPT_PARSER_ERR        -6
 
 // Returned when MPlayer should exit. Used by various help stuff.
 /** M_OPT_EXIT must be the lowest number on this list.
  */
-#define M_OPT_EXIT              -6
+#define M_OPT_EXIT              -7
 
 char *m_option_strerror(int code);
 
@@ -491,11 +520,10 @@ static inline void m_option_free(const m_option_t *opt, void *dst)
  * 0). Thus the first OPT_FLAG_CONSTANTS is a wrapper which just adds one
  * argument to ensure __VA_ARGS__ is not empty when calling the next macro.
  */
-#define OPT_FLAG_ON(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_flag, .max = 1)
-#define OPT_FLAG_OFF(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_flag, .min = 1)
-#define OPT_MAKE_FLAGS OPT_FLAG_ON
+#define OPT_FLAG(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_flag, .max = 1)
 #define OPT_FLAG_CONSTANTS(...) OPT_FLAG_CONSTANTS_(__VA_ARGS__, .type = &m_option_type_flag)
 #define OPT_FLAG_CONSTANTS_(optname, varname, flags, offvalue, value, ...) OPT_GENERAL(optname, varname, flags, .min = offvalue, .max = value, __VA_ARGS__)
+#define OPT_FLAG_STORE(optname, varname, flags, value) OPT_GENERAL(optname, varname, flags, .max = value, .type = &m_option_type_store)
 #define OPT_STRINGLIST(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_string_list)
 #define OPT_PATHLIST(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_string_list, .priv = (void *)&(const char){OPTION_PATH_SEPARATOR})
 #define OPT_INT(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_int)
@@ -518,6 +546,8 @@ static inline void m_option_free(const m_option_t *opt, void *dst)
 #define OPT_TIME(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_time)
 #define OPT_REL_TIME(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_rel_time)
 #define OPT_COLOR(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_color)
+#define OPT_GEOMETRY(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_geometry)
+#define OPT_SIZE_BOX(...) OPT_GENERAL(__VA_ARGS__, .type = &m_option_type_size_box)
 
 #define OPT_TRACKCHOICE(name, var) OPT_CHOICE_OR_INT(name, var, 0, 0, 8190, ({"no", -2}, {"auto", -1}))
 

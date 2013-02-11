@@ -27,6 +27,7 @@
 #include "core/mp_common.h"
 #include "sub/draw_bmp.h"
 #include "sub/sub.h"
+#include "sub/img_convert.h"
 #include "video/mp_image.h"
 #include "video/sws_utils.h"
 #include "video/img_format.h"
@@ -53,9 +54,12 @@ struct part {
 struct mp_draw_sub_cache
 {
     struct part *parts[MAX_OSD_PARTS];
+    struct mp_image *upsample_img;
+    struct mp_image upsample_temp;
 };
 
-static struct part *get_cache(struct mp_draw_sub_cache **cache,
+
+static struct part *get_cache(struct mp_draw_sub_cache *cache,
                               struct sub_bitmaps *sbs, struct mp_image *format);
 static bool get_sub_area(struct mp_rect bb, struct mp_image *temp,
                          struct sub_bitmap *sb, struct mp_image *out_area,
@@ -213,33 +217,34 @@ static void unpremultiply_and_split_BGR32(struct mp_image *img,
 static void scale_sb_rgba(struct sub_bitmap *sb, struct mp_image *dst_format,
                           struct mp_image **out_sbi, struct mp_image **out_sba)
 {
-    struct mp_image *sbisrc = new_mp_image(sb->w, sb->h);
-    mp_image_setfmt(sbisrc, IMGFMT_BGR32);
-    sbisrc->planes[0] = sb->bitmap;
-    sbisrc->stride[0] = sb->stride;
-    struct mp_image *sbisrc2 = alloc_mpi(sb->dw, sb->dh, IMGFMT_BGR32);
-    mp_image_swscale(sbisrc2, sbisrc, SWS_BILINEAR);
+    struct mp_image sbisrc = {0};
+    mp_image_setfmt(&sbisrc, IMGFMT_BGR32);
+    mp_image_set_size(&sbisrc, sb->w, sb->h);
+    sbisrc.planes[0] = sb->bitmap;
+    sbisrc.stride[0] = sb->stride;
+    struct mp_image *sbisrc2 = mp_image_alloc(IMGFMT_BGR32, sb->dw, sb->dh);
+    mp_image_swscale(sbisrc2, &sbisrc, SWS_BILINEAR);
 
-    struct mp_image *sba = alloc_mpi(sb->dw, sb->dh, IMGFMT_Y8);
+    struct mp_image *sba = mp_image_alloc(IMGFMT_Y8, sb->dw, sb->dh);
     unpremultiply_and_split_BGR32(sbisrc2, sba);
 
-    struct mp_image *sbi = alloc_mpi(sb->dw, sb->dh, dst_format->imgfmt);
+    struct mp_image *sbi = mp_image_alloc(dst_format->imgfmt, sb->dw, sb->dh);
     sbi->colorspace = dst_format->colorspace;
     sbi->levels = dst_format->levels;
     mp_image_swscale(sbi, sbisrc2, SWS_BILINEAR);
 
-    free_mp_image(sbisrc);
-    free_mp_image(sbisrc2);
+    talloc_free(sbisrc2);
 
     *out_sbi = sbi;
     *out_sba = sba;
 }
 
-static void draw_rgba(struct mp_draw_sub_cache **cache, struct mp_rect bb,
+static void draw_rgba(struct mp_draw_sub_cache *cache, struct mp_rect bb,
                       struct mp_image *temp, int bits,
                       struct sub_bitmaps *sbs)
 {
     struct part *part = get_cache(cache, sbs, temp);
+    assert(part);
 
     for (int i = 0; i < sbs->num_parts; ++i) {
         struct sub_bitmap *sb = &sbs->parts[i];
@@ -252,35 +257,26 @@ static void draw_rgba(struct mp_draw_sub_cache **cache, struct mp_rect bb,
         if (!get_sub_area(bb, temp, sb, &dst, &src_x, &src_y))
             continue;
 
-        struct mp_image *sbi = NULL;
-        struct mp_image *sba = NULL;
-        if (part) {
-            sbi = part->imgs[i].i;
-            sba = part->imgs[i].a;
-        }
+        struct mp_image *sbi = part->imgs[i].i;
+        struct mp_image *sba = part->imgs[i].a;
 
         if (!(sbi && sba))
             scale_sb_rgba(sb, temp, &sbi, &sba);
 
         int bytes = (bits + 7) / 8;
         uint8_t *alpha_p = sba->planes[0] + src_y * sba->stride[0] + src_x;
-        for (int p = 0; p < 3; p++) {
+        for (int p = 0; p < (temp->num_planes > 2 ? 3 : 1); p++) {
             void *src = sbi->planes[p] + src_y * sbi->stride[p] + src_x * bytes;
             blend_src_alpha(dst.planes[p], dst.stride[p], src, sbi->stride[p],
                             alpha_p, sba->stride[0], dst.w, dst.h, bytes);
         }
 
-        if (part) {
-            part->imgs[i].i = talloc_steal(part, sbi);
-            part->imgs[i].a = talloc_steal(part, sba);
-        } else {
-            free_mp_image(sbi);
-            free_mp_image(sba);
-        }
+        part->imgs[i].i = talloc_steal(part, sbi);
+        part->imgs[i].a = talloc_steal(part, sba);
     }
 }
 
-static void draw_ass(struct mp_draw_sub_cache **cache, struct mp_rect bb,
+static void draw_ass(struct mp_draw_sub_cache *cache, struct mp_rect bb,
                      struct mp_image *temp, int bits, struct sub_bitmaps *sbs)
 {
     struct mp_csp_params cspar = MP_CSP_PARAMS_DEFAULTS;
@@ -318,36 +314,11 @@ static void draw_ass(struct mp_draw_sub_cache **cache, struct mp_rect bb,
 
         int bytes = (bits + 7) / 8;
         uint8_t *alpha_p = (uint8_t *)sb->bitmap + src_y * sb->stride + src_x;
-        for (int p = 0; p < 3; p++) {
+        for (int p = 0; p < (temp->num_planes > 2 ? 3 : 1); p++) {
             blend_const_alpha(dst.planes[p], dst.stride[p], color_yuv[p],
                               alpha_p, sb->stride, a, dst.w, dst.h, bytes);
         }
     }
-}
-
-static void mp_image_crop(struct mp_image *img, struct mp_rect rc)
-{
-    for (int p = 0; p < img->num_planes; ++p) {
-        int bits = MP_IMAGE_BITS_PER_PIXEL_ON_PLANE(img, p);
-        img->planes[p] +=
-            (rc.y0 >> (p ? img->chroma_y_shift : 0)) * img->stride[p] +
-            (rc.x0 >> (p ? img->chroma_x_shift : 0)) * bits / 8;
-    }
-    img->w = rc.x1 - rc.x0;
-    img->h = rc.y1 - rc.y0;
-    img->chroma_width = img->w >> img->chroma_x_shift;
-    img->chroma_height = img->h >> img->chroma_y_shift;
-    img->display_w = img->display_h = 0;
-}
-
-static bool clip_to_bb(struct mp_rect bb, struct mp_rect *rc)
-{
-    rc->x0 = FFMAX(bb.x0, rc->x0);
-    rc->y0 = FFMAX(bb.y0, rc->y0);
-    rc->x1 = FFMIN(bb.x1, rc->x1);
-    rc->y1 = FFMIN(bb.y1, rc->y1);
-
-    return rc->x1 > rc->x0 && rc->y1 > rc->y0;
 }
 
 static void get_swscale_alignment(const struct mp_image *img, int *out_xstep,
@@ -356,14 +327,8 @@ static void get_swscale_alignment(const struct mp_image *img, int *out_xstep,
     int sx = (1 << img->chroma_x_shift);
     int sy = (1 << img->chroma_y_shift);
 
-    // Hack for IMGFMT_Y8
-    if (img->chroma_x_shift == 31 && img->chroma_y_shift == 31) {
-        sx = 1;
-        sy = 1;
-    }
-
     for (int p = 0; p < img->num_planes; ++p) {
-        int bits = MP_IMAGE_BITS_PER_PIXEL_ON_PLANE(img, p);
+        int bits = img->fmt.bpp[p];
         // the * 2 fixes problems with writing past the destination width
         while (((sx >> img->chroma_x_shift) * bits) % (SWS_MIN_BYTE_ALIGN * 8 * 2))
             sx *= 2;
@@ -386,70 +351,43 @@ static bool align_bbox_for_swscale(struct mp_image *img, struct mp_rect *rc)
 {
     struct mp_rect img_rect = {0, 0, img->w, img->h};
     // Get rid of negative coordinates
-    if (!clip_to_bb(img_rect, rc))
+    if (!mp_rect_intersection(rc, &img_rect))
         return false;
     int xstep, ystep;
     get_swscale_alignment(img, &xstep, &ystep);
     align_bbox(xstep, ystep, rc);
-    return clip_to_bb(img_rect, rc);
+    return mp_rect_intersection(rc, &img_rect);
 }
 
-// Try to find best/closest YUV 444 format for imgfmt
+// Try to find best/closest YUV 444 format (or similar) for imgfmt
 static void get_closest_y444_format(int imgfmt, int *out_format, int *out_bits)
 {
-#ifdef ACCURATE
-    struct mp_image tmp = {0};
-    mp_image_setfmt(&tmp, imgfmt);
-    if (tmp.flags & MP_IMGFLAG_YUV) {
-        int bits;
-        if (mp_get_chroma_shift(imgfmt, NULL, NULL, &bits)) {
-            switch (bits) {
-                case 8:
-                    *out_format = IMGFMT_444P;
-                    *out_bits = 8;
-                    return;
-                case 9:
-                    *out_format = IMGFMT_444P9;
-                    *out_bits = 9;
-                    return;
-                case 10:
-                    *out_format = IMGFMT_444P10;
-                    *out_bits = 10;
-                    return;
-                case 12:
-                    *out_format = IMGFMT_444P12;
-                    *out_bits = 12;
-                    return;
-                case 14:
-                    *out_format = IMGFMT_444P14;
-                    *out_bits = 14;
-                    return;
-            }
-        }
-    } else {
+    struct mp_imgfmt_desc desc = mp_imgfmt_get_desc(imgfmt);
+    if (desc.flags & MP_IMGFLAG_RGB) {
         *out_format = IMGFMT_GBRP;
         *out_bits = 8;
         return;
+    } else if (desc.flags & MP_IMGFLAG_YUV_P) {
+        *out_format = mp_imgfmt_find_yuv_planar(0, 0, desc.num_planes,
+                                                desc.plane_bits);
+        if (*out_format && mp_sws_supported_format(*out_format)) {
+            *out_bits = mp_imgfmt_get_desc(*out_format).plane_bits;
+            return;
+        }
     }
-    *out_format = IMGFMT_444P16;
-    *out_bits = 16;
-#else
+    // fallback
     *out_format = IMGFMT_444P;
     *out_bits = 8;
-#endif
 }
 
-static struct part *get_cache(struct mp_draw_sub_cache **cache,
+static struct part *get_cache(struct mp_draw_sub_cache *cache,
                               struct sub_bitmaps *sbs, struct mp_image *format)
 {
-    if (cache && !*cache)
-        *cache = talloc_zero(NULL, struct mp_draw_sub_cache);
-
     struct part *part = NULL;
 
     bool use_cache = sbs->format == SUBBITMAP_RGBA;
-    if (cache && use_cache) {
-        part = (*cache)->parts[sbs->render_index];
+    if (use_cache) {
+        part = cache->parts[sbs->render_index];
         if (part) {
             if (part->bitmap_pos_id != sbs->bitmap_pos_id
                 || part->imgfmt != format->imgfmt
@@ -461,7 +399,7 @@ static struct part *get_cache(struct mp_draw_sub_cache **cache,
             }
         }
         if (!part) {
-            part = talloc(*cache, struct part);
+            part = talloc(cache, struct part);
             *part = (struct part) {
                 .bitmap_pos_id = sbs->bitmap_pos_id,
                 .num_imgs = sbs->num_parts,
@@ -473,7 +411,7 @@ static struct part *get_cache(struct mp_draw_sub_cache **cache,
                                            part->num_imgs);
         }
         assert(part->num_imgs == sbs->num_parts);
-        (*cache)->parts[sbs->render_index] = part;
+        cache->parts[sbs->render_index] = part;
     }
 
     return part;
@@ -488,15 +426,94 @@ static bool get_sub_area(struct mp_rect bb, struct mp_image *temp,
     struct mp_rect dst = {sb->x - bb.x0, sb->y - bb.y0};
     dst.x1 = dst.x0 + sb->dw;
     dst.y1 = dst.y0 + sb->dh;
-    if (!clip_to_bb((struct mp_rect){0, 0, temp->w, temp->h}, &dst))
+    if (!mp_rect_intersection(&dst, &(struct mp_rect){0, 0, temp->w, temp->h}))
         return false;
 
     *out_src_x = (dst.x0 - sb->x) + bb.x0;
     *out_src_y = (dst.y0 - sb->y) + bb.y0;
     *out_area = *temp;
-    mp_image_crop(out_area, dst);
+    mp_image_crop_rc(out_area, dst);
 
     return true;
+}
+
+// Convert the src image to imgfmt (which should be a 444 format)
+static struct mp_image *chroma_up(struct mp_draw_sub_cache *cache, int imgfmt,
+                                  struct mp_image *src)
+{
+    if (src->imgfmt == imgfmt)
+        return src;
+
+    if (!cache->upsample_img || cache->upsample_img->imgfmt != imgfmt ||
+        cache->upsample_img->w < src->w || cache->upsample_img->h < src->h)
+    {
+        talloc_free(cache->upsample_img);
+        cache->upsample_img = mp_image_alloc(imgfmt, src->w, src->h);
+        talloc_steal(cache, cache->upsample_img);
+    }
+
+    cache->upsample_temp = *cache->upsample_img;
+    struct mp_image *temp = &cache->upsample_temp;
+    mp_image_set_size(temp, src->w, src->h);
+
+    // The temp image is always YUV, but src not necessarily.
+    // Reduce amount of conversions in YUV case (upsampling/shifting only)
+    if (src->flags & MP_IMGFLAG_YUV) {
+        temp->colorspace = src->colorspace;
+        temp->levels = src->levels;
+    }
+
+    if (src->imgfmt == IMGFMT_420P) {
+        assert(imgfmt == IMGFMT_444P);
+        // Faster upsampling: keep Y plane, upsample chroma planes only
+        // The whole point is not having swscale copy the Y plane
+        struct mp_image t_dst = *temp;
+        mp_image_setfmt(&t_dst, IMGFMT_Y8);
+        mp_image_set_size(&t_dst, temp->chroma_width, temp->chroma_height);
+        struct mp_image t_src = t_dst;
+        mp_image_set_size(&t_src, src->chroma_width, src->chroma_height);
+        for (int c = 0; c < 2; c++) {
+            t_dst.planes[0] = temp->planes[1 + c];
+            t_dst.stride[0] = temp->stride[1 + c];
+            t_src.planes[0] = src->planes[1 + c];
+            t_src.stride[0] = src->stride[1 + c];
+            mp_image_swscale(&t_dst, &t_src, SWS_POINT);
+        }
+        temp->planes[0] = src->planes[0];
+        temp->stride[0] = src->stride[0];
+    } else {
+        mp_image_swscale(temp, src, SWS_POINT);
+    }
+
+    return temp;
+}
+
+// Undo chroma_up() (copy temp to old_src if needed)
+static void chroma_down(struct mp_image *old_src, struct mp_image *temp)
+{
+    assert(old_src->w == temp->w && old_src->h == temp->h);
+    if (temp != old_src) {
+        if (old_src->imgfmt == IMGFMT_420P) {
+            // Downsampling, skipping the Y plane (see chroma_up())
+            assert(temp->imgfmt == IMGFMT_444P);
+            assert(temp->planes[0] == old_src->planes[0]);
+            struct mp_image t_dst = *temp;
+            mp_image_setfmt(&t_dst, IMGFMT_Y8);
+            mp_image_set_size(&t_dst, old_src->chroma_width,
+                              old_src->chroma_height);
+            struct mp_image t_src = t_dst;
+            mp_image_set_size(&t_src, temp->chroma_width, temp->chroma_height);
+            for (int c = 0; c < 2; c++) {
+                t_dst.planes[0] = old_src->planes[1 + c];
+                t_dst.stride[0] = old_src->stride[1 + c];
+                t_src.planes[0] = temp->planes[1 + c];
+                t_src.stride[0] = temp->stride[1 + c];
+                mp_image_swscale(&t_dst, &t_src, SWS_AREA);
+            }
+        } else {
+            mp_image_swscale(old_src, temp, SWS_AREA); // chroma down
+        }
+    }
 }
 
 // cache: if not NULL, the function will set *cache to a talloc-allocated cache
@@ -509,165 +526,40 @@ void mp_draw_sub_bitmaps(struct mp_draw_sub_cache **cache, struct mp_image *dst,
     if (!mp_sws_supported_format(dst->imgfmt))
         return;
 
+    struct mp_draw_sub_cache *cache_ = cache ? *cache : NULL;
+    if (!cache_)
+        cache_ = talloc_zero(NULL, struct mp_draw_sub_cache);
+
     int format, bits;
     get_closest_y444_format(dst->imgfmt, &format, &bits);
 
-    struct mp_rect bb;
-    if (!sub_bitmaps_bb(sbs, &bb))
-        return;
+    struct mp_rect rc_list[MP_SUB_BB_LIST_MAX];
+    int num_rc = mp_get_sub_bb_list(sbs, rc_list, MP_SUB_BB_LIST_MAX);
 
-    if (!align_bbox_for_swscale(dst, &bb))
-        return;
+    for (int r = 0; r < num_rc; r++) {
+        struct mp_rect bb = rc_list[r];
 
-    struct mp_image *temp;
-    struct mp_image dst_region = *dst;
-    mp_image_crop(&dst_region, bb);
-    if (dst->imgfmt == format) {
-        temp = &dst_region;
+        if (!align_bbox_for_swscale(dst, &bb))
+            return;
+
+        struct mp_image dst_region = *dst;
+        mp_image_crop_rc(&dst_region, bb);
+        struct mp_image *temp = chroma_up(cache_, format, &dst_region);
+
+        if (sbs->format == SUBBITMAP_RGBA) {
+            draw_rgba(cache_, bb, temp, bits, sbs);
+        } else if (sbs->format == SUBBITMAP_LIBASS) {
+            draw_ass(cache_, bb, temp, bits, sbs);
+        }
+
+        chroma_down(&dst_region, temp);
+    }
+
+    if (cache) {
+        *cache = cache_;
     } else {
-        temp = alloc_mpi(bb.x1 - bb.x0, bb.y1 - bb.y0, format);
-        // temp is always YUV, dst_region not
-        // reduce amount of conversions in YUV case (upsampling/shifting only)
-        if (dst_region.flags & MP_IMGFLAG_YUV) {
-            temp->colorspace = dst_region.colorspace;
-            temp->levels = dst_region.levels;
-        }
-        mp_image_swscale(temp, &dst_region, SWS_POINT); // chroma up
+        talloc_free(cache_);
     }
-
-    if (sbs->format == SUBBITMAP_RGBA) {
-        draw_rgba(cache, bb, temp, bits, sbs);
-    } else if (sbs->format == SUBBITMAP_LIBASS) {
-        draw_ass(cache, bb, temp, bits, sbs);
-    }
-
-    if (temp != &dst_region) {
-        mp_image_swscale(&dst_region, temp, SWS_AREA); // chroma down
-        free_mp_image(temp);
-    }
-}
-
-struct mp_draw_sub_backup
-{
-    bool valid;
-    struct mp_image *image;                     // backed up image parts
-    struct line_ext *lines[MP_MAX_PLANES];      // backup range for each line
-};
-
-struct line_ext {
-    int x0, x1; // x1 is exclusive
-};
-
-struct mp_draw_sub_backup *mp_draw_sub_backup_new(void)
-{
-    return talloc_zero(NULL, struct mp_draw_sub_backup);
-}
-
-// Signal that the full image is valid (nothing to backup).
-void mp_draw_sub_backup_reset(struct mp_draw_sub_backup *backup)
-{
-    backup->valid = true;
-    if (backup->image) {
-        for (int p = 0; p < MP_MAX_PLANES; p++) {
-            int h = backup->image->h;
-            for (int y = 0; y < h; y++) {
-                struct line_ext *ext = &backup->lines[p][y];
-                ext->x0 = ext->x1 = -1;
-            }
-        }
-    }
-}
-
-static void backup_realloc(struct mp_draw_sub_backup *backup,
-                           struct mp_image *img)
-{
-    if (backup->image && backup->image->imgfmt == img->imgfmt
-        && backup->image->w == img->w && backup->image->h == img->h)
-        return;
-
-    talloc_free_children(backup);
-    backup->image = alloc_mpi(img->w, img->h, img->imgfmt);
-    talloc_steal(backup, backup->image);
-    for (int p = 0; p < MP_MAX_PLANES; p++) {
-        backup->lines[p] = talloc_array(backup, struct line_ext,
-                                        backup->image->h);
-    }
-    mp_draw_sub_backup_reset(backup);
-}
-
-static void copy_line(struct mp_image *dst, struct mp_image *src,
-                      int p, int plane_y, int x0, int x1)
-{
-    int bits = MP_IMAGE_BITS_PER_PIXEL_ON_PLANE(dst, p);
-    int xs = p ? dst->chroma_x_shift : 0;
-    memcpy(dst->planes[p] + plane_y * dst->stride[p] + (x0 >> xs) * bits / 8,
-           src->planes[p] + plane_y * src->stride[p] + (x0 >> xs) * bits / 8,
-           ((x1 - x0) >> xs) * bits / 8);
-}
-
-static void backup_rect(struct mp_draw_sub_backup *backup, struct mp_image *img,
-                        int plane, struct mp_rect rc)
-{
-    if (!align_bbox_for_swscale(img, &rc))
-        return;
-    int ys = plane ? img->chroma_y_shift : 0;
-    int yp = ys ? ((1 << ys) - 1) : 0;
-    for (int y = (rc.y0 >> ys); y < ((rc.y1 + yp) >> ys); y++) {
-        struct line_ext *ext = &backup->lines[plane][y];
-        if (ext->x0 == -1) {
-            copy_line(backup->image, img, plane, y, rc.x0, rc.x1);
-            ext->x0 = rc.x0;
-            ext->x1 = rc.x1;
-        } else {
-            if (rc.x0 < ext->x0) {
-                copy_line(backup->image, img, plane, y, rc.x0, ext->x0);
-                ext->x0 = rc.x0;
-            }
-            if (ext->x1 < rc.x1) {
-                copy_line(backup->image, img, plane, y, ext->x1, rc.x1);
-                ext->x1 = rc.x1;
-            }
-        }
-    }
-}
-
-void mp_draw_sub_backup_add(struct mp_draw_sub_backup *backup,
-                            struct mp_image *img, struct sub_bitmaps *sbs)
-{
-    backup_realloc(backup, img);
-
-    for (int p = 0; p < img->num_planes; p++) {
-        for (int i = 0; i < sbs->num_parts; ++i) {
-            struct sub_bitmap *sb = &sbs->parts[i];
-            struct mp_rect rc = {sb->x, sb->y, sb->x + sb->dw, sb->y + sb->dh};
-            backup_rect(backup, img, p, rc);
-        }
-    }
-}
-
-bool mp_draw_sub_backup_restore(struct mp_draw_sub_backup *backup,
-                                struct mp_image *buffer)
-{
-    if (!backup->image || backup->image->imgfmt != buffer->imgfmt
-        || backup->image->w != buffer->w || backup->image->h != buffer->h
-        || !backup->valid)
-    {
-        backup->valid = false;
-        return false;
-    }
-    struct mp_image *img = backup->image;
-    for (int p = 0; p < img->num_planes; p++) {
-        int ys = p ? img->chroma_y_shift : 0;
-        int yp = ys ? ((1 << ys) - 1) : 0;
-        int p_h = ((img->h + yp) >> ys);
-        for (int y = 0; y < p_h; y++) {
-            struct line_ext *ext = &backup->lines[p][y];
-            if (ext->x0 < ext->x1) {
-                copy_line(buffer, img, p, y, ext->x0, ext->x1);
-            }
-        }
-    }
-    return true;
 }
 
 // vim: ts=4 sw=4 et tw=80

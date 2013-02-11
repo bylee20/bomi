@@ -35,6 +35,7 @@ App::App(int &argc, char **argv)
 	setOrganizationDomain("xylosper.net");
 	setApplicationName("CMPlayer");
 	setQuitOnLastWindowClosed(false);
+//	setFont(QFont(QString::fromUtf8("나눔 고딕")));
 #ifndef Q_OS_MAC
 	setWindowIcon(defaultIcon());
 #endif
@@ -74,7 +75,7 @@ App::~App() {
 
 void App::setMainWindow(MainWindow *mw) {
 	d->main = mw;
-    setActivationWindow(d->main, false);
+	setActivationWindow(d->main, false);
 }
 
 MainWindow *App::mainWindow() const {
@@ -100,11 +101,6 @@ QIcon App::defaultIcon() {
 }
 
 void App::setAlwaysOnTop(QWindow *window, bool onTop) {
-//	if (onTop)
-//		window->setFlags(window->flags() | Qt::WindowStaysOnTopHint);
-//	else
-//		window->setFlags(window->flags() & ~Qt::WindowStaysOnTopHint);
-//	qDebug() << window->flags() | Qt::WindowStaysOnTopHint
 	d->helper.setAlwaysOnTop(window, onTop);
 }
 
@@ -154,7 +150,7 @@ void App::open(const QString &mrl) {
 
 void App::onMessageReceived(const QString &message) {
 	if (message == "wakeUp") {
-        activateWindow();
+		activateWindow();
 	} else if (message.left(3) == "mrl") {
 		auto open = [this] (const QString &mrl) {
 			if (!mrl.isEmpty() && d->main)

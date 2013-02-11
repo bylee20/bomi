@@ -40,7 +40,6 @@ enum mp_command_type {
     MP_CMD_PLAYLIST_CLEAR,
     MP_CMD_SUB_STEP,
     MP_CMD_TV_SET_CHANNEL,
-    MP_CMD_EDL_MARK,
     MP_CMD_TV_LAST_CHANNEL,
     MP_CMD_TV_SET_FREQ,
     MP_CMD_TV_SET_NORM,
@@ -79,6 +78,7 @@ enum mp_command_type {
 
     MP_CMD_SHOW_CHAPTERS,
     MP_CMD_SHOW_TRACKS,
+    MP_CMD_SHOW_PLAYLIST,
 
     /// Video output commands
     MP_CMD_VO_CMDLINE,
@@ -203,7 +203,8 @@ char *mp_input_get_section(struct input_ctx *ictx);
 
 // Initialize the input system
 struct input_conf;
-struct input_ctx *mp_input_init(struct input_conf *input_conf);
+struct input_ctx *mp_input_init(struct input_conf *input_conf,
+                                bool load_default_conf);
 
 void mp_input_uninit(struct input_ctx *ictx);
 

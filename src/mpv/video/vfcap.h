@@ -29,14 +29,7 @@
 // driver/filter can do vertical flip (upside-down)
 #define VFCAP_FLIP 0x80
 
-// driver/hardware handles timing (blocking)
-#define VFCAP_TIMER 0x100
-// vf filter: accepts stride (put_image)
-// vo driver: has draw_slice() support for the given csp
-#define VFCAP_ACCEPT_STRIDE 0x400
 // filter does postprocessing (so you shouldn't scale/filter image before it)
 #define VFCAP_POSTPROC 0x800
-// used by libvo and vf_vo, indicates the VO does not support draw_slice for this format
-#define VOCAP_NOSLICES 0x8000
 
 #endif /* MPLAYER_VFCAP_H */

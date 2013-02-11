@@ -42,7 +42,6 @@ typedef struct {
     int           vsub;
     uint8_t       *tmp_data [4];  ///< temporary plane data buffer
     int           tmp_bwidth[4];  ///< temporary plane byte width
-    int           pixel_step;
 } KerndeintContext;
 
 #define OFFSET(x) offsetof(KerndeintContext, x)
@@ -98,12 +97,16 @@ static int config_props(AVFilterLink *inlink)
 {
     KerndeintContext *kerndeint = inlink->dst->priv;
     const AVPixFmtDescriptor *desc = &av_pix_fmt_descriptors[inlink->format];
+    int ret;
 
     kerndeint->vsub = desc->log2_chroma_h;
-    kerndeint->pixel_step = av_get_bits_per_pixel(desc) >> 3;
 
-    return av_image_alloc(kerndeint->tmp_data, kerndeint->tmp_bwidth,
+    ret = av_image_alloc(kerndeint->tmp_data, kerndeint->tmp_bwidth,
                           inlink->w, inlink->h, inlink->format, 1);
+    if (ret < 0)
+        return ret;
+    memset(kerndeint->tmp_data[0], 0, ret);
+    return 0;
 }
 
 static int filter_frame(AVFilterLink *inlink, AVFilterBufferRef *inpic)
@@ -142,6 +145,8 @@ static int filter_frame(AVFilterLink *inlink, AVFilterBufferRef *inpic)
     const int sharp  = kerndeint->sharp;
     const int twoway = kerndeint->twoway;
 
+    const int is_packed_rgb = av_pix_fmt_desc_get(inlink->format)->flags & PIX_FMT_RGB;
+
     outpic = ff_get_video_buffer(outlink, AV_PERM_WRITE|AV_PERM_ALIGN, outlink->w, outlink->h);
     if (!outpic) {
         avfilter_unref_bufferp(&inpic);
@@ -156,7 +161,7 @@ static int filter_frame(AVFilterLink *inlink, AVFilterBufferRef *inpic)
 
         srcp = srcp_saved = inpic->data[plane];
         src_linesize      = inpic->linesize[plane];
-        psrc_linesize     = outpic->linesize[plane];
+        psrc_linesize     = kerndeint->tmp_bwidth[plane];
         dstp = dstp_saved = outpic->data[plane];
         dst_linesize      = outpic->linesize[plane];
         srcp              = srcp_saved + (1 - order) * src_linesize;
@@ -203,7 +208,6 @@ static int filter_frame(AVFilterLink *inlink, AVFilterBufferRef *inpic)
                     (abs((int)prvp[x]  - (int)srcp[x])  > thresh) ||
                     (abs((int)prvpp[x] - (int)srcpp[x]) > thresh) ||
                     (abs((int)prvpn[x] - (int)srcpn[x]) > thresh)) {
-                    int is_packed_rgb = av_pix_fmt_desc_get(inlink->format)->flags & PIX_FMT_RGB;
                     if (map) {
                         g = x & ~3;
 

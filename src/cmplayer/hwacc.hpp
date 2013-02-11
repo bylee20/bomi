@@ -1,5 +1,5 @@
-#ifndef HWACCEL_HPP
-#define HWACCEL_HPP
+#ifndef HWACC_HPP
+#define HWACC_HPP
 
 #include "stdafx.hpp"
 extern "C" {
@@ -17,4 +17,4 @@ private:
 	friend class PlayEngine;
 };
 
-#endif // HWACCEL_HPP
+#endif // HWACC_HPP

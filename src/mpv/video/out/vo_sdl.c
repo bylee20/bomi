@@ -46,7 +46,6 @@
 #include "aspect.h"
 #include "config.h"
 #include "vo.h"
-#include "geometry.h"
 
 struct formatmap_entry {
     Uint32 sdl;
@@ -54,11 +53,11 @@ struct formatmap_entry {
     int is_rgba;
 };
 const struct formatmap_entry formats[] = {
-    {SDL_PIXELFORMAT_YV12, IMGFMT_YV12, 0},
-    {SDL_PIXELFORMAT_IYUV, IMGFMT_IYUV, 0},
-    {SDL_PIXELFORMAT_YUY2, IMGFMT_YUY2, 0},
+    {SDL_PIXELFORMAT_YV12, IMGFMT_420P, 0},
+    {SDL_PIXELFORMAT_IYUV, IMGFMT_420P, 0},
+    {SDL_PIXELFORMAT_YUY2, IMGFMT_YUYV, 0},
     {SDL_PIXELFORMAT_UYVY, IMGFMT_UYVY, 0},
-    {SDL_PIXELFORMAT_YVYU, IMGFMT_YVYU, 0},
+    //{SDL_PIXELFORMAT_YVYU, IMGFMT_YVYU, 0},
 #if BYTE_ORDER == BIG_ENDIAN
     {SDL_PIXELFORMAT_RGBX8888, IMGFMT_RGBA, 0}, // has no alpha -> bad for OSD
     {SDL_PIXELFORMAT_BGRX8888, IMGFMT_BGRA, 0}, // has no alpha -> bad for OSD
@@ -172,6 +171,7 @@ struct priv {
     int renderer_index;
     SDL_RendererInfo renderer_info;
     SDL_Texture *tex;
+    int tex_swapped;
     mp_image_t texmpi;
     mp_image_t *ssmpi;
     struct mp_rect src_rect;
@@ -271,14 +271,12 @@ static bool try_create_renderer(struct vo *vo, int i, const char *driver,
     if (!is_good_renderer(&ri, driver, vc->allow_sw, NULL))
         return false;
 
+    bool xy_valid = vo->opts->vo_geometry.xy_valid;
+
     // then actually try
     vc->window = SDL_CreateWindow("MPV",
-                                  geometry_xy_changed
-                                      ? vo->dx
-                                      : SDL_WINDOWPOS_UNDEFINED,
-                                  geometry_xy_changed
-                                      ? vo->dy
-                                      : SDL_WINDOWPOS_UNDEFINED,
+                                  xy_valid ? vo->dx : SDL_WINDOWPOS_UNDEFINED,
+                                  xy_valid ? vo->dy : SDL_WINDOWPOS_UNDEFINED,
                                   w, h,
                                   SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN);
     if (!vc->window) {
@@ -374,16 +372,15 @@ static void set_fullscreen(struct vo *vo, int fs)
     struct priv *vc = vo->priv;
     struct MPOpts *opts = vo->opts;
 
-    if (opts->vidmode)
-        SDL_SetWindowDisplayMode(vc->window, NULL);
-    else {
-        SDL_DisplayMode mode;
-        if (!SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(vc->window),
-                                       &mode))
-            SDL_SetWindowDisplayMode(vc->window, &mode);
+    Uint32 fs_flags = 0;
+    if (fs) {
+        if (opts->vidmode)
+            fs_flags |= SDL_WINDOW_FULLSCREEN;
+        else
+            fs_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
     }
 
-    if (SDL_SetWindowFullscreen(vc->window, fs)) {
+    if (SDL_SetWindowFullscreen(vc->window, fs_flags)) {
         mp_msg(MSGT_VO, MSGL_ERR, "[sdl] SDL_SetWindowFullscreen failed\n");
         return;
     }
@@ -427,6 +424,7 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
         return -1;
     }
 
+    vc->tex_swapped = texfmt == SDL_PIXELFORMAT_YV12;
     vc->tex = SDL_CreateTexture(vc->renderer, texfmt,
                                 SDL_TEXTUREACCESS_STREAMING, width, height);
     if (!vc->tex) {
@@ -435,8 +433,7 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
     }
 
     mp_image_t *texmpi = &vc->texmpi;
-    texmpi->width = texmpi->w = width;
-    texmpi->height = texmpi->h = height;
+    mp_image_set_size(texmpi, width, height);
     mp_image_setfmt(texmpi, format);
     switch (texmpi->num_planes) {
     case 1:
@@ -448,8 +445,6 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
         vc->tex = NULL;
         return -1;
     }
-
-    vc->ssmpi = alloc_mpi(width, height, format);
 
     resize(vo, d_width, d_height);
 
@@ -594,7 +589,7 @@ static void uninit(struct vo *vo)
 {
     struct priv *vc = vo->priv;
     destroy_renderer(vo);
-    free_mp_image(vc->ssmpi);
+    talloc_free(vc->ssmpi);
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
     talloc_free(vc);
 }
@@ -772,11 +767,6 @@ static int preinit(struct vo *vo, const char *arg)
         return -1;
     }
 
-    // work around broken XVidMode support for now (TODO regularily test
-    // whether this is still necessary)
-    SDL_SetHintWithPriority(SDL_HINT_VIDEO_X11_XVIDMODE, "0",
-                            SDL_HINT_DEFAULT);
-
     // predefine SDL defaults (SDL env vars shall override)
     SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "1",
                             SDL_HINT_DEFAULT);
@@ -815,8 +805,7 @@ static int query_format(struct vo *vo, uint32_t format)
 {
     struct priv *vc = vo->priv;
     int i, j;
-    int cap = VFCAP_CSP_SUPPORTED | VFCAP_FLIP | VFCAP_ACCEPT_STRIDE |
-              VFCAP_OSD;
+    int cap = VFCAP_CSP_SUPPORTED | VFCAP_FLIP | VFCAP_OSD;
     for (i = 0; i < vc->renderer_info.num_texture_formats; ++i)
         for (j = 0; j < sizeof(formats) / sizeof(formats[0]); ++j)
             if (vc->renderer_info.texture_formats[i] == formats[j].sdl)
@@ -825,7 +814,7 @@ static int query_format(struct vo *vo, uint32_t format)
     return 0;
 }
 
-static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
+static void draw_image(struct vo *vo, mp_image_t *mpi)
 {
     struct priv *vc = vo->priv;
     void *pixels;
@@ -859,7 +848,7 @@ static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
     if (color_add > 255)
         color_add = 255;
 
-    // typically this runs in parallel with the following copy_mpi call
+    // typically this runs in parallel with the following mp_image_copy call
     SDL_SetRenderDrawColor(vc->renderer, color_add, color_add, color_add, 255);
     SDL_RenderClear(vc->renderer);
 
@@ -880,7 +869,7 @@ static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
         texmpi->planes[0] = pixels;
         texmpi->stride[0] = pitch;
         if (texmpi->num_planes == 3) {
-            if (texmpi->imgfmt == IMGFMT_YV12) {
+            if (vc->tex_swapped) {
                 texmpi->planes[2] =
                     ((Uint8 *) texmpi->planes[0] + texmpi->h * pitch);
                 texmpi->stride[2] = pitch / 2;
@@ -896,9 +885,11 @@ static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
                 texmpi->stride[2] = pitch / 2;
             }
         }
-        copy_mpi(texmpi, mpi);
+        mp_image_copy(texmpi, mpi);
 
         SDL_UnlockTexture(vc->tex);
+
+        mp_image_setrefp(&vc->ssmpi, mpi);
     }
 
     SDL_Rect src, dst;
@@ -911,7 +902,7 @@ static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
     dst.w = vc->dst_rect.x1 - vc->dst_rect.x0;
     dst.h = vc->dst_rect.y1 - vc->dst_rect.y0;
 
-    // typically this runs in parallel with the following copy_mpi call
+    // typically this runs in parallel with the following mp_image_copy call
     if (color_mod > 255) {
         SDL_SetTextureColorMod(vc->tex, color_mod / 2, color_mod / 2, color_mod / 2);
         SDL_RenderCopy(vc->renderer, vc->tex, &src, &dst);
@@ -920,8 +911,6 @@ static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
         SDL_SetTextureColorMod(vc->tex, color_mod, color_mod, color_mod);
         SDL_RenderCopy(vc->renderer, vc->tex, &src, &dst);
     }
-    if (mpi)
-        copy_mpi(vc->ssmpi, mpi);
 }
 
 static void update_screeninfo(struct vo *vo)
@@ -942,20 +931,18 @@ static void update_screeninfo(struct vo *vo)
 static struct mp_image *get_screenshot(struct vo *vo)
 {
     struct priv *vc = vo->priv;
-    mp_image_t *image = alloc_mpi(vc->ssmpi->width, vc->ssmpi->height,
-                                  vc->ssmpi->imgfmt);
-    copy_mpi(image, vc->ssmpi);
-    return image;
+    return vc->ssmpi ? mp_image_new_ref(vc->ssmpi) : NULL;
 }
 
 static struct mp_image *get_window_screenshot(struct vo *vo)
 {
     struct priv *vc = vo->priv;
-    mp_image_t *image = alloc_mpi(vo->dwidth, vo->dheight, vc->osd_format.mpv);
+    struct mp_image *image = mp_image_alloc(vc->osd_format.mpv, vo->dwidth,
+                                                                vo->dheight);
     if (SDL_RenderReadPixels(vc->renderer, NULL, vc->osd_format.sdl,
                              image->planes[0], image->stride[0])) {
         mp_msg(MSGT_VO, MSGL_ERR, "[sdl] SDL_RenderReadPixels failed\n");
-        free_mp_image(image);
+        talloc_free(image);
         return NULL;
     }
     return image;
@@ -995,11 +982,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
 {
     struct priv *vc = vo->priv;
     switch (request) {
-    case VOCTRL_QUERY_FORMAT:
-        return query_format(vo, *((uint32_t *)data));
-    case VOCTRL_DRAW_IMAGE:
-        draw_image(vo, (mp_image_t *)data, vo->next_pts);
-        return 0;
     case VOCTRL_FULLSCREEN:
         set_fullscreen(vo, !vo_fs);
         return 1;
@@ -1008,7 +990,7 @@ static int control(struct vo *vo, uint32_t request, void *data)
     case VOCTRL_RESUME:
         return vc->int_pause = 0;
     case VOCTRL_REDRAW_FRAME:
-        draw_image(vo, NULL, MP_NOPTS_VALUE);
+        draw_image(vo, NULL);
         return 1;
     case VOCTRL_UPDATE_SCREENINFO:
         update_screeninfo(vo);
@@ -1042,7 +1024,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
 #define OPT_BASE_STRUCT struct priv
 
 const struct vo_driver video_out_sdl = {
-    .is_new = true,
     .info = &(const vo_info_t) {
         "SDL 2.0 Renderer",
         "sdl",
@@ -1054,12 +1035,14 @@ const struct vo_driver video_out_sdl = {
         .renderer_index = -1
     },
     .options = (const struct m_option []){
-        OPT_FLAG_ON("sw", allow_sw, 0),
+        OPT_FLAG("sw", allow_sw, 0),
         {NULL}
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
+    .draw_image = draw_image,
     .uninit = uninit,
     .check_events = check_events,
     .draw_osd = draw_osd,

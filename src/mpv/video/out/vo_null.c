@@ -30,10 +30,8 @@
 #include "video/vfcap.h"
 #include "video/mp_image.h"
 
-static int draw_slice(struct vo *vo, uint8_t *image[], int stride[],
-                      int w, int h, int x, int y)
+static void draw_image(struct vo *vo, mp_image_t *mpi)
 {
-    return 0;
 }
 
 static void draw_osd(struct vo *vo, struct osd_state *osd)
@@ -77,15 +75,10 @@ static int preinit(struct vo *vo, const char *arg)
 
 static int control(struct vo *vo, uint32_t request, void *data)
 {
-    switch (request) {
-    case VOCTRL_QUERY_FORMAT:
-        return query_format(vo, *((uint32_t *)data));
-    }
     return VO_NOTIMPL;
 }
 
 const struct vo_driver video_out_null = {
-    .is_new = false,
     .info = &(const vo_info_t) {
         "Null video output",
         "null",
@@ -93,9 +86,10 @@ const struct vo_driver video_out_null = {
         ""
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
-    .draw_slice = draw_slice,
+    .draw_image = draw_image,
     .draw_osd = draw_osd,
     .flip_page = flip_page,
     .check_events = check_events,

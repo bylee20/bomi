@@ -3,149 +3,52 @@
 extern "C" {
 #include <video/img_format.h>
 #include <video/mp_image.h>
+#include <video/img_fourcc.h>
 }
 
-extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
+VideoFrame::VideoFrame::Data::Data(mp_image *mpi)
+: mpi(mp_image_new_ref(mpi)), format(mpi) {}
+
+VideoFrame::VideoFrame::Data::Data(const Data &other)
+: QSharedData(other) {
+	format = other.format;
+	if (other.mpi)
+		mpi = mp_image_new_ref(other.mpi);
+}
+
+VideoFrame::Data::~Data() {
+	if (mpi)
+		mp_image_unrefp(&mpi);
+}
 
 quint32 VideoFrame::UniqueId = 0;
 
-void VideoFrame::setFormat(const VideoFormat &format) {
-	d->format = format;
-	for (int i=0; i<3; ++i)
-		d->data[i].resize(format.byteWidth(i)*format.byteHeight(i));
+const uchar *VideoFrame::data(int i) const {
+	return reinterpret_cast<const uchar*>(d->mpi->planes[i]);
 }
 
-bool VideoFrame::copy(GLuint *textures, GLenum fmt) {
-	Q_ASSERT(fmt == GL_BGRA);
-	Q_ASSERT(d->data[0].size() == d->format.width()*d->format.height()*4);
-	glBindTexture(GL_TEXTURE_2D, textures[0]);
-	glGetTexImage(GL_TEXTURE_2D, 0, fmt, GL_UNSIGNED_BYTE, d->data[0].data());
-	return false;
-}
-
-bool VideoFrame::copy(const mp_image *mpi) {
-	bool ret = d->format.imgfmt() != mpi->imgfmt || d->format.byteWidth(0) != mpi->stride[0] || d->format.byteHeight(0) != mpi->height;
-	if (ret)
-		setFormat(VideoFormat::fromMpImage(mpi));
-	for (int i=0; i<3; ++i)
-		memcpy(d->data[i].data(), mpi->planes[i], d->data[i].size());
-	return ret;
-}
-
-VideoFormat::Type imgfmtToVideoFormatType(unsigned int imgfmt) {
-	switch (imgfmt) {
-	case IMGFMT_YV12:
-		return VideoFormat::YV12;
-	case IMGFMT_I420:
-		return VideoFormat::I420;
-	case IMGFMT_YUY2:
-		return VideoFormat::YUY2;
-	case IMGFMT_UYVY:
-		return VideoFormat::UYVY;
-	case IMGFMT_NV12:
-		return VideoFormat::NV12;
-	case IMGFMT_NV21:
-		return VideoFormat::NV21;
-	case IMGFMT_RGBA:
-		return VideoFormat::RGBA;
-	case IMGFMT_BGRA:
-		return VideoFormat::BGRA;
-	default:
-		return VideoFormat::Unknown;
-	}
-}
-
-VideoFormat VideoFormat::fromMpImage(const mp_image *mpi) {
-	VideoFormat format;
-	format.m_type = imgfmtToVideoFormatType(mpi->imgfmt);
-	format.m_bpp = mpi->bpp;
-	format.m_planes = mpi->num_planes;
-
-	format.m_size = QSize(mpi->w, mpi->h);
-	format.m_drawSize = QSize(mpi->stride[0], mpi->height);
-	format.m_byteSize.fill(QSize(0, 0));
-	for (int i=0; i<format.m_planes; ++i) {
-		format.m_byteSize[i].rwidth() = mpi->stride[i];
-		format.m_byteSize[i].rheight() = mpi->height;
-	}
-
-	format.m_imgfmt = mpi->imgfmt;
-	switch (mpi->imgfmt) {
-	case IMGFMT_YV12:
-	case IMGFMT_I420:
-		format.m_byteSize[1].rheight() >>= 1;
-		format.m_byteSize[2].rheight() >>= 1;
-		format.m_bpp = 12;
-		break;
-	case IMGFMT_NV12:
-	case IMGFMT_NV21:
-		format.m_byteSize[1].rheight() >>= 1;
-		format.m_bpp = 12;
-		break;
-	case IMGFMT_YUY2:
-	case IMGFMT_UYVY:
-		format.m_drawSize.rwidth() >>= 1;
-		format.m_bpp = 16;
-		break;
-	case IMGFMT_RGBA:
-	case IMGFMT_BGRA:
-		format.m_drawSize.rwidth() >>= 2;
-		format.m_bpp = 32;
-		break;
-	default:
-		break;
-	}
-
-	return format;
-}
-
-//VideoFormat VideoFormat::fromImgFmt(uint32_t imgfmt, int width, int height) {
-//	switch (imgfmt) {
-//	case IMGFMT_YV12:
-//		return fromType(YV12, width, height);
-//	case IMGFMT_I420:
-//		return fromType(I420, width, height);
-//	case IMGFMT_YUY2:
-//		return fromType(YUY2, width, height);
-//	case IMGFMT_UYVY:
-//		return fromType(UYVY, width, height);
-//	case IMGFMT_NV12:
-//		return fromType(NV12, width, height);
-//	case IMGFMT_NV21:
-//		return fromType(NV21, width, height);
-//	case IMGFMT_RGBA:
-//		return fromType(RGBA, width, height);
-//	default:
-//		return VideoFormat();
-//	}
+//void VideoFrame::setFormat(const VideoFormat &format) {
+//	d->format = format;
+//	for (int i=0; i<3; ++i)
+//		d->data[i].resize(format.byteWidth(i)*format.byteHeight(i));
 //}
 
-uint32_t videoFormatTypeToImgfmt(VideoFormat::Type type) {
-	switch (type) {
-	case VideoFormat::YV12:
-		return IMGFMT_YV12;
-	case VideoFormat::I420:
-		return IMGFMT_I420;
-	case VideoFormat::YUY2:
-		return IMGFMT_YUY2;
-	case VideoFormat::UYVY:
-		return IMGFMT_UYVY;
-	case VideoFormat::NV12:
-		return IMGFMT_NV12;
-	case VideoFormat::NV21:
-		return IMGFMT_NV21;
-	case VideoFormat::BGRA:
-		return IMGFMT_BGRA;
-	case VideoFormat::RGBA:
-		return IMGFMT_RGBA;
-	default:
-		return 0;
-	}
-}
+//bool VideoFrame::copy(GLuint *textures, GLenum fmt) {
+//	Q_ASSERT(fmt == GL_BGRA);
+//	Q_ASSERT(d->data[0].size() == d->format.width()*d->format.height()*4);
+//	glBindTexture(GL_TEXTURE_2D, textures[0]);
+//	glGetTexImage(GL_TEXTURE_2D, 0, fmt, GL_UNSIGNED_BYTE, d->data[0].data());
+//	return false;
+//}
 
-QString cc4ToDescription(VideoFormat::Type type) {
-	return _L(vo_format_name(videoFormatTypeToImgfmt(type)));
-}
+//bool VideoFrame::copy(const mp_image *mpi) {
+//	bool ret = d->format.imgfmt() != mpi->imgfmt || d->format.byteWidth(0) != mpi->stride[0] || d->format.byteHeight(0) != mpi->h;
+//	if (ret)
+//		setFormat(VideoFormat(mpi));
+//	for (int i=0; i<3; ++i)
+//		memcpy(d->data[i].data(), mpi->planes[i], d->data[i].size());
+//	return ret;
+//}
 
 
 QImage VideoFrame::toImage() const {

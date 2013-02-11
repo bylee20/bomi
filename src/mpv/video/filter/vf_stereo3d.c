@@ -45,6 +45,7 @@ typedef enum stereo_code {
     ANAGLYPH_GM_GRAY,   //anaglyph green/magenta gray
     ANAGLYPH_GM_HALF,   //anaglyph green/magenta half colored
     ANAGLYPH_GM_COLOR,  //anaglyph green/magenta colored
+    ANAGLYPH_GM_DUBOIS, //anaglyph green/magenta dubois
     ANAGLYPH_YB_GRAY,   //anaglyph yellow/blue gray
     ANAGLYPH_YB_HALF,   //anaglyph yellow/blue half colored
     ANAGLYPH_YB_COLOR,  //anaglyph yellow/blue colored
@@ -104,6 +105,10 @@ static const int ana_coeff[][3][6] = {
     {{    0,     0,     0, 65536,     0,     0},
      {    0, 65536,     0,     0,     0,     0},
      {    0,     0,     0,     0,     0, 65536}},
+  [ANAGLYPH_GM_DUBOIS]  =
+    {{-4063,-10354, -2556, 34669, 46203,  1573},
+     {18612, 43778,  9372, -1049,  -983, -4260},
+     { -983, -1769,  1376,   590,  4915, 61407}},
   [ANAGLYPH_YB_GRAY]   =
     {{    0,     0,     0, 19595, 38470,  7471},
      {    0,     0,     0, 19595, 38470,  7471},
@@ -148,8 +153,6 @@ static inline uint8_t ana_convert(int coeff[6], uint8_t left[3], uint8_t right[3
 static int config(struct vf_instance *vf, int width, int height, int d_width,
                   int d_height, unsigned int flags, unsigned int outfmt)
 {
-    struct MPOpts *opts = vf->opts;
-
     if ((width & 1) || (height & 1)) {
         mp_msg(MSGT_VFILTER, MSGL_WARN, "[stereo3d] invalid height or width\n");
         return 0;
@@ -214,6 +217,7 @@ static int config(struct vf_instance *vf, int width, int height, int d_width,
     case ANAGLYPH_GM_GRAY:
     case ANAGLYPH_GM_HALF:
     case ANAGLYPH_GM_COLOR:
+    case ANAGLYPH_GM_DUBOIS:
     case ANAGLYPH_YB_GRAY:
     case ANAGLYPH_YB_HALF:
     case ANAGLYPH_YB_COLOR:
@@ -271,19 +275,16 @@ static int config(struct vf_instance *vf, int width, int height, int d_width,
         return 0;
         break;
     }
-    if (!opts->screen_size_x && !opts->screen_size_y) {
-        d_width     = d_width  * vf->priv->out.width  / width;
-        d_height    = d_height * vf->priv->out.height / height;
-    }
+    vf_rescale_dsize(&d_width, &d_height, width, height,
+                     vf->priv->out.width, vf->priv->out.height);
     return vf_next_config(vf, vf->priv->out.width, vf->priv->out.height,
                           d_width, d_height, flags, outfmt);
 }
 
-static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
+static struct mp_image *filter(struct vf_instance *vf, struct mp_image *mpi)
 {
-    mp_image_t *dmpi;
     if (vf->priv->in.fmt == vf->priv->out.fmt) { //nothing to do
-        dmpi = mpi;
+        return mpi;
     } else {
         int out_off_left, out_off_right;
         int in_off_left  = vf->priv->in.row_left   * mpi->stride[0]  +
@@ -291,9 +292,9 @@ static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
         int in_off_right = vf->priv->in.row_right  * mpi->stride[0]  +
                            vf->priv->in.off_right;
 
-        dmpi = vf_get_image(vf->next, IMGFMT_RGB24, MP_IMGTYPE_TEMP,
-                            MP_IMGFLAG_ACCEPT_STRIDE,
-                            vf->priv->out.width, vf->priv->out.height);
+        struct mp_image *dmpi = vf_alloc_out_image(vf);
+        mp_image_copy_attributes(dmpi, mpi);
+
         out_off_left   = vf->priv->out.row_left  * dmpi->stride[0] +
                          vf->priv->out.off_left;
         out_off_right  = vf->priv->out.row_right * dmpi->stride[0] +
@@ -341,9 +342,11 @@ static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
         case ANAGLYPH_GM_GRAY:
         case ANAGLYPH_GM_HALF:
         case ANAGLYPH_GM_COLOR:
+        case ANAGLYPH_GM_DUBOIS:
         case ANAGLYPH_YB_GRAY:
         case ANAGLYPH_YB_HALF:
-        case ANAGLYPH_YB_COLOR: {
+        case ANAGLYPH_YB_COLOR:
+        case ANAGLYPH_YB_DUBOIS: {
             int x,y,il,ir,o;
             unsigned char *source     = mpi->planes[0];
             unsigned char *dest       = dmpi->planes[0];
@@ -374,11 +377,13 @@ static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
         default:
             mp_msg(MSGT_VFILTER, MSGL_WARN,
                    "[stereo3d] stereo format of output is not supported\n");
-            return 0;
+            return NULL;
             break;
         }
+
+        talloc_free(mpi);
+        return dmpi;
     }
-    return vf_next_put_image(vf, dmpi, pts);
 }
 
 static int query_format(struct vf_instance *vf, unsigned int fmt)
@@ -398,7 +403,7 @@ static int vf_open(vf_instance_t *vf, char *args)
 {
     vf->config          = config;
     vf->uninit          = uninit;
-    vf->put_image       = put_image;
+    vf->filter          = filter;
     vf->query_format    = query_format;
 
     return 1;
@@ -423,6 +428,8 @@ static const struct format_preset {
     {"anaglyph_green_magenta_half_color",ANAGLYPH_GM_HALF},
     {"agmc",                             ANAGLYPH_GM_COLOR},
     {"anaglyph_green_magenta_color",     ANAGLYPH_GM_COLOR},
+    {"agmd",                             ANAGLYPH_GM_DUBOIS},
+    {"anaglyph_green_magenta_dubois",    ANAGLYPH_GM_DUBOIS},
     {"aybg",                             ANAGLYPH_YB_GRAY},
     {"anaglyph_yellow_blue_gray",        ANAGLYPH_YB_GRAY},
     {"aybh",                             ANAGLYPH_YB_HALF},

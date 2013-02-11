@@ -34,12 +34,12 @@ protected:
 	void resetNode();
 	void setGeometryDirty(bool dirty = true);
 	int textureCount() const {return m_count;}
-	GLuint texture(int i) const {return m_textures[i];}
+	GLuint texture(int i) const;
 private:
 	QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) final;
 	struct Shader;	struct Material;	struct Node;	struct Data;
 	friend class Node;
-	GLuint *m_textures = nullptr, m_count = 0;
+	int m_count = 0;
 	Data *d;
 };
 

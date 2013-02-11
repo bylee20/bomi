@@ -43,17 +43,18 @@ char *m_option_strerror(int code)
 {
     switch (code) {
     case M_OPT_UNKNOWN:
-        return mp_gtext("Unrecognized option name");
+        return mp_gtext("option not found");
     case M_OPT_MISSING_PARAM:
-        return mp_gtext("Required parameter for option missing");
+        return mp_gtext("option requires parameter");
     case M_OPT_INVALID:
-        return mp_gtext("Option parameter could not be parsed");
+        return mp_gtext("option parameter could not be parsed");
     case M_OPT_OUT_OF_RANGE:
-        return mp_gtext("Parameter is outside values allowed for option");
+        return mp_gtext("parameter is outside values allowed for option");
+    case M_OPT_DISALLOW_PARAM:
+        return mp_gtext("option doesn't take a parameter");
     case M_OPT_PARSER_ERR:
-        return mp_gtext("Parser error");
     default:
-        return NULL;
+        return mp_gtext("parser error");
     }
 }
 
@@ -144,12 +145,37 @@ const m_option_type_t m_option_type_flag = {
     // need yes or no in config files
     .name  = "Flag",
     .size  = sizeof(int),
-    .flags = M_OPT_TYPE_OLD_SYNTAX_NO_PARAM,
+    .flags = M_OPT_TYPE_OPTIONAL_PARAM,
     .parse = parse_flag,
     .print = print_flag,
     .copy  = copy_opt,
     .add = add_flag,
     .clamp = clamp_flag,
+};
+
+// Single-value, write-only flag
+
+static int parse_store(const m_option_t *opt, struct bstr name,
+                       struct bstr param, void *dst)
+{
+    if (param.len == 0 || bstrcasecmp0(param, "yes") == 0) {
+        if (dst)
+            VAL(dst) = opt->max;
+        return 0;
+    } else {
+        mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+               "Invalid parameter for %.*s flag: %.*s\n",
+               BSTR_P(name), BSTR_P(param));
+        return M_OPT_DISALLOW_PARAM;
+    }
+}
+
+const m_option_type_t m_option_type_store = {
+    // can only be activated
+    .name  = "Flag",
+    .size  = sizeof(int),
+    .flags = M_OPT_TYPE_OPTIONAL_PARAM,
+    .parse = parse_store,
 };
 
 // Integer
@@ -1014,7 +1040,7 @@ static int parse_print(const m_option_t *opt, struct bstr name,
 
 const m_option_type_t m_option_type_print = {
     .name  = "Print",
-    .flags = M_OPT_TYPE_OLD_SYNTAX_NO_PARAM,
+    .flags = M_OPT_TYPE_OPTIONAL_PARAM,
     .parse = parse_print,
 };
 
@@ -1026,7 +1052,7 @@ const m_option_type_t m_option_type_print_func_param = {
 
 const m_option_type_t m_option_type_print_func = {
     .name  = "Print",
-    .flags = M_OPT_TYPE_ALLOW_WILDCARD | M_OPT_TYPE_OLD_SYNTAX_NO_PARAM,
+    .flags = M_OPT_TYPE_ALLOW_WILDCARD | M_OPT_TYPE_OPTIONAL_PARAM,
     .parse = parse_print,
 };
 
@@ -1165,6 +1191,180 @@ const m_option_type_t m_option_type_color = {
     .parse = parse_color,
 };
 
+
+// Parse a >=0 number starting at s. Set s to the string following the number.
+// If the number ends with '%', eat that and set *out_per to true, but only
+// if the number is between 0-100; if not, don't eat anything, even the number.
+static bool eat_num_per(bstr *s, int *out_num, bool *out_per)
+{
+    bstr rest;
+    long long v = bstrtoll(*s, &rest, 10);
+    if (s->len == rest.len || v < INT_MIN || v > INT_MAX)
+        return false;
+    *out_num = v;
+    *out_per = false;
+    *s = rest;
+    if (bstr_eatstart0(&rest, "%") && v >= 0 && v <= 100) {
+        *out_per = true;
+        *s = rest;
+    }
+    return true;
+}
+
+static bool parse_geometry_str(struct m_geometry *gm, bstr s)
+{
+    *gm = (struct m_geometry) { .x = INT_MIN, .y = INT_MIN };
+    if (s.len == 0)
+        return true;
+    // Approximate grammar:
+    // [W[xH]][{+-}X{+-}Y] | [X:Y]
+    // (meaning: [optional] {one character of} one|alternative)
+    // Every number can be followed by '%'
+    int num;
+    bool per;
+
+#define READ_NUM(F, F_PER) do {         \
+    if (!eat_num_per(&s, &num, &per))   \
+        goto error;                     \
+    gm->F = num;                        \
+    gm->F_PER = per;                    \
+} while(0)
+
+#define READ_SIGN(F) do {               \
+    if (bstr_eatstart0(&s, "+")) {      \
+        gm->F = false;                  \
+    } else if (bstr_eatstart0(&s, "-")) {\
+        gm->F = true;                   \
+    } else goto error;                  \
+} while(0)
+
+    if (bstrchr(s, ':') < 0) {
+        gm->wh_valid = true;
+        if (!bstr_startswith0(s, "+") && !bstr_startswith0(s, "-")) {
+            READ_NUM(w, w_per);
+            if (bstr_eatstart0(&s, "x"))
+                READ_NUM(h, h_per);
+        }
+        if (s.len > 0) {
+            gm->xy_valid = true;
+            READ_SIGN(x_sign);
+            READ_NUM(x, x_per);
+            READ_SIGN(y_sign);
+            READ_NUM(y, y_per);
+        }
+    } else {
+        gm->xy_valid = true;
+        READ_NUM(x, x_per);
+        if (!bstr_eatstart0(&s, ":"))
+            goto error;
+        READ_NUM(y, y_per);
+    }
+
+    return s.len == 0;
+
+error:
+    return false;
+}
+
+#undef READ_NUM
+#undef READ_SIGN
+
+// xpos,ypos: position of the left upper corner
+// widw,widh: width and height of the window
+// scrw,scrh: width and height of the current screen
+// The input parameters should be set to a centered window (default fallbacks).
+void m_geometry_apply(int *xpos, int *ypos, int *widw, int *widh,
+                      int scrw, int scrh, struct m_geometry *gm)
+{
+    if (gm->wh_valid) {
+        int prew = *widw, preh = *widh;
+        if (gm->w > 0)
+            *widw = gm->w_per ? scrw * (gm->w / 100.0) : gm->w;
+        if (gm->h > 0)
+            *widh = gm->h_per ? scrh * (gm->h / 100.0) : gm->h;
+        // keep aspect if the other value is not set
+        double asp = (double)prew / preh;
+        if (gm->w > 0 && !(gm->h > 0)) {
+            *widh = *widw / asp;
+        } else if (!(gm->w > 0) && gm->h > 0) {
+            *widw = *widh * asp;
+        }
+    }
+
+    if (gm->xy_valid) {
+        if (gm->x != INT_MIN) {
+            *xpos = gm->x;
+            if (gm->x_per)
+                *xpos = (scrw - *widw) * (*xpos / 100.0);
+            if (gm->x_sign)
+                *xpos = scrw - *widw - *xpos;
+        }
+        if (gm->y != INT_MIN) {
+            *ypos = gm->y;
+            if (gm->y_per)
+                *ypos = (scrh - *widh) * (*ypos / 100.0);
+            if (gm->y_sign)
+                *ypos = scrh - *widh - *ypos;
+        }
+    }
+}
+
+static int parse_geometry(const m_option_t *opt, struct bstr name,
+                          struct bstr param, void *dst)
+{
+    struct m_geometry gm;
+    if (!parse_geometry_str(&gm, param))
+        goto error;
+
+    if (dst)
+        *((struct m_geometry *)dst) = gm;
+
+    return 1;
+
+error:
+    mp_msg(MSGT_CFGPARSER, MSGL_ERR, "Option %.*s: invalid geometry: '%.*s'\n",
+           BSTR_P(name), BSTR_P(param));
+    mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+           "Valid format: [W[%%][xH[%%]]][{+-}X[%%]{+-}Y[%%]] | [X[%%]:Y[%%]]\n");
+    return M_OPT_INVALID;
+}
+
+const m_option_type_t m_option_type_geometry = {
+    .name  = "Window geometry",
+    .size  = sizeof(struct m_geometry),
+    .parse = parse_geometry,
+};
+
+static int parse_size_box(const m_option_t *opt, struct bstr name,
+                          struct bstr param, void *dst)
+{
+    struct m_geometry gm;
+    if (!parse_geometry_str(&gm, param))
+        goto error;
+
+    if (gm.xy_valid)
+        goto error;
+
+    if (dst)
+        *((struct m_geometry *)dst) = gm;
+
+    return 1;
+
+error:
+    mp_msg(MSGT_CFGPARSER, MSGL_ERR, "Option %.*s: invalid size: '%.*s'\n",
+           BSTR_P(name), BSTR_P(param));
+    mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+           "Valid format: W[%%][xH[%%]] or empty string\n");
+    return M_OPT_INVALID;
+}
+
+const m_option_type_t m_option_type_size_box = {
+    .name  = "Window size",
+    .size  = sizeof(struct m_geometry),
+    .parse = parse_size_box,
+};
+
+
 #include "video/img_format.h"
 
 static int parse_imgfmt(const m_option_t *opt, struct bstr name,
@@ -1200,6 +1400,41 @@ const m_option_type_t m_option_type_imgfmt = {
     .name  = "Image format",
     .size  = sizeof(uint32_t),
     .parse = parse_imgfmt,
+    .copy  = copy_opt,
+};
+
+static int parse_fourcc(const m_option_t *opt, struct bstr name,
+                        struct bstr param, void *dst)
+{
+    if (param.len == 0)
+        return M_OPT_MISSING_PARAM;
+
+    unsigned int value;
+
+    if (param.len == 4) {
+        uint8_t *s = param.start;
+        value = s[0] | (s[1] << 8) | (s[2] << 16) | (s[3] << 24);
+    } else {
+        bstr rest;
+        value = bstrtoll(param, &rest, 16);
+        if (rest.len != 0) {
+            mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+                   "Option %.*s: invalid FourCC: '%.*s'\n",
+                   BSTR_P(name), BSTR_P(param));
+            return M_OPT_INVALID;
+        }
+    }
+
+    if (dst)
+        *((unsigned int *)dst) = value;
+
+    return 1;
+}
+
+const m_option_type_t m_option_type_fourcc = {
+    .name  = "FourCC",
+    .size  = sizeof(unsigned int),
+    .parse = parse_fourcc,
     .copy  = copy_opt,
 };
 

@@ -44,7 +44,6 @@
 #include "vo.h"
 #include "video/vfcap.h"
 #include "video/mp_image.h"
-#include "geometry.h"
 #include "sub/sub.h"
 #include "bitmap_packer.h"
 
@@ -195,7 +194,6 @@ struct gl_priv {
     // per pixel (full pixel when packed, each component when planar)
     int plane_bytes;
     int plane_bits;
-    int component_bits;
 
     GLint gl_internal_format;
     GLenum gl_format;
@@ -232,20 +230,19 @@ struct fmt_entry {
     int mp_format;
     GLint internal_format;
     GLenum format;
-    int component_bits;
     GLenum type;
 };
 
 static const struct fmt_entry mp_to_gl_formats[] = {
-    {IMGFMT_RGB48NE, GL_RGB16, GL_RGB,  16, GL_UNSIGNED_SHORT},
-    {IMGFMT_RGB24,   GL_RGB,   GL_RGB,  8,  GL_UNSIGNED_BYTE},
-    {IMGFMT_RGBA,    GL_RGBA,  GL_RGBA, 8,  GL_UNSIGNED_BYTE},
-    {IMGFMT_RGB15,   GL_RGBA,  GL_RGBA, 5,  GL_UNSIGNED_SHORT_1_5_5_5_REV},
-    {IMGFMT_RGB16,   GL_RGB,   GL_RGB,  6,  GL_UNSIGNED_SHORT_5_6_5_REV},
-    {IMGFMT_BGR15,   GL_RGBA,  GL_BGRA, 5,  GL_UNSIGNED_SHORT_1_5_5_5_REV},
-    {IMGFMT_BGR16,   GL_RGB,   GL_RGB,  6,  GL_UNSIGNED_SHORT_5_6_5},
-    {IMGFMT_BGR24,   GL_RGB,   GL_BGR,  8,  GL_UNSIGNED_BYTE},
-    {IMGFMT_BGRA,    GL_RGBA,  GL_BGRA, 8,  GL_UNSIGNED_BYTE},
+    {IMGFMT_RGB48,   GL_RGB16, GL_RGB,  GL_UNSIGNED_SHORT},
+    {IMGFMT_RGB24,   GL_RGB,   GL_RGB,  GL_UNSIGNED_BYTE},
+    {IMGFMT_RGBA,    GL_RGBA,  GL_RGBA, GL_UNSIGNED_BYTE},
+    {IMGFMT_RGB15,   GL_RGBA,  GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV},
+    {IMGFMT_RGB16,   GL_RGB,   GL_RGB,  GL_UNSIGNED_SHORT_5_6_5_REV},
+    {IMGFMT_BGR15,   GL_RGBA,  GL_BGRA, GL_UNSIGNED_SHORT_1_5_5_5_REV},
+    {IMGFMT_BGR16,   GL_RGB,   GL_RGB,  GL_UNSIGNED_SHORT_5_6_5},
+    {IMGFMT_BGR24,   GL_RGB,   GL_BGR,  GL_UNSIGNED_BYTE},
+    {IMGFMT_BGRA,    GL_RGBA,  GL_BGRA, GL_UNSIGNED_BYTE},
     {0},
 };
 
@@ -886,14 +883,10 @@ static void init_dither(struct gl_priv *p)
     if (p->dither_depth > 0)
         dst_depth = p->dither_depth;
 
-    int src_depth = p->component_bits;
-    if (p->use_lut_3d)
-        src_depth = 16;
-
-    if (dst_depth >= src_depth || p->dither_depth < 0 || src_depth < 0)
+    if (p->dither_depth < 0)
         return;
 
-    mp_msg(MSGT_VO, MSGL_V, "[gl] Dither %d->%d.\n", src_depth, dst_depth);
+    mp_msg(MSGT_VO, MSGL_V, "[gl] Dither to %d.\n", dst_depth);
 
     // This defines how many bits are considered significant for output on
     // screen. The superfluous bits will be used for rounded according to the
@@ -1237,49 +1230,23 @@ static void flip_page(struct vo *vo)
     p->frames_rendered++;
 }
 
-static int draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, int h,
-                      int x, int y)
-{
-    struct gl_priv *p = vo->priv;
-    GL *gl = p->gl;
-
-    p->mpi_flipped = stride[0] < 0;
-
-    for (int n = 0; n < p->plane_count; n++) {
-        gl->ActiveTexture(GL_TEXTURE0 + n);
-        gl->BindTexture(GL_TEXTURE_2D, p->planes[n].gl_texture);
-        int xs = p->planes[n].shift_x, ys = p->planes[n].shift_y;
-        glUploadTex(gl, GL_TEXTURE_2D, p->gl_format, p->gl_type, src[n],
-                    stride[n], x >> xs, y >> ys, w >> xs, h >> ys, 0);
-    }
-    gl->ActiveTexture(GL_TEXTURE0);
-
-    return 0;
-}
-
-static uint32_t get_image(struct vo *vo, mp_image_t *mpi)
+static bool get_image(struct vo *vo, mp_image_t *mpi)
 {
     struct gl_priv *p = vo->priv;
     GL *gl = p->gl;
 
     if (!p->use_pbo)
-        return VO_FALSE;
+        return false;
 
     // We don't support alpha planes. (Disabling PBOs with normal draw calls is
     // an undesired, but harmless side-effect.)
     if (mpi->num_planes != p->plane_count)
-        return VO_FALSE;
+        return false;
 
-    if (mpi->flags & MP_IMGFLAG_READABLE)
-        return VO_FALSE;
-    if (mpi->type != MP_IMGTYPE_STATIC && mpi->type != MP_IMGTYPE_TEMP &&
-        (mpi->type != MP_IMGTYPE_NUMBERED || mpi->number))
-        return VO_FALSE;
-    mpi->flags &= ~MP_IMGFLAG_COMMON_PLANE;
     for (int n = 0; n < p->plane_count; n++) {
         struct texplane *plane = &p->planes[n];
-        mpi->stride[n] = (mpi->width >> plane->shift_x) * p->plane_bytes;
-        int needed_size = (mpi->height >> plane->shift_y) * mpi->stride[n];
+        mpi->stride[n] = (mpi->w >> plane->shift_x) * p->plane_bytes;
+        int needed_size = (mpi->h >> plane->shift_y) * mpi->stride[n];
         if (!plane->gl_buffer)
             gl->GenBuffers(1, &plane->gl_buffer);
         gl->BindBuffer(GL_PIXEL_UNPACK_BUFFER, plane->gl_buffer);
@@ -1294,12 +1261,12 @@ static uint32_t get_image(struct vo *vo, mp_image_t *mpi)
         mpi->planes[n] = plane->buffer_ptr;
         gl->BindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     }
-    mpi->flags |= MP_IMGFLAG_DIRECT;
-    return VO_TRUE;
+    return true;
 }
 
-static uint32_t draw_image(struct gl_priv *p, mp_image_t *mpi)
+static void draw_image(struct vo *vo, mp_image_t *mpi)
 {
+    struct gl_priv *p = vo->priv;
     GL *gl = p->gl;
     int n;
 
@@ -1307,16 +1274,8 @@ static uint32_t draw_image(struct gl_priv *p, mp_image_t *mpi)
 
     mp_image_t mpi2 = *mpi;
     int w = mpi->w, h = mpi->h;
-    if (mpi->flags & MP_IMGFLAG_DRAW_CALLBACK)
-        goto skip_upload;
-    mpi2.flags = 0;
-    mpi2.type = MP_IMGTYPE_TEMP;
-    mpi2.width = mpi2.w;
-    mpi2.height = mpi2.h;
-    if (!(mpi->flags & MP_IMGFLAG_DIRECT)
-        && !p->planes[0].buffer_ptr
-        && get_image(p->vo, &mpi2) == VO_TRUE)
-    {
+    bool pbo = false;
+    if (!p->planes[0].buffer_ptr && get_image(p->vo, &mpi2)) {
         for (n = 0; n < p->plane_count; n++) {
             struct texplane *plane = &p->planes[n];
             int xs = plane->shift_x, ys = plane->shift_y;
@@ -1325,13 +1284,14 @@ static uint32_t draw_image(struct gl_priv *p, mp_image_t *mpi)
                        mpi2.stride[n], mpi->stride[n]);
         }
         mpi = &mpi2;
+        pbo = true;
     }
     p->mpi_flipped = mpi->stride[0] < 0;
     for (n = 0; n < p->plane_count; n++) {
         struct texplane *plane = &p->planes[n];
         int xs = plane->shift_x, ys = plane->shift_y;
         void *plane_ptr = mpi->planes[n];
-        if (mpi->flags & MP_IMGFLAG_DIRECT) {
+        if (pbo) {
             gl->BindBuffer(GL_PIXEL_UNPACK_BUFFER, plane->gl_buffer);
             if (!gl->UnmapBuffer(GL_PIXEL_UNPACK_BUFFER))
                 mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Video PBO upload failed. "
@@ -1346,17 +1306,16 @@ static uint32_t draw_image(struct gl_priv *p, mp_image_t *mpi)
     }
     gl->ActiveTexture(GL_TEXTURE0);
     gl->BindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-skip_upload:
+
     do_render(p);
-    return VO_TRUE;
 }
 
 static mp_image_t *get_screenshot(struct gl_priv *p)
 {
     GL *gl = p->gl;
 
-    mp_image_t *image = alloc_mpi(p->texture_width, p->texture_height,
-                                  p->image_format);
+    mp_image_t *image = mp_image_alloc(p->image_format, p->texture_width,
+                                                        p->texture_height);
 
     // NOTE about image formats with alpha plane: we don't even have the alpha
     // anymore. We never upload it to any texture, as it would be a waste of
@@ -1372,11 +1331,8 @@ static mp_image_t *get_screenshot(struct gl_priv *p)
                       image->planes[n], image->stride[n]);
     }
     gl->ActiveTexture(GL_TEXTURE0);
-
-    image->w = p->image_width;
-    image->h = p->image_height;
-    image->display_w = p->vo->aspdat.prew;
-    image->display_h = p->vo->aspdat.preh;
+    mp_image_set_size(image, p->image_width, p->image_height);
+    mp_image_set_display_size(image, p->vo->aspdat.prew, p->vo->aspdat.preh);
 
     mp_image_set_colorspace_details(image, &p->colorspace);
 
@@ -1595,34 +1551,33 @@ static bool init_format(int fmt, struct gl_priv *init)
     if (!init)
         init = &dummy;
 
-    mp_image_t dummy_img = {0};
-    mp_image_setfmt(&dummy_img, fmt);
+    struct mp_imgfmt_desc desc = mp_imgfmt_get_desc(fmt);
+    if (!desc.id)
+        return false;
 
     init->image_format = fmt;
-    init->component_bits = -1;
+    init->plane_bits = desc.plane_bits;
 
     // RGB/packed formats
     for (const struct fmt_entry *e = mp_to_gl_formats; e->mp_format; e++) {
         if (e->mp_format == fmt) {
             supported = true;
-            init->plane_bits = dummy_img.bpp;
+            init->plane_bits = desc.bpp[0];
             init->gl_format = e->format;
             init->gl_internal_format = e->internal_format;
-            init->component_bits = e->component_bits;
             init->gl_type = e->type;
             break;
         }
     }
 
     // YUV/planar formats
-    if (!supported && mp_get_chroma_shift(fmt, NULL, NULL, &init->plane_bits)) {
+    if (!supported && (desc.flags & MP_IMGFLAG_YUV_P)) {
         init->gl_format = GL_RED;
-        init->component_bits = init->plane_bits;
         if (init->plane_bits == 8) {
             supported = true;
             init->gl_internal_format = GL_RED;
             init->gl_type = GL_UNSIGNED_BYTE;
-        } else if (IMGFMT_IS_YUVP16_NE(fmt)) {
+        } else if (init->plane_bits <= 16 && (desc.flags & MP_IMGFLAG_NE)) {
             supported = true;
             init->gl_internal_format = GL_R16;
             init->gl_type = GL_UNSIGNED_SHORT;
@@ -1632,7 +1587,7 @@ static bool init_format(int fmt, struct gl_priv *init)
     // RGB/planar
     if (!supported && fmt == IMGFMT_GBRP) {
         supported = true;
-        init->plane_bits = init->component_bits = 8;
+        init->plane_bits = 8;
         init->gl_format = GL_RED;
         init->gl_internal_format = GL_RED;
         init->gl_type = GL_UNSIGNED_BYTE;
@@ -1642,28 +1597,28 @@ static bool init_format(int fmt, struct gl_priv *init)
         return false;
 
     init->plane_bytes = (init->plane_bits + 7) / 8;
-    init->is_yuv = dummy_img.flags & MP_IMGFLAG_YUV;
+    init->is_yuv = desc.flags & MP_IMGFLAG_YUV;
     init->is_linear_rgb = false;
 
     // NOTE: we throw away the additional alpha plane, if one exists.
-    init->plane_count = dummy_img.num_planes > 2 ? 3 : 1;
-    assert(dummy_img.num_planes >= init->plane_count);
-    assert(dummy_img.num_planes <= init->plane_count + 1);
+    init->plane_count = desc.num_planes > 2 ? 3 : 1;
+    assert(desc.num_planes >= init->plane_count);
+    assert(desc.num_planes <= init->plane_count + 1);
 
     for (int n = 0; n < init->plane_count; n++) {
         struct texplane *plane = &init->planes[n];
 
-        plane->shift_x = n > 0 ? dummy_img.chroma_x_shift : 0;
-        plane->shift_y = n > 0 ? dummy_img.chroma_y_shift : 0;
+        plane->shift_x = desc.xs[n];
+        plane->shift_y = desc.ys[n];
     }
 
     return true;
 }
 
-static int query_format(uint32_t format)
+static int query_format(struct vo *vo, uint32_t format)
 {
     int caps = VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_FLIP |
-               VFCAP_ACCEPT_STRIDE | VFCAP_OSD;
+               VFCAP_OSD;
     if (!init_format(format, NULL))
         return 0;
     return caps;
@@ -1735,10 +1690,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     struct gl_priv *p = vo->priv;
 
     switch (request) {
-    case VOCTRL_QUERY_FORMAT:
-        return query_format(*(uint32_t *)data);
-    case VOCTRL_DRAW_IMAGE:
-        return draw_image(p, data);
     case VOCTRL_ONTOP:
         if (!p->glctx->ontop)
             break;
@@ -2252,7 +2203,6 @@ err_out:
 }
 
 const struct vo_driver video_out_opengl = {
-    .is_new = true,
     .info = &(const vo_info_t) {
         "Extended OpenGL Renderer",
         "opengl",
@@ -2260,9 +2210,10 @@ const struct vo_driver video_out_opengl = {
         ""
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
-    .draw_slice = draw_slice,
+    .draw_image = draw_image,
     .draw_osd = draw_osd,
     .flip_page = flip_page,
     .check_events = check_events,
@@ -2270,7 +2221,6 @@ const struct vo_driver video_out_opengl = {
 };
 
 const struct vo_driver video_out_opengl_hq = {
-    .is_new = true,
     .info = &(const vo_info_t) {
         "Extended OpenGL Renderer (high quality rendering preset)",
         "opengl-hq",
@@ -2278,9 +2228,10 @@ const struct vo_driver video_out_opengl_hq = {
         ""
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
-    .draw_slice = draw_slice,
+    .draw_image = draw_image,
     .draw_osd = draw_osd,
     .flip_page = flip_page,
     .check_events = check_events,
@@ -2330,10 +2281,6 @@ static const char help_text[] =
 "        8 bits per component are assumed.\n"
 "     8: Dither to 8 bit output.\n"
 "    Default: -1.\n"
-"    Note that dithering will always be disabled if the bit depth\n"
-"    of the video is lower or qual to the detected dither-depth.\n"
-"    If color management is enabled, input depth is assumed to be\n"
-"    16 bits, because the 3D LUT output is 16 bit wide.\n"
 "  debug\n"
 "    Check for OpenGL errors, i.e. call glGetError(). Also request a\n"
 "    debug OpenGL context.\n"

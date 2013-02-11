@@ -178,7 +178,6 @@ static const ModeTab mode_44_48 = {
 typedef struct TwinContext {
     AVCodecContext *avctx;
     AVFrame frame;
-    DSPContext      dsp;
     AVFloatDSPContext fdsp;
     FFTContext mdct_ctx[3];
 
@@ -650,11 +649,10 @@ static void imdct_and_window(TwinContext *tctx, enum FrameType ftype, int wtype,
 
         mdct->imdct_half(mdct, buf1 + bsize*j, in + bsize*j);
 
-        tctx->dsp.vector_fmul_window(out2,
-                                     prev_buf + (bsize-wsize)/2,
-                                     buf1 + bsize*j,
-                                     ff_sine_windows[av_log2(wsize)],
-                                     wsize/2);
+        tctx->fdsp.vector_fmul_window(out2, prev_buf + (bsize-wsize) / 2,
+                                      buf1 + bsize * j,
+                                      ff_sine_windows[av_log2(wsize)],
+                                      wsize / 2);
         out2 += wsize;
 
         memcpy(out2, buf1 + bsize*j + wsize/2, (bsize - wsize/2)*sizeof(float));
@@ -694,7 +692,7 @@ static void imdct_output(TwinContext *tctx, enum FrameType ftype, int wtype,
     if (tctx->avctx->channels == 2) {
         memcpy(&out[1][0],     &prev_buf[2*mtab->size],         size1 * sizeof(out[1][0]));
         memcpy(&out[1][size1], &tctx->curr_frame[2*mtab->size], size2 * sizeof(out[1][0]));
-        tctx->dsp.butterflies_float(out[0], out[1], mtab->size);
+        tctx->fdsp.butterflies_float(out[0], out[1], mtab->size);
     }
 }
 
@@ -1163,7 +1161,6 @@ static av_cold int twin_decode_init(AVCodecContext *avctx)
         return -1;
     }
 
-    ff_dsputil_init(&tctx->dsp, avctx);
     avpriv_float_dsp_init(&tctx->fdsp, avctx->flags & CODEC_FLAG_BITEXACT);
     if ((ret = init_mdct_win(tctx))) {
         av_log(avctx, AV_LOG_ERROR, "Error initializing MDCT\n");

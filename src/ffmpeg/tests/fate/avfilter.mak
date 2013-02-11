@@ -11,7 +11,7 @@ FATE_LAVFI = fate-lavfi-alphaextract_rgb                                \
              fate-lavfi-fade                                            \
              fate-lavfi-field                                           \
              fate-lavfi-idet                                            \
-             fate-lavfi-kerndeint                                       \
+             fate-lavfi-il                                              \
              fate-lavfi-life                                            \
              fate-lavfi-null                                            \
              fate-lavfi-overlay                                         \
@@ -41,18 +41,17 @@ FATE_LAVFI = fate-lavfi-alphaextract_rgb                                \
 
 FATE_LAVFI-$(CONFIG_GPL) += fate-lavfi-colormatrix1                     \
                             fate-lavfi-colormatrix2                     \
-                            fate-lavfi-histeq                           \
                             fate-lavfi-hue                              \
+                            fate-lavfi-kerndeint                        \
                             fate-lavfi-pixfmts_super2xsai               \
+                            fate-lavfi-pp                               \
+                            fate-lavfi-pp2                              \
+                            fate-lavfi-pp3                              \
+                            fate-lavfi-pp4                              \
+                            fate-lavfi-pp5                              \
+                            fate-lavfi-pp6                              \
                             fate-lavfi-tinterlace_merge                 \
                             fate-lavfi-tinterlace_pad                   \
-
-FATE_LAVFI-$(CONFIG_MP_FILTER) += fate-lavfi-pp                         \
-             fate-lavfi-pp2                                             \
-             fate-lavfi-pp3                                             \
-             fate-lavfi-pp4                                             \
-             fate-lavfi-pp5                                             \
-             fate-lavfi-pp6                                             \
 
 FATE_LAVFI += $(FATE_LAVFI-yes)
 

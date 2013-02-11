@@ -7,6 +7,8 @@
 extern "C" {
 #include <video/out/vo.h>
 #include <video/vfcap.h>
+#include <video/img_fourcc.h>
+#include <video/mp_image.h>
 #include <sub/sub.h>
 }
 
@@ -15,22 +17,17 @@ struct VideoOutput::Data {
 	vo_driver driver;
 	vo_info_t info;
 	VideoFormat format;
+	VideoFrame frame;
 	mp_osd_res osd;
-	mp_image_t *mpimg = nullptr;
-	VideoFrame *frame = nullptr;
+//	mp_image_t *mpimg = nullptr;
+//	VideoFrame *frame = nullptr;
 	PlayEngine *engine = nullptr;
 	bool flip = false;
 	bool hwAcc = false;
+	VideoRendererItem *renderer = nullptr;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
-	Q_ASSERT(VideoFormat::YV12 == IMGFMT_YV12);
-	Q_ASSERT(VideoFormat::I420 == IMGFMT_I420);
-	Q_ASSERT(VideoFormat::YUY2 == IMGFMT_YUY2);
-	Q_ASSERT(VideoFormat::NV12 == IMGFMT_NV12);
-	Q_ASSERT(VideoFormat::NV21 == IMGFMT_NV21);
-	Q_ASSERT(VideoFormat::UYVY == IMGFMT_UYVY);
-
 	memset(&d->info, 0, sizeof(d->info));
 	memset(&d->driver, 0, sizeof(d->driver));
 	memset(&d->osd, 0, sizeof(d->osd));
@@ -40,15 +37,15 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 	d->info.author		= "xylosper <darklin20@gmail.com>";
 	d->info.comment		= "";
 
-	d->driver.is_new = true,
 	d->driver.info = &d->info;
 	d->driver.preinit = preinit;
 	d->driver.config = config;
 	d->driver.control = control;
-	d->driver.draw_slice = drawSlice;
 	d->driver.draw_osd = drawOsd;
 	d->driver.flip_page = flipPage;
 	d->driver.check_events = checkEvents;
+	d->driver.query_format = queryFormat;
+	d->driver.draw_image = drawImage;
 	d->driver.uninit = uninit;
 
 	d->engine = engine;
@@ -57,89 +54,92 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 VideoOutput::~VideoOutput() {}
 
 struct vo *VideoOutput::vo_create(MPContext *mpctx) {
-	struct vo *vo = reinterpret_cast<struct vo*>(talloc_ptrtype(NULL, vo));
-	memset(vo, 0, sizeof(*vo));
-	vo->opts = &mpctx->opts;
-	vo->key_fifo = mpctx->key_fifo;
-	vo->input_ctx = mpctx->input;
-	vo->event_fd = -1;
-	vo->registered_fd = -1;
-	vo->priv = this;
-	vo->driver = &d->driver;
-	if (!vo->driver->preinit(vo, NULL))
-		return vo;
-	talloc_free_children(vo);
-	talloc_free(vo);
+	struct vo *svo = reinterpret_cast<struct vo*>(talloc_ptrtype(NULL, svo));
+	memset(svo, 0, sizeof(*svo));
+	svo->opts = &mpctx->opts;
+	svo->key_fifo = mpctx->key_fifo;
+	svo->input_ctx = mpctx->input;
+	svo->event_fd = -1;
+	svo->registered_fd = -1;
+	svo->priv = this;
+	svo->driver = &d->driver;
+	if (!svo->driver->preinit(svo, NULL))
+		return svo;
+	talloc_free_children(svo);
+	talloc_free(svo);
 	return nullptr;
+}
+
+void VideoOutput::setRenderer(VideoRendererItem *renderer) {
+	if (d->renderer)
+		disconnect(d->renderer, 0, this, 0);
+	connect(d->renderer = renderer, &VideoRendererItem::formatChanged, this, &VideoOutput::handleFormatChanged);
+}
+
+void VideoOutput::handleFormatChanged(const VideoFormat &format) {
+	emit formatChanged(d->format = format);
 }
 
 const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
-int VideoOutput::config(struct vo *vo, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
+int VideoOutput::config(struct vo *vo, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t /*fmt*/) {
 	auto d = static_cast<VideoOutput*>(vo->priv)->d;
-	d->hwAcc = fmt == IMGFMT_VDPAU;
+	d->hwAcc = false;//fmt == IMGFMT_VDPAU;
 	return 0;
 }
 
 bool VideoOutput::getImage(void *data) {
-	if (!d->hwAcc)
-		return false;
-	static_cast<mp_image_t*>(data)->flags |= MP_IMGFLAG_DIRECT;
-	return true;
-#ifdef Q_OS_MAC
-	Q_UNUSED(data);
 	return false;
-#endif
-	static_cast<mp_image_t*>(data)->flags |= MP_IMGFLAG_DIRECT;
-	return true;
-#ifdef Q_OS_LINUX
-//	return d->hwAcc.isActivated() && d->hwAcc.setBuffer(static_cast<mp_image_t*>(data));
-#endif
+//	if (!d->hwAcc)
+//		return false;
+//	static_cast<mp_image_t*>(data)->flags |= MP_IMGFLAG_DIRECT;
+//	return true;
+//#ifdef Q_OS_MAC
+//	Q_UNUSED(data);
+//	return false;
+//#endif
+//	static_cast<mp_image_t*>(data)->flags |= MP_IMGFLAG_DIRECT;
+//	return true;
+//#ifdef Q_OS_LINUX
+////	return d->hwAcc.isActivated() && d->hwAcc.setBuffer(static_cast<mp_image_t*>(data));
+//#endif
 }
 
-//extern HwAccel *ha;
+//extern HwAcc *ha;
 
-void VideoOutput::drawImage(void *data) {
-	mp_image_t *mpi = static_cast<mp_image_t*>(data);
-	if (auto renderer = d->engine->videoRenderer()) {
-		VideoFrame &frame = renderer->getNextFrame();
-		frame.setFormat(d->format);
+void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
+	auto v = static_cast<VideoOutput*>(vo->priv); auto d = v->d;
+	d->frame = VideoFrame(mpi);
+//	if (mpi->imgfmt == IMGFMT_VDPAU_FIRST)
+//		mp_image_unrefp(&mpi);
+//	if (auto renderer = d->engine->videoRenderer()) {
+//		VideoFrame &frame = renderer->getNextFrame();
+////		frame.setFormat(d->format);
+////#ifdef Q_OS_LINUX
+////		if (ha->isActivated())
+////			mpi = &ha->extract(mpi);
+////#endif
+//		if (frame.copy(mpi))
+//			emit v->formatChanged(d->format = frame.format());
 //#ifdef Q_OS_LINUX
-//		if (ha->isActivated())
-//			mpi = &ha->extract(mpi);
+////		if (ha->isActivated())
+////			ha->clean();
 //#endif
-		if (frame.copy(mpi))
-			emit formatChanged(d->format = frame.format());
-#ifdef Q_OS_LINUX
-//		if (ha->isActivated())
-//			ha->clean();
-#endif
-	}
+//	}
 	d->flip = true;
 }
 
-int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
+int VideoOutput::control(struct vo *vo, uint32_t req, void */*data*/) {
 	VideoOutput *v = static_cast<VideoOutput*>(vo->priv);
 	switch (req) {
-	case VOCTRL_QUERY_FORMAT:
-		return v->queryFormat(*static_cast<uint32_t*>(data));
-	case VOCTRL_DRAW_IMAGE:
-		v->drawImage(data);
-		return VO_TRUE;
 	case VOCTRL_REDRAW_FRAME:
-		if (auto renderer = v->d->engine->videoRenderer())
-			renderer->update();
+		if (v->d->renderer)
+			v->d->renderer->present(v->d->frame);
 		return VO_TRUE;
 	case VOCTRL_FULLSCREEN:
-		return VO_TRUE;
 	case VOCTRL_UPDATE_SCREENINFO:
-//		update_xinerama_info(vo);
-		return VO_TRUE;
-	case VOCTRL_GET_IMAGE:
-		return VO_NOTIMPL;
-		return v->getImage(data);
 	case VOCTRL_PAUSE:
 	case VOCTRL_RESUME:
 	case VOCTRL_GET_PANSCAN:
@@ -152,11 +152,6 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	default:
 		return VO_NOTIMPL;
 	}
-}
-
-int VideoOutput::drawSlice(struct vo */*vo*/, uint8_t */*src*/[], int /*stride*/[], int w, int h, int x, int y) {
-	qDebug() << "drawSlice();" << x << y << w << h;
-	return true;
 }
 
 void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
@@ -175,24 +170,26 @@ void VideoOutput::flipPage(struct vo *vo) {
 	Data *d = static_cast<VideoOutput*>(vo->priv)->d;
 	if (!d->flip)
 		return;
-	if (auto renderer = d->engine->videoRenderer())
-		renderer->next();
+	if (d->renderer)
+		d->renderer->present(d->frame);
+//	if (auto renderer = d->engine->videoRenderer())
+//		renderer->next();
 	d->flip = false;
 }
 
 void VideoOutput::checkEvents(struct vo */*vo*/) {}
 
-int VideoOutput::queryFormat(int format) {
+int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	switch (format) {
-	case IMGFMT_I420:
-	case IMGFMT_YV12:
+	case IMGFMT_420P:
 	case IMGFMT_NV12:
-	case IMGFMT_YUY2:
+	case IMGFMT_NV21:
+	case IMGFMT_YUYV:
 	case IMGFMT_UYVY:
 #ifdef Q_OS_LINUX
-	case IMGFMT_VDPAU:
+	case IMGFMT_VDPAU_FIRST:
 #endif
-		return VFCAP_OSD | VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_ACCEPT_STRIDE | VOCAP_NOSLICES;
+		return VFCAP_OSD | VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_FLIP;
 	default:
 		return 0;
 	}

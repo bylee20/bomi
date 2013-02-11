@@ -33,7 +33,7 @@
 #include "libavutil/timer.h"
 #include "avcodec.h"
 #include "internal.h"
-#include "get_bits.h"
+#include "put_bits.h"
 #include "dsputil.h"
 #include "rangecoder.h"
 #include "golomb.h"
@@ -395,8 +395,8 @@ static void encode_rgb_frame(FFV1Context *s, uint8_t *src[3], int w, int h, int 
     int x, y, p, i;
     const int ring_size = s->avctx->context_model ? 3 : 2;
     int16_t *sample[4][3];
-    int lbd    = s->avctx->bits_per_raw_sample <= 8;
-    int bits   = s->avctx->bits_per_raw_sample > 0 ? s->avctx->bits_per_raw_sample : 8;
+    int lbd    = s->bits_per_raw_sample <= 8;
+    int bits   = s->bits_per_raw_sample > 0 ? s->bits_per_raw_sample : 8;
     int offset = 1 << bits;
 
     s->run_index = 0;
@@ -896,6 +896,8 @@ slices_ok:
 #define STATS_OUT_SIZE 1024 * 1024 * 6
     if (avctx->flags & CODEC_FLAG_PASS1) {
         avctx->stats_out = av_mallocz(STATS_OUT_SIZE);
+        if (!avctx->stats_out)
+            return AVERROR(ENOMEM);
         for (i = 0; i < s->quant_table_count; i++)
             for (j = 0; j < s->slice_count; j++) {
                 FFV1Context *sf = s->slice_context[j];

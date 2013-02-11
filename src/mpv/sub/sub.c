@@ -39,6 +39,8 @@
 #include "draw_bmp.h"
 #include "spudec.h"
 #include "subreader.h"
+#include "video/mp_image.h"
+#include "video/mp_image_pool.h"
 
 
 char * const sub_osd_names[]={
@@ -168,10 +170,15 @@ static bool spu_visible(struct osd_state *osd, struct osd_object *obj)
 
 static void render_object(struct osd_state *osd, struct osd_object *obj,
                           struct mp_osd_res res, double video_pts,
-                          const bool formats[SUBBITMAP_COUNT],
+                          const bool sub_formats[SUBBITMAP_COUNT],
                           struct sub_bitmaps *out_imgs)
 {
     struct MPOpts *opts = osd->opts;
+
+    bool formats[SUBBITMAP_COUNT];
+    memcpy(formats, sub_formats, sizeof(formats));
+    if (opts->vo_force_rgba_osd)
+        formats[SUBBITMAP_LIBASS] = false;
 
     *out_imgs = (struct sub_bitmaps) {0};
 
@@ -273,7 +280,7 @@ void osd_draw(struct osd_state *osd, struct mp_osd_res res,
 struct draw_on_image_closure {
     struct osd_state *osd;
     struct mp_image *dest;
-    struct mp_draw_sub_backup *bk;
+    struct mp_image_pool *pool;
     bool changed;
 };
 
@@ -281,13 +288,17 @@ static void draw_on_image(void *ctx, struct sub_bitmaps *imgs)
 {
     struct draw_on_image_closure *closure = ctx;
     struct osd_state *osd = closure->osd;
-    if (closure->bk)
-        mp_draw_sub_backup_add(closure->bk, closure->dest, imgs);
+    if (closure->pool) {
+        mp_image_pool_make_writeable(closure->pool, closure->dest);
+    } else {
+        mp_image_make_writeable(closure->dest);
+    }
     mp_draw_sub_bitmaps(&osd->draw_cache, closure->dest, imgs);
     talloc_steal(osd, osd->draw_cache);
     closure->changed = true;
 }
 
+// Calls mp_image_make_writeable() on the dest image if something is drawn.
 // Returns whether anything was drawn.
 bool osd_draw_on_image(struct osd_state *osd, struct mp_osd_res res,
                        double video_pts, int draw_flags, struct mp_image *dest)
@@ -298,11 +309,14 @@ bool osd_draw_on_image(struct osd_state *osd, struct mp_osd_res res,
     return closure.changed;
 }
 
-void osd_draw_on_image_bk(struct osd_state *osd, struct mp_osd_res res,
-                          double video_pts, int draw_flags,
-                          struct mp_draw_sub_backup *bk, struct mp_image *dest)
+// Like osd_draw_on_image(), but if dest needs to be copied to make it
+// writeable, allocate images from the given pool. (This is a minor
+// optimization to reduce "real" image sized memory allocations.)
+void osd_draw_on_image_p(struct osd_state *osd, struct mp_osd_res res,
+                         double video_pts, int draw_flags,
+                         struct mp_image_pool *pool, struct mp_image *dest)
 {
-    struct draw_on_image_closure closure = {osd, dest, bk};
+    struct draw_on_image_closure closure = {osd, dest, pool};
     osd_draw(osd, res, video_pts, draw_flags, mp_draw_sub_formats,
              &draw_on_image, &closure);
 }
@@ -323,24 +337,4 @@ void osd_subs_changed(struct osd_state *osd)
         if (osd->objs[n]->is_sub)
             vo_osd_changed(n);
     }
-}
-
-bool sub_bitmaps_bb(struct sub_bitmaps *imgs, struct mp_rect *out_bb)
-{
-    struct mp_rect bb = {INT_MAX, INT_MAX, INT_MIN, INT_MIN};
-    for (int n = 0; n < imgs->num_parts; n++) {
-        struct sub_bitmap *p = &imgs->parts[n];
-        bb.x0 = FFMIN(bb.x0, p->x);
-        bb.y0 = FFMIN(bb.y0, p->y);
-        bb.x1 = FFMAX(bb.x1, p->x + p->dw);
-        bb.y1 = FFMAX(bb.y1, p->y + p->dh);
-    }
-
-    // avoid degenerate bounding box if empty
-    bb.x0 = FFMIN(bb.x0, bb.x1);
-    bb.y0 = FFMIN(bb.y0, bb.y1);
-
-    *out_bb = bb;
-
-    return bb.x0 < bb.x1 && bb.y0 < bb.y1;
 }

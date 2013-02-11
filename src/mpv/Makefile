@@ -48,19 +48,14 @@ SOURCES-$(LIBSMBCLIENT)         += stream/stream_smb.c
 SOURCES-$(MACOSX_FINDER)        += osdep/macosx_finder_args.m
 SOURCES-$(MACOSX_BUNDLE)        += osdep/macosx_bundle.m
 SOURCES-$(COCOA)                += video/out/osx_common.m \
-                                   video/out/cocoa_common.m \
-                                   osdep/cocoa_events.m
+                                   video/out/cocoa_common.m
 SOURCES-$(MNG)                  += demux/demux_mng.c
 SOURCES-$(MPG123)               += audio/decode/ad_mpg123.c
 
 SOURCES-$(NEED_GETTIMEOFDAY)    += osdep/gettimeofday.c
 SOURCES-$(NEED_GLOB)            += osdep/glob-win.c
-SOURCES-$(NEED_SETENV)          += osdep/setenv.c
 SOURCES-$(NEED_SHMEM)           += osdep/shmem.c
-SOURCES-$(NEED_STRSEP)          += osdep/strsep.c
-SOURCES-$(NEED_VSSCANF)         += osdep/vsscanf.c
-SOURCES-$(NETWORKING)           += stream/stream_netstream.c \
-                                   stream/asf_mmst_streaming.c \
+SOURCES-$(NETWORKING)           += stream/asf_mmst_streaming.c \
                                    stream/asf_streaming.c \
                                    stream/cookies.c \
                                    stream/http.c \
@@ -77,7 +72,6 @@ SOURCES-$(STREAM_CACHE)         += stream/cache2.c
 
 SOURCES-$(TV)                   += stream/stream_tv.c stream/tv.c \
                                    stream/frequencies.c stream/tvi_dummy.c
-SOURCES-$(TV_BSDBT848)          += stream/tvi_bsdbt848.c
 
 SOURCES-$(TV_V4L2)              += stream/tvi_v4l2.c stream/audio_in.c
 SOURCES-$(VCD)                  += stream/stream_vcd.c
@@ -231,8 +225,10 @@ SOURCES = talloc.c \
           video/image_writer.c \
           video/img_format.c \
           video/mp_image.c \
+          video/mp_image_pool.c \
           video/sws_utils.c \
           video/decode/dec_video.c \
+          video/decode/lavc_dr1.c \
           video/decode/vd.c \
           video/decode/vd_lavc.c \
           video/filter/vf.c \
@@ -268,7 +264,6 @@ SOURCES = talloc.c \
           video/out/bitmap_packer.c \
           video/out/aspect.c \
           video/out/filter_kernels.c \
-          video/out/geometry.c \
           video/out/vo.c \
           video/out/vo_null.c \
           video/out/vo_image.c \
@@ -360,12 +355,18 @@ video/out/vo_vdpau.c: video/out/vdpau_template.c
 video/out/vdpau_template.c: TOOLS/vdpau_functions.pl
 	./$< > $@
 
+MKVLIB_DEPS = TOOLS/lib/Parse/Matroska.pm \
+              TOOLS/lib/Parse/Matroska/Definitions.pm \
+              TOOLS/lib/Parse/Matroska/Element.pm \
+              TOOLS/lib/Parse/Matroska/Reader.pm \
+              TOOLS/lib/Parse/Matroska/Utils.pm \
+
 demux/ebml.c demux/demux_mkv.c: demux/ebml_types.h
-demux/ebml_types.h: TOOLS/matroska.pl
+demux/ebml_types.h: TOOLS/matroska.pl $(MKVLIB_DEPS)
 	./$< --generate-header > $@
 
 demux/ebml.c: demux/ebml_defs.c
-demux/ebml_defs.c: TOOLS/matroska.pl
+demux/ebml_defs.c: TOOLS/matroska.pl $(MKVLIB_DEPS)
 	./$< --generate-definitions > $@
 
 video/out/vo_opengl.c: video/out/vo_opengl_shaders.h

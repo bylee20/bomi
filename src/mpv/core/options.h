@@ -16,10 +16,11 @@ typedef struct MPOpts {
     float softvol_max;
     int gapless_audio;
     int ao_buffersize;
-    int screen_size_x;
-    int screen_size_y;
     int vo_screenwidth;
     int vo_screenheight;
+    struct m_geometry vo_geometry;
+    struct m_geometry vo_autofit;
+    struct m_geometry vo_autofit_larger;
     int force_window_position;
     char *vo_winname;
     char *vo_wintitle;
@@ -29,10 +30,13 @@ typedef struct MPOpts {
     int fullscreen;
     int vo_dbpp;
     float vo_panscanrange;
+    int vo_force_rgba_osd;
     int requested_colorspace;
     int requested_input_range;
     int requested_output_range;
     int cursor_autohide_delay;
+    char** vo_fstype_list;
+    int vo_stop_screensaver;
 
     // ranges -100 - 100, 1000 if the vo default should be used
     int vo_gamma_gamma;
@@ -50,7 +54,7 @@ typedef struct MPOpts {
     int ordered_chapters;
     int chapter_merge_threshold;
     int quiet;
-    int noconfig;
+    int load_config;
     char *codecs_file;
     int stream_cache_size;
     float stream_cache_min_percent;
@@ -106,9 +110,7 @@ typedef struct MPOpts {
     float drc_level;
     struct m_obj_settings *vf_settings;
     float movie_aspect;
-    float screen_size_xy;
     int flip;
-    int vd_use_slices;
     int vd_use_dr1;
     char **sub_name;
     char **sub_paths;
@@ -127,19 +129,20 @@ typedef struct MPOpts {
     char *ass_styles_file;
     int ass_style_override;
     int ass_hinting;
+
+    int hwdec_api;
+
     struct lavc_param {
         int workaround_bugs;
         int error_resilience;
         int error_concealment;
         int gray;
-        int vstats;
         int idct_algo;
         int debug;
         int vismv;
         int skip_top;
         int skip_bottom;
         int fast;
-        char *lowres_str;
         char *skip_loop_filter_str;
         char *skip_idct_str;
         char *skip_frame_str;

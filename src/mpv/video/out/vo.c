@@ -33,11 +33,11 @@
 #include "core/bstr.h"
 #include "vo.h"
 #include "aspect.h"
-#include "geometry.h"
 #include "core/input/input.h"
 #include "core/mp_fifo.h"
 #include "core/m_config.h"
 #include "core/mp_msg.h"
+#include "video/mp_image.h"
 #include "video/vfcap.h"
 #include "sub/sub.h"
 
@@ -88,41 +88,37 @@ extern struct vo_driver video_out_corevideo;
 
 const struct vo_driver *video_out_drivers[] =
 {
+#if CONFIG_VDPAU
+        &video_out_vdpau,
+#endif
+#ifdef CONFIG_GL
+        &video_out_opengl,
+#endif
 #ifdef CONFIG_DIRECT3D
         &video_out_direct3d_shaders,
         &video_out_direct3d,
 #endif
-#ifdef CONFIG_GL_COCOA
-        &video_out_opengl,
-        &video_out_opengl_old,
-#endif
 #ifdef CONFIG_COREVIDEO
         &video_out_corevideo,
-#endif
-#if CONFIG_VDPAU
-        &video_out_vdpau,
 #endif
 #ifdef CONFIG_XV
         &video_out_xv,
 #endif
-#ifdef CONFIG_GL
-#if !defined CONFIG_GL_COCOA
-        &video_out_opengl,
-        &video_out_opengl_old,
-#endif
-#endif
 #ifdef CONFIG_SDL2
         &video_out_sdl,
+#endif
+#ifdef CONFIG_GL
+        &video_out_opengl_old,
 #endif
 #ifdef CONFIG_X11
         &video_out_x11,
 #endif
-#ifdef CONFIG_CACA
-        &video_out_caca,
-#endif
         &video_out_null,
         // should not be auto-selected
         &video_out_image,
+#ifdef CONFIG_CACA
+        &video_out_caca,
+#endif
 #ifdef CONFIG_ENCODING
         &video_out_lavc,
 #endif
@@ -135,6 +131,8 @@ const struct vo_driver *video_out_drivers[] =
 
 static int vo_preinit(struct vo *vo, char *arg)
 {
+    if (vo->driver->encode != !!vo->encode_lavc_ctx)
+        return -1;
     if (vo->driver->priv_size) {
         vo->priv = talloc_zero_size(vo, vo->driver->priv_size);
         if (vo->driver->priv_defaults)
@@ -161,23 +159,18 @@ int vo_control(struct vo *vo, uint32_t request, void *data)
 
 // Return -1 if driver appears not to support a draw_image interface,
 // 0 otherwise (whether the driver actually drew something or not).
-int vo_draw_image(struct vo *vo, struct mp_image *mpi, double pts)
+int vo_draw_image(struct vo *vo, struct mp_image *mpi)
 {
     if (!vo->config_ok)
         return 0;
     if (vo->driver->buffer_frames) {
-        vo->driver->draw_image(vo, mpi, pts);
+        vo->driver->draw_image(vo, mpi);
         return 0;
     }
     vo->frame_loaded = true;
-    vo->next_pts = pts;
-    // Guaranteed to support at least DRAW_IMAGE later
-    if (vo->driver->is_new) {
-        vo->waiting_mpi = mpi;
-        return 0;
-    }
-    if (vo_control(vo, VOCTRL_DRAW_IMAGE, mpi) == VO_NOTIMPL)
-        return -1;
+    vo->next_pts = mpi->pts;
+    assert(!vo->waiting_mpi);
+    vo->waiting_mpi = mp_image_new_ref(mpi);
     return 0;
 }
 
@@ -208,22 +201,19 @@ void vo_skip_frame(struct vo *vo)
 {
     vo_control(vo, VOCTRL_SKIPFRAME, NULL);
     vo->frame_loaded = false;
-}
-
-int vo_draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, int h, int x, int y)
-{
-    return vo->driver->draw_slice(vo, src, stride, w, h, x, y);
+    mp_image_unrefp(&vo->waiting_mpi);
 }
 
 void vo_new_frame_imminent(struct vo *vo)
 {
-    if (!vo->driver->is_new)
-        return;
     if (vo->driver->buffer_frames)
         vo_control(vo, VOCTRL_NEWFRAME, NULL);
     else {
-        vo_control(vo, VOCTRL_DRAW_IMAGE, vo->waiting_mpi);
-        vo->waiting_mpi = NULL;
+        assert(vo->frame_loaded);
+        assert(vo->waiting_mpi);
+        assert(vo->waiting_mpi->pts == vo->next_pts);
+        vo->driver->draw_image(vo, vo->waiting_mpi);
+        mp_image_unrefp(&vo->waiting_mpi);
     }
 }
 
@@ -266,6 +256,7 @@ void vo_seek_reset(struct vo *vo)
     vo_control(vo, VOCTRL_RESET, NULL);
     vo->frame_loaded = false;
     vo->hasframe = false;
+    mp_image_unrefp(&vo->waiting_mpi);
 }
 
 void vo_destroy(struct vo *vo)
@@ -273,17 +264,20 @@ void vo_destroy(struct vo *vo)
     if (vo->registered_fd != -1)
         mp_input_rm_key_fd(vo->input_ctx, vo->registered_fd);
     vo->driver->uninit(vo);
+    talloc_free(vo->waiting_mpi);
     talloc_free(vo);
 }
 
 void list_video_out(void)
 {
-    int i = 0;
     mp_tmsg(MSGT_CPLAYER, MSGL_INFO, "Available video output drivers:\n");
     mp_msg(MSGT_IDENTIFY, MSGL_INFO, "ID_VIDEO_OUTPUTS\n");
-    while (video_out_drivers[i]) {
-        const vo_info_t *info = video_out_drivers[i++]->info;
-        mp_msg(MSGT_GLOBAL, MSGL_INFO,"\t%s\t%s\n", info->short_name, info->name);
+    for (int i = 0; video_out_drivers[i]; i++) {
+        const vo_info_t *info = video_out_drivers[i]->info;
+        if (!video_out_drivers[i]->encode) {
+            mp_msg(MSGT_GLOBAL, MSGL_INFO,"\t%s\t%s\n",
+                   info->short_name, info->name);
+        }
     }
     mp_msg(MSGT_GLOBAL, MSGL_INFO,"\n");
 }
@@ -361,6 +355,62 @@ struct vo *init_best_video_out(struct MPOpts *opts,
     return NULL;
 }
 
+// Fit *w/*h into the size specified by geo.
+static void apply_autofit(int *w, int *h, int scr_w, int scr_h,
+                          struct m_geometry *geo, bool allow_upscale)
+{
+    if (!geo->wh_valid)
+        return;
+
+    int dummy;
+    int n_w = *w, n_h = *h;
+    m_geometry_apply(&dummy, &dummy, &n_w, &n_h, scr_w, scr_h, geo);
+
+    if (!allow_upscale && *w <= n_w && *h <= n_h)
+        return;
+
+    // If aspect mismatches, always make the window smaller than the fit box
+    double asp = (double)*w / *h;
+    double n_asp = (double)n_w / n_h;
+    if (n_asp <= asp) {
+        *w = n_w;
+        *h = n_w / asp;
+    } else {
+        *w = n_h * asp;
+        *h = n_h;
+    }
+}
+
+// Set window size (vo->dwidth/dheight) and position (vo->dx/dy) according to
+// the video display size d_w/d_h.
+// NOTE: currently, all GUI backends do their own handling of window geometry
+//       additional to this code. This is to deal with initial window placement,
+//       fullscreen handling, avoiding resize on config() with no size change,
+//       multi-monitor stuff, and possibly more.
+static void determine_window_geometry(struct vo *vo, int d_w, int d_h)
+{
+    struct MPOpts *opts = vo->opts;
+
+    int scr_w = opts->vo_screenwidth;
+    int scr_h = opts->vo_screenheight;
+
+    // This is only for applying monitor pixel aspect
+    aspect(vo, &d_w, &d_h, A_NOZOOM);
+
+    apply_autofit(&d_w, &d_h, scr_w, scr_h, &opts->vo_autofit, true);
+    apply_autofit(&d_w, &d_h, scr_w, scr_h, &opts->vo_autofit_larger, false);
+
+    vo->dx = (int)(opts->vo_screenwidth - d_w) / 2;
+    vo->dy = (int)(opts->vo_screenheight - d_h) / 2;
+    m_geometry_apply(&vo->dx, &vo->dy, &d_w, &d_h, scr_w, scr_h,
+                     &opts->vo_geometry);
+
+    vo->dx += xinerama_x;
+    vo->dy += xinerama_y;
+    vo->dwidth = d_w;
+    vo->dheight = d_h;
+}
+
 static int event_fd_callback(void *ctx, int fd)
 {
     struct vo *vo = ctx;
@@ -372,24 +422,16 @@ int vo_config(struct vo *vo, uint32_t width, uint32_t height,
                      uint32_t d_width, uint32_t d_height, uint32_t flags,
                      uint32_t format)
 {
-    struct MPOpts *opts = vo->opts;
     panscan_init(vo);
     aspect_save_videores(vo, width, height, d_width, d_height);
 
     if (vo_control(vo, VOCTRL_UPDATE_SCREENINFO, NULL) == VO_TRUE) {
-        aspect(vo, &d_width, &d_height, A_NOZOOM);
-        vo->dx = (int)(opts->vo_screenwidth - d_width) / 2;
-        vo->dy = (int)(opts->vo_screenheight - d_height) / 2;
-        geometry(&vo->dx, &vo->dy, &d_width, &d_height,
-                 opts->vo_screenwidth, opts->vo_screenheight);
-        geometry_xy_changed |= xinerama_screen >= 0;
-        vo->dx += xinerama_x;
-        vo->dy += xinerama_y;
-        vo->dwidth = d_width;
-        vo->dheight = d_height;
+        determine_window_geometry(vo, d_width, d_height);
+        d_width = vo->dwidth;
+        d_height = vo->dheight;
     }
 
-    vo->default_caps = vo_control(vo, VOCTRL_QUERY_FORMAT, &format);
+    vo->default_caps = vo->driver->query_format(vo, format);
 
     int ret = vo->driver->config(vo, width, height, d_width, d_height, flags,
                                  format);

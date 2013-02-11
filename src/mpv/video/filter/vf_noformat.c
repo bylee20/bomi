@@ -34,7 +34,7 @@
 static struct vf_priv_s {
     unsigned int fmt;
 } const vf_priv_dflt = {
-  IMGFMT_YV12
+  IMGFMT_420P
 };
 
 //===========================================================================//
@@ -47,8 +47,6 @@ static int query_format(struct vf_instance *vf, unsigned int fmt){
 
 static int vf_open(vf_instance_t *vf, char *args){
     vf->query_format=query_format;
-    vf->draw_slice=vf_next_draw_slice;
-    vf->default_caps=0;
     return 1;
 }
 

@@ -57,9 +57,9 @@ void Pref::save() const {
 	WRITE(sub_autoload);
 	WRITE(sub_autoselect);
 
-	WRITE(enable_hwaccel);
+    WRITE(enable_hwaccel);
 	WRITE(skin_name);
-	WRITE(hwaccel_codecs);
+    WRITE(hwaccel_codecs);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -114,8 +114,8 @@ void Pref::load() {
 	READ(sub_ext);
 
 	READ(skin_name);
-	READ(enable_hwaccel);
-	READ(hwaccel_codecs);
+    READ(enable_hwaccel);
+    READ(hwaccel_codecs);
 
 	READ(enable_generate_playist);
 	READ(sub_enable_autoload);
@@ -130,7 +130,7 @@ void Pref::load() {
 	wheel_scroll_map.load(r, "wheel_scroll_map");
 }
 
-QList<int> Pref::defaultHwAccelCodecs() {
+QList<int> Pref::defaultHwAccCodecs() {
 	QList<int> codecs;
 	for (auto codec : HwAcc::fullCodecList()) {
 		if (HwAcc::supports(codec))

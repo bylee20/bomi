@@ -32,6 +32,7 @@
 #include <assert.h>
 
 #include "osdep/io.h"
+#include "osdep/getch2.h"
 
 #include "input.h"
 #include "core/mp_fifo.h"
@@ -59,10 +60,6 @@
 #endif
 
 #include "ar.h"
-
-#ifdef CONFIG_COCOA
-#include "osdep/cocoa_events.h"
-#endif
 
 #define MP_MAX_KEY_DOWN 32
 
@@ -126,7 +123,6 @@ static const mp_cmd_t mp_cmds[] = {
                       {"exact", 1},             {"1", 1},
                       {"keyframes", -1},        {"-1", -1})),
   }},
-  { MP_CMD_EDL_MARK, "edl_mark", },
   { MP_CMD_SPEED_MULT, "speed_mult", { ARG_FLOAT } },
   { MP_CMD_QUIT, "quit", { OARG_INT(0) } },
   { MP_CMD_STOP, "stop", },
@@ -201,6 +197,7 @@ static const mp_cmd_t mp_cmds[] = {
 
   { MP_CMD_SHOW_CHAPTERS, "show_chapters", },
   { MP_CMD_SHOW_TRACKS, "show_tracks", },
+  { MP_CMD_SHOW_PLAYLIST, "show_playlist", },
 
   { MP_CMD_VO_CMDLINE, "vo_cmdline", { ARG_STRING } },
 
@@ -523,7 +520,7 @@ static int print_cmd_list(m_option_t *cfg, char *optname, char *optparam);
 
 // Our command line options
 static const m_option_t input_conf[] = {
-    OPT_STRING("conf", input.config_file, CONF_GLOBAL, OPTDEF_STR("input.conf")),
+    OPT_STRING("conf", input.config_file, CONF_GLOBAL),
     OPT_INT("ar-delay", input.ar_delay, CONF_GLOBAL),
     OPT_INT("ar-rate", input.ar_rate, CONF_GLOBAL),
     { "keylist", print_key_list, CONF_TYPE_PRINT_FUNC, CONF_GLOBAL | CONF_NOCFG },
@@ -531,17 +528,17 @@ static const m_option_t input_conf[] = {
     OPT_STRING("js-dev", input.js_dev, CONF_GLOBAL),
     OPT_STRING("ar-dev", input.ar_dev, CONF_GLOBAL),
     OPT_STRING("file", input.in_file, CONF_GLOBAL),
-    OPT_MAKE_FLAGS("default-bindings", input.default_bindings, CONF_GLOBAL),
-    OPT_MAKE_FLAGS("test", input.test, CONF_GLOBAL),
+    OPT_FLAG("default-bindings", input.default_bindings, CONF_GLOBAL),
+    OPT_FLAG("test", input.test, CONF_GLOBAL),
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
 static const m_option_t mp_input_opts[] = {
     { "input", (void *)&input_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},
-    OPT_MAKE_FLAGS("joystick", input.use_joystick, CONF_GLOBAL),
-    OPT_MAKE_FLAGS("lirc", input.use_lirc, CONF_GLOBAL),
-    OPT_MAKE_FLAGS("lircc", input.use_lircc, CONF_GLOBAL),
-    OPT_MAKE_FLAGS("ar", input.use_ar, CONF_GLOBAL),
+    OPT_FLAG("joystick", input.use_joystick, CONF_GLOBAL),
+    OPT_FLAG("lirc", input.use_lirc, CONF_GLOBAL),
+    OPT_FLAG("lircc", input.use_lircc, CONF_GLOBAL),
+    OPT_FLAG("ar", input.use_ar, CONF_GLOBAL),
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
@@ -1331,7 +1328,9 @@ static mp_cmd_t *check_autorepeat(struct input_ctx *ictx)
         unsigned int t = GetTimer();
         // First time : wait delay
         if (ictx->ar_state == 0
-            && (t - ictx->last_key_down) >= ictx->ar_delay * 1000) {
+            && (t - ictx->last_key_down) >= ictx->ar_delay * 1000)
+        {
+            talloc_free(ictx->ar_cmd);
             ictx->ar_cmd = get_cmd_from_keys(ictx, ictx->num_key_down,
                                              ictx->key_down);
             if (!ictx->ar_cmd) {
@@ -1503,11 +1502,8 @@ static void read_all_fd_events(struct input_ctx *ictx, int time)
 
 static void read_all_events(struct input_ctx *ictx, int time)
 {
-#ifdef CONFIG_COCOA
-    cocoa_events_read_all_events(ictx, time);
-#else
+    getch2_poll();
     read_all_fd_events(ictx, time);
-#endif
 }
 
 int mp_input_queue_cmd(struct input_ctx *ictx, mp_cmd_t *cmd)
@@ -1515,7 +1511,7 @@ int mp_input_queue_cmd(struct input_ctx *ictx, mp_cmd_t *cmd)
     ictx->got_new_events = true;
     if (!cmd)
         return 0;
-    queue_add(&ictx->control_cmd_queue, cmd, true);
+    queue_add(&ictx->control_cmd_queue, cmd, false);
     return 1;
 }
 
@@ -1525,8 +1521,10 @@ int mp_input_queue_cmd(struct input_ctx *ictx, mp_cmd_t *cmd)
  */
 mp_cmd_t *mp_input_get_cmd(struct input_ctx *ictx, int time, int peek_only)
 {
-    if (async_quit_request)
-        return mp_input_parse_cmd(bstr0("quit 1"), "");
+    if (async_quit_request) {
+        struct mp_cmd *cmd = mp_input_parse_cmd(bstr0("quit 1"), "");
+        queue_add(&ictx->control_cmd_queue, cmd, true);
+    }
 
     if (ictx->control_cmd_queue.first || ictx->key_cmd_queue.first)
         time = 0;
@@ -1723,15 +1721,16 @@ static int parse_config(struct input_ctx *ictx, bool builtin, bstr data,
     return n_binds;
 }
 
-static int parse_config_file(struct input_ctx *ictx, char *file)
+static int parse_config_file(struct input_ctx *ictx, char *file, bool warn)
 {
     if (!mp_path_exists(file)) {
-        mp_msg(MSGT_INPUT, MSGL_V, "Input config file %s missing.\n", file);
+        mp_msg(MSGT_INPUT, warn ? MSGL_ERR : MSGL_V,
+               "Input config file %s not found.\n", file);
         return 0;
     }
     stream_t *s = open_stream(file, NULL, NULL);
     if (!s) {
-        mp_msg(MSGT_INPUT, MSGL_V, "Can't open input config file %s.\n", file);
+        mp_msg(MSGT_INPUT, MSGL_ERR, "Can't open input config file %s.\n", file);
         return 0;
     }
     bstr res = stream_read_complete(s, NULL, 1000000, 0);
@@ -1756,7 +1755,8 @@ char *mp_input_get_section(struct input_ctx *ictx)
     return ictx->section;
 }
 
-struct input_ctx *mp_input_init(struct input_conf *input_conf)
+struct input_ctx *mp_input_init(struct input_conf *input_conf,
+                                bool load_default_conf)
 {
     struct input_ctx *ictx = talloc_ptrtype(NULL, ictx);
     *ictx = (struct input_ctx){
@@ -1771,10 +1771,6 @@ struct input_ctx *mp_input_init(struct input_conf *input_conf)
     ictx->section = talloc_strdup(ictx, "default");
 
     parse_config(ictx, true, bstr0(builtin_input_conf), "<default>");
-
-#ifdef CONFIG_COCOA
-    cocoa_events_init(ictx, read_all_fd_events);
-#endif
 
 #ifndef __MINGW32__
     long ret = pipe(ictx->wakeup_pipe);
@@ -1792,27 +1788,18 @@ struct input_ctx *mp_input_init(struct input_conf *input_conf)
                             NULL, NULL);
 #endif
 
-    char *file;
-    char *config_file = input_conf->config_file;
-    file = config_file[0] != '/' ?
-        mp_find_user_config_file(config_file) : config_file;
-    if (!file)
-        return ictx;
-
-    if (!parse_config_file(ictx, file)) {
-        // free file if it was allocated by get_path(),
-        // before it gets overwritten
-        if (file != config_file)
-            talloc_free(file);
+    bool config_ok = false;
+    if (input_conf->config_file)
+        config_ok = parse_config_file(ictx, input_conf->config_file, true);
+    if (!config_ok && load_default_conf) {
         // Try global conf dir
-        file = MPLAYER_CONFDIR "/input.conf";
-        if (!parse_config_file(ictx, file))
-            mp_msg(MSGT_INPUT, MSGL_V, "Falling back on default (hardcoded) "
-                   "input config\n");
-    } else {
-        // free file if it was allocated by get_path()
-        if (file != config_file)
-            talloc_free(file);
+        char *file = mp_find_config_file("input.conf");
+        config_ok = file && parse_config_file(ictx, file, false);
+        talloc_free(file);
+    }
+    if (!config_ok) {
+        mp_msg(MSGT_INPUT, MSGL_V, "Falling back on default (hardcoded) "
+               "input config\n");
     }
 
 #ifdef CONFIG_JOYSTICK
@@ -1886,12 +1873,17 @@ struct input_ctx *mp_input_init(struct input_conf *input_conf)
     return ictx;
 }
 
+static void clear_queue(struct cmd_queue *queue)
+{
+    while (queue->first) {
+        struct mp_cmd *item = queue->first;
+        queue_remove(queue, item);
+        talloc_free(item);
+    }
+}
+
 void mp_input_uninit(struct input_ctx *ictx)
 {
-#ifdef CONFIG_COCOA
-    cocoa_events_uninit();
-#endif
-
     if (!ictx)
         return;
 
@@ -1903,9 +1895,13 @@ void mp_input_uninit(struct input_ctx *ictx)
         if (ictx->cmd_fds[i].close_func)
             ictx->cmd_fds[i].close_func(ictx->cmd_fds[i].fd);
     }
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 2; i++) {
         if (ictx->wakeup_pipe[i] != -1)
             close(ictx->wakeup_pipe[i]);
+    }
+    clear_queue(&ictx->key_cmd_queue);
+    clear_queue(&ictx->control_cmd_queue);
+    talloc_free(ictx->ar_cmd);
     talloc_free(ictx);
 }
 

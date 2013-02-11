@@ -155,39 +155,17 @@ static int config( struct vf_instance *vf,
 
 //===========================================================================//
 
-static void get_image( struct vf_instance *vf, mp_image_t *mpi ) {
-    if( mpi->flags & MP_IMGFLAG_PRESERVE )
-	return; // don't change
-    if( mpi->imgfmt!=vf->priv->outfmt )
-	return; // colorspace differ
-
-    mpi->priv =
-    vf->dmpi = vf_get_image( vf->next, mpi->imgfmt, mpi->type, mpi->flags, mpi->width, mpi->height );
-    mpi->planes[0] = vf->dmpi->planes[0];
-    mpi->stride[0] = vf->dmpi->stride[0];
-    mpi->width = vf->dmpi->width;
-    if( mpi->flags & MP_IMGFLAG_PLANAR ) {
-        mpi->planes[1] = vf->dmpi->planes[1];
-        mpi->planes[2] = vf->dmpi->planes[2];
-	mpi->stride[1] = vf->dmpi->stride[1];
-	mpi->stride[2] = vf->dmpi->stride[2];
+static struct mp_image *filter(struct vf_instance *vf, struct mp_image *mpi)
+{
+    struct mp_image *dmpi = mpi;
+    if (!mp_image_is_writeable(mpi)) {
+        dmpi = vf_alloc_out_image(vf);
+        mp_image_copy_attributes(dmpi, mpi);
     }
-    mpi->flags |= MP_IMGFLAG_DIRECT;
-}
-
-static int put_image( struct vf_instance *vf, mp_image_t *mpi, double pts) {
-    mp_image_t *dmpi = mpi->priv;
-    mpi->priv = NULL;
-
-    if( !(mpi->flags & MP_IMGFLAG_DIRECT) )
-        // no DR, so get a new image! hope we'll get DR buffer:
-        dmpi = vf->dmpi = vf_get_image( vf->next,vf->priv->outfmt, MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE, mpi->width, mpi->height);
 
     unsharp( dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->w,   mpi->h,   &vf->priv->lumaParam );
     unsharp( dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->w/2, mpi->h/2, &vf->priv->chromaParam );
     unsharp( dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->w/2, mpi->h/2, &vf->priv->chromaParam );
-
-    vf_clone_mpi_attributes(dmpi, mpi);
 
 #if HAVE_MMX
     if(gCpuCaps.hasMMX)
@@ -198,7 +176,9 @@ static int put_image( struct vf_instance *vf, mp_image_t *mpi, double pts) {
 	__asm__ volatile ("sfence\n\t");
 #endif
 
-    return vf_next_put_image( vf, dmpi, pts);
+    if (dmpi != mpi)
+        talloc_free(mpi);
+    return dmpi;
 }
 
 static void uninit( struct vf_instance *vf ) {
@@ -226,9 +206,7 @@ static void uninit( struct vf_instance *vf ) {
 
 static int query_format( struct vf_instance *vf, unsigned int fmt ) {
     switch(fmt) {
-    case IMGFMT_YV12:
-    case IMGFMT_I420:
-    case IMGFMT_IYUV:
+    case IMGFMT_420P:
 	return vf_next_query_format( vf, vf->priv->outfmt );
     }
     return 0;
@@ -261,16 +239,13 @@ static void parse( FilterParam *fp, char* args ) {
 //===========================================================================//
 
 static const unsigned int fmt_list[] = {
-    IMGFMT_YV12,
-    IMGFMT_I420,
-    IMGFMT_IYUV,
+    IMGFMT_420P,
     0
 };
 
 static int vf_open( vf_instance_t *vf, char *args ) {
     vf->config       = config;
-    vf->put_image    = put_image;
-    vf->get_image    = get_image;
+    vf->filter       = filter;
     vf->query_format = query_format;
     vf->uninit       = uninit;
     vf->priv         = malloc( sizeof(struct vf_priv_s) );
@@ -300,7 +275,7 @@ static int vf_open( vf_instance_t *vf, char *args ) {
     }
 
     // check csp:
-    vf->priv->outfmt = vf_match_csp( &vf->next, fmt_list, IMGFMT_YV12 );
+    vf->priv->outfmt = vf_match_csp( &vf->next, fmt_list, IMGFMT_420P );
     if( !vf->priv->outfmt ) {
 	uninit( vf );
         return 0; // no csp match :(

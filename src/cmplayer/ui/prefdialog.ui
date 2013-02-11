@@ -237,7 +237,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QWidget" name="hwaccel_list" native="true">
+                 <widget class="QWidget" name="HwAcc_list" native="true">
                   <property name="enabled">
                    <bool>false</bool>
                   </property>
@@ -2631,7 +2631,7 @@ e.g.: English, Korean</string>
   <connection>
    <sender>enable_hwaccel</sender>
    <signal>toggled(bool)</signal>
-   <receiver>hwaccel_list</receiver>
+   <receiver>HwAcc_list</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

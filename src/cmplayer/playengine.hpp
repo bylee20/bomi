@@ -110,8 +110,6 @@ public slots:
 	void relativeSeek(int pos) {tellmp("seek", (double)pos/1000.0, 0);}
 	void runCommand(mp_cmd *cmd);
 signals:
-	void initialized();
-	void finalized();
 	void started(Mrl mrl);
 	void stopped(Mrl mrl, int pos, int duration);
 	void finished(Mrl mrl);
@@ -120,8 +118,6 @@ signals:
 	void stateChanged(EngineState state);
 	void seekableChanged(bool seekable);
 	void durationChanged(int duration);
-	void aboutToPlay();
-	void aboutToOpen();
 	void volumeChanged(int volume);
 	void preampChanged(double preamp);
 	void mutedChanged(bool muted);
@@ -147,7 +143,7 @@ private:
 	void tellmp(const QString &cmd, const QVariant &a1, const QVariant &a2, const QVariant &a3) {tellmp(cmd % ' ' % a1.toString() % ' ' % a2.toString() % ' ' % a3.toString());}
 	template<template <typename> class T> void tellmp(const QString &cmd, const T<QString> &args) {QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);}
 	void setVideoAspect(double ratio);
-	void setState(EngineState state) {if (_Change(m_state, state)) {emit stateChanged(m_state);}}
+	void setState(EngineState state);
 	void run();
 	bool parse(const Id &id);
 	bool parse(const QString &line);

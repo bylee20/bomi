@@ -154,9 +154,9 @@ typedef struct sh_video {
     int disp_w, disp_h;   // display size (filled by demuxer)
     int colorspace;       // mp_csp
     int color_range;      // mp_csp_levels
+    int imgfmt;           // raw video image format
     // output driver/filters: (set by libmpcodecs core)
     unsigned int outfmt;
-    unsigned int outfmtidx;
     struct vf_instance *vfilter;  // video filter chain
     int output_flags;       // query_format() results for output filters+vo
     const struct vd_functions *vd_driver;

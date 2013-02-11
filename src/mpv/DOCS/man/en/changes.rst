@@ -53,7 +53,9 @@ General changes for mplayer2 to mpv
 * Make ``--softvol`` default (**mpv** is not a mixer control panel)
 * Improved support for .cue files
 * Screenshot improvements (can save screenshots as JPG or PNG, configurable
-  filenames, support for taking screenshots with or without subtitles)
+  filenames, support for taking screenshots with or without subtitles - the
+  ``screenshot`` video filter is not needed anymore, and should not be put
+  into the mpv config file)
 * Removal of teletext support
 * Replace image VOs (``--vo=jpeg`` etc.) with ``--vo=image``
 * Do not lose settings when playing a new file in the same player instance
@@ -117,7 +119,12 @@ Command line switches
     -spugauss                           --sub-gauss
     -vobsub                             --sub (pass the .idx file)
     -ass-bottom-margin                  --vf=sub=bottom:top
+    -vc ffh264vdpau (etc.)              --hwdec=vdpau
+    -x W, -y H                          --geometry=WxH + --no-keepaspect
+    -xy W                               --autofit=W
     =================================== ===================================
+
+*NOTE*: ``-opt val`` becomes ``--opt=val``.
 
 input.conf and slave commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

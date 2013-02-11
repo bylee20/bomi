@@ -62,6 +62,7 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { AV_CODEC_ID_MPEG4,        MKTAG('M', 'P', '4', 'S') },
     { AV_CODEC_ID_MPEG4,        MKTAG('M', '4', 'S', '2') },
     { AV_CODEC_ID_MPEG4,        MKTAG( 4 ,  0 ,  0 ,  0 ) }, /* some broken avi use this */
+    { AV_CODEC_ID_MPEG4,        MKTAG('Z', 'M', 'P', '4') }, /* some broken avi use this */
     { AV_CODEC_ID_MPEG4,        MKTAG('D', 'I', 'V', '1') },
     { AV_CODEC_ID_MPEG4,        MKTAG('B', 'L', 'Z', '0') },
     { AV_CODEC_ID_MPEG4,        MKTAG('m', 'p', '4', 'v') },
@@ -325,6 +326,8 @@ const AVCodecTag ff_codec_bmp_tags[] = {
     { AV_CODEC_ID_CLLC,         MKTAG('C', 'L', 'L', 'C') },
     { AV_CODEC_ID_MSS2,         MKTAG('M', 'S', 'S', '2') },
     { AV_CODEC_ID_SVQ3,         MKTAG('S', 'V', 'Q', '3') },
+    { AV_CODEC_ID_012V,         MKTAG('0', '1', '2', 'v') },
+    { AV_CODEC_ID_012V,         MKTAG('a', '1', '2', 'v') },
     { AV_CODEC_ID_NONE,         0 }
 };
 
@@ -424,10 +427,14 @@ void ff_end_tag(AVIOContext *pb, int64_t start)
 {
     int64_t pos;
 
+    av_assert0((start&1) == 0);
+
     pos = avio_tell(pb);
+    if (pos & 1)
+        avio_w8(pb, 0);
     avio_seek(pb, start - 4, SEEK_SET);
     avio_wl32(pb, (uint32_t)(pos - start));
-    avio_seek(pb, pos, SEEK_SET);
+    avio_seek(pb, FFALIGN(pos, 2), SEEK_SET);
 }
 
 /* WAVEFORMATEX header */
@@ -815,7 +822,13 @@ int ff_read_riff_info(AVFormatContext *s, int64_t size)
 
         chunk_code = avio_rl32(pb);
         chunk_size = avio_rl32(pb);
-
+        if (url_feof(pb)) {
+            if (chunk_code || chunk_size) {
+                av_log(s, AV_LOG_WARNING, "INFO subchunk truncated\n");
+                return AVERROR_INVALIDDATA;
+            }
+            break;
+        }
         if (chunk_size > end || end - chunk_size < cur || chunk_size == UINT_MAX) {
             avio_seek(pb, -9, SEEK_CUR);
             chunk_code = avio_rl32(pb);

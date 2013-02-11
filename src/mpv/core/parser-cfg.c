@@ -61,7 +61,6 @@ int m_config_parse_config_file(m_config_t *config, const char *conffile)
     int param_pos;      /* param pos */
     int ret = 1;
     int errors = 0;
-    int prev_mode = config->mode;
     m_profile_t *profile = NULL;
 
     mp_msg(MSGT_CFGPARSER, MSGL_V, "Reading config file %s", conffile);
@@ -71,9 +70,7 @@ int m_config_parse_config_file(m_config_t *config, const char *conffile)
                ": too deep 'include'. check your configfiles\n");
         ret = -1;
         goto out;
-    } else
-
-        config->mode = M_CONFIG_FILE;
+    }
 
     if ((line = malloc(MAX_LINE_LEN + 1)) == NULL) {
         mp_msg(MSGT_CFGPARSER, MSGL_FATAL,
@@ -144,66 +141,53 @@ int m_config_parse_config_file(m_config_t *config, const char *conffile)
         while (isspace(line[line_pos]))
             ++line_pos;
 
+        param_pos = 0;
+        bool param_set = false;
+
         /* check '=' */
-        if (line[line_pos++] != '=') {
-            PRINT_LINENUM;
-            mp_msg(MSGT_CFGPARSER, MSGL_ERR,
-                   "option %s needs a parameter\n", opt);
-            ret = -1;
-            errors++;
-            continue;
-        }
+        if (line[line_pos] == '=') {
+            line_pos++;
+            param_set = true;
 
-        /* whitespaces... */
-        while (isspace(line[line_pos]))
-            ++line_pos;
+            /* whitespaces... */
+            while (isspace(line[line_pos]))
+                ++line_pos;
 
-        /* read the parameter */
-        if (line[line_pos] == '"' || line[line_pos] == '\'') {
-            c = line[line_pos];
-            ++line_pos;
-            for (param_pos = 0; line[line_pos] != c; /* NOTHING */) {
-                param[param_pos++] = line[line_pos++];
-                if (param_pos >= MAX_PARAM_LEN) {
-                    PRINT_LINENUM;
-                    mp_msg(MSGT_CFGPARSER, MSGL_ERR,
-                           "option %s has a too long parameter\n", opt);
-                    ret = -1;
-                    errors++;
-                    goto nextline;
+            /* read the parameter */
+            if (line[line_pos] == '"' || line[line_pos] == '\'') {
+                c = line[line_pos];
+                ++line_pos;
+                for (param_pos = 0; line[line_pos] != c; /* NOTHING */) {
+                    param[param_pos++] = line[line_pos++];
+                    if (param_pos >= MAX_PARAM_LEN) {
+                        PRINT_LINENUM;
+                        mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+                               "option %s has a too long parameter\n", opt);
+                        ret = -1;
+                        errors++;
+                        goto nextline;
+                    }
+                }
+                line_pos++;                 /* skip the closing " or ' */
+            } else {
+                for (param_pos = 0; isprint(line[line_pos])
+                        && !isspace(line[line_pos])
+                        && line[line_pos] != '#'; /* NOTHING */) {
+                    param[param_pos++] = line[line_pos++];
+                    if (param_pos >= MAX_PARAM_LEN) {
+                        PRINT_LINENUM;
+                        mp_msg(MSGT_CFGPARSER, MSGL_ERR, "too long parameter\n");
+                        ret = -1;
+                        errors++;
+                        goto nextline;
+                    }
                 }
             }
-            line_pos++;                 /* skip the closing " or ' */
-        } else {
-            for (param_pos = 0; isprint(line[line_pos])
-                     && !isspace(line[line_pos])
-                     && line[line_pos] != '#'; /* NOTHING */) {
-                param[param_pos++] = line[line_pos++];
-                if (param_pos >= MAX_PARAM_LEN) {
-                    PRINT_LINENUM;
-                    mp_msg(MSGT_CFGPARSER, MSGL_ERR, "too long parameter\n");
-                    ret = -1;
-                    errors++;
-                    goto nextline;
-                }
-            }
+
+            while (isspace(line[line_pos]))
+                ++line_pos;
         }
         param[param_pos] = '\0';
-
-        /* did we read a parameter? */
-        if (param_pos == 0) {
-            PRINT_LINENUM;
-            mp_msg(MSGT_CFGPARSER, MSGL_ERR,
-                   "option %s needs a parameter\n", opt);
-            ret = -1;
-            errors++;
-            continue;
-        }
-
-        /* now, check if we have some more chars on the line */
-        /* whitespace... */
-        while (isspace(line[line_pos]))
-            ++line_pos;
 
         /* EOL / comment */
         if (line[line_pos] != '\0' && line[line_pos] != '#') {
@@ -213,23 +197,34 @@ int m_config_parse_config_file(m_config_t *config, const char *conffile)
             ret = -1;
         }
 
+        bstr bopt = bstr0(opt);
+        bstr bparam = bstr0(param);
+
+        tmp = m_config_map_option(config, &bopt, &bparam, false);
+        if (tmp > 0 && !param_set)
+            tmp = M_OPT_MISSING_PARAM;
+        if (tmp < 0) {
+            PRINT_LINENUM;
+            mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+                   "error parsing option %s=%s: %s\n",
+                   opt, param, m_option_strerror(tmp));
+            continue;
+        }
+
         if (profile) {
             if (!strcmp(opt, "profile-desc"))
                 m_profile_set_desc(profile, param), tmp = 1;
             else
                 tmp = m_config_set_profile_option(config, profile,
-                                                  opt, param);
-        } else
-            tmp = m_config_set_option0(config, opt, param);
+                                                  bopt, bparam);
+        } else {
+            tmp = m_config_set_option_ext(config, bopt, bparam,
+                                          M_SETOPT_FROM_CONFIG_FILE);
+        }
         if (tmp < 0) {
             PRINT_LINENUM;
-            if (tmp == M_OPT_UNKNOWN) {
-                mp_msg(MSGT_CFGPARSER, MSGL_ERR,
-                       "unknown option '%s'\n", opt);
-                continue;
-            }
             mp_msg(MSGT_CFGPARSER, MSGL_ERR,
-                   "setting option %s='%s' failed\n", opt, param);
+                   "setting option %s='%s' failed.\n", opt, param);
             continue;
             /* break */
         }
@@ -241,7 +236,6 @@ out:
     free(line);
     if (fp)
         fclose(fp);
-    config->mode = prev_mode;
     --recursion_depth;
     if (ret < 0) {
         mp_msg(MSGT_CFGPARSER, MSGL_FATAL, "Error loading config file %s.\n",

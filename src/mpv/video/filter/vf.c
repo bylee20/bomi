@@ -30,9 +30,11 @@
 #include "core/m_option.h"
 #include "core/m_struct.h"
 
+#include "core/options.h"
 
 #include "video/img_format.h"
 #include "video/mp_image.h"
+#include "video/mp_image_pool.h"
 #include "vf.h"
 
 #include "video/memcpy_pic.h"
@@ -63,7 +65,6 @@ extern const vf_info_t vf_info_phase;
 extern const vf_info_t vf_info_divtc;
 extern const vf_info_t vf_info_softskip;
 extern const vf_info_t vf_info_screenshot;
-extern const vf_info_t vf_info_screenshot_force;
 extern const vf_info_t vf_info_sub;
 extern const vf_info_t vf_info_yadif;
 extern const vf_info_t vf_info_stereo3d;
@@ -86,7 +87,6 @@ static const vf_info_t *const filter_list[] = {
 #endif
 
     &vf_info_screenshot,
-    &vf_info_screenshot_force,
 
     &vf_info_noise,
     &vf_info_eq,
@@ -117,248 +117,21 @@ const m_obj_list_t vf_obj_list = {
     M_ST_OFF(vf_info_t, opts)
 };
 
-//============================================================================
-// mpi stuff:
-
-void vf_mpi_clear(mp_image_t *mpi, int x0, int y0, int w, int h)
+// Get a new image for filter output, with size and pixel format according to
+// the last vf_config call.
+struct mp_image *vf_alloc_out_image(struct vf_instance *vf)
 {
-    int y;
-    if (mpi->flags & MP_IMGFLAG_PLANAR) {
-        y0 &= ~1;
-        h += h & 1;
-        if (x0 == 0 && w == mpi->width) {
-            // full width clear:
-            memset(mpi->planes[0] + mpi->stride[0] * y0, 0, mpi->stride[0] * h);
-            memset(mpi->planes[1] + mpi->stride[1] *(y0 >> mpi->chroma_y_shift),
-                   128, mpi->stride[1] * (h >> mpi->chroma_y_shift));
-            memset(mpi->planes[2] + mpi->stride[2] *(y0 >> mpi->chroma_y_shift),
-                   128, mpi->stride[2] * (h >> mpi->chroma_y_shift));
-        } else
-            for (y = y0; y < y0 + h; y += 2) {
-                memset(mpi->planes[0] + x0 + mpi->stride[0] * y, 0, w);
-                memset(mpi->planes[0] + x0 + mpi->stride[0] * (y + 1), 0, w);
-                memset(mpi->planes[1] + (x0 >> mpi->chroma_x_shift) +
-                       mpi->stride[1] * (y >> mpi->chroma_y_shift),
-                       128, (w >> mpi->chroma_x_shift));
-                memset(mpi->planes[2] + (x0 >> mpi->chroma_x_shift) +
-                       mpi->stride[2] * (y >> mpi->chroma_y_shift),
-                       128, (w >> mpi->chroma_x_shift));
-            }
-        return;
-    }
-    // packed:
-    for (y = y0; y < y0 + h; y++) {
-        unsigned char *dst = mpi->planes[0] + mpi->stride[0] * y +
-                             (mpi->bpp >> 3) * x0;
-        if (mpi->flags & MP_IMGFLAG_YUV) {
-            unsigned int *p = (unsigned int *) dst;
-            int size = (mpi->bpp >> 3) * w / 4;
-            int i;
-#ifdef BIG_ENDIAN
-#define CLEAR_PACKEDYUV_PATTERN 0x00800080
-#define CLEAR_PACKEDYUV_PATTERN_SWAPPED 0x80008000
-#else
-#define CLEAR_PACKEDYUV_PATTERN 0x80008000
-#define CLEAR_PACKEDYUV_PATTERN_SWAPPED 0x00800080
-#endif
-            if (mpi->flags & MP_IMGFLAG_SWAPPED) {
-                for (i = 0; i < size - 3; i += 4)
-                    p[i] = p[i + 1] = p[i + 2] = p[i + 3] = CLEAR_PACKEDYUV_PATTERN_SWAPPED;
-                for (; i < size; i++)
-                    p[i] = CLEAR_PACKEDYUV_PATTERN_SWAPPED;
-            } else {
-                for (i = 0; i < size - 3; i += 4)
-                    p[i] = p[i + 1] = p[i + 2] = p[i + 3] = CLEAR_PACKEDYUV_PATTERN;
-                for (; i < size; i++)
-                    p[i] = CLEAR_PACKEDYUV_PATTERN;
-            }
-        } else
-            memset(dst, 0, (mpi->bpp >> 3) * w);
-    }
+    assert(vf->fmt_out.configured);
+    return mp_image_pool_get(vf->out_pool, vf->fmt_out.fmt,
+                             vf->fmt_out.w, vf->fmt_out.h);
 }
 
-mp_image_t *vf_get_image(vf_instance_t *vf, unsigned int outfmt,
-                         int mp_imgtype, int mp_imgflag, int w, int h)
+void vf_make_out_image_writeable(struct vf_instance *vf, struct mp_image *img)
 {
-    mp_image_t *mpi = NULL;
-    int w2;
-    int number = mp_imgtype >> 16;
-
-    assert(w == -1 || w >= vf->w);
-    assert(h == -1 || h >= vf->h);
-    assert(vf->w > 0);
-    assert(vf->h > 0);
-
-    if (w == -1)
-        w = vf->w;
-    if (h == -1)
-        h = vf->h;
-
-    w2 = (mp_imgflag & MP_IMGFLAG_ACCEPT_ALIGNED_STRIDE) ? FFALIGN(w, 32) : w;
-
-    if (vf->put_image == vf_next_put_image) {
-        // passthru mode, if the filter uses the fallback/default put_image()
-        mpi = vf_get_image(vf->next,outfmt,mp_imgtype,mp_imgflag,w,h);
-        mpi->usage_count++;
-        return mpi;
-    }
-
-    // Note: we should call libvo first to check if it supports direct rendering
-    // and if not, then fallback to software buffers:
-    switch (mp_imgtype & 0xff) {
-    case MP_IMGTYPE_EXPORT:
-        if (!vf->imgctx.export_images[0])
-            vf->imgctx.export_images[0] = new_mp_image(w2, h);
-        mpi = vf->imgctx.export_images[0];
-        break;
-    case MP_IMGTYPE_STATIC:
-        if (!vf->imgctx.static_images[0])
-            vf->imgctx.static_images[0] = new_mp_image(w2, h);
-        mpi = vf->imgctx.static_images[0];
-        break;
-    case MP_IMGTYPE_TEMP:
-        if (!vf->imgctx.temp_images[0])
-            vf->imgctx.temp_images[0] = new_mp_image(w2, h);
-        mpi = vf->imgctx.temp_images[0];
-        break;
-    case MP_IMGTYPE_IPB:
-        if (!(mp_imgflag & MP_IMGFLAG_READABLE)) { // B frame:
-            if (!vf->imgctx.temp_images[0])
-                vf->imgctx.temp_images[0] = new_mp_image(w2, h);
-            mpi = vf->imgctx.temp_images[0];
-            break;
-        }
-    case MP_IMGTYPE_IP:
-        if (!vf->imgctx.static_images[vf->imgctx.static_idx])
-            vf->imgctx.static_images[vf->imgctx.static_idx] = new_mp_image(w2, h);
-        mpi = vf->imgctx.static_images[vf->imgctx.static_idx];
-        vf->imgctx.static_idx ^= 1;
-        break;
-    case MP_IMGTYPE_NUMBERED:
-        if (number == -1) {
-            int i;
-            for (i = 0; i < NUM_NUMBERED_MPI; i++)
-                if (!vf->imgctx.numbered_images[i] ||
-                        !vf->imgctx.numbered_images[i]->usage_count)
-                    break;
-            number = i;
-        }
-        if (number < 0 || number >= NUM_NUMBERED_MPI)
-            return NULL;
-        if (!vf->imgctx.numbered_images[number])
-            vf->imgctx.numbered_images[number] = new_mp_image(w2, h);
-        mpi = vf->imgctx.numbered_images[number];
-        mpi->number = number;
-        break;
-    }
-    if (mpi) {
-        int missing_palette = !(mpi->flags & MP_IMGFLAG_RGB_PALETTE) &&
-                              (mp_imgflag & MP_IMGFLAG_RGB_PALETTE);
-        mpi->type = mp_imgtype;
-        mpi->w = vf->w;
-        mpi->h = vf->h;
-        // keep buffer allocation status & color flags only:
-        mpi->flags &= MP_IMGFLAG_ALLOCATED | MP_IMGFLAG_TYPE_DISPLAYED |
-                      MP_IMGFLAGMASK_COLORS;
-        // accept restrictions, draw_slice and palette flags only:
-        mpi->flags |= mp_imgflag & (MP_IMGFLAGMASK_RESTRICTIONS |
-                          MP_IMGFLAG_DRAW_CALLBACK | MP_IMGFLAG_RGB_PALETTE);
-        if (!vf->draw_slice)
-            mpi->flags &= ~MP_IMGFLAG_DRAW_CALLBACK;
-        if (mpi->width != w2 || mpi->height != h || missing_palette) {
-            if (mpi->flags & MP_IMGFLAG_ALLOCATED) {
-                if (mpi->width < w2 || mpi->height < h || missing_palette) {
-                    // need to re-allocate buffer memory:
-                    av_free(mpi->planes[0]);
-                    if (mpi->flags & MP_IMGFLAG_RGB_PALETTE)
-                        av_free(mpi->planes[1]);
-                    for (int n = 0; n < MP_MAX_PLANES; n++)
-                        mpi->planes[n] = NULL;
-                    mpi->flags &= ~MP_IMGFLAG_ALLOCATED;
-                    mp_msg(MSGT_VFILTER, MSGL_V,
-                           "vf.c: have to REALLOCATE buffer memory :(\n");
-                }
-            }
-            mpi->width = w2;
-            mpi->chroma_width = (w2 + (1 << mpi->chroma_x_shift) - 1) >>
-                                                     mpi->chroma_x_shift;
-            mpi->height = h;
-            mpi->chroma_height = (h + (1 << mpi->chroma_y_shift) - 1) >>
-                                                     mpi->chroma_y_shift;
-        }
-        if (!mpi->bpp)
-            mp_image_setfmt(mpi, outfmt);
-        if (!(mpi->flags & MP_IMGFLAG_ALLOCATED) &&
-                mpi->type > MP_IMGTYPE_EXPORT) {
-            // check libvo first!
-            if (vf->get_image)
-                vf->get_image(vf, mpi);
-
-            if (!(mpi->flags & MP_IMGFLAG_DIRECT)) {
-                // non-direct and not yet allocated image. allocate it!
-                if (!mpi->bpp) { // no way we can allocate this
-                    mp_msg(MSGT_DECVIDEO, MSGL_FATAL,
-                           "vf_get_image: Tried to allocate a format that "
-                           "can not be allocated!\n");
-                    return NULL;
-                }
-
-                // check if codec prefer aligned stride:
-                if (mp_imgflag & MP_IMGFLAG_PREFER_ALIGNED_STRIDE) {
-                    int align = (mpi->flags & MP_IMGFLAG_PLANAR &&
-                                 mpi->flags & MP_IMGFLAG_YUV) ?
-                                (16 << mpi->chroma_x_shift) - 1 : 32; // OK?
-                    w2 = FFALIGN(w, align);
-                    if (mpi->width != w2) {
-                        // we have to change width... check if we CAN co it:
-                        int flags = vf->query_format(vf, outfmt);
-                        // should not fail
-                        if (!(flags & (VFCAP_CSP_SUPPORTED |
-                                       VFCAP_CSP_SUPPORTED_BY_HW)))
-                            mp_msg(MSGT_DECVIDEO, MSGL_WARN,
-                                   "??? vf_get_image{vf->query_format(outfmt)} "
-                                   "failed!\n");
-                        if (flags & VFCAP_ACCEPT_STRIDE) {
-                            mpi->width = w2;
-                            mpi->chroma_width =
-                                (w2 + (1 << mpi->chroma_x_shift) - 1) >>
-                                mpi->chroma_x_shift;
-                        }
-                    }
-                }
-
-                mp_image_alloc_planes(mpi);
-                vf_mpi_clear(mpi, 0, 0, mpi->width, mpi->height);
-            }
-        }
-        if (mpi->flags & MP_IMGFLAG_DRAW_CALLBACK)
-            if (vf->start_slice)
-                vf->start_slice(vf, mpi);
-        if (!(mpi->flags & MP_IMGFLAG_TYPE_DISPLAYED)) {
-            mp_msg(MSGT_DECVIDEO, MSGL_V,
-                   "*** [%s] %s%s mp_image_t, %dx%dx%dbpp %s %s, %d bytes\n",
-                   vf->info->name,
-                   (mpi->type == MP_IMGTYPE_EXPORT) ? "Exporting" :
-                   ((mpi->flags & MP_IMGFLAG_DIRECT) ?
-                            "Direct Rendering" : "Allocating"),
-                   (mpi->flags & MP_IMGFLAG_DRAW_CALLBACK) ? " (slices)" : "",
-                   mpi->width, mpi->height, mpi->bpp,
-                   (mpi->flags & MP_IMGFLAG_YUV) ? "YUV" :
-                           ((mpi->flags & MP_IMGFLAG_SWAPPED) ? "BGR" : "RGB"),
-                   (mpi->flags & MP_IMGFLAG_PLANAR) ? "planar" : "packed",
-                   mpi->bpp * mpi->width * mpi->height / 8);
-            mp_msg(MSGT_DECVIDEO, MSGL_DBG2, "(imgfmt: %x, planes: %p,%p,%p "
-                   "strides: %d,%d,%d, chroma: %dx%d, shift: h:%d,v:%d)\n",
-                   mpi->imgfmt, mpi->planes[0], mpi->planes[1], mpi->planes[2],
-                   mpi->stride[0], mpi->stride[1], mpi->stride[2],
-                   mpi->chroma_width, mpi->chroma_height,
-                   mpi->chroma_x_shift, mpi->chroma_y_shift);
-            mpi->flags |= MP_IMGFLAG_TYPE_DISPLAYED;
-        }
-        mpi->qscale = NULL;
-        mpi->usage_count++;
-    }
-    return mpi;
+    assert(vf->fmt_out.configured);
+    assert(vf->fmt_out.fmt == img->imgfmt);
+    assert(vf->fmt_out.w == img->w && vf->fmt_out.h == img->h);
+    mp_image_pool_make_writeable(vf->out_pool, img);
 }
 
 //============================================================================
@@ -366,6 +139,43 @@ mp_image_t *vf_get_image(vf_instance_t *vf, unsigned int outfmt,
 static int vf_default_query_format(struct vf_instance *vf, unsigned int fmt)
 {
     return vf_next_query_format(vf, fmt);
+}
+
+
+static struct mp_image *vf_default_filter(struct vf_instance *vf,
+                                          struct mp_image *mpi)
+{
+    assert(!vf->filter_ext);
+    return mpi;
+}
+
+static void print_fmt(int msglevel, struct vf_format *fmt)
+{
+    if (fmt && fmt->configured) {
+        mp_msg(MSGT_VFILTER, msglevel, "%dx%d", fmt->w, fmt->h);
+        if (fmt->w != fmt->dw || fmt->h != fmt->dh)
+            mp_msg(MSGT_VFILTER, msglevel, "->%dx%d", fmt->dw, fmt->dh);
+        mp_msg(MSGT_VFILTER, msglevel, " %s %#x", mp_imgfmt_to_name(fmt->fmt),
+               fmt->flags);
+    } else {
+        mp_msg(MSGT_VFILTER, msglevel, "???");
+    }
+}
+
+void vf_print_filter_chain(int msglevel, struct vf_instance *vf)
+{
+    if (!mp_msg_test(MSGT_VFILTER, msglevel))
+        return;
+
+    for (vf_instance_t *f = vf; f; f = f->next) {
+        mp_msg(MSGT_VFILTER, msglevel, " [%s] ", f->info->name);
+        print_fmt(msglevel, &f->fmt_in);
+        if (f->next) {
+            mp_msg(MSGT_VFILTER, msglevel, " -> ");
+            print_fmt(msglevel, &f->fmt_out);
+        }
+        mp_msg(MSGT_VFILTER, msglevel, "\n");
+    }
 }
 
 struct vf_instance *vf_open_plugin_noerr(struct MPOpts *opts,
@@ -384,16 +194,15 @@ struct vf_instance *vf_open_plugin_noerr(struct MPOpts *opts,
         if (!strcmp(filter_list[i]->name, name))
             break;
     }
-    vf = calloc(1, sizeof *vf);
+    vf = talloc_zero(NULL, struct vf_instance);
     vf->opts = opts;
     vf->info = filter_list[i];
     vf->next = next;
     vf->config = vf_next_config;
     vf->control = vf_next_control;
     vf->query_format = vf_default_query_format;
-    vf->put_image = vf_next_put_image;
-    vf->default_caps = VFCAP_ACCEPT_STRIDE;
-    vf->default_reqs = 0;
+    vf->filter = vf_default_filter;
+    vf->out_pool = talloc_steal(vf, mp_image_pool_new(16));
     if (vf->info->opts) { // vf_vo get some special argument
         const m_struct_t *st = vf->info->opts;
         void *vf_priv = m_struct_alloc(st);
@@ -410,7 +219,7 @@ struct vf_instance *vf_open_plugin_noerr(struct MPOpts *opts,
     *retcode = vf->info->vf_open(vf, (char *)args);
     if (*retcode > 0)
         return vf;
-    free(vf);
+    talloc_free(vf);
     return NULL;
 }
 
@@ -531,77 +340,92 @@ unsigned int vf_match_csp(vf_instance_t **vfp, const unsigned int *list,
     return best;
 }
 
-void vf_clone_mpi_attributes(mp_image_t *dst, mp_image_t *src)
+// Used by filters to add a filtered frame to the output queue.
+// Ownership of img is transferred from caller to the filter chain.
+void vf_add_output_frame(struct vf_instance *vf, struct mp_image *img)
 {
-    dst->pict_type = src->pict_type;
-    dst->fields = src->fields;
-    dst->qscale_type = src->qscale_type;
-    if (dst->width == src->width && dst->height == src->height) {
-        dst->qstride = src->qstride;
-        dst->qscale = src->qscale;
-        dst->display_w = src->display_w;
-        dst->display_h = src->display_h;
+    if (img)
+        MP_TARRAY_APPEND(vf, vf->out_queued, vf->num_out_queued, img);
+}
+
+static struct mp_image *vf_dequeue_output_frame(struct vf_instance *vf)
+{
+    struct mp_image *res = NULL;
+    if (vf->num_out_queued) {
+        res = vf->out_queued[0];
+        MP_TARRAY_REMOVE_AT(vf->out_queued, vf->num_out_queued, 0);
     }
-    if ((dst->flags & MP_IMGFLAG_YUV) == (src->flags & MP_IMGFLAG_YUV)) {
-        dst->colorspace = src->colorspace;
-        dst->levels = src->levels;
+    return res;
+}
+
+// Input a frame into the filter chain.
+// Return >= 0 on success, < 0 on failure (even if output frames were produced)
+int vf_filter_frame(struct vf_instance *vf, struct mp_image *img)
+{
+    assert(vf->fmt_in.configured);
+    assert(img->w == vf->fmt_in.w && img->h == vf->fmt_in.h);
+    assert(img->imgfmt == vf->fmt_in.fmt);
+
+    if (vf->filter_ext) {
+        return vf->filter_ext(vf, img);
+    } else {
+        vf_add_output_frame(vf, vf->filter(vf, img));
+        return 0;
     }
 }
 
-void vf_queue_frame(vf_instance_t *vf, int (*func)(vf_instance_t *))
-{
-    vf->continue_buffered_image = func;
-}
-
-// Output the next buffered image (if any) from the filter chain.
-// The queue could be kept as a simple stack/list instead avoiding the
-// looping here, but there's currently no good context variable where
-// that could be stored so this was easier to implement.
-
-int vf_output_queued_frame(vf_instance_t *vf)
+// Output the next queued image (if any) from the full filter chain.
+struct mp_image *vf_chain_output_queued_frame(struct vf_instance *vf)
 {
     while (1) {
-        int ret;
-        vf_instance_t *current;
-        vf_instance_t *last = NULL;
-        int (*tmp)(vf_instance_t *);
-        for (current = vf; current; current = current->next)
-            if (current->continue_buffered_image)
-                last = current;
+        struct vf_instance *last = NULL;
+        for (struct vf_instance * cur = vf; cur; cur = cur->next) {
+            if (cur->num_out_queued)
+                last = cur;
+        }
         if (!last)
-            return 0;
-        tmp = last->continue_buffered_image;
-        last->continue_buffered_image = NULL;
-        ret = tmp(last);
-        if (ret)
-            return ret;
+            return NULL;
+        struct mp_image *img = vf_dequeue_output_frame(last);
+        if (!last->next)
+            return img;
+        vf_filter_frame(last->next, img);
     }
 }
 
+static void vf_forget_frames(struct vf_instance *vf)
+{
+    for (int n = 0; n < vf->num_out_queued; n++)
+        talloc_free(vf->out_queued[n]);
+    vf->num_out_queued = 0;
+}
 
-/**
- * \brief Video config() function wrapper
- *
- * Blocks config() calls with different size or format for filters
- * with VFCAP_CONSTANT
- *
- * First call is redirected to vf->config.
- *
- * In following calls, it verifies that the configuration parameters
- * are unchanged, and returns either success or error.
- *
- */
+void vf_chain_seek_reset(struct vf_instance *vf)
+{
+    vf->control(vf, VFCTRL_SEEK_RESET, NULL);
+    for (struct vf_instance *cur = vf; cur; cur = cur->next)
+        vf_forget_frames(cur);
+}
+
 int vf_config_wrapper(struct vf_instance *vf,
                       int width, int height, int d_width, int d_height,
                       unsigned int flags, unsigned int outfmt)
 {
-    vf->fmt.have_configured = 1;
-    vf->fmt.orig_height = height;
-    vf->fmt.orig_width = width;
-    vf->fmt.orig_fmt = outfmt;
+    vf_forget_frames(vf);
+    mp_image_pool_clear(vf->out_pool);
+
+    vf->fmt_in = vf->fmt_out = (struct vf_format){0};
+
     int r = vf->config(vf, width, height, d_width, d_height, flags, outfmt);
-    if (!r)
-        vf->fmt.have_configured = 0;
+    if (r) {
+        vf->fmt_in = (struct vf_format) {
+            .configured = 1,
+            .w = width,    .h = height,
+            .dw = d_width, .dh = d_height,
+            .flags = flags,
+            .fmt = outfmt,
+        };
+        vf->fmt_out = vf->next ? vf->next->fmt_in : (struct vf_format){0};
+    }
     return r;
 }
 
@@ -610,7 +434,6 @@ int vf_next_config(struct vf_instance *vf,
                    unsigned int voflags, unsigned int outfmt)
 {
     struct MPOpts *opts = vf->opts;
-    int miss;
     int flags = vf->next->query_format(vf->next, outfmt);
     if (!flags) {
         // hmm. colorspace mismatch!!!
@@ -629,19 +452,6 @@ int vf_next_config(struct vf_instance *vf,
             return 0; // FAIL
         }
     }
-    mp_msg(MSGT_VFILTER, MSGL_V, "REQ: flags=0x%X  req=0x%X  \n",
-           flags, vf->default_reqs);
-    miss = vf->default_reqs - (flags & vf->default_reqs);
-    if (miss & VFCAP_ACCEPT_STRIDE) {
-        // vf requires stride support but vf->next doesn't support it!
-        // let's insert the 'expand' filter, it does the job for us:
-        vf_instance_t *vf2 = vf_open_filter(opts, vf->next, "expand", NULL);
-        if (!vf2)
-            return 0;      // shouldn't happen!
-        vf->next = vf2;
-    }
-    vf->next->w = width;
-    vf->next->h = height;
     return vf_config_wrapper(vf->next, width, height, d_width, d_height,
                              voflags, outfmt);
 }
@@ -657,44 +467,6 @@ int vf_next_query_format(struct vf_instance *vf, unsigned int fmt)
     if (flags)
         flags |= vf->default_caps;
     return flags;
-}
-
-int vf_next_put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
-{
-    return vf->next->put_image(vf->next, mpi, pts);
-}
-
-void vf_next_draw_slice(struct vf_instance *vf, unsigned char **src,
-                        int *stride, int w, int h, int x, int y)
-{
-    if (vf->next->draw_slice) {
-        vf->next->draw_slice(vf->next, src, stride, w, h, x, y);
-        return;
-    }
-    if (!vf->dmpi) {
-        mp_msg(MSGT_VFILTER, MSGL_ERR,
-               "draw_slice: dmpi not stored by vf_%s\n", vf->info->name);
-        return;
-    }
-    if (!(vf->dmpi->flags & MP_IMGFLAG_PLANAR)) {
-        memcpy_pic(vf->dmpi->planes[0] + y * vf->dmpi->stride[0] +
-                       vf->dmpi->bpp / 8 * x,
-                   src[0], vf->dmpi->bpp / 8 * w, h, vf->dmpi->stride[0],
-                   stride[0]);
-        return;
-    }
-    memcpy_pic(vf->dmpi->planes[0] + y * vf->dmpi->stride[0] + x, src[0],
-               w, h, vf->dmpi->stride[0], stride[0]);
-    memcpy_pic(vf->dmpi->planes[1]
-                   + (y >> vf->dmpi->chroma_y_shift) * vf->dmpi->stride[1]
-                   + (x >> vf->dmpi->chroma_x_shift),
-               src[1], w >> vf->dmpi->chroma_x_shift,
-               h >> vf->dmpi->chroma_y_shift, vf->dmpi->stride[1], stride[1]);
-    memcpy_pic(vf->dmpi->planes[2]
-                   + (y >> vf->dmpi->chroma_y_shift) * vf->dmpi->stride[2]
-                   + (x >> vf->dmpi->chroma_x_shift),
-               src[2], w >> vf->dmpi->chroma_x_shift,
-               h >> vf->dmpi->chroma_y_shift, vf->dmpi->stride[2], stride[2]);
 }
 
 //============================================================================
@@ -727,13 +499,8 @@ void vf_uninit_filter(vf_instance_t *vf)
 {
     if (vf->uninit)
         vf->uninit(vf);
-    free_mp_image(vf->imgctx.static_images[0]);
-    free_mp_image(vf->imgctx.static_images[1]);
-    free_mp_image(vf->imgctx.temp_images[0]);
-    free_mp_image(vf->imgctx.export_images[0]);
-    for (int i = 0; i < NUM_NUMBERED_MPI; i++)
-        free_mp_image(vf->imgctx.numbered_images[i]);
-    free(vf);
+    vf_forget_frames(vf);
+    talloc_free(vf);
 }
 
 void vf_uninit_filter_chain(vf_instance_t *vf)
@@ -743,6 +510,16 @@ void vf_uninit_filter_chain(vf_instance_t *vf)
         vf_uninit_filter(vf);
         vf = next;
     }
+}
+
+// When changing the size of an image that had old_w/old_h with
+// DAR *d_width/*d_height to the new size new_w/new_h, adjust
+// *d_width/*d_height such that the new image has the same pixel aspect ratio.
+void vf_rescale_dsize(int *d_width, int *d_height, int old_w, int old_h,
+                      int new_w, int new_h)
+{
+    *d_width  = *d_width  * new_w / old_w;
+    *d_height = *d_height * new_h / old_h;
 }
 
 void vf_detc_init_pts_buf(struct vf_detc_pts_buf *p)

@@ -5,7 +5,8 @@
 
 struct MPContext;	struct vo_driver;
 class VideoFormat;	class PlayEngine;
-typedef quint32 uint32_t;
+typedef quint32 uint32_t;	struct mp_image;
+class VideoRendererItem;
 
 class VideoOutput : public QObject {
 	Q_OBJECT
@@ -17,8 +18,11 @@ public:
 	void release();
 	bool isHwAccActivated() const;
 	const VideoFormat &format() const;
+	void setRenderer(VideoRendererItem *renderer);
 signals:
 	void formatChanged(const VideoFormat &format);
+private slots:
+	void handleFormatChanged(const VideoFormat &format);
 private:
 	static int preinit(struct vo */*vo*/, const char */*arg*/) {return 0;}
 	static void uninit(struct vo */*vo*/) {}
@@ -27,9 +31,8 @@ private:
 	static void drawOsd(struct vo *vo, struct osd_state *osd);
 	static void flipPage(struct vo *vo);
 	static void checkEvents(struct vo *vo);
-	static int drawSlice(struct vo *vo, uint8_t *src[], int stride[], int w, int h, int x, int y);
-	static int queryFormat(int format);
-	void drawImage(void *data);
+	static int queryFormat(struct vo *vo, quint32 format);
+	static void drawImage(struct vo *vo, mp_image *mpi);
 	bool getImage(void *data);
 	struct Data;
 	Data *d;

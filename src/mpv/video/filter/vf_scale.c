@@ -47,8 +47,6 @@ static struct vf_priv_s {
     double param[2];
     unsigned int fmt;
     struct SwsContext *ctx;
-    struct SwsContext *ctx2; //for interlaced slices only
-    unsigned char* palette;
     int interlaced;
     int noup;
     int accurate_rnd;
@@ -58,10 +56,6 @@ static struct vf_priv_s {
   -1,-1,
   0,
   {SWS_PARAM_DEFAULT, SWS_PARAM_DEFAULT},
-  0,
-  NULL,
-  NULL,
-  NULL
 };
 
 static int mp_sws_set_colorspace(struct SwsContext *sws,
@@ -93,8 +87,7 @@ static const unsigned int outfmt_list[]={
     IMGFMT_422P10_BE,
     IMGFMT_422P9_LE,
     IMGFMT_422P9_BE,
-    IMGFMT_YV12,
-    IMGFMT_I420,
+    IMGFMT_420P,
     IMGFMT_420P16_LE,
     IMGFMT_420P16_BE,
     IMGFMT_420P14_LE,
@@ -105,14 +98,12 @@ static const unsigned int outfmt_list[]={
     IMGFMT_420P10_BE,
     IMGFMT_420P9_LE,
     IMGFMT_420P9_BE,
-    IMGFMT_420A,
-    IMGFMT_IYUV,
-    IMGFMT_YVU9,
-    IMGFMT_IF09,
+    IMGFMT_420AP,
+    IMGFMT_410P,
     IMGFMT_411P,
     IMGFMT_NV12,
     IMGFMT_NV21,
-    IMGFMT_YUY2,
+    IMGFMT_YUYV,
     IMGFMT_UYVY,
     IMGFMT_440P,
 // RGB and grayscale (Y8 and Y800):
@@ -125,24 +116,22 @@ static const unsigned int outfmt_list[]={
     IMGFMT_BGR24,
     IMGFMT_RGB24,
     IMGFMT_GBRP,
-    IMGFMT_RGB48LE,
-    IMGFMT_RGB48BE,
+    IMGFMT_RGB48_LE,
+    IMGFMT_RGB48_BE,
     IMGFMT_BGR16,
     IMGFMT_RGB16,
     IMGFMT_BGR15,
     IMGFMT_RGB15,
     IMGFMT_BGR12,
     IMGFMT_RGB12,
-    IMGFMT_Y800,
     IMGFMT_Y8,
     IMGFMT_BGR8,
     IMGFMT_RGB8,
     IMGFMT_BGR4,
     IMGFMT_RGB4,
-    IMGFMT_BG4B,
-    IMGFMT_RG4B,
-    IMGFMT_BGR1,
-    IMGFMT_RGB1,
+    IMGFMT_RGB4_BYTE,
+    IMGFMT_BGR4_BYTE,
+    IMGFMT_MONO,
     0
 };
 
@@ -153,17 +142,18 @@ static const unsigned int outfmt_list[]={
  * fast assembler implementation.
  */
 static int preferred_conversions[][2] = {
-    {IMGFMT_YUY2, IMGFMT_UYVY},
-    {IMGFMT_YUY2, IMGFMT_422P},
-    {IMGFMT_UYVY, IMGFMT_YUY2},
+    {IMGFMT_YUYV, IMGFMT_UYVY},
+    {IMGFMT_YUYV, IMGFMT_422P},
+    {IMGFMT_UYVY, IMGFMT_YUYV},
     {IMGFMT_UYVY, IMGFMT_422P},
-    {IMGFMT_422P, IMGFMT_YUY2},
+    {IMGFMT_422P, IMGFMT_YUYV},
     {IMGFMT_422P, IMGFMT_UYVY},
-    {IMGFMT_420P10, IMGFMT_YV12},
+    {IMGFMT_420P10, IMGFMT_420P},
     {IMGFMT_GBRP, IMGFMT_BGR24},
     {IMGFMT_GBRP, IMGFMT_RGB24},
     {IMGFMT_GBRP, IMGFMT_BGR32},
     {IMGFMT_GBRP, IMGFMT_RGB32},
+    {IMGFMT_PAL8, IMGFMT_BGR32},
     {0, 0}
 };
 
@@ -208,11 +198,9 @@ static unsigned int find_best_out(vf_instance_t *vf, int in_format){
 static int config(struct vf_instance *vf,
         int width, int height, int d_width, int d_height,
 	unsigned int flags, unsigned int outfmt){
-    struct MPOpts *opts = vf->opts;
     unsigned int best=find_best_out(vf, outfmt);
     int int_sws_flags=0;
     int round_w=0, round_h=0;
-    int i;
     SwsFilter *srcFilter, *dstFilter;
     enum PixelFormat dfmt, sfmt;
 
@@ -223,7 +211,6 @@ static int config(struct vf_instance *vf,
 	return 0;
     }
     sfmt = imgfmt2pixfmt(outfmt);
-    if (outfmt == IMGFMT_RGB8 || outfmt == IMGFMT_BGR8) sfmt = PIX_FMT_PAL8;
     dfmt = imgfmt2pixfmt(best);
 
     vf->next->query_format(vf->next,best);
@@ -284,13 +271,11 @@ static int config(struct vf_instance *vf,
 
     // calculate the missing parameters:
     switch(best) {
-    case IMGFMT_YV12:		/* YV12 needs w & h rounded to 2 */
-    case IMGFMT_I420:
-    case IMGFMT_IYUV:
+    case IMGFMT_420P:		/* YV12 needs w & h rounded to 2 */
     case IMGFMT_NV12:
     case IMGFMT_NV21:
       vf->priv->h = (vf->priv->h + 1) & ~1;
-    case IMGFMT_YUY2:		/* YUY2 needs w rounded to 2 */
+    case IMGFMT_YUYV:		/* YUY2 needs w rounded to 2 */
     case IMGFMT_UYVY:
       vf->priv->w = (vf->priv->w + 1) & ~1;
     }
@@ -301,7 +286,6 @@ static int config(struct vf_instance *vf,
 
     // free old ctx:
     if(vf->priv->ctx) sws_freeContext(vf->priv->ctx);
-    if(vf->priv->ctx2)sws_freeContext(vf->priv->ctx2);
 
     // new swscaler:
     sws_getFlagsAndFilterFromCmdLine(&int_sws_flags, &srcFilter, &dstFilter);
@@ -312,67 +296,12 @@ static int config(struct vf_instance *vf,
 		  vf->priv->w, vf->priv->h >> vf->priv->interlaced,
 	    dfmt,
 	    int_sws_flags, srcFilter, dstFilter, vf->priv->param);
-    if(vf->priv->interlaced){
-        vf->priv->ctx2=sws_getContext(width, height >> 1,
-	    sfmt,
-		  vf->priv->w, vf->priv->h >> 1,
-	    dfmt,
-	    int_sws_flags, srcFilter, dstFilter, vf->priv->param);
-    }
     if(!vf->priv->ctx){
 	// error...
 	mp_msg(MSGT_VFILTER,MSGL_WARN,"Couldn't init SwScaler for this setup\n");
 	return 0;
     }
     vf->priv->fmt=best;
-
-    free(vf->priv->palette);
-    vf->priv->palette=NULL;
-    switch(best){
-    case IMGFMT_RGB8: {
-      /* set 332 palette for 8 bpp */
-	vf->priv->palette=malloc(4*256);
-	for(i=0; i<256; i++){
-	    vf->priv->palette[4*i+0]=4*(i>>6)*21;
-	    vf->priv->palette[4*i+1]=4*((i>>3)&7)*9;
-	    vf->priv->palette[4*i+2]=4*((i&7)&7)*9;
-            vf->priv->palette[4*i+3]=0;
-	}
-	break; }
-    case IMGFMT_BGR8: {
-      /* set 332 palette for 8 bpp */
-	vf->priv->palette=malloc(4*256);
-	for(i=0; i<256; i++){
-	    vf->priv->palette[4*i+0]=4*(i&3)*21;
-	    vf->priv->palette[4*i+1]=4*((i>>2)&7)*9;
-	    vf->priv->palette[4*i+2]=4*((i>>5)&7)*9;
-            vf->priv->palette[4*i+3]=0;
-	}
-	break; }
-    case IMGFMT_BGR4:
-    case IMGFMT_BG4B: {
-	vf->priv->palette=malloc(4*16);
-	for(i=0; i<16; i++){
-	    vf->priv->palette[4*i+0]=4*(i&1)*63;
-	    vf->priv->palette[4*i+1]=4*((i>>1)&3)*21;
-	    vf->priv->palette[4*i+2]=4*((i>>3)&1)*63;
-            vf->priv->palette[4*i+3]=0;
-	}
-	break; }
-    case IMGFMT_RGB4:
-    case IMGFMT_RG4B: {
-	vf->priv->palette=malloc(4*16);
-	for(i=0; i<16; i++){
-	    vf->priv->palette[4*i+0]=4*(i>>3)*63;
-	    vf->priv->palette[4*i+1]=4*((i>>1)&3)*21;
-	    vf->priv->palette[4*i+2]=4*((i&1)&1)*63;
-            vf->priv->palette[4*i+3]=0;
-	}
-	break; }
-    }
-
-    if (!opts->screen_size_x && !opts->screen_size_y
-        && !(opts->screen_size_xy >= 0.001)) {
 	// Compute new d_width and d_height, preserving aspect
 	// while ensuring that both are >= output size in pixels.
 	if (vf->priv->h * d_width > vf->priv->w * d_height) {
@@ -384,18 +313,7 @@ static int config(struct vf_instance *vf,
 	}
 	//d_width=d_width*vf->priv->w/width;
 	//d_height=d_height*vf->priv->h/height;
-    }
     return vf_next_config(vf,vf->priv->w,vf->priv->h,d_width,d_height,flags,best);
-}
-
-static void start_slice(struct vf_instance *vf, mp_image_t *mpi){
-//    printf("start_slice called! flag=%d\n",mpi->flags&MP_IMGFLAG_DRAW_CALLBACK);
-    if(!(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK)) return; // shouldn't happen
-    // they want slices!!! allocate the buffer.
-    mpi->priv=vf->dmpi=vf_get_image(vf->next,vf->priv->fmt,
-//	mpi->type, mpi->flags & (~MP_IMGFLAG_DRAW_CALLBACK),
-	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
-	vf->priv->w, vf->priv->h);
 }
 
 static void scale(struct SwsContext *sws1, struct SwsContext *sws2, uint8_t *src[MP_MAX_PLANES], int src_stride[MP_MAX_PLANES],
@@ -428,42 +346,15 @@ static void scale(struct SwsContext *sws1, struct SwsContext *sws2, uint8_t *src
     }
 }
 
-static void draw_slice(struct vf_instance *vf,
-        unsigned char** src, int* stride, int w,int h, int x, int y){
-    mp_image_t *dmpi=vf->dmpi;
-    if(!dmpi){
-	mp_msg(MSGT_VFILTER,MSGL_FATAL,"vf_scale: draw_slice() called with dmpi=NULL (no get_image?)\n");
-	return;
-    }
-//    printf("vf_scale::draw_slice() y=%d h=%d\n",y,h);
-    scale(vf->priv->ctx, vf->priv->ctx2, src, stride, y, h, dmpi->planes, dmpi->stride, vf->priv->interlaced);
-}
+static struct mp_image *filter(struct vf_instance *vf, struct mp_image *mpi)
+{
+    struct mp_image *dmpi = vf_alloc_out_image(vf);
+    mp_image_copy_attributes(dmpi, mpi);
 
-static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts){
-    mp_image_t *dmpi=mpi->priv;
+    scale(vf->priv->ctx, vf->priv->ctx, mpi->planes,mpi->stride,0,mpi->h,dmpi->planes,dmpi->stride, vf->priv->interlaced);
 
-//    printf("vf_scale::put_image(): processing whole frame! dmpi=%p flag=%d\n",
-//	dmpi, (mpi->flags&MP_IMGFLAG_DRAW_CALLBACK));
-
-  if(!(mpi->flags&MP_IMGFLAG_DRAW_CALLBACK && dmpi)){
-
-    // hope we'll get DR buffer:
-    dmpi=vf_get_image(vf->next,vf->priv->fmt,
-	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE | MP_IMGFLAG_PREFER_ALIGNED_STRIDE,
-	vf->priv->w, vf->priv->h);
-
-      scale(vf->priv->ctx, vf->priv->ctx, mpi->planes,mpi->stride,0,mpi->h,dmpi->planes,dmpi->stride, vf->priv->interlaced);
-  }
-
-    if(vf->priv->w==mpi->w && vf->priv->h==mpi->h){
-	// just conversion, no scaling -> keep postprocessing data
-	// this way we can apply pp filter to non-yv12 source using scaler
-        vf_clone_mpi_attributes(dmpi, mpi);
-    }
-
-    if(vf->priv->palette) dmpi->planes[1]=vf->priv->palette; // export palette!
-
-    return vf_next_put_image(vf,dmpi, pts);
+    talloc_free(mpi);
+    return dmpi;
 }
 
 static int control(struct vf_instance *vf, int request, void* data){
@@ -512,17 +403,11 @@ static int control(struct vf_instance *vf, int request, void* data){
 
 	r= sws_setColorspaceDetails(vf->priv->ctx, inv_table, srcRange, table, dstRange, brightness, contrast, saturation);
 	if(r<0) break;
-	if(vf->priv->ctx2){
-            r= sws_setColorspaceDetails(vf->priv->ctx2, inv_table, srcRange, table, dstRange, brightness, contrast, saturation);
-            if(r<0) break;
-        }
 
 	return CONTROL_TRUE;
     case VFCTRL_SET_YUV_COLORSPACE: {
         struct mp_csp_details colorspace = *(struct mp_csp_details *)data;
         if (mp_sws_set_colorspace(vf->priv->ctx, &colorspace) >= 0) {
-            if (vf->priv->ctx2)
-                mp_sws_set_colorspace(vf->priv->ctx2, &colorspace);
             vf->priv->colorspace = colorspace;
             return 1;
         }
@@ -619,16 +504,12 @@ static int query_format(struct vf_instance *vf, unsigned int fmt){
 
 static void uninit(struct vf_instance *vf){
     if(vf->priv->ctx) sws_freeContext(vf->priv->ctx);
-    if(vf->priv->ctx2) sws_freeContext(vf->priv->ctx2);
-    free(vf->priv->palette);
     free(vf->priv);
 }
 
 static int vf_open(vf_instance_t *vf, char *args){
     vf->config=config;
-    vf->start_slice=start_slice;
-    vf->draw_slice=draw_slice;
-    vf->put_image=put_image;
+    vf->filter=filter;
     vf->query_format=query_format;
     vf->control= control;
     vf->uninit=uninit;

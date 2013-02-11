@@ -66,74 +66,54 @@ static void rotate(unsigned char* dst,unsigned char* src,int dststride,int srcst
     }
 }
 
-//===========================================================================//
-
-static int config(struct vf_instance *vf,
-        int width, int height, int d_width, int d_height,
-	unsigned int flags, unsigned int outfmt){
+static int config(struct vf_instance *vf, int width, int height,
+                  int d_width, int d_height,
+                  unsigned int flags, unsigned int outfmt)
+{
     if (vf->priv->direction & 4) {
-	if (width<height) vf->priv->direction&=3;
+        if (width < height)
+            vf->priv->direction &= 3;
     }
-    if (vf->priv->direction & 4){
-	vf->put_image=vf_next_put_image; // passthru mode!
-	if (vf->next->draw_slice) vf->draw_slice=vf_next_draw_slice;
-/* FIXME: this should be in an other procedure in vf.c; that should always check
-     whether the filter after the passthrough one still (not)supports slices */
-	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
-    }
-    return vf_next_config(vf,height,width,d_height,d_width,flags,outfmt);
+    struct mp_imgfmt_desc desc = mp_imgfmt_get_desc(outfmt);
+    int a_w = MP_ALIGN_DOWN(width, desc.align_x);
+    int a_h = MP_ALIGN_DOWN(height, desc.align_y);
+    vf_rescale_dsize(&d_width, &d_height, width, height, a_w, a_h);
+    return vf_next_config(vf, a_h, a_w, d_height, d_width, flags, outfmt);
 }
 
-static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts){
-    mp_image_t *dmpi;
+static struct mp_image *filter(struct vf_instance *vf, struct mp_image *mpi)
+{
+    if (vf->priv->direction & 4)
+        return mpi;
 
-    // hope we'll get DR buffer:
-    dmpi=vf_get_image(vf->next,mpi->imgfmt,
-	MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-	mpi->h, mpi->w);
+    struct mp_image *dmpi = vf_alloc_out_image(vf);
+    mp_image_copy_attributes(dmpi, mpi);
 
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-	rotate(dmpi->planes[0],mpi->planes[0],
-	       dmpi->stride[0],mpi->stride[0],
-	       dmpi->w,dmpi->h,1,vf->priv->direction);
-	rotate(dmpi->planes[1],mpi->planes[1],
-	       dmpi->stride[1],mpi->stride[1],
-	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,vf->priv->direction);
-	rotate(dmpi->planes[2],mpi->planes[2],
-	       dmpi->stride[2],mpi->stride[2],
-	       dmpi->w>>mpi->chroma_x_shift,dmpi->h>>mpi->chroma_y_shift,1,vf->priv->direction);
-    } else {
-	rotate(dmpi->planes[0],mpi->planes[0],
-	       dmpi->stride[0],mpi->stride[0],
-	       dmpi->w,dmpi->h,dmpi->bpp>>3,vf->priv->direction);
-	dmpi->planes[1] = mpi->planes[1]; // passthrough rgb8 palette
+    for (int p = 0; p < mpi->num_planes; p++) {
+        rotate(dmpi->planes[p],mpi->planes[p], dmpi->stride[p],mpi->stride[p],
+               dmpi->plane_w[p], dmpi->plane_h[p], mpi->fmt.bytes[p],
+               vf->priv->direction);
     }
 
-    return vf_next_put_image(vf,dmpi, pts);
+    talloc_free(mpi);
+    return dmpi;
 }
 
-//===========================================================================//
-
-static int query_format(struct vf_instance *vf, unsigned int fmt){
-    if(IMGFMT_IS_RGB(fmt) || IMGFMT_IS_BGR(fmt)) return vf_next_query_format(vf, fmt);
-    // we can support only symmetric (chroma_x_shift==chroma_y_shift) YUV formats:
-    switch(fmt) {
-	case IMGFMT_YV12:
-	case IMGFMT_I420:
-	case IMGFMT_IYUV:
-	case IMGFMT_YVU9:
-//	case IMGFMT_IF09:
-	case IMGFMT_Y8:
-	case IMGFMT_Y800:
-	case IMGFMT_444P:
-	    return vf_next_query_format(vf, fmt);
-    }
-    return 0;
+static int query_format(struct vf_instance *vf, unsigned int fmt)
+{
+    struct mp_imgfmt_desc desc = mp_imgfmt_get_desc(fmt);
+    if (!(desc.flags & MP_IMGFLAG_BYTE_ALIGNED))
+        return 0;
+    if (desc.chroma_xs != desc.chroma_ys)
+        return 0;
+    if (desc.num_planes == 1 && (desc.chroma_xs || desc.chroma_ys))
+        return 0;
+    return vf_next_query_format(vf, fmt);
 }
 
 static int vf_open(vf_instance_t *vf, char *args){
     vf->config=config;
-    vf->put_image=put_image;
+    vf->filter=filter;
     vf->query_format=query_format;
     vf->priv=malloc(sizeof(struct vf_priv_s));
     vf->priv->direction=args?atoi(args):0;

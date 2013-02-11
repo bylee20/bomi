@@ -113,8 +113,8 @@ public:
 	int brightness_step = 1, saturation_step = 1, contrast_step = 1, hue_step = 1;
 	int volume_step = 2, sync_delay_step = 500, amp_step = 10, sub_pos_step = 1;
 
-	bool enable_hwaccel = false;
-	QList<int> hwaccel_codecs = defaultHwAccelCodecs();
+    bool enable_hwaccel = false;
+    QList<int> hwaccel_codecs = defaultHwAccCodecs();
 
 	QString skin_name = "simple";
 
@@ -123,7 +123,7 @@ public:
 private:
 	static Pref &get();
 	Pref() {load();}
-	static QList<int> defaultHwAccelCodecs();
+	static QList<int> defaultHwAccCodecs();
 	static ClickActionMap defaultDoubleClick() {
 		ClickActionMap map = {false, Enum::ClickAction::Fullscreen};
 		map[Enum::KeyModifier::None].enabled = true;

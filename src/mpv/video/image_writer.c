@@ -39,9 +39,7 @@
 #include "video/img_format.h"
 #include "video/mp_image.h"
 #include "video/fmt-conversion.h"
-
 #include "video/sws_utils.h"
-#include "video/filter/vf.h"
 
 #include "core/m_option.h"
 
@@ -65,8 +63,8 @@ const struct m_sub_options image_writer_conf = {
         OPT_INTRANGE("jpeg-optimize", jpeg_optimize, 0, 0, 100),
         OPT_INTRANGE("jpeg-smooth", jpeg_smooth, 0, 0, 100),
         OPT_INTRANGE("jpeg-dpi", jpeg_dpi, M_OPT_MIN, 1, 99999),
-        OPT_MAKE_FLAGS("jpeg-progressive", jpeg_progressive, 0),
-        OPT_MAKE_FLAGS("jpeg-baseline", jpeg_baseline, 0),
+        OPT_FLAG("jpeg-progressive", jpeg_progressive, 0),
+        OPT_FLAG("jpeg-baseline", jpeg_baseline, 0),
         OPT_INTRANGE("png-compression", png_compression, 0, 0, 9),
         OPT_STRING("format", format, 0),
         {0},
@@ -217,16 +215,16 @@ static const struct img_writer img_writers[] = {
     { "ppm", write_lavc, .lavc_codec = CODEC_ID_PPM },
     { "pgm", write_lavc,
       .lavc_codec = CODEC_ID_PGM,
-      .pixfmts = (int[]) { IMGFMT_Y800, 0 },
+      .pixfmts = (int[]) { IMGFMT_Y8, 0 },
     },
     { "pgmyuv", write_lavc,
       .lavc_codec = CODEC_ID_PGMYUV,
-      .pixfmts = (int[]) { IMGFMT_YV12, 0 },
+      .pixfmts = (int[]) { IMGFMT_420P, 0 },
     },
     { "tga", write_lavc,
       .lavc_codec = CODEC_ID_TARGA,
-      .pixfmts = (int[]) { IMGFMT_BGR24, IMGFMT_BGRA, IMGFMT_BGR15LE,
-                           IMGFMT_Y800, 0},
+      .pixfmts = (int[]) { IMGFMT_BGR24, IMGFMT_BGRA, IMGFMT_BGR15_LE,
+                           IMGFMT_Y8, 0},
     },
 #ifdef CONFIG_JPEG
     { "jpg", write_jpeg },
@@ -287,8 +285,8 @@ int write_image(struct mp_image *image, const struct image_writer_opts *opts,
     //         - RGB->YUV assumes BT.601
     //         - color levels broken in various ways thanks to libswscale
     if (image->imgfmt != destfmt || is_anamorphic) {
-        struct mp_image *dst = alloc_mpi(d_w, d_h, destfmt);
-        vf_clone_mpi_attributes(dst, image);
+        struct mp_image *dst = mp_image_alloc(destfmt, d_w, d_h);
+        mp_image_copy_attributes(dst, image);
 
         int flags = SWS_LANCZOS | SWS_FULL_CHR_H_INT | SWS_FULL_CHR_H_INP |
                     SWS_ACCURATE_RND | SWS_BITEXACT;
@@ -312,7 +310,7 @@ int write_image(struct mp_image *image, const struct image_writer_opts *opts,
                    filename);
     }
 
-    free_mp_image(allocated_image);
+    talloc_free(allocated_image);
 
     return success;
 }

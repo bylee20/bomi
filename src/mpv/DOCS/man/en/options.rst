@@ -203,6 +203,51 @@
     Enables caching for the stream used by ``--audiofile``, using the
     specified amount of memory.
 
+--autofit=<[W[xH]]>
+    Set the initial window size to a maximum size specified by WxH, without
+    changing the window's aspect ratio. The size is measured in pixels, or if
+    a number is followed by a percentage sign (``%``), in percents of the
+    screen size.
+
+    This option never changes the aspect ratio of the window. If the aspect
+    ratio mismatches, the window's size is reduced until it fits into the
+    specified size.
+
+    Window position is not taken into account, nor is it modified by this
+    option (the window manager still may place the window differently depending
+    on size). Use ``--geometry`` to change the window position. Its effects
+    are applied after this option.
+
+    See ``--geometry`` for details how this is handled with multi-monitor
+    setups, or if the ``--wid`` option is used.
+
+    Use ``--autofit-larger`` instead if you don't want the window to get larger.
+    Use ``--geometry`` if you want to force both window width and height to a
+    specific size.
+
+    *NOTE*: Generally only supported by GUI VOs. Ignored for encoding.
+
+    *EXAMPLE*:
+
+    ``70%``
+        Make the window width 70% of the screen size, keeping aspect ratio.
+    ``1000``
+        Set the window width to 1000 pixels, keeping aspect ratio.
+    ``70%:60%``
+        Make the window as large as possible, without being wider than 70% of
+        the screen width, or higher than 60% of the screen height.
+
+--autofit-larger=<[W[xH]]>
+    This option behaves exactly like ``--autofit``, except the window size is
+    only changed if the window would be larger than the specified size.
+
+    *EXAMPLE*:
+
+    ``90%x80%``
+        If the video is larger than 90% of the screen width or 80% of the
+        screen height, make the window smaller until either its width is 90%
+        of the screen, or its height is 80% of the screen.
+
 --autosub, --no-autosub
     Load additional subtitle files matching the video filename. Enabled by
     default. See also ``--autosub-match``.
@@ -450,14 +495,10 @@
     (network only)
     Support cookies when making HTTP requests. Disabled by default.
 
-    *WARNING*: works with the deprecated ``mp_http://`` protocol only.
-
 --cookies-file=<filename>
     (network only)
     Read HTTP cookies from <filename>. The file is
     assumed to be in Netscape format.
-
-    *WARNING*: works with the deprecated ``mp_http://`` protocol only.
 
 --correct-pts, --no-correct-pts
     Switches mpv to a mode where timestamps for video frames are
@@ -525,15 +566,6 @@
     to -1 (the default), mpv will choose the first edition declared as a
     default, or if there is no default, the first edition defined.
 
---edlout=<filename>
-    Creates a new file and writes edit decision list (EDL) records to it.
-    During playback, the user hits 'i' to mark the start or end of a skip
-    block. This provides a starting point from which the user can fine-tune
-    EDL entries later. See http://www.mplayerhq.hu/DOCS/HTML/en/edl.html for
-    details.
-
-    *NOTE*: broken.
-
 --embeddedfonts, --no-embeddedfonts
     Use fonts embedded in Matroska container files and ASS scripts (default:
     enabled). These fonts can be used for SSA/ASS subtitle rendering
@@ -564,6 +596,14 @@
 
 --flip
     Flip image upside-down.
+
+--force-rgba-osd-rendering
+    Change how some video outputs render the OSD and text subtitles. This
+    does not change appearance of the subtitles and only has performance
+    implications. For VOs which support native ASS rendering (like ``vdpau``,
+    ``opengl``, ``direct3d``), this can be slightly faster or slower,
+    depending on GPU drivers and hardware. For other VOs, this just makes
+    rendering slower.
 
 --force-window-position
     Forcefully move mpv's video output window to default location whenever
@@ -668,22 +708,24 @@
     consider using options such as ``--srate`` and ``--format`` to explicitly
     select what the shared output format will be.
 
---geometry=<x[%][:y[%]]>, --geometry=<[WxH][+-x+-y]>
-    Adjust where the output is on the screen initially. The x and y
-    specifications are in pixels measured from the top-left of the screen to
-    the top-left of the image being displayed, however if a percentage sign is
-    given after the argument it turns the value into a percentage of the
-    screen size in that direction. It also supports the standard X11
-    ``--geometry`` option format, in which e.g. +10-50 means "place 10 pixels
-    from the left border and 50 pixels from the lower border" and "--20+-10"
-    means "place 20 pixels beyond the right and 10 pixels beyond the top
-    border". If an external window is specified using the ``--wid`` option,
+--geometry=<[W[xH]][+-x+-y]>, --geometry=<x:y>
+    Adjust the initial window position or size. W and H set the window size in
+    pixels. x and y set the window position, measured in pixels from the
+    top-left of the screen to the top-left of the image being displayed. If a
+    percentage sign (``%``) is given after the argument it turns the value into
+    a percentage of the screen size in that direction. Positions are specified
+    similar to the standard X11 ``--geometry`` option format, in which e.g.
+    +10-50 means "place 10 pixels from the left border and 50 pixels from the
+    lower border" and "--20+-10" means "place 20 pixels beyond the right and
+    10 pixels beyond the top border".
+
+    If an external window is specified using the ``--wid`` option,
     then the x and y coordinates are relative to the top-left corner of the
     window rather than the screen. The coordinates are relative to the screen
     given with ``--screen`` for the video output drivers that fully
     support ``--screen``.
 
-    *NOTE*: May not be supported by some of the older VO drivers.
+    *NOTE*: Generally only supported by GUI VOs. Ignored for encoding.
 
     *NOTE (OSX)*: On Mac OSX the origin of the screen coordinate system is
     located on the the bottom-left corner. For instance, ``0:0`` will place the
@@ -695,10 +737,21 @@
         Places the window at x=50, y=40.
     ``50%:50%``
         Places the window in the middle of the screen.
-    ``100%``
-        Places the window at the middle of the right edge of the screen.
     ``100%:100%``
         Places the window at the bottom right corner of the screen.
+    ``50%``
+        Sets the window width to half the screen width. Window height is set so
+        that the window has the video aspect ratio.
+    ``50%x50%``
+        Forces the window width and height to half the screen width and height.
+        Will show black borders to compensate for the video aspect ration (with
+        most VOs and without ``--no-keepaspect``).
+    ``50%+10+10``
+        Sets the window to half the screen widths, and positions it 10 pixels
+        below/left of the top left corner of the screen.
+
+    See also ``--autofit`` and ``--autofit-larger`` for fitting the window into
+    a given size without changing aspect ratio.
 
 --grabpointer, --no-grabpointer
     ``--no-grabpointer`` tells the player to not grab the mouse pointer after a
@@ -758,8 +811,6 @@
 --http-header-fields=<field1,field2>
     Set custom HTTP fields when accessing HTTP stream.
 
-    *WARNING*: works with the deprecated ``mp_http://`` protocol only.
-
     *EXAMPLE*:
 
             ``mpv --http-header-fields='Field1: value1','Field2: value2' http://localhost:1234``
@@ -778,6 +829,18 @@
     Adjust the hue of the video signal (default: 0). You can get a colored
     negative of the image with this option. Not supported by all video output
     drivers.
+
+--hwdec=<api>
+    Specify the hardware video decoding API that should be used if possible.
+    Whether hardware decoding is actually done depends on the video codec. If
+    hardware decoding is not possible, mpv will fall back to software decoding.
+
+    <api> can be one of the following:
+
+    :no:        always use software decoding (default)
+    :vdpau:     works with nvidia drivers only, requires ``--vo=vdpau``
+    :vda:       OSX
+    :crystalhd: Broadcom Crystal HD
 
 --identify
     Deprecated. Use ``TOOLS/mpv_identify.sh``.
@@ -823,8 +886,7 @@
 
     conf=<filename>
         Specify input configuration file other than the default
-        ``~/.mpv/input.conf``. ``~/.mpv/<filename>`` is assumed if no
-        full path is given.
+        ``~/.mpv/input.conf``.
 
     ar-dev=<device>
         Device to be used for Apple IR Remote (default is autodetected, Linux
@@ -937,7 +999,7 @@
         :8:      macroblock (MB) type
         :16:     per-block quantization parameter (QP)
         :32:     motion vector
-        :0x0040: motion vector visualization (use ``--no-slices``)
+        :0x0040: motion vector visualization
         :0x0080: macroblock (MB) skip
         :0x0100: startcode
         :0x0200: PTS
@@ -968,19 +1030,6 @@
     idct=<0-99>
         For best decoding quality use the same IDCT algorithm for decoding and
         encoding. This may come at a price in accuracy, though.
-
-    lowres=<number>[,<w>]
-        Decode at lower resolutions. Low resolution decoding is not supported
-        by all codecs, and it will often result in ugly artifacts. This is not
-        a bug, but a side effect of not decoding at full resolution.
-
-        :0: disabled
-        :1: 1/2 resolution
-        :2: 1/4 resolution
-        :3: 1/8 resolution
-
-        If <w> is specified lowres decoding will be used only if the width of
-        the video is major than or equal to <w>.
 
     o=<key>=<value>[,<key>=<value>[,...]]
         Pass AVOptions to libavcodec decoder. Note, a patch to make the o=
@@ -1034,8 +1083,6 @@
         :2: Visualize forward predicted MVs of B-frames.
         :4: Visualize backward predicted MVs of B-frames.
 
-    vstats
-        Prints some statistics and stores them in ``./vstats_*.log``.
 
 --lavfdopts=<option1:option2:...>
     Specify parameters for libavformat demuxers (``--demuxer=lavf``). Separate
@@ -1203,17 +1250,16 @@
     Disables colorkeying. Only supported by the xv (see ``--vo=xv:ck``) video
     output driver.
 
---no-config=<options>
-    Do not parse selected configuration files.
+--no-config
+    Do not load default configuration files. This prevents loading of
+    ``~/.mpv/config`` and ``~/.mpv/input.conf``, as well as loading the
+    same files from system wide configuration directories.
 
-    *NOTE*: If ``--include`` or ``--use-filedir-conf`` options are specified
-    at the command line, they will be honoured.
+    Loading of some configuration files is not affected by this option, such
+    as configuration files for cddb, DVB code and fontconfig.
 
-    Available options are:
-
-    :all:    all configuration files
-    :system: system configuration file
-    :user:   user configuration file
+    *NOTE*: Files explicitly requested by command line options, like
+    ``--include`` or ``--use-filedir-conf``, will still be loaded.
 
 --no-idx
     Do not use index present in the file even if one is present.
@@ -1516,6 +1562,16 @@
     Particularly useful on slow terminals or broken ones which do not properly
     handle carriage return (i.e. \\r).
 
+--quvi-format=<best|default|...>
+    Video format/quality that is directly passed to libquvi (default: ``best``).
+    This is used when opening links to streaming sites like YouTube. The
+    interpretation of this value is highly specific to the streaming site and
+    the video. The only well defined values that work on all sites are ``best``
+    (best quality/highest bandwidth, default), and ``default`` (lowest quality).
+
+    The quvi command line tool can be used to find out which formats are
+    supported for a given URL: ``quvi --query-formats URL``.
+
 --radio=<option1:option2:...>
     These options set various parameters of the radio capture module. For
     listening to radio with mpv use ``radio://<frequency>`` (if channels
@@ -1539,12 +1595,6 @@
 
     volume=<0..100>
         sound volume for radio device (default 100)
-
-    freq_min=<value> (\*BSD BT848 only)
-        minimum allowed frequency (default: 87.50)
-
-    freq_max=<value> (\*BSD BT848 only)
-        maximum allowed frequency (default: 108.00)
 
     channels=<frequency>-<name>,<frequency>-<name>,...
         Set channel list. Use _ for spaces in names (or play with quoting ;-).
@@ -1593,10 +1643,11 @@
     :sqcif|qcif|cif|4cif|pal|ntsc: set standard image size
     :w=<value>:                    image width in pixels
     :h=<value>:                    image height in pixels
-    :i420|yv12|yuy2|y8:            set colorspace
     :format=<value>:               colorspace (fourcc) in hex or string
-                                   constant. Use ``--rawvideo=format=help``
-                                   for a list of possible strings.
+                                   constant.
+    :mp-format=<value>:            colorspace by internal video format
+                                   Use ``--rawvideo=mp-format=help``
+                                   for a list of possible formats.
     :size=<value>:                 frame size in Bytes
 
     *EXAMPLE*:
@@ -1612,8 +1663,6 @@
 
 --referrer=<string>
     Specify a referrer path or URL for HTTP requests.
-
-    *WARNING*: works with the deprecated ``mp_http://`` protocol only.
 
 --reuse-socket
     (udp:// only)
@@ -1758,12 +1807,6 @@
     protocol should be developed (and will, if there is enough interest).
 
     This affects smplayer, smplayer2, mplayerosx, and others.
-
---slices, --no-slices
-    Drawing video by 16-pixel height slices/bands, instead draws the
-    whole frame in a single run. May be faster or slower, depending on video
-    card and available cache. It has effect only with libavcodec codecs.
-    Enabled by default if applicable; usually disabled when threading is used.
 
 --softsleep
     Time frames by repeatedly checking the current time instead of asking
@@ -2008,13 +2051,10 @@
 
     driver=<value>
         See ``--tv=driver=help`` for a list of compiled-in TV input drivers.
-        available: dummy, v4l, v4l2, bsdbt848 (default: autodetect)
+        available: dummy, v4l2 (default: autodetect)
 
     device=<value>
-        Specify TV device (default: ``/dev/video0``). NOTE: For the bsdbt848
-        driver you can provide both bktr and tuner device names separating
-        them with a comma, tuner after bktr (e.g. ``--tv
-        device=/dev/bktr1,/dev/tuner1``).
+        Specify TV device (default: ``/dev/video0``).
 
     input=<value>
         Specify input (default: 0 (TV), see console output for available
@@ -2026,9 +2066,8 @@
 
     outfmt=<value>
         Specify the output format of the tuner with a preset value supported
-        by the V4L driver (yv12, rgb32, rgb24, rgb16, rgb15, uyvy, yuy2, i420)
-        or an arbitrary format given as hex value. Try outfmt=help for a list
-        of all available formats.
+        by the V4L driver (YV12, UYVY, YUY2, I420)
+        or an arbitrary format given as hex value.
 
     width=<value>
         output window width
@@ -2043,8 +2082,7 @@
         maximum size of the capture buffer in megabytes (default: dynamical)
 
     norm=<value>
-        For bsdbt848 and v4l, PAL, SECAM, NTSC are available. For v4l2, see
-        the console output for a list of all available norms, also see the
+        See the console output for a list of all available norms, also see the
         normid option below.
 
     normid=<value> (v4l2 only)
@@ -2215,8 +2253,6 @@
 --user-agent=<string>
     Use <string> as user agent for HTTP streaming.
 
-    *WARNING*: works with the deprecated ``mp_http://`` protocol only.
-
 -v
     Increment verbosity level, one level for each ``-v`` found on the command
     line.
@@ -2272,10 +2308,6 @@
     (X11 and win32 only)
     This tells mpv to attach to an existing window.See ``--slave-broken``.
 
---x=<width>
-    Scale image to width <width> (if software/hardware scaling is available).
-    Disables aspect calculations.
-
 --screen=<all|current|0-32>
     In multi-monitor configurations (i.e. a single desktop that spans across
     multiple displays) this option tells mpv which screen to display the
@@ -2287,13 +2319,3 @@
     This option is not suitable to only set the startup screen (because it
     will always display on the given screen in fullscreen mode),
     ``--geometry`` is the best that is available for that purpose currently.
-
---xy=<value>
-
-    :value<=8: Scale image by factor <value>.
-    :value>8:  Set width to value and calculate height to keep correct aspect
-               ratio.
-
---y=<height>
-    Scale image to height <height> (if software/hardware scaling is available).
-    Disables aspect calculations.

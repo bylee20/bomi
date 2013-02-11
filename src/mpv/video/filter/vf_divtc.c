@@ -46,6 +46,7 @@ struct vf_priv_s
    unsigned int *csdata;
    int *history;
    struct vf_detc_pts_buf ptsbuf;
+   struct mp_image *buffer;
    };
 
 /*
@@ -61,7 +62,7 @@ static int diff_MMX(unsigned char *old, unsigned char *new, int os, int ns)
 	"pxor %%mm4, %%mm4 \n\t"
 	"pxor %%mm7, %%mm7 \n\t"
 
-	ASMALIGN(4)
+	".align 4 \n\t"
 	"1: \n\t"
 
 	"movq (%%"REG_S"), %%mm0 \n\t"
@@ -198,20 +199,13 @@ static int imgop(int(*planeop)(unsigned char *, unsigned char *,
 			       int, int, int, int, int),
 		 mp_image_t *dst, mp_image_t *src, int arg)
    {
-   if(dst->flags&MP_IMGFLAG_PLANAR)
-      return planeop(dst->planes[0], src?src->planes[0]:0,
-		     dst->w, dst->h,
-		     dst->stride[0], src?src->stride[0]:0, arg)+
-	     planeop(dst->planes[1], src?src->planes[1]:0,
-		     dst->chroma_width, dst->chroma_height,
-		     dst->stride[1], src?src->stride[1]:0, arg)+
-	     planeop(dst->planes[2], src?src->planes[2]:0,
-		     dst->chroma_width, dst->chroma_height,
-		     dst->stride[2], src?src->stride[2]:0, arg);
-
-   return planeop(dst->planes[0], src?src->planes[0]:0,
-		  dst->w*(dst->bpp/8), dst->h,
-		  dst->stride[0], src?src->stride[0]:0, arg);
+       int sum = 0;
+       for (int p = 0; p < dst->num_planes; p++) {
+           sum += planeop(dst->planes[p], src ? src->planes[p] : NULL,
+                          dst->w * (dst->fmt.bpp[p] / 8), dst->plane_h[p],
+                          dst->stride[p], src ? src->stride[p] : 0, arg);
+       }
+       return sum;
    }
 
 /*
@@ -258,19 +252,23 @@ static int match(struct vf_priv_s *p, int *diffs,
    return m;
    }
 
-static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
+static struct mp_image *filter(struct vf_instance *vf, struct mp_image *mpi)
    {
-   mp_image_t *dmpi, *tmpi=0;
    int n, m, f, newphase;
    struct vf_priv_s *p=vf->priv;
    unsigned int checksum;
    double d;
 
-   dmpi=vf_get_image(vf->next, mpi->imgfmt,
-		     MP_IMGTYPE_STATIC, MP_IMGFLAG_ACCEPT_STRIDE |
-		     MP_IMGFLAG_PRESERVE | MP_IMGFLAG_READABLE,
-		     mpi->width, mpi->height);
-   vf_clone_mpi_attributes(dmpi, mpi);
+   if (!p->buffer || p->buffer->w != mpi->w || p->buffer->h != mpi->h ||
+       p->buffer->imgfmt != mpi->imgfmt)
+   {
+       mp_image_unrefp(&p->buffer);
+       p->buffer = mp_image_alloc(mpi->imgfmt, mpi->w, mpi->h);
+       talloc_steal(vf, p->buffer);
+   }
+
+   struct mp_image *dmpi = p->buffer;
+   double pts = mpi->pts;
 
    newphase=p->phase;
 
@@ -360,26 +358,24 @@ static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
       case 0:
 	 imgop(copyop, dmpi, mpi, 0);
          vf_detc_adjust_pts(&p->ptsbuf, pts, 0, 1);
+         talloc_free(mpi);
 	 return 0;
 
       case 4:
 	 if(p->deghost>0)
 	    {
-	    tmpi=vf_get_image(vf->next, mpi->imgfmt,
-			      MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE |
-			      MP_IMGFLAG_READABLE,
-			      mpi->width, mpi->height);
-	    vf_clone_mpi_attributes(tmpi, mpi);
+            imgop(copyop, dmpi, mpi, 0);
+            vf_make_out_image_writeable(vf, mpi);
 
-	    imgop(copyop, tmpi, mpi, 0);
-	    imgop(deghost_plane, tmpi, dmpi, p->deghost);
-	    imgop(copyop, dmpi, mpi, 0);
-	    return vf_next_put_image(vf, tmpi, vf_detc_adjust_pts(&p->ptsbuf, pts, 0, 0));
+	    imgop(deghost_plane, mpi, dmpi, p->deghost);
+            mpi->pts = vf_detc_adjust_pts(&p->ptsbuf, pts, 0, 0);
+	    return mpi;
 	    }
       }
 
    imgop(copyop, dmpi, mpi, 0);
-   return vf_next_put_image(vf, dmpi, vf_detc_adjust_pts(&p->ptsbuf, pts, 0, 0));
+   mpi->pts = vf_detc_adjust_pts(&p->ptsbuf, pts, 0, 0);
+   return mpi;
    }
 
 static int analyze(struct vf_priv_s *p)
@@ -574,11 +570,10 @@ static int query_format(struct vf_instance *vf, unsigned int fmt)
    {
    switch(fmt)
       {
-      case IMGFMT_444P: case IMGFMT_IYUV: case IMGFMT_RGB24:
+      case IMGFMT_444P: case IMGFMT_RGB24:
       case IMGFMT_422P: case IMGFMT_UYVY: case IMGFMT_BGR24:
-      case IMGFMT_411P: case IMGFMT_YUY2: case IMGFMT_IF09:
-      case IMGFMT_YV12: case IMGFMT_I420: case IMGFMT_YVU9:
-      case IMGFMT_IUYV: case IMGFMT_Y800: case IMGFMT_Y8:
+      case IMGFMT_411P: case IMGFMT_YUYV: case IMGFMT_410P:
+      case IMGFMT_420P: case IMGFMT_Y8:
 	 return vf_next_query_format(vf,fmt);
       }
 
@@ -597,6 +592,16 @@ static void uninit(struct vf_instance *vf)
       }
    }
 
+static int control(vf_instance_t *vf, int request, void *data)
+{
+    switch (request) {
+    case VFCTRL_SEEK_RESET:
+        vf_detc_init_pts_buf(&vf->priv->ptsbuf);
+        break;
+    }
+    return vf_next_control(vf, request, data);
+}
+
 static int vf_open(vf_instance_t *vf, char *args)
    {
    struct vf_priv_s *p;
@@ -613,10 +618,10 @@ static int vf_open(vf_instance_t *vf, char *args)
       return 0;
       }
 
-   vf->put_image=put_image;
+   vf->filter=filter;
    vf->uninit=uninit;
    vf->query_format=query_format;
-   vf->default_reqs=VFCAP_ACCEPT_STRIDE;
+   vf->control=control;
    if(!(vf->priv=p=calloc(1, sizeof(struct vf_priv_s))))
       goto nomem;
 

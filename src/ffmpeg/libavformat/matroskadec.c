@@ -1788,6 +1788,7 @@ static int matroska_read_header(AVFormatContext *s)
             st->codec->codec_type = AVMEDIA_TYPE_AUDIO;
             st->codec->sample_rate = track->audio.out_samplerate;
             st->codec->channels = track->audio.channels;
+            st->codec->bits_per_coded_sample = track->audio.bitdepth;
             if (st->codec->codec_id != AV_CODEC_ID_AAC)
             st->need_parsing = AVSTREAM_PARSE_HEADERS;
         } else if (track->type == MATROSKA_TRACK_TYPE_SUBTITLE) {
@@ -1881,6 +1882,7 @@ static int matroska_deliver_packet(MatroskaDemuxContext *matroska,
  */
 static void matroska_clear_queue(MatroskaDemuxContext *matroska)
 {
+    matroska->prev_pkt = NULL;
     if (matroska->packets) {
         int n;
         for (n = 0; n < matroska->num_packets; n++) {
@@ -2388,7 +2390,6 @@ static int matroska_read_seek(AVFormatContext *s, int stream_index,
         avio_seek(s->pb, st->index_entries[st->nb_index_entries-1].pos, SEEK_SET);
         matroska->current_id = 0;
         while ((index = av_index_search_timestamp(st, timestamp, flags)) < 0) {
-            matroska->prev_pkt = NULL;
             matroska_clear_queue(matroska);
             if (matroska_parse_cluster(matroska) < 0)
                 break;
@@ -2417,9 +2418,14 @@ static int matroska_read_seek(AVFormatContext *s, int stream_index,
 
     avio_seek(s->pb, st->index_entries[index_min].pos, SEEK_SET);
     matroska->current_id = 0;
-    st->skip_to_keyframe =
-    matroska->skip_to_keyframe = !(flags & AVSEEK_FLAG_ANY);
-    matroska->skip_to_timecode = st->index_entries[index].timestamp;
+    if (flags & AVSEEK_FLAG_ANY) {
+        st->skip_to_keyframe = 0;
+        matroska->skip_to_timecode = timestamp;
+    } else {
+        st->skip_to_keyframe = 1;
+        matroska->skip_to_timecode = st->index_entries[index].timestamp;
+    }
+    matroska->skip_to_keyframe = 1;
     matroska->done = 0;
     matroska->num_levels = 0;
     ff_update_cur_dts(s, st, st->index_entries[index].timestamp);

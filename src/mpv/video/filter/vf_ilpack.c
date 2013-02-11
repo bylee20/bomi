@@ -83,7 +83,7 @@ static void pack_nn_MMX(unsigned char *dst, unsigned char *y,
     int av_unused us, int av_unused vs)
 {
     __asm__ volatile (""
-        ASMALIGN(4)
+        ".align 4 \n\t"
         "1: \n\t"
         "movq (%0), %%mm1 \n\t"
         "movq (%0), %%mm2 \n\t"
@@ -123,7 +123,7 @@ static void pack_li_0_MMX(unsigned char *dst, unsigned char *y,
 #endif
         "pxor %%mm0, %%mm0 \n\t"
 
-        ASMALIGN(4)
+        ".align 4 \n\t"
         ".Lli0: \n\t"
         "movq (%%"REG_S"), %%mm1 \n\t"
         "movq (%%"REG_S"), %%mm2 \n\t"
@@ -231,7 +231,7 @@ static void pack_li_1_MMX(unsigned char *dst, unsigned char *y,
 #endif
         "pxor %%mm0, %%mm0 \n\t"
 
-        ASMALIGN(4)
+        ".align 4 \n\t"
         ".Lli1: \n\t"
         "movq (%%"REG_S"), %%mm1 \n\t"
         "movq (%%"REG_S"), %%mm2 \n\t"
@@ -372,18 +372,16 @@ static void ilpack(unsigned char *dst, unsigned char *src[3],
 }
 
 
-static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
+static struct mp_image *filter(struct vf_instance *vf, struct mp_image *mpi)
 {
-    mp_image_t *dmpi;
+    mp_image_t *dmpi = vf_alloc_out_image(vf);
+    mp_image_copy_attributes(dmpi, mpi);
 
-    // hope we'll get DR buffer:
-    dmpi=vf_get_image(vf->next, IMGFMT_YUY2,
-              MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-              mpi->w, mpi->h);
 
     ilpack(dmpi->planes[0], mpi->planes, dmpi->stride[0], mpi->stride, mpi->w, mpi->h, vf->priv->pack);
 
-    return vf_next_put_image(vf,dmpi, pts);
+    talloc_free(mpi);
+    return dmpi;
 }
 
 static int config(struct vf_instance *vf,
@@ -391,7 +389,7 @@ static int config(struct vf_instance *vf,
           unsigned int flags, unsigned int outfmt)
 {
     /* FIXME - also support UYVY output? */
-    return vf_next_config(vf, width, height, d_width, d_height, flags, IMGFMT_YUY2);
+    return vf_next_config(vf, width, height, d_width, d_height, flags, IMGFMT_YUYV);
 }
 
 
@@ -399,10 +397,8 @@ static int query_format(struct vf_instance *vf, unsigned int fmt)
 {
     /* FIXME - really any YUV 4:2:0 input format should work */
     switch (fmt) {
-    case IMGFMT_YV12:
-    case IMGFMT_IYUV:
-    case IMGFMT_I420:
-        return vf_next_query_format(vf,IMGFMT_YUY2);
+    case IMGFMT_420P:
+        return vf_next_query_format(vf,IMGFMT_YUYV);
     }
     return 0;
 }
@@ -411,7 +407,7 @@ static int vf_open(vf_instance_t *vf, char *args)
 {
     vf->config=config;
     vf->query_format=query_format;
-    vf->put_image=put_image;
+    vf->filter=filter;
     vf->priv = calloc(1, sizeof(struct vf_priv_s));
     vf->priv->mode = 1;
     if (args) sscanf(args, "%d", &vf->priv->mode);

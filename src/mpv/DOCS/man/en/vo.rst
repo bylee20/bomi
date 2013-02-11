@@ -62,9 +62,7 @@ x11 (X11 only)
 
 vdpau (X11 only)
     Uses the VDPAU interface to display and optionally also decode video.
-    Hardware decoding is used with ``--vc=ffmpeg12vdpau``,
-    ``--vc=ffwmv3vdpau``, ``--vc=ffvc1vdpau``, ``--vc=ffh264vdpau`` or
-    ``--vc=ffodivxvdpau``.
+    Hardware decoding is used with ``--hwdec=vdpau``.
 
     sharpen=<-1-1>
         For positive values, apply a sharpening algorithm to the video, for
@@ -212,15 +210,6 @@ direct3d_shaders (Windows only)
     exact-backbuffer
         Always resize the backbuffer to window size.
 
-    no16bit-textures
-        Don't use textures with a 16 bit color channel for YUV formats that
-        use more than 8 bits per component. Instead, use D3DFMT_A8L8 textures
-        and compute the values sampled from the 2 channels back into one.
-        Might be slower, since the shader becomes slightly more complicated.
-        Might work better, if your drivers either don't support D3DFMT_L16,
-        or if either the texture unit or the shaders don't operate in at least
-        16 bit precision.
-
 direct3d (Windows only)
     Same as ``direct3d_shaders``, but with the options ``disable-textures``
     and ``disable-shaders`` forced.
@@ -345,11 +334,6 @@ opengl
             8 bits per component are assumed.
         8
             Dither to 8 bit output.
-
-        Note that dithering will always be disabled if the bit depth
-        of the video is lower or equal to the detected dither-depth.
-        If color management is enabled, input depth is assumed to be
-        16 bits, because the 3D LUT output is 16 bit wide.
 
         Note that the depth of the connected video display device can not be
         detected. Often, LCD panels will do dithering on their own, which

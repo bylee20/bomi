@@ -75,6 +75,7 @@ struct ao;
 
 struct ao_driver {
     bool is_new;
+    bool encode;
     const struct ao_info *info;
     const struct ao_old_functions *old_functions;
     int (*control)(struct ao *ao, enum aocontrol cmd, void *arg);
@@ -102,8 +103,8 @@ struct ao {
     bool probing;
     bool initialized;
     bool untimed;
-    bool no_persistent_volume;
-    bool per_application_mixer;
+    bool no_persistent_volume;  // the AO does the equivalent of af_volume
+    bool per_application_mixer; // like above, but volume persists (per app)
     const struct ao_driver *driver;
     void *priv;
     struct encode_lavc_context *encode_lavc_ctx;

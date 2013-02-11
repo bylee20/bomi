@@ -51,7 +51,6 @@
 #include "audio/filter/af.h"
 #include "video/decode/dec_video.h"
 #include "audio/decode/dec_audio.h"
-#include "osdep/strsep.h"
 #include "sub/spudec.h"
 #include "core/path.h"
 #include "sub/ass_mp.h"
@@ -1740,6 +1739,23 @@ static void show_tracks_on_osd(MPContext *mpctx)
     talloc_free(res);
 }
 
+static void show_playlist_on_osd(MPContext *mpctx)
+{
+    struct MPOpts *opts = &mpctx->opts;
+    char *res = NULL;
+
+    for (struct playlist_entry *e = mpctx->playlist->first; e; e = e->next) {
+        if (mpctx->playlist->current == e) {
+            res = talloc_asprintf_append(res, "> %s <\n", e->filename);
+        } else {
+            res = talloc_asprintf_append(res, "%s\n", e->filename);
+        }
+    }
+
+    set_osd_msg(mpctx, OSD_MSG_TEXT, 1, opts->osd_duration, "%s", res);
+    talloc_free(res);
+}
+
 void run_command(MPContext *mpctx, mp_cmd_t *cmd)
 {
     struct MPOpts *opts = &mpctx->opts;
@@ -1828,27 +1844,6 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
         break;
     }
 
-    case MP_CMD_EDL_MARK:
-        if (edl_fd) {
-            float v = get_current_time(mpctx);
-            if (mpctx->begin_skip == MP_NOPTS_VALUE) {
-                mpctx->begin_skip = v;
-                mp_tmsg(MSGT_CPLAYER, MSGL_INFO,
-                        "EDL skip start, press 'i' again to end block.\n");
-            } else {
-                if (mpctx->begin_skip > v)
-                    mp_tmsg(MSGT_CPLAYER, MSGL_WARN,
-                            "EDL skip canceled, last start > stop\n");
-                else {
-                    fprintf(edl_fd, "%f %f %d\n", mpctx->begin_skip, v, 0);
-                    mp_tmsg(MSGT_CPLAYER, MSGL_INFO,
-                            "EDL skip end, line written.\n");
-                }
-                mpctx->begin_skip = MP_NOPTS_VALUE;
-            }
-        }
-        break;
-
     case MP_CMD_SPEED_MULT: {
         float v = cmd->args[0].v.f;
         v *= mpctx->opts.playback_speed;
@@ -1872,7 +1867,7 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
         int dir = cmd->id == MP_CMD_PLAYLIST_PREV ? -1 : +1;
         int force = cmd->args[0].v.i;
 
-        struct playlist_entry *e = playlist_get_next(mpctx->playlist, dir);
+        struct playlist_entry *e = mp_next_file(mpctx, dir);
         if (!e && !force)
             break;
         mpctx->playlist->current = e;
@@ -2266,16 +2261,19 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
         if (!sh_audio)
             break;
         char *af_args = strdup(cmd->args[0].v.s);
-        char *af_commands = af_args;
-        char *af_command;
+        bstr af_commands = bstr0(af_args);
         struct af_instance *af;
-        while ((af_command = strsep(&af_commands, ",")) != NULL) {
+        while (af_commands.len) {
+            bstr af_command;
+            bstr_split_tok(af_commands, ",", &af_command, &af_commands);
+            char *af_command0 = bstrdup0(NULL, af_command);
             if (cmd->id == MP_CMD_AF_DEL) {
-                af = af_get(mpctx->mixer.afilter, af_command);
+                af = af_get(mpctx->mixer.afilter, af_command0);
                 if (af != NULL)
                     af_remove(mpctx->mixer.afilter, af);
             } else
-                af_add(mpctx->mixer.afilter, af_command);
+                af_add(mpctx->mixer.afilter, af_command0);
+            talloc_free(af_command0);
         }
         reinit_audio_chain(mpctx);
         free(af_args);
@@ -2305,6 +2303,9 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
         break;
     case MP_CMD_SHOW_TRACKS:
         show_tracks_on_osd(mpctx);
+        break;
+    case MP_CMD_SHOW_PLAYLIST:
+        show_playlist_on_osd(mpctx);
         break;
 
     default:

@@ -139,6 +139,8 @@ Component options:
   --disable-mdct           disable MDCT code
   --disable-rdft           disable RDFT code
   --disable-fft            disable FFT code
+
+Hardware accelerators:
   --enable-dxva2           enable DXVA2 code
   --enable-vaapi           enable VAAPI code [autodetect]
   --enable-vda             enable VDA code   [autodetect]
@@ -225,7 +227,7 @@ External library support:
   --enable-libvo-amrwbenc  enable AMR-WB encoding via libvo-amrwbenc [no]
   --enable-libvorbis       enable Vorbis en/decoding via libvorbis,
                            native implementation exists [no]
-  --enable-libvpx          enable VP8 de/encoding via libvpx [no]
+  --enable-libvpx          enable VP8 and VP9 de/encoding via libvpx [no]
   --enable-libx264         enable H.264 encoding via x264 [no]
   --enable-libxavs         enable AVS encoding via xavs [no]
   --enable-libxvid         enable Xvid encoding via xvidcore,
@@ -789,8 +791,8 @@ check_ld(){
     log check_ld "$@"
     type=$1
     shift 1
-    flags=$(filter_out '-l*' $@)
-    libs=$(filter '-l*' $@)
+    flags=$(filter_out '-l*|*.so' $@)
+    libs=$(filter '-l*|*.so' $@)
     check_$type $($cflags_filter $flags) || return
     flags=$($ldflags_filter $flags)
     libs=$($ldflags_filter $libs)
@@ -1109,6 +1111,13 @@ DOCUMENT_LIST="
     txtpages
 "
 
+HWACCEL_LIST="
+    dxva2
+    vaapi
+    vda
+    vdpau
+"
+
 LIBRARY_LIST="
     avcodec
     avdevice
@@ -1131,6 +1140,7 @@ PROGRAM_LIST="
 CONFIG_LIST="
     $COMPONENT_LIST
     $DOCUMENT_LIST
+    $HWACCEL_LIST
     $LIBRARY_LIST
     $PROGRAM_LIST
     avisynth
@@ -1138,7 +1148,6 @@ CONFIG_LIST="
     crystalhd
     dct
     dwt
-    dxva2
     fast_unaligned
     fft
     fontconfig
@@ -1207,9 +1216,6 @@ CONFIG_LIST="
     static
     swscale_alpha
     thumb
-    vaapi
-    vda
-    vdpau
     version3
     xmm_clobber_test
     x11grab
@@ -1300,6 +1306,7 @@ HAVE_LIST_PUB='
 MATH_FUNCS="
     atanf
     atan2f
+    cbrt
     cbrtf
     cosf
     exp2
@@ -1343,6 +1350,8 @@ HAVE_LIST="
     asm_types_h
     attribute_may_alias
     attribute_packed
+    cdio_paranoia_h
+    cdio_paranoia_paranoia_h
     clock_gettime
     closesocket
     cmov
@@ -1379,6 +1388,7 @@ HAVE_LIST="
     gettimeofday
     glob
     gnu_as
+    gsm_h
     ibm_asm
     inet_aton
     io_h
@@ -1650,7 +1660,7 @@ cook_decoder_select="mdct sinewin"
 cscd_decoder_select="lzo"
 cscd_decoder_suggest="zlib"
 dca_decoder_select="mdct"
-dirac_decoder_select="dwt golomb"
+dirac_decoder_select="dwt golomb videodsp"
 dnxhd_encoder_select="aandcttables mpegvideoenc"
 dxa_decoder_select="zlib"
 eac3_decoder_select="ac3_decoder"
@@ -1783,6 +1793,7 @@ vda_deps="VideoDecodeAcceleration_VDADecoder_h pthreads"
 vdpau_deps="vdpau_vdpau_h vdpau_vdpau_x11_h"
 
 h263_vaapi_hwaccel_select="vaapi h263_decoder"
+h263_vdpau_hwaccel_select="vdpau h263_decoder"
 h264_crystalhd_decoder_select="crystalhd h264_mp4toannexb_bsf h264_parser"
 h264_dxva2_hwaccel_deps="dxva2api_h"
 h264_dxva2_hwaccel_select="dxva2 h264_decoder"
@@ -1791,6 +1802,7 @@ h264_vda_decoder_select="vda h264_parser h264_decoder"
 h264_vda_hwaccel_deps="VideoDecodeAcceleration_VDADecoder_h pthreads"
 h264_vda_hwaccel_select="vda h264_decoder"
 h264_vdpau_decoder_select="vdpau h264_decoder"
+h264_vdpau_hwaccel_select="vdpau h264_decoder"
 mpeg_vdpau_decoder_select="vdpau mpegvideo_decoder"
 mpeg1_vdpau_decoder_select="vdpau mpeg1video_decoder"
 mpeg1_vdpau_hwaccel_select="vdpau mpeg1video_decoder"
@@ -1799,22 +1811,26 @@ mpeg2_dxva2_hwaccel_deps="dxva2api_h"
 mpeg2_dxva2_hwaccel_select="dxva2 mpeg2video_decoder"
 mpeg2_vdpau_hwaccel_select="vdpau mpeg2video_decoder"
 mpeg2_vaapi_hwaccel_select="vaapi mpeg2video_decoder"
+mpeg2_vdpau_hwaccel_select="vdpau mpeg2video_decoder"
 mpeg4_crystalhd_decoder_select="crystalhd"
 mpeg4_vaapi_hwaccel_select="vaapi mpeg4_decoder"
 mpeg4_vdpau_decoder_select="vdpau mpeg4_decoder"
+mpeg4_vdpau_hwaccel_select="vdpau mpeg4_decoder"
 msmpeg4_crystalhd_decoder_select="crystalhd"
 vc1_crystalhd_decoder_select="crystalhd"
 vc1_dxva2_hwaccel_deps="dxva2api_h"
 vc1_dxva2_hwaccel_select="dxva2 vc1_decoder"
 vc1_vaapi_hwaccel_select="vaapi vc1_decoder"
 vc1_vdpau_decoder_select="vdpau vc1_decoder"
+vc1_vdpau_hwaccel_select="vdpau vc1_decoder"
 wmv3_crystalhd_decoder_select="crystalhd"
 wmv3_dxva2_hwaccel_select="vc1_dxva2_hwaccel"
 wmv3_vaapi_hwaccel_select="vc1_vaapi_hwaccel"
 wmv3_vdpau_decoder_select="vc1_vdpau_decoder"
+wmv3_vdpau_hwaccel_select="vc1_vdpau_hwaccel"
 
 # parsers
-h264_parser_select="error_resilience golomb h264dsp h264pred mpegvideo"
+h264_parser_select="error_resilience golomb h264chroma h264dsp h264pred h264qpel mpegvideo"
 mpeg4video_parser_select="error_resilience mpegvideo"
 mpegvideo_parser_select="error_resilience mpegvideo"
 vc1_parser_select="error_resilience mpegvideo"
@@ -1850,8 +1866,10 @@ libvo_aacenc_encoder_deps="libvo_aacenc"
 libvo_amrwbenc_encoder_deps="libvo_amrwbenc"
 libvorbis_decoder_deps="libvorbis"
 libvorbis_encoder_deps="libvorbis"
-libvpx_decoder_deps="libvpx"
-libvpx_encoder_deps="libvpx"
+libvpx_vp8_decoder_deps="libvpx"
+libvpx_vp8_encoder_deps="libvpx"
+libvpx_vp9_decoder_deps="libvpx"
+libvpx_vp9_encoder_deps="libvpx"
 libx264_encoder_deps="libx264"
 libx264rgb_encoder_deps="libx264"
 libxavs_encoder_deps="libxavs"
@@ -1958,6 +1976,7 @@ rtmpts_protocol_select="ffrtmphttp_protocol https_protocol"
 rtp_protocol_select="udp_protocol"
 sctp_protocol_deps="struct_sctp_event_subscribe"
 sctp_protocol_select="network"
+srtp_protocol_select="rtp_protocol"
 tcp_protocol_select="network"
 tls_protocol_deps_any="openssl gnutls"
 tls_protocol_select="tcp_protocol"
@@ -2490,7 +2509,8 @@ suncc_flags(){
                     core2)              echo -xarch=ssse3 -xchip=core2   ;;
                     corei7)           echo -xarch=sse4_2 -xchip=nehalem  ;;
                     corei7-avx)       echo -xarch=avx -xchip=sandybridge ;;
-                    amdfam10|barcelona|bdver*) echo -xarch=sse4_1        ;;
+                    amdfam10|barcelona)       echo -xtarget=barcelona    ;;
+                    bdver*)                   echo -xarch=avx            ;;
                     athlon-4|athlon-[mx]p)    echo -xarch=ssea           ;;
                     k8|opteron|athlon64|athlon-fx)
                                               echo -xarch=sse2a          ;;
@@ -2501,7 +2521,8 @@ suncc_flags(){
             -fomit-frame-pointer) echo -xregs=frameptr    ;;
             -fPIC)                echo -KPIC -xcode=pic32 ;;
             -W*,*)                echo $flag              ;;
-            -f*-*|-W*)                                    ;;
+            -f*-*|-W*|-mimpure-text)                      ;;
+            -shared)              echo -G                 ;;
             *)                    echo $flag              ;;
         esac
     done
@@ -3076,7 +3097,7 @@ check_64bit(){
 }
 
 case "$arch" in
-    alpha|ia64)
+    aarch64|alpha|ia64)
         spic=$shared
     ;;
     mips)
@@ -3139,12 +3160,6 @@ case $target_os in
         enabled gcc || check_ldflags -Wl,-zmuldefs
         ;;
     openbsd|bitrig)
-        # On OpenBSD 4.5. the compiler does not use PIC unless
-        # explicitly using -fPIC. FFmpeg builds fine without PIC,
-        # however the generated executable will not do anything
-        # (simply quits with exit-code 1, no crash, no output).
-        # Thus explicitly enable PIC here.
-        enable pic
         disable symver
         SHFLAGS='-shared'
         SLIBNAME_WITH_MAJOR='$(SLIBNAME).$(LIBVERSION)'
@@ -3338,12 +3353,17 @@ esac
 
 # determine libc flavour
 
+# uclibc defines __GLIBC__, so it needs to be checked before glibc.
 if check_cpp_condition features.h "defined __UCLIBC__"; then
     libc_type=uclibc
     add_cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
 elif check_cpp_condition features.h "defined __GLIBC__"; then
     libc_type=glibc
     add_cppflags -D_POSIX_C_SOURCE=200112 -D_XOPEN_SOURCE=600
+# MinGW headers can be installed on Cygwin, so check for newlib first.
+elif check_cpp_condition newlib.h "defined _NEWLIB_VERSION"; then
+    libc_type=newlib
+    add_cppflags -U__STRICT_ANSI__
 elif check_header _mingw.h; then
     libc_type=mingw
     check_cpp_condition _mingw.h \
@@ -3355,9 +3375,6 @@ elif check_header _mingw.h; then
         add_compat msvcrt/snprintf.o
         add_cflags "-include $source_path/compat/msvcrt/snprintf.h"
     fi
-elif check_cpp_condition newlib.h "defined _NEWLIB_VERSION"; then
-    libc_type=newlib
-    add_cppflags -U__STRICT_ANSI__
 elif check_func_headers stdlib.h _get_doserrno; then
     libc_type=msvcrt
     add_compat strtod.o strtod=avpriv_strtod
@@ -3817,7 +3834,6 @@ enabled libiec61883 && require libiec61883 libiec61883/iec61883.h iec61883_cmp_c
 enabled libaacplus && require  "libaacplus >= 2.0.0" aacplus.h aacplusEncOpen -laacplus
 enabled libass     && require_pkg_config libass ass/ass.h ass_library_init
 enabled libbluray  && require libbluray libbluray/bluray.h bd_open -lbluray
-enabled libcdio    && require2 libcdio "cdio/cdda.h cdio/paranoia.h" cdio_cddap_open -lcdio_paranoia -lcdio_cdda -lcdio
 enabled libcelt    && require libcelt celt/celt.h celt_decode -lcelt0 &&
                       { check_lib celt/celt.h celt_decoder_create_custom -lcelt0 ||
                         die "ERROR: libcelt must be installed and version must be >= 0.11.0."; }
@@ -3827,7 +3843,9 @@ enabled libfdk_aac && require  libfdk_aac fdk-aac/aacenc_lib.h aacEncOpen -lfdk-
 flite_libs="-lflite_cmu_time_awb -lflite_cmu_us_awb -lflite_cmu_us_kal -lflite_cmu_us_kal16 -lflite_cmu_us_rms -lflite_cmu_us_slt -lflite_usenglish -lflite_cmulex -lflite"
 enabled libflite   && require2 libflite "flite/flite.h" flite_init $flite_libs
 enabled libfreetype && require_pkg_config freetype2 "ft2build.h freetype/freetype.h" FT_Init_FreeType
-enabled libgsm     && require  libgsm gsm/gsm.h gsm_create -lgsm
+enabled libgsm     && { for gsm_hdr in "gsm.h" "gsm/gsm.h"; do
+                            check_lib "${gsm_hdr}" gsm_create -lgsm && break;
+                        done || die "ERROR: libgsm not found"; }
 enabled libilbc    && require  libilbc ilbc.h WebRtcIlbcfix_InitDecode -lilbc
 enabled libmodplug && require  libmodplug libmodplug/modplug.h ModPlug_Load -lmodplug
 enabled libmp3lame && require  "libmp3lame >= 3.98.3" lame/lame.h lame_set_VBR_quality -lmp3lame
@@ -3857,10 +3875,12 @@ enabled libvo_aacenc && require libvo_aacenc vo-aacenc/voAAC.h voGetAACEncAPI -l
 enabled libvo_amrwbenc && require libvo_amrwbenc vo-amrwbenc/enc_if.h E_IF_init -lvo-amrwbenc
 enabled libvorbis  && require  libvorbis vorbis/vorbisenc.h vorbis_info_init -lvorbisenc -lvorbis -logg
 enabled libvpx     && {
-    enabled libvpx_decoder && { check_lib2 "vpx/vpx_decoder.h vpx/vp8dx.h" vpx_codec_dec_init_ver -lvpx ||
-                                die "ERROR: libvpx decoder must be installed and version must be >=0.9.1"; }
-    enabled libvpx_encoder && { check_lib2 "vpx/vpx_encoder.h vpx/vp8cx.h" "vpx_codec_enc_init_ver VP8E_SET_MAX_INTRA_BITRATE_PCT" -lvpx ||
-                                die "ERROR: libvpx encoder version must be >=0.9.7"; } }
+    enabled libvpx_vp8_decoder && { check_lib2 "vpx/vpx_decoder.h vpx/vp8dx.h" vpx_codec_dec_init_ver -lvpx ||
+                                die "ERROR: libvpx decoder version must be >=0.9.1"; }
+    enabled libvpx_vp8_encoder && { check_lib2 "vpx/vpx_encoder.h vpx/vp8cx.h" "vpx_codec_enc_init_ver VP8E_SET_MAX_INTRA_BITRATE_PCT" -lvpx ||
+                                die "ERROR: libvpx encoder version must be >=0.9.7"; }
+    enabled libvpx_vp9_decoder && { check_lib2 "vpx/vpx_decoder.h vpx/vp8dx.h" "vpx_codec_vp9_dx" -lvpx || disable libvpx_vp9_decoder;  }
+    enabled libvpx_vp9_encoder && { check_lib2 "vpx/vpx_encoder.h vpx/vp8cx.h" "vpx_codec_vp9_cx" -lvpx || disable libvpx_vp9_encoder; } }
 enabled libx264    && require  libx264 x264.h x264_encoder_encode -lx264 &&
                       { check_cpp_condition x264.h "X264_BUILD >= 118" ||
                         die "ERROR: libx264 must be installed and version must be >= 0.118."; }
@@ -3916,7 +3936,7 @@ rsync --help 2> /dev/null | grep -q 'contimeout' && enable rsync_contimeout || d
 check_header linux/fb.h
 check_header linux/videodev.h
 check_header linux/videodev2.h
-check_struct linux/videodev2.h "struct v4l2_frmivalenum" discrete
+check_code cc linux/videodev2.h "struct v4l2_frmsizeenum vfse; vfse.discrete.width = 0;" && enable_safe struct_v4l2_frmivalenum_discrete
 
 check_header sys/videoio.h
 
@@ -3954,6 +3974,9 @@ enabled jack_indev && check_lib2 jack/jack.h jack_client_open -ljack && check_fu
 
 enabled_any sndio_indev sndio_outdev && check_lib2 sndio.h sio_open -lsndio
 
+if enabled libcdio; then
+    check_lib2 "cdio/cdda.h cdio/paranoia.h" cdio_cddap_open -lcdio_paranoia -lcdio_cdda -lcdio || check_lib2 "cdio/paranoia/cdda.h cdio/paranoia/paranoia.h" cdio_cddap_open -lcdio_paranoia -lcdio_cdda -lcdio
+fi
 
 enabled x11grab                                           &&
 require X11 X11/Xlib.h XOpenDisplay -lX11                 &&
@@ -4061,12 +4084,13 @@ if enabled icc; then
     check_cflags -w1
     # -wd: Disable following warnings
     # 144, 167, 556: -Wno-pointer-sign
+    # 188: enumerated type mixed with another type
     # 1292: attribute "foo" ignored
     # 1419: external declaration in primary source file
     # 10006: ignoring unknown option -fno-signed-zeros
     # 10148: ignoring unknown option -Wno-parentheses
     # 10156: ignoring option '-W'; no argument required
-    check_cflags -wd144,167,556,1292,1419,10006,10148,10156
+    check_cflags -wd144,167,188,556,1292,1419,10006,10148,10156
     # 11030: Warning unknown option --as-needed
     # 10156: ignoring option '-export'; no argument required
     check_ldflags -wd10156,11030
@@ -4090,6 +4114,7 @@ elif enabled gcc; then
     check_optflags -fno-tree-vectorize
     check_cflags -Werror=implicit-function-declaration
     check_cflags -Werror=missing-prototypes
+    check_cflags -Werror=return-type
     check_cflags -Werror=vla
 elif enabled llvm_gcc; then
     check_cflags -mllvm -stack-alignment=16
@@ -4098,6 +4123,7 @@ elif enabled clang; then
     check_cflags -Qunused-arguments
     check_cflags -Werror=implicit-function-declaration
     check_cflags -Werror=missing-prototypes
+    check_cflags -Werror=return-type
 elif enabled armcc; then
     # 2523: use of inline assembler is deprecated
     add_cflags -W${armcc_opt},--diag_suppress=2523
@@ -4366,7 +4392,7 @@ LD_PATH=$LD_PATH
 DLLTOOL=$dlltool
 LDFLAGS=$LDFLAGS
 LDFLAGS-ffserver=$FFSERVERLDFLAGS
-SHFLAGS=$SHFLAGS
+SHFLAGS=$(echo $($ldflags_filter $SHFLAGS))
 YASMFLAGS=$YASMFLAGS
 BUILDSUF=$build_suffix
 PROGSSUF=$progs_suffix
@@ -4505,7 +4531,7 @@ pkgconfig_generate(){
     requires=$5
     enabled ${name#lib} || return 0
     mkdir -p $name
-    cat <<EOF > $name/$name.pc
+    cat <<EOF > $name/$name${build_suffix}.pc
 prefix=$prefix
 exec_prefix=\${prefix}
 libdir=$libdir
@@ -4541,27 +4567,27 @@ Cflags: -I\${includedir}
 EOF
 }
 
-libavfilter_pc_deps="libavutil = $LIBAVUTIL_VERSION"
-enabled libavfilter_deps_avcodec    && prepend libavfilter_pc_deps "libavcodec = $LIBAVCODEC_VERSION,"
-enabled libavfilter_deps_avformat   && prepend libavfilter_pc_deps "libavformat = $LIBAVFORMAT_VERSION,"
-enabled libavfilter_deps_avresample && prepend libavfilter_pc_deps "libavresample = $LIBAVRESAMPLE_VERSION,"
-enabled libavfilter_deps_swscale    && prepend libavfilter_pc_deps "libswscale = $LIBSWSCALE_VERSION,"
-enabled libavfilter_deps_swresample && prepend libavfilter_pc_deps "libswresample = $LIBSWRESAMPLE_VERSION,"
-enabled libavfilter_deps_postproc   && prepend libavfilter_pc_deps "libpostproc = $LIBPOSTPROC_VERSION,"
+libavfilter_pc_deps="libavutil${build_suffix} = $LIBAVUTIL_VERSION"
+enabled libavfilter_deps_avcodec    && prepend libavfilter_pc_deps "libavcodec${build_suffix} = $LIBAVCODEC_VERSION,"
+enabled libavfilter_deps_avformat   && prepend libavfilter_pc_deps "libavformat${build_suffix} = $LIBAVFORMAT_VERSION,"
+enabled libavfilter_deps_avresample && prepend libavfilter_pc_deps "libavresample${build_suffix} = $LIBAVRESAMPLE_VERSION,"
+enabled libavfilter_deps_swscale    && prepend libavfilter_pc_deps "libswscale${build_suffix} = $LIBSWSCALE_VERSION,"
+enabled libavfilter_deps_swresample && prepend libavfilter_pc_deps "libswresample${build_suffix} = $LIBSWRESAMPLE_VERSION,"
+enabled libavfilter_deps_postproc   && prepend libavfilter_pc_deps "libpostproc${build_suffix} = $LIBPOSTPROC_VERSION,"
 libavfilter_pc_deps=${libavfilter_pc_deps%, }
 
-libavdevice_pc_deps="libavformat = $LIBAVFORMAT_VERSION"
-enabled lavfi_indev && prepend libavdevice_pc_deps "libavfilter = $LIBAVFILTER_VERSION,"
+libavdevice_pc_deps="libavformat${build_suffix} = $LIBAVFORMAT_VERSION"
+enabled lavfi_indev && prepend libavdevice_pc_deps "libavfilter${build_suffix} = $LIBAVFILTER_VERSION,"
 
 pkgconfig_generate libavutil "FFmpeg utility library" "$LIBAVUTIL_VERSION" "$LIBM"
-pkgconfig_generate libavcodec "FFmpeg codec library" "$LIBAVCODEC_VERSION" "$extralibs" "libavutil = $LIBAVUTIL_VERSION"
-pkgconfig_generate libavformat "FFmpeg container format library" "$LIBAVFORMAT_VERSION" "$extralibs" "libavcodec = $LIBAVCODEC_VERSION"
+pkgconfig_generate libavcodec "FFmpeg codec library" "$LIBAVCODEC_VERSION" "$extralibs" "libavutil${build_suffix} = $LIBAVUTIL_VERSION"
+pkgconfig_generate libavformat "FFmpeg container format library" "$LIBAVFORMAT_VERSION" "$extralibs" "libavcodec${build_suffix} = $LIBAVCODEC_VERSION"
 pkgconfig_generate libavdevice "FFmpeg device handling library" "$LIBAVDEVICE_VERSION" "$extralibs" "$libavdevice_pc_deps"
 pkgconfig_generate libavfilter "FFmpeg video filtering library" "$LIBAVFILTER_VERSION" "$extralibs" "$libavfilter_pc_deps"
-pkgconfig_generate libpostproc "FFmpeg postprocessing library" "$LIBPOSTPROC_VERSION" "" "libavutil = $LIBAVUTIL_VERSION"
-pkgconfig_generate libavresample "Libav audio resampling library" "$LIBAVRESAMPLE_VERSION" "$extralibs" "libavutil = $LIBAVUTIL_VERSION"
-pkgconfig_generate libswscale "FFmpeg image rescaling library" "$LIBSWSCALE_VERSION" "$LIBM" "libavutil = $LIBAVUTIL_VERSION"
-pkgconfig_generate libswresample "FFmpeg audio resampling library" "$LIBSWRESAMPLE_VERSION" "$LIBM" "libavutil = $LIBAVUTIL_VERSION"
+pkgconfig_generate libpostproc "FFmpeg postprocessing library" "$LIBPOSTPROC_VERSION" "" "libavutil${build_suffix} = $LIBAVUTIL_VERSION"
+pkgconfig_generate libavresample "Libav audio resampling library" "$LIBAVRESAMPLE_VERSION" "$extralibs" "libavutil${build_suffix} = $LIBAVUTIL_VERSION"
+pkgconfig_generate libswscale "FFmpeg image rescaling library" "$LIBSWSCALE_VERSION" "$LIBM" "libavutil${build_suffix} = $LIBAVUTIL_VERSION"
+pkgconfig_generate libswresample "FFmpeg audio resampling library" "$LIBSWRESAMPLE_VERSION" "$LIBM" "libavutil${build_suffix} = $LIBAVUTIL_VERSION"
 
 fix_ffmpeg_remote(){
     git_remote_from=$1

@@ -21,236 +21,382 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+
+#include <libavutil/mem.h>
+#include <libavutil/common.h>
+#include <libavutil/bswap.h>
 
 #include "talloc.h"
 
 #include "video/img_format.h"
 #include "video/mp_image.h"
 #include "video/sws_utils.h"
-
 #include "video/memcpy_pic.h"
-#include "libavutil/mem.h"
-#include "libavutil/common.h"
 
-void mp_image_alloc_planes(mp_image_t *mpi) {
-  // IF09 - allocate space for 4. plane delta info - unused
-  if (mpi->imgfmt == IMGFMT_IF09) {
-    mpi->planes[0]=av_malloc(mpi->bpp*mpi->width*(mpi->height+2)/8+
-                            mpi->chroma_width*mpi->chroma_height);
-  } else
-    mpi->planes[0]=av_malloc(mpi->bpp*mpi->width*(mpi->height+2)/8);
-  if (!mpi->planes[0])
-    abort(); //out of memory
-  if (mpi->flags&MP_IMGFLAG_PLANAR) {
-    // FIXME this code only supports same bpp for all planes, and bpp divisible
-    // by 8. Currently the case for all planar formats.
-    int bpp = MP_IMAGE_PLANAR_BITS_PER_PIXEL_ON_PLANE(mpi, 0) / 8;
-    // YV12/I420/YVU9/IF09. feel free to add other planar formats here...
-    mpi->stride[0]=mpi->stride[3]=bpp*mpi->width;
-    if(mpi->num_planes > 2){
-      mpi->stride[1]=mpi->stride[2]=bpp*mpi->chroma_width;
-      if(mpi->flags&MP_IMGFLAG_SWAPPED){
-        // I420/IYUV  (Y,U,V)
-        mpi->planes[1]=mpi->planes[0]+mpi->stride[0]*mpi->height;
-        mpi->planes[2]=mpi->planes[1]+mpi->stride[1]*mpi->chroma_height;
-        if (mpi->num_planes > 3)
-            mpi->planes[3]=mpi->planes[2]+mpi->stride[2]*mpi->chroma_height;
-      } else {
-        // YV12,YVU9,IF09  (Y,V,U)
-        mpi->planes[2]=mpi->planes[0]+mpi->stride[0]*mpi->height;
-        mpi->planes[1]=mpi->planes[2]+mpi->stride[1]*mpi->chroma_height;
-        if (mpi->num_planes > 3)
-            mpi->planes[3]=mpi->planes[1]+mpi->stride[1]*mpi->chroma_height;
-      }
-    } else {
-      // NV12/NV21
-      mpi->stride[1]=mpi->chroma_width;
-      mpi->planes[1]=mpi->planes[0]+mpi->stride[0]*mpi->height;
-    }
-  } else {
-    mpi->stride[0]=mpi->width*mpi->bpp/8;
-    if (mpi->flags & MP_IMGFLAG_RGB_PALETTE)
-      mpi->planes[1] = av_malloc(1024);
-  }
-  mpi->flags|=MP_IMGFLAG_ALLOCATED;
+struct m_refcount {
+    void *arg;
+    // free() is called if refcount reaches 0.
+    void (*free)(void *arg);
+    // External refcounted object (such as libavcodec DR buffers). This assumes
+    // that the actual data is managed by the external object, not by
+    // m_refcount. The .ext_* calls use that external object's refcount
+    // primitives. It usually doesn't make sense to set both .free and .ext_*.
+    void (*ext_ref)(void *arg);
+    void (*ext_unref)(void *arg);
+    bool (*ext_is_unique)(void *arg);
+    // Native refcount (there may be additional references if .ext_* are set)
+    int refcount;
+};
+
+// Only for checking API usage
+static int m_refcount_destructor(void *ptr)
+{
+    struct m_refcount *ref = ptr;
+    assert(ref->refcount == 0);
+    return 0;
 }
 
-mp_image_t* alloc_mpi(int w, int h, unsigned long int fmt) {
-  mp_image_t* mpi = new_mp_image(w,h);
-
-  mpi->width=FFALIGN(w, MP_STRIDE_ALIGNMENT);
-  mp_image_setfmt(mpi,fmt);
-  mp_image_alloc_planes(mpi);
-  mpi->width=w;
-  mp_image_setfmt(mpi,fmt); // reset chroma size
-
-  return mpi;
+// Starts out with refcount==1, caller can set .arg and .free and .ext_*
+static struct m_refcount *m_refcount_new(void)
+{
+    struct m_refcount *ref = talloc_ptrtype(NULL, ref);
+    *ref = (struct m_refcount) { .refcount = 1 };
+    talloc_set_destructor(ref, m_refcount_destructor);
+    return ref;
 }
 
-void copy_mpi(mp_image_t *dmpi, mp_image_t *mpi) {
-  if(mpi->flags&MP_IMGFLAG_PLANAR){
-    memcpy_pic(dmpi->planes[0],mpi->planes[0], MP_IMAGE_BYTES_PER_ROW_ON_PLANE(mpi, 0), mpi->h,
-	       dmpi->stride[0],mpi->stride[0]);
-    memcpy_pic(dmpi->planes[1],mpi->planes[1], MP_IMAGE_BYTES_PER_ROW_ON_PLANE(mpi, 1), mpi->chroma_height,
-	       dmpi->stride[1],mpi->stride[1]);
-    memcpy_pic(dmpi->planes[2], mpi->planes[2], MP_IMAGE_BYTES_PER_ROW_ON_PLANE(mpi, 2), mpi->chroma_height,
-	       dmpi->stride[2],mpi->stride[2]);
-  } else {
-    memcpy_pic(dmpi->planes[0],mpi->planes[0],
-	       MP_IMAGE_BYTES_PER_ROW_ON_PLANE(mpi, 0), mpi->h,
-	       dmpi->stride[0],mpi->stride[0]);
-  }
+static void m_refcount_ref(struct m_refcount *ref)
+{
+    ref->refcount++;
+    if (ref->ext_ref)
+        ref->ext_ref(ref->arg);
 }
 
-void mp_image_setfmt(mp_image_t* mpi,unsigned int out_fmt){
-    mpi->flags&=~(MP_IMGFLAG_PLANAR|MP_IMGFLAG_YUV|MP_IMGFLAG_SWAPPED);
-    mpi->imgfmt=out_fmt;
-    // compressed formats
-    if(IMGFMT_IS_HWACCEL(out_fmt)){
-	mpi->bpp=0;
-	return;
+static void m_refcount_unref(struct m_refcount *ref)
+{
+    assert(ref->refcount > 0);
+    if (ref->ext_unref)
+        ref->ext_unref(ref->arg);
+    ref->refcount--;
+    if (ref->refcount == 0) {
+        if (ref->free)
+            ref->free(ref->arg);
+        talloc_free(ref);
     }
-    mpi->num_planes=1;
-    if (IMGFMT_IS_RGB(out_fmt)) {
-	if (IMGFMT_RGB_DEPTH(out_fmt) < 8 && !(out_fmt&128))
-	    mpi->bpp = IMGFMT_RGB_DEPTH(out_fmt);
-	else
-	    mpi->bpp=(IMGFMT_RGB_DEPTH(out_fmt)+7)&(~7);
-	return;
+}
+
+static bool m_refcount_is_unique(struct m_refcount *ref)
+{
+    if (ref->refcount > 1)
+        return false;
+    if (ref->ext_is_unique)
+        return ref->ext_is_unique(ref->arg); // referenced only by us
+    return true;
+}
+
+static void mp_image_alloc_planes(struct mp_image *mpi)
+{
+    assert(!mpi->planes[0]);
+
+    size_t plane_size[MP_MAX_PLANES];
+    for (int n = 0; n < MP_MAX_PLANES; n++) {
+        int line_bytes = (mpi->plane_w[n] * mpi->fmt.bpp[n] + 7) / 8;
+        mpi->stride[n] = FFALIGN(line_bytes, SWS_MIN_BYTE_ALIGN);
+        plane_size[n] = mpi->stride[n] * mpi->plane_h[n];
     }
-    if (IMGFMT_IS_BGR(out_fmt)) {
-	if (IMGFMT_BGR_DEPTH(out_fmt) < 8 && !(out_fmt&128))
-	    mpi->bpp = IMGFMT_BGR_DEPTH(out_fmt);
-	else
-	    mpi->bpp=(IMGFMT_BGR_DEPTH(out_fmt)+7)&(~7);
-	mpi->flags|=MP_IMGFLAG_SWAPPED;
-	return;
+    if (mpi->imgfmt == IMGFMT_PAL8)
+        plane_size[1] = MP_PALETTE_SIZE;
+
+    size_t sum = 0;
+    for (int n = 0; n < MP_MAX_PLANES; n++)
+        sum += plane_size[n];
+
+    uint8_t *data = av_malloc(FFMAX(sum, 1));
+    if (!data)
+        abort(); //out of memory
+
+    for (int n = 0; n < MP_MAX_PLANES; n++) {
+        mpi->planes[n] = plane_size[n] ? data : NULL;
+        data += plane_size[n];
     }
-    switch (out_fmt) {
-    case IMGFMT_BGR0:
-        mpi->bpp = 32;
-        return;
-    }
-    mpi->num_planes=3;
-    if (out_fmt == IMGFMT_GBRP) {
-        mpi->bpp=24;
-        mpi->flags|=MP_IMGFLAG_PLANAR;
-        mpi->chroma_x_shift = 0;
-        mpi->chroma_y_shift = 0;
-        mpi->chroma_width=mpi->width;
-        mpi->chroma_height=mpi->height;
-        return;
-    }
-    mpi->flags|=MP_IMGFLAG_YUV;
-    if (mp_get_chroma_shift(out_fmt, NULL, NULL, NULL)) {
-        mpi->flags|=MP_IMGFLAG_PLANAR;
-        mpi->bpp = mp_get_chroma_shift(out_fmt, &mpi->chroma_x_shift, &mpi->chroma_y_shift, NULL);
-        mpi->chroma_width  = mpi->width  >> mpi->chroma_x_shift;
-        mpi->chroma_height = mpi->height >> mpi->chroma_y_shift;
-    }
-    switch(out_fmt){
-    case IMGFMT_I420:
-    case IMGFMT_IYUV:
-	mpi->flags|=MP_IMGFLAG_SWAPPED;
-    case IMGFMT_YV12:
-	return;
-    case IMGFMT_420A:
-    case IMGFMT_IF09:
-	mpi->num_planes=4;
-    case IMGFMT_YVU9:
-    case IMGFMT_444P:
-    case IMGFMT_422P:
-    case IMGFMT_411P:
-    case IMGFMT_440P:
-    case IMGFMT_444P16_LE:
-    case IMGFMT_444P16_BE:
-    case IMGFMT_444P14_LE:
-    case IMGFMT_444P14_BE:
-    case IMGFMT_444P12_LE:
-    case IMGFMT_444P12_BE:
-    case IMGFMT_444P10_LE:
-    case IMGFMT_444P10_BE:
-    case IMGFMT_444P9_LE:
-    case IMGFMT_444P9_BE:
-    case IMGFMT_422P16_LE:
-    case IMGFMT_422P16_BE:
-    case IMGFMT_422P14_LE:
-    case IMGFMT_422P14_BE:
-    case IMGFMT_422P12_LE:
-    case IMGFMT_422P12_BE:
-    case IMGFMT_422P10_LE:
-    case IMGFMT_422P10_BE:
-    case IMGFMT_422P9_LE:
-    case IMGFMT_422P9_BE:
-    case IMGFMT_420P16_LE:
-    case IMGFMT_420P16_BE:
-    case IMGFMT_420P14_LE:
-    case IMGFMT_420P14_BE:
-    case IMGFMT_420P12_LE:
-    case IMGFMT_420P12_BE:
-    case IMGFMT_420P10_LE:
-    case IMGFMT_420P10_BE:
-    case IMGFMT_420P9_LE:
-    case IMGFMT_420P9_BE:
-	return;
-    case IMGFMT_Y800:
-    case IMGFMT_Y8:
-    case IMGFMT_Y16LE:
-    case IMGFMT_Y16BE:
-	/* they're planar ones, but for easier handling use them as packed */
-	mpi->flags&=~MP_IMGFLAG_PLANAR;
-	mpi->num_planes=1;
-	return;
-    case IMGFMT_UYVY:
-	mpi->flags|=MP_IMGFLAG_SWAPPED;
-    case IMGFMT_YUY2:
-        mpi->chroma_x_shift = 1;
-        mpi->chroma_y_shift = 1;
-        mpi->chroma_width=(mpi->width>>1);
-        mpi->chroma_height=(mpi->height>>1);
-	mpi->bpp=16;
-	mpi->num_planes=1;
-	return;
-    case IMGFMT_NV12:
-	mpi->flags|=MP_IMGFLAG_SWAPPED;
-    case IMGFMT_NV21:
-	mpi->flags|=MP_IMGFLAG_PLANAR;
-	mpi->bpp=12;
-	mpi->num_planes=2;
-	mpi->chroma_width=(mpi->width>>0);
-	mpi->chroma_height=(mpi->height>>1);
-	mpi->chroma_x_shift=0;
-	mpi->chroma_y_shift=1;
-	return;
-    }
-    mp_msg(MSGT_DECVIDEO,MSGL_WARN,"mp_image: unknown out_fmt: 0x%X\n",out_fmt);
-    mpi->bpp=0;
+}
+
+void mp_image_setfmt(struct mp_image *mpi, unsigned int out_fmt)
+{
+    mpi->flags &= ~MP_IMGFLAG_FMT_MASK;
+    struct mp_imgfmt_desc fmt = mp_imgfmt_get_desc(out_fmt);
+    mpi->fmt = fmt;
+    mpi->flags |= fmt.flags;
+    mpi->imgfmt = fmt.id;
+    mpi->chroma_x_shift = fmt.chroma_xs;
+    mpi->chroma_y_shift = fmt.chroma_ys;
+    mpi->num_planes = fmt.num_planes;
+    mp_image_set_size(mpi, mpi->w, mpi->h);
 }
 
 static int mp_image_destructor(void *ptr)
 {
     mp_image_t *mpi = ptr;
-
-    if(mpi->flags&MP_IMGFLAG_ALLOCATED){
-        /* because we allocate the whole image at once */
-        av_free(mpi->planes[0]);
-        if (mpi->flags & MP_IMGFLAG_RGB_PALETTE)
-            av_free(mpi->planes[1]);
-    }
-
+    m_refcount_unref(mpi->refcount);
     return 0;
 }
 
-mp_image_t* new_mp_image(int w,int h){
-    mp_image_t* mpi = talloc_zero(NULL, mp_image_t);
+static int mp_chroma_div_up(int size, int shift)
+{
+    return (size + (1 << shift) - 1) >> shift;
+}
+
+// Caller has to make sure this doesn't exceed the allocated plane data/strides.
+void mp_image_set_size(struct mp_image *mpi, int w, int h)
+{
+    mpi->w = w;
+    mpi->h = h;
+    for (int n = 0; n < mpi->num_planes; n++) {
+        mpi->plane_w[n] = mp_chroma_div_up(mpi->w, mpi->fmt.xs[n]);
+        mpi->plane_h[n] = mp_chroma_div_up(mpi->h, mpi->fmt.ys[n]);
+    }
+    mpi->chroma_width = mpi->plane_w[1];
+    mpi->chroma_height = mpi->plane_h[1];
+    mpi->display_w = mpi->display_h = 0;
+}
+
+void mp_image_set_display_size(struct mp_image *mpi, int dw, int dh)
+{
+    mpi->display_w = dw;
+    mpi->display_h = dh;
+}
+
+struct mp_image *mp_image_alloc(unsigned int imgfmt, int w, int h)
+{
+    struct mp_image *mpi = talloc_zero(NULL, struct mp_image);
     talloc_set_destructor(mpi, mp_image_destructor);
-    mpi->width=mpi->w=w;
-    mpi->height=mpi->h=h;
+    mp_image_set_size(mpi, w, h);
+    mp_image_setfmt(mpi, imgfmt);
+    mp_image_alloc_planes(mpi);
+
+    mpi->refcount = m_refcount_new();
+    mpi->refcount->free = av_free;
+    mpi->refcount->arg = mpi->planes[0];
     return mpi;
 }
 
-void free_mp_image(mp_image_t* mpi){
-    talloc_free(mpi);
+struct mp_image *mp_image_new_copy(struct mp_image *img)
+{
+    struct mp_image *new = mp_image_alloc(img->imgfmt, img->w, img->h);
+    mp_image_copy(new, img);
+    mp_image_copy_attributes(new, img);
+
+    // Normally these are covered by the reference to the original image data
+    // (like the AVFrame in vd_lavc.c), but we can't manage it on our own.
+    new->qscale = NULL;
+    new->qstride = 0;
+
+    return new;
+}
+
+// Make dst take over the image data of src, and free src.
+// This is basically a safe version of *dst = *src; free(src);
+// Only works with ref-counted images, and can't change image size/format.
+void mp_image_steal_data(struct mp_image *dst, struct mp_image *src)
+{
+    assert(dst->imgfmt == src->imgfmt && dst->w == src->w && dst->h == src->h);
+    assert(dst->refcount && src->refcount);
+
+    for (int p = 0; p < MP_MAX_PLANES; p++) {
+        dst->planes[p] = src->planes[p];
+        dst->stride[p] = src->stride[p];
+    }
+    mp_image_copy_attributes(dst, src);
+
+    m_refcount_unref(dst->refcount);
+    dst->refcount = src->refcount;
+    talloc_set_destructor(src, NULL);
+    talloc_free(src);
+}
+
+// Return a new reference to img. The returned reference is owned by the caller,
+// while img is left untouched.
+struct mp_image *mp_image_new_ref(struct mp_image *img)
+{
+    if (!img->refcount)
+        return mp_image_new_copy(img);
+
+    struct mp_image *new = talloc_ptrtype(NULL, new);
+    talloc_set_destructor(new, mp_image_destructor);
+    *new = *img;
+
+    m_refcount_ref(new->refcount);
+    return new;
+}
+
+// Return a reference counted reference to img. If the reference count reaches
+// 0, call free(free_arg). The data passed by img must not be free'd before
+// that. The new reference will be writeable.
+struct mp_image *mp_image_new_custom_ref(struct mp_image *img, void *free_arg,
+                                         void (*free)(void *arg))
+{
+    struct mp_image *new = talloc_ptrtype(NULL, new);
+    talloc_set_destructor(new, mp_image_destructor);
+    *new = *img;
+
+    new->refcount = m_refcount_new();
+    new->refcount->free = free;
+    new->refcount->arg = free_arg;
+    return new;
+}
+
+// Return a reference counted reference to img. ref/unref/is_unique are used to
+// connect to an external refcounting API. It is assumed that the new object
+// has an initial reference to that external API.
+struct mp_image *mp_image_new_external_ref(struct mp_image *img, void *arg,
+                                           void (*ref)(void *arg),
+                                           void (*unref)(void *arg),
+                                           bool (*is_unique)(void *arg))
+{
+    struct mp_image *new = talloc_ptrtype(NULL, new);
+    talloc_set_destructor(new, mp_image_destructor);
+    *new = *img;
+
+    new->refcount = m_refcount_new();
+    new->refcount->ext_ref = ref;
+    new->refcount->ext_unref = unref;
+    new->refcount->ext_is_unique = is_unique;
+    new->refcount->arg = arg;
+    return new;
+}
+
+bool mp_image_is_writeable(struct mp_image *img)
+{
+    if (!img->refcount)
+        return true; // not ref-counted => always considered writeable
+    return m_refcount_is_unique(img->refcount);
+}
+
+// Make the image data referenced by img writeable. This allocates new data
+// if the data wasn't already writeable, and img->planes[] and img->stride[]
+// will be set to the copy.
+void mp_image_make_writeable(struct mp_image *img)
+{
+    if (mp_image_is_writeable(img))
+        return;
+
+    mp_image_steal_data(img, mp_image_new_copy(img));
+    assert(mp_image_is_writeable(img));
+}
+
+void mp_image_setrefp(struct mp_image **p_img, struct mp_image *new_value)
+{
+    if (*p_img != new_value) {
+        talloc_free(*p_img);
+        *p_img = new_value ? mp_image_new_ref(new_value) : NULL;
+    }
+}
+
+// Mere helper function (mp_image can be directly free'd with talloc_free)
+void mp_image_unrefp(struct mp_image **p_img)
+{
+    talloc_free(*p_img);
+    *p_img = NULL;
+}
+
+void mp_image_copy(struct mp_image *dst, struct mp_image *src)
+{
+    assert(dst->imgfmt == src->imgfmt);
+    assert(dst->w == src->w && dst->h == src->h);
+    assert(mp_image_is_writeable(dst));
+    for (int n = 0; n < dst->num_planes; n++) {
+        int line_bytes = (dst->plane_w[n] * dst->fmt.bpp[n] + 7) / 8;
+        memcpy_pic(dst->planes[n], src->planes[n], line_bytes, dst->plane_h[n],
+                   dst->stride[n], src->stride[n]);
+    }
+    if (dst->imgfmt == IMGFMT_PAL8)
+        memcpy(dst->planes[1], src->planes[1], MP_PALETTE_SIZE);
+}
+
+void mp_image_copy_attributes(struct mp_image *dst, struct mp_image *src)
+{
+    dst->pict_type = src->pict_type;
+    dst->fields = src->fields;
+    dst->qscale_type = src->qscale_type;
+    dst->pts = src->pts;
+    if (dst->w == src->w && dst->h == src->h) {
+        dst->qstride = src->qstride;
+        dst->qscale = src->qscale;
+        dst->display_w = src->display_w;
+        dst->display_h = src->display_h;
+    }
+    if ((dst->flags & MP_IMGFLAG_YUV) == (src->flags & MP_IMGFLAG_YUV)) {
+        dst->colorspace = src->colorspace;
+        dst->levels = src->levels;
+    }
+    if (dst->imgfmt == IMGFMT_PAL8 && src->imgfmt == IMGFMT_PAL8) {
+        memcpy(dst->planes[1], src->planes[1], MP_PALETTE_SIZE);
+    }
+}
+
+// Crop the given image to (x0, y0)-(x1, y1) (bottom/right border exclusive)
+// x0/y0 must be naturally aligned.
+void mp_image_crop(struct mp_image *img, int x0, int y0, int x1, int y1)
+{
+    assert(x0 >= 0 && y0 >= 0);
+    assert(x0 <= x1 && y0 <= y1);
+    assert(x1 <= img->w && y1 <= img->h);
+    assert(!(x0 & (img->fmt.align_x - 1)));
+    assert(!(y0 & (img->fmt.align_y - 1)));
+
+    for (int p = 0; p < img->num_planes; ++p) {
+        img->planes[p] += (y0 >> img->fmt.ys[p]) * img->stride[p] +
+                          (x0 >> img->fmt.xs[p]) * img->fmt.bpp[p] / 8;
+    }
+    mp_image_set_size(img, x1 - x0, y1 - y0);
+}
+
+void mp_image_crop_rc(struct mp_image *img, struct mp_rect rc)
+{
+    mp_image_crop(img, rc.x0, rc.y0, rc.x1, rc.y1);
+}
+
+// Bottom/right border is allowed not to be aligned, but it might implicitly
+// overwrite pixel data until the alignment (align_x/align_y) is reached.
+void mp_image_clear(struct mp_image *img, int x0, int y0, int x1, int y1)
+{
+    assert(x0 >= 0 && y0 >= 0);
+    assert(x0 <= x1 && y0 <= y1);
+    assert(x1 <= img->w && y1 <= img->h);
+    assert(!(x0 & (img->fmt.align_x - 1)));
+    assert(!(y0 & (img->fmt.align_y - 1)));
+
+    struct mp_image area = *img;
+    mp_image_crop(&area, x0, y0, x1, y1);
+
+    uint32_t plane_clear[MP_MAX_PLANES] = {0};
+
+    if (area.imgfmt == IMGFMT_YUYV) {
+        plane_clear[0] = av_le2ne16(0x8000);
+    } else if (area.imgfmt == IMGFMT_UYVY) {
+        plane_clear[0] = av_le2ne16(0x0080);
+    } else if (area.imgfmt == IMGFMT_NV12 || area.imgfmt == IMGFMT_NV21) {
+        plane_clear[1] = 0x8080;
+    } else if (area.flags & MP_IMGFLAG_YUV_P) {
+        uint16_t chroma_clear = (1 << area.fmt.plane_bits) / 2;
+        if (!(area.flags & MP_IMGFLAG_NE))
+            chroma_clear = av_bswap16(chroma_clear);
+        if (area.num_planes > 2)
+            plane_clear[1] = plane_clear[2] = chroma_clear;
+    }
+
+    for (int p = 0; p < area.num_planes; p++) {
+        int bpp = area.fmt.bpp[p];
+        int bytes = (area.plane_w[p] * bpp + 7) / 8;
+        if (bpp <= 8) {
+            memset_pic(area.planes[p], plane_clear[p], bytes,
+                       area.plane_h[p], area.stride[p]);
+        } else {
+            memset16_pic(area.planes[p], plane_clear[p], (bytes + 1) / 2,
+                         area.plane_h[p], area.stride[p]);
+        }
+    }
 }
 
 enum mp_csp mp_image_csp(struct mp_image *img)

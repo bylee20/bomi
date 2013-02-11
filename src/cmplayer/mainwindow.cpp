@@ -31,6 +31,7 @@ public:
 };
 
 struct MainWindow::Data {
+	bool visible = false, sotChanging = false;
 	PlayerItem *player = nullptr;
 	RootMenu menu;	RecentInfo recent;
 	const Pref &p = cPref;
@@ -589,7 +590,7 @@ MainWindow::MainWindow(): d(new Data) {
 		if (d->menu("tool")["auto-shutdown"]->isChecked()) cApp.shutdown();
 	});
 	connect(&d->subtitle, &SubtitleRendererItem::modelsChanged, &d->subtitleView, &SubtitleView::setModels);
-	connect(&d->engine, &PlayEngine::aboutToPlay, [this] () {
+	connect(&d->engine, &PlayEngine::started, [this] () {
 		d->updateListMenu(d->menu("play")("title"), d->engine.dvd().titles, d->engine.currentDvdTitle());
 		d->updateListMenu(d->menu("play")("chapter"), d->engine.chapters(), d->engine.currentChapter());
 		d->updateListMenu(d->menu("audio")("track"), d->engine.audioStreams(), d->engine.currentAudioStream());
@@ -608,13 +609,14 @@ MainWindow::MainWindow(): d(new Data) {
 	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
 	d->connectCurrentStreamActions(&d->menu("subtitle")("spu"), &PlayEngine::currentSubtitleStream);
 	connect(this, &MainWindow::windowStateChanged, [this] (Qt::WindowState state) {
-		d->dontPause = true;
-		d->moving = false;
-		d->prevPos = QPoint();
+		setFilePath(d->filePath);
 		if (state != d->winState) {
 			d->prevWinState = d->winState;
 			d->winState = state;
 		}
+		d->dontPause = true;
+		d->moving = false;
+		d->prevPos = QPoint();
 		switch (state) {
 		case Qt::WindowFullScreen:
 			cApp.setAlwaysOnTop(this, false);
@@ -629,14 +631,16 @@ MainWindow::MainWindow(): d(new Data) {
 			setVisible(true);
 		}
 		d->dontPause = false;
-		setFilePath(d->filePath);
+		if (!d->stateChanging)
+			doVisibleAction(state != Qt::WindowMinimized);
 	});
+	connect(this, &MainWindow::visibleChanged, this, &MainWindow::doVisibleAction);
 #ifndef Q_OS_MAC
 	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
 		if (reason == QSystemTrayIcon::Trigger)
 			setVisible(!isVisible());
 		else if (reason == QSystemTrayIcon::Context)
-            d->contextMenu.exec(QCursor::pos());
+			d->contextMenu.exec(QCursor::pos());
 	});
 #endif
 
@@ -693,19 +697,24 @@ void MainWindow::openFromFileManager(const Mrl &mrl) {
 void MainWindow::exit() {
 	static bool done = false;
 	if (!done) {
-		d->renderer.quit();
-		d->engine.quit();
 #ifndef Q_OS_MAC
+		qDebug() << d->tray->isVisible();
 		d->tray->hide();
+		delete d->tray;
 #endif
 		d->recent.setLastPlaylist(d->playlist.playlist());
 		d->recent.setLastMrl(d->engine.mrl());
+		d->renderer.quit();
+		d->engine.quit();
 		d->save_state();
 		if (d->player)
 			d->player->unplug();
 		d->engine.wait();
 		cApp.processEvents();
-		cApp.quit();
+		done = true;
+		delete d;
+		::exit(0);
+//		QTimer::singleShot(1, qApp, SLOT(quit()));
 	}
 }
 
@@ -968,7 +977,7 @@ void MainWindow::applyPref() {
 	d->menu.syncTitle();
 	d->menu.resetKeyMap();
 #ifndef Q_OS_MAC
-    d->tray->setVisible(d->p.enable_system_tray);
+	d->tray->setVisible(d->p.enable_system_tray);
 #endif
 	if (time >= 0)
 		d->engine.reload();
@@ -997,23 +1006,34 @@ void MainWindow::exposeEvent(QExposeEvent *event) {
 	}
 }
 
+void MainWindow::doVisibleAction(bool visible) {
+	if (!_Change(d->visible, visible))
+		return;
+	if (d->visible) {
+		if (d->pausedByHiding && d->engine.isPaused()) {
+			d->engine.play();
+			d->pausedByHiding = false;
+		}
+		setFilePath(d->filePath);
+	} else {
+		if (!d->p.pause_minimized || d->dontPause)
+			return;
+		if (!d->engine.isPlaying() || (d->p.pause_video_only && !d->engine.hasVideo()))
+			return;
+		d->pausedByHiding = true;
+		d->engine.pause();
+	}
+}
+
 void MainWindow::showEvent(QShowEvent *event) {
 	QQuickView::showEvent(event);
-	if (d->pausedByHiding && d->engine.isPaused()) {
-		d->engine.play();
-		d->pausedByHiding = false;
-	}
-	setFilePath(d->filePath);
+	doVisibleAction(true);
+	qDebug() << "show";
 }
 
 void MainWindow::hideEvent(QHideEvent *event) {
 	QQuickView::hideEvent(event);
-	if (!d->p.pause_minimized || d->dontPause)
-		return;
-	if (!d->engine.isPlaying() || (d->p.pause_video_only && !d->engine.hasVideo()))
-		return;
-	d->pausedByHiding = true;
-	d->engine.pause();
+	doVisibleAction(false);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -1043,6 +1063,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 void MainWindow::updateStaysOnTop() {
+	d->sotChanging = true;
 	const int id = d->menu("window").g("stays-on-top")->checkedAction()->data().toInt();
 	bool onTop = false;
 	if (!isFullScreen()) {
@@ -1054,6 +1075,7 @@ void MainWindow::updateStaysOnTop() {
 			onTop = d->engine.isPlaying();
 	}
 	cApp.setAlwaysOnTop(this, onTop);
+	d->sotChanging = false;
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {

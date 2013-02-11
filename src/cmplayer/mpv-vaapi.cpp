@@ -1,5 +1,6 @@
 extern "C" {
 #include "video/fmt-conversion.h"
+#include "video/filter/vf.h"
 #include "video/decode/vd.h"
 #include "video/img_format.h"
 #include "demux/demux_packet.h"
@@ -12,7 +13,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include "mpv-vaapi.hpp"
 
-static void draw_slice(struct AVCodecContext *s, const AVFrame *src, int offset[4], int y, int type, int height);
+//static void draw_slice(struct AVCodecContext *s, const AVFrame *src, int offset[4], int y, int type, int height);
 struct VaApiCodec { AVCodecID id = AV_CODEC_ID_NONE; QVector<VAProfile> profiles; int surfaceCount = 0; };
 struct VaApiInfo::Data { QMap<AVCodecID, VaApiCodec> supported; Display *xdpy = nullptr; VADisplay display = nullptr; };
 
@@ -135,7 +136,7 @@ VaApi::VaApi(sh_video *sh) {
 	m_avctx->get_buffer = get_buffer;
 	m_avctx->release_buffer = release_buffer;
 	m_avctx->reget_buffer = get_buffer;
-	m_avctx->draw_horiz_band = draw_slice;
+//	m_avctx->draw_horiz_band = draw_slice;
 	m_avctx->slice_flags = SLICE_FLAG_CODED_ORDER | SLICE_FLAG_ALLOW_FIELD;
 	m_avctx->flags |= CODEC_FLAG_EMU_EDGE;
 	m_avctx->coded_width = sh->disp_w;
@@ -226,24 +227,6 @@ bool VaApi::fillContext() {
 	return false;
 }
 
-static void draw_slice(struct AVCodecContext *avctx, const AVFrame *src, int offset[4], int y, int /*type*/, int height) {
-	sh_video_t *sh = static_cast<VaApi*>(avctx->opaque)->m_sh;
-	uint8_t *source[MP_MAX_PLANES] = { src->data[0] + offset[0], src->data[1] + offset[1], src->data[2] + offset[2] };
-	int strides[MP_MAX_PLANES] = { src->linesize[0], src->linesize[1], src->linesize[2] };
-	if (height < 0) {
-		y -= (height = -height);
-		for (int i = 0; i < MP_MAX_PLANES; i++) {
-			strides[i] = -strides[i];
-			source[i] -= strides[i];
-		}
-	}
-	if (y < sh->disp_h) {
-		height = FFMIN(height, sh->disp_h - y);
-		mpcodecs_draw_slice(sh, source, strides, sh->disp_w, height, 0, y);
-	}
-}
-
-
 bool VaApi::initVideoOutput(PixelFormat pixfmt) {
 	if (pixfmt != AV_PIX_FMT_VAAPI_VLD)
 		return false;
@@ -255,10 +238,9 @@ bool VaApi::initVideoOutput(PixelFormat pixfmt) {
 		m_last_sample_aspect_ratio = m_avctx->sample_aspect_ratio;
 		m_sh->disp_w = m_avctx->width;
 		m_sh->disp_h = m_avctx->height;
-		const unsigned int supported_fmts[] = {(uint)IMGFMT_VDPAU, 0xffffffff};
 		m_sh->colorspace = avcol_spc_to_mp_csp(m_avctx->colorspace);
 		m_sh->color_range = avcol_range_to_mp_csp_levels(m_avctx->color_range);
-		if (!fillContext() || !mpcodecs_config_vo(m_sh, m_sh->disp_w, m_sh->disp_h, supported_fmts, IMGFMT_VDPAU))
+		if (!fillContext() || !mpcodecs_config_vo(m_sh, m_sh->disp_w, m_sh->disp_h, IMGFMT_VDPAU_FIRST))
 			return false;
 		m_vo = true;
 	}
@@ -302,7 +284,6 @@ void VaApi::releaseBuffer(AVFrame *pic) {
 
 union pts { int64_t i; double d; };
 mp_image *VaApi::decode(demux_packet *packet, void *data, int len, int flags,  double *reordered_pts) {
-	cleanImage();
 	if (flags & 2)
 		m_avctx->skip_frame = AVDISCARD_ALL;
 	else if (flags & 1)
@@ -331,32 +312,58 @@ mp_image *VaApi::decode(demux_packet *packet, void *data, int len, int flags,  d
 		return nullptr;
 	if (!initVideoOutput(m_avctx->pix_fmt))
 		return nullptr;
-
-	static mp_image_t mpi;
 	const auto id = (VASurfaceID)(uintptr_t)m_pic->data[3];
 	vaSyncSurface(m_context.display, id);
 	VAStatus status;
-	memset(&mpi, 0, sizeof(mpi));
+	mp_image_t *mpi = nullptr;
 	do {
 		if ((status = vaDeriveImage(m_context.display, id, &m_vaImage)) != VA_STATUS_SUCCESS)
 			break;
 		uchar *temp = nullptr;
 		if ((status = vaMapBuffer(m_context.display, m_vaImage.buf, (void**)&temp)) != VA_STATUS_SUCCESS)
 			break;
-		mpi.imgfmt = m_vaImage.format.fourcc;
-		mpi.stride[0] = m_vaImage.pitches[0];
-		mpi.stride[1] = m_vaImage.pitches[1];
-		mpi.stride[2] = m_vaImage.pitches[2];
-		mpi.num_planes = m_vaImage.num_planes;
-		mpi.w = mpi.width = m_vaImage.width;
-		mpi.h = mpi.height = m_vaImage.height;
-		mpi.planes[0] = temp + m_vaImage.offsets[0];
-		mpi.planes[1] = temp + m_vaImage.offsets[1];
-		mpi.planes[2] = temp + m_vaImage.offsets[2];
+		quint32 imgfmt = 0;
+		switch (m_vaImage.format.fourcc) {
+		case VA_FOURCC_YV12:
+		case VA_FOURCC_IYUV:
+			imgfmt = IMGFMT_420P;
+			break;
+		case VA_FOURCC_NV12:
+			imgfmt = IMGFMT_NV12;
+			break;
+		case VA_FOURCC('N', 'V', '2', '1'):
+			imgfmt = IMGFMT_NV21;
+			break;
+		case VA_FOURCC_UYVY:
+			imgfmt = IMGFMT_UYVY;
+			break;
+		case VA_FOURCC_YUY2:
+			imgfmt = IMGFMT_YUYV;
+			break;
+		default:
+			break;
+		}
+		mpi = mp_image_alloc(imgfmt, m_vaImage.width, m_vaImage.height);
+		mpi->imgfmt = IMGFMT_VDPAU_FIRST;
+//		Q_ASSERT(mpi->stride[0] >= m_vaImage.pitches[0]);
+		for (int i=0; i<mpi->fmt.num_planes; ++i) {
+			uchar *dest = mpi->planes[i];
+			qDebug() << mpi->fmt.ys[i];
+			const uchar *src = temp + m_vaImage.offsets[i];
+			const int size = qMin(mpi->stride[i], (int)m_vaImage.pitches[i]);
+			const int hmax = (m_vaImage.height >> mpi->fmt.ys[i]);
+			for (int h=0; h<hmax; ++h) {
+				memcpy(dest, src, size);
+				dest += mpi->stride[i];
+				src += m_vaImage.pitches[i];
+			}
+		}
+//		mp_image_unrefp(&mpi);
 	} while (0);
 	if (status != VA_STATUS_SUCCESS)
 		qDebug() << "va(DeriveImage|MapBuffer)():" << vaErrorStr(status);
-	return &mpi;
+	cleanImage();
+	return mpi;
 }
 
 static int control(sh_video_t *sh, int cmd, void *arg)
@@ -364,8 +371,8 @@ static int control(sh_video_t *sh, int cmd, void *arg)
 	VaApi *ctx = (VaApi*)sh->context;
 	AVCodecContext *avctx = (AVCodecContext*)ctx->m_avctx;
 	switch (cmd) {
-	case VDCTRL_QUERY_FORMAT:
-		return (*((int *)arg)) == IMGFMT_VDPAU ? CONTROL_TRUE : CONTROL_FALSE;
+//	case VDCTRL_QUERY_FORMAT:
+//		return (*((int *)arg)) == IMGFMT_VDPAU ? CONTROL_TRUE : CONTROL_FALSE;
 	case VDCTRL_RESYNC_STREAM:
 		avcodec_flush_buffers(avctx);
 		return CONTROL_TRUE;
@@ -391,7 +398,7 @@ void VaApiInfo::initialize() {
 		"vaapi",
 		"",
 		"",
-		"hwaccel codecs",
+		"HwAcc codecs",
 		"libva",
 	};
 	cmplayer_vd_vaapi.info = &info;

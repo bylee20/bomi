@@ -1203,6 +1203,13 @@ typedef struct AVFormatContext {
      */
     unsigned int correct_ts_overflow;
 
+    /**
+     * Force seeking to any (also non key) frames.
+     * - encoding: unused
+     * - decoding: Set by user via AVOPtions (NO direct access)
+     */
+    int seek2any;
+
     /*****************************************************************
      * All fields below this line are not part of the public API. They
      * may not be used outside of libavformat and can be changed and
@@ -1929,6 +1936,18 @@ enum AVCodecID av_codec_get_id(const struct AVCodecTag * const *tags, unsigned i
  * in AVInputFormat.codec_tag and AVOutputFormat.codec_tag
  */
 unsigned int av_codec_get_tag(const struct AVCodecTag * const *tags, enum AVCodecID id);
+
+/**
+ * Get the codec tag for the given codec id.
+ *
+ * @param tags list of supported codec_id - codec_tag pairs, as stored
+ * in AVInputFormat.codec_tag and AVOutputFormat.codec_tag
+ * @param id codec id that should be searched for in the list
+ * @param tag A pointer to the found tag
+ * @return 0 if id was not found in tags, > 0 if it was found
+ */
+int av_codec_get_tag2(const struct AVCodecTag * const *tags, enum AVCodecID id,
+                      unsigned int *tag);
 
 int av_find_default_stream_index(AVFormatContext *s);
 

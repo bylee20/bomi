@@ -71,10 +71,11 @@ static int preinit(struct vo *vo, const char *arg)
     vc = vo->priv;
     vc->harddup = vo->encode_lavc_ctx->options->harddup;
     vc->colorspace = (struct mp_csp_details) MP_CSP_DETAILS_DEFAULTS;
+    vo->untimed = true;
     return 0;
 }
 
-static void draw_image(struct vo *vo, mp_image_t *mpi, double pts);
+static void draw_image(struct vo *vo, mp_image_t *mpi);
 static void uninit(struct vo *vo)
 {
     struct priv *vc = vo->priv;
@@ -82,16 +83,9 @@ static void uninit(struct vo *vo)
         return;
 
     if (vc->lastipts >= 0 && vc->stream)
-        draw_image(vo, NULL, MP_NOPTS_VALUE);
+        draw_image(vo, NULL);
 
-    if (vc->lastimg) {
-        // palette hack
-        if (vc->lastimg->imgfmt == IMGFMT_RGB8
-                || vc->lastimg->imgfmt == IMGFMT_BGR8)
-            vc->lastimg->planes[1] = NULL;
-        free_mp_image(vc->lastimg);
-        vc->lastimg = NULL;
-    }
+    mp_image_unrefp(&vc->lastimg);
 
     vo->priv = NULL;
 }
@@ -171,12 +165,7 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
 
     vc->buffer = talloc_size(vc, vc->buffer_size);
 
-    vc->lastimg = alloc_mpi(width, height, format);
-
-    // palette hack
-    if (vc->lastimg->imgfmt == IMGFMT_RGB8 ||
-            vc->lastimg->imgfmt == IMGFMT_BGR8)
-        vc->lastimg->planes[1] = talloc_zero_size(vc, 1024);
+    mp_image_unrefp(&vc->lastimg);
 
     return 0;
 
@@ -200,10 +189,8 @@ static int query_format(struct vo *vo, uint32_t format)
             // we can do it
         VFCAP_CSP_SUPPORTED_BY_HW |
             // we don't convert colorspaces here
-        VFCAP_OSD |
+        VFCAP_OSD;
             // we have OSD
-        VOCAP_NOSLICES;
-            // we don't use slices
 }
 
 static void write_packet(struct vo *vo, int size, AVPacket *packet)
@@ -286,7 +273,7 @@ static int encode_video(struct vo *vo, AVFrame *frame, AVPacket *packet)
     }
 }
 
-static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
+static void draw_image(struct vo *vo, mp_image_t *mpi)
 {
     struct priv *vc = vo->priv;
     struct encode_lavc_context *ectx = vo->encode_lavc_ctx;
@@ -295,6 +282,8 @@ static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
     AVCodecContext *avc;
     int64_t frameipts;
     double nextpts;
+
+    double pts = mpi ? mpi->pts : MP_NOPTS_VALUE;
 
     if (!vc)
         return;
@@ -456,13 +445,8 @@ static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
                 mp_msg(MSGT_ENCODE, MSGL_INFO,
                        "vo-lavc: Frame at pts %d got displayed %d times\n",
                        (int) vc->lastframeipts, vc->lastdisplaycount);
-            copy_mpi(vc->lastimg, mpi);
+            mp_image_setrefp(&vc->lastimg, mpi);
             vc->lastimg_wants_osd = true;
-
-            // palette hack
-            if (vc->lastimg->imgfmt == IMGFMT_RGB8 ||
-                    vc->lastimg->imgfmt == IMGFMT_BGR8)
-                memcpy(vc->lastimg->planes[1], mpi->planes[1], 1024);
 
             vc->lastframeipts = vc->lastipts = frameipts;
             if (ectx->options->rawts && vc->lastipts < 0) {
@@ -512,11 +496,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
 {
     struct priv *vc = vo->priv;
     switch (request) {
-    case VOCTRL_QUERY_FORMAT:
-        return query_format(vo, *((uint32_t *)data));
-    case VOCTRL_DRAW_IMAGE:
-        draw_image(vo, (mp_image_t *)data, vo->next_pts);
-        return 0;
     case VOCTRL_SET_YUV_COLORSPACE:
         vc->colorspace = *(struct mp_csp_details *)data;
         if (vc->stream) {
@@ -534,8 +513,8 @@ static int control(struct vo *vo, uint32_t request, void *data)
 }
 
 const struct vo_driver video_out_lavc = {
-    .is_new = true,
     .buffer_frames = false,
+    .encode = true,
     .info = &(const struct vo_info_s){
         "video encoding using libavcodec",
         "lavc",
@@ -543,10 +522,12 @@ const struct vo_driver video_out_lavc = {
         ""
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
     .uninit = uninit,
     .check_events = check_events,
+    .draw_image = draw_image,
     .draw_osd = draw_osd,
     .flip_page_timed = flip_page_timed,
 };

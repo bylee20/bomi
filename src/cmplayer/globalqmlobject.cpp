@@ -21,12 +21,10 @@ QLinkedList<UtilObject*> UtilObject::objs;
 UtilObject::UtilObject(QObject *parent)
 : QObject(parent) {
 	objs.append(this);
-	qDebug() << "ctor";
 }
 
 UtilObject::~UtilObject() {
 	objs.removeOne(this);
-	qDebug() << "dtor";
 }
 
 double UtilObject::textWidth(const QString &text, int size, const QString &family) {
@@ -55,7 +53,6 @@ QPointF UtilObject::mousePos(QQuickItem *item) {
 }
 
 QPointF UtilObject::mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) const {
-	qDebug() << item << scenePos;
 	return item ? item->mapFromScene(scenePos) : scenePos;
 }
 
@@ -107,7 +104,7 @@ quint64 UtilObject::processTime() {
 
 #ifdef Q_OS_LINUX
 #include <fcntl.h>
-QString UtilObject::monospace() const { return "monospace"; }
+QString UtilObject::monospace() { return "monospace"; }
 static int getField(const char *fileName, const char *fieldName, char *buffer, int size = BUFSIZ) {
 	const auto fd = open(fileName, O_RDONLY);
 	if (fd < 0)

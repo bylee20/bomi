@@ -39,6 +39,7 @@
 #include "sub/sub.h"
 #include "video/mp_image.h"
 #include "video/vfcap.h"
+#include "video/memcpy_pic.h"
 
 #include "core/input/keycodes.h"
 #include "core/input/input.h"
@@ -49,6 +50,7 @@
 static caca_canvas_t  *canvas;
 static caca_display_t *display;
 static caca_dither_t  *dither           = NULL;
+static uint8_t        *dither_buffer    = NULL;
 static const char     *dither_antialias = "default";
 static const char     *dither_charset   = "default";
 static const char     *dither_color     = "default";
@@ -132,6 +134,7 @@ static int resize(void)
     screen_h = caca_get_canvas_height(canvas);
 
     caca_free_dither(dither);
+    talloc_free(dither_buffer);
 
     dither = caca_create_dither(bpp, image_width, image_height,
                                 depth * image_width,
@@ -140,6 +143,8 @@ static int resize(void)
         mp_msg(MSGT_VO, MSGL_FATAL, "vo_caca: caca_create_dither failed!\n");
         return ENOSYS;
     }
+    dither_buffer =
+        talloc_array(NULL, uint8_t, depth * image_width * image_height);
 
     /* Default libcaca features */
     caca_set_dither_antialias(dither, dither_antialias);
@@ -164,18 +169,11 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
     return resize();
 }
 
-static uint32_t draw_image(struct vo *vo, mp_image_t *mpi)
+static void draw_image(struct vo *vo, mp_image_t *mpi)
 {
-    assert(mpi->stride[0] == image_width * 3);
-    caca_dither_bitmap(canvas, 0, 0, screen_w, screen_h, dither,
-                       mpi->planes[0]);
-    return true;
-}
-
-static int draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, int h,
-                      int x, int y)
-{
-    return 0;
+    memcpy_pic(dither_buffer, mpi->planes[0], image_width * depth, image_height,
+               image_width * depth, mpi->stride[0]);
+    caca_dither_bitmap(canvas, 0, 0, screen_w, screen_h, dither, dither_buffer);
 }
 
 static void flip_page(struct vo *vo)
@@ -319,6 +317,8 @@ static void uninit(struct vo *vo)
 {
     caca_free_dither(dither);
     dither = NULL;
+    talloc_free(dither_buffer);
+    dither_buffer = NULL;
     caca_free_display(display);
     caca_free_canvas(canvas);
 }
@@ -356,7 +356,7 @@ static int preinit(struct vo *vo, const char *arg)
     return 0;
 }
 
-static int query_format(uint32_t format)
+static int query_format(struct vo *vo, uint32_t format)
 {
     if (format == IMGFMT_BGR24)
         return VFCAP_OSD | VFCAP_CSP_SUPPORTED;
@@ -366,18 +366,10 @@ static int query_format(uint32_t format)
 
 static int control(struct vo *vo, uint32_t request, void *data)
 {
-    switch (request) {
-    case VOCTRL_QUERY_FORMAT:
-        return query_format(*((uint32_t *)data));
-    case VOCTRL_DRAW_IMAGE:
-        return draw_image(vo, data);
-    default:
-        return VO_NOTIMPL;
-    }
+    return VO_NOTIMPL;
 }
 
 const struct vo_driver video_out_caca = {
-    .is_new = false,
     .info = &(const vo_info_t) {
         "libcaca",
         "caca",
@@ -385,9 +377,10 @@ const struct vo_driver video_out_caca = {
         ""
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
-    .draw_slice = draw_slice,
+    .draw_image = draw_image,
     .draw_osd = draw_osd,
     .flip_page = flip_page,
     .check_events = check_events,

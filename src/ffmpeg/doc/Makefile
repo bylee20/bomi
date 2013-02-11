@@ -62,7 +62,7 @@ doc/%.html: doc/%.texi $(SRC_PATH)/doc/t2h.init $(GENTEXI)
 	$(M)texi2html -I doc -monolithic --init-file $(SRC_PATH)/doc/t2h.init --output $@ $<
 
 doc/%.pod: TAG = POD
-doc/%.pod: doc/%.texi $(GENTEXI)
+doc/%.pod: doc/%.texi $(SRC_PATH)/doc/texi2pod.pl $(GENTEXI)
 	$(Q)$(TEXIDEP)
 	$(M)perl $(SRC_PATH)/doc/texi2pod.pl -Idoc $< $@
 
@@ -92,9 +92,9 @@ uninstall: uninstall-man
 uninstall-man:
 	$(RM) $(addprefix "$(MANDIR)/man1/",$(ALLMANPAGES))
 
-docclean: clean
+clean:: docclean
 
-clean::
+docclean:
 	$(RM) $(TXTPAGES) doc/*.html doc/*.pod doc/*.1 doc/*.3 $(CLEANSUFFIXES:%=doc/%) doc/avoptions_*.texi
 	$(RM) -r doc/doxy/html
 

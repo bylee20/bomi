@@ -21,6 +21,7 @@
 
 #include "libavutil/channel_layout.h"
 #include "libavutil/float_dsp.h"
+#include "libavutil/internal.h"
 #include "avcodec.h"
 #include "internal.h"
 #define BITSTREAM_READER_LE
@@ -38,7 +39,6 @@
 
 typedef struct {
     AVFrame frame;
-    DSPContext dsp;
     AVFloatDSPContext fdsp;
     DECLARE_ALIGNED(32, float,   sp_lpc)[FFALIGN(36, 16)];   ///< LPC coefficients for speech data (spec: A)
     DECLARE_ALIGNED(32, float, gain_lpc)[FFALIGN(10, 16)];   ///< LPC coefficients for gain        (spec: GB)
@@ -84,7 +84,7 @@ static av_cold int ra288_decode_init(AVCodecContext *avctx)
 static void convolve(float *tgt, const float *src, int len, int n)
 {
     for (; n >= 0; n--)
-        tgt[n] = ff_scalarproduct_float_c(src, src - n, len);
+        tgt[n] = avpriv_scalarproduct_float_c(src, src - n, len);
 
 }
 
@@ -113,7 +113,7 @@ static void decode(RA288Context *ractx, float gain, int cb_coef)
     for (i=0; i < 5; i++)
         buffer[i] = codetable[cb_coef][i] * sumsum;
 
-    sum = ff_scalarproduct_float_c(buffer, buffer, 5);
+    sum = avpriv_scalarproduct_float_c(buffer, buffer, 5);
 
     sum = FFMAX(sum, 5. / (1<<24));
 

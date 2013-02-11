@@ -52,7 +52,7 @@ static const uint8_t svcd_scan_offset_placeholder[14] = {
 };
 
 static void mpeg1_encode_block(MpegEncContext *s,
-                         DCTELEM *block,
+                         int16_t *block,
                          int component);
 static void mpeg1_encode_motion(MpegEncContext *s, int val, int f_or_b_code);    // RAL: f_code parameter added
 
@@ -145,6 +145,9 @@ static av_cold int encode_init(AVCodecContext *avctx)
 {
     MpegEncContext *s = avctx->priv_data;
 
+    if (avctx->codec_id == AV_CODEC_ID_MPEG1VIDEO && avctx->height > 2800)
+        avctx->thread_count = 1;
+
     if(ff_MPV_encode_init(avctx) < 0)
         return -1;
 
@@ -177,6 +180,19 @@ static av_cold int encode_init(AVCodecContext *avctx)
             if(avctx->width <= 720 && avctx->height <= 576) avctx->level = 8; /* Main */
             else if(avctx->width <= 1440)                   avctx->level = 6; /* High 1440 */
             else                                            avctx->level = 4; /* High */
+        }
+    }
+
+    if ((avctx->width & 0xFFF) == 0 && (avctx->height & 0xFFF) == 1) {
+        av_log(avctx, AV_LOG_ERROR, "Width / Height is invalid for MPEG2\n");
+        return AVERROR(EINVAL);
+    }
+
+    if (s->strict_std_compliance > FF_COMPLIANCE_UNOFFICIAL) {
+        if ((avctx->width & 0xFFF) == 0 || (avctx->height & 0xFFF) == 0) {
+            av_log(avctx, AV_LOG_ERROR, "Width or Height are not allowed to be multiplies of 4096\n"
+                                        "add '-strict %d' if you want to use them anyway.\n", FF_COMPLIANCE_UNOFFICIAL);
+            return AVERROR(EINVAL);
         }
     }
 
@@ -227,8 +243,8 @@ static void mpeg1_encode_sequence_header(MpegEncContext *s)
             /* mpeg1 header repeated every gop */
             put_header(s, SEQ_START_CODE);
 
-            put_sbits(&s->pb, 12, s->width );
-            put_sbits(&s->pb, 12, s->height);
+            put_sbits(&s->pb, 12, s->width  & 0xFFF);
+            put_sbits(&s->pb, 12, s->height & 0xFFF);
 
             for(i=1; i<15; i++){
                 float error= aspect_ratio;
@@ -455,7 +471,7 @@ static inline void put_mb_modes(MpegEncContext *s, int n, int bits,
 }
 
 static av_always_inline void mpeg1_encode_mb_internal(MpegEncContext *s,
-                                                   DCTELEM block[6][64],
+                                                   int16_t block[6][64],
                                                    int motion_x, int motion_y,
                                                    int mb_block_count)
 {
@@ -679,7 +695,7 @@ static av_always_inline void mpeg1_encode_mb_internal(MpegEncContext *s,
     }
 }
 
-void ff_mpeg1_encode_mb(MpegEncContext *s, DCTELEM block[6][64], int motion_x, int motion_y)
+void ff_mpeg1_encode_mb(MpegEncContext *s, int16_t block[6][64], int motion_x, int motion_y)
 {
     if (s->chroma_format == CHROMA_420) mpeg1_encode_mb_internal(s, block, motion_x, motion_y, 6);
     else                                mpeg1_encode_mb_internal(s, block, motion_x, motion_y, 8);
@@ -862,7 +878,7 @@ static inline void encode_dc(MpegEncContext *s, int diff, int component)
 }
 
 static void mpeg1_encode_block(MpegEncContext *s,
-                               DCTELEM *block,
+                               int16_t *block,
                                int n)
 {
     int alevel, level, last_non_zero, dc, diff, i, j, run, last_index, sign;

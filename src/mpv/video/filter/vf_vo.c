@@ -37,9 +37,6 @@ struct vf_priv_s {
 };
 #define video_out (vf->priv->vo)
 
-static void draw_slice(struct vf_instance *vf, unsigned char **src,
-                       int *stride, int w, int h, int x, int y);
-
 static int config(struct vf_instance *vf,
                   int width, int height, int d_width, int d_height,
                   unsigned int flags, unsigned int outfmt)
@@ -69,7 +66,6 @@ static int config(struct vf_instance *vf,
 
     // save vo's stride capability for the wanted colorspace:
     vf->default_caps = video_out->default_caps;
-    vf->draw_slice = (vf->default_caps & VOCAP_NOSLICES) ? NULL : draw_slice;
 
     return 1;
 }
@@ -107,61 +103,17 @@ static int control(struct vf_instance *vf, int request, void *data)
         };
         return vo_control(video_out, VOCTRL_GET_EQUALIZER, &param) == VO_TRUE;
     }
+    case VFCTRL_HWDEC_DECODER_RENDER:
+        return vo_control(video_out, VOCTRL_HWDEC_DECODER_RENDER, data);
+    case VFCTRL_HWDEC_ALLOC_SURFACE:
+        return vo_control(video_out, VOCTRL_HWDEC_ALLOC_SURFACE, data);
     }
     return CONTROL_UNKNOWN;
 }
 
 static int query_format(struct vf_instance *vf, unsigned int fmt)
 {
-    int flags = vo_control(video_out, VOCTRL_QUERY_FORMAT, &fmt);
-    // draw_slice() accepts stride, draw_frame() doesn't:
-    if (flags)
-        if (fmt == IMGFMT_YV12 || fmt == IMGFMT_I420 || fmt == IMGFMT_IYUV)
-            flags |= VFCAP_ACCEPT_STRIDE;
-    return flags;
-}
-
-static void get_image(struct vf_instance *vf,
-                      mp_image_t *mpi)
-{
-    if (!video_out->config_ok)
-        return;
-    // GET_IMAGE is required for hardware-accelerated formats
-    if (IMGFMT_IS_HWACCEL(mpi->imgfmt))
-        vo_control(video_out, VOCTRL_GET_IMAGE, mpi);
-}
-
-static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts)
-{
-    if (!video_out->config_ok)
-        return 0;
-    // first check, maybe the vo/vf plugin implements draw_image using mpi:
-    if (vo_draw_image(video_out, mpi, pts) >= 0)
-        return 1;
-    // nope, fallback to old draw_frame/draw_slice:
-    if (!(mpi->flags & (MP_IMGFLAG_DIRECT | MP_IMGFLAG_DRAW_CALLBACK))) {
-        // blit frame:
-        if (vf->default_caps & VFCAP_ACCEPT_STRIDE)
-            vo_draw_slice(video_out, mpi->planes, mpi->stride, mpi->w, mpi->h,
-                          0, 0);
-        // else: out of luck
-    }
-    return 1;
-}
-
-static void start_slice(struct vf_instance *vf, mp_image_t *mpi)
-{
-    if (!video_out->config_ok)
-        return;
-    vo_control(video_out, VOCTRL_START_SLICE, mpi);
-}
-
-static void draw_slice(struct vf_instance *vf, unsigned char **src,
-                       int *stride, int w, int h, int x, int y)
-{
-    if (!video_out->config_ok)
-        return;
-    vo_draw_slice(video_out, src, stride, w, h, x, y);
+    return video_out->driver->query_format(video_out, fmt);
 }
 
 static void uninit(struct vf_instance *vf)
@@ -179,10 +131,6 @@ static int vf_open(vf_instance_t *vf, char *args)
     vf->config = config;
     vf->control = control;
     vf->query_format = query_format;
-    vf->get_image = get_image;
-    vf->put_image = put_image;
-    vf->draw_slice = draw_slice;
-    vf->start_slice = start_slice;
     vf->uninit = uninit;
     vf->priv = calloc(1, sizeof(struct vf_priv_s));
     vf->priv->vo = (struct vo *)args;

@@ -924,6 +924,12 @@ void ff_er_frame_end(MpegEncContext *s)
         return;
     };
 
+    if (   s->picture_structure == PICT_FRAME
+        && s->current_picture.f.linesize[0] != s->current_picture_ptr->f.linesize[0]) {
+        av_log(s->avctx, AV_LOG_ERROR, "Error concealment not possible, frame not fully initialized\n");
+        return;
+    }
+
     if (s->current_picture.f.motion_val[0] == NULL) {
         av_log(s->avctx, AV_LOG_ERROR, "Warning MVs not available\n");
 
@@ -1180,11 +1186,8 @@ void ff_er_frame_end(MpegEncContext *s)
                     int time_pp = s->pp_time;
                     int time_pb = s->pb_time;
 
-                    if (s->avctx->codec_id == AV_CODEC_ID_H264) {
-                        // FIXME
-                    } else {
-                        ff_thread_await_progress(&s->next_picture_ptr->f, mb_y, 0);
-                    }
+                    av_assert0(s->avctx->codec_id != AV_CODEC_ID_H264);
+                    ff_thread_await_progress(&s->next_picture_ptr->f, mb_y, 0);
                     s->mv[0][0][0] = s->next_picture.f.motion_val[0][xy][0] *  time_pb            / time_pp;
                     s->mv[0][0][1] = s->next_picture.f.motion_val[0][xy][1] *  time_pb            / time_pp;
                     s->mv[1][0][0] = s->next_picture.f.motion_val[0][xy][0] * (time_pb - time_pp) / time_pp;

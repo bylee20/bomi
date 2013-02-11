@@ -140,7 +140,8 @@ struct vdpctx {
     struct mp_osd_res                  osd_rect;
 
     struct vdpau_render_state          surface_render[MAX_VIDEO_SURFACES];
-    int                                surface_num;
+    bool                               surface_in_use[MAX_VIDEO_SURFACES];
+    int                                surface_num; // indexes output_surfaces
     int                                query_surface_num;
     VdpTime                            recent_vsync_time;
     float                              user_fps;
@@ -177,9 +178,6 @@ struct vdpctx {
 
     // Video equalizer
     struct mp_csp_equalizer video_eq;
-
-    // These tell what's been initialized and uninit() should free/uninitialize
-    bool mode_switched;
 };
 
 static bool status_ok(struct vo *vo);
@@ -332,15 +330,12 @@ static void add_new_video_surface(struct vo *vo, VdpVideoSurface surface,
     struct vdpctx *vc = vo->priv;
     struct buffered_video_surface *bv = vc->buffered_video;
 
-    if (reserved_mpi)
-        reserved_mpi->usage_count++;
-    if (bv[NUM_BUFFERED_VIDEO - 1].mpi)
-        bv[NUM_BUFFERED_VIDEO - 1].mpi->usage_count--;
+    mp_image_unrefp(&bv[NUM_BUFFERED_VIDEO - 1].mpi);
 
     for (int i = NUM_BUFFERED_VIDEO - 1; i > 0; i--)
         bv[i] = bv[i - 1];
     bv[0] = (struct buffered_video_surface){
-        .mpi = reserved_mpi,
+        .mpi = reserved_mpi ? mp_image_new_ref(reserved_mpi) : NULL,
         .surface = surface,
         .pts = pts,
     };
@@ -358,8 +353,7 @@ static void forget_frames(struct vo *vo)
     vc->dropped_frame = false;
     for (int i = 0; i < NUM_BUFFERED_VIDEO; i++) {
         struct buffered_video_surface *p = vc->buffered_video + i;
-        if (p->mpi)
-            p->mpi->usage_count--;
+        mp_image_unrefp(&p->mpi);
         *p = (struct buffered_video_surface){
             .surface = VDP_INVALID_HANDLE,
         };
@@ -529,7 +523,7 @@ static int win_x11_init_vdpau_flip_queue(struct vo *vo)
                "refresh rate of %.3f Hz.\n", vc->user_fps);
     } else if (vc->user_fps == 0) {
 #ifdef CONFIG_XF86VM
-        double fps = vo_vm_get_fps(vo);
+        double fps = vo_x11_vm_get_fps(vo);
         if (!fps)
             mp_msg(MSGT_VO, MSGL_WARN, "[vdpau] Failed to get display FPS\n");
         else {
@@ -759,15 +753,13 @@ static int initialize_vdpau_objects(struct vo *vo)
 
     vc->vdp_chroma_type = VDP_CHROMA_TYPE_420;
     switch (vc->image_format) {
-    case IMGFMT_YV12:
-    case IMGFMT_I420:
-    case IMGFMT_IYUV:
+    case IMGFMT_420P:
         vc->vdp_pixel_format = VDP_YCBCR_FORMAT_YV12;
         break;
     case IMGFMT_NV12:
         vc->vdp_pixel_format = VDP_YCBCR_FORMAT_NV12;
         break;
-    case IMGFMT_YUY2:
+    case IMGFMT_YUYV:
         vc->vdp_pixel_format = VDP_YCBCR_FORMAT_YUYV;
         vc->vdp_chroma_type  = VDP_CHROMA_TYPE_422;
         break;
@@ -851,16 +843,6 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
                   uint32_t format)
 {
     struct vdpctx *vc = vo->priv;
-    struct vo_x11_state *x11 = vo->x11;
-    XVisualInfo vinfo;
-    XSetWindowAttributes xswa;
-    XWindowAttributes attribs;
-    unsigned long xswamask;
-    int depth;
-
-#ifdef CONFIG_XF86VM
-    int vm = flags & VOFLAG_MODESWITCHING;
-#endif
 
     if (handle_preemption(vo) < 0)
         return -1;
@@ -874,39 +856,8 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
     if (IMGFMT_IS_VDPAU(vc->image_format) && !create_vdp_decoder(vo, 2))
         return -1;
 
-#ifdef CONFIG_XF86VM
-    if (vm) {
-        vo_vm_switch(vo);
-        vc->mode_switched = true;
-    }
-#endif
-    XGetWindowAttributes(x11->display, DefaultRootWindow(x11->display),
-                         &attribs);
-    depth = attribs.depth;
-    if (depth != 15 && depth != 16 && depth != 24 && depth != 32)
-        depth = 24;
-    XMatchVisualInfo(x11->display, x11->screen, depth, TrueColor, &vinfo);
-
-    xswa.background_pixel = 0;
-    xswa.border_pixel     = 0;
-    /* Do not use CWBackPixel: It leads to VDPAU errors after
-     * aspect ratio changes. */
-    xswamask = CWBorderPixel;
-
-    vo_x11_create_vo_window(vo, &vinfo, vo->dx, vo->dy, d_width, d_height,
-                            flags, CopyFromParent, "vdpau");
-    XChangeWindowAttributes(x11->display, x11->window, xswamask, &xswa);
-
-#ifdef CONFIG_XF86VM
-    if (vm) {
-        /* Grab the mouse pointer in our window */
-        if (vo_grabpointer)
-            XGrabPointer(x11->display, x11->window, True, 0,
-                         GrabModeAsync, GrabModeAsync,
-                         x11->window, None, CurrentTime);
-        XSetInputFocus(x11->display, x11->window, RevertToNone, CurrentTime);
-    }
-#endif
+    vo_x11_create_vo_window(vo, NULL, vo->dx, vo->dy, d_width, d_height,
+                            flags, "vdpau");
 
     if (initialize_vdpau_objects(vo) < 0)
         return -1;
@@ -1252,17 +1203,16 @@ static void flip_page_timed(struct vo *vo, unsigned int pts_us, int duration)
     vc->surface_num = WRAP_ADD(vc->surface_num, 1, vc->num_output_surfaces);
 }
 
-static int draw_slice(struct vo *vo, uint8_t *image[], int stride[], int w,
-                      int h, int x, int y)
+static int decoder_render(struct vo *vo, void *state_ptr)
 {
     struct vdpctx *vc = vo->priv;
     struct vdp_functions *vdp = vc->vdp;
     VdpStatus vdp_st;
+    struct vdpau_render_state *rndr = (struct vdpau_render_state *)state_ptr;
 
     if (handle_preemption(vo) < 0)
         return VO_TRUE;
 
-    struct vdpau_render_state *rndr = (struct vdpau_render_state *)image[0];
     int max_refs = vc->image_format == IMGFMT_VDPAU_H264 ?
         rndr->info.h264.num_ref_frames : 2;
     if (!IMGFMT_IS_VDPAU(vc->image_format))
@@ -1300,7 +1250,7 @@ static struct vdpau_render_state *get_surface(struct vo *vo, int number)
     return &vc->surface_render[number];
 }
 
-static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
+static void draw_image(struct vo *vo, mp_image_t *mpi)
 {
     struct vdpctx *vc = vo->priv;
     struct vdp_functions *vdp = vc->vdp;
@@ -1308,9 +1258,9 @@ static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
     struct vdpau_render_state *rndr;
 
     if (IMGFMT_IS_VDPAU(vc->image_format)) {
-        rndr = mpi->priv;
+        rndr = (struct vdpau_render_state *)mpi->planes[0];
         reserved_mpi = mpi;
-    } else if (!(mpi->flags & MP_IMGFLAG_DRAW_CALLBACK)) {
+    } else {
         rndr = get_surface(vo, vc->deint_counter);
         vc->deint_counter = WRAP_ADD(vc->deint_counter, 1, NUM_BUFFERED_VIDEO);
         if (handle_preemption(vo) >= 0) {
@@ -1324,17 +1274,13 @@ static void draw_image(struct vo *vo, mp_image_t *mpi, double pts)
             CHECK_ST_WARNING("Error when calling "
                              "vdp_video_surface_put_bits_y_cb_cr");
         }
-    } else
-        // We don't support slice callbacks so this shouldn't occur -
-        // I think the flags test above in pointless, but I'm adding
-        // this instead of removing it just in case.
-        abort();
+    }
     if (mpi->fields & MP_IMGFIELD_ORDERED)
         vc->top_field_first = !!(mpi->fields & MP_IMGFIELD_TOP_FIRST);
     else
         vc->top_field_first = 1;
 
-    add_new_video_surface(vo, rndr->surface, reserved_mpi, pts);
+    add_new_video_surface(vo, rndr->surface, reserved_mpi, mpi->pts);
 
     return;
 }
@@ -1347,7 +1293,7 @@ static struct mp_image *read_output_surface(struct vdpctx *vc,
 {
     VdpStatus vdp_st;
     struct vdp_functions *vdp = vc->vdp;
-    struct mp_image *image = alloc_mpi(width, height, IMGFMT_BGR32);
+    struct mp_image *image = mp_image_alloc(IMGFMT_BGR32, width, height);
     image->colorspace = MP_CSP_RGB;
     image->levels = vc->colorspace.levels_out; // hardcoded with conv. matrix
 
@@ -1380,8 +1326,7 @@ static struct mp_image *get_screenshot(struct vo *vo)
     struct mp_image *image = read_output_surface(vc, vc->screenshot_surface,
                                                  vc->vid_width, vc->vid_height);
 
-    image->display_w = vo->aspdat.prew;
-    image->display_h = vo->aspdat.preh;
+    mp_image_set_display_size(image, vo->aspdat.prew, vo->aspdat.preh);
 
     return image;
 }
@@ -1394,51 +1339,53 @@ static struct mp_image *get_window_screenshot(struct vo *vo)
     struct mp_image *image = read_output_surface(vo->priv, screen,
                                                  vc->output_surface_width,
                                                  vc->output_surface_height);
-    image->width = image->w = vo->dwidth;
-    image->height = image->h = vo->dheight;
+    mp_image_set_size(image, vo->dwidth, vo->dheight);
     return image;
 }
 
-static uint32_t get_image(struct vo *vo, mp_image_t *mpi)
+static void release_decoder_surface(void *ptr)
 {
-    struct vdpctx *vc = vo->priv;
-    struct vdpau_render_state *rndr;
-
-    // no dr for non-decoding for now
-    if (!IMGFMT_IS_VDPAU(vc->image_format))
-        return VO_FALSE;
-    if (mpi->type != MP_IMGTYPE_NUMBERED)
-        return VO_FALSE;
-
-    rndr = get_surface(vo, mpi->number);
-    if (!rndr) {
-        mp_msg(MSGT_VO, MSGL_ERR, "[vdpau] no surfaces available in "
-               "get_image\n");
-        // TODO: this probably breaks things forever, provide a dummy buffer?
-        return VO_FALSE;
-    }
-    mpi->flags |= MP_IMGFLAG_DIRECT;
-    mpi->stride[0] = mpi->stride[1] = mpi->stride[2] = 0;
-    mpi->planes[0] = mpi->planes[1] = mpi->planes[2] = NULL;
-    // hack to get around a check and to avoid a special-case in vd_ffmpeg.c
-    mpi->planes[0] = (void *)rndr;
-    mpi->num_planes = 1;
-    mpi->priv = rndr;
-    return VO_TRUE;
+    bool *in_use_ptr = ptr;
+    *in_use_ptr = false;
 }
 
-static int query_format(uint32_t format)
+static struct mp_image *get_decoder_surface(struct vo *vo)
+{
+    struct vdpctx *vc = vo->priv;
+
+    if (!IMGFMT_IS_VDPAU(vc->image_format))
+        return NULL;
+
+    for (int n = 0; n < MAX_VIDEO_SURFACES; n++) {
+        if (!vc->surface_in_use[n]) {
+            vc->surface_in_use[n] = true;
+            struct mp_image *res =
+                mp_image_new_custom_ref(&(struct mp_image){0},
+                                        &vc->surface_in_use[n],
+                                        release_decoder_surface);
+            mp_image_setfmt(res, vc->image_format);
+            mp_image_set_size(res, vc->vid_width, vc->vid_height);
+            struct vdpau_render_state *rndr = get_surface(vo, n);
+            res->planes[0] = (void *)rndr;
+            return res;
+        }
+    }
+
+    mp_msg(MSGT_VO, MSGL_ERR, "[vdpau] no surfaces available in "
+           "get_decoder_surface\n");
+    // TODO: this probably breaks things forever, provide a dummy buffer?
+    return NULL;
+}
+
+static int query_format(struct vo *vo, uint32_t format)
 {
     int default_flags = VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
         | VFCAP_OSD | VFCAP_FLIP;
     switch (format) {
-    case IMGFMT_YV12:
-    case IMGFMT_I420:
-    case IMGFMT_IYUV:
+    case IMGFMT_420P:
     case IMGFMT_NV12:
-    case IMGFMT_YUY2:
+    case IMGFMT_YUYV:
     case IMGFMT_UYVY:
-        return default_flags | VOCAP_NOSLICES;
     case IMGFMT_VDPAU_MPEG1:
     case IMGFMT_VDPAU_MPEG2:
     case IMGFMT_VDPAU_H264:
@@ -1497,10 +1444,6 @@ static void uninit(struct vo *vo)
     /* Destroy all vdpau objects */
     destroy_vdpau_objects(vo);
 
-#ifdef CONFIG_XF86VM
-    if (vc->mode_switched)
-        vo_vm_close(vo);
-#endif
     vo_x11_uninit(vo);
 
     // Free bitstream buffers allocated by FFmpeg
@@ -1523,7 +1466,7 @@ static int preinit(struct vo *vo, const char *arg)
     if (vc->deint < 0)
         vc->deint = 0;
 
-    if (!vo_init(vo))
+    if (!vo_x11_init(vo))
         return -1;
 
     // After this calling uninit() should work to free resources
@@ -1604,12 +1547,11 @@ static int control(struct vo *vo, uint32_t request, void *data)
         if (vc->dropped_frame)
             vo->want_redraw = true;
         return true;
-    case VOCTRL_QUERY_FORMAT:
-        return query_format(*(uint32_t *)data);
-    case VOCTRL_GET_IMAGE:
-        return get_image(vo, data);
-    case VOCTRL_DRAW_IMAGE:
-        abort(); // draw_image() should get called directly
+    case VOCTRL_HWDEC_ALLOC_SURFACE:
+        *(struct mp_image **)data = get_decoder_surface(vo);
+        return true;
+    case VOCTRL_HWDEC_DECODER_RENDER:
+        return decoder_render(vo, data);
     case VOCTRL_BORDER:
         vo_x11_border(vo);
         checked_resize(vo);
@@ -1645,7 +1587,7 @@ static int control(struct vo *vo, uint32_t request, void *data)
         vo_x11_ontop(vo);
         return VO_TRUE;
     case VOCTRL_UPDATE_SCREENINFO:
-        update_xinerama_info(vo);
+        vo_x11_update_screeninfo(vo);
         return VO_TRUE;
     case VOCTRL_NEWFRAME:
         vc->deint_queue_pos = next_deint_queue_pos(vo, true);
@@ -1680,7 +1622,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
 #define OPT_BASE_STRUCT struct vdpctx
 
 const struct vo_driver video_out_vdpau = {
-    .is_new = true,
     .buffer_frames = true,
     .info = &(const struct vo_info_s){
         "VDPAU with X11",
@@ -1689,11 +1630,11 @@ const struct vo_driver video_out_vdpau = {
         ""
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
     .draw_image = draw_image,
     .get_buffered_frame = set_next_frame_info,
-    .draw_slice = draw_slice,
     .draw_osd = draw_osd,
     .flip_page_timed = flip_page_timed,
     .check_events = check_events,
@@ -1701,14 +1642,13 @@ const struct vo_driver video_out_vdpau = {
     .priv_size = sizeof(struct vdpctx),
     .options = (const struct m_option []){
         OPT_INTRANGE("deint", deint, 0, -4, 4),
-        OPT_FLAG_ON("chroma-deint", chroma_deint, 0, OPTDEF_INT(1)),
-        OPT_FLAG_OFF("nochroma-deint", chroma_deint, 0),
-        OPT_MAKE_FLAGS("pullup", pullup, 0),
+        OPT_FLAG("chroma-deint", chroma_deint, 0, OPTDEF_INT(1)),
+        OPT_FLAG("pullup", pullup, 0),
         OPT_FLOATRANGE("denoise", denoise, 0, 0, 1),
         OPT_FLOATRANGE("sharpen", sharpen, 0, -1, 1),
         OPT_INTRANGE("hqscaling", hqscaling, 0, 0, 9),
         OPT_FLOAT("fps", user_fps, 0),
-        OPT_FLAG_ON("composite-detect", composite_detect, 0, OPTDEF_INT(1)),
+        OPT_FLAG("composite-detect", composite_detect, 0, OPTDEF_INT(1)),
         OPT_INT("queuetime_windowed", flip_offset_window, 0, OPTDEF_INT(50)),
         OPT_INT("queuetime_fs", flip_offset_fs, 0, OPTDEF_INT(50)),
         OPT_INTRANGE("output_surfaces", num_output_surfaces, 0,

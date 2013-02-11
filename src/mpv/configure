@@ -305,10 +305,8 @@ Optional features:
   --enable-radio         enable radio interface [disable]
   --enable-radio-capture enable radio capture (through PCI/line-in) [disable]
   --disable-radio-v4l2   disable Video4Linux2 radio interface [autodetect]
-  --disable-radio-bsdbt848   disable BSD BT848 radio interface [autodetect]
   --disable-tv           disable TV interface (TV/DVB grabbers) [enable]
   --disable-tv-v4l2      disable Video4Linux2 TV interface [autodetect]
-  --disable-tv-bsdbt848  disable BSD BT848 interface [autodetect]
   --disable-pvr          disable Video4Linux2 MPEG PVR [autodetect]
   --disable-networking   disable networking [enable]
   --enable-winsock2_h    enable winsock2_h [autodetect]
@@ -355,7 +353,6 @@ Video output:
   --enable-vm              enable XF86VidMode support [autodetect]
   --enable-xinerama        enable Xinerama support [autodetect]
   --enable-x11             enable X11 video output [autodetect]
-  --enable-xshape          enable XShape support [autodetect]
   --disable-xss            disable screensaver support via xss [autodetect]
   --disable-corevideo      disable CoreVideo video output [autodetect]
   --disable-cocoa          disable Cocoa OpenGL backend [autodetect]
@@ -419,7 +416,6 @@ _prefix="/usr/local"
 ffmpeg=auto
 _encoding=yes
 _x11=auto
-_xshape=auto
 _xss=auto
 _xv=auto
 _vdpau=auto
@@ -427,7 +423,6 @@ _direct3d=auto
 _sdl=auto
 _sdl2=auto
 _dsound=auto
-_nas=auto
 _mng=auto
 _jpeg=auto
 _gl=auto
@@ -457,10 +452,8 @@ _select=yes
 _radio=no
 _radio_capture=no
 _radio_v4l2=auto
-_radio_bsdbt848=auto
 _tv=yes
 _tv_v4l2=auto
-_tv_bsdbt848=auto
 _pvr=auto
 networking=yes
 _winsock2_h=auto
@@ -494,7 +487,6 @@ _rpath=no
 libpostproc=auto
 libavfilter=no
 libavdevice=no
-_asmalign_pot=auto
 _stream_cache=yes
 _priority=no
 def_dos_paths="#define HAVE_DOS_PATHS 0"
@@ -513,9 +505,6 @@ for ac_option do
     ;;
   --bindir=*)
     _bindir=$(echo $ac_option | cut -d '=' -f 2)
-    ;;
-  --datadir=*)
-    _datadir=$(echo $ac_option | cut -d '=' -f 2)
     ;;
   --mandir=*)
     _mandir=$(echo $ac_option | cut -d '=' -f 2)
@@ -589,8 +578,6 @@ for ac_option do
   --disable-encoding)   _encoding=no    ;;
   --enable-x11)         _x11=yes        ;;
   --disable-x11)        _x11=no         ;;
-  --enable-xshape)      _xshape=yes     ;;
-  --disable-xshape)     _xshape=no      ;;
   --enable-xss)         _xss=yes        ;;
   --disable-xss)        _xss=no         ;;
   --enable-xv)          _xv=yes         ;;
@@ -655,8 +642,6 @@ for ac_option do
   --disable-alsa)       _alsa=no        ;;
   --enable-tv)          _tv=yes         ;;
   --disable-tv)         _tv=no          ;;
-  --enable-tv-bsdbt848)  _tv_bsdbt848=yes ;;
-  --disable-tv-bsdbt848) _tv_bsdbt848=no  ;;
   --enable-tv-v4l2)     _tv_v4l2=yes    ;;
   --disable-tv-v4l2)    _tv_v4l2=no     ;;
   --enable-radio)       _radio=yes      ;;
@@ -665,8 +650,6 @@ for ac_option do
   --disable-radio)      _radio=no       ;;
   --enable-radio-v4l2)  _radio_v4l2=yes ;;
   --disable-radio-v4l2) _radio_v4l2=no  ;;
-  --enable-radio-bsdbt848)      _radio_bsdbt848=yes     ;;
-  --disable-radio-bsdbt848)     _radio_bsdbt848=no      ;;
   --enable-pvr)         _pvr=yes        ;;
   --disable-pvr)        _pvr=no         ;;
   --enable-networking)     networking=yes    ;;
@@ -751,7 +734,6 @@ done
 
 # Atmos: moved this here, to be correct, if --prefix is specified
 test -z "$_bindir"  && _bindir="$_prefix/bin"
-test -z "$_datadir" && _datadir="$_prefix/share/mpv"
 test -z "$_mandir"  && _mandir="$_prefix/share/man"
 test -z "$_confdir" && _confdir="$_prefix/etc/mpv"
 test -z "$_localedir"  && _localedir="$_prefix/share/locale"
@@ -1195,19 +1177,6 @@ echores $pic
 
 if x86 ; then
 
-echocheck ".align is a power of two"
-if test "$_asmalign_pot" = auto ; then
-_asmalign_pot=no
-inline_asm_check '".align 3"' && _asmalign_pot=yes
-fi
-if test "$_asmalign_pot" = "yes" ; then
-  def_asmalign_pot='#define ASMALIGN(ZEROBITS) ".align " #ZEROBITS "\n\t"'
-else
-  def_asmalign_pot='#define ASMALIGN(ZEROBITS) ".align 1<<" #ZEROBITS "\n\t"'
-fi
-echores $_asmalign_pot
-
-
 echocheck "ebx availability"
 ebx_available=no
 def_ebx_available='#define HAVE_EBX_AVAILABLE 0'
@@ -1252,36 +1221,6 @@ else
   def_gettext="#undef CONFIG_GETTEXT"
 fi
 echores "$_gettext"
-
-
-echocheck "__builtin_expect"
-# GCC branch prediction hint
-cat > $TMPC << EOF
-static int foo(int a) {
-    a = __builtin_expect(a, 10);
-    return a == 10 ? 0 : 1;
-}
-int main(void) { return foo(10) && foo(0); }
-EOF
-_builtin_expect=no
-cc_check && _builtin_expect=yes
-if test "$_builtin_expect" = yes ; then
-  def_builtin_expect='#define HAVE_BUILTIN_EXPECT 1'
-else
-  def_builtin_expect='#undef HAVE_BUILTIN_EXPECT'
-fi
-echores "$_builtin_expect"
-
-
-echocheck "mkstemp"
-_mkstemp=no
-define_statement_check "_XOPEN_SOURCE 600" "stdlib.h" 'mkstemp("")' && _mkstemp=yes
-if test "$_mkstemp" = yes ; then
-  def_mkstemp='#define HAVE_MKSTEMP 1'
-else
-  def_mkstemp='#define HAVE_MKSTEMP 0'
-fi
-echores "$_mkstemp"
 
 
 echocheck "nanosleep"
@@ -1503,9 +1442,9 @@ if test "$_pthreads" = yes ; then
   def_threads='#define HAVE_THREADS 1'
   extra_cflags="$extra_cflags $THREAD_CFLAGS"
 else
-  res_comment="v4l2, ao_nas, win32 loader disabled"
+  res_comment="v4l2 disabled"
   def_pthreads='#undef HAVE_PTHREADS'
-  _nas=no ; _tv_v4l2=no
+  _tv_v4l2=no
 fi
 echores "$_pthreads"
 
@@ -1658,38 +1597,6 @@ fi
 echores "$_shm"
 
 
-echocheck "strsep()"
-_strsep=no
-statement_check string.h 'char *s = "Hello, world!"; strsep(&s, ",")' && _strsep=yes
-if test "$_strsep" = yes ; then
-  def_strsep='#define HAVE_STRSEP 1'
- need_strsep=no
-else
-  def_strsep='#undef HAVE_STRSEP'
- need_strsep=yes
-fi
-echores "$_strsep"
-
-
-echocheck "vsscanf()"
-cat > $TMPC << EOF
-#define _ISOC99_SOURCE
-#include <stdarg.h>
-#include <stdio.h>
-int main(void) { va_list ap; vsscanf("foo", "bar", ap); return 0; }
-EOF
-_vsscanf=no
-cc_check && _vsscanf=yes
-if test "$_vsscanf" = yes ; then
-  def_vsscanf='#define HAVE_VSSCANF 1'
-  need_vsscanf=no
-else
-  def_vsscanf='#undef HAVE_VSSCANF'
-  need_vsscanf=yes
-fi
-echores "$_vsscanf"
-
-
 echocheck "POSIX select()"
 cat > $TMPC << EOF
 #include <stdio.h>
@@ -1714,19 +1621,6 @@ elif test  "$_select" = yes ; then
   def_select='#define HAVE_AUDIO_SELECT 1'
 fi
 echores "$_select"
-
-
-echocheck "gettimeofday()"
-_gettimeofday=no
-statement_check sys/time.h 'struct timeval tv; struct timezone tz; gettimeofday(&tv, &tz)' && _gettimeofday=yes
-if test "$_gettimeofday" = yes ; then
-  def_gettimeofday='#define HAVE_GETTIMEOFDAY 1'
-  need_gettimeofday=no
-else
-  def_gettimeofday='#undef HAVE_GETTIMEOFDAY'
-  need_gettimeofday=yes
-fi
-echores "$_gettimeofday"
 
 
 echocheck "glob()"
@@ -1777,6 +1671,7 @@ echocheck "Mac OS X Bundle file locations"
 def_macosx_bundle='#undef CONFIG_MACOSX_BUNDLE'
 test "$_macosx_bundle" = auto && _macosx_bundle=$_macosx_finder
 if test "$_macosx_bundle" = yes ; then
+  extra_ldflags="$extra_ldflags -headerpad_max_install_names"
   def_macosx_bundle='#define CONFIG_MACOSX_BUNDLE 1'
 fi
 echores "$_macosx_bundle"
@@ -2127,21 +2022,10 @@ echores "$_xf86keysym"
 echocheck "CACA"
 if test "$_caca" = auto ; then
   _caca=no
-  if ( caca-config --version ) >> "$TMPLOG" 2>&1 ; then
-  cat > $TMPC << EOF
-#include <caca.h>
-#ifdef CACA_API_VERSION_1
-  #include <caca0.h>
-#endif
-int main(void) { caca_init(); return 0; }
-EOF
-  cc_check $(caca-config --libs) && _caca=yes
-  fi
+  pkg_config_add 'caca >= 0.99.beta18' && _caca=yes
 fi
 if test "$_caca" = yes ; then
   def_caca='#define CONFIG_CACA 1'
-  extra_cflags="$extra_cflags $(caca-config --cflags)"
-  libs_mplayer="$libs_mplayer $(caca-config --libs)"
   vomodules="caca $vomodules"
 else
   def_caca='#undef CONFIG_CACA'
@@ -2621,7 +2505,7 @@ echores "$_dvdread"
 echocheck "libcdio"
 if test "$_libcdio" = auto ; then
     _libcdio=no
-    if pkg_config_add libcdio_paranoia ; then
+    if pkg_config_add 'libcdio_paranoia' ; then
         _libcdio=yes
     fi
 fi
@@ -2835,81 +2719,6 @@ fi
 echores "$_tv"
 
 
-if freebsd || netbsd || openbsd || dragonfly ; then
-  echocheck "*BSD BT848 bt8xx header"
-  _ioctl_bt848_h=no
-  for file in "machine/ioctl_bt848.h" \
-            "dev/bktr/ioctl_bt848.h" \
-            "dev/video/bktr/ioctl_bt848.h" \
-            "dev/ic/bt8xx.h" ; do
-    cat > $TMPC <<EOF
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <$file>
-int main(void) { ioctl(0, TVTUNER_GETFREQ, 0); return 0; }
-EOF
-    if cc_check ; then
-     _ioctl_bt848_h=yes
-     _ioctl_bt848_h_name="$file"
-     break;
-    fi
-  done
-  if test "$_ioctl_bt848_h" = yes ; then
-    def_ioctl_bt848_h_name="#define IOCTL_BT848_H_NAME <$_ioctl_bt848_h_name>"
-    res_comment="using $_ioctl_bt848_h_name"
-  else
-    def_ioctl_bt848_h_name="#undef IOCTL_BT848_H_NAME"
-  fi
-  echores "$_ioctl_bt848_h"
-
-  echocheck "*BSD ioctl_meteor.h"
-  _ioctl_meteor_h=no
-  for ioctl_meteor_h_path in "machine/ioctl_meteor.h" "dev/bktr/ioctl_meteor.h" "dev/video/bktr/ioctl_meteor.h" ; do
-    statement_check_broken "sys/types.h" "$ioctl_meteor_h_path" 'ioctl(0, METEORSINPUT, 0)' &&
-      _ioctl_meteor_h=yes && break
-  done
-  if test "$_ioctl_meteor_h" = yes ; then
-    def_ioctl_meteor_h_name="#define IOCTL_METEOR_H_NAME <$ioctl_meteor_h_path>"
-    res_comment="using $ioctl_meteor_h_path"
-  else
-    def_ioctl_meteor_h_name="#undef IOCTL_METEOR_H_NAME"
-  fi
-  echores "$_ioctl_meteor_h"
-
-  echocheck "*BSD BrookTree 848 TV interface"
-  if test "$_tv_bsdbt848" = auto ; then
-    _tv_bsdbt848=no
-    if test "$_tv" = yes ; then
-      cat > $TMPC <<EOF
-#include <sys/types.h>
-$def_ioctl_meteor_h_name
-$def_ioctl_bt848_h_name
-#ifdef IOCTL_METEOR_H_NAME
-#include IOCTL_METEOR_H_NAME
-#endif
-#ifdef IOCTL_BT848_H_NAME
-#include IOCTL_BT848_H_NAME
-#endif
-int main(void) {
- ioctl(0, METEORSINPUT, 0);
- ioctl(0, TVTUNER_GETFREQ, 0);
- return 0;
-}
-EOF
-      cc_check && _tv_bsdbt848=yes
-    fi
-  fi
-  if test "$_tv_bsdbt848" = yes ; then
-    def_tv_bsdbt848='#define CONFIG_TV_BSDBT848 1'
-    inputmodules="tv-bsdbt848 $inputmodules"
-  else
-    def_tv_bsdbt848='#undef CONFIG_TV_BSDBT848'
-    noinputmodules="tv-bsdbt848 $noinputmodules"
-  fi
-  echores "$_tv_bsdbt848"
-fi #if freebsd || netbsd || openbsd || dragonfly
-
-
 echocheck "Video 4 Linux 2 TV interface"
 if test "$_tv_v4l2" = auto ; then
   _tv_v4l2=no
@@ -2968,31 +2777,8 @@ fi
 echores "$_radio_v4l2"
 
 
-if freebsd || netbsd || openbsd || dragonfly &&
-  test "$_radio" = yes && test "$_radio_bsdbt848" = auto ; then
-echocheck "*BSD BrookTree 848 Radio interface"
-   _radio_bsdbt848=no
-    cat > $TMPC <<EOF
-#include <sys/types.h>
-$def_ioctl_bt848_h_name
-#ifdef IOCTL_BT848_H_NAME
-#include IOCTL_BT848_H_NAME
-#endif
-int main(void) { ioctl(0, RADIO_GETFREQ, 0); return 0; }
-EOF
-    cc_check && _radio_bsdbt848=yes
-echores "$_radio_bsdbt848"
-fi #if freebsd || netbsd || openbsd || dragonfly && _radio && _radio_bsdbt848
-
-if test "$_radio_bsdbt848" = yes ; then
-  def_radio_bsdbt848='#define CONFIG_RADIO_BSDBT848 1'
-else
-  def_radio_bsdbt848='#undef CONFIG_RADIO_BSDBT848'
-fi
-
-if test "$_radio_v4l2" = no &&
-   test "$_radio_bsdbt848" = no && test "$_radio" = yes ; then
-    die "Radio driver requires BSD BT848 or V4L2!"
+if test "$_radio_v4l2" = no && test "$_radio" = yes ; then
+    die "Radio driver requires V4L2!"
 fi
 
 echocheck "Video 4 Linux 2 MPEG PVR interface"
@@ -3154,7 +2940,6 @@ CONFIGURATION = $configuration
 
 prefix  = \$(DESTDIR)$_prefix
 BINDIR  = \$(DESTDIR)$_bindir
-DATADIR = \$(DESTDIR)$_datadir
 MANDIR  = \$(DESTDIR)$_mandir
 CONFDIR = \$(DESTDIR)$_confdir
 LOCALEDIR = \$(DESTDIR)$_localedir
@@ -3182,11 +2967,8 @@ ARCH = $arch
 $(mak_enable "$arch_all"    "$arch"    ARCH)
 $(mak_enable "$subarch_all" "$subarch" ARCH)
 
-NEED_GETTIMEOFDAY = $need_gettimeofday
 NEED_GLOB         = $need_glob
 NEED_SHMEM        = $need_shmem
-NEED_STRSEP       = $need_strsep
-NEED_VSSCANF      = $need_vsscanf
 
 # features
 ALSA = $_alsa
@@ -3247,7 +3029,6 @@ RADIO_CAPTURE=$_radio_capture
 RSOUND = $_rsound
 STREAM_CACHE = $_stream_cache
 TV = $_tv
-TV_BSDBT848 = $_tv_bsdbt848
 TV_V4L2 = $_tv_v4l2
 VCD = $_vcd
 VDPAU = $_vdpau
@@ -3296,7 +3077,6 @@ cat > $TMPH << EOF
 
 #define CONFIGURATION "$configuration"
 
-#define MPLAYER_DATADIR "$_datadir"
 #define MPLAYER_CONFDIR "$_confdir"
 #define MPLAYER_LOCALEDIR "$_localedir"
 
@@ -3317,24 +3097,19 @@ $def_winsock2_h
 
 /* system functions */
 $def_gethostbyname2
-$def_gettimeofday
 $def_glob
 $def_nanosleep
 $def_posix_select
 $def_select
 $def_setmode
 $def_shm
-$def_strsep
 $def_sysi86
 $def_sysi86_iv
 $def_termcap
 $def_termios
-$def_vsscanf
 
 
 /* system-specific features */
-$def_asmalign_pot
-$def_builtin_expect
 $def_dl
 $def_dos_paths
 $def_iconv
@@ -3392,7 +3167,6 @@ $def_libavfilter
 $def_alsa
 $def_coreaudio
 $def_jack
-$def_nas
 $def_openal
 $def_openal_h
 $def_ossaudio
@@ -3409,18 +3183,14 @@ $def_libbs2b
 /* input */
 $def_apple_ir
 $def_apple_remote
-$def_ioctl_bt848_h_name
-$def_ioctl_meteor_h_name
 $def_joystick
 $def_lirc
 $def_lircc
 $def_pvr
 $def_radio
-$def_radio_bsdbt848
 $def_radio_capture
 $def_radio_v4l2
 $def_tv
-$def_tv_bsdbt848
 $def_tv_v4l2
 
 
@@ -3474,7 +3244,6 @@ $def_xv
 $def_encoding
 
 $def_fast_64bit
-$def_mkstemp
 $def_pthreads
 $def_threads
 $def_xform_asm
@@ -3497,7 +3266,6 @@ cat << EOF
 Config files successfully generated by ./configure $configuration !
 
   Install prefix: $_prefix
-  Data directory: $_datadir
   Config direct.: $_confdir
 
   Enabled optional drivers:

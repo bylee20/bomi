@@ -49,25 +49,24 @@
 #define MODE_BGR  0x2
 
 #include "core/mp_msg.h"
+#include "osdep/timer.h"
 
 extern int sws_flags;
 
 struct priv {
     struct vo *vo;
 
-    struct mp_draw_sub_backup *osd_backup;
+    struct mp_image *original_image;
 
     /* local data */
-    unsigned char *ImageData;
+    unsigned char *ImageData[2];
     //! original unaligned pointer for free
-    unsigned char *ImageDataOrig;
+    unsigned char *ImageDataOrig[2];
 
     /* X11 related variables */
-    XImage *myximage;
+    XImage *myximage[2];
     int depth, bpp;
     XWindowAttributes attribs;
-
-    int int_pause;
 
     int Flip_Flag;
     int zoomFlag;
@@ -87,15 +86,21 @@ struct priv {
     int dst_width;
 
     XVisualInfo vinfo;
+    int ximage_depth;
 
     int firstTime;
 
-#ifdef HAVE_SHM
-    int Shmem_Flag;
+    int current_buf;
+    int visible_buf;
+    int num_buffers;
+    int total_buffers;
 
-    XShmSegmentInfo Shminfo[1];
+    int Shmem_Flag;
+#ifdef HAVE_SHM
+    int Shm_Warned_Slow;
+
+    XShmSegmentInfo Shminfo[2];
     int gXErrorFlag;
-    int CompletionType;
 #endif
 };
 
@@ -110,73 +115,122 @@ static void check_events(struct vo *vo)
     if (ret & VO_EVENT_RESIZE)
         vo_x11_clearwindow(vo, vo->x11->window);
     else if (ret & VO_EVENT_EXPOSE)
-        vo_x11_clearwindow_part(vo, vo->x11->window, p->myximage->width,
-                                p->myximage->height);
-    if (ret & VO_EVENT_EXPOSE && p->int_pause)
-        flip_page(vo);
+        vo_x11_clearwindow_part(vo, vo->x11->window,
+                                    p->myximage[p->current_buf]->width,
+                                    p->myximage[p->current_buf]->height);
+    if (ret & VO_EVENT_EXPOSE)
+        vo->want_redraw = true;
 }
 
-static void getMyXImage(struct priv *p)
+/* Scan the available visuals on this Display/Screen.  Try to find
+ * the 'best' available TrueColor visual that has a decent color
+ * depth (at least 15bit).  If there are multiple visuals with depth
+ * >= 15bit, we prefer visuals with a smaller color depth. */
+static int find_depth_from_visuals(Display * dpy, int screen,
+                                   Visual ** visual_return)
+{
+    XVisualInfo visual_tmpl;
+    XVisualInfo *visuals;
+    int nvisuals, i;
+    int bestvisual = -1;
+    int bestvisual_depth = -1;
+
+    visual_tmpl.screen = screen;
+    visual_tmpl.class = TrueColor;
+    visuals = XGetVisualInfo(dpy,
+                             VisualScreenMask | VisualClassMask,
+                             &visual_tmpl, &nvisuals);
+    if (visuals != NULL)
+    {
+        for (i = 0; i < nvisuals; i++)
+        {
+            mp_msg(MSGT_VO, MSGL_V,
+                   "vo: X11 truecolor visual %#lx, depth %d, R:%lX G:%lX B:%lX\n",
+                   visuals[i].visualid, visuals[i].depth,
+                   visuals[i].red_mask, visuals[i].green_mask,
+                   visuals[i].blue_mask);
+            /*
+             * Save the visual index and its depth, if this is the first
+             * truecolor visul, or a visual that is 'preferred' over the
+             * previous 'best' visual.
+             */
+            if (bestvisual_depth == -1
+                || (visuals[i].depth >= 15
+                    && (visuals[i].depth < bestvisual_depth
+                        || bestvisual_depth < 15)))
+            {
+                bestvisual = i;
+                bestvisual_depth = visuals[i].depth;
+            }
+        }
+
+        if (bestvisual != -1 && visual_return != NULL)
+            *visual_return = visuals[bestvisual].visual;
+
+        XFree(visuals);
+    }
+    return bestvisual_depth;
+}
+
+static void getMyXImage(struct priv *p, int foo)
 {
     struct vo *vo = p->vo;
 #ifdef HAVE_SHM
-    if (vo->x11->display_is_local && XShmQueryExtension(vo->x11->display))
+    if (vo->x11->display_is_local && XShmQueryExtension(vo->x11->display)) {
         p->Shmem_Flag = 1;
-    else {
+        vo->x11->ShmCompletionEvent = XShmGetEventBase(vo->x11->display)
+                                    + ShmCompletion;
+    } else {
         p->Shmem_Flag = 0;
         mp_msg(MSGT_VO, MSGL_WARN,
                "Shared memory not supported\nReverting to normal Xlib\n");
     }
-    if (p->Shmem_Flag)
-        p->CompletionType = XShmGetEventBase(vo->x11->display) + ShmCompletion;
 
     if (p->Shmem_Flag) {
-        p->myximage =
+        p->myximage[foo] =
             XShmCreateImage(vo->x11->display, p->vinfo.visual, p->depth,
-                            ZPixmap, NULL, &p->Shminfo[0], p->image_width,
+                            ZPixmap, NULL, &p->Shminfo[foo], p->image_width,
                             p->image_height);
-        if (p->myximage == NULL) {
+        if (p->myximage[foo] == NULL) {
             mp_msg(MSGT_VO, MSGL_WARN,
                    "Shared memory error,disabling ( Ximage error )\n");
             goto shmemerror;
         }
-        p->Shminfo[0].shmid = shmget(IPC_PRIVATE,
-                                     p->myximage->bytes_per_line *
-                                        p->myximage->height,
-                                     IPC_CREAT | 0777);
-        if (p->Shminfo[0].shmid < 0) {
-            XDestroyImage(p->myximage);
+        p->Shminfo[foo].shmid = shmget(IPC_PRIVATE,
+                                       p->myximage[foo]->bytes_per_line *
+                                       p->myximage[foo]->height,
+                                       IPC_CREAT | 0777);
+        if (p->Shminfo[foo].shmid < 0) {
+            XDestroyImage(p->myximage[foo]);
             mp_msg(MSGT_VO, MSGL_V, "%s\n", strerror(errno));
             //perror( strerror( errno ) );
             mp_msg(MSGT_VO, MSGL_WARN,
                    "Shared memory error,disabling ( seg id error )\n");
             goto shmemerror;
         }
-        p->Shminfo[0].shmaddr = (char *) shmat(p->Shminfo[0].shmid, 0, 0);
+        p->Shminfo[foo].shmaddr = (char *) shmat(p->Shminfo[foo].shmid, 0, 0);
 
-        if (p->Shminfo[0].shmaddr == ((char *) -1)) {
-            XDestroyImage(p->myximage);
-            if (p->Shminfo[0].shmaddr != ((char *) -1))
-                shmdt(p->Shminfo[0].shmaddr);
+        if (p->Shminfo[foo].shmaddr == ((char *) -1)) {
+            XDestroyImage(p->myximage[foo]);
             mp_msg(MSGT_VO, MSGL_WARN,
                    "Shared memory error,disabling ( address error )\n");
             goto shmemerror;
         }
-        p->myximage->data = p->Shminfo[0].shmaddr;
-        p->ImageData = (unsigned char *) p->myximage->data;
-        p->Shminfo[0].readOnly = False;
-        XShmAttach(vo->x11->display, &p->Shminfo[0]);
+        p->myximage[foo]->data = p->Shminfo[foo].shmaddr;
+        p->ImageData[foo] = (unsigned char *) p->myximage[foo]->data;
+        p->Shminfo[foo].readOnly = False;
+        XShmAttach(vo->x11->display, &p->Shminfo[foo]);
 
         XSync(vo->x11->display, False);
 
         if (p->gXErrorFlag) {
-            XDestroyImage(p->myximage);
-            shmdt(p->Shminfo[0].shmaddr);
+            XDestroyImage(p->myximage[foo]);
+            shmdt(p->Shminfo[foo].shmaddr);
             mp_msg(MSGT_VO, MSGL_WARN, "Shared memory error,disabling.\n");
             p->gXErrorFlag = 0;
             goto shmemerror;
         } else
-            shmctl(p->Shminfo[0].shmid, IPC_RMID, 0);
+            shmctl(p->Shminfo[foo].shmid, IPC_RMID, 0);
 
         if (!p->firstTime) {
             mp_msg(MSGT_VO, MSGL_V, "Sharing memory.\n");
@@ -186,36 +240,40 @@ static void getMyXImage(struct priv *p)
 shmemerror:
         p->Shmem_Flag = 0;
 #endif
-    p->myximage =
+    p->myximage[foo] =
         XCreateImage(vo->x11->display, p->vinfo.visual, p->depth, ZPixmap,
                      0, NULL, p->image_width, p->image_height, 8, 0);
-    p->ImageDataOrig =
-        malloc(p->myximage->bytes_per_line * p->image_height + 32);
-    p->myximage->data = p->ImageDataOrig + 16 - ((long)p->ImageDataOrig & 15);
-    memset(p->myximage->data, 0, p->myximage->bytes_per_line * p->image_height);
-    p->ImageData = p->myximage->data;
+    p->ImageDataOrig[foo] =
+        malloc(p->myximage[foo]->bytes_per_line * p->image_height + 32);
+    p->myximage[foo]->data = p->ImageDataOrig[foo] + 16
+                           - ((long)p->ImageDataOrig & 15);
+    memset(p->myximage[foo]->data, 0, p->myximage[foo]->bytes_per_line
+                                      * p->image_height);
+    p->ImageData[foo] = p->myximage[foo]->data;
 #ifdef HAVE_SHM
 }
 #endif
 }
 
-static void freeMyXImage(struct priv *p)
+static void freeMyXImage(struct priv *p, int foo)
 {
     struct vo *vo = p->vo;
 #ifdef HAVE_SHM
     if (p->Shmem_Flag) {
-        XShmDetach(vo->x11->display, &p->Shminfo[0]);
-        XDestroyImage(p->myximage);
-        shmdt(p->Shminfo[0].shmaddr);
+        XShmDetach(vo->x11->display, &p->Shminfo[foo]);
+        XDestroyImage(p->myximage[foo]);
+        shmdt(p->Shminfo[foo].shmaddr);
     } else
 #endif
     {
-        p->myximage->data = p->ImageDataOrig;
-        XDestroyImage(p->myximage);
-        p->ImageDataOrig = NULL;
+        if (p->myximage[foo]) {
+            p->myximage[foo]->data = p->ImageDataOrig[foo];
+            XDestroyImage(p->myximage[foo]);
+            p->ImageDataOrig[foo] = NULL;
+        }
     }
-    p->myximage = NULL;
-    p->ImageData = NULL;
+    p->myximage[foo] = NULL;
+    p->ImageData[foo] = NULL;
 }
 
 #if BYTE_ORDER == BIG_ENDIAN
@@ -265,12 +323,10 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
 {
     struct priv *p = vo->priv;
 
-    Colormap theCmap;
     const struct fmt2Xfmtentry_s *fmte = fmt2Xfmt;
 
-#ifdef CONFIG_XF86VM
-    int vm = flags & VOFLAG_MODESWITCHING;
-#endif
+    mp_image_unrefp(&p->original_image);
+
     p->Flip_Flag = flags & VOFLAG_FLIPPING;
     p->zoomFlag = 1;
 
@@ -287,8 +343,8 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
     if (p->depth != 15 && p->depth != 16 && p->depth != 24 && p->depth != 32) {
         Visual *visual;
 
-        p->depth = vo_find_depth_from_visuals(vo->x11->display, vo->x11->screen,
-                                              &visual);
+        p->depth = find_depth_from_visuals(vo->x11->display, vo->x11->screen,
+                                           &visual);
     }
     if (!XMatchVisualInfo(vo->x11->display, vo->x11->screen, p->depth,
                           DirectColor, &p->vinfo)
@@ -300,43 +356,32 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
     }
 
     /* set image size (which is indeed neither the input nor output size),
-       if zoom is on it will be changed during draw_slice anyway so we don't
+       if zoom is on it will be changed during draw_image anyway so we don't
        duplicate the aspect code here
      */
     p->image_width = (width + 7) & (~7);
     p->image_height = height;
 
-    {
-#ifdef CONFIG_XF86VM
-        if (vm)
-            vo_vm_switch(vo);
+    vo_x11_create_vo_window(vo, &p->vinfo, vo->dx, vo->dy, vo->dwidth,
+                            vo->dheight, flags, "x11");
 
-#endif
-        theCmap = vo_x11_create_colormap(vo, &p->vinfo);
-
-        vo_x11_create_vo_window(vo, &p->vinfo, vo->dx, vo->dy, vo->dwidth,
-                                vo->dheight, flags, theCmap, "x11");
-        if (WinID > 0)
-            p->depth = vo_x11_update_geometry(vo, true);
-
-#ifdef CONFIG_XF86VM
-        if (vm) {
-            /* Grab the mouse pointer in our window */
-            if (vo_grabpointer)
-                XGrabPointer(vo->x11->display, vo->x11->window, True, 0,
-                             GrabModeAsync, GrabModeAsync,
-                             vo->x11->window, None, CurrentTime);
-            XSetInputFocus(vo->x11->display, vo->x11->window, RevertToNone,
-                           CurrentTime);
-        }
-#endif
+    if (WinID > 0) {
+        unsigned depth, dummy_uint;
+        int dummy_int;
+        Window dummy_win;
+        XGetGeometry(vo->x11->display, vo->x11->window, &dummy_win, &dummy_int,
+                     &dummy_int, &dummy_uint, &dummy_uint, &dummy_uint, &depth);
+        p->depth = depth;
     }
 
-    if (p->myximage) {
-        freeMyXImage(p);
-        sws_freeContext(p->swsContext);
-    }
-    getMyXImage(p);
+    int i;
+    for (i = 0; i < p->total_buffers; i++)
+        freeMyXImage(p, i);
+    sws_freeContext(p->swsContext);
+    p->num_buffers = 2;
+    p->total_buffers = p->num_buffers;
+    for (i = 0; i < p->total_buffers; i++)
+        getMyXImage(p, i);
 
     while (fmte->mpfmt) {
         int depth = IMGFMT_RGB_DEPTH(fmte->mpfmt);
@@ -345,11 +390,11 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
         if (depth == 15)
             depth = 16;
 
-        if (depth == p->myximage->bits_per_pixel &&
-            fmte->byte_order == p->myximage->byte_order &&
-            fmte->red_mask == p->myximage->red_mask &&
-            fmte->green_mask == p->myximage->green_mask &&
-            fmte->blue_mask == p->myximage->blue_mask)
+        if (depth == p->myximage[0]->bits_per_pixel &&
+            fmte->byte_order == p->myximage[0]->byte_order &&
+            fmte->red_mask == p->myximage[0]->red_mask &&
+            fmte->green_mask == p->myximage[0]->green_mask &&
+            fmte->blue_mask == p->myximage[0]->blue_mask)
             break;
         fmte++;
     }
@@ -360,7 +405,7 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
         return -1;
     }
     p->out_format = fmte->mpfmt;
-    p->bpp = p->myximage->bits_per_pixel;
+    p->bpp = p->myximage[0]->bits_per_pixel;
     p->out_offset = 0;
     // We can easily "emulate" non-native RGB32 and BGR32
     if (p->out_format == (IMGFMT_BGR32 | 128)
@@ -389,8 +434,10 @@ static void Display_Image(struct priv *p, XImage *myximage, uint8_t *ImageData)
 {
     struct vo *vo = p->vo;
 
+    XImage *x_image = p->myximage[p->current_buf];
+
     int x = (vo->dwidth - p->dst_width) / 2;
-    int y = (vo->dheight - p->myximage->height) / 2;
+    int y = (vo->dheight - x_image->height) / 2;
 
     // do not draw if the image needs rescaling
     if ((p->old_vo_dwidth != vo->dwidth ||
@@ -401,29 +448,29 @@ static void Display_Image(struct priv *p, XImage *myximage, uint8_t *ImageData)
         x = vo->dx;
         y = vo->dy;
     }
-    p->myximage->data += p->out_offset;
+    x_image->data += p->out_offset;
 #ifdef HAVE_SHM
     if (p->Shmem_Flag) {
         XShmPutImage(vo->x11->display, vo->x11->window, vo->x11->vo_gc,
-                     p->myximage, 0, 0, x, y, p->dst_width, p->myximage->height,
+                     x_image, 0, 0, x, y, p->dst_width, x_image->height,
                      True);
+        vo->x11->ShmCompletionWaitCount++;
     } else
 #endif
     {
         XPutImage(vo->x11->display, vo->x11->window, vo->x11->vo_gc,
-                  p->myximage, 0, 0, x, y, p->dst_width, p->myximage->height);
+                  x_image, 0, 0, x, y, p->dst_width, x_image->height);
     }
-    p->myximage->data -= p->out_offset;
+    x_image->data -= p->out_offset;
 }
 
-static struct mp_image get_x_buffer(struct priv *p)
+static struct mp_image get_x_buffer(struct priv *p, int buf_index)
 {
     struct mp_image img = {0};
-    img.w = img.width = p->image_width;
-    img.h = img.height = p->image_height;
+    mp_image_set_size(&img, p->image_width, p->image_height);
     mp_image_setfmt(&img, p->out_format);
 
-    img.planes[0] = p->ImageData;
+    img.planes[0] = p->ImageData[buf_index];
     img.stride[0] = p->image_width * ((p->bpp + 7) / 8);
 
     return img;
@@ -433,7 +480,7 @@ static void draw_osd(struct vo *vo, struct osd_state *osd)
 {
     struct priv *p = vo->priv;
 
-    struct mp_image img = get_x_buffer(p);
+    struct mp_image img = get_x_buffer(p, p->current_buf);
 
     struct mp_osd_res res = {
         .w = img.w,
@@ -442,44 +489,59 @@ static void draw_osd(struct vo *vo, struct osd_state *osd)
         .video_par = vo->aspdat.par,
     };
 
-    osd_draw_on_image_bk(osd, res, osd->vo_pts, 0, p->osd_backup, &img);
+    osd_draw_on_image(osd, res, osd->vo_pts, 0, &img);
 }
 
 static mp_image_t *get_screenshot(struct vo *vo)
 {
     struct priv *p = vo->priv;
 
-    struct mp_image img = get_x_buffer(p);
-    struct mp_image *res = alloc_mpi(img.w, img.h, img.imgfmt);
-    copy_mpi(res, &img);
-    mp_draw_sub_backup_restore(p->osd_backup, res);
+    if (!p->original_image)
+        return NULL;
 
+    struct mp_image *res = mp_image_new_ref(p->original_image);
+    mp_image_set_display_size(res, vo->aspdat.prew, vo->aspdat.preh);
     return res;
 }
 
-static int redraw_frame(struct vo *vo)
+static void wait_for_completion(struct vo *vo, int max_outstanding)
 {
-    struct priv *p = vo->priv;
-
-    struct mp_image img = get_x_buffer(p);
-    mp_draw_sub_backup_restore(p->osd_backup, &img);
-
-    return true;
+#ifdef HAVE_SHM
+    struct priv *ctx = vo->priv;
+    struct vo_x11_state *x11 = vo->x11;
+    if (ctx->Shmem_Flag) {
+        while (x11->ShmCompletionWaitCount > max_outstanding) {
+            if (!ctx->Shm_Warned_Slow) {
+                mp_msg(MSGT_VO, MSGL_WARN, "[VO_X11] X11 can't keep up! Waiting"
+                                           " for XShm completion events...\n");
+                ctx->Shm_Warned_Slow = 1;
+            }
+            usec_sleep(1000);
+            check_events(vo);
+        }
+    }
+#endif
 }
 
 static void flip_page(struct vo *vo)
 {
     struct priv *p = vo->priv;
-    Display_Image(p, p->myximage, p->ImageData);
-    XSync(vo->x11->display, False);
+    Display_Image(p, p->myximage[p->current_buf],
+                     p->ImageData[p->current_buf]);
+    p->visible_buf = p->current_buf;
+    p->current_buf = (p->current_buf + 1) % p->num_buffers;
+
+    if (!p->Shmem_Flag)
+        XSync(vo->x11->display, False);
 }
 
-static int draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, int h,
-                      int x, int y)
+static void draw_image(struct vo *vo, mp_image_t *mpi)
 {
     struct priv *p = vo->priv;
     uint8_t *dst[MP_MAX_PLANES] = {NULL};
     int dstStride[MP_MAX_PLANES] = {0};
+
+    wait_for_completion(vo, p->num_buffers - 1);
 
     if ((p->old_vo_dwidth != vo->dwidth || p->old_vo_dheight != vo->dheight)
         /*&& y==0 */ && p->zoomFlag)
@@ -503,66 +565,135 @@ static int draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, int h,
             p->image_width = (newW + 7) & (~7);
             p->image_height = newH;
 
-            freeMyXImage(p);
-            getMyXImage(p);
+            int i;
+            for (i = 0; i < p->total_buffers; i++)
+                freeMyXImage(p, i);
             sws_freeContext(oldContext);
+            for (i = 0; i < p->total_buffers; i++)
+                getMyXImage(p, i);
         } else
             p->swsContext = oldContext;
         p->dst_width = newW;
     }
 
     dstStride[0] = p->image_width * ((p->bpp + 7) / 8);
-    dst[0] = p->ImageData;
+    dst[0] = p->ImageData[p->current_buf];
     if (p->Flip_Flag) {
         dst[0] += dstStride[0] * (p->image_height - 1);
         dstStride[0] = -dstStride[0];
     }
-    sws_scale(p->swsContext, (const uint8_t **)src, stride, y, h, dst,
-              dstStride);
-    mp_draw_sub_backup_reset(p->osd_backup);
-    return 0;
+    sws_scale(p->swsContext, (const uint8_t **)mpi->planes, mpi->stride,
+              0, mpi->h, dst, dstStride);
+
+    mp_image_setrefp(&p->original_image, mpi);
+}
+
+static int redraw_frame(struct vo *vo)
+{
+    struct priv *p = vo->priv;
+
+    if (!p->original_image)
+        return false;
+
+    draw_image(vo, p->original_image);
+    return true;
 }
 
 static int query_format(struct vo *vo, uint32_t format)
 {
+    struct priv *p = vo->priv;
     mp_msg(MSGT_VO, MSGL_DBG2,
            "vo_x11: query_format was called: %x (%s)\n", format,
            vo_format_name(format));
-    if (IMGFMT_IS_BGR(format)) {
-        if (IMGFMT_BGR_DEPTH(format) <= 8)
-            return 0;           // TODO 8bpp not yet fully implemented
-        if (IMGFMT_BGR_DEPTH(format) == vo->x11->depthonscreen)
-            return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW |
-                   VFCAP_OSD | VFCAP_FLIP |
-                   VFCAP_ACCEPT_STRIDE;
-        else
-            return VFCAP_CSP_SUPPORTED | VFCAP_OSD |
-                   VFCAP_FLIP |
-                   VFCAP_ACCEPT_STRIDE;
+    if (IMGFMT_IS_RGB(format)) {
+        for (int n = 0; fmt2Xfmt[n].mpfmt; n++) {
+            if (fmt2Xfmt[n].mpfmt == format) {
+                if (IMGFMT_RGB_DEPTH(format) == p->ximage_depth) {
+                    return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW |
+                           VFCAP_OSD | VFCAP_FLIP;
+                } else {
+                    return VFCAP_CSP_SUPPORTED | VFCAP_OSD | VFCAP_FLIP;
+                }
+            }
+        }
     }
 
     switch (format) {
-    case IMGFMT_I420:
-    case IMGFMT_IYUV:
-    case IMGFMT_YV12:
-        return VFCAP_CSP_SUPPORTED | VFCAP_OSD |
-               VFCAP_ACCEPT_STRIDE;
+    case IMGFMT_420P:
+        return VFCAP_CSP_SUPPORTED | VFCAP_OSD;
     }
     return 0;
 }
 
+static void find_x11_depth(struct vo *vo)
+{
+    struct vo_x11_state *x11 = vo->x11;
+    struct priv *p = vo->priv;
+    XImage *mXImage = NULL;
+    int depth, bpp, ximage_depth;
+    unsigned int mask;
+    XWindowAttributes attribs;
+
+    // get color depth (from root window, or the best visual):
+    XGetWindowAttributes(x11->display, x11->rootwin, &attribs);
+    depth = attribs.depth;
+
+    if (depth != 15 && depth != 16 && depth != 24 && depth != 32)
+    {
+        Visual *visual;
+
+        depth = find_depth_from_visuals(x11->display, x11->screen, &visual);
+        if (depth != -1)
+            mXImage = XCreateImage(x11->display, visual, depth, ZPixmap,
+                                   0, NULL, 1, 1, 8, 1);
+    } else
+        mXImage =
+            XGetImage(x11->display, x11->rootwin, 0, 0, 1, 1, AllPlanes, ZPixmap);
+
+    ximage_depth = depth;   // display depth on screen
+
+    // get bits/pixel from XImage structure:
+    if (mXImage == NULL)
+    {
+        mask = 0;
+    } else
+    {
+        /* for the depth==24 case, the XImage structures might use
+         * 24 or 32 bits of data per pixel. */
+        bpp = mXImage->bits_per_pixel;
+        if ((ximage_depth + 7) / 8 != (bpp + 7) / 8)
+            ximage_depth = bpp;     // by A'rpi
+        mask =
+            mXImage->red_mask | mXImage->green_mask | mXImage->blue_mask;
+        mp_msg(MSGT_VO, MSGL_V,
+               "vo: X11 color mask:  %X  (R:%lX G:%lX B:%lX)\n", mask,
+               mXImage->red_mask, mXImage->green_mask, mXImage->blue_mask);
+        XDestroyImage(mXImage);
+    }
+    if (((ximage_depth + 7) / 8) == 2)
+    {
+        if (mask == 0x7FFF)
+            ximage_depth = 15;
+        else if (mask == 0xFFFF)
+            ximage_depth = 16;
+    }
+
+    mp_msg(MSGT_VO, MSGL_V, "vo: X11 depth %d and %d bpp.\n", depth,
+           ximage_depth);
+
+    p->ximage_depth = ximage_depth;
+}
 
 static void uninit(struct vo *vo)
 {
     struct priv *p = vo->priv;
-    if (p->myximage)
-        freeMyXImage(p);
+    if (p->myximage[0])
+        freeMyXImage(p, 0);
+    if (p->myximage[1])
+        freeMyXImage(p, 1);
 
-#ifdef CONFIG_XF86VM
-    vo_vm_close(vo);
-#endif
+    talloc_free(p->original_image);
 
-    p->zoomFlag = 0;
     vo_x11_uninit(vo);
 
     sws_freeContext(p->swsContext);
@@ -578,23 +709,15 @@ static int preinit(struct vo *vo, const char *arg)
         return ENOSYS;
     }
 
-    p->osd_backup = talloc_steal(p, mp_draw_sub_backup_new());
-
-    if (!vo_init(vo))
+    if (!vo_x11_init(vo))
         return -1;              // Can't open X11
+    find_x11_depth(vo);
     return 0;
 }
 
 static int control(struct vo *vo, uint32_t request, void *data)
 {
-    struct priv *p = vo->priv;
     switch (request) {
-    case VOCTRL_PAUSE:
-        return p->int_pause = 1;
-    case VOCTRL_RESUME:
-        return p->int_pause = 0;
-    case VOCTRL_QUERY_FORMAT:
-        return query_format(vo, *((uint32_t *) data));
     case VOCTRL_FULLSCREEN:
         vo_x11_fullscreen(vo);
         vo_x11_clearwindow(vo, vo->x11->window);
@@ -607,13 +730,13 @@ static int control(struct vo *vo, uint32_t request, void *data)
     case VOCTRL_GET_EQUALIZER:
     {
         struct voctrl_get_equalizer_args *args = data;
-        return vo_x11_get_equalizer(args->name, args->valueptr);
+        return vo_x11_get_equalizer(vo, args->name, args->valueptr);
     }
     case VOCTRL_ONTOP:
         vo_x11_ontop(vo);
         return VO_TRUE;
     case VOCTRL_UPDATE_SCREENINFO:
-        update_xinerama_info(vo);
+        vo_x11_update_screeninfo(vo);
         return VO_TRUE;
     case VOCTRL_REDRAW_FRAME:
         return redraw_frame(vo);
@@ -627,7 +750,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
 }
 
 const struct vo_driver video_out_x11 = {
-    .is_new = false,
     .info = &(const vo_info_t) {
         "X11 ( XImage/Shm )",
         "x11",
@@ -640,14 +762,12 @@ const struct vo_driver video_out_x11 = {
         .srcH = -1,
         .old_vo_dwidth = -1,
         .old_vo_dheight = -1,
-#ifdef HAVE_SHM
-        .CompletionType = -1,
-#endif
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
-    .draw_slice = draw_slice,
+    .draw_image = draw_image,
     .draw_osd = draw_osd,
     .flip_page = flip_page,
     .check_events = check_events,

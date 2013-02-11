@@ -36,6 +36,7 @@
 #include "w64.h"
 #include "avio.h"
 #include "metadata.h"
+#include "spdif.h"
 
 typedef struct WAVDemuxContext {
     const AVClass *class;
@@ -49,6 +50,7 @@ typedef struct WAVDemuxContext {
     int smv_eof;
     int audio_eof;
     int ignore_length;
+    int spdif;
 } WAVDemuxContext;
 
 
@@ -407,6 +409,21 @@ static int wav_read_packet(AVFormatContext *s,
     AVStream *st;
     WAVDemuxContext *wav = s->priv_data;
 
+    if (CONFIG_SPDIF_DEMUXER && wav->spdif == 0 &&
+        s->streams[0]->codec->codec_tag == 1) {
+        enum AVCodecID codec;
+        ret = ff_spdif_probe(s->pb->buffer, s->pb->buf_end - s->pb->buffer,
+                             &codec);
+        if (ret > AVPROBE_SCORE_MAX / 2) {
+            s->streams[0]->codec->codec_id = codec;
+            wav->spdif = 1;
+        } else {
+            wav->spdif = -1;
+        }
+    }
+    if (CONFIG_SPDIF_DEMUXER && wav->spdif == 1)
+        return ff_spdif_read_packet(s, pkt);
+
     if (wav->smv_data_ofs > 0) {
         int64_t audio_dts, video_dts;
 smv_retry:
@@ -593,6 +610,12 @@ static int w64_read_header(AVFormatContext *s)
             avio_skip(pb, FFALIGN(size, INT64_C(8)) - size);
 
             avpriv_set_pts_info(st, 64, 1, st->codec->sample_rate);
+        } else if (!memcmp(guid, ff_w64_guid_fact, 16)) {
+            int64_t samples;
+
+            samples = avio_rl64(pb);
+            if (samples > 0)
+                st->duration = samples;
         } else if (!memcmp(guid, ff_w64_guid_data, 16)) {
             wav->data_end = avio_tell(pb) + size - 24;
 

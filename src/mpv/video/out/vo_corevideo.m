@@ -219,7 +219,7 @@ static void flip_page(struct vo *vo)
     p->mpglctx->gl->Clear(GL_COLOR_BUFFER_BIT);
 }
 
-static uint32_t draw_image(struct vo *vo, mp_image_t *mpi)
+static void draw_image(struct vo *vo, mp_image_t *mpi)
 {
     struct priv *p = vo->priv;
     CVReturn error;
@@ -231,8 +231,8 @@ static uint32_t draw_image(struct vo *vo, mp_image_t *mpi)
             mp_msg(MSGT_VO, MSGL_ERR,"[vo_corevideo] Failed to create OpenGL"
                                      " texture Cache(%d)\n", error);
 
-        error = CVPixelBufferCreateWithBytes(NULL, mpi->width, mpi->height,
-                    p->pixelFormat, mpi->planes[0], mpi->width * mpi->bpp / 8,
+        error = CVPixelBufferCreateWithBytes(NULL, mpi->w, mpi->h,
+                    p->pixelFormat, mpi->planes[0], mpi->stride[0],
                     NULL, NULL, NULL, &p->pixelBuffer);
         if(error != kCVReturnSuccess)
             mp_msg(MSGT_VO, MSGL_ERR,"[vo_corevideo] Failed to create Pixel"
@@ -240,16 +240,15 @@ static uint32_t draw_image(struct vo *vo, mp_image_t *mpi)
     }
 
     do_render(vo);
-    return VO_TRUE;
 }
 
 static int query_format(struct vo *vo, uint32_t format)
 {
     struct priv *p = vo->priv;
     const int flags = VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW |
-                      VFCAP_OSD | VOCAP_NOSLICES;
+                      VFCAP_OSD;
     switch (format) {
-        case IMGFMT_YUY2:
+        case IMGFMT_YUYV:
             p->pixelFormat = kYUVSPixelFormat;
             return flags;
 
@@ -347,7 +346,7 @@ static int get_image_fmt(struct vo *vo)
 {
     struct priv *p = vo->priv;
     switch (p->pixelFormat) {
-        case kYUVSPixelFormat:   return IMGFMT_YUY2;
+        case kYUVSPixelFormat:   return IMGFMT_YUYV;
         case k24RGBPixelFormat:  return IMGFMT_RGB24;
         case k32ARGBPixelFormat: return IMGFMT_ARGB;
         case k32BGRAPixelFormat: return IMGFMT_BGRA;
@@ -368,15 +367,15 @@ static mp_image_t *get_screenshot(struct vo *vo)
     size_t width      = CVPixelBufferGetWidth(p->pixelBuffer);
     size_t height     = CVPixelBufferGetHeight(p->pixelBuffer);
     size_t stride     = CVPixelBufferGetBytesPerRow(p->pixelBuffer);
-    size_t image_size = stride * height;
 
-    mp_image_t *image = alloc_mpi(width, height, img_fmt);
-    memcpy(image->planes[0], base, image_size);
-    image->stride[0]  = stride;
+    struct mp_image img = {0};
+    mp_image_setfmt(&img, img_fmt);
+    mp_image_set_size(&img, width, height);
+    img.planes[0] = base;
+    img.stride[0] = stride;
 
-    image->display_w = vo->aspdat.prew;
-    image->display_h = vo->aspdat.preh;
-
+    struct mp_image *image = mp_image_new_copy(&img);
+    mp_image_set_display_size(image, vo->aspdat.prew, vo->aspdat.preh);
     mp_image_set_colorspace_details(image, &p->colorspace);
 
     return image;
@@ -386,10 +385,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
 {
     struct priv *p = vo->priv;
     switch (request) {
-        case VOCTRL_DRAW_IMAGE:
-            return draw_image(vo, data);
-        case VOCTRL_QUERY_FORMAT:
-            return query_format(vo, *(uint32_t*)data);
         case VOCTRL_ONTOP:
             p->mpglctx->ontop(vo);
             return VO_TRUE;
@@ -438,7 +433,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
 }
 
 const struct vo_driver video_out_corevideo = {
-    .is_new = true,
     .info = &(const vo_info_t) {
         "Mac OS X Core Video",
         "corevideo",
@@ -446,8 +440,10 @@ const struct vo_driver video_out_corevideo = {
         ""
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
+    .draw_image = draw_image,
     .draw_osd = draw_osd,
     .flip_page = flip_page,
     .check_events = check_events,

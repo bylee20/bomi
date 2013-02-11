@@ -187,7 +187,8 @@ SOURCES += main.cpp \
     mpv-main.c \
     shadervar.cpp \
     subtitlestyle.cpp \
-    hwacc.cpp
+    hwacc.cpp \
+    videoformat.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp
@@ -222,7 +223,6 @@ OTHER_FILES += \
     imports/CMPlayerSkin/Button.qml \
     imports/CMPlayerSkin/Player.qml \
     imports/CMPlayerSkin/MouseCatcher.qml \
-    imports/CMPlayerSkin/func.js \
     skins/classic/Slider.qml \
     skins/classic/FramedButton.qml \
     skins/classic/cmplayer.qml \

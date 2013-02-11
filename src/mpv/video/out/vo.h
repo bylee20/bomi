@@ -36,26 +36,24 @@
 #define VO_EVENT_MOVE 16
 
 enum mp_voctrl {
-    /* does the device support the required format */
-    VOCTRL_QUERY_FORMAT = 1,
     /* signal a device reset seek */
-    VOCTRL_RESET,
+    VOCTRL_RESET = 1,
     /* used to switch to fullscreen */
     VOCTRL_FULLSCREEN,
     /* signal a device pause */
     VOCTRL_PAUSE,
     /* start/resume playback */
     VOCTRL_RESUME,
-    /* libmpcodecs direct rendering */
-    VOCTRL_GET_IMAGE,
-    VOCTRL_DRAW_IMAGE,
+
     VOCTRL_GET_PANSCAN,
     VOCTRL_SET_PANSCAN,
     VOCTRL_SET_EQUALIZER,               // struct voctrl_set_equalizer_args
     VOCTRL_GET_EQUALIZER,               // struct voctrl_get_equalizer_args
     VOCTRL_DUPLICATE_FRAME,
 
-    VOCTRL_START_SLICE,
+    /* for vdpau hardware decoding */
+    VOCTRL_HWDEC_DECODER_RENDER,        // pointer to hw state
+    VOCTRL_HWDEC_ALLOC_SURFACE,         // struct mp_image**
 
     VOCTRL_NEWFRAME,
     VOCTRL_SKIPFRAME,
@@ -100,7 +98,7 @@ struct voctrl_screenshot_args {
     // implemented.
     int full_window;
     // Will be set to a newly allocated image, that contains the screenshot.
-    // The caller has to free the pointer with free_mp_image().
+    // The caller has to free the image with talloc_free().
     // It is not specified whether the image data is a copy or references the
     // image data directly.
     // Is never NULL. (Failure has to be indicated by returning VO_FALSE.)
@@ -144,11 +142,12 @@ struct osd_state;
 struct mp_image;
 
 struct vo_driver {
-    // Driver uses new API
-    bool is_new;
     // Driver buffers or adds (deinterlace) frames and will keep track
     // of pts values itself
     bool buffer_frames;
+
+    // Encoding functionality, which can be invoked via --o only.
+    bool encode;
 
     const vo_info_t *info;
     /*
@@ -157,6 +156,14 @@ struct vo_driver {
      *   returns: zero on successful initialization, non-zero on error.
      */
     int (*preinit)(struct vo *vo, const char *arg);
+
+    /*
+     * Whether the given image format is supported and config() will succeed.
+     * format: one of IMGFMT_*
+     * returns: 0 on not supported, otherwise a bitmask of VFCAP_* values
+     */
+    int (*query_format)(struct vo *vo, uint32_t format);
+
     /*
      * Initialize (means CONFIGURE) the display driver.
      * params:
@@ -176,7 +183,8 @@ struct vo_driver {
      */
     int (*control)(struct vo *vo, uint32_t request, void *data);
 
-    void (*draw_image)(struct vo *vo, struct mp_image *mpi, double pts);
+    void (*draw_image)(struct vo *vo, struct mp_image *mpi);
+    void (*draw_image_pts)(struct vo *vo, struct mp_image *mpi, double pts);
 
     /*
      * Get extra frames from the VO, such as those added by VDPAU
@@ -185,17 +193,6 @@ struct vo_driver {
      * it as a separate step seems to allow making code more robust.
      */
     void (*get_buffered_frame)(struct vo *vo, bool eof);
-
-    /*
-     * Draw a planar YUV slice to the buffer:
-     * params:
-     *   src[3] = source image planes (Y,U,V)
-     *   stride[3] = source image planes line widths (in bytes)
-     *   w,h = width*height of area to be copied (in Y pixels)
-     *   x,y = position at the destination image (in Y pixels)
-     */
-    int (*draw_slice)(struct vo *vo, uint8_t *src[], int stride[], int w,
-                      int h, int x, int y);
 
     /*
      * Draws OSD to the screen buffer
@@ -233,6 +230,8 @@ struct vo {
     int config_ok;  // Last config call was successful?
     int config_count;  // Total number of successful config calls
     int default_caps; // query_format() result for configured video format
+
+    bool untimed;       // non-interactive, don't do sleep calls in playloop
 
     bool frame_loaded;  // Is there a next frame the VO could flip to?
     struct mp_image *waiting_mpi;
@@ -291,11 +290,10 @@ int vo_config(struct vo *vo, uint32_t width, uint32_t height,
 void list_video_out(void);
 
 int vo_control(struct vo *vo, uint32_t request, void *data);
-int vo_draw_image(struct vo *vo, struct mp_image *mpi, double pts);
+int vo_draw_image(struct vo *vo, struct mp_image *mpi);
 int vo_redraw_frame(struct vo *vo);
 int vo_get_buffered_frame(struct vo *vo, bool eof);
 void vo_skip_frame(struct vo *vo);
-int vo_draw_slice(struct vo *vo, uint8_t *src[], int stride[], int w, int h, int x, int y);
 void vo_new_frame_imminent(struct vo *vo);
 void vo_draw_osd(struct vo *vo, struct osd_state *osd);
 void vo_flip_page(struct vo *vo, unsigned int pts_us, int duration);

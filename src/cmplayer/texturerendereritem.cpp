@@ -1,18 +1,27 @@
 #include "texturerendereritem.hpp"
+#include "global.hpp"
 
 struct TextureRendererItem::Shader : public QSGMaterialShader {
-    Shader(TextureRendererItem *item): m_item(item) {}
+	Shader(TextureRendererItem *item): m_item(item) {}
 	void updateState(const RenderState &state, QSGMaterial *newOne, QSGMaterial *old) {
         Q_UNUSED(old); Q_UNUSED(newOne); m_item->bind(state, program());
 	}
     void initialize() { m_item->link(program()); }
 private:
-    char const *const *attributeNames() const {return m_item->attributeNames();}
-    const char *vertexShader() const {return m_item->vertexShader();}
-    const char *fragmentShader() const {return m_item->fragmentShader();}
+	char const *const *attributeNames() const;
+	const char *vertexShader() const {return m_item->vertexShader();}
+	const char *fragmentShader() const {return m_item->fragmentShader();}
     TextureRendererItem *m_item = nullptr;
 };
 
+char const *const *TextureRendererItem::Shader::attributeNames() const {
+	static const char *names[] = {
+		"qt_VertexPosition",
+		"qt_VertexTexCoord",
+		0
+	};
+	return names;
+}
 
 static int MaterialId = 0;
 static QVector<QSGMaterialType> MaterialTypes = QVector<QSGMaterialType>(50);
@@ -27,26 +36,25 @@ private:
 };
 
 struct TextureRendererItem::Node : public QSGGeometryNode {
-	Node(TextureRendererItem *item): m_item(item) {
+	Node(TextureRendererItem *item) {
 		setFlags(OwnsGeometry | OwnsMaterial);
         setMaterial(new Material(item));
 		setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4));
 		markDirty(DirtyMaterial | DirtyGeometry);
 		item->setGeometryDirty();
-		Q_ASSERT(!item->m_textures);
-		item->m_textures = new GLuint[item->textureCount()];
-		glGenTextures(item->textureCount(), item->m_textures);
-		item->initializeTextures();
+
+		m_count = item->textureCount();
+		m_textures = new GLuint[m_count];
+		glGenTextures(m_count, m_textures);
 	}
 	~Node() {
-		if (m_item->m_textures) {
-			glDeleteTextures(m_item->textureCount(), m_item->m_textures);
-			delete [] m_item->m_textures;
-			m_item->m_textures = nullptr;
-		}
+		glDeleteTextures(m_count, m_textures);
+		delete [] m_textures;
 	}
+	GLuint texture(int i) const {return m_textures[i];}
 private:
-	TextureRendererItem *m_item;
+	int m_count = 0;
+	GLuint *m_textures = nullptr;
 };
 
 struct TextureRendererItem::Data {
@@ -76,14 +84,19 @@ void TextureRendererItem::resetNode() {
 	}
 	if (!d->node) {
 		d->node = new Node(this);
+		initializeTextures();
 	}
+}
+
+GLuint TextureRendererItem::texture(int i) const {
+	return d->node->texture(i);
 }
 
 QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
 	Q_UNUSED(data);
 	d->node = static_cast<Node*>(old);
 	if (!d->node)
-		d->node = new Node(this);
+		resetNode();
 	beforeUpdate();
 	if (d->dirtyGeomerty) {
 		updateTexturedPoint2D(d->node->geometry()->vertexDataAsTexturedPoint2D());

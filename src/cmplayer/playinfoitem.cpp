@@ -82,7 +82,7 @@
 //	const auto fmt = engine->videoFormat();
 //	auto sh = mpctx->sh_video;
 
-//	m_hwaccel = engine->isHwAccActivated();
+//	m_HwAcc = engine->isHwAccActivated();
 //	m_codec = _U(sh->codec->info);
 //	m_input->m_type = format(sh->format);
 //	m_input->m_size = QSize(sh->disp_w, sh->disp_h);
@@ -102,7 +102,7 @@
 //		return;
 //	auto sh = mpctx->sh_audio;
 //	auto ao = mpctx->ao;
-//	m_hwaccel = false;
+//	m_HwAcc = false;
 //	m_codec = _U(sh->codec->info);
 
 //	m_input->m_type = format(sh->format);

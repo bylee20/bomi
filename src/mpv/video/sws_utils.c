@@ -103,8 +103,6 @@ struct SwsContext *sws_getContextFromCmdLine(int srcW, int srcH,
 
     dfmt = imgfmt2pixfmt(dstFormat);
     sfmt = imgfmt2pixfmt(srcFormat);
-    if (srcFormat == IMGFMT_RGB8 || srcFormat == IMGFMT_BGR8)
-        sfmt = PIX_FMT_PAL8;
     sws_getFlagsAndFilterFromCmdLine(&flags, &srcFilterParam, &dstFilterParam);
 
     return sws_getContext(srcW, srcH, sfmt, dstW, dstH, dfmt, flags,
@@ -160,7 +158,7 @@ static void to_gbrp(struct mp_image *dst, struct mp_image *src,
     case IMGFMT_ARGB: SET_COMPS(comp, 1, 2, 3, 0); break;
     case IMGFMT_RGBA: SET_COMPS(comp, 0, 1, 2, 3); break;
     default:
-        temp = alloc_mpi(dst->w, dst->h, IMGFMT_RGBA);
+        temp = mp_image_alloc(IMGFMT_RGBA, dst->w, dst->h);
         mp_image_swscale(temp, src, my_sws_flags);
         src = temp;
         SET_COMPS(comp, 0, 1, 2, 3);
@@ -176,8 +174,6 @@ static void mp_sws_set_conv(struct SwsContext *sws, struct mp_image *dst,
                             struct mp_image *src, int my_sws_flags)
 {
     enum PixelFormat s_fmt = imgfmt2pixfmt(src->imgfmt);
-    if (src->imgfmt == IMGFMT_RGB8 || src->imgfmt == IMGFMT_BGR8)
-        s_fmt = PIX_FMT_PAL8;
     int s_csp = mp_csp_to_sws_colorspace(mp_image_csp(src));
     int s_range = mp_image_levels(src) == MP_CSP_LEVELS_PC;
 
@@ -211,7 +207,7 @@ static void mp_sws_set_conv(struct SwsContext *sws, struct mp_image *dst,
 void mp_image_swscale(struct mp_image *dst, struct mp_image *src,
                       int my_sws_flags)
 {
-    if (dst->imgfmt == IMGFMT_GBRP)
+    if (dst->imgfmt == IMGFMT_GBRP && !sws_isSupportedOutput(PIX_FMT_GBRP))
         return to_gbrp(dst, src, my_sws_flags);
 
     struct SwsContext *sws = sws_alloc_context();

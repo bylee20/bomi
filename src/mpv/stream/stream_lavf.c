@@ -27,9 +27,16 @@
 #include "core/m_struct.h"
 #include "demux/demux.h"
 
+#include "network.h"
+#include "cookies.h"
+
+static int open_f(stream_t *stream, int mode, void *opts, int *file_format);
+
 static int fill_buffer(stream_t *s, char *buffer, int max_len)
 {
     AVIOContext *avio = s->priv;
+    if (!avio)
+        return -1;
     int r = avio_read(avio, buffer, max_len);
     return (r <= 0) ? -1 : r;
 }
@@ -37,6 +44,8 @@ static int fill_buffer(stream_t *s, char *buffer, int max_len)
 static int write_buffer(stream_t *s, char *buffer, int len)
 {
     AVIOContext *avio = s->priv;
+    if (!avio)
+        return -1;
     avio_write(avio, buffer, len);
     avio_flush(avio);
     if (avio->error)
@@ -47,6 +56,8 @@ static int write_buffer(stream_t *s, char *buffer, int len)
 static int seek(stream_t *s, int64_t newpos)
 {
     AVIOContext *avio = s->priv;
+    if (!avio)
+        return -1;
     s->pos = newpos;
     if (avio_seek(avio, s->pos, SEEK_SET) < 0) {
         s->eof = 1;
@@ -55,9 +66,23 @@ static int seek(stream_t *s, int64_t newpos)
     return 1;
 }
 
+static void close_f(stream_t *stream)
+{
+    AVIOContext *avio = stream->priv;
+    /* NOTE: As of 2011 write streams must be manually flushed before close.
+     * Currently write_buffer() always flushes them after writing.
+     * avio_close() could return an error, but we have no way to return that
+     * with the current stream API.
+     */
+    if (avio)
+        avio_close(avio);
+}
+
 static int control(stream_t *s, int cmd, void *arg)
 {
     AVIOContext *avio = s->priv;
+    if (!avio && cmd != STREAM_CTRL_RECONNECT)
+        return -1;
     int64_t size, ts;
     double pts;
     switch(cmd) {
@@ -75,19 +100,16 @@ static int control(stream_t *s, int cmd, void *arg)
         if (ts >= 0)
             return 1;
         break;
+    case STREAM_CTRL_RECONNECT: {
+        if (avio && avio->write_flag)
+            break; // don't bother with this
+        // avio doesn't seem to support this - emulate it by reopening
+        close_f(s);
+        s->priv = NULL;
+        return open_f(s, STREAM_READ, NULL, &(int) {0});
+    }
     }
     return STREAM_UNSUPPORTED;
-}
-
-static void close_f(stream_t *stream)
-{
-    AVIOContext *avio = stream->priv;
-    /* NOTE: As of 2011 write streams must be manually flushed before close.
-     * Currently write_buffer() always flushes them after writing.
-     * avio_close() could return an error, but we have no way to return that
-     * with the current stream API.
-     */
-    avio_close(avio);
 }
 
 static const char * const prefix[] = { "lavf://", "ffmpeg://" };
@@ -97,6 +119,7 @@ static int open_f(stream_t *stream, int mode, void *opts, int *file_format)
     int flags = 0;
     AVIOContext *avio = NULL;
     int res = STREAM_ERROR;
+    AVDictionary *dict = NULL;
     void *temp = talloc_new(NULL);
 
     if (mode == STREAM_READ)
@@ -137,7 +160,28 @@ static int open_f(stream_t *stream, int mode, void *opts, int *file_format)
         filename = talloc_asprintf(temp, "mmsh://%.*s", BSTR_P(b_filename));
     }
 
-    int err = avio_open(&avio, filename, flags);
+#ifdef CONFIG_NETWORKING
+    // HTTP specific options (other protocols ignore them)
+    if (network_useragent)
+        av_dict_set(&dict, "user-agent", network_useragent, 0);
+    if (network_cookies_enabled)
+        av_dict_set(&dict, "cookies", talloc_steal(temp, cookies_lavf()), 0);
+    char *cust_headers = talloc_strdup(temp, "");
+    if (network_referrer) {
+        cust_headers = talloc_asprintf_append(cust_headers, "Referer: %s\r\n",
+                                              network_referrer);
+    }
+    if (network_http_header_fields) {
+        for (int n = 0; network_http_header_fields[n]; n++) {
+            cust_headers = talloc_asprintf_append(cust_headers, "%s\r\n",
+                                                  network_http_header_fields[n]);
+        }
+    }
+    if (strlen(cust_headers))
+        av_dict_set(&dict, "headers", cust_headers, 0);
+#endif
+
+    int err = avio_open2(&avio, filename, flags, NULL, &dict);
     if (err < 0) {
         if (err == AVERROR_PROTOCOL_NOT_FOUND)
             mp_msg(MSGT_OPEN, MSGL_ERR, "[ffmpeg] Protocol not found. Make sure"
@@ -145,7 +189,7 @@ static int open_f(stream_t *stream, int mode, void *opts, int *file_format)
         goto out;
     }
 
-#if LIBAVFORMAT_VERSION_MICRO >= 100
+#if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(54, 0, 0)
     if (avio->av_class) {
         uint8_t *mt = NULL;
         if (av_opt_get(avio, "mime_type", AV_OPT_SEARCH_CHILDREN, &mt) >= 0)
@@ -178,6 +222,7 @@ static int open_f(stream_t *stream, int mode, void *opts, int *file_format)
     res = STREAM_OK;
 
 out:
+    av_dict_free(&dict);
     talloc_free(temp);
     return res;
 }

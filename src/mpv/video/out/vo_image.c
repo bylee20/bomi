@@ -36,11 +36,15 @@
 #include "video/mp_image.h"
 #include "video/fmt-conversion.h"
 #include "video/image_writer.h"
+#include "video/sws_utils.h"
+#include "sub/sub.h"
 #include "core/m_option.h"
 
 struct priv {
     struct image_writer_opts *opts;
     char *outdir;
+
+    struct mp_image *current;
 
     int frame;
 
@@ -74,6 +78,8 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
 {
     struct priv *p = vo->priv;
 
+    mp_image_unrefp(&p->current);
+
     p->d_width = d_width;
     p->d_height = d_height;
 
@@ -88,22 +94,37 @@ static void check_events(struct vo *vo)
 {
 }
 
+static void draw_image(struct vo *vo, mp_image_t *mpi)
+{
+    struct priv *p = vo->priv;
+
+    mp_image_setrefp(&p->current, mpi);
+
+    mp_image_set_display_size(p->current, p->d_width, p->d_height);
+    mp_image_set_colorspace_details(p->current, &p->colorspace);
+}
+
 static void draw_osd(struct vo *vo, struct osd_state *osd)
 {
+    struct priv *p = vo->priv;
+
+    struct aspect_data asp = vo->aspdat;
+    double sar = (double)asp.orgw / asp.orgh;
+    double dar = (double)asp.prew / asp.preh;
+
+    struct mp_osd_res dim = {
+        .w = asp.orgw,
+        .h = asp.orgh,
+        .display_par = sar / dar,
+        .video_par = dar / sar,
+    };
+
+    osd_draw_on_image(osd, dim, osd->vo_pts, OSD_DRAW_SUB_ONLY, p->current);
 }
 
 static void flip_page(struct vo *vo)
 {
-}
-
-static uint32_t draw_image(struct vo *vo, mp_image_t *mpi)
-{
     struct priv *p = vo->priv;
-
-    mp_image_t img = *mpi;
-    img.display_w = p->d_width;
-    img.display_h = p->d_height;
-    mp_image_set_colorspace_details(&img, &p->colorspace);
 
     void *t = talloc_new(NULL);
     char *filename = talloc_asprintf(t, "%08d.%s", p->frame,
@@ -113,33 +134,31 @@ static uint32_t draw_image(struct vo *vo, mp_image_t *mpi)
         filename = mp_path_join(t, bstr0(p->outdir), bstr0(filename));
 
     mp_msg(MSGT_VO, MSGL_STATUS, "\nSaving %s\n", filename);
-    write_image(&img, p->opts, filename);
+    write_image(p->current, p->opts, filename);
 
     talloc_free(t);
+    mp_image_unrefp(&p->current);
 
     (p->frame)++;
-
-    return VO_TRUE;
 }
 
 static int query_format(struct vo *vo, uint32_t fmt)
 {
-    enum PixelFormat av_format = imgfmt2pixfmt(fmt);
-
-    // NOTE: accept everything that can be converted by swscale. screenshot.c
-    // always wants RGB (at least for now), but it probably doesn't matter
-    // whether we or screenshot.c do the conversion.
-    if (av_format != PIX_FMT_NONE && sws_isSupportedInput(av_format))
-        return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
+    if (mp_sws_supported_format(fmt))
+        return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_OSD;
     return 0;
 }
 
 static void uninit(struct vo *vo)
 {
+    struct priv *p = vo->priv;
+
+    mp_image_unrefp(&p->current);
 }
 
 static int preinit(struct vo *vo, const char *arg)
 {
+    vo->untimed = true;
     return 0;
 }
 
@@ -148,10 +167,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     struct priv *p = vo->priv;
 
     switch (request) {
-    case VOCTRL_QUERY_FORMAT:
-        return query_format(vo, *(uint32_t *)data);
-    case VOCTRL_DRAW_IMAGE:
-        return draw_image(vo, data);
     case VOCTRL_SET_YUV_COLORSPACE:
         p->colorspace = *(struct mp_csp_details *)data;
         return true;
@@ -170,7 +185,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
 
 const struct vo_driver video_out_image =
 {
-    .is_new = true,
     .info = &(const vo_info_t) {
         "Write video frames to image files",
         "image",
@@ -187,8 +201,10 @@ const struct vo_driver video_out_image =
         {0},
     },
     .preinit = preinit,
+    .query_format = query_format,
     .config = config,
     .control = control,
+    .draw_image = draw_image,
     .draw_osd = draw_osd,
     .flip_page = flip_page,
     .check_events = check_events,

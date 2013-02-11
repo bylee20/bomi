@@ -152,7 +152,7 @@ static inline void lineNoise_MMX(uint8_t *dst, uint8_t *src, int8_t *noise, int 
 		"pcmpeqb %%mm7, %%mm7		\n\t"
 		"psllw $15, %%mm7		\n\t"
 		"packsswb %%mm7, %%mm7		\n\t"
-		ASMALIGN(4)
+		".align 4                       \n\t"
 		"1:				\n\t"
 		"movq (%0, %%"REG_a"), %%mm0	\n\t"
 		"movq (%1, %%"REG_a"), %%mm1	\n\t"
@@ -181,7 +181,7 @@ static inline void lineNoise_MMX2(uint8_t *dst, uint8_t *src, int8_t *noise, int
 		"pcmpeqb %%mm7, %%mm7		\n\t"
 		"psllw $15, %%mm7		\n\t"
 		"packsswb %%mm7, %%mm7		\n\t"
-		ASMALIGN(4)
+		".align 4                       \n\t"
 		"1:				\n\t"
 		"movq (%0, %%"REG_a"), %%mm0	\n\t"
 		"movq (%1, %%"REG_a"), %%mm1	\n\t"
@@ -219,7 +219,7 @@ static inline void lineNoiseAvg_MMX(uint8_t *dst, uint8_t *src, int len, int8_t 
 
 	__asm__ volatile(
 		"mov %5, %%"REG_a"		\n\t"
-		ASMALIGN(4)
+		".align 4                       \n\t"
 		"1:				\n\t"
 		"movq (%1, %%"REG_a"), %%mm1	\n\t"
 		"movq (%0, %%"REG_a"), %%mm0	\n\t"
@@ -316,42 +316,17 @@ static int config(struct vf_instance *vf,
 	return vf_next_config(vf,width,height,d_width,d_height,flags,outfmt);
 }
 
-static void get_image(struct vf_instance *vf, mp_image_t *mpi){
-    if(mpi->flags&MP_IMGFLAG_PRESERVE) return; // don't change
-    if(mpi->imgfmt!=vf->priv->outfmt) return; // colorspace differ
-    // ok, we can do pp in-place (or pp disabled):
-    vf->dmpi=vf_get_image(vf->next,mpi->imgfmt,
-        mpi->type, mpi->flags, mpi->w, mpi->h);
-    mpi->planes[0]=vf->dmpi->planes[0];
-    mpi->stride[0]=vf->dmpi->stride[0];
-    mpi->width=vf->dmpi->width;
-    if(mpi->flags&MP_IMGFLAG_PLANAR){
-        mpi->planes[1]=vf->dmpi->planes[1];
-        mpi->planes[2]=vf->dmpi->planes[2];
-	mpi->stride[1]=vf->dmpi->stride[1];
-	mpi->stride[2]=vf->dmpi->stride[2];
-    }
-    mpi->flags|=MP_IMGFLAG_DIRECT;
-}
-
-static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts){
-	mp_image_t *dmpi;
-
-	if(!(mpi->flags&MP_IMGFLAG_DIRECT)){
-		// no DR, so get a new image! hope we'll get DR buffer:
-		vf->dmpi=vf_get_image(vf->next,vf->priv->outfmt,
-		MP_IMGTYPE_TEMP, MP_IMGFLAG_ACCEPT_STRIDE,
-		mpi->w,mpi->h);
-//printf("nodr\n");
-	}
-//else printf("dr\n");
-	dmpi= vf->dmpi;
+static struct mp_image *filter(struct vf_instance *vf, struct mp_image *mpi)
+{
+        struct mp_image *dmpi = mpi;
+        if (!mp_image_is_writeable(mpi)) {
+            dmpi = vf_alloc_out_image(vf);
+            mp_image_copy_attributes(dmpi, mpi);
+        }
 
 	noise(dmpi->planes[0], mpi->planes[0], dmpi->stride[0], mpi->stride[0], mpi->w, mpi->h, &vf->priv->lumaParam);
 	noise(dmpi->planes[1], mpi->planes[1], dmpi->stride[1], mpi->stride[1], mpi->w/2, mpi->h/2, &vf->priv->chromaParam);
 	noise(dmpi->planes[2], mpi->planes[2], dmpi->stride[2], mpi->stride[2], mpi->w/2, mpi->h/2, &vf->priv->chromaParam);
-
-        vf_clone_mpi_attributes(dmpi, mpi);
 
 #if HAVE_MMX
 	if(gCpuCaps.hasMMX) __asm__ volatile ("emms\n\t");
@@ -360,7 +335,9 @@ static int put_image(struct vf_instance *vf, mp_image_t *mpi, double pts){
 	if(gCpuCaps.hasMMX2) __asm__ volatile ("sfence\n\t");
 #endif
 
-	return vf_next_put_image(vf,dmpi, pts);
+        if (dmpi != mpi)
+            talloc_free(mpi);
+	return dmpi;
 }
 
 static void uninit(struct vf_instance *vf){
@@ -381,9 +358,7 @@ static void uninit(struct vf_instance *vf){
 static int query_format(struct vf_instance *vf, unsigned int fmt){
 	switch(fmt)
 	{
-	case IMGFMT_YV12:
-	case IMGFMT_I420:
-	case IMGFMT_IYUV:
+	case IMGFMT_420P:
 		return vf_next_query_format(vf,vf->priv->outfmt);
 	}
 	return 0;
@@ -414,16 +389,13 @@ static void parse(FilterParam *fp, char* args){
 }
 
 static const unsigned int fmt_list[]={
-    IMGFMT_YV12,
-    IMGFMT_I420,
-    IMGFMT_IYUV,
+    IMGFMT_420P,
     0
 };
 
 static int vf_open(vf_instance_t *vf, char *args){
     vf->config=config;
-    vf->put_image=put_image;
-    vf->get_image=get_image;
+    vf->filter=filter;
     vf->query_format=query_format;
     vf->uninit=uninit;
     vf->priv=malloc(sizeof(struct vf_priv_s));
@@ -436,7 +408,7 @@ static int vf_open(vf_instance_t *vf, char *args){
     }
 
     // check csp:
-    vf->priv->outfmt=vf_match_csp(&vf->next,fmt_list,IMGFMT_YV12);
+    vf->priv->outfmt=vf_match_csp(&vf->next,fmt_list,IMGFMT_420P);
     if(!vf->priv->outfmt)
     {
 	uninit(vf);

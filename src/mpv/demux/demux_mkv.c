@@ -92,6 +92,7 @@ typedef struct mkv_track {
 
     uint32_t v_width, v_height, v_dwidth, v_dheight;
     double v_frate;
+    uint32_t colorspace;
 
     uint32_t a_formattag;
     uint32_t a_channels, a_bps;
@@ -503,6 +504,14 @@ static void parse_trackaudio(struct demuxer *demuxer, struct mkv_track *track,
                "[mkv] |   + Output sampling frequency: %f\n", track->a_osfreq);
     } else
         track->a_osfreq = track->a_sfreq;
+    // Something creates files with osfreq incorrectly set
+    if (track->a_sfreq == 44100 && track->a_osfreq == 96000) {
+        mp_msg(MSGT_DEMUX, MSGL_WARN, "[mkv] Audio track has codec frequency "
+               "%.1f and playback frequency %.1f.\n[mkv] This looks wrong. "
+               "Assuming this file is corrupt and ignoring the latter.\n",
+               track->a_sfreq, track->a_osfreq);
+        track->a_osfreq = track->a_sfreq;
+    }
     if (audio->n_bit_depth) {
         track->a_bps = audio->bit_depth;
         mp_msg(MSGT_DEMUX, MSGL_V, "[mkv] |   + Bit depth: %u\n",
@@ -545,6 +554,12 @@ static void parse_trackvideo(struct demuxer *demuxer, struct mkv_track *track,
         track->v_height = video->pixel_height;
         mp_msg(MSGT_DEMUX, MSGL_V, "[mkv] |   + Pixel height: %u\n",
                track->v_height);
+    }
+    if (video->n_colour_space && video->colour_space.len == 4) {
+        uint8_t *d = (uint8_t *)&video->colour_space.start[0];
+        track->colorspace = d[0] | (d[1] << 8) | (d[2] << 16) | (d[3] << 24);
+        mp_msg(MSGT_DEMUX, MSGL_V, "[mkv] |   + Colorspace: %#x\n",
+               (unsigned int)track->colorspace);
     }
 }
 
@@ -1155,6 +1170,7 @@ static int demux_mkv_open_video(demuxer_t *demuxer, mkv_track_t *track,
 {
     BITMAPINFOHEADER *bih;
     sh_video_t *sh_v;
+    bool raw = false;
 
     if (track->ms_compat) {     /* MS compatibility mode */
         BITMAPINFOHEADER *src;
@@ -1217,7 +1233,10 @@ static int demux_mkv_open_video(demuxer_t *demuxer, mkv_track_t *track,
             // copy type1 and type2 info from rv properties
             memcpy(dst, src - 8, 8 + cnt);
             track->realmedia = 1;
-
+        } else if (strcmp(track->codec_id, MKV_V_UNCOMPRESSED) == 0) {
+            // raw video, "like AVI" - this is a FourCC
+            bih->biCompression = track->colorspace;
+            raw = true;
         } else {
             const videocodec_info_t *vi = vinfo;
             while (vi->id && strcmp(vi->id, track->codec_id))
@@ -1246,6 +1265,10 @@ static int demux_mkv_open_video(demuxer_t *demuxer, mkv_track_t *track,
     sh_v->gsh->title = talloc_strdup(sh_v, track->name);
     sh_v->bih = bih;
     sh_v->format = sh_v->bih->biCompression;
+    if (raw) {
+        sh_v->format = mmioFOURCC('M', 'P', 'r', 'v');
+        sh_v->imgfmt = sh_v->bih->biCompression;
+    }
     if (track->v_frate == 0.0)
         track->v_frate = 25.0;
     sh_v->fps = track->v_frate;

@@ -114,7 +114,7 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 		m_video->setVideo(m_engine);
 		emit videoChanged();
 	});
-	plug(m_engine, &PlayEngine::aboutToPlay, [this, mediaName] () {
+	plug(m_engine, &PlayEngine::started, [this, mediaName] () {
 		m_media->setName(mediaName(m_media->m_mrl));
 		m_audio->setAudio(m_engine);
 		emit audioChanged();
@@ -198,7 +198,7 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	const auto fmt = engine->videoFormat();
 	auto sh = mpctx->sh_video;
 
-	m_hwaccel = engine->isHwAccActivated();
+	m_HwAcc = engine->isHwAccActivated();
 	m_codec = _U(sh->codec->info);
 	m_input->m_type = format(sh->format);
 	m_input->m_size = QSize(sh->disp_w, sh->disp_h);
@@ -218,7 +218,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 		return;
 	auto sh = mpctx->sh_audio;
 	auto ao = mpctx->ao;
-	m_hwaccel = false;
+	m_HwAcc = false;
 	m_codec = _U(sh->codec->info);
 
 	m_input->m_type = format(sh->format);

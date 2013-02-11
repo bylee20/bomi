@@ -4,6 +4,7 @@
 #include "stdafx.hpp"
 
 struct mp_image;
+struct mp_imgfmt_desc;
 
 constexpr static inline quint32 cc4(char a, char b, char c, char d) {
 #if (Q_BYTE_ORDER == Q_BIG_ENDIAN)
@@ -29,6 +30,7 @@ struct VideoFormat {
 	static constexpr quint32 RGBA = cc4('R', 'G', 'B', 'A');
 	static constexpr quint32 BGRA = cc4('B', 'G', 'R', 'A');
 
+	VideoFormat(const mp_image *mpi);
 	VideoFormat(quint32 type = Unknown): m_type(type) {}
     static VideoFormat fromMpImage(const mp_image *mpi);
 	inline bool operator == (const VideoFormat &rhs) const {

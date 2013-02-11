@@ -18,40 +18,27 @@ extern "C" {
 #include <stream/stream.h>
 }
 
-struct CharArrayList {
-	CharArrayList() {}
-	CharArrayList(const QStringList &list) {
-		m_list.resize(list.size());
-		m_arrays.resize(list.size());
-		for (int i=0; i<list.size(); ++i) {
-			m_arrays[i] = list[i].toLocal8Bit();
-			m_list[i] = m_arrays[i].data();
-		}
-	}
-	char **data() {return m_list.data();}
-	bool contains(const char *string) {
-		for (int i=0; i<m_list.size(); ++i) {
-			if (qstrcmp(m_list[i], string) == 0)
-				return true;
-		}
-		return false;
-	}
-	bool isEmpty() const {return m_list.isEmpty();}
-	int size() const {return m_list.size();}
-	void append(const char *string) {
-		m_arrays.append(QByteArray(string));
-		m_list.append(m_arrays.last().data());
+enum EventType {
+	UserType = QEvent::User, StreamOpen, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged
+};
 
-	}
-	void clear() {m_list.clear(); m_arrays.clear();}
+template<EventType T, typename D1 = char, typename D2 = char, typename D3 = char>
+class EngineEvent : public QEvent {
+public:
+	static constexpr QEvent::Type Type = (QEvent::Type)(T);
+	EngineEvent(): QEvent(Type) {}
+	EngineEvent(const D1 &d1): QEvent(Type), m_d1(d1) {}
+	EngineEvent(const D1 &d1, const D2 &d2): QEvent(Type), m_d1(d1), m_d2(d2) {}
+	EngineEvent(const D1 &d1, const D2 &d2, const D3 &d3): QEvent(Type), m_d1(d1), m_d2(d2), m_d3(d3) {}
+	D1 data() const {return m_d1;}
+	D1 data1() const {return m_d1;}	D2 data2() const {return m_d2;}	D3 data3() const {return m_d3;}
 private:
-	QVector<char *> m_list;
-	QVector<QByteArray> m_arrays;
+	D1 m_d1; D2 m_d2; D3 m_d3;
 };
 
 enum MpCmd {MpSetProperty = -1};
 
-struct mp_volnorm {int method;	float mul;};
+struct mp_volnorm {int method;	float mul; float avg;};
 
 #ifdef Q_OS_MAC
 namespace std {
@@ -67,8 +54,11 @@ static double volnorm_mul(MPContext *mpctx) {
 				break;
 			af = af->next;
 		}
-		if (af)
+		if (af) {
+			auto volnorm = static_cast<mp_volnorm*>(af->setup);
+			qDebug() << "volnorm" << af << volnorm->method << volnorm->mul << volnorm->avg;
 			return static_cast<mp_volnorm*>(af->setup)->mul;
+		}
 	}
 	return 1.0;
 }
@@ -81,6 +71,8 @@ template<> inline int &getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.
 template<> inline char *&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.s;}
 
 struct PlayEngine::Data {
+	Data(PlayEngine *engine): p(engine) {}
+	PlayEngine *p = nullptr;
 	QMutex mutex;
 	QByteArray fileName;
 	QTimer ticker = {};
@@ -94,9 +86,7 @@ struct PlayEngine::Data {
 	GetStartTime getStartTimeFunc;
 	PlaylistModel playlist;
 	double videoAspect = 0.0;
-	int getStartTime(const Mrl &mrl) {
-		return getStartTimeFunc ? getStartTimeFunc(mrl) : 0;
-	}
+	int getStartTime(const Mrl &mrl) {return getStartTimeFunc ? getStartTimeFunc(mrl) : 0;}
 	CharArrayList hwAccCodecs;
 
 	QByteArray &setFileName(const Mrl &mrl) {
@@ -118,10 +108,28 @@ struct PlayEngine::Data {
 		}
 		return ret;
 	}
+	template<EventType T, typename D1 = char, typename D2 = char, typename D3 = char>
+	void post(const D1 &d1, const D2 &d2 = 0, const D3 &d3 = 0) const {
+		qApp->postEvent(p, new EngineEvent<T, D1, D2, D3>(d1, d2, d3));
+	}
+	template<EventType T> void post() const { qApp->postEvent(p, new EngineEvent<T>()); }
+	template<EventType T, typename D1 = char, typename D2 = char, typename D3 = char>
+	bool get(QEvent *event, D1 *d1 = nullptr, D2 *d2 = nullptr, D3 *d3 = nullptr) const {
+		if ((int)event->type() != T)
+			return false;
+		auto ev = static_cast<EngineEvent<T, D1, D2, D3>*>(event);
+		if (d1)
+			*d1 = ev->data1();
+		if (d2)
+			*d2 = ev->data2();
+		if (d3)
+			*d3 = ev->data3();
+		return true;
+	}
 };
 
 PlayEngine::PlayEngine()
-: d(new Data) {
+: d(new Data(this)) {
 	d->video = new VideoOutput(this);
 	mpctx_paused_changed = onPausedChanged;
 	mpctx_play_started = onPlayStarted;
@@ -136,7 +144,7 @@ PlayEngine::PlayEngine()
 	d->ticker.setInterval(20);
 	d->ticker.start();
 
-	connect(d->video, &VideoOutput::formatChanged, this, &PlayEngine::videoFormatChanged, Qt::QueuedConnection);
+	connect(d->video, &VideoOutput::formatChanged, this, &PlayEngine::videoFormatChanged);
 	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
 		load(row, d->getStartTime(d->playlist[row]));
 	});
@@ -200,21 +208,40 @@ void PlayEngine::clear() {
 	m_title = 0;
 }
 
-class StreamOpenEvent : public QEvent {
-public:
-	static constexpr int Type = QEvent::User+1;
-	StreamOpenEvent(): QEvent((QEvent::Type)Type) {}
-	Stream::Type stream() const {return m_stream;}
-private:
-	Stream::Type m_stream = Stream::Unknown;
-};
-
 void PlayEngine::customEvent(QEvent *event) {
-	if (event->type() == StreamOpenEvent::Type) {
-		emit aboutToPlay();
+	switch ((int)event->type()) {
+	case StreamOpen:
+		emit seekableChanged(isSeekable());
 		emit started(d->playlist.loadedMrl());
 		d->start = 0;
+		break;
+	case StateChange: {
+		EngineState state; d->get<StateChange>(event, &state);
+		if (_Change(m_state, state))
+			emit stateChanged(m_state);
+		break;
+	} case MrlStopped: {
+		Mrl mrl; int terminated, duration;
+		d->get<MrlStopped>(event, &mrl, &terminated, &duration);
+		emit stopped(mrl, terminated, duration);
+		break;
+	} case MrlFinished: {
+		Mrl mrl; d->get<MrlFinished>(event, &mrl);
+		emit finished(mrl);
+		break;
+	} case PlaylistFinished:
+		emit d->playlist.finished();
+		break;
+	case MrlChanged: {
+		Mrl mrl; d->get<MrlChanged>(event, &mrl);
+		emit mrlChanged(mrl);
+	}default:
+		break;
 	}
+}
+
+void PlayEngine::setState(EngineState state) {
+	d->post<StateChange>(state);
 }
 
 void PlayEngine::setCurrentDvdTitle(int id) {
@@ -338,22 +365,21 @@ extern char **video_codec_list;
 
 void PlayEngine::run() {
 	CharArrayList args = QStringList()
-		<< "cmplayer-mpv" << "--no-config=all" << "--idle" << "--no-fs"
+		<< "cmplayer-mpv" << "--no-config" << "--idle" << "--no-fs"
 		<< "--fixed-vo" << "--softvol=yes" << "--softvol-max=1000.0"
 		<< "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
-		<< "--input=no-default-bindings" << "--no-consolecontrols" << "--no-mouseinput";
+		<< "--no-consolecontrols" << "--no-mouseinput";
 	d->ctx = reinterpret_cast<Context*>(talloc_named_const(0, sizeof(*d->ctx), "MPContext"));
 	d->ctx->p = this;
 	auto mpctx = d->mpctx = &d->ctx->mp;
 	mpv_init(d->mpctx, args.size(), args.data());
 	vo_cmplayer = d->video->vo_create(d->mpctx);
 	d->init = true;
-	emit initialized();
 	HwAcc hwAcc; (void)hwAcc;
 	d->quit = false;
 	auto idle = [this, mpctx] () {
 		while (mpctx->opts.player_idle_mode && !mpctx->playlist->current && d->mpctx->stop_play != PT_QUIT) {
-			uninit_player(mpctx, 0);
+			uninit_player(mpctx, INITIALIZED_AO);
 			mp_cmd_t *cmd;
 			while (!(cmd = mp_input_get_cmd(mpctx->input, get_wakeup_period(d->mpctx)*1000, false)))
 				;
@@ -368,7 +394,6 @@ void PlayEngine::run() {
 		Q_ASSERT(mpctx->playlist->current);
 		clear();
 		setState(EngineBuffering);
-		emit aboutToOpen();
 		CharArrayList codecs = d->hwAccCodecs;
 		codecs.append(""); codecs.append(nullptr);
 		video_codec_list = codecs.data();
@@ -377,14 +402,13 @@ void PlayEngine::run() {
 		Mrl mrl = d->playlist.loadedMrl();
 		if (error == NoMpError) {
 			d->playing = true;
-			emit seekableChanged(isSeekable());
 			d->mpctx->opts.play_start.pos = d->start*1e-3;
 			d->mpctx->opts.play_start.type = REL_TIME_ABSOLUTE;
 			setmp("speed", (float)m_speed);
 			mixer_setvolume(&d->mpctx->mixer, mpVolume(), mpVolume());
 			mixer_setmute(&d->mpctx->mixer, m_muted);
 			if (!m_af.isEmpty()) tellmp("af_add", m_af);
-			qApp->postEvent(this, new StreamOpenEvent);
+				d->post<StreamOpen>();
 			auto err = start_to_play_current_file(mpctx);
 			terminated = position();
 			duration = this->duration();
@@ -395,7 +419,7 @@ void PlayEngine::run() {
 		if (mpctx->stop_play == PT_QUIT) {
 			if (error == NoMpError) {
 				setState(EngineStopped);
-				emit stopped(d->playlist.loadedMrl(), terminated, duration);
+				d->post<MrlStopped>(d->playlist.loadedMrl(), terminated, duration);
 			}
 			break;
 		}
@@ -404,25 +428,25 @@ void PlayEngine::run() {
 		case KEEP_PLAYING:
 		case AT_END_OF_FILE: {// finished
 			setState(EngineFinished);
-			emit finished(mrl);
+			d->post<MrlFinished>(mrl);
 			playlist_clear(mpctx->playlist);
 			if (d->playlist.hasNext()) {
 				const auto prev = d->playlist.loadedMrl();
 				d->playlist.setLoaded(d->playlist.next());
 				const auto mrl = d->playlist.loadedMrl();
 				if (prev != mrl)
-					emit mrlChanged(mrl);
+					d->post<MrlChanged>(mrl);
 				d->start = d->getStartTime(mrl);
 				playlist_add(mpctx->playlist, playlist_entry_new(mrl.toString().toLocal8Bit()));
 				entry = mpctx->playlist->first;
 			} else
-				emit d->playlist.finished();
+				d->post<PlaylistFinished>();
 			break;
 		} case PT_CURRENT_ENTRY: // stopped by loadfile
 			entry = mpctx->playlist->current;
 		default: // just stopped
 			setState(EngineStopped);
-			emit stopped(mrl, terminated, duration);
+			d->post<MrlStopped>(mrl, terminated, duration);
 			break;
 		}
 
@@ -436,7 +460,6 @@ void PlayEngine::run() {
 	mpctx_delete(d->mpctx);
 	d->mpctx = nullptr;
 	vo_cmplayer = nullptr;
-	emit finalized();
 }
 
 void PlayEngine::tellmp(const QString &cmd) {
@@ -462,7 +485,7 @@ bool PlayEngine::load(int row, int start) {
 			play(start);
 	} else {
 		d->playlist.setLoaded(row);
-		emit mrlChanged(d->playlist.loadedMrl());
+		d->post<MrlChanged>(d->playlist.loadedMrl());
 		if (start < 0)
 			stop();
 		else
@@ -559,8 +582,8 @@ double PlayEngine::fps() const {
 }
 
 void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
-	if (_Change(m_renderer, renderer)) {
-	}
+	if (_Change(m_renderer, renderer))
+		d->video->setRenderer(m_renderer);
 }
 
 VideoFormat PlayEngine::videoFormat() const {
@@ -570,7 +593,8 @@ VideoFormat PlayEngine::videoFormat() const {
 void PlayEngine::setAudioFilter(const QString &af, bool on) {
 	auto it = qFind(m_af.begin(), m_af.end(), af);	const bool prev = it != m_af.end();
 	if (prev != on) {
-		if (on) {m_af.append(af); tellmp("af_add", af);}
+		qDebug() << volumeNormalizer();
+		if (on) {m_af.append(af); tellmp("af_add volnorm=2:2");}
 		else {m_af.erase(it); tellmp("af_del", af);}
 		emit audioFilterChanged(af, on);
 	}

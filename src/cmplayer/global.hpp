@@ -7,6 +7,39 @@
 
 namespace Global {
 
+struct CharArrayList {
+	CharArrayList() {}
+	CharArrayList(const QStringList &list) {
+		m_list.resize(list.size());
+		m_arrays.resize(list.size());
+		for (int i=0; i<list.size(); ++i) {
+			m_arrays[i] = list[i].toLocal8Bit();
+			m_list[i] = m_arrays[i].data();
+		}
+	}
+	char **data() {return m_list.data();}
+	char *const* data() const {return m_list.data();}
+	bool contains(const char *string) {
+		for (int i=0; i<m_list.size(); ++i) {
+			if (qstrcmp(m_list[i], string) == 0)
+				return true;
+		}
+		return false;
+	}
+	bool isEmpty() const {return m_list.isEmpty();}
+	int size() const {return m_list.size();}
+	void append(const char *string) {
+		m_arrays.append(QByteArray(string));
+		m_list.append(m_arrays.last().data());
+
+	}
+	void clear() {m_list.clear(); m_arrays.clear();}
+private:
+	QVector<char *> m_list;
+	QVector<QByteArray> m_arrays;
+};
+
+
 enum EngineState {EngineStopped = 1, EnginePlaying = 2, EnginePaused = 4, EngineFinished = 8, EngineOpening = 16, EngineBuffering = 32, EngineError = 64, EnginePreparing = 128};
 enum StreamType {UnknownStream = 0, VideoStream, AudioStream, SubPicStream};
 enum MediaMetaData {LanguageCode};

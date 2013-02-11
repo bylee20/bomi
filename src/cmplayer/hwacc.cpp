@@ -23,10 +23,10 @@ const char *HwAcc::codecName(AVCodecID id) {
 
 #ifdef Q_OS_LINUX
 #include "mpv-vaapi.hpp"
-HwAccel::HwAccel() { VaApiInfo::initialize(); }
-HwAccel::~HwAccel() { VaApiInfo::finalize(); }
-bool HwAccel::supports(AVCodecID codec) { return VaApiInfo::find(codec) != nullptr; }
-const char *HwAccel::codecName(AVCodecID id) {
+HwAcc::HwAcc() { VaApiInfo::initialize(); }
+HwAcc::~HwAcc() { VaApiInfo::finalize(); }
+bool HwAcc::supports(AVCodecID codec) { return VaApiInfo::find(codec) != nullptr; }
+const char *HwAcc::codecName(AVCodecID id) {
 	switch (id) {
 	case AV_CODEC_ID_H264:
 		return "vah264";

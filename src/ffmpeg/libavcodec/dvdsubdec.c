@@ -127,8 +127,8 @@ static int decode_rle(uint8_t *bitmap, int linesize, int w, int h,
     return 0;
 }
 
-static void guess_palette(uint32_t *rgba_palette,
-                          DVDSubContext* ctx,
+static void guess_palette(DVDSubContext* ctx,
+                          uint32_t *rgba_palette,
                           uint32_t subtitle_color)
 {
     static const uint8_t level_map[4][4] = {
@@ -146,7 +146,7 @@ static void guess_palette(uint32_t *rgba_palette,
     if(ctx->has_palette) {
         for(i = 0; i < 4; i++)
             rgba_palette[i] = (ctx->palette[colormap[i]] & 0x00ffffff)
-                              | ((alpha[i] * 17) << 24);
+                              | ((alpha[i] * 17U) << 24);
         return;
     }
 
@@ -351,7 +351,7 @@ static int decode_dvd_subtitles(DVDSubContext *ctx, AVSubtitle *sub_header,
                     yuv_a_to_rgba(yuv_palette, alpha, (uint32_t*)sub_header->rects[0]->pict.data[1], 256);
                 } else {
                     sub_header->rects[0]->nb_colors = 4;
-                    guess_palette((uint32_t*)sub_header->rects[0]->pict.data[1], ctx,
+                    guess_palette(ctx, (uint32_t*)sub_header->rects[0]->pict.data[1],
                                   0xffff00);
                 }
                 sub_header->rects[0]->x = x1;
@@ -487,7 +487,7 @@ static int dvdsub_decode(AVCodecContext *avctx,
                          void *data, int *data_size,
                          AVPacket *avpkt)
 {
-    DVDSubContext *ctx = (DVDSubContext*) avctx->priv_data;
+    DVDSubContext *ctx = avctx->priv_data;
     const uint8_t *buf = avpkt->data;
     int buf_size = avpkt->size;
     AVSubtitle *sub = data;
@@ -566,7 +566,7 @@ static int dvdsub_parse_extradata(AVCodecContext *avctx)
 
 static int dvdsub_init(AVCodecContext *avctx)
 {
-    DVDSubContext *ctx = (DVDSubContext*) avctx->priv_data;
+    DVDSubContext *ctx = avctx->priv_data;
     int ret;
 
     if ((ret = dvdsub_parse_extradata(avctx)) < 0)

@@ -21,6 +21,7 @@
 #import <CoreServices/CoreServices.h> // for CGDisplayHideCursor
 #import <IOKit/pwr_mgt/IOPMLib.h>
 #include <dlfcn.h>
+#include <libavutil/common.h>
 
 #include "cocoa_common.h"
 
@@ -58,6 +59,9 @@
 @interface NSView (IntroducedInLion)
 - (NSRect)convertRectToBacking:(NSRect)aRect;
 - (void)setWantsBestResolutionOpenGLSurface:(BOOL)aBool;
+@end
+@interface NSEvent (IntroducedInLion)
+- (BOOL)hasPreciseScrollingDeltas;
 @end
 #endif
 
@@ -103,7 +107,6 @@ struct vo_cocoa_state {
     NSString *window_title;
 
     NSInteger window_level;
-    NSInteger fullscreen_window_level;
 
     int display_cursor;
     int cursor_timer;
@@ -113,6 +116,8 @@ struct vo_cocoa_state {
     bool out_fs_resize;
 
     IOPMAssertionID power_mgmt_assertion;
+
+    CGFloat accumulated_scroll;
 };
 
 static int _instances = 0;
@@ -135,6 +140,7 @@ static struct vo_cocoa_state *vo_cocoa_init_state(struct vo *vo)
         .display_cursor = 1,
         .cursor_autohide_delay = vo->opts->cursor_autohide_delay,
         .power_mgmt_assertion = kIOPMNullAssertionID,
+        .accumulated_scroll = 0,
     };
     if (!vo_border) s->windowed_mask = NSBorderlessWindowMask;
     return s;
@@ -189,6 +195,7 @@ static void disable_power_management(struct vo *vo)
 int vo_cocoa_init(struct vo *vo)
 {
     vo->cocoa = vo_cocoa_init_state(vo);
+    vo->wakeup_period = 0.02;
     _instances++;
 
     NSApplicationLoad();
@@ -299,8 +306,7 @@ static void vo_set_level(struct vo *vo, int ontop)
         s->window_level = NSNormalWindowLevel;
     }
 
-    if (!vo_fs)
-        [s->window setLevel:s->window_level];
+    [s->window setLevel:s->window_level];
 }
 
 void vo_cocoa_ontop(struct vo *vo)
@@ -472,7 +478,7 @@ static void vo_cocoa_display_cursor(struct vo *vo, int requested_state)
 int vo_cocoa_check_events(struct vo *vo)
 {
     struct vo_cocoa_state *s = vo->cocoa;
-    NSEvent *event;
+
     int ms_time = (int) ([[NSProcessInfo processInfo] systemUptime] * 1000);
 
     // automatically hide mouse cursor
@@ -482,26 +488,31 @@ int vo_cocoa_check_events(struct vo *vo)
         s->cursor_timer = ms_time;
     }
 
-    event = [NSApp nextEventMatchingMask:NSAnyEventMask untilDate:nil
-                   inMode:NSEventTrackingRunLoopMode dequeue:YES];
-    if (event == nil)
-        return 0;
-    [NSApp sendEvent:event];
+    int result = 0;
 
-    if (s->did_resize) {
-        s->did_resize = NO;
-        resize_window(vo);
-        return VO_EVENT_RESIZE;
+    for (;;) {
+        NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask untilDate:nil
+                       inMode:NSEventTrackingRunLoopMode dequeue:YES];
+        if (event == nil)
+            break;
+        [NSApp sendEvent:event];
+
+        if (s->did_resize) {
+            s->did_resize = NO;
+            resize_window(vo);
+            result |= VO_EVENT_RESIZE;
+        }
+        // Without SDL's bootstrap code (include SDL.h in mplayer.c),
+        // on Leopard, we have trouble to get the play window automatically focused
+        // when the app is actived. The Following code fix this problem.
+        if ([event type] == NSAppKitDefined
+                && [event subtype] == NSApplicationActivatedEventType) {
+            [s->window makeMainWindow];
+            [s->window makeKeyAndOrderFront:nil];
+        }
     }
-    // Without SDL's bootstrap code (include SDL.h in mplayer.c),
-    // on Leopard, we have trouble to get the play window automatically focused
-    // when the app is actived. The Following code fix this problem.
-    if ([event type] == NSAppKitDefined
-            && [event subtype] == NSApplicationActivatedEventType) {
-        [s->window makeMainWindow];
-        [s->window makeKeyAndOrderFront:nil];
-    }
-    return 0;
+
+    return result;
 }
 
 void vo_cocoa_fullscreen(struct vo *vo)
@@ -733,10 +744,34 @@ void create_menu()
 
 - (void)scrollWheel:(NSEvent *)theEvent
 {
-    if ([theEvent deltaY] > 0)
-        mplayer_put_key(_vo->key_fifo, MOUSE_BTN3);
-    else
-        mplayer_put_key(_vo->key_fifo, MOUSE_BTN4);
+    struct vo_cocoa_state *s = _vo->cocoa;
+
+    CGFloat delta;
+    // Use the dimention with the most delta as the scrolling one
+    if (FFABS([theEvent deltaY]) > FFABS([theEvent deltaX])) {
+        delta = [theEvent deltaY];
+    } else {
+        delta = - [theEvent deltaX];
+    }
+
+    if (is_osx_version_at_least(10, 7, 0) &&
+        [theEvent hasPreciseScrollingDeltas]) {
+        s->accumulated_scroll += delta;
+        static const CGFloat threshold = 10;
+        while (s->accumulated_scroll >= threshold) {
+            s->accumulated_scroll -= threshold;
+            mplayer_put_key(_vo->key_fifo, MOUSE_BTN3);
+        }
+        while (s->accumulated_scroll <= -threshold) {
+            s->accumulated_scroll += threshold;
+            mplayer_put_key(_vo->key_fifo, MOUSE_BTN4);
+        }
+    } else {
+        if (delta > 0)
+            mplayer_put_key(_vo->key_fifo, MOUSE_BTN3);
+        else
+            mplayer_put_key(_vo->key_fifo, MOUSE_BTN4);
+    }
 }
 
 - (void)mouseEvent:(NSEvent *)theEvent
@@ -767,9 +802,31 @@ void create_menu()
     }
 }
 
+- (void)application:(NSApplication *)sender openFiles:(NSArray *)filenames
+{
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    NSArray *sorted_filenames = [filenames
+        sortedArrayUsingSelector:@selector(compare:)];
+
+    for (int i = 0; i < [sorted_filenames count]; i++) {
+        NSString *filename = [sorted_filenames objectAtIndex:i];
+        NSString *escaped_filename = escape_loadfile_name(filename);
+
+        char *cmd = talloc_asprintf(NULL, "loadfile \"%s\"%s",
+                                    [escaped_filename UTF8String],
+                                    (i == 0) ? "" : " append");
+        mp_input_queue_cmd(_vo->input_ctx, mp_input_parse_cmd(bstr0(cmd), ""));
+        talloc_free(cmd);
+    }
+
+    [pool release];
+}
+
 - (void)applicationWillBecomeActive:(NSNotification *)aNotification
 {
     if (vo_fs && current_screen_has_dock_or_menubar(_vo)) {
+        struct vo_cocoa_state *s = _vo->cocoa;
+        [self setLevel:s->window_level];
         [NSApp setPresentationOptions:NSApplicationPresentationHideDock|
                                       NSApplicationPresentationHideMenuBar];
     }
@@ -778,6 +835,7 @@ void create_menu()
 - (void)applicationWillResignActive:(NSNotification *)aNotification
 {
     if (vo_fs) {
+        [self setLevel:NSNormalWindowLevel];
         [NSApp setPresentationOptions:NSApplicationPresentationDefault];
     }
 }
@@ -795,12 +853,7 @@ void create_menu()
         andEventID:kAEQuitApplication];
 }
 
-- (void)normalSize
-{
-    struct vo_cocoa_state *s = _vo->cocoa;
-    if (!vo_fs)
-        [self setContentSize:s->current_video_size keepCentered:YES];
-}
+- (void)normalSize { [self mulSize:1.0f]; }
 
 - (void)halfSize { [self mulSize:0.5f];}
 
@@ -809,10 +862,10 @@ void create_menu()
 - (void)mulSize:(float)multiplier
 {
     if (!vo_fs) {
-        struct vo_cocoa_state *s = _vo->cocoa;
-        NSSize size = [[self contentView] frame].size;
-        size.width  = s->current_video_size.width  * (multiplier);
-        size.height = s->current_video_size.height * (multiplier);
+        NSSize size = {
+            .width  = _vo->aspdat.prew * multiplier,
+            .height = _vo->aspdat.preh * multiplier
+        };
         [self setContentSize:size keepCentered:YES];
     }
 }
