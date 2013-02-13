@@ -26,20 +26,20 @@ objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   audio/filter/af_lavcresample.o audio/filter/af_pan.o audio/filter/af_resample.o \
   audio/filter/af_scaletempo.o audio/filter/af_sinesuppress.o audio/filter/af_sub.o \
   audio/filter/af_surround.o audio/filter/af_sweep.o audio/filter/af_tools.o \
-  audio/filter/af_volnorm.o audio/filter/af_volume.o audio/filter/filter.o \
+  audio/filter/af_drc.o audio/filter/af_volume.o audio/filter/filter.o \
   audio/filter/window.o audio/format.o audio/mixer.o audio/out/ao.o \
   audio/out/ao_null.o audio/out/ao_pcm.o audio/reorder_ch.o \
-  core/asxparser.o core/av_log.o core/av_opts.o core/bstr.o core/codec-cfg.o \
-  core/command.o core/cpudetect.o core/defaultopts.o core/input/input.o \
+  core/asxparser.o core/av_log.o core/av_opts.o core/bstr.o \
+  core/command.o core/codecs.o core/av_common.o core/cpudetect.o core/defaultopts.o core/input/input.o \
   core/m_config.o core/m_option.o core/m_property.o core/m_struct.o core/mp_common.o \
   core/mp_fifo.o core/parser-cfg.o core/parser-mpcmd.o core/path.o \
   core/playlist.o core/playlist_parser.o core/quvi.o core/screenshot.o \
   core/subopt-helper.o core/timeline/tl_cue.o core/timeline/tl_edl.o \
-  core/timeline/tl_matroska.o core/version.o demux/asfheader.o demux/aviheader.o \
+  core/timeline/tl_matroska.o core/version.o demux/codec_tags.o demux/asfheader.o demux/aviheader.o \
   demux/aviprint.o demux/demux.o demux/demux_asf.o demux/demux_avi.o demux/demux_cue.o \
   demux/demux_edl.o demux/demux_lavf.o demux/demux_mf.o demux/demux_mkv.o \
   demux/demux_mpg.o demux/demux_rawaudio.o demux/demux_rawvideo.o demux/demux_ts.o \
-  demux/ebml.o demux/extension.o demux/mf.o demux/mp3_hdr.o demux/mp_taglists.o \
+  demux/ebml.o demux/extension.o demux/mf.o demux/mp3_hdr.o \
   demux/mpeg_hdr.o demux/parse_es.o demux/video.o osdep/getch2.o \
   osdep/mmap_anon.o osdep/numcores.o osdep/shmem.o \
   stream/asf_mmst_streaming.o stream/asf_streaming.o stream/cache2.o stream/cdinfo.o \
@@ -68,8 +68,6 @@ objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   video/out/vo_null.o video/sws_utils.o"
 
 libs="-ldvdread -lbz2 -lcdio_cdda -lcdio_paranoia -lcdio -lmpg123 -lquvi"
-
-#osdep/io.o video/decode/vd_lavc.o 
 
 kern=`uname -s`
 if test $kern = "Darwin"

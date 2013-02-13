@@ -21,6 +21,8 @@
 
 #include <stdbool.h>
 
+#include "codec_tags.h"
+
 #include "aviheader.h"
 #include "ms_hdr.h"
 struct MPOpts;
@@ -54,12 +56,20 @@ struct sh_stream {
     struct sh_video *video;
     struct sh_sub *sub;
 
-    // Work around other hacks.
-    int lavf_codec_tag;
+    // E.g. "h264" (usually corresponds to AVCodecDescriptor.name)
+    const char *codec;
+
+    // Codec specific header data (set by demux_lavf.c)
+    // Other demuxers use sh_audio->wf and sh_video->bih instead.
+    struct AVCodecContext *lav_headers;
 
     char *title;
+    char *lang;                 // language code
     bool default_track;         // container default track flag
     bool attached_picture;      // stream is a picture (such as album art)
+
+    // Human readable description of the running decoder, or NULL
+    char *decoder_desc;
 
     // shouldn't exist type of stuff
     struct MPOpts *opts;
@@ -68,12 +78,10 @@ struct sh_stream {
 
 #define SH_COMMON                                                       \
     struct sh_stream *gsh;                                              \
-    const char *demuxer_codecname;                                      \
     struct MPOpts *opts;                                                \
     struct demux_stream *ds;                                            \
-    struct codecs *codec;                                               \
+    /* usually a FourCC, exact meaning depends on gsh->format */        \
     unsigned int format;                                                \
-    int libav_codec_id;                                                 \
     int initialized;                                                    \
     /* number of seconds stream should be delayed                       \
      * (according to dwStart or similar) */                             \
@@ -87,8 +95,6 @@ struct sh_stream {
     double pts;                                                         \
     /* decoder context */                                               \
     void *context;                                                      \
-    const char *codecname;                                              \
-    char *lang;   /* track language */                                  \
 
 typedef struct sh_common {
     SH_COMMON
@@ -154,7 +160,6 @@ typedef struct sh_video {
     int disp_w, disp_h;   // display size (filled by demuxer)
     int colorspace;       // mp_csp
     int color_range;      // mp_csp_levels
-    int imgfmt;           // raw video image format
     // output driver/filters: (set by libmpcodecs core)
     unsigned int outfmt;
     struct vf_instance *vfilter;  // video filter chain

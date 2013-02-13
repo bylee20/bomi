@@ -137,8 +137,18 @@ double UtilObject::totalMemory(MemoryUnit unit) {
 int UtilObject::cores() {
 	static int count = -1;
 	if (count < 0) {
-		char buffer[BUFSIZ];
-		count = getField("/proc/cpuinfo", "cpu cores", buffer);
+		QFile file("/proc/cpuinfo");
+		count = 0;
+		if (!file.open(QFile::ReadOnly | QFile::Text))
+			count = 1;
+		else {
+			char buffer[BUFSIZ];	const char proc[] = "processor";
+			while (file.readLine(buffer, BUFSIZ) != -1) {
+				buffer[sizeof(proc)-1] = '\0';
+				if (!strcmp(buffer, proc))
+					++count;
+			}
+		}
 	}
 	return count;
 }

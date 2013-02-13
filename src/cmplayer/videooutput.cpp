@@ -19,11 +19,8 @@ struct VideoOutput::Data {
 	VideoFormat format;
 	VideoFrame frame;
 	mp_osd_res osd;
-//	mp_image_t *mpimg = nullptr;
-//	VideoFrame *frame = nullptr;
 	PlayEngine *engine = nullptr;
 	bool flip = false;
-	bool hwAcc = false;
 	VideoRendererItem *renderer = nullptr;
 };
 
@@ -84,50 +81,13 @@ const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
-int VideoOutput::config(struct vo *vo, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t /*fmt*/) {
-	auto d = static_cast<VideoOutput*>(vo->priv)->d;
-	d->hwAcc = false;//fmt == IMGFMT_VDPAU;
+int VideoOutput::config(struct vo */*vo*/, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t /*fmt*/) {
 	return 0;
 }
-
-bool VideoOutput::getImage(void *data) {
-	return false;
-//	if (!d->hwAcc)
-//		return false;
-//	static_cast<mp_image_t*>(data)->flags |= MP_IMGFLAG_DIRECT;
-//	return true;
-//#ifdef Q_OS_MAC
-//	Q_UNUSED(data);
-//	return false;
-//#endif
-//	static_cast<mp_image_t*>(data)->flags |= MP_IMGFLAG_DIRECT;
-//	return true;
-//#ifdef Q_OS_LINUX
-////	return d->hwAcc.isActivated() && d->hwAcc.setBuffer(static_cast<mp_image_t*>(data));
-//#endif
-}
-
-//extern HwAcc *ha;
 
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto v = static_cast<VideoOutput*>(vo->priv); auto d = v->d;
 	d->frame = VideoFrame(mpi);
-//	if (mpi->imgfmt == IMGFMT_VDPAU_FIRST)
-//		mp_image_unrefp(&mpi);
-//	if (auto renderer = d->engine->videoRenderer()) {
-//		VideoFrame &frame = renderer->getNextFrame();
-////		frame.setFormat(d->format);
-////#ifdef Q_OS_LINUX
-////		if (ha->isActivated())
-////			mpi = &ha->extract(mpi);
-////#endif
-//		if (frame.copy(mpi))
-//			emit v->formatChanged(d->format = frame.format());
-//#ifdef Q_OS_LINUX
-////		if (ha->isActivated())
-////			ha->clean();
-//#endif
-//	}
 	d->flip = true;
 }
 
@@ -138,17 +98,6 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void */*data*/) {
 		if (v->d->renderer)
 			v->d->renderer->present(v->d->frame);
 		return VO_TRUE;
-	case VOCTRL_FULLSCREEN:
-	case VOCTRL_UPDATE_SCREENINFO:
-	case VOCTRL_PAUSE:
-	case VOCTRL_RESUME:
-	case VOCTRL_GET_PANSCAN:
-	case VOCTRL_SET_PANSCAN:
-	case VOCTRL_SET_EQUALIZER:
-	case VOCTRL_GET_EQUALIZER:
-	case VOCTRL_SET_YUV_COLORSPACE:;
-	case VOCTRL_GET_YUV_COLORSPACE:;
-	case VOCTRL_ONTOP:
 	default:
 		return VO_NOTIMPL;
 	}
@@ -170,25 +119,20 @@ void VideoOutput::flipPage(struct vo *vo) {
 	Data *d = static_cast<VideoOutput*>(vo->priv)->d;
 	if (!d->flip)
 		return;
-	if (d->renderer)
+	if (d->renderer) {
 		d->renderer->present(d->frame);
-//	if (auto renderer = d->engine->videoRenderer())
-//		renderer->next();
+		while (d->renderer->isFramePended())
+			PlayEngine::usleep(50);
+	}
 	d->flip = false;
 }
-
-void VideoOutput::checkEvents(struct vo */*vo*/) {}
 
 int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	switch (format) {
 	case IMGFMT_420P:
-	case IMGFMT_NV12:
-	case IMGFMT_NV21:
-	case IMGFMT_YUYV:
-	case IMGFMT_UYVY:
-#ifdef Q_OS_LINUX
-	case IMGFMT_VDPAU_FIRST:
-#endif
+	case IMGFMT_NV12:	case IMGFMT_NV21:
+	case IMGFMT_YUYV:	case IMGFMT_UYVY:
+	case IMGFMT_BGRA:	case IMGFMT_RGBA:
 		return VFCAP_OSD | VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_FLIP;
 	default:
 		return 0;

@@ -9,6 +9,8 @@ public:
 	TextureRendererItem(int textures, QQuickItem *parent = 0);
 	~TextureRendererItem();
 	void setGeometry(const QPointF &pos, const QSizeF &size) {setPosition(pos); setSize(size);}
+	int textureCount() const {return m_count;}
+	GLuint texture(int i) const;
 protected:
 	typedef QSGGeometry::TexturedPoint2D TexturedPoint2D;
 	typedef QSGMaterialShader::RenderState RenderState;
@@ -33,8 +35,6 @@ protected:
 	}
 	void resetNode();
 	void setGeometryDirty(bool dirty = true);
-	int textureCount() const {return m_count;}
-	GLuint texture(int i) const;
 private:
 	QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) final;
 	struct Shader;	struct Material;	struct Node;	struct Data;

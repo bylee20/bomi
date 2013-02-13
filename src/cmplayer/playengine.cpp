@@ -11,7 +11,7 @@ extern "C" {
 #include <core/command.h>
 #include <video/out/vo.h>
 #include <core/playlist.h>
-#include <core/codec-cfg.h>
+#include <core/codecs.h>
 #include <core/m_property.h>
 #include <core/input/input.h>
 #include <audio/filter/af.h>
@@ -87,7 +87,7 @@ struct PlayEngine::Data {
 	PlaylistModel playlist;
 	double videoAspect = 0.0;
 	int getStartTime(const Mrl &mrl) {return getStartTimeFunc ? getStartTimeFunc(mrl) : 0;}
-	CharArrayList hwAccCodecs;
+	QByteArray hwAccCodecs;
 
 	QByteArray &setFileName(const Mrl &mrl) {
 		fileName = "\"";
@@ -176,17 +176,21 @@ double PlayEngine::volumeNormalizer() const {
 }
 
 bool PlayEngine::isHwAccActivated() const {
-	if (!d->mpctx || !d->mpctx->sh_video || !d->mpctx->sh_video->codec)
-		return false;
-	return d->hwAccCodecs.contains(d->mpctx->sh_video->codec->name);
+	return false;
+//	if (!d->mpctx || !d->mpctx->sh_video || !d->mpctx->sh_video->codec)
+//		return false;
+//	return d->hwAccCodecs.contains(d->mpctx->sh_video->codec->name);
 }
 
 void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
 	d->hwAccCodecs.clear();
 	for (auto id : codecs) {
-		if (const char *name = HwAcc::codecName((AVCodecID)id))
+		if (const char *name = HwAcc::codecName((AVCodecID)id)) {
 			d->hwAccCodecs.append(name);
+			d->hwAccCodecs.append(',');
+		}
 	}
+	d->hwAccCodecs.chop(1);
 }
 
 void PlayEngine::setVideoAspect(double ratio) {
@@ -361,7 +365,7 @@ bool PlayEngine::isInitialized() const {
 	return d->init;
 }
 
-extern char **video_codec_list;
+//extern char **video_codec_list;
 
 void PlayEngine::run() {
 	CharArrayList args = QStringList()
@@ -394,9 +398,7 @@ void PlayEngine::run() {
 		Q_ASSERT(mpctx->playlist->current);
 		clear();
 		setState(EngineBuffering);
-		CharArrayList codecs = d->hwAccCodecs;
-		codecs.append(""); codecs.append(nullptr);
-		video_codec_list = codecs.data();
+		mpctx->opts.video_decoders = d->hwAccCodecs.data();
 		auto error = prepare_to_play_current_file(mpctx);
 		int terminated = 0, duration = 0;
 		Mrl mrl = d->playlist.loadedMrl();
@@ -456,7 +458,8 @@ void PlayEngine::run() {
 		if (!mpctx->playlist->current && !mpctx->opts.player_idle_mode)
 			break;
 	}
-	video_codec_list = nullptr;
+	mpctx->opts.video_decoders = nullptr;
+//	video_codec_list = nullptr;
 	mpctx_delete(d->mpctx);
 	d->mpctx = nullptr;
 	vo_cmplayer = nullptr;

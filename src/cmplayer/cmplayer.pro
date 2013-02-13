@@ -41,7 +41,7 @@ macx {
     TARGET = cmplayer
     LIBS += -lX11 -lxcb \
         -L../../build/lib -lcmplayer_mpv -lchardet -lcmplayer_av \
-        -lopenal -lasound -ldl -lva -lva-x11
+        -lopenal -lasound -ldl -lva -lva-glx
     HEADERS += app_x11.hpp mpv-vaapi.hpp
     SOURCES += app_x11.cpp mpv-vaapi.cpp
 }
@@ -123,7 +123,8 @@ HEADERS += playengine.hpp \
     historymodel.hpp \
     shadervar.h \
     hwacc.hpp \
-    subtitlestyle.hpp
+    subtitlestyle.hpp \
+    mainwidget.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -188,7 +189,8 @@ SOURCES += main.cpp \
     shadervar.cpp \
     subtitlestyle.cpp \
     hwacc.cpp \
-    videoformat.cpp
+    videoformat.cpp \
+    mainwidget.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp

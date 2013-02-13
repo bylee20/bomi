@@ -61,7 +61,6 @@ void mp_msg_va2(int mod, int lev, const char *format, va_list va) {
 	vsnprintf(tmp, MSGSIZE_MAX, format, va);
 	tmp[MSGSIZE_MAX-2] = '\n';
 	tmp[MSGSIZE_MAX-1] = '\0';
-//	qDebug() << tmp;
 	const int len = strlen(tmp);
 	static QString line;
 	if (tmp[len-1] == '\n') {

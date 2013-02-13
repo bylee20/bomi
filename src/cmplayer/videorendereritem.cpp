@@ -4,8 +4,8 @@
 #include "shadervar.h"
 
 struct VideoRendererItem::Data {
-	VideoFrame frame, next;
-	bool quit = false, frameChanged = false;
+	VideoFrame frame;
+	bool quit = false, framePended = false;
 	QRectF vtx;
 	QPoint offset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
@@ -19,7 +19,10 @@ struct VideoRendererItem::Data {
 	QByteArray shader;
 	int loc_rgb_0, loc_rgb_c, loc_kern_d, loc_kern_c, loc_kern_n, loc_y_tan, loc_y_b;
 	int loc_brightness, loc_contrast, loc_sat_hue, loc_dxy, loc_p1, loc_p2, loc_p3;
+	int loc_strideCorrection;
+	QPointF strideCorrection;
 	VideoFormat::Type shaderType = VideoFormat::BGRA;
+	QMutex mutex;
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
@@ -28,6 +31,7 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
 	setZ(-1);
+	connect(this, &VideoRendererItem::framePended, this, &VideoRendererItem::update, Qt::BlockingQueuedConnection);
 }
 
 VideoRendererItem::~VideoRendererItem() {
@@ -36,6 +40,10 @@ VideoRendererItem::~VideoRendererItem() {
 
 QQuickItem *VideoRendererItem::overlay() const {
 	return d->overlay;
+}
+
+bool VideoRendererItem::isFramePended() const {
+	return d->quit ? false : d->framePended;
 }
 
 const VideoFrame &VideoRendererItem::frame() const {
@@ -48,23 +56,14 @@ const VideoFrame &VideoRendererItem::frame() const {
 //	return d->next;
 //}
 
-class UpdateEvent : public QEvent {
-public:
-	static constexpr int Type = QEvent::User+1;
-	UpdateEvent(const VideoFrame &frame): QEvent(QEvent::Type(Type)), frame(frame) {}
-	const VideoFrame frame;
-};
-
-void VideoRendererItem::customEvent(QEvent *event) {
-	if (event->type() == UpdateEvent::Type) {
-		d->frame = static_cast<UpdateEvent*>(event)->frame;
-		d->frameChanged = true;
-		update();
-	}
-}
-
 void VideoRendererItem::present(const VideoFrame &frame) {
-	qApp->postEvent(this, new UpdateEvent(frame));
+	if (!d->quit) {
+		d->mutex.lock();
+		d->frame = frame;
+		d->framePended = true;
+		d->mutex.unlock();
+		emit framePended();
+	}
 }
 
 QRectF VideoRendererItem::screenRect() const {
@@ -169,6 +168,9 @@ void VideoRendererItem::updateGeometry() {
 
 void VideoRendererItem::quit() {
 	d->quit = true;
+	d->mutex.lock();
+	d->framePended = false;
+	d->mutex.unlock();
 //	d->wait.wakeAll();
 	setOverlay(nullptr);
 }
@@ -275,11 +277,12 @@ QByteArray VideoRendererItem::shader(int type) {
 		case VideoFormat::I420:
 			shader.append(R"(
 				uniform sampler2D p1, p2, p3;
+				uniform vec2 sc;
 				vec3 get_yuv(const vec2 coord) {
 					vec3 yuv;
 					yuv.x = texture2D(p1, coord).x;
-					yuv.y = texture2D(p2, coord).x;
-					yuv.z = texture2D(p3, coord).x;
+					yuv.y = texture2D(p2, coord*vec2(sc.x, 1.0)).x;
+					yuv.z = texture2D(p3, coord*vec2(sc.y, 1.0)).x;
 					return yuv;
 				}
 			)");
@@ -287,10 +290,11 @@ QByteArray VideoRendererItem::shader(int type) {
 		case VideoFormat::NV12:
 			shader.append(R"(
 				uniform sampler2D p1, p2;
+				uniform vec2 sc;
 				vec3 get_yuv(const vec2 coord) {
 					vec3 yuv;
 					yuv.x = texture2D(p1, coord).x;
-					yuv.yz = texture2D(p2, coord).xw;
+					yuv.yz = texture2D(p2, coord*vec2(sc.x, 1.0)).xw;
 					return yuv;
 				}
 			)");
@@ -298,10 +302,11 @@ QByteArray VideoRendererItem::shader(int type) {
 		case VideoFormat::NV21:
 			shader.append(R"(
 				uniform sampler2D p1, p2;
+				uniform vec2 sc;
 				vec3 get_yuv(const vec2 coord) {
 					vec3 yuv;
 					yuv.x = texture2D(p1, coord).x;
-					yuv.yz = texture2D(p2, coord).wx;
+					yuv.yz = texture2D(p2, coord*vec2(sc.x, 1.0)).wx;
 					return yuv;
 				}
 			)");
@@ -346,7 +351,7 @@ QByteArray VideoRendererItem::shader(int type) {
 			uniform sampler2D p1;
 			varying highp vec2 qt_TexCoord;
 			void main() {
-                gl_FragColor = texture2D(p1, qt_TexCoord);
+				gl_FragColor = texture2D(p1, qt_TexCoord);
 			}
 		)");
 		return shader;
@@ -375,6 +380,7 @@ void VideoRendererItem::link(QOpenGLShaderProgram *program) {
 	d->loc_p1 = program->uniformLocation("p1");
 	d->loc_p2 = program->uniformLocation("p2");
 	d->loc_p3 = program->uniformLocation("p3");
+	d->loc_strideCorrection = program->uniformLocation("sc");
 }
 
 void VideoRendererItem::drawMpOsd(void *pctx, sub_bitmaps *imgs) {
@@ -392,7 +398,7 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 	const float dx = 1.0/(double)d->format.drawWidth();
 	const float dy = 1.0/(double)d->format.drawHeight();
 	program->setUniformValue(d->loc_dxy, dx, dy, -dx, 0.f);
-
+	program->setUniformValue(d->loc_strideCorrection, d->strideCorrection);
 	const bool filter = d->shaderVar.effects() & FilterEffects;
 	const bool kernel = d->shaderVar.effects() & KernelEffects;
 	if (filter || kernel) {
@@ -420,11 +426,8 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 }
 
 void VideoRendererItem::beforeUpdate() {
-//	qDebug() << "update?" << (d->frameId != d->frame.id()) << d->frameId;
-//	QMutexLocker locker(&d->mutex);
-//	if (d->frame.id() == d->frameId)
-//		return;
-	if (!d->frameChanged)
+	QMutexLocker locker(&d->mutex);
+	if (!d->framePended)
 		return;
 	if (d->format != d->frame.format()) {
 		d->format = d->frame.format();
@@ -444,9 +447,9 @@ void VideoRendererItem::beforeUpdate() {
 		switch (d->format.type()) {
 		case VideoFormat::I420:
 		case VideoFormat::YV12:
-			setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
-			setTex(1, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(1));
-			setTex(2, GL_LUMINANCE, w >> 1, h >> 1, d->frame.data(2));
+			setTex(0, GL_LUMINANCE, d->format.byteWidth(0), d->format.byteHeight(0), d->frame.data(0));
+			setTex(1, GL_LUMINANCE, d->format.byteWidth(1), d->format.byteHeight(1), d->frame.data(1));
+			setTex(2, GL_LUMINANCE, d->format.byteWidth(2), d->format.byteHeight(2), d->frame.data(2));
 			break;
 		case VideoFormat::NV12:
 		case VideoFormat::NV21:
@@ -469,10 +472,7 @@ void VideoRendererItem::beforeUpdate() {
 		}
 		++(d->drawnFrames);
 	}
-	d->frameChanged = false;
-//	d->frameId = d->frame.id();
-//	d->wait.wakeAll();
-//	qDebug() << "update done";
+	d->framePended = false;
 }
 
 void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
@@ -516,17 +516,21 @@ void VideoRendererItem::initializeTextures() {
 		bindTex(idx);
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, w >> 2, h, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
 	};
+	d->strideCorrection = QPointF(1.0, 1.0);
 	switch (d->format.type()) {
 	case VideoFormat::I420:
 	case VideoFormat::YV12:
-		initTex(0, GL_LUMINANCE, w, h);
-		initTex(1, GL_LUMINANCE, w >> 1, h >> 1);
-		initTex(2, GL_LUMINANCE, w >> 1, h >> 1);
+		initTex(0, GL_LUMINANCE, d->format.byteWidth(0), d->format.byteHeight(0));
+		initTex(1, GL_LUMINANCE, d->format.byteWidth(1), d->format.byteHeight(1));
+		initTex(2, GL_LUMINANCE, d->format.byteWidth(2), d->format.byteHeight(2));
+		d->strideCorrection.rx() = ((double)d->format.byteWidth(0)/(double)(d->format.byteWidth(1)*2));
+		d->strideCorrection.ry() = ((double)d->format.byteWidth(0)/(double)(d->format.byteWidth(2)*2));
 		break;
 	case VideoFormat::NV12:
 	case VideoFormat::NV21:
-		initTex(0, GL_LUMINANCE, w, h);
-		initTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1);
+		initTex(0, GL_LUMINANCE, d->format.byteWidth(0), d->format.byteHeight(0));
+		initTex(1, GL_LUMINANCE_ALPHA, d->format.byteWidth(1) >> 1, d->format.byteHeight(1));
+		d->strideCorrection.rx() = ((double)d->format.byteWidth(0)/(double)(d->format.byteWidth(1)));
 		break;
 	case VideoFormat::YUY2:
 	case VideoFormat::UYVY:

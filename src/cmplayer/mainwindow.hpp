@@ -3,13 +3,15 @@
 
 #include "stdafx.hpp"
 #include "global.hpp"
+#include "globalqmlobject.hpp"
 
 class Mrl;		class PrefDialog;
+class MainWindow;
 
-class MainWindow : public QQuickView {
+class MainWindow : public QWidget {
 	Q_OBJECT
 public:
-	MainWindow();
+	MainWindow(QWidget *parent = nullptr);
 	MainWindow(const MainWindow &) = delete;
 	MainWindow &operator = (const MainWindow &) = delete;
 	~MainWindow();
@@ -38,23 +40,53 @@ private:
 	void showMessage(const QString &cmd, bool value) {showMessage(cmd, value ? tr("On") : tr("Off"));}
 	void appendSubFiles(const QStringList &files, bool checked, const QString &enc);
 	void setFullScreen(bool full);
+	void changeEvent(QEvent *event);
 	void closeEvent(QCloseEvent *event);
 	void customEvent(QEvent *event);
 	int getStartTime(const Mrl &mrl);
 	void showEvent(QShowEvent *event);
 	void hideEvent(QHideEvent *event);
-	void keyPressEvent(QKeyEvent *event);
-	void mouseMoveEvent(QMouseEvent *event);
-	void mouseDoubleClickEvent(QMouseEvent *event);
-	void mouseReleaseEvent(QMouseEvent *event);
-	void mousePressEvent(QMouseEvent *event);
-	void wheelEvent(QWheelEvent *event);
+	void onKeyPressed(QKeyEvent *event);
+	void onMouseEvent(QMouseEvent *event);
+	void onWheelEvent(QWheelEvent *event);
 	void dropEvent(QDropEvent *event);
 	void dragEnterEvent(QDragEnterEvent *event);
 	void resizeEvent(QResizeEvent *event);
-	void exposeEvent(QExposeEvent *event);
+	friend class MainView;
 	struct Data;
 	Data *d;
+};
+
+class MainView : public QQuickView {
+public:
+	MainView(MainWindow *parent): QQuickView(parent->window()->windowHandle()), p(parent) {}
+private:
+	void keyPressEvent(QKeyEvent *event) {
+		QQuickView::keyPressEvent(event);
+		p->onKeyPressed(event);
+	}
+	void mouseMoveEvent(QMouseEvent *event) {
+		QQuickView::mouseMoveEvent(event);
+		p->onMouseEvent(event);
+	}
+	void mouseDoubleClickEvent(QMouseEvent *event) {
+		UtilObject::resetDoubleClickFilter();
+		QQuickView::mouseDoubleClickEvent(event);
+		p->onMouseEvent(event);
+	}
+	void mouseReleaseEvent(QMouseEvent *event) {
+		QQuickView::mouseReleaseEvent(event);
+		p->onMouseEvent(event);
+	}
+	void mousePressEvent(QMouseEvent *event) {
+		QQuickView::mousePressEvent(event);
+		p->onMouseEvent(event);
+	}
+	void wheelEvent(QWheelEvent *event) {
+		QQuickView::wheelEvent(event);
+		p->onWheelEvent(event);
+	}
+	MainWindow *p = nullptr;
 };
 
 #endif // MAINWINDOW_HPP

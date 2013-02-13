@@ -143,7 +143,7 @@ SOURCES = talloc.c \
           audio/filter/af_surround.c \
           audio/filter/af_sweep.c \
           audio/filter/af_tools.c \
-          audio/filter/af_volnorm.c \
+          audio/filter/af_drc.c \
           audio/filter/af_volume.c \
           audio/filter/filter.c \
           audio/filter/window.c \
@@ -151,10 +151,11 @@ SOURCES = talloc.c \
           audio/out/ao_null.c \
           audio/out/ao_pcm.c \
           core/asxparser.c \
+          core/av_common.c \
           core/av_log.c \
           core/av_opts.c \
           core/bstr.c \
-          core/codec-cfg.c \
+          core/codecs.c \
           core/command.c \
           core/cpudetect.c \
           core/defaultopts.c \
@@ -181,6 +182,7 @@ SOURCES = talloc.c \
           demux/asfheader.c \
           demux/aviheader.c \
           demux/aviprint.c \
+          demux/codec_tags.c \
           demux/demux.c \
           demux/demux_asf.c \
           demux/demux_avi.c \
@@ -199,7 +201,6 @@ SOURCES = talloc.c \
           demux/ebml.c \
           demux/extension.c \
           demux/mf.c \
-          demux/mp_taglists.c \
           demux/video.c \
           osdep/numcores.c \
           osdep/io.c \
@@ -343,10 +344,6 @@ mpv$(EXESUF): $(OBJECTS)
 mpv$(EXESUF):
 	$(CC) -o $@ $^ $(EXTRALIBS)
 
-core/codec-cfg.c: core/codecs.conf.h
-core/codecs.conf.h: TOOLS/file2string.pl etc/codecs.conf
-	./$^ >$@
-
 core/input/input.c: core/input/input_conf.h
 core/input/input_conf.h: TOOLS/file2string.pl etc/input.conf
 	./$^ >$@
@@ -442,7 +439,6 @@ clean:
 	-$(RM) $(call ADD_ALL_EXESUFS,mpv)
 	-$(RM) DOCS/man/en/mpv.1
 	-$(RM) version.h
-	-$(RM) core/codecs.conf.h
 	-$(RM) core/input/input_conf.h
 	-$(RM) video/out/vdpau_template.c
 	-$(RM) demux/ebml_types.h demux/ebml_defs.c

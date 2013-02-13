@@ -7,7 +7,8 @@ extern "C" {
 }
 
 VideoFrame::VideoFrame::Data::Data(mp_image *mpi)
-: mpi(mp_image_new_ref(mpi)), format(mpi) {}
+: mpi(mp_image_new_ref(mpi)), format(mpi) {
+}
 
 VideoFrame::VideoFrame::Data::Data(const Data &other)
 : QSharedData(other) {
@@ -21,11 +22,11 @@ VideoFrame::Data::~Data() {
 		mp_image_unrefp(&mpi);
 }
 
-quint32 VideoFrame::UniqueId = 0;
-
 const uchar *VideoFrame::data(int i) const {
-	return reinterpret_cast<const uchar*>(d->mpi->planes[i]);
+	return d->mpi->planes[i];
 }
+
+quint32 VideoFrame::UniqueId = 0;
 
 //void VideoFrame::setFormat(const VideoFormat &format) {
 //	d->format = format;

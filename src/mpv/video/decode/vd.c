@@ -25,8 +25,6 @@
 #include "core/mp_msg.h"
 #include "core/options.h"
 
-#include "core/codec-cfg.h"
-
 #include "video/img_format.h"
 
 #include "stream/stream.h"
@@ -39,16 +37,18 @@
 #include "video/out/vo.h"
 
 extern const vd_functions_t mpcodecs_vd_ffmpeg;
-vd_functions_t cmplayer_vd_vaapi = {0};
 
+/* Please do not add any new decoders here. If you want to implement a new
+ * decoder, add it to libavcodec, except for wrappers around external
+ * libraries and decoders requiring binary support. */
+
+vd_functions_t cmplayer_vd_vaapi;
 const vd_functions_t * const mpcodecs_vd_drivers[] = {
     &mpcodecs_vd_ffmpeg,
-#ifdef __linux__
-    &cmplayer_vd_vaapi,
-#endif
     /* Please do not add any new decoders here. If you want to implement a new
      * decoder, add it to libavcodec, except for wrappers around external
      * libraries and decoders requiring binary support. */
+    &cmplayer_vd_vaapi,
     NULL
 };
 
@@ -114,7 +114,7 @@ int mpcodecs_config_vo(sh_video_t *sh, int w, int h, unsigned int out_fmt)
     sh->vfilter = vf;
 
     // autodetect flipping
-    bool flip = !!opts->flip != !!(sh->codec->flags & CODECS_FLAG_FLIP);
+    bool flip = opts->flip;
     if (flip && !(sh->output_flags & VFCAP_FLIP)) {
         // we need to flip, but no flipping filter avail.
         vf_add_before_vo(&vf, "flip", NULL);

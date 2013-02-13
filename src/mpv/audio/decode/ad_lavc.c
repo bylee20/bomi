@@ -28,6 +28,8 @@
 #include "talloc.h"
 
 #include "config.h"
+#include "core/av_common.h"
+#include "core/codecs.h"
 #include "core/mp_msg.h"
 #include "core/options.h"
 
@@ -37,17 +39,7 @@
 #include "compat/mpbswap.h"
 #include "compat/libav.h"
 
-static const ad_info_t info =
-{
-    "libavcodec audio decoders",
-    "ffmpeg",
-    "",
-    "",
-    "",
-    .print_name = "libavcodec",
-};
-
-LIBAD_EXTERN(ffmpeg)
+LIBAD_EXTERN(lavc)
 
 struct priv {
     AVCodecContext *avctx;
@@ -189,82 +181,63 @@ static int setup_format(sh_audio_t *sh_audio,
     return 0;
 }
 
-static int init(sh_audio_t *sh_audio)
+static void set_from_wf(AVCodecContext *avctx, WAVEFORMATEX *wf)
+{
+    avctx->channels = wf->nChannels;
+    avctx->sample_rate = wf->nSamplesPerSec;
+    avctx->bit_rate = wf->nAvgBytesPerSec * 8;
+    avctx->block_align = wf->nBlockAlign;
+    avctx->bits_per_coded_sample = wf->wBitsPerSample;
+
+    if (wf->cbSize > 0) {
+        avctx->extradata = av_mallocz(wf->cbSize + FF_INPUT_BUFFER_PADDING_SIZE);
+        avctx->extradata_size = wf->cbSize;
+        memcpy(avctx->extradata, wf + 1, avctx->extradata_size);
+    }
+}
+
+static int init(sh_audio_t *sh_audio, const char *decoder)
 {
     struct MPOpts *opts = sh_audio->opts;
     AVCodecContext *lavc_context;
     AVCodec *lavc_codec;
 
-    const char *dll = sh_audio->codec->dll;
-
-    if (sh_audio->wf && dll && strcmp(dll, "pcm") == 0) {
-        if (sh_audio->format == MKTAG('M', 'P', 'a', 'f')) {
-            // demuxer_rawaudio convenience (abuses wFormatTag)
-            dll = find_pcm_decoder(af_map, sh_audio->wf->wFormatTag, 0);
-        } else {
-            dll = find_pcm_decoder(tag_map, sh_audio->format,
+    if (sh_audio->wf && strcmp(decoder, "pcm") == 0) {
+        decoder = find_pcm_decoder(tag_map, sh_audio->format,
                                    sh_audio->wf->wBitsPerSample);
-        }
+    } else if (sh_audio->wf && strcmp(decoder, "mp-pcm") == 0) {
+        decoder = find_pcm_decoder(af_map, sh_audio->format, 0);
     }
 
-    if (dll) {
-        lavc_codec = avcodec_find_decoder_by_name(dll);
-        if (!lavc_codec) {
-            mp_tmsg(MSGT_DECAUDIO, MSGL_ERR,
-                    "Cannot find codec '%s' in libavcodec...\n", dll);
-            return 0;
-        }
-    } else if (!sh_audio->libav_codec_id) {
-        mp_tmsg(MSGT_DECAUDIO, MSGL_INFO, "No Libav codec ID known. "
-                "Generic lavc decoder is not applicable.\n");
+    lavc_codec = avcodec_find_decoder_by_name(decoder);
+    if (!lavc_codec) {
+        mp_tmsg(MSGT_DECAUDIO, MSGL_ERR,
+                "Cannot find codec '%s' in libavcodec...\n", decoder);
         return 0;
-    } else {
-        lavc_codec = avcodec_find_decoder(sh_audio->libav_codec_id);
-        if (!lavc_codec) {
-            mp_tmsg(MSGT_DECAUDIO, MSGL_INFO, "Libavcodec has no decoder "
-                   "for this codec\n");
-            return 0;
-        }
     }
-
-    sh_audio->codecname = lavc_codec->long_name;
-    if (!sh_audio->codecname)
-        sh_audio->codecname = lavc_codec->name;
 
     struct priv *ctx = talloc_zero(NULL, struct priv);
     sh_audio->context = ctx;
     lavc_context = avcodec_alloc_context3(lavc_codec);
     ctx->avctx = lavc_context;
     ctx->avframe = avcodec_alloc_frame();
+    lavc_context->codec_type = AVMEDIA_TYPE_AUDIO;
+    lavc_context->codec_id = lavc_codec->id;
+
+    lavc_context->request_channels = opts->audio_output_channels;
 
     // Always try to set - option only exists for AC3 at the moment
     av_opt_set_double(lavc_context, "drc_scale", opts->drc_level,
                       AV_OPT_SEARCH_CHILDREN);
+
+    lavc_context->codec_tag = sh_audio->format;
     lavc_context->sample_rate = sh_audio->samplerate;
     lavc_context->bit_rate = sh_audio->i_bps * 8;
-    if (sh_audio->wf) {
-        lavc_context->channels = sh_audio->wf->nChannels;
-        lavc_context->sample_rate = sh_audio->wf->nSamplesPerSec;
-        lavc_context->bit_rate = sh_audio->wf->nAvgBytesPerSec * 8;
-        lavc_context->block_align = sh_audio->wf->nBlockAlign;
-        lavc_context->bits_per_coded_sample = sh_audio->wf->wBitsPerSample;
-    }
-    lavc_context->request_channels = opts->audio_output_channels;
-    lavc_context->codec_tag = sh_audio->format; //FOURCC
-    if (sh_audio->gsh->lavf_codec_tag)
-        lavc_context->codec_tag = sh_audio->gsh->lavf_codec_tag;
-    lavc_context->codec_type = AVMEDIA_TYPE_AUDIO;
-    lavc_context->codec_id = lavc_codec->id; // not sure if required, imho not --A'rpi
 
-    /* alloc extra data */
-    if (sh_audio->wf && sh_audio->wf->cbSize > 0) {
-        lavc_context->extradata = av_mallocz(sh_audio->wf->cbSize + FF_INPUT_BUFFER_PADDING_SIZE);
-        lavc_context->extradata_size = sh_audio->wf->cbSize;
-        memcpy(lavc_context->extradata, sh_audio->wf + 1,
-               lavc_context->extradata_size);
-    }
+    if (sh_audio->wf)
+        set_from_wf(lavc_context, sh_audio->wf);
 
-    // for QDM2
+    // demux_mkv, demux_mpg
     if (sh_audio->codecdata_len && sh_audio->codecdata &&
             !lavc_context->extradata) {
         lavc_context->extradata = av_malloc(sh_audio->codecdata_len +
@@ -274,6 +247,9 @@ static int init(sh_audio_t *sh_audio)
                lavc_context->extradata_size);
     }
 
+    if (sh_audio->gsh->lav_headers)
+        mp_copy_lav_codec_headers(lavc_context, sh_audio->gsh->lav_headers);
+
     /* open it */
     if (avcodec_open2(lavc_context, lavc_codec, NULL) < 0) {
         mp_tmsg(MSGT_DECAUDIO, MSGL_ERR, "Could not open codec.\n");
@@ -282,16 +258,6 @@ static int init(sh_audio_t *sh_audio)
     }
     mp_msg(MSGT_DECAUDIO, MSGL_V, "INFO: libavcodec \"%s\" init OK!\n",
            lavc_codec->name);
-
-    if (sh_audio->wf && sh_audio->format == 0x3343414D) {
-        // MACE 3:1
-        sh_audio->ds->ss_div = 2 * 3; // 1 samples/packet
-        sh_audio->ds->ss_mul = 2 * sh_audio->wf->nChannels; // 1 byte*ch/packet
-    } else if (sh_audio->wf && sh_audio->format == 0x3643414D) {
-        // MACE 6:1
-        sh_audio->ds->ss_div = 2 * 6; // 1 samples/packet
-        sh_audio->ds->ss_mul = 2 * sh_audio->wf->nChannels; // 1 byte*ch/packet
-    }
 
     // Decode at least 1 byte:  (to get header filled)
     for (int tries = 0;;) {
@@ -303,7 +269,7 @@ static int init(sh_audio_t *sh_audio)
         }
         if (++tries >= 5) {
             mp_msg(MSGT_DECAUDIO, MSGL_ERR,
-                   "ad_ffmpeg: initial decode failed\n");
+                   "ad_lavc: initial decode failed\n");
             uninit(sh_audio);
             return 0;
         }
@@ -328,7 +294,6 @@ static int init(sh_audio_t *sh_audio)
 
 static void uninit(sh_audio_t *sh)
 {
-    sh->codecname = NULL;
     struct priv *ctx = sh->context;
     if (!ctx)
         return;
@@ -493,4 +458,11 @@ static int decode_audio(sh_audio_t *sh_audio, unsigned char *buf, int minlen,
         sh_audio->pts_bytes += size;
     }
     return len;
+}
+
+static void add_decoders(struct mp_decoder_list *list)
+{
+    mp_add_lavc_decoders(list, AVMEDIA_TYPE_AUDIO);
+    mp_add_decoder(list, "lavc", "pcm", "pcm", "Raw PCM");
+    mp_add_decoder(list, "lavc", "mp-pcm", "mp-pcm", "Raw PCM");
 }

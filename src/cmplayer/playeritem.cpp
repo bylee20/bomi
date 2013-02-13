@@ -13,7 +13,7 @@
 
 extern "C" {
 #include <demux/stheader.h>
-#include <core/codec-cfg.h>
+#include <core/codecs.h>
 #include <video/decode//vd.h>
 #include <video/out/vo.h>
 #include <audio/out/ao.h>
@@ -74,11 +74,12 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	if (fullScreen != m_fullScreen)
 		emit fullScreenChanged(m_fullScreen = fullScreen);
 
-	plug(window(), &QWindow::windowStateChanged, [this] (Qt::WindowState state) {
-		auto fullScreen = state == Qt::WindowFullScreen;
-		if (fullScreen != m_fullScreen)
-			emit fullScreenChanged(m_fullScreen = fullScreen);
-	});
+	if (window())
+		plug(window(), &QWindow::windowStateChanged, [this] (Qt::WindowState state) {
+			auto fullScreen = state == Qt::WindowFullScreen;
+			if (fullScreen != m_fullScreen)
+				emit fullScreenChanged(m_fullScreen = fullScreen);
+		});
 
 
 	auto mediaName = [this] (const Mrl &mrl) -> QString {
@@ -133,9 +134,6 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	plug(m_engine, &PlayEngine::mutedChanged, [this] (bool muted) {
 		emit mutedChanged(m_muted = muted);
 	});
-//	plug(m_engine, &PlayEngine::stateChanged, [this] (EngineState state) {
-
-//	});
 
 	if (m_renderer) {
 		d->drawnFrames = m_renderer->drawnFrames();
@@ -187,19 +185,15 @@ void PlayerItem::setVolume(int volume) {
 		m_engine->setVolume(volume);
 }
 
-
-
-
-
 void AvInfoObject::setVideo(const PlayEngine *engine) {
 	auto mpctx = engine->context();
-	if (!mpctx || !mpctx->sh_video || !mpctx->sh_video->codec)
+	if (!mpctx || !mpctx->sh_video || !mpctx->sh_video)
 		return;
 	const auto fmt = engine->videoFormat();
 	auto sh = mpctx->sh_video;
 
 	m_HwAcc = engine->isHwAccActivated();
-	m_codec = _U(sh->codec->info);
+	m_codec = _U(mpctx->sh[STREAM_VIDEO]->decoder_desc);
 	m_input->m_type = format(sh->format);
 	m_input->m_size = QSize(sh->disp_w, sh->disp_h);
 	m_input->m_fps = sh->fps;
@@ -219,7 +213,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 	auto sh = mpctx->sh_audio;
 	auto ao = mpctx->ao;
 	m_HwAcc = false;
-	m_codec = _U(sh->codec->info);
+	m_codec = _U(mpctx->sh[STREAM_AUDIO]->decoder_desc);
 
 	m_input->m_type = format(sh->format);
 	m_input->m_bps = sh->i_bps*8;

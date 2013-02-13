@@ -75,6 +75,9 @@ App::~App() {
 
 void App::setMainWindow(MainWindow *mw) {
 	d->main = mw;
+#ifndef Q_OS_MAC
+	d->main->setWindowIcon(defaultIcon());
+#endif
 	setActivationWindow(d->main, false);
 }
 
@@ -125,7 +128,7 @@ bool App::event(QEvent *event) {
 }
 
 QWindow *App::topWindow() const {
-    return d->main;
+	return d->main->window()->windowHandle();
 }
 
 QStringList App::devices() const {

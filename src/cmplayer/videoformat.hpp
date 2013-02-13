@@ -3,6 +3,15 @@
 
 #include "stdafx.hpp"
 
+
+struct ImageBuffer {
+	int width = 0, height = 0, planes = 0;
+	quint32 type = 0;
+	QByteArray _data;
+	uchar *data[3] = {0, 0, 0};
+	int stride[3] = {0, 0, 0};
+};
+
 struct mp_image;
 struct mp_imgfmt_desc;
 
@@ -29,7 +38,7 @@ struct VideoFormat {
 	static constexpr quint32 UYVY = cc4('U', 'Y', 'V', 'Y');
 	static constexpr quint32 RGBA = cc4('R', 'G', 'B', 'A');
 	static constexpr quint32 BGRA = cc4('B', 'G', 'R', 'A');
-
+	static constexpr quint32 HWAC = cc4('H', 'W', 'A', 'C');
 	VideoFormat(const mp_image *mpi);
 	VideoFormat(quint32 type = Unknown): m_type(type) {}
     static VideoFormat fromMpImage(const mp_image *mpi);
@@ -52,12 +61,11 @@ struct VideoFormat {
 	int drawHeight() const {return m_drawSize.height();}
 	int byteWidth(int plane) const {return m_byteSize[plane].width();}
 	int byteHeight(int plane) const {return m_byteSize[plane].height();}
-	quint32 imgfmt() const {return m_imgfmt;}
 private:
 	QSize m_size = {0, 0}, m_drawSize = {0, 0};
 	QVector<QSize> m_byteSize = {3, QSize(0, 0)};
 	int m_planes = 0, m_bpp = 0;
-	quint32 m_type = Unknown, m_imgfmt = -1;
+	quint32 m_type = Unknown;
 };
 
 VideoFormat::Type imgfmtToVideoFormatType(quint32 imgfmt);

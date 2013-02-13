@@ -341,7 +341,7 @@ void AboutDialog::showFullLicense() {
 
 	const QString fileName(sender() == d->ui.view_mpl ? ":/mpl.html" : ":/gpl.html");
 	QFile file(fileName);
-	file.open(QFile::ReadOnly);
+	file.open(QFile::ReadOnly | QFile::Text);
 	text->setHtml(QString::fromLatin1(file.readAll()));
 	dlg.resize(500, 400);
 	dlg.exec();

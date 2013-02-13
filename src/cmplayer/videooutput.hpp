@@ -30,10 +30,9 @@ private:
 	static int control(struct vo *vo, uint32_t request, void *data);
 	static void drawOsd(struct vo *vo, struct osd_state *osd);
 	static void flipPage(struct vo *vo);
-	static void checkEvents(struct vo *vo);
+	static void checkEvents(struct vo */*vo*/) {}
 	static int queryFormat(struct vo *vo, quint32 format);
 	static void drawImage(struct vo *vo, mp_image *mpi);
-	bool getImage(void *data);
 	struct Data;
 	Data *d;
 };

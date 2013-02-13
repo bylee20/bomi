@@ -29,16 +29,16 @@ bool HwAcc::supports(AVCodecID codec) { return VaApiInfo::find(codec) != nullptr
 const char *HwAcc::codecName(AVCodecID id) {
 	switch (id) {
 	case AV_CODEC_ID_H264:
-		return "vah264";
+		return "vaapi:h264";
 	case AV_CODEC_ID_MPEG1VIDEO:
 	case AV_CODEC_ID_MPEG2VIDEO:
-		return "vampeg12";
+		return "vaapi:mpegvideo";
 	case AV_CODEC_ID_MPEG4:
-		return "vampeg4";
+		return "vaapi:mpeg4";
 	case AV_CODEC_ID_WMV3:
-		return "vawmv3";
+		return "vaapi:wmv3";
 	case AV_CODEC_ID_VC1:
-		return "vavc1";
+		return "vaapi:vc1";
 	default:
 		return nullptr;
 	}

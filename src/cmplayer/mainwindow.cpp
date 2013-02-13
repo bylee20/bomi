@@ -31,15 +31,18 @@ public:
 };
 
 struct MainWindow::Data {
+	Data(MainWindow *p): p(p) {}
+	MainWindow *p = nullptr;
+	MainView *view = nullptr;
 	bool visible = false, sotChanging = false;
 	PlayerItem *player = nullptr;
 	RootMenu menu;	RecentInfo recent;
-	const Pref &p = cPref;
+//	const Pref &p = cPref;
 	PlayEngine engine;
 	VideoRendererItem renderer;
 	SubtitleRendererItem subtitle;
 	QPoint prevPos;		QTimer hider;
-	Qt::WindowState winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
+	Qt::WindowStates winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
 	bool middleClicked = false, moving = false, changingSub = false;
 	bool pausedByHiding = false, dontShowMsg = false, dontPause = false;
 	bool stateChanging = false;
@@ -282,6 +285,7 @@ struct MainWindow::Data {
 
 	QList<LoadedSubtitle> autoload(const Mrl &mrl, bool autoselect) {
 		QList<LoadedSubtitle> loaded;
+		const auto &p = cPref;
 		if (!p.sub_enable_autoload)
 			return loaded;
 		const QStringList filter = Info::subtitleNameFilter();
@@ -321,11 +325,16 @@ struct MainWindow::Data {
 void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
-MainWindow::MainWindow(): d(new Data) {
+MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
+	setAcceptDrops(true);
+	setFocus();
+	window()->winId();
+	d->view = new MainView(this);
+	d->view->setResizeMode(QQuickView::SizeRootObjectToView);
+	d->view->installEventFilter(this);
 	d->engine.start();
 	d->engine.setGetStartTimeFunction([this] (const Mrl &mrl){return getStartTime(mrl);});
-	setFlags(flags() | Qt::WindowFullscreenButtonHint);
-	setResizeMode(QQuickView::SizeRootObjectToView);
+//	setFlags(flags() | Qt::WindowFullscreenButtonHint);
 	d->engine.setVideoRenderer(&d->renderer);
 	d->renderer.setOverlay(&d->subtitle);
 
@@ -342,6 +351,7 @@ MainWindow::MainWindow(): d(new Data) {
 	Menu &win = d->menu("window");		Menu &help = d->menu("help");
 
 	connect(open["file"], &QAction::triggered, [this] () {
+		qDebug() << thread() << qApp->thread() << QThread::currentThread();
 		AppState &as = AppState::get();
 		const QString filter = Info::mediaExtFilter();
 		const QString dir = QFileInfo(as.open_last_file).absolutePath();
@@ -492,7 +502,7 @@ MainWindow::MainWindow(): d(new Data) {
 	connect(sub("list")["open"], &QAction::triggered, [this] () {
 		const QString filter = tr("Subtitle Files") % ' ' % Info::subtitleExt().toFilter();
 		const auto dir = d->engine.mrl().isLocalFile() ? QFileInfo(d->engine.mrl().toLocalFile()).absolutePath() : _L("");
-		QString enc = d->p.sub_enc;
+		QString enc = cPref.sub_enc;
 		const auto files = EncodingFileDialog::getOpenFileNames(nullptr, tr("Open Subtitle"), dir, filter, &enc);
 		if (!files.isEmpty()) appendSubFiles(files, true, enc);
 	});
@@ -519,7 +529,7 @@ MainWindow::MainWindow(): d(new Data) {
 	});
 	auto toggleItem = [this] (const char *name) {
 		if (d->player) {
-			auto item = rootObject()->findChild<QObject*>(name);
+			auto item = d->view->rootObject()->findChild<QObject*>(name);
 			if (item)
 				item->setProperty("visible", !item->property("visible").toBool());
 		}
@@ -570,7 +580,7 @@ MainWindow::MainWindow(): d(new Data) {
 			d->menu("play")["pause"]->setChecked(false);
 			d->menu("play")["pause"]->setText(tr("Pause"));
 		}
-		cApp.setScreensaverDisabled(d->p.disable_screensaver && state == EnginePlaying);
+		cApp.setScreensaverDisabled(cPref.disable_screensaver && state == EnginePlaying);
 		updateStaysOnTop();
 		d->stateChanging = false;
 	});
@@ -608,33 +618,6 @@ MainWindow::MainWindow(): d(new Data) {
 	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);
 	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
 	d->connectCurrentStreamActions(&d->menu("subtitle")("spu"), &PlayEngine::currentSubtitleStream);
-	connect(this, &MainWindow::windowStateChanged, [this] (Qt::WindowState state) {
-		setFilePath(d->filePath);
-		if (state != d->winState) {
-			d->prevWinState = d->winState;
-			d->winState = state;
-		}
-		d->dontPause = true;
-		d->moving = false;
-		d->prevPos = QPoint();
-		switch (state) {
-		case Qt::WindowFullScreen:
-			cApp.setAlwaysOnTop(this, false);
-			setVisible(true);
-			if (d->p.hide_cursor)
-				d->hider.start(d->p.hide_cursor_delay);
-			break;
-		default:
-			d->hider.stop();
-			setCursorVisible(true);
-			updateStaysOnTop();
-			setVisible(true);
-		}
-		d->dontPause = false;
-		if (!d->stateChanging)
-			doVisibleAction(state != Qt::WindowMinimized);
-	});
-	connect(this, &MainWindow::visibleChanged, this, &MainWindow::doVisibleAction);
 #ifndef Q_OS_MAC
 	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
 		if (reason == QSystemTrayIcon::Trigger)
@@ -691,7 +674,7 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::openFromFileManager(const Mrl &mrl) {
-	d->openWith(d->p.open_media_from_file_manager, mrl);
+	d->openWith(cPref.open_media_from_file_manager, mrl);
 }
 
 void MainWindow::exit() {
@@ -713,7 +696,7 @@ void MainWindow::exit() {
 		cApp.processEvents();
 		done = true;
 		delete d;
-		::exit(0);
+		::quick_exit(0);
 //		QTimer::singleShot(1, qApp, SLOT(quit()));
 	}
 }
@@ -781,7 +764,7 @@ void MainWindow::setVideoSize(double rate) {
 	} else {
 		// patched by Handrake
 		const QSizeF video = d->renderer.sizeHint();
-		const QSizeF desktop = screen()->availableVirtualSize();
+		const QSizeF desktop = windowHandle()->screen()->availableVirtualSize();
 		const double target = 0.15;
 		if (isFullScreen())
 			setFullScreen(false);
@@ -789,8 +772,7 @@ void MainWindow::setVideoSize(double rate) {
 			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
 		const QSize size = (this->size() - d->renderer.size() + d->renderer.sizeHint()*qSqrt(rate)).toSize();
 		if (size != this->size()) {
-			resize(size);
-			setGeometry(QRect(position(), size));
+			setGeometry(QRect(pos(), size));
 			int dx = 0;
 			const int rightDiff = desktop.width() - (x() + width());
 			if (rightDiff < 10) {
@@ -803,86 +785,76 @@ void MainWindow::setVideoSize(double rate) {
 				int x = this->x() + dx;
 				if (x < 0)
 					x = 0;
-				setX(x);
+				move(x, this->y());
 			}
 		}
 	}
 }
 
-void MainWindow::mousePressEvent(QMouseEvent *event) {
-	d->middleClicked = false;
-	QQuickView::mousePressEvent(event);
-	if (event->isAccepted())
-		return;
-	bool showContextMenu = false;
-	switch (event->button()) {
-	case Qt::LeftButton:
-		if (isFullScreen())
+void MainWindow::onMouseEvent(QMouseEvent *event) {
+	if (event->type() == QEvent::MouseButtonPress) {
+		if (event->isAccepted())
+			return;
+		d->middleClicked = false;
+		bool showContextMenu = false;
+		switch (event->button()) {
+		case Qt::LeftButton:
+			if (isFullScreen())
+				break;
+			d->moving = true;
+			d->prevPos = event->globalPos();
 			break;
-		d->moving = true;
-		d->prevPos = event->globalPos();
-		break;
-	case Qt::MiddleButton:
-		d->middleClicked = true;
-		break;
-	case Qt::RightButton:
-		showContextMenu = true;
-		break;
-	default:
-		break;
-	}
-	if (showContextMenu)
-		d->contextMenu.exec(event->globalPos());
-	else
-		d->contextMenu.hide();
-}
-
-void MainWindow::mouseMoveEvent(QMouseEvent *event) {
-	d->hider.stop();
-	setCursorVisible(true);
-	QQuickView::mouseMoveEvent(event);
-	const bool full = isFullScreen();
-	if (full) {
+		case Qt::MiddleButton:
+			d->middleClicked = true;
+			break;
+		case Qt::RightButton:
+			showContextMenu = true;
+			break;
+		default:
+			break;
+		}
+		if (showContextMenu)
+			d->contextMenu.exec(event->globalPos());
+		else
+			d->contextMenu.hide();
+	} else if (event->type() == QEvent::MouseMove) {
+		d->hider.stop();
+		setCursorVisible(true);
+		const bool full = isFullScreen();
+		if (full) {
+			if (d->moving) {
+				d->moving = false;
+				d->prevPos = QPoint();
+			}
+			if (cPref.hide_cursor)
+				d->hider.start(cPref.hide_cursor_delay);
+		} else {
+			if (d->moving) {
+				const QPoint pos = event->globalPos();
+				move(this->pos() + pos - d->prevPos);
+				d->prevPos = pos;
+			}
+		}
+	} else if (event->type() == QEvent::MouseButtonRelease){
 		if (d->moving) {
 			d->moving = false;
 			d->prevPos = QPoint();
 		}
-		if (d->p.hide_cursor)
-			d->hider.start(d->p.hide_cursor_delay);
-	} else {
-		if (d->moving) {
-			const QPoint pos = event->globalPos();
-			setPosition(this->position() + pos - d->prevPos);
-			d->prevPos = pos;
+		const auto rect = geometry();
+		if (d->middleClicked && event->button() == Qt::MiddleButton && rect.contains(event->localPos().toPoint()+rect.topLeft())) {
+			if (QAction *action = d->menu.middleClickAction(event->modifiers()))
+				action->trigger();
+		}
+		UtilObject::setMouseReleased(event->localPos());
+	} else if (event->type() == QEvent::MouseButtonDblClick) {
+		if (!UtilObject::isDoubleClickFiltered() && (event->buttons() & Qt::LeftButton)) {
+			if (QAction *action = d->menu.doubleClickAction(event->modifiers()))
+				action->trigger();
 		}
 	}
 }
 
-void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
-	if (d->moving) {
-		d->moving = false;
-		d->prevPos = QPoint();
-	}
-	const auto rect = geometry();
-	if (d->middleClicked && event->button() == Qt::MiddleButton && rect.contains(event->localPos().toPoint()+rect.topLeft())) {
-		if (QAction *action = d->menu.middleClickAction(event->modifiers()))
-			action->trigger();
-	}
-	QQuickView::mouseReleaseEvent(event);
-	UtilObject::setMouseReleased(event->localPos());
-}
-
-void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
-	UtilObject::resetDoubleClickFilter();
-	QQuickView::mouseDoubleClickEvent(event);
-	if (!UtilObject::isDoubleClickFiltered() && (event->buttons() & Qt::LeftButton)) {
-		if (QAction *action = d->menu.doubleClickAction(event->modifiers()))
-			action->trigger();
-	}
-}
-
-void MainWindow::wheelEvent(QWheelEvent *event) {
-	QQuickView::wheelEvent(event);
+void MainWindow::onWheelEvent(QWheelEvent *event) {
 	if (!event->isAccepted() && event->delta()) {
 		if (QAction *action = d->menu.wheelScrollAction(event->modifiers(), event->delta() > 0)) {
 			action->trigger();
@@ -920,7 +892,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
 		}
 	}
 	if (!playlist.isEmpty()) {
-		const Pref::OpenMedia &mode = d->p.open_media_by_drag_and_drop;
+		const Pref::OpenMedia &mode = cPref.open_media_by_drag_and_drop;
 		const auto mrl = playlist.first();
 		if (mode.playlist_behavior != Enum::PlaylistBehaviorWhenOpenMedia::AppendToPlaylist) {
 			d->engine.setPlaylist(Playlist());
@@ -930,33 +902,33 @@ void MainWindow::dropEvent(QDropEvent *event) {
 		d->playlist.merge(playlist);
 		d->engine.load(mrl, mode.start_playback);
 	} else if (!subList.isEmpty())
-		appendSubFiles(subList, true, d->p.sub_enc);
+		appendSubFiles(subList, true, cPref.sub_enc);
 }
 
 void MainWindow::reloadSkin() {
 	if (d->player)
 		d->player->unplug();
 	d->player = nullptr;
-	engine()->clearComponentCache();
+	d->view->engine()->clearComponentCache();
 	PlayerItem::registerItems();
-	rootContext()->setContextProperty("history", &d->history);
-	rootContext()->setContextProperty("playlist", &d->playlist);
-	Skin::apply(this, d->p.skin_name);
-	if (status() == Error) {
-		auto errors = this->errors();
+	d->view->rootContext()->setContextProperty("history", &d->history);
+	d->view->rootContext()->setContextProperty("playlist", &d->playlist);
+	Skin::apply(d->view, cPref.skin_name);
+	if (d->view->status() == QQuickView::Error) {
+		auto errors = d->view->errors();
 		for (auto error : errors) {
 			qDebug() << error.toString();
 		}
 	} else {
-		if (!(d->player = qobject_cast<PlayerItem*>(rootObject())))
-			d->player = rootObject()->findChild<PlayerItem*>();
+		if (!(d->player = qobject_cast<PlayerItem*>(d->view->rootObject())))
+			d->player = d->view->rootObject()->findChild<PlayerItem*>();
 		if (d->player)
 			d->player->plugTo(&d->engine);
 	}
 }
 
 void MainWindow::applyPref() {
-	d->engine.setHwAccCodecs(d->p.enable_hwaccel ? d->p.hwaccel_codecs : QList<int>());
+	d->engine.setHwAccCodecs(cPref.enable_hwaccel ? cPref.hwaccel_codecs : QList<int>());
 	int time = -1;
 	switch (d->engine.state()) {
 	case EnginePlaying:
@@ -967,17 +939,17 @@ void MainWindow::applyPref() {
 	default:
 		break;
 	}
-	SubtitleParser::setMsPerCharactor(d->p.ms_per_char);
-	Translator::load(d->p.locale);
+	SubtitleParser::setMsPerCharactor(cPref.ms_per_char);
+	Translator::load(cPref.locale);
 	reloadSkin();
-	d->subtitle.setPriority(d->p.sub_priority);
-	d->subtitle.setStyle(d->p.sub_style);
+	d->subtitle.setPriority(cPref.sub_priority);
+	d->subtitle.setStyle(cPref.sub_style);
 	d->menu.update();
 	d->menu.save();
 	d->menu.syncTitle();
 	d->menu.resetKeyMap();
 #ifndef Q_OS_MAC
-	d->tray->setVisible(d->p.enable_system_tray);
+	d->tray->setVisible(cPref.enable_system_tray);
 #endif
 	if (time >= 0)
 		d->engine.reload();
@@ -992,33 +964,33 @@ void connectCopies(Menu &menu, const Slot &slot) {
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
-	QQuickView::resizeEvent(event);
+	QWidget::resizeEvent(event);
+	d->view->setGeometry(0, 0, width(), height());
 }
 
-void MainWindow::exposeEvent(QExposeEvent *event) {
-	QQuickView::exposeEvent(event);
-	if (auto obj = rootObject()) {
-		auto old = obj->boundingRect().size().toSize();
-		if (size() != old) {
-			QResizeEvent ev(size(), old);
-			qApp->sendEvent(this, &ev);
-		}
-	}
-}
+//void MainWindow::exposeEvent(QExposeEvent *event) {
+//	QWidget::exposeEvent(event);
+//	if (auto obj = rootObject()) {
+//		auto old = obj->boundingRect().size().toSize();
+//		if (size() != old) {
+//			QResizeEvent ev(size(), old);
+//			qApp->sendEvent(this, &ev);
+//		}
+//	}
+//}
 
 void MainWindow::doVisibleAction(bool visible) {
-	if (!_Change(d->visible, visible))
-		return;
+	d->visible = visible;
 	if (d->visible) {
 		if (d->pausedByHiding && d->engine.isPaused()) {
 			d->engine.play();
 			d->pausedByHiding = false;
 		}
-		setFilePath(d->filePath);
+		setWindowFilePath(d->filePath);
 	} else {
-		if (!d->p.pause_minimized || d->dontPause)
+		if (!cPref.pause_minimized || d->dontPause)
 			return;
-		if (!d->engine.isPlaying() || (d->p.pause_video_only && !d->engine.hasVideo()))
+		if (!d->engine.isPlaying() || (cPref.pause_video_only && !d->engine.hasVideo()))
 			return;
 		d->pausedByHiding = true;
 		d->engine.pause();
@@ -1026,23 +998,24 @@ void MainWindow::doVisibleAction(bool visible) {
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
-	QQuickView::showEvent(event);
+	QWidget::showEvent(event);
+	d->view->show();
 	doVisibleAction(true);
-	qDebug() << "show";
 }
 
 void MainWindow::hideEvent(QHideEvent *event) {
-	QQuickView::hideEvent(event);
+	QWidget::hideEvent(event);
 	doVisibleAction(false);
+	d->view->hide();;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
 #ifndef Q_OS_MAC
-	if (d->p.enable_system_tray && d->p.hide_rather_close) {
+	if (cPref.enable_system_tray && cPref.hide_rather_close) {
 		hide();
 		AppState &as = AppState::get();
 		if (as.ask_system_tray) {
-            CheckDialog dlg;//(this);
+			CheckDialog dlg(this);
 			dlg.setChecked(true);
 			dlg.setLabelText(tr("CMPlayer will be running in the system tray "
 					"when the window closed.<br>"
@@ -1063,6 +1036,9 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 void MainWindow::updateStaysOnTop() {
+	return;
+	if (windowState() == Qt::WindowMinimized)
+		return;
 	d->sotChanging = true;
 	const int id = d->menu("window").g("stays-on-top")->checkedAction()->data().toInt();
 	bool onTop = false;
@@ -1074,21 +1050,20 @@ void MainWindow::updateStaysOnTop() {
 		else
 			onTop = d->engine.isPlaying();
 	}
-	cApp.setAlwaysOnTop(this, onTop);
+	cApp.setAlwaysOnTop(window()->windowHandle(), onTop);
 	d->sotChanging = false;
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *event) {
-	QQuickView::keyPressEvent(event);
-	if (event->isAccepted())
-		return;
-	constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
-	auto action = cMenu.action(QKeySequence(event->key() + (event->modifiers() & modMask)));
-	if (action) {
-		if (action->isCheckable())
-			action->toggle();
-		else
-			action->trigger();
+void MainWindow::onKeyPressed(QKeyEvent *event) {
+	if (!event->isAccepted()) {
+		constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
+		auto action = cMenu.action(QKeySequence(event->key() + (event->modifiers() & modMask)));
+		if (action) {
+			if (action->isCheckable())
+				action->toggle();
+			else
+				action->trigger();
+		}
 	}
 }
 
@@ -1100,7 +1075,7 @@ auto MainWindow::updateMrl(const Mrl &mrl) -> void {
 		d->filePath = file.absoluteFilePath();
 		title += file.fileName();
 		if (isVisible())
-			setFilePath(d->filePath);
+			setWindowFilePath(d->filePath);
 	} else {
 		clearSubtitles();
 		if (mrl.isDvd()) {
@@ -1110,7 +1085,7 @@ auto MainWindow::updateMrl(const Mrl &mrl) -> void {
 		}
 	}
 	title += _L(" - ") % Info::name() % _L(" ") % Info::version();
-	setTitle(title);
+	setWindowTitle(title);
 	d->sync_subtitle_file_menu();
 }
 
@@ -1146,12 +1121,12 @@ void MainWindow::customEvent(QEvent *event) {
 }
 
 int MainWindow::getStartTime(const Mrl &mrl) {
-	if (!d->p.remember_stopped)
+	if (!cPref.remember_stopped)
 		return 0;
 	const int start = d->history.stoppedTime(mrl);
 	if (start <= 0)
 		return 0;
-	if (d->p.ask_record_found) {
+	if (cPref.ask_record_found) {
 		if (QThread::currentThread() == &d->engine) {
 			d->startFromStopped = -1;
 			qApp->postEvent(this, new AskStartTimeEvent(mrl, start));
@@ -1174,5 +1149,36 @@ void MainWindow::setCursorVisible(bool visible) {
 	} else if (!visible && cursor().shape() != Qt::BlankCursor) {
 		setCursor(Qt::BlankCursor);
 		UtilObject::setCursorVisible(false);
+	}
+}
+
+void MainWindow::changeEvent(QEvent *event) {
+	QWidget::changeEvent(event);
+	if (event->type() == QEvent::WindowStateChange) {
+		setWindowFilePath(d->filePath);
+		auto state = windowState();
+		if (state != d->winState) {
+			d->prevWinState = d->winState;
+			d->winState = state;
+		}
+		d->dontPause = true;
+		d->moving = false;
+		d->prevPos = QPoint();
+		switch (state) {
+		case Qt::WindowFullScreen:
+			cApp.setAlwaysOnTop(window()->windowHandle(), false);
+			setVisible(true);
+			if (cPref.hide_cursor)
+				d->hider.start(cPref.hide_cursor_delay);
+			break;
+		default:
+			d->hider.stop();
+			setCursorVisible(true);
+			updateStaysOnTop();
+			setVisible(true);
+		}
+		d->dontPause = false;
+		if (!d->stateChanging)
+			doVisibleAction(state != Qt::WindowMinimized);
 	}
 }

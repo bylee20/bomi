@@ -51,6 +51,7 @@ public:
 	QQuickItem *overlay() const;
 	void present(const VideoFrame &frame);
 	const VideoFrame &frame() const;
+	bool isFramePended() const;
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -62,11 +63,12 @@ signals:
 	void offsetChanged(const QPoint &pos);
 	void formatChanged(const VideoFormat &format);
 	void screenRectChanged(const QRectF rect);
+	void framePended();
+	void texturesInitialized();
 private: // for VideoOutput
 //	VideoFrame &getNextFrame() const;
 //	void next();
 private:
-	void customEvent(QEvent *event);
 	void initializeTextures();
 	static QByteArray shader(int type);
     static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
@@ -80,7 +82,6 @@ private:
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	struct Data;
 	Data *d;
-
 	friend class VideoOutput;
 };
 
