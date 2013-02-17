@@ -77,6 +77,7 @@ ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(ICON_PATH)/128x128/apps
 	-install -d $(DEST_DIR)$(ICON_PATH)/256x256/apps
 	-install -d $(DEST_DIR)$(CMPLAYER_SKINS_PATH)
+	-install -d $(DEST_DIR)$(CMPLAYER_IMPORTS_PATH)
 #	-install -d $(DEST_DIR)$(ICON_PATH)/scalable/apps
 	$(install_exe) build/$(cmplayer_exec) $(DEST_DIR)$(BIN_PATH)
 	$(install_file) cmplayer.desktop $(DEST_DIR)$(APP_PATH)
@@ -91,5 +92,5 @@ ifeq ($(os),linux)
 	$(install_file) icons/cmplayer256.png $(DEST_DIR)$(ICON_PATH)/256x256/apps/cmplayer.png
 #	$(install_file) icons/cmplayer.svg $(DEST_DIR)$(ICON_PATH)/scalable/apps/cmplayer.svg
 	-cp -r build/skins/* $(DEST_DIR)$(CMPLAYER_SKINS_PATH)/
-	-cp -r build/imports/CMPlayerSkin $(DEST_DIR)$(CMPLAYER_IMPORTS_PATH)/
+	-cp -r build/imports/* $(DEST_DIR)$(CMPLAYER_IMPORTS_PATH)/
 endif
