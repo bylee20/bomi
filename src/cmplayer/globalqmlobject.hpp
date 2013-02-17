@@ -40,7 +40,7 @@ public:
 	Q_INVOKABLE QPointF mousePos(QQuickItem *item);
 	Q_INVOKABLE QPointF mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) const;
 	Q_INVOKABLE bool execute(const QString &key);
-	Q_INVOKABLE static double bound(double min, double v, double max) {return qBound(min, v, max);}
+	Q_INVOKABLE double bound(double min, double v, double max) const {return qBound(min, v, max);}
 	static void resetDoubleClickFilter() {m_filterDoubleClick = false;}
 	static bool isDoubleClickFiltered() {return m_filterDoubleClick;}
 	static bool isCursorVisible() {return m_cursor;}

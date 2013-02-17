@@ -5,6 +5,7 @@
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusInterface>
+#include <QtDBus/QDBusReply>
 #include <qpa/qplatformnativeinterface.h>
 #include <qpa/qplatformwindow.h>
 extern "C" {
@@ -45,32 +46,68 @@ struct XWindowInfo {
 };
 
 struct AppX11::Data {
-	QTimer *ss_timer;
+	QTimer ss_timer;
 	XWindowInfo x;
+	QDBusInterface *iface = nullptr;
+	QDBusReply<uint> reply;
+	bool inhibit = false;
+	bool xss = false;
 };
 
 AppX11::AppX11(QObject *parent)
 : QObject(parent), d(new Data) {
-	d->ss_timer = new QTimer;
-	d->ss_timer->setInterval(10000);
-	connect(d->ss_timer, SIGNAL(timeout()), this, SLOT(ss_reset()));
+	d->ss_timer.setInterval(20000);
+	connect(&d->ss_timer, &QTimer::timeout, [this] () {
+		if (d->xss && d->x.display)
+			XResetScreenSaver(d->x.display);
+	});
 }
 
 AppX11::~AppX11() {
-	delete d->ss_timer;
+	delete d->iface;
 	delete d;
 }
 
 void AppX11::setScreensaverDisabled(bool disabled) {
-	if (disabled)
-		d->ss_timer->start();
-	else
-		d->ss_timer->stop();
-}
-
-void AppX11::ss_reset() {
-	if (d->x.display)
-		XResetScreenSaver(d->x.display);
+	if (d->inhibit == disabled)
+		return;
+	if (disabled) {
+		if (!d->iface && !d->xss) {
+			d->iface = new QDBusInterface("org.gnome.ScreenSaver", "/org/gnome/ScreenSaver", "org.gnome.ScreenSaver");
+			if (!d->iface->isValid()) {
+				delete d->iface;
+				d->iface = new QDBusInterface("org.freedesktop.ScreenSaver", "/ScreenSaver", "org.freedesktop.ScreenSaver");
+				if (!d->iface->isValid()) {
+					delete d->iface;
+					d->iface = nullptr;
+					d->xss = true;
+				}
+			}
+		}
+		if (d->iface) {
+			d->reply = d->iface->call("Inhibit", "CMPlayer", "Running player");
+			if (!d->reply.isValid()) {
+				qDebug() << "DBus failed:" << d->reply.error().message();
+				qDebug() << "fallback to XResetScreenSaver()";
+				delete d->iface;
+				d->iface = nullptr;
+				d->xss = true;
+			} else
+				qDebug() << "disable width" << d->iface->interface();
+		}
+		if (d->xss)
+			d->ss_timer.start();
+	} else {
+		if (d->iface) {
+			auto response = d->iface->call("UnInhibit", d->reply.value());
+			if (response.type() == QDBusMessage::ErrorMessage)
+				qDebug() << response.errorName() << response.errorMessage();
+			else
+				qDebug() << "enable width" << d->iface->interface();
+		} else if (d->xss)
+			d->ss_timer.stop();
+	}
+	d->inhibit = disabled;
 }
 
 void AppX11::setAlwaysOnTop(QWindow *window, bool onTop) {

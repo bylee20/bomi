@@ -5,26 +5,38 @@ import CMPlayerCore 1.0 as Core
 Skin.Player {
 	id: player
 	dockZ: 1.0
-	property real pw: -1; property real ph: -1
+	property real pw: -1
 	onWidthChanged: {
-		if (pw > 0)
-			controls.x = Core.Util.bound(0.0, controls.x*width/pw, width-controls.width)
+		if (pw >= 0)
+			controls.setCx(controls.getCx(pw))
 		pw = width
 	}
-	onHeightChanged: {
-		if (ph > 0)
-			controls.y = Core.Util.bound(0.0, controls.y*height/ph, height-controls.height)
+	property real ph: -1
+	onHeightChanged:  {
+		if (ph >= 0)
+			controls.setCy(controls.getCy(ph))
 		ph = height
 	}
+
 	MouseArea {
 		Component.onCompleted: controls.hidden = !containsMouse
 		anchors.fill: parent
 		hoverEnabled: true; onPressed: mouse.accepted = false
 		onEntered: controls.hidden = false; onExited: controls.hidden = true
 		MouseArea {
-			id: controls
+			id: controls //Math.max(0, Math.min(cx*parent.width - width/2, parent.width-width)) }//
+			function setCx(cx) { x = Core.Util.bound(0, cx*parent.width - width/2, parent.width - width) }
+			function setCy(cy) { y = Core.Util.bound(0, cy*parent.height - height/2, parent.height - height) }
+			function getCx(bg) { return (x+width/2)/bg; }
+			function getCy(bg) { return (y+height/2)/bg; }
+
+//			property real cx: -1//getCx()
+//			property real cy: -1//getCy()
+//			onXChanged: cx = getCx()
+//			onWidthChanged: cx = getCx()
+//			Component.onCompleted: {cx = getCx()}
 			property bool hidden: false
-			width:400; height: inner.height+24
+			width: 400; height: inner.height+24
 			drag.target: controls; drag.axis: Drag.XAndYAxis
 			drag.minimumX: 0; drag.maximumX: player.width-width
 			drag.minimumY: 0; drag.maximumY: player.height-height

@@ -513,6 +513,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 		d->subtitle.select(-1);
 		for (auto action : d->menu("subtitle")("list").g()->actions())
 			action->setChecked(true);
+		showMessage(tr("Select All Subtitles"), tr("%1 Subtitle(s)").arg(d->subtitle.loaded().size()));
 	});
 	connect(sub("list")["next"], &QAction::triggered, [this] () {
 		auto actions = d->menu("subtitle")("list").g()->actions();
@@ -533,6 +534,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 			next->setChecked(true);
 			d->subtitle.deselect(-1);
 			d->subtitle.select(next->data().toInt());
+			showMessage(tr("Current Subtitle"), next->text());
 		}
 	});
 	connect(sub("list")["hide"], &QAction::toggled, [this] (bool hide) {d->subtitle.setVisible(!hide);});

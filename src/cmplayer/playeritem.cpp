@@ -175,7 +175,7 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	const auto fmt = engine->videoFormat();
 	auto sh = mpctx->sh_video;
 
-	m_HwAcc = engine->isHwAccActivated();
+	m_hwAcc = engine->isHwAccActivated();
 	m_codec = _U(mpctx->sh[STREAM_VIDEO]->decoder_desc);
 	m_input->m_type = format(sh->format);
 	m_input->m_size = QSize(sh->disp_w, sh->disp_h);
@@ -195,7 +195,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 		return;
 	auto sh = mpctx->sh_audio;
 	auto ao = mpctx->ao;
-	m_HwAcc = false;
+	m_hwAcc = false;
 	m_codec = _U(mpctx->sh[STREAM_AUDIO]->decoder_desc);
 
 	m_input->m_type = format(sh->format);

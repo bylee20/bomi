@@ -39,14 +39,14 @@ private:
 
 class AvInfoObject : public QObject {
 	Q_OBJECT
-	Q_PROPERTY(bool isHardwareAccelerated READ HwAcc)
+	Q_PROPERTY(bool isHardwareAccelerated READ hwAcc)
 	Q_PROPERTY(QString codec READ codec)
 	Q_PROPERTY(AvIoFormat *input READ input)
 	Q_PROPERTY(AvIoFormat *output READ output)
 public:
 	AvInfoObject(QObject *parent): QObject(parent) {}
 	QString codec() const {return m_codec;}
-	bool HwAcc() const {return m_HwAcc;}
+	bool hwAcc() const {return m_hwAcc;}
 	AvIoFormat *input() const {return m_input;}
 	AvIoFormat *output() const {return m_output;}
 	void setVideo(const PlayEngine *engine);
@@ -58,7 +58,7 @@ private:
 	static QString bps(int Bps) {return (Bps ? _N(Bps*8/1000) % _L("kbps") : QString());}
 	AvIoFormat *m_input = new AvIoFormat(this);
 	AvIoFormat *m_output = new AvIoFormat(this);
-	bool m_HwAcc = false;
+	bool m_hwAcc = false;
 	QString m_codec;
 };
 

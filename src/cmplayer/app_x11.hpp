@@ -12,8 +12,6 @@ public:
 	void setAlwaysOnTop(QWindow *window, bool onTop);
 	QStringList devices() const;
 	bool shutdown();
-private slots:
-	void ss_reset();
 private:
 	AppX11(const AppX11&) = delete;
 	AppX11 &operator = (const AppX11&) = delete;
