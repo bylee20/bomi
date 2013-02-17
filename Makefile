@@ -18,8 +18,8 @@ ifeq ($(os),osx)
 	cmplayer_exec_path := build/$(cmplayer_exec).app/Contents/MacOS
 else
 	PREFIX ?= /usr/local
-	QMAKE ?= qmake
-	LRELEASE ?= lrelease
+	QMAKE ?= qmake-qt5
+	LRELEASE ?= lrelease-qt5
 	BIN_PATH ?= $(PREFIX)/bin
 	DATA_PATH ?= $(PREFIX)/share
 	ICON_PATH ?= $(DATA_PATH)/icons/hicolor
@@ -91,5 +91,5 @@ ifeq ($(os),linux)
 	$(install_file) icons/cmplayer256.png $(DEST_DIR)$(ICON_PATH)/256x256/apps/cmplayer.png
 #	$(install_file) icons/cmplayer.svg $(DEST_DIR)$(ICON_PATH)/scalable/apps/cmplayer.svg
 	-cp -r build/skins/* $(DEST_DIR)$(CMPLAYER_SKINS_PATH)/
-	-cp -r build/imports/* $(DEST_DIR)$(CMPLAYER_IMPORTS_PATH)/
+	-cp -r build/imports/CMPlayerSkin $(DEST_DIR)$(CMPLAYER_IMPORTS_PATH)/
 endif

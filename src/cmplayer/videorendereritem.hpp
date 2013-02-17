@@ -73,7 +73,6 @@ private: // for VideoOutput
 //	void next();
 private:
 	void initializeTextures();
-	static QByteArray shader(int frameType, int effectType);
     static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
 	const char *fragmentShader() const;
 	void link(QOpenGLShaderProgram *program);
