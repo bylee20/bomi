@@ -19,13 +19,12 @@ class PlayerItem : public QQuickItem, public Skin {
 	Q_PROPERTY(int time READ position NOTIFY tick)
 	Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
 	Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
-	Q_PROPERTY(bool volumeNormalized READ isVolumeNormalized NOTIFY volumeNormalizedChanged)
 	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
 	Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
 	Q_PROPERTY(double avgsync READ avgsync)
 	Q_PROPERTY(double avgfps READ avgfps)
 	Q_PROPERTY(State state READ state NOTIFY stateChanged)
-	Q_PROPERTY(QString stateText READ stateText)
+	Q_PROPERTY(QString stateText READ stateText NOTIFY stateTextChanged)
 	Q_PROPERTY(bool playing READ isPlaying NOTIFY playingChanged)
 	Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
 //	Q_PROPERTY(bool paused READ isPaused NOTIFY pausedChanged)
@@ -45,8 +44,7 @@ public:
 	void setDuration(int duration) {if (m_duration != duration) emit durationChanged(m_duration = duration);}
 	void setPosition(int pos) {if (m_position != pos) emit tick(m_position = pos);}
 	void setState(State state);
-	bool isVolumeNormalized() const {return m_volnorm;}
-	double volumeNormalizer() const {return m_norm;}
+	double volumeNormalizer() const;
 	QString stateText() const;
 	int volume() const {return m_volume;}
 	bool isFullScreen() const {return m_fullScreen;}
@@ -65,6 +63,7 @@ public:
 	QString message() const {return m_message;}
 	Q_INVOKABLE void seek(int time);
 	Q_INVOKABLE void setVolume(int volume);
+	void setFullScreen(bool fs) {if (_Change(m_fullScreen, fs)) emit fullScreenChanged(m_fullScreen);}
 	~PlayerItem();
 signals:
 	void stateTextChanged(const QString &stateText);
@@ -80,7 +79,6 @@ signals:
 	void runningChanged(bool running);
 	void stateChanged(State state);
 	void mediaChanged();
-	void volumeNormalizedChanged(bool volnorm);
 	void volumeChanged(int volume);
 	void fullScreenChanged(bool full);
 private slots:
@@ -90,12 +88,10 @@ private:
 	struct Data;
 	Data *d;
 	int m_duration = 0, m_position = 0;
-	bool m_volnorm = false;
 	State m_state = Stopped;
 	AvInfoObject *m_audio = new AvInfoObject(this);
 	AvInfoObject *m_video = new AvInfoObject(this);
 	MediaInfoObject *m_media = new MediaInfoObject(this);
-	double m_norm = 1.0;
 	int m_volume = 0;
 	bool m_fullScreen = false, m_muted = false;
 	VideoRendererItem *m_renderer = nullptr;

@@ -20,7 +20,7 @@ cflags="-I../../build/include"
 objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   audio/decode/ad_spdif.o audio/decode/dec_audio.o audio/filter/af.o \
   audio/filter/af_center.o audio/filter/af_channels.o audio/filter/af_delay.o \
-  audio/filter/af_dummy.o audio/filter/af_equalizer.o audio/filter/af_export.o \
+  audio/filter/af_equalizer.o audio/filter/af_export.o \
   audio/filter/af_extrastereo.o audio/filter/af_format.o audio/filter/af_hrtf.o \
   audio/filter/af_karaoke.o audio/filter/af_lavcac3enc.o \
   audio/filter/af_lavcresample.o audio/filter/af_pan.o audio/filter/af_resample.o \
@@ -65,7 +65,7 @@ objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
   video/img_format.o video/mp_image.o video/mp_image_pool.o video/out/aspect.o video/out/bitmap_packer.o \
   video/out/filter_kernels.o \
   video/out/vo.o video/out/vo_image.o \
-  video/out/vo_null.o video/sws_utils.o"
+  video/sws_utils.o"
 
 libs="-ldvdread -lbz2 -lcdio_cdda -lcdio_paranoia -lcdio -lmpg123 -lquvi"
 

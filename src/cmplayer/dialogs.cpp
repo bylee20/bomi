@@ -282,8 +282,6 @@ QString GetUrlDialog::encoding() const {
 
 /******************************************************************************/
 
-ToggleDialog::ToggleDialog(QWidget *parent): QDialog(parent, Qt::Tool) {}
-
 struct AboutDialog::Data {
 	Ui::AboutDialog ui;
 };

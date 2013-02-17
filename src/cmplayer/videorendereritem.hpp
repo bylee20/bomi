@@ -49,9 +49,12 @@ public:
 	void quit();
 	void setOverlay(QQuickItem *overlay);
 	QQuickItem *overlay() const;
-	void present(const VideoFrame &frame);
+	void present(const VideoFrame &frame, bool checkFormat = true);
 	const VideoFrame &frame() const;
 	bool isFramePended() const;
+	bool hasFrame() const;
+	QImage frameImage() const;
+	QRectF frameRect(const QRectF &area) const;
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -70,7 +73,7 @@ private: // for VideoOutput
 //	void next();
 private:
 	void initializeTextures();
-	static QByteArray shader(int type);
+	static QByteArray shader(int frameType, int effectType);
     static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
 	const char *fragmentShader() const;
 	void link(QOpenGLShaderProgram *program);

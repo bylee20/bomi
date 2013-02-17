@@ -87,10 +87,11 @@ Item {
 				font.family: wrapper.fontFamily
 				function update() {
 					var cpu = Util.cpu; var mem = Util.memory; var fps = player.avgfps;
-					text = qsTr("CPU usage: %1%(avg. %2%/core)\nRAM usage: %3MB(%4% of %5GB)\nAvg. A-V sync: %6ms\nAvg. frame rate: %7fps(%8MB/s)")
+					text = qsTr("CPU usage: %1%(avg. %2%/core)\nRAM usage: %3MB(%4% of %5GB)\nAvg. A-V sync: %6ms\nAvg. frame rate: %7fps(%8MB/s)\nVolume Normalizer: %9%")
 					.arg(cpu.toFixed(1)).arg((cpu/Util.cores).toFixed(1))
 					.arg(mem.toFixed(1)).arg((mem/Util.totalMemory*100.0).toFixed(1)).arg((Util.totalMemory/1024.0).toFixed(2))
-					.arg(player.avgsync.toFixed(1)).arg(fps.toFixed(3)).arg((player.bps(fps)/(8*1024*1024)).toFixed(2));
+					.arg(player.avgsync.toFixed(1)).arg(fps.toFixed(3)).arg((player.bps(fps)/(8*1024*1024)).toFixed(2))
+					.arg((player.volumeNormalizer*100.0).toFixed(1));
 				}
 				color: "yellow"
 				style: Text.Outline

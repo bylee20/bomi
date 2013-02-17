@@ -109,8 +109,10 @@ bool MpMessage::getStream(const Id &id, const char *category, const char *idtext
 	static QRegExp rxCategory("^(AUDIO|VIDEO|SUBTITLE)_ID$");
 	if (rxCategory.indexIn(id.name) != -1) {
 		if (_Same(rxCategory.cap(1), category)) {
-			auto &name = streams[id.value.toInt()].m_name;
-			name = trans.arg(streams.size());
+			const int streamId = id.value.toInt();
+			auto &stream = streams[streamId];
+			stream.m_id = streamId;
+			stream.m_name = trans.arg(streamId+1);
 			return true;
 		}
 	} else {
@@ -120,10 +122,13 @@ bool MpMessage::getStream(const Id &id, const char *category, const char *idtext
 				const int streamId = rxId.cap(2).toInt();
 				const auto attr = rxId.cap(3);
 				const auto value = id.value;
+				auto &stream = streams[streamId];
+				stream.m_id = streamId;
+				stream.m_name = trans.arg(streamId+1);
 				if (_Same(attr, "LANG"))
-					streams[streamId].m_lang = value;
+					stream.m_lang = value;
 				else
-					streams[streamId].m_title = value;
+					stream.m_title = value;
 				return true;
 			}
 		}

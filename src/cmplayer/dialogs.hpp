@@ -87,16 +87,6 @@ private:
 	Data *d;
 };
 
-
-class ToggleDialog : public QDialog {
-	Q_OBJECT
-public:
-	ToggleDialog(QWidget *parent = 0);
-public slots:
-	void toggle() {setVisible(!isVisible());}
-private:
-};
-
 class AboutDialog : public QDialog {
 	Q_OBJECT
 public:

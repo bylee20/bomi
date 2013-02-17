@@ -10,61 +10,53 @@ extern "C" {
 #include <video/img_fourcc.h>
 #include <video/mp_image.h>
 #include <sub/sub.h>
+struct vo_driver video_out_null = VideoOutput::getDriver();
 }
 
+const vo_driver &VideoOutput::getDriver() {
+	static vo_driver driver;
+	static bool first = true;
+	if (first) {
+		first = false;
+		static vo_info_t info;
+		info.name = "CMPlayer video output";
+		info.short_name	= "null";
+		info.author = "xylosper <darklin20@gmail.com>";
+		info.comment = "";
+		driver.info = &info;
+		driver.preinit = preinit;
+		driver.config = config;
+		driver.control = control;
+		driver.draw_osd = drawOsd;
+		driver.flip_page = flipPage;
+		driver.check_events = checkEvents;
+		driver.query_format = queryFormat;
+		driver.draw_image = drawImage;
+		driver.uninit = uninit;
+	}
+	return driver;
+}
 
 struct VideoOutput::Data {
-	vo_driver driver;
-	vo_info_t info;
 	VideoFormat format;
 	VideoFrame frame;
 	mp_osd_res osd;
 	PlayEngine *engine = nullptr;
 	bool flip = false;
 	VideoRendererItem *renderer = nullptr;
+	bool formatChanged = false;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
-	memset(&d->info, 0, sizeof(d->info));
-	memset(&d->driver, 0, sizeof(d->driver));
 	memset(&d->osd, 0, sizeof(d->osd));
-
-	d->info.name		= "CMPlayer video output";
-	d->info.short_name	= "cmp";
-	d->info.author		= "xylosper <darklin20@gmail.com>";
-	d->info.comment		= "";
-
-	d->driver.info = &d->info;
-	d->driver.preinit = preinit;
-	d->driver.config = config;
-	d->driver.control = control;
-	d->driver.draw_osd = drawOsd;
-	d->driver.flip_page = flipPage;
-	d->driver.check_events = checkEvents;
-	d->driver.query_format = queryFormat;
-	d->driver.draw_image = drawImage;
-	d->driver.uninit = uninit;
-
 	d->engine = engine;
 }
 
 VideoOutput::~VideoOutput() {}
 
-struct vo *VideoOutput::vo_create(MPContext *mpctx) {
-	struct vo *svo = reinterpret_cast<struct vo*>(talloc_ptrtype(NULL, svo));
-	memset(svo, 0, sizeof(*svo));
-	svo->opts = &mpctx->opts;
-	svo->key_fifo = mpctx->key_fifo;
-	svo->input_ctx = mpctx->input;
-	svo->event_fd = -1;
-	svo->registered_fd = -1;
-	svo->priv = this;
-	svo->driver = &d->driver;
-	if (!svo->driver->preinit(svo, NULL))
-		return svo;
-	talloc_free_children(svo);
-	talloc_free(svo);
-	return nullptr;
+int VideoOutput::preinit(struct vo *vo, const char *arg) {
+	vo->priv = (void*)(quintptr)QString::fromLatin1(arg).toULongLong();
+	return 0;
 }
 
 void VideoOutput::setRenderer(VideoRendererItem *renderer) {
@@ -87,11 +79,14 @@ int VideoOutput::config(struct vo */*vo*/, uint32_t /*w_s*/, uint32_t /*h_s*/, u
 
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto v = static_cast<VideoOutput*>(vo->priv); auto d = v->d;
-	d->frame = VideoFrame(mpi);
+	if ((d->formatChanged = !d->format.compare(mpi)))
+		d->format = VideoFormat(mpi);
+	d->frame = VideoFrame(mpi, d->format);
 	d->flip = true;
 }
 
-int VideoOutput::control(struct vo *vo, uint32_t req, void */*data*/) {
+int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
+	Q_UNUSED(data);
 	VideoOutput *v = static_cast<VideoOutput*>(vo->priv);
 	switch (req) {
 	case VOCTRL_REDRAW_FRAME:
@@ -108,7 +103,7 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 	if (auto r = d->engine->videoRenderer()) {
 		d->osd.w = d->format.width();
 		d->osd.h = d->format.height();
-		d->osd.display_par = 1.0;//vo->monitor_par;
+		d->osd.display_par = 1.0;
 		d->osd.video_par = vo->aspdat.par;
 		static bool format[SUBBITMAP_COUNT] = {0, 0, 1, 1};
 		osd_draw(osd, d->osd, osd->vo_pts, 0, format,  VideoRendererItem::drawMpOsd, r);
@@ -120,7 +115,7 @@ void VideoOutput::flipPage(struct vo *vo) {
 	if (!d->flip)
 		return;
 	if (d->renderer) {
-		d->renderer->present(d->frame);
+		d->renderer->present(d->frame, d->formatChanged);
 		while (d->renderer->isFramePended())
 			PlayEngine::usleep(50);
 	}

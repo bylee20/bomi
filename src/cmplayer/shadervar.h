@@ -13,10 +13,11 @@ struct ShaderVar {
         contrast = qBound(0., m_color.contrast() + 1., 2.);
         updateHS();
     }
-    int setEffects(VideoRendererItem::Effects effects);
+	bool setEffects(VideoRendererItem::Effects effects);
     VideoRendererItem::Effects effects() const {return m_effects;}
     void setYRange(float min, float max) {y_min = min; y_max = max;}
     int id() const {return m_idx;}
+	QByteArray fragment(int frameType) const;
 private:
     void updateHS() {
         double sat_sinhue = 0.0, sat_coshue = 0.0;

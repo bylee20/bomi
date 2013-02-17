@@ -1,15 +1,16 @@
 import QtQuick 2.0
-import CMPlayerSkin 1.0
+import CMPlayerCore 1.0 as Core
+import CMPlayerSkin 1.0 as Skin
 
 Rectangle {
 	id: main
 	readonly property real margin: 5
-	Player {
+	Skin.Player {
 		id: player
 		width: parent.width; height: fullScreen ? parent.height : parent.height - controls.height
 		onFullScreenChanged: controls.update(); onTick: timetext.secs = (time*1e-3).toFixed(0)
 	}
-	MouseCatcher {
+	Skin.MouseCatcher {
 		id: catcher
 		width: parent.width; height: controls.height; anchors.bottom: parent.bottom
 		tracking: player.fullScreen; onCatchedChanged: controls.update()
@@ -36,7 +37,7 @@ Rectangle {
 				readonly property alias h: bg.height
 				source: "bg.png"
 				width: parent.width; height: 35
-				HorizontalLayout {
+				Skin.HorizontalLayout {
 					anchors {fill: parent} spacing: 1; paddings: 2; bottomPadding: 1; fillers: [right]
 					FramedButton { id: pause; width: height; action: "menu/play/pause"; icon: player.playing ? "pause.png" : "play.png" }
 					Grid {
@@ -61,30 +62,30 @@ Rectangle {
 								GradientStop { position: 0.8; color: "#6ad" }
 								GradientStop { position: 1.0; color: "#fff" }
 							}
-							HorizontalLayout {
+							Skin.HorizontalLayout {
 								anchors.fill: parent; fillers: [medianame]; paddings: 3
 								Text {
 									id: medianumber
 									width: contentWidth; verticalAlignment: Text.AlignVCenter
 									text: "[%1/%2](%3) ".arg(playlist.loaded+1).arg(playlist.count).arg(player.stateText)
-									font { pixelSize: 11; family: Util.monospace }
+									font { pixelSize: 11; family: Core.Util.monospace }
 								}
 								Text {
 									id: medianame
 									text: player.media.name; elide: Text.ElideMiddle
-									font { pixelSize: 11; family: Util.monospace }
+									font { pixelSize: 11; family: Core.Util.monospace }
 									verticalAlignment: Text.AlignVCenter
 								}
 								Text {
 									id: timetext
 									width: contentWidth; verticalAlignment: Text.AlignVCenter
 									property int secs: 0
-									text: "%1/%2".arg(Util.msecToString(secs*1000.0)).arg(Util.msecToString(player.duration))
-									font { pixelSize: 11; family: Util.monospace }
+									text: "%1/%2".arg(Core.Util.msecToString(secs*1000.0)).arg(Core.Util.msecToString(player.duration))
+									font { pixelSize: 11; family: Core.Util.monospace }
 								}
 							}
 						}
-						HorizontalLayout {
+						Skin.HorizontalLayout {
 							width: parent.width; height: pause.height-1-panel.height; fillers: [timeslider]; spacing: 1
 							Slider {
 								id: timeslider

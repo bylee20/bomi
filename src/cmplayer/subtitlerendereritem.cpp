@@ -2,6 +2,7 @@
 #include "richtextdocument.hpp"
 #include "subtitlemodel.hpp"
 #include "subtitlestyle.hpp"
+#include "subtitledrawer.hpp"
 
 SubtitleRendererItem::Render::Render(const SubtitleComponent &comp)
 : comp(&comp), prev(comp.end()), model(new SubtitleComponentModel(&comp)) {}
@@ -11,14 +12,14 @@ SubtitleRendererItem::Render::~Render() { delete this->model; }
 struct SubtitleRendererItem::Data {
 	SubtitleStyle style;
 	bool docempty = true;
-	RichTextDocument front, back;
-	double top = 0.0, bottom = 0.0, left = 0.0, right = 0.0;
+	SubtitleDrawer drawer;
 	bool redraw = false;
 	int loc_tex = 0, loc_shadowColor = 0, loc_shadowOffset = 0, loc_dxdy = 0;
 	QImage image, next, blank = {1, 1, QImage::Format_ARGB32_Premultiplied};
 	QPointF shadowOffset = {0, 0};
 	QSize textureSize = {0, 0};
 	QSize imageSize = {0, 0};
+	RichTextDocument text;
 	bool selecting = false;
 	QMap<QString, int> langMap;
 	int language_priority(const Render *r) const {
@@ -31,6 +32,7 @@ SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
 : TextureRendererItem(1, parent), d(new Data) {
 	d->blank.fill(0x0);
 	updateAlignment();	updateStyle();	prepare();	update();
+//	connect(this, &SubtitleRendererItem::visibleChanged, [this] { if (isVisible()) rerender(); });
 }
 
 SubtitleRendererItem::~SubtitleRendererItem() {
@@ -48,29 +50,14 @@ void SubtitleRendererItem::setStyle(const SubtitleStyle &style) {
 }
 
 void SubtitleRendererItem::updateStyle() {
-	auto update = [this] (RichTextDocument &doc) {
-		doc.setFontPixelSize(d->style.font.height());
-		doc.setWrapMode(d->style.wrapMode);
-		doc.setFormat(QTextFormat::ForegroundBrush, QBrush(d->style.font.color));
-		doc.setFormat(QTextFormat::FontFamily, d->style.font.family());
-		doc.setFormat(QTextFormat::FontUnderline, d->style.font.underline());
-		doc.setFormat(QTextFormat::FontStrikeOut, d->style.font.strikeOut());
-		doc.setFormat(QTextFormat::FontWeight, d->style.font.weight());
-		doc.setFormat(QTextFormat::FontItalic, d->style.font.italic());
-		doc.setLeading(d->style.spacing.line, d->style.spacing.paragraph);
-	};
-	update(d->front);	update(d->back);		setGeometryDirty();
-	if (d->style.outline.enabled)
-		d->back.setTextOutline(d->style.outline.color, d->style.font.height()*d->style.outline.width*2.0);
-	else
-		d->back.setTextOutline(Qt::NoPen);
+	d->drawer.setStyle(d->style);
+	setGeometryDirty();
 	prepare();
 	this->update();
 }
 
 void SubtitleRendererItem::updateAlignment() {
-	d->back.setAlignment(m_alignment);
-	d->front.setAlignment(m_alignment);
+	d->drawer.setAlignment(m_alignment);
 }
 
 void SubtitleRendererItem::setTopAlignment(bool top) {
@@ -84,15 +71,22 @@ void SubtitleRendererItem::setTopAlignment(bool top) {
 	}
 }
 
+const SubtitleStyle &SubtitleRendererItem::style() const {
+	return d->style;
+}
+
+const RichTextDocument &SubtitleRendererItem::text() const {
+	return d->text;
+}
+
 void SubtitleRendererItem::setText(const RichTextDocument &doc) {
-	d->front = doc.blocks();
-	d->back = doc.blocks();
+	d->text = doc;
+	d->drawer.setText(doc);
 	prepare();
 	update();
 }
 
-double SubtitleRendererItem::scale() const {
-	auto area = drawArea();
+double SubtitleRendererItem::scale(const QRectF &area) const {
 	const auto policy = d->style.font.scale;
 	double px = d->style.font.size;
 	if (policy == SubtitleStyle::Font::Scale::Diagonal)
@@ -105,46 +99,13 @@ double SubtitleRendererItem::scale() const {
 }
 
 void SubtitleRendererItem::prepare() {
-	d->docempty = !d->front.hasWords();
+	d->docempty = !d->drawer.draw(d->image, d->imageSize, d->shadowOffset, drawArea(), dpr());
 	if (!d->docempty) {
-		double scale = this->scale();
-		d->front.updateLayoutInfo();
-		d->back.updateLayoutInfo();
-		d->front.doLayout(width()/scale);
-		d->back.doLayout(width()/scale);
-
-		d->shadowOffset = d->style.shadow.offset*d->style.font.height()*scale;
-		d->imageSize.rwidth() = width();
-		d->imageSize.rheight() = d->front.naturalSize().height()*scale + qAbs(d->shadowOffset.y());
-
-		double dpr = 1.0;
-		if (window() && window()->screen()) {
-			auto screen = window()->screen();
-			dpr = screen->logicalDotsPerInch()/screen->physicalDotsPerInch();
-			if (dpr < 1.0)
-				dpr = 1.0;
-		}
-
-		d->image = QImage(d->imageSize*dpr, QImage::Format_ARGB32_Premultiplied);
-		d->docempty = d->image.isNull();
-		d->image.setDevicePixelRatio(dpr);
-		if (!d->docempty) {
-			d->image.fill(0x0);
-			QPainter painter(&d->image);
-			if (d->shadowOffset.y() < 0)
-				painter.translate(0, -d->shadowOffset.y());
-			painter.scale(scale*dpr, scale*dpr);
-			d->back.draw(&painter, QPointF(0, 0));
-			d->front.draw(&painter, QPointF(0, 0));
-			painter.end();
-			d->redraw = true;
-			d->shadowOffset.rx() /= (double)d->imageSize.width();
-			d->shadowOffset.ry() /= (double)d->imageSize.height();
-		}
+		d->redraw = true;
+		d->shadowOffset.rx() /= (double)d->imageSize.width();
+		d->shadowOffset.ry() /= (double)d->imageSize.height();
 	}
 	setVisible(!d->docempty);
-	if (d->docempty)
-		d->shadowOffset = QPointF(0, 0);
 }
 
 
@@ -168,29 +129,7 @@ void SubtitleRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *
 }
 
 void SubtitleRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
-	const auto area = drawArea();
-	const QSizeF size = d->imageSize;
-	QPointF pos(0.0, 0.0);
-	if (m_alignment & Qt::AlignBottom) {
-		pos.ry() = qMax(0.0, area.height()*(1.0 - d->bottom) - size.height());
-	} else if (m_alignment & Qt::AlignVCenter)
-		pos.ry() = (area.height() - size.height())*0.5;
-	else {
-		pos.ry() = area.height()*d->top;
-		if (pos.y() + size.height() > area.height())
-			pos.ry() = area.height() - size.height();
-	}
-
-	if (m_alignment & Qt::AlignHCenter)
-		pos.rx() = (area.width() - size.width())*0.5;
-	else if (m_alignment & Qt::AlignRight)
-		pos.rx() = area.width()*(1.0 - d->right) - size.width();
-	else
-		pos.rx() = area.width()*d->left;
-
-	pos += area.topLeft();
-
-	set(tp, QRectF(pos, size), QRectF(0, 0, 1, 1));
+	set(tp, QRectF(d->drawer.pos(d->imageSize, drawArea()), d->imageSize), QRectF(0, 0, 1, 1));
 }
 
 void SubtitleRendererItem::initializeTextures() {
@@ -238,20 +177,27 @@ const char *SubtitleRendererItem::fragmentShader() const {
 	return shader;
 }
 
+const Margin &SubtitleRendererItem::margin() const {
+	return d->drawer.margin();
+}
+
 void SubtitleRendererItem::setMargin(double top, double bottom, double right, double left) {
-	d->top = top;
-	d->bottom = bottom;
-	if (d->right != right || d->left != left) {
-		d->right = right;
-		d->left = left;
-	}
+	Margin margin;
+	margin.top = top; margin.bottom = bottom; margin.right = right; margin.left = left;
+	d->drawer.setMargin(margin);
 	setGeometryDirty();
 	update();
 }
 
+void SubtitleRendererItem::rerender() {
+	if (m_compempty)
+		resetIterators();
+	render(m_ms);
+}
+
 void SubtitleRendererItem::render(int ms) {
 	m_ms = ms;
-	if (!m_visible || m_compempty || ms == 0)
+	if (m_hidden || m_compempty || ms == 0)
 		return;
 	bool changed = false;
 	for (auto render : m_order) {
@@ -272,32 +218,64 @@ void SubtitleRendererItem::render(int ms) {
 	}
 }
 
-void SubtitleRendererItem::select(int idx, bool selected) {
-	if (0 <= idx && idx < m_loaded.size() && m_loaded[idx].isSelected() != selected) {
-		m_loaded[idx].selection() = selected;
-		const auto comp = &m_loaded[idx].component();
-		Render *render = nullptr;
-		for (auto it = m_order.begin(); it!= m_order.end(); ++it) {
-			if ((*it)->comp == comp) {
-				render = *it;
-				m_order.erase(it);
-				render->prev = comp->end();
-				break;
-			}
+SubtitleRendererItem::Render *SubtitleRendererItem::take(int loadedIndex) {
+	const auto comp = &m_loaded[loadedIndex].component();
+	Render *render = nullptr;
+	for (auto it = m_order.begin(); it!= m_order.end(); ++it) {
+		if ((*it)->comp == comp) {
+			render = *it;
+			m_order.erase(it);
+			render->prev = comp->end();
+			break;
 		}
-		if (selected) {
-			if (!render)
-				render = new Render(*comp);
-			m_order.prepend(render);
-			for (auto it = m_order.begin(); it != m_order.end(); ) {
-				Render *&prev = *it;
-				if (++it == m_order.end())
-					break;
-				Render *&next = *it;
-				if (d->language_priority(prev) >= d->language_priority(next))
-					break;
-				qSwap(prev, next);
-			}
+	}
+	return render;
+}
+
+void SubtitleRendererItem::deselect(int idx) {
+	if (idx < 0) {
+		qDeleteAll(m_order);
+		m_order.clear();
+		for (auto &loaded : m_loaded)
+			loaded.selection() = false;
+	} else if (_InRange(0, idx, m_loaded.size()-1) && m_loaded[idx].isSelected()) {
+		delete take(idx);
+		m_loaded[idx].selection() = false;
+	} else
+		return;
+	if (!d->selecting)
+		applySelection();
+}
+
+void SubtitleRendererItem::select(int idx) {
+	if (idx < 0) {
+		qDeleteAll(m_order);
+		m_order.clear();
+		const bool wasSelecting = d->selecting;
+		if (!wasSelecting)
+			d->selecting = true;
+		for (int i=0; i<m_loaded.size(); ++i) {
+			m_loaded[i].selection() = false;
+			select(i);
+		}
+		if (!wasSelecting) {
+			d->selecting = false;
+			applySelection();
+		}
+	} else if (_InRange(0, idx, m_loaded.size()-1) && !m_loaded[idx].isSelected()) {
+		auto render = take(idx);
+		if (!render)
+			render = new Render(m_loaded[idx].component());
+		m_loaded[idx].selection() = true;
+		m_order.prepend(render);
+		for (auto it = m_order.begin(); it != m_order.end(); ) {
+			Render *&prev = *it;
+			if (++it == m_order.end())
+				break;
+			Render *&next = *it;
+			if (d->language_priority(prev) >= d->language_priority(next))
+				break;
+			qSwap(prev, next);
 		}
 		if (!d->selecting)
 			applySelection();
@@ -314,7 +292,8 @@ bool SubtitleRendererItem::load(const QString &fileName, const QString &enc, boo
 	if (select) {
 		d->selecting = true;
 		for (int i=m_loaded.size()-1; i>=idx; --i) {
-			this->select(i, select);
+			if (select)
+				this->select(i);
 		}
 		d->selecting = false;
 		applySelection();

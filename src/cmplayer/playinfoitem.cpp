@@ -209,7 +209,7 @@
 //		emit mediaChanged();
 //	});
 //	plug(d->engine, &PlayEngine::audioFilterChanged, [this] (const QString &af, bool on) {
-//		if (af == _L("volnorm"))
+//		if (af == _L("normalizer"))
 //			emit volumeNormalizedChanged(m_volnorm = on);
 //	});
 
@@ -232,7 +232,7 @@
 //	emit audioChanged();
 //	emit mediaChanged();
 //	emit stateChanged(m_state = (State)d->engine->state());
-//	emit volumeNormalizedChanged(m_volnorm = d->engine->hasAudioFilter("volnorm"));
+//	emit volumeNormalizedChanged(m_volnorm = d->engine->hasAudioFilter("normalizer"));
 //	emit volumeChanged(m_volume = d->engine->volume());
 //	emit fullScreenChanged(m_fullScreen = (window()->windowState() == Qt::WindowFullScreen));
 //}

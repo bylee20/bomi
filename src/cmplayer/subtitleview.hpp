@@ -7,7 +7,7 @@
 class PlayEngine;		class Subtitle;
 class SubtitleComponentModel;
 
-class SubtitleView : public ToggleDialog {
+class SubtitleView : public QDialog {
 	Q_OBJECT
 public:
 	SubtitleView(QWidget *parent = 0);
@@ -19,7 +19,6 @@ private slots:
 	void setAutoScrollEnabled(bool enabled);
 private:
 	void showEvent(QShowEvent *event);
-	void hideEvent(QHideEvent *event);
 	void updateModels();
 	class CompView;
 	struct Data;

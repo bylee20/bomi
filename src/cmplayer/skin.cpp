@@ -49,7 +49,6 @@ void Skin::apply(QQuickView *view, const QString &name) {
 		if (!imports.contains(path))
 			view->engine()->addImportPath(path);
 	}
-	qDebug() << view->engine()->importPathList();
 	const auto skin = Skin::source(name);
 	view->setResizeMode(QQuickView::SizeRootObjectToView);
 	view->setSource(QUrl::fromLocalFile(skin.absoluteFilePath()));

@@ -534,6 +534,15 @@ void uninit_player(struct MPContext *mpctx, unsigned int mask)
 			struct demuxer *demuxer = mpctx->sources[i];
 			if (demuxer->stream != mpctx->stream)
 				free_stream(demuxer->stream);
+//			for (i = 0; i < MAX_S_STREAMS; i++) {
+//				printf("ss:%d ", (int)demuxer->s_streams[i]);
+//				if (demuxer->s_streams[i] && demuxer->s_streams[i]->extradata) {
+//					printf("sh:%s\n", demuxer->s_streams[i]->extradata);
+//					free(demuxer->s_streams[i]->extradata);
+//				}
+//				printf("\n");
+//				fflush(stdout);
+//			}
 			free_demuxer(demuxer);
 		}
 		talloc_free(mpctx->sources);
@@ -1935,10 +1944,11 @@ static void set_dvdsub_fake_extradata(struct sh_sub *sh_sub, struct stream *st,
 		s = talloc_asprintf_append(s, "%06x", color);
 	}
 	s = talloc_asprintf_append(s, "\n");
-
+	const int len = strlen(s) + 1;
 	free(sh_sub->extradata);
-	sh_sub->extradata = strdup(s);
-	sh_sub->extradata_len = strlen(s);
+	sh_sub->extradata = malloc(len);
+	memcpy(sh_sub->extradata, s, len);
+	sh_sub->extradata_len = len;
 	talloc_free(s);
 #endif
 }
@@ -2358,10 +2368,10 @@ int reinit_video_chain(struct MPContext *mpctx)
 	double ar = -1.0;
 	//================== Init VIDEO (codec & libvo) ==========================
 	if (!opts->fixed_vo || !(mpctx->initialized_flags & INITIALIZED_VO)) {
-		//		mpctx->video_out
-		//			= init_best_video_out(opts, mpctx->key_fifo, mpctx->input,
-		//								  mpctx->encode_lavc_ctx);
-		if (!(mpctx->video_out = vo_cmplayer)) {
+				mpctx->video_out
+					= init_best_video_out(opts, mpctx->key_fifo, mpctx->input,
+										  mpctx->encode_lavc_ctx);
+		if (!(mpctx->video_out)) {
 			mp_tmsg(MSGT_CPLAYER, MSGL_FATAL, "Error opening/initializing "
 					"the selected video_out (-vo) device.\n");
 			goto err_out;
@@ -3787,7 +3797,7 @@ static struct mp_resolve_result *resolve_url(const char *filename,
 }
 
 // Waiting for the slave master to send us a new file to play.
-static void idle_loop(struct MPContext *mpctx)
+void idle_loop(struct MPContext *mpctx)
 {
 	// ================= idle loop (STOP state) =========================
 	while (mpctx->opts.player_idle_mode && !mpctx->playlist->current

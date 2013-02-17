@@ -7,7 +7,7 @@ Core.Engine {
 	Logo { anchors.fill: parent; visible: player.state == Core.Engine.Stopped }
 	TextOsd { id: msgosd }
 	ProgressOsd { id: timeline; value: player.time/player.duration }
-	PlayInfoOsd { objectName: "playinfo"; player: player }
+	PlayInfoView { objectName: "playinfo"; player: player }
 	PlaylistDock { objectName: "playlist"; z: dockZ }
 	HistoryDock { objectName: "history"; z: dockZ }
 	onMessageRequested: { msgosd.text = message; msgosd.show(); }

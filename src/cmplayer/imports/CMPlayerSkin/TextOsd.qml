@@ -9,6 +9,6 @@ Osd {
 		style: Text.Outline
 		styleColor: "black"
 		anchors.fill: parent
-		onWidthChanged: {font.pixelSize = width*0.03;}
+		onWidthChanged: {font.pixelSize = width*0.025;}
 	}
 }

@@ -16,7 +16,7 @@ public:
 	MainWindow &operator = (const MainWindow &) = delete;
 	~MainWindow();
 	void openFromFileManager(const Mrl &mrl);
-	bool isFullScreen() const {return windowState() == Qt::WindowFullScreen;}
+	bool isFullScreen() const {return windowState() & Qt::WindowFullScreen;}
 public slots:
 	void openMrl(const Mrl &mrl, const QString &enc);
 	void openMrl(const Mrl &mrl);
@@ -46,6 +46,7 @@ private:
 	int getStartTime(const Mrl &mrl);
 	void showEvent(QShowEvent *event);
 	void hideEvent(QHideEvent *event);
+	void keyPressEvent(QKeyEvent *event);
 	void onKeyPressed(QKeyEvent *event);
 	void onMouseEvent(QMouseEvent *event);
 	void onWheelEvent(QWheelEvent *event);

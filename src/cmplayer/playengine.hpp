@@ -15,6 +15,8 @@ typedef std::function<int(const Mrl&)> GetStartTime;
 struct DvdInfo {
 	struct Title {
 		QString name() const {return m_name;}
+		int id() const {return m_id;}
+		int m_id = 0;
 		int number = 0, chapters = 0, angles = 0, length = 0;
 	private:
 		friend class PlayEngine;
@@ -28,9 +30,11 @@ struct DvdInfo {
 
 struct Chapter {
 	QString name() const {return m_name;}
+	int id() const {return m_id;}
 private:
 	friend class PlayEngine;
 	QString m_name;
+	int m_id = 0;
 };
 
 typedef QLinkedList<QString> FilterList;
@@ -69,15 +73,20 @@ public:
 	QList<Chapter> chapters() const {return m_chapters;}
 	int currentSubtitleStream() const;
 	StreamList subtitleStreams() const {return m_subtitleStreams;}
-	void setCurrentSubtitleStream(int id) {setmp("sub", id);}
+	void setCurrentSubtitleStream(int id);
 	void setCurrentDvdTitle(int id);
 	void setCurrentChapter(int id) {setmp("chapter", id);}
 	bool hasVideo() const;
 	bool frameDrop() const {return m_framedrop;}
 	bool isHwAccActivated() const;
 	void setFrameDrop(bool on) {tellmp("frame_drop", (m_framedrop = on) ? 1 : 0);}
-	void setAudioFilter(const QString &af, bool on);
-	bool hasAudioFilter(const QString &af) const {return m_af.contains(af);}
+	void setVolumeNormalized(bool on);
+	void setTempoScaled(bool on);
+	bool isVolumeNormalized() const;
+	bool isTempoScaled() const;
+
+//	void setAudioFilter(const QString &af, bool on);
+//	bool hasAudioFilter(const QString &af) const {return m_af.contains(af);}
 	double fps() const;
 	double videoAspectRatio() const;
 	VideoRendererItem *videoRenderer() const {return m_renderer;}
@@ -110,6 +119,8 @@ public slots:
 	void relativeSeek(int pos) {tellmp("seek", (double)pos/1000.0, 0);}
 	void runCommand(mp_cmd *cmd);
 signals:
+	void tempoScaledChanged(bool on);
+	void volumeNormalizedChanged(bool on);
 	void started(Mrl mrl);
 	void stopped(Mrl mrl, int pos, int duration);
 	void finished(Mrl mrl);
@@ -121,7 +132,6 @@ signals:
 	void volumeChanged(int volume);
 	void preampChanged(double preamp);
 	void mutedChanged(bool muted);
-	void audioFilterChanged(const QString &af, bool on);
 	void videoFormatChanged(const VideoFormat &format);
 	void videoAspectRatioChanged(double ratio);
 	void dvdInfoChanged();
@@ -148,13 +158,13 @@ private:
 	bool parse(const Id &id);
 	bool parse(const QString &line);
 	void customEvent(QEvent *event);
-	int m_duration = 0, m_title = 0, m_volume = 100;
+	int m_duration = 0, m_title = 0, m_volume = 100, m_subId = -1;
 	EngineState m_state = EngineStopped;
 	double m_speed = 1.0, m_preamp = 1.0;
 	bool m_framedrop = false, m_muted = false;
 	StreamList m_subtitleStreams, m_audioStreams, m_videoStreams;
 	VideoRendererItem *m_renderer = nullptr;
-	DvdInfo m_dvd;	FilterList m_af;//	Mrl m_mrl;
+	DvdInfo m_dvd;
 	QList<Chapter> m_chapters;
 	struct Data; Data *d;
 };

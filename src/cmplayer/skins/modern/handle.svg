@@ -14,7 +14,7 @@
    height="10"
    id="svg2"
    version="1.1"
-   inkscape:version="0.48.2 r9819"
+   inkscape:version="0.48.4 r9939"
    sodipodi:docname="handle.svg"
    inkscape:export-filename="/Users/xylosper/dev/cmplayer/src/cmplayer/skins/modern/handle-hovered.png"
    inkscape:export-xdpi="90"
@@ -24,19 +24,15 @@
     <linearGradient
        id="linearGradient4489">
       <stop
-         style="stop-color:#737373;stop-opacity:1;"
+         style="stop-color:#000000;stop-opacity:0.76724136;"
          offset="0"
          id="stop4491" />
       <stop
-         id="stop4493"
-         offset="0.61167556"
-         style="stop-color:#808080;stop-opacity:1;" />
+         id="stop3795"
+         offset="0.62908322"
+         style="stop-color:#000000;stop-opacity:0.51724136;" />
       <stop
-         id="stop4495"
-         offset="0.86990893"
-         style="stop-color:#999999;stop-opacity:1;" />
-      <stop
-         style="stop-color:#a6a6a6;stop-opacity:1;"
+         style="stop-color:#000000;stop-opacity:0;"
          offset="1"
          id="stop4497" />
     </linearGradient>
@@ -220,11 +216,11 @@
        xlink:href="#linearGradient4489"
        id="radialGradient4487"
        gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(1.0532651,0,0,1.0532636,-2.3465689,-17.475781)"
-       cx="42.055599"
-       cy="325.38663"
-       fx="42.055599"
-       fy="325.38663"
+       gradientTransform="matrix(1.6839399,4.6839708e-8,-4.9116118e-8,1.7657794,-30.220773,-251.28102)"
+       cx="41.518097"
+       cy="325.76779"
+       fx="41.518097"
+       fy="325.76779"
        r="11.311317" />
   </defs>
   <sodipodi:namedview
@@ -235,15 +231,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="12.170297"
-     inkscape:cx="10.800018"
+     inkscape:cx="-3.5792531"
      inkscape:cy="5.1409703"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="1280"
-     inkscape:window-height="699"
-     inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-width="1920"
+     inkscape:window-height="1027"
+     inkscape:window-x="-2"
+     inkscape:window-y="-3"
      inkscape:window-maximized="1"
      showguides="true"
      inkscape:guide-bbox="true">
@@ -280,7 +276,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -297,11 +293,11 @@
        sodipodi:cy="328.06082"
        sodipodi:rx="11.311317"
        sodipodi:ry="11.311317"
-       d="m 55.425457,328.06082 a 11.311317,11.311317 0 1 1 -22.622635,0 11.311317,11.311317 0 1 1 22.622635,0 z"
+       d="m 55.425457,328.06082 c 0,6.24707 -5.064249,11.31132 -11.311317,11.31132 -6.247069,0 -11.311318,-5.06425 -11.311318,-11.31132 0,-6.24707 5.064249,-11.31132 11.311318,-11.31132 6.247068,0 11.311317,5.06425 11.311317,11.31132 z"
        transform="matrix(0.4002419,0,0,0.40024191,-14.464007,905.21243)" />
     <path
        transform="matrix(0.40024189,0,0,0.4002419,-12.656327,916.05851)"
-       d="m 55.425457,328.06082 a 11.311317,11.311317 0 1 1 -22.622635,0 11.311317,11.311317 0 1 1 22.622635,0 z"
+       d="m 55.425457,328.06082 c 0,6.24707 -5.064249,11.31132 -11.311317,11.31132 -6.247069,0 -11.311318,-5.06425 -11.311318,-11.31132 0,-6.24707 5.064249,-11.31132 11.311318,-11.31132 6.247068,0 11.311317,5.06425 11.311317,11.31132 z"
        sodipodi:ry="11.311317"
        sodipodi:rx="11.311317"
        sodipodi:cy="328.06082"
@@ -311,13 +307,13 @@
        sodipodi:type="arc" />
     <path
        sodipodi:type="arc"
-       style="fill:url(#radialGradient4487);fill-opacity:1;stroke:#55aaff;stroke-width:2.36225557;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       style="fill:url(#radialGradient4487);fill-opacity:1;stroke:none"
        id="path4485"
        sodipodi:cx="44.11414"
        sodipodi:cy="328.06082"
        sodipodi:rx="11.311317"
        sodipodi:ry="11.311317"
        d="m 55.425457,328.06082 a 11.311317,11.311317 0 1 1 -22.622635,0 11.311317,11.311317 0 1 1 22.622635,0 z"
-       transform="matrix(0.4002419,0,0,0.40024191,0.81910435,902.99391)" />
+       transform="matrix(0.25495863,0,0,0.25495863,-6.2472806,963.72026)" />
   </g>
 </svg>

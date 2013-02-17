@@ -19,9 +19,9 @@ public:
 	QPoint video_offset = {0, 0};
 
 // audio state
-	double preamp = 1.0;
-	int volume = 100;
-	bool muted = false, af_volnorm = true;
+	double audio_preamp = 1.0;
+	int audio_volume = 100;
+	bool audio_muted = false, audio_normalizer = true, audio_scaletempo = true;
 
 // subtitle state
 	double sub_pos = 1.0;

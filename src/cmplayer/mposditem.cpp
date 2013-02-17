@@ -74,28 +74,24 @@ extern "C" {
 struct OsdData {
 	int x = 0, y = 0, w = 0, h = 0, stride = 0;
 	QByteArray data;
-	quint32 lut[256];
+	QVector<quint32> lut;
 	sub_bitmap_format format = SUBBITMAP_EMPTY;
 };
 
 struct MpOsdItem::Data {
-	int loc_tex_data = 0, loc_tex_lut = 0;
-	bool redraw = false;
+	int loc_tex_data = 0, loc_tex_lut = 0, prevId = -1, prevPosId = -1;
 	QRectF vertextRect = {.0, .0, .0, .0}, textureRect = {0.0, 0.0, 1.0, 1.0};
 	QRectF osdRect = {0, 0, 0, 0};
 	OsdData osd;
 	QMutex mutex;
 	QSize frameSize = {1, 1};
-	bool newFrame = false;
-	bool reposition = false;
-	bool formatChanged = true;
-	int prevId = -1, prevPosId = -1;
-	bool called = false;
+	bool callback = false, reposition = false, redraw = false;
 	sub_bitmap_format shaderFormat = SUBBITMAP_INDEXED;
 };
 
 MpOsdItem::MpOsdItem(QQuickItem *parent)
 : TextureRendererItem(2, parent), d(new Data) {
+	d->osd.lut.resize(256);
 	setVisible(false);
 }
 
@@ -116,18 +112,6 @@ void MpOsdItem::customEvent(QEvent *event) {
 	} else if (event->type() == HideEvent) {
 		setVisible(false);
 	}
-}
-
-void MpOsdItem::beginNewFrame() {
-	d->newFrame = true;
-	d->called = false;
-}
-
-void MpOsdItem::endNewFrame() {
-	d->newFrame = false;
-	if (!d->called)
-		qApp->postEvent(this, new QEvent((QEvent::Type)(HideEvent)));
-	d->called = false;
 }
 
 void MpOsdItem::link(QOpenGLShaderProgram *program) {
@@ -161,8 +145,28 @@ void MpOsdItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeom
 	update();
 }
 
+void MpOsdItem::draw(QImage &frame) {
+	if (!isVisible())
+		return;
+	QImage *osd = nullptr;
+	d->mutex.lock();
+	if (d->osd.format == SUBBITMAP_RGBA) {
+		osd = new QImage((uchar*)d->osd.data.data(), d->osd.stride/4, d->osd.h, QImage::Format_ARGB32_Premultiplied);
+	} else if (d->osd.format == SUBBITMAP_INDEXED) {
+		osd = new QImage((uchar*)d->osd.data.data(), d->osd.stride, d->osd.h, QImage::Format_Indexed8);
+		osd->setColorTable(d->osd.lut);
+	}
+	if (osd) {
+		QPainter painter(&frame);
+		painter.drawImage(d->osd.x, d->osd.y, *osd, 0, 0, d->osd.w, -1);
+		painter.end();
+	}
+	d->mutex.unlock();
+	delete osd;
+}
+
 void MpOsdItem::draw(sub_bitmaps *imgs) {
-	d->called = true;
+	d->callback = true;
 	if (imgs->num_parts > 0) {
 		auto &img = imgs->parts[0];
 		if (d->prevId == imgs->bitmap_id && d->prevPosId == imgs->bitmap_pos_id)
@@ -185,7 +189,7 @@ void MpOsdItem::draw(sub_bitmaps *imgs) {
 					to += d->osd.stride;
 					from += img.stride;
 				}
-				memcpy(d->osd.lut, bitmap->palette, 256*4);
+				memcpy(d->osd.lut.data(), bitmap->palette, 256*4);
 				d->textureRect.setWidth((double)d->osd.w/(double)d->osd.stride);
 			} else {
 				d->osd.stride = img.stride;
@@ -202,10 +206,16 @@ void MpOsdItem::draw(sub_bitmaps *imgs) {
 			d->reposition = true;
 		}
 		d->mutex.unlock();
-		qApp->postEvent(this, new QEvent((QEvent::Type)(ShowEvent)));
 	}
 }
 
+void MpOsdItem::present() {
+	if (d->callback) {
+		qApp->postEvent(this, new QEvent((QEvent::Type)(ShowEvent)));
+		d->callback = false;
+	} else
+		qApp->postEvent(this, new QEvent((QEvent::Type)(HideEvent)));
+}
 
 void MpOsdItem::beforeUpdate() {
 	if (d->redraw) {
@@ -216,6 +226,9 @@ void MpOsdItem::beforeUpdate() {
 		d->redraw = false;
 	}
 	if (d->reposition) {
+		d->mutex.lock();
+		d->osdRect = QRectF(d->osd.x, d->osd.y, d->osd.w, d->osd.h);
+		d->mutex.unlock();
 		setGeometryDirty();
 		d->reposition = false;
 	}
@@ -231,7 +244,7 @@ void MpOsdItem::initializeTextures() {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glBindTexture(GL_TEXTURE_1D, texture(1));
-		glTexImage1D(GL_TEXTURE_1D, 0, 4, 256, 0, GL_BGRA, GL_UNSIGNED_BYTE, d->osd.lut);
+		glTexImage1D(GL_TEXTURE_1D, 0, 4, 256, 0, GL_BGRA, GL_UNSIGNED_BYTE, d->osd.lut.data());
 		glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

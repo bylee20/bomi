@@ -1,9 +1,7 @@
 #include "actiongroup.hpp"
 
 ActionGroup::ActionGroup(QObject *parent)
-: QActionGroup(parent) {
-//	connect(this, SIGNAL(triggered(QAction*)), this, SLOT(emitData(QAction*)));
-}
+: QActionGroup(parent) {}
 
 void ActionGroup::setChecked(const QVariant &data, bool checked) {
 	const auto actions = this->actions();
@@ -37,16 +35,3 @@ void ActionGroup::clear() {
 		delete action;
 	}
 }
-
-//void ActionGroup::emitData(QAction *action) {
-//	const QVariant data = action->data();
-//	emit triggered(data);
-//	if (data.type() == QVariant::Int)
-//		emit triggered(data.toInt());
-//	else if (data.type() == QVariant::Double)
-//		emit triggered(data.toDouble());
-//	else if (data.type() == QVariant::String)
-//		emit triggered(data.toString());
-//	else if (data.type() == QVariant::Url)
-//		emit triggered(data.toUrl().toString());
-//}

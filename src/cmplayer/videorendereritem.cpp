@@ -5,7 +5,7 @@
 
 struct VideoRendererItem::Data {
 	VideoFrame frame;
-	bool quit = false, framePended = false;
+	bool quit = false, framePended = false, checkFormat = true, shaderChanged = false;
 	QRectF vtx;
 	QPoint offset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
@@ -50,19 +50,29 @@ const VideoFrame &VideoRendererItem::frame() const {
 	return d->frame;
 }
 
-//VideoFrame &VideoRendererItem::getNextFrame() const {
-//	d->mposd->beginNewFrame();
-//	d->next.newId();
-//	return d->next;
-//}
+bool VideoRendererItem::hasFrame() const {
+	return !d->format.isEmpty();
+}
 
-void VideoRendererItem::present(const VideoFrame &frame) {
+QImage VideoRendererItem::frameImage() const {
+	if (d->format.isEmpty())
+		return QImage();
+	d->mutex.lock();
+	QImage image = d->frame.toImage();
+	d->mutex.unlock();;
+	d->mposd->draw(image);
+	return image;
+}
+
+void VideoRendererItem::present(const VideoFrame &frame, bool checkFormat) {
 	if (!d->quit) {
 		d->mutex.lock();
 		d->frame = frame;
 		d->framePended = true;
+		d->checkFormat = checkFormat;
 		d->mutex.unlock();
 		emit framePended();
+		d->mposd->present();
 	}
 }
 
@@ -141,23 +151,28 @@ VideoRendererItem::Effects VideoRendererItem::effects() const {
 
 void VideoRendererItem::setEffects(Effects effects) {
 	if (d->shaderVar.effects() != effects) {
-		d->shaderVar.setEffects(effects);
+		d->shaderChanged = d->shaderVar.setEffects(effects);
+		setGeometryDirty();
 		update();
 	}
 }
 
-void VideoRendererItem::updateGeometry() {
-	QRectF vtx(x(), y(), width(), height());
+QRectF VideoRendererItem::frameRect(const QRectF &area) const {
 	if (!d->format.isEmpty()) {
-			const double aspect = targetAspectRatio();
-			QSizeF frame(aspect, 1.0), letter(targetCropRatio(aspect), 1.0);
-			letter.scale(width(), height(), Qt::KeepAspectRatio);
-			frame.scale(letter, Qt::KeepAspectRatioByExpanding);
-			QPointF pos(x(), y());
-			pos.rx() += (width() - frame.width())*0.5;
-			pos.ry() += (height() - frame.height())*0.5;
-			vtx = QRectF(pos, frame);
-	}
+		const double aspect = targetAspectRatio();
+		QSizeF frame(aspect, 1.0), letter(targetCropRatio(aspect), 1.0);
+		letter.scale(area.width(), area.height(), Qt::KeepAspectRatio);
+		frame.scale(letter, Qt::KeepAspectRatioByExpanding);
+		QPointF pos(area.x(), area.y());
+		pos.rx() += (area.width() - frame.width())*0.5;
+		pos.ry() += (area.height() - frame.height())*0.5;
+		return QRectF(pos, frame);
+	} else
+		return area;
+}
+
+void VideoRendererItem::updateGeometry() {
+	const QRectF vtx = frameRect(QRectF(x(), y(), width(), height()));
 	if (d->vtx != vtx) {
 		d->vtx = vtx;
 		d->mposd->setPosition(d->vtx.topLeft());
@@ -230,8 +245,8 @@ int VideoRendererItem::outputWidth() const {
 	return d->dar > 0.01 ? (int)(d->dar*(double)d->format.height() + 0.5) : d->format.width();
 }
 
-QByteArray VideoRendererItem::shader(int type) {
-	if (VideoFormat::isYCbCr(type)) {
+QByteArray VideoRendererItem::shader(int frameType, int effectType) {
+	if (VideoFormat::isYCbCr(frameType)) {
 		// **** common shader *****
 		QByteArray shader = (R"(
 			uniform float brightness, contrast;
@@ -272,8 +287,7 @@ QByteArray VideoRendererItem::shader(int type) {
 				adjust_rgb(yuv);
 			}
 		)");
-		switch (type) {
-		case VideoFormat::YV12:
+		switch (frameType) {
 		case VideoFormat::I420:
 			shader.append(R"(
 				uniform sampler2D p1, p2, p3;
@@ -360,7 +374,7 @@ QByteArray VideoRendererItem::shader(int type) {
 
 const char *VideoRendererItem::fragmentShader() const {
     d->shaderType = d->format.type();
-    d->shader = shader(d->shaderType);
+	d->shader = d->shaderVar.fragment(d->shaderType);
 	return d->shader.constData();
 }
 
@@ -429,14 +443,16 @@ void VideoRendererItem::beforeUpdate() {
 	QMutexLocker locker(&d->mutex);
 	if (!d->framePended)
 		return;
-	if (d->format != d->frame.format()) {
+	bool reset = false;
+	if (d->checkFormat && d->format != d->frame.format()) {
+		reset = true;
 		d->format = d->frame.format();
 		d->mposd->setFrameSize(d->format.size());
 		resetNode();
 		updateGeometry();
 		emit formatChanged(d->format);
 	}
-    if (d->shaderType != d->format.type())
+	if (!reset && (d->shaderChanged || d->shaderType != d->format.type()))
 		resetNode();
 	if (!d->format.isEmpty()) {
 		const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
@@ -446,7 +462,6 @@ void VideoRendererItem::beforeUpdate() {
 		};
 		switch (d->format.type()) {
 		case VideoFormat::I420:
-		case VideoFormat::YV12:
 			setTex(0, GL_LUMINANCE, d->format.byteWidth(0), d->format.byteHeight(0), d->frame.data(0));
 			setTex(1, GL_LUMINANCE, d->format.byteWidth(1), d->format.byteHeight(1), d->frame.data(1));
 			setTex(2, GL_LUMINANCE, d->format.byteWidth(2), d->format.byteHeight(2), d->frame.data(2));
@@ -472,6 +487,7 @@ void VideoRendererItem::beforeUpdate() {
 		}
 		++(d->drawnFrames);
 	}
+	d->shaderChanged = false;
 	d->framePended = false;
 }
 
@@ -494,7 +510,14 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	xy += offset;
 	if (d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter)))
 		emit screenRectChanged(d->letterbox->screen());
-	set(tp, d->vtx.translated(offset), QRectF(0.0, 0.0, _Ratio(d->format.width(), d->format.drawWidth()), 1.0));
+	double top = 0.0, left = 0.0, right = _Ratio(d->format.width(), d->format.drawWidth()), bottom = 1.0;
+	if (!(d->shaderVar.effects() & IgnoreEffect)) {
+		if (d->shaderVar.effects() & FlipVertically)
+			qSwap(top, bottom);
+		if (d->shaderVar.effects() & FlipHorizontally)
+			qSwap(left, right);
+	}
+	set(tp, d->vtx.translated(offset), QRectF(left, top, right-left, bottom-top));
 }
 
 void VideoRendererItem::initializeTextures() {
@@ -519,18 +542,17 @@ void VideoRendererItem::initializeTextures() {
 	d->strideCorrection = QPointF(1.0, 1.0);
 	switch (d->format.type()) {
 	case VideoFormat::I420:
-	case VideoFormat::YV12:
-		initTex(0, GL_LUMINANCE, d->format.byteWidth(0), d->format.byteHeight(0));
+		initTex(0, GL_LUMINANCE, w, h);
 		initTex(1, GL_LUMINANCE, d->format.byteWidth(1), d->format.byteHeight(1));
 		initTex(2, GL_LUMINANCE, d->format.byteWidth(2), d->format.byteHeight(2));
-		d->strideCorrection.rx() = ((double)d->format.byteWidth(0)/(double)(d->format.byteWidth(1)*2));
-		d->strideCorrection.ry() = ((double)d->format.byteWidth(0)/(double)(d->format.byteWidth(2)*2));
+		d->strideCorrection.rx() = ((double)w/(double)(d->format.byteWidth(1)*2));
+		d->strideCorrection.ry() = ((double)w/(double)(d->format.byteWidth(2)*2));
 		break;
 	case VideoFormat::NV12:
 	case VideoFormat::NV21:
-		initTex(0, GL_LUMINANCE, d->format.byteWidth(0), d->format.byteHeight(0));
+		initTex(0, GL_LUMINANCE, w, h);
 		initTex(1, GL_LUMINANCE_ALPHA, d->format.byteWidth(1) >> 1, d->format.byteHeight(1));
-		d->strideCorrection.rx() = ((double)d->format.byteWidth(0)/(double)(d->format.byteWidth(1)));
+		d->strideCorrection.rx() = ((double)w/(double)(d->format.byteWidth(1)));
 		break;
 	case VideoFormat::YUY2:
 	case VideoFormat::UYVY:

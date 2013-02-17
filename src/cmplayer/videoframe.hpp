@@ -4,20 +4,17 @@
 #include "stdafx.hpp"
 #include "videoformat.hpp"
 
-struct mp_image;
-
 class VideoFrame {
 public:
-	VideoFrame(mp_image *mpi): d(new Data(mpi)) {}
+	VideoFrame(mp_image *mpi, const VideoFormat &format): d(new Data(mpi, format)) {}
 	VideoFrame(): d(new Data) {}
 	QImage toImage() const;
 	const uchar *data(int i) const;
 	const VideoFormat &format() const {return d->format;}
 private:
-	static quint32 UniqueId;
 	struct Data : public QSharedData {
 		Data() {}
-		Data(mp_image *mpi);
+		Data(mp_image *mpi, const VideoFormat &format);
 		Data(const Data &other);
 		~Data();
 		Data &operator = (const Data &rhs) = delete;

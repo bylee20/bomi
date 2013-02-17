@@ -99,13 +99,22 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	play->addMenu(_L("chapter"))->setEnabled(false);
 
 	Menu *subtitle = this->addMenu(_L("subtitle"));
-	subtitle->addMenu(_L("spu"))->setEnabled(false);
+	Menu *spu = subtitle->addMenu(_L("track"));
+	spu->setEnabled(false);
+	spu->g()->setExclusive(true);
+	spu->addAction(_L("next"))->setShortcut(Qt::CTRL + Qt::Key_E);
+	spu->addSeparator();
 
 	Menu *sList = subtitle->addMenu(_L("list"));
 	sList->g()->setExclusive(false);
-	sList->addAction(_L("open"));
+	sList->addAction(_L("open"))->setShortcut(Qt::SHIFT + Qt::Key_F);
 	sList->addAction(_L("clear"));
-	sList->addAction(_L("hide"))->setCheckable(true);
+	sList->addAction(_L("next"))->setShortcut(Qt::SHIFT + Qt::Key_E);
+	sList->addAction(_L("all"))->setShortcut(Qt::SHIFT + Qt::Key_R);
+	auto hideSubtitle = sList->addAction(_L("hide"));
+	hideSubtitle->setCheckable(true);
+	hideSubtitle->setShortcut(Qt::SHIFT + Qt::Key_Q);
+	sList->addSeparator();
 
 	subtitle->addSeparator();
 	subtitle->addActionToGroup(_L("in-video"), true, _L("display"))->setData(0);
@@ -221,9 +230,9 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	mute->setShortcut(Qt::Key_M);
 
 	audio->addSeparator();
-	QAction *volnorm = audio->addAction(_L("volnorm"), true);
+	QAction *volnorm = audio->addAction(_L("normalizer"), true);
 	volnorm->setShortcut(Qt::Key_N);
-	QAction *scaleTempo = audio->addAction(_L("scale-tempo"), true);
+	QAction *scaleTempo = audio->addAction(_L("tempo-scaler"), true);
 	scaleTempo->setShortcut(Qt::Key_Z);
 	audio->addSeparator();
 
@@ -307,7 +316,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	play->m("chapter")->setEnabled(false);
 	video->m("track")->setEnabled(false);
 	audio->m("track")->setEnabled(false);
-	subtitle->m("spu")->setEnabled(false);
+	subtitle->m("track")->setEnabled(false);
 
 	load();
 }
@@ -364,12 +373,16 @@ void RootMenu::update() {
 
 	Menu &sub = root("subtitle");
 	sub.setTitle(tr("Subtitle"));
+	Menu &spu = sub("track");
+	spu["next"]->setText(tr("Select Next"));
 	Menu &list = sub("list");
 	list.setTitle(tr("Subtitle File"));
 	list["open"]->setText(tr("Open"));
 	list["clear"]->setText(tr("Clear"));
+	list["next"]->setText(tr("Select Next"));
+	list["all"]->setText(tr("Select All"));
 	list["hide"]->setText(tr("Hide"));
-	sub("spu").setTitle(tr("Subtitle Track"));
+	sub("track").setTitle(tr("Subtitle Track"));
 
 	sub["on-letterbox"]->setText(tr("Display on Letterbox"));
 	sub["in-video"]->setText(tr("Display in Video"));
@@ -447,8 +460,8 @@ void RootMenu::update() {
 	audio.setTitle(tr("Audio"));
 	audio("track").setTitle(tr("Audio Track"));
 	audio["mute"]->setText(tr("Mute"));
-	audio["volnorm"]->setText(tr("Normalize Volume"));
-	audio["scale-tempo"]->setText(tr("Auto-scale Tempo"));
+	audio["normalizer"]->setText(tr("Volume Normalizer"));
+	audio["tempo-scaler"]->setText(tr("Tempo Scaler"));
 	setActionStep(audio["volume-up"], audio["volume-down"]
 			, tr("Volume %1%"), p.volume_step);
 	setActionStep(audio["amp-up"], audio["amp-down"]

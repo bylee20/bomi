@@ -70,17 +70,6 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	m_renderer = engine->videoRenderer();
 	m_renderer->setParentItem(this);
 	m_renderer->setGeometry(QPointF(0, 0), QSizeF(width(), height()));
-	auto fullScreen = window()->windowState() == Qt::WindowFullScreen;
-	if (fullScreen != m_fullScreen)
-		emit fullScreenChanged(m_fullScreen = fullScreen);
-
-	if (window())
-		plug(window(), &QWindow::windowStateChanged, [this] (Qt::WindowState state) {
-			auto fullScreen = state == Qt::WindowFullScreen;
-			if (fullScreen != m_fullScreen)
-				emit fullScreenChanged(m_fullScreen = fullScreen);
-		});
-
 
 	auto mediaName = [this] (const Mrl &mrl) -> QString {
 		if (mrl.isLocalFile())
@@ -123,10 +112,6 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 		d->sync = 0;
 		emit mediaChanged();
 	});
-	plug(m_engine, &PlayEngine::audioFilterChanged, [this] (const QString &af, bool on) {
-		if (af == _L("volnorm"))
-			emit volumeNormalizedChanged(m_volnorm = on);
-	});
 
 	plug(m_engine, &PlayEngine::volumeChanged, [this](int volume) {
 		emit volumeChanged(m_volume = volume);
@@ -148,9 +133,7 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	emit audioChanged();
 	emit mediaChanged();
 //	emit stateChanged(m_state = (State)m_engine->state());
-	emit volumeNormalizedChanged(m_volnorm = m_engine->hasAudioFilter("volnorm"));
 	emit volumeChanged(m_volume = m_engine->volume());
-	emit fullScreenChanged(m_fullScreen = (window()->windowState() == Qt::WindowFullScreen));
 }
 
 void PlayerItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) {
@@ -258,6 +241,10 @@ double PlayerItem::avgsync() const {
 	return sync;
 }
 
+double PlayerItem::volumeNormalizer() const {
+	return m_engine ? m_engine->volumeNormalizer() : 1.0;
+}
+
 QString PlayerItem::stateText() const {
 	switch (m_state) {
 	case Playing:
@@ -278,4 +265,5 @@ QString PlayerItem::stateText() const {
 		return tr("Paused");
 	}
 }
+
 

@@ -26,13 +26,16 @@ else
 	APP_PATH ?= $(DATA_PATH)/applications
 	ACTION_PATH ?= $(DATA_PATH)/apps/solid/actions
 	CMPLAYER_SKINS_PATH ?= $(DATA_PATH)/cmplayer/skins
+	CMPLAYER_IMPORTS_PATH ?= $(DATA_PATH)/cmplayer/imports
 	cmplayer_exec := cmplayer
 	qmake_vars := $(qmake_vars) \
-		DEFINES+="CMPLAYER_SKINS_PATH=\\\\\\\"$(CMPLAYER_SKINS_PATH)\\\\\\\"" QMAKE_CXX=$(CXX)
+		DEFINES+="CMPLAYER_SKINS_PATH=\\\\\\\"$(CMPLAYER_SKINS_PATH)\\\\\\\"" \
+		DEFINES+="CMPLAYER_IMPORTS_PATH=\\\\\\\"$(CMPLAYER_IMPORTS_PATH)\\\\\\\"" \
+		QMAKE_CXX=$(CXX)
 endif
 
-cmplayer: translations skin
-	cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make release
+cmplayer: translations skins imports
+	cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make -j5 release
 ifeq ($(os),osx)
 	cp -r build/skins $(cmplayer_exec_path)
 	cd build && macdeployqt $(cmplayer_exec).app -dmg
@@ -43,9 +46,12 @@ translations:
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_en.ts -qm cmplayer_en.qm
 	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ru.ts -qm cmplayer_ru.qm
 	
-skin: build_dir
+skins: build_dir
 	cp -r src/cmplayer/skins build
 
+imports: build_dir
+	cp -r src/cmplayer/imports build
+	
 build_dir:
 	install -d build
 
@@ -54,6 +60,7 @@ clean:
 	-rm -rf build/CMPlayer*
 	-rm -rf build/cmplayer*
 	-rm -rf build/skins
+	-rm -rf build/imports
 	-rm -f src/cmplayer/translations/*.qm
 
 install: cmplayer
@@ -84,4 +91,5 @@ ifeq ($(os),linux)
 	$(install_file) icons/cmplayer256.png $(DEST_DIR)$(ICON_PATH)/256x256/apps/cmplayer.png
 #	$(install_file) icons/cmplayer.svg $(DEST_DIR)$(ICON_PATH)/scalable/apps/cmplayer.svg
 	-cp -r build/skins/* $(DEST_DIR)$(CMPLAYER_SKINS_PATH)/
+	-cp -r build/imports/* $(DEST_DIR)$(CMPLAYER_IMPORTS_PATH)/
 endif

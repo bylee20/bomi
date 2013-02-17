@@ -19,12 +19,13 @@ public:
 	bool isHwAccActivated() const;
 	const VideoFormat &format() const;
 	void setRenderer(VideoRendererItem *renderer);
+	static const vo_driver &getDriver();
 signals:
 	void formatChanged(const VideoFormat &format);
 private slots:
 	void handleFormatChanged(const VideoFormat &format);
 private:
-	static int preinit(struct vo */*vo*/, const char */*arg*/) {return 0;}
+	static int preinit(struct vo *vo, const char *arg);
 	static void uninit(struct vo */*vo*/) {}
 	static int config(struct vo *vo, uint32_t w, uint32_t h, uint32_t , uint32_t , uint32_t , uint32_t fmt);
 	static int control(struct vo *vo, uint32_t request, void *data);

@@ -13,13 +13,11 @@ struct Stream {
 			name += name.isEmpty() ? m_lang : " (" % m_lang % ")";
 		return name;
 	}
-	inline int id() const {return m_id;}
+	int id() const {return m_id;}
 private:
 	friend class MpMessage;
-	int m_id = -1;
-	QString m_title;
-	QString m_lang;
-	QString m_name;
+	friend class PlayEngine;
+	QString m_title, m_lang, m_name; int m_id = -1;
 };
 
 typedef QMap<int, Stream> StreamList;

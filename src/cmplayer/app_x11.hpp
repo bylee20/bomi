@@ -3,8 +3,6 @@
 
 #include "stdafx.hpp"
 
-//#ifdef Q_OS_LINUX
-
 class AppX11 : public QObject {
 	Q_OBJECT
 public:
@@ -22,7 +20,5 @@ private:
 	struct Data;
 	Data *d = nullptr;
 };
-
-//#endif
 
 #endif // APPLICATION_X11_HPP

@@ -1,6 +1,6 @@
 TEMPLATE = app
-CONFIG += link_pkgconfig debug_and_release precompile_header
-QT = core gui network quick widgets gui-private
+CONFIG += link_pkgconfig debug_and_release precompile_header c++11
+QT = core gui network quick widgets
 
 PRECOMPILED_HEADER = stdafx.hpp
 
@@ -8,12 +8,20 @@ precompile_header:!isEmpty(PRECOMPILED_HEADER) {
     DEFINES += USING_PCH
 }
 
+#SOURCE_DIR="/home/xylosper/dev/cmplayer"
+isEmpty(SOURCE_DIR) {
+    SOURCE_DIR = ../..
+}
+
+DESTDIR = $${SOURCE_DIR}/build
+LIB_DIR = $${DESTDIR}/lib
+
 !isEmpty(RELEASE) {
-        CONFIG += release
-        macx:CONFIG += app_bundle
+    CONFIG += release
+    macx:CONFIG += app_bundle
 } else {
-        CONFIG += debug
-        macx:CONFIG -= app_bundle
+    CONFIG += debug
+    macx:CONFIG -= app_bundle
 }
 
 macx {
@@ -25,10 +33,10 @@ macx {
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
-    LIBS +=  ../../build/lib/libavcodec.a \
-	../../build/lib/libavformat.a ../../build/lib/libavutil.a \
-	../../build/lib/libswscale.a ../../build/lib/libcmplayer_mpv.a \
-        ../../build/lib/libchardet.a \
+    LIBS +=  $${DESTDIR}/lib/libavcodec.a \
+        $${LIB_DIR}/libavformat.a $${LIB_DIR}/libavutil.a \
+        $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
+        $${LIB_DIR}/libchardet.a \
         -L/opt/local/lib \
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
@@ -37,25 +45,22 @@ macx {
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
-    QT += dbus
+    QT += dbus gui-private
     TARGET = cmplayer
     LIBS += -lX11 -lxcb \
-        -L../../build/lib -lcmplayer_mpv -lchardet -lcmplayer_av \
-        -lopenal -lasound -ldl -lva -lva-glx
+        -L$${LIB_DIR} -lchardet \
+        -lopenal -lasound -ldl -lva -lva-glx -lcmplayer_mpv -lcmplayer_av
     HEADERS += app_x11.hpp mpv-vaapi.hpp
     SOURCES += app_x11.cpp mpv-vaapi.cpp
 }
 
 LIBS += -lmpg123 -lquvi -ldvdread -lbz2 -lcdio_paranoia -lcdio_cdda -lcdio -lz
-# +=  -lpthread -lm -lmad -lfaad -la52 -ldca
 
 INCLUDEPATH += ../mpv ../../build/include
 
 QMAKE_CC = "gcc -std=c99 -ffast-math -w"
 
 QMAKE_CXXFLAGS += -std=c++11
-
-DESTDIR = ../../build
 
 QML_IMPORT_PATH += imports
 
@@ -117,14 +122,14 @@ HEADERS += playengine.hpp \
     subtitlerendereritem.hpp \
     playeritem.hpp \
     videoformat.hpp \
-    qwindowwidget.hpp \
     mposditem.hpp \
     globalqmlobject.hpp \
     historymodel.hpp \
     shadervar.h \
     hwacc.hpp \
     subtitlestyle.hpp \
-    mainwidget.hpp
+    audiocontroller.hpp \
+    subtitledrawer.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -181,7 +186,6 @@ SOURCES += main.cpp \
     texturerendereritem.cpp \
     subtitlerendereritem.cpp \
     playeritem.cpp \
-    qwindowwidget.cpp \
     mposditem.cpp \
     globalqmlobject.cpp \
     historymodel.cpp \
@@ -190,7 +194,8 @@ SOURCES += main.cpp \
     subtitlestyle.cpp \
     hwacc.cpp \
     videoformat.cpp \
-    mainwidget.cpp
+    audiocontroller.cpp \
+    subtitledrawer.cpp
 
 HEADERS += skin.hpp
 SOURCES += skin.cpp
@@ -211,7 +216,6 @@ OTHER_FILES += \
     imports/CMPlayerSkin/ScrollBar.qml \
     imports/CMPlayerSkin/ProgressOsd.qml \
     imports/CMPlayerSkin/PlaylistView.qml \
-    imports/CMPlayerSkin/PlayInfoOsd.qml \
     imports/CMPlayerSkin/Osd.qml \
     imports/CMPlayerSkin/Logo.qml \
     imports/CMPlayerSkin/HistoryView.qml \
@@ -230,4 +234,6 @@ OTHER_FILES += \
     skins/classic/cmplayer.qml \
     skins/modern/cmplayer.qml \
     skins/modern/Slider.qml \
-    skins/modern/TimeText.qml
+    skins/modern/TimeText.qml \
+    imports/CMPlayerSkin/PlayInfoView.qml \
+    emptyskin.qml

@@ -1,11 +1,11 @@
 #include "app.hpp"
 #include "mrl.hpp"
-#include "mainwidget.hpp"
+#include "mainwindow.hpp"
 #include "playeritem.hpp"
 #include "videoformat.hpp"
 
 int main(int argc, char **argv) {
-//	QApplication::setAttribute(Qt::AA_X11InitThreads);
+	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
 	qRegisterMetaType<EngineState>("State");
 	qRegisterMetaType<Mrl>("Mrl");
@@ -19,7 +19,6 @@ int main(int argc, char **argv) {
 			app.sendMessage(_L("mrl ") % mrl.toString());
 		return 0;
 	}
-//	MainWidget *w = new MainWidget;	MainWindow *mw = w->mainWindow(); w->show();
 	MainWindow *mw = new MainWindow;	mw->show();
 	app.setMainWindow(mw);
 	if (!mrl.isEmpty())

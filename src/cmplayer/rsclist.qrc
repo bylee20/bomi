@@ -27,5 +27,6 @@
         <file>img/cmplayer-logo.png</file>
         <file>img/logo-background.png</file>
         <file>img/logo-background.svg</file>
+        <file>emptyskin.qml</file>
     </qresource>
 </RCC>

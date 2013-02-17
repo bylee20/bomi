@@ -38,14 +38,14 @@ Skin.Player {
 				Skin.HorizontalLayout {
 					id: texts; width: parent.width; height: 15; fillers: [name]; spacing: 5
 					property int vAlignment: Text.AlignBottom
-					TimeText { id: position; msecs: player.time; anchors.left: parent.left; verticalAlignment: texts.vAlignment }
+					TimeText { id: position; msecs: player.time; verticalAlignment: texts.vAlignment }
 					Text {
 						id: name
 						text: player.media.name; elide: Text.ElideMiddle;
 						color: "white"; font { bold: true; pixelSize: 12 }
 						horizontalAlignment: Text.AlignHCenter; verticalAlignment: texts.vAlignment
 					}
-					TimeText { id: duration; msecs: player.duration; anchors.right: parent.right; verticalAlignment: texts.vAlignment}
+					TimeText { id: duration; msecs: player.duration; verticalAlignment: texts.vAlignment}
 				}
 				Skin.HorizontalLayout {
 					id: seekbarwrapper; width: parent.width; height: 10; fillers: [seekbar]; spacing: 10

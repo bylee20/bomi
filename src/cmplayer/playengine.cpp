@@ -2,6 +2,7 @@
 #include "videoframe.hpp"
 #include "videooutput.hpp"
 #include "hwacc.hpp"
+#include "audiocontroller.hpp"
 #include "playlistmodel.hpp"
 #define PLAY_ENGINE_P
 #include "mpcore.hpp"
@@ -10,6 +11,7 @@
 extern "C" {
 #include <core/command.h>
 #include <video/out/vo.h>
+#include <video/decode/vd.h>
 #include <core/playlist.h>
 #include <core/codecs.h>
 #include <core/m_property.h>
@@ -36,7 +38,7 @@ private:
 	D1 m_d1; D2 m_d2; D3 m_d3;
 };
 
-enum MpCmd {MpSetProperty = -1};
+enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2};
 
 struct mp_volnorm {int method;	float mul; float avg;};
 
@@ -45,23 +47,6 @@ namespace std {
 	void __throw_bad_function_call() {throw "bad";}
 }
 #endif
-
-static double volnorm_mul(MPContext *mpctx) {
-	if (mpctx && mpctx->mixer.afilter) {
-		auto af = mpctx->mixer.afilter->first;
-		while (af) {
-			if (strcmp(af->info->name, "volnorm") == 0)
-				break;
-			af = af->next;
-		}
-		if (af) {
-			auto volnorm = static_cast<mp_volnorm*>(af->setup);
-			qDebug() << "volnorm" << af << volnorm->method << volnorm->mul << volnorm->avg;
-			return static_cast<mp_volnorm*>(af->setup)->mul;
-		}
-	}
-	return 1.0;
-}
 
 struct PlayEngine::Context { MPContext mp; PlayEngine *p; };
 
@@ -73,16 +58,17 @@ template<> inline char *&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].
 struct PlayEngine::Data {
 	Data(PlayEngine *engine): p(engine) {}
 	PlayEngine *p = nullptr;
-	QMutex mutex;
+	AudioController *audio = nullptr;
+//	QMutex mutex;
 	QByteArray fileName;
 	QTimer ticker = {};
 	bool quit = false, playing = false, init = false;
 	int start = 0, tick = 0;
-	bool wasPlaying = false;
+//	bool wasPlaying = false;
 	PlayEngine::Context *ctx = nullptr;
 	MPContext *mpctx = nullptr;
 	VideoOutput *video = nullptr;
-	QMutex q_mutex;		QWaitCondition q_wait;
+//	QMutex q_mutex;		QWaitCondition q_wait;
 	GetStartTime getStartTimeFunc;
 	PlaylistModel playlist;
 	double videoAspect = 0.0;
@@ -97,7 +83,7 @@ struct PlayEngine::Data {
 	}
 
 	template<typename T>
-	bool enqueue(int id, const char *name, const T &v) {
+	bool enqueue(int id, const char *name = "", const T &v = 0) {
 		const bool ret = mpctx && mpctx->input && playing;
 		if (ret) {
 			mp_cmd_t *cmd = talloc_ptrtype(NULL, cmd);
@@ -114,7 +100,7 @@ struct PlayEngine::Data {
 	}
 	template<EventType T> void post() const { qApp->postEvent(p, new EngineEvent<T>()); }
 	template<EventType T, typename D1 = char, typename D2 = char, typename D3 = char>
-	bool get(QEvent *event, D1 *d1 = nullptr, D2 *d2 = nullptr, D3 *d3 = nullptr) const {
+	bool getEventData(QEvent *event, D1 *d1 = nullptr, D2 *d2 = nullptr, D3 *d3 = nullptr) const {
 		if ((int)event->type() != T)
 			return false;
 		auto ev = static_cast<EngineEvent<T, D1, D2, D3>*>(event);
@@ -130,6 +116,7 @@ struct PlayEngine::Data {
 
 PlayEngine::PlayEngine()
 : d(new Data(this)) {
+	d->audio = new AudioController(this);
 	d->video = new VideoOutput(this);
 	mpctx_paused_changed = onPausedChanged;
 	mpctx_play_started = onPlayStarted;
@@ -151,6 +138,7 @@ PlayEngine::PlayEngine()
 }
 
 PlayEngine::~PlayEngine() {
+	delete d->audio;
 	delete d->video;
 	delete d;
 }
@@ -172,12 +160,16 @@ void PlayEngine::onPlayStarted(MPContext *mpctx) {
 }
 
 double PlayEngine::volumeNormalizer() const {
-	return volnorm_mul(d->mpctx);
+	auto amp = d->audio->normalizer();
+	return amp < 0 ? 1.0 : amp;
 }
 
+
 bool PlayEngine::isHwAccActivated() const {
+//	if (d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->gsh)
+//		qDebug() << d->mpctx->sh_video->vd_driver->name
 	return false;
-//	if (!d->mpctx || !d->mpctx->sh_video || !d->mpctx->sh_video->codec)
+//	if (!d->mpctx || !d->mpctx->sh_video || !d->mpctx->stream>sh_video->avctx)
 //		return false;
 //	return d->hwAccCodecs.contains(d->mpctx->sh_video->codec->name);
 }
@@ -198,9 +190,20 @@ void PlayEngine::setVideoAspect(double ratio) {
 		emit videoAspectRatioChanged(d->videoAspect = ratio);
 }
 
+void PlayEngine::setCurrentSubtitleStream(int id) {
+	if (id < 0) {
+		setmp("sub-visibility", false);
+		setmp("sub", id);
+		m_subId = -1;
+	} else {
+		setmp("sub-visibility", true);
+		setmp("sub", id);
+		m_subId = id;
+	}
+}
+
 int PlayEngine::currentSubtitleStream() const {
-	return -1;
-//	return d->mpctx->global_sub_pos;
+	return m_subId;
 }
 
 void PlayEngine::clear() {
@@ -210,34 +213,37 @@ void PlayEngine::clear() {
 	m_videoStreams.clear();
 	m_subtitleStreams.clear();
 	m_title = 0;
+	m_subId = -1;
 }
 
 void PlayEngine::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
 	case StreamOpen:
+		if (!m_subtitleStreams.isEmpty())
+			m_subtitleStreams[-1].m_name = tr("No Subtitle");
 		emit seekableChanged(isSeekable());
 		emit started(d->playlist.loadedMrl());
 		d->start = 0;
 		break;
 	case StateChange: {
-		EngineState state; d->get<StateChange>(event, &state);
+		EngineState state; d->getEventData<StateChange>(event, &state);
 		if (_Change(m_state, state))
 			emit stateChanged(m_state);
 		break;
 	} case MrlStopped: {
 		Mrl mrl; int terminated, duration;
-		d->get<MrlStopped>(event, &mrl, &terminated, &duration);
+		d->getEventData<MrlStopped>(event, &mrl, &terminated, &duration);
 		emit stopped(mrl, terminated, duration);
 		break;
 	} case MrlFinished: {
-		Mrl mrl; d->get<MrlFinished>(event, &mrl);
+		Mrl mrl; d->getEventData<MrlFinished>(event, &mrl);
 		emit finished(mrl);
 		break;
 	} case PlaylistFinished:
 		emit d->playlist.finished();
 		break;
 	case MrlChanged: {
-		Mrl mrl; d->get<MrlChanged>(event, &mrl);
+		Mrl mrl; d->getEventData<MrlChanged>(event, &mrl);
 		emit mrlChanged(mrl);
 	}default:
 		break;
@@ -278,6 +284,7 @@ bool PlayEngine::parse(const Id &id) {
 					if (ok) {
 						auto var = id.name.midRef(idx+1);
 						auto &title = m_dvd.titles[tid];
+						title.m_id = tid;
 						title.number = tid;
 						title.m_name = tr("Title %1").arg(tid);
 						if (_Same(var, "CHAPTERS"))
@@ -320,6 +327,7 @@ bool PlayEngine::parse(const QString &line) {
 		m_chapters.clear();
 		for (auto name : rxTitle.cap(1).split(',', QString::SkipEmptyParts)) {
 			Chapter chapter; chapter.m_name = name;
+			chapter.m_id = m_chapters.size();
 			m_chapters.append(chapter);
 		}
 	} else
@@ -352,6 +360,8 @@ void PlayEngine::runCommand(mp_cmd *cmd) {
 		case MpSetProperty:
 			mp_property_do(cmd->name, M_PROPERTY_SET, &cmd->args[0].v.f, d->mpctx);
 			break;
+		case MpResetAudioChain:
+			reinit_audio_chain(d->mpctx);
 		default:
 			break;
 		}
@@ -365,11 +375,11 @@ bool PlayEngine::isInitialized() const {
 	return d->init;
 }
 
-//extern char **video_codec_list;
-
 void PlayEngine::run() {
 	CharArrayList args = QStringList()
 		<< "cmplayer-mpv" << "--no-config" << "--idle" << "--no-fs"
+		<< ("--af=dummy=" % QString::number((quint64)(quintptr)(void*)d->audio))
+		<< ("--vo=null:" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--softvol=yes" << "--softvol-max=1000.0"
 		<< "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--no-consolecontrols" << "--no-mouseinput";
@@ -377,22 +387,11 @@ void PlayEngine::run() {
 	d->ctx->p = this;
 	auto mpctx = d->mpctx = &d->ctx->mp;
 	mpv_init(d->mpctx, args.size(), args.data());
-	vo_cmplayer = d->video->vo_create(d->mpctx);
 	d->init = true;
 	HwAcc hwAcc; (void)hwAcc;
 	d->quit = false;
-	auto idle = [this, mpctx] () {
-		while (mpctx->opts.player_idle_mode && !mpctx->playlist->current && d->mpctx->stop_play != PT_QUIT) {
-			uninit_player(mpctx, INITIALIZED_AO);
-			mp_cmd_t *cmd;
-			while (!(cmd = mp_input_get_cmd(mpctx->input, get_wakeup_period(d->mpctx)*1000, false)))
-				;
-			mpctx_run_command(mpctx, cmd);
-			mp_cmd_free(cmd);
-		}
-	};
 	while (!d->quit) {
-		idle();
+		idle_loop(mpctx);
 		if (mpctx->stop_play == PT_QUIT)
 			break;
 		Q_ASSERT(mpctx->playlist->current);
@@ -409,8 +408,7 @@ void PlayEngine::run() {
 			setmp("speed", (float)m_speed);
 			mixer_setvolume(&d->mpctx->mixer, mpVolume(), mpVolume());
 			mixer_setmute(&d->mpctx->mixer, m_muted);
-			if (!m_af.isEmpty()) tellmp("af_add", m_af);
-				d->post<StreamOpen>();
+			d->post<StreamOpen>();
 			auto err = start_to_play_current_file(mpctx);
 			terminated = position();
 			duration = this->duration();
@@ -459,10 +457,8 @@ void PlayEngine::run() {
 			break;
 	}
 	mpctx->opts.video_decoders = nullptr;
-//	video_codec_list = nullptr;
 	mpctx_delete(d->mpctx);
 	d->mpctx = nullptr;
-	vo_cmplayer = nullptr;
 }
 
 void PlayEngine::tellmp(const QString &cmd) {
@@ -593,14 +589,25 @@ VideoFormat PlayEngine::videoFormat() const {
 	return d->video->format();
 }
 
-void PlayEngine::setAudioFilter(const QString &af, bool on) {
-	auto it = qFind(m_af.begin(), m_af.end(), af);	const bool prev = it != m_af.end();
-	if (prev != on) {
-		qDebug() << volumeNormalizer();
-		if (on) {m_af.append(af); tellmp("af_add volnorm=2:2");}
-		else {m_af.erase(it); tellmp("af_del", af);}
-		emit audioFilterChanged(af, on);
+void PlayEngine::setVolumeNormalized(bool on) {
+	if (d->audio->setNormalizer(on))
+		emit volumeNormalizedChanged(on);
+}
+
+void PlayEngine::setTempoScaled(bool on) {
+	if (d->audio->setScaletempo(on)) {
+		if (d->playing)
+			d->enqueue<int>(MpResetAudioChain);
+		emit tempoScaledChanged(on);
 	}
+}
+
+bool PlayEngine::isVolumeNormalized() const {
+	return d->audio->normalizer() > 0;
+}
+
+bool PlayEngine::isTempoScaled() const {
+	return d->audio->scaletempo();
 }
 
 void PlayEngine::stop() {

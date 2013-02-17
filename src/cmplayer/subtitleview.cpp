@@ -33,7 +33,7 @@ struct SubtitleView::Data {
 };
 
 SubtitleView::SubtitleView(QWidget *parent)
-: ToggleDialog(parent), d(new Data) {
+: QDialog(parent), d(new Data) {
 	QScrollArea *area = new QScrollArea(this);
 	d->splitter = new QSplitter(Qt::Horizontal, area);
 	d->timeVisible = new QCheckBox(tr("Show start/end time"), this);
@@ -108,12 +108,7 @@ void SubtitleView::setAutoScrollEnabled(bool enabled) {
 }
 
 void SubtitleView::showEvent(QShowEvent *event) {
-	ToggleDialog::showEvent(event);
+	QDialog::showEvent(event);
 	if (d->needToUpdate)
 		updateModels();
-}
-
-void SubtitleView::hideEvent(QHideEvent *event) {
-	ToggleDialog::hideEvent(event);
-
 }

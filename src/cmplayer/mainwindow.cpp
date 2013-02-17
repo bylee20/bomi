@@ -1,4 +1,5 @@
 #include "stdafx.hpp"
+#include "snapshotdialog.hpp"
 #include "mainwindow.hpp"
 #include "playeritem.hpp"
 #include "rootmenu.hpp"
@@ -49,7 +50,7 @@ struct MainWindow::Data {
 	ABRepeater ab = {&engine, &subtitle};
 	QMenu contextMenu;
 	PrefDialog *prefDlg = nullptr;
-	SubtitleView subtitleView;
+	SubtitleView *subtitleView = nullptr;
 	HistoryModel history;
 	PlaylistModel &playlist = engine.playlist();
 //	FavoritesView *favorite;
@@ -157,11 +158,11 @@ struct MainWindow::Data {
 		const AppState &as = AppState::get();
 
 		engine.setSpeed(as.play_speed);
-		engine.setVolume(as.volume);
-		engine.setMuted(as.muted);
-		engine.setPreamp(as.preamp);
-		engine.setAudioFilter("volnorm", as.af_volnorm);
-
+		engine.setVolume(as.audio_volume);
+		engine.setMuted(as.audio_muted);
+		engine.setPreamp(as.audio_preamp);
+		engine.setVolumeNormalized(as.audio_normalizer);
+		engine.setTempoScaled(as.audio_scaletempo);
 
 		menu("video")("aspect").g()->trigger(as.video_aspect_ratio);
 		menu("video")("crop").g()->trigger(as.video_crop_ratio);
@@ -189,10 +190,11 @@ struct MainWindow::Data {
 
 	void save_state() const {
 		AppState &as = AppState::get();
-		as.volume = engine.volume();
-		as.muted = engine.isMuted();
-		as.preamp = engine.preamp();
-		as.af_volnorm = engine.hasAudioFilter("volnorm");
+		as.audio_volume = engine.volume();
+		as.audio_muted = engine.isMuted();
+		as.audio_preamp = engine.preamp();
+		as.audio_normalizer = engine.isVolumeNormalized();
+		as.audio_scaletempo = engine.isTempoScaled();
 		as.video_aspect_ratio = renderer.aspectRatio();
 		as.video_crop_ratio = renderer.cropRatio();
 		as.video_alignment = renderer.alignment();
@@ -219,10 +221,9 @@ struct MainWindow::Data {
 		menu.setEnabledSync(!list.isEmpty());
 		if (!list.isEmpty()) {
 			menu.g()->clear();
-			int id = 0;
-			for (typename List::const_iterator it = list.begin(); it != list.end(); ++it, ++id) {
+			for (typename List::const_iterator it = list.begin(); it != list.end(); ++it) {
 				auto act = menu.addActionToGroupWithoutKey(it->name(), true);
-				act->setData(id); if (current == id) act->setChecked(true);
+				act->setData(it->id()); if (current == it->id()) act->setChecked(true);
 			}
 		}
 		menu.syncActions();
@@ -327,16 +328,17 @@ void qt_mac_set_dock_menu(QMenu *menu);
 
 MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 	setAcceptDrops(true);
-	setFocus();
+	setWindowFlags(windowFlags() | Qt::WindowFullscreenButtonHint);
 	window()->winId();
 	d->view = new MainView(this);
+	d->view->setColor(Qt::black);
 	d->view->setResizeMode(QQuickView::SizeRootObjectToView);
 	d->view->installEventFilter(this);
 	d->engine.start();
 	d->engine.setGetStartTimeFunction([this] (const Mrl &mrl){return getStartTime(mrl);});
-//	setFlags(flags() | Qt::WindowFullscreenButtonHint);
 	d->engine.setVideoRenderer(&d->renderer);
 	d->renderer.setOverlay(&d->subtitle);
+	d->subtitleView = new SubtitleView(this);
 
 	resize(400, 300);
 	setMinimumSize(QSize(400, 300));
@@ -355,7 +357,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 		AppState &as = AppState::get();
 		const QString filter = Info::mediaExtFilter();
 		const QString dir = QFileInfo(as.open_last_file).absolutePath();
-		const QString file = _GetOpenFileName(nullptr, tr("Open File"), dir, filter);
+		const QString file = _GetOpenFileName(this, tr("Open File"), dir, filter);
 		if (!file.isEmpty()) {openMrl(Mrl(file)); as.open_last_file = file;}
 	});
 	connect(open["url"], &QAction::triggered, [this] () {
@@ -425,9 +427,9 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 	connect(video("aspect").g(), &ActionGroup::triggered, [this] (QAction *a) {d->renderer.setAspectRatio(a->data().toDouble());});
 	connect(video("crop").g(), &ActionGroup::triggered, [this] (QAction *a) {d->renderer.setCropRatio(a->data().toDouble());});
 	connect(video["snapshot"], &QAction::triggered, [this] () {
-		//	static SnapshotDialog *dlg = new SnapshotDialog(this);
-		//	dlg->setVideoRenderer(d->video); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
-		//	if (!dlg->isVisible()) {dlg->adjustSize(); dlg->show();}
+		static SnapshotDialog *dlg = new SnapshotDialog(this);
+		dlg->setVideoRenderer(&d->renderer); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
+		if (!dlg->isVisible()) {dlg->adjustSize(); dlg->show();}
 	});
 	connect(video["drop-frame"], &QAction::toggled, [this] (bool enabled) {
 		d->engine.setFrameDrop(enabled); showMessage(tr("Drop Frame"), enabled);
@@ -491,14 +493,49 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 		const int amp = qBound(0, qRound(d->engine.preamp()*100 + a->data().toInt()), 1000);
 		d->engine.setPreamp(amp*0.01); showMessage(tr("Amp"), amp, "%");
 	});
-	connect(audio["volnorm"], &QAction::toggled, [this] (bool on) {
-		d->engine.setAudioFilter("volnorm", on); showMessage(tr("Normalize Volume"), on);
+	connect(audio["normalizer"], &QAction::toggled, [this] (bool on) {
+		d->engine.setVolumeNormalized(on); showMessage(tr("Volume Normalizer"), on);
 	});
-	connect(audio["scale-tempo"], &QAction::toggled, [this] (bool on) {
-		d->engine.setAudioFilter("scaletempo", on); showMessage(tr("Auto-scale tempo"), on);
+	connect(audio["tempo-scaler"], &QAction::toggled, [this] (bool on) {
+		d->engine.setTempoScaled(on); showMessage(tr("Tempo Scaler"), on);
 	});
-
-	connect(sub("list")["hide"], &QAction::toggled, &d->subtitle, &SubtitleRendererItem::setHidden);
+	connect(sub("track")["next"], &QAction::triggered, [this] () {
+		auto actions = d->menu("subtitle")("track").g()->actions();
+		if (!actions.isEmpty()) {
+			auto it = actions.begin();
+			while (it != actions.end() && !(*it++)->isChecked()) ;
+			if (it == actions.end())
+				it = actions.begin();
+			(*it)->trigger();
+		}
+	});
+	connect(sub("list")["all"], &QAction::triggered, [this] () {
+		d->subtitle.select(-1);
+		for (auto action : d->menu("subtitle")("list").g()->actions())
+			action->setChecked(true);
+	});
+	connect(sub("list")["next"], &QAction::triggered, [this] () {
+		auto actions = d->menu("subtitle")("list").g()->actions();
+		if (!actions.isEmpty()) {
+			bool checked = false;
+			auto it = actions.begin();
+			QAction *next = nullptr;
+			for (; it != actions.end(); ++it) {
+				next = *it;
+				if (!checked)
+					checked = next->isChecked();
+				else if (!next->isChecked())
+					break;
+				next->setChecked(false);
+			}
+			if (!checked || it == actions.end())
+				next = actions.first();
+			next->setChecked(true);
+			d->subtitle.deselect(-1);
+			d->subtitle.select(next->data().toInt());
+		}
+	});
+	connect(sub("list")["hide"], &QAction::toggled, [this] (bool hide) {d->subtitle.setVisible(!hide);});
 	connect(sub("list")["open"], &QAction::triggered, [this] () {
 		const QString filter = tr("Subtitle Files") % ' ' % Info::subtitleExt().toFilter();
 		const auto dir = d->engine.mrl().isLocalFile() ? QFileInfo(d->engine.mrl().toLocalFile()).absolutePath() : _L("");
@@ -506,14 +543,16 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 		const auto files = EncodingFileDialog::getOpenFileNames(nullptr, tr("Open Subtitle"), dir, filter, &enc);
 		if (!files.isEmpty()) appendSubFiles(files, true, enc);
 	});
-	connect(sub("list")["clear"], &QAction::triggered, [this] () {
-		d->subtitle.unload();
-		qDeleteAll(d->menu("subtitle")("list").g()->actions());
-	});
+	connect(sub("list")["clear"], &QAction::triggered, this, &MainWindow::clearSubtitles);
 	connect(sub("list").g(), &ActionGroup::triggered, [this] (QAction *a) {
-		if (!d->changingSub) {d->subtitle.select(a->data().toInt(), a->isChecked());}
+		if (!d->changingSub) {
+			if (a->isChecked())
+				d->subtitle.select(a->data().toInt());
+			else
+				d->subtitle.deselect(a->data().toInt());
+		}
 	});
-	connect(sub("spu").g(), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(sub("track").g(), &ActionGroup::triggered, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentSubtitleStream(a->data().toInt());
 		showMessage(tr("Current Subtitle Track"), a->text());
 	});
@@ -537,9 +576,12 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 	connect(tool["playlist"], &QAction::triggered, [toggleItem] () {toggleItem("playlist");});
 	connect(tool["history"], &QAction::triggered, [toggleItem] () {toggleItem("history");});
 	connect(tool["playinfo"], &QAction::triggered, [toggleItem] () {toggleItem("playinfo");});
-	connect(tool["subtitle"], &QAction::triggered, [this] () {d->subtitleView.setVisible(!d->subtitleView.isVisible());});
+	connect(tool["subtitle"], &QAction::triggered, [this] () {d->subtitleView->setVisible(!d->subtitleView->isVisible());});
 	connect(tool["pref"], &QAction::triggered, [this] () {
-		if (!d->prefDlg) {d->prefDlg = new PrefDialog; connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));} d->prefDlg->show();
+		if (!d->prefDlg) {
+			d->prefDlg = new PrefDialog(this);
+			connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
+		} d->prefDlg->show();
 	});
 	connect(tool["reload-skin"], &QAction::triggered, this, &MainWindow::reloadSkin);
 	connect(tool["auto-exit"], &QAction::toggled, [this] (bool on) {
@@ -563,7 +605,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 	connect(win["maximize"], &QAction::triggered, this, &MainWindow::showMaximized);
 	connect(win["close"], &QAction::triggered, this, &MainWindow::close);
 
-	connect(help["about"], &QAction::triggered, [this] () {AboutDialog dlg; dlg.exec();});
+	connect(help["about"], &QAction::triggered, [this] () {AboutDialog dlg(this); dlg.exec();});
 	connect(d->menu["exit"], &QAction::triggered, this, &MainWindow::exit);
 
 	connect(&d->engine, &PlayEngine::mrlChanged, this, &MainWindow::updateMrl);
@@ -585,13 +627,9 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 		d->stateChanging = false;
 	});
 	connect(&d->engine, &PlayEngine::tick, &d->subtitle, &SubtitleRendererItem::render);
-	connect(&d->engine, &PlayEngine::audioFilterChanged, [this, &audio] (const QString &af, bool on) {
-		if (af == _L("volnorm"))
-			audio["volnorm"]->setChecked(on);
-		else if (af == _L("scaletempo"))
-			audio["scale-tempo"]->setChecked(on);
-	});
-	connect(&d->engine, &PlayEngine::mutedChanged, d->menu("audio")["mute"], &QAction::setChecked);
+	connect(&d->engine, &PlayEngine::volumeNormalizedChanged, audio["normalizer"], &QAction::setChecked);
+	connect(&d->engine, &PlayEngine::tempoScaledChanged, audio["tempo-scaler"], &QAction::setChecked);
+	connect(&d->engine, &PlayEngine::mutedChanged, audio["mute"], &QAction::setChecked);
 	connect(&d->recent, &RecentInfo::openListChanged, this, &MainWindow::updateRecentActions);
 	connect(&d->hider, &QTimer::timeout, [this] () {setCursorVisible(false);});
 	connect(&d->history, &HistoryModel::playRequested, [this] (const Mrl &mrl) {openMrl(mrl);});
@@ -599,13 +637,13 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 		if (d->menu("tool")["auto-exit"]->isChecked()) exit();
 		if (d->menu("tool")["auto-shutdown"]->isChecked()) cApp.shutdown();
 	});
-	connect(&d->subtitle, &SubtitleRendererItem::modelsChanged, &d->subtitleView, &SubtitleView::setModels);
+	connect(&d->subtitle, &SubtitleRendererItem::modelsChanged, d->subtitleView, &SubtitleView::setModels);
 	connect(&d->engine, &PlayEngine::started, [this] () {
 		d->updateListMenu(d->menu("play")("title"), d->engine.dvd().titles, d->engine.currentDvdTitle());
 		d->updateListMenu(d->menu("play")("chapter"), d->engine.chapters(), d->engine.currentChapter());
 		d->updateListMenu(d->menu("audio")("track"), d->engine.audioStreams(), d->engine.currentAudioStream());
 		d->updateListMenu(d->menu("video")("track"), d->engine.videoStreams(), d->engine.currentVideoStream());
-		d->updateListMenu(d->menu("subtitle")("spu"), d->engine.subtitleStreams(), d->engine.currentSubtitleStream());
+		d->updateListMenu(d->menu("subtitle")("track"), d->engine.subtitleStreams(), d->engine.currentSubtitleStream());
 	});
 	connect(&d->engine, &PlayEngine::started, &d->history, &HistoryModel::setStarted);
 	connect(&d->engine,	&PlayEngine::stopped, &d->history, &HistoryModel::setStopped);
@@ -617,7 +655,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 	d->connectCurrentStreamActions(&d->menu("play")("chapter"), &PlayEngine::currentChapter);
 	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);
 	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
-	d->connectCurrentStreamActions(&d->menu("subtitle")("spu"), &PlayEngine::currentSubtitleStream);
+	d->connectCurrentStreamActions(&d->menu("subtitle")("track"), &PlayEngine::currentSubtitleStream);
 #ifndef Q_OS_MAC
 	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
 		if (reason == QSystemTrayIcon::Trigger)
@@ -669,7 +707,6 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 
 MainWindow::~MainWindow() {
 	exit();
-	delete d->prefDlg;
 	delete d;
 }
 
@@ -681,7 +718,6 @@ void MainWindow::exit() {
 	static bool done = false;
 	if (!done) {
 #ifndef Q_OS_MAC
-		qDebug() << d->tray->isVisible();
 		d->tray->hide();
 		delete d->tray;
 #endif
@@ -694,10 +730,8 @@ void MainWindow::exit() {
 			d->player->unplug();
 		d->engine.wait();
 		cApp.processEvents();
+		cApp.quit();
 		done = true;
-		delete d;
-		::quick_exit(0);
-//		QTimer::singleShot(1, qApp, SLOT(quit()));
 	}
 }
 
@@ -814,7 +848,7 @@ void MainWindow::onMouseEvent(QMouseEvent *event) {
 			break;
 		}
 		if (showContextMenu)
-			d->contextMenu.exec(event->globalPos());
+			d->contextMenu.exec(QCursor::pos());
 		else
 			d->contextMenu.hide();
 	} else if (event->type() == QEvent::MouseMove) {
@@ -919,12 +953,13 @@ void MainWindow::reloadSkin() {
 		for (auto error : errors) {
 			qDebug() << error.toString();
 		}
-	} else {
-		if (!(d->player = qobject_cast<PlayerItem*>(d->view->rootObject())))
-			d->player = d->view->rootObject()->findChild<PlayerItem*>();
-		if (d->player)
-			d->player->plugTo(&d->engine);
+		d->view->setSource(QUrl("qrc:/emptyskin.qml"));
 	}
+
+	if (!(d->player = qobject_cast<PlayerItem*>(d->view->rootObject())))
+		d->player = d->view->rootObject()->findChild<PlayerItem*>();
+	if (d->player)
+		d->player->plugTo(&d->engine);
 }
 
 void MainWindow::applyPref() {
@@ -966,6 +1001,11 @@ void connectCopies(Menu &menu, const Slot &slot) {
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QWidget::resizeEvent(event);
 	d->view->setGeometry(0, 0, width(), height());
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event) {
+	QWidget::keyPressEvent(event);
+	onKeyPressed(event);
 }
 
 //void MainWindow::exposeEvent(QExposeEvent *event) {
@@ -1036,8 +1076,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 void MainWindow::updateStaysOnTop() {
-	return;
-	if (windowState() == Qt::WindowMinimized)
+	if (windowState() & Qt::WindowMinimized)
 		return;
 	d->sotChanging = true;
 	const int id = d->menu("window").g("stays-on-top")->checkedAction()->data().toInt();
@@ -1055,7 +1094,7 @@ void MainWindow::updateStaysOnTop() {
 }
 
 void MainWindow::onKeyPressed(QKeyEvent *event) {
-	if (!event->isAccepted()) {
+//	if (!event->isAccepted()) {
 		constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
 		auto action = cMenu.action(QKeySequence(event->key() + (event->modifiers() & modMask)));
 		if (action) {
@@ -1064,7 +1103,7 @@ void MainWindow::onKeyPressed(QKeyEvent *event) {
 			else
 				action->trigger();
 		}
-	}
+//	}
 }
 
 auto MainWindow::updateMrl(const Mrl &mrl) -> void {
@@ -1145,9 +1184,11 @@ int MainWindow::getStartTime(const Mrl &mrl) {
 void MainWindow::setCursorVisible(bool visible) {
 	if (visible && cursor().shape() == Qt::BlankCursor) {
 		unsetCursor();
+		d->view->unsetCursor();
 		UtilObject::setCursorVisible(true);
 	} else if (!visible && cursor().shape() != Qt::BlankCursor) {
 		setCursor(Qt::BlankCursor);
+		d->view->setCursor(Qt::BlankCursor);
 		UtilObject::setCursorVisible(false);
 	}
 }
@@ -1164,14 +1205,12 @@ void MainWindow::changeEvent(QEvent *event) {
 		d->dontPause = true;
 		d->moving = false;
 		d->prevPos = QPoint();
-		switch (state) {
-		case Qt::WindowFullScreen:
+		if (state & Qt::WindowFullScreen) {
 			cApp.setAlwaysOnTop(window()->windowHandle(), false);
 			setVisible(true);
 			if (cPref.hide_cursor)
 				d->hider.start(cPref.hide_cursor_delay);
-			break;
-		default:
+		} else {
 			d->hider.stop();
 			setCursorVisible(true);
 			updateStaysOnTop();
@@ -1180,5 +1219,7 @@ void MainWindow::changeEvent(QEvent *event) {
 		d->dontPause = false;
 		if (!d->stateChanging)
 			doVisibleAction(state != Qt::WindowMinimized);
+		if (d->player)
+			d->player->setFullScreen(state & Qt::WindowFullScreen);
 	}
 }

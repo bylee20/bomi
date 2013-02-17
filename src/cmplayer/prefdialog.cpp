@@ -213,7 +213,6 @@ struct PrefDialog::Data {
 	QMap<int, QCheckBox*> HwAcc;
 	PrefOpenMediaGroup *open_media_from_file_manager;
 	PrefOpenMediaGroup *open_media_by_drag_and_drop;
-	QQuickView *preview = new QQuickView;
 	QStringList imports;
 };
 
@@ -224,15 +223,9 @@ PrefDialog::PrefDialog(QWidget *parent)
 : QDialog(parent)
 #endif
 , d(new Data) {
-
-//	d->preview->resize(400, 300);
-//		d->preview->show();
-	d->preview->setResizeMode(QQuickView::SizeRootObjectToView);
-//	d->imports = d->preview->engine()->importPathList();
 	d->ui.setupUi(this);
 	d->ui.tree->setItemDelegate(new Delegate(d->ui.tree));
 	d->ui.tree->setIconSize(QSize(32, 32));
-	d->ui.skin_preview->setEmbeddedWindow(d->preview);
 
 	connect(d->ui.tree, SIGNAL(itemSelectionChanged()), this, SLOT(onCategoryChanged()));
 	auto addCategory = [this] (const QString &name) {
@@ -269,7 +262,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Keyboard shorcuts"), d->ui.ui_shortcut, ":/img/preferences-desktop-keyboard-32.png", ui);
 	addPage(tr("Mouse actions"), d->ui.ui_mouse, ":/img/input-mouse-32.png", ui);
 	addPage(tr("Control step"), d->ui.ui_step, ":/img/run-build-32.png", ui);
-	addPage(tr("Skin"), d->ui.ui_skin, ":/img/preferences-desktop-theme-32.png", ui);
+//	addPage(tr("Skin"), d->ui.ui_skin, ":/img/preferences-desktop-theme-32.png", ui);
 
 	open->setSelected(true);
 
@@ -347,7 +340,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 }
 
 PrefDialog::~PrefDialog() {
-	delete d->preview;
 	delete d;
 }
 
@@ -356,7 +348,6 @@ void PrefDialog::onSkinIndexChanged(int idx) {
 		const auto name = d->ui.skin_name->itemText(idx);
 		const auto skin = Skin::source(name);
 		d->ui.skin_path->setText(skin.absolutePath());
-		d->preview->setSource(QUrl::fromLocalFile(skin.absoluteFilePath()));
 	}
 }
 
