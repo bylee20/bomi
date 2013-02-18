@@ -719,6 +719,7 @@ void MainWindow::openFromFileManager(const Mrl &mrl) {
 void MainWindow::exit() {
 	static bool done = false;
 	if (!done) {
+		cApp.setScreensaverDisabled(false);
 #ifndef Q_OS_MAC
 		d->tray->hide();
 		delete d->tray;

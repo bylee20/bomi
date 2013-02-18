@@ -8,6 +8,9 @@ moc_*.cpp
 a.out
 *-build-*
 build/*
+arch/pkg
+arch/src
+arch/*.tar.xz
 src/build-interm*
 src/libav/.config
 src/libav/.version
