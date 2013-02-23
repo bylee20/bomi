@@ -41,9 +41,9 @@ extern const vd_functions_t mpcodecs_vd_ffmpeg;
 /* Please do not add any new decoders here. If you want to implement a new
  * decoder, add it to libavcodec, except for wrappers around external
  * libraries and decoders requiring binary support. */
-
+vd_functions_t cmplayer_vd_hwacc;
 const vd_functions_t * const mpcodecs_vd_drivers[] = {
-    &mpcodecs_vd_ffmpeg,
+    &mpcodecs_vd_ffmpeg, &cmplayer_vd_hwacc,
     /* Please do not add any new decoders here. If you want to implement a new
      * decoder, add it to libavcodec, except for wrappers around external
      * libraries and decoders requiring binary support. */

@@ -13,7 +13,7 @@ CXX ?= g++
 ifeq ($(os),osx)
 	QMAKE ?= /Developer/Tools/Qt/qmake -spec macx-g++
 	MACDEPLOYQT ?= /Developer/Tools/Qt/macdeployqt
-	LRELEASE ?= /Developer/Tools/Qt/lrelease
+	LRELEASE ?= /Users/xylosper/Qt5.0.1/5.0.1/clang_64/bin/lrelease
 	cmplayer_exec := CMPlayer
 	cmplayer_exec_path := build/$(cmplayer_exec).app/Contents/MacOS
 else
