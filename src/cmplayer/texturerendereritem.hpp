@@ -38,7 +38,7 @@ protected:
 private:
 	QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) final;
 	struct Shader;	struct Material;	struct Node;	struct Data;
-	friend class Node;
+	friend struct Node;
 	int m_count = 0;
 	Data *d;
 };

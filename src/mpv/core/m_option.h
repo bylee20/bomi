@@ -118,27 +118,6 @@ typedef struct m_obj_settings {
  */
 extern const m_option_type_t m_option_type_obj_settings_list;
 
-// Extra definition needed for \ref m_option_type_obj_presets options.
-typedef struct {
-    // Description of the struct holding the presets.
-    const struct m_struct_st *in_desc;
-    // Description of the struct that should be set by the presets.
-    const struct m_struct_st *out_desc;
-    // Pointer to an array of structs defining the various presets.
-    const void *presets;
-    // Offset of the preset's name inside the in_struct.
-    void *name_off;
-} m_obj_presets_t;
-
-// Set several fields in a struct at once.
-/** For this two struct descriptions are used. One for the struct holding the
- *  preset and one for the struct beeing set. Every field present in both
- *  structs will be copied from the preset struct to the destination one.
- *  The option priv field (\ref m_option::priv) must point to a correctly
- *  filled \ref m_obj_presets_t.
- */
-extern const m_option_type_t m_option_type_obj_presets;
-
 // Parse an URL into a struct.
 /** The option priv field (\ref m_option::priv) must point to a
  *  \ref m_struct_st describing which fields of the URL must be used.
@@ -196,7 +175,6 @@ struct m_sub_options {
 #define CONF_TYPE_AFMT          (&m_option_type_afmt)
 #define CONF_TYPE_SPAN          (&m_option_type_span)
 #define CONF_TYPE_OBJ_SETTINGS_LIST (&m_option_type_obj_settings_list)
-#define CONF_TYPE_OBJ_PRESETS   (&m_option_type_obj_presets)
 #define CONF_TYPE_CUSTOM_URL    (&m_option_type_custom_url)
 #define CONF_TYPE_OBJ_PARAMS    (&m_option_type_obj_params)
 #define CONF_TYPE_TIME          (&m_option_type_time)
@@ -355,16 +333,11 @@ struct m_option {
 // The option should be set during command line pre-parsing
 #define M_OPT_PRE_PARSE         (1 << 6)
 
-// For options with children, add all children as top-level arguments
-// (e.g. "--parent=child=value" becomes "--parent-child=value")
-#define M_OPT_PREFIXED          (1 << 8)
-
-// Similar to M_OPT_PREFIXED, but drop the prefix.
-// (e.g. "--parent=child=value" becomes "--child=value")
-#define M_OPT_MERGE             (1 << 9)
-
 // See M_OPT_TYPE_OPTIONAL_PARAM.
 #define M_OPT_OPTIONAL_PARAM    (1 << 10)
+
+// Parse C-style escapes like "\n" (for CONF_TYPE_STRING only)
+#define M_OPT_PARSE_ESCAPES     (1 << 11)
 
 // These are kept for compatibility with older code.
 #define CONF_MIN                M_OPT_MIN
@@ -552,10 +525,12 @@ static inline void m_option_free(const m_option_t *opt, void *dst)
 #define OPT_TRACKCHOICE(name, var) OPT_CHOICE_OR_INT(name, var, 0, 0, 8190, ({"no", -2}, {"auto", -1}))
 
 // subconf must have the type struct m_sub_options.
-// flagv should be M_OPT_MERGE or M_OPT_FLATTEN.
+// All sub-options are prefixed with "name-" and are added to the current
+// (containing) option list.
+// If name is "", add the sub-options directly instead.
 // varname refers to the field, that must be a pointer to a field described by
 // the subconf struct.
-#define OPT_SUBSTRUCT(varname, subconf, flagv) OPT_GENERAL("-", varname, flagv, .type = &m_option_type_subconfig_struct, .priv = (void*)&subconf)
+#define OPT_SUBSTRUCT(name, varname, subconf, flagv) OPT_GENERAL(name, varname, flagv, .type = &m_option_type_subconfig_struct, .priv = (void*)&subconf)
 
 #define OPT_BASE_STRUCT struct MPOpts
 

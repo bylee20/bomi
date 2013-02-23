@@ -200,7 +200,12 @@ int m_config_parse_config_file(m_config_t *config, const char *conffile)
         bstr bopt = bstr0(opt);
         bstr bparam = bstr0(param);
 
-        tmp = m_config_map_option(config, &bopt, &bparam, false);
+        if (profile && bstr_equals0(bopt, "profile-desc")) {
+            m_profile_set_desc(profile, param);
+            goto nextline;
+        }
+
+        tmp = m_config_option_requires_param(config, bopt);
         if (tmp > 0 && !param_set)
             tmp = M_OPT_MISSING_PARAM;
         if (tmp < 0) {
@@ -212,11 +217,7 @@ int m_config_parse_config_file(m_config_t *config, const char *conffile)
         }
 
         if (profile) {
-            if (!strcmp(opt, "profile-desc"))
-                m_profile_set_desc(profile, param), tmp = 1;
-            else
-                tmp = m_config_set_profile_option(config, profile,
-                                                  bopt, bparam);
+            tmp = m_config_set_profile_option(config, profile, bopt, bparam);
         } else {
             tmp = m_config_set_option_ext(config, bopt, bparam,
                                           M_SETOPT_FROM_CONFIG_FILE);

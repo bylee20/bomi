@@ -14,7 +14,7 @@ with shift.
 
 A list of special keys can be obtained with
 
-| **mpv** --input=keylist
+| **mpv** --input-keylist
 
 In general, keys can be combined with ``Shift``, ``Ctrl`` and ``Alt``:
 
@@ -23,7 +23,7 @@ In general, keys can be combined with ``Shift``, ``Ctrl`` and ``Alt``:
 **mpv** can be started in input test mode, which displays key bindings and the
 commands they're bound to on the OSD, instead of running the commands:
 
-| **mpv** --input=test --demuxer=rawvideo --rawvideo=w=1280:h=720 /dev/zero
+| **mpv** --input-test --demuxer=rawvideo --rawvideo=w=1280:h=720 /dev/zero
 
 (Commands which normally close the player will not work in this mode, and you
 must kill **mpv** externally to make it exit.)
@@ -51,7 +51,7 @@ List of input commands
 ignore
     Use this to "block" keys that should be unbound, and do nothing. Useful for
     disabling default bindings, without disabling all bindings with
-    ``--input=default-bindings=no``.
+    ``--no-input-default-bindings``.
 
 seek <seconds> [relative|absolute|absolute-percent|- [default-precise|exact|keyframes]]
     Change the playback position. By default, seeks by a relative amount of
@@ -278,6 +278,7 @@ angle                       x current DVD angle
 metadata                      metadata key/value pairs
 metadata/<key>                value of metadata entry <key>
 pause                       x pause status (bool)
+cache                         network cache fill state (0-100)
 pts-association-mode        x see ``--pts-association-mode``
 hr-seek                     x see ``--hr-seek``
 volume                      x current volume (0-100)

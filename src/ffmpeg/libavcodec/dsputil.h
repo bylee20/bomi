@@ -155,7 +155,6 @@ typedef struct DSPContext {
     void (*put_signed_pixels_clamped)(const int16_t *block/*align 16*/, uint8_t *pixels/*align 8*/, int line_size);
     void (*add_pixels_clamped)(const int16_t *block/*align 16*/, uint8_t *pixels/*align 8*/, int line_size);
     void (*add_pixels8)(uint8_t *pixels, int16_t *block, int line_size);
-    void (*add_pixels4)(uint8_t *pixels, int16_t *block, int line_size);
     int (*sum_abs_dctelem)(int16_t *block/*align 16*/);
     /**
      * translational global motion compensation.
@@ -404,11 +403,5 @@ void ff_dsputil_init_sh4(DSPContext* c, AVCodecContext *avctx);
 void ff_dsputil_init_vis(DSPContext* c, AVCodecContext *avctx);
 
 void ff_dsputil_init_dwt(DSPContext *c);
-
-#if (ARCH_ARM && HAVE_NEON) || ARCH_PPC || HAVE_MMX
-#   define STRIDE_ALIGN 16
-#else
-#   define STRIDE_ALIGN 8
-#endif
 
 #endif /* AVCODEC_DSPUTIL_H */

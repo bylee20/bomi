@@ -84,7 +84,6 @@ static const uint8_t is_audio_command[10] = { 1, 1, 1, 1, 0, 0, 0, 1, 1, 0 };
 
 typedef struct ShortenContext {
     AVCodecContext *avctx;
-    AVFrame frame;
     GetBitContext gb;
 
     int min_framesize, max_framesize;
@@ -117,9 +116,6 @@ static av_cold int shorten_decode_init(AVCodecContext * avctx)
 {
     ShortenContext *s = avctx->priv_data;
     s->avctx = avctx;
-
-    avcodec_get_frame_defaults(&s->frame);
-    avctx->coded_frame = &s->frame;
 
     return 0;
 }
@@ -343,6 +339,7 @@ static int read_header(ShortenContext *s)
     s->channels = get_uint(s, CHANSIZE);
     if (s->channels <= 0 || s->channels > MAX_CHANNELS) {
         av_log(s->avctx, AV_LOG_ERROR, "too many channels: %d\n", s->channels);
+        s->channels = 0;
         return AVERROR_INVALIDDATA;
     }
     s->avctx->channels = s->channels;
@@ -352,7 +349,7 @@ static int read_header(ShortenContext *s)
         int skip_bytes, blocksize;
 
         blocksize = get_uint(s, av_log2(DEFAULT_BLOCK_SIZE));
-        if (!blocksize || blocksize > MAX_BLOCKSIZE) {
+        if (!blocksize || blocksize > (unsigned)MAX_BLOCKSIZE) {
             av_log(s->avctx, AV_LOG_ERROR, "invalid or unsupported block size: %d\n",
                    blocksize);
             return AVERROR(EINVAL);
@@ -406,6 +403,7 @@ static int read_header(ShortenContext *s)
 static int shorten_decode_frame(AVCodecContext *avctx, void *data,
                                 int *got_frame_ptr, AVPacket *avpkt)
 {
+    AVFrame *frame     = data;
     const uint8_t *buf = avpkt->data;
     int buf_size = avpkt->size;
     ShortenContext *s = avctx->priv_data;
@@ -501,7 +499,7 @@ static int shorten_decode_frame(AVCodecContext *avctx, void *data,
                         av_log(avctx, AV_LOG_ERROR, "Increasing block size is not supported\n");
                         return AVERROR_PATCHWELCOME;
                     }
-                    if (!blocksize || blocksize > MAX_BLOCKSIZE) {
+                    if (!blocksize || blocksize > (unsigned)MAX_BLOCKSIZE) {
                         av_log(avctx, AV_LOG_ERROR, "invalid or unsupported "
                                "block size: %d\n", blocksize);
                         return AVERROR(EINVAL);
@@ -584,15 +582,15 @@ static int shorten_decode_frame(AVCodecContext *avctx, void *data,
                 int chan;
 
                 /* get output buffer */
-                s->frame.nb_samples = s->blocksize;
-                if ((ret = ff_get_buffer(avctx, &s->frame)) < 0) {
+                frame->nb_samples = s->blocksize;
+                if ((ret = ff_get_buffer(avctx, frame)) < 0) {
                     av_log(avctx, AV_LOG_ERROR, "get_buffer() failed\n");
                     return ret;
                 }
 
                 for (chan = 0; chan < s->channels; chan++) {
-                    samples_u8  = ((uint8_t **)s->frame.extended_data)[chan];
-                    samples_s16 = ((int16_t **)s->frame.extended_data)[chan];
+                    samples_u8  = ((uint8_t **)frame->extended_data)[chan];
+                    samples_s16 = ((int16_t **)frame->extended_data)[chan];
                     for (i = 0; i < s->blocksize; i++) {
                         switch (s->internal_ftype) {
                         case TYPE_U8:
@@ -606,9 +604,7 @@ static int shorten_decode_frame(AVCodecContext *avctx, void *data,
                     }
                 }
 
-
-                *got_frame_ptr   = 1;
-                *(AVFrame *)data = s->frame;
+                *got_frame_ptr = 1;
             }
         }
     }

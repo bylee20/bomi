@@ -28,7 +28,6 @@ void (*mpctx_play_started)(struct MPContext *) = nullptr;
 inline void quit_player(struct MPContext *mpctx, enum exit_reason how) {exit_player(mpctx, how, 0);}
 inline void mpctx_delete(struct MPContext *mpctx) {quit_player(mpctx, EXIT_NONE);}
 extern int mpv_init(struct MPContext *mpctx, int argc, char **argv);
-extern double get_wakeup_period(struct MPContext *mpctx);
 extern int play_next_file();
 extern int run_playback();
 extern void idle_loop(struct MPContext *mpctx);

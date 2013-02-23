@@ -4,7 +4,8 @@
 #define ITEM(row) (static_cast<SubtitleComponentModel::Item*>(at(row)))
 #define C_ITEM(row) (static_cast<const SubtitleComponentModel::Item*>(at(row)))
 
-struct SubtitleComponentModel::Item : public ListModel::Item {
+class SubtitleComponentModel::Item : public ListModel::Item {
+public:
 	Item(): m_end(-1) {}
 	Item(c_iterator it): m_end(-1), m_it(it) {}
 	int start() const {return m_it.key();}

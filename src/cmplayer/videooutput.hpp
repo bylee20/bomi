@@ -20,6 +20,7 @@ public:
 	const VideoFormat &format() const;
 	void setRenderer(VideoRendererItem *renderer);
 	static const vo_driver &getDriver();
+	void quit();
 signals:
 	void formatChanged(const VideoFormat &format);
 private slots:

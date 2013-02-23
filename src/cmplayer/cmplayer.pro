@@ -25,40 +25,45 @@ LIB_DIR = $${DESTDIR}/lib
 }
 
 macx {
-    QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
-    QMAKE_CXXFLAGS_X86_64 += -m64
-    QMAKE_CXX = /opt/local/bin/g++-mp-4.8
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    #QMAKE_CXXFLAGS -= "-stdlib=libc++" "-std=c++11"
+
+    QMAKE_CXXFLAGS -= -mmacosx-version-min=10.6
+    #QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
+    #QMAKE_CXXFLAGS_X86_64 += -m64
+#    QMAKE_CXX = /opt/local/bin/gcc
+    QMAKE_CXX = clang++ -std=c++11 -stdlib=libc++
+    #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
     QMAKE_MAC_SDK = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
+    BREW = /usr/local/Cellar
     LIBS +=  $${DESTDIR}/lib/libavcodec.a \
         $${LIB_DIR}/libavformat.a $${LIB_DIR}/libavutil.a \
         $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
         $${LIB_DIR}/libchardet.a \
-        -L/opt/local/lib \
-        -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
+	-L/usr/local/lib -liconv -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
-        -framework IOKit -framework Carbon
+	-framework IOKit -framework Carbon
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
+    CONFIG += c++11
     QT += dbus gui-private
     TARGET = cmplayer
     LIBS += -lX11 -lxcb \
         -L$${LIB_DIR} -lchardet \
-        -lopenal -lasound -ldl -lva -lva-glx -lcmplayer_mpv -lcmplayer_av
+	-lopenal -lasound -ldl -lva -lva-glx -lcmplayer_mpv -lcmplayer_av
     HEADERS += app_x11.hpp mpv-vaapi.hpp
     SOURCES += app_x11.cpp mpv-vaapi.cpp
 }
 
-LIBS += -lmpg123 -lquvi -ldvdread -lbz2 -lcdio_paranoia -lcdio_cdda -lcdio -lz
+LIBS += -lmpg123 -lquvi -ldvdread -lbz2 -lcdio -lz -lcdio_paranoia -lcdio_cdda
 
 INCLUDEPATH += ../mpv ../../build/include
 
-QMAKE_CC = "gcc -std=c99 -ffast-math -w"
+#QMAKE_CC = "/opt/local/bin/gcc -std=c99 -ffast-math -w"
 
 QMAKE_CXXFLAGS += -std=c++11
 

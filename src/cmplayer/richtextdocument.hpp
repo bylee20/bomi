@@ -5,7 +5,8 @@
 #include "richtextblock.hpp"
 #include "richtexthelper.hpp"
 
-struct RichTextDocument : public RichTextHelper {
+class RichTextDocument : public RichTextHelper {
+public:
 	RichTextDocument();
 	RichTextDocument(const QString &text);
 	RichTextDocument(const RichTextDocument &rhs);

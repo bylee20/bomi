@@ -179,7 +179,7 @@ Follows a BNF description for the filtergraph syntax:
 @var{LINKLABEL}        ::= "[" @var{NAME} "]"
 @var{LINKLABELS}       ::= @var{LINKLABEL} [@var{LINKLABELS}]
 @var{FILTER_ARGUMENTS} ::= sequence of chars (eventually quoted)
-@var{FILTER}           ::= [@var{LINKNAMES}] @var{NAME} ["=" @var{ARGUMENTS}] [@var{LINKNAMES}]
+@var{FILTER}           ::= [@var{LINKLABELS}] @var{NAME} ["=" @var{FILTER_ARGUMENTS}] [@var{LINKLABELS}]
 @var{FILTERCHAIN}      ::= @var{FILTER} [,@var{FILTERCHAIN}]
 @var{FILTERGRAPH}      ::= [sws_flags=@var{flags};] @var{FILTERCHAIN} [;@var{FILTERGRAPH}]
 @end example
@@ -1778,21 +1778,142 @@ threshold, and defaults to 98.
 @var{threshold} is the threshold below which a pixel value is
 considered black, and defaults to 32.
 
+@section blend
+
+Blend two video frames into each other.
+
+It takes two input streams and outputs one stream, the first input is the
+"top" layer and second input is "bottom" layer.
+Output terminates when shortest input terminates.
+
+This filter accepts a list of options in the form of @var{key}=@var{value}
+pairs separated by ":". A description of the accepted options follows.
+
+@table @option
+@item c0_mode
+@item c1_mode
+@item c2_mode
+@item c3_mode
+@item all_mode
+Set blend mode for specific pixel component or all pixel components in case
+of @var{all_mode}. Default value is @code{normal}.
+
+Available values for component modes are:
+@table @samp
+@item addition
+@item and
+@item average
+@item burn
+@item darken
+@item difference
+@item divide
+@item dodge
+@item exclusion
+@item hardlight
+@item lighten
+@item multiply
+@item negation
+@item normal
+@item or
+@item overlay
+@item phoenix
+@item pinlight
+@item reflect
+@item screen
+@item softlight
+@item subtract
+@item vividlight
+@item xor
+@end table
+
+@item c0_opacity
+@item c1_opacity
+@item c2_opacity
+@item c3_opacity
+@item all_opacity
+Set blend opacity for specific pixel component or all pixel components in case
+of @var{all_expr}. Only used in combination with pixel component blend modes.
+
+@item c0_expr
+@item c1_expr
+@item c2_expr
+@item c3_expr
+@item all_expr
+Set blend expression for specific pixel component or all pixel components in case
+of @var{all_expr}. Note that related mode options will be ignored if those are set.
+
+The expressions can use the following variables:
+
+@table @option
+@item X
+@item Y
+the coordinates of the current sample
+
+@item W
+@item H
+the width and height of currently filtered plane
+
+@item SW
+@item SH
+Width and height scale depending on the currently filtered plane. It is the
+ratio between the corresponding luma plane number of pixels and the current
+plane ones. E.g. for YUV4:2:0 the values are @code{1,1} for the luma plane, and
+@code{0.5,0.5} for chroma planes.
+
+@item T
+Time of the current frame, expressed in seconds.
+
+@item TOP, A
+Value of pixel component at current location for first video frame (top layer).
+
+@item BOTTOM, B
+Value of pixel component at current location for second video frame (bottom layer).
+@end table
+@end table
+
+@itemize
+
+@item
+Apply transition from bottom layer to top layer in first 10 seconds:
+@example
+blend=all_expr='A*(if(gte(T,10),1,T/10))+B*(1-(if(gte(T,10),1,T/10)))'
+@end example
+
+@item
+Apply 1x1 checkerboard effect:
+@example
+blend=all_expr='if(eq(mod(X,2),mod(Y,2)),A,B)'
+@end example
+@end itemize
+
 @section boxblur
 
 Apply boxblur algorithm to the input video.
 
-This filter accepts the parameters:
-@var{luma_radius}:@var{luma_power}:@var{chroma_radius}:@var{chroma_power}:@var{alpha_radius}:@var{alpha_power}
+The filter accepts parameters as a list of @var{key}=@var{value}
+pairs, separated by ":". If the key of the first options is omitted,
+the arguments are interpreted according to the syntax
+@option{luma_radius}:@option{luma_power}:@option{chroma_radius}:@option{chroma_power}:@option{alpha_radius}:@option{alpha_power}.
 
-Chroma and alpha parameters are optional, if not specified they default
-to the corresponding values set for @var{luma_radius} and
-@var{luma_power}.
+A description of the accepted options follows.
 
-@var{luma_radius}, @var{chroma_radius}, and @var{alpha_radius} represent
-the radius in pixels of the box used for blurring the corresponding
-input plane. They are expressions, and can contain the following
-constants:
+@table @option
+@item luma_radius, lr
+@item chroma_radius, cr
+@item alpha_radius, ar
+Set an expression for the box radius in pixels used for blurring the
+corresponding input plane.
+
+The radius value must be a non-negative number, and must not be
+greater than the value of the expression @code{min(w,h)/2} for the
+luma and alpha planes, and of @code{min(cw,ch)/2} for the chroma
+planes.
+
+Default value for @option{luma_radius} is "2". If not specified,
+@option{chroma_radius} and @option{alpha_radius} default to the
+corresponding value set for @option{luma_radius}.
+
+The expressions can contain the following constants:
 @table @option
 @item w, h
 the input width and height in pixels
@@ -1805,18 +1926,22 @@ horizontal and vertical chroma subsample values. For example for the
 pixel format "yuv422p" @var{hsub} is 2 and @var{vsub} is 1.
 @end table
 
-The radius must be a non-negative number, and must not be greater than
-the value of the expression @code{min(w,h)/2} for the luma and alpha planes,
-and of @code{min(cw,ch)/2} for the chroma planes.
+@item luma_power, lp
+@item chroma_power, cp
+@item alpha_power, ap
+Specify how many times the boxblur filter is applied to the
+corresponding plane.
 
-@var{luma_power}, @var{chroma_power}, and @var{alpha_power} represent
-how many times the boxblur filter is applied to the corresponding
-plane.
+Default value for @option{luma_power} is 2. If not specified,
+@option{chroma_power} and @option{alpha_power} default to the
+corresponding value set for @option{luma_power}.
 
-Some examples follow:
+A value of 0 will disable the effect.
+@end table
+
+Some examples follow.
 
 @itemize
-
 @item
 Apply a boxblur filter with luma, chroma, and alpha radius
 set to 2:
@@ -1825,17 +1950,16 @@ boxblur=2:1
 @end example
 
 @item
-Set luma radius to 2, alpha and chroma radius to 0
+Set luma radius to 2, alpha and chroma radius to 0:
 @example
-boxblur=2:1:0:0:0:0
+boxblur=2:1:cr=0:ar=0
 @end example
 
 @item
-Set luma and chroma radius to a fraction of the video dimension
+Set luma and chroma radius to a fraction of the video dimension:
 @example
 boxblur=min(h\,w)/10:1:min(cw\,ch)/10:1
 @end example
-
 @end itemize
 
 @section colormatrix
@@ -2063,17 +2187,21 @@ playback.
 
 @section decimate
 
-This filter drops frames that do not differ greatly from the previous
-frame in order to reduce framerate.  The main use of this filter is
-for very-low-bitrate encoding (e.g. streaming over dialup modem), but
-it could in theory be used for fixing movies that were
-inverse-telecined incorrectly.
+Drop frames that do not differ greatly from the previous frame in
+order to reduce framerate.
 
-It accepts the following parameters:
-@var{max}:@var{hi}:@var{lo}:@var{frac}.
+The main use of this filter is for very-low-bitrate encoding
+(e.g. streaming over dialup modem), but it could in theory be used for
+fixing movies that were inverse-telecined incorrectly.
+
+The filter accepts parameters as a list of @var{key}=@var{value}
+pairs, separated by ":". If the key of the first options is omitted,
+the arguments are interpreted according to the syntax:
+@option{max}:@option{hi}:@option{lo}:@option{frac}.
+
+A description of the accepted options follows.
 
 @table @option
-
 @item max
 Set the maximum number of consecutive frames which can be dropped (if
 positive), or the minimum interval between dropped frames (if
@@ -2082,20 +2210,22 @@ number of previous sequentially dropped frames.
 
 Default value is 0.
 
-@item hi, lo, frac
+@item hi
+@item lo
+@item frac
 Set the dropping threshold values.
 
-Values for @var{hi} and @var{lo} are for 8x8 pixel blocks and
+Values for @option{hi} and @option{lo} are for 8x8 pixel blocks and
 represent actual pixel value differences, so a threshold of 64
 corresponds to 1 unit of difference for each pixel, or the same spread
 out differently over the block.
 
 A frame is a candidate for dropping if no 8x8 blocks differ by more
-than a threshold of @var{hi}, and if no more than @var{frac} blocks (1
-meaning the whole image) differ by more than a threshold of @var{lo}.
+than a threshold of @option{hi}, and if no more than @option{frac} blocks (1
+meaning the whole image) differ by more than a threshold of @option{lo}.
 
-Default value for @var{hi} is 64*12, default value for @var{lo} is
-64*5, and default value for @var{frac} is 0.33.
+Default value for @option{hi} is 64*12, default value for @option{lo} is
+64*5, and default value for @option{frac} is 0.33.
 @end table
 
 @section delogo
@@ -2224,10 +2354,12 @@ specified file.
 
 Draw a colored box on the input image.
 
-The filter accepts parameters as a list of @var{key}=@var{value} pairs,
-separated by ":".
+The filter accepts parameters as a list of @var{key}=@var{value}
+pairs, separated by ":". If the key of the first options is omitted,
+the arguments are interpreted according to the syntax
+@option{x}:@option{y}:@option{width}:@option{height}:@option{color}:@option{thickness}.
 
-The description of the accepted parameters follows.
+A description of the accepted options follows.
 
 @table @option
 @item x, y
@@ -2247,10 +2379,6 @@ video with inverted luma.
 @item thickness, t
 Set the thickness of the box edge. Default value is @code{4}.
 @end table
-
-If the key of the first options is omitted, the arguments are
-interpreted according to the syntax
-@var{x}:@var{y}:@var{width}:@var{height}:@var{color}:@var{thickness}.
 
 Some examples follow:
 @itemize
@@ -3170,29 +3298,33 @@ Set mode for @code{waveform}. Can be either @code{row}, or @code{column}.
 Default is @code{row}.
 
 @item display_mode
-Set display mode for @code{waveform}.
+Set display mode for @code{waveform} and @code{levels}.
 It accepts the following values:
 @table @samp
 @item parade
-Display separate waveforms for the color components side by side in
-@code{row} mode or one below other in @code{column} mode.
+Display separate graph for the color components side by side in
+@code{row} waveform mode or one below other in @code{column} waveform mode
+for @code{waveform} histogram mode. For @code{levels} histogram mode
+per color component graphs are placed one bellow other.
 
-In this display mode it is easy to spot color casts in the highlights and
-shadows of an image, by comparing the contours of the top and the bottom
-of each waveform. Since whites, grays, and blacks are characterized by
+This display mode in @code{waveform} histogram mode makes it easy to spot
+color casts in the highlights and shadows of an image, by comparing the
+contours of the top and the bottom of each waveform.
+Since whites, grays, and blacks are characterized by
 exactly equal amounts of red, green, and blue, neutral areas of the
-picture should display three waveforms of roughly equal height.
+picture should display three waveforms of roughly equal width/height.
 If not, the correction is easy to make by making adjustments to level the
 three waveforms.
 
 @item overlay
 Presents information that's identical to that in the @code{parade}, except
-that the waveforms representing color components are superimposed directly
+that the graphs representing color components are superimposed directly
 over one another.
 
-This display mode can make it easier to spot the relative differences or
-similarities in overlapping areas of the color components that are supposed
-to be identical, such as neutral whites, grays, or blacks.
+This display mode in @code{waveform} histogram mode can make it easier to spot
+the relative differences or similarities in overlapping areas of the color
+components that are supposed to be identical, such as neutral whites, grays,
+or blacks.
 @end table
 Default is @code{parade}.
 @end table
@@ -3352,8 +3484,48 @@ If a parameter is omitted, it is kept at its current value.
 
 @section idet
 
-Interlaceing detect filter. This filter tries to detect if the input is
-interlaced or progressive. Top or bottom field first.
+Detect video interlacing type.
+
+This filter tries to detect if the input is interlaced or progressive,
+top or bottom field first.
+
+@section il
+
+Deinterleave or interleave fields.
+
+This filter allows to process interlaced images fields without
+deinterlacing them. Deinterleaving splits the input frame into 2
+fields (so called half pictures). Odd lines are moved to the top
+half of the output image, even lines to the bottom half.
+You can process (filter) them independently and then re-interleave them.
+
+It accepts a list of options in the form of @var{key}=@var{value} pairs
+separated by ":". A description of the accepted options follows.
+
+@table @option
+@item luma_mode, l
+@item chroma_mode, s
+@item alpha_mode, a
+Available values for @var{luma_mode}, @var{chroma_mode} and
+@var{alpha_mode} are:
+
+@table @samp
+@item none
+Do nothing.
+
+@item deinterleave, d
+Deinterleave fields, placing one above the other.
+
+@item interleave, i
+Interleave fields. Reverse the effect of deinterleaving.
+@end table
+Default value is @code{none}.
+
+@item luma_swap, ls
+@item chroma_swap, cs
+@item alpha_swap, as
+Swap luma/chroma/alpha fields. Exchange even & odd lines. Default value is @code{0}.
+@end table
 
 @section kerndeint
 
@@ -3581,7 +3753,6 @@ The list of the currently supported filters follows:
 @item dint
 @item divtc
 @item down3dright
-@item dsize
 @item eq2
 @item eq
 @item fil
@@ -3589,9 +3760,7 @@ The list of the currently supported filters follows:
 @item harddup
 @item ilpack
 @item ivtc
-@item kerndeint
 @item mcdeint
-@item noise
 @item ow
 @item perspective
 @item phase
@@ -3600,11 +3769,9 @@ The list of the currently supported filters follows:
 @item qp
 @item sab
 @item softpulldown
-@item softskip
 @item spp
 @item telecine
 @item tinterlace
-@item unsharp
 @item uspp
 @end table
 
@@ -3618,12 +3785,6 @@ Some examples follow:
 Adjust gamma, brightness, contrast:
 @example
 mp=eq2=1.0:2:0.5
-@end example
-
-@item
-Add temporal noise to input video:
-@example
-mp=noise=20t
 @end example
 @end itemize
 
@@ -3652,6 +3813,57 @@ noformat=yuv420p,vflip
 
 # convert the input video to any of the formats not contained in the list
 noformat=yuv420p:yuv444p:yuv410p
+@end example
+
+@section noise
+
+Add noise on video input frame.
+
+This filter accepts a list of options in the form of @var{key}=@var{value}
+pairs separated by ":". A description of the accepted options follows.
+
+@table @option
+@item all_seed
+@item c0_seed
+@item c1_seed
+@item c2_seed
+@item c3_seed
+Set noise seed for specific pixel component or all pixel components in case
+of @var{all_seed}. Default value is @code{123457}.
+
+@item all_strength, as
+@item c0_strength, c0s
+@item c1_strength, c1s
+@item c2_strength, c2s
+@item c3_strength, c3s
+Set noise strength for specific pixel component or all pixel components in case
+@var{all_strength}. Default value is @code{0}. Allowed range is [0, 100].
+
+@item all_flags, af
+@item c0_flags, c0f
+@item c1_flags, c1f
+@item c2_flags, c2f
+@item c3_flags, c3f
+Set pixel component flags or set flags for all components if @var{all_flags}.
+Available values for component flags are:
+@table @samp
+@item a
+averaged temporal noise (smoother)
+@item p
+mix random noise with a (semi)regular pattern
+@item q
+higher quality (slightly better looking, slightly slower)
+@item t
+temporal noise (noise pattern changes between frames)
+@item u
+uniform noise (gaussian otherwise)
+@end table
+@end table
+
+Some examples follow:
+@example
+Add temporal and uniform noise to input video:
+noise=alls=20:allf=t+u
 @end example
 
 @section null
@@ -3790,9 +4002,31 @@ overlay input width and height
 same as @var{overlay_w} and @var{overlay_h}
 @end table
 
+@item format
+Set the format for the output video.
+
+It accepts the following values:
+@table @samp
+@item yuv420
+force YUV420 output
+
+@item yuv444
+force YUV444 output
+
 @item rgb
+force RGB output
+@end table
+
+Default value is @samp{yuv420}.
+
+@item rgb @emph{(deprecated)}
 If set to 1, force the filter to accept inputs in the RGB
-color space. Default value is 0.
+color space. Default value is 0. This option is deprecated, use
+@option{format} instead.
+
+@item shortest
+If set to 1, force the output to terminate when the shortest input
+terminates. Default value is 0.
 @end table
 
 Be aware that frames are taken from each input video in timestamp
@@ -3850,6 +4084,18 @@ ffplay input.avi -vf 'split[a][b]; [a]pad=iw*2:ih[src]; [b]deshake[filt]; [src][
 The above command is the same as:
 @example
 ffplay input.avi -vf 'split[b], pad=iw*2[src], [b]deshake, [src]overlay=w'
+@end example
+
+@item
+Compose output by putting two input videos side to side:
+@example
+ffmpeg -i left.avi -i right.avi -filter_complex "
+nullsrc=size=200x100 [background];
+[0:v] setpts=PTS-STARTPTS, scale=100x100 [left];
+[1:v] setpts=PTS-STARTPTS, scale=100x100 [right];
+[background][left]       overlay=shortest=1       [background+left];
+[background+left][right] overlay=shortest=1:x=100 [left+right]
+"
 @end example
 
 @item
@@ -4598,6 +4844,10 @@ Set the filename of the subtitle file to read. It must be specified.
 Specify the size of the original video, the video for which the ASS file
 was composed. Due to a misdesign in ASS aspect ratio arithmetic, this is
 necessary to correctly scale the fonts if the aspect ratio has been changed.
+
+@item charenc
+Set subtitles input character encoding. @code{subtitles} filter only. Only
+useful if not UTF-8.
 @end table
 
 If the first key is not specified, it is assumed that the first value
@@ -4646,43 +4896,6 @@ Useful for enlarging pixel art images without reducing sharpness.
 
 @section swapuv
 Swap U & V plane.
-
-@section il
-Deinterleave or interleave fields.
-
-This filter allows to process interlaced images fields without
-deinterlacing them. Deinterleaving splits the input frame into 2
-fields (so called half pictures). Odd lines are moved to the top
-half of the output image, even lines to the bottom half.
-You can process (filter) them independently and then re-interleave them.
-
-It accepts a list of options in the form of @var{key}=@var{value} pairs
-separated by ":". A description of the accepted options follows.
-
-@table @option
-@item luma_mode, l
-@item chroma_mode, s
-@item alpha_mode, a
-Available values for @var{luma_mode}, @var{chroma_mode} and
-@var{alpha_mode} are:
-
-@table @samp
-@item none
-Do nothing.
-
-@item deinterleave, d
-Deinterleave fields, placing one above the other.
-
-@item interleave, i
-Interleave fields. Reversing effect of deinterleave.
-@end table
-Default value is @code{none}.
-
-@item luma_swap, ls
-@item chroma_swap, cs
-@item alpha_swap, as
-Swap luma/chroma/alpha fields. Exchange even & odd lines. Default value is @code{0}.
-@end table
 
 @section thumbnail
 Select the most representative frame in a given sequence of consecutive frames.
@@ -4913,51 +5126,52 @@ transpose=1:portrait
 
 Sharpen or blur the input video.
 
-It accepts the following parameters:
+This filter accepts parameters as a list of @var{key}=@var{value} pairs,
+separated by ":".
+
+If the key of the first options is omitted, the arguments are
+interpreted according to the syntax:
 @var{luma_msize_x}:@var{luma_msize_y}:@var{luma_amount}:@var{chroma_msize_x}:@var{chroma_msize_y}:@var{chroma_amount}
 
-Negative values for the amount will blur the input video, while positive
-values will sharpen. All parameters are optional and default to the
-equivalent of the string '5:5:1.0:5:5:0.0'.
+A description of the accepted options follows.
 
 @table @option
+@item luma_msize_x, lx
+@item chroma_msize_x, cx
+Set the luma/chroma matrix horizontal size. It must be an odd integer
+between 3 and 63, default value is 5.
 
-@item luma_msize_x
-Set the luma matrix horizontal size. It can be an integer between 3
-and 13, default value is 5.
+@item luma_msize_y, ly
+@item chroma_msize_y, cy
+Set the luma/chroma matrix vertical size. It must be an odd integer
+between 3 and 63, default value is 5.
 
-@item luma_msize_y
-Set the luma matrix vertical size. It can be an integer between 3
-and 13, default value is 5.
+@item luma_amount, la
+@item chroma_amount, ca
+Set the luma/chroma effect strength. It can be a float number,
+reasonable values lay between -1.5 and 1.5.
 
-@item luma_amount
-Set the luma effect strength. It can be a float number between -2.0
-and 5.0, default value is 1.0.
+Negative values will blur the input video, while positive values will
+sharpen it, a value of zero will disable the effect.
 
-@item chroma_msize_x
-Set the chroma matrix horizontal size. It can be an integer between 3
-and 13, default value is 5.
-
-@item chroma_msize_y
-Set the chroma matrix vertical size. It can be an integer between 3
-and 13, default value is 5.
-
-@item chroma_amount
-Set the chroma effect strength. It can be a float number between -2.0
-and 5.0, default value is 0.0.
-
+Default value is 1.0 for @option{luma_amount}, 0.0 for
+@option{chroma_amount}.
 @end table
 
+Some examples follow:
+@itemize
+@item
+Apply strong luma sharpen effect:
 @example
-# Strong luma sharpen effect parameters
 unsharp=7:7:2.5
-
-# Strong blur of both luma and chroma parameters
-unsharp=7:7:-2:7:7:-2
-
-# Use the default values with @command{ffmpeg}
-ffmpeg -i in.avi -vf "unsharp" out.mp4
 @end example
+
+@item
+Apply strong blur of both luma and chroma parameters:
+@example
+unsharp=7:7:-2:7:7:-2
+@end example
+@end itemize
 
 @section vflip
 

@@ -6,7 +6,7 @@
 #include "subtitle.hpp"
 
 class RichTextDocument;		class SubtitleComponentModel;
-class SubtitleStyle;		class Margin;
+struct SubtitleStyle;		class Margin;
 
 class LoadedSubtitle {
 public:

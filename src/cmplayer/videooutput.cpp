@@ -42,7 +42,7 @@ struct VideoOutput::Data {
 	VideoFrame frame;
 	mp_osd_res osd;
 	PlayEngine *engine = nullptr;
-	bool flip = false;
+	bool flip = false, quit = false;
 	VideoRendererItem *renderer = nullptr;
 	bool formatChanged = false;
 };
@@ -73,7 +73,8 @@ const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
-int VideoOutput::config(struct vo */*vo*/, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t /*fmt*/) {
+int VideoOutput::config(struct vo */*vo*/, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
+	qDebug() << fmt << IMGFMT_420P;
 	return 0;
 }
 
@@ -112,14 +113,18 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 
 void VideoOutput::flipPage(struct vo *vo) {
 	Data *d = static_cast<VideoOutput*>(vo->priv)->d;
-	if (!d->flip)
+	if (!d->flip || d->quit)
 		return;
 	if (d->renderer) {
 		d->renderer->present(d->frame, d->formatChanged);
-		while (d->renderer->isFramePended())
+		while (d->renderer->isFramePended() && !d->quit)
 			PlayEngine::usleep(50);
 	}
 	d->flip = false;
+}
+
+void VideoOutput::quit() {
+	d->quit = true;
 }
 
 int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {

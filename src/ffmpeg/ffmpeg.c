@@ -1102,6 +1102,12 @@ static int reap_filters(void)
             case AVMEDIA_TYPE_AUDIO:
                 avfilter_copy_buf_props(filtered_frame, picref);
                 filtered_frame->pts = frame_pts;
+                if (!(ost->st->codec->codec->capabilities & CODEC_CAP_PARAM_CHANGE) &&
+                    ost->st->codec->channels != av_frame_get_channels(filtered_frame)) {
+                    av_log(NULL, AV_LOG_ERROR,
+                           "Audio filter graph output is not normalized and encoder does not support parameter changes\n");
+                    break;
+                }
                 do_audio_out(of->ctx, ost, filtered_frame);
                 break;
             default:
@@ -2206,7 +2212,7 @@ static int transcode_init(void)
                 codec->frame_size         = icodec->frame_size;
                 codec->audio_service_type = icodec->audio_service_type;
                 codec->block_align        = icodec->block_align;
-                if((codec->block_align == 1 || codec->block_align == 1152) && codec->codec_id == AV_CODEC_ID_MP3)
+                if((codec->block_align == 1 || codec->block_align == 1152 || codec->block_align == 576) && codec->codec_id == AV_CODEC_ID_MP3)
                     codec->block_align= 0;
                 if(codec->codec_id == AV_CODEC_ID_AC3)
                     codec->block_align= 0;

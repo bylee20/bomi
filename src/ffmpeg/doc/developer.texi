@@ -147,28 +147,40 @@ GCC statement expressions (@samp{(x = (@{ int y = 4; y; @})}).
 @end itemize
 
 @subsection Naming conventions
-All names are using underscores (_), not CamelCase. For example, @samp{avfilter_get_video_buffer} is
-a valid function name and @samp{AVFilterGetVideo} is not. The exception from this are type names, like
+All names should be composed with underscores (_), not CamelCase. For example,
+@samp{avfilter_get_video_buffer} is an acceptable function name and
+@samp{AVFilterGetVideo} is not. The exception from this are type names, like
 for example structs and enums; they should always be in the CamelCase
 
-
-There are following conventions for naming variables and functions:
+There are the following conventions for naming variables and functions:
 @itemize @bullet
 @item
 For local variables no prefix is required.
 @item
-For variables and functions declared as @code{static} no prefixes are required.
+For variables and functions declared as @code{static} no prefix is required.
 @item
-For variables and functions used internally by the library, @code{ff_} prefix
-should be used.
-For example, @samp{ff_w64_demuxer}.
+For variables and functions used internally by a library an @code{ff_}
+prefix should be used, e.g. @samp{ff_w64_demuxer}.
 @item
 For variables and functions used internally across multiple libraries, use
 @code{avpriv_}. For example, @samp{avpriv_aac_parse_header}.
 @item
-For exported names, each library has its own prefixes. Just check the existing
-code and name accordingly.
+Each library has its own prefix for public symbols, in addition to the
+commonly used @code{av_} (@code{avformat_} for libavformat,
+@code{avcodec_} for libavcodec, @code{swr_} for libswresample, etc).
+Check the existing code and choose names accordingly.
+Note that some symbols without these prefixes are also exported for
+retro-compatibility reasons. These exceptions are declared in the
+@code{lib<name>/lib<name>.v} files.
 @end itemize
+
+Furthermore, name space reserved for the system should not be invaded.
+Identifiers ending in @code{_t} are reserved by
+@url{http://pubs.opengroup.org/onlinepubs/007904975/functions/xsh_chap02_02.html#tag_02_02_02, POSIX}.
+Also avoid names starting with @code{__} or @code{_} followed by an uppercase
+letter as they are reserved by the C standard. Names starting with @code{_}
+are reserved at the file level and may not be used for externally visible
+symbols. If in doubt, just avoid names starting with @code{_} altogether.
 
 @subsection Miscellaneous conventions
 @itemize @bullet

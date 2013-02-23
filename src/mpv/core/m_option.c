@@ -35,6 +35,7 @@
 #include <libavutil/avstring.h>
 
 #include "talloc.h"
+#include "core/mp_common.h"
 #include "core/m_option.h"
 #include "core/mp_msg.h"
 #include "stream/url.h"
@@ -674,6 +675,39 @@ const m_option_type_t m_option_type_float = {
 #undef VAL
 #define VAL(x) (*(char **)(x))
 
+static char *unescape_string(void *talloc_ctx, bstr str)
+{
+    char *res = talloc_strdup(talloc_ctx, "");
+    while (str.len) {
+        bstr rest;
+        bool esc = bstr_split_tok(str, "\\", &str, &rest);
+        res = talloc_strndup_append_buffer(res, str.start, str.len);
+        if (esc) {
+            if (!mp_parse_escape(&rest, &res)) {
+                talloc_free(res);
+                return NULL;
+            }
+        }
+        str = rest;
+    }
+    return res;
+}
+
+static char *escape_string(char *str0)
+{
+    char *res = talloc_strdup(NULL, "");
+    bstr str = bstr0(str0);
+    while (str.len) {
+        bstr rest;
+        bool esc = bstr_split_tok(str, "\\", &str, &rest);
+        res = talloc_strndup_append_buffer(res, str.start, str.len);
+        if (esc)
+            res = talloc_strdup_append_buffer(res, "\\\\");
+        str = rest;
+    }
+    return res;
+}
+
 static int clamp_str(const m_option_t *opt, void *val)
 {
     char *v = VAL(val);
@@ -688,21 +722,39 @@ static int clamp_str(const m_option_t *opt, void *val)
 static int parse_str(const m_option_t *opt, struct bstr name,
                      struct bstr param, void *dst)
 {
-    if (param.start == NULL)
-        return M_OPT_MISSING_PARAM;
+    int r = 1;
+    void *tmp = talloc_new(NULL);
+
+    if (param.start == NULL) {
+        r = M_OPT_MISSING_PARAM;
+        goto exit;
+    }
+
+    if (opt->flags & M_OPT_PARSE_ESCAPES) {
+        char *res = unescape_string(tmp, param);
+        if (!res) {
+            mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+                   "Parameter has broken escapes: %.*s\n", BSTR_P(param));
+            r = M_OPT_INVALID;
+            goto exit;
+        }
+        param = bstr0(res);
+    }
 
     if ((opt->flags & M_OPT_MIN) && (param.len < opt->min)) {
         mp_msg(MSGT_CFGPARSER, MSGL_ERR,
                "Parameter must be >= %d chars: %.*s\n",
                (int) opt->min, BSTR_P(param));
-        return M_OPT_OUT_OF_RANGE;
+        r = M_OPT_OUT_OF_RANGE;
+        goto exit;
     }
 
     if ((opt->flags & M_OPT_MAX) && (param.len > opt->max)) {
         mp_msg(MSGT_CFGPARSER, MSGL_ERR,
                "Parameter must be <= %d chars: %.*s\n",
                (int) opt->max, BSTR_P(param));
-        return M_OPT_OUT_OF_RANGE;
+        r = M_OPT_OUT_OF_RANGE;
+        goto exit;
     }
 
     if (dst) {
@@ -710,13 +762,16 @@ static int parse_str(const m_option_t *opt, struct bstr name,
         VAL(dst) = bstrdup0(NULL, param);
     }
 
-    return 1;
-
+exit:
+    talloc_free(tmp);
+    return r;
 }
 
 static char *print_str(const m_option_t *opt, const void *val)
 {
-    return (val && VAL(val)) ? talloc_strdup(NULL, VAL(val)) : NULL;
+    bool need_escape = opt->flags & M_OPT_PARSE_ESCAPES;
+    char *s = val ? VAL(val) : NULL;
+    return s ? (need_escape ? escape_string(s) : talloc_strdup(NULL, s)) : NULL;
 }
 
 static void copy_str(const m_option_t *opt, void *dst, const void *src)
@@ -2133,82 +2188,6 @@ const m_option_type_t m_option_type_obj_settings_list = {
     .free  = free_obj_settings_list,
 };
 
-
-
-static int parse_obj_presets(const m_option_t *opt, struct bstr name,
-                             struct bstr param, void *dst)
-{
-    m_obj_presets_t *obj_p = (m_obj_presets_t *)opt->priv;
-    const m_struct_t *in_desc;
-    const m_struct_t *out_desc;
-    int s, i;
-    const unsigned char *pre;
-    char *pre_name = NULL;
-
-    if (!obj_p) {
-        mp_msg(MSGT_CFGPARSER, MSGL_ERR, "Option %.*s: Presets need a "
-               "pointer to a m_obj_presets_t in the priv field.\n",
-               BSTR_P(name));
-        return M_OPT_PARSER_ERR;
-    }
-
-    if (param.len == 0)
-        return M_OPT_MISSING_PARAM;
-
-    pre = obj_p->presets;
-    in_desc = obj_p->in_desc;
-    out_desc = obj_p->out_desc ? obj_p->out_desc : obj_p->in_desc;
-    s = in_desc->size;
-
-    if (!bstrcmp0(param, "help")) {
-        mp_msg(MSGT_CFGPARSER, MSGL_INFO, "Available presets for %s->%.*s:",
-               out_desc->name, BSTR_P(name));
-        for (pre = obj_p->presets;
-             (pre_name = M_ST_MB(char *, pre, obj_p->name_off)); pre +=  s)
-            mp_msg(MSGT_CFGPARSER, MSGL_ERR, " %s", pre_name);
-        mp_msg(MSGT_CFGPARSER, MSGL_ERR, "\n");
-        return M_OPT_EXIT - 1;
-    }
-
-    for (pre_name = M_ST_MB(char *, pre, obj_p->name_off); pre_name;
-         pre +=  s, pre_name = M_ST_MB(char *, pre, obj_p->name_off))
-        if (!bstrcmp0(param, pre_name))
-            break;
-    if (!pre_name) {
-        mp_msg(MSGT_CFGPARSER, MSGL_ERR,
-               "Option %.*s: There is no preset named %.*s\n"
-               "Available presets are:", BSTR_P(name), BSTR_P(param));
-        for (pre = obj_p->presets;
-             (pre_name = M_ST_MB(char *, pre, obj_p->name_off)); pre +=  s)
-            mp_msg(MSGT_CFGPARSER, MSGL_ERR, " %s", pre_name);
-        mp_msg(MSGT_CFGPARSER, MSGL_ERR, "\n");
-        return M_OPT_INVALID;
-    }
-
-    if (!dst)
-        return 1;
-
-    for (i = 0; in_desc->fields[i].name; i++) {
-        const m_option_t *out_opt = m_option_list_find(out_desc->fields,
-                                                       in_desc->fields[i].name);
-        if (!out_opt) {
-            mp_msg(MSGT_CFGPARSER, MSGL_ERR,
-                "Option %.*s: Unable to find the target option for field %s.\n"
-                "Please report this to the developers.\n",
-                BSTR_P(name), in_desc->fields[i].name);
-            return M_OPT_PARSER_ERR;
-        }
-        m_option_copy(out_opt, M_ST_MB_P(dst, out_opt->p),
-                      M_ST_MB_P(pre, in_desc->fields[i].p));
-    }
-    return 1;
-}
-
-
-const m_option_type_t m_option_type_obj_presets = {
-    .name  = "Object presets",
-    .parse = parse_obj_presets,
-};
 
 static int parse_custom_url(const m_option_t *opt, struct bstr name,
                             struct bstr url, void *dst)

@@ -726,7 +726,7 @@ void MainWindow::exit() {
 #endif
 		d->recent.setLastPlaylist(d->playlist.playlist());
 		d->recent.setLastMrl(d->engine.mrl());
-		d->renderer.quit();
+		d->renderer.setOverlay(nullptr);
 		d->engine.quit();
 		d->save_state();
 		if (d->player)

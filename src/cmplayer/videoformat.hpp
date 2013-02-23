@@ -15,7 +15,8 @@ constexpr static inline quint32 cc4(char a, char b, char c, char d) {
 #endif
 }
 
-struct VideoFormat {
+class VideoFormat {
+public:
 	typedef quint32 Type;
 	static constexpr quint32 Unknown = 0;
 	static constexpr quint32 I420 = cc4('I', '4', '2', '0');

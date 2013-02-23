@@ -1390,6 +1390,7 @@ HAVE_LIST="
     gnu_as
     gsm_h
     ibm_asm
+    iconv
     inet_aton
     io_h
     isatty
@@ -1474,6 +1475,7 @@ HAVE_LIST="
 CONFIG_EXTRA="
     aandcttables
     ac3dsp
+    audio_frame_queue
     error_resilience
     gcrypt
     golomb
@@ -1641,7 +1643,7 @@ mpegvideoenc_select="mpegvideo"
 
 # decoders / encoders
 aac_decoder_select="mdct sinewin"
-aac_encoder_select="mdct sinewin"
+aac_encoder_select="audio_frame_queue mdct sinewin"
 aac_latm_decoder_select="aac_decoder aac_latm_parser"
 ac3_decoder_select="mdct ac3dsp ac3_parser"
 ac3_encoder_select="mdct ac3dsp"
@@ -1687,7 +1689,7 @@ h263_decoder_select="error_resilience h263_parser mpegvideo"
 h263_encoder_select="aandcttables error_resilience mpegvideoenc"
 h263i_decoder_select="h263_decoder"
 h263p_encoder_select="h263_encoder"
-h264_decoder_select="error_resilience golomb h264chroma h264dsp h264pred h264qpel mpegvideo"
+h264_decoder_select="error_resilience golomb h264chroma h264dsp h264pred h264qpel mpegvideo videodsp"
 huffyuv_encoder_select="huffman"
 iac_decoder_select="fft mdct sinewin"
 imc_decoder_select="fft mdct sinewin"
@@ -1726,13 +1728,13 @@ msmpeg4v3_decoder_select="h263_decoder"
 msmpeg4v3_encoder_select="h263_encoder"
 mss2_decoder_select="vc1_decoder"
 nellymoser_decoder_select="mdct sinewin"
-nellymoser_encoder_select="mdct sinewin"
+nellymoser_encoder_select="audio_frame_queue mdct sinewin"
 nuv_decoder_select="lzo"
 png_decoder_select="zlib"
 png_encoder_select="zlib"
 qcelp_decoder_select="lsp"
 qdm2_decoder_select="mdct rdft mpegaudiodsp"
-ra_144_encoder_select="lpc"
+ra_144_encoder_select="audio_frame_queue lpc"
 ralf_decoder_select="golomb"
 rv10_decoder_select="h263_decoder"
 rv10_encoder_select="h263_encoder"
@@ -1830,7 +1832,7 @@ wmv3_vdpau_decoder_select="vc1_vdpau_decoder"
 wmv3_vdpau_hwaccel_select="vc1_vdpau_hwaccel"
 
 # parsers
-h264_parser_select="error_resilience golomb h264chroma h264dsp h264pred h264qpel mpegvideo"
+h264_parser_select="error_resilience golomb h264chroma h264dsp h264pred h264qpel mpegvideo videodsp"
 mpeg4video_parser_select="error_resilience mpegvideo"
 mpegvideo_parser_select="error_resilience mpegvideo"
 vc1_parser_select="error_resilience mpegvideo"
@@ -1839,7 +1841,9 @@ vc1_parser_select="error_resilience mpegvideo"
 libaacplus_encoder_deps="libaacplus"
 libcelt_decoder_deps="libcelt"
 libfaac_encoder_deps="libfaac"
+libfaac_encoder_select="audio_frame_queue"
 libfdk_aac_encoder_deps="libfdk_aac"
+libfdk_aac_encoder_select="audio_frame_queue"
 libgsm_decoder_deps="libgsm"
 libgsm_encoder_deps="libgsm"
 libgsm_ms_decoder_deps="libgsm"
@@ -1848,24 +1852,30 @@ libilbc_decoder_deps="libilbc"
 libilbc_encoder_deps="libilbc"
 libmodplug_demuxer_deps="libmodplug"
 libmp3lame_encoder_deps="libmp3lame"
+libmp3lame_encoder_select="audio_frame_queue"
 libopencore_amrnb_decoder_deps="libopencore_amrnb"
 libopencore_amrnb_encoder_deps="libopencore_amrnb"
+libopencore_amrnb_encoder_select="audio_frame_queue"
 libopencore_amrwb_decoder_deps="libopencore_amrwb"
 libopenjpeg_decoder_deps="libopenjpeg"
 libopenjpeg_encoder_deps="libopenjpeg"
 libopus_decoder_deps="libopus"
 libopus_encoder_deps="libopus"
+libopus_encoder_select="audio_frame_queue"
 libschroedinger_decoder_deps="libschroedinger"
 libschroedinger_encoder_deps="libschroedinger"
 libspeex_decoder_deps="libspeex"
 libspeex_encoder_deps="libspeex"
+libspeex_encoder_select="audio_frame_queue"
 libstagefright_h264_decoder_deps="libstagefright_h264"
 libtheora_encoder_deps="libtheora"
 libtwolame_encoder_deps="libtwolame"
 libvo_aacenc_encoder_deps="libvo_aacenc"
+libvo_aacenc_encoder_select="audio_frame_queue"
 libvo_amrwbenc_encoder_deps="libvo_amrwbenc"
 libvorbis_decoder_deps="libvorbis"
 libvorbis_encoder_deps="libvorbis"
+libvorbis_encoder_select="audio_frame_queue"
 libvpx_vp8_decoder_deps="libvpx"
 libvpx_vp8_encoder_deps="libvpx"
 libvpx_vp9_decoder_deps="libvpx"
@@ -2012,6 +2022,7 @@ movie_filter_deps="avcodec avformat"
 mp_filter_deps="gpl avcodec swscale inline_asm"
 mptestsrc_filter_deps="gpl"
 negate_filter_deps="lut_filter"
+noise_filter_deps="gpl"
 resample_filter_deps="avresample"
 ocv_filter_deps="libopencv"
 pan_filter_deps="swresample"
@@ -3162,7 +3173,7 @@ case $target_os in
     openbsd|bitrig)
         disable symver
         SHFLAGS='-shared'
-        SLIBNAME_WITH_MAJOR='$(SLIBNAME).$(LIBVERSION)'
+        SLIB_INSTALL_NAME='$(SLIBNAME).$(LIBMAJOR).$(LIBMINOR)'
         SLIB_INSTALL_LINKS=
         oss_indev_extralibs="-lossaudio"
         oss_outdev_extralibs="-lossaudio"
@@ -3226,7 +3237,6 @@ case $target_os in
         objformat="win32"
         ranlib=:
         enable dos_paths
-        add_cppflags -U__STRICT_ANSI__
         ;;
     win32|win64)
         if enabled shared; then
@@ -3370,6 +3380,7 @@ elif check_header _mingw.h; then
         "defined (__MINGW64_VERSION_MAJOR) || (__MINGW32_MAJOR_VERSION > 3) || \
             (__MINGW32_MAJOR_VERSION == 3 && __MINGW32_MINOR_VERSION >= 15)" ||
         die "ERROR: MinGW runtime version must be >= 3.15."
+    add_cppflags -U__STRICT_ANSI__
     if check_cpp_condition _mingw.h "defined(__MINGW64_VERSION_MAJOR) && \
             __MINGW64_VERSION_MAJOR < 3"; then
         add_compat msvcrt/snprintf.o
@@ -3715,6 +3726,7 @@ check_func  getopt
 check_func  getrusage
 check_struct "sys/time.h sys/resource.h" "struct rusage" ru_maxrss
 check_func  gettimeofday
+check_func  iconv || check_lib2 iconv.h iconv -liconv
 check_func  inet_aton $network_extralibs
 check_func  isatty
 check_func  localtime_r
@@ -4457,6 +4469,7 @@ get_version(){
     eval ${name}_VERSION=\$${name}_VERSION_MAJOR.\$${name}_VERSION_MINOR.\$${name}_VERSION_MICRO
     eval echo "${lcname}_VERSION=\$${name}_VERSION" >> config.mak
     eval echo "${lcname}_VERSION_MAJOR=\$${name}_VERSION_MAJOR" >> config.mak
+    eval echo "${lcname}_VERSION_MINOR=\$${name}_VERSION_MINOR" >> config.mak
 }
 
 map 'get_version $v' $LIBRARY_LIST
@@ -4583,7 +4596,7 @@ pkgconfig_generate libavutil "FFmpeg utility library" "$LIBAVUTIL_VERSION" "$LIB
 pkgconfig_generate libavcodec "FFmpeg codec library" "$LIBAVCODEC_VERSION" "$extralibs" "libavutil${build_suffix} = $LIBAVUTIL_VERSION"
 pkgconfig_generate libavformat "FFmpeg container format library" "$LIBAVFORMAT_VERSION" "$extralibs" "libavcodec${build_suffix} = $LIBAVCODEC_VERSION"
 pkgconfig_generate libavdevice "FFmpeg device handling library" "$LIBAVDEVICE_VERSION" "$extralibs" "$libavdevice_pc_deps"
-pkgconfig_generate libavfilter "FFmpeg video filtering library" "$LIBAVFILTER_VERSION" "$extralibs" "$libavfilter_pc_deps"
+pkgconfig_generate libavfilter "FFmpeg audio/video filtering library" "$LIBAVFILTER_VERSION" "$extralibs" "$libavfilter_pc_deps"
 pkgconfig_generate libpostproc "FFmpeg postprocessing library" "$LIBPOSTPROC_VERSION" "" "libavutil${build_suffix} = $LIBAVUTIL_VERSION"
 pkgconfig_generate libavresample "Libav audio resampling library" "$LIBAVRESAMPLE_VERSION" "$extralibs" "libavutil${build_suffix} = $LIBAVUTIL_VERSION"
 pkgconfig_generate libswscale "FFmpeg image rescaling library" "$LIBSWSCALE_VERSION" "$LIBM" "libavutil${build_suffix} = $LIBAVUTIL_VERSION"

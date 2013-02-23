@@ -50,6 +50,7 @@ typedef struct {
     ASS_Renderer *renderer;
     ASS_Track    *track;
     char *filename;
+    char *charenc;
     uint8_t rgba_map[4];
     int     pix_step[4];       ///< steps per pixel for each plane of the main output
     int original_w, original_h;
@@ -59,12 +60,10 @@ typedef struct {
 #define OFFSET(x) offsetof(AssContext, x)
 #define FLAGS AV_OPT_FLAG_FILTERING_PARAM|AV_OPT_FLAG_VIDEO_PARAM
 
-static const AVOption options[] = {
-    {"filename",       "set the filename of file to read",                         OFFSET(filename),   AV_OPT_TYPE_STRING,     {.str = NULL},  CHAR_MIN, CHAR_MAX, FLAGS },
-    {"f",              "set the filename of file to read",                         OFFSET(filename),   AV_OPT_TYPE_STRING,     {.str = NULL},  CHAR_MIN, CHAR_MAX, FLAGS },
-    {"original_size",  "set the size of the original video (used to scale fonts)", OFFSET(original_w), AV_OPT_TYPE_IMAGE_SIZE, {.str = NULL},  CHAR_MIN, CHAR_MAX, FLAGS },
-    {NULL},
-};
+#define COMMON_OPTIONS \
+    {"filename",       "set the filename of file to read",                         OFFSET(filename),   AV_OPT_TYPE_STRING,     {.str = NULL},  CHAR_MIN, CHAR_MAX, FLAGS }, \
+    {"f",              "set the filename of file to read",                         OFFSET(filename),   AV_OPT_TYPE_STRING,     {.str = NULL},  CHAR_MIN, CHAR_MAX, FLAGS }, \
+    {"original_size",  "set the size of the original video (used to scale fonts)", OFFSET(original_w), AV_OPT_TYPE_IMAGE_SIZE, {.str = NULL},  CHAR_MIN, CHAR_MAX, FLAGS }, \
 
 /* libass supports a log level ranging from 0 to 7 */
 static const int ass_libavfilter_log_level_map[] = {
@@ -213,7 +212,11 @@ static const AVFilterPad ass_outputs[] = {
 
 #if CONFIG_ASS_FILTER
 
-#define ass_options options
+static const AVOption ass_options[] = {
+    COMMON_OPTIONS
+    {NULL},
+};
+
 AVFILTER_DEFINE_CLASS(ass);
 
 static av_cold int init_ass(AVFilterContext *ctx, const char *args)
@@ -236,7 +239,7 @@ static av_cold int init_ass(AVFilterContext *ctx, const char *args)
 
 AVFilter avfilter_vf_ass = {
     .name          = "ass",
-    .description   = NULL_IF_CONFIG_SMALL("Render subtitles onto input video using the libass library."),
+    .description   = NULL_IF_CONFIG_SMALL("Render ASS subtitles onto input video using the libass library."),
     .priv_size     = sizeof(AssContext),
     .init          = init_ass,
     .uninit        = uninit,
@@ -249,15 +252,22 @@ AVFilter avfilter_vf_ass = {
 
 #if CONFIG_SUBTITLES_FILTER
 
-#define subtitles_options options
+static const AVOption subtitles_options[] = {
+    COMMON_OPTIONS
+    {"charenc", "set input character encoding", OFFSET(charenc), AV_OPT_TYPE_STRING, {.str = NULL}, CHAR_MIN, CHAR_MAX, FLAGS},
+    {NULL},
+};
+
 AVFILTER_DEFINE_CLASS(subtitles);
 
 static av_cold int init_subtitles(AVFilterContext *ctx, const char *args)
 {
     int ret, sid;
+    AVDictionary *codec_opts = NULL;
     AVFormatContext *fmt = NULL;
     AVCodecContext *dec_ctx = NULL;
     AVCodec *dec = NULL;
+    const AVCodecDescriptor *dec_desc;
     AVStream *st;
     AVPacket pkt;
     AssContext *ass = ctx->priv;
@@ -300,7 +310,15 @@ static av_cold int init_subtitles(AVFilterContext *ctx, const char *args)
                avcodec_get_name(dec_ctx->codec_id));
         return AVERROR(EINVAL);
     }
-    ret = avcodec_open2(dec_ctx, dec, NULL);
+    dec_desc = avcodec_descriptor_get(dec_ctx->codec_id);
+    if (dec_desc && (dec_desc->props & AV_CODEC_PROP_BITMAP_SUB)) {
+        av_log(ctx, AV_LOG_ERROR,
+               "Only text based subtitles are currently supported\n");
+        return AVERROR_PATCHWELCOME;
+    }
+    if (ass->charenc)
+        av_dict_set(&codec_opts, "sub_charenc", ass->charenc, 0);
+    ret = avcodec_open2(dec_ctx, dec, &codec_opts);
     if (ret < 0)
         goto end;
 
@@ -318,13 +336,16 @@ static av_cold int init_subtitles(AVFilterContext *ctx, const char *args)
 
         if (pkt.stream_index == sid) {
             ret = avcodec_decode_subtitle2(dec_ctx, &sub, &got_subtitle, &pkt);
-            if (ret < 0 || !got_subtitle)
-                break;
-            for (i = 0; i < sub.num_rects; i++) {
-                char *ass_line = sub.rects[i]->ass;
-                if (!ass_line)
-                    break;
-                ass_process_data(ass->track, ass_line, strlen(ass_line));
+            if (ret < 0) {
+                av_log(ctx, AV_LOG_WARNING, "Error decoding: %s (ignored)\n",
+                       av_err2str(ret));
+            } else if (got_subtitle) {
+                for (i = 0; i < sub.num_rects; i++) {
+                    char *ass_line = sub.rects[i]->ass;
+                    if (!ass_line)
+                        break;
+                    ass_process_data(ass->track, ass_line, strlen(ass_line));
+                }
             }
         }
         av_free_packet(&pkt);
@@ -332,6 +353,7 @@ static av_cold int init_subtitles(AVFilterContext *ctx, const char *args)
     }
 
 end:
+    av_dict_free(&codec_opts);
     if (dec_ctx)
         avcodec_close(dec_ctx);
     if (fmt)
@@ -341,7 +363,7 @@ end:
 
 AVFilter avfilter_vf_subtitles = {
     .name          = "subtitles",
-    .description   = NULL_IF_CONFIG_SMALL("Render subtitles onto input video using the libass library."),
+    .description   = NULL_IF_CONFIG_SMALL("Render text subtitles onto input video using the libass library."),
     .priv_size     = sizeof(AssContext),
     .init          = init_subtitles,
     .uninit        = uninit,

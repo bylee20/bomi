@@ -5,7 +5,7 @@
 
 struct VideoRendererItem::Data {
 	VideoFrame frame;
-	bool quit = false, framePended = false, checkFormat = true, shaderChanged = false;
+	bool framePended = false, checkFormat = true, shaderChanged = false;
 	QRectF vtx;
 	QPoint offset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
@@ -31,7 +31,7 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
 	setZ(-1);
-	connect(this, &VideoRendererItem::framePended, this, &VideoRendererItem::update, Qt::BlockingQueuedConnection);
+	connect(this, &VideoRendererItem::framePended, this, &VideoRendererItem::update, Qt::QueuedConnection);
 }
 
 VideoRendererItem::~VideoRendererItem() {
@@ -43,7 +43,7 @@ QQuickItem *VideoRendererItem::overlay() const {
 }
 
 bool VideoRendererItem::isFramePended() const {
-	return d->quit ? false : d->framePended;
+	return d->framePended;
 }
 
 const VideoFrame &VideoRendererItem::frame() const {
@@ -65,15 +65,13 @@ QImage VideoRendererItem::frameImage() const {
 }
 
 void VideoRendererItem::present(const VideoFrame &frame, bool checkFormat) {
-	if (!d->quit) {
-		d->mutex.lock();
-		d->frame = frame;
-		d->framePended = true;
-		d->checkFormat = checkFormat;
-		d->mutex.unlock();
-		emit framePended();
-		d->mposd->present();
-	}
+	d->mutex.lock();
+	d->frame = frame;
+	d->framePended = true;
+	d->checkFormat = checkFormat;
+	d->mutex.unlock();
+	emit framePended();
+	d->mposd->present();
 }
 
 QRectF VideoRendererItem::screenRect() const {
@@ -179,15 +177,6 @@ void VideoRendererItem::updateGeometry() {
 		d->mposd->setSize(d->vtx.size());
         setGeometryDirty();
 	}
-}
-
-void VideoRendererItem::quit() {
-	d->quit = true;
-	d->mutex.lock();
-	d->framePended = false;
-	d->mutex.unlock();
-//	d->wait.wakeAll();
-	setOverlay(nullptr);
 }
 
 void VideoRendererItem::setColor(const ColorProperty &prop) {

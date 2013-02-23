@@ -6,7 +6,7 @@
 #include "richtexthelper.hpp"
 
 class TagFormat;
-class RichTextBlock;
+struct RichTextBlock;
 
 class SamiParser : public SubtitleParser {
 public:

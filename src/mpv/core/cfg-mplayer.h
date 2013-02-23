@@ -95,11 +95,8 @@ const m_option_t tvopts_conf[]={
     {"saturation", &stream_tv_defaults.saturation, CONF_TYPE_INT, CONF_RANGE, -100, 100, NULL},
     {"gain", &stream_tv_defaults.gain, CONF_TYPE_INT, CONF_RANGE, -1, 100, NULL},
 #if defined(CONFIG_TV_V4L2)
-    {"buffersize", &stream_tv_defaults.buffer_size, CONF_TYPE_INT, CONF_RANGE, 16, 1024, NULL},
     {"amode", &stream_tv_defaults.amode, CONF_TYPE_INT, CONF_RANGE, 0, 3, NULL},
     {"volume", &stream_tv_defaults.volume, CONF_TYPE_INT, CONF_RANGE, 0, 65535, NULL},
-#endif
-#if defined(CONFIG_TV_V4L2)
     {"bass", &stream_tv_defaults.bass, CONF_TYPE_INT, CONF_RANGE, 0, 65535, NULL},
     {"treble", &stream_tv_defaults.treble, CONF_TYPE_INT, CONF_RANGE, 0, 65535, NULL},
     {"balance", &stream_tv_defaults.balance, CONF_TYPE_INT, CONF_RANGE, 0, 65535, NULL},
@@ -499,12 +496,11 @@ const m_option_t common_opts[] = {
     OPT_INTRANGE("ass-hinting", ass_hinting, 0, 0, 7),
     OPT_CHOICE("ass-style-override", ass_style_override, 0,
                ({"no", 0}, {"yes", 1})),
-    OPT_GENERAL("osd", osd_style, M_OPT_PREFIXED,
-                .type = &m_option_type_subconfig_struct,
-                .priv = (void*)&osd_style_conf),
-    OPT_GENERAL("sub-text", sub_text_style, M_OPT_PREFIXED,
-                .type = &m_option_type_subconfig_struct,
-                .priv = (void*)&osd_style_conf),
+    OPT_FLAG("osd-bar", osd_bar_visible, 0),
+    OPT_FLOATRANGE("osd-bar-align-x", osd_bar_align_x, 0, -1.0, +1.0),
+    OPT_FLOATRANGE("osd-bar-align-y", osd_bar_align_y, 0, -1.0, +1.0),
+    OPT_SUBSTRUCT("osd", osd_style, osd_style_conf, 0),
+    OPT_SUBSTRUCT("sub-text", sub_text_style, osd_style_conf, 0),
     {NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
@@ -520,7 +516,7 @@ const m_option_t tvscan_conf[]={
 extern const struct m_sub_options image_writer_conf;
 
 const m_option_t screenshot_conf[] = {
-    OPT_SUBSTRUCT(screenshot_image_opts, image_writer_conf, M_OPT_MERGE),
+    OPT_SUBSTRUCT("", screenshot_image_opts, image_writer_conf, 0),
     OPT_STRING("template", screenshot_template, 0),
     {0},
 };
@@ -609,8 +605,11 @@ const m_option_t mplayer_opts[]={
     {"heartbeat-cmd", &heartbeat_cmd, CONF_TYPE_STRING, 0, 0, 0, NULL},
     {"mouseinput", &vo_nomouse_input, CONF_TYPE_FLAG, 0, 1, 0, NULL},
 
-    {"screen", &xinerama_screen, CONF_TYPE_CHOICE, CONF_RANGE,
-     .min = 0, .max = 32, M_CHOICES(({"all", -2}, {"current", -1}))},
+    OPT_CHOICE_OR_INT("screen", vo_screen_id, 0, 0, 32,
+                      ({"default", -1})),
+
+    OPT_CHOICE_OR_INT("fs-screen", vo_fsscreen_id, 0, 0, 32,
+                      ({"all", -2}, {"current", -1})),
 
     OPT_INTRANGE("brightness", vo_gamma_brightness, 0, -100, 100),
     OPT_INTRANGE("saturation", vo_gamma_saturation, 0, -100, 100),
@@ -648,8 +647,8 @@ const m_option_t mplayer_opts[]={
 
     {"playlist", NULL, CONF_TYPE_STRING, CONF_NOCFG | M_OPT_MIN, 1, 0, NULL},
     {"shuffle", NULL, CONF_TYPE_FLAG, CONF_NOCFG, 0, 0, NULL},
-    {"{", NULL, CONF_TYPE_FLAG, CONF_NOCFG, 0, 0, NULL},
-    {"}", NULL, CONF_TYPE_FLAG, CONF_NOCFG, 0, 0, NULL},
+    {"{", NULL, CONF_TYPE_STORE, CONF_NOCFG, 0, 0, NULL},
+    {"}", NULL, CONF_TYPE_STORE, CONF_NOCFG, 0, 0, NULL},
 
     OPT_FLAG("ordered-chapters", ordered_chapters, 0),
     OPT_INTRANGE("chapter-merge-threshold", chapter_merge_threshold, 0, 0, 10000),
@@ -672,9 +671,11 @@ const m_option_t mplayer_opts[]={
                 {"auto", 2},
                 {"no", 0})),
 
-    OPT_STRING("term-osd-esc", term_osd_esc, 0, OPTDEF_STR("\x1b[A\r\x1b[K")),
-    OPT_STRING("playing-msg", playing_msg, 0),
-    OPT_STRING("status-msg", status_msg, 0),
+    OPT_STRING("term-osd-esc", term_osd_esc, M_OPT_PARSE_ESCAPES,
+               OPTDEF_STR("\x1b[A\r\x1b[K")),
+    OPT_STRING("playing-msg", playing_msg, M_OPT_PARSE_ESCAPES),
+    OPT_STRING("status-msg", status_msg, M_OPT_PARSE_ESCAPES),
+    OPT_STRING("osd-status-msg", osd_status_msg, M_OPT_PARSE_ESCAPES),
 
     {"slave-broken", &slave_mode, CONF_TYPE_FLAG,CONF_GLOBAL , 0, 1, NULL},
     OPT_FLAG("idle", player_idle_mode, CONF_GLOBAL),
@@ -686,8 +687,7 @@ const m_option_t mplayer_opts[]={
     {"tvscan", (void *) tvscan_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},
 #endif /* CONFIG_TV */
 
-    {"screenshot", (void *) screenshot_conf, CONF_TYPE_SUBCONFIG,
-     M_OPT_PREFIXED, 0, 0, NULL},
+    {"screenshot", (void *) screenshot_conf, CONF_TYPE_SUBCONFIG},
 
     OPT_FLAG("list-properties", list_properties, CONF_GLOBAL),
     {"identify", &mp_msg_levels[MSGT_IDENTIFY], CONF_TYPE_FLAG, CONF_GLOBAL, 0, MSGL_V, NULL},

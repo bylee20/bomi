@@ -127,8 +127,9 @@ typedef struct MPContext {
     subtitle subs; // subtitle list used when reading subtitles from demuxer
 
     int add_osd_seek_info; // bitfield of enum mp_osd_seek_info
-    unsigned int osd_visible;
+    unsigned int osd_visible; // for the osd bar only
     int osd_function;
+    unsigned int osd_function_visible;
 
     struct playlist *playlist;
     char *filename; // currently playing file
@@ -292,6 +293,7 @@ struct track *mp_track_by_tid(struct MPContext *mpctx, enum stream_type type,
                               int tid);
 bool mp_remove_track(struct MPContext *mpctx, struct track *track);
 struct playlist_entry *mp_next_file(struct MPContext *mpctx, int direction);
+int mp_get_cache_percent(struct MPContext *mpctx);
 
 // timeline/tl_matroska.c
 void build_ordered_chapter_timeline(struct MPContext *mpctx);

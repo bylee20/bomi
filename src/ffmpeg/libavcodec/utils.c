@@ -25,6 +25,7 @@
  * utils.
  */
 
+#include "config.h"
 #include "libavutil/avassert.h"
 #include "libavutil/avstring.h"
 #include "libavutil/bprint.h"
@@ -47,6 +48,9 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <float.h>
+#if HAVE_ICONV
+# include <iconv.h>
+#endif
 
 volatile int ff_avcodec_locked;
 static int volatile entangled_thread_counter = 0;
@@ -177,6 +181,12 @@ void avcodec_set_dimensions(AVCodecContext *s, int width, int height)
 
 #define INTERNAL_BUFFER_SIZE (32 + 1)
 
+#if (ARCH_ARM && HAVE_NEON) || ARCH_PPC || HAVE_MMX
+#   define STRIDE_ALIGN 16
+#else
+#   define STRIDE_ALIGN 8
+#endif
+
 void avcodec_align_dimensions2(AVCodecContext *s, int *width, int *height,
                                int linesize_align[AV_NUM_DATA_POINTERS])
 {
@@ -257,7 +267,8 @@ void avcodec_align_dimensions2(AVCodecContext *s, int *width, int *height,
     case AV_PIX_FMT_PAL8:
     case AV_PIX_FMT_BGR8:
     case AV_PIX_FMT_RGB8:
-        if (s->codec_id == AV_CODEC_ID_SMC) {
+        if (s->codec_id == AV_CODEC_ID_SMC ||
+            s->codec_id == AV_CODEC_ID_CINEPAK) {
             w_align = 4;
             h_align = 4;
         }
@@ -265,6 +276,12 @@ void avcodec_align_dimensions2(AVCodecContext *s, int *width, int *height,
     case AV_PIX_FMT_BGR24:
         if ((s->codec_id == AV_CODEC_ID_MSZH) ||
             (s->codec_id == AV_CODEC_ID_ZLIB)) {
+            w_align = 4;
+            h_align = 4;
+        }
+        break;
+    case AV_PIX_FMT_RGB24:
+        if (s->codec_id == AV_CODEC_ID_CINEPAK) {
             w_align = 4;
             h_align = 4;
         }
@@ -460,7 +477,6 @@ static int video_get_buffer(AVCodecContext *s, AVFrame *pic)
             buf->base[i] = av_malloc(size[i] + 16); //FIXME 16
             if (buf->base[i] == NULL)
                 return AVERROR(ENOMEM);
-            memset(buf->base[i], 128, size[i]);
 
             // no edge if EDGE EMU or not planar YUV
             if ((s->flags & CODEC_FLAG_EMU_EDGE) || !size[2])
@@ -492,6 +508,28 @@ static int video_get_buffer(AVCodecContext *s, AVFrame *pic)
                                 "buffers used\n", pic, avci->buffer_count);
 
     return 0;
+}
+
+void avpriv_color_frame(AVFrame *frame, const int c[4])
+{
+    const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(frame->format);
+    int p, y, x;
+
+    av_assert0(desc->flags & PIX_FMT_PLANAR);
+
+    for (p = 0; p<desc->nb_components; p++) {
+        uint8_t *dst = frame->data[p];
+        int is_chroma = p == 1 || p == 2;
+        int bytes = -((-frame->width) >> (is_chroma ? desc->log2_chroma_w : 0));
+        for (y = 0; y<-((-frame->height) >> (is_chroma ? desc->log2_chroma_h : 0)); y++){
+            if (desc->comp[0].depth_minus1 >= 8) {
+                for (x = 0; x<bytes; x++)
+                    ((uint16_t*)dst)[x] = c[p];
+            }else
+                memset(dst, c[p], bytes);
+            dst += frame->linesize[p];
+        }
+    }
 }
 
 int avcodec_default_get_buffer(AVCodecContext *avctx, AVFrame *frame)
@@ -1060,6 +1098,32 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
             avctx->channels > FF_SANE_NB_CHANNELS) {
             ret = AVERROR(EINVAL);
             goto free_and_end;
+        }
+        if (avctx->sub_charenc) {
+            if (avctx->codec_type != AVMEDIA_TYPE_SUBTITLE) {
+                av_log(avctx, AV_LOG_ERROR, "Character encoding is only "
+                       "supported with subtitles codecs\n");
+                ret = AVERROR(EINVAL);
+                goto free_and_end;
+            } else if (avctx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB) {
+                av_log(avctx, AV_LOG_WARNING, "Codec '%s' is bitmap-based, "
+                       "subtitles character encoding will be ignored\n",
+                       avctx->codec_descriptor->name);
+                avctx->sub_charenc_mode = FF_SUB_CHARENC_MODE_DO_NOTHING;
+            } else {
+                /* input character encoding is set for a text based subtitle
+                 * codec at this point */
+                if (avctx->sub_charenc_mode == FF_SUB_CHARENC_MODE_AUTOMATIC)
+                    avctx->sub_charenc_mode = FF_SUB_CHARENC_MODE_PRE_DECODER;
+
+                if (!HAVE_ICONV && avctx->sub_charenc_mode == FF_SUB_CHARENC_MODE_PRE_DECODER) {
+                    av_log(avctx, AV_LOG_ERROR, "Character encoding subtitles "
+                           "conversion needs a libavcodec built with iconv support "
+                           "for this codec\n");
+                    ret = AVERROR(ENOSYS);
+                    goto free_and_end;
+                }
+            }
         }
     }
 end:
@@ -1767,7 +1831,7 @@ int attribute_align_arg avcodec_decode_audio4(AVCodecContext *avctx,
             av_log(avctx, AV_LOG_DEBUG, "skip %d samples due to side data\n",
                    avctx->internal->skip_samples);
         }
-        if (avctx->internal->skip_samples) {
+        if (avctx->internal->skip_samples && *got_frame_ptr) {
             if(frame->nb_samples <= avctx->internal->skip_samples){
                 *got_frame_ptr = 0;
                 avctx->internal->skip_samples -= frame->nb_samples;
@@ -1819,6 +1883,68 @@ int attribute_align_arg avcodec_decode_audio4(AVCodecContext *avctx,
     return ret;
 }
 
+#define UTF8_MAX_BYTES 4 /* 5 and 6 bytes sequences should not be used */
+static int recode_subtitle(AVCodecContext *avctx,
+                           AVPacket *outpkt, const AVPacket *inpkt)
+{
+#if HAVE_ICONV
+    iconv_t cd = (iconv_t)-1;
+    int ret = 0;
+    char *inb, *outb;
+    size_t inl, outl;
+    AVPacket tmp;
+#endif
+
+    if (avctx->sub_charenc_mode != FF_SUB_CHARENC_MODE_PRE_DECODER)
+        return 0;
+
+#if HAVE_ICONV
+    cd = iconv_open("UTF-8", avctx->sub_charenc);
+    if (cd == (iconv_t)-1) {
+        av_log(avctx, AV_LOG_ERROR, "Unable to open iconv context "
+               "with input character encoding \"%s\"\n", avctx->sub_charenc);
+        ret = AVERROR(errno);
+        goto end;
+    }
+
+    inb = inpkt->data;
+    inl = inpkt->size;
+
+    if (inl >= INT_MAX / UTF8_MAX_BYTES - FF_INPUT_BUFFER_PADDING_SIZE) {
+        av_log(avctx, AV_LOG_ERROR, "Subtitles packet is too big for recoding\n");
+        ret = AVERROR(ENOMEM);
+        goto end;
+    }
+
+    ret = av_new_packet(&tmp, inl * UTF8_MAX_BYTES);
+    if (ret < 0)
+        goto end;
+    outpkt->data = tmp.data;
+    outpkt->size = tmp.size;
+    outb = outpkt->data;
+    outl = outpkt->size;
+
+    if (iconv(cd, &inb, &inl, &outb, &outl) == (size_t)-1 ||
+        iconv(cd, NULL, NULL, &outb, &outl) == (size_t)-1 ||
+        outl >= outpkt->size || inl != 0) {
+        av_log(avctx, AV_LOG_ERROR, "Unable to recode subtitle event \"%s\" "
+               "from %s to UTF-8\n", inpkt->data, avctx->sub_charenc);
+        av_free_packet(&tmp);
+        ret = AVERROR(errno);
+        goto end;
+    }
+    outpkt->size -= outl;
+    outpkt->data[outpkt->size - 1] = '\0';
+
+end:
+    if (cd != (iconv_t)-1)
+        iconv_close(cd);
+    return ret;
+#else
+    av_assert0(!"requesting subtitles recoding without iconv");
+#endif
+}
+
 int avcodec_decode_subtitle2(AVCodecContext *avctx, AVSubtitle *sub,
                              int *got_sub_ptr,
                              AVPacket *avpkt)
@@ -1834,19 +1960,28 @@ int avcodec_decode_subtitle2(AVCodecContext *avctx, AVSubtitle *sub,
     avcodec_get_subtitle_defaults(sub);
 
     if (avpkt->size) {
+        AVPacket pkt_recoded;
         AVPacket tmp = *avpkt;
         int did_split = av_packet_split_side_data(&tmp);
         //apply_param_change(avctx, &tmp);
 
-        avctx->pkt = &tmp;
+        pkt_recoded = tmp;
+        ret = recode_subtitle(avctx, &pkt_recoded, &tmp);
+        if (ret < 0) {
+            *got_sub_ptr = 0;
+        } else {
+            avctx->pkt = &pkt_recoded;
 
-        if (avctx->pkt_timebase.den && avpkt->pts != AV_NOPTS_VALUE)
-            sub->pts = av_rescale_q(avpkt->pts,
-                                    avctx->pkt_timebase, AV_TIME_BASE_Q);
-        ret = avctx->codec->decode(avctx, sub, got_sub_ptr, &tmp);
-        sub->format = sub->num_rects && sub->rects[0]->ass;
+            if (avctx->pkt_timebase.den && avpkt->pts != AV_NOPTS_VALUE)
+                sub->pts = av_rescale_q(avpkt->pts,
+                                        avctx->pkt_timebase, AV_TIME_BASE_Q);
+            ret = avctx->codec->decode(avctx, sub, got_sub_ptr, &pkt_recoded);
+            if (tmp.data != pkt_recoded.data)
+                av_free(pkt_recoded.data);
+            sub->format = !(avctx->codec_descriptor->props & AV_CODEC_PROP_BITMAP_SUB);
+            avctx->pkt = NULL;
+        }
 
-        avctx->pkt = NULL;
         if (did_split) {
             ff_packet_free_side_data(&tmp);
             if(ret == tmp.size)

@@ -51,8 +51,20 @@
 #define NSOpenGLProfileVersion3_2Core 0x3200
 #endif
 
-#define NSLeftAlternateKeyMask (0x000020 | NSAlternateKeyMask)
+#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
 #define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
+
+static bool LeftAltPressed(NSEvent *event)
+{
+    return ([event modifierFlags] & NSLeftAlternateKeyMask) ==
+            NSLeftAlternateKeyMask;
+}
+
+static bool RightAltPressed(NSEvent *event)
+{
+    return ([event modifierFlags] & NSRightAlternateKeyMask) ==
+            NSRightAlternateKeyMask;
+}
 
 // add methods not available on OSX versions prior to 10.7
 #ifndef MAC_OS_X_VERSION_10_7
@@ -96,8 +108,8 @@ struct vo_cocoa_state {
     NSSize previous_video_size;
 
     NSRect screen_frame;
+    NSRect fsscreen_frame;
     NSScreen *screen_handle;
-    NSArray *screen_array;
 
     NSInteger windowed_mask;
     NSInteger fullscreen_mask;
@@ -241,24 +253,39 @@ static int current_screen_has_dock_or_menubar(struct vo *vo)
     return f.size.height > vf.size.height || f.size.width > vf.size.width;
 }
 
+static int get_screen_handle(int identifier, NSWindow *window, NSScreen **screen) {
+    NSArray *screens  = [NSScreen screens];
+    int n_of_displays = [screens count];
+
+    if (identifier >= n_of_displays) { // check if the identifier is out of bounds
+        mp_msg(MSGT_VO, MSGL_INFO, "[cocoa] Screen ID %d does not exist, "
+            "falling back to main device\n", identifier);
+        identifier = -1;
+    }
+
+    if (identifier < 0) {
+        // default behaviour gets either the window screen or the main screen
+        // if window is not available
+        if (! (*screen = [window screen]) )
+            *screen = [screens objectAtIndex:0];
+        return 0;
+    } else {
+        *screen = [screens objectAtIndex:(identifier)];
+        return 1;
+    }
+}
+
 static void update_screen_info(struct vo *vo)
 {
     struct vo_cocoa_state *s = vo->cocoa;
-    s->screen_array = [NSScreen screens];
-    if (xinerama_screen >= (int)[s->screen_array count]) {
-        mp_msg(MSGT_VO, MSGL_INFO, "[cocoa] Device ID %d does not exist, "
-            "falling back to main device\n", xinerama_screen);
-        xinerama_screen = -1;
-    }
+    struct MPOpts *opts = vo->opts;
+    NSScreen *ws, *fss;
 
-    if (xinerama_screen < 0) { // default behaviour
-        if (! (s->screen_handle = [s->window screen]) )
-            s->screen_handle = [s->screen_array objectAtIndex:0];
-    } else {
-        s->screen_handle = [s->screen_array objectAtIndex:(xinerama_screen)];
-    }
+    get_screen_handle(opts->vo_screen_id, s->window, &ws);
+    s->screen_frame = [ws frame];
 
-    s->screen_frame = [s->screen_handle frame];
+    get_screen_handle(opts->vo_fsscreen_id, s->window, &fss);
+    s->fsscreen_frame = [fss frame];
 }
 
 void vo_cocoa_update_xinerama_info(struct vo *vo)
@@ -628,7 +655,7 @@ void create_menu()
         s->windowed_frame = [self frame];
         [self setHasShadow:NO];
         [self setStyleMask:s->fullscreen_mask];
-        [self setFrame:s->screen_frame display:YES animate:NO];
+        [self setFrame:s->fsscreen_frame display:YES animate:NO];
         vo_fs = VO_TRUE;
         vo_cocoa_display_cursor(_vo, 0);
         [self setMovableByWindowBackground: NO];
@@ -678,22 +705,21 @@ void create_menu()
 
 - (void)keyDown:(NSEvent *)theEvent
 {
-    unsigned char charcode;
-    if (([theEvent modifierFlags] & NSRightAlternateKeyMask) ==
-            NSRightAlternateKeyMask)
-        charcode = *[[theEvent characters] UTF8String];
-    else
-        charcode = [[theEvent charactersIgnoringModifiers] characterAtIndex:0];
+    NSString *chars;
 
-    int key = convert_key([theEvent keyCode], charcode);
+    if (RightAltPressed(theEvent))
+        chars = [theEvent characters];
+    else
+        chars = [theEvent charactersIgnoringModifiers];
+
+    int key = convert_key([theEvent keyCode], *[chars UTF8String]);
 
     if (key > -1) {
         if ([theEvent modifierFlags] & NSShiftKeyMask)
             key |= MP_KEY_MODIFIER_SHIFT;
         if ([theEvent modifierFlags] & NSControlKeyMask)
             key |= MP_KEY_MODIFIER_CTRL;
-        if (([theEvent modifierFlags] & NSLeftAlternateKeyMask) ==
-                NSLeftAlternateKeyMask)
+        if (LeftAltPressed(theEvent))
             key |= MP_KEY_MODIFIER_ALT;
         if ([theEvent modifierFlags] & NSCommandKeyMask)
             key |= MP_KEY_MODIFIER_META;

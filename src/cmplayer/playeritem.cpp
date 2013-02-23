@@ -235,7 +235,7 @@ double PlayerItem::avgsync() const {
 	auto mpctx = m_engine->context();
 	double sync = 0.0;
 	if (mpctx->sh_audio && mpctx->sh_video) {
-		sync = (mpctx->total_avsync_change - d->sync)*1000.0;
+		sync = (mpctx->total_avsync_change)*1000.0;
 		d->sync = mpctx->total_avsync_change;
 	}
 	return sync;

@@ -1,6 +1,10 @@
 #ifndef STDAFX_HPP
 #define STDAFX_HPP
 
+#ifdef __OBJC__
+//asdasd
+#endif
+
 #ifdef __cplusplus
 
 #include <QtCore>

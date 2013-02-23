@@ -124,6 +124,9 @@ unsigned int avpriv_toupper4(unsigned int x);
  */
 void ff_init_buffer_info(AVCodecContext *s, AVFrame *frame);
 
+
+void avpriv_color_frame(AVFrame *frame, const int color[4]);
+
 /**
  * Remove and free all side data from packet.
  */
@@ -188,6 +191,10 @@ int ff_thread_can_start_frame(AVCodecContext *avctx);
 int ff_get_logical_cpus(AVCodecContext *avctx);
 
 int avpriv_h264_has_num_reorder_frames(AVCodecContext *avctx);
+
+void ff_print_debug_info2(AVCodecContext *avctx, AVFrame *pict, uint8_t *mbskip_table,
+                         uint8_t *visualization_buffer[3], int *low_delay,
+                         int mb_width, int mb_height, int mb_stride, int quarter_sample);
 
 /**
  * Call avcodec_open2 recursively by decrementing counter, unlocking mutex,

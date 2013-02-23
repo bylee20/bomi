@@ -18,6 +18,8 @@ typedef struct MPOpts {
     int ao_buffersize;
     int vo_screenwidth;
     int vo_screenheight;
+    int vo_screen_id;
+    int vo_fsscreen_id;
     struct m_geometry vo_geometry;
     struct m_geometry vo_autofit;
     struct m_geometry vo_autofit_larger;
@@ -77,6 +79,7 @@ typedef struct MPOpts {
     char *term_osd_esc;
     char *playing_msg;
     char *status_msg;
+    char *osd_status_msg;
     int player_idle_mode;
     int consolecontrols;
     int doubleclick_time;
@@ -117,6 +120,9 @@ typedef struct MPOpts {
     char **sub_name;
     char **sub_paths;
     int sub_auto;
+    int osd_bar_visible;
+    float osd_bar_align_x;
+    float osd_bar_align_y;
     struct osd_style_opts *osd_style;
     struct osd_style_opts *sub_text_style;
     float sub_scale;

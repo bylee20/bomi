@@ -64,7 +64,7 @@ const VaApiCodec *VaApiInfo::find(AVCodecID id) { const auto &i = get(); auto it
 void *VaApiInfo::display() { return get().d->display; }
 void VaApiInfo::finalize() { auto &i = get(); if (i.d->display) vaTerminate(i.d->display); if (i.d->xdpy) XCloseDisplay(i.d->xdpy); }
 
-struct VaApi {
+struct HwAccDecoder {
 	struct Texture {
 		Texture(VADisplay display, int width, int height): display(display) {
 			glGenTextures(1, &id);
@@ -84,21 +84,21 @@ struct VaApi {
 	};
 
 	struct VaApiSurface { VASurfaceID  id = VA_INVALID_ID; bool ref = false; quint64 order = 0; };
-	VaApi(sh_video *sh, const char *decoder);
-	~VaApi();
-	static int init(sh_video_t *sh, const char *decoder) { VaApi *vaapi = new VaApi(sh, decoder); return vaapi->m_ok ? 1 : ((delete vaapi), 0); }
-	static void uninit(sh_video_t *sh) { delete static_cast<VaApi*>(sh->context); }
-	static int get_buffer(AVCodecContext *avctx, AVFrame *pic) { return static_cast<VaApi*>(avctx->opaque)->getBuffer(pic); }
-	static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic) { static_cast<VaApi*>(avctx->opaque)->releaseBuffer(pic); }
+	HwAccDecoder(sh_video *sh, const char *decoder);
+	~HwAccDecoder();
+	static int init(sh_video_t *sh, const char *decoder) { HwAccDecoder *vaapi = new HwAccDecoder(sh, decoder); return vaapi->m_ok ? 1 : ((delete vaapi), 0); }
+	static void uninit(sh_video_t *sh) { delete static_cast<HwAccDecoder*>(sh->context); }
+	static int get_buffer(AVCodecContext *avctx, AVFrame *pic) { return static_cast<HwAccDecoder*>(avctx->opaque)->getBuffer(pic); }
+	static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic) { static_cast<HwAccDecoder*>(avctx->opaque)->releaseBuffer(pic); }
 	static mp_image *decode(sh_video *sh, demux_packet *packet, void *data, int len, int flags, double *reordered_pts) {
-		return static_cast<VaApi*>(sh->context)->decode(packet, data, len, flags, reordered_pts);
+		return static_cast<HwAccDecoder*>(sh->context)->decode(packet, data, len, flags, reordered_pts);
 	}
 	mp_image *decode(demux_packet *packet, void *data, int len, int flags, double *reordered_pts);
 	bool initVideoOutput(AVPixelFormat pix_fmt);
 	int getBuffer(AVFrame *pic);
 	void releaseBuffer(AVFrame *pic);
 	static PixelFormat find(AVCodecContext *avctx, const PixelFormat *fmt) {
-		auto vaapi = static_cast<VaApi*>(avctx->opaque);
+		auto vaapi = static_cast<HwAccDecoder*>(avctx->opaque);
 		for (int i = 0; fmt[i] != PIX_FMT_NONE; i++) {
 			if (fmt[i] == PIX_FMT_VAAPI_VLD && vaapi->initVideoOutput(fmt[i]))
 				return fmt[i];
@@ -125,7 +125,7 @@ struct VaApi {
 	mp_image_pool *m_pool = nullptr;
 };
 
-VaApi::VaApi(sh_video *sh, const char *decoder) {
+HwAccDecoder::HwAccDecoder(sh_video *sh, const char *decoder) {
 	memset(&m_context, 0, sizeof(m_context));
 	m_context.config_id = m_context.context_id = VA_INVALID_ID;
 	m_context.display = VaApiInfo::display();
@@ -175,7 +175,7 @@ VaApi::VaApi(sh_video *sh, const char *decoder) {
 	m_ok = true;
 }
 
-VaApi::~VaApi() {
+HwAccDecoder::~HwAccDecoder() {
 	freeContext();
 	if (m_avctx) {
 		if (m_avctx->codec && avcodec_close(m_avctx) < 0)
@@ -189,7 +189,7 @@ VaApi::~VaApi() {
 	m_sh->context = nullptr;
 }
 
-void VaApi::freeContext() {
+void HwAccDecoder::freeContext() {
 	if (m_context.display) {
 		delete m_texture;
 		if (m_context.context_id != VA_INVALID_ID)
@@ -208,7 +208,7 @@ void VaApi::freeContext() {
 	m_texture = nullptr;
 }
 
-bool VaApi::fillContext() {
+bool HwAccDecoder::fillContext() {
 	m_avctx->hwaccel_context = nullptr;
 	auto codec = VaApiInfo::find(m_avctx->codec_id);
 	if (!codec)
@@ -244,7 +244,7 @@ bool VaApi::fillContext() {
 	return false;
 }
 
-bool VaApi::initVideoOutput(PixelFormat pixfmt) {
+bool HwAccDecoder::initVideoOutput(PixelFormat pixfmt) {
 	if (pixfmt != AV_PIX_FMT_VAAPI_VLD)
 		return false;
 	if (av_cmp_q(m_avctx->sample_aspect_ratio, m_last_sample_aspect_ratio) ||
@@ -264,7 +264,7 @@ bool VaApi::initVideoOutput(PixelFormat pixfmt) {
 	return true;
 }
 
-int VaApi::getBuffer(AVFrame *pic) {
+int HwAccDecoder::getBuffer(AVFrame *pic) {
 	if (!initVideoOutput(m_avctx->pix_fmt))
 		return -1;
 	int i_old, i;
@@ -288,7 +288,7 @@ int VaApi::getBuffer(AVFrame *pic) {
 	return 0;
 }
 
-void VaApi::releaseBuffer(AVFrame *pic) {
+void HwAccDecoder::releaseBuffer(AVFrame *pic) {
 	const auto id = (VASurfaceID)(uintptr_t)pic->data[3];
 	for (int i=0; i<m_surfaces.size(); ++i) {
 		if (m_surfaces[i].id == id) {
@@ -300,7 +300,7 @@ void VaApi::releaseBuffer(AVFrame *pic) {
 }
 
 union pts { int64_t i; double d; };
-mp_image *VaApi::decode(demux_packet *packet, void *data, int len, int flags,  double *reordered_pts) {
+mp_image *HwAccDecoder::decode(demux_packet *packet, void *data, int len, int flags,  double *reordered_pts) {
 	if (flags & 2)
 		m_avctx->skip_frame = AVDISCARD_ALL;
 	else if (flags & 1)
@@ -340,7 +340,7 @@ mp_image *VaApi::decode(demux_packet *packet, void *data, int len, int flags,  d
 }
 
 static int control(sh_video_t *sh, int cmd, void */*arg*/) {
-	VaApi *ctx = (VaApi*)sh->context;
+	HwAccDecoder *ctx = (HwAccDecoder*)sh->context;
 	AVCodecContext *avctx = (AVCodecContext*)ctx->m_avctx;
 	switch (cmd) {
 	case VDCTRL_RESYNC_STREAM:
@@ -369,13 +369,13 @@ static void add_decoders(struct mp_decoder_list *list) {
 	mp_add_decoder(list, "vaapi", "wmv3", "wmv3", "VA-API WMV3/WMV9");
 }
 
-extern vd_functions cmplayer_vd_vaapi;
+extern vd_functions cmplayer_vd_hwacc;
 void VaApiInfo::initialize() {
-	cmplayer_vd_vaapi.name = "vaapi";
-	cmplayer_vd_vaapi.init = VaApi::init;
-	cmplayer_vd_vaapi.uninit = VaApi::uninit;
-	cmplayer_vd_vaapi.control = control;
-	cmplayer_vd_vaapi.decode = VaApi::decode;
-	cmplayer_vd_vaapi.add_decoders = add_decoders;
+	cmplayer_vd_hwacc.name = "vaapi";
+	cmplayer_vd_hwacc.init = HwAccDecoder::init;
+	cmplayer_vd_hwacc.uninit = HwAccDecoder::uninit;
+	cmplayer_vd_hwacc.control = control;
+	cmplayer_vd_hwacc.decode = HwAccDecoder::decode;
+	cmplayer_vd_hwacc.add_decoders = add_decoders;
 	get();
 }

@@ -22,6 +22,8 @@ void set_default_mplayer_options(struct MPOpts *opts)
         .monitor_pixel_aspect = 1.0,
         .vo_panscanrange = 1.0,
         .cursor_autohide_delay = 1000,
+        .vo_screen_id = -1,
+        .vo_fsscreen_id = -1,
         .vo_gamma_gamma = 1000,
         .vo_gamma_brightness = 1000,
         .vo_gamma_contrast = 1000,
@@ -57,6 +59,7 @@ void set_default_mplayer_options(struct MPOpts *opts)
         .drc_level = 1.,
         .movie_aspect = -1.,
         .sub_auto = 1,
+        .osd_bar_visible = 1,
 #ifdef CONFIG_ASS
         .ass_enabled = 1,
 #endif

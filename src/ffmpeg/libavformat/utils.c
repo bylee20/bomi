@@ -1767,7 +1767,10 @@ int av_index_search_timestamp(AVStream *st, int64_t wanted_timestamp,
 static int64_t ff_read_timestamp(AVFormatContext *s, int stream_index, int64_t *ppos, int64_t pos_limit,
                                  int64_t (*read_timestamp)(struct AVFormatContext *, int , int64_t *, int64_t ))
 {
-    return wrap_timestamp(s->streams[stream_index], read_timestamp(s, stream_index, ppos, pos_limit));
+    int64_t ts = read_timestamp(s, stream_index, ppos, pos_limit);
+    if (stream_index >= 0)
+        ts = wrap_timestamp(s->streams[stream_index], ts);
+    return ts;
 }
 
 int ff_seek_frame_binary(AVFormatContext *s, int stream_index, int64_t target_ts, int flags)
@@ -1860,10 +1863,10 @@ int64_t ff_gen_search(AVFormatContext *s, int stream_index, int64_t target_ts,
         filesize = avio_size(s->pb);
         pos_max = filesize - 1;
         do{
-            pos_max -= step;
+            pos_max = FFMAX(0, pos_max - step);
             ts_max = ff_read_timestamp(s, stream_index, &pos_max, pos_max + step, read_timestamp);
             step += step;
-        }while(ts_max == AV_NOPTS_VALUE && pos_max >= step);
+        }while(ts_max == AV_NOPTS_VALUE && pos_max > 0);
         if (ts_max == AV_NOPTS_VALUE)
             return -1;
 
@@ -2769,6 +2772,8 @@ int avformat_find_stream_info(AVFormatContext *ic, AVDictionary **options)
                 fps_analyze_framecount *= 2;
             if (ic->fps_probe_size >= 0)
                 fps_analyze_framecount = ic->fps_probe_size;
+            if (st->disposition & AV_DISPOSITION_ATTACHED_PIC)
+                fps_analyze_framecount = 0;
             /* variable fps and no guess at the real fps */
             if(   tb_unreliable(st->codec) && !(st->r_frame_rate.num && st->avg_frame_rate.num)
                && st->info->duration_count < fps_analyze_framecount

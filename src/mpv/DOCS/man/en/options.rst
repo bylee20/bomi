@@ -649,6 +649,21 @@
 --fullscreen, --fs
     Fullscreen playback (centers movie, and paints black bands around it).
 
+
+--fs-screen=<all|current|0-32>
+    In multi-monitor configurations (i.e. a single desktop that spans across
+    multiple displays) this option tells mpv which screen to go fullscreen to.
+    If ``default`` is provided mpv will fallback to using the behaviour
+    depending on what the user provided with the ``screen`` option.
+
+    *NOTE (X11)*: this option does not work properly with all window managers.
+    ``all`` in particular will usually only work with ``--fstype=-fullscreen``
+    or ``--fstype=none``, and even then only with some window managers.
+
+    *NOTE (OSX)*: ``all`` doesn't work on OSX and will behave like ``current``.
+
+    See also ``--screen``.
+
 --fsmode-dontuse=<0-31>
     OBSOLETE, use the ``--fs`` option.
     Try this option if you still experience fullscreen problems.
@@ -733,6 +748,8 @@
     *NOTE (OSX)*: On Mac OSX the origin of the screen coordinate system is
     located on the the bottom-left corner. For instance, ``0:0`` will place the
     window at the bottom-left of the screen.
+
+    *NOTE (X11)*: this option does not work properly with all window managers.
 
     *EXAMPLE*:
 
@@ -879,55 +896,47 @@
     their start timestamps differ, and then video timing is gradually adjusted
     if necessary to reach correct synchronization later.
 
---input=<commands>
-    This option can be used to configure certain parts of the input system.
-    Paths are relative to ``~/.mpv/``.
+--input-conf=<filename>
+    Specify input configuration file other than the default
+    ``~/.mpv/input.conf``.
 
-    *NOTE*: Autorepeat is currently only supported by joysticks.
+--input-ar-dev=<device>
+    Device to be used for Apple IR Remote (default is autodetected, Linux
+    only).
 
-    Available commands are:
+--input-ar-delay
+    Delay in milliseconds before we start to autorepeat a key (0 to
+    disable).
 
-    conf=<filename>
-        Specify input configuration file other than the default
-        ``~/.mpv/input.conf``.
+--input-ar-rate
+    Number of key presses to generate per second on autorepeat.
 
-    ar-dev=<device>
-        Device to be used for Apple IR Remote (default is autodetected, Linux
-        only).
+--no-input-default-bindings
+    Use the key bindings that mpv ships with by default.
 
-    ar-delay
-        Delay in milliseconds before we start to autorepeat a key (0 to
-        disable).
+--input-keylist
+    Prints all keys that can be bound to commands.
 
-    ar-rate
-        Number of key presses to generate per second on autorepeat.
+--input-cmdlist
+    Prints all commands that can be bound to keys.
 
-    (no-)default-bindings
-        Use the key bindings that mpv ships with by default.
+--input-js-dev
+    Specifies the joystick device to use (default: ``/dev/input/js0``).
 
-    keylist
-        Prints all keys that can be bound to commands.
+--input-file=<filename>
+    Read commands from the given file. Mostly useful with a FIFO.
+    See also ``--slave``.
 
-    cmdlist
-        Prints all commands that can be bound to keys.
+    *NOTE*: When the given file is a FIFO mpv opens both ends so you
+    can do several `echo "seek 10" > mp_pipe` and the pipe will stay
+    valid.
 
-    js-dev
-        Specifies the joystick device to use (default: ``/dev/input/js0``).
-
-    file=<filename>
-        Read commands from the given file. Mostly useful with a FIFO.
-        See also ``--slave``.
-
-        *NOTE*: When the given file is a FIFO mpv opens both ends so you
-        can do several `echo "seek 10" > mp_pipe` and the pipe will stay
-        valid.
-
-    test
-        Input test mode. Instead of executing commands on key presses, mpv
-        will show the keys and the bound commands on the OSD. Has to be used
-        with a dummy video, and the normal ways to quit the player will not
-        work (key bindings that normally quit will be shown on OSD only, just
-        like any other binding).
+--input-test
+    Input test mode. Instead of executing commands on key presses, mpv
+    will show the keys and the bound commands on the OSD. Has to be used
+    with a dummy video, and the normal ways to quit the player will not
+    work (key bindings that normally quit will be shown on OSD only, just
+    like any other binding).
 
 --ipv4-only-proxy
     Skip any HTTP proxy for IPv6 addresses. It will still be used for IPv4
@@ -1288,6 +1297,20 @@
     search for video segments from other files, and will also ignore any
     chapter order specified for the main file.
 
+--no-osd-bar, --osd-bar
+    Disable display of the OSD bar. This will make some things (like seeking)
+    use OSD text messages instead of the bar.
+
+    You can configure this on a per-command basis in input.conf using ``osd-``
+    prefixes, see ``Input command prefixes``. If you want to disable the OSD
+    completely, use ``--osd-level=0``.
+
+--osd-bar-align-x=<-1..1>
+    Position of the OSD bar. -1 is far left, 0 is centered, 1 is far right.
+
+--osd-bar-align-y=<-1..1>
+    Position of the OSD bar. -1 is top, 0 is centered, 1 is bottom.
+
 --osd-back-color=<#RRGGBB>, --sub-text-back-color=<#RRGGBB>
     See ``--osd-color``. Color used for OSD/sub text background.
 
@@ -1390,6 +1413,12 @@
 
     Default: 0.
 
+--osd-status-msg=<string>
+    Show a custom string during playback instead of the standard status text.
+    This overrides the status text used for ``--osd-level=3``, when using the
+    ``show_progress`` command (by default mapped to ``P``), or in some
+    non-default cases when seeking. Expands properties. See ``--playing-msg``.
+
 --overlapsub
     Allows the next subtitle to be displayed while the current one is still
     visible (default is to enable the support only for specific formats). This
@@ -1417,7 +1446,7 @@
 
 --playing-msg=<string>
     Print out a string before starting playback. The string is expanded for
-    properties, e.g. ``--playing-msg=file: \${filename}`` will print the string
+    properties, e.g. ``--playing-msg=file: ${filename}`` will print the string
     ``file:`` followed by a space and the currently played filename.
 
     The following expansions are supported:
@@ -1425,7 +1454,7 @@
     \${NAME}
         Expands to the value of the property ``NAME``. If ``NAME`` starts with
         ``=``, use the raw value of the property. If retrieving the property
-        fails, expand to an error string. (Use ``\${NAME:}`` with a trailing
+        fails, expand to an error string. (Use ``${NAME:}`` with a trailing
         ``:`` to expand to an empty string instead.)
     \${NAME:STR}
         Expands to the value of the property ``NAME``, or ``STR`` if the
@@ -1436,13 +1465,18 @@
     \${?NAME:STR}
         Expands to ``STR`` (recursively) if the property ``NAME`` is available.
     \$\$
-        Expands to ``\$``.
+        Expands to ``$``.
     \$}
         Expands to ``}``. (To produce this character inside recursive
         expansion.)
     \$>
-        Disable property expansion and special handling of ``\$`` for the rest
+        Disable property expansion and special handling of ``$`` for the rest
         of the string.
+
+    This option also parses C-style escapes. Example:
+
+    - ``\n`` becomes a newline character
+    - ``\\`` expands to ``\``
 
 --status-msg=<string>
     Print out a custom string during playback instead of the standard status
@@ -1643,7 +1677,6 @@
     Available options are:
 
     :fps=<value>:                  rate in frames per second (default: 25.0)
-    :sqcif|qcif|cif|4cif|pal|ntsc: set standard image size
     :w=<value>:                    image width in pixels
     :h=<value>:                    image height in pixels
     :format=<value>:               colorspace (fourcc) in hex or string
@@ -1684,6 +1717,18 @@
 --sb=<n>
     Seek to byte position. Useful for playback from CD-ROM images or VOB files
     with junk at the beginning. See also ``--start``.
+
+--screen=<default|0-32>
+    In multi-monitor configurations (i.e. a single desktop that spans across
+    multiple displays) this option tells mpv which screen to display the
+    movie on.
+
+    This option doesn't always work. In these cases, try to use ``--geometry``
+    to position the window explicitly.
+
+    *NOTE (X11)*: this option does not work properly with all window managers.
+
+    See also ``--fs-screen``.
 
 --screenshot-format=<type>
     Set the image file type used for saving screenshots.
@@ -2302,15 +2347,3 @@
 --wid=<ID>
     (X11 and win32 only)
     This tells mpv to attach to an existing window.See ``--slave-broken``.
-
---screen=<all|current|0-32>
-    In multi-monitor configurations (i.e. a single desktop that spans across
-    multiple displays) this option tells mpv which screen to display the
-    movie on. A value of ``all`` means fullscreen across the whole virtual display
-    (in this case system provided information is completely ignored), ``current`` means
-    fullscreen on the display the window currently is on. The initial position
-    set via the ``--geometry`` option is relative to the specified screen.
-    Will usually only work with ``--fstype=-fullscreen`` or ``--fstype=none``.
-    This option is not suitable to only set the startup screen (because it
-    will always display on the given screen in fullscreen mode),
-    ``--geometry`` is the best that is available for that purpose currently.

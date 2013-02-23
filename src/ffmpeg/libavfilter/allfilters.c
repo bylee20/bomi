@@ -94,6 +94,7 @@ void avfilter_register_all(void)
     REGISTER_FILTER(BBOX,           bbox,           vf);
     REGISTER_FILTER(BLACKDETECT,    blackdetect,    vf);
     REGISTER_FILTER(BLACKFRAME,     blackframe,     vf);
+    REGISTER_FILTER(BLEND,          blend,          vf);
     REGISTER_FILTER(BOXBLUR,        boxblur,        vf);
     REGISTER_FILTER(COLORMATRIX,    colormatrix,    vf);
     REGISTER_FILTER(COPY,           copy,           vf);
@@ -128,6 +129,7 @@ void avfilter_register_all(void)
     REGISTER_FILTER(MP,             mp,             vf);
     REGISTER_FILTER(NEGATE,         negate,         vf);
     REGISTER_FILTER(NOFORMAT,       noformat,       vf);
+    REGISTER_FILTER(NOISE,          noise,          vf);
     REGISTER_FILTER(NULL,           null,           vf);
     REGISTER_FILTER(OCV,            ocv,            vf);
     REGISTER_FILTER(OVERLAY,        overlay,        vf);

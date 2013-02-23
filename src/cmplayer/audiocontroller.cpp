@@ -64,7 +64,7 @@ struct AudioController::Data {
 		}
 		hint /= (float)total*(float)AcMisc<T>::MaxLv;
 		if (hint >= 0.01)
-			gain = clamp(0.25*(float)AcMisc<T>::MaxLv / hint, 0.1, 5.0);
+			gain = clamp(0.25*(float)AcMisc<T>::MaxLv / hint, 0.1, 10.0);
 		normalizedSamples[index].len = len;
 		normalizedSamples[index].avg = avg*gain;
 		index = (index+1)%normalizedSamples.size();

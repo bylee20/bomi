@@ -46,7 +46,6 @@ public:
 	void setVideoAspectRaito(double ratio);
 	QQuickItem *osd() const;
 	void setAspectRatio(double ratio);
-	void quit();
 	void setOverlay(QQuickItem *overlay);
 	QQuickItem *overlay() const;
 	void present(const VideoFrame &frame, bool checkFormat = true);

@@ -61,7 +61,7 @@ struct PlayEngine::Data {
 	AudioController *audio = nullptr;
 //	QMutex mutex;
 	QByteArray fileName;
-	QTimer ticker = {};
+	QTimer ticker;
 	bool quit = false, playing = false, init = false;
 	int start = 0, tick = 0;
 //	bool wasPlaying = false;
@@ -86,7 +86,7 @@ struct PlayEngine::Data {
 	bool enqueue(int id, const char *name = "", const T &v = 0) {
 		const bool ret = mpctx && mpctx->input && playing;
 		if (ret) {
-			mp_cmd_t *cmd = talloc_ptrtype(NULL, cmd);
+			mp_cmd_t *cmd = (mp_cmd_t*)talloc_ptrtype(NULL, cmd);
 			cmd->id = id;
 			cmd->name = (char*)name;
 			getCmdArg<T>(cmd) = v;
@@ -416,6 +416,7 @@ void PlayEngine::run() {
 			d->playing = false;
 		} else
 			setState(EngineError);
+		qDebug() << "terminate playback";
 		if (mpctx->stop_play == PT_QUIT) {
 			if (error == NoMpError) {
 				setState(EngineStopped);
@@ -456,9 +457,13 @@ void PlayEngine::run() {
 		if (!mpctx->playlist->current && !mpctx->opts.player_idle_mode)
 			break;
 	}
+	qDebug() << "terminate loop";
+	d->video->quit();
 	mpctx->opts.video_decoders = nullptr;
 	mpctx_delete(d->mpctx);
 	d->mpctx = nullptr;
+	d->init = false;
+	qDebug() << "terminate engine";
 }
 
 void PlayEngine::tellmp(const QString &cmd) {
@@ -468,6 +473,7 @@ void PlayEngine::tellmp(const QString &cmd) {
 }
 
 void PlayEngine::quit() {
+	d->video->quit();
 	tellmp("quit 1");
 }
 

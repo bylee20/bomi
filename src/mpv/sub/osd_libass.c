@@ -20,12 +20,14 @@
 #include <string.h>
 #include <assert.h>
 
+#include <libavutil/common.h>
+
 #include "config.h"
 
 #include "talloc.h"
+#include "core/mp_common.h"
 #include "core/mp_msg.h"
 #include "sub.h"
-#include "libavutil/common.h"
 
 static const char osd_font_pfb[] =
 #include "sub/osd_font.h"
@@ -102,15 +104,6 @@ static void clear_obj(struct osd_object *obj)
         ass_flush_events(obj->osd_track);
 }
 
-static char *append_utf8_buffer(char *buffer, uint32_t codepoint)
-{
-    char data[8];
-    uint8_t tmp;
-    char *output = data;
-    PUT_UTF8(codepoint, tmp, *output++ = tmp;);
-    return talloc_strndup_append_buffer(buffer, data, output - data);
-}
-
 void osd_get_function_sym(char *buffer, size_t buffer_size, int osd_function)
 {
     // 0xFF is never valid UTF-8, so we can use it to escape OSD symbols.
@@ -124,7 +117,7 @@ static char *mangle_ass(const char *in)
         // As used by osd_get_function_sym().
         if (in[0] == '\xFF' && in[1]) {
             res = talloc_strdup_append_buffer(res, ASS_USE_OSD_FONT);
-            res = append_utf8_buffer(res, OSD_CODEPOINTS + in[1]);
+            res = mp_append_utf8_buffer(res, OSD_CODEPOINTS + in[1]);
             res = talloc_strdup_append_buffer(res, "{\\r}");
             in += 2;
             continue;
@@ -134,7 +127,7 @@ static char *mangle_ass(const char *in)
         res = talloc_strndup_append_buffer(res, in, 1);
         // Break ASS escapes with U+2060 WORD JOINER
         if (*in == '\\')
-            res = append_utf8_buffer(res, 0x2060);
+            res = mp_append_utf8_buffer(res, 0x2060);
         in++;
     }
     return res;
@@ -155,10 +148,23 @@ static void update_osd(struct osd_state *osd, struct osd_object *obj)
     talloc_free(text);
 }
 
+static int get_align(float val, int res, int *out_margin)
+{
+    *out_margin = FFMAX(0, (1.0 - fabs(val)) * res / 2);
+    if (fabs(val) < 0.1)
+        return 1; // centered
+    return val > 0 ? 2 : 0; // bottom / top (or right / left)
+}
+
+static const int ass_align_x[3] = {1, 2, 3};
+static const int ass_align_y[3] = {4, 8, 0};
+
 #define OSDBAR_ELEMS 46
 
 static void update_progbar(struct osd_state *osd, struct osd_object *obj)
 {
+    struct MPOpts *opts = osd->opts;
+
     if (osd->progbar_type < 0) {
         clear_obj(obj);
         return;
@@ -169,8 +175,12 @@ static void update_progbar(struct osd_state *osd, struct osd_object *obj)
 
     ASS_Style *style = obj->osd_track->styles + obj->osd_track->default_style;
 
-    style->Alignment = 10; // all centered
-    style->MarginL = style->MarginR = style->MarginV = 0;
+    int ax = get_align(opts->osd_bar_align_x, obj->osd_track->PlayResX,
+                       &style->MarginR);
+    int ay = get_align(opts->osd_bar_align_y, obj->osd_track->PlayResY,
+                       &style->MarginV);
+    style->Alignment = ass_align_x[ax] + ass_align_y[ay];
+    style->MarginL = style->MarginR;
 
     // We need a fixed font size with respect to the OSD width.
     // Assume the OSD bar takes 2/3 of the OSD width at PlayResY=288 and
@@ -187,11 +197,13 @@ static void update_progbar(struct osd_state *osd, struct osd_object *obj)
 
     char *text = talloc_strdup(NULL, "{\\q2}");
 
-    if (osd->progbar_type >= 32) {
-        text = append_utf8_buffer(text, osd->progbar_type);
-    } else if (osd->progbar_type > 0) {
+    if (osd->progbar_type == 0 || osd->progbar_type >= 256) {
+        // no sym
+    } else if (osd->progbar_type >= 32) {
+        text = mp_append_utf8_buffer(text, osd->progbar_type);
+    } else {
         text = talloc_strdup_append_buffer(text, ASS_USE_OSD_FONT);
-        text = append_utf8_buffer(text, OSD_CODEPOINTS + osd->progbar_type);
+        text = mp_append_utf8_buffer(text, OSD_CODEPOINTS + osd->progbar_type);
         text = talloc_strdup_append_buffer(text, "{\\r}");
     }
 
@@ -199,12 +211,12 @@ static void update_progbar(struct osd_state *osd, struct osd_object *obj)
     text = talloc_strdup_append_buffer(text, "\\h");
     text = talloc_strdup_append_buffer(text, ASS_USE_OSD_FONT);
 
-    text = append_utf8_buffer(text, OSD_CODEPOINTS + OSD_PB_START);
+    text = mp_append_utf8_buffer(text, OSD_CODEPOINTS + OSD_PB_START);
     for (int n = 0; n < active; n++)
-        text = append_utf8_buffer(text, OSD_CODEPOINTS + OSD_PB_0);
+        text = mp_append_utf8_buffer(text, OSD_CODEPOINTS + OSD_PB_0);
     for (int n = 0; n < OSDBAR_ELEMS - active; n++)
-        text = append_utf8_buffer(text, OSD_CODEPOINTS + OSD_PB_1);
-    text = append_utf8_buffer(text, OSD_CODEPOINTS + OSD_PB_END);
+        text = mp_append_utf8_buffer(text, OSD_CODEPOINTS + OSD_PB_1);
+    text = mp_append_utf8_buffer(text, OSD_CODEPOINTS + OSD_PB_END);
 
     ASS_Event *event = get_osd_ass_event(obj->osd_track);
     event->Text = strdup(text);

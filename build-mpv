@@ -74,12 +74,12 @@ if test $kern = "Darwin"
 then
   echo "Build for OS X"
   args="$args --enable-coreaudio --disable-alsa"
-  libs="$libs -lintl -framework OpenAL -framework VideoDecodeAcceleration -framework CoreVideo -framework CoreFoundation -framework Cocoa"
+  libs="$libs -framework OpenAL -framework VideoDecodeAcceleration -framework CoreVideo -framework CoreFoundation -framework Cocoa"
   objs="$objs audio/out/ao_coreaudio.o osdep/timer-darwin.o"
 elif test $kern = "Linux"
 then
   echo "Build for Linux"
-  args="--cc=gcc $args --disable-coreaudio --enable-alsa"
+  args="$args --disable-coreaudio --enable-alsa"
   libs="-L../../build/lib -lcmplayer_av $libs -lopenal -lasound -lva"
   objs="$objs audio/out/ao_alsa.o audio/out/ao_openal.o osdep/timer-linux.o"
 else
@@ -87,7 +87,5 @@ else
   exit
 fi
 
-#--extra-cflags="$cflags" 
-
-cd src/mpv && make distclean; PKG_CONFIG_PATH="../../build/lib/pkgconfig" ./configure $args --extra-libs="$libs" \
+cd src/mpv && make distclean; PKG_CONFIG_PATH="../../build/lib/pkgconfig:${PKG_CONFIG_PATH}" ./configure $args --extra-libs="$libs"\
   && make -j 6 && ar rcsv ../../build/lib/libcmplayer_mpv.a $objs
