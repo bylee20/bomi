@@ -26,7 +26,7 @@
 
 class AskStartTimeEvent : public QEvent {
 public:
-	static const QEvent::Type Type = (QEvent::Type)(QEvent::User + 1);
+	static constexpr QEvent::Type Type = (QEvent::Type)(QEvent::User + 1);
 	AskStartTimeEvent(const Mrl &mrl, int start): QEvent(Type), mrl(mrl), start(start) {}
 	Mrl mrl;	int start;
 };
@@ -38,7 +38,6 @@ struct MainWindow::Data {
 	bool visible = false, sotChanging = false;
 	PlayerItem *player = nullptr;
 	RootMenu menu;	RecentInfo recent;
-//	const Pref &p = cPref;
 	PlayEngine engine;
 	VideoRendererItem renderer;
 	SubtitleRendererItem subtitle;
@@ -328,7 +327,6 @@ void qt_mac_set_dock_menu(QMenu *menu);
 
 MainWindow::MainWindow(QWidget *parent): QWidget(parent), d(new Data(this)) {
 	setAcceptDrops(true);
-	setWindowFlags(windowFlags() | Qt::WindowFullscreenButtonHint);
 	window()->winId();
 	d->view = new MainView(this);
 	d->view->setColor(Qt::black);
@@ -885,10 +883,17 @@ void MainWindow::onMouseEvent(QMouseEvent *event) {
 		UtilObject::setMouseReleased(event->localPos());
 	} else if (event->type() == QEvent::MouseButtonDblClick) {
 		if (!UtilObject::isDoubleClickFiltered() && (event->buttons() & Qt::LeftButton)) {
-			if (QAction *action = d->menu.doubleClickAction(event->modifiers()))
-				action->trigger();
+			if (QAction *action = d->menu.doubleClickAction(event->modifiers())) {
+#ifdef Q_OS_MAC
+				if (action == d->menu("window")["full"])
+					QTimer::singleShot(300, action, SLOT(trigger()));
+				else
+#endif
+					action->trigger();
+			}
 		}
 	}
+	event->accept();
 }
 
 void MainWindow::onWheelEvent(QWheelEvent *event) {
@@ -1185,11 +1190,11 @@ int MainWindow::getStartTime(const Mrl &mrl) {
 }
 
 void MainWindow::setCursorVisible(bool visible) {
-	if (visible && cursor().shape() == Qt::BlankCursor) {
+	if (visible && d->view->cursor().shape() == Qt::BlankCursor) {
 		unsetCursor();
 		d->view->unsetCursor();
 		UtilObject::setCursorVisible(true);
-	} else if (!visible && cursor().shape() != Qt::BlankCursor) {
+	} else if (!visible && d->view->cursor().shape() != Qt::BlankCursor) {
 		setCursor(Qt::BlankCursor);
 		d->view->setCursor(Qt::BlankCursor);
 		UtilObject::setCursorVisible(false);

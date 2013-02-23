@@ -42,12 +42,6 @@ enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2};
 
 struct mp_volnorm {int method;	float mul; float avg;};
 
-#ifdef Q_OS_MAC
-namespace std {
-	void __throw_bad_function_call() {throw "bad";}
-}
-#endif
-
 struct PlayEngine::Context { MPContext mp; PlayEngine *p; };
 
 template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0);
