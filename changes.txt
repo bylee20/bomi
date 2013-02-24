@@ -1,3 +1,26 @@
+0.7.0
+
+* New skin: modern
+* Tempo scaler auido filter is enabled
+* Volume normalizer is configurable
+* Change decoder from libav to ffmpeg: much better file handling
+* Change backend from mplayer2 to mpv: better maintanance
+* Obsolate DVD menu support
+* Upgrade Qt to version 5: better performance
+* History and playlist is embedded in video screen
+* Supports High resolution display(like Retina display)  (#11)
+* Add m4v and m2v suffix for media files (#12)
+* Screensaver in Linux can be disabled properly (#16)
+* Fix random suspension problem (#8, #10)
+* Better handling for fullscreen (#7, #13)
+
+0.6.2
+
+- Bug fix
+* Wrong stride of video frame
+* Wrong behavior when mouse moving in fullscreen mode
+* Wrong compile option which causes crash in 32bit mode (Linux)
+
 0.6.1
 
 - Improvement
