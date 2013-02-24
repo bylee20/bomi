@@ -241,16 +241,16 @@ const char *HwAcc::codecName(AVCodecID id) {
 
 #ifdef Q_OS_MAC
 struct Vda {
-	Vda(AVCodecContext *avctx) {
-		memset(&m_context, 0, sizeof(struct vda_context));
-	}
-
+	Vda() { memset(&m_context, 0, sizeof(struct vda_context)); }
+	~Vda() { freeContext(); }
 	constexpr static const char *name() {return "vda";}
-
+	quint32 imgfmt() const {return m_imgfmt;}
+	constexpr static int data()  { return 1; }
+	void release(void */*data*/) {	}
+	static constexpr PixelFormat vld() {return AV_PIX_FMT_VDA_VLD;}
 	static void addDecoders(mp_decoder_list *list) {
 		mp_add_decoder(list, "vda", "h264", "h264", "Apple VDA H.264");
 	}
-
 	static OSType vdaType(AVPixelFormat pixfmt) {
 		 switch (pixfmt) {
 		 case AV_PIX_FMT_UYVY422:
@@ -265,7 +265,6 @@ struct Vda {
 			 return 0;
 		 }
 	}
-
 	static mp_imgfmt imgfmt(OSType type) {
 		 switch (type) {
 		 case kCVPixelFormatType_422YpCbCr8:
@@ -280,19 +279,8 @@ struct Vda {
 			 return IMGFMT_NONE;
 		 }
 	}
-
-
-	~Vda() { freeContext(); }
-
-
-	constexpr static int data()  { return 1; }
-
-	void release(void */*data*/) {	}
-
-	static constexpr PixelFormat vld() {return AV_PIX_FMT_VDA_VLD;}
-	quint32 imgfmt() const {return m_imgfmt;}
 	void freeContext() {
-		if (m_ok && m_init) {
+		if (m_init) {
 			ff_vda_destroy_decoder(&m_context);
 			memset(&m_context, 0, sizeof(struct vda_context));
 		}
@@ -316,13 +304,11 @@ struct Vda {
 		m_init = true;
 		return true;
 	}
-
 	static void freeBuffer(void *arg) {
 		CVPixelBufferRef buffer = (CVPixelBufferRef)arg;
 		CVPixelBufferUnlockBaseAddress(buffer, 0);
 		CVPixelBufferRelease(buffer);
 	}
-
 	mp_image *image(AVFrame *pic) {
 		CVPixelBufferRef buffer = (CVPixelBufferRef)pic->data[3];
 		CVPixelBufferLockBaseAddress(buffer, 0);
@@ -339,6 +325,7 @@ struct Vda {
 		}
 		return mp_image_new_custom_ref(&m_mpi, buffer, freeBuffer);
 	}
+private:
 	vda_context m_context;
 	bool m_init = false;
 	OSType m_bufferType = vdaType(AV_PIX_FMT_UYVY422);
@@ -357,7 +344,6 @@ const char *HwAcc::codecName(AVCodecID id) {
 	}
 }
 #endif
-
 
 struct HwAccDecoder {
 	HwAccDecoder(sh_video *sh, const char *decoder);
@@ -386,7 +372,6 @@ struct HwAccDecoder {
 		}
 		return PIX_FMT_NONE;
 	}
-
 	AVCodecContext *m_avctx = nullptr;
 	AVFrame *m_pic = nullptr;
 	bool m_vo = false;

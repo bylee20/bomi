@@ -8,7 +8,7 @@ Rectangle {
 	Skin.Player {
 		id: player
 		width: parent.width; height: fullScreen ? parent.height : parent.height - controls.height
-		onFullScreenChanged: controls.update(); onTick: timetext.secs = (time*1e-3).toFixed(0)
+		onFullScreenChanged: controls.update()
 	}
 	Skin.MouseCatcher {
 		id: catcher
@@ -76,12 +76,11 @@ Rectangle {
 									font { pixelSize: 11; family: Core.Util.monospace }
 									verticalAlignment: Text.AlignVCenter
 								}
-								Text {
-									id: timetext
-									width: contentWidth; verticalAlignment: Text.AlignVCenter
-									property int secs: 0
-									text: "%1/%2".arg(Core.Util.msecToString(secs*1000.0)).arg(Core.Util.msecToString(player.duration))
-									font { pixelSize: 11; family: Core.Util.monospace }
+								Row {
+									width: childrenRect.width
+									Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: player.time }
+									Skin.TimeText { color: "black"; font.pixelSize: 11; text: "/" }
+									Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: player.duration }
 								}
 							}
 						}

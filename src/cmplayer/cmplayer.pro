@@ -65,7 +65,7 @@ INCLUDEPATH += ../mpv ../../build/include
 
 QMAKE_CXXFLAGS += -std=c++11
 
-QML2_IMPORT_PATH += imports
+QML_IMPORT_PATH += imports
 
 DEFINES += _LARGEFILE_SOURCE "_FILE_OFFSET_BITS=64" _LARGEFILE64_SOURCE
 
@@ -232,12 +232,12 @@ OTHER_FILES += \
     imports/CMPlayerSkin/Button.qml \
     imports/CMPlayerSkin/Player.qml \
     imports/CMPlayerSkin/MouseCatcher.qml \
+    imports/CMPlayerSkin/TimeText.qml \
     skins/classic/Slider.qml \
     skins/classic/FramedButton.qml \
     skins/classic/cmplayer.qml \
     skins/modern/cmplayer.qml \
     skins/modern/Slider.qml \
-    skins/modern/TimeText.qml \
     imports/CMPlayerSkin/PlayInfoView.qml \
     emptyskin.qml
 

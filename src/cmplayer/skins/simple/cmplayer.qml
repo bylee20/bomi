@@ -1,14 +1,14 @@
 import QtQuick 2.0
-import CMPlayerSkin 1.0
+import CMPlayerSkin 1.0 as Skin
 import CMPlayerCore 1.0 as Core
 Rectangle {
 	id: main
-	Player {
+	Skin.Player {
 		id: player
 		width: parent.width; height: fullScreen ? parent.height : parent.height - controls.height
 		onFullScreenChanged: controls.update()
 	}
-	MouseCatcher {
+	Skin.MouseCatcher {
 		id: catcher
 		width: parent.width; height: controls.height; anchors.bottom: parent.bottom
 		tracking: player.fullScreen
@@ -21,10 +21,10 @@ Rectangle {
 				GradientStop { position: 0.1; color: "#eee" }
 				GradientStop { position: 1.0; color: "#aaa" }
 			}
-			HorizontalLayout {
+			Skin.HorizontalLayout {
 				anchors.fill: parent; spacing: 3; paddings: 4
 				fillers: [timeslider]
-				Button {
+				Skin.Button {
 					id: playPause
 					width: parent.contentHeight; height: parent.contentHeight
 					icon: (player.state === Core.Engine.Playing) ? "pause.png" : "play.png"
@@ -36,12 +36,11 @@ Rectangle {
 					value: player.time/player.duration
 					onPressed: player.seek(Math.floor(player.duration*target))
 				}
-				Text {
-					id: timetext
-					width: contentWidth; height: contentHeight
-					font { family: Core.Util.monospace; pixelSize: 10 }
-					property int secs: 0
-					text: "%1/%2".arg(Core.Util.msecToString(secs*1000.0)).arg(Core.Util.msecToString(player.duration))
+				Row {
+					width: childrenRect.width
+					Skin.TimeText { color: "black"; msecs: player.time }
+					Skin.TimeText { color: "black"; text: "/" }
+					Skin.TimeText { color: "black"; msecs: player.duration }
 				}
 				Slider {
 					id: volumeslider
