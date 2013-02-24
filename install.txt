@@ -1,29 +1,19 @@
 To compile CMPlayer, you need next things:
 
 * g++ >= 4.7
-* Qt >= 4.8
-* python >= 3.0
+* Qt >= 5.0
 * yasm
 * zlib
 * libbz2
-* libdts
-* libdvdnav
 * libdvdread
 * libcdio
 * libcdio-paranoia
 * libcdio-cdda
 * libopenal
-* libasound
-* libva
-* libmad
-* libfaad
-* libxvidcore
-* libdv
-* libvorbis
-* libtheora
-* libogg
-* liba52
-* libdca
+* libmpg123
+* libasound (on Linux)
+* libva (on Linux)
+
 
 Also, you need VGA(graphics board) and driver which support OpenGL 2.0 or later.
 
@@ -39,7 +29,7 @@ If you want build cmplayer, follow next:
 
 1. Run next command to build the libraries included in source tree,
 
-$ ./build-libchardet && ./build-sigar && ./build-libav && ./build-mplayer2
+$ ./build-libchardet && ./build-sigar && ./build-ffmpeg && ./build-mpv
 
 2. Run next command to build cmplayer excutable,
 
@@ -69,7 +59,7 @@ where you have to use exactly same <args> specified when building cmplayer.
 
 1. Run next command to build the libraries included in source tree,
 
-./build-libchardet && ./build-sigar && ./build-libav && ./build-mplayer2
+./build-libchardet && ./build-sigar && ./build-ffmpeg && ./build-mpv
 
 2. Run next command to build cmplayer excutable,
 

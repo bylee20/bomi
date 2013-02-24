@@ -1287,5 +1287,7 @@
 		<key>i386</key>
 		<string>10.5.0</string>
 	</dict>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 </dict>
 </plist>
