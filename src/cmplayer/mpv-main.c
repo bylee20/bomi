@@ -1942,7 +1942,8 @@ static void set_dvdsub_fake_extradata(struct sh_sub *sh_sub, struct stream *st,
 	s = talloc_asprintf_append(s, "\n");
 
 	free(sh_sub->extradata);
-	sh_sub->extradata = strdup(s);
+	sh_sub->extradata = malloc(strlen(s) + 1);
+	strcpy(sh_sub->extradata, s);
 	sh_sub->extradata_len = strlen(s);
 	talloc_free(s);
 #endif

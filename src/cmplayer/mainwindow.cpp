@@ -935,7 +935,10 @@ void MainWindow::wheelEvent(QWheelEvent *event) {
 
 bool MainWindow::event(QEvent *event) {
 	bool res = QQuickView::event(event);
-	if (!res) {
+	if (event->type() == QEvent::Close) {
+		closeEvent(static_cast<QCloseEvent*>(event));
+		res = true;
+	} else if (!res) {
 		if (event->type() == QEvent::DragMove) {
 			auto move = static_cast<QDragMoveEvent*>(event);
 			if (move->mimeData()->hasUrls()) {
@@ -944,8 +947,6 @@ bool MainWindow::event(QEvent *event) {
 			}
 		} else if (event->type() == QEvent::Drop)
 			dropEvent(static_cast<QDropEvent*>(event));
-		else if (event->type() == QEvent::Close)
-			closeEvent(static_cast<QCloseEvent*>(event));
 	}
 	return res;
 }
@@ -1111,7 +1112,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 		hide();
 		AppState &as = AppState::get();
 		if (as.ask_system_tray) {
-			CheckDialog dlg(this);
+			CheckDialog dlg(d->widget());
 			dlg.setChecked(true);
 			dlg.setLabelText(tr("CMPlayer will be running in the system tray "
 					"when the window closed.<br>"

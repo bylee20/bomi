@@ -220,12 +220,13 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->start = 0;
 		break;
 	case StateChange: {
-		EngineState state; d->getEventData<StateChange>(event, &state);
+		EngineState state = EngineStopped;
+		d->getEventData<StateChange>(event, &state);
 		if (_Change(m_state, state))
 			emit stateChanged(m_state);
 		break;
 	} case MrlStopped: {
-		Mrl mrl; int terminated, duration;
+		Mrl mrl; int terminated = 0, duration = 0;
 		d->getEventData<MrlStopped>(event, &mrl, &terminated, &duration);
 		emit stopped(mrl, terminated, duration);
 		break;

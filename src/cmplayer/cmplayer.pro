@@ -20,7 +20,7 @@ LIB_DIR = $${DESTDIR}/lib
     CONFIG += release
     macx:CONFIG += app_bundle
 } else {
-    CONFIG += debug
+    #CONFIG += debug
     macx:CONFIG -= app_bundle
 }
 
@@ -54,15 +54,14 @@ macx {
     LIBS += -lX11 -lxcb \
         -L$${LIB_DIR} -lchardet \
 	-lopenal -lasound -ldl -lva -lva-glx -lcmplayer_mpv -lcmplayer_av
-    HEADERS += app_x11.hpp mpv-vaapi.hpp
-    SOURCES += app_x11.cpp mpv-vaapi.cpp
+    HEADERS += app_x11.hpp
+    SOURCES += app_x11.cpp
+    QMAKE_CC = "gcc -std=c99 -w"
 }
 
 LIBS += -lmpg123 -lquvi -ldvdread -lbz2 -lcdio -lz -lcdio_paranoia -lcdio_cdda
 
 INCLUDEPATH += ../mpv ../../build/include
-
-#QMAKE_CC = "/opt/local/bin/gcc -std=c99 -ffast-math -w"
 
 QMAKE_CXXFLAGS += -std=c++11
 

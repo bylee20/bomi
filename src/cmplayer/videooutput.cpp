@@ -73,8 +73,7 @@ const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
-int VideoOutput::config(struct vo */*vo*/, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t fmt) {
-	qDebug() << fmt << IMGFMT_420P;
+int VideoOutput::config(struct vo */*vo*/, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t /*fmt*/) {
 	return 0;
 }
 

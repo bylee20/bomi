@@ -138,3 +138,4 @@ src/mpv/demux/ebml_defs.c
 src/mpv/demux/ebml_types.h
 src/mpv/mpv
 src/mpv/version.h
+/build/

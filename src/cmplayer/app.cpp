@@ -76,7 +76,7 @@ App::~App() {
 void App::setMainWindow(MainWindow *mw) {
 	d->main = mw;
 #ifndef Q_OS_MAC
-	d->main->setWindowIcon(defaultIcon());
+	d->main->setIcon(defaultIcon());
 #endif
 	setActivationWindow(d->main, false);
 }

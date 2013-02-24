@@ -1,29 +1,225 @@
 #include "hwacc.hpp"
-
-QList<AVCodecID> HwAcc::fullCodecList() {
-	static const QList<AVCodecID> list = QList<AVCodecID>()
-		<< AV_CODEC_ID_MPEG1VIDEO << AV_CODEC_ID_MPEG2VIDEO << AV_CODEC_ID_MPEG4
-		<< AV_CODEC_ID_WMV3 << AV_CODEC_ID_VC1 << AV_CODEC_ID_H264;
-	 return list;
-}
-
+#include "stdafx.hpp"
+extern "C" {
+#include <video/filter/vf.h>
+#include <video/decode/vd.h>
+#include <video/img_format.h>
+#include <demux/demux_packet.h>
+#include <core/codecs.h>
+#include <core/av_common.h>
+#include <libavcodec/avcodec.h>
+#ifdef Q_OS_LINUX
+#include <video/mp_image_pool.h>
+#include <va/va.h>
+#include <va/va_glx.h>
+#include <libavcodec/vaapi.h>
+#endif
 #ifdef Q_OS_MAC
-HwAcc::~HwAcc() {}
-bool HwAcc::supports(AVCodecID codec) { return codec == AV_CODEC_ID_H264; }
-const char *HwAcc::codecName(AVCodecID id) {
-	switch (id) {
-	case AV_CODEC_ID_H264:
-		return "vda:h264";
-	default:
-		return nullptr;
-	}
-}
+#include <libavcodec/vda.h>
 #endif
 
+}
+
 #ifdef Q_OS_LINUX
-#include "mpv-vaapi.hpp"
-HwAcc::~HwAcc() { VaApiInfo::finalize(); }
-bool HwAcc::supports(AVCodecID codec) { return VaApiInfo::find(codec) != nullptr; }
+struct VaApiInfo {
+	struct Codec { AVCodecID id = AV_CODEC_ID_NONE; QVector<VAProfile> profiles; int surfaceCount = 0; };
+	static VaApiInfo &get();
+	const Codec *find(AVCodecID id) const { auto it = m_supported.find(id); return it != m_supported.end() && !it->profiles.isEmpty() ? &(*it) : 0; }
+	void *display() const { return m_display; }
+	~VaApiInfo() { if (m_display) vaTerminate(m_display); if (m_xdpy) XCloseDisplay(m_xdpy); }
+private:
+	VaApiInfo() {
+		if (!(m_xdpy = XOpenDisplay(NULL)) || !(m_display = vaGetDisplayGLX(m_xdpy)))
+			return;
+		int major, minor;
+		if (vaInitialize(m_display, &major, &minor) != VA_STATUS_SUCCESS)
+			return;
+		auto size = vaMaxNumProfiles(m_display);
+		QVector<VAProfile> profiles;
+		profiles.resize(size);
+		if (vaQueryConfigProfiles(m_display, profiles.data(), &size) != VA_STATUS_SUCCESS)
+			return;
+		profiles.resize(size);
+		auto supports = [this, &profiles](const QVector<VAProfile> &candidates, int count, AVCodecID id) {
+			Codec codec;
+			for (auto one : candidates) {
+				if (profiles.contains(one))
+					codec.profiles.push_back(one);
+			}
+			if (!codec.profiles.isEmpty()) {
+				codec.surfaceCount = count;
+				codec.id = id;
+			}
+			return codec;
+		};
+	#define NUM_VIDEO_SURFACES_MPEG2  3 /* 1 decode frame, up to  2 references */
+	#define NUM_VIDEO_SURFACES_MPEG4  3 /* 1 decode frame, up to  2 references */
+	#define NUM_VIDEO_SURFACES_H264  21 /* 1 decode frame, up to 20 references */
+	#define NUM_VIDEO_SURFACES_VC1    3 /* 1 decode frame, up to  2 references */
+		const QVector<VAProfile> mpeg2s = {VAProfileMPEG2Main, VAProfileMPEG2Simple};
+		const QVector<VAProfile> mpeg4s = {VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple};
+		const QVector<VAProfile> h264s = {VAProfileH264High, VAProfileH264Main, VAProfileH264Baseline};
+		const QVector<VAProfile> wmv3s = {VAProfileVC1Main, VAProfileVC1Simple};
+		const QVector<VAProfile> vc1s = {VAProfileVC1Advanced};
+		m_supported[AV_CODEC_ID_MPEG1VIDEO] = supports(mpeg2s, NUM_VIDEO_SURFACES_MPEG2, AV_CODEC_ID_MPEG1VIDEO);
+		m_supported[AV_CODEC_ID_MPEG2VIDEO] = supports(mpeg2s, NUM_VIDEO_SURFACES_MPEG2, AV_CODEC_ID_MPEG2VIDEO);
+		m_supported[AV_CODEC_ID_MPEG4] = supports(mpeg4s, NUM_VIDEO_SURFACES_MPEG4, AV_CODEC_ID_MPEG4);
+		m_supported[AV_CODEC_ID_WMV3] = supports(wmv3s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_WMV3);
+		m_supported[AV_CODEC_ID_VC1] = supports(vc1s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_VC1);
+		m_supported[AV_CODEC_ID_H264] = supports(h264s, NUM_VIDEO_SURFACES_H264, AV_CODEC_ID_H264);
+	}
+	QMap<AVCodecID, Codec> m_supported;
+	Display *m_xdpy = nullptr;
+	VADisplay m_display = nullptr;
+};
+VaApiInfo &VaApiInfo::get() {static VaApiInfo info; return info;}
+
+struct VaApi {
+	struct Texture {
+		Texture(VADisplay display, int width, int height): display(display) {
+			glGenTextures(1, &id);
+			glBindTexture(GL_TEXTURE_2D, id);
+			glTexImage2D(GL_TEXTURE_2D, 0, 4, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+			status = vaCreateSurfaceGLX(display, GL_TEXTURE_2D, id, &surface);
+			if (status != VA_STATUS_SUCCESS)
+				qDebug() << "vaCreateSurfaceGLX():" << vaErrorStr(status);
+		}
+		~Texture() {
+			if (surface)
+				vaDestroySurfaceGLX(display, &surface);
+			glDeleteTextures(1, &id);
+		}
+		VADisplay display = 0;
+		GLuint id = GL_NONE;
+		void *surface = nullptr;
+		int status = VA_STATUS_ERROR_UNKNOWN;
+	};
+	struct VaApiSurface { VASurfaceID  id = VA_INVALID_ID; bool ref = false; quint64 order = 0; };
+	VaApi() {
+		memset(&m_context, 0, sizeof(m_context));
+		m_context.context_id = m_context.config_id = VA_INVALID_ID;
+		m_context.display = VaApiInfo::get().display();
+		m_window.setSurfaceType(QWindow::OpenGLSurface);
+		m_window.setGeometry(-10, -10, 1, 1);
+		m_window.create();
+		m_gl.create();
+		m_gl.makeCurrent(&m_window);
+		m_pool = mp_image_pool_new(5);
+	}
+	~VaApi() { freeContext(); mp_image_pool_clear(m_pool); talloc_free(m_pool); m_gl.doneCurrent(); m_window.destroy();}
+	static constexpr const char *name() {return "vaapi";}
+	static constexpr PixelFormat vld() {return AV_PIX_FMT_VAAPI_VLD;}
+	static constexpr quint32 imgfmt() {return IMGFMT_BGRA;}
+	static void addDecoders(mp_decoder_list *list) {
+		mp_add_decoder(list, "vaapi", "mpegvideo", "mpegvideo", "VA-API MPEG-1/2");
+		mp_add_decoder(list, "vaapi", "h264", "h264", "VA-API H.264");
+		mp_add_decoder(list, "vaapi", "vc1", "vc1", "VA-API WVC1");
+		mp_add_decoder(list, "vaapi", "mpeg4", "mpeg4", "VA-API MPEG-4,DIVX-4/5");
+		mp_add_decoder(list, "vaapi", "wmv3", "wmv3", "VA-API WMV3/WMV9");
+	}
+	VASurfaceID data() {
+		int i_old, i;
+		for (i=0, i_old=0; i<m_surfaces.size(); ++i) {
+			if (!m_surfaces[i].ref)
+				break;
+			if (m_surfaces[i].order < m_surfaces[i_old].order)
+				i_old = i;
+		}
+		if (i >= m_surfaces.size())
+			i = i_old;
+		m_surfaces[i].ref = true;
+		m_surfaces[i].order = ++m_surfaceOrder;
+		Q_ASSERT(m_surfaces[i].id != VA_INVALID_ID);
+		return m_surfaces[i].id;
+	}
+	void release(void *data) {
+		const auto id = (VASurfaceID)(uintptr_t)data;
+		for (int i=0; i<m_surfaces.size(); ++i) {
+			if (m_surfaces[i].id == id) {
+				m_surfaces[i].ref = false;
+				break;
+			}
+		}
+	}
+	void freeContext() {
+		if (m_context.display) {
+			delete m_texture;
+			if (m_context.context_id != VA_INVALID_ID)
+				qDebug() << vaDestroyContext(m_context.display, m_context.context_id);
+			for (auto &surface : m_surfaces) {
+				if (surface.id != VA_INVALID_SURFACE)
+					vaDestroySurfaces(m_context.display, &surface.id, 1);
+			}
+			if (m_context.config_id != VA_INVALID_ID)
+				qDebug() << vaDestroyConfig(m_context.display, m_context.config_id);
+		}
+		m_context.context_id = m_context.config_id = VA_INVALID_ID;
+		m_profile = (VAProfile)(-1);
+		m_surfaces.clear();
+		m_surfaceOrder = 0;
+		m_texture = nullptr;
+	}
+	bool fillContext(AVCodecContext *avctx) {
+		avctx->hwaccel_context = nullptr;
+		auto codec = VaApiInfo::get().find(avctx->codec_id);
+		if (!codec)
+			return false;
+		freeContext();
+		m_profile = codec->profiles.front();
+		VAStatus status = VA_STATUS_SUCCESS;
+		do {
+			VAConfigAttrib attr = { VAConfigAttribRTFormat, 0 };
+			if((status = vaGetConfigAttributes(m_context.display, m_profile, VAEntrypointVLD, &attr, 1)) != VA_STATUS_SUCCESS)
+				break;
+			if(!(attr.value & VA_RT_FORMAT_YUV420) && !(attr.value & VA_RT_FORMAT_YUV422))
+				{ status = VA_STATUS_ERROR_FLAG_NOT_SUPPORTED; break; }
+			if((status = vaCreateConfig(m_context.display, m_profile, VAEntrypointVLD, &attr, 1, &m_context.config_id)) != VA_STATUS_SUCCESS)
+				break;
+			QVector<VASurfaceID> ids(codec->surfaceCount, VA_INVALID_SURFACE);
+			if ((status = vaCreateSurfaces(m_context.display, avctx->width, avctx->height, VA_RT_FORMAT_YUV420, ids.size(), ids.data())) != VA_STATUS_SUCCESS
+					&& (status = vaCreateSurfaces(m_context.display, avctx->width, avctx->height, VA_RT_FORMAT_YUV422, ids.size(), ids.data())) != VA_STATUS_SUCCESS)
+				break;
+			m_surfaces.resize(ids.size());
+			for (int i=0; i<ids.size(); ++i)
+				m_surfaces[i].id = ids[i];
+			if ((status = vaCreateContext(m_context.display, m_context.config_id, avctx->width, avctx->height, VA_PROGRESSIVE, ids.data(), ids.size(), &m_context.context_id)) != VA_STATUS_SUCCESS)
+				break;
+			avctx->hwaccel_context = &m_context;
+			m_texture = new Texture(m_context.display, avctx->width, avctx->height);
+			if ((status = m_texture->status) != VA_STATUS_SUCCESS)
+				break;
+			return true;
+		} while(0);
+		if (status != VA_STATUS_SUCCESS)
+			qDebug() << "vaapi:" << vaErrorStr(status);
+		return false;
+	}
+	mp_image *image(AVFrame *pic) {
+		const auto id = (VASurfaceID)(uintptr_t)pic->data[3];
+		vaSyncSurface(m_context.display, id);
+		glBindTexture(GL_TEXTURE_2D, m_texture->id);
+		const auto status = vaCopySurfaceGLX(m_context.display, m_texture->surface, id, 0);
+		if (status != VA_STATUS_SUCCESS)
+			qDebug() << "vaCopySurfaceGLX():" << vaErrorStr(status);
+		auto mpi = mp_image_pool_get(m_pool, imgfmt(), pic->width, pic->height);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, mpi->planes[0]);
+		return mpi;
+	}
+private:
+	vaapi_context m_context;
+	QVector<VaApiSurface> m_surfaces;
+	quint64 m_surfaceOrder = 0;
+	VAProfile m_profile = (VAProfile)(-1);
+	QWindow m_window;
+	QOpenGLContext m_gl;
+	Texture *m_texture = nullptr;
+	mp_image_pool *m_pool = nullptr;
+
+};
+typedef VaApi Backend;
+
+
+bool HwAcc::supports(AVCodecID codec) { return VaApiInfo::get().find(codec) != nullptr; }
 const char *HwAcc::codecName(AVCodecID id) {
 	switch (id) {
 	case AV_CODEC_ID_H264:
@@ -43,95 +239,16 @@ const char *HwAcc::codecName(AVCodecID id) {
 }
 #endif
 
-extern "C" {
-#include "video/fmt-conversion.h"
-#include <video/filter/vf.h>
-#include <video/decode/vd.h>
-#include "video/img_format.h"
-#include "demux/demux_packet.h"
-#include "core/codecs.h"
-#include "video/mp_image_pool.h"
-#include "core/av_common.h"
-#ifdef Q_OS_LINUX
-#include <va/va.h>
-#include <va/va_glx.h>
-#include <libavcodec/vaapi.h>
-#endif
 #ifdef Q_OS_MAC
-#include <libavcodec/vda.h>
-#endif
-#include <libavcodec/avcodec.h>
-}
-#include "stdafx.hpp"
-
-#ifdef Q_OS_LINUX
-struct VaApiCodec { AVCodecID id = AV_CODEC_ID_NONE; QVector<VAProfile> profiles; int surfaceCount = 0; };
-struct VaApiInfo::Data { QMap<AVCodecID, VaApiCodec> supported; Display *xdpy = nullptr; VADisplay display = nullptr; };
-
-VaApiInfo::VaApiInfo(): d(new Data) {
-	if (!(d->xdpy = XOpenDisplay(NULL)) || !(d->display = vaGetDisplayGLX(d->xdpy)))
-		return;
-	int major, minor;
-	if (vaInitialize(d->display, &major, &minor) != VA_STATUS_SUCCESS)
-		return;
-	auto size = vaMaxNumProfiles(d->display);
-	QVector<VAProfile> profiles;
-	profiles.resize(size);
-	if (vaQueryConfigProfiles(d->display, profiles.data(), &size) != VA_STATUS_SUCCESS)
-		return;
-	profiles.resize(size);
-	auto supports = [this, &profiles](const QVector<VAProfile> &candidates, int count, AVCodecID id) {
-		VaApiCodec codec;
-		for (auto one : candidates) {
-			if (profiles.contains(one))
-				codec.profiles.push_back(one);
-		}
-		if (!codec.profiles.isEmpty()) {
-			codec.surfaceCount = count;
-			codec.id = id;
-		}
-		return codec;
-	};
-#define NUM_VIDEO_SURFACES_MPEG2  3 /* 1 decode frame, up to  2 references */
-#define NUM_VIDEO_SURFACES_MPEG4  3 /* 1 decode frame, up to  2 references */
-#define NUM_VIDEO_SURFACES_H264  21 /* 1 decode frame, up to 20 references */
-#define NUM_VIDEO_SURFACES_VC1    3 /* 1 decode frame, up to  2 references */
-	const QVector<VAProfile> mpeg2s = {VAProfileMPEG2Main, VAProfileMPEG2Simple};
-	const QVector<VAProfile> mpeg4s = {VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple};
-	const QVector<VAProfile> h264s = {VAProfileH264High, VAProfileH264Main, VAProfileH264Baseline};
-	const QVector<VAProfile> wmv3s = {VAProfileVC1Main, VAProfileVC1Simple};
-	const QVector<VAProfile> vc1s = {VAProfileVC1Advanced};
-	d->supported[AV_CODEC_ID_MPEG1VIDEO] = supports(mpeg2s, NUM_VIDEO_SURFACES_MPEG2, AV_CODEC_ID_MPEG1VIDEO);
-	d->supported[AV_CODEC_ID_MPEG2VIDEO] = supports(mpeg2s, NUM_VIDEO_SURFACES_MPEG2, AV_CODEC_ID_MPEG2VIDEO);
-	d->supported[AV_CODEC_ID_MPEG4] = supports(mpeg4s, NUM_VIDEO_SURFACES_MPEG4, AV_CODEC_ID_MPEG4);
-	d->supported[AV_CODEC_ID_WMV3] = supports(wmv3s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_WMV3);
-	d->supported[AV_CODEC_ID_VC1] = supports(vc1s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_VC1);
-	d->supported[AV_CODEC_ID_H264] = supports(h264s, NUM_VIDEO_SURFACES_H264, AV_CODEC_ID_H264);
-}
-VaApiInfo &VaApiInfo::get() { static VaApiInfo info; return info; }
-VaApiInfo::~VaApiInfo() { delete d; }
-const VaApiCodec *VaApiInfo::find(AVCodecID id) { const auto &i = get(); auto it = i.d->supported.find(id); return it != i.d->supported.end() && !it->profiles.isEmpty() ? &(*it) : 0; }
-void *VaApiInfo::display() { return get().d->display; }
-void VaApiInfo::finalize() { auto &i = get(); if (i.d->display) vaTerminate(i.d->display); if (i.d->xdpy) XCloseDisplay(i.d->xdpy); }
-#endif
-
 struct Vda {
 	Vda(AVCodecContext *avctx) {
 		memset(&m_context, 0, sizeof(struct vda_context));
-		m_ok = true;
 	}
 
 	constexpr static const char *name() {return "vda";}
 
 	static void addDecoders(mp_decoder_list *list) {
 		mp_add_decoder(list, "vda", "h264", "h264", "Apple VDA H.264");
-		return;
-
-		mp_add_decoder(list, "vaapi", "mpegvideo", "mpegvideo", "VA-API MPEG-1/2");
-		mp_add_decoder(list, "vaapi", "h264", "h264", "VA-API H.264");
-		mp_add_decoder(list, "vaapi", "vc1", "vc1", "VA-API WVC1");
-		mp_add_decoder(list, "vaapi", "mpeg4", "mpeg4", "VA-API MPEG-4,DIVX-4/5");
-		mp_add_decoder(list, "vaapi", "wmv3", "wmv3", "VA-API WMV3/WMV9");
 	}
 
 	static OSType vdaType(AVPixelFormat pixfmt) {
@@ -173,7 +290,6 @@ struct Vda {
 	void release(void */*data*/) {	}
 
 	static constexpr PixelFormat vld() {return AV_PIX_FMT_VDA_VLD;}
-	AVPixelFormat pixfmt() const {return m_pixfmt;}
 	quint32 imgfmt() const {return m_imgfmt;}
 	void freeContext() {
 		if (m_ok && m_init) {
@@ -182,8 +298,6 @@ struct Vda {
 		}
 	}
 	bool fillContext(AVCodecContext *avctx) {
-		if (!m_ok)
-			return false;
 		freeContext();
 		avctx->hwaccel_context = nullptr;
 		m_context.width = avctx->width;
@@ -225,24 +339,35 @@ struct Vda {
 		}
 		return mp_image_new_custom_ref(&m_mpi, buffer, freeBuffer);
 	}
-
-	bool isOk() const {return m_ok;}
-	bool m_ok = false;
 	vda_context m_context;
 	bool m_init = false;
-	AVPixelFormat m_pixfmt = AV_PIX_FMT_UYVY422;
-	OSType m_bufferType = vdaType(m_pixfmt);
+	OSType m_bufferType = vdaType(AV_PIX_FMT_UYVY422);
 	mp_imgfmt m_imgfmt = imgfmt(m_bufferType);
 	mp_image m_mpi;
-//	mp_image_pool *m_pool = nullptr;
 };
-
 typedef Vda Backend;
+
+bool HwAcc::supports(AVCodecID codec) { return codec == AV_CODEC_ID_H264; }
+const char *HwAcc::codecName(AVCodecID id) {
+	switch (id) {
+	case AV_CODEC_ID_H264:
+		return "vda:h264";
+	default:
+		return nullptr;
+	}
+}
+#endif
+
 
 struct HwAccDecoder {
 	HwAccDecoder(sh_video *sh, const char *decoder);
 	~HwAccDecoder();
-	static int init(sh_video_t *sh, const char *decoder) { HwAccDecoder *dec = new HwAccDecoder(sh, decoder); return dec->m_backend->isOk() ? 1 : ((delete decoder), 0); }
+	static int init(sh_video_t *sh, const char *decoder) {
+		HwAccDecoder *dec = new HwAccDecoder(sh, decoder);
+		if (dec->m_backend->fillContext(dec->m_avctx))
+			return 1;
+		delete dec;	return 0;
+	}
 	static void uninit(sh_video_t *sh) { delete static_cast<HwAccDecoder*>(sh->context); }
 	static int get_buffer(AVCodecContext *avctx, AVFrame *pic) { return static_cast<HwAccDecoder*>(avctx->opaque)->getBuffer(pic); }
 	static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic) { static_cast<HwAccDecoder*>(avctx->opaque)->releaseBuffer(pic); }
@@ -264,20 +389,10 @@ struct HwAccDecoder {
 
 	AVCodecContext *m_avctx = nullptr;
 	AVFrame *m_pic = nullptr;
-	bool m_vo = false, m_ok = false;
+	bool m_vo = false;
 	AVRational m_last_sample_aspect_ratio;
 	Backend *m_backend = nullptr;
 	sh_video *m_sh = nullptr;
-#ifdef Q_OS_LINUX
-	QVector<VaApiSurface> m_surfaces;
-	quint64 m_surfaceOrder = 0;
-	vaapi_context m_context;
-	VAProfile m_profile = (VAProfile)(-1);
-	QWindow m_window;
-	QOpenGLContext m_gl;
-	Texture *m_texture = nullptr;
-#endif
-	mp_image_pool *m_pool = nullptr;
 };
 
 HwAccDecoder::HwAccDecoder(sh_video *sh, const char *decoder) {
@@ -317,23 +432,11 @@ HwAccDecoder::HwAccDecoder(sh_video *sh, const char *decoder) {
 	m_avctx->thread_count = 1;
 	if (avcodec_open2(m_avctx, codec, nullptr) < 0)
 		return;
-	m_backend = new Backend(m_avctx);
-#ifdef Q_OS_LINUX
-	m_window.setSurfaceType(QWindow::OpenGLSurface);
-	m_window.setGeometry(-10, -10, 1, 1);
-//	m_window.moveToThread(QThread::currentThread());
-	m_window.create();
-//	m_gl.moveToThread(QThread::currentThread());
-	m_gl.create();
-	m_gl.makeCurrent(&m_window);
-#endif
-	m_pool = mp_image_pool_new(5);
-	m_ok = true;
+	m_backend = new Backend;
 }
 
 HwAccDecoder::~HwAccDecoder() {
 	delete m_backend;
-//	freeContext();
 	if (m_avctx) {
 		if (m_avctx->codec && avcodec_close(m_avctx) < 0)
 			mp_tmsg(MSGT_DECVIDEO, MSGL_ERR, "Could not close codec.\n");
@@ -342,7 +445,6 @@ HwAccDecoder::~HwAccDecoder() {
 	}
 	av_freep(&m_avctx);
 	avcodec_free_frame(&m_pic);
-	mp_image_pool_clear(m_pool);
 	m_sh->context = nullptr;
 }
 
@@ -369,43 +471,18 @@ bool HwAccDecoder::initVideoOutput(PixelFormat pixfmt) {
 int HwAccDecoder::getBuffer(AVFrame *pic) {
 	if (!initVideoOutput(m_avctx->pix_fmt))
 		return -1;
-//	m_backend->setBuffer(pic);
-	//	int i_old, i;
-	//	for (i=0, i_old=0; i<m_surfaces.size(); ++i) {
-	//		if (!m_surfaces[i].ref)
-	//			break;
-	//		if (m_surfaces[i].order < m_surfaces[i_old].order)
-	//			i_old = i;
-	//	}
-	//	if (i >= m_surfaces.size())
-	//		i = i_old;
-	//	m_surfaces[i].ref = true;
-	//	m_surfaces[i].order = ++m_surfaceOrder;
-	//	Q_ASSERT(m_surfaces[i].id != VA_INVALID_ID);
-	//	uchar *dummy = (uchar*)(uintptr_t)m_surfaces[i].id;
-//		uchar *dummy = reinterpret_cast<uint8_t*>(1);
-		pic->linesize[0] = pic->linesize[1] = pic->linesize[2] = pic->linesize[3] = 0;
-	//	pic->data[1] = pic->data[2] = nullptr;
-		pic->data[0] = pic->data[3] = reinterpret_cast<uchar*>(m_backend->data());
-		pic->type = FF_BUFFER_TYPE_USER;
-		pic->reordered_opaque = m_avctx->reordered_opaque;
+	pic->linesize[0] = pic->linesize[1] = pic->linesize[2] = pic->linesize[3] = 0;
+	pic->data[1] = pic->data[2] = nullptr;
+	pic->data[0] = pic->data[3] = (uchar*)(quintptr)m_backend->data();
+	pic->type = FF_BUFFER_TYPE_USER;
+	pic->reordered_opaque = m_avctx->reordered_opaque;
 	return 0;
 }
 
 void HwAccDecoder::releaseBuffer(AVFrame *pic) {
 	m_backend->release(pic->data[3]);
-
-//	const auto id = (VASurfaceID)(uintptr_t)pic->data[3];
-//	for (int i=0; i<m_surfaces.size(); ++i) {
-//		if (m_surfaces[i].id == id) {
-//			m_surfaces[i].ref = false;
-//			break;
-//		}
-//	}
 	pic->data[0] = pic->data[1] = pic->data[2] = pic->data[3] = nullptr;
 }
-
-
 
 union pts { int64_t i; double d; };
 mp_image *HwAccDecoder::decode(demux_packet *packet, void *data, int len, int flags,  double *reordered_pts) {
@@ -424,8 +501,6 @@ mp_image *HwAccDecoder::decode(demux_packet *packet, void *data, int len, int fl
 		pkt.side_data = packet->avpacket->side_data;
 		pkt.side_data_elems = packet->avpacket->side_data_elems;
 	}
-
-	// The avcodec opaque field stupidly supports only int64_t type
 	pts temp; temp.d = *reordered_pts;
 	m_avctx->reordered_opaque = temp.i;
 	int newFrame = 0;
@@ -437,17 +512,6 @@ mp_image *HwAccDecoder::decode(demux_packet *packet, void *data, int len, int fl
 	if (!initVideoOutput(m_avctx->pix_fmt))
 		return nullptr;
 	return m_backend->image(m_pic);
-//	auto mpi = mp_image_pool_new_copy(m_pool, &tmp);
-
-//	const auto id = (VASurfaceID)(uintptr_t)m_pic->data[3];
-//	vaSyncSurface(m_context.display, id);
-//	glBindTexture(GL_TEXTURE_2D, m_texture->id);
-//	const auto status = vaCopySurfaceGLX(m_context.display, m_texture->surface, id, 0);
-//	if (status != VA_STATUS_SUCCESS)
-//		qDebug() << "vaCopySurfaceGLX():" << vaErrorStr(status);
-//	auto mpi = mp_image_pool_get(m_pool, IMGFMT_BGRA, m_avctx->width, m_avctx->height);
-//	glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, mpi->planes[0]);
-//	return mpi;
 }
 
 static int control(sh_video_t *sh, int cmd, void */*arg*/) {
@@ -474,6 +538,13 @@ static int control(sh_video_t *sh, int cmd, void */*arg*/) {
 
 const char *HwAcc::name() { return Backend::name(); }
 
+QList<AVCodecID> HwAcc::fullCodecList() {
+	static const QList<AVCodecID> list = QList<AVCodecID>()
+		<< AV_CODEC_ID_MPEG1VIDEO << AV_CODEC_ID_MPEG2VIDEO << AV_CODEC_ID_MPEG4
+		<< AV_CODEC_ID_WMV3 << AV_CODEC_ID_VC1 << AV_CODEC_ID_H264;
+	 return list;
+}
+
 extern vd_functions cmplayer_vd_hwacc;
 HwAcc::HwAcc() {
 	cmplayer_vd_hwacc.name = Backend::name();
@@ -482,7 +553,4 @@ HwAcc::HwAcc() {
 	cmplayer_vd_hwacc.control = control;
 	cmplayer_vd_hwacc.decode = HwAccDecoder::decode;
 	cmplayer_vd_hwacc.add_decoders = Backend::addDecoders;
-#ifdef Q_OS_LINUX
-	VaApiInfo::get();
-#endif
 }
