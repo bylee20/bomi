@@ -26,13 +26,12 @@ LIB_DIR = $${DESTDIR}/lib
 
 macx {
     #QMAKE_CXXFLAGS -= "-stdlib=libc++" "-std=c++11"
-
     QMAKE_CXXFLAGS -= -mmacosx-version-min=10.6
     #QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
     #QMAKE_CXXFLAGS_X86_64 += -m64
 #    QMAKE_CXX = /opt/local/bin/gcc
     QMAKE_CXX = clang++ -std=c++11 -stdlib=libc++
-    #QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.6
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
     QMAKE_MAC_SDK = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
@@ -67,7 +66,7 @@ INCLUDEPATH += ../mpv ../../build/include
 
 QMAKE_CXXFLAGS += -std=c++11
 
-QML_IMPORT_PATH += imports
+QML2_IMPORT_PATH += imports
 
 DEFINES += _LARGEFILE_SOURCE "_FILE_OFFSET_BITS=64" _LARGEFILE64_SOURCE
 
@@ -242,3 +241,7 @@ OTHER_FILES += \
     skins/modern/TimeText.qml \
     imports/CMPlayerSkin/PlayInfoView.qml \
     emptyskin.qml
+
+evil_hack_to_fool_lupdate {
+SOURCES += $${OTHER_FILES}
+}

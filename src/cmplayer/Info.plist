@@ -15,9 +15,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>net.xylosper.CMPlayer</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.6.3</string>
+	<string>0.7.0</string>
 	<key>CFBundleVersion</key>
-	<string>0.6.3</string>
+	<string>0.7.0</string>
 	<key>CFBundleGetInfoString</key>
 	<string>Created by Qt/QMake</string>
 	<key>CFBundleSignature</key>
@@ -110,23 +110,6 @@
 			<string>playlist.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>Playlist file</string>
-			<key>CFBundleTypeRole</key>
-			<string>Viewer</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>vlc</string>
-			</array>
-			<key>CFBundleTypeIconFile</key>
-			<string>playlist.icns</string>
-			<key>CFBundleTypeMIMETypes</key>
-			<array>
-				<string>application/x-videolan-vlc</string>
-				<string>application/videolan-vlc</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>VLC file</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 		</dict>

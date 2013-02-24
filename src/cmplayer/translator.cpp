@@ -57,8 +57,7 @@ bool Translator::load(const QLocale &locale) {
 	if (file == d->file)
 		return d->succ;
 	d->file = file;
-	d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def));
-	if (d->succ)
+	if ((d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def))))
 		QLocale::setDefault(l);
 	return d->succ;
 }

@@ -237,7 +237,7 @@ QString QtSingleApplication::id() const
   \sa activateWindow(), messageReceived()
 */
 
-void QtSingleApplication::setActivationWindow(QWidget* aw, bool activateOnMessage)
+void QtSingleApplication::setActivationWindow(QWindow* aw, bool activateOnMessage)
 {
     actWin = aw;
     if (activateOnMessage)
@@ -253,7 +253,7 @@ void QtSingleApplication::setActivationWindow(QWidget* aw, bool activateOnMessag
 
     \sa setActivationWindow()
 */
-QWidget *QtSingleApplication::activationWindow() const
+QWindow *QtSingleApplication::activationWindow() const
 {
     return actWin;
 }
@@ -278,7 +278,7 @@ void QtSingleApplication::activateWindow()
     if (actWin) {
 		actWin->setVisible(true);
         actWin->raise();
-		actWin->activateWindow();
+		actWin->requestActivate();
     }
 }
 

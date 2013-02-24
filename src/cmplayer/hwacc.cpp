@@ -472,6 +472,8 @@ static int control(sh_video_t *sh, int cmd, void */*arg*/) {
 	}
 }
 
+const char *HwAcc::name() { return Backend::name(); }
+
 extern vd_functions cmplayer_vd_hwacc;
 HwAcc::HwAcc() {
 	cmplayer_vd_hwacc.name = Backend::name();

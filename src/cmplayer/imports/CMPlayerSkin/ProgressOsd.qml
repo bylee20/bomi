@@ -25,10 +25,10 @@ Osd {
 				anchors.top: parent.top
 				anchors.left: parent.left
 				anchors.bottom: parent.bottom
-				anchors.margins: border.border.width
+				anchors.margins: border.border.width*2
 				anchors.rightMargin: 0
 				color: Qt.rgba(1.0, 1.0, 1.0, 0.5)
-				width: (parent.width-border.border.width*2)*value
+				width: (parent.width-border.border.width*4)*value
 			}
 		}
 	}

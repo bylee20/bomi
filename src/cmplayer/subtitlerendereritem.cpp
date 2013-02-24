@@ -99,6 +99,7 @@ double SubtitleRendererItem::scale(const QRectF &area) const {
 }
 
 void SubtitleRendererItem::prepare() {
+	qDebug() << "dpr" << dpr();
 	d->docempty = !d->drawer.draw(d->image, d->imageSize, d->shadowOffset, drawArea(), dpr());
 	if (!d->docempty) {
 		d->redraw = true;

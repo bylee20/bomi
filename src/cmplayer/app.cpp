@@ -128,7 +128,7 @@ bool App::event(QEvent *event) {
 }
 
 QWindow *App::topWindow() const {
-	return d->main->window()->windowHandle();
+	return d->main;
 }
 
 QStringList App::devices() const {

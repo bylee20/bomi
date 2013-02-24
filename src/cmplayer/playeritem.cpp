@@ -231,11 +231,10 @@ double PlayerItem::bps(double fps) const {
 double PlayerItem::avgsync() const {
 	if (!m_engine || !m_engine->context())
 		return 0.0;
-//	m_norm = m_engine->volumeNormalizer();
 	auto mpctx = m_engine->context();
 	double sync = 0.0;
 	if (mpctx->sh_audio && mpctx->sh_video) {
-		sync = (mpctx->total_avsync_change)*1000.0;
+		sync = (mpctx->last_av_difference)*1000.0;
 		d->sync = mpctx->total_avsync_change;
 	}
 	return sync;

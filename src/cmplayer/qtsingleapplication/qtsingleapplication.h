@@ -81,8 +81,8 @@ public:
     bool isRunning();
     QString id() const;
 
-	void setActivationWindow(QWidget *aw, bool activateOnMessage = true);
-	QWidget* activationWindow() const;
+	void setActivationWindow(QWindow *aw, bool activateOnMessage = true);
+	QWindow* activationWindow() const;
 
     // Obsolete:
     void initialize(bool dummy = true)
@@ -100,7 +100,7 @@ Q_SIGNALS:
 private:
     void sysInit(const QString &appId = QString());
     QtLocalPeer *peer;
-	QWidget *actWin;
+	QWindow *actWin;
 };
 
 }

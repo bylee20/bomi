@@ -349,16 +349,19 @@ E-mail разработчиков: %2
 <context>
     <name>HistoryView</name>
     <message>
+        <location filename="../imports/CMPlayerSkin/HistoryView.qml" line="37"/>
         <source>Name</source>
-        <translation type="obsolete">Имя</translation>
+        <translation type="unfinished">Имя</translation>
     </message>
     <message>
+        <location filename="../imports/CMPlayerSkin/HistoryView.qml" line="42"/>
         <source>Latest Play</source>
-        <translation type="obsolete">Последние проигранные</translation>
+        <translation type="unfinished">Последние проигранные</translation>
     </message>
     <message>
+        <location filename="../imports/CMPlayerSkin/HistoryView.qml" line="47"/>
         <source>Location</source>
-        <translation type="obsolete">Расположение</translation>
+        <translation type="unfinished">Расположение</translation>
     </message>
     <message>
         <source>Erase</source>
@@ -418,7 +421,7 @@ E-mail разработчиков: %2
         <translation type="obsolete">Аудио %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="481"/>
+        <location filename="../mainwindow.cpp" line="479"/>
         <source>Current Audio Track</source>
         <translation>Текущая аудио дорожка</translation>
     </message>
@@ -436,22 +439,22 @@ E-mail разработчиков: %2
         <translation type="obsolete">Видео %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="425"/>
+        <location filename="../mainwindow.cpp" line="423"/>
         <source>Current Video Track</source>
         <translation>Текущая видео дорожка</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="418"/>
+        <location filename="../mainwindow.cpp" line="416"/>
         <source>Current DVD Title</source>
         <translation>Текущий диск DVD</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="421"/>
+        <location filename="../mainwindow.cpp" line="419"/>
         <source>Current Chapter</source>
         <translation>Текущая глава</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="360"/>
+        <location filename="../mainwindow.cpp" line="358"/>
         <source>Open File</source>
         <translation>Открыть файл</translation>
     </message>
@@ -466,33 +469,48 @@ E-mail разработчиков: %2
         <translation>Открыть субтитры</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="408"/>
+        <location filename="../mainwindow.cpp" line="406"/>
         <source>Seeking</source>
         <translation>Поиск</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="408"/>
+        <location filename="../mainwindow.cpp" line="406"/>
         <source>sec</source>
         <translation>сек</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="487"/>
+        <location filename="../mainwindow.cpp" line="485"/>
         <source>Volume</source>
         <translation>Громкость</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="491"/>
+        <location filename="../mainwindow.cpp" line="489"/>
         <source>Mute</source>
         <translation>Без звука</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="497"/>
+        <location filename="../mainwindow.cpp" line="495"/>
         <source>Volume Normalizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="500"/>
+        <location filename="../mainwindow.cpp" line="498"/>
         <source>Tempo Scaler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="514"/>
+        <source>Select All Subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="514"/>
+        <source>%1 Subtitle(s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="535"/>
+        <source>Current Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -506,12 +524,12 @@ E-mail разработчиков: %2
         <translation>Пауза</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1148"/>
+        <location filename="../mainwindow.cpp" line="1156"/>
         <source>Stopped Record Found</source>
         <translation type="unfinished">Остановленная запись найдена</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1149"/>
+        <location filename="../mainwindow.cpp" line="1157"/>
         <source>This file was stopped during its playing before.
 Played Date: %1
 Stopped Time: %2
@@ -524,42 +542,42 @@ Do you want to start from where it&apos;s stopped?
 (Вы можете отключить эти вопросы в Параметрах.)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="377"/>
+        <location filename="../mainwindow.cpp" line="375"/>
         <source>Speed</source>
         <translation>Скорость</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="494"/>
+        <location filename="../mainwindow.cpp" line="492"/>
         <source>Amp</source>
         <translation>Усиление</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="392"/>
+        <location filename="../mainwindow.cpp" line="390"/>
         <source>Set A to %1</source>
         <translation>Установить A в %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="395"/>
+        <location filename="../mainwindow.cpp" line="393"/>
         <source>Range is too short!</source>
         <translation>Диапазон слишком короткий!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="396"/>
+        <location filename="../mainwindow.cpp" line="394"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation>Установить B в %1. Начать повторение!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="398"/>
+        <location filename="../mainwindow.cpp" line="396"/>
         <source>Quit repeating</source>
         <translation>Завершить повторение</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="399"/>
+        <location filename="../mainwindow.cpp" line="397"/>
         <source>Repeat current subtitle</source>
         <translation>Повторять текущие субтитры</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="389"/>
+        <location filename="../mainwindow.cpp" line="387"/>
         <source>A-B Repeat</source>
         <translation>Повторять A-B</translation>
     </message>
@@ -569,12 +587,12 @@ Do you want to start from where it&apos;s stopped?
         <translation>Положение субтитров</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1060"/>
+        <location filename="../mainwindow.cpp" line="1068"/>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
         <translation>Когда окно закрыто, CMPlayer будет находиться в системном лотке.&lt;br&gt;Вы можете изменить это в Параметрах.&lt;br&gt;Если вы хотите выйти из CMPlayer, используйте меню &apos;Выход&apos;.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1064"/>
+        <location filename="../mainwindow.cpp" line="1072"/>
         <source>Do not display this message again</source>
         <translation>Не показывать больше это сообщение</translation>
     </message>
@@ -597,32 +615,32 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">Шаг автомасштабирования</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="464"/>
+        <location filename="../mainwindow.cpp" line="462"/>
         <source>Reset brightness, contrast, saturation and hue</source>
         <translation>Сбросить яркость, контрастность, насыщенность и оттенок</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="468"/>
+        <location filename="../mainwindow.cpp" line="466"/>
         <source>Brightness</source>
         <translation>Яркость</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="469"/>
+        <location filename="../mainwindow.cpp" line="467"/>
         <source>Saturation</source>
         <translation>Насыщеность</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="470"/>
+        <location filename="../mainwindow.cpp" line="468"/>
         <source>Hue</source>
         <translation>Оттенок</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="471"/>
+        <location filename="../mainwindow.cpp" line="469"/>
         <source>Contrast</source>
         <translation>Контрастность</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="435"/>
+        <location filename="../mainwindow.cpp" line="433"/>
         <source>Drop Frame</source>
         <translation>Пропуск кадров</translation>
     </message>
@@ -678,27 +696,27 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">Меню DVD</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="223"/>
+        <location filename="../playengine.cpp" line="217"/>
         <source>No Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="267"/>
+        <location filename="../playengine.cpp" line="261"/>
         <source>Audio %1</source>
         <translation type="unfinished">Аудио %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="269"/>
+        <location filename="../playengine.cpp" line="263"/>
         <source>Video %1</source>
         <translation type="unfinished">Видео %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="271"/>
+        <location filename="../playengine.cpp" line="265"/>
         <source>Subtitle %1</source>
         <translation type="unfinished">Субтитры %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="289"/>
+        <location filename="../playengine.cpp" line="283"/>
         <source>Title %1</source>
         <translation>Заголовок %1</translation>
     </message>
@@ -769,6 +787,54 @@ Do you want to start from where it&apos;s stopped?
         <source>Video codec</source>
         <translation type="obsolete">Видео кодек</translation>
     </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="90"/>
+        <source>CPU Usage: %1%(avg. %2%/core)
+RAM Usage: %3MB(%4% of %5GB)
+Audio/Video Sync: %6ms
+Avg. Frame Rate: %7fps(%8MB/s)
+Volume Normalizer: %9%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="110"/>
+        <source>Video Codec: %1 %2
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="111"/>
+        <source>[HW acc.]</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="112"/>
+        <source>Input : %1 %2x%3 %4fps(%5MB/s)
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="118"/>
+        <source>Output: %1 %2x%3 %4fps(%5MB/s)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="141"/>
+        <source>Audio Codec: %1
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="142"/>
+        <source>Input : %1 %2kbps %3kHz %4ch %5bits
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="148"/>
+        <source>Output: %1 %2kbps %3kHz %4ch %5bits</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PlayerItem</name>
@@ -778,42 +844,42 @@ Do you want to start from where it&apos;s stopped?
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="251"/>
+        <location filename="../playeritem.cpp" line="250"/>
         <source>Playing</source>
         <translation type="unfinished">Проигрывается</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="253"/>
+        <location filename="../playeritem.cpp" line="252"/>
         <source>Stopped</source>
         <translation type="unfinished">Остановлен</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="255"/>
+        <location filename="../playeritem.cpp" line="254"/>
         <source>Finished</source>
         <translation type="unfinished">Завершён</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="257"/>
+        <location filename="../playeritem.cpp" line="256"/>
         <source>Buffering</source>
         <translation type="unfinished">Буферизация</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="259"/>
+        <location filename="../playeritem.cpp" line="258"/>
         <source>Opening</source>
         <translation type="unfinished">Открытие</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="261"/>
+        <location filename="../playeritem.cpp" line="260"/>
         <source>Error</source>
         <translation type="unfinished">Ошибка</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="263"/>
+        <location filename="../playeritem.cpp" line="262"/>
         <source>Preparing</source>
         <translation type="unfinished">Подготовка</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="265"/>
+        <location filename="../playeritem.cpp" line="264"/>
         <source>Paused</source>
         <translation type="unfinished">Пристановлен</translation>
     </message>
@@ -2376,17 +2442,17 @@ e.g.: English, Korean</source>
 <context>
     <name>SubtitleComponentModel</name>
     <message>
-        <location filename="../subtitlemodel.cpp" line="77"/>
+        <location filename="../subtitlemodel.cpp" line="78"/>
         <source>Start</source>
         <translation>Старт</translation>
     </message>
     <message>
-        <location filename="../subtitlemodel.cpp" line="78"/>
+        <location filename="../subtitlemodel.cpp" line="79"/>
         <source>End</source>
         <translation>Конец</translation>
     </message>
     <message>
-        <location filename="../subtitlemodel.cpp" line="79"/>
+        <location filename="../subtitlemodel.cpp" line="80"/>
         <source>Text</source>
         <translation>Текст</translation>
     </message>

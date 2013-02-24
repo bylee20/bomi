@@ -11,6 +11,7 @@ public:
 	static QList<AVCodecID> fullCodecList();
 	static bool supports(AVCodecID codec);
 	static const char *codecName(AVCodecID id);
+	static const char *name();
 	~HwAcc();
 private:
 	HwAcc();

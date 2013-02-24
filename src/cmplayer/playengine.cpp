@@ -150,7 +150,7 @@ void PlayEngine::setmp(const char *name, float value) {
 }
 
 void PlayEngine::onPlayStarted(MPContext *mpctx) {
-	reinterpret_cast<Context*>(mpctx)->p->setState(EnginePlaying);
+	reinterpret_cast<Context*>(mpctx)->p->setState(mpctx->paused ? EnginePaused : EnginePlaying);
 }
 
 double PlayEngine::volumeNormalizer() const {
@@ -160,8 +160,8 @@ double PlayEngine::volumeNormalizer() const {
 
 
 bool PlayEngine::isHwAccActivated() const {
-//	if (d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->gsh)
-//		qDebug() << d->mpctx->sh_video->vd_driver->name
+	if (d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->vd_driver)
+		return qstrcmp(d->mpctx->sh_video->vd_driver->name, HwAcc::name()) == 0;
 	return false;
 //	if (!d->mpctx || !d->mpctx->sh_video || !d->mpctx->stream>sh_video->avctx)
 //		return false;

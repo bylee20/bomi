@@ -46,7 +46,7 @@ struct AudioController::Data {
 	int enable[AF_NCH];
 	float level[AF_NCH];
 	bool soft = true;
-
+	double silence = 0.0001;
 	template<typename T>
 	void updateGain(mp_audio *data) {
 		T *p = static_cast<T*>(data->audio);
@@ -63,7 +63,7 @@ struct AudioController::Data {
 			total += sample.len;
 		}
 		hint /= (float)total*(float)AcMisc<T>::MaxLv;
-		if (hint >= 0.01)
+		if (hint >= silence)
 			gain = clamp(0.25*(float)AcMisc<T>::MaxLv / hint, 0.1, 10.0);
 		normalizedSamples[index].len = len;
 		normalizedSamples[index].avg = avg*gain;

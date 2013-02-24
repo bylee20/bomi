@@ -11,9 +11,10 @@ install_dir := sh install_dir.sh
 CXX ?= g++
 
 ifeq ($(os),osx)
-	QMAKE ?= /Developer/Tools/Qt/qmake -spec macx-g++
-	MACDEPLOYQT ?= /Developer/Tools/Qt/macdeployqt
-	LRELEASE ?= /Users/xylosper/Qt5.0.1/5.0.1/clang_64/bin/lrelease
+	QT_PATH = /Users/xylosper/Qt5.0.1/5.0.1/clang_64
+	QMAKE ?= $(QT_PATH)/bin/qmake -spec macx-clang
+	MACDEPLOYQT ?= $(QT_PATH)/bin/macdeployqt
+	LRELEASE ?= $(QT_PATH)/bin/lrelease
 	cmplayer_exec := CMPlayer
 	cmplayer_exec_path := build/$(cmplayer_exec).app/Contents/MacOS
 else
@@ -38,7 +39,9 @@ cmplayer: translations skins imports
 	cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make -j5 release
 ifeq ($(os),osx)
 	cp -r build/skins $(cmplayer_exec_path)
-	cd build && macdeployqt $(cmplayer_exec).app -dmg
+	cp -r build/imports $(cmplayer_exec_path)
+	cp -r $(QT_PATH)/qml/QtQuick.2 $(cmplayer_exec_path)/imports
+	cd build && $(MACDEPLOYQT) $(cmplayer_exec).app -dmg
 endif
 
 translations:
