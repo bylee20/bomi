@@ -614,3 +614,7 @@ bool PlayEngine::isTempoScaled() const {
 void PlayEngine::stop() {
 	tellmp("stop");
 }
+
+void PlayEngine::setVolumeNormalizer(double target, double silence, double min, double max) {
+	d->audio->setNormalizer(target, silence, min, max);
+}

@@ -457,6 +457,11 @@ void PrefDialog::fill(const Pref &p) {
 			ch->setChecked(true);
 	}
 
+	d->ui.normalizer_silence->setValue(p.normalizer_silence);
+	d->ui.normalizer_target->setValue(p.normalizer_target);
+	d->ui.normalizer_min->setValue(p.normalizer_min*100.0);
+	d->ui.normalizer_max->setValue(p.normalizer_max*100.0);
+
 	d->ui.blur_kern_c->setValue(p.blur_kern_c);
 	d->ui.blur_kern_n->setValue(p.blur_kern_n);
 	d->ui.blur_kern_d->setValue(p.blur_kern_d);
@@ -550,6 +555,11 @@ void PrefDialog::apply() {
 	p.sharpen_kern_d = d->ui.sharpen_kern_d->value();
 	p.adjust_contrast_min_luma = d->ui.min_luma->value();
 	p.adjust_contrast_max_luma = d->ui.max_luma->value();
+
+	p.normalizer_target = d->ui.normalizer_target->value();
+	p.normalizer_silence = d->ui.normalizer_silence->value();
+	p.normalizer_min = d->ui.normalizer_min->value()/100.0;
+	p.normalizer_max = d->ui.normalizer_max->value()/100.0;
 
 	p.sub_enable_autoload = d->ui.sub_enable_autoload->isChecked();
 	p.sub_enable_autoselect = d->ui.sub_enable_autoselect->isChecked();

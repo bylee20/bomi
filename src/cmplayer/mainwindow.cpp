@@ -1014,7 +1014,6 @@ void MainWindow::reloadSkin() {
 }
 
 void MainWindow::applyPref() {
-	d->engine.setHwAccCodecs(cPref.enable_hwaccel ? cPref.hwaccel_codecs : QList<int>());
 	int time = -1;
 	switch (d->engine.state()) {
 	case EnginePlaying:
@@ -1025,17 +1024,20 @@ void MainWindow::applyPref() {
 	default:
 		break;
 	}
-	SubtitleParser::setMsPerCharactor(cPref.ms_per_char);
-	Translator::load(cPref.locale);
+	auto &p = cPref;
+	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
+	d->engine.setVolumeNormalizer(p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
+	SubtitleParser::setMsPerCharactor(p.ms_per_char);
+	Translator::load(p.locale);
 	reloadSkin();
-	d->subtitle.setPriority(cPref.sub_priority);
-	d->subtitle.setStyle(cPref.sub_style);
+	d->subtitle.setPriority(p.sub_priority);
+	d->subtitle.setStyle(p.sub_style);
 	d->menu.update();
 	d->menu.save();
 	d->menu.syncTitle();
 	d->menu.resetKeyMap();
 #ifndef Q_OS_MAC
-	d->tray->setVisible(cPref.enable_system_tray);
+	d->tray->setVisible(p.enable_system_tray);
 #endif
 	if (time >= 0)
 		d->engine.reload();

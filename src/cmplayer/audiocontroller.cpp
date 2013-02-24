@@ -21,6 +21,7 @@ template<> struct AcMisc<qint16> {
 	static constexpr int MinLv = SHRT_MIN;
 	static constexpr int format = AF_FORMAT_S16_NE;
 	static constexpr int bps = 2;
+	static constexpr double level(double p) {return (p < 0 ? -p : p)/(double)(SHRT_MAX);}
 	static constexpr bool isInt = true;
 };
 template<> struct AcMisc<float> {
@@ -29,6 +30,7 @@ template<> struct AcMisc<float> {
 	static constexpr int format = AF_FORMAT_FLOAT_NE;
 	static constexpr int bps = 4;
 	static constexpr bool isInt = false;
+	static constexpr double level(double p) {return (p < 0 ? -p : p);}
 };
 
 // some codes are copied from mplayer
@@ -37,34 +39,29 @@ af_info af_info_dummy = { "CMPlayer audio controller", "dummy", "xylosper", "", 
 extern af_info af_info_scaletempo;
 
 struct AudioController::Data {
-	struct SampleInfo { float avg = 0.0; int len = 0; void reset() {avg = 0.0; len = 0;}};
-
+	struct SampleInfo { double avg = 0.0; int len = 0; void reset() {avg = 0.0; len = 0;}};
 	mp_audio data;
-	af_instance *af = nullptr;
-	af_instance af_scaletempo;
-	// volume
-	int enable[AF_NCH];
-	float level[AF_NCH];
-	bool soft = true;
-	double silence = 0.0001;
+	af_instance *af = nullptr, af_scaletempo;
+	int enable[AF_NCH], index = 0; float level[AF_NCH];
+	double gain = 1.0, silence = 0.0001, gain_min = 0.1, gain_max = 10.0, target = 0.25;
 	template<typename T>
 	void updateGain(mp_audio *data) {
 		T *p = static_cast<T*>(data->audio);
 		const int len = data->len/sizeof(T);
-		float avg = 0.0;
-		for (int i=0; i<len; ++i)
-			avg += p[i]*p[i];
-		avg = qSqrt(avg/(float)len);
+		double avg = 0.0;
+		for (int i=0; i<len; ++i) {
+			avg += AcMisc<T>::level(p[i]);
+		}
+		avg /= (double)len;
 
-		float hint = avg;
-		int total = len;
+		double hint = 0.0; int total = 0;
 		for (const SampleInfo &sample : this->normalizedSamples) {
-			hint += sample.avg*(float)sample.len;
+			hint += sample.avg*(double)sample.len;
 			total += sample.len;
 		}
-		hint /= (float)total*(float)AcMisc<T>::MaxLv;
+		hint /= (double)total;
 		if (hint >= silence)
-			gain = clamp(0.25*(float)AcMisc<T>::MaxLv / hint, 0.1, 10.0);
+			gain = qBound(gain_min, target / hint, gain_max);
 		normalizedSamples[index].len = len;
 		normalizedSamples[index].avg = avg*gain;
 		index = (index+1)%normalizedSamples.size();
@@ -81,13 +78,8 @@ struct AudioController::Data {
 		}
 		return data;
 	}
-
-	bool normalizer = false;
-	bool scaletempo = false;
+	bool soft = true, normalizer = false, scaletempo = false;
 	QVector<SampleInfo> normalizedSamples;
-	int index = 0;
-	float gain = 1.0;
-
 };
 
 AudioController::AudioController(QObject *parent): QObject(parent), d(new Data) {
@@ -229,4 +221,11 @@ double AudioController::normalizer() const {
 
 bool AudioController::scaletempo() const {
 	return d->scaletempo;
+}
+
+void AudioController::setNormalizer(double target, double silence, double min, double max) {
+	d->silence = silence;
+	d->target = target;
+	d->gain_min = min;
+	d->gain_max = max;
 }

@@ -60,6 +60,11 @@ void Pref::save() const {
     WRITE(enable_hwaccel);
 	WRITE(skin_name);
     WRITE(hwaccel_codecs);
+
+	WRITE(normalizer_silence);
+	WRITE(normalizer_target);
+	WRITE(normalizer_min);
+	WRITE(normalizer_max);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -123,6 +128,11 @@ void Pref::load() {
 	READ(generate_playlist);
 	READ(sub_autoload);
 	READ(sub_autoselect);
+
+	READ(normalizer_silence);
+	READ(normalizer_target);
+	READ(normalizer_min);
+	READ(normalizer_max);
 #undef READ
 //	sub_style.load(r, "sub_style");
 	double_click_map.load(r, "double_click_map");

@@ -105,6 +105,7 @@ public:
 	double preamp() const {return m_preamp;}
 	StreamList audioStreams() const {return m_audioStreams;}
 	void setCurrentAudioStream(int id) {setmp("audio", id);}
+	void setVolumeNormalizer(double target, double silence, double min, double max);
 public slots:
 	void setVolume(int volume) {if (_Change(m_volume, qBound(0, volume, 100))) {setMpVolume(); emit volumeChanged(m_volume);}}
 	void setPreamp(double preamp) {if (_ChangeZ(m_preamp, qBound(0.0, preamp, 10.0))) {	setMpVolume();	emit preampChanged(m_preamp);}}

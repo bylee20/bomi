@@ -116,6 +116,8 @@ public:
     bool enable_hwaccel = false;
     QList<int> hwaccel_codecs = defaultHwAccCodecs();
 
+	double normalizer_silence = 0.0001, normalizer_target = 0.25, normalizer_min = 0.1, normalizer_max = 10.0;
+
 	QString skin_name = "simple";
 
 	void save() const;
