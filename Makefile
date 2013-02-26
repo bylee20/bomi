@@ -64,7 +64,6 @@ clean:
 	-rm -rf build/cmplayer*
 	-rm -rf build/skins
 	-rm -rf build/imports
-	-rm -f src/cmplayer/translations/*.qm
 
 install: cmplayer
 ifeq ($(os),linux)
