@@ -15,7 +15,7 @@ else
 CFLAGS += -O2
 endif
 
-MAKE_VARS = CXX=g++-4.7 QMAKE=qmake-qt4 LRELEASE=lrelease-qt4 PREFIX=/usr \
+MAKE_VARS = QMAKE=qmake PREFIX=/usr \
 		ACTION_PATH=/usr/share/kde4/apps/solid/actions
 
 build: build-stamp
@@ -24,9 +24,8 @@ build-stamp:
 
 	# Add here commands to compile the package.
 	./build-libchardet
-	./build-sigar
-	./build-libav
-	./build-mplayer2
+	./build-ffmpeg
+	./build-mpv
 	make $(MAKE_VARS) cmplayer
 
 	#touch build-stamp
@@ -40,9 +39,8 @@ clean:
 	# Add here commands to clean up after the build process.
 	-make $(MAKE_VARS) clean
 	-cd src/libchardet* && make distclean
-	-cd src/libav && make distclean
-	-cd src/mplayer2 && make distclean
-	-cd src/sigar && make clean
+	-cd src/ffmpeg && make distclean
+	-cd src/mpv && make distclean
 	-rm -rf build
 
 	dh_clean

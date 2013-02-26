@@ -13,6 +13,7 @@
 * Screensaver in Linux can be disabled properly (#16)
 * Fix random suspension problem (#8, #10)
 * Better handling for fullscreen (#7, #13)
+* Fix to keep the window style when reopen preferences
 
 0.6.2
 

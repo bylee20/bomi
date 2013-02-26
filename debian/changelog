@@ -1,3 +1,22 @@
+cmplayer (0.7.0-1) quantal; urgency=low
+
+  * New skin: modern
+  * Tempo scaler auido filter is enabled
+  * Volume normalizer is configurable
+  * Change decoder from libav to ffmpeg: much better file handling
+  * Change backend from mplayer2 to mpv: better maintanance
+  * Obsolate DVD menu support
+  * Upgrade Qt to version 5: better performance
+  * History and playlist is embedded in video screen
+  * Supports High resolution display(like Retina display)  (#11)
+  * Add m4v and m2v suffix for media files (#12)
+  * Screensaver in Linux can be disabled properly (#16)
+  * Fix random suspension problem (#8, #10)
+  * Better handling for fullscreen (#7, #13)
+  * Fix to keep the window style when reopen preferences
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Tue, 26 Feb 2013 19:15:00 +0900
+
 cmplayer (0.6.2-1) precise; urgency=low
 
   * Fix: Wrong stride of video frame

@@ -499,8 +499,7 @@ void PrefDialog::fill(const Pref &p) {
 	d->ui.sub_priority->setValues(p.sub_priority);
 
 	d->ui.single_app->setChecked(cApp.isUnique());
-	d->ui.locale->setCurrentData(p.locale);
-	d->ui.window_style->setCurrentData(cApp.styleName());
+	d->ui.window_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
 	d->ui.enable_system_tray->setChecked(p.enable_system_tray);
 	d->ui.hide_rather_close->setChecked(p.hide_rather_close);
 

@@ -35,7 +35,7 @@ else
 		QMAKE_CXX=$(CXX)
 endif
 
-cmplayer: translations skins imports
+cmplayer: skins imports
 	cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make -j5 release
 ifeq ($(os),osx)
 	cp -r build/skins $(cmplayer_exec_path)

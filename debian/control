@@ -3,18 +3,15 @@ Section: graphics
 Priority: optional
 Maintainer: xylosper <darklin20@gmail.com>
 Build-Depends: g++-4.7(>= 4.7), debhelper (>= 7)
-	, libqt4-dev (>= 4.8), libqt4-opengl-dev (>=4.8)
-	, yasm, python3, zlib1g-dev, libx11-dev, libdts-dev
-	, libdvdnav-dev, libdvdread-dev
+	, qt5-qmake, qtbase5-dev, qtdeclarative5-dev
+	, yasm, zlib1g-dev, libx11-dev, libdvdread-dev
 	, libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
 	, libopenal-dev, libasound2-dev, libva-dev
-	, libmad0-dev, libfaad-dev, libxvidcore-dev, libdv4-dev
-	, libvorbis-dev, libtheora-dev, libogg-dev
-	, liba52-dev, libdca-dev,  libbz2-dev
+	, libmpg123-dev, libbz2-dev, qt5-default
 
 Package: cmplayer
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, qtdeclarative5-qtquick2-plugin
 Description: CMPlayer - a multimedia player
  CMPlayer is a multimedia player.
 

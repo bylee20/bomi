@@ -63,8 +63,8 @@ public:
 		if (idx >= 0)
 			setCurrentIndex(idx);
 	}
-	void setCurrentText(const QString &text) {
-		const int idx = findText(text);
+	void setCurrentText(const QString &text, Qt::MatchFlags flags = static_cast<Qt::MatchFlags>(Qt::MatchExactly|Qt::MatchCaseSensitive)) {
+		const int idx = findText(text, flags);
 		if (idx >= 0)
 			setCurrentIndex(idx);
 	}
