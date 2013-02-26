@@ -55,13 +55,11 @@ macx {
     CONFIG += c++11
     QT += dbus gui-private
     TARGET = cmplayer
-    LIBS += -lX11 -lxcb \
-        -L$${LIB_DIR} -lchardet \
-	-lopenal -lasound -ldl -lva -lva-glx -lcmplayer_mpv -lcmplayer_av
+    LIBS += -lX11 -lxcb -L$${LIB_DIR} -lchardet -lva -lva-glx -lcmplayer_mpv -lcmplayer_av
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
     QMAKE_CC = "gcc -std=c99 -w"
-    LIBS += -lmpg123 -lquvi -ldvdread -lcdio -lcdio_paranoia -lcdio_cdda
+    LIBS += -lmpg123 -lquvi -ldvdread -lcdio -lcdio_paranoia -lcdio_cdda -lopenal -lasound -ldl
 }
 
 LIBS += -lbz2 -lz
