@@ -13,15 +13,14 @@ build() {
 	cd $srcdir
 	echo $url
 	echo $pkgname-$pkgver
-	#git clone $url $pkgname-$pkgver
-	cd $pkgname-$pkgver
-	#git checkout $pkgver
+	git clone $url $pkgname-$pkgver
+	git checkout $pkgver
 	./build-libchardet && ./build-ffmpeg && ./build-mpv && \
-	make PREFIX=/usr CXX=g++ QMAKE=qmake-qt5 LRELEASE=lrelease-qt5 cmplayer || return 1
+	make PREFIX=/usr QMAKE=qmake-qt5 cmplayer || return 1
 }
 
 package() {
 	pkgdesc="CMPlayer is a multimedia player."
 	cd "$srcdir/$pkgname-$pkgver"
-	make DEST_DIR=$pkgdir PREFIX=/usr CXX=g++ QMAKE=qmake-qt5 LRELEASE=lrelease-qt5 install || return 1
+	make DEST_DIR=$pkgdir PREFIX=/usr QMAKE=qmake-qt5 install || return 1
 }

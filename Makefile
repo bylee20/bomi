@@ -44,11 +44,6 @@ ifeq ($(os),osx)
 	cd build && $(MACDEPLOYQT) $(cmplayer_exec).app -dmg
 endif
 
-translations:
-	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ko.ts -qm cmplayer_ko.qm
-	cd src/cmplayer/translations && $(LRELEASE) cmplayer_en.ts -qm cmplayer_en.qm
-	cd src/cmplayer/translations && $(LRELEASE) cmplayer_ru.ts -qm cmplayer_ru.qm
-	
 skins: build_dir
 	cp -r src/cmplayer/skins build
 
