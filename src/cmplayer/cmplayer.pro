@@ -26,7 +26,7 @@ LIB_DIR = $${DESTDIR}/lib
 
 macx {
     #QMAKE_CXXFLAGS -= "-stdlib=libc++" "-std=c++11"
-    QMAKE_CXXFLAGS -= -mmacosx-version-min=10.6
+    QMAKE_CXXFLAGS -= "-mmacosx-version-min=10.6"
     #QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
     #QMAKE_CXXFLAGS_X86_64 += -m64
 #    QMAKE_CXX = /opt/local/bin/gcc
@@ -37,11 +37,15 @@ macx {
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
     BREW = /usr/local/Cellar
+    BLIB_DIR = /usr/local/lib
     LIBS +=  $${DESTDIR}/lib/libavcodec.a \
         $${LIB_DIR}/libavformat.a $${LIB_DIR}/libavutil.a \
         $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
         $${LIB_DIR}/libchardet.a \
-	-L/usr/local/lib -liconv -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
+	$${BLIB_DIR}/libmpg123.a $${BLIB_DIR}/libquvi.a -L$${BLIB_DIR} -llua \
+	$${BLIB_DIR}/libdvdread.a $${BLIB_DIR}/libcdio.a $${BLIB_DIR}/libcdio_paranoia.a \
+	$${BLIB_DIR}/libcdio_cdda.a $${BLIB_DIR}/libdvdcss.a \
+	-lcurl -liconv -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
 	-framework IOKit -framework Carbon
     HEADERS += app_mac.hpp
@@ -57,9 +61,10 @@ macx {
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
     QMAKE_CC = "gcc -std=c99 -w"
+    LIBS += -lmpg123 -lquvi -ldvdread -lcdio -lcdio_paranoia -lcdio_cdda
 }
 
-LIBS += -lmpg123 -lquvi -ldvdread -lbz2 -lcdio -lz -lcdio_paranoia -lcdio_cdda
+LIBS += -lbz2 -lz
 
 INCLUDEPATH += ../mpv ../../build/include
 
