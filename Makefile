@@ -41,6 +41,7 @@ ifeq ($(os),osx)
 	cp -r build/skins $(cmplayer_exec_path)
 	cp -r build/imports $(cmplayer_exec_path)
 	cp -r $(QT_PATH)/qml/QtQuick.2 $(cmplayer_exec_path)/imports
+	cp -r /usr/local/Cellar/libquvi/0.4.1/libquvi-scripts/share/libquvi-scripts/lua $(cmplayer_exec_path)
 	cd build && $(MACDEPLOYQT) $(cmplayer_exec).app -dmg
 endif
 

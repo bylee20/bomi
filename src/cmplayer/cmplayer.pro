@@ -42,7 +42,7 @@ macx {
         $${LIB_DIR}/libavformat.a $${LIB_DIR}/libavutil.a \
         $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
         $${LIB_DIR}/libchardet.a \
-	$${BLIB_DIR}/libmpg123.a $${BLIB_DIR}/libquvi.a -L$${BLIB_DIR} -llua \
+	$${BLIB_DIR}/libmpg123.a $${BLIB_DIR}/libquvi.a $${BLIB_DIR}/liblua52.a \
 	$${BLIB_DIR}/libdvdread.a $${BLIB_DIR}/libcdio.a $${BLIB_DIR}/libcdio_paranoia.a \
 	$${BLIB_DIR}/libcdio_cdda.a $${BLIB_DIR}/libdvdcss.a \
 	-lcurl -liconv -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
