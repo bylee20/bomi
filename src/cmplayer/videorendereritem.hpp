@@ -54,6 +54,7 @@ public:
 	bool hasFrame() const;
 	QImage frameImage() const;
 	QRectF frameRect(const QRectF &area) const;
+	void setLumaRange(int min, int max);
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);

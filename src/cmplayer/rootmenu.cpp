@@ -442,7 +442,7 @@ void RootMenu::update() {
 	effect["sharpen"]->setText(tr("Sharpen"));
 	effect["gray"]->setText(tr("Grayscale"));
 	effect["invert"]->setText(tr("Invert Color"));
-	effect["remap"]->setText(tr("Adjust Constrast"));
+	effect["remap"]->setText(tr("Remap Luma"));
 	effect["ignore"]->setText(tr("Ignore All Filters"));
 
 	Menu &color = video("color");

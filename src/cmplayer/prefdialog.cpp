@@ -470,8 +470,8 @@ void PrefDialog::fill(const Pref &p) {
 	d->ui.sharpen_kern_c->setValue(p.sharpen_kern_c);
 	d->ui.sharpen_kern_n->setValue(p.sharpen_kern_n);
 	d->ui.sharpen_kern_d->setValue(p.sharpen_kern_d);
-	d->ui.min_luma->setValue(p.adjust_contrast_min_luma);
-	d->ui.max_luma->setValue(p.adjust_contrast_max_luma);
+	d->ui.min_luma->setValue(p.remap_luma_min);
+	d->ui.max_luma->setValue(p.remap_luma_max);
 
 	d->ui.sub_enable_autoload->setChecked(p.sub_enable_autoload);
 	d->ui.sub_enable_autoselect->setChecked(p.sub_enable_autoselect);
@@ -555,8 +555,8 @@ void PrefDialog::apply() {
 	p.sharpen_kern_c = d->ui.sharpen_kern_c->value();
 	p.sharpen_kern_n = d->ui.sharpen_kern_n->value();
 	p.sharpen_kern_d = d->ui.sharpen_kern_d->value();
-	p.adjust_contrast_min_luma = d->ui.min_luma->value();
-	p.adjust_contrast_max_luma = d->ui.max_luma->value();
+	p.remap_luma_min = d->ui.min_luma->value();
+	p.remap_luma_max = d->ui.max_luma->value();
 
 	p.normalizer_target = d->ui.normalizer_target->value();
 	p.normalizer_silence = d->ui.normalizer_silence->value();

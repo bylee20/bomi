@@ -47,8 +47,8 @@ void Pref::save() const {
 	WRITE(sharpen_kern_c);
 	WRITE(sharpen_kern_n);
 	WRITE(sharpen_kern_d);
-	WRITE(adjust_contrast_min_luma);
-	WRITE(adjust_contrast_max_luma);
+	WRITE(remap_luma_min);
+	WRITE(remap_luma_max);
 
 	WRITE(enable_generate_playist);
 	WRITE(sub_enable_autoload);
@@ -92,8 +92,8 @@ void Pref::load() {
 	READ(sharpen_kern_c);
 	READ(sharpen_kern_n);
 	READ(sharpen_kern_d);
-	READ(adjust_contrast_min_luma);
-	READ(adjust_contrast_max_luma);
+	READ(remap_luma_min);
+	READ(remap_luma_max);
 
 	READ(enable_system_tray);
 	READ(hide_rather_close);

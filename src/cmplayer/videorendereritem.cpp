@@ -2,6 +2,7 @@
 #include "mposditem.hpp"
 #include "videoframe.hpp"
 #include "shadervar.h"
+#include "global.hpp"
 
 struct VideoRendererItem::Data {
 	VideoFrame frame;
@@ -23,6 +24,7 @@ struct VideoRendererItem::Data {
 	QPointF strideCorrection;
 	VideoFormat::Type shaderType = VideoFormat::BGRA;
 	QMutex mutex;
+//	RangeF luma = {0.0, 1.0};
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
@@ -275,19 +277,25 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 	const float dy = 1.0/(double)d->format.drawHeight();
 	program->setUniformValue(d->loc_dxy, dx, dy, -dx, 0.f);
 	program->setUniformValue(d->loc_strideCorrection, d->strideCorrection);
-	const bool filter = d->shaderVar.effects() & FilterEffects;
-	const bool kernel = d->shaderVar.effects() & KernelEffects;
+	const auto effects = d->shaderVar.effects();
+	const bool filter = effects & FilterEffects;
+	const bool kernel = effects & KernelEffects;
 	if (filter || kernel) {
 		program->setUniformValue(d->loc_rgb_c, d->shaderVar.rgb_c[0], d->shaderVar.rgb_c[1], d->shaderVar.rgb_c[2]);
 		program->setUniformValue(d->loc_rgb_0, d->shaderVar.rgb_0);
-		const float y_tan = 1.0/(d->shaderVar.y_max - d->shaderVar.y_min);
-		program->setUniformValue(d->loc_y_tan, y_tan);
-		program->setUniformValue(d->loc_y_b, (float)-d->shaderVar.y_min*y_tan);
 	}
 	if (kernel) {
 		program->setUniformValue(d->loc_kern_c, d->shaderVar.kern_c);
 		program->setUniformValue(d->loc_kern_n, d->shaderVar.kern_n);
 		program->setUniformValue(d->loc_kern_d, d->shaderVar.kern_d);
+	}
+	if (effects & RemapLuma) {
+		const float y_tan = 1.0/d->shaderVar.m_luma.difference();
+		program->setUniformValue(d->loc_y_tan, y_tan);
+		program->setUniformValue(d->loc_y_b, (float)-d->shaderVar.m_luma.min);
+	} else {
+		program->setUniformValue(d->loc_y_tan, 1.0f);
+		program->setUniformValue(d->loc_y_b, 0.0f);
 	}
 	if (!d->format.isEmpty()) {
 		auto f = QOpenGLContext::currentContext()->functions();
@@ -302,6 +310,10 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 }
 
 void VideoRendererItem::beforeUpdate() {
+//	if (d->shaderVar.effects() & RemapLuma)
+//		d->shaderVar.setYRange(d->luma.min, d->luma.max);
+//	else
+//		d->shaderVar.setYRange(0.0, 1.0);
 	QMutexLocker locker(&d->mutex);
 	if (!d->framePended)
 		return;
@@ -434,4 +446,9 @@ void VideoRendererItem::initializeTextures() {
 
 QQuickItem *VideoRendererItem::osd() const {
 	return d->mposd;
+}
+
+void VideoRendererItem::setLumaRange(int min, int max) {
+	d->shaderVar.m_luma = RangeF((double)min/255.0, (double)max/255.0);
+	update();
 }

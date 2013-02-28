@@ -7,6 +7,18 @@
 
 namespace Global {
 
+template<typename T>
+struct Range {
+	Range() {}
+	Range(const T &min, const T &max): min(min), max(max) {}
+	bool contains(const T &t) {return min <= t && t <= max;}
+	bool isValid() const {return min <= max;}
+	T difference() const {return max - min;}
+	T min = 0, max = 0;
+};
+typedef Range<double> RangeF;
+typedef Range<int> RangeI;
+
 struct CharArrayList {
 	CharArrayList() {}
 	CharArrayList(const QStringList &list) {

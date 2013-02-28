@@ -3,6 +3,7 @@
 
 #include "videorendereritem.hpp"
 #include "colorproperty.hpp"
+#include "global.hpp"
 
 struct ShaderVar {
     ShaderVar() { setColor(m_color); setEffects(m_effects); }
@@ -15,7 +16,8 @@ struct ShaderVar {
     }
 	bool setEffects(VideoRendererItem::Effects effects);
     VideoRendererItem::Effects effects() const {return m_effects;}
-    void setYRange(float min, float max) {y_min = min; y_max = max;}
+	void setLumaRange(const RangeF &luma) {m_luma = luma;}
+//    void setYRange(float min, float max) {y_min = min; y_max = max;}
     int id() const {return m_idx;}
 	QByteArray fragment(int frameType) const;
 private:
@@ -32,9 +34,10 @@ private:
     }
     float rgb_0, rgb_c[3];
     float kern_d, kern_c, kern_n;
-    float y_min = 0.0f, y_max = 1.0f;
+//    float y_min = 0.0f, y_max = 1.0f;
     float brightness, contrast, sat_hue[2][2];
     VideoRendererItem::Effects m_effects = 0;
+	RangeF m_luma = {0.0, 1.0};
     int m_idx = 0;
     ColorProperty m_color;
     friend class VideoRendererItem;

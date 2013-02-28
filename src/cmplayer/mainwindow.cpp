@@ -1025,11 +1025,11 @@ void MainWindow::applyPref() {
 		break;
 	}
 	auto &p = cPref;
+	Translator::load(p.locale);
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizer(p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
+	d->renderer.setLumaRange(p.remap_luma_min, p.remap_luma_max);
 	SubtitleParser::setMsPerCharactor(p.ms_per_char);
-	Translator::load(p.locale);
-	reloadSkin();
 	d->subtitle.setPriority(p.sub_priority);
 	d->subtitle.setStyle(p.sub_style);
 	d->menu.update();
@@ -1039,6 +1039,7 @@ void MainWindow::applyPref() {
 #ifndef Q_OS_MAC
 	d->tray->setVisible(p.enable_system_tray);
 #endif
+	reloadSkin();
 	if (time >= 0)
 		d->engine.reload();
 }
