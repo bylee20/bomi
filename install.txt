@@ -5,6 +5,7 @@ To compile CMPlayer, you need next things:
 * yasm
 * zlib
 * libbz2
+* libquvi
 * libdvdread
 * libcdio
 * libcdio-paranoia

@@ -311,6 +311,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 	d->ui.skin_name->addItems(Skin::names(true));
 	onSkinIndexChanged(d->ui.skin_name->currentIndex());
 
+
+
 	connect(d->ui.skin_name, SIGNAL(currentIndexChanged(int)), this, SLOT(onSkinIndexChanged(int)));
 	connect(d->ui.sub_autoselect, SIGNAL(currentDataChanged(QVariant)), this, SLOT(checkSubAutoselect(QVariant)));
 	connect(d->ui.sub_autoload, SIGNAL(currentDataChanged(QVariant)), this, SLOT(checkSubAutoselect(QVariant)));
@@ -520,6 +522,7 @@ void PrefDialog::fill(const Pref &p) {
 	d->ui.sub_pos_step->setValue(p.sub_pos_step);
 	d->ui.sync_delay_step->setValue(p.sync_delay_step*0.001);
 
+	d->ui.locale->setCurrentData(p.locale);
 	d->ui.skin_name->setCurrentText(p.skin_name);
 }
 

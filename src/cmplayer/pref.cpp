@@ -134,7 +134,7 @@ void Pref::load() {
 	READ(normalizer_min);
 	READ(normalizer_max);
 #undef READ
-//	sub_style.load(r, "sub_style");
+	sub_style.load(r, "sub_style");
 	double_click_map.load(r, "double_click_map");
 	middle_click_map.load(r, "middle_click_map");
 	wheel_scroll_map.load(r, "wheel_scroll_map");

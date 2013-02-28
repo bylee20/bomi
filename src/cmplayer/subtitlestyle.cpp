@@ -27,7 +27,6 @@ void SubtitleStyle::load(Record &r, const QString &group) {
 	READ(font.color);
 	READ(font.size);
 	READ(font.scale);
-//	READr.read((int&)font.scale, "font.scale");
 	READ(font.qfont);
 	READ(outline.enabled);
 	READ(outline.color);
@@ -40,8 +39,4 @@ void SubtitleStyle::load(Record &r, const QString &group) {
 	READ(spacing.paragraph);
 #undef READ
 	r.endGroup();
-
-	// for < 0.6.0 compatibility
-//	shadow_offset.rx() = qBound(-0.01, shadow_offset.x(), 0.01);
-//	shadow_offset.ry() = qBound(-0.01, shadow_offset.y(), 0.01);
 }

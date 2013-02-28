@@ -9,7 +9,6 @@ class Record;
 struct SubtitleStyle {
 	struct Font {
 		typedef Enum::OsdScalePolicy Scale;
-//		enum Scale {Width = 'w', Height = 'h', Diagonal = 'd'};
 		Font() { qfont.setPixelSize(height()); }
 		QString family() const {return qfont.family();}
 		bool bold() const {return qfont.bold();}
