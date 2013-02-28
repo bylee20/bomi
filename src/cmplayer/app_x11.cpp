@@ -93,7 +93,7 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 				d->iface = nullptr;
 				d->xss = true;
 			} else
-				qDebug() << "disable width" << d->iface->interface();
+				qDebug() << "disable with" << d->iface->interface();
 		}
 		if (d->xss)
 			d->ss_timer.start();
@@ -103,7 +103,7 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 			if (response.type() == QDBusMessage::ErrorMessage)
 				qDebug() << response.errorName() << response.errorMessage();
 			else
-				qDebug() << "enable width" << d->iface->interface();
+				qDebug() << "enable with" << d->iface->interface();
 		} else if (d->xss)
 			d->ss_timer.stop();
 	}

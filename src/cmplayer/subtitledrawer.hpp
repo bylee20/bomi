@@ -12,12 +12,13 @@ public:
 	void setAlignment(Qt::Alignment alignment) { back.setAlignment(m_alignment = alignment); front.setAlignment(alignment); }
 	void setText(const RichTextDocument &doc) { front = doc.blocks(); back = doc.blocks(); }
 	void setMargin(const Margin &margin) { m_margin = margin; }
-	bool hasWords() const { return front.hasWords(); }
+	bool hasDrawn() const {return m_drawn;}
 	bool draw(QImage &image, QSize &imageSize, QPointF &shadowOffset, const QRectF &area, double dpr = 1.0);
 	QPointF pos(const QSizeF &image, const QRectF &area) const;
 	Qt::Alignment alignment() const { return m_alignment; }
 	const Margin &margin() const { return m_margin; }
 	const SubtitleStyle &style() const {return m_style;}
+	const RichTextDocument &text() const {return front;}
 private:
 	double scale(const QRectF &area) const {
 		const auto policy = m_style.font.scale;
@@ -47,6 +48,7 @@ private:
 	RichTextDocument front, back;
 	Margin m_margin;
 	Qt::Alignment m_alignment;
+	bool m_drawn = false;
 };
 
 

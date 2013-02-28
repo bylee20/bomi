@@ -46,7 +46,7 @@ public:
 	void setLetterboxHint(bool hint) { if (_Change(m_letterbox, hint) && m_screen != boundingRect()) { prepare(); update(); } }
 	void setDelay(int delay) { if (_Change(m_delay, delay)) render(m_ms); }
 	bool load(const QString &fileName, const QString &enc, bool select);
-	void unload() { qDeleteAll(m_order); m_order.clear(); m_loaded.clear(); m_compempty = true; rerender(); emit modelsChanged(models()); }
+	void unload();
 	void select(int idx);
 	void deselect(int idx = -1);
 	const SubtitleStyle &style() const;
@@ -73,7 +73,6 @@ private:
 	QSizeF contentSize() const {return m_size;}
 	void setText(const RichTextDocument &doc);
 	void setMargin(double top, double bottom, double right, double left);
-private:
 	struct Render {
 		Render(const SubtitleComponent &comp); ~Render();
 		const SubtitleComponent *comp = nullptr;
@@ -90,6 +89,7 @@ private:
 	void updateAlignment();
 	bool blending() const override {return true;}
 	void prepare();
+	void clear();
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	void link(QOpenGLShaderProgram *program);
 	void bind(const RenderState &state, QOpenGLShaderProgram *program);

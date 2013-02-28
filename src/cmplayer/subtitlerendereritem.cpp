@@ -11,7 +11,6 @@ SubtitleRendererItem::Render::~Render() { delete this->model; }
 
 struct SubtitleRendererItem::Data {
 	SubtitleStyle style;
-	bool docempty = true;
 	SubtitleDrawer drawer;
 	bool redraw = false;
 	int loc_tex = 0, loc_shadowColor = 0, loc_shadowOffset = 0, loc_dxdy = 0;
@@ -19,7 +18,6 @@ struct SubtitleRendererItem::Data {
 	QPointF shadowOffset = {0, 0};
 	QSize textureSize = {0, 0};
 	QSize imageSize = {0, 0};
-	RichTextDocument text;
 	bool selecting = false;
 	QMap<QString, int> langMap;
 	int language_priority(const Render *r) const {
@@ -76,11 +74,10 @@ const SubtitleStyle &SubtitleRendererItem::style() const {
 }
 
 const RichTextDocument &SubtitleRendererItem::text() const {
-	return d->text;
+	return d->drawer.text();
 }
 
 void SubtitleRendererItem::setText(const RichTextDocument &doc) {
-	d->text = doc;
 	d->drawer.setText(doc);
 	prepare();
 	update();
@@ -99,15 +96,28 @@ double SubtitleRendererItem::scale(const QRectF &area) const {
 }
 
 void SubtitleRendererItem::prepare() {
-	d->docempty = !d->drawer.draw(d->image, d->imageSize, d->shadowOffset, drawArea(), dpr());
-	if (!d->docempty) {
+	const auto drawn = d->drawer.draw(d->image, d->imageSize, d->shadowOffset, drawArea(), dpr());
+	if (drawn) {
 		d->redraw = true;
 		d->shadowOffset.rx() /= (double)d->imageSize.width();
 		d->shadowOffset.ry() /= (double)d->imageSize.height();
 	}
-	setVisible(!d->docempty);
+	setVisible(drawn);
 }
 
+void SubtitleRendererItem::unload() {
+	qDeleteAll(m_order);
+	m_order.clear();
+	m_loaded.clear();
+	setText(RichTextDocument());
+	m_compempty = true;
+	rerender();
+	emit modelsChanged(models());
+}
+
+void SubtitleRendererItem::clear() {
+	setText(RichTextDocument());
+}
 
 void SubtitleRendererItem::link(QOpenGLShaderProgram *program) {
 	TextureRendererItem::link(program);
@@ -133,7 +143,7 @@ void SubtitleRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 }
 
 void SubtitleRendererItem::initializeTextures() {
-	if (!d->docempty) {
+	if (d->drawer.hasDrawn()) {
 		glBindTexture(GL_TEXTURE_2D, texture(0));
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, d->image.width(), d->image.height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, d->image.bits());
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

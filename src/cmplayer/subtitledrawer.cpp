@@ -32,7 +32,7 @@ void SubtitleDrawer::setStyle(const SubtitleStyle &style) {
 }
 
 bool SubtitleDrawer::draw(QImage &image, QSize &imageSize, QPointF &shadowOffset, const QRectF &area, double dpr) {
-	if (!hasWords())
+	if (!(m_drawn = front.hasWords()))
 		return false;
 	const double scale = this->scale(area);
 	updateLayoutInfo();
@@ -52,5 +52,5 @@ bool SubtitleDrawer::draw(QImage &image, QSize &imageSize, QPointF &shadowOffset
 		painter.end();
 	} else
 		shadowOffset = QPointF(0, 0);
-	return !image.isNull();
+	return m_drawn = !image.isNull();
 }
