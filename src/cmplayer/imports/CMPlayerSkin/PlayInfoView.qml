@@ -70,7 +70,8 @@ Item {
 					.arg(player.stateText)
 					.arg(Util.msecToString(player.time))
 					.arg(Util.msecToString(player.duration))
-					.arg((player.time/player.duration).toFixed(1));
+                    .arg((player.time*100.0/player.duration).toFixed(1));
+                    console.log((player.time*100.0/player.duration).toFixed(1))
 				}
 				color: "yellow"
 				style: Text.Outline

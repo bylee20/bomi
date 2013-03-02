@@ -18,7 +18,7 @@ struct ShaderVar {
     VideoRendererItem::Effects effects() const {return m_effects;}
 	void setLumaRange(const RangeF &luma) {m_luma = luma;}
 //    void setYRange(float min, float max) {y_min = min; y_max = max;}
-    int id() const {return m_idx;}
+	int id() const {return m_idx;}
 	QByteArray fragment(int frameType) const;
 private:
     void updateHS() {
@@ -38,7 +38,7 @@ private:
     float brightness, contrast, sat_hue[2][2];
     VideoRendererItem::Effects m_effects = 0;
 	RangeF m_luma = {0.0, 1.0};
-    int m_idx = 0;
+	int m_idx = 0;
     ColorProperty m_color;
     friend class VideoRendererItem;
 };

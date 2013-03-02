@@ -168,12 +168,12 @@ void main() {
 )");
 
 static char KernelMain[] = (R"(
-	void main() {
+void main() {
 	vec3 c = get_yuv_kernel_applied(qt_TexCoord);
 	apply_filter_convert(c);
 	gl_FragColor.xyz = c;
 	gl_FragColor.w = 1.0;
-	}
+}
 )");
 
 QByteArray ShaderVar::fragment(int frameType) const {
