@@ -1,35 +1,17 @@
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header c++11
+macx:CONFIG -= app_bundle
+!isEmpty(RELEASE): CONFIG += release; macx:CONFIG += app_bundle
 QT = core gui network quick widgets
-
 PRECOMPILED_HEADER = stdafx.hpp
-
-precompile_header:!isEmpty(PRECOMPILED_HEADER) {
-    DEFINES += USING_PCH
-}
-
-#SOURCE_DIR="/home/xylosper/dev/cmplayer"
-isEmpty(SOURCE_DIR) {
-    SOURCE_DIR = ../..
-}
-
-DESTDIR = $${SOURCE_DIR}/build
+precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
+DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
-
-!isEmpty(RELEASE) {
-    CONFIG += release
-    macx:CONFIG += app_bundle
-} else {
-    #CONFIG += debug
-    macx:CONFIG -= app_bundle
-}
+INCLUDEPATH += ../mpv ../../build/include
+LIBS += -L$${LIB_DIR}
 
 macx {
-    #QMAKE_CXXFLAGS -= "-stdlib=libc++" "-std=c++11"
     QMAKE_CXXFLAGS -= "-mmacosx-version-min=10.6"
-    #QMAKE_CXXFLAGS_X86_64 -= -arch x86_64 -Xarch_x86_64
-    #QMAKE_CXXFLAGS_X86_64 += -m64
-#    QMAKE_CXX = /opt/local/bin/gcc
     QMAKE_CXX = clang++ -std=c++11 -stdlib=libc++
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
     QMAKE_MAC_SDK = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
@@ -37,36 +19,30 @@ macx {
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
     BREW = /usr/local/Cellar
-    BLIB_DIR = /usr/local/lib
-    LIBS +=  $${DESTDIR}/lib/libavcodec.a \
-        $${LIB_DIR}/libavformat.a $${LIB_DIR}/libavutil.a \
-        $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
-        $${LIB_DIR}/libchardet.a \
-	$${BLIB_DIR}/libmpg123.a $${BLIB_DIR}/libquvi.a $${BLIB_DIR}/liblua52.a \
-	$${BLIB_DIR}/libdvdread.a $${BLIB_DIR}/libcdio.a $${BLIB_DIR}/libcdio_paranoia.a \
-	$${BLIB_DIR}/libcdio_cdda.a $${BLIB_DIR}/libdvdcss.a \
-	-lcurl -liconv -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
+    LLIB_DIR = /usr/local/lib
+    LIBS +=  $${LIB_DIR}/libavcodec.a $${LIB_DIR}/libavformat.a $${LIB_DIR}/libavutil.a \
+        $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a $${LIB_DIR}/libchardet.a \
+        $${LLIB_DIR}/libmpg123.a $${LLIB_DIR}/libquvi.a $${LLIB_DIR}/liblua52.a \
+        $${LLIB_DIR}/libdvdread.a $${LLIB_DIR}/libcdio.a $${LLIB_DIR}/libcdio_paranoia.a \
+        $${LLIB_DIR}/libcdio_cdda.a $${LLIB_DIR}/libdvdcss.a -lcurl -liconv \
+        -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
 	-framework IOKit -framework Carbon
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
-    CONFIG += c++11
     QT += dbus gui-private
+    QMAKE_CC = "gcc -std=c99 -w"
+    QMAKE_CXXFLAGS += -std=c++11
     TARGET = cmplayer
-    LIBS += -lX11 -lxcb -L$${LIB_DIR} -lchardet -lva -lva-glx -lcmplayer_mpv -lcmplayer_av
+    LIBS += -lX11 -lxcb -lva -lva-glx -lchardet -lcmplayer_mpv -lswscale -lavcodec -lavformat -lavutil \
+        -lmpg123 -lquvi -ldvdread -lcdio -lcdio_paranoia -lcdio_cdda -lopenal -lasound -ldl
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
-    QMAKE_CC = "gcc -std=c99 -w"
-    LIBS += -lmpg123 -lquvi -ldvdread -lcdio -lcdio_paranoia -lcdio_cdda -lopenal -lasound -ldl
 }
 
 LIBS += -lbz2 -lz
-
-INCLUDEPATH += ../mpv ../../build/include
-
-QMAKE_CXXFLAGS += -std=c++11
 
 QML_IMPORT_PATH += imports
 
@@ -135,7 +111,8 @@ HEADERS += playengine.hpp \
     hwacc.hpp \
     subtitlestyle.hpp \
     audiocontroller.hpp \
-    subtitledrawer.hpp
+    subtitledrawer.hpp \
+    skin.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -201,10 +178,8 @@ SOURCES += main.cpp \
     hwacc.cpp \
     videoformat.cpp \
     audiocontroller.cpp \
-    subtitledrawer.cpp
-
-HEADERS += skin.hpp
-SOURCES += skin.cpp
+    subtitledrawer.cpp \
+    skin.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

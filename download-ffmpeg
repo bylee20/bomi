@@ -1,3 +1,14 @@
+#! /bin/bash
+
 install -d src
-cd src && git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git ffmpeg && cd ffmpeg && find . -name '.git*' | xargs rm -rf
+
+version=1.1.3
+url=http://www.ffmpeg.org/releases/ffmpeg-${version}.tar.gz
+out=ffmpeg.tar.gz
+if ! [ -f ${out} ]; then
+  curl -o src/${out} "${url}"
+  cd src && tar xvfz ${out}
+fi
+
+#cd src && git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git ffmpeg && cd ffmpeg && find . -name '.git*' | xargs rm -rf
 
