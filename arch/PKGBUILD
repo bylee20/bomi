@@ -1,12 +1,12 @@
 # Maintainer: xylosper <darklin20@gmail.com>
 
 pkgname=('cmplayer')
-pkgver=0.7.0
+pkgver=0.7.1
 pkgrel=1
 arch=('i686' 'x86_64')
 url="https://code.google.com/p/$pkgname"
 license=('GPL')
-depends=('qt5>=5.0' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'yasm')
+depends=('qt5-base' 'qt5-declarative' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'yasm')
 makedepends=('git' 'mesa' 'gcc>=4.7')
 
 build() {
@@ -15,11 +15,11 @@ build() {
 	cd $pkgname-$pkgver
 	git checkout $pkgver
 	./build-libchardet && ./build-ffmpeg && ./build-mpv && \
-	make PREFIX=/usr QMAKE=qmake-qt5 cmplayer || return 1
+	make PREFIX=/usr QMAKE=qmake cmplayer || return 1
 }
 
 package() {
 	pkgdesc="CMPlayer is a multimedia player."
 	cd "$srcdir/$pkgname-$pkgver"
-	make DEST_DIR=$pkgdir PREFIX=/usr QMAKE=qmake-qt5 install || return 1
+	make DEST_DIR=$pkgdir PREFIX=/usr QMAKE=qmake install || return 1
 }
