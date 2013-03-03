@@ -210,7 +210,16 @@
        </widget>
        <widget class="QWidget" name="advanced">
         <layout class="QVBoxLayout" name="verticalLayout_19">
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <item>
@@ -1124,13 +1133,13 @@
              <item>
               <widget class="QGroupBox" name="groupBox_7">
                <property name="title">
-                <string>Adjust contrast</string>
+                <string>Remap Luma</string>
                </property>
                <layout class="QFormLayout" name="formLayout_9">
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_30">
                   <property name="text">
-                   <string>Minimum luminance</string>
+                   <string>Minimum luma</string>
                   </property>
                  </widget>
                 </item>
@@ -1147,7 +1156,7 @@
                 <item row="1" column="0">
                  <widget class="QLabel" name="label_34">
                   <property name="text">
-                   <string>Maximum luminance</string>
+                   <string>Maximum luma</string>
                   </property>
                  </widget>
                 </item>
@@ -2130,7 +2139,7 @@ e.g.: English, Korean</string>
          <item>
           <layout class="QHBoxLayout" name="_3">
            <property name="spacing">
-            <number>-1</number>
+            <number>6</number>
            </property>
            <item>
             <widget class="QPushButton" name="shortcut1">

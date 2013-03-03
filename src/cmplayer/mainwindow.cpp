@@ -319,6 +319,23 @@ struct MainWindow::Data {
 		return loaded;
 	}
 	QWidget *widget() {return &proxy;}
+
+	void commitData() {
+		static bool first = true;
+		if (first) {
+			recent.setLastPlaylist(playlist.playlist());
+			recent.setLastMrl(engine.mrl());
+			engine.quit();
+			save_state();
+			if (player)
+				player->unplug();
+			engine.wait();
+			cApp.processEvents();
+			first = false;
+		}
+//		cApp.quit();
+//		done = true;
+	}
 };
 
 #ifdef Q_OS_MAC
@@ -726,6 +743,11 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 
 	d->winState = d->prevWinState = windowState();
 
+//	Currently, session management does not works.
+//	connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
+//	connect(&cApp, &App::saveStateRequest, [this] (QSessionManager &session) {
+//		session.setRestartHint(QSessionManager::RestartIfRunning);
+//	});
 }
 
 MainWindow::~MainWindow() {
@@ -745,15 +767,8 @@ void MainWindow::exit() {
 		d->tray->hide();
 		delete d->tray;
 #endif
-		d->recent.setLastPlaylist(d->playlist.playlist());
-		d->recent.setLastMrl(d->engine.mrl());
+		d->commitData();
 		d->renderer.setOverlay(nullptr);
-		d->engine.quit();
-		d->save_state();
-		if (d->player)
-			d->player->unplug();
-		d->engine.wait();
-		cApp.processEvents();
 		cApp.quit();
 		done = true;
 	}
