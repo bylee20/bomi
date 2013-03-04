@@ -127,7 +127,7 @@ struct MainWindow::Data {
 			d->recent.stack(mrl);
 	}
 
-	void sync_subtitle_file_menu() {
+	void syncSubtitleFileMenu() {
 		if (changingSub)
 			return;
 		changingSub = true;
@@ -151,7 +151,7 @@ struct MainWindow::Data {
 		changingSub = false;
 	}
 
-	void load_state() {
+	void loadState() {
 		dontShowMsg = true;
 
 		const AppState &as = AppState::get();
@@ -193,7 +193,7 @@ struct MainWindow::Data {
 		dontShowMsg = false;
 	}
 
-	void save_state() const {
+	void saveState() const {
 		AppState &as = AppState::get();
 		as.audio_volume = engine.volume();
 		as.audio_muted = engine.isMuted();
@@ -344,15 +344,13 @@ struct MainWindow::Data {
 			recent.setLastPlaylist(playlist.playlist());
 			recent.setLastMrl(engine.mrl());
 			engine.quit();
-			save_state();
+			saveState();
 			if (player)
 				player->unplug();
 			engine.wait();
 			cApp.processEvents();
 			first = false;
 		}
-//		cApp.quit();
-//		done = true;
 	}
 };
 
@@ -754,7 +752,7 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 #endif
 	while (!d->engine.isInitialized())
 		d->engine.msleep(1);
-	d->load_state();
+	d->loadState();
 	applyPref();
 
 	d->engine.setPlaylist(d->recent.lastPlaylist());
@@ -1204,7 +1202,7 @@ auto MainWindow::updateMrl(const Mrl &mrl) -> void {
 	}
 	title += _L(" - ") % Info::name() % _L(" ") % Info::version();
 	setTitle(title);
-	d->sync_subtitle_file_menu();
+	d->syncSubtitleFileMenu();
 }
 
 void MainWindow::clearSubtitles() {
@@ -1216,7 +1214,7 @@ void MainWindow::appendSubFiles(const QStringList &files, bool checked, const QS
 	if (!files.isEmpty()) {
 		for (auto file : files)
 			d->subtitle.load(file, enc, checked);
-		d->sync_subtitle_file_menu();
+		d->syncSubtitleFileMenu();
 	}
 }
 
