@@ -38,6 +38,9 @@ AppState::AppState() {
 	READ(ask_system_tray);
 
 	READ(auto_exit);
+
+	READ(win_pos);
+	READ(win_size);
 #undef READ
 }
 
@@ -73,6 +76,9 @@ void AppState::save() const {
 	WRITE(open_url_enc);
 
 	WRITE(auto_exit);
+
+	WRITE(win_pos);
+	WRITE(win_size);
 #undef WRITE
 }
 

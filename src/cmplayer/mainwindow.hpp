@@ -56,6 +56,7 @@ private:
 	void dropEvent(QDropEvent *event);
 	void dragEnterEvent(QDragEnterEvent *event);
 	void resizeEvent(QResizeEvent *event);
+	void moveEvent(QMoveEvent *event);
 	bool event(QEvent *event);
 	friend class MainView;
 	struct Data;

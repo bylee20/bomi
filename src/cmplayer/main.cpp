@@ -19,12 +19,10 @@ int main(int argc, char **argv) {
 			app.sendMessage(_L("mrl ") % mrl.toString());
 		return 0;
 	}
-	MainWindow *mw = new MainWindow;	mw->show();
-	app.setMainWindow(mw);
+	MainWindow mw;
+	mw.show();
+	app.setMainWindow(&mw);
 	if (!mrl.isEmpty())
-		mw->openFromFileManager(mrl);
-	const int ret = app.exec();
-	mw->exit();
-	delete mw;
-	return ret;
+		mw.openFromFileManager(mrl);
+	return app.exec();
 }

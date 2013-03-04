@@ -156,6 +156,12 @@ struct MainWindow::Data {
 
 		const AppState &as = AppState::get();
 
+		if (as.win_size.isValid() && p->screen()) {
+			const auto screen = p->screen()->size();
+			p->setPosition(screen.width()*as.win_pos.x(), screen.height()*as.win_pos.y());
+			p->resize(as.win_size);
+		}
+
 		engine.setSpeed(as.play_speed);
 		engine.setVolume(as.audio_volume);
 		engine.setMuted(as.audio_muted);
@@ -207,7 +213,19 @@ struct MainWindow::Data {
 		as.screen_stays_on_top = stay_on_top_mode();
 		as.sub_letterbox = subtitle.letterboxHint();
 		as.sub_align_top = subtitle.isTopAligned();
+
 		as.save();
+	}
+
+	void updateWindowGeometryState() {
+		const auto state = p->windowState();
+		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible() && p->screen()) {
+			auto &as = AppState::get();
+			const auto screen = p->screen()->size();
+			as.win_pos.rx() = qBound(0.0, (double)p->x()/(double)screen.width(), 1.0);
+			as.win_pos.ry() = qBound(0.0, (double)p->y()/(double)screen.height(), 1.0);
+			as.win_size = p->size();
+		}
 	}
 
 	Enum::StaysOnTop stay_on_top_mode() const {
@@ -343,6 +361,10 @@ void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
 MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
+#ifndef Q_OS_MAC
+	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
+	d->tray->show();
+#endif
 	setFlags(flags() | Qt::WindowFullscreenButtonHint);
 	setColor(Qt::black);
 	setResizeMode(QQuickView::SizeRootObjectToView);
@@ -354,9 +376,6 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 
 	resize(400, 300);
 	setMinimumSize(QSize(400, 300));
-#ifndef Q_OS_MAC
-	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
-#endif
 	d->hider.setSingleShot(true);
 
 	Menu &open = d->menu("open");		Menu &play = d->menu("play");
@@ -670,6 +689,7 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
 	d->connectCurrentStreamActions(&d->menu("subtitle")("track"), &PlayEngine::currentSubtitleStream);
 	connect(this, &MainWindow::windowStateChanged, [this] (Qt::WindowState state) {
+		d->updateWindowGeometryState();
 		setFilePath(d->filePath);
 		if (state != d->winState) {
 			d->prevWinState = d->winState;
@@ -763,10 +783,6 @@ void MainWindow::exit() {
 	static bool done = false;
 	if (!done) {
 		cApp.setScreensaverDisabled(false);
-#ifndef Q_OS_MAC
-		d->tray->hide();
-		delete d->tray;
-#endif
 		d->commitData();
 		d->renderer.setOverlay(nullptr);
 		cApp.quit();
@@ -1069,6 +1085,7 @@ void connectCopies(Menu &menu, const Slot &slot) {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QQuickView::resizeEvent(event);
+	d->updateWindowGeometryState();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
@@ -1251,4 +1268,9 @@ void MainWindow::setCursorVisible(bool visible) {
 		setCursor(Qt::BlankCursor);
 		UtilObject::setCursorVisible(false);
 	}
+}
+
+void MainWindow::moveEvent(QMoveEvent *event) {
+	QQuickView::moveEvent(event);
+	d->updateWindowGeometryState();
 }

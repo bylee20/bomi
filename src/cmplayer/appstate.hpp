@@ -7,6 +7,9 @@
 
 class AppState {
 public:
+	QPointF win_pos;
+	QSize win_size;
+
 // play state
 	double play_speed = 1.0;
 
