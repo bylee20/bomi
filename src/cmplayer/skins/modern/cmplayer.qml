@@ -5,7 +5,36 @@ import CMPlayerCore 1.0 as Core
 Skin.AppWithFloating {
 	id: app
 	name: "net.xylosper.cmplayer.skin.modern"
-	player: Skin.Player { anchors.fill: parent }
+	engine: Skin.Player { anchors.fill: parent }
+
+	Component {
+		id: slider
+		Skin.Slider {
+			id: slideritem
+			height: 5
+			groove: Rectangle {
+				height: 5; radius: 2; border { color: "#ccc"; width: 1 }
+				anchors.verticalCenter: parent.verticalCenter
+				gradient: Gradient {
+					GradientStop {position: 0.0; color: "#333"}
+					GradientStop {position: 1.0; color: "#bbb"}
+				}
+			}
+			filled: Rectangle {
+				height: groove.height; radius: groove.radius; border {width: 1; color: "#5af"}
+				gradient: Gradient {
+					GradientStop { position: 0.0; color: "white" }
+					GradientStop { position: 1.0; color: "skyblue" }
+				}
+			}
+			handle: Image {
+				width: 10; height: 10
+				source: slideritem.pressed ? "handle-pressed.png" : slideritem.hovered ? "handle-hovered.png" : "handle.png"
+				anchors.verticalCenter: parent.verticalCenter
+			}
+		}
+	}
+
 	controls: Item {
 		width: 400; height: inner.height+24
 		BorderImage {
@@ -17,48 +46,45 @@ Skin.AppWithFloating {
 			Skin.HorizontalLayout {
 				id: texts; width: parent.width; height: 15; fillers: [name]; spacing: 5
 				property int vAlignment: Text.AlignBottom
-				Skin.TimeText { id: position; msecs: app.player.time; verticalAlignment: texts.vAlignment }
+				Skin.TimeText { id: position; msecs: engine.time; verticalAlignment: texts.vAlignment }
 				Text {
 					id: name
-					text: app.player.media.name; elide: Text.ElideMiddle;
+					text: engine.media.name; elide: Text.ElideMiddle;
 					color: "white"; font { bold: true; pixelSize: 12 }
 					horizontalAlignment: Text.AlignHCenter; verticalAlignment: texts.vAlignment
 				}
-				Skin.TimeText { id: duration; msecs: app.player.duration; verticalAlignment: texts.vAlignment}
+				Skin.TimeText { id: duration; msecs: engine.duration; verticalAlignment: texts.vAlignment}
 			}
 			Skin.HorizontalLayout {
 				id: seekbarwrapper; width: parent.width; height: 10; fillers: [seekbar]; spacing: 10
-				Slider { id: seekbar; value: app.player.time/app.player.duration; onDragging: app.player.seek(app.player.duration*value) }
+				Skin.SeekControl { id: seekbar; component: slider; engine: app.engine }
 			}
 			Item {
 				id: buttons; width: parent.width; height: 22
-				Row {
+				Skin.HorizontalLayout {
 					height: parent.height*0.75; anchors.verticalCenter: parent.verticalCenter; spacing: 3
 					Skin.Button {
-						id: mute; checked: app.player.muted; width: parent.height; height: parent.height
+						id: mute; checked: engine.muted; width: parent.height; height: parent.height
 						icon: getStateIconName("volume"); action: "menu/audio/mute"
 						Item {
 							id: volume; anchors.fill: parent
 							visible: (!mute.checked && !(mute.hovered && mute.pressed))
 									 || (mute.checked && mute.pressed && mute.hovered)
 							Image {
-								id: volume1; anchors.fill: parent; visible: app.player.volume > 10
+								id: volume1; anchors.fill: parent; visible: engine.volume > 10
 								source: mute.hovered ? "volume-1-hovered.png" : "volume-1.png"
 							}
 							Image {
-								id: volume2; anchors.fill: parent; visible: app.player.volume > 40
+								id: volume2; anchors.fill: parent; visible: engine.volume > 40
 								source: mute.hovered ? "volume-2-hovered.png" : "volume-2.png"
 							}
 							Image {
-								id: volume3; anchors.fill: parent; visible: app.player.volume > 80
+								id: volume3; anchors.fill: parent; visible: engine.volume > 80
 								source: mute.hovered ? "volume-3-hovered.png" : "volume-3.png"
 							}
 						}
 					}
-					Slider {
-						id: volumebar; anchors.verticalCenter: parent.verticalCenter; width: 70
-						value: app.player.volume/100; onDragging: app.player.volume = value*100
-					}
+					Skin.VolumeControl { id: volumebar; width: 70; component: slider; engine: app.engine }
 				}
 				Row {
 					height: parent.height; spacing: 10; anchors.horizontalCenter: parent.horizontalCenter;
@@ -68,7 +94,7 @@ Skin.AppWithFloating {
 					}
 					Skin.Button {
 						id: pause; width: parent.height; height: width
-						icon: getStateIconName(app.player.playing ? "pause" : "play"); action: "menu/play/pause"
+						icon: getStateIconName(engine.playing ? "pause" : "play"); action: "menu/play/pause"
 					}
 
 					Skin.Button {

@@ -19,7 +19,6 @@ class PlayerItem : public QQuickItem, public Skin {
 	Q_PROPERTY(int time READ position NOTIFY tick)
 	Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
 	Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
-	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
 	Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
 	Q_PROPERTY(double avgsync READ avgsync)
 	Q_PROPERTY(double avgfps READ avgfps)
@@ -47,7 +46,6 @@ public:
 	double volumeNormalizer() const;
 	QString stateText() const;
 	int volume() const {return m_volume;}
-	bool isFullScreen() const {return m_fullScreen;}
 	bool isMuted() const {return m_muted;}
 	void setPlaylist(const PlaylistModel *playlist);
 	static void registerItems();
@@ -63,7 +61,6 @@ public:
 	QString message() const {return m_message;}
 	Q_INVOKABLE void seek(int time);
 	Q_INVOKABLE void setVolume(int volume);
-	void setFullScreen(bool fs) {if (_Change(m_fullScreen, fs)) emit fullScreenChanged(m_fullScreen);}
 	~PlayerItem();
 signals:
 	void stateTextChanged(const QString &stateText);
@@ -80,24 +77,20 @@ signals:
 	void stateChanged(State state);
 	void mediaChanged();
 	void volumeChanged(int volume);
-	void fullScreenChanged(bool full);
 private slots:
 	void updateStateInfo();
 private:
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	struct Data;
 	Data *d;
-	int m_duration = 0, m_position = 0;
+	int m_duration = 0, m_position = 0, m_volume = 0;
 	State m_state = Stopped;
-	AvInfoObject *m_audio = new AvInfoObject(this);
-	AvInfoObject *m_video = new AvInfoObject(this);
+	AvInfoObject *m_audio = new AvInfoObject(this), *m_video = new AvInfoObject(this);
 	MediaInfoObject *m_media = new MediaInfoObject(this);
-	int m_volume = 0;
-	bool m_fullScreen = false, m_muted = false;
 	VideoRendererItem *m_renderer = nullptr;
 	PlayEngine *m_engine = nullptr;
 	QString m_message;
-	bool m_running = false, m_playing = false;
+	bool m_running = false, m_playing = false, m_muted = false;
 };
 
 #endif // PLAYERITEM_HPP

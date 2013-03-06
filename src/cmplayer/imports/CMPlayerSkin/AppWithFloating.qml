@@ -1,15 +1,15 @@
 import QtQuick 2.0
-import CMPlayerCore 1.0 as Core
+import CMPlayerCore 1.0
 import CMPlayerSkin 1.0
 
 Item {
 	id: root
-	property Player player
+	property Engine engine
 	property Item controls
 	property string name: undefined
 	MouseArea {
 		id: area
-		parent: player
+		parent: engine
 		property real pw: -1
 		property real ph: -1
 		onWidthChanged: {
@@ -29,8 +29,8 @@ Item {
 		onEntered: floating.hidden = false; onExited: floating.hidden = true
 		MouseArea {
 			id: floating //Math.max(0, Math.min(cx*parent.width - width/2, parent.width-width)) }//
-			function setCx(cx) { x = Core.Util.bound(0, cx*parent.width - width/2, parent.width - width) }
-			function setCy(cy) { y = Core.Util.bound(0, cy*parent.height - height/2, parent.height - height) }
+			function setCx(cx) { x = Util.bound(0, cx*parent.width - width/2, parent.width - width) }
+			function setCy(cy) { y = Util.bound(0, cy*parent.height - height/2, parent.height - height) }
 			function getCx(bg) { return (x+width/2)/bg; }
 			function getCy(bg) { return (y+height/2)/bg; }
 
@@ -53,22 +53,22 @@ Item {
 				}
 			}
 		}
-		Connections { target: Core.Util; onCursorVisibleChanged: floating.hidden = !cursorVisible }
+		Connections { target: Util; onCursorVisibleChanged: floating.hidden = !cursorVisible }
 	}
 	property real initCx: 0.5
 	property real initCy: 0.0
 	Component.onCompleted: {
-		player.parent = root
-		player.dockZ = 1
-		Core.Settings.open(root.name)
-		initCx = Core.Settings.getReal("cx", 0.5)
-		initCy = Core.Settings.getReal("cy", 0.0)
-		Core.Settings.close()
+		engine.parent = root
+		engine.dockZ = 1
+		Settings.open(root.name)
+		initCx = Settings.getReal("cx", 0.5)
+		initCy = Settings.getReal("cy", 0.0)
+		Settings.close()
 	}
 	Component.onDestruction: {
-		Core.Settings.open(root.name)
-		Core.Settings.set("cx", floating.getCx(area.width))
-		Core.Settings.set("cy", floating.getCy(area.height))
-		Core.Settings.close()
+		Settings.open(root.name)
+		Settings.set("cx", floating.getCx(area.width))
+		Settings.set("cy", floating.getCy(area.height))
+		Settings.close()
 	}
 }

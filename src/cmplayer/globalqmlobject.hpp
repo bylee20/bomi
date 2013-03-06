@@ -35,6 +35,7 @@ class UtilObject : public QObject {
 	Q_PROPERTY(double memory READ usingMemory)
 	Q_PROPERTY(bool cursorVisible READ isCursorVisible NOTIFY cursorVisibleChanged)
 	Q_PROPERTY(QString tr READ tr NOTIFY trChanged)
+	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
 public:
 	UtilObject(QObject *parent = nullptr);
 	Q_INVOKABLE double textWidth(const QString &text, int size);
@@ -59,18 +60,21 @@ public:
 	static quint64 systemTime() { struct timeval t; gettimeofday(&t, 0); return t.tv_sec*1000000u + t.tv_usec; }
 	static quint64 processTime(); // usec
 	static QString monospace();
+	bool isFullScreen() const {return m_fullScreen;}
+	static void setFullScreen(bool fs) {if (_Change(m_fullScreen, fs)) for (auto obj : objs) emit obj->fullScreenChanged(m_fullScreen);}
 	QString tr() const {return QString();}
 	~UtilObject();
 signals:
 	void trChanged();
 	void mouseReleased(const QPointF &scenePos);
 	void cursorVisibleChanged(bool cursorVisible);
+	void fullScreenChanged(bool fullScreen);
 private:
 	void changeEvent(QEvent *event) {
 		if (event->type() == QEvent::LanguageChange)
 			emit trChanged();
 	}
-
+	static bool m_fullScreen;
 //	static UtilObject &get();
 	static bool m_filterDoubleClick, m_pressed, m_cursor;
 	static QLinkedList<UtilObject*> objs;

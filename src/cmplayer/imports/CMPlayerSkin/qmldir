@@ -16,3 +16,7 @@ Player			1.0 Player.qml
 MouseCatcher		1.0 MouseCatcher.qml
 TimeText		1.0 TimeText.qml
 AppWithFloating         1.0 AppWithFloating.qml
+Slider                  1.0 Slider.qml
+SeekControl             1.0 SeekControl.qml
+VolumeControl           1.0 VolumeControl.qml
+AppWithDock             1.0 AppWithDock.qml

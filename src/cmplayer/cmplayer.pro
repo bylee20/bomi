@@ -202,7 +202,6 @@ OTHER_FILES += \
     imports/CMPlayerSkin/HistoryView.qml \
     imports/CMPlayerSkin/FlickableListView.qml \
     imports/CMPlayerSkin/ColumnHeader.qml \
-    skins/simple/Slider.qml \
     skins/simple/cmplayer.qml \
     imports/CMPlayerSkin/PlaylistDock.qml \
     imports/CMPlayerSkin/HistoryDock.qml \
@@ -211,14 +210,16 @@ OTHER_FILES += \
     imports/CMPlayerSkin/Player.qml \
     imports/CMPlayerSkin/MouseCatcher.qml \
     imports/CMPlayerSkin/TimeText.qml \
-    skins/classic/Slider.qml \
     skins/classic/FramedButton.qml \
     skins/classic/cmplayer.qml \
     skins/modern/cmplayer.qml \
-    skins/modern/Slider.qml \
     imports/CMPlayerSkin/PlayInfoView.qml \
     emptyskin.qml \
-    imports/CMPlayerSkin/AppWithFloating.qml
+    imports/CMPlayerSkin/AppWithFloating.qml \
+    imports/CMPlayerSkin/Slider.qml \
+    imports/CMPlayerSkin/SeekControl.qml \
+    imports/CMPlayerSkin/VolumeControl.qml \
+    imports/CMPlayerSkin/AppWithDock.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}

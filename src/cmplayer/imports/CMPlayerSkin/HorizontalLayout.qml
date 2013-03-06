@@ -21,10 +21,10 @@ Item {
 		for (i=0; i < children.length; ++i) {
 			child = children[i];
 			child.height = h
-			if (fillers.indexOf(child) === -1)
+			if (fillers && fillers.indexOf(child) === -1)
 				w += child.width
 		}
-		if (fillers.length > 0) {
+		if (fillers && fillers.length > 0) {
 			w += spacing*(children.length-1)
 			w = (width - w - leftPadding - rightPadding)/fillers.length
 			for (i=0; i<fillers.length; ++i) {

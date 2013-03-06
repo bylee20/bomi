@@ -710,8 +710,7 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 		d->dontPause = false;
 		if (!d->stateChanging)
 			doVisibleAction(state != Qt::WindowMinimized);
-		if (d->player)
-			d->player->setFullScreen(state & Qt::WindowFullScreen);
+		UtilObject::setFullScreen(state & Qt::WindowFullScreen);
 	});
 
 #ifndef Q_OS_MAC

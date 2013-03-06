@@ -12,6 +12,7 @@ void SettingsObject::open(const QString &name) {
 	}
 }
 
+bool UtilObject::m_fullScreen = false;
 bool UtilObject::m_filterDoubleClick = false;
 bool UtilObject::m_pressed = false;
 bool UtilObject::m_cursor = true;
