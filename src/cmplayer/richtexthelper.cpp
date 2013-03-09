@@ -258,7 +258,7 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 			const QChar c = text.at(pos);
 			if (isSeparator(c.unicode())) {
 				if (!ret.last().text.isEmpty())
-					ret.last().text.append(c);
+					ret.last().text.append(isNewLine(c.unicode()) ? _L(' ') : c);
 				if (skipSeparator(pos, text))
 					break;
 			} else {
@@ -276,6 +276,7 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 				}
 			}
 		}
+		qDebug() << text;
 	};
 
 	while (pos <text.size()) {

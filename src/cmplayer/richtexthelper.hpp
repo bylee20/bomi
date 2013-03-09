@@ -33,6 +33,7 @@ public:
 	static inline bool isRightBracket(ushort c) {return c == '>';}
 	static inline bool isSeparator(ushort c) {return c == ' ' || c == '\t' || c == '\r' || c== '\n';}
 	static inline bool isWhitespace(ushort c) {return c == ' ' || c == '\t';}
+	static inline bool isNewLine(ushort c) {return c == '\r' || c == '\n';}
 	static QString replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s = Qt::CaseInsensitive);
 	static int indexOf(const QStringRef &ref, QRegExp &rx, int from = 0);
 	static inline QStringRef trim(const QStringRef &text) {
