@@ -49,7 +49,7 @@ public:
 	void setFlag(bool flag) {m_flag = flag;}
 	static int msec(int frame, double frameRate) {return qRound(frame/frameRate*1000.0);}
 	static int frame(int msec, double frameRate) {return qRound(msec*0.001*frameRate);}
-
+	int toTime(int key, double fps) const { return m_base == Time ? key : msec(key, fps); }
 	QString m_klass;
 private:
 	friend class Parser;

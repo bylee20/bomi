@@ -276,7 +276,6 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 				}
 			}
 		}
-		qDebug() << text;
 	};
 
 	while (pos <text.size()) {

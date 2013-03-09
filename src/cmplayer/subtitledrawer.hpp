@@ -51,5 +51,4 @@ private:
 	bool m_drawn = false;
 };
 
-
 #endif // SUBTITLEDRAWER_HPP

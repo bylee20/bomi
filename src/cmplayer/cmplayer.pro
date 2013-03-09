@@ -112,7 +112,9 @@ HEADERS += playengine.hpp \
     subtitlestyle.hpp \
     audiocontroller.hpp \
     subtitledrawer.hpp \
-    skin.hpp
+    skin.hpp \
+    subtitlerenderingthread.hpp \
+    dataevent.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -179,7 +181,8 @@ SOURCES += main.cpp \
     videoformat.cpp \
     audiocontroller.cpp \
     subtitledrawer.cpp \
-    skin.cpp
+    skin.cpp \
+    subtitlerenderingthread.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
