@@ -65,6 +65,8 @@ bool VideoRendererItem::hasFrame() const {
 QImage VideoRendererItem::frameImage() const {
 	if (d->format.isEmpty())
 		return QImage();
+	if (!d->image.isNull())
+		return d->image;
 	d->mutex.lock();
 	QImage image = d->frame.toImage();
 	d->mutex.unlock();;

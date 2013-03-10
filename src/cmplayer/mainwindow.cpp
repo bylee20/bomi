@@ -525,8 +525,7 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 		a->setChecked(true); d->engine.setCurrentAudioStream(a->data().toInt()); showMessage(tr("Current Audio Track"), a->text());
 	});
 	connect(audio.g("volume"), &ActionGroup::triggered, [this] (QAction *a) {
-		const int diff = a->data().toInt();
-		if (diff) {
+		if (const int diff = a->data().toInt()) {
 			const int volume = qBound(0, d->engine.volume() + diff, 100);
 			d->engine.setVolume(volume); showMessage(tr("Volume"), volume, "%");
 		}

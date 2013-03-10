@@ -421,11 +421,11 @@ int PlayEngine::runImage(const Mrl &mrl, int &terminated, int &duration) {
 	}
 	m_imgPos = 0;
 	terminated = duration = 0;
-//	mpctx->stop_play = AT_END_OF_FILE;
 	return terminate_playback(mpctx, error);
 }
 
 int PlayEngine::runAv(const Mrl &/*mrl*/, int &terminated, int &duration) {
+	d->video->output(QImage());
 	auto mpctx = &d->ctx->mp;
 	mpctx->opts.video_decoders = d->hwAccCodecs.data();
 	d->mpctx->opts.play_start.pos = d->start*1e-3;
