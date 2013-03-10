@@ -24,8 +24,10 @@ struct VideoRendererItem::Data {
 	QPointF strideCorrection;
 	VideoFormat::Type shaderType = VideoFormat::BGRA;
 	QMutex mutex;
-//	RangeF luma = {0.0, 1.0};
+	QImage image;
 };
+
+static const QEvent::Type UpdateEvent = (QEvent::Type)(QEvent::User+1);
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 : TextureRendererItem(3, parent), d(new Data) {
@@ -33,11 +35,15 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
 	setZ(-1);
-	connect(this, &VideoRendererItem::framePended, this, &VideoRendererItem::update, Qt::QueuedConnection);
 }
 
 VideoRendererItem::~VideoRendererItem() {
 	delete d;
+}
+
+void VideoRendererItem::customEvent(QEvent *event) {
+	if (event->type() == UpdateEvent)
+		update();
 }
 
 QQuickItem *VideoRendererItem::overlay() const {
@@ -66,13 +72,25 @@ QImage VideoRendererItem::frameImage() const {
 	return image;
 }
 
+void VideoRendererItem::present(const QImage &image) {
+	if (d->image.isNull() && image.isNull())
+		return;
+	if (image.format() != QImage::Format_ARGB32_Premultiplied)
+		d->image = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+	else
+		d->image = image;
+	d->framePended = true;
+	update();
+}
+
 void VideoRendererItem::present(const VideoFrame &frame, bool checkFormat) {
 	d->mutex.lock();
+	d->image = QImage();
 	d->frame = frame;
 	d->framePended = true;
 	d->checkFormat = checkFormat;
 	d->mutex.unlock();
-	emit framePended();
+	qApp->postEvent(this, new QEvent(UpdateEvent));
 	d->mposd->present();
 }
 
@@ -310,15 +328,20 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 }
 
 void VideoRendererItem::beforeUpdate() {
-//	if (d->shaderVar.effects() & RemapLuma)
-//		d->shaderVar.setYRange(d->luma.min, d->luma.max);
-//	else
-//		d->shaderVar.setYRange(0.0, 1.0);
 	QMutexLocker locker(&d->mutex);
 	if (!d->framePended)
 		return;
 	bool reset = false;
-	if (d->checkFormat && d->format != d->frame.format()) {
+	if (!d->image.isNull()) {
+		const VideoFormat format(d->image);
+		if (format != d->format) {
+			reset = true;
+			d->format = format;
+			resetNode();
+			updateGeometry();
+			emit formatChanged(d->format);
+		}
+	} else if (d->checkFormat && d->format != d->frame.format()) {
 		reset = true;
 		d->format = d->frame.format();
 		d->mposd->setFrameSize(d->format.size());
@@ -329,37 +352,40 @@ void VideoRendererItem::beforeUpdate() {
 	if (!reset && (d->shaderChanged || d->shaderType != d->format.type()))
 		resetNode();
 	if (!d->format.isEmpty()) {
-		const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
 		auto setTex = [this] (int idx, GLenum fmt, int width, int height, const uchar *data) {
 			glBindTexture(GL_TEXTURE_2D, texture(idx));
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, GL_UNSIGNED_BYTE, data);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, d->format.glFormat(), data);
 		};
-		switch (d->format.type()) {
-		case VideoFormat::I420:
-			setTex(0, GL_LUMINANCE, d->format.byteWidth(0), d->format.byteHeight(0), d->frame.data(0));
-			setTex(1, GL_LUMINANCE, d->format.byteWidth(1), d->format.byteHeight(1), d->frame.data(1));
-			setTex(2, GL_LUMINANCE, d->format.byteWidth(2), d->format.byteHeight(2), d->frame.data(2));
-			break;
-		case VideoFormat::NV12:
-		case VideoFormat::NV21:
-			setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
-			setTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1, d->frame.data(1));
-			break;
-		case VideoFormat::YUY2:
-		case VideoFormat::UYVY:
-			setTex(0, GL_LUMINANCE_ALPHA, w >> 1, h, d->frame.data(0));
-			setTex(1, GL_BGRA, w >> 2, h, d->frame.data(0));
-			break;
-		case VideoFormat::RGBA:
-			setTex(0, GL_RGBA, w >> 2, h, d->frame.data(0));
-			break;
-		case VideoFormat::BGRA:
-			setTex(0, GL_BGRA, w >> 2, h, d->frame.data(0));
-			break;
-		default:
-			break;
-		}
-		++(d->drawnFrames);
+		if (d->image.isNull()) {
+			const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
+			switch (d->format.type()) {
+			case VideoFormat::I420:
+				setTex(0, GL_LUMINANCE, d->format.byteWidth(0), d->format.byteHeight(0), d->frame.data(0));
+				setTex(1, GL_LUMINANCE, d->format.byteWidth(1), d->format.byteHeight(1), d->frame.data(1));
+				setTex(2, GL_LUMINANCE, d->format.byteWidth(2), d->format.byteHeight(2), d->frame.data(2));
+				break;
+			case VideoFormat::NV12:
+			case VideoFormat::NV21:
+				setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
+				setTex(1, GL_LUMINANCE_ALPHA, w >> 1, h >> 1, d->frame.data(1));
+				break;
+			case VideoFormat::YUY2:
+			case VideoFormat::UYVY:
+				setTex(0, GL_LUMINANCE_ALPHA, w >> 1, h, d->frame.data(0));
+				setTex(1, GL_BGRA, w >> 2, h, d->frame.data(0));
+				break;
+			case VideoFormat::RGBA:
+				setTex(0, GL_RGBA, w >> 2, h, d->frame.data(0));
+				break;
+			case VideoFormat::BGRA:
+				setTex(0, GL_BGRA, w >> 2, h, d->frame.data(0));
+				break;
+			default:
+				break;
+			}
+		} else
+			setTex(0, GL_BGRA, d->image.width(), d->image.height(), d->image.bits());
+		++d->drawnFrames;
 	}
 	d->shaderChanged = false;
 	d->framePended = false;
@@ -407,11 +433,11 @@ void VideoRendererItem::initializeTextures() {
 	const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
 	auto initTex = [this, &bindTex] (int idx, GLenum fmt, int width, int height) {
 		bindTex(idx);
-		glTexImage2D(GL_TEXTURE_2D, 0, fmt, width, height, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, fmt, width, height, 0, fmt, d->format.glFormat(), nullptr);
 	};
 	auto initRgbTex = [this, &bindTex, w, h] (int idx, GLenum fmt) {
 		bindTex(idx);
-		glTexImage2D(GL_TEXTURE_2D, 0, 4, w >> 2, h, 0, fmt, GL_UNSIGNED_BYTE, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, 4, w >> 2, h, 0, fmt, d->format.glFormat(), nullptr);
 	};
 	d->strideCorrection = QPointF(1.0, 1.0);
 	switch (d->format.type()) {

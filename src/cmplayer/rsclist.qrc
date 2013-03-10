@@ -28,5 +28,6 @@
         <file>img/logo-background.png</file>
         <file>img/logo-background.svg</file>
         <file>emptyskin.qml</file>
+        <file>img/document-open-folder.png</file>
     </qresource>
 </RCC>

@@ -1,4 +1,5 @@
 #include "mrl.hpp"
+#include "info.hpp"
 
 Mrl::Mrl(const QString &location) {
 	const int idx = location.indexOf("://");
@@ -18,6 +19,13 @@ QString Mrl::fileName() const {
 	return m_loc.mid(idx + 1);
 }
 
+QString Mrl::suffix() const {
+	const int idx = m_loc.lastIndexOf('.');
+	if (idx != -1)
+		return m_loc.mid(idx + 1);
+	return QString();
+}
+
 QString Mrl::displayName() const {
 	if (isLocalFile())
 		return fileName();
@@ -26,3 +34,4 @@ QString Mrl::displayName() const {
 	return toString();
 }
 
+bool Mrl::isImage() const { return Info::readableImageExt().contains(suffix(), Qt::CaseInsensitive); }

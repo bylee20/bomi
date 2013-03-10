@@ -111,7 +111,7 @@ void SubtitleRenderingThread::updateCache() {
 		it = d->pool.erase(it);
 	Q_ASSERT(it.key() == d->current);
 	auto key = d->current;
-	const int size = qMin(4, d->pool.size()+1);
+	const int size = qMin(3, d->pool.size()+1);
 	for (int i=0; i<size; ++i) {
 		++it; ++key;
 		if (key == d->its.end())

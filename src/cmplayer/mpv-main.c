@@ -4074,11 +4074,7 @@ goto_enable_cache: ;
 		mp_input_set_section(mpctx->input, "tv", 0);
 	if (mpctx->encode_lavc_ctx)
 		mp_input_set_section(mpctx->input, "encode", MP_INPUT_NO_DEFAULT_SECTION);
-	return NoMpError;
-}
 
-enum MpError start_to_play_current_file(struct MPContext *mpctx) {
-	struct MPOpts *opts = &mpctx->opts;
 	//==================== START PLAYING =======================
 
 	mp_tmsg(MSGT_CPLAYER, MSGL_V, "Starting playback...\n");
@@ -4124,6 +4120,10 @@ enum MpError start_to_play_current_file(struct MPContext *mpctx) {
 		pause_player(mpctx);
 	mpctx_play_started(mpctx);
 
+	return NoMpError;
+}
+
+enum MpError start_to_play_current_file(struct MPContext *mpctx) {
 	while (!mpctx->stop_play)
 		run_playloop(mpctx);
 

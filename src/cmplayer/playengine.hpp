@@ -51,7 +51,8 @@ public:
 	~PlayEngine();
 	MPContext *context() const;
 	int position() const;
-	int duration() const {return m_duration;}
+	void setImageDuration(int duration) {m_imgDuration = duration;}
+	int duration() const {return m_imgMode ? m_imgDuration : m_duration;}
 	void setPlaylist(const Playlist &playlist);
 	Mrl mrl() const;
 	bool atEnd() const;
@@ -84,9 +85,6 @@ public:
 	void setTempoScaled(bool on);
 	bool isVolumeNormalized() const;
 	bool isTempoScaled() const;
-
-//	void setAudioFilter(const QString &af, bool on);
-//	bool hasAudioFilter(const QString &af) const {return m_af.contains(af);}
 	double fps() const;
 	double videoAspectRatio() const;
 	VideoRendererItem *videoRenderer() const {return m_renderer;}
@@ -115,9 +113,9 @@ public slots:
 	void stop();
 	void quit();
 	void reload();
-	void pause() {if (!isPaused()) tellmp("pause");}
-	void seek(int pos) {tellmp("seek", (double)pos/1000.0, 2);}
-	void relativeSeek(int pos) {tellmp("seek", (double)pos/1000.0, 0);}
+	void pause();
+	void seek(int pos);
+	void relativeSeek(int pos);
 	void runCommand(mp_cmd *cmd);
 signals:
 	void tempoScaledChanged(bool on);
@@ -139,6 +137,8 @@ signals:
 private:
 	static void onPausedChanged(MPContext *mpctx);
 	static void onPlayStarted(MPContext *mpctx);
+	int runImage(const Mrl &mrl, int &terminated, int &duration);
+	int runAv(const Mrl &mrl, int &terminated, int &duration);
 	bool load(int row, int start = -1);
 	void play(int time);
 	void clear();
@@ -167,7 +167,9 @@ private:
 	VideoRendererItem *m_renderer = nullptr;
 	DvdInfo m_dvd;
 	QList<Chapter> m_chapters;
+	int m_imgDuration = 10000, m_imgPos = 0, m_imgSeek = 0, m_imgRelSeek = 0;
 	struct Data; Data *d;
+	bool m_imgMode = false;
 };
 
 #endif // PLAYENGINE_HPP

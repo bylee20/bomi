@@ -451,6 +451,8 @@ void PrefDialog::fill(const Pref &p) {
 	d->ui.hide_cursor->setChecked(p.hide_cursor);
 	d->ui.hide_delay->setValue(p.hide_cursor_delay/1000);
 	d->ui.disable_screensaver->setChecked(p.disable_screensaver);
+	d->ui.remember_image->setChecked(p.remember_image);
+	d->ui.image_duration->setValue(p.image_duration/1000);
 
 	d->ui.enable_hwaccel->setChecked(p.enable_hwaccel);
 	for (auto codec : p.hwaccel_codecs) {
@@ -541,6 +543,8 @@ void PrefDialog::apply() {
 	p.hide_cursor = d->ui.hide_cursor->isChecked();
 	p.hide_cursor_delay = d->ui.hide_delay->value()*1000;
 	p.disable_screensaver = d->ui.disable_screensaver->isChecked();
+	p.remember_image = d->ui.remember_image->isChecked();
+	p.image_duration = qRound(d->ui.image_duration->value()*1000.0);
 
 	p.enable_hwaccel = d->ui.enable_hwaccel->isChecked();
 	p.hwaccel_codecs.clear();

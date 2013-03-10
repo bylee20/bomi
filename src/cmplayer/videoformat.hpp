@@ -28,6 +28,7 @@ public:
 	static constexpr quint32 BGRA = cc4('B', 'G', 'R', 'A');
 	static constexpr quint32 HWAC = cc4('H', 'W', 'A', 'C');
 	VideoFormat(const mp_image *mpi): d(new Data(mpi)) {}
+	VideoFormat(const QImage &image): d(new Data(image)) {}
 	VideoFormat(): d(new Data) {}
 	inline bool operator == (const VideoFormat &rhs) const {return d->compare(rhs.d.constData());}
 	inline bool operator != (const VideoFormat &rhs) const {return !operator == (rhs);}
@@ -47,10 +48,12 @@ public:
 	inline int byteHeight(int plane) const {return d->byteSize[plane].height();}
 	inline bool compare(const mp_image *mpi) const {return d->compare(mpi);}
 	inline PixelFormat pixfmt() const {return d->pixfmt;}
+	inline GLenum glFormat() const {return d->glFormat;}
 private:
 	struct Data : public QSharedData {
 		Data() {}
 		Data(const mp_image *mpi);
+		Data(const QImage &image);
 		inline bool compare(const mp_image *mpi) const {
 			return mpi->fmt.id == imgfmt && mpi->w == size.width() && mpi->h == size.height()
 				&& byteSize[0].width() && mpi->stride[0] && byteSize[1].width() && mpi->stride[1] && byteSize[2].width() && mpi->stride[2];
@@ -62,6 +65,7 @@ private:
 		QVector<QSize> byteSize = {3, QSize(0, 0)};
 		int planes = 0, bpp = 0, imgfmt = 0;
 		quint32 type = Unknown;
+		GLenum glFormat = GL_NONE;
 		PixelFormat pixfmt = AV_PIX_FMT_NONE;
 	};
 	QSharedDataPointer<Data> d;

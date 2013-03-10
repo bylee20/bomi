@@ -28,7 +28,7 @@ public:
 	static const char *version() {return "0.7.1";}
 	static const char *name() {return "CMPlayer";}
 	static QString mediaExtFilter();
-	static QStringList mediaNameFilter() {return videoNameFilter() += audioNameFilter();}
+	static QStringList mediaNameFilter() {return videoNameFilter() + audioNameFilter() + readableImageExt();}
 	static const char *pluginPath();
 private:
 	Info();

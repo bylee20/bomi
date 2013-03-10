@@ -32,6 +32,8 @@ AppState::AppState() {
 
 	READ(screen_stays_on_top);
 
+	READ(open_folder_types);
+	READ(open_last_folder);
 	READ(open_last_file);
 	READ(open_url_list);
 	READ(open_url_enc);
@@ -70,6 +72,8 @@ void AppState::save() const {
 
 	WRITE(screen_stays_on_top);
 
+	WRITE(open_folder_types);
+	WRITE(open_last_folder);
 	WRITE(open_last_file);
 	WRITE(ask_system_tray);
 	WRITE(open_url_list);

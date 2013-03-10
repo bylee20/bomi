@@ -88,11 +88,11 @@ public:
 	OpenMedia open_media_by_drag_and_drop = {true, Enum::PlaylistBehaviorWhenOpenMedia::AppendToPlaylist};
 
 	bool pause_minimized = true, pause_video_only = true;
-	bool remember_stopped = true, ask_record_found = true;
+	bool remember_stopped = true, ask_record_found = true, remember_image = false;
 	bool enable_generate_playist = true;
 	Enum::GeneratePlaylist generate_playlist = Enum::GeneratePlaylist::Folder;
 	bool hide_cursor = true, disable_screensaver = true;
-	int hide_cursor_delay = 3000;
+	int hide_cursor_delay = 3000, image_duration = 0;
 
 	int blur_kern_c = 1, blur_kern_n = 2, blur_kern_d = 1;
 	int sharpen_kern_c = 5, sharpen_kern_n = -1, sharpen_kern_d = 0;

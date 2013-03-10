@@ -1,4 +1,5 @@
 #include "playengine.hpp"
+#include "info.hpp"
 #include "videoframe.hpp"
 #include "videooutput.hpp"
 #include "hwacc.hpp"
@@ -32,9 +33,9 @@ struct mp_volnorm {int method;	float mul; float avg;};
 struct PlayEngine::Context { MPContext mp; PlayEngine *p; };
 
 template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0);
-template<> inline float &getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.f;}
-template<> inline int &getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.i;}
-template<> inline char *&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.s;}
+template<> inline float	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.f;}
+template<> inline int	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.i;}
+template<> inline char*	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.s;}
 
 struct PlayEngine::Data {
 	Data(PlayEngine *engine): p(engine) {}
@@ -51,6 +52,7 @@ struct PlayEngine::Data {
 	PlaylistModel playlist;
 	double videoAspect = 0.0;
 	QByteArray hwAccCodecs;
+	QMutex imgMutex;
 
 	int getStartTime(const Mrl &mrl) {return getStartTimeFunc ? getStartTimeFunc(mrl) : 0;}
 	QByteArray &setFileName(const Mrl &mrl) {
@@ -80,7 +82,9 @@ PlayEngine::PlayEngine()
 	mpctx_paused_changed = onPausedChanged;
 	mpctx_play_started = onPlayStarted;
 	connect(&d->ticker, &QTimer::timeout, [this] () {
-		if (d->mpctx && (isPaused() || isPlaying())) {
+		if (m_imgMode)
+			emit tick(m_imgPos);
+		else if (d->mpctx && (isPaused() || isPlaying())) {
 			const int duration = qRound(get_time_length(d->mpctx)*1000.0);
 			if (m_duration != duration)
 				emit durationChanged(m_duration = duration);
@@ -100,6 +104,28 @@ PlayEngine::~PlayEngine() {
 	delete d->audio;
 	delete d->video;
 	delete d;
+}
+
+void PlayEngine::seek(int pos) {
+	if (m_imgMode) {
+		if (m_imgDuration > 0) {
+			d->imgMutex.lock();
+			m_imgSeek = pos;
+			d->imgMutex.unlock();
+		}
+	} else
+		tellmp("seek", (double)pos/1000.0, 2);
+}
+
+void PlayEngine::relativeSeek(int pos) {
+	if (m_imgMode) {
+		if (m_imgDuration > 0) {
+			d->imgMutex.lock();
+			m_imgRelSeek += pos;
+			d->imgMutex.unlock();
+		}
+	} else
+		tellmp("seek", (double)pos/1000.0, 0);
 }
 
 void PlayEngine::setGetStartTimeFunction(const GetStartTime &func) {
@@ -122,7 +148,6 @@ double PlayEngine::volumeNormalizer() const {
 	auto amp = d->audio->normalizer();
 	return amp < 0 ? 1.0 : amp;
 }
-
 
 bool PlayEngine::isHwAccActivated() const {
 	if (d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->vd_driver)
@@ -328,8 +353,96 @@ void PlayEngine::runCommand(mp_cmd *cmd) {
 	}
 }
 
+class TimeLine {
+public:
+	TimeLine() {m_time.start();}
+	int pos() const {return m_running ? m_pos + m_time.elapsed() : m_pos;}
+	void stop () { if (m_running) { m_pos += m_time.elapsed(); m_running = false; } }
+	void moveBy(int diff) {
+		m_pos += diff;
+		if (m_running) {
+			if (m_pos + m_time.elapsed() < 0)
+				m_pos = -m_time.elapsed();
+		} else {
+			if (m_pos < 0)
+				m_pos = 0;
+		}
+	}
+	void start() { if (!m_running) { m_time.restart(); m_running = true; } }
+private:
+	QTime m_time;
+	int m_pos = 0;
+	bool m_running = true;
+};
+
 bool PlayEngine::isInitialized() const {
 	return d->init;
+}
+
+int PlayEngine::runImage(const Mrl &mrl, int &terminated, int &duration) {
+	QImage image;
+	if (!image.load(mrl.toLocalFile()))
+		return OpenFileError;
+	auto mpctx = &d->ctx->mp;
+	auto error = prepare_to_play_current_file(mpctx);
+	if (error != NoMpError)
+		return error;
+	d->video->output(image);
+	m_imgPos = 0;
+	post(this, StreamOpen);
+	TimeLine time;
+	while (!mpctx->stop_play) {
+		mp_cmd_t *cmd = nullptr;
+		while ((cmd = mp_input_get_cmd(mpctx->input, 0, 1)) != NULL) {
+			cmd = mp_input_get_cmd(mpctx->input, 0, 0);
+			runCommand(cmd);
+			mp_cmd_free(cmd);
+			if (mpctx->stop_play)
+				break;
+		}
+		d->imgMutex.lock();
+		if (m_imgSeek > 0)
+			m_imgRelSeek = m_imgSeek - m_imgPos;
+		if (m_imgRelSeek)
+			time.moveBy(m_imgRelSeek);
+		m_imgSeek = m_imgRelSeek = 0;
+		d->imgMutex.unlock();
+		if (m_imgDuration > 0) {
+			if (isPaused())
+				time.stop();
+			else {
+				time.start();
+				m_imgPos = qBound(0, time.pos(), m_imgDuration);
+			}
+			if (m_imgPos >= m_imgDuration)
+				break;
+		}
+		msleep(50);
+	}
+	m_imgPos = 0;
+	terminated = duration = 0;
+//	mpctx->stop_play = AT_END_OF_FILE;
+	return terminate_playback(mpctx, error);
+}
+
+int PlayEngine::runAv(const Mrl &/*mrl*/, int &terminated, int &duration) {
+	auto mpctx = &d->ctx->mp;
+	mpctx->opts.video_decoders = d->hwAccCodecs.data();
+	d->mpctx->opts.play_start.pos = d->start*1e-3;
+	d->mpctx->opts.play_start.type = REL_TIME_ABSOLUTE;
+	setmp("speed", (float)m_speed);
+	mixer_setvolume(&d->mpctx->mixer, mpVolume(), mpVolume());
+	mixer_setmute(&d->mpctx->mixer, m_muted);
+	auto error = prepare_to_play_current_file(mpctx);
+	if (error == NoMpError) {
+		post(this, StreamOpen);
+		while (!mpctx->stop_play)
+			run_playloop(mpctx);
+		terminated = position();
+		duration = this->duration();
+		terminate_playback(mpctx, error);
+	}
+	return error;
 }
 
 void PlayEngine::run() {
@@ -348,31 +461,25 @@ void PlayEngine::run() {
 	HwAcc hwAcc; (void)hwAcc;
 	d->quit = false;
 	while (!d->quit) {
+		m_imgMode = false;
 		idle_loop(mpctx);
 		if (mpctx->stop_play == PT_QUIT)
 			break;
 		Q_ASSERT(mpctx->playlist->current);
 		clear();
-		setState(EngineBuffering);
-		mpctx->opts.video_decoders = d->hwAccCodecs.data();
-		auto error = prepare_to_play_current_file(mpctx);
 		int terminated = 0, duration = 0;
 		Mrl mrl = d->playlist.loadedMrl();
-		if (error == NoMpError) {
-			d->playing = true;
-			d->mpctx->opts.play_start.pos = d->start*1e-3;
-			d->mpctx->opts.play_start.type = REL_TIME_ABSOLUTE;
-			setmp("speed", (float)m_speed);
-			mixer_setvolume(&d->mpctx->mixer, mpVolume(), mpVolume());
-			mixer_setmute(&d->mpctx->mixer, m_muted);
-			post(this, StreamOpen);
-			auto err = start_to_play_current_file(mpctx);
-			terminated = position();
-			duration = this->duration();
-			terminate_playback(mpctx, err);
-			d->playing = false;
-		} else
+		d->playing = true;
+		setState(EngineBuffering);
+		int error = NoMpError;
+		m_imgMode = mrl.isImage();
+		if (m_imgMode)
+			error = runImage(mrl, terminated, duration);
+		else
+			error = runAv(mrl, terminated, duration);
+		if (error != NoMpError)
 			setState(EngineError);
+		d->playing = false;
 		qDebug() << "terminate playback";
 		if (mpctx->stop_play == PT_QUIT) {
 			if (error == NoMpError) {
@@ -472,7 +579,7 @@ void PlayEngine::load(const Mrl &mrl, int start) {
 }
 
 int PlayEngine::position() const {
-	return d->mpctx && d->mpctx->demuxer ? get_current_time(d->mpctx)*1000.0 + 0.5 : 0;
+	return m_imgMode ? m_imgPos : (d->mpctx && d->mpctx->demuxer ? get_current_time(d->mpctx)*1000.0 + 0.5 : 0);
 }
 
 bool PlayEngine::isSeekable() const {
@@ -499,10 +606,22 @@ void PlayEngine::onPausedChanged(MPContext *mpctx) {
 		engine->setState(mpctx->paused ? EnginePaused : EnginePlaying);
 }
 
+void PlayEngine::pause() {
+	if (!isPaused()) {
+		if (m_imgMode)
+			setState(EnginePaused);
+		else
+			tellmp("pause");
+	}
+}
+
 void PlayEngine::play() {
 	switch (m_state) {
 	case EnginePaused:
-		tellmp("pause");
+		if (m_imgMode)
+			setState(EnginePlaying);
+		else
+			tellmp("pause");
 		break;
 	case EngineStopped:
 	case EngineFinished:

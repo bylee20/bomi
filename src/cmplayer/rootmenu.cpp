@@ -18,6 +18,9 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	QAction *file = open->addAction(_L("file"));
 	file->setShortcut(Qt::CTRL + Qt::Key_F);
 	file->setData(int('f'));
+	QAction *folder = open->addAction(_L("folder"));
+	folder->setShortcut(Qt::CTRL + Qt::Key_G);
+	folder->setData(int('d'));
 	QAction *url = open->addAction(_L("url"));
 	url->setData(int('u'));
 	QAction *dvd = open->addAction(_L("dvd"));
@@ -328,6 +331,7 @@ void RootMenu::update() {
 	Menu &open = root("open");
 	open.setTitle(tr("Open"));
 	open["file"]->setText(tr("Open File"));
+	open["folder"]->setText(tr("Open Folder"));
 	open["url"]->setText(tr("Load URL"));
 	open["dvd"]->setText(tr("Open DVD"));
 

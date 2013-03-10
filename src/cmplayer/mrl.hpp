@@ -23,6 +23,8 @@ public:
 	bool isPlaylist() const;
 	QString displayName() const;
 	bool isEmpty() const {return m_loc.isEmpty();}
+	QString suffix() const;
+	bool isImage() const;
 private:
 	QString m_loc = {};
 };

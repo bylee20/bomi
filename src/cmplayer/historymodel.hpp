@@ -25,6 +25,7 @@ public:
 	Q_INVOKABLE QString name(int row) const {return m_items[row].mrl.displayName();}
 	Q_INVOKABLE QString latestPlay(int row) const {return m_items[row].date.toString(Qt::ISODate);}
 	Q_INVOKABLE QString location(int row) const {return m_items[row].mrl.toString();}
+	void setRememberImage(bool on) {m_rememberImage = on;}
 public slots:
 	void clear() {beginResetModel(); m_items.clear(); endResetModel();}
 	void setStarted(Mrl mrl);
@@ -40,6 +41,7 @@ private:
 	RoleHash roleNames() const;
 	int findIndex(const Mrl &mrl) const;
 	QList<Item> m_items;
+	bool m_rememberImage = false;
 };
 
 #endif // HISTORYMODEL_HPP

@@ -49,6 +49,7 @@ public:
 	void setOverlay(QQuickItem *overlay);
 	QQuickItem *overlay() const;
 	void present(const VideoFrame &frame, bool checkFormat = true);
+	void present(const QImage &image);
 	const VideoFrame &frame() const;
 	bool isFramePended() const;
 	bool hasFrame() const;
@@ -66,7 +67,7 @@ signals:
 	void offsetChanged(const QPoint &pos);
 	void formatChanged(const VideoFormat &format);
 	void screenRectChanged(const QRectF rect);
-	void framePended();
+//	void framePended();
 	void texturesInitialized();
 private: // for VideoOutput
 //	VideoFrame &getNextFrame() const;
@@ -82,6 +83,7 @@ private:
 	void updateGeometry();
 	static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
+	void customEvent(QEvent *event);
 	struct Data;
 	Data *d;
 	friend class VideoOutput;

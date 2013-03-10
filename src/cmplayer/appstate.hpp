@@ -38,6 +38,8 @@ public:
 	Enum::StaysOnTop screen_stays_on_top = Enum::StaysOnTop::Playing;
 
 // misc
+	QString open_last_folder;
+	QString open_folder_types = _L("vi");
 	QString open_last_file;
 	QString open_url_enc;
 	QStringList open_url_list;

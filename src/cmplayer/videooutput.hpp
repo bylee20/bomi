@@ -21,6 +21,7 @@ public:
 	void setRenderer(VideoRendererItem *renderer);
 	static const vo_driver &getDriver();
 	void quit();
+	void output(const QImage &image);
 signals:
 	void formatChanged(const VideoFormat &format);
 private slots:

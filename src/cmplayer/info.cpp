@@ -17,7 +17,6 @@ Info::Info() {
 	m_audioExt << "mp3" << "ogg" << "ra" << "wav" << "wma";
 	m_subExt << "smi" << "srt" << "sub" << "txt";
 	m_plExt << "pls" << "m3u";
-//	m_imageExt << "bmp" << "jpg" << "jpeg" << "png" << "ppm" << "tiff" << "xbm" << "xpm";
 }
 
 Info::~Info() {}

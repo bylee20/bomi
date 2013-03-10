@@ -1,4 +1,5 @@
 #include "stdafx.hpp"
+#include "openmediafolderdialog.hpp"
 #include "snapshotdialog.hpp"
 #include "mainwindow.hpp"
 #include "playeritem.hpp"
@@ -388,6 +389,17 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 		const QString file = _GetOpenFileName(&d->proxy, tr("Open File"), dir, filter);
 		if (!file.isEmpty()) {openMrl(Mrl(file)); as.open_last_file = file;}
 	});
+	connect(open["folder"], &QAction::triggered, [this] () {
+		OpenMediaFolderDialog dlg(&d->proxy);
+		if (dlg.exec()) {
+			const auto list = dlg.playlist();
+			if (!list.isEmpty()) {
+				d->engine.setPlaylist(list);
+				d->engine.load(list.first(), true);
+				d->recent.stack(list.first());
+			}
+		}
+	});
 	connect(open["url"], &QAction::triggered, [this] () {
 		GetUrlDialog dlg; if (dlg.exec()) {openMrl(dlg.url().toString(), dlg.encoding());}
 	});
@@ -610,7 +622,7 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	connect(tool["pref"], &QAction::triggered, [this] () {
 		if (!d->prefDlg) {
 			d->prefDlg = new PrefDialog(&d->proxy);
-			connect(d->prefDlg, SIGNAL(applicationRequested()), this, SLOT(applyPref()));
+			connect(d->prefDlg, &PrefDialog::applicationRequested, this, &MainWindow::applyPref);
 		} d->prefDlg->show();
 	});
 	connect(tool["reload-skin"], &QAction::triggered, this, &MainWindow::reloadSkin);
@@ -1054,8 +1066,10 @@ void MainWindow::applyPref() {
 	}
 	auto &p = cPref;
 	Translator::load(p.locale);
+	d->history.setRememberImage(p.remember_image);
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizer(p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
+	d->engine.setImageDuration(p.image_duration);
 	d->renderer.setLumaRange(p.remap_luma_min, p.remap_luma_max);
 	SubtitleParser::setMsPerCharactor(p.ms_per_char);
 	d->subtitle.setPriority(p.sub_priority);
@@ -1236,7 +1250,7 @@ void MainWindow::customEvent(QEvent *event) {
 }
 
 int MainWindow::getStartTime(const Mrl &mrl) {
-	if (!cPref.remember_stopped)
+	if (!cPref.remember_stopped || mrl.isImage())
 		return 0;
 	const int start = d->history.stoppedTime(mrl);
 	if (start <= 0)

@@ -114,7 +114,8 @@ HEADERS += playengine.hpp \
     subtitledrawer.hpp \
     skin.hpp \
     subtitlerenderingthread.hpp \
-    dataevent.hpp
+    dataevent.hpp \
+    openmediafolderdialog.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -182,7 +183,8 @@ SOURCES += main.cpp \
     audiocontroller.cpp \
     subtitledrawer.cpp \
     skin.cpp \
-    subtitlerenderingthread.cpp
+    subtitlerenderingthread.cpp \
+    openmediafolderdialog.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -192,7 +194,8 @@ FORMS += \
     ui/aboutdialog.ui \
     ui/opendvddialog.ui \
     ui/snapshotdialog.ui \
-    ui/prefdialog.ui
+    ui/prefdialog.ui \
+    ui/openmediafolderdialog.ui
 
 OTHER_FILES += \
     imports/CMPlayerSkin/qmldir \

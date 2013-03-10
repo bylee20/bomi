@@ -5,7 +5,7 @@ extern "C" {
 
 VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
 : size(mpi->w, mpi->h), drawSize(mpi->stride[0]/mpi->fmt.bytes[0], mpi->h)
-, planes(mpi->fmt.num_planes), imgfmt(mpi->fmt.id) {
+, planes(mpi->fmt.num_planes), imgfmt(mpi->fmt.id), glFormat(GL_UNSIGNED_BYTE) {
 	switch (imgfmt) {
 	case IMGFMT_420P:
 		pixfmt = AV_PIX_FMT_YUV420P;
@@ -45,4 +45,16 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
 		byteSize[i].rheight() = mpi->h >> mpi->fmt.ys[i];
 		bpp += mpi->fmt.bpp[i] >> (mpi->fmt.xs[i] + mpi->fmt.ys[i]);
 	}
+}
+
+VideoFormat::VideoFormat::Data::Data(const QImage &image) {
+	Q_ASSERT(image.format() == QImage::Format_ARGB32 || image.format() == QImage::Format_ARGB32_Premultiplied);
+	drawSize = size = image.size();
+	byteSize[0] = QSize(size.width()*4, size.height());
+	planes = 1;
+	bpp = 32;
+	imgfmt = IMGFMT_BGRA;
+	pixfmt = AV_PIX_FMT_BGRA;
+	type = BGRA;
+	glFormat = GL_UNSIGNED_INT_8_8_8_8_REV;
 }

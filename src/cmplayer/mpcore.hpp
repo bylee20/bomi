@@ -29,7 +29,7 @@ inline void quit_player(struct MPContext *mpctx, enum exit_reason how) {exit_pla
 inline void mpctx_delete(struct MPContext *mpctx) {quit_player(mpctx, EXIT_NONE);}
 extern int mpv_init(struct MPContext *mpctx, int argc, char **argv);
 extern int play_next_file();
-extern int run_playback();
+extern int run_playloop(struct MPContext *mpctx);
 extern void idle_loop(struct MPContext *mpctx);
 #else
 extern void mpctx_run_command(struct MPContext *, struct mp_cmd *);

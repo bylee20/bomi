@@ -242,16 +242,9 @@ void SubtitleRendererItem::deselect(int idx) {
 }
 
 void SubtitleRendererItem::applySelection() {
+	m_compempty = true;
 	qDeleteAll(d->models);
 	d->models.clear();
-	if (d->renderer)
-		delete d->renderer;
-	d->renderer = new SubtitleRenderingThread(d->order, this);
-	d->renderer->setDrawer(d->drawer);
-	d->renderer->setArea(drawArea(), dpr());
-	d->renderer->start();
-	d->renderer->render(m_ms, m_fps);
-	m_compempty = true;
 	d->models.reserve(d->order.size());
 	for (auto comp : d->order) {
 		d->models.append(new SubtitleComponentModel(comp, this));
@@ -259,6 +252,15 @@ void SubtitleRendererItem::applySelection() {
 			m_compempty = false;
 	}
 	emit modelsChanged(d->models);
+	delete d->renderer;
+	d->renderer = nullptr;
+	if (!m_compempty) {
+		d->renderer = new SubtitleRenderingThread(d->order, this);
+		d->renderer->setDrawer(d->drawer);
+		d->renderer->setArea(drawArea(), dpr());
+		d->renderer->start();
+		d->renderer->render(m_ms, m_fps);
+	}
 }
 
 void SubtitleRendererItem::select(int idx) {

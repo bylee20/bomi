@@ -59,6 +59,11 @@ int VideoOutput::preinit(struct vo *vo, const char *arg) {
 	return 0;
 }
 
+void VideoOutput::output(const QImage &image) {
+	if (d->renderer)
+		d->renderer->present(image);
+}
+
 void VideoOutput::setRenderer(VideoRendererItem *renderer) {
 	if (d->renderer)
 		disconnect(d->renderer, 0, this, 0);
