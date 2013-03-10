@@ -418,10 +418,14 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	});
 	connect(play["pause"], &QAction::toggled, [this] (bool pause) {
 		if (!d->stateChanging) {
-			if (pause)
-				d->engine.pause();
-			else
-				d->engine.play();
+			if (cPref.pause_to_play_next_image && cPref.image_duration == 0 && d->engine.mrl().isImage())
+				d->menu("play")["next"]->trigger();
+			else {
+				if (pause)
+					d->engine.pause();
+				else
+					d->engine.play();
+			}
 		}
 	});
 	connect(play("repeat").g(), &ActionGroup::triggered, [this] (QAction *a) {
@@ -531,7 +535,7 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	connect(audio["mute"], &QAction::toggled, [this] (bool on) {d->engine.setMuted(on); showMessage(tr("Mute"), on);});
 	connect(audio.g("amp"), &ActionGroup::triggered, [this] (QAction *a) {
 		const int amp = qBound(0, qRound(d->engine.preamp()*100 + a->data().toInt()), 1000);
-		d->engine.setPreamp(amp*0.01); showMessage(tr("Amp"), amp, "%");
+		d->engine.setPreamp(amp*0.01); showMessage(tr("Amplifier"), amp, "%");
 	});
 	connect(audio["normalizer"], &QAction::toggled, [this] (bool on) {
 		d->engine.setVolumeNormalized(on); showMessage(tr("Volume Normalizer"), on);

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>702</width>
+    <width>712</width>
     <height>640</height>
    </rect>
   </property>
@@ -75,7 +75,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>1</number>
+        <number>9</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -238,6 +238,13 @@
                </spacer>
               </item>
              </layout>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="pause_to_play_next_image">
+              <property name="text">
+               <string>Use play/pause action as play next action when duration is 'Infinity'</string>
+              </property>
+             </widget>
             </item>
             <item>
              <widget class="QCheckBox" name="remember_image">
@@ -2430,7 +2437,7 @@ e.g.: English, Korean</string>
                 <item row="1" column="0">
                  <widget class="QLabel" name="label_19">
                   <property name="text">
-                   <string>Amp.</string>
+                   <string>Amplifier</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

@@ -87,7 +87,7 @@ public:
 	OpenMedia open_media_from_file_manager = {true, Enum::PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist};
 	OpenMedia open_media_by_drag_and_drop = {true, Enum::PlaylistBehaviorWhenOpenMedia::AppendToPlaylist};
 
-	bool pause_minimized = true, pause_video_only = true;
+	bool pause_minimized = true, pause_video_only = true, pause_to_play_next_image = true;
 	bool remember_stopped = true, ask_record_found = true, remember_image = false;
 	bool enable_generate_playist = true;
 	Enum::GeneratePlaylist generate_playlist = Enum::GeneratePlaylist::Folder;
