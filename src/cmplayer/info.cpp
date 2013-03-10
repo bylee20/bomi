@@ -17,6 +17,7 @@ Info::Info() {
 	m_audioExt << "mp3" << "ogg" << "ra" << "wav" << "wma";
 	m_subExt << "smi" << "srt" << "sub" << "txt";
 	m_plExt << "pls" << "m3u";
+//	m_imageExt << "bmp" << "jpg" << "jpeg" << "png" << "ppm" << "tiff" << "xbm" << "xpm";
 }
 
 Info::~Info() {}
@@ -46,6 +47,8 @@ QString Info::mediaExtFilter() {
 			+ Info::videoExt().toFilter() + ";;"
 			+ QCoreApplication::translate("Info", "Audio Files") + ' '
 			+ Info::audioExt().toFilter() + ";;"
+			+ QCoreApplication::translate("Info", "Image Files") + ' '
+			+ Info::readableImageExt().toFilter() + ";;"
 			+ QCoreApplication::translate("Info", "All Files") + ' ' + "(*.*)";
 	return filter;
 }
@@ -54,3 +57,21 @@ const char *Info::pluginPath() {
 	return "";
 }
 
+static Info::ExtList convert(const QList<QByteArray> &formats) {
+	Info::ExtList exts;
+	for (auto &format : formats)
+		exts << QString::fromLocal8Bit(format);
+	return exts;
+}
+
+const Info::ExtList &Info::readableImageExt() {
+	if (self.m_rImgExt.isEmpty())
+		self.m_rImgExt = convert(QImageReader::supportedImageFormats());
+	return self.m_rImgExt;
+}
+
+const Info::ExtList &Info::writableImageExt() {
+	if (self.m_wImgExt.isEmpty())
+		self.m_wImgExt = convert(QImageWriter::supportedImageFormats());
+	return self.m_wImgExt;
+}

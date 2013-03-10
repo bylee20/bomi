@@ -16,8 +16,6 @@ public slots:
 	void take();
 private slots:
 	void updateSnapshot(bool sub);
-	void save();
-	void copyToClipboard();
 private:
 	struct Data;
 	Data *d;
@@ -33,13 +31,10 @@ public:
 	void setImage(const QPixmap &image);
 	void scale(double factor);
 	QPixmap image() const;
-public slots:
-	void zoomIn() {scale(1.25);}
-	void zoomOut() {scale(0.8);}
-	void zoomOriginal();
 signals:
 	void scaleChanged(double scale);
 private:
+	void zoomOriginal();
 	void adjustScrollBar(QScrollBar *scrollBar, double factor);
 	struct Data;
 	Data *d;

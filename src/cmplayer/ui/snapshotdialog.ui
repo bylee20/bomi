@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>491</width>
+    <width>798</width>
     <height>82</height>
    </rect>
   </property>
@@ -97,6 +97,13 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="clip">
+       <property name="text">
+        <string>Copy to Clipboard</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="save">

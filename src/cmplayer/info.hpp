@@ -15,6 +15,8 @@ public:
 	};
 	~Info();
 	static const QString &privatePath() {return self.m_privPath;}
+	static const ExtList &readableImageExt();
+	static const ExtList &writableImageExt();
 	static const ExtList &videoExt() {return self.m_videoExt;}
 	static const ExtList &audioExt() {return self.m_audioExt;}
 	static const ExtList &subtitleExt() {return self.m_subExt;}
@@ -30,7 +32,7 @@ public:
 	static const char *pluginPath();
 private:
 	Info();
-	ExtList m_videoExt, m_audioExt, m_subExt, m_plExt;
+	ExtList m_videoExt, m_audioExt, m_subExt, m_plExt, m_rImgExt, m_wImgExt;
 	QString m_privPath;
 	static Info self;
 };
