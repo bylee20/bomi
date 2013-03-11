@@ -11,10 +11,14 @@ Info::Info() {
 		dir.cd(".cmplayer");
 		m_privPath = dir.absolutePath();
 	}
-	m_videoExt << "asf" << "avi" << "dvix" << "flv" <<"m2v" << "m4v" << "mkv" << "mov"
-			<< "mp4" << "mpeg" << "mpg" << "vob"
-			<< "ogg" << "ogm"<< "qt" << "rm" << "rmvb" << "wmv";
-	m_audioExt << "mp3" << "ogg" << "ra" << "wav" << "wma";
+	m_videoExt << "3gp" << "3iv" << "asf" << "avi" << "cpk"
+		<< "dat" << "divx" << "dv" << "flac" << "fli" << "flv"
+		<< "h264" << "i263"	<< "m2ts" << "m4v" << "mkv" << "mov"
+		<< "mp2" << "mp4" << "mpeg" << "mpg" << "mpg2" << "mpg4"
+		<< "nsv" << "nut" << "nuv" << "ogg" <<"ogm" << "qt"
+		<< "rm" << "rmvb" << "vcd" << "vfw" << "vob" << "wmv";
+	m_audioExt << "aac" << "ac3" << "aiff" << "m4a" << "mka" << "mp3"
+		<< "ogg" << "pcm" << "vaw" << "wav" << "waw" << "wma";
 	m_subExt << "smi" << "srt" << "sub" << "txt";
 	m_plExt << "pls" << "m3u";
 }
