@@ -36,6 +36,7 @@ struct MainWindow::Data {
 	Data(MainWindow *p): p(p) {}
 	MainWindow *p = nullptr;
 	bool visible = false, sotChanging = false;
+	bool fullScreen = false;
 	PlayerItem *player = nullptr;
 	RootMenu menu;	RecentInfo recent;
 	PlayEngine engine;
@@ -196,6 +197,9 @@ struct MainWindow::Data {
 
 	void saveState() const {
 		AppState &as = AppState::get();
+		if (!(p->windowState() & Qt::WindowFullScreen))
+			updateWindowPosState();
+
 		as.audio_volume = engine.volume();
 		as.audio_muted = engine.isMuted();
 		as.audio_preamp = engine.preamp();
@@ -218,17 +222,20 @@ struct MainWindow::Data {
 		as.save();
 	}
 
-	void updateWindowGeometryState() {
+	void updateWindowSizeState() const {
+		const auto state = p->windowState();
+		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible() && p->screen())
+			AppState::get().win_size = p->size();
+	}
+	void updateWindowPosState() const {
 		const auto state = p->windowState();
 		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible() && p->screen()) {
 			auto &as = AppState::get();
 			const auto screen = p->screen()->size();
 			as.win_pos.rx() = qBound(0.0, (double)p->x()/(double)screen.width(), 1.0);
 			as.win_pos.ry() = qBound(0.0, (double)p->y()/(double)screen.height(), 1.0);
-			as.win_size = p->size();
 		}
 	}
-
 	Enum::StaysOnTop stay_on_top_mode() const {
 		const int id = menu("window").g("stays-on-top")->checkedAction()->data().toInt();
 		return Enum::StaysOnTop::from(id, Enum::StaysOnTop::Playing);
@@ -702,7 +709,7 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
 	d->connectCurrentStreamActions(&d->menu("subtitle")("track"), &PlayEngine::currentSubtitleStream);
 	connect(this, &MainWindow::windowStateChanged, [this] (Qt::WindowState state) {
-		d->updateWindowGeometryState();
+		d->updateWindowSizeState();
 		setFilePath(d->filePath);
 		if (state != d->winState) {
 			d->prevWinState = d->winState;
@@ -855,6 +862,9 @@ void MainWindow::showMessage(const QString &message) {
 
 void MainWindow::setFullScreen(bool full) {
 	d->dontPause = true;
+	d->fullScreen = full;
+	if (full && !(windowState() & Qt::WindowFullScreen))
+		d->updateWindowPosState();
 	setWindowState(full ? Qt::WindowFullScreen : d->prevWinState);
 	d->dontPause = false;
 }
@@ -1099,7 +1109,8 @@ void connectCopies(Menu &menu, const Slot &slot) {
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QQuickView::resizeEvent(event);
-	d->updateWindowGeometryState();
+	if (!d->fullScreen)
+		d->updateWindowSizeState();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
@@ -1113,6 +1124,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 			else
 				action->trigger();
 		}
+		event->accept();
 	}
 }
 
@@ -1286,5 +1298,6 @@ void MainWindow::setCursorVisible(bool visible) {
 
 void MainWindow::moveEvent(QMoveEvent *event) {
 	QQuickView::moveEvent(event);
-	d->updateWindowGeometryState();
+	if (!d->fullScreen)
+		d->updateWindowPosState();
 }

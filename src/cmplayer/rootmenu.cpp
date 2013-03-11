@@ -299,7 +299,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	QAction *exit = this->addAction(_L("exit"));
 	exit->setMenuRole(QAction::QuitRole);
 #ifdef Q_OS_MAC
-	exit->setShortcut(Qt::ALT + Qt::Key_F4);
+//	exit->setShortcut(Qt::ALT + Qt::Key_F4);
 #else
 	exit->setShortcut(Qt::CTRL + Qt::Key_Q);
 #endif
@@ -519,6 +519,9 @@ void RootMenu::save() {
 void RootMenu::load() {
 	Record r;
 	Menu::load(r);
+#ifdef Q_OS_MAC
+	a(_L("exit"))->setShortcut(QKeySequence());
+#endif
 }
 
 QAction *RootMenu::action(const QString &id) const {
