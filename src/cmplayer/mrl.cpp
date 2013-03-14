@@ -35,3 +35,10 @@ QString Mrl::displayName() const {
 }
 
 bool Mrl::isImage() const { return Info::readableImageExt().contains(suffix(), Qt::CaseInsensitive); }
+
+bool Mrl::isEmpty() const {
+	const int idx = m_loc.indexOf("://");
+	if (idx < 0)
+		return true;
+	return (idx+3 >= m_loc.size());
+}

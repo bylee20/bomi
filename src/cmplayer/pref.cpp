@@ -65,6 +65,8 @@ void Pref::save() const {
 	WRITE(normalizer_target);
 	WRITE(normalizer_min);
 	WRITE(normalizer_max);
+
+	WRITE(lion_style_fullscreen);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -133,11 +135,18 @@ void Pref::load() {
 	READ(normalizer_target);
 	READ(normalizer_min);
 	READ(normalizer_max);
+
+	READ(lion_style_fullscreen);
 #undef READ
-	sub_style.load(r, "sub_style");
-	double_click_map.load(r, "double_click_map");
-	middle_click_map.load(r, "middle_click_map");
-	wheel_scroll_map.load(r, "wheel_scroll_map");
+
+#define READ2(a) a.load(r, #a)
+	READ2(open_media_from_file_manager);
+	READ2(open_media_by_drag_and_drop);
+	READ2(sub_style);
+	READ2(double_click_map);
+	READ2(middle_click_map);
+	READ2(wheel_scroll_map);
+#undef READ2
 }
 
 QList<int> Pref::defaultHwAccCodecs() {

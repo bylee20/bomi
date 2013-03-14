@@ -107,7 +107,7 @@ public:
 		m_action->setShortcuts(m_shortcuts);
 	}
 	static void makeRoot(QTreeWidget *parent) {
-		RootMenu &root = cMenu;
+		RootMenu &root = RootMenu::instance();
 		QList<QAction*> actions = root.actions();
 		for (int i=0; i<actions.size(); ++i) {
 			QAction *const act = actions[i];
@@ -453,6 +453,7 @@ void PrefDialog::fill(const Pref &p) {
 	d->ui.disable_screensaver->setChecked(p.disable_screensaver);
 	d->ui.remember_image->setChecked(p.remember_image);
 	d->ui.image_duration->setValue(p.image_duration/1000);
+	d->ui.lion_style_fullscreen->setChecked(p.lion_style_fullscreen);
 
 	d->ui.enable_hwaccel->setChecked(p.enable_hwaccel);
 	for (auto codec : p.hwaccel_codecs) {
@@ -546,6 +547,7 @@ void PrefDialog::apply() {
 	p.remember_image = d->ui.remember_image->isChecked();
 	p.image_duration = qRound(d->ui.image_duration->value()*1000.0);
 
+	p.lion_style_fullscreen = d->ui.lion_style_fullscreen->isChecked();
 	p.enable_hwaccel = d->ui.enable_hwaccel->isChecked();
 	p.hwaccel_codecs.clear();
 	for (auto it = d->HwAcc.begin(); it != d->HwAcc.end(); ++it) {

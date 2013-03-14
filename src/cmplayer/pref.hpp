@@ -91,7 +91,7 @@ public:
 	bool remember_stopped = true, ask_record_found = true, remember_image = false;
 	bool enable_generate_playist = true;
 	Enum::GeneratePlaylist generate_playlist = Enum::GeneratePlaylist::Folder;
-	bool hide_cursor = true, disable_screensaver = true;
+	bool hide_cursor = true, disable_screensaver = true, lion_style_fullscreen = false;
 	int hide_cursor_delay = 3000, image_duration = 0;
 
 	int blur_kern_c = 1, blur_kern_n = 2, blur_kern_d = 1;

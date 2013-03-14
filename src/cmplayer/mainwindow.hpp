@@ -16,7 +16,7 @@ public:
 	MainWindow &operator = (const MainWindow &) = delete;
 	~MainWindow();
 	void openFromFileManager(const Mrl &mrl);
-	bool isFullScreen() const {return windowState() & Qt::WindowFullScreen;}
+	bool isFullScreen() const;
 public slots:
 	void openMrl(const Mrl &mrl, const QString &enc);
 	void openMrl(const Mrl &mrl);
@@ -30,7 +30,9 @@ private slots:
 //	void hideCursor();
 	void updateStaysOnTop();
 	void reloadSkin();
+	void checkWindowState();
 private:
+	void updateTitle();
 	void setCursorVisible(bool visible);
 	void doVisibleAction(bool visible);
 	void showMessage(const QString &message);

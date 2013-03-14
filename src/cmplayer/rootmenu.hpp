@@ -65,6 +65,4 @@ private:
 	QMap<QKeySequence, QAction*> m_keymap;
 };
 
-#define cMenu (RootMenu::instance())
-
 #endif // ROOTMENU_HPP

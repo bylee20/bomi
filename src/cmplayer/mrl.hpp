@@ -22,7 +22,7 @@ public:
 	QString fileName() const;
 	bool isPlaylist() const;
 	QString displayName() const;
-	bool isEmpty() const {return m_loc.isEmpty();}
+	bool isEmpty() const;
 	QString suffix() const;
 	bool isImage() const;
 private:

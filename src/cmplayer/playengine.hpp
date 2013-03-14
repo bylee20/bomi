@@ -114,6 +114,7 @@ public slots:
 	void quit();
 	void reload();
 	void pause();
+	void unpause();
 	void seek(int pos);
 	void relativeSeek(int pos);
 	void runCommand(mp_cmd *cmd);

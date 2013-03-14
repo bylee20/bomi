@@ -290,7 +290,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	window->addSeparator();
 	window->addAction(_L("minimize"));
 	window->addAction(_L("maximize"));
-	window->addAction(_L("close"));
+	window->addAction(_L("close"))->setShortcut(Qt::CTRL + Qt::Key_W);
 
 	Menu *help = this->addMenu(_L("help"));
 	QAction *about = help->addAction(_L("about"));

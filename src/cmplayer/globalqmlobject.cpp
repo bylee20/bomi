@@ -59,7 +59,7 @@ QPointF UtilObject::mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) co
 
 
 bool UtilObject::execute(const QString &key) {
-	auto action = cMenu.action(key);
+	auto action = RootMenu::instance().action(key);
 	if (!action)
 		return false;
 //	if (m_engine) {

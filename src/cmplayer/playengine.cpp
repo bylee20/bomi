@@ -607,27 +607,27 @@ void PlayEngine::onPausedChanged(MPContext *mpctx) {
 }
 
 void PlayEngine::pause() {
-	if (!isPaused()) {
-		if (m_imgMode)
-			setState(EnginePaused);
-		else
-			tellmp("pause");
-	}
+	if (m_imgMode)
+		setState(EnginePaused);
+	else
+		setmp("pause", 1);
+}
+
+void PlayEngine::unpause() {
+	if (m_imgMode)
+		setState(EnginePlaying);
+	else
+		setmp("pause", 0);
 }
 
 void PlayEngine::play() {
 	switch (m_state) {
-	case EnginePaused:
-		if (m_imgMode)
-			setState(EnginePlaying);
-		else
-			tellmp("pause");
-		break;
 	case EngineStopped:
 	case EngineFinished:
 		play(d->getStartTime(d->playlist.loadedMrl()));
 		break;
 	default:
+		unpause();
 		break;
 	}
 }

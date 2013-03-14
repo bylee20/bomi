@@ -121,7 +121,8 @@ void VideoOutput::flipPage(struct vo *vo) {
 		return;
 	if (d->renderer) {
 		d->renderer->present(d->frame, d->formatChanged);
-		while (d->renderer->isFramePended() && !d->quit)
+		auto w = d->renderer->window();
+		while (w && w->isVisible() && d->renderer->isFramePended() && !d->quit)
 			PlayEngine::usleep(50);
 	}
 	d->flip = false;

@@ -5,7 +5,7 @@
 #include <sys/time.h>
 
 enum MemoryUnit {
-	Byte = 1, Kilobyte = 1024, Megabyte = 1024*1024, Gigabyte = 1024*1024*1024
+	ByteUnit = 1, Kilobyte = 1024, Megabyte = 1024*1024, Gigabyte = 1024*1024*1024
 };
 
 class SettingsObject : public QObject {
