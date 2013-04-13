@@ -56,7 +56,7 @@ private:
 		Data(const QImage &image);
 		inline bool compare(const mp_image *mpi) const {
 			return mpi->fmt.id == imgfmt && mpi->w == size.width() && mpi->h == size.height()
-				&& byteSize[0].width() && mpi->stride[0] && byteSize[1].width() && mpi->stride[1] && byteSize[2].width() && mpi->stride[2];
+				&& byteSize[0].width() == mpi->stride[0] && byteSize[1].width() == mpi->stride[1] && byteSize[2].width() == mpi->stride[2];
 		}
 		inline bool compare(const Data *other) const {
 			return type == other->type && size == other->size && drawSize == other->drawSize;
