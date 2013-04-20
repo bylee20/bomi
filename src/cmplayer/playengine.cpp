@@ -431,8 +431,6 @@ int PlayEngine::runAv(const Mrl &/*mrl*/, int &terminated, int &duration) {
 	d->mpctx->opts.play_start.pos = d->start*1e-3;
 	d->mpctx->opts.play_start.type = REL_TIME_ABSOLUTE;
 	setmp("speed", (float)m_speed);
-	mixer_setvolume(&d->mpctx->mixer, mpVolume(), mpVolume());
-	mixer_setmute(&d->mpctx->mixer, m_muted);
 	auto error = prepare_to_play_current_file(mpctx);
 	if (error == NoMpError) {
 		post(this, StreamOpen);
@@ -445,13 +443,16 @@ int PlayEngine::runAv(const Mrl &/*mrl*/, int &terminated, int &duration) {
 	return error;
 }
 
+void PlayEngine::setMpVolume() {
+	d->audio->setVolume(m_muted ? 0.0 : qBound(0.0, m_preamp*m_volume*0.01, 10.0));
+}
+
 void PlayEngine::run() {
 	CharArrayList args = QStringList()
 		<< "cmplayer-mpv" << "--no-config" << "--idle" << "--no-fs"
 		<< ("--af=dummy=" % QString::number((quint64)(quintptr)(void*)d->audio))
 		<< ("--vo=null:" % QString::number((quint64)(quintptr)(void*)(d->video)))
-		<< "--fixed-vo" << "--softvol=yes" << "--softvol-max=1000.0"
-		<< "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
+		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--no-consolecontrols" << "--no-mouseinput";
 	d->ctx = reinterpret_cast<Context*>(talloc_named_const(0, sizeof(*d->ctx), "MPContext"));
 	d->ctx->p = this;

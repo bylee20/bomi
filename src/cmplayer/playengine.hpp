@@ -107,7 +107,7 @@ public:
 public slots:
 	void setVolume(int volume) {if (_Change(m_volume, qBound(0, volume, 100))) {setMpVolume(); emit volumeChanged(m_volume);}}
 	void setPreamp(double preamp) {if (_ChangeZ(m_preamp, qBound(0.0, preamp, 10.0))) {	setMpVolume();	emit preampChanged(m_preamp);}}
-	void setMuted(bool muted) {if (_Change(m_muted, muted)) {setmp("mute", m_muted); emit mutedChanged(m_muted);}}
+	void setMuted(bool muted) {if (_Change(m_muted, muted)) {setMpVolume(); emit mutedChanged(m_muted);}}
 	void setVideoRenderer(VideoRendererItem *renderer);
 	void play();
 	void stop();
@@ -146,8 +146,7 @@ private:
 	void setmp(const char *name, int value);
 	void setmp(const char *name, float value);
 	void setmp(const char *name, double value) {setmp(name, (float)value);}
-	void setMpVolume() {setmp("volume", mpVolume());}
-	float mpVolume() const {return qBound(0.0, m_preamp*m_volume, 1000.0)/10.0;}
+	void setMpVolume();
 	QPoint mapToFrameFromTop(const QPoint &pos);
 	void tellmp(const QString &cmd);
 	void tellmp(const QString &cmd, const QVariant &arg) {tellmp(cmd % _L(' ') % arg.toString());}

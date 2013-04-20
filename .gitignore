@@ -6,7 +6,6 @@
 moc_*.cpp
 a.out
 *-build-*
-src/ffmpeg*
 build/*
 arch/pkg
 arch/src

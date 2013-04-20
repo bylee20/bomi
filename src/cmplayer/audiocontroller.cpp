@@ -41,6 +41,7 @@ extern af_info af_info_scaletempo;
 struct AudioController::Data {
 	struct SampleInfo { double avg = 0.0; int len = 0; void reset() {avg = 0.0; len = 0;}};
 	mp_audio data;
+	bool muted = false;
 	af_instance *af = nullptr, af_scaletempo;
 	int enable[AF_NCH], index = 0; float level[AF_NCH];
 	double gain = 1.0, silence = 0.0001, gain_min = 0.1, gain_max = 10.0, target = 0.25;
@@ -142,6 +143,15 @@ int AudioController::config(mp_audio *data) {
 	return af_test_output(d->af, data);
 }
 
+void AudioController::setVolume(double volume) {
+	for (int i=0; i<AF_NCH; ++i)
+		d->level[i] = volume;
+}
+
+double AudioController::volume() const {
+	return d->level[0];
+}
+
 int AudioController::control(af_instance *af, int cmd, void *arg) {
 	auto ac = static_cast<AudioController*>(af->setup);
 	auto d = ac ? ac->d : nullptr;
@@ -166,7 +176,8 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 		*(int*)arg = d->soft;
 		return AF_OK;
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
-		return af_from_dB(AF_NCH, (float*)arg, d->level, 20.0, -200.0, 60.0);
+//		return af_from_dB(AF_NCH, (float*)arg, d->level, 20.0, -200.0, 60.0);
+		return AF_OK;
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_GET:
 		return af_to_dB(AF_NCH, d->level, (float*)arg, 20.0);
 	case AF_CONTROL_PLAYBACK_SPEED | AF_CONTROL_SET:

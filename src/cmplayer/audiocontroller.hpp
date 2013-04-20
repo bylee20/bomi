@@ -12,6 +12,8 @@ class AudioController : public QObject {
 public:
 	AudioController(QObject *parent = nullptr);
 	~AudioController();
+	void setVolume(double volume);
+	double volume() const;
 	bool setNormalizer(bool on);
 	bool setScaletempo(bool on);
 	double normalizer() const;
