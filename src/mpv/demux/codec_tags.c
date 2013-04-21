@@ -103,6 +103,8 @@ static const struct mp_codec_tag mp_audio_codec_tags[] = {
     {0x3                      , "pcm"}, // lavf: pcm_f32le
     {0xfffe                   , "pcm"},
     // ------- internal mplayer FourCCs ------
+    {MKTAG('O', 'p', 'u', 's'), "opus"}, // demux_mkv.c
+    {MKTAG('a', 'L', 'a', 'C'), "alac"}, // demux_mkv.c
     {MKTAG('S', 'a', 'd', 'x'), "adpcm_adx"},
     {MKTAG('A', 'M', 'V', 'A'), "adpcm_ima_amv"},
     {MKTAG('R', 'o', 'Q', 'A'), "roq_dpcm"},
@@ -290,9 +292,6 @@ static const struct mp_codec_tag mp_video_codec_tags[] = {
     {MKTAG('M', 'V', 'I', '1'), "motionpixels"},
     {MKTAG('M', 'D', 'E', 'C'), "mdec"},
     {MKTAG('N', 'U', 'V', '1'), "nuv"},
-    {MKTAG('p', 't', 'x', ' '), "ptx"},
-    {MKTAG('S', 'G', 'I', '1'), "sgi"},
-    {MKTAG('s', 'u', 'n', ' '), "sunrast"},
     {MKTAG('F', 'L', 'I', 'C'), "flic"},
     {MKTAG('R', 'o', 'Q', 'V'), "roq"},
     {MKTAG('A', 'M', 'V', 'V'), "amv"},
@@ -311,6 +310,7 @@ static const struct mp_codec_tag mp_video_codec_tags[] = {
     {MKTAG('I', 'N', 'P', 'V'), "interplayvideo"},
     {MKTAG('V', 'Q', 'A', 'V'), "ws_vqa"},
     {MKTAG('C', '9', '3', 'V'), "c93"},
+    {MKTAG('V', 'P', '9', '0'), "vp9"},
     {0},
 };
 
@@ -352,7 +352,7 @@ static const char *lookup_tag(const struct mp_codec_tag *mp_table,
     }
     const struct AVCodecTag *av_tags[] = {av_table, NULL};
     int id = av_codec_get_id(av_tags, tag);
-    return id == CODEC_ID_NONE ? NULL : mp_codec_from_av_codec_id(id);
+    return id == AV_CODEC_ID_NONE ? NULL : mp_codec_from_av_codec_id(id);
 }
 
 void mp_set_video_codec_from_tag(struct sh_video *sh)

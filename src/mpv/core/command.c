@@ -85,13 +85,13 @@ static void rescale_input_coordinates(struct MPContext *mpctx, int ix, int iy,
     struct MPOpts *opts = &mpctx->opts;
     struct vo *vo = mpctx->video_out;
     //remove the borders, if any, and rescale to the range [0,1],[0,1]
-    if (vo_fs) {                //we are in full-screen mode
-        if (opts->vo_screenwidth > vo->dwidth)
+    if (opts->vo.fs) {                //we are in full-screen mode
+        if (opts->vo.screenwidth > vo->dwidth)
             // there are borders along the x axis
-            ix -= (opts->vo_screenwidth - vo->dwidth) / 2;
-        if (opts->vo_screenheight > vo->dheight)
+            ix -= (opts->vo.screenwidth - vo->dwidth) / 2;
+        if (opts->vo.screenheight > vo->dheight)
             // there are borders along the y axis (usual way)
-            iy -= (opts->vo_screenheight - vo->dheight) / 2;
+            iy -= (opts->vo.screenheight - vo->dheight) / 2;
 
         if (ix < 0 || ix > vo->dwidth) {
             *dx = *dy = -1.0;
@@ -108,8 +108,8 @@ static void rescale_input_coordinates(struct MPContext *mpctx, int ix, int iy,
 
     mp_msg(MSGT_CPLAYER, MSGL_V,
            "\r\nrescaled coordinates: %.3f, %.3f, screen (%d x %d), vodisplay: (%d, %d), fullscreen: %d\r\n",
-           *dx, *dy, opts->vo_screenwidth, opts->vo_screenheight, vo->dwidth,
-           vo->dheight, vo_fs);
+           *dx, *dy, opts->vo.screenwidth, opts->vo.screenheight, vo->dwidth,
+           vo->dheight, opts->vo.fs);
 }
 
 // Property-option bridge.
@@ -146,7 +146,8 @@ static int mp_property_playback_speed(m_option_t *prop, int action,
         opts->playback_speed = *(float *) arg;
         // Adjust time until next frame flip for nosound mode
         mpctx->time_frame *= orig_speed / opts->playback_speed;
-        reinit_audio_chain(mpctx);
+        if (mpctx->sh_audio)
+            reinit_audio_chain(mpctx);
         return M_PROPERTY_OK;
     }
     case M_PROPERTY_PRINT:
@@ -594,14 +595,14 @@ static int mp_property_audio_delay(m_option_t *prop, int action,
 {
     if (!(mpctx->sh_audio && mpctx->sh_video))
         return M_PROPERTY_UNAVAILABLE;
-    float delay = audio_delay;
+    float delay = mpctx->opts.audio_delay;
     switch (action) {
     case M_PROPERTY_PRINT:
         *(char **)arg = format_delay(delay);
         return M_PROPERTY_OK;
     case M_PROPERTY_SET:
-        audio_delay = *(float *)arg;
-        mpctx->delay -= audio_delay - delay;
+        mpctx->audio_delay = mpctx->opts.audio_delay = *(float *)arg;
+        mpctx->delay -= mpctx->audio_delay - delay;
         return M_PROPERTY_OK;
     }
     return mp_property_generic_option(prop, action, arg, mpctx);
@@ -834,10 +835,12 @@ static int mp_property_program(m_option_t *prop, int action, void *arg,
                    "Selected program contains no audio or video streams!\n");
             return M_PROPERTY_ERROR;
         }
-        mp_switch_track(mpctx, STREAM_AUDIO,
-                find_track_by_demuxer_id(mpctx, STREAM_AUDIO, prog.aid));
         mp_switch_track(mpctx, STREAM_VIDEO,
                 find_track_by_demuxer_id(mpctx, STREAM_VIDEO, prog.vid));
+        mp_switch_track(mpctx, STREAM_AUDIO,
+                find_track_by_demuxer_id(mpctx, STREAM_AUDIO, prog.aid));
+        mp_switch_track(mpctx, STREAM_SUB,
+                find_track_by_demuxer_id(mpctx, STREAM_VIDEO, prog.sid));
         return M_PROPERTY_OK;
     }
     return M_PROPERTY_NOT_IMPLEMENTED;
@@ -845,19 +848,21 @@ static int mp_property_program(m_option_t *prop, int action, void *arg,
 
 
 /// Fullscreen state (RW)
-static int mp_property_fullscreen(m_option_t *prop, int action, void *arg,
+static int mp_property_fullscreen(m_option_t *prop,
+                                  int action,
+                                  void *arg,
                                   MPContext *mpctx)
 {
-
     if (!mpctx->video_out)
         return M_PROPERTY_UNAVAILABLE;
+    struct mp_vo_opts *opts = mpctx->video_out->opts;
 
     if (action == M_PROPERTY_SET) {
-        if (vo_fs == !!*(int *) arg)
+        if (opts->fs == !!*(int *) arg)
             return M_PROPERTY_OK;
         if (mpctx->video_out->config_ok)
             vo_control(mpctx->video_out, VOCTRL_FULLSCREEN, 0);
-        mpctx->opts.fullscreen = vo_fs;
+        mpctx->opts.fullscreen = opts->fs;
         return M_PROPERTY_OK;
     }
     return mp_property_generic_option(prop, action, arg, mpctx);
@@ -1022,15 +1027,7 @@ static int mp_property_ontop(m_option_t *prop, int action, void *arg,
                              MPContext *mpctx)
 {
     return mp_property_vo_flag(prop, action, arg, VOCTRL_ONTOP,
-                               &mpctx->opts.vo_ontop, mpctx);
-}
-
-/// Display in the root window (RW)
-static int mp_property_rootwin(m_option_t *prop, int action, void *arg,
-                               MPContext *mpctx)
-{
-    return mp_property_vo_flag(prop, action, arg, VOCTRL_ROOTWIN,
-                               &vo_rootwin, mpctx);
+                               &mpctx->opts.vo.ontop, mpctx);
 }
 
 /// Show window borders (RW)
@@ -1038,11 +1035,11 @@ static int mp_property_border(m_option_t *prop, int action, void *arg,
                               MPContext *mpctx)
 {
     return mp_property_vo_flag(prop, action, arg, VOCTRL_BORDER,
-                               &vo_border, mpctx);
+                               &mpctx->opts.vo.border, mpctx);
 }
 
 static int mp_property_framedrop(m_option_t *prop, int action,
-                                     void *arg, MPContext *mpctx)
+                                 void *arg, MPContext *mpctx)
 {
     if (!mpctx->sh_video)
         return M_PROPERTY_UNAVAILABLE;
@@ -1094,13 +1091,6 @@ static int mp_property_gamma(m_option_t *prop, int action, void *arg,
     return M_PROPERTY_UNAVAILABLE;
 }
 
-/// VSync (RW)
-static int mp_property_vsync(m_option_t *prop, int action, void *arg,
-                             MPContext *mpctx)
-{
-    return mp_property_generic_option(prop, action, arg, mpctx);
-}
-
 /// Video codec tag (RO)
 static int mp_property_video_format(m_option_t *prop, int action,
                                     void *arg, MPContext *mpctx)
@@ -1147,6 +1137,28 @@ static int mp_property_height(m_option_t *prop, int action, void *arg,
     if (!mpctx->sh_video)
         return M_PROPERTY_UNAVAILABLE;
     return m_property_int_ro(prop, action, arg, mpctx->sh_video->disp_h);
+}
+
+static int property_vo_wh(m_option_t *prop, int action, void *arg,
+                          MPContext *mpctx, bool get_w)
+{
+    struct vo *vo = mpctx->video_out;
+    if (!mpctx->sh_video && !vo || !vo->hasframe)
+        return M_PROPERTY_UNAVAILABLE;
+    return m_property_int_ro(prop, action, arg,
+                             get_w ? vo->aspdat.prew : vo->aspdat.preh);
+}
+
+static int mp_property_dwidth(m_option_t *prop, int action, void *arg,
+                                MPContext *mpctx)
+{
+    return property_vo_wh(prop, action, arg, mpctx, true);
+}
+
+static int mp_property_dheight(m_option_t *prop, int action, void *arg,
+                                 MPContext *mpctx)
+{
+    return property_vo_wh(prop, action, arg, mpctx, false);
 }
 
 /// Video fps (RO)
@@ -1253,12 +1265,14 @@ static int mp_property_sub_visibility(m_option_t *prop, int action,
 static int mp_property_sub_forced_only(m_option_t *prop, int action,
                                        void *arg, MPContext *mpctx)
 {
+    struct MPOpts *opts = &mpctx->opts;
+
     if (!vo_spudec)
         return M_PROPERTY_UNAVAILABLE;
 
     if (action == M_PROPERTY_SET) {
-        forced_subs_only = *(int *)arg;
-        spudec_set_forced_subs_only(vo_spudec, forced_subs_only);
+        opts->forced_subs_only = *(int *)arg;
+        spudec_set_forced_subs_only(vo_spudec, opts->forced_subs_only);
         return M_PROPERTY_OK;
     }
     return mp_property_generic_option(prop, action, arg, mpctx);
@@ -1388,21 +1402,19 @@ static const m_option_t mp_properties[] = {
     M_OPTION_PROPERTY_CUSTOM("colormatrix-output-range",
                              mp_property_colormatrix_output_range),
     M_OPTION_PROPERTY_CUSTOM("ontop", mp_property_ontop),
-    M_OPTION_PROPERTY_CUSTOM("rootwin", mp_property_rootwin),
     M_OPTION_PROPERTY_CUSTOM("border", mp_property_border),
     M_OPTION_PROPERTY_CUSTOM("framedrop", mp_property_framedrop),
     M_OPTION_PROPERTY_CUSTOM_("gamma", mp_property_gamma,
-                    .offset = offsetof(struct MPOpts, vo_gamma_gamma)),
+                    .offset = offsetof(struct MPOpts, gamma_gamma)),
     M_OPTION_PROPERTY_CUSTOM_("brightness", mp_property_gamma,
-                    .offset = offsetof(struct MPOpts, vo_gamma_brightness)),
+                    .offset = offsetof(struct MPOpts, gamma_brightness)),
     M_OPTION_PROPERTY_CUSTOM_("contrast", mp_property_gamma,
-                    .offset = offsetof(struct MPOpts, vo_gamma_contrast)),
+                    .offset = offsetof(struct MPOpts, gamma_contrast)),
     M_OPTION_PROPERTY_CUSTOM_("saturation", mp_property_gamma,
-                    .offset = offsetof(struct MPOpts, vo_gamma_saturation)),
+                    .offset = offsetof(struct MPOpts, gamma_saturation)),
     M_OPTION_PROPERTY_CUSTOM_("hue", mp_property_gamma,
-                    .offset = offsetof(struct MPOpts, vo_gamma_hue)),
+                    .offset = offsetof(struct MPOpts, gamma_hue)),
     M_OPTION_PROPERTY_CUSTOM("panscan", mp_property_panscan),
-    M_OPTION_PROPERTY_CUSTOM_("vsync", mp_property_vsync),
     { "video-format", mp_property_video_format, CONF_TYPE_STRING,
       0, 0, 0, NULL },
     { "video-codec", mp_property_video_codec, CONF_TYPE_STRING,
@@ -1413,6 +1425,8 @@ static const m_option_t mp_properties[] = {
       0, 0, 0, NULL },
     { "height", mp_property_height, CONF_TYPE_INT,
       0, 0, 0, NULL },
+    { "dwidth", mp_property_dwidth, CONF_TYPE_INT },
+    { "dheight", mp_property_dheight, CONF_TYPE_INT },
     { "fps", mp_property_fps, CONF_TYPE_FLOAT,
       0, 0, 0, NULL },
     { "aspect", mp_property_aspect, CONF_TYPE_FLOAT,
@@ -1504,7 +1518,6 @@ static struct property_osd_display {
     // video
     { "panscan", _("Panscan"), .osd_progbar = OSD_PANSCAN },
     { "ontop", _("Stay on top") },
-    { "rootwin", _("Rootwin") },
     { "border", _("Border") },
     { "framedrop", _("Framedrop") },
     { "deinterlace", _("Deinterlace") },
@@ -1516,7 +1529,6 @@ static struct property_osd_display {
     { "contrast", _("Contrast"), .osd_progbar = OSD_CONTRAST },
     { "saturation", _("Saturation"), .osd_progbar = OSD_SATURATION },
     { "hue", _("Hue"), .osd_progbar = OSD_HUE },
-    { "vsync", _("VSync") },
     { "angle", _("Angle") },
     // subs
     { "sub", _("Subtitles") },
@@ -1733,9 +1745,9 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
     int osdl = msg_osd ? 1 : OSD_LEVEL_INVISIBLE;
     switch (cmd->id) {
     case MP_CMD_SEEK: {
-        float v = cmd->args[0].v.f;
-        int abs = (cmd->nargs > 1) ? cmd->args[1].v.i : 0;
-        int exact = (cmd->nargs > 2) ? cmd->args[2].v.i : 0;
+        double v = cmd->args[0].v.d;
+        int abs = cmd->args[1].v.i;
+        int exact = cmd->args[2].v.i;
         if (abs == 2) {   // Absolute seek to a timestamp in seconds
             queue_seek(mpctx, MPSEEK_ABSOLUTE, v, exact);
             set_osd_function(mpctx,
@@ -1825,7 +1837,7 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
 
     case MP_CMD_QUIT:
         mpctx->stop_play = PT_QUIT;
-        mpctx->quit_player_rc = (cmd->nargs > 0) ? cmd->args[0].v.i : 0;
+        mpctx->quit_player_rc = cmd->args[0].v.i;
         break;
 
     case MP_CMD_PLAYLIST_NEXT:
@@ -1926,14 +1938,16 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
         char *filename = cmd->args[0].v.s;
         bool append = cmd->args[1].v.i;
         struct playlist *pl = playlist_parse_file(filename);
-        if (!pl) {
+        if (pl) {
             if (!append)
                 playlist_clear(mpctx->playlist);
             playlist_transfer_entries(mpctx->playlist, pl);
             talloc_free(pl);
 
-            if (!append)
-                mpctx->stop_play = PT_NEXT_ENTRY;
+            if (!append) {
+                mpctx->playlist->current = mpctx->playlist->first;
+                mpctx->stop_play = PT_CURRENT_ENTRY;
+            }
         } else {
             mp_tmsg(MSGT_CPLAYER, MSGL_ERR,
                     "\nUnable to load playlist %s.\n", filename);
@@ -2176,7 +2190,7 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
     }
 
     case MP_CMD_SCREENSHOT:
-        screenshot_request(mpctx, cmd->args[0].v.i, cmd->args[1].v.i);
+        screenshot_request(mpctx, cmd->args[0].v.i, cmd->args[1].v.i, msg_osd);
         break;
 
     case MP_CMD_RUN:

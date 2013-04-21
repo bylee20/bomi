@@ -42,7 +42,6 @@
 #include <assert.h>
 #include "talloc.h"
 #include "gl_common.h"
-#include "aspect.h"
 #include "core/options.h"
 #include "sub/sub.h"
 #include "bitmap_packer.h"
@@ -145,12 +144,8 @@ static bool is_software_gl(GL *gl)
 #ifdef HAVE_LIBDL
 #include <dlfcn.h>
 #endif
-/**
- * \brief find address of a linked function
- * \param s name of function to find
- * \return address of function or NULL if not found
- */
-static void *getdladdr(const char *s)
+
+void *mp_getdladdr(const char *s)
 {
     void *ret = NULL;
 #ifdef HAVE_LIBDL
@@ -456,13 +451,14 @@ struct gl_functions gl_functions[] = {
 #undef DEF_FN_NAMES
 
 
-/**
- * \brief find the function pointers of some useful OpenGL extensions
- * \param getProcAddress function to resolve function names, may be NULL
- * \param ext2 an extra extension string
- */
-static void getFunctions(GL *gl, void *(*getProcAddress)(const GLubyte *),
-                         const char *ext2, bool gl3)
+// Fill the GL struct with function pointers and extensions from the current
+// GL context. Called by the backend.
+// getProcAddress: function to resolve function names, may be NULL
+// ext2: an extra extension string
+// Note: if you create a CONTEXT_FORWARD_COMPATIBLE_BIT_ARB with OpenGL 3.0,
+//       you must append "GL_ARB_compatibility" to ext2.
+void mpgl_load_functions(GL *gl, void *(*getProcAddress)(const GLubyte *),
+                         const char *ext2)
 {
     talloc_free_children(gl);
     *gl = (GL) {
@@ -470,50 +466,70 @@ static void getFunctions(GL *gl, void *(*getProcAddress)(const GLubyte *),
     };
 
     if (!getProcAddress)
-        getProcAddress = (void *)getdladdr;
+        getProcAddress = (void *)mp_getdladdr;
+
+    gl->GetString = getProcAddress("glGetString");
+    if (!gl->GetString)
+        gl->GetString = glGetString;
 
     GLint major = 0, minor = 0;
-    if (gl3) {
+    const char *version = gl->GetString(GL_VERSION);
+    sscanf(version, "%d.%d", &major, &minor);
+    gl->version = MPGL_VER(major, minor);
+    mp_msg(MSGT_VO, MSGL_V, "[gl] Detected OpenGL %d.%d.\n", major, minor);
+
+    mp_msg(MSGT_VO, MSGL_V, "GL_VENDOR='%s'\n",   gl->GetString(GL_VENDOR));
+    mp_msg(MSGT_VO, MSGL_V, "GL_RENDERER='%s'\n", gl->GetString(GL_RENDERER));
+    mp_msg(MSGT_VO, MSGL_V, "GL_VERSION='%s'\n",  gl->GetString(GL_VERSION));
+    mp_msg(MSGT_VO, MSGL_V, "GL_SHADING_LANGUAGE_VERSION='%s'\n",
+                            gl->GetString(GL_SHADING_LANGUAGE_VERSION));
+
+    // Note: This code doesn't handle CONTEXT_FORWARD_COMPATIBLE_BIT_ARB
+    //       on OpenGL 3.0 correctly. Apparently there's no way to detect this
+    //       situation, because GL_ARB_compatibility is specified only for 3.1
+    //       and above.
+
+    bool has_legacy = false;
+    if (gl->version >= MPGL_VER(3, 0)) {
         gl->GetStringi = getProcAddress("glGetStringi");
         gl->GetIntegerv = getProcAddress("glGetIntegerv");
 
         if (!(gl->GetStringi && gl->GetIntegerv))
             return;
 
-        gl->GetIntegerv(GL_MAJOR_VERSION, &major);
-        gl->GetIntegerv(GL_MINOR_VERSION, &minor);
-
         GLint exts;
         gl->GetIntegerv(GL_NUM_EXTENSIONS, &exts);
         for (int n = 0; n < exts; n++) {
-            gl->extensions
-                = talloc_asprintf_append(gl->extensions, " %s",
-                                         gl->GetStringi(GL_EXTENSIONS, n));
+            const char *ext = gl->GetStringi(GL_EXTENSIONS, n);
+            gl->extensions = talloc_asprintf_append(gl->extensions, " %s", ext);
+            if (strcmp(ext, "GL_ARB_compatibility") == 0)
+                has_legacy = true;
         }
-    } else {
-        gl->GetString = getProcAddress("glGetString");
-        if (!gl->GetString)
-            gl->GetString = glGetString;
 
+        // This version doesn't have GL_ARB_compatibility yet, and always
+        // includes legacy (except with CONTEXT_FORWARD_COMPATIBLE_BIT_ARB).
+        if (gl->version == MPGL_VER(3, 0))
+            has_legacy = true;
+    } else {
         const char *ext = (char*)gl->GetString(GL_EXTENSIONS);
         gl->extensions = talloc_asprintf_append(gl->extensions, " %s", ext);
 
-        const char *version = gl->GetString(GL_VERSION);
-        sscanf(version, "%d.%d", &major, &minor);
+        has_legacy = true;
     }
-    gl->version = MPGL_VER(major, minor);
 
-    mp_msg(MSGT_VO, MSGL_V, "[gl] Detected OpenGL %d.%d.\n", major, minor);
+    if (has_legacy)
+        mp_msg(MSGT_VO, MSGL_V, "[gl] OpenGL legacy compat. found.\n");
     mp_msg(MSGT_VO, MSGL_DBG2, "[gl] Combined OpenGL extensions string:\n%s\n",
            gl->extensions);
 
     for (int n = 0; n < sizeof(gl_functions) / sizeof(gl_functions[0]); n++) {
         struct gl_functions *section = &gl_functions[n];
 
-        // With gl3=false, we could have a legacy context, where functionality
-        // is never removed. (E.g. the context could be at version >= 3.0, but
-        // legacy functions like glBegin still exist and work.)
-        if (gl3 && section->ver_removed && gl->version >= section->ver_removed)
+        // With has_legacy, the legacy functions are still available, and
+        // functions are never actually removed. (E.g. the context could be at
+        // version >= 3.0, but functions like glBegin still exist and work.)
+        if (!has_legacy && section->ver_removed &&
+            gl->version >= section->ver_removed)
             continue;
 
         // NOTE: Function entrypoints can exist, even if they do not work.
@@ -825,638 +841,91 @@ mp_image_t *glGetWindowScreenshot(GL *gl)
     return image;
 }
 
-#ifdef CONFIG_GL_COCOA
-#include "cocoa_common.h"
-
-static bool create_window_cocoa(struct MPGLContext *ctx, uint32_t d_width,
-                                uint32_t d_height, uint32_t flags, bool gl3)
-{
-    int rv = vo_cocoa_create_window(ctx->vo, d_width, d_height, flags, gl3);
-    if (rv != 0)
-        return false;
-
-    getFunctions(ctx->gl, (void *)vo_cocoa_glgetaddr, NULL, gl3);
-
-    if (gl3) {
-        ctx->depth_r = vo_cocoa_cgl_color_size(ctx->vo);
-        ctx->depth_g = vo_cocoa_cgl_color_size(ctx->vo);
-        ctx->depth_b = vo_cocoa_cgl_color_size(ctx->vo);
-    }
-
-    if (!ctx->gl->SwapInterval)
-        ctx->gl->SwapInterval = vo_cocoa_swap_interval;
-
-    return true;
-}
-
-static bool create_window_cocoa_old(struct MPGLContext *ctx, uint32_t d_width,
-                                    uint32_t d_height, uint32_t flags)
-{
-    return create_window_cocoa(ctx, d_width, d_height, flags, false);
-}
-
-static bool create_window_cocoa_gl3(struct MPGLContext *ctx, uint32_t d_width,
-                                    uint32_t d_height, uint32_t flags)
-{
-    return create_window_cocoa(ctx, d_width, d_height, flags, true);
-}
-
-static void releaseGlContext_cocoa(MPGLContext *ctx)
-{
-}
-
-static void swapGlBuffers_cocoa(MPGLContext *ctx)
-{
-    vo_cocoa_swap_buffers(ctx->vo);
-}
-#endif
-
-#ifdef CONFIG_GL_WIN32
-#include <windows.h>
-#include "w32_common.h"
-
-struct w32_context {
-    HGLRC context;
-};
-
-static void *w32gpa(const GLubyte *procName)
-{
-    HMODULE oglmod;
-    void *res = wglGetProcAddress(procName);
-    if (res)
-        return res;
-    oglmod = GetModuleHandle("opengl32.dll");
-    return GetProcAddress(oglmod, procName);
-}
-
-static bool create_window_w32_old(struct MPGLContext *ctx, uint32_t d_width,
-                                  uint32_t d_height, uint32_t flags)
-{
-    GL *gl = ctx->gl;
-
-    if (!vo_w32_config(ctx->vo, d_width, d_height, flags))
-        return false;
-
-    struct w32_context *w32_ctx = ctx->priv;
-    HGLRC *context = &w32_ctx->context;
-
-    if (*context) {
-        gl->Finish();   // supposedly to prevent flickering
-        return true;
-    }
-
-    HWND win = ctx->vo->w32->window;
-    HDC windc = GetDC(win);
-    bool res = false;
-
-    HGLRC new_context = wglCreateContext(windc);
-    if (!new_context) {
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not create GL context!\n");
-        goto out;
-    }
-
-    if (!wglMakeCurrent(windc, new_context)) {
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not set GL context!\n");
-        wglDeleteContext(new_context);
-        goto out;
-    }
-
-    *context = new_context;
-
-    getFunctions(ctx->gl, w32gpa, NULL, false);
-    res = true;
-
-out:
-    ReleaseDC(win, windc);
-    return res;
-}
-
-static bool create_window_w32_gl3(struct MPGLContext *ctx, uint32_t d_width,
-                                  uint32_t d_height, uint32_t flags)
-{
-    if (!vo_w32_config(ctx->vo, d_width, d_height, flags))
-        return false;
-
-    struct w32_context *w32_ctx = ctx->priv;
-    HGLRC *context = &w32_ctx->context;
-
-    if (*context) // reuse existing context
-        return true; // not reusing it breaks gl3!
-
-    HWND win = ctx->vo->w32->window;
-    HDC windc = GetDC(win);
-    HGLRC new_context = 0;
-
-    new_context = wglCreateContext(windc);
-    if (!new_context) {
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not create GL context!\n");
-        return false;
-    }
-
-    // set context
-    if (!wglMakeCurrent(windc, new_context)) {
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not set GL context!\n");
-        goto out;
-    }
-
-    const char *(GLAPIENTRY *wglGetExtensionsStringARB)(HDC hdc)
-        = w32gpa((const GLubyte*)"wglGetExtensionsStringARB");
-
-    if (!wglGetExtensionsStringARB)
-        goto unsupported;
-
-    const char *wgl_exts = wglGetExtensionsStringARB(windc);
-    if (!strstr(wgl_exts, "WGL_ARB_create_context"))
-        goto unsupported;
-
-    HGLRC (GLAPIENTRY *wglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext,
-                                                   const int *attribList)
-        = w32gpa((const GLubyte*)"wglCreateContextAttribsARB");
-
-    if (!wglCreateContextAttribsARB)
-        goto unsupported;
-
-    int gl_version = ctx->requested_gl_version;
-    int attribs[] = {
-        WGL_CONTEXT_MAJOR_VERSION_ARB, MPGL_VER_GET_MAJOR(gl_version),
-        WGL_CONTEXT_MINOR_VERSION_ARB, MPGL_VER_GET_MINOR(gl_version),
-        WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-        0
-    };
-
-    *context = wglCreateContextAttribsARB(windc, 0, attribs);
-    if (! *context) {
-        // NVidia, instead of ignoring WGL_CONTEXT_FLAGS_ARB, will error out if
-        // it's present on pre-3.2 contexts.
-        // Remove it from attribs and retry the context creation.
-        attribs[6] = attribs[7] = 0;
-        *context = wglCreateContextAttribsARB(windc, 0, attribs);
-    }
-    if (! *context) {
-        int err = GetLastError();
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not create an OpenGL 3.x"
-                                    " context: error 0x%x\n", err);
-        goto out;
-    }
-
-    wglMakeCurrent(NULL, NULL);
-    wglDeleteContext(new_context);
-
-    if (!wglMakeCurrent(windc, *context)) {
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not set GL3 context!\n");
-        wglDeleteContext(*context);
-        return false;
-    }
-
-    /* update function pointers */
-    getFunctions(ctx->gl, w32gpa, NULL, true);
-
-    int pfmt = GetPixelFormat(windc);
-    PIXELFORMATDESCRIPTOR pfd;
-    if (DescribePixelFormat(windc, pfmt, sizeof(PIXELFORMATDESCRIPTOR), &pfd)) {
-        ctx->depth_r = pfd.cRedBits;
-        ctx->depth_g = pfd.cGreenBits;
-        ctx->depth_b = pfd.cBlueBits;
-    }
-
-    return true;
-
-unsupported:
-    mp_msg(MSGT_VO, MSGL_ERR, "[gl] The current OpenGL implementation does"
-                              " not support OpenGL 3.x \n");
-out:
-    wglDeleteContext(new_context);
-    return false;
-}
-
-static void releaseGlContext_w32(MPGLContext *ctx)
-{
-    struct w32_context *w32_ctx = ctx->priv;
-    HGLRC *context = &w32_ctx->context;
-    if (*context) {
-        wglMakeCurrent(0, 0);
-        wglDeleteContext(*context);
-    }
-    *context = 0;
-}
-
-static void swapGlBuffers_w32(MPGLContext *ctx)
-{
-    HDC vo_hdc = GetDC(ctx->vo->w32->window);
-    SwapBuffers(vo_hdc);
-    ReleaseDC(ctx->vo->w32->window, vo_hdc);
-}
-#endif
-
-#ifdef CONFIG_GL_X11
-#include <X11/Xlib.h>
-#include <GL/glx.h>
-#include "x11_common.h"
-
-struct glx_context {
-    XVisualInfo *vinfo;
-    GLXContext context;
-    GLXFBConfig fbc;
-};
-
-// The GL3/FBC initialization code roughly follows/copies from:
-//  http://www.opengl.org/wiki/Tutorial:_OpenGL_3.0_Context_Creation_(GLX)
-// but also uses some of the old code.
-
-static GLXFBConfig select_fb_config(struct vo *vo, const int *attribs)
-{
-    int fbcount;
-    GLXFBConfig *fbc = glXChooseFBConfig(vo->x11->display, vo->x11->screen,
-                                         attribs, &fbcount);
-    if (!fbc)
-        return NULL;
-
-    // The list in fbc is sorted (so that the first element is the best).
-    GLXFBConfig fbconfig = fbc[0];
-
-    XFree(fbc);
-
-    return fbconfig;
-}
-
-static bool create_glx_window(struct MPGLContext *ctx, uint32_t d_width,
-                              uint32_t d_height, uint32_t flags)
-{
-    struct vo *vo = ctx->vo;
-    struct glx_context *glx_ctx = ctx->priv;
-
-    if (glx_ctx->context) {
-        // GL context and window already exist.
-        // Only update window geometry etc.
-        vo_x11_create_vo_window(vo, glx_ctx->vinfo, vo->dx, vo->dy, d_width,
-                                d_height, flags, "gl");
-        return true;
-    }
-
-    int glx_major, glx_minor;
-
-    // FBConfigs were added in GLX version 1.3.
-    if (!glXQueryVersion(vo->x11->display, &glx_major, &glx_minor) ||
-        (MPGL_VER(glx_major, glx_minor) <  MPGL_VER(1, 3)))
-    {
-        mp_msg(MSGT_VO, MSGL_ERR, "[gl] GLX version older than 1.3.\n");
-        return false;
-    }
-
-    const int glx_attribs_stereo_value_idx = 1; // index of GLX_STEREO + 1
-    int glx_attribs[] = {
-        GLX_STEREO, False,
-        GLX_X_RENDERABLE, True,
-        GLX_RED_SIZE, 1,
-        GLX_GREEN_SIZE, 1,
-        GLX_BLUE_SIZE, 1,
-        GLX_DOUBLEBUFFER, True,
-        None
-    };
-    GLXFBConfig fbc = NULL;
-    if (flags & VOFLAG_STEREO) {
-        glx_attribs[glx_attribs_stereo_value_idx] = True;
-        fbc = select_fb_config(vo, glx_attribs);
-        if (!fbc) {
-            mp_msg(MSGT_VO, MSGL_ERR, "[gl] Could not find a stereo visual,"
-                   " 3D will probably not work!\n");
-            glx_attribs[glx_attribs_stereo_value_idx] = False;
-        }
-    }
-    if (!fbc)
-        fbc = select_fb_config(vo, glx_attribs);
-    if (!fbc) {
-        mp_msg(MSGT_VO, MSGL_ERR, "[gl] no GLX support present\n");
-        return false;
-    }
-
-    glx_ctx->fbc = fbc;
-    glx_ctx->vinfo = glXGetVisualFromFBConfig(vo->x11->display, fbc);
-
-    mp_msg(MSGT_VO, MSGL_V, "[gl] GLX chose visual with ID 0x%x\n",
-            (int)glx_ctx->vinfo->visualid);
-
-    glXGetFBConfigAttrib(vo->x11->display, fbc, GLX_RED_SIZE, &ctx->depth_r);
-    glXGetFBConfigAttrib(vo->x11->display, fbc, GLX_GREEN_SIZE, &ctx->depth_g);
-    glXGetFBConfigAttrib(vo->x11->display, fbc, GLX_BLUE_SIZE, &ctx->depth_b);
-
-    vo_x11_create_vo_window(vo, glx_ctx->vinfo, vo->dx, vo->dy, d_width,
-                            d_height, flags, "gl");
-
-    return true;
-}
-
-static bool create_window_x11_old(struct MPGLContext *ctx, uint32_t d_width,
-                                  uint32_t d_height, uint32_t flags)
-{
-    struct glx_context *glx_ctx = ctx->priv;
-    Display *display = ctx->vo->x11->display;
-    struct vo *vo = ctx->vo;
-    GL *gl = ctx->gl;
-
-    if (!create_glx_window(ctx, d_width, d_height, flags))
-        return false;
-
-    if (glx_ctx->context)
-        return true;
-
-    GLXContext new_context = glXCreateContext(display, glx_ctx->vinfo, NULL,
-                                              True);
-    if (!new_context) {
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not create GLX context!\n");
-        return false;
-    }
-
-    if (!glXMakeCurrent(display, ctx->vo->x11->window, new_context)) {
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not set GLX context!\n");
-        glXDestroyContext(display, new_context);
-        return false;
-    }
-
-    void *(*getProcAddress)(const GLubyte *);
-    getProcAddress = getdladdr("glXGetProcAddress");
-    if (!getProcAddress)
-        getProcAddress = getdladdr("glXGetProcAddressARB");
-
-    const char *glxstr = "";
-    const char *(*glXExtStr)(Display *, int)
-        = getdladdr("glXQueryExtensionsString");
-    if (glXExtStr)
-        glxstr = glXExtStr(display, ctx->vo->x11->screen);
-
-    getFunctions(gl, getProcAddress, glxstr, false);
-    if (!gl->GenPrograms && gl->GetString &&
-        gl->version < MPGL_VER(3, 0) &&
-        getProcAddress &&
-        strstr(gl->GetString(GL_EXTENSIONS), "GL_ARB_vertex_program"))
-    {
-        mp_msg(MSGT_VO, MSGL_WARN,
-                "Broken glXGetProcAddress detected, trying workaround\n");
-        getFunctions(gl, NULL, glxstr, false);
-    }
-
-    glx_ctx->context = new_context;
-
-    if (!glXIsDirect(vo->x11->display, new_context))
-        ctx->gl->mpgl_caps &= ~MPGL_CAP_NO_SW;
-
-    return true;
-}
-
-typedef GLXContext (*glXCreateContextAttribsARBProc)
-    (Display*, GLXFBConfig, GLXContext, Bool, const int*);
-
-static bool create_window_x11_gl3(struct MPGLContext *ctx, uint32_t d_width,
-                                  uint32_t d_height, uint32_t flags)
-{
-    struct glx_context *glx_ctx = ctx->priv;
-    struct vo *vo = ctx->vo;
-
-    if (!create_glx_window(ctx, d_width, d_height, flags))
-        return false;
-
-    if (glx_ctx->context)
-        return true;
-
-    glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
-        (glXCreateContextAttribsARBProc)
-            glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
-
-    const char *glxstr = "";
-    const char *(*glXExtStr)(Display *, int)
-        = getdladdr("glXQueryExtensionsString");
-    if (glXExtStr)
-        glxstr = glXExtStr(vo->x11->display, vo->x11->screen);
-    bool have_ctx_ext = glxstr && !!strstr(glxstr, "GLX_ARB_create_context");
-
-    if (!(have_ctx_ext && glXCreateContextAttribsARB)) {
-        return false;
-    }
-
-    int gl_version = ctx->requested_gl_version;
-    int context_attribs[] = {
-        GLX_CONTEXT_MAJOR_VERSION_ARB, MPGL_VER_GET_MAJOR(gl_version),
-        GLX_CONTEXT_MINOR_VERSION_ARB, MPGL_VER_GET_MINOR(gl_version),
-        GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
-        GLX_CONTEXT_FLAGS_ARB,
-            flags & VOFLAG_GL_DEBUG ? GLX_CONTEXT_DEBUG_BIT_ARB : 0,
-        None
-    };
-    GLXContext context = glXCreateContextAttribsARB(vo->x11->display,
-                                                    glx_ctx->fbc, 0, True,
-                                                    context_attribs);
-    if (!context) {
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not create GLX context!\n");
-        return false;
-    }
-
-    // set context
-    if (!glXMakeCurrent(vo->x11->display, vo->x11->window, context)) {
-        mp_msg(MSGT_VO, MSGL_FATAL, "[gl] Could not set GLX context!\n");
-        glXDestroyContext(vo->x11->display, context);
-        return false;
-    }
-
-    glx_ctx->context = context;
-
-    getFunctions(ctx->gl, (void *)glXGetProcAddress, glxstr, true);
-
-    if (!glXIsDirect(vo->x11->display, context))
-        ctx->gl->mpgl_caps &= ~MPGL_CAP_NO_SW;
-
-    return true;
-}
-
-/**
- * \brief free the VisualInfo and GLXContext of an OpenGL context.
- * \ingroup glcontext
- */
-static void releaseGlContext_x11(MPGLContext *ctx)
-{
-    struct glx_context *glx_ctx = ctx->priv;
-    XVisualInfo **vinfo = &glx_ctx->vinfo;
-    GLXContext *context = &glx_ctx->context;
-    Display *display = ctx->vo->x11->display;
-    GL *gl = ctx->gl;
-    if (*vinfo)
-        XFree(*vinfo);
-    *vinfo = NULL;
-    if (*context) {
-        if (gl->Finish)
-            gl->Finish();
-        glXMakeCurrent(display, None, NULL);
-        glXDestroyContext(display, *context);
-    }
-    *context = 0;
-}
-
-static void swapGlBuffers_x11(MPGLContext *ctx)
-{
-    glXSwapBuffers(ctx->vo->x11->display, ctx->vo->x11->window);
-}
-#endif
-
+typedef void (*MPGLSetBackendFn)(MPGLContext *ctx);
 
 struct backend {
     const char *name;
-    enum MPGLType type;
+    MPGLSetBackendFn init;
 };
 
 static struct backend backends[] = {
-    {"auto", GLTYPE_AUTO},
-    {"cocoa", GLTYPE_COCOA},
-    {"win", GLTYPE_W32},
-    {"x11", GLTYPE_X11},
-    // mplayer-svn aliases (note that mplayer-svn couples these with the numeric
-    // values of the internal GLTYPE_* constants)
-    {"-1", GLTYPE_AUTO},
-    { "0", GLTYPE_W32},
-    { "1", GLTYPE_X11},
-
+#ifdef CONFIG_GL_COCOA
+    {"cocoa", mpgl_set_backend_cocoa},
+#endif
+#ifdef CONFIG_GL_WIN32
+    {"win", mpgl_set_backend_w32},
+#endif
+#ifdef CONFIG_GL_X11
+    {"x11", mpgl_set_backend_x11},
+#endif
+#ifdef CONFIG_GL_WAYLAND
+    {"wayland", mpgl_set_backend_wayland},
+#endif
     {0}
 };
 
 int mpgl_find_backend(const char *name)
 {
+    if (name == NULL || strcmp(name, "auto") == 0)
+        return -1;
     for (const struct backend *entry = backends; entry->name; entry++) {
         if (strcmp(entry->name, name) == 0)
-            return entry->type;
+            return entry - backends;
     }
-    return -1;
+    return -2;
 }
 
-MPGLContext *mpgl_init(enum MPGLType type, struct vo *vo)
+static MPGLContext *init_backend(struct vo *vo, MPGLSetBackendFn set_backend)
 {
-    MPGLContext *ctx;
-    if (type == GLTYPE_AUTO) {
-        ctx = mpgl_init(GLTYPE_COCOA, vo);
-        if (ctx)
-            return ctx;
-        ctx = mpgl_init(GLTYPE_W32, vo);
-        if (ctx)
-            return ctx;
-        return mpgl_init(GLTYPE_X11, vo);
-    }
-    ctx = talloc_zero(NULL, MPGLContext);
+    MPGLContext *ctx = talloc_ptrtype(NULL, ctx);
     *ctx = (MPGLContext) {
         .gl = talloc_zero(ctx, GL),
-        .type = type,
         .vo = vo,
-        .requested_gl_version = MPGL_VER(3, 0),
-        .vo_init_ok = true,
     };
-    switch (ctx->type) {
-#ifdef CONFIG_GL_COCOA
-    case GLTYPE_COCOA:
-        ctx->create_window_old = create_window_cocoa_old;
-        ctx->create_window_gl3 = create_window_cocoa_gl3;
-        ctx->releaseGlContext = releaseGlContext_cocoa;
-        ctx->swapGlBuffers = swapGlBuffers_cocoa;
-        ctx->check_events = vo_cocoa_check_events;
-        ctx->update_xinerama_info = vo_cocoa_update_xinerama_info;
-        ctx->fullscreen = vo_cocoa_fullscreen;
-        ctx->ontop = vo_cocoa_ontop;
-        ctx->vo_init = vo_cocoa_init;
-        ctx->pause = vo_cocoa_pause;
-        ctx->resume = vo_cocoa_resume;
-        ctx->vo_uninit = vo_cocoa_uninit;
-        break;
-#endif
-#ifdef CONFIG_GL_WIN32
-    case GLTYPE_W32:
-        ctx->priv = talloc_zero(ctx, struct w32_context);
-        ctx->create_window_old = create_window_w32_old;
-        ctx->create_window_gl3 = create_window_w32_gl3;
-        ctx->releaseGlContext = releaseGlContext_w32;
-        ctx->swapGlBuffers = swapGlBuffers_w32;
-        ctx->update_xinerama_info = w32_update_xinerama_info;
-        ctx->border = vo_w32_border;
-        ctx->check_events = vo_w32_check_events;
-        ctx->fullscreen = vo_w32_fullscreen;
-        ctx->ontop = vo_w32_ontop;
-        ctx->vo_init = vo_w32_init;
-        ctx->vo_uninit = vo_w32_uninit;
-        break;
-#endif
-#ifdef CONFIG_GL_X11
-    case GLTYPE_X11:
-        ctx->priv = talloc_zero(ctx, struct glx_context);
-        ctx->create_window_old = create_window_x11_old;
-        ctx->create_window_gl3 = create_window_x11_gl3;
-        ctx->releaseGlContext = releaseGlContext_x11;
-        ctx->swapGlBuffers = swapGlBuffers_x11;
-        ctx->update_xinerama_info = vo_x11_update_screeninfo;
-        ctx->border = vo_x11_border;
-        ctx->check_events = vo_x11_check_events;
-        ctx->fullscreen = vo_x11_fullscreen;
-        ctx->ontop = vo_x11_ontop;
-        ctx->vo_init = vo_x11_init;
-        ctx->vo_uninit = vo_x11_uninit;
-        break;
-#endif
+    set_backend(ctx);
+    if (!ctx->vo_init(vo)) {
+        talloc_free(ctx);
+        ctx = NULL;
     }
-    if (ctx->vo_init && ctx->vo_init(vo))
-        return ctx;
-    talloc_free(ctx);
-    return NULL;
+    return ctx;
 }
 
-bool mpgl_destroy_window(struct MPGLContext *ctx)
+MPGLContext *mpgl_init(struct vo *vo, const char *backend_name)
 {
-    ctx->releaseGlContext(ctx);
-    *ctx->gl = (GL) {0};
-    // This is a caveat. At least on X11, this will recreate the X display
-    // connection. Also, if vo_init() fails, unspecified things will happen.
-    ctx->vo_uninit(ctx->vo);
-    ctx->vo_init_ok = ctx->vo_init(ctx->vo);
-    return ctx->vo_init_ok;
-}
-
-static bool create_window(struct MPGLContext *ctx, int gl_caps,
-                          bool (*create)(struct MPGLContext *, uint32_t,
-                                         uint32_t, uint32_t),
-                          uint32_t d_width, uint32_t d_height, uint32_t flags)
-{
-    if (!create || !ctx->vo_init_ok)
-        return false;
-    if (create(ctx, d_width, d_height, flags)) {
-        int missing = (ctx->gl->mpgl_caps & gl_caps) ^ gl_caps;
-        if (!missing) {
-            ctx->selected_create_window = create;
-            return true;
+    MPGLContext *ctx = NULL;
+    int index = mpgl_find_backend(backend_name);
+    if (index == -1) {
+        for (const struct backend *entry = backends; entry->name; entry++) {
+            ctx = init_backend(vo, entry->init);
+            if (ctx)
+                return ctx;
         }
+    } else if (index >= 0) {
+        ctx = init_backend(vo, backends[index].init);
+    }
+    return ctx;
+}
+
+bool mpgl_config_window(struct MPGLContext *ctx, int gl_caps, uint32_t d_width,
+                        uint32_t d_height, uint32_t flags)
+{
+    gl_caps |= MPGL_CAP_GL;
+
+    ctx->requested_gl_version = (gl_caps & MPGL_CAP_GL_LEGACY)
+                                ? MPGL_VER(2, 1) : MPGL_VER(3, 0);
+
+    if (ctx->config_window(ctx, d_width, d_height, flags)) {
+        int missing = (ctx->gl->mpgl_caps & gl_caps) ^ gl_caps;
+        if (!missing)
+            return true;
+
         mp_msg(MSGT_VO, MSGL_WARN, "[gl] Missing OpenGL features:");
         list_features(missing, MSGL_WARN, false);
         if (missing & MPGL_CAP_NO_SW) {
             mp_msg(MSGT_VO, MSGL_WARN, "[gl] Rejecting suspected software "
-                   "OpenGL renderer.\n");
+                    "OpenGL renderer.\n");
         }
     }
-    // If we tried to create a GL 3 context, and we're going to create a legacy
-    // context after this, the window should be recreated at least on X11.
-    mpgl_destroy_window(ctx);
-    return false;
-}
-
-bool mpgl_create_window(struct MPGLContext *ctx, int gl_caps, uint32_t d_width,
-                        uint32_t d_height, uint32_t flags)
-{
-    assert(ctx->vo_init_ok);
-    if (ctx->selected_create_window)
-        return ctx->selected_create_window(ctx, d_width, d_height, flags);
-
-    bool allow_gl3 = !(gl_caps & MPGL_CAP_GL_LEGACY);
-    bool allow_legacy = !(gl_caps & MPGL_CAP_GL3);
-    gl_caps |= MPGL_CAP_GL;
-
-    if (allow_gl3 && create_window(ctx, gl_caps, ctx->create_window_gl3,
-                                   d_width, d_height, flags))
-        return true;
-
-    if (allow_legacy && create_window(ctx, gl_caps, ctx->create_window_old,
-                                      d_width, d_height, flags))
-        return true;
 
     mp_msg(MSGT_VO, MSGL_ERR, "[gl] OpenGL context creation failed!\n");
     return false;
@@ -1464,9 +933,7 @@ bool mpgl_create_window(struct MPGLContext *ctx, int gl_caps, uint32_t d_width,
 
 void mpgl_uninit(MPGLContext *ctx)
 {
-    if (!ctx)
-        return;
-    if (ctx->vo_init_ok) {
+    if (ctx) {
         ctx->releaseGlContext(ctx);
         ctx->vo_uninit(ctx->vo);
     }

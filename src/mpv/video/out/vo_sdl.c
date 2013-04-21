@@ -177,7 +177,6 @@ struct priv {
     struct mp_rect src_rect;
     struct mp_rect dst_rect;
     struct mp_osd_res osd_res;
-    int int_pause;
     struct formatmap_entry osd_format;
     struct osd_bitmap_surface {
         int bitmap_id;
@@ -197,6 +196,8 @@ struct priv {
 
     // options
     int allow_sw;
+    int switch_mode;
+    int vsync;
 };
 
 static bool is_good_renderer(SDL_RendererInfo *ri,
@@ -271,7 +272,7 @@ static bool try_create_renderer(struct vo *vo, int i, const char *driver,
     if (!is_good_renderer(&ri, driver, vc->allow_sw, NULL))
         return false;
 
-    bool xy_valid = vo->opts->vo_geometry.xy_valid;
+    bool xy_valid = vo->opts->geometry.xy_valid;
 
     // then actually try
     vc->window = SDL_CreateWindow("MPV",
@@ -370,11 +371,10 @@ static void check_resize(struct vo *vo)
 static void set_fullscreen(struct vo *vo, int fs)
 {
     struct priv *vc = vo->priv;
-    struct MPOpts *opts = vo->opts;
 
     Uint32 fs_flags = 0;
     if (fs) {
-        if (opts->vidmode)
+        if (vc->switch_mode)
             fs_flags |= SDL_WINDOW_FULLSCREEN;
         else
             fs_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
@@ -388,7 +388,7 @@ static void set_fullscreen(struct vo *vo, int fs)
     // toggling fullscreen might recreate the window, so better guard for this
     SDL_DisableScreenSaver();
 
-    vo_fs = fs;
+    vo->opts->fs = fs;
     force_resize(vo);
 }
 
@@ -471,7 +471,7 @@ static void flip_page(struct vo *vo)
 static void check_events(struct vo *vo)
 {
     struct priv *vc = vo->priv;
-    struct MPOpts *opts = vo->opts;
+    struct mp_vo_opts *opts = vo->opts;
     SDL_Event ev;
 
     if (opts->cursor_autohide_delay >= 0) {
@@ -770,14 +770,12 @@ static int preinit(struct vo *vo, const char *arg)
     // predefine SDL defaults (SDL env vars shall override)
     SDL_SetHintWithPriority(SDL_HINT_RENDER_SCALE_QUALITY, "1",
                             SDL_HINT_DEFAULT);
+    SDL_SetHintWithPriority(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0",
+                            SDL_HINT_DEFAULT);
 
     // predefine MPV options (SDL env vars shall be overridden)
-    if (vo_vsync)
-        SDL_SetHintWithPriority(SDL_HINT_RENDER_VSYNC, "1",
-                                SDL_HINT_OVERRIDE);
-    else
-        SDL_SetHintWithPriority(SDL_HINT_RENDER_VSYNC, "0",
-                                SDL_HINT_OVERRIDE);
+    SDL_SetHintWithPriority(SDL_HINT_RENDER_VSYNC, vc->vsync ? "1" : "0",
+                            SDL_HINT_OVERRIDE);
 
     if (SDL_InitSubSystem(SDL_INIT_VIDEO)) {
         mp_msg(MSGT_VO, MSGL_ERR, "[sdl] SDL_Init failed\n");
@@ -805,7 +803,7 @@ static int query_format(struct vo *vo, uint32_t format)
 {
     struct priv *vc = vo->priv;
     int i, j;
-    int cap = VFCAP_CSP_SUPPORTED | VFCAP_FLIP | VFCAP_OSD;
+    int cap = VFCAP_CSP_SUPPORTED | VFCAP_FLIP;
     for (i = 0; i < vc->renderer_info.num_texture_formats; ++i)
         for (j = 0; j < sizeof(formats) / sizeof(formats[0]); ++j)
             if (vc->renderer_info.texture_formats[i] == formats[j].sdl)
@@ -922,10 +920,10 @@ static void update_screeninfo(struct vo *vo)
         mp_msg(MSGT_VO, MSGL_ERR, "[sdl] SDL_GetCurrentDisplayMode failed\n");
         return;
     }
-    struct MPOpts *opts = vo->opts;
-    opts->vo_screenwidth = mode.w;
-    opts->vo_screenheight = mode.h;
-    aspect_save_screenres(vo, opts->vo_screenwidth, opts->vo_screenheight);
+    struct mp_vo_opts *opts = vo->opts;
+    opts->screenwidth = mode.w;
+    opts->screenheight = mode.h;
+    aspect_save_screenres(vo, opts->screenwidth, opts->screenheight);
 }
 
 static struct mp_image *get_screenshot(struct vo *vo)
@@ -980,15 +978,10 @@ static int get_eq(struct vo *vo, const char *name, int *value)
 
 static int control(struct vo *vo, uint32_t request, void *data)
 {
-    struct priv *vc = vo->priv;
     switch (request) {
     case VOCTRL_FULLSCREEN:
-        set_fullscreen(vo, !vo_fs);
+        set_fullscreen(vo, !vo->opts->fs);
         return 1;
-    case VOCTRL_PAUSE:
-        return vc->int_pause = 1;
-    case VOCTRL_RESUME:
-        return vc->int_pause = 0;
     case VOCTRL_REDRAW_FRAME:
         draw_image(vo, NULL);
         return 1;
@@ -1020,7 +1013,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     return VO_NOTIMPL;
 }
 
-#undef OPT_BASE_STRUCT
 #define OPT_BASE_STRUCT struct priv
 
 const struct vo_driver video_out_sdl = {
@@ -1032,10 +1024,13 @@ const struct vo_driver video_out_sdl = {
     },
     .priv_size = sizeof(struct priv),
     .priv_defaults = &(const struct priv) {
-        .renderer_index = -1
+        .renderer_index = -1,
+        .vsync = 1,
     },
     .options = (const struct m_option []){
         OPT_FLAG("sw", allow_sw, 0),
+        OPT_FLAG("switch-mode", switch_mode, 0),
+        OPT_FLAG("vsync", vsync, 0),
         {NULL}
     },
     .preinit = preinit,

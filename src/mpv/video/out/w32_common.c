@@ -33,7 +33,7 @@
 #include "osdep/io.h"
 #include "talloc.h"
 
-#define WIN_ID_TO_HWND(x) ((HWND)(uint32_t)(x))
+#define WIN_ID_TO_HWND(x) ((HWND)(intptr_t)(x))
 
 static const wchar_t classname[] = L"mpv";
 
@@ -131,7 +131,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
             w32->event_flags |= VO_EVENT_EXPOSE;
             break;
         case WM_MOVE: {
-            w32->event_flags |= VO_EVENT_MOVE;
             POINT p = {0};
             ClientToScreen(w32->window, &p);
             w32->window_x = p.x;
@@ -151,7 +150,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
             break;
         }
         case WM_SIZING:
-            if (vo_keepaspect && !vo_fs && WinID < 0) {
+            if (vo->opts->keepaspect && !vo->opts->fs && vo->opts->WinID < 0) {
                 RECT *rc = (RECT*)lParam;
                 // get client area of the windows if it had the rect rc
                 // (subtracting the window borders)
@@ -216,29 +215,30 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
             break;
         }
         case WM_LBUTTONDOWN:
-            if (!vo_nomouse_input && (vo_fs || (wParam & MK_CONTROL))) {
+            if (!vo->opts->nomouse_input && (vo->opts->fs || (wParam & MK_CONTROL)))
+            {
                 mplayer_put_key(vo->key_fifo, MP_MOUSE_BTN0 | mod_state(vo));
                 break;
             }
-            if (!vo_fs) {
+            if (!vo->opts->fs) {
                 ReleaseCapture();
                 SendMessage(hWnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
                 return 0;
             }
             break;
         case WM_MBUTTONDOWN:
-            if (!vo_nomouse_input)
+            if (!vo->opts->nomouse_input)
                 mplayer_put_key(vo->key_fifo, MP_MOUSE_BTN1 | mod_state(vo));
             break;
         case WM_RBUTTONDOWN:
-            if (!vo_nomouse_input)
+            if (!vo->opts->nomouse_input)
                 mplayer_put_key(vo->key_fifo, MP_MOUSE_BTN2 | mod_state(vo));
             break;
         case WM_MOUSEMOVE:
             vo_mouse_movement(vo, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
             break;
         case WM_MOUSEWHEEL:
-            if (!vo_nomouse_input) {
+            if (!vo->opts->nomouse_input) {
                 int x = GET_WHEEL_DELTA_WPARAM(wParam);
                 if (x > 0)
                     mplayer_put_key(vo->key_fifo, MP_MOUSE_BTN3 | mod_state(vo));
@@ -247,7 +247,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
             }
             break;
         case WM_XBUTTONDOWN:
-            if (!vo_nomouse_input) {
+            if (!vo->opts->nomouse_input) {
                 int x = HIWORD(wParam);
                 if (x == 1)
                     mplayer_put_key(vo->key_fifo, MP_MOUSE_BTN5 | mod_state(vo));
@@ -282,7 +282,7 @@ int vo_w32_check_events(struct vo *vo)
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
     }
-    if (WinID >= 0) {
+    if (vo->opts->WinID >= 0) {
         BOOL res;
         RECT r;
         POINT p;
@@ -295,12 +295,11 @@ int vo_w32_check_events(struct vo *vo)
         ClientToScreen(w32->window, &p);
         if (p.x != w32->window_x || p.y != w32->window_y) {
             w32->window_x = p.x; w32->window_y = p.y;
-            w32->event_flags |= VO_EVENT_MOVE;
         }
-        res = GetClientRect(WIN_ID_TO_HWND(WinID), &r);
+        res = GetClientRect(WIN_ID_TO_HWND(vo->opts->WinID), &r);
         if (res && (r.right != vo->dwidth || r.bottom != vo->dheight))
             MoveWindow(w32->window, 0, 0, r.right, r.bottom, FALSE);
-        if (!IsWindow(WIN_ID_TO_HWND(WinID)))
+        if (!IsWindow(WIN_ID_TO_HWND(vo->opts->WinID)))
             // Window has probably been closed, e.g. due to program crash
             mplayer_put_key(vo->key_fifo, MP_KEY_CLOSE_WIN);
     }
@@ -313,10 +312,10 @@ static BOOL CALLBACK mon_enum(HMONITOR hmon, HDC hdc, LPRECT r, LPARAM p)
     struct vo *vo = (void*)p;
     struct vo_w32_state *w32 = vo->w32;
     // this defaults to the last screen if specified number does not exist
-    xinerama_x = r->left;
-    xinerama_y = r->top;
-    vo->opts->vo_screenwidth = r->right - r->left;
-    vo->opts->vo_screenheight = r->bottom - r->top;
+    vo->xinerama_x = r->left;
+    vo->xinerama_y = r->top;
+    vo->opts->screenwidth = r->right - r->left;
+    vo->opts->screenheight = r->bottom - r->top;
     if (w32->mon_cnt == w32->mon_id)
         return FALSE;
     w32->mon_cnt++;
@@ -340,38 +339,37 @@ static BOOL CALLBACK mon_enum(HMONITOR hmon, HDC hdc, LPRECT r, LPARAM p)
 void w32_update_xinerama_info(struct vo *vo)
 {
     struct vo_w32_state *w32 = vo->w32;
-    struct MPOpts *opts = vo->opts;
-    int screen = vo_fs ? opts->vo_fsscreen_id : opts->vo_screen_id;
-    xinerama_x = xinerama_y = 0;
-    if (vo_fs && screen == -2) {
+    struct mp_vo_opts *opts = vo->opts;
+    int screen = opts->fs ? opts->fsscreen_id : opts->screen_id;
+    vo->xinerama_x = vo->xinerama_y = 0;
+    if (opts->fs && screen == -2) {
         int tmp;
-        xinerama_x = GetSystemMetrics(SM_XVIRTUALSCREEN);
-        xinerama_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+        vo->xinerama_x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+        vo->xinerama_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
         tmp = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-        if (tmp) vo->opts->vo_screenwidth = tmp;
+        if (tmp) vo->opts->screenwidth = tmp;
         tmp = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-        if (tmp) vo->opts->vo_screenheight = tmp;
+        if (tmp) vo->opts->screenheight = tmp;
     } else if (screen == -1) {
         MONITORINFO mi;
         HMONITOR m = MonitorFromWindow(w32->window, MONITOR_DEFAULTTOPRIMARY);
         mi.cbSize = sizeof(mi);
         GetMonitorInfoW(m, &mi);
-        xinerama_x = mi.rcMonitor.left;
-        xinerama_y = mi.rcMonitor.top;
-        vo->opts->vo_screenwidth = mi.rcMonitor.right - mi.rcMonitor.left;
-        vo->opts->vo_screenheight = mi.rcMonitor.bottom - mi.rcMonitor.top;
+        vo->xinerama_x = mi.rcMonitor.left;
+        vo->xinerama_y = mi.rcMonitor.top;
+        vo->opts->screenwidth = mi.rcMonitor.right - mi.rcMonitor.left;
+        vo->opts->screenheight = mi.rcMonitor.bottom - mi.rcMonitor.top;
     } else if (screen >= 0) {
         w32->mon_cnt = 0;
         w32->mon_id = screen;
         EnumDisplayMonitors(NULL, NULL, mon_enum, (LONG_PTR)vo);
     }
-    aspect_save_screenres(vo, vo->opts->vo_screenwidth,
-                          vo->opts->vo_screenheight);
+    aspect_save_screenres(vo, vo->opts->screenwidth,
+                          vo->opts->screenheight);
 }
 
 static void updateScreenProperties(struct vo *vo)
 {
-    struct vo_w32_state *w32 = vo->w32;
     DEVMODE dm;
     dm.dmSize = sizeof dm;
     dm.dmDriverExtra = 0;
@@ -382,54 +380,9 @@ static void updateScreenProperties(struct vo *vo)
         return;
     }
 
-    vo->opts->vo_screenwidth = dm.dmPelsWidth;
-    vo->opts->vo_screenheight = dm.dmPelsHeight;
-    w32->depthonscreen = dm.dmBitsPerPel;
+    vo->opts->screenwidth = dm.dmPelsWidth;
+    vo->opts->screenheight = dm.dmPelsHeight;
     w32_update_xinerama_info(vo);
-}
-
-static void changeMode(struct vo *vo)
-{
-    struct vo_w32_state *w32 = vo->w32;
-    DEVMODE dm;
-    dm.dmSize = sizeof dm;
-    dm.dmDriverExtra = 0;
-
-    dm.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-    dm.dmBitsPerPel = w32->depthonscreen;
-    dm.dmPelsWidth = vo->opts->vo_screenwidth;
-    dm.dmPelsHeight = vo->opts->vo_screenheight;
-
-    if (w32->vm) {
-        int bestMode = -1;
-        int bestScore = INT_MAX;
-        int i;
-        for (i = 0; EnumDisplaySettings(0, i, &dm); ++i) {
-            int score = (dm.dmPelsWidth - w32->o_dwidth)
-                        * (dm.dmPelsHeight - w32->o_dheight);
-            if (dm.dmBitsPerPel != w32->depthonscreen
-                || dm.dmPelsWidth < w32->o_dwidth
-                || dm.dmPelsHeight < w32->o_dheight)
-                continue;
-
-            if (score < bestScore) {
-                bestScore = score;
-                bestMode = i;
-            }
-        }
-
-        if (bestMode != -1)
-            EnumDisplaySettings(0, bestMode, &dm);
-
-        ChangeDisplaySettings(&dm, CDS_FULLSCREEN);
-    }
-}
-
-static void resetMode(struct vo *vo)
-{
-    struct vo_w32_state *w32 = vo->w32;
-    if (w32->vm)
-        ChangeDisplaySettings(0, 0);
 }
 
 static DWORD update_style(struct vo *vo, DWORD style)
@@ -437,7 +390,7 @@ static DWORD update_style(struct vo *vo, DWORD style)
     const DWORD NO_FRAME = WS_POPUP;
     const DWORD FRAME = WS_OVERLAPPEDWINDOW | WS_SIZEBOX;
     style &= ~(NO_FRAME | FRAME);
-    style |= (vo_border && !vo_fs) ? FRAME : NO_FRAME;
+    style |= (vo->opts->border && !vo->opts->fs) ? FRAME : NO_FRAME;
     return style;
 }
 
@@ -448,32 +401,30 @@ static int reinit_window_state(struct vo *vo)
     HWND layer = HWND_NOTOPMOST;
     RECT r;
 
-    if (WinID >= 0)
+    if (vo->opts->WinID >= 0)
         return 1;
 
     wchar_t *title = mp_from_utf8(NULL, vo_get_window_title(vo));
     SetWindowTextW(w32->window, title);
     talloc_free(title);
 
-    bool toggle_fs = w32->current_fs != vo_fs;
-    w32->current_fs = vo_fs;
+    bool toggle_fs = w32->current_fs != vo->opts->fs;
+    w32->current_fs = vo->opts->fs;
 
     DWORD style = update_style(vo, GetWindowLong(w32->window, GWL_STYLE));
 
-    if (vo_fs || vo->opts->vo_ontop)
+    if (vo->opts->fs || vo->opts->ontop)
         layer = HWND_TOPMOST;
 
     // xxx not sure if this can trigger any unwanted messages (WM_MOVE/WM_SIZE)
-    if (vo_fs) {
-        changeMode(vo);
+    if (vo->opts->fs) {
         while (ShowCursor(0) >= 0) /**/ ;
     } else {
-        resetMode(vo);
         while (ShowCursor(1) < 0) /**/ ;
     }
     updateScreenProperties(vo);
 
-    if (vo_fs) {
+    if (vo->opts->fs) {
         // Save window position and size when switching to fullscreen.
         if (toggle_fs) {
             w32->prev_width = vo->dwidth;
@@ -483,10 +434,10 @@ static int reinit_window_state(struct vo *vo)
             mp_msg(MSGT_VO, MSGL_V, "[vo] save window bounds: %d:%d:%d:%d\n",
                    w32->prev_x, w32->prev_y, w32->prev_width, w32->prev_height);
         }
-        vo->dwidth = vo->opts->vo_screenwidth;
-        vo->dheight = vo->opts->vo_screenheight;
-        w32->window_x = xinerama_x;
-        w32->window_y = xinerama_y;
+        vo->dwidth = vo->opts->screenwidth;
+        vo->dheight = vo->opts->screenheight;
+        w32->window_x = vo->xinerama_x;
+        w32->window_y = vo->xinerama_y;
     } else {
         if (toggle_fs) {
             // Restore window position and size when switching from fullscreen.
@@ -507,8 +458,9 @@ static int reinit_window_state(struct vo *vo)
     SetWindowLong(w32->window, GWL_STYLE, style);
     add_window_borders(w32->window, &r);
 
-    mp_msg(MSGT_VO, MSGL_V, "[vo] reset window bounds: %ld:%ld:%ld:%ld\n",
-           r.left, r.top, r.right - r.left, r.bottom - r.top);
+    mp_msg(MSGT_VO, MSGL_V, "[vo] reset window bounds: %d:%d:%d:%d\n",
+           (int) r.left, (int) r.top, (int)(r.right - r.left),
+           (int)(r.bottom - r.top));
 
     SetWindowPos(w32->window, layer, r.left, r.top, r.right - r.left,
                  r.bottom - r.top, SWP_FRAMECHANGED);
@@ -568,7 +520,7 @@ int vo_w32_config(struct vo *vo, uint32_t width, uint32_t height,
     w32->o_dheight = height;
 
     // the desired size is ignored in wid mode, it always matches the window size.
-    if (WinID < 0) {
+    if (vo->opts->WinID < 0) {
         if (w32->window_bounds_initialized) {
             // restore vo_dwidth/vo_dheight, which are reset against our will
             // in vo_config()
@@ -591,10 +543,14 @@ int vo_w32_config(struct vo *vo, uint32_t width, uint32_t height,
             w32->prev_width = vo->dwidth = width;
             w32->prev_height = vo->dheight = height;
         }
+    } else {
+        RECT r;
+        GetClientRect(w32->window, &r);
+        vo->dwidth = r.right;
+        vo->dheight = r.bottom;
     }
 
-    vo_fs = flags & VOFLAG_FULLSCREEN;
-    w32->vm = flags & VOFLAG_MODESWITCHING;
+    vo->opts->fs = flags & VOFLAG_FULLSCREEN;
     return reinit_window_state(vo);
 }
 
@@ -644,15 +600,16 @@ int vo_w32_init(struct vo *vo)
         return 0;
     }
 
-    if (WinID >= 0) {
+    if (vo->opts->WinID >= 0) {
         RECT r;
-        GetClientRect(WIN_ID_TO_HWND(WinID), &r);
+        GetClientRect(WIN_ID_TO_HWND(vo->opts->WinID), &r);
         vo->dwidth = r.right; vo->dheight = r.bottom;
         w32->window = CreateWindowExW(WS_EX_NOPARENTNOTIFY, classname,
                                       classname,
                                       WS_CHILD | WS_VISIBLE,
                                       0, 0, vo->dwidth, vo->dheight,
-                                      WIN_ID_TO_HWND(WinID), 0, hInstance, vo);
+                                      WIN_ID_TO_HWND(vo->opts->WinID),
+                                      0, hInstance, vo);
     } else {
         w32->window = CreateWindowExW(0, classname,
                                       classname,
@@ -666,7 +623,7 @@ int vo_w32_init(struct vo *vo)
         return 0;
     }
 
-    if (WinID >= 0)
+    if (vo->opts->WinID >= 0)
         EnableWindow(w32->window, 0);
 
     // we don't have proper event handling
@@ -674,9 +631,8 @@ int vo_w32_init(struct vo *vo)
 
     updateScreenProperties(vo);
 
-    mp_msg(MSGT_VO, MSGL_V, "vo: win32: running at %dx%d with depth %d\n",
-           vo->opts->vo_screenwidth, vo->opts->vo_screenheight,
-           w32->depthonscreen);
+    mp_msg(MSGT_VO, MSGL_V, "vo: win32: running at %dx%d\n",
+           vo->opts->screenwidth, vo->opts->screenheight);
 
     return 1;
 }
@@ -693,7 +649,7 @@ int vo_w32_init(struct vo *vo)
 
 void vo_w32_fullscreen(struct vo *vo)
 {
-    vo_fs = !vo_fs;
+    vo->opts->fs = !vo->opts->fs;
     reinit_window_state(vo);
 }
 
@@ -704,7 +660,7 @@ void vo_w32_fullscreen(struct vo *vo)
  */
 void vo_w32_border(struct vo *vo)
 {
-    vo_border = !vo_border;
+    vo->opts->border = !vo->opts->border;
     reinit_window_state(vo);
 }
 
@@ -715,7 +671,7 @@ void vo_w32_border(struct vo *vo)
  */
 void vo_w32_ontop(struct vo *vo)
 {
-    vo->opts->vo_ontop = !vo->opts->vo_ontop;
+    vo->opts->ontop = !vo->opts->ontop;
     reinit_window_state(vo);
 }
 
@@ -732,7 +688,6 @@ void vo_w32_uninit(struct vo *vo)
     mp_msg(MSGT_VO, MSGL_V, "vo: win32: uninit\n");
     if (!w32)
         return;
-    resetMode(vo);
     ShowCursor(1);
     DestroyWindow(w32->window);
     UnregisterClassW(classname, 0);

@@ -142,9 +142,6 @@ j and J
 F
     Toggle displaying "forced subtitles".
 
-a
-    Toggle subtitle alignment: top / middle / bottom.
-
 x and z
     Adjust subtitle delay by +/- 0.1 seconds.
 
@@ -190,7 +187,7 @@ corresponding adjustment, or the software equalizer (``--vf=eq``).)
     Adjust brightness.
 
 5 and 6
-    Adjust hue.
+    Adjust gamma.
 
 7 and 8
     Adjust saturation.

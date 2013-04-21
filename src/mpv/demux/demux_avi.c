@@ -652,8 +652,7 @@ static void demux_seek_avi(demuxer_t *demuxer, float rel_seek_secs,
           int id=((AVIINDEXENTRY *)priv->idx)[i].ckid;
           if(avi_stream_id(id)==d_video->id) ++d_video->pack_no;
       }
-      priv->video_pack_no=
-      sh_video->num_frames=sh_video->num_frames_decoded=d_video->pack_no;
+      priv->video_pack_no=d_video->pack_no;
       priv->avi_video_pts=d_video->pack_no*(float)sh_video->video.dwScale/(float)sh_video->video.dwRate;
       d_video->pos=video_chunk_pos;
 
@@ -791,14 +790,6 @@ static int demux_avi_control(demuxer_t *demuxer,int cmd, void *arg){
 	case DEMUXER_CTRL_GET_TIME_LENGTH:
     	    if (!priv->numberofframes || !sh_video) return DEMUXER_CTRL_DONTKNOW;
 	    *((double *)arg)=(double)priv->numberofframes/sh_video->fps;
-	    if (sh_video->video.dwLength<=1) return DEMUXER_CTRL_GUESS;
-	    return DEMUXER_CTRL_OK;
-
-	case DEMUXER_CTRL_GET_PERCENT_POS:
-    	    if (!priv->numberofframes || !sh_video) {
-              return DEMUXER_CTRL_DONTKNOW;
-	    }
-	    *((int *)arg)=(int)(priv->video_pack_no*100/priv->numberofframes);
 	    if (sh_video->video.dwLength<=1) return DEMUXER_CTRL_GUESS;
 	    return DEMUXER_CTRL_OK;
 

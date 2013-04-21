@@ -95,6 +95,7 @@ struct track {
     // If this track is from an external file (e.g. subtitle file).
     bool is_external;
     char *external_filename;
+    bool auto_loaded;
 
     // If the track's stream changes with the timeline (ordered chapters).
     bool under_timeline;
@@ -199,6 +200,11 @@ typedef struct MPContext {
     // How much video timing has been changed to make it match the audio
     // timeline. Used for status line information only.
     double total_avsync_change;
+    // Total number of dropped frames that were "approved" to be dropped.
+    // Actual dropping depends on --framedrop and decoder internals.
+    int drop_frame_cnt;
+    // Number of frames dropped in a row.
+    int dropped_frames;
     // A-V sync difference when last frame was displayed. Kept to display
     // the same value if the status line is updated at a time where no new
     // video frame is shown.
@@ -210,7 +216,12 @@ typedef struct MPContext {
     // As video_pts, but is not reset when seeking away. (For the very short
     // period of time until a new frame is decoded and shown.)
     double last_vo_pts;
+    // Video PTS, or audio PTS if video has ended.
+    double playback_pts;
 
+    float audio_delay;
+
+    unsigned int last_heartbeat;
     // used to prevent hanging in some error cases
     unsigned int start_timestamp;
 
@@ -238,14 +249,15 @@ typedef struct MPContext {
 
     struct ass_library *ass_library;
 
-    int file_format;
-
     int last_dvb_step;
     int dvbin_reopen;
 
     int paused;
     // step this many frames, then pause
     int step_frames;
+    // Counted down each frame, stop playback if 0 is reached. (-1 = disable)
+    int max_frames;
+    bool playing_msg_shown;
 
     bool paused_for_cache;
 
@@ -280,8 +292,10 @@ void queue_seek(struct MPContext *mpctx, enum seek_type type, double amount,
                 int exact);
 int seek_chapter(struct MPContext *mpctx, int chapter, double *seek_pts);
 double get_time_length(struct MPContext *mpctx);
+double get_start_time(struct MPContext *mpctx);
 double get_current_time(struct MPContext *mpctx);
 int get_percent_pos(struct MPContext *mpctx);
+double get_current_pos_ratio(struct MPContext *mpctx);
 int get_current_chapter(struct MPContext *mpctx);
 char *chapter_display_name(struct MPContext *mpctx, int chapter);
 char *chapter_name(struct MPContext *mpctx, int chapter);

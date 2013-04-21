@@ -297,7 +297,6 @@ colormatrix                 x see ``--colormatrix``
 colormatrix-input-range     x see ``--colormatrix-input-range``
 colormatrix-output-range    x see ``--colormatrix-output-range``
 ontop                       x see ``--ontop``
-rootwin                     x see ``--rootwin``
 border                      x see ``--border``
 framedrop                   x see ``--framedrop``
 gamma                       x see ``--gamma``
@@ -306,17 +305,18 @@ contrast                    x see ``--contrast``
 saturation                  x see ``--saturation``
 hue                         x see ``--hue``
 panscan                     x see ``--panscan``
-vsync                       x see ``--vsync``
 video-format                  video format (string)
 video-codec                   video codec selected for decoding
 video-bitrate                 video bitrate
-width                         video width
+width                         video width (container or decoded size)
 height                        video height
-fps                           FPS (may contain bogus values)
+fps                           container FPS (may contain bogus values)
+dwidth                        video width (after filters and aspect scaling)
+dheight                       video height
 aspect                      x video aspect
 video                       x current video track (similar to ``--vid``)
 program                     x switch TS program (write-only)
-sub                         x current subttitle track (similar to ``--sid``)
+sub                         x current subtitle track (similar to ``--sid``)
 sub-delay                   x see ``--sub-delay``
 sub-pos                     x see ``--sub-pos``
 sub-visibility              x whether current subtitle is rendered

@@ -52,7 +52,6 @@
 #include "video/memcpy_pic.h"
 #include "sub/sub.h"
 #include "sub/draw_bmp.h"
-#include "aspect.h"
 #include "video/csputils.h"
 #include "core/subopt-helper.h"
 #include "osdep/timer.h"
@@ -85,15 +84,12 @@ struct xvctx {
     int current_buf;
     int current_ip_buf;
     int num_buffers;
-    int total_buffers;
-    int visible_buf;
     XvImage *xvimage[2];
     struct mp_image *original_image;
     uint32_t image_width;
     uint32_t image_height;
     uint32_t image_format;
     struct mp_csp_details cached_csp;
-    int is_paused;
     struct mp_rect src_rect;
     struct mp_rect dst_rect;
     uint32_t max_width, max_height; // zero means: not set
@@ -318,7 +314,7 @@ static void xv_print_ck_info(struct xvctx *xv)
     }
 }
 
-/* NOTE: If vo_colorkey has bits set after the first 3 low order bytes
+/* NOTE: If vo.colorkey has bits set after the first 3 low order bytes
  *       we don't draw anything as this means it was forced to off. */
 static int xv_init_colorkey(struct vo *vo)
 {
@@ -329,7 +325,7 @@ static int xv_init_colorkey(struct vo *vo)
 
     /* check if colorkeying is needed */
     xv_atom = xv_intern_atom_if_exists(vo, "XV_COLORKEY");
-    if (xv_atom != None && !(vo_colorkey & 0xFF000000)) {
+    if (xv_atom != None && !(vo->opts->colorkey & 0xFF000000)) {
         if (ctx->xv_ck_info.source == CK_SRC_CUR) {
             int colorkey_ret;
 
@@ -343,14 +339,14 @@ static int xv_init_colorkey(struct vo *vo)
                 return 0; // error getting colorkey
             }
         } else {
-            ctx->xv_colorkey = vo_colorkey;
+            ctx->xv_colorkey = vo->opts->colorkey;
 
             /* check if we have to set the colorkey too */
             if (ctx->xv_ck_info.source == CK_SRC_SET) {
                 xv_atom = XInternAtom(display, "XV_COLORKEY", False);
 
                 rez = XvSetPortAttribute(display, ctx->xv_port, xv_atom,
-                                         vo_colorkey);
+                                         vo->opts->colorkey);
                 if (rez != Success) {
                     mp_msg(MSGT_VO, MSGL_FATAL, "[xv] Couldn't set colorkey!\n");
                     return 0; // error setting colorkey
@@ -388,8 +384,7 @@ static int xv_init_colorkey(struct vo *vo)
  *
  * Also draws the black bars ( when the video doesn't fit the display in
  * fullscreen ) separately, so they don't overlap with the video area. */
-static void xv_draw_colorkey(struct vo *vo, int32_t x, int32_t y,
-                             int32_t w, int32_t h)
+static void xv_draw_colorkey(struct vo *vo, const struct mp_rect *rc)
 {
     struct xvctx *ctx = vo->priv;
     struct vo_x11_state *x11 = vo->x11;
@@ -398,7 +393,8 @@ static void xv_draw_colorkey(struct vo *vo, int32_t x, int32_t y,
     {
         //less tearing than XClearWindow()
         XSetForeground(x11->display, x11->vo_gc, ctx->xv_colorkey);
-        XFillRectangle(x11->display, x11->window, x11->vo_gc, x, y, w, h);
+        XFillRectangle(x11->display, x11->window, x11->vo_gc, rc->x0, rc->y0,
+                       rc->x1 - rc->x0, rc->y1 - rc->y0);
     }
 }
 
@@ -478,10 +474,8 @@ static void resize(struct vo *vo)
 
     vo_get_src_dst_rects(vo, &ctx->src_rect, &ctx->dst_rect, &unused);
 
-    struct mp_rect *dst = &ctx->dst_rect;
-    int dw = dst->x1 - dst->x0, dh = dst->y1 - dst->y0;
-    vo_x11_clearwindow_part(vo, vo->x11->window, dw, dh);
-    xv_draw_colorkey(vo, dst->x0, dst->y0, dw, dh);
+    vo_x11_clear_background(vo, &ctx->dst_rect);
+    xv_draw_colorkey(vo, &ctx->dst_rect);
     read_xv_csp(vo);
 }
 
@@ -512,8 +506,6 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
         return -1;
     }
 
-    ctx->visible_buf = -1;
-
     /* check image formats */
     ctx->xv_format = 0;
     for (i = 0; i < ctx->formats; i++) {
@@ -526,7 +518,7 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
     if (!ctx->xv_format)
         return -1;
 
-    vo_x11_create_vo_window(vo, NULL, vo->dx, vo->dy, vo->dwidth,
+    vo_x11_config_vo_window(vo, NULL, vo->dx, vo->dy, vo->dwidth,
                             vo->dheight, flags, "xv");
 
     if (ctx->xv_ck_info.method == CK_METHOD_BACKGROUND)
@@ -536,13 +528,12 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
            ctx->xv_port);
 
     // In case config has been called before
-    for (i = 0; i < ctx->total_buffers; i++)
+    for (i = 0; i < ctx->num_buffers; i++)
         deallocate_xvimage(vo, i);
 
     ctx->num_buffers = 2;
-    ctx->total_buffers = ctx->num_buffers;
 
-    for (i = 0; i < ctx->total_buffers; i++)
+    for (i = 0; i < ctx->num_buffers; i++)
         allocate_xvimage(vo, i);
 
     ctx->current_buf = 0;
@@ -682,16 +673,10 @@ static void draw_osd(struct vo *vo, struct osd_state *osd)
 
     struct mp_image img = get_xv_buffer(vo, ctx->current_buf);
 
-    struct mp_rect *src = &ctx->src_rect;
-    struct mp_rect *dst = &ctx->dst_rect;
-    int dw = dst->x1 - dst->x0, dh = dst->y1 - dst->y0;
-    int sw = src->x1 - src->x0, sh = src->y1 - src->y0;
-    double xvpar = (double)dw / dh * sh / sw;
-
     struct mp_osd_res res = {
         .w = ctx->image_width,
         .h = ctx->image_height,
-        .display_par = vo->monitor_par / xvpar,
+        .display_par = 1.0 / vo->aspdat.par,
         .video_par = vo->aspdat.par,
     };
 
@@ -723,7 +708,6 @@ static void flip_page(struct vo *vo)
     put_xvimage(vo, ctx->xvimage[ctx->current_buf]);
 
     /* remember the currently visible buffer */
-    ctx->visible_buf = ctx->current_buf;
     ctx->current_buf = (ctx->current_buf + 1) % ctx->num_buffers;
 
     if (!ctx->Shmem_Flag)
@@ -768,7 +752,7 @@ static int query_format(struct vo *vo, uint32_t format)
 {
     struct xvctx *ctx = vo->priv;
     uint32_t i;
-    int flag = VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_OSD;
+    int flag = VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
 
     int fourcc = find_xv_format(format);
     if (fourcc) {
@@ -787,7 +771,6 @@ static void uninit(struct vo *vo)
 
     talloc_free(ctx->original_image);
 
-    ctx->visible_buf = -1;
     if (ctx->ai)
         XvFreeAdaptorInfo(ctx->ai);
     ctx->ai = NULL;
@@ -795,7 +778,7 @@ static void uninit(struct vo *vo)
         XFree(ctx->fo);
         ctx->fo = NULL;
     }
-    for (i = 0; i < ctx->total_buffers; i++)
+    for (i = 0; i < ctx->num_buffers; i++)
         deallocate_xvimage(vo, i);
     // uninit() shouldn't get called unless initialization went past vo_init()
     vo_x11_uninit(vo);
@@ -936,10 +919,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
 {
     struct xvctx *ctx = vo->priv;
     switch (request) {
-    case VOCTRL_PAUSE:
-        return (ctx->is_paused = 1);
-    case VOCTRL_RESUME:
-        return (ctx->is_paused = 0);
     case VOCTRL_GET_PANSCAN:
         return VO_TRUE;
     case VOCTRL_FULLSCREEN:

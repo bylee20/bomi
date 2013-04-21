@@ -70,8 +70,11 @@ static int demux_mf_fill_buffer(demuxer_t *demuxer, demux_stream_t *ds){
     if (mf->streams)
         entry_stream = mf->streams[mf->curr_frame];
     struct stream *stream = entry_stream;
-    if (!stream)
-        stream = open_stream(mf->names[mf->curr_frame], demuxer->opts, NULL);
+    if (!stream) {
+        char *filename = mf->names[mf->curr_frame];
+        if (filename)
+            stream = open_stream(filename, demuxer->opts, NULL);
+    }
 
     if (stream) {
         stream_seek(stream, 0);
@@ -87,53 +90,68 @@ static int demux_mf_fill_buffer(demuxer_t *demuxer, demux_stream_t *ds){
         talloc_free(data.start);
     }
 
-    if (stream != entry_stream)
+    if (stream && stream != entry_stream)
         free_stream(stream);
 
     mf->curr_frame++;
     return 1;
 }
 
-// force extension/type to have a fourcc
+// map file extension/type to a codec name
 
 static const struct {
   const char *type;
-  uint32_t format;
+  const char *codec;
 } type2format[] = {
-  { "bmp",  mmioFOURCC('b', 'm', 'p', ' ') },
-  { "dpx",  mmioFOURCC('d', 'p', 'x', ' ') },
-  { "j2c",  mmioFOURCC('M', 'J', '2', 'C') },
-  { "j2k",  mmioFOURCC('M', 'J', '2', 'C') },
-  { "jp2",  mmioFOURCC('M', 'J', '2', 'C') },
-  { "jpc",  mmioFOURCC('M', 'J', '2', 'C') },
-  { "jpeg", mmioFOURCC('I', 'J', 'P', 'G') },
-  { "jpg",  mmioFOURCC('I', 'J', 'P', 'G') },
-  { "jps",  mmioFOURCC('I', 'J', 'P', 'G') },
-  { "jls",  mmioFOURCC('I', 'J', 'P', 'G') },
-  { "thm",  mmioFOURCC('I', 'J', 'P', 'G') },
-  { "db",   mmioFOURCC('I', 'J', 'P', 'G') },
-  { "pcx",  mmioFOURCC('p', 'c', 'x', ' ') },
-  { "png",  mmioFOURCC('M', 'P', 'N', 'G') },
-  { "pns",  mmioFOURCC('M', 'P', 'N', 'G') },
-  { "ptx",  mmioFOURCC('p', 't', 'x', ' ') },
-  { "tga",  mmioFOURCC('M', 'T', 'G', 'A') },
-  { "tif",  mmioFOURCC('t', 'i', 'f', 'f') },
-  { "tiff",  mmioFOURCC('t', 'i', 'f', 'f') },
-  { "sgi",  mmioFOURCC('S', 'G', 'I', '1') },
-  { "sun",  mmioFOURCC('s', 'u', 'n', ' ') },
-  { "ras",  mmioFOURCC('s', 'u', 'n', ' ') },
-  { "ra",  mmioFOURCC('s', 'u', 'n', ' ') },
-  { "im1",  mmioFOURCC('s', 'u', 'n', ' ') },
-  { "im8",  mmioFOURCC('s', 'u', 'n', ' ') },
-  { "im24",  mmioFOURCC('s', 'u', 'n', ' ') },
-  { "sunras",  mmioFOURCC('s', 'u', 'n', ' ') },
-  { NULL,   0 }
+  { "bmp",  "bmp" },
+  { "dpx",  "dpx" },
+  { "j2c",  "jpeg2000" },
+  { "j2k",  "jpeg2000" },
+  { "jp2",  "jpeg2000" },
+  { "jpc",  "jpeg2000" },
+  { "jpeg", "mjpeg" },
+  { "jpg",  "mjpeg" },
+  { "jps",  "mjpeg" },
+  { "jls",  "ljpeg" },
+  { "thm",  "mjpeg" },
+  { "db",   "mjpeg" },
+  { "pcx",  "pcx" },
+  { "png",  "png" },
+  { "pns",  "png" },
+  { "ptx",  "ptx" },
+  { "tga",  "targa" },
+  { "tif",  "tiff" },
+  { "tiff", "tiff" },
+  { "sgi",  "sgi" },
+  { "sun",  "sunrast" },
+  { "ras",  "sunrast" },
+  { "rs",   "sunrast" },
+  { "ra",   "sunrast" },
+  { "im1",  "sunrast" },
+  { "im8",  "sunrast" },
+  { "im24",  "sunrast" },
+  { "im32",  "sunrast" },
+  { "sunras",  "sunrast" },
+  { "xbm",  "xbm" },
+  { "pam",  "pam" },
+  { "pbm",  "pbm" },
+  { "pgm",  "pgm" },
+  { "pgmyuv",  "pgmyuv" },
+  { "ppm",  "ppm" },
+  { "pnm",  "ppm" },
+  { "gif",  "gif" }, // usually handled by demux_lavf
+  { "pix",  "brender_pix" },
+  { "exr",  "exr" },
+  { "pic",  "pictor" },
+  { "xface",  "xface" },
+  { "xwd",  "xwd" },
+  {0}
 };
 
-static uint32_t probe_format(mf_t *mf)
+static const char *probe_format(mf_t *mf)
 {
     if (mf->nr_of_files < 1)
-        return 0;
+        return NULL;
     char *type = mf_type;
     if (!type || !type[0]) {
         char *p = strrchr(mf->names[0], '.');
@@ -141,13 +159,13 @@ static uint32_t probe_format(mf_t *mf)
             type = p + 1;
     }
     if (!type || !type[0])
-        return 0;
+        return NULL;
     int i;
     for (i = 0; type2format[i].type; i++) {
         if (strcasecmp(type, type2format[i].type) == 0)
             break;
     }
-    return type2format[i].format;
+    return type2format[i].codec;
 }
 
 static mf_t *open_mf(demuxer_t *demuxer)
@@ -193,12 +211,11 @@ static demuxer_t* demux_open_mf(demuxer_t* demuxer){
   // (even though new_sh_video() ought to take care of it)
   demuxer->video->sh = sh_video;
 
-  sh_video->format = probe_format(mf);
-  if (!sh_video->format) {
+  sh_video->gsh->codec = probe_format(mf);
+  if (!sh_video->gsh->codec) {
     mp_msg(MSGT_DEMUX, MSGL_INFO, "[demux_mf] file type was not set! (try -mf type=ext)\n" );
     goto error;
   }
-  mp_set_video_codec_from_tag(sh_video);
 
   // make sure that the video demuxer stream header knows about its
   // parent video demuxer stream (this is getting wacky), or else
@@ -232,12 +249,6 @@ static int demux_control_mf(demuxer_t *demuxer, int cmd, void *arg) {
   switch(cmd) {
     case DEMUXER_CTRL_GET_TIME_LENGTH:
       *((double *)arg) = (double)mf->nr_of_files / mf->sh->fps;
-      return DEMUXER_CTRL_OK;
-
-    case DEMUXER_CTRL_GET_PERCENT_POS:
-      if (mf->nr_of_files < 1)
-        return DEMUXER_CTRL_DONTKNOW;
-      *((int *)arg) = 100 * mf->curr_frame / mf->nr_of_files;
       return DEMUXER_CTRL_OK;
 
     case DEMUXER_CTRL_CORRECT_PTS:

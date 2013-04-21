@@ -1,19 +1,23 @@
 /*
- * This file is part of mplayer2.
+ * This file is part of mpv.
  *
- * mplayer2 is free software; you can redistribute it and/or modify
+ * mpv is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * mplayer2 is distributed in the hope that it will be useful,
+ * mpv is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with mplayer2; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * with mpv.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * You can alternatively redistribute this file and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
  */
 
 // Note that this file is not directly passed as shader, but run through some
@@ -108,8 +112,8 @@ void main() {
 }
 
 #!section frag_video
-uniform sampler2D textures[3];
-uniform vec2 textures_size[3];
+uniform sampler2D textures[4];
+uniform vec2 textures_size[4];
 uniform sampler1D lut_c_1d;
 uniform sampler1D lut_l_1d;
 uniform sampler2D lut_c_2d;
@@ -126,6 +130,9 @@ uniform vec2 dither_size;
 
 in vec2 texcoord;
 DECLARE_FRAGPARMS
+
+#define CONV_NV12 1
+#define CONV_PLANAR 2
 
 vec4 sample_bilinear(sampler2D tex, vec2 texsize, vec2 texcoord) {
     return texture(tex, texcoord);
@@ -312,15 +319,32 @@ vec4 sample_sharpen5(sampler2D tex, vec2 texsize, vec2 texcoord) {
 }
 
 void main() {
-#ifdef USE_PLANAR
+#ifndef USE_CONV
+#define USE_CONV 0
+#endif
+#if USE_CONV == CONV_PLANAR
     vec3 color = vec3(SAMPLE_L(textures[0], textures_size[0], texcoord).r,
                       SAMPLE_C(textures[1], textures_size[1], texcoord).r,
                       SAMPLE_C(textures[2], textures_size[2], texcoord).r);
+    float alpha = 1.0;
+#elif USE_CONV == CONV_NV12
+    vec3 color = vec3(SAMPLE_L(textures[0], textures_size[0], texcoord).r,
+                      SAMPLE_C(textures[1], textures_size[1], texcoord).rg);
+    float alpha = 1.0;
 #else
-    vec3 color = SAMPLE_L(textures[0], textures_size[0], texcoord).rgb;
+    vec4 acolor = SAMPLE_L(textures[0], textures_size[0], texcoord);
+    vec3 color = acolor.rgb;
+    float alpha = acolor.a;
+#endif
+#ifdef USE_ALPHA_PLANE
+    alpha = SAMPLE_L(textures[USE_ALPHA_PLANE],
+                     textures_size[USE_ALPHA_PLANE], texcoord).r;
 #endif
 #ifdef USE_GBRP
     color.gbr = color;
+#endif
+#ifdef USE_SWAP_UV
+    color.rbg = color;
 #endif
 #ifdef USE_YGRAY
     // NOTE: actually slightly wrong for 16 bit input video, and completely
@@ -351,5 +375,9 @@ void main() {
     float dither_value = texture(dither, gl_FragCoord.xy / dither_size).r;
     color = floor(color * dither_multiply + dither_value ) / dither_quantization;
 #endif
-    out_color = vec4(color, 1);
+#ifdef USE_ALPHA
+    out_color = vec4(color, alpha);
+#else
+    out_color = vec4(color, 1.0);
+#endif
 }

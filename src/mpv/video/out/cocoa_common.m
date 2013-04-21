@@ -92,6 +92,8 @@ static bool RightAltPressed(NSEvent *event)
 - (void)fullscreen;
 - (void)mouseEvent:(NSEvent *)theEvent;
 - (void)mulSize:(float)multiplier;
+- (int)titleHeight;
+- (NSRect)clipFrame:(NSRect)frame withContentAspect:(NSSize) aspect;
 - (void)setContentSize:(NSSize)newSize keepCentered:(BOOL)keepCentered;
 @end
 
@@ -122,7 +124,7 @@ struct vo_cocoa_state {
 
     int display_cursor;
     int cursor_timer;
-    int cursor_autohide_delay;
+    int vo_cursor_autohide_delay;
 
     bool did_resize;
     bool out_fs_resize;
@@ -150,11 +152,11 @@ static struct vo_cocoa_state *vo_cocoa_init_state(struct vo *vo)
         .windowed_frame = {{0,0},{0,0}},
         .out_fs_resize = NO,
         .display_cursor = 1,
-        .cursor_autohide_delay = vo->opts->cursor_autohide_delay,
+        .vo_cursor_autohide_delay = vo->opts->cursor_autohide_delay,
         .power_mgmt_assertion = kIOPMNullAssertionID,
         .accumulated_scroll = 0,
     };
-    if (!vo_border) s->windowed_mask = NSBorderlessWindowMask;
+    if (!vo->opts->border) s->windowed_mask = NSBorderlessWindowMask;
     return s;
 }
 
@@ -201,7 +203,7 @@ static void disable_power_management(struct vo *vo)
         assertion_type = kIOPMAssertionTypePreventUserIdleDisplaySleep;
 
     IOPMAssertionCreateWithName(assertion_type, kIOPMAssertionLevelOn,
-        CFSTR("org.mplayer2.power_mgmt"), &s->power_mgmt_assertion);
+        CFSTR("io.mpv.power_management"), &s->power_mgmt_assertion);
 }
 
 int vo_cocoa_init(struct vo *vo)
@@ -278,28 +280,28 @@ static int get_screen_handle(int identifier, NSWindow *window, NSScreen **screen
 static void update_screen_info(struct vo *vo)
 {
     struct vo_cocoa_state *s = vo->cocoa;
-    struct MPOpts *opts = vo->opts;
+    struct mp_vo_opts *opts = vo->opts;
     NSScreen *ws, *fss;
 
-    get_screen_handle(opts->vo_screen_id, s->window, &ws);
+    get_screen_handle(opts->screen_id, s->window, &ws);
     s->screen_frame = [ws frame];
 
-    get_screen_handle(opts->vo_fsscreen_id, s->window, &fss);
+    get_screen_handle(opts->fsscreen_id, s->window, &fss);
     s->fsscreen_frame = [fss frame];
 }
 
 void vo_cocoa_update_xinerama_info(struct vo *vo)
 {
     struct vo_cocoa_state *s = vo->cocoa;
-    struct MPOpts *opts = vo->opts;
+    struct mp_vo_opts *opts = vo->opts;
 
     update_screen_info(vo);
     aspect_save_screenres(vo, s->screen_frame.size.width,
                               s->screen_frame.size.height);
-    opts->vo_screenwidth = s->screen_frame.size.width;
-    opts->vo_screenheight = s->screen_frame.size.height;
-    xinerama_x = s->screen_frame.origin.x;
-    xinerama_y = s->screen_frame.origin.y;
+    opts->screenwidth = s->screen_frame.size.width;
+    opts->screenheight = s->screen_frame.size.height;
+    vo->xinerama_x = s->screen_frame.origin.x;
+    vo->xinerama_y = s->screen_frame.origin.y;
 }
 
 int vo_cocoa_change_attributes(struct vo *vo)
@@ -338,9 +340,9 @@ static void vo_set_level(struct vo *vo, int ontop)
 
 void vo_cocoa_ontop(struct vo *vo)
 {
-    struct MPOpts *opts = vo->opts;
-    opts->vo_ontop = !opts->vo_ontop;
-    vo_set_level(vo, opts->vo_ontop);
+    struct mp_vo_opts *opts = vo->opts;
+    opts->ontop = !opts->ontop;
+    vo_set_level(vo, opts->ontop);
 }
 
 static void update_state_sizes(struct vo_cocoa_state *s,
@@ -355,9 +357,7 @@ static int create_window(struct vo *vo, uint32_t d_width, uint32_t d_height,
                          uint32_t flags, int gl3profile)
 {
     struct vo_cocoa_state *s = vo->cocoa;
-    struct MPOpts *opts = vo->opts;
-
-    const NSRect window_rect = NSMakeRect(xinerama_x, xinerama_y,
+    const NSRect window_rect = NSMakeRect(vo->xinerama_x, vo->xinerama_y,
                                           d_width, d_height);
     const NSRect glview_rect = NSMakeRect(0, 0, 100, 100);
 
@@ -383,11 +383,6 @@ static int create_window(struct vo *vo, uint32_t d_width, uint32_t d_height,
       } else {
           attr[i++] = NSOpenGLProfileVersionLegacy;
       }
-    } else if(gl3profile) {
-        mp_msg(MSGT_VO, MSGL_ERR,
-            "[cocoa] Invalid pixel format attribute "
-            "(GL3 is not supported on OSX versions prior to 10.7)\n");
-        return -1;
     }
     attr[i++] = NSOpenGLPFADoubleBuffer; // double buffered
     attr[i] = (NSOpenGLPixelFormatAttribute)0;
@@ -415,21 +410,9 @@ static int create_window(struct vo *vo, uint32_t d_width, uint32_t d_height,
 
     [NSApp setDelegate:s->window];
     [s->window setDelegate:s->window];
-    [s->window setContentSize:s->current_video_size];
+
+    [s->window setContentSize:s->current_video_size keepCentered:YES];
     [s->window setContentAspectRatio:s->current_video_size];
-    [s->window setFrameOrigin:NSMakePoint(vo->dx, vo->dy)];
-
-    if (flags & VOFLAG_HIDDEN) {
-        [s->window orderOut:nil];
-    } else {
-        [s->window makeKeyAndOrderFront:nil];
-        [NSApp activateIgnoringOtherApps:YES];
-    }
-
-    if (flags & VOFLAG_FULLSCREEN)
-        vo_cocoa_fullscreen(vo);
-
-    vo_set_level(vo, opts->vo_ontop);
 
     return 0;
 }
@@ -440,7 +423,7 @@ static void update_window(struct vo *vo)
 
     if (s->current_video_size.width  != s->previous_video_size.width ||
         s->current_video_size.height != s->previous_video_size.height) {
-        if (vo_fs) {
+        if (vo->opts->fs) {
             // we will resize as soon as we get out of fullscreen
             s->out_fs_resize = YES;
         } else {
@@ -453,11 +436,18 @@ static void update_window(struct vo *vo)
     }
 }
 
-int vo_cocoa_create_window(struct vo *vo, uint32_t d_width,
+int vo_cocoa_config_window(struct vo *vo, uint32_t d_width,
                            uint32_t d_height, uint32_t flags,
                            int gl3profile)
 {
     struct vo_cocoa_state *s = vo->cocoa;
+    struct mp_vo_opts *opts = vo->opts;
+
+    if (vo->config_count > 0) {
+        NSPoint origin = [s->window frame].origin;
+        vo->dx = origin.x;
+        vo->dy = origin.y;
+    }
 
     update_state_sizes(s, d_width, d_height);
 
@@ -467,6 +457,20 @@ int vo_cocoa_create_window(struct vo *vo, uint32_t d_width,
     } else {
         update_window(vo);
     }
+
+    [s->window setFrameOrigin:NSMakePoint(vo->dx, vo->dy)];
+
+    if (flags & VOFLAG_HIDDEN) {
+        [s->window orderOut:nil];
+    } else {
+        [s->window makeKeyAndOrderFront:nil];
+        [NSApp activateIgnoringOtherApps:YES];
+    }
+
+    if (flags & VOFLAG_FULLSCREEN && !vo->opts->fs)
+        vo_cocoa_fullscreen(vo);
+
+    vo_set_level(vo, opts->ontop);
 
     resize_window(vo);
 
@@ -490,12 +494,12 @@ static void vo_cocoa_display_cursor(struct vo *vo, int requested_state)
 {
     struct vo_cocoa_state *s = vo->cocoa;
     if (requested_state) {
-        if (!vo_fs || s->cursor_autohide_delay > -2) {
+        if (!vo->opts->fs || s->vo_cursor_autohide_delay > -2) {
             s->display_cursor = requested_state;
             CGDisplayShowCursor(kCGDirectMainDisplay);
         }
     } else {
-        if (s->cursor_autohide_delay != -1) {
+        if (s->vo_cursor_autohide_delay != -1) {
             s->display_cursor = requested_state;
             CGDisplayHideCursor(kCGDirectMainDisplay);
         }
@@ -509,8 +513,8 @@ int vo_cocoa_check_events(struct vo *vo)
     int ms_time = (int) ([[NSProcessInfo processInfo] systemUptime] * 1000);
 
     // automatically hide mouse cursor
-    if (vo_fs && s->display_cursor &&
-        (ms_time - s->cursor_timer >= s->cursor_autohide_delay)) {
+    if (vo->opts->fs && s->display_cursor &&
+        (ms_time - s->cursor_timer >= s->vo_cursor_autohide_delay)) {
         vo_cocoa_display_cursor(vo, 0);
         s->cursor_timer = ms_time;
     }
@@ -647,7 +651,8 @@ void create_menu()
 - (void)fullscreen
 {
     struct vo_cocoa_state *s = _vo->cocoa;
-    if (!vo_fs) {
+    struct mp_vo_opts *opts = _vo->opts;
+    if (!opts->fs) {
         update_screen_info(_vo);
         if (current_screen_has_dock_or_menubar(_vo))
             [NSApp setPresentationOptions:NSApplicationPresentationHideDock|
@@ -656,7 +661,7 @@ void create_menu()
         [self setHasShadow:NO];
         [self setStyleMask:s->fullscreen_mask];
         [self setFrame:s->fsscreen_frame display:YES animate:NO];
-        vo_fs = VO_TRUE;
+        opts->fs = true;
         vo_cocoa_display_cursor(_vo, 0);
         [self setMovableByWindowBackground: NO];
     } else {
@@ -670,7 +675,7 @@ void create_menu()
             s->out_fs_resize = NO;
         }
         [self setContentAspectRatio:s->current_video_size];
-        vo_fs = VO_FALSE;
+        opts->fs = false;
         vo_cocoa_display_cursor(_vo, 1);
         [self setMovableByWindowBackground: YES];
     }
@@ -694,7 +699,11 @@ void create_menu()
 {
     // this is only valid as a starting value. it will be rewritten in the
     // -fullscreen method.
-    return !vo_fs;
+    if (_vo) {
+        return !_vo->opts->fs;
+    } else {
+        return NO;
+    }
 }
 
 - (void)handleQuitEvent:(NSAppleEventDescriptor*)e
@@ -729,7 +738,7 @@ void create_menu()
 
 - (void)mouseMoved: (NSEvent *) theEvent
 {
-    if (vo_fs)
+    if (_vo->opts->fs)
         vo_cocoa_display_cursor(_vo, 1);
 }
 
@@ -850,7 +859,7 @@ void create_menu()
 
 - (void)applicationWillBecomeActive:(NSNotification *)aNotification
 {
-    if (vo_fs && current_screen_has_dock_or_menubar(_vo)) {
+    if (_vo->opts->fs && current_screen_has_dock_or_menubar(_vo)) {
         struct vo_cocoa_state *s = _vo->cocoa;
         [self setLevel:s->window_level];
         [NSApp setPresentationOptions:NSApplicationPresentationHideDock|
@@ -860,7 +869,7 @@ void create_menu()
 
 - (void)applicationWillResignActive:(NSNotification *)aNotification
 {
-    if (vo_fs) {
+    if (_vo->opts->fs) {
         [self setLevel:NSNormalWindowLevel];
         [NSApp setPresentationOptions:NSApplicationPresentationDefault];
     }
@@ -887,7 +896,7 @@ void create_menu()
 
 - (void)mulSize:(float)multiplier
 {
-    if (!vo_fs) {
+    if (!_vo->opts->fs) {
         NSSize size = {
             .width  = _vo->aspdat.prew * multiplier,
             .height = _vo->aspdat.preh * multiplier
@@ -896,35 +905,58 @@ void create_menu()
     }
 }
 
-- (void)setCenteredContentSize:(NSSize)ns
+- (int)titleHeight
 {
-    NSRect nf = [self frame];
-    NSRect vf = [[self screen] visibleFrame];
-    NSRect cb = [[self contentView] bounds];
-    int title_height = nf.size.height - cb.size.height;
-    double ratio = (double)ns.width / (double)ns.height;
+    NSRect of    = [self frame];
+    NSRect cb    = [[self contentView] bounds];
+    return of.size.height - cb.size.height;
+}
 
-    // clip the new size to the visibleFrame's size if needed
-    if (ns.width > vf.size.width || ns.height + title_height > vf.size.height) {
-        ns = vf.size;
-        ns.height -= title_height; // make space for the title bar
+- (NSRect)clipFrame:(NSRect)frame withContentAspect:(NSSize) aspect
+{
+    NSRect vf    = [[self screen] visibleFrame];
+    double ratio = (double)aspect.width / (double)aspect.height;
 
-        if (ns.width > ns.height) {
-            ns.height = ((double)ns.width * 1/ratio + 0.5);
-        } else {
-            ns.width = ((double)ns.height * ratio + 0.5);
-        }
+    // clip frame to screens visibile frame
+    frame = CGRectIntersection(frame, vf);
+
+    NSSize s = frame.size;
+    s.height -= [self titleHeight];
+
+    if (s.width > s.height) {
+        s.width  = ((double)s.height * ratio + 0.5);
+    } else {
+        s.height = ((double)s.width * 1/ratio + 0.5);
     }
 
-    int dw = nf.size.width - ns.width;
-    int dh = nf.size.height - ns.height - title_height;
+    s.height += [self titleHeight];
+    frame.size = s;
 
-    nf.origin.x += dw / 2;
-    nf.origin.y += dh / 2;
+    return frame;
+}
 
-    NSRect new_frame =
-        NSMakeRect(nf.origin.x, nf.origin.y, ns.width, ns.height + title_height);
-    [self setFrame:new_frame display:YES animate:NO];
+- (void)setCenteredContentSize:(NSSize)ns
+{
+#define get_center(x) NSMakePoint(CGRectGetMidX((x)), CGRectGetMidY((x)))
+    NSRect of    = [self frame];
+    NSRect vf    = [[self screen] visibleFrame];
+    NSPoint old_center = get_center(of);
+
+    NSRect nf = NSMakeRect(vf.origin.x, vf.origin.y,
+                           ns.width, ns.height + [self titleHeight]);
+
+    nf = [self clipFrame:nf withContentAspect:ns];
+
+    NSPoint new_center = get_center(nf);
+
+    int dx0 = old_center.x - new_center.x;
+    int dy0 = old_center.y - new_center.y;
+
+    nf.origin.x += dx0;
+    nf.origin.y += dy0;
+
+    [self setFrame:nf display:YES animate:NO];
+#undef get_center
 }
 
 - (void)setContentSize:(NSSize)ns keepCentered:(BOOL)keepCentered

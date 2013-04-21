@@ -61,8 +61,6 @@
 #include <lirc/lircc.h>
 #endif
 
-#include "ar.h"
-
 #define MP_MAX_KEY_DOWN 32
 
 struct cmd_bind {
@@ -92,6 +90,7 @@ struct key_name {
 #define ARG_STRING              { .type = {"", NULL, &m_option_type_string} }
 #define ARG_CHOICE(c)           { .type = {"", NULL, &m_option_type_choice,    \
                                            M_CHOICES(c)} }
+#define ARG_TIME                { .type = {"", NULL, &m_option_type_time} }
 
 #define OARG_FLOAT(def)         { .type = {"", NULL, &m_option_type_float},    \
                                   .optional = true, .v.f = def }
@@ -117,7 +116,7 @@ static const mp_cmd_t mp_cmds[] = {
   { MP_CMD_RADIO_STEP_FREQ, "radio_step_freq", {ARG_FLOAT } },
 
   { MP_CMD_SEEK, "seek", {
-      ARG_FLOAT,
+      ARG_TIME,
       OARG_CHOICE(0, ({"relative", 0},          {"0", 0},
                       {"absolute-percent", 1},  {"1", 1},
                       {"absolute", 2},          {"2", 2})),
@@ -220,10 +219,9 @@ static const struct legacy_cmd legacy_cmds[] = {
     {"audio_delay",             "add audio-delay"},
     {"switch_audio",            "cycle audio"},
     {"balance",                 "add balance"},
-    {"vo_fullscreen",           "no-osd cycle fullscreen"},
+    {"vo_fullscreen",           "cycle fullscreen"},
     {"panscan",                 "add panscan"},
     {"vo_ontop",                "cycle ontop"},
-    {"vo_rootwin",              "cycle rootwin"},
     {"vo_border",               "cycle border"},
     {"frame_drop",              "cycle framedrop"},
     {"gamma",                   "add gamma"},
@@ -388,17 +386,6 @@ static const struct key_name key_names[] = {
   { MP_JOY_BTN8,        "JOY_BTN8" },
   { MP_JOY_BTN9,        "JOY_BTN9" },
 
-  { MP_AR_PLAY,         "AR_PLAY" },
-  { MP_AR_PLAY_HOLD,    "AR_PLAY_HOLD" },
-  { MP_AR_NEXT,         "AR_NEXT" },
-  { MP_AR_NEXT_HOLD,    "AR_NEXT_HOLD" },
-  { MP_AR_PREV,         "AR_PREV" },
-  { MP_AR_PREV_HOLD,    "AR_PREV_HOLD" },
-  { MP_AR_MENU,         "AR_MENU" },
-  { MP_AR_MENU_HOLD,    "AR_MENU_HOLD" },
-  { MP_AR_VUP,          "AR_VUP" },
-  { MP_AR_VDOWN,        "AR_VDOWN" },
-
   { MP_KEY_POWER,       "POWER" },
   { MP_KEY_MENU,        "MENU" },
   { MP_KEY_PLAY,        "PLAY" },
@@ -518,6 +505,8 @@ int async_quit_request;
 static int print_key_list(m_option_t *cfg, char *optname, char *optparam);
 static int print_cmd_list(m_option_t *cfg, char *optname, char *optparam);
 
+#define OPT_BASE_STRUCT struct MPOpts
+
 // Our command line options
 static const m_option_t input_conf[] = {
     OPT_STRING("conf", input.config_file, CONF_GLOBAL),
@@ -526,7 +515,6 @@ static const m_option_t input_conf[] = {
     { "keylist", print_key_list, CONF_TYPE_PRINT_FUNC, CONF_GLOBAL | CONF_NOCFG },
     { "cmdlist", print_cmd_list, CONF_TYPE_PRINT_FUNC, CONF_GLOBAL | CONF_NOCFG },
     OPT_STRING("js-dev", input.js_dev, CONF_GLOBAL),
-    OPT_STRING("ar-dev", input.ar_dev, CONF_GLOBAL),
     OPT_STRING("file", input.in_file, CONF_GLOBAL),
     OPT_FLAG("default-bindings", input.default_bindings, CONF_GLOBAL),
     OPT_FLAG("test", input.test, CONF_GLOBAL),
@@ -538,7 +526,6 @@ static const m_option_t mp_input_opts[] = {
     OPT_FLAG("joystick", input.use_joystick, CONF_GLOBAL),
     OPT_FLAG("lirc", input.use_lirc, CONF_GLOBAL),
     OPT_FLAG("lircc", input.use_lircc, CONF_GLOBAL),
-    OPT_FLAG("ar", input.use_ar, CONF_GLOBAL),
     { NULL, NULL, 0, 0, 0, 0, NULL}
 };
 
@@ -576,7 +563,7 @@ static char *get_key_combo_name(int *keys, int max)
     while (1) {
         ret = get_key_name(*keys, ret);
         if (--max && *++keys)
-            talloc_asprintf_append_buffer(ret, "-");
+            ret = talloc_asprintf_append_buffer(ret, "-");
         else
             break;
     }
@@ -819,7 +806,7 @@ mp_cmd_t *mp_input_parse_cmd(bstr str, const char *loc)
         if (bstrcasecmp(bstr_splice(str, 0, old_len),
                         (bstr) {(char *)entry->old, old_len}) == 0)
         {
-            mp_tmsg(MSGT_INPUT, MSGL_V, "Warning: command '%s' is "
+            mp_tmsg(MSGT_INPUT, MSGL_WARN, "Warning: command '%s' is "
                     "deprecated, replaced with '%s' at %s.\n",
                     entry->old, entry->new, loc);
             bstr s = bstr_cut(str, old_len);
@@ -1774,27 +1761,6 @@ struct input_ctx *mp_input_init(struct input_conf *input_conf,
         int fd = lircc_init("mpv", NULL);
         if (fd >= 0)
             mp_input_add_cmd_fd(ictx, fd, 1, NULL, lircc_cleanup);
-    }
-#endif
-
-#ifdef CONFIG_APPLE_REMOTE
-    if (input_conf->use_ar) {
-        if (mp_input_ar_init() < 0)
-            mp_tmsg(MSGT_INPUT, MSGL_ERR, "Can't init Apple Remote.\n");
-        else
-            mp_input_add_key_fd(ictx, -1, 0, mp_input_ar_read,
-                                mp_input_ar_close, NULL);
-    }
-#endif
-
-#ifdef CONFIG_APPLE_IR
-    if (input_conf->use_ar) {
-        int fd = mp_input_appleir_init(input_conf->ar_dev);
-        if (fd < 0)
-            mp_tmsg(MSGT_INPUT, MSGL_ERR, "Can't init Apple Remote.\n");
-        else
-            mp_input_add_key_fd(ictx, fd, 1, mp_input_appleir_read,
-                                close, NULL);
     }
 #endif
 

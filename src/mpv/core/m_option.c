@@ -59,6 +59,14 @@ char *m_option_strerror(int code)
     }
 }
 
+int m_option_required_params(const m_option_t *opt)
+{
+    if (((opt->flags & M_OPT_OPTIONAL_PARAM) ||
+            (opt->type->flags & M_OPT_TYPE_OPTIONAL_PARAM)))
+        return 0;
+    return 1;
+}
+
 static const struct m_option *m_option_list_findb(const struct m_option *list,
                                                   struct bstr name)
 {
@@ -177,6 +185,34 @@ const m_option_type_t m_option_type_store = {
     .size  = sizeof(int),
     .flags = M_OPT_TYPE_OPTIONAL_PARAM,
     .parse = parse_store,
+};
+
+// Same for float types
+
+#undef VAL
+#define VAL(x) (*(float *)(x))
+
+static int parse_store_float(const m_option_t *opt, struct bstr name,
+                             struct bstr param, void *dst)
+{
+    if (param.len == 0 || bstrcasecmp0(param, "yes") == 0) {
+        if (dst)
+            VAL(dst) = opt->max;
+        return 0;
+    } else {
+        mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+               "Invalid parameter for %.*s flag: %.*s\n",
+               BSTR_P(name), BSTR_P(param));
+        return M_OPT_DISALLOW_PARAM;
+    }
+}
+
+const m_option_type_t m_option_type_float_store = {
+    // can only be activated
+    .name  = "Flag",
+    .size  = sizeof(float),
+    .flags = M_OPT_TYPE_OPTIONAL_PARAM,
+    .parse = parse_store_float,
 };
 
 // Integer
@@ -522,6 +558,10 @@ static int clamp_double(const m_option_t *opt, void *val)
         v = opt->min;
         r = M_OPT_OUT_OF_RANGE;
     }
+    if (!isfinite(v)) {
+        v = opt->min;
+        r = M_OPT_OUT_OF_RANGE;
+    }
     VAL(val) = v;
     return r;
 }
@@ -535,23 +575,8 @@ static int parse_double(const m_option_t *opt, struct bstr name,
     struct bstr rest;
     double tmp_float = bstrtod(param, &rest);
 
-    switch (rest.len ? rest.start[0] : 0) {
-    case ':':
-    case '/':
-        tmp_float /= bstrtod(bstr_cut(rest, 1), &rest);
-        break;
-    case '.':
-    case ',':
-        /* we also handle floats specified with
-         * non-locale decimal point ::atmos
-         */
-        rest = bstr_cut(rest, 1);
-        if (tmp_float < 0)
-            tmp_float -= 1.0 / pow(10, rest.len) * bstrtod(rest, &rest);
-        else
-            tmp_float += 1.0 / pow(10, rest.len) * bstrtod(rest, &rest);
-        break;
-    }
+    if (bstr_eatstart0(&rest, ":") || bstr_eatstart0(&rest, "/"))
+        tmp_float /= bstrtod(rest, &rest);
 
     if (rest.len) {
         mp_msg(MSGT_CFGPARSER, MSGL_ERR,
@@ -577,6 +602,13 @@ static int parse_double(const m_option_t *opt, struct bstr name,
             return M_OPT_OUT_OF_RANGE;
         }
 
+    if (!isfinite(tmp_float)) {
+        mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+               "The %.*s option must be a finite number: %.*s\n",
+               BSTR_P(name), BSTR_P(param));
+        return M_OPT_OUT_OF_RANGE;
+    }
+
     if (dst)
         VAL(dst) = tmp_float;
     return 1;
@@ -587,9 +619,9 @@ static char *print_double(const m_option_t *opt, const void *val)
     return talloc_asprintf(NULL, "%f", VAL(val));
 }
 
-static char *print_double_f2(const m_option_t *opt, const void *val)
+static char *print_double_f3(const m_option_t *opt, const void *val)
 {
-    return talloc_asprintf(NULL, "%.2f", VAL(val));
+    return talloc_asprintf(NULL, "%.3f", VAL(val));
 }
 
 static void add_double(const m_option_t *opt, void *val, double add, bool wrap)
@@ -615,7 +647,7 @@ const m_option_type_t m_option_type_double = {
     .size  = sizeof(double),
     .parse = parse_double,
     .print = print_double,
-    .pretty_print = print_double_f2,
+    .pretty_print = print_double_f3,
     .copy  = copy_opt,
     .clamp = clamp_double,
 };
@@ -646,9 +678,9 @@ static char *print_float(const m_option_t *opt, const void *val)
     return talloc_asprintf(NULL, "%f", VAL(val));
 }
 
-static char *print_float_f2(const m_option_t *opt, const void *val)
+static char *print_float_f3(const m_option_t *opt, const void *val)
 {
-    return talloc_asprintf(NULL, "%.2f", VAL(val));
+    return talloc_asprintf(NULL, "%.3f", VAL(val));
 }
 
 static void add_float(const m_option_t *opt, void *val, double add, bool wrap)
@@ -664,7 +696,7 @@ const m_option_type_t m_option_type_float = {
     .size  = sizeof(float),
     .parse = parse_float,
     .print = print_float,
-    .pretty_print = print_float_f2,
+    .pretty_print = print_float_f3,
     .copy  = copy_opt,
     .add = add_float,
     .clamp = clamp_float,
@@ -1116,6 +1148,54 @@ const m_option_type_t m_option_type_print_func = {
 #undef VAL
 #define VAL(x) (*(char ***)(x))
 
+// Return 0 on success, otherwise error code
+// On success, set *out_name and *out_val, and advance *str
+// out_val.start is NULL if there was no parameter.
+static int split_subconf(bstr *str, bstr *out_name, bstr *out_val)
+{
+    bstr p = *str;
+    // Skip option name (until the next character that could possibly be a
+    // meta character in option parsing)
+    int optlen = bstrcspn(p, ":=,\\%\"'");
+    bstr subopt = bstr_splice(p, 0, optlen);
+    bstr subparam = {0};
+    p = bstr_cut(p, optlen);
+    if (bstr_eatstart0(&p, "=")) {
+        if (bstr_startswith0(p, "\"")) {
+            p = bstr_cut(p, 1);
+            optlen = bstrcspn(p, "\"");
+            subparam = bstr_splice(p, 0, optlen);
+            p = bstr_cut(p, optlen);
+            if (!bstr_startswith0(p, "\"")) {
+                mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+                       "Terminating '\"' missing for '%.*s'\n",
+                       BSTR_P(subopt));
+                return M_OPT_INVALID;
+            }
+            p = bstr_cut(p, 1);
+        } else if (bstr_startswith0(p, "%")) {
+            p = bstr_cut(p, 1);
+            optlen = bstrtoll(p, &p, 0);
+            if (!bstr_startswith0(p, "%") || (optlen > p.len - 1)) {
+                mp_msg(MSGT_CFGPARSER, MSGL_ERR,
+                       "Invalid length %d for '%.*s'\n",
+                       optlen, BSTR_P(subopt));
+                return M_OPT_INVALID;
+            }
+            subparam = bstr_splice(p, 1, optlen + 1);
+            p = bstr_cut(p, optlen + 1);
+        } else {
+            optlen = bstrcspn(p, ":,");
+            subparam = bstr_splice(p, 0, optlen);
+            p = bstr_cut(p, optlen);
+        }
+    }
+    *str = p;
+    *out_name = subopt;
+    *out_val = subparam;
+    return 0;
+}
+
 static int parse_subconf(const m_option_t *opt, struct bstr name,
                          struct bstr param, void *dst)
 {
@@ -1128,41 +1208,10 @@ static int parse_subconf(const m_option_t *opt, struct bstr name,
     struct bstr p = param;
 
     while (p.len) {
-        int optlen = bstrcspn(p, ":=");
-        struct bstr subopt = bstr_splice(p, 0, optlen);
-        struct bstr subparam = bstr0(NULL);
-        p = bstr_cut(p, optlen);
-        if (bstr_startswith0(p, "=")) {
-            p = bstr_cut(p, 1);
-            if (bstr_startswith0(p, "\"")) {
-                p = bstr_cut(p, 1);
-                optlen = bstrcspn(p, "\"");
-                subparam = bstr_splice(p, 0, optlen);
-                p = bstr_cut(p, optlen);
-                if (!bstr_startswith0(p, "\"")) {
-                    mp_msg(MSGT_CFGPARSER, MSGL_ERR,
-                           "Terminating '\"' missing for '%.*s'\n",
-                           BSTR_P(subopt));
-                    return M_OPT_INVALID;
-                }
-                p = bstr_cut(p, 1);
-            } else if (bstr_startswith0(p, "%")) {
-                p = bstr_cut(p, 1);
-                optlen = bstrtoll(p, &p, 0);
-                if (!bstr_startswith0(p, "%") || (optlen > p.len - 1)) {
-                    mp_msg(MSGT_CFGPARSER, MSGL_ERR,
-                           "Invalid length %d for '%.*s'\n",
-                           optlen, BSTR_P(subopt));
-                    return M_OPT_INVALID;
-                }
-                subparam = bstr_splice(p, 1, optlen + 1);
-                p = bstr_cut(p, optlen + 1);
-            } else {
-                optlen = bstrcspn(p, ":");
-                subparam = bstr_splice(p, 0, optlen);
-                p = bstr_cut(p, optlen);
-            }
-        }
+        bstr subopt, subparam;
+        int r = split_subconf(&p, &subopt, &subparam);
+        if (r < 0)
+            return r;
         if (bstr_startswith0(p, ":"))
             p = bstr_cut(p, 1);
         else if (p.len > 0) {
@@ -1173,8 +1222,8 @@ static int parse_subconf(const m_option_t *opt, struct bstr name,
 
         if (dst) {
             lst = talloc_realloc(NULL, lst, char *, 2 * (nr + 2));
-            lst[2 * nr] = bstrdup0(lst, subopt);
-            lst[2 * nr + 1] = bstrdup0(lst, subparam);
+            lst[2 * nr] = bstrto0(lst, subopt);
+            lst[2 * nr + 1] = bstrto0(lst, subparam);
             memset(&lst[2 * (nr + 1)], 0, 2 * sizeof(char *));
             nr++;
         }
@@ -1547,6 +1596,8 @@ static int parse_timestring(struct bstr str, double *time, char endchar)
         return 0;  /* unsupported time format */
     if (len < str.len && str.start[len] != endchar)
         return 0;  /* invalid extra characters at the end */
+    if (!isfinite(*time))
+        return 0;
     return len;
 }
 
@@ -1667,216 +1718,151 @@ static int find_obj_desc(struct bstr name, const m_obj_list_t *l,
     return 0;
 }
 
-static int get_obj_param(struct bstr opt_name, struct bstr obj_name,
-                         const m_struct_t *desc, struct bstr str, int *nold,
-                         int oldmax, char **dst)
+// Consider -vf a=b=c:d=e. This verifies "b"="c" and "d"="e" and that the
+// option names/values are correct. Try to determine whether an option
+// without '=' sets a flag, or whether it's a positional argument.
+static int get_obj_param(bstr opt_name, bstr obj_name, const m_struct_t *desc,
+                         bstr name, bstr val, int *nold, int oldmax,
+                         bstr *out_name, bstr *out_val)
 {
-    const m_option_t *opt;
+    const m_option_t *opt = m_option_list_findb(desc->fields, name);
     int r;
 
-    int eq = bstrchr(str, '=');
-
-    if (eq > 0) {   // eq == 0  ignored
-        struct bstr p = bstr_cut(str, eq + 1);
-        str = bstr_splice(str, 0, eq);
-        opt = m_option_list_findb(desc->fields, str);
+    // va.start != NULL => of the form name=val (not positional)
+    // If it's just "name", and the associated option exists and is a flag,
+    // don't accept it as positional argument.
+    if (val.start || (opt && m_option_required_params(opt) == 0)) {
         if (!opt) {
             mp_msg(MSGT_CFGPARSER, MSGL_ERR,
                    "Option %.*s: %.*s doesn't have a %.*s parameter.\n",
-                   BSTR_P(opt_name), BSTR_P(obj_name), BSTR_P(str));
+                   BSTR_P(opt_name), BSTR_P(obj_name), BSTR_P(name));
             return M_OPT_UNKNOWN;
         }
-        r = m_option_parse(opt, str, p, NULL);
+        r = m_option_parse(opt, name, val, NULL);
         if (r < 0) {
             if (r > M_OPT_EXIT)
                 mp_msg(MSGT_CFGPARSER, MSGL_ERR, "Option %.*s: "
                        "Error while parsing %.*s parameter %.*s (%.*s)\n",
-                       BSTR_P(opt_name), BSTR_P(obj_name), BSTR_P(str),
-                       BSTR_P(p));
+                       BSTR_P(opt_name), BSTR_P(obj_name), BSTR_P(name),
+                       BSTR_P(val));
             return r;
         }
-        if (dst) {
-            dst[0] = bstrdup0(NULL, str);
-            dst[1] = bstrdup0(NULL, p);
-        }
+        *out_name = name;
+        *out_val = val;
+        return 1;
     } else {
+        val = name;
+        // positional fields
+        if (val.len == 0) { // Empty field, count it and go on
+            (*nold)++;
+            return 1;
+        }
         if ((*nold) >= oldmax) {
             mp_msg(MSGT_CFGPARSER, MSGL_ERR, "Option %.*s: %.*s has only %d params, so you can't give more than %d unnamed params.\n",
                    BSTR_P(opt_name), BSTR_P(obj_name), oldmax, oldmax);
             return M_OPT_OUT_OF_RANGE;
         }
         opt = &desc->fields[(*nold)];
-        r = m_option_parse(opt, bstr0(opt->name), str, NULL);
+        r = m_option_parse(opt, bstr0(opt->name), val, NULL);
         if (r < 0) {
             if (r > M_OPT_EXIT)
                 mp_msg(MSGT_CFGPARSER, MSGL_ERR, "Option %.*s: "
                        "Error while parsing %.*s parameter %s (%.*s)\n",
                        BSTR_P(opt_name), BSTR_P(obj_name), opt->name,
-                       BSTR_P(str));
+                       BSTR_P(val));
             return r;
         }
-        if (dst) {
-            dst[0] = talloc_strdup(NULL, opt->name);
-            dst[1] = bstrdup0(NULL, str);
-        }
+        *out_name = bstr0(opt->name);
+        *out_val = val;
         (*nold)++;
+        return 1;
     }
-    return 1;
 }
 
+// Consider -vf a=b:c:d. This parses "b:c:d" into name/value pairs, stored as
+// linear array in *_ret. In particular, desc contains what options a the
+// object takes, and verifies the option values as well.
 static int get_obj_params(struct bstr opt_name, struct bstr name,
-                          struct bstr params, const m_struct_t *desc,
-                          char separator, char ***_ret)
+                          struct bstr *pstr, const m_struct_t *desc,
+                          char ***ret)
 {
     int n = 0, nold = 0, nopts;
-    char **ret;
-
-    if (!bstrcmp0(params, "help")) { // Help
-        char min[50], max[50];
-        if (!desc->fields) {
-            mp_msg(MSGT_CFGPARSER, MSGL_INFO,
-                   "%.*s doesn't have any options.\n\n", BSTR_P(name));
-            return M_OPT_EXIT - 1;
-        }
-        mp_msg(MSGT_CFGPARSER, MSGL_INFO,
-               "\n Name                 Type            Min        Max\n\n");
-        for (n = 0; desc->fields[n].name; n++) {
-            const m_option_t *opt = &desc->fields[n];
-            if (opt->type->flags & M_OPT_TYPE_HAS_CHILD)
-                continue;
-            if (opt->flags & M_OPT_MIN)
-                sprintf(min, "%-8.0f", opt->min);
-            else
-                strcpy(min, "No");
-            if (opt->flags & M_OPT_MAX)
-                sprintf(max, "%-8.0f", opt->max);
-            else
-                strcpy(max, "No");
-            mp_msg(MSGT_CFGPARSER, MSGL_INFO,
-                   " %-20.20s %-15.15s %-10.10s %-10.10s\n",
-                   opt->name, opt->type->name, min, max);
-        }
-        mp_msg(MSGT_CFGPARSER, MSGL_INFO, "\n");
-        return M_OPT_EXIT - 1;
-    }
+    char **args = NULL;
+    int num_args = 0;
+    int r = 1;
 
     for (nopts = 0; desc->fields[nopts].name; nopts++)
         /* NOP */;
 
-    // TODO : Check that each opt can be parsed
-    struct bstr s = params;
-    while (1) {
-        bool end = false;
-        int idx = bstrchr(s, separator);
-        if (idx < 0) {
-            idx = s.len;
-            end = true;
+    while (pstr->len > 0) {
+        bstr fname, fval;
+        r = split_subconf(pstr, &fname, &fval);
+        if (r < 0)
+            goto exit;
+        if (bstr_equals0(fname, "help"))
+            goto print_help;
+        r = get_obj_param(opt_name, name, desc, fname, fval, &nold, nopts,
+                          &fname, &fval);
+        if (r < 0)
+            goto exit;
+
+        if (ret) {
+            MP_TARRAY_APPEND(NULL, args, num_args, bstrto0(NULL, fname));
+            MP_TARRAY_APPEND(NULL, args, num_args, bstrto0(NULL, fval));
         }
-        struct bstr field = bstr_splice(s, 0, idx);
-        s = bstr_cut(s, idx + 1);
-        if (field.len == 0) { // Empty field, count it and go on
-            nold++;
-        } else {
-            int r = get_obj_param(opt_name, name, desc, field, &nold, nopts,
-                                  NULL);
-            if (r < 0)
-                return r;
-            n++;
-        }
-        if (end)
+
+        if (!bstr_eatstart0(pstr, ":"))
             break;
     }
-    if (nold > nopts) {
-        mp_msg(MSGT_CFGPARSER, MSGL_ERR, "Too many options for %.*s\n",
-               BSTR_P(name));
-        return M_OPT_OUT_OF_RANGE;
-    }
-    if (!_ret) // Just test
-        return 1;
-    if (n == 0) // No options or only empty options
-        return 1;
 
-    ret = talloc_array(NULL, char *, (n + 2) * 2);
-    n = nold = 0;
-    s = params;
-
-    while (s.len > 0) {
-        int idx = bstrchr(s, separator);
-        if (idx < 0)
-            idx = s.len;
-        struct bstr field = bstr_splice(s, 0, idx);
-        s = bstr_cut(s, idx + 1);
-        if (field.len == 0) { // Empty field, count it and go on
-            nold++;
+    if (ret) {
+        if (num_args > 0) {
+            for (int n = 0; n < 2; n++)
+                MP_TARRAY_APPEND(NULL, args, num_args, NULL);
+            *ret = args;
+            args = NULL;
         } else {
-            get_obj_param(opt_name, name, desc, field, &nold, nopts,
-                          &ret[n * 2]);
-            n++;
+            *ret = NULL;
         }
     }
-    ret[n * 2] = ret[n * 2 + 1] = NULL;
-    *_ret = ret;
 
-    return 1;
+exit:
+    return r;
+
+print_help: ;
+    char min[50], max[50];
+    if (!desc->fields) {
+        mp_msg(MSGT_CFGPARSER, MSGL_INFO,
+                "%.*s doesn't have any options.\n\n", BSTR_P(name));
+        return M_OPT_EXIT - 1;
+    }
+    mp_msg(MSGT_CFGPARSER, MSGL_INFO,
+            "\n Name                 Type            Min        Max\n\n");
+    for (n = 0; desc->fields[n].name; n++) {
+        const m_option_t *opt = &desc->fields[n];
+        if (opt->type->flags & M_OPT_TYPE_HAS_CHILD)
+            continue;
+        if (opt->flags & M_OPT_MIN)
+            sprintf(min, "%-8.0f", opt->min);
+        else
+            strcpy(min, "No");
+        if (opt->flags & M_OPT_MAX)
+            sprintf(max, "%-8.0f", opt->max);
+        else
+            strcpy(max, "No");
+        mp_msg(MSGT_CFGPARSER, MSGL_INFO,
+                " %-20.20s %-15.15s %-10.10s %-10.10s\n",
+                opt->name, opt->type->name, min, max);
+    }
+    mp_msg(MSGT_CFGPARSER, MSGL_INFO, "\n");
+    return M_OPT_EXIT - 1;
 }
 
-static int parse_obj_params(const m_option_t *opt, struct bstr name,
-                            struct bstr param, void *dst)
-{
-    char **opts;
-    int r;
-    m_obj_params_t *p = opt->priv;
-    const m_struct_t *desc;
+// Characters which may appear in a filter name
+#define NAMECH "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
 
-    // We need the object desc
-    if (!p)
-        return M_OPT_INVALID;
-
-    desc = p->desc;
-    r = get_obj_params(name, bstr0(desc->name), param, desc, p->separator,
-                       dst ? &opts : NULL);
-    if (r < 0)
-        return r;
-    if (!dst)
-        return 1;
-    if (!opts) // no arguments given
-        return 1;
-
-    for (r = 0; opts[r]; r += 2)
-        m_struct_set(desc, dst, opts[r], bstr0(opts[r + 1]));
-
-    return 1;
-}
-
-
-const m_option_type_t m_option_type_obj_params = {
-    .name  = "Object params",
-    .parse = parse_obj_params,
-};
-
-/// Some predefined types as a definition would be quite lengthy
-
-/// Span arguments
-static const m_span_t m_span_params_dflts = {
-    -1, -1
-};
-static const m_option_t m_span_params_fields[] = {
-    {"start", M_ST_OFF(m_span_t, start), CONF_TYPE_INT, M_OPT_MIN, 1, 0, NULL},
-    {"end", M_ST_OFF(m_span_t, end), CONF_TYPE_INT, M_OPT_MIN, 1, 0, NULL},
-    { NULL, NULL, 0, 0, 0, 0, NULL }
-};
-static const struct m_struct_st m_span_opts = {
-    "m_span",
-    sizeof(m_span_t),
-    &m_span_params_dflts,
-    m_span_params_fields
-};
-const m_obj_params_t m_span_params_def = {
-    &m_span_opts,
-    '-'
-};
-
-static int parse_obj_settings(struct bstr opt, struct bstr str,
+// Parse one item, e.g. -vf a=b:c:d,e=f:g => parse a=b:c:d into "a" and "b:c:d"
+static int parse_obj_settings(struct bstr opt, struct bstr *pstr,
                               const m_obj_list_t *list,
                               m_obj_settings_t **_ret, int ret_n)
 {
@@ -1885,12 +1871,12 @@ static int parse_obj_settings(struct bstr opt, struct bstr str,
     const m_struct_t *desc;
     m_obj_settings_t *ret = _ret ? *_ret : NULL;
 
-    struct bstr param = bstr0(NULL);
-    int idx = bstrchr(str, '=');
-    if (idx >= 0) {
-        param = bstr_cut(str, idx + 1);
-        str = bstr_splice(str, 0, idx);
-    }
+    bool has_param = false;
+    int idx = bstrspn(*pstr, NAMECH);
+    bstr str = bstr_splice(*pstr, 0, idx);
+    *pstr = bstr_cut(*pstr, idx);
+    if (bstr_eatstart0(pstr, "="))
+        has_param = true;
 
     if (!find_obj_desc(str, list, &desc)) {
         mp_msg(MSGT_CFGPARSER, MSGL_ERR, "Option %.*s: %.*s doesn't exist.\n",
@@ -1898,20 +1884,26 @@ static int parse_obj_settings(struct bstr opt, struct bstr str,
         return M_OPT_INVALID;
     }
 
-    if (param.start) {
-        if (!desc && _ret) {
+    if (has_param) {
+        if (!desc) {
+            // Should perhaps be parsed as escape-able string. But this is a
+            // compatibility path, so it's not worth the trouble.
+            int next = bstrcspn(*pstr, ",");
+            bstr param = bstr_splice(*pstr, 0, next);
+            *pstr = bstr_cut(*pstr, next);
             if (!bstrcmp0(param, "help")) {
                 mp_msg(MSGT_CFGPARSER, MSGL_INFO,
                        "Option %.*s: %.*s have no option description.\n",
                        BSTR_P(opt), BSTR_P(str));
                 return M_OPT_EXIT - 1;
             }
-            plist = talloc_zero_array(NULL, char *, 4);
-            plist[0] = talloc_strdup(NULL, "_oldargs_");
-            plist[1] = bstrdup0(NULL, param);
+            if (_ret) {
+                plist = talloc_zero_array(NULL, char *, 4);
+                plist[0] = talloc_strdup(NULL, "_oldargs_");
+                plist[1] = bstrto0(NULL, param);
+            }
         } else if (desc) {
-            r = get_obj_params(opt, str, param, desc, ':',
-                               _ret ? &plist : NULL);
+            r = get_obj_params(opt, str, pstr, desc, _ret ? &plist : NULL);
             if (r < 0)
                 return r;
         }
@@ -1921,7 +1913,7 @@ static int parse_obj_settings(struct bstr opt, struct bstr str,
 
     ret = talloc_realloc(NULL, ret, struct m_obj_settings, ret_n + 2);
     memset(&ret[ret_n], 0, 2 * sizeof(m_obj_settings_t));
-    ret[ret_n].name = bstrdup0(NULL, str);
+    ret[ret_n].name = bstrto0(NULL, str);
     ret[ret_n].attribs = plist;
 
     *_ret = ret;
@@ -2101,20 +2093,16 @@ static int parse_obj_settings_list(const m_option_t *opt, struct bstr name,
         return M_OPT_EXIT - 1;
     }
 
-    struct bstr s = bstrdup(NULL, param);
-    char *allocptr = s.start;
     int n = 0;
-    while (s.len > 0) {
-        struct bstr el = get_nextsep(&s, OPTION_LIST_SEPARATOR, 1);
-        int r = parse_obj_settings(name, el, opt->priv, dst ? &res : NULL, n);
-        if (r < 0) {
-            talloc_free(allocptr);
+    while (param.len > 0) {
+        int r = parse_obj_settings(name, &param, opt->priv, dst ? &res : NULL, n);
+        if (r < 0)
             return r;
-        }
-        s = bstr_cut(s, 1);
+        char sep[2] = {OPTION_LIST_SEPARATOR, 0};
+        if (param.len > 0 && !bstr_eatstart0(&param, sep))
+            return M_OPT_INVALID;
         n++;
     }
-    talloc_free(allocptr);
     if (n == 0)
         return M_OPT_INVALID;
 

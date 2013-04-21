@@ -37,7 +37,6 @@
 #include "video/img_format.h"
 #include "video/memcpy_pic.h"
 #include "core/mp_msg.h"
-#include "aspect.h"
 #include "w32_common.h"
 #include "libavutil/common.h"
 #include "sub/sub.h"
@@ -119,7 +118,6 @@ typedef struct d3d_priv {
     int opt_disable_stretchrect;
     int opt_disable_shaders;
     int opt_only_8bit;
-    int opt_disable_osd;
     int opt_disable_texture_align;
     // debugging
     int opt_force_power_of_2;
@@ -129,8 +127,6 @@ typedef struct d3d_priv {
 
     struct vo *vo;
 
-    int is_clear_needed;        /**< 1 = Clear the backbuffer before StretchRect
-                                0 = (default) Don't clear it */
     D3DLOCKED_RECT locked_rect; /**< The locked offscreen surface */
     RECT fs_movie_rect;         /**< Rect (upscaled) of the movie when displayed
                                 in fullscreen */
@@ -297,12 +293,6 @@ static void calc_fs_rect(d3d_priv *priv)
            "<vo_direct3d>Video rectangle: t: %ld, l: %ld, r: %ld, b:%ld\n",
            priv->fs_movie_rect.top,   priv->fs_movie_rect.left,
            priv->fs_movie_rect.right, priv->fs_movie_rect.bottom);
-
-    /* The backbuffer should be cleared before next StretchRect. This is
-     * necessary because our new draw area could be smaller than the
-     * previous one used by StretchRect and without it, leftovers from the
-     * previous frame will be left. */
-    priv->is_clear_needed = 1;
 }
 
 // Adjust the texture size *width/*height to fit the requirements of the D3D
@@ -832,7 +822,6 @@ static bool resize_d3d(d3d_priv *priv)
     IDirect3DDevice9_SetTransform(priv->d3d_device, D3DTS_VIEW, &view);
 
     calc_fs_rect(priv);
-
     priv->vo->want_redraw = true;
 
     return 1;
@@ -867,11 +856,7 @@ static uint32_t d3d_draw_frame(d3d_priv *priv)
     if (!d3d_begin_scene(priv))
         return VO_ERROR;
 
-    if (priv->is_clear_needed || priv->opt_swap_discard) {
-        IDirect3DDevice9_Clear(priv->d3d_device, 0, NULL,
-                               D3DCLEAR_TARGET, 0, 0, 0);
-        priv->is_clear_needed = 0;
-    }
+    IDirect3DDevice9_Clear(priv->d3d_device, 0, NULL, D3DCLEAR_TARGET, 0, 0, 0);
 
     if (priv->use_textures) {
 
@@ -1137,10 +1122,7 @@ static int query_format(struct vo *vo, uint32_t movie_fmt)
     if (!init_rendering_mode(priv, movie_fmt, false))
         return 0;
 
-    int osd_caps = VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
-    if (!priv->opt_disable_osd)
-        osd_caps |= VFCAP_OSD;
-    return osd_caps;
+    return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
 }
 
 /****************************************************************************
@@ -1173,7 +1155,7 @@ static void update_colorspace(d3d_priv *priv)
 }
 
 const char *options_help_text = "-vo direct3d command line help:\n"
-"Example: -vo direct3d:disable-osd:disable-textures\n"
+"Example: -vo direct3d:disable-textures\n"
 "Options:\n"
 "    prefer-stretchrect\n"
 "        Use IDirect3DDevice9::StretchRect over other methods if possible.\n"
@@ -1188,10 +1170,6 @@ const char *options_help_text = "-vo direct3d command line help:\n"
 "    only-8bit\n"
 "        Never render YUV video with more than 8 bits per component.\n"
 "        (Using this flag will force software conversion to 8 bit.)\n"
-"    disable-osd\n"
-"        Disable OSD rendering.\n"
-"        (Using this flag might force the insertion of the 'ass' video filter,\n"
-"         which will render the subtitles in software.)\n"
 "    disable-texture-align\n"
 "        Normally texture sizes are always aligned to 16. With this option\n"
 "        enabled, the video texture will always have exactly the same size as\n"
@@ -1253,7 +1231,6 @@ static int preinit_internal(struct vo *vo, const char *arg, bool allow_shaders)
         {"disable-stretchrect", OPT_ARG_BOOL, &priv->opt_disable_stretchrect},
         {"disable-shaders", OPT_ARG_BOOL, &priv->opt_disable_shaders},
         {"only-8bit", OPT_ARG_BOOL, &priv->opt_only_8bit},
-        {"disable-osd", OPT_ARG_BOOL, &priv->opt_disable_osd},
         {"force-power-of-2", OPT_ARG_BOOL, &priv->opt_force_power_of_2},
         {"disable-texture-align", OPT_ARG_BOOL, &priv->opt_disable_texture_align},
         {"texture-memory", OPT_ARG_INT, &priv->opt_texture_memory},
@@ -1325,7 +1302,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     case VOCTRL_RESET:
         return VO_NOTIMPL;
     case VOCTRL_REDRAW_FRAME:
-        priv->is_clear_needed = 1;
         d3d_draw_frame(priv);
         return VO_TRUE;
     case VOCTRL_SET_YUV_COLORSPACE:
@@ -1366,6 +1342,7 @@ static int control(struct vo *vo, uint32_t request, void *data)
         return VO_TRUE;
     case VOCTRL_SET_PANSCAN:
         calc_fs_rect(priv);
+        priv->vo->want_redraw = true;
         return VO_TRUE;
     case VOCTRL_GET_PANSCAN:
         return VO_TRUE;

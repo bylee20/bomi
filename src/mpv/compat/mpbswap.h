@@ -21,12 +21,8 @@
 
 #include <libavutil/bswap.h>
 
-#ifndef bswap_16
 #define bswap_16(x) av_bswap16(x)
-#endif
-#ifndef bswap_32
 #define bswap_32(x) av_bswap32(x)
-#endif
 #define be2me_16(x) av_be2ne16(x)
 #define be2me_32(x) av_be2ne32(x)
 #define le2me_16(x) av_le2ne16(x)

@@ -42,24 +42,6 @@
 #include "video/mp_image.h"
 #include "video/mp_image_pool.h"
 
-
-char * const sub_osd_names[]={
-    _("Seekbar"),
-    _("Play"),
-    _("Pause"),
-    _("Stop"),
-    _("Rewind"),
-    _("Forward"),
-    _("Clock"),
-    _("Contrast"),
-    _("Saturation"),
-    _("Volume"),
-    _("Brightness"),
-    _("Hue"),
-    _("Balance")
-};
-char * const sub_osd_names_short[] ={ "", "|>", "||", "[]", "<<" , ">>", "", "", "", "", "", "", "" };
-
 int sub_pos=100;
 int sub_visibility=1;
 
@@ -71,7 +53,7 @@ float sub_fps = 0;
 void *vo_spudec=NULL;
 void *vo_vobsub=NULL;
 
-static const const struct osd_style_opts osd_style_opts_def = {
+static const struct osd_style_opts osd_style_opts_def = {
     .font = "Sans",
     .font_size = 45,
     .color = {255, 255, 255, 255},
@@ -83,7 +65,6 @@ static const const struct osd_style_opts osd_style_opts_def = {
     .margin_y = 10,
 };
 
-#undef OPT_BASE_STRUCT
 #define OPT_BASE_STRUCT struct osd_style_opts
 const struct m_sub_options osd_style_conf = {
     .opts = (m_option_t[]) {
@@ -98,6 +79,7 @@ const struct m_sub_options osd_style_conf = {
         OPT_FLOATRANGE("spacing", spacing, 0, -10, 10),
         OPT_INTRANGE("margin-x", margin_x, 0, 0, 300),
         OPT_INTRANGE("margin-y", margin_y, 0, 0, 600),
+        OPT_FLOATRANGE("blur", blur, 0, 0, 20),
         {0}
     },
     .size = sizeof(struct osd_style_opts),
@@ -177,7 +159,7 @@ static void render_object(struct osd_state *osd, struct osd_object *obj,
 
     bool formats[SUBBITMAP_COUNT];
     memcpy(formats, sub_formats, sizeof(formats));
-    if (opts->vo_force_rgba_osd)
+    if (opts->force_rgba_osd)
         formats[SUBBITMAP_LIBASS] = false;
 
     *out_imgs = (struct sub_bitmaps) {0};

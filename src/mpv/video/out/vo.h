@@ -28,12 +28,10 @@
 
 #include "video/img_format.h"
 #include "core/mp_common.h"
+#include "core/options.h"
 
 #define VO_EVENT_EXPOSE 1
 #define VO_EVENT_RESIZE 2
-#define VO_EVENT_KEYPRESS 4
-#define VO_EVENT_REINIT 8
-#define VO_EVENT_MOVE 16
 
 enum mp_voctrl {
     /* signal a device reset seek */
@@ -49,7 +47,6 @@ enum mp_voctrl {
     VOCTRL_SET_PANSCAN,
     VOCTRL_SET_EQUALIZER,               // struct voctrl_set_equalizer_args
     VOCTRL_GET_EQUALIZER,               // struct voctrl_get_equalizer_args
-    VOCTRL_DUPLICATE_FRAME,
 
     /* for vdpau hardware decoding */
     VOCTRL_HWDEC_DECODER_RENDER,        // pointer to hw state
@@ -60,7 +57,6 @@ enum mp_voctrl {
     VOCTRL_REDRAW_FRAME,
 
     VOCTRL_ONTOP,
-    VOCTRL_ROOTWIN,
     VOCTRL_BORDER,
 
     VOCTRL_SET_DEINTERLACE,
@@ -107,11 +103,6 @@ struct voctrl_screenshot_args {
     bool has_osd;
 };
 
-typedef struct {
-  int x,y;
-  int w,h;
-} mp_win_t;
-
 #define VO_TRUE		1
 #define VO_FALSE	0
 #define VO_ERROR	-1
@@ -119,11 +110,11 @@ typedef struct {
 #define VO_NOTIMPL	-3
 
 #define VOFLAG_FULLSCREEN	0x01
-#define VOFLAG_MODESWITCHING	0x02
 #define VOFLAG_FLIPPING		0x08
 #define VOFLAG_HIDDEN		0x10  //< Use to create a hidden window
 #define VOFLAG_STEREO		0x20  //< Use to create a stereo-capable window
 #define VOFLAG_GL_DEBUG         0x40  // Hint to request debug OpenGL context
+#define VOFLAG_ALPHA            0x80  // Hint to request alpha framebuffer
 
 typedef struct vo_info_s
 {
@@ -224,12 +215,17 @@ struct vo_driver {
 
     // List of options to parse into priv struct (requires privsize to be set)
     const struct m_option *options;
+
+    // Help text to print when option parsing fails
+    const char *help_text;
+
+    // Parse these options before parsing user options
+    const char *init_option_string;
 };
 
 struct vo {
     int config_ok;  // Last config call was successful?
     int config_count;  // Total number of successful config calls
-    int default_caps; // query_format() result for configured video format
 
     bool untimed;       // non-interactive, don't do sleep calls in playloop
 
@@ -244,12 +240,16 @@ struct vo {
 
     double flip_queue_offset; // queue flip events at most this much in advance
 
+    unsigned int next_wakeup_time; // deadline for next vo_check_events() call,
+                                   // in GetTimerMS() units (set by VO)
+
     const struct vo_driver *driver;
     void *priv;
-    struct MPOpts *opts;
+    struct mp_vo_opts *opts;
     struct vo_x11_state *x11;
     struct vo_w32_state *w32;
     struct vo_cocoa_state *cocoa;
+    struct vo_wayland_state *wayland;
     struct mp_fifo *key_fifo;
     struct encode_lavc_context *encode_lavc_ctx;
     struct input_ctx *input_ctx;
@@ -262,25 +262,23 @@ struct vo {
     int dwidth;
     int dheight;
 
-    int panscan_x;
-    int panscan_y;
-    float panscan_amount;
-    float monitor_par;
+    int xinerama_x;
+    int xinerama_y;
+
     struct aspect_data {
+        float monitor_par; // out of screen size or from options
         int orgw; // real width
         int orgh; // real height
         int prew; // prescaled width
         int preh; // prescaled height
         float par; // pixel aspect ratio out of orgw/orgh and prew/preh
-        int scrw; // horizontal resolution
-        int scrh; // vertical resolution
-        float asp;
+        float asp; // final video display aspect
     } aspdat;
 
     char *window_title;
 };
 
-struct vo *init_best_video_out(struct MPOpts *opts,
+struct vo *init_best_video_out(struct mp_vo_opts *opts,
                                struct mp_fifo *key_fifo,
                                struct input_ctx *input_ctx,
                                struct encode_lavc_context *encode_lavc_ctx);
@@ -290,14 +288,16 @@ int vo_config(struct vo *vo, uint32_t width, uint32_t height,
 void list_video_out(void);
 
 int vo_control(struct vo *vo, uint32_t request, void *data);
-int vo_draw_image(struct vo *vo, struct mp_image *mpi);
+void vo_queue_image(struct vo *vo, struct mp_image *mpi);
 int vo_redraw_frame(struct vo *vo);
+bool vo_get_want_redraw(struct vo *vo);
 int vo_get_buffered_frame(struct vo *vo, bool eof);
 void vo_skip_frame(struct vo *vo);
 void vo_new_frame_imminent(struct vo *vo);
 void vo_draw_osd(struct vo *vo, struct osd_state *osd);
 void vo_flip_page(struct vo *vo, unsigned int pts_us, int duration);
 void vo_check_events(struct vo *vo);
+unsigned int vo_get_sleep_time(struct vo *vo);
 void vo_seek_reset(struct vo *vo);
 void vo_destroy(struct vo *vo);
 
@@ -305,29 +305,6 @@ const char *vo_get_window_title(struct vo *vo);
 
 // NULL terminated array of all drivers
 extern const struct vo_driver *video_out_drivers[];
-
-extern int xinerama_x;
-extern int xinerama_y;
-
-extern int vo_grabpointer;
-extern int vo_vsync;
-extern int vo_fs;
-extern int vo_fsmode;
-extern float vo_panscan;
-extern int vo_refresh_rate;
-extern int vo_keepaspect;
-extern int vo_rootwin;
-extern int vo_border;
-
-extern int vo_nomouse_input;
-extern int enable_mouse_movements;
-
-extern int vo_pts;
-extern float vo_fps;
-
-extern int vo_colorkey;
-
-extern int64_t WinID;
 
 struct mp_keymap {
   int from;
@@ -340,10 +317,5 @@ void vo_mouse_movement(struct vo *vo, int posx, int posy);
 struct mp_osd_res;
 void vo_get_src_dst_rects(struct vo *vo, struct mp_rect *out_src,
                           struct mp_rect *out_dst, struct mp_osd_res *out_osd);
-
-static inline int aspect_scaling(void)
-{
-  return vo_keepaspect || vo_fs;
-}
 
 #endif /* MPLAYER_VIDEO_OUT_H */

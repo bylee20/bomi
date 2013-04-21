@@ -171,11 +171,6 @@ direct3d_shaders (Windows only)
         Never render YUV video with more than 8 bits per component.
         (Using this flag will force software conversion to 8 bit.)
 
-    disable-osd
-        Disable OSD rendering for subtitles.
-        (Using this flag might force the insertion of the 'ass' video filter,
-        which will render the subtitles in software.)
-
     disable-texture-align
         Normally texture sizes are always aligned to 16. With this option
         enabled, the video texture will always have exactly the same size as
@@ -324,12 +319,12 @@ opengl
         Enable use of PBOs. This is faster, but can sometimes lead to
         sporadic and temporary image corruption.
 
-    dither-depth=<n>
-        Positive non-zero values select the target bit depth. Default: 0.
+    dither-depth=<N|no|auto>
+        Set dither target depth to N. Default: no.
 
-        \-1
+        no
             Disable any dithering done by mpv.
-        0
+        auto
             Automatic selection. If output bit depth can't be detected,
             8 bits per component are assumed.
         8
@@ -386,6 +381,8 @@ opengl
             Win32/WGL
         x11
             X11/GLX
+        wayland
+            Wayland/EGL
 
     indirect
         Do YUV conversion and scaling as separate passes. This will
@@ -401,7 +398,8 @@ opengl
         Selects the internal format of textures used for FBOs. The format can
         influence performance and quality of the video output. (FBOs are not
         always used, and typically only when using extended scalers.)
-        fmt can be one of: rgb, rgba, rgb8, rgb10, rgb16, rgb16f, rgb32f
+        fmt can be one of: rgb, rgba, rgb8, rgb10, rgb16, rgb16f, rgb32f,
+        rgba12, rgba16, rgba16f, rgba32f.
         Default: rgb.
 
     gamma
@@ -433,15 +431,23 @@ opengl
         dimension. Default is 128x256x64.
         Sizes must be a power of two, and 256 at most.
 
+    alpha
+        Try to create a framebuffer with alpha component. This only makes sense
+        if the video contains alpha information (which is extremely rare). May
+        not be supported on all platforms. If alpha framebuffers are
+        unavailable, it silently falls back to a normal framebuffer. Note
+        that when using FBO indirections (such as with ``opengl-hq``), a FBO
+        format with alpha must be specified with the ``fbo-format`` option.
+
 opengl-hq
     Same as ``opengl``, but with default settings for high quality rendering.
 
     This is equivalent to:
 
-    | --vo=opengl:lscale=lanczos2:dither-depth=0:pbo:fbo-format=rgb16
+    | --vo=opengl:lscale=lanczos2:dither-depth=auto:pbo:fbo-format=rgb16
 
     Note that some cheaper LCDs do dithering that gravely interferes with
-    vo_opengl's dithering. Disabling dithering with ``dither-depth=-1`` helps.
+    vo_opengl's dithering. Disabling dithering with ``dither-depth=no`` helps.
 
     Unlike ``opengl``, ``opengl-hq`` makes use of FBOs by default. Sometimes you
     can achieve better quality or performance by changing the fbo-format
@@ -626,11 +632,6 @@ opengl-old
         setting has no effect, the size of the slices as provided by the
         decoder is used. If the decoder does not use slice rendering, the
         default is 16.
-    (no-)osd
-        Enable or disable support for OSD rendering via OpenGL (default:
-        enabled). This option is for testing; to disable the OSD use
-        ``--osd-level=0`` instead.
-
     sw
         Continue even if a software renderer is detected.
 
@@ -643,6 +644,8 @@ opengl-old
             Win32/WGL
         x11
             X11/GLX
+        wayland
+            Wayland/EGL
 
 sdl
     SDL 2.0+ Render video output driver, depending on system with or without
@@ -651,6 +654,9 @@ sdl
 
     sw
         Continue even if a software renderer is detected.
+
+    switch-mode
+        Instruct SDL to switch the monitor video mode when going fullscreen.
 
 null
     Produces no video output. Useful for benchmarking.

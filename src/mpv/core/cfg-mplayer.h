@@ -282,6 +282,8 @@ const m_option_t msgl_config[]={
 
 extern const m_option_t lavc_decode_opts_conf[];
 
+#define OPT_BASE_STRUCT struct MPOpts
+
 const m_option_t common_opts[] = {
 // ------------------------- common options --------------------
     OPT_FLAG("quiet", quiet, CONF_GLOBAL),
@@ -295,6 +297,7 @@ const m_option_t common_opts[] = {
     {"priority", &proc_priority, CONF_TYPE_STRING, 0, 0, 0, NULL},
 #endif
     OPT_FLAG("config", load_config, CONF_GLOBAL | CONF_NOCFG | CONF_PRE_PARSE),
+    OPT_STRINGLIST("reset-on-next-file", reset_options, CONF_GLOBAL),
 
 // ------------------------- stream options --------------------
 
@@ -340,11 +343,11 @@ const m_option_t common_opts[] = {
 
 // ------------------------- demuxer options --------------------
 
-    // number of frames to play/convert
-    {"frames", &play_n_frames_mf, CONF_TYPE_INT, CONF_MIN, 0, 0, NULL},
+    OPT_CHOICE_OR_INT("frames", play_frames, 0, 0, INT_MAX,
+                      ({"all", -1})),
 
     // seek to byte/seconds position
-    {"sb", &seek_to_byte, CONF_TYPE_INT64, CONF_MIN, 0, 0, NULL},
+    OPT_INT64("sb", seek_to_byte, 0),
     OPT_REL_TIME("start", play_start, 0),
     OPT_REL_TIME("end", play_end, 0),
     OPT_REL_TIME("length", play_length, 0),
@@ -389,6 +392,7 @@ const m_option_t common_opts[] = {
     OPT_STRING("audio-demuxer", audio_demuxer_name, 0),
     OPT_STRING("sub-demuxer", sub_demuxer_name, 0),
     OPT_FLAG("extbased", extension_parsing, 0),
+    OPT_FLAG("mkv-subtitle-preroll", mkv_subtitle_preroll, 0),
 
     {"mf", (void *) mfopts_conf, CONF_TYPE_SUBCONFIG, 0,0,0, NULL},
 #ifdef CONFIG_RADIO
@@ -410,20 +414,20 @@ const m_option_t common_opts[] = {
     {"bps", &pts_from_bps, CONF_TYPE_FLAG, 0, 0, 1, NULL},
 
     // set A-V sync correction speed (0=disables it):
-    {"mc", &default_max_pts_correction, CONF_TYPE_FLOAT, CONF_RANGE, 0, 100, NULL},
+    OPT_FLOATRANGE("mc", default_max_pts_correction, 0, 0, 100),
 
     // force video/audio rate:
-    {"fps", &force_fps, CONF_TYPE_DOUBLE, CONF_MIN, 0, 0, NULL},
-    {"srate", &force_srate, CONF_TYPE_INT, CONF_RANGE, 1000, 8*48000, NULL},
+    OPT_DOUBLE("fps", force_fps, CONF_MIN, 0),
+    OPT_INTRANGE("srate", force_srate, 0, 1000, 8*48000),
     OPT_INTRANGE("channels", audio_output_channels, 0, 1, 8),
     OPT_AUDIOFORMAT("format", audio_output_format, 0),
     OPT_FLOATRANGE("speed", playback_speed, 0, 0.01, 100.0),
 
     // set a-v distance
-    {"audio-delay", &audio_delay, CONF_TYPE_FLOAT, CONF_RANGE, -100.0, 100.0, NULL},
+    OPT_FLOATRANGE("audio-delay", audio_delay, 0, -100.0, 100.0),
 
     // ignore header-specified delay (dwStart)
-    {"ignore-start", &ignore_start, CONF_TYPE_FLAG, 0, 0, 1, NULL},
+    OPT_FLAG("ignore-start", ignore_start, 0),
 
     OPT_FLOATRANGE("a52drc", drc_level, 0, 0, 2),
 
@@ -439,6 +443,7 @@ const m_option_t common_opts[] = {
 
     OPT_STRING("ad", audio_decoders, 0),
     OPT_STRING("vd", video_decoders, 0),
+    OPT_FLAG("dtshd", dtshd, 0),
 
     OPT_CHOICE("hwdec", hwdec_api, 0,
                ({"no", 0},
@@ -456,8 +461,7 @@ const m_option_t common_opts[] = {
     {"sws", &sws_flags, CONF_TYPE_INT, 0, 0, 2, NULL},
     {"ssf", (void *) scaler_filter_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},
     OPT_FLOATRANGE("aspect", movie_aspect, 0, 0.1, 10.0),
-    // xxx: this aliases int with float, which is very evil (but works in this case)
-    OPT_FLAG_STORE("no-aspect", movie_aspect, 0, 0),
+    OPT_FLOAT_STORE("no-aspect", movie_aspect, 0, 0),
 
     OPT_FLAG_CONSTANTS("flip", flip, 0, 0, 1),
 
@@ -476,7 +480,7 @@ const m_option_t common_opts[] = {
     {"sub-delay", &sub_delay, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL},
     {"subfps", &sub_fps, CONF_TYPE_FLOAT, 0, 0.0, 10.0, NULL},
     OPT_FLAG("autosub", sub_auto, 0),
-    {"sub-forced-only", &forced_subs_only, CONF_TYPE_FLAG, 0, 0, 1, NULL},
+    OPT_FLAG("sub-forced-only", forced_subs_only, 0),
     // enable Closed Captioning display
     {"overlapsub", &suboverlap_enabled, CONF_TYPE_FLAG, 0, 0, 2, NULL},
     {"sub-no-text-pp", &sub_no_text_pp, CONF_TYPE_FLAG, 0, 0, 1, NULL},
@@ -499,6 +503,8 @@ const m_option_t common_opts[] = {
     OPT_FLAG("osd-bar", osd_bar_visible, 0),
     OPT_FLOATRANGE("osd-bar-align-x", osd_bar_align_x, 0, -1.0, +1.0),
     OPT_FLOATRANGE("osd-bar-align-y", osd_bar_align_y, 0, -1.0, +1.0),
+    OPT_FLOATRANGE("osd-bar-w", osd_bar_w, 0, 1, 100),
+    OPT_FLOATRANGE("osd-bar-h", osd_bar_h, 0, 0.1, 50),
     OPT_SUBSTRUCT("osd", osd_style, osd_style_conf, 0),
     OPT_SUBSTRUCT("sub-text", sub_text_style, osd_style_conf, 0),
     {NULL, NULL, 0, 0, 0, 0, NULL}
@@ -525,12 +531,11 @@ const m_option_t mplayer_opts[]={
     /* name, pointer, type, flags, min, max */
 
 //---------------------- libao/libvo options ------------------------
-    OPT_STRINGLIST("vo", video_driver_list, 0),
+    OPT_STRINGLIST("vo", vo.video_driver_list, 0),
     OPT_STRINGLIST("ao", audio_driver_list, 0),
     OPT_FLAG("fixed-vo", fixed_vo, CONF_GLOBAL),
-    OPT_FLAG("ontop", vo_ontop, 0),
-    {"rootwin", &vo_rootwin, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-    {"border", &vo_border, CONF_TYPE_FLAG, 0, 0, 1, NULL},
+    OPT_FLAG("ontop", vo.ontop, 0),
+    OPT_FLAG("border", vo.border, 1),
 
     OPT_STRING("mixer", mixer_device, 0),
     OPT_STRING("mixer-channel", mixer_channel, 0),
@@ -539,7 +544,7 @@ const m_option_t mplayer_opts[]={
                 {"yes", SOFTVOL_YES},
                 {"auto", SOFTVOL_AUTO})),
     OPT_FLOATRANGE("softvol-max", softvol_max, 0, 10, 10000),
-    {"volstep", &volstep, CONF_TYPE_INT, CONF_RANGE, 0, 100, NULL},
+    OPT_INTRANGE("volstep", volstep, 0, 0, 100),
     OPT_FLOATRANGE("volume", mixer_init_volume, 0, -1, 10000),
     OPT_CHOICE("mute", mixer_init_mute, M_OPT_OPTIONAL_PARAM,
                ({"auto", -1},
@@ -550,34 +555,28 @@ const m_option_t mplayer_opts[]={
     OPT_INT("abs", ao_buffersize, 0),
 
     // set screen dimensions (when not detectable or virtual!=visible)
-    OPT_INTRANGE("screenw", vo_screenwidth, CONF_GLOBAL, 0, 4096),
-    OPT_INTRANGE("screenh", vo_screenheight, CONF_GLOBAL, 0, 4096),
-    OPT_GEOMETRY("geometry", vo_geometry, 0),
-    OPT_SIZE_BOX("autofit", vo_autofit, 0),
-    OPT_SIZE_BOX("autofit-larger", vo_autofit_larger, 0),
-    OPT_FLAG("force-window-position", force_window_position, 0),
+    OPT_INTRANGE("screenw", vo.screenwidth, CONF_GLOBAL, 0, 4096),
+    OPT_INTRANGE("screenh", vo.screenheight, CONF_GLOBAL, 0, 4096),
+    OPT_GEOMETRY("geometry", vo.geometry, 0),
+    OPT_SIZE_BOX("autofit", vo.autofit, 0),
+    OPT_SIZE_BOX("autofit-larger", vo.autofit_larger, 0),
+    OPT_FLAG("force-window-position", vo.force_window_position, 0),
     // vo name (X classname) and window title strings
-    OPT_STRING("name", vo_winname, 0),
-    OPT_STRING("title", vo_wintitle, 0),
+    OPT_STRING("name", vo.winname, 0),
+    OPT_STRING("title", wintitle, 0),
     // set aspect ratio of monitor - useful for 16:9 TV-out
-    OPT_FLOATRANGE("monitoraspect", force_monitor_aspect, 0, 0.0, 9.0),
-    OPT_FLOATRANGE("monitorpixelaspect", monitor_pixel_aspect, 0, 0.2, 9.0),
-    // video mode switching: (x11,xv,dga)
-    OPT_FLAG("vm", vidmode, 0),
+    OPT_FLOATRANGE("monitoraspect", vo.force_monitor_aspect, 0, 0.0, 9.0),
+    OPT_FLOATRANGE("monitorpixelaspect", vo.monitor_pixel_aspect, 0, 0.2, 9.0),
     // start in fullscreen mode:
     OPT_FLAG("fullscreen", fullscreen, 0),
     OPT_FLAG("fs", fullscreen, 0),
     // set fullscreen switch method (workaround for buggy WMs)
-    {"fsmode-dontuse", &vo_fsmode, CONF_TYPE_INT, CONF_RANGE, 0, 31, NULL},
-    // set bpp (x11+vm)
-    OPT_INTRANGE("bpp", vo_dbpp, 0, 0, 32),
-    {"colorkey", &vo_colorkey, CONF_TYPE_INT, 0, 0, 0, NULL},
-    {"no-colorkey", &vo_colorkey, CONF_TYPE_STORE, 0, 0, 0x1000000, NULL},
-    // wait for v-sync (gl)
-    {"vsync", &vo_vsync, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-    {"panscan", &vo_panscan, CONF_TYPE_FLOAT, CONF_RANGE, 0, 1.0, NULL},
-    OPT_FLOATRANGE("panscanrange", vo_panscanrange, 0, -19.0, 99.0),
-    OPT_FLAG("force-rgba-osd-rendering", vo_force_rgba_osd, 0),
+    OPT_INTRANGE("fsmode-dontuse", vo.fsmode, 0, 31, 4096),
+    OPT_INT("colorkey", vo.colorkey, 0),
+    OPT_FLAG_STORE("no-colorkey", vo.colorkey, 0, 0x1000000),
+    OPT_FLOATRANGE("panscan", vo.panscan, 0, 0.0, 1.0),
+    OPT_FLOATRANGE("panscanrange", vo.panscanrange, 0, -19.0, 99.0),
+    OPT_FLAG("force-rgba-osd-rendering", force_rgba_osd, 0),
     OPT_CHOICE("colormatrix", requested_colorspace, 0,
                ({"auto", MP_CSP_AUTO},
                 {"BT.601", MP_CSP_BT_601},
@@ -592,41 +591,40 @@ const m_option_t mplayer_opts[]={
                 {"limited", MP_CSP_LEVELS_TV},
                 {"full", MP_CSP_LEVELS_PC})),
 
-    {"grabpointer", &vo_grabpointer, CONF_TYPE_FLAG, 0, 0, 1, NULL},
-    OPT_CHOICE_OR_INT("cursor-autohide", cursor_autohide_delay, 0,
+    OPT_CHOICE_OR_INT("cursor-autohide", vo.cursor_autohide_delay, 0,
                       0, 30000, ({"no", -1}, {"always", -2})),
 
-    {"refreshrate",&vo_refresh_rate,CONF_TYPE_INT,CONF_RANGE, 0,100, NULL},
-    {"wid", &WinID, CONF_TYPE_INT64, 0, 0, 0, NULL},
+    OPT_INT64("wid", vo.WinID, CONF_GLOBAL),
 #ifdef CONFIG_X11
-    OPT_FLAG("stop-xscreensaver", vo_stop_screensaver, 0),
-    OPT_STRINGLIST("fstype", vo_fstype_list, 0),
+    OPT_FLAG("stop-xscreensaver", vo.stop_screensaver, 0),
+    OPT_STRINGLIST("fstype", vo.fstype_list, 0),
 #endif
-    {"heartbeat-cmd", &heartbeat_cmd, CONF_TYPE_STRING, 0, 0, 0, NULL},
-    {"mouseinput", &vo_nomouse_input, CONF_TYPE_FLAG, 0, 1, 0, NULL},
+    OPT_STRING("heartbeat-cmd", heartbeat_cmd, 0),
+    OPT_FLOAT("heartbeat-interval", heartbeat_interval, CONF_MIN, 0),
+    OPT_FLAG("mouseinput", vo.nomouse_input, 0),
 
-    OPT_CHOICE_OR_INT("screen", vo_screen_id, 0, 0, 32,
+    OPT_CHOICE_OR_INT("screen", vo.screen_id, 0, 0, 32,
                       ({"default", -1})),
 
-    OPT_CHOICE_OR_INT("fs-screen", vo_fsscreen_id, 0, 0, 32,
+    OPT_CHOICE_OR_INT("fs-screen", vo.fsscreen_id, 0, 0, 32,
                       ({"all", -2}, {"current", -1})),
 
-    OPT_INTRANGE("brightness", vo_gamma_brightness, 0, -100, 100),
-    OPT_INTRANGE("saturation", vo_gamma_saturation, 0, -100, 100),
-    OPT_INTRANGE("contrast", vo_gamma_contrast, 0, -100, 100),
-    OPT_INTRANGE("hue", vo_gamma_hue, 0, -100, 100),
-    OPT_INTRANGE("gamma", vo_gamma_gamma, 0, -100, 100),
-    {"keepaspect", &vo_keepaspect, CONF_TYPE_FLAG, 0, 0, 1, NULL},
+    OPT_INTRANGE("brightness", gamma_brightness, 0, -100, 100),
+    OPT_INTRANGE("saturation", gamma_saturation, 0, -100, 100),
+    OPT_INTRANGE("contrast", gamma_contrast, 0, -100, 100),
+    OPT_INTRANGE("hue", gamma_hue, 0, -100, 100),
+    OPT_INTRANGE("gamma", gamma_gamma, 0, -100, 100),
+    OPT_FLAG("keepaspect", vo.keepaspect, 1),
 
 //---------------------- mplayer-only options ------------------------
 
-    {"use-filedir-conf", &use_filedir_conf, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL},
+    OPT_FLAG("use-filedir-conf", use_filedir_conf, CONF_GLOBAL),
     OPT_CHOICE("osd-level", osd_level, 0,
                ({"0", 0}, {"1", 1}, {"2", 2}, {"3", 3})),
     OPT_INTRANGE("osd-duration", osd_duration, 0, 0, 3600000),
     OPT_FLAG("osd-fractions", osd_fractions, 0),
 
-    {"sstep", &step_sec, CONF_TYPE_DOUBLE, CONF_MIN, 0, 0, NULL},
+    OPT_DOUBLE("sstep", step_sec, CONF_MIN, 0),
 
     OPT_CHOICE("framedrop", frame_dropping, 0,
                ({"no", 0},
@@ -677,11 +675,11 @@ const m_option_t mplayer_opts[]={
     OPT_STRING("status-msg", status_msg, M_OPT_PARSE_ESCAPES),
     OPT_STRING("osd-status-msg", osd_status_msg, M_OPT_PARSE_ESCAPES),
 
-    {"slave-broken", &slave_mode, CONF_TYPE_FLAG,CONF_GLOBAL , 0, 1, NULL},
+    OPT_FLAG("slave-broken", slave_mode, CONF_GLOBAL),
     OPT_FLAG("idle", player_idle_mode, CONF_GLOBAL),
     OPT_INTRANGE("key-fifo-size", input.key_fifo_size, CONF_GLOBAL, 2, 65000),
     OPT_FLAG("consolecontrols", consolecontrols, CONF_GLOBAL),
-    {"mouse-movements", &enable_mouse_movements, CONF_TYPE_FLAG, CONF_GLOBAL, 0, 1, NULL},
+    OPT_FLAG("mouse-movements", vo.enable_mouse_movements, 1),
     OPT_INTRANGE("doubleclick-time", doubleclick_time, 0, 0, 1000),
 #ifdef CONFIG_TV
     {"tvscan", (void *) tvscan_conf, CONF_TYPE_SUBCONFIG, 0, 0, 0, NULL},

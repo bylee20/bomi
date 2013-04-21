@@ -97,6 +97,7 @@ struct mp_imgfmt_entry mp_imgfmt_list[] = {
     FMT("rgb4",                 IMGFMT_RGB4)
     FMT("bgr4",                 IMGFMT_BGR4)
     FMT("mono",                 IMGFMT_MONO)
+    FMT("mono_w",               IMGFMT_MONO_W)
     FMT_ENDIAN("rgb12",         IMGFMT_RGB12)
     FMT_ENDIAN("rgb15",         IMGFMT_RGB15)
     FMT_ENDIAN("rgb16",         IMGFMT_RGB16)
@@ -160,7 +161,7 @@ static struct mp_imgfmt_desc get_avutil_fmt(enum PixelFormat fmt)
     struct mp_imgfmt_desc desc = {
         .id = mpfmt,
         .avformat = fmt,
-        .name = mp_imgfmt_to_name(desc.id),
+        .name = mp_imgfmt_to_name(mpfmt),
         .chroma_xs = pd->log2_chroma_w,
         .chroma_ys = pd->log2_chroma_h,
     };

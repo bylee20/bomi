@@ -25,11 +25,12 @@
 #include <stdbool.h>
 
 #include <unistd.h>
-//#include <sys/mman.h>
+
+#include "talloc.h"
 
 #include "config.h"
+#include "osdep/timer.h"
 #include "core/options.h"
-#include "talloc.h"
 #include "core/bstr.h"
 #include "vo.h"
 #include "aspect.h"
@@ -40,32 +41,6 @@
 #include "video/mp_image.h"
 #include "video/vfcap.h"
 #include "sub/sub.h"
-
-#include "osdep/shmem.h"
-#ifdef CONFIG_X11
-#include "x11_common.h"
-#endif
-
-int xinerama_x;
-int xinerama_y;
-
-int vo_nomouse_input = 0;
-int vo_grabpointer = 1;
-int vo_vsync = 1;
-int vo_fs = 0;
-int vo_fsmode = 0;
-float vo_panscan = 0.0f;
-int vo_refresh_rate=0;
-int vo_keepaspect=1;
-int vo_rootwin=0;
-int vo_border=1;
-int64_t WinID = -1;
-
-int vo_pts=0; // for hw decoding
-float vo_fps=0;
-
-int vo_colorkey = 0x0000ff00; // default colorkey is green
-                              // (0xff000000 means that colorkey has been disabled)
 
 //
 // Externally visible list of all vo drivers
@@ -144,9 +119,16 @@ static int vo_preinit(struct vo *vo, char *arg)
         char n[50];
         int l = snprintf(n, sizeof(n), "vo/%s", vo->driver->info->short_name);
         assert(l < sizeof(n));
+        if (vo->driver->init_option_string) {
+            m_config_parse_suboptions(cfg, n,
+                                      (char *)vo->driver->init_option_string);
+        }
         int r = m_config_parse_suboptions(cfg, n, arg);
-        if (r < 0)
+        if (r < 0) {
+            if (vo->driver->help_text)
+                mp_msg(MSGT_VO, MSGL_FATAL, "%s\n", vo->driver->help_text);
             return r;
+        }
     }
     return vo->driver->preinit(vo, arg);
 }
@@ -156,21 +138,18 @@ int vo_control(struct vo *vo, uint32_t request, void *data)
     return vo->driver->control(vo, request, data);
 }
 
-// Return -1 if driver appears not to support a draw_image interface,
-// 0 otherwise (whether the driver actually drew something or not).
-int vo_draw_image(struct vo *vo, struct mp_image *mpi)
+void vo_queue_image(struct vo *vo, struct mp_image *mpi)
 {
     if (!vo->config_ok)
-        return 0;
+        return;
     if (vo->driver->buffer_frames) {
         vo->driver->draw_image(vo, mpi);
-        return 0;
+        return;
     }
     vo->frame_loaded = true;
     vo->next_pts = mpi->pts;
     assert(!vo->waiting_mpi);
     vo->waiting_mpi = mp_image_new_ref(mpi);
-    return 0;
 }
 
 int vo_redraw_frame(struct vo *vo)
@@ -178,10 +157,18 @@ int vo_redraw_frame(struct vo *vo)
     if (!vo->config_ok || !vo->hasframe)
         return -1;
     if (vo_control(vo, VOCTRL_REDRAW_FRAME, NULL) == true) {
+        vo->want_redraw = false;
         vo->redrawing = true;
         return 0;
     }
     return -1;
+}
+
+bool vo_get_want_redraw(struct vo *vo)
+{
+    if (!vo->config_ok || !vo->hasframe)
+        return false;
+    return vo->want_redraw;
 }
 
 int vo_get_buffered_frame(struct vo *vo, bool eof)
@@ -218,7 +205,7 @@ void vo_new_frame_imminent(struct vo *vo)
 
 void vo_draw_osd(struct vo *vo, struct osd_state *osd)
 {
-    if (vo->config_ok && (vo->default_caps & VFCAP_OSD))
+    if (vo->config_ok && vo->driver->draw_osd)
         vo->driver->draw_osd(vo, osd);
 }
 
@@ -241,6 +228,7 @@ void vo_flip_page(struct vo *vo, unsigned int pts_us, int duration)
 
 void vo_check_events(struct vo *vo)
 {
+    vo->next_wakeup_time = GetTimerMS() + 60 * 1000;
     if (!vo->config_ok) {
         if (vo->registered_fd != -1)
             mp_input_rm_key_fd(vo->input_ctx, vo->registered_fd);
@@ -248,6 +236,20 @@ void vo_check_events(struct vo *vo)
         return;
     }
     vo->driver->check_events(vo);
+}
+
+// Return the amount of time vo_check_events() should be called in milliseconds.
+// Note: video timing is completely separate from this.
+unsigned int vo_get_sleep_time(struct vo *vo)
+{
+    unsigned int sleep = 60 * 1000;
+    if (vo->config_ok && vo->next_wakeup_time) {
+        unsigned int now = GetTimerMS();
+        sleep = 0;
+        if (vo->next_wakeup_time >= now)
+            sleep = vo->next_wakeup_time - now;
+    }
+    return sleep;
 }
 
 void vo_seek_reset(struct vo *vo)
@@ -295,7 +297,7 @@ static void replace_legacy_vo_name(bstr *name)
     *name = new;
 }
 
-struct vo *init_best_video_out(struct MPOpts *opts,
+struct vo *init_best_video_out(struct mp_vo_opts *opts,
                                struct mp_fifo *key_fifo,
                                struct input_ctx *input_ctx,
                                struct encode_lavc_context *encode_lavc_ctx)
@@ -310,6 +312,7 @@ struct vo *init_best_video_out(struct MPOpts *opts,
         .input_ctx = input_ctx,
         .event_fd = -1,
         .registered_fd = -1,
+        .aspdat = { .monitor_par = 1 },
     };
     // first try the preferred drivers, with their optional subdevice param:
     if (vo_list && vo_list[0])
@@ -388,24 +391,23 @@ static void apply_autofit(int *w, int *h, int scr_w, int scr_h,
 //       multi-monitor stuff, and possibly more.
 static void determine_window_geometry(struct vo *vo, int d_w, int d_h)
 {
-    struct MPOpts *opts = vo->opts;
+    struct mp_vo_opts *opts = vo->opts;
 
-    int scr_w = opts->vo_screenwidth;
-    int scr_h = opts->vo_screenheight;
+    int scr_w = opts->screenwidth;
+    int scr_h = opts->screenheight;
 
-    // This is only for applying monitor pixel aspect
-    aspect(vo, &d_w, &d_h, A_NOZOOM);
+    aspect_calc_monitor(vo, &d_w, &d_h);
 
-    apply_autofit(&d_w, &d_h, scr_w, scr_h, &opts->vo_autofit, true);
-    apply_autofit(&d_w, &d_h, scr_w, scr_h, &opts->vo_autofit_larger, false);
+    apply_autofit(&d_w, &d_h, scr_w, scr_h, &opts->autofit, true);
+    apply_autofit(&d_w, &d_h, scr_w, scr_h, &opts->autofit_larger, false);
 
-    vo->dx = (int)(opts->vo_screenwidth - d_w) / 2;
-    vo->dy = (int)(opts->vo_screenheight - d_h) / 2;
+    vo->dx = (int)(opts->screenwidth - d_w) / 2;
+    vo->dy = (int)(opts->screenheight - d_h) / 2;
     m_geometry_apply(&vo->dx, &vo->dy, &d_w, &d_h, scr_w, scr_h,
-                     &opts->vo_geometry);
+                     &opts->geometry);
 
-    vo->dx += xinerama_x;
-    vo->dy += xinerama_y;
+    vo->dx += vo->xinerama_x;
+    vo->dy += vo->xinerama_y;
     vo->dwidth = d_w;
     vo->dheight = d_h;
 }
@@ -421,7 +423,6 @@ int vo_config(struct vo *vo, uint32_t width, uint32_t height,
                      uint32_t d_width, uint32_t d_height, uint32_t flags,
                      uint32_t format)
 {
-    panscan_init(vo);
     aspect_save_videores(vo, width, height, d_width, d_height);
 
     if (vo_control(vo, VOCTRL_UPDATE_SCREENINFO, NULL) == VO_TRUE) {
@@ -430,14 +431,10 @@ int vo_config(struct vo *vo, uint32_t width, uint32_t height,
         d_height = vo->dheight;
     }
 
-    vo->default_caps = vo->driver->query_format(vo, format);
-
     int ret = vo->driver->config(vo, width, height, d_width, d_height, flags,
                                  format);
     vo->config_ok = (ret == 0);
     vo->config_count += vo->config_ok;
-    if (!vo->config_ok)
-        vo->default_caps = 0;
     if (vo->registered_fd == -1 && vo->event_fd != -1 && vo->config_ok) {
         mp_input_add_key_fd(vo->input_ctx, vo->event_fd, 1, event_fd_callback,
                             NULL, vo);
@@ -520,15 +517,12 @@ void vo_get_src_dst_rects(struct vo *vo, struct mp_rect *out_src,
     struct mp_osd_res osd = {
         .w = vo->dwidth,
         .h = vo->dheight,
-        .display_par = vo->monitor_par,
+        .display_par = vo->aspdat.monitor_par,
         .video_par = vo->aspdat.par,
     };
-    if (aspect_scaling()) {
-        int scaled_width  = 0, scaled_height = 0;
-        aspect(vo, &scaled_width, &scaled_height, A_WINZOOM);
-        panscan_calc_windowed(vo);
-        scaled_width  += vo->panscan_x;
-        scaled_height += vo->panscan_y;
+    if (vo->opts->keepaspect) {
+        int scaled_width, scaled_height;
+        aspect_calc_panscan(vo, &scaled_width, &scaled_height);
         int border_w = vo->dwidth  - scaled_width;
         int border_h = vo->dheight - scaled_height;
         osd.ml = border_w / 2;
@@ -568,8 +562,9 @@ const char *vo_get_window_title(struct vo *vo)
 void vo_mouse_movement(struct vo *vo, int posx, int posy)
 {
   char cmd_str[40];
-  if (!enable_mouse_movements)
+  if (!vo->opts->enable_mouse_movements)
     return;
   snprintf(cmd_str, sizeof(cmd_str), "set_mouse_pos %i %i", posx, posy);
   mp_input_queue_cmd(vo->input_ctx, mp_input_parse_cmd(bstr0(cmd_str), ""));
 }
+

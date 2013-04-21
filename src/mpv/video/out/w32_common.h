@@ -26,10 +26,6 @@
 struct vo_w32_state {
     HWND window;
 
-    bool vm;
-
-    int depthonscreen;
-
     // last non-fullscreen extends (updated only on fullscreen or on initialization)
     int prev_width;
     int prev_height;
@@ -52,6 +48,8 @@ struct vo_w32_state {
     int mon_cnt;
     int mon_id;
 };
+
+struct vo;
 
 int vo_w32_init(struct vo *vo);
 void vo_w32_uninit(struct vo *vo);

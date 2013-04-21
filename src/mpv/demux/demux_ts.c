@@ -415,11 +415,11 @@ static void ts_add_stream(demuxer_t * demuxer, ES_stream_t *es)
  		if (sh) {
 			switch (es->type) {
 			case SPU_DVB:
-				sh->type = 'b'; break;
+				sh->gsh->codec = "dvb_subtitle"; break;
 			case SPU_DVD:
-				sh->type = 'v'; break;
+				sh->gsh->codec = "dvd_subtitle"; break;
 			case SPU_PGS:
-				sh->type = 'p'; break;
+				sh->gsh->codec = "hdmv_pgs_subtitle"; break;
         		}
 			priv->ts.streams[es->pid].id = priv->last_sid;
 			priv->ts.streams[es->pid].sh = sh;
@@ -990,6 +990,7 @@ static demuxer_t *demux_open_ts(demuxer_t * demuxer)
 
 
 	demuxer->type= DEMUXER_TYPE_MPEG_TS;
+        demuxer->ts_resets_possible = true;
 
 
 	stream_reset(demuxer->stream);
@@ -2985,7 +2986,7 @@ static int ts_parse(demuxer_t *demuxer , ES_stream_t *es, unsigned char *packet,
 			{
 				sh_sub_t *sh_sub = demuxer->sub->sh;
 
-				if(sh_sub && sh_sub->sid == tss->pid)
+				if(sh_sub && sh_sub->gsh->tid == tss->pid)
 				{
 					ds = demuxer->sub;
 

@@ -44,7 +44,6 @@
 #include "talloc.h"
 #include "vo.h"
 #include "x11_common.h"
-#include "aspect.h"
 #include "video/csputils.h"
 #include "sub/sub.h"
 #include "core/m_option.h"
@@ -377,7 +376,10 @@ static void resize(struct vo *vo)
     vc->src_rect_vid.y0 = vc->flip ? src_rect.y1 : src_rect.y0;
     vc->src_rect_vid.y1 = vc->flip ? src_rect.y0 : src_rect.y1;
 
-    int flip_offset_ms = vo_fs ? vc->flip_offset_fs : vc->flip_offset_window;
+    int flip_offset_ms = vo->opts->fs ?
+                         vc->flip_offset_fs :
+                         vc->flip_offset_window;
+
     vo->flip_queue_offset = flip_offset_ms / 1000.;
 
     if (vc->output_surface_width < vo->dwidth
@@ -856,7 +858,7 @@ static int config(struct vo *vo, uint32_t width, uint32_t height,
     if (IMGFMT_IS_VDPAU(vc->image_format) && !create_vdp_decoder(vo, 2))
         return -1;
 
-    vo_x11_create_vo_window(vo, NULL, vo->dx, vo->dy, d_width, d_height,
+    vo_x11_config_vo_window(vo, NULL, vo->dx, vo->dy, d_width, d_height,
                             flags, "vdpau");
 
     if (initialize_vdpau_objects(vo) < 0)
@@ -1380,7 +1382,7 @@ static struct mp_image *get_decoder_surface(struct vo *vo)
 static int query_format(struct vo *vo, uint32_t format)
 {
     int default_flags = VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW
-        | VFCAP_OSD | VFCAP_FLIP;
+        | VFCAP_FLIP;
     switch (format) {
     case IMGFMT_420P:
     case IMGFMT_NV12:
@@ -1618,7 +1620,6 @@ static int control(struct vo *vo, uint32_t request, void *data)
     return VO_NOTIMPL;
 }
 
-#undef OPT_BASE_STRUCT
 #define OPT_BASE_STRUCT struct vdpctx
 
 const struct vo_driver video_out_vdpau = {

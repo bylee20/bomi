@@ -27,6 +27,7 @@
 #include "config.h"
 
 struct vo;
+struct mp_rect;
 
 struct vo_x11_state {
     Display *display;
@@ -44,39 +45,48 @@ struct vo_x11_state {
     XIM xim;
     XIC xic;
 
-    GC vo_gc;
+    GC f_gc;    // used to paint background
+    GC vo_gc;   // used to paint video
     Colormap colormap;
 
     int wm_type;
     int fs_type;
-    int window_state;
+    bool window_hidden;
     int fs_flip;
     int fs_layer;
-    int vm_set;
-    int vm_orig_w, vm_orig_h;
 
-    GC f_gc;
     XSizeHints vo_hint;
     unsigned int mouse_timer;
     int mouse_waiting_hide;
     int orig_layer;
     int old_gravity;
-    int vo_old_x;
-    int vo_old_y;
-    int vo_old_width;
-    int vo_old_height;
+
+    // Current actual window position (updated on window move/resize events).
+    int win_x;
+    int win_y;
+    unsigned int win_width;
+    unsigned int win_height;
+
+    int pending_vo_events;
+
+    // last non-fullscreen extends (updated on fullscreen or reinitialization)
+    int nofs_width;
+    int nofs_height;
+    int nofs_x;
+    int nofs_y;
 
     /* Keep track of original video width/height to determine when to
      * resize window when reconfiguring. Resize window when video size
      * changes, but don't force window size changes as long as video size
      * stays the same (even if that size is different from the current
      * window size after the user modified the latter). */
-    int last_video_width;
-    int last_video_height;
+    int old_dwidth;
+    int old_dheight;
     /* Video size changed during fullscreen when we couldn't tell the new
      * size to the window manager. Must set window size when turning
      * fullscreen off. */
     bool size_changed_during_fs;
+    bool pos_changed_during_fs;
 
     unsigned int olddecor;
     unsigned int oldfuncs;
@@ -123,19 +133,16 @@ uint32_t vo_x11_set_equalizer(struct vo *vo, const char *name, int value);
 uint32_t vo_x11_get_equalizer(struct vo *vo, const char *name, int *value);
 bool vo_x11_screen_is_composited(struct vo *vo);
 void fstype_help(void);
-void vo_x11_create_vo_window(struct vo *vo, XVisualInfo *vis,
+void vo_x11_config_vo_window(struct vo *vo, XVisualInfo *vis,
                              int x, int y, unsigned int width,
                              unsigned int height, int flags,
                              const char *classname);
-void vo_x11_clearwindow_part(struct vo *vo, Window vo_window,
-                             int img_width, int img_height);
+void vo_x11_clear_background(struct vo *vo, const struct mp_rect *rc);
 void vo_x11_clearwindow(struct vo *vo, Window vo_window);
 void vo_x11_ontop(struct vo *vo);
 void vo_x11_border(struct vo *vo);
 void vo_x11_update_screeninfo(struct vo *vo);
 
 double vo_x11_vm_get_fps(struct vo *vo);
-
-void xscreensaver_heartbeat(struct vo_x11_state *x11);
 
 #endif /* MPLAYER_X11_COMMON_H */

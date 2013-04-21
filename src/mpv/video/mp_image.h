@@ -103,6 +103,7 @@ void mp_image_unrefp(struct mp_image **p_img);
 void mp_image_clear(struct mp_image *mpi, int x0, int y0, int x1, int y1);
 void mp_image_crop(struct mp_image *img, int x0, int y0, int x1, int y1);
 void mp_image_crop_rc(struct mp_image *img, struct mp_rect rc);
+void mp_image_vflip(struct mp_image *img);
 
 void mp_image_set_size(struct mp_image *mpi, int w, int h);
 void mp_image_set_display_size(struct mp_image *mpi, int dw, int dh);
@@ -116,7 +117,8 @@ struct mp_image *mp_image_new_custom_ref(struct mp_image *img, void *arg,
 struct mp_image *mp_image_new_external_ref(struct mp_image *img, void *arg,
                                            void (*ref)(void *arg),
                                            void (*unref)(void *arg),
-                                           bool (*is_unique)(void *arg));
+                                           bool (*is_unique)(void *arg),
+                                           void (*free)(void *arg));
 
 enum mp_csp mp_image_csp(struct mp_image *img);
 enum mp_csp_levels mp_image_levels(struct mp_image *img);
@@ -124,6 +126,14 @@ enum mp_csp_levels mp_image_levels(struct mp_image *img);
 struct mp_csp_details;
 void mp_image_set_colorspace_details(struct mp_image *image,
                                      struct mp_csp_details *csp);
+
+struct AVFrame;
+void mp_image_copy_fields_from_av_frame(struct mp_image *dst,
+                                        struct AVFrame *src);
+void mp_image_copy_fields_to_av_frame(struct AVFrame *dst,
+                                      struct mp_image *src);
+struct mp_image *mp_image_from_av_frame(struct AVFrame *av_frame);
+struct AVFrame *mp_image_to_av_frame_and_unref(struct mp_image *img);
 
 // align must be a power of two (align >= 1), v >= 0
 #define MP_ALIGN_UP(v, align) FFALIGN(v, align)

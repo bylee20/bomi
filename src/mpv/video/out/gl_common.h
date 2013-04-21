@@ -47,6 +47,7 @@
 #include <GL/glext.h>
 #endif
 
+#define MP_GET_GL_WORKAROUNDS
 #include "video/out/gl_header_fixes.h"
 
 struct GL;
@@ -72,13 +73,6 @@ void glEnable3DLeft(GL *gl, int type);
 void glEnable3DRight(GL *gl, int type);
 void glDisable3D(GL *gl, int type);
 
-enum MPGLType {
-    GLTYPE_AUTO,
-    GLTYPE_COCOA,
-    GLTYPE_W32,
-    GLTYPE_X11,
-};
-
 enum {
     MPGL_CAP_GL                 = (1 << 0),     // GL was successfully loaded
     MPGL_CAP_GL_LEGACY          = (1 << 1),     // GL 1.1 (but not 3.x)
@@ -102,13 +96,12 @@ enum {
 
 typedef struct MPGLContext {
     GL *gl;
-    enum MPGLType type;
     struct vo *vo;
 
     // Bit size of each component in the created framebuffer. 0 if unknown.
     int depth_r, depth_g, depth_b;
 
-    // GL version requested from create_window_gl3 backend.
+    // GL version requested from config_window_gl3 backend (MPGL_VER mangled).
     // (Might be different from the actual version in gl->version.)
     int requested_gl_version;
 
@@ -119,13 +112,15 @@ typedef struct MPGLContext {
     void (*vo_uninit)(struct vo *vo);
     void (*releaseGlContext)(struct MPGLContext *);
 
-    // Creates GL 1.x/2.x legacy context.
-    bool (*create_window_old)(struct MPGLContext *ctx, uint32_t d_width,
-                              uint32_t d_height, uint32_t flags);
-
-    // Creates GL 3.x core context.
-    bool (*create_window_gl3)(struct MPGLContext *ctx, uint32_t d_width,
-                              uint32_t d_height, uint32_t flags);
+    // Resize the window, or create a new window if there isn't one yet.
+    // On the first call, it creates a GL context according to what's specified
+    // in MPGLContext.requested_gl_version. This is just a hint, and if the
+    // requested version is not available, it may return a completely different
+    // GL context. (The caller must check if the created GL version is ok. The
+    // callee must try to fall back to an older version if the requested
+    // version is not available, and newer versions are incompatible.)
+    bool (*config_window)(struct MPGLContext *ctx, uint32_t d_width,
+                          uint32_t d_height, uint32_t flags);
 
     // optional
     void (*pause)(struct vo *vo);
@@ -136,28 +131,30 @@ typedef struct MPGLContext {
 
     // For free use by the backend.
     void *priv;
-    // Internal to gl_common.c.
-    bool (*selected_create_window)(struct MPGLContext *ctx, uint32_t d_width,
-                                   uint32_t d_height, uint32_t flags);
-    bool vo_init_ok;
 } MPGLContext;
 
-int mpgl_find_backend(const char *name);
-
-MPGLContext *mpgl_init(enum MPGLType type, struct vo *vo);
+MPGLContext *mpgl_init(struct vo *vo, const char *backend_name);
 void mpgl_uninit(MPGLContext *ctx);
 
 // Create a VO window and create a GL context on it.
-// (Calls create_window_gl3 or create_window+setGlWindow.)
+// (Calls config_window_gl3 or config_window+setGlWindow.)
 // gl_caps: bitfield of MPGL_CAP_* (required GL version and feature set)
 // flags: passed to the backend's create window function
 // Returns success.
-bool mpgl_create_window(struct MPGLContext *ctx, int gl_caps, uint32_t d_width,
+bool mpgl_config_window(struct MPGLContext *ctx, int gl_caps, uint32_t d_width,
                         uint32_t d_height, uint32_t flags);
 
-// Destroy the window, without resetting GL3 vs. GL2 context choice.
-// If this fails (false), mpgl_uninit(ctx) must be called.
-bool mpgl_destroy_window(struct MPGLContext *ctx);
+int mpgl_find_backend(const char *name);
+
+void mpgl_set_backend_cocoa(MPGLContext *ctx);
+void mpgl_set_backend_w32(MPGLContext *ctx);
+void mpgl_set_backend_x11(MPGLContext *ctx);
+void mpgl_set_backend_wayland(MPGLContext *ctx);
+
+void *mp_getdladdr(const char *s);
+
+void mpgl_load_functions(GL *gl, void *(*getProcAddress)(const GLubyte *),
+                         const char *ext2);
 
 // print a multi line string with line numbers (e.g. for shader sources)
 // mod, lev: module and log level, as in mp_msg()

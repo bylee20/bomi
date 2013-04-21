@@ -48,13 +48,12 @@ static int config(struct vf_instance *vf,
     }
 
     const vo_info_t *info = video_out->driver->info;
-    mp_msg(MSGT_CPLAYER, MSGL_INFO, "VO: [%s] %dx%d => %dx%d %s %s%s%s\n",
+    mp_msg(MSGT_CPLAYER, MSGL_INFO, "VO: [%s] %dx%d => %dx%d %s %s%s\n",
            info->short_name,
            width, height,
            d_width, d_height,
            vo_format_name(outfmt),
            (flags & VOFLAG_FULLSCREEN) ? " [fs]" : "",
-           (flags & VOFLAG_MODESWITCHING) ? " [vm]" : "",
            (flags & VOFLAG_FLIPPING) ? " [flip]" : "");
     mp_msg(MSGT_CPLAYER, MSGL_V, "VO: Description: %s\n", info->name);
     mp_msg(MSGT_CPLAYER, MSGL_V, "VO: Author: %s\n", info->author);
@@ -64,9 +63,6 @@ static int config(struct vf_instance *vf,
     if (vo_config(video_out, width, height, d_width, d_height, flags, outfmt))
         return 0;
 
-    // save vo's stride capability for the wanted colorspace:
-    vf->default_caps = video_out->default_caps;
-
     return 1;
 }
 
@@ -74,12 +70,8 @@ static int control(struct vf_instance *vf, int request, void *data)
 {
     switch (request) {
     case VFCTRL_GET_DEINTERLACE:
-        if (!video_out)
-            return CONTROL_FALSE;   // vo not configured?
         return vo_control(video_out, VOCTRL_GET_DEINTERLACE, data) == VO_TRUE;
     case VFCTRL_SET_DEINTERLACE:
-        if (!video_out)
-            return CONTROL_FALSE;    // vo not configured?
         return vo_control(video_out, VOCTRL_SET_DEINTERLACE, data) == VO_TRUE;
     case VFCTRL_GET_YUV_COLORSPACE:
         return vo_control(video_out, VOCTRL_GET_YUV_COLORSPACE, data) == true;
