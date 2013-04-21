@@ -2,6 +2,7 @@ import QtQuick 2.0
 
 Rectangle {
 	id: dock
+	property alias selectedIndex: view.selectedIndex
 	x: d.dest;	y: 20;	height: parent.height-40;
 	color: "gray"; radius: 10; opacity: 0.8;	visible: false
 	onVisibleChanged: if (visible) {d.updateWidth(); sliding.start();}

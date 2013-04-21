@@ -1,5 +1,4 @@
 #include "subtitle_parser_p.hpp"
-#include "tagiterator.hpp"
 #include "global.hpp"
 
 bool SamiParser::isParsable() const {

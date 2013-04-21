@@ -216,7 +216,7 @@ private:
 	mp_image_pool *m_pool = nullptr;
 
 };
-typedef VaApi Backend;
+using Backend = VaApi;
 
 
 bool HwAcc::supports(AVCodecID codec) { return VaApiInfo::get().find(codec) != nullptr; }
@@ -366,10 +366,12 @@ struct HwAccDecoder {
 	void releaseBuffer(AVFrame *pic);
 	static PixelFormat find(AVCodecContext *avctx, const PixelFormat *fmt) {
 		auto vaapi = static_cast<HwAccDecoder*>(avctx->opaque);
-		for (int i = 0; fmt[i] != PIX_FMT_NONE; i++) {
+		for (int i = 0; fmt[i] != PIX_FMT_NONE; ++i) {
+			qDebug() << fmt[i] << Backend::vld() << AV_PIX_FMT_VAAPI_VLD << AV_PIX_FMT_VDPAU_H264;
 			if (fmt[i] == Backend::vld() && vaapi->initVideoOutput(fmt[i]))
 				return fmt[i];
 		}
+		Q_ASSERT(false);
 		return PIX_FMT_NONE;
 	}
 	AVCodecContext *m_avctx = nullptr;

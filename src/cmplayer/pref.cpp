@@ -1,10 +1,176 @@
 #include "pref.hpp"
 #include "hwacc.hpp"
 
-Pref &Pref::get() {
-	static Pref pref;
-	return pref;
+template<typename T>
+static QStringList toStringList(const QList<T> &list) {
+	QStringList ret;
+	ret.reserve(list.size());
+	for (int i=0; i<list.size(); ++i)
+		ret.push_back(list[i].toString());
+	return ret;
 }
+
+template<typename T>
+static QList<T> fromStringList(const QStringList &list) {
+	QList<T> ret;
+	ret.reserve(list.size());
+	for (int i=0; i<list.size(); ++i)
+		ret.push_back(T::fromString(list[i]));
+	return ret;
+}
+
+
+QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
+	QHash<QString, QList<QKeySequence> > keys;
+	keys[_L("menu/open/file")] << Qt::CTRL + Qt::Key_F;
+	keys[_L("menu/open/folder")] << Qt::CTRL + Qt::Key_G;
+
+	keys[_L("menu/play/pause")] << Qt::Key_Space;
+	keys[_L("menu/play/prev")] << Qt::CTRL + Qt::Key_Left;
+	keys[_L("menu/play/next")] << Qt::CTRL + Qt::Key_Right;
+	keys[_L("menu/play/speed/slower")] << Qt::Key_Minus;
+	keys[_L("menu/play/speed/reset")] << Qt::Key_Backspace;
+	keys[_L("menu/play/speed/faster")] << Qt::Key_Plus << Qt::Key_Equal;
+	keys[_L("menu/play/repeat/range")] << Qt::Key_R;
+	keys[_L("menu/play/repeat/subtitle")] << Qt::Key_E;
+	keys[_L("menu/play/repeat/quit")] << Qt::Key_Escape;
+	keys[_L("menu/play/seek/forward1")] << Qt::Key_Right;
+	keys[_L("menu/play/seek/forward2")] << Qt::Key_PageDown;
+	keys[_L("menu/play/seek/forward3")] << Qt::Key_End;
+	keys[_L("menu/play/seek/backward1")] << Qt::Key_Left;
+	keys[_L("menu/play/seek/backward2")] << Qt::Key_PageUp;
+	keys[_L("menu/play/seek/backward3")] << Qt::Key_Home;
+	keys[_L("menu/play/seek/prev-subtitle")] << Qt::Key_Comma;
+	keys[_L("menu/play/seek/current-subtitle")] << Qt::Key_Period;
+	keys[_L("menu/play/seek/next-subtitle")] << Qt::Key_Slash;
+
+	keys[_L("menu/subtitle/track/next")] << Qt::CTRL + Qt::Key_E;
+	keys[_L("menu/subtitle/list/open")] << Qt::SHIFT + Qt::Key_F;
+	keys[_L("menu/subtitle/list/next")] << Qt::SHIFT + Qt::Key_E;
+	keys[_L("menu/subtitle/list/all")] << Qt::SHIFT + Qt::Key_R;
+	keys[_L("menu/subtitle/list/hide")] << Qt::SHIFT + Qt::Key_Q;
+	keys[_L("menu/subtitle/pos-up")] << Qt::Key_W;
+	keys[_L("menu/subtitle/pos-down")] << Qt::Key_S;
+	keys[_L("menu/subtitle/sync-add")] << Qt::Key_D;
+	keys[_L("menu/subtitle/sync-reset")] << Qt::Key_Q;
+	keys[_L("menu/subtitle/sync-sub")] << Qt::Key_A;
+
+	keys[_L("menu/video/snapshot")] << Qt::CTRL + Qt::Key_S;
+	keys[_L("menu/video/drop-frame")] << Qt::CTRL + Qt::Key_D;
+	keys[_L("menu/video/move/reset")] << Qt::SHIFT + Qt::Key_X;
+	keys[_L("menu/video/move/up")] << Qt::SHIFT + Qt::Key_W;
+	keys[_L("menu/video/move/down")] << Qt::SHIFT + Qt::Key_S;
+	keys[_L("menu/video/move/left")] << Qt::SHIFT + Qt::Key_A;
+	keys[_L("menu/video/move/right")] << Qt::SHIFT + Qt::Key_D;
+	keys[_L("menu/video/color/brightness+")] << Qt::Key_T;
+	keys[_L("menu/video/color/brightness-")] << Qt::Key_G;
+	keys[_L("menu/video/color/contrast+")] << Qt::Key_Y;
+	keys[_L("menu/video/color/contrast-")] << Qt::Key_H;
+	keys[_L("menu/video/color/saturation+")] << Qt::Key_U;
+	keys[_L("menu/video/color/saturation-")] << Qt::Key_J;
+	keys[_L("menu/video/color/hue+")] << Qt::Key_I;
+	keys[_L("menu/video/color/hue-")] << Qt::Key_K;
+
+	keys[_L("menu/audio/track/next")] << Qt::CTRL + Qt::Key_A;
+	keys[_L("menu/audio/volume-up")] << Qt::Key_Up;
+	keys[_L("menu/audio/volume-down")] << Qt::Key_Down;
+	keys[_L("menu/audio/mute")] << Qt::Key_M;
+	keys[_L("menu/audio/normalizer")] << Qt::Key_N;
+	keys[_L("menu/audio/tempo-scaler")] << Qt::Key_Z;
+	keys[_L("menu/audio/amp-up")] << Qt::CTRL + Qt::Key_Up;
+	keys[_L("menu/audio/amp-down")] << Qt::CTRL + Qt::Key_Down;
+	keys[_L("menu/audio/sync-reset")] << Qt::Key_Backslash;
+	keys[_L("menu/audio/sync-add")] << Qt::Key_BracketRight;
+	keys[_L("menu/audio/sync-sub")] << Qt::Key_BracketLeft;
+
+	keys[_L("menu/tool/playlist/toggle")] << Qt::Key_L;
+	keys[_L("menu/tool/history")] << Qt::Key_C;
+	keys[_L("menu/tool/subtitle")] << Qt::Key_V;
+	keys[_L("menu/tool/pref")] << Qt::Key_P;
+	keys[_L("menu/tool/reload-skin")] << Qt::Key_R + Qt::CTRL;
+	keys[_L("menu/tool/playinfo")] << Qt::Key_Tab;
+
+	keys[_L("menu/window/proper")] << Qt::Key_QuoteLeft;
+	keys[_L("menu/window/100%")] << Qt::Key_1;
+	keys[_L("menu/window/200%")] << Qt::Key_2;
+	keys[_L("menu/window/300%")] << Qt::Key_3;
+	keys[_L("menu/window/400%")] << Qt::Key_4;
+	keys[_L("menu/window/full")] << Qt::Key_Enter << Qt::Key_Return << Qt::Key_F;
+	keys[_L("menu/window/close")] << Qt::CTRL + Qt::Key_W;
+
+#ifndef Q_OS_MAC
+	keys[_L("menu/exit")] << Qt::CTRL + Qt::Key_Q;
+#endif
+	return keys;
+}
+
+Shortcuts Pref::preset(ShortcutPreset id) {
+	Shortcuts keys;
+	if (id == Movist) {
+		keys[_L("menu/open/file")] << Qt::CTRL + Qt::Key_O;
+		keys[_L("menu/window/close")] << Qt::CTRL + Qt::Key_W;
+		keys[_L("menu/tool/playlist/save")] << Qt::CTRL + Qt::Key_S << Qt::CTRL + Qt::SHIFT + Qt::Key_S;
+		keys[_L("menu/tool/playlist/append-file")] << Qt::CTRL + Qt::ALT + Qt::Key_L;
+		keys[_L("menu/play/prev")] << Qt::ALT + Qt::CTRL + Qt::Key_Left;
+		keys[_L("menu/play/next")] << Qt::ALT + Qt::CTRL + Qt::Key_Right;
+		keys[_L("menu/play/pause")] << Qt::Key_Space;
+		keys[_L("menu/play/seek/backword1")] << Qt::Key_Left;
+		keys[_L("menu/play/seek/forward1")] << Qt::Key_Right;
+		keys[_L("menu/play/repeat/quit")] << Qt::CTRL + Qt::Key_Backslash;
+		keys[_L("menu/play/seek/range")] << Qt::CTRL + Qt::Key_BracketLeft << Qt::CTRL + Qt::Key_BracketRight;
+		keys[_L("menu/play/speed/reset")] << Qt::SHIFT + Qt::CTRL + Qt::Key_Backslash;
+		keys[_L("menu/play/repeat/faster")] << Qt::SHIFT + Qt::CTRL + Qt::Key_Right;
+		keys[_L("menu/play/speed/slower")] << Qt::SHIFT + Qt::CTRL + Qt::Key_Left;
+		keys[_L("menu/window/full")] << Qt::META + Qt::CTRL + Qt::Key_F;
+		keys[_L("menu/window/100%")] << Qt::CTRL + Qt::Key_1;
+		keys[_L("menu/window/200%")] << Qt::CTRL + Qt::Key_2;
+//		keys[_L("menu/audio")]
+//		오디오 메뉴
+//		⌃⌥⌘ S 사운드 트랙 > 순환
+//		⌃⌥⌘ \ 기본 오디오 동기
+//		⌃⌥⌘ ← 오디오 동기 0.1초 당기기
+//		⌃⌥⌘ → 오디오 동기 0.1초 밀기
+//		↑ 음량 높이기
+//		⌥ ↑ 음량 높이기 ((미세 조정))
+//		⇧ ↑ 시스템 음량 높이기
+//		↓ 음량 낮추기
+//		⌥ ↓ 음량 낮추기 ((미세 조정))
+//		⇧ ↓ 시스템 음량 낮추기
+//		⌥⌘ ↓ 소리 끔
+//		⌥⇧⌘ ↓ 시스템 소리 끔
+
+//		자막 메뉴
+//		⌃⌥ = 레터박스 높이 > 기본값
+//		⌃⌥ 0 레터박스 높이 > 같은 높이
+//		⌃⌥ 1 레터박스 높이 > 한 줄 높이
+//		⌃⌥ 2 레터박스 높이 > 두 줄 높이
+//		⌃⌥ 3 레터박스 높이 > 세 줄 높이
+//		⌃⌥ L 레터박스 높이 > 순환
+//		⌃⌘S 자막 순환
+//		⌃⌘V 자막 사용 안함
+//		⌃⌘↑ 글자 크게
+//		⌃⌘↓ 글자 작게
+//		⌃⇧ = 기본 동기
+//		⌃⇧ ← 0.1초 당기기
+//		⌃⇧ → 0.1초 밀기
+
+//		윈도우
+//		⌘ T 다른 모든 윈도우 위에 유지
+//		⌥⌘ T 다른 모든 윈도우 위에 유지 ((재생 중에만))
+//		⌘ M 최소화
+//		⌥⌘ M 모두 최소화
+//		⌘ L 제어 패널 > 재생목록
+//		⌘ P 제어 패널 > 속성 보기
+//		⌘ J 조절 탭 순환
+	} else
+		keys = defaultShortcuts();
+	return keys;
+}
+
+//Pref &Pref::get() {
+//	static Pref pref;
+//	return pref;
+//}
 
 #define PREF_GROUP _L("preference")
 
@@ -34,7 +200,7 @@ void Pref::save() const {
 	WRITE(amp_step);
 	WRITE(sub_pos_step);
 	WRITE(volume_step);
-	WRITE(sync_delay_step);
+	WRITE(sub_sync_step);
 	WRITE(brightness_step);
 	WRITE(saturation_step);
 	WRITE(contrast_step);
@@ -77,6 +243,15 @@ void Pref::save() const {
 	WRITE2(middle_click_map);
 	WRITE2(wheel_scroll_map);
 #undef WRITE2
+
+	r.beginWriteArray("shortcuts", shortcuts.size());
+	auto it = shortcuts.cbegin();
+	for (int i=0; it != shortcuts.cend(); ++it, ++i) {
+		r.setArrayIndex(i);
+		r.setValue("id", it.key());
+		r.setValue("keys", toStringList(it.value()));
+	}
+	r.endArray();
 }
 
 void Pref::load() {
@@ -113,7 +288,7 @@ void Pref::load() {
 	READ(volume_step);
 	READ(amp_step);
 	READ(sub_pos_step);
-	READ(sync_delay_step);
+	READ(sub_sync_step);
 	READ(brightness_step);
 	READ(saturation_step);
 	READ(contrast_step);
@@ -147,6 +322,21 @@ void Pref::load() {
 	READ2(middle_click_map);
 	READ2(wheel_scroll_map);
 #undef READ2
+
+	const auto size = r.beginReadArray("shortcuts");
+	if (size > 0) {
+		shortcuts.clear();
+		for (int i=0; i<size; ++i) {
+			r.setArrayIndex(i);
+			const auto id = r.value("id").toString();
+			if (!id.isEmpty()) {
+				const auto keys = fromStringList<QKeySequence>(r.value("keys").toStringList());
+				if (!keys.isEmpty())
+					shortcuts[id] = keys;
+			}
+		}
+	}
+	r.endArray();
 }
 
 QList<int> Pref::defaultHwAccCodecs() {

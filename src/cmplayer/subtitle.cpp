@@ -1,7 +1,6 @@
 #include "subtitle.hpp"
 #include "subtitle_parser.hpp"
 #include "global.hpp"
-#include "pref.hpp"
 #include "charsetdetector.hpp"
 
 QString SubtitleComponent::name() const {
@@ -108,11 +107,10 @@ RichTextDocument Subtitle::caption(int time, double fps) const {
 	return caption;
 }
 
-bool Subtitle::load(const QString &file, const QString &enc) {
-	const double acc = cPref.sub_enc_accuracy*0.01;
+bool Subtitle::load(const QString &file, const QString &enc, double accuracy) {
 	QString encoding;
-	if (cPref.sub_enc_autodetection)
-		encoding = CharsetDetector::detect(file, acc);
+	if (accuracy > 0.0)
+		encoding = CharsetDetector::detect(file, accuracy);
 	if (encoding.isEmpty())
 		encoding = enc;
 	*this = parse(file, encoding);

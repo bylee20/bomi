@@ -72,14 +72,12 @@ HEADERS += playengine.hpp \
     playlistview.hpp \
     recentinfo.hpp \
     subtitleview.hpp \
-    osdstyle.hpp \
     simplelistwidget.hpp \
     appstate.hpp \
     dialogs.hpp \
     favoritesview.hpp \
     downloader.hpp \
     subtitlemodel.hpp \
-    tagiterator.hpp \
     subtitle_parser_p.hpp \
     enums.hpp \
     snapshotdialog.hpp \
@@ -142,14 +140,12 @@ SOURCES += main.cpp \
     playlistview.cpp \
     recentinfo.cpp \
     subtitleview.cpp \
-    osdstyle.cpp \
     simplelistwidget.cpp \
     appstate.cpp \
     dialogs.cpp \
     favoritesview.cpp \
     downloader.cpp \
     subtitlemodel.cpp \
-    tagiterator.cpp \
     subtitle_parser_p.cpp \
     enums.cpp \
     snapshotdialog.cpp \

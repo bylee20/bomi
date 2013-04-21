@@ -24,7 +24,7 @@ bool CharsetDetector::isDetected() const {
 QString CharsetDetector::encoding() const {
 	if (d->detected) {
 		const QString enc(d->obj->encoding);
-		if (enc == "EUC-KR")
+		if (enc.compare("EUC-KR", Qt::CaseInsensitive) == 0)
 			return QString("CP949");
 		return enc;
 	}

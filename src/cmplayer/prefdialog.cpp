@@ -43,7 +43,7 @@ class PrefMouseGroup : public QGroupBox {
 public:
 	typedef ::Enum::KeyModifier Modifier;
 	typedef EnumComboBox<Enum> ComboBox;
-	typedef Pref::ActionEnumInfo<Enum> ActionInfo;
+	typedef ActionEnumInfo<Enum> ActionInfo;
 	typedef Pref::KeyModifierMap<Enum> ActionMap;
 	PrefMouseGroup(QVBoxLayout *form, QWidget *parent = 0)
 	: QGroupBox(parent), form(form) {
@@ -96,41 +96,57 @@ public:
 	enum Column {Discription = 0, Shortcut1, Shortcut2, Shortcut3, Shortcut4};
 	bool isMenu() const{return m_action->menu() != 0;}
 	bool isSeparator() const{return m_action->isSeparator();}
-	const QList<QKeySequence> &shortcuts() const {return m_shortcuts;}
-	void setShortcut(Column column, const QKeySequence &shortcut) {
-		m_shortcuts[column - 1] = shortcut;
-		setText(column, shortcut.toString(QKeySequence::NativeText));
+	QKeySequence shortcut(int i) const {return m_shortcuts[i];}
+	void setShortcut(int idx, const QKeySequence &shortcut) {
+		m_shortcuts[idx] = shortcut;
+		setText(idx + Shortcut1, shortcut.toString(QKeySequence::NativeText));
 	}
-	void applyShortcut() {
-		for (int i=0; i<childCount(); ++i)
-			static_cast<MenuTreeItem *>(child(i))->applyShortcut();
-		m_action->setShortcuts(m_shortcuts);
+	void setShortcuts(const QList<QKeySequence> &keys) {
+		int i=0;
+		for (; i<m_shortcuts.size() && i<keys.size(); ++i)
+			m_shortcuts[i] = keys[i];
+		for (; i<m_shortcuts.size(); ++i)
+			m_shortcuts[i] = QKeySequence();
+		for (int i=0; i<m_shortcuts.size(); ++i)
+			setText(i+1, m_shortcuts[i].toString(QKeySequence::NativeText));
 	}
-	static void makeRoot(QTreeWidget *parent) {
-		RootMenu &root = RootMenu::instance();
-		QList<QAction*> actions = root.actions();
-		for (int i=0; i<actions.size(); ++i) {
-			QAction *const act = actions[i];
-			if (act->menu()) {
-				Q_ASSERT(qobject_cast<Menu*>(act->menu()) != 0);
-				parent->addTopLevelItem(create(static_cast<Menu*>(act->menu())));
-			} else if (!root.id(act).isEmpty())
-				parent->addTopLevelItem(new MenuTreeItem(act, 0));
+	QList<QKeySequence> shortcuts() const {
+		QList<QKeySequence> shortcuts;
+		for (auto key : m_shortcuts) {
+			if (!key.isEmpty())
+				shortcuts << key;
 		}
+		return shortcuts;
+	}
+	QString id() const {return m_id;}
+	static QList<MenuTreeItem*> makeRoot(QTreeWidget *parent) {
+		RootMenu &root = RootMenu::instance();
+		QList<MenuTreeItem*> items;
+		auto item = create(&root, items);
+		parent->addTopLevelItems(item->takeChildren());
+		delete item;
+		return items;
 	}
 private:
-	static MenuTreeItem *create(Menu *menu) {
+	static MenuTreeItem *create(Menu *menu, QList<MenuTreeItem*> &items) {
+		RootMenu &root = RootMenu::instance();
 		QList<QAction*> actions = menu->actions();
 		QList<QTreeWidgetItem*> children;
 		for (int i=0; i<actions.size(); ++i) {
-			QAction *const act = actions[i];
-			if (act->menu()) {
-				Q_ASSERT(qobject_cast<Menu*>(act->menu()) != 0);
-				MenuTreeItem *child = create(static_cast<Menu*>(act->menu()));
-				if (child)
+			const auto action = actions[i];
+			const auto id = root.longId(action);
+			if (!id.isEmpty()) {
+				if (action->menu()) {
+					Q_ASSERT(qobject_cast<Menu*>(action->menu()) != 0);
+					if (auto child = create(static_cast<Menu*>(action->menu()), items))
+						children.push_back(child);
+				} else {
+					auto child = new MenuTreeItem(action, 0);
+					child->m_id = id;
+					items.push_back(child);
 					children.push_back(child);
-			} else if (!menu->id(act).isEmpty())
-				children.push_back(new MenuTreeItem(act, 0));
+				}
+			}
 		}
 		if (children.isEmpty())
 			return 0;
@@ -146,14 +162,10 @@ private:
 	: QTreeWidgetItem(parent), m_action(action) {
 		Q_ASSERT(action->menu() == 0);
 		setText(Discription, m_action->text());
-		m_shortcuts = m_action->shortcuts();
-		while (m_shortcuts.size() < 4)
-			m_shortcuts.append(QKeySequence());
-		for (int i=0; i<m_shortcuts.size(); ++i)
-			setText(i+1, m_shortcuts[i].toString(QKeySequence::NativeText));
+		m_shortcuts.resize(4);
 	}
-	QAction *m_action;
-	QList<QKeySequence> m_shortcuts;
+	QAction *m_action; QString m_id;
+	QVector<QKeySequence> m_shortcuts;
 };
 
 
@@ -205,6 +217,10 @@ private:
 	}
 };
 
+
+/********************************************************************************/
+
+
 struct PrefDialog::Data {
 	Ui::PrefDialog ui;
 	QButtonGroup *shortcuts;
@@ -214,20 +230,25 @@ struct PrefDialog::Data {
 	PrefOpenMediaGroup *open_media_from_file_manager;
 	PrefOpenMediaGroup *open_media_by_drag_and_drop;
 	QStringList imports;
+	QList<MenuTreeItem*> actionItems;
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
-#ifdef Q_OS_MAC
-: QDialog(parent, Qt::Tool)
-#else
-: QDialog(parent)
-#endif
-, d(new Data) {
+: QDialog(parent, Qt::Tool), d(new Data) {
 	d->ui.setupUi(this);
 	d->ui.tree->setItemDelegate(new Delegate(d->ui.tree));
 	d->ui.tree->setIconSize(QSize(32, 32));
 
-	connect(d->ui.tree, SIGNAL(itemSelectionChanged()), this, SLOT(onCategoryChanged()));
+	connect(d->ui.tree, &QTreeWidget::itemSelectionChanged, [this] () {
+		auto items = d->ui.tree->selectedItems();
+		if (items.isEmpty())
+			return;
+		auto item = items.first();
+		if (item->data(0, CategoryRole).toBool())
+			return;
+		d->ui.page_name->setText(item->parent()->text(0) % " > " % item->text(0));
+		d->ui.stack->setCurrentWidget(item->data(0, WidgetRole).value<QWidget*>());
+	});
 	auto addCategory = [this] (const QString &name) {
 		auto item = new QTreeWidgetItem;
 		item->setText(0, name);
@@ -296,45 +317,102 @@ PrefDialog::PrefDialog(QWidget *parent)
 	d->whl = new PrefMouseGroup<Enum::WheelAction>(d->ui.ui_mouse_layout);
 
 	d->shortcuts = new QButtonGroup(this);
-	d->shortcuts->addButton(d->ui.shortcut1, MenuTreeItem::Shortcut1);
-	d->shortcuts->addButton(d->ui.shortcut2, MenuTreeItem::Shortcut2);
-	d->shortcuts->addButton(d->ui.shortcut3, MenuTreeItem::Shortcut3);
-	d->shortcuts->addButton(d->ui.shortcut4, MenuTreeItem::Shortcut4);
+	d->shortcuts->addButton(d->ui.shortcut1, 0);
+	d->shortcuts->addButton(d->ui.shortcut2, 1);
+	d->shortcuts->addButton(d->ui.shortcut3, 2);
+	d->shortcuts->addButton(d->ui.shortcut4, 3);
 
-	MenuTreeItem::makeRoot(d->ui.shortcut_tree);
+	d->actionItems = MenuTreeItem::makeRoot(d->ui.shortcut_tree);
 
 	d->ui.shortcut_tree->header()->resizeSection(0, 200);
+
+
+	auto checkSubAutoselect = [this] (const QVariant &data) {
+		const bool enabled = data.toInt() == Enum::SubtitleAutoselect::Matched.id();
+		d->ui.sub_ext_label->setEnabled(enabled);
+		d->ui.sub_ext->setEnabled(enabled);
+	};
 
 	d->ui.sub_priority->setAddingAndErasingEnabled(true);
 	checkSubAutoselect(d->ui.sub_autoselect->currentData());
 
+	auto updateSkinPath = [this] (int idx) {
+		if (idx >= 0) {
+			const auto name = d->ui.skin_name->itemText(idx);
+			const auto skin = Skin::source(name);
+			d->ui.skin_path->setText(skin.absolutePath());
+		}
+	};
+
 	d->ui.skin_name->addItems(Skin::names(true));
-	onSkinIndexChanged(d->ui.skin_name->currentIndex());
+	updateSkinPath(d->ui.skin_name->currentIndex());
 
+	connect(d->ui.skin_name, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), updateSkinPath);
+	connect(d->ui.sub_autoselect, &DataComboBox::currentDataChanged, checkSubAutoselect);
+	connect(d->ui.sub_autoload, &DataComboBox::currentDataChanged, checkSubAutoselect);
+	connect(d->shortcuts, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this] (int idx) {
+		auto item = static_cast<MenuTreeItem*>(d->ui.shortcut_tree->currentItem());
+		if (item && !item->isMenu()) {
+			GetShortcutDialog dlg(item->shortcut(idx), this);
+			if (dlg.exec())
+				item->setShortcut(idx, dlg.shortcut());
+		}
+	});
+	connect(d->ui.shortcut_tree, &QTreeWidget::currentItemChanged, [this] (QTreeWidgetItem *it) {
+		MenuTreeItem *item = static_cast<MenuTreeItem*>(it);
+		const QList<QAbstractButton*> buttons = d->shortcuts->buttons();
+		for (int i=0; i<buttons.size(); ++i)
+			buttons[i]->setEnabled(item && !item->isMenu());
+	});
 
+	auto onBlurKernelChanged = [this] () {
+		d->ui.blur_sum->setText(QString::number(d->ui.blur_kern_c->value() + d->ui.blur_kern_n->value()*4 + d->ui.blur_kern_d->value()*4));
+	};
+	auto onSharpenKernelChanged = [this] () {
+		d->ui.sharpen_sum->setText(QString::number(d->ui.sharpen_kern_c->value() + d->ui.sharpen_kern_n->value()*4 + d->ui.sharpen_kern_d->value()*4));
+	};
+	using ValueChanged = void(QSpinBox::*)(int);
+	connect(d->ui.blur_kern_c, static_cast<ValueChanged>(&QSpinBox::valueChanged), onBlurKernelChanged);
+	connect(d->ui.blur_kern_n, static_cast<ValueChanged>(&QSpinBox::valueChanged), onBlurKernelChanged);
+	connect(d->ui.blur_kern_d, static_cast<ValueChanged>(&QSpinBox::valueChanged), onBlurKernelChanged);
 
-	connect(d->ui.skin_name, SIGNAL(currentIndexChanged(int)), this, SLOT(onSkinIndexChanged(int)));
-	connect(d->ui.sub_autoselect, SIGNAL(currentDataChanged(QVariant)), this, SLOT(checkSubAutoselect(QVariant)));
-	connect(d->ui.sub_autoload, SIGNAL(currentDataChanged(QVariant)), this, SLOT(checkSubAutoselect(QVariant)));
-	connect(d->shortcuts, SIGNAL(buttonClicked(int)), this, SLOT(getShortcut(int)));
-	connect(d->ui.shortcut_tree, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)), this, SLOT(onCurrentMenuChanged(QTreeWidgetItem*)));
+	connect(d->ui.sharpen_kern_c, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
+	connect(d->ui.sharpen_kern_n, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
+	connect(d->ui.sharpen_kern_d, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
 
-	connect(d->ui.blur_kern_c, SIGNAL(valueChanged(int)), this, SLOT(onBlurKernelChanged()));
-	connect(d->ui.blur_kern_n, SIGNAL(valueChanged(int)), this, SLOT(onBlurKernelChanged()));
-	connect(d->ui.blur_kern_d, SIGNAL(valueChanged(int)), this, SLOT(onBlurKernelChanged()));
+	connect(d->ui.dbb, &DBB::clicked, [this] (QAbstractButton *button) {
+		switch (d->ui.dbb->standardButton(button)) {
+		case DBB::Ok:
+			hide();
+		case DBB::Apply:
+			emit applyRequested();
+			break;
+		case DBB::Cancel:
+			hide();
+		case DBB::Reset:
+			emit resetRequested();
+			break;
+		case DBB::RestoreDefaults:
+			set(Pref());
+			break;
+		default:
+			break;
+		}
+	});
 
-	connect(d->ui.sharpen_kern_c, SIGNAL(valueChanged(int)), this, SLOT(onSharpenKernelChanged()));
-	connect(d->ui.sharpen_kern_n, SIGNAL(valueChanged(int)), this, SLOT(onSharpenKernelChanged()));
-	connect(d->ui.sharpen_kern_d, SIGNAL(valueChanged(int)), this, SLOT(onSharpenKernelChanged()));
+	d->ui.shortcut_preset->addItem(tr("CMPlayer"), Pref::CMPlayer);
+	d->ui.shortcut_preset->addItem(tr("Movist"), Pref::Movist);
 
-	connect(d->ui.dbb, SIGNAL(clicked(QAbstractButton*)), this, SLOT(onDialogButtonClicked(QAbstractButton*)));
+	connect(d->ui.load_preset, &QPushButton::clicked, [this] () {
+		const int idx = d->ui.shortcut_preset->currentIndex();
+		if (idx != -1) {
+			const auto preset = static_cast<Pref::ShortcutPreset>(d->ui.shortcut_preset->itemData(idx).toInt());
+			setShortcuts(Pref::preset(preset));
+		}
+	});
 
 	retranslate();
-	fill(cPref);
 
-//	d->ui.skin_prev->setWindow
-
-//	d->ui.sub_shadow_blur->hide();
 #ifdef Q_OS_MAC
 	d->ui.system_tray_group->hide();
 #endif
@@ -345,55 +423,6 @@ PrefDialog::~PrefDialog() {
 	delete d;
 }
 
-void PrefDialog::onSkinIndexChanged(int idx) {
-	if (idx >= 0) {
-		const auto name = d->ui.skin_name->itemText(idx);
-		const auto skin = Skin::source(name);
-		d->ui.skin_path->setText(skin.absolutePath());
-	}
-}
-
-void PrefDialog::getShortcut(int id) {
-	MenuTreeItem *item = static_cast<MenuTreeItem*>(d->ui.shortcut_tree->currentItem());
-	if (!item || item->isMenu())
-		return;
-	GetShortcutDialog dlg(item->shortcuts()[id - 1], this);
-	if (dlg.exec())
-		item->setShortcut(MenuTreeItem::Column(id), dlg.shortcut());
-}
-
-void PrefDialog::onCurrentMenuChanged(QTreeWidgetItem *it) {
-	MenuTreeItem *item = static_cast<MenuTreeItem*>(it);
-	const QList<QAbstractButton*> buttons = d->shortcuts->buttons();
-	for (int i=0; i<buttons.size(); ++i)
-		buttons[i]->setEnabled(item && !item->isMenu());
-}
-
-
-void PrefDialog::onCategoryChanged() {
-	auto items = d->ui.tree->selectedItems();
-	if (items.isEmpty())
-		return;
-	auto item = items.first();
-	if (item->data(0, CategoryRole).toBool())
-		return;
-	d->ui.page_name->setText(item->parent()->text(0) % " > " % item->text(0));
-	d->ui.stack->setCurrentWidget(item->data(0, WidgetRole).value<QWidget*>());
-}
-
-void PrefDialog::onBlurKernelChanged() {
-	d->ui.blur_sum->setText(QString::number(d->ui.blur_kern_c->value() + d->ui.blur_kern_n->value()*4 + d->ui.blur_kern_d->value()*4));
-}
-
-void PrefDialog::onSharpenKernelChanged() {
-	d->ui.sharpen_sum->setText(QString::number(d->ui.sharpen_kern_c->value() + d->ui.sharpen_kern_n->value()*4 + d->ui.sharpen_kern_d->value()*4));
-}
-
-void PrefDialog::checkSubAutoselect(const QVariant &data) {
-	const bool enabled = data.toInt() == Enum::SubtitleAutoselect::Matched.id();
-	d->ui.sub_ext_label->setEnabled(enabled);
-	d->ui.sub_ext->setEnabled(enabled);
-}
 
 QString PrefDialog::toString(const QLocale &locale) {
 	QString text;
@@ -438,7 +467,7 @@ void PrefDialog::retranslate() {
 	d->ui.dbb->button(DBB::Reset)->setText(tr("Reset"));
 }
 
-void PrefDialog::fill(const Pref &p) {
+void PrefDialog::set(const Pref &p) {
 	d->open_media_from_file_manager->setValue(p.open_media_from_file_manager);
 	d->open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
 
@@ -523,15 +552,21 @@ void PrefDialog::fill(const Pref &p) {
 	d->ui.volume_step->setValue(p.volume_step);
 	d->ui.amp_step->setValue(p.amp_step);
 	d->ui.sub_pos_step->setValue(p.sub_pos_step);
-	d->ui.sync_delay_step->setValue(p.sync_delay_step*0.001);
+	d->ui.sub_sync_step->setValue(p.sub_sync_step*0.001);
+	d->ui.audio_sync_step->setValue(p.audio_sync_step*0.001);
 
 	d->ui.locale->setCurrentData(p.locale);
 	d->ui.skin_name->setCurrentText(p.skin_name);
+
+	setShortcuts(p.shortcuts);
 }
 
-void PrefDialog::apply() {
-	Pref &p = Pref::get();
+void PrefDialog::setShortcuts(const Shortcuts &shortcuts) {
+	for (auto item : d->actionItems)
+		item->setShortcuts(shortcuts[item->id()]);
+}
 
+void PrefDialog::get(Pref &p) {
 	p.open_media_from_file_manager = d->open_media_from_file_manager->value();
 	p.open_media_by_drag_and_drop = d->open_media_by_drag_and_drop->value();
 
@@ -602,9 +637,6 @@ void PrefDialog::apply() {
 	p.enable_system_tray = d->ui.enable_system_tray->isChecked();
 	p.hide_rather_close = d->ui.hide_rather_close->isChecked();
 
-	for (int i=0; i<d->ui.shortcut_tree->topLevelItemCount(); ++i)
-		((MenuTreeItem*)(d->ui.shortcut_tree->topLevelItem(i)))->applyShortcut();
-
 	p.double_click_map = d->dbl->values();
 	p.middle_click_map = d->mdl->values();
 	p.wheel_scroll_map = d->whl->values();
@@ -620,13 +652,17 @@ void PrefDialog::apply() {
 	p.volume_step = d->ui.volume_step->value();
 	p.amp_step = d->ui.amp_step->value();
 	p.sub_pos_step = d->ui.sub_pos_step->value();
-	p.sync_delay_step = qRound(d->ui.sync_delay_step->value()*1000.0);
+	p.sub_sync_step = qRound(d->ui.sub_sync_step->value()*1000.0);
+	p.audio_sync_step = qRound(d->ui.audio_sync_step->value()*1000.0);
 
 	p.skin_name = d->ui.skin_name->currentText();
 
-	p.save();
-
-	emit applicationRequested();
+	p.shortcuts.clear();
+	for (auto item : d->actionItems) {
+		const auto keys = item->shortcuts();
+		if (!keys.isEmpty())
+			p.shortcuts[item->id()] = keys;
+	}
 }
 
 void PrefDialog::changeEvent(QEvent *event) {
@@ -637,28 +673,7 @@ void PrefDialog::changeEvent(QEvent *event) {
 	}
 }
 
-void PrefDialog::onDialogButtonClicked(QAbstractButton *button) {
-	auto reset = [this] () {fill(cPref);};
-	auto restore = [this] () {fill(Pref());};
 
-	switch (d->ui.dbb->standardButton(button)) {
-	case DBB::Ok:
-		hide();
-	case DBB::Apply:
-		apply();
-		break;
-	case DBB::Cancel:
-		hide();
-	case DBB::Reset:
-		reset();
-		break;
-	case DBB::RestoreDefaults:
-		restore();
-		break;
-	default:
-		break;
-	}
-}
 
 void PrefDialog::showEvent(QShowEvent *event) {
 	QDialog::showEvent(event);

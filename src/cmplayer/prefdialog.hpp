@@ -11,23 +11,16 @@ class PrefDialog : public QDialog {
 public:
 	PrefDialog(QWidget *parent = 0);
 	~PrefDialog();
+	void set(const Pref &pref);
+	void get(Pref &p);
 signals:
-	void applicationRequested();
-private slots:
-	void checkSubAutoselect(const QVariant &data);
-	void onBlurKernelChanged();
-	void onSharpenKernelChanged();
-	void onCategoryChanged();
-	void apply();
-	void getShortcut(int id);
-	void onCurrentMenuChanged(QTreeWidgetItem *it);
-	void onDialogButtonClicked(QAbstractButton *button);
-	void onSkinIndexChanged(int idx);
+	void applyRequested();
+	void resetRequested();
 private:
+	void setShortcuts(const QHash<QString, QList<QKeySequence> > &shortcuts);
 	void changeEvent(QEvent *event);
 	void showEvent(QShowEvent *event);
 	QString toString(const QLocale &locale);
-	void fill(const Pref &p);
 	void retranslate();
 	class MenuTreeItem;
 	class Delegate;

@@ -9,18 +9,23 @@
 
 class QLocale;
 
+typedef QHash<QString, QList<QKeySequence>> Shortcuts;
+
+template <typename Enum>
+struct ActionEnumInfo {
+	typedef Enum EnumType;
+	typedef ActionEnumInfo<Enum> Super ;
+	ActionEnumInfo(): enabled(false) {}
+	ActionEnumInfo(bool e, const Enum &a): enabled(e), action(a) {}
+	bool enabled; Enum action;
+};
+using ClickActionInfo = ActionEnumInfo<Enum::ClickAction>;
+using WheelActionInfo = ActionEnumInfo<Enum::WheelAction>;
+
 class Pref {
 public:
-	static const Pref &instance() {return get();}
-	template <typename Enum>
-	struct ActionEnumInfo {
-		typedef Enum EnumType;
-		ActionEnumInfo(): enabled(false) {}
-		ActionEnumInfo(bool e, const Enum &a): enabled(e), action(a) {}
-		bool enabled; Enum action;
-	};
-	typedef ActionEnumInfo<Enum::ClickAction> ClickActionInfo;
-	typedef ActionEnumInfo<Enum::WheelAction> WheelActionInfo;
+	enum ShortcutPreset {CMPlayer, Movist};
+//	static const Pref &instance() {return get();}
 	template <typename Enum>
 	struct KeyModifierMap {
 		typedef ::Enum::KeyModifier Modifier;
@@ -111,7 +116,7 @@ public:
 	WheelActionMap wheel_scroll_map = defaultWheelAction();
 	int seek_step1 = 5000, seek_step2 = 30000, seek_step3 = 60000, speed_step = 10;
 	int brightness_step = 1, saturation_step = 1, contrast_step = 1, hue_step = 1;
-	int volume_step = 2, sync_delay_step = 500, amp_step = 10, sub_pos_step = 1;
+	int volume_step = 2, sub_sync_step = 500, amp_step = 10, sub_pos_step = 1, audio_sync_step = 200;
 
     bool enable_hwaccel = false;
     QList<int> hwaccel_codecs = defaultHwAccCodecs();
@@ -120,12 +125,16 @@ public:
 
 	QString skin_name = "modern";
 
+	Shortcuts shortcuts = defaultShortcuts();
+
+	static Shortcuts preset(ShortcutPreset id);
+
 	void save() const;
 	void load();
 private:
-	static Pref &get();
-	Pref() {load();}
+//	static Pref &get();
 	static QList<int> defaultHwAccCodecs();
+	static Shortcuts defaultShortcuts();
 	static ClickActionMap defaultDoubleClick() {
 		ClickActionMap map = {false, Enum::ClickAction::Fullscreen};
 		map[Enum::KeyModifier::None].enabled = true;
@@ -142,9 +151,8 @@ private:
 		map[Enum::KeyModifier::Ctrl] = WheelActionInfo(true, Enum::WheelAction::Amp);
 		return map;
 	}
-	friend class PrefDialog;
 };
 
-#define cPref (Pref::instance())
+//#define cPref (Pref::instance())
 
 #endif // PREF_HPP

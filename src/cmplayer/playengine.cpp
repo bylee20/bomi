@@ -431,6 +431,7 @@ int PlayEngine::runAv(const Mrl &/*mrl*/, int &terminated, int &duration) {
 	d->mpctx->opts.play_start.pos = d->start*1e-3;
 	d->mpctx->opts.play_start.type = REL_TIME_ABSOLUTE;
 	setmp("speed", (float)m_speed);
+	setmp("audio_delay", m_audioSync*0.001);
 	auto error = prepare_to_play_current_file(mpctx);
 	if (error == NoMpError) {
 		post(this, StreamOpen);

@@ -45,7 +45,7 @@ public:
 	void setPos(double pos) { if (_ChangeF(m_pos, qBound(0.0, pos, 1.0))) setMargin(m_top ? m_pos : 0, m_top ? 0.0 : 1.0 - m_pos, 0, 0); }
 	void setLetterboxHint(bool hint);
 	void setDelay(int delay) { if (_Change(m_delay, delay)) rerender(); }
-	bool load(const QString &fileName, const QString &enc, bool select);
+	bool load(const Subtitle &subtitle, bool select);
 	void unload();
 	void select(int idx);
 	void deselect(int idx = -1);

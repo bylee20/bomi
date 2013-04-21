@@ -20,6 +20,7 @@ Rectangle {
 	readonly property string nameFontFamily: Util.monospace
 	readonly property string locationFontFamily: Util.monospace
 	readonly property real padding: 5
+	property alias selectedIndex: view.currentIndex
 	function contentWidth() {
 		var max = 0;
 		for (var i=0; i<view.count; ++i) {

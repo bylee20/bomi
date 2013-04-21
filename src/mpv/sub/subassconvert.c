@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdbool.h>
-
+#include <ctype.h>
 #include "core/mp_msg.h"
 #include "subassconvert.h"
 #include "core/bstr.h"

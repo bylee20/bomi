@@ -3,6 +3,13 @@
 
 #include "menu.hpp"
 
+typedef QHash<QString, QList<QKeySequence> > Shortcuts;
+
+struct Pref;
+template<typename E> class ActionEnumInfo;
+using ClickActionInfo = ActionEnumInfo<Enum::ClickAction>;
+using WheelActionInfo = ActionEnumInfo<Enum::WheelAction>;
+
 class RootMenu : public Menu {
 	Q_OBJECT
 private:
@@ -15,23 +22,21 @@ private:
 	typedef QMap<Enum::ClickAction, QAction*> ClickActionMap;
 	typedef QMap<Enum::WheelAction, WheelActionPair> WheelActionMap;
 public:
+	enum Preset {Current, CMPlayer, Movist};
 	RootMenu();
 	RootMenu(const RootMenu &) = delete;
 	~RootMenu() {obj = nullptr;}
-	void save();
-	void load();
-	void update();
-	inline QAction *clickAction(const Enum::ClickAction &a) const {return m_click[a];}
-	inline QAction *wheelAction(const Enum::WheelAction &a, bool up) const {
-		return up ? m_wheel[a].up : m_wheel[a].down;
-	}
+	void update(const Pref &p);
 	static inline RootMenu &instance() {return *obj;}
-	QAction *action(const QString &id) const;
+	QString longId(QAction *action) const {return m_ids.value(action);}
+	QAction *action(const QString &id) const {return m_actions.value(id, nullptr);}
 	QAction *action(const QKeySequence &shortcut) const {return m_keymap.value(shortcut);}
-	QAction *doubleClickAction(Qt::KeyboardModifiers mod) const;
-	QAction *middleClickAction(Qt::KeyboardModifiers mod) const;
-	QAction *wheelScrollAction(Qt::KeyboardModifiers mod, bool up) const;
+	QAction *doubleClickAction(const ClickActionInfo &info) const;
+	QAction *middleClickAction(const ClickActionInfo &info) const;
+	QAction *wheelScrollAction(const WheelActionInfo &info, bool up) const;
 	inline void resetKeyMap() {m_keymap.clear(); fillKeyMap(this);}
+	Shortcuts shortcuts() const;
+	void setShortcuts(const Shortcuts &shortcuts);
 private:
 	template<typename N>
 	inline static void setActionAttr(QAction *act, const QVariant &data
@@ -58,11 +63,24 @@ private:
 		setActionAttr(menu[key + "+"], QList<QVariant>() << prop << step, text, step);
 		setActionAttr(menu[key + "-"], QList<QVariant>() << prop << -step, text, -step);
 	}
+	void fillId(Menu *menu, const QString &parent);
 	void fillKeyMap(Menu *menu);
 	static RootMenu *obj;
 	ClickActionMap m_click;
 	WheelActionMap m_wheel;
+	QHash<QAction*, QString> m_ids;
+	QHash<QString, QAction*> m_actions;
 	QMap<QKeySequence, QAction*> m_keymap;
 };
+
+//class ShortcutMap {
+//public:
+//	typedef QList<QKeySequence> Keys;
+//	ShortcutMap() {}
+//	Keys operator[] (const QString &id) const {return m_map.value(id);}
+//	Keys &operator[] (const QString &id) const {return m_map[id];}
+//private:
+////	QHash<QString, Keys> m_map;
+//};
 
 #endif // ROOTMENU_HPP

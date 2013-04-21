@@ -33,7 +33,7 @@ struct SubtitleView::Data {
 };
 
 SubtitleView::SubtitleView(QWidget *parent)
-: QDialog(parent), d(new Data) {
+: QDialog(parent, Qt::Tool), d(new Data) {
 	QScrollArea *area = new QScrollArea(this);
 	d->splitter = new QSplitter(Qt::Horizontal, area);
 	d->timeVisible = new QCheckBox(tr("Show start/end time"), this);

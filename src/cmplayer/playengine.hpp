@@ -93,6 +93,8 @@ public:
 	void setCurrentVideoStream(int id) {setmp("video", id);}
 	int currentVideoStream() const;
 	void setGetStartTimeFunction(const GetStartTime &func);
+	void setAudioSync(int sync) {if (_Change(m_audioSync, sync)) setmp("audio_sync", sync*0.001);}
+	int audioSync() const {return m_audioSync;}
 	const PlaylistModel &playlist() const;
 	PlaylistModel &playlist();
 
@@ -159,7 +161,7 @@ private:
 	bool parse(const Id &id);
 	bool parse(const QString &line);
 	void customEvent(QEvent *event);
-	int m_duration = 0, m_title = 0, m_volume = 100, m_subId = -1;
+	int m_duration = 0, m_title = 0, m_volume = 100, m_subId = -1, m_audioSync = 0;
 	EngineState m_state = EngineStopped;
 	double m_speed = 1.0, m_preamp = 1.0;
 	bool m_framedrop = false, m_muted = false;

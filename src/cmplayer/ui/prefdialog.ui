@@ -75,7 +75,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>3</number>
+        <number>7</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -273,7 +273,16 @@
        </widget>
        <widget class="QWidget" name="advanced">
         <layout class="QVBoxLayout" name="verticalLayout_19">
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <item>
@@ -2167,6 +2176,34 @@ e.g.: English, Korean</string>
        <widget class="QWidget" name="ui_shortcut">
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_17">
+           <item>
+            <widget class="QLabel" name="label_40">
+             <property name="text">
+              <string>Preset</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="shortcut_preset">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="load_preset">
+             <property name="text">
+              <string>Load</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
           <widget class="QTreeWidget" name="shortcut_tree">
            <property name="alternatingRowColors">
             <bool>true</bool>
@@ -2283,19 +2320,19 @@ e.g.: English, Korean</string>
        </widget>
        <widget class="QWidget" name="ui_step">
         <layout class="QVBoxLayout" name="verticalLayout_24">
-         <property name="topMargin">
-          <number>0</number>
-         </property>
          <item>
-          <layout class="QGridLayout" name="gridLayout_4">
-           <item row="0" column="0">
-            <layout class="QVBoxLayout" name="verticalLayout_23">
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_22">
              <item>
               <widget class="QGroupBox" name="groupBox_17">
                <property name="title">
                 <string>Seek</string>
                </property>
                <layout class="QFormLayout" name="formLayout">
+                <property name="fieldGrowthPolicy">
+                 <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+                </property>
                 <item row="0" column="0">
                  <widget class="QLabel" name="aLabel_7">
                   <property name="text">
@@ -2374,6 +2411,9 @@ e.g.: English, Korean</string>
                 <string>Playback</string>
                </property>
                <layout class="QFormLayout" name="formLayout_12">
+                <property name="fieldGrowthPolicy">
+                 <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+                </property>
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_9">
                   <property name="text">
@@ -2397,10 +2437,62 @@ e.g.: English, Korean</string>
                </layout>
               </widget>
              </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox_21">
+               <property name="title">
+                <string>Subtitle</string>
+               </property>
+               <layout class="QFormLayout" name="formLayout_10">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_10">
+                  <property name="text">
+                   <string>Position</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="1">
+                 <widget class="QSpinBox" name="sub_pos_step">
+                  <property name="suffix">
+                   <string notr="true">%</string>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="value">
+                   <number>1</number>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_11">
+                  <property name="text">
+                   <string>Sync Delay</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="sub_sync_step">
+                  <property name="suffix">
+                   <string>sec</string>
+                  </property>
+                  <property name="minimum">
+                   <double>0.010000000000000</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.100000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>0.500000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
             </layout>
            </item>
-           <item row="0" column="1">
-            <layout class="QVBoxLayout" name="verticalLayout_22">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_23">
              <item>
               <widget class="QGroupBox" name="groupBox_20">
                <property name="title">
@@ -2459,44 +2551,15 @@ e.g.: English, Korean</string>
                   </property>
                  </widget>
                 </item>
-               </layout>
-              </widget>
-             </item>
-             <item>
-              <widget class="QGroupBox" name="groupBox_21">
-               <property name="title">
-                <string>Subtitle</string>
-               </property>
-               <layout class="QFormLayout" name="formLayout_10">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_10">
-                  <property name="text">
-                   <string>Position</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QSpinBox" name="sub_pos_step">
-                  <property name="suffix">
-                   <string notr="true">%</string>
-                  </property>
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="value">
-                   <number>1</number>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="label_11">
+                <item row="2" column="0">
+                 <widget class="QLabel" name="label_39">
                   <property name="text">
                    <string>Sync Delay</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1">
-                 <widget class="QDoubleSpinBox" name="sync_delay_step">
+                <item row="2" column="1">
+                 <widget class="QDoubleSpinBox" name="audio_sync_step">
                   <property name="suffix">
                    <string>sec</string>
                   </property>
@@ -2514,16 +2577,12 @@ e.g.: English, Korean</string>
                </layout>
               </widget>
              </item>
-            </layout>
-           </item>
-           <item row="1" column="0" colspan="2">
-            <widget class="QGroupBox" name="groupBox_18">
-             <property name="title">
-              <string>Color</string>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_6">
-              <item>
-               <layout class="QFormLayout" name="formLayout_11">
+             <item>
+              <widget class="QGroupBox" name="groupBox_18">
+               <property name="title">
+                <string>Color</string>
+               </property>
+               <layout class="QFormLayout" name="formLayout_4">
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_12">
                   <property name="text">
@@ -2564,18 +2623,14 @@ e.g.: English, Korean</string>
                   </property>
                  </widget>
                 </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QFormLayout" name="formLayout_4">
-                <item row="0" column="0">
+                <item row="2" column="0">
                  <widget class="QLabel" name="label_13">
                   <property name="text">
                    <string>Saturation</string>
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="1">
+                <item row="2" column="1">
                  <widget class="QSpinBox" name="saturation_step">
                   <property name="suffix">
                    <string notr="true">%</string>
@@ -2588,14 +2643,14 @@ e.g.: English, Korean</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="0">
+                <item row="3" column="0">
                  <widget class="QLabel" name="label_20">
                   <property name="text">
                    <string>Hue</string>
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1">
+                <item row="3" column="1">
                  <widget class="QSpinBox" name="hue_step">
                   <property name="suffix">
                    <string notr="true">%</string>
@@ -2609,9 +2664,9 @@ e.g.: English, Korean</string>
                  </widget>
                 </item>
                </layout>
-              </item>
-             </layout>
-            </widget>
+              </widget>
+             </item>
+            </layout>
            </item>
           </layout>
          </item>

@@ -6,7 +6,7 @@
 template<typename D1 = char, typename D2 = char, typename D3 = char>
 class DataEvent : public QEvent {
 public:
-	typedef DataEvent<D1, D2, D3> This;
+	using This = DataEvent<D1, D2, D3>;
 	DataEvent(int type): QEvent((Type)type) {}
 	DataEvent(int type, const D1 &d1): QEvent((Type)type), m_d1(d1) {}
 	DataEvent(int type, const D1 &d1, const D2 &d2)

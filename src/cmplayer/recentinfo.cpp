@@ -1,6 +1,5 @@
 #include "recentinfo.hpp"
 #include "playlist.hpp"
-#include "pref.hpp"
 #include "playengine.hpp"
 
 struct RecentInfo::Data {

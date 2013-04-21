@@ -5,8 +5,8 @@
 #include "global.hpp"
 #include "globalqmlobject.hpp"
 
-class Mrl;		class PrefDialog;
-class MainWindow;
+class Mrl;			class PrefDialog;
+class MainWindow;	class Playlist;
 
 class MainWindow : public QQuickView {
 	Q_OBJECT
@@ -18,8 +18,8 @@ public:
 	void openFromFileManager(const Mrl &mrl);
 	bool isFullScreen() const;
 public slots:
-	void openMrl(const Mrl &mrl, const QString &enc);
 	void openMrl(const Mrl &mrl);
+	void openMrl(const Mrl &mrl, const QString &enc);
 	void exit();
 private slots:
 	void applyPref();
@@ -32,6 +32,8 @@ private slots:
 	void reloadSkin();
 	void checkWindowState();
 private:
+	Playlist generatePlaylist(const Mrl &mrl) const;
+	void connectMenus();
 	void updateTitle();
 	void setCursorVisible(bool visible);
 	void doVisibleAction(bool visible);

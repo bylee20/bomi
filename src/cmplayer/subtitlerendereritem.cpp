@@ -297,13 +297,12 @@ void SubtitleRendererItem::select(int idx) {
 	}
 }
 
-bool SubtitleRendererItem::load(const QString &fileName, const QString &enc, bool select) {
+bool SubtitleRendererItem::load(const Subtitle &subtitle, bool select) {
 	const int idx = m_loaded.size();
-	Subtitle sub;
-	if (!sub.load(fileName, enc))
+	if (subtitle.isEmpty())
 		return false;
-	for (int i=0; i<sub.size(); ++i)
-		m_loaded.append(LoadedSubtitle(sub[i]));
+	for (int i=0; i<subtitle.size(); ++i)
+		m_loaded.append(LoadedSubtitle(subtitle[i]));
 	if (select) {
 		d->selecting = true;
 		for (int i=m_loaded.size()-1; i>=idx; --i) {

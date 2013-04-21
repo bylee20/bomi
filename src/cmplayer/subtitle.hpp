@@ -74,7 +74,7 @@ public:
 //	int start(int time, double frameRate) const;
 //	int end(int time, double frameRate) const;
 	RichTextDocument caption(int time, double frameRate) const;
-	bool load(const QString &file, const QString &enc);
+	bool load(const QString &file, const QString &enc, double accuracy);
 	void clear() {m_comp.clear();}
 	void append(const SubtitleComponent &comp) {m_comp.append(comp);}
 	static Subtitle parse(const QString &fileName, const QString &enc);
