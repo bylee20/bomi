@@ -93,7 +93,7 @@ public:
 	void setCurrentVideoStream(int id) {setmp("video", id);}
 	int currentVideoStream() const;
 	void setGetStartTimeFunction(const GetStartTime &func);
-	void setAudioSync(int sync) {if (_Change(m_audioSync, sync)) setmp("audio_delay", sync*0.001);}
+	void setAudioSync(int sync) {if (_Change(m_audioSync, sync)) setmp("audio-delay", sync*0.001);}
 	int audioSync() const {return m_audioSync;}
 	const PlaylistModel &playlist() const;
 	PlaylistModel &playlist();
@@ -136,12 +136,16 @@ signals:
 	void mutedChanged(bool muted);
 	void videoFormatChanged(const VideoFormat &format);
 	void videoAspectRatioChanged(double ratio);
+	void audioStreamsChanged(const StreamList &streams);
+	void videoStreamsChanged(const StreamList &streams);
+	void subtitleStreamsChanged(const StreamList &streams);
 	void dvdInfoChanged();
 private:
 	static void onPausedChanged(MPContext *mpctx);
 	static void onPlayStarted(MPContext *mpctx);
 	int runImage(const Mrl &mrl, int &terminated, int &duration);
 	int runAv(const Mrl &mrl, int &terminated, int &duration);
+	int currentTrackId(int type) const;
 	bool load(int row, int start = -1);
 	void play(int time);
 	void clear();
@@ -161,7 +165,7 @@ private:
 	bool parse(const Id &id);
 	bool parse(const QString &line);
 	void customEvent(QEvent *event);
-	int m_duration = 0, m_title = 0, m_volume = 100, m_subId = -1, m_audioSync = 0;
+	int m_duration = 0, m_title = 0, m_volume = 100, m_audioSync = 0;
 	EngineState m_state = EngineStopped;
 	double m_speed = 1.0, m_preamp = 1.0;
 	bool m_framedrop = false, m_muted = false;

@@ -1,70 +1,51 @@
 #!/bin/sh
 
 args="--disable-encoding --disable-termcap --disable-termios --disable-iconv \
-  --disable-lirc --disable-lircc --disable-joystick --disable-apple-remote \
-  --disable-apple-ir --disable-vm --disable-xf86keysym --disable-radio \
+  --disable-lirc --disable-lircc --disable-joystick \
+  --disable-vm --disable-xf86keysym --disable-radio \
   --disable-radio-capture --disable-radio-v4l2 --disable-tv \
   --disable-tv-v4l2 --disable-pvr --enable-networking \
   --disable-winsock2_h --disable-smb --enable-libquvi --disable-vcd --disable-bluray --enable-dvdread \
   --enable-cddb --disable-enca --disable-macosx-finder --disable-macosx-bundle \
   --enable-inet6 --enable-gethostbyname2 --enable-ftp --disable-vstream \
   --enable-pthreads --disable-libass --disable-libass-osd --disable-rpath \
-  --disable-libavdevice --disable-libpostproc --disable-libavfilter --disable-mng \
+  --disable-libavdevice --disable-libpostproc --disable-libavfilter --disable-libavresample --disable-mng \
   --disable-jpeg --enable-libcdio --disable-ladspa --disable-libbs2b --enable-mpg123 \
   --disable-gl --disable-corevideo --disable-cocoa --disable-x11 --disable-sdl \
   --disable-sdl2 --disable-caca --disable-direct3d --disable-dvb --disable-xv --disable-vdpau \
   --disable-vm --disable-xinerama --disable-xss --enable-openal \
   --disable-ossaudio --disable-rsound --disable-pulse --disable-portaudio \
   --disable-jack --disable-dsound --disable-select --disable-gettext --disable-static"
-objs="audio/decode/ad.o audio/decode/ad_lavc.o audio/decode/ad_mpg123.o \
-  audio/decode/ad_spdif.o audio/decode/dec_audio.o audio/filter/af.o \
-  audio/filter/af_center.o audio/filter/af_channels.o audio/filter/af_delay.o \
-  audio/filter/af_equalizer.o audio/filter/af_export.o \
-  audio/filter/af_extrastereo.o audio/filter/af_format.o audio/filter/af_hrtf.o \
-  audio/filter/af_karaoke.o audio/filter/af_lavcac3enc.o \
-  audio/filter/af_lavcresample.o audio/filter/af_pan.o audio/filter/af_resample.o \
-  audio/filter/af_scaletempo.o audio/filter/af_sinesuppress.o audio/filter/af_sub.o \
-  audio/filter/af_surround.o audio/filter/af_sweep.o audio/filter/af_tools.o \
-  audio/filter/af_drc.o audio/filter/af_volume.o audio/filter/filter.o \
-  audio/filter/window.o audio/format.o audio/mixer.o audio/out/ao.o \
-  audio/out/ao_null.o audio/out/ao_pcm.o audio/reorder_ch.o \
-  core/asxparser.o core/av_log.o core/av_opts.o core/bstr.o \
-  core/command.o core/codecs.o core/av_common.o core/cpudetect.o core/defaultopts.o core/input/input.o \
-  core/m_config.o core/m_option.o core/m_property.o core/m_struct.o core/mp_common.o \
-  core/mp_fifo.o core/parser-cfg.o core/parser-mpcmd.o core/path.o \
-  core/playlist.o core/playlist_parser.o core/quvi.o core/screenshot.o \
-  core/subopt-helper.o core/timeline/tl_cue.o core/timeline/tl_edl.o \
-  core/timeline/tl_matroska.o core/version.o demux/codec_tags.o demux/asfheader.o demux/aviheader.o \
-  demux/aviprint.o demux/demux.o demux/demux_asf.o demux/demux_avi.o demux/demux_cue.o \
-  demux/demux_edl.o demux/demux_lavf.o demux/demux_mf.o demux/demux_mkv.o \
-  demux/demux_mpg.o demux/demux_rawaudio.o demux/demux_rawvideo.o demux/demux_ts.o \
-  demux/ebml.o demux/extension.o demux/mf.o demux/mp3_hdr.o \
-  demux/mpeg_hdr.o demux/parse_es.o demux/video.o osdep/getch2.o \
-  osdep/mmap_anon.o osdep/numcores.o osdep/shmem.o \
-  stream/asf_mmst_streaming.o stream/asf_streaming.o stream/cache2.o stream/cdinfo.o \
-  stream/cookies.o stream/http.o stream/network.o stream/stream.o \
-  stream/stream_avdevice.o stream/stream_cdda.o stream/stream_cddb.o \
-  stream/stream_dvd.o stream/stream_dvd_common.o stream/stream_file.o \
-  stream/stream_ftp.o stream/stream_lavf.o stream/stream_mf.o \
-  stream/stream_null.o stream/stream_udp.o stream/tcp.o stream/udp.o stream/url.o \
-  sub/dec_sub.o sub/draw_bmp.o sub/find_sub.o sub/find_subfiles.o sub/img_convert.o \
-  sub/osd_dummy.o sub/sd_lavc.o sub/spudec.o sub/sub.o sub/subassconvert.o \
-  sub/subreader.o talloc.o video/csputils.o video/decode/dec_video.o video/decode/vd.o \
-  video/decode/vd_lavc.o video/decode/lavc_dr1.o video/filter/pullup.o video/filter/vf.o \
-  video/filter/vf_crop.o video/filter/vf_delogo.o video/filter/vf_divtc.o \
-  video/filter/vf_dlopen.o video/filter/vf_down3dright.o video/filter/vf_dsize.o \
-  video/filter/vf_eq.o video/filter/vf_expand.o video/filter/vf_flip.o \
-  video/filter/vf_format.o video/filter/vf_gradfun.o video/filter/vf_hqdn3d.o \
-  video/filter/vf_ilpack.o video/filter/vf_mirror.o video/filter/vf_noformat.o \
-  video/filter/vf_noise.o video/filter/vf_phase.o video/filter/vf_pullup.o \
-  video/filter/vf_rotate.o video/filter/vf_scale.o video/filter/vf_screenshot.o \
-  video/filter/vf_softpulldown.o video/filter/vf_stereo3d.o video/filter/vf_sub.o \
-  video/filter/vf_swapuv.o video/filter/vf_unsharp.o video/filter/vf_vo.o \
-  video/filter/vf_yadif.o video/fmt-conversion.o video/image_writer.o \
-  video/img_format.o video/mp_image.o video/mp_image_pool.o video/out/aspect.o video/out/bitmap_packer.o \
-  video/out/filter_kernels.o \
-  video/out/vo.o video/out/vo_image.o \
-  video/sws_utils.o"
+objs="talloc.o audio/format.o audio/mixer.o audio/decode/ad.o audio/reorder_ch.o audio/decode/ad_lavc.o audio/decode/ad_spdif.o \
+ audio/decode/dec_audio.o audio/filter/af.o audio/filter/af_center.o audio/filter/af_channels.o audio/filter/af_delay.o \
+ audio/filter/af_equalizer.o audio/filter/af_extrastereo.o audio/filter/af_format.o audio/filter/af_hrtf.o \
+ audio/filter/af_karaoke.o audio/filter/af_lavcac3enc.o audio/filter/af_lavrresample.o audio/filter/af_pan.o \
+ audio/filter/af_scaletempo.o audio/filter/af_sinesuppress.o audio/filter/af_sub.o audio/filter/af_surround.o \
+ audio/filter/af_sweep.o audio/filter/af_tools.o audio/filter/af_drc.o audio/filter/af_volume.o audio/filter/filter.o \
+ audio/filter/window.o audio/out/ao.o audio/out/ao_null.o audio/out/ao_pcm.o core/asxparser.o core/av_common.o core/av_log.o \
+ core/av_opts.o core/bstr.o core/codecs.o core/command.o core/cpudetect.o core/defaultopts.o core/m_config.o core/m_option.o \
+ core/m_property.o core/m_struct.o core/mp_common.o core/mp_fifo.o core/parser-cfg.o core/parser-mpcmd.o \
+ core/path.o core/playlist.o core/playlist_parser.o core/screenshot.o core/subopt-helper.o core/version.o core/timeline/tl_edl.o \
+ core/timeline/tl_matroska.o core/timeline/tl_cue.o demux/asfheader.o demux/aviheader.o demux/aviprint.o demux/codec_tags.o \
+ demux/demux.o demux/demux_asf.o demux/demux_avi.o demux/demux_edl.o demux/demux_cue.o demux/demux_lavf.o demux/demux_mf.o \
+ demux/demux_mpg.o demux/demux_ts.o demux/mp3_hdr.o demux/parse_es.o demux/mpeg_hdr.o demux/demux_rawaudio.o demux/demux_rawvideo.o \
+ demux/extension.o demux/mf.o demux/video.o osdep/numcores.o osdep/io.o stream/stream.o stream/stream_avdevice.o stream/stream_file.o \
+ stream/stream_lavf.o stream/stream_mf.o stream/stream_null.o stream/url.o sub/dec_sub.o sub/draw_bmp.o sub/find_sub.o sub/find_subfiles.o \
+ sub/img_convert.o sub/sd_lavc.o sub/spudec.o sub/sub.o sub/subassconvert.o sub/subreader.o video/csputils.o video/fmt-conversion.o \
+ video/image_writer.o video/img_format.o video/mp_image.o video/mp_image_pool.o video/sws_utils.o video/decode/dec_video.o video/decode/vd.o \
+ video/decode/vd_lavc.o video/filter/vf.o video/filter/pullup.o video/filter/vf_crop.o video/filter/vf_delogo.o video/filter/vf_divtc.o \
+ video/filter/vf_dlopen.o video/filter/vf_down3dright.o video/filter/vf_dsize.o video/filter/vf_eq.o video/filter/vf_expand.o \
+ video/filter/vf_flip.o video/filter/vf_format.o video/filter/vf_gradfun.o video/filter/vf_hqdn3d.o video/filter/vf_ilpack.o \
+ video/filter/vf_mirror.o video/filter/vf_noformat.o video/filter/vf_noise.o video/filter/vf_phase.o video/filter/vf_pullup.o \
+ video/filter/vf_rotate.o video/filter/vf_scale.o video/filter/vf_screenshot.o video/filter/vf_softpulldown.o video/filter/vf_stereo3d.o \
+ video/filter/vf_sub.o video/filter/vf_swapuv.o video/filter/vf_unsharp.o video/filter/vf_vo.o video/filter/vf_yadif.o \
+ video/out/bitmap_packer.o video/out/aspect.o video/out/filter_kernels.o video/out/vo.o video/out/vo_image.o \
+ osdep/getch2.o stream/stream_cdda.o stream/cdinfo.o stream/stream_cddb.o stream/stream_dvd.o stream/stream_dvd_common.o \
+ stream/stream_ftp.o audio/filter/af_export.o osdep/mmap_anon.o audio/decode/ad_mpg123.o osdep/shmem.o stream/asf_mmst_streaming.o \
+ stream/asf_streaming.o stream/cookies.o stream/http.o stream/network.o stream/udp.o stream/tcp.o stream/stream_udp.o stream/cache2.o \
+ sub/osd_dummy.o core/quvi.o video/decode/lavc_dr1.o core/input/input.o demux/demux_mkv.o demux/ebml.o"
+  
+#core/mp_msg.o    video/out/vo_null.o
 
 libs="-ldvdread -lbz2 -lcdio_cdda -lcdio_paranoia -lcdio -lmpg123 -lquvi"
 

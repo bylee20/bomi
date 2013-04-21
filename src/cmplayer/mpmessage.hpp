@@ -14,6 +14,9 @@ struct Stream {
 		return name;
 	}
 	int id() const {return m_id;}
+	bool operator == (const Stream &rhs) const {
+		return m_title == rhs.m_title && m_lang == rhs.m_lang && m_name == rhs.m_name && m_id == rhs.m_id;
+	}
 private:
 	friend class MpMessage;
 	friend class PlayEngine;

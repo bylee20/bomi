@@ -23,7 +23,7 @@ extern "C" {
 }
 
 enum EventType {
-	UserType = QEvent::User, StreamOpen, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged
+	UserType = QEvent::User, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged
 };
 
 enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2};
@@ -175,16 +175,14 @@ void PlayEngine::setCurrentSubtitleStream(int id) {
 	if (id < 0) {
 		setmp("sub-visibility", false);
 		setmp("sub", id);
-		m_subId = -1;
 	} else {
 		setmp("sub-visibility", true);
 		setmp("sub", id);
-		m_subId = id;
 	}
 }
 
 int PlayEngine::currentSubtitleStream() const {
-	return m_subId;
+	return currentTrackId(STREAM_SUB);
 }
 
 void PlayEngine::clear() {
@@ -193,15 +191,27 @@ void PlayEngine::clear() {
 	m_audioStreams.clear();
 	m_videoStreams.clear();
 	m_subtitleStreams.clear();
+	emit audioStreamsChanged(m_audioStreams);
+	emit videoStreamsChanged(m_videoStreams);
+	emit subtitleStreamsChanged(m_subtitleStreams);
 	m_title = 0;
-	m_subId = -1;
 }
 
 void PlayEngine::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
-	case StreamOpen:
-		if (!m_subtitleStreams.isEmpty())
-			m_subtitleStreams[-1].m_name = tr("No Subtitle");
+	case UpdateTrack: {
+		QVector<StreamList> streams;
+		get(event, streams);
+		if (_Change(m_videoStreams, streams[STREAM_VIDEO]))
+			emit videoStreamsChanged(m_videoStreams);
+		if (_Change(m_audioStreams, streams[STREAM_AUDIO]))
+			emit audioStreamsChanged(m_audioStreams);
+		if (!streams[STREAM_SUB].isEmpty())
+			streams[STREAM_SUB][-1].m_name = tr("No Subtitle");
+		if (_Change(m_subtitleStreams, streams[STREAM_SUB]))
+			emit subtitleStreamsChanged(m_subtitleStreams);
+		break;
+	} case StreamOpen:
 		emit seekableChanged(isSeekable());
 		emit started(d->playlist.loadedMrl());
 		d->start = 0;
@@ -246,60 +256,54 @@ void PlayEngine::setCurrentDvdTitle(int id) {
 }
 
 bool PlayEngine::parse(const Id &id) {
-	if (getStream(id, "AUDIO", "AID", m_audioStreams, tr("Audio %1")))
-		return true;
-	else if (getStream(id, "VIDEO", "VID", m_videoStreams, tr("Video %1")))
-		return true;
-	else if (getStream(id, "SUBTITLE", "SID", m_subtitleStreams, tr("Subtitle %1")))
-		return true;
-	else if (!id.name.isEmpty()) {
-		if (id.name.startsWith(_L("DVD_"))) {
-			auto dvd = id.name.midRef(4);
-			if (_Same(dvd, "TITLES")) {
-//				m_dvd.titles[id.value.toInt()];
-			} else if(dvd.startsWith(_L("TITLE_"))) {
-				auto title = _MidRef(dvd, 6);
-				int idx = id.name.indexOf(_L("_"), title.position());
-				if (idx != -1) {
-					bool ok = false;
-					int tid = id.name.mid(title.position(), idx-title.position()).toInt(&ok);
-					if (ok) {
-						auto var = id.name.midRef(idx+1);
-						auto &title = m_dvd.titles[tid];
-						title.m_id = tid;
-						title.number = tid;
-						title.m_name = tr("Title %1").arg(tid);
-						if (_Same(var, "CHAPTERS"))
-							title.chapters = id.value.toInt();
-						else if (_Same(var, "ANGLES"))
-							title.angles = id.value.toInt();
-						else if (_Same(var, "LENGTH"))
-							title.length = id.value.toDouble()*1000+0.5;
-						else
-							return false;
-					} else
+	if (id.name.isEmpty())
+		return false;
+	if (id.name.startsWith(_L("DVD_"))) {
+		auto dvd = id.name.midRef(4);
+		if (_Same(dvd, "TITLES")) {
+//			m_dvd.titles[id.value.toInt()];
+		} else if(dvd.startsWith(_L("TITLE_"))) {
+			auto title = _MidRef(dvd, 6);
+			int idx = id.name.indexOf(_L("_"), title.position());
+			if (idx != -1) {
+				bool ok = false;
+				int tid = id.name.mid(title.position(), idx-title.position()).toInt(&ok);
+				if (ok) {
+					auto var = id.name.midRef(idx+1);
+					auto &title = m_dvd.titles[tid];
+					title.m_id = tid;
+					title.number = tid;
+					title.m_name = tr("Title %1").arg(tid);
+					if (_Same(var, "CHAPTERS"))
+						title.chapters = id.value.toInt();
+					else if (_Same(var, "ANGLES"))
+						title.angles = id.value.toInt();
+					else if (_Same(var, "LENGTH"))
+						title.length = id.value.toDouble()*1000+0.5;
+					else
 						return false;
 				} else
 					return false;
-			} else if (_Same(dvd, "VOLUME_ID")) {
-				m_dvd.volume = id.value;
-			} else if (_Same(dvd, "DISC_ID")) {
-				m_dvd.id = id.value;
-			} else if (_Same(dvd, "CURRENT_TITLE")) {
-				m_title = id.value.toInt();
 			} else
 				return false;
-			return true;
-		} else if (id.name.startsWith("VIDEO")) {
-			if (_Same(id.name, "VIDEO_ASPECT")) {
-				setVideoAspect(id.value.toDouble());
-			} else
-				return false;
-			return true;
-		}
-//		static QRegExp rxTitle("DVD_TITLE_(\\d+)_(LENGTH|CHAPTERS)");
+		} else if (_Same(dvd, "VOLUME_ID")) {
+			m_dvd.volume = id.value;
+		} else if (_Same(dvd, "DISC_ID")) {
+			m_dvd.id = id.value;
+		} else if (_Same(dvd, "CURRENT_TITLE")) {
+			m_title = id.value.toInt();
+		} else
+			return false;
+		return true;
+	} else if (id.name.startsWith("VIDEO")) {
+		if (_Same(id.name, "VIDEO_ASPECT")) {
+			setVideoAspect(id.value.toDouble());
+		} else
+			return false;
+		return true;
 	} else
 		return false;
+//		static QRegExp rxTitle("DVD_TITLE_(\\d+)_(LENGTH|CHAPTERS)");
 	return true;
 }
 
@@ -431,12 +435,33 @@ int PlayEngine::runAv(const Mrl &/*mrl*/, int &terminated, int &duration) {
 	d->mpctx->opts.play_start.pos = d->start*1e-3;
 	d->mpctx->opts.play_start.type = REL_TIME_ABSOLUTE;
 	setmp("speed", (float)m_speed);
-	setmp("audio_delay", m_audioSync*0.001);
+	setmp("audio-delay", m_audioSync*0.001);
 	auto error = prepare_to_play_current_file(mpctx);
+	QVector<StreamList> streams(STREAM_TYPE_COUNT);
+	QString name[STREAM_TYPE_COUNT];
+	name[STREAM_AUDIO] = tr("Audio %1");
+	name[STREAM_VIDEO] = tr("Video %1");
+	name[STREAM_SUB] = tr("Subtitle %1");
 	if (error == NoMpError) {
 		post(this, StreamOpen);
-		while (!mpctx->stop_play)
+		while (!mpctx->stop_play) {
 			run_playloop(mpctx);
+			if (!mpctx->stop_play && streams[STREAM_AUDIO].size() + streams[STREAM_VIDEO].size() + streams[STREAM_SUB].size() != mpctx->num_tracks) {
+				streams[STREAM_AUDIO].clear(); streams[STREAM_VIDEO].clear(); streams[STREAM_SUB].clear();
+				for (int i=0; i<mpctx->num_tracks; ++i) {
+					const auto track = mpctx->tracks[i];
+					auto &list = streams[track->type];
+					if (!list.contains(track->user_tid)) {
+						auto &stream = list[track->user_tid];
+						stream.m_title = QString::fromLocal8Bit(track->title);
+						stream.m_lang = QString::fromLocal8Bit(track->lang);
+						stream.m_id = track->user_tid;
+						stream.m_name = name[track->type].arg(track->user_tid+1);
+					}
+				}
+				post(this, UpdateTrack, streams);
+			}
+		}
 		terminated = position();
 		duration = this->duration();
 		terminate_playback(mpctx, error);
@@ -642,14 +667,16 @@ Mrl PlayEngine::mrl() const {
 	return d->playlist.loadedMrl();
 }
 
+int PlayEngine::currentTrackId(int type) const {
+	return (d->mpctx && d->mpctx->current_track[type]) ? d->mpctx->current_track[type]->user_tid : -1;
+}
+
 int PlayEngine::currentAudioStream() const {
-	if (d->mpctx && d->mpctx->sh_audio)
-		return d->mpctx->sh_audio->aid;
-	return -1;
+	return currentTrackId(STREAM_AUDIO);
 }
 
 int PlayEngine::currentVideoStream() const {
-	return hasVideo() ? d->mpctx->sh_video->vid : -1;
+	return hasVideo() ? currentTrackId(STREAM_VIDEO) : -1;
 }
 
 const PlaylistModel &PlayEngine::playlist() const {

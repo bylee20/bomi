@@ -357,10 +357,10 @@ struct HwAccDecoder {
 	static void uninit(sh_video_t *sh) { delete static_cast<HwAccDecoder*>(sh->context); }
 	static int get_buffer(AVCodecContext *avctx, AVFrame *pic) { return static_cast<HwAccDecoder*>(avctx->opaque)->getBuffer(pic); }
 	static void release_buffer(struct AVCodecContext *avctx, AVFrame *pic) { static_cast<HwAccDecoder*>(avctx->opaque)->releaseBuffer(pic); }
-	static mp_image *decode(sh_video *sh, demux_packet *packet, void *data, int len, int flags, double *reordered_pts) {
-		return static_cast<HwAccDecoder*>(sh->context)->decode(packet, data, len, flags, reordered_pts);
+	static mp_image *decode(struct sh_video *sh, struct demux_packet *pkt, int flags, double *reordered_pts) {
+		return static_cast<HwAccDecoder*>(sh->context)->decode(pkt, flags, reordered_pts);
 	}
-	mp_image *decode(demux_packet *packet, void *data, int len, int flags, double *reordered_pts);
+	mp_image *decode(struct demux_packet *pkt, int flags, double *reordered_pts);
 	bool initVideoOutput(AVPixelFormat pix_fmt);
 	int getBuffer(AVFrame *pic);
 	void releaseBuffer(AVFrame *pic);
@@ -472,7 +472,7 @@ void HwAccDecoder::releaseBuffer(AVFrame *pic) {
 }
 
 union pts { int64_t i; double d; };
-mp_image *HwAccDecoder::decode(demux_packet *packet, void *data, int len, int flags,  double *reordered_pts) {
+mp_image *HwAccDecoder::decode(demux_packet *packet, int flags, double *reordered_pts) {
 	if (flags & 2)
 		m_avctx->skip_frame = AVDISCARD_ALL;
 	else if (flags & 1)
@@ -481,7 +481,8 @@ mp_image *HwAccDecoder::decode(demux_packet *packet, void *data, int len, int fl
 		m_avctx->skip_frame = AVDISCARD_DEFAULT;
 
 	AVPacket pkt; av_init_packet(&pkt);
-	pkt.data = (uchar*)data; pkt.size = len;
+	pkt.data = packet ? packet->buffer : nullptr;
+	pkt.size = packet ? packet->len : 0;
 	if (packet && packet->keyframe)
 		pkt.flags |= AV_PKT_FLAG_KEY;
 	if (packet && packet->avpacket) {

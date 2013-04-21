@@ -261,10 +261,20 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	connect(&d->engine, &PlayEngine::started, [this] () {
 		d->updateListMenu(d->menu("play")("title"), d->engine.dvd().titles, d->engine.currentDvdTitle());
 		d->updateListMenu(d->menu("play")("chapter"), d->engine.chapters(), d->engine.currentChapter());
-		d->updateListMenu(d->menu("audio")("track"), d->engine.audioStreams(), d->engine.currentAudioStream());
-		d->updateListMenu(d->menu("video")("track"), d->engine.videoStreams(), d->engine.currentVideoStream());
-		d->updateListMenu(d->menu("subtitle")("track"), d->engine.subtitleStreams(), d->engine.currentSubtitleStream());
 	});
+	connect(&d->engine, &PlayEngine::audioStreamsChanged, [this] (const StreamList &streams) {
+		d->updateListMenu(d->menu("audio")("track"), streams, d->engine.currentAudioStream());
+	});
+	connect(&d->engine, &PlayEngine::videoStreamsChanged, [this] (const StreamList &streams) {
+		d->updateListMenu(d->menu("video")("track"), streams, d->engine.currentVideoStream());
+	});
+	connect(&d->engine, &PlayEngine::subtitleStreamsChanged, [this] (const StreamList &streams) {
+		d->updateListMenu(d->menu("subtitle")("track"), streams, d->engine.currentSubtitleStream());
+	});
+
+//	d->updateListMenu(d->menu("video")("track"), d->engine.videoStreams(), d->engine.currentVideoStream());
+//	d->updateListMenu(d->menu("subtitle")("track"), d->engine.subtitleStreams(), d->engine.currentSubtitleStream());
+
 	connect(&d->engine, &PlayEngine::started, &d->history, &HistoryModel::setStarted);
 	connect(&d->engine,	&PlayEngine::stopped, &d->history, &HistoryModel::setStopped);
 	connect(&d->engine, &PlayEngine::finished, &d->history, &HistoryModel::setFinished);
