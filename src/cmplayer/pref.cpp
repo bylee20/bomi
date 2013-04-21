@@ -124,53 +124,27 @@ Shortcuts Pref::preset(ShortcutPreset id) {
 		keys[_L("menu/window/full")] << Qt::META + Qt::CTRL + Qt::Key_F;
 		keys[_L("menu/window/100%")] << Qt::CTRL + Qt::Key_1;
 		keys[_L("menu/window/200%")] << Qt::CTRL + Qt::Key_2;
-//		keys[_L("menu/audio")]
-//		오디오 메뉴
-//		⌃⌥⌘ S 사운드 트랙 > 순환
-//		⌃⌥⌘ \ 기본 오디오 동기
-//		⌃⌥⌘ ← 오디오 동기 0.1초 당기기
-//		⌃⌥⌘ → 오디오 동기 0.1초 밀기
-//		↑ 음량 높이기
-//		⌥ ↑ 음량 높이기 ((미세 조정))
-//		⇧ ↑ 시스템 음량 높이기
-//		↓ 음량 낮추기
-//		⌥ ↓ 음량 낮추기 ((미세 조정))
-//		⇧ ↓ 시스템 음량 낮추기
-//		⌥⌘ ↓ 소리 끔
-//		⌥⇧⌘ ↓ 시스템 소리 끔
-
-//		자막 메뉴
-//		⌃⌥ = 레터박스 높이 > 기본값
-//		⌃⌥ 0 레터박스 높이 > 같은 높이
-//		⌃⌥ 1 레터박스 높이 > 한 줄 높이
-//		⌃⌥ 2 레터박스 높이 > 두 줄 높이
-//		⌃⌥ 3 레터박스 높이 > 세 줄 높이
-//		⌃⌥ L 레터박스 높이 > 순환
-//		⌃⌘S 자막 순환
-//		⌃⌘V 자막 사용 안함
-//		⌃⌘↑ 글자 크게
-//		⌃⌘↓ 글자 작게
-//		⌃⇧ = 기본 동기
-//		⌃⇧ ← 0.1초 당기기
-//		⌃⇧ → 0.1초 밀기
-
-//		윈도우
-//		⌘ T 다른 모든 윈도우 위에 유지
-//		⌥⌘ T 다른 모든 윈도우 위에 유지 ((재생 중에만))
-//		⌘ M 최소화
-//		⌥⌘ M 모두 최소화
-//		⌘ L 제어 패널 > 재생목록
-//		⌘ P 제어 패널 > 속성 보기
-//		⌘ J 조절 탭 순환
+		keys[_L("menu/audio/track/next")] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_S;
+		keys[_L("menu/audio/sync-reset")] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_Backslash;
+		keys[_L("menu/audio/sync-add")] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_Right;
+		keys[_L("menu/audio/sync-sub")] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_Left;
+		keys[_L("menu/audio/volume-up")] << Qt::ALT + Qt::Key_Up << Qt::Key_Up;
+		keys[_L("menu/audio/volume-down")] << Qt::ALT + Qt::Key_Down << Qt::Key_Down;
+		keys[_L("menu/audio/mute")] << Qt::ALT + Qt::CTRL + Qt::Key_Down;
+		keys[_L("menu/subtitle/list/next")] << Qt::META + Qt::CTRL + Qt::Key_S;
+		keys[_L("menu/subtitle/list/hide")] << Qt::META + Qt::CTRL + Qt::Key_V;
+		keys[_L("menu/subtitle/sync-reset")] << Qt::META + Qt::SHIFT + Qt::Key_Equal;
+		keys[_L("menu/subtitle/sync-add")] << Qt::META + Qt::SHIFT + Qt::Key_Right;
+		keys[_L("menu/subtitle/sync-sub")] << Qt::META + Qt::SHIFT + Qt::Key_Left;
+		keys[_L("menu/window/sot-always")] << Qt::CTRL + Qt::Key_T;
+		keys[_L("menu/window/sot-playing")] << Qt::CTRL + Qt::ALT + Qt::Key_T;
+		keys[_L("menu/window/minimize")] << Qt::ALT + Qt::CTRL + Qt::Key_M;
+		keys[_L("menu/tool/playlist/toggle")] << Qt::CTRL + Qt::Key_L;
+		keys[_L("menu/tool/playinfo")] << Qt::CTRL + Qt::Key_P;
 	} else
 		keys = defaultShortcuts();
 	return keys;
 }
-
-//Pref &Pref::get() {
-//	static Pref pref;
-//	return pref;
-//}
 
 #define PREF_GROUP _L("preference")
 
