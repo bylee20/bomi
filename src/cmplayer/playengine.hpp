@@ -93,7 +93,7 @@ public:
 	void setCurrentVideoStream(int id) {setmp("video", id);}
 	int currentVideoStream() const;
 	void setGetStartTimeFunction(const GetStartTime &func);
-	void setAudioSync(int sync) {if (_Change(m_audioSync, sync)) setmp("audio_sync", sync*0.001);}
+	void setAudioSync(int sync) {if (_Change(m_audioSync, sync)) setmp("audio_delay", sync*0.001);}
 	int audioSync() const {return m_audioSync;}
 	const PlaylistModel &playlist() const;
 	PlaylistModel &playlist();

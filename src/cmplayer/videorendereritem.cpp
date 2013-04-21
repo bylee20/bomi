@@ -480,3 +480,8 @@ void VideoRendererItem::setLumaRange(int min, int max) {
 	d->shaderVar.m_luma = RangeF((double)min/255.0, (double)max/255.0);
 	update();
 }
+
+void VideoRendererItem::setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d) {
+	d->shaderVar.setKernel(blur_c, blur_n, blur_d, sharpen_c, sharpen_n, sharpen_d);
+	update();
+}

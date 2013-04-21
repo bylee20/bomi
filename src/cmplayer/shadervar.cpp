@@ -1,5 +1,4 @@
 #include "shadervar.h"
-#include "pref.hpp"
 #include "videoformat.hpp"
 
 bool ShaderVar::setEffects(VideoRendererItem::Effects effects) {
@@ -18,16 +17,15 @@ bool ShaderVar::setEffects(VideoRendererItem::Effects effects) {
 		}
 		if (effects & VideoRendererItem::KernelEffects) {
 			idx = 2;
-			const Pref &p = cPref;
 			if (effects & VideoRendererItem::Blur) {
-				kern_c += p.blur_kern_c;
-				kern_n += p.blur_kern_n;
-				kern_d += p.blur_kern_d;
+				kern_c += m_blur_kern_c;
+				kern_n += m_blur_kern_n;
+				kern_d += m_blur_kern_d;
 			}
 			if (effects & VideoRendererItem::Sharpen) {
-				kern_c += p.sharpen_kern_c;
-				kern_n += p.sharpen_kern_n;
-				kern_d += p.sharpen_kern_d;
+				kern_c += m_sharpen_kern_c;
+				kern_n += m_sharpen_kern_n;
+				kern_d += m_sharpen_kern_d;
 			}
 			const double den = 1.0/(kern_c + kern_n*4.0 + kern_d*4.0);
 			kern_c *= den;

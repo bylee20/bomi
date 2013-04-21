@@ -23,7 +23,7 @@ public:
 
 // audio state
 	double audio_preamp = 1.0;
-	int audio_volume = 100;
+	int audio_volume = 100, audio_sync = 0;
 	bool audio_muted = false, audio_normalizer = true, audio_scaletempo = true;
 
 // subtitle state

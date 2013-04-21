@@ -56,6 +56,7 @@ public:
 	QImage frameImage() const;
 	QRectF frameRect(const QRectF &area) const;
 	void setLumaRange(int min, int max);
+	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);

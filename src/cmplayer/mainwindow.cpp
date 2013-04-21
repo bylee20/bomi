@@ -539,8 +539,7 @@ void MainWindow::connectMenus() {
 	connect(audio["mute"], &QAction::toggled, [this] (bool on) {d->engine.setMuted(on); showMessage(tr("Mute"), on);});
 	connect(audio.g("sync"), &ActionGroup::triggered, [this] (QAction *a) {
 		const int diff = a->data().toInt(); const int sync = diff ? d->engine.audioSync() + diff : 0;
-		d->engine.setAudioSync(sync); showMessage("Audio Sync", sync*0.001, "sec", true);
-		qDebug() << d->engine.audioSync();
+		d->engine.setAudioSync(sync); showMessage(tr("Audio Sync"), sync*0.001, "sec", true);
 	});
 	connect(audio.g("amp"), &ActionGroup::triggered, [this] (QAction *a) {
 		const int amp = qBound(0, qRound(d->engine.preamp()*100 + a->data().toInt()), 1000);
@@ -1117,11 +1116,11 @@ void MainWindow::applyPref() {
 	d->engine.setVolumeNormalizer(p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
 	d->renderer.setLumaRange(p.remap_luma_min, p.remap_luma_max);
+	d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
 	SubtitleParser::setMsPerCharactor(p.ms_per_char);
 	d->subtitle.setPriority(p.sub_priority);
 	d->subtitle.setStyle(p.sub_style);
 	d->menu.update(p);
-//	d->menu.save();
 	d->menu.syncTitle();
 	d->menu.resetKeyMap();
 #ifndef Q_OS_MAC

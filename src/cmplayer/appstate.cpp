@@ -24,6 +24,7 @@ AppState::AppState() {
 	READ(audio_scaletempo);
 	READ(audio_muted);
 	READ(audio_preamp);
+	READ(audio_sync);
 
 	READ(sub_pos);
 	READ(sub_letterbox);
@@ -64,6 +65,7 @@ void AppState::save() const {
 	WRITE(audio_scaletempo);
 	WRITE(audio_muted);
 	WRITE(audio_preamp);
+	WRITE(audio_sync);
 
 	WRITE(sub_pos);
 	WRITE(sub_letterbox);
