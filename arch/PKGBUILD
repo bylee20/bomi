@@ -1,20 +1,19 @@
 # Maintainer: xylosper <darklin20@gmail.com>
 
 pkgname=('cmplayer')
-pkgver=0.7.2
+pkgver=0.7.3
 pkgrel=1
 arch=('i686' 'x86_64')
 url="https://code.google.com/p/$pkgname"
 license=('GPL')
-depends=('qt5-base' 'qt5-declarative' 'ffmpeg' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'yasm')
+depends=('qt5-base' 'qt5-declarative' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'yasm')
 makedepends=('git' 'mesa' 'gcc')
+source=(http://cmplayer.googlecode.com/files/$pkgname-$pkgver.tar.gz)
+md5sums=('b8f4faab40e1ba98764ecaafecaedca6')
 
 build() {
-	cd $srcdir
-	git clone $url $pkgname-$pkgver
-	cd $pkgname-$pkgver
-	git checkout $pkgver
-	./build-libchardet && ./build-mpv && \
+	cd $srcdir/$pkgname-$pkgver
+	./build-libchardet && ./build-ffmpeg && ./build-mpv && \
 	make PREFIX=/usr QMAKE=qmake cmplayer || return 1
 }
 
