@@ -20,8 +20,8 @@ macx {
     TARGET = CMPlayer
     BREW = /usr/local/Cellar
     LLIB_DIR = /usr/local/lib
-    LIBS += $${LIB_DIR}/libchardet.a $${LLIB_DIR}/libavcodec.a $${LLIB_DIR}/libavformat.a \
-	$${LLIB_DIR}/libavutil.a $${LLIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
+    LIBS += $${LIB_DIR}/libchardet.a $${LIB_DIR}/libswresample.a $${LIB_DIR}/libavcodec.a $${LIB_DIR}/libavformat.a \
+	$${LIB_DIR}/libavutil.a $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
 	$${LLIB_DIR}/libmpg123.a $${LLIB_DIR}/libquvi.a $${LLIB_DIR}/liblua52.a \
 	$${LLIB_DIR}/libdvdread.a $${LLIB_DIR}/libcdio.a $${LLIB_DIR}/libcdio_paranoia.a \
 	$${LLIB_DIR}/libcdio_cdda.a $${LLIB_DIR}/libdvdcss.a -lcurl -liconv \

@@ -894,7 +894,7 @@ void MainWindow::setFullScreen(bool full) {
 		d->fullScreen = full;
 		d->updateWindowPosState();
 #ifdef Q_OS_MAC
-		if (!pref().lion_style_fullscreen) {
+		if (!d->pref().lion_style_fullscreen) {
 			static Qt::WindowFlags flags = this->flags();
 			static QRect geometry;
 			if (full) {
@@ -1259,6 +1259,7 @@ void MainWindow::updateStaysOnTop() {
 
 void MainWindow::updateTitle() {
 	const auto mrl = d->engine.mrl();
+	setFilePath(QString());
 	if (mrl.isEmpty())
 		setTitle(Info::name() % _L(" ") % Info::version());
 	else {

@@ -5,8 +5,8 @@
 
 typedef QHash<QString, QList<QKeySequence> > Shortcuts;
 
-struct Pref;
-template<typename E> class ActionEnumInfo;
+class Pref;
+template<typename E> struct ActionEnumInfo;
 using ClickActionInfo = ActionEnumInfo<Enum::ClickAction>;
 using WheelActionInfo = ActionEnumInfo<Enum::WheelAction>;
 

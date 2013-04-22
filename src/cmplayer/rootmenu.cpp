@@ -423,7 +423,7 @@ void RootMenu::update(const Pref &p) {
 		playlist["save"]->setText(tr("Save"));
 		playlist["clear"]->setText(tr("Clear"));
 		playlist["append-file"]->setText(tr("Append File"));
-		playlist["append-url"]->setText(tr("Append Url"));
+		playlist["append-url"]->setText(tr("Append URL"));
 		playlist["remove"]->setText(tr("Remove"));
 		playlist["move-up"]->setText(tr("Move Up"));
 		playlist["move-down"]->setText(tr("Move Down"));
