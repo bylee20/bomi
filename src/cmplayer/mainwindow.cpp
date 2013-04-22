@@ -1190,6 +1190,9 @@ void MainWindow::doVisibleAction(bool visible) {
 			d->pausedByHiding = false;
 		}
 		setFilePath(d->filePath);
+#ifndef Q_OS_MAC
+		setIcon(cApp.defaultIcon());
+#endif
 	} else {
 		if (!d->pref().pause_minimized || d->dontPause)
 			return;

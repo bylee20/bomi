@@ -1,3 +1,19 @@
+0.7.3
+
+  * Fix: 'Open from file manager' and 'Open by drag-and-drop' options weren't saved
+  * Fix: Sometimes auto-pause and replay on hiding and showing fails
+  * Fix: Wrong behavior on opening media when minimized
+  * Fix: Wrong window title when the location is invalid
+  * Fix: Wrong format comparision which causes video torn
+  * Fix: Keep the volume when media changed
+  * Fix: No audio when audio track changed
+  * Fix: Show application icon when the window reopen
+  * New: Audio track circulation
+  * New: Keyboard shortcut preset and Movist preset
+  * New: Playlist menu
+  * New: Adjust audio sync delay
+  * New: Lion-style fullscreen can be disabled
+
 0.7.2
 
   * Fix: wrong character display of subtitle when new line characters exist in a paragraph
