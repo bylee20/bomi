@@ -87,7 +87,7 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 		}
 		if (d->iface) {
 			if (d->gnome)
-				d->reply = d->iface->call("Inhibit", "CMPlayer", 0, "Running player", 4 | 8);
+				d->reply = d->iface->call("Inhibit", "CMPlayer", 0u, "Running player", 4u | 8u);
 			else
 				d->reply = d->iface->call("Inhibit", "CMPlayer", "Running player");
 			if (!d->reply.isValid()) {
