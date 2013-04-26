@@ -52,6 +52,7 @@ struct AppX11::Data {
 	QDBusReply<uint> reply;
 	bool inhibit = false;
 	bool xss = false;
+	bool gnome = false;
 };
 
 AppX11::AppX11(QObject *parent)
@@ -73,8 +74,8 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 		return;
 	if (disabled) {
 		if (!d->iface && !d->xss) {
-			d->iface = new QDBusInterface("org.gnome.ScreenSaver", "/org/gnome/ScreenSaver", "org.gnome.ScreenSaver");
-			if (!d->iface->isValid()) {
+			d->iface = new QDBusInterface("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager");
+			if (!(d->gnome = d->iface->isValid())) {
 				delete d->iface;
 				d->iface = new QDBusInterface("org.freedesktop.ScreenSaver", "/ScreenSaver", "org.freedesktop.ScreenSaver");
 				if (!d->iface->isValid()) {
@@ -85,7 +86,10 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 			}
 		}
 		if (d->iface) {
-			d->reply = d->iface->call("Inhibit", "CMPlayer", "Running player");
+			if (d->gnome)
+				d->reply = d->iface->call("Inhibit", "CMPlayer", 0, "Running player", 4 | 8);
+			else
+				d->reply = d->iface->call("Inhibit", "CMPlayer", "Running player");
 			if (!d->reply.isValid()) {
 				qDebug() << "DBus failed:" << d->reply.error().message();
 				qDebug() << "fallback to XResetScreenSaver()";
@@ -99,7 +103,7 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 			d->ss_timer.start();
 	} else {
 		if (d->iface) {
-			auto response = d->iface->call("UnInhibit", d->reply.value());
+			auto response = d->iface->call(d->gnome ? "Uninhibit" : "UnInhibit", d->reply.value());
 			if (response.type() == QDBusMessage::ErrorMessage)
 				qDebug() << response.errorName() << response.errorMessage();
 			else
