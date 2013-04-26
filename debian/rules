@@ -15,8 +15,7 @@ else
 CFLAGS += -O2
 endif
 
-MAKE_VARS = QMAKE=qmake PREFIX=/usr \
-		ACTION_PATH=/usr/share/kde4/apps/solid/actions
+MAKE_VARS = QMAKE=qmake PREFIX=/usr ACTION_PATH=/usr/share/kde4/apps/solid/actions
 
 build: build-stamp
 build-stamp:

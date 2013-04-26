@@ -2,7 +2,7 @@
 
 pkgname=('cmplayer')
 pkgver=0.7.3
-pkgrel=1
+pkgrel=2
 arch=('i686' 'x86_64')
 url="https://code.google.com/p/$pkgname"
 license=('GPL')
@@ -14,11 +14,11 @@ md5sums=('3052b79669fabac8250353a573f80214')
 build() {
 	cd $srcdir/$pkgname-$pkgver
 	./build-libchardet && ./build-ffmpeg && ./build-mpv && \
-	make PREFIX=/usr QMAKE=qmake cmplayer || return 1
+	make PREFIX=/usr cmplayer || return 1
 }
 
 package() {
 	pkgdesc="CMPlayer is a multimedia player."
 	cd "$srcdir/$pkgname-$pkgver"
-	make DEST_DIR=$pkgdir PREFIX=/usr QMAKE=qmake install || return 1
+	make DEST_DIR=$pkgdir PREFIX=/usr install || return 1
 }

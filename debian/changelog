@@ -1,3 +1,21 @@
+cmplayer (0.7.3-1) raring; urgency=low
+
+  * New: Audio track circulation
+  * New: Keyboard shortcut preset and Movist preset
+  * New: Playlist menu
+  * New: Adjust audio sync delay
+  * New: Lion-style fullscreen can be disabled
+  * Fix: 'Open from file manager' and 'Open by drag-and-drop' options weren't saved
+  * Fix: Sometimes auto-pause and replay on hiding and showing fails
+  * Fix: Wrong behavior on opening media when minimized
+  * Fix: Wrong window title when the location is invalid
+  * Fix: Wrong format comparision which causes video torn
+  * Fix: Keep the volume when media changed
+  * Fix: No audio when audio track changed
+  * Fix: Show application icon when the window reopen
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 26 Apr 2013 18:26:00 +0900
+
 cmplayer (0.7.0-1) quantal; urgency=low
 
   * New skin: modern

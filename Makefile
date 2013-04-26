@@ -14,13 +14,11 @@ ifeq ($(os),osx)
 	QT_PATH = /Users/xylosper/Qt5.0.1/5.0.1/clang_64
 	QMAKE ?= $(QT_PATH)/bin/qmake -spec macx-clang
 	MACDEPLOYQT ?= $(QT_PATH)/bin/macdeployqt
-	LRELEASE ?= $(QT_PATH)/bin/lrelease
 	cmplayer_exec := CMPlayer
 	cmplayer_exec_path := build/$(cmplayer_exec).app/Contents/MacOS
 else
 	PREFIX ?= /usr/local
 	QMAKE ?= qmake-qt5
-	LRELEASE ?= lrelease-qt5
 	BIN_PATH ?= $(PREFIX)/bin
 	DATA_PATH ?= $(PREFIX)/share
 	ICON_PATH ?= $(DATA_PATH)/icons/hicolor
