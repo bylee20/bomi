@@ -1,3 +1,7 @@
+0.7.4
+
+  * Fix: Disabling screensaver in gnome
+
 0.7.3
 
   * Fix: 'Open from file manager' and 'Open by drag-and-drop' options weren't saved

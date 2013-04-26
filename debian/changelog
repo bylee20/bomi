@@ -1,10 +1,11 @@
-cmplayer (0.7.3-1) raring; urgency=low
+cmplayer (0.7.4-1) raring; urgency=low
 
   * New: Audio track circulation
   * New: Keyboard shortcut preset and Movist preset
   * New: Playlist menu
   * New: Adjust audio sync delay
   * New: Lion-style fullscreen can be disabled
+  * Fix: Disabling screensaver in gnome
   * Fix: 'Open from file manager' and 'Open by drag-and-drop' options weren't saved
   * Fix: Sometimes auto-pause and replay on hiding and showing fails
   * Fix: Wrong behavior on opening media when minimized
