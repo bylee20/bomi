@@ -1,8 +1,8 @@
 # Maintainer: xylosper <darklin20@gmail.com>
 
 pkgname=('cmplayer')
-pkgver=0.7.3
-pkgrel=2
+pkgver=0.7.4
+pkgrel=1
 arch=('i686' 'x86_64')
 url="https://code.google.com/p/$pkgname"
 license=('GPL')
