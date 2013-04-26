@@ -2,7 +2,7 @@ Source: cmplayer
 Section: graphics
 Priority: optional
 Maintainer: xylosper <darklin20@gmail.com>
-Build-Depends: g++-4.7(>= 4.7), debhelper (>= 7)
+Build-Depends: g++ (>= 4.7), debhelper (>= 7)
 	, qt5-qmake, qtbase5-dev, qtdeclarative5-dev
 	, yasm, zlib1g-dev, libx11-dev, libdvdread-dev
 	, libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
