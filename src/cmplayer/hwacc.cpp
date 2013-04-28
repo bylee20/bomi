@@ -185,7 +185,9 @@ struct VaApi {
 			if ((status = vaCreateContext(m_context.display, m_context.config_id, avctx->width, avctx->height, VA_PROGRESSIVE, ids.data(), ids.size(), &m_context.context_id)) != VA_STATUS_SUCCESS)
 				break;
 			avctx->hwaccel_context = &m_context;
-			m_texture = new Texture(m_context.display, avctx->width, avctx->height);
+			auto img = mp_image_pool_get(m_pool, imgfmt(), avctx->width, avctx->height);
+			m_texture = new Texture(m_context.display, img->stride[0]/4, img->h);
+			talloc_free(img);
 			if ((status = m_texture->status) != VA_STATUS_SUCCESS)
 				break;
 			return true;
