@@ -17,23 +17,26 @@ extern "C" {
 #ifdef Q_OS_MAC
 #include <libavcodec/vda.h>
 #endif
-
 }
 
 #ifdef Q_OS_LINUX
+#include <qpa/qplatformnativeinterface.h>
+#include <qpa/qplatformwindow.h>
 struct VaApiInfo {
 	struct Codec { AVCodecID id = AV_CODEC_ID_NONE; QVector<VAProfile> profiles; int surfaceCount = 0; };
 	static VaApiInfo &get();
 	const Codec *find(AVCodecID id) const { auto it = m_supported.find(id); return it != m_supported.end() && !it->profiles.isEmpty() ? &(*it) : 0; }
 	void *display() const { return m_display; }
-	~VaApiInfo() { if (m_display) vaTerminate(m_display); if (m_xdpy) XCloseDisplay(m_xdpy); }
+	void finalize() {if (m_display) {vaTerminate(m_display); m_display = nullptr; init = false;}}
 private:
 	VaApiInfo() {
-		if (!(m_xdpy = XOpenDisplay(NULL)) || !(m_display = vaGetDisplayGLX(m_xdpy)))
+		m_xdpy = static_cast<Display*>(qApp->platformNativeInterface()->nativeResourceForWindow("display", qApp->topLevelWindows().first()));
+		if (!m_xdpy || !(m_display = vaGetDisplayGLX(m_xdpy)))
 			return;
 		int major, minor;
 		if (vaInitialize(m_display, &major, &minor) != VA_STATUS_SUCCESS)
 			return;
+		init = true;
 		auto size = vaMaxNumProfiles(m_display);
 		QVector<VAProfile> profiles;
 		profiles.resize(size);
@@ -71,7 +74,14 @@ private:
 	QMap<AVCodecID, Codec> m_supported;
 	Display *m_xdpy = nullptr;
 	VADisplay m_display = nullptr;
+	static bool init;
+	friend void finalize_vaapi();
 };
+
+bool VaApiInfo::init = false;
+
+void finalize_vaapi() {if (VaApiInfo::init) VaApiInfo::get().finalize();}
+
 VaApiInfo &VaApiInfo::get() {static VaApiInfo info; return info;}
 
 struct VaApi {
@@ -200,7 +210,7 @@ struct VaApi {
 		const auto id = (VASurfaceID)(uintptr_t)pic->data[3];
 		vaSyncSurface(m_context.display, id);
 		glBindTexture(GL_TEXTURE_2D, m_texture->id);
-		const auto status = vaCopySurfaceGLX(m_context.display, m_texture->surface, id, 0);
+		const auto status = vaCopySurfaceGLX(m_context.display, m_texture->surface, id, VA_SRC_BT601);
 		if (status != VA_STATUS_SUCCESS)
 			qDebug() << "vaCopySurfaceGLX():" << vaErrorStr(status);
 		auto mpi = mp_image_pool_get(m_pool, imgfmt(), pic->width, pic->height);

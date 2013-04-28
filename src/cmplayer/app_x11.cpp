@@ -64,7 +64,10 @@ AppX11::AppX11(QObject *parent)
 	});
 }
 
+extern void finalize_vaapi();
+
 AppX11::~AppX11() {
+	finalize_vaapi();
 	delete d->iface;
 	delete d;
 }

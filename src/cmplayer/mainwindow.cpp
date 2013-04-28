@@ -1260,9 +1260,7 @@ void MainWindow::updateStaysOnTop() {
 void MainWindow::updateTitle() {
 	const auto mrl = d->engine.mrl();
 	setFilePath(QString());
-	if (mrl.isEmpty())
-		setTitle(Info::name() % _L(" ") % Info::version());
-	else {
+	if (!mrl.isEmpty()) {
 		QString title;
 		if (mrl.isLocalFile()) {
 			const QFileInfo file(mrl.toLocalFile());
@@ -1277,9 +1275,10 @@ void MainWindow::updateTitle() {
 					title += "DVD";
 			}
 		}
-		title += _L(" - ") % Info::name() % _L(" ") % Info::version();
+		title += _L(" - ") % Info::name();
 		setTitle(title);
-	}
+	} else
+		setTitle(Info::name());
 }
 
 void MainWindow::updateMrl(const Mrl &mrl) {
