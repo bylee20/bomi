@@ -8,7 +8,7 @@
 #include "playlistmodel.hpp"
 #include "videorendereritem.hpp"
 #include "playengine.hpp"
-#include "mpcore.hpp"
+#include <core/mp_cmplayer.h>
 #include "videoformat.hpp"
 
 extern "C" {

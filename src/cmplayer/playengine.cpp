@@ -6,10 +6,8 @@
 #include "audiocontroller.hpp"
 #include "playlistmodel.hpp"
 #include "dataevent.hpp"
-#define PLAY_ENGINE_P
-#include "mpcore.hpp"
-#undef PLAY_ENGINE_P
-#undef run_command
+#include <core/mp_cmplayer.h>
+
 extern "C" {
 #include <core/command.h>
 #include <video/out/vo.h>
@@ -30,8 +28,6 @@ enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2};
 
 struct mp_volnorm {int method;	float mul; float avg;};
 
-struct PlayEngine::Context { MPContext mp; PlayEngine *p; };
-
 template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0);
 template<> inline float	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.f;}
 template<> inline int	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.i;}
@@ -45,7 +41,6 @@ struct PlayEngine::Data {
 	QTimer ticker;
 	bool quit = false, playing = false, init = false;
 	int start = 0, tick = 0;
-	PlayEngine::Context *ctx = nullptr;
 	MPContext *mpctx = nullptr;
 	VideoOutput *video = nullptr;
 	GetStartTime getStartTimeFunc;
@@ -79,8 +74,9 @@ PlayEngine::PlayEngine()
 : d(new Data(this)) {
 	d->audio = new AudioController(this);
 	d->video = new VideoOutput(this);
-	mpctx_paused_changed = onPausedChanged;
-	mpctx_play_started = onPlayStarted;
+	mp_register_player_paused_changed(mpPausedChanged);
+	mp_register_player_command_filter(mpCommandFilter);
+//	mpctx_play_started = onPlayStarted;
 	connect(&d->ticker, &QTimer::timeout, [this] () {
 		if (m_imgMode)
 			emit tick(m_imgPos);
@@ -140,9 +136,9 @@ void PlayEngine::setmp(const char *name, float value) {
 	d->enqueue<float>(MpSetProperty, name, value);
 }
 
-void PlayEngine::onPlayStarted(MPContext *mpctx) {
-	reinterpret_cast<Context*>(mpctx)->p->setState(mpctx->paused ? EnginePaused : EnginePlaying);
-}
+//void PlayEngine::onPlayStarted(MPContext *mpctx) {
+//	reinterpret_cast<Context*>(mpctx)->p->setState(mpctx->paused ? EnginePaused : EnginePlaying);
+//}
 
 double PlayEngine::volumeNormalizer() const {
 	auto amp = d->audio->normalizer();
@@ -338,23 +334,21 @@ double PlayEngine::videoAspectRatio() const {
 	return d->videoAspect;
 }
 
-extern "C" void mpctx_run_command(MPContext *mpctx, mp_cmd *cmd) {((PlayEngine::Context*)(mpctx))->p->runCommand(cmd);}
-extern "C" void run_command(MPContext *mpctx, mp_cmd *cmd);
-void PlayEngine::runCommand(mp_cmd *cmd) {
+int PlayEngine::mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 	if (cmd->id < 0) {
 		switch (cmd->id) {
 		case MpSetProperty:
-			mp_property_do(cmd->name, M_PROPERTY_SET, &cmd->args[0].v.f, d->mpctx);
+			mp_property_do(cmd->name, M_PROPERTY_SET, &cmd->args[0].v.f, mpctx);
 			break;
 		case MpResetAudioChain:
-			reinit_audio_chain(d->mpctx);
+			reinit_audio_chain(mpctx);
 		default:
 			break;
 		}
 		cmd->id = MP_CMD_IGNORE;
-	} else {
-		::run_command(d->mpctx, cmd);
+		return true;
 	}
+	return false;
 }
 
 class TimeLine {
@@ -383,14 +377,15 @@ bool PlayEngine::isInitialized() const {
 	return d->init;
 }
 
-int PlayEngine::runImage(const Mrl &mrl, int &terminated, int &duration) {
+int PlayEngine::playImage(const Mrl &mrl, int &terminated, int &duration) {
 	QImage image;
 	if (!image.load(mrl.toLocalFile()))
-		return OpenFileError;
-	auto mpctx = &d->ctx->mp;
-	auto error = prepare_to_play_current_file(mpctx);
-	if (error != NoMpError)
+		return MPERROR_OPEN_FILE;
+	auto mpctx = d->mpctx;
+	auto error = prepare_playback(mpctx);
+	if (error != MPERROR_NONE)
 		return error;
+	setState(mpctx->paused ? EnginePaused : EnginePlaying);
 	d->video->output(image);
 	m_imgPos = 0;
 	post(this, StreamOpen);
@@ -399,7 +394,7 @@ int PlayEngine::runImage(const Mrl &mrl, int &terminated, int &duration) {
 		mp_cmd_t *cmd = nullptr;
 		while ((cmd = mp_input_get_cmd(mpctx->input, 0, 1)) != NULL) {
 			cmd = mp_input_get_cmd(mpctx->input, 0, 0);
-			runCommand(cmd);
+			run_command(mpctx, cmd);
 			mp_cmd_free(cmd);
 			if (mpctx->stop_play)
 				break;
@@ -425,47 +420,47 @@ int PlayEngine::runImage(const Mrl &mrl, int &terminated, int &duration) {
 	}
 	m_imgPos = 0;
 	terminated = duration = 0;
-	return terminate_playback(mpctx, error);
+	return error;
 }
 
-int PlayEngine::runAv(const Mrl &/*mrl*/, int &terminated, int &duration) {
+int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duration) {
 	d->video->output(QImage());
-	auto mpctx = &d->ctx->mp;
+	auto mpctx = d->mpctx;
 	mpctx->opts.video_decoders = d->hwAccCodecs.data();
 	d->mpctx->opts.play_start.pos = d->start*1e-3;
 	d->mpctx->opts.play_start.type = REL_TIME_ABSOLUTE;
 	setmp("speed", (float)m_speed);
 	setmp("audio-delay", m_audioSync*0.001);
-	auto error = prepare_to_play_current_file(mpctx);
+	auto error = prepare_playback(mpctx);
 	QVector<StreamList> streams(STREAM_TYPE_COUNT);
 	QString name[STREAM_TYPE_COUNT];
 	name[STREAM_AUDIO] = tr("Audio %1");
 	name[STREAM_VIDEO] = tr("Video %1");
 	name[STREAM_SUB] = tr("Subtitle %1");
-	if (error == NoMpError) {
-		post(this, StreamOpen);
-		while (!mpctx->stop_play) {
-			run_playloop(mpctx);
-			if (!mpctx->stop_play && streams[STREAM_AUDIO].size() + streams[STREAM_VIDEO].size() + streams[STREAM_SUB].size() != mpctx->num_tracks) {
-				streams[STREAM_AUDIO].clear(); streams[STREAM_VIDEO].clear(); streams[STREAM_SUB].clear();
-				for (int i=0; i<mpctx->num_tracks; ++i) {
-					const auto track = mpctx->tracks[i];
-					auto &list = streams[track->type];
-					if (!list.contains(track->user_tid)) {
-						auto &stream = list[track->user_tid];
-						stream.m_title = QString::fromLocal8Bit(track->title);
-						stream.m_lang = QString::fromLocal8Bit(track->lang);
-						stream.m_id = track->user_tid;
-						stream.m_name = name[track->type].arg(track->user_tid+1);
-					}
+	if (error != MPERROR_NONE)
+		return error;
+	setState(mpctx->paused ? EnginePaused : EnginePlaying);
+	post(this, StreamOpen);
+	while (!mpctx->stop_play) {
+		run_playloop(mpctx);
+		if (!mpctx->stop_play && streams[STREAM_AUDIO].size() + streams[STREAM_VIDEO].size() + streams[STREAM_SUB].size() != mpctx->num_tracks) {
+			streams[STREAM_AUDIO].clear(); streams[STREAM_VIDEO].clear(); streams[STREAM_SUB].clear();
+			for (int i=0; i<mpctx->num_tracks; ++i) {
+				const auto track = mpctx->tracks[i];
+				auto &list = streams[track->type];
+				if (!list.contains(track->user_tid)) {
+					auto &stream = list[track->user_tid];
+					stream.m_title = QString::fromLocal8Bit(track->title);
+					stream.m_lang = QString::fromLocal8Bit(track->lang);
+					stream.m_id = track->user_tid;
+					stream.m_name = name[track->type].arg(track->user_tid+1);
 				}
-				post(this, UpdateTrack, streams);
 			}
+			post(this, UpdateTrack, streams);
 		}
-		terminated = position();
-		duration = this->duration();
-		terminate_playback(mpctx, error);
 	}
+	terminated = position();
+	duration = this->duration();
 	return error;
 }
 
@@ -480,16 +475,15 @@ void PlayEngine::run() {
 		<< ("--vo=null:" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--no-consolecontrols" << "--no-mouseinput";
-	d->ctx = reinterpret_cast<Context*>(talloc_named_const(0, sizeof(*d->ctx), "MPContext"));
-	d->ctx->p = this;
-	auto mpctx = d->mpctx = &d->ctx->mp;
-	mpv_init(d->mpctx, args.size(), args.data());
+	auto mpctx = d->mpctx = create_player(args.size(), args.data());
+	Q_ASSERT(d->mpctx);
+	d->mpctx->priv = this;
 	d->init = true;
 	HwAcc hwAcc; (void)hwAcc;
 	d->quit = false;
 	while (!d->quit) {
 		m_imgMode = false;
-		idle_loop(mpctx);
+		idle_player(mpctx);
 		if (mpctx->stop_play == PT_QUIT)
 			break;
 		Q_ASSERT(mpctx->playlist->current);
@@ -498,18 +492,19 @@ void PlayEngine::run() {
 		Mrl mrl = d->playlist.loadedMrl();
 		d->playing = true;
 		setState(EngineBuffering);
-		int error = NoMpError;
+		int error = MPERROR_NONE;
 		m_imgMode = mrl.isImage();
 		if (m_imgMode)
-			error = runImage(mrl, terminated, duration);
+			error = playImage(mrl, terminated, duration);
 		else
-			error = runAv(mrl, terminated, duration);
-		if (error != NoMpError)
+			error = playAudioVideo(mrl, terminated, duration);
+		clean_up_playback(mpctx);
+		if (error != MPERROR_NONE)
 			setState(EngineError);
 		d->playing = false;
 		qDebug() << "terminate playback";
 		if (mpctx->stop_play == PT_QUIT) {
-			if (error == NoMpError) {
+			if (error == MPERROR_NONE) {
 				setState(EngineStopped);
 				post(this, MrlStopped, d->playlist.loadedMrl(), terminated, duration);
 			}
@@ -551,7 +546,7 @@ void PlayEngine::run() {
 	qDebug() << "terminate loop";
 	d->video->quit();
 	mpctx->opts.video_decoders = nullptr;
-	mpctx_delete(d->mpctx);
+	destroy_player(mpctx);
 	d->mpctx = nullptr;
 	d->init = false;
 	qDebug() << "terminate engine";
@@ -627,10 +622,10 @@ int PlayEngine::currentChapter() const {
 	return -2;
 }
 
-void PlayEngine::onPausedChanged(MPContext *mpctx) {
-	PlayEngine *engine = reinterpret_cast<Context*>(mpctx)->p;
+void PlayEngine::mpPausedChanged(MPContext *mpctx, int paused) {
+	auto engine = reinterpret_cast<PlayEngine*>(mpctx->priv);
 	if (mpctx->stop_play == KEEP_PLAYING)
-		engine->setState(mpctx->paused ? EnginePaused : EnginePlaying);
+		engine->setState(paused ? EnginePaused : EnginePlaying);
 }
 
 void PlayEngine::pause() {

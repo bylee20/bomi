@@ -89,7 +89,6 @@ HEADERS += playengine.hpp \
     rootmenu.hpp \
     app.hpp \
     videooutput.hpp \
-    mpcore.hpp \
     prefdialog.hpp \
     richtexthelper.hpp \
     richtextblock.hpp \
@@ -171,7 +170,6 @@ SOURCES += main.cpp \
     mposditem.cpp \
     globalqmlobject.cpp \
     historymodel.cpp \
-    mpv-main.c \
     shadervar.cpp \
     subtitlestyle.cpp \
     hwacc.cpp \

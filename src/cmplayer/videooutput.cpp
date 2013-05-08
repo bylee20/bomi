@@ -1,8 +1,8 @@
 #include "videooutput.hpp"
 #include "videoframe.hpp"
-#include "mpcore.hpp"
 #include "videorendereritem.hpp"
 #include "playengine.hpp"
+#include <core/mp_cmplayer.h>
 
 extern "C" {
 #include <video/out/vo.h>

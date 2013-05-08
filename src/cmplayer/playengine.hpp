@@ -42,7 +42,6 @@ typedef QLinkedList<QString> FilterList;
 class PlayEngine : public QThread, public MpMessage {
 	Q_OBJECT
 public:
-	struct Context;
 	static void msleep(unsigned long msec) {QThread::msleep(msec);}
 	static void usleep(unsigned long usec) {QThread::usleep(usec);}
 	PlayEngine();
@@ -119,7 +118,6 @@ public slots:
 	void unpause();
 	void seek(int pos);
 	void relativeSeek(int pos);
-	void runCommand(mp_cmd *cmd);
 signals:
 	void tempoScaledChanged(bool on);
 	void volumeNormalizedChanged(bool on);
@@ -141,10 +139,11 @@ signals:
 	void subtitleStreamsChanged(const StreamList &streams);
 	void dvdInfoChanged();
 private:
-	static void onPausedChanged(MPContext *mpctx);
+	static void mpPausedChanged(MPContext *mpctx, int paused);
+	static int mpCommandFilter(MPContext *mpctx, mp_cmd *cmd);
 	static void onPlayStarted(MPContext *mpctx);
-	int runImage(const Mrl &mrl, int &terminated, int &duration);
-	int runAv(const Mrl &mrl, int &terminated, int &duration);
+	int playImage(const Mrl &mrl, int &terminated, int &duration);
+	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);
 	int currentTrackId(int type) const;
 	bool load(int row, int start = -1);
 	void play(int time);

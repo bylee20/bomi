@@ -377,10 +377,9 @@ struct HwAccDecoder {
 	int getBuffer(AVFrame *pic);
 	void releaseBuffer(AVFrame *pic);
 	static PixelFormat find(AVCodecContext *avctx, const PixelFormat *fmt) {
-		auto vaapi = static_cast<HwAccDecoder*>(avctx->opaque);
+//		auto vaapi = static_cast<HwAccDecoder*>(avctx->opaque);
 		for (int i = 0; fmt[i] != PIX_FMT_NONE; ++i) {
-			qDebug() << fmt[i] << Backend::vld() << AV_PIX_FMT_VAAPI_VLD << AV_PIX_FMT_VDPAU_H264;
-			if (fmt[i] == Backend::vld() && vaapi->initVideoOutput(fmt[i]))
+			if (fmt[i] == Backend::vld()/* && vaapi->initVideoOutput(fmt[i])*/)
 				return fmt[i];
 		}
 		Q_ASSERT(false);
@@ -460,7 +459,7 @@ bool HwAccDecoder::initVideoOutput(PixelFormat pixfmt) {
 		m_sh->disp_h = m_avctx->height;
 		m_sh->colorspace = avcol_spc_to_mp_csp(m_avctx->colorspace);
 		m_sh->color_range = avcol_range_to_mp_csp_levels(m_avctx->color_range);
-		if (!m_backend->fillContext(m_avctx) || !mpcodecs_config_vo(m_sh, m_sh->disp_w, m_sh->disp_h, m_backend->imgfmt()))
+		if (!m_backend || !m_backend->fillContext(m_avctx) || !mpcodecs_config_vo(m_sh, m_sh->disp_w, m_sh->disp_h, m_backend->imgfmt()))
 			return false;
 		m_vo = true;
 	}

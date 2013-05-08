@@ -2,14 +2,14 @@
 
 pkgname=('cmplayer')
 pkgver=0.7.4
-pkgrel=1
+pkgrel=2
 arch=('i686' 'x86_64')
 url="https://code.google.com/p/$pkgname"
 license=('GPL')
 depends=('qt5-base' 'qt5-declarative' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'yasm')
 makedepends=('git' 'mesa' 'gcc')
 source=(http://cmplayer.googlecode.com/files/$pkgname-$pkgver.tar.gz)
-md5sums=('3052b79669fabac8250353a573f80214')
+md5sums=('cb37629d4a22f0cc3f86f1b284d4ad73')
 
 build() {
 	cd $srcdir/$pkgname-$pkgver
