@@ -377,12 +377,12 @@ struct HwAccDecoder {
 	int getBuffer(AVFrame *pic);
 	void releaseBuffer(AVFrame *pic);
 	static PixelFormat find(AVCodecContext *avctx, const PixelFormat *fmt) {
-//		auto vaapi = static_cast<HwAccDecoder*>(avctx->opaque);
+		auto vaapi = static_cast<HwAccDecoder*>(avctx->opaque);
 		for (int i = 0; fmt[i] != PIX_FMT_NONE; ++i) {
-			if (fmt[i] == Backend::vld()/* && vaapi->initVideoOutput(fmt[i])*/)
+			if (fmt[i] == Backend::vld() && vaapi && vaapi->initVideoOutput(fmt[i]))
 				return fmt[i];
 		}
-		Q_ASSERT(false);
+//		Q_ASSERT(false);
 		return PIX_FMT_NONE;
 	}
 	AVCodecContext *m_avctx = nullptr;

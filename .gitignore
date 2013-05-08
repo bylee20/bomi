@@ -55,13 +55,7 @@ ui_*.h
 src/cmplayer/Makefile
 src/cmplayer/Makefile.Debug
 src/cmplayer/Makefile.Release
-src/cmplayer/make
-src/cmplayer/make -j6
-src/cmplayer/make -j6.Debug
-src/cmplayer/make -j6.Release
-src/cmplayer/make.Debug
-src/cmplayer/make.Release
-src/cmplayer/cmplayer.pro.user.2.6pre1
+src/cmplayer/cmplayer.pro.user*
 src/ffmpeg/.config
 src/ffmpeg/.version
 src/ffmpeg/config.asm
@@ -79,16 +73,6 @@ src/ffmpeg/libavutil/avconfig.h
 src/ffmpeg/libavutil/libavutil.pc
 src/ffmpeg/libswscale/libswscale.pc
 src/ffmpeg/version.h
-src/mplayer2/input/input.conf.h
 src/ffmpeg/doc/examples/pc-uninstalled/libswresample.pc
 src/ffmpeg/libswresample/libswresample.pc
-src/mpv/config.h
-src/mpv/config.log
-src/mpv/config.mak
-src/mpv/core/codecs.conf.h
-src/mpv/core/input/input_conf.h
-src/mpv/demux/ebml_defs.c
-src/mpv/demux/ebml_types.h
-src/mpv/mpv
-src/mpv/version.h
-/build/
+build/
