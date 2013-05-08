@@ -1,3 +1,0 @@
-[submodule "src/mpv"]
-	path = src/mpv
-	url = https://github.com/xylosper/mpv.git
