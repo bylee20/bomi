@@ -471,7 +471,7 @@ void PlayEngine::setMpVolume() {
 void PlayEngine::run() {
 	CharArrayList args = QStringList()
 		<< "cmplayer-mpv" << "--no-config" << "--idle" << "--no-fs"
-		<< ("--af=dummy=" % QString::number((quint64)(quintptr)(void*)d->audio))
+		<< ("--af=dummy=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--no-consolecontrols" << "--no-mouseinput";
@@ -492,12 +492,8 @@ void PlayEngine::run() {
 		Mrl mrl = d->playlist.loadedMrl();
 		d->playing = true;
 		setState(EngineBuffering);
-		int error = MPERROR_NONE;
 		m_imgMode = mrl.isImage();
-		if (m_imgMode)
-			error = playImage(mrl, terminated, duration);
-		else
-			error = playAudioVideo(mrl, terminated, duration);
+		int error = m_imgMode ? playImage(mrl, terminated, duration) : playAudioVideo(mrl, terminated, duration);
 		clean_up_playback(mpctx);
 		if (error != MPERROR_NONE)
 			setState(EngineError);
@@ -511,32 +507,33 @@ void PlayEngine::run() {
 			break;
 		}
 		playlist_entry *entry = nullptr;
-		switch (mpctx->stop_play) {
-		case KEEP_PLAYING:
-		case AT_END_OF_FILE: {// finished
-			setState(EngineFinished);
-			post(this, MrlFinished, mrl);
-			playlist_clear(mpctx->playlist);
-			if (d->playlist.hasNext()) {
-				const auto prev = d->playlist.loadedMrl();
-				d->playlist.setLoaded(d->playlist.next());
-				const auto mrl = d->playlist.loadedMrl();
-				if (prev != mrl)
-					post(this, MrlChanged, mrl);
-				d->start = d->getStartTime(mrl);
-				playlist_add(mpctx->playlist, playlist_entry_new(mrl.toString().toLocal8Bit()));
-				entry = mpctx->playlist->first;
-			} else
-				post(this, PlaylistFinished);
-			break;
-		} case PT_CURRENT_ENTRY: // stopped by loadfile
-			entry = mpctx->playlist->current;
-		default: // just stopped
-			setState(EngineStopped);
-			post(this, MrlStopped, mrl, terminated, duration);
-			break;
+		if (error == MPERROR_NONE) {
+			switch (mpctx->stop_play) {
+			case KEEP_PLAYING:
+			case AT_END_OF_FILE: {// finished
+				setState(EngineFinished);
+				post(this, MrlFinished, mrl);
+				playlist_clear(mpctx->playlist);
+				if (d->playlist.hasNext()) {
+					const auto prev = d->playlist.loadedMrl();
+					d->playlist.setLoaded(d->playlist.next());
+					const auto mrl = d->playlist.loadedMrl();
+					if (prev != mrl)
+						post(this, MrlChanged, mrl);
+					d->start = d->getStartTime(mrl);
+					playlist_add(mpctx->playlist, playlist_entry_new(mrl.toString().toLocal8Bit()));
+					entry = mpctx->playlist->first;
+				} else
+					post(this, PlaylistFinished);
+				break;
+			} case PT_CURRENT_ENTRY: // stopped by loadfile
+				entry = mpctx->playlist->current;
+			default: // just stopped
+				setState(EngineStopped);
+				post(this, MrlStopped, mrl, terminated, duration);
+				break;
+			}
 		}
-
 		mpctx->playlist->current = entry;
 		mpctx->playlist->current_was_replaced = false;
 		mpctx->stop_play = KEEP_PLAYING;

@@ -34,7 +34,7 @@ template<> struct AcMisc<float> {
 };
 
 // some codes are copied from mplayer
-af_info af_info_dummy = { "CMPlayer audio controller", "dummy", "xylosper", "", AF_FLAGS_NOT_REENTRANT, ac_open };
+af_info af_info_dummy = { "CMPlayer audio controller", "dummy", "xylosper", "", AF_FLAGS_NOT_REENTRANT, ac_open, nullptr};
 
 extern af_info af_info_scaletempo;
 
@@ -95,16 +95,9 @@ AudioController::~AudioController() {
 }
 
 
-int AudioController::init(af_instance *af, const af_cfg *cfg) {
+int AudioController::init(af_instance *af, const char *arg) {
 	Q_ASSERT(!af->setup);
-	AudioController *ac = nullptr;
-	for (auto list = cfg->list; *list; ++list) {
-		auto tokens = QString::fromLatin1(*cfg->list).split('=');
-		if (tokens.size() == 2 && tokens[0] == "dummy") {
-			ac = (AudioController*)(void*)(quintptr)tokens[1].toULongLong();
-			break;
-		}
-	}
+	AudioController *ac = (AudioController*)(void*)(quintptr)QString::fromLatin1(arg).toULongLong();
 	Q_ASSERT(ac);
 	auto d = ac->d;
 	af->setup = ac;
@@ -113,7 +106,6 @@ int AudioController::init(af_instance *af, const af_cfg *cfg) {
 	d->af = af;
 	af_info_scaletempo.open(&d->af_scaletempo);
 	d->af_scaletempo.info = &af_info_scaletempo;
-
 	return AF_OK;
 }
 
@@ -136,10 +128,7 @@ int AudioController::config(mp_audio *data) {
 	d->af->delay = d->af_scaletempo.delay;
 	d->af->mul = d->af_scaletempo.mul;
 
-	d->data.rate = d->af_scaletempo.data->rate;
-	d->data.nch = d->af_scaletempo.data->nch;
-	d->data.format = d->af_scaletempo.data->format;
-	d->data.bps = d->af_scaletempo.data->bps;
+	mp_audio_copy_config(&d->data, d->af_scaletempo.data);
 	return af_test_output(d->af, data);
 }
 
@@ -158,22 +147,10 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 	Q_ASSERT(!ac || (ac && d));
 	switch(cmd){
 	case AF_CONTROL_REINIT:
+		Q_ASSERT(ac != nullptr);
 		return ac->config(static_cast<mp_audio*>(arg));
-	case AF_CONTROL_POST_CREATE:
-		return ac->init(af, static_cast<af_cfg*>(arg));
 	case AF_CONTROL_COMMAND_LINE:
-		return AF_OK;
-	case AF_CONTROL_VOLUME_ON_OFF | AF_CONTROL_SET:
-		memcpy(d->enable, (int*)arg, AF_NCH*sizeof(int));
-		return AF_OK;
-	case AF_CONTROL_VOLUME_ON_OFF | AF_CONTROL_GET:
-		memcpy((int*)arg, d->enable, AF_NCH*sizeof(int));
-		return AF_OK;
-	case AF_CONTROL_VOLUME_SOFTCLIP | AF_CONTROL_SET:
-		d->soft = *(int*)arg;
-		return AF_OK;
-	case AF_CONTROL_VOLUME_SOFTCLIP | AF_CONTROL_GET:
-		*(int*)arg = d->soft;
+		init(af, static_cast<const char*>(arg));
 		return AF_OK;
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
 //		return af_from_dB(AF_NCH, (float*)arg, d->level, 20.0, -200.0, 60.0);

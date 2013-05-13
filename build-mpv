@@ -6,7 +6,7 @@ args="--disable-encoding --disable-termcap --disable-termios --disable-iconv \
   --disable-radio-capture --disable-radio-v4l2 --disable-tv \
   --disable-tv-v4l2 --disable-pvr --enable-networking \
   --disable-winsock2_h --disable-smb --enable-libquvi --disable-vcd --disable-bluray --enable-dvdread \
-  --enable-cddb --disable-enca --disable-macosx-finder --disable-macosx-bundle \
+  --enable-cddb --disable-enca --disable-macosx-bundle \
   --enable-inet6 --enable-gethostbyname2 --enable-ftp --disable-vstream \
   --enable-pthreads --disable-libass --disable-libass-osd --disable-rpath \
   --disable-libavdevice --disable-libpostproc --disable-libavfilter --disable-libavresample --disable-mng \

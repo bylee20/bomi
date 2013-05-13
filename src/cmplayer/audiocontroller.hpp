@@ -20,7 +20,7 @@ public:
 	bool scaletempo() const;
 	void setNormalizer(double target, double silence, double min, double max);
 private:
-	static int init(af_instance *af, const af_cfg *cfg);
+	static int init(af_instance *af, const char *arg);
 	int config(mp_audio *data);
 	static mp_audio *play(af_instance *af, mp_audio *data);
 	static void uninit(af_instance *af);
