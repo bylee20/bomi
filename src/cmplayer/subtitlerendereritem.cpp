@@ -214,17 +214,14 @@ void SubtitleRendererItem::render(int ms) {
 		d->renderer->render(ms - m_delay, m_fps);
 }
 
-const SubtitleComponent *SubtitleRendererItem::take(int loadedIndex) {
-	const auto comp = &m_loaded[loadedIndex].component();
-	const SubtitleComponent *ret = nullptr;
+bool SubtitleRendererItem::removeInOrder(const SubtitleComponent *comp) {
 	for (auto it = d->order.begin(); it!= d->order.end(); ++it) {
 		if (*it == comp) {
-			ret = *it;
 			d->order.erase(it);
-			break;
+			return true;
 		}
 	}
-	return ret;
+	return false;
 }
 
 void SubtitleRendererItem::deselect(int idx) {
@@ -233,7 +230,7 @@ void SubtitleRendererItem::deselect(int idx) {
 		for (auto &loaded : m_loaded)
 			loaded.selection() = false;
 	} else if (_InRange(0, idx, m_loaded.size()-1) && m_loaded[idx].isSelected()) {
-		delete take(idx);
+		removeInOrder(&m_loaded[idx].component());
 		m_loaded[idx].selection() = false;
 	} else
 		return;
@@ -260,7 +257,8 @@ void SubtitleRendererItem::applySelection() {
 		d->renderer->setArea(drawArea(), dpr());
 		d->renderer->start();
 		d->renderer->render(m_ms, m_fps);
-	}
+	} else
+		setVisible(false);
 }
 
 void SubtitleRendererItem::select(int idx) {
@@ -278,11 +276,10 @@ void SubtitleRendererItem::select(int idx) {
 			applySelection();
 		}
 	} else if (_InRange(0, idx, m_loaded.size()-1) && !m_loaded[idx].isSelected()) {
-		auto comp = take(idx);
-		if (!comp)
-			comp = &m_loaded[idx].component();
-		m_loaded[idx].selection() = true;
-		d->order.prepend(comp);
+		auto &loaded = m_loaded[idx];
+		removeInOrder(&loaded.component());
+		loaded.selection() = true;
+		d->order.prepend(&loaded.component());
 		for (auto it = d->order.begin(); it != d->order.end(); ) {
 			const SubtitleComponent *&prev = *it;
 			if (++it == d->order.end())

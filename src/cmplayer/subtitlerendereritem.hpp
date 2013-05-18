@@ -73,7 +73,7 @@ private slots:
 
 private:
 	void rerender();
-	const SubtitleComponent *take(int loadedIndex);
+	bool removeInOrder(const SubtitleComponent *comp);
 	QSizeF contentSize() const {return m_size;}
 	void setMargin(double top, double bottom, double right, double left);
 	QRectF drawArea() const { return m_letterbox ? boundingRect() : m_screen; }
