@@ -110,7 +110,7 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 		d->osd.h = d->format.height();
 		d->osd.display_par = 1.0;
 		d->osd.video_par = vo->aspdat.par;
-		static bool format[SUBBITMAP_COUNT] = {0, 0, 1, 1};
+		static bool format[SUBBITMAP_COUNT] = {0, 0, 1, 0};
 		osd_draw(osd, d->osd, osd->vo_pts, 0, format,  VideoRendererItem::drawMpOsd, r);
 	}
 }

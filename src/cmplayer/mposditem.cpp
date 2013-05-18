@@ -72,7 +72,7 @@ extern "C" {
 }
 
 struct OsdData {
-	int x = 0, y = 0, w = 0, h = 0, stride = 0;
+	int x = 0, y = 0, w = 0, h = 0, dw = 0, dh = 0, stride = 0;
 	QByteArray data;
 	QVector<quint32> lut;
 	sub_bitmap_format format = SUBBITMAP_EMPTY;
@@ -158,7 +158,7 @@ void MpOsdItem::draw(QImage &frame) {
 	}
 	if (osd) {
 		QPainter painter(&frame);
-		painter.drawImage(d->osd.x, d->osd.y, *osd, 0, 0, d->osd.w, -1);
+		painter.drawImage(QRectF(d->osd.x, d->osd.y, d->osd.dw, d->osd.dh), *osd, QRectF(0, 0, d->osd.w, d->osd.h));
 		painter.end();
 	}
 	d->mutex.unlock();
@@ -174,8 +174,10 @@ void MpOsdItem::draw(sub_bitmaps *imgs) {
 		d->mutex.lock();
 		if (d->prevId != imgs->bitmap_id) {
 			d->osd.format = imgs->format;
-			d->osd.w = img.dw;
-			d->osd.h = img.dh;
+			d->osd.w = img.w;
+			d->osd.h = img.h;
+			d->osd.dw = img.dw;
+			d->osd.dh = img.dh;
 			d->osd.x = img.x;
 			d->osd.y = img.y;
 			if (imgs->format == SUBBITMAP_INDEXED) {
@@ -195,7 +197,7 @@ void MpOsdItem::draw(sub_bitmaps *imgs) {
 				d->osd.stride = img.stride;
 				d->osd.data.resize(d->osd.stride*d->osd.h);
 				memcpy(d->osd.data.data(), img.bitmap, d->osd.data.size());
-				d->textureRect.setWidth((double)(d->osd.w*4-1)/(double)d->osd.stride);
+				d->textureRect.setWidth((double)(d->osd.w*4)/(double)d->osd.stride);
 			}
 			d->prevId = imgs->bitmap_id;
 			d->redraw = true;
@@ -227,7 +229,7 @@ void MpOsdItem::beforeUpdate() {
 	}
 	if (d->reposition) {
 		d->mutex.lock();
-		d->osdRect = QRectF(d->osd.x, d->osd.y, d->osd.w, d->osd.h);
+		d->osdRect = QRectF(d->osd.x, d->osd.y, d->osd.dw, d->osd.dh);
 		d->mutex.unlock();
 		setGeometryDirty();
 		d->reposition = false;
@@ -257,7 +259,7 @@ void MpOsdItem::initializeTextures() {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
-	d->osdRect = QRectF(d->osd.x, d->osd.y, d->osd.w, d->osd.h);
+	d->osdRect = QRectF(d->osd.x, d->osd.y, d->osd.dw, d->osd.dh);
 	d->mutex.unlock();
 	setGeometryDirty();
 }

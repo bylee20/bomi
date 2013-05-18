@@ -153,6 +153,7 @@ struct VaApi {
 	}
 	void freeContext() {
 		if (m_context.display) {
+			m_gl.makeCurrent(&m_window);
 			delete m_texture;
 			if (m_context.context_id != VA_INVALID_ID)
 				qDebug() << vaDestroyContext(m_context.display, m_context.context_id);
@@ -196,6 +197,7 @@ struct VaApi {
 				break;
 			avctx->hwaccel_context = &m_context;
 			auto img = mp_image_pool_get(m_pool, imgfmt(), avctx->width, avctx->height);
+			m_gl.makeCurrent(&m_window);
 			m_texture = new Texture(m_context.display, img->stride[0]/4, img->h);
 			talloc_free(img);
 			if ((status = m_texture->status) != VA_STATUS_SUCCESS)
