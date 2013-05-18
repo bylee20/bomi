@@ -44,12 +44,12 @@ const RichTextDocument &SubtitleRendererItem::text() const {
 }
 
 void SubtitleRendererItem::setLetterboxHint(bool hint) {
-	if (_Change(m_letterbox, hint) && m_screen != boundingRect())
+	if (_Change(m_letterbox, hint) && m_screen != boundingRect() && d->renderer)
 		d->renderer->setArea(drawArea(), dpr());
 }
 
 void SubtitleRendererItem::setScreenRect(const QRectF &screen) {
-	if (_Change(m_screen, screen) && !m_letterbox) {
+	if (_Change(m_screen, screen) && !m_letterbox && d->renderer) {
 		d->renderer->setArea(drawArea(), dpr());
 		setGeometryDirty();
 	}
