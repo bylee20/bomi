@@ -45,6 +45,7 @@ struct VideoOutput::Data {
 	bool flip = false, quit = false;
 	VideoRendererItem *renderer = nullptr;
 	bool formatChanged = false;
+	quint32 dest_w = 0, dest_h = 0;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -65,27 +66,28 @@ void VideoOutput::output(const QImage &image) {
 }
 
 void VideoOutput::setRenderer(VideoRendererItem *renderer) {
-	if (d->renderer)
-		disconnect(d->renderer, 0, this, 0);
-	connect(d->renderer = renderer, &VideoRendererItem::formatChanged, this, &VideoOutput::handleFormatChanged);
-}
-
-void VideoOutput::handleFormatChanged(const VideoFormat &format) {
-	emit formatChanged(d->format = format);
+	d->renderer = renderer;
 }
 
 const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
-int VideoOutput::config(struct vo */*vo*/, uint32_t /*w_s*/, uint32_t /*h_s*/, uint32_t, uint32_t, uint32_t, uint32_t /*fmt*/) {
+int VideoOutput::config(struct vo *vo, uint32_t w_src, uint32_t h_src, uint32_t w_dest, uint32_t h_dest, uint32_t fs, uint32_t fmt) {
+	Q_UNUSED(fs); Q_UNUSED(fmt); Q_UNUSED(w_src); Q_UNUSED(h_src);
+	auto v = static_cast<VideoOutput*>(vo->priv); auto d = v->d;
+	if (_Change(d->dest_w, w_dest))
+		d->formatChanged = true;
+	if (_Change(d->dest_h, h_dest))
+		d->formatChanged = true;
+	emit v->reconfigured();
 	return 0;
 }
 
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto v = static_cast<VideoOutput*>(vo->priv); auto d = v->d;
-	if ((d->formatChanged = !d->format.compare(mpi)))
-		d->format = VideoFormat(mpi);
+	if (d->formatChanged || (d->formatChanged = !d->format.compare(mpi)))
+		emit v->formatChanged(d->format = VideoFormat(mpi, d->dest_w, d->dest_h));
 	d->frame = VideoFrame(mpi, d->format);
 	d->flip = true;
 }

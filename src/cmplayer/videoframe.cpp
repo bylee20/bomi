@@ -47,7 +47,7 @@ QImage VideoFrame::toImage() const {
 		, d->format.width(), d->format.height(), AV_PIX_FMT_RGB24, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
 	QImage image(d->format.size(), QImage::Format_RGB888);
 	const uchar *srcData[] = {data(0), data(1), data(2)};
-	const int srcStride[] = {d->format.byteWidth(0), d->format.byteWidth(1), d->format.byteWidth(2)};
+	const int srcStride[] = {d->format.bytesPerLine(0), d->format.bytesPerLine(1), d->format.bytesPerLine(2)};
 	uchar *destData[] = {image.bits()}; const int destStride[] = {image.bytesPerLine()};
 	sws_scale(sws, srcData, srcStride, 0, d->format.height(), destData, destStride);
 	sws_freeContext(sws);

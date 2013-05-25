@@ -100,10 +100,6 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 		m_video->setVideo(m_engine);
 		emit videoChanged();
 	});
-	plug(m_engine, &PlayEngine::videoAspectRatioChanged, [this] () {
-		m_video->setVideo(m_engine);
-		emit videoChanged();
-	});
 	plug(m_engine, &PlayEngine::started, [this, mediaName] () {
 		m_media->setName(mediaName(m_media->m_mrl));
 		m_audio->setAudio(m_engine);
@@ -182,9 +178,7 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	m_input->m_fps = sh->fps;
 	m_input->m_bps = sh->i_bps*8;
 	m_output->m_type = format(fmt.type());
-	m_output->m_size = fmt.size();
-	if (engine->videoAspectRatio() > 0.1)
-		m_output->m_size.rwidth() = fmt.height()*engine->videoAspectRatio();
+	m_output->m_size = fmt.drawSize();
 	m_output->m_fps = sh->fps;
 	m_output->m_bps = fmt.bps(sh->fps);
 }

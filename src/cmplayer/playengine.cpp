@@ -21,7 +21,7 @@ extern "C" {
 }
 
 enum EventType {
-	UserType = QEvent::User, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged
+	UserType = QEvent::User, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged, VideoFormatChanged, UpdateChapterList
 };
 
 enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2};
@@ -45,7 +45,6 @@ struct PlayEngine::Data {
 	VideoOutput *video = nullptr;
 	GetStartTime getStartTimeFunc;
 	PlaylistModel playlist;
-	double videoAspect = 0.0;
 	QByteArray hwAccCodecs;
 	QMutex imgMutex;
 
@@ -68,6 +67,8 @@ struct PlayEngine::Data {
 		}
 		return ret;
 	}
+
+	VideoFormat videoFormat;
 };
 
 PlayEngine::PlayEngine()
@@ -76,7 +77,6 @@ PlayEngine::PlayEngine()
 	d->video = new VideoOutput(this);
 	mp_register_player_paused_changed(mpPausedChanged);
 	mp_register_player_command_filter(mpCommandFilter);
-//	mpctx_play_started = onPlayStarted;
 	connect(&d->ticker, &QTimer::timeout, [this] () {
 		if (m_imgMode)
 			emit tick(m_imgPos);
@@ -90,7 +90,9 @@ PlayEngine::PlayEngine()
 	d->ticker.setInterval(20);
 	d->ticker.start();
 
-	connect(d->video, &VideoOutput::formatChanged, this, &PlayEngine::videoFormatChanged);
+	connect(d->video, &VideoOutput::formatChanged, [this] (const VideoFormat &format) {
+		post(this, VideoFormatChanged, format);
+	});
 	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
 		load(row, d->getStartTime(d->playlist[row]));
 	});
@@ -136,10 +138,6 @@ void PlayEngine::setmp(const char *name, float value) {
 	d->enqueue<float>(MpSetProperty, name, value);
 }
 
-//void PlayEngine::onPlayStarted(MPContext *mpctx) {
-//	reinterpret_cast<Context*>(mpctx)->p->setState(mpctx->paused ? EnginePaused : EnginePlaying);
-//}
-
 double PlayEngine::volumeNormalizer() const {
 	auto amp = d->audio->normalizer();
 	return amp < 0 ? 1.0 : amp;
@@ -162,11 +160,6 @@ void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
 	d->hwAccCodecs.chop(1);
 }
 
-void PlayEngine::setVideoAspect(double ratio) {
-	if (d->videoAspect != ratio)
-		emit videoAspectRatioChanged(d->videoAspect = ratio);
-}
-
 void PlayEngine::setCurrentSubtitleStream(int id) {
 	if (id < 0) {
 		setmp("sub-visibility", false);
@@ -182,7 +175,6 @@ int PlayEngine::currentSubtitleStream() const {
 }
 
 void PlayEngine::clear() {
-	setVideoAspect(0.0);
 	m_dvd.clear();
 	m_audioStreams.clear();
 	m_videoStreams.clear();
@@ -195,7 +187,12 @@ void PlayEngine::clear() {
 
 void PlayEngine::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
-	case UpdateTrack: {
+	case UpdateChapterList: {
+		ChapterList chapters; get(event, chapters);
+		if (_Change(m_chapters, chapters))
+			emit chaptersChanged(m_chapters);
+		break;
+	} case UpdateTrack: {
 		QVector<StreamList> streams;
 		get(event, streams);
 		if (_Change(m_videoStreams, streams[STREAM_VIDEO]))
@@ -233,7 +230,11 @@ void PlayEngine::customEvent(QEvent *event) {
 	case MrlChanged: {
 		Mrl mrl; get(event, mrl);
 		emit mrlChanged(mrl);
-	}default:
+	} case VideoFormatChanged: {
+		VideoFormat format; get(event, format);
+		if (_Change(d->videoFormat, format))
+			emit videoFormatChanged(d->videoFormat);
+	} default:
 		break;
 	}
 }
@@ -284,54 +285,18 @@ bool PlayEngine::parse(const Id &id) {
 				return false;
 		} else if (_Same(dvd, "VOLUME_ID")) {
 			m_dvd.volume = id.value;
-		} else if (_Same(dvd, "DISC_ID")) {
-			m_dvd.id = id.value;
 		} else if (_Same(dvd, "CURRENT_TITLE")) {
 			m_title = id.value.toInt();
 		} else
 			return false;
 		return true;
-	} else if (id.name.startsWith("VIDEO")) {
-		if (_Same(id.name, "VIDEO_ASPECT")) {
-			setVideoAspect(id.value.toDouble());
-		} else
-			return false;
-		return true;
 	} else
-		return false;
-//		static QRegExp rxTitle("DVD_TITLE_(\\d+)_(LENGTH|CHAPTERS)");
-	return true;
-}
-
-bool PlayEngine::parse(const QString &line) {
-	static QRegExp rxTitle("^CHAPTERS: (.+)$");
-	if (rxTitle.indexIn(line) != -1) {
-		m_chapters.clear();
-		for (auto name : rxTitle.cap(1).split(',', QString::SkipEmptyParts)) {
-			Chapter chapter; chapter.m_name = name;
-			chapter.m_id = m_chapters.size();
-			m_chapters.append(chapter);
-		}
-	} else
-//	if (_Same(line, "DVDNAV_TITLE_IS_MOVIE")) {
-////		m_isInDvdMenu = false;
-//	} else if (_Same(line, "DVDNAV_TITLE_IS_MENU")) {
-////		m_isInDvdMenu = true;
-//	} else if (line.startsWith(_L("DVDNAV, switched to title: "))) {
-////		m_title = line.mid(27).toInt();
-//	} else
 		return false;
 	return true;
 }
-
-
 
 MPContext *PlayEngine::context() const {
 	return d->mpctx;
-}
-
-double PlayEngine::videoAspectRatio() const {
-	return d->videoAspect;
 }
 
 int PlayEngine::mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
@@ -389,6 +354,7 @@ int PlayEngine::playImage(const Mrl &mrl, int &terminated, int &duration) {
 	d->video->output(image);
 	m_imgPos = 0;
 	post(this, StreamOpen);
+	post(this, UpdateChapterList, ChapterList());
 	TimeLine time;
 	while (!mpctx->stop_play) {
 		mp_cmd_t *cmd = nullptr;
@@ -441,6 +407,24 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 		return error;
 	setState(mpctx->paused ? EnginePaused : EnginePlaying);
 	post(this, StreamOpen);
+	ChapterList chapters(qMax(0, get_chapter_count(mpctx)));
+	for (int i=0; i<chapters.size(); ++i) {
+		const QString time = _MSecToString(qRound(chapter_start_time(mpctx, i)*1000), _L("hh:mm:ss.zzz"));
+		if (char *name = chapter_name(mpctx, i)) {
+			chapters[i].m_name = QString::fromLocal8Bit(name) % '(' % time % ')';
+			talloc_free(name);
+		} else
+			chapters[i].m_name = '(' % QString::number(i+1) % ") " % time;
+		chapters[i].m_id = i;
+	}
+	uint title = 0, titles = 0;
+	if (mpctx->demuxer && mpctx->demuxer->stream) {
+		auto stream = mpctx->demuxer->stream;
+		stream->control(stream, STREAM_CTRL_GET_CURRENT_TITLE, &title);
+		stream->control(stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
+	}
+	post(this, UpdateChapterList, chapters);
+
 	while (!mpctx->stop_play) {
 		run_playloop(mpctx);
 		if (!mpctx->stop_play && streams[STREAM_AUDIO].size() + streams[STREAM_VIDEO].size() + streams[STREAM_SUB].size() != mpctx->num_tracks) {
@@ -689,7 +673,7 @@ void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
 }
 
 VideoFormat PlayEngine::videoFormat() const {
-	return d->video->format();
+	return d->videoFormat;
 }
 
 void PlayEngine::setVolumeNormalized(bool on) {

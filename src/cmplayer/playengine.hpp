@@ -22,20 +22,24 @@ struct DvdInfo {
 		friend class PlayEngine;
 		QString m_name;
 	};
-	void clear() {titles.clear(); titles.clear(); id.clear();}
+	void clear() {titles.clear(); titles.clear(); }
 	QMap<int, Title> titles;
 	QString volume;
-	QString id = 0;
 };
 
 struct Chapter {
 	QString name() const {return m_name;}
 	int id() const {return m_id;}
+	bool operator == (const Chapter &rhs) const {
+		return m_id == rhs.m_id && m_name == rhs.m_name;
+	}
 private:
 	friend class PlayEngine;
 	QString m_name;
 	int m_id = 0;
 };
+
+typedef QVector<Chapter> ChapterList;
 
 typedef QLinkedList<QString> FilterList;
 
@@ -70,7 +74,7 @@ public:
 	const DvdInfo &dvd() const {return m_dvd;}
 	int currentDvdTitle() const {return m_title;}
 	int currentChapter() const;
-	QList<Chapter> chapters() const {return m_chapters;}
+	ChapterList chapters() const {return m_chapters;}
 	int currentSubtitleStream() const;
 	StreamList subtitleStreams() const {return m_subtitleStreams;}
 	void setCurrentSubtitleStream(int id);
@@ -85,7 +89,6 @@ public:
 	bool isVolumeNormalized() const;
 	bool isTempoScaled() const;
 	double fps() const;
-	double videoAspectRatio() const;
 	VideoRendererItem *videoRenderer() const {return m_renderer;}
 	VideoFormat videoFormat() const;
 	StreamList videoStreams() const {return m_videoStreams;}
@@ -133,10 +136,10 @@ signals:
 	void preampChanged(double preamp);
 	void mutedChanged(bool muted);
 	void videoFormatChanged(const VideoFormat &format);
-	void videoAspectRatioChanged(double ratio);
 	void audioStreamsChanged(const StreamList &streams);
 	void videoStreamsChanged(const StreamList &streams);
 	void subtitleStreamsChanged(const StreamList &streams);
+	void chaptersChanged(const ChapterList &chapters);
 	void dvdInfoChanged();
 private:
 	static void mpPausedChanged(MPContext *mpctx, int paused);
@@ -158,7 +161,6 @@ private:
 	void tellmp(const QString &cmd, const QVariant &a1, const QVariant &a2) {tellmp(cmd % ' ' % a1.toString() % ' ' % a2.toString());}
 	void tellmp(const QString &cmd, const QVariant &a1, const QVariant &a2, const QVariant &a3) {tellmp(cmd % ' ' % a1.toString() % ' ' % a2.toString() % ' ' % a3.toString());}
 	template<template <typename> class T> void tellmp(const QString &cmd, const T<QString> &args) {QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);}
-	void setVideoAspect(double ratio);
 	void setState(EngineState state);
 	void run();
 	bool parse(const Id &id);
@@ -171,7 +173,7 @@ private:
 	StreamList m_subtitleStreams, m_audioStreams, m_videoStreams;
 	VideoRendererItem *m_renderer = nullptr;
 	DvdInfo m_dvd;
-	QList<Chapter> m_chapters;
+	ChapterList m_chapters;
 	int m_imgDuration = 10000, m_imgPos = 0, m_imgSeek = 0, m_imgRelSeek = 0;
 	struct Data; Data *d;
 	bool m_imgMode = false;

@@ -260,7 +260,8 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	connect(&d->subtitle, &SubtitleRendererItem::modelsChanged, d->subtitleView, &SubtitleView::setModels);
 	connect(&d->engine, &PlayEngine::started, [this] () {
 		d->updateListMenu(d->menu("play")("title"), d->engine.dvd().titles, d->engine.currentDvdTitle());
-		d->updateListMenu(d->menu("play")("chapter"), d->engine.chapters(), d->engine.currentChapter());
+//		d->updateListMenu(d->menu("play")("chapter"), d->engine.chapters(), d->engine.currentChapter());
+		d->subtitle.setFps(d->engine.fps());
 	});
 	connect(&d->engine, &PlayEngine::audioStreamsChanged, [this] (const StreamList &streams) {
 		d->updateListMenu(d->menu("audio")("track"), streams, d->engine.currentAudioStream());
@@ -271,16 +272,14 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	connect(&d->engine, &PlayEngine::subtitleStreamsChanged, [this] (const StreamList &streams) {
 		d->updateListMenu(d->menu("subtitle")("track"), streams, d->engine.currentSubtitleStream());
 	});
-
-//	d->updateListMenu(d->menu("video")("track"), d->engine.videoStreams(), d->engine.currentVideoStream());
-//	d->updateListMenu(d->menu("subtitle")("track"), d->engine.subtitleStreams(), d->engine.currentSubtitleStream());
+	connect(&d->engine, &PlayEngine::chaptersChanged, [this] (const ChapterList &chapters) {
+		d->updateListMenu(d->menu("play")("chapter"), chapters, d->engine.currentChapter());
+	});
 
 	connect(&d->engine, &PlayEngine::started, &d->history, &HistoryModel::setStarted);
 	connect(&d->engine,	&PlayEngine::stopped, &d->history, &HistoryModel::setStopped);
 	connect(&d->engine, &PlayEngine::finished, &d->history, &HistoryModel::setFinished);
-	connect(&d->engine, &PlayEngine::videoFormatChanged, [this] () { d->subtitle.setFps(d->engine.fps()); });
 	connect(&d->renderer, &VideoRendererItem::screenRectChanged, &d->subtitle, &SubtitleRendererItem::setScreenRect);
-	connect(&d->engine, &PlayEngine::videoAspectRatioChanged, &d->renderer, &VideoRendererItem::setVideoAspectRaito);
 	d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentDvdTitle);
 	d->connectCurrentStreamActions(&d->menu("play")("chapter"), &PlayEngine::currentChapter);
 	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);

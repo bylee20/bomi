@@ -364,7 +364,7 @@ struct HwAccDecoder {
 	~HwAccDecoder();
 	static int init(sh_video_t *sh, const char *decoder) {
 		HwAccDecoder *dec = new HwAccDecoder(sh, decoder);
-		if (dec->m_backend->fillContext(dec->m_avctx))
+		if (dec->m_backend && dec->m_backend->fillContext(dec->m_avctx))
 			return 1;
 		delete dec;	return 0;
 	}
@@ -380,11 +380,12 @@ struct HwAccDecoder {
 	void releaseBuffer(AVFrame *pic);
 	static PixelFormat find(AVCodecContext *avctx, const PixelFormat *fmt) {
 		auto vaapi = static_cast<HwAccDecoder*>(avctx->opaque);
+		if (!vaapi)
+			return AV_PIX_FMT_NONE;
 		for (int i = 0; fmt[i] != PIX_FMT_NONE; ++i) {
-			if (fmt[i] == Backend::vld() && vaapi && vaapi->initVideoOutput(fmt[i]))
+			if (fmt[i] == Backend::vld() && vaapi->initVideoOutput(fmt[i]))
 				return fmt[i];
 		}
-//		Q_ASSERT(false);
 		return PIX_FMT_NONE;
 	}
 	AVCodecContext *m_avctx = nullptr;
@@ -394,6 +395,8 @@ struct HwAccDecoder {
 	Backend *m_backend = nullptr;
 	sh_video *m_sh = nullptr;
 };
+
+extern "C" void set_from_bih(AVCodecContext *avctx, uint32_t format, BITMAPINFOHEADER *bih);
 
 HwAccDecoder::HwAccDecoder(sh_video *sh, const char *decoder) {
 	(m_sh = sh)->context = this;
@@ -416,20 +419,12 @@ HwAccDecoder::HwAccDecoder(sh_video *sh, const char *decoder) {
 	m_avctx->coded_height = sh->disp_h;
 	m_avctx->codec_tag = sh->format;
 	m_avctx->stream_codec_tag = sh->video.fccHandler;
-
-	if (sh->gsh->lav_headers)
-		   mp_copy_lav_codec_headers(m_avctx, sh->gsh->lav_headers);
-	if (sh->bih && sh->bih->biSize > (int)sizeof(*sh->bih)) {
-		m_avctx->extradata_size = sh->bih->biSize - sizeof(*sh->bih);
-		m_avctx->extradata = (uchar*)av_mallocz(m_avctx->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
-		memcpy(m_avctx->extradata, sh->bih + 1, m_avctx->extradata_size);
-	}
-	if (sh->bih) {
-		m_avctx->bits_per_coded_sample = sh->bih->biBitCount;
-		m_avctx->coded_width  = sh->bih->biWidth;
-		m_avctx->coded_height = sh->bih->biHeight;
-	}
 	m_avctx->thread_count = 1;
+
+	if (sh->bih)
+		 set_from_bih(m_avctx, sh->format, sh->bih);
+	 if (sh->gsh->lav_headers)
+		 mp_copy_lav_codec_headers(m_avctx, sh->gsh->lav_headers);
 	if (avcodec_open2(m_avctx, codec, nullptr) < 0)
 		return;
 	m_backend = new Backend;
@@ -448,7 +443,7 @@ HwAccDecoder::~HwAccDecoder() {
 	m_sh->context = nullptr;
 }
 
-bool HwAccDecoder::initVideoOutput(PixelFormat pixfmt) {
+bool HwAccDecoder::initVideoOutput(AVPixelFormat pixfmt) {
 	if (pixfmt != Backend::vld())
 		return false;
 	if (av_cmp_q(m_avctx->sample_aspect_ratio, m_last_sample_aspect_ratio) ||
@@ -486,12 +481,14 @@ void HwAccDecoder::releaseBuffer(AVFrame *pic) {
 
 union pts { int64_t i; double d; };
 mp_image *HwAccDecoder::decode(demux_packet *packet, int flags, double *reordered_pts) {
-	if (flags & 2)
-		m_avctx->skip_frame = AVDISCARD_ALL;
-	else if (flags & 1)
+	m_avctx->skip_idct = m_avctx->skip_frame = AVDISCARD_DEFAULT;
+	if (flags & 3) {
 		m_avctx->skip_frame = AVDISCARD_NONREF;
-	else
-		m_avctx->skip_frame = AVDISCARD_DEFAULT;
+		if (flags & 2)
+			m_avctx->skip_idct = AVDISCARD_ALL;
+	}
+	if (packet && packet->buffer && packet->len <= 0)
+		return nullptr;
 
 	AVPacket pkt; av_init_packet(&pkt);
 	pkt.data = packet ? packet->buffer : nullptr;
@@ -508,6 +505,9 @@ mp_image *HwAccDecoder::decode(demux_packet *packet, int flags, double *reordere
 	if (avcodec_decode_video2(m_avctx, m_pic, &newFrame, &pkt) < 0)
 		mp_msg(MSGT_DECVIDEO, MSGL_WARN, "Error while decoding frame!\n");
 	temp.i = m_pic->reordered_opaque; *reordered_pts = temp.d;
+	pkt.data = nullptr;
+	pkt.size = 0;
+	av_destruct_packet(&pkt);
 	if (!newFrame)
 		return nullptr;
 	if (!initVideoOutput(m_avctx->pix_fmt))
@@ -527,7 +527,7 @@ static int control(sh_video_t *sh, int cmd, void */*arg*/) {
 		if (avctx->active_thread_type & FF_THREAD_FRAME)
 			delay += avctx->thread_count - 1;
 		return delay + 10;
-	} case VDCTRL_RESET_ASPECT: {
+	} case VDCTRL_REINIT_VO: {
 		if (ctx->m_vo)
 			ctx->m_vo = false;
 		ctx->initVideoOutput(avctx->pix_fmt);

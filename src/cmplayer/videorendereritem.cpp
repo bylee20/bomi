@@ -117,7 +117,7 @@ double VideoRendererItem::targetAspectRatio() const {
 		return d->aspect;
 	if (d->aspect == 0.0)
 		return itemAspectRatio();
-	return d->dar > 0.01 ? d->dar : _Ratio(d->format.size());
+	return _Ratio(d->format.drawSize());
 }
 
 double VideoRendererItem::targetCropRatio(double fallback) const {
@@ -236,24 +236,15 @@ double VideoRendererItem::cropRatio() const {
 	return d->crop;
 }
 
-void VideoRendererItem::setVideoAspectRaito(double ratio) {
-	d->dar = ratio;
-}
-
-
 QSize VideoRendererItem::sizeHint() const {
 	if (d->format.isEmpty())
 		return QSize(400, 300);
 	const double aspect = targetAspectRatio();
 	QSizeF size(aspect, 1.0);
-	size.scale(d->format.size(), Qt::KeepAspectRatioByExpanding);
+	size.scale(d->format.drawSize(), Qt::KeepAspectRatioByExpanding);
 	QSizeF crop(targetCropRatio(aspect), 1.0);
 	crop.scale(size, Qt::KeepAspectRatio);
 	return crop.toSize();
-}
-
-int VideoRendererItem::outputWidth() const {
-	return d->dar > 0.01 ? (int)(d->dar*(double)d->format.height() + 0.5) : d->format.width();
 }
 
 const char *VideoRendererItem::fragmentShader() const {
@@ -293,8 +284,8 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 	program->setUniformValue(d->loc_brightness, d->shaderVar.brightness);
 	program->setUniformValue(d->loc_contrast, d->shaderVar.contrast);
 	program->setUniformValue(d->loc_sat_hue, d->shaderVar.sat_hue);
-	const float dx = 1.0/(double)d->format.drawWidth();
-	const float dy = 1.0/(double)d->format.drawHeight();
+	const float dx = 1.0/(double)d->format.dataWidth();
+	const float dy = 1.0/(double)d->format.dataHeight();
 	program->setUniformValue(d->loc_dxy, dx, dy, -dx, 0.f);
 	program->setUniformValue(d->loc_strideCorrection, d->strideCorrection);
 	const auto effects = d->shaderVar.effects();
@@ -341,7 +332,6 @@ void VideoRendererItem::beforeUpdate() {
 			d->format = format;
 			resetNode();
 			updateGeometry();
-			emit formatChanged(d->format);
 		}
 	} else if (d->checkFormat && d->format != d->frame.format()) {
 		reset = true;
@@ -349,7 +339,6 @@ void VideoRendererItem::beforeUpdate() {
 		d->mposd->setFrameSize(d->format.size());
 		resetNode();
 		updateGeometry();
-		emit formatChanged(d->format);
 	}
 	if (!reset && (d->shaderChanged || d->shaderType != d->format.type()))
 		resetNode();
@@ -359,12 +348,12 @@ void VideoRendererItem::beforeUpdate() {
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, fmt, d->format.glFormat(), data);
 		};
 		if (d->image.isNull()) {
-			const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
+			const int w = d->format.bytesPerLine(0), h = d->format.lines(0);
 			switch (d->format.type()) {
 			case VideoFormat::I420:
-				setTex(0, GL_LUMINANCE, d->format.byteWidth(0), d->format.byteHeight(0), d->frame.data(0));
-				setTex(1, GL_LUMINANCE, d->format.byteWidth(1), d->format.byteHeight(1), d->frame.data(1));
-				setTex(2, GL_LUMINANCE, d->format.byteWidth(2), d->format.byteHeight(2), d->frame.data(2));
+				setTex(0, GL_LUMINANCE, d->format.bytesPerLine(0), d->format.lines(0), d->frame.data(0));
+				setTex(1, GL_LUMINANCE, d->format.bytesPerLine(1), d->format.lines(1), d->frame.data(1));
+				setTex(2, GL_LUMINANCE, d->format.bytesPerLine(2), d->format.lines(2), d->frame.data(2));
 				break;
 			case VideoFormat::NV12:
 			case VideoFormat::NV21:
@@ -412,7 +401,7 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	xy += offset;
 	if (d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter)))
 		emit screenRectChanged(d->letterbox->screen());
-	double top = 0.0, left = 0.0, right = _Ratio(d->format.width(), d->format.drawWidth()), bottom = 1.0;
+	double top = 0.0, left = 0.0, right = _Ratio(d->format.width(), d->format.dataWidth()), bottom = 1.0;
 	if (!(d->shaderVar.effects() & IgnoreEffect)) {
 		if (d->shaderVar.effects() & FlipVertically)
 			qSwap(top, bottom);
@@ -432,7 +421,7 @@ void VideoRendererItem::initializeTextures() {
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	};
-	const int w = d->format.byteWidth(0), h = d->format.byteHeight(0);
+	const int w = d->format.bytesPerLine(0), h = d->format.lines(0);
 	auto initTex = [this, &bindTex] (int idx, GLenum fmt, int width, int height) {
 		bindTex(idx);
 		glTexImage2D(GL_TEXTURE_2D, 0, fmt, width, height, 0, fmt, d->format.glFormat(), nullptr);
@@ -445,16 +434,16 @@ void VideoRendererItem::initializeTextures() {
 	switch (d->format.type()) {
 	case VideoFormat::I420:
 		initTex(0, GL_LUMINANCE, w, h);
-		initTex(1, GL_LUMINANCE, d->format.byteWidth(1), d->format.byteHeight(1));
-		initTex(2, GL_LUMINANCE, d->format.byteWidth(2), d->format.byteHeight(2));
-		d->strideCorrection.rx() = ((double)w/(double)(d->format.byteWidth(1)*2));
-		d->strideCorrection.ry() = ((double)w/(double)(d->format.byteWidth(2)*2));
+		initTex(1, GL_LUMINANCE, d->format.bytesPerLine(1), d->format.lines(1));
+		initTex(2, GL_LUMINANCE, d->format.bytesPerLine(2), d->format.lines(2));
+		d->strideCorrection.rx() = ((double)w/(double)(d->format.bytesPerLine(1)*2));
+		d->strideCorrection.ry() = ((double)w/(double)(d->format.bytesPerLine(2)*2));
 		break;
 	case VideoFormat::NV12:
 	case VideoFormat::NV21:
 		initTex(0, GL_LUMINANCE, w, h);
-		initTex(1, GL_LUMINANCE_ALPHA, d->format.byteWidth(1) >> 1, d->format.byteHeight(1));
-		d->strideCorrection.rx() = ((double)w/(double)(d->format.byteWidth(1)));
+		initTex(1, GL_LUMINANCE_ALPHA, d->format.bytesPerLine(1) >> 1, d->format.lines(1));
+		d->strideCorrection.rx() = ((double)w/(double)(d->format.bytesPerLine(1)));
 		break;
 	case VideoFormat::YUY2:
 	case VideoFormat::UYVY:

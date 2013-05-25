@@ -3,8 +3,8 @@ extern "C" {
 #include <video/img_format.h>
 }
 
-VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
-: size(mpi->w, mpi->h), drawSize(mpi->stride[0]/mpi->fmt.bytes[0], mpi->h)
+VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h)
+: size(mpi->w, mpi->h), dataSize(mpi->stride[0]/mpi->fmt.bytes[0], mpi->h), drawSize(dest_w, dest_h)
 , planes(mpi->fmt.num_planes), imgfmt(mpi->fmt.id), glFormat(GL_UNSIGNED_BYTE) {
 	switch (imgfmt) {
 	case IMGFMT_420P:
@@ -49,7 +49,7 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
 
 VideoFormat::VideoFormat::Data::Data(const QImage &image) {
 	Q_ASSERT(image.format() == QImage::Format_ARGB32 || image.format() == QImage::Format_ARGB32_Premultiplied);
-	drawSize = size = image.size();
+	dataSize = size = image.size();
 	byteSize[0] = QSize(size.width()*4, size.height());
 	planes = 1;
 	bpp = 32;

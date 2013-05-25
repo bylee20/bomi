@@ -87,9 +87,6 @@ void MpMessage::_parse(const QString &line) {
 	auto id = MpMessage::id(line);
 	qDebug() << "mpv:" << qPrintable(line);
 	if (id.name.isEmpty()) {
-		for (auto p : parsers)
-			if (p->parse(line))
-				return;
 	} else {
 		for (auto p : parsers)
 			if (p->parse(id))
@@ -97,7 +94,6 @@ void MpMessage::_parse(const QString &line) {
 	}
 }
 
-bool MpMessage::parse(const QString &) {return false;}
 bool MpMessage::parse(const Id &) {return false;}
 
 MpMessage::Id MpMessage::id(const QString &line) {

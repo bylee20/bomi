@@ -24,8 +24,7 @@ public:
 	void output(const QImage &image);
 signals:
 	void formatChanged(const VideoFormat &format);
-private slots:
-	void handleFormatChanged(const VideoFormat &format);
+	void reconfigured();
 private:
 	static int preinit(struct vo *vo, const char *arg);
 	static void uninit(struct vo */*vo*/) {}

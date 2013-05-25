@@ -40,10 +40,8 @@ public:
 	int alignment() const;
 	double fps() const;
 	Effects effects() const;
-	int outputWidth() const;
 	QSize sizeHint() const;
 	QSizeF size() const {return QSizeF(width(), height());}
-	void setVideoAspectRaito(double ratio);
 	QQuickItem *osd() const;
 	void setAspectRatio(double ratio);
 	void setOverlay(QQuickItem *overlay);
@@ -66,13 +64,8 @@ public slots:
 signals:
 	void effectsChanged(Effects effects);
 	void offsetChanged(const QPoint &pos);
-	void formatChanged(const VideoFormat &format);
 	void screenRectChanged(const QRectF rect);
-//	void framePended();
 	void texturesInitialized();
-private: // for VideoOutput
-//	VideoFrame &getNextFrame() const;
-//	void next();
 private:
 	void initializeTextures();
     static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
