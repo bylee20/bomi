@@ -210,10 +210,6 @@ void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
 MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
-#ifndef Q_OS_MAC
-	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), d->widget());
-	d->tray->show();
-#endif
 	setFlags(flags() | Qt::WindowFullscreenButtonHint);
 	setColor(Qt::black);
 	setResizeMode(QQuickView::SizeRootObjectToView);
@@ -287,14 +283,6 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	d->connectCurrentStreamActions(&d->menu("subtitle")("track"), &PlayEngine::currentSubtitleStream);
 	connect(this, &MainWindow::windowStateChanged, this, &MainWindow::checkWindowState);
 
-#ifndef Q_OS_MAC
-	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
-		if (reason == QSystemTrayIcon::Trigger)
-			setVisible(!isVisible());
-		else if (reason == QSystemTrayIcon::Context)
-			d->contextMenu.exec(QCursor::pos());
-	});
-#endif
 
 	auto addContextMenu = [this] (Menu &menu) {d->contextMenu.addMenu(menu.copied(&d->contextMenu));};
 	addContextMenu(d->menu("open"));
@@ -372,6 +360,17 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	updateRecentActions(d->recent.openList());
 
 	d->winState = d->prevWinState = windowState();
+
+#ifndef Q_OS_MAC
+	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
+	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
+		if (reason == QSystemTrayIcon::Trigger)
+			setVisible(!isVisible());
+		else if (reason == QSystemTrayIcon::Context)
+			d->contextMenu.exec(QCursor::pos());
+	});
+	d->tray->setVisible(d->preferences.enable_system_tray);
+#endif
 
 //	Currently, session management does not works.
 //	connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
@@ -1132,12 +1131,13 @@ void MainWindow::applyPref() {
 	d->menu.update(p);
 	d->menu.syncTitle();
 	d->menu.resetKeyMap();
-#ifndef Q_OS_MAC
-	d->tray->setVisible(p.enable_system_tray);
-#endif
+
 	reloadSkin();
 	if (time >= 0)
 		d->engine.reload();
+
+	if (d->tray)
+		d->tray->setVisible(p.enable_system_tray);
 	d->preferences.save();
 }
 
@@ -1259,25 +1259,24 @@ void MainWindow::updateStaysOnTop() {
 void MainWindow::updateTitle() {
 	const auto mrl = d->engine.mrl();
 	setFilePath(QString());
+	QString fileName;
 	if (!mrl.isEmpty()) {
-		QString title;
 		if (mrl.isLocalFile()) {
 			const QFileInfo file(mrl.toLocalFile());
 			d->filePath = file.absoluteFilePath();
-			title += file.fileName();
+			fileName = file.fileName();
 			if (isVisible())
 				setFilePath(d->filePath);
 		} else {
 			if (mrl.isDvd()) {
-				title += d->engine.dvd().volume;
-				if (title.isEmpty())
-					title += "DVD";
+				fileName = d->engine.dvd().volume;
+				if (fileName.isEmpty())
+					fileName = _L("DVD");
 			}
 		}
-		title += _L(" - ") % Info::name();
-		setTitle(title);
-	} else
-		setTitle(Info::name());
+	}
+	cApp.setFileName(fileName);
+//	cApp.setApplicationTitle(title);
 }
 
 void MainWindow::updateMrl(const Mrl &mrl) {
