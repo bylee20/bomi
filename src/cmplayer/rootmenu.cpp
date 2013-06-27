@@ -278,7 +278,7 @@ void RootMenu::update(const Pref &p) {
 	open["dvd"]->setText(tr("Open DVD"));
 
 	auto &recent = open("recent");
-	recent.setTitle(tr("Recent Open"));
+	recent.setTitle(tr("Recently Opened"));
 	recent["clear"]->setText(tr("Clear"));
 
 	auto &play = root("play");
@@ -330,7 +330,7 @@ void RootMenu::update(const Pref &p) {
 	list["hide"]->setText(tr("Hide"));
 	sub("track").setTitle(tr("Subtitle Track"));
 
-	sub["on-letterbox"]->setText(tr("Display on Letterbox"));
+	sub["on-letterbox"]->setText(tr("Display in Letterbox"));
 	sub["in-video"]->setText(tr("Display in Video"));
 	sub["align-top"]->setText(tr("Top Alignment"));
 	sub["align-bottom"]->setText(tr("Bottom Alignment"));
@@ -428,18 +428,18 @@ void RootMenu::update(const Pref &p) {
 		playlist["move-up"]->setText(tr("Move Up"));
 		playlist["move-down"]->setText(tr("Move Down"));
 	tool["favorites"]->setText(tr("Favorites"));
-	tool["history"]->setText(tr("Play History"));
+	tool["history"]->setText(tr("History List"));
 	tool["subtitle"]->setText(tr("Subtitle View"));
 	tool["pref"]->setText(tr("Preferences"));
 	tool["reload-skin"]->setText(tr("Reload Skin"));
-	tool["playinfo"]->setText(tr("Play Information"));
+	tool["playinfo"]->setText(tr("Playback Information"));
 	tool["auto-exit"]->setText(tr("Auto-exit"));
 	tool["auto-shutdown"]->setText(tr("Auto-shutdown"));
 
 	auto &window = root("window");
 	window.setTitle(tr("Window"));
 	window["sot-always"]->setText(tr("Always Stay on Top"));
-	window["sot-playing"]->setText(tr("Stay on Top Playing"));
+	window["sot-playing"]->setText(tr("Stay on Top While Playing"));
 	window["sot-never"]->setText(tr("Don't Stay on Top"));
 	window["proper"]->setText(tr("Proper Size"));
 	window["full"]->setText(tr("Fullscreen"));

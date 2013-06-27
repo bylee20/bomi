@@ -75,7 +75,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>7</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -211,7 +211,7 @@
               <item>
                <widget class="QDoubleSpinBox" name="image_duration">
                 <property name="specialValueText">
-                 <string>Infinity</string>
+                 <string>Infinite</string>
                 </property>
                 <property name="accelerated">
                  <bool>true</bool>
@@ -249,7 +249,7 @@
             <item>
              <widget class="QCheckBox" name="remember_image">
               <property name="text">
-               <string>Remeber image playback history</string>
+               <string>Remember image playback history</string>
               </property>
              </widget>
             </item>
