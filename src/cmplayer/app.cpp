@@ -35,6 +35,7 @@ App::App(int &argc, char **argv)
 	setOrganizationDomain("xylosper.net");
 	setApplicationName("CMPlayer");
 	setQuitOnLastWindowClosed(false);
+	setApplicationDisplayName("CMPlayer");
 //	setFont(QFont(QString::fromUtf8("나눔 고딕")));
 #ifndef Q_OS_MAC
 	setWindowIcon(defaultIcon());
@@ -79,6 +80,15 @@ void App::setMainWindow(MainWindow *mw) {
 	d->main->setIcon(defaultIcon());
 #endif
 	setActivationWindow(d->main, false);
+}
+
+void App::setFileName(const QString &fileName) {
+	if (d->main) {
+		d->main->setTitle(fileName);
+#ifdef Q_OS_LINUX
+		d->helper.setWmName(fileName % _L(" - ") % applicationDisplayName());
+#endif
+	}
 }
 
 MainWindow *App::mainWindow() const {

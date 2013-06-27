@@ -10,7 +10,10 @@
 #include <qpa/qplatformwindow.h>
 extern "C" {
 #include <xcb/xcb.h>
+#include <xcb/xcb_icccm.h>
+#include <xcb/xcb_util.h>
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 }
 
 struct XWindowInfo {
@@ -23,10 +26,13 @@ struct XWindowInfo {
 		netWmStateAtom = getAtom(connection, "_NET_WM_STATE");
 		netWmStateAboveAtom = getAtom(connection, "_NET_WM_STATE_ABOVE");
 		netWmStateStaysOnTopAtom = getAtom(connection, "_NET_WM_STATE_STAYS_ON_TOP");
+		auto className = "cmplayer\0CMPlayer";
+		xcb_icccm_set_wm_class(connection, window, sizeof(className), className);
 	}
 	xcb_connection_t *connection = nullptr;
 	xcb_window_t window = 0, root = 0;
-	xcb_atom_t netWmStateAtom = 0, netWmStateAboveAtom = 0, netWmStateStaysOnTopAtom = 0;
+	xcb_atom_t netWmStateAtom = 0, netWmStateAboveAtom = 0, netWmStateStaysOnTopAtom = 0
+		, wmName = 0, wmClass = 0;
 	Display *display = nullptr;
 	static xcb_atom_t getAtom(xcb_connection_t *conn, const char *name) {
 		auto cookie = xcb_intern_atom(conn, 0, strlen(name), name);
@@ -53,6 +59,7 @@ struct AppX11::Data {
 	bool inhibit = false;
 	bool xss = false;
 	bool gnome = false;
+	QByteArray wmName;
 };
 
 AppX11::AppX11(QObject *parent)
@@ -135,6 +142,17 @@ void AppX11::setAlwaysOnTop(QWindow *window, bool onTop) {
 
 QStringList AppX11::devices() const {
 	return QStringList();
+}
+
+void AppX11::setWmName(const QString &name) {
+	d->wmName = name.toUtf8();
+	char *utf8 = d->wmName.data();
+	if (d->x.connection && d->x.window && d->x.display) {
+		XTextProperty text;
+		Xutf8TextListToTextProperty(d->x.display, &utf8, 1, XCompoundTextStyle, &text);
+		XSetWMName(d->x.display, d->x.window, &text);
+//		xcb_icccm_set_wm_name(d->x.connection, d->x.window, XCB_ATOM_STRING, 8, d->wmName.size(), d->wmName.constData());
+	}
 }
 
 bool AppX11::shutdown() {

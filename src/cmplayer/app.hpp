@@ -15,6 +15,7 @@ public:
 	static QIcon defaultIcon();
 	static Mrl getMrlFromCommandLine();
 
+	void setFileName(const QString &fileName);
 	void setMainWindow(MainWindow *mw);
 	MainWindow *mainWindow() const;
     QWindow *topWindow() const;
