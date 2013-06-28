@@ -17,27 +17,23 @@ private:
 
 struct sub_bitmaps;
 
-class MpOsdItem : public TextureRendererItem {
+class MpOsdItem : public QQuickItem {
 public:
 	MpOsdItem(QQuickItem *parent = nullptr);
 	~MpOsdItem();
 	void draw(sub_bitmaps *imgs);
 	void setFrameSize(const QSize &size);
+	QSize frameSize() const;
 	void present();
 	void draw(QImage &frame);
 private:
+	friend class MpOsdItemShader;
+	void updateState(QOpenGLShaderProgram *program);
 	static const int ShowEvent = QEvent::User + 1;
 	static const int HideEvent = QEvent::User + 2;
 	void customEvent(QEvent *event);
-	bool blending() const override {return true;}
-	void prepare();
-	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
-	void link(QOpenGLShaderProgram *program);
-	void bind(const RenderState &state, QOpenGLShaderProgram *program);
-	void updateTexturedPoint2D(TexturedPoint2D *tp);
-	void beforeUpdate();
-	void initializeTextures();
-	const char *fragmentShader() const;
+	void geometryChanged(const QRectF &newOne, const QRectF &old);
+	QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data);
 	struct Data;
 	Data *d;
 };

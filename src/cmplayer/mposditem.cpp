@@ -71,144 +71,184 @@ extern "C" {
 #undef new
 }
 
-struct OsdData {
-	int x = 0, y = 0, w = 0, h = 0, dw = 0, dh = 0, stride = 0;
-	QByteArray data;
-	QVector<quint32> lut;
+struct OsdBitmap {
+	struct Part { QRect display = {0, 0, 0, 0};	int width = 0; QImage image; };
+	QVector<Part> parts;
+	int id = -1, pos = -1;
 	sub_bitmap_format format = SUBBITMAP_EMPTY;
 };
 
+struct MpOsdItemShader : public QSGMaterialShader {
+	MpOsdItemShader(MpOsdItem *item): m_item(item) {}
+	void updateState(const RenderState &state, QSGMaterial *newOne, QSGMaterial *old) {
+		Q_UNUSED(old); Q_UNUSED(newOne);
+		auto prog = program();
+		if (state.isMatrixDirty())
+			prog->setUniformValue(m_loc_matrix, state.combinedMatrix());
+		prog->setUniformValue(m_loc_tex_data, 0);
+		prog->setUniformValue(m_loc_width, (float)m_item->frameSize().width());
+		prog->setUniformValue(m_loc_height, (float)m_item->frameSize().height());
+		m_item->updateState(prog);
+	}
+	void initialize() {
+		QSGMaterialShader::initialize();
+		m_loc_matrix = program()->uniformLocation("qt_Matrix");
+		m_loc_tex_data = program()->uniformLocation("tex_data");
+		m_loc_width = program()->uniformLocation("width");
+		m_loc_height = program()->uniformLocation("height");
+	}
+private:
+	char const *const *attributeNames() const;
+	const char *vertexShader() const;
+	const char *fragmentShader() const;
+	int m_loc_matrix = 0, m_loc_tex_data = 0, m_loc_width = 0, m_loc_height = 0;
+	MpOsdItem *m_item = nullptr;
+};
+
+char const *const *MpOsdItemShader::attributeNames() const {
+	static const char *names[] = {
+		"qt_VertexPosition",
+		"qt_VertexTexCoord",
+		0
+	};
+	return names;
+}
+
+const char *MpOsdItemShader::vertexShader() const {
+	static const char *shader = (R"(
+		uniform highp mat4 qt_Matrix;
+		attribute highp vec4 qt_VertexPosition;
+		attribute highp vec2 qt_VertexTexCoord;
+		varying highp vec2 qt_TexCoord;
+		void main() {
+			qt_TexCoord = qt_VertexTexCoord;
+			gl_Position = qt_Matrix * qt_VertexPosition;
+		}
+	)");
+	return shader;
+}
+
+const char *MpOsdItemShader::fragmentShader() const {
+	static const char *shader = (R"(
+		uniform sampler2D tex_data;
+		uniform float width, height;
+		varying highp vec2 qt_TexCoord;
+		void main() {
+			vec2 size = vec2(width, height);
+			vec3 dxy0 = vec3(1.0/width, 1.0/height, 0.0);
+			ivec2 pixel = ivec2(qt_TexCoord*size);
+			vec2 texel = (vec2(pixel)+vec2(0.5, 0.5))/size;
+
+			vec4 x0y0 = texture2D(tex_data, texel);
+			vec4 x1y0 = texture2D(tex_data, texel + dxy0.xz);
+			vec4 x0y1 = texture2D(tex_data, texel + dxy0.zy);
+			vec4 x1y1 = texture2D(tex_data, texel + dxy0.xy);
+
+			float a = fract(qt_TexCoord.x*width);
+			float b = fract(qt_TexCoord.y*height);
+			gl_FragColor =  mix(mix(x0y0, x1y0, a), mix(x0y1, x1y1, a), b);
+		}
+	)");
+	return shader;
+}
+
+static int MaterialId = 0;
+static QVector<QSGMaterialType> MaterialTypes = QVector<QSGMaterialType>(50);
+
+struct MpOsdItemMaterial : public QSGMaterial {
+	MpOsdItemMaterial(MpOsdItem *item): m_item(item) { setFlag(Blending); }
+	QSGMaterialType *type() const { return &MaterialTypes[m_id]; }
+	QSGMaterialShader *createShader() const { return new MpOsdItemShader(m_item); }
+private:
+	int m_id = ++MaterialId%MaterialTypes.size();
+	MpOsdItem *m_item = nullptr;
+};
+
+struct MpOsdItemNode : public QSGGeometryNode {
+	MpOsdItemNode(MpOsdItem *item, const QSize &frameSize): m_item(item) {
+		setFlags(OwnsGeometry | OwnsMaterial);
+		setMaterial(new MpOsdItemMaterial(item));
+		setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4));
+		markDirty(DirtyMaterial | DirtyGeometry);
+		m_fbo = new QOpenGLFramebufferObject(frameSize, GL_TEXTURE_2D);
+		m_device = new QOpenGLPaintDevice(frameSize);
+		m_device->setPaintFlipped(true);
+	}
+	~MpOsdItemNode() {	delete m_fbo;}
+	QOpenGLFramebufferObject *fbo() const {return m_fbo;}
+	QOpenGLPaintDevice *device() const {return m_device;}
+private:
+	QOpenGLFramebufferObject *m_fbo = nullptr;
+	QOpenGLPaintDevice *m_device = nullptr;
+	MpOsdItem *m_item = nullptr;
+};
+
 struct MpOsdItem::Data {
-	int loc_tex_data = 0, loc_tex_lut = 0, prevId = -1, prevPosId = -1;
-	QRectF vertextRect = {.0, .0, .0, .0}, textureRect = {0.0, 0.0, 1.0, 1.0};
-	QRectF osdRect = {0, 0, 0, 0};
-	OsdData osd;
+	OsdBitmap osd;
 	QMutex mutex;
-	QSize frameSize = {1, 1};
-	bool callback = false, reposition = false, redraw = false;
+	bool callback = false, redraw = false, dirtyGeometry = true;
 	sub_bitmap_format shaderFormat = SUBBITMAP_INDEXED;
+	QOpenGLFramebufferObject *fbo = nullptr;
+	QSize frameSize = {1, 1};
+	MpOsdItemNode *node = nullptr;
+
+	void paint(QPainter *painter) {
+		for (const auto &part : osd.parts)
+			painter->drawImage(part.display, part.image, QRect(0, 0, part.width, part.image.height()));
+	}
 };
 
 MpOsdItem::MpOsdItem(QQuickItem *parent)
-: TextureRendererItem(2, parent), d(new Data) {
-	d->osd.lut.resize(256);
-	setVisible(false);
+: QQuickItem(parent), d(new Data) {
+	setFlag(ItemHasContents, true);
 }
 
 MpOsdItem::~MpOsdItem() {
 	delete d;
 }
 
+QSize MpOsdItem::frameSize() const {
+	return d->frameSize;
+}
+
 void MpOsdItem::setFrameSize(const QSize &size) {
-	d->frameSize = size;
-	update();
-}
-
-void MpOsdItem::customEvent(QEvent *event) {
-	TextureRendererItem::customEvent(event);
-	if (event->type() == ShowEvent) {
-		setVisible(true);
+	if (size != d->frameSize) {
+		d->frameSize = size;
 		update();
-	} else if (event->type() == HideEvent) {
-		setVisible(false);
 	}
 }
 
-void MpOsdItem::link(QOpenGLShaderProgram *program) {
-	TextureRendererItem::link(program);
-	d->loc_tex_data = program->uniformLocation("tex_data");
-	d->loc_tex_lut = program->uniformLocation("tex_lut");
-}
-
-void MpOsdItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
-	TextureRendererItem::bind(state, program);
-	program->setUniformValue(d->loc_tex_data, 0);
-	program->setUniformValue(d->loc_tex_lut, 1);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture(0));
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_1D, texture(1));
-	glActiveTexture(GL_TEXTURE0);
-}
-
-void MpOsdItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
-	const auto exp_x = width()/d->frameSize.width();
-	const auto exp_y = height()/d->frameSize.height();
-	const QPointF pos(d->osdRect.x()*exp_x, d->osdRect.y()*exp_y);
-	const QSizeF size(d->osdRect.width()*exp_x, d->osdRect.height()*exp_y);
-	set(tp, QRectF(pos, size), d->textureRect);
-}
-
-void MpOsdItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) {
-	TextureRendererItem::geometryChanged(newGeometry, oldGeometry);
-	setGeometryDirty();
-	update();
-}
-
-void MpOsdItem::draw(QImage &frame) {
-	if (!isVisible())
-		return;
-	QImage *osd = nullptr;
-	d->mutex.lock();
-	if (d->osd.format == SUBBITMAP_RGBA) {
-		osd = new QImage((uchar*)d->osd.data.data(), d->osd.stride/4, d->osd.h, QImage::Format_ARGB32_Premultiplied);
-	} else if (d->osd.format == SUBBITMAP_INDEXED) {
-		osd = new QImage((uchar*)d->osd.data.data(), d->osd.stride, d->osd.h, QImage::Format_Indexed8);
-		osd->setColorTable(d->osd.lut);
-	}
-	if (osd) {
-		QPainter painter(&frame);
-		painter.drawImage(QRectF(d->osd.x, d->osd.y, d->osd.dw, d->osd.dh), *osd, QRectF(0, 0, d->osd.w, d->osd.h));
-		painter.end();
-	}
-	d->mutex.unlock();
-	delete osd;
-}
 
 void MpOsdItem::draw(sub_bitmaps *imgs) {
 	d->callback = true;
-	if (imgs->num_parts > 0) {
-		auto &img = imgs->parts[0];
-		if (d->prevId == imgs->bitmap_id && d->prevPosId == imgs->bitmap_pos_id)
-			return;
-		d->mutex.lock();
-		if (d->prevId != imgs->bitmap_id) {
-			d->osd.format = imgs->format;
-			d->osd.w = img.w;
-			d->osd.h = img.h;
-			d->osd.dw = img.dw;
-			d->osd.dh = img.dh;
-			d->osd.x = img.x;
-			d->osd.y = img.y;
-			if (imgs->format == SUBBITMAP_INDEXED) {
-				d->osd.stride = d->osd.w%4 ? ((d->osd.w/4)+1)*4 : d->osd.w;
-				d->osd.data.resize(d->osd.stride*d->osd.h);
-				auto bitmap = reinterpret_cast<osd_bmp_indexed*>(img.bitmap);
-				auto from = bitmap->bitmap;
-				auto to = d->osd.data.data();
-				for (int i = 0; i < d->osd.h; ++i) {
-					memcpy(to, from, d->osd.w);
-					to += d->osd.stride;
-					from += img.stride;
-				}
-				memcpy(d->osd.lut.data(), bitmap->palette, 256*4);
-				d->textureRect.setWidth((double)d->osd.w/(double)d->osd.stride);
-			} else {
-				d->osd.stride = img.stride;
-				d->osd.data.resize(d->osd.stride*d->osd.h);
-				memcpy(d->osd.data.data(), img.bitmap, d->osd.data.size());
-				d->textureRect.setWidth((double)(d->osd.w*4)/(double)d->osd.stride);
-			}
-			d->prevId = imgs->bitmap_id;
-			d->redraw = true;
-		}
-		if (d->prevPosId != imgs->bitmap_pos_id) {
-			d->osd.x = img.x;
-			d->osd.y = img.y;
-			d->reposition = true;
-		}
-		d->mutex.unlock();
+	if (imgs->num_parts <= 0 || imgs->format != SUBBITMAP_RGBA)
+		return;
+	if (d->osd.id == imgs->bitmap_id && d->osd.pos == imgs->bitmap_pos_id)
+		return;
+	d->mutex.lock();
+	d->osd.id = imgs->bitmap_id;
+	d->osd.pos = imgs->bitmap_pos_id;
+	d->osd.parts.resize(imgs->num_parts);
+	d->osd.format = imgs->format;
+	for (int i=0; i<imgs->num_parts; ++i) {
+		auto &img = imgs->parts[i];
+		auto &part = d->osd.parts[i];
+		part.image = QImage(img.stride >> 2, img.h, QImage::Format_ARGB32_Premultiplied);
+		part.width = img.w;
+		part.display = QRect(img.x, img.y, img.dw, img.dh);
+		memcpy(part.image.bits(), img.bitmap, img.stride*img.h);
 	}
+	d->redraw = true;
+	d->mutex.unlock();
+}
+
+void MpOsdItem::draw(QImage &frame) {
+	if (!isVisible() || d->osd.format != SUBBITMAP_RGBA)
+		return;
+	d->mutex.lock();
+	QPainter painter(&frame);
+	d->paint(&painter);
+	d->mutex.unlock();
 }
 
 void MpOsdItem::present() {
@@ -219,71 +259,64 @@ void MpOsdItem::present() {
 		qApp->postEvent(this, new QEvent((QEvent::Type)(HideEvent)));
 }
 
-void MpOsdItem::beforeUpdate() {
-	if (d->redraw) {
-		if (_Change(d->shaderFormat, d->osd.format)) {
-			resetNode();
-		} else
-			initializeTextures();
-		d->redraw = false;
+void MpOsdItem::customEvent(QEvent *event) {
+	QQuickItem::customEvent(event);
+	if (event->type() == ShowEvent) {
+		setVisible(true);
+		update();
+	} else if (event->type() == HideEvent) {
+		setVisible(false);
 	}
-	if (d->reposition) {
+}
+
+QSGNode *MpOsdItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
+	Q_UNUSED(data);
+	d->node = static_cast<MpOsdItemNode*>(old);
+	if (!d->node || d->node->fbo()->size() != d->frameSize) {
+		delete d->node;
+		d->node = new MpOsdItemNode(this, d->frameSize);
+	}
+	if (!old || d->redraw) {
+		d->node->fbo()->bind();
+		QPainter painter;
+		painter.begin(d->node->device());
+		painter.setCompositionMode(QPainter::CompositionMode_Source);
+		painter.fillRect(QRect(QPoint(0, 0), d->frameSize), Qt::transparent);
+		painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
 		d->mutex.lock();
-		d->osdRect = QRectF(d->osd.x, d->osd.y, d->osd.dw, d->osd.dh);
+		d->paint(&painter);
+		d->redraw = false;
 		d->mutex.unlock();
-		setGeometryDirty();
-		d->reposition = false;
+
+		painter.end();
+		d->node->fbo()->release();
 	}
+	if (!old || d->dirtyGeometry) {
+		auto tp = d->node->geometry()->vertexDataAsTexturedPoint2D();
+		const QRectF vtx = boundingRect();
+		const QRectF txt(0, 0, 1, 1);
+		auto set = [](QSGGeometry::TexturedPoint2D *tp, const QPointF &vtx, const QPointF &txt) {
+			tp->set(vtx.x(), vtx.y(), txt.x(), txt.y());
+		};
+		set(tp, vtx.topLeft(), txt.topLeft());
+		set(++tp, vtx.bottomLeft(), txt.bottomLeft());
+		set(++tp, vtx.topRight(), txt.topRight());
+		set(++tp, vtx.bottomRight(), txt.bottomRight());
+		d->node->markDirty(QSGNode::DirtyGeometry);
+	}
+	return d->node;
 }
 
-void MpOsdItem::initializeTextures() {
-	d->mutex.lock();
-	if (d->shaderFormat == SUBBITMAP_INDEXED) {
-		glBindTexture(GL_TEXTURE_2D, texture(0));
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, d->osd.stride, d->osd.h, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, d->osd.data.data());
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glBindTexture(GL_TEXTURE_1D, texture(1));
-		glTexImage1D(GL_TEXTURE_1D, 0, 4, 256, 0, GL_BGRA, GL_UNSIGNED_BYTE, d->osd.lut.data());
-		glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	} else if (d->shaderFormat == SUBBITMAP_RGBA) {
-		glBindTexture(GL_TEXTURE_2D, texture(0));
-		glTexImage2D(GL_TEXTURE_2D, 0, 4, d->osd.stride/4, d->osd.h, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, d->osd.data.data());
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	}
-	d->osdRect = QRectF(d->osd.x, d->osd.y, d->osd.dw, d->osd.dh);
-	d->mutex.unlock();
-	setGeometryDirty();
+void MpOsdItem::geometryChanged(const QRectF &newOne, const QRectF &old) {
+	QQuickItem::geometryChanged(newOne, old);
+	d->dirtyGeometry = true;
+	update();
 }
 
-const char *MpOsdItem::fragmentShader() const {
-	const char *shader = nullptr;
-	if (d->shaderFormat == SUBBITMAP_INDEXED) {
-		shader = (R"(
-			uniform sampler2D tex_data;
-			uniform sampler1D tex_lut;
-			varying highp vec2 qt_TexCoord;
-			void main() {
-				float c = texture2D(tex_data, qt_TexCoord).x;
-				gl_FragColor = texture1D(tex_lut, c);
-			}
-		)");
-	} else {
-		shader = (R"(
-			uniform sampler2D tex_data;
-			varying highp vec2 qt_TexCoord;
-			void main() {
-				gl_FragColor = texture2D(tex_data, qt_TexCoord);
-			}
-		)");
+void MpOsdItem::updateState(QOpenGLShaderProgram */*program*/) {
+	if (d->node && !d->frameSize.isEmpty()) {
+		auto f = QOpenGLContext::currentContext()->functions();
+		f->glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, d->node->fbo()->texture());
 	}
-	return shader;
 }

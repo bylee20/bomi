@@ -37,7 +37,7 @@ macx {
     QMAKE_CXXFLAGS += -std=c++11
     TARGET = cmplayer
     LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavformat -lavutil \
-        -lmpg123 -lquvi -ldvdread -lcdio -lcdio_paranoia -lcdio_cdda -lopenal -lasound -ldl
+        -lmpg123 -lquvi -ldvdread -lcdio -lcdio_paranoia -lcdio_cdda -lopenal -lasound -ldl -lass -lenca
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }

@@ -69,7 +69,7 @@ QImage VideoRendererItem::frameImage() const {
 		return d->image;
 	d->mutex.lock();
 	QImage image = d->frame.toImage();
-	d->mutex.unlock();;
+	d->mutex.unlock();
 	d->mposd->draw(image);
 	return image;
 }

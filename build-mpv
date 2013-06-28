@@ -1,15 +1,11 @@
 #!/bin/sh
 
-args="--disable-encoding --disable-termcap --disable-termios --disable-iconv \
-  --disable-lirc --disable-lircc --disable-joystick \
-  --disable-vm --disable-xf86keysym --disable-radio \
-  --disable-radio-capture --disable-radio-v4l2 --disable-tv \
-  --disable-tv-v4l2 --disable-pvr --enable-networking \
+args="--disable-encoding --disable-libguess --disable-termcap --disable-termios --enable-iconv \
+  --disable-lirc --disable-lircc --disable-joystick --disable-vm --disable-xf86keysym --disable-radio \
+  --disable-radio-capture --disable-radio-v4l2 --disable-tv --disable-tv-v4l2 --disable-pvr --enable-networking \
   --disable-winsock2_h --disable-smb --enable-libquvi --disable-vcd --disable-bluray --enable-dvdread \
-  --enable-cddb --disable-enca --disable-macosx-bundle \
-  --enable-inet6 --enable-gethostbyname2 --enable-ftp --disable-vstream \
-  --enable-pthreads --disable-libass --disable-libass-osd --disable-rpath \
-  --disable-libavdevice --disable-libpostproc --disable-libavfilter --disable-libavresample --disable-mng \
+  --enable-cddb --enable-enca --disable-macosx-bundle --enable-inet6 --enable-gethostbyname2 --enable-ftp --disable-vstream \
+  --enable-pthreads --disable-rpath --disable-libavdevice --disable-libpostproc --disable-libavfilter --disable-libavresample --disable-mng \
   --disable-jpeg --enable-libcdio --disable-ladspa --disable-libbs2b --enable-mpg123 \
   --disable-gl --disable-corevideo --disable-cocoa --disable-x11 --disable-sdl \
   --disable-sdl2 --disable-caca --disable-direct3d --disable-dvb --disable-xv --disable-vdpau \
@@ -17,7 +13,9 @@ args="--disable-encoding --disable-termcap --disable-termios --disable-iconv \
   --disable-ossaudio --disable-rsound --disable-pulse --disable-portaudio \
   --disable-jack --disable-dsound --disable-select --disable-gettext --disable-static"
 
-libs="-ldvdread -lbz2 -lcdio_cdda -lcdio_paranoia -lcdio -lmpg123 -lquvi"
+libs="-ldvdread -lbz2 -lcdio_cdda -lcdio_paranoia -lcdio -lmpg123 -lquvi -lass" # -lfontconfig -lexpat -lfreetype -lharfbuzz -lenca -lm"
+
+#  --enable-libass --enable-libass-osd
 
 kern=`uname -s`
 if test $kern = "Darwin"

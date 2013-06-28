@@ -1,8 +1,8 @@
 #!/bin/sh
 
 args="--prefix=../../build --enable-gpl --disable-debug --disable-shared --enable-static \
-  --enable-runtime-cpudetect --disable-doc --disable-ffmpeg --disable-ffplay --disable-ffprobe \
-  --disable-ffserver --disable-avdevice --disable-avfilter --enable-swresample \
+  --enable-runtime-cpudetect --disable-doc --disable-programs \
+  --disable-avdevice --disable-avfilter --enable-swresample \
   --disable-avresample --enable-pthreads --disable-dxva2 --disable-vdpau --disable-postproc \
   --disable-encoders --disable-muxers --disable-devices --disable-filters"
   

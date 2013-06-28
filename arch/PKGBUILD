@@ -1,24 +1,27 @@
 # Maintainer: xylosper <darklin20@gmail.com>
+# Contributor: willemw <willemw12@gmail.com>
 
 pkgname=('cmplayer')
 pkgver=0.7.4
-pkgrel=2
+pkgrel=3
+pkgdesc="A powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
 url="https://code.google.com/p/$pkgname"
 license=('GPL')
-depends=('qt5-base' 'qt5-declarative' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'yasm')
+depends=('qt5-base' 'qt5-declarative' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'yasm' 'harfbuzz' 'enca' 'fribidi' 'libass')
 makedepends=('git' 'mesa' 'gcc')
 source=(http://cmplayer.googlecode.com/files/$pkgname-$pkgver.tar.gz)
 md5sums=('cb37629d4a22f0cc3f86f1b284d4ad73')
 
 build() {
-	cd $srcdir/$pkgname-$pkgver
-	./build-libchardet && ./build-ffmpeg && ./build-mpv && \
-	make PREFIX=/usr cmplayer || return 1
+  cd "$srcdir/$pkgname-$pkgver"
+  ./build-libchardet
+  ./build-ffmpeg
+  ./build-mpv
+  make cmplayer
 }
 
 package() {
-	pkgdesc="CMPlayer is a multimedia player."
-	cd "$srcdir/$pkgname-$pkgver"
-	make DEST_DIR=$pkgdir PREFIX=/usr install || return 1
+  cd "$srcdir/$pkgname-$pkgver"
+  make DEST_DIR=$pkgdir install
 }

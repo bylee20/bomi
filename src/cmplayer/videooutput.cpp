@@ -29,7 +29,6 @@ const vo_driver &VideoOutput::getDriver() {
 		driver.control = control;
 		driver.draw_osd = drawOsd;
 		driver.flip_page = flipPage;
-		driver.check_events = checkEvents;
 		driver.query_format = queryFormat;
 		driver.draw_image = drawImage;
 		driver.uninit = uninit;
