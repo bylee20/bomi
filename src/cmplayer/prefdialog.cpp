@@ -415,6 +415,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 #ifdef Q_OS_MAC
 	d->ui.system_tray_group->hide();
+#else
+	d->ui.lion_style_fullscreen->hide();
 #endif
 	adjustSize();
 }

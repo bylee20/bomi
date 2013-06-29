@@ -4,6 +4,7 @@
 #include "stdafx.hpp"
 extern "C" {
 #include <video/mp_image.h>
+#include <libavutil/pixfmt.h>
 }
 //struct mp_image;
 
@@ -48,7 +49,7 @@ public:
 	inline int bytesPerLine(int plane) const {return d->byteSize[plane].width();}
 	inline int lines(int plane) const {return d->byteSize[plane].height();}
 	inline bool compare(const mp_image *mpi) const {return d->compare(mpi);}
-	inline PixelFormat pixfmt() const {return d->pixfmt;}
+	inline AVPixelFormat pixfmt() const {return d->pixfmt;}
 	inline GLenum glFormat() const {return d->glFormat;}
 private:
 	struct Data : public QSharedData {
@@ -67,7 +68,7 @@ private:
 		int planes = 0, bpp = 0, imgfmt = 0;
 		quint32 type = Unknown;
 		GLenum glFormat = GL_NONE;
-		PixelFormat pixfmt = AV_PIX_FMT_NONE;
+		AVPixelFormat pixfmt = AV_PIX_FMT_NONE;
 	};
 	QSharedDataPointer<Data> d;
 };

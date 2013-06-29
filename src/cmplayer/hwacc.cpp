@@ -4,6 +4,7 @@ extern "C" {
 #include <video/filter/vf.h>
 #include <video/decode/vd.h>
 #include <video/img_format.h>
+#include <video/mp_image.h>
 #include <demux/demux_packet.h>
 #include <core/codecs.h>
 #include <core/av_common.h>
@@ -394,11 +395,14 @@ struct HwAccDecoder {
 	AVRational m_last_sample_aspect_ratio;
 	Backend *m_backend = nullptr;
 	sh_video *m_sh = nullptr;
+
+	mp_image_params m_image_params;
 };
 
 extern "C" void set_from_bih(AVCodecContext *avctx, uint32_t format, BITMAPINFOHEADER *bih);
 
 HwAccDecoder::HwAccDecoder(sh_video *sh, const char *decoder) {
+	memset(&m_image_params, 0, sizeof(m_image_params));
 	(m_sh = sh)->context = this;
 	AVCodec *codec = avcodec_find_decoder_by_name(decoder);
 	if (!codec)
@@ -454,9 +458,13 @@ bool HwAccDecoder::initVideoOutput(AVPixelFormat pixfmt) {
 		m_last_sample_aspect_ratio = m_avctx->sample_aspect_ratio;
 		m_sh->disp_w = m_avctx->width;
 		m_sh->disp_h = m_avctx->height;
-		m_sh->colorspace = avcol_spc_to_mp_csp(m_avctx->colorspace);
-		m_sh->color_range = avcol_range_to_mp_csp_levels(m_avctx->color_range);
-		if (!m_backend || !m_backend->fillContext(m_avctx) || !mpcodecs_config_vo(m_sh, m_sh->disp_w, m_sh->disp_h, m_backend->imgfmt()))
+		m_image_params.imgfmt = (mp_imgfmt)m_backend->imgfmt();
+		m_image_params.d_w = m_image_params.w = m_avctx->width;
+		m_image_params.d_h = m_image_params.h = m_avctx->height;
+		m_image_params.colorspace = avcol_spc_to_mp_csp(m_avctx->colorspace);
+		m_image_params.colorlevels = avcol_range_to_mp_csp_levels(m_avctx->color_range);
+		m_image_params.chroma_location = avchroma_location_to_mp(m_avctx->chroma_sample_location);
+		if (!m_backend || !m_backend->fillContext(m_avctx) || (mpcodecs_reconfig_vo(m_sh, &m_image_params) < 0))
 			return false;
 		m_vo = true;
 	}
