@@ -14,10 +14,10 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	setTitle("Root Menu");
 
 	auto &open = *addMenu(_L("open"));
-	open.addAction(_L("file"))->setData(int('f'));
-	open.addAction(_L("folder"))->setData(int('d'));
-	open.addAction(_L("url"))->setData(int('u'));
-	open.addAction(_L("dvd"))->setData(QUrl("dvd://"));
+	open.addAction(_L("file"));
+	open.addAction(_L("folder"));
+	open.addAction(_L("url"));
+	open.addAction(_L("dvd"));
 	open.addSeparator();
 	auto &recent = *open.addMenu(_L("recent"));
 		recent.addSeparator();
@@ -230,12 +230,16 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	fillId(this, "");
 }
 
-bool RootMenu::execute(const QString &longId) {
-	if (auto action = instance().action(longId)) {
-		if (action->menu())
-			action->menu()->exec(QCursor::pos());
-		else
-			action->trigger();
+bool RootMenu::execute(const QString &longId, const QString &argument) {
+	ArgAction aa = RootMenu::instance().m_actions.value(longId);
+	if (aa.action) {
+		if (aa.action->menu())
+			aa.action->menu()->exec(QCursor::pos());
+		else {
+			aa.argument = argument;
+			aa.action->trigger();
+			aa.argument.clear();
+		}
 		return true;
 	} else {
 		qDebug() << "Cannot find action:" << longId;
@@ -250,7 +254,7 @@ void RootMenu::setShortcuts(const Shortcuts &shortcuts) {
 			id = id.mid(5);
 		auto found = m_actions.constFind(id);
 		if (found != m_actions.cend())
-			found.value()->setShortcuts(it.value());
+			found.value().action->setShortcuts(it.value());
 		else
 			qDebug() << "Cannot find action:" << id;
 	}
@@ -263,7 +267,7 @@ void RootMenu::fillId(Menu *menu, const QString &id) {
 	const auto ids = menu->ids();
 	for (auto it = ids.cbegin(); it != ids.cend(); ++it) {
 		const QString key = id % it.key();
-		m_ids[m_actions[key] = it.value()] = key;
+		m_ids[m_actions[key].action = it.value()] = key;
 		if (auto menu = qobject_cast<Menu*>(it.value()->menu()))
 			fillId(menu, key % "/");
 	}
@@ -272,7 +276,7 @@ void RootMenu::fillId(Menu *menu, const QString &id) {
 QHash<QString, QList<QKeySequence> > RootMenu::shortcuts() const {
 	QHash<QString, QList<QKeySequence> > keys;
 	for (auto it = m_actions.cbegin(); it != m_actions.cend(); ++it) {
-		auto shortcuts = it.value()->shortcuts();
+		auto shortcuts = it.value().action->shortcuts();
 		if (!shortcuts.isEmpty())
 			keys[it.key()] = shortcuts;
 	}
@@ -475,37 +479,6 @@ void RootMenu::fillKeyMap(Menu *menu) {
 		}
 	}
 }
-
-//void RootMenu::save() {
-//	Record r;
-//	Menu::save(r);
-//}
-
-//void RootMenu::load() {
-//	Record r;
-//	Menu::load(r);
-
-//}
-
-//QAction *RootMenu::action(const QString &id) const {
-//	const QStringList key = id.split(QLatin1Char('/'));
-//	if (key.size() < 2)
-//		return 0;
-//	if (key.first() != this->id())
-//		return 0;
-//	const Menu *it = this;
-//	for (int i=1; i<key.size()-1 && it; ++i) {
-//		if (!(it = it->m(key[i])))
-//			return nullptr;
-//	}
-//	auto action = it->a(key.last());
-//	if (!action) {
-//		Menu *menu = it->m(key.last());
-//		if (menu)
-//			action = menu->menuAction();
-//	}
-//	return action;
-//}
 
 QAction *RootMenu::doubleClickAction(const ClickActionInfo &info) const {
 	return info.enabled ? m_click[info.action] : nullptr;

@@ -162,18 +162,9 @@ Mrl App::getMrlFromCommandLine() {
 
 Arguments App::parse(const QStringList &cmds) {
 	Arguments args;
-	for (const QString &cmd : cmds) {
-		if (!cmd.startsWith(_L("--")))
-			continue;
-		Argument arg;
-		const int eq = cmd.indexOf('=');
-		if (eq < 0)
-			arg.name = cmd.mid(2);
-		else {
-			arg.name = cmd.mid(2, eq - 2);
-			arg.value = cmd.mid(eq+1);
-		}
-		args.append(arg);
+	for (QString cmd : cmds) {
+		if (cmd.startsWith(_L("--")))
+			args << Argument::fromCommand(cmd.mid(2));
 	}
 	return args;
 }
@@ -193,8 +184,10 @@ void App::onMessageReceived(const QString &message) {
 			if (!mrl.isEmpty() && d->main)
 				d->main->openMrl(mrl);
 		} else if (arg.name == _L("action")) {
-			if (d->main)
-				RootMenu::execute(arg.value);
+			if (d->main) {
+				const auto a = Argument::fromCommand(arg.value);
+				RootMenu::execute(a.name, a.value);
+			}
 		}
 	}
 }

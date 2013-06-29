@@ -7,7 +7,20 @@
 class QUrl;		class Mrl;
 class MainWindow;	class QMenuBar;
 
-struct Argument { QString name, value; };
+struct Argument {
+	QString name, value;
+	static Argument fromCommand(const QString &cmd) {
+		Argument arg;
+		const int eq = cmd.indexOf('=');
+		if (eq < 0)
+			arg.name = cmd;
+		else {
+			arg.name = cmd.left(eq);
+			arg.value = cmd.mid(eq+1);
+		}
+		return arg;
+	}
+};
 typedef QList<Argument> Arguments;
 
 class App : public QtSolution::QtSingleApplication {

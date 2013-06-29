@@ -13,10 +13,7 @@ int main(int argc, char **argv) {
 	PlayerItem::registerItems();
 	qDebug() << "Create App instance";
 	App app(argc, argv);
-	const auto mrl = app.getMrlFromCommandLine();
 	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]"))) {
-//		if (!mrl.isEmpty())
-//			app.sendMessage(_L("mrl ") % mrl.toString());
 		qDebug() << "Another instance is already running. Exit this.";
 		return 0;
 	}
@@ -24,6 +21,7 @@ int main(int argc, char **argv) {
 	MainWindow mw;
 	mw.show();
 	app.setMainWindow(&mw);
+	const auto mrl = app.getMrlFromCommandLine();
 	if (!mrl.isEmpty())
 		mw.openFromFileManager(mrl);
 	qDebug() << "Start main event loop";

@@ -93,7 +93,7 @@ private:
 
 class PrefDialog::MenuTreeItem : public QTreeWidgetItem {
 public:
-	enum Column {Discription = 0, Shortcut1, Shortcut2, Shortcut3, Shortcut4};
+	enum Column {Discription = 0, Shortcut1, Shortcut2, Shortcut3, Shortcut4, Id};
 	bool isMenu() const{return m_action->menu() != 0;}
 	bool isSeparator() const{return m_action->isSeparator();}
 	QKeySequence shortcut(int i) const {return m_shortcuts[i];}
@@ -142,7 +142,7 @@ private:
 						children.push_back(child);
 				} else {
 					auto child = new MenuTreeItem(action, 0);
-					child->m_id = id;
+					child->setText(Id, child->m_id = id);
 					items.push_back(child);
 					children.push_back(child);
 				}

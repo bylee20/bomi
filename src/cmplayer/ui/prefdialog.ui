@@ -75,7 +75,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>1</number>
+        <number>7</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2231,6 +2231,11 @@ e.g.: English, Korean</string>
            <column>
             <property name="text">
              <string>Shortcut4</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>ID</string>
             </property>
            </column>
           </widget>
