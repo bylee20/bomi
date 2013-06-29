@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 	qDebug() << "Create App instance";
 	App app(argc, argv);
 	const auto mrl = app.getMrlFromCommandLine();
-	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]")) {
+	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]"))) {
 //		if (!mrl.isEmpty())
 //			app.sendMessage(_L("mrl ") % mrl.toString());
 		qDebug() << "Another instance is already running. Exit this.";
