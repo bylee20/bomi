@@ -44,11 +44,10 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("menu/play/seek/current-subtitle")] << Qt::Key_Period;
 	keys[_L("menu/play/seek/next-subtitle")] << Qt::Key_Slash;
 
-	keys[_L("menu/subtitle/track/next")] << Qt::CTRL + Qt::Key_E;
-	keys[_L("menu/subtitle/list/open")] << Qt::SHIFT + Qt::Key_F;
-	keys[_L("menu/subtitle/list/next")] << Qt::SHIFT + Qt::Key_E;
-	keys[_L("menu/subtitle/list/all")] << Qt::SHIFT + Qt::Key_R;
-	keys[_L("menu/subtitle/list/hide")] << Qt::SHIFT + Qt::Key_Q;
+	keys[_L("menu/subtitle/track/open")] << Qt::SHIFT + Qt::Key_F;
+	keys[_L("menu/subtitle/track/next")] << Qt::SHIFT + Qt::Key_N;
+	keys[_L("menu/subtitle/track/all")] << Qt::SHIFT + Qt::Key_B;
+	keys[_L("menu/subtitle/track/hide")] << Qt::SHIFT + Qt::Key_H;
 	keys[_L("menu/subtitle/pos-up")] << Qt::Key_W;
 	keys[_L("menu/subtitle/pos-down")] << Qt::Key_S;
 	keys[_L("menu/subtitle/sync-add")] << Qt::Key_D;
@@ -131,8 +130,8 @@ Shortcuts Pref::preset(ShortcutPreset id) {
 		keys[_L("menu/audio/volume-up")] << Qt::ALT + Qt::Key_Up << Qt::Key_Up;
 		keys[_L("menu/audio/volume-down")] << Qt::ALT + Qt::Key_Down << Qt::Key_Down;
 		keys[_L("menu/audio/mute")] << Qt::ALT + Qt::CTRL + Qt::Key_Down;
-		keys[_L("menu/subtitle/list/next")] << Qt::META + Qt::CTRL + Qt::Key_S;
-		keys[_L("menu/subtitle/list/hide")] << Qt::META + Qt::CTRL + Qt::Key_V;
+		keys[_L("menu/subtitle/track/next")] << Qt::META + Qt::CTRL + Qt::Key_S;
+		keys[_L("menu/subtitle/track/hide")] << Qt::META + Qt::CTRL + Qt::Key_V;
 		keys[_L("menu/subtitle/sync-reset")] << Qt::META + Qt::SHIFT + Qt::Key_Equal;
 		keys[_L("menu/subtitle/sync-add")] << Qt::META + Qt::SHIFT + Qt::Key_Right;
 		keys[_L("menu/subtitle/sync-sub")] << Qt::META + Qt::SHIFT + Qt::Key_Left;

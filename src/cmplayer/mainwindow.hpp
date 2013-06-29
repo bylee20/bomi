@@ -7,6 +7,7 @@
 
 class Mrl;			class PrefDialog;
 class MainWindow;	class Playlist;
+class Subtitle;
 
 class MainWindow : public QQuickView {
 	Q_OBJECT
@@ -25,7 +26,7 @@ private slots:
 	void applyPref();
 	void updateMrl(const Mrl &mrl);
 	void setVideoSize(double rate);
-	void clearSubtitles();
+	void clearSubtitleFiles();
 	void updateRecentActions(const QList<Mrl> &list);
 //	void hideCursor();
 	void updateStaysOnTop();
@@ -33,6 +34,7 @@ private slots:
 	void checkWindowState();
 private:
 	Playlist generatePlaylist(const Mrl &mrl) const;
+	bool load(Subtitle &subtitle, const QString &fileName, const QString &encoding);
 	void connectMenus();
 	void updateTitle();
 	void setCursorVisible(bool visible);

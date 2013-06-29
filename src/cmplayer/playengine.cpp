@@ -47,7 +47,8 @@ struct PlayEngine::Data {
 	PlaylistModel playlist;
 	QByteArray hwAccCodecs;
 	QMutex imgMutex;
-
+	QMap<QString, QString> subtitleNames;
+	QList<QTemporaryFile*> subtitleFiles;
 	int getStartTime(const Mrl &mrl) {return getStartTimeFunc ? getStartTimeFunc(mrl) : 0;}
 	QByteArray &setFileName(const Mrl &mrl) {
 		fileName = "\"";
@@ -160,18 +161,62 @@ void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
 	d->hwAccCodecs.chop(1);
 }
 
+void PlayEngine::setSubtitleStreamsVisible(bool visible) {
+	m_subtitleStreamsVisible = visible;
+	const auto id = currentSubtitleStream();
+	setmp("sub-visibility", (m_subtitleStreamsVisible && id >= 0));
+}
+
 void PlayEngine::setCurrentSubtitleStream(int id) {
-	if (id < 0) {
-		setmp("sub-visibility", false);
-		setmp("sub", id);
-	} else {
-		setmp("sub-visibility", true);
-		setmp("sub", id);
-	}
+	setmp("sub-visibility", (m_subtitleStreamsVisible && id >= 0));
+	setmp("sub", id);
 }
 
 int PlayEngine::currentSubtitleStream() const {
 	return currentTrackId(STREAM_SUB);
+}
+
+void PlayEngine::addSubtitleStream(const QString &fileName, const QString &enc) {
+	QFileInfo info(fileName);
+	QFile in(fileName);
+	QTemporaryFile *out = new QTemporaryFile(QDir::tempPath() % "/XXXXXX_" % info.fileName());
+	if (in.open(QFile::ReadOnly) && out->open()) {
+		QTextStream sin, sout;
+		sin.setDevice(&in);
+		sin.setCodec(enc.toLocal8Bit());
+		sout.setDevice(out);
+		sout.setCodec("UTF-8");
+		QString line;
+		while (!(line = sin.readLine()).isNull())
+			sout << line << endl;
+		sout.flush();
+	} else {
+		delete out;
+		out = nullptr;
+	}
+	if (out) {
+		out->close();
+		d->subtitleFiles.append(out);
+		d->subtitleNames[out->fileName()] = info.fileName();
+		tellmp("sub_add", out->fileName());
+	}
+}
+
+void PlayEngine::removeSubtitleStream(int id) {
+	auto it = m_subtitleStreams.find(id);
+	if (it != m_subtitleStreams.end()) {
+		auto fileName = it->fileName();
+		if (!fileName.isEmpty()) {
+			d->subtitleNames.remove(fileName);
+			for (int i=0; i<d->subtitleFiles.size(); ++i) {
+				if (d->subtitleFiles[i]->fileName() == fileName) {
+					delete d->subtitleFiles.takeAt(i);
+					break;
+				}
+			}
+		}
+		tellmp("sub_remove", id);
+	}
 }
 
 void PlayEngine::clear() {
@@ -179,29 +224,44 @@ void PlayEngine::clear() {
 	m_audioStreams.clear();
 	m_videoStreams.clear();
 	m_subtitleStreams.clear();
+	d->subtitleFiles.clear();
+	qDeleteAll(d->subtitleFiles);
+	d->subtitleFiles.clear();
 	emit audioStreamsChanged(m_audioStreams);
 	emit videoStreamsChanged(m_videoStreams);
 	emit subtitleStreamsChanged(m_subtitleStreams);
 	m_title = 0;
 }
 
+template<typename T>
+static bool _CheckSwap(T &the, T &one) { if (the != one) { the.swap(one); return true; } return false; }
+
 void PlayEngine::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
 	case UpdateChapterList: {
 		ChapterList chapters; get(event, chapters);
-		if (_Change(m_chapters, chapters))
+		if (_CheckSwap(m_chapters, chapters))
 			emit chaptersChanged(m_chapters);
 		break;
 	} case UpdateTrack: {
 		QVector<StreamList> streams;
 		get(event, streams);
-		if (_Change(m_videoStreams, streams[STREAM_VIDEO]))
+		if (_CheckSwap(m_videoStreams, streams[STREAM_VIDEO]))
 			emit videoStreamsChanged(m_videoStreams);
-		if (_Change(m_audioStreams, streams[STREAM_AUDIO]))
+		if (_CheckSwap(m_audioStreams, streams[STREAM_AUDIO]))
 			emit audioStreamsChanged(m_audioStreams);
-		if (!streams[STREAM_SUB].isEmpty())
+		if (!streams[STREAM_SUB].isEmpty()) {
 			streams[STREAM_SUB][-1].m_name = tr("No Subtitle");
-		if (_Change(m_subtitleStreams, streams[STREAM_SUB]))
+			for (auto &one : streams[STREAM_SUB]) {
+				auto it = d->subtitleNames.constFind(one.m_title);
+				if (it != d->subtitleNames.constEnd()) {
+					one.m_fileName.swap(one.m_title);
+					one.m_title = *it;
+					qDebug() << one.m_fileName;
+				}
+			}
+		}
+		if (_CheckSwap(m_subtitleStreams, streams[STREAM_SUB]))
 			emit subtitleStreamsChanged(m_subtitleStreams);
 		break;
 	} case StreamOpen:
@@ -458,7 +518,7 @@ void PlayEngine::run() {
 		<< ("--af=dummy=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
-		<< "--no-consolecontrols" << "--no-mouseinput";
+		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8";
 	auto mpctx = d->mpctx = create_player(args.size(), args.data());
 	Q_ASSERT(d->mpctx);
 	d->mpctx->priv = this;

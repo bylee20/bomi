@@ -108,6 +108,10 @@ public:
 	StreamList audioStreams() const {return m_audioStreams;}
 	void setCurrentAudioStream(int id) {setmp("audio", id);}
 	void setVolumeNormalizer(double target, double silence, double min, double max);
+	void addSubtitleStream(const QString &fileName, const QString &enc);
+	void removeSubtitleStream(int id);
+	void setSubtitleStreamsVisible(bool visible);
+	bool isSubtitleStreamsVisible() const {return m_subtitleStreamsVisible;}
 public slots:
 	void setVolume(int volume) {if (_Change(m_volume, qBound(0, volume, 100))) {setMpVolume(); emit volumeChanged(m_volume);}}
 	void setPreamp(double preamp) {if (_ChangeZ(m_preamp, qBound(0.0, preamp, 10.0))) {	setMpVolume();	emit preampChanged(m_preamp);}}
@@ -176,7 +180,7 @@ private:
 	ChapterList m_chapters;
 	int m_imgDuration = 10000, m_imgPos = 0, m_imgSeek = 0, m_imgRelSeek = 0;
 	struct Data; Data *d;
-	bool m_imgMode = false;
+	bool m_imgMode = false, m_subtitleStreamsVisible = true;
 };
 
 #endif // PLAYENGINE_HPP

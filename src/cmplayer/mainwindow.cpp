@@ -63,7 +63,7 @@ struct MainWindow::Data {
 	const Pref &pref() const {return preferences;}
 // methods
 	int startFromStopped = -1;
-
+	QAction *subtrackSep = nullptr;
 
 	void openWith(const Pref::OpenMedia &mode, const QList<Mrl> &mrls) {
 		if (mrls.isEmpty())
@@ -101,11 +101,14 @@ struct MainWindow::Data {
 		if (changingSub)
 			return;
 		changingSub = true;
-		auto &list = menu("subtitle")("list");
-		auto g = list.g();
+		auto &list = menu("subtitle")("track");
+		auto g = list.g("external");
 		const auto loaded = subtitle.loaded();
-		while (g->actions().size() < loaded.size())
-			list.addActionToGroupWithoutKey("", true);
+		while (g->actions().size() < loaded.size()) {
+			auto action = g->addAction("");
+			action->setCheckable(true);
+			list.insertAction(subtrackSep, action);
+		}
 		while (g->actions().size() > loaded.size())
 			delete g->actions().last();
 		const auto actions = g->actions();
@@ -137,22 +140,23 @@ struct MainWindow::Data {
 		}
 	}
 	template<typename List>
-	void updateListMenu(Menu &menu, const List &list, int current) {
-		menu.setEnabledSync(!list.isEmpty());
+	void updateListMenu(Menu &menu, const List &list, int current, const QString &group = "") {
+		if (group.isEmpty())
+			menu.setEnabledSync(!list.isEmpty());
 		if (!list.isEmpty()) {
-			menu.g()->clear();
+			menu.g(group)->clear();
 			for (typename List::const_iterator it = list.begin(); it != list.end(); ++it) {
-				auto act = menu.addActionToGroupWithoutKey(it->name(), true);
+				auto act = menu.addActionToGroupWithoutKey(it->name(), true, group);
 				act->setData(it->id()); if (current == it->id()) act->setChecked(true);
 			}
 		}
 		menu.syncActions();
 	}
 	template<typename F>
-	void connectCurrentStreamActions(Menu *menu, F func) {
-		auto checkCurrentStreamAction = [this, func, menu] () {
+	void connectCurrentStreamActions(Menu *menu, F func, QString group = "") {
+		auto checkCurrentStreamAction = [this, func, menu, group] () {
 			const auto current = (engine.*func)();
-			for (auto action : menu->actions()) {
+			for (auto action : menu->g(group)->actions()) {
 				if (action->data().toInt() == current) {
 					action->setChecked(true);
 					break;
@@ -266,7 +270,7 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 		d->updateListMenu(d->menu("video")("track"), streams, d->engine.currentVideoStream());
 	});
 	connect(&d->engine, &PlayEngine::subtitleStreamsChanged, [this] (const StreamList &streams) {
-		d->updateListMenu(d->menu("subtitle")("track"), streams, d->engine.currentSubtitleStream());
+		d->updateListMenu(d->menu("subtitle")("track"), streams, d->engine.currentSubtitleStream(), _L("internal"));
 	});
 	connect(&d->engine, &PlayEngine::chaptersChanged, [this] (const ChapterList &chapters) {
 		d->updateListMenu(d->menu("play")("chapter"), chapters, d->engine.currentChapter());
@@ -371,6 +375,7 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	});
 	d->tray->setVisible(d->preferences.enable_system_tray);
 #endif
+
 
 //	Currently, session management does not works.
 //	connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
@@ -559,7 +564,7 @@ void MainWindow::connectMenus() {
 	connect(audio["tempo-scaler"], &QAction::toggled, [this] (bool on) {
 		d->engine.setTempoScaled(on); showMessage(tr("Tempo Scaler"), on);
 	});
-	auto selectNext = [this] (const QList<QAction*> &actions) {
+	auto  selectNext = [this] (const QList<QAction*> &actions) {
 		if (!actions.isEmpty()) {
 			auto it = actions.begin();
 			while (it != actions.end() && !(*it++)->isChecked()) ;
@@ -573,39 +578,39 @@ void MainWindow::connectMenus() {
 	});
 
 	Menu &sub = d->menu("subtitle");
-	connect(sub("track")["next"], &QAction::triggered, [this, selectNext] () {
-		selectNext(d->menu("subtitle")("track").g()->actions());
+	d->subtrackSep = sub("track").addSeparator();
+	connect(sub("track")["next"], &QAction::triggered, [this] () {
+		int checked = -1;
+		auto list = d->menu("subtitle")("track").g("external")->actions();
+		list += d->menu("subtitle")("track").g("internal")->actions();
+		if (list.isEmpty() || (list.size() == 1 && list.first()->isChecked()))
+			return;
+		d->changingSub = true;
+		for (int i=0; i<list.size(); ++i) {
+			if (list[i]->isChecked()) {
+				checked = i;
+				list[i]->setChecked(false);
+			}
+		}
+		d->changingSub = false;
+		d->subtitle.deselect(-1);
+		if (++checked >= list.size())
+			checked = 0;
+		list[checked]->trigger();
+		if (!d->menu("subtitle")("track").g("internal")->checkedAction())
+			d->engine.setCurrentSubtitleStream(-2);
 	});
-	connect(sub("list")["all"], &QAction::triggered, [this] () {
+	connect(sub("track")["all"], &QAction::triggered, [this] () {
 		d->subtitle.select(-1);
-		for (auto action : d->menu("subtitle")("list").g()->actions())
+		for (auto action : d->menu("subtitle")("track").g("external")->actions())
 			action->setChecked(true);
 		showMessage(tr("Select All Subtitles"), tr("%1 Subtitle(s)").arg(d->subtitle.loaded().size()));
 	});
-	connect(sub("list")["next"], &QAction::triggered, [this] () {
-		auto actions = d->menu("subtitle")("list").g()->actions();
-		if (!actions.isEmpty()) {
-			bool checked = false;
-			auto it = actions.begin();
-			QAction *next = nullptr;
-			for (; it != actions.end(); ++it) {
-				next = *it;
-				if (!checked)
-					checked = next->isChecked();
-				else if (!next->isChecked())
-					break;
-				next->setChecked(false);
-			}
-			if (!checked || it == actions.end())
-				next = actions.first();
-			next->setChecked(true);
-			d->subtitle.deselect(-1);
-			d->subtitle.select(next->data().toInt());
-			showMessage(tr("Current Subtitle"), next->text());
-		}
+	connect(sub("track")["hide"], &QAction::toggled, [this] (bool hide) {
+		d->subtitle.setVisible(!hide);
+		d->engine.setSubtitleStreamsVisible(!hide);
 	});
-	connect(sub("list")["hide"], &QAction::toggled, [this] (bool hide) {d->subtitle.setVisible(!hide);});
-	connect(sub("list")["open"], &QAction::triggered, [this] () {
+	connect(sub("track")["open"], &QAction::triggered, [this] () {
 		const QString filter = tr("Subtitle Files") % ' ' % Info::subtitleExt().toFilter();
 		const auto dir = d->engine.mrl().isLocalFile() ? QFileInfo(d->engine.mrl().toLocalFile()).absolutePath() : _L("");
 		QString enc = d->pref().sub_enc;
@@ -613,18 +618,19 @@ void MainWindow::connectMenus() {
 		if (!files.isEmpty())
 			appendSubFiles(files, true, enc);
 	});
-	connect(sub("list")["clear"], &QAction::triggered, this, &MainWindow::clearSubtitles);
-	connect(sub("list").g(), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(sub("track")["clear"], &QAction::triggered, this, &MainWindow::clearSubtitleFiles);
+	connect(sub("track").g("external"), &ActionGroup::triggered, [this] (QAction *a) {
 		if (!d->changingSub) {
 			if (a->isChecked())
 				d->subtitle.select(a->data().toInt());
 			else
 				d->subtitle.deselect(a->data().toInt());
 		}
+		showMessage(tr("Selected Subtitle"), a->text());
 	});
-	connect(sub("track").g(), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(sub("track").g("internal"), &ActionGroup::triggered, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentSubtitleStream(a->data().toInt());
-		showMessage(tr("Current Subtitle Track"), a->text());
+		showMessage(tr("Selected Subtitle"), a->text());
 	});
 	connect(sub.g("display"), &ActionGroup::triggered, [this] (QAction *a) {d->subtitle.setLetterboxHint(a->data().toInt());});
 	connect(sub.g("align"), &ActionGroup::triggered, [this] (QAction *a) {d->subtitle.setTopAlignment(a->data().toInt());});
@@ -1336,7 +1342,7 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 						continue;
 				}
 				Subtitle sub;
-				if (sub.load(all[i].absoluteFilePath(), p.sub_enc, p.sub_enc_accuracy*0.01)) {
+				if (load(sub, all[i].absoluteFilePath(), p.sub_enc)) {
 					for (int i=0; i<sub.size(); ++i)
 						loaded.push_back(LoadedSubtitle(sub[i]));
 				}
@@ -1350,21 +1356,33 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 		};
 		d->subtitle.setLoaded(autoload(true));
 	} else
-		clearSubtitles();
+		clearSubtitleFiles();
 	updateTitle();
 	d->syncSubtitleFileMenu();
 }
 
-void MainWindow::clearSubtitles() {
+void MainWindow::clearSubtitleFiles() {
 	d->subtitle.unload();
-	qDeleteAll(d->menu("subtitle")("list").g()->actions());
+	qDeleteAll(d->menu("subtitle")("track").g("external")->actions());
+	for (auto action : d->menu("subtitle")("track").g("internal")->actions()) {
+		auto id = action->data().toInt();
+		if (!d->engine.subtitleStreams()[id].fileName().isEmpty())
+			d->engine.removeSubtitleStream(id);
+	}
+}
+
+bool MainWindow::load(Subtitle &sub, const QString &fileName, const QString &encoding) {
+	if (sub.load(fileName, encoding, d->pref().sub_enc_accuracy*0.01))
+		return true;
+	d->engine.addSubtitleStream(fileName, encoding);
+	return false;
 }
 
 void MainWindow::appendSubFiles(const QStringList &files, bool checked, const QString &enc) {
 	if (!files.isEmpty()) {
 		Subtitle sub;
 		for (auto file : files) {
-			if (sub.load(file, enc, d->pref().sub_enc_accuracy))
+			if (load(sub, file, enc))
 				d->subtitle.load(sub, checked);
 		}
 		d->syncSubtitleFileMenu();

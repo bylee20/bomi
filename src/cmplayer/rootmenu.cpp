@@ -55,18 +55,15 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 
 	auto &subtitle = *addMenu(_L("subtitle"));
 	auto &spu = *subtitle.addMenu(_L("track"));
-		spu.setEnabled(false);
-		spu.g()->setExclusive(true);
-		spu.addAction(_L("next"));
+		spu.addGroup("internal")->setExclusive(true);
+		spu.addGroup("external")->setExclusive(false);
+		spu.addAction(_L("open"));
+		spu.addAction(_L("clear"));
 		spu.addSeparator();
-	auto &slist = *subtitle.addMenu(_L("list"));
-		slist.g()->setExclusive(false);
-		slist.addAction(_L("open"));
-		slist.addAction(_L("clear"));
-		slist.addAction(_L("next"));
-		slist.addAction(_L("all"));
-		slist.addAction(_L("hide"), true);
-		slist.addSeparator();
+		spu.addAction(_L("next"));
+		spu.addAction(_L("all"));
+		spu.addAction(_L("hide"), true);
+		spu.addSeparator();
 	subtitle.addSeparator();
 	subtitle.addActionToGroup(_L("in-video"), true, _L("display"))->setData(0);
 	subtitle.addActionToGroup(_L("on-letterbox"), true, _L("display"))->setData(1);
@@ -229,7 +226,6 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	play("chapter").setEnabled(false);
 	video("track").setEnabled(false);
 	audio("track").setEnabled(false);
-	subtitle("track").setEnabled(false);
 
 	fillId(this, "menu");
 }
@@ -319,16 +315,14 @@ void RootMenu::update(const Pref &p) {
 
 	auto &sub = root("subtitle");
 	sub.setTitle(tr("Subtitle"));
+
 	auto &spu = sub("track");
+	spu.setTitle(tr("Subtitle Track"));
+	spu["open"]->setText(tr("Open File(s)"));
+	spu["clear"]->setText(tr("Clear File(s)"));
 	spu["next"]->setText(tr("Select Next"));
-	auto &list = sub("list");
-	list.setTitle(tr("Subtitle File"));
-	list["open"]->setText(tr("Open"));
-	list["clear"]->setText(tr("Clear"));
-	list["next"]->setText(tr("Select Next"));
-	list["all"]->setText(tr("Select All"));
-	list["hide"]->setText(tr("Hide"));
-	sub("track").setTitle(tr("Subtitle Track"));
+	spu["all"]->setText(tr("Select All"));
+	spu["hide"]->setText(tr("Hide"));
 
 	sub["on-letterbox"]->setText(tr("Display in Letterbox"));
 	sub["in-video"]->setText(tr("Display in Video"));

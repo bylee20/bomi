@@ -17,10 +17,12 @@ struct Stream {
 	bool operator == (const Stream &rhs) const {
 		return m_title == rhs.m_title && m_lang == rhs.m_lang && m_name == rhs.m_name && m_id == rhs.m_id;
 	}
+	QString fileName() const {return m_fileName;}
 private:
 	friend class MpMessage;
 	friend class PlayEngine;
 	QString m_title, m_lang, m_name; int m_id = -1;
+	QString m_fileName;
 };
 
 typedef QMap<int, Stream> StreamList;
