@@ -63,13 +63,13 @@ Skin.AppWithDock {
 			width: parent.width; height: 35
 			Skin.HorizontalLayout {
 				anchors {fill: parent} spacing: 1; paddings: 2; bottomPadding: 1; fillers: [right]
-				FramedButton { id: pause; width: height; action: "menu/play/pause"; icon: app.engine.playing ? "pause.png" : "play.png" }
+				FramedButton { id: pause; width: height; action: "play/pause"; icon: app.engine.playing ? "pause.png" : "play.png" }
 				Grid {
 					id: grid; columns: 2; width: h*2; readonly property real h: pause.height/2
-					FramedButton { id: backward; width: grid.h; height: grid.h; action: "menu/play/backward"; icon: "backward.png" }
-					FramedButton { id: forward; width: grid.h; height: grid.h; action: "menu/play/forward"; icon: "forward.png" }
-					FramedButton { id: previous; width: grid.h; height: grid.h; action: "menu/play/previous"; icon: "previous.png" }
-					FramedButton { id: next; width: grid.h; height: grid.h; action: "menu/play/next"; icon: "next.png" }
+					FramedButton { id: backward; width: grid.h; height: grid.h; action: "play/seek/backward1"; icon: "backward.png" }
+					FramedButton { id: forward; width: grid.h; height: grid.h; action: "play/seek/forward1"; icon: "forward.png" }
+					FramedButton { id: previous; width: grid.h; height: grid.h; action: "play/prev"; icon: "previous.png" }
+					FramedButton { id: next; width: grid.h; height: grid.h; action: "play/next"; icon: "next.png" }
 				}
 				Column {
 					id: right
@@ -112,7 +112,7 @@ Skin.AppWithDock {
 						width: parent.width; height: pause.height-1-panel.height; fillers: [timeslider]; spacing: 1
 						Skin.SeekControl { id: timeslider; engine: app.engine; component: slider }
 						FramedButton {
-							id: mute; width: height; action: "menu/audio/mute"
+							id: mute; width: height; action: "audio/mute"
 							icon: app.engine.muted ? "speaker-off.png" : "speaker-on.png"
 						}
 						Skin.VolumeControl { id: volumeslider; width: 70; engine: app.engine; component: slider }

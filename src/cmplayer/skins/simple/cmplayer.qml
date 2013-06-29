@@ -40,7 +40,7 @@ Skin.AppWithDock {
 				id: playPause
 				width: parent.contentHeight; height: parent.contentHeight
 				icon: (engine.state === Core.Engine.Playing) ? "pause.png" : "play.png"
-				action: "menu/play/pause"
+				action: "play/pause"
 				paddings: pressed ? 2 : (hovered ? 0 : 1)
 			}
 			Skin.SeekControl { id: timeslider; engine: app.engine; component: slider }

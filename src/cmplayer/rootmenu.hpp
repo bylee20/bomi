@@ -29,7 +29,7 @@ public:
 	void update(const Pref &p);
 	static inline RootMenu &instance() {return *obj;}
 	QString longId(QAction *action) const {return m_ids.value(action);}
-	QAction *action(const QString &id) const {return m_actions.value(id, nullptr);}
+	QAction *action(const QString &longId) const {return m_actions.value(longId, nullptr);}
 	QAction *action(const QKeySequence &shortcut) const {return m_keymap.value(shortcut);}
 	QAction *doubleClickAction(const ClickActionInfo &info) const;
 	QAction *middleClickAction(const ClickActionInfo &info) const;
@@ -37,6 +37,7 @@ public:
 	inline void resetKeyMap() {m_keymap.clear(); fillKeyMap(this);}
 	Shortcuts shortcuts() const;
 	void setShortcuts(const Shortcuts &shortcuts);
+	static bool execute(const QString &longId);
 private:
 	template<typename N>
 	inline static void setActionAttr(QAction *act, const QVariant &data

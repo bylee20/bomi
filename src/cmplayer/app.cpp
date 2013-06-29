@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "rootmenu.hpp"
 #include "playengine.hpp"
 #include "mainwindow.hpp"
 #include "mrl.hpp"
@@ -19,8 +20,6 @@ struct App::Data {
 #else
 	QMenuBar *mb = nullptr;
 #endif
-//	QUrl url;
-//	QProcess cpu;
 	MainWindow *main = nullptr;
 #if defined(Q_OS_MAC)
 	AppMac helper;
@@ -152,8 +151,31 @@ QMenuBar *App::globalMenuBar() const {
 #endif
 
 Mrl App::getMrlFromCommandLine() {
-	const QStringList args = arguments();
-	return args.size() > 1 ? Mrl(args.last()) : Mrl();
+	const auto args = parse(arguments());
+	for (const Argument &arg : args) {
+		qDebug() << arg.name << arg.value;
+		if (arg.name == _L("open"))
+			return Mrl(arg.value);
+	}
+	return Mrl();
+}
+
+Arguments App::parse(const QStringList &cmds) {
+	Arguments args;
+	for (const QString &cmd : cmds) {
+		if (!cmd.startsWith(_L("--")))
+			continue;
+		Argument arg;
+		const int eq = cmd.indexOf('=');
+		if (eq < 0)
+			arg.name = cmd.mid(2);
+		else {
+			arg.name = cmd.mid(2, eq - 2);
+			arg.value = cmd.mid(eq+1);
+		}
+		args.append(arg);
+	}
+	return args;
 }
 
 void App::open(const QString &mrl) {
@@ -162,14 +184,18 @@ void App::open(const QString &mrl) {
 }
 
 void App::onMessageReceived(const QString &message) {
-	if (message == "wakeUp") {
-		activateWindow();
-	} else if (message.left(3) == "mrl") {
-		auto open = [this] (const QString &mrl) {
+	const auto args = parse(message.split("[:sep:]"));
+	for (const Argument &arg : args) {
+		if (arg.name == _L("wake-up"))
+			activateWindow();
+		else if (arg.name == _L("open")) {
+			const Mrl mrl(arg.value);
 			if (!mrl.isEmpty() && d->main)
 				d->main->openMrl(mrl);
-		};
-		open(message.right(message.size()-4));
+		} else if (arg.name == _L("action")) {
+			if (d->main)
+				RootMenu::execute(arg.value);
+		}
 	}
 }
 

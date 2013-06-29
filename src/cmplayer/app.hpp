@@ -7,6 +7,9 @@
 class QUrl;		class Mrl;
 class MainWindow;	class QMenuBar;
 
+struct Argument { QString name, value; };
+typedef QList<Argument> Arguments;
+
 class App : public QtSolution::QtSingleApplication {
 	Q_OBJECT
 public:
@@ -14,7 +17,7 @@ public:
 	~App();
 	static QIcon defaultIcon();
 	static Mrl getMrlFromCommandLine();
-
+	static Arguments parse(const QStringList &cmds);
 	void setFileName(const QString &fileName);
 	void setMainWindow(MainWindow *mw);
 	MainWindow *mainWindow() const;
@@ -31,8 +34,6 @@ public:
 	void setScreensaverDisabled(bool disabled);
 	void setUnique(bool unique);
 	bool shutdown();
-public slots:
-//	void xSync() {syncX();}
 private slots:
 	void open(const QString &url);
 	void onMessageReceived(const QString &message);

@@ -227,16 +227,32 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	video("track").setEnabled(false);
 	audio("track").setEnabled(false);
 
-	fillId(this, "menu");
+	fillId(this, "");
+}
+
+bool RootMenu::execute(const QString &longId) {
+	if (auto action = instance().action(longId)) {
+		if (action->menu())
+			action->menu()->exec(QCursor::pos());
+		else
+			action->trigger();
+		return true;
+	} else {
+		qDebug() << "Cannot find action:" << longId;
+		return false;
+	}
 }
 
 void RootMenu::setShortcuts(const Shortcuts &shortcuts) {
 	for (auto it = shortcuts.cbegin(); it != shortcuts.cend(); ++it) {
-		auto found = m_actions.constFind(it.key());
+		auto id = it.key();
+		if (id.startsWith("menu/"))
+			id = id.mid(5);
+		auto found = m_actions.constFind(id);
 		if (found != m_actions.cend())
 			found.value()->setShortcuts(it.value());
 		else
-			qDebug() << "Cannot find action:" << it.key();
+			qDebug() << "Cannot find action:" << id;
 	}
 #ifdef Q_OS_MAC
 	a(_L("exit"))->setShortcut(QKeySequence());
@@ -246,10 +262,10 @@ void RootMenu::setShortcuts(const Shortcuts &shortcuts) {
 void RootMenu::fillId(Menu *menu, const QString &id) {
 	const auto ids = menu->ids();
 	for (auto it = ids.cbegin(); it != ids.cend(); ++it) {
-		const QString key = id % "/" % it.key();
+		const QString key = id % it.key();
 		m_ids[m_actions[key] = it.value()] = key;
 		if (auto menu = qobject_cast<Menu*>(it.value()->menu()))
-			fillId(menu, key);
+			fillId(menu, key % "/");
 	}
 }
 

@@ -65,7 +65,7 @@ Skin.AppWithFloating {
 					height: parent.height*0.75; anchors.verticalCenter: parent.verticalCenter; spacing: 3
 					Skin.Button {
 						id: mute; checked: engine.muted; width: parent.height; height: parent.height
-						icon: getStateIconName("volume"); action: "menu/audio/mute"
+						icon: getStateIconName("volume"); action: "audio/mute"
 						Item {
 							id: volume; anchors.fill: parent
 							visible: (!mute.checked && !(mute.hovered && mute.pressed))
@@ -90,16 +90,16 @@ Skin.AppWithFloating {
 					height: parent.height; spacing: 10; anchors.horizontalCenter: parent.horizontalCenter;
 					Skin.Button {
 						width: parent.height*0.9; height: width; anchors.verticalCenter: pause.verticalCenter
-						icon: getStateIconName("play-slower"); action: "menu/play/speed/slower"
+						icon: getStateIconName("play-slower"); action: "play/speed/slower"
 					}
 					Skin.Button {
 						id: pause; width: parent.height; height: width
-						icon: getStateIconName(engine.playing ? "pause" : "play"); action: "menu/play/pause"
+						icon: getStateIconName(engine.playing ? "pause" : "play"); action: "play/pause"
 					}
 
 					Skin.Button {
 						id: faster; width: parent.height*0.9; height: width; anchors.verticalCenter: pause.verticalCenter
-						icon: getStateIconName("play-faster"); action: "menu/play/speed/faster"
+						icon: getStateIconName("play-faster"); action: "play/speed/faster"
 					}
 				}
 			}
