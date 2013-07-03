@@ -13,10 +13,10 @@ extern "C" {
 #include <video/mp_image_pool.h>
 #include <va/va.h>
 #include <va/va_glx.h>
-#include <libavcodec/vaapi.h>
 #if VA_CHECK_VERSION(0, 34, 0)
 #include <va/va_compat.h>
 #endif
+#include <libavcodec/vaapi.h>
 #endif
 #ifdef Q_OS_MAC
 #include <libavcodec/vda.h>

@@ -75,7 +75,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>7</number>
+        <number>8</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1268,66 +1268,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="hide_cursor">
-           <property name="text">
-            <string>Hide the mouse cursor which doesn't move for a while</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <item>
-            <widget class="QLabel" name="label_23">
-             <property name="text">
-              <string>Timeout</string>
-             </property>
-             <property name="indent">
-              <number>20</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QSpinBox" name="hide_delay">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="suffix">
-              <string>sec</string>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="value">
-              <number>3</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="disable_screensaver">
-           <property name="text">
-            <string>Disable screensaver while playing</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QCheckBox" name="lion_style_fullscreen">
            <property name="text">
             <string>Use Lion-style fullscreen mode</string>
@@ -1439,8 +1379,6 @@
          </item>
         </layout>
         <zorder>single_app</zorder>
-        <zorder>hide_cursor</zorder>
-        <zorder>disable_screensaver</zorder>
         <zorder>system_tray_group</zorder>
         <zorder>groupBox_16</zorder>
         <zorder>groupBox_15</zorder>
@@ -2313,6 +2251,97 @@ e.g.: English, Korean</string>
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="gen_behaviours">
+        <layout class="QVBoxLayout" name="verticalLayout_26">
+         <item>
+          <widget class="QCheckBox" name="hide_cursor">
+           <property name="text">
+            <string>Hide the mouse cursor which doesn't move for a while</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout">
+           <item>
+            <widget class="QLabel" name="label_23">
+             <property name="text">
+              <string>Timeout</string>
+             </property>
+             <property name="indent">
+              <number>20</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="hide_delay">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="accelerated">
+              <bool>true</bool>
+             </property>
+             <property name="suffix">
+              <string>sec</string>
+             </property>
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="value">
+              <number>3</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="disable_screensaver">
+           <property name="text">
+            <string>Disable screensaver while playing</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="show_osd_on_action">
+           <property name="text">
+            <string>Show OSD messages when actions are triggered</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="show_osd_on_resized">
+           <property name="text">
+            <string>Show OSD messages when the window is resized</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_10">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>398</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="ui_mouse">
         <layout class="QVBoxLayout" name="verticalLayout_25">
          <property name="topMargin">
@@ -2774,8 +2803,8 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>297</x>
-     <y>73</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
      <x>297</x>
@@ -2790,12 +2819,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>543</x>
-     <y>348</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>543</x>
-     <y>373</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -2934,28 +2963,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>305</x>
-     <y>73</y>
+     <x>297</x>
+     <y>54</y>
     </hint>
     <hint type="destinationlabel">
-     <x>327</x>
-     <y>100</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>hide_cursor</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>label_23</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>263</x>
-     <y>76</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>269</x>
-     <y>91</y>
+     <x>314</x>
+     <y>78</y>
     </hint>
    </hints>
   </connection>

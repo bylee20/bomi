@@ -39,7 +39,7 @@ private:
 	void updateTitle();
 	void setCursorVisible(bool visible);
 	void doVisibleAction(bool visible);
-	void showMessage(const QString &message);
+	void showMessage(const QString &message, const bool *force = nullptr);
 	void showMessage(const QString &cmd, int value, const QString &unit, bool sign = false) {showMessage(cmd, toString(value, sign) + unit);}
 	void showMessage(const QString &cmd, double value, const QString &unit, bool sign = false) {showMessage(cmd, toString(value, sign) + unit);}
 	void showMessage(const QString &cmd, const QString &desc) {showMessage(cmd + ": " + desc);}

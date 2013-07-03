@@ -18,10 +18,10 @@ build() {
   ./build-libchardet
   ./build-ffmpeg
   ./build-mpv
-  make cmplayer
+  make PREFIX=/usr cmplayer
 }
 
 package() {
   cd "$srcdir/$pkgname-$pkgver"
-  make DEST_DIR=$pkgdir install
+  make DEST_DIR=$pkgdir PREFIX=/usr install
 }

@@ -29,5 +29,6 @@
         <file>img/logo-background.svg</file>
         <file>emptyskin.qml</file>
         <file>img/document-open-folder.png</file>
+        <file>img/preferences-system-session-services.png</file>
     </qresource>
 </RCC>

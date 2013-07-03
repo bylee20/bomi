@@ -286,7 +286,11 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
 	d->connectCurrentStreamActions(&d->menu("subtitle")("track"), &PlayEngine::currentSubtitleStream);
 	connect(this, &MainWindow::windowStateChanged, this, &MainWindow::checkWindowState);
-
+	auto showSize = [this] {
+		showMessage(_N(qRound(d->renderer.width())) % _U("\303\227") % _N(qRound(d->renderer.height())), &d->pref().show_osd_on_resized);
+	};
+	connect(&d->renderer, &VideoRendererItem::widthChanged, showSize);
+	connect(&d->renderer, &VideoRendererItem::heightChanged, showSize);
 
 	auto addContextMenu = [this] (Menu &menu) {d->contextMenu.addMenu(menu.copied(&d->contextMenu));};
 	addContextMenu(d->menu("open"));
@@ -858,7 +862,12 @@ void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
 	}
 }
 
-void MainWindow::showMessage(const QString &message) {
+void MainWindow::showMessage(const QString &message, const bool *force) {
+	if (force) {
+		if (!*force)
+			return;
+	} else if (!d->pref().show_osd_on_action)
+		return;
 	if (!d->dontShowMsg && d->player)
 		d->player->requestMessage(message);
 }

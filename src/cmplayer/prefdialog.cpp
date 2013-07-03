@@ -269,8 +269,9 @@ PrefDialog::PrefDialog(QWidget *parent)
 	};
 
 	auto general = addCategory(tr("General"));
-	auto open = addPage(tr("Open"), d->ui.open_media, ":/img/document-open-32.png", general);
+	addPage(tr("Open"), d->ui.open_media, ":/img/document-open-32.png", general)->setSelected(true);
 	addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
+	addPage(tr("Behaviours"), d->ui.gen_behaviours, ":/img/preferences-system-session-services.png", general);
 	addPage(tr("Application"), d->ui.application, ":/img/cmplayer-32.png", general);
 	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
 
@@ -284,8 +285,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Mouse actions"), d->ui.ui_mouse, ":/img/input-mouse-32.png", ui);
 	addPage(tr("Control step"), d->ui.ui_step, ":/img/run-build-32.png", ui);
 //	addPage(tr("Skin"), d->ui.ui_skin, ":/img/preferences-desktop-theme-32.png", ui);
-
-	open->setSelected(true);
 
 	d->open_media_from_file_manager = new PrefOpenMediaGroup(tr("Open from file manager"), d->ui.open_media);
 	d->open_media_by_drag_and_drop = new PrefOpenMediaGroup(tr("Open by drag-and-drop"), d->ui.open_media);
@@ -473,6 +472,8 @@ void PrefDialog::set(const Pref &p) {
 	d->open_media_from_file_manager->setValue(p.open_media_from_file_manager);
 	d->open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
 
+	d->ui.show_osd_on_action->setChecked(p.show_osd_on_action);
+	d->ui.show_osd_on_resized->setChecked(p.show_osd_on_resized);
 	d->ui.pause_minimized->setChecked(p.pause_minimized);
 	d->ui.pause_video_only->setChecked(p.pause_video_only);
 	d->ui.remember_stopped->setChecked(p.remember_stopped);
@@ -572,6 +573,8 @@ void PrefDialog::get(Pref &p) {
 	p.open_media_from_file_manager = d->open_media_from_file_manager->value();
 	p.open_media_by_drag_and_drop = d->open_media_by_drag_and_drop->value();
 
+	p.show_osd_on_action = d->ui.show_osd_on_action->isChecked();
+	p.show_osd_on_resized = d->ui.show_osd_on_resized->isChecked();
 	p.pause_minimized = d->ui.pause_minimized->isChecked();
 	p.pause_video_only = d->ui.pause_video_only->isChecked();
 	p.remember_stopped = d->ui.remember_stopped->isChecked();

@@ -12,7 +12,4 @@ Core.Engine {
 	HistoryDock { objectName: "history"; z: dockZ }
 	onMessageRequested: { msgosd.text = message; msgosd.show(); }
 	onSought: {timeline.show();}
-	function showSize() { msgosd.text = "%1x%2".arg(width).arg(height); msgosd.show() }
-	onHeightChanged: showSize()
-	onWidthChanged: showSize()
 }
