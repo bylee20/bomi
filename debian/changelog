@@ -1,3 +1,22 @@
+cmplayer (0.7.5-1) raring; urgency=low
+
+  * Add: introduce OSD options in 'Behaviours' tab
+  * Add: '--action=%ID%' command where %ID% can be confirmed in keyboard shortcut option
+  * Add: '--wake-up' command to activate CMPlayer window
+  * Add: libass support
+  * Mod: subtitle file list and subtitle track list is unified
+  * Mod: '--open=%FILE%' command to open a file
+  * Fix: some translations(thanks to Willem)
+  * Fix: cannot handle multiple parts of internal subtitles
+  * Fix: missing X-Window properties: WM_CLASS, WM_NAME
+  * Fix: crash on deselecting of a subtitle
+  * Fix: wrong color and size of internal subtitles
+  * Fix: inoccasional crash when subtitle rendered
+  * Fix: terminated when hwacc is enabled
+  * Fix: possible wrong stride when hwacc is enabled
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Wed, 3 Jul 2013 21:17:00 +0900
+
 cmplayer (0.7.4-1) raring; urgency=low
 
   * New: Audio track circulation

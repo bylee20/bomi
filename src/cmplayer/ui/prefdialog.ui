@@ -75,7 +75,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>8</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -141,13 +141,13 @@
          <item>
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
-            <string>Stopped playback</string>
+            <string>Resume playback</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
              <widget class="QCheckBox" name="remember_stopped">
               <property name="text">
-               <string>Start the playback from stopped time previously</string>
+               <string>Resume playback at last played position</string>
               </property>
              </widget>
             </item>
@@ -157,7 +157,7 @@
                <bool>false</bool>
               </property>
               <property name="text">
-               <string>Ask when a stopped record is found</string>
+               <string>Confirm resume playback</string>
               </property>
              </widget>
             </item>

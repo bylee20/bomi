@@ -1402,17 +1402,17 @@ void MainWindow::customEvent(QEvent *event) {
 	if (event->type() == AskStartTimeEvent::Type) {
 		const auto ev = static_cast<AskStartTimeEvent*>(event);
 		const QDateTime date = d->history.stoppedDate(ev->mrl);
-		const QString title = tr("Stopped Record Found");
-		const QString text = tr("This file was stopped during its playing before.\n"
-			"Played Date: %1\nStopped Time: %2\n"
-			"Do you want to start from where it's stopped?\n"
-			"(You can configure not to ask anymore in the preferecences.)")
-			.arg(date.toString(Qt::ISODate)).arg(_MSecToString(ev->start, "h:mm:ss"));
-		const QMessageBox::StandardButtons b = QMessageBox::Yes | QMessageBox::No;
-		if (QMessageBox::question(QApplication::activeWindow(), title, text, b, QMessageBox::Yes) == QMessageBox::Yes)
-			d->startFromStopped = 1;
-		else
-			d->startFromStopped = 0;
+
+		CheckDialog dlg(d->widget(), QDialogButtonBox::Yes | QDialogButtonBox::No);
+		dlg.setChecked(false);
+		dlg.setLabelText(tr("Do you want to resume the playback at the last played position?\n"
+			"Played Date: %1\nStopped Position: %2\n")
+			.arg(date.toString(Qt::ISODate)).arg(_MSecToString(ev->start, "h:mm:ss")));
+		dlg.setCheckBoxText("Don't ask again");
+		dlg.setWindowTitle(tr("Resume Playback"));
+		d->startFromStopped = dlg.exec() == QDialogButtonBox::Yes;
+		if (_Change(d->preferences.ask_record_found, !dlg.isChecked()))
+			d->preferences.save();
 	}
 }
 

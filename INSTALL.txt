@@ -30,7 +30,7 @@ If you want build cmplayer, follow next:
 
 1. Run next command to build the libraries included in source tree,
 
-$ ./build-libchardet && ./build-sigar && ./build-ffmpeg && ./build-mpv
+$ ./build-libchardet && ./build-ffmpeg && ./build-mpv
 
 2. Run next command to build cmplayer excutable,
 
@@ -60,7 +60,7 @@ where you have to use exactly same <args> specified when building cmplayer.
 
 1. Run next command to build the libraries included in source tree,
 
-./build-libchardet && ./build-sigar && ./build-ffmpeg && ./build-mpv
+./build-libchardet && ./build-ffmpeg && ./build-mpv
 
 2. Run next command to build cmplayer excutable,
 
