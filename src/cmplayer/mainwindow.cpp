@@ -24,6 +24,7 @@
 #include "translator.hpp"
 #include "playlist.hpp"
 #include "subtitle_parser.hpp"
+#include "subtitlemodel.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 #endif
