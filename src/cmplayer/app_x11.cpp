@@ -26,7 +26,7 @@ struct XWindowInfo {
 		netWmStateAtom = getAtom(connection, "_NET_WM_STATE");
 		netWmStateAboveAtom = getAtom(connection, "_NET_WM_STATE_ABOVE");
 		netWmStateStaysOnTopAtom = getAtom(connection, "_NET_WM_STATE_STAYS_ON_TOP");
-		auto className = "cmplayer\0CMPlayer";
+		const char className[] = "cmplayer\0CMPlayer";
 		xcb_icccm_set_wm_class(connection, window, sizeof(className), className);
 	}
 	xcb_connection_t *connection = nullptr;
