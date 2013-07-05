@@ -38,6 +38,7 @@ public:
 
 struct MainWindow::Data {
 	Data(MainWindow *p): p(p) {preferences.load();}
+	MainView *view = nullptr;
 	MainWindow *p = nullptr;
 	bool visible = false, sotChanging = false, fullScreen = false;
 	PlayerItem *player = nullptr;
@@ -46,7 +47,7 @@ struct MainWindow::Data {
 	VideoRendererItem renderer;
 	SubtitleRendererItem subtitle;
 	QPoint prevPos;		QTimer hider;
-	Qt::WindowState winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
+	Qt::WindowStates winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
 	bool middleClicked = false, moving = false, changingSub = false;
 	bool pausedByHiding = false, dontShowMsg = false, dontPause = false;
 	bool stateChanging = false;
@@ -59,7 +60,6 @@ struct MainWindow::Data {
 //	FavoritesView *favorite;
 	QSystemTrayIcon *tray = nullptr;
 	QString filePath;
-	QWidget proxy;
 	Pref preferences;
 	const Pref &pref() const {return preferences;}
 // methods
@@ -128,14 +128,14 @@ struct MainWindow::Data {
 
 	void updateWindowSizeState() const {
 		const auto state = p->windowState();
-		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible() && p->screen())
+		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible())
 			AppState::get().win_size = p->size();
 	}
 	void updateWindowPosState() const {
 		const auto state = p->windowState();
-		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible() && p->screen()) {
+		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible()) {
 			auto &as = AppState::get();
-			const auto screen = p->screen()->size();
+			const auto screen = p->window()->windowHandle()->size();
 			as.win_pos.rx() = qBound(0.0, (double)p->x()/(double)screen.width(), 1.0);
 			as.win_pos.ry() = qBound(0.0, (double)p->y()/(double)screen.height(), 1.0);
 		}
@@ -168,9 +168,10 @@ struct MainWindow::Data {
 		for (auto copy : menu->copies())
 			connect(copy, &QMenu::aboutToShow, checkCurrentStreamAction);
 	}
-
-
-	QWidget *widget() {return &proxy;}
+	template <typename T>
+	T findItem(const QString &name = QString()) {
+		return view->rootObject()->findChild<T>(name);
+	}
 
 	void commitData() {
 		static bool first = true;
@@ -214,15 +215,19 @@ struct MainWindow::Data {
 void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
-MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
-	setFlags(flags() | Qt::WindowFullscreenButtonHint);
-	setColor(Qt::black);
-	setResizeMode(QQuickView::SizeRootObjectToView);
+MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenButtonHint | Qt::Window), d(new Data(this)) {
+	d->view = new MainView(this);
+	auto widget = createWindowContainer(d->view, this);
+	auto l = new QVBoxLayout;
+	l->addWidget(widget);
+	l->setMargin(0);
+	setLayout(l);
+
 	d->engine.start();
 	d->engine.setGetStartTimeFunction([this] (const Mrl &mrl){return getStartTime(mrl);});
 	d->engine.setVideoRenderer(&d->renderer);
 	d->renderer.setOverlay(&d->subtitle);
-	d->subtitleView = new SubtitleView(d->widget());
+	d->subtitleView = new SubtitleView(this);
 
 	resize(400, 300);
 	setMinimumSize(QSize(400, 300));
@@ -286,7 +291,6 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);
 	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
 	d->connectCurrentStreamActions(&d->menu("subtitle")("track"), &PlayEngine::currentSubtitleStream);
-	connect(this, &MainWindow::windowStateChanged, this, &MainWindow::checkWindowState);
 	auto showSize = [this] {
 		showMessage(_N(qRound(d->renderer.width())) % _U("\303\227") % _N(qRound(d->renderer.height())), &d->pref().show_osd_on_resized);
 	};
@@ -327,9 +331,9 @@ MainWindow::MainWindow(QWindow *parent): QQuickView(parent), d(new Data(this)) {
 
 	const AppState &as = AppState::get();
 
-	if (as.win_size.isValid() && screen()) {
-		const auto screen = this->screen()->size();
-		setPosition(screen.width()*as.win_pos.x(), screen.height()*as.win_pos.y());
+	if (as.win_size.isValid()) {
+		const auto screen = this->windowHandle()->screen()->size();
+		move(screen.width()*as.win_pos.x(), screen.height()*as.win_pos.y());
 		resize(as.win_size);
 	}
 
@@ -400,11 +404,11 @@ void MainWindow::connectMenus() {
 		AppState &as = AppState::get();
 		const QString filter = Info::mediaExtFilter();
 		const QString dir = QFileInfo(as.open_last_file).absolutePath();
-		const QString file = _GetOpenFileName(d->widget(), tr("Open File"), dir, filter);
+		const QString file = _GetOpenFileName(this, tr("Open File"), dir, filter);
 		if (!file.isEmpty()) {openMrl(Mrl(file)); as.open_last_file = file;}
 	});
 	connect(open["folder"], &QAction::triggered, [this] () {
-		OpenMediaFolderDialog dlg(d->widget());
+		OpenMediaFolderDialog dlg(this);
 		if (dlg.exec()) {
 			const auto list = dlg.playlist();
 			if (!list.isEmpty()) {
@@ -494,7 +498,7 @@ void MainWindow::connectMenus() {
 	connect(video("aspect").g(), &ActionGroup::triggered, [this] (QAction *a) {d->renderer.setAspectRatio(a->data().toDouble());});
 	connect(video("crop").g(), &ActionGroup::triggered, [this] (QAction *a) {d->renderer.setCropRatio(a->data().toDouble());});
 	connect(video["snapshot"], &QAction::triggered, [this] () {
-		static SnapshotDialog *dlg = new SnapshotDialog(d->widget());
+		static SnapshotDialog *dlg = new SnapshotDialog(this);
 		dlg->setVideoRenderer(&d->renderer); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
 		if (!dlg->isVisible()) {dlg->adjustSize(); dlg->show();}
 	});
@@ -651,16 +655,16 @@ void MainWindow::connectMenus() {
 	Menu &tool = d->menu("tool");
 	auto toggleItem = [this] (const char *name) {
 		QObject *item = nullptr;
-		if (d->player && (item = rootObject()->findChild<QObject*>(name)))
+		if (d->player && (item = d->findItem<QObject*>(name)))
 			item->setProperty("visible", !item->property("visible").toBool());
 	};
 	auto selectedIndex = [this] (const char *name) {
 		QObject *item = nullptr;
-		return d->player && (item = rootObject()->findChild<QObject*>(name)) ? item->property("selectedIndex").toInt() : -1;
+		return d->player && (item = d->findItem<QObject*>(name)) ? item->property("selectedIndex").toInt() : -1;
 	};
 	auto selectIndex = [this] (const char *name, int idx) {
 		QObject *item = nullptr;
-		if (d->player && (item = rootObject()->findChild<QObject*>(name)))
+		if (d->player && (item = d->findItem<QObject*>(name)))
 			item->setProperty("selectedIndex", idx);
 	};
 	auto &playlist = tool("playlist");
@@ -668,14 +672,14 @@ void MainWindow::connectMenus() {
 	connect(playlist["open"], &QAction::triggered, [this] () {
 		QString enc;
 		const QString filter = tr("Playlist") +' '+ Info::playlistExt().toFilter();
-		const QString file = EncodingFileDialog::getOpenFileName(d->widget(), tr("Open File"), QString(), filter, &enc);
+		const QString file = EncodingFileDialog::getOpenFileName(this, tr("Open File"), QString(), filter, &enc);
 		if (!file.isEmpty())
 			d->playlist.setPlaylist(Playlist(file, enc));
 	});
 	connect(playlist["save"], &QAction::triggered, [this] () {
 		const Playlist &list = d->playlist.playlist();
 		if (!list.isEmpty()) {
-			auto file = _GetSaveFileName(d->widget(), tr("Save File"), QString(), tr("Playlist") + " (*.pls)");
+			auto file = _GetSaveFileName(this, tr("Save File"), QString(), tr("Playlist") + " (*.pls)");
 			if (!file.isEmpty()) {
 				if (QFileInfo(file).suffix().compare("pls", Qt::CaseInsensitive) != 0)
 					file += ".pls";
@@ -686,14 +690,14 @@ void MainWindow::connectMenus() {
 	connect(playlist["clear"], &QAction::triggered, [this] () { d->playlist.clear(); });
 	connect(playlist["append-file"], &QAction::triggered, [this] () {
 		const auto filter = Info::mediaExtFilter();
-		auto files = _GetOpenFileNames(d->widget(), tr("Open File"), QString(), filter);
+		auto files = _GetOpenFileNames(this, tr("Open File"), QString(), filter);
 		Playlist list;
 		for (int i=0; i<files.size(); ++i)
 			list << Mrl(files[i]);
 		d->playlist.append(list);
 	});
 	connect(playlist["append-url"], &QAction::triggered, [this] () {
-		GetUrlDialog dlg(d->widget());
+		GetUrlDialog dlg(this);
 		if (dlg.exec()) {
 			const Mrl mrl = dlg.url().toString();
 			if (mrl.isPlaylist()) {
@@ -723,7 +727,7 @@ void MainWindow::connectMenus() {
 	connect(tool["subtitle"], &QAction::triggered, [this] () {d->subtitleView->setVisible(!d->subtitleView->isVisible());});
 	connect(tool["pref"], &QAction::triggered, [this] () {
 		if (!d->prefDlg) {
-			d->prefDlg = new PrefDialog(d->widget());
+			d->prefDlg = new PrefDialog(this);
 			connect(d->prefDlg, &PrefDialog::applyRequested, [this] {d->prefDlg->get(d->preferences); applyPref();});
 			connect(d->prefDlg, &PrefDialog::resetRequested, [this] {d->prefDlg->set(d->pref());});
 		}
@@ -756,7 +760,7 @@ void MainWindow::connectMenus() {
 	connect(win["maximize"], &QAction::triggered, this, &MainWindow::showMaximized);
 	connect(win["close"], &QAction::triggered, [this] () { d->menu.hide(); close(); });
 
-	connect(help["about"], &QAction::triggered, [this] () {AboutDialog dlg(d->widget()); dlg.exec();});
+	connect(help["about"], &QAction::triggered, [this] () {AboutDialog dlg(this); dlg.exec();});
 	connect(d->menu["exit"], &QAction::triggered, this, &MainWindow::exit);
 }
 
@@ -876,7 +880,7 @@ void MainWindow::showMessage(const QString &message, const bool *force) {
 void MainWindow::checkWindowState() {
 	const auto state = windowState();
 	d->updateWindowSizeState();
-	setFilePath(d->filePath);
+	setWindowFilePath(d->filePath);
 	if (state != d->winState) {
 		d->prevWinState = d->winState;
 		d->winState = state;
@@ -886,7 +890,7 @@ void MainWindow::checkWindowState() {
 	d->prevPos = QPoint();
 	const auto full = d->fullScreen || state &  Qt::WindowFullScreen;
 	if (full) {
-		cApp.setAlwaysOnTop(this, false);
+		cApp.setAlwaysOnTop(window()->windowHandle(), false);
 		setVisible(true);
 		if (d->pref().hide_cursor)
 			d->hider.start(d->pref().hide_cursor_delay);
@@ -939,7 +943,7 @@ void MainWindow::setVideoSize(double rate) {
 	} else {
 		// patched by Handrake
 		const QSizeF video = d->renderer.sizeHint();
-		const QSizeF desktop = screen()->availableVirtualSize();
+		const QSizeF desktop = window()->windowHandle()->screen()->availableVirtualSize();
 		const double target = 0.15;
 		if (isFullScreen())
 			setFullScreen(false);
@@ -947,7 +951,7 @@ void MainWindow::setVideoSize(double rate) {
 			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
 		const QSize size = (this->size() - d->renderer.size() + d->renderer.sizeHint()*qSqrt(rate)).toSize();
 		if (size != this->size()) {
-			setGeometry(QRect(position(), size));
+			setGeometry(QRect(pos(), size));
 			int dx = 0;
 			const int rightDiff = desktop.width() - (x() + width());
 			if (rightDiff < 10) {
@@ -960,14 +964,14 @@ void MainWindow::setVideoSize(double rate) {
 				int x = this->x() + dx;
 				if (x < 0)
 					x = 0;
-				setPosition(x, this->y());
+				move(x, this->y());
 			}
 		}
 	}
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
-	QQuickView::mouseMoveEvent(event);
+	QWidget::mouseMoveEvent(event);
 	d->hider.stop();
 	setCursorVisible(true);
 	const bool full = isFullScreen();
@@ -981,16 +985,15 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 	} else {
 		if (d->moving) {
 			const QPoint pos = event->globalPos();
-			setPosition(position() + pos - d->prevPos);
+			move(this->pos() + pos - d->prevPos);
 			d->prevPos = pos;
 		}
 	}
 }
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
-	UtilObject::resetDoubleClickFilter();
-	QQuickView::mouseDoubleClickEvent(event);
-	if (!UtilObject::isDoubleClickFiltered() && (event->buttons() & Qt::LeftButton)) {
+	QWidget::mouseDoubleClickEvent(event);
+	if (event->buttons() & Qt::LeftButton) {
 		if (auto action = d->menu.doubleClickAction(d->pref().double_click_map[event->modifiers()])) {
 #ifdef Q_OS_MAC
 			if (action == d->menu("window")["full"])
@@ -1003,7 +1006,7 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
 }
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
-	QQuickView::mouseReleaseEvent(event);
+	QWidget::mouseReleaseEvent(event);
 	if (d->moving) {
 		d->moving = false;
 		d->prevPos = QPoint();
@@ -1016,7 +1019,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
 	UtilObject::setMouseReleased(event->localPos());
 }
 void MainWindow::mousePressEvent(QMouseEvent *event) {
-	QQuickView::mousePressEvent(event);
+	QWidget::mousePressEvent(event);
 	if (event->isAccepted())
 		return;
 	d->middleClicked = false;
@@ -1043,31 +1046,13 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 		d->contextMenu.hide();
 }
 void MainWindow::wheelEvent(QWheelEvent *event) {
-	QQuickView::wheelEvent(event);
+	QWidget::wheelEvent(event);
 	if (!event->isAccepted() && event->delta()) {
 		if (auto action = d->menu.wheelScrollAction(d->pref().wheel_scroll_map[event->modifiers()], event->delta() > 0)) {
 			action->trigger();
 			event->accept();
 		}
 	}
-}
-
-bool MainWindow::event(QEvent *event) {
-	bool res = QQuickView::event(event);
-	if (event->type() == QEvent::Close) {
-		closeEvent(static_cast<QCloseEvent*>(event));
-		res = true;
-	} else if (!res) {
-		if (event->type() == QEvent::DragMove) {
-			auto move = static_cast<QDragMoveEvent*>(event);
-			if (move->mimeData()->hasUrls()) {
-				move->acceptProposedAction();
-				res = true;
-			}
-		} else if (event->type() == QEvent::Drop)
-			dropEvent(static_cast<QDropEvent*>(event));
-	}
-	return res;
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
@@ -1105,19 +1090,19 @@ void MainWindow::reloadSkin() {
 	if (d->player)
 		d->player->unplug();
 	d->player = nullptr;
-	engine()->clearComponentCache();
+	d->view->engine()->clearComponentCache();
 	PlayerItem::registerItems();
-	rootContext()->setContextProperty("history", &d->history);
-	rootContext()->setContextProperty("playlist", &d->playlist);
-	Skin::apply(this, d->pref().skin_name);
-	if (status() == QQuickView::Error) {
-		auto errors = this->errors();
+	d->view->rootContext()->setContextProperty("history", &d->history);
+	d->view->rootContext()->setContextProperty("playlist", &d->playlist);
+	Skin::apply(d->view, d->pref().skin_name);
+	if (d->view->status() == QQuickView::Error) {
+		auto errors = d->view->errors();
 		for (auto error : errors)
 			qDebug() << error.toString();
-		setSource(QUrl("qrc:/emptyskin.qml"));
+		d->view->setSource(QUrl("qrc:/emptyskin.qml"));
 	}
-	if (!(d->player = qobject_cast<PlayerItem*>(rootObject())))
-		d->player = rootObject()->findChild<PlayerItem*>();
+	if (!(d->player = qobject_cast<PlayerItem*>(d->view->rootObject())))
+		d->player = d->findItem<PlayerItem*>();
 	if (d->player)
 		d->player->plugTo(&d->engine);
 }
@@ -1166,13 +1151,13 @@ void connectCopies(Menu &menu, const Slot &slot) {
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
-	QQuickView::resizeEvent(event);
+	QWidget::resizeEvent(event);
 	if (!d->fullScreen)
 		d->updateWindowSizeState();
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event) {
-	QQuickView::keyPressEvent(event);
+	QWidget::keyPressEvent(event);
 	if (!event->isAccepted()) {
 		constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
 		auto action = RootMenu::instance().action(QKeySequence(event->key() + (event->modifiers() & modMask)));
@@ -1186,16 +1171,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 	}
 }
 
-void MainWindow::exposeEvent(QExposeEvent *event) {
-	QQuickView::exposeEvent(event);
-	if (auto obj = rootObject()) {
-		auto old = obj->boundingRect().size().toSize();
-		if (size() != old) {
-			QResizeEvent ev(size(), old);
-			qApp->sendEvent(this, &ev);
-		}
-	}
-}
 
 void MainWindow::doVisibleAction(bool visible) {
 	d->visible = visible;
@@ -1204,9 +1179,9 @@ void MainWindow::doVisibleAction(bool visible) {
 			d->engine.play();
 			d->pausedByHiding = false;
 		}
-		setFilePath(d->filePath);
+		setWindowFilePath(d->filePath);
 #ifndef Q_OS_MAC
-		setIcon(cApp.defaultIcon());
+		setWindowIcon(cApp.defaultIcon());
 #endif
 	} else {
 		if (!d->pref().pause_minimized || d->dontPause)
@@ -1219,22 +1194,29 @@ void MainWindow::doVisibleAction(bool visible) {
 }
 
 void MainWindow::showEvent(QShowEvent *event) {
-	QQuickView::showEvent(event);
+	QWidget::showEvent(event);
 	doVisibleAction(true);
 }
 
 void MainWindow::hideEvent(QHideEvent *event) {
-	QQuickView::hideEvent(event);
+	QWidget::hideEvent(event);
 	doVisibleAction(false);
 }
 
+void MainWindow::changeEvent(QEvent *event) {
+	QWidget::changeEvent(event);
+	if (event->type() == QEvent::WindowStateChange)
+		checkWindowState();
+}
+
 void MainWindow::closeEvent(QCloseEvent *event) {
+	QWidget::closeEvent(event);
 #ifndef Q_OS_MAC
 	if (d->pref().enable_system_tray && d->pref().hide_rather_close) {
 		hide();
 		AppState &as = AppState::get();
 		if (as.ask_system_tray) {
-			CheckDialog dlg(d->widget());
+			CheckDialog dlg(this);
 			dlg.setChecked(true);
 			dlg.setLabelText(tr("CMPlayer will be running in the system tray "
 					"when the window closed.<br>"
@@ -1268,13 +1250,13 @@ void MainWindow::updateStaysOnTop() {
 		else
 			onTop = d->engine.isPlaying();
 	}
-	cApp.setAlwaysOnTop(this, onTop);
+	cApp.setAlwaysOnTop(window()->windowHandle(), onTop);
 	d->sotChanging = false;
 }
 
 void MainWindow::updateTitle() {
 	const auto mrl = d->engine.mrl();
-	setFilePath(QString());
+	setWindowFilePath(QString());
 	QString fileName;
 	if (!mrl.isEmpty()) {
 		if (mrl.isLocalFile()) {
@@ -1282,7 +1264,7 @@ void MainWindow::updateTitle() {
 			d->filePath = file.absoluteFilePath();
 			fileName = file.fileName();
 			if (isVisible())
-				setFilePath(d->filePath);
+				setWindowFilePath(d->filePath);
 		} else {
 			if (mrl.isDvd()) {
 				fileName = d->engine.dvd().volume;
@@ -1404,7 +1386,7 @@ void MainWindow::customEvent(QEvent *event) {
 		const auto ev = static_cast<AskStartTimeEvent*>(event);
 		const QDateTime date = d->history.stoppedDate(ev->mrl);
 
-		CheckDialog dlg(d->widget(), QDialogButtonBox::Yes | QDialogButtonBox::No);
+		CheckDialog dlg(this, QDialogButtonBox::Yes | QDialogButtonBox::No);
 		dlg.setChecked(false);
 		dlg.setLabelText(tr("Do you want to resume the playback at the last played position?\n"
 			"Played Date: %1\nStopped Position: %2\n")
@@ -1450,7 +1432,7 @@ void MainWindow::setCursorVisible(bool visible) {
 }
 
 void MainWindow::moveEvent(QMoveEvent *event) {
-	QQuickView::moveEvent(event);
+	QWidget::moveEvent(event);
 	if (!d->fullScreen)
 		d->updateWindowPosState();
 }

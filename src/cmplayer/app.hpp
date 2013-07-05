@@ -33,7 +33,6 @@ public:
 	void setFileName(const QString &fileName);
 	void setMainWindow(MainWindow *mw);
 	MainWindow *mainWindow() const;
-    QWindow *topWindow() const;
 	QStringList devices() const;
 	QString styleName() const;
 	bool isUnique() const;

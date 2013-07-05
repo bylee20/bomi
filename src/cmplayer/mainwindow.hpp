@@ -9,10 +9,10 @@ class Mrl;			class PrefDialog;
 class MainWindow;	class Playlist;
 class Subtitle;
 
-class MainWindow : public QQuickView {
+class MainWindow : public QWidget {
 	Q_OBJECT
 public:
-	MainWindow(QWindow *parent = nullptr);
+	MainWindow(QWidget *parent = nullptr);
 	MainWindow(const MainWindow &) = delete;
 	MainWindow &operator = (const MainWindow &) = delete;
 	~MainWindow();
@@ -52,7 +52,6 @@ private:
 	int getStartTime(const Mrl &mrl);
 	void showEvent(QShowEvent *event);
 	void hideEvent(QHideEvent *event);
-	void exposeEvent(QExposeEvent *event);
 	void keyPressEvent(QKeyEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
 	void mouseDoubleClickEvent(QMouseEvent *event);
@@ -63,10 +62,48 @@ private:
 	void dragEnterEvent(QDragEnterEvent *event);
 	void resizeEvent(QResizeEvent *event);
 	void moveEvent(QMoveEvent *event);
-	bool event(QEvent *event);
 	friend class MainView;
 	struct Data;
 	Data *d;
 };
+
+class MainView : public QQuickView {
+	Q_OBJECT
+public:
+	MainView(MainWindow *main): QQuickView(main->windowHandle()), m_main(main) {
+		setColor(Qt::black);
+		setResizeMode(QQuickView::SizeRootObjectToView);
+	}
+private:
+	void mouseDoubleClickEvent(QMouseEvent *event) {
+		UtilObject::resetDoubleClickFilter();
+		QQuickView::mouseDoubleClickEvent(event);
+		if (!UtilObject::isDoubleClickFiltered())
+			m_main->mouseDoubleClickEvent(event);
+	}
+	void mousePressEvent(QMouseEvent *event) {
+		QQuickView::mousePressEvent(event);
+		m_main->mousePressEvent(event);
+	}
+	void mouseReleaseEvent(QMouseEvent *event) {
+		QQuickView::mouseReleaseEvent(event);
+		m_main->mouseReleaseEvent(event);
+	}
+	void mouseMoveEvent(QMouseEvent *event) {
+		QQuickView::mouseMoveEvent(event);
+		m_main->mouseMoveEvent(event);
+	}
+	void keyPressEvent(QKeyEvent *event) {
+		QQuickView::keyPressEvent(event);
+		m_main->keyPressEvent(event);
+	}
+	void wheelEvent(QWheelEvent *event) {
+		QQuickView::wheelEvent(event);
+		m_main->wheelEvent(event);
+	}
+
+	MainWindow *m_main = nullptr;
+};
+
 
 #endif // MAINWINDOW_HPP

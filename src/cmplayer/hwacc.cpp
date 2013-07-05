@@ -24,8 +24,7 @@ extern "C" {
 }
 
 #ifdef Q_OS_LINUX
-#include <qpa/qplatformnativeinterface.h>
-#include <qpa/qplatformwindow.h>
+#include <QX11Info>
 struct VaApiInfo {
 	struct Codec { AVCodecID id = AV_CODEC_ID_NONE; QVector<VAProfile> profiles; int surfaceCount = 0; };
 	static VaApiInfo &get();
@@ -34,7 +33,7 @@ struct VaApiInfo {
 	void finalize() {if (m_display) {vaTerminate(m_display); m_display = nullptr; init = false;}}
 private:
 	VaApiInfo() {
-		m_xdpy = static_cast<Display*>(qApp->platformNativeInterface()->nativeResourceForWindow("display", qApp->topLevelWindows().first()));
+		m_xdpy = QX11Info::display();
 		if (!m_xdpy || !(m_display = vaGetDisplayGLX(m_xdpy)))
 			return;
 		int major, minor;

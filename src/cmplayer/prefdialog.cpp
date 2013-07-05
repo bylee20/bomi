@@ -234,7 +234,7 @@ struct PrefDialog::Data {
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
-: QDialog(parent, Qt::Tool), d(new Data) {
+: QDialog(parent), d(new Data) {
 	d->ui.setupUi(this);
 	d->ui.tree->setItemDelegate(new Delegate(d->ui.tree));
 	d->ui.tree->setIconSize(QSize(32, 32));

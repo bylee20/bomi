@@ -41,7 +41,6 @@ App::App(int &argc, char **argv)
 	setOrganizationDomain("xylosper.net");
 	setApplicationName("CMPlayer");
 	setQuitOnLastWindowClosed(false);
-	setApplicationDisplayName("CMPlayer");
 //	setFont(QFont(QString::fromUtf8("나눔 고딕")));
 #ifndef Q_OS_MAC
 	setWindowIcon(defaultIcon());
@@ -83,13 +82,13 @@ App::~App() {
 void App::setMainWindow(MainWindow *mw) {
 	d->main = mw;
 #ifndef Q_OS_MAC
-	d->main->setIcon(defaultIcon());
+	d->main->setWindowIcon(defaultIcon());
 #endif
 }
 
 void App::setFileName(const QString &fileName) {
 	if (d->main) {
-		d->main->setTitle(fileName);
+		d->main->setWindowTitle(fileName);
 #ifdef Q_OS_LINUX
 		d->helper.setWmName(fileName % _L(" - ") % applicationDisplayName());
 #endif
@@ -142,10 +141,6 @@ bool App::event(QEvent *event) {
 	}
 }
 
-QWindow *App::topWindow() const {
-	return d->main;
-}
-
 QStringList App::devices() const {
 	return d->helper.devices();
 }
@@ -186,7 +181,7 @@ void App::onMessageReceived(const QString &message) {
 		if (arg.name == _L("wake-up")) {
 			d->main->setVisible(true);
 			d->main->raise();
-			d->main->requestActivate();
+			d->main->activateWindow();
 		} else if (arg.name == _L("open")) {
 			const Mrl mrl(arg.value);
 			if (!mrl.isEmpty() && d->main)
