@@ -32,7 +32,7 @@ macx {
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
-    QT += dbus gui-private
+    QT += dbus x11extras
     QMAKE_CC = "gcc -std=c99 -w"
     QMAKE_CXXFLAGS += -std=c++11
     TARGET = cmplayer
@@ -55,10 +55,6 @@ HEADERS += playengine.hpp \
     global.hpp \
     menu.hpp \
     colorproperty.hpp \
-    qtsingleapplication/qtsingleapplication.h \
-    qtsingleapplication/qtlockedfile.h \
-    qtsingleapplication/qtlocalpeer.h \
-    qtsingleapplication/qtsinglecoreapplication.h \
     translator.hpp \
     pref.hpp \
     videoframe.hpp \
@@ -120,12 +116,6 @@ SOURCES += main.cpp \
     global.cpp \
     menu.cpp \
     colorproperty.cpp \
-    qtsingleapplication/qtsingleapplication.cpp \
-    qtsingleapplication/qtlockedfile_win.cpp \
-    qtsingleapplication/qtlockedfile_unix.cpp \
-    qtsingleapplication/qtlockedfile.cpp \
-    qtsingleapplication/qtlocalpeer.cpp \
-    qtsingleapplication/qtsinglecoreapplication.cpp \
     translator.cpp \
     pref.cpp \
     videoframe.cpp \

@@ -2,7 +2,6 @@
 #define APP_HPP
 
 #include "stdafx.hpp"
-#include "qtsingleapplication/qtsingleapplication.h"
 
 class QUrl;		class Mrl;
 class MainWindow;	class QMenuBar;
@@ -23,7 +22,7 @@ struct Argument {
 };
 typedef QList<Argument> Arguments;
 
-class App : public QtSolution::QtSingleApplication {
+class App : public QApplication {
 	Q_OBJECT
 public:
 	App(int &argc, char **argv);
@@ -47,6 +46,10 @@ public:
 	void setScreensaverDisabled(bool disabled);
 	void setUnique(bool unique);
 	bool shutdown();
+public slots:
+	bool sendMessage(const QString &message, int timeout = 5000);
+signals:
+	void messageReceived(const QString &message);
 private slots:
 	void open(const QString &url);
 	void onMessageReceived(const QString &message);
@@ -61,5 +64,19 @@ private:
 };
 
 #define cApp (*static_cast<App*>(qApp))
+
+class LocalConnection : public QObject {
+	Q_OBJECT
+public:
+	LocalConnection(const QString &id, QObject *parent = 0);
+	~LocalConnection();
+	bool runServer();
+	bool sendMessage(const QString &message, int timeout);
+signals:
+	void messageReceived(const QString &message);
+private:
+	struct Data;
+	Data *d;
+};
 
 #endif // APPLICATION_HPP

@@ -6,8 +6,7 @@
 #include <QtDBus/QDBusMessage>
 #include <QtDBus/QDBusInterface>
 #include <QtDBus/QDBusReply>
-#include <qpa/qplatformnativeinterface.h>
-#include <qpa/qplatformwindow.h>
+#include <QtX11Extras/QX11Info>
 extern "C" {
 #include <xcb/xcb.h>
 #include <xcb/xcb_icccm.h>
@@ -20,9 +19,9 @@ struct XWindowInfo {
 	XWindowInfo() {}
 	XWindowInfo(QWindow *w) {
 		window = w->winId();
-		connection = static_cast<xcb_connection_t*>(cApp.platformNativeInterface()->nativeResourceForWindow("connection", w));
-		display = static_cast<Display*>(cApp.platformNativeInterface()->nativeResourceForWindow("display", w));
-		root = getRoot(connection, window);
+		connection = QX11Info::connection();
+		display = QX11Info::display();
+		root = QX11Info::appRootWindow();
 		netWmStateAtom = getAtom(connection, "_NET_WM_STATE");
 		netWmStateAboveAtom = getAtom(connection, "_NET_WM_STATE_ABOVE");
 		netWmStateStaysOnTopAtom = getAtom(connection, "_NET_WM_STATE_STAYS_ON_TOP");
@@ -41,12 +40,6 @@ struct XWindowInfo {
 			return 0;
 		auto ret = reply->atom;
 		free(reply);
-		return ret;
-	}
-	static xcb_window_t getRoot(xcb_connection_t *conn, xcb_window_t window) {
-		auto geo = xcb_get_geometry_reply(conn, xcb_get_geometry(conn, window), nullptr);
-		auto ret = geo->root;
-		free(geo);
 		return ret;
 	}
 };

@@ -26,10 +26,17 @@ struct App::Data {
 #elif defined(Q_OS_LINUX)
 	AppX11 helper;
 #endif
+	LocalConnection connection = {"net.xylosper.CMPlayer", nullptr};
 };
 
 App::App(int &argc, char **argv)
-: QtSingleApplication("net.xylosper.CMPlayer", argc, argv), d(new Data) {
+: QApplication(argc, argv), d(new Data) {
+	connect(&d->connection, &LocalConnection::messageReceived, this, &App::messageReceived);
+
+	//	actWin = 0;
+	//	peer = new LocalConnection(_L("net.xylosper.CMPlayer"), this);
+	//	connect(peer, SIGNAL(messageReceived(const QString&)), SIGNAL(messageReceived(const QString&)));
+
 	setOrganizationName("xylosper");
 	setOrganizationDomain("xylosper.net");
 	setApplicationName("CMPlayer");
@@ -78,7 +85,6 @@ void App::setMainWindow(MainWindow *mw) {
 #ifndef Q_OS_MAC
 	d->main->setIcon(defaultIcon());
 #endif
-	setActivationWindow(d->main, false);
 }
 
 void App::setFileName(const QString &fileName) {
@@ -177,9 +183,11 @@ void App::open(const QString &mrl) {
 void App::onMessageReceived(const QString &message) {
 	const auto args = parse(message.split("[:sep:]"));
 	for (const Argument &arg : args) {
-		if (arg.name == _L("wake-up"))
-			activateWindow();
-		else if (arg.name == _L("open")) {
+		if (arg.name == _L("wake-up")) {
+			d->main->setVisible(true);
+			d->main->raise();
+			d->main->requestActivate();
+		} else if (arg.name == _L("open")) {
 			const Mrl mrl(arg.value);
 			if (!mrl.isEmpty() && d->main)
 				d->main->openMrl(mrl);
@@ -190,6 +198,10 @@ void App::onMessageReceived(const QString &message) {
 			}
 		}
 	}
+}
+
+bool App::sendMessage(const QString &message, int timeout) {
+	return d->connection.sendMessage(message, timeout);
 }
 
 QStringList App::availableStyleNames() const {
@@ -224,4 +236,107 @@ bool App::isUnique() const {
 
 bool App::shutdown() {
 	return d->helper.shutdown();
+}
+
+/**************************************************************************************/
+
+#if defined(Q_OS_WIN)
+#include <QtCore/QLibrary>
+#include <QtCore/qt_windows.h>
+typedef BOOL(WINAPI*PProcessIdToSessionId)(DWORD,DWORD*);
+static PProcessIdToSessionId pProcessIdToSessionId = 0;
+#endif
+#if defined(Q_OS_UNIX)
+#include <time.h>
+#include <unistd.h>
+#endif
+
+static int getUid() {
+#if defined(Q_OS_WIN)
+	if (!pProcessIdToSessionId) {
+		QLibrary lib("kernel32");
+		pProcessIdToSessionId = (PProcessIdToSessionId)lib.resolve("ProcessIdToSessionId");
+	}
+	if (pProcessIdToSessionId) {
+		DWORD sessionId = 0;
+		pProcessIdToSessionId(GetCurrentProcessId(), &sessionId);
+		return sessionId;
+	}
+#else
+	return ::getuid();
+#endif
+}
+
+struct LocalConnection::Data {
+	QString id, socket;
+	QLocalServer server;
+	QLockFile *lock = nullptr;
+};
+
+constexpr static const char* ack = "ack";
+
+LocalConnection::LocalConnection(const QString &id, QObject* parent)
+: QObject(parent), d(new Data) {
+	d->id = id;
+	d->socket = id % '-' % QString::number(getUid(), 16);
+	d->lock = new QLockFile(QDir::temp().path() % '/' % d->socket % "-lock");
+	d->lock->setStaleLockTime(0);
+}
+
+LocalConnection::~LocalConnection() {
+	delete d->lock;
+	delete d;
+}
+
+bool LocalConnection::runServer() {
+	if (d->lock->isLocked())
+		return true;
+	if (!d->lock->tryLock() && !(d->lock->removeStaleLockFile() && d->lock->tryLock()))
+		return false;
+	if (!d->server.listen(d->socket)) {
+		QFile::remove(QDir::temp().path() % '/' % d->socket);
+		if (!d->server.listen(d->socket))
+			return false;
+	}
+	connect(&d->server, &QLocalServer::newConnection, [this]() {
+		QScopedPointer<QLocalSocket> socket(d->server.nextPendingConnection());
+		if (socket) {
+			while (socket->bytesAvailable() < (int)sizeof(quint32))
+				socket->waitForReadyRead();
+			QDataStream in(socket.data());
+			QByteArray msg; quint32 left;
+			in >> left;
+			msg.resize(left);
+			char *buffer = msg.data();
+			do {
+				const int read = in.readRawData(buffer, left);
+				if (read < 0)
+					return;
+				left -= read;
+				buffer += read;
+			} while (left > 0 && socket->waitForReadyRead(5000));
+			QString message(QString::fromUtf8(msg));
+			socket->write(ack, qstrlen(ack));
+			socket->waitForBytesWritten(1000);
+			socket->close();
+			emit messageReceived(message); //### (might take a long time to return)
+		}
+	});
+	return true;
+}
+
+bool LocalConnection::sendMessage(const QString &message, int timeout) {
+	if (runServer())
+		return false;
+	QLocalSocket socket;
+	socket.connectToServer(d->socket);
+	if (!socket.waitForConnected(timeout))
+		return false;
+	const auto msg = message.toUtf8();
+	QDataStream out(&socket);
+	out.writeBytes(msg.constData(), msg.size());
+	bool res = socket.waitForBytesWritten(timeout);
+	res &= socket.waitForReadyRead(timeout);   // wait for ack
+	res &= (socket.read(qstrlen(ack)) == ack);
+	return res;
 }
