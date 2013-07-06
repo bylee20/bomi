@@ -19,10 +19,7 @@ Item {
 			else
 				controls.y = 0
 		}
-		NumberAnimation {
-			id: sliding; target: controls; property: "y"
-			duration: 200; from: 0; to: controls.height
-		}
+		NumberAnimation { id: sliding; target: controls; property: "y"; duration: 200; from: 0; to: controls.height }
 	}
 	Component.onCompleted: {engine.parent = root; controls.parent = catcher}
 }

@@ -218,7 +218,6 @@ void MpOsdItem::setFrameSize(const QSize &size) {
 	}
 }
 
-
 void MpOsdItem::draw(sub_bitmaps *imgs) {
 	d->callback = true;
 	if (imgs->num_parts <= 0 || imgs->format != SUBBITMAP_RGBA)
