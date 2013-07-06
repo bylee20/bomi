@@ -8,6 +8,7 @@ class Record;
 class Mrl {
 public:
 	Mrl() {}
+	Mrl(const QUrl &url);
 	Mrl(const QString &location);
 	Mrl(const Mrl &other): m_loc(other.m_loc) {}
 	bool operator == (const Mrl &rhs) const {return m_loc == rhs.m_loc;}

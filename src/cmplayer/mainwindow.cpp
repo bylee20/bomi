@@ -123,9 +123,6 @@ struct MainWindow::Data {
 		changingSub = false;
 	}
 
-
-
-
 	void updateWindowSizeState() const {
 		const auto state = p->windowState();
 		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible())
@@ -216,6 +213,7 @@ void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
 MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenButtonHint | Qt::Window), d(new Data(this)) {
+	setAcceptDrops(true);
 	d->view = new MainView(this);
 	auto widget = createWindowContainer(d->view, this);
 	auto l = new QVBoxLayout;
@@ -1061,23 +1059,22 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
 }
 
 void MainWindow::dropEvent(QDropEvent *event) {
-	auto urls = event->mimeData()->urls();
+	const auto urls = event->mimeData()->urls();
 	if (!event->mimeData()->hasUrls() || urls.isEmpty())
 		return;
-	qSort(urls);
 	Playlist playlist;
 	QStringList subList;
 	for (int i=0; i<urls.size(); ++i) {
 		const QString suffix = QFileInfo(urls[i].path()).suffix().toLower();
 		if (Info::playlistExt().contains(suffix)) {
 			Playlist list;
-			list.load(urls[i].toString());
+			list.load(urls[i]);
 			playlist += list;
 		} else if (Info::subtitleExt().contains(suffix)) {
 			subList << urls[i].toLocalFile();
 		} else if (Info::videoExt().contains(suffix)
 				|| Info::audioExt().contains(suffix)) {
-			playlist.append(urls[i].toString());
+			playlist.append(urls[i]);
 		}
 	}
 	if (!playlist.isEmpty()) {

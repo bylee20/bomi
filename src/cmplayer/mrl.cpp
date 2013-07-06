@@ -1,12 +1,18 @@
 #include "mrl.hpp"
 #include "info.hpp"
 
+Mrl::Mrl(const QUrl &url) {
+	if (url.isLocalFile())
+		m_loc = _L("file://") % url.toLocalFile();
+	else
+		m_loc = url.toString();
+}
+
 Mrl::Mrl(const QString &location) {
 	const int idx = location.indexOf("://");
-	if (idx < 0) {
-		m_loc = _L("file://");
-		m_loc += location;
-	} else
+	if (idx < 0)
+		m_loc = _L("file://") % location;
+	else
 		m_loc = location;
 }
 
