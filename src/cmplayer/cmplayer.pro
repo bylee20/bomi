@@ -195,7 +195,6 @@ OTHER_FILES += \
     skins/simple/cmplayer.qml \
     imports/CMPlayerSkin/PlaylistDock.qml \
     imports/CMPlayerSkin/HistoryDock.qml \
-    imports/CMPlayerSkin/HorizontalLayout.qml \
     imports/CMPlayerSkin/Button.qml \
     imports/CMPlayerSkin/Player.qml \
     imports/CMPlayerSkin/MouseCatcher.qml \

@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtQuick.Layouts 1.0
 import CMPlayerSkin 1.0 as Skin
 import CMPlayerCore 1.0 as Core
 
@@ -43,25 +44,25 @@ Skin.AppWithFloating {
 		}
 		Column {
 			id: inner; width: parent.width-50; anchors.centerIn: parent; spacing: 5
-			Skin.HorizontalLayout {
-				id: texts; width: parent.width; height: 15; fillers: [name]; spacing: 5
-				property int vAlignment: Text.AlignBottom
-				Skin.TimeText { id: position; msecs: engine.time; verticalAlignment: texts.vAlignment }
+			RowLayout {
+				id: texts; width: parent.width; height: 15; spacing: 5
+				Skin.TimeText { id: position; msecs: engine.time; Layout.alignment: Qt.AlignBottom }
 				Text {
 					id: name
+					Layout.alignment: Qt.AlignBottom; Layout.fillWidth: true
 					text: engine.media.name; elide: Text.ElideMiddle;
 					color: "white"; font { bold: true; pixelSize: 12 }
-					horizontalAlignment: Text.AlignHCenter; verticalAlignment: texts.vAlignment
+					horizontalAlignment: Text.AlignHCenter
 				}
-				Skin.TimeText { id: duration; msecs: engine.duration; verticalAlignment: texts.vAlignment}
+				Skin.TimeText { id: duration; msecs: engine.duration; Layout.alignment: Qt.AlignBottom }
 			}
-			Skin.HorizontalLayout {
-				id: seekbarwrapper; width: parent.width; height: 10; fillers: [seekbar]; spacing: 10
-				Skin.SeekControl { id: seekbar; component: slider; engine: app.engine }
+			RowLayout {
+				id: seekbarwrapper; width: parent.width; height: 10; spacing: 10
+				Skin.SeekControl { id: seekbar; component: slider; engine: app.engine; Layout.fillWidth: true }
 			}
 			Item {
 				id: buttons; width: parent.width; height: 22
-				Skin.HorizontalLayout {
+				RowLayout {
 					height: parent.height*0.75; anchors.verticalCenter: parent.verticalCenter; spacing: 3
 					Skin.Button {
 						id: mute; checked: engine.muted; width: parent.height; height: parent.height
@@ -110,7 +111,7 @@ Skin.AppWithFloating {
 			onClicked: checked = !checked
 			states: State {
 				name: "toggled"; when: toggler.checked
-				PropertyChanges { target:texts; opacity: 0.0; vAlignment: Text.AlignTop; height: 0.0 }
+				PropertyChanges { target:texts; opacity: 0.0; height: 0.0 }
 				PropertyChanges { target:buttons; opacity: 0.0; height: 0.0 }
 				PropertyChanges { target:inner; spacing: 0 }
 				PropertyChanges { target:bg; border.bottom: 15 } // to adjust bg center line

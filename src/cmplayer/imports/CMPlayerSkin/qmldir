@@ -10,7 +10,6 @@ PlaylistView		1.0 PlaylistView.qml
 PlaylistDock		1.0 PlaylistDock.qml
 HistoryView		1.0 HistoryView.qml
 HistoryDock		1.0 HistoryDock.qml
-HorizontalLayout	1.0 HorizontalLayout.qml
 Button			1.0 Button.qml
 Player			1.0 Player.qml
 MouseCatcher		1.0 MouseCatcher.qml

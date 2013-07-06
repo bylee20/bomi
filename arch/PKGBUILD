@@ -8,8 +8,8 @@ pkgdesc="A powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
 url="https://code.google.com/p/$pkgname"
 license=('GPL')
-depends=('qt5-base' 'qt5-declarative' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'yasm' 'harfbuzz' 'enca' 'fribidi' 'libass')
-makedepends=('git' 'mesa' 'gcc')
+depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'harfbuzz' 'fribidi' 'libass')
+makedepends=('git' 'mesa' 'gcc' 'yasm')
 source=(https://github.com/xylosper/cmplayer/releases/0.7.5/1066/cmplayer-$pkgver.tar.gz)
 md5sums=('80f9703418e040972b897036aab8e695')
 

@@ -96,16 +96,16 @@
 
 //FavoritesView::FavoritesView(PlayEngine *engine, QWidget *parent)
 //: QWidget(parent), d(new Data) {
-//	setStyleSheet("\
-//		QTreeView::branch:has-children:!has-siblings:closed,\
-//		QTreeView::branch:closed:has-children:has-siblings {\
-//			border-image: none;\
-//			image: url(:/img/folder.png);\
-//		}\
-//		QTreeView::branch:open:has-children:!has-siblings,\
-//		QTreeView::branch:open:has-children:has-siblings {\
-//			border-image: none;\
-//			image: url(:/img/document-open-folder.png);\
+//	setStyleSheet("
+//		QTreeView::branch:has-children:!has-siblings:closed,
+//		QTreeView::branch:closed:has-children:has-siblings {
+//			border-image: none;
+//			image: url(:/img/folder.png);
+//		}
+//		QTreeView::branch:open:has-children:!has-siblings,
+//		QTreeView::branch:open:has-children:has-siblings {
+//			border-image: none;
+//			image: url(:/img/document-open-folder.png);
 //		}"
 //	);
 //	setContextMenuPolicy(Qt::CustomContextMenu);

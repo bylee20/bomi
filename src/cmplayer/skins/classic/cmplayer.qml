@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtQuick.Layouts 1.0
 import CMPlayerCore 1.0 as Core
 import CMPlayerSkin 1.0 as Skin
 
@@ -61,9 +62,9 @@ Skin.AppWithDock {
 			readonly property alias h: bg.height
 			source: "bg.png"
 			width: parent.width; height: 35
-			Skin.HorizontalLayout {
-				anchors {fill: parent} spacing: 1; paddings: 2; bottomPadding: 1; fillers: [right]
-				FramedButton { id: pause; width: height; action: "play/pause"; icon: app.engine.playing ? "pause.png" : "play.png" }
+			RowLayout {
+				anchors.margins: 2; anchors.fill: parent; spacing: 1
+				FramedButton { id: pause; width: height; height: parent.height; action: "play/pause"; icon: app.engine.playing ? "pause.png" : "play.png" }
 				Grid {
 					id: grid; columns: 2; width: h*2; readonly property real h: pause.height/2
 					FramedButton { id: backward; width: grid.h; height: grid.h; action: "play/seek/backward1"; icon: "backward.png" }
@@ -73,46 +74,43 @@ Skin.AppWithDock {
 				}
 				Column {
 					id: right
-					spacing: 1
+					Layout.fillWidth: true
+					height: parent.height
+					spacing: 2
 					Rectangle {
 						id: panel
-						width: parent.width
-						border {width: 1; color: "#aaa"}
-						height: 20
-						radius: 3
+						width: parent.width; height: 20; radius: 3; border {width: 1; color: "#aaa"}
 						gradient: Gradient {
 							GradientStop { position: 0.0; color: "#111" }
 							GradientStop { position: 0.1; color: "#6ad" }
 							GradientStop { position: 0.8; color: "#6ad" }
 							GradientStop { position: 1.0; color: "#fff" }
 						}
-						Skin.HorizontalLayout {
-							anchors.fill: parent; fillers: [medianame]; paddings: 3
+						RowLayout {
+							anchors.margins: 3; anchors.fill: parent; spacing: 0
 							Text {
 								id: medianumber
-								width: contentWidth; verticalAlignment: Text.AlignVCenter
+								verticalAlignment: Text.AlignVCenter
 								text: "[%1/%2](%3) ".arg(playlist.loaded+1).arg(playlist.count).arg(app.engine.stateText)
 								font { pixelSize: 11; family: Core.Util.monospace }
 							}
 							Text {
 								id: medianame
+								Layout.fillWidth: true
 								text: app.engine.media.name; elide: Text.ElideMiddle
 								font { pixelSize: 11; family: Core.Util.monospace }
 								verticalAlignment: Text.AlignVCenter
 							}
-							Row {
-								width: childrenRect.width
-								Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: app.engine.time }
-								Skin.TimeText { color: "black"; font.pixelSize: 11; text: "/" }
-								Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: app.engine.duration }
-							}
+							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: app.engine.time }
+							Skin.TimeText { color: "black"; font.pixelSize: 11; text: "/" }
+							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: app.engine.duration }
 						}
 					}
-					Skin.HorizontalLayout {
-						width: parent.width; height: pause.height-1-panel.height; fillers: [timeslider]; spacing: 1
-						Skin.SeekControl { id: timeslider; engine: app.engine; component: slider }
+					RowLayout {
+						width: parent.width; spacing: 1; height: 10
+						Skin.SeekControl { id: timeslider; engine: app.engine; component: slider; Layout.fillWidth: true }
 						FramedButton {
-							id: mute; width: height; action: "audio/mute"
+							id: mute; width: height; height: parent.height; action: "audio/mute"
 							icon: app.engine.muted ? "speaker-off.png" : "speaker-on.png"
 						}
 						Skin.VolumeControl { id: volumeslider; width: 70; engine: app.engine; component: slider }
