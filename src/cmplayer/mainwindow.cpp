@@ -654,7 +654,7 @@ void MainWindow::connectMenus() {
 	auto toggleItem = [this] (const char *name) {
 		QObject *item = nullptr;
 		if (d->player && (item = d->findItem<QObject*>(name)))
-			item->setProperty("visible", !item->property("visible").toBool());
+			item->setProperty("show", !item->property("show").toBool());
 	};
 	auto selectedIndex = [this] (const char *name) {
 		QObject *item = nullptr;

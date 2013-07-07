@@ -186,7 +186,7 @@ private:
 struct MpOsdItem::Data {
 	OsdBitmap osd;
 	QMutex mutex;
-	bool callback = false, redraw = false, dirtyGeometry = true;
+	bool show = false, redraw = false, dirtyGeometry = true;
 	sub_bitmap_format shaderFormat = SUBBITMAP_INDEXED;
 	QOpenGLFramebufferObject *fbo = nullptr;
 	QSize frameSize = {1, 1};
@@ -219,7 +219,7 @@ void MpOsdItem::setFrameSize(const QSize &size) {
 }
 
 void MpOsdItem::draw(sub_bitmaps *imgs) {
-	d->callback = true;
+	d->show = true;
 	if (imgs->num_parts <= 0 || imgs->format != SUBBITMAP_RGBA)
 		return;
 	if (d->osd.id == imgs->bitmap_id && d->osd.pos == imgs->bitmap_pos_id)
@@ -251,9 +251,9 @@ void MpOsdItem::draw(QImage &frame) {
 }
 
 void MpOsdItem::present() {
-	if (d->callback) {
+	if (d->show) {
 		qApp->postEvent(this, new QEvent((QEvent::Type)(ShowEvent)));
-		d->callback = false;
+		d->show = false;
 	} else
 		qApp->postEvent(this, new QEvent((QEvent::Type)(HideEvent)));
 }

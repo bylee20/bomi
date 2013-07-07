@@ -10,6 +10,7 @@ Item {
 	property string fontFamily: Util.monospace
 	readonly property int fontSize: parent.height*0.03;
 	property var player
+	property alias show: wrapper.visible
 	onPlayerChanged: {
 		if (player) {
 			player.audioChanged.connect(audioinfo.update)

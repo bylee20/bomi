@@ -40,9 +40,10 @@ public:
 	void merge(const Playlist &playlist);
 	QHash<int, QByteArray> roleNames() const override;
 	Q_INVOKABLE void play(int row);
-	Q_INVOKABLE QString name(int row) const {return m_list[row].displayName();}
-	Q_INVOKABLE QString location(int row) const {return m_list[row].toString();}
+	Q_INVOKABLE QString name(int row) const {return m_list.value(row).displayName();}
+	Q_INVOKABLE QString location(int row) const {return m_list.value(row).toString();}
 	Q_INVOKABLE QString number(int row) const;
+	Q_INVOKABLE bool isLoaded(int row) const {return m_loaded == row;}
 	QChar fillChar() const {return m_fill;}
 	void setFillChar(QChar c) {if (_Change(m_fill, c)) emit fillCharChanged();}
 public slots:

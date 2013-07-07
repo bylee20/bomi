@@ -46,6 +46,22 @@ HistoryModel::RoleHash HistoryModel::roleNames() const {
 	return hash;
 }
 
+QVariant HistoryModel::headerData(int section, Qt::Orientation orientation, int role) const {
+	if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
+		return QVariant();
+	switch (section) {
+	case Name:
+		return tr("Name");
+	case LatestPlay:
+		return tr("Latest Playback");
+	case LocationRole:
+		return tr("Location");
+	default:
+		return QVariant();
+	}
+	return QVariant();
+}
+
 void HistoryModel::setStarted(Mrl mrl) {
 	if (!m_rememberImage && mrl.isImage())
 		return;

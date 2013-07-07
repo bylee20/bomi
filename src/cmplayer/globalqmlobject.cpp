@@ -13,11 +13,17 @@ void SettingsObject::open(const QString &name) {
 }
 
 bool UtilObject::m_fullScreen = false;
-bool UtilObject::m_filterDoubleClick = false;
-bool UtilObject::m_pressed = false;
 bool UtilObject::m_cursor = true;
 
+static QMap<UtilObject::Event, bool> createFilters() {
+	QMap<UtilObject::Event, bool> ret;
+	for (int i=0; i<UtilObject::EventCount; ++i)
+		ret[(UtilObject::Event)i] = false;
+	return ret;
+}
+
 QLinkedList<UtilObject*> UtilObject::objs;
+QMap<UtilObject::Event, bool> UtilObject::m_triggered = createFilters();
 
 UtilObject::UtilObject(QObject *parent)
 : QObject(parent) {

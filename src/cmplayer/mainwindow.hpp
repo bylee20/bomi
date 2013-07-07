@@ -76,30 +76,41 @@ public:
 	}
 private:
 	void mouseDoubleClickEvent(QMouseEvent *event) {
-		UtilObject::resetDoubleClickFilter();
+//		UtilObject::resetFilter(UtilObject::MouseDoubleClick);
+		UtilObject::resetTriggered(UtilObject::MouseDoubleClick);
 		QQuickView::mouseDoubleClickEvent(event);
-		if (!UtilObject::isDoubleClickFiltered())
+		if (UtilObject::isTriggered(UtilObject::MouseDoubleClick))
 			m_main->mouseDoubleClickEvent(event);
 	}
 	void mousePressEvent(QMouseEvent *event) {
+		UtilObject::resetTriggered(UtilObject::MousePress);
 		QQuickView::mousePressEvent(event);
-		m_main->mousePressEvent(event);
+		if (UtilObject::isTriggered(UtilObject::MousePress))
+			m_main->mousePressEvent(event);
 	}
 	void mouseReleaseEvent(QMouseEvent *event) {
+//		UtilObject::resetFilter(UtilObject::MouseRelease);
 		QQuickView::mouseReleaseEvent(event);
-		m_main->mouseReleaseEvent(event);
+//		if (!UtilObject::isFiltered(UtilObject::MouseRelease))
+			m_main->mouseReleaseEvent(event);
 	}
 	void mouseMoveEvent(QMouseEvent *event) {
+//		UtilObject::resetFilter(UtilObject::MouseMove);
 		QQuickView::mouseMoveEvent(event);
-		m_main->mouseMoveEvent(event);
+//		if (!UtilObject::isFiltered(UtilObject::MouseMove))
+			m_main->mouseMoveEvent(event);
 	}
 	void keyPressEvent(QKeyEvent *event) {
+//		UtilObject::resetFilter(UtilObject::KeyPress);
 		QQuickView::keyPressEvent(event);
-		m_main->keyPressEvent(event);
+//		if (!UtilObject::isFiltered(UtilObject::KeyPress))
+			m_main->keyPressEvent(event);
 	}
 	void wheelEvent(QWheelEvent *event) {
+		UtilObject::resetTriggered(UtilObject::Wheel);
 		QQuickView::wheelEvent(event);
-		m_main->wheelEvent(event);
+		if (UtilObject::isTriggered(UtilObject::Wheel))
+			m_main->wheelEvent(event);
 	}
 
 	MainWindow *m_main = nullptr;

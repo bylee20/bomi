@@ -9,6 +9,21 @@ Item {
 	Binding { target: engine; property: "width"; value: root.width }
 	Binding { target: engine; property: "height"; value: Util.fullScreen ? root.height : root.height - controls.height }
 	Connections { target: Util; onFullScreenChanged: catcher.update() }
+
+	MouseArea {
+		anchors.fill: parent
+		acceptedButtons: Qt.AllButtons
+		onPressed: {
+			Util.trigger(Util.MousePress)
+		}
+		onWheel: {
+			Util.trigger(Util.Wheel)
+		}
+		onDoubleClicked: {
+			Util.trigger(Util.MouseDoubleClick)
+		}
+	}
+
 	MouseCatcher {
 		id: catcher; z: engine.z + 1
 		width: parent.width; height: controls.height; anchors.bottom: parent.bottom

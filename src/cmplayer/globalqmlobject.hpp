@@ -36,18 +36,24 @@ class UtilObject : public QObject {
 	Q_PROPERTY(bool cursorVisible READ isCursorVisible NOTIFY cursorVisibleChanged)
 	Q_PROPERTY(QString tr READ tr NOTIFY trChanged)
 	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
+	Q_ENUMS(Event)
 public:
+	enum Event {MouseDoubleClick = 0, MousePress, MouseRelease, MouseMove, Wheel, KeyPress, EventCount};
 	UtilObject(QObject *parent = nullptr);
 	Q_INVOKABLE double textWidth(const QString &text, int size);
 	Q_INVOKABLE double textWidth(const QString &text, int size, const QString &family);
 	Q_INVOKABLE QString msecToString(int ms) {return Pch::__null_time.addSecs(qRound((double)ms*1e-3)).toString(_L("h:mm:ss"));}
-	Q_INVOKABLE void filterDoubleClick() {m_filterDoubleClick = true;}
 	Q_INVOKABLE QPointF mousePos(QQuickItem *item);
 	Q_INVOKABLE QPointF mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) const;
 	Q_INVOKABLE bool execute(const QString &key);
 	Q_INVOKABLE double bound(double min, double v, double max) const {return qBound(min, v, max);}
-	static void resetDoubleClickFilter() {m_filterDoubleClick = false;}
-	static bool isDoubleClickFiltered() {return m_filterDoubleClick;}
+
+	Q_INVOKABLE void trigger(Event event) {m_triggered[event] = true;}
+	static bool isTriggered(Event event) {return m_triggered[event];}
+	static void resetTriggered(Event event) {m_triggered[event] = false;}
+	static void resetFilter(Event event) {m_triggered[event] = false;}
+	static bool isFiltered(Event event) {return m_triggered[event];}
+	Q_INVOKABLE void filter(Event event) {m_triggered[event] = true;}
 	static bool isCursorVisible() {return m_cursor;}
 	static void setCursorVisible(bool visible) {if (_Change(m_cursor, visible)) for (auto obj : objs) emit obj->cursorVisibleChanged(m_cursor);}
 	static void setMouseReleased(const QPointF &scenePos) {	for (auto obj : objs) emit obj->mouseReleased(scenePos); }
@@ -74,11 +80,10 @@ private:
 		if (event->type() == QEvent::LanguageChange)
 			emit trChanged();
 	}
-	static bool m_fullScreen;
+	static bool m_fullScreen, m_cursor;
 //	static UtilObject &get();
-	static bool m_filterDoubleClick, m_pressed, m_cursor;
 	static QLinkedList<UtilObject*> objs;
-
+	static QMap<Event, bool> m_triggered;
 };
 
 #endif // GLOBALQMLOBJECT_HPP

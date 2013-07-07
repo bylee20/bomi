@@ -186,10 +186,9 @@ OTHER_FILES += \
     imports/CMPlayerSkin/TextOsd.qml \
     imports/CMPlayerSkin/ScrollBar.qml \
     imports/CMPlayerSkin/ProgressOsd.qml \
-    imports/CMPlayerSkin/PlaylistView.qml \
+    imports/CMPlayerSkin/PlayInfoView.qml \
     imports/CMPlayerSkin/Osd.qml \
     imports/CMPlayerSkin/Logo.qml \
-    imports/CMPlayerSkin/HistoryView.qml \
     imports/CMPlayerSkin/FlickableListView.qml \
     imports/CMPlayerSkin/ColumnHeader.qml \
     skins/simple/cmplayer.qml \
@@ -202,7 +201,6 @@ OTHER_FILES += \
     skins/classic/FramedButton.qml \
     skins/classic/cmplayer.qml \
     skins/modern/cmplayer.qml \
-    imports/CMPlayerSkin/PlayInfoView.qml \
     emptyskin.qml \
     imports/CMPlayerSkin/AppWithFloating.qml \
     imports/CMPlayerSkin/Slider.qml \
