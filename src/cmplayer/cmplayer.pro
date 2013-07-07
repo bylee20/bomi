@@ -184,13 +184,10 @@ FORMS += \
 OTHER_FILES += \
     imports/CMPlayerSkin/qmldir \
     imports/CMPlayerSkin/TextOsd.qml \
-    imports/CMPlayerSkin/ScrollBar.qml \
     imports/CMPlayerSkin/ProgressOsd.qml \
     imports/CMPlayerSkin/PlayInfoView.qml \
     imports/CMPlayerSkin/Osd.qml \
     imports/CMPlayerSkin/Logo.qml \
-    imports/CMPlayerSkin/FlickableListView.qml \
-    imports/CMPlayerSkin/ColumnHeader.qml \
     skins/simple/cmplayer.qml \
     imports/CMPlayerSkin/PlaylistDock.qml \
     imports/CMPlayerSkin/HistoryDock.qml \

@@ -5,6 +5,7 @@ import QtQuick.Controls.Styles 1.0
 
 Item {
 	id: dock
+	property alias selectedIndex: table.currentRow
 	readonly property real widthHint: column.width + table.margins*2 + table.scrollArea
 	property bool show: false
 	x: parent.width; y: 20
@@ -65,8 +66,8 @@ Item {
 
 		onRowCountChanged:column.width = contentWidth()
 		property Gradient __loadedGradient : Gradient {
-			GradientStop {position: 0.0; color: "#9af"}
-			GradientStop {position: 1.0; color: "#fff"}
+			GradientStop {position: 0.0; color: "#5af"}
+			GradientStop {position: 1.0; color: "#8cf"}
 		}
 		TableViewColumn { role: "name"; width: 0; id: column }
 		rowDelegate: Rectangle {

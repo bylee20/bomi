@@ -15,20 +15,14 @@ Core.Engine {
 		PlaylistDock {
 			id: right
 			objectName: "playlist"
-//			visible: true
-			width: Math.min(widthHint, player.width-(left.x+left.width))
-//			property bool show: false
+			width: Math.min(widthHint, player.width-(left.x+left.width)-20)
 		}
 		HistoryDock {
 			id: left
 			objectName: "history"
-//			visible: true
 			width: Math.min(widthHint, player.width*0.4)
-//			property bool show: false
 		}
 	}
-
 	onMessageRequested: { msgosd.text = message; msgosd.show(); }
 	onSought: {timeline.show();}
-
 }
