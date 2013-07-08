@@ -149,7 +149,7 @@ Shortcuts Pref::preset(ShortcutPreset id) {
 
 void Pref::save() const {
 	Record r(PREF_GROUP);
-#define WRITE(a) r.write(a, #a);
+#define WRITE(a) r.write(a, #a)
 	WRITE(remember_stopped);
 	WRITE(ask_record_found);
 	WRITE(pause_minimized);
@@ -206,6 +206,9 @@ void Pref::save() const {
 	WRITE(normalizer_max);
 
 	WRITE(lion_style_fullscreen);
+
+	WRITE(show_logo);
+	WRITE(bg_color);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -285,6 +288,9 @@ void Pref::load() {
 	READ(normalizer_max);
 
 	READ(lion_style_fullscreen);
+
+	READ(show_logo);
+	READ(bg_color);
 #undef READ
 
 #define READ2(a) a.load(r, #a)

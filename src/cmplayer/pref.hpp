@@ -99,7 +99,7 @@ public:
 	bool hide_cursor = true, disable_screensaver = true, lion_style_fullscreen = false;
 	int hide_cursor_delay = 3000, image_duration = 0;
 	bool show_osd_on_action = true, show_osd_on_resized = true;
-
+	bool show_logo = true; QColor bg_color = Qt::black;
 	int blur_kern_c = 1, blur_kern_n = 2, blur_kern_d = 1;
 	int sharpen_kern_c = 5, sharpen_kern_n = -1, sharpen_kern_d = 0;
 	int remap_luma_min = 16, remap_luma_max = 235;

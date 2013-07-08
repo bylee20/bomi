@@ -1111,10 +1111,14 @@ void MainWindow::reloadSkin() {
 			item->setProperty("show", AppState::get().playlist_visible);
 		if (auto item = d->findItem("playinfo"))
 			item->setProperty("show", AppState::get().playinfo_visible);
+		if (auto item = d->findItem("logo")) {
+			item->setProperty("show", d->pref().show_logo);
+			item->setProperty("color", d->pref().bg_color);
+		}
 	}
 }
 
-void MainWindow::applyPref(bool skin) {
+void MainWindow::applyPref() {
 	int time = -1;
 	switch (d->engine.state()) {
 	case EnginePlaying:
@@ -1140,8 +1144,7 @@ void MainWindow::applyPref(bool skin) {
 	d->menu.syncTitle();
 	d->menu.resetKeyMap();
 
-	if (skin)
-		reloadSkin();
+	reloadSkin();
 	if (time >= 0)
 		d->engine.reload();
 

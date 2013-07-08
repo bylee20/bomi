@@ -272,6 +272,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Open"), d->ui.open_media, ":/img/document-open-32.png", general)->setSelected(true);
 	addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
 	addPage(tr("Behaviours"), d->ui.gen_behaviours, ":/img/preferences-system-session-services.png", general);
+	addPage(tr("Looks"), d->ui.gen_appearance, ":/img/preferences-desktop-theme-32.png", general);
 	addPage(tr("Application"), d->ui.application, ":/img/cmplayer-32.png", general);
 	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
 
@@ -284,7 +285,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Keyboard shorcuts"), d->ui.ui_shortcut, ":/img/preferences-desktop-keyboard-32.png", ui);
 	addPage(tr("Mouse actions"), d->ui.ui_mouse, ":/img/input-mouse-32.png", ui);
 	addPage(tr("Control step"), d->ui.ui_step, ":/img/run-build-32.png", ui);
-//	addPage(tr("Skin"), d->ui.ui_skin, ":/img/preferences-desktop-theme-32.png", ui);
+
 
 	d->open_media_from_file_manager = new PrefOpenMediaGroup(tr("Open from file manager"), d->ui.open_media);
 	d->open_media_by_drag_and_drop = new PrefOpenMediaGroup(tr("Open by drag-and-drop"), d->ui.open_media);
@@ -418,6 +419,11 @@ PrefDialog::PrefDialog(QWidget *parent)
 	d->ui.lion_style_fullscreen->hide();
 #endif
 	adjustSize();
+
+	auto group = new QButtonGroup(this);
+	group->addButton(d->ui.show_logo);
+	group->addButton(d->ui.fill_bg_color);
+	group->setExclusive(true);
 }
 
 PrefDialog::~PrefDialog() {
@@ -486,6 +492,11 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.remember_image->setChecked(p.remember_image);
 	d->ui.image_duration->setValue(p.image_duration/1000);
 	d->ui.lion_style_fullscreen->setChecked(p.lion_style_fullscreen);
+	if (p.show_logo)
+		d->ui.show_logo->setChecked(true);
+	else
+		d->ui.fill_bg_color->setChecked(true);
+	d->ui.bg_color->setColor(p.bg_color, false);
 
 	d->ui.enable_hwaccel->setChecked(p.enable_hwaccel);
 	for (auto codec : p.hwaccel_codecs) {
@@ -586,8 +597,10 @@ void PrefDialog::get(Pref &p) {
 	p.disable_screensaver = d->ui.disable_screensaver->isChecked();
 	p.remember_image = d->ui.remember_image->isChecked();
 	p.image_duration = qRound(d->ui.image_duration->value()*1000.0);
-
 	p.lion_style_fullscreen = d->ui.lion_style_fullscreen->isChecked();
+	p.show_logo = d->ui.show_logo->isChecked();
+	p.bg_color = d->ui.bg_color->color();
+
 	p.enable_hwaccel = d->ui.enable_hwaccel->isChecked();
 	p.hwaccel_codecs.clear();
 	for (auto it = d->HwAcc.begin(); it != d->HwAcc.end(); ++it) {
