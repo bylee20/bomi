@@ -7,18 +7,17 @@ Item {
 	id: dock
 	property alias selectedIndex: table.currentRow
 	readonly property real widthHint: column.width + table.margins*2 + table.scrollArea
+	readonly property real dest: dock.parent.width-dock.width+rect.radius
 	property bool show: false
-	x: parent.width; y: 20
-	visible: false
-	width: widthHint; height: parent.height-2*y
+	x: parent.width; y: 20; width: widthHint; height: parent.height-2*y; visible: false
 	Rectangle { id: rect; anchors.fill: parent; color: "gray"; opacity: 0.8; radius: 5 }
 	states: State {
 		name: "show"; when: dock.show
 		PropertyChanges { target: dock; visible: true }
-		PropertyChanges { target: dock; x: dock.parent.width-dock.width+rect.radius; explicit: true }
+		PropertyChanges { target: dock; x: dock.dest; explicit: true }
 	}
-	Connections { target: parent; onWidthChanged: {if (show) x = dock.parent.width-dock.width+rect.radius }}
-	onWidthChanged: {if (show) x = dock.parent.width-dock.width+rect.radius }
+	Connections { target: parent; onWidthChanged: { if (show) x = dock.dest } }
+	onWidthChanged: {if (show) x = dock.dest }
 	transitions: Transition {
 		reversible: true; to: "show"
 		SequentialAnimation {
@@ -32,7 +31,11 @@ Item {
 		x: table.x-1; y: table.y-1
 		width: table.width+2-(table.vScrollVisible? table.scrollArea : 0);
 		height: table.height+2-(table.hScrollVisible ? table.scrollArea : 0);
-		border { color: "black"; width: 1 } color: "transparent"
+		border { color: "black"; width: 1 }
+		gradient: Gradient {
+			GradientStop {position: 0.0; color: "#ccc"}
+			GradientStop {position: 1.0; color: "#333"}
+		}
 	}
 
 	TableView {
@@ -40,6 +43,8 @@ Item {
 
 		model: playlist
 		headerVisible: false
+
+		backgroundVisible: false
 
 		readonly property real scrollArea: 12
 		readonly property real margins: 15

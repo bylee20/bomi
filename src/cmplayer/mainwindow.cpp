@@ -165,9 +165,9 @@ struct MainWindow::Data {
 		for (auto copy : menu->copies())
 			connect(copy, &QMenu::aboutToShow, checkCurrentStreamAction);
 	}
-	template <typename T>
-	T findItem(const QString &name = QString()) {
-		return view->rootObject()->findChild<T>(name);
+	template <typename T = QObject>
+	T* findItem(const QString &name = QString()) {
+		return player ? view->rootObject()->findChild<T*>(name) : nullptr;
 	}
 
 	void commitData() {
@@ -364,7 +364,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenBut
 
 	d->dontShowMsg = false;
 
-	applyPref();
+//	applyPref();
 
 	d->engine.setPlaylist(d->recent.lastPlaylist());
 	d->engine.load(d->recent.lastMrl());
@@ -389,6 +389,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenBut
 //	connect(&cApp, &App::saveStateRequest, [this] (QSessionManager &session) {
 //		session.setRestartHint(QSessionManager::RestartIfRunning);
 //	});
+
+	QTimer::singleShot(1, this, SLOT(applyPref()));
 }
 
 MainWindow::~MainWindow() {
@@ -651,22 +653,21 @@ void MainWindow::connectMenus() {
 	});
 
 	Menu &tool = d->menu("tool");
-	auto toggleItem = [this] (const char *name) {
-		QObject *item = nullptr;
-		if (d->player && (item = d->findItem<QObject*>(name)))
-			item->setProperty("show", !item->property("show").toBool());
+	auto toggleTool = [this] (const char *name, bool &visible) {
+		visible = !visible;
+		if (auto item = d->findItem<QObject>(name))
+			item->setProperty("show", visible);
 	};
 	auto selectedIndex = [this] (const char *name) {
 		QObject *item = nullptr;
-		return d->player && (item = d->findItem<QObject*>(name)) ? item->property("selectedIndex").toInt() : -1;
+		return (item = d->findItem<QObject>(name)) ? item->property("selectedIndex").toInt() : -1;
 	};
 	auto selectIndex = [this] (const char *name, int idx) {
-		QObject *item = nullptr;
-		if (d->player && (item = d->findItem<QObject*>(name)))
+		if (auto item = d->findItem<QObject>(name))
 			item->setProperty("selectedIndex", idx);
 	};
 	auto &playlist = tool("playlist");
-	connect(playlist["toggle"], &QAction::triggered, [toggleItem] () {toggleItem("playlist");});
+	connect(playlist["toggle"], &QAction::triggered, [toggleTool] () {toggleTool("playlist", AppState::get().playlist_visible);});
 	connect(playlist["open"], &QAction::triggered, [this] () {
 		QString enc;
 		const QString filter = tr("Playlist") +' '+ Info::playlistExt().toFilter();
@@ -720,8 +721,8 @@ void MainWindow::connectMenus() {
 			selectIndex("playlist", idx+1);
 	});
 
-	connect(tool["history"], &QAction::triggered, [toggleItem] () {toggleItem("history");});
-	connect(tool["playinfo"], &QAction::triggered, [toggleItem] () {toggleItem("playinfo");});
+	connect(tool["history"], &QAction::triggered, [toggleTool] () {toggleTool("history", AppState::get().history_visible);});
+	connect(tool["playinfo"], &QAction::triggered, [toggleTool] () {toggleTool("playinfo", AppState::get().playinfo_visible);});
 	connect(tool["subtitle"], &QAction::triggered, [this] () {d->subtitleView->setVisible(!d->subtitleView->isVisible());});
 	connect(tool["pref"], &QAction::triggered, [this] () {
 		if (!d->prefDlg) {
@@ -949,7 +950,9 @@ void MainWindow::setVideoSize(double rate) {
 			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
 		const QSize size = (this->size() - d->renderer.size() + d->renderer.sizeHint()*qSqrt(rate)).toSize();
 		if (size != this->size()) {
-			setGeometry(QRect(pos(), size));
+			if (isMaximized())
+				showNormal();
+			resize(size);
 			int dx = 0;
 			const int rightDiff = desktop.width() - (x() + width());
 			if (rightDiff < 10) {
@@ -1099,12 +1102,19 @@ void MainWindow::reloadSkin() {
 		d->view->setSource(QUrl("qrc:/emptyskin.qml"));
 	}
 	if (!(d->player = qobject_cast<PlayerItem*>(d->view->rootObject())))
-		d->player = d->findItem<PlayerItem*>();
-	if (d->player)
+		d->player = d->view->rootObject()->findChild<PlayerItem*>();
+	if (d->player) {
 		d->player->plugTo(&d->engine);
+		if (auto item = d->findItem("history"))
+			item->setProperty("show", AppState::get().history_visible);
+		if (auto item = d->findItem("playlist"))
+			item->setProperty("show", AppState::get().playlist_visible);
+		if (auto item = d->findItem("playinfo"))
+			item->setProperty("show", AppState::get().playinfo_visible);
+	}
 }
 
-void MainWindow::applyPref() {
+void MainWindow::applyPref(bool skin) {
 	int time = -1;
 	switch (d->engine.state()) {
 	case EnginePlaying:
@@ -1130,7 +1140,8 @@ void MainWindow::applyPref() {
 	d->menu.syncTitle();
 	d->menu.resetKeyMap();
 
-	reloadSkin();
+	if (skin)
+		reloadSkin();
 	if (time >= 0)
 		d->engine.reload();
 

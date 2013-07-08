@@ -44,6 +44,10 @@ AppState::AppState() {
 
 	READ(win_pos);
 	READ(win_size);
+
+	READ(playlist_visible);
+	READ(history_visible);
+	READ(playinfo_visible);
 #undef READ
 }
 
@@ -85,6 +89,10 @@ void AppState::save() const {
 
 	WRITE(win_pos);
 	WRITE(win_size);
+
+	WRITE(playlist_visible);
+	WRITE(history_visible);
+	WRITE(playinfo_visible);
 #undef WRITE
 }
 

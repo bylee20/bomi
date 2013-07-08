@@ -12,18 +12,14 @@ Item {
 		parent: engine
 		property real pw: -1
 		property real ph: -1
-		onWidthChanged: {
-			floating.setCx(pw < 0 ? initCx : floating.getCx(pw))
-			pw = width
-		}
-		onHeightChanged:  {
-			floating.setCy(ph < 0 ? initCy : floating.getCy(ph))
-			ph = height
-		}
+		function updatePosX() { floating.setCx(pw < 0 ? initCx : floating.getCx(pw)); pw = width }
+		function updatePosY() { floating.setCy(ph < 0 ? initCy : floating.getCy(ph)); ph = height }
+		onWidthChanged: updatePosX()
+		onHeightChanged: updatePosY()
 		Component.onCompleted: {
 			controls.parent = floating
 			floating.hidden = !containsMouse
-x		}
+		}
 		anchors.fill: parent
 		hoverEnabled: true;
 		onPressed: Util.trigger(Util.MousePress)
@@ -68,6 +64,8 @@ x		}
 		initCx = Settings.getReal("cx", 0.5)
 		initCy = Settings.getReal("cy", 0.0)
 		Settings.close()
+//		area.updatePosX();
+//		area.updatePosY();
 	}
 	Component.onDestruction: {
 		Settings.open(root.name)

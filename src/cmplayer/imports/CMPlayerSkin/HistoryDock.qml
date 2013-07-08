@@ -13,28 +13,27 @@ Item {
 	property bool show: false
 	Rectangle { id: rect; anchors.fill: parent; color: "gray"; opacity: 0.8; radius: 5 }
 
-//	Component.onCompleted: x = -dock.width
-
 	states: State {
 		name: "show"; when: dock.show
 		PropertyChanges { target: dock; explicit: true; x: -rect.radius }
+		PropertyChanges { target: dock; visible: true }
 	}
 	transitions: Transition {
 		reversible: true; to: "show"
+		PropertyAction { property: "visible" }
 		NumberAnimation { property: "x" }
 	}
-
-//	NumberAnimation {
-//		id: sliding;		target: dock;		property: "x"
-//		from: -dock.width;	to: -rect.radius;	easing.type: Easing.OutCubic
-//	}
 
 	Rectangle {
 		id: frame
 		x: table.x-1; y: table.y-1
 		width: table.width+2-(true? table.scrollArea : 0);
 		height: table.height+2-(table.hScrollVisible ? table.scrollArea : 0);
-		border { color: "black"; width: 1 } color: "transparent"
+		border { color: "black"; width: 1 }
+		gradient: Gradient {
+			GradientStop {position: 0.0; color: "#ccc"}
+			GradientStop {position: 1.0; color: "#333"}
+		}
 	}
 
 	TableView {

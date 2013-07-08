@@ -23,7 +23,7 @@ public slots:
 	void openMrl(const Mrl &mrl, const QString &enc);
 	void exit();
 private slots:
-	void applyPref();
+	void applyPref(bool skin = true);
 	void updateMrl(const Mrl &mrl);
 	void setVideoSize(double rate);
 	void clearSubtitleFiles();
