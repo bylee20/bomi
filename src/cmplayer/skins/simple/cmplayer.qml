@@ -9,23 +9,30 @@ Skin.AppWithDock {
 	id: app
 
 	Component {
-		id: slider
-		Skin.Slider {
-			groove: Rectangle {
-				height: parent.height; anchors.verticalCenter: parent.verticalCenter;
-				color: "#fff"; border { color: "#999"; width: 1 }
-				gradient: Gradient {
-					GradientStop {position: 0.0; color: "#555"}
-					GradientStop {position: 1.0; color: "#bbb"}
+		id: sliders
+		SliderStyle {
+			groove: Item {
+				implicitHeight: 12;
+				implicitWidth: 100;
+				Rectangle {
+					anchors.fill: parent
+					color: "#fff"; border { color: "#999"; width: 1 }
+					gradient: Gradient {
+						GradientStop {position: 0.0; color: "#555"}
+						GradientStop {position: 1.0; color: "#bbb"}
+					}
+				}
+				Rectangle {
+					border { color: "#999"; width: 1 }
+					anchors {top: parent.top; bottom: parent.bottom; left: parent.left; }
+					width: parent.width*control.value/control.maximumValue
+					gradient: Gradient {
+						GradientStop {position: 0.0; color: "#fff"}
+						GradientStop {position: 1.0; color: "#ccc"}
+					}
 				}
 			}
-			filled: Rectangle {
-				height: parent.height; anchors {top: parent.top; bottom: parent.bottom; left: parent.left; margins: 1}
-				gradient: Gradient {
-					GradientStop {position: 0.0; color: "#fff"}
-					GradientStop {position: 1.0; color: "#ccc"}
-				}
-			}
+			handle: Item {}
 		}
 	}
 
@@ -44,7 +51,7 @@ Skin.AppWithDock {
 				action: "play/pause"; icon: (engine.state === Core.Engine.Playing) ? "pause.png" : "play.png"
 				paddings: pressed ? 2 : (hovered ? 0 : 1)
 			}
-			Skin.SeekControl { id: timeslider; engine: app.engine; component: slider; Layout.fillWidth: true; Layout.fillHeight: true }
+			Skin.TimeSlider { id: timeslider; engine: app.engine; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
 			Row {
 				width: childrenRect.width
 				height: parent.height
@@ -52,7 +59,7 @@ Skin.AppWithDock {
 				Skin.TimeText { color: "black"; text: "/" }
 				Skin.TimeText { color: "black"; msecs: app.engine.duration }
 			}
-			Skin.VolumeControl { id: volumeslider; width: 100; engine: app.engine; component: slider; height: parent.height }
+			Skin.VolumeSlider { id: volumeslider; width: 100; engine: app.engine; style: sliders; height: parent.height }
 		}
 	}
 }

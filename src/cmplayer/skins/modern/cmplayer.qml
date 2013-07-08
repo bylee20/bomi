@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
+import QtQuick.Controls.Styles 1.0
 import CMPlayerSkin 1.0 as Skin
 import CMPlayerCore 1.0 as Core
 
@@ -10,9 +11,7 @@ Skin.AppWithFloating {
 
 	Component {
 		id: slider
-		Skin.Slider {
-			id: slideritem
-			height: 5
+		SliderStyle {
 			groove: Rectangle {
 				height: 5; radius: 2; border { color: "#ccc"; width: 1 }
 				anchors.verticalCenter: parent.verticalCenter
@@ -20,17 +19,18 @@ Skin.AppWithFloating {
 					GradientStop {position: 0.0; color: "#333"}
 					GradientStop {position: 1.0; color: "#bbb"}
 				}
-			}
-			filled: Rectangle {
-				height: groove.height; radius: groove.radius; border {width: 1; color: "#5af"}
-				gradient: Gradient {
-					GradientStop { position: 0.0; color: "white" }
-					GradientStop { position: 1.0; color: "skyblue" }
+				Rectangle {
+					width: parent.width*control.value/control.maximumValue; height: parent.height
+					radius: parent.radius; border {width: 1; color: "#5af"}
+					gradient: Gradient {
+						GradientStop { position: 0.0; color: "white" }
+						GradientStop { position: 1.0; color: "skyblue" }
+					}
 				}
 			}
 			handle: Image {
 				width: 10; height: 10
-				source: slideritem.pressed ? "handle-pressed.png" : slideritem.hovered ? "handle-hovered.png" : "handle.png"
+				source: control.pressed ? "handle-pressed.png" : control.hovered ? "handle-hovered.png" : "handle.png"
 				anchors.verticalCenter: parent.verticalCenter
 			}
 		}
@@ -58,7 +58,7 @@ Skin.AppWithFloating {
 			}
 			RowLayout {
 				id: seekbarwrapper; width: parent.width; height: 10; spacing: 10
-				Skin.SeekControl { id: seekbar; component: slider; engine: app.engine; Layout.fillWidth: true }
+				Skin.TimeSlider { id: seekbar; style: slider; engine: app.engine; Layout.fillWidth: true }
 			}
 			Item {
 				id: buttons; width: parent.width; height: 22
@@ -85,7 +85,7 @@ Skin.AppWithFloating {
 							}
 						}
 					}
-					Skin.VolumeControl { id: volumebar; width: 70; component: slider; engine: app.engine }
+					Skin.VolumeSlider { id: volumebar; width: 70; style: slider; engine: app.engine }
 				}
 				Row {
 					height: parent.height; spacing: 10; anchors.horizontalCenter: parent.horizontalCenter;

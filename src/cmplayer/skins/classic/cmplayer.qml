@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
+import QtQuick.Controls.Styles 1.0
 import CMPlayerCore 1.0 as Core
 import CMPlayerSkin 1.0 as Skin
 
@@ -8,40 +9,42 @@ Skin.AppWithDock {
 	readonly property real margin: 5
 	Component {
 		id: slider
-		Skin.Slider {
-			id: slideritem
-			groove: Rectangle {
-				height: 5; anchors.centerIn: parent; border { color: "#999"; width: 1 }
-				gradient: Gradient {
-					GradientStop {position: 0.0; color: "#333"}
-					GradientStop {position: 1.0; color: "#bbb"}
+		SliderStyle {
+			groove: Item {
+				Rectangle {
+					height: 5; anchors.centerIn: parent; border { color: "#999"; width: 1 }
+					width: parent.width
+					gradient: Gradient {
+						GradientStop {position: 0.0; color: "#333"}
+						GradientStop {position: 1.0; color: "#bbb"}
+					}
+					Rectangle {
+						height: parent.height
+						width: parent.width*control.value/control.maximumValue
+						border { color: "#6ad"; width: 1 }
+						gradient: Gradient {
+							GradientStop {position: 0.0; color: "#fff"}
+							GradientStop {position: 1.0; color: "#ccc"}
+						}
+					}
 				}
-			}
-			filled: Rectangle {
-				height: parent.height
-				border { color: "#6ad"; width: 1 }
-				gradient: Gradient {
-					GradientStop {position: 0.0; color: "#fff"}
-					GradientStop {position: 1.0; color: "#ccc"}
-				}
-			}
 
+			}
 			handle: Rectangle {
 				id: handle
 				width: 9; height: 9; radius: 2
 				anchors.verticalCenter: parent.verticalCenter
-				border.width: slideritem.pressed ? 2 : 1
-				border.color: slideritem.pressed || slideritem.hovered ? "#6ad" : "#5c5c5c"
-
-				property Gradient __dark: Gradient {
+				border.width: control.pressed ? 2 : 1
+				border.color: control.pressed || control.hovered ? "#6ad" : "#5c5c5c"
+				property Gradient dark: Gradient {
 					GradientStop { position: 0.0; color: "#aaa"}
 					GradientStop { position: 1.0; color: "#999"}
 				}
-				property Gradient __bright: Gradient {
+				property Gradient bright: Gradient {
 					GradientStop { position: 0.0; color: "#fff"}
 					GradientStop { position: 1.0; color: "#ccc"}
 				}
-				gradient: slideritem.pressed || slideritem.hovered ? __bright : __dark
+				gradient: control.pressed || control.hovered ? bright : dark
 			}
 		}
 	}
@@ -108,12 +111,12 @@ Skin.AppWithDock {
 					}
 					RowLayout {
 						width: parent.width; spacing: 1; height: 10
-						Skin.SeekControl { id: timeslider; engine: app.engine; component: slider; Layout.fillWidth: true }
+						Skin.TimeSlider { id: timeslider; engine: app.engine; style: slider; Layout.fillWidth: true }
 						FramedButton {
 							id: mute; width: height; height: parent.height; action: "audio/mute"
 							icon: app.engine.muted ? "speaker-off.png" : "speaker-on.png"
 						}
-						Skin.VolumeControl { id: volumeslider; width: 70; engine: app.engine; component: slider }
+						Skin.VolumeSlider { id: volumeslider; width: 70; engine: app.engine; style: slider }
 					}
 				}
 			}

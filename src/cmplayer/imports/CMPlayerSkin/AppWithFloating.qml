@@ -23,10 +23,14 @@ Item {
 		Component.onCompleted: {
 			controls.parent = floating
 			floating.hidden = !containsMouse
-		}
+x		}
 		anchors.fill: parent
-		hoverEnabled: true; onPressed: mouse.accepted = false
-		onEntered: floating.hidden = false; onExited: floating.hidden = true
+		hoverEnabled: true;
+		onPressed: Util.trigger(Util.MousePress)
+		onDoubleClicked: Util.trigger(Util.MouseDoubleClick)
+		onWheel: Util.trigger(Util.Wheel)
+		onEntered: floating.hidden = false;
+		onExited: floating.hidden = true
 		MouseArea {
 			id: floating //Math.max(0, Math.min(cx*parent.width - width/2, parent.width-width)) }//
 			function setCx(cx) { x = Util.bound(0, cx*parent.width - width/2, parent.width - width) }
@@ -35,11 +39,11 @@ Item {
 			function getCy(bg) { return (y+height/2)/bg; }
 
 			property bool hidden: false
-			width: 400; height: inner.height+24
+			width: controls.width; height: controls.height
 			drag.target: floating; drag.axis: Drag.XAndYAxis
 			drag.minimumX: 0; drag.maximumX: root.width-width
 			drag.minimumY: 0; drag.maximumY: root.height-height
-			onDoubleClicked: Util.filterDoubleClick()
+			onDoubleClicked: Util.trigger(Util.MouseDoubleClick)
 			states: State {
 				name: "hidden"; when: floating.hidden
 				PropertyChanges { target: floating; opacity: 0.0 }

@@ -200,10 +200,9 @@ OTHER_FILES += \
     skins/modern/cmplayer.qml \
     emptyskin.qml \
     imports/CMPlayerSkin/AppWithFloating.qml \
-    imports/CMPlayerSkin/Slider.qml \
-    imports/CMPlayerSkin/SeekControl.qml \
-    imports/CMPlayerSkin/VolumeControl.qml \
-    imports/CMPlayerSkin/AppWithDock.qml
+    imports/CMPlayerSkin/AppWithDock.qml \
+    imports/CMPlayerSkin/TimeSlider.qml \
+    imports/CMPlayerSkin/VolumeSlider.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}
