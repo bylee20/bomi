@@ -1,3 +1,12 @@
+0.7.6
+
+  * Add: option to show logo or fill color
+  * Add: remember the visibilities of tools
+  * Add: add horizontal scrollbar to playlist
+  * Add: OSD options on actions and window resizing in 'Behaviours' tab
+  * Fix: cannot open a file whose name contains special characters by drop
+  * Fix: missing WM_CLASS
+
 0.7.5
 
   * Add: introduce OSD options in 'Behaviours' tab

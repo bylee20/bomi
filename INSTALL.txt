@@ -1,7 +1,7 @@
 To compile CMPlayer, you need next things:
 
 * g++ >= 4.7
-* Qt >= 5.0
+* Qt >= 5.1
 * yasm
 * zlib
 * libbz2
