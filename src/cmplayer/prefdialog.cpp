@@ -226,7 +226,7 @@ struct PrefDialog::Data {
 	QButtonGroup *shortcuts;
 	PrefMouseGroup<Enum::ClickAction> *dbl, *mdl;
 	PrefMouseGroup<Enum::WheelAction> *whl;
-	QMap<int, QCheckBox*> HwAcc;
+	QMap<int, QCheckBox*> hwAcc;
 	PrefOpenMediaGroup *open_media_from_file_manager;
 	PrefOpenMediaGroup *open_media_by_drag_and_drop;
 	QStringList imports;
@@ -303,8 +303,9 @@ PrefDialog::PrefDialog(QWidget *parent)
 			ch->setText(_L(desc) % " (" % tr("Not supported") % ')');
 		ch->setEnabled(supports);
 		vbox->addWidget(ch);
-		d->HwAcc[codec] = ch;
+		d->hwAcc[codec] = ch;
 	}
+	qDebug() << d->hwAcc;
 	d->ui.HwAcc_list->setLayout(vbox);
 
 	d->ui.sub_ext->addItem(QString(), QString());
@@ -500,8 +501,7 @@ void PrefDialog::set(const Pref &p) {
 
 	d->ui.enable_hwaccel->setChecked(p.enable_hwaccel);
 	for (auto codec : p.hwaccel_codecs) {
-		auto ch = d->HwAcc[codec];
-		if (ch)
+		if (auto ch = d->hwAcc.value(codec))
 			ch->setChecked(true);
 	}
 
@@ -603,7 +603,9 @@ void PrefDialog::get(Pref &p) {
 
 	p.enable_hwaccel = d->ui.enable_hwaccel->isChecked();
 	p.hwaccel_codecs.clear();
-	for (auto it = d->HwAcc.begin(); it != d->HwAcc.end(); ++it) {
+	qDebug() <<d->hwAcc;
+	for (auto it = d->hwAcc.cbegin(); it != d->hwAcc.cend(); ++it) {
+		qDebug() <<it.key() <<it.value();
 		if ((*it)->isChecked())
 			p.hwaccel_codecs.append(it.key());
 	}
