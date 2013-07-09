@@ -305,7 +305,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 		vbox->addWidget(ch);
 		d->hwAcc[codec] = ch;
 	}
-	qDebug() << d->hwAcc;
 	d->ui.HwAcc_list->setLayout(vbox);
 
 	d->ui.sub_ext->addItem(QString(), QString());
@@ -383,21 +382,12 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	connect(d->ui.dbb, &DBB::clicked, [this] (QAbstractButton *button) {
 		switch (d->ui.dbb->standardButton(button)) {
-		case DBB::Ok:
-			hide();
-		case DBB::Apply:
-			emit applyRequested();
-			break;
-		case DBB::Cancel:
-			hide();
-		case DBB::Reset:
-			emit resetRequested();
-			break;
-		case DBB::RestoreDefaults:
-			set(Pref());
-			break;
-		default:
-			break;
+		case DBB::Ok:		hide();
+		case DBB::Apply:	emit applyRequested();		break;
+		case DBB::Cancel:	hide();
+		case DBB::Reset:	emit resetRequested();		break;
+		case DBB::RestoreDefaults:	set(Pref());		break;
+		default:										break;
 		}
 	});
 
@@ -509,6 +499,7 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.normalizer_target->setValue(p.normalizer_target);
 	d->ui.normalizer_min->setValue(p.normalizer_min*100.0);
 	d->ui.normalizer_max->setValue(p.normalizer_max*100.0);
+	d->ui.normalizer_length->setValue(p.normalizer_length);
 
 	d->ui.blur_kern_c->setValue(p.blur_kern_c);
 	d->ui.blur_kern_n->setValue(p.blur_kern_n);
@@ -603,10 +594,8 @@ void PrefDialog::get(Pref &p) {
 
 	p.enable_hwaccel = d->ui.enable_hwaccel->isChecked();
 	p.hwaccel_codecs.clear();
-	qDebug() <<d->hwAcc;
 	for (auto it = d->hwAcc.cbegin(); it != d->hwAcc.cend(); ++it) {
-		qDebug() <<it.key() <<it.value();
-		if ((*it)->isChecked())
+		if (*it && (*it)->isChecked())
 			p.hwaccel_codecs.append(it.key());
 	}
 
@@ -623,6 +612,7 @@ void PrefDialog::get(Pref &p) {
 	p.normalizer_silence = d->ui.normalizer_silence->value();
 	p.normalizer_min = d->ui.normalizer_min->value()/100.0;
 	p.normalizer_max = d->ui.normalizer_max->value()/100.0;
+	p.normalizer_length = d->ui.normalizer_length->value();
 
 	p.sub_enable_autoload = d->ui.sub_enable_autoload->isChecked();
 	p.sub_enable_autoselect = d->ui.sub_enable_autoselect->isChecked();

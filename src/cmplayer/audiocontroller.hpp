@@ -18,7 +18,7 @@ public:
 	bool setScaletempo(bool on);
 	double normalizer() const;
 	bool scaletempo() const;
-	void setNormalizer(double target, double silence, double min, double max);
+	void setNormalizer(double length, double target, double silence, double min, double max);
 private:
 	static int init(af_instance *af, const char *arg);
 	int config(mp_audio *data);

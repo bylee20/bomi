@@ -1133,7 +1133,7 @@ void MainWindow::applyPref() {
 	Translator::load(p.locale);
 	d->history.setRememberImage(p.remember_image);
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
-	d->engine.setVolumeNormalizer(p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
+	d->engine.setVolumeNormalizer(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
 	d->renderer.setLumaRange(p.remap_luma_min, p.remap_luma_max);
 	d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);

@@ -26,8 +26,6 @@ enum EventType {
 
 enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2};
 
-struct mp_volnorm {int method;	float mul; float avg;};
-
 template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0);
 template<> inline float	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.f;}
 template<> inline int	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.i;}
@@ -761,6 +759,6 @@ void PlayEngine::stop() {
 	tellmp("stop");
 }
 
-void PlayEngine::setVolumeNormalizer(double target, double silence, double min, double max) {
-	d->audio->setNormalizer(target, silence, min, max);
+void PlayEngine::setVolumeNormalizer(double length, double target, double silence, double min, double max) {
+	d->audio->setNormalizer(length, target, silence, min, max);
 }

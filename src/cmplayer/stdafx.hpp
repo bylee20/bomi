@@ -58,13 +58,13 @@ static inline double _Ratio(T1 w, T2 h) {return static_cast<double>(w)/static_ca
 static inline double _Ratio(const QSize &size) {return _Ratio(size.width(), size.height());}
 static inline double _Ratio(const QSizeF &size) {return _Ratio(size.width(), size.height());}
 static inline QStringList _GetOpenFileNames(QWidget *p, const QString &t, const QString &dir, const QString &f) {
-	return QFileDialog::getOpenFileNames(p, t, dir, f, 0, QFileDialog::DontUseNativeDialog);
+	return QFileDialog::getOpenFileNames(p, t, dir, f, 0);
 }
 static inline QString _GetOpenFileName(QWidget *p, const QString &t, const QString &dir, const QString &f) {
-	return QFileDialog::getOpenFileName(p, t, dir, f, 0, QFileDialog::DontUseNativeDialog);
+	return QFileDialog::getOpenFileName(p, t, dir, f, 0);
 }
 static inline QString _GetSaveFileName(QWidget *p, const QString &t, const QString &dir, const QString &f) {
-	return QFileDialog::getSaveFileName(p, t, dir, f, 0, QFileDialog::DontUseNativeDialog);
+	return QFileDialog::getSaveFileName(p, t, dir, f, 0);
 }
 }
 

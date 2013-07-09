@@ -107,7 +107,7 @@ public:
 	double preamp() const {return m_preamp;}
 	StreamList audioStreams() const {return m_audioStreams;}
 	void setCurrentAudioStream(int id) {setmp("audio", id);}
-	void setVolumeNormalizer(double target, double silence, double min, double max);
+	void setVolumeNormalizer(double length, double target, double silence, double min, double max);
 	void addSubtitleStream(const QString &fileName, const QString &enc);
 	void removeSubtitleStream(int id);
 	void setSubtitleStreamsVisible(bool visible);
