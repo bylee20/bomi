@@ -20,6 +20,7 @@ Item {
 			controls.parent = floating
 			floating.hidden = !containsMouse
 		}
+		acceptedButtons: Qt.AllButtons
 		anchors.fill: parent
 		hoverEnabled: true;
 		onPressed: Util.trigger(Util.MousePress)
@@ -28,7 +29,7 @@ Item {
 		onEntered: floating.hidden = false;
 		onExited: floating.hidden = true
 		MouseArea {
-			id: floating //Math.max(0, Math.min(cx*parent.width - width/2, parent.width-width)) }//
+			id: floating
 			function setCx(cx) { x = Util.bound(0, cx*parent.width - width/2, parent.width - width) }
 			function setCy(cy) { y = Util.bound(0, cy*parent.height - height/2, parent.height - height) }
 			function getCx(bg) { return (x+width/2)/bg; }
@@ -64,8 +65,6 @@ Item {
 		initCx = Settings.getReal("cx", 0.5)
 		initCy = Settings.getReal("cy", 0.0)
 		Settings.close()
-//		area.updatePosX();
-//		area.updatePosY();
 	}
 	Component.onDestruction: {
 		Settings.open(root.name)

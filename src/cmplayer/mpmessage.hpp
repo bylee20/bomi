@@ -33,14 +33,13 @@ public:
 	virtual ~MpMessage();
 	static void add(MpMessage *parser);
 	static void clear();
+	static void _parse(const QString &line);
 protected:
 	struct Id {Id() {}	Id(const QString &name, const QString &value): name(name), value(value) {} QString name, value;};
 	static Id id(const QString &line);
 	virtual bool parse(const Id &id);
 	static bool getStream(const Id &id, const char *category, const char *idtext, StreamList &streams, const QString &trans);
 private:
-	static void _parse(const QString &line);
-	friend void mp_msg_va2(int mod, int lev, const char *format, va_list va);
 	static QList<MpMessage*> parsers;
 };
 

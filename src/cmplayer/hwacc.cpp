@@ -6,8 +6,8 @@ extern "C" {
 #include <video/img_format.h>
 #include <video/mp_image.h>
 #include <demux/demux_packet.h>
-#include <core/codecs.h>
-#include <core/av_common.h>
+#include <mpvcore/codecs.h>
+#include <mpvcore/av_common.h>
 #include <libavcodec/avcodec.h>
 #ifdef Q_OS_LINUX
 #include <video/mp_image_pool.h>
@@ -424,7 +424,7 @@ HwAccDecoder::HwAccDecoder(sh_video *sh, const char *decoder) {
 	m_avctx->coded_width = sh->disp_w;
 	m_avctx->coded_height = sh->disp_h;
 	m_avctx->codec_tag = sh->format;
-	m_avctx->stream_codec_tag = sh->video.fccHandler;
+//	m_avctx->stream_codec_tag = sh->video.fccHandler;
 	m_avctx->thread_count = 1;
 
 	if (sh->bih)

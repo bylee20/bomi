@@ -5,7 +5,7 @@ Comment=Play your media
 Name[pl]=CMPlayer
 GenericName[pl]=Odtwarzacz filmów
 Comment[pl]=Odtwarzaczaj filmy z CMPlayer
-Exec=cmplayer --wake-up --open=%f
+Exec=cmplayer --wake-up --open=%u
 Icon=cmplayer
 StartupNotify=true
 Terminal=false

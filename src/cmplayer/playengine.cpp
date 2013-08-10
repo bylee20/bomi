@@ -6,16 +6,16 @@
 #include "audiocontroller.hpp"
 #include "playlistmodel.hpp"
 #include "dataevent.hpp"
-#include <core/mp_cmplayer.h>
+#include <mpvcore/mp_cmplayer.h>
 
 extern "C" {
-#include <core/command.h>
+#include <mpvcore/command.h>
 #include <video/out/vo.h>
 #include <video/decode/vd.h>
-#include <core/playlist.h>
-#include <core/codecs.h>
-#include <core/m_property.h>
-#include <core/input/input.h>
+#include <mpvcore/playlist.h>
+#include <mpvcore/codecs.h>
+#include <mpvcore/m_property.h>
+#include <mpvcore/input/input.h>
 #include <audio/filter/af.h>
 #include <stream/stream.h>
 }
@@ -27,6 +27,7 @@ enum EventType {
 enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2};
 
 template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0);
+template<> inline double&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.d;}
 template<> inline float	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.f;}
 template<> inline int	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.i;}
 template<> inline char*	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.s;}
@@ -127,6 +128,10 @@ void PlayEngine::relativeSeek(int pos) {
 
 void PlayEngine::setGetStartTimeFunction(const GetStartTime &func) {
 	d->getStartTimeFunc = func;
+}
+
+void PlayEngine::setmp(const char *name, double value) {
+	d->enqueue<double>(MpSetProperty, name, value);
 }
 
 void PlayEngine::setmp(const char *name, int value) {
@@ -450,10 +455,10 @@ int PlayEngine::playImage(const Mrl &mrl, int &terminated, int &duration) {
 int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duration) {
 	d->video->output(QImage());
 	auto mpctx = d->mpctx;
-	mpctx->opts.video_decoders = d->hwAccCodecs.data();
-	d->mpctx->opts.play_start.pos = d->start*1e-3;
-	d->mpctx->opts.play_start.type = REL_TIME_ABSOLUTE;
-	setmp("speed", (float)m_speed);
+	mpctx->opts->video_decoders = d->hwAccCodecs.data();
+	d->mpctx->opts->play_start.pos = d->start*1e-3;
+	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
+	setmp("speed", m_speed);
 	setmp("audio-delay", m_audioSync*0.001);
 	auto error = prepare_playback(mpctx);
 	QVector<StreamList> streams(STREAM_TYPE_COUNT);
@@ -514,7 +519,7 @@ void PlayEngine::run() {
 	CharArrayList args = QStringList()
 		<< "cmplayer-mpv" << "--no-config" << "--idle" << "--no-fs"
 		<< ("--af=dummy=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
-		<< ("--vo=null:" % QString::number((quint64)(quintptr)(void*)(d->video)))
+		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8";
 	auto mpctx = d->mpctx = create_player(args.size(), args.data());
@@ -579,12 +584,12 @@ void PlayEngine::run() {
 		mpctx->playlist->current = entry;
 		mpctx->playlist->current_was_replaced = false;
 		mpctx->stop_play = KEEP_PLAYING;
-		if (!mpctx->playlist->current && !mpctx->opts.player_idle_mode)
+		if (!mpctx->playlist->current && !mpctx->opts->player_idle_mode)
 			break;
 	}
 	qDebug() << "terminate loop";
 	d->video->quit();
-	mpctx->opts.video_decoders = nullptr;
+	mpctx->opts->video_decoders = nullptr;
 	destroy_player(mpctx);
 	d->mpctx = nullptr;
 	d->init = false;

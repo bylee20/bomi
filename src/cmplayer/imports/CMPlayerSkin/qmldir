@@ -7,7 +7,6 @@ PlaylistDock		1.0 PlaylistDock.qml
 HistoryDock		1.0 HistoryDock.qml
 Button			1.0 Button.qml
 Player			1.0 Player.qml
-MouseCatcher		1.0 MouseCatcher.qml
 TimeText		1.0 TimeText.qml
 AppWithFloating         1.0 AppWithFloating.qml
 TimeSlider              1.0 TimeSlider.qml

@@ -15,53 +15,49 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
-struct XWindowInfo {
-	XWindowInfo() {}
-	XWindowInfo(QWindow *w) {
-		window = w->winId();
-		connection = QX11Info::connection();
-		display = QX11Info::display();
-		root = QX11Info::appRootWindow();
-		netWmStateAtom = getAtom(connection, "_NET_WM_STATE");
-		netWmStateAboveAtom = getAtom(connection, "_NET_WM_STATE_ABOVE");
-		netWmStateStaysOnTopAtom = getAtom(connection, "_NET_WM_STATE_STAYS_ON_TOP");
-		const char className[] = "cmplayer\0CMPlayer";
-		xcb_icccm_set_wm_class(connection, window, sizeof(className), className);
-	}
-	xcb_connection_t *connection = nullptr;
-	xcb_window_t window = 0, root = 0;
-	xcb_atom_t netWmStateAtom = 0, netWmStateAboveAtom = 0, netWmStateStaysOnTopAtom = 0
-		, wmName = 0, wmClass = 0;
-	Display *display = nullptr;
-	static xcb_atom_t getAtom(xcb_connection_t *conn, const char *name) {
-		auto cookie = xcb_intern_atom(conn, 0, strlen(name), name);
-		auto reply = xcb_intern_atom_reply(conn, cookie, nullptr);
-		if (!reply)
-			return 0;
-		auto ret = reply->atom;
-		free(reply);
-		return ret;
-	}
-};
+static xcb_atom_t getAtom(xcb_connection_t *connection, const char *name) {
+	auto cookie = xcb_intern_atom(connection, 0, strlen(name), name);
+	auto reply = xcb_intern_atom_reply(connection, cookie, nullptr);
+	if (!reply)
+		return 0;
+	auto ret = reply->atom;
+	free(reply);
+	return ret;
+}
 
 struct AppX11::Data {
 	QTimer ss_timer;
-	XWindowInfo x;
+//	XWindowInfo x;
 	QDBusInterface *iface = nullptr;
 	QDBusReply<uint> reply;
 	bool inhibit = false;
 	bool xss = false;
 	bool gnome = false;
 	QByteArray wmName;
+
+	xcb_connection_t *connection = nullptr;
+	xcb_window_t root = 0;
+	xcb_atom_t aNetWmState = 0, aNetWmStateAbove = 0, aNetWmStateStaysOnTop = 0, aWmName = 0, aWmClass = 0;
+	Display *display = nullptr;
+
+	xcb_atom_t getAtom(const char *name) { return ::getAtom(connection, name); }
 };
 
 AppX11::AppX11(QObject *parent)
 : QObject(parent), d(new Data) {
 	d->ss_timer.setInterval(20000);
 	connect(&d->ss_timer, &QTimer::timeout, [this] () {
-		if (d->xss && d->x.display)
-			XResetScreenSaver(d->x.display);
+		if (d->xss && d->display)
+			XResetScreenSaver(d->display);
 	});
+	d->connection = QX11Info::connection();
+	d->display = QX11Info::display();
+	d->root = QX11Info::appRootWindow();
+	d->aNetWmState = d->getAtom("_NET_WM_STATE");
+	d->aNetWmStateAbove = d->getAtom("_NET_WM_STATE_ABOVE");
+	d->aNetWmStateStaysOnTop = d->getAtom("_NET_WM_STATE_STAYS_ON_TOP");
+//	const char className[] = "cmplayer\0CMPlayer";
+//	xcb_icccm_set_wm_class(d->connection, window, sizeof(className), className);
 }
 
 extern void finalize_vaapi();
@@ -118,34 +114,32 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 }
 
 void AppX11::setAlwaysOnTop(QWindow *window, bool onTop) {
-	if (d->x.window != window->winId())
-		d->x = XWindowInfo(window);
 	xcb_client_message_event_t event;
 	memset(&event, 0, sizeof(event));
 	event.response_type = XCB_CLIENT_MESSAGE;
 	event.format = 32;
-	event.window = d->x.window;
-	event.type = d->x.netWmStateAtom;
+	event.window = window->winId();
+	event.type = d->aNetWmState;
 	event.data.data32[0] = onTop ? 1 : 0;
-	event.data.data32[1] = d->x.netWmStateAboveAtom;
-	event.data.data32[2] = d->x.netWmStateStaysOnTopAtom;
-	xcb_send_event(d->x.connection, 0, d->x.root, XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT, (const char *)&event);
-	xcb_flush(d->x.connection);
+	event.data.data32[1] = d->aNetWmStateAbove;
+	event.data.data32[2] = d->aNetWmStateStaysOnTop;
+	xcb_send_event(d->connection, 0, d->root, XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT, (const char *)&event);
+	xcb_flush(d->connection);
 }
 
 QStringList AppX11::devices() const {
 	return QStringList();
 }
 
-void AppX11::setWmName(const QString &name) {
-	d->wmName = name.toUtf8();
-	char *utf8 = d->wmName.data();
-	if (d->x.connection && d->x.window && d->x.display) {
-		XTextProperty text;
-		Xutf8TextListToTextProperty(d->x.display, &utf8, 1, XCompoundTextStyle, &text);
-		XSetWMName(d->x.display, d->x.window, &text);
-//		xcb_icccm_set_wm_name(d->x.connection, d->x.window, XCB_ATOM_STRING, 8, d->wmName.size(), d->wmName.constData());
-	}
+void AppX11::setWmName(QWindow *window, const QString &name) {
+//	d->wmName = name.toUtf8();
+//	char *utf8 = d->wmName.data();
+//	if (d->x.connection && d->x.window && d->x.display) {
+//		XTextProperty text;
+//		Xutf8TextListToTextProperty(d->x.display, &utf8, 1, XCompoundTextStyle, &text);
+//		XSetWMName(d->x.display, d->x.window, &text);
+////		xcb_icccm_set_wm_name(d->x.connection, d->x.window, XCB_ATOM_STRING, 8, d->wmName.size(), d->wmName.constData());
+//	}
 }
 
 bool AppX11::shutdown() {

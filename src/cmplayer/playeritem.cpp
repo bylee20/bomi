@@ -8,12 +8,12 @@
 #include "playlistmodel.hpp"
 #include "videorendereritem.hpp"
 #include "playengine.hpp"
-#include <core/mp_cmplayer.h>
+#include <mpvcore/mp_cmplayer.h>
 #include "videoformat.hpp"
 
 extern "C" {
 #include <demux/stheader.h>
-#include <core/codecs.h>
+#include <mpvcore/codecs.h>
 #include <video/decode//vd.h>
 #include <video/out/vo.h>
 #include <audio/out/ao.h>

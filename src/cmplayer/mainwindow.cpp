@@ -58,7 +58,7 @@ struct MainWindow::Data {
 	HistoryModel history;
 	PlaylistModel &playlist = engine.playlist();
 //	FavoritesView *favorite;
-	QSystemTrayIcon *tray = nullptr;
+//	QSystemTrayIcon *tray = nullptr;
 	QString filePath;
 	Pref preferences;
 	const Pref &pref() const {return preferences;}
@@ -373,14 +373,14 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenBut
 	d->winState = d->prevWinState = windowState();
 
 #ifndef Q_OS_MAC
-	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
-	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
-		if (reason == QSystemTrayIcon::Trigger)
-			setVisible(!isVisible());
-		else if (reason == QSystemTrayIcon::Context)
-			d->contextMenu.exec(QCursor::pos());
-	});
-	d->tray->setVisible(d->preferences.enable_system_tray);
+//	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
+//	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
+//		if (reason == QSystemTrayIcon::Trigger)
+//			setVisible(!isVisible());
+//		else if (reason == QSystemTrayIcon::Context)
+//			d->contextMenu.exec(QCursor::pos());
+//	});
+//	d->tray->setVisible(d->preferences.enable_system_tray);
 #endif
 
 
@@ -1148,8 +1148,8 @@ void MainWindow::applyPref() {
 	if (time >= 0)
 		d->engine.reload();
 
-	if (d->tray)
-		d->tray->setVisible(p.enable_system_tray);
+//	if (d->tray)
+//		d->tray->setVisible(p.enable_system_tray);
 	d->preferences.save();
 }
 

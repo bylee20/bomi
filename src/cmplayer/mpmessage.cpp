@@ -6,54 +6,41 @@ extern "C" {
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <core/mp_msg.h>
-#define MSGSIZE_MAX 3072
-int mp_msg_levels[MSGT_MAX]; // verbose level of this module. initialized to -2
-int mp_msg_level_all = MSGL_STATUS;
-int verbose = 0;
-int mp_msg_color = 0;
-int mp_msg_module = 0;
-int mp_msg_test(int mod, int lev) {return lev <= (mp_msg_levels[mod] == -2 ? mp_msg_level_all + verbose : mp_msg_levels[mod]);}
-const char* filename_recode(const char* filename) {return filename;}
-char *mp_gtext(const char *string) {return (char *)string;}
-void mp_msg_init(void){
-	char *env = getenv("MPLAYER_VERBOSE");
-	if (env)
-		verbose = atoi(env);
-	for(int i=0;i<MSGT_MAX;i++)
-		mp_msg_levels[i] = -2;
-	mp_msg_levels[MSGT_IDENTIFY] = -1; // no -identify output by default
-}
+#include <mpvcore/mp_msg.h>
+#define MSGSIZE_MAX 6144
+//int mp_msg_levels[MSGT_MAX]; // verbose level of this module. initialized to -2
+//int mp_msg_level_all = MSGL_STATUS;
+//int verbose = 0;
+//int mp_msg_color = 0;
+//int mp_msg_module = 0;
 
-void mp_msg_va(int mod, int lev, const char *format, va_list va) {
-	if (!mp_msg_test(mod, lev))
-		return; // do not display
-	char tmp[MSGSIZE_MAX];
-	vsnprintf(tmp, MSGSIZE_MAX, format, va);
-	tmp[MSGSIZE_MAX-2] = '\n';
-	tmp[MSGSIZE_MAX-1] = 0;
-	fprintf(stdout, "%s", tmp);
-	fflush(stdout);
-}
+//void mp_msg_va(int mod, int lev, const char *format, va_list va) {
+//	if (!mp_msg_test(mod, lev))
+//		return; // do not display
+//	char tmp[MSGSIZE_MAX];
+//	vsnprintf(tmp, MSGSIZE_MAX, format, va);
+//	tmp[MSGSIZE_MAX-2] = '\n';
+//	tmp[MSGSIZE_MAX-1] = 0;
+//	fprintf(stdout, "%s", tmp);
+//	fflush(stdout);
+//}
 
-void mp_msg(int mod, int lev, const char *format, ...) {
-	va_list va;
-	va_start(va, format);
-	mp_msg_va2(mod, lev, format, va);
-	va_end(va);
-}
+//void mp_msg(int mod, int lev, const char *format, ...) {
+//	va_list va;
+//	va_start(va, format);
+//	mp_msg_va2(mod, lev, format, va);
+//	va_end(va);
+//}
 
-void mp_tmsg(int mod, int lev, const char *format, ...) {
-	va_list va;
-	va_start(va, format);
-	mp_msg_va2(mod, lev, mp_gtext(format), va);
-	va_end(va);
-}
+//void mp_tmsg(int mod, int lev, const char *format, ...) {
+//	va_list va;
+//	va_start(va, format);
+//	mp_msg_va2(mod, lev, mp_gtext(format), va);
+//	va_end(va);
+//}
 
-}
-
-void mp_msg_va2(int mod, int lev, const char *format, va_list va) {
-	if (!mp_msg_test(mod, lev))
+void mp_msg_log_va2(struct mp_log *log, int lev, const char *format, va_list va) {
+	if (!mp_msg_test_log(log, lev))
 		return; // do not display
 	if (format[0] == '[')
 		return;
@@ -71,6 +58,8 @@ void mp_msg_va2(int mod, int lev, const char *format, va_list va) {
 		line.clear();
 	} else
 		line += QString::fromLocal8Bit(tmp, len);
+}
+
 }
 
 QList<MpMessage*> MpMessage::parsers;

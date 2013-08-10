@@ -88,9 +88,10 @@ void App::setMainWindow(MainWindow *mw) {
 
 void App::setFileName(const QString &fileName) {
 	if (d->main) {
-		d->main->setWindowTitle(fileName);
+		const QString title = fileName % _L(" - ") % applicationName();
+		d->main->setWindowTitle(title);
 #ifdef Q_OS_LINUX
-		d->helper.setWmName(fileName % _L(" - ") % applicationDisplayName());
+		d->helper.setWmName(d->main->window()->windowHandle(), title);
 #endif
 	}
 }

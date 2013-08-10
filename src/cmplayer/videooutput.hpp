@@ -26,7 +26,7 @@ signals:
 	void formatChanged(const VideoFormat &format);
 	void reconfigured();
 private:
-	static int preinit(struct vo *vo, const char *arg);
+	static int preinit(struct vo *vo);
 	static void uninit(struct vo */*vo*/) {}
 	static int config(struct vo *vo, uint32_t w, uint32_t h, uint32_t , uint32_t , uint32_t , uint32_t fmt);
 	static int control(struct vo *vo, uint32_t request, void *data);

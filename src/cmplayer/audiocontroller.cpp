@@ -109,9 +109,12 @@ AudioController::AudioController(QObject *parent): QObject(parent), d(new Data) 
 		d->enable[i] = 1;
 		d->level[i] = 1.0;
 	}
+	d->af_scaletempo.priv = malloc(af_info_scaletempo.priv_size);
+	memcpy(d->af_scaletempo.priv, af_info_scaletempo.priv_defaults, af_info_scaletempo.priv_size);
 }
 
 AudioController::~AudioController() {
+	free(d->af_scaletempo.priv);
 	delete d;
 }
 

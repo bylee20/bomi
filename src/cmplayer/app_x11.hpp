@@ -12,7 +12,7 @@ public:
 	void setAlwaysOnTop(QWindow *window, bool onTop);
 	QStringList devices() const;
 	bool shutdown();
-	void setWmName(const QString &name);
+	void setWmName(QWindow *window, const QString &name);
 private:
 	AppX11(const AppX11&) = delete;
 	AppX11 &operator = (const AppX11&) = delete;

@@ -193,7 +193,6 @@ OTHER_FILES += \
     imports/CMPlayerSkin/HistoryDock.qml \
     imports/CMPlayerSkin/Button.qml \
     imports/CMPlayerSkin/Player.qml \
-    imports/CMPlayerSkin/MouseCatcher.qml \
     imports/CMPlayerSkin/TimeText.qml \
     skins/classic/FramedButton.qml \
     skins/classic/cmplayer.qml \

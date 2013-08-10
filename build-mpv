@@ -1,21 +1,20 @@
 #!/bin/sh
 
-args="--disable-encoding --disable-libguess --disable-termcap --disable-termios --enable-iconv \
+args="--disable-encoding --disable-libguess --disable-terminfo --disable-termcap --disable-termios --enable-iconv \
   --disable-lirc --disable-lircc --disable-joystick --disable-vm --disable-xf86keysym --disable-radio \
-  --disable-radio-capture --disable-radio-v4l2 --disable-tv --disable-tv-v4l2 --disable-pvr --enable-networking \
-  --disable-winsock2_h --disable-smb --enable-libquvi --disable-vcd --disable-bluray --enable-dvdread \
-  --enable-cddb --disable-enca --disable-macosx-bundle --enable-inet6 --enable-gethostbyname2 --enable-ftp --disable-vstream \
-  --enable-pthreads --disable-rpath --disable-libavdevice --disable-libpostproc --disable-libavfilter --disable-libavresample --disable-mng \
-  --disable-jpeg --enable-libcdio --disable-ladspa --disable-libbs2b --enable-mpg123 \
-  --disable-gl --disable-corevideo --disable-cocoa --disable-x11 --disable-sdl \
-  --disable-sdl2 --disable-caca --disable-direct3d --disable-dvb --disable-xv --disable-vdpau \
-  --disable-vm --disable-xinerama --disable-xss --enable-openal \
-  --disable-ossaudio --disable-rsound --disable-pulse --disable-portaudio \
-  --disable-jack --disable-dsound --disable-select --disable-gettext --disable-static"
+  --disable-radio-capture --disable-radio-v4l2 --disable-tv --disable-tv-v4l2 --disable-pvr \
+  --disable-smb --enable-libquvi4 --disable-libquvi9 --disable-lcms2 --disable-vcd --disable-bluray --enable-dvdread \
+  --disable-enca --disable-macosx-bundle --enable-pthreads  \
+  --disable-rpath --disable-libpostproc --disable-libavdevice --disable-libavfilter --disable-vf-lavfi --disable-af-lavfi --disable-mng \
+  --disable-jpeg --enable-libcdio --disable-ladspa --disable-libbs2b --enable-mpg123 --disable-libavresample \
+  --disable-gl --disable-caca --disable-direct3d --disable-sdl --disable-sdl2 --disable-xv --disable-vdpau \
+  --disable-vm --disable-xinerama --disable-x11 --disable-wayland --disable-xss --disable-corevideo --disable-cocoa \
+  --disable-ossaudio --disable-rsound --disable-pulse --disable-portaudio --disable-jack --enable-openal --disable-dsound --disable-wasapi --enable-select \
+  --disable-gettext --disable-cross-compile --disable-shm"
 
 libs="-ldvdread -lbz2 -lcdio_cdda -lcdio_paranoia -lcdio -lmpg123 -lquvi -lass" # -lfontconfig -lexpat -lfreetype -lharfbuzz -lenca -lm"
 
-#  --enable-libass --enable-libass-osd
+# --enable-libass --enable-libass-osd
 
 kern=`uname -s`
 if test $kern = "Darwin"
@@ -35,4 +34,4 @@ fi
 
 cd src/mpv && make distclean; PKG_CONFIG_PATH="../../build/lib/pkgconfig:${PKG_CONFIG_PATH}" ./configure $args --extra-libs="$libs"
 make -j 6
-ar rcsv ../../build/lib/libcmplayer_mpv.a `find . -name '*.o' | sed 's/^.*\(mp_msg\|vo_null\|af_dummy\)\.o$//'`
+ar rcsv ../../build/lib/libcmplayer_mpv.a `find . -name '*.o' | sed 's/^.*\(vo_null\|af_dummy\)\.o$//'`

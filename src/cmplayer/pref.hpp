@@ -122,7 +122,7 @@ public:
     bool enable_hwaccel = false;
     QList<int> hwaccel_codecs = defaultHwAccCodecs();
 
-	double normalizer_silence = 0.0001, normalizer_target = 0.05, normalizer_min = 0.1, normalizer_max = 10.0;
+	double normalizer_silence = 0.0001, normalizer_target = 0.07, normalizer_min = 0.1, normalizer_max = 10.0;
 	double normalizer_length = 5.0;
 
 	QString skin_name = "modern";

@@ -2,21 +2,38 @@
 #include "videoframe.hpp"
 #include "videorendereritem.hpp"
 #include "playengine.hpp"
-#include <core/mp_cmplayer.h>
+#include <mpvcore/mp_cmplayer.h>
 
 extern "C" {
 #include <video/out/vo.h>
 #include <video/vfcap.h>
 #include <video/img_fourcc.h>
+#include <mpvcore/m_option.h>
 #include <video/mp_image.h>
 #include <sub/sub.h>
 struct vo_driver video_out_null = VideoOutput::getDriver();
 }
 
+struct cmplayer_vo_priv {
+	VideoOutput *vo;
+	char *address;
+};
+
+static VideoOutput *priv(struct vo *vo) { return static_cast<cmplayer_vo_priv*>(vo->priv)->vo; }
+
+#define OPT_BASE_STRUCT struct cmplayer_vo_priv
 const vo_driver &VideoOutput::getDriver() {
 	static vo_driver driver;
 	static bool first = true;
 	if (first) {
+		static m_option options[1];
+		memset(options, 0, sizeof(options));
+		options[0].name = "address";
+		options[0].flags = 0;
+		options[0].defval = 0;
+		options[0].offset = MP_CHECKED_OFFSETOF(OPT_BASE_STRUCT, address, char*);
+		options[0].____new = 1;
+		options[0].type = &m_option_type_string;
 		first = false;
 		static vo_info_t info;
 		info.name = "CMPlayer video output";
@@ -32,6 +49,8 @@ const vo_driver &VideoOutput::getDriver() {
 		driver.query_format = queryFormat;
 		driver.draw_image = drawImage;
 		driver.uninit = uninit;
+		driver.options = options;
+		driver.priv_size = sizeof(cmplayer_vo_priv);
 	}
 	return driver;
 }
@@ -54,8 +73,9 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 
 VideoOutput::~VideoOutput() {}
 
-int VideoOutput::preinit(struct vo *vo, const char *arg) {
-	vo->priv = (void*)(quintptr)QString::fromLatin1(arg).toULongLong();
+int VideoOutput::preinit(struct vo *vo) {
+	auto priv = static_cast<cmplayer_vo_priv*>(vo->priv);
+	priv->vo = (VideoOutput*)(void*)(quintptr)QString::fromLatin1(priv->address).toULongLong();
 	return 0;
 }
 
@@ -74,7 +94,7 @@ const VideoFormat &VideoOutput::format() const {
 
 int VideoOutput::config(struct vo *vo, uint32_t w_src, uint32_t h_src, uint32_t w_dest, uint32_t h_dest, uint32_t fs, uint32_t fmt) {
 	Q_UNUSED(fs); Q_UNUSED(fmt); Q_UNUSED(w_src); Q_UNUSED(h_src);
-	auto v = static_cast<VideoOutput*>(vo->priv); auto d = v->d;
+	auto v = priv(vo); auto d = v->d;
 	if (_Change(d->dest_w, w_dest))
 		d->formatChanged = true;
 	if (_Change(d->dest_h, h_dest))
@@ -84,7 +104,7 @@ int VideoOutput::config(struct vo *vo, uint32_t w_src, uint32_t h_src, uint32_t 
 }
 
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
-	auto v = static_cast<VideoOutput*>(vo->priv); auto d = v->d;
+	auto v = priv(vo); auto d = v->d;
 	if (d->formatChanged || (d->formatChanged = !d->format.compare(mpi)))
 		emit v->formatChanged(d->format = VideoFormat(mpi, d->dest_w, d->dest_h));
 	d->frame = VideoFrame(mpi, d->format);
@@ -93,7 +113,7 @@ void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	Q_UNUSED(data);
-	VideoOutput *v = static_cast<VideoOutput*>(vo->priv);
+	auto *v = priv(vo);
 	switch (req) {
 	case VOCTRL_REDRAW_FRAME:
 		if (v->d->renderer)
@@ -105,7 +125,7 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 }
 
 void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
-	Data *d = static_cast<VideoOutput*>(vo->priv)->d;
+	Data *d = priv(vo)->d;
 	if (auto r = d->engine->videoRenderer()) {
 		d->osd.w = d->format.width();
 		d->osd.h = d->format.height();
@@ -117,7 +137,7 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 }
 
 void VideoOutput::flipPage(struct vo *vo) {
-	Data *d = static_cast<VideoOutput*>(vo->priv)->d;
+	Data *d = priv(vo)->d;
 	if (!d->flip || d->quit)
 		return;
 	if (d->renderer) {
