@@ -10,6 +10,7 @@ class ActionGroup : public QActionGroup {
 public:
 	ActionGroup(QObject *parent = 0);
 	void setChecked(const QVariant &data, bool checked);
+	void trigger(double data);
 	void trigger(const QVariant &data);
 	QVariant data() const;
 	void clear();

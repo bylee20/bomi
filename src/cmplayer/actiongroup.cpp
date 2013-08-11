@@ -13,6 +13,15 @@ void ActionGroup::setChecked(const QVariant &data, bool checked) {
 	}
 }
 
+void ActionGroup::trigger(double data) {
+	for (auto action : actions()) {
+		if (qFuzzyCompare(action->data().toDouble(), data)) {
+			action->trigger();
+			return;
+		}
+	}
+}
+
 void ActionGroup::trigger(const QVariant &data) {
 	const auto actions = this->actions();
 	for (auto action : actions) {
@@ -35,3 +44,4 @@ void ActionGroup::clear() {
 		delete action;
 	}
 }
+
