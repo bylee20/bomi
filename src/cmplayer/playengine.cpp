@@ -149,7 +149,7 @@ double PlayEngine::volumeNormalizer() const {
 
 bool PlayEngine::isHwAccActivated() const {
 	if (d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->vd_driver)
-		return qstrcmp(d->mpctx->sh_video->vd_driver->name, HwAcc::name()) == 0;
+		return d->mpctx->sh_video->hwdec_info != nullptr;
 	return false;
 }
 
@@ -455,7 +455,7 @@ int PlayEngine::playImage(const Mrl &mrl, int &terminated, int &duration) {
 int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duration) {
 	d->video->output(QImage());
 	auto mpctx = d->mpctx;
-	mpctx->opts->video_decoders = d->hwAccCodecs.data();
+	mpctx->opts->hwdec_codecs = d->hwAccCodecs.data();
 	d->mpctx->opts->play_start.pos = d->start*1e-3;
 	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
 	setmp("speed", m_speed);
@@ -521,12 +521,12 @@ void PlayEngine::run() {
 		<< ("--af=dummy=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
-		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8";
+		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8" << "--hwdec=vaapi";
 	auto mpctx = d->mpctx = create_player(args.size(), args.data());
 	Q_ASSERT(d->mpctx);
 	d->mpctx->priv = this;
+
 	d->init = true;
-	HwAcc hwAcc; (void)hwAcc;
 	d->quit = false;
 	while (!d->quit) {
 		m_imgMode = false;
@@ -589,7 +589,7 @@ void PlayEngine::run() {
 	}
 	qDebug() << "terminate loop";
 	d->video->quit();
-	mpctx->opts->video_decoders = nullptr;
+	mpctx->opts->hwdec_codecs = nullptr;
 	destroy_player(mpctx);
 	d->mpctx = nullptr;
 	d->init = false;

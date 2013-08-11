@@ -43,8 +43,12 @@ struct AppX11::Data {
 	xcb_atom_t getAtom(const char *name) { return ::getAtom(connection, name); }
 };
 
+extern void initialize_vaapi();
+extern void finalize_vaapi();
+
 AppX11::AppX11(QObject *parent)
 : QObject(parent), d(new Data) {
+	initialize_vaapi();
 	d->ss_timer.setInterval(20000);
 	connect(&d->ss_timer, &QTimer::timeout, [this] () {
 		if (d->xss && d->display)
@@ -59,8 +63,6 @@ AppX11::AppX11(QObject *parent)
 //	const char className[] = "cmplayer\0CMPlayer";
 //	xcb_icccm_set_wm_class(d->connection, window, sizeof(className), className);
 }
-
-extern void finalize_vaapi();
 
 AppX11::~AppX11() {
 	finalize_vaapi();

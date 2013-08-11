@@ -161,8 +161,7 @@ SOURCES += main.cpp \
     globalqmlobject.cpp \
     historymodel.cpp \
     shadervar.cpp \
-    subtitlestyle.cpp \
-    hwacc.cpp \
+    subtitlestyle.cpp hwacc.cpp \
     videoformat.cpp \
     audiocontroller.cpp \
     subtitledrawer.cpp \

@@ -7,6 +7,7 @@ struct MPContext;	struct vo_driver;
 class VideoFormat;	class PlayEngine;
 typedef quint32 uint32_t;	struct mp_image;
 class VideoRendererItem;
+class HwAcc;
 
 class VideoOutput : public QObject {
 	Q_OBJECT
@@ -16,12 +17,12 @@ public:
 	struct vo *vo_create(MPContext *mpctx);
 	void prepare(void *avctx);
 	void release();
-	bool isHwAccActivated() const;
 	const VideoFormat &format() const;
 	void setRenderer(VideoRendererItem *renderer);
 	static const vo_driver &getDriver();
 	void quit();
 	void output(const QImage &image);
+	void setHwAcc(HwAcc *acc);
 signals:
 	void formatChanged(const VideoFormat &format);
 	void reconfigured();

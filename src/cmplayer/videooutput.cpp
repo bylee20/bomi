@@ -2,11 +2,13 @@
 #include "videoframe.hpp"
 #include "videorendereritem.hpp"
 #include "playengine.hpp"
+#include "hwacc.hpp"
 #include <mpvcore/mp_cmplayer.h>
 
 extern "C" {
 #include <video/out/vo.h>
 #include <video/vfcap.h>
+#include <video/decode/dec_video.h>
 #include <video/img_fourcc.h>
 #include <mpvcore/m_option.h>
 #include <video/mp_image.h>
@@ -14,10 +16,7 @@ extern "C" {
 struct vo_driver video_out_null = VideoOutput::getDriver();
 }
 
-struct cmplayer_vo_priv {
-	VideoOutput *vo;
-	char *address;
-};
+struct cmplayer_vo_priv { VideoOutput *vo; char *address; };
 
 static VideoOutput *priv(struct vo *vo) { return static_cast<cmplayer_vo_priv*>(vo->priv)->vo; }
 
@@ -64,6 +63,7 @@ struct VideoOutput::Data {
 	VideoRendererItem *renderer = nullptr;
 	bool formatChanged = false;
 	quint32 dest_w = 0, dest_h = 0;
+	HwAcc *acc = nullptr;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -72,6 +72,10 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 }
 
 VideoOutput::~VideoOutput() {}
+
+void VideoOutput::setHwAcc(HwAcc *acc) {
+	d->acc = acc;
+}
 
 int VideoOutput::preinit(struct vo *vo) {
 	auto priv = static_cast<cmplayer_vo_priv*>(vo->priv);
@@ -105,21 +109,28 @@ int VideoOutput::config(struct vo *vo, uint32_t w_src, uint32_t h_src, uint32_t 
 
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto v = priv(vo); auto d = v->d;
+	if (d->acc)
+		mpi = d->acc->getFrame(mpi);
 	if (d->formatChanged || (d->formatChanged = !d->format.compare(mpi)))
 		emit v->formatChanged(d->format = VideoFormat(mpi, d->dest_w, d->dest_h));
 	d->frame = VideoFrame(mpi, d->format);
+	if (d->acc)
+		mp_image_unrefp(&mpi);
 	d->flip = true;
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
-	Q_UNUSED(data);
 	auto *v = priv(vo);
 	switch (req) {
 	case VOCTRL_REDRAW_FRAME:
 		if (v->d->renderer)
 			v->d->renderer->present(v->d->frame);
 		return VO_TRUE;
-	default:
+	case VOCTRL_GET_HWDEC_INFO: {
+		auto info = static_cast<mp_hwdec_info*>(data);
+		info->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);
+		return VO_TRUE;
+	} default:
 		return VO_NOTIMPL;
 	}
 }
@@ -155,7 +166,7 @@ void VideoOutput::quit() {
 
 int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	switch (format) {
-	case IMGFMT_420P:
+	case IMGFMT_420P:	case IMGFMT_VAAPI:
 	case IMGFMT_NV12:	case IMGFMT_NV21:
 	case IMGFMT_YUYV:	case IMGFMT_UYVY:
 	case IMGFMT_BGRA:	case IMGFMT_RGBA:
@@ -164,4 +175,3 @@ int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 		return 0;
 	}
 }
-
