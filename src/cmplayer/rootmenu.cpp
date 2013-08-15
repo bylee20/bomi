@@ -182,7 +182,10 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		playlist.addAction(_L("move-down"));
 
 	tool.addAction(_L("favorites"))->setVisible(false);
-	tool.addAction(_L("history"))->setShortcut(Qt::Key_C);
+		auto &history = *tool.addMenu(_L("history"));
+		history.addAction(_L("toggle"))->setShortcut(Qt::Key_C);
+		history.addAction(_L("clear"));
+
 	tool.addAction(_L("subtitle"))->setShortcut(Qt::Key_V);
 	tool.addAction(_L("playinfo"));
 	tool.addSeparator();
@@ -449,7 +452,11 @@ void RootMenu::update(const Pref &p) {
 		playlist["move-up"]->setText(tr("Move Up"));
 		playlist["move-down"]->setText(tr("Move Down"));
 	tool["favorites"]->setText(tr("Favorites"));
-	tool["history"]->setText(tr("History List"));
+		auto &history = tool("history");
+		history.setTitle(tr("History"));
+		history["toggle"]->setText(tr("Show/Hide"));
+		history["clear"]->setText(tr("Clear"));
+
 	tool["subtitle"]->setText(tr("Subtitle View"));
 	tool["pref"]->setText(tr("Preferences"));
 	tool["reload-skin"]->setText(tr("Reload Skin"));

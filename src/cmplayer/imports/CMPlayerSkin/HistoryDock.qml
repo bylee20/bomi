@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
+import CMPlayerCore 1.0 as Core
 
 Item {
 	id: dock
@@ -99,5 +100,10 @@ Item {
 			}
 		}
 	}
-//	MouseArea { anchors.fill: parent; acceptedButtons: Qt.RightButton }
+
+	MouseArea {
+		anchors.fill: parent
+		acceptedButtons: Qt.RightButton
+		onClicked: Core.Util.execute("tool/history")
+	}
 }

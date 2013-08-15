@@ -851,7 +851,10 @@ void MainWindow::connectMenus() {
 			selectIndex("playlist", idx+1);
 	});
 
-	connect(tool["history"], &QAction::triggered, [toggleTool] () {toggleTool("history", AppState::get().history_visible);});
+	auto &history = tool("history");
+	connect(history["toggle"], &QAction::triggered, [toggleTool] () {toggleTool("history", AppState::get().history_visible);});
+	connect(history["clear"], &QAction::triggered, [this] () { d->history.clear(); });
+
 	connect(tool["playinfo"], &QAction::triggered, [toggleTool] () {toggleTool("playinfo", AppState::get().playinfo_visible);});
 	connect(tool["subtitle"], &QAction::triggered, [this] () {d->subtitleView->setVisible(!d->subtitleView->isVisible());});
 	connect(tool["pref"], &QAction::triggered, [this] () {
