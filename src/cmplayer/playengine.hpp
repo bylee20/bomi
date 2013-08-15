@@ -70,7 +70,7 @@ public:
 	EngineState state() const {return m_state;}
 	void load(const Mrl &mrl, int start = -1);
 	void load(const Mrl &mrl, bool play);
-	void setSpeed(double speed) {if (_ChangeZ(m_speed, speed)) {setmp("speed", speed);}}
+	void setSpeed(double speed) {if (_ChangeZ(m_speed, speed)) {setmp("speed", speed); emit speedChanged(m_speed);}}
 	const DvdInfo &dvd() const {return m_dvd;}
 	int currentDvdTitle() const {return m_title;}
 	int currentChapter() const;
@@ -145,6 +145,7 @@ signals:
 	void subtitleStreamsChanged(const StreamList &streams);
 	void chaptersChanged(const ChapterList &chapters);
 	void dvdInfoChanged();
+	void speedChanged(double speed);
 private:
 	static void mpPausedChanged(MPContext *mpctx, int paused);
 	static int mpCommandFilter(MPContext *mpctx, mp_cmd *cmd);

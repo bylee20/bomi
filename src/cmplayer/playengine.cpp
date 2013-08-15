@@ -265,7 +265,6 @@ void PlayEngine::customEvent(QEvent *event) {
 				if (it != d->subtitleNames.constEnd()) {
 					one.m_fileName.swap(one.m_title);
 					one.m_title = *it;
-					qDebug() << one.m_fileName;
 				}
 			}
 		}

@@ -26,6 +26,7 @@ class PlayerItem : public QQuickItem, public Skin {
 	Q_PROPERTY(QString stateText READ stateText NOTIFY stateTextChanged)
 	Q_PROPERTY(bool playing READ isPlaying NOTIFY playingChanged)
 	Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
+	Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
 //	Q_PROPERTY(bool paused READ isPaused NOTIFY pausedChanged)
 //	Q_PROPERTY(bool stopped READ isStopped NOTIFY stoppedCahnged)
 public:
@@ -47,6 +48,7 @@ public:
 	QString stateText() const;
 	int volume() const {return m_volume;}
 	bool isMuted() const {return m_muted;}
+	double speed() const {return m_speed;}
 	void setPlaylist(const PlaylistModel *playlist);
 	static void registerItems();
 	void plugTo(PlayEngine *engine);
@@ -77,6 +79,7 @@ signals:
 	void stateChanged(State state);
 	void mediaChanged();
 	void volumeChanged(int volume);
+	void speedChanged(double speed);
 private slots:
 	void updateStateInfo();
 private:
@@ -91,6 +94,7 @@ private:
 	PlayEngine *m_engine = nullptr;
 	QString m_message;
 	bool m_running = false, m_playing = false, m_muted = false;
+	double m_speed = 1.0;
 };
 
 #endif // PLAYERITEM_HPP

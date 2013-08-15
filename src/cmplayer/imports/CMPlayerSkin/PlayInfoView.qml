@@ -71,15 +71,28 @@ Item {
 					.arg(player.stateText)
 					.arg(Util.msecToString(player.time))
 					.arg(Util.msecToString(player.duration))
-                    .arg((player.time*100.0/player.duration).toFixed(1));
+					.arg((player.time*100.0/player.duration).toFixed(1));
 				}
 				color: "yellow"
 				style: Text.Outline
 				styleColor: "black"
 			}
 			Text {
-				id: resources
+				id: speed
 				anchors.top: timeinfo.bottom
+				anchors.left: parent.left
+				width: contentWidth
+				height: contentHeight
+				font.pixelSize: wrapper.fontSize
+				font.family: wrapper.fontFamily
+				color: "yellow"
+				style: Text.Outline
+				styleColor: "black"
+				text: qsTr("Playback Speed: ×%1").arg((player ? player.speed : 1.0).toFixed(2));
+			}
+			Text {
+				id: resources
+				anchors.top: speed.bottom
 				anchors.left: parent.left
 				anchors.topMargin: wrapper.fontSize
 				width: contentWidth

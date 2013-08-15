@@ -669,8 +669,8 @@ void MainWindow::connectMenus() {
 		const int amp = qBound(0, qRound(d->engine.preamp()*100 + a->data().toInt()), 1000);
 		if (amp != qRound(d->engine.preamp()*100))
 			d->push(amp*0.01, d->engine.preamp(), [this] (double amp) {
-				d->engine.setPreamp(amp*0.01);
-				showMessage(tr("Amplifier"), amp, "%");
+				d->engine.setPreamp(amp);
+				showMessage(tr("Amplifier"), qRound(amp*100), "%");
 			});
 	});
 	connect(audio["normalizer"], &QAction::triggered, [this] (bool on) {
@@ -769,8 +769,8 @@ void MainWindow::connectMenus() {
 		const int pos = qBound(0, qRound(d->subtitle.pos()*100.0 + a->data().toInt()), 100);
 		if (pos != qRound(d->subtitle.pos()*100))
 			d->push(pos*0.01, d->subtitle.pos(), [this] (double pos) {
-				d->subtitle.setPos(pos*0.01);
-				showMessage(tr("Subtitle Position"), pos, "%");
+				d->subtitle.setPos(pos);
+				showMessage(tr("Subtitle Position"), qRound(pos*100), "%");
 			});
 	});
 	connect(sub.g("sync"), &ActionGroup::triggered, [this] (QAction *a) {

@@ -115,13 +115,16 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	plug(m_engine, &PlayEngine::mutedChanged, [this] (bool muted) {
 		emit mutedChanged(m_muted = muted);
 	});
-
+	plug(m_engine, &PlayEngine::speedChanged, [this] (double speed) {
+		emit speedChanged(m_speed = speed);
+	});
 	if (m_renderer) {
 		d->drawnFrames = m_renderer->drawnFrames();
 		d->frameTime = UtilObject::systemTime();
 	}
 
 	setState((State)m_engine->state());
+	emit speedChanged(m_speed = m_engine->speed());
 	emit mutedChanged(m_muted = m_engine->isMuted());
 	emit durationChanged(m_duration = m_engine->duration());
 	emit tick(m_position = m_engine->position());
