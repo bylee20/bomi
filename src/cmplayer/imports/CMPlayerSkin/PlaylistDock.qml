@@ -54,7 +54,7 @@ Item {
 		anchors { fill: parent; margins: table.margins }
 
 		readonly property int nameFontSize: 15
-		readonly property int locationFontSize: 8
+		readonly property int locationFontSize: 10
 		readonly property string nameFontFamily: Core.Util.monospace
 		readonly property string locationFontFamily: Core.Util.monospace
 

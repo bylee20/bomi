@@ -35,6 +35,11 @@ void PlaylistModel::play(int row) {
 		emit playRequested(row);
 }
 
+QString PlaylistModel::location(int row) const {
+	auto mrl = m_list.value(row);
+	return mrl.isLocalFile() ? mrl.toLocalFile() : mrl.toString();
+}
+
 QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
 	const int row = index.row();
 	if (!isValidRow(row))
