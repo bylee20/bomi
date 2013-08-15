@@ -271,9 +271,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 	auto general = addCategory(tr("General"));
 	addPage(tr("Open"), d->ui.open_media, ":/img/document-open-32.png", general)->setSelected(true);
 	addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
-	addPage(tr("Behaviours"), d->ui.gen_behaviours, ":/img/preferences-system-session-services.png", general);
-	addPage(tr("Looks"), d->ui.gen_appearance, ":/img/preferences-desktop-theme-32.png", general);
-	addPage(tr("Application"), d->ui.application, ":/img/cmplayer-32.png", general);
+	addPage(tr("Behaviour"), d->ui.gen_behaviours, ":/img/preferences-system-session-services.png", general);
+	addPage(tr("Look"), d->ui.gen_appearance, ":/img/preferences-desktop-theme-32.png", general);
 	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
 
 	auto subtitle = addCategory(tr("Subtitle"));

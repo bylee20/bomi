@@ -75,7 +75,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>3</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -183,7 +183,7 @@
                <bool>false</bool>
               </property>
               <property name="text">
-               <string>Apply on video only</string>
+               <string>Apply to video only</string>
               </property>
               <property name="checked">
                <bool>true</bool>
@@ -196,7 +196,7 @@
          <item>
           <widget class="QGroupBox" name="groupBox_14">
            <property name="title">
-            <string>Image playback</string>
+            <string>Image slide show</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_8">
             <item>
@@ -242,14 +242,14 @@
             <item>
              <widget class="QCheckBox" name="pause_to_play_next_image">
               <property name="text">
-               <string>Use play/pause action as play next action when duration is 'Infinity'</string>
+               <string>Use 'play/pause' as 'play next' when duration is 'Infinite'</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QCheckBox" name="remember_image">
               <property name="text">
-               <string>Remember image playback history</string>
+               <string>Remember image slides history</string>
               </property>
              </widget>
             </item>
@@ -273,25 +273,6 @@
        </widget>
        <widget class="QWidget" name="gen_appearance">
         <layout class="QVBoxLayout" name="verticalLayout_31">
-         <item>
-          <widget class="QGroupBox" name="groupBox_16">
-           <property name="title">
-            <string>Window style</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_20">
-            <item>
-             <widget class="DataComboBox" name="window_style"/>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_27">
-              <property name="text">
-               <string>You may need to restart CMPlayer to apply the changes </string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
          <item>
           <widget class="QGroupBox" name="groupBox_4">
            <property name="title">
@@ -320,7 +301,7 @@
             <item>
              <widget class="QRadioButton" name="show_logo">
               <property name="text">
-               <string>Show the default logo of CMPlayer</string>
+               <string>Show default CMPlayer logo</string>
               </property>
              </widget>
             </item>
@@ -362,6 +343,51 @@
           </widget>
          </item>
          <item>
+          <widget class="QGroupBox" name="groupBox_15">
+           <property name="title">
+            <string>Language</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_15">
+            <item>
+             <widget class="DataComboBox" name="locale">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_26">
+              <property name="text">
+               <string>You may need to restart CMPlayer to apply the changes </string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_16">
+           <property name="title">
+            <string>Window style</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_20">
+            <item>
+             <widget class="DataComboBox" name="window_style"/>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_27">
+              <property name="text">
+               <string>You may need to restart CMPlayer to apply the changes </string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <spacer name="verticalSpacer_11">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -393,7 +419,7 @@
          <item>
           <widget class="QTabWidget" name="tabWidget">
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="tab">
             <attribute name="title">
@@ -1418,93 +1444,6 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="application">
-        <layout class="QVBoxLayout" name="verticalLayout_7">
-         <item>
-          <widget class="QCheckBox" name="single_app">
-           <property name="text">
-            <string>Run only single CMPlayer application at the same time</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="lion_style_fullscreen">
-           <property name="text">
-            <string>Use Lion-style fullscreen mode</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_15">
-           <property name="title">
-            <string>Language</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_15">
-            <item>
-             <widget class="DataComboBox" name="locale">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_26">
-              <property name="text">
-               <string>You may need to restart CMPlayer to apply the changes </string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="system_tray_group">
-           <property name="title">
-            <string>System tray</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_2">
-            <item>
-             <widget class="QCheckBox" name="enable_system_tray">
-              <property name="text">
-               <string>Show system tray icon</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="hide_rather_close">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Hide the window rather than quit when closed </string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_5">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>147</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-        <zorder>single_app</zorder>
-        <zorder>system_tray_group</zorder>
-        <zorder>groupBox_15</zorder>
-        <zorder>lion_style_fullscreen</zorder>
-       </widget>
        <widget class="QWidget" name="sub_load">
         <property name="name" stdset="0">
          <string>Subtitle</string>
@@ -2376,7 +2315,7 @@ e.g.: English, Korean</string>
          <item>
           <widget class="QCheckBox" name="hide_cursor">
            <property name="text">
-            <string>Hide the mouse cursor which doesn't move for a while</string>
+            <string>Hide mouse after timeout</string>
            </property>
           </widget>
          </item>
@@ -2445,6 +2384,46 @@ e.g.: English, Korean</string>
            <property name="text">
             <string>Show OSD messages when the window is resized</string>
            </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="single_app">
+           <property name="text">
+            <string>Run only single CMPlayer application at the same time</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="lion_style_fullscreen">
+           <property name="text">
+            <string>Use Lion-style fullscreen mode</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="system_tray_group">
+           <property name="title">
+            <string>System tray</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <widget class="QCheckBox" name="enable_system_tray">
+              <property name="text">
+               <string>Show system tray icon</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="hide_rather_close">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Hide the window rather than quit when closed </string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
          <item>
@@ -2939,12 +2918,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>297</x>
-     <y>67</y>
+     <x>534</x>
+     <y>344</y>
     </hint>
     <hint type="destinationlabel">
-     <x>292</x>
-     <y>61</y>
+     <x>455</x>
+     <y>374</y>
     </hint>
    </hints>
   </connection>
@@ -2955,12 +2934,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>297</x>
-     <y>67</y>
+     <x>534</x>
+     <y>344</y>
     </hint>
     <hint type="destinationlabel">
-     <x>254</x>
-     <y>61</y>
+     <x>382</x>
+     <y>374</y>
     </hint>
    </hints>
   </connection>
@@ -2971,12 +2950,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>297</x>
-     <y>62</y>
+     <x>294</x>
+     <y>76</y>
     </hint>
     <hint type="destinationlabel">
-     <x>297</x>
-     <y>59</y>
+     <x>294</x>
+     <y>69</y>
     </hint>
    </hints>
   </connection>
@@ -2987,12 +2966,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>318</x>
-     <y>96</y>
+     <x>294</x>
+     <y>76</y>
     </hint>
     <hint type="destinationlabel">
-     <x>318</x>
-     <y>119</y>
+     <x>294</x>
+     <y>67</y>
     </hint>
    </hints>
   </connection>
@@ -3007,8 +2986,8 @@ e.g.: English, Korean</string>
      <y>54</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>371</x>
+     <y>97</y>
     </hint>
    </hints>
   </connection>
@@ -3019,28 +2998,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>336</x>
-     <y>189</y>
+     <x>294</x>
+     <y>81</y>
     </hint>
     <hint type="destinationlabel">
-     <x>318</x>
-     <y>215</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>enable_system_tray</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>hide_rather_close</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>294</x>
+     <y>72</y>
     </hint>
    </hints>
   </connection>
@@ -3051,12 +3014,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>297</x>
-     <y>62</y>
+     <x>534</x>
+     <y>96</y>
     </hint>
     <hint type="destinationlabel">
-     <x>297</x>
-     <y>54</y>
+     <x>534</x>
+     <y>124</y>
     </hint>
    </hints>
   </connection>
@@ -3067,12 +3030,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>297</x>
-     <y>68</y>
+     <x>534</x>
+     <y>191</y>
     </hint>
     <hint type="destinationlabel">
-     <x>297</x>
-     <y>62</y>
+     <x>534</x>
+     <y>219</y>
     </hint>
    </hints>
   </connection>
@@ -3083,12 +3046,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>297</x>
-     <y>68</y>
+     <x>534</x>
+     <y>191</y>
     </hint>
     <hint type="destinationlabel">
-     <x>292</x>
-     <y>56</y>
+     <x>396</x>
+     <y>248</y>
     </hint>
    </hints>
   </connection>
@@ -3099,12 +3062,28 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>293</x>
-     <y>263</y>
+     <x>276</x>
+     <y>78</y>
     </hint>
     <hint type="destinationlabel">
-     <x>323</x>
-     <y>264</y>
+     <x>287</x>
+     <y>78</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>enable_system_tray</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>hide_rather_close</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>293</x>
+     <y>281</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>297</x>
+     <y>295</y>
     </hint>
    </hints>
   </connection>
