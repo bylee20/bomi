@@ -559,24 +559,38 @@ void MainWindow::connectMenus() {
 		dlg->setVideoRenderer(&d->renderer); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
 		if (!dlg->isVisible()) {dlg->adjustSize(); dlg->show();}
 	});
-	connect(video["drop-frame"], &QAction::toggled, [this] (bool enabled) {
-		d->engine.setFrameDrop(enabled); showMessage(tr("Drop Frame"), enabled);
+	connect(video["drop-frame"], &QAction::triggered, [this] () {
+		auto action = d->menu("video")["drop-frame"];
+		if (action->isChecked() != d->engine.frameDrop())
+			d->push(action->isChecked(), d->engine.frameDrop(), [this, action] (bool v) {
+				d->engine.setFrameDrop(v);
+				action->setChecked(v);
+				showMessage(tr("Drop Frame"), v);
+			});
 	});
 	connect(&video("align"), &Menu::triggered, [this] () {
 		int key = 0;
-		for (auto a : d->menu("video")("align").actions()) {if (a->isChecked()) key |= a->data().toInt();}
-		d->renderer.setAlignment(key);
+		for (auto action : d->menu("video")("align").actions()) {
+			if (action->isChecked())
+				key |= action->data().toInt();
+		}
+		if (d->renderer.alignment() != key)
+			d->push(key, d->renderer.alignment(), [this] (int key) {
+				d->renderer.setAlignment(key);
+				for (auto action : d->menu("video")("align").actions())
+					action->setChecked(action->data().toInt() & key);
+			});
 	});
-
 	connect(&video("move"), &Menu::triggered, [this] (QAction *action) {
 		const int move = action->data().toInt();
-		if (move == Qt::NoArrow) {
-			d->renderer.setOffset(QPoint(0, 0));
-		} else {
-			const double x = move == Qt::LeftArrow ? -1 : (move == Qt::RightArrow ? 1 : 0);
-			const double y = move == Qt::UpArrow ? -1 : (move == Qt::DownArrow ? 1 : 0);
-			d->renderer.setOffset(d->renderer.offset() += QPoint(x, y));
+		QPoint offset(0, 0);
+		if (move != Qt::NoArrow) {
+			const auto x = move == Qt::LeftArrow ? -1 : (move == Qt::RightArrow ? 1 : 0);
+			const auto y = move == Qt::UpArrow ? -1 : (move == Qt::DownArrow ? 1 : 0);
+			offset = d->renderer.offset() += QPoint(x, y);
 		}
+		if (d->renderer.offset() != offset)
+			d->push(offset, d->renderer.offset(), [this](const QPoint &v) { d->renderer.setOffset(v); });
 	});
 	connect(&video("filter"), &Menu::triggered, [this] () {
 		VideoRendererItem::Effects effects = 0;
@@ -1232,13 +1246,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event) {
 	QWidget::keyPressEvent(event);
 	if (!event->isAccepted()) {
 		constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
-		auto action = RootMenu::instance().action(QKeySequence(event->key() + (event->modifiers() & modMask)));
-		if (action) {
-			if (action->isCheckable())
-				action->toggle();
-			else
-				action->trigger();
-		}
+		if (auto action = RootMenu::instance().action(QKeySequence(event->key() + (event->modifiers() & modMask))))
+			action->trigger();
 		event->accept();
 	}
 }

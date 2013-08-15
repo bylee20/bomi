@@ -10,7 +10,7 @@ extern "C" {
 #include <mpvcore/av_common.h>
 }
 
-bool HwAcc::supports(AVCodecID /*codec*/) { return true; }//return VaApiInfo::get().find(codec) != nullptr; }
+bool HwAcc::supports(AVCodecID codec) { return VaApi::find(codec) != nullptr; }
 
 const char *HwAcc::codecName(AVCodecID id) {
 	switch (id) {
@@ -30,7 +30,6 @@ const char *HwAcc::codecName(AVCodecID id) {
 		return nullptr;
 	}
 }
-
 
 QList<AVCodecID> HwAcc::fullCodecList() {
 	static const QList<AVCodecID> list = QList<AVCodecID>()
@@ -69,6 +68,7 @@ int HwAcc::imgfmt() const {
 }
 
 int HwAcc::init(lavc_ctx *ctx) {
+#ifdef Q_OS_LINUX
 	auto format = ctx->hwdec->image_formats;
 	if (!format)
 		return -1;
@@ -86,6 +86,10 @@ int HwAcc::init(lavc_ctx *ctx) {
 	ctx->hwdec_priv = acc;
 	ctx->avctx->hwaccel_context = acc->context();
 	return 0;
+#else
+	Q_UNUSED(ctx);
+	return -1;
+#endif
 }
 
 void HwAcc::uninit(lavc_ctx *ctx) {
@@ -105,9 +109,11 @@ int HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder)
 	Q_UNUSED(hwdec);
 	if (!info || !info->vdpau_ctx)
 		return HWDEC_ERR_NO_CTX;
-	if (!fullCodecList().contains((AVCodecID)mp_codec_to_av_codec_id(decoder)))
-		return HWDEC_ERR_NO_CODEC;
-	return 0;
+	if (hwdec->type == HWDEC_VAAPI) {
+		if (VaApi::find((AVCodecID)mp_codec_to_av_codec_id(decoder)))
+			return 0;
+	}
+	return HWDEC_ERR_NO_CODEC;
 }
 
 vd_lavc_hwdec create_vaapi_functions() {

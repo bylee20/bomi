@@ -58,9 +58,6 @@ protected:
 	AVCodecID codec() const {return m_codec;}
 private:
 	static VideoOutput *vo(lavc_ctx *ctx);
-//	bool isOk() const;
-//	bool isOk(int width, int height) const;
-//	bool reinitialize(int width, int height);
 	static int probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder);
 	static int init(lavc_ctx *ctx);
 	static void uninit(lavc_ctx *ctx);

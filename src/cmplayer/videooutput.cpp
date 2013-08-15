@@ -21,7 +21,7 @@ static VideoOutput *priv(struct vo *vo) { return static_cast<cmplayer_vo_priv*>(
 
 #define OPT_BASE_STRUCT struct cmplayer_vo_priv
 vo_driver create_driver() {
-	static m_option options[1];
+	static m_option options[2];
 	memset(options, 0, sizeof(options));
 	options[0].name = "address";
 	options[0].flags = 0;

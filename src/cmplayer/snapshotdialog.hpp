@@ -15,8 +15,11 @@ public:
 public slots:
 	void take();
 private slots:
+	void onFrameImageObtained(const QImage &image);
 	void updateSnapshot(bool sub);
 private:
+	void updateSubtitleImage();
+	void redraw();
 	struct Data;
 	Data *d;
 };

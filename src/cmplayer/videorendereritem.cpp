@@ -26,7 +26,10 @@ struct VideoRendererItem::Data {
 	VideoFormat::Type shaderType = VideoFormat::BGRA;
 	QMutex mutex;
 	QImage image;
+	bool take = false;
+#ifdef Q_OS_LINUX
 	VaApiSurfaceGLX *vaapi = nullptr;
+#endif
 };
 
 static const QEvent::Type UpdateEvent = (QEvent::Type)(QEvent::User+1);
@@ -40,7 +43,9 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 }
 
 VideoRendererItem::~VideoRendererItem() {
+#ifdef Q_OS_LINUX
 	delete d->vaapi;
+#endif
 	delete d;
 }
 
@@ -65,24 +70,21 @@ bool VideoRendererItem::hasFrame() const {
 	return !d->format.isEmpty();
 }
 
-QImage VideoRendererItem::frameImage() const {
+void VideoRendererItem::requestFrameImage() const {
 	if (d->format.isEmpty())
-		return QImage();
-	if (!d->image.isNull())
-		return d->image;
-	if (d->format.type() == VideoFormat::VAGL) {
-		if (!d->vaapi->isValid())
-			return QImage();
-		QImage frame(d->format.alignedSize(), QImage::Format_ARGB32);
-		glBindTexture(GL_TEXTURE_2D, texture(0));
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, frame.bits());
-		return frame;
-	} else {
+		emit frameImageObtained(QImage());
+	else if (!d->image.isNull())
+		emit frameImageObtained(d->image);
+	else if (d->format.type() != VideoFormat::VAGL) {
 		d->mutex.lock();
 		QImage image = d->frame.toImage();
 		d->mutex.unlock();
-		d->mposd->draw(image);
-		return image;
+		d->mposd->drawOn(image);
+		emit frameImageObtained(image);
+	} else {
+		Q_ASSERT(d->format.type() == VideoFormat::VAGL);
+		d->take = true;
+		const_cast<VideoRendererItem*>(this)->update();
 	}
 }
 
@@ -164,7 +166,7 @@ void VideoRendererItem::setOffset(const QPoint &offset) {
 	if (d->offset != offset) {
 		d->offset = offset;
 		emit offsetChanged(d->offset);
-        setGeometryDirty();
+		updateGeometry();
         update();
 	}
 }
@@ -198,6 +200,7 @@ QRectF VideoRendererItem::frameRect(const QRectF &area) const {
 		QPointF pos(area.x(), area.y());
 		pos.rx() += (area.width() - frame.width())*0.5;
 		pos.ry() += (area.height() - frame.height())*0.5;
+		qDebug() << pos;
 		return QRectF(pos, frame);
 	} else
 		return area;
@@ -205,12 +208,9 @@ QRectF VideoRendererItem::frameRect(const QRectF &area) const {
 
 void VideoRendererItem::updateGeometry() {
 	const QRectF vtx = frameRect(QRectF(x(), y(), width(), height()));
-	if (d->vtx != vtx) {
-		d->vtx = vtx;
-		d->mposd->setPosition(d->vtx.topLeft());
+	if (_Change(d->vtx, vtx))
 		d->mposd->setSize(d->vtx.size());
-        setGeometryDirty();
-	}
+	setGeometryDirty();
 }
 
 void VideoRendererItem::setColor(const ColorProperty &prop) {
@@ -285,7 +285,7 @@ void VideoRendererItem::link(QOpenGLShaderProgram *program) {
 }
 
 void VideoRendererItem::drawMpOsd(void *pctx, sub_bitmaps *imgs) {
-	reinterpret_cast<VideoRendererItem*>(pctx)->d->mposd->draw(imgs);
+	reinterpret_cast<VideoRendererItem*>(pctx)->d->mposd->drawOn(imgs);
 }
 
 void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
@@ -380,19 +380,22 @@ void VideoRendererItem::beforeUpdate() {
 			case VideoFormat::RGBA:
 				setTex(0, GL_RGBA, w >> 2, h, d->frame.data(0));
 				break;
+#ifdef Q_OS_LINUX
 			case VideoFormat::VAGL:
 				glBindTexture(GL_TEXTURE_2D, texture(0));
 				if (!d->vaapi)
 					d->vaapi = new VaApiSurfaceGLX(texture(0));
 				d->vaapi->copy(d->frame.data(3));
-//				if (!d->surface) {
-//					qDebug() << d->format.width() << d->format.bytesPerLine(0)/4 << d->format.dataWidth() << d->format.height();
-//					glTexImage2D(GL_TEXTURE_2D, 0, 4, d->format.bytesPerLine(0)/4, d->format.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
-//					d->surface = VaApi::createGLXSurface(texture(0));
-//				}
-//				VaApi::copyGLXSurface(d->surface, d->frame.data(3));
-//				setTex(0, GL_BGRA, w >> 2, h, d->frame.data(0));
+				if (d->take) {
+					QImage image(d->format.alignedSize(), QImage::Format_ARGB32);
+					glBindTexture(GL_TEXTURE_2D, texture(0));
+					glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
+					d->mposd->drawOn(image);
+					emit frameImageObtained(image);
+					d->take = false;
+				}
 				break;
+#endif
 			default:
 				break;
 			}
@@ -430,14 +433,18 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 		if (d->shaderVar.effects() & FlipHorizontally)
 			qSwap(left, right);
 	}
-	set(tp, d->vtx.translated(offset), QRectF(left, top, right-left, bottom-top));
+	auto vtx = d->vtx.translated(offset);
+	d->mposd->setPosition(vtx.topLeft());
+	set(tp, vtx, QRectF(left, top, right-left, bottom-top));
 }
 
 void VideoRendererItem::initializeTextures() {
+#ifdef Q_OS_LINUX
 	if (d->vaapi) {
 		delete d->vaapi;
 		d->vaapi = nullptr;
 	}
+#endif
 	if (d->format.isEmpty())
 		return;
 	auto bindTex = [this] (int idx) {
@@ -456,7 +463,8 @@ void VideoRendererItem::initializeTextures() {
 		bindTex(idx);
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, w >> 2, h, 0, fmt, d->format.glFormat(), nullptr);
 	};
-	d->strideCorrection = QPointF(1.0, 1.0);
+	d->strideCorrection = QPointF(1.0, 1.0); // texel correction for second and third planar
+	// occasionally, the stride does not match exactly, e.g, for I420, stride[1]*2 != stride[0]
 	switch (d->format.type()) {
 	case VideoFormat::I420:
 		initTex(0, GL_LUMINANCE, w, h);
@@ -482,10 +490,12 @@ void VideoRendererItem::initializeTextures() {
 	case VideoFormat::BGRA:
 		initRgbTex(0, GL_BGRA);
 		break;
+#ifdef Q_OS_LINUX
 	case VideoFormat::VAGL:
 		initRgbTex(0, GL_BGRA);
 		d->vaapi = new VaApiSurfaceGLX(texture(0));
 		break;
+#endif
 	default:
 		break;
 	}

@@ -51,6 +51,7 @@ public:
 	const VideoFrame &frame() const;
 	bool isFramePended() const;
 	bool hasFrame() const;
+	void requestFrameImage() const;
 	QImage frameImage() const;
 	QRectF frameRect(const QRectF &area) const;
 	void setLumaRange(int min, int max);
@@ -62,6 +63,7 @@ public slots:
 	void setOffset(const QPoint &offset);
 	void setCropRatio(double ratio);
 signals:
+	void frameImageObtained(const QImage &image) const;
 	void effectsChanged(Effects effects);
 	void offsetChanged(const QPoint &pos);
 	void screenRectChanged(const QRectF rect);

@@ -2,6 +2,9 @@
 #define HWACC_VAAPI_HPP
 
 #include "hwacc.hpp"
+
+#ifdef Q_OS_LINUX
+
 extern "C" {
 #include <va/va.h>
 }
@@ -97,5 +100,7 @@ private:
 	GLuint m_texture = GL_NONE;
 	VAStatus m_status = VA_STATUS_SUCCESS;
 };
+
+#endif
 
 #endif // HWACC_VAAPI_HPP

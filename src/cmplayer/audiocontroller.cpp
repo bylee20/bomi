@@ -28,7 +28,7 @@ static AudioController *priv(af_instance *af) { return static_cast<cmplayer_af_p
 
 #define OPT_BASE_STRUCT struct cmplayer_af_priv
 af_info create_info() {
-	static m_option options[1];
+	static m_option options[2];
 	memset(options, 0, sizeof(options));
 	options[0].name = "address";
 	options[0].flags = 0;
@@ -44,9 +44,9 @@ af_info create_info() {
 		"",
 		AF_FLAGS_NOT_REENTRANT,
 		AudioController::open,
-		nullptr, // bool (*test_conversion)(int src_format, int dst_format);
+		nullptr,
 		sizeof(cmplayer_af_priv),
-		nullptr,//	const void *priv_defaults;
+		nullptr,
 		options
 	};
 	return info;

@@ -1,6 +1,8 @@
 #include "hwacc_vaapi.hpp"
 #include "stdafx.hpp"
 
+#ifdef Q_OS_LINUX
+
 extern "C" {
 #include <video/decode/dec_video.h>
 #include <video/decode/lavc.h>
@@ -52,8 +54,8 @@ VaApi::VaApi() {
 	const QVector<int> avmpeg2s = {FF_PROFILE_MPEG2_MAIN, FF_PROFILE_MPEG2_SIMPLE};
 	const QVector<VAProfile> vampeg4s = {VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple};
 	const QVector<int> avmpeg4s = {FF_PROFILE_MPEG4_MAIN, FF_PROFILE_MPEG4_ADVANCED_SIMPLE, FF_PROFILE_MPEG4_SIMPLE};
-	const QVector<VAProfile> vah264s = {VAProfileH264High, VAProfileH264Main, VAProfileH264Baseline};
-	const QVector<int> avh264s = {FF_PROFILE_H264_HIGH, FF_PROFILE_H264_MAIN, FF_PROFILE_H264_BASELINE};
+	const QVector<VAProfile> vah264s = {VAProfileH264High, VAProfileH264Main, VAProfileH264Baseline, VAProfileH264ConstrainedBaseline};
+	const QVector<int> avh264s = {FF_PROFILE_H264_HIGH, FF_PROFILE_H264_MAIN, FF_PROFILE_H264_BASELINE, FF_PROFILE_H264_CONSTRAINED_BASELINE};
 	const QVector<VAProfile> vawmv3s = {VAProfileVC1Main, VAProfileVC1Simple, VAProfileVC1Advanced};
 	const QVector<int> avwmv3s = {FF_PROFILE_VC1_MAIN, FF_PROFILE_VC1_SIMPLE, FF_PROFILE_VC1_ADVANCED};
 	const QVector<VAProfile> vavc1s = {VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple};
@@ -113,7 +115,7 @@ struct HwAccVaApi::Data {
 	vaapi_context context = {nullptr, VA_INVALID_ID, VA_INVALID_ID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	QVector<VaApiSurface> surfaces;
 	quint64 surfaceOrder = 0;
-	VAProfile profile = (VAProfile)(-1);
+	VAProfile profile = VAProfileNone;
 };
 
 HwAccVaApi::HwAccVaApi(AVCodecID cid, Type type)
@@ -362,3 +364,9 @@ mp_image *HwAccVaApiX11::getImage(mp_image *mpi) {
 	}
 	return mpi;
 }
+
+#else
+void initialize_vaapi() {}
+void finalize_vaapi() {}
+#endif
+

@@ -21,11 +21,11 @@ class MpOsdItem : public QQuickItem {
 public:
 	MpOsdItem(QQuickItem *parent = nullptr);
 	~MpOsdItem();
-	void draw(sub_bitmaps *imgs);
+	void drawOn(sub_bitmaps *imgs);
 	void setFrameSize(const QSize &size);
 	QSize frameSize() const;
 	void present();
-	void draw(QImage &frame);
+	void drawOn(QImage &frame);
 private:
 	friend class MpOsdItemShader;
 	void updateState(QOpenGLShaderProgram *program);

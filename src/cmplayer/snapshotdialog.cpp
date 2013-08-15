@@ -43,7 +43,56 @@ SnapshotDialog::~SnapshotDialog() {
 }
 
 void SnapshotDialog::setVideoRenderer(const VideoRendererItem *video) {
-	d->video = video;
+	if (d->video)
+		disconnect(d->video, 0, this, 0);
+	if ((d->video = video))
+		connect(d->video, SIGNAL(frameImageObtained(QImage)), this, SLOT(onFrameImageObtained(QImage)), Qt::QueuedConnection);
+}
+
+void SnapshotDialog::updateSubtitleImage() {
+	d->hasSubtitle = false;
+	if (!d->subtitle)
+		return;
+	d->drawer.setText(d->subtitle->text());
+	d->drawer.setAlignment(d->subtitle->alignment());
+	d->drawer.setMargin(d->subtitle->margin());
+	d->drawer.setStyle(d->subtitle->style());
+	QImage subtitle; QSize size; QPointF offset;
+	if (!(d->hasSubtitle = d->drawer.draw(subtitle, size, offset, d->image.rect(), d->subtitle->dpr())))
+		return;
+	if (d->drawer.style().shadow.enabled) {
+		QImage shadow(subtitle.size(), QImage::Format_ARGB32_Premultiplied);
+
+		const auto color = d->drawer.style().shadow.color;
+		const int r = color.red(), g = color.green(), b = color.blue();
+		const double alpha = color.alphaF();
+		for (int x=0; x<shadow.width(); ++x) {
+			for (int y=0; y<shadow.height(); ++y)
+				shadow.setPixel(x, y, qRgba(r, g, b, alpha*qAlpha(subtitle.pixel(x, y))));
+		}
+		d->sub = QImage(subtitle.size(), QImage::Format_ARGB32_Premultiplied);
+		d->sub.fill(0x0);
+		QPainter painter(&d->sub);
+		painter.drawImage(offset, shadow);
+		painter.drawImage(QPoint(0, 0), subtitle);
+	} else
+		d->sub = subtitle;
+	d->subPos = d->drawer.pos(d->sub.size(), d->image.rect());
+}
+
+void SnapshotDialog::onFrameImageObtained(const QImage &image) {
+	const QImage frame = image;
+	if (frame.size() == d->video->sizeHint())
+		d->image = frame;
+	else {
+		d->image = QImage(d->video->sizeHint(), QImage::Format_ARGB32_Premultiplied);
+		QPainter painter(&d->image);
+		painter.setRenderHint(QPainter::SmoothPixmapTransform);
+		painter.drawImage(d->video->frameRect(d->image.rect()), frame);
+	}
+	updateSubtitleImage();
+	updateSnapshot(d->ui.subtitle->isChecked());
+	d->ui.take->setEnabled(true);
 }
 
 void SnapshotDialog::setSubtitleRenderer(const SubtitleRendererItem *subtitle) {
@@ -61,12 +110,15 @@ void SnapshotDialog::updateSnapshot(bool sub) {
 		}
 		d->ui.viewer->setImage(pixmap);
 	}
+	d->ui.save->setEnabled(!d->image.isNull());
 }
 
 void SnapshotDialog::take() {
 	if (!d->video || !d->video->hasFrame())
 		return;
 	d->ui.take->setEnabled(false);
+	d->video->requestFrameImage();
+	return;
 	const QImage frame = d->video->frameImage();
 	d->image = QImage(d->video->sizeHint(), QImage::Format_ARGB32_Premultiplied);
 	QPainter painter(&d->image);

@@ -418,6 +418,8 @@ void RootMenu::update(const Pref &p) {
 
 	video["snapshot"]->setText(tr("Take Snapshot"));
 	video["drop-frame"]->setText(tr("Drop Frame"));
+	video["drop-frame"]->setVisible(false);
+	video["drop-frame"]->setEnabled(false);
 
 	auto &audio = root("audio");
 	audio.setTitle(tr("Audio"));

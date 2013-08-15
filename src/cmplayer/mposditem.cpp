@@ -218,7 +218,7 @@ void MpOsdItem::setFrameSize(const QSize &size) {
 	}
 }
 
-void MpOsdItem::draw(sub_bitmaps *imgs) {
+void MpOsdItem::drawOn(sub_bitmaps *imgs) {
 	d->show = true;
 	if (imgs->num_parts <= 0 || imgs->format != SUBBITMAP_RGBA)
 		return;
@@ -241,7 +241,7 @@ void MpOsdItem::draw(sub_bitmaps *imgs) {
 	d->mutex.unlock();
 }
 
-void MpOsdItem::draw(QImage &frame) {
+void MpOsdItem::drawOn(QImage &frame) {
 	if (!isVisible() || d->osd.format != SUBBITMAP_RGBA)
 		return;
 	d->mutex.lock();
