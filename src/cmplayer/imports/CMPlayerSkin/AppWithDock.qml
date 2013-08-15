@@ -8,7 +8,16 @@ Item {
 	property Item controls: Item {}
 	Binding { target: engine; property: "width"; value: root.width }
 	Binding { target: engine; property: "height"; value: Util.fullScreen ? root.height : root.height - controls.height }
-	Connections { target: Util; onFullScreenChanged: catcher.update() }
+	Connections {
+		target: Util
+		onFullScreenChanged: {
+			catcher.update()
+			if (Util.fullScreen)
+				engine.bottomPadding = catcher.height
+			else
+				engine.bottomPadding = 0
+		}
+	}
 
 	MouseArea {
 		anchors.fill: parent
