@@ -29,7 +29,6 @@ private slots:
 	void setVideoSize(double rate);
 	void clearSubtitleFiles();
 	void updateRecentActions(const QList<Mrl> &list);
-//	void hideCursor();
 	void updateStaysOnTop();
 	void reloadSkin();
 	void checkWindowState();

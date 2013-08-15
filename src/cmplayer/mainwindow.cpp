@@ -57,9 +57,9 @@ struct MainWindow::Data {
 	SubtitleView *subtitleView = nullptr;
 	HistoryModel history;
 	PlaylistModel &playlist = engine.playlist();
-	QUndoStack undo;
+	QUndoStack *undo = nullptr;
 //	FavoritesView *favorite;
-//	QSystemTrayIcon *tray = nullptr;
+	QSystemTrayIcon *tray = nullptr;
 	QString filePath;
 	Pref preferences;
 	const Pref &pref() const {return preferences;}
@@ -211,9 +211,14 @@ struct MainWindow::Data {
 
 	template<typename T, typename Func>
 	QUndoCommand *push(const T &to, const T &from, const Func &func) {
-		auto cmd = new ValueCmd<Func, T>(to, from, func);
-		undo.push(cmd);
-		return cmd;
+		if (undo) {
+			auto cmd = new ValueCmd<Func, T>(to, from, func);
+			undo->push(cmd);
+			return cmd;
+		} else {
+			func(to);
+			return nullptr;
+		}
 	}
 
 	template<typename Func>
@@ -407,16 +412,15 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenBut
 	d->winState = d->prevWinState = windowState();
 
 #ifndef Q_OS_MAC
-//	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
-//	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
-//		if (reason == QSystemTrayIcon::Trigger)
-//			setVisible(!isVisible());
-//		else if (reason == QSystemTrayIcon::Context)
-//			d->contextMenu.exec(QCursor::pos());
-//	});
-//	d->tray->setVisible(d->preferences.enable_system_tray);
+	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
+	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
+		if (reason == QSystemTrayIcon::Trigger)
+			setVisible(!isVisible());
+		else if (reason == QSystemTrayIcon::Context)
+			d->contextMenu.exec(QCursor::pos());
+	});
+	d->tray->setVisible(d->preferences.enable_system_tray);
 #endif
-
 
 //	Currently, session management does not works.
 //	connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
@@ -424,17 +428,17 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenBut
 //		session.setRestartHint(QSessionManager::RestartIfRunning);
 //	});
 
-	d->undo.clear();
+	d->undo = new QUndoStack(this);
 	d->currentAspect = d->menu("video")("aspect").g()->checkedAction();
 	d->currentCrop = d->menu("video")("crop").g()->checkedAction();
 	auto undo = d->menu("tool")["undo"];
 	auto redo = d->menu("tool")["redo"];
-	connect(&d->undo, &QUndoStack::canUndoChanged, undo, &QAction::setEnabled);
-	connect(&d->undo, &QUndoStack::canRedoChanged, redo, &QAction::setEnabled);
-	connect(undo, &QAction::triggered, &d->undo, &QUndoStack::undo);
-	connect(redo, &QAction::triggered, &d->undo, &QUndoStack::redo);
-	d->menu("tool")["undo"]->setEnabled(d->undo.canUndo());
-	d->menu("tool")["redo"]->setEnabled(d->undo.canRedo());
+	connect(d->undo, &QUndoStack::canUndoChanged, undo, &QAction::setEnabled);
+	connect(d->undo, &QUndoStack::canRedoChanged, redo, &QAction::setEnabled);
+	connect(undo, &QAction::triggered, d->undo, &QUndoStack::undo);
+	connect(redo, &QAction::triggered, d->undo, &QUndoStack::redo);
+	d->menu("tool")["undo"]->setEnabled(d->undo->canUndo());
+	d->menu("tool")["redo"]->setEnabled(d->undo->canRedo());
 	QTimer::singleShot(1, this, SLOT(applyPref()));
 
 	d->dontShowMsg = false;
@@ -595,28 +599,39 @@ void MainWindow::connectMenus() {
 	connect(&video("filter"), &Menu::triggered, [this] () {
 		VideoRendererItem::Effects effects = 0;
 		for (auto act : d->menu("video")("filter").actions()) {
-			if (act->isChecked()) effects |= static_cast<VideoRendererItem::Effect>(act->data().toInt());
-		} d->renderer.setEffects(effects);
+			if (act->isChecked())
+				effects |= static_cast<VideoRendererItem::Effect>(act->data().toInt());
+		}
+		if (d->renderer.effects() != effects)
+			d->push(effects, d->renderer.effects(), [this] (VideoRendererItem::Effects effects) {
+				d->renderer.setEffects(effects);
+				for (auto action : d->menu("video")("filter").actions())
+					action->setChecked(action->data().toInt() & effects);
+			});
 	});
 	connect(video("color").g(), &ActionGroup::triggered, [this] (QAction *action) {
 		const auto data = action->data().toList();
 		const auto prop = ColorProperty::Value(data[0].toInt());
-		if (prop == ColorProperty::PropMax) {
-			d->renderer.setColor(ColorProperty());
-			showMessage(tr("Reset brightness, contrast, saturation and hue"));
-		} else {
-			QString cmd;
+		ColorProperty color; QString cmd;
+		if (prop != ColorProperty::PropMax) {
 			switch(prop) {
 			case ColorProperty::Brightness: cmd = tr("Brightness"); break;
 			case ColorProperty::Saturation: cmd = tr("Saturation"); break;
 			case ColorProperty::Hue: cmd = tr("Hue"); break;
 			case ColorProperty::Contrast: cmd = tr("Contrast"); break;
-			default: return;}
-			ColorProperty color = d->renderer.color();
+			default: return;
+			}
+			color = d->renderer.color();
 			color.setValue(prop, color.value(prop) + data[1].toInt()*0.01);
-			d->renderer.setColor(color);
-			showMessage(cmd, qRound(d->renderer.color()[prop]*100.0), "%", true);
 		}
+		if (d->renderer.color() != color)
+			d->push(color, d->renderer.color(), [this, cmd, prop] (const ColorProperty &color) {
+				d->renderer.setColor(color);
+				if (prop == ColorProperty::PropMax)
+					showMessage(tr("Reset/Adjust brightness, contrast, saturation and hue"));
+				else
+					showMessage(cmd, qRound(d->renderer.color()[prop]*100.0), "%", true);
+			});
 	});
 
 	Menu &audio = d->menu("audio");
@@ -633,20 +648,46 @@ void MainWindow::connectMenus() {
 				});
 		}
 	});
-	connect(audio["mute"], &QAction::toggled, [this] (bool on) {d->engine.setMuted(on); showMessage(tr("Mute"), on);});
+	connect(audio["mute"], &QAction::triggered, [this] (bool on) {
+		if (on != d->engine.isMuted())
+			d->push(on, d->engine.isMuted(), [this] (bool on) {
+				d->engine.setMuted(on);
+				d->menu("audio")["mute"]->setChecked(on);
+				showMessage(tr("Mute"), on);
+			});
+	});
 	connect(audio.g("sync"), &ActionGroup::triggered, [this] (QAction *a) {
-		const int diff = a->data().toInt(); const int sync = diff ? d->engine.audioSync() + diff : 0;
-		d->engine.setAudioSync(sync); showMessage(tr("Audio Sync"), sync*0.001, "sec", true);
+		const int diff = a->data().toInt();
+		const int sync = diff ? d->engine.audioSync() + diff : 0;
+		if (d->engine.audioSync() != sync)
+			d->push(sync, d->engine.audioSync(), [this] (int sync) {
+				d->engine.setAudioSync(sync);
+				showMessage(tr("Audio Sync"), (double)sync*0.001, "sec", true);
+			});
 	});
 	connect(audio.g("amp"), &ActionGroup::triggered, [this] (QAction *a) {
 		const int amp = qBound(0, qRound(d->engine.preamp()*100 + a->data().toInt()), 1000);
-		d->engine.setPreamp(amp*0.01); showMessage(tr("Amplifier"), amp, "%");
+		if (amp != qRound(d->engine.preamp()*100))
+			d->push(amp*0.01, d->engine.preamp(), [this] (double amp) {
+				d->engine.setPreamp(amp*0.01);
+				showMessage(tr("Amplifier"), amp, "%");
+			});
 	});
-	connect(audio["normalizer"], &QAction::toggled, [this] (bool on) {
-		d->engine.setVolumeNormalized(on); showMessage(tr("Volume Normalizer"), on);
+	connect(audio["normalizer"], &QAction::triggered, [this] (bool on) {
+		if (on != d->engine.isVolumeNormalized())
+			d->push(on, d->engine.isVolumeNormalized(), [this] (bool on) {
+				d->engine.setVolumeNormalized(on);
+				showMessage(tr("Volume Normalizer"), on);
+				d->menu("audio")["normalizer"]->setChecked(on);
+			});
 	});
-	connect(audio["tempo-scaler"], &QAction::toggled, [this] (bool on) {
-		d->engine.setTempoScaled(on); showMessage(tr("Tempo Scaler"), on);
+	connect(audio["tempo-scaler"], &QAction::triggered, [this] (bool on) {
+		if (on != d->engine.isTempoScaled())
+			d->push(on, d->engine.isTempoScaled(), [this] (bool on) {
+				d->engine.setTempoScaled(on);
+				showMessage(tr("Tempo Scaler"), on);
+				d->menu("audio")["tempo-scaler"]->setChecked(on);
+			});
 	});
 	auto  selectNext = [this] (const QList<QAction*> &actions) {
 		if (!actions.isEmpty()) {
@@ -716,15 +757,29 @@ void MainWindow::connectMenus() {
 		a->setChecked(true); d->engine.setCurrentSubtitleStream(a->data().toInt());
 		showMessage(tr("Selected Subtitle"), a->text());
 	});
-	connect(sub.g("display"), &ActionGroup::triggered, [this] (QAction *a) {d->subtitle.setLetterboxHint(a->data().toInt());});
-	connect(sub.g("align"), &ActionGroup::triggered, [this] (QAction *a) {d->subtitle.setTopAlignment(a->data().toInt());});
+	d->connect(sub.g("display"), [this] (QAction *action) {
+		d->subtitle.setLetterboxHint(action->data().toInt());
+		showMessage(tr("Subtitle Display"), action->text());
+	});
+	d->connect(sub.g("align"), [this] (QAction *action) {
+		d->subtitle.setTopAlignment(action->data().toInt());
+		showMessage(tr("Subtitle Alignment"), action->text());
+	});
 	connect(sub.g("pos"), &ActionGroup::triggered, [this] (QAction *a) {
 		const int pos = qBound(0, qRound(d->subtitle.pos()*100.0 + a->data().toInt()), 100);
-		d->subtitle.setPos(pos*0.01); showMessage(tr("Subtitle Position"), pos, "%");
+		if (pos != qRound(d->subtitle.pos()*100))
+			d->push(pos*0.01, d->subtitle.pos(), [this] (double pos) {
+				d->subtitle.setPos(pos*0.01);
+				showMessage(tr("Subtitle Position"), pos, "%");
+			});
 	});
 	connect(sub.g("sync"), &ActionGroup::triggered, [this] (QAction *a) {
 		const int diff = a->data().toInt(); const int delay = diff ? d->subtitle.delay() + diff : 0;
-		d->subtitle.setDelay(delay); showMessage("Subtitle Sync", delay*0.001, "sec", true);
+		if (delay != d->subtitle.delay())
+			d->push(delay, d->subtitle.delay(), [this] (int delay) {
+				d->subtitle.setDelay(delay);
+				showMessage("Subtitle Sync", delay*0.001, "sec", true);
+			});
 	});
 
 	Menu &tool = d->menu("tool");
@@ -809,8 +864,13 @@ void MainWindow::connectMenus() {
 		d->prefDlg->show();
 	});
 	connect(tool["reload-skin"], &QAction::triggered, this, &MainWindow::reloadSkin);
-	connect(tool["auto-exit"], &QAction::toggled, [this] (bool on) {
-		showMessage((AppState::get().auto_exit = on) ? tr("Exit CMPlayer when the playlist has finished.") : tr("Auto-exit is canceled."));
+	connect(tool["auto-exit"], &QAction::triggered, [this] (bool on) {
+		if (on != AppState::get().auto_exit)
+			d->push(on, AppState::get().auto_exit, [this] (bool on) {
+				AppState::get().auto_exit = on;
+				showMessage(on ? tr("Exit CMPlayer when the playlist has finished.") : tr("Auto-exit is canceled."));
+				d->menu("tool")["auto-exit"]->setChecked(on);
+			});
 	});
 	connect(tool["auto-shutdown"], &QAction::toggled, [this] (bool on) {
 		if (on) {
@@ -819,16 +879,17 @@ void MainWindow::connectMenus() {
 					, QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Cancel) {
 				d->menu("tool")["auto-shutdown"]->setChecked(false);
 			} else
-				showMessage("The system will shut down when the play list has finished.");
+				showMessage(tr("The system will shut down when the play list has finished."));
 		} else
-			showMessage("Auto-shutdown is canceled.");
+			showMessage(tr("Auto-shutdown is canceled."));
 	});
-
-
 
 	Menu &win = d->menu("window");		Menu &help = d->menu("help");
 
-	connect(win.g("stays-on-top"), &ActionGroup::triggered, this, &MainWindow::updateStaysOnTop);
+	d->connect(win.g("stays-on-top"), [this] (QAction *action) {
+		updateStaysOnTop();
+		showMessage(tr("Stays on Top"), action->text());
+	});
 	connect(win.g("size"), &ActionGroup::triggered, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
 	connect(win["minimize"], &QAction::triggered, this, &MainWindow::showMinimized);
 	connect(win["maximize"], &QAction::triggered, this, &MainWindow::showMaximized);
@@ -1223,8 +1284,8 @@ void MainWindow::applyPref() {
 	if (time >= 0)
 		d->engine.reload();
 
-//	if (d->tray)
-//		d->tray->setVisible(p.enable_system_tray);
+	if (d->tray)
+		d->tray->setVisible(p.enable_system_tray);
 	d->preferences.save();
 }
 

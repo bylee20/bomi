@@ -200,7 +200,6 @@ QRectF VideoRendererItem::frameRect(const QRectF &area) const {
 		QPointF pos(area.x(), area.y());
 		pos.rx() += (area.width() - frame.width())*0.5;
 		pos.ry() += (area.height() - frame.height())*0.5;
-		qDebug() << pos;
 		return QRectF(pos, frame);
 	} else
 		return area;
