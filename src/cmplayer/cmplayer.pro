@@ -36,7 +36,7 @@ macx {
     QMAKE_CC = "gcc -std=c99 -w"
     QMAKE_CXXFLAGS += -std=c++11
     TARGET = cmplayer
-    LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavformat -lavutil \
+    LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lva-x11 -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavformat -lavutil \
         -lmpg123 -lquvi -ldvdread -lcdio -lcdio_paranoia -lcdio_cdda -lopenal -lasound -ldl -lass -lenca
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
@@ -108,7 +108,9 @@ HEADERS += playengine.hpp \
     skin.hpp \
     subtitlerenderingthread.hpp \
     dataevent.hpp \
-    openmediafolderdialog.hpp
+    openmediafolderdialog.hpp \
+    hwacc_vaapi.hpp \
+    hwacc_vdpau.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -167,7 +169,9 @@ SOURCES += main.cpp \
     subtitledrawer.cpp \
     skin.cpp \
     subtitlerenderingthread.cpp \
-    openmediafolderdialog.cpp
+    openmediafolderdialog.cpp \
+    hwacc_vaapi.cpp \
+    hwacc_vdpau.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

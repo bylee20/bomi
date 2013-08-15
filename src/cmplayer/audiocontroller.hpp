@@ -3,9 +3,8 @@
 
 #include "stdafx.hpp"
 
-struct af_instance;
-struct mp_audio;
-struct af_cfg;
+struct af_instance;		struct mp_audio;
+struct af_cfg;			struct af_info;
 
 class AudioController : public QObject {
 	Q_OBJECT
@@ -20,14 +19,14 @@ public:
 	bool scaletempo() const;
 	void setNormalizer(double length, double target, double silence, double min, double max);
 private:
-	static int init(af_instance *af, const char *arg);
+	static int open(af_instance *af);
 	int config(mp_audio *data);
 	static mp_audio *play(af_instance *af, mp_audio *data);
 	static void uninit(af_instance *af);
 	static int control(af_instance *af, int cmd, void *arg);
 	struct Data;
 	Data *d;
-	friend int ac_open(af_instance *af);
+	friend af_info create_info();
 };
 
 #endif // AUDIOCONTROLLER_HPP

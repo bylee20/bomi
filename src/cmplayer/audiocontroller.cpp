@@ -1,18 +1,7 @@
 #include "audiocontroller.hpp"
+#include <mpvcore/mp_cmplayer.h>
 extern "C" {
-#define new __new
 #include <audio/filter/af.h>
-#undef new
-}
-
-int ac_open(af_instance *af) {
-	af->control = AudioController::control;
-	af->uninit = AudioController::uninit;
-	af->play = AudioController::play;
-	af->mul = 1;
-	af->data = nullptr;
-	af->setup = nullptr;
-	return AF_OK;
 }
 
 template<typename T> struct AcMisc {};
@@ -33,8 +22,37 @@ template<> struct AcMisc<float> {
 	static constexpr double level(double p) {return (p < 0 ? -p : p);}
 };
 
-// some codes are copied from mplayer
-af_info af_info_dummy = { "CMPlayer audio controller", "dummy", "xylosper", "", AF_FLAGS_NOT_REENTRANT, ac_open, nullptr};
+struct cmplayer_af_priv { AudioController *ac; char *address; };
+
+static AudioController *priv(af_instance *af) { return static_cast<cmplayer_af_priv*>(af->priv)->ac; }
+
+#define OPT_BASE_STRUCT struct cmplayer_af_priv
+af_info create_info() {
+	static m_option options[1];
+	memset(options, 0, sizeof(options));
+	options[0].name = "address";
+	options[0].flags = 0;
+	options[0].defval = 0;
+	options[0].offset = MP_CHECKED_OFFSETOF(OPT_BASE_STRUCT, address, char*);
+	options[0].____new = 1;
+	options[0].type = &m_option_type_string;
+
+	static af_info info = {
+		"CMPlayer audio controller",
+		"dummy",
+		"xylosper",
+		"",
+		AF_FLAGS_NOT_REENTRANT,
+		AudioController::open,
+		nullptr, // bool (*test_conversion)(int src_format, int dst_format);
+		sizeof(cmplayer_af_priv),
+		nullptr,//	const void *priv_defaults;
+		options
+	};
+	return info;
+}
+
+af_info af_info_dummy = create_info();
 
 extern af_info af_info_scaletempo;
 
@@ -118,23 +136,29 @@ AudioController::~AudioController() {
 	delete d;
 }
 
+int AudioController::open(af_instance *af) {
+	af->control = AudioController::control;
+	af->uninit = AudioController::uninit;
+	af->play = AudioController::play;
+	af->mul = 1;
+	af->data = nullptr;
+	af->setup = nullptr;
 
-int AudioController::init(af_instance *af, const char *arg) {
-	Q_ASSERT(!af->setup);
-	AudioController *ac = (AudioController*)(void*)(quintptr)QString::fromLatin1(arg).toULongLong();
-	Q_ASSERT(ac);
-	auto d = ac->d;
-	af->setup = ac;
+	auto priv = static_cast<cmplayer_af_priv*>(af->priv);
+	priv->ac = (AudioController*)(void*)(quintptr)QString::fromLatin1(priv->address).toULongLong();
+
+	auto d = priv->ac->d;
 	af->data = &d->data;
 
 	d->af = af;
 	af_info_scaletempo.open(&d->af_scaletempo);
 	d->af_scaletempo.info = &af_info_scaletempo;
+
 	return AF_OK;
 }
 
 void AudioController::uninit(af_instance *af) {
-	auto ac = static_cast<AudioController*>(af->setup);
+	auto ac = priv(af);
 	if (ac) {
 		ac->d->af_scaletempo.uninit(&ac->d->af_scaletempo);
 		ac->d->af = nullptr;
@@ -164,16 +188,11 @@ double AudioController::volume() const {
 }
 
 int AudioController::control(af_instance *af, int cmd, void *arg) {
-	auto ac = static_cast<AudioController*>(af->setup);
-	auto d = ac ? ac->d : nullptr;
-	Q_ASSERT(!ac || (ac && d));
+	auto ac = priv(af);
+	auto d = ac->d;
 	switch(cmd){
 	case AF_CONTROL_REINIT:
-		Q_ASSERT(ac != nullptr);
 		return ac->config(static_cast<mp_audio*>(arg));
-	case AF_CONTROL_COMMAND_LINE:
-		init(af, static_cast<const char*>(arg));
-		return AF_OK;
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
 //		return af_from_dB(AF_NCH, (float*)arg, d->level, 20.0, -200.0, 60.0);
 		return AF_OK;
@@ -189,7 +208,7 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 }
 
 mp_audio *AudioController::play(af_instance *af, mp_audio *data) {
-	auto d = static_cast<AudioController*>(af->setup)->d;
+	auto d = priv(af)->d;
 	if (d->normalizer) {
 		if (d->data.format == AF_FORMAT_S16_NE)
 			d->updateGain<qint16>(data);

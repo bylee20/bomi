@@ -178,7 +178,7 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	m_input->m_fps = sh->fps;
 	m_input->m_bps = sh->i_bps*8;
 	m_output->m_type = format(fmt.type());
-	m_output->m_size = fmt.drawSize();
+	m_output->m_size = fmt.outputSize();
 	m_output->m_fps = sh->fps;
 	m_output->m_bps = fmt.bps(sh->fps);
 }

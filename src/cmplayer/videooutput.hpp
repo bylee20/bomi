@@ -19,10 +19,10 @@ public:
 	void release();
 	const VideoFormat &format() const;
 	void setRenderer(VideoRendererItem *renderer);
-	static const vo_driver &getDriver();
 	void quit();
 	void output(const QImage &image);
 	void setHwAcc(HwAcc *acc);
+	HwAcc *hwAcc() const;
 signals:
 	void formatChanged(const VideoFormat &format);
 	void reconfigured();
@@ -37,6 +37,7 @@ private:
 	static void drawImage(struct vo *vo, mp_image *mpi);
 	struct Data;
 	Data *d;
+	friend vo_driver create_driver();
 };
 
 #endif // VIDEOOUTPUT_HPP

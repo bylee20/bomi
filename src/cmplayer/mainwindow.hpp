@@ -12,6 +12,7 @@ class Subtitle;
 class MainWindow : public QWidget {
 	Q_OBJECT
 public:
+	class Cmd;
 	MainWindow(QWidget *parent = nullptr);
 	MainWindow(const MainWindow &) = delete;
 	MainWindow &operator = (const MainWindow &) = delete;
@@ -65,7 +66,20 @@ private:
 	friend class MainView;
 	struct Data;
 	Data *d;
+	class VolumeCmd;	class SpeedCmd;		class AspectRatioCmd;
+	class CropCmd;
 };
+
+template<typename Func, typename T>
+class ValueCmd : public QUndoCommand {
+public:
+	ValueCmd(const T &to, const T &from, const Func &func): to(to), from(from), func(func) { }
+	void redo() { func(to); }
+	void undo() { func(from); }
+private:
+	T to, from; Func  func;
+};
+
 
 class MainView : public QQuickView {
 	Q_OBJECT

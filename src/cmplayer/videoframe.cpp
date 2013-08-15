@@ -9,7 +9,13 @@ extern "C" {
 }
 
 VideoFrame::VideoFrame::Data::Data(mp_image *mpi, const VideoFormat &format)
-: mpi(mp_image_new_ref(mpi)), format(format) {
+: format(format) {
+	data[0] = mpi->planes[0];
+	data[1] = mpi->planes[1];
+	data[2] = mpi->planes[2];
+	data[3] = mpi->planes[3];
+	if (mpi->imgfmt != IMGFMT_VAAPI)
+		this->mpi = mp_image_new_ref(mpi);
 }
 
 VideoFrame::VideoFrame::Data::Data(const QImage &image)
@@ -24,6 +30,10 @@ VideoFrame::VideoFrame::Data::Data(const Data &other)
 : QSharedData(other) {
 	image = other.image;
 	format = other.format;
+	data[0] = other.data[0];
+	data[1] = other.data[1];
+	data[2] = other.data[2];
+	data[3] = other.data[3];
 	if (other.mpi)
 		mpi = mp_image_new_ref(other.mpi);
 }
@@ -31,10 +41,6 @@ VideoFrame::VideoFrame::Data::Data(const Data &other)
 VideoFrame::Data::~Data() {
 	if (mpi)
 		mp_image_unrefp(&mpi);
-}
-
-const uchar *VideoFrame::data(int i) const {
-	return d->mpi->planes[i];
 }
 
 QImage VideoFrame::toImage() const {

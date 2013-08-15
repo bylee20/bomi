@@ -155,7 +155,6 @@ QMenuBar *App::globalMenuBar() const {
 Mrl App::getMrlFromCommandLine() {
 	const auto args = parse(arguments());
 	for (const Argument &arg : args) {
-		qDebug() << arg.name << arg.value;
 		if (arg.name == _L("open"))
 			return Mrl(arg.value);
 	}

@@ -1,4 +1,5 @@
 #include "videorendereritem.hpp"
+#include "hwacc_vaapi.hpp"
 #include "mposditem.hpp"
 #include "videoframe.hpp"
 #include "shadervar.h"
@@ -25,6 +26,7 @@ struct VideoRendererItem::Data {
 	VideoFormat::Type shaderType = VideoFormat::BGRA;
 	QMutex mutex;
 	QImage image;
+	VaApiSurfaceGLX *vaapi = nullptr;
 };
 
 static const QEvent::Type UpdateEvent = (QEvent::Type)(QEvent::User+1);
@@ -38,6 +40,7 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 }
 
 VideoRendererItem::~VideoRendererItem() {
+	delete d->vaapi;
 	delete d;
 }
 
@@ -67,11 +70,20 @@ QImage VideoRendererItem::frameImage() const {
 		return QImage();
 	if (!d->image.isNull())
 		return d->image;
-	d->mutex.lock();
-	QImage image = d->frame.toImage();
-	d->mutex.unlock();
-	d->mposd->draw(image);
-	return image;
+	if (d->format.type() == VideoFormat::VAGL) {
+		if (!d->vaapi->isValid())
+			return QImage();
+		QImage frame(d->format.alignedSize(), QImage::Format_ARGB32);
+		glBindTexture(GL_TEXTURE_2D, texture(0));
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, frame.bits());
+		return frame;
+	} else {
+		d->mutex.lock();
+		QImage image = d->frame.toImage();
+		d->mutex.unlock();
+		d->mposd->draw(image);
+		return image;
+	}
 }
 
 void VideoRendererItem::present(const QImage &image) {
@@ -117,7 +129,7 @@ double VideoRendererItem::targetAspectRatio() const {
 		return d->aspect;
 	if (d->aspect == 0.0)
 		return itemAspectRatio();
-	return _Ratio(d->format.drawSize());
+	return _Ratio(d->format.outputSize());
 }
 
 double VideoRendererItem::targetCropRatio(double fallback) const {
@@ -241,7 +253,7 @@ QSize VideoRendererItem::sizeHint() const {
 		return QSize(400, 300);
 	const double aspect = targetAspectRatio();
 	QSizeF size(aspect, 1.0);
-	size.scale(d->format.drawSize(), Qt::KeepAspectRatioByExpanding);
+	size.scale(d->format.outputSize(), Qt::KeepAspectRatioByExpanding);
 	QSizeF crop(targetCropRatio(aspect), 1.0);
 	crop.scale(size, Qt::KeepAspectRatio);
 	return crop.toSize();
@@ -284,8 +296,8 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 	program->setUniformValue(d->loc_brightness, d->shaderVar.brightness);
 	program->setUniformValue(d->loc_contrast, d->shaderVar.contrast);
 	program->setUniformValue(d->loc_sat_hue, d->shaderVar.sat_hue);
-	const float dx = 1.0/(double)d->format.dataWidth();
-	const float dy = 1.0/(double)d->format.dataHeight();
+	const float dx = 1.0/(double)d->format.alignedWidth();
+	const float dy = 1.0/(double)d->format.alignedHeight();
 	program->setUniformValue(d->loc_dxy, dx, dy, -dx, 0.f);
 	program->setUniformValue(d->loc_strideCorrection, d->strideCorrection);
 	const auto effects = d->shaderVar.effects();
@@ -351,7 +363,7 @@ void VideoRendererItem::beforeUpdate() {
 			const int w = d->format.bytesPerLine(0), h = d->format.lines(0);
 			switch (d->format.type()) {
 			case VideoFormat::I420:
-				setTex(0, GL_LUMINANCE, d->format.bytesPerLine(0), d->format.lines(0), d->frame.data(0));
+				setTex(0, GL_LUMINANCE, w, h, d->frame.data(0));
 				setTex(1, GL_LUMINANCE, d->format.bytesPerLine(1), d->format.lines(1), d->frame.data(1));
 				setTex(2, GL_LUMINANCE, d->format.bytesPerLine(2), d->format.lines(2), d->frame.data(2));
 				break;
@@ -368,8 +380,18 @@ void VideoRendererItem::beforeUpdate() {
 			case VideoFormat::RGBA:
 				setTex(0, GL_RGBA, w >> 2, h, d->frame.data(0));
 				break;
-			case VideoFormat::BGRA:
-				setTex(0, GL_BGRA, w >> 2, h, d->frame.data(0));
+			case VideoFormat::VAGL:
+				glBindTexture(GL_TEXTURE_2D, texture(0));
+				if (!d->vaapi)
+					d->vaapi = new VaApiSurfaceGLX(texture(0));
+				d->vaapi->copy(d->frame.data(3));
+//				if (!d->surface) {
+//					qDebug() << d->format.width() << d->format.bytesPerLine(0)/4 << d->format.dataWidth() << d->format.height();
+//					glTexImage2D(GL_TEXTURE_2D, 0, 4, d->format.bytesPerLine(0)/4, d->format.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+//					d->surface = VaApi::createGLXSurface(texture(0));
+//				}
+//				VaApi::copyGLXSurface(d->surface, d->frame.data(3));
+//				setTex(0, GL_BGRA, w >> 2, h, d->frame.data(0));
 				break;
 			default:
 				break;
@@ -401,7 +423,7 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	xy += offset;
 	if (d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter)))
 		emit screenRectChanged(d->letterbox->screen());
-	double top = 0.0, left = 0.0, right = _Ratio(d->format.width(), d->format.dataWidth()), bottom = 1.0;
+	double top = 0.0, left = 0.0, right = _Ratio(d->format.width(), d->format.alignedWidth()), bottom = 1.0;
 	if (!(d->shaderVar.effects() & IgnoreEffect)) {
 		if (d->shaderVar.effects() & FlipVertically)
 			qSwap(top, bottom);
@@ -412,6 +434,10 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 }
 
 void VideoRendererItem::initializeTextures() {
+	if (d->vaapi) {
+		delete d->vaapi;
+		d->vaapi = nullptr;
+	}
 	if (d->format.isEmpty())
 		return;
 	auto bindTex = [this] (int idx) {
@@ -455,6 +481,10 @@ void VideoRendererItem::initializeTextures() {
 		break;
 	case VideoFormat::BGRA:
 		initRgbTex(0, GL_BGRA);
+		break;
+	case VideoFormat::VAGL:
+		initRgbTex(0, GL_BGRA);
+		d->vaapi = new VaApiSurfaceGLX(texture(0));
 		break;
 	default:
 		break;

@@ -45,10 +45,13 @@ struct AppX11::Data {
 
 extern void initialize_vaapi();
 extern void finalize_vaapi();
+extern void initialize_vdpau();
+extern void finalize_vdpau();
 
 AppX11::AppX11(QObject *parent)
 : QObject(parent), d(new Data) {
 	initialize_vaapi();
+	initialize_vdpau();
 	d->ss_timer.setInterval(20000);
 	connect(&d->ss_timer, &QTimer::timeout, [this] () {
 		if (d->xss && d->display)
@@ -66,6 +69,7 @@ AppX11::AppX11(QObject *parent)
 
 AppX11::~AppX11() {
 	finalize_vaapi();
+	finalize_vdpau();
 	delete d->iface;
 	delete d;
 }

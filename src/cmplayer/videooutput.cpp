@@ -13,7 +13,6 @@ extern "C" {
 #include <mpvcore/m_option.h>
 #include <video/mp_image.h>
 #include <sub/sub.h>
-struct vo_driver video_out_null = VideoOutput::getDriver();
 }
 
 struct cmplayer_vo_priv { VideoOutput *vo; char *address; };
@@ -21,38 +20,38 @@ struct cmplayer_vo_priv { VideoOutput *vo; char *address; };
 static VideoOutput *priv(struct vo *vo) { return static_cast<cmplayer_vo_priv*>(vo->priv)->vo; }
 
 #define OPT_BASE_STRUCT struct cmplayer_vo_priv
-const vo_driver &VideoOutput::getDriver() {
+vo_driver create_driver() {
+	static m_option options[1];
+	memset(options, 0, sizeof(options));
+	options[0].name = "address";
+	options[0].flags = 0;
+	options[0].defval = 0;
+	options[0].offset = MP_CHECKED_OFFSETOF(OPT_BASE_STRUCT, address, char*);
+	options[0].____new = 1;
+	options[0].type = &m_option_type_string;
+
+	static vo_info_t info;
+	info.name = "CMPlayer video output";
+	info.short_name	= "null";
+	info.author = "xylosper <darklin20@gmail.com>";
+	info.comment = "";
+
 	static vo_driver driver;
-	static bool first = true;
-	if (first) {
-		static m_option options[1];
-		memset(options, 0, sizeof(options));
-		options[0].name = "address";
-		options[0].flags = 0;
-		options[0].defval = 0;
-		options[0].offset = MP_CHECKED_OFFSETOF(OPT_BASE_STRUCT, address, char*);
-		options[0].____new = 1;
-		options[0].type = &m_option_type_string;
-		first = false;
-		static vo_info_t info;
-		info.name = "CMPlayer video output";
-		info.short_name	= "null";
-		info.author = "xylosper <darklin20@gmail.com>";
-		info.comment = "";
-		driver.info = &info;
-		driver.preinit = preinit;
-		driver.config = config;
-		driver.control = control;
-		driver.draw_osd = drawOsd;
-		driver.flip_page = flipPage;
-		driver.query_format = queryFormat;
-		driver.draw_image = drawImage;
-		driver.uninit = uninit;
-		driver.options = options;
-		driver.priv_size = sizeof(cmplayer_vo_priv);
-	}
+	driver.info = &info;
+	driver.preinit = VideoOutput::preinit;
+	driver.config = VideoOutput::config;
+	driver.control = VideoOutput::control;
+	driver.draw_osd = VideoOutput::drawOsd;
+	driver.flip_page = VideoOutput::flipPage;
+	driver.query_format = VideoOutput::queryFormat;
+	driver.draw_image = VideoOutput::drawImage;
+	driver.uninit = VideoOutput::uninit;
+	driver.options = options;
+	driver.priv_size = sizeof(cmplayer_vo_priv);
 	return driver;
 }
+
+vo_driver video_out_null = create_driver();
 
 struct VideoOutput::Data {
 	VideoFormat format;
@@ -107,15 +106,18 @@ int VideoOutput::config(struct vo *vo, uint32_t w_src, uint32_t h_src, uint32_t 
 	return 0;
 }
 
+HwAcc *VideoOutput::hwAcc() const {return d->acc;}
+
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto v = priv(vo); auto d = v->d;
-	if (d->acc)
-		mpi = d->acc->getFrame(mpi);
-	if (d->formatChanged || (d->formatChanged = !d->format.compare(mpi)))
-		emit v->formatChanged(d->format = VideoFormat(mpi, d->dest_w, d->dest_h));
-	d->frame = VideoFrame(mpi, d->format);
-	if (d->acc)
-		mp_image_unrefp(&mpi);
+	auto img = mpi;
+	if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
+		img = d->acc->getImage(mpi);
+	if (d->formatChanged || (d->formatChanged = !d->format.compare(img)))
+		emit v->formatChanged(d->format = VideoFormat(img, d->dest_w, d->dest_h));
+	d->frame = VideoFrame(img, d->format);
+	if (img != mpi) // new image is allocated, unref it
+		mp_image_unrefp(&img);
 	d->flip = true;
 }
 
@@ -166,6 +168,7 @@ void VideoOutput::quit() {
 
 int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	switch (format) {
+	case IMGFMT_VDPAU:
 	case IMGFMT_420P:	case IMGFMT_VAAPI:
 	case IMGFMT_NV12:	case IMGFMT_NV21:
 	case IMGFMT_YUYV:	case IMGFMT_UYVY:
@@ -175,3 +178,5 @@ int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 		return 0;
 	}
 }
+
+vo_driver video_out_vaapi;

@@ -12,7 +12,7 @@ public:
 	QImage toImage() const;
 	bool hasImage() const {return !d->image.isNull();}
 	const QImage &image() const {return d->image;}
-	const uchar *data(int i) const;
+	const uchar *data(int i) const {return d->data[i];}
 	const VideoFormat &format() const {return d->format;}
 private:
 	struct Data : public QSharedData {
@@ -24,6 +24,7 @@ private:
 		Data &operator = (const Data &rhs) = delete;
 		mp_image *mpi = nullptr;
 		QImage image;
+		uchar *data[4] = {0, 0, 0, 0};
 		VideoFormat format;
 	};
 	QSharedDataPointer<Data> d;

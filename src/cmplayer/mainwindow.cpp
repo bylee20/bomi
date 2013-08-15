@@ -49,7 +49,7 @@ struct MainWindow::Data {
 	QPoint prevPos;		QTimer hider;
 	Qt::WindowStates winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
 	bool middleClicked = false, moving = false, changingSub = false;
-	bool pausedByHiding = false, dontShowMsg = false, dontPause = false;
+	bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
 	bool stateChanging = false;
 	ABRepeater ab = {&engine, &subtitle};
 	QMenu contextMenu;
@@ -57,6 +57,7 @@ struct MainWindow::Data {
 	SubtitleView *subtitleView = nullptr;
 	HistoryModel history;
 	PlaylistModel &playlist = engine.playlist();
+	QUndoStack undo;
 //	FavoritesView *favorite;
 //	QSystemTrayIcon *tray = nullptr;
 	QString filePath;
@@ -65,6 +66,7 @@ struct MainWindow::Data {
 // methods
 	int startFromStopped = -1;
 	QAction *subtrackSep = nullptr;
+	QAction *currentAspect = nullptr, *currentCrop = nullptr;
 
 	void openWith(const Pref::OpenMedia &mode, const QList<Mrl> &mrls) {
 		if (mrls.isEmpty())
@@ -161,9 +163,9 @@ struct MainWindow::Data {
 				}
 			}
 		};
-		connect(menu, &QMenu::aboutToShow, checkCurrentStreamAction);
+		MainWindow::connect(menu, &QMenu::aboutToShow, checkCurrentStreamAction);
 		for (auto copy : menu->copies())
-			connect(copy, &QMenu::aboutToShow, checkCurrentStreamAction);
+			MainWindow::connect(copy, &QMenu::aboutToShow, checkCurrentStreamAction);
 	}
 	template <typename T = QObject>
 	T* findItem(const QString &name = QString()) {
@@ -206,6 +208,28 @@ struct MainWindow::Data {
 			first = false;
 		}
 	}
+
+	template<typename T, typename Func>
+	QUndoCommand *push(const T &to, const T &from, const Func &func) {
+		auto cmd = new ValueCmd<Func, T>(to, from, func);
+		undo.push(cmd);
+		return cmd;
+	}
+
+	template<typename Func>
+	void connect(ActionGroup *g, Func func) {
+		MainWindow::connect(g, &ActionGroup::triggered, [this, g, func] (QAction *a) {
+			push(a, currentActions[g], [this, func, g] (QAction *a) {
+				if (a) {
+					func(a);
+					a->setChecked(true);
+				}
+				currentActions[g] = a;
+			});
+		});
+	}
+
+	QMap<ActionGroup*, QAction*> currentActions;
 };
 
 #ifdef Q_OS_MAC
@@ -362,6 +386,16 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenBut
 	d->menu("tool")["auto-exit"]->setChecked(as.auto_exit);
 	d->menu("window").g("stays-on-top")->trigger(as.screen_stays_on_top.id());
 
+	auto setCurrentAction = [this] (ActionGroup *g) { d->currentActions[g] = g->checkedAction(); };
+	setCurrentAction(d->menu("video")("aspect").g());
+	setCurrentAction(d->menu("video")("crop").g());
+	setCurrentAction(d->menu("video")("align").g("horizontal"));
+	setCurrentAction(d->menu("video")("align").g("vertical"));
+//	setCurrentAction(d->menu("video")("filter").g());
+	setCurrentAction(d->menu("subtitle").g("display"));
+	setCurrentAction(d->menu("subtitle").g("align"));
+	setCurrentAction(d->menu("window").g("stays-on-top"));
+
 	d->dontShowMsg = false;
 
 //	applyPref();
@@ -390,7 +424,20 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenBut
 //		session.setRestartHint(QSessionManager::RestartIfRunning);
 //	});
 
+	d->undo.clear();
+	d->currentAspect = d->menu("video")("aspect").g()->checkedAction();
+	d->currentCrop = d->menu("video")("crop").g()->checkedAction();
+	auto undo = d->menu("tool")["undo"];
+	auto redo = d->menu("tool")["redo"];
+	connect(&d->undo, &QUndoStack::canUndoChanged, undo, &QAction::setEnabled);
+	connect(&d->undo, &QUndoStack::canRedoChanged, redo, &QAction::setEnabled);
+	connect(undo, &QAction::triggered, &d->undo, &QUndoStack::undo);
+	connect(redo, &QAction::triggered, &d->undo, &QUndoStack::redo);
+	d->menu("tool")["undo"]->setEnabled(d->undo.canUndo());
+	d->menu("tool")["redo"]->setEnabled(d->undo.canRedo());
 	QTimer::singleShot(1, this, SLOT(applyPref()));
+
+	d->dontShowMsg = false;
 }
 
 MainWindow::~MainWindow() {
@@ -432,8 +479,12 @@ void MainWindow::connectMenus() {
 	connect(play["stop"], &QAction::triggered, [this] () {d->engine.stop();});
 	connect(play("speed").g(), &ActionGroup::triggered, [this] (QAction *a) {
 		const int diff = a->data().toInt();
-		d->engine.setSpeed(qBound(0.1, diff ? (d->engine.speed() + diff/100.0) : 1, 10.0));
-		showMessage(tr("Speed"), QString::fromUtf8("\303\227%1").arg(d->engine.speed()));
+		const double speed = qBound(0.1, diff ? (d->engine.speed() + diff/100.0) : 1, 10.0);
+		if (!qFuzzyCompare(d->engine.speed(), speed))
+			d->push(speed, d->engine.speed(), [this] (double v) {
+				d->engine.setSpeed(v);
+				showMessage(tr("Speed"), QString::fromUtf8("\303\227%1").arg(d->engine.speed()));
+			});
 	});
 	connect(play["pause"], &QAction::triggered, [this] () {
 		if (!d->stateChanging) {
@@ -495,8 +546,14 @@ void MainWindow::connectMenus() {
 	connect(video("track").g(), &ActionGroup::triggered, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentVideoStream(a->data().toInt()); showMessage(tr("Current Video Track"), a->text());
 	});
-	connect(video("aspect").g(), &ActionGroup::triggered, [this] (QAction *a) {d->renderer.setAspectRatio(a->data().toDouble());});
-	connect(video("crop").g(), &ActionGroup::triggered, [this] (QAction *a) {d->renderer.setCropRatio(a->data().toDouble());});
+	d->connect(video("aspect").g(), [this] (QAction *a) {
+		d->renderer.setAspectRatio(a->data().toDouble());
+		showMessage(tr("Aspect Ratio"), a->text());
+	});
+	d->connect(video("crop").g(), [this] (QAction *a) {
+		d->renderer.setCropRatio(a->data().toDouble());
+		showMessage(tr("Crop Ratio"), a->text());
+	});
 	connect(video["snapshot"], &QAction::triggered, [this] () {
 		static SnapshotDialog *dlg = new SnapshotDialog(this);
 		dlg->setVideoRenderer(&d->renderer); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
@@ -555,7 +612,11 @@ void MainWindow::connectMenus() {
 	connect(audio.g("volume"), &ActionGroup::triggered, [this] (QAction *a) {
 		if (const int diff = a->data().toInt()) {
 			const int volume = qBound(0, d->engine.volume() + diff, 100);
-			d->engine.setVolume(volume); showMessage(tr("Volume"), volume, "%");
+			if (d->engine.volume() != volume)
+				d->push(volume, d->engine.volume(), [this] (int v) {
+					d->engine.setVolume(v);
+					showMessage(tr("Volume"), v, "%");
+				});
 		}
 	});
 	connect(audio["mute"], &QAction::toggled, [this] (bool on) {d->engine.setMuted(on); showMessage(tr("Mute"), on);});

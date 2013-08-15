@@ -10,11 +10,8 @@
 #include <set>
 #include <qmath.h>
 
-#ifdef Q_WS_MAC
-#define Q_OS_MAC
-#endif
-#ifdef Q_WS_X11
-#define Q_OS_LINUX
+#ifdef Q_OS_LINUX
+#include <QX11Info>
 #endif
 
 extern "C" void *fast_memcpy(void * to, const void * from, size_t len);

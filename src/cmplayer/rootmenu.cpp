@@ -164,6 +164,9 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	auto ampDown = audio.addActionToGroup(_L("amp-down"), false, _L("amp"));
 
 	auto &tool = *addMenu(_L("tool"));
+	tool.addAction(_L("undo"))->setShortcut(Qt::CTRL + Qt::Key_Z);
+	tool.addAction(_L("redo"))->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
+	tool.addSeparator();
 		auto &playlist = *tool.addMenu(_L("playlist"));
 		playlist.addAction(_L("toggle"))->setShortcut(Qt::Key_L);
 		playlist.addSeparator();
@@ -429,6 +432,8 @@ void RootMenu::update(const Pref &p) {
 	setActionStep(audio["amp-up"], audio["amp-down"], tr("Amp %1%"), p.amp_step);
 
 	auto &tool = root("tool");
+	tool["undo"]->setText(tr("Undo"));
+	tool["redo"]->setText(tr("Redo"));
 	tool.setTitle(tr("Tools"));
 		auto &playlist = tool("playlist");
 		playlist.setTitle(tr("Playlist"));

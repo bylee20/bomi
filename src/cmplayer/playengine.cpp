@@ -9,6 +9,7 @@
 #include <mpvcore/mp_cmplayer.h>
 
 extern "C" {
+#include <video/decode/lavc.h>
 #include <mpvcore/command.h>
 #include <video/out/vo.h>
 #include <video/decode/vd.h>
@@ -148,9 +149,13 @@ double PlayEngine::volumeNormalizer() const {
 }
 
 bool PlayEngine::isHwAccActivated() const {
-	if (d->mpctx && d->mpctx->sh_video && d->mpctx->sh_video->vd_driver)
-		return d->mpctx->sh_video->hwdec_info != nullptr;
-	return false;
+#ifdef Q_OS_LINUX
+//	qDebug() << d->mpctx->sh[STREAM_VIDEO]->codec;
+	return d->video->hwAcc() != nullptr;
+#endif
+#ifdef Q_OS_MAC
+	return d->mpctx->sh[STREAM_VIDEO]->codec
+#endif
 }
 
 void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
@@ -455,7 +460,17 @@ int PlayEngine::playImage(const Mrl &mrl, int &terminated, int &duration) {
 int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duration) {
 	d->video->output(QImage());
 	auto mpctx = d->mpctx;
-	mpctx->opts->hwdec_codecs = d->hwAccCodecs.data();
+	if (d->hwAccCodecs.isEmpty()) {
+		d->mpctx->opts->hwdec_api = HWDEC_NONE;
+		d->mpctx->opts->hwdec_codecs = nullptr;
+	} else {
+#ifdef Q_OS_LINUX
+		d->mpctx->opts->hwdec_api = HWDEC_VAAPI;
+#elif defined(Q_OS_MAC)
+		d->mpctx->opts->hwdec_api = HWDEC_VDA;
+#endif
+		mpctx->opts->hwdec_codecs = d->hwAccCodecs.data();
+	}
 	d->mpctx->opts->play_start.pos = d->start*1e-3;
 	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
 	setmp("speed", m_speed);
@@ -518,10 +533,10 @@ void PlayEngine::setMpVolume() {
 void PlayEngine::run() {
 	CharArrayList args = QStringList()
 		<< "cmplayer-mpv" << "--no-config" << "--idle" << "--no-fs"
-		<< ("--af=dummy=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
+		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
-		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8" << "--hwdec=vaapi";
+		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8";
 	auto mpctx = d->mpctx = create_player(args.size(), args.data());
 	Q_ASSERT(d->mpctx);
 	d->mpctx->priv = this;
@@ -590,6 +605,7 @@ void PlayEngine::run() {
 	qDebug() << "terminate loop";
 	d->video->quit();
 	mpctx->opts->hwdec_codecs = nullptr;
+	mpctx->opts->hwdec_api = HWDEC_NONE;
 	destroy_player(mpctx);
 	d->mpctx = nullptr;
 	d->init = false;
