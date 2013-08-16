@@ -73,31 +73,62 @@ bool SubRipParser::isParsable() const {
 }
 
 void SubRipParser::_parse(Subtitle &sub) {
-	QRegExp rxCaption(
-		"(^|[\r\n]*)(\\d+)(\r|\r\n|\n)"
-		"(\\d\\d):(\\d\\d):(\\d\\d),(\\d\\d\\d) --> (\\d\\d):(\\d\\d):(\\d\\d),(\\d\\d\\d)"
-		"(.*)([\r\n]*$|\r\r|\r\n\r\n|\n\n)"
-	);
-	rxCaption.setMinimal(true);
+	QRegularExpression rxNum(R"(^\s*(\d+)\s*$)");
+	QRegularExpression rxTime(R"(^\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*$)");
+	QRegularExpression rxBlank(R"(^\s*$)");
+	auto getNumber = [&rxNum, this] () {
+		for (;;) {
+			const auto ref = getLine();
+			if (ref.isNull())
+				break;
+			auto matched = rxNum.match(ref.toString());
+			if (matched.hasMatch())
+				return matched.capturedRef(1).toInt();
+		}
+		return -1;
+	};
+	auto getTime = [&rxTime, this] (int &start, int &end) {
+		for (;;) {
+			const auto ref = getLine();
+			if (ref.isNull())
+				break;
+			auto matched = rxTime.match(ref.toString());
+			if (matched.hasMatch()) {
+#define TO_INT(n) (matched.capturedRef(n).toInt())
+				start = _TimeToMSec(TO_INT(1), TO_INT(2), TO_INT(3), TO_INT(4));
+				end = _TimeToMSec(TO_INT(5), TO_INT(6), TO_INT(7), TO_INT(8));
+#undef TO_INT
+				return true;
+			}
+		}
+		return false;
+	};
+	auto getCaption = [&rxBlank, this] () {
+		QString ret;
+		for (;;) {
+			const auto line = getLine().toString();
+			auto matched = rxBlank.match(line);
+			if (matched.hasMatch())
+				break;
+			if (!ret.isEmpty())
+				ret += "<br>";
+			ret += line;
+		}
+		return QString("<p>" % ret % "</p>");
+	};
 
-	QRegExp rxLineBreak("(\r[^\n]|\r\n|[^\r]\n)");
 	sub.clear();
 	auto &comp = append(sub);
-	int pos = 0;
-	auto toInt = [&rxCaption] (int nth) {return rxCaption.cap(nth).toInt();};
 	QLinkedList<SubtitleComponent> caps;
-	while (pos < all().size()) {
-		const int idx = rxCaption.indexIn(all(), pos);
-		if (idx < 0)
+	for (;;) {
+		const auto num = getNumber();
+		if (num < 0)
 			break;
-		caps.append(SubtitleComponent(file().fileName()));
-		auto &part = caps.last();
-		const int start = _TimeToMSec(toInt(4), toInt(5), toInt(6), toInt(7));
-		const int end = _TimeToMSec(toInt(8), toInt(9), toInt(10), toInt(11));
-		const QString text = _L("<p>") % rxCaption.cap(12).trimmed().replace(rxLineBreak, "<br>") % _L("</p>");
-		append(part, text, start, end);
-		comp.unite(part, 25);
-		pos = idx + rxCaption.matchedLength();
+		int start = 0, end = 0;
+		if (!getTime(start, end))
+			break;
+		const auto caption = getCaption();
+		append(comp, caption, start, end);
 	}
 }
 
