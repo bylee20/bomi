@@ -10,7 +10,14 @@ extern "C" {
 #include <mpvcore/av_common.h>
 }
 
-bool HwAcc::supports(AVCodecID codec) { return VaApi::find(codec) != nullptr; }
+bool HwAcc::supports(AVCodecID codec) {
+#ifdef Q_OS_MAC
+	return codec == AV_CODEC_ID_H264;
+#endif
+#ifdef Q_OS_LINUX
+	return VaApi::find(codec) != nullptr;
+#endif
+}
 
 const char *HwAcc::codecName(AVCodecID id) {
 	switch (id) {

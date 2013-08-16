@@ -150,11 +150,12 @@ double PlayEngine::volumeNormalizer() const {
 
 bool PlayEngine::isHwAccActivated() const {
 #ifdef Q_OS_LINUX
-//	qDebug() << d->mpctx->sh[STREAM_VIDEO]->codec;
 	return d->video->hwAcc() != nullptr;
 #endif
 #ifdef Q_OS_MAC
-	return d->mpctx->sh[STREAM_VIDEO]->codec
+	if (!d->mpctx || !d->mpctx[STREAM_VIDEO] || !d->mpctx[STREAM_VIDEO]->codec)
+		return false;
+	return qstrcmp(d->mpctx->sh[STREAM_VIDEO]->codec, "h264_vda");
 #endif
 }
 

@@ -2,21 +2,20 @@
 # Contributor: willemw <willemw12@gmail.com>
 
 pkgname=cmplayer
-pkgver=0.7.6
+pkgver=0.7.7
 pkgrel=1
 pkgdesc="A powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
 url="https://code.google.com/p/$pkgname"
 license=('GPL')
-depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'openal' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'harfbuzz' 'fribidi' 'libass')
-makedepends=('git' 'mesa' 'gcc' 'yasm')
-source=(https://github.com/xylosper/cmplayer/releases/0.7.5/1066/cmplayer-$pkgver-source.tar.gz)
+depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'fribidi' 'libass' 'ffmpeg')
+makedepends=('mesa' 'gcc')
+source=(https://github.com/xylosper/cmplayer/releases/$pkgver/1066/cmplayer-$pkgver-source.tar.gz)
 md5sums=('a87c75db4d3cf520779c5171b683bbf2')
 
 build() {
   cd "$srcdir/$pkgname-$pkgver"
   ./build-libchardet
-  ./build-ffmpeg
   ./build-mpv
   make PREFIX=/usr cmplayer
 }
