@@ -1418,8 +1418,7 @@ void MainWindow::updateTitle() {
 			}
 		}
 	}
-	cApp.setFileName(fileName);
-//	cApp.setApplicationTitle(title);
+	cApp.setWindowTitle(this, fileName);
 }
 
 void MainWindow::updateMrl(const Mrl &mrl) {

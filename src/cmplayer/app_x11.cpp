@@ -63,8 +63,6 @@ AppX11::AppX11(QObject *parent)
 	d->aNetWmState = d->getAtom("_NET_WM_STATE");
 	d->aNetWmStateAbove = d->getAtom("_NET_WM_STATE_ABOVE");
 	d->aNetWmStateStaysOnTop = d->getAtom("_NET_WM_STATE_STAYS_ON_TOP");
-//	const char className[] = "cmplayer\0CMPlayer";
-//	xcb_icccm_set_wm_class(d->connection, window, sizeof(className), className);
 }
 
 AppX11::~AppX11() {
@@ -138,14 +136,17 @@ QStringList AppX11::devices() const {
 }
 
 void AppX11::setWmName(QWindow *window, const QString &name) {
-//	d->wmName = name.toUtf8();
-//	char *utf8 = d->wmName.data();
-//	if (d->x.connection && d->x.window && d->x.display) {
-//		XTextProperty text;
-//		Xutf8TextListToTextProperty(d->x.display, &utf8, 1, XCompoundTextStyle, &text);
-//		XSetWMName(d->x.display, d->x.window, &text);
-////		xcb_icccm_set_wm_name(d->x.connection, d->x.window, XCB_ATOM_STRING, 8, d->wmName.size(), d->wmName.constData());
-//	}
+	d->wmName = name.toUtf8();
+	char *utf8 = d->wmName.data();
+	auto wid = window->winId();
+	if (d->connection && d->display) {
+		XTextProperty text;
+		Xutf8TextListToTextProperty(d->display, &utf8, 1, XCompoundTextStyle, &text);
+		XSetWMName(d->display, wid, &text);
+//		xcb_icccm_set_wm_name(d->x.connection, d->x.window, XCB_ATOM_STRING, 8, d->wmName.size(), d->wmName.constData());
+		const char className[] = "cmplayer\0CMPlayer";
+		xcb_icccm_set_wm_class(d->connection, wid, sizeof(className), className);
+	}
 }
 
 bool AppX11::shutdown() {

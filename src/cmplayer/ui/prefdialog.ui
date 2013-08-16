@@ -10,9 +10,6 @@
     <height>542</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>Preferences</string>
-  </property>
   <property name="styleSheet">
    <string notr="true"/>
   </property>

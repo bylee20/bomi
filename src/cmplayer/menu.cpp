@@ -29,7 +29,7 @@ QMenu *Menu::copied(QWidget *parent) {
 	QMenu *menu = new QMenu(parent);
 	menu->setTitle(title());
 	menu->setEnabled(isEnabled());
-	connect(this, SIGNAL(triggered(QAction*)), menu, SIGNAL(triggered(QAction*)));
+	connect(menu, SIGNAL(triggered(QAction*)), this, SIGNAL(triggered(QAction*)));
 	for (QAction *action : actions()) {
 		auto sub = static_cast<Menu*>(action->menu());
 		if (sub)

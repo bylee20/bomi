@@ -414,6 +414,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 	group->addButton(d->ui.show_logo);
 	group->addButton(d->ui.fill_bg_color);
 	group->setExclusive(true);
+
+	cApp.setWindowTitle(this, tr("Preferences"));
 }
 
 PrefDialog::~PrefDialog() {

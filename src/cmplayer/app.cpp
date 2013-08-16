@@ -86,14 +86,12 @@ void App::setMainWindow(MainWindow *mw) {
 #endif
 }
 
-void App::setFileName(const QString &fileName) {
-	if (d->main) {
-		const QString title = fileName % _L(" - ") % applicationName();
-		d->main->setWindowTitle(title);
+void App::setWindowTitle(QWidget *w, const QString &title) {
+	const auto text = title % (title.isEmpty() ? "" : " - ") % applicationName();
+	w->setWindowTitle(text);
 #ifdef Q_OS_LINUX
-		d->helper.setWmName(d->main->window()->windowHandle(), title);
+	d->helper.setWmName(w->window()->windowHandle(), text);
 #endif
-	}
 }
 
 MainWindow *App::mainWindow() const {

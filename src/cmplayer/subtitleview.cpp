@@ -2,6 +2,7 @@
 #include "subtitlemodel.hpp"
 #include "playengine.hpp"
 #include "subtitle.hpp"
+#include "app.hpp"
 
 class SubtitleView::CompView : public QWidget {
 public:
@@ -55,7 +56,7 @@ SubtitleView::SubtitleView(QWidget *parent)
 	connect(d->timeVisible, SIGNAL(toggled(bool)), this, SLOT(setTimeVisible(bool)));
 	connect(d->autoScroll, SIGNAL(toggled(bool)), this, SLOT(setAutoScrollEnabled(bool)));
 
-	setWindowTitle(tr("Subtitle View"));
+	cApp.setWindowTitle(this, tr("Subtitle View"));
 }
 
 SubtitleView::~SubtitleView() {

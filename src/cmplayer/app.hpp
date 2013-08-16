@@ -30,7 +30,7 @@ public:
 	static QIcon defaultIcon();
 	static Mrl getMrlFromCommandLine();
 	static Arguments parse(const QStringList &cmds);
-	void setFileName(const QString &fileName);
+	void setWindowTitle(QWidget *w, const QString &title);
 	void setMainWindow(MainWindow *mw);
 	MainWindow *mainWindow() const;
 	QStringList devices() const;
