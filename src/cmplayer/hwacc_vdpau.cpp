@@ -1,17 +1,17 @@
 #include "hwacc_vdpau.hpp"
 #include "stdafx.hpp"
 
+void initialize_vdpau() {}
+void finalize_vdpau() {}
+
+#if 0
+
 extern "C" {
 #include <libavcodec/vdpau.h>
 #include <vdpau/vdpau_x11.h>
 #include <video/mp_image.h>
 #include <video/mp_image_pool.h>
 }
-
-void initialize_vdpau() {}
-void finalize_vdpau() {}
-
-#if 0
 
 Vdpau::Data Vdpau::d;
 

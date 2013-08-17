@@ -78,7 +78,8 @@ struct OsdBitmap {
 	sub_bitmap_format format = SUBBITMAP_EMPTY;
 };
 
-struct MpOsdItemShader : public QSGMaterialShader {
+class MpOsdItemShader : public QSGMaterialShader {
+public:
 	MpOsdItemShader(MpOsdItem *item): m_item(item) {}
 	void updateState(const RenderState &state, QSGMaterial *newOne, QSGMaterial *old) {
 		Q_UNUSED(old); Q_UNUSED(newOne);
@@ -167,7 +168,7 @@ private:
 struct MpOsdItemNode : public QSGGeometryNode {
 	MpOsdItemNode(MpOsdItem *item, const QSize &frameSize): m_item(item) {
 		setFlags(OwnsGeometry | OwnsMaterial);
-		setMaterial(new MpOsdItemMaterial(item));
+		setMaterial(new MpOsdItemMaterial(m_item));
 		setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4));
 		markDirty(DirtyMaterial | DirtyGeometry);
 		m_fbo = new QOpenGLFramebufferObject(frameSize, GL_TEXTURE_2D);

@@ -113,13 +113,15 @@ mp_image *HwAcc::allocateImage(struct lavc_ctx *ctx, AVFrame */*frame*/) {
 }
 
 int HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder) {
-	Q_UNUSED(hwdec);
+	Q_UNUSED(hwdec);	Q_UNUSED(decoder);
 	if (!info || !info->vdpau_ctx)
 		return HWDEC_ERR_NO_CTX;
+#ifdef Q_OS_LINUX
 	if (hwdec->type == HWDEC_VAAPI) {
 		if (VaApi::find((AVCodecID)mp_codec_to_av_codec_id(decoder)))
 			return 0;
 	}
+#endif
 	return HWDEC_ERR_NO_CODEC;
 }
 

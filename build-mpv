@@ -7,7 +7,7 @@ args="--disable-encoding --disable-libguess --disable-terminfo --disable-termcap
   --disable-enca --disable-macosx-bundle --enable-pthreads  \
   --disable-rpath --disable-libpostproc --disable-libavdevice --disable-libavfilter --disable-vf-lavfi --disable-af-lavfi --disable-mng \
   --disable-jpeg --enable-libcdio --disable-ladspa --disable-libbs2b --enable-mpg123 --disable-libavresample \
-  --disable-gl --disable-caca --disable-direct3d --disable-sdl --disable-sdl2 --disable-xv --disable-vdpau --enable-vaapi \
+  --disable-gl --disable-caca --disable-direct3d --disable-sdl --disable-sdl2 --disable-xv --disable-vdpau \
   --disable-vm --disable-xinerama --disable-x11 --disable-wayland --disable-xss --disable-corevideo --disable-cocoa \
   --disable-ossaudio --disable-rsound --disable-pulse --disable-portaudio --disable-jack --disable-openal --disable-dsound --disable-wasapi --enable-select \
   --disable-gettext --disable-cross-compile --disable-shm"
@@ -20,18 +20,20 @@ kern=`uname -s`
 if test $kern = "Darwin"
 then
   echo "Build for OS X"
-  args="$args --enable-coreaudio --disable-alsa"
+  args="$args --enable-coreaudio --disable-alsa --disable-vaapi"
   libs="$libs -framework VideoDecodeAcceleration -framework CoreVideo -framework CoreFoundation -framework Cocoa"
+  PKG_CONFIG_PATH="/usr/X11/lib/pkgconfig:${PKG_CONFIG_PATH}"
 elif test $kern = "Linux"
 then
   echo "Build for Linux"
-  args="$args --disable-coreaudio --enable-alsa"
+  args="$args --disable-coreaudio --enable-alsa --enable-vaapi"
   libs="$libs -lasound -lva"
 else
   echo "Not supported!"
   exit
 fi
 
-cd src/mpv && make distclean; PKG_CONFIG_PATH="../../build/lib/pkgconfig:${PKG_CONFIG_PATH}" ./configure $args --extra-libs="$libs"
+export PKG_CONFIG_PATH="../../build/lib/pkgconfig:${PKG_CONFIG_PATH}"
+cd src/mpv && make distclean;  ./configure $args --extra-libs="$libs"
 make -j 6
 ar rcsv ../../build/lib/libcmplayer_mpv.a `find . -name '*.o' | sed 's/^.*\(vo_null\|af_dummy\|vaapi\|vdpau\)\.o$//'`

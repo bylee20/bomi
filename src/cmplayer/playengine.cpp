@@ -153,7 +153,7 @@ bool PlayEngine::isHwAccActivated() const {
 	return d->video->hwAcc() != nullptr;
 #endif
 #ifdef Q_OS_MAC
-	if (!d->mpctx || !d->mpctx[STREAM_VIDEO] || !d->mpctx[STREAM_VIDEO]->codec)
+	if (!d->mpctx || !d->mpctx->sh[STREAM_VIDEO] || !d->mpctx->sh[STREAM_VIDEO]->codec)
 		return false;
 	return qstrcmp(d->mpctx->sh[STREAM_VIDEO]->codec, "h264_vda");
 #endif

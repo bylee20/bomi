@@ -1,3 +1,5 @@
+cache()
+
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header c++11
 macx:CONFIG -= app_bundle
@@ -10,27 +12,30 @@ LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
 LIBS += -L$${LIB_DIR}
 
+PKG = $${LIB_DIR}/pkgconfig
+
 macx {
     QMAKE_CXXFLAGS -= "-mmacosx-version-min=10.6"
     QMAKE_CXX = clang++ -std=c++11 -stdlib=libc++
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
-    QMAKE_MAC_SDK = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
+    QMAKE_MAC_SDK = macosx
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
     BREW = /usr/local/Cellar
     LLIB_DIR = /usr/local/lib
-    LIBS += $${LIB_DIR}/libchardet.a $${LIB_DIR}/libswresample.a $${LIB_DIR}/libavcodec.a $${LIB_DIR}/libavformat.a \
-	$${LIB_DIR}/libavutil.a $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
-	$${LLIB_DIR}/libmpg123.a $${LLIB_DIR}/libquvi.a $${LLIB_DIR}/liblua52.a \
-	$${LLIB_DIR}/libdvdread.a $${LLIB_DIR}/libcdio.a $${LLIB_DIR}/libcdio_paranoia.a \
-	$${LLIB_DIR}/libcdio_cdda.a $${LLIB_DIR}/libdvdcss.a -lcurl -liconv \
-        -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
-        -framework CoreFoundation -framework AudioUnit -framework CoreAudio -framework OpenAL \
+#    LIBS += $${LIB_DIR}/libchardet.a $${LIB_DIR}/libswresample.a $${LIB_DIR}/libavcodec.a $${LIB_DIR}/libavformat.a \
+#	$${LIB_DIR}/libavutil.a $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
+#	$${LLIB_DIR}/libmpg123.a $${LLIB_DIR}/libquvi.a $${LLIB_DIR}/liblua52.a \
+#	$${LLIB_DIR}/libdvdread.a $${LLIB_DIR}/libcdio.a $${LLIB_DIR}/libcdio_paranoia.a \
+#	$${LLIB_DIR}/libcdio_cdda.a $${LLIB_DIR}/libdvdcss.a -lcurl -liconv \
+    LIBS += -L/usr/local/lib -liconv \
+	-framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
+	-framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
 	-framework IOKit -framework Carbon
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
-    INCLUDEPATH += /opt/local/include /usr/local/include
+#    INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
     QT += dbus x11extras
     QMAKE_CC = "gcc -std=c99 -w"
@@ -42,7 +47,11 @@ macx {
     SOURCES += app_x11.cpp
 }
 
-LIBS += -lbz2 -lz
+# -lchardet -lavformat -lavcodec -lavutil -lswresample -lswscale -lcmplayer_mpv -lmpg123 -ldvdread \
+#	-liconv -lquvi -lcdio
+
+LIBS += -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavformat -lavutil \
+	-lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz
 
 QML_IMPORT_PATH += imports
 

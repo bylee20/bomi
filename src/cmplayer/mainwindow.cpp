@@ -1051,16 +1051,21 @@ void MainWindow::setFullScreen(bool full) {
 		d->updateWindowPosState();
 #ifdef Q_OS_MAC
 		if (!d->pref().lion_style_fullscreen) {
-			static Qt::WindowFlags flags = this->flags();
+			static Qt::WindowFlags flags = windowFlags();
 			static QRect geometry;
 			if (full) {
-				flags = this->flags();
-				geometry = this->geometry();
-				setFlags(flags | Qt::FramelessWindowHint);
-				setGeometry(QRect(QPoint(0, 0), screen()->size()));
-				SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
+				auto desktop = cApp.desktop();
+				const int screen = desktop->screenNumber(this);
+				if (screen >= 0) {
+					flags = windowFlags();
+					geometry = this->geometry();
+					setWindowFlags(flags | Qt::FramelessWindowHint);
+					SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
+					show();
+					setGeometry(QRect(QPoint(0, 0), desktop->screenGeometry(this).size()));
+				}
 			} else {
-				setFlags(flags);
+				setWindowFlags(flags);
 				setGeometry(geometry);
 				SetSystemUIMode(kUIModeNormal, 0);
 			}
