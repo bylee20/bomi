@@ -371,6 +371,12 @@ struct VdaUploader : public TextureUploader {
 		CGLTexImageIOSurface2D(m_cgl, info.target, info.internal, info.width, info.height, info.format, info.type, surface, info.plane);
 	}
 	virtual void initialize(const TextureInfo &/*info*/) override {}
+	virtual QImage toImage(const VideoFrame &frame) override {
+		mp_image mpi; memset(&mpi, 0, sizeof(mpi));
+		mp_image_setfmt(&mpi, frame.format().type());
+		mp_image_set_size(&mpi, frame.width(), frame.height());
+		const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
+	}
 };
 
 #endif

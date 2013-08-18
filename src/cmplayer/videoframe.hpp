@@ -14,7 +14,8 @@ public:
 	const QImage &image() const {return d->image;}
 	const uchar *data(int i) const {return d->data[i];}
 	const VideoFormat &format() const {return d->format;}
-	bool isNative() const {return d->native;}
+	int width() const {return d->format.width();}
+	int height() const {return d->format.height();}
 private:
 	struct Data : public QSharedData {
 		Data() {}
@@ -27,7 +28,6 @@ private:
 		QImage image;
 		uchar *data[4] = {0, 0, 0, 0};
 		VideoFormat format;
-		bool native = false;
 	};
 	QSharedDataPointer<Data> d;
 };
