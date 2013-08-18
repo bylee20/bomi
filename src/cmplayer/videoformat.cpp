@@ -11,10 +11,18 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h
 : size(mpi->w, mpi->h), outputSize(dest_w, dest_h)
 , planes(mpi->fmt.num_planes), type(mpi->imgfmt), imgfmt(mpi->imgfmt) {
 	if ((native = IMGFMT_IS_HWACCEL(imgfmt))) {
+#ifdef Q_OS_LINUX
 		if (imgfmt == IMGFMT_VAAPI) {
-
-		} else if (imgfmt == IMGFMT_VDA) {
-
+			type = IMGFMT_BGRA;
+			planes = 1;
+			const int stride = FFALIGN((mpi->w * 32 + 7) / 8, 16);
+			alignedSize = QSize(stride/4, mpi->h);
+			alignedByteSize[0] = QSize(stride, mpi->h);
+			bpp = 32;
+		}
+#endif
+#ifdef Q_OS_MAC
+		if (imgfmt == IMGFMT_VDA) {
 			auto buffer = (CVPixelBufferRef)mpi->planes[3];
 			switch (CVPixelBufferGetPixelFormatType(buffer)) {
 			case kCVPixelFormatType_422YpCbCr8:
@@ -51,6 +59,7 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h
 			alignedSize = alignedByteSize[0];
 			alignedSize.rwidth() /= desc.bytes[0];
 		}
+#endif
 	} else {
 		alignedSize = QSize(mpi->stride[0]/mpi->fmt.bytes[0], mpi->h);
 		for (int i=0; i<3; ++i) {
@@ -59,20 +68,6 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h
 			bpp += mpi->fmt.bpp[i] >> (mpi->fmt.xs[i] + mpi->fmt.ys[i]);
 		}
 	}
-//	if (type == APGL) {
-//		planes = 3;
-//		alignedSize = size;
-//		alignedByteSize[0] = size;
-//		bpp = 12;
-//	} else if (type == VAGL) {
-//		planes = 1;
-//		const int stride = FFALIGN((mpi->w * 32 + 7) / 8, 16);
-//		alignedSize = QSize(stride/4, mpi->h);
-//		alignedByteSize[0] = QSize(stride, mpi->h);
-//		bpp = 32;
-//	} else {
-
-//	}
 }
 
 VideoFormat::VideoFormat::Data::Data(const QImage &image) {

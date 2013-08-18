@@ -84,30 +84,7 @@ void finalize_vaapi() {
 		VaApi::get().finalize();
 }
 
-/**********************************************************************************************/
-
-VaApiSurfaceGLX::VaApiSurfaceGLX(GLuint texture) {
-	m_status = vaCreateSurfaceGLX(VaApi::glx(), GL_TEXTURE_2D, texture, &m_surface);
-	if (isValid())
-		m_texture = texture;
-	else
-		m_surface = nullptr;
-}
-
-VaApiSurfaceGLX::~VaApiSurfaceGLX() {
-	if (m_surface)
-		vaDestroySurfaceGLX(VaApi::glx(), m_surface);
-}
-
-bool VaApiSurfaceGLX::copy(const uchar *data) {
-	const auto id = (VASurfaceID)(uintptr_t)data;
-	vaSyncSurface(VaApi::glx(), id);
-	m_status = vaCopySurfaceGLX(VaApi::glx(), m_surface, id, VA_SRC_BT601);
-	return isValid();
-}
-
 /***************************************************************************************************/
-
 
 struct VaApiSurface { VASurfaceID  id = VA_INVALID_ID; bool ref = false; quint64 order = 0; };
 
@@ -139,10 +116,6 @@ vaapi_context *HwAccVaApi::vaapi() const {
 
 bool HwAccVaApi::isOk() const {
 	return status() == VA_STATUS_SUCCESS;
-}
-
-bool HwAccVaApi::isAvailable(AVCodecID codec) const {
-	return VaApi::find(codec) != nullptr;
 }
 
 void *HwAccVaApi::context() const {
@@ -215,17 +188,6 @@ bool HwAccVaApi::fillContext(AVCodecContext *avctx) {
 		d->surfaces[i].id = ids[i];
 	if (!isSuccess(vaCreateContext(d->context.display, d->context.config_id, w, h, VA_PROGRESSIVE, ids.data(), ids.size(), &d->context.context_id)))
 		return false;
-	m_size = QSize(w, h);
-	return true;
-}
-
-bool HwAccVaApi::check(AVCodecContext *avctx) {
-	if (avctx->pix_fmt != AV_PIX_FMT_VAAPI_VLD || !HwAccVaApi::isOk())
-		return false;
-	if (size().width() == avctx->width && size().height() == avctx->height)
-		return true;
-	if (!fillContext(avctx))
-		return false;
 	return true;
 }
 
@@ -270,14 +232,9 @@ HwAccVaApiX11::~HwAccVaApiX11() {
 	delete d;
 }
 
-bool HwAccVaApiX11::check(AVCodecContext *avctx) {
-	if (!HwAccVaApi::check(avctx))
+bool HwAccVaApiX11::fillContext(AVCodecContext *avctx) {
+	if (!HwAccVaApi::fillContext(avctx))
 		return false;
-	retriveImageFormat();
-	return HwAccVaApi::isOk();
-}
-
-void HwAccVaApiX11::retriveImageFormat() {
 	VAImage image;
 	auto destroy = [&image, this] () {
 		if (image.image_id != VA_INVALID_ID) {
@@ -285,18 +242,18 @@ void HwAccVaApiX11::retriveImageFormat() {
 			image.image_id = VA_INVALID_ID;
 		}
 	};
-	auto findFormat =[&image, &destroy, this] () {
+	auto findFormat =[&image, &destroy, avctx, this] () {
 		int count = vaMaxNumImageFormats(vaapi()->display);
 		QVector<VAImageFormat> formats;
 		formats.resize(count);
 		vaQueryImageFormats(vaapi()->display, formats.data(), &count);
 		formats.resize(count);
 		for (int i=0; i<formats.size(); ++i) {
-			if (!isSuccess(vaCreateImage(vaapi()->display, &formats[i], size().width(), size().height(), &image))) {
+			if (!isSuccess(vaCreateImage(vaapi()->display, &formats[i], avctx->width, avctx->height, &image))) {
 				image.image_id = VA_INVALID_ID;
 				continue;
 			}
-			if (!isSuccess(vaGetImage(vaapi()->display, static_cast<VaApiSurface*>(surface(0))->id, 0, 0, size().width(), size().height(), image.image_id))) {
+			if (!isSuccess(vaGetImage(vaapi()->display, static_cast<VaApiSurface*>(surface(0))->id, 0, 0, avctx->width, avctx->height, image.image_id))) {
 				destroy();
 				continue;
 			}
@@ -321,6 +278,7 @@ void HwAccVaApiX11::retriveImageFormat() {
 	d->imgfmt = findFormat();
 	d->fourcc = image.format.fourcc;
 	destroy();
+	return isOk();
 }
 
 VaApiImage *HwAccVaApiX11::newImage() {

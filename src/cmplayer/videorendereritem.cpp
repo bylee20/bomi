@@ -1,10 +1,8 @@
 #include "videorendereritem.hpp"
-#include "hwacc_vaapi.hpp"
 #include "mposditem.hpp"
 #include "videoframe.hpp"
 #include "shadervar.h"
 #include "global.hpp"
-#include "hwacc_vda.hpp"
 #include "textureshader.hpp"
 
 struct VideoRendererItem::Data {
@@ -14,9 +12,6 @@ struct VideoRendererItem::Data {
 	double crop = -1.0, aspect = -1.0, dar = 0.0;	int alignment = Qt::AlignCenter;
 	LetterboxItem *letterbox = nullptr;	MpOsdItem *mposd = nullptr;		QQuickItem *overlay = nullptr;
 	QMutex mutex;	QImage image;
-#ifdef Q_OS_LINUX
-	VaApiSurfaceGLX *vaapi = nullptr;
-#endif
 	TextureShader *shader = nullptr;	QByteArray shaderCode;		VideoFormat::Type shaderType = IMGFMT_BGRA;
 };
 
@@ -32,9 +27,6 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 }
 
 VideoRendererItem::~VideoRendererItem() {
-#ifdef Q_OS_LINUX
-	delete d->vaapi;
-#endif
 	delete d->shader;
 	delete d;
 }
@@ -65,17 +57,10 @@ void VideoRendererItem::requestFrameImage() const {
 		emit frameImageObtained(QImage());
 	else if (!d->image.isNull())
 		emit frameImageObtained(d->image);
-//	else if (d->format.type() != VideoFormat::VAGL) {
-//		d->mutex.lock();
-//		QImage image = d->frame.toImage();
-//		d->mutex.unlock();
-//		d->mposd->drawOn(image);
-//		emit frameImageObtained(image);
-//	} else {
-//		Q_ASSERT(d->format.type() == VideoFormat::VAGL);
-//		d->take = true;
-//		const_cast<VideoRendererItem*>(this)->update();
-//	}
+	else {
+		d->take = true;
+		const_cast<VideoRendererItem*>(this)->update();
+	}
 }
 
 void VideoRendererItem::present(const QImage &image) {
@@ -299,6 +284,10 @@ void VideoRendererItem::beforeUpdate() {
 	if (!d->format.isEmpty()) {
 		if (d->image.isNull()) {
 			d->shader->upload(d->frame);
+			if (d->take) {
+				emit frameImageObtained(d->shader->toImage(d->frame));
+				d->take = false;
+			}
 		}
 //			setTex(0, GL_BGRA, d->image.width(), d->image.height(), d->image.bits());
 		++d->drawnFrames;
@@ -340,12 +329,6 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 }
 
 void VideoRendererItem::initializeTextures() {
-#ifdef Q_OS_LINUX
-	if (d->vaapi) {
-		delete d->vaapi;
-		d->vaapi = nullptr;
-	}
-#endif
 	if (d->format.isEmpty())
 		return;
 	Q_ASSERT(d->shader != nullptr);

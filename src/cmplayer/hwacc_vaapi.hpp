@@ -19,8 +19,6 @@ public:
 	virtual void *context() const override;
 	virtual mp_image *getSurface() override;
 	virtual Type type() const override {return m_type;}
-	virtual bool isAvailable(AVCodecID codec) const override;
-	virtual bool check(AVCodecContext *avctx) override;
 protected:
 	vaapi_context *vaapi() const;
 	int &status() {return m_status;}
@@ -28,7 +26,7 @@ protected:
 	QSize &size() {return m_size;}
 	const QSize &size() const {return m_size;}
 	void freeContext();
-	bool fillContext(AVCodecContext *avctx);
+	bool fillContext(AVCodecContext *avctx) override;
 	bool isSuccess(int result);
 	void *surface(int i) const;
 private:
@@ -51,11 +49,10 @@ class HwAccVaApiX11 : public HwAccVaApi {
 public:
 	HwAccVaApiX11(AVCodecID codec);
 	virtual ~HwAccVaApiX11();
-	virtual bool check(AVCodecContext *avctx) override;
+	bool fillContext(AVCodecContext *avctx) override;
 	virtual mp_image *getImage(mp_image *mpi) override;
 private:
 	VaApiImage *newImage();
-	void retriveImageFormat();
 	struct Data;
 	Data *d;
 };
@@ -86,19 +83,6 @@ private:
 	static bool init;
 	friend void initialize_vaapi();
 	friend void finalize_vaapi();
-};
-
-class VaApiSurfaceGLX {
-public:
-	VaApiSurfaceGLX(GLuint texture);
-	~VaApiSurfaceGLX();
-	bool isValid() const {return m_status == VA_STATUS_SUCCESS;}
-	bool copy(const uchar *data);
-	VAStatus status() const {return m_status;}
-private:
-	void *m_surface = nullptr;
-	GLuint m_texture = GL_NONE;
-	VAStatus m_status = VA_STATUS_SUCCESS;
 };
 
 #endif

@@ -10,9 +10,8 @@ precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
-LIBS += -L$${LIB_DIR}
-
-PKG = $${LIB_DIR}/pkgconfig
+LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavformat -lavutil \
+        -lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz
 
 macx {
     QT += gui-private
@@ -42,8 +41,7 @@ macx {
     QMAKE_CC = "gcc -std=c99 -w"
     QMAKE_CXXFLAGS += -std=c++11
     TARGET = cmplayer
-    LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lva-x11 -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavformat -lavutil \
-        -lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lasound -ldl -lass
+    LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lva-x11 -lasound -ldl -lass
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }
@@ -51,8 +49,6 @@ macx {
 # -lchardet -lavformat -lavcodec -lavutil -lswresample -lswscale -lcmplayer_mpv -lmpg123 -ldvdread \
 #	-liconv -lquvi -lcdio
 
-LIBS += -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavformat -lavutil \
-	-lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz
 
 QML_IMPORT_PATH += imports
 

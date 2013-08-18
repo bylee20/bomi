@@ -54,7 +54,6 @@ public:
 protected:
 	HwAcc(AVCodecID codec);
 	virtual bool isOk() const = 0;
-	virtual bool check(AVCodecContext *avctx) = 0;
 	virtual mp_image *getSurface() = 0;
 	virtual void *context() const = 0;
 	virtual bool fillContext(AVCodecContext *avctx) = 0;
@@ -66,7 +65,7 @@ private:
 	static int probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder);
 	static int init(lavc_ctx *ctx);
 	static void uninit(lavc_ctx *ctx);
-	static mp_image *allocateImage(struct lavc_ctx *ctx, AVFrame *frame);
+	static mp_image *allocateImage(struct lavc_ctx *ctx, int imgfmt, int width, int height);
 	friend class PlayEngine;
 	friend vd_lavc_hwdec create_vaapi_functions();
 	friend vd_lavc_hwdec create_vdpau_functions();

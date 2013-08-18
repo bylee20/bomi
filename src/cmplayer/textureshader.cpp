@@ -355,28 +355,7 @@ public:
 //	} else
 //		setTex(0, GL_BGRA, d->image.width(), d->image.height(), d->image.bits());
 
-//case VideoFormat::UYVY:
-//	initTex(0, GL_LUMINANCE_ALPHA, w >> 1, h);
-//	initTex(1, GL_RGBA, w >> 2, h);
-//	break;
-//case VideoFormat::RGBA:
-//	initRgbTex(0, GL_RGBA);
-//	break;
-//case VideoFormat::BGRA:
-//	initRgbTex(0, GL_BGRA);
-//	break;
-//#ifdef Q_OS_LINUX
-//case VideoFormat::VAGL:
-//	initRgbTex(0, GL_BGRA);
-//	d->vaapi = new VaApiSurfaceGLX(texture(0));
-//	break;
-//#endif
-//case VideoFormat::APGL:
 
-//	break;
-//default:
-//	break;
-//}
 
 #ifdef Q_OS_MAC
 
@@ -392,6 +371,45 @@ struct VdaUploader : public TextureUploader {
 		CGLTexImageIOSurface2D(m_cgl, info.target, info.internal, info.width, info.height, info.format, info.type, surface, info.plane);
 	}
 	virtual void initialize(const TextureInfo &/*info*/) override {}
+};
+
+#endif
+
+#ifdef Q_OS_LINUX
+
+#include "hwacc_vaapi.hpp"
+#include <va/va_glx.h>
+
+struct VaApiUploader : public TextureUploader {
+	virtual void initialize(const TextureInfo &info) override {
+		free();
+		Q_ASSERT(info.format == GL_BGRA);
+		TextureUploader::initialize(info);
+		vaCreateSurfaceGLX(VaApi::glx(), info.target, m_texture = info.id, &m_surface);
+	}
+	~VaApiUploader() { free(); }
+	virtual void upload(const TextureInfo &info, const VideoFrame &frame) override {
+		Q_ASSERT(m_texture == info.id);
+		glBindTexture(info.target, info.id);
+		const auto id = (VASurfaceID)(uintptr_t)frame.data(3);
+		vaSyncSurface(VaApi::glx(), id);
+		vaCopySurfaceGLX(VaApi::glx(), m_surface, id, VA_SRC_BT601);
+	}
+	virtual QImage toImage(const VideoFrame &frame) const override {
+		QImage image(frame.format().alignedSize(), QImage::Format_ARGB32);
+		glBindTexture(GL_TEXTURE_2D, m_texture);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
+		return image;
+	}
+private:
+	void free() {
+		if (m_surface)
+			vaDestroySurfaceGLX(VaApi::glx(), m_surface);
+		m_surface = nullptr;
+	}
+
+	void *m_surface = nullptr;
+	GLuint m_texture = GL_NONE;
 };
 
 #endif
@@ -420,6 +438,11 @@ TextureShader *TextureShader::create(const VideoFormat &format) {
 		MAKE(BlackOutShader)
 	}
 	if (format.isNative())
+#ifdef Q_OS_MAC
 		shader->setUploader(new VdaUploader);
+#endif
+#ifdef Q_OS_LINUX
+		shader->setUploader(new VaApiUploader);
+#endif
 	return shader;
 }

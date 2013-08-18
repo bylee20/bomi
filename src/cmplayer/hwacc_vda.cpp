@@ -1,12 +1,16 @@
 #include "hwacc_vda.hpp"
+extern "C" {
+#include <video/mp_image.h>
+}
+
+#ifdef Q_OS_MAC
+
 #include <OpenGL/CGLIOSurface.h>
 #include <CoreVideo/CVOpenGLTextureCache.h>
 #include <qpa/qplatformnativeinterface.h>
 //#include <qpa/qplatformwindow.h>
-
 extern "C" {
 #include <libavcodec/vda.h>
-#include <video/mp_image.h>
 }
 #ifdef check
 #undef check
@@ -127,3 +131,5 @@ bool HwAccVda::fillContext(AVCodecContext *avctx) {
 	size() = QSize(avctx->width, avctx->height);
 	return (d->ok = true);
 }
+
+#endif

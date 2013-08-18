@@ -94,7 +94,6 @@ int HwAcc::init(lavc_ctx *ctx) {
 		delete acc;
 		return -1;
 	}
-	qDebug() << ctx->avctx->width << ctx->avctx->height;
 	acc->d->imgfmt = format[0];
 	vo(ctx)->setHwAcc(acc);
 	ctx->hwdec_priv = acc;
@@ -108,10 +107,15 @@ void HwAcc::uninit(lavc_ctx *ctx) {
 	delete static_cast<HwAcc*>(ctx->hwdec_priv);
 }
 
-mp_image *HwAcc::allocateImage(struct lavc_ctx *ctx, AVFrame */*frame*/) {
+mp_image *HwAcc::allocateImage(struct lavc_ctx *ctx, int imgfmt, int width, int height) {
 	auto acc = static_cast<HwAcc*>(ctx->hwdec_priv);
-	if (!acc->check(ctx->avctx))
+	if (imgfmt != acc->d->imgfmt || !acc->isOk())
 		return nullptr;
+	if (acc->size().width() != width || acc->size().height() != height) {
+		if (!acc->fillContext(ctx->avctx))
+			return nullptr;
+		acc->size() = QSize(width, height);
+	}
 	return acc->getSurface();
 }
 
@@ -119,14 +123,7 @@ int HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder)
 	Q_UNUSED(hwdec);	Q_UNUSED(decoder);
 	if (!info || !info->vdpau_ctx)
 		return HWDEC_ERR_NO_CTX;
-#ifdef Q_OS_LINUX
-	if ()
-	hwdec->type == HWDEC_VAAPI &&
-#endif
-#ifdef Q_OS_MAC
-	if (hwdec->type == HWDEC_VDA)
-#endif
-		if (supports((AVCodecID)mp_codec_to_av_codec_id(decoder)))
+	if (supports((AVCodecID)mp_codec_to_av_codec_id(decoder)))
 			return 0;
 	return HWDEC_ERR_NO_CODEC;
 }
@@ -138,7 +135,7 @@ vd_lavc_hwdec create_vaapi_functions() {
 	hwdec.init = HwAcc::init;
 	hwdec.uninit = HwAcc::uninit;
 	hwdec.probe = HwAcc::probe;
-	hwdec.fix_image = nullptr;
+	hwdec.process_image = nullptr;
 	static const int formats[] = {IMGFMT_VAAPI, 0};
 	hwdec.image_formats = formats;
 	return hwdec;
@@ -153,7 +150,7 @@ vd_lavc_hwdec create_vdpau_functions() {
 	hwdec.init = HwAcc::init;
 	hwdec.uninit = HwAcc::uninit;
 	hwdec.probe = HwAcc::probe;
-	hwdec.fix_image = nullptr;
+	hwdec.process_image = nullptr;
 	static const int formats[] = {IMGFMT_VDPAU, 0};
 	hwdec.image_formats = formats;
 	return hwdec;
@@ -168,7 +165,7 @@ vd_lavc_hwdec create_vda_functions() {
 	hwdec.init = HwAcc::init;
 	hwdec.uninit = HwAcc::uninit;
 	hwdec.probe = HwAcc::probe;
-	hwdec.fix_image = nullptr;
+	hwdec.process_image = nullptr;
 	static const int formats[] = {IMGFMT_VDA, 0};
 	hwdec.image_formats = formats;
 	return hwdec;

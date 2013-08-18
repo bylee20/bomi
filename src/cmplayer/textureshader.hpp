@@ -25,6 +25,9 @@ struct TextureUploader {
 		glBindTexture(info.target, info.id);
 		glTexSubImage2D(info.target, 0, 0, 0, info.width, info.height, info.format, info.type, frame.data(info.plane));
 	}
+	virtual QImage toImage(const VideoFrame &frame) const {
+		return frame.toImage();
+	}
 };
 
 class TextureShader {
@@ -40,6 +43,7 @@ public:
 	void link(QOpenGLShaderProgram *program);
 	void render(QOpenGLShaderProgram *program, const ShaderVar &var);
 	virtual void upload(const VideoFrame &frame);
+	QImage toImage(const VideoFrame &frame) const {return m_uploader->toImage(frame);}
 protected:
 	virtual QByteArray getMain(const ShaderVar &var) const = 0;
 	float &sc(int idx) {return m_strideCorrection[idx];}
