@@ -4,8 +4,10 @@
 #include "videorendereritem.hpp"
 #include "colorproperty.hpp"
 #include "global.hpp"
+#include "videoformat.hpp"
 
-struct ShaderVar {
+class ShaderVar {
+public:
     ShaderVar() { setColor(m_color); setEffects(m_effects); }
     inline const ColorProperty &color() const {return m_color;}
     inline void setColor(const ColorProperty &color) {
@@ -19,7 +21,6 @@ struct ShaderVar {
 	void setLumaRange(const RangeF &luma) {m_luma = luma;}
 //    void setYRange(float min, float max) {y_min = min; y_max = max;}
 	int id() const {return m_idx;}
-	QByteArray fragment(int frameType) const;
 	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d) {
 		m_blur_kern_c = blur_c;
 		m_blur_kern_n = blur_n;
@@ -50,10 +51,11 @@ private:
 	int m_idx = 0;
     ColorProperty m_color;
     friend class VideoRendererItem;
-
+	friend class TextureShader;
 	int m_blur_kern_c = 1, m_blur_kern_n = 1, m_blur_kern_d = 1;
 	int m_sharpen_kern_c = 1, m_sharpen_kern_n = 1, m_sharpen_kern_d = 1;
 };
+
 
 
 #endif // SHADERVAR_H

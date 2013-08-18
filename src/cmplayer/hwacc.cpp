@@ -3,6 +3,7 @@
 #include "stdafx.hpp"
 #include "hwacc_vaapi.hpp"
 #include "hwacc_vdpau.hpp"
+#include "hwacc_vda.hpp"
 
 extern "C" {
 #include <video/decode/lavc.h>
@@ -75,28 +76,30 @@ int HwAcc::imgfmt() const {
 }
 
 int HwAcc::init(lavc_ctx *ctx) {
-#ifdef Q_OS_LINUX
 	auto format = ctx->hwdec->image_formats;
 	if (!format)
 		return -1;
 	HwAcc *acc = nullptr;
+#ifdef Q_OS_LINUX
 	if (format[0] == IMGFMT_VAAPI)
 		acc = new HwAccVaApiGLX(ctx->avctx->codec_id);
 //	else if (format[0] == IMGFMT_VDPAU)
 //		acc = new HwAccVdpau(ctx->avctx->codec_id);
+#endif
+#ifdef Q_OS_MAC
+	if (format[0] == IMGFMT_VDA)
+		acc = new HwAccVda(ctx->avctx->codec_id);
+#endif
 	if (!acc || !acc->isOk()) {
 		delete acc;
 		return -1;
 	}
+	qDebug() << ctx->avctx->width << ctx->avctx->height;
 	acc->d->imgfmt = format[0];
 	vo(ctx)->setHwAcc(acc);
 	ctx->hwdec_priv = acc;
 	ctx->avctx->hwaccel_context = acc->context();
 	return 0;
-#else
-	Q_UNUSED(ctx);
-	return -1;
-#endif
 }
 
 void HwAcc::uninit(lavc_ctx *ctx) {
@@ -117,11 +120,14 @@ int HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder)
 	if (!info || !info->vdpau_ctx)
 		return HWDEC_ERR_NO_CTX;
 #ifdef Q_OS_LINUX
-	if (hwdec->type == HWDEC_VAAPI) {
-		if (VaApi::find((AVCodecID)mp_codec_to_av_codec_id(decoder)))
-			return 0;
-	}
+	if ()
+	hwdec->type == HWDEC_VAAPI &&
 #endif
+#ifdef Q_OS_MAC
+	if (hwdec->type == HWDEC_VDA)
+#endif
+		if (supports((AVCodecID)mp_codec_to_av_codec_id(decoder)))
+			return 0;
 	return HWDEC_ERR_NO_CODEC;
 }
 
@@ -133,7 +139,8 @@ vd_lavc_hwdec create_vaapi_functions() {
 	hwdec.uninit = HwAcc::uninit;
 	hwdec.probe = HwAcc::probe;
 	hwdec.fix_image = nullptr;
-	hwdec.image_formats = (const int[]) {IMGFMT_VAAPI, 0};
+	static const int formats[] = {IMGFMT_VAAPI, 0};
+	hwdec.image_formats = formats;
 	return hwdec;
 }
 
@@ -147,9 +154,24 @@ vd_lavc_hwdec create_vdpau_functions() {
 	hwdec.uninit = HwAcc::uninit;
 	hwdec.probe = HwAcc::probe;
 	hwdec.fix_image = nullptr;
-	hwdec.image_formats = (const int[]) {IMGFMT_VDPAU, 0};
+	static const int formats[] = {IMGFMT_VDPAU, 0};
+	hwdec.image_formats = formats;
 	return hwdec;
 }
 
 vd_lavc_hwdec mp_vd_lavc_vdpau = create_vdpau_functions();
 
+vd_lavc_hwdec create_vda_functions() {
+	vd_lavc_hwdec hwdec;
+	hwdec.type = HWDEC_VDA;
+	hwdec.allocate_image = HwAcc::allocateImage;
+	hwdec.init = HwAcc::init;
+	hwdec.uninit = HwAcc::uninit;
+	hwdec.probe = HwAcc::probe;
+	hwdec.fix_image = nullptr;
+	static const int formats[] = {IMGFMT_VDA, 0};
+	hwdec.image_formats = formats;
+	return hwdec;
+}
+
+vd_lavc_hwdec mp_vd_lavc_vda = create_vda_functions();

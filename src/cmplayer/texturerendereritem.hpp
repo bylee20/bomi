@@ -11,6 +11,7 @@ public:
 	void setGeometry(const QPointF &pos, const QSizeF &size) {setPosition(pos); setSize(size);}
 	int textureCount() const {return m_count;}
 	GLuint texture(int i) const;
+	GLuint *textures() const;
 protected:
 	typedef QSGGeometry::TexturedPoint2D TexturedPoint2D;
 	typedef QSGMaterialShader::RenderState RenderState;

@@ -15,6 +15,7 @@ LIBS += -L$${LIB_DIR}
 PKG = $${LIB_DIR}/pkgconfig
 
 macx {
+    QT += gui-private
     QMAKE_CXXFLAGS -= "-mmacosx-version-min=10.6"
     QMAKE_CXX = clang++ -std=c++11 -stdlib=libc++
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
@@ -29,7 +30,7 @@ macx {
 #	$${LLIB_DIR}/libmpg123.a $${LLIB_DIR}/libquvi.a $${LLIB_DIR}/liblua52.a \
 #	$${LLIB_DIR}/libdvdread.a $${LLIB_DIR}/libcdio.a $${LLIB_DIR}/libcdio_paranoia.a \
 #	$${LLIB_DIR}/libcdio_cdda.a $${LLIB_DIR}/libdvdcss.a -lcurl -liconv \
-    LIBS += -L/usr/local/lib -liconv \
+    LIBS += -L/usr/local/lib -liconv -framework IOSurface \
 	-framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
 	-framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
 	-framework IOKit -framework Carbon
@@ -119,7 +120,9 @@ HEADERS += playengine.hpp \
     dataevent.hpp \
     openmediafolderdialog.hpp \
     hwacc_vaapi.hpp \
-    hwacc_vdpau.hpp
+    hwacc_vdpau.hpp \
+    hwacc_vda.hpp \
+    textureshader.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -180,7 +183,9 @@ SOURCES += main.cpp \
     subtitlerenderingthread.cpp \
     openmediafolderdialog.cpp \
     hwacc_vaapi.cpp \
-    hwacc_vdpau.cpp
+    hwacc_vdpau.cpp \
+    hwacc_vda.cpp \
+    textureshader.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -158,6 +158,7 @@ void VideoOutput::flipPage(struct vo *vo) {
 		auto w = d->renderer->window();
 		while (w && w->isVisible() && d->renderer->isFramePended() && !d->quit)
 			PlayEngine::usleep(50);
+		d->formatChanged = false;
 	}
 	d->flip = false;
 }
@@ -168,15 +169,20 @@ void VideoOutput::quit() {
 
 int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	switch (format) {
-	case IMGFMT_VDPAU:
-	case IMGFMT_420P:	case IMGFMT_VAAPI:
-	case IMGFMT_NV12:	case IMGFMT_NV21:
-	case IMGFMT_YUYV:	case IMGFMT_UYVY:
-	case IMGFMT_BGRA:	case IMGFMT_RGBA:
+	case IMGFMT_VDPAU:	case IMGFMT_VDA:	case IMGFMT_VAAPI:
+	case IMGFMT_420P:
+	case IMGFMT_NV12:
+	case IMGFMT_NV21:
+	case IMGFMT_YUYV:
+	case IMGFMT_UYVY:
+	case IMGFMT_BGRA:
+	case IMGFMT_RGBA:
 		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_FLIP;
 	default:
 		return 0;
 	}
 }
 
+#ifdef Q_OS_LINUX
 vo_driver video_out_vaapi;
+#endif

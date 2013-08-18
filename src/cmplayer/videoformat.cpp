@@ -1,4 +1,7 @@
 #include "videoformat.hpp"
+#ifdef Q_OS_MAC
+#include <VideoDecodeAcceleration/VDADecoder.h>
+#endif
 extern "C" {
 #include <video/img_format.h>
 #include <libavutil/common.h>
@@ -6,59 +9,70 @@ extern "C" {
 
 VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h)
 : size(mpi->w, mpi->h), outputSize(dest_w, dest_h)
-, planes(mpi->fmt.num_planes), imgfmt(mpi->fmt.id), glFormat(GL_UNSIGNED_BYTE) {
-	switch (imgfmt) {
-	case IMGFMT_420P:
-		pixfmt = AV_PIX_FMT_YUV420P;
-		type = I420;
-		break;
-	case IMGFMT_YUYV:
-		pixfmt = AV_PIX_FMT_YUYV422;
-		type = YUY2;
-		break;
-	case IMGFMT_UYVY:
-		pixfmt = AV_PIX_FMT_UYVY422;
-		type = UYVY;
-		break;
-	case IMGFMT_NV12:
-		pixfmt = AV_PIX_FMT_NV12;
-		type = NV12;
-		break;
-	case IMGFMT_NV21:
-		pixfmt = AV_PIX_FMT_NV21;
-		type = NV21;
-		break;
-	case IMGFMT_RGBA:
-		pixfmt = AV_PIX_FMT_RGBA;
-		type = RGBA;
-		break;
-	case IMGFMT_BGRA:
-		pixfmt = AV_PIX_FMT_BGRA;
-		type = BGRA;
-		break;
-	case IMGFMT_VAAPI:
-		pixfmt = AV_PIX_FMT_VAAPI_VLD;
-		type = VAGL;
-		break;
-	default:
-		pixfmt = AV_PIX_FMT_NONE;
-		type = Unknown;
-		break;
-	}
-	if (type != VAGL) {
+, planes(mpi->fmt.num_planes), type(mpi->imgfmt), imgfmt(mpi->imgfmt) {
+	if ((native = IMGFMT_IS_HWACCEL(imgfmt))) {
+		if (imgfmt == IMGFMT_VAAPI) {
+
+		} else if (imgfmt == IMGFMT_VDA) {
+
+			auto buffer = (CVPixelBufferRef)mpi->planes[3];
+			switch (CVPixelBufferGetPixelFormatType(buffer)) {
+			case kCVPixelFormatType_422YpCbCr8:
+				type = IMGFMT_UYVY;
+				break;
+			case kCVPixelFormatType_422YpCbCr8_yuvs:
+				type = IMGFMT_YUYV;
+				break;
+			case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:
+				type = IMGFMT_NV12;
+				break;
+			case kCVPixelFormatType_420YpCbCr8Planar:
+				type = IMGFMT_420P;
+				break;
+			default:
+				qDebug() << "Not supported format!";
+				type = IMGFMT_NONE;
+			}
+			auto desc = mp_imgfmt_get_desc(type);
+			if (CVPixelBufferIsPlanar(buffer)) {
+				planes = CVPixelBufferGetPlaneCount(buffer);
+				Q_ASSERT(planes == desc.num_planes);
+				for (int i=0; i<planes; ++i) {
+					alignedByteSize[i].rwidth() = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
+					alignedByteSize[i].rheight() = CVPixelBufferGetHeightOfPlane(buffer, i);
+					bpp += desc.bpp[i] >> (desc.xs[i] + desc.ys[i]);
+				}
+			} else {
+				planes = 1;
+				alignedByteSize[0].rwidth() = CVPixelBufferGetBytesPerRow(buffer);
+				alignedByteSize[0].rheight() = CVPixelBufferGetHeight(buffer);
+				bpp = desc.bpp[0];
+			}
+			alignedSize = alignedByteSize[0];
+			alignedSize.rwidth() /= desc.bytes[0];
+		}
+	} else {
 		alignedSize = QSize(mpi->stride[0]/mpi->fmt.bytes[0], mpi->h);
 		for (int i=0; i<3; ++i) {
 			alignedByteSize[i].rwidth() = mpi->stride[i];
 			alignedByteSize[i].rheight() = mpi->h >> mpi->fmt.ys[i];
 			bpp += mpi->fmt.bpp[i] >> (mpi->fmt.xs[i] + mpi->fmt.ys[i]);
 		}
-	} else {
-		planes = 1;
-		const int stride = FFALIGN((mpi->w * 32 + 7) / 8, 16);
-		alignedSize = QSize(stride/4, mpi->h);
-		alignedByteSize[0] = QSize(stride, mpi->h);
-		bpp = 32;
 	}
+//	if (type == APGL) {
+//		planes = 3;
+//		alignedSize = size;
+//		alignedByteSize[0] = size;
+//		bpp = 12;
+//	} else if (type == VAGL) {
+//		planes = 1;
+//		const int stride = FFALIGN((mpi->w * 32 + 7) / 8, 16);
+//		alignedSize = QSize(stride/4, mpi->h);
+//		alignedByteSize[0] = QSize(stride, mpi->h);
+//		bpp = 32;
+//	} else {
+
+//	}
 }
 
 VideoFormat::VideoFormat::Data::Data(const QImage &image) {
@@ -67,8 +81,9 @@ VideoFormat::VideoFormat::Data::Data(const QImage &image) {
 	alignedByteSize[0] = QSize(size.width()*4, size.height());
 	planes = 1;
 	bpp = 32;
-	imgfmt = IMGFMT_BGRA;
-	pixfmt = AV_PIX_FMT_BGRA;
-	type = BGRA;
-	glFormat = GL_UNSIGNED_INT_8_8_8_8_REV;
+	type = imgfmt = IMGFMT_BGRA;
+}
+
+QString VideoFormat::name() const {
+	return QString::fromLatin1(mp_imgfmt_to_name(d->type));
 }

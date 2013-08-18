@@ -51,7 +51,7 @@ struct TextureRendererItem::Node : public QSGGeometryNode {
 		glDeleteTextures(m_count, m_textures);
 		delete [] m_textures;
 	}
-	GLuint texture(int i) const {return m_textures[i];}
+	GLuint *textures() const {return m_textures;}
 private:
 	int m_count = 0;
 	GLuint *m_textures = nullptr;
@@ -89,7 +89,11 @@ void TextureRendererItem::resetNode() {
 }
 
 GLuint TextureRendererItem::texture(int i) const {
-	return d->node->texture(i);
+	return d->node->textures()[i];
+}
+
+GLuint *TextureRendererItem::textures() const {
+	return d->node->textures();
 }
 
 QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
