@@ -14,8 +14,7 @@ VideoFrame::VideoFrame::Data::Data(mp_image *mpi, const VideoFormat &format)
 	data[1] = mpi->planes[1];
 	data[2] = mpi->planes[2];
 	data[3] = mpi->planes[3];
-	if (mpi->imgfmt != IMGFMT_VAAPI)
-		this->mpi = mp_image_new_ref(mpi);
+	this->mpi = mp_image_new_ref(mpi);
 }
 
 VideoFrame::VideoFrame::Data::Data(const QImage &image)

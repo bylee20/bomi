@@ -20,7 +20,7 @@ bool HwAcc::supports(AVCodecID codec) {
 #endif
 }
 
-const char *HwAcc::codecName(AVCodecID id) {
+const char *HwAcc::codecName(int id) {
 	switch (id) {
 	case AV_CODEC_ID_H264:
 		return "h264";
@@ -114,7 +114,7 @@ mp_image *HwAcc::allocateImage(struct lavc_ctx *ctx, int imgfmt, int width, int 
 	if (acc->size().width() != width || acc->size().height() != height) {
 		if (!acc->fillContext(ctx->avctx))
 			return nullptr;
-		acc->size() = QSize(width, height);
+		acc->m_size = QSize(width, height);
 	}
 	return acc->getSurface();
 }

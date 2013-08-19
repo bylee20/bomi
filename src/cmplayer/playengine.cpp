@@ -155,7 +155,7 @@ bool PlayEngine::isHwAccActivated() const {
 void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
 	d->hwAccCodecs.clear();
 	for (auto id : codecs) {
-		if (const char *name = HwAcc::codecName((AVCodecID)id)) {
+		if (const char *name = HwAcc::codecName(id)) {
 			d->hwAccCodecs.append(name);
 			d->hwAccCodecs.append(',');
 		}

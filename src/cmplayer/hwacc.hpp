@@ -45,7 +45,7 @@ public:
 	static void finalize();
 	static QList<AVCodecID> fullCodecList();
 	static bool supports(AVCodecID codec);
-	static const char *codecName(AVCodecID id);
+	static const char *codecName(int id);
 	static const char *name();
 	virtual mp_image *getImage(mp_image *mpi) = 0;
 	virtual Type type() const = 0;
@@ -59,7 +59,6 @@ protected:
 	virtual bool fillContext(AVCodecContext *avctx) = 0;
 	AVCodecID codec() const {return m_codec;}
 	const QSize &size() const {return m_size;}
-	QSize &size() {return m_size;}
 private:
 	static VideoOutput *vo(lavc_ctx *ctx);
 	static int probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder);

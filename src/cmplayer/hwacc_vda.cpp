@@ -8,7 +8,6 @@ extern "C" {
 #include <OpenGL/CGLIOSurface.h>
 #include <CoreVideo/CVOpenGLTextureCache.h>
 #include <qpa/qplatformnativeinterface.h>
-//#include <qpa/qplatformwindow.h>
 extern "C" {
 #include <libavcodec/vda.h>
 }
@@ -18,8 +17,6 @@ extern "C" {
 
 struct HwAccVda::Data {
 	vda_context context;
-	AVPixelFormat pixfmt = AV_PIX_FMT_NONE;
-	mp_imgfmt imgfmt = IMGFMT_NONE;
 	bool ok = true;
 };
 
@@ -37,29 +34,11 @@ mp_image *HwAccVda::getImage(mp_image *mpi) {
 	auto buffer = (CVPixelBufferRef)mpi->planes[3];
 	auto release = [] (void *arg) {
 		CVPixelBufferRef buffer = (CVPixelBufferRef)arg;
-//		IOSurfaceUnlock(CVPixelBufferGetIOSurface(buffer), 0, nullptr);
-//		CVPixelBufferUnlockBaseAddress(buffer, 0);
 		CVPixelBufferRelease(buffer);
 	};
 	CVPixelBufferRetain(buffer);
-//	CVPixelBufferLockBaseAddress(buffer, 0);
-//	auto surface = CVPixelBufferGetIOSurface(buffer);
-//	IOSurfaceLock(surface, 0, nullptr);
-
 	auto img = nullImage(IMGFMT_VDA, size().width(), size().height(), buffer, release);
 	img->planes[3] = mpi->planes[3];
-//	img->planes[0] = (uchar*)surface;
-	return img;
-
-	if (CVPixelBufferIsPlanar(buffer)) {
-		for (int i=0; i<img->fmt.num_planes; ++i) {
-			img->planes[i] = (uchar*)CVPixelBufferGetBaseAddressOfPlane(buffer, i);
-			img->stride[i] = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
-		}
-	} else {
-		img->planes[0] = (uchar*)CVPixelBufferGetBaseAddress(buffer);
-		img->stride[0] = CVPixelBufferGetBytesPerRow(buffer);
-	}
 	return img;
 }
 
@@ -77,21 +56,125 @@ void *HwAccVda::context() const {
 	return &d->context;
 }
 
-bool HwAccVda::check(AVCodecContext *avctx) {
-	if (avctx->pix_fmt != AV_PIX_FMT_VDA_VLD || !isOk())
-		return false;
-	if (size().width() == avctx->width && size().height() == avctx->height)
-		return true;
-	if (!fillContext(avctx))
-		return false;
-	return true;
-}
-
 void HwAccVda::freeContext() {
 	if (d->context.decoder) {
 		ff_vda_destroy_decoder(&d->context);
 		d->context.decoder = nullptr;
 	}
+}
+
+
+static CFArrayRef vda_create_pixel_format_array() {
+	auto array = CFArrayCreateMutable(kCFAllocatorDefault, 4, &kCFTypeArrayCallBacks);
+	auto append = [array] (OSType type) {
+		auto format  = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &type);
+		CFArrayAppendValue(array, format);
+		CFRelease(format);
+	};
+	append(kCVPixelFormatType_420YpCbCr8Planar);
+	append(kCVPixelFormatType_422YpCbCr8);
+	append(kCVPixelFormatType_422YpCbCr8_yuvs);
+	append(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange);
+	return array;
+}
+
+/* Decoder callback that adds the vda frame to the queue in display order. */
+static void vda_decoder_callback (void *vda_hw_ctx, CFDictionaryRef /*user_info*/, OSStatus /*status*/, uint32_t /*infoFlags*/, CVImageBufferRef image_buffer) {
+	vda_context *vda_ctx = (vda_context*)vda_hw_ctx;
+
+	if (!image_buffer)
+		return;
+
+//	if (vda_ctx->cv_pix_fmt_type != CVPixelBufferGetPixelFormatType(image_buffer))
+//		return;
+
+	vda_ctx->cv_buffer = CVPixelBufferRetain(image_buffer);
+}
+
+static int _ff_vda_create_decoder(struct vda_context *vda_ctx, uint8_t *extradata, int extradata_size) {
+	OSStatus status;
+	CFNumberRef height;
+	CFNumberRef width;
+	CFNumberRef format;
+	CFDataRef avc_data;
+	CFMutableDictionaryRef config_info;
+	CFMutableDictionaryRef buffer_attributes;
+	CFMutableDictionaryRef io_surface_properties;
+	CFNumberRef cv_pix_fmt;
+
+	vda_ctx->priv_bitstream = NULL;
+	vda_ctx->priv_allocated_size = 0;
+
+	/* Each VCL NAL in the bitstream sent to the decoder
+	 * is preceded by a 4 bytes length header.
+	 * Change the avcC atom header if needed, to signal headers of 4 bytes. */
+	if (extradata_size >= 4 && (extradata[4] & 0x03) != 0x03) {
+		uint8_t *rw_extradata;
+
+		if (!(rw_extradata = (uchar*)av_malloc(extradata_size)))
+			return AVERROR(ENOMEM);
+
+		memcpy(rw_extradata, extradata, extradata_size);
+
+		rw_extradata[4] |= 0x03;
+
+		avc_data = CFDataCreate(kCFAllocatorDefault, rw_extradata, extradata_size);
+
+		av_freep(&rw_extradata);
+	} else {
+		avc_data = CFDataCreate(kCFAllocatorDefault, extradata, extradata_size);
+	}
+
+	config_info = CFDictionaryCreateMutable(kCFAllocatorDefault,
+											4,
+											&kCFTypeDictionaryKeyCallBacks,
+											&kCFTypeDictionaryValueCallBacks);
+
+	height   = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &vda_ctx->height);
+	width    = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &vda_ctx->width);
+	format   = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &vda_ctx->format);
+
+	CFDictionarySetValue(config_info, kVDADecoderConfiguration_Height, height);
+	CFDictionarySetValue(config_info, kVDADecoderConfiguration_Width, width);
+	CFDictionarySetValue(config_info, kVDADecoderConfiguration_SourceFormat, format);
+	CFDictionarySetValue(config_info, kVDADecoderConfiguration_avcCData, avc_data);
+
+	buffer_attributes = CFDictionaryCreateMutable(kCFAllocatorDefault,
+												  2,
+												  &kCFTypeDictionaryKeyCallBacks,
+												  &kCFTypeDictionaryValueCallBacks);
+	io_surface_properties = CFDictionaryCreateMutable(kCFAllocatorDefault,
+													  0,
+													  &kCFTypeDictionaryKeyCallBacks,
+													  &kCFTypeDictionaryValueCallBacks);
+	cv_pix_fmt  = CFNumberCreate(kCFAllocatorDefault,
+								 kCFNumberSInt32Type,
+								 &vda_ctx->cv_pix_fmt_type);
+	auto formats = vda_create_pixel_format_array();
+	CFDictionarySetValue(buffer_attributes,
+						 kCVPixelBufferPixelFormatTypeKey,
+						 formats);
+	CFDictionarySetValue(buffer_attributes,
+						 kCVPixelBufferIOSurfacePropertiesKey,
+						 io_surface_properties);
+
+	status = VDADecoderCreate(config_info,
+							  buffer_attributes,
+							  (VDADecoderOutputCallback*)vda_decoder_callback,
+							  vda_ctx,
+							  &vda_ctx->decoder);
+
+	CFRelease(formats);
+	CFRelease(height);
+	CFRelease(width);
+	CFRelease(format);
+	CFRelease(avc_data);
+	CFRelease(config_info);
+	CFRelease(io_surface_properties);
+	CFRelease(cv_pix_fmt);
+	CFRelease(buffer_attributes);
+
+	return status;
 }
 
 bool HwAccVda::fillContext(AVCodecContext *avctx) {
@@ -104,31 +187,9 @@ bool HwAccVda::fillContext(AVCodecContext *avctx) {
 	d->context.format = 'avc1';
 	d->context.use_sync_decoding = 1;
 	d->context.use_ref_buffer = 1;
-	d->pixfmt = AV_PIX_FMT_YUYV422;//avcodec_default_get_format(avctx, avctx->codec->pix_fmts);
-	switch (d->pixfmt) {
-	case AV_PIX_FMT_UYVY422:
-		d->context.cv_pix_fmt_type = kCVPixelFormatType_422YpCbCr8;
-		d->imgfmt = IMGFMT_UYVY;
-		break;
-	case AV_PIX_FMT_YUYV422:
-		d->context.cv_pix_fmt_type = kCVPixelFormatType_422YpCbCr8_yuvs;
-		d->imgfmt = IMGFMT_YUYV;
-		break;
-	case AV_PIX_FMT_NV12:
-		d->context.cv_pix_fmt_type = kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange;
-		d->imgfmt = IMGFMT_NV12;
-		break;
-	case AV_PIX_FMT_YUV420P:
-		d->context.cv_pix_fmt_type = kCVPixelFormatType_420YpCbCr8Planar;
-		d->imgfmt = IMGFMT_420P;
-		break;
-	default:
-		qDebug() << "Not supported format:" << d->pixfmt;
-	}
 
-	if (kVDADecoderNoErr != ff_vda_create_decoder(&d->context, avctx->extradata, avctx->extradata_size))
+	if (kVDADecoderNoErr != _ff_vda_create_decoder(&d->context, avctx->extradata, avctx->extradata_size))
 		return false;
-	size() = QSize(avctx->width, avctx->height);
 	return (d->ok = true);
 }
 

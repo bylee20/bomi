@@ -1,10 +1,9 @@
 #include "textureshader.hpp"
 #include "videoframe.hpp"
-#include "hwacc_vda.hpp"
 #include "shadervar.h"
 
 TextureShader::TextureShader(const VideoFormat &format, GLenum target)
-: m_format(format), m_target(target), m_uploader(new TextureUploader) {
+: m_format(format), m_target(target) {
 	m_info.reserve(3);
 	m_variables = R"(
 		uniform float brightness, contrast;
@@ -14,22 +13,22 @@ TextureShader::TextureShader(const VideoFormat &format, GLenum target)
 		uniform float y_tan, y_b;
 		uniform vec4 dxy;
 		uniform float kern_c, kern_n, kern_d;
-		uniform float sc[3];
+		uniform vec2 sc1, sc2, sc3;
 		varying highp vec2 qt_TexCoord;
 	)";
 	if (target == GL_TEXTURE_RECTANGLE_ARB) {
 		m_variables += R"(
 			uniform sampler2DRect p1, p2, p3;
 			vec4 texture1(const in vec2 coord) { return texture2DRect(p1, coord); }
-			vec4 texture2(const in vec2 coord) { return texture2DRect(p2, coord*vec2(sc[1], 1.0)); }
-			vec4 texture3(const in vec2 coord) { return texture2DRect(p3, coord*vec2(sc[2], 1.0)); }
+			vec4 texture2(const in vec2 coord) { return texture2DRect(p2, coord*sc2); }
+			vec4 texture3(const in vec2 coord) { return texture2DRect(p3, coord*sc3); }
 		)";
 	} else {
 		m_variables += R"(
 			uniform sampler2D p1, p2, p3;
 			vec4 texture1(const in vec2 coord) { return texture2D(p1, coord); }
-			vec4 texture2(const in vec2 coord) { return texture2D(p2, coord*vec2(sc[1], 1.0)); }
-			vec4 texture3(const in vec2 coord) { return texture2D(p3, coord*vec2(sc[2], 1.0)); }
+			vec4 texture2(const in vec2 coord) { return texture2D(p2, coord*sc2); }
+			vec4 texture3(const in vec2 coord) { return texture2D(p3, coord*sc3); }
 		)";
 	}
 	if (m_target == GL_TEXTURE_2D)
@@ -43,8 +42,6 @@ void TextureShader::initialize(GLuint *textures) {
 	for (int i=0; i<m_info.size(); ++i) {
 		m_info[i].id = textures[i];
 		m_uploader->initialize(m_info[i]);
-//		auto &info = m_info[i];
-//		initTex(i, info.width, info.height, info.format, info.type, info.internal);
 	}
 }
 
@@ -74,7 +71,9 @@ void TextureShader::link(QOpenGLShaderProgram *program) {
 	loc_p1 = program->uniformLocation("p1");
 	loc_p2 = program->uniformLocation("p2");
 	loc_p3 = program->uniformLocation("p3");
-	loc_sc = program->uniformLocation("sc");
+	loc_sc1 = program->uniformLocation("sc1");
+	loc_sc2 = program->uniformLocation("sc2");
+	loc_sc3 = program->uniformLocation("sc3");
 }
 
 void TextureShader::render(QOpenGLShaderProgram *program, const ShaderVar &var) {
@@ -90,7 +89,9 @@ void TextureShader::render(QOpenGLShaderProgram *program, const ShaderVar &var) 
 		program->setUniformValue(loc_dxy, dx, dy, -dx, 0.f);
 	} else
 		program->setUniformValue(loc_dxy, 1.f, 1.f, -1.f, 0.f);
-	program->setUniformValueArray(loc_sc, m_strideCorrection, 3, 1);
+	program->setUniformValue(loc_sc1, m_sc1);
+	program->setUniformValue(loc_sc2, m_sc2);
+	program->setUniformValue(loc_sc3, m_sc3);
 	const auto effects = var.effects();
 	const bool filter = effects & VideoRendererItem::FilterEffects;
 	const bool kernel = effects & VideoRendererItem::KernelEffects;
@@ -250,9 +251,10 @@ public:
 		)");
 		auto init = [this, &format] (int i) {
 			addTexInfo(i, format.bytesPerLine(i), format.lines(i), GL_LUMINANCE);
-			sc(i) = (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*2);
+			sc(i).rx() *= (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*2);
 		};
 		init(0); init(1); init(2);
+		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; sc(2) *= 0.5; }\
 	}
 };
 
@@ -277,7 +279,8 @@ public:
 		setGetter(get);
 		addTexInfo(0, format.bytesPerLine(0), format.lines(0), GL_LUMINANCE);
 		addTexInfo(1, format.bytesPerLine(1)/2, format.lines(1), GL_LUMINANCE_ALPHA);
-		sc(1) = (double)format.bytesPerLine(0)/(double)format.bytesPerLine(1);
+		sc(1) *= (double)format.bytesPerLine(0)/(double)format.bytesPerLine(1);
+		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; }
 	}
 };
 
@@ -303,22 +306,17 @@ public:
 		addTexInfo(0, format.bytesPerLine(0)/2, format.lines(0), GL_LUMINANCE_ALPHA);
 		addRgbInfo(0, format.bytesPerLine(0)/4, format.lines(0), GL_BGRA);
 		if (target == GL_TEXTURE_RECTANGLE_ARB)
-			sc(1) = 0.5;
+			sc(1) *= 0.5;
 	}
 };
 
-/****************************************************************************/
+/**************************************************************************/
 
-class RgbShader : public TextureShader {
+class PassThroughShader : public TextureShader {
 public:
-	RgbShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
-	: TextureShader(format, target) {
-		GLenum glfmt = GL_BGRA;
-		if (format.type() == IMGFMT_RGBA)
-			glfmt = GL_RGBA;
-		addRgbInfo(0, format.bytesPerLine(0)/4, format.lines(0), glfmt);
-	}
-	QByteArray getMain(const ShaderVar &/*var*/) const {
+	PassThroughShader(const VideoFormat &format, GLenum target)
+	: TextureShader(format, target) {}
+	QByteArray getMain(const ShaderVar &/*var*/) const override {
 		return (R"(
 			void main() { gl_FragColor = texture1(qt_TexCoord); }
 		)");
@@ -327,41 +325,34 @@ public:
 
 /****************************************************************************/
 
+class RgbShader : public PassThroughShader {
+public:
+	RgbShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
+	: PassThroughShader(format, target) {
+		GLenum glfmt = GL_BGRA;
+		if (format.type() == IMGFMT_RGBA)
+			glfmt = GL_RGBA;
+		addRgbInfo(0, format.bytesPerLine(0)/4, format.lines(0), glfmt);
+	}
+};
 
-//#ifdef Q_OS_LINUX
-//		case VideoFormat::VAGL:
-//			glBindTexture(GL_TEXTURE_2D, texture(0));
-//			if (!d->vaapi)
-//				d->vaapi = new VaApiSurfaceGLX(texture(0));
-//			d->vaapi->copy(d->frame.data(3));
-//			if (d->take) {
-//				QImage image(d->format.alignedSize(), QImage::Format_ARGB32);
-//				glBindTexture(GL_TEXTURE_2D, texture(0));
-//				glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
-//				d->mposd->drawOn(image);
-//				emit frameImageObtained(image);
-//				d->take = false;
-//			}
-//			break;
-//#endif
-//		case VideoFormat::APGL:
-//			if (!d->acc)
-//				d->acc = new VdaSurface(textures());
-//			d->acc->copy(d->frame.data(3));
-//			break;
-//		default:
-//			break;
-//		}
-//	} else
-//		setTex(0, GL_BGRA, d->image.width(), d->image.height(), d->image.bits());
-
-
+/****************************************************************************/
 
 #ifdef Q_OS_MAC
 
 #include <OpenGL/CGLIOSurface.h>
 #include <CoreVideo/CVPixelBuffer.h>
 #include <qpa/qplatformnativeinterface.h>
+
+class AppleY422Shader : public PassThroughShader {
+public:
+	AppleY422Shader(const VideoFormat &format, GLenum target): PassThroughShader(format, target) {
+		GLenum type = GL_UNSIGNED_SHORT_8_8_APPLE;
+		if (format.type() == IMGFMT_YUYV)
+			type = GL_UNSIGNED_SHORT_8_8_REV_APPLE;
+		addTexInfo(0, format.width(), format.height(), GL_YCBCR_422_APPLE, type, GL_RGB);
+	}
+};
 
 struct VdaUploader : public TextureUploader {
 	virtual void upload(const TextureInfo &info, const VideoFrame &frame) override {
@@ -371,11 +362,25 @@ struct VdaUploader : public TextureUploader {
 		CGLTexImageIOSurface2D(m_cgl, info.target, info.internal, info.width, info.height, info.format, info.type, surface, info.plane);
 	}
 	virtual void initialize(const TextureInfo &/*info*/) override {}
-	virtual QImage toImage(const VideoFrame &frame) override {
+	virtual QImage toImage(const VideoFrame &frame) const override {
 		mp_image mpi; memset(&mpi, 0, sizeof(mpi));
 		mp_image_setfmt(&mpi, frame.format().type());
 		mp_image_set_size(&mpi, frame.width(), frame.height());
-		const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
+		const auto buffer = (CVPixelBufferRef)frame.data(3);
+		CVPixelBufferLockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
+		if (CVPixelBufferIsPlanar(buffer)) {
+			const int num = CVPixelBufferGetPlaneCount(buffer);
+			for (int i=0; i<num; ++i) {
+				mpi.planes[i] = (uchar*)CVPixelBufferGetBaseAddressOfPlane(buffer, i);
+				mpi.stride[i] = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
+			}
+		} else {
+			mpi.planes[0] = (uchar*)CVPixelBufferGetBaseAddress(buffer);
+			mpi.stride[0] = CVPixelBufferGetBytesPerRow(buffer);
+		}
+		const QImage image = VideoFrame(&mpi, frame.format()).toImage();
+		CVPixelBufferUnlockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
+		return image;
 	}
 };
 
@@ -436,7 +441,11 @@ TextureShader *TextureShader::create(const VideoFormat &format) {
 		MAKE(NvShader)
 	case IMGFMT_YUYV:
 	case IMGFMT_UYVY:
+#ifdef Q_OS_MAC
+		MAKE(AppleY422Shader)
+#else
 		MAKE(Y422Shader)
+#endif
 	case IMGFMT_BGRA:
 	case IMGFMT_RGBA:
 		MAKE(RgbShader)
@@ -450,5 +459,7 @@ TextureShader *TextureShader::create(const VideoFormat &format) {
 #ifdef Q_OS_LINUX
 		shader->setUploader(new VaApiUploader);
 #endif
+	else
+		shader->setUploader(new TextureUploader);
 	return shader;
 }

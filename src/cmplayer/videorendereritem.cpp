@@ -285,7 +285,9 @@ void VideoRendererItem::beforeUpdate() {
 		if (d->image.isNull()) {
 			d->shader->upload(d->frame);
 			if (d->take) {
-				emit frameImageObtained(d->shader->toImage(d->frame));
+				auto image = d->shader->toImage(d->frame);
+				d->mposd->drawOn(image);
+				emit frameImageObtained(image);
 				d->take = false;
 			}
 		}
