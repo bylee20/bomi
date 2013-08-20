@@ -121,8 +121,7 @@ Item {
 				font.pixelSize: wrapper.fontSize
 				font.family: wrapper.fontFamily
 				function update() {
-					var txt = qsTr("Video Codec: %1 %2\n")
-					.arg(player.video.codec).arg(player.video.isHardwareAccelerated ? qsTr("[HW acc.]") : "");
+					var txt = qsTr("Video Codec: %1\n").arg(player.video.codec);
 					txt += qsTr("Input : %1 %2x%3 %4fps(%5MB/s)\n")
 					.arg(player.video.input.type)
 					.arg(player.video.input.size.width)
@@ -135,6 +134,8 @@ Item {
 					.arg(player.video.output.size.height)
 					.arg(player.video.output.fps.toFixed(3))
 					.arg((player.video.output.bps/(8*1024*1024)).toFixed(2));
+					if (player.video.isHardwareAccelerated)
+						txt += "\n" + qsTr("Hardware Acceleration") + ": " + qsTr("Activated");
 					text = txt
 				}
 				color: "yellow"

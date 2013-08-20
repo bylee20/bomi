@@ -3,7 +3,6 @@
 #include "videorendereritem.hpp"
 #include "playengine.hpp"
 #include "hwacc.hpp"
-#include <mpvcore/mp_cmplayer.h>
 
 extern "C" {
 #include <video/out/vo.h>
@@ -27,7 +26,7 @@ vo_driver create_driver() {
 	options[0].flags = 0;
 	options[0].defval = 0;
 	options[0].offset = MP_CHECKED_OFFSETOF(OPT_BASE_STRUCT, address, char*);
-	options[0].____new = 1;
+	options[0].is_new_option = 1;
 	options[0].type = &m_option_type_string;
 
 	static vo_info_t info;
@@ -185,4 +184,5 @@ int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 
 #ifdef Q_OS_LINUX
 vo_driver video_out_vaapi;
+vo_driver video_out_vdpau;
 #endif

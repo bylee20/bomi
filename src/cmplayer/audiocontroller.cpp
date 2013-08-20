@@ -34,7 +34,7 @@ af_info create_info() {
 	options[0].flags = 0;
 	options[0].defval = 0;
 	options[0].offset = MP_CHECKED_OFFSETOF(OPT_BASE_STRUCT, address, char*);
-	options[0].____new = 1;
+	options[0].is_new_option = 1;
 	options[0].type = &m_option_type_string;
 
 	static af_info info = {

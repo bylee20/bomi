@@ -126,8 +126,7 @@ void TextureShader::render(QOpenGLShaderProgram *program, const ShaderVar &var) 
 
 /****************************************************************************/
 
-class BlackOutShader : public TextureShader {
-public:
+struct BlackOutShader : public TextureShader {
 	BlackOutShader(const VideoFormat &format, GLenum target): TextureShader(format, target) {}
 	QByteArray getMain(const ShaderVar &/*var*/) const override {
 		return R"(
@@ -236,8 +235,7 @@ private:
 
 /****************************************************************************/
 
-class I420Shader : public YCbCrShader {
-public:
+struct I420Shader : public YCbCrShader {
 	I420Shader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
 	: YCbCrShader(format, target) {
 		setGetter(R"(
@@ -260,8 +258,7 @@ public:
 
 /****************************************************************************/
 
-class NvShader : public YCbCrShader {
-public:
+struct NvShader : public YCbCrShader {
 	NvShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
 	: YCbCrShader(format, target) {
 		QByteArray get = (R"(
@@ -279,15 +276,14 @@ public:
 		setGetter(get);
 		addTexInfo(0, format.bytesPerLine(0), format.lines(0), GL_LUMINANCE);
 		addTexInfo(1, format.bytesPerLine(1)/2, format.lines(1), GL_LUMINANCE_ALPHA);
-		sc(1) *= (double)format.bytesPerLine(0)/(double)format.bytesPerLine(1);
+		sc(1).rx() *= (double)format.bytesPerLine(0)/(double)format.bytesPerLine(1);
 		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; }
 	}
 };
 
 /****************************************************************************/
 
-class Y422Shader : public YCbCrShader {
-public:
+struct Y422Shader : public YCbCrShader {
 	Y422Shader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
 	: YCbCrShader(format, target) {
 		QByteArray get = (R"(
@@ -306,14 +302,13 @@ public:
 		addTexInfo(0, format.bytesPerLine(0)/2, format.lines(0), GL_LUMINANCE_ALPHA);
 		addRgbInfo(0, format.bytesPerLine(0)/4, format.lines(0), GL_BGRA);
 		if (target == GL_TEXTURE_RECTANGLE_ARB)
-			sc(1) *= 0.5;
+			sc(1).rx() *= 0.5;
 	}
 };
 
 /**************************************************************************/
 
-class PassThroughShader : public TextureShader {
-public:
+struct PassThroughShader : public TextureShader {
 	PassThroughShader(const VideoFormat &format, GLenum target)
 	: TextureShader(format, target) {}
 	QByteArray getMain(const ShaderVar &/*var*/) const override {
@@ -325,8 +320,7 @@ public:
 
 /****************************************************************************/
 
-class RgbShader : public PassThroughShader {
-public:
+struct RgbShader : public PassThroughShader {
 	RgbShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
 	: PassThroughShader(format, target) {
 		GLenum glfmt = GL_BGRA;
@@ -344,8 +338,8 @@ public:
 #include <CoreVideo/CVPixelBuffer.h>
 #include <qpa/qplatformnativeinterface.h>
 
-class AppleY422Shader : public PassThroughShader {
-public:
+
+struct AppleY422Shader : public PassThroughShader {
 	AppleY422Shader(const VideoFormat &format, GLenum target): PassThroughShader(format, target) {
 		GLenum type = GL_UNSIGNED_SHORT_8_8_APPLE;
 		if (format.type() == IMGFMT_YUYV)
@@ -390,6 +384,20 @@ struct VdaUploader : public TextureUploader {
 
 #include "hwacc_vaapi.hpp"
 #include <va/va_glx.h>
+
+struct MesaY422Shader : public YCbCrShader {
+	MesaY422Shader(const VideoFormat &format, GLenum target): YCbCrShader(format, target) {
+		QByteArray getter(R"(vec3 get_yuv(const vec2 coord) { return texture1(coord).y!!; })");
+		GLenum type = GL_UNSIGNED_SHORT_8_8_MESA;
+		if (format.type() == IMGFMT_YUYV) {
+			type = GL_UNSIGNED_SHORT_8_8_REV_MESA;
+			getter.replace("!!", "zx");
+		} else
+			getter.replace("!!", "xz");
+		setGetter(getter);
+		addTexInfo(0, format.width(), format.height(), GL_YCBCR_MESA, type, GL_YCBCR_MESA);
+	}
+};
 
 struct VaApiUploader : public TextureUploader {
 	virtual void initialize(const TextureInfo &info) override {
@@ -444,8 +452,12 @@ TextureShader *TextureShader::create(const VideoFormat &format) {
 #ifdef Q_OS_MAC
 		MAKE(AppleY422Shader)
 #else
-		MAKE(Y422Shader)
+		if (QOpenGLContext::currentContext()->hasExtension("GL_MESA_ycbcr_texture")) {
+			qDebug() << "Good! We have GL_MESA_ycbcr_texture.";
+			MAKE(MesaY422Shader)
+		} else
 #endif
+		MAKE(Y422Shader)
 	case IMGFMT_BGRA:
 	case IMGFMT_RGBA:
 		MAKE(RgbShader)
