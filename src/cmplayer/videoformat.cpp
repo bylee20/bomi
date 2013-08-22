@@ -9,7 +9,8 @@ extern "C" {
 
 VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h)
 : size(mpi->w, mpi->h), outputSize(dest_w, dest_h)
-, planes(mpi->fmt.num_planes), type(mpi->imgfmt), imgfmt(mpi->imgfmt) {
+, planes(mpi->fmt.num_planes), type(mpi->imgfmt), imgfmt(mpi->imgfmt)
+, colorspace(mpi->colorspace), range(mpi->levels) {
 	if ((native = IMGFMT_IS_HWACCEL(imgfmt))) {
 #ifdef Q_OS_LINUX
 		if (imgfmt == IMGFMT_VAAPI) {
@@ -71,12 +72,13 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h
 }
 
 VideoFormat::VideoFormat::Data::Data(const QImage &image) {
-	Q_ASSERT(image.format() == QImage::Format_ARGB32 || image.format() == QImage::Format_ARGB32_Premultiplied);
-	alignedSize = size = image.size();
+	outputSize = alignedSize = size = image.size();
 	alignedByteSize[0] = QSize(size.width()*4, size.height());
 	planes = 1;
 	bpp = 32;
 	type = imgfmt = IMGFMT_BGRA;
+	colorspace = MP_CSP_RGB;
+	range = MP_CSP_LEVELS_PC;
 }
 
 QString VideoFormat::name() const {

@@ -106,7 +106,6 @@ HEADERS += playengine.hpp \
     mposditem.hpp \
     globalqmlobject.hpp \
     historymodel.hpp \
-    shadervar.h \
     hwacc.hpp \
     subtitlestyle.hpp \
     audiocontroller.hpp \
@@ -170,7 +169,6 @@ SOURCES += main.cpp \
     mposditem.cpp \
     globalqmlobject.cpp \
     historymodel.cpp \
-    shadervar.cpp \
     subtitlestyle.cpp hwacc.cpp \
     videoformat.cpp \
     audiocontroller.cpp \

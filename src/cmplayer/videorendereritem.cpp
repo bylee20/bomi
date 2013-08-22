@@ -1,18 +1,36 @@
 #include "videorendereritem.hpp"
 #include "mposditem.hpp"
 #include "videoframe.hpp"
-#include "shadervar.h"
 #include "global.hpp"
 #include "textureshader.hpp"
 
 struct VideoRendererItem::Data {
-	VideoFrame frame;	VideoFormat format;		quint64 drawnFrames = 0;
-	bool framePended = false, checkFormat = true, shaderChanged = false, take = false;
-	QRectF vtx;			QPoint offset = {0, 0};		ShaderVar shaderVar;
-	double crop = -1.0, aspect = -1.0, dar = 0.0;	int alignment = Qt::AlignCenter;
-	LetterboxItem *letterbox = nullptr;	MpOsdItem *mposd = nullptr;		QQuickItem *overlay = nullptr;
-	QMutex mutex;	QImage image;
-	TextureShader *shader = nullptr;	QByteArray shaderCode;		VideoFormat::Type shaderType = IMGFMT_BGRA;
+	VideoFrame frame;
+	VideoFormat format;
+	quint64 drawnFrames = 0;
+	bool framePended = false, checkFormat = true, take = false, flipped = false;
+	QRectF vtx;
+	QPoint offset = {0, 0};
+	double crop = -1.0, aspect = -1.0, dar = 0.0;
+	int alignment = Qt::AlignCenter;
+	LetterboxItem *letterbox = nullptr;
+	MpOsdItem *mposd = nullptr;
+	QQuickItem *overlay = nullptr;
+	QMutex mutex;
+	TextureShader *shader = nullptr;
+	QByteArray shaderCode;
+	VideoFormat::Type shaderType = IMGFMT_BGRA;
+	Kernel3x3 blur, sharpen, kernel;
+	Effects effects = 0;
+	ColorProperty color;
+	void updateKernel() {
+		kernel = Kernel3x3();
+		if (effects & Blur)
+			kernel += blur;
+		if (effects & Sharpen)
+			kernel += sharpen;
+		kernel.normalize();
+	}
 };
 
 static const QEvent::Type UpdateEvent = (QEvent::Type)(QEvent::User+1);
@@ -55,8 +73,8 @@ bool VideoRendererItem::hasFrame() const {
 void VideoRendererItem::requestFrameImage() const {
 	if (d->format.isEmpty())
 		emit frameImageObtained(QImage());
-	else if (!d->image.isNull())
-		emit frameImageObtained(d->image);
+	else if (d->frame.hasImage() || !d->frame.format().isNative())
+		emit frameImageObtained(d->frame.toImage());
 	else {
 		d->take = true;
 		const_cast<VideoRendererItem*>(this)->update();
@@ -64,20 +82,13 @@ void VideoRendererItem::requestFrameImage() const {
 }
 
 void VideoRendererItem::present(const QImage &image) {
-	if (d->image.isNull() && image.isNull())
-		return;
-	if (image.format() != QImage::Format_ARGB32_Premultiplied)
-		d->image = image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
-	else
-		d->image = image;
-	d->framePended = true;
-	update();
+	present(VideoFrame(image), false, true);
 }
 
-void VideoRendererItem::present(const VideoFrame &frame, bool checkFormat) {
+void VideoRendererItem::present(const VideoFrame &frame, bool flipped, bool checkFormat) {
 	d->mutex.lock();
-	d->image = QImage();
 	d->frame = frame;
+	d->flipped = flipped;
 	d->framePended = true;
 	d->checkFormat = checkFormat;
 	d->mutex.unlock();
@@ -155,12 +166,14 @@ quint64 VideoRendererItem::drawnFrames() const {
 }
 
 VideoRendererItem::Effects VideoRendererItem::effects() const {
-	return d->shaderVar.effects();
+	return d->effects;
 }
 
 void VideoRendererItem::setEffects(Effects effects) {
-	if (d->shaderVar.effects() != effects) {
-		d->shaderChanged = d->shaderVar.setEffects(effects);
+	if (_Change(d->effects, effects)) {
+		if (!d->shader->setEffects(d->effects))
+			d->shaderType = IMGFMT_NONE;
+		d->updateKernel();
 		setGeometryDirty();
 		update();
 	}
@@ -188,14 +201,14 @@ void VideoRendererItem::updateGeometry() {
 }
 
 void VideoRendererItem::setColor(const ColorProperty &prop) {
-	if (d->shaderVar.color() != prop) {
-		d->shaderVar.setColor(prop);
+	if (_Change(d->color, prop)) {
+		d->shader->setColor(d->color);
 		update();
 	}
 }
 
 const ColorProperty &VideoRendererItem::color() const {
-	return d->shaderVar.color();
+	return d->color;
 }
 
 void VideoRendererItem::setAspectRatio(double ratio) {
@@ -234,8 +247,9 @@ QSize VideoRendererItem::sizeHint() const {
 }
 
 const char *VideoRendererItem::fragmentShader() const {
-	d->shaderType = d->format.type();
-	d->shaderCode = d->shader->fragment(d->shaderVar);
+	d->shaderType = d->format.imgfmt();
+	d->shaderCode = d->shader->fragment();
+	qDebug() << "fragment" << d->shader->hasKernelEffects();
 	return d->shaderCode.constData();
 }
 
@@ -251,50 +265,33 @@ void VideoRendererItem::drawMpOsd(void *pctx, sub_bitmaps *imgs) {
 
 void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
 	TextureRendererItem::bind(state, program);
-	Q_ASSERT(d->shader);
-	d->shader->render(program, d->shaderVar);
+	d->shader->render(program, d->kernel);
 }
 
 void VideoRendererItem::beforeUpdate() {
 	QMutexLocker locker(&d->mutex);
-	if (!d->framePended)
-		return;
-	auto updateFormat = [this] (const VideoFormat &format) {
-		if (format != d->format) {
-			d->format = format;
-			if (d->shader)
-				delete d->shader;
-			d->shader = TextureShader::create(format);
-			resetNode();
-			updateGeometry();
-			return true;
-		}
-		return false;
-	};
-
 	bool reset = false;
-	if (!d->image.isNull())
-		reset = updateFormat(d->image);
-	else if (d->checkFormat) {
-		reset = updateFormat(d->frame.format());
+	if ((reset = (d->checkFormat && _Change(d->format, d->frame.format()))))
 		d->mposd->setFrameSize(d->format.size());
-	}
-	if (!reset && (d->shaderChanged || d->shaderType != d->format.type()))
+	if (!reset && d->shaderType != d->format.imgfmt())
+		reset = true;
+	if (reset) {
+		if (d->shader)
+			delete d->shader;
+		d->shader = TextureShader::create(d->format, d->color, d->effects);
 		resetNode();
-	if (!d->format.isEmpty()) {
-		if (d->image.isNull()) {
-			d->shader->upload(d->frame);
-			if (d->take) {
-				auto image = d->shader->toImage(d->frame);
-				d->mposd->drawOn(image);
-				emit frameImageObtained(image);
-				d->take = false;
-			}
-		}
-//			setTex(0, GL_BGRA, d->image.width(), d->image.height(), d->image.bits());
-		++d->drawnFrames;
+		updateGeometry();
 	}
-	d->shaderChanged = false;
+	if ((d->framePended) && !d->format.isEmpty()) {
+		d->shader->upload(d->frame);
+		++d->drawnFrames;
+		if (d->take) {
+			auto image = d->shader->toImage(d->frame);
+			d->mposd->drawOn(image);
+			emit frameImageObtained(image);
+			d->take = false;
+		}
+	}
 	d->framePended = false;
 }
 
@@ -319,12 +316,14 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 		emit screenRectChanged(d->letterbox->screen());
 	double top, left, right, bottom;
 	d->shader->getCoords(left, top, right, bottom);
-	if (!(d->shaderVar.effects() & IgnoreEffect)) {
-		if (d->shaderVar.effects() & FlipVertically)
+	if (!(d->effects & IgnoreEffect)) {
+		if (d->effects & FlipVertically)
 			qSwap(top, bottom);
-		if (d->shaderVar.effects() & FlipHorizontally)
+		if (d->effects & FlipHorizontally)
 			qSwap(left, right);
 	}
+	if (d->flipped)
+		qSwap(top, bottom);
 	auto vtx = d->vtx.translated(offset);
 	d->mposd->setPosition(vtx.topLeft());
 	set(tp, vtx, QRectF(left, top, right-left, bottom-top));
@@ -341,12 +340,9 @@ QQuickItem *VideoRendererItem::osd() const {
 	return d->mposd;
 }
 
-void VideoRendererItem::setLumaRange(int min, int max) {
-	d->shaderVar.m_luma = RangeF((double)min/255.0, (double)max/255.0);
-	update();
-}
-
 void VideoRendererItem::setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d) {
-	d->shaderVar.setKernel(blur_c, blur_n, blur_d, sharpen_c, sharpen_n, sharpen_d);
+	d->blur.set(blur_c, blur_n, blur_d);
+	d->sharpen.set(sharpen_c, sharpen_n, sharpen_d);
+	d->updateKernel();
 	update();
 }

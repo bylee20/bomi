@@ -19,11 +19,9 @@ public:
 		InvertColor			= 1 << 3,
 		Blur				= 1 << 4,
 		Sharpen				= 1 << 5,
-		RemapLuma			= 1 << 6,
 		IgnoreEffect		= 1 << 8
 	};
 	Q_DECLARE_FLAGS(Effects, Effect)
-	static const int FilterEffects = InvertColor | RemapLuma;
 	static const int KernelEffects = Blur | Sharpen;
 	VideoRendererItem(QQuickItem *parent = 0);
 	~VideoRendererItem();
@@ -46,7 +44,7 @@ public:
 	void setAspectRatio(double ratio);
 	void setOverlay(QQuickItem *overlay);
 	QQuickItem *overlay() const;
-	void present(const VideoFrame &frame, bool checkFormat = true);
+	void present(const VideoFrame &frame, bool flipped = false, bool checkFormat = true);
 	void present(const QImage &image);
 	const VideoFrame &frame() const;
 	bool isFramePended() const;
@@ -54,7 +52,6 @@ public:
 	void requestFrameImage() const;
 	QImage frameImage() const;
 	QRectF frameRect(const QRectF &area) const;
-	void setLumaRange(int min, int max);
 	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
 public slots:
 	void setAlignment(int alignment);

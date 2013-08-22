@@ -59,62 +59,177 @@
 
 \begin_body
 
-\begin_layout Standard
-\begin_inset FormulaMacro
-\renewcommand{\mr}[1]{\mathrm{#1}}
-\end_inset
-
-
-\end_layout
-
 \begin_layout Section
-Renormalize Y
+Definitions
 \end_layout
 
-\begin_layout Standard
-\begin_inset Formula 
-\[
-Y_{\mr{min}}\rightarrow0,\quad Y_{\mr{max}}\rightarrow1
-\]
-
+\begin_layout Subsection
+\begin_inset Formula $YUV$
 \end_inset
 
-
-\begin_inset Formula 
-\[
-Y'=\frac{Y}{Y_{\mr{max}}-Y_{\mr{min}}}-\frac{Y_{\mr{min}}}{Y_{\mr{max}}-Y_{\mr{min}}}
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section
-Color property
+color space
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{align*}
+Y & =K_{R}R+\left(1-K_{R}-K_{B}\right)G+K_{B}B & [0,1]\\
+U & =B-Y=-K_{R}R-\left(1-K_{R}-K_{B}\right)G+\left(1-K_{B}\right)B & \quad[K_{B}-1,1-K_{B}]\\
+V & =R-Y=\left(1-K_{R}\right)R-\left(1-K_{R}-K_{B}\right)G-K_{B}B & [K_{R}-1,1-K_{R}]
+\end{align*}
+
+\end_inset
+
+where 
+\begin_inset Formula $R,G,B$
+\end_inset
+
+ is in 
+\begin_inset Formula $[-1,1]$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+\begin_inset Formula $YP_{B}P_{R}$
+\end_inset
+
+ color space
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+Y & =Y & [0,1]\\
+P_{B} & =\frac{U}{2\left(1-K_{B}\right)}=\frac{B-Y}{2\left(1-K_{B}\right)} & [-0.5,0.5]\\
+P_{R} & =\frac{V}{2\left(1-K_{R}\right)}=\frac{B-R}{2\left(1-K_{R}\right)} & [-0.5,0.5]
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+\begin_inset Formula $Y'C_{B}C_{R}$
+\end_inset
+
+ color space
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+Y' & =Y_{1}+\left(Y_{2}-Y_{1}\right)Y & [Y_{1},Y_{2}]\\
+C_{B} & =C_{1}+\left(C_{2}-C_{1}\right)\left(P_{B}+0.5\right)=0.5\left(C_{2}+C_{1}\right)+\left(C_{2}-C_{1}\right)P_{B} & [C_{1},C_{2}]\\
+C_{R} & =C_{1}+\left(C_{2}-C_{1}\right)\left(P_{R}+0.5\right)=0.5\left(C_{2}+C_{1}\right)+\left(C_{2}-C_{1}\right)P_{R} & [C_{1},C_{2}]
+\end{align*}
+
+\end_inset
+
+where
+\begin_inset Formula 
+\[
+\begin{cases}
+Y_{1}=16\\
+Y_{2}=235
+\end{cases},\begin{cases}
+C_{1}=16\\
+C_{2}=240
+\end{cases}
+\]
+
+\end_inset
+
+for MPEG range(video range),
+\begin_inset Formula 
+\[
+\begin{cases}
+Y_{1}=0\\
+Y_{2}=255
+\end{cases}\text{\quad and\quad}\begin{cases}
+C_{1}=0\\
+C_{2}=255
+\end{cases}
+\]
+
+\end_inset
+
+for JPEG range(full range).
+ For renormalization in shader,
+\begin_inset Formula 
+\[
+\begin{cases}
+Y_{1}=16/255\\
+Y_{2}=235/255
+\end{cases},\begin{cases}
+C_{1}=16/255\\
+C_{2}=240/255
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Conversion
+\end_layout
+
+\begin_layout Subsection
+\begin_inset Formula $RGB$
+\end_inset
+
+ to 
+\begin_inset Formula $Y'C_{B}C_{R}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+Y' & =Y_{1}+\left(Y_{2}-Y_{1}\right)\left[K_{R}R+\left(1-K_{R}-K_{B}\right)G+K_{B}B\right]\\
+C_{B} & =\frac{C_{2}+C_{1}}{2}+\frac{\left(C_{2}-C_{1}\right)\left[-K_{R}R-\left(1-K_{R}-K_{B}\right)G+\left(1-K_{B}\right)B\right]}{2\left(1-K_{B}\right)}\\
+C_{R} & =\frac{C_{2}+C_{1}}{2}+\frac{\left(C_{2}-C_{1}\right)\left[\left(1-K_{R}\right)R-\left(1-K_{R}-K_{B}\right)G-K_{B}B\right]}{2\left(1-K_{R}\right)}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+D_{Y}=\frac{1}{Y_{2}-Y_{1}},\quad D_{B}=\frac{1}{2\left(1-K_{B}\right)\left(C_{2}-C_{1}\right)},\quad D_{R}=\frac{1}{2\left(1-K_{R}\right)\left(C_{2}-C_{1}\right)}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
 \begin{pmatrix}Y'\\
-U'\\
-V'
-\end{pmatrix}-\begin{pmatrix}Y_{0}\\
-U_{0}\\
-V_{0}
-\end{pmatrix}= & C\begin{pmatrix}1 & 0 & 0\\
-0 & S\cos H & S\sin H\\
-0 & -S\sin H & S\cos H
-\end{pmatrix}\left[\begin{pmatrix}Y\\
-U\\
-V
-\end{pmatrix}-\begin{pmatrix}Y_{0}\\
-U_{0}\\
-V_{0}
-\end{pmatrix}\right]+\begin{pmatrix}B\\
-0\\
-0
+C_{B}\\
+C_{R}
+\end{pmatrix}=\begin{pmatrix}Y_{1}\\
+\frac{C_{2}+C_{1}}{2}\\
+\frac{C_{2}+C_{1}}{2}
+\end{pmatrix}+M_{Y\leftarrow R}\begin{pmatrix}R\\
+G\\
+B
+\end{pmatrix}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+M_{Y\leftarrow R} & =\begin{pmatrix}\left(Y_{2}-Y_{1}\right)K_{R} & \left(Y_{2}-Y_{1}\right)\left(1-K_{R}-K_{B}\right) & \left(Y_{2}-Y_{1}\right)K_{B}\\
+\frac{-\left(C_{2}-C_{1}\right)K_{R}}{2\left(1-K_{B}\right)} & \frac{-\left(C_{2}-C_{1}\right)\left(1-K_{R}-K_{B}\right)}{2\left(1-K_{B}\right)} & \frac{C_{2}-C_{1}}{2}\\
+\frac{C_{2}-C_{1}}{2} & \frac{-\left(C_{2}-C_{1}\right)\left(1-K_{R}-K_{B}\right)}{2\left(1-K_{R}\right)} & \frac{-\left(C_{2}-C_{1}\right)K_{B}}{2\left(1-K_{R}\right)}
 \end{pmatrix}
 \end{align*}
 
@@ -123,8 +238,15 @@ V_{0}
 
 \end_layout
 
-\begin_layout Section
-YUV to RGB
+\begin_layout Subsection
+\begin_inset Formula $Y'C_{B}C_{R}$
+\end_inset
+
+ to 
+\begin_inset Formula $RGB$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -133,16 +255,184 @@ YUV to RGB
 \begin{pmatrix}R\\
 G\\
 B
-\end{pmatrix}=\begin{pmatrix}1.164 & 0 & 1.596\\
-1.164 & -0.391 & -0.813\\
-1.164 & 2.018 & 0
-\end{pmatrix}\left[\begin{pmatrix}Y'\\
-U'\\
-V'
-\end{pmatrix}-\begin{pmatrix}Y_{0}\\
-U_{0}\\
-V_{0}
+\end{pmatrix}=M_{Y\leftarrow R}^{-1}\left[\begin{pmatrix}Y'\\
+C_{B}\\
+C_{R}
+\end{pmatrix}-\begin{pmatrix}Y_{1}\\
+\frac{C_{2}+C_{1}}{2}\\
+\frac{C_{2}+C_{1}}{2}
 \end{pmatrix}\right]
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+M_{Y\leftarrow R}^{-1}=\begin{pmatrix}\frac{1}{Y_{2}-Y_{1}} & 0 & \frac{2\left(1-K_{R}\right)}{C_{2}-C_{1}}\\
+\frac{1}{Y_{2}-Y_{1}} & \frac{2\left(1-K_{B}\right)K_{B}}{\left(C_{2}-C_{1}\right)\left(K_{B}+K_{R}-1\right)} & \frac{2\left(1-K_{R}\right)K_{R}}{\left(C_{2}-C_{1}\right)\left(K_{B}+K_{R}-1\right)}\\
+\frac{1}{Y_{2}-Y_{1}} & \frac{2\left(1-K_{B}\right)}{C_{2}-C_{1}} & 0
+\end{pmatrix}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Filter
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
+\begin_layout Section
+Color adjust
+\end_layout
+
+\begin_layout Subsection
+Brightness and Contrast
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+E_{Y}=\left(Y'-Y_{0}\right)S_{C}+S_{B}+Y_{0};\quad Y_{0}=Y_{1}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Saturation and Hue
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{cases}
+E_{B} & =\left[\left(C_{B}-C_{0}\right)\cos S_{H}+\left(C_{R}-C_{0}\right)\sin S_{H}\right]S_{C}S_{S}+C_{0}\\
+E_{R} & =\left[\left(C_{R}-C_{0}\right)\cos S_{H}-\left(C_{B}-C_{0}\right)\sin S_{H}\right]S_{C}S_{S}+C_{0}
+\end{cases};\quad C_{0}=\frac{C_{1}+C_{2}}{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Matrix expression
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+E_{Y} & =\left(Y'-Y_{0}\right)S_{C}+S_{B}+Y_{0}\\
+E_{B} & =\left[\left(C_{B}-C_{0}\right)\cos S_{H}+\left(C_{R}-C_{0}\right)\sin S_{H}\right]S_{C}S_{S}+C_{0}\\
+E_{R} & =\left[-\left(C_{B}-C_{0}\right)\sin S_{H}+\left(C_{R}-C_{0}\right)\cos S_{H}\right]S_{C}S_{S}+C_{0}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\begin{pmatrix}E_{Y}\\
+E_{B}\\
+E_{R}
+\end{pmatrix}=S_{C}M_{SH}^{Y}\left[\begin{pmatrix}Y'\\
+C_{B}\\
+C_{R}
+\end{pmatrix}-\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}\right]+\begin{pmatrix}S_{B}\\
+0\\
+0
+\end{pmatrix}+\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+M_{SH}=\begin{pmatrix}1 & 0 & 0\\
+0 & S_{S}\cos S_{H} & S_{S}\sin S_{H}\\
+0 & -S_{S}\sin S_{H} & S_{S}\cos S_{H}
+\end{pmatrix}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+\begin{pmatrix}R'\\
+G'\\
+B'
+\end{pmatrix} & =M_{Y\leftarrow R}^{-1}\left[\begin{pmatrix}E_{Y}\\
+E_{B}\\
+E_{R}
+\end{pmatrix}-\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}\right]\\
+ & =S_{C}M_{Y\leftarrow R}^{-1}M_{SH}^{Y}M_{Y\leftarrow R}\begin{pmatrix}R\\
+G\\
+B
+\end{pmatrix}+M_{Y\leftarrow R}^{-1}\begin{pmatrix}S_{B}\\
+0\\
+0
+\end{pmatrix}=S_{C}M_{Y\leftarrow R}^{-1}M_{SH}^{Y}M_{Y\leftarrow R}\begin{pmatrix}R\\
+G\\
+B
+\end{pmatrix}+\frac{S_{B}}{Y_{2}-Y_{1}}\begin{pmatrix}1\\
+1\\
+1
+\end{pmatrix}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+M_{Y\leftarrow R}^{-1}\left[\begin{pmatrix}E_{Y}\\
+E_{B}\\
+E_{R}
+\end{pmatrix}-\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}\right]=S_{C}M_{Y\leftarrow R}^{-1}M_{SH}^{Y}\left[\begin{pmatrix}Y'\\
+C_{B}\\
+C_{R}
+\end{pmatrix}-\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}\right]+M_{Y\leftarrow R}^{-1}\begin{pmatrix}S_{B}\\
+0\\
+0
+\end{pmatrix}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\begin{pmatrix}R'\\
+G'\\
+B'
+\end{pmatrix}=AM_{C}C+B+V_{C}
 \]
 
 \end_inset
@@ -151,22 +441,54 @@ V_{0}
 \end_layout
 
 \begin_layout Section
-Adjust color
+BT.601
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \[
-\begin{pmatrix}R'\\
-G'\\
-B'
-\end{pmatrix}=\begin{pmatrix}R_{c} & 0 & 0\\
-0 & G_{c} & 0\\
-0 & 0 & B_{c}
-\end{pmatrix}\begin{pmatrix}R\\
-G\\
-B
-\end{pmatrix}+
+K_{R}=0.299,\quad K_{B}=0.114
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+MPEG range
+\end_layout
+
+\begin_layout Standard
+For shader,
+\begin_inset Formula 
+\[
+Y_{1}=C_{1}=\frac{16}{255},\quad Y_{2}=\frac{235}{255},\quad C_{2}=\frac{240}{255}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+M_{Y\leftarrow R} & =\begin{pmatrix}\left(Y_{2}-Y_{1}\right)K_{R} & \left(Y_{2}-Y_{1}\right)\left(1-K_{R}-K_{B}\right) & \left(Y_{2}-Y_{1}\right)K_{B}\\
+\frac{-\left(C_{2}-C_{1}\right)K_{R}}{2\left(1-K_{B}\right)} & \frac{-\left(C_{2}-C_{1}\right)\left(1-K_{R}-K_{B}\right)}{2\left(1-K_{B}\right)} & \frac{C_{2}-C_{1}}{2}\\
+\frac{C_{2}-C_{1}}{2} & \frac{-\left(C_{2}-C_{1}\right)\left(1-K_{R}-K_{B}\right)}{2\left(1-K_{R}\right)} & \frac{-\left(C_{2}-C_{1}\right)K_{B}}{2\left(1-K_{R}\right)}
+\end{pmatrix}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+M_{Y\leftarrow R}^{-1}=\begin{pmatrix}\frac{1}{Y_{2}-Y_{1}} & 0 & \frac{2\left(1-K_{R}\right)}{C_{2}-C_{1}}\\
+\frac{1}{Y_{2}-Y_{1}} & \frac{2\left(1-K_{B}\right)K_{B}}{\left(C_{2}-C_{1}\right)\left(K_{B}+K_{R}-1\right)} & \frac{2\left(1-K_{R}\right)K_{R}}{\left(C_{2}-C_{1}\right)\left(K_{B}+K_{R}-1\right)}\\
+\frac{1}{Y_{2}-Y_{1}} & \frac{2\left(1-K_{B}\right)}{C_{2}-C_{1}} & 0
+\end{pmatrix}
 \]
 
 \end_inset

@@ -123,8 +123,6 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	effect.addActionToGroup(_L("blur"), true)->setData((int)VideoRendererItem::Blur);
 	effect.addActionToGroup(_L("sharpen"), true)->setData((int)VideoRendererItem::Sharpen);
 	effect.addSeparator();
-	effect.addActionToGroup(_L("remap"), true)->setData((int)VideoRendererItem::RemapLuma);
-	effect.addSeparator();
 	effect.addActionToGroup(_L("gray"), true)->setData((int)VideoRendererItem::Grayscale);
 	effect.addActionToGroup(_L("invert"), true)->setData((int)VideoRendererItem::InvertColor);
 	effect.addSeparator();
@@ -408,7 +406,6 @@ void RootMenu::update(const Pref &p) {
 	effect["sharpen"]->setText(tr("Sharpen"));
 	effect["gray"]->setText(tr("Grayscale"));
 	effect["invert"]->setText(tr("Invert Color"));
-	effect["remap"]->setText(tr("Remap Luma"));
 	effect["ignore"]->setText(tr("Ignore All Filters"));
 
 	auto &color = video("color");

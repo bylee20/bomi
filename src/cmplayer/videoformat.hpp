@@ -8,13 +8,13 @@ extern "C" {
 }
 //struct mp_image;
 
-constexpr static inline quint32 cc4(char a, char b, char c, char d) {
-#if (Q_BYTE_ORDER == Q_BIG_ENDIAN)
-	return (((quint32)d)|(((quint32)c)<<8)|(((quint32)b)<<16)|(((quint32)a)<<24));
-#else
-	return (((quint32)a)|(((quint32)b)<<8)|(((quint32)c)<<16)|(((quint32)d)<<24));
-#endif
-}
+//constexpr static inline quint32 cc4(char a, char b, char c, char d) {
+//#if (Q_BYTE_ORDER == Q_BIG_ENDIAN)
+//	return (((quint32)d)|(((quint32)c)<<8)|(((quint32)b)<<16)|(((quint32)a)<<24));
+//#else
+//	return (((quint32)a)|(((quint32)b)<<8)|(((quint32)c)<<16)|(((quint32)d)<<24));
+//#endif
+//}
 
 class VideoFormat {
 public:
@@ -41,6 +41,9 @@ public:
 	inline int lines(int plane) const {return d->alignedByteSize[plane].height();}
 	inline bool compare(const mp_image *mpi) const {return d->compare(mpi);}
 	inline bool isNative() const {return d->native;}
+	inline mp_csp colorspace() const { return d->colorspace; }
+	inline mp_csp_levels range() const { return d->range; }
+	inline Type imgfmt() const {return d->imgfmt;}
 private:
 	struct Data : public QSharedData {
 		Data() {}
@@ -48,16 +51,19 @@ private:
 		Data(const QImage &image);
 		inline bool compare(const mp_image *mpi) const {
 			return mpi->fmt.id == imgfmt && mpi->w == size.width() && mpi->h == size.height()
+				&& mpi->colorspace == colorspace && mpi->levels == range
 				&& (native || (alignedByteSize[0].width() == mpi->stride[0] && alignedByteSize[1].width() == mpi->stride[1] && alignedByteSize[2].width() == mpi->stride[2]));
 		}
 		inline bool compare(const Data *other) const {
-			return type == other->type && size == other->size && alignedSize == other->alignedSize && outputSize == other->outputSize;
+			return colorspace == other->colorspace && range == other->range && type == other->type && size == other->size && alignedSize == other->alignedSize && outputSize == other->outputSize;
 		}
 		QSize size = {0, 0}, alignedSize = {0, 0}, outputSize = {0, 0};
 		QVector<QSize> alignedByteSize = {3, QSize(0, 0)};
 		int planes = 0, bpp = 0;
 		Type type = IMGFMT_NONE, imgfmt = IMGFMT_NONE;
 		bool native = false;
+		mp_csp colorspace = MP_CSP_BT_601;
+		mp_csp_levels range = MP_CSP_LEVELS_TV;
 	};
 	QSharedDataPointer<Data> d;
 };

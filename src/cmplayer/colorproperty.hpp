@@ -1,7 +1,10 @@
 #ifndef COLORPROPERTY_HPP
 #define COLORPROPERTY_HPP
 
-#include <QtGlobal>
+#include <QGenericMatrix>
+extern "C" {
+#include <video/csputils.h>
+}
 
 class ColorProperty {
 public:
@@ -65,6 +68,15 @@ public:
 			&& qFuzzyCompare(m_value[Contrast], 0.0)
 			&& qFuzzyCompare(m_value[Hue], 0.0);
 	}
+
+/*	m00 m01 m02  v0
+ *  m10 m11 m12  v1
+ *  m20 m21 m22  v2
+ *   o0  o1  o2   x
+ */
+	QMatrix4x4 matrix(mp_csp colorspace, mp_csp_levels range) const;
+//	QVector3D vector(mp_csp colorspace, mp_csp_levels range) const;
+//	QVector3D origin(mp_csp colorspace, mp_csp_levels range) const;
 private:
 	double m_value[4] = {0.0, 0.0, 0.0, 0.0};
 };

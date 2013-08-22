@@ -623,6 +623,7 @@ void MainWindow::connectMenus() {
 			}
 			color = d->renderer.color();
 			color.setValue(prop, color.value(prop) + data[1].toInt()*0.01);
+			color.clamp();
 		}
 		if (d->renderer.color() != color)
 			d->push(color, d->renderer.color(), [this, cmd, prop] (const ColorProperty &color) {
@@ -1279,7 +1280,6 @@ void MainWindow::applyPref() {
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizer(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
-	d->renderer.setLumaRange(p.remap_luma_min, p.remap_luma_max);
 	d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
 	SubtitleParser::setMsPerCharactor(p.ms_per_char);
 	d->subtitle.setPriority(p.sub_priority);

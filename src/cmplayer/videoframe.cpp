@@ -17,12 +17,20 @@ VideoFrame::VideoFrame::Data::Data(mp_image *mpi, const VideoFormat &format)
 	this->mpi = mp_image_new_ref(mpi);
 }
 
+static QImage convertImage(const QImage &image) {
+	switch (image.format()) {
+	case QImage::Format_ARGB32:
+	case QImage::Format_ARGB32_Premultiplied:
+	case QImage::Format_RGB32:
+		return image;
+	default:
+		return image.convertToFormat(QImage::Format_ARGB32);
+	}
+}
+
 VideoFrame::VideoFrame::Data::Data(const QImage &image)
-: mpi(nullptr), format(image) {
-	if (image.format() != QImage::Format_ARGB32_Premultiplied && image.format() != QImage::Format_ARGB32)
-		this->image = image.convertToFormat(QImage::Format_ARGB32);
-	else
-		this->image = image;
+: mpi(nullptr), image(convertImage(image)), format(this->image) {
+	data[0] = this->image.bits();
 }
 
 VideoFrame::VideoFrame::Data::Data(const Data &other)

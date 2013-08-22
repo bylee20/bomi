@@ -8,7 +8,6 @@ class VideoFormat;	class PlayEngine;
 typedef quint32 uint32_t;	struct mp_image;
 class VideoRendererItem;
 class HwAcc;
-
 class VideoOutput : public QObject {
 	Q_OBJECT
 public:
@@ -29,7 +28,7 @@ signals:
 private:
 	static int preinit(struct vo *vo);
 	static void uninit(struct vo */*vo*/) {}
-	static int config(struct vo *vo, uint32_t w, uint32_t h, uint32_t , uint32_t , uint32_t , uint32_t fmt);
+	static int reconfig(struct vo *vo, struct mp_image_params *params, int flags);
 	static int control(struct vo *vo, uint32_t request, void *data);
 	static void drawOsd(struct vo *vo, struct osd_state *osd);
 	static void flipPage(struct vo *vo);

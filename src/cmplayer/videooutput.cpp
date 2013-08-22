@@ -38,7 +38,7 @@ vo_driver create_driver() {
 	static vo_driver driver;
 	driver.info = &info;
 	driver.preinit = VideoOutput::preinit;
-	driver.config = VideoOutput::config;
+	driver.reconfig = VideoOutput::reconfig;
 	driver.control = VideoOutput::control;
 	driver.draw_osd = VideoOutput::drawOsd;
 	driver.flip_page = VideoOutput::flipPage;
@@ -57,11 +57,13 @@ struct VideoOutput::Data {
 	VideoFrame frame;
 	mp_osd_res osd;
 	PlayEngine *engine = nullptr;
-	bool flip = false, quit = false;
+	bool flip = false, quit = false, upsideDown = false;
 	VideoRendererItem *renderer = nullptr;
 	bool formatChanged = false;
-	quint32 dest_w = 0, dest_h = 0;
+	int dest_w = 0, dest_h = 0;
 	HwAcc *acc = nullptr;
+	mp_csp colorspace = MP_CSP_AUTO;
+	mp_csp_levels range = MP_CSP_LEVELS_AUTO;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -94,13 +96,15 @@ const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
-int VideoOutput::config(struct vo *vo, uint32_t w_src, uint32_t h_src, uint32_t w_dest, uint32_t h_dest, uint32_t fs, uint32_t fmt) {
-	Q_UNUSED(fs); Q_UNUSED(fmt); Q_UNUSED(w_src); Q_UNUSED(h_src);
+int VideoOutput::reconfig(vo *vo, mp_image_params *params, int flags) {
 	auto v = priv(vo); auto d = v->d;
-	if (_Change(d->dest_w, w_dest))
+	d->upsideDown = flags & VOFLAG_FLIPPING;
+	if (_Change(d->dest_w, params->d_w))
 		d->formatChanged = true;
-	if (_Change(d->dest_h, h_dest))
+	if (_Change(d->dest_h, params->d_h))
 		d->formatChanged = true;
+	d->colorspace = params->colorspace;
+	d->range = params->colorlevels;
 	emit v->reconfigured();
 	return 0;
 }
@@ -125,7 +129,7 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	switch (req) {
 	case VOCTRL_REDRAW_FRAME:
 		if (v->d->renderer)
-			v->d->renderer->present(v->d->frame);
+			v->d->renderer->present(v->d->frame, v->d->upsideDown);
 		return VO_TRUE;
 	case VOCTRL_GET_HWDEC_INFO: {
 		auto info = static_cast<mp_hwdec_info*>(data);
@@ -153,7 +157,7 @@ void VideoOutput::flipPage(struct vo *vo) {
 	if (!d->flip || d->quit)
 		return;
 	if (d->renderer) {
-		d->renderer->present(d->frame, d->formatChanged);
+		d->renderer->present(d->frame, d->upsideDown, d->formatChanged);
 		auto w = d->renderer->window();
 		while (w && w->isVisible() && d->renderer->isFramePended() && !d->quit)
 			PlayEngine::usleep(50);
