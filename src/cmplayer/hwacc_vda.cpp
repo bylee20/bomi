@@ -87,7 +87,7 @@ static void vda_decoder_callback (void *vda_hw_ctx, CFDictionaryRef /*user_info*
 
 //	if (vda_ctx->cv_pix_fmt_type != CVPixelBufferGetPixelFormatType(image_buffer))
 //		return;
-
+	vda_ctx->cv_pix_fmt_type = CVPixelBufferGetPixelFormatType(image_buffer);
 	vda_ctx->cv_buffer = CVPixelBufferRetain(image_buffer);
 }
 

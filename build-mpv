@@ -20,13 +20,13 @@ kern=`uname -s`
 if test $kern = "Darwin"
 then
   echo "Build for OS X"
-  args="$args --enable-coreaudio --disable-alsa --disable-vaapi"
+  args="$args --enable-coreaudio --disable-alsa --disable-vaapi --enable-vda"
   libs="$libs -framework VideoDecodeAcceleration -framework CoreVideo -framework CoreFoundation -framework Cocoa"
   PKG_CONFIG_PATH="/usr/X11/lib/pkgconfig:${PKG_CONFIG_PATH}"
 elif test $kern = "Linux"
 then
   echo "Build for Linux"
-  args="$args --disable-coreaudio --enable-alsa --enable-vaapi"
+  args="$args --disable-coreaudio --enable-alsa --enable-vaapi --disable-vda"
   libs="$libs -lasound -lva"
 else
   echo "Not supported!"
@@ -36,4 +36,4 @@ fi
 export PKG_CONFIG_PATH="../../build/lib/pkgconfig:${PKG_CONFIG_PATH}"
 cd src/mpv && make distclean;  ./configure $args --extra-libs="$libs"
 make -j 6
-ar rcsv ../../build/lib/libcmplayer_mpv.a `find . -name '*.o' | sed 's/^.*\(vo_null\|af_dummy\|vaapi\|vdpau\)\.o$//'`
+ar rcsv ../../build/lib/libcmplayer_mpv.a `find . -name '*.o' | sed 's/^.*\(vo_null\|af_dummy\|vaapi\|vdpau\|vda\)\.o$//'`
