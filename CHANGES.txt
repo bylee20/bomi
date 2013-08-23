@@ -8,7 +8,7 @@
   * New: buffer length option for volume normalzer
   * Mod: enlarge location font in playlist
   * Mod: remove scheme(file://) of location for local file 
-  * Mod: better performance of hardware decoding (VA-API)
+  * Mod: better performance of hardware decoding
   * Mod: default options for volume normalizer are changed
   * Fix: crash on saving preferences
   * Fix: WM_CLASS and WM_NAME for windows
@@ -16,7 +16,7 @@
   * Fix: cannot reach the scrollbar of history and playlist in fullscreen mode
   * Fix: internal subtitles don't move with video
   * Fix: couldn't save & restore aspect ratio and crop state
-  * Fix: smooth amplification by volume normalization
+  * Fix: smooth volume normalization
 
 0.7.6
 
