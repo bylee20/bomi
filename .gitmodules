@@ -1,6 +1,3 @@
 [submodule "src/mpv"]
 	path = src/mpv
 	url = https://github.com/xylosper/mpv.git
-[submodule "src/ffmpeg"]
-	path = src/ffmpeg
-	url = git://source.ffmpeg.org/ffmpeg.git
