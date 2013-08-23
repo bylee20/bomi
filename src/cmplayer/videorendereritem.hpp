@@ -19,7 +19,7 @@ public:
 		InvertColor			= 1 << 3,
 		Blur				= 1 << 4,
 		Sharpen				= 1 << 5,
-		IgnoreEffect		= 1 << 8
+		Disable				= 1 << 8
 	};
 	Q_DECLARE_FLAGS(Effects, Effect)
 	static const int KernelEffects = Blur | Sharpen;

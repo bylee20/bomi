@@ -126,7 +126,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	effect.addActionToGroup(_L("gray"), true)->setData((int)VideoRendererItem::Grayscale);
 	effect.addActionToGroup(_L("invert"), true)->setData((int)VideoRendererItem::InvertColor);
 	effect.addSeparator();
-	effect.addActionToGroup(_L("ignore"), true)->setData((int)VideoRendererItem::IgnoreEffect);
+	effect.addActionToGroup(_L("disable"), true)->setData((int)VideoRendererItem::Disable);
 
 	auto &color = *video.addMenu(_L("color"));
 	color.addActionToGroup(_L("reset"), false)->setData(QList<QVariant>() << (int)ColorProperty::PropMax << 0);
@@ -406,7 +406,7 @@ void RootMenu::update(const Pref &p) {
 	effect["sharpen"]->setText(tr("Sharpen"));
 	effect["gray"]->setText(tr("Grayscale"));
 	effect["invert"]->setText(tr("Invert Color"));
-	effect["ignore"]->setText(tr("Ignore All Filters"));
+	effect["disable"]->setText(tr("Disable Filters"));
 
 	auto &color = video("color");
 	color.setTitle(tr("Color"));

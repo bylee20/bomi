@@ -316,7 +316,7 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 		emit screenRectChanged(d->letterbox->screen());
 	double top, left, right, bottom;
 	d->shader->getCoords(left, top, right, bottom);
-	if (!(d->effects & IgnoreEffect)) {
+	if (!(d->effects & Disable)) {
 		if (d->effects & FlipVertically)
 			qSwap(top, bottom);
 		if (d->effects & FlipHorizontally)
