@@ -6,6 +6,11 @@
   * New: undo/redo for some actions (e.g., playback speed, volume etc.)
   * New: fallback to software decoding when hw. acc. failed
   * New: buffer length option for volume normalzer
+  * New: supports BT.709 and SMPTE 420M colorspace
+  * New: supports fullrange YCbCr format
+  * New: supports flipped frame
+  * New: display messagebox on loading or error
+  * Mod: remove remap luma filter
   * Mod: enlarge location font in playlist
   * Mod: remove scheme(file://) of location for local file 
   * Mod: better performance of hardware decoding
@@ -17,7 +22,10 @@
   * Fix: internal subtitles don't move with video
   * Fix: couldn't save & restore aspect ratio and crop state
   * Fix: smooth volume normalization
-
+  * Fix: clipping color property values in [-1, 1]
+  * Fix: cannot select images in open folder dialog
+  * Fix: some filters weren't applied immediately
+  
 0.7.6
 
   * New: option to show logo or fill color
