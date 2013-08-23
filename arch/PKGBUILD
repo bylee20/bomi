@@ -4,9 +4,9 @@
 pkgname=cmplayer
 pkgver=0.7.7
 pkgrel=1
-pkgdesc="A powerful and easy-to-use multimedia player"
+pkgdesc="Powerful and Easy-to-use Multimedia Player"
 arch=('i686' 'x86_64')
-url="https://code.google.com/p/$pkgname"
+url="http://$pkgname.github.io"
 license=('GPL')
 depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'fribidi' 'libass' 'ffmpeg')
 makedepends=('mesa' 'gcc')

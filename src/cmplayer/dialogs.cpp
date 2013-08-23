@@ -294,7 +294,7 @@ AboutDialog::AboutDialog(QWidget *parent)
 	UI_LABEL_ARG(copyright, arg(QDate::currentDate().year()));
 	UI_LABEL_ARG(contacts, arg("<a href=\"http://xylosper.net\">http://xylosper.net</a><br>")
 		.arg("<a href=\"mailto:darklin20@gmail.com\">darklin20@gmail.com</a><br>")
-		.arg("<a href=\"http://code.google.com/p/cmplayer\">http://code.google.com/p/cmplayer</a>"));
+		.arg("<a href=\"http://cmplayer.github.com\">http://cmplayer.github.com</a>"));
 #undef UI_LABEL_ARG
 	d->ui.license->setText(
 		"This program is free software; "

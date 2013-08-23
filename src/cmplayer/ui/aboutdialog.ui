@@ -155,7 +155,7 @@ p, li { white-space: pre-wrap; }
            <property name="text">
             <string>Developer's blog: %1
 Developer's E-mail: %2
-Project homepage: %3</string>
+Project page: %3</string>
            </property>
           </widget>
          </item>
