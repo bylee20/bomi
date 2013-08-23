@@ -121,13 +121,15 @@ Item {
 				font.pixelSize: wrapper.fontSize
 				font.family: wrapper.fontFamily
 				function update() {
-					var txt = qsTr("Video Codec: %1\n").arg(player.video.codec);
-					txt += qsTr("Input : %1 %2x%3 %4fps(%5MB/s)\n")
+					var txt = qsTr("Video Codec: %1").arg(player.video.codec);
+					txt += "\n";
+					txt += qsTr("Input : %1 %2x%3 %4fps(%5MB/s)")
 					.arg(player.video.input.type)
 					.arg(player.video.input.size.width)
 					.arg(player.video.input.size.height)
 					.arg(player.video.input.fps.toFixed(3))
 					.arg((player.video.input.bps/(8*1024*1024)).toFixed(2));
+					txt += "\n";
 					txt += qsTr("Output: %1 %2x%3 %4fps(%5MB/s)")
 					.arg(player.video.output.type)
 					.arg(player.video.output.size.width)

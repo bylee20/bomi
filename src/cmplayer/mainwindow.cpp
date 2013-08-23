@@ -567,7 +567,7 @@ void MainWindow::connectMenus() {
 	});
 	d->connect(video("crop").g(), [this] (QAction *a) {
 		d->renderer.setCropRatio(a->data().toDouble());
-		showMessage(tr("Crop Ratio"), a->text());
+		showMessage(tr("Crop"), a->text());
 	});
 	connect(video["snapshot"], &QAction::triggered, [this] () {
 		static SnapshotDialog *dlg = new SnapshotDialog(this);
