@@ -1,4 +1,5 @@
 *~
+.qmake.cache
 *.o
 *.d
 *.a
