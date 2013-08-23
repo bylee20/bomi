@@ -52,7 +52,7 @@ private:
 };
 
 
-enum EngineState {EngineStopped = 1, EnginePlaying = 2, EnginePaused = 4, EngineFinished = 8, EngineOpening = 16, EngineBuffering = 32, EngineError = 64, EnginePreparing = 128};
+enum EngineState {EngineStopped = 1, EnginePlaying = 2, EnginePaused = 4, EngineFinished = 8, EngineLoading = 16, EngineError = 64};
 enum StreamType {UnknownStream = 0, VideoStream, AudioStream, SubPicStream};
 enum MediaMetaData {LanguageCode};
 

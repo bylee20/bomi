@@ -50,7 +50,8 @@ struct MainWindow::Data {
 	Qt::WindowStates winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
 	bool middleClicked = false, moving = false, changingSub = false;
 	bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
-	bool stateChanging = false;
+	bool stateChanging = false, loading = false;
+	QTimer loadingTimer;
 	ABRepeater ab = {&engine, &subtitle};
 	QMenu contextMenu;
 	PrefDialog *prefDlg = nullptr;
@@ -262,12 +263,19 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	connect(&d->engine, &PlayEngine::mrlChanged, this, &MainWindow::updateMrl);
 	connect(&d->engine, &PlayEngine::stateChanged, [this] (EngineState state) {
+		qDebug() << state;
 		d->stateChanging = true;
+		auto mbox = [this] (const QString &msg) { if (d->player) d->player->requestMessageBox(msg); };
+		mbox(QString());
+		if ((d->loading = state == EngineLoading))
+			d->loadingTimer.start();
+		else
+			d->loadingTimer.stop();
+		if (state == EngineError)
+			mbox(tr("Error!\nCannot open the media."));
 		switch (state) {
+		case EngineLoading:
 		case EnginePlaying:
-		case EngineBuffering:
-		case EngineOpening:
-		case EnginePreparing:
 			d->menu("play")["pause"]->setText(tr("Pause"));
 			break;
 		default:
@@ -440,6 +448,13 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	QTimer::singleShot(1, this, SLOT(applyPref()));
 
 	d->dontShowMsg = false;
+
+	d->loadingTimer.setInterval(500);
+	d->loadingTimer.setSingleShot(true);
+	connect(&d->loadingTimer, &QTimer::timeout, [this] () {
+		if (d->loading && d->player)
+			d->player->requestMessageBox(tr("Loading ...\nPlease wait for a while."));
+	});
 }
 
 MainWindow::~MainWindow() {
@@ -496,9 +511,7 @@ void MainWindow::connectMenus() {
 				const auto state = d->engine.state();
 				switch (state) {
 				case EnginePlaying:
-				case EngineOpening:
-				case EngineBuffering:
-				case EnginePreparing:
+				case EngineLoading:
 					d->engine.pause();
 					break;
 				default:
@@ -1011,7 +1024,7 @@ void MainWindow::showMessage(const QString &message, const bool *force) {
 	} else if (!d->pref().show_osd_on_action)
 		return;
 	if (!d->dontShowMsg && d->player)
-		d->player->requestMessage(message);
+		d->player->requestMessageOsd(message);
 }
 
 void MainWindow::checkWindowState() {
@@ -1265,7 +1278,7 @@ void MainWindow::applyPref() {
 	int time = -1;
 	switch (d->engine.state()) {
 	case EnginePlaying:
-	case EngineBuffering:
+	case EngineLoading:
 	case EnginePaused:
 		time = d->engine.position();
 		break;

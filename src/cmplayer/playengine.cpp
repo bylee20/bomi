@@ -476,7 +476,6 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	name[STREAM_SUB] = tr("Subtitle %1");
 	if (error != MPERROR_NONE)
 		return error;
-	setState(mpctx->paused ? EnginePaused : EnginePlaying);
 	post(this, StreamOpen);
 	ChapterList chapters(qMax(0, get_chapter_count(mpctx)));
 	for (int i=0; i<chapters.size(); ++i) {
@@ -495,10 +494,16 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 		stream->control(stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
 	}
 	post(this, UpdateChapterList, chapters);
-
+	bool first = true;
 	while (!mpctx->stop_play) {
 		run_playloop(mpctx);
-		if (!mpctx->stop_play && streams[STREAM_AUDIO].size() + streams[STREAM_VIDEO].size() + streams[STREAM_SUB].size() != mpctx->num_tracks) {
+		if (mpctx->stop_play)
+			break;
+		if (first) {
+			setState(mpctx->paused ? EnginePaused : EnginePlaying);
+			first = false;
+		}
+		if (streams[STREAM_AUDIO].size() + streams[STREAM_VIDEO].size() + streams[STREAM_SUB].size() != mpctx->num_tracks) {
 			streams[STREAM_AUDIO].clear(); streams[STREAM_VIDEO].clear(); streams[STREAM_SUB].clear();
 			for (int i=0; i<mpctx->num_tracks; ++i) {
 				const auto track = mpctx->tracks[i];
@@ -546,9 +551,10 @@ void PlayEngine::run() {
 		int terminated = 0, duration = 0;
 		Mrl mrl = d->playlist.loadedMrl();
 		d->playing = true;
-		setState(EngineBuffering);
+		setState(EngineLoading);
 		m_imgMode = mrl.isImage();
 		int error = m_imgMode ? playImage(mrl, terminated, duration) : playAudioVideo(mrl, terminated, duration);
+		qDebug() << error;
 		clean_up_playback(mpctx);
 		if (error != MPERROR_NONE)
 			setState(EngineError);
@@ -689,6 +695,8 @@ void PlayEngine::pause() {
 }
 
 void PlayEngine::unpause() {
+	if (state() != EnginePaused)
+		setState(EngineLoading);
 	if (m_imgMode)
 		setState(EnginePlaying);
 	else
@@ -699,7 +707,11 @@ void PlayEngine::play() {
 	switch (m_state) {
 	case EngineStopped:
 	case EngineFinished:
+	case EngineError:
 		play(d->getStartTime(d->playlist.loadedMrl()));
+		break;
+	case EngineLoading:
+		// do nothing. just wait
 		break;
 	default:
 		unpause();

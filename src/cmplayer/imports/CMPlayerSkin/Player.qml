@@ -9,6 +9,25 @@ Core.Engine {
 	property real bottomPadding: 0.0
 	Logo { anchors.fill: parent; visible: player.state == Core.Engine.Stopped }
 	TextOsd { id: msgosd }
+	Rectangle {
+		id: msgbox
+		color: "#ddd"
+		opacity: 0.8
+		anchors.centerIn: parent
+		width: boxmsg.width + pad*2
+		height: boxmsg.height + pad*2
+		readonly property real pad: 5
+		Text {
+			id: boxmsg
+			anchors.centerIn: parent
+			opacity: 1.0
+			width: contentWidth
+			height: contentHeight
+			font.bold: true
+		}
+		radius: 5
+	}
+
 	ProgressOsd { id: timeline; value: player.time/player.duration }
 	PlayInfoView { objectName: "playinfo"; player: player }
 	Item {
@@ -26,6 +45,10 @@ Core.Engine {
 			height: parent.height-2*y - bottomPadding
 		}
 	}
-	onMessageRequested: { msgosd.text = message; msgosd.show(); }
+	onMessageOsdRequested: { msgosd.text = osdMessage; msgosd.show(); }
+	onMessageBoxRequested: {
+			msgbox.visible = !!boxMessage
+		boxmsg.text = boxMessage
+	}
 	onSought: {timeline.show();}
 }

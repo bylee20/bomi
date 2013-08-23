@@ -11,7 +11,8 @@ class PlayEngine;
 class PlayerItem : public QQuickItem, public Skin {
 	Q_OBJECT
 	Q_ENUMS(State)
-	Q_PROPERTY(QString message READ message)
+	Q_PROPERTY(QString osdMessage READ osdMessage)
+	Q_PROPERTY(QString boxMessage READ boxMessage)
 	Q_PROPERTY(MediaInfoObject *media READ media NOTIFY mediaChanged)
 	Q_PROPERTY(AvInfoObject *audio READ audio NOTIFY videoChanged)
 	Q_PROPERTY(AvInfoObject *video READ video NOTIFY audioChanged)
@@ -58,16 +59,19 @@ public:
 	PlayerItem(QQuickItem *parent = nullptr);
 	VideoRendererItem *renderer() const {return m_renderer;}
 	PlayEngine *engine() const {return m_engine;}
-	void requestMessage(const QString &message) {emit messageRequested(m_message = message);}
+	void requestMessageOsd(const QString &message) {emit messageOsdRequested(m_omsg = message);}
+	void requestMessageBox(const QString &message) {emit messageBoxRequested(m_bmsg = message);}
 	void doneSeeking() {emit sought();}
-	QString message() const {return m_message;}
+	QString osdMessage() const {return m_omsg;}
+	QString boxMessage() const {return m_bmsg;}
 	Q_INVOKABLE void seek(int time);
 	Q_INVOKABLE void setVolume(int volume);
 	~PlayerItem();
 signals:
 	void stateTextChanged(const QString &stateText);
 	void playingChanged(bool playing);
-	void messageRequested(const QString &message);
+	void messageOsdRequested(const QString &message);
+	void messageBoxRequested(const QString &message);
 	void sought();
 	void mutedChanged(bool muted);
 	void nameChanged(const QString &name);
@@ -92,7 +96,7 @@ private:
 	MediaInfoObject *m_media = new MediaInfoObject(this);
 	VideoRendererItem *m_renderer = nullptr;
 	PlayEngine *m_engine = nullptr;
-	QString m_message;
+	QString m_omsg, m_bmsg;
 	bool m_running = false, m_playing = false, m_muted = false;
 	double m_speed = 1.0;
 };
