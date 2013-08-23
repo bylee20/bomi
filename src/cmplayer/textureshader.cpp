@@ -202,7 +202,7 @@ struct I420Shader : public TextureShader {
 struct NvShader : public TextureShader {
 	NvShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
 	: TextureShader(format, target) {
-		QByteArray get = (R"(
+		QByteArray texel = (R"(
 			vec3 texel(const vec2 coord) {
 				vec3 yuv;
 				yuv.x = texture1(coord).x;
@@ -211,10 +211,10 @@ struct NvShader : public TextureShader {
 			}
 		)");
 		if (format.type() == IMGFMT_NV12)
-			get.replace("!!", "xw");
+			texel.replace("!!", "xw");
 		else
-			get.replace("!!", "wx");
-		setTexel(get);
+			texel.replace("!!", "wx");
+		setTexel(texel);
 		addTexInfo(0, format.bytesPerLine(0), format.lines(0), GL_LUMINANCE);
 		addTexInfo(1, format.bytesPerLine(1)/2, format.lines(1), GL_LUMINANCE_ALPHA);
 		sc(1).rx() *= (double)format.bytesPerLine(0)/(double)format.bytesPerLine(1);
@@ -227,7 +227,7 @@ struct NvShader : public TextureShader {
 struct Y422Shader : public TextureShader {
 	Y422Shader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
 	: TextureShader(format, target) {
-		QByteArray get = (R"(
+		QByteArray texel = (R"(
 			vec3 texel(const vec2 coord) {
 				vec3 yuv;
 				yuv.x = texture1(coord).?;
@@ -236,10 +236,10 @@ struct Y422Shader : public TextureShader {
 			}
 		)");
 		if (format.type() == IMGFMT_YUYV)
-			get.replace("?", "x").replace("!!", "yw");
+			texel.replace("?", "x").replace("!!", "yw");
 		else
-			get.replace("?", "a").replace("!!", "zx");
-		setTexel(get);
+			texel.replace("?", "a").replace("!!", "zx");
+		setTexel(texel);
 		addTexInfo(0, format.bytesPerLine(0)/2, format.lines(0), GL_LUMINANCE_ALPHA);
 		addRgbInfo(0, format.bytesPerLine(0)/4, format.lines(0), GL_BGRA);
 		if (target == GL_TEXTURE_RECTANGLE_ARB)

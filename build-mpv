@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 args="--disable-encoding --disable-libguess --disable-terminfo --disable-termcap --disable-termios --enable-iconv \
   --disable-lirc --disable-lircc --disable-joystick --disable-vm --disable-xf86keysym --disable-radio \
@@ -36,4 +36,14 @@ fi
 export PKG_CONFIG_PATH="../../build/lib/pkgconfig:${PKG_CONFIG_PATH}"
 cd src/mpv && make distclean;  ./configure $args --extra-libs="$libs"
 make -j 6
-ar rcsv ../../build/lib/libcmplayer_mpv.a `find . -name '*.o' | sed 's/^.*\(vo_null\|af_dummy\|vaapi\|vdpau\|vda\)\.o$//'`
+
+allobjs=`find . -name '*.o'`
+objs=""
+for obj in $allobjs; do
+	if [[ $obj =~ ^.*(vo_null|af_dummy|vaapi|vdpau|vda).o$ ]]; then
+		continue
+	fi
+	objs+=" $obj"
+done
+
+ar rcsv ../../build/lib/libcmplayer_mpv.a $objs

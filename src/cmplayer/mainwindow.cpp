@@ -126,13 +126,11 @@ struct MainWindow::Data {
 	}
 
 	void updateWindowSizeState() const {
-		const auto state = p->windowState();
-		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible())
+		if (!p->isFullScreen() && !p->isMinimized() && p->isVisible())
 			AppState::get().win_size = p->size();
 	}
 	void updateWindowPosState() const {
-		const auto state = p->windowState();
-		if (!(state & Qt::WindowFullScreen) && !(state & Qt::WindowMinimized) && p->isVisible()) {
+		if (!p->isFullScreen() && !p->isMinimized() && p->isVisible()) {
 			auto &as = AppState::get();
 			const auto screen = p->window()->windowHandle()->size();
 			as.win_pos.rx() = qBound(0.0, (double)p->x()/(double)screen.width(), 1.0);
@@ -180,7 +178,7 @@ struct MainWindow::Data {
 			recent.setLastMrl(engine.mrl());
 			engine.quit();
 			auto &as = AppState::get();
-			if (!(p->windowState() & Qt::WindowFullScreen))
+			if (!p->isFullScreen())
 				updateWindowPosState();
 			as.audio_volume = engine.volume();
 			as.audio_muted = engine.isMuted();
@@ -241,7 +239,7 @@ struct MainWindow::Data {
 void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
-MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::WindowFullscreenButtonHint | Qt::Window), d(new Data(this)) {
+MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data(this)) {
 	setAcceptDrops(true);
 	d->view = new MainView(this);
 	auto widget = createWindowContainer(d->view, this);
@@ -1027,7 +1025,7 @@ void MainWindow::checkWindowState() {
 	d->dontPause = true;
 	d->moving = false;
 	d->prevPos = QPoint();
-	const auto full = d->fullScreen || state &  Qt::WindowFullScreen;
+	const auto full = isFullScreen();
 	if (full) {
 		cApp.setAlwaysOnTop(window()->windowHandle(), false);
 		setVisible(true);
@@ -1079,7 +1077,7 @@ void MainWindow::setFullScreen(bool full) {
 	d->dontPause = false;
 }
 
-bool MainWindow::isFullScreen() const {return d->fullScreen;}
+bool MainWindow::isFullScreen() const {return d->fullScreen || QWidget::isFullScreen();}
 
 void MainWindow::setVideoSize(double rate) {
 	if (rate < 0) {
