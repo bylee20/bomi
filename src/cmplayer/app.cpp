@@ -87,7 +87,7 @@ void App::setMainWindow(MainWindow *mw) {
 }
 
 void App::setWindowTitle(QWidget *w, const QString &title) {
-	const auto text = title % (title.isEmpty() ? "" : " - ") % applicationName();
+	const QString text = title % (title.isEmpty() ? "" : " - ") % applicationName();
 	w->setWindowTitle(text);
 #ifdef Q_OS_LINUX
 	d->helper.setWmName(w->window()->windowHandle(), text);

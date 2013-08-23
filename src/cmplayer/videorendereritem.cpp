@@ -249,7 +249,6 @@ QSize VideoRendererItem::sizeHint() const {
 const char *VideoRendererItem::fragmentShader() const {
 	d->shaderType = d->format.imgfmt();
 	d->shaderCode = d->shader->fragment();
-	qDebug() << "fragment" << d->shader->hasKernelEffects();
 	return d->shaderCode.constData();
 }
 

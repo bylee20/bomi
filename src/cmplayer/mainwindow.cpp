@@ -263,7 +263,6 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	connect(&d->engine, &PlayEngine::mrlChanged, this, &MainWindow::updateMrl);
 	connect(&d->engine, &PlayEngine::stateChanged, [this] (EngineState state) {
-		qDebug() << state;
 		d->stateChanging = true;
 		auto mbox = [this] (const QString &msg) { if (d->player) d->player->requestMessageBox(msg); };
 		mbox(QString());

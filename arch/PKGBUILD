@@ -10,8 +10,8 @@ url="http://$pkgname.github.io"
 license=('GPL')
 depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu' 'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi' 'alsa-lib' 'mpg123' 'libva' 'libgl' 'fribidi' 'libass' 'ffmpeg')
 makedepends=('mesa' 'gcc')
-source=(https://github.com/xylosper/cmplayer/releases/$pkgver/1066/cmplayer-$pkgver-source.tar.gz)
-md5sums=('a87c75db4d3cf520779c5171b683bbf2')
+source=(https://github.com/xylosper/cmplayer/releases/download/$pkgver/cmplayer-$pkgver-source.tar.gz)
+md5sums=('3647db8fa3b4140d7ffe04045457fb10')
 
 build() {
   export MAKE="make -j5"
