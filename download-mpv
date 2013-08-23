@@ -1,0 +1,7 @@
+#! /bin/bash
+
+install -d src
+
+cd src && git clone --depth 1 git://github.com/xylosper/mpv && cd mpv && find . -name '.git*' | xargs rm -rf
+#cd src && git clone --depth 1 git://source.ffmpeg.org/ffmpeg.git ffmpeg && cd ffmpeg && find . -name '.git*' | xargs rm -rf
+
