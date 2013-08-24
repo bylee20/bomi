@@ -32,9 +32,6 @@ public slots:
 	bool sendMessage(const QString &message, int timeout = 5000);
 signals:
 	void messageReceived(const QString &message);
-private slots:
-	void open(const QString &url);
-	void onMessageReceived(const QString &message);
 private:
 	static constexpr int ReopenEvent = QEvent::User + 1;
 	App(const App&) = delete;

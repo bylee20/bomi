@@ -99,12 +99,11 @@ const VideoFormat &VideoOutput::format() const {
 int VideoOutput::reconfig(vo *vo, mp_image_params *params, int flags) {
 	auto v = priv(vo); auto d = v->d;
 	d->upsideDown = flags & VOFLAG_FLIPPING;
-	if (_Change(d->dest_w, params->d_w))
-		d->formatChanged = true;
-	if (_Change(d->dest_h, params->d_h))
-		d->formatChanged = true;
+	d->dest_w = params->d_w;
+	d->dest_h = params->d_h;
 	d->colorspace = params->colorspace;
 	d->range = params->colorlevels;
+	d->formatChanged = true;
 	emit v->reconfigured();
 	return 0;
 }
@@ -125,11 +124,13 @@ void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
-	auto *v = priv(vo);
+	auto v = priv(vo); auto d = v->d;
 	switch (req) {
 	case VOCTRL_REDRAW_FRAME:
-		if (v->d->renderer)
-			v->d->renderer->present(v->d->frame, v->d->upsideDown);
+		if (d->renderer) {
+			d->renderer->present(d->frame, d->upsideDown, d->formatChanged);
+			d->formatChanged = false;
+		}
 		return VO_TRUE;
 	case VOCTRL_GET_HWDEC_INFO: {
 		auto info = static_cast<mp_hwdec_info*>(data);

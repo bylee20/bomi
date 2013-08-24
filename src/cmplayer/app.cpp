@@ -163,7 +163,9 @@ App::App(int &argc, char **argv)
 	};
 	d->styleNames = makeStyleNameList();
 	makeStyle();
-	connect(&d->connection, &LocalConnection::messageReceived, this, &App::onMessageReceived);
+	connect(&d->connection, &LocalConnection::messageReceived, [this] (const QString &message) {
+		d->execute(parse(message.split("[:sep:]")));
+	});
 }
 
 App::~App() {
@@ -242,22 +244,8 @@ QMenuBar *App::globalMenuBar() const {
 }
 #endif
 
-void App::open(const QString &mrl) {
-	if (!mrl.isEmpty() && d->main)
-		d->main->openMrl(mrl);
-}
-
-void App::onMessageReceived(const QString &message) {
-	d->execute(parse(message.split("[:sep:]")));
-}
-
 void App::runCommands() {
 	d->execute(d->args());
-//	const auto args = d->args();
-//	const auto mrl = getMrlFromCommandLine();
-//	if (!mrl.isEmpty())
-//		mw.openFromFileManager(mrl);
-
 }
 
 bool App::sendMessage(const QString &message, int timeout) {
