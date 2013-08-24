@@ -29,6 +29,11 @@
 #include <Carbon/Carbon.h>
 #endif
 
+extern void initialize_vaapi();
+extern void finalize_vaapi();
+extern void initialize_vdpau();
+extern void finalize_vdpau();
+
 class AskStartTimeEvent : public QEvent {
 public:
 	static constexpr QEvent::Type Type = (QEvent::Type)(QEvent::User + 1);
@@ -241,6 +246,9 @@ void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
 MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data(this)) {
+	initialize_vaapi();
+	initialize_vdpau();
+
 	setAcceptDrops(true);
 	d->view = new MainView(this);
 	auto widget = createWindowContainer(d->view, this);
@@ -462,6 +470,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 MainWindow::~MainWindow() {
 	exit();
 	delete d;
+	finalize_vdpau();
+	finalize_vaapi();
 }
 
 void MainWindow::connectMenus() {
