@@ -1,0 +1,10 @@
+#! /bin/bash
+
+git clone --depth=1 git://github.com/xylosper/cmplayer cmplayer
+git clone --depth=1 git://github.com/xylosper/mpv cmplayer/src/mpv
+rm -rf `find ./cmplayer -name '.git*'`
+
+ver=`head -1 cmplayer/CHANGES.txt`
+mv cmplayer cmplayer-$ver
+tar cvfz cmplayer-$ver-source.tar.gz cmplayer-$ver
+sed -i "s/^md5sums=(.*$/md5sums=('`md5sum cmplayer-$ver-source.tar.gz | sed "s/\s*cmplayer-.*$//"`')/" PKGBUILD 
