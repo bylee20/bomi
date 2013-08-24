@@ -175,6 +175,9 @@ int AudioController::config(mp_audio *data) {
 	d->af->mul = d->af_scaletempo.mul;
 
 	mp_audio_copy_config(&d->data, d->af_scaletempo.data);
+
+	if (data->format != AF_FORMAT_S16_NE)
+	  mp_audio_set_format(&d->data, AF_FORMAT_FLOAT_NE);
 	return af_test_output(d->af, data);
 }
 
