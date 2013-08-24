@@ -1,0 +1,21 @@
+#!/bin/bash
+
+dir=./build/CMPlayer.app/Contents
+all=`find $dir/Frameworks -name 'Qt*' | grep -E '/Qt[^/.]+$'`
+all+=" "`find $dir/MacOS -name '*.dylib'`
+all+=" "`find $dir/PlugIns -name '*.dylib'`
+all+=" $dir/MacOS/CMPlayer"
+
+for one in $all; do
+	echo $one
+	list=`otool -L $one`
+	for l in $list; do
+		name=`echo $l | grep -E "Qt[^\.]+\.framework.*[^:]$"`
+		if [ $name ]; then
+			fw="@executable_path/../Frameworks/"`echo $name | sed -E "s/^.*(Qt[^\.]+.framework.*Qt.*)$/\1/"`
+			install_name_tool -change $name $fw $one
+		fi
+	done
+done
+
+

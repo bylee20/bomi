@@ -132,6 +132,13 @@ struct App::Data {
 
 App::App(int &argc, char **argv)
 : QApplication(argc, argv), d(new Data(this)) {
+#ifdef Q_OS_MAC
+	QDir dir(QApplication::applicationDirPath());
+	dir.cdUp();
+	dir.cd("PlugIns");
+	QApplication::setLibraryPaths(QStringList(dir.absolutePath()));
+#endif
+
 	setOrganizationName("xylosper");
 	setOrganizationDomain("xylosper.net");
 	setApplicationName("CMPlayer");

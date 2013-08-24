@@ -44,6 +44,8 @@ ifeq ($(os),osx)
 	cp -r $(QT_PATH)/qml/QtQuick/Layouts $(cmplayer_exec_path)/imports/QtQuick
 	cp -r /usr/local/Cellar/libquvi/0.4.1/libquvi-scripts/share/libquvi-scripts/lua $(cmplayer_exec_path)
 	rm `find $(cmplayer_exec_path) -name '*_debug.dylib'`
+	cd build && $(MACDEPLOYQT) $(cmplayer_exec).app
+	./fix-dep
 	cd build && $(MACDEPLOYQT) $(cmplayer_exec).app -dmg
 endif
 
