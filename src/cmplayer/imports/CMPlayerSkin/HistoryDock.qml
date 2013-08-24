@@ -5,11 +5,8 @@ import CMPlayerCore 1.0 as Core
 
 Item {
 	id: dock
-//	visible: false
-	x: -dock.width
-	y: 20;
+	x: -dock.width; y: 20; visible: false
 	width: 300; height: parent.height-y*2
-	onVisibleChanged: if (visible) { sliding.start(); }
 	readonly property real widthHint: table.contentWidth+rect.radius+table.margins*2
 	property bool show: false
 	Rectangle { id: rect; anchors.fill: parent; color: "gray"; opacity: 0.8; radius: 5 }
@@ -28,8 +25,8 @@ Item {
 	Rectangle {
 		id: frame
 		x: table.x-1; y: table.y-1
-		width: table.width+2-(true? table.scrollArea : 0);
-		height: table.height+2-(table.hScrollVisible ? table.scrollArea : 0);
+		width: table.width+2
+		height: table.height+2
 		border { color: "black"; width: 1 }
 		gradient: Gradient {
 			GradientStop {position: 0.0; color: "#ccc"}
@@ -39,14 +36,13 @@ Item {
 
 	TableView {
 		id: table
-		readonly property real scrollArea: 12
+		readonly property real scrollArea: 10
 		readonly property real margins: 15
 		readonly property real contentWidth: name.width + latest.width + location.width
-		readonly property bool hScrollVisible: contentWidth > viewport.width
 		anchors {
 			fill: parent; topMargin: margins; leftMargin: margins+rect.radius;
-			rightMargin: margins - (true ? table.scrollArea : 0);
-			bottomMargin: margins - (table.hScrollVisible ? table.scrollArea : 0)
+			rightMargin: margins
+			bottomMargin: margins
 		}
 		model: history
 		frameVisible: false
@@ -85,17 +81,31 @@ Item {
 		style: TableViewStyle {
 			backgroundColor: "#555"
 			alternateBackgroundColor: "#333"
-			decrementControl: Item {} incrementControl: Item {} corner: Item {}
-			scrollBarBackground: Item { implicitWidth: table.scrollArea; implicitHeight: table.scrollArea }
+			decrementControl: Item {} incrementControl: Item {}
+			corner: Item {}
+			scrollBarBackground: Rectangle {
+				color: "#ddd"
+				x: styleData.horizontal ? -1 : 1
+				y: styleData.horizontal ? 1 : 1
+				implicitWidth: table.scrollArea; implicitHeight: table.scrollArea
+				Rectangle {
+					color: parent.color
+					x: parent.width
+					visible: styleData.horizontal
+					width: 2
+					height: table.scrollArea
+				}
+			}
 			handle: Item {
 				implicitWidth: table.scrollArea; implicitHeight: table.scrollArea
 				Rectangle {
 					anchors {
-						fill: parent; rightMargin: 2; bottomMargin: 2
-						leftMargin: styleData.horizontal ? 2 : 4
-						topMargin: styleData.horizontal ? 4 : 2
+						margins: 1
+						fill: parent;
+						leftMargin: styleData.horizontal ? 1 : 3
+						topMargin: styleData.horizontal ? 3 : 2
 					}
-					opacity: 0.8; radius: 3; smooth: true; color: "white"
+					opacity: 0.8; radius: 3; smooth: true; color: "black"
 				}
 			}
 		}

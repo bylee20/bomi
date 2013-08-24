@@ -7,7 +7,7 @@ Item {
 	id: dock
 	property alias selectedIndex: table.currentRow
 	readonly property real widthHint: column.width + table.margins*2 + table.scrollArea
-	readonly property real dest: dock.parent.width-dock.width+rect.radius
+	property real dest: 0
 	property bool show: false
 	x: parent.width; y: 20; width: widthHint; height: parent.height-2*y; visible: false
 	Rectangle { id: rect; anchors.fill: parent; color: "gray"; opacity: 0.8; radius: 5 }
@@ -16,8 +16,6 @@ Item {
 		PropertyChanges { target: dock; visible: true }
 		PropertyChanges { target: dock; x: dock.dest; explicit: true }
 	}
-	Connections { target: parent; onWidthChanged: { if (show) x = dock.dest } }
-	onWidthChanged: {if (show) x = dock.dest }
 	transitions: Transition {
 		reversible: true; to: "show"
 		SequentialAnimation {
@@ -26,11 +24,17 @@ Item {
 		}
 	}
 
+	function updateDestination() { dock.dest = dock.parent.width-dock.width+rect.radius }
+	Component.onCompleted: updateDestination()
+	Connections { target: parent; onWidthChanged: { updateDestination() } }
+	onWidthChanged: { updateDestination() }
+	onDestChanged: { if (dock.show) dock.x = dock.dest }
+
 	Rectangle {
 		id: frame
 		x: table.x-1; y: table.y-1
-		width: table.width+2-(table.vScrollVisible? table.scrollArea : 0);
-		height: table.height+2-(table.hScrollVisible ? table.scrollArea : 0);
+		width: table.width+2
+		height: table.height+2
 		border { color: "black"; width: 1 }
 		gradient: Gradient {
 			GradientStop {position: 0.0; color: "#ccc"}
@@ -46,10 +50,8 @@ Item {
 
 		backgroundVisible: false
 
-		readonly property real scrollArea: 12
+		readonly property real scrollArea: 10
 		readonly property real margins: 15
-		readonly property bool hScrollVisible: column.width > viewport.width
-		readonly property bool vScrollVisible: 40*table.rowCount > viewport.height
 		x: margins; y: margins;
 		anchors { fill: parent; margins: table.margins }
 
@@ -76,7 +78,7 @@ Item {
 		}
 		TableViewColumn { role: "name"; width: 0; id: column }
 		rowDelegate: Rectangle {
-			property bool loaded: playlist.loaded == styleData.row
+			property bool loaded: playlist.loaded === styleData.row
 			height: 40
 			color: (0 <= styleData.row && styleData.row < table.rowCount)
 				? styleData.selected ? Qt.rgba(0.4, 0.6, 1.0, 1.0) : (loaded ? "white" : (styleData.alternate ? "#333" :  "#555" ))
@@ -92,12 +94,12 @@ Item {
 					anchors.left: parent.left
 					anchors.right: parent.right
 					font { family: table.nameFontFamily; pixelSize: table.nameFontSize }
-					font.italic: playlist.loaded == styleData.row
-					font.bold: playlist.loaded == styleData.row
+					font.italic: playlist.loaded === styleData.row
+					font.bold: playlist.loaded === styleData.row
 
 					verticalAlignment: Text.AlignVCenter
 					height: 25
-					color: playlist.loaded == styleData.row ? "black" : "white";
+					color: playlist.loaded === styleData.row ? "black" : "white";
 					text: styleData.value;
 					elide: Text.ElideRight
 				}
@@ -121,16 +123,29 @@ Item {
 			backgroundColor: "#555"
 			alternateBackgroundColor: "#333"
 			decrementControl: Item {} incrementControl: Item {} corner: Item {}
-			scrollBarBackground: Item { implicitWidth: table.scrollArea; implicitHeight: table.scrollArea }
+			scrollBarBackground: Rectangle {
+				color: "#ddd"
+				implicitWidth: table.scrollArea; implicitHeight: table.scrollArea
+				x: styleData.horizontal ? -1 : 1
+				y: styleData.horizontal ? 1 : 0
+				Rectangle {
+					visible: styleData.horizontal
+					color: parent.color
+					x: parent.width
+					width: 2
+					height: table.scrollArea
+				}
+			}
 			handle: Item {
 				implicitWidth: table.scrollArea; implicitHeight: table.scrollArea
 				Rectangle {
 					anchors {
-						fill: parent; rightMargin: 2; bottomMargin: 2
-						leftMargin: styleData.horizontal ? 2 : 4
-						topMargin: styleData.horizontal ? 4 : 2
+						margins: 1
+						fill: parent;
+						leftMargin: styleData.horizontal ? 1 : 3
+						topMargin: styleData.horizontal ? 3 : 1
 					}
-					opacity: 0.8; radius: 3; smooth: true; color: "white"
+					opacity: 0.8; radius: 3; smooth: true; color: "black"
 				}
 			}
 		}

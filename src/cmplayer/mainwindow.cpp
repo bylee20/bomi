@@ -1273,10 +1273,10 @@ void MainWindow::reloadSkin() {
 		d->player = d->view->rootObject()->findChild<PlayerItem*>();
 	if (d->player) {
 		d->player->plugTo(&d->engine);
-		if (auto item = d->findItem("history"))
-			item->setProperty("show", AppState::get().history_visible);
 		if (auto item = d->findItem("playlist"))
 			item->setProperty("show", AppState::get().playlist_visible);
+		if (auto item = d->findItem("history"))
+			item->setProperty("show", AppState::get().history_visible);
 		if (auto item = d->findItem("playinfo"))
 			item->setProperty("show", AppState::get().playinfo_visible);
 		if (auto item = d->findItem("logo")) {
