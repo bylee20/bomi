@@ -77,6 +77,9 @@ static const int ReopenEvent = QEvent::User + 1;
 struct AppMac::Data {
 	AppObjC *objc;
 	bool eventsLoaded;
+	IOPMAssertionID aid = 0;
+	CFMutableDictionaryRef prop = 0;
+	CFNumberRef on = 0, off = 0;
 };
 
 AppMac::AppMac(QObject *parent)
@@ -84,9 +87,32 @@ AppMac::AppMac(QObject *parent)
 	d->eventsLoaded = false;
 	d->objc = [[AppObjC alloc] init];
 	qApp->installEventFilter( this );
+
+//	static const int AssertionOn = kIOPMAssertionLevelOn;
+//	static const int AssertionOff = kIOPMAssertionLevelOff;
+
+//	d->on = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &AssertionOn);
+//	d->off = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &AssertionOff);
+//	d->prop = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+//	if (d->on && d->off && d->prop) {
+//		CFDictionarySetValue(d->prop, kIOPMAssertionTypePreventUserIdleSystemSleep, d->off);
+//		CFDictionarySetValue(d->prop, kIOPMAssertionTypePreventUserIdleDisplaySleep, d->off);
+//		CFDictionarySetValue(d->prop, kIOPMAssertionTypePreventSystemSleep, d->off);
+//		CFDictionarySetValue(d->prop, kIOPMAssertionNameKey, CFSTR("CMPlayer"));
+//		if (IOPMAssertionCreateWithProperties(d->prop, &d->aid) != kIOReturnSuccess)
+//			d->aid = 0;
+//	}
+//	if (d->prop)
+//		CFRelease(d->prop);
 }
 
 AppMac::~AppMac() {
+	if (d->aid)
+		IOPMAssertionRelease(d->aid);
+	if (d->on)
+		CFRelease(d->on);
+	if (d->off)
+		CFRelease(d->off);
 	[d->objc release];
 	delete d;
 }
@@ -149,20 +175,19 @@ QStringList AppMac::devices() const {
 }
 
 void AppMac::setScreensaverDisabled(bool disabled) {
-	static bool prev = false;
-	static IOPMAssertionID idle = 0;
-	static IOPMAssertionID display = 0;
-	if (prev == disabled)
+	if (disabled == (d->aid != 0))
 		return;
-	prev = disabled;
-	if (disabled) {
-		IOPMAssertionCreate(kIOPMAssertionTypeNoIdleSleep, kIOPMAssertionLevelOn, &idle);
-		IOPMAssertionCreate(kIOPMAssertionTypeNoDisplaySleep, kIOPMAssertionLevelOn, &display);
-	} else {
-		IOPMAssertionRelease(idle);
-		IOPMAssertionRelease(display);
-		idle = display = 0;
+	if (d->aid) {
+		IOPMAssertionRelease(d->aid);
+		d->aid = 0;
 	}
+	if (disabled)
+		IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep
+			, kIOPMAssertionLevelOn, CFSTR("net.xylosper.CMPlayer.playing"), &d->aid);
+//	const CFNumberRef level = disabled ? d->on : d->off;
+//	IOPMAssertionSetProperty(d->aid, kIOPMAssertionTypePreventUserIdleSystemSleep, level);
+//	IOPMAssertionSetProperty(d->aid, kIOPMAssertionTypePreventUserIdleDisplaySleep, level);
+//	IOPMAssertionSetProperty(d->aid, kIOPMAssertionTypePreventSystemSleep, level);
 }
 
 static OSStatus sendAE(AEEventID EventToSend) {
