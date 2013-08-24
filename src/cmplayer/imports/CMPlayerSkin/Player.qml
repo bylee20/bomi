@@ -13,6 +13,7 @@ Core.Engine {
 		id: msgbox
 		color: "#ddd"
 		opacity: 0.8
+		visible: false
 		anchors.centerIn: parent
 		width: boxmsg.width + pad*2
 		height: boxmsg.height + pad*2
