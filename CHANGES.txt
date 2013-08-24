@@ -1,3 +1,14 @@
+0.7.8
+
+  * Mod: remove '=' in --open and --action (e.g., --action play/pause not --action=play/pause)
+  * Fix: cannot control audio of format unmatched
+  * Fix: playlist and history located in wrong place on resized or initially shown
+  * Fix: 'disable screensaver' didn't work in OS X
+  * Fix: occasional black out of video when new media is played
+  * Fix: cannot parse path which containts '~'
+  * Fix: add a borderline to messagebox
+  * Fix: hide empty messagebox on executed
+
 0.7.7
 
   * New: playback speed in playback information
