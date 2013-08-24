@@ -27,6 +27,8 @@ Core.Engine {
 			font.bold: true
 		}
 		radius: 5
+		border.color: "black"
+		border.width: 1
 	}
 
 	ProgressOsd { id: timeline; value: player.time/player.duration }
