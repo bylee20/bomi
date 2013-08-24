@@ -46,12 +46,12 @@ struct MainWindow::Data {
 	PlayEngine engine;
 	VideoRendererItem renderer;
 	SubtitleRendererItem subtitle;
-	QPoint prevPos;		QTimer hider;
+	QPoint prevPos;
 	Qt::WindowStates winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
 	bool middleClicked = false, moving = false, changingSub = false;
 	bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
 	bool stateChanging = false, loading = false;
-	QTimer loadingTimer;
+	QTimer loadingTimer, hider, initializer;
 	ABRepeater ab = {&engine, &subtitle};
 	QMenu contextMenu;
 	PrefDialog *prefDlg = nullptr;
@@ -444,7 +444,6 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	connect(redo, &QAction::triggered, d->undo, &QUndoStack::redo);
 	d->menu("tool")["undo"]->setEnabled(d->undo->canUndo());
 	d->menu("tool")["redo"]->setEnabled(d->undo->canRedo());
-	QTimer::singleShot(1, this, SLOT(applyPref()));
 
 	d->dontShowMsg = false;
 
@@ -454,6 +453,10 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 		if (d->loading && d->player)
 			d->player->requestMessageBox(tr("Loading ...\nPlease wait for a while."));
 	});
+
+	connect(&d->initializer, &QTimer::timeout, [this] () { applyPref(); cApp.runCommands(); });
+	d->initializer.setSingleShot(true);
+	d->initializer.start(1);
 }
 
 MainWindow::~MainWindow() {

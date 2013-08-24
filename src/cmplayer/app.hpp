@@ -6,30 +6,12 @@
 class QUrl;		class Mrl;
 class MainWindow;	class QMenuBar;
 
-struct Argument {
-	QString name, value;
-	static Argument fromCommand(const QString &cmd) {
-		Argument arg;
-		const int eq = cmd.indexOf('=');
-		if (eq < 0)
-			arg.name = cmd;
-		else {
-			arg.name = cmd.left(eq);
-			arg.value = cmd.mid(eq+1);
-		}
-		return arg;
-	}
-};
-typedef QList<Argument> Arguments;
-
 class App : public QApplication {
 	Q_OBJECT
 public:
 	App(int &argc, char **argv);
 	~App();
 	static QIcon defaultIcon();
-	static Mrl getMrlFromCommandLine();
-	static Arguments parse(const QStringList &cmds);
 	void setWindowTitle(QWidget *w, const QString &title);
 	void setMainWindow(MainWindow *mw);
 	MainWindow *mainWindow() const;
@@ -45,6 +27,7 @@ public:
 	void setScreensaverDisabled(bool disabled);
 	void setUnique(bool unique);
 	bool shutdown();
+	void runCommands();
 public slots:
 	bool sendMessage(const QString &message, int timeout = 5000);
 signals:

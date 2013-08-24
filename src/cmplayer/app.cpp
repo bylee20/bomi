@@ -13,7 +13,67 @@
 
 #define APP_GROUP _L("application")
 
+enum class LineCmd {
+	Unknown,
+	WakeUp,
+	Open,
+	Action,
+	Count
+};
+
+struct CmdInfo {
+	CmdInfo(LineCmd cmd, const char *name, bool hasArg)
+	: cmd(cmd), name(name), hasArg(hasArg) {}
+	CmdInfo() {}
+	LineCmd cmd = LineCmd::Unknown;
+	const char *name = ""; // never nullptr
+	bool hasArg = false;
+};
+
+static CmdInfo cmds[] = {
+	{LineCmd::WakeUp, "wake-up", false},
+	{LineCmd::Open, "open", true},
+	{LineCmd::Action, "action", true}
+};
+
+struct Argument {
+	LineCmd cmd = LineCmd::Unknown;
+	QString value;
+};
+
+typedef QList<Argument> Arguments;
+
+static Arguments parse(const QStringList &cmds) {
+	auto fromCommand = [](const QStringList &cmds, int &cmdidx) {
+		const QString cmd = cmds[cmdidx];
+		if (!cmd.startsWith(_L("--")))
+			return Argument();
+		auto ref = cmd.midRef(2);
+		for (const CmdInfo &info : ::cmds) {
+			if (ref != _L(info.name))
+				continue;
+			Argument arg;
+			arg.cmd = info.cmd;
+			if (info.hasArg && ++cmdidx < cmds.size())
+				arg.value = cmds[cmdidx];
+			return arg;
+		}
+		return Argument();
+	};
+	Arguments args;
+	for (int i=0; i<cmds.size(); ++i) {
+		auto arg = fromCommand(cmds, i);
+		if (arg.cmd == LineCmd::Unknown)
+			qDebug() << "Not valid option:" << cmds[i];
+		else
+			args << arg;
+	}
+	return args;
+}
+
 struct App::Data {
+	Data(App *p): p(p) {}
+	App *p = nullptr;
 	QStringList styleNames;
 #ifdef Q_OS_MAC
 	QMenuBar *mb = new QMenuBar;
@@ -27,21 +87,55 @@ struct App::Data {
 	AppX11 helper;
 #endif
 	LocalConnection connection = {"net.xylosper.CMPlayer", nullptr};
+	Arguments args() const {
+		auto args = p->arguments();
+		args.pop_front();
+		return parse(args);
+	}
+	static QPair<QString, QString> splitEq(const QString &cmd) {
+		QPair<QString,QString> pair;
+		const int eq = cmd.indexOf('=');
+		if (eq < 0)
+			pair.first = cmd;
+		else {
+			pair.first = cmd.left(eq);
+			pair.second = cmd.mid(eq+1);
+		}
+		return pair;
+	}
+	void execute(const Arguments &args) {
+		for (const Argument &arg : args) {
+			switch (arg.cmd) {
+			case LineCmd::WakeUp:
+				main->setVisible(true);
+				main->raise();
+				main->activateWindow();
+				break;
+			case LineCmd::Open: {
+				const Mrl mrl(arg.value);
+				if (!mrl.isEmpty() && main)
+					main->openFromFileManager(mrl);
+				break;
+			} case LineCmd::Action:
+				if (main) {
+					const auto pair = splitEq(arg.value);
+					RootMenu::execute(pair.first, pair.second);
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
 };
 
+
 App::App(int &argc, char **argv)
-: QApplication(argc, argv), d(new Data) {
-	connect(&d->connection, &LocalConnection::messageReceived, this, &App::messageReceived);
-
-	//	actWin = 0;
-	//	peer = new LocalConnection(_L("net.xylosper.CMPlayer"), this);
-	//	connect(peer, SIGNAL(messageReceived(const QString&)), SIGNAL(messageReceived(const QString&)));
-
+: QApplication(argc, argv), d(new Data(this)) {
 	setOrganizationName("xylosper");
 	setOrganizationDomain("xylosper.net");
 	setApplicationName("CMPlayer");
 	setQuitOnLastWindowClosed(false);
-//	setFont(QFont(QString::fromUtf8("나눔 고딕")));
 #ifndef Q_OS_MAC
 	setWindowIcon(defaultIcon());
 #endif
@@ -58,7 +152,6 @@ App::App(int &argc, char **argv)
 		}
 		return names;
 	};
-
 	auto makeStyle = [this]() {
 		Record r(APP_GROUP);
 		auto name = r.value("style", styleName()).toString();
@@ -68,10 +161,9 @@ App::App(int &argc, char **argv)
 			return;
 		setStyle(QStyleFactory::create(name));
 	};
-
 	d->styleNames = makeStyleNameList();
 	makeStyle();
-	connect(this, SIGNAL(messageReceived(QString)), this, SLOT(onMessageReceived(QString)));
+	connect(&d->connection, &LocalConnection::messageReceived, this, &App::onMessageReceived);
 }
 
 App::~App() {
@@ -150,47 +242,22 @@ QMenuBar *App::globalMenuBar() const {
 }
 #endif
 
-Mrl App::getMrlFromCommandLine() {
-	const auto args = parse(arguments());
-	for (const Argument &arg : args) {
-		if (arg.name == _L("open"))
-			return Mrl(arg.value);
-	}
-	return Mrl();
-}
-
-Arguments App::parse(const QStringList &cmds) {
-	Arguments args;
-	for (QString cmd : cmds) {
-		if (cmd.startsWith(_L("--")))
-			args << Argument::fromCommand(cmd.mid(2));
-	}
-	return args;
-}
-
 void App::open(const QString &mrl) {
 	if (!mrl.isEmpty() && d->main)
 		d->main->openMrl(mrl);
 }
 
 void App::onMessageReceived(const QString &message) {
-	const auto args = parse(message.split("[:sep:]"));
-	for (const Argument &arg : args) {
-		if (arg.name == _L("wake-up")) {
-			d->main->setVisible(true);
-			d->main->raise();
-			d->main->activateWindow();
-		} else if (arg.name == _L("open")) {
-			const Mrl mrl(arg.value);
-			if (!mrl.isEmpty() && d->main)
-				d->main->openMrl(mrl);
-		} else if (arg.name == _L("action")) {
-			if (d->main) {
-				const auto a = Argument::fromCommand(arg.value);
-				RootMenu::execute(a.name, a.value);
-			}
-		}
-	}
+	d->execute(parse(message.split("[:sep:]")));
+}
+
+void App::runCommands() {
+	d->execute(d->args());
+//	const auto args = d->args();
+//	const auto mrl = getMrlFromCommandLine();
+//	if (!mrl.isEmpty())
+//		mw.openFromFileManager(mrl);
+
 }
 
 bool App::sendMessage(const QString &message, int timeout) {

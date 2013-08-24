@@ -21,9 +21,6 @@ int main(int argc, char **argv) {
 	MainWindow mw;
 	mw.show();
 	app.setMainWindow(&mw);
-	const auto mrl = app.getMrlFromCommandLine();
-	if (!mrl.isEmpty())
-		mw.openFromFileManager(mrl);
 	qDebug() << "Start main event loop";
 	return app.exec();
 }
