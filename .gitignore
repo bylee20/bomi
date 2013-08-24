@@ -1,3 +1,5 @@
+src/ffmpeg
+src/build-*
 *~
 .qmake.cache
 *.o
