@@ -24,18 +24,12 @@ macx {
     TARGET = CMPlayer
     BREW = /usr/local/Cellar
     LLIB_DIR = /usr/local/lib
-#    LIBS += $${LIB_DIR}/libchardet.a $${LIB_DIR}/libswresample.a $${LIB_DIR}/libavcodec.a $${LIB_DIR}/libavformat.a \
-#	$${LIB_DIR}/libavutil.a $${LIB_DIR}/libswscale.a $${LIB_DIR}/libcmplayer_mpv.a \
-#	$${LLIB_DIR}/libmpg123.a $${LLIB_DIR}/libquvi.a $${LLIB_DIR}/liblua52.a \
-#	$${LLIB_DIR}/libdvdread.a $${LLIB_DIR}/libcdio.a $${LLIB_DIR}/libcdio_paranoia.a \
-#	$${LLIB_DIR}/libcdio_cdda.a $${LLIB_DIR}/libdvdcss.a -lcurl -liconv \
-    LIBS += -L/usr/local/lib -liconv -framework IOSurface \
+    LIBS += -L/usr/local/lib -liconv -lfribidi -llua -ldvdcss -lcurl -L/usr/X11/lib -lfreetype -lfontconfig -framework IOSurface \
 	-framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
 	-framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
 	-framework IOKit -framework Carbon
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
-#    INCLUDEPATH += /opt/local/include /usr/local/include
 } else:unix {
     QT += dbus x11extras
     QMAKE_CC = "gcc -std=c99 -w"
@@ -45,10 +39,6 @@ macx {
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }
-
-# -lchardet -lavformat -lavcodec -lavutil -lswresample -lswscale -lcmplayer_mpv -lmpg123 -ldvdread \
-#	-liconv -lquvi -lcdio
-
 
 QML_IMPORT_PATH += imports
 

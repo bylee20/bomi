@@ -11,7 +11,7 @@ install_dir := sh install_dir.sh
 CXX ?= g++
 
 ifeq ($(os),osx)
-	QT_PATH = /Users/xylosper/Qt5.0.1/5.0.1/clang_64
+	QT_PATH = /Users/xylosper/Qt5.1.0/5.1.0/clang_64
 	QMAKE ?= $(QT_PATH)/bin/qmake -spec macx-clang
 	MACDEPLOYQT ?= $(QT_PATH)/bin/macdeployqt
 	cmplayer_exec := CMPlayer
@@ -39,7 +39,11 @@ ifeq ($(os),osx)
 	cp -r build/skins $(cmplayer_exec_path)
 	cp -r build/imports $(cmplayer_exec_path)
 	cp -r $(QT_PATH)/qml/QtQuick.2 $(cmplayer_exec_path)/imports
+	install -d $(cmplayer_exec_path)/imports/QtQuick
+	cp -r $(QT_PATH)/qml/QtQuick/Controls $(cmplayer_exec_path)/imports/QtQuick
+	cp -r $(QT_PATH)/qml/QtQuick/Layouts $(cmplayer_exec_path)/imports/QtQuick
 	cp -r /usr/local/Cellar/libquvi/0.4.1/libquvi-scripts/share/libquvi-scripts/lua $(cmplayer_exec_path)
+	rm `find $(cmplayer_exec_path) -name '*_debug.dylib'`
 	cd build && $(MACDEPLOYQT) $(cmplayer_exec).app -dmg
 endif
 
