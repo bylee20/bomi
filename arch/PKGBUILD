@@ -3,7 +3,7 @@
 
 pkgname=cmplayer
 pkgver=0.7.8
-pkgrel=1
+pkgrel=2
 pkgdesc="Powerful and Easy-to-use Multimedia Player"
 arch=('i686' 'x86_64')
 url="http://$pkgname.github.io"
@@ -16,6 +16,8 @@ md5sums=('388c16c09c320fe4db3c5d59dba1e780')
 build() {
   export MAKE="make -j5"
   cd "$srcdir/$pkgname-$pkgver"
+  sed -i 's/--open=/--open /' cmplayer-opendvd.desktop
+  sed -i 's/--open=/--open /' cmplayer.desktop
   ./build-libchardet
   ./build-mpv
   make PREFIX=/usr cmplayer

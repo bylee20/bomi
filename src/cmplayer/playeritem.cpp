@@ -95,7 +95,7 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 			setDuration(m_engine->duration());
 		}
 	});
-
+	plug(m_engine, &PlayEngine::stateChanged, [this] (EngineState state) { setState((State)state); });
 	plug(m_engine, &PlayEngine::videoFormatChanged, [this] () {
 		m_video->setVideo(m_engine);
 		emit videoChanged();
@@ -249,14 +249,10 @@ QString PlayerItem::stateText() const {
 		return tr("Stopped");
 	case Finished:
 		return tr("Finished");
-	case Buffering:
-		return tr("Buffering");
-	case Opening:
-		return tr("Opening");
+	case Loading:
+		return tr("Loading");
 	case Error:
 		return tr("Error");
-	case Preparing:
-		return tr("Preparing");
 	default:
 		return tr("Paused");
 	}

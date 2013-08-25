@@ -1,6 +1,7 @@
 #ifndef PLAYERITEM_HPP
 #define PLAYERITEM_HPP
 
+#include "global.hpp"
 #include "stdafx.hpp"
 #include "playinfoitem.hpp"
 #include "skin.hpp"
@@ -31,7 +32,14 @@ class PlayerItem : public QQuickItem, public Skin {
 //	Q_PROPERTY(bool paused READ isPaused NOTIFY pausedChanged)
 //	Q_PROPERTY(bool stopped READ isStopped NOTIFY stoppedCahnged)
 public:
-	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Opening = 16, Buffering = 32, Error = 64, Preparing = 128};
+	enum State {
+		Stopped = EngineStopped,
+		Playing = EnginePlaying,
+		Paused = EnginePaused,
+		Finished = EngineFinished,
+		Loading = EngineLoading,
+		Error = EngineError
+	};
 	double avgsync() const;
 	double avgfps() const;
 	Q_INVOKABLE double bps(double fps) const;
