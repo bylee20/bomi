@@ -6,5 +6,5 @@ Actions=open;
 [Desktop Action open]
 Name=Open Video DVD with CMPlayer
 Name[pl]=Otwórz Video DVD z CMPlayer
-Exec=cmplayer --wake-up --open=dvd://%d
+Exec=cmplayer --wake-up --open dvd://%d
 Icon=cmplayer
