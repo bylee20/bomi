@@ -20,29 +20,43 @@ bool HwAcc::supports(AVCodecID codec) {
 #endif
 }
 
+struct CodecInfo {
+	CodecInfo(AVCodecID id = AV_CODEC_ID_NONE, const char *name = "unknown")
+	: id(id), name(name) {}
+	AVCodecID id; const char *name;
+};
+
+static const CodecInfo codecs[] = {
+	{AV_CODEC_ID_MPEG1VIDEO,	"mpeg1video"},
+	{AV_CODEC_ID_MPEG2VIDEO,	"mpeg2video"},
+	{AV_CODEC_ID_MPEG4,			"mpeg4"},
+	{AV_CODEC_ID_WMV3,			"wmv3"},
+	{AV_CODEC_ID_VC1,			"vc1"},
+	{AV_CODEC_ID_H264,			"h264"}
+};
+
 const char *HwAcc::codecName(int id) {
-	switch (id) {
-	case AV_CODEC_ID_H264:
-		return "h264";
-	case AV_CODEC_ID_MPEG1VIDEO:
-		return "mpeg1video";
-	case AV_CODEC_ID_MPEG2VIDEO:
-		return "mpeg2video";
-	case AV_CODEC_ID_MPEG4:
-		return "mpeg4";
-	case AV_CODEC_ID_WMV3:
-		return "wmv3";
-	case AV_CODEC_ID_VC1:
-		return "vc1";
-	default:
-		return nullptr;
+	for (auto &info : codecs) {
+		if (info.id == id)
+			return info.name;
 	}
+	return "unknow";
+}
+
+AVCodecID HwAcc::codecId(const char *name) {
+	for (auto &info : codecs) {
+		if (qstrcmp(info.name, name) == 0)
+			return info.id;
+	}
+	return AV_CODEC_ID_NONE;
 }
 
 QList<AVCodecID> HwAcc::fullCodecList() {
-	static const QList<AVCodecID> list = QList<AVCodecID>()
-		<< AV_CODEC_ID_MPEG1VIDEO << AV_CODEC_ID_MPEG2VIDEO << AV_CODEC_ID_MPEG4
-		<< AV_CODEC_ID_WMV3 << AV_CODEC_ID_VC1 << AV_CODEC_ID_H264;
+	static QList<AVCodecID> list;
+	if (list.isEmpty()) {
+		for (auto &info : codecs)
+			list << info.id;
+	}
 	 return list;
 }
 

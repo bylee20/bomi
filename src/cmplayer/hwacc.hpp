@@ -46,7 +46,7 @@ public:
 	static QList<AVCodecID> fullCodecList();
 	static bool supports(AVCodecID codec);
 	static const char *codecName(int id);
-	static const char *name();
+	static AVCodecID codecId(const char *name);
 	virtual mp_image *getImage(mp_image *mpi) = 0;
 	virtual Type type() const = 0;
 	mp_image *nullImage(uint imgfmt, int width, int height, void *arg = nullptr, void(*free)(void*) = nullptr) const;

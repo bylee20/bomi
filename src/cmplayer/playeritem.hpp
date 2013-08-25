@@ -3,15 +3,16 @@
 
 #include "global.hpp"
 #include "stdafx.hpp"
-#include "playinfoitem.hpp"
 #include "skin.hpp"
 
-class VideoRendererItem;
-class PlayEngine;
+class VideoRendererItem;		class PlayEngine;
+class AvInfoObject;				class MediaInfoObject;
+class PlaylistModel;
 
 class PlayerItem : public QQuickItem, public Skin {
 	Q_OBJECT
 	Q_ENUMS(State)
+	Q_ENUMS(HwAcc)
 	Q_PROPERTY(QString osdMessage READ osdMessage)
 	Q_PROPERTY(QString boxMessage READ boxMessage)
 	Q_PROPERTY(MediaInfoObject *media READ media NOTIFY mediaChanged)
@@ -29,6 +30,7 @@ class PlayerItem : public QQuickItem, public Skin {
 	Q_PROPERTY(bool playing READ isPlaying NOTIFY playingChanged)
 	Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
 	Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
+	Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated)
 //	Q_PROPERTY(bool paused READ isPaused NOTIFY pausedChanged)
 //	Q_PROPERTY(bool stopped READ isStopped NOTIFY stoppedCahnged)
 public:
@@ -40,6 +42,8 @@ public:
 		Loading = EngineLoading,
 		Error = EngineError
 	};
+	enum HwAcc { Unavailable, Inactivated, Activated };
+
 	double avgsync() const;
 	double avgfps() const;
 	Q_INVOKABLE double bps(double fps) const;
@@ -54,6 +58,7 @@ public:
 	void setPosition(int pos) {if (m_position != pos) emit tick(m_position = pos);}
 	void setState(State state);
 	double volumeNormalizer() const;
+	bool isVolumeNormalizerActivated() const;
 	QString stateText() const;
 	int volume() const {return m_volume;}
 	bool isMuted() const {return m_muted;}
@@ -100,8 +105,8 @@ private:
 	Data *d;
 	int m_duration = 0, m_position = 0, m_volume = 0;
 	State m_state = Stopped;
-	AvInfoObject *m_audio = new AvInfoObject(this), *m_video = new AvInfoObject(this);
-	MediaInfoObject *m_media = new MediaInfoObject(this);
+	AvInfoObject *m_audio, *m_video;
+	MediaInfoObject *m_media;
 	VideoRendererItem *m_renderer = nullptr;
 	PlayEngine *m_engine = nullptr;
 	QString m_omsg, m_bmsg;

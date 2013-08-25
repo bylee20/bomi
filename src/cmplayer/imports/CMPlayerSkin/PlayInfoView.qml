@@ -101,11 +101,23 @@ Item {
 				font.family: wrapper.fontFamily
 				function update() {
 					var cpu = Util.cpu; var mem = Util.memory; var fps = player.avgfps;
-					text = qsTr("CPU Usage: %1%(avg. %2%/core)\nRAM Usage: %3MB(%4% of %5GB)\nAudio/Video Sync: %6ms\nAvg. Frame Rate: %7fps(%8MB/s)\nVolume Normalizer: %9%")
-					.arg(cpu.toFixed(1)).arg((cpu/Util.cores).toFixed(1))
-					.arg(mem.toFixed(1)).arg((mem/Util.totalMemory*100.0).toFixed(1)).arg((Util.totalMemory/1024.0).toFixed(2))
-					.arg(player.avgsync.toFixed(1)).arg(fps.toFixed(3)).arg((player.bps(fps)/(8*1024*1024)).toFixed(2))
-					.arg((player.volumeNormalizer*100.0).toFixed(1));
+					var txt = qsTr("CPU Usage: %1%(avg. %2%/core)")
+						.arg(cpu.toFixed(1))
+						.arg((cpu/Util.cores).toFixed(1));
+					txt += '\n';
+					txt += qsTr("RAM Usage: %3MB(%4% of %5GB)")
+						.arg(mem.toFixed(1))
+						.arg((mem/Util.totalMemory*100.0).toFixed(1))
+						.arg((Util.totalMemory/1024.0).toFixed(2));
+					txt += '\n';
+					txt += qsTr("Audio/Video Sync: %6ms").arg(player.avgsync.toFixed(1));
+					txt += '\n';
+					txt += qsTr("Avg. Frame Rate: %7fps(%8MB/s)")
+						.arg(fps.toFixed(3)).arg((player.bps(fps)/(8*1024*1024)).toFixed(2));
+					txt += '\n';
+					txt += qsTr("Volume Normalizer: %1")
+						.arg(player.volumeNormalizerActivated ? ((player.volumeNormalizer*100.0).toFixed(1) + "%") : qsTr("Inactivated"));
+					text = txt;
 				}
 				color: "yellow"
 				style: Text.Outline
@@ -122,22 +134,22 @@ Item {
 				font.family: wrapper.fontFamily
 				function update() {
 					var txt = qsTr("Video Codec: %1").arg(player.video.codec);
-					txt += "\n";
+					txt += '\n';
 					txt += qsTr("Input : %1 %2x%3 %4fps(%5MB/s)")
-					.arg(player.video.input.type)
-					.arg(player.video.input.size.width)
-					.arg(player.video.input.size.height)
-					.arg(player.video.input.fps.toFixed(3))
-					.arg((player.video.input.bps/(8*1024*1024)).toFixed(2));
-					txt += "\n";
+						.arg(player.video.input.type)
+						.arg(player.video.input.size.width)
+						.arg(player.video.input.size.height)
+						.arg(player.video.input.fps.toFixed(3))
+						.arg((player.video.input.bps/(8*1024*1024)).toFixed(2));
+					txt += '\n';
 					txt += qsTr("Output: %1 %2x%3 %4fps(%5MB/s)")
-					.arg(player.video.output.type)
-					.arg(player.video.output.size.width)
-					.arg(player.video.output.size.height)
-					.arg(player.video.output.fps.toFixed(3))
-					.arg((player.video.output.bps/(8*1024*1024)).toFixed(2));
-					if (player.video.isHardwareAccelerated)
-						txt += "\n" + qsTr("Hardware Acceleration") + ": " + qsTr("Activated");
+						.arg(player.video.output.type)
+						.arg(player.video.output.size.width)
+						.arg(player.video.output.size.height)
+						.arg(player.video.output.fps.toFixed(3))
+						.arg((player.video.output.bps/(8*1024*1024)).toFixed(2));
+					txt += '\n';
+					txt += qsTr("Hardware Acceleration: %1").arg(player.video.hardwareAccelerationText);
 					text = txt
 				}
 				color: "yellow"
@@ -155,19 +167,21 @@ Item {
 				font.pixelSize: wrapper.fontSize
 				font.family: wrapper.fontFamily
 				function update() {
-					var txt = qsTr("Audio Codec: %1\n").arg(player.audio.codec);
-					txt += qsTr("Input : %1 %2kbps %3kHz %4ch %5bits\n")
-					.arg(player.audio.input.type)
-					.arg((player.audio.input.bps*1e-3).toFixed(0))
-					.arg(player.audio.input.samplerate)
-					.arg(player.audio.input.channels)
-					.arg(player.audio.input.bits);
+					var txt = qsTr("Audio Codec: %1").arg(player.audio.codec);
+					txt += '\n';
+					txt += qsTr("Input : %1 %2kbps %3kHz %4ch %5bits")
+						.arg(player.audio.input.type)
+						.arg((player.audio.input.bps*1e-3).toFixed(0))
+						.arg(player.audio.input.samplerate)
+						.arg(player.audio.input.channels)
+						.arg(player.audio.input.bits);
+					txt += '\n';
 					txt += qsTr("Output: %1 %2kbps %3kHz %4ch %5bits")
-					.arg(player.audio.output.type)
-					.arg((player.audio.output.bps*1e-3).toFixed(0))
-					.arg(player.audio.output.samplerate)
-					.arg(player.audio.output.channels)
-					.arg(player.audio.output.bits);
+						.arg(player.audio.output.type)
+						.arg((player.audio.output.bps*1e-3).toFixed(0))
+						.arg(player.audio.output.samplerate)
+						.arg(player.audio.output.channels)
+						.arg(player.audio.output.bits);
 					text = txt
 				}
 				color: "yellow"
