@@ -4,7 +4,7 @@ args="--disable-encoding --disable-libguess --disable-terminfo --disable-termcap
   --disable-lirc --disable-lircc --disable-joystick --disable-vm --disable-xf86keysym --disable-radio \
   --disable-radio-capture --disable-radio-v4l2 --disable-tv --disable-tv-v4l2 --disable-pvr \
   --disable-smb --enable-libquvi4 --disable-libquvi9 --disable-lcms2 --disable-vcd --disable-bluray --enable-dvdread \
-  --disable-enca --disable-macosx-bundle --enable-pthreads  \
+  --disable-enca --enable-pthreads  \
   --disable-rpath --disable-libpostproc --disable-libavdevice --disable-libavfilter --disable-vf-lavfi --disable-af-lavfi --disable-mng \
   --disable-jpeg --enable-libcdio --disable-ladspa --disable-libbs2b --enable-mpg123 --disable-libavresample \
   --disable-gl --disable-caca --disable-direct3d --disable-sdl --disable-sdl2 --disable-xv --disable-vdpau \
