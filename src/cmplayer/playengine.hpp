@@ -84,8 +84,8 @@ public:
 	bool frameDrop() const {return m_framedrop;}
 	bool isHwAccActivated() const;
 	void setFrameDrop(bool on) {tellmp("frame_drop", (m_framedrop = on) ? 1 : 0);}
-	void setVolumeNormalized(bool on);
-	void setTempoScaled(bool on);
+	void setVolumeNormalizerActivated(bool on);
+	void setTempoScalerActivated(bool on);
 	bool isVolumeNormalized() const;
 	bool isTempoScaled() const;
 	double fps() const;
@@ -107,15 +107,15 @@ public:
 	double preamp() const {return m_preamp;}
 	StreamList audioStreams() const {return m_audioStreams;}
 	void setCurrentAudioStream(int id) {setmp("audio", id);}
-	void setVolumeNormalizer(double length, double target, double silence, double min, double max);
+	void setVolumeNormalizerOption(double length, double target, double silence, double min, double max);
 	void addSubtitleStream(const QString &fileName, const QString &enc);
 	void removeSubtitleStream(int id);
 	void setSubtitleStreamsVisible(bool visible);
 	bool isSubtitleStreamsVisible() const {return m_subtitleStreamsVisible;}
 public slots:
-	void setVolume(int volume) {if (_Change(m_volume, qBound(0, volume, 100))) {setMpVolume(); emit volumeChanged(m_volume);}}
-	void setPreamp(double preamp) {if (_ChangeZ(m_preamp, qBound(0.0, preamp, 10.0))) {	setMpVolume();	emit preampChanged(m_preamp);}}
-	void setMuted(bool muted) {if (_Change(m_muted, muted)) {setMpVolume(); emit mutedChanged(m_muted);}}
+	void setVolume(int volume) {if (_Change(m_volume, qBound(0, volume, 100))) {updateAudioLevel(); emit volumeChanged(m_volume);}}
+	void setPreamp(double preamp) {if (_ChangeZ(m_preamp, qBound(0.0, preamp, 10.0))) {	updateAudioLevel();	emit preampChanged(m_preamp);}}
+	void setMuted(bool muted) {if (_Change(m_muted, muted)) {updateAudioLevel(); emit mutedChanged(m_muted);}}
 	void setVideoRenderer(VideoRendererItem *renderer);
 	void play();
 	void stop();
@@ -127,7 +127,7 @@ public slots:
 	void relativeSeek(int pos);
 signals:
 	void tempoScaledChanged(bool on);
-	void volumeNormalizedChanged(bool on);
+	void volumeNormalizerActivatedChanged(bool on);
 	void started(Mrl mrl);
 	void stopped(Mrl mrl, int pos, int duration);
 	void finished(Mrl mrl);
@@ -159,7 +159,7 @@ private:
 	void setmp(const char *name, int value);
 	void setmp(const char *name, float value);
 	void setmp(const char *name, double value);
-	void setMpVolume();
+	void updateAudioLevel();
 	QPoint mapToFrameFromTop(const QPoint &pos);
 	void tellmp(const QString &cmd);
 	void tellmp(const QString &cmd, const QVariant &arg) {tellmp(cmd % _L(' ') % arg.toString());}

@@ -107,7 +107,9 @@ HEADERS += playengine.hpp \
     hwacc_vaapi.hpp \
     hwacc_vdpau.hpp \
     hwacc_vda.hpp \
-    textureshader.hpp
+    textureshader.hpp \
+    tmp.hpp \
+    audiofilter.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -169,7 +171,8 @@ SOURCES += main.cpp \
     hwacc_vaapi.cpp \
     hwacc_vdpau.cpp \
     hwacc_vda.cpp \
-    textureshader.cpp
+    textureshader.cpp \
+    audiofilter.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

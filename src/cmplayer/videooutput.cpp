@@ -79,7 +79,7 @@ void VideoOutput::setHwAcc(HwAcc *acc) {
 
 int VideoOutput::preinit(struct vo *vo) {
 	auto priv = static_cast<cmplayer_vo_priv*>(vo->priv);
-	priv->vo = (VideoOutput*)(void*)(quintptr)QString::fromLatin1(priv->address).toULongLong();
+	priv->vo = address_cast<VideoOutput*>(priv->address);
 	return 0;
 }
 

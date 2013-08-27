@@ -144,8 +144,7 @@ void PlayEngine::setmp(const char *name, float value) {
 }
 
 double PlayEngine::volumeNormalizer() const {
-	auto amp = d->audio->normalizer();
-	return amp < 0 ? 1.0 : amp;
+	auto gain = d->audio->gain(); return gain < 0 ? 1.0 : gain;
 }
 
 bool PlayEngine::isHwAccActivated() const {
@@ -524,8 +523,8 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	return error;
 }
 
-void PlayEngine::setMpVolume() {
-	d->audio->setVolume(m_muted ? 0.0 : qBound(0.0, m_preamp*m_volume*0.01, 10.0));
+void PlayEngine::updateAudioLevel() {
+	d->audio->setLevel(m_muted ? 0.0 : qBound(0.0, m_preamp*m_volume*0.01, 10.0));
 }
 
 void PlayEngine::run() {
@@ -760,13 +759,13 @@ VideoFormat PlayEngine::videoFormat() const {
 	return d->videoFormat;
 }
 
-void PlayEngine::setVolumeNormalized(bool on) {
-	if (d->audio->setNormalizer(on))
-		emit volumeNormalizedChanged(on);
+void PlayEngine::setVolumeNormalizerActivated(bool on) {
+	if (d->audio->setNormalizerActivated(on))
+		emit volumeNormalizerActivatedChanged(on);
 }
 
-void PlayEngine::setTempoScaled(bool on) {
-	if (d->audio->setScaletempo(on)) {
+void PlayEngine::setTempoScalerActivated(bool on) {
+	if (d->audio->setTempoScalerActivated(on)) {
 		if (d->playing)
 			d->enqueue<int>(MpResetAudioChain);
 		emit tempoScaledChanged(on);
@@ -774,17 +773,17 @@ void PlayEngine::setTempoScaled(bool on) {
 }
 
 bool PlayEngine::isVolumeNormalized() const {
-	return d->audio->normalizer() > 0;
+	return d->audio->isNormalizerActivated();
 }
 
 bool PlayEngine::isTempoScaled() const {
-	return d->audio->scaletempo();
+	return d->audio->isTempoScalerActivated();
 }
 
 void PlayEngine::stop() {
 	tellmp("stop");
 }
 
-void PlayEngine::setVolumeNormalizer(double length, double target, double silence, double min, double max) {
-	d->audio->setNormalizer(length, target, silence, min, max);
+void PlayEngine::setVolumeNormalizerOption(double length, double target, double silence, double min, double max) {
+	d->audio->setNormalizerOption(length, target, silence, min, max);
 }

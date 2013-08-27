@@ -293,7 +293,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 		d->stateChanging = false;
 	});
 	connect(&d->engine, &PlayEngine::tick, &d->subtitle, &SubtitleRendererItem::render);
-	connect(&d->engine, &PlayEngine::volumeNormalizedChanged, d->menu("audio")["normalizer"], &QAction::setChecked);
+	connect(&d->engine, &PlayEngine::volumeNormalizerActivatedChanged, d->menu("audio")["normalizer"], &QAction::setChecked);
 	connect(&d->engine, &PlayEngine::tempoScaledChanged, d->menu("audio")["tempo-scaler"], &QAction::setChecked);
 	connect(&d->engine, &PlayEngine::mutedChanged, d->menu("audio")["mute"], &QAction::setChecked);
 	connect(&d->recent, &RecentInfo::openListChanged, this, &MainWindow::updateRecentActions);
@@ -381,8 +381,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->engine.setVolume(as.audio_volume);
 	d->engine.setMuted(as.audio_muted);
 	d->engine.setPreamp(as.audio_preamp);
-	d->engine.setVolumeNormalized(as.audio_normalizer);
-	d->engine.setTempoScaled(as.audio_scaletempo);
+	d->engine.setVolumeNormalizerActivated(as.audio_normalizer);
+	d->engine.setTempoScalerActivated(as.audio_scaletempo);
 
 	d->renderer.setOffset(as.video_offset);
 	d->renderer.setEffects((VideoRendererItem::Effects)as.video_effects);
@@ -700,7 +700,7 @@ void MainWindow::connectMenus() {
 	connect(audio["normalizer"], &QAction::triggered, [this] (bool on) {
 		if (on != d->engine.isVolumeNormalized())
 			d->push(on, d->engine.isVolumeNormalized(), [this] (bool on) {
-				d->engine.setVolumeNormalized(on);
+				d->engine.setVolumeNormalizerActivated(on);
 				showMessage(tr("Volume Normalizer"), on);
 				d->menu("audio")["normalizer"]->setChecked(on);
 			});
@@ -708,7 +708,7 @@ void MainWindow::connectMenus() {
 	connect(audio["tempo-scaler"], &QAction::triggered, [this] (bool on) {
 		if (on != d->engine.isTempoScaled())
 			d->push(on, d->engine.isTempoScaled(), [this] (bool on) {
-				d->engine.setTempoScaled(on);
+				d->engine.setTempoScalerActivated(on);
 				showMessage(tr("Tempo Scaler"), on);
 				d->menu("audio")["tempo-scaler"]->setChecked(on);
 			});
@@ -1301,7 +1301,7 @@ void MainWindow::applyPref() {
 	Translator::load(p.locale);
 	d->history.setRememberImage(p.remember_image);
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
-	d->engine.setVolumeNormalizer(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
+	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
 	d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
 	SubtitleParser::setMsPerCharactor(p.ms_per_char);

@@ -63,6 +63,12 @@ static inline QString _GetOpenFileName(QWidget *p, const QString &t, const QStri
 static inline QString _GetSaveFileName(QWidget *p, const QString &t, const QString &dir, const QString &f) {
 	return QFileDialog::getSaveFileName(p, t, dir, f, 0);
 }
+template<typename T> static typename std::enable_if<std::is_pointer<T>::value, T>::type address_cast(const char *address, int base = 10) {
+	bool ok = false;
+	const quintptr ptr = QString::fromLatin1(address).toULongLong(&ok, base);
+	return ok ? (T)(void*)(ptr) : (T)nullptr;
+}
+
 }
 
 using namespace Pch;

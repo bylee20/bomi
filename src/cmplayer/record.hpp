@@ -4,14 +4,12 @@
 #include "stdafx.hpp"
 #include "colorproperty.hpp"
 #include "enums.hpp"
+#include <type_traits>
 
 template <typename T> static inline T fromVariant(const QVariant &data) {return data.value<T>();}
 template <typename T> static inline QVariant toVariant(const T &t) {return QVariant::fromValue(t);}
 
 enum class RecordType : quint32 {Normal, Enum, List};
-
-template <typename T1, typename T2> struct IsSame {constexpr static bool value = false;};
-template <typename T> struct IsSame<T, T> {constexpr static bool value = true;};
 
 template <typename T>
 struct RecordInfo {
@@ -29,8 +27,9 @@ struct RecordInfo<QStringList> {
 
 template <typename T>
 struct RecordInfo<QList<T> > {
-	constexpr static RecordType type = IsSame<T, QVariant>::value ? RecordType::Normal : RecordType::List;
-	constexpr static bool builtIn = IsSame<T, QVariant>::value;
+	constexpr static bool builtIn = std::is_same<T, QVariant>::value;
+	constexpr static RecordType type = builtIn ? RecordType::Normal : RecordType::List;
+
 };
 
 template <typename T, RecordType type = RecordInfo<T>::type, bool builtIn = RecordInfo<T>::builtIn>
