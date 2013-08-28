@@ -16,7 +16,7 @@ bool HwAcc::supports(AVCodecID codec) {
 	return codec == AV_CODEC_ID_H264;
 #endif
 #ifdef Q_OS_LINUX
-	return VaApi::find(codec) != nullptr;
+	return VaApi::codec(codec) != nullptr;
 #endif
 }
 
@@ -96,7 +96,7 @@ int HwAcc::init(lavc_ctx *ctx) {
 	HwAcc *acc = nullptr;
 #ifdef Q_OS_LINUX
 	if (format[0] == IMGFMT_VAAPI)
-		acc = new HwAccVaApiGLX(ctx->avctx->codec_id);
+		acc = new HwAccVaApi(ctx->avctx->codec_id);
 //	else if (format[0] == IMGFMT_VDPAU)
 //		acc = new HwAccVdpau(ctx->avctx->codec_id);
 #endif

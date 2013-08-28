@@ -34,6 +34,7 @@ private:
 	static void flipPage(struct vo *vo);
 	static int queryFormat(struct vo *vo, quint32 format);
 	static void drawImage(struct vo *vo, mp_image *mpi);
+	static void getBufferedFrame(struct vo *vo, bool eof);
 	struct Data;
 	Data *d;
 	friend vo_driver create_driver();

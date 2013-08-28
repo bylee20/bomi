@@ -36,13 +36,16 @@ vo_driver create_driver() {
 	info.comment = "";
 
 	static vo_driver driver;
+	memset(&driver, 0, sizeof(driver));
 	driver.info = &info;
+	driver.buffer_frames = true;
 	driver.preinit = VideoOutput::preinit;
 	driver.reconfig = VideoOutput::reconfig;
 	driver.control = VideoOutput::control;
 	driver.draw_osd = VideoOutput::drawOsd;
 	driver.flip_page = VideoOutput::flipPage;
 	driver.query_format = VideoOutput::queryFormat;
+	driver.get_buffered_frame = VideoOutput::getBufferedFrame;
 	driver.draw_image = VideoOutput::drawImage;
 	driver.uninit = VideoOutput::uninit;
 	driver.options = options;
@@ -64,6 +67,9 @@ struct VideoOutput::Data {
 	HwAcc *acc = nullptr;
 	mp_csp colorspace = MP_CSP_AUTO;
 	mp_csp_levels range = MP_CSP_LEVELS_AUTO;
+	QLinkedList<VideoFrame> frames;
+	bool deinterlace = false;
+	double prevPts = MP_NOPTS_VALUE;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -110,6 +116,17 @@ int VideoOutput::reconfig(vo *vo, mp_image_params *params, int flags) {
 
 HwAcc *VideoOutput::hwAcc() const {return d->acc;}
 
+void VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) {
+	auto v = priv(vo); auto d = v->d;
+	vo->frame_loaded = !d->frames.isEmpty();
+	if (vo->frame_loaded) {
+		d->frame = d->frames.takeFirst();
+		vo->next_pts = d->frame.pts();
+		if (!d->frames.isEmpty())
+			vo->next_pts2 = d->frames.front().pts();
+	}
+}
+
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto v = priv(vo); auto d = v->d;
 	auto img = mpi;
@@ -117,10 +134,24 @@ void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 		img = d->acc->getImage(mpi);
 	if (d->formatChanged || (d->formatChanged = !d->format.compare(img)))
 		emit v->formatChanged(d->format = VideoFormat(img, d->dest_w, d->dest_h));
-	d->frame = VideoFrame(img, d->format);
+	static const int field[] = {VideoFrame::Top, VideoFrame::Bottom};
+	const bool deint = d->deinterlace && (img->fields & MP_IMGFIELD_INTERLACED);
+	const double pts = img->pts;
+	VideoFrame frame(img, d->format);
+	frame.setPts(pts);
+	frame.setField(deint ? field[!(img->fields & MP_IMGFIELD_TOP_FIRST)] : (VideoFrame::Last | VideoFrame::Picture));
+	d->frames.append(frame);
+
+	if (deint) {
+		frame.setField(field[!!(img->fields & MP_IMGFIELD_TOP_FIRST)] | VideoFrame::Last);
+		const auto diff = (pts - d->prevPts);
+		if (d->prevPts != MP_NOPTS_VALUE && 0.0 < diff && diff < 0.5)
+			frame.setPts(pts + 0.5*diff);
+		d->frames.append(frame);
+	}
+
 	if (img != mpi) // new image is allocated, unref it
 		mp_image_unrefp(&img);
-	d->flip = true;
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
@@ -131,12 +162,25 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 			d->renderer->present(d->frame, d->upsideDown, d->formatChanged);
 			d->formatChanged = false;
 		}
-		return VO_TRUE;
-	case VOCTRL_GET_HWDEC_INFO: {
-		auto info = static_cast<mp_hwdec_info*>(data);
-		info->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);
-		return VO_TRUE;
-	} default:
+		return true;
+	case VOCTRL_GET_HWDEC_INFO:
+		static_cast<mp_hwdec_info*>(data)->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);
+		return true;
+	case VOCTRL_NEWFRAME:
+		d->flip = true;
+		return true;
+	case VOCTRL_SKIPFRAME:
+		d->flip = false;
+		return true;
+	case VOCTRL_RESET:
+		d->format = VideoFormat();
+		d->frame = VideoFrame();
+		d->frames.clear();
+		d->prevPts = MP_NOPTS_VALUE;
+		d->formatChanged = true;
+		d->flip = false;
+		return true;
+	default:
 		return VO_NOTIMPL;
 	}
 }

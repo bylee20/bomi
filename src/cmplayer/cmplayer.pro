@@ -10,7 +10,7 @@ precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
-LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavformat -lavutil \
+LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavfilter -lpostproc -lavformat -lavutil \
         -lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz
 
 macx {

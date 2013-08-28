@@ -334,6 +334,78 @@ struct MesaY422Shader : public TextureShader {
 	}
 };
 
+struct VaApiDeinterlacer : public VaApiStatusChecker {
+	VAContextID m_context = VA_INVALID_ID;
+	VAConfigID m_config = VA_INVALID_ID;
+	VAStatus m_status = VA_STATUS_SUCCESS;
+	VABufferID m_deinterlacer = VA_INVALID_ID;
+	QVector<VAProcColorStandardType> m_inputColors, m_outputColors;
+	QVector<VASurfaceID> m_forwardReferencess, m_backwardReferences;
+	VaApiDeinterlacer() {
+		auto dpy = VaApi::glx();
+		auto filter = VaApi::filter(VAProcFilterDeinterlacing);
+		if (!filter || filter->algorithms().isEmpty())
+			{isSuccess(VA_STATUS_ERROR_UNIMPLEMENTED); return;}
+		if (!isSuccess(vaCreateConfig(dpy, VAProfileNone, VAEntrypointVideoProc, nullptr, 0, &m_config)))
+			return;
+		if (!isSuccess(vaCreateContext(dpy, m_config, 0, 0, 0, nullptr, 0, &m_context)))
+			return;
+		VAProcFilterParameterBufferDeinterlacing param;
+		param.type = VAProcFilterDeinterlacing;
+		param.algorithm = (VAProcDeinterlacingType)filter->algorithms().first();
+		param.flags = 0;
+		if (!isSuccess(vaCreateBuffer(VaApi::glx(), m_context, VAProcFilterParameterBufferType, sizeof(param), 1, &param, &m_deinterlacer)))
+			return;
+		VAProcPipelineCaps caps;
+		m_inputColors.resize(VAProcColorStandardCount);
+		m_outputColors.resize(VAProcColorStandardCount);
+		caps.input_color_standards = m_inputColors.data();
+		caps.output_color_standards = m_outputColors.data();
+		caps.num_input_color_standards = m_inputColors.size();
+		caps.num_output_color_standards = m_outputColors.size();
+		if (!isSuccess(vaQueryVideoProcPipelineCaps(VaApi::glx(), m_context, &m_deinterlacer, 1, &caps)))
+			return;
+		m_inputColors.resize(caps.num_input_color_standards);
+		m_outputColors.resize(caps.num_output_color_standards);
+		m_forwardReferencess.resize(caps.num_forward_references);
+		m_backwardReferences.resize(caps.num_backward_references);
+	}
+	~VaApiDeinterlacer() {
+		auto dpy = VaApi::glx();
+		if (m_deinterlacer != VA_INVALID_ID)
+			vaDestroyBuffer(dpy, m_deinterlacer);
+		if (m_context != VA_INVALID_ID)
+			vaDestroyContext(dpy, m_context);
+		if (m_config != VA_INVALID_ID)
+			vaDestroyConfig(dpy, m_config);
+	}
+	bool apply(VASurfaceID input, VASurfaceID output, bool top) {
+		if (!isSuccess(vaBeginPicture(VaApi::glx(), m_context, output)))
+			return false;
+		VABufferID pipeline = VA_INVALID_ID;
+		VAProcPipelineParameterBuffer *param = nullptr;
+		if (!isSuccess(vaCreateBuffer(VaApi::glx(), m_context, VAProcPipelineParameterBufferType, sizeof(*param), 1, nullptr, &pipeline)))
+			return false;
+		vaMapBuffer(VaApi::glx(), pipeline, (void**)&param);
+		param->surface = input;
+		param->surface_region = nullptr;
+		param->output_region = nullptr;
+		param->output_background_color = 0;
+		param->filter_flags = top ? VA_TOP_FIELD : VA_BOTTOM_FIELD;
+		param->filters = &m_deinterlacer;
+		param->num_filters = 1;
+		vaUnmapBuffer(VaApi::glx(), pipeline);
+		param->forward_references = m_forwardReferencess.data();
+		param->num_forward_references = m_forwardReferencess.size();
+		param->backward_references = m_backwardReferences.data();
+		param->num_backward_references = m_backwardReferences.size();
+		vaRenderPicture(VaApi::glx(), m_context, &pipeline, 1);
+		vaEndPicture(VaApi::glx(), m_context);
+		return true;
+	}
+private:
+};
+
 struct VaApiUploader : public TextureUploader {
 	static const int specs[MP_CSP_COUNT];
 	virtual void initialize(const TextureInfo &info) override {
@@ -341,14 +413,22 @@ struct VaApiUploader : public TextureUploader {
 		Q_ASSERT(info.format == GL_BGRA);
 		TextureUploader::initialize(info);
 		vaCreateSurfaceGLX(VaApi::glx(), info.target, m_texture = info.id, &m_surface);
+		vaCreateSurfaces(VaApi::glx(), info.width, info.height, VaApi::surfaceFormat(), 1, &m_ppSurface);
 	}
-	~VaApiUploader() { free(); }
+	~VaApiUploader() { free(); delete m_deint; }
 	virtual void upload(const TextureInfo &info, const VideoFrame &frame) override {
+		auto dpy = VaApi::glx();
 		Q_ASSERT(m_texture == info.id);
+		auto id = (VASurfaceID)(uintptr_t)frame.data(3);
+		vaSyncSurface(dpy, id);
+		if (frame.field() & VideoFrame::Interlaced) {
+			if (!m_deint)
+				m_deint = new VaApiDeinterlacer;
+			if (m_deint->apply(id, m_ppSurface, frame.field() & VideoFrame::Top))
+				id = m_ppSurface;
+		}
 		glBindTexture(info.target, info.id);
-		const auto id = (VASurfaceID)(uintptr_t)frame.data(3);
-		vaSyncSurface(VaApi::glx(), id);
-		vaCopySurfaceGLX(VaApi::glx(), m_surface, id, specs[frame.format().colorspace()]);
+		vaCopySurfaceGLX(dpy, m_surface, id, specs[frame.format().colorspace()]);
 	}
 	virtual QImage toImage(const VideoFrame &frame) const override {
 		QImage image(frame.format().alignedSize(), QImage::Format_ARGB32);
@@ -362,10 +442,16 @@ private:
 		if (m_surface)
 			vaDestroySurfaceGLX(VaApi::glx(), m_surface);
 		m_surface = nullptr;
+		if (m_ppSurface != VA_INVALID_SURFACE) {
+			vaDestroySurfaces(VaApi::glx(), &m_ppSurface, 1);
+			m_ppSurface = VA_INVALID_SURFACE;
+		}
 	}
 
 	void *m_surface = nullptr;
 	GLuint m_texture = GL_NONE;
+	VASurfaceID m_ppSurface = VA_INVALID_SURFACE;
+	VaApiDeinterlacer *m_deint = nullptr;
 };
 
 const int VaApiUploader::specs[MP_CSP_COUNT] = {

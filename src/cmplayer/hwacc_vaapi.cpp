@@ -11,31 +11,138 @@ extern "C" {
 #include <video/mp_image_pool.h>
 #include <va/va_glx.h>
 #include <va/va_x11.h>
+#include <va/va_vpp.h>
 #include <video/sws_utils.h>
-#if VA_CHECK_VERSION(0, 34, 0)
-#include <va/va_compat.h>
-#endif
 #include <libavcodec/vaapi.h>
 }
 
 bool VaApi::init = false;
+VADisplay VaApi::m_display = nullptr;
 VaApi &VaApi::get() {static VaApi info; return info;}
+
+VaApiFilterInfo::VaApiFilterInfo(VAContextID context, VAProcFilterType type) {
+	m_type = type;
+	uint size = 0;
+	auto dpy = VaApi::glx();
+	switch (type) {
+	case VAProcFilterNoiseReduction:
+	case VAProcFilterSharpening: {
+		VAProcFilterCap cap; size = 1;
+		if (!isSuccess(vaQueryVideoProcFilterCaps(dpy, context, type, &cap, &size)) || size != 1)
+			return;
+		m_caps.resize(1); m_caps[0].algorithm = type; m_caps[0].range = cap.range;
+		break;
+	} case VAProcFilterDeinterlacing: {
+		size = VAProcDeinterlacingCount;
+		VAProcFilterCapDeinterlacing caps[VAProcDeinterlacingCount];
+		if (!isSuccess(vaQueryVideoProcFilterCaps(dpy, context, VAProcFilterDeinterlacing, caps, &size)))
+			return;
+		m_caps.resize(size);
+		for (uint i=0; i<size; ++i)
+			m_caps[i].algorithm = caps[i].type;
+		break;
+	} case VAProcFilterColorBalance: {
+		size = VAProcColorBalanceCount;
+		VAProcFilterCapColorBalance caps[VAProcColorBalanceCount];
+		if (!isSuccess(vaQueryVideoProcFilterCaps(dpy, context, VAProcFilterColorBalance, caps, &size)))
+			return;
+		m_caps.resize(size);
+		for (uint i=0; i<size; ++i) {
+			m_caps[i].algorithm = caps[i].type;
+			m_caps[i].range = caps[i].range;
+		}
+		break;
+	} default:
+		return;
+	}
+	m_algorithms.resize(m_caps.size());
+	for (int i=0; i<m_caps.size(); ++i)
+		m_algorithms[i] = m_caps[i].algorithm;
+}
+
+struct VaApiSurface {
+	VASurfaceID id = VA_INVALID_SURFACE;
+	bool ref = false;
+	quint64 order = 0;
+};
+
+class VaApiSurfacePool : public VaApiStatusChecker {
+public:
+	VaApiSurfacePool() { memset(&m_null, 0, sizeof(m_null)); }
+	~VaApiSurfacePool() { clear(); }
+
+	VAStatus create(int size, int width, int height, uint format) {
+		if (m_width == width && m_height == height && m_format == format && m_surfaces.size() == size)
+			return isSuccess(VA_STATUS_SUCCESS);
+		clear();
+		m_width = width;
+		m_height = height;
+		m_format = format;
+		m_ids.resize(size);
+		if (!isSuccess(vaCreateSurfaces(VaApi::glx(), width, height, format, size, m_ids.data()))) {
+			m_ids.clear();
+			return status();
+		}
+		m_surfaces.resize(size);
+		for (int i=0; i<size; ++i)
+			m_surfaces[i].id = m_ids[i];
+		return status();
+	}
+
+	VaApiSurface *getSurface() {
+		int i_old, i;
+		for (i=0, i_old=0; i<m_surfaces.size(); ++i) {
+			if (!m_surfaces[i].ref)
+				break;
+			if (m_surfaces[i].order < m_surfaces[i_old].order)
+				i_old = i;
+		}
+		if (i >= m_surfaces.size())
+			i = i_old;
+		auto surface = &m_surfaces[i];
+		surface->ref = true;
+		surface->order = ++m_order;
+		Q_ASSERT(surface->id != VA_INVALID_ID);
+		return surface;
+	}
+	VaApiSurface *getSurface(int index) { return &m_surfaces[index]; }
+	mp_image *getMpImage() {
+		auto surface = getSurface();
+		auto release = [](void *arg) { ((VaApiSurface*)arg)->ref = false; };
+		auto mpi = mp_image_new_custom_ref(&m_null, &surface, release);
+		mp_image_setfmt(mpi, IMGFMT_VAAPI);
+		mp_image_set_size(mpi, m_width, m_height);
+		mpi->planes[1] = mpi->planes[2] = nullptr;
+		mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)surface->id;
+		return mpi;
+	}
+	void clear() {
+		for (auto &it : m_surfaces) {
+			if (it.id != VA_INVALID_SURFACE)
+				vaDestroySurfaces(VaApi::glx(), &it.id, 1);
+		}
+		m_surfaces.clear();
+		m_ids.clear();
+	}
+	QVector<VASurfaceID> ids() const {return m_ids;}
+	uint format() const {return m_format;}
+private:
+	QVector<VASurfaceID> m_ids;
+	QVector<VaApiSurface> m_surfaces;
+	uint m_format = 0;
+	int m_width = 0, m_height = 0;
+	quint64 m_order = 0LL;
+	mp_image m_null;
+};
 
 VaApi::VaApi() {
 	init = true;
-	auto dpy = QX11Info::display();
-	m_x11Display = vaGetDisplay(dpy);
-	m_glxDisplay = vaGetDisplayGLX(dpy);
-	VADisplay display = nullptr; int major, minor;
-	if (m_x11Display) {
-		if (vaInitialize(m_x11Display, &major, &minor) == VA_STATUS_SUCCESS)
-			display = m_x11Display;
-	}
-	if (m_glxDisplay) {
-		if (vaInitialize(m_glxDisplay, &major, &minor) == VA_STATUS_SUCCESS)
-			display = m_glxDisplay;
-	}
+	auto xdpy = QX11Info::display();
+	VADisplay display = m_display = vaGetDisplayGLX(xdpy);
 	if (!display)
+		return;
+	int major, minor;
+	if (!isSuccess(vaInitialize(m_display, &major, &minor)))
 		return;
 	auto size = vaMaxNumProfiles(display);
 	QVector<VAProfile> profiles;
@@ -43,8 +150,26 @@ VaApi::VaApi() {
 	if (vaQueryConfigProfiles(display, profiles.data(), &size) != VA_STATUS_SUCCESS)
 		return;
 	profiles.resize(size);
-	auto supports = [this, &profiles](const QVector<VAProfile> &va, const QVector<int> &av, int count, AVCodecID id) {
-		m_supported.insert(id, VaApiCodec(profiles, va, av, count, id));
+
+	for (auto profile : profiles) {
+		int size = vaMaxNumEntrypoints(display);
+		QVector<VAEntrypoint> entries(size, VAEntrypointMax);
+		if (vaQueryConfigEntrypoints(display, profile, entries.data(), &size) != VA_STATUS_SUCCESS)
+			continue;
+		entries.resize(size);
+		m_entries.insert(profile, entries);
+	}
+
+	auto supports = [this, &profiles](const QVector<VAProfile> &va_all, const QVector<int> &av_all, int surfaces, AVCodecID id) {
+		QVector<VAProfile> va; QVector<int> av;
+		for (int i=0; i<va_all.size(); ++i) {
+			if (hasEntryPoint(VAEntrypointVLD, va_all[i])) {
+				va.push_back(va_all[i]);
+				av.push_back(av_all[i]);
+			}
+		}
+		if (!va.isEmpty())
+			m_supported.insert(id, VaApiCodec(profiles, va, av, surfaces, id));
 	};
 #define NUM_VIDEO_SURFACES_MPEG2  3 /* 1 decode frame, up to  2 references */
 #define NUM_VIDEO_SURFACES_MPEG4  3 /* 1 decode frame, up to  2 references */
@@ -66,17 +191,42 @@ VaApi::VaApi() {
 	supports(vawmv3s, avwmv3s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_WMV3);
 	supports(vavc1s, avvc1s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_VC1);
 	supports(vah264s, avh264s, NUM_VIDEO_SURFACES_H264, AV_CODEC_ID_H264);
+
+	if (hasEntryPoint(VAEntrypointVideoProc, VAProfileNone)) {
+		VAConfigID config = VA_INVALID_ID;
+		VAContextID context = VA_INVALID_ID;
+		do {
+			if (!isSuccess(vaCreateConfig(display, VAProfileNone, VAEntrypointVideoProc, nullptr, 0, &config)))
+				break;
+			if (!isSuccess(vaCreateContext(display, config, 0, 0, 0, nullptr, 0, &context)))
+				break;
+			QVector<VAProcFilterType> types(VAProcFilterCount);
+			uint size = VAProcFilterCount;
+			if (!isSuccess(vaQueryVideoProcFilters(display, context, types.data(), &size)))
+				break;
+			types.resize(size);
+			for (const auto &type : types) {
+				auto info = VaApiFilterInfo(context, type);
+				if (info.isSuccess())
+					m_filters.insert(type, info);
+			}
+		} while (false);
+		if (context != VA_INVALID_ID)
+			vaDestroyContext(display, context);
+		if (config != VA_INVALID_ID)
+			vaDestroyConfig(display, config);
+	}
 }
 
 void VaApi::finalize() {
 	auto close = [] (VADisplay &dpy) { if (dpy) { vaTerminate(dpy); dpy = nullptr; } };
-	close(m_glxDisplay); close(m_x11Display);
+	close(m_display);
 	init = false;
 }
 
 void initialize_vaapi() {
 	if (!VaApi::init)
-		VaApi::get().x11();
+		VaApi::get().glx();
 }
 
 void finalize_vaapi() {
@@ -86,17 +236,14 @@ void finalize_vaapi() {
 
 /***************************************************************************************************/
 
-struct VaApiSurface { VASurfaceID  id = VA_INVALID_ID; bool ref = false; quint64 order = 0; };
-
 struct HwAccVaApi::Data {
 	vaapi_context context = {nullptr, VA_INVALID_ID, VA_INVALID_ID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	QVector<VaApiSurface> surfaces;
-	quint64 surfaceOrder = 0;
 	VAProfile profile = VAProfileNone;
+	VaApiSurfacePool pool;
 };
 
-HwAccVaApi::HwAccVaApi(AVCodecID cid, Type type)
-: HwAcc(cid), d(new Data), m_status(VA_STATUS_SUCCESS), m_type(type) {
+HwAccVaApi::HwAccVaApi(AVCodecID cid)
+: HwAcc(cid), d(new Data) {
 }
 
 HwAccVaApi::~HwAccVaApi() {
@@ -104,14 +251,6 @@ HwAccVaApi::~HwAccVaApi() {
 	if (d->context.config_id != VA_INVALID_ID)
 		vaDestroyConfig(d->context.display, d->context.config_id);
 	delete d;
-}
-
-void *HwAccVaApi::surface(int i) const {
-	return &d->surfaces[i];
-}
-
-vaapi_context *HwAccVaApi::vaapi() const {
-	return &d->context;
 }
 
 bool HwAccVaApi::isOk() const {
@@ -123,205 +262,183 @@ void *HwAccVaApi::context() const {
 }
 
 mp_image *HwAccVaApi::getSurface() {
-	int i_old, i;
-	for (i=0, i_old=0; i<d->surfaces.size(); ++i) {
-		if (!d->surfaces[i].ref)
-			break;
-		if (d->surfaces[i].order < d->surfaces[i_old].order)
-			i_old = i;
-	}
-	if (i >= d->surfaces.size())
-		i = i_old;
-	d->surfaces[i].ref = true;
-	d->surfaces[i].order = ++d->surfaceOrder;
-	Q_ASSERT(d->surfaces[i].id != VA_INVALID_ID);
-	auto release = [](void *ref) { *(bool*)ref = false; };
-	auto mpi = nullImage(IMGFMT_VAAPI, size().width(), size().height(), &d->surfaces[i].ref, release);
-	mpi->planes[1] = mpi->planes[2] = nullptr;
-	mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)d->surfaces[i].id;
-	return mpi;
+	return d->pool.getMpImage();
 }
 
 void HwAccVaApi::freeContext() {
 	if (d->context.display) {
 		if (d->context.context_id != VA_INVALID_ID)
 			vaDestroyContext(d->context.display, d->context.context_id);
-		for (auto &surface : d->surfaces) {
-			if (surface.id != VA_INVALID_SURFACE)
-				vaDestroySurfaces(d->context.display, &surface.id, 1);
-			surface = VaApiSurface();
-		}
 	}
 	d->context.context_id = VA_INVALID_ID;
-	d->surfaceOrder = 0;
-}
-
-bool HwAccVaApi::isSuccess(int result) {
-	return (status() = result) == VA_STATUS_SUCCESS;
 }
 
 bool HwAccVaApi::fillContext(AVCodecContext *avctx) {
 	if (status() != VA_STATUS_SUCCESS)
 		return false;
 	freeContext();
-	d->context.display = VaApi::display(type());
+	d->context.display = VaApi::glx();
 	if (!d->context.display)
 		return false;
-	const auto codec = VaApi::find(avctx->codec_id);
+	const auto codec = VaApi::codec(avctx->codec_id);
 	if (!codec)
 		return false;
 	d->profile = codec->profile(avctx->profile);
-	d->surfaces.resize(codec->surfaces);
 	VAConfigAttrib attr = { VAConfigAttribRTFormat, 0 };
-	if((status() = vaGetConfigAttributes(d->context.display, d->profile, VAEntrypointVLD, &attr, 1)) != VA_STATUS_SUCCESS)
+	if(!isSuccess(vaGetConfigAttributes(d->context.display, d->profile, VAEntrypointVLD, &attr, 1)))
 		return false;
 	if(!(attr.value & VA_RT_FORMAT_YUV420) && !(attr.value & VA_RT_FORMAT_YUV422))
-		{status() = VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT; return false; }
-	if((status() = vaCreateConfig(d->context.display, d->profile, VAEntrypointVLD, &attr, 1, &d->context.config_id)) != VA_STATUS_SUCCESS)
+		return isSuccess(VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT);
+	if(!isSuccess(vaCreateConfig(d->context.display, d->profile, VAEntrypointVLD, &attr, 1, &d->context.config_id)))
 		return false;
-	QVector<VASurfaceID> ids(d->surfaces.size(), VA_INVALID_SURFACE);
 	const int w = avctx->width, h = avctx->height;
-	if (!isSuccess(vaCreateSurfaces(d->context.display, w, h, VA_RT_FORMAT_YUV420, ids.size(), ids.data()))
-			&& !isSuccess(vaCreateSurfaces(d->context.display, w, h, VA_RT_FORMAT_YUV422, ids.size(), ids.data())))
-		return false;
-	for (int i=0; i<ids.size(); ++i)
-		d->surfaces[i].id = ids[i];
+	auto format = VA_RT_FORMAT_YUV420;
+	if (!isSuccess(d->pool.create(codec->surfaces, w, h, format))) {
+		if (!isSuccess(d->pool.create(codec->surfaces, w, h, format = VA_RT_FORMAT_YUV422)))
+			return false;
+	}
+	VaApi::get().setSurfaceFormat(format);
+	auto ids = d->pool.ids();
 	if (!isSuccess(vaCreateContext(d->context.display, d->context.config_id, w, h, VA_PROGRESSIVE, ids.data(), ids.size(), &d->context.context_id)))
 		return false;
 	return true;
 }
 
-/*************************************************************************************************/
-
-struct VaApiImage {
-	VaApiImage(VAImageFormat *format, const QSize &size) {
-		this->format = format;
-		vaCreateImage(display, format, size.width(), size.height(), &image);
-		Q_ASSERT(format->fourcc == image.format.fourcc);
-	}
-	~VaApiImage() {
-		if (image.image_id != VA_INVALID_ID)
-			vaDestroyImage(display, image.image_id);
-	}
-	VAImage image;
-	bool ref = false;
-	VADisplay display = VaApi::x11();
-	VAImageFormat *format = nullptr;
-};
-
-typedef QLinkedList<VaApiImage*> ImagePool;
-struct HwAccVaApiX11::Data {
-	quint32 fourcc = 0;
-	mp_imgfmt imgfmt = IMGFMT_NONE;
-	ImagePool pool;
-	ImagePool::iterator it;
-	VAImageFormat format;
-};
-
-HwAccVaApiX11::HwAccVaApiX11(AVCodecID codec)
-: HwAccVaApi(codec, VaApiX11), d(new Data) {
-	d->it = d->pool.end();
-}
-
-HwAccVaApiX11::~HwAccVaApiX11() {
-	for (auto image : d->pool) {
-		image->format = nullptr;
-		if (!image->ref)
-			delete image;
-	}
-	delete d;
-}
-
-bool HwAccVaApiX11::fillContext(AVCodecContext *avctx) {
-	if (!HwAccVaApi::fillContext(avctx))
-		return false;
-	VAImage image;
-	auto destroy = [&image, this] () {
-		if (image.image_id != VA_INVALID_ID) {
-			vaDestroyImage(vaapi()->display, image.image_id);
-			image.image_id = VA_INVALID_ID;
-		}
-	};
-	auto findFormat =[&image, &destroy, avctx, this] () {
-		int count = vaMaxNumImageFormats(vaapi()->display);
-		QVector<VAImageFormat> formats;
-		formats.resize(count);
-		vaQueryImageFormats(vaapi()->display, formats.data(), &count);
-		formats.resize(count);
-		for (int i=0; i<formats.size(); ++i) {
-			if (!isSuccess(vaCreateImage(vaapi()->display, &formats[i], avctx->width, avctx->height, &image))) {
-				image.image_id = VA_INVALID_ID;
-				continue;
-			}
-			if (!isSuccess(vaGetImage(vaapi()->display, static_cast<VaApiSurface*>(surface(0))->id, 0, 0, avctx->width, avctx->height, image.image_id))) {
-				destroy();
-				continue;
-			}
-			d->format = formats[i];
-			switch (image.format.fourcc) {
-			case VA_FOURCC_NV12:
-				return IMGFMT_NV12;
-			case VA_FOURCC_YV12:
-			case VA_FOURCC('I', '4', '2', '0'):
-				return IMGFMT_420P;
-			case VA_FOURCC_YUY2:
-				return IMGFMT_YUYV;
-			case VA_FOURCC_UYVY:
-				return IMGFMT_UYVY;
-			default:
-				status() = VA_STATUS_ERROR_INVALID_IMAGE_FORMAT;
-				break;
-			}
-		}
-		return IMGFMT_NONE;
-	};
-	d->imgfmt = findFormat();
-	d->fourcc = image.format.fourcc;
-	destroy();
-	return isOk();
-}
-
-VaApiImage *HwAccVaApiX11::newImage() {
-	if (!d->pool.isEmpty()) {
-		for (auto it = d->it; it != d->pool.end(); ++it) {
-			if (!(*it)->ref)
-				return *(d->it = it);
-		}
-		for (auto it = d->pool.begin(); it != d->it; ++it) {
-			if (!(*it)->ref)
-				return *(d->it = it);
-		}
-	}
-	return *(d->it = d->pool.insert(d->pool.end(), new VaApiImage(&d->format, size())));
-}
-
-mp_image *HwAccVaApiX11::getImage(mp_image *mpi) {
-	if (mpi->fmt.id != IMGFMT_VAAPI)
-		return nullptr;
-	const auto id = (VASurfaceID)(uintptr_t)mpi->planes[3];
-	vaSyncSurface(vaapi()->display, id);
-	auto img = newImage();
-	vaGetImage(vaapi()->display, id, 0, 0, size().width(), size().height(), img->image.image_id);
-	void *data = nullptr;
-	vaMapBuffer(vaapi()->display, img->image.buf, &data);
-	img->ref = true;
-	auto release = [](void *data) {
-		auto img = static_cast<VaApiImage*>(data);
-		vaUnmapBuffer(img->display, img->image.buf);
-		img->ref = false;
-		if (!img->format)
-			delete img;
-	};
-	mpi = nullImage(d->imgfmt, img->image.width, img->image.height, img, release);
-	uint offsets[3] = {img->image.offsets[0], img->image.offsets[1], img->image.offsets[2]};
-	if (img->image.format.fourcc == VA_FOURCC_YV12)
-		qSwap(offsets[1], offsets[2]);
-	for (uint i=0; i<img->image.num_planes; ++i) {
-		mpi->stride[i] = img->image.pitches[i];
-		mpi->planes[i] = (uchar*)data + offsets[i];
-	}
+mp_image *HwAccVaApi::getImage(mp_image *mpi) {
 	return mpi;
 }
+
+/*************************************************************************************************/
+
+//struct VaApiImage {
+//	VaApiImage(VAImageFormat *format, const QSize &size) {
+//		this->format = format;
+//		vaCreateImage(display, format, size.width(), size.height(), &image);
+//		Q_ASSERT(format->fourcc == image.format.fourcc);
+//	}
+//	~VaApiImage() {
+//		if (image.image_id != VA_INVALID_ID)
+//			vaDestroyImage(display, image.image_id);
+//	}
+//	VAImage image;
+//	bool ref = false;
+//	VADisplay display = VaApi::x11();
+//	VAImageFormat *format = nullptr;
+//};
+
+//typedef QLinkedList<VaApiImage*> ImagePool;
+//struct HwAccVaApiX11::Data {
+//	quint32 fourcc = 0;
+//	mp_imgfmt imgfmt = IMGFMT_NONE;
+//	ImagePool pool;
+//	ImagePool::iterator it;
+//	VAImageFormat format;
+//};
+
+//HwAccVaApiX11::HwAccVaApiX11(AVCodecID codec)
+//: HwAccVaApi(codec, VaApiX11), d(new Data) {
+//	d->it = d->pool.end();
+//}
+
+//HwAccVaApiX11::~HwAccVaApiX11() {
+//	for (auto image : d->pool) {
+//		image->format = nullptr;
+//		if (!image->ref)
+//			delete image;
+//	}
+//	delete d;
+//}
+
+//bool HwAccVaApiX11::fillContext(AVCodecContext *avctx) {
+//	if (!HwAccVaApi::fillContext(avctx))
+//		return false;
+//	VAImage image;
+//	auto destroy = [&image, this] () {
+//		if (image.image_id != VA_INVALID_ID) {
+//			vaDestroyImage(vaapi()->display, image.image_id);
+//			image.image_id = VA_INVALID_ID;
+//		}
+//	};
+//	auto findFormat =[&image, &destroy, avctx, this] () {
+//		int count = vaMaxNumImageFormats(vaapi()->display);
+//		QVector<VAImageFormat> formats;
+//		formats.resize(count);
+//		vaQueryImageFormats(vaapi()->display, formats.data(), &count);
+//		formats.resize(count);
+//		for (int i=0; i<formats.size(); ++i) {
+//			if (!isSuccess(vaCreateImage(vaapi()->display, &formats[i], avctx->width, avctx->height, &image))) {
+//				image.image_id = VA_INVALID_ID;
+//				continue;
+//			}
+//			if (!isSuccess(vaGetImage(vaapi()->display, static_cast<VaApiSurface*>(surface(0))->id, 0, 0, avctx->width, avctx->height, image.image_id))) {
+//				destroy();
+//				continue;
+//			}
+//			d->format = formats[i];
+//			switch (image.format.fourcc) {
+//			case VA_FOURCC_NV12:
+//				return IMGFMT_NV12;
+//			case VA_FOURCC_YV12:
+//			case VA_FOURCC('I', '4', '2', '0'):
+//				return IMGFMT_420P;
+//			case VA_FOURCC_YUY2:
+//				return IMGFMT_YUYV;
+//			case VA_FOURCC_UYVY:
+//				return IMGFMT_UYVY;
+//			default:
+//				status() = VA_STATUS_ERROR_INVALID_IMAGE_FORMAT;
+//				break;
+//			}
+//		}
+//		return IMGFMT_NONE;
+//	};
+//	d->imgfmt = findFormat();
+//	d->fourcc = image.format.fourcc;
+//	destroy();
+//	return isOk();
+//}
+
+//VaApiImage *HwAccVaApiX11::newImage() {
+//	if (!d->pool.isEmpty()) {
+//		for (auto it = d->it; it != d->pool.end(); ++it) {
+//			if (!(*it)->ref)
+//				return *(d->it = it);
+//		}
+//		for (auto it = d->pool.begin(); it != d->it; ++it) {
+//			if (!(*it)->ref)
+//				return *(d->it = it);
+//		}
+//	}
+//	return *(d->it = d->pool.insert(d->pool.end(), new VaApiImage(&d->format, size())));
+//}
+
+//mp_image *HwAccVaApiX11::getImage(mp_image *mpi) {
+//	if (mpi->fmt.id != IMGFMT_VAAPI)
+//		return nullptr;
+//	const auto id = (VASurfaceID)(uintptr_t)mpi->planes[3];
+//	vaSyncSurface(vaapi()->display, id);
+//	auto img = newImage();
+//	vaGetImage(vaapi()->display, id, 0, 0, size().width(), size().height(), img->image.image_id);
+//	void *data = nullptr;
+//	vaMapBuffer(vaapi()->display, img->image.buf, &data);
+//	img->ref = true;
+//	auto release = [](void *data) {
+//		auto img = static_cast<VaApiImage*>(data);
+//		vaUnmapBuffer(img->display, img->image.buf);
+//		img->ref = false;
+//		if (!img->format)
+//			delete img;
+//	};
+//	mpi = nullImage(d->imgfmt, img->image.width, img->image.height, img, release);
+//	uint offsets[3] = {img->image.offsets[0], img->image.offsets[1], img->image.offsets[2]};
+//	if (img->image.format.fourcc == VA_FOURCC_YV12)
+//		qSwap(offsets[1], offsets[2]);
+//	for (uint i=0; i<img->image.num_planes; ++i) {
+//		mpi->stride[i] = img->image.pitches[i];
+//		mpi->planes[i] = (uchar*)data + offsets[i];
+//	}
+//	return mpi;
+//}
 
 #else
 void initialize_vaapi() {}

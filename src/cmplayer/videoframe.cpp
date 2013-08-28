@@ -15,6 +15,7 @@ VideoFrame::VideoFrame::Data::Data(mp_image *mpi, const VideoFormat &format)
 	data[2] = mpi->planes[2];
 	data[3] = mpi->planes[3];
 	this->mpi = mp_image_new_ref(mpi);
+	this->pts = mpi->pts;
 }
 
 static QImage convertImage(const QImage &image) {
@@ -37,6 +38,8 @@ VideoFrame::VideoFrame::Data::Data(const Data &other)
 : QSharedData(other) {
 	image = other.image;
 	format = other.format;
+	field = other.field;
+	pts = other.pts;
 	data[0] = other.data[0];
 	data[1] = other.data[1];
 	data[2] = other.data[2];

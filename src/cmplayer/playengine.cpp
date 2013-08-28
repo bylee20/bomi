@@ -18,6 +18,7 @@ extern "C" {
 #include <mpvcore/m_property.h>
 #include <mpvcore/input/input.h>
 #include <audio/filter/af.h>
+#include <video/filter/vf.h>
 #include <stream/stream.h>
 }
 
@@ -533,10 +534,13 @@ void PlayEngine::run() {
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
-		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8";
+		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8"
+//	<< "--vf=lavfi=yadif"
+	;
 	auto mpctx = d->mpctx = create_player(args.size(), args.data());
 	Q_ASSERT(d->mpctx);
 	d->mpctx->priv = this;
+
 
 	d->init = true;
 	d->quit = false;
@@ -550,6 +554,8 @@ void PlayEngine::run() {
 		int terminated = 0, duration = 0;
 		Mrl mrl = d->playlist.loadedMrl();
 		d->playing = true;
+//		setmp("deinterlace", 1);
+
 		setState(EngineLoading);
 		m_imgMode = mrl.isImage();
 		int error = m_imgMode ? playImage(mrl, terminated, duration) : playAudioVideo(mrl, terminated, duration);

@@ -5,84 +5,92 @@
 
 #ifdef Q_OS_LINUX
 
-extern "C" {
 #include <va/va.h>
-}
+#include <va/va_vpp.h>
+#if VA_CHECK_VERSION(0, 34, 0)
+#include <va/va_compat.h>
+#endif
+
+struct VaApiStatusChecker {
+	virtual ~VaApiStatusChecker() {}
+	bool isSuccess(bool status) { return (m_status = status) == VA_STATUS_SUCCESS; }
+	bool isSuccess() const { return m_status == VA_STATUS_SUCCESS; }
+	VAStatus status() const { return m_status; }
+	const char *text() const { return vaErrorStr(m_status); }
+private:
+	VAStatus m_status = VA_STATUS_SUCCESS;
+};
 
 struct vaapi_context;
 
-class HwAccVaApi : public HwAcc {
+class HwAccVaApi : public HwAcc, public VaApiStatusChecker {
 public:
-	HwAccVaApi(AVCodecID codec, Type type);
+	HwAccVaApi(AVCodecID codec);
 	virtual ~HwAccVaApi();
 	virtual bool isOk() const override;
 	virtual void *context() const override;
 	virtual mp_image *getSurface() override;
-	virtual Type type() const override {return m_type;}
-protected:
-	vaapi_context *vaapi() const;
-	int &status() {return m_status;}
-	int status() const {return m_status;}
-	QSize &size() {return m_size;}
-	const QSize &size() const {return m_size;}
+	virtual Type type() const override {return VaApiGLX;}
+	virtual mp_image *getImage(mp_image *mpi);
+private:
 	void freeContext();
 	bool fillContext(AVCodecContext *avctx) override;
-	bool isSuccess(int result);
-	void *surface(int i) const;
 private:
 	struct Data;
 	Data *d;
-	int m_status;
-	QSize m_size;
-	Type m_type;
 };
 
-class HwAccVaApiGLX : public HwAccVaApi {
-public:
-	HwAccVaApiGLX(AVCodecID codec): HwAccVaApi(codec, VaApiGLX) {}
-	virtual mp_image *getImage(mp_image *mpi) {return mpi;}
+struct VaApiFilterCapability {
+	int algorithm = 0;
+	VAProcFilterValueRange range = {0, 0, 0, 0};
 };
 
-struct VaApiImage;
-
-class HwAccVaApiX11 : public HwAccVaApi {
-public:
-	HwAccVaApiX11(AVCodecID codec);
-	virtual ~HwAccVaApiX11();
-	bool fillContext(AVCodecContext *avctx) override;
-	virtual mp_image *getImage(mp_image *mpi) override;
+struct VaApiFilterInfo : public VaApiStatusChecker {
+	VaApiFilterInfo() {}
+	VaApiFilterInfo(VAContextID context, VAProcFilterType type);
+	VAProcFilterType type() const {return m_type;}
+	const VaApiFilterCapability *capability(int algorithm) {
+		for (const auto &cap : m_caps) {
+			if (cap.algorithm == algorithm)
+				return &cap;
+		}
+		return nullptr;
+	}
+	const QVector<int> &algorithms() const { return m_algorithms; }
 private:
-	VaApiImage *newImage();
-	struct Data;
-	Data *d;
+	QVector<int> m_algorithms;
+	VAProcFilterType m_type = VAProcFilterNone;
+	QVector<VaApiFilterCapability> m_caps;
 };
 
 typedef HwAccCodec<VAProfile> VaApiCodec;
 
-struct VaApi {
-	static const VaApiCodec *find(AVCodecID id) {
-		const auto &supported = get().m_supported;
-		auto it = supported.find(id);
-		return it != supported.end() && !it->profiles.isEmpty() ? &(*it) : 0;
-	}
-	static VADisplay glx() {return get().m_glxDisplay;}
-	static VADisplay x11() {return get().m_x11Display;}
-	static VADisplay display(HwAcc::Type type) {
-		if (type == HwAcc::VaApiGLX)
-			return glx();
-		if (type == HwAcc::VaApiX11)
-			return x11();
-		return nullptr;
-	}
+struct VaApi : public VaApiStatusChecker {
+	static const VaApiCodec *codec(AVCodecID id) { return find(id, get().m_supported); }
+	static VADisplay glx() {return m_display;}
+	static const VaApiFilterInfo *filter(VAProcFilterType type) { return find(type, get().m_filters); }
+	static int surfaceFormat() {return get().m_surfaceFormat;}
 private:
+	void setSurfaceFormat(int format) { m_surfaceFormat = format; }
+	bool hasEntryPoint(VAEntrypoint point, VAProfile profile = VAProfileNone) {
+		auto entries = find(profile, m_entries); return entries && entries->contains(point);
+	}
+	template<typename Map>
+	static const typename Map::mapped_type *find(typename Map::key_type key, const Map &map) {
+		const auto it = map.find(key); return (it != map.end()) ? &(*it) : nullptr;
+	}
 	static VaApi &get();
 	VaApi();
 	void finalize();
 	QMap<AVCodecID, VaApiCodec> m_supported;
-	VADisplay m_glxDisplay = nullptr, m_x11Display = nullptr;
+	QMap<VAProfile, QVector<VAEntrypoint>> m_entries;
+	QMap<VAProcFilterType, VaApiFilterInfo> m_filters;
+	int m_surfaceFormat = 0;
+	static VADisplay m_display;
 	static bool init;
 	friend void initialize_vaapi();
 	friend void finalize_vaapi();
+	friend class HwAccVaApi;
 };
 
 #endif

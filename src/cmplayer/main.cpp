@@ -10,6 +10,7 @@ int main(int argc, char **argv) {
 	qRegisterMetaType<EngineState>("State");
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
+	qRegisterMetaType<QVector<int>>("QVector<int>");
 	PlayerItem::registerItems();
 	qDebug() << "Create App instance";
 	App app(argc, argv);
