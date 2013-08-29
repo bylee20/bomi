@@ -115,7 +115,7 @@ private:
 	}
 	void keyPressEvent(QKeyEvent *event) {
 //		UtilObject::resetFilter(UtilObject::KeyPress);
-		QQuickView::keyPressEvent(event);
+//		QQuickView::keyPressEvent(event);
 //		if (!UtilObject::isFiltered(UtilObject::KeyPress))
 			m_main->keyPressEvent(event);
 	}
