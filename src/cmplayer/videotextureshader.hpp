@@ -1,5 +1,5 @@
-#ifndef TEXTURESHADER_HPP
-#define TEXTURESHADER_HPP
+#ifndef VIDEOTEXTURESHADER_HPP
+#define VIDEOTEXTURESHADER_HPP
 
 #include "videorendereritem.hpp"
 #include "colorproperty.hpp"
@@ -42,13 +42,13 @@ private:
 	QMatrix3x3 mat;
 };
 
-struct TextureInfo {
+struct VideoTextureInfo {
 	GLuint id = GL_NONE; int plane = 0, width = 0, height = 0; GLenum target = GL_TEXTURE_2D, format = GL_NONE, type = GL_UNSIGNED_BYTE, internal = GL_NONE;
 };
 
-struct TextureUploader {
-	virtual ~TextureUploader() {}
-	virtual void initialize(const TextureInfo &info) {
+struct VideoTextureUploader {
+	virtual ~VideoTextureUploader() {}
+	virtual void initialize(const VideoTextureInfo &info) {
 		glBindTexture(info.target, info.id);
 		glTexParameterf(info.target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameterf(info.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -56,7 +56,7 @@ struct TextureUploader {
 		glTexParameterf(info.target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(info.target, 0, info.internal, info.width, info.height, 0, info.format, info.type, nullptr);
 	}
-	virtual void upload(const TextureInfo &info, const VideoFrame &frame) {
+	virtual void upload(const VideoTextureInfo &info, const VideoFrame &frame) {
 		glBindTexture(info.target, info.id);
 		glTexSubImage2D(info.target, 0, 0, 0, info.width, info.height, info.format, info.type, frame.data(info.plane));
 	}
@@ -67,12 +67,12 @@ struct TextureUploader {
 	virtual mp_csp_levels colorrange(const VideoFormat &format) const { return format.range(); }
 };
 
-class TextureShader {
+class VideoTextureShader {
 public:
 	static constexpr int KernelEffects = VideoRendererItem::KernelEffects;
-	static TextureShader *create(const VideoFormat &format, const ColorProperty &color = ColorProperty(), int effects = 0);
-	TextureShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D);
-	virtual ~TextureShader() { delete m_uploader; }
+	static VideoTextureShader *create(const VideoFormat &format, const ColorProperty &color = ColorProperty(), int effects = 0);
+	VideoTextureShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D);
+	virtual ~VideoTextureShader() { delete m_uploader; }
 	void initialize(GLuint *textures);
 	GLuint *textures() const {return m_textures;}
 	const VideoFormat &format() const {return m_format;}
@@ -91,7 +91,7 @@ protected:
 	QPointF &sc(int idx) {return *m_strideCorrection[idx];}
 	QPointF sc(int idx) const {return *m_strideCorrection[idx];}
 	void addTexInfo(int plane, int width, int height, GLenum format, GLenum type = GL_UNSIGNED_BYTE, GLenum internal = GL_NONE) {
-		TextureInfo info;
+		VideoTextureInfo info;
 		info.plane = plane; info.width = width; info.height = height;			info.target = m_target;
 		info.format = format; info.type = type; info.internal = (internal == GL_NONE) ? format : internal;
 		m_info.append(info);
@@ -101,7 +101,7 @@ protected:
 	}
 private:
 	void updateMatrix();
-	void setUploader(TextureUploader *uploader) { if (m_uploader) delete m_uploader; m_uploader = uploader; }
+	void setUploader(VideoTextureUploader *uploader) { if (m_uploader) delete m_uploader; m_uploader = uploader; }
 	VideoFormat m_format;
 	GLuint *m_textures = nullptr;
 	GLenum m_target = GL_TEXTURE_2D;
@@ -113,8 +113,8 @@ private:
 	int loc_p1, loc_p2, loc_p3;
 	int loc_sc1, loc_sc2, loc_sc3, loc_conv_mat, loc_conv_vec, loc_orig_vec;
 	QRectF m_rect = {0, 0, 1, 1};
-	QVector<TextureInfo> m_info;
-	TextureUploader *m_uploader = nullptr;
+	QVector<VideoTextureInfo> m_info;
+	VideoTextureUploader *m_uploader = nullptr;
 	QMatrix3x3 m_conv_mat;
 	QVector3D m_conv_vec;
 	QVector3D m_orig_vec;

@@ -1,7 +1,7 @@
-#include "textureshader.hpp"
+#include "videotextureshader.hpp"
 #include "videoframe.hpp"
 
-TextureShader::TextureShader(const VideoFormat &format, GLenum target)
+VideoTextureShader::VideoTextureShader(const VideoFormat &format, GLenum target)
 : m_format(format), m_target(target) {
 	m_info.reserve(3);
 	m_header = R"(
@@ -35,7 +35,7 @@ TextureShader::TextureShader(const VideoFormat &format, GLenum target)
 		m_rect.setBottomRight(QPointF(format.width(), format.height()));
 }
 
-void TextureShader::initialize(GLuint *textures) {
+void VideoTextureShader::initialize(GLuint *textures) {
 	m_textures = textures;
 	for (int i=0; i<m_info.size(); ++i) {
 		m_info[i].id = textures[i];
@@ -43,7 +43,7 @@ void TextureShader::initialize(GLuint *textures) {
 	}
 }
 
-QByteArray TextureShader::fragment() const {
+QByteArray VideoTextureShader::fragment() const {
 	QByteArray codes = m_header;
 	codes += m_texel;
 	if (m_effects & VideoRendererItem::KernelEffects) {
@@ -94,13 +94,13 @@ QByteArray TextureShader::fragment() const {
 	return codes;
 }
 
-void TextureShader::upload(const VideoFrame &frame) {
+void VideoTextureShader::upload(const VideoFrame &frame) {
 	Q_ASSERT(m_uploader);
 	for (int i=0; i<m_info.size(); ++i)
 		m_uploader->upload(m_info[i], frame);
 }
 
-void TextureShader::updateMatrix() {
+void VideoTextureShader::updateMatrix() {
 	auto color = m_color;
 	if (m_effects & VideoRendererItem::Grayscale)
 		color.setSaturation(-1.0);
@@ -115,7 +115,7 @@ void TextureShader::updateMatrix() {
 }
 
 
-void TextureShader::link(QOpenGLShaderProgram *program) {
+void VideoTextureShader::link(QOpenGLShaderProgram *program) {
 	loc_kern_c = program->uniformLocation("kern_c");
 	loc_kern_d = program->uniformLocation("kern_d");
 	loc_kern_n = program->uniformLocation("kern_n");
@@ -130,7 +130,7 @@ void TextureShader::link(QOpenGLShaderProgram *program) {
 	loc_orig_vec = program->uniformLocation("orig_vec");
 }
 
-bool TextureShader::setEffects(int effects) {
+bool VideoTextureShader::setEffects(int effects) {
 	constexpr auto kernel = VideoRendererItem::KernelEffects;
 	const bool ret = ((effects & kernel) == (m_effects & kernel));
 	m_effects = effects;
@@ -138,7 +138,7 @@ bool TextureShader::setEffects(int effects) {
 	return ret;
 }
 
-void TextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &kernel) {
+void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &kernel) {
 	program->setUniformValue(loc_p1, 0);
 	program->setUniformValue(loc_p2, 1);
 	program->setUniformValue(loc_p3, 2);
@@ -167,18 +167,18 @@ void TextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &kerne
 
 /****************************************************************************/
 
-struct BlackOutShader : public TextureShader {
+struct BlackOutShader : public VideoTextureShader {
 	BlackOutShader(const VideoFormat &format, GLenum target)
-	: TextureShader(format, target) {
+	: VideoTextureShader(format, target) {
 		setTexel(R"(vec3 texel(const in vec2 coord) { return vec3(0.0, 0.0, 0.0); })");
 	}
 };
 
 /****************************************************************************/
 
-struct I420Shader : public TextureShader {
+struct I420Shader : public VideoTextureShader {
 	I420Shader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
-	: TextureShader(format, target) {
+	: VideoTextureShader(format, target) {
 		setTexel(R"(
 			vec3 texel(const vec2 coord) {
 				vec3 yuv;
@@ -199,9 +199,9 @@ struct I420Shader : public TextureShader {
 
 /****************************************************************************/
 
-struct NvShader : public TextureShader {
+struct NvShader : public VideoTextureShader {
 	NvShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
-	: TextureShader(format, target) {
+	: VideoTextureShader(format, target) {
 		QByteArray texel = (R"(
 			vec3 texel(const vec2 coord) {
 				vec3 yuv;
@@ -224,9 +224,9 @@ struct NvShader : public TextureShader {
 
 /****************************************************************************/
 
-struct Y422Shader : public TextureShader {
+struct Y422Shader : public VideoTextureShader {
 	Y422Shader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
-	: TextureShader(format, target) {
+	: VideoTextureShader(format, target) {
 		QByteArray texel = (R"(
 			vec3 texel(const vec2 coord) {
 				vec3 yuv;
@@ -249,8 +249,8 @@ struct Y422Shader : public TextureShader {
 
 /**************************************************************************/
 
-struct PassThroughShader : public TextureShader {
-	PassThroughShader(const VideoFormat &format, GLenum target): TextureShader(format, target) {}
+struct PassThroughShader : public VideoTextureShader {
+	PassThroughShader(const VideoFormat &format, GLenum target): VideoTextureShader(format, target) {}
 };
 
 /****************************************************************************/
@@ -320,8 +320,8 @@ struct VdaUploader : public TextureUploader {
 #include "hwacc_vaapi.hpp"
 #include <va/va_glx.h>
 
-struct MesaY422Shader : public TextureShader {
-	MesaY422Shader(const VideoFormat &format, GLenum target): TextureShader(format, target) {
+struct MesaY422Shader : public VideoTextureShader {
+	MesaY422Shader(const VideoFormat &format, GLenum target): VideoTextureShader(format, target) {
 		QByteArray getter(R"(vec3 texel(const vec2 coord) { return texture1(coord).y!!; })");
 		GLenum type = GL_UNSIGNED_SHORT_8_8_MESA;
 		if (format.type() == IMGFMT_YUYV) {
@@ -334,6 +334,8 @@ struct MesaY422Shader : public TextureShader {
 	}
 };
 
+#include <va/va_x11.h>
+
 struct VaApiDeinterlacer : public VaApiStatusChecker {
 	VAContextID m_context = VA_INVALID_ID;
 	VAConfigID m_config = VA_INVALID_ID;
@@ -342,7 +344,9 @@ struct VaApiDeinterlacer : public VaApiStatusChecker {
 	QVector<VAProcColorStandardType> m_inputColors, m_outputColors;
 	QVector<VASurfaceID> m_forwardReferencess, m_backwardReferences;
 	VaApiDeinterlacer() {
-		auto dpy = VaApi::glx();
+		dpy = vaGetDisplayGLX(XOpenDisplay(0));
+		int major, minor;
+		vaInitialize(dpy, &major, &minor);
 		auto filter = VaApi::filter(VAProcFilterDeinterlacing);
 		if (!filter || filter->algorithms().isEmpty())
 			{isSuccess(VA_STATUS_ERROR_UNIMPLEMENTED); return;}
@@ -354,7 +358,7 @@ struct VaApiDeinterlacer : public VaApiStatusChecker {
 		param.type = VAProcFilterDeinterlacing;
 		param.algorithm = (VAProcDeinterlacingType)filter->algorithms().first();
 		param.flags = 0;
-		if (!isSuccess(vaCreateBuffer(VaApi::glx(), m_context, VAProcFilterParameterBufferType, sizeof(param), 1, &param, &m_deinterlacer)))
+		if (!isSuccess(vaCreateBuffer(dpy, m_context, VAProcFilterParameterBufferType, sizeof(param), 1, &param, &m_deinterlacer)))
 			return;
 		VAProcPipelineCaps caps;
 		m_inputColors.resize(VAProcColorStandardCount);
@@ -363,7 +367,7 @@ struct VaApiDeinterlacer : public VaApiStatusChecker {
 		caps.output_color_standards = m_outputColors.data();
 		caps.num_input_color_standards = m_inputColors.size();
 		caps.num_output_color_standards = m_outputColors.size();
-		if (!isSuccess(vaQueryVideoProcPipelineCaps(VaApi::glx(), m_context, &m_deinterlacer, 1, &caps)))
+		if (!isSuccess(vaQueryVideoProcPipelineCaps(dpy, m_context, &m_deinterlacer, 1, &caps)))
 			return;
 		m_inputColors.resize(caps.num_input_color_standards);
 		m_outputColors.resize(caps.num_output_color_standards);
@@ -371,22 +375,22 @@ struct VaApiDeinterlacer : public VaApiStatusChecker {
 		m_backwardReferences.resize(caps.num_backward_references);
 	}
 	~VaApiDeinterlacer() {
-		auto dpy = VaApi::glx();
 		if (m_deinterlacer != VA_INVALID_ID)
 			vaDestroyBuffer(dpy, m_deinterlacer);
 		if (m_context != VA_INVALID_ID)
 			vaDestroyContext(dpy, m_context);
 		if (m_config != VA_INVALID_ID)
 			vaDestroyConfig(dpy, m_config);
+		vaTerminate(dpy);
 	}
 	bool apply(VASurfaceID input, VASurfaceID output, bool top) {
-		if (!isSuccess(vaBeginPicture(VaApi::glx(), m_context, output)))
+		if (!isSuccess(vaBeginPicture(dpy, m_context, output)))
 			return false;
 		VABufferID pipeline = VA_INVALID_ID;
 		VAProcPipelineParameterBuffer *param = nullptr;
-		if (!isSuccess(vaCreateBuffer(VaApi::glx(), m_context, VAProcPipelineParameterBufferType, sizeof(*param), 1, nullptr, &pipeline)))
+		if (!isSuccess(vaCreateBuffer(dpy, m_context, VAProcPipelineParameterBufferType, sizeof(*param), 1, nullptr, &pipeline)))
 			return false;
-		vaMapBuffer(VaApi::glx(), pipeline, (void**)&param);
+		vaMapBuffer(dpy, pipeline, (void**)&param);
 		param->surface = input;
 		param->surface_region = nullptr;
 		param->output_region = nullptr;
@@ -394,29 +398,30 @@ struct VaApiDeinterlacer : public VaApiStatusChecker {
 		param->filter_flags = top ? VA_TOP_FIELD : VA_BOTTOM_FIELD;
 		param->filters = &m_deinterlacer;
 		param->num_filters = 1;
-		vaUnmapBuffer(VaApi::glx(), pipeline);
+		vaUnmapBuffer(dpy, pipeline);
 		param->forward_references = m_forwardReferencess.data();
 		param->num_forward_references = m_forwardReferencess.size();
 		param->backward_references = m_backwardReferences.data();
 		param->num_backward_references = m_backwardReferences.size();
-		vaRenderPicture(VaApi::glx(), m_context, &pipeline, 1);
-		vaEndPicture(VaApi::glx(), m_context);
+		vaRenderPicture(dpy, m_context, &pipeline, 1);
+		vaEndPicture(dpy, m_context);
 		return true;
 	}
 private:
+	VADisplay dpy;
 };
 
-struct VaApiUploader : public TextureUploader {
+struct VaApiUploader : public VideoTextureUploader {
 	static const int specs[MP_CSP_COUNT];
-	virtual void initialize(const TextureInfo &info) override {
+	virtual void initialize(const VideoTextureInfo &info) override {
 		free();
 		Q_ASSERT(info.format == GL_BGRA);
-		TextureUploader::initialize(info);
+		VideoTextureUploader::initialize(info);
 		vaCreateSurfaceGLX(VaApi::glx(), info.target, m_texture = info.id, &m_surface);
 		vaCreateSurfaces(VaApi::glx(), info.width, info.height, VaApi::surfaceFormat(), 1, &m_ppSurface);
 	}
 	~VaApiUploader() { free(); delete m_deint; }
-	virtual void upload(const TextureInfo &info, const VideoFrame &frame) override {
+	virtual void upload(const VideoTextureInfo &info, const VideoFrame &frame) override {
 		auto dpy = VaApi::glx();
 		Q_ASSERT(m_texture == info.id);
 		auto id = (VASurfaceID)(uintptr_t)frame.data(3);
@@ -466,8 +471,8 @@ const int VaApiUploader::specs[MP_CSP_COUNT] = {
 
 #endif
 
-TextureShader *TextureShader::create(const VideoFormat &format, const ColorProperty &color, int effects) {
-	TextureShader *shader = nullptr;
+VideoTextureShader *VideoTextureShader::create(const VideoFormat &format, const ColorProperty &color, int effects) {
+	VideoTextureShader *shader = nullptr;
 	auto target = GL_TEXTURE_2D;
 #ifdef Q_OS_MAC
 	if (format.isNative())
@@ -505,7 +510,7 @@ TextureShader *TextureShader::create(const VideoFormat &format, const ColorPrope
 		shader->setUploader(new VaApiUploader);
 #endif
 	else
-		shader->setUploader(new TextureUploader);
+		shader->setUploader(new VideoTextureUploader);
 	shader->m_effects = effects;
 	shader->m_color = color;
 	shader->updateMatrix();

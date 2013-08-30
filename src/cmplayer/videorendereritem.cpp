@@ -2,7 +2,7 @@
 #include "mposditem.hpp"
 #include "videoframe.hpp"
 #include "global.hpp"
-#include "textureshader.hpp"
+#include "videotextureshader.hpp"
 
 struct VideoRendererItem::Data {
 	VideoFrame frame;
@@ -17,7 +17,7 @@ struct VideoRendererItem::Data {
 	MpOsdItem *mposd = nullptr;
 	QQuickItem *overlay = nullptr;
 	QMutex mutex;
-	TextureShader *shader = nullptr;
+	VideoTextureShader *shader = nullptr;
 	QByteArray shaderCode;
 	VideoFormat::Type shaderType = IMGFMT_BGRA;
 	Kernel3x3 blur, sharpen, kernel;
@@ -40,7 +40,7 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 	setFlags(ItemHasContents | ItemAcceptsDrops);
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
-	d->shader = TextureShader::create(d->format);
+	d->shader = VideoTextureShader::create(d->format);
 	setZ(-1);
 }
 
@@ -277,7 +277,7 @@ void VideoRendererItem::beforeUpdate() {
 	if (reset) {
 		if (d->shader)
 			delete d->shader;
-		d->shader = TextureShader::create(d->format, d->color, d->effects);
+		d->shader = VideoTextureShader::create(d->format, d->color, d->effects);
 		resetNode();
 		updateGeometry();
 	}
