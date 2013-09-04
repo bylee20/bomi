@@ -57,6 +57,8 @@ struct VaApiFilterInfo : public VaApiStatusChecker {
 		return nullptr;
 	}
 	const QVector<int> &algorithms() const { return m_algorithms; }
+	static QString description(VAProcFilterType type, int algorithm);
+	bool supports(int algorithm) const { return m_algorithms.contains(algorithm); }
 private:
 	QVector<int> m_algorithms;
 	VAProcFilterType m_type = VAProcFilterNone;
@@ -69,6 +71,8 @@ struct VaApi : public VaApiStatusChecker {
 	static const VaApiCodec *codec(AVCodecID id) { return find(id, get().m_supported); }
 	static VADisplay glx() {return m_display;}
 	static const VaApiFilterInfo *filter(VAProcFilterType type) { return find(type, get().m_filters); }
+	static QList<VaApiFilterInfo> filters() { return get().m_filters.values(); }
+	static QList<int> algorithms(VAProcFilterType type);
 	static int surfaceFormat() {return get().m_surfaceFormat;}
 private:
 	void setSurfaceFormat(int format) { m_surfaceFormat = format; }

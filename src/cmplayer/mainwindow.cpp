@@ -48,6 +48,7 @@ struct MainWindow::Data {
 	bool visible = false, sotChanging = false, fullScreen = false;
 	PlayerItem *player = nullptr;
 	RootMenu menu;	RecentInfo recent;
+	AppState &as = AppState::get();
 	PlayEngine engine;
 	VideoRendererItem renderer;
 	SubtitleRendererItem subtitle;
@@ -88,12 +89,12 @@ struct MainWindow::Data {
 		};
 		if (!checkAndPlay(mrl)) {
 			Playlist playlist;
-			if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::AppendToPlaylist) {
+			if (mode.playlist_behavior == PlaylistBehaviorWhenOpenMedia::AppendToPlaylist) {
 				d->playlist.append(mrls);
-			} else if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist) {
+			} else if (mode.playlist_behavior == PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist) {
 				d->playlist.clear();
 				playlist.append(mrls);
-			} else if (mode.playlist_behavior == Enum::PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist) {
+			} else if (mode.playlist_behavior == PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist) {
 				d->playlist.clear();
 				playlist = p->generatePlaylist(mrl);
 			}
@@ -193,14 +194,14 @@ struct MainWindow::Data {
 			as.audio_scaletempo = engine.isTempoScaled();
 			as.video_aspect_ratio = renderer.aspectRatio();
 			as.video_crop_ratio = renderer.cropRatio();
-			as.video_alignment = renderer.alignment();
+			as.video_alignment = PositionInfo::from(renderer.alignment(), Position::CC);
 			as.video_offset = renderer.offset();
 			as.video_effects = renderer.effects();
 			as.video_color = renderer.color();
 			as.play_speed = engine.speed();
 			as.sub_pos = subtitle.pos();
 			as.sub_sync_delay = subtitle.delay();
-			as.screen_stays_on_top = Enum::StaysOnTop::from(sot, Enum::StaysOnTop::Playing);
+			as.screen_stays_on_top = StaysOnTopInfo::from(sot, StaysOnTop::Playing);
 			as.sub_letterbox = subtitle.letterboxHint();
 			as.sub_align_top = subtitle.isTopAligned();
 			as.save();
@@ -393,8 +394,9 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->menu("video")("aspect").g()->trigger(as.video_aspect_ratio);
 	d->menu("video")("crop").g()->trigger(as.video_crop_ratio);
-	d->menu("video")("align").g("horizontal")->trigger(as.video_alignment.id() & 0x0f);
-	d->menu("video")("align").g("vertical")->trigger(as.video_alignment.id() & 0xf0);
+	d->menu("video")("align").g("horizontal")->trigger(as.video_alignment & 0x0f);
+	d->menu("video")("align").g("vertical")->trigger(as.video_alignment & 0xf0);
+	d->menu("video")("deint").g()->trigger((int)as.video_deint);
 	for (int i=0; i<16; ++i) {
 		if ((as.video_effects >> i) & 1)
 			d->menu("video")("filter").g()->setChecked(1 << i, true);
@@ -402,7 +404,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->menu("subtitle").g("display")->trigger((int)as.sub_letterbox);
 	d->menu("subtitle").g("align")->trigger((int)as.sub_align_top);
 	d->menu("tool")["auto-exit"]->setChecked(as.auto_exit);
-	d->menu("window").g("stays-on-top")->trigger(as.screen_stays_on_top.id());
+	d->menu("window").g("stays-on-top")->trigger((int)as.screen_stays_on_top);
 
 	auto setCurrentAction = [this] (ActionGroup *g) { d->currentActions[g] = g->checkedAction(); };
 	setCurrentAction(d->menu("video")("aspect").g());
@@ -586,15 +588,6 @@ void MainWindow::connectMenus() {
 		dlg->setVideoRenderer(&d->renderer); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
 		if (!dlg->isVisible()) {dlg->adjustSize(); dlg->show();}
 	});
-	connect(video["drop-frame"], &QAction::triggered, [this] () {
-		auto action = d->menu("video")["drop-frame"];
-		if (action->isChecked() != d->engine.frameDrop())
-			d->push(action->isChecked(), d->engine.frameDrop(), [this, action] (bool v) {
-				d->engine.setFrameDrop(v);
-				action->setChecked(v);
-				showMessage(tr("Drop Frame"), v);
-			});
-	});
 	connect(&video("align"), &Menu::triggered, [this] () {
 		int key = 0;
 		for (auto action : d->menu("video")("align").actions()) {
@@ -618,6 +611,28 @@ void MainWindow::connectMenus() {
 		}
 		if (d->renderer.offset() != offset)
 			d->push(offset, d->renderer.offset(), [this](const QPoint &v) { d->renderer.setOffset(v); });
+	});
+	connect(video("deint")["cycle"], &QAction::triggered, [this] () {
+		auto actions = d->menu("video")("deint").g()->actions();
+		int i = 0;
+		for (; i<actions.size(); ++i)
+			if (actions[i]->isChecked())
+				break;
+		if (++i >= actions.size())
+			i = 0;
+		actions[i]->trigger();
+	});
+	connect(video("deint").g(), &QActionGroup::triggered, [this] (QAction *action) {
+		auto mode = DeintModeInfo::from(action->data().toInt(), DeintMode::Never);
+		if (d->engine.deintMode() != mode)
+			d->push(mode, d->engine.deintMode(), [this] (DeintMode mode) {
+				d->as.video_deint = mode;
+				if (auto action = d->menu("video")("deint").g()->find((int)mode)) {
+					action->setChecked(true);
+					showMessage(tr("Deinterlace"), action->text());
+					d->engine.setDeintMode(mode);
+				}
+			});
 	});
 	connect(&video("filter"), &Menu::triggered, [this] () {
 		VideoRendererItem::Effects effects = 0;
@@ -932,7 +947,7 @@ Playlist MainWindow::generatePlaylist(const Mrl &mrl) const {
 	const auto mode = d->pref().generate_playlist;
 	const QFileInfo file(mrl.toLocalFile());
 	const QDir dir = file.dir();
-	if (mode == Enum::GeneratePlaylist::Folder)
+	if (mode == GeneratePlaylist::Folder)
 		return Playlist().loadAll(dir);
 	const auto filter = Info::mediaNameFilter();
 	const auto files = dir.entryInfoList(filter, QDir::Files, QDir::Name);
@@ -1303,6 +1318,7 @@ void MainWindow::applyPref() {
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
+	d->engine.setDeint(p.deint_swdec, p.deint_hwdec);
 	d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
 	SubtitleParser::setMsPerCharactor(p.ms_per_char);
 	d->subtitle.setPriority(p.sub_priority);
@@ -1416,9 +1432,9 @@ void MainWindow::updateStaysOnTop() {
 	const int id = d->menu("window").g("stays-on-top")->checkedAction()->data().toInt();
 	bool onTop = false;
 	if (!isFullScreen()) {
-		if (id == Enum::StaysOnTop::Always)
+		if (id == StaysOnTop::Always)
 			onTop = true;
-		else if (id == Enum::StaysOnTop::Never)
+		else if (id == StaysOnTop::Never)
 			onTop = false;
 		else
 			onTop = d->engine.isPlaying();
@@ -1461,11 +1477,11 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 			const QString base = QFileInfo(mrl.toLocalFile()).completeBaseName();
 			for (int i=0; i<loaded.size(); ++i) {
 				bool select = false;
-				if (p.sub_autoselect == Enum::SubtitleAutoselect::Matched) {
+				if (p.sub_autoselect == SubtitleAutoselect::Matched) {
 					select = QFileInfo(loaded[i].component().fileName()).completeBaseName() == base;
-				} else if (p.sub_autoselect == Enum::SubtitleAutoselect::All) {
+				} else if (p.sub_autoselect == SubtitleAutoselect::All) {
 					select = true;
-				} else if (p.sub_autoselect == Enum::SubtitleAutoselect::EachLanguage) {
+				} else if (p.sub_autoselect == SubtitleAutoselect::EachLanguage) {
 		//			const QString lang = loaded[i].m_comp.language().id();
 					const QString lang = loaded[i].component().language();
 					if ((select = (!langSet.contains(lang))))
@@ -1474,7 +1490,7 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 				if (select)
 					selected.append(i);
 			}
-			if (p.sub_autoselect == Enum::SubtitleAutoselect::Matched
+			if (p.sub_autoselect == SubtitleAutoselect::Matched
 					&& !selected.isEmpty() && !p.sub_ext.isEmpty()) {
 				for (int i=0; i<selected.size(); ++i) {
 					const QString fileName = loaded[selected[i]].component().fileName();
@@ -1498,8 +1514,8 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 			const QFileInfoList all = fileInfo.dir().entryInfoList(filter, QDir::Files, QDir::Name);
 			const QString base = fileInfo.completeBaseName();
 			for (int i=0; i<all.size(); ++i) {
-				if (p.sub_autoload != Enum::SubtitleAutoload::Folder) {
-					if (p.sub_autoload == Enum::SubtitleAutoload::Matched) {
+				if (p.sub_autoload != SubtitleAutoload::Folder) {
+					if (p.sub_autoload == SubtitleAutoload::Matched) {
 						if (base != all[i].completeBaseName())
 							continue;
 					} else if (!all[i].fileName().contains(base))

@@ -19,7 +19,6 @@ static QList<T> fromStringList(const QStringList &list) {
 	return ret;
 }
 
-
 QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	QHash<QString, QList<QKeySequence> > keys;
 	keys[_L("open/file")] << Qt::CTRL + Qt::Key_F;
@@ -55,12 +54,12 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("subtitle/sync-sub")] << Qt::Key_A;
 
 	keys[_L("video/snapshot")] << Qt::CTRL + Qt::Key_S;
-	keys[_L("video/drop-frame")] << Qt::CTRL + Qt::Key_D;
 	keys[_L("video/move/reset")] << Qt::SHIFT + Qt::Key_X;
 	keys[_L("video/move/up")] << Qt::SHIFT + Qt::Key_W;
 	keys[_L("video/move/down")] << Qt::SHIFT + Qt::Key_S;
 	keys[_L("video/move/left")] << Qt::SHIFT + Qt::Key_A;
 	keys[_L("video/move/right")] << Qt::SHIFT + Qt::Key_D;
+	keys[_L("video/deint/cycle")] << Qt::CTRL + Qt::Key_D;
 	keys[_L("video/color/brightness+")] << Qt::Key_T;
 	keys[_L("video/color/brightness-")] << Qt::Key_G;
 	keys[_L("video/color/contrast+")] << Qt::Key_Y;
@@ -199,6 +198,8 @@ void Pref::save() const {
     WRITE(enable_hwaccel);
 	WRITE(skin_name);
     WRITE(hwaccel_codecs);
+	WRITE(enable_hwdeint);
+	WRITE(hwdeints);
 
 	WRITE(normalizer_silence);
 	WRITE(normalizer_target);
@@ -209,6 +210,11 @@ void Pref::save() const {
 
 	WRITE(show_logo);
 	WRITE(bg_color);
+
+	WRITE(deint_hwdec);
+	WRITE(deint_swdec);
+	WRITE(deint_list_hwdec);
+	WRITE(deint_list_swdec);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -274,6 +280,8 @@ void Pref::load() {
 	READ(skin_name);
     READ(enable_hwaccel);
     READ(hwaccel_codecs);
+	READ(enable_hwdeint);
+	READ(hwdeints);
 
 	READ(enable_generate_playist);
 	READ(sub_enable_autoload);
@@ -291,6 +299,11 @@ void Pref::load() {
 
 	READ(show_logo);
 	READ(bg_color);
+
+	READ(deint_hwdec);
+	READ(deint_swdec);
+	READ(deint_list_hwdec);
+	READ(deint_list_swdec);
 #undef READ
 
 #define READ2(a) a.load(r, #a)
@@ -316,6 +329,23 @@ void Pref::load() {
 		}
 	}
 	r.endArray();
+}
+
+#ifdef Q_OS_LINUX
+#include "hwacc_vaapi.hpp"
+#endif
+
+QList<int> Pref::defaultHwAccDeints() {
+	QList<int> deints;
+#ifdef Q_OS_LINUX
+	auto algorithms = VaApi::algorithms(VAProcFilterDeinterlacing);
+	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
+	for (auto algo : algorithms) {
+		if (filter->supports(algo))
+			deints << algo;
+	}
+#endif
+	return deints;
 }
 
 QList<int> Pref::defaultHwAccCodecs() {

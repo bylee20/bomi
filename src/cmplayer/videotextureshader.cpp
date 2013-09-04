@@ -13,6 +13,8 @@ VideoTextureShader::VideoTextureShader(const VideoFormat &format, GLenum target)
 		vec3 texel(const in vec2 coord);
 		vec3 get_texel(const in vec2 coord);
 		vec3 get_color(const in vec2 coord);
+		uniform float top_field;
+		uniform float deint;
 	)";
 	if (target == GL_TEXTURE_RECTANGLE_ARB) {
 		m_header += R"(
@@ -46,16 +48,16 @@ void VideoTextureShader::initialize(GLuint *textures) {
 QByteArray VideoTextureShader::fragment() const {
 	QByteArray codes = m_header;
 	codes += m_texel;
+	QString dxy;
+	const char *fmt = "const vec4 dxy = vec4(%f, %f, %f, %f);\n";
+	if (m_target == GL_TEXTURE_2D && !format().isEmpty()) {
+		const float dx = 1.0/(double)format().alignedWidth();
+		const float dy = 1.0/(double)format().alignedHeight();
+		dxy.sprintf(fmt, dx, dy, -dx, 0.f);
+	} else
+		dxy.sprintf(fmt, 1.f, 1.f, -1.f, 0.f);
+	codes += dxy.toLatin1();
 	if (m_effects & VideoRendererItem::KernelEffects) {
-		QString dxy;
-		const char *fmt = "const vec4 dxy = vec4(%f, %f, %f, %f);\n";
-		if (m_target == GL_TEXTURE_2D && !format().isEmpty()) {
-			const float dx = 1.0/(double)format().alignedWidth();
-			const float dy = 1.0/(double)format().alignedHeight();
-			dxy.sprintf(fmt, dx, dy, -dx, 0.f);
-		} else
-			dxy.sprintf(fmt, 1.f, 1.f, -1.f, 0.f);
-		codes += dxy.toLatin1();
 		codes += R"(
 			vec3 get_texel(const in vec2 coord) {
 				// dxy.zy   dxy.wy   dxy.xy
@@ -69,35 +71,57 @@ QByteArray VideoTextureShader::fragment() const {
 		)";
 	} else {
 		codes += R"(
-				vec3 get_texel(const in vec2 coord) {
-				return texel(coord);
-			}
+				vec3 get_texel(const in vec2 coord) { return texel(coord); }
 		)";
 	}
-	codes += R"(
-		vec3 get_color(const in vec2 coord) {
-			vec3 tex = get_texel(coord);
-			tex -= orig_vec;
-			tex *= conv_mat;
-			tex += conv_vec;
-			return tex;
+	QByteArray pp;
+	if (m_deint.flags() & DeintInfo::OpenGL) {
+		if (m_deint.method() == DeintInfo::Bob) {
+			pp = R"(
+				vec3 preprocess(const in vec2 coord) {
+					float y = coord.y;
+					float offset = deint*(top_field*dxy.y + mod(y, 2.0*dxy.y));
+					return get_texel(coord - vec2(0.0, offset));
+				}
+			)";
+		} else if (m_deint.method() == DeintInfo::LinearBob) {
+			pp = R"(
+				vec3 preprocess(const in vec2 coord) {
+					float y = coord.y;
+					float offset = deint*(top_field*dxy.y + mod(y, 2.0*dxy.y));
+					return mix(get_texel(coord + vec2(0.0, -offset)), get_texel(coord + vec2(0.0, 2.0*dxy.y-offset)), offset/(2.0*dxy.y));
+				}
+			)";
 		}
-	)";
-
+	}
+	if (pp.isEmpty()) {
+		pp = R"(
+			vec3 preprocess(const in vec2 coord) { return get_texel(coord); }
+		)";
+	}
+	codes += pp;
 	codes += R"(
 			void main() {
-				vec3 c = get_color(qt_TexCoord);
-				gl_FragColor.xyz = c;
-				gl_FragColor.w = 1.0;
+				vec3 tex = preprocess(qt_TexCoord);
+				tex -= orig_vec;
+				tex *= conv_mat;
+				tex += conv_vec;
+				const vec2 one = vec2(1.0, 0.0);
+				gl_FragColor = tex.xyzz * one.xxxy + one.yyyx;
+//				gl_FragColor.xyz = c;
+//				gl_FragColor.w = 1.0;
 			}
 	)";
 	return codes;
 }
 
 void VideoTextureShader::upload(const VideoFrame &frame) {
+	m_field = frame.field();
 	Q_ASSERT(m_uploader);
-	for (int i=0; i<m_info.size(); ++i)
-		m_uploader->upload(m_info[i], frame);
+	if (!(m_field & VideoFrame::Additional)) {
+		for (int i=0; i<m_info.size(); ++i)
+			m_uploader->upload(m_info[i], frame);
+	}
 }
 
 void VideoTextureShader::updateMatrix() {
@@ -119,6 +143,8 @@ void VideoTextureShader::link(QOpenGLShaderProgram *program) {
 	loc_kern_c = program->uniformLocation("kern_c");
 	loc_kern_d = program->uniformLocation("kern_d");
 	loc_kern_n = program->uniformLocation("kern_n");
+	loc_top_field = program->uniformLocation("top_field");
+	loc_deint = program->uniformLocation("deint");
 	loc_p1 = program->uniformLocation("p1");
 	loc_p2 = program->uniformLocation("p2");
 	loc_p3 = program->uniformLocation("p3");
@@ -139,6 +165,8 @@ bool VideoTextureShader::setEffects(int effects) {
 }
 
 void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &kernel) {
+	program->setUniformValue(loc_top_field, float(!!(m_field & VideoFrame::Top)));
+	program->setUniformValue(loc_deint, float(!!(m_field & VideoFrame::Interlaced)));
 	program->setUniformValue(loc_p1, 0);
 	program->setUniformValue(loc_p2, 1);
 	program->setUniformValue(loc_p3, 2);
@@ -344,9 +372,7 @@ struct VaApiDeinterlacer : public VaApiStatusChecker {
 	QVector<VAProcColorStandardType> m_inputColors, m_outputColors;
 	QVector<VASurfaceID> m_forwardReferencess, m_backwardReferences;
 	VaApiDeinterlacer() {
-		dpy = vaGetDisplayGLX(XOpenDisplay(0));
-		int major, minor;
-		vaInitialize(dpy, &major, &minor);
+		dpy = VaApi::glx();
 		auto filter = VaApi::filter(VAProcFilterDeinterlacing);
 		if (!filter || filter->algorithms().isEmpty())
 			{isSuccess(VA_STATUS_ERROR_UNIMPLEMENTED); return;}
@@ -381,7 +407,6 @@ struct VaApiDeinterlacer : public VaApiStatusChecker {
 			vaDestroyContext(dpy, m_context);
 		if (m_config != VA_INVALID_ID)
 			vaDestroyConfig(dpy, m_config);
-		vaTerminate(dpy);
 	}
 	bool apply(VASurfaceID input, VASurfaceID output, bool top) {
 		if (!isSuccess(vaBeginPicture(dpy, m_context, output)))
@@ -413,6 +438,10 @@ private:
 
 struct VaApiUploader : public VideoTextureUploader {
 	static const int specs[MP_CSP_COUNT];
+	VaApiUploader(const DeintInfo &deint): VideoTextureUploader(deint) {
+		if (deint.flags() & DeintInfo::VaApi)
+			m_deint = new VaApiDeinterlacer;
+	}
 	virtual void initialize(const VideoTextureInfo &info) override {
 		free();
 		Q_ASSERT(info.format == GL_BGRA);
@@ -426,9 +455,7 @@ struct VaApiUploader : public VideoTextureUploader {
 		Q_ASSERT(m_texture == info.id);
 		auto id = (VASurfaceID)(uintptr_t)frame.data(3);
 		vaSyncSurface(dpy, id);
-		if (frame.field() & VideoFrame::Interlaced) {
-			if (!m_deint)
-				m_deint = new VaApiDeinterlacer;
+		if ((frame.field() & VideoFrame::Interlaced) && m_deint) {
 			if (m_deint->apply(id, m_ppSurface, frame.field() & VideoFrame::Top))
 				id = m_ppSurface;
 		}
@@ -452,7 +479,6 @@ private:
 			m_ppSurface = VA_INVALID_SURFACE;
 		}
 	}
-
 	void *m_surface = nullptr;
 	GLuint m_texture = GL_NONE;
 	VASurfaceID m_ppSurface = VA_INVALID_SURFACE;
@@ -471,7 +497,7 @@ const int VaApiUploader::specs[MP_CSP_COUNT] = {
 
 #endif
 
-VideoTextureShader *VideoTextureShader::create(const VideoFormat &format, const ColorProperty &color, int effects) {
+VideoTextureShader *VideoTextureShader::create(const VideoFormat &format, const ColorProperty &color, const DeintInfo &deint, int effects) {
 	VideoTextureShader *shader = nullptr;
 	auto target = GL_TEXTURE_2D;
 #ifdef Q_OS_MAC
@@ -507,12 +533,13 @@ VideoTextureShader *VideoTextureShader::create(const VideoFormat &format, const 
 		shader->setUploader(new VdaUploader);
 #endif
 #ifdef Q_OS_LINUX
-		shader->setUploader(new VaApiUploader);
+		shader->setUploader(new VaApiUploader(deint));
 #endif
 	else
 		shader->setUploader(new VideoTextureUploader);
 	shader->m_effects = effects;
 	shader->m_color = color;
+	shader->m_deint = deint;
 	shader->updateMatrix();
 	return shader;
 }

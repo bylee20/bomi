@@ -3,6 +3,7 @@
 
 #include "stdafx.hpp"
 #include "colorproperty.hpp"
+#include "deintinfo.hpp"
 #include "enums.hpp"
 #include <type_traits>
 
@@ -13,9 +14,7 @@ enum class RecordType : quint32 {Normal, Enum, List};
 
 template <typename T>
 struct RecordInfo {
-	static T *make(); struct No {}; struct Yes {No no[3];};
-	static Yes check(EnumClass *);	static No check(...);
-	constexpr static RecordType type = (sizeof(check(make())) == sizeof(Yes)) ? RecordType::Enum : RecordType::Normal;
+	constexpr static RecordType type = std::is_enum<T>::value ? RecordType::Enum : RecordType::Normal;
 	constexpr static bool builtIn = type == RecordType::Normal && (QMetaTypeId2<T>::Defined || QMetaTypeId<T>::Defined);
 };
 
@@ -41,8 +40,18 @@ struct RecordIo {
 
 template <typename T>
 struct RecordIo<T, RecordType::Enum, false> {
-	static void read(QSettings &r, EnumClass &value, const char *key) {value.setByName(r.value(_L(key), value.name()).toString());}
-	static void write(QSettings &r, const EnumClass &value, const char *key) {r.setValue(_L(key), value.name());}
+	static void read(QSettings &r, T &value, const char *key) {value = EnumInfo<T>::from(r.value(_L(key), EnumInfo<T>::name(value)).toString(), value);}
+	static void write(QSettings &r, const T &value, const char *key) {r.setValue(_L(key), EnumInfo<T>::name(value));}
+};
+
+template<>
+struct RecordIo<DeintInfo, RecordType::Normal, false> {
+	static void read(QSettings &r, DeintInfo &value, const char *key) {
+		value = DeintInfo::fromString(r.value(_L(key), value.toString()).toString());
+	}
+	static void write(QSettings &r, const DeintInfo &value, const char *key) {
+		r.setValue(_L(key), value.toString());
+	}
 };
 
 template <typename T>

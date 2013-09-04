@@ -7,8 +7,8 @@ typedef QHash<QString, QList<QKeySequence> > Shortcuts;
 
 class Pref;
 template<typename E> struct ActionEnumInfo;
-using ClickActionInfo = ActionEnumInfo<Enum::ClickAction>;
-using WheelActionInfo = ActionEnumInfo<Enum::WheelAction>;
+using ClickActionEnumInfo = ActionEnumInfo<ClickAction>;
+using WheelActionEnumInfo = ActionEnumInfo<WheelAction>;
 
 class RootMenu : public Menu {
 	Q_OBJECT
@@ -20,8 +20,8 @@ private:
 		QAction *up, *down;
 	};
 	struct ArgAction { QString argument; QAction *action = nullptr; };
-	typedef QMap<Enum::ClickAction, QAction*> ClickActionMap;
-	typedef QMap<Enum::WheelAction, WheelActionPair> WheelActionMap;
+	typedef QMap<ClickAction, QAction*> ClickActionMap;
+	typedef QMap<WheelAction, WheelActionPair> WheelActionMap;
 public:
 	enum Preset {Current, CMPlayer, Movist};
 	RootMenu();
@@ -32,9 +32,9 @@ public:
 	QString longId(QAction *action) const {return m_ids.value(action);}
 	QAction *action(const QString &longId) const {return m_actions.value(longId).action;}
 	QAction *action(const QKeySequence &shortcut) const {return m_keymap.value(shortcut);}
-	QAction *doubleClickAction(const ClickActionInfo &info) const;
-	QAction *middleClickAction(const ClickActionInfo &info) const;
-	QAction *wheelScrollAction(const WheelActionInfo &info, bool up) const;
+	QAction *doubleClickAction(const ClickActionEnumInfo &info) const;
+	QAction *middleClickAction(const ClickActionEnumInfo &info) const;
+	QAction *wheelScrollAction(const WheelActionEnumInfo &info, bool up) const;
 	inline void resetKeyMap() {m_keymap.clear(); fillKeyMap(this);}
 	Shortcuts shortcuts() const;
 	void setShortcuts(const Shortcuts &shortcuts);

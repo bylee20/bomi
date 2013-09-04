@@ -1,4 +1,5 @@
 #include "prefdialog.hpp"
+#include "deintinfo.hpp"
 #include "translator.hpp"
 #include "dialogs.hpp"
 #include "info.hpp"
@@ -8,12 +9,14 @@
 #include "rootmenu.hpp"
 #include "skin.hpp"
 #include "hwacc.hpp"
+#include <array>
+#include "hwacc_vaapi.hpp"
 
 // from clementine's preferences dialog
 typedef QDialogButtonBox DBB;
 
 static const int CategoryRole = Qt::UserRole + 1;
-static const int WidgetRole = Qt::UserRole + 1;
+static const int WidgetRole = Qt::UserRole + CategoryRole;
 
 class PrefOpenMediaGroup : public QGroupBox {
 	Q_DECLARE_TR_FUNCTIONS(PrefOpenMediaGroup)
@@ -22,7 +25,7 @@ public:
 	: QGroupBox(title, parent) {
 		auto layout = new QVBoxLayout(this);
 		start = new QCheckBox(tr("Start the playback"), this);
-		playlist = new EnumComboBox<Enum::PlaylistBehaviorWhenOpenMedia>(this);
+		playlist = new EnumComboBox<PlaylistBehaviorWhenOpenMedia>(this);
 		layout->addWidget(start);
 		layout->addWidget(playlist);
 		auto vbox = static_cast<QVBoxLayout*>(parent->layout());
@@ -35,13 +38,13 @@ public:
 	Pref::OpenMedia value() const {return Pref::OpenMedia(start->isChecked(), playlist->currentValue());}
 private:
 	QCheckBox *start;
-	EnumComboBox<Enum::PlaylistBehaviorWhenOpenMedia> *playlist;
+	EnumComboBox<PlaylistBehaviorWhenOpenMedia> *playlist;
 };
 
 template <typename Enum>
 class PrefMouseGroup : public QGroupBox {
 public:
-	typedef ::Enum::KeyModifier Modifier;
+	typedef ::KeyModifier Modifier;
 	typedef EnumComboBox<Enum> ComboBox;
 	typedef ActionEnumInfo<Enum> ActionInfo;
 	typedef Pref::KeyModifierMap<Enum> ActionMap;
@@ -56,7 +59,7 @@ public:
 			combos.append(combo);
 			checks.append(check);
 			if (mods[i] != Modifier::None)
-				check->setText(QKeySequence(mods[i].id()).toString(QKeySequence::NativeText));
+				check->setText(QKeySequence((int)mods[i]).toString(QKeySequence::NativeText));
 			grid->addWidget(check, i, 0, 1, 1);
 			grid->addWidget(combo, i, 1, 1, 1);
 			combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -68,7 +71,7 @@ public:
 	void setValues(const ActionMap &map) {
 		for (int i=0; i<mods.size(); ++i) {
 			const ActionInfo info = map[mods[i]];
-			const int idx = combos[i]->findData(info.action.id());
+			const int idx = combos[i]->findData((int)info.action);
 			Q_ASSERT(idx != -1);
 			combos[i]->setCurrentIndex(idx);
 			checks[i]->setChecked(info.enabled);
@@ -102,13 +105,10 @@ public:
 		setText(idx + Shortcut1, shortcut.toString(QKeySequence::NativeText));
 	}
 	void setShortcuts(const QList<QKeySequence> &keys) {
-		int i=0;
-		for (; i<m_shortcuts.size() && i<keys.size(); ++i)
-			m_shortcuts[i] = keys[i];
-		for (; i<m_shortcuts.size(); ++i)
-			m_shortcuts[i] = QKeySequence();
-		for (int i=0; i<m_shortcuts.size(); ++i)
+		for (int i = 0; i<(int)m_shortcuts.size(); ++i) {
+			m_shortcuts[i] = (i < keys.size()) ? keys[i] : QKeySequence();
 			setText(i+1, m_shortcuts[i].toString(QKeySequence::NativeText));
+		}
 	}
 	QList<QKeySequence> shortcuts() const {
 		QList<QKeySequence> shortcuts;
@@ -162,10 +162,10 @@ private:
 	: QTreeWidgetItem(parent), m_action(action) {
 		Q_ASSERT(action->menu() == 0);
 		setText(Discription, m_action->text());
-		m_shortcuts.resize(4);
+//		m_shortcuts.resize(4);
 	}
 	QAction *m_action; QString m_id;
-	QVector<QKeySequence> m_shortcuts;
+	std::array<QKeySequence, 4> m_shortcuts;
 };
 
 
@@ -224,9 +224,10 @@ private:
 struct PrefDialog::Data {
 	Ui::PrefDialog ui;
 	QButtonGroup *shortcuts;
-	PrefMouseGroup<Enum::ClickAction> *dbl, *mdl;
-	PrefMouseGroup<Enum::WheelAction> *whl;
-	QMap<int, QCheckBox*> hwAcc;
+	PrefMouseGroup<ClickAction> *dbl, *mdl;
+	PrefMouseGroup<WheelAction> *whl;
+	QMap<int, QCheckBox*> hwdec;
+	QMap<int, QCheckBox*> hwdeint;
 	PrefOpenMediaGroup *open_media_from_file_manager;
 	PrefOpenMediaGroup *open_media_by_drag_and_drop;
 	QStringList imports;
@@ -237,7 +238,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
 	d->ui.setupUi(this);
 	d->ui.tree->setItemDelegate(new Delegate(d->ui.tree));
-	d->ui.tree->setIconSize(QSize(32, 32));
+	d->ui.tree->setIconSize(QSize(22, 22));
 
 	connect(d->ui.tree, &QTreeWidget::itemSelectionChanged, [this] () {
 		auto items = d->ui.tree->selectedItems();
@@ -275,6 +276,11 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Look"), d->ui.gen_appearance, ":/img/preferences-desktop-theme-32.png", general);
 	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
 
+	auto video = addCategory(tr("Video"));
+	addPage(tr("Hardware Acceleration"), d->ui.video_hwacc, ":/img/apps-hardware-icon.png", video);
+	addPage(tr("Deinterlace"), d->ui.video_deint, ":/img/format-line-spacing-double.png", video);
+	addPage(tr("Filter"), d->ui.video_filter, ":/img/draw-brush.png", video);
+
 	auto subtitle = addCategory(tr("Subtitle"));
 	addPage(tr("Load"), d->ui.sub_load, ":/img/application-x-subrip-32.png", subtitle);
 	addPage(tr("Appearance"), d->ui.sub_appearance, ":/img/format-text-color-32.png", subtitle);
@@ -290,30 +296,70 @@ PrefDialog::PrefDialog(QWidget *parent)
 	d->open_media_by_drag_and_drop = new PrefOpenMediaGroup(tr("Open by drag-and-drop"), d->ui.open_media);
 
 	auto vbox = new QVBoxLayout;
-	vbox->setContentsMargins(20, 0, 0, 0);
-	const auto codecs = HwAcc::fullCodecList();
-	for (const auto codec : codecs) {
-		QCheckBox *ch = new QCheckBox;
-		const auto supports = HwAcc::supports(codec);
-		const auto desc = avcodec_descriptor_get(codec)->long_name;
-		if (supports)
-			ch->setText(desc);
+	vbox->setMargin(0);
+
+	auto makeCheckBox = [&vbox, this] (const QString desc, bool supported) {
+		QCheckBox *box = new QCheckBox;
+		if (supported)
+			box->setText(desc);
 		else
-			ch->setText(_L(desc) % " (" % tr("Not supported") % ')');
-		ch->setEnabled(supports);
-		vbox->addWidget(ch);
-		d->hwAcc[codec] = ch;
+			box->setText(desc % _L(" (") % tr("Not supported") % _L(')'));
+		box->setEnabled(supported);
+		vbox->addWidget(box);
+		return box;
+	};
+
+	const auto codecs = HwAcc::fullCodecList();
+	for (const auto codec : codecs)
+		d->hwdec[codec] = makeCheckBox(avcodec_descriptor_get(codec)->long_name, HwAcc::supports(codec));
+	d->ui.hwdec_list->setLayout(vbox);
+
+#ifdef Q_OS_LINUX
+	vbox = new QVBoxLayout;
+	vbox->setMargin(0);
+	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
+	for (int algo : VaApi::algorithms(VAProcFilterDeinterlacing)) {
+		if (algo == VAProcDeinterlacingBob) // other methods are not tested, yet
+			d->hwdeint[algo] = makeCheckBox(VaApiFilterInfo::description(filter->type(), algo), filter->supports(algo));
 	}
-	d->ui.HwAcc_list->setLayout(vbox);
+	d->ui.hwdeint_list->setLayout(vbox);
+#endif
+
+	auto initDeints = [] (const QList<DeintInfo> &deints, QComboBox *combo, QStackedWidget *stack, bool hw) {
+		for (auto deint : deints) {
+			combo->addItem(deint.name(), deint.method());
+			auto w = new DeintWidget(deint, hw);
+			const int idx = stack->addWidget(w);
+			combo->setItemData(idx, QVariant::fromValue(w), WidgetRole);
+		}
+	};
+	initDeints(DeintInfo::hwdecList(), d->ui.deint_hwdec_combo, d->ui.deint_hwdec_stack, true);
+	initDeints(DeintInfo::swdecList(), d->ui.deint_swdec_combo, d->ui.deint_swdec_stack, false);
+
+	auto updateDeintDesc = [this] (QWidget *w) {
+		const auto method = qobject_cast<DeintWidget*>(w)->method();
+		d->ui.deint_desc->setText("\n" % DeintInfo::name(method) % "\n\n" % DeintInfo::description(method));
+	};
+	connect(d->ui.deint_swdec_stack, &QStackedWidget::currentChanged, [this, updateDeintDesc] (int index) {
+		updateDeintDesc(d->ui.deint_swdec_stack->widget(index));
+	});
+	connect(d->ui.deint_hwdec_stack, &QStackedWidget::currentChanged, [this, updateDeintDesc] (int index) {
+		updateDeintDesc(d->ui.deint_hwdec_stack->widget(index));
+	});
+	connect(d->ui.deint_tabs, &QTabWidget::currentChanged, [this, updateDeintDesc] (int index) {
+		auto stack = index ? d->ui.deint_hwdec_stack : d->ui.deint_swdec_stack;
+		updateDeintDesc(stack->currentWidget());
+	});
+	updateDeintDesc(d->ui.deint_tabs->currentWidget()->findChild<QStackedWidget*>()->currentWidget());
 
 	d->ui.sub_ext->addItem(QString(), QString());
 	d->ui.sub_ext->addItemTextData(Info::subtitleExt());
 	d->ui.locale->addItemData(Translator::availableLocales());
 	d->ui.window_style->addItemTextData(cApp.availableStyleNames());
 
-	d->dbl = new PrefMouseGroup<Enum::ClickAction>(d->ui.ui_mouse_layout);
-	d->mdl = new PrefMouseGroup<Enum::ClickAction>(d->ui.ui_mouse_layout);
-	d->whl = new PrefMouseGroup<Enum::WheelAction>(d->ui.ui_mouse_layout);
+	d->dbl = new PrefMouseGroup<ClickAction>(d->ui.ui_mouse_layout);
+	d->mdl = new PrefMouseGroup<ClickAction>(d->ui.ui_mouse_layout);
+	d->whl = new PrefMouseGroup<WheelAction>(d->ui.ui_mouse_layout);
 
 	d->shortcuts = new QButtonGroup(this);
 	d->shortcuts->addButton(d->ui.shortcut1, 0);
@@ -327,7 +373,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 
 	auto checkSubAutoselect = [this] (const QVariant &data) {
-		const bool enabled = data.toInt() == Enum::SubtitleAutoselect::Matched.id();
+		const bool enabled = data.toInt() == SubtitleAutoselect::Matched;
 		d->ui.sub_ext_label->setEnabled(enabled);
 		d->ui.sub_ext->setEnabled(enabled);
 	};
@@ -477,7 +523,7 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.remember_stopped->setChecked(p.remember_stopped);
 	d->ui.ask_record_found->setChecked(p.ask_record_found);
 	d->ui.enable_generate_playlist->setChecked(p.enable_generate_playist);
-	d->ui.generate_playlist->setCurrentData(p.generate_playlist.id());
+	d->ui.generate_playlist->setCurrentValue(p.generate_playlist);
 	d->ui.hide_cursor->setChecked(p.hide_cursor);
 	d->ui.hide_delay->setValue(p.hide_cursor_delay/1000);
 	d->ui.disable_screensaver->setChecked(p.disable_screensaver);
@@ -490,11 +536,27 @@ void PrefDialog::set(const Pref &p) {
 		d->ui.fill_bg_color->setChecked(true);
 	d->ui.bg_color->setColor(p.bg_color, false);
 
-	d->ui.enable_hwaccel->setChecked(p.enable_hwaccel);
-	for (auto codec : p.hwaccel_codecs) {
-		if (auto ch = d->hwAcc.value(codec))
-			ch->setChecked(true);
-	}
+	auto setHw = [this] (QGroupBox *group, bool enabled, QMap<int, QCheckBox*> &map, const QList<int> &keys) {
+		group->setChecked(enabled);
+		for (auto key : keys) {
+			if (auto ch = map.value(key))
+				ch->setChecked(true);
+		}
+	};
+	setHw(d->ui.enable_hwdec, p.enable_hwaccel, d->hwdec, p.hwaccel_codecs);
+	setHw(d->ui.enable_hwdeint, p.enable_hwdeint, d->hwdeint, p.hwdeints);
+
+	auto setDeintList = [] (const QComboBox *combo, const QList<DeintInfo> &list) {
+		for (const auto &deint : list) {
+			auto idx = combo->findData(deint.method());
+			if (idx >= 0)
+				combo->itemData(idx, WidgetRole).value<DeintWidget*>()->setInfo(deint);
+		}
+	};
+	setDeintList(d->ui.deint_hwdec_combo, p.deint_list_hwdec);
+	setDeintList(d->ui.deint_swdec_combo, p.deint_list_swdec);
+	d->ui.deint_hwdec_combo->setCurrentData(p.deint_hwdec.method());
+	d->ui.deint_swdec_combo->setCurrentData(p.deint_swdec.method());
 
 	d->ui.normalizer_silence->setValue(p.normalizer_silence);
 	d->ui.normalizer_target->setValue(p.normalizer_target);
@@ -508,13 +570,13 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.sharpen_kern_c->setValue(p.sharpen_kern_c);
 	d->ui.sharpen_kern_n->setValue(p.sharpen_kern_n);
 	d->ui.sharpen_kern_d->setValue(p.sharpen_kern_d);
-	d->ui.min_luma->setValue(p.remap_luma_min);
-	d->ui.max_luma->setValue(p.remap_luma_max);
+//	d->ui.min_luma->setValue(p.remap_luma_min);
+//	d->ui.max_luma->setValue(p.remap_luma_max);
 
 	d->ui.sub_enable_autoload->setChecked(p.sub_enable_autoload);
 	d->ui.sub_enable_autoselect->setChecked(p.sub_enable_autoselect);
-	d->ui.sub_autoload->setCurrentData(p.sub_autoload.id());
-	d->ui.sub_autoselect->setCurrentData(p.sub_autoselect.id());
+	d->ui.sub_autoload->setCurrentValue(p.sub_autoload);
+	d->ui.sub_autoselect->setCurrentValue(p.sub_autoselect);
 	d->ui.sub_ext->setCurrentData(p.sub_ext);
 	d->ui.sub_enc->setEncoding(p.sub_enc);
 	d->ui.sub_enc_autodetection->setChecked(p.sub_enc_autodetection);
@@ -525,7 +587,7 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.sub_outline->setChecked(p.sub_style.outline.enabled);
 	d->ui.sub_outline_color->setColor(p.sub_style.outline.color, false);
 	d->ui.sub_outline_width->setValue(p.sub_style.outline.width*100.0);
-	d->ui.sub_font_scale->setCurrentData(p.sub_style.font.scale.id());
+	d->ui.sub_font_scale->setCurrentValue(p.sub_style.font.scale);
 	d->ui.sub_font_size->setValue(p.sub_style.font.size*100.0);
 	d->ui.sub_shadow->setChecked(p.sub_style.shadow.enabled);
 	d->ui.sub_shadow_color->setColor(p.sub_style.shadow.color, false);
@@ -593,12 +655,27 @@ void PrefDialog::get(Pref &p) {
 	p.show_logo = d->ui.show_logo->isChecked();
 	p.bg_color = d->ui.bg_color->color();
 
-	p.enable_hwaccel = d->ui.enable_hwaccel->isChecked();
-	p.hwaccel_codecs.clear();
-	for (auto it = d->hwAcc.cbegin(); it != d->hwAcc.cend(); ++it) {
-		if (*it && (*it)->isChecked())
-			p.hwaccel_codecs.append(it.key());
-	}
+	auto getHw = [] (bool &enabled, QGroupBox *group, QList<int> &keys, const QMap<int, QCheckBox*> &map) {
+		enabled = group->isChecked();
+		keys.clear();
+		for (auto it = map.begin(); it != map.end(); ++it) {
+			if (*it && (*it)->isChecked())
+				keys << it.key();
+		}
+	};
+	getHw(p.enable_hwaccel, d->ui.enable_hwdec, p.hwaccel_codecs, d->hwdec);
+	getHw(p.enable_hwdeint, d->ui.enable_hwdeint, p.hwdeints, d->hwdeint);
+
+	auto getDeintList = [] (const QComboBox *combo) {
+		QList<DeintInfo> list;
+		for (int i=0; i<combo->count(); ++i)
+			list << combo->itemData(i, WidgetRole).value<DeintWidget*>()->info();
+		return list;
+	};
+	p.deint_list_hwdec = getDeintList(d->ui.deint_hwdec_combo);
+	p.deint_list_swdec = getDeintList(d->ui.deint_swdec_combo);
+	p.deint_hwdec = d->ui.deint_hwdec_combo->currentData(WidgetRole).value<DeintWidget*>()->info();
+	p.deint_swdec = d->ui.deint_swdec_combo->currentData(WidgetRole).value<DeintWidget*>()->info();
 
 	p.blur_kern_c = d->ui.blur_kern_c->value();
 	p.blur_kern_n = d->ui.blur_kern_n->value();
@@ -606,8 +683,8 @@ void PrefDialog::get(Pref &p) {
 	p.sharpen_kern_c = d->ui.sharpen_kern_c->value();
 	p.sharpen_kern_n = d->ui.sharpen_kern_n->value();
 	p.sharpen_kern_d = d->ui.sharpen_kern_d->value();
-	p.remap_luma_min = d->ui.min_luma->value();
-	p.remap_luma_max = d->ui.max_luma->value();
+//	p.remap_luma_min = d->ui.min_luma->value();
+//	p.remap_luma_max = d->ui.max_luma->value();
 
 	p.normalizer_target = d->ui.normalizer_target->value();
 	p.normalizer_silence = d->ui.normalizer_silence->value();

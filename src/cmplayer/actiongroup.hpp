@@ -14,6 +14,7 @@ public:
 	void trigger(const QVariant &data);
 	QVariant data() const;
 	void clear();
+	QAction *find(const QVariant &data) const;
 };
 
 #endif // ACTIONGROUP_HPP

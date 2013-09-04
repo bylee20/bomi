@@ -47,11 +47,11 @@ void PlayerItem::setState(State state) {
 }
 
 void PlayerItem::unplug() {
-	if (m_engine) {
-		Skin::unplug();
-		if (m_renderer)
-			m_renderer->setParentItem(nullptr);
-	}
+	Skin::unplug();
+	if (m_renderer)
+		m_renderer->setParentItem(nullptr);
+	m_engine = nullptr;
+	m_renderer = nullptr;
 }
 
 void PlayerItem::plugTo(PlayEngine *engine) {
@@ -184,6 +184,8 @@ double PlayerItem::avgsync() const {
 		sync = (mpctx->last_av_difference)*1000.0;
 		d->sync = mpctx->total_avsync_change;
 	}
+	if (m_renderer)
+		d->sync -= m_renderer->delay();
 	return sync;
 }
 

@@ -249,12 +249,9 @@ private:
 	int m_samples_queued = 0;
 	int m_samples_to_slide = 0;
 
-	QVector<SampleType> m_queue;
-	QVector<SampleType> m_overlap;
-	QVector<TableType> m_table_blend;
+	QVector<SampleType> m_queue, m_overlap, m_buffer;
+	QVector<TableType> m_table_blend, m_table_window;
 	QVector<CorrType> m_buf_pre_corr;
-	QVector<TableType> m_table_window;
-	QVector<SampleType> m_buffer;
 	SampleType *m_buffer_end = nullptr;
 };
 

@@ -10,6 +10,8 @@
 class VideoRendererItem;	struct MPContext;
 class VideoFormat;			struct mp_cmd;
 class PlaylistModel;		class Playlist;
+class DeintInfo;			enum class DeintMode;
+
 typedef std::function<int(const Mrl&)> GetStartTime;
 
 struct DvdInfo {
@@ -112,6 +114,10 @@ public:
 	void removeSubtitleStream(int id);
 	void setSubtitleStreamsVisible(bool visible);
 	bool isSubtitleStreamsVisible() const {return m_subtitleStreamsVisible;}
+	void setVideoFilters(const QString &vfs);
+	void setDeint(const DeintInfo &sw, const DeintInfo &hw);
+	void setDeintMode(DeintMode mode);
+	DeintMode deintMode() const;
 public slots:
 	void setVolume(int volume) {if (_Change(m_volume, qBound(0, volume, 100))) {updateAudioLevel(); emit volumeChanged(m_volume);}}
 	void setPreamp(double preamp) {if (_ChangeZ(m_preamp, qBound(0.0, preamp, 10.0))) {	updateAudioLevel();	emit preampChanged(m_preamp);}}

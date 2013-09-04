@@ -13,6 +13,7 @@ public:
 	GLuint texture(int i) const;
 	GLuint *textures() const;
 protected:
+	void markDirty(QSGNode::DirtyState bits);
 	typedef QSGGeometry::TexturedPoint2D TexturedPoint2D;
 	typedef QSGMaterialShader::RenderState RenderState;
 	virtual bool blending() const {return false;}

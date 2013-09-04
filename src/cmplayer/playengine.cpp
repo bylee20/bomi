@@ -5,8 +5,10 @@
 #include "hwacc.hpp"
 #include "audiocontroller.hpp"
 #include "playlistmodel.hpp"
+#include "deintinfo.hpp"
 #include "dataevent.hpp"
 #include <mpvcore/mp_cmplayer.h>
+#include <array>
 
 extern "C" {
 #include <video/decode/lavc.h>
@@ -26,7 +28,7 @@ enum EventType {
 	UserType = QEvent::User, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged, VideoFormatChanged, UpdateChapterList
 };
 
-enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2};
+enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2, MpResetDeint = -3, MpResetDeintMode = -4};
 
 template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0);
 template<> inline double&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.d;}
@@ -48,6 +50,7 @@ struct PlayEngine::Data {
 	PlaylistModel playlist;
 	QByteArray hwAccCodecs;
 	QMutex imgMutex;
+	QMutex mutex;
 	QMap<QString, QString> subtitleNames;
 	QList<QTemporaryFile*> subtitleFiles;
 	int getStartTime(const Mrl &mrl) {return getStartTimeFunc ? getStartTimeFunc(mrl) : 0;}
@@ -57,7 +60,8 @@ struct PlayEngine::Data {
 		fileName += "\"";
 		return fileName;
 	}
-	template<typename T>
+	QByteArray vfs;
+	template<typename T = int>
 	bool enqueue(int id, const char *name = "", const T &v = 0) {
 		const bool ret = mpctx && mpctx->input && playing;
 		if (ret) {
@@ -71,6 +75,8 @@ struct PlayEngine::Data {
 	}
 
 	VideoFormat videoFormat;
+	DeintInfo deint_sw, deint_hw;
+	DeintMode deintMode = DeintMode::Never;
 };
 
 PlayEngine::PlayEngine()
@@ -133,15 +139,15 @@ void PlayEngine::setGetStartTimeFunction(const GetStartTime &func) {
 }
 
 void PlayEngine::setmp(const char *name, double value) {
-	d->enqueue<double>(MpSetProperty, name, value);
+	d->enqueue(MpSetProperty, name, value);
 }
 
 void PlayEngine::setmp(const char *name, int value) {
-	d->enqueue<int>(MpSetProperty, name, value);
+	d->enqueue(MpSetProperty, name, value);
 }
 
 void PlayEngine::setmp(const char *name, float value) {
-	d->enqueue<float>(MpSetProperty, name, value);
+	d->enqueue(MpSetProperty, name, value);
 }
 
 double PlayEngine::volumeNormalizer() const {
@@ -246,7 +252,7 @@ void PlayEngine::customEvent(QEvent *event) {
 			emit chaptersChanged(m_chapters);
 		break;
 	} case UpdateTrack: {
-		QVector<StreamList> streams;
+		std::array<StreamList, STREAM_TYPE_COUNT> streams;
 		get(event, streams);
 		if (_CheckSwap(m_videoStreams, streams[STREAM_VIDEO]))
 			emit videoStreamsChanged(m_videoStreams);
@@ -361,6 +367,8 @@ MPContext *PlayEngine::context() const {
 }
 
 int PlayEngine::mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
+	auto e = static_cast<PlayEngine*>(mpctx->priv); auto d = e->d;
+	QMutexLocker locker(&d->mutex);
 	if (cmd->id < 0) {
 		switch (cmd->id) {
 		case MpSetProperty:
@@ -368,6 +376,13 @@ int PlayEngine::mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 			break;
 		case MpResetAudioChain:
 			reinit_audio_chain(mpctx);
+			break;
+		case MpResetDeint:
+			d->video->setDeint(d->deint_sw, d->deint_hw);
+			break;
+		case MpResetDeintMode:
+			d->video->setDeintMode(d->deintMode);
+			break;
 		default:
 			break;
 		}
@@ -468,8 +483,10 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
 	setmp("speed", m_speed);
 	setmp("audio-delay", m_audioSync*0.001);
+	d->video->setDeint(d->deint_sw, d->deint_hw);
+	d->video->setDeintMode(d->deintMode);
 	auto error = prepare_playback(mpctx);
-	QVector<StreamList> streams(STREAM_TYPE_COUNT);
+	std::array<StreamList, STREAM_TYPE_COUNT> streams;
 	QString name[STREAM_TYPE_COUNT];
 	name[STREAM_AUDIO] = tr("Audio %1");
 	name[STREAM_VIDEO] = tr("Video %1");
@@ -495,6 +512,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	}
 	post(this, UpdateChapterList, chapters);
 	bool first = true;
+	tellmp("vf set", d->vfs);
 	while (!mpctx->stop_play) {
 		run_playloop(mpctx);
 		if (mpctx->stop_play)
@@ -535,7 +553,7 @@ void PlayEngine::run() {
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8"
-//	<< "--vf=lavfi=yadif"
+//	<< "--vf=lavfi=\"yadif=mode=0\""
 	;
 	auto mpctx = d->mpctx = create_player(args.size(), args.data());
 	Q_ASSERT(d->mpctx);
@@ -554,12 +572,9 @@ void PlayEngine::run() {
 		int terminated = 0, duration = 0;
 		Mrl mrl = d->playlist.loadedMrl();
 		d->playing = true;
-//		setmp("deinterlace", 1);
-
 		setState(EngineLoading);
 		m_imgMode = mrl.isImage();
 		int error = m_imgMode ? playImage(mrl, terminated, duration) : playAudioVideo(mrl, terminated, duration);
-		qDebug() << error;
 		clean_up_playback(mpctx);
 		if (error != MPERROR_NONE)
 			setState(EngineError);
@@ -607,7 +622,6 @@ void PlayEngine::run() {
 			break;
 	}
 	qDebug() << "terminate loop";
-	d->video->quit();
 	mpctx->opts->hwdec_codecs = nullptr;
 	mpctx->opts->hwdec_api = HWDEC_NONE;
 	destroy_player(mpctx);
@@ -622,8 +636,14 @@ void PlayEngine::tellmp(const QString &cmd) {
 	}
 }
 
+void PlayEngine::setVideoFilters(const QString &vfs) {
+	if (_Change(d->vfs, vfs.toLocal8Bit())) {
+		if (d->playing)
+			tellmp("vf set", d->vfs);
+	}
+}
+
 void PlayEngine::quit() {
-	d->video->quit();
 	tellmp("quit 1");
 }
 
@@ -773,7 +793,7 @@ void PlayEngine::setVolumeNormalizerActivated(bool on) {
 void PlayEngine::setTempoScalerActivated(bool on) {
 	if (d->audio->setTempoScalerActivated(on)) {
 		if (d->playing)
-			d->enqueue<int>(MpResetAudioChain);
+			d->enqueue(MpResetAudioChain);
 		emit tempoScaledChanged(on);
 	}
 }
@@ -792,4 +812,29 @@ void PlayEngine::stop() {
 
 void PlayEngine::setVolumeNormalizerOption(double length, double target, double silence, double min, double max) {
 	d->audio->setNormalizerOption(length, target, silence, min, max);
+}
+
+void PlayEngine::setDeint(const DeintInfo &sw, const DeintInfo &hw) {
+	if (d->deint_sw == sw && d->deint_hw == hw)
+		return;
+	QMutexLocker locker(&d->mutex);
+	if (d->deint_sw == sw && d->deint_hw == hw)
+		return;
+	d->deint_sw = sw;
+	d->deint_hw = hw;
+	d->enqueue(MpResetDeint);
+}
+
+void PlayEngine::setDeintMode(DeintMode mode) {
+	if (d->deintMode == mode)
+		return;
+	QMutexLocker locker(&d->mutex);
+	if (d->deintMode == mode)
+		return;
+	d->deintMode = mode;
+	d->enqueue(MpResetDeintMode);
+}
+
+DeintMode PlayEngine::deintMode() const {
+	return d->deintMode;
 }

@@ -19,14 +19,14 @@ extern "C" {
 class VideoFormat {
 public:
 	typedef mp_imgfmt Type;
-	VideoFormat(const mp_image *mpi, int dest_w, int dest_h): d(new Data(mpi, dest_w, dest_h)) {}
+	VideoFormat(const mp_image *mpi): d(new Data(mpi)) {}
 	VideoFormat(const QImage &image): d(new Data(image)) {}
 	VideoFormat(): d(new Data) {}
 	inline bool operator == (const VideoFormat &rhs) const {return d->compare(rhs.d.constData());}
 	inline bool operator != (const VideoFormat &rhs) const {return !operator == (rhs);}
 	inline QSize size() const {return d->size;} // original pixel size
 	inline QSize alignedSize() const {return d->alignedSize;} // aligned pixel size
-	inline QSize outputSize() const {return d->outputSize;} // output pixel size
+	inline QSize displaySize() const {return d->displaySize;} // display pixel size
 	inline bool isEmpty() const {return d->size.isEmpty() || d->type == IMGFMT_NONE;}
 	inline double bps(double fps) const {return fps*_Area(d->size)*d->bpp;}
 	inline Type type() const {return d->type;} // output type != d->imgfmt
@@ -39,6 +39,7 @@ public:
 	inline int alignedHeight() const {return d->alignedSize.height();}
 	inline int bytesPerLine(int plane) const {return d->alignedByteSize[plane].width();}
 	inline int lines(int plane) const {return d->alignedByteSize[plane].height();}
+	inline int bytesPerPlain(int plane) const { return bytesPerLine(plane)*lines(plane); }
 	inline bool compare(const mp_image *mpi) const {return d->compare(mpi);}
 	inline bool isNative() const {return d->native;}
 	inline mp_csp colorspace() const { return d->colorspace; }
@@ -47,18 +48,19 @@ public:
 private:
 	struct Data : public QSharedData {
 		Data() {}
-		Data(const mp_image *mpi, int dest_w, int dest_h);
+		Data(const mp_image *mpi);
 		Data(const QImage &image);
 		inline bool compare(const mp_image *mpi) const {
-			return mpi->fmt.id == imgfmt && mpi->w == size.width() && mpi->h == size.height()
-				&& mpi->colorspace == colorspace && mpi->levels == range
-				&& (native || (alignedByteSize[0].width() == mpi->stride[0] && alignedByteSize[1].width() == mpi->stride[1] && alignedByteSize[2].width() == mpi->stride[2]));
+			return mpi->fmt.id == imgfmt && QSize(mpi->w, mpi->h) == size
+					&& QSize(mpi->display_w, mpi->display_h) == displaySize
+					&& mpi->colorspace == colorspace && mpi->levels == range
+					&& (native || (alignedByteSize[0].width() == mpi->stride[0] && alignedByteSize[1].width() == mpi->stride[1] && alignedByteSize[2].width() == mpi->stride[2]));
 		}
 		inline bool compare(const Data *other) const {
-			return colorspace == other->colorspace && range == other->range && type == other->type && size == other->size && alignedSize == other->alignedSize && outputSize == other->outputSize;
+			return colorspace == other->colorspace && range == other->range && type == other->type && size == other->size && alignedSize == other->alignedSize && displaySize == other->displaySize;
 		}
-		QSize size = {0, 0}, alignedSize = {0, 0}, outputSize = {0, 0};
-		QVector<QSize> alignedByteSize = {3, QSize(0, 0)};
+		QSize size = {0, 0}, alignedSize = {0, 0}, displaySize = {0, 0};
+		std::array<QSize, 3> alignedByteSize{{QSize(0, 0), QSize(0, 0), QSize(0, 0)}};
 		int planes = 0, bpp = 0;
 		Type type = IMGFMT_NONE, imgfmt = IMGFMT_NONE;
 		bool native = false;

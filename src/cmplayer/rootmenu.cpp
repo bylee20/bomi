@@ -82,7 +82,6 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	video.addMenu(_L("track"))->setEnabled(false);
 	video.addSeparator();
 	video.addAction(_L("snapshot"));
-	video.addAction(_L("drop-frame"), true);
 	video.addSeparator();
 	auto &aspect = *video.addMenu(_L("aspect"));
 		aspect.addActionToGroup(_L("auto"), true)->setData(-1.0);
@@ -114,6 +113,14 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		move.addAction(_L("left"))->setData((int)Qt::LeftArrow);
 		move.addAction(_L("right"))->setData((int)Qt::RightArrow);
 	video.addSeparator();
+
+	auto &deint = *video.addMenu(_L("deint"));
+	deint.addAction(_L("cycle"));
+	deint.addSeparator();
+	deint.g()->setExclusive(true);
+	deint.addActionToGroup(_L("never"), true)->setData((int)DeintMode::Never);
+	deint.addActionToGroup(_L("auto"), true)->setData((int)DeintMode::Auto);
+	deint.addActionToGroup(_L("always"), true)->setData((int)DeintMode::Always);
 
 	auto &effect = *video.addMenu(_L("filter"));
 	effect.g()->setExclusive(false);
@@ -195,9 +202,9 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 
 	auto &window = *addMenu(_L("window"));
 	// sot == Stays On Top
-	window.addActionToGroup(_L("sot-always"), true, _L("stays-on-top"))->setData(Enum::StaysOnTop::Always.id());
-	window.addActionToGroup(_L("sot-playing"), true, _L("stays-on-top"))->setData(Enum::StaysOnTop::Playing.id());
-	window.addActionToGroup(_L("sot-never"), true, _L("stays-on-top"))->setData(Enum::StaysOnTop::Never.id());
+	window.addActionToGroup(_L("sot-always"), true, _L("stays-on-top"))->setData((int)StaysOnTop::Always);
+	window.addActionToGroup(_L("sot-playing"), true, _L("stays-on-top"))->setData((int)StaysOnTop::Playing);
+	window.addActionToGroup(_L("sot-never"), true, _L("stays-on-top"))->setData((int)StaysOnTop::Never);
 	window.addSeparator();
 	window.addActionToGroup(_L("proper"), false, _L("size"))->setData(0.0);
 	window.addActionToGroup(_L("100%"), false, _L("size"))->setData(1.0);
@@ -215,16 +222,16 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 
 	addAction(_L("exit"))->setMenuRole(QAction::QuitRole);
 
-	m_click[Enum::ClickAction::OpenFile] = open["file"];
-	m_click[Enum::ClickAction::Fullscreen] = window["full"];
-	m_click[Enum::ClickAction::Pause] = play["pause"];
-	m_click[Enum::ClickAction::Mute] = mute;
-	m_wheel[Enum::WheelAction::Seek1] = WheelActionPair(forward1, backward1);
-	m_wheel[Enum::WheelAction::Seek2] = WheelActionPair(forward2, backward2);
-	m_wheel[Enum::WheelAction::Seek3] = WheelActionPair(forward3, backward3);
-	m_wheel[Enum::WheelAction::PrevNext] = WheelActionPair(prev, next);
-	m_wheel[Enum::WheelAction::Volume] = WheelActionPair(volUp, volDown);
-	m_wheel[Enum::WheelAction::Amp] = WheelActionPair(ampUp, ampDown);
+	m_click[ClickAction::OpenFile] = open["file"];
+	m_click[ClickAction::Fullscreen] = window["full"];
+	m_click[ClickAction::Pause] = play["pause"];
+	m_click[ClickAction::Mute] = mute;
+	m_wheel[WheelAction::Seek1] = WheelActionPair(forward1, backward1);
+	m_wheel[WheelAction::Seek2] = WheelActionPair(forward2, backward2);
+	m_wheel[WheelAction::Seek3] = WheelActionPair(forward3, backward3);
+	m_wheel[WheelAction::PrevNext] = WheelActionPair(prev, next);
+	m_wheel[WheelAction::Volume] = WheelActionPair(volUp, volDown);
+	m_wheel[WheelAction::Amp] = WheelActionPair(ampUp, ampDown);
 
 	play("title").setEnabled(false);
 	play("chapter").setEnabled(false);
@@ -398,6 +405,13 @@ void RootMenu::update(const Pref &p) {
 	move["left"]->setText(tr("To Left"));
 	move["right"]->setText(tr("To Right"));
 
+	auto &deint = video("deint");
+	deint.setTitle(tr("Deinterlace"));
+	deint["cycle"]->setText(tr("Cycle"));
+	deint["never"]->setText(tr("Never"));
+	deint["auto"]->setText(tr("Auto"));
+	deint["always"]->setText(tr("Always"));
+
 	auto &effect = video("filter");
 	effect.setTitle(tr("Filter"));
 	effect["flip-v"]->setText(tr("Flip Vertically"));
@@ -417,9 +431,6 @@ void RootMenu::update(const Pref &p) {
 	setVideoPropStep(color, "hue", ColorProperty::Hue, tr("Hue %1%"), p.brightness_step);
 
 	video["snapshot"]->setText(tr("Take Snapshot"));
-	video["drop-frame"]->setText(tr("Drop Frame"));
-	video["drop-frame"]->setVisible(false);
-	video["drop-frame"]->setEnabled(false);
 
 	auto &audio = root("audio");
 	audio.setTitle(tr("Audio"));
@@ -491,15 +502,15 @@ void RootMenu::fillKeyMap(Menu *menu) {
 	}
 }
 
-QAction *RootMenu::doubleClickAction(const ClickActionInfo &info) const {
+QAction *RootMenu::doubleClickAction(const ClickActionEnumInfo &info) const {
 	return info.enabled ? m_click[info.action] : nullptr;
 }
 
-QAction *RootMenu::middleClickAction(const ClickActionInfo &info) const {
+QAction *RootMenu::middleClickAction(const ClickActionEnumInfo &info) const {
 	return info.enabled ? m_click[info.action] : nullptr;
 }
 
-QAction *RootMenu::wheelScrollAction(const WheelActionInfo &info, bool up) const {
+QAction *RootMenu::wheelScrollAction(const WheelActionEnumInfo &info, bool up) const {
 	return info.enabled ? (up ? m_wheel[info.action].up : m_wheel[info.action].down) : nullptr;
 }
 

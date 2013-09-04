@@ -3,16 +3,25 @@
 #include "videorendereritem.hpp"
 #include "playengine.hpp"
 #include "hwacc.hpp"
+#include "deintinfo.hpp"
+#include "videofilter.hpp"
 
 extern "C" {
+#include <video/fmt-conversion.h>
 #include <video/out/vo.h>
+#include <video/filter/vf.h>
+#include <a.out.h>
 #include <video/vfcap.h>
 #include <video/decode/dec_video.h>
 #include <video/img_fourcc.h>
+#include <video/mp_image_pool.h>
 #include <mpvcore/m_option.h>
 #include <video/mp_image.h>
+#include <mpvcore/mp_core.h>
 #include <sub/sub.h>
+
 }
+
 
 struct cmplayer_vo_priv { VideoOutput *vo; char *address; };
 
@@ -60,24 +69,75 @@ struct VideoOutput::Data {
 	VideoFrame frame;
 	mp_osd_res osd;
 	PlayEngine *engine = nullptr;
-	bool flip = false, quit = false, upsideDown = false;
+	bool flip = false;
+	int upsideDown = 0;
 	VideoRendererItem *renderer = nullptr;
-	bool formatChanged = false;
-	int dest_w = 0, dest_h = 0;
-	HwAcc *acc = nullptr;
-	mp_csp colorspace = MP_CSP_AUTO;
-	mp_csp_levels range = MP_CSP_LEVELS_AUTO;
+	HwAcc *acc = nullptr, *prevAcc = nullptr;
 	QLinkedList<VideoFrame> frames;
-	bool deinterlace = false;
 	double prevPts = MP_NOPTS_VALUE;
+	VideoFilter *pass = new PassThroughVideoFilter;
+	mp_image_params params;
+	DeintInfo deint_sw, deint_hw;
+	DeintMode deintMode = DeintMode::Never;
+	VideoFilter *filter_sw = nullptr;
+	VideoFilter *filter_hw = nullptr;
+	VideoFilter *filter = pass;
+	template<typename T> T *newFilter(const QString &opts = QString()) {
+		auto filter = new T; filter->setOptions(opts); return filter;
+	}
+	VideoFilter *makeFilter(const DeintInfo &deint) {
+		const int flags = deint.flags();
+		if (deint.isHardware())
+			return newFilter<HardwareDeintFilter>(deint.isDoubleRate() ? "x2" : "");
+		else if (flags & DeintInfo::PostProc) {
+			QString options;
+			switch (deint.method()) {
+			case DeintInfo::LinearBob:
+				options = "li";
+				break;
+			case DeintInfo::LinearBlend:
+				options = "lb";
+				break;
+			case DeintInfo::CubicBob:
+				options = "ci";
+				break;
+			case DeintInfo::Median:
+				options = "md";
+				break;
+			default:
+				break;
+			}
+			if (!options.isEmpty())
+				return newFilter<FFmpegPostProcDeint>(deint.isDoubleRate() ? options + "x2" : options);
+		} else if (flags & DeintInfo::AvFilter) {
+			QString options;
+			switch (deint.method()) {
+			case DeintInfo::Yadif:
+				options = "yadif";
+				if (deint.isDoubleRate())
+					options += "=mode=1";
+				break;
+			default:
+				break;
+			}
+			if (!options.isEmpty())
+				return newFilter<FFmpegAvFilter>(options);
+		}
+		return nullptr;
+	}
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
-	memset(&d->osd, 0, sizeof(d->osd));
+	reset();
 	d->engine = engine;
 }
 
-VideoOutput::~VideoOutput() {}
+VideoOutput::~VideoOutput() {
+	delete d->filter_sw;
+	delete d->filter_hw;
+	delete d->pass;
+	delete d;
+}
 
 void VideoOutput::setHwAcc(HwAcc *acc) {
 	d->acc = acc;
@@ -95,22 +155,62 @@ void VideoOutput::output(const QImage &image) {
 }
 
 void VideoOutput::setRenderer(VideoRendererItem *renderer) {
-	d->renderer = renderer;
+	if (_Change(d->renderer, renderer))
+		updateDeint();
 }
 
 const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
+void VideoOutput::setDeintMode(DeintMode mode) {
+	if (_Change(d->deintMode, mode))
+		updateDeint();
+}
+
+void VideoOutput::updateDeint() {
+	DeintInfo deint;
+	auto deintAcc = [] (const DeintInfo &ref) {
+		const int flags = ref.flags() & DeintInfo::Hardware;
+		return flags ? DeintInfo(ref.method(), flags) : DeintInfo();
+	};
+	if (d->deintMode == DeintMode::Never) {
+		deint = DeintInfo();
+		d->filter = d->pass;
+	} else {
+		if (d->acc) {
+			d->filter = d->filter_hw;
+			deint = deintAcc(d->deint_hw);
+		} else {
+			d->filter = d->filter_sw;
+			deint = deintAcc(d->deint_sw);
+		}
+	}
+	if (!d->filter)
+		d->filter = d->pass;
+	if (d->renderer)
+		d->renderer->setDeint(deint);
+}
+
+void VideoOutput::reset() {
+	memset(&d->params, 0, sizeof(d->params));
+	memset(&d->osd, 0, sizeof(d->osd));
+	d->params.colorlevels = MP_CSP_LEVELS_AUTO;
+	d->params.colorspace = MP_CSP_AUTO;
+	d->format = VideoFormat();
+	d->frame = VideoFrame();
+	d->frames.clear();
+	d->prevPts = MP_NOPTS_VALUE;
+	d->flip = false;
+	if (d->renderer)
+		d->renderer->emptyQueue();
+}
+
 int VideoOutput::reconfig(vo *vo, mp_image_params *params, int flags) {
 	auto v = priv(vo); auto d = v->d;
-	d->upsideDown = flags & VOFLAG_FLIPPING;
-	d->dest_w = params->d_w;
-	d->dest_h = params->d_h;
-	d->colorspace = params->colorspace;
-	d->range = params->colorlevels;
-	d->formatChanged = true;
-	emit v->reconfigured();
+	d->upsideDown = (flags & VOFLAG_FLIPPING) ? VideoFrame::Flipped : 0;
+	d->params = *params;
+	v->reset();
 	return 0;
 }
 
@@ -125,43 +225,45 @@ void VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) {
 		if (!d->frames.isEmpty())
 			vo->next_pts2 = d->frames.front().pts();
 	}
+	if (_Change(d->format, d->frame.format()))
+		emit v->formatChanged(d->format);
+}
+
+void VideoOutput::setDeint(const DeintInfo &sw, const DeintInfo &hw) {
+	auto update = [this] (VideoFilter *&filter, DeintInfo &deint, const DeintInfo &newer) {
+		if (!_Change(deint, newer)) return false;
+		delete filter; filter = d->makeFilter(deint); return true;
+	};
+	bool changed = update(d->filter_sw, d->deint_sw, sw);
+	changed = update(d->filter_hw, d->deint_hw, hw) || changed;
+	if (changed)
+		updateDeint();
 }
 
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto v = priv(vo); auto d = v->d;
+	if (_Change(d->prevAcc, d->acc))
+		v->updateDeint();
 	auto img = mpi;
 	if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
 		img = d->acc->getImage(mpi);
-	if (d->formatChanged || (d->formatChanged = !d->format.compare(img)))
-		emit v->formatChanged(d->format = VideoFormat(img, d->dest_w, d->dest_h));
-	static const int field[] = {VideoFrame::Top, VideoFrame::Bottom};
-	const bool deint = d->deinterlace && (img->fields & MP_IMGFIELD_INTERLACED);
 	const double pts = img->pts;
-	VideoFrame frame(img, d->format);
-	frame.setPts(pts);
-	frame.setField(deint ? field[!(img->fields & MP_IMGFIELD_TOP_FIRST)] : (VideoFrame::Last | VideoFrame::Picture));
-	d->frames.append(frame);
-
-	if (deint) {
-		frame.setField(field[!!(img->fields & MP_IMGFIELD_TOP_FIRST)] | VideoFrame::Last);
-		const auto diff = (pts - d->prevPts);
-		if (d->prevPts != MP_NOPTS_VALUE && 0.0 < diff && diff < 0.5)
-			frame.setPts(pts + 0.5*diff);
-		d->frames.append(frame);
-	}
-
+	auto filter = d->pass;
+	if (d->deintMode == DeintMode::Always || (d->deintMode == DeintMode::Auto && (img->fields & MP_IMGFIELD_INTERLACED)))
+		filter = d->filter;
+	filter->setFrameFlags(d->upsideDown);
+	filter->apply(img, d->frames, d->prevPts);
+	d->prevPts = pts;
 	if (img != mpi) // new image is allocated, unref it
-		mp_image_unrefp(&img);
+		talloc_free(img);
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	auto v = priv(vo); auto d = v->d;
 	switch (req) {
 	case VOCTRL_REDRAW_FRAME:
-		if (d->renderer) {
-			d->renderer->present(d->frame, d->upsideDown, d->formatChanged);
-			d->formatChanged = false;
-		}
+		if (d->renderer)
+			d->renderer->present(d->frame);
 		return true;
 	case VOCTRL_GET_HWDEC_INFO:
 		static_cast<mp_hwdec_info*>(data)->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);
@@ -173,12 +275,7 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 		d->flip = false;
 		return true;
 	case VOCTRL_RESET:
-		d->format = VideoFormat();
-		d->frame = VideoFrame();
-		d->frames.clear();
-		d->prevPts = MP_NOPTS_VALUE;
-		d->formatChanged = true;
-		d->flip = false;
+		v->reset();
 		return true;
 	default:
 		return VO_NOTIMPL;
@@ -199,20 +296,11 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 
 void VideoOutput::flipPage(struct vo *vo) {
 	Data *d = priv(vo)->d;
-	if (!d->flip || d->quit)
+	if (!d->flip)
 		return;
-	if (d->renderer) {
-		d->renderer->present(d->frame, d->upsideDown, d->formatChanged);
-		auto w = d->renderer->window();
-		while (w && w->isVisible() && d->renderer->isFramePended() && !d->quit)
-			PlayEngine::usleep(50);
-		d->formatChanged = false;
-	}
+	if (d->renderer)
+		d->renderer->present(d->frame);
 	d->flip = false;
-}
-
-void VideoOutput::quit() {
-	d->quit = true;
 }
 
 int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {

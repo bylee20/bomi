@@ -18,6 +18,7 @@ AppState::AppState() {
 	READ(video_offset);
 	READ(video_effects);
 	READ(video_color);
+	READ(video_deint);
 
 	READ(audio_volume);
 	READ(audio_normalizer);
@@ -63,6 +64,7 @@ void AppState::save() const {
 	WRITE(video_offset);
 	WRITE(video_effects);
 	WRITE(video_color);
+	WRITE(video_deint);
 
 	WRITE(audio_volume);
 	WRITE(audio_normalizer);

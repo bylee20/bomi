@@ -2,7 +2,6 @@
 #define AUDIOFILTER_HPP
 
 #include "tmp.hpp"
-#include <QVector>
 extern "C" {
 #include <audio/filter/af.h>
 }

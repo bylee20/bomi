@@ -20,8 +20,8 @@ public:
 		bool isNull() const {return !up || !down;}
 		QAction *up, *down;
 	};
-	typedef QMap<Enum::ClickAction, QAction*> ClickActionMap;
-	typedef QMap<Enum::WheelAction, WheelActionPair> WheelActionMap;
+	typedef QMap<ClickAction, QAction*> ClickActionMap;
+	typedef QMap<WheelAction, WheelActionPair> WheelActionMap;
 	typedef QHash<QString, Menu*> MenuHash;
 	typedef QHash<QString, QAction*> ActionHash;
 	typedef QHash<QString, ActionGroup*> GroupHash;

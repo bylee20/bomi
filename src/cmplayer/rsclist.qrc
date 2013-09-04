@@ -30,5 +30,8 @@
         <file>emptyskin.qml</file>
         <file>img/document-open-folder.png</file>
         <file>img/preferences-system-session-services.png</file>
+        <file>img/draw-brush.png</file>
+        <file>img/apps-hardware-icon.png</file>
+        <file>img/format-line-spacing-double.png</file>
     </qresource>
 </RCC>

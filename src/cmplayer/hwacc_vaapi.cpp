@@ -20,6 +20,48 @@ bool VaApi::init = false;
 VADisplay VaApi::m_display = nullptr;
 VaApi &VaApi::get() {static VaApi info; return info;}
 
+QString VaApiFilterInfo::description(VAProcFilterType type, int algorithm) {
+	switch (type) {
+	case VAProcFilterNoiseReduction:
+		return _L("Noise reduction filter");
+	case VAProcFilterSharpening:
+		return _L("Sharpening filter");
+	case VAProcFilterDeinterlacing:
+		switch (algorithm) {
+		case VAProcDeinterlacingBob:
+			return _L("Bob deinterlacer");
+		case VAProcDeinterlacingWeave:
+			return _L("Weave deinterlacer");
+		case VAProcDeinterlacingMotionAdaptive:
+			return _L("Motion adaptive deinterlacer");
+		case VAProcDeinterlacingMotionCompensated:
+			return _L("Motion compensation deinterlacer");
+		default:
+			break;
+		}
+	default:
+		break;
+	}
+	return "";
+}
+
+QList<int> VaApi::algorithms(VAProcFilterType type) {
+	QList<int> ret;
+	switch (type) {
+	case VAProcFilterNoiseReduction:
+	case VAProcFilterSharpening:
+		ret << type;
+		break;
+	case VAProcFilterDeinterlacing:
+		for (int i=1; i<VAProcDeinterlacingCount; ++i)
+			ret << i;
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
 VaApiFilterInfo::VaApiFilterInfo(VAContextID context, VAProcFilterType type) {
 	m_type = type;
 	uint size = 0;
@@ -109,9 +151,7 @@ public:
 	mp_image *getMpImage() {
 		auto surface = getSurface();
 		auto release = [](void *arg) { ((VaApiSurface*)arg)->ref = false; };
-		auto mpi = mp_image_new_custom_ref(&m_null, &surface, release);
-		mp_image_setfmt(mpi, IMGFMT_VAAPI);
-		mp_image_set_size(mpi, m_width, m_height);
+		auto mpi = nullMpImage(IMGFMT_VAAPI, m_width, m_height, &surface, release);
 		mpi->planes[1] = mpi->planes[2] = nullptr;
 		mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)surface->id;
 		return mpi;

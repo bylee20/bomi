@@ -3,14 +3,18 @@
 ActionGroup::ActionGroup(QObject *parent)
 : QActionGroup(parent) {}
 
-void ActionGroup::setChecked(const QVariant &data, bool checked) {
+QAction *ActionGroup::find(const QVariant &data) const {
 	const auto actions = this->actions();
 	for (auto action : actions) {
-		if (action->data() == data) {
-			action->setChecked(checked);
-			return;
-		}
+		if (action->data() == data)
+			return action;
 	}
+	return nullptr;
+}
+
+void ActionGroup::setChecked(const QVariant &data, bool checked) {
+	if (auto action = find(data))
+		action->setChecked(checked);
 }
 
 void ActionGroup::trigger(double data) {
@@ -23,13 +27,8 @@ void ActionGroup::trigger(double data) {
 }
 
 void ActionGroup::trigger(const QVariant &data) {
-	const auto actions = this->actions();
-	for (auto action : actions) {
-		if (action->data() == data) {
-			action->trigger();
-			return;
-		}
-	}
+	if (auto action = find(data))
+		action->trigger();
 }
 
 QVariant ActionGroup::data() const {

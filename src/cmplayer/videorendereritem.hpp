@@ -5,6 +5,7 @@
 #include "skin.hpp"
 #include "texturerendereritem.hpp"
 
+class DeintInfo;
 class VideoRendererItem;		class ColorProperty;
 class VideoFrame;				class VideoFormat;
 
@@ -44,7 +45,7 @@ public:
 	void setAspectRatio(double ratio);
 	void setOverlay(QQuickItem *overlay);
 	QQuickItem *overlay() const;
-	void present(const VideoFrame &frame, bool flipped = false, bool checkFormat = true);
+	void present(const VideoFrame &frame);
 	void present(const QImage &image);
 	const VideoFrame &frame() const;
 	bool isFramePended() const;
@@ -53,6 +54,8 @@ public:
 	QImage frameImage() const;
 	QRectF frameRect(const QRectF &area) const;
 	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
+	int delay() const;
+	void setDeint(const DeintInfo &deint);
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -66,6 +69,8 @@ signals:
 	void screenRectChanged(const QRectF rect);
 	void texturesInitialized();
 private:
+	void emptyQueue();
+	void scheduleUpdate();
 	void initializeTextures();
     static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
 	const char *fragmentShader() const;

@@ -12,7 +12,6 @@ LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavfilter -lpostproc -lavformat -lavutil \
         -lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz
-
 macx {
     QT += gui-private
     QMAKE_CXXFLAGS -= "-mmacosx-version-min=10.6"
@@ -107,9 +106,11 @@ HEADERS += playengine.hpp \
     hwacc_vaapi.hpp \
     hwacc_vdpau.hpp \
     hwacc_vda.hpp \
-    textureshader.hpp \
     tmp.hpp \
-    audiofilter.hpp
+    audiofilter.hpp \
+    videotextureshader.hpp \
+    videofilter.hpp \
+    deintinfo.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -171,8 +172,10 @@ SOURCES += main.cpp \
     hwacc_vaapi.cpp \
     hwacc_vdpau.cpp \
     hwacc_vda.cpp \
-    textureshader.cpp \
-    audiofilter.cpp
+    audiofilter.cpp \
+    videotextureshader.cpp \
+    videofilter.cpp \
+    deintinfo.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

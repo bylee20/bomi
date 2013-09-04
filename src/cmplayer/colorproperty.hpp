@@ -9,64 +9,41 @@ extern "C" {
 class ColorProperty {
 public:
 	enum Value {Brightness = 0, Saturation, Contrast, Hue, PropMax};
-	ColorProperty(double b, double s, double c, double h): m_value{b, s, c, h} {}
-	ColorProperty() {}
-	ColorProperty(const ColorProperty &other) {
-		m_value[Brightness] = other.m_value[Brightness];
-		m_value[Saturation] = other.m_value[Saturation];
-		m_value[Contrast] = other.m_value[Contrast];
-		m_value[Hue] = other.m_value[Hue];
-	}
-	~ColorProperty() {}
-	ColorProperty &operator = (const ColorProperty &rhs) {
-		if (this != &rhs) {
-			m_value[Brightness] = rhs.m_value[Brightness];
-			m_value[Saturation] = rhs.m_value[Saturation];
-			m_value[Contrast] = rhs.m_value[Contrast];
-			m_value[Hue] = rhs.m_value[Hue];
-		}
-		return *this;
-	}
-	bool operator == (const ColorProperty &rhs) const {
-		return qFuzzyCompare(m_value[Brightness], rhs.m_value[Brightness])
-			&& qFuzzyCompare(m_value[Saturation], rhs.m_value[Saturation])
-			&& qFuzzyCompare(m_value[Contrast], rhs.m_value[Contrast])
-			&& qFuzzyCompare(m_value[Hue], rhs.m_value[Hue]);
-	}
-	bool operator != (const ColorProperty &rhs) const {
-		return !operator==(rhs);
-	}
-	double &operator [] (Value p) {return m_value[p];}
-	const double &operator [] (Value p) const {return m_value[p];}
-	double value(Value v) const {return m_value[v];}
-	double brightness() const {return m_value[Brightness];}
-	double saturation() const {return m_value[Saturation];}
-	double contrast() const {return m_value[Contrast];}
-	double hue() const {return m_value[Hue];}
+	ColorProperty(double b, double s, double c, double h): m{b, s, c, h} {}
+	ColorProperty() = default;
+	bool operator == (const ColorProperty &rhs) const { return m == rhs.m; }
+	bool operator != (const ColorProperty &rhs) const { return m != rhs.m; }
+	double &operator [] (Value p) {return m[p];}
+	const double &operator [] (Value p) const {return m[p];}
+	double value(Value v) const {return m[v];}
+	double brightness() const {return m[Brightness];}
+	double saturation() const {return m[Saturation];}
+	double contrast() const {return m[Contrast];}
+	double hue() const {return m[Hue];}
 
-	double &value(Value v) {return m_value[v];}
-	double &brightness() {return m_value[Brightness];}
-	double &saturation() {return m_value[Saturation];}
-	double &contrast() {return m_value[Contrast];}
-	double &hue() {return m_value[Hue];}
+	double &value(Value v) {return m[v];}
+	double &brightness() {return m[Brightness];}
+	double &saturation() {return m[Saturation];}
+	double &contrast() {return m[Contrast];}
+	double &hue() {return m[Hue];}
 
-	void setValue(Value p, double val) {m_value[p] = qFuzzyCompare(val, 0.0) ? 0.0 : val;}
-	void setBrightness(double v) {m_value[Brightness] = v;}
-	void setSaturation(double v) {m_value[Saturation] = v;}
-	void setContrast(double v) {m_value[Contrast] = v;}
-	void setHue(double v) {m_value[Hue] = v;}
+	void setValue(Value p, double val) {m[p] = qFuzzyCompare(val, 0.0) ? 0.0 : val;}
+	void setBrightness(double v) {m[Brightness] = v;}
+	void setSaturation(double v) {m[Saturation] = v;}
+	void setContrast(double v) {m[Contrast] = v;}
+	void setHue(double v) {m[Hue] = v;}
 #undef clamp
 	void clamp() {
-		m_value[Brightness] = qBound(-1.0, m_value[Brightness], 1.0);
-		m_value[Contrast] = qBound(-1.0, m_value[Contrast], 1.0);
-		m_value[Saturation] = qBound(-1.0, m_value[Saturation], 1.0);
-		m_value[Hue] = qBound(-1.0, m_value[Hue], 1.0);
+		m[Brightness] = qBound(-1.0, m[Brightness], 1.0);
+		m[Contrast] = qBound(-1.0, m[Contrast], 1.0);
+		m[Saturation] = qBound(-1.0, m[Saturation], 1.0);
+		m[Hue] = qBound(-1.0, m[Hue], 1.0);
 	}
 	bool isZero() const {
-		return qFuzzyCompare(m_value[Brightness], 0.0)
-			&& qFuzzyCompare(m_value[Saturation], 0.0)
-			&& qFuzzyCompare(m_value[Contrast], 0.0)
-			&& qFuzzyCompare(m_value[Hue], 0.0);
+		return qFuzzyCompare(m[Brightness], 0.0)
+			&& qFuzzyCompare(m[Saturation], 0.0)
+			&& qFuzzyCompare(m[Contrast], 0.0)
+			&& qFuzzyCompare(m[Hue], 0.0);
 	}
 
 /*	m00 m01 m02  v0
@@ -75,10 +52,8 @@ public:
  *   o0  o1  o2   x
  */
 	QMatrix4x4 matrix(mp_csp colorspace, mp_csp_levels range) const;
-//	QVector3D vector(mp_csp colorspace, mp_csp_levels range) const;
-//	QVector3D origin(mp_csp colorspace, mp_csp_levels range) const;
 private:
-	double m_value[4] = {0.0, 0.0, 0.0, 0.0};
+	std::array<double, 4> m{{0.0, 0.0, 0.0, 0.0}};
 };
 
 #endif // COLORPROPERTY_HPP

@@ -2,10 +2,12 @@
 #define HWACC_HPP
 
 #include "stdafx.hpp"
+#include <array>
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <video/img_format.h>
 }
+#include "enums.hpp"
 
 struct lavc_ctx;		struct AVFrame;
 struct mp_image;		struct vd_lavc_hwdec;
@@ -49,7 +51,6 @@ public:
 	static AVCodecID codecId(const char *name);
 	virtual mp_image *getImage(mp_image *mpi) = 0;
 	virtual Type type() const = 0;
-	mp_image *nullImage(uint imgfmt, int width, int height, void *arg = nullptr, void(*free)(void*) = nullptr) const;
 	int imgfmt() const;
 protected:
 	HwAcc(AVCodecID codec);
@@ -74,5 +75,8 @@ private:
 	AVCodecID m_codec = AV_CODEC_ID_NONE;
 	QSize m_size = {0,0};
 };
+
+mp_image *nullMpImage(void *arg = nullptr, void(*free)(void*) = nullptr);
+mp_image *nullMpImage(uint imgfmt, int width, int height, void *arg = nullptr, void(*free)(void*) = nullptr);
 
 #endif // HWACC_HPP

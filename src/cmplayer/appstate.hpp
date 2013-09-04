@@ -18,8 +18,9 @@ public:
 	double video_aspect_ratio = -1.0, video_crop_ratio = -1.0;
 	int video_effects = 0;
 	ColorProperty video_color = {0.0, 0.0, 0.0, 0.0};
-	Enum::Position video_alignment = Enum::Position::CC;
+	Position video_alignment = Position::CC;
 	QPoint video_offset = {0, 0};
+	DeintMode video_deint = DeintMode::Never;
 
 // audio state
 	double audio_preamp = 1.0;
@@ -37,7 +38,7 @@ public:
 	bool history_visible = false;
 	bool playinfo_visible = false;
 // window state
-	Enum::StaysOnTop screen_stays_on_top = Enum::StaysOnTop::Playing;
+	StaysOnTop screen_stays_on_top = StaysOnTop::Playing;
 
 // misc
 	QString open_last_folder;

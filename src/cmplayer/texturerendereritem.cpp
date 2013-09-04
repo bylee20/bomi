@@ -8,23 +8,14 @@ struct TextureRendererItem::Shader : public QSGMaterialShader {
 	}
     void initialize() { m_item->link(program()); }
 private:
-	char const *const *attributeNames() const;
+	char const *const *attributeNames() const { return m_item->attributeNames(); }
 	const char *vertexShader() const {return m_item->vertexShader();}
 	const char *fragmentShader() const {return m_item->fragmentShader();}
     TextureRendererItem *m_item = nullptr;
 };
 
-char const *const *TextureRendererItem::Shader::attributeNames() const {
-	static const char *names[] = {
-		"qt_VertexPosition",
-		"qt_VertexTexCoord",
-		0
-	};
-	return names;
-}
-
 static int MaterialId = 0;
-static QVector<QSGMaterialType> MaterialTypes = QVector<QSGMaterialType>(50);
+static std::array<QSGMaterialType, 50> MaterialTypes;
 
 struct TextureRendererItem::Material : public QSGMaterial {
     Material(TextureRendererItem *item): m_item(item) { if (item->blending()) setFlag(Blending); }
@@ -86,6 +77,11 @@ void TextureRendererItem::resetNode() {
 		d->node = new Node(this);
 		initializeTextures();
 	}
+}
+
+void TextureRendererItem::markDirty(QSGNode::DirtyState bits) {
+	if (d->node)
+		d->node->markDirty(bits);
 }
 
 GLuint TextureRendererItem::texture(int i) const {

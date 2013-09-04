@@ -4,6 +4,7 @@
 #include "videorendereritem.hpp"
 #include "colorproperty.hpp"
 #include "videoframe.hpp"
+#include "deintinfo.hpp"
 
 struct Kernel3x3 {
 	Kernel3x3() { mat(0, 0) = mat(2, 2) = 0.f; }
@@ -47,6 +48,7 @@ struct VideoTextureInfo {
 };
 
 struct VideoTextureUploader {
+	VideoTextureUploader(const DeintInfo &deint = DeintInfo()): m_deint(deint) {}
 	virtual ~VideoTextureUploader() {}
 	virtual void initialize(const VideoTextureInfo &info) {
 		glBindTexture(info.target, info.id);
@@ -65,12 +67,17 @@ struct VideoTextureUploader {
 	}
 	virtual mp_csp colorspace(const VideoFormat &format) const { return format.colorspace(); }
 	virtual mp_csp_levels colorrange(const VideoFormat &format) const { return format.range(); }
+	const DeintInfo &deint() const { return m_deint; }
+private:
+	DeintInfo m_deint;
 };
 
 class VideoTextureShader {
 public:
 	static constexpr int KernelEffects = VideoRendererItem::KernelEffects;
-	static VideoTextureShader *create(const VideoFormat &format, const ColorProperty &color = ColorProperty(), int effects = 0);
+	static VideoTextureShader *create(const VideoFormat &format
+		, const ColorProperty &color = ColorProperty()
+		, const DeintInfo &deint = DeintInfo(), int effects = 0);
 	VideoTextureShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D);
 	virtual ~VideoTextureShader() { delete m_uploader; }
 	void initialize(GLuint *textures);
@@ -80,12 +87,13 @@ public:
 	void getCoords(double &x1, double &y1, double &x2, double &y2) const { m_rect.getCoords(&x1, &y1, &x2, &y2); }
 	void link(QOpenGLShaderProgram *program);
 	void render(QOpenGLShaderProgram *program, const Kernel3x3 &kernel);
-	virtual void upload(const VideoFrame &frame);
+	void upload(const VideoFrame &frame);
 	QImage toImage(const VideoFrame &frame) const {return m_uploader->toImage(frame);}
 	void setColor(const ColorProperty &color) { m_color = color; updateMatrix(); }
 	bool setEffects(int effects);
 	void upload(const QImage &image);
 	bool hasKernelEffects() const {return m_effects & KernelEffects;}
+	bool isCompatibleWith(const VideoFormat &format) const;
 protected:
 	void setTexel(const QByteArray &codes) {m_texel = codes;}
 	QPointF &sc(int idx) {return *m_strideCorrection[idx];}
@@ -109,7 +117,7 @@ private:
 	// texel correction for second and third planar. occasionally, the stride does not match exactly, e.g, for I420, stride[1]*2 != stride[0]
 	QPointF m_sc1 = {1.0, 1.0}, m_sc2 = {1.0, 1.0}, m_sc3 = {1.0, 1.0};
 	QPointF *m_strideCorrection[3] = {&m_sc1, &m_sc2, &m_sc3};
-	int loc_kern_d, loc_kern_c, loc_kern_n;
+	int loc_kern_d, loc_kern_c, loc_kern_n, loc_top_field, loc_deint;
 	int loc_p1, loc_p2, loc_p3;
 	int loc_sc1, loc_sc2, loc_sc3, loc_conv_mat, loc_conv_vec, loc_orig_vec;
 	QRectF m_rect = {0, 0, 1, 1};
@@ -121,6 +129,9 @@ private:
 	QByteArray m_texel = "vec3 texel(const in vec2 coord) {return texture1(coord).xyz;}";
 	ColorProperty m_color;
 	int m_effects = 0;
+	bool m_top = false;
+	int m_field = 0;
+	DeintInfo m_deint;
 };
 
 #endif // TEXTURESHADER_HPP

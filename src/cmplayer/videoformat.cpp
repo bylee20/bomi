@@ -7,8 +7,8 @@ extern "C" {
 #include <libavutil/common.h>
 }
 
-VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h)
-: size(mpi->w, mpi->h), outputSize(dest_w, dest_h)
+VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
+: size(mpi->w, mpi->h), displaySize(mpi->display_w, mpi->display_h)
 , planes(mpi->fmt.num_planes), type(mpi->imgfmt), imgfmt(mpi->imgfmt)
 , colorspace(mpi->colorspace), range(mpi->levels) {
 	if ((native = IMGFMT_IS_HWACCEL(imgfmt))) {
@@ -63,7 +63,7 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h
 #endif
 	} else {
 		alignedSize = QSize(mpi->stride[0]/mpi->fmt.bytes[0], mpi->h);
-		for (int i=0; i<3; ++i) {
+		for (int i=0; i<(int)alignedByteSize.size(); ++i) {
 			alignedByteSize[i].rwidth() = mpi->stride[i];
 			alignedByteSize[i].rheight() = mpi->h >> mpi->fmt.ys[i];
 			bpp += mpi->fmt.bpp[i] >> (mpi->fmt.xs[i] + mpi->fmt.ys[i]);
@@ -72,7 +72,7 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi, int dest_w, int dest_h
 }
 
 VideoFormat::VideoFormat::Data::Data(const QImage &image) {
-	outputSize = alignedSize = size = image.size();
+	displaySize = alignedSize = size = image.size();
 	alignedByteSize[0] = QSize(size.width()*4, size.height());
 	planes = 1;
 	bpp = 32;

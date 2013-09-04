@@ -11,6 +11,14 @@ extern "C" {
 #include <mpvcore/av_common.h>
 }
 
+static mp_image null;
+
+mp_image *nullMpImage(void *arg, void(*free)(void*)) { return mp_image_new_custom_ref(&null, arg, free); }
+
+mp_image *nullMpImage(uint imgfmt, int width, int height, void *arg, void(*free)(void*)) {
+	auto mpi = nullMpImage(arg, free); mp_image_setfmt(mpi, imgfmt); mp_image_set_size(mpi, width, height); return mpi;
+}
+
 bool HwAcc::supports(AVCodecID codec) {
 #ifdef Q_OS_MAC
 	return codec == AV_CODEC_ID_H264;
@@ -72,13 +80,6 @@ HwAcc::HwAcc(AVCodecID codec)
 
 HwAcc::~HwAcc() {
 	delete d;
-}
-
-mp_image *HwAcc::nullImage(uint imgfmt, int width, int height, void *arg, void (*free)(void *)) const {
-	auto mpi = mp_image_new_custom_ref(&d->nullImage, arg, free);
-	mp_image_setfmt(mpi, imgfmt);
-	mp_image_set_size(mpi, width, height);
-	return mpi;
 }
 
 VideoOutput *HwAcc::vo(lavc_ctx *ctx) {

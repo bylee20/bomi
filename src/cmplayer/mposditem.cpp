@@ -154,7 +154,7 @@ const char *MpOsdItemShader::fragmentShader() const {
 }
 
 static int MaterialId = 0;
-static QVector<QSGMaterialType> MaterialTypes = QVector<QSGMaterialType>(50);
+static std::array<QSGMaterialType, 50> MaterialTypes;
 
 struct MpOsdItemMaterial : public QSGMaterial {
 	MpOsdItemMaterial(MpOsdItem *item): m_item(item) { setFlag(Blending); }

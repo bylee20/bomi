@@ -1,661 +1,584 @@
+
 #ifndef ENUMS_HPP
 #define ENUMS_HPP
 
-#include <QtCore/QCoreApplication>
-#include <QtCore/QMap>
+#include <QCoreApplication>
+#include <array>
 
-class EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(EnumClass)
-public:
-	EnumClass(const EnumClass &rhs): m_id(rhs.m_id) {}
-	virtual ~EnumClass() {}
-	EnumClass &operator = (const EnumClass &rhs) {m_id = rhs.m_id; return *this;}
-	bool operator == (const EnumClass &rhs) const {return m_id == rhs.m_id;}
-	bool operator != (const EnumClass &rhs) const {return m_id != rhs.m_id;}
-	bool operator < (const EnumClass &rhs) const {return m_id < rhs.m_id;}
-	bool operator == (int rhs) const {return m_id == rhs;}
-	bool operator != (int rhs) const {return m_id != rhs;}
-	bool operator < (int rhs) const {return m_id < rhs;}
-	int id() const {return m_id;}
-	virtual QString name() const = 0;
-	virtual QString description() const = 0;
-	virtual void setById(int id) = 0;
-	virtual void setByName(const QString &name) = 0;
-protected:
-	EnumClass(int id): m_id(id) {}
-	void setId(int id) {m_id = id;}
-private:
-	int m_id = 0;
+template<typename T> class EnumInfo {};
+
+enum class DeintMode : int {
+	Never = (int)0,
+	Auto = (int)1,
+	Always = (int)2
 };
 
-static inline bool operator == (int lhs, const EnumClass &rhs) {return rhs == lhs;}
-static inline bool operator != (int lhs, const EnumClass &rhs) {return rhs != lhs;}
+inline bool operator == (DeintMode e, int i) { return (int)e == i; }
+inline bool operator != (DeintMode e, int i) { return (int)e != i; }
+inline bool operator == (int i, DeintMode e) { return (int)e == i; }
+inline bool operator != (int i, DeintMode e) { return (int)e != i; }
+inline int operator & (DeintMode e, int i) { return (int)e & i; }
+inline int operator & (int i, DeintMode e) { return (int)e & i; }
 
-namespace Enum {
-class StaysOnTop : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(StaysOnTop)
+template<>
+class EnumInfo<DeintMode> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef DeintMode Enum;
 public:
-	typedef QList<StaysOnTop> List;
-	static const int count = 3;
-	static const StaysOnTop Always;
-	static const StaysOnTop Playing;
-	static const StaysOnTop Never;
-
-	StaysOnTop(): EnumClass(0) {}
-	StaysOnTop(const StaysOnTop &rhs): EnumClass(rhs) {}
-	StaysOnTop &operator = (const StaysOnTop &rhs) {setId(rhs.id()); return *this;}
-	StaysOnTop &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static StaysOnTop from(const QString &name, const StaysOnTop &def = StaysOnTop()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? StaysOnTop(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 3; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static StaysOnTop from(int id, const StaysOnTop &def = StaysOnTop()) {
-		return isCompatible(id) ? StaysOnTop(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Never: return tr("");
+		case Enum::Auto: return tr("");
+		case Enum::Always: return tr("");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == Always.id())
-			return QString();
-		if (id == Playing.id())
-			return QString();
-		if (id == Never.id())
-			return QString();
-		return QString();
+	static constexpr const std::array<Item, 3> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	StaysOnTop(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	StaysOnTop(int id): EnumClass(id) {}
+	static const std::array<Item, 3> info;
 };
-}
 
-namespace Enum {
-class SeekingStep : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(SeekingStep)
+using DeintModeInfo = EnumInfo<DeintMode>;
+
+enum class StaysOnTop : int {
+	Always = (int)0,
+	Playing = (int)1,
+	Never = (int)2
+};
+
+inline bool operator == (StaysOnTop e, int i) { return (int)e == i; }
+inline bool operator != (StaysOnTop e, int i) { return (int)e != i; }
+inline bool operator == (int i, StaysOnTop e) { return (int)e == i; }
+inline bool operator != (int i, StaysOnTop e) { return (int)e != i; }
+inline int operator & (StaysOnTop e, int i) { return (int)e & i; }
+inline int operator & (int i, StaysOnTop e) { return (int)e & i; }
+
+template<>
+class EnumInfo<StaysOnTop> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef StaysOnTop Enum;
 public:
-	typedef QList<SeekingStep> List;
-	static const int count = 3;
-	static const SeekingStep Step1;
-	static const SeekingStep Step2;
-	static const SeekingStep Step3;
-
-	SeekingStep(): EnumClass(0) {}
-	SeekingStep(const SeekingStep &rhs): EnumClass(rhs) {}
-	SeekingStep &operator = (const SeekingStep &rhs) {setId(rhs.id()); return *this;}
-	SeekingStep &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static SeekingStep from(const QString &name, const SeekingStep &def = SeekingStep()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? SeekingStep(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 3; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static SeekingStep from(int id, const SeekingStep &def = SeekingStep()) {
-		return isCompatible(id) ? SeekingStep(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Always: return tr("");
+		case Enum::Playing: return tr("");
+		case Enum::Never: return tr("");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == Step1.id())
-			return QString();
-		if (id == Step2.id())
-			return QString();
-		if (id == Step3.id())
-			return QString();
-		return QString();
+	static constexpr const std::array<Item, 3> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	SeekingStep(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	SeekingStep(int id): EnumClass(id) {}
+	static const std::array<Item, 3> info;
 };
-}
 
-namespace Enum {
-class GeneratePlaylist : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(GeneratePlaylist)
+using StaysOnTopInfo = EnumInfo<StaysOnTop>;
+
+enum class SeekingStep : int {
+	Step1 = (int)0,
+	Step2 = (int)1,
+	Step3 = (int)2
+};
+
+inline bool operator == (SeekingStep e, int i) { return (int)e == i; }
+inline bool operator != (SeekingStep e, int i) { return (int)e != i; }
+inline bool operator == (int i, SeekingStep e) { return (int)e == i; }
+inline bool operator != (int i, SeekingStep e) { return (int)e != i; }
+inline int operator & (SeekingStep e, int i) { return (int)e & i; }
+inline int operator & (int i, SeekingStep e) { return (int)e & i; }
+
+template<>
+class EnumInfo<SeekingStep> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef SeekingStep Enum;
 public:
-	typedef QList<GeneratePlaylist> List;
-	static const int count = 2;
-	static const GeneratePlaylist Similar;
-	static const GeneratePlaylist Folder;
-
-	GeneratePlaylist(): EnumClass(0) {}
-	GeneratePlaylist(const GeneratePlaylist &rhs): EnumClass(rhs) {}
-	GeneratePlaylist &operator = (const GeneratePlaylist &rhs) {setId(rhs.id()); return *this;}
-	GeneratePlaylist &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static GeneratePlaylist from(const QString &name, const GeneratePlaylist &def = GeneratePlaylist()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? GeneratePlaylist(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 3; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static GeneratePlaylist from(int id, const GeneratePlaylist &def = GeneratePlaylist()) {
-		return isCompatible(id) ? GeneratePlaylist(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Step1: return tr("");
+		case Enum::Step2: return tr("");
+		case Enum::Step3: return tr("");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == Similar.id())
-			return tr("Add files which have similar names");
-		if (id == Folder.id())
-			return tr("Add all files in the same folder");
-		return QString();
+	static constexpr const std::array<Item, 3> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	GeneratePlaylist(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	GeneratePlaylist(int id): EnumClass(id) {}
+	static const std::array<Item, 3> info;
 };
-}
 
-namespace Enum {
-class PlaylistBehaviorWhenOpenMedia : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(PlaylistBehaviorWhenOpenMedia)
+using SeekingStepInfo = EnumInfo<SeekingStep>;
+
+enum class GeneratePlaylist : int {
+	Similar = (int)0,
+	Folder = (int)1
+};
+
+inline bool operator == (GeneratePlaylist e, int i) { return (int)e == i; }
+inline bool operator != (GeneratePlaylist e, int i) { return (int)e != i; }
+inline bool operator == (int i, GeneratePlaylist e) { return (int)e == i; }
+inline bool operator != (int i, GeneratePlaylist e) { return (int)e != i; }
+inline int operator & (GeneratePlaylist e, int i) { return (int)e & i; }
+inline int operator & (int i, GeneratePlaylist e) { return (int)e & i; }
+
+template<>
+class EnumInfo<GeneratePlaylist> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef GeneratePlaylist Enum;
 public:
-	typedef QList<PlaylistBehaviorWhenOpenMedia> List;
-	static const int count = 3;
-	static const PlaylistBehaviorWhenOpenMedia AppendToPlaylist;
-	static const PlaylistBehaviorWhenOpenMedia ClearAndAppendToPlaylist;
-	static const PlaylistBehaviorWhenOpenMedia ClearAndGenerateNewPlaylist;
-
-	PlaylistBehaviorWhenOpenMedia(): EnumClass(0) {}
-	PlaylistBehaviorWhenOpenMedia(const PlaylistBehaviorWhenOpenMedia &rhs): EnumClass(rhs) {}
-	PlaylistBehaviorWhenOpenMedia &operator = (const PlaylistBehaviorWhenOpenMedia &rhs) {setId(rhs.id()); return *this;}
-	PlaylistBehaviorWhenOpenMedia &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static PlaylistBehaviorWhenOpenMedia from(const QString &name, const PlaylistBehaviorWhenOpenMedia &def = PlaylistBehaviorWhenOpenMedia()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? PlaylistBehaviorWhenOpenMedia(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 2; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static PlaylistBehaviorWhenOpenMedia from(int id, const PlaylistBehaviorWhenOpenMedia &def = PlaylistBehaviorWhenOpenMedia()) {
-		return isCompatible(id) ? PlaylistBehaviorWhenOpenMedia(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Similar: return tr("Add files which have similar names");
+		case Enum::Folder: return tr("Add all files in the same folder");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == AppendToPlaylist.id())
-			return tr("Append the open media to the playlist");
-		if (id == ClearAndAppendToPlaylist.id())
-			return tr("Clear the playlist and append the open media to the playlist");
-		if (id == ClearAndGenerateNewPlaylist.id())
-			return tr("Clear the playlist and generate new playlist");
-		return QString();
+	static constexpr const std::array<Item, 2> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	PlaylistBehaviorWhenOpenMedia(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	PlaylistBehaviorWhenOpenMedia(int id): EnumClass(id) {}
+	static const std::array<Item, 2> info;
 };
-}
 
-namespace Enum {
-class SubtitleAutoload : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(SubtitleAutoload)
+using GeneratePlaylistInfo = EnumInfo<GeneratePlaylist>;
+
+enum class PlaylistBehaviorWhenOpenMedia : int {
+	AppendToPlaylist = (int)0,
+	ClearAndAppendToPlaylist = (int)1,
+	ClearAndGenerateNewPlaylist = (int)2
+};
+
+inline bool operator == (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e == i; }
+inline bool operator != (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e != i; }
+inline bool operator == (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e == i; }
+inline bool operator != (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e != i; }
+inline int operator & (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e & i; }
+inline int operator & (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e & i; }
+
+template<>
+class EnumInfo<PlaylistBehaviorWhenOpenMedia> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef PlaylistBehaviorWhenOpenMedia Enum;
 public:
-	typedef QList<SubtitleAutoload> List;
-	static const int count = 3;
-	static const SubtitleAutoload Matched;
-	static const SubtitleAutoload Contain;
-	static const SubtitleAutoload Folder;
-
-	SubtitleAutoload(): EnumClass(0) {}
-	SubtitleAutoload(const SubtitleAutoload &rhs): EnumClass(rhs) {}
-	SubtitleAutoload &operator = (const SubtitleAutoload &rhs) {setId(rhs.id()); return *this;}
-	SubtitleAutoload &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static SubtitleAutoload from(const QString &name, const SubtitleAutoload &def = SubtitleAutoload()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? SubtitleAutoload(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 3; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static SubtitleAutoload from(int id, const SubtitleAutoload &def = SubtitleAutoload()) {
-		return isCompatible(id) ? SubtitleAutoload(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::AppendToPlaylist: return tr("Append the open media to the playlist");
+		case Enum::ClearAndAppendToPlaylist: return tr("Clear the playlist and append the open media to the playlist");
+		case Enum::ClearAndGenerateNewPlaylist: return tr("Clear the playlist and generate new playlist");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == Matched.id())
-			return tr("Subtitles which have the same name as that of playing file");
-		if (id == Contain.id())
-			return tr("Subtitles whose names contain the name of playing file");
-		if (id == Folder.id())
-			return tr("All subtitles in the folder where the playing file is located");
-		return QString();
+	static constexpr const std::array<Item, 3> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	SubtitleAutoload(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	SubtitleAutoload(int id): EnumClass(id) {}
+	static const std::array<Item, 3> info;
 };
-}
 
-namespace Enum {
-class SubtitleAutoselect : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(SubtitleAutoselect)
+using PlaylistBehaviorWhenOpenMediaInfo = EnumInfo<PlaylistBehaviorWhenOpenMedia>;
+
+enum class SubtitleAutoload : int {
+	Matched = (int)0,
+	Contain = (int)1,
+	Folder = (int)2
+};
+
+inline bool operator == (SubtitleAutoload e, int i) { return (int)e == i; }
+inline bool operator != (SubtitleAutoload e, int i) { return (int)e != i; }
+inline bool operator == (int i, SubtitleAutoload e) { return (int)e == i; }
+inline bool operator != (int i, SubtitleAutoload e) { return (int)e != i; }
+inline int operator & (SubtitleAutoload e, int i) { return (int)e & i; }
+inline int operator & (int i, SubtitleAutoload e) { return (int)e & i; }
+
+template<>
+class EnumInfo<SubtitleAutoload> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef SubtitleAutoload Enum;
 public:
-	typedef QList<SubtitleAutoselect> List;
-	static const int count = 4;
-	static const SubtitleAutoselect Matched;
-	static const SubtitleAutoselect First;
-	static const SubtitleAutoselect All;
-	static const SubtitleAutoselect EachLanguage;
-
-	SubtitleAutoselect(): EnumClass(0) {}
-	SubtitleAutoselect(const SubtitleAutoselect &rhs): EnumClass(rhs) {}
-	SubtitleAutoselect &operator = (const SubtitleAutoselect &rhs) {setId(rhs.id()); return *this;}
-	SubtitleAutoselect &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static SubtitleAutoselect from(const QString &name, const SubtitleAutoselect &def = SubtitleAutoselect()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? SubtitleAutoselect(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 3; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static SubtitleAutoselect from(int id, const SubtitleAutoselect &def = SubtitleAutoselect()) {
-		return isCompatible(id) ? SubtitleAutoselect(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Matched: return tr("Subtitles which have the same name as that of playing file");
+		case Enum::Contain: return tr("Subtitles whose names contain the name of playing file");
+		case Enum::Folder: return tr("All subtitles in the folder where the playing file is located");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == Matched.id())
-			return tr("Subtitle which has the same name as that of playing file");
-		if (id == First.id())
-			return tr("First subtitle from loaded ones");
-		if (id == All.id())
-			return tr("All loaded subtitles");
-		if (id == EachLanguage.id())
-			return tr("Each language subtitle");
-		return QString();
+	static constexpr const std::array<Item, 3> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	SubtitleAutoselect(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	SubtitleAutoselect(int id): EnumClass(id) {}
+	static const std::array<Item, 3> info;
 };
-}
 
-namespace Enum {
-class OsdScalePolicy : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(OsdScalePolicy)
+using SubtitleAutoloadInfo = EnumInfo<SubtitleAutoload>;
+
+enum class SubtitleAutoselect : int {
+	Matched = (int)0,
+	First = (int)1,
+	All = (int)2,
+	EachLanguage = (int)3
+};
+
+inline bool operator == (SubtitleAutoselect e, int i) { return (int)e == i; }
+inline bool operator != (SubtitleAutoselect e, int i) { return (int)e != i; }
+inline bool operator == (int i, SubtitleAutoselect e) { return (int)e == i; }
+inline bool operator != (int i, SubtitleAutoselect e) { return (int)e != i; }
+inline int operator & (SubtitleAutoselect e, int i) { return (int)e & i; }
+inline int operator & (int i, SubtitleAutoselect e) { return (int)e & i; }
+
+template<>
+class EnumInfo<SubtitleAutoselect> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef SubtitleAutoselect Enum;
 public:
-	typedef QList<OsdScalePolicy> List;
-	static const int count = 3;
-	static const OsdScalePolicy Width;
-	static const OsdScalePolicy Height;
-	static const OsdScalePolicy Diagonal;
-
-	OsdScalePolicy(): EnumClass(0) {}
-	OsdScalePolicy(const OsdScalePolicy &rhs): EnumClass(rhs) {}
-	OsdScalePolicy &operator = (const OsdScalePolicy &rhs) {setId(rhs.id()); return *this;}
-	OsdScalePolicy &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static OsdScalePolicy from(const QString &name, const OsdScalePolicy &def = OsdScalePolicy()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? OsdScalePolicy(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 4; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static OsdScalePolicy from(int id, const OsdScalePolicy &def = OsdScalePolicy()) {
-		return isCompatible(id) ? OsdScalePolicy(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Matched: return tr("Subtitle which has the same name as that of playing file");
+		case Enum::First: return tr("First subtitle from loaded ones");
+		case Enum::All: return tr("All loaded subtitles");
+		case Enum::EachLanguage: return tr("Each language subtitle");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == Width.id())
-			return tr("Fit to width of video");
-		if (id == Height.id())
-			return tr("Fit to height of video");
-		if (id == Diagonal.id())
-			return tr("Fit to diagonal of video");
-		return QString();
+	static constexpr const std::array<Item, 4> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	OsdScalePolicy(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	OsdScalePolicy(int id): EnumClass(id) {}
+	static const std::array<Item, 4> info;
 };
-}
 
-namespace Enum {
-class ClickAction : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(ClickAction)
+using SubtitleAutoselectInfo = EnumInfo<SubtitleAutoselect>;
+
+enum class OsdScalePolicy : int {
+	Width = (int)0,
+	Height = (int)1,
+	Diagonal = (int)2
+};
+
+inline bool operator == (OsdScalePolicy e, int i) { return (int)e == i; }
+inline bool operator != (OsdScalePolicy e, int i) { return (int)e != i; }
+inline bool operator == (int i, OsdScalePolicy e) { return (int)e == i; }
+inline bool operator != (int i, OsdScalePolicy e) { return (int)e != i; }
+inline int operator & (OsdScalePolicy e, int i) { return (int)e & i; }
+inline int operator & (int i, OsdScalePolicy e) { return (int)e & i; }
+
+template<>
+class EnumInfo<OsdScalePolicy> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef OsdScalePolicy Enum;
 public:
-	typedef QList<ClickAction> List;
-	static const int count = 4;
-	static const ClickAction OpenFile;
-	static const ClickAction Fullscreen;
-	static const ClickAction Pause;
-	static const ClickAction Mute;
-
-	ClickAction(): EnumClass(0) {}
-	ClickAction(const ClickAction &rhs): EnumClass(rhs) {}
-	ClickAction &operator = (const ClickAction &rhs) {setId(rhs.id()); return *this;}
-	ClickAction &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static ClickAction from(const QString &name, const ClickAction &def = ClickAction()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? ClickAction(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 3; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static ClickAction from(int id, const ClickAction &def = ClickAction()) {
-		return isCompatible(id) ? ClickAction(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Width: return tr("Fit to width of video");
+		case Enum::Height: return tr("Fit to height of video");
+		case Enum::Diagonal: return tr("Fit to diagonal of video");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == OpenFile.id())
-			return tr("Open a file");
-		if (id == Fullscreen.id())
-			return tr("Toggle fullscreen mode");
-		if (id == Pause.id())
-			return tr("Toggle play/pause");
-		if (id == Mute.id())
-			return tr("Toggle mute/unmute");
-		return QString();
+	static constexpr const std::array<Item, 3> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	ClickAction(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	ClickAction(int id): EnumClass(id) {}
+	static const std::array<Item, 3> info;
 };
-}
 
-namespace Enum {
-class WheelAction : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(WheelAction)
+using OsdScalePolicyInfo = EnumInfo<OsdScalePolicy>;
+
+enum class ClickAction : int {
+	OpenFile = (int)0,
+	Fullscreen = (int)1,
+	Pause = (int)2,
+	Mute = (int)3
+};
+
+inline bool operator == (ClickAction e, int i) { return (int)e == i; }
+inline bool operator != (ClickAction e, int i) { return (int)e != i; }
+inline bool operator == (int i, ClickAction e) { return (int)e == i; }
+inline bool operator != (int i, ClickAction e) { return (int)e != i; }
+inline int operator & (ClickAction e, int i) { return (int)e & i; }
+inline int operator & (int i, ClickAction e) { return (int)e & i; }
+
+template<>
+class EnumInfo<ClickAction> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef ClickAction Enum;
 public:
-	typedef QList<WheelAction> List;
-	static const int count = 6;
-	static const WheelAction Seek1;
-	static const WheelAction Seek2;
-	static const WheelAction Seek3;
-	static const WheelAction PrevNext;
-	static const WheelAction Volume;
-	static const WheelAction Amp;
-
-	WheelAction(): EnumClass(0) {}
-	WheelAction(const WheelAction &rhs): EnumClass(rhs) {}
-	WheelAction &operator = (const WheelAction &rhs) {setId(rhs.id()); return *this;}
-	WheelAction &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return 0 <= id && id < count;}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static WheelAction from(const QString &name, const WheelAction &def = WheelAction()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? WheelAction(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 4; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static WheelAction from(int id, const WheelAction &def = WheelAction()) {
-		return isCompatible(id) ? WheelAction(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::OpenFile: return tr("Open a file");
+		case Enum::Fullscreen: return tr("Toggle fullscreen mode");
+		case Enum::Pause: return tr("Toggle play/pause");
+		case Enum::Mute: return tr("Toggle mute/unmute");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == Seek1.id())
-			return tr("Seek playback for step 1");
-		if (id == Seek2.id())
-			return tr("Seek playback for step 2");
-		if (id == Seek3.id())
-			return tr("Seek playback for step 3");
-		if (id == PrevNext.id())
-			return tr("Play previous/next");
-		if (id == Volume.id())
-			return tr("Volumn up/down");
-		if (id == Amp.id())
-			return tr("Amp. up/down");
-		return QString();
+	static constexpr const std::array<Item, 4> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QString name[count] = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	WheelAction(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	WheelAction(int id): EnumClass(id) {}
+	static const std::array<Item, 4> info;
 };
-}
 
-namespace Enum {
-class KeyModifier : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(KeyModifier)
+using ClickActionInfo = EnumInfo<ClickAction>;
+
+enum class WheelAction : int {
+	Seek1 = (int)0,
+	Seek2 = (int)1,
+	Seek3 = (int)2,
+	PrevNext = (int)3,
+	Volume = (int)4,
+	Amp = (int)5
+};
+
+inline bool operator == (WheelAction e, int i) { return (int)e == i; }
+inline bool operator != (WheelAction e, int i) { return (int)e != i; }
+inline bool operator == (int i, WheelAction e) { return (int)e == i; }
+inline bool operator != (int i, WheelAction e) { return (int)e != i; }
+inline int operator & (WheelAction e, int i) { return (int)e & i; }
+inline int operator & (int i, WheelAction e) { return (int)e & i; }
+
+template<>
+class EnumInfo<WheelAction> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef WheelAction Enum;
 public:
-	typedef QList<KeyModifier> List;
-	static const int count = 4;
-	static const KeyModifier None;
-	static const KeyModifier Ctrl;
-	static const KeyModifier Shift;
-	static const KeyModifier Alt;
-
-	KeyModifier(): EnumClass(Qt::NoModifier) {}
-	KeyModifier(const KeyModifier &rhs): EnumClass(rhs) {}
-	KeyModifier &operator = (const KeyModifier &rhs) {setId(rhs.id()); return *this;}
-	KeyModifier &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return map().name.contains(id);}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static KeyModifier from(const QString &name, const KeyModifier &def = KeyModifier()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? KeyModifier(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 6; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
 	}
-	static KeyModifier from(int id, const KeyModifier &def = KeyModifier()) {
-		return isCompatible(id) ? KeyModifier(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Seek1: return tr("Seek playback for step 1");
+		case Enum::Seek2: return tr("Seek playback for step 2");
+		case Enum::Seek3: return tr("Seek playback for step 3");
+		case Enum::PrevNext: return tr("Play previous/next");
+		case Enum::Volume: return tr("Volumn up/down");
+		case Enum::Amp: return tr("Amp. up/down");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == None.id())
-			return QString();
-		if (id == Ctrl.id())
-			return QString();
-		if (id == Shift.id())
-			return QString();
-		if (id == Alt.id())
-			return QString();
-		return QString();
+	static constexpr const std::array<Item, 6> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QMap<int, QString> name = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	KeyModifier(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	KeyModifier(int id): EnumClass(id) {}
+	static const std::array<Item, 6> info;
 };
-}
 
-namespace Enum {
-class Position : public EnumClass {
-	Q_DECLARE_TR_FUNCTIONS(Position)
+using WheelActionInfo = EnumInfo<WheelAction>;
+
+enum class KeyModifier : int {
+	None = (int)Qt::NoModifier,
+	Ctrl = (int)Qt::ControlModifier,
+	Shift = (int)Qt::ShiftModifier,
+	Alt = (int)Qt::AltModifier
+};
+
+inline bool operator == (KeyModifier e, int i) { return (int)e == i; }
+inline bool operator != (KeyModifier e, int i) { return (int)e != i; }
+inline bool operator == (int i, KeyModifier e) { return (int)e == i; }
+inline bool operator != (int i, KeyModifier e) { return (int)e != i; }
+inline int operator & (KeyModifier e, int i) { return (int)e & i; }
+inline int operator & (int i, KeyModifier e) { return (int)e & i; }
+
+template<>
+class EnumInfo<KeyModifier> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef KeyModifier Enum;
 public:
-	typedef QList<Position> List;
-	static const int count = 9;
-	static const Position CC;
-	static const Position TL;
-	static const Position TC;
-	static const Position TR;
-	static const Position CL;
-	static const Position CR;
-	static const Position BL;
-	static const Position BC;
-	static const Position BR;
-
-	Position(): EnumClass(Qt::AlignVCenter|Qt::AlignHCenter) {}
-	Position(const Position &rhs): EnumClass(rhs) {}
-	Position &operator = (const Position &rhs) {setId(rhs.id()); return *this;}
-	Position &operator = (int rhs) {setById(rhs); return *this;}
-	QString name() const {return map().name[id()];}
-	QString description() const {return description(id());}
-	void setById(int id) {if (isCompatible(id)) setId(id);}
-	void setByName(const QString &name) {setId(map().value.value(name, id()));}
-	static bool isCompatible(int id) {return map().name.contains(id);}
-	static bool isCompatible(const QString &name) {return map().value.contains(name);}
-	static Position from(const QString &name, const Position &def = Position()) {
-		const QMap<QString, int>::const_iterator it = map().value.find(name);
-		return it != map().value.end() ? Position(*it) : def;
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 4; }
+	static const char *name(Enum e) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
 	}
-	static Position from(int id, const Position &def = Position()) {
-		return isCompatible(id) ? Position(id) : def;
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::None: return tr("");
+		case Enum::Ctrl: return tr("");
+		case Enum::Shift: return tr("");
+		case Enum::Alt: return tr("");
+		default: return tr("");
+		};
 	}
-	static QString description(int id) {
-		if (id == CC.id())
-			return QString();
-		if (id == TL.id())
-			return QString();
-		if (id == TC.id())
-			return QString();
-		if (id == TR.id())
-			return QString();
-		if (id == CL.id())
-			return QString();
-		if (id == CR.id())
-			return QString();
-		if (id == BL.id())
-			return QString();
-		if (id == BC.id())
-			return QString();
-		if (id == BR.id())
-			return QString();
-		return QString();
+	static constexpr const std::array<Item, 4> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
 	}
-	static const List &list() {return map().list;}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
 private:
-	struct Map {
-		Map() {list.reserve(count);}
-		QMap<int, QString> name = {};
-		QMap<QString, int> value = {};
-		List list = {};
-	};
-	static Map _map;
-	static const Map &map() {return _map;}
-	Position(int id, const char *name): EnumClass(id) {
-        _map.value.insert(_map.name[id] = QLatin1String(name), id);
-		_map.list.append(*this);
-	}
-	Position(int id): EnumClass(id) {}
+	static const std::array<Item, 4> info;
 };
-}
+
+using KeyModifierInfo = EnumInfo<KeyModifier>;
+
+enum class Position : int {
+	CC = (int)Qt::AlignVCenter|Qt::AlignHCenter,
+	TL = (int)Qt::AlignTop|Qt::AlignLeft,
+	TC = (int)Qt::AlignTop|Qt::AlignHCenter,
+	TR = (int)Qt::AlignTop|Qt::AlignRight,
+	CL = (int)Qt::AlignVCenter|Qt::AlignLeft,
+	CR = (int)Qt::AlignVCenter|Qt::AlignRight,
+	BL = (int)Qt::AlignBottom|Qt::AlignLeft,
+	BC = (int)Qt::AlignBottom|Qt::AlignHCenter,
+	BR = (int)Qt::AlignBottom|Qt::AlignRight
+};
+
+inline bool operator == (Position e, int i) { return (int)e == i; }
+inline bool operator != (Position e, int i) { return (int)e != i; }
+inline bool operator == (int i, Position e) { return (int)e == i; }
+inline bool operator != (int i, Position e) { return (int)e != i; }
+inline int operator & (Position e, int i) { return (int)e & i; }
+inline int operator & (int i, Position e) { return (int)e & i; }
+
+template<>
+class EnumInfo<Position> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef Position Enum;
+public:
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 9; }
+	static const char *name(Enum e) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
+	}
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::CC: return tr("");
+		case Enum::TL: return tr("");
+		case Enum::TC: return tr("");
+		case Enum::TR: return tr("");
+		case Enum::CL: return tr("");
+		case Enum::CR: return tr("");
+		case Enum::BL: return tr("");
+		case Enum::BC: return tr("");
+		case Enum::BR: return tr("");
+		default: return tr("");
+		};
+	}
+	static constexpr const std::array<Item, 9> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
+private:
+	static const std::array<Item, 9> info;
+};
+
+using PositionInfo = EnumInfo<Position>;
 
 #endif

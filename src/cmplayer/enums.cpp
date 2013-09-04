@@ -1,90 +1,83 @@
 #include "enums.hpp"
+const std::array<DeintModeInfo::Item, 3> DeintModeInfo::info{{
+	{DeintMode::Never, "Never"},
+	{DeintMode::Auto, "Auto"},
+	{DeintMode::Always, "Always"}
+}};
 
-namespace Enum {
-StaysOnTop::Map StaysOnTop::_map;
-const StaysOnTop StaysOnTop::Always(0, "Always");
-const StaysOnTop StaysOnTop::Playing(1, "Playing");
-const StaysOnTop StaysOnTop::Never(2, "Never");
-}
+const std::array<StaysOnTopInfo::Item, 3> StaysOnTopInfo::info{{
+	{StaysOnTop::Always, "Always"},
+	{StaysOnTop::Playing, "Playing"},
+	{StaysOnTop::Never, "Never"}
+}};
 
-namespace Enum {
-SeekingStep::Map SeekingStep::_map;
-const SeekingStep SeekingStep::Step1(0, "Step1");
-const SeekingStep SeekingStep::Step2(1, "Step2");
-const SeekingStep SeekingStep::Step3(2, "Step3");
-}
+const std::array<SeekingStepInfo::Item, 3> SeekingStepInfo::info{{
+	{SeekingStep::Step1, "Step1"},
+	{SeekingStep::Step2, "Step2"},
+	{SeekingStep::Step3, "Step3"}
+}};
 
-namespace Enum {
-GeneratePlaylist::Map GeneratePlaylist::_map;
-const GeneratePlaylist GeneratePlaylist::Similar(0, "Similar");
-const GeneratePlaylist GeneratePlaylist::Folder(1, "Folder");
-}
+const std::array<GeneratePlaylistInfo::Item, 2> GeneratePlaylistInfo::info{{
+	{GeneratePlaylist::Similar, "Similar"},
+	{GeneratePlaylist::Folder, "Folder"}
+}};
 
-namespace Enum {
-PlaylistBehaviorWhenOpenMedia::Map PlaylistBehaviorWhenOpenMedia::_map;
-const PlaylistBehaviorWhenOpenMedia PlaylistBehaviorWhenOpenMedia::AppendToPlaylist(0, "AppendToPlaylist");
-const PlaylistBehaviorWhenOpenMedia PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist(1, "ClearAndAppendToPlaylist");
-const PlaylistBehaviorWhenOpenMedia PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist(2, "ClearAndGenerateNewPlaylist");
-}
+const std::array<PlaylistBehaviorWhenOpenMediaInfo::Item, 3> PlaylistBehaviorWhenOpenMediaInfo::info{{
+	{PlaylistBehaviorWhenOpenMedia::AppendToPlaylist, "AppendToPlaylist"},
+	{PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist, "ClearAndAppendToPlaylist"},
+	{PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist, "ClearAndGenerateNewPlaylist"}
+}};
 
-namespace Enum {
-SubtitleAutoload::Map SubtitleAutoload::_map;
-const SubtitleAutoload SubtitleAutoload::Matched(0, "Matched");
-const SubtitleAutoload SubtitleAutoload::Contain(1, "Contain");
-const SubtitleAutoload SubtitleAutoload::Folder(2, "Folder");
-}
+const std::array<SubtitleAutoloadInfo::Item, 3> SubtitleAutoloadInfo::info{{
+	{SubtitleAutoload::Matched, "Matched"},
+	{SubtitleAutoload::Contain, "Contain"},
+	{SubtitleAutoload::Folder, "Folder"}
+}};
 
-namespace Enum {
-SubtitleAutoselect::Map SubtitleAutoselect::_map;
-const SubtitleAutoselect SubtitleAutoselect::Matched(0, "Matched");
-const SubtitleAutoselect SubtitleAutoselect::First(1, "First");
-const SubtitleAutoselect SubtitleAutoselect::All(2, "All");
-const SubtitleAutoselect SubtitleAutoselect::EachLanguage(3, "EachLanguage");
-}
+const std::array<SubtitleAutoselectInfo::Item, 4> SubtitleAutoselectInfo::info{{
+	{SubtitleAutoselect::Matched, "Matched"},
+	{SubtitleAutoselect::First, "First"},
+	{SubtitleAutoselect::All, "All"},
+	{SubtitleAutoselect::EachLanguage, "EachLanguage"}
+}};
 
-namespace Enum {
-OsdScalePolicy::Map OsdScalePolicy::_map;
-const OsdScalePolicy OsdScalePolicy::Width(0, "Width");
-const OsdScalePolicy OsdScalePolicy::Height(1, "Height");
-const OsdScalePolicy OsdScalePolicy::Diagonal(2, "Diagonal");
-}
+const std::array<OsdScalePolicyInfo::Item, 3> OsdScalePolicyInfo::info{{
+	{OsdScalePolicy::Width, "Width"},
+	{OsdScalePolicy::Height, "Height"},
+	{OsdScalePolicy::Diagonal, "Diagonal"}
+}};
 
-namespace Enum {
-ClickAction::Map ClickAction::_map;
-const ClickAction ClickAction::OpenFile(0, "OpenFile");
-const ClickAction ClickAction::Fullscreen(1, "Fullscreen");
-const ClickAction ClickAction::Pause(2, "Pause");
-const ClickAction ClickAction::Mute(3, "Mute");
-}
+const std::array<ClickActionInfo::Item, 4> ClickActionInfo::info{{
+	{ClickAction::OpenFile, "OpenFile"},
+	{ClickAction::Fullscreen, "Fullscreen"},
+	{ClickAction::Pause, "Pause"},
+	{ClickAction::Mute, "Mute"}
+}};
 
-namespace Enum {
-WheelAction::Map WheelAction::_map;
-const WheelAction WheelAction::Seek1(0, "Seek1");
-const WheelAction WheelAction::Seek2(1, "Seek2");
-const WheelAction WheelAction::Seek3(2, "Seek3");
-const WheelAction WheelAction::PrevNext(3, "PrevNext");
-const WheelAction WheelAction::Volume(4, "Volume");
-const WheelAction WheelAction::Amp(5, "Amp");
-}
+const std::array<WheelActionInfo::Item, 6> WheelActionInfo::info{{
+	{WheelAction::Seek1, "Seek1"},
+	{WheelAction::Seek2, "Seek2"},
+	{WheelAction::Seek3, "Seek3"},
+	{WheelAction::PrevNext, "PrevNext"},
+	{WheelAction::Volume, "Volume"},
+	{WheelAction::Amp, "Amp"}
+}};
 
-namespace Enum {
-KeyModifier::Map KeyModifier::_map;
-const KeyModifier KeyModifier::None(Qt::NoModifier, "None");
-const KeyModifier KeyModifier::Ctrl(Qt::ControlModifier, "Ctrl");
-const KeyModifier KeyModifier::Shift(Qt::ShiftModifier, "Shift");
-const KeyModifier KeyModifier::Alt(Qt::AltModifier, "Alt");
-}
+const std::array<KeyModifierInfo::Item, 4> KeyModifierInfo::info{{
+	{KeyModifier::None, "None"},
+	{KeyModifier::Ctrl, "Ctrl"},
+	{KeyModifier::Shift, "Shift"},
+	{KeyModifier::Alt, "Alt"}
+}};
 
-namespace Enum {
-Position::Map Position::_map;
-const Position Position::CC(Qt::AlignVCenter|Qt::AlignHCenter, "CC");
-const Position Position::TL(Qt::AlignTop|Qt::AlignLeft, "TL");
-const Position Position::TC(Qt::AlignTop|Qt::AlignHCenter, "TC");
-const Position Position::TR(Qt::AlignTop|Qt::AlignRight, "TR");
-const Position Position::CL(Qt::AlignVCenter|Qt::AlignLeft, "CL");
-const Position Position::CR(Qt::AlignVCenter|Qt::AlignRight, "CR");
-const Position Position::BL(Qt::AlignBottom|Qt::AlignLeft, "BL");
-const Position Position::BC(Qt::AlignBottom|Qt::AlignHCenter, "BC");
-const Position Position::BR(Qt::AlignBottom|Qt::AlignRight, "BR");
-}
-
+const std::array<PositionInfo::Item, 9> PositionInfo::info{{
+	{Position::CC, "CC"},
+	{Position::TL, "TL"},
+	{Position::TC, "TC"},
+	{Position::TR, "TR"},
+	{Position::CL, "CL"},
+	{Position::CR, "CR"},
+	{Position::BL, "BL"},
+	{Position::BC, "BC"},
+	{Position::BR, "BR"}
+}};

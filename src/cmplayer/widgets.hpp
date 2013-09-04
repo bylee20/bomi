@@ -90,29 +90,23 @@ private slots:
 template<typename Enum>
 class EnumComboBox : public DataComboBox {
 public:
-	typedef Enum EnumType;
 	EnumComboBox(QWidget *parent = 0): DataComboBox(parent) {
 		setup(this);
 		retranslate(this);
 	}
 	static void setup(QComboBox *combo) {
-		const typename Enum::List list = Enum::list();
 		combo->clear();
-		for (int i=0; i<list.size(); ++i)
-			combo->addItem(QString(), list[i].id());
+		for (auto &item : EnumInfo<Enum>::items())
+			combo->addItem(QString(), (int)item.value);
 	}
 	static void retranslate(QComboBox *combo) {
-		const typename Enum::List list = Enum::list();
-		Q_ASSERT(list.size() == combo->count());
-		for (int i=0; i<list.size(); ++i)
-			combo->setItemText(i, list[i].description());
+		const auto items = EnumInfo<Enum>::items();
+		Q_ASSERT(items.size() == combo->count());
+		for (int i=0; i<items.size(); ++i)
+			combo->setItemText(i, EnumInfo<Enum>::description(items[i].value));
 	}
-	EnumType currentValue() const {
-		return EnumType::from(currentData().toInt());
-	}
-	void setCurrentValue(const EnumType &e) {
-		setCurrentData(e.id());
-	}
+	Enum currentValue() const { return EnumInfo<Enum>::from(currentData().toInt()); }
+	void setCurrentValue(Enum e) { setCurrentData((int)e); }
 
 private:
 	void changeEvent(QEvent *event) {
@@ -122,10 +116,10 @@ private:
 	}
 };
 
-typedef EnumComboBox<Enum::GeneratePlaylist> GeneratePlaylistComboBox;
-typedef EnumComboBox<Enum::SubtitleAutoload> SubtitleAutoloadComboBox;
-typedef EnumComboBox<Enum::SubtitleAutoselect> SubtitleAutoselectComboBox;
-typedef EnumComboBox<Enum::OsdScalePolicy> OsdScalePolicyComboBox;
+typedef EnumComboBox<GeneratePlaylist> GeneratePlaylistComboBox;
+typedef EnumComboBox<SubtitleAutoload> SubtitleAutoloadComboBox;
+typedef EnumComboBox<SubtitleAutoselect> SubtitleAutoselectComboBox;
+typedef EnumComboBox<OsdScalePolicy> OsdScalePolicyComboBox;
 
 
 #endif // WIDGETS_HPP

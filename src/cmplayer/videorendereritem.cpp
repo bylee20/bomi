@@ -1,14 +1,16 @@
 #include "videorendereritem.hpp"
 #include "mposditem.hpp"
 #include "videoframe.hpp"
+#include "hwacc.hpp"
 #include "global.hpp"
 #include "videotextureshader.hpp"
+#include "dataevent.hpp"
 
 struct VideoRendererItem::Data {
 	VideoFrame frame;
 	VideoFormat format;
 	quint64 drawnFrames = 0;
-	bool framePended = false, checkFormat = true, take = false, flipped = false;
+	bool take = false;
 	QRectF vtx;
 	QPoint offset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0;
@@ -31,9 +33,13 @@ struct VideoRendererItem::Data {
 			kernel += sharpen;
 		kernel.normalize();
 	}
+	QLinkedList<VideoFrame> frames;
+	DeintInfo deint;
+	bool deintChanged = false;
 };
 
 static const QEvent::Type UpdateEvent = (QEvent::Type)(QEvent::User+1);
+static const QEvent::Type DeintEvent = (QEvent::Type)(UpdateEvent + 1);
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 : TextureRendererItem(3, parent), d(new Data) {
@@ -52,14 +58,22 @@ VideoRendererItem::~VideoRendererItem() {
 void VideoRendererItem::customEvent(QEvent *event) {
 	if (event->type() == UpdateEvent)
 		update();
+	else if (event->type() == DeintEvent) {
+		DeintInfo deint;
+		get(event, deint);
+		if (!deint.isHardware())
+			deint = DeintInfo();
+		if ((d->deintChanged = _Change(d->deint, deint)))
+			update();
+	}
+}
+
+void VideoRendererItem::scheduleUpdate() {
+	qApp->postEvent(this, new QEvent(UpdateEvent));
 }
 
 QQuickItem *VideoRendererItem::overlay() const {
 	return d->overlay;
-}
-
-bool VideoRendererItem::isFramePended() const {
-	return d->framePended;
 }
 
 const VideoFrame &VideoRendererItem::frame() const {
@@ -82,17 +96,14 @@ void VideoRendererItem::requestFrameImage() const {
 }
 
 void VideoRendererItem::present(const QImage &image) {
-	present(VideoFrame(image), false, true);
+	present(VideoFrame(image));
 }
 
-void VideoRendererItem::present(const VideoFrame &frame, bool flipped, bool checkFormat) {
+void VideoRendererItem::present(const VideoFrame &frame) {
 	d->mutex.lock();
-	d->frame = frame;
-	d->flipped = flipped;
-	d->framePended = true;
-	d->checkFormat = checkFormat;
+	d->frames.append(frame);
 	d->mutex.unlock();
-	qApp->postEvent(this, new QEvent(UpdateEvent));
+	scheduleUpdate();
 	d->mposd->present();
 }
 
@@ -112,12 +123,16 @@ void VideoRendererItem::setAlignment(int alignment) {
 	}
 }
 
+void VideoRendererItem::setDeint(const DeintInfo &deint) {
+	post(this, DeintEvent, deint);
+}
+
 double VideoRendererItem::targetAspectRatio() const {
 	if (d->aspect > 0.0)
 		return d->aspect;
 	if (d->aspect == 0.0)
 		return itemAspectRatio();
-	return _Ratio(d->format.outputSize());
+	return _Ratio(d->format.displaySize());
 }
 
 double VideoRendererItem::targetCropRatio(double fallback) const {
@@ -240,7 +255,7 @@ QSize VideoRendererItem::sizeHint() const {
 		return QSize(400, 300);
 	const double aspect = targetAspectRatio();
 	QSizeF size(aspect, 1.0);
-	size.scale(d->format.outputSize(), Qt::KeepAspectRatioByExpanding);
+	size.scale(d->format.displaySize(), Qt::KeepAspectRatioByExpanding);
 	QSizeF crop(targetCropRatio(aspect), 1.0);
 	crop.scale(size, Qt::KeepAspectRatio);
 	return crop.toSize();
@@ -267,21 +282,38 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 	d->shader->render(program, d->kernel);
 }
 
-void VideoRendererItem::beforeUpdate() {
+void VideoRendererItem::emptyQueue() {
 	QMutexLocker locker(&d->mutex);
+	d->frames.clear();
+}
+
+int VideoRendererItem::delay() const {
+	return d->frames.isEmpty() ? 0 : (d->frames.back().pts() - d->frames.front().pts())*1000.0;
+}
+
+void VideoRendererItem::beforeUpdate() {
+	if (d->frames.isEmpty())
+		return;
+	QMutexLocker locker(&d->mutex);
+	d->frame = d->frames.takeFirst();
 	bool reset = false;
-	if ((reset = (d->checkFormat && _Change(d->format, d->frame.format()))))
+	if (_Change(d->format, d->frame.format())) {
 		d->mposd->setFrameSize(d->format.size());
+		reset = true;
+	}
 	if (!reset && d->shaderType != d->format.imgfmt())
+		reset = true;
+	if (!reset && d->deintChanged)
 		reset = true;
 	if (reset) {
 		if (d->shader)
 			delete d->shader;
-		d->shader = VideoTextureShader::create(d->format, d->color, d->effects);
+		d->shader = VideoTextureShader::create(d->format, d->color, d->deint, d->effects);
 		resetNode();
 		updateGeometry();
 	}
-	if ((d->framePended) && !d->format.isEmpty()) {
+//	bool reset = false;
+	if (!d->format.isEmpty()) {
 		d->shader->upload(d->frame);
 		++d->drawnFrames;
 		if (d->take) {
@@ -291,7 +323,16 @@ void VideoRendererItem::beforeUpdate() {
 			d->take = false;
 		}
 	}
-	d->framePended = false;
+	if (!d->frames.isEmpty()) {
+		const auto diff = (d->frames.back().pts() - d->frames.front().pts());
+		if (diff < 0.1) {
+			scheduleUpdate();
+		} else {
+			qDebug() << "Too many frames are queued! Drop them...";
+			d->frames.clear();
+		}
+	}
+	d->deintChanged = false;
 }
 
 void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
@@ -321,7 +362,7 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 		if (d->effects & FlipHorizontally)
 			qSwap(left, right);
 	}
-	if (d->flipped)
+	if (d->frame.field() & VideoFrame::Flipped)
 		qSwap(top, bottom);
 	auto vtx = d->vtx.translated(offset);
 	d->mposd->setPosition(vtx.topLeft());
