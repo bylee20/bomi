@@ -274,12 +274,15 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
 	addPage(tr("Behaviour"), d->ui.gen_behaviours, ":/img/preferences-system-session-services.png", general);
 	addPage(tr("Look"), d->ui.gen_appearance, ":/img/preferences-desktop-theme-32.png", general);
-	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
+//	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
 
 	auto video = addCategory(tr("Video"));
-	addPage(tr("Hardware Acceleration"), d->ui.video_hwacc, ":/img/apps-hardware-icon.png", video);
+	addPage(tr("Hardware acceleration"), d->ui.video_hwacc, ":/img/apps-hardware-icon.png", video);
 	addPage(tr("Deinterlace"), d->ui.video_deint, ":/img/format-line-spacing-double.png", video);
-	addPage(tr("Filter"), d->ui.video_filter, ":/img/draw-brush.png", video);
+	addPage(tr("Video filter"), d->ui.video_filter, ":/img/draw-brush.png", video);
+
+	auto audio = addCategory(tr("Audio"));
+	addPage(tr("Aduio filter"), d->ui.audio_filter, ":/img/applications-multimedia.png", audio);
 
 	auto subtitle = addCategory(tr("Subtitle"));
 	addPage(tr("Load"), d->ui.sub_load, ":/img/application-x-subrip-32.png", subtitle);

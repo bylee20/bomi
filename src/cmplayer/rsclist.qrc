@@ -33,5 +33,6 @@
         <file>img/draw-brush.png</file>
         <file>img/apps-hardware-icon.png</file>
         <file>img/format-line-spacing-double.png</file>
+        <file>img/applications-multimedia.png</file>
     </qresource>
 </RCC>
