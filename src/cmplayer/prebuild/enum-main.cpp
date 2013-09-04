@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -35,16 +36,6 @@ static string getTemplate(const string &fileName) {
 		}
 	}
 	return out.str();
-}
-
-static string hpp() {
-	static string tmp;
-	return tmp.empty() ? (tmp = getTemplate("enumtemplate.hpp")) : tmp;
-}
-
-static string cpp() {
-	static string tmp;
-	return tmp.empty() ? (tmp = getTemplate("enumtemplate.cpp")) : tmp;
 }
 
 static inline int toInt(const string &s) {
@@ -125,81 +116,105 @@ static string &replace(string &str, const string &substr, const string &overwrit
 	return str;
 }
 
+static const string hppTmp = R"(
+enum class __ENUM_NAME : int {
+__ENUM_VALUES
+};
+
+inline bool operator == (__ENUM_NAME e, int i) { return (int)e == i; }
+inline bool operator != (__ENUM_NAME e, int i) { return (int)e != i; }
+inline bool operator == (int i, __ENUM_NAME e) { return (int)e == i; }
+inline bool operator != (int i, __ENUM_NAME e) { return (int)e != i; }
+inline int operator & (__ENUM_NAME e, int i) { return (int)e & i; }
+inline int operator & (int i, __ENUM_NAME e) { return (int)e & i; }
+
+template<>
+class EnumInfo<__ENUM_NAME> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef __ENUM_NAME Enum;
+public:
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return __ENUM_COUNT; }
+	static const char *name(Enum e) {
+		__ENUM_FUNC_NAME
+	}
+	static QString description(Enum e) {
+		switch (e) {
+__ENUM_FUNC_DESC_CASES
+		};
+	}
+	static constexpr const std::array<Item, __ENUM_COUNT> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
+private:
+	static const std::array<Item, __ENUM_COUNT> info;
+};
+
+using __ENUM_NAMEInfo = EnumInfo<__ENUM_NAME>;
+)";
+
+static const string cppTmp = R"(
+const std::array<__ENUM_NAMEInfo::Item, __ENUM_COUNT> __ENUM_NAMEInfo::info{{
+__ENUM_INFOS
+}};
+)";
+
 static void generate() {
 	cout << "Generate enum files" << endl;
-	const vector<EnumData> data = readEnums();
-	const string hppTmp = ::hpp();
-	const string cppTmp = ::cpp();
+	const auto enums = readEnums();
+	string hpp = R"(
+#ifndef ENUMS_HPP
+#define ENUMS_HPP
 
+#include <QCoreApplication>
+#include <array>
+
+template<typename T> class EnumInfo {};
+)";
+	string cpp = "#include \"enums.hpp\"";
+	for (const EnumData &data : enums) {
+		string htmpl = hppTmp;
+		string ctmpl = cppTmp;
+		replace(htmpl, "__ENUM_NAME", data.name);
+		string value, infos, cases;
+		for (const EnumData::Item &item : data.items) {
+			value += "\t" + item.name + " = (int)" + item.value;
+			infos += "\t{" + data.name + "::" + item.name + ", " + '"' + item.name + "\"}";
+			cases += "\t\tcase Enum::" + item.name + ": return tr(\"" + item.desc + "\");\n";
+			if (&item != &data.items.back()) {
+				value += ",\n";
+				infos += ",\n";
+			}
+		}
+		cases += "\t\tdefault: return tr(\"\");";
+		replace(htmpl, "__ENUM_VALUES", value);
+		replace(htmpl, "__ENUM_COUNT", toString(data.items.size()));
+		replace(htmpl, "__ENUM_FUNC_DESC_CASES", cases);
+		if (data.continuous)
+			replace(htmpl, "__ENUM_FUNC_NAME", R"(return info[(int)e].name;)");
+		else
+			replace(htmpl, "__ENUM_FUNC_NAME", R"(auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;)");
+
+		replace(ctmpl, "__ENUM_NAME", data.name);
+		replace(ctmpl, "__ENUM_COUNT", toString(data.items.size()));
+		replace(ctmpl, "__ENUM_INFOS", infos);
+
+		cout << htmpl;
+		hpp += htmpl;
+		cpp += ctmpl;
+	}
+	hpp += "\n#endif\n";
 	fstream s_hpp, s_cpp;
 	s_hpp.open("../enums.hpp", ios::out);
 	s_cpp.open("../enums.cpp", ios::out);
-	assert(s_hpp.is_open() && s_cpp.is_open());
-
-	s_hpp << "#ifndef ENUMS_HPP\n#define ENUMS_HPP\n\n"
-		"#include <QtCore/QCoreApplication>\n#include <QtCore/QMap>\n\n"
-		"class EnumClass {\n"
-		"	Q_DECLARE_TR_FUNCTIONS(EnumClass)\n"
-		"public:\n"
-		"	EnumClass(const EnumClass &rhs): m_id(rhs.m_id) {}\n"
-		"	virtual ~EnumClass() {}\n"
-		"	EnumClass &operator = (const EnumClass &rhs) {m_id = rhs.m_id; return *this;}\n"
-		"	bool operator == (const EnumClass &rhs) const {return m_id == rhs.m_id;}\n"
-		"	bool operator != (const EnumClass &rhs) const {return m_id != rhs.m_id;}\n"
-		"	bool operator < (const EnumClass &rhs) const {return m_id < rhs.m_id;}\n"
-		"	bool operator == (int rhs) const {return m_id == rhs;}\n"
-		"	bool operator != (int rhs) const {return m_id != rhs;}\n"
-		"	bool operator < (int rhs) const {return m_id < rhs;}\n"
-		"	int id() const {return m_id;}\n"
-		"	virtual QString name() const = 0;\n"
-		"	virtual QString description() const = 0;\n"
-		"	virtual void setById(int id) = 0;\n"
-		"	virtual void setByName(const QString &name) = 0;\n"
-		"protected:\n"
-		"	EnumClass(int id): m_id(id) {}\n"
-		"	void setId(int id) {m_id = id;}\n"
-		"private:\n"
-		"	int m_id = 0;\n"
-		"};\n\n"
-		"static inline bool operator == (int lhs, const EnumClass &rhs) {return rhs == lhs;}\n"
-		"static inline bool operator != (int lhs, const EnumClass &rhs) {return rhs != lhs;}\n\n";
-	s_cpp << "#include \"enums.hpp\"\n\n";
-
-	for (vector<EnumData>::const_iterator it = data.begin(); it != data.end(); ++it) {
-		string hpp = hppTmp;
-		string cpp = cppTmp;
-		replace(hpp, "__ENUM_CLASS", it->name);
-		replace(hpp, "__DEFAULT_ID", it->items.front().value);
-		replace(cpp, "__ENUM_CLASS", it->name);
-		replace(hpp, "__ENUM_COUNT", toString(it->items.size()));
-		string decl_values, defa_desc, init_values;
-		for (vector<EnumData::Item>::const_iterator iit = it->items.begin(); iit != it->items.end(); ++iit) {
-			string tmp1("\tstatic const %1 %2;\n");
-			decl_values += replace(replace(tmp1, "%1", it->name), "%2", iit->name);
-
-			defa_desc += "\t\tif (id == " + iit->name + ".id())\n\t\t\treturn ";
-			defa_desc += iit->desc.empty() ? "QString();\n" : "tr(\"" + iit->desc + "\");\n";
-
-			string tmp2("const %1 %1::%2(%3, \"%2\");\n");
-			init_values += replace(replace(replace(tmp2, "%1", it->name), "%2", iit->name), "%3", iit->value);
-		}
-		init_values.erase(init_values.size()-1);
-		defa_desc += "\t\treturn QString();";
-		replace(hpp, "__DEC_ENUM_VALUES", decl_values);
-		replace(hpp, "__DEF_DESCRIPTION", defa_desc);
-		replace(cpp, "__INIT_ENUM_VALUES", init_values);
-		if (it->continuous) {
-			replace(hpp, "__DEC_NAME_ARRAY", "QString name[count] = {};");
-			replace(hpp, "__DEF_ID_COMPATIBLE", "return 0 <= id && id < count;");
-		} else {
-			replace(hpp, "__DEC_NAME_ARRAY", "QMap<int, QString> name = {};");
-			replace(hpp, "__DEF_ID_COMPATIBLE", "return map().name.contains(id);");
-		}
-		s_hpp << hpp << endl;
-		s_cpp << cpp << endl;
-	}
-
-	s_hpp << "#endif" << endl;
+	s_hpp << hpp;
+	s_cpp << cpp;
 }
 
 int main() {
