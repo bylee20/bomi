@@ -18,7 +18,6 @@ struct VideoRendererItem::Data {
 	LetterboxItem *letterbox = nullptr;
 	MpOsdItem *mposd = nullptr;
 	QQuickItem *overlay = nullptr;
-	QMutex mutex;
 	VideoTextureShader *shader = nullptr;
 	QByteArray shaderCode;
 	VideoFormat::Type shaderType = IMGFMT_BGRA;
@@ -33,13 +32,10 @@ struct VideoRendererItem::Data {
 			kernel += sharpen;
 		kernel.normalize();
 	}
-	QLinkedList<VideoFrame> frames;
+	QLinkedList<VideoFrame> queue;
 	DeintInfo deint;
 	bool deintChanged = false;
 };
-
-static const QEvent::Type UpdateEvent = (QEvent::Type)(QEvent::User+1);
-static const QEvent::Type DeintEvent = (QEvent::Type)(UpdateEvent + 1);
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 : TextureRendererItem(3, parent), d(new Data) {
@@ -56,20 +52,27 @@ VideoRendererItem::~VideoRendererItem() {
 }
 
 void VideoRendererItem::customEvent(QEvent *event) {
-	if (event->type() == UpdateEvent)
+	switch ((int)event->type()) {
+	case EnqueueFrame:
+		d->queue.push_back(getData<VideoFrame>(event));
 		update();
-	else if (event->type() == DeintEvent) {
-		DeintInfo deint;
-		get(event, deint);
+		break;
+	case RenderNextFrame:
+		update();
+		break;
+	case EmptyQueue:
+		d->queue.clear();
+		break;
+	case UpdateDeint: {
+		auto deint = getData<DeintInfo>(event);
 		if (!deint.isHardware())
 			deint = DeintInfo();
 		if ((d->deintChanged = _Change(d->deint, deint)))
 			update();
+		break;
+	} default:
+		break;
 	}
-}
-
-void VideoRendererItem::scheduleUpdate() {
-	qApp->postEvent(this, new QEvent(UpdateEvent));
 }
 
 QQuickItem *VideoRendererItem::overlay() const {
@@ -100,10 +103,7 @@ void VideoRendererItem::present(const QImage &image) {
 }
 
 void VideoRendererItem::present(const VideoFrame &frame) {
-	d->mutex.lock();
-	d->frames.append(frame);
-	d->mutex.unlock();
-	scheduleUpdate();
+	postData(this, EnqueueFrame, frame);
 	d->mposd->present();
 }
 
@@ -124,7 +124,7 @@ void VideoRendererItem::setAlignment(int alignment) {
 }
 
 void VideoRendererItem::setDeint(const DeintInfo &deint) {
-	post(this, DeintEvent, deint);
+	postData(this, UpdateDeint, deint);
 }
 
 double VideoRendererItem::targetAspectRatio() const {
@@ -283,19 +283,17 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 }
 
 void VideoRendererItem::emptyQueue() {
-	QMutexLocker locker(&d->mutex);
-	d->frames.clear();
+	postData(this, EmptyQueue);
 }
 
 int VideoRendererItem::delay() const {
-	return d->frames.isEmpty() ? 0 : (d->frames.back().pts() - d->frames.front().pts())*1000.0;
+	return d->queue.isEmpty() ? 0 : (d->queue.back().pts() - d->queue.front().pts())*1000.0;
 }
 
 void VideoRendererItem::beforeUpdate() {
-	if (d->frames.isEmpty())
+	if (d->queue.isEmpty())
 		return;
-	QMutexLocker locker(&d->mutex);
-	d->frame = d->frames.takeFirst();
+	d->frame = d->queue.takeFirst();
 	bool reset = false;
 	if (_Change(d->format, d->frame.format())) {
 		d->mposd->setFrameSize(d->format.size());
@@ -323,13 +321,13 @@ void VideoRendererItem::beforeUpdate() {
 			d->take = false;
 		}
 	}
-	if (!d->frames.isEmpty()) {
-		const auto diff = (d->frames.back().pts() - d->frames.front().pts());
+	if (!d->queue.isEmpty()) {
+		const auto diff = (d->queue.back().pts() - d->queue.front().pts());
 		if (diff < 0.1) {
-			scheduleUpdate();
+			postData(this, RenderNextFrame);
 		} else {
 			qDebug() << "Too many frames are queued! Drop them...";
-			d->frames.clear();
+			d->queue.clear();
 		}
 	}
 	d->deintChanged = false;

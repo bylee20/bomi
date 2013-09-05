@@ -19,9 +19,9 @@ SubtitleRenderingThread::SubtitleRenderingThread(const RenderTarget &target, QOb
 
 SubtitleRenderingThread::~SubtitleRenderingThread() { quit(); delete d; }
 
-void SubtitleRenderingThread::setDrawer(const SubtitleDrawer &drawer) { post(this, SetDrawer, drawer); }
+void SubtitleRenderingThread::setDrawer(const SubtitleDrawer &drawer) { postData(this, SetDrawer, drawer); }
 
-void SubtitleRenderingThread::newImage(const Picture &pic) { post(parent(), Prepared, this, pic); }
+void SubtitleRenderingThread::newImage(const Picture &pic) { postData(parent(), Prepared, this, pic); }
 
 SubtitleRenderingThread::Picture SubtitleRenderingThread::draw(const QList<CompIt> &its) {
 	Picture pic(its, m_target);
@@ -66,12 +66,12 @@ bool SubtitleRenderingThread::event(QEvent *event) {
 	const int type = event->type();
 	switch (type) {
 	case SetDrawer:
-		get(event, d->drawer);
+		getData(event, d->drawer);
 		d->pool.clear();
 		update();
 		return true;
 	case SetArea:
-		get(event, m_area, m_dpr);
+		getData(event, m_area, m_dpr);
 		d->pool.clear();
 		update();
 		return true;
@@ -79,7 +79,7 @@ bool SubtitleRenderingThread::event(QEvent *event) {
 		return true;
 	case Tick: {
 		int time; double fps; bool check = true;
-		get(event, time, fps, check);
+		getData(event, time, fps, check);
 		if (time < 0 || fps < 0.0)
 			return true;
 		if (_Change(m_fps, fps))

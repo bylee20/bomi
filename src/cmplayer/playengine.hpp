@@ -153,9 +153,7 @@ signals:
 	void dvdInfoChanged();
 	void speedChanged(double speed);
 private:
-	static void mpPausedChanged(MPContext *mpctx, int paused);
 	static int mpCommandFilter(MPContext *mpctx, mp_cmd *cmd);
-	static void onPlayStarted(MPContext *mpctx);
 	int playImage(const Mrl &mrl, int &terminated, int &duration);
 	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);
 	int currentTrackId(int type) const;

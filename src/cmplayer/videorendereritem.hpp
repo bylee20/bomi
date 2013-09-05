@@ -70,7 +70,7 @@ signals:
 	void texturesInitialized();
 private:
 	void emptyQueue();
-	void scheduleUpdate();
+	void enqueue(const VideoFrame &frame);
 	void initializeTextures();
     static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
 	const char *fragmentShader() const;

@@ -4,6 +4,8 @@
 #include "stdafx.hpp"
 #include "texturerendereritem.hpp"
 
+enum EventType {EnqueueFrame = QEvent::User + 1, RenderNextFrame, EmptyQueue, UpdateDeint, Show, Hide };
+
 class LetterboxItem : public QQuickItem {
 public:
     LetterboxItem(QQuickItem *parent = 0);
@@ -29,8 +31,6 @@ public:
 private:
 	friend class MpOsdItemShader;
 	void updateState(QOpenGLShaderProgram *program);
-	static const int ShowEvent = QEvent::User + 1;
-	static const int HideEvent = QEvent::User + 2;
 	void customEvent(QEvent *event);
 	void geometryChanged(const QRectF &newOne, const QRectF &old);
 	QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data);

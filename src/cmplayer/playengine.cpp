@@ -30,6 +30,8 @@ enum EventType {
 
 enum MpCmd {MpSetProperty = -1, MpResetAudioChain = -2, MpResetDeint = -3, MpResetDeintMode = -4};
 
+static inline PlayEngine *priv(MPContext *mpctx) { return static_cast<PlayEngine*>(mpctx->priv); }
+
 template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0);
 template<> inline double&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.d;}
 template<> inline float	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.f;}
@@ -63,7 +65,7 @@ struct PlayEngine::Data {
 	QByteArray vfs;
 	template<typename T = int>
 	bool enqueue(int id, const char *name = "", const T &v = 0) {
-		const bool ret = mpctx && mpctx->input && playing;
+		const bool ret = mpctx && mpctx->input;
 		if (ret) {
 			mp_cmd_t *cmd = (mp_cmd_t*)talloc_ptrtype(NULL, cmd);
 			cmd->id = id;
@@ -83,7 +85,6 @@ PlayEngine::PlayEngine()
 : d(new Data(this)) {
 	d->audio = new AudioController(this);
 	d->video = new VideoOutput(this);
-	mp_register_player_paused_changed(mpPausedChanged);
 	mp_register_player_command_filter(mpCommandFilter);
 	connect(&d->ticker, &QTimer::timeout, [this] () {
 		if (m_imgMode)
@@ -99,7 +100,7 @@ PlayEngine::PlayEngine()
 	d->ticker.start();
 
 	connect(d->video, &VideoOutput::formatChanged, [this] (const VideoFormat &format) {
-		post(this, VideoFormatChanged, format);
+		postData(this, VideoFormatChanged, format);
 	});
 	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
 		load(row, d->getStartTime(d->playlist[row]));
@@ -247,13 +248,12 @@ static bool _CheckSwap(T &the, T &one) { if (the != one) { the.swap(one); return
 void PlayEngine::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
 	case UpdateChapterList: {
-		ChapterList chapters; get(event, chapters);
+		auto chapters = getData<ChapterList>(event);
 		if (_CheckSwap(m_chapters, chapters))
 			emit chaptersChanged(m_chapters);
 		break;
 	} case UpdateTrack: {
-		std::array<StreamList, STREAM_TYPE_COUNT> streams;
-		get(event, streams);
+		auto streams = getData<std::array<StreamList, STREAM_TYPE_COUNT>>(event);
 		if (_CheckSwap(m_videoStreams, streams[STREAM_VIDEO]))
 			emit videoStreamsChanged(m_videoStreams);
 		if (_CheckSwap(m_audioStreams, streams[STREAM_AUDIO]))
@@ -277,28 +277,27 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->start = 0;
 		break;
 	case StateChange: {
-		EngineState state = EngineStopped;
-		get(event, state);
+		const auto state = getData<EngineState>(event);
 		if (_Change(m_state, state))
 			emit stateChanged(m_state);
 		break;
 	} case MrlStopped: {
 		Mrl mrl; int terminated = 0, duration = 0;
-		get(event, mrl, terminated, duration);
+		getData(event, mrl, terminated, duration);
 		emit stopped(mrl, terminated, duration);
 		break;
 	} case MrlFinished: {
-		Mrl mrl; get(event, mrl);
+		const auto mrl = getData<Mrl>(event);
 		emit finished(mrl);
 		break;
 	} case PlaylistFinished:
 		emit d->playlist.finished();
 		break;
 	case MrlChanged: {
-		Mrl mrl; get(event, mrl);
+		const auto mrl = getData<Mrl>(event);
 		emit mrlChanged(mrl);
 	} case VideoFormatChanged: {
-		VideoFormat format; get(event, format);
+		const auto format = getData<VideoFormat>(event);
 		if (_Change(d->videoFormat, format))
 			emit videoFormatChanged(d->videoFormat);
 	} default:
@@ -307,7 +306,7 @@ void PlayEngine::customEvent(QEvent *event) {
 }
 
 void PlayEngine::setState(EngineState state) {
-	post(this, StateChange, state);
+	postData(this, StateChange, state);
 }
 
 void PlayEngine::setCurrentDvdTitle(int id) {
@@ -368,8 +367,8 @@ MPContext *PlayEngine::context() const {
 
 int PlayEngine::mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 	auto e = static_cast<PlayEngine*>(mpctx->priv); auto d = e->d;
-	QMutexLocker locker(&d->mutex);
 	if (cmd->id < 0) {
+		QMutexLocker locker(&d->mutex);
 		switch (cmd->id) {
 		case MpSetProperty:
 			mp_property_do(cmd->name, M_PROPERTY_SET, &cmd->args[0].v.f, mpctx);
@@ -429,8 +428,8 @@ int PlayEngine::playImage(const Mrl &mrl, int &terminated, int &duration) {
 	setState(mpctx->paused ? EnginePaused : EnginePlaying);
 	d->video->output(image);
 	m_imgPos = 0;
-	post(this, StreamOpen);
-	post(this, UpdateChapterList, ChapterList());
+	postData(this, StreamOpen);
+	postData(this, UpdateChapterList, ChapterList());
 	TimeLine time;
 	while (!mpctx->stop_play) {
 		mp_cmd_t *cmd = nullptr;
@@ -493,7 +492,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	name[STREAM_SUB] = tr("Subtitle %1");
 	if (error != MPERROR_NONE)
 		return error;
-	post(this, StreamOpen);
+	postData(this, StreamOpen);
 	ChapterList chapters(qMax(0, get_chapter_count(mpctx)));
 	for (int i=0; i<chapters.size(); ++i) {
 		const QString time = _MSecToString(qRound(chapter_start_time(mpctx, i)*1000), _L("hh:mm:ss.zzz"));
@@ -510,17 +509,23 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 		stream->control(stream, STREAM_CTRL_GET_CURRENT_TITLE, &title);
 		stream->control(stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
 	}
-	post(this, UpdateChapterList, chapters);
-	bool first = true;
+	postData(this, UpdateChapterList, chapters);
+	auto prevState = EngineLoading;
 	tellmp("vf set", d->vfs);
 	while (!mpctx->stop_play) {
 		run_playloop(mpctx);
 		if (mpctx->stop_play)
 			break;
-		if (first) {
-			setState(mpctx->paused ? EnginePaused : EnginePlaying);
-			first = false;
-		}
+		auto state = prevState;
+		if (mpctx->paused_for_cache && !mpctx->opts->pause)
+			state = EngineLoading;
+		else if (mpctx->paused)
+			state = EnginePaused;
+		else
+			state = EnginePlaying;
+//		qDebug() << mp_get_cache_percent(d->mpctx);
+		if (_Change(prevState, state))
+			setState(state);
 		if (streams[STREAM_AUDIO].size() + streams[STREAM_VIDEO].size() + streams[STREAM_SUB].size() != mpctx->num_tracks) {
 			streams[STREAM_AUDIO].clear(); streams[STREAM_VIDEO].clear(); streams[STREAM_SUB].clear();
 			for (int i=0; i<mpctx->num_tracks; ++i) {
@@ -534,7 +539,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 					stream.m_name = name[track->type].arg(track->user_tid+1);
 				}
 			}
-			post(this, UpdateTrack, streams);
+			postData(this, UpdateTrack, streams);
 		}
 	}
 	terminated = position();
@@ -552,13 +557,9 @@ void PlayEngine::run() {
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
-		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8"
-//	<< "--vf=lavfi=\"yadif=mode=0\""
-	;
+		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8";
 	auto mpctx = d->mpctx = create_player(args.size(), args.data());
-	Q_ASSERT(d->mpctx);
 	d->mpctx->priv = this;
-
 
 	d->init = true;
 	d->quit = false;
@@ -583,7 +584,7 @@ void PlayEngine::run() {
 		if (mpctx->stop_play == PT_QUIT) {
 			if (error == MPERROR_NONE) {
 				setState(EngineStopped);
-				post(this, MrlStopped, d->playlist.loadedMrl(), terminated, duration);
+				postData(this, MrlStopped, d->playlist.loadedMrl(), terminated, duration);
 			}
 			break;
 		}
@@ -593,25 +594,25 @@ void PlayEngine::run() {
 			case KEEP_PLAYING:
 			case AT_END_OF_FILE: {// finished
 				setState(EngineFinished);
-				post(this, MrlFinished, mrl);
+				postData(this, MrlFinished, mrl);
 				playlist_clear(mpctx->playlist);
 				if (d->playlist.hasNext()) {
 					const auto prev = d->playlist.loadedMrl();
 					d->playlist.setLoaded(d->playlist.next());
 					const auto mrl = d->playlist.loadedMrl();
 					if (prev != mrl)
-						post(this, MrlChanged, mrl);
+						postData(this, MrlChanged, mrl);
 					d->start = d->getStartTime(mrl);
 					playlist_add(mpctx->playlist, playlist_entry_new(mrl.toString().toLocal8Bit()));
 					entry = mpctx->playlist->first;
 				} else
-					post(this, PlaylistFinished);
+					postData(this, PlaylistFinished);
 				break;
 			} case PT_CURRENT_ENTRY: // stopped by loadfile
 				entry = mpctx->playlist->current;
 			default: // just stopped
 				setState(EngineStopped);
-				post(this, MrlStopped, mrl, terminated, duration);
+				postData(this, MrlStopped, mrl, terminated, duration);
 				break;
 			}
 		}
@@ -660,7 +661,7 @@ bool PlayEngine::load(int row, int start) {
 			play(start);
 	} else {
 		d->playlist.setLoaded(row);
-		post(this, MrlChanged, d->playlist.loadedMrl());
+		postData(this, MrlChanged, d->playlist.loadedMrl());
 		if (start < 0)
 			stop();
 		else
@@ -706,12 +707,6 @@ int PlayEngine::currentChapter() const {
 	return -2;
 }
 
-void PlayEngine::mpPausedChanged(MPContext *mpctx, int paused) {
-	auto engine = reinterpret_cast<PlayEngine*>(mpctx->priv);
-	if (mpctx->stop_play == KEEP_PLAYING)
-		engine->setState(paused ? EnginePaused : EnginePlaying);
-}
-
 void PlayEngine::pause() {
 	if (m_imgMode)
 		setState(EnginePaused);
@@ -720,8 +715,6 @@ void PlayEngine::pause() {
 }
 
 void PlayEngine::unpause() {
-	if (state() != EnginePaused)
-		setState(EngineLoading);
 	if (m_imgMode)
 		setState(EnginePlaying);
 	else

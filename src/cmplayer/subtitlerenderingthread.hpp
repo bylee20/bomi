@@ -36,9 +36,9 @@ public:
 	SubtitleRenderingThread(const RenderTarget &list, QObject *parent = nullptr);
 	~SubtitleRenderingThread();
 	void setDrawer(const SubtitleDrawer &drawer);
-	void render(int time, double fps) { post(this, Tick, time, fps, true); }
-	void rerender(int time, double fps) { post(this, Tick, time, fps, false); }
-	void setArea(const QRectF &rect, double dpr) { if (m_area != rect || m_dpr != dpr) post(this, SetArea, rect, dpr); }
+	void render(int time, double fps) { postData(this, Tick, time, fps, true); }
+	void rerender(int time, double fps) { postData(this, Tick, time, fps, false); }
+	void setArea(const QRectF &rect, double dpr) { if (m_area != rect || m_dpr != dpr) postData(this, SetArea, rect, dpr); }
 private:
 	void newImage(const Picture &pic);
 	Picture draw(const QList<CompIt> &its);

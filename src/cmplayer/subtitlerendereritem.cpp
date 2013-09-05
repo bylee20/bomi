@@ -408,7 +408,7 @@ QVector<SubtitleComponentModel*> SubtitleRendererItem::models() const {
 
 void SubtitleRendererItem::customEvent(QEvent *event) {
 	if (event->type() == (int)SubtitleRenderingThread::Prepared) {
-		auto e = static_cast<DataEvent<SubtitleRenderingThread*, SubtitleRenderingThread::Picture>*>(event);
+		auto e = static_cast<DataEvent2<SubtitleRenderingThread*, SubtitleRenderingThread::Picture>*>(event);
 		if (e->data1() == d->renderer) {
 			d->pic = e->data2();
 			if (!d->pic.image.isNull()) {

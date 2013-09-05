@@ -1,4 +1,8 @@
 #include "mposditem.hpp"
+#include "dataevent.hpp"
+extern "C" {
+#include <sub/sub.h>
+}
 
 LetterboxItem::LetterboxItem(QQuickItem *parent)
 : QQuickItem(parent) {
@@ -63,12 +67,6 @@ QSGNode *LetterboxItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data)
         node->markDirty(QSGNode::DirtyGeometry);
     }
     return node;
-}
-
-extern "C" {
-#define new __new
-#include <sub/sub.h>
-#undef new
 }
 
 struct OsdBitmap {
@@ -186,7 +184,6 @@ private:
 
 struct MpOsdItem::Data {
 	OsdBitmap osd;
-	QMutex mutex;
 	bool show = false, redraw = false, dirtyGeometry = true;
 	sub_bitmap_format shaderFormat = SUBBITMAP_INDEXED;
 	QOpenGLFramebufferObject *fbo = nullptr;
@@ -225,47 +222,53 @@ void MpOsdItem::drawOn(sub_bitmaps *imgs) {
 		return;
 	if (d->osd.id == imgs->bitmap_id && d->osd.pos == imgs->bitmap_pos_id)
 		return;
-	d->mutex.lock();
-	d->osd.id = imgs->bitmap_id;
-	d->osd.pos = imgs->bitmap_pos_id;
-	d->osd.parts.resize(imgs->num_parts);
-	d->osd.format = imgs->format;
+	OsdBitmap osd;
+	osd.id = imgs->bitmap_id;
+	osd.pos = imgs->bitmap_pos_id;
+	osd.parts.resize(imgs->num_parts);
+	osd.format = imgs->format;
 	for (int i=0; i<imgs->num_parts; ++i) {
 		auto &img = imgs->parts[i];
-		auto &part = d->osd.parts[i];
+		auto &part = osd.parts[i];
 		part.image = QImage(img.stride >> 2, img.h, QImage::Format_ARGB32_Premultiplied);
 		part.width = img.w;
 		part.display = QRect(img.x, img.y, img.dw, img.dh);
 		memcpy(part.image.bits(), img.bitmap, img.stride*img.h);
 	}
-	d->redraw = true;
-	d->mutex.unlock();
+	postData(this, EnqueueFrame, osd);
 }
 
 void MpOsdItem::drawOn(QImage &frame) {
 	if (!isVisible() || d->osd.format != SUBBITMAP_RGBA)
 		return;
-	d->mutex.lock();
 	QPainter painter(&frame);
 	d->paint(&painter);
-	d->mutex.unlock();
 }
 
 void MpOsdItem::present() {
 	if (d->show) {
-		qApp->postEvent(this, new QEvent((QEvent::Type)(ShowEvent)));
+		postData(this, Show);
 		d->show = false;
 	} else
-		qApp->postEvent(this, new QEvent((QEvent::Type)(HideEvent)));
+		postData(this, Hide);
 }
 
 void MpOsdItem::customEvent(QEvent *event) {
 	QQuickItem::customEvent(event);
-	if (event->type() == ShowEvent) {
+	switch ((int)event->type()) {
+	case Show:
 		setVisible(true);
 		update();
-	} else if (event->type() == HideEvent) {
+		break;
+	case Hide:
 		setVisible(false);
+		break;
+	case EnqueueFrame:
+		d->osd = getData<OsdBitmap>(event);
+		d->redraw = true;
+		update();
+	default:
+		break;
 	}
 }
 
@@ -283,11 +286,8 @@ QSGNode *MpOsdItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
 		painter.setCompositionMode(QPainter::CompositionMode_Source);
 		painter.fillRect(QRect(QPoint(0, 0), d->frameSize), Qt::transparent);
 		painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
-		d->mutex.lock();
 		d->paint(&painter);
 		d->redraw = false;
-		d->mutex.unlock();
-
 		painter.end();
 		d->node->fbo()->release();
 	}
