@@ -82,7 +82,6 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	plug(m_engine, &PlayEngine::tick, [this] (int pos) {
 		if (isVisible()) {
 			setPosition(pos);
-			setState((State)m_engine->state());
 			setDuration(m_engine->duration());
 		}
 	});
@@ -122,7 +121,6 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	emit videoChanged();
 	emit audioChanged();
 	emit mediaChanged();
-//	emit stateChanged(m_state = (State)m_engine->state());
 	emit volumeChanged(m_volume = m_engine->volume());
 }
 

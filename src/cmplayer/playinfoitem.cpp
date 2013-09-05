@@ -3,9 +3,10 @@
 #include "videoformat.hpp"
 #include "playengine.hpp"
 extern "C" {
-#include "mpvcore/mp_core.h"
-#include "audio/filter/af.h"
-#include "audio/out/ao.h"
+#include <mpvcore/mp_core.h>
+#include <audio/filter/af.h>
+#include <video/filter/vf.h>
+#include <audio/out/ao.h>
 }
 
 void AvInfoObject::setHwAcc(PlayerItem::HwAcc acc) {
@@ -29,6 +30,9 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	const auto fmt = engine->videoFormat();
 	auto sh = mpctx->sh_video;
 
+	const auto out = fmt.imgfmt();
+	const auto in = sh->vfilter ? sh->vfilter->fmt_in.params.imgfmt : out;
+
 	if (!HwAcc::supports(HwAcc::codecId(mpctx->sh[STREAM_VIDEO]->codec)))
 		setHwAcc(PlayerItem::Unavailable);
 	else if (engine->isHwAccActivated())
@@ -41,7 +45,9 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	m_input->m_size = QSize(sh->disp_w, sh->disp_h);
 	m_input->m_fps = sh->fps;
 	m_input->m_bps = sh->i_bps*8;
-	m_output->m_type = fmt.name();
+	m_output->m_type = _L(mp_imgfmt_to_name(out));
+	if (in != out)
+		m_output->m_type = _L(mp_imgfmt_to_name(in)) % _U("→") % m_output->m_type;
 	m_output->m_size = fmt.displaySize();
 	m_output->m_fps = sh->fps;
 	m_output->m_bps = fmt.bps(sh->fps);
@@ -56,13 +62,18 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 	m_hwAcc = PlayerItem::Unavailable;
 	m_codec = _U(mpctx->sh[STREAM_AUDIO]->decoder_desc);
 
+	const auto out = ao->format;
+	const auto in = sh->afilter ? sh->afilter->input.format : out;
+
 	m_input->m_type = format(sh->format);
 	m_input->m_bps = sh->i_bps*8;
 	m_input->m_samplerate = sh->samplerate/1000.0; // kHz
 	m_input->m_channels = sh->channels.num;
 	m_input->m_bits = af_fmt2bits(sh->sample_format);
 
-	m_output->m_type = _U(af_fmt2str_short(ao->format));
+	m_output->m_type = _L(af_fmt2str_short(out));
+	if (in != out)
+		m_output->m_type = _L(af_fmt2str_short(in)) % _U("→") % m_output->m_type;
 	m_output->m_bps = ao->bps*8;
 	m_output->m_samplerate = ao->samplerate/1000.0;
 	m_output->m_channels = ao->channels.num;

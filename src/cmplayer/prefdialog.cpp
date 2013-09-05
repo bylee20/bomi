@@ -274,6 +274,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
 	addPage(tr("Behaviour"), d->ui.gen_behaviours, ":/img/preferences-system-session-services.png", general);
 	addPage(tr("Look"), d->ui.gen_appearance, ":/img/preferences-desktop-theme-32.png", general);
+	addPage(tr("Performance"), d->ui.performance, ":/img/chronometer.png", general);
 //	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
 
 	auto video = addCategory(tr("Video"));
