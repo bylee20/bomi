@@ -108,8 +108,7 @@ QByteArray VideoTextureShader::fragment() const {
 				tex += conv_vec;
 				const vec2 one = vec2(1.0, 0.0);
 				gl_FragColor = tex.xyzz * one.xxxy + one.yyyx;
-//				gl_FragColor.xyz = c;
-//				gl_FragColor.w = 1.0;
+//				gl_FragColor = texel(qt_TexCoord).xxxx * one.xxxy + one.yyyx;
 			}
 	)";
 	return codes;
@@ -218,6 +217,35 @@ struct I420Shader : public VideoTextureShader {
 		)");
 		auto init = [this, &format] (int i) {
 			addTexInfo(i, format.bytesPerLine(i), format.lines(i), GL_LUMINANCE);
+			sc(i).rx() *= (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*2);
+		};
+		init(0); init(1); init(2);
+		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; sc(2) *= 0.5; }\
+	}
+};
+
+template<const int bit, const bool little>
+struct P420BitShader : public VideoTextureShader { // planar 4:2:0 bit>8
+	P420BitShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
+	: VideoTextureShader(format, target) {
+		QByteArray code = R"(
+			 float convBits(const in vec4 tex) {
+				 const vec2 c = vec2(265.0, 1.0)/(256.0*)";
+		code += QByteArray::number((1 << (bit-8))-1);
+		code += R"(.0/255.0 + 1.0);
+				 return dot(tex.!!, c);
+			 }
+			 vec3 texel(const in vec2 coord) {
+				vec3 yuv;
+				 yuv.x = convBits(texture1(coord));
+				 yuv.y = convBits(texture2(coord));
+				 yuv.z = convBits(texture3(coord));
+				return yuv;
+			 }
+		)";
+		setTexel(code.replace("!!", little ? "wx" : "xw"));
+		auto init = [this, &format] (int i) {
+			addTexInfo(i, format.bytesPerLine(i)/2, format.lines(i), GL_LUMINANCE_ALPHA);
 			sc(i).rx() *= (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*2);
 		};
 		init(0); init(1); init(2);
@@ -508,6 +536,26 @@ VideoTextureShader *VideoTextureShader::create(const VideoFormat &format, const 
 	switch (format.type()) {
 	case IMGFMT_420P:
 		MAKE(I420Shader)
+	case IMGFMT_420P16_LE:
+		MAKE((P420BitShader<16, true>))
+	case IMGFMT_420P16_BE:
+		MAKE((P420BitShader<16, false>))
+	case IMGFMT_420P14_LE:
+		MAKE((P420BitShader<14, true>))
+	case IMGFMT_420P14_BE:
+		  MAKE((P420BitShader<14, false>))
+	case IMGFMT_420P12_LE:
+		  MAKE((P420BitShader<12, true>))
+	case IMGFMT_420P12_BE:
+		  MAKE((P420BitShader<12, false>))
+	case IMGFMT_420P10_LE:
+		  MAKE((P420BitShader<10, true>))
+	case IMGFMT_420P10_BE:
+		  MAKE((P420BitShader<10, false>))
+	case IMGFMT_420P9_LE:
+		  MAKE((P420BitShader<9, true>))
+	case IMGFMT_420P9_BE:
+		  MAKE((P420BitShader<9, false>))
 	case IMGFMT_NV21:
 	case IMGFMT_NV12:
 		MAKE(NvShader)

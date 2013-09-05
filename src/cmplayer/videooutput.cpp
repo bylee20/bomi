@@ -307,6 +307,16 @@ int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	switch (format) {
 	case IMGFMT_VDPAU:	case IMGFMT_VDA:	case IMGFMT_VAAPI:
 	case IMGFMT_420P:
+	case IMGFMT_420P16_LE:
+	case IMGFMT_420P16_BE:
+	case IMGFMT_420P14_LE:
+	case IMGFMT_420P14_BE:
+	case IMGFMT_420P12_LE:
+	case IMGFMT_420P12_BE:
+	case IMGFMT_420P10_LE:
+	case IMGFMT_420P10_BE:
+	case IMGFMT_420P9_LE:
+	case IMGFMT_420P9_BE:
 	case IMGFMT_NV12:
 	case IMGFMT_NV21:
 	case IMGFMT_YUYV:
