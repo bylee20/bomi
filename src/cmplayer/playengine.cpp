@@ -640,7 +640,12 @@ void PlayEngine::setMuted(bool muted) {
 }
 
 void PlayEngine::run() {
-	QStringList args = QStringList() << "cmplayer-mpv" << "--no-config" << "--idle" << "--no-fs"
+	QStringList args;
+	args << "cmplayer-mpv";
+	auto mpvOptions = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
+	if (!mpvOptions.isEmpty())
+		args += QString::fromLocal8Bit(mpvOptions).split(' ', QString::SkipEmptyParts);
+	args << "--no-config" << "--idle" << "--no-fs"
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
@@ -651,6 +656,7 @@ void PlayEngine::run() {
 		args_byte[i] = args[i].toLocal8Bit();
 		args_raw[i] = args_byte[i].data();
 	}
+	qDebug() << "Initialize mpv with" << args;
 	auto mpctx = d->mpctx = create_player(args_raw.size(), args_raw.data());
 	d->mpctx->priv = this;
 	auto tmp_ao = d->mpctx->opts->audio_driver_list->name;
