@@ -2,7 +2,7 @@
 
 args="--prefix=../../build --enable-gpl --disable-debug --disable-shared --enable-static \
   --enable-runtime-cpudetect --disable-doc --disable-programs \
-  --disable-avdevice --disable-avfilter --enable-swresample \
+  --disable-avdevice --enable-avfilter --enable-swresample \
   --disable-avresample --enable-pthreads --disable-dxva2 --disable-vdpau --enable-postproc \
   --disable-encoders --disable-muxers --disable-devices --disable-filters"
   
@@ -17,4 +17,4 @@ then
   args="$args --disable-vda --enable-vaapi"
 fi
 
-cd src/ffmpeg* && make distclean; ./configure $args && make -j 6 && make install
+cd src/ffmpeg* && make distclean; ./configure $args && make -j 5 && make install
