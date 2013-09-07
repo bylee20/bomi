@@ -171,7 +171,7 @@ App::App(int &argc, char **argv)
 	d->styleNames = makeStyleNameList();
 	makeStyle();
 	connect(&d->connection, &LocalConnection::messageReceived, [this] (const QString &message) {
-		d->execute(parse(message.split("[:sep:]")));
+		auto args = message.split("[:sep:]"); args.pop_front(); d->execute(parse(args));
 	});
 }
 
