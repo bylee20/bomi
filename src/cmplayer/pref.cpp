@@ -215,6 +215,10 @@ void Pref::save() const {
 	WRITE(deint_swdec);
 	WRITE(deint_list_hwdec);
 	WRITE(deint_list_swdec);
+
+	WRITE(audio_driver);
+	WRITE(software_volume);
+	WRITE(clipping_method);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -304,6 +308,10 @@ void Pref::load() {
 	READ(deint_swdec);
 	READ(deint_list_hwdec);
 	READ(deint_list_swdec);
+
+	READ(audio_driver);
+	READ(software_volume);
+	READ(clipping_method);
 #undef READ
 
 #define READ2(a) a.load(r, #a)

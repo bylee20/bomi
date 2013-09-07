@@ -60,6 +60,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 	auto sh = mpctx->sh_audio;
 	auto ao = mpctx->ao;
 	m_hwAcc = PlayerItem::Unavailable;
+	m_audioDriver = AudioDriverInfo::name(engine->audioDriver());
 	m_codec = _U(mpctx->sh[STREAM_AUDIO]->decoder_desc);
 
 	const auto out = ao->format;

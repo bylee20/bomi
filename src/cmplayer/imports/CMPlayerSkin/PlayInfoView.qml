@@ -182,6 +182,8 @@ Item {
 						.arg(player.audio.output.samplerate)
 						.arg(player.audio.output.channels)
 						.arg(player.audio.output.bits);
+                    txt += '\n';
+                    txt += qsTr("Output Driver: %1").arg(player.audio.audioDriverText);
 					text = txt
 				}
 				color: "yellow"

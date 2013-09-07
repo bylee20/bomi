@@ -415,6 +415,79 @@
          </property>
         </layout>
        </widget>
+       <widget class="QWidget" name="audio_sound">
+        <layout class="QVBoxLayout" name="verticalLayout_37">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_21">
+           <item>
+            <widget class="QLabel" name="label_43">
+             <property name="text">
+              <string>Preferred Output driver</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="DataComboBox" name="audio_driver"/>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_20">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_7">
+           <property name="title">
+            <string>Volume control</string>
+           </property>
+           <layout class="QFormLayout" name="formLayout_15">
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_46">
+              <property name="text">
+               <string>Use software volume</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="SoftwareVolumeComboBox" name="software_volume"/>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_50">
+              <property name="text">
+               <string>Clipping method</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="ClippingMethodComboBox" name="clipping_method"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>308</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="performance">
         <layout class="QVBoxLayout" name="verticalLayout_36">
          <item>
@@ -3058,6 +3131,16 @@ e.g.: English, Korean</string>
   </customwidget>
   <customwidget>
    <class>OsdScalePolicyComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widgets.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>SoftwareVolumeComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widgets.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>ClippingMethodComboBox</class>
    <extends>QComboBox</extends>
    <header>widgets.hpp</header>
   </customwidget>

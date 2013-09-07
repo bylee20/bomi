@@ -2,6 +2,7 @@
 #define AUDIOFILTER_HPP
 
 #include "tmp.hpp"
+#include "enums.hpp"
 extern "C" {
 #include <audio/filter/af.h>
 }
@@ -65,11 +66,13 @@ struct NormalizerOption {
 
 class VolumeController : public AudioFilter {
 public:
-	static VolumeController *create(int format);
+	static VolumeController *create(int format, ClippingMethod clip);
 	double gain() const { return m_gain; }
+	ClippingMethod clippingMethod() const { return m_clip; }
 protected:
 	double m_gain = 1.0;
-	VolumeController(int format): AudioFilter(format) {}
+	ClippingMethod m_clip;
+	VolumeController(int format, ClippingMethod clip): AudioFilter(format), m_clip(clip) {}
 };
 
 #endif // AUDIOFILTER_HPP

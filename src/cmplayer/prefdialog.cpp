@@ -283,6 +283,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Video filter"), d->ui.video_filter, ":/img/draw-brush.png", video);
 
 	auto audio = addCategory(tr("Audio"));
+	addPage(tr("Sound"), d->ui.audio_sound, ":/img/audio-volume-high.png", audio);
 	addPage(tr("Aduio filter"), d->ui.audio_filter, ":/img/applications-multimedia.png", audio);
 
 	auto subtitle = addCategory(tr("Subtitle"));
@@ -375,6 +376,17 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	d->ui.shortcut_tree->header()->resizeSection(0, 200);
 
+	QList<AudioDriver> audioDrivers;
+	audioDrivers << AudioDriver::Auto;
+#ifdef Q_OS_LINUX
+	audioDrivers << AudioDriver::ALSA << AudioDriver::PulseAudio << AudioDriver::JACK;
+#endif
+#ifdef Q_OS_MAC
+	audioDrivers << AudioDriver::CoreAudio;
+#endif
+	audioDrivers << AudioDriver::PortAudio << AudioDriver::OpenAL;
+	for (auto driver : audioDrivers)
+		d->ui.audio_driver->addItem(AudioDriverInfo::name(driver), (int)driver);
 
 	auto checkSubAutoselect = [this] (const QVariant &data) {
 		const bool enabled = data.toInt() == SubtitleAutoselect::Matched;
@@ -395,6 +407,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	d->ui.skin_name->addItems(Skin::names(true));
 	updateSkinPath(d->ui.skin_name->currentIndex());
+
+//	d->ui.audio_driver->
 
 	connect(d->ui.skin_name, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), updateSkinPath);
 	connect(d->ui.sub_autoselect, &DataComboBox::currentDataChanged, checkSubAutoselect);
@@ -630,6 +644,10 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.locale->setCurrentData(p.locale);
 	d->ui.skin_name->setCurrentText(p.skin_name);
 
+	d->ui.audio_driver->setCurrentData((int)p.audio_driver);
+	d->ui.software_volume->setCurrentValue(p.software_volume);
+	d->ui.clipping_method->setCurrentValue(p.clipping_method);
+
 	setShortcuts(p.shortcuts);
 }
 
@@ -748,6 +766,10 @@ void PrefDialog::get(Pref &p) {
 	p.audio_sync_step = qRound(d->ui.audio_sync_step->value()*1000.0);
 
 	p.skin_name = d->ui.skin_name->currentText();
+
+	p.audio_driver = AudioDriverInfo::from(d->ui.audio_driver->currentData().toInt());
+	p.software_volume = d->ui.software_volume->currentValue();
+	p.clipping_method = d->ui.clipping_method->currentValue();
 
 	p.shortcuts.clear();
 	for (auto item : d->actionItems) {

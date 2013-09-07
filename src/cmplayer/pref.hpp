@@ -133,6 +133,10 @@ public:
 
 	Shortcuts shortcuts = defaultShortcuts();
 
+	AudioDriver audio_driver = AudioDriver::Auto;
+	SoftwareVolume software_volume = SoftwareVolume::Auto;
+	ClippingMethod clipping_method = ClippingMethod::Auto;
+
 	static Shortcuts preset(ShortcutPreset id);
 
 	void save() const;

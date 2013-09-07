@@ -120,6 +120,7 @@ typedef EnumComboBox<GeneratePlaylist> GeneratePlaylistComboBox;
 typedef EnumComboBox<SubtitleAutoload> SubtitleAutoloadComboBox;
 typedef EnumComboBox<SubtitleAutoselect> SubtitleAutoselectComboBox;
 typedef EnumComboBox<OsdScalePolicy> OsdScalePolicyComboBox;
-
+typedef EnumComboBox<SoftwareVolume> SoftwareVolumeComboBox;
+typedef EnumComboBox<ClippingMethod> ClippingMethodComboBox;
 
 #endif // WIDGETS_HPP

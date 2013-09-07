@@ -39,9 +39,14 @@ template<typename T> constexpr double toLevel(IfFloat<T> p)   { return (double)s
 
 template<typename T> constexpr T            hardclip(double p) { return qBound(-(double)maximum<T>(), p, (double)maximum<T>()); }
 template<typename T> constexpr IfFloat<T>   softclip(double p) { return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : sin(p)); }
-template<typename T> constexpr IfInteger<T> softclip(double p) { return maximum<T>()*softclip(p/maximum<T>()); }
+template<typename T> constexpr IfInteger<T> softclip(double p) { return maximum<T>()*softclip<double>(p/maximum<T>()); }
 template<typename T> constexpr IfInteger<T> autoclip(double p) { return hardclip<T>(p); }
 template<typename T> constexpr IfFloat<T>   autoclip(double p) { return softclip<T>(p); }
+
+template<ClippingMethod method, typename T> struct Clip { };
+template<typename T> struct Clip<ClippingMethod::Auto, T> { static T apply(double p) { return autoclip<T>(p); } };
+template<typename T> struct Clip<ClippingMethod::Hard, T> { static T apply(double p) { return hardclip<T>(p); } };
+template<typename T> struct Clip<ClippingMethod::Soft, T> { static T apply(double p) { return softclip<T>(p); } };
 
 template<typename T>
 class TempoScalerImpl : public TempoScaler {
@@ -255,21 +260,23 @@ private:
 	SampleType *m_buffer_end = nullptr;
 };
 
-template<typename T>
+template<ClippingMethod method, typename T>
 class VolumeControllerImpl : public VolumeController {
 	struct BufferInfo {
 		BufferInfo(int frames = 0): frames(frames) {}
 		int frames = 0; double level = 0.0;
 	};
 public:
-	VolumeControllerImpl(int format): VolumeController(format) {}
+	VolumeControllerImpl(int format): VolumeController(format, method) {
+		qDebug() << "Clipping Method:" << ClippingMethodInfo::name(method);
+	}
 	mp_audio *play(mp_audio *data) override {
 		auto p = (T*)(data->audio);
 		const int nch = channels();
 		const int frames = s2f(b2s(data->len));
 		for (int i=0; i<frames; ++i) {
 			for (int ch = 0; ch < nch; ++ch, ++p)
-				*p = autoclip<T>((*p)*m_level[ch]*m_gain);
+				*p = Clip<method, T>::apply((*p)*m_level[ch]*m_gain);
 		}
 		return data;
 	}
@@ -350,6 +357,33 @@ Class *Class::create(int format) { \
 	default:			   return nullptr; \
 	} \
 }
-
 DEC_CREATE(TempoScaler)
-DEC_CREATE(VolumeController)
+
+template<ClippingMethod method>
+VolumeController *create(int format) {
+	switch (format) {
+	case AF_FORMAT_S16_NE:
+		return new VolumeControllerImpl<method, qint16>(format);
+	case AF_FORMAT_S32_NE:
+		return new VolumeControllerImpl<method, qint32>(format);
+	case AF_FORMAT_FLOAT_NE:
+		return new VolumeControllerImpl<method, float> (format);
+	case AF_FORMAT_DOUBLE_NE:
+		return new VolumeControllerImpl<method, double>(format);
+	default:
+		return nullptr;
+	}
+}
+
+VolumeController *VolumeController::create(int format, ClippingMethod method) {
+	switch (method) {
+	case ClippingMethod::Auto:
+		return ::create<ClippingMethod::Auto>(format);
+	case ClippingMethod::Soft:
+		return ::create<ClippingMethod::Soft>(format);
+	case ClippingMethod::Hard:
+		return ::create<ClippingMethod::Hard>(format);
+	default:
+		return nullptr;
+	}
+}

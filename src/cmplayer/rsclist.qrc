@@ -35,5 +35,6 @@
         <file>img/format-line-spacing-double.png</file>
         <file>img/applications-multimedia.png</file>
         <file>img/chronometer.png</file>
+        <file>img/audio-volume-high.png</file>
     </qresource>
 </RCC>

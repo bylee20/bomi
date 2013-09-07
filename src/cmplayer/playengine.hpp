@@ -11,6 +11,8 @@ class VideoRendererItem;	struct MPContext;
 class VideoFormat;			struct mp_cmd;
 class PlaylistModel;		class Playlist;
 class DeintInfo;			enum class DeintMode;
+enum class AudioDriver;		enum class SoftwareVolume;
+enum class ClippingMethod;
 
 typedef std::function<int(const Mrl&)> GetStartTime;
 
@@ -118,10 +120,15 @@ public:
 	void setDeint(const DeintInfo &sw, const DeintInfo &hw);
 	void setDeintMode(DeintMode mode);
 	DeintMode deintMode() const;
+	void setAudioDriver(AudioDriver driver);
+	AudioDriver preferredAudioDriver() const;
+	AudioDriver audioDriver() const;
+	void setSoftwareVolume(SoftwareVolume sv);
+	void setClippingMethod(ClippingMethod method);
 public slots:
-	void setVolume(int volume) {if (_Change(m_volume, qBound(0, volume, 100))) {updateAudioLevel(); emit volumeChanged(m_volume);}}
-	void setPreamp(double preamp) {if (_ChangeZ(m_preamp, qBound(0.0, preamp, 10.0))) {	updateAudioLevel();	emit preampChanged(m_preamp);}}
-	void setMuted(bool muted) {if (_Change(m_muted, muted)) {updateAudioLevel(); emit mutedChanged(m_muted);}}
+	void setVolume(int volume);
+	void setPreamp(double preamp);
+	void setMuted(bool muted);
 	void setVideoRenderer(VideoRendererItem *renderer);
 	void play();
 	void stop();

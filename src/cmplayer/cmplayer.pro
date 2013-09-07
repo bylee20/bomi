@@ -26,7 +26,7 @@ macx {
     LIBS += -L/usr/local/lib -liconv -lfribidi -llua -ldvdcss -lcurl -L/usr/X11/lib -lfreetype -lfontconfig -framework IOSurface \
 	-framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
 	-framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
-	-framework IOKit -framework Carbon
+        -framework IOKit -framework Carbon -framework OpenAL
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
 } else:unix {
@@ -34,7 +34,7 @@ macx {
     QMAKE_CC = "gcc -std=c99 -w"
     QMAKE_CXXFLAGS += -std=c++11
     TARGET = cmplayer
-    LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lva-x11 -lasound -ldl -lass
+    LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lva-x11 -lasound -ldl -lass -lpulse -lopenal -ljack
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }

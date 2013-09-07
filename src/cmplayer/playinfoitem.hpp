@@ -41,6 +41,7 @@ class AvInfoObject : public QObject {
 	Q_PROPERTY(AvIoFormat *input READ input)
 	Q_PROPERTY(AvIoFormat *output READ output)
 	Q_PROPERTY(QString hardwareAccelerationText READ hwAccText)
+	Q_PROPERTY(QString audioDriverText READ audioDriverText)
 public:
 	AvInfoObject(QObject *parent): QObject(parent) {setHwAcc(PlayerItem::Unavailable);}
 	QString codec() const {return m_codec;}
@@ -49,7 +50,8 @@ public:
 	AvIoFormat *output() const {return m_output;}
 	void setVideo(const PlayEngine *engine);
 	void setAudio(const PlayEngine *engine);
-	QString hwAccText() const {return m_hwAccText;}
+	QString hwAccText() const { return m_hwAccText; }
+	QString audioDriverText() const { return m_audioDriver; }
 private:
 	void setHwAcc(PlayerItem::HwAcc acc);
 	static QString format(quint32 fmt) { return fmt >= 0x20202020 ? _U((const char*)&fmt, 4) : _L("0x") % _N(fmt, 16); }
@@ -57,7 +59,7 @@ private:
 	AvIoFormat *m_input = new AvIoFormat(this);
 	AvIoFormat *m_output = new AvIoFormat(this);
 	PlayerItem::HwAcc m_hwAcc = PlayerItem::Unavailable;
-	QString m_codec, m_hwAccText;
+	QString m_codec, m_hwAccText, &m_audioDriver = m_hwAccText;
 };
 
 class MediaInfoObject : public QObject {
