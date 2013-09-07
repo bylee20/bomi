@@ -10,6 +10,13 @@ extern "C" {
 #include <qpa/qplatformnativeinterface.h>
 extern "C" {
 #include <libavcodec/vda.h>
+#define class ____class
+#define new ____new
+#define Picture ____Picture
+#include <libavcodec/h264.h>
+#undef Picture
+#undef new
+#undef class
 }
 #ifdef check
 #undef check
@@ -184,6 +191,12 @@ bool HwAccVda::fillContext(AVCodecContext *avctx) {
 	freeContext();
 
 	d->ok = false;
+
+	const auto h264 = static_cast<H264Context*>(avctx->priv_data);
+	if (h264 && h264->sps.pic_struct_present_flag && h264->sei_pic_struct != SEI_PIC_STRUCT_FRAME)
+		return false;
+	if (h264 && FIELD_OR_MBAFF_PICTURE(h264))
+		return false;
 
 	d->context.width = avctx->width;
 	d->context.height = avctx->height;

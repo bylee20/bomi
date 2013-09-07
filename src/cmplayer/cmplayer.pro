@@ -27,6 +27,7 @@ macx {
         -framework IOKit -framework Carbon -framework OpenAL
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
+    INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
 } else:unix {
     QT += dbus x11extras
     QMAKE_CC = "gcc -std=c99 -w"
