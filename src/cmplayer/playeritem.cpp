@@ -118,10 +118,13 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	emit mutedChanged(m_muted = m_engine->isMuted());
 	emit durationChanged(m_duration = m_engine->duration());
 	emit tick(m_position = m_engine->position());
-	emit videoChanged();
-	emit audioChanged();
 	emit mediaChanged();
 	emit volumeChanged(m_volume = m_engine->volume());
+
+	m_video->setVideo(m_engine);
+	m_audio->setAudio(m_engine);
+	emit videoChanged();
+	emit audioChanged();
 }
 
 void PlayerItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) {
