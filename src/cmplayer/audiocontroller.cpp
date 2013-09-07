@@ -1,5 +1,6 @@
 #include "audiocontroller.hpp"
 #include "audiofilter.hpp"
+#include "enums.hpp"
 
 af_info create_info();
 af_info af_info_dummy = create_info();
@@ -15,6 +16,7 @@ struct AudioController::Data {
 
 	bool normalizerActivated = false;
 	bool tempoScalerActivated = false;
+	bool volumeChanged = false;
 	double scale = 1.0;
 	TempoScaler *scaler = nullptr;
 	VolumeController *volume = nullptr;
@@ -24,6 +26,8 @@ struct AudioController::Data {
 	float level[AF_NCH];
 
 	NormalizerOption normalizerOption;
+
+	ClippingMethod clip = ClippingMethod::Auto;
 };
 
 AudioController::AudioController(QObject *parent): QObject(parent), d(new Data) {
@@ -35,6 +39,10 @@ AudioController::~AudioController() {
 	delete d->scaler;
 	delete d->volume;
 	delete d;
+}
+
+void AudioController::setClippingMethod(ClippingMethod method) {
+	d->clip = method;
 }
 
 int AudioController::open(af_instance *af) {
@@ -73,7 +81,18 @@ Filter *check(Filter *&filter, const mp_audio &data) {
 	return filter;
 }
 
+VolumeController *check(VolumeController *&filter, ClippingMethod clip, const mp_audio &data) {
+	if (!filter || !filter->isCompatibleWith(&data) || filter->clippingMethod() != clip) {
+		delete filter;
+		filter = VolumeController::create(data.format, clip);
+	}
+	if (filter)
+		filter->reconfigure(&data);
+	return filter;
+}
+
 int AudioController::reinitialize(mp_audio *data) {
+	d->volumeChanged = false;
 	if (!data)
 		return AF_ERROR;
 	mp_audio_copy_config(&d->data, data);
@@ -86,7 +105,7 @@ int AudioController::reinitialize(mp_audio *data) {
 	default:
 		mp_audio_set_format(&d->data, AF_FORMAT_FLOAT_NE);
 	}
-	check(d->volume, d->data);
+	check(d->volume, d->clip, d->data);
 	check(d->scaler, d->data);
 	return af_test_output(d->af, data);
 }
@@ -106,8 +125,8 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 	case AF_CONTROL_REINIT:
 		return ac->reinitialize(static_cast<mp_audio*>(arg));
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
-		//		return af_from_dB(AF_NCH, (float*)arg, d->level, 20.0, -200.0, 60.0);
-		return AF_OK;
+		d->volumeChanged = true;
+		return af_from_dB(AF_NCH, (float*)arg, d->level, 20.0, -200.0, 60.0);
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_GET:
 		return af_to_dB(AF_NCH, d->level, (float*)arg, 20.0);
 	case AF_CONTROL_PLAYBACK_SPEED | AF_CONTROL_SET:
@@ -123,6 +142,8 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 
 mp_audio *AudioController::play(af_instance *af, mp_audio *data) {
 	auto ac = priv(af); auto d = ac->d;
+	if (!d->volumeChanged && !d->normalizerActivated && (!d->tempoScalerActivated || d->scale == 1.0))
+		return data;
 	af->mul = 1.0;
 	af->delay = 0.0;
 	if (d->volume && d->volume->prepare(ac, data))

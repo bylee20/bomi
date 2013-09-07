@@ -5,7 +5,7 @@
 
 struct af_instance;		struct mp_audio;
 struct af_cfg;			struct af_info;
-
+enum class ClippingMethod;
 struct NormalizerOption;
 
 class AudioController : public QObject {
@@ -23,6 +23,7 @@ public:
 	void setNormalizerOption(double length, double target, double silence, double min, double max);
 	double scale() const;
 	const NormalizerOption &normalizerOption() const;
+	void setClippingMethod(ClippingMethod method);
 private:
 	static int open(af_instance *af);
 	int reinitialize(mp_audio *data);
