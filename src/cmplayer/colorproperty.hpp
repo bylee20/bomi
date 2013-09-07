@@ -9,7 +9,7 @@ extern "C" {
 class ColorProperty {
 public:
 	enum Value {Brightness = 0, Saturation, Contrast, Hue, PropMax};
-	ColorProperty(double b, double s, double c, double h): m{b, s, c, h} {}
+	ColorProperty(double b, double s, double c, double h): m{{b, s, c, h}} {}
 	ColorProperty() = default;
 	bool operator == (const ColorProperty &rhs) const { return m == rhs.m; }
 	bool operator != (const ColorProperty &rhs) const { return m != rhs.m; }

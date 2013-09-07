@@ -34,8 +34,8 @@ template<typename T, typename B = T> using IfFloat   = typename std::enable_if<!
 template<typename T> constexpr IfInteger<T> maximum() { return std::numeric_limits<T>::max(); }
 template<typename T> constexpr IfFloat<T>   maximum() { return (T)1.0; }
 
-template<typename T> constexpr double toLevel(IfInteger<T> p) { return (double)std::abs(p)/(double)std::numeric_limits<T>::max(); }
-template<typename T> constexpr double toLevel(IfFloat<T> p)   { return (double)std::fabs(p); }
+template<typename T> constexpr double toLevel(IfInteger<T> p) { return (double)qAbs(p)/(double)std::numeric_limits<T>::max(); }
+template<typename T> constexpr double toLevel(IfFloat<T> p)   { return (double)qAbs(p); }
 
 template<typename T> constexpr T            hardclip(double p) { return qBound(-(double)maximum<T>(), p, (double)maximum<T>()); }
 template<typename T> constexpr IfFloat<T>   softclip(double p) { return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : sin(p)); }

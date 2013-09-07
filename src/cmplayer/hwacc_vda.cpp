@@ -20,6 +20,13 @@ struct HwAccVda::Data {
 	bool ok = true;
 };
 
+const std::array<OSType, 4> cvpixfmts{{
+	kCVPixelFormatType_420YpCbCr8Planar,
+	kCVPixelFormatType_422YpCbCr8,
+	kCVPixelFormatType_422YpCbCr8_yuvs,
+	kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+}};
+
 HwAccVda::HwAccVda(AVCodecID codec)
 : HwAcc(codec), d(new Data) {
 	memset(&d->context, 0, sizeof(d->context));
@@ -37,7 +44,8 @@ mp_image *HwAccVda::getImage(mp_image *mpi) {
 		CVPixelBufferRelease(buffer);
 	};
 	CVPixelBufferRetain(buffer);
-	auto img = nullImage(IMGFMT_VDA, size().width(), size().height(), buffer, release);
+	auto img = nullMpImage(IMGFMT_VDA, size().width(), size().height(), buffer, release);
+	mp_image_copy_attributes(img, mpi);
 	img->planes[3] = mpi->planes[3];
 	return img;
 }
@@ -47,7 +55,7 @@ bool HwAccVda::isOk() const {
 }
 
 mp_image *HwAccVda::getSurface() {
-	auto mpi = nullImage(IMGFMT_VDA, size().width(), size().height(), nullptr, nullptr);
+	auto mpi = nullMpImage(IMGFMT_VDA, size().width(), size().height(), nullptr, nullptr);
 	mpi->planes[0] = (uchar*)(void*)(uintptr_t)1;
 	return mpi;
 }
@@ -63,18 +71,13 @@ void HwAccVda::freeContext() {
 	}
 }
 
-
 static CFArrayRef vda_create_pixel_format_array() {
 	auto array = CFArrayCreateMutable(kCFAllocatorDefault, 4, &kCFTypeArrayCallBacks);
-	auto append = [array] (OSType type) {
-		auto format  = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &type);
+	for (auto type : cvpixfmts) {
+		auto format = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &type);
 		CFArrayAppendValue(array, format);
 		CFRelease(format);
-	};
-	append(kCVPixelFormatType_420YpCbCr8Planar);
-	append(kCVPixelFormatType_422YpCbCr8);
-	append(kCVPixelFormatType_422YpCbCr8_yuvs);
-	append(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange);
+	}
 	return array;
 }
 
@@ -84,10 +87,10 @@ static void vda_decoder_callback (void *vda_hw_ctx, CFDictionaryRef /*user_info*
 
 	if (!image_buffer)
 		return;
-
-//	if (vda_ctx->cv_pix_fmt_type != CVPixelBufferGetPixelFormatType(image_buffer))
-//		return;
-	vda_ctx->cv_pix_fmt_type = CVPixelBufferGetPixelFormatType(image_buffer);
+	const auto fmt = CVPixelBufferGetPixelFormatType(image_buffer);
+	if (!_Contains(cvpixfmts, fmt))
+		return;
+	vda_ctx->cv_pix_fmt_type = fmt;
 	vda_ctx->cv_buffer = CVPixelBufferRetain(image_buffer);
 }
 

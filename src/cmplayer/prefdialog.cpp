@@ -296,7 +296,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Mouse actions"), d->ui.ui_mouse, ":/img/input-mouse-32.png", ui);
 	addPage(tr("Control step"), d->ui.ui_step, ":/img/run-build-32.png", ui);
 
-
 	d->open_media_from_file_manager = new PrefOpenMediaGroup(tr("Open from file manager"), d->ui.open_media);
 	d->open_media_by_drag_and_drop = new PrefOpenMediaGroup(tr("Open by drag-and-drop"), d->ui.open_media);
 
@@ -356,6 +355,10 @@ PrefDialog::PrefDialog(QWidget *parent)
 		updateDeintDesc(stack->currentWidget());
 	});
 	updateDeintDesc(d->ui.deint_tabs->currentWidget()->findChild<QStackedWidget*>()->currentWidget());
+#ifdef Q_OS_MAC
+	d->ui.enable_hwdeint->setVisible(false);
+	d->ui.enable_hwdeint->setEnabled(false);
+#endif
 
 	d->ui.sub_ext->addItem(QString(), QString());
 	d->ui.sub_ext->addItemTextData(Info::subtitleExt());

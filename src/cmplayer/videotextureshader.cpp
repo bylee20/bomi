@@ -1,5 +1,6 @@
 #include "videotextureshader.hpp"
 #include "videoframe.hpp"
+#include "hwacc.hpp"
 
 VideoTextureShader::VideoTextureShader(const VideoFormat &format, GLenum target)
 : m_format(format), m_target(target) {
@@ -339,16 +340,16 @@ struct AppleY422Shader : public PassThroughShader {
 	}
 };
 
-struct VdaUploader : public TextureUploader {
-	virtual void upload(const TextureInfo &info, const VideoFrame &frame) override {
+struct VdaUploader : public VideoTextureUploader {
+	virtual void upload(const VideoTextureInfo &info, const VideoFrame &frame) override {
 		const auto m_cgl = static_cast<CGLContextObj>(qApp->platformNativeInterface()->nativeResourceForContext("cglcontextobj", QOpenGLContext::currentContext()));
 		const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
 		glBindTexture(info.target, info.id);
 		CGLTexImageIOSurface2D(m_cgl, info.target, info.internal, info.width, info.height, info.format, info.type, surface, info.plane);
 	}
-	virtual void initialize(const TextureInfo &/*info*/) override {}
+	virtual void initialize(const VideoTextureInfo &/*info*/) override {}
 	virtual QImage toImage(const VideoFrame &frame) const override {
-		mp_image mpi; memset(&mpi, 0, sizeof(mpi));
+		mp_image mpi = *nullMpImage();
 		mp_image_setfmt(&mpi, frame.format().type());
 		mp_image_set_size(&mpi, frame.width(), frame.height());
 		const auto buffer = (CVPixelBufferRef)frame.data(3);
@@ -367,6 +368,7 @@ struct VdaUploader : public TextureUploader {
 		CVPixelBufferUnlockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
 		return image;
 	}
+	virtual mp_csp colorspace(const VideoFormat &) const override { return MP_CSP_RGB; }
 };
 
 #endif

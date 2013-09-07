@@ -1,6 +1,10 @@
 #ifndef STDAFX_HPP
 #define STDAFX_HPP
 
+#include <stdlib.h>
+
+extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
+
 #ifdef __cplusplus
 
 #include <QtCore>
@@ -9,12 +13,14 @@
 #include <QtQuick>
 #include <set>
 #include <qmath.h>
+#ifndef __OBJC__
+#include <type_traits>
+#include <array>
+#endif
 
 #ifdef Q_OS_LINUX
 #include <QX11Info>
 #endif
-
-extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
 
 namespace Pch {
 static inline QLatin1String _L(const char *str) {return QLatin1String(str);}
@@ -63,11 +69,16 @@ static inline QString _GetOpenFileName(QWidget *p, const QString &t, const QStri
 static inline QString _GetSaveFileName(QWidget *p, const QString &t, const QString &dir, const QString &f) {
 	return QFileDialog::getSaveFileName(p, t, dir, f, 0);
 }
+
+#ifndef __OBJC__
+
 template<typename T> static typename std::enable_if<std::is_pointer<T>::value, T>::type address_cast(const char *address, int base = 10) {
 	bool ok = false;
 	const quintptr ptr = QString::fromLatin1(address).toULongLong(&ok, base);
 	return ok ? (T)(void*)(ptr) : (T)nullptr;
 }
+
+#endif
 
 template<typename Iter, typename Test>
 Iter _FindIf(Iter begin, Iter end, Test test) { return std::find_if(begin, end, test); }
@@ -75,6 +86,14 @@ template<typename List, typename Test>
 typename List::const_iterator _FindIf(const List &list, Test test) { return std::find_if(list.begin(), list.end(), test); }
 template<typename List, typename Test>
 bool _ContainsIf(const List &list, Test test) { return std::find_if(list.begin(), list.end(), test) != list.end(); }
+
+template<typename Iter, typename T>
+Iter _Find(Iter begin, Iter end, const T &t) { return std::find(begin, end, t); }
+template<typename List, typename T>
+typename List::const_iterator _Find(const List &list, const T &t) { return std::find(list.begin(), list.end(), t); }
+template<typename List, typename T>
+bool _Contains(const List &list, const T &t) { return std::find(list.begin(), list.end(), t) != list.end(); }
+
 }
 
 using namespace Pch;

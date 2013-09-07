@@ -11,11 +11,9 @@ DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavfilter -lpostproc -lavformat -lavutil \
-        -lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio
+	-lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio
 macx {
     QT += gui-private
-    QMAKE_CXXFLAGS -= "-mmacosx-version-min=10.6"
-    QMAKE_CXX = clang++ -std=c++11 -stdlib=libc++
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
     QMAKE_MAC_SDK = macosx
     QMAKE_INFO_PLIST = Info.plist

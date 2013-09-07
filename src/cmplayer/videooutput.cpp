@@ -10,7 +10,6 @@ extern "C" {
 #include <video/fmt-conversion.h>
 #include <video/out/vo.h>
 #include <video/filter/vf.h>
-#include <a.out.h>
 #include <video/vfcap.h>
 #include <video/decode/dec_video.h>
 #include <video/img_fourcc.h>
