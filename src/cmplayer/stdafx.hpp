@@ -69,6 +69,12 @@ template<typename T> static typename std::enable_if<std::is_pointer<T>::value, T
 	return ok ? (T)(void*)(ptr) : (T)nullptr;
 }
 
+template<typename Iter, typename Test>
+Iter _FindIf(Iter begin, Iter end, Test test) { return std::find_if(begin, end, test); }
+template<typename List, typename Test>
+typename List::const_iterator _FindIf(const List &list, Test test) { return std::find_if(list.begin(), list.end(), test); }
+template<typename List, typename Test>
+bool _ContainsIf(const List &list, Test test) { return std::find_if(list.begin(), list.end(), test) != list.end(); }
 }
 
 using namespace Pch;
