@@ -1122,6 +1122,7 @@ void MainWindow::setFullScreen(bool full) {
 			}
 			checkWindowState();
 			updateTitle();
+			updateStaysOnTop();
 		} else
 #endif
 			setWindowState(full ? Qt::WindowFullScreen : d->prevWinState);
