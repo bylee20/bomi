@@ -15,9 +15,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>net.xylosper.CMPlayer</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.7.8</string>
+	<string>0.7.9</string>
 	<key>CFBundleVersion</key>
-	<string>0.7.8</string>
+	<string>0.7.9</string>
 	<key>CFBundleSignature</key>
 	<string>XYLO</string>
 	<key>CFBundleDevelopmentRegion</key>
