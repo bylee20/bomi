@@ -125,7 +125,17 @@ private:
 		if (UtilObject::isTriggered(UtilObject::Wheel))
 			m_main->wheelEvent(event);
 	}
-
+	bool event(QEvent *event) {
+		if (QQuickView::event(event))
+			return true;
+		if (event->type() == QEvent::DragMove) {
+			m_main->dragEnterEvent(static_cast<QDragEnterEvent*>(event));
+		} else if (event->type() == QEvent::Drop) {
+			m_main->dropEvent(static_cast<QDropEvent*>(event));
+		} else
+			return false;
+		return true;
+	}
 	MainWindow *m_main = nullptr;
 };
 
