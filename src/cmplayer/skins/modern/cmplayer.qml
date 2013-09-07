@@ -91,7 +91,7 @@ Skin.AppWithFloating {
 					height: parent.height; spacing: 10; anchors.horizontalCenter: parent.horizontalCenter;
 					Skin.Button {
 						width: parent.height*0.9; height: width; anchors.verticalCenter: pause.verticalCenter
-						icon: getStateIconName("play-slower"); action: "play/speed/slower"
+                        icon: getStateIconName("seek-backward"); action: "play/seek/backward2"
 					}
 					Skin.Button {
 						id: pause; width: parent.height; height: width
@@ -100,7 +100,7 @@ Skin.AppWithFloating {
 
 					Skin.Button {
 						id: faster; width: parent.height*0.9; height: width; anchors.verticalCenter: pause.verticalCenter
-						icon: getStateIconName("play-faster"); action: "play/speed/faster"
+                        icon: getStateIconName("seek-forward"); action: "play/seek/backward2"
 					}
 				}
 			}
