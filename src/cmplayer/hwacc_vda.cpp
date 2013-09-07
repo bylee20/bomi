@@ -95,8 +95,10 @@ static void vda_decoder_callback (void *vda_hw_ctx, CFDictionaryRef /*user_info*
 	if (!image_buffer)
 		return;
 	const auto fmt = CVPixelBufferGetPixelFormatType(image_buffer);
-	if (!_Contains(cvpixfmts, fmt))
+	if (!_Contains(cvpixfmts, fmt)) {
+		qDebug() << "vda: not supported format!!";
 		return;
+	}
 	vda_ctx->cv_pix_fmt_type = fmt;
 	vda_ctx->cv_buffer = CVPixelBufferRetain(image_buffer);
 }

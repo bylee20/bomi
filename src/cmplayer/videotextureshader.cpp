@@ -218,7 +218,8 @@ struct I420Shader : public VideoTextureShader {
 		)");
 		auto init = [this, &format] (int i) {
 			addTexInfo(i, format.bytesPerLine(i), format.lines(i), GL_LUMINANCE);
-			sc(i).rx() *= (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*2);
+			if (format.imgfmt() != IMGFMT_VDA) // vda uploader takes the width not stride without correction
+				sc(i).rx() *= (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*2);
 		};
 		init(0); init(1); init(2);
 		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; sc(2) *= 0.5; }\
@@ -274,7 +275,8 @@ struct NvShader : public VideoTextureShader {
 		setTexel(texel);
 		addTexInfo(0, format.bytesPerLine(0), format.lines(0), GL_LUMINANCE);
 		addTexInfo(1, format.bytesPerLine(1)/2, format.lines(1), GL_LUMINANCE_ALPHA);
-		sc(1).rx() *= (double)format.bytesPerLine(0)/(double)format.bytesPerLine(1);
+		if (format.imgfmt() != IMGFMT_VDA) // vda uploader takes the width not stride without correction
+			sc(1).rx() *= (double)format.bytesPerLine(0)/(double)format.bytesPerLine(1);
 		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; }
 	}
 };
@@ -345,7 +347,9 @@ struct VdaUploader : public VideoTextureUploader {
 		const auto m_cgl = static_cast<CGLContextObj>(qApp->platformNativeInterface()->nativeResourceForContext("cglcontextobj", QOpenGLContext::currentContext()));
 		const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
 		glBindTexture(info.target, info.id);
-		CGLTexImageIOSurface2D(m_cgl, info.target, info.internal, info.width, info.height, info.format, info.type, surface, info.plane);
+		const auto w = IOSurfaceGetWidthOfPlane(surface, info.plane);
+		const auto h = IOSurfaceGetHeightOfPlane(surface, info.plane);
+		CGLTexImageIOSurface2D(m_cgl, info.target, info.internal, w, h, info.format, info.type, surface, info.plane);
 	}
 	virtual void initialize(const VideoTextureInfo &/*info*/) override {}
 	virtual QImage toImage(const VideoFrame &frame) const override {
@@ -368,7 +372,11 @@ struct VdaUploader : public VideoTextureUploader {
 		CVPixelBufferUnlockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
 		return image;
 	}
-	virtual mp_csp colorspace(const VideoFormat &) const override { return MP_CSP_RGB; }
+	virtual mp_csp colorspace(const VideoFormat &format) const override {
+		if (format.type() == IMGFMT_UYVY || format.type() == IMGFMT_YUYV)
+			return MP_CSP_RGB;
+		return VideoTextureUploader::colorspace(format);
+	}
 };
 
 #endif
