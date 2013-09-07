@@ -96,7 +96,7 @@ QString DeintInfo::description(Method method) {
 		desc = tr("Bob with cubic interpolation. Deinterlace the given block by cubically interpolating every second line.");
 		break;
 	case Yadif:
-		desc = tr("Yet Another DeInteracing Filter. Create a full picture through a complicated algorithm that includes both temporal and spatial interpolation.");
+		desc = tr("Yet Another DeInterlacing Filter. Create a full picture through a complicated algorithm that includes both temporal and spatial interpolation.");
 		break;
 	case LinearBlend:
 		desc = tr("Linear blend deinterlacing filter that deinterlaces the given block by filtering all lines with a (1 2 1) filter.");

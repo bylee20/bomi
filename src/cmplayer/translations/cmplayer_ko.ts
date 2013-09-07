@@ -253,6 +253,24 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
+    <name>AvInfoObject</name>
+    <message>
+        <location filename="../playinfoitem.cpp" line="15"/>
+        <source>Activated</source>
+        <translation>활성화</translation>
+    </message>
+    <message>
+        <location filename="../playinfoitem.cpp" line="18"/>
+        <source>Inactivated</source>
+        <translation>비활성</translation>
+    </message>
+    <message>
+        <location filename="../playinfoitem.cpp" line="21"/>
+        <source>Unavailable</source>
+        <translation>사용 불가</translation>
+    </message>
+</context>
+<context>
     <name>CheckDialog</name>
     <message>
         <source>&amp;Ok</source>
@@ -262,24 +280,20 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ClickAction</name>
     <message>
-        <location filename="../enums.hpp" line="442"/>
         <source>Open a file</source>
-        <translation>파일 열기</translation>
+        <translation type="obsolete">파일 열기</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="444"/>
         <source>Toggle fullscreen mode</source>
-        <translation>전체화면 전환</translation>
+        <translation type="obsolete">전체화면 전환</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="446"/>
         <source>Toggle play/pause</source>
-        <translation>재생/일시정지 전환</translation>
+        <translation type="obsolete">재생/일시정지 전환</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="448"/>
         <source>Toggle mute/unmute</source>
-        <translation>음소거 전환</translation>
+        <translation type="obsolete">음소거 전환</translation>
     </message>
 </context>
 <context>
@@ -382,6 +396,67 @@ p, li { white-space: pre-wrap; }
     <message>
         <source>Open URL</source>
         <translation type="obsolete">URL 열기</translation>
+    </message>
+</context>
+<context>
+    <name>DeintInfo</name>
+    <message>
+        <location filename="../deintinfo.cpp" line="90"/>
+        <source>Display each line twice.</source>
+        <translation>각 줄을 두 번 씩 표시합니다.</translation>
+    </message>
+    <message>
+        <location filename="../deintinfo.cpp" line="93"/>
+        <source>Bob with linear interpolation. Deinterlace the given picture by linearly interpolating every second line.</source>
+        <translation>Bob에 선형 보간을 적용. 주어진 영상을 두 줄씩 선형 보간하는 디인터레이스 모드입니다.</translation>
+    </message>
+    <message>
+        <location filename="../deintinfo.cpp" line="96"/>
+        <source>Bob with cubic interpolation. Deinterlace the given block by cubically interpolating every second line.</source>
+        <translation>Bob에 큐빅 보간을 적용. 주어진 영상을 두 줄씩 큐빅 보간하는 디인터레이스 모드입니다.</translation>
+    </message>
+    <message>
+        <location filename="../deintinfo.cpp" line="99"/>
+        <source>Yet Another DeInterlacing Filter. Create a full picture through a complicated algorithm that includes both temporal and spatial interpolation.</source>
+        <translation>Yet Another DeInterlacing Filter. 시공간 보간을 포함하는 복잡한 알고리즘을 이용하여 한 장의 영상을 만들어 냅니다. </translation>
+    </message>
+    <message>
+        <location filename="../deintinfo.cpp" line="102"/>
+        <source>Linear blend deinterlacing filter that deinterlaces the given block by filtering all lines with a (1 2 1) filter.</source>
+        <translation>주어진 블럭에 (1 2 1) 필터를 적용하여 각 줄을 선형 혼합하는 디이터레이스 모드입니다.</translation>
+    </message>
+    <message>
+        <location filename="../deintinfo.cpp" line="105"/>
+        <source>Median deinterlacing filter that deinterlaces the given block by applying a median filter to every second line.</source>
+        <translation>주어진 블럭에 중간값 필터를 두 줄 씩 적용하는 디인터레이스 모드입니다. </translation>
+    </message>
+    <message>
+        <location filename="../deintinfo.cpp" line="113"/>
+        <source>This method supports double the framerate.</source>
+        <translation>이 방법은 프레임레이트를 두 배로 늘릴 수 있습니다.</translation>
+    </message>
+    <message>
+        <location filename="../deintinfo.cpp" line="115"/>
+        <source>This method can be accelerated by OpenGL.</source>
+        <translation>이 방법은 OpenGL에 의해서 가속될 수 있습니다.</translation>
+    </message>
+    <message>
+        <location filename="../deintinfo.cpp" line="117"/>
+        <source>This method can be accelerated by VA-API. In order to activate this filter, You have to enable it in &apos;Hardware Acceleration&apos;.</source>
+        <translation>이 방법은 VA-API에 의해서 가속될 수 있습니다. 이 필터를 활성화하기 위해서는 &apos;하드웨어 가속&apos;에서 사용 가능하게 해야합니다.</translation>
+    </message>
+</context>
+<context>
+    <name>DeintWidget</name>
+    <message>
+        <location filename="../deintinfo.cpp" line="134"/>
+        <source>Make the framerate doubled</source>
+        <translation>프레임레이트를 두배로</translation>
+    </message>
+    <message>
+        <location filename="../deintinfo.cpp" line="135"/>
+        <source>Enable hardware acceleration</source>
+        <translation>하드웨어 가속 사용</translation>
     </message>
 </context>
 <context>
@@ -717,14 +792,12 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>GeneratePlaylist</name>
     <message>
-        <location filename="../enums.hpp" line="170"/>
         <source>Add files which have similar names</source>
-        <translation>비슷한 이름의 파일을 추가</translation>
+        <translation type="obsolete">비슷한 이름의 파일을 추가</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="172"/>
         <source>Add all files in the same folder</source>
-        <translation>같은 폴더의 모든 파일을 추가</translation>
+        <translation type="obsolete">같은 폴더의 모든 파일을 추가</translation>
     </message>
     <message>
         <source>Do not add any other files</source>
@@ -809,17 +882,17 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>HistoryDock</name>
     <message>
-        <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="55"/>
+        <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="51"/>
         <source>Name</source>
         <translation>이름</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="56"/>
+        <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="52"/>
         <source>Latest Playback</source>
         <translation>최근 재생</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="57"/>
+        <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="53"/>
         <source>Location</source>
         <translation>위치</translation>
     </message>
@@ -918,9 +991,9 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../mainwindow.cpp" line="471"/>
-        <location filename="../mainwindow.cpp" line="816"/>
-        <location filename="../mainwindow.cpp" line="834"/>
+        <location filename="../mainwindow.cpp" line="497"/>
+        <location filename="../mainwindow.cpp" line="855"/>
+        <location filename="../mainwindow.cpp" line="873"/>
         <source>Open File</source>
         <translation>파일 열기</translation>
     </message>
@@ -929,7 +1002,7 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">자막</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="754"/>
+        <location filename="../mainwindow.cpp" line="793"/>
         <source>Open Subtitle</source>
         <translation>자막 열기</translation>
     </message>
@@ -947,72 +1020,72 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">밝기, 대비, 채도, 색조 초기화</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="629"/>
+        <location filename="../mainwindow.cpp" line="668"/>
         <source>Brightness</source>
         <translation>밝기</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="630"/>
+        <location filename="../mainwindow.cpp" line="669"/>
         <source>Saturation</source>
         <translation>채도</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="631"/>
+        <location filename="../mainwindow.cpp" line="670"/>
         <source>Hue</source>
         <translation>색조</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="632"/>
+        <location filename="../mainwindow.cpp" line="671"/>
         <source>Contrast</source>
         <translation>대비</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="643"/>
+        <location filename="../mainwindow.cpp" line="682"/>
         <source>Reset/Adjust brightness, contrast, saturation and hue</source>
         <translation>밝기, 대비, 채도, 색조 초기화/조절</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="677"/>
+        <location filename="../mainwindow.cpp" line="716"/>
         <source>Audio Sync</source>
         <translation>오디오 싱크</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="685"/>
+        <location filename="../mainwindow.cpp" line="724"/>
         <source>Amplifier</source>
         <translation>앰프</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="744"/>
+        <location filename="../mainwindow.cpp" line="783"/>
         <source>Select All Subtitles</source>
         <translation>모든 자막 선택</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="744"/>
+        <location filename="../mainwindow.cpp" line="783"/>
         <source>%1 Subtitle(s)</source>
         <translation>%1개 자막</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="774"/>
+        <location filename="../mainwindow.cpp" line="813"/>
         <source>Subtitle Display</source>
         <translation>자막 표시</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="778"/>
+        <location filename="../mainwindow.cpp" line="817"/>
         <source>Subtitle Alignment</source>
         <translation>자막 정렬</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="899"/>
+        <location filename="../mainwindow.cpp" line="938"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>자동 시스템 종료가 취소되었습니다.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="906"/>
+        <location filename="../mainwindow.cpp" line="945"/>
         <source>Stays on Top</source>
         <translation>맨위로</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1551"/>
+        <location filename="../mainwindow.cpp" line="1594"/>
         <source>Do you want to resume the playback at the last played position?
 Played Date: %1
 Stopped Position: %2
@@ -1023,7 +1096,7 @@ Stopped Position: %2
 </translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1555"/>
+        <location filename="../mainwindow.cpp" line="1598"/>
         <source>Resume Playback</source>
         <translation>재생 다시 시작하기</translation>
     </message>
@@ -1032,13 +1105,13 @@ Stopped Position: %2
         <translation type="obsolete">현재 자막</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="815"/>
-        <location filename="../mainwindow.cpp" line="823"/>
+        <location filename="../mainwindow.cpp" line="854"/>
+        <location filename="../mainwindow.cpp" line="862"/>
         <source>Playlist</source>
         <translation>재생 목록</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="823"/>
+        <location filename="../mainwindow.cpp" line="862"/>
         <source>Save File</source>
         <translation>파일 저장</translation>
     </message>
@@ -1063,12 +1136,12 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">속도: ×%1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="279"/>
+        <location filename="../mainwindow.cpp" line="299"/>
         <source>Pause</source>
         <translation>일시정지</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="282"/>
+        <location filename="../mainwindow.cpp" line="302"/>
         <source>Play</source>
         <translation>재생</translation>
     </message>
@@ -1093,7 +1166,7 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">앰프: %2% (최대: %1%)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="751"/>
+        <location filename="../mainwindow.cpp" line="790"/>
         <source>Subtitle Files</source>
         <translation>자막 파일</translation>
     </message>
@@ -1102,32 +1175,32 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">구간 반복: %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="544"/>
+        <location filename="../mainwindow.cpp" line="570"/>
         <source>Seeking</source>
         <translation>탐색</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="544"/>
+        <location filename="../mainwindow.cpp" line="570"/>
         <source>sec</source>
         <translation>초</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="570"/>
+        <location filename="../mainwindow.cpp" line="596"/>
         <source>Crop</source>
         <translation>잘라내기</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="659"/>
+        <location filename="../mainwindow.cpp" line="698"/>
         <source>Volume</source>
         <translation>소리</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="668"/>
+        <location filename="../mainwindow.cpp" line="707"/>
         <source>Mute</source>
         <translation>음소거</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="503"/>
+        <location filename="../mainwindow.cpp" line="529"/>
         <source>Speed</source>
         <translation>재생 속도</translation>
     </message>
@@ -1136,23 +1209,23 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">소리 증폭</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="886"/>
+        <location filename="../mainwindow.cpp" line="925"/>
         <source>Exit CMPlayer when the playlist has finished.</source>
         <translation>재생목록을 마치면 CMPlayer를 종료합니다.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="886"/>
+        <location filename="../mainwindow.cpp" line="925"/>
         <source>Auto-exit is canceled.</source>
         <translation>자동 종료가 취소되었습니다.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="892"/>
+        <location filename="../mainwindow.cpp" line="931"/>
         <source>Auto-shutdown</source>
         <translation>자동 시스템 종료</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="893"/>
-        <location filename="../mainwindow.cpp" line="897"/>
+        <location filename="../mainwindow.cpp" line="932"/>
+        <location filename="../mainwindow.cpp" line="936"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>재생목록을 마치면 시스템이 종료됩니다.</translation>
     </message>
@@ -1161,7 +1234,7 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">오디오 %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="651"/>
+        <location filename="../mainwindow.cpp" line="690"/>
         <source>Current Audio Track</source>
         <translation>현재 오디오 트랙</translation>
     </message>
@@ -1178,87 +1251,92 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">비디오 %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="562"/>
+        <location filename="../mainwindow.cpp" line="588"/>
         <source>Current Video Track</source>
         <translation>현재 비디오 트랙</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="554"/>
+        <location filename="../mainwindow.cpp" line="580"/>
         <source>Current DVD Title</source>
         <translation>현재 DVD 타이</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="557"/>
+        <location filename="../mainwindow.cpp" line="583"/>
         <source>Current Chapter</source>
         <translation>현재 챕터</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="529"/>
+        <location filename="../mainwindow.cpp" line="555"/>
         <source>Set A to %1</source>
         <translation>시작 %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="275"/>
+        <location filename="../mainwindow.cpp" line="295"/>
         <source>Error!
 Cannot open the media.</source>
         <translation>에러!
 미디어를 열 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="456"/>
+        <location filename="../mainwindow.cpp" line="476"/>
         <source>Loading ...
 Please wait for a while.</source>
         <translation>로딩중 ...
 잠시만 기다려 주세요.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="532"/>
+        <location filename="../mainwindow.cpp" line="558"/>
         <source>Range is too short!</source>
         <translation>구간이 너무 짧습니다!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="533"/>
+        <location filename="../mainwindow.cpp" line="559"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation>마지막 %1. 반복 시작!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="535"/>
+        <location filename="../mainwindow.cpp" line="561"/>
         <source>Quit repeating</source>
         <translation>반복 마침</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="536"/>
+        <location filename="../mainwindow.cpp" line="562"/>
         <source>Repeat current subtitle</source>
         <translation>현재 자막 반복</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="526"/>
+        <location filename="../mainwindow.cpp" line="552"/>
         <source>A-B Repeat</source>
         <translation>A-B 구간 반복</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="566"/>
+        <location filename="../mainwindow.cpp" line="592"/>
         <source>Aspect Ratio</source>
         <translation>화면 비율</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="692"/>
+        <location filename="../mainwindow.cpp" line="644"/>
+        <source>Deinterlace</source>
+        <translation>디인터레이스</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="731"/>
         <source>Volume Normalizer</source>
         <translation>볼륨 노멀라이저</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="700"/>
+        <location filename="../mainwindow.cpp" line="739"/>
         <source>Tempo Scaler</source>
         <translation>템포 스케일러</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="766"/>
-        <location filename="../mainwindow.cpp" line="770"/>
+        <location filename="../mainwindow.cpp" line="805"/>
+        <location filename="../mainwindow.cpp" line="809"/>
         <source>Selected Subtitle</source>
         <translation>선택된 자막</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="785"/>
+        <location filename="../mainwindow.cpp" line="824"/>
         <source>Subtitle Position</source>
         <translation>자막 위치</translation>
     </message>
@@ -1277,9 +1355,8 @@ Please wait for a while.</source>
         <translation type="obsolete">소리 평준화</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="583"/>
         <source>Drop Frame</source>
-        <translation>드롭 프레임</translation>
+        <translation type="obsolete">드롭 프레임</translation>
     </message>
     <message>
         <source>Track</source>
@@ -1306,12 +1383,12 @@ Please wait for a while.</source>
         <translation type="obsolete">창이 닫혀도 CMPlayer는 종료되지 않고 시스템 트레이상에서 작동할 것입니다.&lt;br&gt;CMPlayer를 종료하려면 종료 메뉴를 이용해주세요.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1386"/>
+        <location filename="../mainwindow.cpp" line="1429"/>
         <source>Do not display this message again</source>
         <translation>이 메시지를 다시 표시하지 않기</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1382"/>
+        <location filename="../mainwindow.cpp" line="1425"/>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
         <translation>창이 닫혀도 CMPlayer는 종료되지 않고 시스템 트레이상에서 작동할 것입니다.&lt;br&gt;환경 설정에서 동작방식을 변경할 수 있습니다.&lt;br&gt;CMPlayer를 종료하려면 종료 메뉴를 이용해주세요.</translation>
     </message>
@@ -1913,19 +1990,16 @@ Please wait for a while.</source>
 <context>
     <name>OsdScalePolicy</name>
     <message>
-        <location filename="../enums.hpp" line="387"/>
         <source>Fit to width of video</source>
-        <translation>가로 길이에 맞추기</translation>
+        <translation type="obsolete">가로 길이에 맞추기</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="389"/>
         <source>Fit to height of video</source>
-        <translation>세로 길이에 맞추기</translation>
+        <translation type="obsolete">세로 길이에 맞추기</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="391"/>
         <source>Fit to diagonal of video</source>
-        <translation>대각선 길이에 맞추기</translation>
+        <translation type="obsolete">대각선 길이에 맞추기</translation>
     </message>
 </context>
 <context>
@@ -2030,27 +2104,27 @@ Please wait for a while.</source>
         <translation type="obsolete">DVD 메뉴</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="256"/>
+        <location filename="../playengine.cpp" line="326"/>
         <source>No Subtitle</source>
         <translation>자막 없음</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="474"/>
+        <location filename="../playengine.cpp" line="557"/>
         <source>Audio %1</source>
         <translation>오디오 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="475"/>
+        <location filename="../playengine.cpp" line="558"/>
         <source>Video %1</source>
         <translation>비디오 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="476"/>
+        <location filename="../playengine.cpp" line="559"/>
         <source>Subtitle %1</source>
         <translation>자막 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="334"/>
+        <location filename="../playengine.cpp" line="403"/>
         <source>Title %1</source>
         <translation>타이틀 %1</translation>
     </message>
@@ -2220,13 +2294,12 @@ Avg. Frame Rate: %7fps(%8MB/s)
 Volume Normalizer: %9%</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="104"/>
         <source>CPU Usage: %1%(avg. %2%/core)
 RAM Usage: %3MB(%4% of %5GB)
 Audio/Video Sync: %6ms
 Avg. Frame Rate: %7fps(%8MB/s)
 Volume Normalizer: %9%</source>
-        <translation>CPU 점유율: %1%(코어당 평균 %2%)
+        <translation type="obsolete">CPU 점유율: %1%(코어당 평균 %2%)
 RAM 사용량: %3MB(%5GB 중 %4%)
 오디오/비디오 싱크: %6ms
 평균 프레임 레이트: %7fps(%8MB/s)
@@ -2254,46 +2327,92 @@ RAM 사용량: %3MB(%5GB 중 %4%)
 </translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="124"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="104"/>
+        <source>CPU Usage: %1%(avg. %2%/core)</source>
+        <translation>CPU 점유율: %1%(코어당 평균 %2%)</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="108"/>
+        <source>RAM Usage: %3MB(%4% of %5GB)</source>
+        <translation>RAM 사용량: %3MB(%5GB 중 %4%)</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="113"/>
+        <source>Audio/Video Sync: %6ms</source>
+        <translation>오디오/비디오 싱크: %6밀리초</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="115"/>
+        <source>Avg. Frame Rate: %7fps(%8MB/s)</source>
+        <translation>평균 프레임 레이트: %7fps(%8MB/s)</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="118"/>
+        <source>Volume Normalizer: %1</source>
+        <translation>소리 평준화: %1</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="119"/>
+        <source>Inactivated</source>
+        <translation>비활성</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="136"/>
         <source>Video Codec: %1</source>
         <translation>비디오 코덱: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="126"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="138"/>
         <source>Input : %1 %2x%3 %4fps(%5MB/s)</source>
         <translation>입력: %1 %2x%3 %4fps(%5MB/s)</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="133"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="145"/>
         <source>Output: %1 %2x%3 %4fps(%5MB/s)</source>
         <translation>출력: %1 %2x%3 %4fps(%5MB/s)</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="140"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="152"/>
+        <source>Hardware Acceleration: %1</source>
+        <translation>하드웨어 가속: %1</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="170"/>
+        <source>Audio Codec: %1</source>
+        <translation>오디오 코덱: %1</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="172"/>
+        <source>Input : %1 %2kbps %3kHz %4ch %5bits</source>
+        <translation>입력: %1 %2kbps %3kHz %4ch %5bits</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="186"/>
+        <source>Output Driver: %1</source>
+        <translation>출력 드라이버: %1</translation>
+    </message>
+    <message>
         <source>Hardware Acceleration</source>
-        <translation>하드웨어 가속</translation>
+        <translation type="obsolete">하드웨어 가속</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="140"/>
         <source>Activated</source>
-        <translation>활성화</translation>
+        <translation type="obsolete">활성화</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="158"/>
         <source>Audio Codec: %1
 </source>
-        <translation>오디오 코덱: %1
+        <translation type="obsolete">오디오 코덱: %1
 </translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="159"/>
         <source>Input : %1 %2kbps %3kHz %4ch %5bits
 </source>
-        <translation>입력: %1 %2kbps %3kHz %4ch %5bits
+        <translation type="obsolete">입력: %1 %2kbps %3kHz %4ch %5bits
 </translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="165"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="179"/>
         <source>Output: %1 %2kbps %3kHz %4ch %5bits</source>
         <translation>출력: %1 %2kbps %3kHz %4ch %5bits</translation>
     </message>
@@ -2320,47 +2439,49 @@ RAM 사용량: %3MB(%5GB 중 %4%)
 <context>
     <name>PlayerItem</name>
     <message>
-        <location filename="../playeritem.cpp" line="76"/>
+        <location filename="../playeritem.cpp" line="67"/>
         <source>File</source>
         <translation>파일</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="247"/>
+        <location filename="../playeritem.cpp" line="201"/>
         <source>Playing</source>
         <translation>재생중</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="249"/>
+        <location filename="../playeritem.cpp" line="203"/>
         <source>Stopped</source>
         <translation>정지</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="251"/>
+        <location filename="../playeritem.cpp" line="205"/>
         <source>Finished</source>
         <translation>마침</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="253"/>
+        <location filename="../playeritem.cpp" line="207"/>
+        <source>Loading</source>
+        <translation>로딩중</translation>
+    </message>
+    <message>
         <source>Buffering</source>
-        <translation>버퍼링</translation>
+        <translation type="obsolete">버퍼링</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="255"/>
         <source>Opening</source>
-        <translation>여는 중</translation>
+        <translation type="obsolete">여는 중</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="257"/>
+        <location filename="../playeritem.cpp" line="209"/>
         <source>Error</source>
         <translation>에러</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="259"/>
         <source>Preparing</source>
-        <translation>준비중</translation>
+        <translation type="obsolete">준비중</translation>
     </message>
     <message>
-        <location filename="../playeritem.cpp" line="261"/>
+        <location filename="../playeritem.cpp" line="211"/>
         <source>Paused</source>
         <translation>일시정지</translation>
     </message>
@@ -2368,19 +2489,16 @@ RAM 사용량: %3MB(%5GB 중 %4%)
 <context>
     <name>PlaylistBehaviorWhenOpenMedia</name>
     <message>
-        <location filename="../enums.hpp" line="222"/>
         <source>Append the open media to the playlist</source>
-        <translation>열린 미디어 파일을 재생 목록에 추가</translation>
+        <translation type="obsolete">열린 미디어 파일을 재생 목록에 추가</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="224"/>
         <source>Clear the playlist and append the open media to the playlist</source>
-        <translation>재생목록을 비우고 열린 미디어 파일을 재생목록에 추가</translation>
+        <translation type="obsolete">재생목록을 비우고 열린 미디어 파일을 재생목록에 추가</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="226"/>
         <source>Clear the playlist and generate new playlist</source>
-        <translation>재생목록을 비우고 새로운 재생목록을 생성</translation>
+        <translation type="obsolete">재생목록을 비우고 새로운 재생목록을 생성</translation>
     </message>
 </context>
 <context>
@@ -2878,7 +2996,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">URL</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="456"/>
+        <location filename="../prefdialog.cpp" line="521"/>
         <source>Double Click</source>
         <translation>더블 클릭</translation>
     </message>
@@ -2887,7 +3005,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">가운데 버튼 클릭</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="458"/>
+        <location filename="../prefdialog.cpp" line="523"/>
         <source>Wheel Scroll</source>
         <translation>휠 스크롤</translation>
     </message>
@@ -2984,7 +3102,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">미디어 종류</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="271"/>
+        <location filename="../prefdialog.cpp" line="272"/>
         <source>General</source>
         <translation>일반</translation>
     </message>
@@ -3041,31 +3159,30 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">마우스 커서가 일정 시간 움직이지 않으면 숨기기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2324"/>
+        <location filename="../ui/prefdialog.ui" line="2612"/>
         <source>Timeout</source>
         <translation>제한시간</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="217"/>
-        <location filename="../ui/prefdialog.ui" line="496"/>
-        <location filename="../ui/prefdialog.ui" line="2340"/>
-        <location filename="../ui/prefdialog.ui" line="2476"/>
-        <location filename="../ui/prefdialog.ui" line="2499"/>
-        <location filename="../ui/prefdialog.ui" line="2522"/>
-        <location filename="../ui/prefdialog.ui" line="2606"/>
-        <location filename="../ui/prefdialog.ui" line="2694"/>
+        <location filename="../ui/prefdialog.ui" line="1779"/>
+        <location filename="../ui/prefdialog.ui" line="2628"/>
+        <location filename="../ui/prefdialog.ui" line="2764"/>
+        <location filename="../ui/prefdialog.ui" line="2787"/>
+        <location filename="../ui/prefdialog.ui" line="2810"/>
+        <location filename="../ui/prefdialog.ui" line="2894"/>
+        <location filename="../ui/prefdialog.ui" line="2982"/>
         <source>sec</source>
         <translation>초</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2368"/>
+        <location filename="../ui/prefdialog.ui" line="2656"/>
         <source>Disable screensaver while playing</source>
         <translation>재생중 화면 보호기 끄기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="423"/>
         <source>Codec</source>
-        <translation>코덱</translation>
+        <translation type="obsolete">코덱</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="82"/>
@@ -3073,44 +3190,42 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation>재생목록 생성</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="429"/>
         <source>Hardware acceleration (experimental)</source>
-        <translation>하드웨어 가속 (실험적)</translation>
+        <translation type="obsolete">하드웨어 가속 (실험적)</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="435"/>
         <source>Enable hardware acceleration for decoding</source>
-        <translation>디코딩시에 하드웨어 가속을 사용</translation>
+        <translation type="obsolete">디코딩시에 하드웨어 가속을 사용</translation>
     </message>
     <message>
         <source>Output format</source>
         <translation type="obsolete">출력 포맷</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="674"/>
+        <location filename="../prefdialog.cpp" line="283"/>
         <source>Video filter</source>
         <translation>비디오 필터</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="680"/>
+        <location filename="../ui/prefdialog.ui" line="919"/>
         <source>Blur kernel</source>
         <translation>부드럽게 필터 커널</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="701"/>
-        <location filename="../ui/prefdialog.ui" line="1052"/>
+        <location filename="../ui/prefdialog.ui" line="940"/>
+        <location filename="../ui/prefdialog.ui" line="1291"/>
         <source>Center</source>
         <translation>중앙</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="715"/>
-        <location filename="../ui/prefdialog.ui" line="1066"/>
+        <location filename="../ui/prefdialog.ui" line="954"/>
+        <location filename="../ui/prefdialog.ui" line="1305"/>
         <source>Neighbor</source>
         <translation>인접</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="729"/>
-        <location filename="../ui/prefdialog.ui" line="1080"/>
+        <location filename="../ui/prefdialog.ui" line="968"/>
+        <location filename="../ui/prefdialog.ui" line="1319"/>
         <source>Diagonal</source>
         <translation>대각</translation>
     </message>
@@ -3145,37 +3260,36 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">이미지 재생 기록 기억하기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="466"/>
         <source>Audio filter</source>
-        <translation>오디오 필터</translation>
+        <translation type="obsolete">오디오 필터</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="472"/>
+        <location filename="../ui/prefdialog.ui" line="1755"/>
         <source>Volume Normalizer</source>
         <translation>볼륨 노멀라이저</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="535"/>
+        <location filename="../ui/prefdialog.ui" line="1818"/>
         <source>Target level</source>
         <translation>목표 레벨</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="564"/>
+        <location filename="../ui/prefdialog.ui" line="1847"/>
         <source>Silence level</source>
         <translation>침묵 레벨</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="597"/>
+        <location filename="../ui/prefdialog.ui" line="1880"/>
         <source>Minimum gain</source>
         <translation>최소 게인</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="626"/>
+        <location filename="../ui/prefdialog.ui" line="1909"/>
         <source>Maximum gain</source>
         <translation>최대 게인</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1031"/>
+        <location filename="../ui/prefdialog.ui" line="1270"/>
         <source>Sharpen kernel</source>
         <translation>선명하게 필터 커널</translation>
     </message>
@@ -3192,12 +3306,12 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">최대 휘도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2389"/>
+        <location filename="../ui/prefdialog.ui" line="2677"/>
         <source>Run only single CMPlayer application at the same time</source>
         <translation>동시에 하나의 CMPlayer 어플리케이션만 실행</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2396"/>
+        <location filename="../ui/prefdialog.ui" line="2684"/>
         <source>Use Lion-style fullscreen mode</source>
         <translation>라이온 방식의 풀스크린 모드 사용</translation>
     </message>
@@ -3232,24 +3346,24 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation>색 채우기:</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2403"/>
+        <location filename="../ui/prefdialog.ui" line="2691"/>
         <source>System tray</source>
         <translation>시스템 트레이</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2409"/>
+        <location filename="../ui/prefdialog.ui" line="2697"/>
         <source>Show system tray icon</source>
         <translation>시스템 트레이 아이콘 표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2419"/>
+        <location filename="../ui/prefdialog.ui" line="2707"/>
         <source>Hide the window rather than quit when closed </source>
         <translation>창을 닫았을 때 종료하지 않고 숨기기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1446"/>
-        <location filename="../ui/prefdialog.ui" line="2573"/>
-        <location filename="../prefdialog.cpp" line="278"/>
+        <location filename="../ui/prefdialog.ui" line="639"/>
+        <location filename="../ui/prefdialog.ui" line="2861"/>
+        <location filename="../prefdialog.cpp" line="289"/>
         <source>Subtitle</source>
         <translation>자막</translation>
     </message>
@@ -3279,129 +3393,220 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation>CMPlayer 기본 로고를 표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="480"/>
+        <location filename="../ui/prefdialog.ui" line="1763"/>
         <source>Buffer length for calculating average level</source>
         <translation>평균 레벨을 계산하기 위한 버퍼 크기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1456"/>
-        <location filename="../ui/prefdialog.ui" line="2194"/>
-        <location filename="../prefdialog.cpp" line="279"/>
+        <location filename="../ui/prefdialog.ui" line="649"/>
+        <location filename="../ui/prefdialog.ui" line="2482"/>
+        <location filename="../prefdialog.cpp" line="290"/>
         <source>Load</source>
         <translation>불러오기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1462"/>
+        <location filename="../ui/prefdialog.ui" line="425"/>
+        <source>Preferred Output driver</source>
+        <translation>선호 출력 드라이버</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="450"/>
+        <source>Volume control</source>
+        <translation>볼륨 컨트롤</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="456"/>
+        <source>Use software volume</source>
+        <translation>소프트웨어 볼륨 사용</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="466"/>
+        <source>Clipping method</source>
+        <translation>클리핑 방식</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="496"/>
+        <source>Default Cache</source>
+        <translation>기본 캐쉬</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="504"/>
+        <source>Local files</source>
+        <translation>로컬 파일</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="521"/>
+        <source>Network media</source>
+        <translation>네트워크 미디어</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="545"/>
+        <source>DVD drives</source>
+        <translation>DVD 드라이브</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="567"/>
+        <source>Minimum Cache</source>
+        <translation>최소 캐쉬</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="575"/>
+        <source>For playback</source>
+        <translation>재생용</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="593"/>
+        <source>For seeking</source>
+        <translation>탐색용</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="612"/>
+        <source>Network folders</source>
+        <translation>네트워크 폴더</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="618"/>
+        <source>Folders of network drives or NFS</source>
+        <translation>네트워크 드라이브나 NFS용 폴더</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="655"/>
         <source>Load subtitle files when a local media file is open</source>
         <translation>로컬 미디어 파일을 열었을 때 자막파일 불러오기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1472"/>
+        <location filename="../ui/prefdialog.ui" line="665"/>
         <source>Load next subtitles when starting to play a file.</source>
         <translation>파일재생을 시작할 때, 다음 자막을 불러옵니다.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1485"/>
+        <location filename="../ui/prefdialog.ui" line="678"/>
         <source>Auto-selection</source>
         <translation>자동 선택</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1491"/>
+        <location filename="../ui/prefdialog.ui" line="684"/>
         <source>Select subtitles from loaded ones automatically</source>
         <translation>자동으로 불러온 자막들을 선택</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1501"/>
+        <location filename="../ui/prefdialog.ui" line="694"/>
         <source>Select next subtitles in automatically loaded subtitles.</source>
         <translation>자동으로 불러온 자막중에 다음 자막들을 선택합니다.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1522"/>
+        <location filename="../ui/prefdialog.ui" line="715"/>
         <source>Extension</source>
         <translation>확장자</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1563"/>
+        <location filename="../ui/prefdialog.ui" line="756"/>
         <source>Encoding</source>
         <translation>인코딩</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1569"/>
+        <location filename="../ui/prefdialog.ui" line="762"/>
         <source>Open subtitle file with selected encoding.</source>
         <translation>선택된 인코딩으로 자막파일을 엽니다.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1582"/>
+        <location filename="../ui/prefdialog.ui" line="775"/>
         <source>Enable encoding auto-detection</source>
         <translation>인코딩 자동 탐지 사용</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1594"/>
+        <location filename="../ui/prefdialog.ui" line="787"/>
         <source>Accuracy to enforce</source>
         <translation>적용 정확도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1641"/>
+        <location filename="../ui/prefdialog.ui" line="834"/>
         <source>Default display time</source>
         <translation>기본 표시 시간</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1647"/>
+        <location filename="../ui/prefdialog.ui" line="840"/>
         <source>Caculate the end time of a subtitle when the time is not specified</source>
         <translation>종료 시간이 지정되지 않은 경우 자동으로 계산합니다</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1656"/>
+        <location filename="../ui/prefdialog.ui" line="849"/>
         <source>Display time per one character</source>
         <translation>한 글자당 표시 시간</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1666"/>
+        <location filename="../ui/prefdialog.ui" line="859"/>
         <source>When display time is not specifid in subtitle, caculate interval wih this value.</source>
         <translation>자막내에 표시시간이 지정되어있지 않은 경우, 이 값을 이용하여 간격을 계산합니다.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1672"/>
+        <location filename="../ui/prefdialog.ui" line="865"/>
         <source>msec</source>
         <translation>밀리초</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2052"/>
+        <location filename="../ui/prefdialog.ui" line="1648"/>
+        <source>For S/W decoding</source>
+        <translation>소프트웨어 디코딩용</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1656"/>
+        <location filename="../ui/prefdialog.ui" line="1693"/>
+        <source>Method</source>
+        <translation>모드</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1685"/>
+        <source>For H/W decoding</source>
+        <translation>하드웨어 디코딩용</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1960"/>
+        <source>Use hardware-accelerated decoding</source>
+        <translation>하드웨어 가속 디코딩 사용</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="1982"/>
+        <source>Use hardware-accelerated deinterlacing</source>
+        <translation>하드웨어 가속 디인터레이스 사용</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2340"/>
         <source>New line</source>
         <translation>기본 줄 간격</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2084"/>
+        <location filename="../ui/prefdialog.ui" line="2372"/>
         <source>New paragraph</source>
         <translation>새 문단 간격</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2177"/>
+        <location filename="../ui/prefdialog.ui" line="2465"/>
         <source>Preset</source>
         <translation>프리셋</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2232"/>
+        <location filename="../ui/prefdialog.ui" line="2520"/>
         <source>ID</source>
         <translation>ID</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2315"/>
+        <location filename="../ui/prefdialog.ui" line="2603"/>
         <source>Hide mouse after timeout</source>
         <translation>다음 시간이 경과하면 마우스를 숨기기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2375"/>
+        <location filename="../ui/prefdialog.ui" line="2663"/>
         <source>Show OSD messages when actions are triggered</source>
         <translation>액션이 작동되었을 때 OSD 메시지를 표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2382"/>
+        <location filename="../ui/prefdialog.ui" line="2670"/>
         <source>Show OSD messages when the window is resized</source>
         <translation>창의 크기가 바뀌었을 때 OSD 메시지를 표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2661"/>
+        <location filename="../ui/prefdialog.ui" line="2949"/>
         <source>Amplifier</source>
         <translation>앰프</translation>
     </message>
@@ -3414,7 +3619,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">모든 크기는 다음 기본 길이를 기준으로 상대적 크기로 계산됩니다</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1732"/>
+        <location filename="../ui/prefdialog.ui" line="2020"/>
         <source>Font</source>
         <translation>글꼴</translation>
     </message>
@@ -3423,24 +3628,24 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">이름</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1824"/>
-        <location filename="../ui/prefdialog.ui" line="1913"/>
-        <location filename="../ui/prefdialog.ui" line="2713"/>
+        <location filename="../ui/prefdialog.ui" line="2112"/>
+        <location filename="../ui/prefdialog.ui" line="2201"/>
+        <location filename="../ui/prefdialog.ui" line="3001"/>
         <source>Color</source>
         <translation>색</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1726"/>
+        <location filename="../ui/prefdialog.ui" line="2014"/>
         <source>Text</source>
         <translation>글자</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1799"/>
+        <location filename="../ui/prefdialog.ui" line="2087"/>
         <source>Outline</source>
         <translation>테두리</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1759"/>
+        <location filename="../ui/prefdialog.ui" line="2047"/>
         <source>Size</source>
         <translation>크기</translation>
     </message>
@@ -3469,27 +3674,24 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">이미지 재생 기록 기억하기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1382"/>
         <source>Remap Luma</source>
-        <translation>휘도 재규격화</translation>
+        <translation type="obsolete">휘도 재규격화</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1388"/>
         <source>Minimum luma</source>
-        <translation>최소 휘도</translation>
+        <translation type="obsolete">최소 휘도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1405"/>
         <source>Maximum luma</source>
-        <translation>최대 휘도</translation>
+        <translation type="obsolete">최대 휘도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1841"/>
+        <location filename="../ui/prefdialog.ui" line="2129"/>
         <source>Width</source>
         <translation>두께</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2033"/>
+        <location filename="../ui/prefdialog.ui" line="2321"/>
         <source>Line spacing</source>
         <translation>줄간격</translation>
     </message>
@@ -3502,7 +3704,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">기본 줄 간격</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1883"/>
+        <location filename="../ui/prefdialog.ui" line="2171"/>
         <source>Shadow</source>
         <translation>그림자</translation>
     </message>
@@ -3511,7 +3713,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">그림자를 표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1936"/>
+        <location filename="../ui/prefdialog.ui" line="2224"/>
         <source>Opacity</source>
         <translation>투명도</translation>
     </message>
@@ -3520,12 +3722,12 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">%</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1957"/>
+        <location filename="../ui/prefdialog.ui" line="2245"/>
         <source>X-offset</source>
         <translation>수평 거리</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1986"/>
+        <location filename="../ui/prefdialog.ui" line="2274"/>
         <source>Y-offset</source>
         <translation>수직 거리</translation>
     </message>
@@ -3534,7 +3736,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">테두리를 부드럽게</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2149"/>
+        <location filename="../ui/prefdialog.ui" line="2437"/>
         <source>You can specify the order of unified(mulit) subtitles with the &apos;Name&apos; property in a subtitle file.
 If not specified, they will be displayed in selected order.
 e.g.: English, Korean</source>
@@ -3543,72 +3745,73 @@ e.g.: English, Korean</source>
 예: English, 영어, Korean, 한국어</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2207"/>
+        <location filename="../ui/prefdialog.ui" line="2495"/>
         <source>Menu</source>
         <translation>메뉴</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2212"/>
-        <location filename="../ui/prefdialog.ui" line="2254"/>
+        <location filename="../ui/prefdialog.ui" line="2500"/>
+        <location filename="../ui/prefdialog.ui" line="2542"/>
         <source>Shortcut1</source>
         <translation>단축키1</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2217"/>
-        <location filename="../ui/prefdialog.ui" line="2270"/>
+        <location filename="../ui/prefdialog.ui" line="2505"/>
+        <location filename="../ui/prefdialog.ui" line="2558"/>
         <source>Shortcut2</source>
         <translation>단축키2</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2222"/>
-        <location filename="../ui/prefdialog.ui" line="2286"/>
+        <location filename="../ui/prefdialog.ui" line="2510"/>
+        <location filename="../ui/prefdialog.ui" line="2574"/>
         <source>Shortcut3</source>
         <translation>단축키3</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2227"/>
-        <location filename="../ui/prefdialog.ui" line="2302"/>
+        <location filename="../ui/prefdialog.ui" line="2515"/>
+        <location filename="../ui/prefdialog.ui" line="2590"/>
         <source>Shortcut4</source>
         <translation>단축키4</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2460"/>
+        <location filename="../ui/prefdialog.ui" line="2748"/>
         <source>Seek</source>
         <translation>탐색</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2469"/>
+        <location filename="../ui/prefdialog.ui" line="2757"/>
         <source>Step 1</source>
         <translation>1단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2492"/>
+        <location filename="../ui/prefdialog.ui" line="2780"/>
         <source>Step 2</source>
         <translation>2단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2515"/>
+        <location filename="../ui/prefdialog.ui" line="2803"/>
         <source>Step 3</source>
         <translation>3단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2541"/>
-        <location filename="../prefdialog.cpp" line="273"/>
+        <location filename="../ui/prefdialog.ui" line="2829"/>
+        <location filename="../prefdialog.cpp" line="274"/>
         <source>Playback</source>
         <translation>재생</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2550"/>
+        <location filename="../ui/prefdialog.ui" line="2838"/>
         <source>Speed</source>
         <translation>속도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2629"/>
+        <location filename="../ui/prefdialog.ui" line="2917"/>
+        <location filename="../prefdialog.cpp" line="285"/>
         <source>Audio</source>
         <translation>오디오</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2635"/>
+        <location filename="../ui/prefdialog.ui" line="2923"/>
         <source>Volume</source>
         <translation>소리</translation>
     </message>
@@ -3617,33 +3820,33 @@ e.g.: English, Korean</source>
         <translation type="obsolete">앰프</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2579"/>
+        <location filename="../ui/prefdialog.ui" line="2867"/>
         <source>Position</source>
         <translation>위치</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2599"/>
-        <location filename="../ui/prefdialog.ui" line="2687"/>
+        <location filename="../ui/prefdialog.ui" line="2887"/>
+        <location filename="../ui/prefdialog.ui" line="2975"/>
         <source>Sync Delay</source>
         <translation>싱크 지연</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2719"/>
+        <location filename="../ui/prefdialog.ui" line="3007"/>
         <source>Brightness</source>
         <translation>밝기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2739"/>
+        <location filename="../ui/prefdialog.ui" line="3027"/>
         <source>Contrast</source>
         <translation>대비</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2759"/>
+        <location filename="../ui/prefdialog.ui" line="3047"/>
         <source>Saturation</source>
         <translation>채도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2779"/>
+        <location filename="../ui/prefdialog.ui" line="3067"/>
         <source>Hue</source>
         <translation>색조</translation>
     </message>
@@ -3672,7 +3875,7 @@ e.g.: English, Korean</source>
         <translation type="obsolete">DVD</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="418"/>
+        <location filename="../prefdialog.cpp" line="483"/>
         <source>Preferences</source>
         <translation>환경 설정</translation>
     </message>
@@ -3681,7 +3884,7 @@ e.g.: English, Korean</source>
         <translation type="obsolete">시스템 기본 로케일</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="272"/>
+        <location filename="../prefdialog.cpp" line="273"/>
         <source>Open</source>
         <translation>열기</translation>
     </message>
@@ -3698,37 +3901,36 @@ e.g.: English, Korean</source>
         <translation type="obsolete">어플리케이션</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="276"/>
         <source>Advanced</source>
-        <translation>고급</translation>
+        <translation type="obsolete">고급</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="280"/>
+        <location filename="../prefdialog.cpp" line="291"/>
         <source>Appearance</source>
         <translation>생김새</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="281"/>
+        <location filename="../prefdialog.cpp" line="292"/>
         <source>Priority</source>
         <translation>우선순위</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="283"/>
+        <location filename="../prefdialog.cpp" line="294"/>
         <source>User interface</source>
         <translation>유저 인터페이스</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="284"/>
+        <location filename="../prefdialog.cpp" line="295"/>
         <source>Keyboard shorcuts</source>
         <translation>키보드 단축키</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="285"/>
+        <location filename="../prefdialog.cpp" line="296"/>
         <source>Mouse actions</source>
         <translation>마우스 동작</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="286"/>
+        <location filename="../prefdialog.cpp" line="297"/>
         <source>Control step</source>
         <translation>조작 단계</translation>
     </message>
@@ -3738,17 +3940,17 @@ e.g.: English, Korean</source>
         <translation>스킨</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="289"/>
+        <location filename="../prefdialog.cpp" line="300"/>
         <source>Open from file manager</source>
         <translation>파일 매니저에서 열었을 때</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="290"/>
+        <location filename="../prefdialog.cpp" line="301"/>
         <source>Open by drag-and-drop</source>
         <translation>드래그 앤 드롭으로 열었을 때</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="302"/>
+        <location filename="../prefdialog.cpp" line="311"/>
         <source>Not supported</source>
         <translation>지원 안됨</translation>
     </message>
@@ -3757,77 +3959,107 @@ e.g.: English, Korean</source>
         <translation type="obsolete">미리보기 없음!</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="274"/>
+        <location filename="../prefdialog.cpp" line="275"/>
         <source>Behaviour</source>
         <translation>동작</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="275"/>
+        <location filename="../prefdialog.cpp" line="276"/>
         <source>Look</source>
         <translation>모양</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="393"/>
+        <location filename="../prefdialog.cpp" line="277"/>
+        <source>Cache</source>
+        <translation>캐쉬</translation>
+    </message>
+    <message>
+        <location filename="../prefdialog.cpp" line="280"/>
+        <source>Video</source>
+        <translation>비디오</translation>
+    </message>
+    <message>
+        <location filename="../prefdialog.cpp" line="281"/>
+        <source>Hardware acceleration</source>
+        <translation>하드웨어 가속</translation>
+    </message>
+    <message>
+        <location filename="../prefdialog.cpp" line="282"/>
+        <source>Deinterlace</source>
+        <translation>디인터레이스</translation>
+    </message>
+    <message>
+        <location filename="../prefdialog.cpp" line="286"/>
+        <source>Sound</source>
+        <translation>사운드</translation>
+    </message>
+    <message>
+        <location filename="../prefdialog.cpp" line="287"/>
+        <source>Aduio filter</source>
+        <translation>오디오 필터</translation>
+    </message>
+    <message>
+        <location filename="../prefdialog.cpp" line="458"/>
         <source>CMPlayer</source>
         <translation>CMPlayer</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="394"/>
+        <location filename="../prefdialog.cpp" line="459"/>
         <source>Movist</source>
         <translation>무비스트</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="431"/>
+        <location filename="../prefdialog.cpp" line="496"/>
         <source>Use the system default language</source>
         <translation>시스템 기본 언어를 사용</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="435"/>
+        <location filename="../prefdialog.cpp" line="500"/>
         <source>English</source>
         <translation>영어</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="441"/>
+        <location filename="../prefdialog.cpp" line="506"/>
         <source>Korean</source>
         <translation>한국어</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="444"/>
+        <location filename="../prefdialog.cpp" line="509"/>
         <source>Russian</source>
         <translation>러시아어</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="457"/>
+        <location filename="../prefdialog.cpp" line="522"/>
         <source>Middle Click</source>
         <translation>중간 클릭</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="459"/>
+        <location filename="../prefdialog.cpp" line="524"/>
         <source>All</source>
         <translation>모든 파일</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="462"/>
+        <location filename="../prefdialog.cpp" line="527"/>
         <source>Ok</source>
         <translation>확인</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="463"/>
+        <location filename="../prefdialog.cpp" line="528"/>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="464"/>
+        <location filename="../prefdialog.cpp" line="529"/>
         <source>Apply</source>
         <translation>적용</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="465"/>
+        <location filename="../prefdialog.cpp" line="530"/>
         <source>Restore Defaults</source>
         <translation>기본값 복원</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="466"/>
+        <location filename="../prefdialog.cpp" line="531"/>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>
@@ -3840,7 +4072,7 @@ e.g.: English, Korean</source>
         <translation type="obsolete">재생목록 전환</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="438"/>
+        <location filename="../prefdialog.cpp" line="503"/>
         <source>Japanese</source>
         <translation>일본어</translation>
     </message>
@@ -3852,7 +4084,7 @@ e.g.: English, Korean</source>
 <context>
     <name>PrefOpenMediaGroup</name>
     <message>
-        <location filename="../prefdialog.cpp" line="24"/>
+        <location filename="../prefdialog.cpp" line="27"/>
         <source>Start the playback</source>
         <translation>재생을 시작하기</translation>
     </message>
@@ -5213,28 +5445,28 @@ e.g.: English, Korean</source>
 <context>
     <name>RootMenu</name>
     <message>
-        <location filename="../rootmenu.cpp" line="294"/>
-        <location filename="../rootmenu.cpp" line="443"/>
+        <location filename="../rootmenu.cpp" line="301"/>
+        <location filename="../rootmenu.cpp" line="454"/>
         <source>Open</source>
         <translation>열기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="295"/>
+        <location filename="../rootmenu.cpp" line="302"/>
         <source>Open File</source>
         <translation>파일 열기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="296"/>
+        <location filename="../rootmenu.cpp" line="303"/>
         <source>Open Folder</source>
         <translation>폴더 열기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="297"/>
+        <location filename="../rootmenu.cpp" line="304"/>
         <source>Load URL</source>
         <translation>URL 불러오기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="298"/>
+        <location filename="../rootmenu.cpp" line="305"/>
         <source>Open DVD</source>
         <translation>DVD 열기</translation>
     </message>
@@ -5243,113 +5475,113 @@ e.g.: English, Korean</source>
         <translation type="obsolete">최근 연 목록</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="302"/>
-        <location filename="../rootmenu.cpp" line="445"/>
-        <location filename="../rootmenu.cpp" line="455"/>
+        <location filename="../rootmenu.cpp" line="309"/>
+        <location filename="../rootmenu.cpp" line="456"/>
+        <location filename="../rootmenu.cpp" line="466"/>
         <source>Clear</source>
         <translation>비우기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="305"/>
-        <location filename="../rootmenu.cpp" line="306"/>
+        <location filename="../rootmenu.cpp" line="312"/>
+        <location filename="../rootmenu.cpp" line="313"/>
         <source>Play</source>
         <translation>재생</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="307"/>
+        <location filename="../rootmenu.cpp" line="314"/>
         <source>Stop</source>
         <translation>정지</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="308"/>
+        <location filename="../rootmenu.cpp" line="315"/>
         <source>Play Previous</source>
         <translation>이전 재생</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="309"/>
+        <location filename="../rootmenu.cpp" line="316"/>
         <source>Play Next</source>
         <translation>다음 재생</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="312"/>
+        <location filename="../rootmenu.cpp" line="319"/>
         <source>Playback Speed</source>
         <translation>재생 속도</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="313"/>
-        <location filename="../rootmenu.cpp" line="395"/>
-        <location filename="../rootmenu.cpp" line="413"/>
+        <location filename="../rootmenu.cpp" line="320"/>
+        <location filename="../rootmenu.cpp" line="402"/>
+        <location filename="../rootmenu.cpp" line="427"/>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="317"/>
+        <location filename="../rootmenu.cpp" line="324"/>
         <source>A-B Repeat</source>
         <translation>구간 반복</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="318"/>
+        <location filename="../rootmenu.cpp" line="325"/>
         <source>Set Range to Current Time</source>
         <translation>현재 시간으로 구간 지정</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="319"/>
+        <location filename="../rootmenu.cpp" line="326"/>
         <source>Repeat Current Subtitle</source>
         <translation>현재 자막 반복</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="320"/>
+        <location filename="../rootmenu.cpp" line="327"/>
         <source>Quit</source>
         <translation>종료</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="323"/>
+        <location filename="../rootmenu.cpp" line="330"/>
         <source>Seek</source>
         <translation>탐색</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="324"/>
+        <location filename="../rootmenu.cpp" line="331"/>
         <source>Forward %1sec</source>
         <translation>%1초 앞으로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="328"/>
+        <location filename="../rootmenu.cpp" line="335"/>
         <source>Backward %1sec</source>
         <translation>%1초 뒤로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="333"/>
+        <location filename="../rootmenu.cpp" line="340"/>
         <source>To Previous Subtitle</source>
         <translation>이전 자막으로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="334"/>
+        <location filename="../rootmenu.cpp" line="341"/>
         <source>To Beginning of Current Subtitle</source>
         <translation>현재 자막의 시작으로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="335"/>
+        <location filename="../rootmenu.cpp" line="342"/>
         <source>To Next Subtitle</source>
         <translation>다음 자막으로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="337"/>
+        <location filename="../rootmenu.cpp" line="344"/>
         <source>Title</source>
         <translation>타이틀</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="338"/>
+        <location filename="../rootmenu.cpp" line="345"/>
         <source>Chapter</source>
         <translation>챕터</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="341"/>
+        <location filename="../rootmenu.cpp" line="348"/>
         <source>Subtitle</source>
         <translation>자막</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="347"/>
-        <location filename="../rootmenu.cpp" line="427"/>
+        <location filename="../rootmenu.cpp" line="354"/>
+        <location filename="../rootmenu.cpp" line="438"/>
         <source>Select Next</source>
         <translation>다음 선택</translation>
     </message>
@@ -5358,17 +5590,17 @@ e.g.: English, Korean</source>
         <translation type="obsolete">자막 파일</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="348"/>
+        <location filename="../rootmenu.cpp" line="355"/>
         <source>Select All</source>
         <translation>모두 선택</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="349"/>
+        <location filename="../rootmenu.cpp" line="356"/>
         <source>Hide</source>
         <translation>숨기기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="344"/>
+        <location filename="../rootmenu.cpp" line="351"/>
         <source>Subtitle Track</source>
         <translation>자막 트랙</translation>
     </message>
@@ -5377,224 +5609,245 @@ e.g.: English, Korean</source>
         <translation type="obsolete">레터박스에 표시</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="301"/>
+        <location filename="../rootmenu.cpp" line="308"/>
         <source>Recently Opened</source>
         <translation>최근 연 목록</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="345"/>
+        <location filename="../rootmenu.cpp" line="352"/>
         <source>Open File(s)</source>
         <translation>파일 열기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="346"/>
+        <location filename="../rootmenu.cpp" line="353"/>
         <source>Clear File(s)</source>
         <translation>파일 비우기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="351"/>
+        <location filename="../rootmenu.cpp" line="358"/>
         <source>Display in Letterbox</source>
         <translation>레터박스에 표시</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="352"/>
+        <location filename="../rootmenu.cpp" line="359"/>
         <source>Display in Video</source>
         <translation>비디오에 표시</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="353"/>
+        <location filename="../rootmenu.cpp" line="360"/>
         <source>Top Alignment</source>
         <translation>상단 정렬</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="354"/>
+        <location filename="../rootmenu.cpp" line="361"/>
         <source>Bottom Alignment</source>
         <translation>하단 정렬</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="356"/>
+        <location filename="../rootmenu.cpp" line="363"/>
         <source>Up %1%</source>
         <translation>%1% 위로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="357"/>
+        <location filename="../rootmenu.cpp" line="364"/>
         <source>Down %1%</source>
         <translation>%1% 아래로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="358"/>
-        <location filename="../rootmenu.cpp" line="431"/>
+        <location filename="../rootmenu.cpp" line="365"/>
+        <location filename="../rootmenu.cpp" line="442"/>
         <source>Reset Sync</source>
         <translation>싱크 초기화</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="359"/>
-        <location filename="../rootmenu.cpp" line="432"/>
+        <location filename="../rootmenu.cpp" line="366"/>
+        <location filename="../rootmenu.cpp" line="443"/>
         <source>Sync %1sec</source>
         <translation>싱크 %1초</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="362"/>
+        <location filename="../rootmenu.cpp" line="369"/>
         <source>Video</source>
         <translation>비디오</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="363"/>
+        <location filename="../rootmenu.cpp" line="370"/>
         <source>Video Track</source>
         <translation>비디오 트랙</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="366"/>
+        <location filename="../rootmenu.cpp" line="373"/>
         <source>Aspect Ratio</source>
         <translation>화면 비율</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="367"/>
+        <location filename="../rootmenu.cpp" line="374"/>
+        <location filename="../rootmenu.cpp" line="412"/>
         <source>Auto</source>
         <translation>자동</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="368"/>
-        <location filename="../rootmenu.cpp" line="377"/>
+        <location filename="../rootmenu.cpp" line="375"/>
+        <location filename="../rootmenu.cpp" line="384"/>
         <source>Same as Window</source>
         <translation>창 비율에 맞춤</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="369"/>
-        <location filename="../rootmenu.cpp" line="378"/>
+        <location filename="../rootmenu.cpp" line="376"/>
+        <location filename="../rootmenu.cpp" line="385"/>
         <source>4:3 (TV)</source>
         <translation>4:3 (TV)</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="370"/>
-        <location filename="../rootmenu.cpp" line="379"/>
+        <location filename="../rootmenu.cpp" line="377"/>
+        <location filename="../rootmenu.cpp" line="386"/>
         <source>16:9 (HDTV)</source>
         <translation>16:9 (HDTV)</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="371"/>
-        <location filename="../rootmenu.cpp" line="380"/>
+        <location filename="../rootmenu.cpp" line="378"/>
+        <location filename="../rootmenu.cpp" line="387"/>
         <source>1.85:1 (Wide Vision)</source>
         <translation>1.85:1 (와이드비전)</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="372"/>
-        <location filename="../rootmenu.cpp" line="381"/>
+        <location filename="../rootmenu.cpp" line="379"/>
+        <location filename="../rootmenu.cpp" line="388"/>
         <source>2.35:1 (CinemaScope)</source>
         <translation>2.35:1 (시네마스코프)</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="375"/>
+        <location filename="../rootmenu.cpp" line="382"/>
         <source>Crop</source>
         <translation>잘라내기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="376"/>
+        <location filename="../rootmenu.cpp" line="383"/>
         <source>Off</source>
         <translation>끄기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="384"/>
+        <location filename="../rootmenu.cpp" line="391"/>
         <source>Screen Alignment</source>
         <translation>화면 정렬</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="386"/>
+        <location filename="../rootmenu.cpp" line="393"/>
         <source>Top</source>
         <translation>상단</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="387"/>
+        <location filename="../rootmenu.cpp" line="394"/>
         <source>Vertical Center</source>
         <translation>수직 중앙</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="388"/>
+        <location filename="../rootmenu.cpp" line="395"/>
         <source>Bottom</source>
         <translation>하단</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="389"/>
+        <location filename="../rootmenu.cpp" line="396"/>
         <source>Left</source>
         <translation>왼쪽</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="390"/>
+        <location filename="../rootmenu.cpp" line="397"/>
         <source>Horizontal Center</source>
         <translation>수평 중앙</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="391"/>
+        <location filename="../rootmenu.cpp" line="398"/>
         <source>Right</source>
         <translation>오른쪽</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="394"/>
+        <location filename="../rootmenu.cpp" line="401"/>
         <source>Screen Position</source>
         <translation>화면 위치</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="396"/>
+        <location filename="../rootmenu.cpp" line="403"/>
         <source>Up</source>
         <translation>위로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="397"/>
+        <location filename="../rootmenu.cpp" line="404"/>
         <source>Down</source>
         <translation>아래로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="398"/>
+        <location filename="../rootmenu.cpp" line="405"/>
         <source>To Left</source>
         <translation>왼쪽으로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="399"/>
+        <location filename="../rootmenu.cpp" line="406"/>
         <source>To Right</source>
         <translation>오른쪽으로</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="402"/>
+        <location filename="../rootmenu.cpp" line="409"/>
+        <source>Deinterlace</source>
+        <translation>디인터레이스</translation>
+    </message>
+    <message>
+        <location filename="../rootmenu.cpp" line="410"/>
+        <source>Cycle</source>
+        <translation>다음 선택</translation>
+    </message>
+    <message>
+        <location filename="../rootmenu.cpp" line="411"/>
+        <source>Never</source>
+        <translation>적용 안 함</translation>
+    </message>
+    <message>
+        <location filename="../rootmenu.cpp" line="413"/>
+        <source>Always</source>
+        <translation>항상 적용</translation>
+    </message>
+    <message>
+        <location filename="../rootmenu.cpp" line="416"/>
         <source>Filter</source>
         <translation>필터</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="403"/>
+        <location filename="../rootmenu.cpp" line="417"/>
         <source>Flip Vertically</source>
         <translation>상하 반전</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="404"/>
+        <location filename="../rootmenu.cpp" line="418"/>
         <source>Flip Horizontally</source>
         <translation>좌우 반전</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="405"/>
+        <location filename="../rootmenu.cpp" line="419"/>
         <source>Blur</source>
         <translation>부드럽게</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="406"/>
+        <location filename="../rootmenu.cpp" line="420"/>
         <source>Sharpen</source>
         <translation>선명하게</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="407"/>
+        <location filename="../rootmenu.cpp" line="421"/>
         <source>Grayscale</source>
         <translation>그레이스케일</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="408"/>
+        <location filename="../rootmenu.cpp" line="422"/>
         <source>Invert Color</source>
         <translation>색 반전</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="409"/>
+        <location filename="../rootmenu.cpp" line="423"/>
         <source>Disable Filters</source>
         <translation>필터 끄기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="453"/>
+        <location filename="../rootmenu.cpp" line="464"/>
         <source>History</source>
         <translation>재생 기록</translation>
     </message>
@@ -5603,7 +5856,7 @@ e.g.: English, Korean</source>
         <translation type="obsolete">휘도 재규격화</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="447"/>
+        <location filename="../rootmenu.cpp" line="458"/>
         <source>Append URL</source>
         <translation>URL 추가</translation>
     </message>
@@ -5612,12 +5865,12 @@ e.g.: English, Korean</source>
         <translation type="obsolete">재생 기록</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="460"/>
+        <location filename="../rootmenu.cpp" line="471"/>
         <source>Playback Information</source>
         <translation>재생 정보</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="467"/>
+        <location filename="../rootmenu.cpp" line="478"/>
         <source>Stay on Top While Playing</source>
         <translation>재생중에만 맨 위에 표시</translation>
     </message>
@@ -5626,17 +5879,16 @@ e.g.: English, Korean</source>
         <translation type="obsolete">명암 조절</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="420"/>
         <source>Drop Frame</source>
-        <translation>드롭 프레임</translation>
+        <translation type="obsolete">드롭 프레임</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="429"/>
+        <location filename="../rootmenu.cpp" line="440"/>
         <source>Volume Normalizer</source>
         <translation>볼륨 노멀라이저</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="430"/>
+        <location filename="../rootmenu.cpp" line="441"/>
         <source>Tempo Scaler</source>
         <translation>템포 스케일러</translation>
     </message>
@@ -5649,32 +5901,32 @@ e.g.: English, Korean</source>
         <translation type="obsolete">모든 필터 무시</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="412"/>
+        <location filename="../rootmenu.cpp" line="426"/>
         <source>Color</source>
         <translation>색</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="414"/>
+        <location filename="../rootmenu.cpp" line="428"/>
         <source>Brightness %1%</source>
         <translation>밝기 %1%</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="415"/>
+        <location filename="../rootmenu.cpp" line="429"/>
         <source>Saturation %1%</source>
         <translation>채도 %1%</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="416"/>
+        <location filename="../rootmenu.cpp" line="430"/>
         <source>Contrast %1%</source>
         <translation>대비 %1%</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="417"/>
+        <location filename="../rootmenu.cpp" line="431"/>
         <source>Hue %1%</source>
         <translation>색조 %1%</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="419"/>
+        <location filename="../rootmenu.cpp" line="433"/>
         <source>Take Snapshot</source>
         <translation>스냅샷 찍기</translation>
     </message>
@@ -5691,17 +5943,17 @@ e.g.: English, Korean</source>
         <translation type="obsolete">픽스맵</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="425"/>
+        <location filename="../rootmenu.cpp" line="436"/>
         <source>Audio</source>
         <translation>오디오</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="426"/>
+        <location filename="../rootmenu.cpp" line="437"/>
         <source>Audio Track</source>
         <translation>오디오 트랙</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="428"/>
+        <location filename="../rootmenu.cpp" line="439"/>
         <source>Mute</source>
         <translation>음소거</translation>
     </message>
@@ -5710,68 +5962,68 @@ e.g.: English, Korean</source>
         <translation type="obsolete">소리 평준화</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="433"/>
+        <location filename="../rootmenu.cpp" line="444"/>
         <source>Volume %1%</source>
         <translation>볼륨 %1%</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="434"/>
+        <location filename="../rootmenu.cpp" line="445"/>
         <source>Amp %1%</source>
         <translation>앰프 %1%</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="437"/>
+        <location filename="../rootmenu.cpp" line="448"/>
         <source>Undo</source>
         <translation>실행 취소</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="438"/>
+        <location filename="../rootmenu.cpp" line="449"/>
         <source>Redo</source>
         <translation>다시 실행</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="439"/>
+        <location filename="../rootmenu.cpp" line="450"/>
         <source>Tools</source>
         <translation>도구</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="441"/>
+        <location filename="../rootmenu.cpp" line="452"/>
         <source>Playlist</source>
         <translation>재생 목록</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="442"/>
-        <location filename="../rootmenu.cpp" line="454"/>
+        <location filename="../rootmenu.cpp" line="453"/>
+        <location filename="../rootmenu.cpp" line="465"/>
         <source>Show/Hide</source>
         <translation>보이기/숨기기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="444"/>
+        <location filename="../rootmenu.cpp" line="455"/>
         <source>Save</source>
         <translation>저장</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="446"/>
+        <location filename="../rootmenu.cpp" line="457"/>
         <source>Append File</source>
         <translation>파일 추가</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="448"/>
+        <location filename="../rootmenu.cpp" line="459"/>
         <source>Remove</source>
         <translation>삭제</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="449"/>
+        <location filename="../rootmenu.cpp" line="460"/>
         <source>Move Up</source>
         <translation>위로 이동</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="450"/>
+        <location filename="../rootmenu.cpp" line="461"/>
         <source>Move Down</source>
         <translation>아래로 이동</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="451"/>
+        <location filename="../rootmenu.cpp" line="462"/>
         <source>Favorites</source>
         <translation>즐겨찾기</translation>
     </message>
@@ -5780,17 +6032,17 @@ e.g.: English, Korean</source>
         <translation type="obsolete">재생 기록</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="457"/>
+        <location filename="../rootmenu.cpp" line="468"/>
         <source>Subtitle View</source>
         <translation>자막 보기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="458"/>
+        <location filename="../rootmenu.cpp" line="469"/>
         <source>Preferences</source>
         <translation>환경 설정</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="459"/>
+        <location filename="../rootmenu.cpp" line="470"/>
         <source>Reload Skin</source>
         <translation>스킨 다시 불러오기</translation>
     </message>
@@ -5799,22 +6051,22 @@ e.g.: English, Korean</source>
         <translation type="obsolete">재생 정보</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="461"/>
+        <location filename="../rootmenu.cpp" line="472"/>
         <source>Auto-exit</source>
         <translation>자동 종료</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="462"/>
+        <location filename="../rootmenu.cpp" line="473"/>
         <source>Auto-shutdown</source>
         <translation>자동 시스템 종료</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="465"/>
+        <location filename="../rootmenu.cpp" line="476"/>
         <source>Window</source>
         <translation>창</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="466"/>
+        <location filename="../rootmenu.cpp" line="477"/>
         <source>Always Stay on Top</source>
         <translation>항상 맨 위에 표시</translation>
     </message>
@@ -5823,47 +6075,47 @@ e.g.: English, Korean</source>
         <translation type="obsolete">재생중에만 맨 위에 표시</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="468"/>
+        <location filename="../rootmenu.cpp" line="479"/>
         <source>Don&apos;t Stay on Top</source>
         <translation>맨위에 표시 안함</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="469"/>
+        <location filename="../rootmenu.cpp" line="480"/>
         <source>Proper Size</source>
         <translation>적당한 크기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="470"/>
+        <location filename="../rootmenu.cpp" line="481"/>
         <source>Fullscreen</source>
         <translation>전체 화면</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="471"/>
+        <location filename="../rootmenu.cpp" line="482"/>
         <source>Minimize</source>
         <translation>최소화</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="472"/>
+        <location filename="../rootmenu.cpp" line="483"/>
         <source>Maximize</source>
         <translation>최대화</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="473"/>
+        <location filename="../rootmenu.cpp" line="484"/>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="476"/>
+        <location filename="../rootmenu.cpp" line="487"/>
         <source>Help</source>
         <translation>도움말</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="477"/>
+        <location filename="../rootmenu.cpp" line="488"/>
         <source>About %1</source>
         <translation>%1 정보</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="478"/>
+        <location filename="../rootmenu.cpp" line="489"/>
         <source>Exit</source>
         <translation>종료</translation>
     </message>
@@ -5895,7 +6147,7 @@ e.g.: English, Korean</source>
     <name>SimpleListWidget</name>
     <message>
         <location filename="../simplelistwidget.cpp" line="12"/>
-        <location filename="../simplelistwidget.cpp" line="73"/>
+        <location filename="../simplelistwidget.cpp" line="74"/>
         <source>Add</source>
         <translation>추가</translation>
     </message>
@@ -5915,12 +6167,12 @@ e.g.: English, Korean</source>
         <translation>아래로</translation>
     </message>
     <message>
-        <location filename="../simplelistwidget.cpp" line="75"/>
+        <location filename="../simplelistwidget.cpp" line="76"/>
         <source>&amp;Ok</source>
         <translation>확인(&amp;O)</translation>
     </message>
     <message>
-        <location filename="../simplelistwidget.cpp" line="76"/>
+        <location filename="../simplelistwidget.cpp" line="77"/>
         <source>&amp;Cancel</source>
         <translation>취소(&amp;C)</translation>
     </message>
@@ -6070,19 +6322,16 @@ e.g.: English, Korean</source>
 <context>
     <name>SubtitleAutoload</name>
     <message>
-        <location filename="../enums.hpp" line="276"/>
         <source>Subtitles which have the same name as that of playing file</source>
-        <translation>재생 파일과 파일명이 같은 자막 파일</translation>
+        <translation type="obsolete">재생 파일과 파일명이 같은 자막 파일</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="278"/>
         <source>Subtitles whose names contain the name of playing file</source>
-        <translation>재생 파일의 이름이 파일명에 포함된 자막 파일</translation>
+        <translation type="obsolete">재생 파일의 이름이 파일명에 포함된 자막 파일</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="280"/>
         <source>All subtitles in the folder where the playing file is located</source>
-        <translation>재생 파일과 같은 폴더에 있는 모든 자막</translation>
+        <translation type="obsolete">재생 파일과 같은 폴더에 있는 모든 자막</translation>
     </message>
     <message>
         <source>Do not load any other subtitles</source>
@@ -6092,24 +6341,20 @@ e.g.: English, Korean</source>
 <context>
     <name>SubtitleAutoselect</name>
     <message>
-        <location filename="../enums.hpp" line="331"/>
         <source>Subtitle which has the same name as that of playing file</source>
-        <translation>재생 파일과 파일명이 같은 자막 파일</translation>
+        <translation type="obsolete">재생 파일과 파일명이 같은 자막 파일</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="333"/>
         <source>First subtitle from loaded ones</source>
-        <translation>불러온 자막중 첫번째 자막</translation>
+        <translation type="obsolete">불러온 자막중 첫번째 자막</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="335"/>
         <source>All loaded subtitles</source>
-        <translation>불러온 모든 자막</translation>
+        <translation type="obsolete">불러온 모든 자막</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="337"/>
         <source>Each language subtitle</source>
-        <translation>각 언어별 자막</translation>
+        <translation type="obsolete">각 언어별 자막</translation>
     </message>
 </context>
 <context>
@@ -6220,34 +6465,28 @@ Do you want to start from where it&apos;s stopped?
 <context>
     <name>WheelAction</name>
     <message>
-        <location filename="../enums.hpp" line="501"/>
         <source>Seek playback for step 1</source>
-        <translation>1단계 탐색</translation>
+        <translation type="obsolete">1단계 탐색</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="503"/>
         <source>Seek playback for step 2</source>
-        <translation>2단계 탐색</translation>
+        <translation type="obsolete">2단계 탐색</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="505"/>
         <source>Seek playback for step 3</source>
-        <translation>3단계 탐색</translation>
+        <translation type="obsolete">3단계 탐색</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="507"/>
         <source>Play previous/next</source>
-        <translation>이전/다음 재생</translation>
+        <translation type="obsolete">이전/다음 재생</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="509"/>
         <source>Volumn up/down</source>
-        <translation>볼륨 크게/작게</translation>
+        <translation type="obsolete">볼륨 크게/작게</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="511"/>
         <source>Amp. up/down</source>
-        <translation>앰프 증가/감소</translation>
+        <translation type="obsolete">앰프 증가/감소</translation>
     </message>
 </context>
 </TS>
