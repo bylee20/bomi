@@ -53,14 +53,15 @@ struct PlayEngine::Data {
 	int start = 0, tick = 0;
 	MPContext *mpctx = nullptr;
 	VideoOutput *video = nullptr;
-	GetStartTime getStartTimeFunc;
+	GetMrlInt getStartTimeFunc, getCacheFunc;
 	PlaylistModel playlist;
 	QByteArray hwAccCodecs;
 	QMutex imgMutex;
 	QMutex mutex;
 	QMap<QString, QString> subtitleNames;
 	QList<QTemporaryFile*> subtitleFiles;
-	int getStartTime(const Mrl &mrl) {return getStartTimeFunc ? getStartTimeFunc(mrl) : 0;}
+	int getStartTime(const Mrl &mrl) { return getStartTimeFunc ? getStartTimeFunc(mrl) : 0; }
+	int getCache(const Mrl &mrl) { return getCacheFunc ? getCacheFunc(mrl) : 0; }
 	QByteArray &setFileName(const Mrl &mrl) {
 		fileName = "\"";
 		fileName += mrl.toString().toLocal8Bit();
@@ -172,8 +173,7 @@ const std::array<AudioDriverName, AudioDriverInfo::size()-1> audioDriverNames = 
 
 void PlayEngine::setAudioDriver(AudioDriver driver) {
 	if (_Change(d->audioDriver, driver)) {
-		auto it = std::find_if(audioDriverNames.begin(), audioDriverNames.end()
-			, [driver] (const AudioDriverName &one) { return one.first == driver; });
+		auto it = _FindIf(audioDriverNames, [driver] (const AudioDriverName &one) { return one.first == driver; });
 		d->ao = it != audioDriverNames.end() ? it->second : "";
 	}
 }
@@ -186,12 +186,20 @@ AudioDriver PlayEngine::audioDriver() const {
 	if (!d->mpctx->mixer.ao)
 		return preferredAudioDriver();
 	auto name = d->mpctx->mixer.ao->driver->info->short_name;
-	auto it = std::find_if(audioDriverNames.begin(), audioDriverNames.end()
-		, [name] (const AudioDriverName &one) { return !qstrcmp(name, one.second);});
+	auto it = _FindIf(audioDriverNames, [name] (const AudioDriverName &one) { return !qstrcmp(name, one.second);});
 	return it != audioDriverNames.end() ? it->first : AudioDriver::Auto;
 }
 
-void PlayEngine::setGetStartTimeFunction(const GetStartTime &func) {
+void PlayEngine::setMinimumCache(int playback, int seeking) {
+	d->mpctx->opts->stream_cache_min_percent = d->mpctx->opts->stream_cache_pause = playback;
+	d->mpctx->opts->stream_cache_seek_min_percent = seeking;
+}
+
+void PlayEngine::setGetCacheFunction(const GetMrlInt &func) {
+	d->getCacheFunc = func;
+}
+
+void PlayEngine::setGetStartTimeFunction(const GetMrlInt &func) {
 	d->getStartTimeFunc = func;
 }
 
@@ -532,8 +540,10 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 #elif defined(Q_OS_MAC)
 		d->mpctx->opts->hwdec_api = HWDEC_VDA;
 #endif
-		mpctx->opts->hwdec_codecs = d->hwAccCodecs.data();
+		d->mpctx->opts->hwdec_codecs = d->hwAccCodecs.data();
 	}
+	d->mpctx->opts->stream_cache_size = d->getCache(Mrl(QString::fromLocal8Bit(d->mpctx->playlist->current->filename)));
+	qDebug() << d->mpctx->opts->stream_cache_size;
 	d->mpctx->opts->audio_driver_list->name = d->ao.data();
 	d->mpctx->opts->play_start.pos = d->start*1e-3;
 	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;

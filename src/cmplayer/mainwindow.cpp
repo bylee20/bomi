@@ -260,6 +260,18 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->engine.start();
 	d->engine.setGetStartTimeFunction([this] (const Mrl &mrl){return getStartTime(mrl);});
+	d->engine.setGetCacheFunction([this] (const Mrl &mrl) {
+		if (mrl.isLocalFile()) {
+			auto path = mrl.toLocalFile();
+			if (_ContainsIf(d->pref().network_folders, [path] (const QString &folder) {
+				return path.startsWith(folder);
+			}))
+				return d->pref().cache_network;
+			return d->pref().cache_local;
+		} if (mrl.isDvd())
+			return d->pref().cache_dvd;
+		return d->pref().cache_network;
+	});
 	d->engine.setVideoRenderer(&d->renderer);
 	d->renderer.setOverlay(&d->subtitle);
 	d->subtitleView = new SubtitleView(this);

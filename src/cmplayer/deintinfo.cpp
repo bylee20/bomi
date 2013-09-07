@@ -63,9 +63,7 @@ DeintInfo DeintInfo::fromString(const QString &text) {
 	const int flags = text.mid(idx + 1).toInt();
 	const QString name = text.left(idx);
 	auto &list = Item::list();
-	auto it = std::find_if(list.begin(), list.end(), [name] (const Item &item) {
-		return item.name == name;
-	});
+	auto it = _FindIf(list, [name] (const Item &item) { return item.name == name; });
 	return it != list.end() ? DeintInfo(it->method, flags) : DeintInfo();
 }
 

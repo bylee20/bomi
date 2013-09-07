@@ -137,6 +137,10 @@ public:
 	SoftwareVolume software_volume = SoftwareVolume::Auto;
 	ClippingMethod clipping_method = ClippingMethod::Auto;
 
+	int cache_local = 0, cache_network = 2048, cache_dvd = 0;
+	int cache_min_playback = 20, cache_min_seeking = 50;
+	QStringList network_folders;
+
 	static Shortcuts preset(ShortcutPreset id);
 
 	void save() const;

@@ -13,6 +13,7 @@ public:
 	void setValues(const QStringList &values);
 	QStringList values() const;
 	void setAddingAndErasingEnabled(bool enabled);
+	void setChangingOrderEnabled(bool enabled);
 private slots:
 	void slotCurrentItemChanged(QListWidgetItem *item);
 	void slotErase();

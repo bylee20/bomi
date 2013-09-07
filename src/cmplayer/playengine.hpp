@@ -14,7 +14,7 @@ class DeintInfo;			enum class DeintMode;
 enum class AudioDriver;		enum class SoftwareVolume;
 enum class ClippingMethod;
 
-typedef std::function<int(const Mrl&)> GetStartTime;
+typedef std::function<int(const Mrl&)> GetMrlInt;
 
 struct DvdInfo {
 	struct Title {
@@ -98,7 +98,8 @@ public:
 	StreamList videoStreams() const {return m_videoStreams;}
 	void setCurrentVideoStream(int id) {setmp("video", id);}
 	int currentVideoStream() const;
-	void setGetStartTimeFunction(const GetStartTime &func);
+	void setGetStartTimeFunction(const GetMrlInt &func);
+	void setGetCacheFunction(const GetMrlInt &func);
 	void setAudioSync(int sync) {if (_Change(m_audioSync, sync)) setmp("audio-delay", (float)(sync*0.001));}
 	int audioSync() const {return m_audioSync;}
 	const PlaylistModel &playlist() const;
@@ -125,6 +126,7 @@ public:
 	AudioDriver audioDriver() const;
 	void setSoftwareVolume(SoftwareVolume sv);
 	void setClippingMethod(ClippingMethod method);
+	void setMinimumCache(int playback, int seeking);
 public slots:
 	void setVolume(int volume);
 	void setPreamp(double preamp);

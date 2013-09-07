@@ -219,6 +219,13 @@ void Pref::save() const {
 	WRITE(audio_driver);
 	WRITE(software_volume);
 	WRITE(clipping_method);
+
+	WRITE(cache_local);
+	WRITE(cache_dvd);
+	WRITE(cache_network);
+	WRITE(cache_min_playback);
+	WRITE(cache_min_seeking);
+	WRITE(network_folders);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -312,6 +319,13 @@ void Pref::load() {
 	READ(audio_driver);
 	READ(software_volume);
 	READ(clipping_method);
+
+	READ(cache_local);
+	READ(cache_dvd);
+	READ(cache_network);
+	READ(cache_min_playback);
+	READ(cache_min_seeking);
+	READ(network_folders);
 #undef READ
 
 #define READ2(a) a.load(r, #a)

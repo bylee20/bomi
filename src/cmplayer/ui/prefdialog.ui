@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>4</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -488,12 +488,12 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="performance">
+       <widget class="QWidget" name="cache">
         <layout class="QVBoxLayout" name="verticalLayout_36">
          <item>
           <widget class="QGroupBox" name="groupBox_24">
            <property name="title">
-            <string>Cache</string>
+            <string>Default Cache</string>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_22">
             <item>
@@ -536,6 +536,9 @@
             </item>
             <item>
              <layout class="QFormLayout" name="formLayout_11">
+              <property name="fieldGrowthPolicy">
+               <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+              </property>
               <item row="0" column="0">
                <widget class="QLabel" name="cache_">
                 <property name="text">
@@ -553,15 +556,46 @@
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_48">
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_25">
+           <property name="title">
+            <string>Minimum Cache</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_23">
+            <item>
+             <layout class="QFormLayout" name="formLayout_16">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_53">
                 <property name="text">
-                 <string>Minimum</string>
+                 <string>For playback</string>
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QSpinBox" name="cache_min">
+              <item row="0" column="1">
+               <widget class="QSpinBox" name="cache_min_playback">
+                <property name="suffix">
+                 <string notr="true">%</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QFormLayout" name="formLayout_17">
+              <item row="0" column="0">
+               <widget class="QLabel" name="label_54">
+                <property name="text">
+                 <string>For seeking</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QSpinBox" name="cache_min_seeking">
                 <property name="suffix">
                  <string notr="true">%</string>
                 </property>
@@ -586,7 +620,14 @@
              </widget>
             </item>
             <item>
-             <widget class="SimpleListWidget" name="network_folders" native="true"/>
+             <widget class="SimpleListWidget" name="network_folders" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>

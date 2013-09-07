@@ -274,7 +274,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
 	addPage(tr("Behaviour"), d->ui.gen_behaviours, ":/img/preferences-system-session-services.png", general);
 	addPage(tr("Look"), d->ui.gen_appearance, ":/img/preferences-desktop-theme-32.png", general);
-	addPage(tr("Performance"), d->ui.performance, ":/img/chronometer.png", general);
+	addPage(tr("Cache"), d->ui.cache, ":/img/preferences-web-browser-cache.png", general);
 //	addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
 
 	auto video = addCategory(tr("Video"));
@@ -388,6 +388,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 	for (auto driver : audioDrivers)
 		d->ui.audio_driver->addItem(AudioDriverInfo::name(driver), (int)driver);
 
+	d->ui.network_folders->setAddingAndErasingEnabled(true);
+
 	auto checkSubAutoselect = [this] (const QVariant &data) {
 		const bool enabled = data.toInt() == SubtitleAutoselect::Matched;
 		d->ui.sub_ext_label->setEnabled(enabled);
@@ -395,6 +397,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	};
 
 	d->ui.sub_priority->setAddingAndErasingEnabled(true);
+	d->ui.sub_priority->setChangingOrderEnabled(true);
 	checkSubAutoselect(d->ui.sub_autoselect->currentData());
 
 	auto updateSkinPath = [this] (int idx) {
@@ -407,8 +410,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	d->ui.skin_name->addItems(Skin::names(true));
 	updateSkinPath(d->ui.skin_name->currentIndex());
-
-//	d->ui.audio_driver->
 
 	connect(d->ui.skin_name, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), updateSkinPath);
 	connect(d->ui.sub_autoselect, &DataComboBox::currentDataChanged, checkSubAutoselect);
@@ -648,6 +649,13 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.software_volume->setCurrentValue(p.software_volume);
 	d->ui.clipping_method->setCurrentValue(p.clipping_method);
 
+	d->ui.cache_local->setValue(p.cache_local);
+	d->ui.cache_network->setValue(p.cache_network);
+	d->ui.cache_dvd->setValue(p.cache_dvd);
+	d->ui.cache_min_playback->setValue(p.cache_min_playback);
+	d->ui.cache_min_seeking->setValue(p.cache_min_seeking);
+	d->ui.network_folders->setValues(p.network_folders);
+
 	setShortcuts(p.shortcuts);
 }
 
@@ -770,6 +778,13 @@ void PrefDialog::get(Pref &p) {
 	p.audio_driver = AudioDriverInfo::from(d->ui.audio_driver->currentData().toInt());
 	p.software_volume = d->ui.software_volume->currentValue();
 	p.clipping_method = d->ui.clipping_method->currentValue();
+
+	p.cache_local = d->ui.cache_local->value();
+	p.cache_network = d->ui.cache_network->value();
+	p.cache_dvd = d->ui.cache_dvd->value();
+	p.cache_min_playback = d->ui.cache_min_playback->value();
+	p.cache_min_seeking = d->ui.cache_min_seeking->value();
+	p.network_folders = d->ui.network_folders->values();
 
 	p.shortcuts.clear();
 	for (auto item : d->actionItems) {

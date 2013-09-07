@@ -36,5 +36,6 @@
         <file>img/applications-multimedia.png</file>
         <file>img/chronometer.png</file>
         <file>img/audio-volume-high.png</file>
+        <file>img/preferences-web-browser-cache.png</file>
     </qresource>
 </RCC>

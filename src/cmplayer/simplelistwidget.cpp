@@ -3,7 +3,7 @@
 struct SimpleListWidget::Data {
 	QListWidget *list;
 	QPushButton *add, *erase, *up, *down;
-	bool addable;
+	bool addable, movable;
 };
 
 SimpleListWidget::SimpleListWidget(QWidget *parent)
@@ -34,6 +34,7 @@ SimpleListWidget::SimpleListWidget(QWidget *parent)
 
 	slotCurrentItemChanged(0);
 	setAddingAndErasingEnabled(false);
+	setChangingOrderEnabled(false);
 }
 
 SimpleListWidget::~SimpleListWidget() {
@@ -102,4 +103,12 @@ void SimpleListWidget::setAddingAndErasingEnabled(bool enabled) {
 	d->erase->setEnabled(d->addable);
 	d->add->setVisible(d->addable);
 	d->erase->setVisible(d->addable);
+}
+
+void SimpleListWidget::setChangingOrderEnabled(bool enabled) {
+	d->movable = enabled;
+	d->up->setEnabled(d->movable);
+	d->down->setEnabled(d->movable);
+	d->up->setVisible(d->movable);
+	d->down->setVisible(d->movable);
 }
