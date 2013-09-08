@@ -128,7 +128,7 @@ void GetShortcutDialog::erase() {
 }
 
 QKeySequence GetShortcutDialog::shortcut() const {
-	return QKeySequence(d->codes[0], d->codes[1], d->codes[2], d->codes[3]);
+	return QKeySequence(d->codes[0]);
 }
 
 void GetShortcutDialog::setShortcut(const QKeySequence &shortcut) {
@@ -159,8 +159,17 @@ void GetShortcutDialog::keyPressEvent(QKeyEvent *event) {
 void GetShortcutDialog::getShortcut(QKeyEvent *event) {
 	if (0 <= d->curIdx && d->curIdx < MaxKeyCount) {
 		d->codes[d->curIdx] = event->key();
-		if (!(event->modifiers() & Qt::KeypadModifier))
-			d->codes[d->curIdx] += event->modifiers();
+		int modifiers = 0;
+		if (event->modifiers() & Qt::CTRL)
+			modifiers |= Qt::CTRL;
+		if (event->modifiers() & Qt::SHIFT)
+			modifiers |= Qt::SHIFT;
+		if (event->modifiers() & Qt::ALT)
+			modifiers |= Qt::ALT;
+		if (event->modifiers() & Qt::META)
+			modifiers |= Qt::META;
+		if (modifiers)
+			d->codes[d->curIdx] += modifiers;
 	}
 }
 

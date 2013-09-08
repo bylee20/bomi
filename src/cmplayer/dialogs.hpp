@@ -37,7 +37,7 @@ private slots:
 	void setGetting(bool on);
 	void erase();
 private:
-	static const int MaxKeyCount = 4;
+	static const int MaxKeyCount = 1;
 	void getShortcut(QKeyEvent *event);
 	struct Data;
 	Data *d = nullptr;
