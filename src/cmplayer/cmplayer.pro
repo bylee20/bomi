@@ -3,7 +3,11 @@ cache()
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header c++11
 macx:CONFIG -= app_bundle
-!isEmpty(RELEASE): CONFIG += release; macx:CONFIG += app_bundle
+!isEmpty(RELEASE) {
+    DEFINES += CMPLAYER_RELEASE
+    CONFIG += release
+    macx:CONFIG += app_bundle
+}
 QT = core gui network quick widgets
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH

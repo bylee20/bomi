@@ -132,10 +132,11 @@ struct App::Data {
 
 App::App(int &argc, char **argv)
 : QApplication(argc, argv), d(new Data(this)) {
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC) && defined(CMPLAYER_RELEASE)
 	static const QByteArray path = QApplication::applicationDirPath().toLocal8Bit();
+	qDebug() << "set $LIBQUVI_SCRIPTSDIR:" << path;
 	if (setenv("LIBQUVI_SCRIPTSDIR", path.data(), 1) < 0)
-		qDebug() << "Cannot set LIBQUVI_SCRIPTSDIR. Some streaming functions won't work.";
+		qDebug() << "Cannot set $LIBQUVI_SCRIPTSDIR. Some streaming functions won't work.";
 #endif
 	setOrganizationName("xylosper");
 	setOrganizationDomain("xylosper.net");
