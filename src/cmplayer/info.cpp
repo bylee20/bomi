@@ -16,7 +16,7 @@ Info::Info() {
 		<< "h264" << "i263"	<< "m2ts" << "m4v" << "mkv" << "mov"
 		<< "mp2" << "mp4" << "mpeg" << "mpg" << "mpg2" << "mpg4"
 		<< "nsv" << "nut" << "nuv" << "ogg" <<"ogm" << "qt"
-		<< "rm" << "rmvb" << "vcd" << "vfw" << "vob" << "wmv";
+		<< "rm" << "rmvb" << "tp" << "ts" << "vcd" << "vfw" << "vob" << "wmv";
 	m_audioExt << "aac" << "ac3" << "aiff" << "m4a" << "mka" << "mp3"
 		<< "ogg" << "pcm" << "vaw" << "wav" << "waw" << "wma";
 	m_subExt << "ass" << "smi" << "srt" << "ssa" << "sub" << "txt";
