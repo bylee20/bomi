@@ -1,3 +1,29 @@
+0.7.9
+
+  * New: 'CMPLAYER_MPV_OPTIONS' environment value for support mpv's options
+  * New: options for default cache and minimum cache
+  * New: options for audio output driver, software volume, clipping method
+  * New: options for hardware accleration, deinterlace
+  * New: 'Deinterlace' submenu in 'Video' menu
+  * New: more verbose playback info (output format conversion/audio output driver)
+  * New: more specific descriptions for H/W Acc. and volumn normalizer in playback info
+  * New: supports for non-8-bits planar 4:2:0 formats (9/10/12/14/16-bits)
+  * New: supports for 32bit signed integer type audio samples
+  * New: (Linux) hardware accelerated deinterlacer
+  * Mod: change faster/slower to seek forward/backward in 'modern' skin
+  * Mod: disable volume normalizer by default
+  * Fix: update audio/video information when skin is reloaded
+  * Fix: pass through audio data when modification is not needed
+  * Fix: remove executable argument in message from other instance
+  * Fix: occasional freezing when tab key is pressed
+  * Fix: wrong state of player in skins
+  * Fix: cannot open media from file manager
+  * Fix: (OS X) wrong Qt library path
+  * Fix: (OS X) preserve stays-on-top state when full screen mode is changed
+  * Fix: (OS X) wrong width/height with VDA which causes distorted or painted-out picture
+  * Fix: (OS X) VDA cannot handle interlaced formats (workaround: just disable it)
+  * Fix: (OS X) drag-and-drop didn't be accepted
+
 0.7.8
 
   * Mod: remove '=' in --open and --action (e.g., --action play/pause not --action=play/pause)
