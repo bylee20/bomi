@@ -69,6 +69,7 @@ bool FFmpegAvFilter::pass(mp_image *img, QLinkedList<VideoFrame> &queue, double 
 }
 
 bool FFmpegAvFilter::build() {
+	avfilter_register_all();
 	release();
 	if (format().isEmpty())
 		return false;
@@ -80,7 +81,7 @@ bool FFmpegAvFilter::build() {
 		if (!out || !in || !m_graph)
 			break;
 		QString tmp;
-#define	args (tmp.toLatin1().constData())
+#define	args (tmp.toLocal8Bit().constData())
 		tmp.sprintf("width=%d:height=%d:pix_fmt=%d:time_base=1/%d:sar=1", format().width(), format().height(), imgfmt2pixfmt(format().type()), AV_TIME_BASE);
 		if (avfilter_graph_create_filter(&m_src, avfilter_get_by_name("buffer"), "src", args, nullptr, m_graph) < 0)
 			break;
@@ -88,7 +89,7 @@ bool FFmpegAvFilter::build() {
 			break;
 		tmp = "pix_fmts=";
 		for (int imgfmt = IMGFMT_START; imgfmt < IMGFMT_END; ++imgfmt) {
-			if (VideoOutput::queryFormat(nullptr, imgfmt)) {
+			if (!IMGFMT_IS_HWACCEL(imgfmt) && VideoOutput::queryFormat(nullptr, imgfmt)) {
 				const char *name = av_get_pix_fmt_name(imgfmt2pixfmt(imgfmt));
 				if (name) {
 					tmp += name;
@@ -216,9 +217,9 @@ bool FFmpegPostProcDeint::build() {
 		flags |= PP_CPU_CAPS_MMX2;
 	switch (format().type()) {
 	case IMGFMT_444P: flags|= PP_FORMAT_444; break;
-		case IMGFMT_422P: flags|= PP_FORMAT_422; break;
-		case IMGFMT_411P: flags|= PP_FORMAT_411; break;
-		default:          flags|= PP_FORMAT_420; break;
+	case IMGFMT_422P: flags|= PP_FORMAT_422; break;
+	case IMGFMT_411P: flags|= PP_FORMAT_411; break;
+	default:          flags|= PP_FORMAT_420; break;
 	}
 	m_context = pp_get_context(format().width(), format().height(), flags);
 	return m_context;

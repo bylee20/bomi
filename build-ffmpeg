@@ -4,7 +4,7 @@ args="--prefix=../../build --enable-gpl --disable-debug --disable-shared --enabl
   --enable-runtime-cpudetect --disable-doc --disable-programs \
   --disable-avdevice --enable-avfilter --enable-swresample \
   --disable-avresample --enable-pthreads --disable-dxva2 --disable-vdpau --enable-postproc \
-  --disable-encoders --disable-muxers --disable-devices --disable-filters"
+  --disable-encoders --disable-muxers --disable-devices --enable-filters"
   
 kern=`uname -s`
 if test $kern = "Darwin"

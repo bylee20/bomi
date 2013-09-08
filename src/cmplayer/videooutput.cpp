@@ -18,7 +18,6 @@ extern "C" {
 #include <video/mp_image.h>
 #include <mpvcore/mp_core.h>
 #include <sub/sub.h>
-
 }
 
 

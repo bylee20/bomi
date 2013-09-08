@@ -13,7 +13,7 @@ extern "C" {
 #define class ____class
 #define new ____new
 #define Picture ____Picture
-#include <libavcodec/h264.h>
+#include <../ffmpeg/libavcodec/h264.h>
 #undef Picture
 #undef new
 #undef class
