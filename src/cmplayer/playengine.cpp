@@ -98,9 +98,12 @@ PlayEngine::PlayEngine()
 		if (m_imgMode)
 			emit tick(m_imgPos);
 		else if (d->mpctx && (isPaused() || isPlaying())) {
-			const int duration = qRound(get_time_length(d->mpctx)*1000.0);
-			if (m_duration != duration)
-				emit durationChanged(m_duration = duration);
+			const bool start = _Change(m_startPos, qMax(0, qRound(get_start_time(d->mpctx)*1000.0)));
+			const bool duration = _Change(m_duration, qRound(get_time_length(d->mpctx)*1000.0));
+			if (start)
+				emit startPositionChanged(m_startPos);
+			if (duration)
+				emit durationChanged(m_duration);
 			emit tick(position());
 		}
 	});
@@ -543,7 +546,6 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 		d->mpctx->opts->hwdec_codecs = d->hwAccCodecs.data();
 	}
 	d->mpctx->opts->stream_cache_size = d->getCache(Mrl(QString::fromLocal8Bit(d->mpctx->playlist->current->filename)));
-	qDebug() << d->mpctx->opts->stream_cache_size;
 	d->mpctx->opts->audio_driver_list->name = d->ao.data();
 	d->mpctx->opts->play_start.pos = d->start*1e-3;
 	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
@@ -590,7 +592,6 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 			state = EnginePaused;
 		else
 			state = EnginePlaying;
-//		qDebug() << mp_get_cache_percent(d->mpctx);
 		if (_Change(prevState, state))
 			setState(state);
 		if (streams[STREAM_AUDIO].size() + streams[STREAM_VIDEO].size() + streams[STREAM_SUB].size() != mpctx->num_tracks) {

@@ -70,8 +70,8 @@ Item {
 					text = "[%1]%2/%3(%4%)"
 					.arg(player.stateText)
 					.arg(Util.msecToString(player.time))
-					.arg(Util.msecToString(player.duration))
-					.arg((player.time*100.0/player.duration).toFixed(1));
+					.arg(Util.msecToString(player.endTime))
+					.arg((player.relativePosition*100.0).toFixed(1));
 				}
 				color: "yellow"
 				style: Text.Outline

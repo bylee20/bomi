@@ -18,6 +18,8 @@ class PlayerItem : public QQuickItem, public Skin {
 	Q_PROPERTY(MediaInfoObject *media READ media NOTIFY mediaChanged)
 	Q_PROPERTY(AvInfoObject *audio READ audio NOTIFY videoChanged)
 	Q_PROPERTY(AvInfoObject *video READ video NOTIFY audioChanged)
+	Q_PROPERTY(int startTime READ startTime NOTIFY startTimeChanged)
+	Q_PROPERTY(int endTime READ endTime NOTIFY endTimeChanged)
 	Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
 	Q_PROPERTY(int time READ position NOTIFY tick)
 	Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
@@ -31,6 +33,7 @@ class PlayerItem : public QQuickItem, public Skin {
 	Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
 	Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
 	Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated)
+	Q_PROPERTY(double relativePosition READ relativePosition NOTIFY relativePositionChanged)
 //	Q_PROPERTY(bool paused READ isPaused NOTIFY pausedChanged)
 //	Q_PROPERTY(bool stopped READ isStopped NOTIFY stoppedCahnged)
 public:
@@ -49,13 +52,13 @@ public:
 	Q_INVOKABLE double bps(double fps) const;
 	int duration() const {return m_duration;}
 	int position() const {return m_position;}
+	int endTime() const { return m_duration + m_start; }
+	int startTime() const { return m_start; }
 	AvInfoObject *audio() const {return m_audio;}
 	AvInfoObject *video() const {return m_video;}
 	MediaInfoObject *media() const {return m_media;}
 	State state() const {return m_state;}
 	void set(const PlayEngine *engine);
-	void setDuration(int duration) {if (m_duration != duration) emit durationChanged(m_duration = duration);}
-	void setPosition(int pos) {if (m_position != pos) emit tick(m_position = pos);}
 	void setState(State state);
 	double volumeNormalizer() const;
 	bool isVolumeNormalizerActivated() const;
@@ -79,6 +82,7 @@ public:
 	QString boxMessage() const {return m_bmsg;}
 	Q_INVOKABLE void seek(int time);
 	Q_INVOKABLE void setVolume(int volume);
+	double relativePosition() const { return m_duration > 0 ? double(m_position - m_start)/m_duration : 0; }
 	~PlayerItem();
 signals:
 	void stateTextChanged(const QString &stateText);
@@ -97,13 +101,16 @@ signals:
 	void mediaChanged();
 	void volumeChanged(int volume);
 	void speedChanged(double speed);
+	void endTimeChanged();
+	void startTimeChanged();
+	void relativePositionChanged();
 private slots:
 	void updateStateInfo();
 private:
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	struct Data;
 	Data *d;
-	int m_duration = 0, m_position = 0, m_volume = 0;
+	int m_duration = 0, m_position = 0, m_volume = 0, m_start = 0;
 	State m_state = Stopped;
 	AvInfoObject *m_audio, *m_video;
 	MediaInfoObject *m_media;
@@ -111,7 +118,7 @@ private:
 	PlayEngine *m_engine = nullptr;
 	QString m_omsg, m_bmsg;
 	bool m_running = false, m_playing = false, m_muted = false;
-	double m_speed = 1.0;
+	double m_speed = 1.0, m_relative = 0.0;
 };
 
 #endif // PLAYERITEM_HPP

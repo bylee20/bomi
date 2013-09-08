@@ -10,6 +10,7 @@ Skin.AppWithDock {
 	Component {
 		id: slider
 		SliderStyle {
+			readonly property real ratio: (control.value - control.minimumValue)/(control.maximumValue - control.minimumValue)
 			groove: Item {
 				Rectangle {
 					height: 5; anchors.centerIn: parent; border { color: "#999"; width: 1 }
@@ -19,8 +20,7 @@ Skin.AppWithDock {
 						GradientStop {position: 1.0; color: "#bbb"}
 					}
 					Rectangle {
-						height: parent.height
-						width: parent.width*control.value/control.maximumValue
+						height: parent.height; width: parent.width*ratio
 						border { color: "#6ad"; width: 1 }
 						gradient: Gradient {
 							GradientStop {position: 0.0; color: "#fff"}
@@ -106,7 +106,7 @@ Skin.AppWithDock {
 							}
 							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: app.engine.time }
 							Skin.TimeText { color: "black"; font.pixelSize: 11; text: "/" }
-							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: app.engine.duration }
+							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: app.engine.endTime }
 						}
 					}
 					RowLayout {

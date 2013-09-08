@@ -58,6 +58,8 @@ public:
 	~PlayEngine();
 	MPContext *context() const;
 	int position() const;
+	int startPosition() const { return m_startPos; }
+	int endPosition() const { return m_startPos + m_duration; }
 	void setImageDuration(int duration) {m_imgDuration = duration;}
 	int duration() const {return m_imgMode ? m_imgDuration : m_duration;}
 	void setPlaylist(const Playlist &playlist);
@@ -151,6 +153,7 @@ signals:
 	void stateChanged(EngineState state);
 	void seekableChanged(bool seekable);
 	void durationChanged(int duration);
+	void startPositionChanged(int pos);
 	void volumeChanged(int volume);
 	void preampChanged(double preamp);
 	void mutedChanged(bool muted);
@@ -184,7 +187,7 @@ private:
 	bool parse(const Id &id);
 	bool parse(const QString &line);
 	void customEvent(QEvent *event);
-	int m_duration = 0, m_title = 0, m_volume = 100, m_audioSync = 0;
+	int m_duration = 0, m_title = 0, m_volume = 100, m_audioSync = 0, m_startPos = 0;
 	EngineState m_state = EngineStopped;
 	double m_speed = 1.0, m_preamp = 1.0;
 	bool m_framedrop = false, m_muted = false;

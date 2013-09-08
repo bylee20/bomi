@@ -79,10 +79,21 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 		m_media->m_mrl = mrl;
 		m_media->setName(mediaName(mrl));
 	});
-	plug(m_engine, &PlayEngine::tick, [this] (int pos) {
+	plug(m_engine, &PlayEngine::tick, [this] (int position) {
 		if (isVisible()) {
-			setPosition(pos);
-			setDuration(m_engine->duration());
+			const bool pos = _Change(m_position, position);
+			const bool duration = _Change(m_duration, m_engine->duration());
+			const bool start = _Change(m_start, m_engine->startPosition());
+			if (start)
+				emit startTimeChanged();
+			if (duration)
+				emit durationChanged(m_duration);
+			if (pos)
+				emit tick(position);
+			if (duration || start)
+				emit endTimeChanged();
+			if (duration || start || pos)
+				emit relativePositionChanged();
 		}
 	});
 	plug(m_engine, &PlayEngine::stateChanged, [this] (EngineState state) { setState((State)state); });
@@ -117,6 +128,9 @@ void PlayerItem::plugTo(PlayEngine *engine) {
 	emit speedChanged(m_speed = m_engine->speed());
 	emit mutedChanged(m_muted = m_engine->isMuted());
 	emit durationChanged(m_duration = m_engine->duration());
+	m_start = m_engine->startPosition();
+	emit startTimeChanged();
+	emit endTimeChanged();
 	emit tick(m_position = m_engine->position());
 	emit mediaChanged();
 	emit volumeChanged(m_volume = m_engine->volume());

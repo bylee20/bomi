@@ -31,7 +31,7 @@ Core.Engine {
 		border.width: 1
 	}
 
-	ProgressOsd { id: timeline; value: player.time/player.duration }
+	ProgressOsd { id: timeline; value: player.relativePosition }
 	PlayInfoView { objectName: "playinfo"; player: player }
 	Item {
 		anchors.fill: parent; z: dockZ
