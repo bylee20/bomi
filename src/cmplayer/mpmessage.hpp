@@ -38,7 +38,6 @@ protected:
 	struct Id {Id() {}	Id(const QString &name, const QString &value): name(name), value(value) {} QString name, value;};
 	static Id id(const QString &line);
 	virtual bool parse(const Id &id);
-	static bool getStream(const Id &id, const char *category, const char *idtext, StreamList &streams, const QString &trans);
 private:
 	static QList<MpMessage*> parsers;
 };

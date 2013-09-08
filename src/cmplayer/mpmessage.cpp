@@ -89,34 +89,3 @@ MpMessage::Id MpMessage::id(const QString &line) {
 	static QRegExp rx("^ID_([^=]+)=([^=]+)$");
 	return rx.indexIn(line) != -1 ? Id(rx.cap(1), rx.cap(2)) : Id();
 }
-
-bool MpMessage::getStream(const Id &id, const char *category, const char *idtext, StreamList &streams, const QString &trans) {
-	static QRegExp rxCategory("^(AUDIO|VIDEO|SUBTITLE)_ID$");
-	if (rxCategory.indexIn(id.name) != -1) {
-		if (_Same(rxCategory.cap(1), category)) {
-			const int streamId = id.value.toInt();
-			auto &stream = streams[streamId];
-			stream.m_id = streamId;
-			stream.m_name = trans.arg(streamId+1);
-			return true;
-		}
-	} else {
-		static QRegExp rxId("^(AID|SID|VID)_(\\d+)_(LANG|NAME)$");
-		if (rxId.indexIn(id.name) != -1) {
-			if (_Same(rxId.cap(1), idtext)) {
-				const int streamId = rxId.cap(2).toInt();
-				const auto attr = rxId.cap(3);
-				const auto value = id.value;
-				auto &stream = streams[streamId];
-				stream.m_id = streamId;
-				stream.m_name = trans.arg(streamId+1);
-				if (_Same(attr, "LANG"))
-					stream.m_lang = value;
-				else
-					stream.m_title = value;
-				return true;
-			}
-		}
-	}
-	return false;
-}
