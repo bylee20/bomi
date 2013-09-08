@@ -81,7 +81,7 @@ QByteArray VideoTextureShader::fragment() const {
 			pp = R"(
 				vec3 preprocess(const in vec2 coord) {
 					float y = coord.y;
-					float offset = deint*(top_field*dxy.y + mod(y, 2.0*dxy.y));
+					float offset = deint*(top_field*dxy.y + dxy.y*0.5 + mod(y, 2.0*dxy.y));
 					return get_texel(coord - vec2(0.0, offset));
 				}
 			)";
@@ -89,7 +89,7 @@ QByteArray VideoTextureShader::fragment() const {
 			pp = R"(
 				vec3 preprocess(const in vec2 coord) {
 					float y = coord.y;
-					float offset = deint*(top_field*dxy.y + mod(y, 2.0*dxy.y));
+					float offset = deint*(top_field*dxy.y + dxy.y*0.5 + mod(y, 2.0*dxy.y));
 					return mix(get_texel(coord + vec2(0.0, -offset)), get_texel(coord + vec2(0.0, 2.0*dxy.y-offset)), offset/(2.0*dxy.y));
 				}
 			)";
