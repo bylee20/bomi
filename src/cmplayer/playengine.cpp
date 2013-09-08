@@ -649,7 +649,7 @@ void PlayEngine::run() {
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
-		<< "--no-consolecontrols" << "--no-mouseinput" << "--subcp=utf8" << "--ao=null,";
+		<< "--no-consolecontrols" << "--no-mouse-movements" << "--subcp=utf8" << "--ao=null,";
 	QVector<QByteArray> args_byte(args.size());
 	QVector<char*> args_raw(args.size());
 	for (int i=0; i<args.size(); ++i) {
