@@ -52,11 +52,8 @@ struct VideoTextureUploader {
 	virtual ~VideoTextureUploader() {}
 	virtual void initialize(const VideoTextureInfo &info) {
 		glBindTexture(info.target, info.id);
-		glTexParameterf(info.target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(info.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(info.target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(info.target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(info.target, 0, info.internal, info.width, info.height, 0, info.format, info.type, nullptr);
+		_InitTexParam();
 	}
 	virtual void upload(const VideoTextureInfo &info, const VideoFrame &frame) {
 		glBindTexture(info.target, info.id);

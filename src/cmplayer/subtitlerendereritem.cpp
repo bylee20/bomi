@@ -150,10 +150,7 @@ void SubtitleRendererItem::initializeTextures() {
 	if (!d->pic.image.isNull()) {//drawer.hasDrawn()) {
 		glBindTexture(GL_TEXTURE_2D, texture(0));
 		glTexImage2D(GL_TEXTURE_2D, 0, 4, d->pic.image.width(), d->pic.image.height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, d->pic.image.bits());
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		_InitTexParam();
 	}
 	setGeometryDirty();
 }

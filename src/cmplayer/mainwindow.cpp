@@ -34,6 +34,8 @@ extern void finalize_vaapi();
 extern void initialize_vdpau();
 extern void finalize_vdpau();
 
+GLint MaxTextureSize = -1;
+
 class AskStartTimeEvent : public QEvent {
 public:
 	static constexpr QEvent::Type Type = (QEvent::Type)(QEvent::User + 1);
@@ -281,6 +283,12 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->hider.setSingleShot(true);
 
 	connectMenus();
+
+	connect(d->view, &QQuickView::sceneGraphInitialized, [] () {
+		if (MaxTextureSize < 0)
+			glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxTextureSize);
+		qDebug() << MaxTextureSize;
+	});
 
 	connect(&d->engine, &PlayEngine::mrlChanged, this, &MainWindow::updateMrl);
 	connect(&d->engine, &PlayEngine::stateChanged, [this] (EngineState state) {

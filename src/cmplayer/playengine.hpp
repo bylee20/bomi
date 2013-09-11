@@ -89,7 +89,6 @@ public:
 	bool hasVideo() const;
 	bool frameDrop() const {return m_framedrop;}
 	bool isHwAccActivated() const;
-	void setFrameDrop(bool on) {tellmp("frame_drop", (m_framedrop = on) ? 1 : 0);}
 	void setVolumeNormalizerActivated(bool on);
 	void setTempoScalerActivated(bool on);
 	bool isVolumeNormalized() const;

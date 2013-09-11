@@ -8,36 +8,6 @@ extern "C" {
 #include <string.h>
 #include <mpvcore/mp_msg.h>
 #define MSGSIZE_MAX 6144
-//int mp_msg_levels[MSGT_MAX]; // verbose level of this module. initialized to -2
-//int mp_msg_level_all = MSGL_STATUS;
-//int verbose = 0;
-//int mp_msg_color = 0;
-//int mp_msg_module = 0;
-
-//void mp_msg_va(int mod, int lev, const char *format, va_list va) {
-//	if (!mp_msg_test(mod, lev))
-//		return; // do not display
-//	char tmp[MSGSIZE_MAX];
-//	vsnprintf(tmp, MSGSIZE_MAX, format, va);
-//	tmp[MSGSIZE_MAX-2] = '\n';
-//	tmp[MSGSIZE_MAX-1] = 0;
-//	fprintf(stdout, "%s", tmp);
-//	fflush(stdout);
-//}
-
-//void mp_msg(int mod, int lev, const char *format, ...) {
-//	va_list va;
-//	va_start(va, format);
-//	mp_msg_va2(mod, lev, format, va);
-//	va_end(va);
-//}
-
-//void mp_tmsg(int mod, int lev, const char *format, ...) {
-//	va_list va;
-//	va_start(va, format);
-//	mp_msg_va2(mod, lev, mp_gtext(format), va);
-//	va_end(va);
-//}
 
 void mp_msg_log_va2(struct mp_log *log, int lev, const char *format, va_list va) {
 	if (!mp_msg_test_log(log, lev))

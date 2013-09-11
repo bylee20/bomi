@@ -113,7 +113,10 @@ HEADERS += playengine.hpp \
     audiofilter.hpp \
     videotextureshader.hpp \
     videofilter.hpp \
-    deintinfo.hpp
+    deintinfo.hpp \
+    letterboxitem.hpp \
+    mposdbitmap.hpp \
+    mposdnode.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -178,7 +181,10 @@ SOURCES += main.cpp \
     audiofilter.cpp \
     videotextureshader.cpp \
     videofilter.cpp \
-    deintinfo.cpp
+    deintinfo.cpp \
+    letterboxitem.cpp \
+    mposdbitmap.cpp \
+    mposdnode.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

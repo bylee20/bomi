@@ -3,6 +3,7 @@
 #include "videoframe.hpp"
 #include "hwacc.hpp"
 #include "global.hpp"
+#include "letterboxitem.hpp"
 #include "videotextureshader.hpp"
 #include "dataevent.hpp"
 
@@ -90,7 +91,7 @@ bool VideoRendererItem::hasFrame() const {
 void VideoRendererItem::requestFrameImage() const {
 	if (d->format.isEmpty())
 		emit frameImageObtained(QImage());
-	else if (d->frame.hasImage() || !d->frame.format().isNative())
+	else if (d->frame.hasImage())
 		emit frameImageObtained(d->frame.toImage());
 	else {
 		d->take = true;
@@ -118,7 +119,7 @@ int VideoRendererItem::alignment() const {
 void VideoRendererItem::setAlignment(int alignment) {
 	if (d->alignment != alignment) {
 		d->alignment = alignment;
-		updateGeometry();
+		updateGeometry(false);
 		update();
 	}
 }
@@ -160,14 +161,14 @@ void VideoRendererItem::geometryChanged(const QRectF &newOne, const QRectF &old)
 		d->overlay->setPosition(QPointF(0, 0));
 		d->overlay->setSize(QSizeF(width(), height()));
 	}
-	updateGeometry();
+	updateGeometry(false);
 }
 
 void VideoRendererItem::setOffset(const QPoint &offset) {
 	if (d->offset != offset) {
 		d->offset = offset;
 		emit offsetChanged(d->offset);
-		updateGeometry();
+		updateGeometry(false);
         update();
 	}
 }
@@ -208,10 +209,15 @@ QRectF VideoRendererItem::frameRect(const QRectF &area) const {
 		return area;
 }
 
-void VideoRendererItem::updateGeometry() {
+void VideoRendererItem::updateGeometry(bool updateOsd) {
 	const QRectF vtx = frameRect(QRectF(x(), y(), width(), height()));
-	if (_Change(d->vtx, vtx))
-		d->mposd->setSize(d->vtx.size());
+	if (_Change(d->vtx, vtx)) {
+		if (d->vtx.size() != QSizeF(d->mposd->width(), d->mposd->height())) {
+			if (updateOsd)
+				d->mposd->forceUpdateTargetSize();
+			d->mposd->setSize(d->vtx.size());
+		}
+	}
 	setGeometryDirty();
 }
 
@@ -229,7 +235,7 @@ const ColorProperty &VideoRendererItem::color() const {
 void VideoRendererItem::setAspectRatio(double ratio) {
 	if (!isSameRatio(d->aspect, ratio)) {
 		d->aspect = ratio;
-		updateGeometry();
+		updateGeometry(true);
 		update();
 	}
 }
@@ -241,7 +247,7 @@ double VideoRendererItem::aspectRatio() const {
 void VideoRendererItem::setCropRatio(double ratio) {
 	if (!isSameRatio(d->crop, ratio)) {
 		d->crop = ratio;
-		updateGeometry();
+		updateGeometry(true);
 		update();
 	}
 }
@@ -273,9 +279,13 @@ void VideoRendererItem::link(QOpenGLShaderProgram *program) {
 	d->shader->link(program);
 }
 
-void VideoRendererItem::drawMpOsd(void *pctx, sub_bitmaps *imgs) {
-	reinterpret_cast<VideoRendererItem*>(pctx)->d->mposd->drawOn(imgs);
+MpOsdItem *VideoRendererItem::mpOsd() const {
+	return d->mposd;
 }
+
+//void VideoRendererItem::drawMpOsd(void *pctx, sub_bitmaps *imgs) {
+//	reinterpret_cast<VideoRendererItem*>(pctx)->d->mposd->drawOn(imgs);
+//}
 
 void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
 	TextureRendererItem::bind(state, program);
@@ -294,29 +304,20 @@ void VideoRendererItem::beforeUpdate() {
 	if (d->queue.isEmpty())
 		return;
 	d->frame = d->queue.takeFirst();
-	bool reset = false;
-	if (_Change(d->format, d->frame.format())) {
-		d->mposd->setFrameSize(d->format.size());
-		reset = true;
-	}
-	if (!reset && d->shaderType != d->format.imgfmt())
-		reset = true;
-	if (!reset && d->deintChanged)
-		reset = true;
-	if (reset) {
+	const bool formatChanged = _Change(d->format, d->frame.format());
+	if (formatChanged || d->shaderType != d->format.imgfmt() || d->deintChanged) {
 		if (d->shader)
 			delete d->shader;
 		d->shader = VideoTextureShader::create(d->format, d->color, d->deint, d->effects);
 		resetNode();
-		updateGeometry();
+		updateGeometry(formatChanged);
 	}
-//	bool reset = false;
 	if (!d->format.isEmpty()) {
 		d->shader->upload(d->frame);
 		++d->drawnFrames;
 		if (d->take) {
 			auto image = d->shader->toImage(d->frame);
-			d->mposd->drawOn(image);
+//			d->mposd->drawOn(image);
 			emit frameImageObtained(image);
 			d->take = false;
 		}

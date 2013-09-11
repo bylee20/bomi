@@ -8,6 +8,7 @@
 class DeintInfo;
 class VideoRendererItem;		class ColorProperty;
 class VideoFrame;				class VideoFormat;
+class MpOsdItem;
 
 class VideoRendererItem : public TextureRendererItem {
 	Q_OBJECT
@@ -72,16 +73,16 @@ private:
 	void emptyQueue();
 	void enqueue(const VideoFrame &frame);
 	void initializeTextures();
-    static void drawMpOsd(void *pctx, struct sub_bitmaps *imgs);
 	const char *fragmentShader() const;
 	void link(QOpenGLShaderProgram *program);
 	void bind(const RenderState &state, QOpenGLShaderProgram *program);
 	void updateTexturedPoint2D(TexturedPoint2D *tp);
 	void beforeUpdate() override;
-	void updateGeometry();
+	void updateGeometry(bool updateOsd);
 	static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
 	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	void customEvent(QEvent *event);
+	MpOsdItem *mpOsd() const;
 	struct Data;
 	Data *d;
 	friend class VideoOutput;

@@ -5,6 +5,7 @@
 #include "hwacc.hpp"
 #include "deintinfo.hpp"
 #include "videofilter.hpp"
+#include "mposditem.hpp"
 
 extern "C" {
 #include <video/fmt-conversion.h>
@@ -282,13 +283,19 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 
 void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 	Data *d = priv(vo)->d;
+	static auto cb = [] (void *pctx, struct sub_bitmaps *imgs) {
+		static_cast<MpOsdItem*>(pctx)->drawOn(imgs);
+	};
 	if (auto r = d->engine->videoRenderer()) {
-		d->osd.w = d->format.width();
-		d->osd.h = d->format.height();
-		d->osd.display_par = 1.0;
+		auto item = r->mpOsd();
+		auto size = item->targetSize();
+		d->osd.w = size.width();
+		d->osd.h = size.height();
+		item->setRenderSize(size);
+		d->osd.display_par = vo->aspdat.monitor_par;
 		d->osd.video_par = vo->aspdat.par;
-		static bool format[SUBBITMAP_COUNT] = {0, 0, 1, 0};
-		osd_draw(osd, d->osd, osd->vo_pts, 0, format,  VideoRendererItem::drawMpOsd, r);
+		static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
+		osd_draw(osd, d->osd, osd->vo_pts, 0, format, cb, item);
 	}
 }
 
