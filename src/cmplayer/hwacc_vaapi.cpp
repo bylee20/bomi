@@ -102,17 +102,23 @@ VaApiFilterInfo::VaApiFilterInfo(VAContextID context, VAProcFilterType type) {
 		m_algorithms[i] = m_caps[i].algorithm;
 }
 
+static QMutex mutex;
+
 struct VaApiSurface {
+	~VaApiSurface() {
+		Q_ASSERT(!ref);
+		if (id != VA_INVALID_SURFACE)
+			vaDestroySurfaces(VaApi::glx(), &id, 1);
+	}
 	VASurfaceID id = VA_INVALID_SURFACE;
-	bool ref = false;
+	bool ref = false, orphan = false;
 	quint64 order = 0;
 };
 
 class VaApiSurfacePool : public VaApiStatusChecker {
 public:
-	VaApiSurfacePool() { memset(&m_null, 0, sizeof(m_null)); }
+	VaApiSurfacePool() {  }
 	~VaApiSurfacePool() { clear(); }
-
 	VAStatus create(int size, int width, int height, uint format) {
 		if (m_width == width && m_height == height && m_format == format && m_surfaces.size() == size)
 			return isSuccess(VA_STATUS_SUCCESS);
@@ -127,52 +133,60 @@ public:
 		}
 		m_surfaces.resize(size);
 		for (int i=0; i<size; ++i)
-			m_surfaces[i].id = m_ids[i];
+			(m_surfaces[i] = new VaApiSurface)->id = m_ids[i];
 		return status();
 	}
-
-	VaApiSurface *getSurface() {
-		int i_old, i;
-		for (i=0, i_old=0; i<m_surfaces.size(); ++i) {
-			if (!m_surfaces[i].ref)
-				break;
-			if (m_surfaces[i].order < m_surfaces[i_old].order)
-				i_old = i;
-		}
-		if (i >= m_surfaces.size())
-			i = i_old;
-		auto surface = &m_surfaces[i];
-		surface->ref = true;
-		surface->order = ++m_order;
-		Q_ASSERT(surface->id != VA_INVALID_ID);
-		return surface;
-	}
-	VaApiSurface *getSurface(int index) { return &m_surfaces[index]; }
 	mp_image *getMpImage() {
 		auto surface = getSurface();
-		auto release = [](void *arg) { ((VaApiSurface*)arg)->ref = false; };
-		auto mpi = nullMpImage(IMGFMT_VAAPI, m_width, m_height, &surface, release);
+		auto release = [](void *arg) {
+			mutex.lock();
+			auto surface = static_cast<VaApiSurface*>(arg);
+			surface->ref = false;
+			if (surface->orphan)
+				delete surface;
+			mutex.unlock();
+		};
+		auto mpi = nullMpImage(IMGFMT_VAAPI, m_width, m_height, surface, release);
 		mpi->planes[1] = mpi->planes[2] = nullptr;
 		mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)surface->id;
 		return mpi;
 	}
 	void clear() {
-		for (auto &it : m_surfaces) {
-			if (it.id != VA_INVALID_SURFACE)
-				vaDestroySurfaces(VaApi::glx(), &it.id, 1);
+		mutex.lock();
+		for (auto surface : m_surfaces) {
+			if (surface->ref)
+				surface->orphan = true;
+			else
+				delete surface;
 		}
 		m_surfaces.clear();
 		m_ids.clear();
+		mutex.unlock();
 	}
 	QVector<VASurfaceID> ids() const {return m_ids;}
 	uint format() const {return m_format;}
 private:
+	VaApiSurface *getSurface() {
+		int i_old, i;
+		for (i=0, i_old=0; i<m_surfaces.size(); ++i) {
+			if (!m_surfaces[i]->ref)
+				break;
+			if (m_surfaces[i]->order < m_surfaces[i_old]->order)
+				i_old = i;
+		}
+		if (i >= m_surfaces.size())
+			i = i_old;
+		auto surface = m_surfaces[i];
+		surface->ref = true;
+		surface->order = ++m_order;
+		Q_ASSERT(surface->id != VA_INVALID_ID);
+		return surface;
+	}
 	QVector<VASurfaceID> m_ids;
-	QVector<VaApiSurface> m_surfaces;
+	QVector<VaApiSurface*> m_surfaces;
 	uint m_format = 0;
 	int m_width = 0, m_height = 0;
 	quint64 m_order = 0LL;
-	mp_image m_null;
 };
 
 VaApi::VaApi() {
