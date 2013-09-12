@@ -37,13 +37,14 @@ struct MpOsdBitmap {
 	const PartInfo &part(int i) const { return m_parts[i]; }
 	Format format() const { return m_format; }
 	const QSize &renderSize() const { return m_renderSize; }
-	const QSize &TextureMapSize() const { return m_textureSize; }
+	const QSize &sheet() const { return m_sheet; }
+	void drawOn(QImage &frame) const;
 private:
 	QByteArray m_data;
 	int m_size = 0, id = -1, pos = -1;
 	QVector<PartInfo> m_parts;
 	Format m_format = RgbaPA;
-	QSize m_textureSize = {0, 0}, m_maximumSize = {0, 0}, m_renderSize = {0, 0};
+	QSize m_sheet = {0, 0}, m_maximumSize = {0, 0}, m_renderSize = {0, 0};
 };
 
 #endif // MPOSDBITMAP_HPP

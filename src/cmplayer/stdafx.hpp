@@ -95,16 +95,7 @@ template<typename List, typename T>
 bool _Contains(const List &list, const T &t) { return std::find(list.begin(), list.end(), t) != list.end(); }
 
 template<int N> static constexpr int _Aligned(int v) { return v%N ? ((v/N) + 1)*N : v; }
-
-static inline void _InitTexParam(int filter = GL_LINEAR, int clamp = GL_CLAMP_TO_EDGE) {
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp);
 }
-}
-
-extern int MaxTextureSize;
 
 using namespace Pch;
 #endif

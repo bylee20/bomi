@@ -116,7 +116,8 @@ HEADERS += playengine.hpp \
     deintinfo.hpp \
     letterboxitem.hpp \
     mposdbitmap.hpp \
-    mposdnode.hpp
+    mposdnode.hpp \
+    openglcompat.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -184,7 +185,8 @@ SOURCES += main.cpp \
     deintinfo.cpp \
     letterboxitem.cpp \
     mposdbitmap.cpp \
-    mposdnode.cpp
+    mposdnode.cpp \
+    openglcompat.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -25,6 +25,7 @@
 #include "playlist.hpp"
 #include "subtitle_parser.hpp"
 #include "subtitlemodel.hpp"
+#include "openglcompat.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 #endif
@@ -33,8 +34,6 @@ extern void initialize_vaapi();
 extern void finalize_vaapi();
 extern void initialize_vdpau();
 extern void finalize_vdpau();
-
-GLint MaxTextureSize = -1;
 
 class AskStartTimeEvent : public QEvent {
 public:
@@ -284,10 +283,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	connectMenus();
 
-	connect(d->view, &QQuickView::sceneGraphInitialized, [] () {
-		if (MaxTextureSize < 0)
-			glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxTextureSize);
-		qDebug() << MaxTextureSize;
+	connect(d->view, &QQuickView::sceneGraphInitialized, [this] () {
+		OpenGLCompat::initialize(d->view->openglContext());
 	});
 
 	connect(&d->engine, &PlayEngine::mrlChanged, this, &MainWindow::updateMrl);

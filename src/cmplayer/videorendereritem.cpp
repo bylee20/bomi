@@ -103,9 +103,9 @@ void VideoRendererItem::present(const QImage &image) {
 	present(VideoFrame(image));
 }
 
-void VideoRendererItem::present(const VideoFrame &frame) {
+void VideoRendererItem::present(const VideoFrame &frame, bool redraw) {
 	postData(this, EnqueueFrame, frame);
-	d->mposd->present();
+	d->mposd->present(redraw);
 }
 
 QRectF VideoRendererItem::screenRect() const {
@@ -283,10 +283,6 @@ MpOsdItem *VideoRendererItem::mpOsd() const {
 	return d->mposd;
 }
 
-//void VideoRendererItem::drawMpOsd(void *pctx, sub_bitmaps *imgs) {
-//	reinterpret_cast<VideoRendererItem*>(pctx)->d->mposd->drawOn(imgs);
-//}
-
 void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
 	TextureRendererItem::bind(state, program);
 	d->shader->render(program, d->kernel);
@@ -301,6 +297,12 @@ int VideoRendererItem::delay() const {
 }
 
 void VideoRendererItem::beforeUpdate() {
+	if (d->take) {
+		auto image = d->shader->toImage(d->frame);
+		d->mposd->drawOn(image);
+		emit frameImageObtained(image);
+		d->take = false;
+	}
 	if (d->queue.isEmpty())
 		return;
 	d->frame = d->queue.takeFirst();
@@ -315,12 +317,6 @@ void VideoRendererItem::beforeUpdate() {
 	if (!d->format.isEmpty()) {
 		d->shader->upload(d->frame);
 		++d->drawnFrames;
-		if (d->take) {
-			auto image = d->shader->toImage(d->frame);
-//			d->mposd->drawOn(image);
-			emit frameImageObtained(image);
-			d->take = false;
-		}
 	}
 	if (!d->queue.isEmpty()) {
 		const auto diff = (d->queue.back().pts() - d->queue.front().pts());

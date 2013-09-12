@@ -46,7 +46,7 @@ public:
 	void setAspectRatio(double ratio);
 	void setOverlay(QQuickItem *overlay);
 	QQuickItem *overlay() const;
-	void present(const VideoFrame &frame);
+	void present(const VideoFrame &frame, bool redraw = false);
 	void present(const QImage &image);
 	const VideoFrame &frame() const;
 	bool isFramePended() const;

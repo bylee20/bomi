@@ -8,14 +8,12 @@ enum EventType {EnqueueFrame = QEvent::User + 1, RenderNextFrame, EmptyQueue, Up
 
 struct sub_bitmaps;
 
-
-
 class MpOsdItem : public QQuickItem {
 public:
 	MpOsdItem(QQuickItem *parent = nullptr);
 	~MpOsdItem();
 	void drawOn(sub_bitmaps *imgs);
-	void present();
+	void present(bool redraw);
 	void drawOn(QImage &frame);
 	QSize targetSize() const;
 	void setRenderSize(const QSize &size);

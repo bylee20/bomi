@@ -19,11 +19,11 @@ extern "C" {
 #include <video/mp_image.h>
 #include <mpvcore/mp_core.h>
 #include <sub/sub.h>
+#include <sub/sd.h>
+struct sd *sub_get_last_sd(struct dec_sub *sub);
 }
 
-
 struct cmplayer_vo_priv { VideoOutput *vo; char *address; };
-
 static VideoOutput *priv(struct vo *vo) { return static_cast<cmplayer_vo_priv*>(vo->priv)->vo; }
 
 #define OPT_BASE_STRUCT struct cmplayer_vo_priv
@@ -207,9 +207,9 @@ void VideoOutput::reset() {
 
 int VideoOutput::reconfig(vo *vo, mp_image_params *params, int flags) {
 	auto v = priv(vo); auto d = v->d;
+	v->reset();
 	d->upsideDown = (flags & VOFLAG_FLIPPING) ? VideoFrame::Flipped : 0;
 	d->params = *params;
-	v->reset();
 	return 0;
 }
 
@@ -262,7 +262,7 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	switch (req) {
 	case VOCTRL_REDRAW_FRAME:
 		if (d->renderer)
-			d->renderer->present(d->frame);
+			d->renderer->present(d->frame, true);
 		return true;
 	case VOCTRL_GET_HWDEC_INFO:
 		static_cast<mp_hwdec_info*>(data)->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);
@@ -282,19 +282,33 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 }
 
 void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
-	Data *d = priv(vo)->d;
+	static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
 	static auto cb = [] (void *pctx, struct sub_bitmaps *imgs) {
 		static_cast<MpOsdItem*>(pctx)->drawOn(imgs);
 	};
+	auto d = priv(vo)->d;
 	if (auto r = d->engine->videoRenderer()) {
+		bool ass = false;
+		if (osd->dec_sub) {
+			auto s = sub_get_last_sd(osd->dec_sub);
+			ass = s && !qstrcmp(s->driver->name, "ass");
+		}
 		auto item = r->mpOsd();
-		auto size = item->targetSize();
-		d->osd.w = size.width();
-		d->osd.h = size.height();
-		item->setRenderSize(size);
+		if (!ass) {
+			d->osd.w = d->format.width();
+			d->osd.h = d->format.height();
+			d->osd.video_par = 1.0;
+		} else {
+			auto size = item->targetSize();
+			const auto unscaled = d->renderer->sizeHint();
+			if (_Area(size) < _Area(unscaled))
+				size = unscaled; // never scale-down
+			d->osd.w = size.width();
+			d->osd.h = size.height();
+			d->osd.video_par = vo->aspdat.par;
+		}
 		d->osd.display_par = vo->aspdat.monitor_par;
-		d->osd.video_par = vo->aspdat.par;
-		static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
+		item->setRenderSize({d->osd.w, d->osd.h});
 		osd_draw(osd, d->osd, osd->vo_pts, 0, format, cb, item);
 	}
 }

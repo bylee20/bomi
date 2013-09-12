@@ -4,7 +4,7 @@
 
 VideoTextureShader::VideoTextureShader(const VideoFormat &format, GLenum target)
 : m_format(format), m_target(target) {
-	m_info.reserve(3);
+	m_textures.reserve(3);
 	m_header = R"(
 		uniform float kern_c, kern_n, kern_d;
 		uniform vec2 sc1, sc2, sc3;
@@ -39,10 +39,9 @@ VideoTextureShader::VideoTextureShader(const VideoFormat &format, GLenum target)
 }
 
 void VideoTextureShader::initialize(GLuint *textures) {
-	m_textures = textures;
-	for (int i=0; i<m_info.size(); ++i) {
-		m_info[i].id = textures[i];
-		m_uploader->initialize(m_info[i]);
+	for (int i=0; i<m_textures.size(); ++i) {
+		m_textures[i].id = textures[i];
+		m_uploader->initialize(m_textures[i]);
 	}
 }
 
@@ -119,8 +118,8 @@ void VideoTextureShader::upload(const VideoFrame &frame) {
 	m_field = frame.field();
 	Q_ASSERT(m_uploader);
 	if (!(m_field & VideoFrame::Additional)) {
-		for (int i=0; i<m_info.size(); ++i)
-			m_uploader->upload(m_info[i], frame);
+		for (int i=0; i<m_textures.size(); ++i)
+			m_uploader->upload(m_textures[i], frame);
 	}
 }
 
@@ -184,11 +183,15 @@ void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &
 	if (!format().isEmpty()) {
 		auto f = QOpenGLContext::currentContext()->functions();
 		f->glActiveTexture(GL_TEXTURE0);
-		glBindTexture(m_target, m_textures[0]);
-		f->glActiveTexture(GL_TEXTURE1);
-		glBindTexture(m_target, m_textures[1]);
-		f->glActiveTexture(GL_TEXTURE2);
-		glBindTexture(m_target, m_textures[2]);
+		glBindTexture(m_target, m_textures[0].id);
+		if (m_textures.size() > 1) {
+			f->glActiveTexture(GL_TEXTURE1);
+			glBindTexture(m_target, m_textures[1].id);
+		}
+		if (m_textures.size() > 2) {
+			f->glActiveTexture(GL_TEXTURE2);
+			glBindTexture(m_target, m_textures[2].id);
+		}
 		f->glActiveTexture(GL_TEXTURE0);
 	}
 }
@@ -210,14 +213,14 @@ struct I420Shader : public VideoTextureShader {
 		setTexel(R"(
 			vec3 texel(const vec2 coord) {
 				vec3 yuv;
-				yuv.x = texture1(coord).x;
-				yuv.y = texture2(coord).x;
-				yuv.z = texture3(coord).x;
+				yuv.x = texture1(coord).r;
+				yuv.y = texture2(coord).r;
+				yuv.z = texture3(coord).r;
 				return yuv;
 			}
 		)");
 		auto init = [this, &format] (int i) {
-			addTexInfo(i, format.bytesPerLine(i), format.lines(i), GL_LUMINANCE);
+			addTexInfo(i, format.bytesPerLine(i), format.lines(i), 1);
 			if (format.imgfmt() != IMGFMT_VDA) // vda uploader takes the width not stride without correction
 				sc(i).rx() *= (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*2);
 		};
@@ -245,13 +248,16 @@ struct P420BitShader : public VideoTextureShader { // planar 4:2:0 bit>8
 				return yuv;
 			 }
 		)";
-		setTexel(code.replace("!!", little ? "wx" : "xw"));
+		setTexel(code.replace("!!", OpenGLCompat::rg(little ? "gr" : "rg")));
 		auto init = [this, &format] (int i) {
-			addTexInfo(i, format.bytesPerLine(i)/2, format.lines(i), GL_LUMINANCE_ALPHA);
+			addTexInfo(i, format.bytesPerLine(i)/2, format.lines(i), 2);
 			sc(i).rx() *= (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*2);
 		};
 		init(0); init(1); init(2);
-		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; sc(2) *= 0.5; }\
+		if (target == GL_TEXTURE_RECTANGLE_ARB) {
+			sc(1) *= 0.5;
+			sc(2) *= 0.5;
+		}
 	}
 };
 
@@ -268,16 +274,14 @@ struct NvShader : public VideoTextureShader {
 				return yuv;
 			}
 		)");
-		if (format.type() == IMGFMT_NV12)
-			texel.replace("!!", "xw");
-		else
-			texel.replace("!!", "wx");
+		texel.replace("!!", OpenGLCompat::rg(format.type() == IMGFMT_NV12 ? "rg" : "gr"));
 		setTexel(texel);
-		addTexInfo(0, format.bytesPerLine(0), format.lines(0), GL_LUMINANCE);
-		addTexInfo(1, format.bytesPerLine(1)/2, format.lines(1), GL_LUMINANCE_ALPHA);
+		addTexInfo(0, format.bytesPerLine(0), format.lines(0), 1);
+		addTexInfo(1, format.bytesPerLine(1)/2, format.lines(1), 2);
 		if (format.imgfmt() != IMGFMT_VDA) // vda uploader takes the width not stride without correction
 			sc(1).rx() *= (double)format.bytesPerLine(0)/(double)format.bytesPerLine(1);
-		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; }
+		if (target == GL_TEXTURE_RECTANGLE_ARB)
+			sc(1) *= 0.5;
 	}
 };
 
@@ -295,12 +299,12 @@ struct Y422Shader : public VideoTextureShader {
 			}
 		)");
 		if (format.type() == IMGFMT_YUYV)
-			texel.replace("?", "x").replace("!!", "yw");
+			texel.replace("?", "r").replace("!!", "ga");
 		else
-			texel.replace("?", "a").replace("!!", "zx");
+			texel.replace("?", OpenGLCompat::rg("g")).replace("!!", "br");
 		setTexel(texel);
-		addTexInfo(0, format.bytesPerLine(0)/2, format.lines(0), GL_LUMINANCE_ALPHA);
-		addRgbInfo(0, format.bytesPerLine(0)/4, format.lines(0), GL_BGRA);
+		addTexInfo(0, format.bytesPerLine(0)/2, format.lines(0), 2);
+		addTexInfo(0, format.bytesPerLine(0)/4, format.lines(0), 4);
 		if (target == GL_TEXTURE_RECTANGLE_ARB)
 			sc(1).rx() *= 0.5;
 	}
@@ -317,10 +321,7 @@ struct PassThroughShader : public VideoTextureShader {
 struct RgbShader : public PassThroughShader {
 	RgbShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
 	: PassThroughShader(format, target) {
-		GLenum glfmt = GL_BGRA;
-		if (format.type() == IMGFMT_RGBA)
-			glfmt = GL_RGBA;
-		addRgbInfo(0, format.bytesPerLine(0)/4, format.lines(0), glfmt);
+		addTexInfo(0, format.bytesPerLine(0)/4, format.lines(0), format.type() == IMGFMT_RGBA ? GL_RGBA : GL_BGRA);
 	}
 };
 
@@ -335,10 +336,11 @@ struct RgbShader : public PassThroughShader {
 
 struct AppleY422Shader : public PassThroughShader {
 	AppleY422Shader(const VideoFormat &format, GLenum target): PassThroughShader(format, target) {
-		GLenum type = GL_UNSIGNED_SHORT_8_8_APPLE;
-		if (format.type() == IMGFMT_YUYV)
-			type = GL_UNSIGNED_SHORT_8_8_REV_APPLE;
-		addTexInfo(0, format.width(), format.height(), GL_YCBCR_422_APPLE, type, GL_RGB);
+		TextureFormat fmt;
+		fmt.internal = GL_RGB;
+		fmt.format = GL_YCBCR_422_APPLE;
+		fmt.type = format.type() == IMGFMT_YUYV ? GL_UNSIGNED_SHORT_8_8_REV_APPLE : GL_UNSIGNED_SHORT_8_8_APPLE;
+		addTexInfo(0, format.width(), format.height(), fmt);
 	}
 };
 
@@ -388,15 +390,13 @@ struct VdaUploader : public VideoTextureUploader {
 
 struct MesaY422Shader : public VideoTextureShader {
 	MesaY422Shader(const VideoFormat &format, GLenum target): VideoTextureShader(format, target) {
-		QByteArray getter(R"(vec3 texel(const vec2 coord) { return texture1(coord).y!!; })");
-		GLenum type = GL_UNSIGNED_SHORT_8_8_MESA;
-		if (format.type() == IMGFMT_YUYV) {
-			type = GL_UNSIGNED_SHORT_8_8_REV_MESA;
-			getter.replace("!!", "zx");
-		} else
-			getter.replace("!!", "xz");
+		QByteArray getter(R"(vec3 texel(const vec2 coord) { return texture1(coord).g!!; })");
+		getter.replace("!!", format.type() == IMGFMT_YUYV ? "br" : "rb");
 		setTexel(getter);
-		addTexInfo(0, format.width(), format.height(), GL_YCBCR_MESA, type, GL_YCBCR_MESA);
+		OpenGLTextureFormat fmt;
+		fmt.internal = fmt.pixel = GL_YCBCR_MESA;
+		fmt.type = ((format.type() == IMGFMT_YUYV) ? GL_UNSIGNED_SHORT_8_8_REV_MESA : GL_UNSIGNED_SHORT_8_8_MESA);
+		addTexInfo(0, format.width(), format.height(), fmt);
 	}
 };
 
@@ -480,30 +480,30 @@ struct VaApiUploader : public VideoTextureUploader {
 		if (deint.flags() & DeintInfo::VaApi)
 			m_deint = new VaApiDeinterlacer;
 	}
-	virtual void initialize(const VideoTextureInfo &info) override {
+	virtual void initialize(const VideoTexture &texture) override {
 		free();
-		Q_ASSERT(info.format == GL_BGRA);
-		VideoTextureUploader::initialize(info);
-		vaCreateSurfaceGLX(VaApi::glx(), info.target, m_texture = info.id, &m_surface);
-		vaCreateSurfaces(VaApi::glx(), info.width, info.height, VaApi::surfaceFormat(), 1, &m_ppSurface);
+		Q_ASSERT(texture.format.pixel == GL_BGRA);
+		VideoTextureUploader::initialize(texture);
+		vaCreateSurfaceGLX(VaApi::glx(), texture.target, m_texture = texture.id, &m_surface);
+		vaCreateSurfaces(VaApi::glx(), texture.width, texture.height, VaApi::surfaceFormat(), 1, &m_ppSurface);
 	}
 	~VaApiUploader() { free(); delete m_deint; }
-	virtual void upload(const VideoTextureInfo &info, const VideoFrame &frame) override {
+	virtual void upload(const VideoTexture &texture, const VideoFrame &frame) override {
 		auto dpy = VaApi::glx();
-		Q_ASSERT(m_texture == info.id);
+		Q_ASSERT(m_texture == texture.id);
 		auto id = (VASurfaceID)(uintptr_t)frame.data(3);
 		vaSyncSurface(dpy, id);
 		if ((frame.field() & VideoFrame::Interlaced) && m_deint) {
 			if (m_deint->apply(id, m_ppSurface, frame.field() & VideoFrame::Top))
 				id = m_ppSurface;
 		}
-		glBindTexture(info.target, info.id);
+		glBindTexture(texture.target, m_texture);
 		vaCopySurfaceGLX(dpy, m_surface, id, specs[frame.format().colorspace()]);
 	}
 	virtual QImage toImage(const VideoFrame &frame) const override {
 		QImage image(frame.format().alignedSize(), QImage::Format_ARGB32);
 		glBindTexture(GL_TEXTURE_2D, m_texture);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, image.bits());
 		return image;
 	}
 	virtual mp_csp colorspace(const VideoFormat &) const override { return MP_CSP_RGB; }

@@ -7,13 +7,9 @@ class MpOsdNode::Shader : public QSGMaterialShader {
 public:
 	Shader(MpOsdNode *node): m_node(node) {}
 	void updateState(const RenderState &state, QSGMaterial *newOne, QSGMaterial *old) {
-		Q_UNUSED(old); Q_UNUSED(newOne);
-		m_node->render(program(), state);
+		Q_UNUSED(old); Q_UNUSED(newOne); m_node->render(program(), state);
 	}
-	void initialize() {
-		QSGMaterialShader::initialize();
-		m_node->bind(program());
-	}
+	void initialize() { QSGMaterialShader::initialize(); m_node->bind(program()); }
 private:
 	virtual const char *const *attributeNames() const override {
 		static const char *names[] = {
@@ -64,7 +60,8 @@ private:
 	mutable QByteArray m_frag, m_vtx;
 };
 
-struct MpOsdNode::Material : public QSGMaterial {
+class MpOsdNode::Material : public QSGMaterial {
+public:
 	Material(MpOsdNode *node): m_node(node) { setFlag(Blending); }
 	QSGMaterialType *type() const { return &MaterialTypes[m_id]; }
 	QSGMaterialShader *createShader() const { return new Shader(m_node); }
@@ -73,29 +70,59 @@ private:
 	MpOsdNode *m_node = nullptr;
 };
 
-MpOsdNode::MpOsdNode(MpOsdBitmap::Format format): m_format(format)
+MpOsdNode::MpOsdNode(MpOsdBitmap::Format format, const char *sheet)
+: m_format(format), m_sheetName(QString::fromLatin1(sheet))
 , m_srcFactor(format & MpOsdBitmap::PaMask ? GL_ONE : GL_SRC_ALPHA) {
 	setFlags(OwnsGeometry | OwnsMaterial);
 	setMaterial(new Material(this));
 	setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4));
 	markDirty(DirtyMaterial | DirtyGeometry);
+	glGenTextures(1, &m_sheet.id);
+	m_sheet.format = OpenGLCompat::textureFormat(format & MpOsdBitmap::Rgba ? GL_BGRA : 1);
 }
 
 MpOsdNode::~MpOsdNode() {
 	delete m_fbo;
-	if (m_bgTexture != GL_NONE)
-		glDeleteTextures(1, &m_bgTexture);
+	glDeleteTextures(1, &m_sheet.id);
+}
+
+void MpOsdNode::link(const QByteArray &fragment, const QByteArray &vertex) {
+	if (!fragment.isEmpty())
+		m_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, fragment.data());
+	if (!vertex.isEmpty())
+		m_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex.data());
+	m_shader.link();
+	loc_sheet = m_shader.uniformLocation(m_sheetName);
+}
+
+void MpOsdNode::bind(const QOpenGLShaderProgram *prog) {
+	loc_matrix = prog->uniformLocation("qt_Matrix");
+	loc_tex_data = prog->uniformLocation("tex_data");
+	loc_width = prog->uniformLocation("width");
+	loc_height = prog->uniformLocation("height");
+}
+
+void MpOsdNode::render(QOpenGLShaderProgram *prog, const QSGMaterialShader::RenderState &state) {
+	if (state.isMatrixDirty())
+		prog->setUniformValue(loc_matrix, state.combinedMatrix());
+	prog->setUniformValue(loc_tex_data, 0);
+	if (m_fbo) {
+		prog->setUniformValue(loc_width, (float)m_fbo->width());
+		prog->setUniformValue(loc_height, (float)m_fbo->height());
+		auto f = QOpenGLContext::currentContext()->functions();
+		f->glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_fbo->texture());
+	}
 }
 
 void MpOsdNode::upload(const MpOsdBitmap &osd, int i) {
 	auto &part = osd.part(i);
-	glBindTexture(GL_TEXTURE_2D, m_bgTexture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, part.map().x(), part.map().y(), part.strideAsPixel(), part.size().height(), m_glFormat, m_glType, osd.data(i));
+	m_sheet.upload(part.map().x(), part.map().y(), part.strideAsPixel(), part.height(), osd.data(i));
 	auto pc = m_coordinates.data() + 4*2*i;
-	const float tx1 = (double)part.map().x()/(double)bgTextureWidth();
-	const float ty1 = (double)part.map().y()/(double)bgTextureHeight();
-	const float tx2 = tx1+(double)part.size().width()/(double)bgTextureWidth();
-	const float ty2 = ty1+(double)part.size().height()/(double)bgTextureHeight();
+	const float tx1 = (double)part.map().x()/(double)m_sheet.width;
+	const float ty1 = (double)part.map().y()/(double)m_sheet.height;
+	const float tx2 = tx1+(double)part.size().width()/(double)m_sheet.width;
+	const float ty2 = ty1+(double)part.size().height()/(double)m_sheet.height;
 	*pc++ = tx1; *pc++ = ty1;
 	*pc++ = tx1; *pc++ = ty2;
 	*pc++ = tx2; *pc++ = ty2;
@@ -112,18 +139,15 @@ void MpOsdNode::upload(const MpOsdBitmap &osd, int i) {
 	*pp++ = vx2; *pp++ = vy1;
 }
 
-void MpOsdNode::initializeBgTexture(const MpOsdBitmap &osd, GLenum internal, GLenum glFormat, GLenum glType) {
-	if (m_bgTextureSize.isEmpty() || osd.TextureMapSize().width() > m_bgTextureSize.width() || osd.TextureMapSize().height() > m_bgTextureSize.height()) {
-		if (osd.TextureMapSize().width() > m_bgTextureSize.width())
-			m_bgTextureSize.setWidth(qMin<int>(_Aligned<4>(osd.TextureMapSize().width()*1.5), MaxTextureSize));
-		if (osd.TextureMapSize().height() > m_bgTextureSize.height())
-			m_bgTextureSize.setHeight(qMin<int>(_Aligned<4>(osd.TextureMapSize().height()*1.5), MaxTextureSize));
-		if (m_bgTexture == GL_NONE)
-			glGenTextures(1, &m_bgTexture);
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, m_bgTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, internal, m_bgTextureSize.width(), m_bgTextureSize.height(), 0, m_glFormat = glFormat, m_glType = glType, nullptr);
-		_InitTexParam(GL_NEAREST);
+void MpOsdNode::initializeSheetTexture(const MpOsdBitmap &osd) {
+	static const int max = OpenGLCompat::maximumTextureSize();
+	if (osd.sheet().width() > m_sheet.width || osd.sheet().height() > m_sheet.height) {
+		if (osd.sheet().width() > m_sheet.width)
+			m_sheet.width = qMin<int>(_Aligned<4>(osd.sheet().width()*1.5), max);
+		if (osd.sheet().height() > m_sheet.height)
+			m_sheet.height = qMin<int>(_Aligned<4>(osd.sheet().height()*1.5), max);
+		glEnable(m_sheet.target);
+		m_sheet.allocate(GL_NEAREST);
 	}
 }
 
@@ -149,6 +173,11 @@ void MpOsdNode::draw(const MpOsdBitmap &osd, const QRectF &rect) {
 		m_positions.resize(4*2*size);
 	}
 
+	initializeSheetTexture(osd);
+
+	m_shader.bind();
+	m_shader.setUniformValue(loc_sheet, 0);
+
 	beforeRendering(osd);
 	glTexCoordPointer(2, GL_FLOAT, 0, m_coordinates.data());
 	glVertexPointer(2, GL_FLOAT, 0, m_positions.data());
@@ -156,7 +185,7 @@ void MpOsdNode::draw(const MpOsdBitmap &osd, const QRectF &rect) {
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, bgTexture());
+	glBindTexture(GL_TEXTURE_2D, m_sheet.id);
 	glEnable(GL_BLEND);
 	glBlendFunc(m_srcFactor, GL_ONE_MINUS_SRC_ALPHA);
 	glDrawArrays(GL_QUADS, 0, 4*osd.count());
@@ -166,6 +195,7 @@ void MpOsdNode::draw(const MpOsdBitmap &osd, const QRectF &rect) {
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	afterRendering();
+	m_shader.release();
 	m_fbo->release();
 
 	auto tp = geometry()->vertexDataAsTexturedPoint2D();
@@ -177,4 +207,53 @@ void MpOsdNode::draw(const MpOsdBitmap &osd, const QRectF &rect) {
 	set(++tp, rect.bottomLeft(), txt.bottomLeft());
 	set(++tp, rect.topRight(), txt.topRight());
 	set(++tp, rect.bottomRight(), txt.bottomRight());
+}
+
+/***************************************************************************************/
+
+MpRgbaOsdNode::MpRgbaOsdNode(MpOsdBitmap::Format format): MpOsdNode(format) {
+	link(R"(
+		uniform sampler2D sheet;
+		void main() {
+			gl_FragColor = texture2D(sheet, gl_TexCoord[0].xy);
+		}
+	)");
+}
+
+void MpRgbaOsdNode::beforeRendering(const MpOsdBitmap &osd) {
+	for (int i=0; i<osd.count(); ++i)
+		upload(osd, i);
+}
+
+MpAssOsdNode::MpAssOsdNode(): MpOsdNode(MpOsdBitmap::Ass) {
+	link(R"(
+		uniform sampler2D sheet;
+		varying vec4 c;
+		void main() {
+			vec2 co = vec2(c.a*texture2D(sheet, gl_TexCoord[0].xy).r, 0.0);
+			gl_FragColor = c*co.xxxy + co.yyyx;
+		}
+	)", R"(
+		varying vec4 c;
+		void main() {
+			c = gl_Color.abgr;
+			gl_TexCoord[0] = gl_MultiTexCoord0;
+			gl_Position = ftransform();
+		}
+	)");
+}
+
+void MpAssOsdNode::beforeRendering(const MpOsdBitmap &osd) {
+	const int num = osd.count();
+	if (num > m_colors.size()/4)
+		m_colors.resize(4*num*1.5);
+	quint32 *pr = m_colors.data();
+	for (int i=0; i<num; ++i) {
+		auto &part = osd.part(i);
+		upload(osd, i);
+		const quint32 color = part.color();
+		*pr++ = color; *pr++ = color; *pr++ = color; *pr++ = color;
+	}
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, m_colors.data());
+	glEnableClientState(GL_COLOR_ARRAY);
 }

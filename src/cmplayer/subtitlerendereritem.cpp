@@ -4,6 +4,7 @@
 #include "subtitlestyle.hpp"
 #include "subtitledrawer.hpp"
 #include "subtitlerenderingthread.hpp"
+#include "openglcompat.hpp"
 
 struct SubtitleRendererItem::Data {
 	SubtitleStyle style;
@@ -20,11 +21,13 @@ struct SubtitleRendererItem::Data {
 	SubtitleRenderingThread::RenderTarget order;
 	SubtitleRenderingThread::Picture pic = {order};
 	QVector<SubtitleComponentModel*> models;
+	OpenGLTexture texture;
 };
 
 SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
 : TextureRendererItem(1, parent), d(new Data) {
 	updateAlignment();	updateStyle();
+	d->texture.format = {GL_RGBA8, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV};
 }
 
 SubtitleRendererItem::~SubtitleRendererItem() {
@@ -147,10 +150,11 @@ void SubtitleRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 }
 
 void SubtitleRendererItem::initializeTextures() {
-	if (!d->pic.image.isNull()) {//drawer.hasDrawn()) {
-		glBindTexture(GL_TEXTURE_2D, texture(0));
-		glTexImage2D(GL_TEXTURE_2D, 0, 4, d->pic.image.width(), d->pic.image.height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, d->pic.image.bits());
-		_InitTexParam();
+	if (!d->pic.image.isNull()) {
+		d->texture.id = texture(0);
+		d->texture.width = d->pic.image.width();
+		d->texture.height = d->pic.image.height();
+		d->texture.allocate(GL_LINEAR, d->pic.image.bits());
 	}
 	setGeometryDirty();
 }

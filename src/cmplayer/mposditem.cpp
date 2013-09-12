@@ -1,13 +1,7 @@
 #include "mposditem.hpp"
-#include "dataevent.hpp"
-extern "C" {
-#include <sub/sub.h>
-}
 #include "mposdbitmap.hpp"
 #include "mposdnode.hpp"
-
-
-
+#include "dataevent.hpp"
 
 struct MpOsdItem::Data {
 	MpOsdBitmap osd;
@@ -40,23 +34,19 @@ QSize MpOsdItem::targetSize() const {
 
 void MpOsdItem::drawOn(sub_bitmaps *imgs) {
 	d->show = true;
-	if (imgs->num_parts <= 0)
-		return;
-//	qDebug() <<imgs->scaled;
 	MpOsdBitmap osd;
-	if (osd.copy(imgs, d->renderSize)) {
+	if (osd.copy(imgs, d->renderSize))
 		postData(this, EnqueueFrame, osd);
-	}
 }
 
 void MpOsdItem::drawOn(QImage &frame) {
-	if (!isVisible() || !d->node)
-		return;
-//	QPainter painter(&frame);
-//	painter.drawImage(0, 0, d->node->fbo()->toImage());
+	if (isVisible())
+		d->osd.drawOn(frame);
 }
 
-void MpOsdItem::present() {
+void MpOsdItem::present(bool redraw) {
+	if (redraw)
+		return;
 	if (d->show) {
 		postData(this, Show);
 		d->show = false;
@@ -78,6 +68,7 @@ void MpOsdItem::customEvent(QEvent *event) {
 		d->osd = getData<MpOsdBitmap>(event);
 		d->redraw = true;
 		update();
+		break;
 	default:
 		break;
 	}
