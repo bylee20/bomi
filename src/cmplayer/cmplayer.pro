@@ -14,7 +14,7 @@ precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
-LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavcodec -lavfilter -lpostproc -lavformat -lavutil \
+LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavfilter -lavcodec -lpostproc -lavformat -lavutil \
 	-lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio
 macx {
     QT += gui-private
@@ -117,7 +117,8 @@ HEADERS += playengine.hpp \
     letterboxitem.hpp \
     mposdbitmap.hpp \
     mposdnode.hpp \
-    openglcompat.hpp
+    openglcompat.hpp \
+    videotextureshader.glsl.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -219,7 +220,8 @@ OTHER_FILES += \
     imports/CMPlayerSkin/AppWithFloating.qml \
     imports/CMPlayerSkin/AppWithDock.qml \
     imports/CMPlayerSkin/TimeSlider.qml \
-    imports/CMPlayerSkin/VolumeSlider.qml
+    imports/CMPlayerSkin/VolumeSlider.qml \
+    videotextureshader.glsl
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}
