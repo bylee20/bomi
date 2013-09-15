@@ -60,10 +60,14 @@
 \begin_body
 
 \begin_layout Section
-Definitions
+Color Matrix
 \end_layout
 
 \begin_layout Subsection
+Definitions
+\end_layout
+
+\begin_layout Subsubsection
 \begin_inset Formula $YUV$
 \end_inset
 
@@ -91,7 +95,7 @@ where
 .
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 \begin_inset Formula $YP_{B}P_{R}$
 \end_inset
 
@@ -111,7 +115,7 @@ P_{R} & =\frac{V}{2\left(1-K_{R}\right)}=\frac{B-R}{2\left(1-K_{R}\right)} & [-0
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 \begin_inset Formula $Y'C_{B}C_{R}$
 \end_inset
 
@@ -174,11 +178,11 @@ C_{2}=240/255
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Subsection
 Conversion
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 \begin_inset Formula $RGB$
 \end_inset
 
@@ -238,7 +242,7 @@ M_{Y\leftarrow R} & =\begin{pmatrix}\left(Y_{2}-Y_{1}\right)K_{R} & \left(Y_{2}-
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 \begin_inset Formula $Y'C_{B}C_{R}$
 \end_inset
 
@@ -288,11 +292,11 @@ Filter
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Subsection
 Color adjust
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 Brightness and Contrast
 \end_layout
 
@@ -307,7 +311,7 @@ E_{Y}=\left(Y'-Y_{0}\right)S_{C}+S_{B}+Y_{0};\quad Y_{0}=Y_{1}
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 Saturation and Hue
 \end_layout
 
@@ -325,7 +329,7 @@ E_{R} & =\left[\left(C_{R}-C_{0}\right)\cos S_{H}-\left(C_{B}-C_{0}\right)\sin S
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 Matrix expression
 \end_layout
 
@@ -440,7 +444,7 @@ B'
 
 \end_layout
 
-\begin_layout Section
+\begin_layout Subsection
 BT.601
 \end_layout
 
@@ -455,7 +459,7 @@ K_{R}=0.299,\quad K_{B}=0.114
 
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Subsubsection
 MPEG range
 \end_layout
 
@@ -490,6 +494,170 @@ M_{Y\leftarrow R}^{-1}=\begin{pmatrix}\frac{1}{Y_{2}-Y_{1}} & 0 & \frac{2\left(1
 \frac{1}{Y_{2}-Y_{1}} & \frac{2\left(1-K_{B}\right)}{C_{2}-C_{1}} & 0
 \end{pmatrix}
 \]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Fast-third order interpolation with linearly interpolated textures
+\end_layout
+
+\begin_layout Standard
+http://http.developer.nvidia.com/GPUGems2/gpugems2_chapter20.html
+\end_layout
+
+\begin_layout Subsection
+Cubic interpolation
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f\left(x\right)=w_{0}\left(x\right)f_{i-1}+w_{1}\left(x\right)f_{i}+w_{2}\left(x\right)f_{i+1}+w_{3}\left(x\right)f_{i+2}
+\]
+
+\end_inset
+
+with linear interpolation,
+\begin_inset Formula 
+\[
+f_{x}=f_{i+\alpha}=\left(1-\alpha\right)f_{i}+\alpha f_{i+1}\quad i=\mathrm{floor}(x),\,\alpha=\mathrm{fract}(x)=x-i
+\]
+
+\end_inset
+
+for arbitary 
+\begin_inset Formula $a\geq0,b\geq0$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+af_{i}+bf_{i+1}=\left(a+b\right)\left[\frac{a}{a+b}f_{i}+\frac{b}{a+b}f_{i+1}\right]=\left(a+b\right)f_{i+\frac{b}{a+b}}
+\]
+
+\end_inset
+
+Therefore,
+\begin_inset Formula 
+\begin{align*}
+w_{0}\left(x\right)f_{i-1}+w_{1}\left(x\right)f_{i} & =\left[w_{0}\left(x\right)+w_{1}\left(x\right)\right]f_{x-\left[1+\alpha-\frac{w_{1}\left(x\right)}{w_{0}\left(x\right)+w_{1}\left(x\right)}\right]}\equiv g_{0}\left(x\right)f_{x-}\\
+w_{2}\left(x\right)f_{i+1}+w_{3}\left(x\right)f_{i+2} & =\left[w_{2}\left(x\right)+w_{3}\left(x\right)\right]f_{x+\left[1-\alpha+\frac{w_{3}\left(x\right)}{w_{2}\left(x\right)+w_{3}\left(x\right)}\right]}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+f\left(x\right) & =g_{0}\left(\alpha\right)f_{x-h_{0}\left(\alpha\right)}+g_{1}\left(\alpha\right)f_{x+h_{1}\left(\alpha\right)}\\
+ & =\left(g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)\right)\left[\frac{g_{0}\left(\alpha\right)}{g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)}f_{x-h_{0}\left(\alpha\right)}+\frac{g_{1}\left(\alpha\right)}{g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)}f_{x+h_{1}\left(\alpha\right)}\right]\\
+ & =\left(g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)\right)\mathrm{mix}\left[f_{x-h_{0}\left(\alpha\right)},f_{x+h_{1}\left(\alpha\right)},\frac{g_{1}\left(\alpha\right)}{g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)}\right]
+\end{align*}
+
+\end_inset
+
+(all functions are periodic in [0,1], 
+\begin_inset Formula $w_{i}\left(x\right)=w_{i}\left(\alpha\right)$
+\end_inset
+
+) where
+\begin_inset Formula 
+\[
+\begin{cases}
+g_{0}\left(\alpha\right)= & w_{0}\left(\alpha\right)+w_{1}\left(\alpha\right)\\
+g_{1}\left(\alpha\right)= & w_{2}\left(\alpha\right)+w_{3}\left(\alpha\right)
+\end{cases},\quad\begin{cases}
+h_{0}\left(\alpha\right)= & 1+\alpha-\frac{w_{1}\left(x\right)}{w_{0}\left(x\right)+w_{1}\left(x\right)}\\
+h_{1}\left(\alpha\right)= & 1-\alpha+\frac{w_{3}\left(x\right)}{w_{2}\left(x\right)+w_{3}\left(x\right)}
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Weight function
+\end_layout
+
+\begin_layout Standard
+http://mentallandscape.com/Papers_siggraph88.pdf
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+W(x)=\begin{cases}
+\frac{1}{6}\left[\left(12-9B-6C\right)\left|x\right|^{3}+\left(-18+12B+6C\right)\left|x\right|^{2}+\left(6-2B\right)\right] & \left|x\right|<1\\
+\frac{1}{6}\left[\left(-B-6C\right)\left|x\right|^{3}+\left(6B+30C\right)\left|x\right|^{2}+\left(-12B-48C\right)\left|x\right|+\left(8B+24C\right)\right] & 1<\left|x\right|<2
+\end{cases}
+\]
+
+\end_inset
+
+In my case, with 
+\begin_inset Formula $0<x<1$
+\end_inset
+
+, 
+\begin_inset Formula 
+\begin{align*}
+w_{0}\left(x\right) & =W\left(x+1\right)\\
+w_{1}\left(x\right) & =W\left(x\right)\\
+w_{2}\left(x\right) & =W\left(x-1\right)\\
+w_{3}\left(x\right) & =W\left(x-2\right)
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+B-spline
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $B=1,C=0$
+\end_inset
+
+
+\begin_inset Formula 
+\[
+W\left(x\right)=\begin{cases}
+\frac{1}{6}\left[3\left|x\right|^{3}-6\left|x\right|^{2}+4\right] & \left|x\right|<1\\
+\frac{1}{6}\left[-\left|x\right|^{3}+6\left|x\right|^{2}-12\left|x\right|+8\right] & 1<\left|x\right|<2
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+w\left(x\right)=\begin{cases}
+\frac{1}{6}\left(4-6x^{2}+3\left|x\right|^{3}\right) & 0<\left|x\right|<1\\
+\frac{1}{6}\left(2-\left|x\right|\right)^{3} & 1<\left|x\right|<2
+\end{cases}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+w_{0}\left(x\right) & =w\left(x+1\right)=\frac{1}{6}\left(1-x\right)^{3}\\
+w_{1}\left(x\right) & =w\left(x\right)=\frac{1}{6}\left(4-6x^{2}+3x^{3}\right)\\
+w_{2}\left(x\right) & =w\left(x-1\right)=\frac{1}{6}\left[4-6\left(x-1\right)^{2}-3\left(x-1\right)^{3}\right]=\frac{1}{6}\left(1-3x^{3}+3x+3x^{2}\right)\\
+w_{3}\left(x\right) & =w\left(x-2\right)=\frac{1}{6}\left(2+(x-2)\right)^{3}=\frac{1}{6}\alpha^{3}
+\end{align*}
 
 \end_inset
 
