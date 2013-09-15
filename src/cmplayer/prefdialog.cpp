@@ -324,7 +324,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
 	for (int algo : VaApi::algorithms(VAProcFilterDeinterlacing)) {
 		if (algo == VAProcDeinterlacingBob) // other methods are not tested, yet
-			d->hwdeint[algo] = makeCheckBox(VaApiFilterInfo::description(filter->type(), algo), filter->supports(algo));
+			d->hwdeint[DeintInfo::Bob] = makeCheckBox(VaApiFilterInfo::description(filter->type(), algo), filter->supports(algo));
 	}
 	d->ui.hwdeint_list->setLayout(vbox);
 #endif

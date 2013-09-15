@@ -33,11 +33,11 @@ QByteArray VideoTextureShader::header() const {
 	m_header += "#define HEIGHT " + QByteArray::number(format().alignedHeight()) + ".0\n";
 	if (m_target != GL_TEXTURE_2D || format().isEmpty())
 		m_header += "#define USE_RECTANGLE\n";
-	if (m_effects & VideoRendererItem::KernelEffects)
+	if (hasKernelEffects())
 		m_header += "#define USE_KERNEL3x3\n";
-	else if (m_interpolator > 0)
+	if (m_interpolator > 0)
 		m_header += "#define USE_BICUBIC\n";
-	if (m_deint.flags() & DeintInfo::OpenGL) {
+	if (m_deint.hardware() == DeintInfo::OpenGL) {
 		if (m_deint.method() == DeintInfo::Bob)
 			m_header += "#define USE_DEINT 1\n";
 		else if (m_deint.method() == DeintInfo::LinearBob)
@@ -96,9 +96,6 @@ void VideoTextureShader::updateMatrix() {
 
 
 void VideoTextureShader::link(QOpenGLShaderProgram *program) {
-	loc_kern_c = program->uniformLocation("kern_c");
-	loc_kern_d = program->uniformLocation("kern_d");
-	loc_kern_n = program->uniformLocation("kern_n");
 	loc_top_field = program->uniformLocation("top_field");
 	loc_deint = program->uniformLocation("deint");
 	loc_p1 = program->uniformLocation("p1");
@@ -106,15 +103,20 @@ void VideoTextureShader::link(QOpenGLShaderProgram *program) {
 	loc_p3 = program->uniformLocation("p3");
 	loc_sc2 = program->uniformLocation("sc2");
 	loc_sc3 = program->uniformLocation("sc3");
-	loc_cubic_lut = program->uniformLocation("cubic_lut");
 	loc_sub_vec = program->uniformLocation("sub_vec");
 	loc_add_vec = program->uniformLocation("add_vec");
 	loc_mul_mat = program->uniformLocation("mul_mat");
+	if (hasKernelEffects()) {
+		loc_kern_c = program->uniformLocation("kern_c");
+		loc_kern_d = program->uniformLocation("kern_d");
+		loc_kern_n = program->uniformLocation("kern_n");
+	}
+	if (m_interpolator > 0)
+		loc_cubic_lut = program->uniformLocation("cubic_lut");
 }
 
 bool VideoTextureShader::setEffects(int effects) {
-	constexpr auto kernel = VideoRendererItem::KernelEffects;
-	const bool ret = ((effects & kernel) == (m_effects & kernel));
+	const bool ret = ((effects & KernelEffects) == (m_effects & KernelEffects));
 	m_effects = effects;
 	updateMatrix();
 	return ret;
@@ -126,19 +128,23 @@ void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &
 	program->setUniformValue(loc_p1, 0);
 	program->setUniformValue(loc_p2, 1);
 	program->setUniformValue(loc_p3, 2);
-	program->setUniformValue(loc_cubic_lut, 3);
 	program->setUniformValue(loc_sub_vec, m_sub_vec);
 	program->setUniformValue(loc_add_vec, m_add_vec);
 	program->setUniformValue(loc_mul_mat, m_mul_mat);
 	program->setUniformValue(loc_sc2, m_sc2);
 	program->setUniformValue(loc_sc3, m_sc3);
-	if (VideoRendererItem::KernelEffects & m_effects) {
+	if (hasKernelEffects()) {
 		program->setUniformValue(loc_kern_c, kernel.center());
 		program->setUniformValue(loc_kern_n, kernel.neighbor());
 		program->setUniformValue(loc_kern_d, kernel.diagonal());
 	}
+	auto f = QOpenGLContext::currentContext()->functions();
+	if (m_interpolator > 0) {
+		program->setUniformValue(loc_cubic_lut, 3);
+		f->glActiveTexture(GL_TEXTURE3);
+		m_cubicLutTexture.bind();
+	}
 	if (!format().isEmpty()) {
-		auto f = QOpenGLContext::currentContext()->functions();
 		f->glActiveTexture(GL_TEXTURE0);
 		m_textures[0].bind();
 		if (m_textures.size() > 1) {
@@ -148,10 +154,6 @@ void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &
 		if (m_textures.size() > 2) {
 			f->glActiveTexture(GL_TEXTURE2);
 			m_textures[2].bind();
-		}
-		if (m_cubicLutTexture.id != GL_NONE) {
-			f->glActiveTexture(GL_TEXTURE3);
-			m_cubicLutTexture.bind();
 		}
 		f->glActiveTexture(GL_TEXTURE0);
 	}
@@ -558,7 +560,8 @@ VideoTextureShader *VideoTextureShader::create(const VideoFormat &format
 	else
 		shader->setUploader(new VideoTextureUploader);
 	shader->m_effects = effects;
-	shader->m_interpolator = interpolator;
+	if (!shader->hasKernelEffects())
+		shader->m_interpolator = interpolator;
 	shader->m_color = color;
 	shader->m_deint = deint;
 	shader->updateMatrix();

@@ -34,13 +34,14 @@ public:
 	};
 	enum Method { Bob, LinearBob, CubicBob, LinearBlend, Median, Yadif, MethodCount };
 	static QList<DeintInfo> list();
-	DeintInfo(Method method, int caps);
+	DeintInfo(Method method, int flags);
 	int capabilities() const;
 	QString name() const;
 	static QString description(Method method);
 	static QString name(Method method);
 	static int capabilities(Method method);
 	int flags() const { return m_flags; }
+	int hardware() const { return m_flags & Hardware; }
 	Method method() const { return m_method; }
 	DeintInfo() = default;
 	bool isDoubleRate() const { return m_flags & DoubleRate; }

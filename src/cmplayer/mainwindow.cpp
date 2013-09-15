@@ -1336,10 +1336,18 @@ void MainWindow::applyPref() {
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
+#ifdef Q_OS_LINUX
+	int flags = p.deint_hwdec.flags();
+	if ((flags & DeintInfo::VaApi) && (!p.enable_hwdeint || !p.hwdeints.contains(p.deint_hwdec.method())))
+		flags &= ~DeintInfo::VaApi;
+	d->engine.setDeint(p.deint_swdec, DeintInfo(p.deint_hwdec.method(), flags));
+#else
 	d->engine.setDeint(p.deint_swdec, p.deint_hwdec);
+#endif
 	d->engine.setAudioDriver(p.audio_driver);
 	d->engine.setClippingMethod(p.clipping_method);
 	d->engine.setSoftwareVolume(p.software_volume);
+	d->engine.setMinimumCache(p.cache_min_playback, p.cache_min_seeking);
 	d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
 	d->renderer.setInterpolator(p.picture_interpolator);
 	SubtitleParser::setMsPerCharactor(p.ms_per_char);

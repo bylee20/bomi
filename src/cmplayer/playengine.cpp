@@ -194,7 +194,8 @@ AudioDriver PlayEngine::audioDriver() const {
 }
 
 void PlayEngine::setMinimumCache(int playback, int seeking) {
-	d->mpctx->opts->stream_cache_min_percent = d->mpctx->opts->stream_cache_pause = playback;
+	d->mpctx->opts->stream_cache_min_percent = playback;
+	d->mpctx->opts->stream_cache_pause = playback*0.5;
 	d->mpctx->opts->stream_cache_seek_min_percent = seeking;
 }
 

@@ -1,5 +1,6 @@
 #include "pref.hpp"
 #include "hwacc.hpp"
+#include "info.hpp"
 
 template<typename T>
 static QStringList toStringList(const QList<T> &list) {
@@ -246,10 +247,13 @@ void Pref::save() const {
 		r.setValue("keys", toStringList(it.value()));
 	}
 	r.endArray();
+
+	r.setValue("version", Info::versionNumber());
 }
 
 void Pref::load() {
 	Record r(PREF_GROUP);
+	const int version = r.value("version", 0).toInt();
 #define READ(a) r.read(a, #a)
 	READ(remember_stopped);
 	READ(ask_record_found);
@@ -294,7 +298,8 @@ void Pref::load() {
     READ(enable_hwaccel);
     READ(hwaccel_codecs);
 	READ(enable_hwdeint);
-	READ(hwdeints);
+	if (version > 0x000709)
+		READ(hwdeints);
 
 	READ(enable_generate_playist);
 	READ(sub_enable_autoload);
@@ -365,8 +370,15 @@ QList<int> Pref::defaultHwAccDeints() {
 	auto algorithms = VaApi::algorithms(VAProcFilterDeinterlacing);
 	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
 	for (auto algo : algorithms) {
-		if (filter->supports(algo))
-			deints << algo;
+		if (filter->supports(algo)) {
+			switch (algo) {
+			case VAProcDeinterlacingBob:
+				deints << DeintInfo::Bob;
+				break;
+			default:
+				break;
+			}
+		}
 	}
 #endif
 	return deints;

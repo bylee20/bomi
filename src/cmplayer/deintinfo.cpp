@@ -41,8 +41,8 @@ const std::array<DeintInfo::Item, DeintInfo::MethodCount> &DeintInfo::Item::list
 	return list;
 }
 
-DeintInfo::DeintInfo(Method method, int options)
-: m_method(method), m_flags(options & Item::list()[method].caps) {}
+DeintInfo::DeintInfo(Method method, int flags)
+: m_method(method), m_flags(flags & Item::list()[method].caps) {}
 
 QList<DeintInfo> DeintInfo::list() {
 	QList<DeintInfo> list;
