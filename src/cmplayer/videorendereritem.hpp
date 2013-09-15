@@ -9,6 +9,7 @@ class DeintInfo;
 class VideoRendererItem;		class ColorProperty;
 class VideoFrame;				class VideoFormat;
 class MpOsdItem;
+enum class InterpolatorType;
 
 class VideoRendererItem : public TextureRendererItem {
 	Q_OBJECT
@@ -57,6 +58,7 @@ public:
 	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
 	int delay() const;
 	void setDeint(const DeintInfo &deint);
+	void setInterpolator(InterpolatorType interpolator);
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -73,7 +75,9 @@ private:
 	void emptyQueue();
 	void enqueue(const VideoFrame &frame);
 	void initializeTextures();
-	const char *fragmentShader() const;
+	const char *fragmentShader() const override;
+	const char *vertexShader() const override;
+	const char *const *attributeNames() const override;
 	void link(QOpenGLShaderProgram *program);
 	void bind(const RenderState &state, QOpenGLShaderProgram *program);
 	void updateTexturedPoint2D(TexturedPoint2D *tp);

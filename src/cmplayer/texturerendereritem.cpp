@@ -7,11 +7,35 @@ struct TextureRendererItem::Shader : public QSGMaterialShader {
         Q_UNUSED(old); Q_UNUSED(newOne); m_item->bind(state, program());
 	}
     void initialize() { m_item->link(program()); }
+#ifndef CMPLAYER_RELEASE
+	void activate() {
+		if (_Change(m_bench, m_item->isBenchmarkOn()))
+			m_elapsed = m_count = 0;
+		if (m_bench)
+			m_timer.restart();
+		QSGMaterialShader::activate();
+	}
+	void deactivate() {
+		QSGMaterialShader::deactivate();
+		if (m_bench) {
+			m_elapsed += m_timer.nsecsElapsed();
+			++m_count;
+			if (!(m_count % 200)) {
+				qDebug() << "ms:" << m_elapsed*1e-6;
+				m_elapsed = m_count = 0;
+			}
+		}
+	}
+#endif
 private:
 	char const *const *attributeNames() const { return m_item->attributeNames(); }
 	const char *vertexShader() const {return m_item->vertexShader();}
 	const char *fragmentShader() const {return m_item->fragmentShader();}
     TextureRendererItem *m_item = nullptr;
+	QElapsedTimer m_timer;
+	bool m_bench = false;
+	quint32 m_elapsed;
+	quint32 m_count = 0;
 };
 
 static int MaterialId = 0;

@@ -1,3 +1,9 @@
++InterpolatorType
+-Bilinear-Bilinear interpolator
+-BicubicCR-Catmull-Rom bicubic interpolator
+-BicubicMN-Mitchell-Netravali bicubic interpolator
+-BicubicBS-B-spline bicubic interpolator
+
 +AudioDriver
 -Auto
 -CoreAudio

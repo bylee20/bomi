@@ -38,21 +38,17 @@ static QMatrix4x4 matSHC(double s, double h, double c) {
 
 						//  y1,y2,c1,c2
 const float ranges[MP_CSP_LEVELS_COUNT][4] = {
-	{	  0.0,	      1.0,      0.0,         1.0}, //MP_CSP_LEVELS_AUTO
-	{16./255.,	235./255.,	16./255,	240./255}, // MP_CSP_LEVELS_TV
-	{	  0.0,	      1.0,      0.0,         1.0}  // MP_CSP_LEVELS_PC
+	{	     0.f,         1.f,        0.f,         1.f}, //MP_CSP_LEVELS_AUTO
+	{ 16.f/255.f, 235.f/255.f,  16./255.f, 240.f/255.f}, // MP_CSP_LEVELS_TV
+	{        0.f,         1.f,        0.f,         1.f}  // MP_CSP_LEVELS_PC
 };
 
 const float specs[MP_CSP_COUNT][2] = {
-	{0.0, 0.0}, // MP_CSP_AUTO,
-	{0.114,0.299}, // MP_CSP_BT_601,
-	{0.0722,0.2126}, // MP_CSP_BT_709,
-	{0.087, 0.212}//		MP_CSP_SMPTE_240M,
+	{0.0000, 0.0000}, // MP_CSP_AUTO,
+	{0.1140, 0.2990}, // MP_CSP_BT_601,
+	{0.0722, 0.2126}, // MP_CSP_BT_709,
+	{0.0870, 0.2120}  // MP_CSP_SMPTE_240M,
 };
-
-//		MP_CSP_RGB,
-//		MP_CSP_XYZ,
-//		MP_CSP_YCGCO,
 
 QMatrix4x4 ColorProperty::matrix(mp_csp colorspace, mp_csp_levels levels) const {
 	const float *spec = specs[colorspace];

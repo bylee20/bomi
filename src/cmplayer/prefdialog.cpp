@@ -447,6 +447,30 @@ PrefDialog::PrefDialog(QWidget *parent)
 	connect(d->ui.sharpen_kern_n, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
 	connect(d->ui.sharpen_kern_d, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
 
+	auto onInterpolatorTypeChanged = [this] () {
+		QString desc;
+		switch(d->ui.picture_interpolator->currentValue()) {
+		case InterpolatorType::Bilinear:
+			desc = tr("This interpolator is fastest but the quality of pictures is low.");
+			break;
+		case InterpolatorType::BicubicCR:
+			desc = tr("This interpolator produces sharpest pictures.");
+			break;
+		case InterpolatorType::BicubicMN:
+			desc = tr("This interpolator shows medium level in sharpness and smoothness.");
+			break;
+		case InterpolatorType::BicubicBS:
+			desc = tr("This interpolator produces smoothest pirctures.");
+			break;
+		default:
+			desc = "";
+			break;
+		}
+		d->ui.picture_interpolator_desc->setText(desc);
+	};
+	connect(d->ui.picture_interpolator, &InterpolatorTypeComboBox::currentDataChanged, onInterpolatorTypeChanged);
+	onInterpolatorTypeChanged();
+
 	connect(d->ui.dbb, &DBB::clicked, [this] (QAbstractButton *button) {
 		switch (d->ui.dbb->standardButton(button)) {
 		case DBB::Ok:		hide();
@@ -586,6 +610,7 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.normalizer_max->setValue(p.normalizer_max*100.0);
 	d->ui.normalizer_length->setValue(p.normalizer_length);
 
+	d->ui.picture_interpolator->setCurrentValue(p.picture_interpolator);
 	d->ui.blur_kern_c->setValue(p.blur_kern_c);
 	d->ui.blur_kern_n->setValue(p.blur_kern_n);
 	d->ui.blur_kern_d->setValue(p.blur_kern_d);
@@ -710,6 +735,7 @@ void PrefDialog::get(Pref &p) {
 	p.deint_hwdec = d->ui.deint_hwdec_combo->currentData(WidgetRole).value<DeintWidget*>()->info();
 	p.deint_swdec = d->ui.deint_swdec_combo->currentData(WidgetRole).value<DeintWidget*>()->info();
 
+	p.picture_interpolator = d->ui.picture_interpolator->currentValue();
 	p.blur_kern_c = d->ui.blur_kern_c->value();
 	p.blur_kern_n = d->ui.blur_kern_n->value();
 	p.blur_kern_d = d->ui.blur_kern_d->value();

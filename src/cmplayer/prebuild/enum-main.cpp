@@ -127,6 +127,14 @@ inline bool operator == (int i, __ENUM_NAME e) { return (int)e == i; }
 inline bool operator != (int i, __ENUM_NAME e) { return (int)e != i; }
 inline int operator & (__ENUM_NAME e, int i) { return (int)e & i; }
 inline int operator & (int i, __ENUM_NAME e) { return (int)e & i; }
+inline bool operator > (__ENUM_NAME e, int i) { return (int)e > i; }
+inline bool operator < (__ENUM_NAME e, int i) { return (int)e < i; }
+inline bool operator >= (__ENUM_NAME e, int i) { return (int)e >= i; }
+inline bool operator <= (__ENUM_NAME e, int i) { return (int)e <= i; }
+inline bool operator > (int i, __ENUM_NAME e) { return i > (int)e; }
+inline bool operator < (int i, __ENUM_NAME e) { return i < (int)e; }
+inline bool operator >= (int i, __ENUM_NAME e) { return i >= (int)e; }
+inline bool operator <= (int i, __ENUM_NAME e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<__ENUM_NAME> {

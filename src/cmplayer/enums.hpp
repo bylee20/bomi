@@ -7,6 +7,62 @@
 
 template<typename T> class EnumInfo {};
 
+enum class InterpolatorType : int {
+	Bilinear = (int)0,
+	BicubicCR = (int)1,
+	BicubicMN = (int)2,
+	BicubicBS = (int)3
+};
+
+inline bool operator == (InterpolatorType e, int i) { return (int)e == i; }
+inline bool operator != (InterpolatorType e, int i) { return (int)e != i; }
+inline bool operator == (int i, InterpolatorType e) { return (int)e == i; }
+inline bool operator != (int i, InterpolatorType e) { return (int)e != i; }
+inline int operator & (InterpolatorType e, int i) { return (int)e & i; }
+inline int operator & (int i, InterpolatorType e) { return (int)e & i; }
+inline bool operator > (InterpolatorType e, int i) { return (int)e > i; }
+inline bool operator < (InterpolatorType e, int i) { return (int)e < i; }
+inline bool operator >= (InterpolatorType e, int i) { return (int)e >= i; }
+inline bool operator <= (InterpolatorType e, int i) { return (int)e <= i; }
+inline bool operator > (int i, InterpolatorType e) { return i > (int)e; }
+inline bool operator < (int i, InterpolatorType e) { return i < (int)e; }
+inline bool operator >= (int i, InterpolatorType e) { return i >= (int)e; }
+inline bool operator <= (int i, InterpolatorType e) { return i <= (int)e; }
+
+template<>
+class EnumInfo<InterpolatorType> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef InterpolatorType Enum;
+public:
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 4; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
+	}
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Bilinear: return tr("Bilinear interpolator");
+		case Enum::BicubicCR: return tr("Catmull-Rom bicubic interpolator");
+		case Enum::BicubicMN: return tr("Mitchell-Netravali bicubic interpolator");
+		case Enum::BicubicBS: return tr("B-spline bicubic interpolator");
+		default: return tr("");
+		};
+	}
+	static constexpr const std::array<Item, 4> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
+private:
+	static const std::array<Item, 4> info;
+};
+
+using InterpolatorTypeInfo = EnumInfo<InterpolatorType>;
+
 enum class AudioDriver : int {
 	Auto = (int)0,
 	CoreAudio = (int)1,
@@ -23,6 +79,14 @@ inline bool operator == (int i, AudioDriver e) { return (int)e == i; }
 inline bool operator != (int i, AudioDriver e) { return (int)e != i; }
 inline int operator & (AudioDriver e, int i) { return (int)e & i; }
 inline int operator & (int i, AudioDriver e) { return (int)e & i; }
+inline bool operator > (AudioDriver e, int i) { return (int)e > i; }
+inline bool operator < (AudioDriver e, int i) { return (int)e < i; }
+inline bool operator >= (AudioDriver e, int i) { return (int)e >= i; }
+inline bool operator <= (AudioDriver e, int i) { return (int)e <= i; }
+inline bool operator > (int i, AudioDriver e) { return i > (int)e; }
+inline bool operator < (int i, AudioDriver e) { return i < (int)e; }
+inline bool operator >= (int i, AudioDriver e) { return i >= (int)e; }
+inline bool operator <= (int i, AudioDriver e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<AudioDriver> {
@@ -73,6 +137,14 @@ inline bool operator == (int i, SoftwareVolume e) { return (int)e == i; }
 inline bool operator != (int i, SoftwareVolume e) { return (int)e != i; }
 inline int operator & (SoftwareVolume e, int i) { return (int)e & i; }
 inline int operator & (int i, SoftwareVolume e) { return (int)e & i; }
+inline bool operator > (SoftwareVolume e, int i) { return (int)e > i; }
+inline bool operator < (SoftwareVolume e, int i) { return (int)e < i; }
+inline bool operator >= (SoftwareVolume e, int i) { return (int)e >= i; }
+inline bool operator <= (SoftwareVolume e, int i) { return (int)e <= i; }
+inline bool operator > (int i, SoftwareVolume e) { return i > (int)e; }
+inline bool operator < (int i, SoftwareVolume e) { return i < (int)e; }
+inline bool operator >= (int i, SoftwareVolume e) { return i >= (int)e; }
+inline bool operator <= (int i, SoftwareVolume e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<SoftwareVolume> {
@@ -119,6 +191,14 @@ inline bool operator == (int i, ClippingMethod e) { return (int)e == i; }
 inline bool operator != (int i, ClippingMethod e) { return (int)e != i; }
 inline int operator & (ClippingMethod e, int i) { return (int)e & i; }
 inline int operator & (int i, ClippingMethod e) { return (int)e & i; }
+inline bool operator > (ClippingMethod e, int i) { return (int)e > i; }
+inline bool operator < (ClippingMethod e, int i) { return (int)e < i; }
+inline bool operator >= (ClippingMethod e, int i) { return (int)e >= i; }
+inline bool operator <= (ClippingMethod e, int i) { return (int)e <= i; }
+inline bool operator > (int i, ClippingMethod e) { return i > (int)e; }
+inline bool operator < (int i, ClippingMethod e) { return i < (int)e; }
+inline bool operator >= (int i, ClippingMethod e) { return i >= (int)e; }
+inline bool operator <= (int i, ClippingMethod e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<ClippingMethod> {
@@ -165,6 +245,14 @@ inline bool operator == (int i, DeintMode e) { return (int)e == i; }
 inline bool operator != (int i, DeintMode e) { return (int)e != i; }
 inline int operator & (DeintMode e, int i) { return (int)e & i; }
 inline int operator & (int i, DeintMode e) { return (int)e & i; }
+inline bool operator > (DeintMode e, int i) { return (int)e > i; }
+inline bool operator < (DeintMode e, int i) { return (int)e < i; }
+inline bool operator >= (DeintMode e, int i) { return (int)e >= i; }
+inline bool operator <= (DeintMode e, int i) { return (int)e <= i; }
+inline bool operator > (int i, DeintMode e) { return i > (int)e; }
+inline bool operator < (int i, DeintMode e) { return i < (int)e; }
+inline bool operator >= (int i, DeintMode e) { return i >= (int)e; }
+inline bool operator <= (int i, DeintMode e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<DeintMode> {
@@ -211,6 +299,14 @@ inline bool operator == (int i, StaysOnTop e) { return (int)e == i; }
 inline bool operator != (int i, StaysOnTop e) { return (int)e != i; }
 inline int operator & (StaysOnTop e, int i) { return (int)e & i; }
 inline int operator & (int i, StaysOnTop e) { return (int)e & i; }
+inline bool operator > (StaysOnTop e, int i) { return (int)e > i; }
+inline bool operator < (StaysOnTop e, int i) { return (int)e < i; }
+inline bool operator >= (StaysOnTop e, int i) { return (int)e >= i; }
+inline bool operator <= (StaysOnTop e, int i) { return (int)e <= i; }
+inline bool operator > (int i, StaysOnTop e) { return i > (int)e; }
+inline bool operator < (int i, StaysOnTop e) { return i < (int)e; }
+inline bool operator >= (int i, StaysOnTop e) { return i >= (int)e; }
+inline bool operator <= (int i, StaysOnTop e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<StaysOnTop> {
@@ -257,6 +353,14 @@ inline bool operator == (int i, SeekingStep e) { return (int)e == i; }
 inline bool operator != (int i, SeekingStep e) { return (int)e != i; }
 inline int operator & (SeekingStep e, int i) { return (int)e & i; }
 inline int operator & (int i, SeekingStep e) { return (int)e & i; }
+inline bool operator > (SeekingStep e, int i) { return (int)e > i; }
+inline bool operator < (SeekingStep e, int i) { return (int)e < i; }
+inline bool operator >= (SeekingStep e, int i) { return (int)e >= i; }
+inline bool operator <= (SeekingStep e, int i) { return (int)e <= i; }
+inline bool operator > (int i, SeekingStep e) { return i > (int)e; }
+inline bool operator < (int i, SeekingStep e) { return i < (int)e; }
+inline bool operator >= (int i, SeekingStep e) { return i >= (int)e; }
+inline bool operator <= (int i, SeekingStep e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<SeekingStep> {
@@ -302,6 +406,14 @@ inline bool operator == (int i, GeneratePlaylist e) { return (int)e == i; }
 inline bool operator != (int i, GeneratePlaylist e) { return (int)e != i; }
 inline int operator & (GeneratePlaylist e, int i) { return (int)e & i; }
 inline int operator & (int i, GeneratePlaylist e) { return (int)e & i; }
+inline bool operator > (GeneratePlaylist e, int i) { return (int)e > i; }
+inline bool operator < (GeneratePlaylist e, int i) { return (int)e < i; }
+inline bool operator >= (GeneratePlaylist e, int i) { return (int)e >= i; }
+inline bool operator <= (GeneratePlaylist e, int i) { return (int)e <= i; }
+inline bool operator > (int i, GeneratePlaylist e) { return i > (int)e; }
+inline bool operator < (int i, GeneratePlaylist e) { return i < (int)e; }
+inline bool operator >= (int i, GeneratePlaylist e) { return i >= (int)e; }
+inline bool operator <= (int i, GeneratePlaylist e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<GeneratePlaylist> {
@@ -347,6 +459,14 @@ inline bool operator == (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e
 inline bool operator != (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e != i; }
 inline int operator & (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e & i; }
 inline int operator & (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e & i; }
+inline bool operator > (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e > i; }
+inline bool operator < (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e < i; }
+inline bool operator >= (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e >= i; }
+inline bool operator <= (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e <= i; }
+inline bool operator > (int i, PlaylistBehaviorWhenOpenMedia e) { return i > (int)e; }
+inline bool operator < (int i, PlaylistBehaviorWhenOpenMedia e) { return i < (int)e; }
+inline bool operator >= (int i, PlaylistBehaviorWhenOpenMedia e) { return i >= (int)e; }
+inline bool operator <= (int i, PlaylistBehaviorWhenOpenMedia e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<PlaylistBehaviorWhenOpenMedia> {
@@ -393,6 +513,14 @@ inline bool operator == (int i, SubtitleAutoload e) { return (int)e == i; }
 inline bool operator != (int i, SubtitleAutoload e) { return (int)e != i; }
 inline int operator & (SubtitleAutoload e, int i) { return (int)e & i; }
 inline int operator & (int i, SubtitleAutoload e) { return (int)e & i; }
+inline bool operator > (SubtitleAutoload e, int i) { return (int)e > i; }
+inline bool operator < (SubtitleAutoload e, int i) { return (int)e < i; }
+inline bool operator >= (SubtitleAutoload e, int i) { return (int)e >= i; }
+inline bool operator <= (SubtitleAutoload e, int i) { return (int)e <= i; }
+inline bool operator > (int i, SubtitleAutoload e) { return i > (int)e; }
+inline bool operator < (int i, SubtitleAutoload e) { return i < (int)e; }
+inline bool operator >= (int i, SubtitleAutoload e) { return i >= (int)e; }
+inline bool operator <= (int i, SubtitleAutoload e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<SubtitleAutoload> {
@@ -440,6 +568,14 @@ inline bool operator == (int i, SubtitleAutoselect e) { return (int)e == i; }
 inline bool operator != (int i, SubtitleAutoselect e) { return (int)e != i; }
 inline int operator & (SubtitleAutoselect e, int i) { return (int)e & i; }
 inline int operator & (int i, SubtitleAutoselect e) { return (int)e & i; }
+inline bool operator > (SubtitleAutoselect e, int i) { return (int)e > i; }
+inline bool operator < (SubtitleAutoselect e, int i) { return (int)e < i; }
+inline bool operator >= (SubtitleAutoselect e, int i) { return (int)e >= i; }
+inline bool operator <= (SubtitleAutoselect e, int i) { return (int)e <= i; }
+inline bool operator > (int i, SubtitleAutoselect e) { return i > (int)e; }
+inline bool operator < (int i, SubtitleAutoselect e) { return i < (int)e; }
+inline bool operator >= (int i, SubtitleAutoselect e) { return i >= (int)e; }
+inline bool operator <= (int i, SubtitleAutoselect e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<SubtitleAutoselect> {
@@ -487,6 +623,14 @@ inline bool operator == (int i, OsdScalePolicy e) { return (int)e == i; }
 inline bool operator != (int i, OsdScalePolicy e) { return (int)e != i; }
 inline int operator & (OsdScalePolicy e, int i) { return (int)e & i; }
 inline int operator & (int i, OsdScalePolicy e) { return (int)e & i; }
+inline bool operator > (OsdScalePolicy e, int i) { return (int)e > i; }
+inline bool operator < (OsdScalePolicy e, int i) { return (int)e < i; }
+inline bool operator >= (OsdScalePolicy e, int i) { return (int)e >= i; }
+inline bool operator <= (OsdScalePolicy e, int i) { return (int)e <= i; }
+inline bool operator > (int i, OsdScalePolicy e) { return i > (int)e; }
+inline bool operator < (int i, OsdScalePolicy e) { return i < (int)e; }
+inline bool operator >= (int i, OsdScalePolicy e) { return i >= (int)e; }
+inline bool operator <= (int i, OsdScalePolicy e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<OsdScalePolicy> {
@@ -534,6 +678,14 @@ inline bool operator == (int i, ClickAction e) { return (int)e == i; }
 inline bool operator != (int i, ClickAction e) { return (int)e != i; }
 inline int operator & (ClickAction e, int i) { return (int)e & i; }
 inline int operator & (int i, ClickAction e) { return (int)e & i; }
+inline bool operator > (ClickAction e, int i) { return (int)e > i; }
+inline bool operator < (ClickAction e, int i) { return (int)e < i; }
+inline bool operator >= (ClickAction e, int i) { return (int)e >= i; }
+inline bool operator <= (ClickAction e, int i) { return (int)e <= i; }
+inline bool operator > (int i, ClickAction e) { return i > (int)e; }
+inline bool operator < (int i, ClickAction e) { return i < (int)e; }
+inline bool operator >= (int i, ClickAction e) { return i >= (int)e; }
+inline bool operator <= (int i, ClickAction e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<ClickAction> {
@@ -584,6 +736,14 @@ inline bool operator == (int i, WheelAction e) { return (int)e == i; }
 inline bool operator != (int i, WheelAction e) { return (int)e != i; }
 inline int operator & (WheelAction e, int i) { return (int)e & i; }
 inline int operator & (int i, WheelAction e) { return (int)e & i; }
+inline bool operator > (WheelAction e, int i) { return (int)e > i; }
+inline bool operator < (WheelAction e, int i) { return (int)e < i; }
+inline bool operator >= (WheelAction e, int i) { return (int)e >= i; }
+inline bool operator <= (WheelAction e, int i) { return (int)e <= i; }
+inline bool operator > (int i, WheelAction e) { return i > (int)e; }
+inline bool operator < (int i, WheelAction e) { return i < (int)e; }
+inline bool operator >= (int i, WheelAction e) { return i >= (int)e; }
+inline bool operator <= (int i, WheelAction e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<WheelAction> {
@@ -634,6 +794,14 @@ inline bool operator == (int i, KeyModifier e) { return (int)e == i; }
 inline bool operator != (int i, KeyModifier e) { return (int)e != i; }
 inline int operator & (KeyModifier e, int i) { return (int)e & i; }
 inline int operator & (int i, KeyModifier e) { return (int)e & i; }
+inline bool operator > (KeyModifier e, int i) { return (int)e > i; }
+inline bool operator < (KeyModifier e, int i) { return (int)e < i; }
+inline bool operator >= (KeyModifier e, int i) { return (int)e >= i; }
+inline bool operator <= (KeyModifier e, int i) { return (int)e <= i; }
+inline bool operator > (int i, KeyModifier e) { return i > (int)e; }
+inline bool operator < (int i, KeyModifier e) { return i < (int)e; }
+inline bool operator >= (int i, KeyModifier e) { return i >= (int)e; }
+inline bool operator <= (int i, KeyModifier e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<KeyModifier> {
@@ -687,6 +855,14 @@ inline bool operator == (int i, Position e) { return (int)e == i; }
 inline bool operator != (int i, Position e) { return (int)e != i; }
 inline int operator & (Position e, int i) { return (int)e & i; }
 inline int operator & (int i, Position e) { return (int)e & i; }
+inline bool operator > (Position e, int i) { return (int)e > i; }
+inline bool operator < (Position e, int i) { return (int)e < i; }
+inline bool operator >= (Position e, int i) { return (int)e >= i; }
+inline bool operator <= (Position e, int i) { return (int)e <= i; }
+inline bool operator > (int i, Position e) { return i > (int)e; }
+inline bool operator < (int i, Position e) { return i < (int)e; }
+inline bool operator >= (int i, Position e) { return i >= (int)e; }
+inline bool operator <= (int i, Position e) { return i <= (int)e; }
 
 template<>
 class EnumInfo<Position> {

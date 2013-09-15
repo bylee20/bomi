@@ -1,117 +1,73 @@
 #include "videotextureshader.hpp"
 #include "videoframe.hpp"
 #include "hwacc.hpp"
+#include "videotextureshader.glsl.hpp"
+
+static const QByteArray shaderTemplate((const char*)videotextureshader_glsl, videotextureshader_glsl_len);
 
 VideoTextureShader::VideoTextureShader(const VideoFormat &format, GLenum target)
 : m_format(format), m_target(target) {
 	m_textures.reserve(3);
-	m_header = R"(
-		uniform float kern_c, kern_n, kern_d;
-		uniform vec2 sc1, sc2, sc3;
-		varying highp vec2 qt_TexCoord;
-		uniform mat3 conv_mat;
-		uniform vec3 conv_vec, orig_vec;
-		vec3 texel(const in vec2 coord);
-		vec3 get_texel(const in vec2 coord);
-		vec3 get_color(const in vec2 coord);
-		uniform float top_field;
-		uniform float deint;
-	)";
-	if (target == GL_TEXTURE_RECTANGLE_ARB) {
-		m_header += R"(
-			uniform sampler2DRect p1, p2, p3;
-			vec4 texture1(const in vec2 coord) { return texture2DRect(p1, coord); }
-			vec4 texture2(const in vec2 coord) { return texture2DRect(p2, coord*sc2); }
-			vec4 texture3(const in vec2 coord) { return texture2DRect(p3, coord*sc3); }
-		)";
-	} else {
-		m_header += R"(
-			uniform sampler2D p1, p2, p3;
-			vec4 texture1(const in vec2 coord) { return texture2D(p1, coord); }
-			vec4 texture2(const in vec2 coord) { return texture2D(p2, coord*sc2); }
-			vec4 texture3(const in vec2 coord) { return texture2D(p3, coord*sc3); }
-		)";
-	}
 	if (m_target == GL_TEXTURE_2D)
 		m_rect.setRight(_Ratio(format.width(), format.alignedWidth()));
 	else
 		m_rect.setBottomRight(QPointF(format.width(), format.height()));
 }
 
+VideoTextureShader::~VideoTextureShader() { delete m_uploader; }
+
 void VideoTextureShader::initialize(GLuint *textures) {
 	for (int i=0; i<m_textures.size(); ++i) {
 		m_textures[i].id = textures[i];
 		m_uploader->initialize(m_textures[i]);
 	}
+	if (m_interpolator > 0)
+		m_cubicLutTexture = OpenGLCompat::allocateBicubicLutTexture(textures[3], m_interpolator);
+	m_updateLut = true;
 }
 
-QByteArray VideoTextureShader::fragment() const {
-	QByteArray codes = m_header;
-	codes += m_texel;
-	QString dxy;
-	const char *fmt = "const vec4 dxy = vec4(%f, %f, %f, %f);\n";
-	if (m_target == GL_TEXTURE_2D && !format().isEmpty()) {
-		const float dx = 1.0/(double)format().alignedWidth();
-		const float dy = 1.0/(double)format().alignedHeight();
-		dxy.sprintf(fmt, dx, dy, -dx, 0.f);
-	} else
-		dxy.sprintf(fmt, 1.f, 1.f, -1.f, 0.f);
-	codes += dxy.toLatin1();
-	if (m_effects & VideoRendererItem::KernelEffects) {
-		codes += R"(
-			vec3 get_texel(const in vec2 coord) {
-				// dxy.zy   dxy.wy   dxy.xy
-				// dxy.zw     0      dxy.xw
-				//-dxy.xy  -dxy.wy  -dxy.zy
-				vec3 c = texel(coord)*kern_c;
-				c += (texel(coord + dxy.wy)+texel(coord + dxy.zw)+texel(coord + dxy.xw)+texel(coord - dxy.wy))*kern_n;
-				c += (texel(coord + dxy.zy)+texel(coord + dxy.xy)+texel(coord - dxy.xy)+texel(coord - dxy.zy))*kern_d;
-				return c;
-			}
-		)";
-	} else {
-		codes += R"(
-				vec3 get_texel(const in vec2 coord) { return texel(coord); }
-		)";
-	}
-	QByteArray pp;
+QByteArray VideoTextureShader::header() const {
+	if (!m_header.isEmpty())
+		return m_header;
+	m_header += "#define WIDTH " + QByteArray::number(format().alignedWidth()) + ".0\n";
+	m_header += "#define HEIGHT " + QByteArray::number(format().alignedHeight()) + ".0\n";
+	if (m_target != GL_TEXTURE_2D || format().isEmpty())
+		m_header += "#define USE_RECTANGLE\n";
+	if (m_effects & VideoRendererItem::KernelEffects)
+		m_header += "#define USE_KERNEL3x3\n";
+	else if (m_interpolator > 0)
+		m_header += "#define USE_BICUBIC\n";
 	if (m_deint.flags() & DeintInfo::OpenGL) {
-		if (m_deint.method() == DeintInfo::Bob) {
-			pp = R"(
-				vec3 preprocess(const in vec2 coord) {
-					float y = coord.y;
-					float offset = deint*(top_field*dxy.y + dxy.y*0.5 + mod(y, 2.0*dxy.y));
-					return get_texel(coord - vec2(0.0, offset));
-				}
-			)";
-		} else if (m_deint.method() == DeintInfo::LinearBob) {
-			pp = R"(
-				vec3 preprocess(const in vec2 coord) {
-					float y = coord.y;
-					float offset = deint*(top_field*dxy.y + dxy.y*0.5 + mod(y, 2.0*dxy.y));
-					return mix(get_texel(coord + vec2(0.0, -offset)), get_texel(coord + vec2(0.0, 2.0*dxy.y-offset)), offset/(2.0*dxy.y));
-				}
-			)";
-		}
+		if (m_deint.method() == DeintInfo::Bob)
+			m_header += "#define USE_DEINT 1\n";
+		else if (m_deint.method() == DeintInfo::LinearBob)
+			m_header += "#define USE_DEINT 2\n";
 	}
-	if (pp.isEmpty()) {
-		pp = R"(
-			vec3 preprocess(const in vec2 coord) { return get_texel(coord); }
-		)";
-	}
-	codes += pp;
-	codes += R"(
-			void main() {
-				vec3 tex = preprocess(qt_TexCoord);
-				tex -= orig_vec;
-				tex *= conv_mat;
-				tex += conv_vec;
-				const vec2 one = vec2(1.0, 0.0);
-				gl_FragColor = tex.xyzz * one.xxxy + one.yyyx;
-//				gl_FragColor = texel(qt_TexCoord).xxxx * one.xxxy + one.yyyx;
-			}
-	)";
-	return codes;
+	return m_header;
+}
+
+const char *VideoTextureShader::fragment() const {
+	m_fragCode = header();
+	m_fragCode += "#define FRAGMENT\n";
+	m_fragCode += shaderTemplate;
+	m_fragCode += m_texel;
+	return m_fragCode.constData();
+}
+
+char const *const *VideoTextureShader::attributes() const {
+	static const char *names[] = {
+		"vertexPosition",
+		"textureCoordinate",
+		0
+	};
+	return names;
+}
+
+const char *VideoTextureShader::vertex() const {
+	m_vertexCode = header();
+	m_vertexCode += "#define VERTEX\n";
+	m_vertexCode += shaderTemplate;
+	return m_vertexCode.constData();
 }
 
 void VideoTextureShader::upload(const VideoFrame &frame) {
@@ -128,13 +84,14 @@ void VideoTextureShader::updateMatrix() {
 	if (m_effects & VideoRendererItem::Grayscale)
 		color.setSaturation(-1.0);
 	auto mat = color.matrix(m_uploader->colorspace(m_format), m_uploader->colorrange(m_format));
-	m_conv_mat = mat.transposed().toGenericMatrix<3, 3>();
-	m_conv_vec = mat.column(3).toVector3D();
-	m_orig_vec = mat.row(3).toVector3D();
+	m_mul_mat = mat.toGenericMatrix<3, 3>().transposed();
+	m_add_vec = mat.column(3).toVector3D();
+	m_sub_vec = mat.row(3).toVector3D();
 	if (m_effects & VideoRendererItem::InvertColor) {
-		m_conv_mat *= -1;
-		m_conv_vec += QVector3D(1, 1, 1);
+		m_mul_mat *= -1;
+		m_add_vec += QVector3D(1, 1, 1);
 	}
+	m_updateLut = true;
 }
 
 
@@ -147,12 +104,12 @@ void VideoTextureShader::link(QOpenGLShaderProgram *program) {
 	loc_p1 = program->uniformLocation("p1");
 	loc_p2 = program->uniformLocation("p2");
 	loc_p3 = program->uniformLocation("p3");
-	loc_sc1 = program->uniformLocation("sc1");
 	loc_sc2 = program->uniformLocation("sc2");
 	loc_sc3 = program->uniformLocation("sc3");
-	loc_conv_mat = program->uniformLocation("conv_mat");
-	loc_conv_vec = program->uniformLocation("conv_vec");
-	loc_orig_vec = program->uniformLocation("orig_vec");
+	loc_cubic_lut = program->uniformLocation("cubic_lut");
+	loc_sub_vec = program->uniformLocation("sub_vec");
+	loc_add_vec = program->uniformLocation("add_vec");
+	loc_mul_mat = program->uniformLocation("mul_mat");
 }
 
 bool VideoTextureShader::setEffects(int effects) {
@@ -169,10 +126,10 @@ void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &
 	program->setUniformValue(loc_p1, 0);
 	program->setUniformValue(loc_p2, 1);
 	program->setUniformValue(loc_p3, 2);
-	program->setUniformValue(loc_conv_mat, m_conv_mat);
-	program->setUniformValue(loc_conv_vec, m_conv_vec);
-	program->setUniformValue(loc_orig_vec, m_orig_vec);
-	program->setUniformValue(loc_sc1, m_sc1);
+	program->setUniformValue(loc_cubic_lut, 3);
+	program->setUniformValue(loc_sub_vec, m_sub_vec);
+	program->setUniformValue(loc_add_vec, m_add_vec);
+	program->setUniformValue(loc_mul_mat, m_mul_mat);
 	program->setUniformValue(loc_sc2, m_sc2);
 	program->setUniformValue(loc_sc3, m_sc3);
 	if (VideoRendererItem::KernelEffects & m_effects) {
@@ -183,14 +140,18 @@ void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &
 	if (!format().isEmpty()) {
 		auto f = QOpenGLContext::currentContext()->functions();
 		f->glActiveTexture(GL_TEXTURE0);
-		glBindTexture(m_target, m_textures[0].id);
+		m_textures[0].bind();
 		if (m_textures.size() > 1) {
 			f->glActiveTexture(GL_TEXTURE1);
-			glBindTexture(m_target, m_textures[1].id);
+			m_textures[1].bind();
 		}
 		if (m_textures.size() > 2) {
 			f->glActiveTexture(GL_TEXTURE2);
-			glBindTexture(m_target, m_textures[2].id);
+			m_textures[2].bind();
+		}
+		if (m_cubicLutTexture.id != GL_NONE) {
+			f->glActiveTexture(GL_TEXTURE3);
+			m_cubicLutTexture.bind();
 		}
 		f->glActiveTexture(GL_TEXTURE0);
 	}
@@ -207,17 +168,17 @@ struct BlackOutShader : public VideoTextureShader {
 
 /****************************************************************************/
 
-struct I420Shader : public VideoTextureShader {
-	I420Shader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
+struct P420Shader : public VideoTextureShader { // planar 4:2:0 bit=8
+	P420Shader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
 	: VideoTextureShader(format, target) {
 		setTexel(R"(
-			vec3 texel(const vec2 coord) {
-				vec3 yuv;
-				yuv.x = texture1(coord).r;
-				yuv.y = texture2(coord).r;
-				yuv.z = texture3(coord).r;
-				return yuv;
-			}
+vec3 texel(const vec2 coord) {
+	vec3 yuv;
+	yuv.x = texture1(coord).r;
+	yuv.y = texture2(coord).r;
+	yuv.z = texture3(coord).r;
+	return yuv;
+}
 		)");
 		auto init = [this, &format] (int i) {
 			addTexInfo(i, format.bytesPerLine(i), format.lines(i), 1);
@@ -234,19 +195,19 @@ struct P420BitShader : public VideoTextureShader { // planar 4:2:0 bit>8
 	P420BitShader(const VideoFormat &format, GLenum target = GL_TEXTURE_2D)
 	: VideoTextureShader(format, target) {
 		QByteArray code = R"(
-			 float convBits(const in vec4 tex) {
-				 const vec2 c = vec2(265.0, 1.0)/(256.0*)";
+float convBits(const in vec4 tex) {
+	const vec2 c = vec2(265.0, 1.0)/(256.0*)";
 		code += QByteArray::number((1 << (bit-8))-1);
 		code += R"(.0/255.0 + 1.0);
-				 return dot(tex.!!, c);
-			 }
-			 vec3 texel(const in vec2 coord) {
-				vec3 yuv;
-				 yuv.x = convBits(texture1(coord));
-				 yuv.y = convBits(texture2(coord));
-				 yuv.z = convBits(texture3(coord));
-				return yuv;
-			 }
+	return dot(tex.!!, c);
+}
+vec3 texel(const in vec2 coord) {
+	vec3 yuv;
+	yuv.x = convBits(texture1(coord));
+	yuv.y = convBits(texture2(coord));
+	yuv.z = convBits(texture3(coord));
+	return yuv;
+}
 		)";
 		setTexel(code.replace("!!", OpenGLCompat::rg(little ? "gr" : "rg")));
 		auto init = [this, &format] (int i) {
@@ -269,7 +230,7 @@ struct NvShader : public VideoTextureShader {
 		QByteArray texel = (R"(
 			vec3 texel(const vec2 coord) {
 				vec3 yuv;
-				yuv.x = texture1(coord).x;
+				yuv.x = texture1(coord).r;
 				yuv.yz = texture2(coord).!!;
 				return yuv;
 			}
@@ -535,7 +496,8 @@ const int VaApiUploader::specs[MP_CSP_COUNT] = {
 
 #endif
 
-VideoTextureShader *VideoTextureShader::create(const VideoFormat &format, const ColorProperty &color, const DeintInfo &deint, int effects) {
+VideoTextureShader *VideoTextureShader::create(const VideoFormat &format
+		, const ColorProperty &color, InterpolatorType interpolator, const DeintInfo &deint, int effects) {
 	VideoTextureShader *shader = nullptr;
 	auto target = GL_TEXTURE_2D;
 #ifdef Q_OS_MAC
@@ -545,7 +507,7 @@ VideoTextureShader *VideoTextureShader::create(const VideoFormat &format, const 
 #define MAKE(name) {shader = new name(format, target); break;}
 	switch (format.type()) {
 	case IMGFMT_420P:
-		MAKE(I420Shader)
+		MAKE(P420Shader)
 	case IMGFMT_420P16_LE:
 		MAKE((P420BitShader<16, true>))
 	case IMGFMT_420P16_BE:
@@ -596,6 +558,7 @@ VideoTextureShader *VideoTextureShader::create(const VideoFormat &format, const 
 	else
 		shader->setUploader(new VideoTextureUploader);
 	shader->m_effects = effects;
+	shader->m_interpolator = interpolator;
 	shader->m_color = color;
 	shader->m_deint = deint;
 	shader->updateMatrix();

@@ -1341,6 +1341,7 @@ void MainWindow::applyPref() {
 	d->engine.setClippingMethod(p.clipping_method);
 	d->engine.setSoftwareVolume(p.software_volume);
 	d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
+	d->renderer.setInterpolator(p.picture_interpolator);
 	SubtitleParser::setMsPerCharactor(p.ms_per_char);
 	d->subtitle.setPriority(p.sub_priority);
 	d->subtitle.setStyle(p.sub_style);

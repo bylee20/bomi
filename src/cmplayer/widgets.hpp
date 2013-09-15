@@ -45,9 +45,13 @@ private:
 
 class DataComboBox : public QComboBox {
 	Q_OBJECT
+protected:
+	using IntFunc = void(QComboBox::*)(int);
 public:
 	DataComboBox(QWidget *parent = 0): QComboBox(parent) {
-		connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(emitCurrentDataChanged(int)));
+		connect(this, static_cast<IntFunc>(&QComboBox::currentIndexChanged), [this] (int idx) {
+			emit currentDataChanged(idx < 0 ? QVariant() : itemData(idx));
+		});
 	}
 	void addItemTextData(const QStringList &list) {
 		for (int i=0; i<list.size(); ++i)
@@ -79,12 +83,6 @@ public:
 	}
 signals:
 	void currentDataChanged(const QVariant &data);
-private slots:
-	void emitCurrentDataChanged(int idx) {
-		if (idx < 0)
-			emit currentDataChanged(QVariant());
-		emit currentDataChanged(itemData(idx));
-	}
 };
 
 template<typename Enum>
@@ -107,7 +105,6 @@ public:
 	}
 	Enum currentValue() const { return EnumInfo<Enum>::from(currentData().toInt()); }
 	void setCurrentValue(Enum e) { setCurrentData((int)e); }
-
 private:
 	void changeEvent(QEvent *event) {
 		QComboBox::changeEvent(event);
@@ -122,5 +119,6 @@ typedef EnumComboBox<SubtitleAutoselect> SubtitleAutoselectComboBox;
 typedef EnumComboBox<OsdScalePolicy> OsdScalePolicyComboBox;
 typedef EnumComboBox<SoftwareVolume> SoftwareVolumeComboBox;
 typedef EnumComboBox<ClippingMethod> ClippingMethodComboBox;
+typedef EnumComboBox<InterpolatorType> InterpolatorTypeComboBox;
 
 #endif // WIDGETS_HPP

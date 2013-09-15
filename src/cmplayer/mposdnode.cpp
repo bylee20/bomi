@@ -21,37 +21,37 @@ private:
 	}
 	virtual const char *vertexShader() const override {
 		static const char *shader = (R"(
-									 uniform highp mat4 qt_Matrix;
-				attribute highp vec4 qt_VertexPosition;
-		attribute highp vec2 qt_VertexTexCoord;
-		varying highp vec2 qt_TexCoord;
-		void main() {
-			qt_TexCoord = qt_VertexTexCoord;
-			gl_Position = qt_Matrix * qt_VertexPosition;
-		}
+			uniform highp mat4 qt_Matrix;
+			attribute highp vec4 qt_VertexPosition;
+			attribute highp vec2 qt_VertexTexCoord;
+			varying highp vec2 qt_TexCoord;
+			void main() {
+				qt_TexCoord = qt_VertexTexCoord;
+				gl_Position = qt_Matrix * qt_VertexPosition;
+			}
 		)");
 		return shader;
 	}
 	virtual const char *fragmentShader() const override {
 		static const char *shader = (R"(
-		uniform sampler2D tex_data;
-		uniform float width, height;
-		varying vec2 qt_TexCoord;
-		void main() {
-			vec2 size = vec2(width, height);
-			vec3 dxy0 = vec3(1.0/width, 1.0/height, 0.0);
-			ivec2 pixel = ivec2(qt_TexCoord*size);
-			vec2 texel = (vec2(pixel)+vec2(0.5, 0.5))/size;
+			uniform sampler2D tex_data;
+			uniform float width, height;
+			varying vec2 qt_TexCoord;
+			void main() {
+				vec2 size = vec2(width, height);
+				vec3 dxy0 = vec3(1.0/width, 1.0/height, 0.0);
+				ivec2 pixel = ivec2(qt_TexCoord*size);
+				vec2 texel = (vec2(pixel)+vec2(0.5, 0.5))/size;
 
-			vec4 x0y0 = texture2D(tex_data, texel);
-			vec4 x1y0 = texture2D(tex_data, texel + dxy0.xz);
-			vec4 x0y1 = texture2D(tex_data, texel + dxy0.zy);
-			vec4 x1y1 = texture2D(tex_data, texel + dxy0.xy);
+				vec4 x0y0 = texture2D(tex_data, texel);
+				vec4 x1y0 = texture2D(tex_data, texel + dxy0.xz);
+				vec4 x0y1 = texture2D(tex_data, texel + dxy0.zy);
+				vec4 x1y1 = texture2D(tex_data, texel + dxy0.xy);
 
-			float a = fract(qt_TexCoord.x*width);
-			float b = fract(qt_TexCoord.y*height);
-			gl_FragColor =  mix(mix(x0y0, x1y0, a), mix(x0y1, x1y1, a), b);
-		}
+				float a = fract(qt_TexCoord.x*width);
+				float b = fract(qt_TexCoord.y*height);
+				gl_FragColor =  mix(mix(x0y0, x1y0, a), mix(x0y1, x1y1, a), b);
+			}
 		)");
 		return shader;
 	}

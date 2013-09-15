@@ -35,16 +35,18 @@ struct VideoRendererItem::Data {
 	}
 	QLinkedList<VideoFrame> queue;
 	DeintInfo deint;
-	bool deintChanged = false;
+	InterpolatorType interpolator = InterpolatorType::Bilinear;
+	bool recreateShader = false;
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
-: TextureRendererItem(3, parent), d(new Data) {
+: TextureRendererItem(5, parent), d(new Data) {
 	setFlags(ItemHasContents | ItemAcceptsDrops);
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
 	d->shader = VideoTextureShader::create(d->format);
 	setZ(-1);
+	setBechmark(true);
 }
 
 VideoRendererItem::~VideoRendererItem() {
@@ -68,8 +70,10 @@ void VideoRendererItem::customEvent(QEvent *event) {
 		auto deint = getData<DeintInfo>(event);
 		if (!deint.isHardware())
 			deint = DeintInfo();
-		if ((d->deintChanged = _Change(d->deint, deint)))
+		if (_Change(d->deint, deint)) {
+			d->recreateShader = true;
 			update();
+		}
 		break;
 	} default:
 		break;
@@ -269,8 +273,15 @@ QSize VideoRendererItem::sizeHint() const {
 
 const char *VideoRendererItem::fragmentShader() const {
 	d->shaderType = d->format.imgfmt();
-	d->shaderCode = d->shader->fragment();
-	return d->shaderCode.constData();
+	return d->shader->fragment();
+}
+
+const char *VideoRendererItem::vertexShader() const {
+	return d->shader->vertex();
+}
+
+const char * const *VideoRendererItem::attributeNames() const {
+	return d->shader->attributes();
 }
 
 void VideoRendererItem::link(QOpenGLShaderProgram *program) {
@@ -307,10 +318,10 @@ void VideoRendererItem::beforeUpdate() {
 		return;
 	d->frame = d->queue.takeFirst();
 	const bool formatChanged = _Change(d->format, d->frame.format());
-	if (formatChanged || d->shaderType != d->format.imgfmt() || d->deintChanged) {
+	if (formatChanged || d->shaderType != d->format.imgfmt() || d->recreateShader) {
 		if (d->shader)
 			delete d->shader;
-		d->shader = VideoTextureShader::create(d->format, d->color, d->deint, d->effects);
+		d->shader = VideoTextureShader::create(d->format, d->color, d->interpolator, d->deint, d->effects);
 		resetNode();
 		updateGeometry(formatChanged);
 	}
@@ -327,7 +338,7 @@ void VideoRendererItem::beforeUpdate() {
 			d->queue.clear();
 		}
 	}
-	d->deintChanged = false;
+	d->recreateShader = false;
 }
 
 void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
@@ -380,4 +391,11 @@ void VideoRendererItem::setKernel(int blur_c, int blur_n, int blur_d, int sharpe
 	d->sharpen.set(sharpen_c, sharpen_n, sharpen_d);
 	d->updateKernel();
 	update();
+}
+
+void VideoRendererItem::setInterpolator(InterpolatorType interpolator) {
+	if (_Change(d->interpolator, interpolator)) {
+		d->recreateShader = true;
+		update();
+	}
 }

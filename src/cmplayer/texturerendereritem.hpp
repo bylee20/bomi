@@ -12,6 +12,8 @@ public:
 	int textureCount() const {return m_count;}
 	GLuint texture(int i) const;
 	GLuint *textures() const;
+	void setBechmark(bool on) { m_benchmark = on; }
+	bool isBenchmarkOn() const { return m_benchmark; }
 protected:
 	void markDirty(QSGNode::DirtyState bits);
 	typedef QSGGeometry::TexturedPoint2D TexturedPoint2D;
@@ -42,6 +44,7 @@ private:
 	struct Shader;	struct Material;	struct Node;	struct Data;
 	friend struct Node;
 	int m_count = 0;
+	bool m_benchmark = false;
 	Data *d;
 };
 
