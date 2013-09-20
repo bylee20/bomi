@@ -132,6 +132,9 @@ struct App::Data {
 
 App::App(int &argc, char **argv)
 : QApplication(argc, argv), d(new Data(this)) {
+#ifdef Q_OS_LINUX
+	setlocale(LC_NUMERIC,"C");
+#endif
 #if defined(Q_OS_MAC) && defined(CMPLAYER_RELEASE)
 	static const QByteArray path = QApplication::applicationDirPath().toLocal8Bit();
 	qDebug() << "set $LIBQUVI_SCRIPTSDIR:" << path;
