@@ -126,9 +126,11 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 		return ac->reinitialize(static_cast<mp_audio*>(arg));
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
 		d->volumeChanged = true;
-		return af_from_dB(AF_NCH, (float*)arg, d->level, 20.0, -200.0, 60.0);
+		std::copy_n((float*)arg, AF_NCH, d->level);
+		return AF_OK;
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_GET:
-		return af_to_dB(AF_NCH, d->level, (float*)arg, 20.0);
+		std::copy_n(d->level, AF_NCH, (float*)arg);
+		return AF_OK;
 	case AF_CONTROL_PLAYBACK_SPEED | AF_CONTROL_SET:
 	case AF_CONTROL_SCALETEMPO_AMOUNT | AF_CONTROL_SET:
 		d->scale = *(double*)arg;

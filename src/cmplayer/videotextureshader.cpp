@@ -101,6 +101,7 @@ void VideoTextureShader::link(QOpenGLShaderProgram *program) {
 	loc_p1 = program->uniformLocation("p1");
 	loc_p2 = program->uniformLocation("p2");
 	loc_p3 = program->uniformLocation("p3");
+	loc_cubic_lut = program->uniformLocation("cubic_lut");
 	loc_sc2 = program->uniformLocation("sc2");
 	loc_sc3 = program->uniformLocation("sc3");
 	loc_sub_vec = program->uniformLocation("sub_vec");
@@ -111,8 +112,6 @@ void VideoTextureShader::link(QOpenGLShaderProgram *program) {
 		loc_kern_d = program->uniformLocation("kern_d");
 		loc_kern_n = program->uniformLocation("kern_n");
 	}
-	if (m_interpolator > 0)
-		loc_cubic_lut = program->uniformLocation("cubic_lut");
 }
 
 bool VideoTextureShader::setEffects(int effects) {
@@ -128,6 +127,7 @@ void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &
 	program->setUniformValue(loc_p1, 0);
 	program->setUniformValue(loc_p2, 1);
 	program->setUniformValue(loc_p3, 2);
+	program->setUniformValue(loc_cubic_lut, 3);
 	program->setUniformValue(loc_sub_vec, m_sub_vec);
 	program->setUniformValue(loc_add_vec, m_add_vec);
 	program->setUniformValue(loc_mul_mat, m_mul_mat);
@@ -139,11 +139,6 @@ void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &
 		program->setUniformValue(loc_kern_d, kernel.diagonal());
 	}
 	auto f = QOpenGLContext::currentContext()->functions();
-	if (m_interpolator > 0) {
-		program->setUniformValue(loc_cubic_lut, 3);
-		f->glActiveTexture(GL_TEXTURE3);
-		m_cubicLutTexture.bind();
-	}
 	if (!format().isEmpty()) {
 		f->glActiveTexture(GL_TEXTURE0);
 		m_textures[0].bind();
@@ -154,6 +149,10 @@ void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &
 		if (m_textures.size() > 2) {
 			f->glActiveTexture(GL_TEXTURE2);
 			m_textures[2].bind();
+		}
+		if (m_cubicLutTexture.id != GL_NONE) {
+			f->glActiveTexture(GL_TEXTURE3);
+			m_cubicLutTexture.bind();
 		}
 		f->glActiveTexture(GL_TEXTURE0);
 	}

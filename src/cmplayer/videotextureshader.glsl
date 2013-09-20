@@ -2,6 +2,11 @@ varying vec2 texCoord;
 #ifdef USE_BICUBIC
 varying vec2 bicubicLutCoord;
 #endif
+#ifdef USE_RECTANGLE
+const vec4 dxy = vec4(1.0, 1.0, -1.0, 0.0);
+#else
+const vec4 dxy = vec4(1.0/WIDTH, 1.0/HEIGHT, -1.0/WIDTH, 0.0);
+#endif
 
 /***********************************************************************/
 
@@ -12,13 +17,11 @@ uniform sampler2DRect p1, p2, p3;
 vec4 texture1(const in vec2 coord) { return texture2DRect(p1, coord); }
 vec4 texture2(const in vec2 coord) { return texture2DRect(p2, coord*sc2); }
 vec4 texture3(const in vec2 coord) { return texture2DRect(p3, coord*sc3); }
-const vec4 dxy = vec4(1.0, 1.0, -1.0, 0.0);
 #else
 uniform sampler2D p1, p2, p3;
 vec4 texture1(const in vec2 coord) { return texture2D(p1, coord); }
 vec4 texture2(const in vec2 coord) { return texture2D(p2, coord*sc2); }
 vec4 texture3(const in vec2 coord) { return texture2D(p3, coord*sc3); }
-const vec4 dxy = vec4(1.0/WIDTH, 1.0/HEIGHT, -1.0/WIDTH, 0.0);
 #endif
 
 vec3 texel(const in vec2 coord);

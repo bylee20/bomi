@@ -8,7 +8,7 @@ macx:CONFIG -= app_bundle
     CONFIG += release
     macx:CONFIG += app_bundle
 }
-QT = core gui network quick widgets
+QT = core gui network quick widgets core-private gui-private
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build

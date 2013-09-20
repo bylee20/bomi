@@ -102,92 +102,153 @@ VaApiFilterInfo::VaApiFilterInfo(VAContextID context, VAProcFilterType type) {
 		m_algorithms[i] = m_caps[i].algorithm;
 }
 
-static QMutex mutex;
-
-struct VaApiSurface {
-	~VaApiSurface() {
-		Q_ASSERT(!ref);
-		if (id != VA_INVALID_SURFACE)
-			vaDestroySurfaces(VaApi::glx(), &id, 1);
-	}
-	VASurfaceID id = VA_INVALID_SURFACE;
-	bool ref = false, orphan = false;
-	quint64 order = 0;
+class VaApiSurface {
+public:
+	~VaApiSurface();
+	VASurfaceID id() const { return m_id; }
+	int format() const { return m_format; }
+private:
+	VaApiSurface() = default;
+	friend class VaApiSurfacePool;
+	VASurfaceID m_id = VA_INVALID_SURFACE;
+	bool m_ref = false, m_orphan = false;
+	quint64 m_order = 0;
+	int m_format = 0;
 };
 
 class VaApiSurfacePool : public VaApiStatusChecker {
 public:
 	VaApiSurfacePool() {  }
 	~VaApiSurfacePool() { clear(); }
-	VAStatus create(int size, int width, int height, uint format) {
-		if (m_width == width && m_height == height && m_format == format && m_surfaces.size() == size)
-			return isSuccess(VA_STATUS_SUCCESS);
-		clear();
-		m_width = width;
-		m_height = height;
-		m_format = format;
-		m_ids.resize(size);
-		if (!isSuccess(vaCreateSurfaces(VaApi::glx(), width, height, format, size, m_ids.data()))) {
-			m_ids.clear();
-			return status();
-		}
-		m_surfaces.resize(size);
-		for (int i=0; i<size; ++i)
-			(m_surfaces[i] = new VaApiSurface)->id = m_ids[i];
-		return status();
-	}
-	mp_image *getMpImage() {
-		auto surface = getSurface();
-		auto release = [](void *arg) {
-			mutex.lock();
-			auto surface = static_cast<VaApiSurface*>(arg);
-			surface->ref = false;
-			if (surface->orphan)
-				delete surface;
-			mutex.unlock();
-		};
-		auto mpi = nullMpImage(IMGFMT_VAAPI, m_width, m_height, surface, release);
-		mpi->planes[1] = mpi->planes[2] = nullptr;
-		mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)surface->id;
-		return mpi;
-	}
-	void clear() {
-		mutex.lock();
-		for (auto surface : m_surfaces) {
-			if (surface->ref)
-				surface->orphan = true;
-			else
-				delete surface;
-		}
-		m_surfaces.clear();
-		m_ids.clear();
-		mutex.unlock();
-	}
+	VAStatus create(int size, int width, int height, uint format);
+	mp_image *getMpImage();
+	void clear();
 	QVector<VASurfaceID> ids() const {return m_ids;}
 	uint format() const {return m_format;}
 private:
-	VaApiSurface *getSurface() {
-		int i_old, i;
-		for (i=0, i_old=0; i<m_surfaces.size(); ++i) {
-			if (!m_surfaces[i]->ref)
-				break;
-			if (m_surfaces[i]->order < m_surfaces[i_old]->order)
-				i_old = i;
-		}
-		if (i >= m_surfaces.size())
-			i = i_old;
-		auto surface = m_surfaces[i];
-		surface->ref = true;
-		surface->order = ++m_order;
-		Q_ASSERT(surface->id != VA_INVALID_ID);
-		return surface;
-	}
+	VaApiSurface *getSurface();
 	QVector<VASurfaceID> m_ids;
 	QVector<VaApiSurface*> m_surfaces;
 	uint m_format = 0;
 	int m_width = 0, m_height = 0;
 	quint64 m_order = 0LL;
 };
+
+static QMutex mutex;
+
+VaApiSurface::~VaApiSurface() {
+	Q_ASSERT(!m_ref);
+	if (m_id != VA_INVALID_SURFACE)
+		vaDestroySurfaces(VaApi::glx(), &m_id, 1);
+}
+
+VAStatus VaApiSurfacePool::create(int size, int width, int height, uint format) {
+	if (m_width == width && m_height == height && m_format == format && m_surfaces.size() == size)
+		return isSuccess(VA_STATUS_SUCCESS);
+	clear();
+	m_width = width;
+	m_height = height;
+	m_format = format;
+	m_ids.resize(size);
+	if (!isSuccess(vaCreateSurfaces(VaApi::glx(), width, height, format, size, m_ids.data()))) {
+		m_ids.clear();
+		return status();
+	}
+	m_surfaces.resize(size);
+	for (int i=0; i<size; ++i) {
+		m_surfaces[i] = new VaApiSurface;
+		m_surfaces[i]->m_id = m_ids[i];
+		m_surfaces[i]->m_format = format;
+	}
+	return status();
+}
+
+mp_image *VaApiSurfacePool::getMpImage() {
+	auto surface = getSurface();
+	if (!surface)
+		return nullptr;
+	auto release = [](void *arg) {
+		mutex.lock();
+		auto surface = static_cast<VaApiSurface*>(arg);
+		surface->m_ref = false;
+		if (surface->m_orphan)
+			delete surface;
+		mutex.unlock();
+	};
+	auto mpi = nullMpImage(IMGFMT_VAAPI, m_width, m_height, surface, release);
+	mpi->planes[0] = (uchar*)(quintptr)surface;
+	mpi->planes[3] = (uchar*)(quintptr)surface->id();
+	return mpi;
+}
+
+void VaApiSurfacePool::clear() {
+	mutex.lock();
+	for (auto surface : m_surfaces) {
+		if (surface->m_ref)
+			surface->m_orphan = true;
+		else
+			delete surface;
+	}
+	m_surfaces.clear();
+	m_ids.clear();
+	mutex.unlock();
+}
+
+VaApiSurface *VaApiSurfacePool::getSurface() {
+	int i_old, i;
+
+	VaApiSurface *best = nullptr;
+	for (VaApiSurface *s : m_surfaces) {
+		if (s->m_ref)
+			continue;
+		if (!best || best->m_order > s->m_order)
+			best = s;
+	}
+	if (!best) {
+		qDebug() << "No usable VASurfaceID!! decoding will fail";
+		return nullptr;
+	}
+
+//	for (int i=0; i<m_surfaces.size(); ++i) {
+//		VaApiSurface *s = m_surface
+//	}
+
+//	for (i=0, i_old=0; i<m_surfaces.size(); ++i) {
+//		if (!m_surfaces[i]->m_ref)
+//			break;
+//		if (m_surfaces[i]->m_order < m_surfaces[i_old]->m_order)
+//			i_old = i;
+//	}
+
+//	struct vaapi_surface *best = NULL;
+
+//	for (int n = 0; n < p->num_video_surfaces; n++) {
+//		struct vaapi_surface *s = p->video_surfaces[n];
+//		if (!s->is_used && s->w == w && s->h == h && s->va_format == va_format) {
+//			if (!best || best->order > s->order)
+//				best = s;
+//		}
+//	}
+
+//	if (!best)
+//		best = alloc_vaapi_surface(p, w, h, va_format);
+
+//	if (best) {
+//		best->is_used = true;
+//		best->order = ++p->video_surface_lru_counter;
+//	}
+
+//	if (i >= m_surfaces.size())
+//		i = i_old;
+//	auto surface = m_surfaces[i];
+//	if (surface->m_ref)
+//		qDebug() << "refed surface!!";
+
+	best->m_ref = true;
+	best->m_order = ++m_order;
+	return best;
+}
+
 
 VaApi::VaApi() {
 	init = true;
@@ -223,7 +284,7 @@ VaApi::VaApi() {
 			}
 		}
 		if (!va.isEmpty())
-			m_supported.insert(id, VaApiCodec(profiles, va, av, surfaces, id));
+			m_supported.insert(id, VaApiCodec(profiles, va, av, surfaces+10, id));
 	};
 #define NUM_VIDEO_SURFACES_MPEG2  3 /* 1 decode frame, up to  2 references */
 #define NUM_VIDEO_SURFACES_MPEG4  3 /* 1 decode frame, up to  2 references */
@@ -359,6 +420,15 @@ bool HwAccVaApi::fillContext(AVCodecContext *avctx) {
 }
 
 mp_image *HwAccVaApi::getImage(mp_image *mpi) {
+//	VaApiSurface *in = (VaApiSurface*)(quintptr)mpi->planes[0];
+//	VAImage image;
+//	vaDeriveImage(VaApi::glx(), in->id(), &image);
+//	vaPutSurface()
+
+//	auto img = nullMpImage(IMGFMT_VDA, size().width(), size().height(), buffer, release);
+//	mp_image_copy_attributes(img, mpi);
+//	img->planes[3] = mpi->planes[3];
+
 	return mpi;
 }
 

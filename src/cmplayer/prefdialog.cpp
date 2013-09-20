@@ -12,6 +12,10 @@
 #include <array>
 #include "hwacc_vaapi.hpp"
 
+#ifdef None
+#undef None
+#endif
+
 // from clementine's preferences dialog
 typedef QDialogButtonBox DBB;
 

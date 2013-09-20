@@ -147,17 +147,17 @@ void PlayEngine::relativeSeek(int pos) {
 }
 
 void PlayEngine::setSoftwareVolume(SoftwareVolume sv) {
-	switch (sv) {
-	case SoftwareVolume::Auto:
-		d->mpctx->opts->softvol = SOFTVOL_AUTO;
-		break;
-	case SoftwareVolume::Always:
-		d->mpctx->opts->softvol = SOFTVOL_YES;
-		break;
-	case SoftwareVolume::Never:
-		d->mpctx->opts->softvol = SOFTVOL_NO;
-		break;
-	}
+//	switch (sv) {
+//	case SoftwareVolume::Auto:
+//		d->mpctx->opts->softvol = SOFTVOL_AUTO;
+//		break;
+//	case SoftwareVolume::Always:
+//		d->mpctx->opts->softvol = SOFTVOL_YES;
+//		break;
+//	case SoftwareVolume::Never:
+//		d->mpctx->opts->softvol = SOFTVOL_NO;
+//		break;
+//	}
 }
 
 void PlayEngine::setClippingMethod(ClippingMethod method) {
@@ -186,9 +186,9 @@ AudioDriver PlayEngine::preferredAudioDriver() const {
 }
 
 AudioDriver PlayEngine::audioDriver() const {
-	if (!d->mpctx->mixer.ao)
+	if (!d->mpctx->ao)
 		return preferredAudioDriver();
-	auto name = d->mpctx->mixer.ao->driver->info->short_name;
+	auto name = d->mpctx->ao->driver->info->short_name;
 	auto it = _FindIf(audioDriverNames, [name] (const AudioDriverName &one) { return !qstrcmp(name, one.second);});
 	return it != audioDriverNames.end() ? it->first : AudioDriver::Auto;
 }
@@ -617,7 +617,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 }
 
 void PlayEngine::updateAudioLevel() {
-	setmp("volume", (float)(m_volume * (d->mpctx->mixer.softvol ? m_preamp*0.1 : 1.0)));
+	setmp("volume", (float)(m_volume * (/*d->mpctx->mixer.softvol ? m_preamp*0.1 :*/ 1.0)));
 }
 
 void PlayEngine::setVolume(int volume) {
@@ -650,7 +650,7 @@ void PlayEngine::run() {
 	args << "--no-config" << "--idle" << "--no-fs"
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
-		<< "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
+		/*<< "--softvol-max=1000.0"*/ << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--no-consolecontrols" << "--no-mouse-movements" << "--subcp=utf8" << "--ao=null,";
 	QVector<QByteArray> args_byte(args.size());
 	QVector<char*> args_raw(args.size());

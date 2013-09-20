@@ -205,8 +205,8 @@ void VideoOutput::reset() {
 		d->renderer->emptyQueue();
 }
 
-int VideoOutput::reconfig(vo *vo, mp_image_params *params, int flags) {
-	auto v = priv(vo); auto d = v->d;
+int VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) {
+	auto v = priv(out); auto d = v->d;
 	v->reset();
 	d->upsideDown = (flags & VOFLAG_FLIPPING) ? VideoFrame::Flipped : 0;
 	d->params = *params;

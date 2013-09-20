@@ -35,7 +35,7 @@ private:
 	void reset();
 	static int preinit(struct vo *vo);
 	static void uninit(struct vo */*vo*/) {}
-	static int reconfig(struct vo *vo, struct mp_image_params *params, int flags);
+	static int reconfig(struct vo *out, struct mp_image_params *params, int flags);
 	static int control(struct vo *vo, quint32 request, void *data);
 	static void drawOsd(struct vo *vo, struct osd_state *osd);
 	static void flipPage(struct vo *vo);
