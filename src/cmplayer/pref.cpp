@@ -367,8 +367,10 @@ void Pref::load() {
 QList<int> Pref::defaultHwAccDeints() {
 	QList<int> deints;
 #ifdef Q_OS_LINUX
-	auto algorithms = VaApi::algorithms(VAProcFilterDeinterlacing);
 	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
+	if (!filter)
+		return deints;
+	auto algorithms = VaApi::algorithms(VAProcFilterDeinterlacing);
 	for (auto algo : algorithms) {
 		if (filter->supports(algo)) {
 			switch (algo) {
