@@ -6,7 +6,7 @@
 #include "globalqmlobject.hpp"
 
 class Mrl;			class PrefDialog;
-class MainWindow;	class Playlist;
+class MainView;		class Playlist;
 class Subtitle;
 
 class MainWindow : public QWidget {
@@ -33,10 +33,21 @@ private slots:
 	void reloadSkin();
 	void checkWindowState();
 private:
+	// init functions
+	MainView *createView();
+	void connectMenus();
+	void connectObjects();
+	void restoreAppState();
+	void initContextMenu();
+	void initPlayEngine();
+	void initVideoRenderer();
+	void initUndoStack();
+	void initTimers();
+
+	void updateTitle();
 	Playlist generatePlaylist(const Mrl &mrl) const;
 	bool load(Subtitle &subtitle, const QString &fileName, const QString &encoding);
-	void connectMenus();
-	void updateTitle();
+
 	void setCursorVisible(bool visible);
 	void doVisibleAction(bool visible);
 	void showMessage(const QString &message, const bool *force = nullptr);
@@ -50,6 +61,7 @@ private:
 	void closeEvent(QCloseEvent *event);
 	void customEvent(QEvent *event);
 	int getStartTime(const Mrl &mrl);
+	int getCache(const Mrl &mrl);
 	void showEvent(QShowEvent *event);
 	void hideEvent(QHideEvent *event);
 	void keyPressEvent(QKeyEvent *event);
@@ -78,7 +90,6 @@ public:
 private:
 	T to, from; Func  func;
 };
-
 
 class MainView : public QQuickView {
 	Q_OBJECT

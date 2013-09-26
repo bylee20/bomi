@@ -14,6 +14,7 @@ public:
 	VideoFrame(const QImage &image): d(new Data(image)) {}
 	VideoFrame(): d(new Data) {}
 	QImage toImage() const;
+	bool isFlipped() const { return d->field & Flipped; }
 	bool hasImage() const {return !d->image.isNull();}
 	const QImage &image() const {return d->image;}
 	const uchar *data(int i) const {return d->data[i];}

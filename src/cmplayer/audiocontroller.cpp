@@ -17,6 +17,7 @@ struct AudioController::Data {
 	bool normalizerActivated = false;
 	bool tempoScalerActivated = false;
 	bool volumeChanged = false;
+	bool muted = false;
 	double scale = 1.0;
 	TempoScaler *scaler = nullptr;
 	VolumeController *volume = nullptr;
@@ -118,6 +119,14 @@ double AudioController::level() const {
 	return d->level[0];
 }
 
+void AudioController::setMuted(bool muted) {
+	d->muted = muted;
+}
+
+bool AudioController::isMuted() const {
+	return d->muted;
+}
+
 int AudioController::control(af_instance *af, int cmd, void *arg) {
 	auto ac = priv(af);
 	auto d = ac->d;
@@ -125,8 +134,6 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 	case AF_CONTROL_REINIT:
 		return ac->reinitialize(static_cast<mp_audio*>(arg));
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
-		d->volumeChanged = true;
-		std::copy_n((float*)arg, AF_NCH, d->level);
 		return AF_OK;
 	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_GET:
 		std::copy_n(d->level, AF_NCH, (float*)arg);
@@ -144,8 +151,6 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 
 mp_audio *AudioController::play(af_instance *af, mp_audio *data) {
 	auto ac = priv(af); auto d = ac->d;
-	if (!d->volumeChanged && !d->normalizerActivated && (!d->tempoScalerActivated || d->scale == 1.0))
-		return data;
 	af->mul = 1.0;
 	af->delay = 0.0;
 	if (d->volume && d->volume->prepare(ac, data))

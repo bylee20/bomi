@@ -27,7 +27,8 @@ public:
 	HwAcc *hwAcc() const;
 	static int queryFormat(struct vo *vo, quint32 format);
 	void setDeint(const DeintInfo &sw, const DeintInfo &hw);
-	void setDeintMode(DeintMode mode);
+	void setDeintEnabled(bool on);
+	void redraw();
 signals:
 	void formatChanged(const VideoFormat &format);
 private:

@@ -9,7 +9,7 @@ extern "C" {
 
 VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
 : size(mpi->w, mpi->h), displaySize(mpi->display_w, mpi->display_h)
-, planes(mpi->fmt.num_planes), type(mpi->imgfmt), imgfmt(mpi->imgfmt)
+, planes(mpi->fmt.num_planes), flags(mpi->flags), type(mpi->imgfmt), imgfmt(mpi->imgfmt)
 , colorspace(mpi->colorspace), range(mpi->levels) {
 	if ((native = IMGFMT_IS_HWACCEL(imgfmt))) {
 #ifdef Q_OS_LINUX
@@ -72,10 +72,12 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
 }
 
 VideoFormat::VideoFormat::Data::Data(const QImage &image) {
+	auto desc = mp_imgfmt_get_desc(IMGFMT_BGRA);
 	displaySize = alignedSize = size = image.size();
 	alignedByteSize[0] = QSize(size.width()*4, size.height());
-	planes = 1;
-	bpp = 32;
+	planes = desc.num_planes;
+	bpp = desc.bpp[0];
+	flags = desc.flags;
 	type = imgfmt = IMGFMT_BGRA;
 	colorspace = MP_CSP_RGB;
 	range = MP_CSP_LEVELS_PC;
@@ -83,4 +85,26 @@ VideoFormat::VideoFormat::Data::Data(const QImage &image) {
 
 QString VideoFormat::name() const {
 	return QString::fromLatin1(mp_imgfmt_to_name(d->type));
+}
+
+int VideoFormat::encodedBits() const {
+	switch (d->type) {
+	case IMGFMT_420P16_LE:
+	case IMGFMT_420P16_BE:
+		return 16;
+	case IMGFMT_420P14_LE:
+	case IMGFMT_420P14_BE:
+		return 14;
+	case IMGFMT_420P12_LE:
+	case IMGFMT_420P12_BE:
+		return 12;
+	case IMGFMT_420P10_LE:
+	case IMGFMT_420P10_BE:
+		return 10;
+	case IMGFMT_420P9_LE:
+	case IMGFMT_420P9_BE:
+		return 9;
+	default:
+		return 8;
+	}
 }

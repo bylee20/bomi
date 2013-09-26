@@ -26,6 +26,7 @@ public:
 	};
 	Q_DECLARE_FLAGS(Effects, Effect)
 	static const int KernelEffects = Blur | Sharpen;
+	static const int ColorEffects = Grayscale | InvertColor;
 	VideoRendererItem(QQuickItem *parent = 0);
 	~VideoRendererItem();
 	double targetAspectRatio() const;
@@ -59,6 +60,7 @@ public:
 	int delay() const;
 	void setDeint(const DeintInfo &deint);
 	void setInterpolator(InterpolatorType interpolator);
+	void release();
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -72,7 +74,7 @@ signals:
 	void screenRectChanged(const QRectF rect);
 	void texturesInitialized();
 private:
-	void emptyQueue();
+	void updateKernel();
 	void enqueue(const VideoFrame &frame);
 	void initializeTextures();
 	const char *fragmentShader() const override;

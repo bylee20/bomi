@@ -66,12 +66,12 @@ bool SubtitleRenderingThread::event(QEvent *event) {
 	const int type = event->type();
 	switch (type) {
 	case SetDrawer:
-		getData(event, d->drawer);
+		getAllData(event, d->drawer);
 		d->pool.clear();
 		update();
 		return true;
 	case SetArea:
-		getData(event, m_area, m_dpr);
+		getAllData(event, m_area, m_dpr);
 		d->pool.clear();
 		update();
 		return true;
@@ -79,7 +79,7 @@ bool SubtitleRenderingThread::event(QEvent *event) {
 		return true;
 	case Tick: {
 		int time; double fps; bool check = true;
-		getData(event, time, fps, check);
+		getAllData(event, time, fps, check);
 		if (time < 0 || fps < 0.0)
 			return true;
 		if (_Change(m_fps, fps))

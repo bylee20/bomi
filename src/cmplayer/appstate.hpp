@@ -20,7 +20,7 @@ public:
 	ColorProperty video_color = {0.0, 0.0, 0.0, 0.0};
 	Position video_alignment = Position::CC;
 	QPoint video_offset = {0, 0};
-	DeintMode video_deint = DeintMode::Never;
+	bool video_deint = false;
 
 // audio state
 	double audio_preamp = 1.0;

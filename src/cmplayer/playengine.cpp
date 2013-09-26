@@ -32,7 +32,7 @@ enum EventType {
 
 enum MpCmd : int {
 	MpSetProperty = std::numeric_limits<int>::min(),
-	MpResetAudioChain, MpResetDeint, MpResetDeintMode
+	MpResetAudioChain, MpResetDeint, MpSetDeintEnabled, MpSetAudioLevel, MpSetAudioMuted, MpRedraw
 };
 
 static inline PlayEngine *priv(MPContext *mpctx) { return static_cast<PlayEngine*>(mpctx->priv); }
@@ -42,6 +42,11 @@ template<> inline double&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].
 template<> inline float	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.f;}
 template<> inline int	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.i;}
 template<> inline char*	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.s;}
+
+extern void initialize_vdpau();
+extern void finalize_vdpau();
+extern void initialize_vaapi();
+extern void finalize_vaapi();
 
 struct PlayEngine::Data {
 	Data(PlayEngine *engine): p(engine) {}
@@ -84,9 +89,12 @@ struct PlayEngine::Data {
 
 	VideoFormat videoFormat;
 	DeintInfo deint_sw, deint_hw;
-	DeintMode deintMode = DeintMode::Never;
+	bool deint = false;
 	QByteArray ao = "";
 	AudioDriver audioDriver = AudioDriver::Auto;
+	QOpenGLContext *gl = nullptr;
+	QOffscreenSurface *surface = nullptr;
+	bool glInit = false;
 };
 
 PlayEngine::PlayEngine()
@@ -146,18 +154,29 @@ void PlayEngine::relativeSeek(int pos) {
 		tellmp("seek", (double)pos/1000.0, 0);
 }
 
-void PlayEngine::setSoftwareVolume(SoftwareVolume sv) {
-//	switch (sv) {
-//	case SoftwareVolume::Auto:
-//		d->mpctx->opts->softvol = SOFTVOL_AUTO;
-//		break;
-//	case SoftwareVolume::Always:
-//		d->mpctx->opts->softvol = SOFTVOL_YES;
-//		break;
-//	case SoftwareVolume::Never:
-//		d->mpctx->opts->softvol = SOFTVOL_NO;
-//		break;
-//	}
+QOpenGLContext *PlayEngine::gl() const {
+	return d->gl;
+}
+
+void PlayEngine::initializeOpenGLContext(QOpenGLContext *context) {
+	d->gl = new QOpenGLContext;
+	d->gl->setShareContext(context);
+	d->gl->setFormat(context->format());
+	d->gl->moveToThread(this);
+	d->surface = new QOffscreenSurface;
+	d->surface->setFormat(context->format());
+	d->surface->create();
+	d->glInit = true;
+}
+
+void PlayEngine::makeCurrent() {
+	if (d->glInit)
+		d->gl->makeCurrent(d->surface);
+}
+
+void PlayEngine::doneCurrent() {
+	if (d->glInit)
+		d->gl->doneCurrent();
 }
 
 void PlayEngine::setClippingMethod(ClippingMethod method) {
@@ -351,7 +370,7 @@ void PlayEngine::customEvent(QEvent *event) {
 		break;
 	} case MrlStopped: {
 		Mrl mrl; int terminated = 0, duration = 0;
-		getData(event, mrl, terminated, duration);
+		getAllData(event, mrl, terminated, duration);
 		emit stopped(mrl, terminated, duration);
 		break;
 	} case MrlFinished: {
@@ -441,14 +460,23 @@ int PlayEngine::mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 		case MpSetProperty:
 			mp_property_do(cmd->name, M_PROPERTY_SET, &cmd->args[0].v, mpctx);
 			break;
+		case MpSetAudioLevel:
+			d->audio->setLevel(cmd->args[0].v.d);
+			break;
+		case MpSetAudioMuted:
+			d->audio->setMuted(cmd->args[0].v.i);
+			break;
 		case MpResetAudioChain:
 			reinit_audio_chain(mpctx);
 			break;
 		case MpResetDeint:
 			d->video->setDeint(d->deint_sw, d->deint_hw);
 			break;
-		case MpResetDeintMode:
-			d->video->setDeintMode(d->deintMode);
+		case MpSetDeintEnabled:
+			d->video->setDeintEnabled(d->deint);
+			break;
+		case MpRedraw:
+			d->video->redraw();
 			break;
 		default:
 			break;
@@ -552,7 +580,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
 	setmp("audio-delay", m_audioSync*0.001);
 	d->video->setDeint(d->deint_sw, d->deint_hw);
-	d->video->setDeintMode(d->deintMode);
+	d->video->setDeintEnabled(d->deint);
 	auto error = prepare_playback(mpctx);
 	updateAudioLevel();
 	std::array<StreamList, STREAM_TYPE_COUNT> streams;
@@ -617,7 +645,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 }
 
 void PlayEngine::updateAudioLevel() {
-	setmp("volume", (float)(m_volume * (/*d->mpctx->mixer.softvol ? m_preamp*0.1 :*/ 1.0)));
+	d->enqueue(MpSetAudioLevel, "", m_volume*0.1*m_preamp);
 }
 
 void PlayEngine::setVolume(int volume) {
@@ -636,6 +664,7 @@ void PlayEngine::setPreamp(double preamp) {
 
 void PlayEngine::setMuted(bool muted) {
 	if (_Change(m_muted, muted)) {
+		d->enqueue(MpSetAudioMuted, "", (int)muted);
 		setmp("mute", (int)m_muted);
 		emit mutedChanged(m_muted);
 	}
@@ -650,7 +679,7 @@ void PlayEngine::run() {
 	args << "--no-config" << "--idle" << "--no-fs"
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
-		/*<< "--softvol-max=1000.0"*/ << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
+		<< "--softvol=yes" << "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
 		<< "--no-consolecontrols" << "--no-mouse-movements" << "--subcp=utf8" << "--ao=null,";
 	QVector<QByteArray> args_byte(args.size());
 	QVector<char*> args_raw(args.size());
@@ -664,11 +693,19 @@ void PlayEngine::run() {
 	auto tmp_ao = d->mpctx->opts->audio_driver_list->name;
 	d->init = true;
 	d->quit = false;
+	initialize_vaapi();
+	initialize_vdpau();
 	while (!d->quit) {
 		m_imgMode = false;
 		idle_player(mpctx);
 		if (mpctx->stop_play == PT_QUIT)
 			break;
+		while (!d->glInit && !d->quit)
+			msleep(50);
+		if (d->quit)
+			break;
+		if (!d->gl->isValid())
+			d->gl->create();
 		Q_ASSERT(mpctx->playlist->current);
 		clear();
 		Mrl mrl = d->playlist.loadedMrl();
@@ -676,7 +713,11 @@ void PlayEngine::run() {
 		setState(EngineLoading);
 		m_imgMode = mrl.isImage();
 		int terminated = 0, duration = 0;
-		int error = m_imgMode ? playImage(mrl, terminated, duration) : playAudioVideo(mrl, terminated, duration);
+		int error = MPERROR_NONE;
+		if (m_imgMode)
+			error = playImage(mrl, terminated, duration);
+		else
+			error = playAudioVideo(mrl, terminated, duration);
 		clean_up_playback(mpctx);
 		if (error != MPERROR_NONE)
 			setState(EngineError);
@@ -728,6 +769,8 @@ void PlayEngine::run() {
 	mpctx->opts->hwdec_api = HWDEC_NONE;
 	mpctx->opts->audio_driver_list->name = tmp_ao;
 	destroy_player(mpctx);
+	finalize_vaapi();
+	finalize_vdpau();
 	d->mpctx = nullptr;
 	d->init = false;
 	qDebug() << "terminate engine";
@@ -920,16 +963,20 @@ void PlayEngine::setDeint(const DeintInfo &sw, const DeintInfo &hw) {
 	d->enqueue(MpResetDeint);
 }
 
-void PlayEngine::setDeintMode(DeintMode mode) {
-	if (d->deintMode == mode)
+void PlayEngine::setDeintEnabled(bool on) {
+	if (d->deint == on)
 		return;
 	QMutexLocker locker(&d->mutex);
-	if (d->deintMode == mode)
+	if (d->deint == on)
 		return;
-	d->deintMode = mode;
-	d->enqueue(MpResetDeintMode);
+	d->deint = on;
+	d->enqueue(MpSetDeintEnabled);
 }
 
-DeintMode PlayEngine::deintMode() const {
-	return d->deintMode;
+bool PlayEngine::isDeintEanbled() const {
+	return d->deint;
+}
+
+void PlayEngine::redraw() {
+	d->enqueue(MpRedraw);
 }

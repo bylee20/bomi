@@ -22,6 +22,8 @@ public:
 	bool isNormalizerActivated() const;
 	void setNormalizerOption(double length, double target, double silence, double min, double max);
 	double scale() const;
+	void setMuted(bool muted);
+	bool isMuted() const;
 	const NormalizerOption &normalizerOption() const;
 	void setClippingMethod(ClippingMethod method);
 private:

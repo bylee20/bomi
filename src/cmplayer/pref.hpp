@@ -135,7 +135,6 @@ public:
 	Shortcuts shortcuts = defaultShortcuts();
 
 	AudioDriver audio_driver = AudioDriver::Auto;
-	SoftwareVolume software_volume = SoftwareVolume::Auto;
 	ClippingMethod clipping_method = ClippingMethod::Auto;
 
 	int cache_local = 0, cache_network = 2048, cache_dvd = 0;

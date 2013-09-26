@@ -272,11 +272,15 @@ public:
 	}
 	mp_audio *play(mp_audio *data) override {
 		auto p = (T*)(data->audio);
-		const int nch = channels();
-		const int frames = s2f(b2s(data->len));
-		for (int i=0; i<frames; ++i) {
-			for (int ch = 0; ch < nch; ++ch, ++p)
-				*p = Clip<method, T>::apply((*p)*m_level[ch]*m_gain);
+		if (m_muted)
+			std::fill_n(p, b2s(data->len), 0);
+		else {
+			const int nch = channels();
+			const int frames = s2f(b2s(data->len));
+			for (int i=0; i<frames; ++i) {
+				for (int ch = 0; ch < nch; ++ch, ++p)
+					*p = Clip<method, T>::apply((*p)*m_level[ch]*m_gain);
+			}
 		}
 		return data;
 	}
@@ -306,6 +310,7 @@ private:
 		return total;
 	}
 	void prepareToPlay(const AudioController *ac, const mp_audio *data) override {
+		m_muted = ac->isMuted();
 		const int nch = channels();
 		std::fill_n(m_level, nch, ac->level());
 		if (_Change(m_normalizer, ac->isNormalizerActivated()))
@@ -340,7 +345,7 @@ private:
 		}
 	}
 
-	bool m_normalizer = false;
+	bool m_normalizer = false, m_muted = false;
 	double m_level[AF_NCH];
 	NormalizerOption m_option;
 	QLinkedList<BufferInfo> m_buffers;

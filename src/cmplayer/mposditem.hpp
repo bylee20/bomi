@@ -4,7 +4,7 @@
 #include "stdafx.hpp"
 #include "texturerendereritem.hpp"
 
-enum EventType {EnqueueFrame = QEvent::User + 1, RenderNextFrame, EmptyQueue, UpdateDeint, Show, Hide };
+enum EventType {EnqueueFrame = QEvent::User + 1, RenderNextFrame, EmptyQueue, UpdateDeint, Show, Hide, NewFrame };
 
 struct sub_bitmaps;
 

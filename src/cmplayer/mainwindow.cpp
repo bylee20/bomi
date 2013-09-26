@@ -413,7 +413,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->menu("video")("crop").g()->trigger(as.video_crop_ratio);
 	d->menu("video")("align").g("horizontal")->trigger(as.video_alignment & 0x0f);
 	d->menu("video")("align").g("vertical")->trigger(as.video_alignment & 0xf0);
-	d->menu("video")("deint").g()->trigger((int)as.video_deint);
+	if (as.video_deint)
+		d->menu("video")["deint"]->trigger();
 	for (int i=0; i<16; ++i) {
 		if ((as.video_effects >> i) & 1)
 			d->menu("video")("filter").g()->setChecked(1 << i, true);
@@ -484,10 +485,21 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	connect(&d->initializer, &QTimer::timeout, [this] () { applyPref(); cApp.runCommands(); });
 	d->initializer.setSingleShot(true);
 	d->initializer.start(1);
+
+	d->view->setPersistentOpenGLContext(true);
+	d->view->setPersistentSceneGraph(true);
+
+	connect(d->view, &QQuickWindow::sceneGraphInitialized, [this] () {
+		d->engine.initializeOpenGLContext(d->view->openglContext());
+	});
+	connect(d->view, &QQuickWindow::sceneGraphInvalidated, [this] () {
+//		qDebug() << QOpenGLContext::currentContext() << d->engine.gl();//d->view->openglContext() << QOpenGLContext::currentContext();
+	});
 }
 
 MainWindow::~MainWindow() {
 	exit();
+	delete d->view;
 	delete d;
 	finalize_vdpau();
 	finalize_vaapi();
@@ -629,26 +641,14 @@ void MainWindow::connectMenus() {
 		if (d->renderer.offset() != offset)
 			d->push(offset, d->renderer.offset(), [this](const QPoint &v) { d->renderer.setOffset(v); });
 	});
-	connect(video("deint")["cycle"], &QAction::triggered, [this] () {
-		auto actions = d->menu("video")("deint").g()->actions();
-		int i = 0;
-		for (; i<actions.size(); ++i)
-			if (actions[i]->isChecked())
-				break;
-		if (++i >= actions.size())
-			i = 0;
-		actions[i]->trigger();
-	});
-	connect(video("deint").g(), &QActionGroup::triggered, [this] (QAction *action) {
-		auto mode = DeintModeInfo::from(action->data().toInt(), DeintMode::Never);
-		if (d->engine.deintMode() != mode)
-			d->push(mode, d->engine.deintMode(), [this] (DeintMode mode) {
-				d->as.video_deint = mode;
-				if (auto action = d->menu("video")("deint").g()->find((int)mode)) {
-					action->setChecked(true);
-					showMessage(tr("Deinterlace"), action->text());
-					d->engine.setDeintMode(mode);
-				}
+	connect(video["deint"], &QAction::triggered, [this] () {
+		QAction *action = d->menu("video")["deint"];
+		if (d->engine.isDeintEanbled() != action->isChecked())
+			d->push(action->isChecked(), d->engine.isDeintEanbled(), [this, action] (bool on) {
+				d->as.video_deint = on;
+				action->setChecked(on);
+				showMessage(action->text(), on ? tr("On") : tr("Off"));
+				d->engine.setDeintEnabled(on);
 			});
 	});
 	connect(&video("filter"), &Menu::triggered, [this] () {
@@ -1346,7 +1346,6 @@ void MainWindow::applyPref() {
 #endif
 	d->engine.setAudioDriver(p.audio_driver);
 	d->engine.setClippingMethod(p.clipping_method);
-	d->engine.setSoftwareVolume(p.software_volume);
 	d->engine.setMinimumCache(p.cache_min_playback, p.cache_min_seeking);
 	d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
 	d->renderer.setInterpolator(p.picture_interpolator);
@@ -1654,3 +1653,4 @@ void MainWindow::moveEvent(QMoveEvent *event) {
 	if (!d->fullScreen)
 		d->updateWindowPosState();
 }
+

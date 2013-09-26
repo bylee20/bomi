@@ -59,12 +59,16 @@ struct TextureRendererItem::Node : public QSGGeometryNode {
 		item->setGeometryDirty();
 
 		m_count = item->textureCount();
-		m_textures = new GLuint[m_count];
-		glGenTextures(m_count, m_textures);
+		if (m_count > 0) {
+			m_textures = new GLuint[m_count];
+			glGenTextures(m_count, m_textures);
+		}
 	}
 	~Node() {
-		glDeleteTextures(m_count, m_textures);
-		delete [] m_textures;
+		if (m_count > 0) {
+			glDeleteTextures(m_count, m_textures);
+			delete [] m_textures;
+		}
 	}
 	GLuint *textures() const {return m_textures;}
 private:

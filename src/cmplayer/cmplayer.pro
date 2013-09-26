@@ -118,7 +118,10 @@ HEADERS += playengine.hpp \
     mposdbitmap.hpp \
     mposdnode.hpp \
     openglcompat.hpp \
-    videotextureshader.glsl.hpp
+    videotextureshader.glsl.hpp \
+    videoframeshader.glsl.hpp \
+    videoframeshader.hpp \
+    undostack.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -187,7 +190,9 @@ SOURCES += main.cpp \
     letterboxitem.cpp \
     mposdbitmap.cpp \
     mposdnode.cpp \
-    openglcompat.cpp
+    openglcompat.cpp \
+    videoframeshader.cpp \
+    undostack.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -221,7 +226,8 @@ OTHER_FILES += \
     imports/CMPlayerSkin/AppWithDock.qml \
     imports/CMPlayerSkin/TimeSlider.qml \
     imports/CMPlayerSkin/VolumeSlider.qml \
-    videotextureshader.glsl
+    videotextureshader.glsl \
+    videoframeshader.glsl
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}

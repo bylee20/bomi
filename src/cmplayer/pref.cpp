@@ -60,7 +60,7 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("video/move/down")] << Qt::SHIFT + Qt::Key_S;
 	keys[_L("video/move/left")] << Qt::SHIFT + Qt::Key_A;
 	keys[_L("video/move/right")] << Qt::SHIFT + Qt::Key_D;
-	keys[_L("video/deint/cycle")] << Qt::CTRL + Qt::Key_D;
+	keys[_L("video/deint")] << Qt::CTRL + Qt::Key_D;
 	keys[_L("video/color/brightness+")] << Qt::Key_T;
 	keys[_L("video/color/brightness-")] << Qt::Key_G;
 	keys[_L("video/color/contrast+")] << Qt::Key_Y;
@@ -219,7 +219,6 @@ void Pref::save() const {
 	WRITE(deint_list_swdec);
 
 	WRITE(audio_driver);
-	WRITE(software_volume);
 	WRITE(clipping_method);
 
 	WRITE(cache_local);
@@ -324,7 +323,6 @@ void Pref::load() {
 	READ(deint_list_swdec);
 
 	READ(audio_driver);
-	READ(software_volume);
 	READ(clipping_method);
 
 	READ(cache_local);

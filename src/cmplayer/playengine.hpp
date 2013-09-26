@@ -120,15 +120,19 @@ public:
 	bool isSubtitleStreamsVisible() const {return m_subtitleStreamsVisible;}
 	void setVideoFilters(const QString &vfs);
 	void setDeint(const DeintInfo &sw, const DeintInfo &hw);
-	void setDeintMode(DeintMode mode);
-	DeintMode deintMode() const;
+	void setDeintEnabled(bool on);
+	bool isDeintEanbled() const;
 	void setAudioDriver(AudioDriver driver);
 	AudioDriver preferredAudioDriver() const;
 	AudioDriver audioDriver() const;
-	void setSoftwareVolume(SoftwareVolume sv);
 	void setClippingMethod(ClippingMethod method);
 	void setMinimumCache(int playback, int seeking);
+	QOpenGLContext *gl() const;
+	void initializeOpenGLContext(QOpenGLContext *context);
+	void makeCurrent();
+	void doneCurrent();
 public slots:
+	void redraw();
 	void setVolume(int volume);
 	void setPreamp(double preamp);
 	void setMuted(bool muted);

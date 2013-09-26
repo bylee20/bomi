@@ -409,9 +409,9 @@ QVector<SubtitleComponentModel*> SubtitleRendererItem::models() const {
 
 void SubtitleRendererItem::customEvent(QEvent *event) {
 	if (event->type() == (int)SubtitleRenderingThread::Prepared) {
-		auto e = static_cast<DataEvent2<SubtitleRenderingThread*, SubtitleRenderingThread::Picture>*>(event);
-		if (e->data1() == d->renderer) {
-			d->pic = e->data2();
+		auto e = static_cast<DataEvent<SubtitleRenderingThread*, SubtitleRenderingThread::Picture>*>(event);
+		if (e->data<0>() == d->renderer) {
+			d->pic = e->data<1>();
 			if (!d->pic.image.isNull()) {
 				d->redraw = true;
 				d->shadowOffset.rx() = d->pic.shadow.x()/(double)d->pic.size.width();

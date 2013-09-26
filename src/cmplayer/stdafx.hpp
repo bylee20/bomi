@@ -95,6 +95,10 @@ template<typename List, typename T>
 bool _Contains(const List &list, const T &t) { return std::find(list.begin(), list.end(), t) != list.end(); }
 
 template<int N> static constexpr int _Aligned(int v) { return v%N ? ((v/N) + 1)*N : v; }
+
+template<typename T, typename... Args> void _Renew(T *&t, Args... args) {delete t; t = new T(args...); }
+template<typename T>                   void _Delete(T *&t) {delete t; t = nullptr; }
+
 }
 
 using namespace Pch;

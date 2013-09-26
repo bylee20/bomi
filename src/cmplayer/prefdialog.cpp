@@ -680,7 +680,6 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.skin_name->setCurrentText(p.skin_name);
 
 	d->ui.audio_driver->setCurrentData((int)p.audio_driver);
-	d->ui.software_volume->setCurrentValue(p.software_volume);
 	d->ui.clipping_method->setCurrentValue(p.clipping_method);
 
 	d->ui.cache_local->setValue(p.cache_local);
@@ -811,7 +810,6 @@ void PrefDialog::get(Pref &p) {
 	p.skin_name = d->ui.skin_name->currentText();
 
 	p.audio_driver = AudioDriverInfo::from(d->ui.audio_driver->currentData().toInt());
-	p.software_volume = d->ui.software_volume->currentValue();
 	p.clipping_method = d->ui.clipping_method->currentValue();
 
 	p.cache_local = d->ui.cache_local->value();

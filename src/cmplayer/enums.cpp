@@ -16,22 +16,10 @@ const std::array<AudioDriverInfo::Item, 7> AudioDriverInfo::info{{
 	{AudioDriver::OpenAL, "OpenAL"}
 }};
 
-const std::array<SoftwareVolumeInfo::Item, 3> SoftwareVolumeInfo::info{{
-	{SoftwareVolume::Auto, "Auto"},
-	{SoftwareVolume::Always, "Always"},
-	{SoftwareVolume::Never, "Never"}
-}};
-
 const std::array<ClippingMethodInfo::Item, 3> ClippingMethodInfo::info{{
 	{ClippingMethod::Auto, "Auto"},
 	{ClippingMethod::Soft, "Soft"},
 	{ClippingMethod::Hard, "Hard"}
-}};
-
-const std::array<DeintModeInfo::Item, 3> DeintModeInfo::info{{
-	{DeintMode::Never, "Never"},
-	{DeintMode::Auto, "Auto"},
-	{DeintMode::Always, "Always"}
 }};
 
 const std::array<StaysOnTopInfo::Item, 3> StaysOnTopInfo::info{{

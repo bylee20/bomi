@@ -68,7 +68,7 @@ struct VideoOutput::Data {
 	VideoFrame frame;
 	mp_osd_res osd;
 	PlayEngine *engine = nullptr;
-	bool flip = false;
+	bool flip = false, deint = false;
 	int upsideDown = 0;
 	VideoRendererItem *renderer = nullptr;
 	HwAcc *acc = nullptr, *prevAcc = nullptr;
@@ -77,7 +77,6 @@ struct VideoOutput::Data {
 	VideoFilter *pass = new PassThroughVideoFilter;
 	mp_image_params params;
 	DeintInfo deint_sw, deint_hw;
-	DeintMode deintMode = DeintMode::Never;
 	VideoFilter *filter_sw = nullptr;
 	VideoFilter *filter_hw = nullptr;
 	VideoFilter *filter = pass;
@@ -162,8 +161,8 @@ const VideoFormat &VideoOutput::format() const {
 	return d->format;
 }
 
-void VideoOutput::setDeintMode(DeintMode mode) {
-	if (_Change(d->deintMode, mode))
+void VideoOutput::setDeintEnabled(bool on) {
+	if (_Change(d->deint, on))
 		updateDeint();
 }
 
@@ -173,7 +172,7 @@ void VideoOutput::updateDeint() {
 		const int flags = ref.flags() & DeintInfo::Hardware;
 		return flags ? DeintInfo(ref.method(), flags) : DeintInfo();
 	};
-	if (d->deintMode == DeintMode::Never) {
+	if (!d->deint) {
 		deint = DeintInfo();
 		d->filter = d->pass;
 	} else {
@@ -201,8 +200,6 @@ void VideoOutput::reset() {
 	d->frames.clear();
 	d->prevPts = MP_NOPTS_VALUE;
 	d->flip = false;
-	if (d->renderer)
-		d->renderer->emptyQueue();
 }
 
 int VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) {
@@ -248,7 +245,7 @@ void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 		img = d->acc->getImage(mpi);
 	const double pts = img->pts;
 	auto filter = d->pass;
-	if (d->deintMode == DeintMode::Always || (d->deintMode == DeintMode::Auto && (img->fields & MP_IMGFIELD_INTERLACED)))
+	if (d->deint && (img->fields & MP_IMGFIELD_INTERLACED))
 		filter = d->filter;
 	filter->setFrameFlags(d->upsideDown);
 	filter->apply(img, d->frames, d->prevPts);
@@ -314,11 +311,11 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 }
 
 void VideoOutput::flipPage(struct vo *vo) {
-	Data *d = priv(vo)->d;
+	auto d = priv(vo)->d;
 	if (!d->flip)
 		return;
 	if (d->renderer)
-		d->renderer->present(d->frame);
+		d->renderer->present(d->frame, false);
 	d->flip = false;
 }
 
@@ -338,6 +335,11 @@ int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	default:
 		return 0;
 	}
+}
+
+void VideoOutput::redraw() {
+	if (d->renderer)
+		d->renderer->present(d->frame, true);
 }
 
 #ifdef Q_OS_LINUX

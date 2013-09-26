@@ -13,20 +13,10 @@
 -PortAudio
 -OpenAL
 
-+SoftwareVolume
--Auto-Auto-probe
--Always-Always apply
--Never-Never apply
-
 +ClippingMethod
 -Auto-Auto-clipping
 -Soft-Soft-clipping
 -Hard-Hard-clipping
-
-+DeintMode
--Never
--Auto
--Always
 
 +StaysOnTop
 -Always

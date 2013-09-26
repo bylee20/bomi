@@ -114,13 +114,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		move.addAction(_L("right"))->setData((int)Qt::RightArrow);
 	video.addSeparator();
 
-	auto &deint = *video.addMenu(_L("deint"));
-	deint.addAction(_L("cycle"));
-	deint.addSeparator();
-	deint.g()->setExclusive(true);
-	deint.addActionToGroup(_L("never"), true)->setData((int)DeintMode::Never);
-	deint.addActionToGroup(_L("auto"), true)->setData((int)DeintMode::Auto);
-	deint.addActionToGroup(_L("always"), true)->setData((int)DeintMode::Always);
+	video.addAction(_L("deint"), true);
 
 	auto &effect = *video.addMenu(_L("filter"));
 	effect.g()->setExclusive(false);
@@ -405,12 +399,7 @@ void RootMenu::update(const Pref &p) {
 	move["left"]->setText(tr("To Left"));
 	move["right"]->setText(tr("To Right"));
 
-	auto &deint = video("deint");
-	deint.setTitle(tr("Deinterlace"));
-	deint["cycle"]->setText(tr("Cycle"));
-	deint["never"]->setText(tr("Never"));
-	deint["auto"]->setText(tr("Auto"));
-	deint["always"]->setText(tr("Always"));
+	video["deint"]->setText(tr("Deinterlace"));
 
 	auto &effect = video("filter");
 	effect.setTitle(tr("Filter"));

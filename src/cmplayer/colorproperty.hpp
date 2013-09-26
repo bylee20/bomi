@@ -6,6 +6,48 @@ extern "C" {
 #include <video/csputils.h>
 }
 
+struct Kernel3x3 {
+	Kernel3x3() { mat(0, 0) = mat(2, 2) = 0.f; }
+	Kernel3x3(double center, double neighbor, double diagonal) {
+		set(center, neighbor, diagonal);
+	}
+	Kernel3x3 &operator = (const Kernel3x3 &rhs) { mat = rhs.mat; return *this; }
+	float &operator () (int i, int j) { return at(i, j); }
+	float  operator () (int i, int j) const {return at(i, j); }
+	Kernel3x3 &operator += (const Kernel3x3 &rhs) { mat += rhs.mat; return *this; }
+	Kernel3x3 operator + (const Kernel3x3 &rhs) { Kernel3x3 lhs = *this; return (lhs += rhs); }
+	Kernel3x3 merged(const Kernel3x3 &other, bool normalize = true) {
+		Kernel3x3 ret = *this + other;
+		if (normalize)
+			ret.normalize();
+		return ret;
+	}
+	void normalize() {
+		double den = 0.0;
+		for (int i=0; i<9; ++i)
+			den += mat.data()[i];
+		mat /= den;
+	}
+	Kernel3x3 normalized() const {
+		Kernel3x3 kernel = *this;
+		kernel.normalize();
+		return kernel;
+	}
+	float &at(int i, int j) { return mat(i, j); }
+	float at(int i, int j) const {return mat(i, j); }
+	void set(double center, double neighbor, double diagonal) {
+		mat(1, 1) = center;
+		mat(0, 1) = mat(1, 0) = mat(1, 2) = mat(2, 1) = neighbor;
+		mat(0, 0) = mat(0, 2) = mat(2, 0) = mat(2, 2) = diagonal;
+	}
+	float center() const {return mat(1, 1);}
+	float neighbor() const {return mat(0, 1);}
+	float diagonal() const {return mat(0, 0);}
+	QMatrix3x3 matrix() const {return mat;}
+private:
+	QMatrix3x3 mat;
+};
+
 class ColorProperty {
 public:
 	enum Value {Brightness = 0, Saturation, Contrast, Hue, PropMax};

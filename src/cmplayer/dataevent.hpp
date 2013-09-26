@@ -2,75 +2,36 @@
 #define DATAEVENT_HPP
 
 #include "stdafx.hpp"
+#include <tuple>
 
-class BaseEvent : public QEvent {
+template<typename... Args>
+class DataEvent : public QEvent {
 public:
-	BaseEvent(int type): QEvent(static_cast<Type>(type)) {}
-};
-
-template<typename D1>
-class DataEvent1 : public BaseEvent {
-public:
-	DataEvent1(int type, const D1 &d1): BaseEvent(type), m_d1(d1) {}
-	const D1 &data() const {return m_d1;}
-	const D1 &data1() const {return m_d1;}
+	using Data = std::tuple<Args...>;
+	template<const int i>
+	using DataType = typename std::tuple_element<i, Data>::type;
+	static constexpr int size = sizeof...(Args);
+	DataEvent(int type, Args... args): QEvent(static_cast<Type>(type)), m_data(args...) {}
+	void get(Args&... args) { std::tie(args...) = m_data; }
+	template<int i>
+	const DataType<i> &data() const { return std::get<i>(m_data); }
 private:
-	D1 m_d1;
+	Data m_data;
 };
 
-template<typename D1, typename D2>
-class DataEvent2 : public DataEvent1<D1> {
-public:
-	DataEvent2(int type, const D1 &d1, const D2 &d2): DataEvent1<D1>(type, d1), m_d2(d2) {}
-	const D2 &data2() const {return m_d2;}
-private:
-	D2 m_d2;
-};
-
-template<typename D1, typename D2, typename D3>
-class DataEvent3 : public DataEvent2<D1, D2> {
-public:
-	DataEvent3(int type, const D1 &d1, const D2 &d2, const D3 &d3): DataEvent2<D1, D2>(type, d1, d2), m_d3(d3) {}
-	const D3 &data3() const {return m_d3;}
-private:
-	D3 m_d3;
-};
-
-static inline void postData(QObject *obj, int type) {
-	qApp->postEvent(obj, new BaseEvent(type));
+template<typename... Args>
+static inline void postData(QObject *obj, int type, const Args&... args) {
+	qApp->postEvent(obj, new DataEvent<Args...>(type, args...));
 }
 
-template<typename D1>
-static inline void postData(QObject *obj, int type, const D1 &d1) {
-	qApp->postEvent(obj, new DataEvent1<D1>(type, d1));
+template<typename... Args>
+static inline void getAllData(QEvent *event, Args&... args) {
+	static_cast<DataEvent<Args...>*>(event)->get(args...);
 }
 
-template<typename D1, typename D2>
-static inline void postData(QObject *obj, int type, const D1 &d1, const D2 &d2) {
-	qApp->postEvent(obj, new DataEvent2<D1, D2>(type, d1, d2));
+template<typename... Args, const int i = 0>
+static inline const typename DataEvent<Args...>::template DataType<i> &getData(QEvent *event) {
+	return static_cast<DataEvent<Args...>*>(event)->template data<i>();
 }
-
-template<typename D1, typename D2, typename D3>
-static inline void postData(QObject *obj, int type, const D1 &d1, const D2 &d2, const D3 &d3) {
-	qApp->postEvent(obj, new DataEvent3<D1, D2, D3>(type, d1, d2, d3));
-}
-
-template<typename D1, typename D2, typename D3>
-static inline void getData(QEvent *event, D1 &d1, D2 &d2, D3 &d3) {
-	auto e = static_cast<DataEvent3<D1, D2, D3>*>(event);
-	d1 = e->data1(); d2 = e->data2(); d3 = e->data3();
-}
-
-template<typename D1, typename D2>
-static inline void getData(QEvent *event, D1 &d1, D2 &d2) {
-	auto e = static_cast<DataEvent2<D1, D2>*>(event);
-	d1 = e->data1(); d2 = e->data2();
-}
-template<typename D1>
-static inline void getData(QEvent *event, D1 &d1) {
-	d1 = static_cast<DataEvent1<D1>*>(event)->data();
-}
-
-template<typename D1> static inline const D1 &getData(QEvent *event) { return static_cast<DataEvent1<D1>*>(event)->data(); }
 
 #endif // DATAEVENT_HPP

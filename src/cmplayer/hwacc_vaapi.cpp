@@ -176,8 +176,8 @@ mp_image *VaApiSurfacePool::getMpImage() {
 		mutex.unlock();
 	};
 	auto mpi = nullMpImage(IMGFMT_VAAPI, m_width, m_height, surface, release);
-	mpi->planes[0] = (uchar*)(quintptr)surface;
-	mpi->planes[3] = (uchar*)(quintptr)surface->id();
+	mpi->planes[1] = (uchar*)(quintptr)surface;
+	mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)surface->id();
 	return mpi;
 }
 
@@ -195,8 +195,6 @@ void VaApiSurfacePool::clear() {
 }
 
 VaApiSurface *VaApiSurfacePool::getSurface() {
-	int i_old, i;
-
 	VaApiSurface *best = nullptr;
 	for (VaApiSurface *s : m_surfaces) {
 		if (s->m_ref)
@@ -208,42 +206,6 @@ VaApiSurface *VaApiSurfacePool::getSurface() {
 		qDebug() << "No usable VASurfaceID!! decoding will fail";
 		return nullptr;
 	}
-
-//	for (int i=0; i<m_surfaces.size(); ++i) {
-//		VaApiSurface *s = m_surface
-//	}
-
-//	for (i=0, i_old=0; i<m_surfaces.size(); ++i) {
-//		if (!m_surfaces[i]->m_ref)
-//			break;
-//		if (m_surfaces[i]->m_order < m_surfaces[i_old]->m_order)
-//			i_old = i;
-//	}
-
-//	struct vaapi_surface *best = NULL;
-
-//	for (int n = 0; n < p->num_video_surfaces; n++) {
-//		struct vaapi_surface *s = p->video_surfaces[n];
-//		if (!s->is_used && s->w == w && s->h == h && s->va_format == va_format) {
-//			if (!best || best->order > s->order)
-//				best = s;
-//		}
-//	}
-
-//	if (!best)
-//		best = alloc_vaapi_surface(p, w, h, va_format);
-
-//	if (best) {
-//		best->is_used = true;
-//		best->order = ++p->video_surface_lru_counter;
-//	}
-
-//	if (i >= m_surfaces.size())
-//		i = i_old;
-//	auto surface = m_surfaces[i];
-//	if (surface->m_ref)
-//		qDebug() << "refed surface!!";
-
 	best->m_ref = true;
 	best->m_order = ++m_order;
 	return best;
@@ -284,7 +246,7 @@ VaApi::VaApi() {
 			}
 		}
 		if (!va.isEmpty())
-			m_supported.insert(id, VaApiCodec(profiles, va, av, surfaces+10, id));
+			m_supported.insert(id, VaApiCodec(profiles, va, av, surfaces + 4, id));
 	};
 #define NUM_VIDEO_SURFACES_MPEG2  3 /* 1 decode frame, up to  2 references */
 #define NUM_VIDEO_SURFACES_MPEG4  3 /* 1 decode frame, up to  2 references */
@@ -402,17 +364,16 @@ bool HwAccVaApi::fillContext(AVCodecContext *avctx) {
 	VAConfigAttrib attr = { VAConfigAttribRTFormat, 0 };
 	if(!isSuccess(vaGetConfigAttributes(d->context.display, d->profile, VAEntrypointVLD, &attr, 1)))
 		return false;
-	if(!(attr.value & VA_RT_FORMAT_YUV420) && !(attr.value & VA_RT_FORMAT_YUV422))
+	const uint rts =  attr.value & (VA_RT_FORMAT_YUV420 | VA_RT_FORMAT_YUV422);
+	if(!rts)
 		return isSuccess(VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT);
 	if(!isSuccess(vaCreateConfig(d->context.display, d->profile, VAEntrypointVLD, &attr, 1, &d->context.config_id)))
 		return false;
 	const int w = avctx->width, h = avctx->height;
-	auto format = VA_RT_FORMAT_YUV420;
-	if (!isSuccess(d->pool.create(codec->surfaces, w, h, format))) {
-		if (!isSuccess(d->pool.create(codec->surfaces, w, h, format = VA_RT_FORMAT_YUV422)))
-			return false;
-	}
-	VaApi::get().setSurfaceFormat(format);
+	auto tryRtFormat = [rts, this, codec, w, h] (uint rt) { return (rts & rt) && isSuccess(d->pool.create(codec->surfaces, w, h, rt)); };
+	if (!tryRtFormat(VA_RT_FORMAT_YUV420) && !tryRtFormat(VA_RT_FORMAT_YUV422))
+		return false;
+	VaApi::get().setSurfaceFormat(d->pool.format());
 	auto ids = d->pool.ids();
 	if (!isSuccess(vaCreateContext(d->context.display, d->context.config_id, w, h, VA_PROGRESSIVE, ids.data(), ids.size(), &d->context.context_id)))
 		return false;
@@ -420,15 +381,6 @@ bool HwAccVaApi::fillContext(AVCodecContext *avctx) {
 }
 
 mp_image *HwAccVaApi::getImage(mp_image *mpi) {
-//	VaApiSurface *in = (VaApiSurface*)(quintptr)mpi->planes[0];
-//	VAImage image;
-//	vaDeriveImage(VaApi::glx(), in->id(), &image);
-//	vaPutSurface()
-
-//	auto img = nullMpImage(IMGFMT_VDA, size().width(), size().height(), buffer, release);
-//	mp_image_copy_attributes(img, mpi);
-//	img->planes[3] = mpi->planes[3];
-
 	return mpi;
 }
 

@@ -11,10 +11,6 @@ public:
 		return m_method == rhs.m_method && m_flags == rhs.m_flags;
 	}
 	bool operator != (const DeintInfo &rhs) const { return !operator==(rhs); }
-	using Mode = DeintMode;
-	static constexpr const Mode Always = DeintMode::Always;
-	static constexpr const Mode Never = DeintMode::Never;
-	static constexpr const Mode Auto = DeintMode::Auto;
 	enum Device {
 		DeviceMask     = 0x0000ff,
 		PostProc       = 0x000001,
@@ -49,6 +45,7 @@ public:
 	bool isHardware() const { return m_flags & Hardware; }
 	bool isSoftware() const { return m_flags & Software; }
 	bool hasFlags() const { return m_flags != 0; }
+	bool hasFlags(bool flags) const { return m_flags & flags; }
 	QString toString() const { return name() + "|" + QString::number(m_flags); }
 	static DeintInfo fromString(const QString &text);
 	static QList<DeintInfo> hwdecList();

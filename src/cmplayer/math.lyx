@@ -578,6 +578,35 @@ h_{1}\left(\alpha\right)= & 1-\alpha+\frac{w_{3}\left(x\right)}{w_{2}\left(x\rig
 \end_inset
 
 
+\begin_inset Formula 
+\[
+\begin{cases}
+g_{R}=g_{0}^{X}= & w_{R}^{X}+w_{G}^{X}\\
+g_{G}=g_{1}^{X}= & w_{B}^{X}+w_{A}^{X}\\
+g_{B}=g_{0}^{Y}= & w_{R}^{Y}+w_{G}^{Y}\\
+g_{A}=g_{1}^{Y}= & w_{B}^{Y}+w_{A}^{Y}
+\end{cases},\quad\begin{cases}
+h_{R}=h_{0}^{X}= & 1+\alpha^{X}-w_{G}^{X}/g_{R}\\
+h_{B}=h_{0}^{Y}= & 1+\alpha^{Y}-w_{G}^{Y}/g_{B}\\
+h_{G}=h_{1}^{X}= & 1-\alpha^{X}+w_{A}^{X}/g_{G}\\
+h_{A}=h_{1}^{Y}= & 1-\alpha^{Y}+w_{A}^{Y}/g_{A}
+\end{cases}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+f_{R} & =g_{R}+g_{G}\\
+f_{G} & =\frac{g_{G}}{f_{R}}\\
+f_{B} & =g_{B}+g_{A}\\
+f_{A} & =\frac{g_{A}}{f_{B}}\\
+\end{align*}
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
@@ -606,11 +635,37 @@ In my case, with
 , 
 \begin_inset Formula 
 \begin{align*}
-w_{0}\left(x\right) & =W\left(x+1\right)\\
-w_{1}\left(x\right) & =W\left(x\right)\\
-w_{2}\left(x\right) & =W\left(x-1\right)\\
-w_{3}\left(x\right) & =W\left(x-2\right)
+w_{0}\left(x\right) & =W\left(x+1\right) & = & \frac{1}{6}\left[\left(-B-6C\right)\left(x+1\right)^{3}+\left(6B+30C\right)\left(x+1\right)^{2}+\left(-12B-48C\right)\left(x+1\right)+\left(8B+24C\right)\right]\\
+ &  & = & \frac{1}{6}\left[\left(-B-6C\right)x^{3}+3\left(B+4C\right)x^{2}-3\left(B+2C\right)x+B\right]\\
+w_{1}\left(x\right) & =W\left(x\right) & = & \frac{1}{6}\left[\left(12-9B-6C\right)x^{3}+\left(-18+12B+6C\right)x^{2}+\left(6-2B\right)\right]\\
+w_{2}\left(x\right) & =W\left(x-1\right) & = & \frac{1}{6}\left[\left(12-9B-6C\right)\left(1-x\right)^{3}+\left(-18+12B+6C\right)\left(1-x\right)^{2}+\left(6-2B\right)\right]\\
+ &  &  & \frac{1}{6}\left[-\left(12-9B-6C\right)x^{3}+3\left(6-5B-4C\right)x^{2}+3\left(B+2C\right)x+B\right]\\
+w_{3}\left(x\right) & =W\left(x-2\right) & = & \frac{1}{6}\left[\left(-B-6C\right)\left(2-x\right)^{3}+\left(6B+30C\right)\left(2-x\right)^{2}+\left(-12B-48C\right)\left(2-x\right)+\left(8B+24C\right)\right]\\
+ &  & = & \frac{1}{6}\left[\left(B+6C\right)x^{3}-6Cx^{2}\right]\\
+\\
+\\
+ &  &  & \frac{1}{6}\left[\left(B+6C\right)x^{3}-6Cx^{2}+12\left(B+5C\right)x\right]
 \end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\begin{pmatrix}w_{0}\left(x\right)\\
+w_{1}\left(x\right)\\
+w_{2}\left(x\right)\\
+w_{3}\left(x\right)
+\end{pmatrix}=\frac{1}{6}\begin{pmatrix}B & -3\left(B+2C\right) & 3\left(B+4C\right) & -B-6C\\
+2\left(3-B\right) & 0 & 6\left(-3+2B+C\right) & 3\left(4-3B-2C\right)\\
+B & 3\left(B+2C\right) & 3\left(6-5B-4C\right) & -3\left(4-3B-2C\right)\\
+0 & 12\left(B+5C\right) & -6C & B+6C
+\end{pmatrix}\begin{pmatrix}x^{0}\\
+x^{1}\\
+x^{2}\\
+x^{3}
+\end{pmatrix}
+\]
 
 \end_inset
 

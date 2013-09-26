@@ -125,60 +125,6 @@ private:
 
 using AudioDriverInfo = EnumInfo<AudioDriver>;
 
-enum class SoftwareVolume : int {
-	Auto = (int)0,
-	Always = (int)1,
-	Never = (int)2
-};
-
-inline bool operator == (SoftwareVolume e, int i) { return (int)e == i; }
-inline bool operator != (SoftwareVolume e, int i) { return (int)e != i; }
-inline bool operator == (int i, SoftwareVolume e) { return (int)e == i; }
-inline bool operator != (int i, SoftwareVolume e) { return (int)e != i; }
-inline int operator & (SoftwareVolume e, int i) { return (int)e & i; }
-inline int operator & (int i, SoftwareVolume e) { return (int)e & i; }
-inline bool operator > (SoftwareVolume e, int i) { return (int)e > i; }
-inline bool operator < (SoftwareVolume e, int i) { return (int)e < i; }
-inline bool operator >= (SoftwareVolume e, int i) { return (int)e >= i; }
-inline bool operator <= (SoftwareVolume e, int i) { return (int)e <= i; }
-inline bool operator > (int i, SoftwareVolume e) { return i > (int)e; }
-inline bool operator < (int i, SoftwareVolume e) { return i < (int)e; }
-inline bool operator >= (int i, SoftwareVolume e) { return i >= (int)e; }
-inline bool operator <= (int i, SoftwareVolume e) { return i <= (int)e; }
-
-template<>
-class EnumInfo<SoftwareVolume> {
-	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
-	typedef SoftwareVolume Enum;
-public:
-	struct Item { Enum value; const char *name; };
-	static constexpr int size() { return 3; }
-	static const char *name(Enum e) {
-		return info[(int)e].name;
-	}
-	static QString description(Enum e) {
-		switch (e) {
-		case Enum::Auto: return tr("Auto-probe");
-		case Enum::Always: return tr("Always apply");
-		case Enum::Never: return tr("Never apply");
-		default: return tr("");
-		};
-	}
-	static constexpr const std::array<Item, 3> &items() { return info; }
-	static Enum from(int id, Enum def = info[0].value) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
-		return it != info.cend() ? it->value : def;
-	}
-	static Enum from(const QString &name, Enum def = info[0].value) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
-		return it != info.cend() ? it->value : def;
-	}
-private:
-	static const std::array<Item, 3> info;
-};
-
-using SoftwareVolumeInfo = EnumInfo<SoftwareVolume>;
-
 enum class ClippingMethod : int {
 	Auto = (int)0,
 	Soft = (int)1,
@@ -232,60 +178,6 @@ private:
 };
 
 using ClippingMethodInfo = EnumInfo<ClippingMethod>;
-
-enum class DeintMode : int {
-	Never = (int)0,
-	Auto = (int)1,
-	Always = (int)2
-};
-
-inline bool operator == (DeintMode e, int i) { return (int)e == i; }
-inline bool operator != (DeintMode e, int i) { return (int)e != i; }
-inline bool operator == (int i, DeintMode e) { return (int)e == i; }
-inline bool operator != (int i, DeintMode e) { return (int)e != i; }
-inline int operator & (DeintMode e, int i) { return (int)e & i; }
-inline int operator & (int i, DeintMode e) { return (int)e & i; }
-inline bool operator > (DeintMode e, int i) { return (int)e > i; }
-inline bool operator < (DeintMode e, int i) { return (int)e < i; }
-inline bool operator >= (DeintMode e, int i) { return (int)e >= i; }
-inline bool operator <= (DeintMode e, int i) { return (int)e <= i; }
-inline bool operator > (int i, DeintMode e) { return i > (int)e; }
-inline bool operator < (int i, DeintMode e) { return i < (int)e; }
-inline bool operator >= (int i, DeintMode e) { return i >= (int)e; }
-inline bool operator <= (int i, DeintMode e) { return i <= (int)e; }
-
-template<>
-class EnumInfo<DeintMode> {
-	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
-	typedef DeintMode Enum;
-public:
-	struct Item { Enum value; const char *name; };
-	static constexpr int size() { return 3; }
-	static const char *name(Enum e) {
-		return info[(int)e].name;
-	}
-	static QString description(Enum e) {
-		switch (e) {
-		case Enum::Never: return tr("");
-		case Enum::Auto: return tr("");
-		case Enum::Always: return tr("");
-		default: return tr("");
-		};
-	}
-	static constexpr const std::array<Item, 3> &items() { return info; }
-	static Enum from(int id, Enum def = info[0].value) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
-		return it != info.cend() ? it->value : def;
-	}
-	static Enum from(const QString &name, Enum def = info[0].value) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
-		return it != info.cend() ? it->value : def;
-	}
-private:
-	static const std::array<Item, 3> info;
-};
-
-using DeintModeInfo = EnumInfo<DeintMode>;
 
 enum class StaysOnTop : int {
 	Always = (int)0,

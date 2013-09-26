@@ -35,27 +35,14 @@ private:
 	virtual const char *fragmentShader() const override {
 		static const char *shader = (R"(
 			uniform sampler2D tex_data;
-			uniform float width, height;
 			varying vec2 qt_TexCoord;
 			void main() {
-				vec2 size = vec2(width, height);
-				vec3 dxy0 = vec3(1.0/width, 1.0/height, 0.0);
-				ivec2 pixel = ivec2(qt_TexCoord*size);
-				vec2 texel = (vec2(pixel)+vec2(0.5, 0.5))/size;
-
-				vec4 x0y0 = texture2D(tex_data, texel);
-				vec4 x1y0 = texture2D(tex_data, texel + dxy0.xz);
-				vec4 x0y1 = texture2D(tex_data, texel + dxy0.zy);
-				vec4 x1y1 = texture2D(tex_data, texel + dxy0.xy);
-
-				float a = fract(qt_TexCoord.x*width);
-				float b = fract(qt_TexCoord.y*height);
-				gl_FragColor =  mix(mix(x0y0, x1y0, a), mix(x0y1, x1y1, a), b);
+				gl_FragColor = texture2D(tex_data, qt_TexCoord);
 			}
 		)");
 		return shader;
 	}
-	int m_loc_matrix = 0, m_loc_tex_data = 0, m_loc_width = 0, m_loc_height = 0;
+	int m_loc_matrix = 0, m_loc_tex_data = 0;
 	MpOsdNode *m_node = nullptr;
 	mutable QByteArray m_frag, m_vtx;
 };
@@ -91,15 +78,16 @@ void MpOsdNode::link(const QByteArray &fragment, const QByteArray &vertex) {
 		m_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, fragment.data());
 	if (!vertex.isEmpty())
 		m_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex.data());
+	m_shader.bindAttributeLocation("vCoordinate", 0);
+	m_shader.bindAttributeLocation("vPosition", 1);
 	m_shader.link();
 	loc_sheet = m_shader.uniformLocation(m_sheetName);
+	loc_mat = m_shader.uniformLocation("matrix");
 }
 
 void MpOsdNode::bind(const QOpenGLShaderProgram *prog) {
 	loc_matrix = prog->uniformLocation("qt_Matrix");
 	loc_tex_data = prog->uniformLocation("tex_data");
-	loc_width = prog->uniformLocation("width");
-	loc_height = prog->uniformLocation("height");
 }
 
 void MpOsdNode::render(QOpenGLShaderProgram *prog, const QSGMaterialShader::RenderState &state) {
@@ -107,11 +95,9 @@ void MpOsdNode::render(QOpenGLShaderProgram *prog, const QSGMaterialShader::Rend
 		prog->setUniformValue(loc_matrix, state.combinedMatrix());
 	prog->setUniformValue(loc_tex_data, 0);
 	if (m_fbo) {
-		prog->setUniformValue(loc_width, (float)m_fbo->width());
-		prog->setUniformValue(loc_height, (float)m_fbo->height());
 		auto f = QOpenGLContext::currentContext()->functions();
 		f->glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_fbo->texture());
+		m_fbo->texture().bind();
 	}
 }
 
@@ -130,9 +116,9 @@ void MpOsdNode::upload(const MpOsdBitmap &osd, int i) {
 
 	auto pp = m_positions.data() + 4*2*i;
 	const float vx1 = part.display().left();
-	const float vy1 = m_fbo->height() - part.display().top();
+	const float vy1 = part.display().top();
 	const float vx2 = vx1 + part.display().width();
-	const float vy2 = vy1 - part.display().height();
+	const float vy2 = vy1 + part.display().height();
 	*pp++ = vx1; *pp++ = vy1;
 	*pp++ = vx1; *pp++ = vy2;
 	*pp++ = vx2; *pp++ = vy2;
@@ -154,17 +140,14 @@ void MpOsdNode::initializeSheetTexture(const MpOsdBitmap &osd) {
 void MpOsdNode::draw(const MpOsdBitmap &osd, const QRectF &rect) {
 	if (!m_fbo || osd.renderSize() != m_fbo->size()) {
 		delete m_fbo;
-		m_fbo = new QOpenGLFramebufferObject(osd.renderSize(), GL_TEXTURE_2D);
+		m_fbo = new OpenGLFramebufferObject(osd.renderSize(), GL_TEXTURE_2D);
 	}
 	m_fbo->bind();
 	glViewport(0, 0, m_fbo->width(), m_fbo->height());
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, m_fbo->width(), m_fbo->height(), 0, -999999, 999999);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	m_mat.setToIdentity();
+	m_mat.ortho(0, m_fbo->width(), 0, m_fbo->height(), -1, 1);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	const int num = osd.count();
 	if (num > m_positions.size()/(4*2)) {
@@ -177,12 +160,14 @@ void MpOsdNode::draw(const MpOsdBitmap &osd, const QRectF &rect) {
 
 	m_shader.bind();
 	m_shader.setUniformValue(loc_sheet, 0);
-
+	m_shader.setUniformValue(loc_mat, m_mat);
 	beforeRendering(osd);
-	glTexCoordPointer(2, GL_FLOAT, 0, m_coordinates.data());
-	glVertexPointer(2, GL_FLOAT, 0, m_positions.data());
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	m_shader.enableAttributeArray(0);
+	m_shader.enableAttributeArray(1);
+
+	m_shader.setAttributeArray(0, m_coordinates.data(), 2);
+	m_shader.setAttributeArray(1, m_positions.data(), 2);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_sheet.id);
@@ -192,9 +177,11 @@ void MpOsdNode::draw(const MpOsdBitmap &osd, const QRectF &rect) {
 	glDisable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	m_shader.disableAttributeArray(0);
+	m_shader.disableAttributeArray(1);
+
 	afterRendering();
+
 	m_shader.release();
 	m_fbo->release();
 
@@ -214,10 +201,20 @@ void MpOsdNode::draw(const MpOsdBitmap &osd, const QRectF &rect) {
 MpRgbaOsdNode::MpRgbaOsdNode(MpOsdBitmap::Format format): MpOsdNode(format) {
 	link(R"(
 		uniform sampler2D sheet;
+		varying vec2 texCoord;
 		void main() {
-			gl_FragColor = texture2D(sheet, gl_TexCoord[0].xy);
+			gl_FragColor = texture2D(sheet, texCoord);
 		}
-	)");
+	)", R"(
+	uniform mat4 matrix;
+	attribute vec4 vPosition;
+	attribute vec2 vCoordinate;
+	varying vec2 texCoord;
+	void main() {
+		texCoord = vCoordinate;
+		gl_Position = matrix*vPosition;
+	}
+)");
 }
 
 void MpRgbaOsdNode::beforeRendering(const MpOsdBitmap &osd) {
@@ -226,19 +223,26 @@ void MpRgbaOsdNode::beforeRendering(const MpOsdBitmap &osd) {
 }
 
 MpAssOsdNode::MpAssOsdNode(): MpOsdNode(MpOsdBitmap::Ass) {
+	program().bindAttributeLocation("vColor", 3);
 	link(R"(
 		uniform sampler2D sheet;
 		varying vec4 c;
+		varying vec2 texCoord;
 		void main() {
-			vec2 co = vec2(c.a*texture2D(sheet, gl_TexCoord[0].xy).r, 0.0);
+			vec2 co = vec2(c.a*texture2D(sheet, texCoord).r, 0.0);
 			gl_FragColor = c*co.xxxy + co.yyyx;
 		}
 	)", R"(
+		uniform mat4 matrix;
 		varying vec4 c;
+		varying vec2 texCoord;
+		attribute vec4 vPosition;
+		attribute vec2 vCoordinate;
+		attribute vec4 vColor;
 		void main() {
-			c = gl_Color.abgr;
-			gl_TexCoord[0] = gl_MultiTexCoord0;
-			gl_Position = ftransform();
+			c = vColor.abgr;
+			texCoord = vCoordinate;
+			gl_Position = matrix*vPosition;
 		}
 	)");
 }
@@ -254,6 +258,10 @@ void MpAssOsdNode::beforeRendering(const MpOsdBitmap &osd) {
 		const quint32 color = part.color();
 		*pr++ = color; *pr++ = color; *pr++ = color; *pr++ = color;
 	}
-	glColorPointer(4, GL_UNSIGNED_BYTE, 0, m_colors.data());
-	glEnableClientState(GL_COLOR_ARRAY);
+	program().enableAttributeArray(3);
+	program().setAttributeArray(3, GL_UNSIGNED_BYTE, m_colors.data(), 4);
+}
+
+void MpAssOsdNode::afterRendering() {
+	program().disableAttributeArray(3);
 }

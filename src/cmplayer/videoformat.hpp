@@ -6,6 +6,7 @@ extern "C" {
 #include <video/mp_image.h>
 #include <libavutil/pixfmt.h>
 }
+#include "openglcompat.hpp"
 //struct mp_image;
 
 //constexpr static inline quint32 cc4(char a, char b, char c, char d) {
@@ -15,6 +16,11 @@ extern "C" {
 //	return (((quint32)a)|(((quint32)b)<<8)|(((quint32)c)<<16)|(((quint32)d)<<24));
 //#endif
 //}
+
+struct VideoTexture2 : public OpenGLTexture {
+	int plane = 0;
+	QPointF cc = {1.0, 1.0}; // coordinate correction
+};
 
 class VideoFormat {
 public:
@@ -45,6 +51,9 @@ public:
 	inline mp_csp colorspace() const { return d->colorspace; }
 	inline mp_csp_levels range() const { return d->range; }
 	inline Type imgfmt() const {return d->imgfmt;}
+	QList<VideoTexture2> textures() const;
+	inline bool isLittleEndian() const { return d->flags & MP_IMGFLAG_LE; }
+	int encodedBits() const;
 private:
 	struct Data : public QSharedData {
 		Data() {}
@@ -54,14 +63,15 @@ private:
 			return mpi->fmt.id == imgfmt && QSize(mpi->w, mpi->h) == size
 					&& QSize(mpi->display_w, mpi->display_h) == displaySize
 					&& mpi->colorspace == colorspace && mpi->levels == range
+					&& (int)mpi->flags == flags
 					&& (native || (alignedByteSize[0].width() == mpi->stride[0] && alignedByteSize[1].width() == mpi->stride[1] && alignedByteSize[2].width() == mpi->stride[2]));
 		}
 		inline bool compare(const Data *other) const {
-			return colorspace == other->colorspace && range == other->range && type == other->type && size == other->size && alignedSize == other->alignedSize && displaySize == other->displaySize;
+			return flags == other->flags && colorspace == other->colorspace && range == other->range && type == other->type && size == other->size && alignedSize == other->alignedSize && displaySize == other->displaySize;
 		}
 		QSize size = {0, 0}, alignedSize = {0, 0}, displaySize = {0, 0};
 		std::array<QSize, 3> alignedByteSize{{QSize(0, 0), QSize(0, 0), QSize(0, 0)}};
-		int planes = 0, bpp = 0;
+		int planes = 0, bpp = 0, flags = 0;
 		Type type = IMGFMT_NONE, imgfmt = IMGFMT_NONE;
 		bool native = false;
 		mp_csp colorspace = MP_CSP_BT_601;
