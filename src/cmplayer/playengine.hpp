@@ -128,7 +128,7 @@ public:
 	void setClippingMethod(ClippingMethod method);
 	void setMinimumCache(int playback, int seeking);
 	QOpenGLContext *gl() const;
-	void initializeOpenGLContext(QOpenGLContext *context);
+//	void initializeOpenGLContext(QOpenGLContext *context);
 	void makeCurrent();
 	void doneCurrent();
 public slots:

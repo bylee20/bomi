@@ -33,6 +33,8 @@ public:
 		const auto diff = (d->pts - prevPts);
 		return (0.0 < diff && diff < 0.5) ? (d->pts + diff/(double)(split)) : d->pts;
 	}
+	void allocate(const VideoFormat &format);
+	void doDeepCopy(const VideoFrame &frame);
 private:
 	struct Data : public QSharedData {
 		Data() {}
@@ -47,6 +49,7 @@ private:
 		VideoFormat format;
 		double pts = MP_NOPTS_VALUE;
 		int field = Picture;
+		QByteArray buffer;
 	};
 	QSharedDataPointer<Data> d;
 };

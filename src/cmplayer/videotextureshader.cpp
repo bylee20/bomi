@@ -17,10 +17,10 @@
 //VideoTextureShader::~VideoTextureShader() { delete m_uploader; }
 
 //void VideoTextureShader::initialize(GLuint *textures) {
-////	for (int i=0; i<m_textures.size(); ++i) {
-////		m_textures[i].id = textures[i];
-////		m_uploader->initialize(m_textures[i]);
-////	}
+//	for (int i=0; i<m_textures.size(); ++i) {
+//		m_textures[i].id = textures[i];
+//		m_uploader->initialize(m_textures[i]);
+//	}
 //	if (m_interpolator > 0)
 //		m_cubicLutTexture = OpenGLCompat::allocateBicubicLutTexture(textures[3], m_interpolator);
 //	m_updateLut = true;
@@ -33,11 +33,11 @@
 //	m_header += "#define HEIGHT " + QByteArray::number(format().alignedHeight()) + ".0\n";
 //	if (m_target != GL_TEXTURE_2D || format().isEmpty())
 //		m_header += "#define USE_RECTANGLE\n";
-//	if (hasKernelEffects())
+//	if (m_effects & VideoRendererItem::KernelEffects)
 //		m_header += "#define USE_KERNEL3x3\n";
-//	if (m_interpolator > 0)
+//	else if (m_interpolator > 0)
 //		m_header += "#define USE_BICUBIC\n";
-//	if (m_deint.hardware() == DeintInfo::OpenGL) {
+//	if (m_deint.flags() & DeintInfo::OpenGL) {
 //		if (m_deint.method() == DeintInfo::Bob)
 //			m_header += "#define USE_DEINT 1\n";
 //		else if (m_deint.method() == DeintInfo::LinearBob)
@@ -71,7 +71,6 @@
 //}
 
 //void VideoTextureShader::upload(const VideoFrame &frame) {
-//	glEnable(m_target);
 //	m_field = frame.field();
 //	Q_ASSERT(m_uploader);
 //	if (!(m_field & VideoFrame::Additional)) {
@@ -97,32 +96,31 @@
 
 
 //void VideoTextureShader::link(QOpenGLShaderProgram *program) {
+//	loc_kern_c = program->uniformLocation("kern_c");
+//	loc_kern_d = program->uniformLocation("kern_d");
+//	loc_kern_n = program->uniformLocation("kern_n");
 //	loc_top_field = program->uniformLocation("top_field");
 //	loc_deint = program->uniformLocation("deint");
 //	loc_p1 = program->uniformLocation("p1");
 //	loc_p2 = program->uniformLocation("p2");
 //	loc_p3 = program->uniformLocation("p3");
-//	loc_cubic_lut = program->uniformLocation("cubic_lut");
 //	loc_sc2 = program->uniformLocation("sc2");
 //	loc_sc3 = program->uniformLocation("sc3");
+//	loc_cubic_lut = program->uniformLocation("cubic_lut");
 //	loc_sub_vec = program->uniformLocation("sub_vec");
 //	loc_add_vec = program->uniformLocation("add_vec");
 //	loc_mul_mat = program->uniformLocation("mul_mat");
-//	if (hasKernelEffects()) {
-//		loc_kern_c = program->uniformLocation("kern_c");
-//		loc_kern_d = program->uniformLocation("kern_d");
-//		loc_kern_n = program->uniformLocation("kern_n");
-//	}
 //}
 
 //bool VideoTextureShader::setEffects(int effects) {
-//	const bool ret = ((effects & KernelEffects) == (m_effects & KernelEffects));
+//	constexpr auto kernel = VideoRendererItem::KernelEffects;
+//	const bool ret = ((effects & kernel) == (m_effects & kernel));
 //	m_effects = effects;
 //	updateMatrix();
 //	return ret;
 //}
 
-//void VideoTextureShader::render(QOpenGLShaderProgram *program, const QVector<VideoTexture2> &textures, const Kernel3x3 &kernel) {
+//void VideoTextureShader::render(QOpenGLShaderProgram *program, const Kernel3x3 &kernel) {
 //	program->setUniformValue(loc_top_field, float(!!(m_field & VideoFrame::Top)));
 //	program->setUniformValue(loc_deint, float(!!(m_field & VideoFrame::Interlaced)));
 //	program->setUniformValue(loc_p1, 0);
@@ -134,23 +132,22 @@
 //	program->setUniformValue(loc_mul_mat, m_mul_mat);
 //	program->setUniformValue(loc_sc2, m_sc2);
 //	program->setUniformValue(loc_sc3, m_sc3);
-//	if (hasKernelEffects()) {
+//	if (VideoRendererItem::KernelEffects & m_effects) {
 //		program->setUniformValue(loc_kern_c, kernel.center());
 //		program->setUniformValue(loc_kern_n, kernel.neighbor());
 //		program->setUniformValue(loc_kern_d, kernel.diagonal());
 //	}
-//	auto f = QOpenGLContext::currentContext()->functions();
-//	if (!format().isEmpty() && !textures.isEmpty()) {
-//		glEnable(m_target);
+//	if (!format().isEmpty()) {
+//		auto f = QOpenGLContext::currentContext()->functions();
 //		f->glActiveTexture(GL_TEXTURE0);
-//		textures[0].bind();
-//		if (textures.size() > 1) {
+//		m_textures[0].bind();
+//		if (m_textures.size() > 1) {
 //			f->glActiveTexture(GL_TEXTURE1);
-//			textures[1].bind();
+//			m_textures[1].bind();
 //		}
-//		if (textures.size() > 2) {
+//		if (m_textures.size() > 2) {
 //			f->glActiveTexture(GL_TEXTURE2);
-//			textures[2].bind();
+//			m_textures[2].bind();
 //		}
 //		if (m_cubicLutTexture.id != GL_NONE) {
 //			f->glActiveTexture(GL_TEXTURE3);
@@ -189,7 +186,7 @@
 //				sc(i).rx() *= (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*2);
 //		};
 //		init(0); init(1); init(2);
-//		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; sc(2) *= 0.5; }
+//		if (target == GL_TEXTURE_RECTANGLE_ARB) { sc(1) *= 0.5; sc(2) *= 0.5; }\
 //	}
 //};
 
@@ -298,52 +295,52 @@
 //#include <qpa/qplatformnativeinterface.h>
 
 
-//struct AppleY422Shader : public PassThroughShader {
-//	AppleY422Shader(const VideoFormat &format, GLenum target): PassThroughShader(format, target) {
-//		TextureFormat fmt;
-//		fmt.internal = GL_RGB;
-//		fmt.format = GL_YCBCR_422_APPLE;
-//		fmt.type = format.type() == IMGFMT_YUYV ? GL_UNSIGNED_SHORT_8_8_REV_APPLE : GL_UNSIGNED_SHORT_8_8_APPLE;
-//		addTexInfo(0, format.width(), format.height(), fmt);
-//	}
-//};
+////struct AppleY422Shader : public PassThroughShader {
+////	AppleY422Shader(const VideoFormat &format, GLenum target): PassThroughShader(format, target) {
+////		TextureFormat fmt;
+////		fmt.internal = GL_RGB;
+////		fmt.format = GL_YCBCR_422_APPLE;
+////		fmt.type = format.type() == IMGFMT_YUYV ? GL_UNSIGNED_SHORT_8_8_REV_APPLE : GL_UNSIGNED_SHORT_8_8_APPLE;
+////		addTexInfo(0, format.width(), format.height(), fmt);
+////	}
+////};
 
-//struct VdaUploader : public VideoTextureUploader {
-//	virtual void upload(const VideoTextureInfo &info, const VideoFrame &frame) override {
-//		const auto m_cgl = static_cast<CGLContextObj>(qApp->platformNativeInterface()->nativeResourceForContext("cglcontextobj", QOpenGLContext::currentContext()));
-//		const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
-//		glBindTexture(info.target, info.id);
-//		const auto w = IOSurfaceGetWidthOfPlane(surface, info.plane);
-//		const auto h = IOSurfaceGetHeightOfPlane(surface, info.plane);
-//		CGLTexImageIOSurface2D(m_cgl, info.target, info.internal, w, h, info.format, info.type, surface, info.plane);
-//	}
-//	virtual void initialize(const VideoTextureInfo &/*info*/) override {}
-//	virtual QImage toImage(const VideoFrame &frame) const override {
-//		mp_image mpi = *nullMpImage();
-//		mp_image_setfmt(&mpi, frame.format().type());
-//		mp_image_set_size(&mpi, frame.width(), frame.height());
-//		const auto buffer = (CVPixelBufferRef)frame.data(3);
-//		CVPixelBufferLockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
-//		if (CVPixelBufferIsPlanar(buffer)) {
-//			const int num = CVPixelBufferGetPlaneCount(buffer);
-//			for (int i=0; i<num; ++i) {
-//				mpi.planes[i] = (uchar*)CVPixelBufferGetBaseAddressOfPlane(buffer, i);
-//				mpi.stride[i] = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
-//			}
-//		} else {
-//			mpi.planes[0] = (uchar*)CVPixelBufferGetBaseAddress(buffer);
-//			mpi.stride[0] = CVPixelBufferGetBytesPerRow(buffer);
-//		}
-//		const QImage image = VideoFrame(&mpi, frame.format()).toImage();
-//		CVPixelBufferUnlockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
-//		return image;
-//	}
-//	virtual mp_csp colorspace(const VideoFormat &format) const override {
-//		if (format.type() == IMGFMT_UYVY || format.type() == IMGFMT_YUYV)
-//			return MP_CSP_RGB;
-//		return VideoTextureUploader::colorspace(format);
-//	}
-//};
+////struct VdaUploader : public VideoTextureUploader {
+////	virtual void upload(const VideoTextureInfo &info, const VideoFrame &frame) override {
+////		const auto m_cgl = static_cast<CGLContextObj>(qApp->platformNativeInterface()->nativeResourceForContext("cglcontextobj", QOpenGLContext::currentContext()));
+////		const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
+////		glBindTexture(info.target, info.id);
+////		const auto w = IOSurfaceGetWidthOfPlane(surface, info.plane);
+////		const auto h = IOSurfaceGetHeightOfPlane(surface, info.plane);
+////		CGLTexImageIOSurface2D(m_cgl, info.target, info.internal, w, h, info.format, info.type, surface, info.plane);
+////	}
+////	virtual void initialize(const VideoTextureInfo &/*info*/) override {}
+////	virtual QImage toImage(const VideoFrame &frame) const override {
+////		mp_image mpi = *nullMpImage();
+////		mp_image_setfmt(&mpi, frame.format().type());
+////		mp_image_set_size(&mpi, frame.width(), frame.height());
+////		const auto buffer = (CVPixelBufferRef)frame.data(3);
+////		CVPixelBufferLockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
+////		if (CVPixelBufferIsPlanar(buffer)) {
+////			const int num = CVPixelBufferGetPlaneCount(buffer);
+////			for (int i=0; i<num; ++i) {
+////				mpi.planes[i] = (uchar*)CVPixelBufferGetBaseAddressOfPlane(buffer, i);
+////				mpi.stride[i] = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
+////			}
+////		} else {
+////			mpi.planes[0] = (uchar*)CVPixelBufferGetBaseAddress(buffer);
+////			mpi.stride[0] = CVPixelBufferGetBytesPerRow(buffer);
+////		}
+////		const QImage image = VideoFrame(&mpi, frame.format()).toImage();
+////		CVPixelBufferUnlockBaseAddress(buffer, kCVPixelBufferLock_ReadOnly);
+////		return image;
+////	}
+////	virtual mp_csp colorspace(const VideoFormat &format) const override {
+////		if (format.type() == IMGFMT_UYVY || format.type() == IMGFMT_YUYV)
+////			return MP_CSP_RGB;
+////		return VideoTextureUploader::colorspace(format);
+////	}
+////};
 
 //#endif
 
@@ -509,35 +506,35 @@
 //#endif
 //#define MAKE(name) {shader = new name(format, target); break;}
 //	switch (format.type()) {
-////	case IMGFMT_420P:
-////		MAKE(P420Shader)
-////	case IMGFMT_420P16_LE:
-////		MAKE((P420BitShader<16, true>))
-////	case IMGFMT_420P16_BE:
-////		MAKE((P420BitShader<16, false>))
-////	case IMGFMT_420P14_LE:
-////		MAKE((P420BitShader<14, true>))
-////	case IMGFMT_420P14_BE:
-////		  MAKE((P420BitShader<14, false>))
-////	case IMGFMT_420P12_LE:
-////		  MAKE((P420BitShader<12, true>))
-////	case IMGFMT_420P12_BE:
-////		  MAKE((P420BitShader<12, false>))
-////	case IMGFMT_420P10_LE:
-////		  MAKE((P420BitShader<10, true>))
-////	case IMGFMT_420P10_BE:
-////		  MAKE((P420BitShader<10, false>))
-////	case IMGFMT_420P9_LE:
-////		  MAKE((P420BitShader<9, true>))
-////	case IMGFMT_420P9_BE:
-////		  MAKE((P420BitShader<9, false>))
-////	case IMGFMT_NV21:
-////	case IMGFMT_NV12:
-////		MAKE(NvShader)
+//	case IMGFMT_420P:
+//		MAKE(P420Shader)
+//	case IMGFMT_420P16_LE:
+//		MAKE((P420BitShader<16, true>))
+//	case IMGFMT_420P16_BE:
+//		MAKE((P420BitShader<16, false>))
+//	case IMGFMT_420P14_LE:
+//		MAKE((P420BitShader<14, true>))
+//	case IMGFMT_420P14_BE:
+//		  MAKE((P420BitShader<14, false>))
+//	case IMGFMT_420P12_LE:
+//		  MAKE((P420BitShader<12, true>))
+//	case IMGFMT_420P12_BE:
+//		  MAKE((P420BitShader<12, false>))
+//	case IMGFMT_420P10_LE:
+//		  MAKE((P420BitShader<10, true>))
+//	case IMGFMT_420P10_BE:
+//		  MAKE((P420BitShader<10, false>))
+//	case IMGFMT_420P9_LE:
+//		  MAKE((P420BitShader<9, true>))
+//	case IMGFMT_420P9_BE:
+//		  MAKE((P420BitShader<9, false>))
+//	case IMGFMT_NV21:
+//	case IMGFMT_NV12:
+//		MAKE(NvShader)
 //	case IMGFMT_YUYV:
 //	case IMGFMT_UYVY:
 //#ifdef Q_OS_MAC
-//		MAKE(AppleY422Shader)
+////		MAKE(AppleY422Shader)
 //#else
 //		if (QOpenGLContext::currentContext()->hasExtension("GL_MESA_ycbcr_texture")) {
 //			qDebug() << "Good! We have GL_MESA_ycbcr_texture.";
@@ -552,17 +549,17 @@
 //		MAKE(BlackOutShader)
 //	}
 //	if (format.isNative())
-//#ifdef Q_OS_MAC
-//		shader->setUploader(new VdaUploader);
-//#endif
+//		;
+////#ifdef Q_OS_MAC
+////		shader->setUploader(new VdaUploader);
+////#endif
 //#ifdef Q_OS_LINUX
 //		shader->setUploader(new VaApiUploader(deint));
 //#endif
 //	else
 //		shader->setUploader(new VideoTextureUploader);
 //	shader->m_effects = effects;
-//	if (!shader->hasKernelEffects())
-//		shader->m_interpolator = interpolator;
+//	shader->m_interpolator = interpolator;
 //	shader->m_color = color;
 //	shader->m_deint = deint;
 //	shader->updateMatrix();

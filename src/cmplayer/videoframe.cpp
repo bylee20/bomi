@@ -34,9 +34,7 @@ VideoFrame::VideoFrame::Data::Data(const QImage &image)
 }
 
 VideoFrame::VideoFrame::Data::Data(const Data &other)
-: QSharedData(other) {
-	image = other.image;
-	format = other.format;
+: QSharedData(other), image(other.image), format(other.format) {
 	field = other.field;
 	pts = other.pts;
 	data[0] = other.data[0];
@@ -45,6 +43,15 @@ VideoFrame::VideoFrame::Data::Data(const Data &other)
 	data[3] = other.data[3];
 	if (other.mpi)
 		mpi = mp_image_new_ref(other.mpi);
+	if (!other.buffer.isEmpty()) {
+		int offset = 0;
+		buffer.resize(other.buffer.size());
+		for (int i=0; i<format.planes(); ++i) {
+			data[i] = (uchar*)buffer.data() + offset;
+			offset += format.bytesPerPlain(i);
+		}
+		memcpy(buffer.data(), other.buffer.data(), buffer.size());
+	}
 }
 
 VideoFrame::Data::~Data() {
@@ -67,4 +74,28 @@ QImage VideoFrame::toImage() const {
 	sws_scale(sws, srcData, srcStride, 0, d->format.height(), destData, destStride);
 	sws_freeContext(sws);
 	return image;
+}
+
+void VideoFrame::allocate(const VideoFormat &format) {
+	if (!_Change(d->format, format))
+		return;
+	int len = 0;
+	int offsets[4] = {0};
+	for (int i=0; i<format.planes(); ++i) {
+		offsets[i] = len;
+		len += format.bytesPerPlain(i);
+	}
+	d->buffer.resize(len);
+	for (int i=0; i< format.planes(); ++i)
+		d->data[i] = (uchar*)d->buffer.data() + offsets[i];
+}
+
+void VideoFrame::doDeepCopy(const VideoFrame &frame) {
+	Q_ASSERT(d->format == frame.format());
+	auto p = d->buffer.data();
+	for (int i=0; i<d->format.planes(); ++i) {
+		const int len = d->format.bytesPerPlain(i);
+		memcpy(p, frame.data(i),  len);
+		p += len;
+	}
 }

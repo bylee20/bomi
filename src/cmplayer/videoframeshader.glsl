@@ -10,7 +10,13 @@ const int nCoord = 9;
 const int nCoord = 1;
 #endif
 
-#if defined(USE_DEINT) && USE_DEINT == 2
+#ifdef USE_DEINT
+#if USE_DEINT == 2
+#define DEINT_LIN
+#endif
+#endif
+
+#ifdef DEINT_LIN
 const int nPos = 2;
 varying float deintMixes[nPos];
 #else
@@ -30,9 +36,9 @@ const int iBC = 8*nPos;
 #endif
 
 varying vec2 texCoords0[nCoord*nPos];
-#if TEX_COUNT > 1
+#if (TEX_COUNT > 1)
 varying vec2 texCoords1[nCoord*nPos];
-#if TEX_COUNT > 2
+#if (TEX_COUNT > 2)
 varying vec2 texCoords2[nCoord*nPos];
 #endif
 #endif
@@ -46,49 +52,63 @@ varying vec2 texCoords2[nCoord*nPos];
 #endif
 
 uniform sampler2D tex0, tex1, tex2;
-vec4 texture0(const in int i) { return texture2D(tex0, texCoords0[i]); }
+
+// WTF no constexpr transfer with index in Apple's driver...
+#define TEXTURE_0(i) texture2D(tex0, texCoords0[i])
 #if TEX_COUNT > 1
-vec4 texture1(const in int i) { return texture2D(tex1, texCoords1[i]); }
+#define TEXTURE_1(i) texture2D(tex1, texCoords1[i])
 #if TEX_COUNT > 2
-vec4 texture2(const in int i) { return texture2D(tex2, texCoords2[i]); }
+#define TEXTURE_2(i) texture2D(tex2, texCoords2[i])
 #endif
 #endif
 
-vec3 texel(const in int i);
+#if (TEX_COUNT == 1)
+vec3 texel(const in vec4 tex0);
+#define TEXEL(i) texel(TEXTURE_0(i))
+#elif (TEX_COUNT == 2)
+vec3 texel(const in vec4 tex0, const in vec4 tex1);
+#define TEXEL(i) texel(TEXTURE_0(i), TEXTURE_1(i))
+#elif (TEX_COUNT == 3)
+vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2);
+#define TEXEL(i) texel(TEXTURE_0(i), TEXTURE_1(i), TEXTURE_2(i))
+#endif
 
-#if defined(USE_DEINT) && USE_DEINT == 2 // LinearBob
-vec3 deinterlaced(const in int i) {
-    return mix(texel(i), texel(i+1), deintMixes[i]);
-}
+#ifdef DEINT_LIN
+// LinearBob
+#define DEINT(i) mix(TEXEL(i), TEXEL(i+1), deintMixes[i])
 #else
-#define deinterlaced texel
+#define DEINT TEXEL
 #endif
 
 #ifdef USE_KERNEL3x3
 uniform float kern_c, kern_n, kern_d;
 #endif
 vec3 filtered() {
+    return TEXEL(iMC);
 #ifdef USE_KERNEL3x3
-    vec3 c = deinterlaced(iMC)*kern_c;
-    c += (deinterlaced(iTC)+deinterlaced(iBC)+deinterlaced(iML)+deinterlaced(iMR))*kern_n;
-    c += (deinterlaced(iTL)+deinterlaced(iTR)+deinterlaced(iBL)+deinterlaced(iBR))*kern_d;
+    vec3 c = DEINT(iMC)*kern_c;
+    c += (DEINT(iTC)+DEINT(iBC)+DEINT(iML)+DEINT(iMR))*kern_n;
+    c += (DEINT(iTL)+DEINT(iTR)+DEINT(iBL)+DEINT(iBR))*kern_d;
     return c;
 #else
-    return deinterlaced(iMC);
+    return DEINT(iMC);
 #endif
 }
 
 uniform mat3 mul_mat;
 uniform vec3 sub_vec, add_vec;
 void main() {
+    const vec2 one = vec2(1.0, 0.0);
+//    gl_FragColor = texel(iMC).rgbr*one.xxxy + one.yyyx;//tex0, texCoords0[0]);
+//    return;
     vec3 tex = filtered();
     tex -= sub_vec;
     tex *= mul_mat;
     tex += add_vec;
-    const vec2 one = vec2(1.0, 0.0);
     gl_FragColor = tex.rgbr*one.xxxy + one.yyyx;
 }
-#endif // FRAGMENT
+#endif
+// FRAGMENT
 
 /***********************************************************************/
 
@@ -105,21 +125,21 @@ void fill_deintCoords(const in int i, const in vec2 coord) {
 #ifdef USE_DEINT
     float offset = deint*(top_field*dxy.y + dxy.y*0.5 + mod(coord.y, 2.0*dxy.y));
     texCoords0[i] = coord + vec2(0.0, -offset);
-#if USE_DEINT == 2
+#ifdef DEINT_LIN
     texCoords0[i+1] = coord + vec2(0.0, 2.0*dxy.y-offset);
     deintMixes[i] = offset/(2.0*dxy.y);
 #endif
 #else
     texCoords0[i] = coord;
 #endif
-#if TEX_COUNT > 1
+#if (TEX_COUNT > 1)
     texCoords1[i] = texCoords0[i]*cc1;
-#if defined(USE_DEINT) && USE_DEINT == 2
+#ifdef DEINT_LIN
     texCoords1[i+1] = texCoords0[i+1]*cc1;
 #endif
-#if TEX_COUNT > 2
+#if (TEX_COUNT > 2)
     texCoords2[i] = texCoords0[i]*cc2;
-#if defined(USE_DEINT) && USE_DEINT == 2
+#ifdef DEINT_LIN
     texCoords2[i+1] = texCoords0[i+1]*cc2;
 #endif
 #endif
@@ -144,4 +164,5 @@ void main() {
     fill_Coords(vCoord);
     gl_Position = vMatrix * vPosition;
 }
-#endif // VERTEX
+#endif
+// VERTEX

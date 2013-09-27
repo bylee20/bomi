@@ -158,16 +158,16 @@ QOpenGLContext *PlayEngine::gl() const {
 	return d->gl;
 }
 
-void PlayEngine::initializeOpenGLContext(QOpenGLContext *context) {
-	d->gl = new QOpenGLContext;
-	d->gl->setShareContext(context);
-	d->gl->setFormat(context->format());
-	d->gl->moveToThread(this);
-	d->surface = new QOffscreenSurface;
-	d->surface->setFormat(context->format());
-	d->surface->create();
-	d->glInit = true;
-}
+//void PlayEngine::initializeOpenGLContext(QOpenGLContext *context) {
+//	d->gl = new QOpenGLContext;
+//	d->gl->setShareContext(context);
+//	d->gl->setFormat(context->format());
+//	d->gl->moveToThread(this);
+//	d->surface = new QOffscreenSurface;
+//	d->surface->setFormat(context->format());
+//	d->surface->create();
+//	d->glInit = true;
+//}
 
 void PlayEngine::makeCurrent() {
 	if (d->glInit)
@@ -700,12 +700,12 @@ void PlayEngine::run() {
 		idle_player(mpctx);
 		if (mpctx->stop_play == PT_QUIT)
 			break;
-		while (!d->glInit && !d->quit)
-			msleep(50);
+//		while (!d->glInit && !d->quit)
+//			msleep(50);
 		if (d->quit)
 			break;
-		if (!d->gl->isValid())
-			d->gl->create();
+//		if (!d->gl->isValid())
+//			d->gl->create();
 		Q_ASSERT(mpctx->playlist->current);
 		clear();
 		Mrl mrl = d->playlist.loadedMrl();

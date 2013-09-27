@@ -21,7 +21,7 @@ protected:
 	virtual bool blending() const {return false;}
 	virtual char const *const *attributeNames() const;
 	virtual const char *vertexShader() const;
-	virtual const char *fragmentShader() const = 0;
+	virtual const char *fragmentShader() const;
 	virtual void link(QOpenGLShaderProgram *program);
 	virtual void bind(const RenderState &state, QOpenGLShaderProgram *program);
 	virtual void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);

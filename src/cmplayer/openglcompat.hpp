@@ -26,9 +26,9 @@ struct OpenGLTexture {
 		return allocate(filter, GL_CLAMP_TO_EDGE, data);
 	}
 	bool allocate(int filter, int clamp, const void *data = nullptr) const {
-		bind();
 		if (!width && !height && !depth)
 			return false;
+		bind();
 		switch (target) {
 		case GL_TEXTURE_3D:
 			glTexImage3D(target, 0, format.internal, width, height, depth, 0, format.pixel, format.type, data);
@@ -57,26 +57,21 @@ struct OpenGLTexture {
 		default:
 			return false;
 		}
+		unbind();
 		return true;
 	}
 	bool upload(const void *data) const {
-		if (isEmpty())
-			return false;
 		switch (target) {
 		case GL_TEXTURE_3D:
-			upload(0, 0, 0, width, height, depth, data);
-			break;
+			return upload(0, 0, 0, width, height, depth, data);
 		case GL_TEXTURE_2D:
 		case GL_TEXTURE_RECTANGLE:
-			upload(0, 0, width, height, data);
-			break;
+			return upload(0, 0, width, height, data);
 		case GL_TEXTURE_1D:
-			upload(0, width, data);
-			break;
+			return upload(0, width, data);
 		default:
 			return false;
 		}
-		return true;
 	}
 	bool isEmpty() const { return !width && !height && !depth; }
 	bool upload1D(const void *data) const { return upload(0, width, data); }
@@ -86,6 +81,7 @@ struct OpenGLTexture {
 			return false;
 		bind();
 		glTexSubImage3D(target, 0, x, y, z, width, height, depth, format.pixel, format.type, data);
+		unbind();
 		return true;
 	}
 	bool upload(int x, int y, int width, int height, const void *data) const {
@@ -93,6 +89,7 @@ struct OpenGLTexture {
 			return false;
 		bind();
 		glTexSubImage2D(target, 0, x, y, width, height, format.pixel, format.type, data);
+		unbind();
 		return true;
 	}
 	bool upload(int x, int width, const void *data) const {
@@ -100,9 +97,10 @@ struct OpenGLTexture {
 			return false;
 		bind();
 		glTexSubImage1D(target, 0, x, width, format.pixel, format.type, data);
+		unbind();
 		return true;
 	}
-	void unbind() { glBindTexture(target, 0); }
+	void unbind() const { glBindTexture(target, 0); }
 };
 
 class OpenGLCompat {

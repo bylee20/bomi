@@ -10,7 +10,8 @@
 #include "videotextureshader.glsl.hpp"
 
 struct VideoRendererItem::Data {
-	VideoFrame frame, back;
+	QLinkedList<VideoFrame> queue;
+	VideoFrame frame;
 	VideoFormat format;
 	quint64 drawnFrames = 0;
 	bool newFrame = false, shaderChanged = false;
@@ -65,6 +66,7 @@ void VideoRendererItem::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
 	case NewFrame:
 		d->newFrame = true;
+		d->queue.push_back(getData<VideoFrame>(event));
 		update();
 		break;
 	case RenderNextFrame:
@@ -74,8 +76,11 @@ void VideoRendererItem::customEvent(QEvent *event) {
 		auto deint = getData<DeintInfo>(event);
 		if (!deint.isHardware())
 			deint = DeintInfo();
-		if (_Change(d->deint, deint))
+		if (_Change(d->deint, deint)) {
+			if (d->shader)
+				d->shader->setDeintInfo(d->deint);
 			update();
+		}
 		break;
 	} default:
 		break;
@@ -111,10 +116,10 @@ void VideoRendererItem::present(const QImage &image) {
 }
 
 void VideoRendererItem::present(const VideoFrame &frame, bool redraw) {
-	d->mutex.lock();
-	d->back = frame;
-	d->mutex.unlock();
-	postData(this, NewFrame);
+//	d->mutex.lock();
+//	d->back = frame;
+//	d->mutex.unlock();
+	postData(this, NewFrame, frame);
 	d->mposd->present(redraw);
 	d->pts = frame.pts();
 }
@@ -289,6 +294,10 @@ QSize VideoRendererItem::sizeHint() const {
 }
 
 const char *VideoRendererItem::fragmentShader() const {
+//	if (!d->shader)
+//		return TextureRendererItem::fragmentShader();
+//	d->fragCode = d->shader->fragment();
+//	return d->fragCode.data();
 	d->fragCode = d->header();
 	d->fragCode += "#define FRAGMENT\n";
 	d->fragCode += QByteArray((char*)videotextureshader_glsl, videotextureshader_glsl_len);
@@ -296,6 +305,10 @@ const char *VideoRendererItem::fragmentShader() const {
 }
 
 const char *VideoRendererItem::vertexShader() const {
+//	if (!d->shader)
+//		return TextureRendererItem::vertexShader();
+//	d->vertexCode = d->shader->vertex();
+//	return d->vertexCode;
 	d->vertexCode = d->header();
 	d->vertexCode += "#define VERTEX\n";
 	d->vertexCode += QByteArray((char*)videotextureshader_glsl, videotextureshader_glsl_len);
@@ -303,6 +316,9 @@ const char *VideoRendererItem::vertexShader() const {
 }
 
 const char * const *VideoRendererItem::attributeNames() const {
+//	if (!d->shader)
+//		return TextureRendererItem::attributeNames();
+//	return d->shader->attributes();
 	static const char *const names[] = { "vPosition", "vCoord", nullptr };
 	return names;
 }
@@ -311,6 +327,8 @@ void VideoRendererItem::link(QOpenGLShaderProgram *prog) {
 	d->loc_tex = prog->uniformLocation("tex");
 	d->loc_vMatrix = prog->uniformLocation("vMatrix");
 	d->loc_lut_bicubic = prog->uniformLocation("lut_bicubic");
+//	if (d->shader)
+//		d->shader->link(prog);
 }
 
 MpOsdItem *VideoRendererItem::mpOsd() const {
@@ -318,6 +336,8 @@ MpOsdItem *VideoRendererItem::mpOsd() const {
 }
 
 void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
+//	if (d->shader)
+//		d->shader->render(program, state.combinedMatrix(), d->kernel);
 	program->setUniformValue(d->loc_vMatrix, state.combinedMatrix());
 	program->setUniformValue(d->loc_tex, 0);
 	program->setUniformValue(d->loc_lut_bicubic, 1);
@@ -333,27 +353,33 @@ void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *pro
 }
 
 int VideoRendererItem::delay() const {
+	return 0;
 	return d->pts == MP_NOPTS_VALUE ? 0.0 : -(d->frame.pts() - d->pts)*1000.0;
 }
 
 void VideoRendererItem::beforeUpdate() {
-	if (!d->newFrame)
+//	if (!d->newFrame)
+//		return;
+	if (d->queue.isEmpty())
 		return;
-	d->mutex.lock();
-	qSwap(d->back, d->frame);
-	d->mutex.unlock();
+//	d->mutex.lock();
+//	qSwap(d->back, d->frame);
+//	d->mutex.unlock();
+	d->frame = d->queue.takeFirst();
 	if (_Change(d->format, d->frame.format())) {
 		_Renew(d->shader, d->format, d->color, d->effects, d->deint);
 		updateGeometry(true);
+		d->shaderChanged = true;
+	}
+	if (d->shader && d->shader->needsToBuild()) {
+		d->shader->build();
 		d->shaderChanged = true;
 	}
 	if (d->shaderChanged)
 		resetNode();
 	if (!d->format.isEmpty() && d->shader) {
 		if (!d->fbo || d->fbo->size() != d->format.size())
-			_Renew(d->fbo, d->format.size());
-		if (d->shader->needsToBuild())
-			d->shader->build();
+			_Renew(d->fbo, d->format.size(), GL_TEXTURE_2D, GL_NEAREST);
 		d->shader->upload(d->frame);
 		if (d->fbo) {
 			d->fbo->bind();
@@ -361,6 +387,12 @@ void VideoRendererItem::beforeUpdate() {
 			d->fbo->release();
 		}
 		++d->drawnFrames;
+	}
+	if (!d->queue.isEmpty()) {
+		if (d->queue.size() > 2)
+			d->queue.clear();
+		else
+			postData(this, RenderNextFrame);
 	}
 	d->newFrame = false;
 	d->shaderChanged = false;

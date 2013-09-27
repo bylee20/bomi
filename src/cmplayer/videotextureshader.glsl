@@ -24,15 +24,56 @@ vec4 interpolated(const in vec2 coord) {
     tex10 = hg_y.r*mix(tex10, tex11, hg_y.a);
     return  hg_x.r*mix(tex00, tex10, hg_x.a);
 #else
+#ifdef USE_LANCZOS
     return texture2D(tex, coord);
+#else
+    return texture2D(tex, coord);
+#endif
 #endif
 }
 
 void main() {
     gl_FragColor = interpolated(texCoord);
 }
-#endif
 
+
+//const float pi = 3.1415926535897932384626433832795;
+//// Lanczos lobes
+//const float a = 3.0;
+
+//float sinc(float x) {
+//   float ptx = pi * x;
+//   return sin(ptx) / ptx;
+//}
+
+//float lanczos(float x) {
+//   if (x == 0.0)
+//      return 1.0;
+//   if (abs(x) < a)
+//      return sinc(x) * sinc(x / a);
+
+//   return 0.0;
+//}
+
+//void main(void) {
+//   vec2 coord = texCoord * vec2(texWidth, texHeight) - vec2(0.5, 0.5);
+//   ivec2 ic = ivec2(coord);
+//   vec4 val = vec4(0.0);
+//   float contrib = 0.0;
+//   for (int y = -1; y < 3; y++) {
+//      for (int x = -1; x < 3; x++) {
+//	 vec2 d = vec2(ic + ivec2(x, y));
+//	 vec2 e = abs(coord - d - vec2(0.5));
+//	 float weight = lanczos(e.x) * lanczos(e.y);
+//	 contrib += weight;
+
+//	 val += texture2D(tex, (d + 0.5) *dxy) * weight;
+//      }
+//   }
+//   gl_FragColor = val / contrib;
+//}
+
+#endif
 /***********************************************************************/
 
 #ifdef VERTEX
@@ -42,7 +83,7 @@ attribute vec4 vPosition;
 attribute vec2 vCoord;
 void main() {
 #ifdef USE_BICUBIC
-    lutBicubicCoord = vCoord*vec2(texWidth, texHeight) - vec2(0.5f, 0.5f);
+    lutBicubicCoord = vCoord*vec2(texWidth, texHeight) - vec2(0.5, 0.5);
 #endif
     texCoord = vCoord;
     gl_Position = vMatrix * vPosition;

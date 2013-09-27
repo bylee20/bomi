@@ -6,6 +6,12 @@
 #include <va/va_glx.h>
 #include <va/va_x11.h>
 #endif
+#ifdef Q_OS_MAC
+#include <OpenGL/CGLIOSurface.h>
+#include <OpenGL/OpenGL.h>
+#include <CoreVideo/CVPixelBuffer.h>
+#include <qpa/qplatformnativeinterface.h>
+#endif
 
 static const QByteArray shaderTemplate((const char*)videoframeshader_glsl, videoframeshader_glsl_len);
 
@@ -20,10 +26,12 @@ VideoFrameShader::VideoFrameShader(const VideoFormat &format, const ColorPropert
 }
 
 VideoFrameShader::~VideoFrameShader() {
+#ifdef Q_OS_LINUX
 	if (m_vaSurfaceGLX) {
 		m_textures[0].bind();
 		vaDestroySurfaceGLX(VaApi::glx(), m_vaSurfaceGLX);
 	}
+#endif
 	for (auto &texture : m_textures)
 		texture.delete_();
 }
@@ -37,6 +45,7 @@ void VideoFrameShader::updateTexCoords() {
 	if (m_flipped)
 		qSwap(p1.ry(), p2.ry());
 	m_vCoords = makeArray(p1, p2);
+	m_coords = {p1, p2};
 }
 
 void VideoFrameShader::setColor(const ColorProperty &color) {
@@ -74,8 +83,9 @@ void VideoFrameShader::setDeintInfo(const DeintInfo &deint) {
 }
 
 void VideoFrameShader::build() {
-	m_rebuild = false;
 	m_shader.removeAllShaders();
+
+	m_rebuild = false;
 
 	QByteArray header;
 	header += "#define TEX_COUNT " + QByteArray::number(m_textures.size()) + "\n";
@@ -91,33 +101,31 @@ void VideoFrameShader::build() {
 	header += cc2string(2).toLatin1();
 	if (m_target != GL_TEXTURE_2D || m_format.isEmpty())
 		header += "#define USE_RECTANGLE\n";
-	qDebug() << "has kernel?" << hasKernelEffects();
 	if (hasKernelEffects())
 		header += "#define USE_KERNEL3x3\n";
 	if (m_deint.hardware() == DeintInfo::OpenGL) {
 		if (m_deint.method() == DeintInfo::Bob)
-			header += "#define USE_DEINT 1\n";
+			header += "#define USE_DEINT 1\r\n";
 		else if (m_deint.method() == DeintInfo::LinearBob)
-			header += "#define USE_DEINT 2\n";
+			header += "#define USE_DEINT 2\r\n";
 	}
 
-	QByteArray frag = header;
-	frag += "#define FRAGMENT\n";
-	frag += shaderTemplate;
-	frag += m_texel;
+	m_fragCode = header;
+	m_fragCode += "#define FRAGMENT\n";
+	m_fragCode += shaderTemplate;
+	m_fragCode += m_texel;
 
-	QByteArray vertex = header;
-	vertex += "#define VERTEX\n";
-	vertex += shaderTemplate;
+	m_vertexCode = header;
+	m_vertexCode += "#define VERTEX\n";
+	m_vertexCode += shaderTemplate;
 
-	m_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, frag);
-	m_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, vertex);
+	m_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, m_fragCode);
+	m_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, m_vertexCode);
 
 	m_shader.bindAttributeLocation("vPosition", vPosition);
 	m_shader.bindAttributeLocation("vCoord", vCoord);
 
 	m_shader.link();
-
 	loc_tex[0] = m_shader.uniformLocation("tex0");
 	loc_tex[1] = m_shader.uniformLocation("tex1");
 	loc_tex[2] = m_shader.uniformLocation("tex2");
@@ -135,10 +143,36 @@ void VideoFrameShader::build() {
 	loc_kern_n = m_shader.uniformLocation("kern_n");
 }
 
+void VideoFrameShader::link(QOpenGLShaderProgram *prog) {
+
+}
+
 void VideoFrameShader::upload(const VideoFrame &frame) {
 	m_field = frame.field();
+	if (m_field & VideoFrame::Additional)
+		return;
 	if (_Change(m_flipped, frame.isFlipped()))
 		updateTexCoords();
+#ifdef Q_OS_MAC
+	if (m_format.imgfmt() == IMGFMT_VDA) {
+		for (const VideoTexture2 &texture : m_textures) {
+			const auto cgl = static_cast<CGLContextObj>(qApp->platformNativeInterface()->nativeResourceForContext("cglcontextobj", QOpenGLContext::currentContext()));
+			const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
+			texture.bind();
+			const auto w = IOSurfaceGetWidthOfPlane(surface, texture.plane);
+			const auto h = IOSurfaceGetHeightOfPlane(surface, texture.plane);
+			CGLTexImageIOSurface2D(cgl, texture.target, texture.format.internal, w, h, texture.format.pixel, texture.format.type, surface, texture.plane);
+			texture.unbind();
+		}
+	} else {
+		m_buffer.doDeepCopy(frame);
+		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+		for (int i=0; i<m_textures.size(); ++i)
+			m_textures[i].upload2D(m_buffer.data(m_textures[i].plane));
+		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+	}
+	return;
+#endif
 #ifdef Q_OS_LINUX
 	if (m_format.imgfmt() == IMGFMT_VAAPI) {
 		static const int specs[MP_CSP_COUNT] = {
@@ -160,13 +194,14 @@ void VideoFrameShader::upload(const VideoFrame &frame) {
 		m_textures[0].bind();
 		vaSyncSurface(VaApi::glx(), id);
 		vaCopySurfaceGLX(VaApi::glx(), m_vaSurfaceGLX, id,  flags);
-	} else
+		return;
+	}
 #endif
 	for (int i=0; i<m_textures.size(); ++i)
-		m_textures[i].upload2D(frame.data(i));
+		m_textures[i].upload2D(frame.data(m_textures[i].plane));
 }
 
-void VideoFrameShader::render(const Kernel3x3 &k3x3) {
+void VideoFrameShader::render(/*QOpenGLShaderProgram *prog, const QMatrix4x4 &mat, */const Kernel3x3 &k3x3) {
 	glViewport(0, 0, m_format.width(), m_format.height());
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -178,6 +213,7 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 	m_shader.setUniformValue(loc_add_vec, m_add_vec);
 	m_shader.setUniformValue(loc_mul_mat, m_mul_mat);
 	m_shader.setUniformValue(loc_vMatrix, m_vMatrix);
+//	m_shader.setUniformValue(loc_vMatrix, mat);
 	if (hasKernelEffects()) {
 		m_shader.setUniformValue(loc_kern_c, k3x3.center());
 		m_shader.setUniformValue(loc_kern_n, k3x3.neighbor());
@@ -206,10 +242,15 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 	m_shader.release();
 }
 
+
 void VideoFrameShader::fillInfo() {
 	m_csp = m_format.colorspace();
 	m_range = m_format.range();
 	m_target = m_format.imgfmt() != IMGFMT_VDA ? GL_TEXTURE_2D : GL_TEXTURE_RECTANGLE;
+#ifdef Q_OS_MAC
+	m_target = GL_TEXTURE_RECTANGLE;
+	m_buffer.allocate(m_format);
+#endif
 	auto cc = [this] (int factor, double rect) {
 		for (int i=1; i<m_textures.size(); ++i) {
 			if (m_format.imgfmt() != IMGFMT_VDA && i < m_format.planes())
@@ -230,7 +271,18 @@ void VideoFrameShader::fillInfo() {
 		texture.height = height;
 		texture.format = format;
 		texture.generate();
+#ifdef Q_OS_MAC
+		if (m_format.imgfmt() != IMGFMT_VDA) {
+			glEnable(texture.target);
+			texture.bind();
+			glTexParameteri(texture.target, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
+			glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+			texture.allocate(GL_LINEAR, m_buffer.data(plane));
+			glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+		}
+#else
 		texture.allocate();
+#endif
 		m_textures.append(texture);
 	};
 
@@ -238,17 +290,13 @@ void VideoFrameShader::fillInfo() {
 		addCustom(plane, m_format.bytesPerLine(plane)/qMin<int>(4, format), m_format.lines(plane), OpenGLCompat::textureFormat(format));
 	};
 
-	m_texel = "vec3 texel(const in int coord) {return texture0(coord).rgb;}"; // passthrough
+	m_texel = "vec3 texel(const in vec4 tex0) {return tex0.rgb;}"; // passthrough
 	switch (m_format.type()) {
 	case IMGFMT_420P:
 		add(0, 1); add(1, 1); add(2, 1); cc(2, 0.5);
 		m_texel = R"(
-			vec3 texel(const in int coord) {
-				vec3 yuv;
-				yuv.x = texture0(coord).r;
-				yuv.y = texture1(coord).r;
-				yuv.z = texture2(coord).r;
-				return yuv;
+			vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {
+				return vec3(tex0.r, tex1.r, tex2.r);
 			}
 		)";
 		break;
@@ -267,12 +315,8 @@ void VideoFrameShader::fillInfo() {
 				const vec2 c = vec2(265.0, 1.0)/(256.0*??.0/255.0 + 1.0);
 				return dot(tex.!!, c);
 			}
-			vec3 texel(const in vec2 coord) {
-				vec3 yuv;
-				yuv.x = convBits(texture0(coord));
-				yuv.y = convBits(texture1(coord));
-				yuv.z = convBits(texture2(coord));
-				return yuv;
+			vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {
+				return vec3(convBits(tex0), convBits(tex1), convBits(tex2));
 			}
 		)";
 		m_texel.replace("??", QByteArray::number((1 << (bits-8))-1));
@@ -282,11 +326,8 @@ void VideoFrameShader::fillInfo() {
 	case IMGFMT_NV12:
 	case IMGFMT_NV21:
 		m_texel = R"(
-			vec3 texel(const in int coord) {
-				vec3 yuv;
-				yuv.x = texture0(coord).r;
-				yuv.yz = texture1(coord).!!;
-				return yuv;
+			vec3 texel(const in vec4 tex0, const in vec4 tex1) {
+				return vec3(tex0.r, tex1.!!);
 			}
 		)";
 		m_texel.replace("!!", OpenGLCompat::rg(m_format.type() == IMGFMT_NV12 ? "rg" : "gr"));
@@ -295,7 +336,16 @@ void VideoFrameShader::fillInfo() {
 	case IMGFMT_YUYV:
 	case IMGFMT_UYVY:
 #ifdef Q_OS_MAC
-		MAKE(AppleY422Shader) // "GL_APPLE_ycbcr_422"
+		if (!ctx->hasExtension("GL_APPLE_ycbcr_422")) {
+			qDebug() << "Good! We have GL_APPLE_ycbcr_422.";
+			OpenGLTextureFormat format;
+			format.internal = GL_RGB8;
+			format.pixel = GL_YCBCR_422_APPLE;
+			format.type = m_format.type() == IMGFMT_YUYV ? GL_UNSIGNED_SHORT_8_8_REV_APPLE : GL_UNSIGNED_SHORT_8_8_APPLE;
+			addCustom(0, m_format.width(), m_format.height(), format);
+			m_csp = MP_CSP_RGB;
+			break;
+		}
 #else
 		if (ctx->hasExtension("GL_MESA_ycbcr_texture")) {
 			qDebug() << "Good! We have GL_MESA_ycbcr_texture.";
@@ -309,16 +359,18 @@ void VideoFrameShader::fillInfo() {
 		}
 #endif
 		m_texel = R"(
-			vec3 texel(const in int coord) {
-				vec3 yuv;
-				yuv.x = texture0(coord).?;
-				yuv.yz = texture1(coord).!!;
-				return yuv;
+			vec3 texel(const in vec4 tex0, const in vec4 tex1) {
+				return vec3(tex0.?, tex1.!!);
+				return vec3(tex0.r, tex1.gg);
+//				return tex1.rgb;
 			}
 		)";
 		m_texel.replace("?", m_format.type() == IMGFMT_YUYV ? "r" : OpenGLCompat::rg("g"));
 		m_texel.replace("!!", m_format.type() == IMGFMT_YUYV ? "ga" : "br");
-		add(0, 2); add(0, 4); cc(1, 0.5);
+		add(0, 2); add(0, 4);
+		if (m_target == GL_TEXTURE_RECTANGLE)
+			m_textures[1].cc.rx() *= 0.5;
+		break;
 	case IMGFMT_BGRA:
 		add(0, GL_BGRA);
 		break;
@@ -344,6 +396,11 @@ void VideoFrameShader::fillInfo() {
 		vaCreateSurfaceGLX(VaApi::glx(), m_textures[0].target, m_textures[0].id, &m_vaSurfaceGLX);
 	}
 #endif
+}
+
+const char *const *VideoFrameShader::attributes() const {
+	static const char *const names[] = {"vPosition", "vCoord", nullptr};
+	return names;
 }
 
 //bool VideoFrameShader::tryPixmap() {

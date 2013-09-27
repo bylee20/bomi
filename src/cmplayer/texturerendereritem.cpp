@@ -164,6 +164,15 @@ const char *TextureRendererItem::vertexShader() const {
 	return shader;
 }
 
+const char *TextureRendererItem::fragmentShader() const {
+	static const char *shader = R"(
+		void main() {
+			gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+		}
+	)";
+	return shader;
+}
+
 void TextureRendererItem::link(QOpenGLShaderProgram *program) {
 	d->loc_matrix = program->uniformLocation("qt_Matrix");
 }

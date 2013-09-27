@@ -78,6 +78,9 @@ template<typename T> static typename std::enable_if<std::is_pointer<T>::value, T
 	return ok ? (T)(void*)(ptr) : (T)nullptr;
 }
 
+template<int N> constexpr static int _Aligned(int v) { return v%N ? ((v/N) + 1)*N : v; }
+template<typename T, typename... Args> void _Renew(T *&t, Args... args) {delete t; t = new T(args...); }
+template<typename T>                   void _Delete(T *&t) {delete t; t = nullptr; }
 #endif
 
 template<typename Iter, typename Test>
@@ -93,12 +96,6 @@ template<typename List, typename T>
 typename List::const_iterator _Find(const List &list, const T &t) { return std::find(list.begin(), list.end(), t); }
 template<typename List, typename T>
 bool _Contains(const List &list, const T &t) { return std::find(list.begin(), list.end(), t) != list.end(); }
-
-template<int N> static constexpr int _Aligned(int v) { return v%N ? ((v/N) + 1)*N : v; }
-
-template<typename T, typename... Args> void _Renew(T *&t, Args... args) {delete t; t = new T(args...); }
-template<typename T>                   void _Delete(T *&t) {delete t; t = nullptr; }
-
 }
 
 using namespace Pch;

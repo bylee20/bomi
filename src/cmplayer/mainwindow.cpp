@@ -490,9 +490,10 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->view->setPersistentSceneGraph(true);
 
 	connect(d->view, &QQuickWindow::sceneGraphInitialized, [this] () {
-		d->engine.initializeOpenGLContext(d->view->openglContext());
+//		d->engine.initializeOpenGLContext(d->view->openglContext());
 	});
 	connect(d->view, &QQuickWindow::sceneGraphInvalidated, [this] () {
+		d->renderer.release();
 //		qDebug() << QOpenGLContext::currentContext() << d->engine.gl();//d->view->openglContext() << QOpenGLContext::currentContext();
 	});
 }

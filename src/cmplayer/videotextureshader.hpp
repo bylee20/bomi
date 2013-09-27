@@ -38,7 +38,7 @@
 //	const char *const *attributes() const;
 //	void getCoords(double &x1, double &y1, double &x2, double &y2) const { m_rect.getCoords(&x1, &y1, &x2, &y2); }
 //	void link(QOpenGLShaderProgram *program);
-//	void render(QOpenGLShaderProgram *program, const QVector<VideoTexture2> &textures, const Kernel3x3 &kernel);
+//	void render(QOpenGLShaderProgram *program, const Kernel3x3 &kernel);
 //	void upload(const VideoFrame &frame);
 //	QImage toImage(const VideoFrame &frame) const {return m_uploader->toImage(frame);}
 //	void setColor(const ColorProperty &color) { m_color = color; updateMatrix(); }
