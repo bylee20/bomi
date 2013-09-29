@@ -59,6 +59,19 @@
 
 \begin_body
 
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\floor}{\mathrm{floor}}
+\end_inset
+
+
+\begin_inset FormulaMacro
+\newcommand{\mix}{\mathrm{mix}}
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Color Matrix
 \end_layout
@@ -459,49 +472,8 @@ K_{R}=0.299,\quad K_{B}=0.114
 
 \end_layout
 
-\begin_layout Subsubsection
-MPEG range
-\end_layout
-
-\begin_layout Standard
-For shader,
-\begin_inset Formula 
-\[
-Y_{1}=C_{1}=\frac{16}{255},\quad Y_{2}=\frac{235}{255},\quad C_{2}=\frac{240}{255}
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{align*}
-M_{Y\leftarrow R} & =\begin{pmatrix}\left(Y_{2}-Y_{1}\right)K_{R} & \left(Y_{2}-Y_{1}\right)\left(1-K_{R}-K_{B}\right) & \left(Y_{2}-Y_{1}\right)K_{B}\\
-\frac{-\left(C_{2}-C_{1}\right)K_{R}}{2\left(1-K_{B}\right)} & \frac{-\left(C_{2}-C_{1}\right)\left(1-K_{R}-K_{B}\right)}{2\left(1-K_{B}\right)} & \frac{C_{2}-C_{1}}{2}\\
-\frac{C_{2}-C_{1}}{2} & \frac{-\left(C_{2}-C_{1}\right)\left(1-K_{R}-K_{B}\right)}{2\left(1-K_{R}\right)} & \frac{-\left(C_{2}-C_{1}\right)K_{B}}{2\left(1-K_{R}\right)}
-\end{pmatrix}
-\end{align*}
-
-\end_inset
-
-
-\begin_inset Formula 
-\[
-M_{Y\leftarrow R}^{-1}=\begin{pmatrix}\frac{1}{Y_{2}-Y_{1}} & 0 & \frac{2\left(1-K_{R}\right)}{C_{2}-C_{1}}\\
-\frac{1}{Y_{2}-Y_{1}} & \frac{2\left(1-K_{B}\right)K_{B}}{\left(C_{2}-C_{1}\right)\left(K_{B}+K_{R}-1\right)} & \frac{2\left(1-K_{R}\right)K_{R}}{\left(C_{2}-C_{1}\right)\left(K_{B}+K_{R}-1\right)}\\
-\frac{1}{Y_{2}-Y_{1}} & \frac{2\left(1-K_{B}\right)}{C_{2}-C_{1}} & 0
-\end{pmatrix}
-\]
-
-\end_inset
-
-
-\end_layout
-
 \begin_layout Section
-Fast-third order interpolation with linearly interpolated textures
+Fast interpolation with linearly interpolated textures
 \end_layout
 
 \begin_layout Standard
@@ -509,99 +481,139 @@ http://http.developer.nvidia.com/GPUGems2/gpugems2_chapter20.html
 \end_layout
 
 \begin_layout Subsection
-Cubic interpolation
+4x4 Kernel
+\end_layout
+
+\begin_layout Standard
+Interpolated color 
+\begin_inset Formula $F\left(x,y\right)$
+\end_inset
+
+ with 4x4 kernel is given by
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
-\[
-f\left(x\right)=w_{0}\left(x\right)f_{i-1}+w_{1}\left(x\right)f_{i}+w_{2}\left(x\right)f_{i+1}+w_{3}\left(x\right)f_{i+2}
-\]
+\begin{align*}
+AF\left(x,y\right) & =w_{00}f_{i-1,j-1}+w_{01}f_{i-1,j}+w_{02}f_{i-1,j+1}+w_{03}f_{i-1,j+2}\\
+ & +w_{10}f_{i+0,j-1}+w_{11}f_{i+0,j}+w_{12}f_{i+0,j+1}+w_{13}f_{i+0,j+2}\\
+ & +w_{20}f_{i+1,j-1}+w_{21}f_{i+1,j}+w_{22}f_{i+1,j+1}+w_{23}f_{i+1,j+2}\\
+ & +w_{30}f_{i+2,j-1}+w_{31}f_{i+2,j}+w_{32}f_{i+2,j+1}+w_{33}f_{i+2,j+2}
+\end{align*}
 
 \end_inset
 
-with linear interpolation,
+where
 \begin_inset Formula 
 \[
-f_{x}=f_{i+\alpha}=\left(1-\alpha\right)f_{i}+\alpha f_{i+1}\quad i=\mathrm{floor}(x),\,\alpha=\mathrm{fract}(x)=x-i
+i=\floor(x),\quad j=\floor\left(y\right),\quad w_{ij}=w_{ij}\left(\alpha,\beta\right)=w_{i}^{\alpha}w_{j}^{\beta},\quad\alpha=x-i,\quad\beta=y-j
 \]
 
 \end_inset
 
-for arbitary 
-\begin_inset Formula $a\geq0,b\geq0$
+and 
+\begin_inset Formula $f_{ij}$
+\end_inset
+
+ is original(not-interpolated) color.
+ 
+\begin_inset Formula $A$
+\end_inset
+
+ is normailzation factor:
+\begin_inset Formula 
+\[
+A=\sum_{a,b}w_{a,b}=\sum_{a}w_{a}^{\alpha}\sum_{b}w_{b}^{\beta}=\left(w_{0}^{\alpha}+w_{1}^{\alpha}+w_{2}^{\alpha}+w_{3}^{\alpha}\right)\left(w_{0}^{\beta}+w_{1}^{\beta}+w_{2}^{\beta}+w_{3}^{\beta}\right)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Linearly interpolated color 
+\begin_inset Formula $F_{x,y}$
+\end_inset
+
+ is given by, 
+\begin_inset Formula 
+\begin{align*}
+F_{x,y} & =F_{i+\alpha,j+\beta}=\mathrm{mix}\left[\mix\left(f_{i,j},f_{i,j+1},\beta\right),\mix\left(f_{i+1,j},f_{i+1,j+1},\beta\right),\alpha\right]\\
+ & =\left(1-\alpha\right)\left[\left(1-\beta\right)f_{i,j}+\beta f_{i,j+1}\right]+\alpha\left[\left(1-\beta\right)f_{i+1,j}+\beta f_{i+1,j+1}\right]
+\end{align*}
+
+\end_inset
+
+We can generalize this formula to a summation of neighbouring four colors:
+\begin_inset Formula 
+\begin{align*}
+F_{ij}^{ab}= & w_{ab}f_{i,j}+w_{a,b+1}f_{i,j+1}+w_{a+1,b}f_{i+1,j}+w_{a+1,b+1}f_{i+1,j+1}\\
+= & \left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)\times\frac{w_{a}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}}\left(\frac{w_{b}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i,j}+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i,j+1}\right)\\
+ & +\left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)\times\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}}\left(\frac{w_{b}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i+1,j}+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i+1,j+1}\right)\\
+= & \left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)F_{i+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}},j+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}}
+\end{align*}
+
+\end_inset
+
+With help of above equation, we can rewrite 
+\begin_inset Formula $F(x,y)$
+\end_inset
+
+ as
+\begin_inset Formula 
+\begin{align*}
+AF\left(x,y\right) & =w_{00}f_{i-1,j-1}+w_{01}f_{i-1,j}+w_{10}f_{i,j-1}+w_{11}f_{i,j}\\
+ & +w_{02}f_{i-1,j+1}+w_{03}f_{i-1,j+2}+w_{12}f_{i+0,j+1}+w_{13}f_{i+0,j+2}\\
+ & +w_{20}f_{i+1,j-1}+w_{21}f_{i+1,j}+w_{30}f_{i+2,j-1}+w_{31}f_{i+2,j}\\
+ & +w_{22}f_{i+1,j+1}+w_{23}f_{i+1,j+2}+w_{32}f_{i+2,j+1}+w_{33}f_{i+2,j+2}\\
+ & =\left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{x-h_{0}^{\alpha},y-h_{0}^{\beta}}+\left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{x-h_{0}^{\alpha},y+h_{1}^{\beta}}\\
+ & +\left(w_{2}^{\alpha}+w_{3}^{\alpha}\right)\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{x+h_{1}^{\alpha},y-h_{0}^{\beta}}+\left(w_{2}^{\alpha}+w_{3}^{\alpha}\right)\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{x+h_{1}^{\alpha},y+h_{1}^{\beta}}
+\end{align*}
+
+\end_inset
+
+where
+\begin_inset Formula 
+\[
+h_{0}^{\alpha}=1+\alpha-\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},\quad h_{1}^{\alpha}=1-\alpha+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}}
+\]
+
+\end_inset
+
+Or,
+\begin_inset Formula 
+\begin{align*}
+F\left(x,y\right) & =\left(1-g^{\alpha}\right)\mix\left(F_{x-h_{0}^{\alpha},y-h_{0}^{\beta}},F_{x-h_{0}^{\alpha},y+h_{1}^{\beta}},g^{\beta}\right)+g^{\alpha}\mix\left(F_{x+h_{1}^{\alpha},y-h_{0}^{\beta}},F_{x+h_{1}^{\alpha},y+h_{1}^{\beta}},g^{\beta}\right)\\
+ & =\mix\left[\mix\left(F_{x-h_{0}^{\alpha},y-h_{0}^{\beta}},F_{x-h_{0}^{\alpha},y+h_{1}^{\beta}},g^{\beta}\right),\mix\left(F_{x+h_{1}^{\alpha},y-h_{0}^{\beta}},F_{x+h_{1}^{\alpha},y+h_{1}^{\beta}},g^{\beta}\right),g^{\alpha}\right]
+\end{align*}
+
+\end_inset
+
+with
+\begin_inset Formula 
+\[
+g^{\alpha}=\frac{w_{2}^{\alpha}+w_{3}^{\alpha}}{\sum_{b}w_{b}^{\alpha}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $w_{a}^{\alpha}$
+\end_inset
+
+ is given by weighting function 
+\begin_inset Formula $W$
 \end_inset
 
 ,
 \begin_inset Formula 
-\[
-af_{i}+bf_{i+1}=\left(a+b\right)\left[\frac{a}{a+b}f_{i}+\frac{b}{a+b}f_{i+1}\right]=\left(a+b\right)f_{i+\frac{b}{a+b}}
-\]
-
-\end_inset
-
-Therefore,
-\begin_inset Formula 
 \begin{align*}
-w_{0}\left(x\right)f_{i-1}+w_{1}\left(x\right)f_{i} & =\left[w_{0}\left(x\right)+w_{1}\left(x\right)\right]f_{x-\left[1+\alpha-\frac{w_{1}\left(x\right)}{w_{0}\left(x\right)+w_{1}\left(x\right)}\right]}\equiv g_{0}\left(x\right)f_{x-}\\
-w_{2}\left(x\right)f_{i+1}+w_{3}\left(x\right)f_{i+2} & =\left[w_{2}\left(x\right)+w_{3}\left(x\right)\right]f_{x+\left[1-\alpha+\frac{w_{3}\left(x\right)}{w_{2}\left(x\right)+w_{3}\left(x\right)}\right]}
-\end{align*}
-
-\end_inset
-
-
-\begin_inset Formula 
-\begin{align*}
-f\left(x\right) & =g_{0}\left(\alpha\right)f_{x-h_{0}\left(\alpha\right)}+g_{1}\left(\alpha\right)f_{x+h_{1}\left(\alpha\right)}\\
- & =\left(g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)\right)\left[\frac{g_{0}\left(\alpha\right)}{g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)}f_{x-h_{0}\left(\alpha\right)}+\frac{g_{1}\left(\alpha\right)}{g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)}f_{x+h_{1}\left(\alpha\right)}\right]\\
- & =\left(g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)\right)\mathrm{mix}\left[f_{x-h_{0}\left(\alpha\right)},f_{x+h_{1}\left(\alpha\right)},\frac{g_{1}\left(\alpha\right)}{g_{0}\left(\alpha\right)+g_{1}\left(\alpha\right)}\right]
-\end{align*}
-
-\end_inset
-
-(all functions are periodic in [0,1], 
-\begin_inset Formula $w_{i}\left(x\right)=w_{i}\left(\alpha\right)$
-\end_inset
-
-) where
-\begin_inset Formula 
-\[
-\begin{cases}
-g_{0}\left(\alpha\right)= & w_{0}\left(\alpha\right)+w_{1}\left(\alpha\right)\\
-g_{1}\left(\alpha\right)= & w_{2}\left(\alpha\right)+w_{3}\left(\alpha\right)
-\end{cases},\quad\begin{cases}
-h_{0}\left(\alpha\right)= & 1+\alpha-\frac{w_{1}\left(x\right)}{w_{0}\left(x\right)+w_{1}\left(x\right)}\\
-h_{1}\left(\alpha\right)= & 1-\alpha+\frac{w_{3}\left(x\right)}{w_{2}\left(x\right)+w_{3}\left(x\right)}
-\end{cases}
-\]
-
-\end_inset
-
-
-\begin_inset Formula 
-\[
-\begin{cases}
-g_{R}=g_{0}^{X}= & w_{R}^{X}+w_{G}^{X}\\
-g_{G}=g_{1}^{X}= & w_{B}^{X}+w_{A}^{X}\\
-g_{B}=g_{0}^{Y}= & w_{R}^{Y}+w_{G}^{Y}\\
-g_{A}=g_{1}^{Y}= & w_{B}^{Y}+w_{A}^{Y}
-\end{cases},\quad\begin{cases}
-h_{R}=h_{0}^{X}= & 1+\alpha^{X}-w_{G}^{X}/g_{R}\\
-h_{B}=h_{0}^{Y}= & 1+\alpha^{Y}-w_{G}^{Y}/g_{B}\\
-h_{G}=h_{1}^{X}= & 1-\alpha^{X}+w_{A}^{X}/g_{G}\\
-h_{A}=h_{1}^{Y}= & 1-\alpha^{Y}+w_{A}^{Y}/g_{A}
-\end{cases}
-\]
-
-\end_inset
-
-
-\begin_inset Formula 
-\begin{align*}
-f_{R} & =g_{R}+g_{G}\\
-f_{G} & =\frac{g_{G}}{f_{R}}\\
-f_{B} & =g_{B}+g_{A}\\
-f_{A} & =\frac{g_{A}}{f_{B}}\\
+w_{0}\left(x\right) & =W\left(x+1\right) &  &  & w_{2}\left(x\right) & =W\left(x-1\right)\\
+w_{1}\left(x\right) & =W\left(x\right) &  &  & w_{3}\left(x\right) & =W\left(x-2\right)
 \end{align*}
 
 \end_inset
@@ -610,7 +622,106 @@ f_{A} & =\frac{g_{A}}{f_{B}}\\
 \end_layout
 
 \begin_layout Subsection
-Weight function
+6x6 Kernel
+\end_layout
+
+\begin_layout Standard
+Interpolated color 
+\begin_inset Formula $F\left(x,y\right)$
+\end_inset
+
+ with 6x6 kernel is given by
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+AF\left(x,y\right) & =w_{00}f_{i-2,j-2}+w_{01}f_{i-2,j-1}+w_{02}f_{i-2,j}+w_{03}f_{i-2,j+1}+w_{04}f_{i-2,j+2}+w_{05}f_{i-2,j+3}\\
+ & +w_{10}f_{i-1,j-2}+w_{11}f_{i-1,j-1}+w_{12}f_{i-1,j}+w_{13}f_{i-1,j+1}+w_{14}f_{i-1,j+2}+w_{15}f_{i-1,j+3}\\
+ & +w_{20}f_{i,j-2}+w_{21}f_{i,j-1}+w_{22}f_{i,j}+w_{23}f_{i,j+1}+w_{24}f_{i,j+2}+w_{25}f_{i,j+3}\\
+ & +w_{30}f_{i+1,j-2}+w_{31}f_{i+1,j-1}+w_{32}f_{i+1,j}+w_{33}f_{i+1,j+1}+w_{34}f_{i+1,j+2}+w_{35}f_{i+1,j+3}\\
+ & +w_{40}f_{i+2,j-2}+w_{41}f_{i+2,j-1}+w_{42}f_{i+2,j}+w_{43}f_{i+2,j+1}+w_{44}f_{i+2,j+2}+w_{45}f_{i+2,j+3}\\
+ & +w_{50}f_{i+3,j-2}+w_{51}f_{i+3,j-1}+w_{52}f_{i+3,j}+w_{53}f_{i+3,j+1}+w_{54}f_{i+3,j+2}+w_{55}f_{i+3,j+3}
+\end{align*}
+
+\end_inset
+
+With help of
+\begin_inset Formula 
+\begin{align*}
+F_{ij}^{ab}= & \left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)F_{i+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}},j+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}},
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+AF\left(x,y\right) & =\left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{x-h_{0}^{\alpha},y-h_{0}^{\beta}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{x-h_{0}^{\alpha},y-h_{1}^{\beta}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{x-h_{0}^{\alpha},y+h_{2}^{\beta}}\right]\\
+ & +\left(w_{2}^{\alpha}+w_{3}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{x-h_{1}^{\alpha},y-h_{0}^{\beta}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{x-h_{1}^{\alpha},y-h_{1}^{\beta}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{x-h_{1}^{\alpha},y+h_{2}^{\beta}}\right]\\
+ & +\left(w_{4}^{\alpha}+w_{5}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{x+h_{2}^{\alpha},y-h_{0}^{\beta}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{x+h_{2}^{\alpha},y-h_{1}^{\beta}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{x+h_{2}^{\alpha},y+h_{2}^{\beta}}\right]
+\end{align*}
+
+\end_inset
+
+wwhere
+\begin_inset Formula 
+\[
+h_{0}^{\alpha}=2+\alpha-\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},\quad h_{1}^{\alpha}=\alpha-\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}},\quad h_{2}^{\alpha}=2-\alpha+\frac{w_{5}^{\alpha}}{w_{4}^{\alpha}+w_{5}^{\alpha}}
+\]
+
+\end_inset
+
+Or,
+\begin_inset Formula 
+\begin{align*}
+F\left(x,y\right) & =\mix3\left[\vphantom{\frac{w_{4}^{\alpha}+w_{5}^{\alpha}}{\sum_{a}w_{a}^{\alpha}}}\right.\\
+ & \qquad\mix3\left(F_{x-h_{0}^{\alpha},y-h_{0}^{\beta}},F_{x-h_{0}^{\alpha},y-h_{1}^{\beta}},F_{x-h_{0}^{\alpha},y+h_{2}^{\beta}},\frac{w_{2}^{\beta}+w_{3}^{\beta}}{\sum_{b}^{3}w_{b}^{\beta}},\frac{w_{4}^{\beta}+w_{5}^{\beta}}{\sum_{b}w_{b}^{\beta}}\right),\\
+ & \qquad\mix3\left(F_{x-h_{1}^{\alpha},y-h_{0}^{\beta}},F_{x-h_{1}^{\alpha},y-h_{1}^{\beta}},F_{x-h_{1}^{\alpha},y+h_{2}^{\beta}},\frac{w_{2}^{\beta}+w_{3}^{\beta}}{\sum_{b}^{3}w_{b}^{\beta}},\frac{w_{4}^{\beta}+w_{5}^{\beta}}{\sum_{b}w_{b}^{\beta}}\right),\\
+ & \qquad\mix3\left(F_{x+h_{2}^{\alpha},y-h_{0}^{\beta}},F_{x+h_{2}^{\alpha},y-h_{1}^{\beta}},F_{x+h_{2}^{\alpha},y+h_{2}^{\beta}},\frac{w_{2}^{\beta}+w_{3}^{\beta}}{\sum_{b}^{3}w_{b}^{\beta}},\frac{w_{4}^{\beta}+w_{5}^{\beta}}{\sum_{b}w_{b}^{\beta}}\right)\\
+ & \qquad,\frac{w_{2}^{\alpha}+w_{3}^{\alpha}}{\sum_{a}^{3}w_{a}^{\alpha}},\frac{w_{4}^{\alpha}+w_{5}^{\alpha}}{\sum_{a}w_{a}^{\alpha}}\left]\vphantom{\frac{w_{4}^{\alpha}+w_{5}^{\alpha}}{\sum_{a}w_{a}^{\alpha}}}\right.
+\end{align*}
+
+\end_inset
+
+where
+\begin_inset Formula 
+\[
+\mathrm{mix3}\left(f_{1},f_{2},f_{3},\alpha,\beta\right)=\mix\left[\mix\left(f_{1},f_{2},\alpha\right),f_{3},\beta\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $w_{a}^{\alpha}$
+\end_inset
+
+ is given by weighting function 
+\begin_inset Formula $W$
+\end_inset
+
+,
+\begin_inset Formula 
+\begin{align*}
+w_{0}\left(x\right) & =W\left(x+2\right) &  &  & w_{3}\left(x\right) & =W\left(x-1\right)\\
+w_{1}\left(x\right) & =W\left(x+1\right) &  &  & w_{4}\left(x\right) & =W\left(x-2\right)\\
+w_{2}\left(x\right) & =W\left(x\right) &  &  & w_{5}\left(x\right) & =W\left(x-3\right)
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Weighting functions
+\end_layout
+
+\begin_layout Subsubsection
+Bicubic interpolation
 \end_layout
 
 \begin_layout Standard
@@ -618,53 +729,37 @@ http://mentallandscape.com/Papers_siggraph88.pdf
 \end_layout
 
 \begin_layout Standard
+Bicubic interpolations can be achieved by use of 4x4 kernel with weighting
+ function:
+\end_layout
+
+\begin_layout Standard
 \begin_inset Formula 
 \[
 W(x)=\begin{cases}
-\frac{1}{6}\left[\left(12-9B-6C\right)\left|x\right|^{3}+\left(-18+12B+6C\right)\left|x\right|^{2}+\left(6-2B\right)\right] & \left|x\right|<1\\
-\frac{1}{6}\left[\left(-B-6C\right)\left|x\right|^{3}+\left(6B+30C\right)\left|x\right|^{2}+\left(-12B-48C\right)\left|x\right|+\left(8B+24C\right)\right] & 1<\left|x\right|<2
+\frac{1}{6}\left[\left(12-9B-6C\right)\left|x\right|^{3}+\left(-18+12B+6C\right)\left|x\right|^{2}+\left(6-2B\right)\right] & 0\leq\left|x\right|<1\\
+\frac{1}{6}\left[\left(-B-6C\right)\left|x\right|^{3}+\left(6B+30C\right)\left|x\right|^{2}+\left(-12B-48C\right)\left|x\right|+\left(8B+24C\right)\right] & 1\leq\left|x\right|<2
 \end{cases}
 \]
 
 \end_inset
 
-In my case, with 
-\begin_inset Formula $0<x<1$
+Well-known values for 
+\begin_inset Formula $B$
 \end_inset
 
-, 
-\begin_inset Formula 
-\begin{align*}
-w_{0}\left(x\right) & =W\left(x+1\right) & = & \frac{1}{6}\left[\left(-B-6C\right)\left(x+1\right)^{3}+\left(6B+30C\right)\left(x+1\right)^{2}+\left(-12B-48C\right)\left(x+1\right)+\left(8B+24C\right)\right]\\
- &  & = & \frac{1}{6}\left[\left(-B-6C\right)x^{3}+3\left(B+4C\right)x^{2}-3\left(B+2C\right)x+B\right]\\
-w_{1}\left(x\right) & =W\left(x\right) & = & \frac{1}{6}\left[\left(12-9B-6C\right)x^{3}+\left(-18+12B+6C\right)x^{2}+\left(6-2B\right)\right]\\
-w_{2}\left(x\right) & =W\left(x-1\right) & = & \frac{1}{6}\left[\left(12-9B-6C\right)\left(1-x\right)^{3}+\left(-18+12B+6C\right)\left(1-x\right)^{2}+\left(6-2B\right)\right]\\
- &  &  & \frac{1}{6}\left[-\left(12-9B-6C\right)x^{3}+3\left(6-5B-4C\right)x^{2}+3\left(B+2C\right)x+B\right]\\
-w_{3}\left(x\right) & =W\left(x-2\right) & = & \frac{1}{6}\left[\left(-B-6C\right)\left(2-x\right)^{3}+\left(6B+30C\right)\left(2-x\right)^{2}+\left(-12B-48C\right)\left(2-x\right)+\left(8B+24C\right)\right]\\
- &  & = & \frac{1}{6}\left[\left(B+6C\right)x^{3}-6Cx^{2}\right]\\
-\\
-\\
- &  &  & \frac{1}{6}\left[\left(B+6C\right)x^{3}-6Cx^{2}+12\left(B+5C\right)x\right]
-\end{align*}
-
+ and 
+\begin_inset Formula $C$
 \end_inset
 
-
+:
 \begin_inset Formula 
 \[
-\begin{pmatrix}w_{0}\left(x\right)\\
-w_{1}\left(x\right)\\
-w_{2}\left(x\right)\\
-w_{3}\left(x\right)
-\end{pmatrix}=\frac{1}{6}\begin{pmatrix}B & -3\left(B+2C\right) & 3\left(B+4C\right) & -B-6C\\
-2\left(3-B\right) & 0 & 6\left(-3+2B+C\right) & 3\left(4-3B-2C\right)\\
-B & 3\left(B+2C\right) & 3\left(6-5B-4C\right) & -3\left(4-3B-2C\right)\\
-0 & 12\left(B+5C\right) & -6C & B+6C
-\end{pmatrix}\begin{pmatrix}x^{0}\\
-x^{1}\\
-x^{2}\\
-x^{3}
-\end{pmatrix}
+\begin{cases}
+B=1,C=0 & \rightarrow\text{B-Spline}\\
+B=0,C=0.5 & \rightarrow\text{Catmull-Rom}\\
+B=C=1/3 & \rightarrow\text{Mitchell-Netravali}
+\end{cases}
 \]
 
 \end_inset
@@ -673,50 +768,31 @@ x^{3}
 \end_layout
 
 \begin_layout Subsubsection
-B-spline
+Lanczos interpolation
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula $B=1,C=0$
-\end_inset
-
-
+Lanczos's weighting function isgiven by,
 \begin_inset Formula 
 \[
-W\left(x\right)=\begin{cases}
-\frac{1}{6}\left[3\left|x\right|^{3}-6\left|x\right|^{2}+4\right] & \left|x\right|<1\\
-\frac{1}{6}\left[-\left|x\right|^{3}+6\left|x\right|^{2}-12\left|x\right|+8\right] & 1<\left|x\right|<2
+W_{A}\left(x\right)=\begin{cases}
+1 & x=0\\
+\mathrm{sinc}\left(\pi x\right)\mathrm{sinc}\left(\frac{\pi x}{A}\right) & \left|x\right|<A\\
+0 & \left|x\right|>A
 \end{cases}
 \]
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-w\left(x\right)=\begin{cases}
-\frac{1}{6}\left(4-6x^{2}+3\left|x\right|^{3}\right) & 0<\left|x\right|<1\\
-\frac{1}{6}\left(2-\left|x\right|\right)^{3} & 1<\left|x\right|<2
-\end{cases}
-\]
-
+Lanczos interpolations need (
+\begin_inset Formula $2A$
 \end_inset
 
-
-\begin_inset Formula 
-\begin{align*}
-w_{0}\left(x\right) & =w\left(x+1\right)=\frac{1}{6}\left(1-x\right)^{3}\\
-w_{1}\left(x\right) & =w\left(x\right)=\frac{1}{6}\left(4-6x^{2}+3x^{3}\right)\\
-w_{2}\left(x\right) & =w\left(x-1\right)=\frac{1}{6}\left[4-6\left(x-1\right)^{2}-3\left(x-1\right)^{3}\right]=\frac{1}{6}\left(1-3x^{3}+3x+3x^{2}\right)\\
-w_{3}\left(x\right) & =w\left(x-2\right)=\frac{1}{6}\left(2+(x-2)\right)^{3}=\frac{1}{6}\alpha^{3}
-\end{align*}
-
+)x(
+\begin_inset Formula $2A$
 \end_inset
 
-
+) sized kernel.
 \end_layout
 
 \end_body

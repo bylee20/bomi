@@ -79,7 +79,8 @@ template<typename T> static typename std::enable_if<std::is_pointer<T>::value, T
 }
 
 template<int N> constexpr static int _Aligned(int v) { return v%N ? ((v/N) + 1)*N : v; }
-template<typename T, typename... Args> void _Renew(T *&t, Args... args) {delete t; t = new T(args...); }
+template<typename T, typename... Args> T *  _New(T *&t, Args... args) { return (t = new T(args...)); }
+template<typename T, typename... Args> T *  _Renew(T *&t, Args... args) {delete t; return (t = new T(args...)); }
 template<typename T>                   void _Delete(T *&t) {delete t; t = nullptr; }
 #endif
 

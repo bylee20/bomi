@@ -76,21 +76,9 @@ void MpOsdItem::customEvent(QEvent *event) {
 
 QSGNode *MpOsdItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
 	Q_UNUSED(data);
-	d->node = static_cast<MpRgbaOsdNode*>(old);
-	if (!d->node || d->node->format() != d->osd.format()) {
-		delete d->node;
-		switch (d->osd.format()) {
-		case MpOsdBitmap::Rgba:
-		case MpOsdBitmap::RgbaPA:
-			d->node = new MpRgbaOsdNode(d->osd.format());
-			break;
-		case MpOsdBitmap::Ass:
-			d->node = new MpAssOsdNode;
-			break;
-		default:
-			return d->node = nullptr;
-		}
-	}
+	d->node = static_cast<MpOsdNode*>(old);
+	if (!d->node)
+		_New(d->node);
 	if (!old || d->redraw)
 		d->node->draw(d->osd, boundingRect());
 	if (!old || d->dirtyGeometry)

@@ -11,7 +11,9 @@ enum class InterpolatorType : int {
 	Bilinear = (int)0,
 	BicubicCR = (int)1,
 	BicubicMN = (int)2,
-	BicubicBS = (int)3
+	BicubicBS = (int)3,
+	Lanczos2 = (int)4,
+	Lanczos3Fast = (int)5
 };
 
 inline bool operator == (InterpolatorType e, int i) { return (int)e == i; }
@@ -35,7 +37,7 @@ class EnumInfo<InterpolatorType> {
 	typedef InterpolatorType Enum;
 public:
 	struct Item { Enum value; const char *name; };
-	static constexpr int size() { return 4; }
+	static constexpr int size() { return 6; }
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
@@ -45,10 +47,12 @@ public:
 		case Enum::BicubicCR: return tr("Catmull-Rom bicubic interpolator");
 		case Enum::BicubicMN: return tr("Mitchell-Netravali bicubic interpolator");
 		case Enum::BicubicBS: return tr("B-spline bicubic interpolator");
+		case Enum::Lanczos2: return tr("Lanczos 2-lobed interpolator");
+		case Enum::Lanczos3Fast: return tr("Lanczos approx. 3-lobed interpolator");
 		default: return tr("");
 		};
 	}
-	static constexpr const std::array<Item, 4> &items() { return info; }
+	static constexpr const std::array<Item, 6> &items() { return info; }
 	static Enum from(int id, Enum def = info[0].value) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
@@ -58,7 +62,7 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
 private:
-	static const std::array<Item, 4> info;
+	static const std::array<Item, 6> info;
 };
 
 using InterpolatorTypeInfo = EnumInfo<InterpolatorType>;

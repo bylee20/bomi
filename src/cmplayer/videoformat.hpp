@@ -17,7 +17,7 @@ extern "C" {
 //#endif
 //}
 
-struct VideoTexture2 : public OpenGLTexture {
+struct VideoTexture : public OpenGLTexture {
 	int plane = 0;
 	QPointF cc = {1.0, 1.0}; // coordinate correction
 };
@@ -51,7 +51,7 @@ public:
 	inline mp_csp colorspace() const { return d->colorspace; }
 	inline mp_csp_levels range() const { return d->range; }
 	inline Type imgfmt() const {return d->imgfmt;}
-	QList<VideoTexture2> textures() const;
+	QList<VideoTexture> textures() const;
 	inline bool isLittleEndian() const { return d->flags & MP_IMGFLAG_LE; }
 	int encodedBits() const;
 private:

@@ -4,20 +4,35 @@
 #include "hwacc.hpp"
 #include "global.hpp"
 #include "letterboxitem.hpp"
-#include "videotextureshader.hpp"
 #include "dataevent.hpp"
 #include "videoframeshader.hpp"
-#include "videotextureshader.glsl.hpp"
+#include "videorenderershader.glsl.hpp"
+#include <atomic>
+
+template<typename T>
+class SyncValue {
+public:
+	SyncValue() = default;
+	SyncValue(const T &t): m_t(t), m_new(t) {}
+	const T &get() const { return m_t; }
+	const T &pended() const { return m_new; }
+	bool pend(const T &new_) { m_new = new_; return m_new != m_t; }
+	bool update() { return _Change(m_t, m_new); }
+	bool replace(const T &new_) { m_new = new_; return update(); }
+private:
+	T m_t, m_new;
+};
 
 struct VideoRendererItem::Data {
+	Data(VideoRendererItem *p): p(p) {}
+	VideoRendererItem *p = nullptr;
 	QLinkedList<VideoFrame> queue;
-	VideoFrame frame;
-	VideoFormat format;
+	OpenGLFramebufferObject *fbo = nullptr;
+	bool take = false, initialized = false, render = false;
 	quint64 drawnFrames = 0;
-	bool newFrame = false, shaderChanged = false;
 	QRectF vtx;
 	QPoint offset = {0, 0};
-	double crop = -1.0, aspect = -1.0, dar = 0.0, pts = MP_NOPTS_VALUE;
+	double crop = -1.0, aspect = -1.0, dar = 0.0, ptsIn = MP_NOPTS_VALUE, ptsOut = MP_NOPTS_VALUE;
 	int alignment = Qt::AlignCenter;
 	LetterboxItem *letterbox = nullptr;
 	MpOsdItem *mposd = nullptr;
@@ -27,24 +42,31 @@ struct VideoRendererItem::Data {
 	Effects effects = 0;
 	ColorProperty color;
 	DeintInfo deint;
-	InterpolatorType interpolator = InterpolatorType::Bilinear;
-	OpenGLFramebufferObject *fbo = nullptr;
-	QMutex mutex;
-	int loc_vMatrix = -1, loc_tex = -1, loc_lut_bicubic = -1;
+	SyncValue<InterpolatorType> interpolator = InterpolatorType::Bilinear;
+	int loc_vMatrix = -1, loc_tex = -1, loc_lut_interpolator = -1;
 	QByteArray fragCode, vertexCode;
+	OpenGLTexture lutInterpolator, black;
+	QSize displaySize{1, 1}, frameSize{0, 0};
 	QByteArray header() const {
 		QByteArray header;
 		header += "const float texWidth = " + QByteArray::number(fbo ? fbo->width() : 1) + ".0;\n";
 		header += "const float texHeight = " + QByteArray::number(fbo ? fbo->height() : 1) + ".0;\n";
-		if (interpolator > 0)
-			header += "#define USE_BICUBIC\n";
+		header += "#define USE_INTERPOLATOR " + QByteArray::number((int)interpolator.get()) + "\n";
 		return header;
 	}
-	OpenGLTexture lutBicubic;
+	void repaint() { render = true; p->update(); }
+	void fillKernel() {
+		kernel = Kernel3x3();
+		if (effects & Blur)
+			kernel += blur;
+		if (effects & Sharpen)
+			kernel += sharpen;
+		kernel.normalize();
+	}
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
-: TextureRendererItem(1, parent), d(new Data) {
+: TextureRendererItem(1, parent), d(new Data(this)) {
 	setFlags(ItemHasContents | ItemAcceptsDrops);
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
@@ -56,30 +78,45 @@ VideoRendererItem::~VideoRendererItem() {
 	delete d;
 }
 
-void VideoRendererItem::release() {
+void VideoRendererItem::initializeGL() {
 	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
+	d->lutInterpolator.generate();
+	_Renew(d->shader);
+	d->shader->setDeintInfo(d->deint);
+	d->shader->setColor(d->color);
+	d->shader->setEffects(d->effects);
+	d->black = OpenGLCompat::makeTexture(1, 1, GL_BGRA);
+	const quint32 p = 0x0;
+	d->black.upload2D(&p);
+	d->initialized = true;
+}
+
+void VideoRendererItem::finalizeGL() {
+	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
+	d->lutInterpolator.delete_();
+	d->black.delete_();
 	_Delete(d->fbo);
 	_Delete(d->shader);
+	d->initialized = false;
 }
 
 void VideoRendererItem::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
 	case NewFrame:
-		d->newFrame = true;
-		d->queue.push_back(getData<VideoFrame>(event));
+		if (d->queue.size() < 3)
+			d->queue.push_back(getData<VideoFrame>(event));
 		update();
 		break;
-	case RenderNextFrame:
+	case NextFrame:
 		update();
 		break;
 	case UpdateDeint: {
 		auto deint = getData<DeintInfo>(event);
 		if (!deint.isHardware())
 			deint = DeintInfo();
-		if (_Change(d->deint, deint)) {
-			if (d->shader)
-				d->shader->setDeintInfo(d->deint);
-			update();
+		if (_Change(d->deint, deint) && d->shader) {
+			d->shader->setDeintInfo(d->deint);
+			d->repaint();
 		}
 		break;
 	} default:
@@ -91,23 +128,16 @@ QQuickItem *VideoRendererItem::overlay() const {
 	return d->overlay;
 }
 
-const VideoFrame &VideoRendererItem::frame() const {
-	return d->frame;
-}
-
 bool VideoRendererItem::hasFrame() const {
-	return !d->format.isEmpty();
+	return d->shader && !d->frameSize.isEmpty();
 }
 
 void VideoRendererItem::requestFrameImage() const {
-	if (d->format.isEmpty() || !d->fbo)
+	if (!hasFrame())
 		emit frameImageObtained(QImage());
-	else if (d->frame.hasImage())
-		emit frameImageObtained(d->frame.toImage());
 	else {
-		auto image = d->fbo->toImage();
-		d->mposd->drawOn(image);
-		emit frameImageObtained(image);
+		d->take = true;
+		const_cast<VideoRendererItem*>(this)->update();
 	}
 }
 
@@ -116,12 +146,12 @@ void VideoRendererItem::present(const QImage &image) {
 }
 
 void VideoRendererItem::present(const VideoFrame &frame, bool redraw) {
-//	d->mutex.lock();
-//	d->back = frame;
-//	d->mutex.unlock();
-	postData(this, NewFrame, frame);
+	if (!d->initialized)
+		return;
+	if (d->shader && d->queue.size() < 3)
+		postData(this, NewFrame, frame);
 	d->mposd->present(redraw);
-	d->pts = frame.pts();
+	d->ptsIn = frame.pts();
 }
 
 QRectF VideoRendererItem::screenRect() const {
@@ -149,7 +179,7 @@ double VideoRendererItem::targetAspectRatio() const {
 		return d->aspect;
 	if (d->aspect == 0.0)
 		return itemAspectRatio();
-	return _Ratio(d->format.displaySize());
+	return hasFrame() ? _Ratio(d->displaySize) : 1.0;
 }
 
 double VideoRendererItem::targetCropRatio(double fallback) const {
@@ -201,27 +231,17 @@ VideoRendererItem::Effects VideoRendererItem::effects() const {
 	return d->effects;
 }
 
-void VideoRendererItem::updateKernel() {
-	d->kernel = Kernel3x3();
-	if (d->effects & Blur)
-		d->kernel += d->blur;
-	if (d->effects & Sharpen)
-		d->kernel += d->sharpen;
-	d->kernel.normalize();
-}
-
 void VideoRendererItem::setEffects(Effects effects) {
 	if (_Change(d->effects, effects)) {
 		if (d->shader)
 			d->shader->setEffects(d->effects);
-		updateKernel();
-		setGeometryDirty();
+		d->fillKernel();
 		update();
 	}
 }
 
 QRectF VideoRendererItem::frameRect(const QRectF &area) const {
-	if (!d->format.isEmpty()) {
+	if (hasFrame()) {
 		const double aspect = targetAspectRatio();
 		QSizeF frame(aspect, 1.0), letter(targetCropRatio(aspect), 1.0);
 		letter.scale(area.width(), area.height(), Qt::KeepAspectRatio);
@@ -247,10 +267,9 @@ void VideoRendererItem::updateGeometry(bool updateOsd) {
 }
 
 void VideoRendererItem::setColor(const ColorProperty &prop) {
-	if (_Change(d->color, prop)) {
-		if (d->shader)
-			d->shader->setColor(d->color);
-		update();
+	if (_Change(d->color, prop) && d->shader) {
+		d->shader->setColor(d->color);
+		d->repaint();
 	}
 }
 
@@ -283,42 +302,33 @@ double VideoRendererItem::cropRatio() const {
 }
 
 QSize VideoRendererItem::sizeHint() const {
-	if (d->format.isEmpty())
+	if (!hasFrame())
 		return QSize(400, 300);
 	const double aspect = targetAspectRatio();
 	QSizeF size(aspect, 1.0);
-	size.scale(d->format.displaySize(), Qt::KeepAspectRatioByExpanding);
+	size.scale(d->displaySize, Qt::KeepAspectRatioByExpanding);
 	QSizeF crop(targetCropRatio(aspect), 1.0);
 	crop.scale(size, Qt::KeepAspectRatio);
 	return crop.toSize();
 }
 
+static const QByteArray commonCode((char*)videorenderershader_glsl, videorenderershader_glsl_len);
+
 const char *VideoRendererItem::fragmentShader() const {
-//	if (!d->shader)
-//		return TextureRendererItem::fragmentShader();
-//	d->fragCode = d->shader->fragment();
-//	return d->fragCode.data();
 	d->fragCode = d->header();
 	d->fragCode += "#define FRAGMENT\n";
-	d->fragCode += QByteArray((char*)videotextureshader_glsl, videotextureshader_glsl_len);
+	d->fragCode += commonCode;
 	return d->fragCode.constData();
 }
 
 const char *VideoRendererItem::vertexShader() const {
-//	if (!d->shader)
-//		return TextureRendererItem::vertexShader();
-//	d->vertexCode = d->shader->vertex();
-//	return d->vertexCode;
 	d->vertexCode = d->header();
 	d->vertexCode += "#define VERTEX\n";
-	d->vertexCode += QByteArray((char*)videotextureshader_glsl, videotextureshader_glsl_len);
+	d->vertexCode += commonCode;
 	return d->vertexCode.constData();
 }
 
 const char * const *VideoRendererItem::attributeNames() const {
-//	if (!d->shader)
-//		return TextureRendererItem::attributeNames();
-//	return d->shader->attributes();
 	static const char *const names[] = { "vPosition", "vCoord", nullptr };
 	return names;
 }
@@ -326,83 +336,90 @@ const char * const *VideoRendererItem::attributeNames() const {
 void VideoRendererItem::link(QOpenGLShaderProgram *prog) {
 	d->loc_tex = prog->uniformLocation("tex");
 	d->loc_vMatrix = prog->uniformLocation("vMatrix");
-	d->loc_lut_bicubic = prog->uniformLocation("lut_bicubic");
-//	if (d->shader)
-//		d->shader->link(prog);
+	d->loc_lut_interpolator = prog->uniformLocation("lut_interpolator");
 }
 
 MpOsdItem *VideoRendererItem::mpOsd() const {
 	return d->mposd;
 }
 
-void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
-//	if (d->shader)
-//		d->shader->render(program, state.combinedMatrix(), d->kernel);
-	program->setUniformValue(d->loc_vMatrix, state.combinedMatrix());
-	program->setUniformValue(d->loc_tex, 0);
-	program->setUniformValue(d->loc_lut_bicubic, 1);
+void VideoRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *prog) {
+	prog->setUniformValue(d->loc_vMatrix, state.combinedMatrix());
+	prog->setUniformValue(d->loc_tex, 0);
+	prog->setUniformValue(d->loc_lut_interpolator, 1);
 	auto f = OpenGLCompat::functions();
 	f->glActiveTexture(GL_TEXTURE0);
 	if (d->fbo)
 		d->fbo->texture().bind();
-	if (d->interpolator > 0) {
+	else
+		d->black.bind();
+	if (d->interpolator.get() > 0) {
 		f->glActiveTexture(GL_TEXTURE1);
-		d->lutBicubic.bind();
+		d->lutInterpolator.bind();
 		f->glActiveTexture(GL_TEXTURE0);
 	}
 }
 
 int VideoRendererItem::delay() const {
-	return 0;
-	return d->pts == MP_NOPTS_VALUE ? 0.0 : -(d->frame.pts() - d->pts)*1000.0;
+	return (d->ptsIn == MP_NOPTS_VALUE || d->ptsOut == MP_NOPTS_VALUE) ? 0.0 : (d->ptsOut - d->ptsIn)*1000.0;
 }
 
 void VideoRendererItem::beforeUpdate() {
-//	if (!d->newFrame)
-//		return;
-	if (d->queue.isEmpty())
-		return;
-//	d->mutex.lock();
-//	qSwap(d->back, d->frame);
-//	d->mutex.unlock();
-	d->frame = d->queue.takeFirst();
-	if (_Change(d->format, d->frame.format())) {
-		_Renew(d->shader, d->format, d->color, d->effects, d->deint);
-		updateGeometry(true);
-		d->shaderChanged = true;
-	}
-	if (d->shader && d->shader->needsToBuild()) {
-		d->shader->build();
-		d->shaderChanged = true;
-	}
-	if (d->shaderChanged)
-		resetNode();
-	if (!d->format.isEmpty() && d->shader) {
-		if (!d->fbo || d->fbo->size() != d->format.size())
-			_Renew(d->fbo, d->format.size(), GL_TEXTURE_2D, GL_NEAREST);
-		d->shader->upload(d->frame);
+	Q_ASSERT(d->shader);
+
+	if (d->take) {
 		if (d->fbo) {
-			d->fbo->bind();
-			d->shader->render(d->kernel);
-			d->fbo->release();
-		}
-		++d->drawnFrames;
+			auto image = d->fbo->toImage();
+			d->mposd->drawOn(image);
+			emit frameImageObtained(image);
+		} else
+			emit frameImageObtained(QImage());
+		d->take = false;
 	}
+
+	bool reset = false;
 	if (!d->queue.isEmpty()) {
-		if (d->queue.size() > 2)
-			d->queue.clear();
-		else
-			postData(this, RenderNextFrame);
+		auto &frame = d->queue.front();
+		if (!frame.format().isEmpty()) {
+			d->ptsOut = frame.pts();
+			d->render = true;
+			if (_Change(d->frameSize, frame.format().size()))
+				reset = true;
+			if (_Change(d->displaySize, frame.format().displaySize()))
+				updateGeometry(true);
+			d->shader->upload(frame);
+			++d->drawnFrames;
+		}
+		d->queue.pop_front();
+		if (!d->queue.isEmpty()) {
+			if (d->queue.size() > 3)
+				d->queue.clear();
+			else
+				postData(this, NextFrame);
+		}
 	}
-	d->newFrame = false;
-	d->shaderChanged = false;
+	if (d->interpolator.update()) {
+		d->lutInterpolator = OpenGLCompat::allocateInterpolatorLutTexture(d->lutInterpolator.id, d->interpolator.get());
+		reset = true;
+	}
+	if (reset)
+		resetNode();
+
+	if (d->render && !d->frameSize.isEmpty()) {
+		if (!d->fbo || d->fbo->size() != d->frameSize)
+			_Renew(d->fbo, d->frameSize, GL_TEXTURE_2D);
+		d->fbo->bind();
+		d->shader->render(d->kernel);
+		d->fbo->release();
+	}
+	d->render = false;
 }
 
 void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	QSizeF letter(targetCropRatio(targetAspectRatio()), 1.0);
 	letter.scale(width(), height(), Qt::KeepAspectRatio);
 	QPointF offset = d->offset;
-    offset.rx() *= letter.width()/100.0;
+	offset.rx() *= letter.width()/100.0;
     offset.ry() *= letter.height()/100.0;
 	QPointF xy(width(), height());
 	xy.rx() -= letter.width(); xy.ry() -= letter.height();	xy *= 0.5;
@@ -431,10 +448,6 @@ void VideoRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
 	set(tp, vtx, QRectF(left, top, right-left, bottom-top));
 }
 
-void VideoRendererItem::initializeTextures() {
-	d->lutBicubic = OpenGLCompat::allocateBicubicLutTexture(textures()[0], d->interpolator);
-}
-
 QQuickItem *VideoRendererItem::osd() const {
 	return d->mposd;
 }
@@ -442,13 +455,11 @@ QQuickItem *VideoRendererItem::osd() const {
 void VideoRendererItem::setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d) {
 	d->blur.set(blur_c, blur_n, blur_d);
 	d->sharpen.set(sharpen_c, sharpen_n, sharpen_d);
-	updateKernel();
-	update();
+	d->fillKernel();
+	d->repaint();
 }
 
 void VideoRendererItem::setInterpolator(InterpolatorType interpolator) {
-	if (_Change(d->interpolator, interpolator)) {
-		d->shaderChanged = true;
-		update();
-	}
+	if (d->interpolator.pend(interpolator))
+		d->repaint();
 }

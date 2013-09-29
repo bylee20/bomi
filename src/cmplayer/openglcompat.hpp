@@ -104,24 +104,30 @@ struct OpenGLTexture {
 };
 
 class OpenGLCompat {
+public:
 	static constexpr int CubicLutSamples = 256;
 	static constexpr int CubicLutSize = CubicLutSamples*4;
-public:
 	static void initialize(QOpenGLContext *ctx) { c.fill(ctx); }
 	static OpenGLTextureFormat textureFormat(GLenum format) { return c.m_formats[format]; }
-	static bool hasRG() { return c.m_hasRG; } // use alpha instead of g if this is false
+	static bool hasRG() { return c.m_hasRG; } // use alpha instead of g if this returns false
 	static QByteArray rg(const char *rg) { return c.m_hasRG ? QByteArray(rg) : QByteArray(rg).replace('g', 'a'); }
 	static int maximumTextureSize() { return c.m_maxTextureSize; }
 	static const OpenGLCompat &get() { return c; }
-	static OpenGLTexture allocateBicubicLutTexture(GLuint id, InterpolatorType type);
+	static OpenGLTexture allocateInterpolatorLutTexture(GLuint id, InterpolatorType type);
 	static OpenGLTexture allocate3dLutTexture(GLuint id);
 	static void upload3dLutTexture(const OpenGLTexture &texture, const QVector3D &sub, const QMatrix3x3 &mul, const QVector3D &add);
-	static QOpenGLFunctions *functions() {
-		auto ctx = QOpenGLContext::currentContext();
-		return ctx ? ctx->functions() : nullptr;
+	static QOpenGLFunctions *functions() { auto ctx = QOpenGLContext::currentContext(); return ctx ? ctx->functions() : nullptr; }
+	static OpenGLTexture makeTexture(int width, int height, GLenum format, GLenum target = GL_TEXTURE_2D, GLenum filter = GL_LINEAR) {
+		OpenGLTexture texture;
+		texture.width = width; texture.height = height;
+		texture.target = target;
+		texture.format = textureFormat(format);
+		texture.generate();
+		texture.allocate(filter);
+		return texture;
 	}
 private:
-	static QVector<GLushort> makeBicubicLut(double b, double c);
+	void fillInterpolatorLut(InterpolatorType type);
 	void fill(QOpenGLContext *ctx);
 	OpenGLCompat() = default;
 	static OpenGLCompat c;
@@ -139,20 +145,21 @@ private:
 	QVector3D m_subLut, m_addLut;
 	QMatrix3x3 m_mulLut;
 	std::array<QPair<double, double>, InterpolatorTypeInfo::size()> m_bicubicParams;
+	std::array<QPair<int, int>, InterpolatorTypeInfo::size()> m_lanczosParams;
 };
 
 class OpenGLFramebufferObject {
 public:
-	OpenGLFramebufferObject(const QSize &size, int target = GL_TEXTURE_2D, int filter = GL_LINEAR) {
+	OpenGLFramebufferObject(const QSize &size, int target = GL_TEXTURE_2D) {
 		auto f = func();
 		f->glGenFramebuffers(1, &m_id);
 		f->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
-		m_texture.generate();
 		m_texture.width = size.width();
 		m_texture.height = size.height();
 		m_texture.target = target;
 		m_texture.format = OpenGLCompat::textureFormat(GL_BGRA);
-		m_texture.allocate(filter);
+		m_texture.generate();
+		m_texture.allocate();
 		f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, m_texture.id, 0);
 		QOpenGLFramebufferObject::bindDefault();
 	}

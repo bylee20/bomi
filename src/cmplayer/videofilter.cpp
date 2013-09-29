@@ -3,13 +3,13 @@
 #include "videooutput.hpp"
 
 bool VideoFilter::pass(mp_image *mpi, QLinkedList<VideoFrame> &queue, double /*prevPts*/) {
-	queue.push_back(VideoFrame(mpi, frameFlags()));
+	queue.push_back(VideoFrame(false, mpi, frameFlags()));
 	return true;
 }
 
 bool VideoFilter::build() { return true; }
 
-bool FFmpegAvFilter::pass(mp_image *img, QLinkedList<VideoFrame> &queue, double prevPts) {
+bool FFmpegVideoFilter::pass(mp_image *img, QLinkedList<VideoFrame> &queue, double prevPts) {
 	if (!m_graph)
 		return false;
 	mp_image *mpi = mp_image_new_ref(img);
@@ -53,22 +53,20 @@ bool FFmpegAvFilter::pass(mp_image *img, QLinkedList<VideoFrame> &queue, double 
 		images.append(got);
 	}
 	if (images.isEmpty())
-		queue.push_back(VideoFrame(img, frameFlags()));
+		queue.push_back(VideoFrame(false, img, frameFlags()));
 	else {
 		auto it = images.begin();
-		queue.push_back(VideoFrame(*it, frameFlags()));
-		talloc_free(*it);
+		queue.push_back(VideoFrame(true, *it, frameFlags()));
 		for (++it; it != images.end(); ++it) {
 			auto mpi = *it;
 			mpi->pts = queue.back().nextPts(prevPts, images.size());
-			queue.push_back(VideoFrame(mpi, frameFlags()));
-			talloc_free(mpi);
+			queue.push_back(VideoFrame(true, mpi, frameFlags()));
 		}
 	}
 	return ok;
 }
 
-bool FFmpegAvFilter::build() {
+bool FFmpegVideoFilter::build() {
 	avfilter_register_all();
 	release();
 	if (format().isEmpty())
@@ -163,9 +161,7 @@ VideoFrame FFmpegPostProcDeint::topField(mp_image *mpi) const {
 	auto img = newImage(mpi);
 	process(img, mpi);
 	paintOut(img, mpi);
-	const VideoFrame frame(img, format(), frameFlags());
-	talloc_free(img);
-	return frame;
+	return VideoFrame(true, img, format(), frameFlags());
 }
 
 VideoFrame FFmpegPostProcDeint::bottomField(mp_image *mpi) const {
@@ -180,14 +176,12 @@ VideoFrame FFmpegPostProcDeint::bottomField(mp_image *mpi) const {
 	img->h += 2;
 	mpi->h += 2;
 	paintOut(img, mpi);
-	const VideoFrame frame(img, format(), frameFlags());
-	talloc_free(img);
-	return frame;
+	return VideoFrame(true, img, format(), frameFlags());
 }
 
 bool FFmpegPostProcDeint::pass(mp_image *mpi, QLinkedList<VideoFrame> &queue, double prevPts) {
 	if (!m_context || !m_mode) {
-		queue.push_back(VideoFrame(mpi, format()));
+		queue.push_back(VideoFrame(false, mpi, format()));
 		return false;
 	}
 	Q_ASSERT(mpi->stride[0] >= ((mpi->w+7)&(~7)));
@@ -228,9 +222,9 @@ bool FFmpegPostProcDeint::build() {
 bool HardwareDeintFilter::pass(mp_image *mpi, QLinkedList<VideoFrame> &queue, double prevPts) {
 	static const VideoFrame::Field field[] = {VideoFrame::Bottom, VideoFrame::Top};
 	const bool topFirst = mpi->fields & MP_IMGFIELD_TOP_FIRST;
-	queue.append(VideoFrame(mpi, field[topFirst] | frameFlags()));
+	queue.append(VideoFrame(false, mpi, field[topFirst] | frameFlags()));
 	if (m_doubler)
-		queue.append(VideoFrame(mpi, queue.last().nextPts(prevPts), field[!topFirst] | VideoFrame::Additional | frameFlags()));
+		queue.append(VideoFrame(false, mpi, queue.last().nextPts(prevPts), field[!topFirst] | VideoFrame::Additional | frameFlags()));
 	return true;
 }
 

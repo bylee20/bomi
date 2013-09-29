@@ -11,7 +11,7 @@ public:
 	template<const int i>
 	using DataType = typename std::tuple_element<i, Data>::type;
 	static constexpr int size = sizeof...(Args);
-	DataEvent(int type, Args... args): QEvent(static_cast<Type>(type)), m_data(args...) {}
+	DataEvent(int type, const Args&... args): QEvent(static_cast<Type>(type)), m_data(args...) {}
 	void get(Args&... args) { std::tie(args...) = m_data; }
 	template<int i>
 	const DataType<i> &data() const { return std::get<i>(m_data); }

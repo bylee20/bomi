@@ -26,7 +26,7 @@ protected:
 	virtual void bind(const RenderState &state, QOpenGLShaderProgram *program);
 	virtual void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	virtual void beforeUpdate() {}
-	virtual void initializeTextures() = 0;
+	virtual void initializeTextures() {}
 	virtual void updateTexturedPoint2D(TexturedPoint2D *tp) {set(tp, boundingRect(), QRectF(0, 0, 1, 1));}
 	static void set(TexturedPoint2D *tp, const QRectF &vtx, const QRectF &txt) {
 		set(tp, vtx.topLeft(), txt.topLeft());

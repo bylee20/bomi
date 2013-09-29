@@ -92,9 +92,6 @@ struct PlayEngine::Data {
 	bool deint = false;
 	QByteArray ao = "";
 	AudioDriver audioDriver = AudioDriver::Auto;
-	QOpenGLContext *gl = nullptr;
-	QOffscreenSurface *surface = nullptr;
-	bool glInit = false;
 };
 
 PlayEngine::PlayEngine()
@@ -129,6 +126,7 @@ PlayEngine::PlayEngine()
 PlayEngine::~PlayEngine() {
 	delete d->audio;
 	delete d->video;
+//	finalizeGL();
 	delete d;
 }
 
@@ -152,31 +150,6 @@ void PlayEngine::relativeSeek(int pos) {
 		}
 	} else
 		tellmp("seek", (double)pos/1000.0, 0);
-}
-
-QOpenGLContext *PlayEngine::gl() const {
-	return d->gl;
-}
-
-//void PlayEngine::initializeOpenGLContext(QOpenGLContext *context) {
-//	d->gl = new QOpenGLContext;
-//	d->gl->setShareContext(context);
-//	d->gl->setFormat(context->format());
-//	d->gl->moveToThread(this);
-//	d->surface = new QOffscreenSurface;
-//	d->surface->setFormat(context->format());
-//	d->surface->create();
-//	d->glInit = true;
-//}
-
-void PlayEngine::makeCurrent() {
-	if (d->glInit)
-		d->gl->makeCurrent(d->surface);
-}
-
-void PlayEngine::doneCurrent() {
-	if (d->glInit)
-		d->gl->doneCurrent();
 }
 
 void PlayEngine::setClippingMethod(ClippingMethod method) {
@@ -645,7 +618,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 }
 
 void PlayEngine::updateAudioLevel() {
-	d->enqueue(MpSetAudioLevel, "", m_volume*0.1*m_preamp);
+	d->enqueue(MpSetAudioLevel, "", (double)(m_volume)*0.01*m_preamp);
 }
 
 void PlayEngine::setVolume(int volume) {
@@ -700,12 +673,8 @@ void PlayEngine::run() {
 		idle_player(mpctx);
 		if (mpctx->stop_play == PT_QUIT)
 			break;
-//		while (!d->glInit && !d->quit)
-//			msleep(50);
 		if (d->quit)
 			break;
-//		if (!d->gl->isValid())
-//			d->gl->create();
 		Q_ASSERT(mpctx->playlist->current);
 		clear();
 		Mrl mrl = d->playlist.loadedMrl();

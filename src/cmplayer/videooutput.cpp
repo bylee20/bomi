@@ -6,6 +6,7 @@
 #include "deintinfo.hpp"
 #include "videofilter.hpp"
 #include "mposditem.hpp"
+#include "videoframeshader.hpp"
 
 extern "C" {
 #include <video/fmt-conversion.h>
@@ -80,6 +81,8 @@ struct VideoOutput::Data {
 	VideoFilter *filter_sw = nullptr;
 	VideoFilter *filter_hw = nullptr;
 	VideoFilter *filter = pass;
+	VideoFrameShader *shader = nullptr;
+	OpenGLFramebufferObject *fbo = nullptr;
 	template<typename T> T *newFilter(const QString &opts = QString()) {
 		auto filter = new T; filter->setOptions(opts); return filter;
 	}
@@ -119,7 +122,7 @@ struct VideoOutput::Data {
 				break;
 			}
 			if (!options.isEmpty())
-				return newFilter<FFmpegAvFilter>(options);
+				return newFilter<FFmpegVideoFilter>(options);
 		}
 		return nullptr;
 	}
@@ -216,7 +219,8 @@ void VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) {
 	auto v = priv(vo); auto d = v->d;
 	vo->frame_loaded = !d->frames.isEmpty();
 	if (vo->frame_loaded) {
-		d->frame = d->frames.takeFirst();
+		d->frame.swap(d->frames.first());
+		d->frames.pop_front();
 		vo->next_pts = d->frame.pts();
 		if (!d->frames.isEmpty())
 			vo->next_pts2 = d->frames.front().pts();

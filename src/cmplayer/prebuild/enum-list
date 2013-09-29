@@ -3,6 +3,8 @@
 -BicubicCR-Catmull-Rom bicubic interpolator
 -BicubicMN-Mitchell-Netravali bicubic interpolator
 -BicubicBS-B-spline bicubic interpolator
+-Lanczos2-Lanczos 2-lobed interpolator
+-Lanczos3Fast-Lanczos approx. 3-lobed interpolator
 
 +AudioDriver
 -Auto

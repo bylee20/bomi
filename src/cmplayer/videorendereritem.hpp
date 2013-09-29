@@ -5,10 +5,10 @@
 #include "skin.hpp"
 #include "texturerendereritem.hpp"
 
-class DeintInfo;
+class DeintInfo;				class OpenGLFramebufferObject;
 class VideoRendererItem;		class ColorProperty;
 class VideoFrame;				class VideoFormat;
-class MpOsdItem;
+class MpOsdItem;				class OpenGLTexture;
 enum class InterpolatorType;
 
 class VideoRendererItem : public TextureRendererItem {
@@ -54,13 +54,14 @@ public:
 	bool isFramePended() const;
 	bool hasFrame() const;
 	void requestFrameImage() const;
-	QImage frameImage() const;
 	QRectF frameRect(const QRectF &area) const;
 	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
 	int delay() const;
 	void setDeint(const DeintInfo &deint);
 	void setInterpolator(InterpolatorType interpolator);
-	void release();
+	void initializeGL();
+	void finalizeGL();
+	void swap(OpenGLTexture &texture, const VideoFormat &format);
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -72,11 +73,8 @@ signals:
 	void effectsChanged(Effects effects);
 	void offsetChanged(const QPoint &pos);
 	void screenRectChanged(const QRectF rect);
-	void texturesInitialized();
 private:
-	void updateKernel();
 	void enqueue(const VideoFrame &frame);
-	void initializeTextures();
 	const char *fragmentShader() const override;
 	const char *vertexShader() const override;
 	const char *const *attributeNames() const override;

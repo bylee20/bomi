@@ -127,10 +127,6 @@ public:
 	AudioDriver audioDriver() const;
 	void setClippingMethod(ClippingMethod method);
 	void setMinimumCache(int playback, int seeking);
-	QOpenGLContext *gl() const;
-//	void initializeOpenGLContext(QOpenGLContext *context);
-	void makeCurrent();
-	void doneCurrent();
 public slots:
 	void redraw();
 	void setVolume(int volume);
@@ -169,6 +165,7 @@ signals:
 	void speedChanged(double speed);
 private:
 	static int mpCommandFilter(MPContext *mpctx, mp_cmd *cmd);
+//	void finalizeGL();
 	int playImage(const Mrl &mrl, int &terminated, int &duration);
 	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);
 	int currentTrackId(int type) const;

@@ -8,13 +8,13 @@ extern "C" {
 #include <video/img_fourcc.h>
 }
 
-VideoFrame::VideoFrame::Data::Data(mp_image *mpi, const VideoFormat &format, double pts, int field)
+VideoFrame::VideoFrame::Data::Data(bool free, mp_image *mpi, const VideoFormat &format, double pts, int field)
 : format(format), pts(pts), field(field) {
 	data[0] = mpi->planes[0];
 	data[1] = mpi->planes[1];
 	data[2] = mpi->planes[2];
 	data[3] = mpi->planes[3];
-	this->mpi = mp_image_new_ref(mpi);
+	this->mpi = free ? mpi : mp_image_new_ref(mpi);
 }
 
 static QImage convertImage(const QImage &image) {

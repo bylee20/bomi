@@ -111,17 +111,16 @@ HEADERS += playengine.hpp \
     hwacc_vda.hpp \
     tmp.hpp \
     audiofilter.hpp \
-    videotextureshader.hpp \
     videofilter.hpp \
     deintinfo.hpp \
     letterboxitem.hpp \
     mposdbitmap.hpp \
     mposdnode.hpp \
     openglcompat.hpp \
-    videotextureshader.glsl.hpp \
     videoframeshader.glsl.hpp \
     videoframeshader.hpp \
-    undostack.hpp
+    undostack.hpp \
+    videorenderershader.glsl.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -184,7 +183,6 @@ SOURCES += main.cpp \
     hwacc_vdpau.cpp \
     hwacc_vda.cpp \
     audiofilter.cpp \
-    videotextureshader.cpp \
     videofilter.cpp \
     deintinfo.cpp \
     letterboxitem.cpp \
@@ -226,7 +224,7 @@ OTHER_FILES += \
     imports/CMPlayerSkin/AppWithDock.qml \
     imports/CMPlayerSkin/TimeSlider.qml \
     imports/CMPlayerSkin/VolumeSlider.qml \
-    videotextureshader.glsl \
+    videorenderershader.glsl \
     videoframeshader.glsl
 
 evil_hack_to_fool_lupdate {

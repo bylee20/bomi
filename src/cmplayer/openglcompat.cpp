@@ -33,29 +33,25 @@ void OpenGLCompat::fill(QOpenGLContext *ctx) {
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTextureSize);
 
-	m_bicubicParams[(int)InterpolatorType::Bilinear] = {0.0, 0.0};
 	m_bicubicParams[(int)InterpolatorType::BicubicBS] = {1.0, 0.0};
 	m_bicubicParams[(int)InterpolatorType::BicubicCR] = {0.0, 0.5};
 	m_bicubicParams[(int)InterpolatorType::BicubicMN] = {1./3., 1./3.};
+	m_bicubicParams[(int)InterpolatorType::Lanczos2] = {2.0, 2.0};
+	m_bicubicParams[(int)InterpolatorType::Lanczos3Fast] = {3.0, 3.0};
 }
 
-QVector<GLushort> OpenGLCompat::makeBicubicLut(double b, double c) {
-	static auto weight = [b, c] (double x) {
-		x = qAbs(x);
-		Q_ASSERT(x <= 2.0);
-		if (x < 1.0)
-			return ((12.0 - 9.0*b - 6.0*c)*x*x*x + (-18.0 + 12.0*b + 6.0*c)*x*x + (6.0 - 2.0*b))/6.0;
-		if (x < 2.0)
-			return ((-b - 6.0*c)*x*x*x + (6.0*b + 30.0*c)*x*x + (-12.0*b - 48.0*c)*x + (8.0*b + 24.0*c))/6.0;
-		return 0.0;
-	};
-	auto conv = [] (double d) { return static_cast<GLushort>(d * std::numeric_limits<GLushort>::max()); };
-	QVector<GLushort> lut(CubicLutSize);
+static auto conv = [] (double d) { return static_cast<GLushort>(d * std::numeric_limits<GLushort>::max()); };
+
+template<typename Func>
+QVector<GLushort> makeInterpolatorLut4(Func func) {
+	QVector<GLushort> lut(OpenGLCompat::CubicLutSize);
 	auto p = lut.data();
-	for (int i=0; i<CubicLutSamples; ++i) {
-		const auto a = (double)i/(CubicLutSamples-1);
-		const auto w0 = weight(a+1.0);	const auto w1 = weight(a);
-		const auto w2 = weight(a-1.0);	const auto w3 = weight(a-2.0);
+	for (int i=0; i<OpenGLCompat::CubicLutSamples; ++i) {
+		const auto a = (double)i/(OpenGLCompat::CubicLutSamples-1);
+		const auto w0 = func(a + 1.0) + func(a + 2.0);
+		const auto w1 = func(a + 0.0);
+		const auto w2 = func(a - 1.0);
+		const auto w3 = func(a - 2.0) + func(a - 3.0);
 		const auto g0 = w0 + w1;		const auto g1 = w2 + w3;
 		const auto h0 = 1.0 + a - w1/g0;const auto h1 = 1.0 - a + w3/g1;
 		const auto f0 = g0 + g1;		const auto f1 = g1/f0;
@@ -65,13 +61,56 @@ QVector<GLushort> OpenGLCompat::makeBicubicLut(double b, double c) {
 	return lut;
 }
 
-OpenGLTexture OpenGLCompat::allocateBicubicLutTexture(GLuint id, InterpolatorType interpolator) {
+#ifndef M_PI
+# define M_PI 3.14159265358979323846
+#endif
+
+static double bicubic(double x, double b, double c) {
+	x = qAbs(x);
+	if (x < 1.0)
+		return ((12.0 - 9.0*b - 6.0*c)*x*x*x + (-18.0 + 12.0*b + 6.0*c)*x*x + (6.0 - 2.0*b))/6.0;
+	if (x < 2.0)
+		return ((-b - 6.0*c)*x*x*x + (6.0*b + 30.0*c)*x*x + (-12.0*b - 48.0*c)*x + (8.0*b + 24.0*c))/6.0;
+	return 0.0;
+}
+
+static double lanczos(double x, double a) {
+	x = qAbs(x);
+	if (x == 0.0)
+		return 1.0;
+	const double pix = M_PI*x;
+	if (x < a)
+		return a*std::sin(pix)*std::sin(pix/a)/(pix*pix);
+	return 0.0;
+}
+
+void OpenGLCompat::fillInterpolatorLut(InterpolatorType interpolator) {
 	const int type = (int)interpolator;
+	const double b = m_bicubicParams[type].first;
+	const double c = m_bicubicParams[type].second;
+	switch (interpolator) {
+	case InterpolatorType::BicubicBS:
+	case InterpolatorType::BicubicCR:
+	case InterpolatorType::BicubicMN:
+		m_bicubicLuts[type] = makeInterpolatorLut4([b, c] (double x) { return bicubic(x, b, c); });
+		break;
+	case InterpolatorType::Lanczos2:
+	case InterpolatorType::Lanczos3Fast:
+		m_bicubicLuts[type] = makeInterpolatorLut4([b] (double x) { return lanczos(x, b); });
+		break;
+	default:
+		break;
+	}
+}
+
+OpenGLTexture OpenGLCompat::allocateInterpolatorLutTexture(GLuint id, InterpolatorType interpolator) {
 	OpenGLTexture texture;
-	if (type == InterpolatorType::Bilinear)
+	if (interpolator == InterpolatorType::Bilinear)
 		return texture;
-	if (c.m_bicubicLuts[type].isEmpty())
-		c.m_bicubicLuts[type] = makeBicubicLut(c.m_bicubicParams[type].first, c.m_bicubicParams[type].second);
+	auto &lut = c.m_bicubicLuts[(int)interpolator];
+	if (lut.isEmpty())
+		c.fillInterpolatorLut(interpolator);
+	Q_ASSERT(!lut.isEmpty());
 	texture.target = GL_TEXTURE_1D;
 	texture.width = CubicLutSamples;
 	texture.height = 0;
@@ -80,7 +119,7 @@ OpenGLTexture OpenGLCompat::allocateBicubicLutTexture(GLuint id, InterpolatorTyp
 	texture.format.type = GL_UNSIGNED_SHORT;
 	texture.id = id;
 	texture.bind();
-	texture.allocate(GL_LINEAR, GL_REPEAT, c.m_bicubicLuts[type].constData());
+	texture.allocate(GL_LINEAR, GL_REPEAT, lut.constData());
 	return texture;
 }
 

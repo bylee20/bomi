@@ -8,6 +8,7 @@ struct sub_bitmaps;
 class MpOsdBitmap {
 public:
 	enum Format {
+		NoFormat = 0,
 		PaMask = 0x01, /*Premultipled Alpha*/
 		Ass = 0x10 | PaMask,
 		Rgba = 0x20,

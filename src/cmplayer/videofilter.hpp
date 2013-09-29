@@ -25,7 +25,7 @@ public:
 			reconfigure(VideoFormat(mpi));
 		if (m_built && pass(mpi, queue, prevPts))
 			return true;
-		queue.push_back(VideoFrame(mpi));
+		queue.push_back(VideoFrame(false, mpi));
 		return false;
 	}
 	const VideoFormat &format() const { return m_format; }
@@ -58,9 +58,9 @@ protected:
 	virtual bool build() override { return VideoFilter::build(); }
 };
 
-class FFmpegAvFilter : public VideoFilter {
+class FFmpegVideoFilter : public VideoFilter {
 public:
-	~FFmpegAvFilter() { release(); }
+	~FFmpegVideoFilter() { release(); }
 protected:
 	bool pass(mp_image *mpi, QLinkedList<VideoFrame> &queue, double prevPts) override;
 	bool build();

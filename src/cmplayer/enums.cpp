@@ -1,9 +1,11 @@
 #include "enums.hpp"
-const std::array<InterpolatorTypeInfo::Item, 4> InterpolatorTypeInfo::info{{
+const std::array<InterpolatorTypeInfo::Item, 6> InterpolatorTypeInfo::info{{
 	{InterpolatorType::Bilinear, "Bilinear"},
 	{InterpolatorType::BicubicCR, "BicubicCR"},
 	{InterpolatorType::BicubicMN, "BicubicMN"},
-	{InterpolatorType::BicubicBS, "BicubicBS"}
+	{InterpolatorType::BicubicBS, "BicubicBS"},
+	{InterpolatorType::Lanczos2, "Lanczos2"},
+	{InterpolatorType::Lanczos3Fast, "Lanczos3Fast"}
 }};
 
 const std::array<AudioDriverInfo::Item, 7> AudioDriverInfo::info{{

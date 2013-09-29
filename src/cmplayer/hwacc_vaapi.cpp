@@ -142,7 +142,7 @@ VaApiSurface::~VaApiSurface() {
 		vaDestroySurfaces(VaApi::glx(), &m_id, 1);
 }
 
-VAStatus VaApiSurfacePool::create(int size, int width, int height, uint format) {
+VAStatus VaApiSurfacePool:: create(int size, int width, int height, uint format) {
 	if (m_width == width && m_height == height && m_format == format && m_surfaces.size() == size)
 		return isSuccess(VA_STATUS_SUCCESS);
 	clear();
@@ -195,16 +195,18 @@ void VaApiSurfacePool::clear() {
 }
 
 VaApiSurface *VaApiSurfacePool::getSurface() {
-	VaApiSurface *best = nullptr;
+	VaApiSurface *best = nullptr, *oldest = nullptr;
 	for (VaApiSurface *s : m_surfaces) {
+		if (!oldest || s->m_order < oldest->m_order)
+			oldest = s;
 		if (s->m_ref)
 			continue;
 		if (!best || best->m_order > s->m_order)
 			best = s;
 	}
 	if (!best) {
-		qDebug() << "No usable VASurfaceID!! decoding will fail";
-		return nullptr;
+		qDebug() << "No usable VASurfaceID!! decoding could fail";
+		best = oldest;
 	}
 	best->m_ref = true;
 	best->m_order = ++m_order;
