@@ -1,4 +1,14 @@
 #include "enums.hpp"
+const std::array<DeintMethodInfo::Item, 7> DeintMethodInfo::info{{
+	{DeintMethod::None, "None"},
+	{DeintMethod::Bob, "Bob"},
+	{DeintMethod::LinearBob, "LinearBob"},
+	{DeintMethod::CubicBob, "CubicBob"},
+	{DeintMethod::Median, "Median"},
+	{DeintMethod::LinearBlend, "LinearBlend"},
+	{DeintMethod::Yadif, "Yadif"}
+}};
+
 const std::array<InterpolatorTypeInfo::Item, 6> InterpolatorTypeInfo::info{{
 	{InterpolatorType::Bilinear, "Bilinear"},
 	{InterpolatorType::BicubicCR, "BicubicCR"},

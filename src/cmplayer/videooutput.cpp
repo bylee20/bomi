@@ -75,57 +75,9 @@ struct VideoOutput::Data {
 	HwAcc *acc = nullptr, *prevAcc = nullptr;
 	QLinkedList<VideoFrame> frames;
 	double prevPts = MP_NOPTS_VALUE;
-	VideoFilter *pass = new PassThroughVideoFilter;
 	mp_image_params params;
-	DeintInfo deint_sw, deint_hw;
-	VideoFilter *filter_sw = nullptr;
-	VideoFilter *filter_hw = nullptr;
-	VideoFilter *filter = pass;
-	VideoFrameShader *shader = nullptr;
-	OpenGLFramebufferObject *fbo = nullptr;
-	template<typename T> T *newFilter(const QString &opts = QString()) {
-		auto filter = new T; filter->setOptions(opts); return filter;
-	}
-	VideoFilter *makeFilter(const DeintInfo &deint) {
-		const int flags = deint.flags();
-		if (deint.isHardware())
-			return newFilter<HardwareDeintFilter>(deint.isDoubleRate() ? "x2" : "");
-		else if (flags & DeintInfo::PostProc) {
-			QString options;
-			switch (deint.method()) {
-			case DeintInfo::LinearBob:
-				options = "li";
-				break;
-			case DeintInfo::LinearBlend:
-				options = "lb";
-				break;
-			case DeintInfo::CubicBob:
-				options = "ci";
-				break;
-			case DeintInfo::Median:
-				options = "md";
-				break;
-			default:
-				break;
-			}
-			if (!options.isEmpty())
-				return newFilter<FFmpegPostProcDeint>(deint.isDoubleRate() ? options + "x2" : options);
-		} else if (flags & DeintInfo::AvFilter) {
-			QString options;
-			switch (deint.method()) {
-			case DeintInfo::Yadif:
-				options = "yadif";
-				if (deint.isDoubleRate())
-					options += "=mode=1";
-				break;
-			default:
-				break;
-			}
-			if (!options.isEmpty())
-				return newFilter<FFmpegVideoFilter>(options);
-		}
-		return nullptr;
-	}
+	DeintOption deint_swdec, deint_hwdec;
+	SoftwareDeinterlacer deinterlacer;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -134,9 +86,6 @@ VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
 }
 
 VideoOutput::~VideoOutput() {
-	delete d->filter_sw;
-	delete d->filter_hw;
-	delete d->pass;
 	delete d;
 }
 
@@ -170,27 +119,12 @@ void VideoOutput::setDeintEnabled(bool on) {
 }
 
 void VideoOutput::updateDeint() {
-	DeintInfo deint;
-	auto deintAcc = [] (const DeintInfo &ref) {
-		const int flags = ref.flags() & DeintInfo::Hardware;
-		return flags ? DeintInfo(ref.method(), flags) : DeintInfo();
-	};
-	if (!d->deint) {
-		deint = DeintInfo();
-		d->filter = d->pass;
-	} else {
-		if (d->acc) {
-			d->filter = d->filter_hw;
-			deint = deintAcc(d->deint_hw);
-		} else {
-			d->filter = d->filter_sw;
-			deint = deintAcc(d->deint_sw);
-		}
-	}
-	if (!d->filter)
-		d->filter = d->pass;
+	DeintOption opt;
+	if (d->deint)
+		opt = d->acc ? d->deint_hwdec : d->deint_swdec;
+	d->deinterlacer.setOption(opt);
 	if (d->renderer)
-		d->renderer->setDeint(deint);
+		d->renderer->setDeintMethod(opt.hwacc ? opt.method : DeintMethod::None);
 }
 
 void VideoOutput::reset() {
@@ -229,15 +163,12 @@ void VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) {
 		emit v->formatChanged(d->format);
 }
 
-void VideoOutput::setDeint(const DeintInfo &sw, const DeintInfo &hw) {
-	auto update = [this] (VideoFilter *&filter, DeintInfo &deint, const DeintInfo &newer) {
-		if (!_Change(deint, newer)) return false;
-		delete filter; filter = d->makeFilter(deint); return true;
-	};
-	bool changed = update(d->filter_sw, d->deint_sw, sw);
-	changed = update(d->filter_hw, d->deint_hw, hw) || changed;
-	if (changed)
-		updateDeint();
+void VideoOutput::setDeintOptions(const DeintOption &sw, const DeintOption &hw) {
+	if (d->deint_swdec == sw && d->deint_hwdec == hw)
+		return;
+	d->deint_swdec = sw;
+	d->deint_hwdec = hw;
+	updateDeint();
 }
 
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
@@ -247,15 +178,15 @@ void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto img = mpi;
 	if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
 		img = d->acc->getImage(mpi);
-	const double pts = img->pts;
-	auto filter = d->pass;
-	if (d->deint && (img->fields & MP_IMGFIELD_INTERLACED))
-		filter = d->filter;
-	filter->setFrameFlags(d->upsideDown);
-	filter->apply(img, d->frames, d->prevPts);
+	VideoFrame frame(img != mpi, img, d->upsideDown ? VideoFrame::Flipped : 0);
+	const double pts = frame.pts();
+	d->deinterlacer.process(frame, d->frames, d->prevPts);
+//	auto filter = d->pass;
+////	if (d->deint && (img->fields & MP_IMGFIELD_INTERLACED))
+////		filter = d->filter;
+//	filter->setFrameFlags(d->upsideDown);
+//	filter->apply(frame, d->frames, d->prevPts);
 	d->prevPts = pts;
-	if (img != mpi) // new image is allocated, unref it
-		talloc_free(img);
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {

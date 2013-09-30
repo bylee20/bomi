@@ -16,6 +16,7 @@ extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
 #ifndef __OBJC__
 #include <type_traits>
 #include <array>
+#include <iterator>
 #endif
 
 #ifdef Q_OS_LINUX
@@ -87,16 +88,16 @@ template<typename T>                   void _Delete(T *&t) {delete t; t = nullpt
 template<typename Iter, typename Test>
 Iter _FindIf(Iter begin, Iter end, Test test) { return std::find_if(begin, end, test); }
 template<typename List, typename Test>
-typename List::const_iterator _FindIf(const List &list, Test test) { return std::find_if(list.begin(), list.end(), test); }
+typename List::const_iterator _FindIf(const List &list, Test test) { return std::find_if(std::begin(list), std::end(list), test); }
 template<typename List, typename Test>
-bool _ContainsIf(const List &list, Test test) { return std::find_if(list.begin(), list.end(), test) != list.end(); }
+bool _ContainsIf(const List &list, Test test) { return std::find_if(std::begin(list), std::end(list), test) != std::end(list); }
 
 template<typename Iter, typename T>
 Iter _Find(Iter begin, Iter end, const T &t) { return std::find(begin, end, t); }
 template<typename List, typename T>
-typename List::const_iterator _Find(const List &list, const T &t) { return std::find(list.begin(), list.end(), t); }
+typename List::const_iterator _Find(const List &list, const T &t) { return std::find(std::begin(list), std::end(list), t); }
 template<typename List, typename T>
-bool _Contains(const List &list, const T &t) { return std::find(list.begin(), list.end(), t) != list.end(); }
+bool _Contains(const List &list, const T &t) { return std::find(std::begin(list), std::end(list), t) != std::end(list); }
 }
 
 using namespace Pch;

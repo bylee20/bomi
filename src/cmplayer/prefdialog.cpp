@@ -231,11 +231,12 @@ struct PrefDialog::Data {
 	PrefMouseGroup<ClickAction> *dbl, *mdl;
 	PrefMouseGroup<WheelAction> *whl;
 	QMap<int, QCheckBox*> hwdec;
-	QMap<int, QCheckBox*> hwdeint;
+	QMap<DeintMethod, QCheckBox*> hwdeint;
 	PrefOpenMediaGroup *open_media_from_file_manager;
 	PrefOpenMediaGroup *open_media_by_drag_and_drop;
 	QStringList imports;
 	QList<MenuTreeItem*> actionItems;
+	DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
@@ -329,42 +330,35 @@ PrefDialog::PrefDialog(QWidget *parent)
 	if (filter) {
 		for (int algo : VaApi::algorithms(VAProcFilterDeinterlacing)) {
 			if (algo == VAProcDeinterlacingBob) // other methods are not tested, yet
-				d->hwdeint[DeintInfo::Bob] = makeCheckBox(VaApiFilterInfo::description(filter->type(), algo), filter->supports(algo));
+				d->hwdeint[DeintMethod::Bob] = makeCheckBox(VaApiFilterInfo::description(filter->type(), algo), filter->supports(algo));
 		}
 	}
 	d->ui.hwdeint_list->setLayout(vbox);
 #endif
 
-	auto initDeints = [] (const QList<DeintInfo> &deints, QComboBox *combo, QStackedWidget *stack, bool hw) {
-		for (auto deint : deints) {
-			combo->addItem(deint.name(), deint.method());
-			auto w = new DeintWidget(deint, hw);
-			const int idx = stack->addWidget(w);
-			combo->setItemData(idx, QVariant::fromValue(w), WidgetRole);
-		}
-	};
-	initDeints(DeintInfo::hwdecList(), d->ui.deint_hwdec_combo, d->ui.deint_hwdec_stack, true);
-	initDeints(DeintInfo::swdecList(), d->ui.deint_swdec_combo, d->ui.deint_swdec_stack, false);
-
-	auto updateDeintDesc = [this] (QWidget *w) {
-		const auto method = qobject_cast<DeintWidget*>(w)->method();
-		d->ui.deint_desc->setText("\n" % DeintInfo::name(method) % "\n\n" % DeintInfo::description(method));
-	};
-	connect(d->ui.deint_swdec_stack, &QStackedWidget::currentChanged, [this, updateDeintDesc] (int index) {
-		updateDeintDesc(d->ui.deint_swdec_stack->widget(index));
-	});
-	connect(d->ui.deint_hwdec_stack, &QStackedWidget::currentChanged, [this, updateDeintDesc] (int index) {
-		updateDeintDesc(d->ui.deint_hwdec_stack->widget(index));
-	});
-	connect(d->ui.deint_tabs, &QTabWidget::currentChanged, [this, updateDeintDesc] (int index) {
-		auto stack = index ? d->ui.deint_hwdec_stack : d->ui.deint_swdec_stack;
-		updateDeintDesc(stack->currentWidget());
-	});
-	updateDeintDesc(d->ui.deint_tabs->currentWidget()->findChild<QStackedWidget*>()->currentWidget());
+	d->ui.deint_tabs->addTab(d->deint_swdec = new DeintWidget(false), tr("For S/W decoding"));
+	d->ui.deint_tabs->addTab(d->deint_hwdec = new DeintWidget(true ), tr("For H/W decoding"));
 #ifdef Q_OS_MAC
 	d->ui.enable_hwdeint->setVisible(false);
 	d->ui.enable_hwdeint->setEnabled(false);
 #endif
+	auto methodText = [] (DeintMethod method, const QString &desc) -> QString {
+		return _L(DeintMethodInfo::name(method)) % ": " % desc;
+	};
+
+	d->ui.deint_desc->setText(
+		'\n' % tr("Methods") % "\n\n" %
+		methodText(DeintMethod::Bob, tr("Display each line twice.")) % '\n' %
+		methodText(DeintMethod::LinearBob, tr("Bob with linear interpolation.")) % '\n' %
+		methodText(DeintMethod::CubicBob, tr("Bob with cubic interpolation.")) % '\n' %
+		methodText(DeintMethod::LinearBlend, tr("Blend linearly each line with (1 2 1) filter.")) % '\n' %
+		methodText(DeintMethod::Median, tr("Apply median filter to every second line.")) % '\n' %
+		methodText(DeintMethod::Yadif, tr("Use complicated temporal and spatial interpolation.")) % "\n\n" %
+		tr("Make FPS doubled") % "\n\n" %
+		tr("This option makes the framerate doubled. You can get smoother and fluid motions if your hardware is good enough.") % "\n\n" %
+		tr("Enable H/W Acc.") % "\n\n" %
+		tr("Some methods can be accelerated with GPU by turning on this option. The operation is done OpenGL (or VA-API in Linux).")
+	);
 
 	d->ui.sub_ext->addItem(QString(), QString());
 	d->ui.sub_ext->addItemTextData(Info::subtitleExt());
@@ -564,6 +558,25 @@ void PrefDialog::retranslate() {
 	d->ui.dbb->button(DBB::Reset)->setText(tr("Reset"));
 }
 
+template<class T>
+static void setHw(QGroupBox *group, bool enabled, QMap<T, QCheckBox*> &map, const QList<T> &keys) {
+	group->setChecked(enabled);
+	for (auto key : keys) {
+		if (auto ch = map.value(key))
+			ch->setChecked(true);
+	}
+}
+
+template<class T>
+static void getHw(bool &enabled, QGroupBox *group, QList<T> &keys, const QMap<T, QCheckBox*> &map) {
+	enabled = group->isChecked();
+	keys.clear();
+	for (auto it = map.begin(); it != map.end(); ++it) {
+		if (*it && (*it)->isChecked())
+			keys << it.key();
+	}
+};
+
 void PrefDialog::set(const Pref &p) {
 	d->open_media_from_file_manager->setValue(p.open_media_from_file_manager);
 	d->open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
@@ -588,27 +601,10 @@ void PrefDialog::set(const Pref &p) {
 		d->ui.fill_bg_color->setChecked(true);
 	d->ui.bg_color->setColor(p.bg_color, false);
 
-	auto setHw = [this] (QGroupBox *group, bool enabled, QMap<int, QCheckBox*> &map, const QList<int> &keys) {
-		group->setChecked(enabled);
-		for (auto key : keys) {
-			if (auto ch = map.value(key))
-				ch->setChecked(true);
-		}
-	};
 	setHw(d->ui.enable_hwdec, p.enable_hwaccel, d->hwdec, p.hwaccel_codecs);
 	setHw(d->ui.enable_hwdeint, p.enable_hwdeint, d->hwdeint, p.hwdeints);
-
-	auto setDeintList = [] (const QComboBox *combo, const QList<DeintInfo> &list) {
-		for (const auto &deint : list) {
-			auto idx = combo->findData(deint.method());
-			if (idx >= 0)
-				combo->itemData(idx, WidgetRole).value<DeintWidget*>()->setInfo(deint);
-		}
-	};
-	setDeintList(d->ui.deint_hwdec_combo, p.deint_list_hwdec);
-	setDeintList(d->ui.deint_swdec_combo, p.deint_list_swdec);
-	d->ui.deint_hwdec_combo->setCurrentData(p.deint_hwdec.method());
-	d->ui.deint_swdec_combo->setCurrentData(p.deint_swdec.method());
+	d->deint_swdec->setOption(p.deint_swdec);
+	d->deint_hwdec->setOption(p.deint_hwdec);
 
 	d->ui.normalizer_silence->setValue(p.normalizer_silence);
 	d->ui.normalizer_target->setValue(p.normalizer_target);
@@ -718,27 +714,10 @@ void PrefDialog::get(Pref &p) {
 	p.show_logo = d->ui.show_logo->isChecked();
 	p.bg_color = d->ui.bg_color->color();
 
-	auto getHw = [] (bool &enabled, QGroupBox *group, QList<int> &keys, const QMap<int, QCheckBox*> &map) {
-		enabled = group->isChecked();
-		keys.clear();
-		for (auto it = map.begin(); it != map.end(); ++it) {
-			if (*it && (*it)->isChecked())
-				keys << it.key();
-		}
-	};
 	getHw(p.enable_hwaccel, d->ui.enable_hwdec, p.hwaccel_codecs, d->hwdec);
 	getHw(p.enable_hwdeint, d->ui.enable_hwdeint, p.hwdeints, d->hwdeint);
-
-	auto getDeintList = [] (const QComboBox *combo) {
-		QList<DeintInfo> list;
-		for (int i=0; i<combo->count(); ++i)
-			list << combo->itemData(i, WidgetRole).value<DeintWidget*>()->info();
-		return list;
-	};
-	p.deint_list_hwdec = getDeintList(d->ui.deint_hwdec_combo);
-	p.deint_list_swdec = getDeintList(d->ui.deint_swdec_combo);
-	p.deint_hwdec = d->ui.deint_hwdec_combo->currentData(WidgetRole).value<DeintWidget*>()->info();
-	p.deint_swdec = d->ui.deint_swdec_combo->currentData(WidgetRole).value<DeintWidget*>()->info();
+	p.deint_swdec = d->deint_swdec->option();
+	p.deint_hwdec = d->deint_hwdec->option();
 
 	p.picture_interpolator = d->ui.picture_interpolator->currentValue();
 	p.blur_kern_c = d->ui.blur_kern_c->value();

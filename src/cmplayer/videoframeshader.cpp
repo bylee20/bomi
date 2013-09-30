@@ -82,8 +82,8 @@ void VideoFrameShader::setEffects(int effects) {
 	m_rebuild = hasKernelEffects() != isKernelEffect(old);
 }
 
-void VideoFrameShader::setDeintInfo(const DeintInfo &deint) {
-	if (_Change(m_deint, deint))
+void VideoFrameShader::setDeintMethod(DeintMethod method) {
+	if (_Change(m_deint, method))
 		m_rebuild = true;
 }
 
@@ -111,13 +111,19 @@ void VideoFrameShader::build() {
 	if (hasKernelEffects())
 		header += "#define USE_KERNEL3x3\n";
 	int deint = 0;
-	if ((m_deint.hardware() & DeintInfo::OpenGL) && format.imgfmt() != IMGFMT_VAAPI) {
-		if (m_deint.method() == DeintInfo::Bob)
+	switch (m_deint) {
+	case DeintMethod::Bob:
+		if (format.imgfmt() != IMGFMT_VAAPI)
 			deint = 1;
-		else if (m_deint.method() == DeintInfo::LinearBob)
-			deint = 2;
+		break;
+	case DeintMethod::LinearBob:
+		deint = 2;
+		break;
+	default:
+		break;
 	}
 	header += "#define USE_DEINT " + QByteArray::number(deint) + "\n";
+	qDebug() << "deint" << deint;
 
 	m_fragCode = header;
 	m_fragCode += "#define FRAGMENT\n";
@@ -175,7 +181,7 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 	if (m_format.imgfmt() == IMGFMT_VDA) {
 		for (const VideoTexture2 &texture : m_textures) {
 			const auto cgl = static_cast<CGLContextObj>(qApp->platformNativeInterface()->nativeResourceForContext("cglcontextobj", QOpenGLContext::currentContext()));
-			const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
+			const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)m_frame.data(3));
 			texture.bind();
 			const auto w = IOSurfaceGetWidthOfPlane(surface, texture.plane);
 			const auto h = IOSurfaceGetHeightOfPlane(surface, texture.plane);
@@ -202,7 +208,7 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 		};
 		auto id = (VASurfaceID)(uintptr_t)m_frame.data(3);
 		int flags = specs[m_frame.format().colorspace()];
-		if (m_deint.hardware() & DeintInfo::VaApi)
+		if (m_deint == DeintMethod::Bob)
 			flags |= field[m_frame.field() & VideoFrame::Interlaced];
 		m_textures[0].bind();
 		vaCopySurfaceGLX(VaApi::glx(), m_vaSurfaceGLX, id,  flags);
@@ -219,80 +225,11 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 	return changed;
 }
 
-//bool VideoFrameShader::upload(const VideoFrame &frame) {
-//	if (frame.isAdditional())
-//		return false;
-//	bool changed = m_frame.format() != frame.format();
-//	if (m_dma) {
-//		if (changed)
-//			m_frame.allocate(frame.format());
-//		m_frame.doDeepCopy(frame);
-//	} else
-//		m_frame = frame;
-//	if (changed) {
-//		fillInfo();
-//		updateTexCoords();
-//		updateColorMatrix();
-//	}
-//	if (m_rebuild)
-//		build();
-//	if (m_rebuild)
-//		return false;
-//#ifdef Q_OS_MAC
-//	if (m_format.imgfmt() == IMGFMT_VDA) {
-//		for (const VideoTexture2 &texture : m_textures) {
-//			const auto cgl = static_cast<CGLContextObj>(qApp->platformNativeInterface()->nativeResourceForContext("cglcontextobj", QOpenGLContext::currentContext()));
-//			const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
-//			texture.bind();
-//			const auto w = IOSurfaceGetWidthOfPlane(surface, texture.plane);
-//			const auto h = IOSurfaceGetHeightOfPlane(surface, texture.plane);
-//			CGLTexImageIOSurface2D(cgl, texture.target, texture.format.internal, w, h, texture.format.pixel, texture.format.type, surface, texture.plane);
-//			texture.unbind();
-//		}
-//		return ret;
-//	}
-//#endif
-//#ifdef Q_OS_LINUX
-//	if (m_frame.format().imgfmt() == IMGFMT_VAAPI) {
-//		static const int specs[MP_CSP_COUNT] = {
-//			0,					//MP_CSP_AUTO,
-//			VA_SRC_BT601,		//MP_CSP_BT_601,
-//			VA_SRC_BT709,		//MP_CSP_BT_709,
-//			VA_SRC_SMPTE_240,	//MP_CSP_SMPTE_240M,
-//			0,					//MP_CSP_RGB,
-//			0,					//MP_CSP_XYZ,
-//			0,					//MP_CSP_YCGCO,
-//		};
-//		static const int field[] = {
-//			// Picture = 0,   Top = 1,      Bottom = 2
-//			VA_FRAME_PICTURE, VA_TOP_FIELD, VA_BOTTOM_FIELD, VA_FRAME_PICTURE
-//		};
-//		auto id = (VASurfaceID)(uintptr_t)frame.data(3);
-//		int flags = specs[m_frame.format().colorspace()];
-//		if (m_deint.hardware() & DeintInfo::VaApi)
-//			flags |= field[m_frame.field() & VideoFrame::Interlaced];
-//		m_textures[0].bind();
-//		vaCopySurfaceGLX(VaApi::glx(), m_vaSurfaceGLX, id,  flags);
-//		vaSyncSurface(VaApi::glx(), id);
-//		return changed;
-//	}
-//#endif
-//	if (m_dma) {
-//		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-//		for (int i=0; i<m_textures.size(); ++i)
-//			m_textures[i].upload2D(m_frame.data(m_textures[i].plane));
-//		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-//	} else {
-//		for (int i=0; i<m_textures.size(); ++i)
-//			m_textures[i].upload2D(frame.data(m_textures[i].plane));
-//	}
-//	return changed;
-//}
-
 void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 	if (m_rebuild)
 		return;
 	glViewport(0, 0, m_frame.format().width(), m_frame.format().height());
+//  VideoFrame is always opaque. No need to clear background.
 //	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 //	glClear(GL_COLOR_BUFFER_BIT);
 

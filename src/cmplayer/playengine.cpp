@@ -88,7 +88,7 @@ struct PlayEngine::Data {
 	}
 
 	VideoFormat videoFormat;
-	DeintInfo deint_sw, deint_hw;
+	DeintOption deint_sw, deint_hw;
 	bool deint = false;
 	QByteArray ao = "";
 	AudioDriver audioDriver = AudioDriver::Auto;
@@ -443,7 +443,7 @@ int PlayEngine::mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 			reinit_audio_chain(mpctx);
 			break;
 		case MpResetDeint:
-			d->video->setDeint(d->deint_sw, d->deint_hw);
+			d->video->setDeintOptions(d->deint_sw, d->deint_hw);
 			break;
 		case MpSetDeintEnabled:
 			d->video->setDeintEnabled(d->deint);
@@ -552,7 +552,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	d->mpctx->opts->play_start.pos = d->start*1e-3;
 	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
 	setmp("audio-delay", m_audioSync*0.001);
-	d->video->setDeint(d->deint_sw, d->deint_hw);
+	d->video->setDeintOptions(d->deint_sw, d->deint_hw);
 	d->video->setDeintEnabled(d->deint);
 	auto error = prepare_playback(mpctx);
 	updateAudioLevel();
@@ -921,7 +921,7 @@ void PlayEngine::setVolumeNormalizerOption(double length, double target, double 
 	d->audio->setNormalizerOption(length, target, silence, min, max);
 }
 
-void PlayEngine::setDeint(const DeintInfo &sw, const DeintInfo &hw) {
+void PlayEngine::setDeintOptions(const DeintOption &sw, const DeintOption &hw) {
 	if (d->deint_sw == sw && d->deint_hw == hw)
 		return;
 	QMutexLocker locker(&d->mutex);

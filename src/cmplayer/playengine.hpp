@@ -10,9 +10,8 @@
 class VideoRendererItem;	struct MPContext;
 class VideoFormat;			struct mp_cmd;
 class PlaylistModel;		class Playlist;
-class DeintInfo;			enum class DeintMode;
-enum class AudioDriver;		enum class SoftwareVolume;
-enum class ClippingMethod;
+class DeintOption;
+enum class AudioDriver;		enum class ClippingMethod;
 
 typedef std::function<int(const Mrl&)> GetMrlInt;
 
@@ -119,7 +118,7 @@ public:
 	void setSubtitleStreamsVisible(bool visible);
 	bool isSubtitleStreamsVisible() const {return m_subtitleStreamsVisible;}
 	void setVideoFilters(const QString &vfs);
-	void setDeint(const DeintInfo &sw, const DeintInfo &hw);
+	void setDeintOptions(const DeintOption &sw, const DeintOption &hw);
 	void setDeintEnabled(bool on);
 	bool isDeintEanbled() const;
 	void setAudioDriver(AudioDriver driver);

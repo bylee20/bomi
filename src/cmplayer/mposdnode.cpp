@@ -1,8 +1,5 @@
 #include "mposdnode.hpp"
 
-static int MaterialId = 0;
-static std::array<QSGMaterialType, 50> MaterialTypes;
-
 class MpOsdNode::Shader : public QSGMaterialShader {
 public:
 	Shader(MpOsdNode *node): m_node(node) {}
@@ -55,10 +52,10 @@ private:
 class MpOsdNode::Material : public QSGMaterial {
 public:
 	Material(MpOsdNode *node): m_node(node) { setFlag(Blending); }
-	QSGMaterialType *type() const { return &MaterialTypes[m_id]; }
+	QSGMaterialType *type() const { return &m_type; }
 	QSGMaterialShader *createShader() const { return new Shader(m_node); }
 private:
-	int m_id = ++MaterialId%MaterialTypes.size();
+	mutable QSGMaterialType m_type;
 	MpOsdNode *m_node = nullptr;
 };
 

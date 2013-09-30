@@ -123,9 +123,9 @@ public:
 
 	bool enable_hwaccel = false, enable_hwdeint = false;
     QList<int> hwaccel_codecs = defaultHwAccCodecs();
-	QList<int> hwdeints = defaultHwAccDeints();
-	DeintInfo deint_hwdec, deint_swdec;
-	QList<DeintInfo> deint_list_hwdec = DeintInfo::hwdecList(), deint_list_swdec = DeintInfo::swdecList();
+	QList<DeintMethod> hwdeints = defaultHwAccDeints();
+	DeintOption deint_hwdec = DeintOption::default_(DeintMethod::Bob);
+	DeintOption deint_swdec = DeintOption::default_(DeintMethod::Bob);
 
 	double normalizer_silence = 0.0001, normalizer_target = 0.07, normalizer_min = 0.1, normalizer_max = 10.0;
 	double normalizer_length = 5.0;
@@ -148,7 +148,7 @@ public:
 private:
 //	static Pref &get();
 	static QList<int> defaultHwAccCodecs();
-	static QList<int> defaultHwAccDeints();
+	static QList<DeintMethod> defaultHwAccDeints();
 	static Shortcuts defaultShortcuts();
 	static ClickActionMap defaultDoubleClick() {
 		ClickActionMap map = {false, ClickAction::Fullscreen};

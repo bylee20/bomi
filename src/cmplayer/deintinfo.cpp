@@ -1,166 +1,160 @@
 #include "deintinfo.hpp"
+#include "widgets.hpp"
+#include "record.hpp"
 
-struct DeintInfo::Item {
-	Method method;
-	int caps;
-	QString name;
-	static const std::array<Item, MethodCount> &list();
+class DeintCaps {
+public:
+	static QList<DeintCaps> list();
+	DeintMethod method() const { return m_method; }
+	bool hwdec() const { return m_hwdec; }
+	bool swdec() const { return m_swdec; }
+	bool cpu() const { return m_cpu; }
+	bool gpu() const { return m_gpu; }
+	bool doubler() const { return m_doubler; }
+private:
+	friend class DeintInfo;
+	DeintMethod m_method = DeintMethod::None;
+	bool m_hwdec = false, m_swdec = false;
+	bool m_cpu = false, m_gpu = false;
+	bool m_doubler = false;
 };
 
-static QList<DeintInfo> deints_hwdec, deints_swdec;
+//QString DeintMethod::description(Method method) {
+//	QString desc;
 
-static void initDeintList() {
-	if (!deints_hwdec.isEmpty() && !deints_swdec.isEmpty())
-		return;
-	const auto deints = DeintInfo::list();
-	for (auto &deint : deints) {
-		const int caps = deint.capabilities();
-		deints_swdec << deint;
-		if (caps & DeintInfo::Hardware)
-			deints_hwdec << deint;
-	}
+//}
+
+QList<DeintCaps> DeintCaps::list() {
+	static QList<DeintCaps> caps;
+	if (!caps.isEmpty())
+		return caps;
+	for (int i=0; i<DeintMethodInfo::size(); ++i)
+		caps.push_back(DeintCaps());
+
+	auto set = [] (DeintMethod method, bool cpu, bool gpu, bool sw, bool hw, bool doubler) {
+		auto &cap = caps[(int)method];
+		cap.m_method = method;
+		cap.m_cpu = cpu;
+		cap.m_gpu = gpu;
+		cap.m_swdec = sw;
+		cap.m_hwdec = hw;
+		cap.m_doubler = doubler;
+		return caps[(int)method];
+	};
+	//  method                    cpu    gpu    swdec  hwdec  doubler
+	set(DeintMethod::Bob        , false, true , true , true , true );
+	set(DeintMethod::LinearBob  , true , true , true , true , true );
+	set(DeintMethod::CubicBob   , true , false, true , false, true );
+	set(DeintMethod::LinearBlend, true , false, true , false, false);
+	set(DeintMethod::Yadif      , true , false, true , false, true );
+	set(DeintMethod::Median     , true , false, true , false, true );
+	return caps;
 }
 
-QList<DeintInfo> DeintInfo::hwdecList() { initDeintList(); return deints_hwdec; }
-QList<DeintInfo> DeintInfo::swdecList() { initDeintList(); return deints_swdec; }
-
-const std::array<DeintInfo::Item, DeintInfo::MethodCount> &DeintInfo::Item::list() {
-	static std::array<DeintInfo::Item, DeintInfo::MethodCount> list;
-	static bool first = true;
-	if (!first)
-		return list;
-#define INIT(mtd, cps) {list[mtd].method = mtd; list[mtd].caps = cps; list[mtd].name = #mtd;}
-	INIT(Bob, Hardware | SingleRate | DoubleRate);
-	INIT(LinearBob, OpenGL | PostProc | SingleRate | DoubleRate);
-	INIT(CubicBob, PostProc | SingleRate | DoubleRate);
-	INIT(Yadif, AvFilter | SingleRate | DoubleRate);
-	INIT(LinearBlend, PostProc | SingleRate);
-	INIT(Median, PostProc | SingleRate | DoubleRate);
-#undef INIT
-	first = false;
-	return list;
+QString DeintOption::toString() const {
+	return _L(DeintMethodInfo::name(method)) + "|" + _N(doubler) + "|" + _N(hwacc);
 }
 
-DeintInfo::DeintInfo(Method method, int flags)
-: m_method(method), m_flags(flags & Item::list()[method].caps) {}
-
-QList<DeintInfo> DeintInfo::list() {
-	QList<DeintInfo> list;
-	list.reserve(MethodCount);
-	for (auto &item : Item::list()) {
-		DeintInfo info;
-		info.m_method = item.method;
-		info.m_flags = item.caps;
-		list << info;
-	}
-	return list;
+DeintOption DeintOption::fromString(const QString &string) {
+	QStringList tokens = string.split("|", QString::SkipEmptyParts);
+	if (tokens.size() != 3)
+		return DeintOption();
+	DeintOption opt;
+	opt.method = DeintMethodInfo::from(tokens[0]);
+	opt.doubler = tokens[1].toInt();
+	opt.hwacc = tokens[2].toInt();
+	return opt;
 }
 
-DeintInfo DeintInfo::fromString(const QString &text) {
-	auto idx = text.indexOf("|");
-	if (idx < 0)
-		return DeintInfo();
-	const int flags = text.mid(idx + 1).toInt();
-	const QString name = text.left(idx);
-	auto &list = Item::list();
-	auto it = _FindIf(list, [name] (const Item &item) { return item.name == name; });
-	return it != list.end() ? DeintInfo(it->method, flags) : DeintInfo();
+DeintOption DeintOption::default_(DeintMethod method) {
+	auto cap = DeintCaps::list()[(int)method];
+	DeintOption option;
+	option.method = method;
+	option.hwacc = cap.gpu();
+	option.doubler = cap.doubler();
+	return option;
 }
-
-int DeintInfo::capabilities() const {
-	return Item::list()[m_method].caps;
-}
-
-QString DeintInfo::name() const {
-	return Item::list()[m_method].name;
-}
-
-QString DeintInfo::name(Method method) {
-	return Item::list()[method].name;
-}
-
-int DeintInfo::capabilities(Method method) {
-	return Item::list()[method].caps;
-}
-
-QString DeintInfo::description(Method method) {
-	QString desc;
-	switch (method) {
-	case Bob:
-		desc = tr("Display each line twice.");
-		break;
-	case LinearBob:
-		desc = tr("Bob with linear interpolation. Deinterlace the given picture by linearly interpolating every second line.");
-		break;
-	case CubicBob:
-		desc = tr("Bob with cubic interpolation. Deinterlace the given block by cubically interpolating every second line.");
-		break;
-	case Yadif:
-		desc = tr("Yet Another DeInterlacing Filter. Create a full picture through a complicated algorithm that includes both temporal and spatial interpolation.");
-		break;
-	case LinearBlend:
-		desc = tr("Linear blend deinterlacing filter that deinterlaces the given block by filtering all lines with a (1 2 1) filter.");
-		break;
-	case Median:
-		desc = tr("Median deinterlacing filter that deinterlaces the given block by applying a median filter to every second line.");
-		break;
-	default:
-		return QString();
-	}
-	const auto caps = Item::list()[method].caps;
-	QString info;
-	if (caps & DoubleRate)
-		info += "\n* " + tr("This method supports double the framerate.");
-	if (caps & OpenGL)
-		info += "\n* " + tr("This method can be accelerated by OpenGL.");
-	if (caps & VaApi)
-		info += "\n* " + tr("This method can be accelerated by VA-API. In order to activate this filter, You have to enable it in 'Hardware Acceleration'.");
-	if (!info.isEmpty())
-		desc += "\n" + info;
-	return desc;
-}
-
 
 struct DeintWidget::Data {
-	QCheckBox *hwacc = nullptr;
-	QCheckBox *doubler = nullptr;
-	DeintInfo::Method method;
+	DataComboBox *combo = nullptr;
+	QCheckBox *hwacc = nullptr, *doubler = nullptr;
+	QMap<DeintMethod, DeintCaps> caps;
+	QMap<DeintMethod, DeintOption> options;
+	bool updating = false;
+	bool hwdec = false;
+	DeintOption &option() { return options[(DeintMethod)combo->currentData().toInt()]; }
 };
 
-DeintWidget::DeintWidget(const DeintInfo &info, bool hwdec, QWidget *parent)
+DeintWidget::DeintWidget(bool hwdec, QWidget *parent)
 : QWidget(parent), d(new Data) {
-	const int caps = info.capabilities();
-	d->method = info.method();
-	d->doubler = new QCheckBox(tr("Make the framerate doubled"), this);
-	d->hwacc = new QCheckBox(tr("Enable hardware acceleration"), this);
-	d->doubler->setEnabled(caps & DeintInfo::DoubleRate);
-	d->hwacc->setEnabled(!hwdec && (caps & DeintInfo::Software) && (caps & DeintInfo::Hardware));
-	d->hwacc->setChecked(hwdec);
-	auto vbox = new QVBoxLayout;
-	vbox->setMargin(0);
-	vbox->addWidget(d->doubler);
-	vbox->addWidget(d->hwacc);
-	setLayout(vbox);
+	d->hwdec = hwdec;
+	Record r("deint_options");
+	QStringList tokens = r.value(hwdec ? "hwdec" : "swdec").toStringList();
+	for (QString token : tokens) {
+		auto opt = DeintOption::fromString(token);
+		if (opt.method != DeintMethod::None)
+			d->options[opt.method] = opt;
+	}
+	d->combo = new DataComboBox(this);
+	const auto caps = DeintCaps::list();
+	for (auto &cap : caps) {
+		if (cap.method() == DeintMethod::None || (hwdec && !cap.hwdec()) || (!hwdec && !cap.swdec()))
+			continue;
+		const auto method = cap.method();
+		d->combo->addItem(DeintMethodInfo::name(method), (int)method);
+		d->caps[method] = cap;
+		if (!d->options.contains(cap.method()))
+			d->options[method] = DeintOption::default_(method);
+	}
+	d->doubler = new QCheckBox(tr("Make FPS doubled"), this);
+	d->hwacc = new QCheckBox(tr("Enable H/W Acc."), this);
+	auto hbox = new QHBoxLayout;
+	hbox->addWidget(d->combo);
+	hbox->addWidget(d->doubler);
+	hbox->addWidget(d->hwacc);
+	setLayout(hbox);
 
-	setInfo(info);
+	auto update = [hwdec, this] (DeintMethod method) {
+		d->updating = true;
+		const auto &cap = d->caps[method];
+		auto &opt = d->options[method];
+		d->doubler->setEnabled(cap.doubler());
+		d->doubler->setChecked(opt.doubler);
+		d->hwacc->setEnabled(!hwdec && cap.gpu() && cap.cpu());
+		if (cap.gpu() && cap.cpu())
+			d->hwacc->setChecked(opt.hwacc);
+		else
+			d->hwacc->setChecked(opt.hwacc = cap.gpu());
+		d->updating = false;
+	};
+	connect(d->combo, &DataComboBox::currentDataChanged, [update] (const QVariant &data) {
+		update(DeintMethod(data.toInt()));
+	});
+	connect(d->doubler, &QCheckBox::toggled, [this] (bool on) {
+		if (!d->updating) d->option().doubler = on;
+	});
+	connect(d->hwacc, &QCheckBox::toggled, [this] (bool on) {
+		if (!d->updating) d->option().hwacc = on;
+	});
+	update(DeintMethod::Bob);
 }
 
 DeintWidget::~DeintWidget() {
+	Record r("deint_options");
+	QStringList tokens;
+	for (auto it = d->options.begin(); it != d->options.end(); ++it)
+		tokens << it->toString();
+	r.write(tokens, d->hwdec ? "hwdec" : "swdec");
 	delete d;
 }
 
-void DeintWidget::setInfo(const DeintInfo &info) {
-	d->doubler->setChecked(info.isDoubleRate());
-	d->hwacc->setChecked(info.isHardware());
+void DeintWidget::setOption(const DeintOption &opt) {
+	auto &option = d->options[opt.method];
+	option.doubler = opt.doubler;
+	option.hwacc = opt.hwacc;
+	d->combo->setCurrentData((int)opt.method);
 }
 
-DeintInfo DeintWidget::info() const {
-	int flags = 0;
-	flags |= d->doubler->isChecked() ? DeintInfo::DoubleRate : DeintInfo::SingleRate;
-	flags |= d->hwacc->isChecked() ? DeintInfo::Hardware : DeintInfo::Software;
-	return DeintInfo(d->method, flags);
-}
-
-DeintInfo::Method DeintWidget::method() const {
-	return d->method;
+DeintOption DeintWidget::option() const {
+	return d->option();
 }

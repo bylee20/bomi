@@ -98,8 +98,10 @@ VaApiFilterInfo::VaApiFilterInfo(VAContextID context, VAProcFilterType type) {
 		return;
 	}
 	m_algorithms.resize(m_caps.size());
-	for (int i=0; i<m_caps.size(); ++i)
+	for (int i=0; i<m_caps.size(); ++i) {
 		m_algorithms[i] = m_caps[i].algorithm;
+		qDebug() << description(type, m_algorithms[i]);
+	}
 }
 
 class VaApiSurface {

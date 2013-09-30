@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>4</number>
+        <number>8</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1653,82 +1653,8 @@
             </sizepolicy>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>-1</number>
            </property>
-           <widget class="QWidget" name="deint_swdec">
-            <attribute name="title">
-             <string>For S/W decoding</string>
-            </attribute>
-            <layout class="QVBoxLayout" name="verticalLayout_28">
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_19">
-               <item>
-                <widget class="QLabel" name="label_30">
-                 <property name="text">
-                  <string>Method</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="DataComboBox" name="deint_swdec_combo"/>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_18">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <widget class="QStackedWidget" name="deint_swdec_stack"/>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="deint_hwdec">
-            <attribute name="title">
-             <string>For H/W decoding</string>
-            </attribute>
-            <layout class="QVBoxLayout" name="verticalLayout_29">
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_20">
-               <item>
-                <widget class="QLabel" name="label_34">
-                 <property name="text">
-                  <string>Method</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="DataComboBox" name="deint_hwdec_combo"/>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_19">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <widget class="QStackedWidget" name="deint_hwdec_stack"/>
-             </item>
-            </layout>
-           </widget>
           </widget>
          </item>
          <item>
@@ -3391,38 +3317,6 @@ e.g.: English, Korean</string>
     <hint type="destinationlabel">
      <x>315</x>
      <y>68</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>deint_swdec_combo</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>deint_swdec_stack</receiver>
-   <slot>setCurrentIndex(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>342</x>
-     <y>97</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>361</x>
-     <y>113</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>deint_hwdec_combo</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>deint_hwdec_stack</receiver>
-   <slot>setCurrentIndex(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>330</x>
-     <y>100</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>347</x>
-     <y>114</y>
     </hint>
    </hints>
   </connection>

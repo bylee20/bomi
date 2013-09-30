@@ -16,7 +16,6 @@ int main(int argc, char **argv) {
 	PlayerItem::registerItems();
 	qDebug() << "Create App instance";
 	App app(argc, argv);
-//	qDebug() << QGuiApplicationPrivate::platformIntegration()->hasCapability(QPlatformIntegration::ThreadedOpenGL);
 	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]"))) {
 		qDebug() << "Another instance is already running. Exit this.";
 		return 0;

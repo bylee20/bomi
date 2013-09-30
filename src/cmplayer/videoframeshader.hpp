@@ -18,7 +18,7 @@ public:
 	~VideoFrameShader();
 	void render(const Kernel3x3 &k3x3);
 	GLenum target() const { return m_target; }
-	void setDeintInfo(const DeintInfo &deint);
+	void setDeintMethod(DeintMethod method);
 	void setEffects(int effects);
 	void setColor(const ColorProperty &color);
 	bool upload(VideoFrame &frame);
@@ -61,7 +61,7 @@ private:
 	QVector3D m_sub_vec, m_add_vec;
 	QVector<GLfloat> m_vCoords, m_vPositions;
 	int m_effects = 0;
-	DeintInfo m_deint;
+	DeintMethod m_deint = DeintMethod::None;
 	int loc_kern_d, loc_kern_c, loc_kern_n, loc_top_field, loc_deint;
 	int loc_sub_vec, loc_add_vec, loc_mul_mat, loc_vMatrix;
 	int loc_tex[3] = {-1, -1, -1}, loc_cc[3] = {-1, -1, -1};

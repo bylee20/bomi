@@ -5,11 +5,9 @@
 
 // CAUTION: NEVER CALL THIS CLASS FROM Qt's GUI
 
-enum class DeintMode;
-
 struct MPContext;			struct vo_driver;
 class VideoFormat;			class PlayEngine;
-struct mp_image;			class DeintInfo;
+struct mp_image;			class DeintOption;
 class VideoRendererItem;	class HwAcc;
 
 class VideoOutput : public QObject {
@@ -26,7 +24,7 @@ public:
 	void setHwAcc(HwAcc *acc);
 	HwAcc *hwAcc() const;
 	static int queryFormat(struct vo *vo, quint32 format);
-	void setDeint(const DeintInfo &sw, const DeintInfo &hw);
+	void setDeintOptions(const DeintOption &sw, const DeintOption &hw);
 	void setDeintEnabled(bool on);
 	void redraw();
 signals:

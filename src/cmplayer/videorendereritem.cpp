@@ -41,7 +41,7 @@ struct VideoRendererItem::Data {
 	Kernel3x3 blur, sharpen, kernel;
 	Effects effects = 0;
 	ColorProperty color;
-	DeintInfo deint;
+	DeintMethod deint = DeintMethod::None;
 	SyncValue<InterpolatorType> interpolator = InterpolatorType::Bilinear;
 	int loc_vMatrix = -1, loc_tex = -1, loc_lut_interpolator = -1;
 	QByteArray fragCode, vertexCode;
@@ -82,7 +82,7 @@ void VideoRendererItem::initializeGL() {
 	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
 	d->lutInterpolator.generate();
 	_Renew(d->shader);
-	d->shader->setDeintInfo(d->deint);
+	d->shader->setDeintMethod(d->deint);
 	d->shader->setColor(d->color);
 	d->shader->setEffects(d->effects);
 	d->black = OpenGLCompat::makeTexture(1, 1, GL_BGRA);
@@ -111,11 +111,8 @@ void VideoRendererItem::customEvent(QEvent *event) {
 		update();
 		break;
 	case UpdateDeint: {
-		auto deint = getData<DeintInfo>(event);
-		if (!deint.isHardware())
-			deint = DeintInfo();
-		if (_Change(d->deint, deint) && d->shader) {
-			d->shader->setDeintInfo(d->deint);
+		if (_Change(d->deint, getData<DeintMethod>(event)) && d->shader) {
+			d->shader->setDeintMethod(d->deint);
 			d->repaint();
 		}
 		break;
@@ -170,8 +167,8 @@ void VideoRendererItem::setAlignment(int alignment) {
 	}
 }
 
-void VideoRendererItem::setDeint(const DeintInfo &deint) {
-	postData(this, UpdateDeint, deint);
+void VideoRendererItem::setDeintMethod(DeintMethod method) {
+	postData(this, UpdateDeint, method);
 }
 
 double VideoRendererItem::targetAspectRatio() const {

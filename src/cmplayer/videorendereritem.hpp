@@ -9,7 +9,7 @@ class DeintInfo;				class OpenGLFramebufferObject;
 class VideoRendererItem;		class ColorProperty;
 class VideoFrame;				class VideoFormat;
 class MpOsdItem;				class OpenGLTexture;
-enum class InterpolatorType;
+enum class InterpolatorType;	enum class DeintMethod;
 
 class VideoRendererItem : public TextureRendererItem {
 	Q_OBJECT
@@ -57,7 +57,7 @@ public:
 	QRectF frameRect(const QRectF &area) const;
 	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
 	int delay() const;
-	void setDeint(const DeintInfo &deint);
+	void setDeintMethod(DeintMethod method);
 	void setInterpolator(InterpolatorType interpolator);
 	void initializeGL();
 	void finalizeGL();

@@ -1339,12 +1339,9 @@ void MainWindow::applyPref() {
 	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
 #ifdef Q_OS_LINUX
-	int flags = p.deint_hwdec.flags();
-	if ((flags & DeintInfo::VaApi) && (!p.enable_hwdeint || !p.hwdeints.contains(p.deint_hwdec.method())))
-		flags &= ~DeintInfo::VaApi;
-	d->engine.setDeint(p.deint_swdec, DeintInfo(p.deint_hwdec.method(), flags));
+	d->engine.setDeintOptions(p.deint_swdec, p.deint_hwdec);
 #else
-	d->engine.setDeint(p.deint_swdec, p.deint_hwdec);
+	d->engine.setDeintOptions(p.deint_swdec, p.deint_hwdec);
 #endif
 	d->engine.setAudioDriver(p.audio_driver);
 	d->engine.setClippingMethod(p.clipping_method);

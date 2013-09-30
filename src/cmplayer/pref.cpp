@@ -199,7 +199,7 @@ void Pref::save() const {
 
     WRITE(enable_hwaccel);
 	WRITE(skin_name);
-    WRITE(hwaccel_codecs);
+	WRITE(hwaccel_codecs);
 	WRITE(enable_hwdeint);
 	WRITE(hwdeints);
 
@@ -215,8 +215,6 @@ void Pref::save() const {
 
 	WRITE(deint_hwdec);
 	WRITE(deint_swdec);
-	WRITE(deint_list_hwdec);
-	WRITE(deint_list_swdec);
 
 	WRITE(audio_driver);
 	WRITE(clipping_method);
@@ -319,8 +317,6 @@ void Pref::load() {
 
 	READ(deint_hwdec);
 	READ(deint_swdec);
-	READ(deint_list_hwdec);
-	READ(deint_list_swdec);
 
 	READ(audio_driver);
 	READ(clipping_method);
@@ -362,8 +358,8 @@ void Pref::load() {
 #include "hwacc_vaapi.hpp"
 #endif
 
-QList<int> Pref::defaultHwAccDeints() {
-	QList<int> deints;
+QList<DeintMethod> Pref::defaultHwAccDeints() {
+	QList<DeintMethod> deints;
 #ifdef Q_OS_LINUX
 	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
 	if (!filter)
@@ -373,7 +369,7 @@ QList<int> Pref::defaultHwAccDeints() {
 		if (filter->supports(algo)) {
 			switch (algo) {
 			case VAProcDeinterlacingBob:
-				deints << DeintInfo::Bob;
+				deints << DeintMethod::Bob;
 				break;
 			default:
 				break;

@@ -15,7 +15,7 @@ public:
 	VideoFrame(): d(new Data) {}
 	VideoFrame(VideoFrame &&other): d(nullptr) { other.d.swap(d); }
 	VideoFrame(const VideoFrame &other): d(other.d) {}
-	VideoFrame &operator = (const VideoFrame &) = delete;
+	VideoFrame &operator = (const VideoFrame &other) { d = other.d; return *this; }
 	VideoFrame &operator = (VideoFrame &&other) { other.d.swap(d); return *this; }
 	QImage toImage() const;
 	bool isFlipped() const { return d->field & Flipped; }

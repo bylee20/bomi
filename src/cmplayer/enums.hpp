@@ -7,6 +7,68 @@
 
 template<typename T> class EnumInfo {};
 
+enum class DeintMethod : int {
+	None = (int)0,
+	Bob = (int)1,
+	LinearBob = (int)2,
+	CubicBob = (int)3,
+	Median = (int)4,
+	LinearBlend = (int)5,
+	Yadif = (int)6
+};
+
+inline bool operator == (DeintMethod e, int i) { return (int)e == i; }
+inline bool operator != (DeintMethod e, int i) { return (int)e != i; }
+inline bool operator == (int i, DeintMethod e) { return (int)e == i; }
+inline bool operator != (int i, DeintMethod e) { return (int)e != i; }
+inline int operator & (DeintMethod e, int i) { return (int)e & i; }
+inline int operator & (int i, DeintMethod e) { return (int)e & i; }
+inline bool operator > (DeintMethod e, int i) { return (int)e > i; }
+inline bool operator < (DeintMethod e, int i) { return (int)e < i; }
+inline bool operator >= (DeintMethod e, int i) { return (int)e >= i; }
+inline bool operator <= (DeintMethod e, int i) { return (int)e <= i; }
+inline bool operator > (int i, DeintMethod e) { return i > (int)e; }
+inline bool operator < (int i, DeintMethod e) { return i < (int)e; }
+inline bool operator >= (int i, DeintMethod e) { return i >= (int)e; }
+inline bool operator <= (int i, DeintMethod e) { return i <= (int)e; }
+
+template<>
+class EnumInfo<DeintMethod> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef DeintMethod Enum;
+public:
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 7; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
+	}
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::None: return tr("");
+		case Enum::Bob: return tr("");
+		case Enum::LinearBob: return tr("");
+		case Enum::CubicBob: return tr("");
+		case Enum::Median: return tr("");
+		case Enum::LinearBlend: return tr("");
+		case Enum::Yadif: return tr("");
+		default: return tr("");
+		};
+	}
+	static constexpr const std::array<Item, 7> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
+private:
+	static const std::array<Item, 7> info;
+};
+
+using DeintMethodInfo = EnumInfo<DeintMethod>;
+
 enum class InterpolatorType : int {
 	Bilinear = (int)0,
 	BicubicCR = (int)1,
