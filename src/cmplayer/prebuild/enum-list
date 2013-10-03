@@ -1,3 +1,14 @@
++DecoderDevice
+-None=0
+-CPU=1
+-GPU=2
+
++DeintDevice
+-None=0
+-CPU=1
+-GPU=2
+-OpenGL=4
+
 +DeintMethod
 -None
 -Bob
@@ -6,6 +17,7 @@
 -Median
 -LinearBlend
 -Yadif
+-MotionAdaptive
 
 +InterpolatorType
 -Bilinear-Bilinear interpolator

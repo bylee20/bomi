@@ -9,6 +9,7 @@ struct MPContext;			struct vo_driver;
 class VideoFormat;			class PlayEngine;
 struct mp_image;			class DeintOption;
 class VideoRendererItem;	class HwAcc;
+enum class DeintMethod;
 
 class VideoOutput : public QObject {
 	Q_OBJECT

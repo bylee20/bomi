@@ -5,7 +5,125 @@
 #include <QCoreApplication>
 #include <array>
 
-template<typename T> class EnumInfo {};
+template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
+
+enum class DecoderDevice : int {
+	CPU = (int)1,
+	GPU = (int)2
+};
+
+inline bool operator == (DecoderDevice e, int i) { return (int)e == i; }
+inline bool operator != (DecoderDevice e, int i) { return (int)e != i; }
+inline bool operator == (int i, DecoderDevice e) { return (int)e == i; }
+inline bool operator != (int i, DecoderDevice e) { return (int)e != i; }
+inline int operator & (DecoderDevice e, int i) { return (int)e & i; }
+inline int operator & (int i, DecoderDevice e) { return (int)e & i; }
+inline int &operator &= (int &i, DecoderDevice e) { return i &= (int)e; }
+inline int operator ~ (DecoderDevice e) { return ~(int)e; }
+inline int operator | (DecoderDevice e, int i) { return (int)e | i; }
+inline int operator | (int i, DecoderDevice e) { return (int)e | i; }
+inline int operator | (DecoderDevice e1, DecoderDevice e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, DecoderDevice e) { return i |= (int)e; }
+inline bool operator > (DecoderDevice e, int i) { return (int)e > i; }
+inline bool operator < (DecoderDevice e, int i) { return (int)e < i; }
+inline bool operator >= (DecoderDevice e, int i) { return (int)e >= i; }
+inline bool operator <= (DecoderDevice e, int i) { return (int)e <= i; }
+inline bool operator > (int i, DecoderDevice e) { return i > (int)e; }
+inline bool operator < (int i, DecoderDevice e) { return i < (int)e; }
+inline bool operator >= (int i, DecoderDevice e) { return i >= (int)e; }
+inline bool operator <= (int i, DecoderDevice e) { return i <= (int)e; }
+
+template<>
+class EnumInfo<DecoderDevice> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef DecoderDevice Enum;
+public:
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 2; }
+	static const char *name(Enum e) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
+	}
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::CPU: return tr("");
+		case Enum::GPU: return tr("");
+		default: return tr("");
+		};
+	}
+	static constexpr const std::array<Item, 2> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
+private:
+	static const std::array<Item, 2> info;
+};
+
+using DecoderDeviceInfo = EnumInfo<DecoderDevice>;
+
+enum class DeintDevice : int {
+	CPU = (int)1,
+	GPU = (int)2,
+	OpenGL = (int)4
+};
+
+inline bool operator == (DeintDevice e, int i) { return (int)e == i; }
+inline bool operator != (DeintDevice e, int i) { return (int)e != i; }
+inline bool operator == (int i, DeintDevice e) { return (int)e == i; }
+inline bool operator != (int i, DeintDevice e) { return (int)e != i; }
+inline int operator & (DeintDevice e, int i) { return (int)e & i; }
+inline int operator & (int i, DeintDevice e) { return (int)e & i; }
+inline int &operator &= (int &i, DeintDevice e) { return i &= (int)e; }
+inline int operator ~ (DeintDevice e) { return ~(int)e; }
+inline int operator | (DeintDevice e, int i) { return (int)e | i; }
+inline int operator | (int i, DeintDevice e) { return (int)e | i; }
+inline int operator | (DeintDevice e1, DeintDevice e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, DeintDevice e) { return i |= (int)e; }
+inline bool operator > (DeintDevice e, int i) { return (int)e > i; }
+inline bool operator < (DeintDevice e, int i) { return (int)e < i; }
+inline bool operator >= (DeintDevice e, int i) { return (int)e >= i; }
+inline bool operator <= (DeintDevice e, int i) { return (int)e <= i; }
+inline bool operator > (int i, DeintDevice e) { return i > (int)e; }
+inline bool operator < (int i, DeintDevice e) { return i < (int)e; }
+inline bool operator >= (int i, DeintDevice e) { return i >= (int)e; }
+inline bool operator <= (int i, DeintDevice e) { return i <= (int)e; }
+
+template<>
+class EnumInfo<DeintDevice> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef DeintDevice Enum;
+public:
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 3; }
+	static const char *name(Enum e) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
+	}
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::CPU: return tr("");
+		case Enum::GPU: return tr("");
+		case Enum::OpenGL: return tr("");
+		default: return tr("");
+		};
+	}
+	static constexpr const std::array<Item, 3> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
+private:
+	static const std::array<Item, 3> info;
+};
+
+using DeintDeviceInfo = EnumInfo<DeintDevice>;
 
 enum class DeintMethod : int {
 	None = (int)0,
@@ -14,7 +132,8 @@ enum class DeintMethod : int {
 	CubicBob = (int)3,
 	Median = (int)4,
 	LinearBlend = (int)5,
-	Yadif = (int)6
+	Yadif = (int)6,
+	MotionAdaptive = (int)7
 };
 
 inline bool operator == (DeintMethod e, int i) { return (int)e == i; }
@@ -23,6 +142,12 @@ inline bool operator == (int i, DeintMethod e) { return (int)e == i; }
 inline bool operator != (int i, DeintMethod e) { return (int)e != i; }
 inline int operator & (DeintMethod e, int i) { return (int)e & i; }
 inline int operator & (int i, DeintMethod e) { return (int)e & i; }
+inline int &operator &= (int &i, DeintMethod e) { return i &= (int)e; }
+inline int operator ~ (DeintMethod e) { return ~(int)e; }
+inline int operator | (DeintMethod e, int i) { return (int)e | i; }
+inline int operator | (int i, DeintMethod e) { return (int)e | i; }
+inline int operator | (DeintMethod e1, DeintMethod e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, DeintMethod e) { return i |= (int)e; }
 inline bool operator > (DeintMethod e, int i) { return (int)e > i; }
 inline bool operator < (DeintMethod e, int i) { return (int)e < i; }
 inline bool operator >= (DeintMethod e, int i) { return (int)e >= i; }
@@ -38,7 +163,7 @@ class EnumInfo<DeintMethod> {
 	typedef DeintMethod Enum;
 public:
 	struct Item { Enum value; const char *name; };
-	static constexpr int size() { return 7; }
+	static constexpr int size() { return 8; }
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
@@ -51,10 +176,11 @@ public:
 		case Enum::Median: return tr("");
 		case Enum::LinearBlend: return tr("");
 		case Enum::Yadif: return tr("");
+		case Enum::MotionAdaptive: return tr("");
 		default: return tr("");
 		};
 	}
-	static constexpr const std::array<Item, 7> &items() { return info; }
+	static constexpr const std::array<Item, 8> &items() { return info; }
 	static Enum from(int id, Enum def = info[0].value) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
@@ -64,7 +190,7 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
 private:
-	static const std::array<Item, 7> info;
+	static const std::array<Item, 8> info;
 };
 
 using DeintMethodInfo = EnumInfo<DeintMethod>;
@@ -84,6 +210,12 @@ inline bool operator == (int i, InterpolatorType e) { return (int)e == i; }
 inline bool operator != (int i, InterpolatorType e) { return (int)e != i; }
 inline int operator & (InterpolatorType e, int i) { return (int)e & i; }
 inline int operator & (int i, InterpolatorType e) { return (int)e & i; }
+inline int &operator &= (int &i, InterpolatorType e) { return i &= (int)e; }
+inline int operator ~ (InterpolatorType e) { return ~(int)e; }
+inline int operator | (InterpolatorType e, int i) { return (int)e | i; }
+inline int operator | (int i, InterpolatorType e) { return (int)e | i; }
+inline int operator | (InterpolatorType e1, InterpolatorType e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, InterpolatorType e) { return i |= (int)e; }
 inline bool operator > (InterpolatorType e, int i) { return (int)e > i; }
 inline bool operator < (InterpolatorType e, int i) { return (int)e < i; }
 inline bool operator >= (InterpolatorType e, int i) { return (int)e >= i; }
@@ -145,6 +277,12 @@ inline bool operator == (int i, AudioDriver e) { return (int)e == i; }
 inline bool operator != (int i, AudioDriver e) { return (int)e != i; }
 inline int operator & (AudioDriver e, int i) { return (int)e & i; }
 inline int operator & (int i, AudioDriver e) { return (int)e & i; }
+inline int &operator &= (int &i, AudioDriver e) { return i &= (int)e; }
+inline int operator ~ (AudioDriver e) { return ~(int)e; }
+inline int operator | (AudioDriver e, int i) { return (int)e | i; }
+inline int operator | (int i, AudioDriver e) { return (int)e | i; }
+inline int operator | (AudioDriver e1, AudioDriver e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, AudioDriver e) { return i |= (int)e; }
 inline bool operator > (AudioDriver e, int i) { return (int)e > i; }
 inline bool operator < (AudioDriver e, int i) { return (int)e < i; }
 inline bool operator >= (AudioDriver e, int i) { return (int)e >= i; }
@@ -203,6 +341,12 @@ inline bool operator == (int i, ClippingMethod e) { return (int)e == i; }
 inline bool operator != (int i, ClippingMethod e) { return (int)e != i; }
 inline int operator & (ClippingMethod e, int i) { return (int)e & i; }
 inline int operator & (int i, ClippingMethod e) { return (int)e & i; }
+inline int &operator &= (int &i, ClippingMethod e) { return i &= (int)e; }
+inline int operator ~ (ClippingMethod e) { return ~(int)e; }
+inline int operator | (ClippingMethod e, int i) { return (int)e | i; }
+inline int operator | (int i, ClippingMethod e) { return (int)e | i; }
+inline int operator | (ClippingMethod e1, ClippingMethod e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, ClippingMethod e) { return i |= (int)e; }
 inline bool operator > (ClippingMethod e, int i) { return (int)e > i; }
 inline bool operator < (ClippingMethod e, int i) { return (int)e < i; }
 inline bool operator >= (ClippingMethod e, int i) { return (int)e >= i; }
@@ -257,6 +401,12 @@ inline bool operator == (int i, StaysOnTop e) { return (int)e == i; }
 inline bool operator != (int i, StaysOnTop e) { return (int)e != i; }
 inline int operator & (StaysOnTop e, int i) { return (int)e & i; }
 inline int operator & (int i, StaysOnTop e) { return (int)e & i; }
+inline int &operator &= (int &i, StaysOnTop e) { return i &= (int)e; }
+inline int operator ~ (StaysOnTop e) { return ~(int)e; }
+inline int operator | (StaysOnTop e, int i) { return (int)e | i; }
+inline int operator | (int i, StaysOnTop e) { return (int)e | i; }
+inline int operator | (StaysOnTop e1, StaysOnTop e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, StaysOnTop e) { return i |= (int)e; }
 inline bool operator > (StaysOnTop e, int i) { return (int)e > i; }
 inline bool operator < (StaysOnTop e, int i) { return (int)e < i; }
 inline bool operator >= (StaysOnTop e, int i) { return (int)e >= i; }
@@ -311,6 +461,12 @@ inline bool operator == (int i, SeekingStep e) { return (int)e == i; }
 inline bool operator != (int i, SeekingStep e) { return (int)e != i; }
 inline int operator & (SeekingStep e, int i) { return (int)e & i; }
 inline int operator & (int i, SeekingStep e) { return (int)e & i; }
+inline int &operator &= (int &i, SeekingStep e) { return i &= (int)e; }
+inline int operator ~ (SeekingStep e) { return ~(int)e; }
+inline int operator | (SeekingStep e, int i) { return (int)e | i; }
+inline int operator | (int i, SeekingStep e) { return (int)e | i; }
+inline int operator | (SeekingStep e1, SeekingStep e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, SeekingStep e) { return i |= (int)e; }
 inline bool operator > (SeekingStep e, int i) { return (int)e > i; }
 inline bool operator < (SeekingStep e, int i) { return (int)e < i; }
 inline bool operator >= (SeekingStep e, int i) { return (int)e >= i; }
@@ -364,6 +520,12 @@ inline bool operator == (int i, GeneratePlaylist e) { return (int)e == i; }
 inline bool operator != (int i, GeneratePlaylist e) { return (int)e != i; }
 inline int operator & (GeneratePlaylist e, int i) { return (int)e & i; }
 inline int operator & (int i, GeneratePlaylist e) { return (int)e & i; }
+inline int &operator &= (int &i, GeneratePlaylist e) { return i &= (int)e; }
+inline int operator ~ (GeneratePlaylist e) { return ~(int)e; }
+inline int operator | (GeneratePlaylist e, int i) { return (int)e | i; }
+inline int operator | (int i, GeneratePlaylist e) { return (int)e | i; }
+inline int operator | (GeneratePlaylist e1, GeneratePlaylist e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, GeneratePlaylist e) { return i |= (int)e; }
 inline bool operator > (GeneratePlaylist e, int i) { return (int)e > i; }
 inline bool operator < (GeneratePlaylist e, int i) { return (int)e < i; }
 inline bool operator >= (GeneratePlaylist e, int i) { return (int)e >= i; }
@@ -417,6 +579,12 @@ inline bool operator == (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e
 inline bool operator != (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e != i; }
 inline int operator & (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e & i; }
 inline int operator & (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e & i; }
+inline int &operator &= (int &i, PlaylistBehaviorWhenOpenMedia e) { return i &= (int)e; }
+inline int operator ~ (PlaylistBehaviorWhenOpenMedia e) { return ~(int)e; }
+inline int operator | (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e | i; }
+inline int operator | (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e | i; }
+inline int operator | (PlaylistBehaviorWhenOpenMedia e1, PlaylistBehaviorWhenOpenMedia e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, PlaylistBehaviorWhenOpenMedia e) { return i |= (int)e; }
 inline bool operator > (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e > i; }
 inline bool operator < (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e < i; }
 inline bool operator >= (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e >= i; }
@@ -471,6 +639,12 @@ inline bool operator == (int i, SubtitleAutoload e) { return (int)e == i; }
 inline bool operator != (int i, SubtitleAutoload e) { return (int)e != i; }
 inline int operator & (SubtitleAutoload e, int i) { return (int)e & i; }
 inline int operator & (int i, SubtitleAutoload e) { return (int)e & i; }
+inline int &operator &= (int &i, SubtitleAutoload e) { return i &= (int)e; }
+inline int operator ~ (SubtitleAutoload e) { return ~(int)e; }
+inline int operator | (SubtitleAutoload e, int i) { return (int)e | i; }
+inline int operator | (int i, SubtitleAutoload e) { return (int)e | i; }
+inline int operator | (SubtitleAutoload e1, SubtitleAutoload e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, SubtitleAutoload e) { return i |= (int)e; }
 inline bool operator > (SubtitleAutoload e, int i) { return (int)e > i; }
 inline bool operator < (SubtitleAutoload e, int i) { return (int)e < i; }
 inline bool operator >= (SubtitleAutoload e, int i) { return (int)e >= i; }
@@ -526,6 +700,12 @@ inline bool operator == (int i, SubtitleAutoselect e) { return (int)e == i; }
 inline bool operator != (int i, SubtitleAutoselect e) { return (int)e != i; }
 inline int operator & (SubtitleAutoselect e, int i) { return (int)e & i; }
 inline int operator & (int i, SubtitleAutoselect e) { return (int)e & i; }
+inline int &operator &= (int &i, SubtitleAutoselect e) { return i &= (int)e; }
+inline int operator ~ (SubtitleAutoselect e) { return ~(int)e; }
+inline int operator | (SubtitleAutoselect e, int i) { return (int)e | i; }
+inline int operator | (int i, SubtitleAutoselect e) { return (int)e | i; }
+inline int operator | (SubtitleAutoselect e1, SubtitleAutoselect e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, SubtitleAutoselect e) { return i |= (int)e; }
 inline bool operator > (SubtitleAutoselect e, int i) { return (int)e > i; }
 inline bool operator < (SubtitleAutoselect e, int i) { return (int)e < i; }
 inline bool operator >= (SubtitleAutoselect e, int i) { return (int)e >= i; }
@@ -581,6 +761,12 @@ inline bool operator == (int i, OsdScalePolicy e) { return (int)e == i; }
 inline bool operator != (int i, OsdScalePolicy e) { return (int)e != i; }
 inline int operator & (OsdScalePolicy e, int i) { return (int)e & i; }
 inline int operator & (int i, OsdScalePolicy e) { return (int)e & i; }
+inline int &operator &= (int &i, OsdScalePolicy e) { return i &= (int)e; }
+inline int operator ~ (OsdScalePolicy e) { return ~(int)e; }
+inline int operator | (OsdScalePolicy e, int i) { return (int)e | i; }
+inline int operator | (int i, OsdScalePolicy e) { return (int)e | i; }
+inline int operator | (OsdScalePolicy e1, OsdScalePolicy e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, OsdScalePolicy e) { return i |= (int)e; }
 inline bool operator > (OsdScalePolicy e, int i) { return (int)e > i; }
 inline bool operator < (OsdScalePolicy e, int i) { return (int)e < i; }
 inline bool operator >= (OsdScalePolicy e, int i) { return (int)e >= i; }
@@ -636,6 +822,12 @@ inline bool operator == (int i, ClickAction e) { return (int)e == i; }
 inline bool operator != (int i, ClickAction e) { return (int)e != i; }
 inline int operator & (ClickAction e, int i) { return (int)e & i; }
 inline int operator & (int i, ClickAction e) { return (int)e & i; }
+inline int &operator &= (int &i, ClickAction e) { return i &= (int)e; }
+inline int operator ~ (ClickAction e) { return ~(int)e; }
+inline int operator | (ClickAction e, int i) { return (int)e | i; }
+inline int operator | (int i, ClickAction e) { return (int)e | i; }
+inline int operator | (ClickAction e1, ClickAction e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, ClickAction e) { return i |= (int)e; }
 inline bool operator > (ClickAction e, int i) { return (int)e > i; }
 inline bool operator < (ClickAction e, int i) { return (int)e < i; }
 inline bool operator >= (ClickAction e, int i) { return (int)e >= i; }
@@ -694,6 +886,12 @@ inline bool operator == (int i, WheelAction e) { return (int)e == i; }
 inline bool operator != (int i, WheelAction e) { return (int)e != i; }
 inline int operator & (WheelAction e, int i) { return (int)e & i; }
 inline int operator & (int i, WheelAction e) { return (int)e & i; }
+inline int &operator &= (int &i, WheelAction e) { return i &= (int)e; }
+inline int operator ~ (WheelAction e) { return ~(int)e; }
+inline int operator | (WheelAction e, int i) { return (int)e | i; }
+inline int operator | (int i, WheelAction e) { return (int)e | i; }
+inline int operator | (WheelAction e1, WheelAction e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, WheelAction e) { return i |= (int)e; }
 inline bool operator > (WheelAction e, int i) { return (int)e > i; }
 inline bool operator < (WheelAction e, int i) { return (int)e < i; }
 inline bool operator >= (WheelAction e, int i) { return (int)e >= i; }
@@ -752,6 +950,12 @@ inline bool operator == (int i, KeyModifier e) { return (int)e == i; }
 inline bool operator != (int i, KeyModifier e) { return (int)e != i; }
 inline int operator & (KeyModifier e, int i) { return (int)e & i; }
 inline int operator & (int i, KeyModifier e) { return (int)e & i; }
+inline int &operator &= (int &i, KeyModifier e) { return i &= (int)e; }
+inline int operator ~ (KeyModifier e) { return ~(int)e; }
+inline int operator | (KeyModifier e, int i) { return (int)e | i; }
+inline int operator | (int i, KeyModifier e) { return (int)e | i; }
+inline int operator | (KeyModifier e1, KeyModifier e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, KeyModifier e) { return i |= (int)e; }
 inline bool operator > (KeyModifier e, int i) { return (int)e > i; }
 inline bool operator < (KeyModifier e, int i) { return (int)e < i; }
 inline bool operator >= (KeyModifier e, int i) { return (int)e >= i; }
@@ -813,6 +1017,12 @@ inline bool operator == (int i, Position e) { return (int)e == i; }
 inline bool operator != (int i, Position e) { return (int)e != i; }
 inline int operator & (Position e, int i) { return (int)e & i; }
 inline int operator & (int i, Position e) { return (int)e & i; }
+inline int &operator &= (int &i, Position e) { return i &= (int)e; }
+inline int operator ~ (Position e) { return ~(int)e; }
+inline int operator | (Position e, int i) { return (int)e | i; }
+inline int operator | (int i, Position e) { return (int)e | i; }
+inline int operator | (Position e1, Position e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, Position e) { return i |= (int)e; }
 inline bool operator > (Position e, int i) { return (int)e > i; }
 inline bool operator < (Position e, int i) { return (int)e < i; }
 inline bool operator >= (Position e, int i) { return (int)e >= i; }

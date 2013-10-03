@@ -3,6 +3,7 @@
 #include "mainwindow.hpp"
 #include "playeritem.hpp"
 #include "videoformat.hpp"
+#include "hwacc.hpp"
 #include <QtGui/private/qguiapplication_p.h>
 #include <QtGui/qpa/qplatformintegration.h>
 
@@ -12,7 +13,7 @@ int main(int argc, char **argv) {
 	qRegisterMetaType<EngineState>("State");
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
-	qRegisterMetaType<QVector<int>>("QVector<int>");
+//	qRegisterMetaType<QVector<int>>("QVector<int>");
 	PlayerItem::registerItems();
 	qDebug() << "Create App instance";
 	App app(argc, argv);
@@ -21,9 +22,13 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 	qDebug() << "Create MainWindow instance";
+	HwAcc::initialize();
 	MainWindow mw;
 	mw.show();
 	app.setMainWindow(&mw);
 	qDebug() << "Start main event loop";
-	return app.exec();
+	auto ret = app.exec();
+	HwAcc::finalize();
+	qDebug() << "Exit...";
+	return ret;
 }

@@ -336,29 +336,13 @@ PrefDialog::PrefDialog(QWidget *parent)
 	d->ui.hwdeint_list->setLayout(vbox);
 #endif
 
-	d->ui.deint_tabs->addTab(d->deint_swdec = new DeintWidget(false), tr("For S/W decoding"));
-	d->ui.deint_tabs->addTab(d->deint_hwdec = new DeintWidget(true ), tr("For H/W decoding"));
+	d->ui.deint_tabs->addTab(d->deint_swdec = new DeintWidget(DecoderDevice::CPU), tr("For S/W decoding"));
+	d->ui.deint_tabs->addTab(d->deint_hwdec = new DeintWidget(DecoderDevice::GPU), tr("For H/W decoding"));
 #ifdef Q_OS_MAC
 	d->ui.enable_hwdeint->setVisible(false);
 	d->ui.enable_hwdeint->setEnabled(false);
 #endif
-	auto methodText = [] (DeintMethod method, const QString &desc) -> QString {
-		return _L(DeintMethodInfo::name(method)) % ": " % desc;
-	};
-
-	d->ui.deint_desc->setText(
-		'\n' % tr("Methods") % "\n\n" %
-		methodText(DeintMethod::Bob, tr("Display each line twice.")) % '\n' %
-		methodText(DeintMethod::LinearBob, tr("Bob with linear interpolation.")) % '\n' %
-		methodText(DeintMethod::CubicBob, tr("Bob with cubic interpolation.")) % '\n' %
-		methodText(DeintMethod::LinearBlend, tr("Blend linearly each line with (1 2 1) filter.")) % '\n' %
-		methodText(DeintMethod::Median, tr("Apply median filter to every second line.")) % '\n' %
-		methodText(DeintMethod::Yadif, tr("Use complicated temporal and spatial interpolation.")) % "\n\n" %
-		tr("Make FPS doubled") % "\n\n" %
-		tr("This option makes the framerate doubled. You can get smoother and fluid motions if your hardware is good enough.") % "\n\n" %
-		tr("Enable H/W Acc.") % "\n\n" %
-		tr("Some methods can be accelerated with GPU by turning on this option. The operation is done OpenGL (or VA-API in Linux).")
-	);
+	d->ui.deint_desc->setText(DeintWidget::informations());
 
 	d->ui.sub_ext->addItem(QString(), QString());
 	d->ui.sub_ext->addItemTextData(Info::subtitleExt());
@@ -603,8 +587,8 @@ void PrefDialog::set(const Pref &p) {
 
 	setHw(d->ui.enable_hwdec, p.enable_hwaccel, d->hwdec, p.hwaccel_codecs);
 	setHw(d->ui.enable_hwdeint, p.enable_hwdeint, d->hwdeint, p.hwdeints);
-	d->deint_swdec->setOption(p.deint_swdec);
-	d->deint_hwdec->setOption(p.deint_hwdec);
+	d->deint_swdec->set(p.deint_swdec);
+	d->deint_hwdec->set(p.deint_hwdec);
 
 	d->ui.normalizer_silence->setValue(p.normalizer_silence);
 	d->ui.normalizer_target->setValue(p.normalizer_target);
@@ -716,8 +700,8 @@ void PrefDialog::get(Pref &p) {
 
 	getHw(p.enable_hwaccel, d->ui.enable_hwdec, p.hwaccel_codecs, d->hwdec);
 	getHw(p.enable_hwdeint, d->ui.enable_hwdeint, p.hwdeints, d->hwdeint);
-	p.deint_swdec = d->deint_swdec->option();
-	p.deint_hwdec = d->deint_hwdec->option();
+	p.deint_swdec = d->deint_swdec->get();
+	p.deint_hwdec = d->deint_hwdec->get();
 
 	p.picture_interpolator = d->ui.picture_interpolator->currentValue();
 	p.blur_kern_c = d->ui.blur_kern_c->value();

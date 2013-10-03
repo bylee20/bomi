@@ -6,7 +6,7 @@
 
 class VideoFrame {
 public:
-	enum Field {Picture = 0, Top = 1, Bottom = 2, Interlaced = Top | Bottom, Additional = 4, Flipped = 8};
+	enum Field {None = 0, Picture = 0, Top = 1, Bottom = 2, Interlaced = Top | Bottom, Additional = 4, Flipped = 8};
 	VideoFrame(bool free, mp_image *mpi, const VideoFormat &format, double pts, int field = Picture): d(new Data(free, mpi, format, pts, field)) {}
 	VideoFrame(bool free, mp_image *mpi, double pts, int field = Picture): d(new Data(free, mpi, VideoFormat(mpi), pts, field)) {}
 	VideoFrame(bool free, mp_image *mpi, int field = Picture): d(new Data(free, mpi, VideoFormat(mpi), mpi->pts, field)) {}
@@ -26,7 +26,6 @@ public:
 	int width() const {return d->format.width();}
 	int height() const {return d->format.height();}
 	double pts() const {return d->pts;}
-//	void setField(int field) { d->field = field; }
 	int field() const { return d->field; }
 	void setPts(double pts) { d->pts = pts; }
 	mp_image *mpi() const { return d->mpi; }
@@ -37,6 +36,7 @@ public:
 		const auto diff = (d->pts - prevPts);
 		return (0.0 < diff && diff < 0.5) ? (d->pts + diff/(double)(split)) : d->pts;
 	}
+	void setPTS(double pts) { d->pts = pts; }
 	void allocate(const VideoFormat &format);
 	void doDeepCopy(const VideoFrame &frame);
 	bool isAdditional() const { return d->field & Additional; }

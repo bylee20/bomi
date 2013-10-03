@@ -124,8 +124,8 @@ public:
 	bool enable_hwaccel = false, enable_hwdeint = false;
     QList<int> hwaccel_codecs = defaultHwAccCodecs();
 	QList<DeintMethod> hwdeints = defaultHwAccDeints();
-	DeintOption deint_hwdec = DeintOption::default_(DeintMethod::Bob);
-	DeintOption deint_swdec = DeintOption::default_(DeintMethod::Bob);
+	DeintCaps deint_hwdec = DeintCaps::default_(DecoderDevice::GPU);
+	DeintCaps deint_swdec = DeintCaps::default_(DecoderDevice::CPU);
 
 	double normalizer_silence = 0.0001, normalizer_target = 0.07, normalizer_min = 0.1, normalizer_max = 10.0;
 	double normalizer_length = 5.0;

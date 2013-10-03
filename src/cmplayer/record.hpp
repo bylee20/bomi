@@ -9,10 +9,13 @@
 
 template <typename T> static inline T fromVariant(const QVariant &data) {return data.value<T>();}
 template <typename T> static inline QVariant toVariant(const T &t) {return QVariant::fromValue(t);}
-template<> inline DeintOption fromVariant(const QVariant &data) { return DeintOption::fromString(data.toString()); }
-template<> inline QVariant    toVariant(const DeintOption &t) { return t.toString(); }
-template<> inline QKeySequence fromVariant(const QVariant &data) {return QKeySequence::fromString(data.toString());}
-template<> inline QVariant     toVariant(const QKeySequence &seq) {return seq.toString();}
+#define DEC_WITH_STRING(T) \
+template<> inline T        fromVariant(const QVariant &data) { return T::fromString(data.toString()); }\
+template<> inline QVariant toVariant(const T &t) { return t.toString(); }
+DEC_WITH_STRING(DeintOption)
+DEC_WITH_STRING(DeintCaps)
+DEC_WITH_STRING(QKeySequence)
+#undef DEC_WITH_STRING
 
 template<class T> struct is_list : std::false_type {};
 template<class T> struct is_list<QList<T>> : std::true_type {};
@@ -71,6 +74,15 @@ struct RecordIoOne<ColorProperty, false> {
 		value.hue() = r.value(_L(key) % _L("_hue"), value.hue()).toDouble();
 	}
 };
+
+extern template class RecordIoOne<int>;
+extern template class RecordIoOne<bool>;
+extern template class RecordIoOne<double>;
+extern template class RecordIoOne<float>;
+extern template class RecordIoOne<QString>;
+extern template class RecordIoOne<QStringList>;
+extern template class RecordIoOne<QVariant>;
+extern template class RecordIoOne<QLocale>;
 
 class Record : public QSettings {
 public:

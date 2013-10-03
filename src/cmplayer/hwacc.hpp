@@ -47,6 +47,7 @@ public:
 	static void finalize();
 	static QList<AVCodecID> fullCodecList();
 	static bool supports(AVCodecID codec);
+	static bool supports(DeintMethod method);
 	static const char *codecName(int id);
 	static AVCodecID codecId(const char *name);
 	virtual mp_image *getImage(mp_image *mpi) = 0;

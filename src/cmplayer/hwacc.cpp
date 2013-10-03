@@ -28,6 +28,24 @@ bool HwAcc::supports(AVCodecID codec) {
 #endif
 }
 
+bool HwAcc::supports(DeintMethod method) {
+#ifdef Q_OS_MAC
+	return false;
+#endif
+#ifdef Q_OS_LINUX
+	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
+	return filter && filter->supports(VaApi::toVAType(method));
+#endif
+}
+
+void HwAcc::initialize() {
+	initialize_vaapi();
+}
+
+void HwAcc::finalize() {
+	finalize_vaapi();
+}
+
 struct CodecInfo {
 	CodecInfo(AVCodecID id = AV_CODEC_ID_NONE, const char *name = "unknown")
 	: id(id), name(name) {}

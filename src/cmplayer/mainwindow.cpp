@@ -1338,11 +1338,25 @@ void MainWindow::applyPref() {
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
-#ifdef Q_OS_LINUX
-	d->engine.setDeintOptions(p.deint_swdec, p.deint_hwdec);
-#else
-	d->engine.setDeintOptions(p.deint_swdec, p.deint_hwdec);
-#endif
+
+	auto conv = [&p] (const DeintCaps &caps) {
+		DeintOption option;
+		option.method = caps.method();
+		option.doubler = caps.doubler();
+		if (caps.hwdec()) {
+			if (!caps.supports(DeintDevice::GPU) && !caps.supports(DeintDevice::OpenGL))
+				return DeintOption();
+			if (caps.supports(DeintDevice::GPU) && p.hwdeints.contains(caps.method()))
+				option.device = DeintDevice::GPU;
+			else
+				option.device = DeintDevice::OpenGL;
+		} else
+			option.device = caps.supports(DeintDevice::OpenGL) ? DeintDevice::OpenGL : DeintDevice::CPU;
+		return option;
+	};
+	const auto deint_swdec = conv(p.deint_swdec);
+	const auto deint_hwdec = conv(p.deint_hwdec);
+	d->engine.setDeintOptions(deint_swdec, deint_hwdec);
 	d->engine.setAudioDriver(p.audio_driver);
 	d->engine.setClippingMethod(p.clipping_method);
 	d->engine.setMinimumCache(p.cache_min_playback, p.cache_min_seeking);

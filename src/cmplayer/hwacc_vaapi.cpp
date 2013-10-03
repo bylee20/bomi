@@ -20,6 +20,17 @@ bool VaApi::init = false;
 VADisplay VaApi::m_display = nullptr;
 VaApi &VaApi::get() {static VaApi info; return info;}
 
+VAProcDeinterlacingType VaApi::toVAType(DeintMethod method) {
+	switch (method) {
+	case DeintMethod::Bob:
+		return VAProcDeinterlacingBob;
+	case DeintMethod::MotionAdaptive:
+		return VAProcDeinterlacingMotionAdaptive;
+	default:
+		return VAProcDeinterlacingNone;
+	}
+}
+
 QString VaApiFilterInfo::description(VAProcFilterType type, int algorithm) {
 	switch (type) {
 	case VAProcFilterNoiseReduction:
@@ -104,38 +115,6 @@ VaApiFilterInfo::VaApiFilterInfo(VAContextID context, VAProcFilterType type) {
 	}
 }
 
-class VaApiSurface {
-public:
-	~VaApiSurface();
-	VASurfaceID id() const { return m_id; }
-	int format() const { return m_format; }
-private:
-	VaApiSurface() = default;
-	friend class VaApiSurfacePool;
-	VASurfaceID m_id = VA_INVALID_SURFACE;
-	bool m_ref = false, m_orphan = false;
-	quint64 m_order = 0;
-	int m_format = 0;
-};
-
-class VaApiSurfacePool : public VaApiStatusChecker {
-public:
-	VaApiSurfacePool() {  }
-	~VaApiSurfacePool() { clear(); }
-	VAStatus create(int size, int width, int height, uint format);
-	mp_image *getMpImage();
-	void clear();
-	QVector<VASurfaceID> ids() const {return m_ids;}
-	uint format() const {return m_format;}
-private:
-	VaApiSurface *getSurface();
-	QVector<VASurfaceID> m_ids;
-	QVector<VaApiSurface*> m_surfaces;
-	uint m_format = 0;
-	int m_width = 0, m_height = 0;
-	quint64 m_order = 0LL;
-};
-
 static QMutex mutex;
 
 VaApiSurface::~VaApiSurface() {
@@ -144,7 +123,7 @@ VaApiSurface::~VaApiSurface() {
 		vaDestroySurfaces(VaApi::glx(), &m_id, 1);
 }
 
-VAStatus VaApiSurfacePool:: create(int size, int width, int height, uint format) {
+VAStatus VaApiSurfacePool::create(int size, int width, int height, uint format) {
 	if (m_width == width && m_height == height && m_format == format && m_surfaces.size() == size)
 		return isSuccess(VA_STATUS_SUCCESS);
 	clear();
@@ -196,6 +175,10 @@ void VaApiSurfacePool::clear() {
 	mutex.unlock();
 }
 
+VaApiSurface *VaApiSurfacePool::getSurface(mp_image *mpi) {
+	return IMGFMT_IS_VAAPI(mpi->imgfmt) ? (VaApiSurface*)(quintptr)mpi->planes[1] : nullptr;
+}
+
 VaApiSurface *VaApiSurfacePool::getSurface() {
 	VaApiSurface *best = nullptr, *oldest = nullptr;
 	for (VaApiSurface *s : m_surfaces) {
@@ -226,13 +209,12 @@ VaApi::VaApi() {
 	if (!isSuccess(vaInitialize(m_display, &major, &minor)))
 		return;
 	auto size = vaMaxNumProfiles(display);
-	QVector<VAProfile> profiles;
-	profiles.resize(size);
-	if (vaQueryConfigProfiles(display, profiles.data(), &size) != VA_STATUS_SUCCESS)
+	m_profiles.resize(size);
+	if (vaQueryConfigProfiles(display, m_profiles.data(), &size) != VA_STATUS_SUCCESS)
 		return;
-	profiles.resize(size);
+	m_profiles.resize(size);
 
-	for (auto profile : profiles) {
+	for (auto profile : m_profiles) {
 		int size = vaMaxNumEntrypoints(display);
 		QVector<VAEntrypoint> entries(size, VAEntrypointMax);
 		if (vaQueryConfigEntrypoints(display, profile, entries.data(), &size) != VA_STATUS_SUCCESS)
@@ -241,7 +223,28 @@ VaApi::VaApi() {
 		m_entries.insert(profile, entries);
 	}
 
-	auto supports = [this, &profiles](const QVector<VAProfile> &va_all, const QVector<int> &av_all, int surfaces, AVCodecID id) {
+	initCodecs();
+	initFilters();
+}
+
+void VaApi::finalize() {
+	auto close = [] (VADisplay &dpy) { if (dpy) { vaTerminate(dpy); dpy = nullptr; } };
+	close(m_display);
+	init = false;
+}
+
+void initialize_vaapi() {
+	if (!VaApi::init)
+		VaApi::get().glx();
+}
+
+void finalize_vaapi() {
+	if (VaApi::init)
+		VaApi::get().finalize();
+}
+
+void VaApi::initCodecs() {
+	auto supports = [this](const QVector<VAProfile> &va_all, const QVector<int> &av_all, int surfaces, AVCodecID id) {
 		QVector<VAProfile> va; QVector<int> av;
 		for (int i=0; i<va_all.size(); ++i) {
 			if (hasEntryPoint(VAEntrypointVLD, va_all[i])) {
@@ -250,7 +253,7 @@ VaApi::VaApi() {
 			}
 		}
 		if (!va.isEmpty())
-			m_supported.insert(id, VaApiCodec(profiles, va, av, surfaces + 4, id));
+			m_supported.insert(id, VaApiCodec(m_profiles, va, av, surfaces + 4, id));
 	};
 #define NUM_VIDEO_SURFACES_MPEG2  3 /* 1 decode frame, up to  2 references */
 #define NUM_VIDEO_SURFACES_MPEG4  3 /* 1 decode frame, up to  2 references */
@@ -272,47 +275,39 @@ VaApi::VaApi() {
 	supports(vawmv3s, avwmv3s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_WMV3);
 	supports(vavc1s, avvc1s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_VC1);
 	supports(vah264s, avh264s, NUM_VIDEO_SURFACES_H264, AV_CODEC_ID_H264);
-
-	if (hasEntryPoint(VAEntrypointVideoProc, VAProfileNone)) {
-		VAConfigID config = VA_INVALID_ID;
-		VAContextID context = VA_INVALID_ID;
-		do {
-			if (!isSuccess(vaCreateConfig(display, VAProfileNone, VAEntrypointVideoProc, nullptr, 0, &config)))
-				break;
-			if (!isSuccess(vaCreateContext(display, config, 0, 0, 0, nullptr, 0, &context)))
-				break;
-			QVector<VAProcFilterType> types(VAProcFilterCount);
-			uint size = VAProcFilterCount;
-			if (!isSuccess(vaQueryVideoProcFilters(display, context, types.data(), &size)))
-				break;
-			types.resize(size);
-			for (const auto &type : types) {
-				auto info = VaApiFilterInfo(context, type);
-				if (info.isSuccess())
-					m_filters.insert(type, info);
-			}
-		} while (false);
-		if (context != VA_INVALID_ID)
-			vaDestroyContext(display, context);
-		if (config != VA_INVALID_ID)
-			vaDestroyConfig(display, config);
-	}
 }
 
-void VaApi::finalize() {
-	auto close = [] (VADisplay &dpy) { if (dpy) { vaTerminate(dpy); dpy = nullptr; } };
-	close(m_display);
-	init = false;
+void VaApi::initFilters() {
+	if (!hasEntryPoint(VAEntrypointVideoProc, VAProfileNone))
+		return;
+	auto display = VaApi::glx();
+	VAConfigID config = VA_INVALID_ID;
+	VAContextID context = VA_INVALID_ID;
+	do {
+		if (!isSuccess(vaCreateConfig(display, VAProfileNone, VAEntrypointVideoProc, nullptr, 0, &config)))
+			break;
+		if (!isSuccess(vaCreateContext(display, config, 0, 0, 0, nullptr, 0, &context)))
+			break;
+		QVector<VAProcFilterType> types(VAProcFilterCount);
+		uint size = VAProcFilterCount;
+		if (!isSuccess(vaQueryVideoProcFilters(display, context, types.data(), &size)))
+			break;
+		types.resize(size);
+		for (const auto &type : types) {
+			VaApiFilterInfo info(context, type);
+			if (info.isSuccess() && !info.algorithms().isEmpty())
+				m_filters.insert(type, info);
+		}
+	} while (false);
+	if (context != VA_INVALID_ID)
+		vaDestroyContext(display, context);
+	if (config != VA_INVALID_ID)
+		vaDestroyConfig(display, config);
 }
 
-void initialize_vaapi() {
-	if (!VaApi::init)
-		VaApi::get().glx();
-}
-
-void finalize_vaapi() {
-	if (VaApi::init)
-		VaApi::get().finalize();
+int VaApi::toVAType(int mp_fields, bool first) {
+	static const int field[] = {VA_BOTTOM_FIELD, VA_TOP_FIELD};
+	return field[(!(mp_fields & MP_IMGFIELD_TOP_FIRST)) ^ (int)first];
 }
 
 /***************************************************************************************************/

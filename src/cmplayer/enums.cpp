@@ -1,12 +1,24 @@
 #include "enums.hpp"
-const std::array<DeintMethodInfo::Item, 7> DeintMethodInfo::info{{
+const std::array<DecoderDeviceInfo::Item, 2> DecoderDeviceInfo::info{{
+	{DecoderDevice::CPU, "CPU"},
+	{DecoderDevice::GPU, "GPU"}
+}};
+
+const std::array<DeintDeviceInfo::Item, 3> DeintDeviceInfo::info{{
+	{DeintDevice::CPU, "CPU"},
+	{DeintDevice::GPU, "GPU"},
+	{DeintDevice::OpenGL, "OpenGL"}
+}};
+
+const std::array<DeintMethodInfo::Item, 8> DeintMethodInfo::info{{
 	{DeintMethod::None, "None"},
 	{DeintMethod::Bob, "Bob"},
 	{DeintMethod::LinearBob, "LinearBob"},
 	{DeintMethod::CubicBob, "CubicBob"},
 	{DeintMethod::Median, "Median"},
 	{DeintMethod::LinearBlend, "LinearBlend"},
-	{DeintMethod::Yadif, "Yadif"}
+	{DeintMethod::Yadif, "Yadif"},
+	{DeintMethod::MotionAdaptive, "MotionAdaptive"}
 }};
 
 const std::array<InterpolatorTypeInfo::Item, 6> InterpolatorTypeInfo::info{{

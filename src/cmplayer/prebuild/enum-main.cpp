@@ -127,6 +127,12 @@ inline bool operator == (int i, __ENUM_NAME e) { return (int)e == i; }
 inline bool operator != (int i, __ENUM_NAME e) { return (int)e != i; }
 inline int operator & (__ENUM_NAME e, int i) { return (int)e & i; }
 inline int operator & (int i, __ENUM_NAME e) { return (int)e & i; }
+inline int &operator &= (int &i, __ENUM_NAME e) { return i &= (int)e; }
+inline int operator ~ (__ENUM_NAME e) { return ~(int)e; }
+inline int operator | (__ENUM_NAME e, int i) { return (int)e | i; }
+inline int operator | (int i, __ENUM_NAME e) { return (int)e | i; }
+inline int operator | (__ENUM_NAME e1, __ENUM_NAME e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, __ENUM_NAME e) { return i |= (int)e; }
 inline bool operator > (__ENUM_NAME e, int i) { return (int)e > i; }
 inline bool operator < (__ENUM_NAME e, int i) { return (int)e < i; }
 inline bool operator >= (__ENUM_NAME e, int i) { return (int)e >= i; }
@@ -183,7 +189,7 @@ static void generate() {
 #include <QCoreApplication>
 #include <array>
 
-template<typename T> class EnumInfo {};
+template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 )";
 	string cpp = "#include \"enums.hpp\"";
 	for (const EnumData &data : enums) {

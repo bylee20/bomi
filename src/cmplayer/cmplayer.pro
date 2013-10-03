@@ -120,7 +120,10 @@ HEADERS += playengine.hpp \
     videoframeshader.glsl.hpp \
     videoframeshader.hpp \
     undostack.hpp \
-    videorenderershader.glsl.hpp
+    videorenderershader.glsl.hpp \
+    ffmpegfilters.hpp \
+    softwaredeinterlacer.hpp \
+    vaapipostprocessor.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -190,7 +193,10 @@ SOURCES += main.cpp \
     mposdnode.cpp \
     openglcompat.cpp \
     videoframeshader.cpp \
-    undostack.cpp
+    undostack.cpp \
+    ffmpegfilters.cpp \
+    softwaredeinterlacer.cpp \
+    vaapipostprocessor.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

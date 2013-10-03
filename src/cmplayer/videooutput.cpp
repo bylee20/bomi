@@ -6,18 +6,14 @@
 #include "deintinfo.hpp"
 #include "videofilter.hpp"
 #include "mposditem.hpp"
-#include "videoframeshader.hpp"
+#include "softwaredeinterlacer.hpp"
+#include "vaapipostprocessor.hpp"
 
 extern "C" {
-#include <video/fmt-conversion.h>
 #include <video/out/vo.h>
-#include <video/filter/vf.h>
 #include <video/vfcap.h>
 #include <video/decode/dec_video.h>
-#include <video/img_fourcc.h>
-#include <video/mp_image_pool.h>
 #include <mpvcore/m_option.h>
-#include <video/mp_image.h>
 #include <mpvcore/mp_core.h>
 #include <sub/sub.h>
 #include <sub/sd.h>
@@ -70,14 +66,14 @@ struct VideoOutput::Data {
 	mp_osd_res osd;
 	PlayEngine *engine = nullptr;
 	bool flip = false, deint = false;
-	int upsideDown = 0;
+	VideoFrame::Field upsideDown = VideoFrame::None;
 	VideoRendererItem *renderer = nullptr;
 	HwAcc *acc = nullptr, *prevAcc = nullptr;
-	QLinkedList<VideoFrame> frames;
-	double prevPts = MP_NOPTS_VALUE;
+	QLinkedList<VideoFrame> queue;
 	mp_image_params params;
 	DeintOption deint_swdec, deint_hwdec;
 	SoftwareDeinterlacer deinterlacer;
+	VaApiPostProcessor vaapi;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -123,8 +119,9 @@ void VideoOutput::updateDeint() {
 	if (d->deint)
 		opt = d->acc ? d->deint_hwdec : d->deint_swdec;
 	d->deinterlacer.setOption(opt);
+	d->vaapi.setDeintOption(opt);
 	if (d->renderer)
-		d->renderer->setDeintMethod(opt.hwacc ? opt.method : DeintMethod::None);
+		d->renderer->setDeintMethod(opt.method);
 }
 
 void VideoOutput::reset() {
@@ -134,15 +131,14 @@ void VideoOutput::reset() {
 	d->params.colorspace = MP_CSP_AUTO;
 	d->format = VideoFormat();
 	d->frame = VideoFrame();
-	d->frames.clear();
-	d->prevPts = MP_NOPTS_VALUE;
+	d->queue.clear();
 	d->flip = false;
 }
 
 int VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) {
 	auto v = priv(out); auto d = v->d;
 	v->reset();
-	d->upsideDown = (flags & VOFLAG_FLIPPING) ? VideoFrame::Flipped : 0;
+	d->upsideDown = (flags & VOFLAG_FLIPPING) ? VideoFrame::Flipped : VideoFrame::None;
 	d->params = *params;
 	return 0;
 }
@@ -151,23 +147,23 @@ HwAcc *VideoOutput::hwAcc() const {return d->acc;}
 
 void VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) {
 	auto v = priv(vo); auto d = v->d;
-	vo->frame_loaded = !d->frames.isEmpty();
+	vo->frame_loaded = !d->queue.isEmpty();
 	if (vo->frame_loaded) {
-		d->frame.swap(d->frames.first());
-		d->frames.pop_front();
+		d->frame.swap(d->queue.first());
+		d->queue.pop_front();
 		vo->next_pts = d->frame.pts();
-		if (!d->frames.isEmpty())
-			vo->next_pts2 = d->frames.front().pts();
+		if (!d->queue.isEmpty())
+			vo->next_pts2 = d->queue.front().pts();
 	}
 	if (_Change(d->format, d->frame.format()))
 		emit v->formatChanged(d->format);
 }
 
-void VideoOutput::setDeintOptions(const DeintOption &sw, const DeintOption &hw) {
-	if (d->deint_swdec == sw && d->deint_hwdec == hw)
+void VideoOutput::setDeintOptions(const DeintOption &swdec, const DeintOption &hwdec) {
+	if (d->deint_swdec == swdec && d->deint_hwdec == hwdec)
 		return;
-	d->deint_swdec = sw;
-	d->deint_hwdec = hw;
+	d->deint_swdec = swdec;
+	d->deint_hwdec = hwdec;
 	updateDeint();
 }
 
@@ -178,15 +174,11 @@ void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto img = mpi;
 	if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
 		img = d->acc->getImage(mpi);
-	VideoFrame frame(img != mpi, img, d->upsideDown ? VideoFrame::Flipped : 0);
-	const double pts = frame.pts();
-	d->deinterlacer.process(frame, d->frames, d->prevPts);
-//	auto filter = d->pass;
-////	if (d->deint && (img->fields & MP_IMGFIELD_INTERLACED))
-////		filter = d->filter;
-//	filter->setFrameFlags(d->upsideDown);
-//	filter->apply(frame, d->frames, d->prevPts);
-	d->prevPts = pts;
+	VideoFrame in(img != mpi, img, d->upsideDown);
+//	if (IMGFMT_IS_VAAPI(mpi->imgfmt) && d->vaapi.apply(in, d->queue))
+//		return;
+	if (!d->deinterlacer.apply(in, d->queue))
+		d->queue.push_back(in);
 }
 
 int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
