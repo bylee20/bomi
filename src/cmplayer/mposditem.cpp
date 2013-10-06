@@ -1,6 +1,5 @@
 #include "mposditem.hpp"
 #include "mposdbitmap.hpp"
-#include "mposdnode.hpp"
 #include "dataevent.hpp"
 #include "openglcompat.hpp"
 
@@ -8,15 +7,10 @@ struct MpOsdItem::Data {
 	MpOsdItem *p = nullptr;
 	MpOsdBitmap osd;
 	QSize imageSize = {0, 0};
-//	bool forced = true;
-	bool show = false;//, redraw = false;
-//	QTimer sizeChecker;
-//	QSize targetSize = {0, 0}, renderSize = {0, 0}, prevSize = {0, 0};
-
+	bool show = false;
 	MpOsdBitmap::Format format = MpOsdBitmap::Ass;
 	GLenum srcFactor = GL_SRC_ALPHA;
 	int loc_atlas = 0, loc_vMatrix = 0;
-//	OpenGLFramebufferObject *fbo = nullptr;
 	OpenGLTextureShaderProgram *shader = nullptr;
 	OpenGLTexture atlas;
 	QMatrix4x4 vMatrix;
@@ -191,22 +185,6 @@ QSize MpOsdItem::imageSize() const {
 void MpOsdItem::paint(OpenGLFramebufferObject *fbo) {
 	d->draw(fbo, d->osd);
 }
-
-//void MpOsdItem::forceUpdateTargetSize() {
-//	d->forced = true;
-//}
-
-//void MpOsdItem::geometryChanged(const QRectF &newOne, const QRectF &old) {
-//	TextureRendererItem::geometryChanged(newOne, old);
-//	if (d->forced) {
-//		d->targetSize = newOne.size().toSize();
-//		d->forced = false;
-//	}else
-//		d->sizeChecker.start();
-//	d->redraw = true;
-//	update();
-
-//}
 
 void MpOsdItem::setImageSize(const QSize &size) {
 	d->imageSize = size;
