@@ -21,18 +21,18 @@ protected:
 	bool atEnd() const {return m_pos >= m_all.size();}
 	ushort at(int i) const {return m_all.at(i).unicode();}
 	void seekTo(int pos) const {m_pos = pos;}
-	static int predictEndTime(const SubtitleComponent::const_iterator &it);
+	static int predictEndTime(const SubComp::const_iterator &it);
 	static int predictEndTime(int start, const QString &text);
 	static QString encodeEntity(const QStringRef &str);
 	static QStringRef processLine(int &idx, const QString &contents);
-	static QList<SubtitleComponent> &components(Subtitle &sub) {return sub.m_comp;}
-	static const QList<SubtitleComponent> &components(const Subtitle &sub) {return sub.m_comp;}
-	static void append(SubtitleComponent &c, const QString &text, int start) {c[start] += RichTextDocument(text);}
-	static void append(SubtitleComponent &c, const QString &text, int start, int end) {append(c, text, start); c[end];}
+	static QList<SubComp> &components(Subtitle &sub) {return sub.m_comp;}
+	static const QList<SubComp> &components(const Subtitle &sub) {return sub.m_comp;}
+	static void append(SubComp &c, const QString &text, int start) {c[start] += RichTextDocument(text);}
+	static void append(SubComp &c, const QString &text, int start, int end) {append(c, text, start); c[end];}
 	const QFileInfo &file() const {return m_file;}
 	bool skipSeparators() const {return RichTextHelper::skipSeparator(m_pos, m_all);}
-	SubtitleComponent &append(Subtitle &sub, SubtitleComponent::SyncType base = SubtitleComponent::Time) {
-		sub.m_comp.append(SubtitleComponent(m_file.fileName(), base));
+	SubComp &append(Subtitle &sub, SubComp::SyncType base = SubComp::Time) {
+		sub.m_comp.append(SubComp(m_file.fileName(), base));
 		return sub.m_comp.last();
 	}
 private:

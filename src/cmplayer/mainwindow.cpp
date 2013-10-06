@@ -125,9 +125,9 @@ struct MainWindow::Data {
 		const auto actions = g->actions();
 		Q_ASSERT(loaded.size() == actions.size());
 		for (int i=0; i<actions.size(); ++i) {
-			actions[i]->setText(loaded[i].name());
+			actions[i]->setText(loaded[i]->name());
 			actions[i]->setData(i);
-			actions[i]->setChecked(loaded[i].isSelected());
+			actions[i]->setChecked(loaded[i]->isSelected());
 		}
 		list.syncActions();
 		changingSub = false;

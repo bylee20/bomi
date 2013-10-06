@@ -43,11 +43,11 @@ struct SubtitleComponentModel::Data {
 	int curRow;
 	QFont curFont, defFont;
 	bool visible;
-	const SubtitleComponent *comp;
-	const SubtitleCaption *pended;
+	const SubComp *comp;
+	const SubCapt *pended;
 };
 
-SubtitleComponentModel::SubtitleComponentModel(const SubtitleComponent *comp, QObject *parent)
+SubtitleComponentModel::SubtitleComponentModel(const SubComp *comp, QObject *parent)
 : ListModel(ColumnCount, parent), d(new Data) {
 	d->comp = comp;
 	d->curRow = -1;
@@ -92,7 +92,7 @@ void SubtitleComponentModel::setVisible(bool visible) {
 	}
 }
 
-void SubtitleComponentModel::setCurrentCaption(const SubtitleCaption *caption) {
+void SubtitleComponentModel::setCurrentCaption(const SubCapt *caption) {
 	if (!d->visible) {
 		d->pended = caption;
 	} else {

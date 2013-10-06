@@ -20,6 +20,7 @@ struct OpenGLTexture {
 	GLenum target = GL_TEXTURE_2D;
 	int width = 0, height = 0, depth = 0;
 	OpenGLTextureFormat format;
+	QSize size() const { return {width, height}; }
 	void generate() { glGenTextures(1, &id); }
 	void delete_() { glDeleteTextures(1, &id); }
 	void bind() const { glBindTexture(target, id); }
@@ -92,6 +93,12 @@ struct OpenGLTexture {
 		glTexSubImage2D(target, 0, x, y, width, height, format.pixel, format.type, data);
 		unbind();
 		return true;
+	}
+	bool upload(int x, int y, const QSize &size, const void *data) const {
+		return upload(x, y, size.width(), size.height(), data);
+	}
+	bool upload(const QPoint &pos, const QSize &size, const void *data) const {
+		return upload(pos.x(), pos.y(), size.width(), size.height(), data);
 	}
 	bool upload(int x, int width, const void *data) const {
 		if (isEmpty())

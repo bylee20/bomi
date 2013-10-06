@@ -4,18 +4,18 @@
 #include "stdafx.hpp"
 #include "richtextdocument.hpp"
 
-struct SubtitleCaption : public RichTextDocument {
-	SubtitleCaption() {index = -1;}
+struct SubCapt : public RichTextDocument {
+	SubCapt() {index = -1;}
 	RichTextDocument &doc() {return *this;}
 	const RichTextDocument &doc() const {return *this;}
-	inline SubtitleCaption &operator += (const SubtitleCaption &rhs) {RichTextDocument::operator += (rhs); return *this;}
-	inline SubtitleCaption &operator += (const RichTextDocument &rhs) {RichTextDocument::operator += (rhs); return *this;}
-	inline SubtitleCaption &operator += (const QList<RichTextBlock> &rhs) {RichTextDocument::operator += (rhs); return *this;}
+	inline SubCapt &operator += (const SubCapt &rhs) {RichTextDocument::operator += (rhs); return *this;}
+	inline SubCapt &operator += (const RichTextDocument &rhs) {RichTextDocument::operator += (rhs); return *this;}
+	inline SubCapt &operator += (const QList<RichTextBlock> &rhs) {RichTextDocument::operator += (rhs); return *this;}
 	mutable int index;
 };
 
-class SubtitleComponent : public QMap<int, SubtitleCaption> {
-	typedef QMap<int, SubtitleCaption> Super;
+class SubComp : public QMap<int, SubCapt> {
+	typedef QMap<int, SubCapt> Super;
 public:
 //	struct Lang {
 //		QString id() const {
@@ -29,11 +29,11 @@ public:
 //	};
 
 	enum SyncType {Time, Frame};
-	SubtitleComponent(const QString &file = QString(), SyncType base = Time);
-	SubtitleComponent &unite(const SubtitleComponent &other, double frameRate);
-	SubtitleComponent united(const SubtitleComponent &other, double frameRate) const;
-	bool operator == (const SubtitleComponent &rhs) const {return name() == rhs.name();}
-	bool operator != (const SubtitleComponent &rhs) const {return !operator==(rhs);}
+	SubComp(const QString &file = QString(), SyncType base = Time);
+	SubComp &unite(const SubComp &other, double frameRate);
+	SubComp united(const SubComp &other, double frameRate) const;
+	bool operator == (const SubComp &rhs) const {return name() == rhs.name();}
+	bool operator != (const SubComp &rhs) const {return !operator==(rhs);}
 	QString name() const;
 	const QString &fileName() const {return m_file;}
 	SyncType base() const {return m_base;}
@@ -61,26 +61,26 @@ private:
 
 };
 
-typedef QMapIterator<int, SubtitleCaption> SubtitleComponentIterator;
+typedef QMapIterator<int, SubCapt> SubtitleComponentIterator;
 
 class Subtitle {
 public:
-	const SubtitleComponent &operator[] (int rhs) const {return m_comp[rhs];}
+	const SubComp &operator[] (int rhs) const {return m_comp[rhs];}
 	Subtitle &operator += (const Subtitle &rhs) {m_comp += rhs.m_comp; return *this;}
 	int count() const {return m_comp.size();}
 	int size() const {return m_comp.size();}
 	bool isEmpty() const;
-	SubtitleComponent component(double frameRate) const;
+	SubComp component(double frameRate) const;
 //	int start(int time, double frameRate) const;
 //	int end(int time, double frameRate) const;
 	RichTextDocument caption(int time, double frameRate) const;
 	bool load(const QString &file, const QString &enc, double accuracy);
 	void clear() {m_comp.clear();}
-	void append(const SubtitleComponent &comp) {m_comp.append(comp);}
+	void append(const SubComp &comp) {m_comp.append(comp);}
 	static Subtitle parse(const QString &fileName, const QString &enc);
 private:
 	friend class SubtitleParser;
-	QList<SubtitleComponent> m_comp;
+	QList<SubComp> m_comp;
 };
 
 #endif // SUBTITLE_HPP

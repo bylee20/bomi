@@ -3,37 +3,37 @@
 #include "global.hpp"
 #include "charsetdetector.hpp"
 
-QString SubtitleComponent::name() const {
+QString SubComp::name() const {
 	return m_klass.isEmpty() ? fileName() : fileName() % _L("(") % m_klass % _L(")");
 }
 
-SubtitleComponent Subtitle::component(double frameRate) const {
+SubComp Subtitle::component(double frameRate) const {
 	if (m_comp.isEmpty())
-		return SubtitleComponent();
-	SubtitleComponent comp;
+		return SubComp();
+	SubComp comp;
 	for (int i=0; i<m_comp.size(); ++i)
 		comp.unite(m_comp[i], frameRate);
 	return comp;
 }
 
 
-SubtitleComponent::SubtitleComponent(const QString &file, SyncType base)
+SubComp::SubComp(const QString &file, SyncType base)
 : m_file(file), m_base(base) {
 	(*this)[0].index = 0;
 	m_flag = false;
 }
 
-SubtitleComponent SubtitleComponent::united(const SubtitleComponent &other, double frameRate) const {
-	return SubtitleComponent(*this).unite(other, frameRate);
+SubComp SubComp::united(const SubComp &other, double frameRate) const {
+	return SubComp(*this).unite(other, frameRate);
 }
 
-SubtitleComponent::const_iterator SubtitleComponent::start(int time, double frameRate) const {
+SubComp::const_iterator SubComp::start(int time, double frameRate) const {
 	if (isEmpty() || time < 0)
 		return end();
 	return --finish(time, frameRate);
 }
 
-SubtitleComponent::const_iterator SubtitleComponent::finish(int time, double frameRate) const {
+SubComp::const_iterator SubComp::finish(int time, double frameRate) const {
 	if (isEmpty() || time < 0)
 		return end();
 	int key = time;
@@ -45,8 +45,8 @@ SubtitleComponent::const_iterator SubtitleComponent::finish(int time, double fra
 	return upperBound(key);
 }
 
-SubtitleComponent &SubtitleComponent::unite(const SubtitleComponent &rhs, double fps) {
-	SubtitleComponent &comp = *this;
+SubComp &SubComp::unite(const SubComp &rhs, double fps) {
+	SubComp &comp = *this;
 	if (this == &rhs || rhs.isEmpty())
 		return comp;
 	else if (isEmpty()) {

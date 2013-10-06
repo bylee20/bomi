@@ -44,7 +44,7 @@ void SamiParser::_parse(Subtitle &sub) {
 			blocks[tag.value("class").toString()] += paragraph;
 		}
 		for (auto it = blocks.begin(); it != blocks.end(); ++it) {
-			SubtitleComponent *comp = nullptr;
+			SubComp *comp = nullptr;
 			for (int i=0; i<sub.count(); ++i) {
 				if (comps[i].language() == it.key()) {
 					comp = &comps[i];
@@ -119,7 +119,7 @@ void SubRipParser::_parse(Subtitle &sub) {
 
 	sub.clear();
 	auto &comp = append(sub);
-	QLinkedList<SubtitleComponent> caps;
+	QLinkedList<SubComp> caps;
 	for (;;) {
 		const auto num = getNumber();
 		if (num < 0)
@@ -164,14 +164,14 @@ void MicroDVDParser::_parse(Subtitle &sub) {
 	const double fps = rxLine.cap(3).toDouble(&ok);
 	auto getKey = [ok, fps] (int frame) {return ok ? qRound((frame/fps)*1000.0) : frame;};
 	if (ok) {
-		append(sub, SubtitleComponent::Time);
+		append(sub, SubComp::Time);
 	} else {
 		seekTo(0);
-		append(sub, SubtitleComponent::Frame);
+		append(sub, SubComp::Frame);
 	}
 
 	QRegExp rxAttr("\\{([^\\}]+):([^\\}]+)\\}");
-	SubtitleComponent &comp = components(sub).first();
+	SubComp &comp = components(sub).first();
 	while (!atEnd()) {
 		line = trim(getLine()).toString();
 		if (rxLine.indexIn(line) == -1)

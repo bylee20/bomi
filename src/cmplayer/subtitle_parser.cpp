@@ -63,7 +63,7 @@ int SubtitleParser::predictEndTime(int start, const QString &text) {
 	return -1;
 }
 
-int SubtitleParser::predictEndTime(const SubtitleComponent::const_iterator &it) {
+int SubtitleParser::predictEndTime(const SubComp::const_iterator &it) {
 	if (msPerChar > 0)
 		return it.value().totalLength()*msPerChar + it.key();
 	return -1;

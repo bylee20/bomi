@@ -11,15 +11,15 @@ struct SubtitleStyle;		struct Margin;
 class LoadedSubtitle {
 public:
 	LoadedSubtitle() {}
-	LoadedSubtitle(const SubtitleComponent &comp): m_comp(comp) {}
+	LoadedSubtitle(const SubComp &comp): m_comp(comp) {}
 	bool isSelected() const {return m_selected;}
 	QString name() const {return m_comp.name();}
-	SubtitleComponent &component() { return m_comp; }
-	const SubtitleComponent &component() const { return m_comp; }
+	SubComp &component() { return m_comp; }
+	const SubComp &component() const { return m_comp; }
 	bool &selection() { return m_selected; }
 private:
 	bool m_selected = false;
-	SubtitleComponent m_comp;
+	SubComp m_comp;
 };
 
 class SubtitleRendererItem : public TextureRendererItem  {
@@ -38,7 +38,7 @@ public:
 	bool hasSubtitles() const { return !m_compempty; }
 	bool isTopAligned() const { return m_top; }
 	QVector<SubtitleComponentModel*> models() const;
-	const QList<LoadedSubtitle> &loaded() const { return m_loaded; }
+	const QList<LoadedSubtitle*> &loaded() const { return m_loaded; }
 	void setLoaded(const QList<LoadedSubtitle> &loaded);
 	void setPriority(const QStringList &priority);
 	void setPos(double pos) { if (_ChangeF(m_pos, qBound(0.0, pos, 1.0))) setMargin(m_top ? m_pos : 0, m_top ? 0.0 : 1.0 - m_pos, 0, 0); }
@@ -70,7 +70,6 @@ private:
 	void initializeGL();
 	void finalizeGL();
 	void rerender();
-	bool removeInOrder(const SubtitleComponent *comp);
 	QSizeF contentSize() const {return m_size;}
 	void setMargin(double top, double bottom, double right, double left);
 	void applySelection();
@@ -91,7 +90,7 @@ private:
 	Qt::Alignment m_alignment = Qt::AlignBottom | Qt::AlignHCenter;
 	double m_fps = 25.0, m_pos = 1.0;
 	int m_delay = 0, m_ms = 0;
-	QList<LoadedSubtitle> m_loaded;
+	QList<LoadedSubtitle*> m_loaded;
 	friend class SubtitleRendererShader;
 };
 
