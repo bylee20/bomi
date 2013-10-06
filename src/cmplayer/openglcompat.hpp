@@ -3,6 +3,7 @@
 
 #include <QImage>
 #include <QOpenGLContext>
+#include <QOpenGLShaderProgram>
 #include <array>
 #include "enums.hpp"
 
@@ -167,6 +168,7 @@ public:
 		m_texture.delete_();
 		func()->glDeleteFramebuffers(1, &m_id);
 	}
+	QRect rect() const { return {0, 0, width(), height()}; }
 	int width() const { return m_texture.width; }
 	int height() const { return m_texture.height; }
 	QSize size() const { return {m_texture.width, m_texture.height}; }
@@ -188,6 +190,95 @@ private:
 	static QOpenGLFunctions *func() { return OpenGLCompat::functions(); }
 	GLuint m_id = GL_NONE;
 	OpenGLTexture m_texture;
+};
+
+class OpenGLTextureShaderProgram : public QOpenGLShaderProgram {
+	enum {vPosition, vCoord, vColor};
+public:
+	OpenGLTextureShaderProgram(QObject *parent = nullptr): QOpenGLShaderProgram(parent) { }
+	void setFragmentShader(const QByteArray &code) {
+		if (!m_frag)
+			m_frag = addShaderFromSourceCode(QOpenGLShader::Fragment, code);
+	}
+	void setVertexShader(const QByteArray &code) {
+		if (!m_vertex) {
+			m_vertex = addShaderFromSourceCode(QOpenGLShader::Vertex, code);
+			m_hasColor = code.contains("vColor");
+		}
+	}
+	bool link() override {
+		bindAttributeLocation("vCoord", vCoord);
+		bindAttributeLocation("vPosition", vPosition);
+		if (m_hasColor)
+			bindAttributeLocation("vColor", vColor);
+		return QOpenGLShaderProgram::link();
+	}
+	void setTextureCount(int textures) {
+		if (textures > m_vPositions.size()/(2*4)) {
+			textures *= 1.5;
+			m_vCoords.resize(2*4*textures);
+			m_vPositions.resize(2*4*textures);
+			if (m_hasColor)
+				m_vColors.resize(4*textures);
+		}
+	}
+	void uploadPosition(int i, const QPointF &p1, const QPointF &p2) {
+		uploadRect(m_vPositions.data(), i, p1, p2);
+	}
+	void uploadPosition(int i, const QRectF &rect) {
+		uploadRect(m_vPositions.data(), i, rect.topLeft(), rect.bottomRight());
+	}
+	void uploadCoord(int i, const QPointF &p1, const QPointF &p2) {
+		uploadRect(m_vCoords.data(), i, p1, p2);
+	}
+	void uploadCoord(int i, const QRectF &rect) {
+		uploadRect(m_vCoords.data(), i, rect.topLeft(), rect.bottomRight());
+	}
+	void uploadColor(int i, quint32 color) {
+		auto p = m_vColors.data() + 4*i;
+		*p++ = color; *p++ = color; *p++ = color; *p++ = color;
+	}
+	void begin() {
+		bind();
+		enableAttributeArray(vPosition);
+		enableAttributeArray(vCoord);
+		setAttributeArray(vCoord, m_vCoords.data(), 2);
+		setAttributeArray(vPosition, m_vPositions.data(), 2);
+		if (m_hasColor) {
+			enableAttributeArray(vColor);
+			setAttributeArray(vColor, GL_UNSIGNED_BYTE, m_vColors.data(), 4);
+		}
+	}
+	void end() {
+		disableAttributeArray(vCoord);
+		disableAttributeArray(vPosition);
+		if (m_hasColor)
+			disableAttributeArray(vColor);
+		release();
+	}
+	void reset() { removeAllShaders(); m_frag = m_vertex = false; }
+private:
+	void uploadRect(float *p, int i, const QPointF &p1, const QPointF &p2) {
+		p += 4*2*i;
+		*p++ = p1.x(); *p++ = p1.y();
+		*p++ = p1.x(); *p++ = p2.y();
+		*p++ = p2.x(); *p++ = p2.y();
+		*p++ = p2.x(); *p++ = p1.y();
+	}
+	QVector<float> m_vPositions, m_vCoords;
+	QVector<quint32> m_vColors;
+	bool m_hasColor = false, m_frag = false, m_vertex = false;
+};
+
+class OpenGLOffscreenContext : public QOpenGLContext {
+public:
+	OpenGLOffscreenContext() {
+		m_surface.setFormat(format());
+		m_surface.create();
+	}
+	bool makeCurrent() { return QOpenGLContext::makeCurrent(&m_surface); }
+private:
+	QOffscreenSurface m_surface;
 };
 
 #endif // OPENGLCOMPAT_HPP

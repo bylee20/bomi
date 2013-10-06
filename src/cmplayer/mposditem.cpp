@@ -2,40 +2,151 @@
 #include "mposdbitmap.hpp"
 #include "mposdnode.hpp"
 #include "dataevent.hpp"
+#include "openglcompat.hpp"
 
 struct MpOsdItem::Data {
+	MpOsdItem *p = nullptr;
 	MpOsdBitmap osd;
-	bool forced = true;
-	bool show = false, redraw = false, dirtyGeometry = true;
-	MpOsdNode *node = nullptr;
-	QTimer sizeChecker;
-	QSize targetSize = {0, 0}, renderSize = {0, 0}, prevSize = {0, 0};
+	QSize imageSize = {0, 0};
+//	bool forced = true;
+	bool show = false;//, redraw = false;
+//	QTimer sizeChecker;
+//	QSize targetSize = {0, 0}, renderSize = {0, 0}, prevSize = {0, 0};
+
+	MpOsdBitmap::Format format = MpOsdBitmap::Ass;
+	GLenum srcFactor = GL_SRC_ALPHA;
+	int loc_atlas = 0, loc_vMatrix = 0;
+//	OpenGLFramebufferObject *fbo = nullptr;
+	OpenGLTextureShaderProgram *shader = nullptr;
+	OpenGLTexture atlas;
+	QMatrix4x4 vMatrix;
+
+	void build(MpOsdBitmap::Format inFormat) {
+		if (!_Change(format, inFormat))
+			return;
+		_Renew(shader);
+		srcFactor = (format & MpOsdBitmap::PaMask) ? GL_ONE : GL_SRC_ALPHA;
+		atlas.width = atlas.height = 0;
+		atlas.format = OpenGLCompat::textureFormat(format & MpOsdBitmap::Rgba ? GL_BGRA : 1);
+
+		QByteArray frag;
+		if (format == MpOsdBitmap::Ass) {
+			frag = R"(
+				uniform sampler2D atlas;
+				varying vec4 c;
+				varying vec2 texCoord;
+				void main() {
+					vec2 co = vec2(c.a*texture2D(atlas, texCoord).r, 0.0);
+					gl_FragColor = c*co.xxxy + co.yyyx;
+				}
+			)";
+		} else {
+			frag = R"(
+				uniform sampler2D atlas;
+				varying vec2 texCoord;
+				void main() {
+					gl_FragColor = texture2D(atlas, texCoord);
+				}
+			)";
+		}
+		shader->setFragmentShader(frag);
+		shader->setVertexShader(R"(
+			uniform mat4 vMatrix;
+			varying vec4 c;
+			varying vec2 texCoord;
+			attribute vec4 vPosition;
+			attribute vec2 vCoord;
+			attribute vec4 vColor;
+			void main() {
+				c = vColor.abgr;
+				texCoord = vCoord;
+				gl_Position = vMatrix*vPosition;
+			}
+		)");
+		shader->link();
+		loc_atlas = shader->uniformLocation("atlas");
+		loc_vMatrix = shader->uniformLocation("vMatrix");
+	}
+
+	void upload(const MpOsdBitmap &osd, int i) {
+		auto &part = osd.part(i);
+		atlas.upload(part.map().x(), part.map().y(), part.strideAsPixel(), part.height(), osd.data(i));
+		QPointF tp = part.map(); tp.rx() /= (double)atlas.width; tp.ry() /= (double)atlas.height;
+		QSizeF ts = part.size(); ts.rwidth() /= (double)atlas.width; ts.rheight() /= (double)atlas.height;
+		shader->uploadCoord(i, {tp, ts});
+		shader->uploadPosition(i, part.display());
+		shader->uploadColor(i, part.color());
+	}
+
+	void initializeAtlas(const MpOsdBitmap &osd) {
+		static const int max = OpenGLCompat::maximumTextureSize();
+		if (osd.sheet().width() > atlas.width || osd.sheet().height() > atlas.height) {
+			if (osd.sheet().width() > atlas.width)
+				atlas.width = qMin<int>(_Aligned<4>(osd.sheet().width()*1.5), max);
+			if (osd.sheet().height() > atlas.height)
+				atlas.height = qMin<int>(_Aligned<4>(osd.sheet().height()*1.5), max);
+			glEnable(atlas.target);
+			if (atlas.id == GL_NONE)
+				atlas.generate();
+			atlas.allocate(GL_NEAREST);
+		}
+	}
+
+	void draw(OpenGLFramebufferObject *fbo, const MpOsdBitmap &osd) {
+		build(osd.format());
+		if (!shader->isLinked())
+			return;
+		initializeAtlas(osd);
+
+		Q_ASSERT(fbo->size() == osd.renderSize());
+		vMatrix.setToIdentity();
+		vMatrix.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
+
+		fbo->bind();
+		glViewport(0, 0, fbo->width(), fbo->height());
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		shader->setTextureCount(osd.count());
+		for (int i=0; i<osd.count(); ++i)
+			upload(osd, i);
+
+		shader->begin();
+		shader->setUniformValue(loc_atlas, 0);
+		shader->setUniformValue(loc_vMatrix, vMatrix);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, atlas.id);
+		glEnable(GL_BLEND);
+		glBlendFunc(srcFactor, GL_ONE_MINUS_SRC_ALPHA);
+		glDrawArrays(GL_QUADS, 0, 4*osd.count());
+		glDisable(GL_BLEND);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		shader->end();
+		fbo->release();
+	}
 };
 
 MpOsdItem::MpOsdItem(QQuickItem *parent)
-: QQuickItem(parent), d(new Data) {
-	setFlag(ItemHasContents, true);
-	connect(&d->sizeChecker, &QTimer::timeout, [this] () {
-		if (!_Change(d->prevSize, QSizeF(width(), height()).toSize())) {
-			d->sizeChecker.stop();
-			d->targetSize = d->prevSize;
-		}
-	});
-	d->sizeChecker.setInterval(300);
+: FramebufferObjectRendererItem(parent), d(new Data) {
+	d->p = this;
 }
 
 MpOsdItem::~MpOsdItem() {
 	delete d;
 }
 
-QSize MpOsdItem::targetSize() const {
-	return d->targetSize;
+void MpOsdItem::initializeGL() { }
+
+void MpOsdItem::finalizeGL() {
+	_Delete(d->shader);
 }
 
 void MpOsdItem::drawOn(sub_bitmaps *imgs) {
 	d->show = true;
 	MpOsdBitmap osd;
-	if (osd.copy(imgs, d->renderSize))
+	if (osd.copy(imgs, d->imageSize))
 		postData(this, EnqueueFrame, osd);
 }
 
@@ -65,46 +176,38 @@ void MpOsdItem::customEvent(QEvent *event) {
 		setVisible(false);
 		break;
 	case EnqueueFrame:
-		d->osd = getData<MpOsdBitmap>(event);
-		d->redraw = true;
-		update();
+		getAllData(event, d->osd);
+		forceRepaint();
 		break;
 	default:
 		break;
 	}
 }
 
-QSGNode *MpOsdItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
-	Q_UNUSED(data);
-	d->node = static_cast<MpOsdNode*>(old);
-	if (!d->node)
-		_New(d->node);
-	if (!old || d->redraw)
-		d->node->draw(d->osd, boundingRect());
-	if (!old || d->dirtyGeometry)
-		d->node->markDirty(QSGNode::DirtyGeometry);
-	d->redraw = false;
-	d->dirtyGeometry = false;
-	return d->node;
+QSize MpOsdItem::imageSize() const {
+	return d->osd.renderSize();
 }
 
-void MpOsdItem::forceUpdateTargetSize() {
-	d->forced = true;
+void MpOsdItem::paint(OpenGLFramebufferObject *fbo) {
+	d->draw(fbo, d->osd);
 }
 
-void MpOsdItem::geometryChanged(const QRectF &newOne, const QRectF &old) {
-	QQuickItem::geometryChanged(newOne, old);
-	if (d->forced) {
-		d->targetSize = newOne.size().toSize();
-		d->forced = false;
-	}else
-		d->sizeChecker.start();
-	d->dirtyGeometry = true;
-	d->redraw = true;
-	update();
+//void MpOsdItem::forceUpdateTargetSize() {
+//	d->forced = true;
+//}
 
-}
+//void MpOsdItem::geometryChanged(const QRectF &newOne, const QRectF &old) {
+//	TextureRendererItem::geometryChanged(newOne, old);
+//	if (d->forced) {
+//		d->targetSize = newOne.size().toSize();
+//		d->forced = false;
+//	}else
+//		d->sizeChecker.start();
+//	d->redraw = true;
+//	update();
 
-void MpOsdItem::setRenderSize(const QSize &size) {
-	d->renderSize = size;
+//}
+
+void MpOsdItem::setImageSize(const QSize &size) {
+	d->imageSize = size;
 }

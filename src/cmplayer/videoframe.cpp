@@ -77,8 +77,12 @@ QImage VideoFrame::toImage() const {
 }
 
 void VideoFrame::allocate(const VideoFormat &format) {
-	if (!_Change(d->format, format))
+	if (format.isEmpty() && d->buffer.isEmpty())
 		return;
+	if (!d->buffer.isEmpty() && d->format == format)
+		return;
+	d.detach();
+	d->format = format;
 	int len = 0;
 	int offsets[4] = {0};
 	for (int i=0; i<format.planes(); ++i) {
@@ -91,6 +95,7 @@ void VideoFrame::allocate(const VideoFormat &format) {
 }
 
 void VideoFrame::doDeepCopy(const VideoFrame &frame) {
+	d.detach();
 	Q_ASSERT(d->format == frame.format());
 	auto p = d->buffer.data();
 	for (int i=0; i<d->format.planes(); ++i) {

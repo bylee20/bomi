@@ -203,7 +203,7 @@ struct MainWindow::Data {
 			as.sub_pos = subtitle.pos();
 			as.sub_sync_delay = subtitle.delay();
 			as.screen_stays_on_top = StaysOnTopInfo::from(sot, StaysOnTop::Playing);
-			as.sub_letterbox = subtitle.letterboxHint();
+			as.sub_letterbox = renderer.overlayInLetterbox();
 			as.sub_align_top = subtitle.isTopAligned();
 			as.save();
 
@@ -343,7 +343,6 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	connect(&d->engine, &PlayEngine::started, &d->history, &HistoryModel::setStarted);
 	connect(&d->engine,	&PlayEngine::stopped, &d->history, &HistoryModel::setStopped);
 	connect(&d->engine, &PlayEngine::finished, &d->history, &HistoryModel::setFinished);
-	connect(&d->renderer, &VideoRendererItem::screenRectChanged, &d->subtitle, &SubtitleRendererItem::setScreenRect);
 	d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentDvdTitle);
 	d->connectCurrentStreamActions(&d->menu("play")("chapter"), &PlayEngine::currentChapter);
 	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);
@@ -488,15 +487,6 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->view->setPersistentOpenGLContext(true);
 	d->view->setPersistentSceneGraph(true);
-
-	connect(d->view, &QQuickWindow::sceneGraphInitialized, [this] () {
-//		d->engine.initializeGL();
-		d->renderer.initializeGL();
-	});
-	connect(d->view, &QQuickWindow::sceneGraphInvalidated, [this] () {
-		d->renderer.finalizeGL();
-//		qDebug() << QOpenGLContext::currentContext() << d->engine.gl();//d->view->openglContext() << QOpenGLContext::currentContext();
-	});
 }
 
 MainWindow::~MainWindow() {
@@ -816,7 +806,7 @@ void MainWindow::connectMenus() {
 		showMessage(tr("Selected Subtitle"), a->text());
 	});
 	d->connect(sub.g("display"), [this] (QAction *action) {
-		d->subtitle.setLetterboxHint(action->data().toInt());
+		d->renderer.setOverlayInLetterbox(action->data().toInt());
 		showMessage(tr("Subtitle Display"), action->text());
 	});
 	d->connect(sub.g("align"), [this] (QAction *action) {

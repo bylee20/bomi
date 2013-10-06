@@ -15,7 +15,7 @@ DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavfilter -lavcodec -lpostproc -lavformat -lavutil \
-	-lmpg123 -lquvi -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio
+        -lmpg123 -lquvi$${LIBQUVI_SUFFIX} -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio
 macx {
     QT += gui-private
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
@@ -23,8 +23,6 @@ macx {
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
-    BREW = /usr/local/Cellar
-    LLIB_DIR = /usr/local/lib
     LIBS += -L/usr/local/lib -liconv -lfribidi -llua -ldvdcss -lcurl -L/usr/X11/lib -lfreetype -lfontconfig -framework IOSurface \
 	-framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
 	-framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
@@ -115,15 +113,15 @@ HEADERS += playengine.hpp \
     deintinfo.hpp \
     letterboxitem.hpp \
     mposdbitmap.hpp \
-    mposdnode.hpp \
     openglcompat.hpp \
     videoframeshader.glsl.hpp \
     videoframeshader.hpp \
     undostack.hpp \
-    videorenderershader.glsl.hpp \
     ffmpegfilters.hpp \
     softwaredeinterlacer.hpp \
-    vaapipostprocessor.hpp
+    vaapipostprocessor.hpp \
+    texturenode.hpp \
+    geometryitem.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -190,13 +188,14 @@ SOURCES += main.cpp \
     deintinfo.cpp \
     letterboxitem.cpp \
     mposdbitmap.cpp \
-    mposdnode.cpp \
     openglcompat.cpp \
     videoframeshader.cpp \
     undostack.cpp \
     ffmpegfilters.cpp \
     softwaredeinterlacer.cpp \
-    vaapipostprocessor.cpp
+    vaapipostprocessor.cpp \
+    texturenode.cpp \
+    geometryitem.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -230,7 +229,6 @@ OTHER_FILES += \
     imports/CMPlayerSkin/AppWithDock.qml \
     imports/CMPlayerSkin/TimeSlider.qml \
     imports/CMPlayerSkin/VolumeSlider.qml \
-    videorenderershader.glsl \
     videoframeshader.glsl
 
 evil_hack_to_fool_lupdate {

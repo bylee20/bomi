@@ -1,9 +1,14 @@
 #!/bin/bash
 
+njobs=$(nproc)
+if [ ! $njobs ]; then
+  njobs=5
+fi
+
 args="--disable-encoding --disable-libguess --disable-terminfo --disable-termcap --disable-termios --enable-iconv \
   --disable-lirc --disable-lircc --disable-joystick --disable-vm --disable-xf86keysym --disable-radio \
   --disable-radio-capture --disable-radio-v4l2 --disable-tv --disable-tv-v4l2 --disable-pvr \
-  --disable-smb --enable-libquvi4 --disable-libquvi9 --disable-lcms2 --disable-vcd --disable-bluray --enable-dvdread \
+  --disable-smb --disable-lcms2 --disable-vcd --disable-bluray --enable-dvdread \
   --disable-enca --enable-pthreads  \
   --disable-rpath --disable-libpostproc --disable-libavdevice --disable-libavfilter --disable-vf-lavfi --disable-af-lavfi --disable-mng \
   --disable-jpeg --enable-libcdio --disable-ladspa --disable-libbs2b --enable-mpg123 --disable-libavresample \
@@ -13,13 +18,11 @@ args="--disable-encoding --disable-libguess --disable-terminfo --disable-termcap
   --disable-gettext --disable-cross-compile --disable-shm"
 
 kern=`uname -s`
-if test $kern = "Darwin"
-then
+if test $kern = "Darwin"; then
   echo "Build for OS X"
   args="$args --enable-coreaudio --disable-alsa --disable-pulse --disable-jack --disable-vaapi --enable-vda"
   PKG_CONFIG_PATH="/usr/X11/lib/pkgconfig:${PKG_CONFIG_PATH}"
-elif test $kern = "Linux"
-then
+elif test $kern = "Linux"; then
   echo "Build for Linux"
   args="$args --disable-coreaudio --enable-alsa --enable-pulse --enable-jack --enable-vaapi --disable-vda"
 else
@@ -29,7 +32,7 @@ fi
 
 export PKG_CONFIG_PATH="../../build/lib/pkgconfig:${PKG_CONFIG_PATH}"
 cd src/mpv && make distclean;  ./configure $args
-make -j 6
+make -j $njobs
 
 allobjs=`find . -name '*.o'`
 objs=""

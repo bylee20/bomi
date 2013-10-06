@@ -105,6 +105,7 @@ void OpenGLCompat::fillInterpolatorLut(InterpolatorType interpolator) {
 
 OpenGLTexture OpenGLCompat::allocateInterpolatorLutTexture(GLuint id, InterpolatorType interpolator) {
 	OpenGLTexture texture;
+	texture.id = id;
 	if (interpolator == InterpolatorType::Bilinear)
 		return texture;
 	auto &lut = c.m_bicubicLuts[(int)interpolator];
@@ -117,7 +118,6 @@ OpenGLTexture OpenGLCompat::allocateInterpolatorLutTexture(GLuint id, Interpolat
 	texture.format.internal = GL_RGBA16;
 	texture.format.pixel = GL_BGRA;
 	texture.format.type = GL_UNSIGNED_SHORT;
-	texture.id = id;
 	texture.bind();
 	texture.allocate(GL_LINEAR, GL_REPEAT, lut.constData());
 	return texture;

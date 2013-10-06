@@ -13,10 +13,10 @@ public:
 	VideoFrame(bool free, mp_image *mpi, const VideoFormat &format, int field = Picture): d(new Data(free, mpi, format, mpi->pts, field)) {}
 	VideoFrame(const QImage &image): d(new Data(image)) {}
 	VideoFrame(): d(new Data) {}
-	VideoFrame(VideoFrame &&other): d(nullptr) { other.d.swap(d); }
+	VideoFrame(VideoFrame &&other): d(nullptr) { d.swap(other.d); }
 	VideoFrame(const VideoFrame &other): d(other.d) {}
 	VideoFrame &operator = (const VideoFrame &other) { d = other.d; return *this; }
-	VideoFrame &operator = (VideoFrame &&other) { other.d.swap(d); return *this; }
+	VideoFrame &operator = (VideoFrame &&other) { d.swap(other.d); return *this; }
 	QImage toImage() const;
 	bool isFlipped() const { return d->field & Flipped; }
 	bool hasImage() const {return !d->image.isNull();}
@@ -27,22 +27,16 @@ public:
 	int height() const {return d->format.height();}
 	double pts() const {return d->pts;}
 	int field() const { return d->field; }
-	void setPts(double pts) { d->pts = pts; }
 	mp_image *mpi() const { return d->mpi; }
-	void swap(VideoFrame &other) {d.swap(other.d);}
-	double nextPts(double prevPts, int split = 2) const {
-		if (prevPts == MP_NOPTS_VALUE)
-			return d->pts;
-		const auto diff = (d->pts - prevPts);
-		return (0.0 < diff && diff < 0.5) ? (d->pts + diff/(double)(split)) : d->pts;
-	}
-	void setPTS(double pts) { d->pts = pts; }
-	void allocate(const VideoFormat &format);
-	void doDeepCopy(const VideoFrame &frame);
 	bool isAdditional() const { return d->field & Additional; }
 	bool isInterlaced() const { return d->field & Interlaced; }
 	bool isTopField() const { return d->field & Top; }
 	bool isBottomField() const { return d->field & Bottom; }
+	void swap(VideoFrame &other) {d.swap(other.d);}
+	void allocate(const VideoFormat &format);
+	void doDeepCopy(const VideoFrame &frame);
+	void clear() { d.reset(); }
+	bool isNull() const { return !d; }
 private:
 	struct Data : public QSharedData {
 		Data() {}
@@ -59,7 +53,7 @@ private:
 		int field = Picture;
 		QByteArray buffer;
 	};
-	QSharedDataPointer<Data> d;
+	QExplicitlySharedDataPointer<Data> d;
 };
 
 Q_DECLARE_TYPEINFO(VideoFrame, Q_MOVABLE_TYPE);

@@ -128,7 +128,6 @@ public:
 	void setClippingMethod(ClippingMethod method);
 	void setMinimumCache(int playback, int seeking);
 public slots:
-	void redraw();
 	void setVolume(int volume);
 	void setPreamp(double preamp);
 	void setMuted(bool muted);

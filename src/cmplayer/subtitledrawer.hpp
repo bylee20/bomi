@@ -19,6 +19,13 @@ public:
 	const Margin &margin() const { return m_margin; }
 	const SubtitleStyle &style() const {return m_style;}
 	const RichTextDocument &text() const {return front;}
+	void clear() {
+		front = RichTextDocument();
+		back = RichTextDocument();
+		m_drawn = false;
+		setStyle(m_style);
+		setAlignment(m_alignment);
+	}
 private:
 	double scale(const QRectF &area) const {
 		const auto policy = m_style.font.scale;

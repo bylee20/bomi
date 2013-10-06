@@ -33,8 +33,10 @@ public:
 	};
 public:
 	enum EventType {SetDrawer = QEvent::User + 1, Tick, SetArea, Reset, Prepared};
-	SubtitleRenderingThread(const RenderTarget &list, QObject *parent = nullptr);
+	SubtitleRenderingThread(QObject *parent);
 	~SubtitleRenderingThread();
+	void reset(const RenderTarget &list, bool sync = false);
+	void clear(bool sync = false) { reset(RenderTarget(), sync); }
 	void setDrawer(const SubtitleDrawer &drawer);
 	void render(int time, double fps) { postData(this, Tick, time, fps, true); }
 	void rerender(int time, double fps) { postData(this, Tick, time, fps, false); }
@@ -48,9 +50,9 @@ private:
 	void updateCache();
 	void update();
 	struct Data; Data *d;
-
+	const RenderTarget &target() const { return m_target; }
 	QRectF m_area; double m_dpr = 1.0, m_fps = 30.0;
-	const RenderTarget m_target;
+	RenderTarget m_target;
 };
 
 #endif // SUBTITLERENDERINGTHREAD_HPP

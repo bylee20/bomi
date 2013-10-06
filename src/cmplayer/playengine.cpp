@@ -32,7 +32,7 @@ enum EventType {
 
 enum MpCmd : int {
 	MpSetProperty = std::numeric_limits<int>::min(),
-	MpResetAudioChain, MpResetDeint, MpSetDeintEnabled, MpSetAudioLevel, MpSetAudioMuted, MpRedraw
+	MpResetAudioChain, MpResetDeint, MpSetDeintEnabled, MpSetAudioLevel, MpSetAudioMuted
 };
 
 static inline PlayEngine *priv(MPContext *mpctx) { return static_cast<PlayEngine*>(mpctx->priv); }
@@ -447,9 +447,6 @@ int PlayEngine::mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 			break;
 		case MpSetDeintEnabled:
 			d->video->setDeintEnabled(d->deint);
-			break;
-		case MpRedraw:
-			d->video->redraw();
 			break;
 		default:
 			break;
@@ -944,8 +941,4 @@ void PlayEngine::setDeintEnabled(bool on) {
 
 bool PlayEngine::isDeintEanbled() const {
 	return d->deint;
-}
-
-void PlayEngine::redraw() {
-	d->enqueue(MpRedraw);
 }

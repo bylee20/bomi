@@ -27,7 +27,6 @@ public:
 	static int queryFormat(struct vo *vo, quint32 format);
 	void setDeintOptions(const DeintOption &sw, const DeintOption &hw);
 	void setDeintEnabled(bool on);
-	void redraw();
 signals:
 	void formatChanged(const VideoFormat &format);
 private:

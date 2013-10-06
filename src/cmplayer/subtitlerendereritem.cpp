@@ -9,8 +9,8 @@
 struct SubtitleRendererItem::Data {
 	SubtitleStyle style;
 	SubtitleDrawer drawer;
-	bool redraw = false, selecting = false;
-	int loc_tex = 0, loc_shadowColor = 0, loc_shadowOffset = 0, loc_dxdy = 0;
+	bool selecting = false;
+	bool redraw = false;
 	QPointF shadowOffset = {0, 0};
 	QMap<QString, int> langMap;
 	int language_priority(const SubtitleComponent &comp) const {
@@ -19,43 +19,86 @@ struct SubtitleRendererItem::Data {
 	}
 	SubtitleRenderingThread *renderer = nullptr;
 	SubtitleRenderingThread::RenderTarget order;
-	SubtitleRenderingThread::Picture pic = {order};
+	SubtitleRenderingThread::Picture pic{order};
 	QVector<SubtitleComponentModel*> models;
 	OpenGLTexture texture;
 };
 
+class SubtitleRendererShader : public TextureRendererShader {
+public:
+	SubtitleRendererShader(const SubtitleRendererItem *item)
+	: TextureRendererShader(item, false) { }
+	const char *fragmentShader() const {
+		const char *shader = (R"(
+			uniform sampler2D tex;
+			uniform vec2 dxdy;
+			uniform vec2 shadowOffset;
+			uniform vec4 shadowColor;
+			varying highp vec2 texCoord;
+			void main() {
+				vec4 top = texture2D(tex, texCoord);
+				float alpha = texture2D(tex, texCoord - shadowOffset).a;
+				gl_FragColor = top + alpha*shadowColor*(1.0 - top.a);
+			}
+		)");
+		return shader;
+	}
+	void link(QOpenGLShaderProgram *prog) override {
+		loc_tex = prog->uniformLocation("tex");
+		loc_dxdy = prog->uniformLocation("dxdy");
+		loc_shadowColor = prog->uniformLocation("shadowColor");
+		loc_shadowOffset = prog->uniformLocation("shadowOffset");
+	}
+	void bind(QOpenGLShaderProgram *prog) override {
+		auto d = static_cast<const SubtitleRendererItem*>(item())->d;
+		prog->setUniformValue(loc_tex, 0);
+		prog->setUniformValue(loc_shadowColor, d->style.shadow.color);
+		prog->setUniformValue(loc_shadowOffset, d->shadowOffset);
+		prog->setUniformValue(loc_dxdy, 1.0/(d->pic.image.width()), 1.0/(d->pic.image.height()));
+	}
+private:
+	int loc_tex = -1, loc_shadowColor = -1, loc_shadowOffset = -1, loc_dxdy = -1, loc_vMatrix = -1;
+};
+
 SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
-: TextureRendererItem(1, parent), d(new Data) {
-	updateAlignment();	updateStyle();
-	d->texture.format = {GL_RGBA8, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV};
+: TextureRendererItem(parent), d(new Data) {
+	d->renderer = new SubtitleRenderingThread(this);
+	d->renderer->start();
+	updateAlignment();
+	updateStyle();
 }
 
 SubtitleRendererItem::~SubtitleRendererItem() {
-	qDeleteAll(d->models);
-	delete d->renderer;
+	unload();
+	d->renderer->quit();
+	d->renderer->wait(50000);
+	_Delete(d->renderer);
 	delete d;
 }
 
 void SubtitleRendererItem::rerender() {
-	if (!m_hidden && !m_compempty && m_ms > 0 && d->renderer)
+	if (!m_hidden && !m_compempty && m_ms > 0)
 		d->renderer->rerender(m_ms - m_delay, m_fps);
+}
 
+TextureRendererShader *SubtitleRendererItem::createShader() const {
+	return new SubtitleRendererShader(this);
+}
+
+void SubtitleRendererItem::initializeGL() {
+	TextureRendererItem::initializeGL();
+	d->texture.format = OpenGLCompat::textureFormat(GL_BGRA);
+	d->texture.generate();
+	setRenderTarget(d->texture);
+}
+
+void SubtitleRendererItem::finalizeGL() {
+	TextureRendererItem::finalizeGL();
+	d->texture.delete_();
 }
 
 const RichTextDocument &SubtitleRendererItem::text() const {
 	return d->pic.text;
-}
-
-void SubtitleRendererItem::setLetterboxHint(bool hint) {
-	if (_Change(m_letterbox, hint) && m_screen != boundingRect() && d->renderer)
-		d->renderer->setArea(drawArea(), dpr());
-}
-
-void SubtitleRendererItem::setScreenRect(const QRectF &screen) {
-	if (_Change(m_screen, screen) && !m_letterbox && d->renderer) {
-		d->renderer->setArea(drawArea(), dpr());
-		setGeometryDirty();
-	}
 }
 
 void SubtitleRendererItem::setPriority(const QStringList &priority) {
@@ -70,15 +113,13 @@ void SubtitleRendererItem::setStyle(const SubtitleStyle &style) {
 
 void SubtitleRendererItem::updateStyle() {
 	d->drawer.setStyle(d->style);
-	if (d->renderer)
-		d->renderer->setDrawer(d->drawer);
+	d->renderer->setDrawer(d->drawer);
 	setGeometryDirty();
 }
 
 void SubtitleRendererItem::updateAlignment() {
 	d->drawer.setAlignment(m_alignment);
-	if (d->renderer)
-		d->renderer->setDrawer(d->drawer);
+	d->renderer->setDrawer(d->drawer);
 }
 
 void SubtitleRendererItem::setTopAlignment(bool top) {
@@ -93,10 +134,6 @@ const SubtitleStyle &SubtitleRendererItem::style() const {
 	return d->style;
 }
 
-//const RichTextDocument &SubtitleRendererItem::text() const {
-//	return d->drawer.text();
-//}
-
 double SubtitleRendererItem::scale(const QRectF &area) const {
 	const auto policy = d->style.font.scale;
 	double px = d->style.font.size;
@@ -110,10 +147,9 @@ double SubtitleRendererItem::scale(const QRectF &area) const {
 }
 
 void SubtitleRendererItem::unload() {
+	d->renderer->clear(true);
 	qDeleteAll(d->models);
 	d->models.clear();
-	delete d->renderer;
-	d->renderer = nullptr;
 	d->order.clear();
 	m_loaded.clear();
 	clear();
@@ -126,70 +162,26 @@ void SubtitleRendererItem::clear() {
 	setVisible(false);
 }
 
-void SubtitleRendererItem::link(QOpenGLShaderProgram *program) {
-	TextureRendererItem::link(program);
-	d->loc_tex = program->uniformLocation("tex");
-	d->loc_dxdy = program->uniformLocation("dxdy");
-	d->loc_shadowColor = program->uniformLocation("shadowColor");
-	d->loc_shadowOffset = program->uniformLocation("shadowOffset");
+void SubtitleRendererItem::getCoords(QRectF &vertices, QRectF &) {
+	vertices = QRectF(d->drawer.pos(d->pic.size, rect()), d->pic.size);
 }
 
-void SubtitleRendererItem::bind(const RenderState &state, QOpenGLShaderProgram *program) {
-	TextureRendererItem::bind(state, program);
-	program->setUniformValue(d->loc_tex, 0);
-	program->setUniformValue(d->loc_shadowColor, d->style.shadow.color);
-	program->setUniformValue(d->loc_shadowOffset, d->shadowOffset);
-	program->setUniformValue(d->loc_dxdy, 1.0/(d->pic.image.width()), 1.0/(d->pic.image.height()));
-	auto f = QOpenGLContext::currentContext()->functions();
-	f->glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture(0));
-}
-
-void SubtitleRendererItem::updateTexturedPoint2D(TexturedPoint2D *tp) {
-	set(tp, QRectF(d->drawer.pos(d->pic.size, drawArea()), d->pic.size), QRectF(0, 0, 1, 1));
-}
-
-void SubtitleRendererItem::initializeTextures() {
-	if (!d->pic.image.isNull()) {
-		d->texture.id = texture(0);
-		d->texture.width = d->pic.image.width();
-		d->texture.height = d->pic.image.height();
-		d->texture.allocate(GL_LINEAR, d->pic.image.bits());
-	}
-	setGeometryDirty();
-}
-
-void SubtitleRendererItem::beforeUpdate() {
+void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 	if (d->redraw) {
-		initializeTextures();
+		if (!d->pic.image.isNull()) {
+			d->texture.width = d->pic.image.width();
+			d->texture.height = d->pic.image.height();
+			d->texture.allocate(GL_LINEAR, d->pic.image.bits());
+		}
 		setGeometryDirty();
 		d->redraw = false;
+		node->markDirty(QSGNode::DirtyMaterial);
 	}
 }
 
 void SubtitleRendererItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) {
+	d->renderer->setArea(rect(), dpr());
 	TextureRendererItem::geometryChanged(newGeometry, oldGeometry);
-	if (m_letterbox) {
-		setGeometryDirty();
-		if (d->renderer)
-			d->renderer->setArea(drawArea(), dpr());
-	}
-}
-
-const char *SubtitleRendererItem::fragmentShader() const {
-	const char *shader = (R"(
-		uniform sampler2D tex;
-		uniform vec2 dxdy;
-		uniform vec2 shadowOffset;
-		uniform vec4 shadowColor;
-		varying highp vec2 qt_TexCoord;
-		void main() {
-			vec4 top = texture2D(tex, qt_TexCoord);
-			float alpha = texture2D(tex, qt_TexCoord - shadowOffset).a;
-			gl_FragColor = top + alpha*shadowColor*(1.0 - top.a);
-		}
-	)");
-	return shader;
 }
 
 const Margin &SubtitleRendererItem::margin() const {
@@ -211,7 +203,7 @@ void SubtitleRendererItem::setHidden(bool hidden) {
 
 void SubtitleRendererItem::render(int ms) {
 	m_ms = ms;
-	if (!m_hidden && !m_compempty && ms > 0 && d->renderer)
+	if (!m_hidden && !m_compempty && ms > 0)
 		d->renderer->render(ms - m_delay, m_fps);
 }
 
@@ -226,6 +218,7 @@ bool SubtitleRendererItem::removeInOrder(const SubtitleComponent *comp) {
 }
 
 void SubtitleRendererItem::deselect(int idx) {
+	d->renderer->clear();
 	if (idx < 0) {
 		d->order.clear();
 		for (auto &loaded : m_loaded)
@@ -240,6 +233,7 @@ void SubtitleRendererItem::deselect(int idx) {
 }
 
 void SubtitleRendererItem::applySelection() {
+	d->renderer->clear();
 	m_compempty = true;
 	qDeleteAll(d->models);
 	d->models.clear();
@@ -250,20 +244,17 @@ void SubtitleRendererItem::applySelection() {
 			m_compempty = false;
 	}
 	emit modelsChanged(d->models);
-	delete d->renderer;
-	d->renderer = nullptr;
 	if (!m_compempty) {
-		d->renderer = new SubtitleRenderingThread(d->order, this);
-		d->renderer->setDrawer(d->drawer);
-		d->renderer->setArea(drawArea(), dpr());
-		d->renderer->start();
+		d->renderer->reset(d->order);
 		d->renderer->render(m_ms, m_fps);
-	} else
+	} else {
 		setVisible(false);
+	}
 }
 
 void SubtitleRendererItem::select(int idx) {
 	if (idx < 0) {
+		d->renderer->clear();
 		d->order.clear();
 		const bool wasSelecting = d->selecting;
 		if (!wasSelecting)
@@ -277,6 +268,7 @@ void SubtitleRendererItem::select(int idx) {
 			applySelection();
 		}
 	} else if (_InRange(0, idx, m_loaded.size()-1) && !m_loaded[idx].isSelected()) {
+		d->renderer->clear();
 		auto &loaded = m_loaded[idx];
 		removeInOrder(&loaded.component());
 		loaded.selection() = true;
@@ -296,9 +288,10 @@ void SubtitleRendererItem::select(int idx) {
 }
 
 bool SubtitleRendererItem::load(const Subtitle &subtitle, bool select) {
-	const int idx = m_loaded.size();
 	if (subtitle.isEmpty())
 		return false;
+	const int idx = m_loaded.size();
+	d->renderer->clear();
 	for (int i=0; i<subtitle.size(); ++i)
 		m_loaded.append(LoadedSubtitle(subtitle[i]));
 	if (select) {
@@ -309,7 +302,8 @@ bool SubtitleRendererItem::load(const Subtitle &subtitle, bool select) {
 		}
 		d->selecting = false;
 		applySelection();
-	}
+	} else
+		d->renderer->reset(d->order);
 	return true;
 }
 
@@ -392,6 +386,7 @@ int SubtitleRendererItem::next() const {
 
 void SubtitleRendererItem::setLoaded(const QList<LoadedSubtitle> &loaded) {
 	unload();
+	d->renderer->clear();
 	m_loaded = loaded;
 	for (const auto &loaded : m_loaded) {
 		if (loaded.isSelected())
@@ -409,18 +404,15 @@ QVector<SubtitleComponentModel*> SubtitleRendererItem::models() const {
 
 void SubtitleRendererItem::customEvent(QEvent *event) {
 	if (event->type() == (int)SubtitleRenderingThread::Prepared) {
-		auto e = static_cast<DataEvent<SubtitleRenderingThread*, SubtitleRenderingThread::Picture>*>(event);
-		if (e->data<0>() == d->renderer) {
-			d->pic = e->data<1>();
-			if (!d->pic.image.isNull()) {
-				d->redraw = true;
-				d->shadowOffset.rx() = d->pic.shadow.x()/(double)d->pic.size.width();
-				d->shadowOffset.ry() = d->pic.shadow.y()/(double)d->pic.size.height();
-				update();
-			}
-			setVisible(!m_hidden && !d->pic.image.isNull());
-			for (int i=0; i<d->models.size(); ++i)
-				d->models[i]->setCurrentCaption(&(*d->pic.its[i]));
+		getAllData(event, d->pic);
+		if (!d->pic.image.isNull()) {
+			d->shadowOffset.rx() = d->pic.shadow.x()/(double)d->pic.size.width();
+			d->shadowOffset.ry() = d->pic.shadow.y()/(double)d->pic.size.height();
+			d->redraw = true;
+			update();
 		}
+		setVisible(!m_hidden && !d->pic.image.isNull());
+		for (int i=0; i<d->models.size() && i<d->pic.its.size(); ++i)
+			d->models[i]->setCurrentCaption(&(*d->pic.its[i]));
 	}
 }

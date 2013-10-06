@@ -181,6 +181,7 @@ App::App(int &argc, char **argv)
 }
 
 App::~App() {
+	delete d->main;
 	delete d->mb;
 	delete d;
 }

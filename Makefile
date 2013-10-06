@@ -1,14 +1,13 @@
-# DYLD_FALLBACK_LIBRARY_PATH /Applications/VLC.app/Contents/MacOS/lib
+LIBQUVI_SUFFIX ?= 
+CXX ?= g++
 
 kern := $(shell uname -s)
 os := $(shell if test $(kern) = "Darwin"; then echo "osx"; elif test $(kern) = "Linux"; then echo "linux"; else echo "unknown"; fi)
-qmake_vars := RELEASE=\\\"yes\\\"
+qmake_vars := RELEASE=\\\"yes\\\" LIBQUVI_SUFFIX=$(LIBQUVI_SUFFIX)
 vlc_plugins_dir := vlc-plugins
 install_file := install -m 644
 install_exe := install -m 755
 install_dir := sh install_dir.sh
-
-CXX ?= g++
 
 ifeq ($(os),osx)
 	QT_PATH = /Users/xylosper/Qt5.1.1/5.1.1/clang_64

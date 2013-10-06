@@ -77,7 +77,7 @@ private:
 		mp_csp colorspace = MP_CSP_BT_601;
 		mp_csp_levels range = MP_CSP_LEVELS_TV;
 	};
-	QSharedDataPointer<Data> d;
+	QExplicitlySharedDataPointer<Data> d;
 };
 
 #endif // VIDEOFORMAT_HPP

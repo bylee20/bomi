@@ -155,7 +155,7 @@ void VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) {
 		if (!d->queue.isEmpty())
 			vo->next_pts2 = d->queue.front().pts();
 	}
-	if (_Change(d->format, d->frame.format()))
+	if (!d->frame.isNull() && _Change(d->format, d->frame.format()))
 		emit v->formatChanged(d->format);
 }
 
@@ -185,8 +185,7 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	auto v = priv(vo); auto d = v->d;
 	switch (req) {
 	case VOCTRL_REDRAW_FRAME:
-		if (d->renderer)
-			d->renderer->present(d->frame, true);
+		d->renderer->rerender();
 		return true;
 	case VOCTRL_GET_HWDEC_INFO:
 		static_cast<mp_hwdec_info*>(data)->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);
@@ -211,14 +210,14 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 		static_cast<MpOsdItem*>(pctx)->drawOn(imgs);
 	};
 	auto d = priv(vo)->d;
-	if (auto r = d->engine->videoRenderer()) {
+	if (auto r = d->renderer) {
 		bool ass = false;
 		if (osd->dec_sub) {
 			auto s = sub_get_last_sd(osd->dec_sub);
 			ass = s && !qstrcmp(s->driver->name, "ass");
 		}
 		auto item = r->mpOsd();
-		if (!ass) {
+		if (!ass) { // never software scaling
 			d->osd.w = d->format.width();
 			d->osd.h = d->format.height();
 			d->osd.video_par = 1.0;
@@ -226,13 +225,13 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 			auto size = item->targetSize();
 			const auto unscaled = d->renderer->sizeHint();
 			if (_Area(size) < _Area(unscaled))
-				size = unscaled; // never scale-down
+				size = unscaled; // scale-down
 			d->osd.w = size.width();
 			d->osd.h = size.height();
 			d->osd.video_par = vo->aspdat.par;
 		}
 		d->osd.display_par = vo->aspdat.monitor_par;
-		item->setRenderSize({d->osd.w, d->osd.h});
+		item->setImageSize({d->osd.w, d->osd.h});
 		osd_draw(osd, d->osd, osd->vo_pts, 0, format, cb, item);
 	}
 }
@@ -241,9 +240,13 @@ void VideoOutput::flipPage(struct vo *vo) {
 	auto d = priv(vo)->d;
 	if (!d->flip)
 		return;
-	if (d->renderer)
-		d->renderer->present(d->frame, false);
 	d->flip = false;
+	if (d->frame.isNull())
+		return;
+	if (d->renderer)
+		d->renderer->present(d->frame);
+	d->frame.clear();
+
 }
 
 int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
@@ -262,11 +265,6 @@ int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	default:
 		return 0;
 	}
-}
-
-void VideoOutput::redraw() {
-	if (d->renderer)
-		d->renderer->present(d->frame, true);
 }
 
 #ifdef Q_OS_LINUX

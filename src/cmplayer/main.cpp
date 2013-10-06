@@ -23,9 +23,9 @@ int main(int argc, char **argv) {
 	}
 	qDebug() << "Create MainWindow instance";
 	HwAcc::initialize();
-	MainWindow mw;
-	mw.show();
-	app.setMainWindow(&mw);
+	MainWindow *mw = new MainWindow;
+	mw->show();
+	app.setMainWindow(mw);
 	qDebug() << "Start main event loop";
 	auto ret = app.exec();
 	HwAcc::finalize();

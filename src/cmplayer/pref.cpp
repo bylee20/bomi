@@ -361,6 +361,8 @@ void Pref::load() {
 QList<DeintMethod> Pref::defaultHwAccDeints() {
 	QList<DeintMethod> deints;
 #ifdef Q_OS_LINUX
+	deints << DeintMethod::Bob;
+	return deints;
 	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
 	if (!filter)
 		return deints;

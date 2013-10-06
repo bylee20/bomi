@@ -13,6 +13,7 @@ enum class InterpolatorType;	enum class DeintMethod;
 
 class VideoRendererItem : public TextureRendererItem {
 	Q_OBJECT
+	static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
 public:
 	enum Effect {
 		NoEffect			= 0,
@@ -46,9 +47,9 @@ public:
 	QSizeF size() const {return QSizeF(width(), height());}
 	QQuickItem *osd() const;
 	void setAspectRatio(double ratio);
-	void setOverlay(QQuickItem *overlay);
+	void setOverlay(GeometryItem *overlay);
 	QQuickItem *overlay() const;
-	void present(const VideoFrame &frame, bool redraw = false);
+	void present(const VideoFrame &frame);
 	void present(const QImage &image);
 	const VideoFrame &frame() const;
 	bool isFramePended() const;
@@ -58,10 +59,11 @@ public:
 	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
 	int delay() const;
 	void setDeintMethod(DeintMethod method);
-	void setInterpolator(InterpolatorType interpolator);
-	void initializeGL();
-	void finalizeGL();
 	void swap(OpenGLTexture &texture, const VideoFormat &format);
+	void rerender() override;
+	GLuint texture() const;
+	void setOverlayInLetterbox(bool letterbox);
+	bool overlayInLetterbox() const;
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -74,18 +76,12 @@ signals:
 	void offsetChanged(const QPoint &pos);
 	void screenRectChanged(const QRectF rect);
 private:
-	void enqueue(const VideoFrame &frame);
-	const char *fragmentShader() const override;
-	const char *vertexShader() const override;
-	const char *const *attributeNames() const override;
-	void link(QOpenGLShaderProgram *program);
-	void bind(const RenderState &state, QOpenGLShaderProgram *program);
-	void updateTexturedPoint2D(TexturedPoint2D *tp);
-	void beforeUpdate() override;
-	void updateGeometry(bool updateOsd);
-	static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
-	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
-	void customEvent(QEvent *event);
+	void initializeGL() override;
+	void finalizeGL() override;
+	void getCoords(QRectF &vertices, QRectF &texCoords) override;
+	void prepare(QSGGeometryNode *node) override;
+	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+	void customEvent(QEvent *event) override;
 	MpOsdItem *mpOsd() const;
 	struct Data;
 	Data *d;

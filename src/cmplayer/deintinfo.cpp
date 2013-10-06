@@ -42,13 +42,12 @@ QList<DeintCaps> DeintCaps::list() {
 }
 
 DeintCaps DeintCaps::default_(DecoderDevice dec) {
-	auto caps = list()[(int)DeintMethod::Bob];
-	Q_ASSERT(caps.m_decoder & dec);
-	if (dec == DecoderDevice::CPU)
-		caps.m_device &= ~DeintDevice::GPU;
-	else // GPU
-		caps.m_device &= ~DeintDevice::CPU;
+	auto ref = list()[(int)DeintMethod::Bob];
+	Q_ASSERT(ref.m_decoder & dec);
+	DeintCaps caps;
+	caps.m_doubler = ref.m_doubler;
 	caps.m_decoder = (int)dec;
+	caps.m_device = (int)((dec == DecoderDevice::CPU) ? DeintDevice::CPU : DeintDevice::GPU);
 	return caps;
 }
 

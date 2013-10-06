@@ -35,7 +35,6 @@ public:
 	int delay() const { return m_delay; }
 	double fps() const { return m_fps; }
 	double pos() const { return m_pos; }
-	bool letterboxHint() const {return m_letterbox;}
 	bool hasSubtitles() const { return !m_compempty; }
 	bool isTopAligned() const { return m_top; }
 	QVector<SubtitleComponentModel*> models() const;
@@ -43,7 +42,6 @@ public:
 	void setLoaded(const QList<LoadedSubtitle> &loaded);
 	void setPriority(const QStringList &priority);
 	void setPos(double pos) { if (_ChangeF(m_pos, qBound(0.0, pos, 1.0))) setMargin(m_top ? m_pos : 0, m_top ? 0.0 : 1.0 - m_pos, 0, 0); }
-	void setLetterboxHint(bool hint);
 	void setDelay(int delay) { if (_Change(m_delay, delay)) rerender(); }
 	bool load(const Subtitle &subtitle, bool select);
 	void unload();
@@ -62,42 +60,39 @@ public:
 		return qMax(screen->logicalDotsPerInch()/screen->physicalDotsPerInch(), 1.0);
 	}
 public slots:
-	void setScreenRect(const QRectF &screen);
 	void setHidden(bool hidden);
 	void render(int ms);
 	void setTopAlignment(bool top);
 	void setFps(double fps) { if (_Change(m_fps, fps)) rerender(); }
 signals:
 	void modelsChanged(const QVector<SubtitleComponentModel*> &models);
-private slots:
-
 private:
+	void initializeGL();
+	void finalizeGL();
 	void rerender();
 	bool removeInOrder(const SubtitleComponent *comp);
 	QSizeF contentSize() const {return m_size;}
 	void setMargin(double top, double bottom, double right, double left);
-	QRectF drawArea() const { return m_letterbox ? boundingRect() : m_screen; }
 	void applySelection();
 	void updateStyle();
 	void updateAlignment();
-	bool blending() const override {return true;}
+	bool isOpaque() const override {return false;}
 	void clear();
 	void customEvent(QEvent *event);
-	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
-	void link(QOpenGLShaderProgram *program);
-	void bind(const RenderState &state, QOpenGLShaderProgram *program);
-	void updateTexturedPoint2D(TexturedPoint2D *tp);
-	void beforeUpdate();
-	void initializeTextures();
-	const char *fragmentShader() const;
+	void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+	void prepare(QSGGeometryNode *node) override;
+	void getCoords(QRectF &vertices, QRectF &) override;
+//	void paint(OpenGLFramebufferObject *fbo) override;
+	TextureRendererShader *createShader() const;
 	struct Data;
 	Data *d;
-	QSizeF m_size;	QRectF m_screen = {0, 0, 0, 0};
-	bool m_letterbox = true, m_compempty = true, m_top = false, m_hidden = false;
+	QSizeF m_size;
+	bool m_compempty = true, m_top = false, m_hidden = false;
 	Qt::Alignment m_alignment = Qt::AlignBottom | Qt::AlignHCenter;
 	double m_fps = 25.0, m_pos = 1.0;
 	int m_delay = 0, m_ms = 0;
 	QList<LoadedSubtitle> m_loaded;
+	friend class SubtitleRendererShader;
 };
 
 #endif // SUBTITLERENDERERITEM_HPP
