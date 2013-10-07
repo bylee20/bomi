@@ -19,9 +19,10 @@ RichTextDocument::~RichTextDocument() {
 
 void RichTextDocument::freeLayouts() {
 	for (auto &layout : m_layouts) {
-		delete layout.block;
-		qDeleteAll(layout.rubies);
+		qDeleteAll(layout->rubies);
+		_Delete(layout);
 	}
+	m_layouts.clear();
 }
 
 RichTextDocument &RichTextDocument::operator = (const RichTextDocument &rhs) {
@@ -83,7 +84,6 @@ void RichTextDocument::setLeading(double newLine, double paragraph) {
 	}
 }
 
-
 void RichTextDocument::setFontPixelSize(int px) {
 	if (m_format.intProperty(QTextFormat::FontPixelSize) != px) {
 		m_format.setProperty(QTextFormat::FontPixelSize, px);
@@ -123,13 +123,13 @@ void RichTextDocument::doLayout(double maxWidth) {
 	const int px = m_format.intProperty(QTextFormat::FontPixelSize);
 	QPointF pos(0, 0);
 	for (int i=0; i<m_layouts.size(); ++i) {
-		auto &block = m_layouts[i].block;
-		auto &rubies = m_layouts[i].rubies;
+		auto &block = m_layouts[i]->block;
+		auto &rubies = m_layouts[i]->rubies;
 
-		block->beginLayout();
+		block.beginLayout();
 		int rt_idx = 0;
-		forever {
-			QTextLine line = block->createLine();
+		for (;;) {
+			QTextLine line = block.createLine();
 			if (!line.isValid())
 				break;
 			line.setLineWidth(maxWidth);
@@ -171,7 +171,7 @@ void RichTextDocument::doLayout(double maxWidth) {
 			} else if (width >= 0)
 				pos.ry() += px;
 		}
-		block->endLayout();
+		block.endLayout();
 	}
 	m_natural = QRectF(0.0, 0.0, width, pos.ry());
 	m_dirty = false;
@@ -179,41 +179,41 @@ void RichTextDocument::doLayout(double maxWidth) {
 
 void RichTextDocument::updateLayoutInfo() {
 	if (m_blockChanged) {
-		auto makeTextLayout = [] (const QString &text) {
-			auto layout = new QTextLayout; layout->setText(text); return layout;
-		};
 		freeLayouts();
 		m_layouts.resize(m_blocks.size());
 		m_formatChanged = m_optionChanged = true;
 		for (int i=0; i<m_blocks.size(); ++i) {
-			m_layouts[i].block = makeTextLayout(m_blocks[i].text);
-			m_layouts[i].rubies.resize(m_blocks[i].rubies.size());
-			for (int j=0; j<m_layouts[i].rubies.size(); ++j) {
-				m_layouts[i].rubies[j] = makeTextLayout(m_blocks[i].rubies[j].rt);
-				m_layouts[i].rubies[j]->setTextOption(rubyOption);
+			auto layout = m_layouts[i] = new Layout;
+			layout->block.setText(m_blocks[i].text);
+			layout->rubies.resize(m_blocks[i].rubies.size());
+			for (int j=0; j<layout->rubies.size(); ++j) {
+				layout->rubies[j] = new QTextLayout;
+				layout->rubies[j]->setText(m_blocks[i].rubies[j].rt);
+				layout->rubies[j]->setTextOption(rubyOption);
 			}
+
 		}
 	}
 	if (m_optionChanged) {
-		for (Layout &layout : m_layouts)
-			layout.block->setTextOption(m_option);
+		for (auto layout : m_layouts)
+			layout->block.setTextOption(m_option);
 	}
 	if (!m_formatChanged && m_pxChanged) {
 		for (int i=0; i<m_blocks.size(); ++i) {
 			const auto &block = m_blocks[i];
-			auto &layout = m_layouts[i];
-			QList<QTextLayout::FormatRange> ranges = layout.block->additionalFormats();
+			auto layout = m_layouts[i];
+			auto ranges = layout->block.additionalFormats();
 			for (int j=0; j<ranges.size(); ++j) {
 				if (!block.formats[j].style.contains(QTextFormat::FontPixelSize)) {
 					ranges[j].format.setProperty(QTextFormat::FontPixelSize, m_format.property(QTextFormat::FontPixelSize));
 					ranges[j].format.setProperty(QTextFormat::TextOutline, m_format.property(QTextFormat::TextOutline));
 				}
 			}
-			layout.block->setAdditionalFormats(ranges);
+			layout->block.setAdditionalFormats(ranges);
 
 			int idx = 0;
-			for (QTextLayout *ruby : layout.rubies) {
-				QList<QTextLayout::FormatRange> ranges = ruby->additionalFormats();
+			for (auto ruby : layout->rubies) {
+				auto ranges = ruby->additionalFormats();
 				if (!block.rubies[idx++].rb_style.contains(RichTextBlock::FontPixelSize)) {
 					const int px = m_format.intProperty(QTextFormat::FontPixelSize)*0.45 + 0.5;
 					ranges.last().format.setProperty(QTextFormat::FontPixelSize, px);
@@ -233,18 +233,18 @@ void RichTextDocument::updateLayoutInfo() {
 			auto &layout = m_layouts[i];
 			QList<QTextLayout::FormatRange> ranges;
 			for (auto &format : block.formats) {
-				ranges << QTextLayout::FormatRange();
-				QTextLayout::FormatRange &range = ranges.last();
+				ranges.push_back(QTextLayout::FormatRange());
+				auto &range = ranges.last();
 				range.start = format.begin;
 				range.length = format.end - format.begin;
 				mergeFormat(range.format, format.style);
 			}
-			layout.block->setAdditionalFormats(ranges);
+			layout->block.setAdditionalFormats(ranges);
 
-			Q_ASSERT(block.rubies.size() == layout.rubies.size());
+			Q_ASSERT(block.rubies.size() == layout->rubies.size());
 
 			int idx = 0;
-			for (const RichTextBlock::Ruby &ruby : block.rubies) {
+			for (const auto &ruby : block.rubies) {
 				QList<QTextLayout::FormatRange> ranges;
 				ranges << QTextLayout::FormatRange();
 				ranges.last().start = 0;
@@ -252,7 +252,7 @@ void RichTextDocument::updateLayoutInfo() {
 				mergeFormat(ranges.last().format, ruby.rb_style);
 				const int px = ranges.last().format.intProperty(QTextFormat::FontPixelSize)*0.45 + 0.5;
 				ranges.last().format.setProperty(QTextFormat::FontPixelSize, px);
-				layout.rubies[idx++]->setAdditionalFormats(ranges);
+				layout->rubies[idx++]->setAdditionalFormats(ranges);
 			}
 		}
 	}
@@ -260,9 +260,9 @@ void RichTextDocument::updateLayoutInfo() {
 }
 
 void RichTextDocument::draw(QPainter *painter, const QPointF &pos) {
-	for (Layout &layout : m_layouts) {
-		layout.block->draw(painter, pos);
-		for (QTextLayout *ruby : layout.rubies)
+	for (auto layout : m_layouts) {
+		layout->block.draw(painter, pos);
+		for (auto ruby : layout->rubies)
 			ruby->draw(painter, pos);
 	}
 }

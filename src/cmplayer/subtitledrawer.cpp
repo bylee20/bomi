@@ -23,20 +23,22 @@ QPointF SubtitleDrawer::pos(const QSizeF &image, const QRectF &area) const {
 
 void SubtitleDrawer::setStyle(const SubtitleStyle &style) {
 	m_style = style;
-	updateStyle(front, style);
-	updateStyle(back, style);
+	updateStyle(m_front, style);
+	updateStyle(m_back, style);
 	if (style.outline.enabled)
-		back.setTextOutline(style.outline.color, style.font.height()*style.outline.width*2.0);
+		m_back.setTextOutline(style.outline.color, style.font.height()*style.outline.width*2.0);
 	else
-		back.setTextOutline(Qt::NoPen);
+		m_back.setTextOutline(Qt::NoPen);
 }
 
-bool SubtitleDrawer::draw(QImage &image, QSize &imageSize, QPointF &shadowOffset, const QRectF &area, double dpr) {
-	if (!(m_drawn = front.hasWords()))
+bool SubtitleDrawer::draw(const RichTextDocument &text, QImage &image, QSize &imageSize, QPointF &shadowOffset, const QRectF &area, double dpr) {
+	if (!(m_drawn = text.hasWords()))
 		return false;
 	const double scale = this->scale(area);
-	updateLayoutInfo();
-	doLayout(area.width()/scale);
+	auto make = [this, text, scale, area] (RichTextDocument &doc, const RichTextDocument &from) {
+		doc = from; doc += text; doc.updateLayoutInfo(); doc.doLayout(area.width()/scale);
+	};
+	RichTextDocument front, back; make(front, m_front); make(back, m_back);
 	shadowOffset = m_style.shadow.offset*m_style.font.height()*scale;
 	imageSize = QSize(area.width(), front.naturalSize().height()*scale + qAbs(shadowOffset.y()));
 	image = QImage(imageSize*dpr, QImage::Format_ARGB32_Premultiplied);

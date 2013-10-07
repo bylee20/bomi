@@ -14,6 +14,8 @@ struct SubtitleRendererItem::Data {
 	bool redraw = false;
 	QPointF shadowOffset = {0, 0};
 	QMap<QString, int> langMap;
+	QMutex mutex;
+	QWaitCondition wait;
 	int language_priority(const SubComp &comp) const {
 //		return langMap.value(r->comp->language().id(), -1);
 		return langMap.value(comp.language(), -1);
@@ -22,11 +24,16 @@ struct SubtitleRendererItem::Data {
 	OpenGLTexture texture;
 	template<typename Func>
 	void apply(Func func) {
+		mutex.lock();
 		for (const auto &obj : selection)
 			if (obj.thread)
 				func(obj.thread);
+		mutex.unlock();
+		wait.wakeAll();
 	}
-	void updateDrawer() { apply([this] (SubCompThread *thread) { thread->setDrawer(drawer); }); }
+	void updateDrawer() {
+		apply([this] (SubCompThread *thread) { thread->setDrawer(drawer); });
+	}
 	void clearSelection() {
 		for (auto &obj : selection) {
 			delete obj.thread;
@@ -40,11 +47,11 @@ struct SubtitleRendererItem::Data {
 		if (!comp)
 			return obj;
 		obj.comp = comp;
-		obj.thread = new SubCompThread(comp, p);
+		obj.thread = new SubCompThread(&mutex, &wait, comp, p);
 		obj.model = new SubtitleComponentModel(comp, p);
-		obj.thread->start();
 		obj.thread->setDrawer(drawer);
 		obj.thread->setArea(p->rect(), p->dpr());
+		obj.thread->start();
 		return obj;
 	}
 
@@ -121,11 +128,8 @@ SubtitleRendererItem::~SubtitleRendererItem() {
 }
 
 void SubtitleRendererItem::rerender() {
-	if (!m_hidden && !m_compempty && m_ms > 0) {
-		for (const auto &obj : d->selection)
-			if (obj.thread)
-				obj.thread->rerender(m_ms - m_delay, m_fps);
-	}
+	if (!m_hidden && !m_compempty && m_ms > 0)
+		d->apply([this] (SubCompThread *thread) { thread->rerender(m_ms - m_delay, m_fps); });
 }
 
 TextureRendererShader *SubtitleRendererItem::createShader() const {

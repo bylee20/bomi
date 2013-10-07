@@ -53,12 +53,11 @@ void SnapshotDialog::updateSubtitleImage() {
 	d->hasSubtitle = false;
 	if (!d->subtitle)
 		return;
-	d->drawer.setText(d->subtitle->text());
 	d->drawer.setAlignment(d->subtitle->alignment());
 	d->drawer.setMargin(d->subtitle->margin());
 	d->drawer.setStyle(d->subtitle->style());
 	QImage subtitle; QSize size; QPointF offset;
-	if (!(d->hasSubtitle = d->drawer.draw(subtitle, size, offset, d->image.rect(), d->subtitle->dpr())))
+	if (!(d->hasSubtitle = d->drawer.draw(d->subtitle->text(), subtitle, size, offset, d->image.rect(), d->subtitle->dpr())))
 		return;
 	if (d->drawer.style().shadow.enabled) {
 		QImage shadow(subtitle.size(), QImage::Format_ARGB32_Premultiplied);

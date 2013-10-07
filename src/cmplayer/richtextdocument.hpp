@@ -16,9 +16,27 @@ public:
 	RichTextDocument &operator += (const RichTextDocument &rhs);
 	RichTextDocument &operator += (const QList<RichTextBlock> &rhs);
 	inline bool isEmpty() const {return m_blocks.isEmpty();}
-	inline int totalLength() const {int ret = 0; for (auto &block : m_blocks) {ret += block.text.size();} return ret;}
-	inline bool hasWords() const {for (auto &block : m_blocks) {for (auto &c : block.text) {if (!isSeparator(c.unicode())) return true;}}	return false;}
-	inline QString toPlainText() const {QString ret; for (auto &block : m_blocks) {ret += block.text;} return ret;}
+	inline int totalLength() const {
+		int ret = 0;
+		for (auto &block : m_blocks)
+			ret += block.text.size();
+		return ret;
+	}
+	inline bool hasWords() const {
+		for (auto &block : m_blocks) {
+			for (auto &c : block.text) {
+				if (!isSeparator(c.unicode()))
+					return true;
+			}
+		}
+		return false;
+	}
+	inline QString toPlainText() const {
+		QString ret;
+		for (auto &block : m_blocks)
+			ret += block.text;
+		return ret;
+	}
 	inline const QList<RichTextBlock> &blocks() const {return m_blocks;}
 	void setAlignment(Qt::Alignment alignment);
 	void setWrapMode(QTextOption::WrapMode wrapMode);
@@ -34,18 +52,18 @@ public:
 	void setLeading(double newLine, double paragraph);
 private:
 	struct Layout {
-		QTextLayout *block;
+		QTextLayout block;
 		QVector<QTextLayout*> rubies;
 	};
-
 	void freeLayouts();
-	inline void setChanged(bool changed) {m_dirty = m_blockChanged = m_formatChanged = m_pxChanged = m_optionChanged = changed;}
-	QVector<Layout> m_layouts;
+	inline void setChanged(bool changed) {
+		m_dirty = m_blockChanged = m_formatChanged = m_pxChanged = m_optionChanged = changed;
+	}
+	QVector<Layout*> m_layouts;
 	QList<RichTextBlock> m_blocks;
 	QTextOption m_option;
 	QTextCharFormat m_format;
-	bool m_blockChanged, m_formatChanged, m_optionChanged, m_pxChanged;
-	bool m_dirty;
+	bool m_blockChanged, m_formatChanged, m_optionChanged, m_pxChanged, m_dirty;
 	double m_lineLeading = 0, m_paragraphLeading = 0;
 	QRectF m_natural;
 };

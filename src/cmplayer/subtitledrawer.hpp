@@ -9,23 +9,17 @@ struct Margin { double top = 0.0, right = 0.0, bottom = 0.0, left = 0.0; };
 class SubtitleDrawer {
 public:
 	void setStyle(const SubtitleStyle &style);
-	void setAlignment(Qt::Alignment alignment) { back.setAlignment(m_alignment = alignment); front.setAlignment(alignment); }
-	void setText(const RichTextDocument &doc) { front = doc.blocks(); back = doc.blocks(); }
+	void setAlignment(Qt::Alignment alignment) {
+		m_back.setAlignment(m_alignment = alignment);
+		m_front.setAlignment(alignment);
+	}
 	void setMargin(const Margin &margin) { m_margin = margin; }
 	bool hasDrawn() const {return m_drawn;}
-	bool draw(QImage &image, QSize &imageSize, QPointF &shadowOffset, const QRectF &area, double dpr = 1.0);
+	bool draw(const RichTextDocument &text, QImage &image, QSize &imageSize, QPointF &shadowOffset, const QRectF &area, double dpr = 1.0);
 	QPointF pos(const QSizeF &image, const QRectF &area) const;
 	Qt::Alignment alignment() const { return m_alignment; }
 	const Margin &margin() const { return m_margin; }
 	const SubtitleStyle &style() const {return m_style;}
-	const RichTextDocument &text() const {return front;}
-	void clear() {
-		front = RichTextDocument();
-		back = RichTextDocument();
-		m_drawn = false;
-		setStyle(m_style);
-		setAlignment(m_alignment);
-	}
 private:
 	double scale(const QRectF &area) const {
 		const auto policy = m_style.font.scale;
@@ -38,8 +32,6 @@ private:
 			px *= area.height();
 		return px/m_style.font.height();
 	}
-	void updateLayoutInfo() { front.updateLayoutInfo(); back.updateLayoutInfo(); }
-	void doLayout(double maxWidth) { front.doLayout(maxWidth); back.doLayout(maxWidth); }
 	static void updateStyle(RichTextDocument &doc, const SubtitleStyle &style) {
 		doc.setFontPixelSize(style.font.height());
 		doc.setWrapMode(style.wrapMode);
@@ -52,7 +44,7 @@ private:
 		doc.setLeading(style.spacing.line, style.spacing.paragraph);
 	}
 	SubtitleStyle m_style;
-	RichTextDocument front, back;
+	RichTextDocument m_front, m_back;
 	Margin m_margin;
 	Qt::Alignment m_alignment;
 	bool m_drawn = false;

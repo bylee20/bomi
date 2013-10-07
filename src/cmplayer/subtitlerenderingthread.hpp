@@ -32,37 +32,49 @@ private:
 class SubCompThread : public QThread {
 	Q_OBJECT
 public:
-	enum EventType {SetDrawer = QEvent::User + 1, Tick, SetArea, Reset, Prepared};
-	SubCompThread(const SubComp *comp, QObject *renderer);
+	enum {Option = 1, Rebuild = 4, FPS = 8, Time = 16, ForceUpdate = Option | FPS};
+	enum EventType {SetDrawer = QEvent::User + 1, SetArea, Reset, Prepared};
+	SubCompThread(QMutex *mutex, QWaitCondition *wait, const SubComp *comp, QObject *renderer);
 	~SubCompThread();
-	void setDrawer(const SubtitleDrawer &drawer) { postData(this, SetDrawer, drawer); }
-	void render(int time, double fps) { postData(this, Tick, time, fps, false); }
-	void rerender(int time, double fps) { postData(this, Tick, time, fps, true); }
-	void setArea(const QRectF &rect, double dpr) {
-		if (m_area != rect || m_dpr != dpr) postData(this, SetArea, rect, dpr);
+	void render(int time, double fps) {
+		m_newKey.time = time;
+		if (_Change(m_newKey.fps, fps))
+			m_changed |= Rebuild;
 	}
+	void rerender(int time, double fps) {
+		render(time, fps);
+		m_changed |= FPS;
+	}
+	void setArea(const QRectF &rect, double dpr) {
+		if (_Change(m_newOption.area, rect))
+			m_changed |= Option;
+		if (_Change(m_newOption.dpr, dpr))
+			m_changed |= Option;
+	}
+	void setDrawer(const SubtitleDrawer &drawer) {
+		m_newOption.drawer = drawer;
+		m_changed |= Option;
+	}
+	void finish();
 private:
 	void run();
 	void postPicture(const SubCompPicture &pic) { postData(m_renderer, Prepared, pic); }
-	SubCompPicture draw(SubCompIt it) {
-		SubCompPicture pic(m_comp, it);
-		m_drawer.setText(pic.text());
-		m_drawer.draw(pic.m_image, pic.m_size, pic.m_shadow, m_area, m_dpr);
-		return pic;
-	}
-	SubCompIt iterator(int time) const { return m_comp->start(time, m_fps); }
-	void rebuild();
-	bool event(QEvent *event);
+	SubCompPicture picture(SubCompIt it);
+	SubCompIt iterator(int time) const { return m_comp->start(time, m_key.fps); }
 	void updateCache();
 	void update();
-	QRectF m_area; double m_dpr = 1.0, m_fps = 30.0;
+	struct DrawOption { QRectF area; double dpr = 1.0; SubtitleDrawer drawer; };
+	struct DrawKey { int time = 0; double fps = -1.0; };
+	DrawOption m_newOption, m_option;
+	DrawKey m_newKey, m_key;
 	const SubComp *m_comp = nullptr;
-	SubtitleDrawer m_drawer;
+	int m_changed = 0;
 	SubCompItMap m_its; SubCompItMapIt m_it;
 	QMap<SubCompItMapIt, SubCompPicture> m_pool;
 	QObject *m_renderer = nullptr;
-	bool m_reset = false;
-	QThread *m_thread = nullptr;
+	bool m_quit = false;
+	QMutex *m_mutex;
+	QWaitCondition *m_wait;
 };
 
 struct SubCompObject {
