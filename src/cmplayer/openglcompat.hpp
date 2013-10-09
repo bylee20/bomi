@@ -21,6 +21,7 @@ struct OpenGLTexture {
 	int width = 0, height = 0, depth = 0;
 	OpenGLTextureFormat format;
 	QSize size() const { return {width, height}; }
+	void setSize(const QSize &size) { width = size.width(); height = size.height(); }
 	void generate() { glGenTextures(1, &id); }
 	void delete_() { glDeleteTextures(1, &id); }
 	void bind() const { glBindTexture(target, id); }

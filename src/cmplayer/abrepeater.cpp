@@ -38,11 +38,11 @@ int ABRepeater::setBToCurrentTime() {
 }
 
 int ABRepeater::setAToSubtitleTime() {
-	return m_a = (m_sub->hasSubtitles() ? m_sub->start(m_engine->position()) : -1);
+	return m_a = m_sub->start(m_engine->position());
 }
 
 int ABRepeater::setBToSubtitleTime() {
-	return m_b = (m_sub->hasSubtitles() ? m_sub->finish(m_engine->position()) : -1);
+	return m_b = m_sub->finish(m_engine->position());
 }
 
 bool ABRepeater::start(int times) {

@@ -1,15 +1,15 @@
-#ifndef SUBTITLECOMPONENTMODEL_HPP
-#define SUBTITLECOMPONENTMODEL_HPP
+#ifndef SubCompModel_HPP
+#define SubCompModel_HPP
 
 #include "stdafx.hpp"
 #include "subtitle.hpp"
 #include "listmodel.hpp"
 
-class SubtitleComponentModel : public ListModel {
+class SubCompModel : public ListModel {
 	Q_OBJECT
 public:
 	enum Column {Start = 0, End, Text, ColumnCount};
-	SubtitleComponentModel(const SubComp *comp, QObject *parent = 0);
+	SubCompModel(const SubComp *comp, QObject *parent = 0);
 	void setCurrentCaption(const SubCapt *caption);
 	int currentRow() const;
 	void setVisible(bool visible);

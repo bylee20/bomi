@@ -31,7 +31,7 @@ void SubtitleDrawer::setStyle(const SubtitleStyle &style) {
 		m_back.setTextOutline(Qt::NoPen);
 }
 
-bool SubtitleDrawer::draw(const RichTextDocument &text, QImage &image, QSize &imageSize, QPointF &shadowOffset, const QRectF &area, double dpr) {
+bool SubtitleDrawer::draw(QImage &image, QSize &imageSize, QPointF &shadowOffset, const RichTextDocument &text, const QRectF &area, double dpr) {
 	if (!(m_drawn = text.hasWords()))
 		return false;
 	const double scale = this->scale(area);

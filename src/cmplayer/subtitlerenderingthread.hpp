@@ -3,86 +3,85 @@
 
 #include "stdafx.hpp"
 #include "subtitle.hpp"
-#include "dataevent.hpp"
 #include "subtitledrawer.hpp"
+#include "subtitlemodel.hpp"
 
-class SubtitleComponentModel;	class SubtitleDrawer;
-using SubCompIt = SubComp::const_iterator;
-using SubCompItMap = QMap<int, SubCompIt>;
+using SubCompItMap = QMap<int, SubComp::ConstIt>;
 using SubCompItMapIt = SubCompItMap::const_iterator;
 
-class SubCompPicture {
+class SubCompSelection {
 public:
-	SubCompPicture(const SubComp *comp, SubCompIt it)
-	: m_comp(comp), m_it(it) { if (m_it != comp->end()) m_text = *m_it; }
-	SubCompPicture(const SubComp *comp): m_comp(comp) { if (comp) m_it = m_comp->end(); }
-	SubCompIt iterator() const { return m_it; }
-	const QSize &size() const { return m_size; }
-	const QImage &image() const { return m_image; }
-	const QPointF &shadowOffset() const { return m_shadow; }
-	const RichTextDocument &text() const { return m_text; }
-	const SubComp *component() const { return m_comp; }
+	static constexpr int PicturePrepared = QEvent::User+1;
+	enum Flag {NewDrawer = 1, NewArea = 2, Rebuild = 4, Rerender = 8};
 private:
-	friend class SubCompThread;
-	const SubComp *m_comp = nullptr;
-	SubCompIt m_it; RichTextDocument m_text;
-	QImage m_image; QSize m_size; QPointF m_shadow;
-};
-
-class SubCompThread : public QThread {
-	Q_OBJECT
+	struct Item;
+	class Thread : public QThread {
+	public:
+		Thread(QMutex *mutex, QWaitCondition *wait, Item *item, QObject *renderer);
+		~Thread();
+		void setFPS(double fps) { this->fps = fps; flags |= Rebuild; }
+		void render(int time, int flags) { this->time = time; this->flags |= flags; }
+		void setArea(const QRectF &rect, double dpr) { this->rect = rect; this->dpr = dpr; flags |= NewArea; }
+		void setDrawer(const SubtitleDrawer &drawer) { this->drawer = drawer; flags |= NewDrawer; }
+		void finish();
+		void run();
+	private:
+		QRectF rect; double dpr = 1.0; SubtitleDrawer drawer;
+		int time = 0, flags = 0; double fps = -1.0;
+		struct Data; Data *d;
+	};
+	struct Item {
+		void release() {
+			delete thread; delete model; if (comp) const_cast<SubComp*>(comp)->selection() = false;
+		}
+		Thread *thread  = nullptr;
+		const SubComp *comp = nullptr;
+		SubCompPicture picture = {nullptr};
+		SubCompModel *model = nullptr;
+	};
+	using List = std::list<Item>;
 public:
-	enum {Option = 1, Rebuild = 4, FPS = 8, Time = 16, ForceUpdate = Option | FPS};
-	enum EventType {SetDrawer = QEvent::User + 1, SetArea, Reset, Prepared};
-	SubCompThread(QMutex *mutex, QWaitCondition *wait, const SubComp *comp, QObject *renderer);
-	~SubCompThread();
-	void render(int time, double fps) {
-		m_newKey.time = time;
-		if (_Change(m_newKey.fps, fps))
-			m_changed |= Rebuild;
+	SubCompSelection(QObject *renderer);
+	~SubCompSelection();
+	QVector<SubCompModel*> models() const;
+	void remove(const SubComp *comp);
+	const SubtitleDrawer &drawer() const;
+	void setDrawer(const SubtitleDrawer &drawer);
+	void clear();
+	template<typename LessThan>
+	void sort(LessThan lt) {
+		items.sort([lt] (const Item &lhs, const Item &rhs) { return lt(*lhs.comp, *rhs.comp); });
 	}
-	void rerender(int time, double fps) {
-		render(time, fps);
-		m_changed |= FPS;
-	}
-	void setArea(const QRectF &rect, double dpr) {
-		if (_Change(m_newOption.area, rect))
-			m_changed |= Option;
-		if (_Change(m_newOption.dpr, dpr))
-			m_changed |= Option;
-	}
-	void setDrawer(const SubtitleDrawer &drawer) {
-		m_newOption.drawer = drawer;
-		m_changed |= Option;
-	}
-	void finish();
+	void setArea(const QRectF &rect, double dpr);
+	void render(int ms, int flags) { forThreads([this, ms, flags] (Thread *t) { t->render(ms, flags); }); }
+	bool isEmpty() const;
+	bool prepend(const SubComp *comp);
+	bool contains(const SubComp *comp) const { return find(comp) != items.end(); }
+	template<typename F> void forComponents(F f) const { for (const auto &item : items) f(*item.comp); }
+	template<typename F> void forPictures  (F f) const { for (const auto &item : items) f(item.picture); }
+	bool update(const SubCompPicture &pic);
+	double fps() const;
+	void setFPS(double fps);
+	void setMargin(double top, double bottom, double right, double left);
 private:
-	void run();
-	void postPicture(const SubCompPicture &pic) { postData(m_renderer, Prepared, pic); }
-	SubCompPicture picture(SubCompIt it);
-	SubCompIt iterator(int time) const { return m_comp->start(time, m_key.fps); }
-	void updateCache();
-	void update();
-	struct DrawOption { QRectF area; double dpr = 1.0; SubtitleDrawer drawer; };
-	struct DrawKey { int time = 0; double fps = -1.0; };
-	DrawOption m_newOption, m_option;
-	DrawKey m_newKey, m_key;
-	const SubComp *m_comp = nullptr;
-	int m_changed = 0;
-	SubCompItMap m_its; SubCompItMapIt m_it;
-	QMap<SubCompItMapIt, SubCompPicture> m_pool;
-	QObject *m_renderer = nullptr;
-	bool m_quit = false;
-	QMutex *m_mutex;
-	QWaitCondition *m_wait;
-};
-
-struct SubCompObject {
-	SubCompThread *thread = nullptr;
-	const SubComp *comp = nullptr;
-	int order = -1;
-	SubCompPicture picture{nullptr};
-	SubtitleComponentModel *model = nullptr;
+	List::iterator find(const SubComp *comp) {
+		return std::find_if(items.begin(), items.end()
+			, [comp] (const Item &item) { return item.comp == comp; });
+	}
+	List::const_iterator find(const SubComp *comp) const {
+		return std::find_if(items.begin(), items.end()
+			, [comp] (const Item &item) { return item.comp == comp; });
+	}
+	template<typename Func>
+	void forThreads(Func func) {
+		mutex.lock();
+		for (const auto &item : items)
+			func(item.thread);
+		mutex.unlock();
+		wait.wakeAll();
+	}
+	List items; mutable QMutex mutex; mutable QWaitCondition wait;
+	struct Data; Data *d;
 };
 
 #endif // SUBTITLERENDERINGTHREAD_HPP

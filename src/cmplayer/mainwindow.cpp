@@ -114,20 +114,20 @@ struct MainWindow::Data {
 		changingSub = true;
 		auto &list = menu("subtitle")("track");
 		auto g = list.g("external");
-		const auto loaded = subtitle.loaded();
-		while (g->actions().size() < loaded.size()) {
+		const auto components = subtitle.components();
+		while (g->actions().size() < components.size()) {
 			auto action = g->addAction("");
 			action->setCheckable(true);
 			list.insertAction(subtrackSep, action);
 		}
-		while (g->actions().size() > loaded.size())
+		while (g->actions().size() > components.size())
 			delete g->actions().last();
 		const auto actions = g->actions();
-		Q_ASSERT(loaded.size() == actions.size());
+		Q_ASSERT(components.size() == actions.size());
 		for (int i=0; i<actions.size(); ++i) {
-			actions[i]->setText(loaded[i]->name());
+			actions[i]->setText(components[i]->name());
 			actions[i]->setData(i);
-			actions[i]->setChecked(loaded[i]->isSelected());
+			actions[i]->setChecked(components[i]->selection());
 		}
 		list.syncActions();
 		changingSub = false;
@@ -325,7 +325,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	connect(&d->engine, &PlayEngine::started, [this] () {
 		d->updateListMenu(d->menu("play")("title"), d->engine.dvd().titles, d->engine.currentDvdTitle());
 //		d->updateListMenu(d->menu("play")("chapter"), d->engine.chapters(), d->engine.currentChapter());
-		d->subtitle.setFps(d->engine.fps());
+		d->subtitle.setFPS(d->engine.fps());
 	});
 	connect(&d->engine, &PlayEngine::audioStreamsChanged, [this] (const StreamList &streams) {
 		d->updateListMenu(d->menu("audio")("track"), streams, d->engine.currentAudioStream());
@@ -777,7 +777,7 @@ void MainWindow::connectMenus() {
 		d->subtitle.select(-1);
 		for (auto action : d->menu("subtitle")("track").g("external")->actions())
 			action->setChecked(true);
-		showMessage(tr("Select All Subtitles"), tr("%1 Subtitle(s)").arg(d->subtitle.loaded().size()));
+		showMessage(tr("Select All Subtitles"), tr("%1 Subtitle(s)").arg(d->subtitle.componentsCount()));
 	});
 	connect(sub("track")["hide"], &QAction::toggled, [this] (bool hide) {
 		d->subtitle.setVisible(!hide);
@@ -810,7 +810,7 @@ void MainWindow::connectMenus() {
 		showMessage(tr("Subtitle Display"), action->text());
 	});
 	d->connect(sub.g("align"), [this] (QAction *action) {
-		d->subtitle.setTopAlignment(action->data().toInt());
+		d->subtitle.setTopAligned(action->data().toInt());
 		showMessage(tr("Subtitle Alignment"), action->text());
 	});
 	connect(sub.g("pos"), &ActionGroup::triggered, [this] (QAction *a) {
@@ -1500,7 +1500,7 @@ void MainWindow::updateTitle() {
 void MainWindow::updateMrl(const Mrl &mrl) {
 	if (mrl.isLocalFile()) {
 		const auto &p = d->pref();
-		auto autoselection = [this, &mrl, &p] (const QList<LoadedSubtitle> &loaded) {
+		auto autoselection = [this, &mrl, &p] (const QList<SubComp> &loaded) {
 			QList<int> selected;
 			if (loaded.isEmpty() || !mrl.isLocalFile() || !p.sub_enable_autoselect)
 				return selected;
@@ -1510,12 +1510,12 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 			for (int i=0; i<loaded.size(); ++i) {
 				bool select = false;
 				if (p.sub_autoselect == SubtitleAutoselect::Matched) {
-					select = QFileInfo(loaded[i].component().fileName()).completeBaseName() == base;
+					select = QFileInfo(loaded[i].fileName()).completeBaseName() == base;
 				} else if (p.sub_autoselect == SubtitleAutoselect::All) {
 					select = true;
 				} else if (p.sub_autoselect == SubtitleAutoselect::EachLanguage) {
 		//			const QString lang = loaded[i].m_comp.language().id();
-					const QString lang = loaded[i].component().language();
+					const QString lang = loaded[i].language();
 					if ((select = (!langSet.contains(lang))))
 						langSet.insert(lang);
 				}
@@ -1525,7 +1525,7 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 			if (p.sub_autoselect == SubtitleAutoselect::Matched
 					&& !selected.isEmpty() && !p.sub_ext.isEmpty()) {
 				for (int i=0; i<selected.size(); ++i) {
-					const QString fileName = loaded[selected[i]].component().fileName();
+					const QString fileName = loaded[selected[i]].fileName();
 					const QString suffix = QFileInfo(fileName).suffix().toLower();
 					if (p.sub_ext == suffix) {
 						const int idx = selected[i];
@@ -1538,7 +1538,7 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 			return selected;
 		};
 		auto autoload = [this, mrl, &autoselection, &p](bool autoselect) {
-			QList<LoadedSubtitle> loaded;
+			QList<SubComp> loaded;
 			if (!p.sub_enable_autoload)
 				return loaded;
 			const QStringList filter = Info::subtitleNameFilter();
@@ -1556,7 +1556,7 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 				Subtitle sub;
 				if (load(sub, all[i].absoluteFilePath(), p.sub_enc)) {
 					for (int i=0; i<sub.size(); ++i)
-						loaded.push_back(LoadedSubtitle(sub[i]));
+						loaded.push_back(sub[i]);
 				}
 			}
 			if (autoselect) {
@@ -1566,7 +1566,7 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 			}
 			return loaded;
 		};
-		d->subtitle.setLoaded(autoload(true));
+		d->subtitle.setComponents(autoload(true));
 	} else
 		clearSubtitleFiles();
 	updateTitle();

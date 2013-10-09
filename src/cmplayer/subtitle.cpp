@@ -19,8 +19,7 @@ SubComp Subtitle::component(double frameRate) const {
 
 SubComp::SubComp(const QString &file, SyncType base)
 : m_file(file), m_base(base) {
-	(*this)[0].index = 0;
-	m_flag = false;
+	m_capts[0].index = 0;
 }
 
 SubComp SubComp::united(const SubComp &other, double frameRate) const {
@@ -46,39 +45,39 @@ SubComp::const_iterator SubComp::finish(int time, double frameRate) const {
 }
 
 SubComp &SubComp::unite(const SubComp &rhs, double fps) {
-	SubComp &comp = *this;
 	if (this == &rhs || rhs.isEmpty())
-		return comp;
-	else if (isEmpty()) {
-		comp = rhs;
-		return comp;
-	}
+		return *this;
+	else if (isEmpty())
+		return *this = rhs;
+	auto convertKeyBase = [] (int key, SyncType from, SyncType to, double frameRate) {
+		return  (from == to) ? key : ((to == Time) ? msec(key, frameRate) : frame(key, frameRate));
+	};
 
-	auto it1 = comp.begin();
+	auto it1 = m_capts.begin();
 	auto it2 = rhs.begin();
 	const auto k2 = convertKeyBase(it2.key(), rhs.base(), m_base, fps);
 	if (it2.key() < it1.key()) {
 		while (k2 < it1.key()) {
-			comp.insert(k2, *it2);
+			m_capts.insert(k2, *it2);
 			++it2;
 		}
 	} else if (k2 == it1.key()){
 		*it1 += *it2;
 		++it2;
 	} else
-		it1 = --comp.lowerBound(k2);
+		it1 = --m_capts.lowerBound(k2);
 
 	while (it2 != rhs.end()) {
 		auto &cap1 = *it1;
 //		const int ka = it1.key();
-		const int kb = ++it1 != comp.end() ? it1.key() : -1;
+		const int kb = ++it1 != m_capts.end() ? it1.key() : -1;
 //		Q_ASSERT(ka < k2);
 		int k2 = 0;
 		while (it2 != rhs.end()) {
 			k2 = convertKeyBase(it2.key(), rhs.base(), m_base, fps);
 			if (!(kb == -1 || k2 < kb))
 				break;
-			*comp.insert(k2, cap1) += *it2;
+			*m_capts.insert(k2, cap1) += *it2;
 			++it2;
 		}
 		if (it2 == rhs.end())
@@ -89,10 +88,10 @@ SubComp &SubComp::unite(const SubComp &rhs, double fps) {
 			*it1 += *(it2-1);
 	}
 
-	auto it = comp.begin();
-	for (int idx = 0; it != comp.end(); ++idx, ++it)
+	auto it = m_capts.begin();
+	for (int idx = 0; it != m_capts.end(); ++idx, ++it)
 		it->index = idx;
-	return comp;
+	return *this;
 }
 
 RichTextDocument Subtitle::caption(int time, double fps) const {

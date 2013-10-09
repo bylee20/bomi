@@ -53,7 +53,7 @@ void SamiParser::_parse(Subtitle &sub) {
 			}
 			if (!comp) {
 				comp = &append(sub);
-				comp->m_klass = it.key();
+				comp->setLanguage(it.key());
 			}
 			(*comp)[sync] += it.value();
 		}

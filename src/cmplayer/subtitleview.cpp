@@ -14,7 +14,7 @@ public:
 		vbox->addWidget(m_name);
 		vbox->addWidget(m_view);
 	}
-	void setModel(SubtitleComponentModel *model) {
+	void setModel(SubCompModel *model) {
 		if (model)
 			m_name->setText(model->name());
 		m_view->setModel(model);
@@ -26,7 +26,7 @@ private:
 };
 
 struct SubtitleView::Data {
-	QVector<SubtitleComponentModel*> models;
+	QVector<SubCompModel*> models;
 	QList<CompView*> comp;
 	QSplitter *splitter;
 	QCheckBox *timeVisible, *autoScroll;
@@ -90,7 +90,7 @@ void SubtitleView::updateModels() {
 	d->needToUpdate = false;
 }
 
-void SubtitleView::setModels(const QVector<SubtitleComponentModel*> &models) {
+void SubtitleView::setModels(const QVector<SubCompModel*> &models) {
 	d->models = models;
 	if (isVisible())
 		updateModels();

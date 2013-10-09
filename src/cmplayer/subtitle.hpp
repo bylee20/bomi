@@ -14,9 +14,13 @@ struct SubCapt : public RichTextDocument {
 	mutable int index;
 };
 
-class SubComp : public QMap<int, SubCapt> {
-	typedef QMap<int, SubCapt> Super;
+class SubComp {
 public:
+	using Map = QMap<int, SubCapt>;
+	using It = Map::iterator;
+	using ConstIt = Map::const_iterator;
+	using iterator = Map::iterator;
+	using const_iterator = Map::const_iterator;
 //	struct Lang {
 //		QString id() const {
 //			if (!name.isEmpty())
@@ -27,13 +31,29 @@ public:
 //		}
 //		QString name, locale, klass;
 //	};
-
 	enum SyncType {Time, Frame};
 	SubComp(const QString &file = QString(), SyncType base = Time);
-	SubComp &unite(const SubComp &other, double frameRate);
-	SubComp united(const SubComp &other, double frameRate) const;
 	bool operator == (const SubComp &rhs) const {return name() == rhs.name();}
 	bool operator != (const SubComp &rhs) const {return !operator==(rhs);}
+	SubCapt &operator[] (int key) { return m_capts[key]; }
+	SubCapt operator[] (int key) const { return m_capts[key]; }
+	SubComp &unite(const SubComp &other, double frameRate);
+	SubComp united(const SubComp &other, double frameRate) const;
+
+	bool hasWords() const { for (auto &capt : m_capts) if (capt.hasWords()) return true; return false; }
+	bool isEmpty() const { return m_capts.isEmpty(); }
+	It begin() { return m_capts.begin(); }
+	It end() { return m_capts.end(); }
+	ConstIt begin() const { return m_capts.begin(); }
+	ConstIt end() const { return m_capts.end(); }
+	ConstIt cbegin() const { return m_capts.cbegin(); }
+	ConstIt cend() const { return m_capts.cend(); }
+	It upperBound(int key) { return m_capts.upperBound(key); }
+	It lowerBound(int key) { return m_capts.lowerBound(key); }
+	ConstIt upperBound(int key) const { return m_capts.upperBound(key); }
+	ConstIt lowerBound(int key) const { return m_capts.lowerBound(key); }
+	It insert(int key, const SubCapt &capt) { return m_capts.insert(key, capt); }
+
 	QString name() const;
 	const QString &fileName() const {return m_file;}
 	SyncType base() const {return m_base;}
@@ -42,23 +62,21 @@ public:
 	QString language() const {return m_klass;}
 	const_iterator start(int time, double frameRate) const;
 	const_iterator finish(int time, double frameRate) const;
-	static int convertKeyBase(int key, SyncType from, SyncType to, double frameRate) {
-		return  (from == to) ? key : ((to == Time) ? msec(key, frameRate) : frame(key, frameRate));
-	}
-	bool flag() const;
-	void setFlag(bool flag) {m_flag = flag;}
 	static int msec(int frame, double frameRate) {return qRound(frame/frameRate*1000.0);}
 	static int frame(int msec, double frameRate) {return qRound(msec*0.001*frameRate);}
 	int toTime(int key, double fps) const { return m_base == Time ? key : msec(key, fps); }
-	QString m_klass;
+	const Map &map() const { return m_capts; }
+	void setLanguage(const QString &lang) { m_klass = lang; }
+	bool selection() const { return m_selection; }
+	bool &selection() { return m_selection; }
 private:
 	friend class Parser;
 	QString m_file;
+	QString m_klass;
 	SyncType m_base;
 //	Language m_lang;
-
-	mutable bool m_flag;
-
+	Map m_capts;
+	mutable bool m_selection = false;
 };
 
 typedef QMapIterator<int, SubCapt> SubtitleComponentIterator;

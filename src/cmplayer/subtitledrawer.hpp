@@ -3,8 +3,37 @@
 
 #include "richtextdocument.hpp"
 #include "subtitlestyle.hpp"
+#include "subtitle.hpp"
 
-struct Margin { double top = 0.0, right = 0.0, bottom = 0.0, left = 0.0; };
+struct Margin {
+	Margin() {}
+	Margin(const QPointF &tl, const QPointF &br)
+		: top(tl.y()), right(br.x()), bottom(br.y()), left(tl.x()) {}
+	double top = 0.0, right = 0.0, bottom = 0.0, left = 0.0;
+};
+
+class SubCompPicture {
+public:
+	SubCompPicture(const SubComp *comp, SubComp::const_iterator it, void *creator)
+	: m_comp(comp), m_it(it), m_creator(creator) { if (m_it != comp->end()) m_text = *m_it; }
+	SubCompPicture(const SubComp *comp): m_comp(comp) { if (comp) m_it = m_comp->end(); }
+	SubComp::const_iterator iterator() const { return m_it; }
+	const QImage &image() const { return m_image; }
+	const QPointF &shadowOffset() const { return m_shadow; }
+	const RichTextDocument &text() const { return m_text; }
+	const SubComp *component() const { return m_comp; }
+	int width() const { return m_image.width(); }
+	int height() const { return m_image.height(); }
+	QSize size() const { return m_image.size(); }
+	bool isValid() const { return m_comp && m_it != m_comp->end(); }
+	void *creator() const { return m_creator; }
+private:
+	friend class SubtitleDrawer;
+	const SubComp *m_comp = nullptr;
+	SubComp::const_iterator m_it; RichTextDocument m_text;
+	QImage m_image; QSize m_size; QPointF m_shadow;
+	void *m_creator = nullptr;
+};
 
 class SubtitleDrawer {
 public:
@@ -15,12 +44,14 @@ public:
 	}
 	void setMargin(const Margin &margin) { m_margin = margin; }
 	bool hasDrawn() const {return m_drawn;}
-	bool draw(const RichTextDocument &text, QImage &image, QSize &imageSize, QPointF &shadowOffset, const QRectF &area, double dpr = 1.0);
+	bool draw(QImage &image, QSize &size, QPointF &shadow, const RichTextDocument &text, const QRectF &area, double dpr = 1.0);
+	bool draw(SubCompPicture &pic, const QRectF &area, double dpr = 1.0) {
+		return draw(pic.m_image, pic.m_size, pic.m_shadow, pic.m_text, area, dpr);
+	}
 	QPointF pos(const QSizeF &image, const QRectF &area) const;
 	Qt::Alignment alignment() const { return m_alignment; }
 	const Margin &margin() const { return m_margin; }
 	const SubtitleStyle &style() const {return m_style;}
-private:
 	double scale(const QRectF &area) const {
 		const auto policy = m_style.font.scale;
 		double px = m_style.font.size;
@@ -32,6 +63,7 @@ private:
 			px *= area.height();
 		return px/m_style.font.height();
 	}
+private:
 	static void updateStyle(RichTextDocument &doc, const SubtitleStyle &style) {
 		doc.setFontPixelSize(style.font.height());
 		doc.setWrapMode(style.wrapMode);

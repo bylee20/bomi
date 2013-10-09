@@ -50,6 +50,7 @@ public:
 	void setTextOutline(const QPen &pen);
 	QSizeF naturalSize() const {return m_natural.size();}
 	void setLeading(double newLine, double paragraph);
+	void clear() { freeLayouts(); m_blocks.clear(); setChanged(true); }
 private:
 	struct Layout {
 		QTextLayout block;

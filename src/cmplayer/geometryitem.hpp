@@ -12,8 +12,6 @@ public:
 	QSizeF size() const { return {width(), height()}; }
 	QRectF geometry() const { return {position(), size()}; }
 	QRectF rect() const { return {0.0, 0.0, width(), height()}; }
-	QPointF pos() const { return position(); }
-	void setPos(const QPointF &pos) { setPosition(pos); }
 };
 
 #endif // GEOMETRYITEM_HPP

@@ -2,7 +2,6 @@
 #include "global.hpp"
 #include "subtitlerendereritem.hpp"
 #include "videorendereritem.hpp"
-#include "subtitledrawer.hpp"
 #include "ui_snapshotdialog.h"
 #include "info.hpp"
 
@@ -10,7 +9,6 @@ struct SnapshotDialog::Data {
 	Ui::SnapshotDialog ui;
 	const VideoRendererItem *video = nullptr;
 	const SubtitleRendererItem *subtitle = nullptr;
-	SubtitleDrawer drawer;
 	QImage image, sub;
 	QPointF subPos;
 	bool hasSubtitle = false;
@@ -51,32 +49,10 @@ void SnapshotDialog::setVideoRenderer(const VideoRendererItem *video) {
 
 void SnapshotDialog::updateSubtitleImage() {
 	d->hasSubtitle = false;
-	if (!d->subtitle)
-		return;
-	d->drawer.setAlignment(d->subtitle->alignment());
-	d->drawer.setMargin(d->subtitle->margin());
-	d->drawer.setStyle(d->subtitle->style());
-	QImage subtitle; QSize size; QPointF offset;
-	if (!(d->hasSubtitle = d->drawer.draw(d->subtitle->text(), subtitle, size, offset, d->image.rect(), d->subtitle->dpr())))
-		return;
-	if (d->drawer.style().shadow.enabled) {
-		QImage shadow(subtitle.size(), QImage::Format_ARGB32_Premultiplied);
-
-		const auto color = d->drawer.style().shadow.color;
-		const int r = color.red(), g = color.green(), b = color.blue();
-		const double alpha = color.alphaF();
-		for (int x=0; x<shadow.width(); ++x) {
-			for (int y=0; y<shadow.height(); ++y)
-				shadow.setPixel(x, y, qRgba(r, g, b, alpha*qAlpha(subtitle.pixel(x, y))));
-		}
-		d->sub = QImage(subtitle.size(), QImage::Format_ARGB32_Premultiplied);
-		d->sub.fill(0x0);
-		QPainter painter(&d->sub);
-		painter.drawImage(offset, shadow);
-		painter.drawImage(QPoint(0, 0), subtitle);
-	} else
-		d->sub = subtitle;
-	d->subPos = d->drawer.pos(d->sub.size(), d->image.rect());
+	if (d->subtitle) {
+		d->sub = d->subtitle->draw(d->image.rect(), &d->subPos);
+		d->hasSubtitle = !d->sub.isNull();
+	}
 }
 
 void SnapshotDialog::onFrameImageObtained(const QImage &image) {
@@ -117,45 +93,6 @@ void SnapshotDialog::take() {
 		return;
 	d->ui.take->setEnabled(false);
 	d->video->requestFrameImage();
-	return;
-//	d->image = QImage(d->video->sizeHint(), QImage::Format_ARGB32_Premultiplied);
-//	QPainter painter(&d->image);
-//	painter.setRenderHint(QPainter::SmoothPixmapTransform);
-//	painter.drawImage(d->video->frameRect(d->image.rect()), frame);
-//	painter.end();
-//	d->hasSubtitle = false;
-//	if (d->subtitle) {
-//		d->drawer.setText(d->subtitle->text());
-//		d->drawer.setAlignment(d->subtitle->alignment());
-//		d->drawer.setMargin(d->subtitle->margin());
-//		d->drawer.setStyle(d->subtitle->style());
-//		QImage subtitle; QSize size; QPointF offset;
-//		if ((d->hasSubtitle = d->drawer.draw(subtitle, size, offset, frame.rect(), d->subtitle->dpr()))) {
-//			if (d->drawer.style().shadow.enabled) {
-//				QImage shadow(subtitle.size(), QImage::Format_ARGB32_Premultiplied);
-
-//				const auto color = d->drawer.style().shadow.color;
-//				const int r = color.red(), g = color.green(), b = color.blue();
-//				const double alpha = color.alphaF();
-//				for (int x=0; x<shadow.width(); ++x) {
-//					for (int y=0; y<shadow.height(); ++y)
-//						shadow.setPixel(x, y, qRgba(r, g, b, alpha*qAlpha(subtitle.pixel(x, y))));
-//				}
-//				d->sub = QImage(subtitle.size(), QImage::Format_ARGB32_Premultiplied);
-//				d->sub.fill(0x0);
-//				painter.begin(&d->sub);
-//				painter.drawImage(offset, shadow);
-//				painter.drawImage(QPoint(0, 0), subtitle);
-//				painter.end();
-//			} else {
-//				d->sub = subtitle;
-//			}
-//			d->subPos = d->drawer.pos(d->sub.size(), frame.rect());
-//		}
-//	}
-//	updateSnapshot(d->ui.subtitle->isChecked());
-//	d->ui.save->setEnabled(!d->image.isNull());
-//	d->ui.take->setEnabled(true);
 }
 
 struct ImageViewer::Data {
