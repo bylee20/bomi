@@ -88,10 +88,8 @@ HEADERS += playengine.hpp \
     mpmessage.hpp \
     stdafx.hpp \
     videorendereritem.hpp \
-    playinfoitem.hpp \
     texturerendereritem.hpp \
     subtitlerendereritem.hpp \
-    playeritem.hpp \
     videoformat.hpp \
     mposditem.hpp \
     globalqmlobject.hpp \
@@ -121,7 +119,9 @@ HEADERS += playengine.hpp \
     softwaredeinterlacer.hpp \
     vaapipostprocessor.hpp \
     texturenode.hpp \
-    geometryitem.hpp
+    geometryitem.hpp \
+    playengine_p.hpp \
+    mediamisc.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -166,10 +166,8 @@ SOURCES += main.cpp \
     mpmessage.cpp \
     playengine.cpp \
     videorendereritem.cpp \
-    playinfoitem.cpp \
     texturerendereritem.cpp \
     subtitlerendereritem.cpp \
-    playeritem.cpp \
     mposditem.cpp \
     globalqmlobject.cpp \
     historymodel.cpp \
@@ -195,7 +193,8 @@ SOURCES += main.cpp \
     softwaredeinterlacer.cpp \
     vaapipostprocessor.cpp \
     texturenode.cpp \
-    geometryitem.cpp
+    geometryitem.cpp \
+    mediamisc.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

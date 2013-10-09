@@ -30,19 +30,19 @@ void ABRepeater::onTick(int time) {
 }
 
 int ABRepeater::setAToCurrentTime() {
-	return (m_a = m_engine->position());
+	return (m_a = m_engine->time());
 }
 
 int ABRepeater::setBToCurrentTime() {
-	return (m_b = m_engine->position());
+	return (m_b = m_engine->time());
 }
 
 int ABRepeater::setAToSubtitleTime() {
-	return m_a = m_sub->start(m_engine->position());
+	return m_a = m_sub->start(m_engine->time());
 }
 
 int ABRepeater::setBToSubtitleTime() {
-	return m_b = m_sub->finish(m_engine->position());
+	return m_b = m_sub->finish(m_engine->time());
 }
 
 bool ABRepeater::start(int times) {

@@ -7,8 +7,6 @@ import CMPlayerCore 1.0 as Core
 Skin.AppWithFloating {
 	id: app
 	name: "net.xylosper.cmplayer.skin.modern"
-	engine: Skin.Player { anchors.fill: parent }
-
 	Component {
 		id: slider
 		SliderStyle {
@@ -47,46 +45,46 @@ Skin.AppWithFloating {
 			id: inner; width: parent.width-50; anchors.centerIn: parent; spacing: 5
 			RowLayout {
 				id: texts; width: parent.width; height: 15; spacing: 5
-				Skin.TimeText { id: position; msecs: engine.time; Layout.alignment: Qt.AlignBottom }
+                Skin.TimeText { id: position; msecs: engine.time; Layout.alignment: Qt.AlignBottom }
 				Text {
 					id: name
 					Layout.alignment: Qt.AlignBottom; Layout.fillWidth: true
-					text: engine.media.name; elide: Text.ElideMiddle;
+                    text: engine.media.name; elide: Text.ElideMiddle;
 					color: "white"; font { bold: true; pixelSize: 12 }
 					horizontalAlignment: Text.AlignHCenter
 				}
-				Skin.TimeText { id: duration; msecs: engine.endTime; Layout.alignment: Qt.AlignBottom }
+                Skin.TimeText { id: duration; msecs: engine.end; Layout.alignment: Qt.AlignBottom }
 			}
 			RowLayout {
 				id: seekbarwrapper; width: parent.width; height: 10; spacing: 10
-				Skin.TimeSlider { id: seekbar; style: slider; engine: app.engine; Layout.fillWidth: true }
+                Skin.TimeSlider { id: seekbar; style: slider; Layout.fillWidth: true }
 			}
 			Item {
 				id: buttons; width: parent.width; height: 22
 				RowLayout {
 					height: parent.height*0.75; anchors.verticalCenter: parent.verticalCenter; spacing: 3
 					Skin.Button {
-						id: mute; checked: engine.muted; width: parent.height; height: parent.height
+                        id: mute; checked: engine.muted; width: parent.height; height: parent.height
 						icon: getStateIconName("volume"); action: "audio/mute"
 						Item {
 							id: volume; anchors.fill: parent
 							visible: (!mute.checked && !(mute.hovered && mute.pressed))
 									 || (mute.checked && mute.pressed && mute.hovered)
 							Image {
-								id: volume1; anchors.fill: parent; visible: engine.volume > 10
+                                id: volume1; anchors.fill: parent; visible: engine.volume > 10
 								source: mute.hovered ? "volume-1-hovered.png" : "volume-1.png"
 							}
 							Image {
-								id: volume2; anchors.fill: parent; visible: engine.volume > 40
+                                id: volume2; anchors.fill: parent; visible: engine.volume > 40
 								source: mute.hovered ? "volume-2-hovered.png" : "volume-2.png"
 							}
 							Image {
-								id: volume3; anchors.fill: parent; visible: engine.volume > 80
+                                id: volume3; anchors.fill: parent; visible: engine.volume > 80
 								source: mute.hovered ? "volume-3-hovered.png" : "volume-3.png"
 							}
 						}
 					}
-					Skin.VolumeSlider { id: volumebar; width: 70; style: slider; engine: app.engine }
+                    Skin.VolumeSlider { id: volumebar; width: 70; style: slider }
 				}
 				Row {
 					height: parent.height; spacing: 10; anchors.horizontalCenter: parent.horizontalCenter;
@@ -96,7 +94,7 @@ Skin.AppWithFloating {
 					}
 					Skin.Button {
 						id: pause; width: parent.height; height: width
-						icon: getStateIconName(engine.playing ? "pause" : "play"); action: "play/pause"
+                        icon: getStateIconName(engine.running ? "pause" : "play"); action: "play/pause"
 					}
 
 					Skin.Button {

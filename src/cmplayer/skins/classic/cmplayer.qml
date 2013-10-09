@@ -67,7 +67,7 @@ Skin.AppWithDock {
 			width: parent.width; height: 35
 			RowLayout {
 				anchors.margins: 2; anchors.fill: parent; spacing: 1
-				FramedButton { id: pause; width: height; height: parent.height; action: "play/pause"; icon: app.engine.playing ? "pause.png" : "play.png" }
+				FramedButton { id: pause; width: height; height: parent.height; action: "play/pause"; icon: engine.playing ? "pause.png" : "play.png" }
 				Grid {
 					id: grid; columns: 2; width: h*2; readonly property real h: pause.height/2
 					FramedButton { id: backward; width: grid.h; height: grid.h; action: "play/seek/backward1"; icon: "backward.png" }
@@ -94,29 +94,29 @@ Skin.AppWithDock {
 							Text {
 								id: medianumber
 								verticalAlignment: Text.AlignVCenter
-								text: "[%1/%2](%3) ".arg(playlist.loaded+1).arg(playlist.count).arg(app.engine.stateText)
+								text: "[%1/%2](%3) ".arg(playlist.loaded+1).arg(playlist.count).arg(engine.stateText)
 								font { pixelSize: 11; family: Core.Util.monospace }
 							}
 							Text {
 								id: medianame
 								Layout.fillWidth: true
-								text: app.engine.media.name; elide: Text.ElideMiddle
+								text: engine.media.name; elide: Text.ElideMiddle
 								font { pixelSize: 11; family: Core.Util.monospace }
 								verticalAlignment: Text.AlignVCenter
 							}
-							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: app.engine.time }
+							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: engine.time }
 							Skin.TimeText { color: "black"; font.pixelSize: 11; text: "/" }
-							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: app.engine.endTime }
+							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: engine.end }
 						}
 					}
 					RowLayout {
 						width: parent.width; spacing: 1; height: 10
-						Skin.TimeSlider { id: timeslider; engine: app.engine; style: slider; Layout.fillWidth: true }
+						Skin.TimeSlider { id: timeslider; style: slider; Layout.fillWidth: true }
 						FramedButton {
 							id: mute; width: height; height: parent.height; action: "audio/mute"
-							icon: app.engine.muted ? "speaker-off.png" : "speaker-on.png"
+							icon: engine.muted ? "speaker-off.png" : "speaker-on.png"
 						}
-						Skin.VolumeSlider { id: volumeslider; width: 70; engine: app.engine; style: slider }
+						Skin.VolumeSlider { id: volumeslider; width: 70; style: slider }
 					}
 				}
 			}

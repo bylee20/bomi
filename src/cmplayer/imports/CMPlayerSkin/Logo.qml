@@ -1,12 +1,14 @@
 import QtQuick 2.0
+import CMPlayerCore 1.0
 
 Rectangle {
 	id: logo
 	objectName: "logo"
 	property bool show: false
 	color: "black"
+    visible: engine.state == Engine.Stopped
 	Image {
-		visible: logo.show
+        visible: logo.show
 		anchors.fill: parent
 		source: "qrc:/img/logo-background.png"
         smooth: true

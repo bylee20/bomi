@@ -1,9 +1,10 @@
-#ifndef PLAYINFOITEM_HPP
-#define PLAYINFOITEM_HPP
+#ifndef MEDIAMISC_HPP
+#define MEDIAMISC_HPP
 
 #include "stdafx.hpp"
 #include "mrl.hpp"
-#include "playeritem.hpp"
+
+class PlayEngine;
 
 class AvIoFormat : public QObject {
 	Q_OBJECT
@@ -15,7 +16,7 @@ class AvIoFormat : public QObject {
 	Q_PROPERTY(double samplerate READ samplerate)
 	Q_PROPERTY(int channels READ channels)
 public:
-	AvIoFormat(QObject *parent): QObject(parent) {}
+	AvIoFormat(QObject *parent = nullptr): QObject(parent) {}
 	QSize size() const {return m_size;}
 	double samplerate() const {return m_samplerate;}
 	int bits() const {return m_bits;}
@@ -36,16 +37,15 @@ private:
 
 class AvInfoObject : public QObject {
 	Q_OBJECT
-	Q_PROPERTY(PlayerItem::HwAcc hardwareAcceleration READ hwAcc)
 	Q_PROPERTY(QString codec READ codec)
 	Q_PROPERTY(AvIoFormat *input READ input)
 	Q_PROPERTY(AvIoFormat *output READ output)
 	Q_PROPERTY(QString hardwareAccelerationText READ hwAccText)
 	Q_PROPERTY(QString audioDriverText READ audioDriverText)
 public:
-	AvInfoObject(QObject *parent): QObject(parent) {setHwAcc(PlayerItem::Unavailable);}
+	AvInfoObject(QObject *parent = nullptr);
 	QString codec() const {return m_codec;}
-	PlayerItem::HwAcc hwAcc() const {return m_hwAcc;}
+	int hwAcc() const {return m_hwAcc;}
 	AvIoFormat *input() const {return m_input;}
 	AvIoFormat *output() const {return m_output;}
 	void setVideo(const PlayEngine *engine);
@@ -53,12 +53,12 @@ public:
 	QString hwAccText() const { return m_hwAccText; }
 	QString audioDriverText() const { return m_audioDriver; }
 private:
-	void setHwAcc(PlayerItem::HwAcc acc);
+	void setHwAcc(int acc);
 	static QString format(quint32 fmt) { return fmt >= 0x20202020 ? _U((const char*)&fmt, 4) : _L("0x") % _N(fmt, 16); }
 	static QString bps(int Bps) {return (Bps ? _N(Bps*8/1000) % _L("kbps") : QString());}
 	AvIoFormat *m_input = new AvIoFormat(this);
 	AvIoFormat *m_output = new AvIoFormat(this);
-	PlayerItem::HwAcc m_hwAcc = PlayerItem::Unavailable;
+	int m_hwAcc = 0;
 	QString m_codec, m_hwAccText, &m_audioDriver = m_hwAccText;
 };
 
@@ -66,17 +66,42 @@ class MediaInfoObject : public QObject {
 	Q_OBJECT
 	Q_PROPERTY(QString name READ name NOTIFY nameChanged)
 public:
-	MediaInfoObject(QObject *parent): QObject(parent) {}
-	void setMrl (const Mrl &mrl) {m_mrl = mrl;}
+	MediaInfoObject(QObject *parent = nullptr): QObject(parent) {}
 	QString name() const {return m_name;}
-	QString display() const {return m_mrl.displayName();}
 	void setName(const QString &name) { if (_Change(m_name, name)) emit nameChanged(m_name); }
 signals:
 	void nameChanged(const QString &name);
 private:
-	friend class PlayerItem;
 	QString m_name;
-	Mrl m_mrl;
 };
 
-#endif // PLAYINFOITEM_HPP
+struct DvdInfo {
+	struct Title {
+		QString name() const {return m_name;}
+		int id() const {return m_id;}
+		int m_id = 0;
+		int number = 0, chapters = 0, angles = 0, length = 0;
+	private:
+		friend class PlayEngine;
+		QString m_name;
+	};
+	void clear() {titles.clear(); titles.clear(); }
+	QMap<int, Title> titles;
+	QString volume;
+};
+
+struct Chapter {
+	QString name() const {return m_name;}
+	int id() const {return m_id;}
+	bool operator == (const Chapter &rhs) const {
+		return m_id == rhs.m_id && m_name == rhs.m_name;
+	}
+private:
+	friend class PlayEngine;
+	QString m_name;
+	int m_id = 0;
+};
+
+typedef QVector<Chapter> ChapterList;
+
+#endif // MEDIAMISC_HPP

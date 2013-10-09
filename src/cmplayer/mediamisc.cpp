@@ -1,4 +1,4 @@
-#include "playinfoitem.hpp"
+#include "mediamisc.hpp"
 #include "hwacc.hpp"
 #include "videoformat.hpp"
 #include "playengine.hpp"
@@ -9,12 +9,17 @@ extern "C" {
 #include <audio/out/ao.h>
 }
 
-void AvInfoObject::setHwAcc(PlayerItem::HwAcc acc) {
+AvInfoObject::AvInfoObject(QObject *parent)
+: QObject(parent) {
+	setHwAcc(PlayEngine::HwAccUnavailable);
+}
+
+void AvInfoObject::setHwAcc(int acc) {
 	switch (m_hwAcc = acc) {
-	case PlayerItem::Activated:
+	case PlayEngine::HwAccActivated:
 		m_hwAccText = tr("Activated");
 		break;
-	case PlayerItem::Inactivated:
+	case PlayEngine::HwAccInactivated:
 		m_hwAccText = tr("Inactivated");
 		break;
 	default:
@@ -34,11 +39,11 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	const auto in = sh->vfilter ? sh->vfilter->fmt_in.params.imgfmt : out;
 
 	if (!HwAcc::supports(HwAcc::codecId(mpctx->sh[STREAM_VIDEO]->codec)))
-		setHwAcc(PlayerItem::Unavailable);
+		setHwAcc(PlayEngine::HwAccUnavailable);
 	else if (engine->isHwAccActivated())
-		setHwAcc(PlayerItem::Activated);
+		setHwAcc(PlayEngine::HwAccActivated);
 	else
-		setHwAcc(PlayerItem::Inactivated);
+		setHwAcc(PlayEngine::HwAccInactivated);
 	m_codec = _U(mpctx->sh[STREAM_VIDEO]->decoder_desc);
 
 	m_input->m_type = format(sh->format);
@@ -59,7 +64,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 		return;
 	auto sh = mpctx->sh_audio;
 	auto ao = mpctx->ao;
-	m_hwAcc = PlayerItem::Unavailable;
+	m_hwAcc = PlayEngine::HwAccUnavailable;
 	m_audioDriver = AudioDriverInfo::name(engine->audioDriver());
 	m_codec = _U(mpctx->sh[STREAM_AUDIO]->decoder_desc);
 

@@ -14,7 +14,7 @@ struct VideoRendererItem::Data {
 	QLinkedList<VideoFrame> queue;
 	OpenGLFramebufferObject *fbo = nullptr;
 	bool take = false, initialized = false, render = false;
-	quint64 drawnFrames = 0;
+	quint64 drawnFrames = 0, lastCheckedFrames = 0, lastCheckedTime = 0;
 	QRectF vtx;
 	QPoint offset = {0, 0};
 	double crop = -1.0, aspect = -1.0, dar = 0.0, ptsIn = MP_NOPTS_VALUE, ptsOut = MP_NOPTS_VALUE;
@@ -101,6 +101,17 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 
 VideoRendererItem::~VideoRendererItem() {
 	delete d;
+}
+
+double VideoRendererItem::avgfps() const {
+	const auto time = _SystemTime();
+	const auto frames = d->drawnFrames;
+	double fps = 0.0;
+	if (time > d->lastCheckedTime && frames > d->lastCheckedFrames)
+		fps = double(frames - d->lastCheckedFrames)/(double(time - d->lastCheckedTime)*1e-6);
+	d->lastCheckedFrames = frames;
+	d->lastCheckedTime = time;
+	return fps;
 }
 
 void VideoRendererItem::setOverlayInLetterbox(bool letterbox) {

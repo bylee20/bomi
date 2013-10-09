@@ -2,7 +2,6 @@
 #define GLOBALQMLOBJECT_HPP
 
 #include "stdafx.hpp"
-#include <sys/time.h>
 
 enum MemoryUnit {
 	ByteUnit = 1, Kilobyte = 1024, Megabyte = 1024*1024, Gigabyte = 1024*1024*1024
@@ -63,7 +62,7 @@ public:
 	static double usingMemory() { return usingMemory(Megabyte); }
 	static double cpuUsage();
 	static int cores();
-	static quint64 systemTime() { struct timeval t; gettimeofday(&t, 0); return t.tv_sec*1000000u + t.tv_usec; }
+	static quint64 systemTime() { return _SystemTime(); }
 	static quint64 processTime(); // usec
 	static QString monospace();
 	bool isFullScreen() const {return m_fullScreen;}

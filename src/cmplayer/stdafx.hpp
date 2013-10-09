@@ -12,6 +12,7 @@ extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
 #include <QtWidgets>
 #include <QtQuick>
 #include <set>
+#include <sys/time.h>
 #include <qmath.h>
 #ifndef __OBJC__
 #include <type_traits>
@@ -98,6 +99,8 @@ template<typename List, typename T>
 typename List::const_iterator _Find(const List &list, const T &t) { return std::find(std::begin(list), std::end(list), t); }
 template<typename List, typename T>
 bool _Contains(const List &list, const T &t) { return std::find(std::begin(list), std::end(list), t) != std::end(list); }
+
+static inline quint64 _SystemTime() { struct timeval t; gettimeofday(&t, 0); return t.tv_sec*1000000u + t.tv_usec; }
 }
 
 using namespace Pch;

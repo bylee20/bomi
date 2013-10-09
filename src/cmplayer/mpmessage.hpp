@@ -32,7 +32,6 @@ public:
 	MpMessage();
 	virtual ~MpMessage();
 	static void add(MpMessage *parser);
-	static void clear();
 	static void _parse(const QString &line);
 protected:
 	struct Id {Id() {}	Id(const QString &name, const QString &value): name(name), value(value) {} QString name, value;};

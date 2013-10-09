@@ -3,11 +3,12 @@ import CMPlayerCore 1.0 as Core
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
 
-Core.Engine {
+Item {
 	id: player
+	objectName: "player"
 	property real dockZ: 0.0
 	property real bottomPadding: 0.0
-	Logo { anchors.fill: parent; visible: player.state == Core.Engine.Stopped }
+	Logo { anchors.fill: parent }
 	TextOsd { id: msgosd }
 	Rectangle {
 		id: msgbox
@@ -31,8 +32,8 @@ Core.Engine {
 		border.width: 1
 	}
 
-	ProgressOsd { id: timeline; value: player.relativePosition }
-	PlayInfoView { objectName: "playinfo"; player: player }
+	ProgressOsd { id: timeline; value: engine.relativePosition }
+	PlayInfoView { objectName: "playinfo" }
 	Item {
 		anchors.fill: parent; z: dockZ
 		PlaylistDock {
@@ -48,10 +49,19 @@ Core.Engine {
 			height: parent.height-2*y - bottomPadding
 		}
 	}
-	onMessageOsdRequested: { msgosd.text = osdMessage; msgosd.show(); }
-	onMessageBoxRequested: {
-			msgbox.visible = !!boxMessage
-		boxmsg.text = boxMessage
+	Component.onCompleted: {
+		engine.screen.parent = player
+		engine.screen.width = width
+		engine.screen.height = height
 	}
-	onSought: {timeline.show();}
+	onWidthChanged: engine.screen.width = width
+	onHeightChanged: engine.screen.height = height
+
+	function showOSD(msg) { msgosd.text = msg; msgosd.show(); }
+	function showMessageBox(msg) { msgbox.visible = !!msg; boxmsg.text = msg }
+
+	Connections {
+		target: engine;
+		onSought: {timeline.show();}
+	}
 }

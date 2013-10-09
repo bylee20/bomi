@@ -19,7 +19,6 @@ struct Range {
 typedef Range<double> RangeF;
 typedef Range<int> RangeI;
 
-enum EngineState {EngineStopped = 1, EnginePlaying = 2, EnginePaused = 4, EngineFinished = 8, EngineLoading = 16, EngineError = 64};
 enum StreamType {UnknownStream = 0, VideoStream, AudioStream, SubPicStream};
 enum MediaMetaData {LanguageCode};
 

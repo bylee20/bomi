@@ -49,18 +49,18 @@ Skin.AppWithDock {
 			anchors.margins: 4
 			Skin.Button {
 				id: playPause; width: height; height: parent.height
-				action: "play/pause"; icon: (engine.state === Core.Engine.Playing) ? "pause.png" : "play.png"
+				action: "play/pause"; icon: (player.state === Core.Engine.Playing) ? "pause.png" : "play.png"
 				paddings: pressed ? 2 : (hovered ? 0 : 1)
 			}
-			Skin.TimeSlider { id: timeslider; engine: app.engine; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
+			Skin.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
 			Row {
 				width: childrenRect.width
 				height: parent.height
-				Skin.TimeText { color: "black"; msecs: app.engine.time }
+				Skin.TimeText { color: "black"; msecs: engine.time }
 				Skin.TimeText { color: "black"; text: "/" }
-				Skin.TimeText { color: "black"; msecs: app.engine.endTime }
+				Skin.TimeText { color: "black"; msecs: engine.end }
 			}
-			Skin.VolumeSlider { id: volumeslider; width: 100; engine: app.engine; style: sliders; height: parent.height }
+			Skin.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
 		}
 	}
 }

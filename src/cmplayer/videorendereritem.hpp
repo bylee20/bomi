@@ -41,7 +41,7 @@ public:
 	double aspectRatio() const;
 	double cropRatio() const;
 	int alignment() const;
-	double fps() const;
+	double avgfps() const;
 	Effects effects() const;
 	QSize sizeHint() const;
 	QSizeF size() const {return QSizeF(width(), height());}

@@ -2,7 +2,6 @@
 #include "openmediafolderdialog.hpp"
 #include "snapshotdialog.hpp"
 #include "mainwindow.hpp"
-#include "playeritem.hpp"
 #include "rootmenu.hpp"
 #include "recentinfo.hpp"
 #include "pref.hpp"
@@ -47,7 +46,7 @@ struct MainWindow::Data {
 	MainView *view = nullptr;
 	MainWindow *p = nullptr;
 	bool visible = false, sotChanging = false, fullScreen = false;
-	PlayerItem *player = nullptr;
+	QQuickItem *player = nullptr;
 	RootMenu menu;	RecentInfo recent;
 	AppState &as = AppState::get();
 	PlayEngine engine;
@@ -190,8 +189,8 @@ struct MainWindow::Data {
 				updateWindowPosState();
 			as.audio_volume = engine.volume();
 			as.audio_muted = engine.isMuted();
-			as.audio_preamp = engine.preamp();
-			as.audio_normalizer = engine.isVolumeNormalized();
+			as.audio_preamp = engine.amp();
+			as.audio_normalizer = engine.isVolumeNormalizerActivated();
 			as.audio_scaletempo = engine.isTempoScaled();
 			as.video_aspect_ratio = renderer.aspectRatio();
 			as.video_crop_ratio = renderer.cropRatio();
@@ -207,9 +206,7 @@ struct MainWindow::Data {
 			as.sub_align_top = subtitle.isTopAligned();
 			as.save();
 
-			if (player)
-				player->unplug();
-			engine.wait();
+			engine.waitUntilTerminated();
 			cApp.processEvents();
 			first = false;
 		}
@@ -241,6 +238,14 @@ struct MainWindow::Data {
 	}
 
 	QMap<ActionGroup*, QAction*> currentActions;
+	void showMessageBox(const QVariant &msg) {
+		if (player)
+			QMetaObject::invokeMethod(player, "showMessageBox", Q_ARG(QVariant, msg));
+	}
+	void showOSD(const QVariant &msg) {
+		if (player)
+			QMetaObject::invokeMethod(player, "showOSD", Q_ARG(QVariant, msg));
+	}
 };
 
 #ifdef Q_OS_MAC
@@ -259,7 +264,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	l->setMargin(0);
 	setLayout(l);
 
-	d->engine.start();
+	d->engine.run();
 	d->engine.setGetStartTimeFunction([this] (const Mrl &mrl){return getStartTime(mrl);});
 	d->engine.setGetCacheFunction([this] (const Mrl &mrl) {
 		if (mrl.isLocalFile()) {
@@ -288,25 +293,24 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	});
 
 	connect(&d->engine, &PlayEngine::mrlChanged, this, &MainWindow::updateMrl);
-	connect(&d->engine, &PlayEngine::stateChanged, [this] (EngineState state) {
+	connect(&d->engine, &PlayEngine::stateChanged, [this] (PlayEngine::State state) {
 		d->stateChanging = true;
-		auto mbox = [this] (const QString &msg) { if (d->player) d->player->requestMessageBox(msg); };
-		mbox(QString());
-		if ((d->loading = state == EngineLoading))
+		d->showMessageBox(QString());
+		if ((d->loading = state == PlayEngine::Loading))
 			d->loadingTimer.start();
 		else
 			d->loadingTimer.stop();
-		if (state == EngineError)
-			mbox(tr("Error!\nCannot open the media."));
+		if (state == PlayEngine::Error)
+			d->showMessageBox(tr("Error!\nCannot open the media."));
 		switch (state) {
-		case EngineLoading:
-		case EnginePlaying:
+		case PlayEngine::Loading:
+		case PlayEngine::Playing:
 			d->menu("play")["pause"]->setText(tr("Pause"));
 			break;
 		default:
 			d->menu("play")["pause"]->setText(tr("Play"));
 		}
-		cApp.setScreensaverDisabled(d->pref().disable_screensaver && state == EnginePlaying);
+		cApp.setScreensaverDisabled(d->pref().disable_screensaver && state == PlayEngine::Playing);
 		updateStaysOnTop();
 		d->stateChanging = false;
 	});
@@ -381,8 +385,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	addMenuBar(d->menu("window"));
 	addMenuBar(d->menu("help"));
 #endif
-	while (!d->engine.isInitialized())
-		d->engine.msleep(1);
+	d->engine.waitUntilInitilaized();
 
 	d->dontShowMsg = true;
 
@@ -397,7 +400,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->engine.setSpeed(as.play_speed);
 	d->engine.setVolume(as.audio_volume);
 	d->engine.setMuted(as.audio_muted);
-	d->engine.setPreamp(as.audio_preamp);
+	d->engine.setAmp(as.audio_preamp);
 	d->engine.setVolumeNormalizerActivated(as.audio_normalizer);
 	d->engine.setTempoScalerActivated(as.audio_scaletempo);
 
@@ -477,8 +480,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->loadingTimer.setInterval(500);
 	d->loadingTimer.setSingleShot(true);
 	connect(&d->loadingTimer, &QTimer::timeout, [this] () {
-		if (d->loading && d->player)
-			d->player->requestMessageBox(tr("Loading ...\nPlease wait for a while."));
+		if (d->loading)
+			d->showMessageBox(tr("Loading ...\nPlease wait for a while."));
 	});
 
 	connect(&d->initializer, &QTimer::timeout, [this] () { applyPref(); cApp.runCommands(); });
@@ -490,6 +493,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 }
 
 MainWindow::~MainWindow() {
+	d->view->engine()->clearComponentCache();
 	exit();
 	delete d->view;
 	delete d;
@@ -545,8 +549,8 @@ void MainWindow::connectMenus() {
 			else {
 				const auto state = d->engine.state();
 				switch (state) {
-				case EnginePlaying:
-				case EngineLoading:
+				case PlayEngine::Playing:
+				case PlayEngine::Loading:
 					d->engine.pause();
 					break;
 				default:
@@ -577,7 +581,6 @@ void MainWindow::connectMenus() {
 		if (diff && !d->engine.isStopped() && d->engine.isSeekable()) {
 			d->engine.relativeSeek(diff);
 			showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
-			if (d->player) d->player->doneSeeking();
 		}
 	});
 	connect(play("seek").g("subtitle"), &ActionGroup::triggered, [this] (QAction *a) {
@@ -714,16 +717,16 @@ void MainWindow::connectMenus() {
 			});
 	});
 	connect(audio.g("amp"), &ActionGroup::triggered, [this] (QAction *a) {
-		const int amp = qBound(0, qRound(d->engine.preamp()*100 + a->data().toInt()), 1000);
-		if (amp != qRound(d->engine.preamp()*100))
-			d->push(amp*0.01, d->engine.preamp(), [this] (double amp) {
-				d->engine.setPreamp(amp);
+		const int amp = qBound(0, qRound(d->engine.amp()*100 + a->data().toInt()), 1000);
+		if (amp != qRound(d->engine.amp()*100))
+			d->push(amp*0.01, d->engine.amp(), [this] (double amp) {
+				d->engine.setAmp(amp);
 				showMessage(tr("Amplifier"), qRound(amp*100), "%");
 			});
 	});
 	connect(audio["normalizer"], &QAction::triggered, [this] (bool on) {
-		if (on != d->engine.isVolumeNormalized())
-			d->push(on, d->engine.isVolumeNormalized(), [this] (bool on) {
+		if (on != d->engine.isVolumeNormalizerActivated())
+			d->push(on, d->engine.isVolumeNormalizerActivated(), [this] (bool on) {
 				d->engine.setVolumeNormalizerActivated(on);
 				showMessage(tr("Volume Normalizer"), on);
 				d->menu("audio")["normalizer"]->setChecked(on);
@@ -1059,8 +1062,8 @@ void MainWindow::showMessage(const QString &message, const bool *force) {
 			return;
 	} else if (!d->pref().show_osd_on_action)
 		return;
-	if (!d->dontShowMsg && d->player)
-		d->player->requestMessageOsd(message);
+	if (!d->dontShowMsg)
+		d->showOSD(message);
 }
 
 void MainWindow::checkWindowState() {
@@ -1280,24 +1283,26 @@ void MainWindow::dropEvent(QDropEvent *event) {
 }
 
 void MainWindow::reloadSkin() {
-	if (d->player)
-		d->player->unplug();
 	d->player = nullptr;
 	d->view->engine()->clearComponentCache();
-	PlayerItem::registerItems();
+	d->view->rootContext()->setContextProperty("engine", &d->engine);
 	d->view->rootContext()->setContextProperty("history", &d->history);
 	d->view->rootContext()->setContextProperty("playlist", &d->playlist);
 	Skin::apply(d->view, d->pref().skin_name);
 	if (d->view->status() == QQuickView::Error) {
-		auto errors = d->view->errors();
-		for (auto error : errors)
-			qDebug() << error.toString();
+//		auto errors = d->view->errors();
+//		for (auto error : errors)
+//			qDebug() << error.toString();
 		d->view->setSource(QUrl("qrc:/emptyskin.qml"));
 	}
-	if (!(d->player = qobject_cast<PlayerItem*>(d->view->rootObject())))
-		d->player = d->view->rootObject()->findChild<PlayerItem*>();
+	auto root = d->view->rootObject();
+	if (!root)
+		return;
+	if (root->objectName() == "player")
+		d->player = qobject_cast<QQuickItem*>(root);
+	if (!d->player)
+		d->player = root->findChild<QQuickItem*>("player");
 	if (d->player) {
-		d->player->plugTo(&d->engine);
 		if (auto item = d->findItem("playlist"))
 			item->setProperty("show", AppState::get().playlist_visible);
 		if (auto item = d->findItem("history"))
@@ -1314,10 +1319,10 @@ void MainWindow::reloadSkin() {
 void MainWindow::applyPref() {
 	int time = -1;
 	switch (d->engine.state()) {
-	case EnginePlaying:
-	case EngineLoading:
-	case EnginePaused:
-		time = d->engine.position();
+	case PlayEngine::Playing:
+	case PlayEngine::Loading:
+	case PlayEngine::Paused:
+		time = d->engine.time();
 		break;
 	default:
 		break;
@@ -1626,11 +1631,11 @@ int MainWindow::getStartTime(const Mrl &mrl) {
 	if (start <= 0)
 		return 0;
 	if (d->pref().ask_record_found) {
-		if (QThread::currentThread() == &d->engine) {
+		if (QThread::currentThread() == d->engine.thread()) {
 			d->startFromStopped = -1;
 			qApp->postEvent(this, new AskStartTimeEvent(mrl, start));
 			while (d->startFromStopped == -1)
-				d->engine.msleep(50);
+				QThread::msleep(50);
 		} else {
 			AskStartTimeEvent event(mrl, start);
 			qApp->sendEvent(this, &event);

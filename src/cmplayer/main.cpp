@@ -1,7 +1,7 @@
 #include "app.hpp"
 #include "mrl.hpp"
 #include "mainwindow.hpp"
-#include "playeritem.hpp"
+#include "playengine.hpp"
 #include "videoformat.hpp"
 #include "hwacc.hpp"
 #include <QtGui/private/qguiapplication_p.h>
@@ -10,11 +10,7 @@
 int main(int argc, char **argv) {
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
-	qRegisterMetaType<EngineState>("State");
-	qRegisterMetaType<Mrl>("Mrl");
-	qRegisterMetaType<VideoFormat>("VideoFormat");
-//	qRegisterMetaType<QVector<int>>("QVector<int>");
-	PlayerItem::registerItems();
+	PlayEngine::registerObjects();
 	qDebug() << "Create App instance";
 	App app(argc, argv);
 	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]"))) {
