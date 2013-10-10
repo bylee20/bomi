@@ -105,7 +105,7 @@ Item {
 				function update() {
 					var cpu = Util.cpu; var mem = Util.memory; var fps = engine.avgfps;
 					var txt = qsTr("CPU Usage: %1%(avg. %2%/core)")
-						.arg(cpu.toFixed(1))
+						.arg(cpu.toFixed(0))
 						.arg((cpu/Util.cores).toFixed(1));
 					txt += '\n';
 					txt += qsTr("RAM Usage: %3MB(%4% of %5GB)")
