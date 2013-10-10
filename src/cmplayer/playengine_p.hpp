@@ -30,7 +30,7 @@ extern "C" {
 #undef min
 
 enum EventType {
-	UserType = QEvent::User, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged, VideoFormatChanged, UpdateChapterList
+	UserType = QEvent::User, TimeRangeChange, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged, VideoFormatChanged, UpdateChapterList
 };
 
 enum MpCmd : int {

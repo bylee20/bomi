@@ -18,7 +18,7 @@ struct PlayEngine::Data {
 	Thread thread{p};
 	AudioController *audio = nullptr;
 	QByteArray fileName;
-	QTimer ticker;
+	QTimer imageTicker, avTicker;
 	bool quit = false, looping = false, init = false;
 	int start = 0;
 	bool muted = false;
@@ -72,6 +72,27 @@ struct PlayEngine::Data {
 			return true;
 		}
 		return false;
+	}
+	static int mpNumTracksChanged(MPContext *mpctx) {
+		qDebug() << "new tracks";
+		std::array<StreamList, STREAM_TYPE_COUNT> streams;
+		QString name[STREAM_TYPE_COUNT];
+		name[STREAM_AUDIO] = tr("Audio %1");
+		name[STREAM_VIDEO] = tr("Video %1");
+		name[STREAM_SUB] = tr("Subtitle %1");
+		for (int i=0; i<mpctx->num_tracks; ++i) {
+			const auto track = mpctx->tracks[i];
+			auto &list = streams[track->type];
+			if (!list.contains(track->user_tid)) {
+				auto &stream = list[track->user_tid];
+				stream.m_title = QString::fromLocal8Bit(track->title);
+				stream.m_lang = QString::fromLocal8Bit(track->lang);
+				stream.m_id = track->user_tid;
+				stream.m_name = name[track->type].arg(track->user_tid+1);
+			}
+		}
+		postData(static_cast<PlayEngine*>(mpctx->priv), UpdateTrack, streams);
+		return true;
 	}
 	int getStartTime(const Mrl &mrl) { return getStartTimeFunc ? getStartTimeFunc(mrl) : 0; }
 	int getCache(const Mrl &mrl) { return getCacheFunc ? getCacheFunc(mrl) : 0; }
@@ -194,20 +215,17 @@ PlayEngine::PlayEngine()
 : d(new Data(this)) {
 	d->audio = new AudioController(this);
 	d->video = new VideoOutput(this);
-	d->ticker.setInterval(20);
+	d->imageTicker.setInterval(20);
+	d->avTicker.setInterval(200);
 	d->updateMediaName();
 	mp_register_player_command_filter(Data::mpCommandFilter);
-
-	connect(&d->ticker, &QTimer::timeout, [this] () {
+	mp_register_player_num_tracks_changed(Data::mpNumTracksChanged);
+	connect(&d->imageTicker, &QTimer::timeout, [this] () {
 		bool begin = false, duration = false, pos = false;
 		if (d->hasImage) {
 			pos = _Change(d->position, d->image.pos());
 			begin = _Change(d->duration, d->image.duration());
 			duration = _Change(d->begin, 0);
-		} else if (isPaused() || isPlaying()) {
-			pos = _Change(d->position, time());
-			begin = _Change(d->begin, qMax(0, qRound(get_start_time(d->mpctx)*1000.0)));
-			duration = _Change(d->duration, qRound(get_time_length(d->mpctx)*1000.0));
 		}
 		if (pos)
 			emit tick(d->position);
@@ -220,15 +238,17 @@ PlayEngine::PlayEngine()
 		if (pos || begin || duration)
 			emit relativePositionChanged();
 	});
-
+	connect(&d->avTicker, &QTimer::timeout, [this] () {
+		d->position = time();
+		emit tick(d->position);
+		emit relativePositionChanged();
+	});
 	connect(d->video, &VideoOutput::formatChanged, [this] (const VideoFormat &format) {
 		postData(this, VideoFormatChanged, format);
 	});
 	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
 		d->load(row, d->getStartTime(d->playlist[row]));
 	});
-
-
 }
 
 PlayEngine::~PlayEngine() {
@@ -246,7 +266,7 @@ void PlayEngine::setImageDuration(int duration) {
 }
 
 int PlayEngine::duration() const {
-	return d->hasImage ? d->image.duration() : d->duration;
+	return d->duration;
 }
 
 const DvdInfo &PlayEngine::dvd() const {return d->dvd;}
@@ -277,7 +297,7 @@ void PlayEngine::waitUntilTerminated() {
 void PlayEngine::waitUntilInitilaized() {
 	while (!d->init)
 		QThread::msleep(1);
-	d->ticker.start();
+//	d->ticker.start();
 	d->videoInfo.setVideo(this);
 	d->audioInfo.setAudio(this);
 }
@@ -497,6 +517,17 @@ void PlayEngine::customEvent(QEvent *event) {
 		const bool wasRunning = isRunning();
 		if (_Change(m_state, state)) {
 			emit stateChanged(m_state);
+			if (m_state == Playing) {
+				if (d->hasImage)
+					d->imageTicker.start();
+				else
+					d->avTicker.start();
+			} else {
+				if (d->hasImage)
+					d->imageTicker.stop();
+				else
+					d->avTicker.stop();
+			}
 			if (wasRunning != isRunning())
 				emit runningChanged();
 		}
@@ -512,6 +543,13 @@ void PlayEngine::customEvent(QEvent *event) {
 		break;
 	} case PlaylistFinished:
 		emit d->playlist.finished();
+		break;
+	case TimeRangeChange:
+		qDebug() <<d->duration <<d->begin;
+		getAllData(event, d->begin, d->duration);
+		emit durationChanged(d->duration);
+		emit beginChanged(d->begin);
+		emit endChanged(end());
 		break;
 	case MrlChanged: {
 		const auto mrl = getData<Mrl>(event);
@@ -665,11 +703,6 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	d->video->setDeintEnabled(d->deint);
 	auto error = prepare_playback(mpctx);
 	d->updateAudioLevel();
-	std::array<StreamList, STREAM_TYPE_COUNT> streams;
-	QString name[STREAM_TYPE_COUNT];
-	name[STREAM_AUDIO] = tr("Audio %1");
-	name[STREAM_VIDEO] = tr("Video %1");
-	name[STREAM_SUB] = tr("Subtitle %1");
 	if (error != MPERROR_NONE)
 		return error;
 	postData(this, StreamOpen);
@@ -690,36 +723,32 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 		stream->control(stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
 	}
 	postData(this, UpdateChapterList, chapters);
-	auto prevState = PlayEngine::Loading;
+	auto prevState = Loading;
+	int begin = 0; duration = 0;
+	auto checkTimeRange = [this, &begin, &duration] () {
+		if (_Change(begin, qMax(0, qRound(get_start_time(d->mpctx)*1000.0)))
+				| _Change(duration, qRound(get_time_length(d->mpctx)*1000.0))) {
+			postData(this, TimeRangeChange, begin, duration);
+			return true;
+		}
+		return false;
+	};
 	d->tellmp("vf set", d->vfs);
 	while (!mpctx->stop_play) {
+		if (!duration)
+			checkTimeRange();
 		run_playloop(mpctx);
 		if (mpctx->stop_play)
 			break;
 		auto state = prevState;
 		if (mpctx->paused_for_cache && !mpctx->opts->pause)
-			state = PlayEngine::Loading;
+			state = Loading;
 		else if (mpctx->paused)
-			state = PlayEngine::Paused;
+			state = Paused;
 		else
-			state = PlayEngine::Playing;
+			state = Playing;
 		if (_Change(prevState, state))
 			setState(state);
-		if (streams[STREAM_AUDIO].size() + streams[STREAM_VIDEO].size() + streams[STREAM_SUB].size() != mpctx->num_tracks) {
-			streams[STREAM_AUDIO].clear(); streams[STREAM_VIDEO].clear(); streams[STREAM_SUB].clear();
-			for (int i=0; i<mpctx->num_tracks; ++i) {
-				const auto track = mpctx->tracks[i];
-				auto &list = streams[track->type];
-				if (!list.contains(track->user_tid)) {
-					auto &stream = list[track->user_tid];
-					stream.m_title = QString::fromLocal8Bit(track->title);
-					stream.m_lang = QString::fromLocal8Bit(track->lang);
-					stream.m_id = track->user_tid;
-					stream.m_name = name[track->type].arg(track->user_tid+1);
-				}
-			}
-			postData(this, UpdateTrack, streams);
-		}
 	}
 	terminated = time();
 	duration = this->duration();
