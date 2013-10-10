@@ -12,7 +12,6 @@ class Subtitle;
 class MainWindow : public QWidget {
 	Q_OBJECT
 public:
-	class Cmd;
 	MainWindow(QWidget *parent = nullptr);
 	MainWindow(const MainWindow &) = delete;
 	MainWindow &operator = (const MainWindow &) = delete;

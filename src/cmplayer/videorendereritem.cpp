@@ -286,23 +286,9 @@ void VideoRendererItem::setEffects(Effects effects) {
 	}
 }
 
-
 QRectF VideoRendererItem::frameRect(const QRectF &area) const {
 	return d->frameRect(area);
-//	if (hasFrame()) {
-//		const double aspect = targetAspectRatio();
-//		QSizeF frame(aspect, 1.0), letter(targetCropRatio(aspect), 1.0);
-//		letter.scale(area.width(), area.height(), Qt::KeepAspectRatio);
-//		frame.scale(letter, Qt::KeepAspectRatioByExpanding);
-//		QPointF pos(area.x(), area.y());
-//		pos.rx() += (area.width() - frame.width())*0.5;
-//		pos.ry() += (area.height() - frame.height())*0.5;
-//		return QRectF(pos, frame);
-//	} else
-//		return area;
 }
-
-
 
 void VideoRendererItem::setColor(const ColorProperty &prop) {
 	if (_Change(d->color, prop) && d->shader) {
@@ -354,8 +340,6 @@ MpOsdItem *VideoRendererItem::mpOsd() const {
 	return d->mposd;
 }
 
-
-
 int VideoRendererItem::delay() const {
 	return (d->ptsIn == MP_NOPTS_VALUE || d->ptsOut == MP_NOPTS_VALUE) ? 0.0 : (d->ptsOut - d->ptsIn)*1000.0;
 }
@@ -406,24 +390,6 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 }
 
 void VideoRendererItem::getCoords(QRectF &vertices, QRectF &texCoords) {
-//	QSizeF letter(targetCropRatio(targetAspectRatio()), 1.0);
-//	letter.scale(width(), height(), Qt::KeepAspectRatio);
-//	QPointF offset = d->offset;
-//	offset.rx() *= letter.width()/100.0;
-//    offset.ry() *= letter.height()/100.0;
-//	QPointF xy(width(), height());
-//	xy.rx() -= letter.width(); xy.ry() -= letter.height();	xy *= 0.5;
-//	if (d->alignment & Qt::AlignLeft)
-//		offset.rx() -= xy.x();
-//	else if (d->alignment & Qt::AlignRight)
-//		offset.rx() += xy.x();
-//	if (d->alignment & Qt::AlignTop)
-//		offset.ry() -= xy.y();
-//	else if (d->alignment & Qt::AlignBottom)
-//		offset.ry() += xy.y();
-//	xy += offset;
-//	if (d->letterbox->set(QRectF(0.0, 0.0, width(), height()), QRectF(xy, letter)))
-//		emit screenRectChanged(d->letterbox->screen());
 	double top = 0.0, left = 0.0, right = 1.0, bottom = 1.0;
 	if (d->fbo)
 		d->fbo->getCoords(left, top, right, bottom);
@@ -434,8 +400,6 @@ void VideoRendererItem::getCoords(QRectF &vertices, QRectF &texCoords) {
 			qSwap(left, right);
 	}
 	vertices = d->vtx;
-//	vertices = d->vtx.translated(offset);
-
 	texCoords = {left, top, right-left, bottom-top};
 }
 

@@ -23,8 +23,6 @@ class PlayEngine : public QObject, public MpMessage {
 	Q_OBJECT
 	Q_ENUMS(State)
 	Q_ENUMS(HardwareAcceleration)
-//	Q_PROPERTY(QString osdMessage READ osdMessage)
-//	Q_PROPERTY(QString boxMessage READ boxMessage)
 	Q_PROPERTY(MediaInfoObject *media READ mediaInfo NOTIFY mediaChanged)
 	Q_PROPERTY(AvInfoObject *audio READ audioInfo NOTIFY videoChanged)
 	Q_PROPERTY(AvInfoObject *video READ videoInfo NOTIFY audioChanged)
