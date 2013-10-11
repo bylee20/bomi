@@ -782,9 +782,15 @@ void MainWindow::connectMenus() {
 			action->setChecked(true);
 		showMessage(tr("Select All Subtitles"), tr("%1 Subtitle(s)").arg(d->subtitle.componentsCount()));
 	});
-	connect(sub("track")["hide"], &QAction::toggled, [this] (bool hide) {
-		d->subtitle.setVisible(!hide);
-		d->engine.setSubtitleStreamsVisible(!hide);
+	connect(sub("track")["hide"], &QAction::triggered, [this] (bool hide) {
+		if (hide != d->subtitle.isHidden()) {
+			d->push(hide, d->subtitle.isHidden(), [this] (bool hide) {
+				d->subtitle.setHidden(hide);
+				d->engine.setSubtitleStreamsVisible(!hide);
+				showMessage(tr("Display Subtitles"), !hide);
+				d->menu("subtitle")("track")["hide"]->setChecked(hide);
+			});
+		}
 	});
 	connect(sub("track")["open"], &QAction::triggered, [this] () {
 		const QString filter = tr("Subtitle Files") % ' ' % Info::subtitleExt().toFilter();
