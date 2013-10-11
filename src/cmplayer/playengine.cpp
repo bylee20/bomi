@@ -121,7 +121,7 @@ struct PlayEngine::Data {
 	template<typename T> void setmp(const char *name, T value) { enqueue(MpSetProperty, name, value); }
 	void tellmp(const QByteArray &cmd) {
 		if (mpctx && mpctx->input)
-			mp_input_queue_cmd(mpctx->input, mp_input_parse_cmd(bstr0(cmd.data()), ""));
+			mp_input_queue_cmd(mpctx->input, mp_input_parse_cmd(mpctx->input, bstr0(cmd.data()), ""));
 	}
 	void tellmp(const QByteArray &cmd, std::initializer_list<QByteArray> list) {
 		int size = cmd.size();
@@ -239,7 +239,7 @@ PlayEngine::PlayEngine()
 			emit relativePositionChanged();
 	});
 	connect(&d->avTicker, &QTimer::timeout, [this] () {
-		d->position = time();
+		d->position = get_current_time(d->mpctx)*1000.0 + 0.5;
 		emit tick(d->position);
 		emit relativePositionChanged();
 	});
@@ -507,6 +507,7 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->audioInfo.setAudio(this);
 		d->start = 0;
 		d->position = 0;
+		emit tick(d->position);
 		emit seekableChanged(isSeekable());
 		emit started(d->playlist.loadedMrl());
 		emit mediaChanged();
@@ -520,7 +521,7 @@ void PlayEngine::customEvent(QEvent *event) {
 			if (m_state == Playing) {
 				if (d->hasImage)
 					d->imageTicker.start();
-				else
+				else if (d->mpctx && d->mpctx->demuxer)
 					d->avTicker.start();
 			} else {
 				if (d->hasImage)
@@ -706,9 +707,9 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	if (error != MPERROR_NONE)
 		return error;
 	postData(this, StreamOpen);
-	ChapterList chapters(qMax(0, get_chapter_count(mpctx)));
+	ChapterList chapters(get_chapter_count(mpctx));
 	for (int i=0; i<chapters.size(); ++i) {
-		const QString time = _MSecToString(qRound(chapter_start_time(mpctx, i)*1000), _L("hh:mm:ss.zzz"));
+		const QString time = _MSecToString(chapter_start_time(mpctx, i)*1000, _L("hh:mm:ss.zzz"));
 		if (char *name = chapter_name(mpctx, i)) {
 			chapters[i].m_name = QString::fromLocal8Bit(name) % '(' % time % ')';
 			talloc_free(name);
@@ -723,31 +724,26 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 		stream->control(stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
 	}
 	postData(this, UpdateChapterList, chapters);
-	auto prevState = Loading;
 	int begin = 0; duration = 0;
 	auto checkTimeRange = [this, &begin, &duration] () {
-		if (_Change(begin, qMax(0, qRound(get_start_time(d->mpctx)*1000.0)))
-				| _Change(duration, qRound(get_time_length(d->mpctx)*1000.0))) {
+		if (_Change(begin, int(get_start_time(d->mpctx)*1000))
+				| _Change(duration, int(get_time_length(d->mpctx)*1000)))
 			postData(this, TimeRangeChange, begin, duration);
-			return true;
-		}
-		return false;
 	};
 	d->tellmp("vf set", d->vfs);
+	auto state = this->state(), newState = Loading;
 	while (!mpctx->stop_play) {
 		if (!duration)
 			checkTimeRange();
 		run_playloop(mpctx);
 		if (mpctx->stop_play)
 			break;
-		auto state = prevState;
+		newState = Playing;
 		if (mpctx->paused_for_cache && !mpctx->opts->pause)
-			state = Loading;
+			newState = Loading;
 		else if (mpctx->paused)
-			state = Paused;
-		else
-			state = Playing;
-		if (_Change(prevState, state))
+			newState = Paused;
+		if (_Change(state, newState))
 			setState(state);
 	}
 	terminated = time();
@@ -917,7 +913,7 @@ void PlayEngine::load(const Mrl &mrl, int start) {
 }
 
 int PlayEngine::time() const {
-	return d->hasImage ? d->image.pos() : (d->mpctx && d->mpctx->demuxer ? get_current_time(d->mpctx)*1000.0 + 0.5 : 0);
+	return d->position;
 }
 
 bool PlayEngine::isSeekable() const {

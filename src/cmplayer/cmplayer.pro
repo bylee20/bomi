@@ -7,7 +7,10 @@ macx:CONFIG -= app_bundle
     DEFINES += CMPLAYER_RELEASE
     CONFIG += release
     macx:CONFIG += app_bundle
+} else {
+    LIBQUVI_SUFFIX = -0.9
 }
+
 QT = core gui network quick widgets core-private gui-private
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
@@ -15,7 +18,8 @@ DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavfilter -lavcodec -lpostproc -lavformat -lavutil \
-        -lmpg123 -lquvi$${LIBQUVI_SUFFIX} -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio
+        -lmpg123 -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio # -lquvi$${LIBQUVI_SUFFIX}
+
 macx {
     QT += gui-private
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
@@ -24,8 +28,8 @@ macx {
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
     LIBS += -L/usr/local/lib -liconv -lfribidi -llua -ldvdcss -lcurl -L/usr/X11/lib -lfreetype -lfontconfig -framework IOSurface \
-	-framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
-	-framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
+        -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
+        -framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
         -framework IOKit -framework Carbon -framework OpenAL
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm

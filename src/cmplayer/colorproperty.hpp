@@ -2,6 +2,7 @@
 #define COLORPROPERTY_HPP
 
 #include <QGenericMatrix>
+#include <QMatrix4x4>
 extern "C" {
 #include <video/csputils.h>
 }

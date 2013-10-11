@@ -1,10 +1,6 @@
 #ifndef STDAFX_HPP
 #define STDAFX_HPP
 
-#include <stdlib.h>
-
-extern "C" void *fast_memcpy(void * to, const void * from, size_t len);
-
 #ifdef __cplusplus
 
 #include <QtCore>
@@ -48,12 +44,12 @@ static inline bool _Change(T &the, const T &one) {if (the != one) {the = one; re
 static inline bool _ChangeF(double &the, double one) {if (!qFuzzyCompare(the, one)) {the = one; return true;} return false;}
 static inline bool _ChangeZ(double &the, double one) {if (qFuzzyCompare(one, 1.0)) {one = 1.0;} if (!qFuzzyCompare(the, one)) {the = one; return true;} return false;}
 template<typename T> static inline const T& _C(T& t) {return t;}
-static const QTime __null_time(0, 0, 0, 0);
-static inline QTime _SecToTime(int sec) {return __null_time.addSecs(sec);}
-static inline QTime _MSecToTime(qint64 ms) {return __null_time.addMSecs(ms);}
+static const QTime _NullTime(0, 0, 0, 0);
+static inline QTime _SecToTime(int sec) {return _NullTime.addSecs(sec);}
+static inline QTime _MSecToTime(qint64 ms) {return _NullTime.addMSecs(ms);}
 static inline QString _MSecToString(qint64 ms, const QString &fmt = _L("hh:mm:ss")) {return _MSecToTime(ms).toString(fmt);}
 static inline QString _SecToString(int s, const QString &fmt = _L("hh:mm:ss")) {return _SecToTime(s).toString(fmt);}
-static inline qint64 _TimeToMSec(const QTime &time) {return __null_time.msecsTo(time);}
+static inline qint64 _TimeToMSec(const QTime &time) {return _NullTime.msecsTo(time);}
 static inline qint64 _TimeToMSec(int h, int m, int s, int ms = 0) {return ((h*60 + m)*60 + s)*1000 + ms;}
 static inline double _Diagonal(double w, double h) {return sqrt(w*w + h*h);}
 static inline double _Diagonal(const QSize &size) {return _Diagonal(size.width(), size.height());}
@@ -63,21 +59,21 @@ static inline double _Ratio(T1 w, T2 h) {return static_cast<double>(w)/static_ca
 static inline double _Ratio(const QSize &size) {return _Ratio(size.width(), size.height());}
 static inline double _Ratio(const QSizeF &size) {return _Ratio(size.width(), size.height());}
 static inline QStringList _GetOpenFileNames(QWidget *p, const QString &t, const QString &dir, const QString &f) {
-	return QFileDialog::getOpenFileNames(p, t, dir, f, 0);
+    return QFileDialog::getOpenFileNames(p, t, dir, f, 0);
 }
 static inline QString _GetOpenFileName(QWidget *p, const QString &t, const QString &dir, const QString &f) {
-	return QFileDialog::getOpenFileName(p, t, dir, f, 0);
+    return QFileDialog::getOpenFileName(p, t, dir, f, 0);
 }
 static inline QString _GetSaveFileName(QWidget *p, const QString &t, const QString &dir, const QString &f) {
-	return QFileDialog::getSaveFileName(p, t, dir, f, 0);
+    return QFileDialog::getSaveFileName(p, t, dir, f, 0);
 }
 
 #ifndef __OBJC__
 
 template<typename T> static typename std::enable_if<std::is_pointer<T>::value, T>::type address_cast(const char *address, int base = 10) {
-	bool ok = false;
-	const quintptr ptr = QString::fromLatin1(address).toULongLong(&ok, base);
-	return ok ? (T)(void*)(ptr) : (T)nullptr;
+    bool ok = false;
+    const quintptr ptr = QString::fromLatin1(address).toULongLong(&ok, base);
+    return ok ? (T)(void*)(ptr) : (T)nullptr;
 }
 
 template<int N> constexpr static int _Aligned(int v) { return v%N ? ((v/N) + 1)*N : v; }

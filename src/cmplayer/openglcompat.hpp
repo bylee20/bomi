@@ -1,10 +1,7 @@
 #ifndef OPENGLCOMPAT_HPP
 #define OPENGLCOMPAT_HPP
 
-#include <QImage>
-#include <QOpenGLContext>
-#include <QOpenGLShaderProgram>
-#include <array>
+#include "stdafx.hpp"
 #include "enums.hpp"
 
 struct OpenGLTextureFormat {
@@ -27,6 +24,15 @@ struct OpenGLTexture {
 	void bind() const { glBindTexture(target, id); }
 	bool allocate(int filter = GL_LINEAR, const void *data = nullptr) const {
 		return allocate(filter, GL_CLAMP_TO_EDGE, data);
+	}
+	bool expand(const QSize &size, double mul = 1.2) {
+		if (width >= size.width() && height >= size.height())
+			return true;
+		if (width < size.width())
+			width = size.width()*mul;
+		if (height < size.height())
+			height = size.width()*mul;
+		return allocate();
 	}
 	bool allocate(int filter, int clamp, const void *data = nullptr) const {
 		if (!width && !height && !depth)
