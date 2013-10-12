@@ -11,13 +11,13 @@ using SubCompItMapIt = SubCompItMap::const_iterator;
 
 class SubCompSelection {
 public:
-	static constexpr int PicturePrepared = QEvent::User+1;
-	enum Flag {NewDrawer = 1, NewArea = 2, Rebuild = 4, Rerender = 8};
+	static constexpr int ImagePrepared = QEvent::User+1;
+	enum Flag {NewDrawer = 1, NewArea = 2, Rebuild = 4, Rerender = 8, Tick = 16};
 private:
 	struct Item;
 	class Thread : public QThread {
 	public:
-		Thread(QMutex *mutex, QWaitCondition *wait, Item *item, QObject *renderer);
+		Thread(QMutex *mutex, QWaitCondition *wait, Item *item, SubCompSelection *selection, QObject *renderer);
 		~Thread();
 		void setFPS(double fps) { this->fps = fps; flags |= Rebuild; }
 		void render(int time, int flags) { this->time = time; this->flags |= flags; }
@@ -36,7 +36,7 @@ private:
 		}
 		Thread *thread  = nullptr;
 		const SubComp *comp = nullptr;
-		SubCompPicture picture = {nullptr};
+		SubCompImage image = {nullptr};
 		SubCompModel *model = nullptr;
 	};
 	using List = std::list<Item>;
@@ -58,12 +58,13 @@ public:
 	bool prepend(const SubComp *comp);
 	bool contains(const SubComp *comp) const { return find(comp) != items.end(); }
 	template<typename F> void forComponents(F f) const { for (const auto &item : items) f(*item.comp); }
-	template<typename F> void forPictures  (F f) const { for (const auto &item : items) f(item.picture); }
-	bool update(const SubCompPicture &pic);
+	template<typename F> void forImages    (F f) const { for (const auto &item : items) f(item.image); }
+	bool update(const SubCompImage &pic);
 	double fps() const;
 	void setFPS(double fps);
 	void setMargin(double top, double bottom, double right, double left);
 private:
+	Item *item(const SubCompImage &image) { return static_cast<Item*>(image.creator()); }
 	List::iterator find(const SubComp *comp) {
 		return std::find_if(items.begin(), items.end()
 			, [comp] (const Item &item) { return item.comp == comp; });
@@ -82,6 +83,7 @@ private:
 	}
 	List items; mutable QMutex mutex; mutable QWaitCondition wait;
 	struct Data; Data *d;
+	QVector<SubCompImage> m_images;
 };
 
 #endif // SUBTITLERENDERINGTHREAD_HPP

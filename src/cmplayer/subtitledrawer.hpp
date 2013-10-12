@@ -12,26 +12,23 @@ struct Margin {
 	double top = 0.0, right = 0.0, bottom = 0.0, left = 0.0;
 };
 
-class SubCompPicture {
+class SubCompImage : public QImage {
 public:
-	SubCompPicture(const SubComp *comp, SubComp::const_iterator it, void *creator)
+	SubCompImage(const SubComp *comp, SubComp::const_iterator it, void *creator)
 	: m_comp(comp), m_it(it), m_creator(creator) { if (m_it != comp->end()) m_text = *m_it; }
-	SubCompPicture(const SubComp *comp): m_comp(comp) { if (comp) m_it = m_comp->end(); }
+	SubCompImage(const SubComp *comp): m_comp(comp) { if (comp) m_it = m_comp->end(); }
 	SubComp::const_iterator iterator() const { return m_it; }
-	const QImage &image() const { return m_image; }
 	const QPointF &shadowOffset() const { return m_shadow; }
 	const RichTextDocument &text() const { return m_text; }
 	const SubComp *component() const { return m_comp; }
-	int width() const { return m_image.width(); }
-	int height() const { return m_image.height(); }
-	QSize size() const { return m_image.size(); }
+	QSize layoutSize() const { return size()/devicePixelRatio(); }
 	bool isValid() const { return m_comp && m_it != m_comp->end(); }
 	void *creator() const { return m_creator; }
 private:
 	friend class SubtitleDrawer;
 	const SubComp *m_comp = nullptr;
 	SubComp::const_iterator m_it; RichTextDocument m_text;
-	QImage m_image; QSize m_size; QPointF m_shadow;
+	QPointF m_shadow;
 	void *m_creator = nullptr;
 };
 
@@ -44,9 +41,9 @@ public:
 	}
 	void setMargin(const Margin &margin) { m_margin = margin; }
 	bool hasDrawn() const {return m_drawn;}
-	bool draw(QImage &image, QSize &size, QPointF &shadow, const RichTextDocument &text, const QRectF &area, double dpr = 1.0);
-	bool draw(SubCompPicture &pic, const QRectF &area, double dpr = 1.0) {
-		return draw(pic.m_image, pic.m_size, pic.m_shadow, pic.m_text, area, dpr);
+	bool draw(QImage &image, QPointF &shadow, const RichTextDocument &text, const QRectF &area, double dpr = 1.0);
+	bool draw(SubCompImage &pic, const QRectF &area, double dpr = 1.0) {
+		return draw(pic, pic.m_shadow, pic.m_text, area, dpr);
 	}
 	QPointF pos(const QSizeF &image, const QRectF &area) const;
 	Qt::Alignment alignment() const { return m_alignment; }

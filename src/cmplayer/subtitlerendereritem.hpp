@@ -28,6 +28,7 @@ public:
 	int componentsCount() const;
 	void setPriority(const QStringList &priority);
 	void setPos(double pos);
+	bool isHidden() const;
 	void setDelay(int delay);
 	bool load(const Subtitle &subtitle, bool select);
 	void unload();

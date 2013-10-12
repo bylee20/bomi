@@ -31,7 +31,7 @@ void SubtitleDrawer::setStyle(const SubtitleStyle &style) {
 		m_back.setTextOutline(Qt::NoPen);
 }
 
-bool SubtitleDrawer::draw(QImage &image, QSize &imageSize, QPointF &shadowOffset, const RichTextDocument &text, const QRectF &area, double dpr) {
+bool SubtitleDrawer::draw(QImage &image, QPointF &shadowOffset, const RichTextDocument &text, const QRectF &area, double dpr) {
 	if (!(m_drawn = text.hasWords()))
 		return false;
 	const double scale = this->scale(area);
@@ -40,8 +40,8 @@ bool SubtitleDrawer::draw(QImage &image, QSize &imageSize, QPointF &shadowOffset
 	};
 	RichTextDocument front, back; make(front, m_front); make(back, m_back);
 	shadowOffset = m_style.shadow.offset*m_style.font.height()*scale;
-	imageSize = QSize(area.width(), front.naturalSize().height()*scale + qAbs(shadowOffset.y()));
-	image = QImage(imageSize*dpr, QImage::Format_ARGB32_Premultiplied);
+	const QSize size(area.width()*dpr, (front.naturalSize().height()*scale + qAbs(shadowOffset.y()))*dpr);
+	image = QImage(size, QImage::Format_ARGB32_Premultiplied);
 	if (!image.isNull()) {
 		image.setDevicePixelRatio(dpr);
 		image.fill(0x0);
@@ -51,7 +51,6 @@ bool SubtitleDrawer::draw(QImage &image, QSize &imageSize, QPointF &shadowOffset
 		painter.scale(scale*dpr, scale*dpr);
 		back.draw(&painter, QPointF(0, 0));
 		front.draw(&painter, QPointF(0, 0));
-		painter.end();
 	} else
 		shadowOffset = QPointF(0, 0);
 	return m_drawn = !image.isNull();

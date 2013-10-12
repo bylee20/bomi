@@ -12,21 +12,22 @@ struct SubCompSelection::Thread::Data {
 	const SubComp *comp = nullptr;
 	SubCompItMap its;
 	SubCompItMapIt it = its.end();
-	QMap<SubCompItMapIt, SubCompPicture> pool;
+	QMap<SubCompItMapIt, SubCompImage> pool;
 	QObject *receiver = nullptr;
 	bool quit = false;
 	double fps = 1.0, dpr = 1.0;
 	QMutex *mutex; QWaitCondition *wait;
 	QRectF rect; SubtitleDrawer drawer;
+	SubCompSelection *selection = nullptr;
 
 	SubComp::ConstIt iterator(int time) const { return comp->start(time, fps); }
-	QMap<SubCompItMapIt, SubCompPicture>::iterator newPicture(SubCompItMapIt it) {
-		auto pic = pool.insert(it, SubCompPicture(comp, *it, item));
+	QMap<SubCompItMapIt, SubCompImage>::iterator newPicture(SubCompItMapIt it) {
+		auto pic = pool.insert(it, SubCompImage(comp, *it, item));
 		drawer.draw(*pic, rect, dpr);
 		return pic;
 	}
 	void update() {
-		auto post = [this] (const SubCompPicture &pic) { postData(receiver, PicturePrepared, pic); };
+		auto post = [this] (const SubCompImage &pic) { postData(receiver, ImagePrepared, pic); };
 		if (it != its.end()) {
 			auto cache = pool.find(it);
 			if (cache == pool.end())
@@ -77,13 +78,14 @@ struct SubCompSelection::Thread::Data {
 	}
 };
 
-SubCompSelection::Thread::Thread(QMutex *mutex, QWaitCondition *wait, Item *item, QObject *renderer)
+SubCompSelection::Thread::Thread(QMutex *mutex, QWaitCondition *wait, Item *item, SubCompSelection *selection, QObject *renderer)
 : QThread(), d(new Data) {
 	d->item = item;
 	d->comp = item->comp;
 	d->receiver = renderer;
 	d->mutex = mutex;
 	d->wait = wait;
+	d->selection = selection;
 }
 
 SubCompSelection::Thread::~Thread() {
@@ -101,12 +103,13 @@ void SubCompSelection::Thread::finish() {
 void SubCompSelection::Thread::run() {
 	static constexpr int NewOption = NewDrawer | NewArea;
 	static constexpr int ForceUpdate = Rerender | Rebuild | NewOption;
+	int flags = 0;
 	while (!d->quit) {
 		QMutexLocker locker(d->mutex);
 		d->wait->wait(d->mutex);
 		if (d->quit)
 			break;
-		int flags = this->flags;
+		flags = this->flags;
 		this->flags = 0;
 		d->time = time;
 		if (flags & NewOption) {
@@ -124,11 +127,9 @@ void SubCompSelection::Thread::run() {
 			d->rebuild();
 		if (flags & NewOption)
 			d->pool.clear();
-		if (d->time < 0 || d->fps < 0.0)
-			continue;
 		if (d->quit)
 			break;
-		if (!d->its.isEmpty())
+		if (d->time > 0 && d->fps > 0.0 && !d->its.isEmpty())
 			d->draw(flags & ForceUpdate);
 	}
 }
@@ -197,7 +198,7 @@ bool SubCompSelection::prepend(const SubComp *comp) {
 	auto &item = items.front();
 	item.comp = comp;
 	item.model = new SubCompModel(comp, d->renderer);
-	item.thread = new Thread(&mutex, &wait, &item, d->renderer);
+	item.thread = new Thread(&mutex, &wait, &item, this, d->renderer);
 	item.thread->setFPS(d->fps);
 	item.thread->setDrawer(d->drawer);
 	item.thread->setArea(d->rect, d->dpr);
@@ -212,12 +213,12 @@ void SubCompSelection::setFPS(double fps) {
 		forThreads([this, fps] (Thread *t) { t->setFPS(fps); });
 }
 
-bool SubCompSelection::update(const SubCompPicture &pic) {
-	if (!pic.creator())
+bool SubCompSelection::update(const SubCompImage &image) {
+	auto item = this->item(image);
+	if (!item)
 		return false;
-	auto item = static_cast<Item*>(pic.creator());
-	item->picture = pic;
-	item->model->setCurrentCaption(&(*pic.iterator()));
+	item->image = image;
+	item->model->setCurrentCaption(&(*image.iterator()));
 	return true;
 }
 

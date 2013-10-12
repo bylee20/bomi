@@ -21,6 +21,7 @@ public:
 	void setInterpolator(InterpolatorType type) { if (_Change(m_newInt, type)) rerender(); }
 	virtual void rerender() { update(); }
 	bool isGeometryDirty() const { return m_dirtyGeomerty; }
+	virtual int quads() const { return 1; }
 protected slots:
 	virtual void initializeGL() { m_lutInt.generate(); }
 	virtual void finalizeGL() { m_lutInt.delete_(); }

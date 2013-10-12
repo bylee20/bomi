@@ -121,7 +121,7 @@ struct TextureRendererItem::Node : public QSGGeometryNode {
 	Node(TextureRendererItem *item) {
 		setFlags(OwnsGeometry | OwnsMaterial);
         setMaterial(new Material(item));
-		setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4));
+		setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4*item->quads()));
 		markDirty(DirtyMaterial | DirtyGeometry);
 	}
 };

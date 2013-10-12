@@ -113,7 +113,7 @@ bool SubtitleRendererItem::isTopAligned() const {
 
 void SubtitleRendererItem::render(int ms) {
 	d->msec = ms;
-	d->render(0);
+	d->render(SubCompSelection::Tick);
 }
 
 void SubtitleRendererItem::rerender() {
@@ -139,8 +139,8 @@ void SubtitleRendererItem::finalizeGL() {
 const RichTextDocument &SubtitleRendererItem::text() const {
 	if (d->textChanged) {
 		d->text.clear();
-		d->selection.forPictures([this] (const SubCompPicture &pic) {
-			d->text += pic.text();
+		d->selection.forImages([this] (const SubCompImage &image) {
+			d->text += image.text();
 		});
 		d->textChanged = false;
 	}
@@ -158,8 +158,8 @@ void SubtitleRendererItem::setStyle(const SubtitleStyle &style) {
 }
 
 QImage SubtitleRendererItem::draw(const QRectF &rect, QPointF *pos) const {
-	QImage sub; QSize size; QPointF offset;
-	if (!d->drawer.draw(sub, size, offset, text(), rect, d->dpr()))
+	QImage sub; QPointF offset;
+	if (!d->drawer.draw(sub, offset, text(), rect, d->dpr()))
 		return QImage();
 	if (!d->drawer.style().shadow.enabled)
 		return sub;
@@ -172,6 +172,7 @@ QImage SubtitleRendererItem::draw(const QRectF &rect, QPointF *pos) const {
 			shadow.setPixel(x, y, qRgba(r, g, b, alpha*qAlpha(sub.pixel(x, y))));
 	}
 	QImage image(sub.size(), QImage::Format_ARGB32_Premultiplied);
+	image.setDevicePixelRatio(sub.devicePixelRatio());
 	image.fill(0x0);
 	QPainter painter(&image);
 	painter.drawImage(offset, shadow);
@@ -228,21 +229,21 @@ void SubtitleRendererItem::getCoords(QRectF &vertices, QRectF &) {
 void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 	if (d->redraw) {
 		d->texture.width = d->texture.height = 0;
-		d->selection.forPictures([this] (const SubCompPicture &pic) {
-			if (d->texture.width < pic.width())
-				d->texture.width = pic.width();
-			d->texture.height += pic.height();
+		d->selection.forImages([this] (const SubCompImage &image) {
+			if (d->texture.width < image.width())
+				d->texture.width = image.width();
+			d->texture.height += image.height();
 		});
 		if (!d->texture.size().isEmpty()) {
 			d->texture.allocate(GL_LINEAR);
 			int y = 0;
 			d->shadowOffset = {0, 0};
-			d->selection.forPictures([this, &y] (const SubCompPicture &pic) {
-				if (!pic.image().isNull())
-					d->texture.upload(0, y, pic.size(), pic.image().bits());
-				y += pic.height();
-				if (qAbs(d->shadowOffset.x()) < qAbs(pic.shadowOffset().x()))
-					d->shadowOffset = pic.shadowOffset();
+			d->selection.forImages([this, &y] (const SubCompImage &image) {
+				if (!image.isNull())
+					d->texture.upload(0, y, image.size(), image.bits());
+				y += image.height();
+				if (qAbs(d->shadowOffset.x()) < qAbs(image.shadowOffset().x()))
+					d->shadowOffset = image.shadowOffset();
 			});
 			d->shadowOffset.rx() /= (double)d->texture.width;
 			d->shadowOffset.ry() /= (double)d->texture.height;
@@ -252,6 +253,10 @@ void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 		d->redraw = false;
 	}
 	setVisible(!d->hidden && !d->texture.size().isEmpty());
+}
+
+bool SubtitleRendererItem::isHidden() const {
+	return d->hidden;
 }
 
 void SubtitleRendererItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) {
@@ -366,19 +371,19 @@ static bool updateIfEarlier(SubComp::ConstIt it, int &time) {
 
 int SubtitleRendererItem::current() const {
 	int time = -1;
-	d->selection.forPictures([this, &time] (const SubCompPicture &picture) {
-		if (picture.isValid())
-			updateIfEarlier(picture.iterator(), time);
+	d->selection.forImages([this, &time] (const SubCompImage &imageture) {
+		if (imageture.isValid())
+			updateIfEarlier(imageture.iterator(), time);
 	});
 	return time;
 }
 
 int SubtitleRendererItem::previous() const {
 	int time = -1;
-	d->selection.forPictures([this, &time] (const SubCompPicture &picture) {
-		if (picture.isValid()) {
-			auto it = picture.iterator();
-			while (it != picture.component()->begin()) {
+	d->selection.forImages([this, &time] (const SubCompImage &imageture) {
+		if (imageture.isValid()) {
+			auto it = imageture.iterator();
+			while (it != imageture.component()->begin()) {
 				if (updateIfEarlier(--it, time))
 					break;
 			}
@@ -389,10 +394,10 @@ int SubtitleRendererItem::previous() const {
 
 int SubtitleRendererItem::next() const {
 	int time = -1;
-	d->selection.forPictures([this, &time] (const SubCompPicture &picture) {
-		if (picture.isValid()) {
-			auto it = picture.iterator();
-			while (++it != picture.component()->end()) {
+	d->selection.forImages([this, &time] (const SubCompImage &imageture) {
+		if (imageture.isValid()) {
+			auto it = imageture.iterator();
+			while (++it != imageture.component()->end()) {
 				if (updateIfEarlier(it, time))
 					break;
 			}
@@ -419,8 +424,8 @@ QVector<SubCompModel*> SubtitleRendererItem::models() const {
 }
 
 void SubtitleRendererItem::customEvent(QEvent *event) {
-	if (event->type() == SubCompSelection::PicturePrepared) {
-		if (d->selection.update(getData<SubCompPicture>(event)))
+	if (event->type() == SubCompSelection::ImagePrepared) {
+		if (d->selection.update(getData<SubCompImage>(event)))
 			d->textChanged = true;
 		d->redraw = true;
 		update();
