@@ -73,25 +73,37 @@ struct PlayEngine::Data {
 		}
 		return false;
 	}
-	static int mpNumTracksChanged(MPContext *mpctx) {
-		qDebug() << "new tracks";
-		std::array<StreamList, STREAM_TYPE_COUNT> streams;
-		QString name[STREAM_TYPE_COUNT];
-		name[STREAM_AUDIO] = tr("Audio %1");
-		name[STREAM_VIDEO] = tr("Video %1");
-		name[STREAM_SUB] = tr("Subtitle %1");
-		for (int i=0; i<mpctx->num_tracks; ++i) {
-			const auto track = mpctx->tracks[i];
-			auto &list = streams[track->type];
-			if (!list.contains(track->user_tid)) {
-				auto &stream = list[track->user_tid];
-				stream.m_title = QString::fromLocal8Bit(track->title);
-				stream.m_lang = QString::fromLocal8Bit(track->lang);
-				stream.m_id = track->user_tid;
-				stream.m_name = name[track->type].arg(track->user_tid+1);
+	static int mpEventFilter(MPContext *mpctx) {
+		enum MpEvent : uint {
+			None = 1u << MP_EVENT_NONE,
+			Tick = 1u << MP_EVENT_TICK,
+			PropertyChanged = 1u << MP_EVENT_PROPERTY,
+			TracksChanged = 1u << MP_EVENT_TRACKS_CHANGED,
+			StartFile  = 1u << MP_EVENT_START_FILE,
+			EndFile = 1u << MP_EVENT_END_FILE
+		};
+		auto e = static_cast<PlayEngine*>(mpctx->priv);
+		int &events = *reinterpret_cast<int*>(mpctx->command_ctx);
+		if (events & TracksChanged) {
+			std::array<StreamList, STREAM_TYPE_COUNT> streams;
+			QString name[STREAM_TYPE_COUNT];
+			name[STREAM_AUDIO] = tr("Audio %1");
+			name[STREAM_VIDEO] = tr("Video %1");
+			name[STREAM_SUB] = tr("Subtitle %1");
+			for (int i=0; i<mpctx->num_tracks; ++i) {
+				const auto track = mpctx->tracks[i];
+				auto &list = streams[track->type];
+				if (!list.contains(track->user_tid)) {
+					auto &stream = list[track->user_tid];
+					stream.m_title = QString::fromLocal8Bit(track->title);
+					stream.m_lang = QString::fromLocal8Bit(track->lang);
+					stream.m_id = track->user_tid;
+					stream.m_name = name[track->type].arg(track->user_tid);
+				}
 			}
+			postData(e, UpdateTrack, streams);
 		}
-		postData(static_cast<PlayEngine*>(mpctx->priv), UpdateTrack, streams);
+		events = 0;
 		return true;
 	}
 	int getStartTime(const Mrl &mrl) { return getStartTimeFunc ? getStartTimeFunc(mrl) : 0; }
@@ -219,7 +231,7 @@ PlayEngine::PlayEngine()
 	d->avTicker.setInterval(200);
 	d->updateMediaName();
 	mp_register_player_command_filter(Data::mpCommandFilter);
-	mp_register_player_num_tracks_changed(Data::mpNumTracksChanged);
+	mp_register_player_event_filter(Data::mpEventFilter);
 	connect(&d->imageTicker, &QTimer::timeout, [this] () {
 		bool begin = false, duration = false, pos = false;
 		if (d->hasImage) {
@@ -546,7 +558,6 @@ void PlayEngine::customEvent(QEvent *event) {
 		emit d->playlist.finished();
 		break;
 	case TimeRangeChange:
-		qDebug() <<d->duration <<d->begin;
 		getAllData(event, d->begin, d->duration);
 		emit durationChanged(d->duration);
 		emit beginChanged(d->begin);
