@@ -289,7 +289,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	auto audio = addCategory(tr("Audio"));
 	addPage(tr("Sound"), d->ui.audio_sound, ":/img/audio-volume-high.png", audio);
-	addPage(tr("Aduio filter"), d->ui.audio_filter, ":/img/applications-multimedia.png", audio);
+	addPage(tr("Audio filter"), d->ui.audio_filter, ":/img/applications-multimedia.png", audio);
 
 	auto subtitle = addCategory(tr("Subtitle"));
 	addPage(tr("Load"), d->ui.sub_load, ":/img/application-x-subrip-32.png", subtitle);

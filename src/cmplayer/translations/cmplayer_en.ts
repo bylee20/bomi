@@ -1531,7 +1531,7 @@ e.g.: English, Korean</source>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="287"/>
-        <source>Aduio filter</source>
+        <source>Audio filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
