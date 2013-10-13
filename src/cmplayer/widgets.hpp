@@ -99,7 +99,7 @@ public:
 	}
 	static void retranslate(QComboBox *combo) {
 		const auto items = EnumInfo<Enum>::items();
-		Q_ASSERT(items.size() == combo->count());
+        Q_ASSERT((int)items.size() == combo->count());
 		for (int i=0; i<(int)items.size(); ++i)
 			combo->setItemText(i, EnumInfo<Enum>::description(items[i].value));
 	}

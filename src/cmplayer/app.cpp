@@ -134,9 +134,6 @@ App::App(int &argc, char **argv)
 : QApplication(argc, argv), d(new Data(this)) {
 #ifdef Q_OS_LINUX
 	setlocale(LC_NUMERIC,"C");
-	auto gtk_disable_setlocale = (void(*)(void))QLibrary::resolve(_L("gtk-x11-2.0"), 0, "gtk_disable_setlocale");
-	if (gtk_disable_setlocale)
-		gtk_disable_setlocale();
 #endif
 #if defined(Q_OS_MAC) && defined(CMPLAYER_RELEASE)
 	static const QByteArray path = QApplication::applicationDirPath().toLocal8Bit();

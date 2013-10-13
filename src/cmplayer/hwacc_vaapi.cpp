@@ -217,7 +217,7 @@ VaApi::VaApi() {
 
 	for (auto profile : m_profiles) {
 		int size = vaMaxNumEntrypoints(display);
-		QVector<VAEntrypoint> entries(size, VAEntrypointMax);
+        QVector<VAEntrypoint> entries(size);
 		if (vaQueryConfigEntrypoints(display, profile, entries.data(), &size) != VA_STATUS_SUCCESS)
 			continue;
 		entries.resize(size);

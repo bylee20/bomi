@@ -9,6 +9,8 @@
 #if VA_CHECK_VERSION(0, 34, 0)
 //#define USE_VAVPP
 #include <va/va_compat.h>
+#else
+static constexpr VAProfile VAProfileNone = (VAProfile)-1;
 #endif
 
 #ifdef USE_VAVPP

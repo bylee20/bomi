@@ -7,7 +7,9 @@ Build-Depends: g++ (>= 4.7), debhelper (>= 7)
 	, yasm, zlib1g-dev, libx11-dev, libdvdread-dev
 	, libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
 	, libopenal-dev, libasound2-dev, libva-dev, libquvi-dev
-	, libmpg123-dev, libbz2-dev, qt5-default
+	, libmpg123-dev, libbz2-dev, libass-dev, libjack-dev
+        , libpulse-dev, libportaudio-dev, libxcb-icccm4-dev
+        , libxcb-util0-dev, qt5-default
 
 Package: cmplayer
 Architecture: any

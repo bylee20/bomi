@@ -49,8 +49,8 @@ SubComp &SubComp::unite(const SubComp &rhs, double fps) {
 		return *this;
 	else if (isEmpty())
 		return *this = rhs;
-	auto convertKeyBase = [] (int key, SyncType from, SyncType to, double frameRate) {
-		return  (from == to) ? key : ((to == Time) ? msec(key, frameRate) : frame(key, frameRate));
+    auto convertKeyBase = [this] (int key, SyncType from, SyncType to, double frameRate) {
+        return  (from == to) ? key : ((to == Time) ? msec(key, frameRate) : frame(key, frameRate));
 	};
 
 	auto it1 = m_capts.begin();

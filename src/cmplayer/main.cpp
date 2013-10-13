@@ -8,6 +8,11 @@
 #include <QtGui/qpa/qplatformintegration.h>
 
 int main(int argc, char **argv) {
+#ifdef Q_OS_LINUX
+    auto gtk_disable_setlocale = (void(*)(void))QLibrary::resolve(_L("gtk-x11-2.0"), 0, "gtk_disable_setlocale");
+    if (gtk_disable_setlocale)
+        gtk_disable_setlocale();
+#endif
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
 	PlayEngine::registerObjects();
