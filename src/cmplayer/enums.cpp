@@ -1,10 +1,17 @@
 #include "enums.hpp"
-const std::array<DecoderDeviceInfo::Item, 2> DecoderDeviceInfo::info{{
+const std::array<DecoderDeviceInfo::Item, 3> DecoderDeviceInfo::info{{
+	{DecoderDevice::None, "None"},
 	{DecoderDevice::CPU, "CPU"},
 	{DecoderDevice::GPU, "GPU"}
 }};
 
-const std::array<DeintDeviceInfo::Item, 3> DeintDeviceInfo::info{{
+const std::array<DeintModeInfo::Item, 2> DeintModeInfo::info{{
+	{DeintMode::Off, "Off"},
+	{DeintMode::Auto, "Auto"}
+}};
+
+const std::array<DeintDeviceInfo::Item, 4> DeintDeviceInfo::info{{
+	{DeintDevice::None, "None"},
 	{DeintDevice::CPU, "CPU"},
 	{DeintDevice::GPU, "GPU"},
 	{DeintDevice::OpenGL, "OpenGL"}

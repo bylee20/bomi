@@ -60,7 +60,7 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("video/move/down")] << Qt::SHIFT + Qt::Key_S;
 	keys[_L("video/move/left")] << Qt::SHIFT + Qt::Key_A;
 	keys[_L("video/move/right")] << Qt::SHIFT + Qt::Key_D;
-	keys[_L("video/deint")] << Qt::CTRL + Qt::Key_D;
+	keys[_L("video/deint/toggle")] << Qt::CTRL + Qt::Key_D;
 	keys[_L("video/color/brightness+")] << Qt::Key_T;
 	keys[_L("video/color/brightness-")] << Qt::Key_G;
 	keys[_L("video/color/contrast+")] << Qt::Key_Y;

@@ -1,6 +1,5 @@
 #include "videoframeshader.hpp"
 #include "videoframe.hpp"
-#include "videoframeshader.glsl.hpp"
 #ifdef Q_OS_LINUX
 #include "hwacc_vaapi.hpp"
 #include <va/va_glx.h>
@@ -13,7 +12,9 @@
 #include <qpa/qplatformnativeinterface.h>
 #endif
 
-static const QByteArray shaderTemplate((const char*)videoframeshader_glsl, videoframeshader_glsl_len);
+static const QByteArray shaderTemplate(
+#include "videoframeshader.glsl.hpp"
+);
 
 VideoFrameShader::VideoFrameShader() {
 	auto ctx = QOpenGLContext::currentContext();
@@ -79,83 +80,93 @@ void VideoFrameShader::setEffects(int effects) {
 	m_effects = effects;
 	if (isColorEffect(old) != isColorEffect(m_effects))
 		updateColorMatrix();
-	m_rebuild = hasKernelEffects() != isKernelEffect(old);
+	for (auto &shader : m_shader) {
+		if (_Change(shader.kernel, hasKernelEffects()))
+			shader.rebuild = true;
+	}
 }
 
 void VideoFrameShader::setDeintMethod(DeintMethod method) {
-	if (_Change(m_deint, method))
-		m_rebuild = true;
+	m_deint = method;
 }
 
-void VideoFrameShader::build() {
-	const VideoFormat &format = m_frame.format();
-	if (format.isEmpty())
-		return;
-	m_shader.removeAllShaders();
-	m_rebuild = false;
-
-	QByteArray header;
-	header += "#define TEX_COUNT " + QByteArray::number(m_textures.size()) + "\n";
-	header += "const float texWidth = " + _N((double)format.alignedWidth(), 1).toLatin1() + ";\n";
-	header += "const float texHeight = " + _N((double)format.alignedHeight(), 1).toLatin1() + ";\n";
-	auto cc2string = [this] (int i) -> QString {
-		QPointF cc = {1.0, 1.0};
-		if (i < m_textures.size())
-			cc = m_textures[i].cc;
-		return _L("const vec2 cc") + _N(i) + _L(" = vec2(") + _N(cc.x(), 6) + _L(", ") + _N(cc.y(), 6) + _L(");\n");
-	};
-	header += cc2string(1).toLatin1();
-	header += cc2string(2).toLatin1();
-	if (m_target != GL_TEXTURE_2D || format.isEmpty())
-		header += "#define USE_RECTANGLE\n";
-	if (hasKernelEffects())
-		header += "#define USE_KERNEL3x3\n";
+void VideoFrameShader::updateShader() {
+	Q_ASSERT(!m_frame.format().isEmpty());
 	int deint = 0;
-	switch (m_deint) {
-	case DeintMethod::Bob:
-		if (format.imgfmt() != IMGFMT_VAAPI)
-			deint = 1;
-		break;
-	case DeintMethod::LinearBob:
-		deint = 2;
-		break;
-	default:
-		break;
+	if (m_frame.isInterlaced()) {
+		switch (m_deint) {
+		case DeintMethod::Bob:
+			if (m_frame.format().imgfmt() != IMGFMT_VAAPI)
+				deint = 1;
+			break;
+		case DeintMethod::LinearBob:
+			deint = 2;
+			break;
+		default:
+			break;
+		}
 	}
-	header += "#define USE_DEINT " + QByteArray::number(deint) + "\n";
-	qDebug() << "deint" << deint;
+	auto &shader = m_shader[deint];
+	if (shader.rebuild) {
+		shader.rebuild = false;
+		const VideoFormat &format = m_frame.format();
+		auto &prog = shader.program;
+		prog.removeAllShaders();
+		QByteArray header;
+		header += "#define TEX_COUNT " + QByteArray::number(m_textures.size()) + "\n";
+		header += "const float texWidth = " + _N((double)format.alignedWidth(), 1).toLatin1() + ";\n";
+		header += "const float texHeight = " + _N((double)format.alignedHeight(), 1).toLatin1() + ";\n";
+		auto cc2string = [this] (int i) -> QString {
+			QPointF cc = {1.0, 1.0};
+			if (i < m_textures.size())
+				cc = m_textures[i].cc;
+			return _L("const vec2 cc") + _N(i) + _L(" = vec2(") + _N(cc.x(), 6) + _L(", ") + _N(cc.y(), 6) + _L(");\n");
+		};
+		header += cc2string(1).toLatin1();
+		header += cc2string(2).toLatin1();
+		if (m_target != GL_TEXTURE_2D || format.isEmpty())
+			header += "#define USE_RECTANGLE\n";
+		if (hasKernelEffects())
+			header += "#define USE_KERNEL3x3\n";
 
-	m_fragCode = header;
-	m_fragCode += "#define FRAGMENT\n";
-	m_fragCode += shaderTemplate;
-	m_fragCode += m_texel;
+		header += "#define USE_DEINT " + QByteArray::number(deint) + "\n";
 
-	m_vertexCode = header;
-	m_vertexCode += "#define VERTEX\n";
-	m_vertexCode += shaderTemplate;
+		auto fragCode = header;
+		fragCode += "#define FRAGMENT\n";
+		fragCode += shaderTemplate;
+		fragCode += m_texel;
 
-	m_shader.addShaderFromSourceCode(QOpenGLShader::Fragment, m_fragCode);
-	m_shader.addShaderFromSourceCode(QOpenGLShader::Vertex, m_vertexCode);
+		auto vertexCode = header;
+		vertexCode += "#define VERTEX\n";
+		vertexCode += shaderTemplate;
 
-	m_shader.bindAttributeLocation("vPosition", vPosition);
-	m_shader.bindAttributeLocation("vCoord", vCoord);
+		prog.addShaderFromSourceCode(QOpenGLShader::Fragment, fragCode);
+		prog.addShaderFromSourceCode(QOpenGLShader::Vertex, vertexCode);
 
-	m_shader.link();
-	loc_tex[0] = m_shader.uniformLocation("tex0");
-	loc_tex[1] = m_shader.uniformLocation("tex1");
-	loc_tex[2] = m_shader.uniformLocation("tex2");
-	loc_top_field = m_shader.uniformLocation("top_field");
-	loc_deint = m_shader.uniformLocation("deint");
-	loc_mul_mat = m_shader.uniformLocation("mul_mat");
-	loc_sub_vec = m_shader.uniformLocation("sub_vec");
-	loc_add_vec = m_shader.uniformLocation("add_vec");
-	loc_cc[0] = m_shader.uniformLocation("cc0");
-	loc_cc[1] = m_shader.uniformLocation("cc1");
-	loc_cc[2] = m_shader.uniformLocation("cc2");
-	loc_vMatrix = m_shader.uniformLocation("vMatrix");
-	loc_kern_c = m_shader.uniformLocation("kern_c");
-	loc_kern_d = m_shader.uniformLocation("kern_d");
-	loc_kern_n = m_shader.uniformLocation("kern_n");
+		prog.bindAttributeLocation("vPosition", vPosition);
+		prog.bindAttributeLocation("vCoord", vCoord);
+
+		prog.link();
+		m_prog = nullptr;
+
+		qDebug() << "shader built";
+	}
+	if (_Change(m_prog, &shader.program)) {
+		loc_tex[0] = m_prog->uniformLocation("tex0");
+		loc_tex[1] = m_prog->uniformLocation("tex1");
+		loc_tex[2] = m_prog->uniformLocation("tex2");
+		loc_top_field = m_prog->uniformLocation("top_field");
+		loc_mul_mat = m_prog->uniformLocation("mul_mat");
+		loc_sub_vec = m_prog->uniformLocation("sub_vec");
+		loc_add_vec = m_prog->uniformLocation("add_vec");
+		loc_cc[0] = m_prog->uniformLocation("cc0");
+		loc_cc[1] = m_prog->uniformLocation("cc1");
+		loc_cc[2] = m_prog->uniformLocation("cc2");
+		loc_vMatrix = m_prog->uniformLocation("vMatrix");
+		loc_kern_c = m_prog->uniformLocation("kern_c");
+		loc_kern_d = m_prog->uniformLocation("kern_d");
+		loc_kern_n = m_prog->uniformLocation("kern_n");
+	}
 }
 
 bool VideoFrameShader::upload(VideoFrame &frame) {
@@ -173,10 +184,7 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 		updateTexCoords();
 		updateColorMatrix();
 	}
-	if (m_rebuild)
-		build();
-	if (m_rebuild)
-		return false;
+	updateShader();
 #ifdef Q_OS_MAC
 	if (m_format.imgfmt() == IMGFMT_VDA) {
 		for (const VideoTexture2 &texture : m_textures) {
@@ -226,53 +234,53 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 }
 
 void VideoFrameShader::render(const Kernel3x3 &k3x3) {
-	if (m_rebuild)
+	if (!m_prog)
 		return;
 	glViewport(0, 0, m_frame.format().width(), m_frame.format().height());
 //  VideoFrame is always opaque. No need to clear background.
 //	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 //	glClear(GL_COLOR_BUFFER_BIT);
 
-	m_shader.bind();
-	m_shader.setUniformValue(loc_top_field, (float)m_frame.isTopField());
-	m_shader.setUniformValue(loc_deint, (float)m_frame.isInterlaced());
-	m_shader.setUniformValue(loc_sub_vec, m_sub_vec);
-	m_shader.setUniformValue(loc_add_vec, m_add_vec);
-	m_shader.setUniformValue(loc_mul_mat, m_mul_mat);
-	m_shader.setUniformValue(loc_vMatrix, m_vMatrix);
+
+	m_prog->bind();
+	m_prog->setUniformValue(loc_top_field, (float)m_frame.isTopField());
+	m_prog->setUniformValue(loc_sub_vec, m_sub_vec);
+	m_prog->setUniformValue(loc_add_vec, m_add_vec);
+	m_prog->setUniformValue(loc_mul_mat, m_mul_mat);
+	m_prog->setUniformValue(loc_vMatrix, m_vMatrix);
 	if (hasKernelEffects()) {
-		m_shader.setUniformValue(loc_kern_c, k3x3.center());
-		m_shader.setUniformValue(loc_kern_n, k3x3.neighbor());
-		m_shader.setUniformValue(loc_kern_d, k3x3.diagonal());
+		m_prog->setUniformValue(loc_kern_c, k3x3.center());
+		m_prog->setUniformValue(loc_kern_n, k3x3.neighbor());
+		m_prog->setUniformValue(loc_kern_d, k3x3.diagonal());
 	}
 
 	auto f = QOpenGLContext::currentContext()->functions();
 	for (int i=0; i<m_textures.size(); ++i) {
-		m_shader.setUniformValue(loc_tex[i], i);
-		m_shader.setUniformValue(loc_cc[i], m_textures[i].cc);
+		m_prog->setUniformValue(loc_tex[i], i);
+		m_prog->setUniformValue(loc_cc[i], m_textures[i].cc);
 		f->glActiveTexture(GL_TEXTURE0 + i);
 		m_textures[i].bind();
 	}
 
-	m_shader.enableAttributeArray(vCoord);
-	m_shader.enableAttributeArray(vPosition);
+	m_prog->enableAttributeArray(vCoord);
+	m_prog->enableAttributeArray(vPosition);
 
-	m_shader.setAttributeArray(vCoord, m_vCoords.data(), 2);
-	m_shader.setAttributeArray(vPosition, m_vPositions.data(), 2);
+	m_prog->setAttributeArray(vCoord, m_vCoords.data(), 2);
+	m_prog->setAttributeArray(vPosition, m_vPositions.data(), 2);
 
 	f->glActiveTexture(GL_TEXTURE0);
 	glDrawArrays(GL_QUADS, 0, 4);
 
-	m_shader.disableAttributeArray(0);
-	m_shader.disableAttributeArray(1);
-	m_shader.release();
+	m_prog->disableAttributeArray(0);
+	m_prog->disableAttributeArray(1);
+	m_prog->release();
 }
 
 
 void VideoFrameShader::fillInfo() {
 	release();
 	const auto &format = m_frame.format();
-	m_rebuild = true;
+	m_shader[0].rebuild = m_shader[1].rebuild = true;
 	m_csp = format.colorspace();
 	m_range = format.range();
 	m_target = m_dma ? GL_TEXTURE_RECTANGLE : GL_TEXTURE_2D;
@@ -414,9 +422,4 @@ void VideoFrameShader::fillInfo() {
 		vaCreateSurfaceGLX(VaApi::glx(), m_textures[0].target, m_textures[0].id, &m_vaSurfaceGLX);
 	}
 #endif
-}
-
-const char *const *VideoFrameShader::attributes() const {
-	static const char *const names[] = {"vPosition", "vCoord", nullptr};
-	return names;
 }

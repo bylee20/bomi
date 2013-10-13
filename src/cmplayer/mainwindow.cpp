@@ -415,8 +415,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->menu("video")("crop").g()->trigger(as.video_crop_ratio);
 	d->menu("video")("align").g("horizontal")->trigger(as.video_alignment & 0x0f);
 	d->menu("video")("align").g("vertical")->trigger(as.video_alignment & 0xf0);
-	if (as.video_deint)
-		d->menu("video")["deint"]->trigger();
+	d->menu("video")("deint").g()->trigger((int)as.video_deint);
 	for (int i=0; i<16; ++i) {
 		if ((as.video_effects >> i) & 1)
 			d->menu("video")("filter").g()->setChecked(1 << i, true);
@@ -636,16 +635,29 @@ void MainWindow::connectMenus() {
 		if (d->renderer.offset() != offset)
 			d->push(offset, d->renderer.offset(), [this](const QPoint &v) { d->renderer.setOffset(v); });
 	});
-	connect(video["deint"], &QAction::triggered, [this] () {
-		QAction *action = d->menu("video")["deint"];
-		if (d->engine.isDeintEanbled() != action->isChecked())
-			d->push(action->isChecked(), d->engine.isDeintEanbled(), [this, action] (bool on) {
-				d->as.video_deint = on;
-				action->setChecked(on);
-				showMessage(action->text(), on ? tr("On") : tr("Off"));
-				d->engine.setDeintEnabled(on);
+	connect(video("deint")["toggle"], &QAction::triggered, [this] () {
+		auto actions = d->menu("video")("deint").g()->actions();
+		int i = 0;
+		for (; i<actions.size(); ++i)
+			if (actions[i]->isChecked())
+				break;
+		if (++i >= actions.size())
+			i = 0;
+		actions[i]->trigger();
+	});
+	connect(video("deint").g(), &QActionGroup::triggered, [this] (QAction *action) {
+		auto mode = DeintModeInfo::from(action->data().toInt(), DeintMode::Auto);
+		if (d->engine.deintMode() != mode)
+			d->push(mode, d->engine.deintMode(), [this] (DeintMode mode) {
+				d->as.video_deint = mode;
+				if (auto action = d->menu("video")("deint").g()->find((int)mode)) {
+					action->setChecked(true);
+					showMessage(tr("Deinterlace"), action->text());
+					d->engine.setDeintMode(mode);
+				}
 			});
 	});
+
 	connect(&video("filter"), &Menu::triggered, [this] () {
 		VideoRendererItem::Effects effects = 0;
 		for (auto act : d->menu("video")("filter").actions()) {

@@ -8,6 +8,7 @@
 template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 
 enum class DecoderDevice : int {
+	None = (int)0,
 	CPU = (int)1,
 	GPU = (int)2
 };
@@ -39,14 +40,73 @@ class EnumInfo<DecoderDevice> {
 	typedef DecoderDevice Enum;
 public:
 	struct Item { Enum value; const char *name; };
-	static constexpr int size() { return 2; }
+	static constexpr int size() { return 3; }
 	static const char *name(Enum e) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
 	}
 	static QString description(Enum e) {
 		switch (e) {
+		case Enum::None: return tr("");
 		case Enum::CPU: return tr("");
 		case Enum::GPU: return tr("");
+		default: return tr("");
+		};
+	}
+	static constexpr const std::array<Item, 3> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
+private:
+	static const std::array<Item, 3> info;
+};
+
+using DecoderDeviceInfo = EnumInfo<DecoderDevice>;
+
+enum class DeintMode : int {
+	Off = (int)0,
+	Auto = (int)1
+};
+
+inline bool operator == (DeintMode e, int i) { return (int)e == i; }
+inline bool operator != (DeintMode e, int i) { return (int)e != i; }
+inline bool operator == (int i, DeintMode e) { return (int)e == i; }
+inline bool operator != (int i, DeintMode e) { return (int)e != i; }
+inline int operator & (DeintMode e, int i) { return (int)e & i; }
+inline int operator & (int i, DeintMode e) { return (int)e & i; }
+inline int &operator &= (int &i, DeintMode e) { return i &= (int)e; }
+inline int operator ~ (DeintMode e) { return ~(int)e; }
+inline int operator | (DeintMode e, int i) { return (int)e | i; }
+inline int operator | (int i, DeintMode e) { return (int)e | i; }
+inline int operator | (DeintMode e1, DeintMode e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, DeintMode e) { return i |= (int)e; }
+inline bool operator > (DeintMode e, int i) { return (int)e > i; }
+inline bool operator < (DeintMode e, int i) { return (int)e < i; }
+inline bool operator >= (DeintMode e, int i) { return (int)e >= i; }
+inline bool operator <= (DeintMode e, int i) { return (int)e <= i; }
+inline bool operator > (int i, DeintMode e) { return i > (int)e; }
+inline bool operator < (int i, DeintMode e) { return i < (int)e; }
+inline bool operator >= (int i, DeintMode e) { return i >= (int)e; }
+inline bool operator <= (int i, DeintMode e) { return i <= (int)e; }
+
+template<>
+class EnumInfo<DeintMode> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef DeintMode Enum;
+public:
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 2; }
+	static const char *name(Enum e) {
+		return info[(int)e].name;
+	}
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Off: return tr("");
+		case Enum::Auto: return tr("");
 		default: return tr("");
 		};
 	}
@@ -63,9 +123,10 @@ private:
 	static const std::array<Item, 2> info;
 };
 
-using DecoderDeviceInfo = EnumInfo<DecoderDevice>;
+using DeintModeInfo = EnumInfo<DeintMode>;
 
 enum class DeintDevice : int {
+	None = (int)0,
 	CPU = (int)1,
 	GPU = (int)2,
 	OpenGL = (int)4
@@ -98,19 +159,20 @@ class EnumInfo<DeintDevice> {
 	typedef DeintDevice Enum;
 public:
 	struct Item { Enum value; const char *name; };
-	static constexpr int size() { return 3; }
+	static constexpr int size() { return 4; }
 	static const char *name(Enum e) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
 	}
 	static QString description(Enum e) {
 		switch (e) {
+		case Enum::None: return tr("");
 		case Enum::CPU: return tr("");
 		case Enum::GPU: return tr("");
 		case Enum::OpenGL: return tr("");
 		default: return tr("");
 		};
 	}
-	static constexpr const std::array<Item, 3> &items() { return info; }
+	static constexpr const std::array<Item, 4> &items() { return info; }
 	static Enum from(int id, Enum def = info[0].value) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
@@ -120,7 +182,7 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
 private:
-	static const std::array<Item, 3> info;
+	static const std::array<Item, 4> info;
 };
 
 using DeintDeviceInfo = EnumInfo<DeintDevice>;

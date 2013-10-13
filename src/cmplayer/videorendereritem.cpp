@@ -372,7 +372,7 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 			if (d->queue.size() > 3)
 				d->queue.clear();
 			else
-				postData(this, NextFrame);
+				update();
 		}
 	}
 

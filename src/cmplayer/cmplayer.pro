@@ -231,8 +231,7 @@ OTHER_FILES += \
     imports/CMPlayerSkin/AppWithFloating.qml \
     imports/CMPlayerSkin/AppWithDock.qml \
     imports/CMPlayerSkin/TimeSlider.qml \
-    imports/CMPlayerSkin/VolumeSlider.qml \
-    videoframeshader.glsl
+    imports/CMPlayerSkin/VolumeSlider.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}

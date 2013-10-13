@@ -22,9 +22,6 @@ public:
 	void setEffects(int effects);
 	void setColor(const ColorProperty &color);
 	bool upload(VideoFrame &frame);
-	QByteArray fragment() const { return m_fragCode; }
-	QByteArray vertex() const { return m_vertexCode; }
-	const char *const *attributes() const;
 	const QRectF &textureRect() const { return m_coords; }
 	void getCoords(double &x1, double &y1, double &x2, double &y2) {
 		x1 = m_coords.left(); y1 = m_coords.top();
@@ -49,9 +46,14 @@ private:
 	}
 	void updateTexCoords();
 private:
-	void build();
+	struct ShaderInfo {
+		QOpenGLShaderProgram program;
+		bool rebuild = true, kernel = false;
+	};
+	void updateShader();
 	VideoFrame m_frame;
-	QOpenGLShaderProgram m_shader;
+	ShaderInfo m_shader[2];
+	QOpenGLShaderProgram *m_prog = nullptr;
 	ColorProperty m_color;
 	mp_csp m_csp;
 	mp_csp_levels m_range;
@@ -62,12 +64,12 @@ private:
 	QVector<GLfloat> m_vCoords, m_vPositions;
 	int m_effects = 0;
 	DeintMethod m_deint = DeintMethod::None;
-	int loc_kern_d, loc_kern_c, loc_kern_n, loc_top_field, loc_deint;
+	int loc_kern_d, loc_kern_c, loc_kern_n, loc_top_field;
 	int loc_sub_vec, loc_add_vec, loc_mul_mat, loc_vMatrix;
 	int loc_tex[3] = {-1, -1, -1}, loc_cc[3] = {-1, -1, -1};
 	QList<VideoTexture> m_textures;
-	QByteArray m_texel, m_fragCode, m_vertexCode;
-	bool m_rebuild = true, m_dma = false;
+	QByteArray m_texel;
+	bool m_dma = false, m_check = true;
 	QRectF m_coords, m_positions;
 #ifdef Q_OS_LINUX
 	void *m_vaSurfaceGLX = nullptr;

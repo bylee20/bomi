@@ -63,7 +63,7 @@ struct PlayEngine::Data {
 				d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
 				break;
 			case MpSetDeintEnabled:
-				d->video->setDeintEnabled(d->deint);
+				d->video->setDeintEnabled(d->deint != DeintMode::Off);
 				break;
 			default:
 				break;
@@ -200,7 +200,7 @@ struct PlayEngine::Data {
 
 	VideoFormat videoFormat;
 	DeintOption deint_swdec, deint_hwdec;
-	bool deint = false;
+	DeintMode deint = DeintMode::Auto;
 	QByteArray ao = "";
 	AudioDriver audioDriver = AudioDriver::Auto;
 
@@ -712,7 +712,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
 	d->setmp("audio-delay", d->audioSync*0.001);
 	d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
-	d->video->setDeintEnabled(d->deint);
+	d->video->setDeintEnabled(d->deint != DeintMode::Off);
 	auto error = prepare_playback(mpctx);
 	d->updateAudioLevel();
 	if (error != MPERROR_NONE)
@@ -1086,17 +1086,17 @@ void PlayEngine::setDeintOptions(const DeintOption &swdec, const DeintOption &hw
 	d->enqueue(MpResetDeint);
 }
 
-void PlayEngine::setDeintEnabled(bool on) {
-	if (d->deint == on)
+void PlayEngine::setDeintMode(DeintMode mode) {
+	if (d->deint == mode)
 		return;
 	QMutexLocker locker(&d->mutex);
-	if (d->deint == on)
+	if (d->deint == mode)
 		return;
-	d->deint = on;
+	d->deint = mode;
 	d->enqueue(MpSetDeintEnabled);
 }
 
-bool PlayEngine::isDeintEanbled() const {
+DeintMode PlayEngine::deintMode() const {
 	return d->deint;
 }
 

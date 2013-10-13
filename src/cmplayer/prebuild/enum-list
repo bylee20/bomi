@@ -3,6 +3,10 @@
 -CPU=1
 -GPU=2
 
++DeintMode
+-Off
+-Auto
+
 +DeintDevice
 -None=0
 -CPU=1
