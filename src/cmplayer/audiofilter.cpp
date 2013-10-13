@@ -48,6 +48,11 @@ template<typename T> struct Clip<ClippingMethod::Auto, T> { static T apply(doubl
 template<typename T> struct Clip<ClippingMethod::Hard, T> { static T apply(double p) { return hardclip<T>(p); } };
 template<typename T> struct Clip<ClippingMethod::Soft, T> { static T apply(double p) { return softclip<T>(p); } };
 
+template<typename T, const int s, const bool is_int = Tmp::isInteger<T>()>
+struct ShiftInt { static void apply(T &t) { t >>= s; } };
+template<typename T, const int s>
+struct ShiftInt<T, s, false> { static void apply(T &t) { Q_UNUSED(t); } };
+
 template<typename T>
 class TempoScalerImpl : public TempoScaler {
 public:
@@ -120,7 +125,6 @@ public:
 		}
 		return data;
 	}
-
 	void reinitialize() override {
 		const double frames_per_ms = fps() / 1000.0;
 		const int samples_per_frames = channels();
@@ -152,8 +156,7 @@ public:
 		auto pw = m_table_window.data();
 		for (int i=1; i<frames_overlap; ++i) {
 			TableType v = ( i * (t - i) * n );
-			if (isInt)
-				(qint64&)v >>= 15;
+			ShiftInt<TableType, 15>::apply(v);
 			pw = std::fill_n(pw, samples_per_frames, v);
 		}
 	}
