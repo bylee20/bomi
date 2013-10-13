@@ -48,9 +48,9 @@ template<typename T> struct Clip<ClippingMethod::Auto, T> { static T apply(doubl
 template<typename T> struct Clip<ClippingMethod::Hard, T> { static T apply(double p) { return hardclip<T>(p); } };
 template<typename T> struct Clip<ClippingMethod::Soft, T> { static T apply(double p) { return softclip<T>(p); } };
 
-template<typename T, const int s, const bool is_int = Tmp::isInteger<T>()>
+template<typename T, constexpr int s, constexpr bool is_int = std::is_integral<T>::value>
 struct ShiftInt { static void apply(T &t) { t >>= s; } };
-template<typename T, const int s>
+template<typename T, constexpr int s>
 struct ShiftInt<T, s, false> { static void apply(T &t) { Q_UNUSED(t); } };
 
 template<typename T>
