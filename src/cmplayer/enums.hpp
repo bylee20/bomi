@@ -44,11 +44,12 @@ public:
 	static const char *name(Enum e) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return tr("");
-		case Enum::CPU: return tr("");
-		case Enum::GPU: return tr("");
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CPU: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::GPU: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}
@@ -103,10 +104,11 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Off: return tr("");
-		case Enum::Auto: return tr("");
+		case Enum::Off: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}
@@ -163,12 +165,13 @@ public:
 	static const char *name(Enum e) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return tr("");
-		case Enum::CPU: return tr("");
-		case Enum::GPU: return tr("");
-		case Enum::OpenGL: return tr("");
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CPU: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::GPU: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::OpenGL: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}
@@ -229,16 +232,17 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return tr("");
-		case Enum::Bob: return tr("");
-		case Enum::LinearBob: return tr("");
-		case Enum::CubicBob: return tr("");
-		case Enum::Median: return tr("");
-		case Enum::LinearBlend: return tr("");
-		case Enum::Yadif: return tr("");
-		case Enum::MotionAdaptive: return tr("");
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Bob: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::LinearBob: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CubicBob: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Median: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::LinearBlend: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Yadif: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::MotionAdaptive: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}
@@ -263,7 +267,7 @@ enum class InterpolatorType : int {
 	BicubicMN = (int)2,
 	BicubicBS = (int)3,
 	Lanczos2 = (int)4,
-	Lanczos3Fast = (int)5
+	Lanczos3Approx = (int)5
 };
 
 inline bool operator == (InterpolatorType e, int i) { return (int)e == i; }
@@ -297,14 +301,15 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Bilinear: return tr("Bilinear interpolator");
-		case Enum::BicubicCR: return tr("Catmull-Rom bicubic interpolator");
-		case Enum::BicubicMN: return tr("Mitchell-Netravali bicubic interpolator");
-		case Enum::BicubicBS: return tr("B-spline bicubic interpolator");
-		case Enum::Lanczos2: return tr("Lanczos 2-lobed interpolator");
-		case Enum::Lanczos3Fast: return tr("Lanczos approx. 3-lobed interpolator");
+		case Enum::Bilinear: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Bilinear"));
+		case Enum::BicubicCR: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Catmull-Rom"));
+		case Enum::BicubicMN: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Mitchell-Netravali"));
+		case Enum::BicubicBS: return tr(QT_TRANSLATE_NOOP("EnumInfo", "B-spline"));
+		case Enum::Lanczos2: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2-Lobed Lanczos"));
+		case Enum::Lanczos3Approx: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Lanczos (Approx.)"));
 		default: return tr("");
 		};
 	}
@@ -364,15 +369,16 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Auto: return tr("");
-		case Enum::CoreAudio: return tr("");
-		case Enum::PulseAudio: return tr("");
-		case Enum::ALSA: return tr("");
-		case Enum::JACK: return tr("");
-		case Enum::PortAudio: return tr("");
-		case Enum::OpenAL: return tr("");
+		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CoreAudio: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::PulseAudio: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::ALSA: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::JACK: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::PortAudio: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::OpenAL: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}
@@ -428,11 +434,12 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Auto: return tr("Auto-clipping");
-		case Enum::Soft: return tr("Soft-clipping");
-		case Enum::Hard: return tr("Hard-clipping");
+		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Auto-clipping"));
+		case Enum::Soft: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Soft-clipping"));
+		case Enum::Hard: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Hard-clipping"));
 		default: return tr("");
 		};
 	}
@@ -488,11 +495,12 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Always: return tr("");
-		case Enum::Playing: return tr("");
-		case Enum::Never: return tr("");
+		case Enum::Always: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Playing: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Never: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}
@@ -548,11 +556,12 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Step1: return tr("");
-		case Enum::Step2: return tr("");
-		case Enum::Step3: return tr("");
+		case Enum::Step1: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Step2: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Step3: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}
@@ -607,10 +616,11 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Similar: return tr("Add files which have similar names");
-		case Enum::Folder: return tr("Add all files in the same folder");
+		case Enum::Similar: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Add files which have similar names"));
+		case Enum::Folder: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Add all files in the same folder"));
 		default: return tr("");
 		};
 	}
@@ -666,11 +676,12 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::AppendToPlaylist: return tr("Append the open media to the playlist");
-		case Enum::ClearAndAppendToPlaylist: return tr("Clear the playlist and append the open media to the playlist");
-		case Enum::ClearAndGenerateNewPlaylist: return tr("Clear the playlist and generate new playlist");
+		case Enum::AppendToPlaylist: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Append the open media to the playlist"));
+		case Enum::ClearAndAppendToPlaylist: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Clear the playlist and append the open media to the playlist"));
+		case Enum::ClearAndGenerateNewPlaylist: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Clear the playlist and generate new playlist"));
 		default: return tr("");
 		};
 	}
@@ -726,11 +737,12 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Matched: return tr("Subtitles which have the same name as that of playing file");
-		case Enum::Contain: return tr("Subtitles whose names contain the name of playing file");
-		case Enum::Folder: return tr("All subtitles in the folder where the playing file is located");
+		case Enum::Matched: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Subtitles which have the same name as that of playing file"));
+		case Enum::Contain: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Subtitles whose names contain the name of playing file"));
+		case Enum::Folder: return tr(QT_TRANSLATE_NOOP("EnumInfo", "All subtitles in the folder where the playing file is located"));
 		default: return tr("");
 		};
 	}
@@ -787,12 +799,13 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Matched: return tr("Subtitle which has the same name as that of playing file");
-		case Enum::First: return tr("First subtitle from loaded ones");
-		case Enum::All: return tr("All loaded subtitles");
-		case Enum::EachLanguage: return tr("Each language subtitle");
+		case Enum::Matched: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Subtitle which has the same name as that of playing file"));
+		case Enum::First: return tr(QT_TRANSLATE_NOOP("EnumInfo", "First subtitle from loaded ones"));
+		case Enum::All: return tr(QT_TRANSLATE_NOOP("EnumInfo", "All loaded subtitles"));
+		case Enum::EachLanguage: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Each language subtitle"));
 		default: return tr("");
 		};
 	}
@@ -848,11 +861,12 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Width: return tr("Fit to width of video");
-		case Enum::Height: return tr("Fit to height of video");
-		case Enum::Diagonal: return tr("Fit to diagonal of video");
+		case Enum::Width: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Fit to width of video"));
+		case Enum::Height: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Fit to height of video"));
+		case Enum::Diagonal: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Fit to diagonal of video"));
 		default: return tr("");
 		};
 	}
@@ -909,12 +923,13 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::OpenFile: return tr("Open a file");
-		case Enum::Fullscreen: return tr("Toggle fullscreen mode");
-		case Enum::Pause: return tr("Toggle play/pause");
-		case Enum::Mute: return tr("Toggle mute/unmute");
+		case Enum::OpenFile: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Open a file"));
+		case Enum::Fullscreen: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Toggle fullscreen mode"));
+		case Enum::Pause: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Toggle play/pause"));
+		case Enum::Mute: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Toggle mute/unmute"));
 		default: return tr("");
 		};
 	}
@@ -973,14 +988,15 @@ public:
 	static const char *name(Enum e) {
 		return info[(int)e].name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Seek1: return tr("Seek playback for step 1");
-		case Enum::Seek2: return tr("Seek playback for step 2");
-		case Enum::Seek3: return tr("Seek playback for step 3");
-		case Enum::PrevNext: return tr("Play previous/next");
-		case Enum::Volume: return tr("Volumn up/down");
-		case Enum::Amp: return tr("Amp. up/down");
+		case Enum::Seek1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Seek playback for step 1"));
+		case Enum::Seek2: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Seek playback for step 2"));
+		case Enum::Seek3: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Seek playback for step 3"));
+		case Enum::PrevNext: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Play previous/next"));
+		case Enum::Volume: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Volumn up/down"));
+		case Enum::Amp: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Amp. up/down"));
 		default: return tr("");
 		};
 	}
@@ -1037,12 +1053,13 @@ public:
 	static const char *name(Enum e) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return tr("");
-		case Enum::Ctrl: return tr("");
-		case Enum::Shift: return tr("");
-		case Enum::Alt: return tr("");
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Ctrl: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Shift: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Alt: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}
@@ -1104,17 +1121,18 @@ public:
 	static const char *name(Enum e) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::CC: return tr("");
-		case Enum::TL: return tr("");
-		case Enum::TC: return tr("");
-		case Enum::TR: return tr("");
-		case Enum::CL: return tr("");
-		case Enum::CR: return tr("");
-		case Enum::BL: return tr("");
-		case Enum::BC: return tr("");
-		case Enum::BR: return tr("");
+		case Enum::CC: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::TL: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::TC: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::TR: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CL: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CR: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BL: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BC: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BR: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}

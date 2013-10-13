@@ -152,6 +152,7 @@ public:
 	static const char *name(Enum e) {
 		__ENUM_FUNC_NAME
 	}
+	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
 __ENUM_FUNC_DESC_CASES
@@ -200,7 +201,7 @@ template<typename T> class EnumInfo { static constexpr int size() { return 0; } 
 		for (const EnumData::Item &item : data.items) {
 			value += "\t" + item.name + " = (int)" + item.value;
 			infos += "\t{" + data.name + "::" + item.name + ", " + '"' + item.name + "\"}";
-			cases += "\t\tcase Enum::" + item.name + ": return tr(\"" + item.desc + "\");\n";
+			cases += "\t\tcase Enum::" + item.name + ": return tr(QT_TRANSLATE_NOOP(\"EnumInfo\", \"" + item.desc + "\"));\n";
 			if (&item != &data.items.back()) {
 				value += ",\n";
 				infos += ",\n";

@@ -34,7 +34,7 @@ const std::array<InterpolatorTypeInfo::Item, 6> InterpolatorTypeInfo::info{{
 	{InterpolatorType::BicubicMN, "BicubicMN"},
 	{InterpolatorType::BicubicBS, "BicubicBS"},
 	{InterpolatorType::Lanczos2, "Lanczos2"},
-	{InterpolatorType::Lanczos3Fast, "Lanczos3Fast"}
+	{InterpolatorType::Lanczos3Approx, "Lanczos3Approx"}
 }};
 
 const std::array<AudioDriverInfo::Item, 7> AudioDriverInfo::info{{

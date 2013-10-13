@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>8</number>
+        <number>7</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -906,25 +906,6 @@
        </widget>
        <widget class="QWidget" name="video_filter">
         <layout class="QVBoxLayout" name="verticalLayout_38">
-         <item>
-          <widget class="QGroupBox" name="groupBox_27">
-           <property name="title">
-            <string>Picture interpolation</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_7">
-            <item>
-             <widget class="InterpolatorTypeComboBox" name="picture_interpolator"/>
-            </item>
-            <item>
-             <widget class="QLabel" name="picture_interpolator_desc">
-              <property name="text">
-               <string notr="true">TextLabel</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
          <item>
           <widget class="QGroupBox" name="groupBox_5">
            <property name="title">
@@ -3115,11 +3096,6 @@ e.g.: English, Korean</string>
   </customwidget>
   <customwidget>
    <class>ClippingMethodComboBox</class>
-   <extends>QComboBox</extends>
-   <header>widgets.hpp</header>
-  </customwidget>
-  <customwidget>
-   <class>InterpolatorTypeComboBox</class>
    <extends>QComboBox</extends>
    <header>widgets.hpp</header>
   </customwidget>

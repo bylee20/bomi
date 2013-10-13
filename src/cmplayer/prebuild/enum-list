@@ -24,12 +24,12 @@
 -MotionAdaptive
 
 +InterpolatorType
--Bilinear-Bilinear interpolator
--BicubicCR-Catmull-Rom bicubic interpolator
--BicubicMN-Mitchell-Netravali bicubic interpolator
--BicubicBS-B-spline bicubic interpolator
--Lanczos2-Lanczos 2-lobed interpolator
--Lanczos3Fast-Lanczos approx. 3-lobed interpolator
+-Bilinear-Bilinear
+-BicubicCR-Catmull-Rom
+-BicubicMN-Mitchell-Netravali
+-BicubicBS-B-spline
+-Lanczos2-2-Lobed Lanczos
+-Lanczos3Approx-3-Lobed Lanczos (Approx.)
 
 +AudioDriver
 -Auto

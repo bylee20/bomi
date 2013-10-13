@@ -116,6 +116,17 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		move.addAction(_L("right"))->setData((int)Qt::RightArrow);
 	video.addSeparator();
 
+	auto &interpolator = *video.addMenu(_L("interpolator"));
+	interpolator.addAction("next");
+	interpolator.addSeparator();
+	interpolator.g()->setExclusive(true);
+	interpolator.addActionToGroup(_L("bilinear"), true)->setData((int)InterpolatorType::Bilinear);
+	interpolator.addActionToGroup(_L("catmull"), true)->setData((int)InterpolatorType::BicubicCR);
+	interpolator.addActionToGroup(_L("mitchell"), true)->setData((int)InterpolatorType::BicubicMN);
+	interpolator.addActionToGroup(_L("b-spline"), true)->setData((int)InterpolatorType::BicubicBS);
+	interpolator.addActionToGroup(_L("lanczos2"), true)->setData((int)InterpolatorType::Lanczos2);
+	interpolator.addActionToGroup(_L("lanczos3-approx"), true)->setData((int)InterpolatorType::Lanczos3Approx);
+
 	auto &deint = *video.addMenu(_L("deint"));
 	deint.addAction(_L("toggle"));
 	deint.addSeparator();
@@ -413,6 +424,12 @@ void RootMenu::update(const Pref &p) {
 	deint["toggle"]->setText(tr("Toggle"));
 	deint["off"]->setText(tr("Off"));
 	deint["auto"]->setText(tr("Auto"));
+
+	auto &interpolator = video("interpolator");
+	interpolator.setTitle(tr("Interpolator"));
+	interpolator["next"]->setText(tr("Select Next"));
+	for (auto action : interpolator.g()->actions())
+		action->setText(InterpolatorTypeInfo::description(action->data().toInt()));
 
 	auto &effect = video("filter");
 	effect.setTitle(tr("Filter"));

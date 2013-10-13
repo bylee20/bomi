@@ -38,7 +38,7 @@ void OpenGLCompat::fill(QOpenGLContext *ctx) {
 	m_bicubicParams[(int)InterpolatorType::BicubicCR] = {0.0, 0.5};
 	m_bicubicParams[(int)InterpolatorType::BicubicMN] = {1./3., 1./3.};
 	m_bicubicParams[(int)InterpolatorType::Lanczos2] = {2.0, 2.0};
-	m_bicubicParams[(int)InterpolatorType::Lanczos3Fast] = {3.0, 3.0};
+	m_bicubicParams[(int)InterpolatorType::Lanczos3Approx] = {3.0, 3.0};
 }
 
 static auto conv = [] (double d) { return static_cast<GLushort>(d * std::numeric_limits<GLushort>::max()); };
@@ -96,7 +96,7 @@ void OpenGLCompat::fillInterpolatorLut(InterpolatorType interpolator) {
 		m_intLuts[type] = makeInterpolatorLut4([b, c] (double x) { return bicubic(x, b, c); });
 		break;
 	case InterpolatorType::Lanczos2:
-	case InterpolatorType::Lanczos3Fast:
+	case InterpolatorType::Lanczos3Approx:
 		m_intLuts[type] = makeInterpolatorLut4([b] (double x) { return lanczos(x, b); });
 		break;
 	default:

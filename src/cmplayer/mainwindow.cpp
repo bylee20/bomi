@@ -416,6 +416,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->menu("video")("align").g("horizontal")->trigger(as.video_alignment & 0x0f);
 	d->menu("video")("align").g("vertical")->trigger(as.video_alignment & 0xf0);
 	d->menu("video")("deint").g()->trigger((int)as.video_deint);
+	d->menu("video")("interpolator").g()->trigger((int)as.video_interpolator);
 	for (int i=0; i<16; ++i) {
 		if ((as.video_effects >> i) & 1)
 			d->menu("video")("filter").g()->setChecked(1 << i, true);
@@ -657,6 +658,29 @@ void MainWindow::connectMenus() {
 				}
 			});
 	});
+	connect(video("interpolator")["next"], &QAction::triggered, [this] () {
+		auto actions = d->menu("video")("interpolator").g()->actions();
+		int i = 0;
+		for (; i<actions.size(); ++i)
+			if (actions[i]->isChecked())
+				break;
+		if (++i >= actions.size())
+			i = 0;
+		actions[i]->trigger();
+	});
+	connect(video("interpolator").g(), &QActionGroup::triggered, [this] (QAction *action) {
+		auto type = InterpolatorTypeInfo::from(action->data().toInt(), InterpolatorType::Bilinear);
+		if (d->renderer.interpolator() != type)
+			d->push(type, d->renderer.interpolator(), [this] (InterpolatorType type) {
+				d->as.video_interpolator = type;
+				if (auto action = d->menu("video")("interpolator").g()->find((int)type)) {
+					action->setChecked(true);
+					showMessage(tr("Interpolator"), action->text());
+					d->renderer.setInterpolator(type);
+				}
+			});
+	});
+
 
 	connect(&video("filter"), &Menu::triggered, [this] () {
 		VideoRendererItem::Effects effects = 0;
@@ -799,7 +823,10 @@ void MainWindow::connectMenus() {
 			d->push(hide, d->subtitle.isHidden(), [this] (bool hide) {
 				d->subtitle.setHidden(hide);
 				d->engine.setSubtitleStreamsVisible(!hide);
-				showMessage(tr("Display Subtitles"), !hide);
+				if (hide)
+					showMessage(tr("Hide Subtitles"));
+				else
+					showMessage(tr("Show Subtitles"));
 				d->menu("subtitle")("track")["hide"]->setChecked(hide);
 			});
 		}
@@ -1374,7 +1401,6 @@ void MainWindow::applyPref() {
 	d->engine.setClippingMethod(p.clipping_method);
 	d->engine.setMinimumCache(p.cache_min_playback, p.cache_min_seeking);
 	d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
-	d->renderer.setInterpolator(p.picture_interpolator);
 	SubtitleParser::setMsPerCharactor(p.ms_per_char);
 	d->subtitle.setPriority(p.sub_priority);
 	d->subtitle.setStyle(p.sub_style);

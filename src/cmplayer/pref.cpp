@@ -180,7 +180,6 @@ void Pref::save() const {
 	WRITE(hue_step);
 	WRITE(locale);
 	WRITE(sub_ext);
-	WRITE(picture_interpolator);
 	WRITE(blur_kern_c);
 	WRITE(blur_kern_n);
 	WRITE(blur_kern_d);
@@ -258,7 +257,6 @@ void Pref::load() {
 	READ(pause_video_only);
 	READ(hide_cursor);
 	READ(hide_cursor_delay);
-	READ(picture_interpolator);
 	READ(blur_kern_c);
 	READ(blur_kern_n);
 	READ(blur_kern_d);
