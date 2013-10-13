@@ -87,6 +87,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		aspect.addActionToGroup(_L("auto"), true)->setData(-1.0);
 		aspect.addActionToGroup(_L("window"), true)->setData(0.0);
 		aspect.addActionToGroup(_L("4:3"), true)->setData(4.0/3.0);
+		aspect.addActionToGroup(_L("16:10"), true)->setData(16.0/10.0);
 		aspect.addActionToGroup(_L("16:9"), true)->setData(16.0/9.0);
 		aspect.addActionToGroup(_L("1.85:1"), true)->setData(1.85);
 		aspect.addActionToGroup(_L("2.35:1"), true)->setData(2.35);
@@ -94,6 +95,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		crop.addActionToGroup(_L("off"), true)->setData(-1.0);
 		crop.addActionToGroup(_L("window"), true)->setData(0.0);
 		crop.addActionToGroup(_L("4:3"), true)->setData(4.0/3.0);
+		crop.addActionToGroup(_L("16:10"), true)->setData(16.0/10.0);
 		crop.addActionToGroup(_L("16:9"), true)->setData(16.0/9.0);
 		crop.addActionToGroup(_L("1.85:1"), true)->setData(1.85);
 		crop.addActionToGroup(_L("2.35:1"), true)->setData(2.35);
@@ -373,6 +375,7 @@ void RootMenu::update(const Pref &p) {
 	aspect["auto"]->setText(tr("Auto"));
 	aspect["window"]->setText(tr("Same as Window"));
 	aspect["4:3"]->setText(tr("4:3 (TV)"));
+	aspect["16:10"]->setText(tr("16:10 (Wide Monitor)"));
 	aspect["16:9"]->setText(tr("16:9 (HDTV)"));
 	aspect["1.85:1"]->setText(tr("1.85:1 (Wide Vision)"));
 	aspect["2.35:1"]->setText(tr("2.35:1 (CinemaScope)"));
@@ -382,6 +385,7 @@ void RootMenu::update(const Pref &p) {
 	crop["off"]->setText(tr("Off"));
 	crop["window"]->setText(tr("Same as Window"));
 	crop["4:3"]->setText(tr("4:3 (TV)"));
+	crop["16:10"]->setText(tr("16:10 (Wide Monitor)"));
 	crop["16:9"]->setText(tr("16:9 (HDTV)"));
 	crop["1.85:1"]->setText(tr("1.85:1 (Wide Vision)"));
 	crop["2.35:1"]->setText(tr("2.35:1 (CinemaScope)"));
