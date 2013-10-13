@@ -1,5 +1,6 @@
 #include "openglcompat.hpp"
 #include "colorproperty.hpp"
+#include <cmath>
 
 OpenGLCompat OpenGLCompat::c;
 
@@ -92,11 +93,11 @@ void OpenGLCompat::fillInterpolatorLut(InterpolatorType interpolator) {
 	case InterpolatorType::BicubicBS:
 	case InterpolatorType::BicubicCR:
 	case InterpolatorType::BicubicMN:
-		m_bicubicLuts[type] = makeInterpolatorLut4([b, c] (double x) { return bicubic(x, b, c); });
+		m_intLuts[type] = makeInterpolatorLut4([b, c] (double x) { return bicubic(x, b, c); });
 		break;
 	case InterpolatorType::Lanczos2:
 	case InterpolatorType::Lanczos3Fast:
-		m_bicubicLuts[type] = makeInterpolatorLut4([b] (double x) { return lanczos(x, b); });
+		m_intLuts[type] = makeInterpolatorLut4([b] (double x) { return lanczos(x, b); });
 		break;
 	default:
 		break;
@@ -108,7 +109,7 @@ OpenGLTexture OpenGLCompat::allocateInterpolatorLutTexture(GLuint id, Interpolat
 	texture.id = id;
 	if (interpolator == InterpolatorType::Bilinear)
 		return texture;
-	auto &lut = c.m_bicubicLuts[(int)interpolator];
+	auto &lut = c.m_intLuts[(int)interpolator];
 	if (lut.isEmpty())
 		c.fillInterpolatorLut(interpolator);
 	Q_ASSERT(!lut.isEmpty());

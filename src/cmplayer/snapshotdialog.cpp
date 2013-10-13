@@ -10,7 +10,7 @@ struct SnapshotDialog::Data {
 	const VideoRendererItem *video = nullptr;
 	const SubtitleRendererItem *subtitle = nullptr;
 	QImage image, sub;
-	QPointF subPos;
+	QRectF subRect;
 	bool hasSubtitle = false;
 };
 
@@ -50,7 +50,7 @@ void SnapshotDialog::setVideoRenderer(const VideoRendererItem *video) {
 void SnapshotDialog::updateSubtitleImage() {
 	d->hasSubtitle = false;
 	if (d->subtitle) {
-		d->sub = d->subtitle->draw(d->image.rect(), &d->subPos);
+		d->sub = d->subtitle->draw(d->image.rect(), &d->subRect);
 		d->hasSubtitle = !d->sub.isNull();
 	}
 }
@@ -81,7 +81,7 @@ void SnapshotDialog::updateSnapshot(bool sub) {
 		QPixmap pixmap = QPixmap::fromImage(d->image);
 		if (sub && d->hasSubtitle) {
 			QPainter painter(&pixmap);
-			painter.drawImage(d->subPos, d->sub);
+			painter.drawImage(d->subRect, d->sub);
 		}
 		d->ui.viewer->setImage(pixmap);
 	}

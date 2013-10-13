@@ -34,16 +34,6 @@ struct SubtitleRendererItem::Data {
 			return language_priority(lhs) > language_priority(rhs);
 		});
 	}
-	double dpr() const {
-		auto window = p->window();
-		if (!window)
-			return 1.0;
-		auto screen = window->screen();
-		return screen ? screen->devicePixelRatio() : 1.0;
-		if (!screen)
-			return 1.0;
-		return qMax(screen->logicalDotsPerInch()/screen->physicalDotsPerInch(), 1.0);
-	}
 	void setMargin(const Margin &margin) {
 		drawer.setMargin(margin);
 		p->setGeometryDirty();
@@ -158,10 +148,19 @@ void SubtitleRendererItem::setStyle(const SubtitleStyle &style) {
 	d->updateDrawer();
 }
 
-QImage SubtitleRendererItem::draw(const QRectF &rect, QPointF *pos) const {
+static inline QRectF operator * (const QRectF &rect, double p) {
+	return {rect.topLeft()*p, rect.size()*p};
+}
+
+static inline QRectF operator / (const QRectF &rect, double p) {
+	return {rect.topLeft()/p, rect.size()/p};
+}
+
+QImage SubtitleRendererItem::draw(const QRectF &rect, QRectF *put) const {
 	QImage sub; QPointF offset;
-	if (!d->drawer.draw(sub, offset, text(), rect, d->dpr()))
+	if (!d->drawer.draw(sub, offset, text(), rect, 1.0))
 		return QImage();
+	sub.setDevicePixelRatio(1.0);
 	if (!d->drawer.style().shadow.enabled)
 		return sub;
 	QImage shadow(sub.size(), QImage::Format_ARGB32_Premultiplied);
@@ -173,13 +172,12 @@ QImage SubtitleRendererItem::draw(const QRectF &rect, QPointF *pos) const {
 			shadow.setPixel(x, y, qRgba(r, g, b, alpha*qAlpha(sub.pixel(x, y))));
 	}
 	QImage image(sub.size(), QImage::Format_ARGB32_Premultiplied);
-	image.setDevicePixelRatio(sub.devicePixelRatio());
 	image.fill(0x0);
 	QPainter painter(&image);
 	painter.drawImage(offset, shadow);
 	painter.drawImage(QPoint(0, 0), sub);
-	if (pos)
-		*pos = d->drawer.pos(sub.size(), rect);
+	if (put)
+		*put = {d->drawer.pos(sub.size(), rect), sub.size()};
 	return image;
 }
 
@@ -224,7 +222,8 @@ void SubtitleRendererItem::unload() {
 }
 
 void SubtitleRendererItem::getCoords(QRectF &vertices, QRectF &) {
-	vertices = QRectF(d->drawer. pos(d->texture.size(), rect()), d->texture.size());
+	const auto dpr = devicePixelRatio();
+	vertices = QRectF(d->drawer. pos(d->texture.size()/dpr, rect()), d->texture.size()/dpr);
 }
 
 void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
@@ -265,7 +264,7 @@ bool SubtitleRendererItem::isHidden() const {
 }
 
 void SubtitleRendererItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) {
-	d->selection.setArea(rect(), d->dpr());
+	d->selection.setArea(rect(), devicePixelRatio());
 	TextureRendererItem::geometryChanged(newGeometry, oldGeometry);
 }
 

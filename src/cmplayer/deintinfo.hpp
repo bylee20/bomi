@@ -4,7 +4,8 @@
 #include "stdafx.hpp"
 #include "enums.hpp"
 
-struct DeintOption {
+class DeintOption {
+public:
 	DeintOption() {}
 	DeintOption(DeintMethod method, DeintDevice device, bool doubler)
 	: method(method), device(device), doubler(doubler) {}

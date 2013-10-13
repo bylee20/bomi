@@ -58,5 +58,6 @@ bool SubtitleDrawer::draw(QImage &image, QPointF &shadowOffset, const RichTextDo
 		front.draw(&painter, QPointF(0, 0));
 	} else
 		shadowOffset = QPointF(0, 0);
+	shadowOffset *= dpr;
 	return m_drawn = !image.isNull();
 }

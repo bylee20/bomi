@@ -171,7 +171,7 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 	if (frame.isAdditional())
 		return false;
 	bool changed = m_frame.format() != frame.format();
-	if (m_dma) {
+	if (m_dma && frame.format().imgfmt() != IMGFMT_VDA) {
 		if (changed)
 			m_frame.allocate(frame.format());
 		m_frame.doDeepCopy(frame);
@@ -184,8 +184,8 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 	}
 	updateShader();
 #ifdef Q_OS_MAC
-	if (m_format.imgfmt() == IMGFMT_VDA) {
-		for (const VideoTexture2 &texture : m_textures) {
+	if (m_frame.format().imgfmt() == IMGFMT_VDA) {
+		for (const VideoTexture &texture : m_textures) {
 			const auto cgl = static_cast<CGLContextObj>(qApp->platformNativeInterface()->nativeResourceForContext("cglcontextobj", QOpenGLContext::currentContext()));
 			const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)m_frame.data(3));
 			texture.bind();
@@ -194,7 +194,7 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 			CGLTexImageIOSurface2D(cgl, texture.target, texture.format.internal, w, h, texture.format.pixel, texture.format.type, surface, texture.plane);
 			texture.unbind();
 		}
-		return ret;
+		return changed;
 	}
 #endif
 #ifdef Q_OS_LINUX
@@ -365,7 +365,7 @@ void VideoFrameShader::fillInfo() {
 		break;
 	case IMGFMT_YUYV:
 	case IMGFMT_UYVY:
-		if (!ctx->hasExtension("GL_APPLE_ycbcr_422")) {
+		if (ctx->hasExtension("GL_APPLE_ycbcr_422")) {
 			qDebug() << "Good! We have GL_APPLE_ycbcr_422.";
 			OpenGLTextureFormat fmt;
 			fmt.internal = GL_RGB8;

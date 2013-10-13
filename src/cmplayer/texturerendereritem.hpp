@@ -22,6 +22,7 @@ public:
 	virtual void rerender() { update(); }
 	bool isGeometryDirty() const { return m_dirtyGeomerty; }
 	virtual int quads() const { return 1; }
+	double devicePixelRatio() const { return m_win ? m_win->devicePixelRatio() : 1.0; }
 protected slots:
 	virtual void initializeGL() { m_lutInt.generate(); }
 	virtual void finalizeGL() { m_lutInt.delete_(); }
@@ -47,6 +48,7 @@ private:
 	InterpolatorType m_newInt = InterpolatorType::Bilinear;
 	mutable QSGMaterialType m_types[2];
 	OpenGLTexture m_lutInt, m_texture;
+	QQuickWindow *m_win = nullptr;
 };
 
 class TextureRendererShader : public QSGMaterialShader {

@@ -38,7 +38,7 @@ public:
 	void setStyle(const SubtitleStyle &style);
 	const RichTextDocument &text() const;
 	bool isOpaque() const override {return false;}
-	QImage draw(const QRectF &rect, QPointF *pos = nullptr) const;
+	QImage draw(const QRectF &rect, QRectF *put = nullptr) const;
 public slots:
 	void setHidden(bool hidden);
 	void render(int ms);

@@ -1,10 +1,11 @@
 #include "record.hpp"
 
-template class RecordIoOne<int>;
-template class RecordIoOne<bool>;
-template class RecordIoOne<double>;
-template class RecordIoOne<float>;
-template class RecordIoOne<QString>;
-template class RecordIoOne<QStringList>;
-template class RecordIoOne<QVariant>;
-template class RecordIoOne<QLocale>;
+template struct RecordIoOne<int>;
+template struct RecordIoOne<bool>;
+template struct RecordIoOne<double>;
+template struct RecordIoOne<float>;
+template struct RecordIoOne<QString>;
+template struct RecordIoOne<QStringList>;
+template struct RecordIoOne<QVariant>;
+template struct RecordIoOne<QLocale>;
+template struct RecordIoOne<QKeySequence>;

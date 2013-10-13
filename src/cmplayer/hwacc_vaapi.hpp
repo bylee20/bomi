@@ -136,9 +136,9 @@ private:
 	quint64 m_order = 0LL;
 };
 
+#endif
+
 void initialize_vaapi();
 void finalize_vaapi();
-
-#endif
 
 #endif // HWACC_VAAPI_HPP

@@ -143,6 +143,7 @@ TextureRendererItem::TextureRendererItem(QQuickItem *parent)
 : GeometryItem(parent), d(new Data) {
 	setFlag(ItemHasContents, true);
 	connect(this, &QQuickItem::windowChanged, [this] (QQuickWindow *window) {
+		m_win = window;
 		if (window) {
 			connect(window, &QQuickWindow::sceneGraphInitialized, this, &TextureRendererItem::tryInitGL, Qt::DirectConnection);
 			connect(window, &QQuickWindow::beforeRendering, this, &TextureRendererItem::tryInitGL, Qt::DirectConnection);
@@ -160,6 +161,7 @@ TextureRendererShader *TextureRendererItem::createShader() const {
 }
 
 QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
+	tryInitGL();
 	Q_UNUSED(data);
 	d->node = static_cast<Node*>(old);
 	if (!d->node)

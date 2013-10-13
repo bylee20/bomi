@@ -80,8 +80,6 @@ template<int N> constexpr static int _Aligned(int v) { return v%N ? ((v/N) + 1)*
 template<typename T, typename... Args> T *  _New(T *&t, Args... args) { return (t = new T(args...)); }
 template<typename T, typename... Args> T *  _Renew(T *&t, Args... args) {delete t; return (t = new T(args...)); }
 template<typename T>                   void _Delete(T *&t) {delete t; t = nullptr; }
-#endif
-
 template<typename Iter, typename Test>
 Iter _FindIf(Iter begin, Iter end, Test test) { return std::find_if(begin, end, test); }
 template<typename List, typename Test>
@@ -95,6 +93,8 @@ template<typename List, typename T>
 typename List::const_iterator _Find(const List &list, const T &t) { return std::find(std::begin(list), std::end(list), t); }
 template<typename List, typename T>
 bool _Contains(const List &list, const T &t) { return std::find(std::begin(list), std::end(list), t) != std::end(list); }
+
+#endif
 
 static inline quint64 _SystemTime() { struct timeval t; gettimeofday(&t, 0); return t.tv_sec*1000000u + t.tv_usec; }
 }

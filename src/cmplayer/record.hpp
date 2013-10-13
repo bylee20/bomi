@@ -75,14 +75,15 @@ struct RecordIoOne<ColorProperty, false> {
 	}
 };
 
-extern template class RecordIoOne<int>;
-extern template class RecordIoOne<bool>;
-extern template class RecordIoOne<double>;
-extern template class RecordIoOne<float>;
-extern template class RecordIoOne<QString>;
-extern template class RecordIoOne<QStringList>;
-extern template class RecordIoOne<QVariant>;
-extern template class RecordIoOne<QLocale>;
+extern template struct RecordIoOne<int>;
+extern template struct RecordIoOne<bool>;
+extern template struct RecordIoOne<double>;
+extern template struct RecordIoOne<float>;
+extern template struct RecordIoOne<QString>;
+extern template struct RecordIoOne<QStringList>;
+extern template struct RecordIoOne<QVariant>;
+extern template struct RecordIoOne<QLocale>;
+extern template struct RecordIoOne<QKeySequence>;
 
 class Record : public QSettings {
 public:

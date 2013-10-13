@@ -73,7 +73,7 @@ struct VideoOutput::Data {
 	mp_image_params params;
 	DeintOption deint_swdec, deint_hwdec;
 	SoftwareDeinterlacer deinterlacer;
-	VaApiPostProcessor vaapi;
+//	VaApiPostProcessor vaapi;
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
@@ -119,7 +119,7 @@ void VideoOutput::updateDeint() {
 	if (d->deint)
 		opt = d->acc ? d->deint_hwdec : d->deint_swdec;
 	d->deinterlacer.setOption(opt);
-	d->vaapi.setDeintOption(opt);
+//	d->vaapi.setDeintOption(opt);
 	if (d->renderer)
 		d->renderer->setDeintMethod(opt.method);
 }
@@ -216,6 +216,7 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 			auto s = sub_get_last_sd(osd->dec_sub);
 			ass = s && !qstrcmp(s->driver->name, "ass");
 		}
+		const auto dpr = r->devicePixelRatio();
 		auto item = r->mpOsd();
 		if (!ass) { // never software scaling
 			d->osd.w = d->format.width();
@@ -230,6 +231,8 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 			d->osd.h = size.height();
 			d->osd.video_par = vo->aspdat.par;
 		}
+		d->osd.w *= dpr;
+		d->osd.h *= dpr;
 		d->osd.display_par = vo->aspdat.monitor_par;
 		item->setImageSize({d->osd.w, d->osd.h});
 		osd_draw(osd, d->osd, osd->vo_pts, 0, format, cb, item);

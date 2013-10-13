@@ -4,6 +4,12 @@
 #include "stdafx.hpp"
 #include "enums.hpp"
 
+#ifndef GL_YCBCR_MESA
+#define GL_YCBCR_MESA                   0x8757
+#define GL_UNSIGNED_SHORT_8_8_MESA      0x85BA
+#define GL_UNSIGNED_SHORT_8_8_REV_MESA  0x85BB
+#endif
+
 struct OpenGLTextureFormat {
 	OpenGLTextureFormat() {}
 	OpenGLTextureFormat(GLint internal, GLenum pixel, GLenum type)
@@ -11,7 +17,8 @@ struct OpenGLTextureFormat {
 	GLint internal = GL_NONE; GLenum pixel = GL_NONE, type = GL_NONE;
 };
 
-struct OpenGLTexture {
+class OpenGLTexture {
+public:
 	virtual ~OpenGLTexture() = default;
 	GLuint id = GL_NONE;
 	GLenum target = GL_TEXTURE_2D;
@@ -147,15 +154,12 @@ private:
 	OpenGLCompat() = default;
 	static OpenGLCompat c;
 	bool m_init = false;
-	GLenum m_oneInternal;
-	GLenum m_twoInternal;
 	QOpenGLVersionProfile m_profile;
 	int m_major = 0, m_minor = 0;
 	int m_maxTextureSize = 0;
 	bool m_hasRG = false;
 	QMap<GLenum, OpenGLTextureFormat> m_formats;
-	std::array<QVector<GLushort>, InterpolatorTypeInfo::size()> m_bicubicLuts;
-//	std::array<GLushort, CubicLutSize> m_bSplineLut;
+	std::array<QVector<GLushort>, InterpolatorTypeInfo::size()> m_intLuts;
 	QVector<GLushort> m_3dLut;
 	QVector3D m_subLut, m_addLut;
 	QMatrix3x3 m_mulLut;
