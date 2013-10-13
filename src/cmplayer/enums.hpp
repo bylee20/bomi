@@ -42,7 +42,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 3; }
 	static const char *name(Enum e) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
+		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? it->name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -102,7 +102,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 2; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -163,7 +163,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 4; }
 	static const char *name(Enum e) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
+		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? it->name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -230,7 +230,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 8; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -299,7 +299,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 6; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -367,7 +367,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 7; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -432,7 +432,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 3; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -493,7 +493,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 3; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -554,7 +554,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 3; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -614,7 +614,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 2; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -674,7 +674,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 3; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -735,7 +735,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 3; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -797,7 +797,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 4; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -859,7 +859,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 3; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -921,7 +921,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 4; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -986,7 +986,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 6; }
 	static const char *name(Enum e) {
-		return info[(int)e].name;
+		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -1051,7 +1051,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 4; }
 	static const char *name(Enum e) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
+		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? it->name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
@@ -1119,7 +1119,7 @@ public:
 	struct Item { Enum value; const char *name; };
 	static constexpr int size() { return 9; }
 	static const char *name(Enum e) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;
+		auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? it->name : "";
 	}
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {

@@ -212,9 +212,9 @@ template<typename T> class EnumInfo { static constexpr int size() { return 0; } 
 		replace(htmpl, "__ENUM_COUNT", toString(data.items.size()));
 		replace(htmpl, "__ENUM_FUNC_DESC_CASES", cases);
 		if (data.continuous)
-			replace(htmpl, "__ENUM_FUNC_NAME", R"(return info[(int)e].name;)");
+			replace(htmpl, "__ENUM_FUNC_NAME", R"(return 0 <= e && e < size() ? info[(int)e].name : "";)");
 		else
-			replace(htmpl, "__ENUM_FUNC_NAME", R"(auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it->name;)");
+			replace(htmpl, "__ENUM_FUNC_NAME", R"(auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? it->name : "";)");
 
 		replace(ctmpl, "__ENUM_NAME", data.name);
 		replace(ctmpl, "__ENUM_COUNT", toString(data.items.size()));
