@@ -1660,7 +1660,7 @@ void MainWindow::customEvent(QEvent *event) {
 		dlg.setLabelText(tr("Do you want to resume the playback at the last played position?\n"
 			"Played Date: %1\nStopped Position: %2\n")
 			.arg(date.toString(Qt::ISODate)).arg(_MSecToString(ev->start, "h:mm:ss")));
-		dlg.setCheckBoxText("Don't ask again");
+		dlg.setCheckBoxText(tr("Don't ask again"));
 		dlg.setWindowTitle(tr("Resume Playback"));
 		d->startFromStopped = dlg.exec() == QDialogButtonBox::Yes;
 		if (_Change(d->preferences.ask_record_found, !dlg.isChecked()))
