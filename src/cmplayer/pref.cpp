@@ -292,9 +292,10 @@ void Pref::load() {
 	READ(skin_name);
     READ(enable_hwaccel);
     READ(hwaccel_codecs);
-	READ(enable_hwdeint);
-	if (version > 0x000709)
+	if (version > 0x000709) {
+		READ(enable_hwdeint);
 		READ(hwdeints);
+	}
 
 	READ(enable_generate_playist);
 	READ(sub_enable_autoload);
