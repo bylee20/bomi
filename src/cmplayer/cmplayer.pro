@@ -8,7 +8,7 @@ macx:CONFIG -= app_bundle
     CONFIG += release
     macx:CONFIG += app_bundle
 } else {
-    LIBQUVI_SUFFIX = -0.9
+    #LIBQUVI_SUFFIX = -0.9
 }
 
 QT = core gui network quick widgets core-private gui-private
@@ -18,7 +18,7 @@ DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavfilter -lavcodec -lpostproc -lavformat -lavutil \
-        -lmpg123 -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio # -lquvi$${LIBQUVI_SUFFIX}
+        -lmpg123 -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio -lquvi$${LIBQUVI_SUFFIX}
 
 macx {
     QT += gui-private
