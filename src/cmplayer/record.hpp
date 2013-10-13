@@ -26,25 +26,28 @@ struct RecordIoOne<T, false> {
 	static_assert(!is_list<T>::value, "assert!");
 	static void read(QSettings &r, T &value, const char *key) {value = fromVariant<T>(r.value(_L(key), toVariant<T>(value)));}
 	static void write(QSettings &r, const T &value, const char *key) {r.setValue(_L(key), toVariant<T>(value));}
+	static T default_() { return T(); }
 };
 
 template <typename T>
 struct RecordIoOne<T, true> {
 	static void read(QSettings &r, T &value, const char *key) {value = EnumInfo<T>::from(r.value(_L(key), EnumInfo<T>::name(value)).toString(), value);}
 	static void write(QSettings &r, const T &value, const char *key) {r.setValue(_L(key), EnumInfo<T>::name(value));}
+	static T default_() { return EnumInfo<T>::items()[0].value; }
 };
 
 template <typename T>
 struct RecordIoList {
+	using One = RecordIoOne<T>;
 	static void read(QSettings &r, QList<T> &values, const char *key) {
 		if (!r.value(_L(key) % _L("_exists"), false).toBool())
 			return;
 		const int size = r.beginReadArray(key);
 		values.clear();	values.reserve(size);
-		T t; for (int i = 0; i<size; ++i) {values.append(t);}
+		T t = One::default_(); for (int i = 0; i<size; ++i) {values.append(t);}
 		for (int i=0; i<size; ++i) {
 			r.setArrayIndex(i);
-			RecordIoOne<T>::read(r, values[i], "data");
+			One::read(r, values[i], "data");
 		}
 		r.endArray();
 	}
@@ -53,7 +56,7 @@ struct RecordIoList {
 		r.beginWriteArray(key, values.size());
 		for (int i=0; i<values.size(); ++i) {
 			r.setArrayIndex(i);
-			RecordIoOne<T>::write(r, values[i], "data");
+			One::write(r, values[i], "data");
 		}
 		r.endArray();
 	}

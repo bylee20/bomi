@@ -358,27 +358,10 @@ void Pref::load() {
 
 QList<DeintMethod> Pref::defaultHwAccDeints() {
 	QList<DeintMethod> deints;
-#ifdef Q_OS_LINUX
-#ifdef USE_VAVPP
-	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
-	if (!filter)
-		return deints;
-	auto algorithms = VaApi::algorithms(VAProcFilterDeinterlacing);
-	for (auto algo : algorithms) {
-		if (filter->supports(algo)) {
-			switch (algo) {
-			case VAProcDeinterlacingBob:
-				deints << DeintMethod::Bob;
-				break;
-			default:
-				break;
-			}
-		}
+	for (auto deint : HwAcc::fullDeintList()) {
+		if (HwAcc::supports(deint))
+			deints << deint;
 	}
-#else
-	deints << DeintMethod::Bob;
-#endif
-#endif
 	return deints;
 }
 
