@@ -1,3 +1,25 @@
+0.7.10
+
+  * New: 16:10 aspect ratio for wide monitors
+  * New: message for showing/hiding subtitle
+  * New: 'Interpolator' submenu in video menu
+  * New: internal subtitles are not scaled anymore which brings better quality
+  * Mod: display CPU usage as integer
+  * Mod: use software volume always
+  * Mod: remove 'Always' menu in 'Deinterlace'
+  * Mod: make 'Auto' default deinterlacer mode
+  * Fix: some typo (Corrected audio spelling)
+  * Fix: draw subtitles in only needed parts
+  * Fix: wrong track number (started from 2)
+  * Fix: show/hide subtitle didn't work
+  * Fix: crash when GTK+ style is loaded with some locales
+  * Fix: crash on startup in some locales
+  * Fix: crash when no va-vpp exists
+  * Fix: Disable OpenGL deinterlacer when VA-API deinterlacer is activated
+  * Fix: do not hide internal subtitles on pause
+  * Fix: couldn't take snapshot when paused
+  * Fix: ocassional crash on changing media files when H/W acc. is activated
+  
 0.7.9
 
   * New: 'Deinterlace' submenu in 'Video' menu
