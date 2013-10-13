@@ -3995,7 +3995,7 @@ e.g.: English, Korean</source>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="287"/>
-        <source>Aduio filter</source>
+        <source>Audio filter</source>
         <translation>오디오 필터</translation>
     </message>
     <message>
