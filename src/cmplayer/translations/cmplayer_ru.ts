@@ -890,6 +890,11 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../mainwindow.cpp" line="1663"/>
+        <source>Don&apos;t ask again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../mainwindow.cpp" line="1664"/>
         <source>Resume Playback</source>
         <translation type="unfinished"></translation>
@@ -1438,7 +1443,7 @@ Do you want to start from where it&apos;s stopped?
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../prefdialog.cpp" line="470"/>
+        <location filename="../prefdialog.cpp" line="461"/>
         <source>Preferences</source>
         <translation>Параметры</translation>
     </message>
@@ -1852,12 +1857,12 @@ Do you want to start from where it&apos;s stopped?
         <translation>мсек</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="339"/>
+        <location filename="../prefdialog.cpp" line="334"/>
         <source>For S/W decoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="340"/>
+        <location filename="../prefdialog.cpp" line="335"/>
         <source>For H/W decoding</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2224,82 +2229,82 @@ e.g.: English, Korean</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="445"/>
+        <location filename="../prefdialog.cpp" line="436"/>
         <source>CMPlayer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="446"/>
+        <location filename="../prefdialog.cpp" line="437"/>
         <source>Movist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="483"/>
+        <location filename="../prefdialog.cpp" line="474"/>
         <source>Use the system default language</source>
         <translation>Использовать системный язык</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="487"/>
+        <location filename="../prefdialog.cpp" line="478"/>
         <source>English</source>
         <translation>Английский</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="490"/>
+        <location filename="../prefdialog.cpp" line="481"/>
         <source>Japanese</source>
         <translation>Японский</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="493"/>
+        <location filename="../prefdialog.cpp" line="484"/>
         <source>Korean</source>
         <translation>Корейский</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="496"/>
+        <location filename="../prefdialog.cpp" line="487"/>
         <source>Russian</source>
         <translation type="unfinished">Русский</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="508"/>
+        <location filename="../prefdialog.cpp" line="499"/>
         <source>Double Click</source>
         <translation>Двойной щелчек</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="509"/>
+        <location filename="../prefdialog.cpp" line="500"/>
         <source>Middle Click</source>
         <translation>Щелчек средней</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="510"/>
+        <location filename="../prefdialog.cpp" line="501"/>
         <source>Wheel Scroll</source>
         <translation>Колесо прокрутки</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="511"/>
+        <location filename="../prefdialog.cpp" line="502"/>
         <source>All</source>
         <translation>Все</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="514"/>
+        <location filename="../prefdialog.cpp" line="505"/>
         <source>Ok</source>
         <translation>Да</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="515"/>
+        <location filename="../prefdialog.cpp" line="506"/>
         <source>Cancel</source>
         <translation>Отмена</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="516"/>
+        <location filename="../prefdialog.cpp" line="507"/>
         <source>Apply</source>
         <translation>Применить</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="517"/>
+        <location filename="../prefdialog.cpp" line="508"/>
         <source>Restore Defaults</source>
         <translation>По умолчанию</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="518"/>
+        <location filename="../prefdialog.cpp" line="509"/>
         <source>Reset</source>
         <translation>Сброс</translation>
     </message>

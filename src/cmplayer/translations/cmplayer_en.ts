@@ -681,6 +681,11 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="../mainwindow.cpp" line="1663"/>
+        <source>Don&apos;t ask again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../mainwindow.cpp" line="1664"/>
         <source>Resume Playback</source>
         <translation type="unfinished"></translation>
@@ -1043,7 +1048,7 @@ Stopped Position: %2
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../prefdialog.cpp" line="470"/>
+        <location filename="../prefdialog.cpp" line="461"/>
         <source>Preferences</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1393,12 +1398,12 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="339"/>
+        <location filename="../prefdialog.cpp" line="334"/>
         <source>For S/W decoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="340"/>
+        <location filename="../prefdialog.cpp" line="335"/>
         <source>For H/W decoding</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1739,82 +1744,82 @@ e.g.: English, Korean</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="445"/>
+        <location filename="../prefdialog.cpp" line="436"/>
         <source>CMPlayer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="446"/>
+        <location filename="../prefdialog.cpp" line="437"/>
         <source>Movist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="483"/>
+        <location filename="../prefdialog.cpp" line="474"/>
         <source>Use the system default language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="487"/>
+        <location filename="../prefdialog.cpp" line="478"/>
         <source>English</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="490"/>
+        <location filename="../prefdialog.cpp" line="481"/>
         <source>Japanese</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="493"/>
+        <location filename="../prefdialog.cpp" line="484"/>
         <source>Korean</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="496"/>
+        <location filename="../prefdialog.cpp" line="487"/>
         <source>Russian</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="508"/>
+        <location filename="../prefdialog.cpp" line="499"/>
         <source>Double Click</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="509"/>
+        <location filename="../prefdialog.cpp" line="500"/>
         <source>Middle Click</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="510"/>
+        <location filename="../prefdialog.cpp" line="501"/>
         <source>Wheel Scroll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="511"/>
+        <location filename="../prefdialog.cpp" line="502"/>
         <source>All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="514"/>
+        <location filename="../prefdialog.cpp" line="505"/>
         <source>Ok</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="515"/>
+        <location filename="../prefdialog.cpp" line="506"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="516"/>
+        <location filename="../prefdialog.cpp" line="507"/>
         <source>Apply</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="517"/>
+        <location filename="../prefdialog.cpp" line="508"/>
         <source>Restore Defaults</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="518"/>
+        <location filename="../prefdialog.cpp" line="509"/>
         <source>Reset</source>
         <translation type="unfinished"></translation>
     </message>

@@ -1331,6 +1331,11 @@ Stopped Position: %2
 </translation>
     </message>
     <message>
+        <location filename="../mainwindow.cpp" line="1663"/>
+        <source>Don&apos;t ask again</source>
+        <translation>다시 묻지 않기</translation>
+    </message>
+    <message>
         <location filename="../mainwindow.cpp" line="1664"/>
         <source>Resume Playback</source>
         <translation>재생 다시 시작하기</translation>
@@ -3274,7 +3279,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">URL</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="508"/>
+        <location filename="../prefdialog.cpp" line="499"/>
         <source>Double Click</source>
         <translation>더블 클릭</translation>
     </message>
@@ -3283,7 +3288,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">가운데 버튼 클릭</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="510"/>
+        <location filename="../prefdialog.cpp" line="501"/>
         <source>Wheel Scroll</source>
         <translation>휠 스크롤</translation>
     </message>
@@ -3823,7 +3828,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation>밀리초</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="339"/>
+        <location filename="../prefdialog.cpp" line="334"/>
         <source>For S/W decoding</source>
         <translation>소프트웨어 디코딩용</translation>
     </message>
@@ -3832,7 +3837,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation type="obsolete">모드</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="340"/>
+        <location filename="../prefdialog.cpp" line="335"/>
         <source>For H/W decoding</source>
         <translation>하드웨어 디코딩용</translation>
     </message>
@@ -4151,7 +4156,7 @@ e.g.: English, Korean</source>
         <translation type="obsolete">DVD</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="470"/>
+        <location filename="../prefdialog.cpp" line="461"/>
         <source>Preferences</source>
         <translation>환경 설정</translation>
     </message>
@@ -4270,67 +4275,67 @@ e.g.: English, Korean</source>
         <translation>사운드</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="445"/>
+        <location filename="../prefdialog.cpp" line="436"/>
         <source>CMPlayer</source>
         <translation>CMPlayer</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="446"/>
+        <location filename="../prefdialog.cpp" line="437"/>
         <source>Movist</source>
         <translation>무비스트</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="483"/>
+        <location filename="../prefdialog.cpp" line="474"/>
         <source>Use the system default language</source>
         <translation>시스템 기본 언어를 사용</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="487"/>
+        <location filename="../prefdialog.cpp" line="478"/>
         <source>English</source>
         <translation>영어</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="493"/>
+        <location filename="../prefdialog.cpp" line="484"/>
         <source>Korean</source>
         <translation>한국어</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="496"/>
+        <location filename="../prefdialog.cpp" line="487"/>
         <source>Russian</source>
         <translation>러시아어</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="509"/>
+        <location filename="../prefdialog.cpp" line="500"/>
         <source>Middle Click</source>
         <translation>중간 클릭</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="511"/>
+        <location filename="../prefdialog.cpp" line="502"/>
         <source>All</source>
         <translation>모든 파일</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="514"/>
+        <location filename="../prefdialog.cpp" line="505"/>
         <source>Ok</source>
         <translation>확인</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="515"/>
+        <location filename="../prefdialog.cpp" line="506"/>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="516"/>
+        <location filename="../prefdialog.cpp" line="507"/>
         <source>Apply</source>
         <translation>적용</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="517"/>
+        <location filename="../prefdialog.cpp" line="508"/>
         <source>Restore Defaults</source>
         <translation>기본값 복원</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="518"/>
+        <location filename="../prefdialog.cpp" line="509"/>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>
@@ -4343,7 +4348,7 @@ e.g.: English, Korean</source>
         <translation type="obsolete">재생목록 전환</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="490"/>
+        <location filename="../prefdialog.cpp" line="481"/>
         <source>Japanese</source>
         <translation>일본어</translation>
     </message>
