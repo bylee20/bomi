@@ -11,7 +11,6 @@ extern "C" {
 #include <video/mp_image_pool.h>
 #include <va/va_glx.h>
 #include <va/va_x11.h>
-#include <va/va_vpp.h>
 #include <video/sws_utils.h>
 #include <libavcodec/vaapi.h>
 }
@@ -20,6 +19,7 @@ bool VaApi::init = false;
 VADisplay VaApi::m_display = nullptr;
 VaApi &VaApi::get() {static VaApi info; return info;}
 
+#ifdef USE_VAVPP
 VAProcDeinterlacingType VaApi::toVAType(DeintMethod method) {
 	switch (method) {
 	case DeintMethod::Bob:
@@ -114,6 +114,7 @@ VaApiFilterInfo::VaApiFilterInfo(VAContextID context, VAProcFilterType type) {
 		qDebug() << description(type, m_algorithms[i]);
 	}
 }
+#endif
 
 static QMutex mutex;
 
@@ -224,7 +225,9 @@ VaApi::VaApi() {
 	}
 
 	initCodecs();
+#ifdef USE_VAVPP
 	initFilters();
+#endif
 }
 
 void VaApi::finalize() {
@@ -277,6 +280,7 @@ void VaApi::initCodecs() {
 	supports(vah264s, avh264s, NUM_VIDEO_SURFACES_H264, AV_CODEC_ID_H264);
 }
 
+#ifdef USE_VAVPP
 void VaApi::initFilters() {
 	if (!hasEntryPoint(VAEntrypointVideoProc, VAProfileNone))
 		return;
@@ -304,6 +308,7 @@ void VaApi::initFilters() {
 	if (config != VA_INVALID_ID)
 		vaDestroyConfig(display, config);
 }
+#endif
 
 int VaApi::toVAType(int mp_fields, bool first) {
 	static const int field[] = {VA_BOTTOM_FIELD, VA_TOP_FIELD};

@@ -30,12 +30,22 @@ bool HwAcc::supports(AVCodecID codec) {
 
 bool HwAcc::supports(DeintMethod method) {
 #ifdef Q_OS_MAC
+	Q_UNUSED(method);
 	return false;
 #endif
 #ifdef Q_OS_LINUX
+#ifdef USE_VAVPP
 	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
 	return filter && filter->supports(VaApi::toVAType(method));
+#else
+	return method == DeintMethod::Bob;
 #endif
+#endif
+}
+
+QList<DeintMethod> HwAcc::fullDeintList() {
+	static auto list = QList<DeintMethod>() << DeintMethod::Bob;
+	return list;
 }
 
 void HwAcc::initialize() {

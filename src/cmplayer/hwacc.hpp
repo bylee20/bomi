@@ -46,6 +46,7 @@ public:
 	static void initialize();
 	static void finalize();
 	static QList<AVCodecID> fullCodecList();
+	static QList<DeintMethod> fullDeintList();
 	static bool supports(AVCodecID codec);
 	static bool supports(DeintMethod method);
 	static const char *codecName(int id);

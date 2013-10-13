@@ -7,9 +7,12 @@
 
 #include <va/va.h>
 #if VA_CHECK_VERSION(0, 34, 0)
-#define USE_VAVPP
-#include <va/va_vpp.h>
+//#define USE_VAVPP
 #include <va/va_compat.h>
+#endif
+
+#ifdef USE_VAVPP
+#include <va/va_vpp.h>
 #endif
 
 struct VaApiStatusChecker {
@@ -41,6 +44,7 @@ private:
 	Data *d;
 };
 
+#ifdef USE_VAVPP
 struct VaApiFilterCap {
 	int algorithm = 0;
 	VAProcFilterValueRange range = {0, 0, 0, 0};
@@ -65,16 +69,19 @@ private:
 	VAProcFilterType m_type = VAProcFilterNone;
 	QVector<VaApiFilterCap> m_caps;
 };
+#endif
 
 typedef HwAccCodec<VAProfile> VaApiCodec;
 
 struct VaApi : public VaApiStatusChecker {
 	static const VaApiCodec *codec(AVCodecID id) { return find(id, get().m_supported); }
 	static VADisplay glx() {return m_display;}
+#ifdef USE_VAVPP
 	static VAProcDeinterlacingType toVAType(DeintMethod method);
 	static const VaApiFilterInfo *filter(VAProcFilterType type) { return find(type, get().m_filters); }
 	static QList<VaApiFilterInfo> filters() { return get().m_filters.values(); }
 	static QList<int> algorithms(VAProcFilterType type);
+#endif
 	static int surfaceFormat() {return get().m_surfaceFormat;}
 	static int toVAType(int mp_fields, bool first);
 private:
@@ -87,14 +94,16 @@ private:
 		const auto it = map.find(key); return (it != map.end()) ? &(*it) : nullptr;
 	}
 	void initCodecs();
+#ifdef USE_VAVPP
 	void initFilters();
+	QMap<VAProcFilterType, VaApiFilterInfo> m_filters;
+#endif
 	static VaApi &get();
 	VaApi();
 	void finalize();
 	QVector<VAProfile> m_profiles;
 	QMap<AVCodecID, VaApiCodec> m_supported;
 	QMap<VAProfile, QVector<VAEntrypoint>> m_entries;
-	QMap<VAProcFilterType, VaApiFilterInfo> m_filters;
 	int m_surfaceFormat = 0;
 	static VADisplay m_display;
 	static bool init;

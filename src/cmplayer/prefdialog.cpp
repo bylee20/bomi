@@ -323,25 +323,16 @@ PrefDialog::PrefDialog(QWidget *parent)
 		d->hwdec[codec] = makeCheckBox(avcodec_descriptor_get(codec)->long_name, HwAcc::supports(codec));
 	d->ui.hwdec_list->setLayout(vbox);
 
-#ifdef Q_OS_LINUX
 	vbox = new QVBoxLayout;
 	vbox->setMargin(0);
-	auto filter = VaApi::filter(VAProcFilterDeinterlacing);
-	if (filter) {
-		for (int algo : VaApi::algorithms(VAProcFilterDeinterlacing)) {
-			if (algo == VAProcDeinterlacingBob) // other methods are not tested, yet
-				d->hwdeint[DeintMethod::Bob] = makeCheckBox(VaApiFilterInfo::description(filter->type(), algo), filter->supports(algo));
-		}
-	}
+
+	const auto deints = HwAcc::fullDeintList();
+	for (const auto deint : deints)
+		d->hwdeint[deint] = makeCheckBox(DeintMethodInfo::name(deint), HwAcc::supports(deint));
 	d->ui.hwdeint_list->setLayout(vbox);
-#endif
 
 	d->ui.deint_tabs->addTab(d->deint_swdec = new DeintWidget(DecoderDevice::CPU), tr("For S/W decoding"));
 	d->ui.deint_tabs->addTab(d->deint_hwdec = new DeintWidget(DecoderDevice::GPU), tr("For H/W decoding"));
-#ifdef Q_OS_MAC
-	d->ui.enable_hwdeint->setVisible(false);
-	d->ui.enable_hwdeint->setEnabled(false);
-#endif
 	d->ui.deint_desc->setText(DeintWidget::informations());
 
 	d->ui.sub_ext->addItem(QString(), QString());
