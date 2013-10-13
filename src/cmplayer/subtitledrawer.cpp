@@ -40,15 +40,20 @@ bool SubtitleDrawer::draw(QImage &image, QPointF &shadowOffset, const RichTextDo
 	};
 	RichTextDocument front, back; make(front, m_front); make(back, m_back);
 	shadowOffset = m_style.shadow.offset*m_style.font.height()*scale;
-	const QSize size(area.width()*dpr, (front.naturalSize().height()*scale + qAbs(shadowOffset.y()))*dpr);
-	image = QImage(size, QImage::Format_ARGB32_Premultiplied);
+	auto nsize = front.naturalSize()*scale;
+	const QSize size(nsize.width() + qAbs(shadowOffset.x()), nsize.height() + qAbs(shadowOffset.y()));
+	image = QImage(size*dpr, QImage::Format_ARGB32_Premultiplied);
 	if (!image.isNull()) {
 		image.setDevicePixelRatio(dpr);
 		image.fill(0x0);
 		QPainter painter(&image);
+		QPointF trans{-(area.width() - nsize.width())*0.5, 0.0};
 		if (shadowOffset.y() < 0)
-			painter.translate(0, -shadowOffset.y());
-		painter.scale(scale*dpr, scale*dpr);
+			trans.ry() -= shadowOffset.y();
+		if (shadowOffset.x() < 0)
+			trans.rx() -= shadowOffset.x();
+		painter.translate(trans);
+		painter.scale(scale, scale);
 		back.draw(&painter, QPointF(0, 0));
 		front.draw(&painter, QPointF(0, 0));
 	} else

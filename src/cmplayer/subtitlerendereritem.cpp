@@ -21,6 +21,7 @@ struct SubtitleRendererItem::Data {
 //		return langMap.value(r->comp->language().id(), -1);
 		return langMap.value(comp.language(), -1);
 	}
+	QVector<quint32> zeros;
 	SubCompSelection selection{p};
 	OpenGLTexture texture;
 	double fps() const { return selection.fps(); }
@@ -223,7 +224,7 @@ void SubtitleRendererItem::unload() {
 }
 
 void SubtitleRendererItem::getCoords(QRectF &vertices, QRectF &) {
-	vertices = QRectF(d->drawer.pos(d->texture.size(), rect()), d->texture.size());
+	vertices = QRectF(d->drawer. pos(d->texture.size(), rect()), d->texture.size());
 }
 
 void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
@@ -235,12 +236,16 @@ void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 			d->texture.height += image.height();
 		});
 		if (!d->texture.size().isEmpty()) {
-			d->texture.allocate(GL_LINEAR);
+			const auto len = d->texture.width*d->texture.height;
+			if (d->zeros.size() < len)
+				d->zeros.resize(len);
+			d->texture.allocate(GL_LINEAR, d->zeros.data());
 			int y = 0;
 			d->shadowOffset = {0, 0};
 			d->selection.forImages([this, &y] (const SubCompImage &image) {
+				const int x = (d->texture.width - image.width())*0.5;
 				if (!image.isNull())
-					d->texture.upload(0, y, image.size(), image.bits());
+					d->texture.upload(x, y, image.size(), image.bits());
 				y += image.height();
 				if (qAbs(d->shadowOffset.x()) < qAbs(image.shadowOffset().x()))
 					d->shadowOffset = image.shadowOffset();

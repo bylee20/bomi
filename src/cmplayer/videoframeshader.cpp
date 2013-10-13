@@ -148,8 +148,6 @@ void VideoFrameShader::updateShader() {
 
 		prog.link();
 		m_prog = nullptr;
-
-		qDebug() << "shader built";
 	}
 	if (_Change(m_prog, &shader.program)) {
 		loc_tex[0] = m_prog->uniformLocation("tex0");
