@@ -22,6 +22,7 @@ public:
 	QPoint video_offset = {0, 0};
 	DeintMode video_deint = DeintMode::Auto;
 	InterpolatorType video_interpolator = InterpolatorType::Bilinear;
+	Dithering video_dithering = Dithering::Fruit;
 // audio state
 	double audio_preamp = 1.0;
 	int audio_volume = 100, audio_sync = 0;

@@ -7,6 +7,67 @@
 
 template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 
+enum class Dithering : int {
+	None = (int)0,
+	Fruit = (int)1,
+	Ordered = (int)2
+};
+
+inline bool operator == (Dithering e, int i) { return (int)e == i; }
+inline bool operator != (Dithering e, int i) { return (int)e != i; }
+inline bool operator == (int i, Dithering e) { return (int)e == i; }
+inline bool operator != (int i, Dithering e) { return (int)e != i; }
+inline int operator & (Dithering e, int i) { return (int)e & i; }
+inline int operator & (int i, Dithering e) { return (int)e & i; }
+inline int &operator &= (int &i, Dithering e) { return i &= (int)e; }
+inline int operator ~ (Dithering e) { return ~(int)e; }
+inline int operator | (Dithering e, int i) { return (int)e | i; }
+inline int operator | (int i, Dithering e) { return (int)e | i; }
+inline int operator | (Dithering e1, Dithering e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, Dithering e) { return i |= (int)e; }
+inline bool operator > (Dithering e, int i) { return (int)e > i; }
+inline bool operator < (Dithering e, int i) { return (int)e < i; }
+inline bool operator >= (Dithering e, int i) { return (int)e >= i; }
+inline bool operator <= (Dithering e, int i) { return (int)e <= i; }
+inline bool operator > (int i, Dithering e) { return i > (int)e; }
+inline bool operator < (int i, Dithering e) { return i < (int)e; }
+inline bool operator >= (int i, Dithering e) { return i >= (int)e; }
+inline bool operator <= (int i, Dithering e) { return i <= (int)e; }
+
+template<>
+class EnumInfo<Dithering> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef Dithering Enum;
+public:
+	struct Item { Enum value; const char *name; };
+	static constexpr int size() { return 3; }
+	static const char *name(Enum e) {
+		return 0 <= e && e < size() ? info[(int)e].name : "";
+	}
+	static QString description(int e) { return description((Enum)e); }
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Off"));
+		case Enum::Fruit: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Random Dithering"));
+		case Enum::Ordered: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Ordered Dithering"));
+		default: return tr("");
+		};
+	}
+	static constexpr const std::array<Item, 3> &items() { return info; }
+	static Enum from(int id, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum from(const QString &name, Enum def = info[0].value) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+		return it != info.cend() ? it->value : def;
+	}
+private:
+	static const std::array<Item, 3> info;
+};
+
+using DitheringInfo = EnumInfo<Dithering>;
+
 enum class DecoderDevice : int {
 	None = (int)0,
 	CPU = (int)1,

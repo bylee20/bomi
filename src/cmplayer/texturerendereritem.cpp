@@ -37,8 +37,24 @@ vec4 interpolated(const in vec2 coord) {
 #endif
 }
 
+#if USE_DITHERing
+uniform sampler2D dithering;
+uniform float dithering_quantization;
+uniform float dithering_center;
+uniform vec2 dithering_size;
+vec4 ditheringed(const in vec4 color) {
+	vec2 dithering_pos = texCoord.xy / dithering_size;
+	float dithering_value = texture2D(dithering, dithering_pos).r + dithering_center;
+	return floor(color * dithering_quantization + dithering_value) / dithering_quantization;
+}
+#endif
+
 void main() {
-	gl_FragColor = interpolated(texCoord);
+	vec4 color = interpolated(texCoord);
+#if USE_DITHERing
+	color = ditheringed(color);
+#endif
+	gl_FragColor = color;
 }
 
 #endif
@@ -59,9 +75,11 @@ void main() {
 
 )";
 
-TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, bool interpolator)
-: m_item(item), m_interpolator(interpolator) {
-	const QByteArray header("#define USE_INTERPOLATOR " + QByteArray::number(interpolator) + "\n");
+TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, bool interpolator, bool dithering)
+	: m_item(item), m_interpolator(interpolator), m_dithering(dithering) {
+	QByteArray header;
+	header += "#define USE_INTERPOLATOR " + QByteArray::number(interpolator) + "\n";
+	header += "#define USE_DITHERing " + QByteArray::number(dithering) + "\n";
 	m_fragCode = header;
 	m_fragCode += "#define FRAGMENT\n";
 	m_fragCode += code;
@@ -94,8 +112,23 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 		prog->setUniformValue(loc_dxy, QVector2D(1.f/(float)texture.width, 1.f/(float)texture.height));
 		f->glActiveTexture(GL_TEXTURE1);
 		m_item->lutInterpolatorTexture().bind();
-		f->glActiveTexture(GL_TEXTURE0);
 	}
+	if (m_dithering) {
+		auto &dithering = m_item->ditheringTexture();
+		Q_ASSERT(dithering.width == dithering.height);
+		Q_ASSERT(loc_dithering != -1);
+		Q_ASSERT(loc_dithering_quantization != -1);
+		Q_ASSERT(loc_dithering_center != -1);
+		Q_ASSERT(loc_dithering_size != -1);
+		const int size = dithering.width;
+		prog->setUniformValue(loc_dithering, 2);
+		prog->setUniformValue(loc_dithering_quantization, float(1 << m_item->depth()) - 1.f);
+		prog->setUniformValue(loc_dithering_center, 0.5f / size*size);
+		prog->setUniformValue(loc_dithering_size, size);
+		f->glActiveTexture(GL_TEXTURE2);
+		dithering.bind();
+	}
+	f->glActiveTexture(GL_TEXTURE0);
 }
 
 void TextureRendererShader::initialize() {
@@ -105,6 +138,12 @@ void TextureRendererShader::initialize() {
 	if (m_interpolator) {
 		loc_lut_interpolator = prog->uniformLocation("lut_interpolator");
 		loc_dxy = prog->uniformLocation("dxy");
+	}
+	if (m_dithering) {
+		loc_dithering = prog->uniformLocation("dithering");
+		loc_dithering_quantization = prog->uniformLocation("dithering_quantization");
+		loc_dithering_center = prog->uniformLocation("dithering_center");
+		loc_dithering_size = prog->uniformLocation("dithering_size");
 	}
 	link(prog);
 }
@@ -157,7 +196,7 @@ TextureRendererItem::~TextureRendererItem() {
 }
 
 TextureRendererShader *TextureRendererItem::createShader() const {
-	return new TextureRendererShader(this, m_interpolator > 0);
+	return new TextureRendererShader(this, m_interpolator > 0, m_dithering > 0);
 }
 
 QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
@@ -175,6 +214,8 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 	}
 	if (_Change(m_interpolator, m_newInt))
 		m_lutInt = OpenGLCompat::allocateInterpolatorLutTexture(m_lutInt.id, m_interpolator);
+	if (_Change(m_dithering, m_newDithering))
+		m_ditheringTex = OpenGLCompat::allocateDitheringTexture(m_ditheringTex.id, m_dithering);
 	return d->node;
 }
 

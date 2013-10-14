@@ -9,7 +9,6 @@
 
 class Record;
 
-
 class Menu : public QMenu {
 	Q_OBJECT
 public:

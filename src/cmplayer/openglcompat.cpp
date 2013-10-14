@@ -1,6 +1,9 @@
 #include "openglcompat.hpp"
 #include "colorproperty.hpp"
 #include <cmath>
+extern "C" {
+#include <video/out/dither.h>
+}
 
 OpenGLCompat OpenGLCompat::c;
 
@@ -13,6 +16,7 @@ void OpenGLCompat::fill(QOpenGLContext *ctx) {
 	m_major = version.first;
 	m_minor = version.second;
 	m_hasRG = m_major >= 3 || ctx->hasExtension("GL_ARB_texture_rg");
+	m_hasFloat = m_major >= 3 || ctx->hasExtension("GL_ARB_texture_float");
 	m_formats[GL_RED] = {GL_R8, GL_RED, GL_UNSIGNED_BYTE};
 	m_formats[GL_RG] = {GL_RG8, GL_RG, GL_UNSIGNED_BYTE};
 	m_formats[GL_LUMINANCE] = {GL_LUMINANCE8, GL_LUMINANCE, GL_UNSIGNED_BYTE};
@@ -138,8 +142,9 @@ QVector3D operator*(const QMatrix3x3 &mat, const QVector3D &vec) {
 	return ret;
 }
 
+constexpr static const int GLushortMax = std::numeric_limits<GLushort>::max();
+
 void OpenGLCompat::upload3dLutTexture(const OpenGLTexture &texture, const QVector3D &sub, const QMatrix3x3 &mul, const QVector3D &add) {
-	constexpr static const int max = std::numeric_limits<GLushort>::max();
 	const int length = texture.width*texture.height*texture.depth*4;
 	if (length != c.m_3dLut.size() || c.m_subLut != sub || c.m_addLut != add || c.m_mulLut != mul) {
 		c.m_subLut = sub;
@@ -147,7 +152,7 @@ void OpenGLCompat::upload3dLutTexture(const OpenGLTexture &texture, const QVecto
 		c.m_mulLut = mul;
 		c.m_3dLut.resize(length);
 		auto p = c.m_3dLut.data();
-		auto conv = [] (float v) { v = qBound(0.f, v, 1.f); return (GLushort)(v*max); };
+		auto conv = [] (float v) { v = qBound(0.f, v, 1.f); return (GLushort)(v*GLushortMax); };
 		for (int z=0; z<texture.depth; ++z) {
 			for (int y=0; y<texture.height; ++y) {
 				for (int x=0; x<texture.width; ++x) {
@@ -158,7 +163,7 @@ void OpenGLCompat::upload3dLutTexture(const OpenGLTexture &texture, const QVecto
 					*p++ = conv(color.z());
 					*p++ = conv(color.y());
 					*p++ = conv(color.x());
-					*p++ = max;
+					*p++ = GLushortMax;
 				}
 			}
 		}
@@ -176,5 +181,48 @@ OpenGLTexture OpenGLCompat::allocate3dLutTexture(GLuint id) {
 	texture.id = id;
 	texture.bind();
 	texture.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, nullptr);
+	return texture;
+}
+
+// copied from mpv's gl_video.c
+OpenGLTexture OpenGLCompat::allocateDitheringTexture(GLuint id, Dithering type) {
+	OpenGLTexture texture;
+	texture.id = id;
+	if (type == Dithering::None)
+		return texture;
+	const int sizeb = 6;
+	int size = 0;
+	QByteArray data;
+	if (type == Dithering::Fruit) {
+		size = 1 << 6;
+		auto &fruit = c.m_fruit;
+		if (fruit.size() != size*size) {
+			fruit.resize(size*size);
+			mp_make_fruit_dither_matrix(fruit.data(), sizeb);
+		}
+		texture.format.internal = c.m_hasRG ? GL_R16 : GL_LUMINANCE16;
+		texture.format.pixel = c.m_hasRG ? GL_RED : GL_LUMINANCE;
+		if (c.m_hasFloat) {
+			texture.format.type = GL_FLOAT;
+			data.resize(sizeof(GLfloat)*fruit.size());
+			memcpy(data.data(), fruit.data(), data.size());
+		} else {
+			texture.format.type = GL_UNSIGNED_SHORT;
+			data.resize(sizeof(GLushort)*fruit.size());
+			auto p = (GLushort*)data.data();
+			for (auto v : fruit)
+				*p++ = v*GLushortMax;
+		}
+	} else {
+		size = 8;
+		data.resize(size*size);
+		mp_make_ordered_dither_matrix((uchar*)data.data(), size);
+		texture.format = textureFormat(1);
+	}
+	texture.width = texture.height = size;
+	texture.target = GL_TEXTURE_2D;
+	//	 gl->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	//	 gl->PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	texture.allocate(GL_NEAREST, GL_REPEAT, data.data());
 	return texture;
 }

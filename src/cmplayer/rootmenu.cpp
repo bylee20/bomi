@@ -127,6 +127,14 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	interpolator.addActionToGroup(_L("lanczos2"), true)->setData((int)InterpolatorType::Lanczos2);
 	interpolator.addActionToGroup(_L("lanczos3-approx"), true)->setData((int)InterpolatorType::Lanczos3Approx);
 
+	auto &dithering = *video.addMenu(_L("dithering"));
+	dithering.addAction("next");
+	dithering.addSeparator();
+	dithering.g()->setExclusive(true);
+	dithering.addActionToGroup(_L("off"), true)->setData((int)Dithering::None);
+	dithering.addActionToGroup(_L("random"), true)->setData((int)Dithering::Fruit);
+	dithering.addActionToGroup(_L("ordered"), true)->setData((int)Dithering::Ordered);
+
 	auto &deint = *video.addMenu(_L("deint"));
 	deint.addAction(_L("toggle"));
 	deint.addSeparator();
@@ -430,6 +438,12 @@ void RootMenu::update(const Pref &p) {
 	interpolator["next"]->setText(tr("Select Next"));
 	for (auto action : interpolator.g()->actions())
 		action->setText(InterpolatorTypeInfo::description(action->data().toInt()));
+
+	auto &dithering = video("dithering");
+	dithering.setTitle(tr("Dithering"));
+	dithering["next"]->setText(tr("Select Next"));
+	for (auto action : dithering.g()->actions())
+		action->setText(DitheringInfo::description(action->data().toInt()));
 
 	auto &effect = video("filter");
 	effect.setTitle(tr("Filter"));

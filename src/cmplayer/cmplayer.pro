@@ -125,7 +125,8 @@ HEADERS += playengine.hpp \
     texturenode.hpp \
     geometryitem.hpp \
     playengine_p.hpp \
-    mediamisc.hpp
+    mediamisc.hpp \
+    ../mpv/video/out/dither.h
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -198,11 +199,13 @@ SOURCES += main.cpp \
     vaapipostprocessor.cpp \
     texturenode.cpp \
     geometryitem.cpp \
-    mediamisc.cpp
+    mediamisc.cpp \
+    ../mpv/video/out/dither.c
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
-    translations/cmplayer_ru.ts
+    translations/cmplayer_ru.ts \
+    translations/cmplayer_it.ts
 
 FORMS += \
     ui/aboutdialog.ui \

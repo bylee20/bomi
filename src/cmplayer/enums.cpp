@@ -1,4 +1,10 @@
 #include "enums.hpp"
+const std::array<DitheringInfo::Item, 3> DitheringInfo::info{{
+	{Dithering::None, "None"},
+	{Dithering::Fruit, "Fruit"},
+	{Dithering::Ordered, "Ordered"}
+}};
+
 const std::array<DecoderDeviceInfo::Item, 3> DecoderDeviceInfo::info{{
 	{DecoderDevice::None, "None"},
 	{DecoderDevice::CPU, "CPU"},

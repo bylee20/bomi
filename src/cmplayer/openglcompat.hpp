@@ -136,6 +136,7 @@ public:
 	static int maximumTextureSize() { return c.m_maxTextureSize; }
 	static const OpenGLCompat &get() { return c; }
 	static OpenGLTexture allocateInterpolatorLutTexture(GLuint id, InterpolatorType type);
+	static OpenGLTexture allocateDitheringTexture(GLuint id, Dithering type);
 	static OpenGLTexture allocate3dLutTexture(GLuint id);
 	static void upload3dLutTexture(const OpenGLTexture &texture, const QVector3D &sub, const QMatrix3x3 &mul, const QVector3D &add);
 	static QOpenGLFunctions *functions() { auto ctx = QOpenGLContext::currentContext(); return ctx ? ctx->functions() : nullptr; }
@@ -157,10 +158,11 @@ private:
 	QOpenGLVersionProfile m_profile;
 	int m_major = 0, m_minor = 0;
 	int m_maxTextureSize = 0;
-	bool m_hasRG = false;
+	bool m_hasRG = false, m_hasFloat;
 	QMap<GLenum, OpenGLTextureFormat> m_formats;
 	std::array<QVector<GLushort>, InterpolatorTypeInfo::size()> m_intLuts;
 	QVector<GLushort> m_3dLut;
+	QVector<GLfloat> m_fruit;
 	QVector3D m_subLut, m_addLut;
 	QMatrix3x3 m_mulLut;
 	std::array<QPair<double, double>, InterpolatorTypeInfo::size()> m_bicubicParams;
@@ -169,14 +171,16 @@ private:
 
 class OpenGLFramebufferObject {
 public:
-	OpenGLFramebufferObject(const QSize &size, int target = GL_TEXTURE_2D) {
+	OpenGLFramebufferObject(const QSize &size, int target = GL_TEXTURE_2D)
+	: OpenGLFramebufferObject(size, OpenGLCompat::textureFormat(GL_BGRA), target) {}
+	OpenGLFramebufferObject(const QSize &size, const OpenGLTextureFormat &format, int target = GL_TEXTURE_2D) {
 		auto f = func();
 		f->glGenFramebuffers(1, &m_id);
 		f->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
 		m_texture.width = size.width();
 		m_texture.height = size.height();
 		m_texture.target = target;
-		m_texture.format = OpenGLCompat::textureFormat(GL_BGRA);
+		m_texture.format = format;
 		m_texture.generate();
 		m_texture.allocate();
 		f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, m_texture.id, 0);

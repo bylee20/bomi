@@ -417,6 +417,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->menu("video")("align").g("vertical")->trigger(as.video_alignment & 0xf0);
 	d->menu("video")("deint").g()->trigger((int)as.video_deint);
 	d->menu("video")("interpolator").g()->trigger((int)as.video_interpolator);
+	d->menu("video")("dithering").g()->trigger((int)as.video_dithering);
 	for (int i=0; i<16; ++i) {
 		if ((as.video_effects >> i) & 1)
 			d->menu("video")("filter").g()->setChecked(1 << i, true);
@@ -677,6 +678,29 @@ void MainWindow::connectMenus() {
 					action->setChecked(true);
 					showMessage(tr("Interpolator"), action->text());
 					d->renderer.setInterpolator(type);
+				}
+			});
+	});
+	connect(video("dithering")["next"], &QAction::triggered, [this] () {
+		auto actions = d->menu("video")("dithering").g()->actions();
+		int i = 0;
+		for (; i<actions.size(); ++i)
+			if (actions[i]->isChecked())
+				break;
+		if (++i >= actions.size())
+			i = 0;
+		actions[i]->trigger();
+	});
+	connect(video("dithering").g(), &QActionGroup::triggered, [this] (QAction *action) {
+		auto type = DitheringInfo::from(action->data().toInt(), Dithering::None);
+		if (d->renderer.dithering() != type)
+			d->push(type, d->renderer.dithering(), [this] (Dithering type) {
+				d->as.video_dithering = type;
+				auto &menu = d->menu("video")("dithering");
+				if (auto action = menu.g()->find((int)type)) {
+					action->setChecked(true);
+					showMessage(menu.title(), action->text());
+					d->renderer.setDithering(type);
 				}
 			});
 	});
