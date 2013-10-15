@@ -1,7 +1,7 @@
 #include "trayicon.hpp"
 #include <glib-object.h>
 
-enum AppIndicatorCategory {APP_INDICATOR_CATEGORY_APPLICATION_STATUS};
+enum AppIndicatorCategory { APP_INDICATOR_CATEGORY_APPLICATION_STATUS };
 enum AppIndicatorStatus {
 	APP_INDICATOR_STATUS_PASSIVE,
 	APP_INDICATOR_STATUS_ACTIVE,

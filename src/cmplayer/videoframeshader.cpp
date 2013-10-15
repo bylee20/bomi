@@ -245,7 +245,6 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 //	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 //	glClear(GL_COLOR_BUFFER_BIT);
 
-
 	m_prog->bind();
 	m_prog->setUniformValue(loc_top_field, (float)m_frame.isTopField());
 	m_prog->setUniformValue(loc_sub_vec, m_sub_vec);

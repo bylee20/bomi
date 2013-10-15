@@ -11,7 +11,6 @@ public:
 		Trigger = QSystemTrayIcon::Trigger,
 		Context = QSystemTrayIcon::Context
 	};
-
 	TrayIcon(const QIcon &icon, QObject *parent = nullptr);
 	~TrayIcon();
 	void setVisible(bool visible);
