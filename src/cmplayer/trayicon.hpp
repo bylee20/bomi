@@ -13,6 +13,7 @@ public:
 	};
 	TrayIcon(const QIcon &icon, QObject *parent = nullptr);
 	~TrayIcon();
+	bool isAvailable() const;
 	void setVisible(bool visible);
 signals:
 	void activated(ActivationReason reason);

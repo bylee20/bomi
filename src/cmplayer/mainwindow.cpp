@@ -450,17 +450,20 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 #ifndef Q_OS_MAC
 	d->tray = new TrayIcon(cApp.defaultIcon(), this);
-	connect(d->tray, &TrayIcon::activated, [this] (TrayIcon::ActivationReason reason) {
-		if (reason == TrayIcon::Trigger)
-			setVisible(!isVisible());
-		else if (reason == TrayIcon::Context)
-			d->contextMenu.exec(QCursor::pos());
-        else if (reason == TrayIcon::Show)
-            setVisible(true);
-        else if (reason == TrayIcon::Quit)
-            exit();
-	});
-	d->tray->setVisible(d->preferences.enable_system_tray);
+	if (d->tray->isAvailable()) {
+		connect(d->tray, &TrayIcon::activated, [this] (TrayIcon::ActivationReason reason) {
+			if (reason == TrayIcon::Trigger)
+				setVisible(!isVisible());
+			else if (reason == TrayIcon::Context)
+				d->contextMenu.exec(QCursor::pos());
+			else if (reason == TrayIcon::Show)
+				setVisible(true);
+			else if (reason == TrayIcon::Quit)
+				exit();
+		});
+		d->tray->setVisible(d->preferences.enable_system_tray);
+	} else
+		_Delete(d->tray);
 #endif
 
 //	Currently, session management does not works.
