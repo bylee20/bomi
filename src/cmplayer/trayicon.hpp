@@ -7,7 +7,7 @@ class TrayIcon : public QObject {
 	Q_OBJECT
 public:
 	enum ActivationReason {
-		Quit = -1,
+        Quit = -1, Show = -2,
 		Trigger = QSystemTrayIcon::Trigger,
 		Context = QSystemTrayIcon::Context
 	};

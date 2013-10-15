@@ -455,6 +455,10 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 			setVisible(!isVisible());
 		else if (reason == TrayIcon::Context)
 			d->contextMenu.exec(QCursor::pos());
+        else if (reason == TrayIcon::Show)
+            setVisible(true);
+        else if (reason == TrayIcon::Quit)
+            exit();
 	});
 	d->tray->setVisible(d->preferences.enable_system_tray);
 #endif
