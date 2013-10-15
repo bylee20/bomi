@@ -55,8 +55,7 @@ private:
 	ShaderInfo m_shader[2];
 	QOpenGLShaderProgram *m_prog = nullptr;
 	ColorProperty m_color;
-	mp_csp m_csp;
-	mp_csp_levels m_range;
+	mp_csp m_csp; mp_csp_levels m_range;
 	GLenum m_target = GL_TEXTURE_2D;
 	QMatrix3x3 m_mul_mat;
 	QMatrix4x4 m_vMatrix;
@@ -71,6 +70,7 @@ private:
 	QByteArray m_texel;
 	bool m_dma = false, m_check = true;
 	QRectF m_coords, m_positions;
+	QPointF m_chroma = {0.0, 0.0};
 #ifdef Q_OS_LINUX
 	void *m_vaSurfaceGLX = nullptr;
 #endif

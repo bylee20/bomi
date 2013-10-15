@@ -116,14 +116,20 @@ void VideoFrameShader::updateShader() {
 		header += "#define TEX_COUNT " + QByteArray::number(m_textures.size()) + "\n";
 		header += "const float texWidth = " + _N((double)format.alignedWidth(), 1).toLatin1() + ";\n";
 		header += "const float texHeight = " + _N((double)format.alignedHeight(), 1).toLatin1() + ";\n";
-		auto cc2string = [this] (int i) -> QString {
+
+		auto declareVec2 = [] (const QString &name, const QPointF &p) {
+			return _L("const vec2 ") + name + _L(" = vec2(") + _N(p.x(), 6) + _L(", ") + _N(p.y(), 6) + _L(");\n");
+		};
+		auto cc2string = [declareVec2, this] (int i) -> QString {
 			QPointF cc = {1.0, 1.0};
 			if (i < m_textures.size())
 				cc = m_textures[i].cc;
-			return _L("const vec2 cc") + _N(i) + _L(" = vec2(") + _N(cc.x(), 6) + _L(", ") + _N(cc.y(), 6) + _L(");\n");
+			return declareVec2("cc" + _N(i), cc);
 		};
 		header += cc2string(1).toLatin1();
 		header += cc2string(2).toLatin1();
+		const double chroma_x = m_frame.format().chroma() == MP_CHROMA_LEFT ? 0.5 : 0.0;
+		header += declareVec2("chroma_location", {chroma_x, 0.0});
 		if (m_target != GL_TEXTURE_2D || format.isEmpty())
 			header += "#define USE_RECTANGLE\n";
 		if (hasKernelEffects())
@@ -279,6 +285,7 @@ void VideoFrameShader::fillInfo() {
 	release();
 	const auto &format = m_frame.format();
 	m_shader[0].rebuild = m_shader[1].rebuild = true;
+
 	m_csp = format.colorspace();
 	m_range = format.range();
 	m_target = m_dma ? GL_TEXTURE_RECTANGLE : GL_TEXTURE_2D;
@@ -342,7 +349,7 @@ void VideoFrameShader::fillInfo() {
 	case IMGFMT_420P9_BE:
 		m_texel = R"(
 			float convBits(const in vec4 tex) {
-				const vec2 c = vec2(265.0, 1.0)/(256.0*??.0/255.0 + 1.0);
+				const vec2 c = vec2(256.0, 1.0)/(256.0*??.0/255.0 + 1.0);
 				return dot(tex.!!, c);
 			}
 			vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {

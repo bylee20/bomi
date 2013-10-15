@@ -50,6 +50,7 @@ public:
 	inline bool isNative() const {return d->native;}
 	inline mp_csp colorspace() const { return d->colorspace; }
 	inline mp_csp_levels range() const { return d->range; }
+	inline mp_chroma_location chroma() const { return d->chroma; }
 	inline Type imgfmt() const {return d->imgfmt;}
 	QList<VideoTexture> textures() const;
 	inline bool isLittleEndian() const { return d->flags & MP_IMGFLAG_LE; }
@@ -61,13 +62,15 @@ private:
 		Data(const QImage &image);
 		inline bool compare(const mp_image *mpi) const {
 			return mpi->fmt.id == imgfmt && QSize(mpi->w, mpi->h) == size
-					&& QSize(mpi->display_w, mpi->display_h) == displaySize
-					&& mpi->colorspace == colorspace && mpi->levels == range
-					&& (int)mpi->flags == flags
-					&& (native || (alignedByteSize[0].width() == mpi->stride[0] && alignedByteSize[1].width() == mpi->stride[1] && alignedByteSize[2].width() == mpi->stride[2]));
+				&& QSize(mpi->display_w, mpi->display_h) == displaySize
+				&& mpi->colorspace == colorspace && mpi->levels == range
+				&& mpi->chroma_location == chroma && (int)mpi->flags == flags
+				&& (native || (alignedByteSize[0].width() == mpi->stride[0] && alignedByteSize[1].width() == mpi->stride[1] && alignedByteSize[2].width() == mpi->stride[2]));
 		}
 		inline bool compare(const Data *other) const {
-			return flags == other->flags && colorspace == other->colorspace && range == other->range && type == other->type && size == other->size && alignedSize == other->alignedSize && displaySize == other->displaySize;
+			return flags == other->flags && colorspace == other->colorspace
+				&& range == other->range && type == other->type && chroma == other->chroma
+				&& size == other->size && alignedSize == other->alignedSize && displaySize == other->displaySize;
 		}
 		QSize size = {0, 0}, alignedSize = {0, 0}, displaySize = {0, 0};
 		std::array<QSize, 3> alignedByteSize{{QSize(0, 0), QSize(0, 0), QSize(0, 0)}};
@@ -76,6 +79,7 @@ private:
 		bool native = false;
 		mp_csp colorspace = MP_CSP_BT_601;
 		mp_csp_levels range = MP_CSP_LEVELS_TV;
+		mp_chroma_location chroma = MP_CHROMA_LEFT;
 	};
 	QExplicitlySharedDataPointer<Data> d;
 };

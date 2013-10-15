@@ -1,8 +1,10 @@
 R"(
 #ifdef USE_RECTANGLE
 const vec4 dxy = vec4(1.0, 1.0, -1.0, 0.0);
+const vec2 chroma_offset = chroma_location;
 #else
 const vec4 dxy = vec4(1.0/texWidth, 1.0/texHeight, -1.0/texWidth, 0.0);
+const vec2 chroma_offset = chroma_location*dxy.xy;
 #endif
 
 varying vec2 texCoord;
@@ -20,9 +22,9 @@ uniform sampler2D tex0, tex1, tex2;
 
 #define TEXTURE_0(i) texture2D(tex0, i)
 #if TEX_COUNT > 1
-#define TEXTURE_1(i) texture2D(tex1, i*cc1)
+#define TEXTURE_1(i) texture2D(tex1, (i+chroma_offset)*cc1)
 #if TEX_COUNT > 2
-#define TEXTURE_2(i) texture2D(tex2, i*cc2)
+#define TEXTURE_2(i) texture2D(tex2, (i+chroma_offset)*cc2)
 #endif
 #endif
 

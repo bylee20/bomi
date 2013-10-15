@@ -10,7 +10,7 @@ extern "C" {
 VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
 : size(mpi->w, mpi->h), displaySize(mpi->display_w, mpi->display_h)
 , planes(mpi->fmt.num_planes), flags(mpi->flags), type(mpi->imgfmt), imgfmt(mpi->imgfmt)
-, colorspace(mpi->colorspace), range(mpi->levels) {
+, colorspace(mpi->colorspace), range(mpi->levels), chroma(mpi->chroma_location) {
 	if ((native = IMGFMT_IS_HWACCEL(imgfmt))) {
 #ifdef Q_OS_LINUX
 		if (imgfmt == IMGFMT_VAAPI) {
