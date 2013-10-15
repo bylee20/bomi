@@ -17,24 +17,30 @@ void OpenGLCompat::fill(QOpenGLContext *ctx) {
 	m_minor = version.second;
 	m_hasRG = m_major >= 3 || ctx->hasExtension("GL_ARB_texture_rg");
 	m_hasFloat = m_major >= 3 || ctx->hasExtension("GL_ARB_texture_float");
-	m_formats[GL_RED] = {GL_R8, GL_RED, GL_UNSIGNED_BYTE};
-	m_formats[GL_RG] = {GL_RG8, GL_RG, GL_UNSIGNED_BYTE};
-	m_formats[GL_LUMINANCE] = {GL_LUMINANCE8, GL_LUMINANCE, GL_UNSIGNED_BYTE};
-	m_formats[GL_LUMINANCE_ALPHA] = {GL_LUMINANCE8_ALPHA8, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE};
-	m_formats[GL_RGB] = {GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE};
-	m_formats[GL_BGR] = {GL_RGB8, GL_BGR, GL_UNSIGNED_BYTE};
-	m_formats[GL_BGRA] = {GL_RGBA8, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV};
-	m_formats[GL_RGBA] = {GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV};
-	if (m_hasRG) {
-		m_formats[1] = m_formats[GL_RED];
-		m_formats[2] = m_formats[GL_RG];
-	} else {
-		qDebug() << "no GL_RG type support";
-		m_formats[1] = m_formats[GL_LUMINANCE];
-		m_formats[2] = m_formats[GL_LUMINANCE_ALPHA];
+
+	m_formats[0][GL_RED] = {GL_R8, GL_RED, GL_UNSIGNED_BYTE};
+	m_formats[0][GL_RG] = {GL_RG8, GL_RG, GL_UNSIGNED_BYTE};
+	m_formats[0][GL_LUMINANCE] = {GL_LUMINANCE8, GL_LUMINANCE, GL_UNSIGNED_BYTE};
+	m_formats[0][GL_LUMINANCE_ALPHA] = {GL_LUMINANCE8_ALPHA8, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE};
+	m_formats[0][GL_RGB] = {GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE};
+	m_formats[0][GL_BGR] = {GL_RGB8, GL_BGR, GL_UNSIGNED_BYTE};
+	m_formats[0][GL_BGRA] = {GL_RGBA8, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV};
+	m_formats[0][GL_RGBA] = {GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV};
+
+	m_formats[1][GL_RED] = {GL_R16, GL_RED, GL_UNSIGNED_SHORT};
+	m_formats[1][GL_RG] = {GL_RG16, GL_RG, GL_UNSIGNED_SHORT};
+	m_formats[1][GL_LUMINANCE] = {GL_LUMINANCE16, GL_LUMINANCE, GL_UNSIGNED_SHORT};
+	m_formats[1][GL_LUMINANCE_ALPHA] = {GL_LUMINANCE16_ALPHA16, GL_LUMINANCE_ALPHA, GL_UNSIGNED_SHORT};
+	m_formats[1][GL_RGB] = {GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT};
+	m_formats[1][GL_BGR] = {GL_RGB16, GL_BGR, GL_UNSIGNED_SHORT};
+	m_formats[1][GL_BGRA] = {GL_RGBA16, GL_BGRA, GL_UNSIGNED_SHORT};
+	m_formats[1][GL_RGBA] = {GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT};
+	for (auto &formats : m_formats) {
+		formats[1] = m_hasRG ? formats[GL_RED] : formats[GL_LUMINANCE];
+		formats[2] = m_hasRG ? formats[GL_RG]  : formats[GL_LUMINANCE_ALPHA];
+		formats[3] = formats[GL_BGR];
+		formats[4] = formats[GL_BGRA];
 	}
-	m_formats[3] = m_formats[GL_BGR];
-	m_formats[4] = m_formats[GL_BGRA];
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTextureSize);
 

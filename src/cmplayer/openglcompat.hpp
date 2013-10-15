@@ -130,7 +130,9 @@ public:
 	static constexpr int CubicLutSamples = 256;
 	static constexpr int CubicLutSize = CubicLutSamples*4;
 	static void initialize(QOpenGLContext *ctx) { c.fill(ctx); }
-	static OpenGLTextureFormat textureFormat(GLenum format) { return c.m_formats[format]; }
+	static OpenGLTextureFormat textureFormat(GLenum format, int bpc = 1) {
+		Q_ASSERT(bpc == 1 || bpc == 2); return c.m_formats[bpc-1][format];
+	}
 	static bool hasRG() { return c.m_hasRG; } // use alpha instead of g if this returns false
 	static QByteArray rg(const char *rg) { return c.m_hasRG ? QByteArray(rg) : QByteArray(rg).replace('g', 'a'); }
 	static int maximumTextureSize() { return c.m_maxTextureSize; }
@@ -158,8 +160,8 @@ private:
 	QOpenGLVersionProfile m_profile;
 	int m_major = 0, m_minor = 0;
 	int m_maxTextureSize = 0;
-	bool m_hasRG = false, m_hasFloat;
-	QMap<GLenum, OpenGLTextureFormat> m_formats;
+	bool m_hasRG = false, m_hasFloat = false;
+	QMap<GLenum, OpenGLTextureFormat> m_formats[2];
 	std::array<QVector<GLushort>, InterpolatorTypeInfo::size()> m_intLuts;
 	QVector<GLushort> m_3dLut;
 	QVector<GLfloat> m_fruit;
