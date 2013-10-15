@@ -21,6 +21,7 @@
 #include <functional>
 #include "playlistmodel.hpp"
 #include "translator.hpp"
+#include "trayicon.hpp"
 #include "playlist.hpp"
 #include "subtitle_parser.hpp"
 #include "subtitlemodel.hpp"
@@ -66,7 +67,7 @@ struct MainWindow::Data {
 	PlaylistModel &playlist = engine.playlist();
 	QUndoStack *undo = nullptr;
 //	FavoritesView *favorite;
-	QSystemTrayIcon *tray = nullptr;
+	TrayIcon *tray = nullptr;
 	QString filePath;
 	Pref preferences;
 	const Pref &pref() const {return preferences;}
@@ -448,11 +449,11 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->winState = d->prevWinState = windowState();
 
 #ifndef Q_OS_MAC
-	d->tray = new QSystemTrayIcon(cApp.defaultIcon(), this);
-	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason reason) {
-		if (reason == QSystemTrayIcon::Trigger)
+	d->tray = new TrayIcon(cApp.defaultIcon(), this);
+	connect(d->tray, &TrayIcon::activated, [this] (TrayIcon::ActivationReason reason) {
+		if (reason == TrayIcon::Trigger)
 			setVisible(!isVisible());
-		else if (reason == QSystemTrayIcon::Context)
+		else if (reason == TrayIcon::Context)
 			d->contextMenu.exec(QCursor::pos());
 	});
 	d->tray->setVisible(d->preferences.enable_system_tray);

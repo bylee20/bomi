@@ -38,8 +38,9 @@ macx {
     QT += dbus x11extras
     QMAKE_CC = "gcc -std=c99 -w"
     QMAKE_CXXFLAGS += -std=c++11
+    PKGCONFIG += glib-2.0
     TARGET = cmplayer
-    LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lva-x11 -lasound -ldl -lass -lpulse -lopenal -ljack
+    LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lva-x11 -lasound -ldl -lass -lpulse -lopenal -ljack -lgobject-2.0
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }
@@ -126,7 +127,8 @@ HEADERS += playengine.hpp \
     geometryitem.hpp \
     playengine_p.hpp \
     mediamisc.hpp \
-    ../mpv/video/out/dither.h
+    ../mpv/video/out/dither.h \
+    trayicon.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -200,7 +202,8 @@ SOURCES += main.cpp \
     texturenode.cpp \
     geometryitem.cpp \
     mediamisc.cpp \
-    ../mpv/video/out/dither.c
+    ../mpv/video/out/dither.c \
+    trayicon.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
