@@ -34,13 +34,17 @@ const std::array<DeintMethodInfo::Item, 8> DeintMethodInfo::info{{
 	{DeintMethod::MotionAdaptive, "MotionAdaptive"}
 }};
 
-const std::array<InterpolatorTypeInfo::Item, 6> InterpolatorTypeInfo::info{{
+const std::array<InterpolatorTypeInfo::Item, 10> InterpolatorTypeInfo::info{{
 	{InterpolatorType::Bilinear, "Bilinear"},
 	{InterpolatorType::BicubicCR, "BicubicCR"},
 	{InterpolatorType::BicubicMN, "BicubicMN"},
 	{InterpolatorType::BicubicBS, "BicubicBS"},
+	{InterpolatorType::Spline16, "Spline16"},
 	{InterpolatorType::Lanczos2, "Lanczos2"},
-	{InterpolatorType::Lanczos3Approx, "Lanczos3Approx"}
+	{InterpolatorType::Spline36Approx, "Spline36Approx"},
+	{InterpolatorType::Lanczos3Approx, "Lanczos3Approx"},
+	{InterpolatorType::Spline36, "Spline36"},
+	{InterpolatorType::Lanczos3, "Lanczos3"}
 }};
 
 const std::array<AudioDriverInfo::Item, 7> AudioDriverInfo::info{{

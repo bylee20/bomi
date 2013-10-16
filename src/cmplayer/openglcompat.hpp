@@ -25,6 +25,13 @@ public:
 	int width = 0, height = 0, depth = 0;
 	OpenGLTextureFormat format;
 	QSize size() const { return {width, height}; }
+	void copyAttributesFrom(const OpenGLTexture &other) {
+		target = other.target;
+		width = other.width;
+		height = other.height;
+		depth = other.depth;
+		format = other.format;
+	}
 	void setSize(const QSize &size) { width = size.width(); height = size.height(); }
 	void generate() { glGenTextures(1, &id); }
 	void delete_() { glDeleteTextures(1, &id); }
@@ -125,19 +132,25 @@ public:
 	void unbind() const { glBindTexture(target, 0); }
 };
 
+class InterpolatorLutTexture : public OpenGLTexture {
+public:
+	float multiply = 2.0f;
+};
+
 class OpenGLCompat {
 public:
-	static constexpr int CubicLutSamples = 256;
-	static constexpr int CubicLutSize = CubicLutSamples*4;
+	static constexpr int IntSamples = 256;
+	static constexpr int IntLutSize = IntSamples*4;
 	static void initialize(QOpenGLContext *ctx) { c.fill(ctx); }
 	static OpenGLTextureFormat textureFormat(GLenum format, int bpc = 1) {
 		Q_ASSERT(bpc == 1 || bpc == 2); return c.m_formats[bpc-1][format];
 	}
 	static bool hasRG() { return c.m_hasRG; } // use alpha instead of g if this returns false
+	static bool hasFloat() { return c.m_hasFloat; }
 	static QByteArray rg(const char *rg) { return c.m_hasRG ? QByteArray(rg) : QByteArray(rg).replace('g', 'a'); }
 	static int maximumTextureSize() { return c.m_maxTextureSize; }
 	static const OpenGLCompat &get() { return c; }
-	static OpenGLTexture allocateInterpolatorLutTexture(GLuint id, InterpolatorType type);
+	static void allocateInterpolatorLutTexture(InterpolatorLutTexture &texture1, InterpolatorLutTexture &texture2, InterpolatorType type);
 	static OpenGLTexture allocateDitheringTexture(GLuint id, Dithering type);
 	static OpenGLTexture allocate3dLutTexture(GLuint id);
 	static void upload3dLutTexture(const OpenGLTexture &texture, const QVector3D &sub, const QMatrix3x3 &mul, const QVector3D &add);
@@ -162,7 +175,7 @@ private:
 	int m_maxTextureSize = 0;
 	bool m_hasRG = false, m_hasFloat = false;
 	QMap<GLenum, OpenGLTextureFormat> m_formats[2];
-	std::array<QVector<GLushort>, InterpolatorTypeInfo::size()> m_intLuts;
+	std::array<QVector<GLfloat>, InterpolatorTypeInfo::size()> m_intLuts1, m_intLuts2;
 	QVector<GLushort> m_3dLut;
 	QVector<GLfloat> m_fruit;
 	QVector3D m_subLut, m_addLut;

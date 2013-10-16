@@ -69,6 +69,8 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("video/color/saturation-")] << Qt::Key_J;
 	keys[_L("video/color/hue+")] << Qt::Key_I;
 	keys[_L("video/color/hue-")] << Qt::Key_K;
+	keys[_L("video/interpolator/next")] << Qt::CTRL+ Qt::Key_I;
+	keys[_L("video/dithering/next")] << Qt::CTRL+ Qt::Key_T;
 
 	keys[_L("audio/track/next")] << Qt::CTRL + Qt::Key_A;
 	keys[_L("audio/volume-up")] << Qt::Key_Up;

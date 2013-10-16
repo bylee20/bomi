@@ -51,25 +51,83 @@ void OpenGLCompat::fill(QOpenGLContext *ctx) {
 	m_bicubicParams[(int)InterpolatorType::Lanczos3Approx] = {3.0, 3.0};
 }
 
-static auto conv = [] (double d) { return static_cast<GLushort>(d * std::numeric_limits<GLushort>::max()); };
+template<typename T>
+QVector<T> convertToIntegerVector(const QVector<GLfloat> &v, float &mul) {
+	static_assert(std::is_unsigned<T>::value, "wrong type");
+	const int size = v.size();
+	QVector<T> ret(size);
+	auto s = v.data();
+	auto d = ret.data();
+	mul = 0.0;
+	for (auto f : v) {
+		qDebug() << "mul:" << mul << qAbs(f);
+		mul = qMax(mul, qAbs(f));
+
+	}
+	mul *= 2.0f;
+	for (int i=0; i<size; ++i) {
+		Q_ASSERT(0 <= ((*s)/mul+0.5f) && ((*s)/mul+0.5f) <= 1.0);
+		*d++ = qBound<quint64>(0, ((*s++)/mul+0.5f)*_Max<T>(), _Max<T>());
+	}
+	return ret;
+}
+
+double fract(double v1, double v2) {
+	static constexpr auto e = std::numeric_limits<float>::epsilon();
+	if (qAbs(v1) < e)
+		return qAbs(v2) < e ? 1.0 : 0.0;
+	return v1/v2;
+}
 
 template<typename Func>
-QVector<GLushort> makeInterpolatorLut4(Func func) {
-	QVector<GLushort> lut(OpenGLCompat::CubicLutSize);
+void makeInterpolatorLut4(QVector<GLfloat> &lut, Func func) {
+	lut.resize(OpenGLCompat::IntLutSize);
 	auto p = lut.data();
-	for (int i=0; i<OpenGLCompat::CubicLutSamples; ++i) {
-		const auto a = (double)i/(OpenGLCompat::CubicLutSamples-1);
+
+	for (int i=0; i<OpenGLCompat::IntSamples; ++i) {
+		const auto a = (double)i/(OpenGLCompat::IntSamples-1);
 		const auto w0 = func(a + 1.0) + func(a + 2.0);
 		const auto w1 = func(a + 0.0);
 		const auto w2 = func(a - 1.0);
 		const auto w3 = func(a - 2.0) + func(a - 3.0);
-		const auto g0 = w0 + w1;		const auto g1 = w2 + w3;
-		const auto h0 = 1.0 + a - w1/g0;const auto h1 = 1.0 - a + w3/g1;
-		const auto f0 = g0 + g1;		const auto f1 = g1/f0;
-		*p++ = conv(h0);		*p++ = conv(h1);
-		*p++ = conv(f0);		*p++ = conv(f1);
+		const auto g0 = w0 + w1;
+		const auto g1 = w2 + w3;
+		const auto h0 = 1.0 + a - fract(w1, g0);
+		const auto h1 = 1.0 - a + fract(w3, g1);
+		const auto f0 = g0 + g1;
+		const auto f1 = fract(g1, f0);
+		*p++ = h0;		*p++ = h1;
+		*p++ = f0;		*p++ = f1;
+		qDebug() << h0*_Max<GLushort>() << h1*_Max<GLushort>() << f0*_Max<GLushort>() << f1*_Max<GLushort>() << w2 << w3;
 	}
-	return lut;
+}
+
+template<typename Func>
+void makeInterpolatorLut6(QVector<GLfloat> &lut1, QVector<GLfloat> &lut2, Func func) {
+	lut1.resize(OpenGLCompat::IntLutSize);
+	lut2.resize(OpenGLCompat::IntLutSize);
+	auto p1 = lut1.data();
+	auto p2 = lut2.data();
+	for (int i=0; i<OpenGLCompat::IntSamples; ++i) {
+		const auto a = (double)i/(OpenGLCompat::IntSamples-1);
+		const auto w0 = func(a + 2.0);
+		const auto w1 = func(a + 1.0);
+		const auto w2 = func(a + 0.0);
+		const auto w3 = func(a - 1.0);
+		const auto w4 = func(a - 2.0);
+		const auto w5 = func(a - 3.0);
+		const auto g0 = w0 + w1;
+		const auto g1 = w2 + w3;
+		const auto g2 = w4 + w5;
+		const auto h0 = 2.0 + a - fract(w1, g0);
+		const auto h1 = 0.0 + a - fract(w3, g1);
+		const auto h2 = 2.0 - a + fract(w5, g2);
+		const auto f0 = fract(g1, (g0 + g1));
+		const auto f1 = fract(g2, (g0 + g1 + g2));
+		*p1++ = h0;		*p1++ = h1;		*p1++ = h2; ++p1;
+		*p2++ = f0;		*p2++ = f1;		p2 += 2;
+		qDebug() << h0 << h1 << h2 << f0 << f1;
+	}
 }
 
 #ifndef M_PI
@@ -95,6 +153,26 @@ static double lanczos(double x, double a) {
 	return 0.0;
 }
 
+static double spline16(double x) {
+	x = qAbs(x);
+	if (x < 1.0)
+		return ((x-9.0/5.0)*x-1.0/5.0)*x+1.0;
+	if (x < 2.0)
+		return ((-1.0/3.0*(x-1.0)+4.0/5.0)*(x-1.0)-7.0/15.0)*(x-1.0);
+	return 0.0;
+}
+
+static double spline36(double x) {
+	x = qAbs(x);
+	if (x < 1.0)
+		return ((13.0/11.0*x-453.0/209.0)*x-3.0/209.0)*x+1.0;
+	if (x < 2.0)
+		return ((-6.0/11.0*(x-1)+270.0/209.0)*(x-1)-156.0/209.0)*(x-1);
+	if (x < 3.0)
+		return ((1.0/11.0*(x-2)-45.0/209.0)*(x-2)+26.0/209.0)*(x-2);
+	return 0.0;
+}
+
 void OpenGLCompat::fillInterpolatorLut(InterpolatorType interpolator) {
 	const int type = (int)interpolator;
 	const double b = m_bicubicParams[type].first;
@@ -103,35 +181,63 @@ void OpenGLCompat::fillInterpolatorLut(InterpolatorType interpolator) {
 	case InterpolatorType::BicubicBS:
 	case InterpolatorType::BicubicCR:
 	case InterpolatorType::BicubicMN:
-		m_intLuts[type] = makeInterpolatorLut4([b, c] (double x) { return bicubic(x, b, c); });
+		makeInterpolatorLut4(m_intLuts1[type], [b, c] (double x) { return bicubic(x, b, c); });
+		break;
+	case InterpolatorType::Spline16:
+		makeInterpolatorLut4(m_intLuts1[type], spline16);
+		break;
+	case InterpolatorType::Spline36Approx:
+		makeInterpolatorLut4(m_intLuts1[type], spline36);
 		break;
 	case InterpolatorType::Lanczos2:
 	case InterpolatorType::Lanczos3Approx:
-		m_intLuts[type] = makeInterpolatorLut4([b] (double x) { return lanczos(x, b); });
+		makeInterpolatorLut4(m_intLuts1[type], [b] (double x) { return lanczos(x, b); });
+		break;
+	case InterpolatorType::Spline36:
+		makeInterpolatorLut6(m_intLuts1[type], m_intLuts2[type], spline36);
+		break;
+	case InterpolatorType::Lanczos3:
+		makeInterpolatorLut6(m_intLuts1[type], m_intLuts2[type], [] (double x) { return lanczos(x, 3.0); });
 		break;
 	default:
 		break;
 	}
 }
 
-OpenGLTexture OpenGLCompat::allocateInterpolatorLutTexture(GLuint id, InterpolatorType interpolator) {
-	OpenGLTexture texture;
-	texture.id = id;
+void OpenGLCompat::allocateInterpolatorLutTexture(InterpolatorLutTexture &texture1, InterpolatorLutTexture &texture2, InterpolatorType interpolator) {
 	if (interpolator == InterpolatorType::Bilinear)
-		return texture;
-	auto &lut = c.m_intLuts[(int)interpolator];
-	if (lut.isEmpty())
+		return;
+	Q_ASSERT(texture1.id != GL_NONE && texture2.id != GL_NONE);
+	auto &lut1 = c.m_intLuts1[(int)interpolator];
+	auto &lut2 = c.m_intLuts2[(int)interpolator];
+	if (lut1.isEmpty())
 		c.fillInterpolatorLut(interpolator);
-	Q_ASSERT(!lut.isEmpty());
-	texture.target = GL_TEXTURE_1D;
-	texture.width = CubicLutSamples;
-	texture.height = 0;
-	texture.format.internal = GL_RGBA16;
-	texture.format.pixel = GL_BGRA;
-	texture.format.type = GL_UNSIGNED_SHORT;
-	texture.bind();
-	texture.allocate(GL_LINEAR, GL_REPEAT, lut.constData());
-	return texture;
+	Q_ASSERT(!lut1.isEmpty());
+	texture1.target = GL_TEXTURE_1D;
+	texture1.width = IntSamples;
+	texture1.height = 0;
+	texture1.format.pixel = GL_BGRA;
+	texture1.format.internal = GL_RGBA16;
+	if (c.m_hasFloat) {
+		texture1.format.type = GL_FLOAT;
+		texture1.allocate(GL_LINEAR, GL_REPEAT, lut1.data());
+		if (!lut2.isEmpty()) {
+			texture2.copyAttributesFrom(texture1);
+			texture2.allocate(GL_LINEAR, GL_REPEAT, lut2.data());
+			qDebug() << "allocated";
+		}
+	} else {
+		texture1.format.type = GL_UNSIGNED_SHORT;
+		auto data = convertToIntegerVector<GLushort>(lut1, texture1.multiply);
+		texture1.allocate(GL_LINEAR, GL_REPEAT, data.data());
+		if (!lut2.isEmpty()) {
+			texture2.copyAttributesFrom(texture1);
+			data = convertToIntegerVector<GLushort>(lut2, texture2.multiply);
+			texture2.allocate(GL_LINEAR, GL_REPEAT, data.data());
+			qDebug() << "allocated";
+		}
+	}
+	qDebug() << texture1.multiply << texture2.multiply;
 }
 
 /*	m00 m01 m02  v0

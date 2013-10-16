@@ -33,8 +33,12 @@
 -BicubicCR-Catmull-Rom
 -BicubicMN-Mitchell-Netravali
 -BicubicBS-B-spline
+-Spline16-2-Lobed Spline
 -Lanczos2-2-Lobed Lanczos
+-Spline36Approx-3-Lobed Spline (Approx.)
 -Lanczos3Approx-3-Lobed Lanczos (Approx.)
+-Spline36-3-Lobed Spline
+-Lanczos3-3-Lobed Lanczos
 
 +AudioDriver
 -Auto

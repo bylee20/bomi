@@ -124,8 +124,12 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	interpolator.addActionToGroup(_L("catmull"), true)->setData((int)InterpolatorType::BicubicCR);
 	interpolator.addActionToGroup(_L("mitchell"), true)->setData((int)InterpolatorType::BicubicMN);
 	interpolator.addActionToGroup(_L("b-spline"), true)->setData((int)InterpolatorType::BicubicBS);
+	interpolator.addActionToGroup(_L("spline16"), true)->setData((int)InterpolatorType::Spline16);
 	interpolator.addActionToGroup(_L("lanczos2"), true)->setData((int)InterpolatorType::Lanczos2);
+	interpolator.addActionToGroup(_L("spline36-approx"), true)->setData((int)InterpolatorType::Spline36Approx);
 	interpolator.addActionToGroup(_L("lanczos3-approx"), true)->setData((int)InterpolatorType::Lanczos3Approx);
+	interpolator.addActionToGroup(_L("spline36"), true)->setData((int)InterpolatorType::Spline36);
+	interpolator.addActionToGroup(_L("lanczos3"), true)->setData((int)InterpolatorType::Lanczos3);
 
 	auto &dithering = *video.addMenu(_L("dithering"));
 	dithering.addAction("next");

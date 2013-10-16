@@ -7,7 +7,7 @@ static const char *code = R"(
 
 varying vec2 texCoord;
 #if USE_INTERPOLATOR
-varying vec2 lutInterpolatorCoord;
+varying vec2 lutIntCoord;
 uniform vec2 dxy;
 #endif
 
@@ -15,14 +15,33 @@ uniform vec2 dxy;
 
 #ifdef FRAGMENT
 uniform sampler2D tex;
+
 #if USE_INTERPOLATOR
-uniform sampler1D lut_interpolator;
+uniform sampler1D lut_int1;
+uniform float lut_int1_mul;
+#if HAS_FLOAT_TEXTURE
+#define renormalize(a, b) (a)
+#else
+vec4 renormalize(const in vec4 v, float mul) {
+	return v*mul-0.5*mul;
+}
 #endif
+#if USE_INTERPOLATOR == 2
+uniform sampler1D lut_int2;
+uniform float lut_int2_mul;
+vec4 mix3(const in vec4 v1, const in vec4 v2, const in vec4 v3, const in float a, const in float b) {
+	return mix(mix(v1, v2, a), v3, b);
+}
+#endif
+#endif
+
 vec4 interpolated(const in vec2 coord) {
-#if USE_INTERPOLATOR
+#if USE_INTERPOLATOR == 0
+	return texture2D(tex, coord);
+#elif USE_INTERPOLATOR == 1
 	// b: h0, g: h1, r: g0+g1, a: g1/(g0+g1)
-	vec4 hg_x = texture1D(lut_interpolator, lutInterpolatorCoord.x);
-	vec4 hg_y = texture1D(lut_interpolator, lutInterpolatorCoord.y);
+	vec4 hg_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul);
+	vec4 hg_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul);
 
 	vec4 tex00 = texture2D(tex, coord + vec2(-hg_x.b, -hg_y.b)*dxy);
 	vec4 tex10 = texture2D(tex, coord + vec2( hg_x.g, -hg_y.b)*dxy);
@@ -32,8 +51,27 @@ vec4 interpolated(const in vec2 coord) {
 	tex00 = mix(tex00, tex10, hg_x.a);
 	tex01 = mix(tex01, tex11, hg_x.a);
 	return  mix(tex00, tex01, hg_y.a);
-#else
-	return texture2D(tex, coord);
+#elif USE_INTERPOLATOR == 2
+	vec4 h_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul);
+	vec4 h_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul);
+	vec4 f_x = renormalize(texture1D(lut_int2, lutIntCoord.x), lut_int2_mul);
+	vec4 f_y = renormalize(texture1D(lut_int2, lutIntCoord.y), lut_int2_mul);
+
+	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b)*dxy);
+	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g)*dxy);
+	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r)*dxy);
+	tex00 = mix3(tex00, tex01, tex02, f_y.b, f_y.g);
+
+	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b)*dxy);
+	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g)*dxy);
+	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r)*dxy);
+	tex10 = mix3(tex10, tex11, tex12, f_y.b, f_y.g);
+
+	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b)*dxy);
+	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g)*dxy);
+	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r)*dxy);
+	tex20 = mix3(tex20, tex21, tex22, f_y.b, f_y.g);
+	return mix3(tex00, tex10, tex20, f_x.b, f_x.g);
 #endif
 }
 
@@ -66,7 +104,7 @@ attribute vec4 vPosition;
 attribute vec2 vCoord;
 void main() {
 #if USE_INTERPOLATOR
-	lutInterpolatorCoord = vCoord/dxy - vec2(0.5, 0.5);
+	lutIntCoord = vCoord/dxy - vec2(0.5, 0.5);
 #endif
 	texCoord = vCoord;
 	gl_Position = vMatrix * vPosition;
@@ -75,10 +113,11 @@ void main() {
 
 )";
 
-TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, bool interpolator, bool dithering)
-	: m_item(item), m_interpolator(interpolator), m_dithering(dithering) {
+TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, int interpolator, bool dithering)
+: m_item(item), m_interpolator(interpolator), m_dithering(dithering) {
 	QByteArray header;
-	header += "#define USE_INTERPOLATOR " + QByteArray::number(interpolator) + "\n";
+	header += "#define HAS_FLOAT_TEXTURE " + QByteArray::number(OpenGLCompat::hasFloat()) + "\n";
+	header += "#define USE_INTERPOLATOR " + QByteArray::number(m_interpolator) + "\n";
 	header += "#define USE_DITHERing " + QByteArray::number(dithering) + "\n";
 	m_fragCode = header;
 	m_fragCode += "#define FRAGMENT\n";
@@ -107,11 +146,19 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 	bind(prog);
 	f->glActiveTexture(GL_TEXTURE0);
 	texture.bind();
+	int texPos = 0;
 	if (m_interpolator) {
-		prog->setUniformValue(loc_lut_interpolator, 1);
+		prog->setUniformValue(loc_lut_int1, ++texPos);
 		prog->setUniformValue(loc_dxy, QVector2D(1.f/(float)texture.width, 1.f/(float)texture.height));
-		f->glActiveTexture(GL_TEXTURE1);
-		m_item->lutInterpolatorTexture().bind();
+		prog->setUniformValue(loc_lut_int1_mul, m_item->lutInterpolatorTexture1().multiply);
+		f->glActiveTexture(GL_TEXTURE0 + texPos);
+		m_item->lutInterpolatorTexture1().bind();
+		if (m_interpolator > 1) {
+			prog->setUniformValue(loc_lut_int2, ++texPos);
+			prog->setUniformValue(loc_lut_int2_mul, m_item->lutInterpolatorTexture2().multiply);
+			f->glActiveTexture(GL_TEXTURE0 + texPos);
+			m_item->lutInterpolatorTexture2().bind();
+		}
 	}
 	if (m_dithering) {
 		auto &dithering = m_item->ditheringTexture();
@@ -121,11 +168,11 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 		Q_ASSERT(loc_dithering_center != -1);
 		Q_ASSERT(loc_dithering_size != -1);
 		const int size = dithering.width;
-		prog->setUniformValue(loc_dithering, 2);
+		prog->setUniformValue(loc_dithering, ++texPos);
 		prog->setUniformValue(loc_dithering_quantization, float(1 << m_item->depth()) - 1.f);
 		prog->setUniformValue(loc_dithering_center, 0.5f / size*size);
 		prog->setUniformValue(loc_dithering_size, size);
-		f->glActiveTexture(GL_TEXTURE2);
+		f->glActiveTexture(GL_TEXTURE0 + texPos);
 		dithering.bind();
 	}
 	f->glActiveTexture(GL_TEXTURE0);
@@ -136,8 +183,13 @@ void TextureRendererShader::initialize() {
 	loc_vMatrix = prog->uniformLocation("vMatrix");
 	loc_tex = prog->uniformLocation("tex");
 	if (m_interpolator) {
-		loc_lut_interpolator = prog->uniformLocation("lut_interpolator");
+		loc_lut_int1 = prog->uniformLocation("lut_int1");
+		loc_lut_int1_mul = prog->uniformLocation("lut_int1_mul");
 		loc_dxy = prog->uniformLocation("dxy");
+		if (m_interpolator > 1) {
+			loc_lut_int2 = prog->uniformLocation("lut_int2");
+			loc_lut_int2_mul = prog->uniformLocation("lut_int2_mul");
+		}
 	}
 	if (m_dithering) {
 		loc_dithering = prog->uniformLocation("dithering");
@@ -196,7 +248,7 @@ TextureRendererItem::~TextureRendererItem() {
 }
 
 TextureRendererShader *TextureRendererItem::createShader() const {
-	return new TextureRendererShader(this, m_interpolator > 0, m_dithering > 0);
+	return new TextureRendererShader(this, m_intCategory, m_dithering > 0);
 }
 
 QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
@@ -212,8 +264,12 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 		d->node->markDirty(QSGNode::DirtyGeometry);
 		m_dirtyGeomerty = false;
 	}
-	if (_Change(m_interpolator, m_newInt))
-		m_lutInt = OpenGLCompat::allocateInterpolatorLutTexture(m_lutInt.id, m_interpolator);
+	if (_Change(m_interpolator, m_newInt)) {
+		m_intCategory = interpolatorCategory(m_interpolator);
+		OpenGLCompat::allocateInterpolatorLutTexture(m_lutInt1, m_lutInt2, m_interpolator);
+		if (m_interpolator > 0)
+			qDebug() << InterpolatorTypeInfo::name(m_interpolator);
+	}
 	if (_Change(m_dithering, m_newDithering))
 		m_ditheringTex = OpenGLCompat::allocateDitheringTexture(m_ditheringTex.id, m_dithering);
 	return d->node;

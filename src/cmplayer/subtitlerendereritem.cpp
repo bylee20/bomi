@@ -57,7 +57,7 @@ struct SubtitleRendererItem::Data {
 class SubtitleRendererShader : public TextureRendererShader {
 public:
 	SubtitleRendererShader(const SubtitleRendererItem *item)
-	: TextureRendererShader(item, false) { }
+	: TextureRendererShader(item) { }
 	const char *fragmentShader() const {
 		const char *shader = (R"(
 			uniform sampler2D tex;

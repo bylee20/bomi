@@ -3,14 +3,14 @@
 
 pkgname=cmplayer
 pkgver=0.7.10
-pkgrel=1
+pkgrel=2
 pkgdesc="Powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
 url="http://$pkgname.github.io"
 license=('GPL')
 depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu'
          'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi-0.4'
-         'alsa-lib' 'libpulse' 'portaudio' 'openal' 'jack'
+         'alsa-lib' 'libpulse' 'portaudio' 'openal' 'jack' 'libchardet'
          'mpg123' 'libva' 'libgl' 'fribidi' 'libass' 'ffmpeg')
 makedepends=('mesa' 'gcc')
 source=(https://github.com/xylosper/cmplayer/releases/download/v$pkgver/cmplayer-$pkgver-source.tar.gz)
@@ -19,7 +19,7 @@ md5sums=('e44fbd8dcf3128bc98694d5308701386')
 build() {
   export MAKE="make -j $(nproc)"
   cd "$srcdir/$pkgname-$pkgver"
-  ./build-libchardet
+  install -d build/lib
   ./build-mpv
   make PREFIX=/usr cmplayer
 }

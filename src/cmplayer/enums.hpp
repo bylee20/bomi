@@ -327,8 +327,12 @@ enum class InterpolatorType : int {
 	BicubicCR = (int)1,
 	BicubicMN = (int)2,
 	BicubicBS = (int)3,
-	Lanczos2 = (int)4,
-	Lanczos3Approx = (int)5
+	Spline16 = (int)4,
+	Lanczos2 = (int)5,
+	Spline36Approx = (int)6,
+	Lanczos3Approx = (int)7,
+	Spline36 = (int)8,
+	Lanczos3 = (int)9
 };
 
 inline bool operator == (InterpolatorType e, int i) { return (int)e == i; }
@@ -358,7 +362,7 @@ class EnumInfo<InterpolatorType> {
 	typedef InterpolatorType Enum;
 public:
 	struct Item { Enum value; const char *name; };
-	static constexpr int size() { return 6; }
+	static constexpr int size() { return 10; }
 	static const char *name(Enum e) {
 		return 0 <= e && e < size() ? info[(int)e].name : "";
 	}
@@ -369,12 +373,16 @@ public:
 		case Enum::BicubicCR: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Catmull-Rom"));
 		case Enum::BicubicMN: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Mitchell-Netravali"));
 		case Enum::BicubicBS: return tr(QT_TRANSLATE_NOOP("EnumInfo", "B-spline"));
+		case Enum::Spline16: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2-Lobed Spline"));
 		case Enum::Lanczos2: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2-Lobed Lanczos"));
+		case Enum::Spline36Approx: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Spline (Approx.)"));
 		case Enum::Lanczos3Approx: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Lanczos (Approx.)"));
+		case Enum::Spline36: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Spline"));
+		case Enum::Lanczos3: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Lanczos"));
 		default: return tr("");
 		};
 	}
-	static constexpr const std::array<Item, 6> &items() { return info; }
+	static constexpr const std::array<Item, 10> &items() { return info; }
 	static Enum from(int id, Enum def = info[0].value) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
@@ -384,7 +392,7 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
 private:
-	static const std::array<Item, 6> info;
+	static const std::array<Item, 10> info;
 };
 
 using InterpolatorTypeInfo = EnumInfo<InterpolatorType>;
