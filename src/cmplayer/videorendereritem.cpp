@@ -378,7 +378,7 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 
 	if (d->render && !d->frameSize.isEmpty()) {
 		if (!d->fbo || d->fbo->size() != d->frameSize) {
-			_Renew(d->fbo, d->frameSize, GL_TEXTURE_2D);
+			_Renew(d->fbo, d->frameSize, OpenGLCompat::textureFormat(GL_RGBA, 2), GL_TEXTURE_2D);
 			setRenderTarget(d->fbo->texture());
 		}
 		d->fbo->bind();

@@ -80,7 +80,7 @@ void VideoFrameShader::setEffects(int effects) {
 	m_effects = effects;
 	if (isColorEffect(old) != isColorEffect(m_effects))
 		updateColorMatrix();
-	for (auto &shader : m_shader) {
+	for (auto &shader : m_shaders) {
 		if (_Change(shader.kernel, hasKernelEffects()))
 			shader.rebuild = true;
 	}
@@ -106,7 +106,7 @@ void VideoFrameShader::updateShader() {
 			break;
 		}
 	}
-	auto &shader = m_shader[deint];
+	auto &shader = m_shaders[deint];
 	if (shader.rebuild) {
 		shader.rebuild = false;
 		const VideoFormat &format = m_frame.format();
@@ -283,7 +283,7 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 void VideoFrameShader::fillInfo() {
 	release();
 	const auto &format = m_frame.format();
-	m_shader[0].rebuild = m_shader[1].rebuild = true;
+	m_shaders[0].rebuild = m_shaders[1].rebuild = true;
 
 	m_csp = format.colorspace();
 	m_range = format.range();

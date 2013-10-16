@@ -52,7 +52,7 @@ private:
 	};
 	void updateShader();
 	VideoFrame m_frame;
-	ShaderInfo m_shader[2];
+	ShaderInfo m_shaders[2];
 	QOpenGLShaderProgram *m_prog = nullptr;
 	ColorProperty m_color;
 	mp_csp m_csp; mp_csp_levels m_range;
