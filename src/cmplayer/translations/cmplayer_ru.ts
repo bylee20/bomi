@@ -2151,7 +2151,7 @@ e.g.: English, Korean</source>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="300"/>
-        <source>Keyboard shorcuts</source>
+        <source>Keyboard shortcuts</source>
         <translation>Комбинации клавиш</translation>
     </message>
     <message>

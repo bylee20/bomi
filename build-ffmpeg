@@ -17,4 +17,4 @@ then
   args="$args --disable-vda --enable-vaapi"
 fi
 
-cd src/ffmpeg* && make distclean; ./configure $args && make -j 5 && make install
+cd src/ffmpeg* && make distclean; ./configure $args && make -j $(nproc) && make install
