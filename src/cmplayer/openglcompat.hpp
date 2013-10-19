@@ -164,6 +164,26 @@ public:
 		texture.allocate(filter);
 		return texture;
 	}
+	static QByteArray interpolatorCodes(int category);
+	static QByteArray interpolatorCodes(InterpolatorType type) { return interpolatorCodes(interpolatorCategory(type)); }
+	static int interpolatorCategory(InterpolatorType type) {
+		switch (type) {
+		case InterpolatorType::Bilinear:
+			return 0;
+		case InterpolatorType::BicubicBS:
+		case InterpolatorType::BicubicCR:
+		case InterpolatorType::BicubicMN:
+		case InterpolatorType::Lanczos2:
+		case InterpolatorType::Spline16:
+		case InterpolatorType::Lanczos3Approx:
+		case InterpolatorType::Spline36Approx:
+			return 1;
+		case InterpolatorType::Spline36:
+		case InterpolatorType::Lanczos3:
+			return 2;
+		}
+		return 0;
+	}
 private:
 	void fillInterpolatorLut(InterpolatorType type);
 	void fill(QOpenGLContext *ctx);

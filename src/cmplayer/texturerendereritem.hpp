@@ -41,23 +41,6 @@ protected:
 private slots:
 	void tryInitGL() { if (!m_init && QOpenGLContext::currentContext()) { initializeGL(); m_init = true; } }
 private:
-	static int interpolatorCategory(InterpolatorType type) {
-		switch (type) {
-		case InterpolatorType::Lanczos3:
-		case InterpolatorType::Spline36:
-			return 2;
-		case InterpolatorType::BicubicBS:
-		case InterpolatorType::BicubicCR:
-		case InterpolatorType::BicubicMN:
-		case InterpolatorType::Spline16:
-		case InterpolatorType::Lanczos2:
-		case InterpolatorType::Spline36Approx:
-		case InterpolatorType::Lanczos3Approx:
-			return 1;
-		default:
-			return 0;
-		}
-	}
 	const OpenGLTexture &texture() const { return m_texture; }
 	const OpenGLTexture &ditheringTexture() const { return m_ditheringTex; }
 	const InterpolatorLutTexture &lutInterpolatorTexture1() const { return m_lutInt1; }

@@ -23,6 +23,8 @@ VideoFrameShader::VideoFrameShader() {
 		qDebug() << "Use direct memory access.";
 	m_vPositions = makeArray({-1.0, -1.0}, {1.0, 1.0});
 	m_vMatrix.setToIdentity();
+	m_lutInt1.generate();
+	m_lutInt2.generate();
 }
 
 VideoFrameShader::~VideoFrameShader() {
@@ -59,14 +61,18 @@ void VideoFrameShader::setColor(const ColorProperty &color) {
 	updateColorMatrix();
 }
 
+void VideoFrameShader::setChromaInterpolator(InterpolatorType type) {
+	for (auto &shader : m_shaders) {
+		if (_Change(shader.interpolator, type))
+			shader.rebuild = true;
+	}
+}
+
 void VideoFrameShader::updateColorMatrix() {
 	auto color = m_color;
 	if (m_effects & VideoRendererItem::Grayscale)
 		color.setSaturation(-1.0);
-	auto mat = color.matrix(m_csp, m_range);
-	m_mul_mat = mat.toGenericMatrix<3, 3>().transposed();
-	m_add_vec = mat.column(3).toVector3D();
-	m_sub_vec = mat.row(3).toVector3D();
+	color.matrix(m_mul_mat, m_add_vec, m_csp, m_range);
 	if (m_effects & VideoRendererItem::InvertColor) {
 		m_mul_mat *= -1;
 		m_add_vec += QVector3D(1, 1, 1);
@@ -116,7 +122,6 @@ void VideoFrameShader::updateShader() {
 		header += "#define TEX_COUNT " + QByteArray::number(m_textures.size()) + "\n";
 		header += "const float texWidth = " + _N((double)format.alignedWidth(), 1).toLatin1() + ";\n";
 		header += "const float texHeight = " + _N((double)format.alignedHeight(), 1).toLatin1() + ";\n";
-
 		auto declareVec2 = [] (const QString &name, const QPointF &p) {
 			return _L("const vec2 ") + name + _L(" = vec2(") + _N(p.x(), 6) + _L(", ") + _N(p.y(), 6) + _L(");\n");
 		};
@@ -136,15 +141,26 @@ void VideoFrameShader::updateShader() {
 			header += "#define USE_KERNEL3x3\n";
 
 		header += "#define USE_DEINT " + QByteArray::number(deint) + "\n";
+		header += R"(
+#ifdef USE_RECTANGLE
+const vec4 dxdy = vec4(1.0, 1.0, -1.0, 0.0);
+const vec2 chroma_offset = chroma_location;
+#else
+const vec4 dxdy = vec4(1.0/texWidth, 1.0/texHeight, -1.0/texWidth, 0.0);
+const vec2 chroma_offset = chroma_location*dxdy.xy;
+#endif
+const vec2 dxy = dxdy.xy;
+)";
 
+		auto common = OpenGLCompat::interpolatorCodes(shader.interpolator) + shaderTemplate;
 		auto fragCode = header;
 		fragCode += "#define FRAGMENT\n";
-		fragCode += shaderTemplate;
+		fragCode += common;
 		fragCode += m_texel;
 
 		auto vertexCode = header;
 		vertexCode += "#define VERTEX\n";
-		vertexCode += shaderTemplate;
+		vertexCode += common;
 
 		prog.addShaderFromSourceCode(QOpenGLShader::Fragment, fragCode);
 		prog.addShaderFromSourceCode(QOpenGLShader::Vertex, vertexCode);
@@ -161,7 +177,6 @@ void VideoFrameShader::updateShader() {
 		loc_tex[2] = m_prog->uniformLocation("tex2");
 		loc_top_field = m_prog->uniformLocation("top_field");
 		loc_mul_mat = m_prog->uniformLocation("mul_mat");
-		loc_sub_vec = m_prog->uniformLocation("sub_vec");
 		loc_add_vec = m_prog->uniformLocation("add_vec");
 		loc_cc[0] = m_prog->uniformLocation("cc0");
 		loc_cc[1] = m_prog->uniformLocation("cc1");
@@ -247,7 +262,6 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 
 	m_prog->bind();
 	m_prog->setUniformValue(loc_top_field, (float)m_frame.isTopField());
-	m_prog->setUniformValue(loc_sub_vec, m_sub_vec);
 	m_prog->setUniformValue(loc_add_vec, m_add_vec);
 	m_prog->setUniformValue(loc_mul_mat, m_mul_mat);
 	m_prog->setUniformValue(loc_vMatrix, m_vMatrix);
@@ -391,7 +405,6 @@ void VideoFrameShader::fillInfo() {
 			m_texel = R"(
 				vec3 texel(const in vec4 tex0, const in vec4 tex1) {
 					return vec3(tex0.?, tex1.!!);
-					return vec3(tex0.r, tex1.gg);
 				}
 			)";
 			m_texel.replace("?", format.type() == IMGFMT_YUYV ? "r" : OpenGLCompat::rg("g"));

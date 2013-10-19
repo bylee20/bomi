@@ -1,12 +1,4 @@
 R"(
-#ifdef USE_RECTANGLE
-const vec4 dxy = vec4(1.0, 1.0, -1.0, 0.0);
-const vec2 chroma_offset = chroma_location;
-#else
-const vec4 dxy = vec4(1.0/texWidth, 1.0/texHeight, -1.0/texWidth, 0.0);
-const vec2 chroma_offset = chroma_location*dxy.xy;
-#endif
-
 varying vec2 texCoord;
 
 /***********************************************************************/
@@ -14,17 +6,21 @@ varying vec2 texCoord;
 #ifdef FRAGMENT
 
 #ifdef USE_RECTANGLE
-#define sampler2D sampler2DRect
-#define texture2D texture2DRect
+#define highp sampler2D sampler2DRect
+#define highp texture2D texture2DRect
 #endif
 
-uniform sampler2D tex0, tex1, tex2;
+uniform highp sampler2D tex0, tex1, tex2;
+
+#define texture0(c) texture2D(tex0, c)
+#define texture1(c) texture2D(tex1, c)
+#define texture2(c) texture2D(tex2, c)
 
 #define TEXTURE_0(i) texture2D(tex0, i)
 #if TEX_COUNT > 1
-#define TEXTURE_1(i) texture2D(tex1, (i+chroma_offset)*cc1)
+#define TEXTURE_1(i) interpolated(tex1, (i+chroma_offset)*cc1)
 #if TEX_COUNT > 2
-#define TEXTURE_2(i) texture2D(tex2, (i+chroma_offset)*cc2)
+#define TEXTURE_2(i) interpolated(tex2, (i+chroma_offset)*cc2)
 #endif
 #endif
 
@@ -41,26 +37,26 @@ vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2);
 
 #define MC(c) c
 #ifdef USE_KERNEL3x3
-#define TC(c) (c + dxy.wy)
-#define ML(c) (c + dxy.zw)
-#define MR(c) (c + dxy.xw)
-#define BC(c) (c - dxy.wy)
-#define TL(c) (c + dxy.zy)
-#define TR(c) (c + dxy.xy)
-#define BL(c) (c - dxy.xy)
-#define BR(c) (c - dxy.zy)
+#define TC(c) (c + dxdy.wy)
+#define ML(c) (c + dxdy.zw)
+#define MR(c) (c + dxdy.xw)
+#define BC(c) (c - dxdy.wy)
+#define TL(c) (c + dxdy.zy)
+#define TR(c) (c + dxdy.xy)
+#define BL(c) (c - dxdy.xy)
+#define BR(c) (c - dxdy.zy)
 #endif
 
 #if USE_DEINT
-uniform float top_field;
+uniform highp float top_field;
 #endif
 vec3 deint(const in vec2 coord) {
 #if USE_DEINT
-	float offset = (top_field+0.5)*dxy.y + mod(coord.y, 2.0*dxy.y);
+	float offset = (top_field+0.5)*dxdy.y + mod(coord.y, 2.0*dxdy.y);
 #if USE_DEINT == 1
 	return TEXEL(coord + vec2(0.0, -offset));
 #elif USE_DEINT == 2
-	return mix(TEXEL(coord + vec2(0.0, -offset)), TEXEL(coord + vec2(0.0, 2.0*dxy.y-offset)), offset/(2.0*dxy.y));
+	return mix(TEXEL(coord + vec2(0.0, -offset)), TEXEL(coord + vec2(0.0, 2.0*dxdy.y-offset)), offset/(2.0*dxdy.y));
 #endif
 #else
 	return TEXEL(coord);
@@ -82,13 +78,11 @@ vec3 filtered(const in vec2 coord) {
 }
 
 uniform mat3 mul_mat;
-uniform vec3 sub_vec, add_vec;
+uniform vec3 add_vec;
 void main() {
 	const vec2 one = vec2(1.0, 0.0);
 	vec3 tex = filtered(texCoord);
-	tex -= sub_vec;
-	tex *= mul_mat;
-	tex += add_vec;
+	tex = mul_mat*tex + add_vec;
 	gl_FragColor = tex.rgbr*one.xxxy + one.yyyx;
 }
 #endif
@@ -102,6 +96,7 @@ attribute vec4 vPosition;
 attribute vec2 vCoord;
 
 void main() {
+	setLutIntCoord(vCoord);
 	texCoord = vCoord;
 	gl_Position = vMatrix*vPosition;
 }

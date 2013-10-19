@@ -2,6 +2,7 @@
 #define RECORD_HPP
 
 #include "stdafx.hpp"
+#include "info.hpp"
 #include "colorproperty.hpp"
 #include "deintinfo.hpp"
 #include "enums.hpp"
@@ -24,23 +25,23 @@ template <typename T, bool enum_ = std::is_enum<T>::value> struct RecordIoOne {}
 template <typename T>
 struct RecordIoOne<T, false> {
 	static_assert(!is_list<T>::value, "assert!");
-	static void read(QSettings &r, T &value, const char *key) {value = fromVariant<T>(r.value(_L(key), toVariant<T>(value)));}
-	static void write(QSettings &r, const T &value, const char *key) {r.setValue(_L(key), toVariant<T>(value));}
+	static void read(QSettings &r, T &value, const QString &key) {value = fromVariant<T>(r.value(key, toVariant<T>(value)));}
+	static void write(QSettings &r, const T &value, const QString &key) {r.setValue(key, toVariant<T>(value));}
 	static T default_() { return T(); }
 };
 
 template <typename T>
 struct RecordIoOne<T, true> {
-	static void read(QSettings &r, T &value, const char *key) {value = EnumInfo<T>::from(r.value(_L(key), EnumInfo<T>::name(value)).toString(), value);}
-	static void write(QSettings &r, const T &value, const char *key) {r.setValue(_L(key), EnumInfo<T>::name(value));}
+	static void read(QSettings &r, T &value, const QString &key) {value = EnumInfo<T>::from(r.value(key, EnumInfo<T>::name(value)).toString(), value);}
+	static void write(QSettings &r, const T &value, const QString &key) {r.setValue(key, EnumInfo<T>::name(value));}
 	static T default_() { return EnumInfo<T>::items()[0].value; }
 };
 
 template <typename T>
 struct RecordIoList {
 	using One = RecordIoOne<T>;
-	static void read(QSettings &r, QList<T> &values, const char *key) {
-		if (!r.value(_L(key) % _L("_exists"), false).toBool())
+	static void read(QSettings &r, QList<T> &values, const QString &key) {
+		if (!r.value(key % _L("_exists"), false).toBool())
 			return;
 		const int size = r.beginReadArray(key);
 		values.clear();	values.reserve(size);
@@ -51,8 +52,8 @@ struct RecordIoList {
 		}
 		r.endArray();
 	}
-	static void write(QSettings &r, const QList<T> &values, const char *key) {
-		r.setValue(_L(key) % _L("_exists"), true);
+	static void write(QSettings &r, const QList<T> &values, const QString &key) {
+		r.setValue(key % _L("_exists"), true);
 		r.beginWriteArray(key, values.size());
 		for (int i=0; i<values.size(); ++i) {
 			r.setArrayIndex(i);
@@ -64,17 +65,17 @@ struct RecordIoList {
 
 template <>
 struct RecordIoOne<ColorProperty, false> {
-	static void write(QSettings &r, const ColorProperty &value, const char *key) {
-		r.setValue(_L(key) % _L("_brightness"), value.brightness());
-		r.setValue(_L(key) % _L("_contrast"), value.contrast());
-		r.setValue(_L(key) % _L("_saturation"), value.saturation());
-		r.setValue(_L(key) % _L("_hue"), value.hue());
+	static void write(QSettings &r, const ColorProperty &value, const QString &key) {
+		r.setValue(key % _L("_brightness"), value.brightness());
+		r.setValue(key % _L("_contrast"), value.contrast());
+		r.setValue(key % _L("_saturation"), value.saturation());
+		r.setValue(key % _L("_hue"), value.hue());
 	}
-	static void read(QSettings &r, ColorProperty &value, const char *key) {
-		value.brightness() = r.value(_L(key) % _L("_brightness"), value.brightness()).toDouble();
-		value.contrast() = r.value(_L(key) % _L("_contrast"), value.contrast()).toDouble();
-		value.saturation() = r.value(_L(key) % _L("_saturation"), value.saturation()).toDouble();
-		value.hue() = r.value(_L(key) % _L("_hue"), value.hue()).toDouble();
+	static void read(QSettings &r, ColorProperty &value, const QString &key) {
+		value.brightness() = r.value(key % _L("_brightness"), value.brightness()).toDouble();
+		value.contrast() = r.value(key % _L("_contrast"), value.contrast()).toDouble();
+		value.saturation() = r.value(key % _L("_saturation"), value.saturation()).toDouble();
+		value.hue() = r.value(key % _L("_hue"), value.hue()).toDouble();
 	}
 };
 
@@ -90,23 +91,35 @@ extern template struct RecordIoOne<QKeySequence>;
 
 class Record : public QSettings {
 public:
-	Record() {}
-	Record(const QString &root): m_root(root) {if (!m_root.isEmpty()) beginGroup(root);}
-	~Record() {if (!m_root.isEmpty()) endGroup();}
-	template <typename T> void write(const T &value, const char *key) {
+//	Record() {}
+	Record(const QString &root): m_root(root) {
+		m_version = value("version", 0).toInt();
+		if (!m_root.isEmpty()) beginGroup(root);
+	}
+	~Record() {
+		if (!m_root.isEmpty()) endGroup();
+		setValue("version", Info::versionNumber());
+	}
+	int version() const { return m_version; }
+	template <typename T> void write(const T &value, const QString &key) {
 		RecordIoOne<T>::write(*this, value, key);
 	}
-	template <typename T> void read(T &value, const char *key) {
+	template <typename T> void read(T &value, const QString &key) {
 		RecordIoOne<T>::read(*this, value, key);
 	}
-	template <typename T> void write(const QList<T> &value, const char *key) {
+	template <typename T> void write(const QList<T> &value, const QString &key) {
 		RecordIoList<T>::write(*this, value, key);
 	}
-	template <typename T> void read(QList<T> &value, const char *key) {
+	template <typename T> void read(QList<T> &value, const QString &key) {
 		RecordIoList<T>::read(*this, value, key);
 	}
+	template <typename T> void write(const T &value, const char *key) { write<T>(value, _L(key)); }
+	template <typename T> void write(const QList<T> &value, const char *key) { write<T>(value, _L(key)); }
+	template <typename T> void read(T &value, const char *key) { read<T>(value, _L(key)); }
+	template <typename T> void read(QList<T> &value, const char *key) { read<T>(value, _L(key)); }
 private:
 	const QString m_root = {};
+	int m_version = 0;
 };
 
 

@@ -5,77 +5,14 @@
 
 static const char *code = R"(
 
-varying vec2 texCoord;
-#if USE_INTERPOLATOR
-varying vec2 lutIntCoord;
-uniform vec2 dxy;
-#endif
+varying highp vec2 texCoord;
 
 /***********************************************************************/
 
 #ifdef FRAGMENT
 uniform sampler2D tex;
 
-#if USE_INTERPOLATOR
-uniform sampler1D lut_int1;
-uniform float lut_int1_mul;
-#if HAS_FLOAT_TEXTURE
-#define renormalize(a, b) (a)
-#else
-vec4 renormalize(const in vec4 v, float mul) {
-	return v*mul-0.5*mul;
-}
-#endif
-#if USE_INTERPOLATOR == 2
-uniform sampler1D lut_int2;
-uniform float lut_int2_mul;
-vec4 mix3(const in vec4 v1, const in vec4 v2, const in vec4 v3, const in float a, const in float b) {
-	return mix(mix(v1, v2, a), v3, b);
-}
-#endif
-#endif
-
-vec4 interpolated(const in vec2 coord) {
-#if USE_INTERPOLATOR == 0
-	return texture2D(tex, coord);
-#elif USE_INTERPOLATOR == 1
-	// b: h0, g: h1, r: g0+g1, a: g1/(g0+g1)
-	vec4 hg_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul);
-	vec4 hg_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul);
-
-	vec4 tex00 = texture2D(tex, coord + vec2(-hg_x.b, -hg_y.b)*dxy);
-	vec4 tex10 = texture2D(tex, coord + vec2( hg_x.g, -hg_y.b)*dxy);
-	vec4 tex01 = texture2D(tex, coord + vec2(-hg_x.b,  hg_y.g)*dxy);
-	vec4 tex11 = texture2D(tex, coord + vec2( hg_x.g,  hg_y.g)*dxy);
-
-	tex00 = mix(tex00, tex10, hg_x.a);
-	tex01 = mix(tex01, tex11, hg_x.a);
-	return  mix(tex00, tex01, hg_y.a);
-#elif USE_INTERPOLATOR == 2
-	vec4 h_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul);
-	vec4 h_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul);
-	vec4 f_x = renormalize(texture1D(lut_int2, lutIntCoord.x), lut_int2_mul);
-	vec4 f_y = renormalize(texture1D(lut_int2, lutIntCoord.y), lut_int2_mul);
-
-	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b)*dxy);
-	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g)*dxy);
-	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r)*dxy);
-	tex00 = mix3(tex00, tex01, tex02, f_y.b, f_y.g);
-
-	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b)*dxy);
-	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g)*dxy);
-	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r)*dxy);
-	tex10 = mix3(tex10, tex11, tex12, f_y.b, f_y.g);
-
-	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b)*dxy);
-	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g)*dxy);
-	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r)*dxy);
-	tex20 = mix3(tex20, tex21, tex22, f_y.b, f_y.g);
-	return mix3(tex00, tex10, tex20, f_x.b, f_x.g);
-#endif
-}
-
-#if USE_DITHERing
+#if USE_DITHERING
 uniform sampler2D dithering;
 uniform float dithering_quantization;
 uniform float dithering_center;
@@ -88,8 +25,8 @@ vec4 ditheringed(const in vec4 color) {
 #endif
 
 void main() {
-	vec4 color = interpolated(texCoord);
-#if USE_DITHERing
+	vec4 color = interpolated(tex, texCoord);
+#if USE_DITHERING
 	color = ditheringed(color);
 #endif
 	gl_FragColor = color;
@@ -100,12 +37,10 @@ void main() {
 
 #ifdef VERTEX
 uniform mat4 vMatrix;
-attribute vec4 vPosition;
-attribute vec2 vCoord;
+attribute highp vec4 vPosition;
+attribute highp vec2 vCoord;
 void main() {
-#if USE_INTERPOLATOR
-	lutIntCoord = vCoord/dxy - vec2(0.5, 0.5);
-#endif
+	setLutIntCoord(vCoord);
 	texCoord = vCoord;
 	gl_Position = vMatrix * vPosition;
 }
@@ -116,14 +51,15 @@ void main() {
 TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, int interpolator, bool dithering)
 : m_item(item), m_interpolator(interpolator), m_dithering(dithering) {
 	QByteArray header;
-	header += "#define HAS_FLOAT_TEXTURE " + QByteArray::number(OpenGLCompat::hasFloat()) + "\n";
-	header += "#define USE_INTERPOLATOR " + QByteArray::number(m_interpolator) + "\n";
-	header += "#define USE_DITHERing " + QByteArray::number(dithering) + "\n";
+	header += "#define DEC_UNIFORM_DXY\n";
+	header += "#define USE_DITHERING " + QByteArray::number(dithering) + "\n";
 	m_fragCode = header;
 	m_fragCode += "#define FRAGMENT\n";
+	m_fragCode += OpenGLCompat::interpolatorCodes(m_interpolator);
 	m_fragCode += code;
 	m_vertexCode = header;
 	m_vertexCode += "#define VERTEX\n";
+	m_vertexCode += OpenGLCompat::interpolatorCodes(m_interpolator);
 	m_vertexCode += code;
 }
 
@@ -265,7 +201,7 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 		m_dirtyGeomerty = false;
 	}
 	if (_Change(m_interpolator, m_newInt)) {
-		m_intCategory = interpolatorCategory(m_interpolator);
+		m_intCategory = OpenGLCompat::interpolatorCategory(m_interpolator);
 		OpenGLCompat::allocateInterpolatorLutTexture(m_lutInt1, m_lutInt2, m_interpolator);
 		if (m_interpolator > 0)
 			qDebug() << InterpolatorTypeInfo::name(m_interpolator);

@@ -94,7 +94,7 @@ public:
  *  m20 m21 m22  v2
  *   o0  o1  o2   x
  */
-	QMatrix4x4 matrix(mp_csp colorspace, mp_csp_levels range) const;
+	void matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, mp_csp_levels range) const;
 private:
 	std::array<double, 4> m{{0.0, 0.0, 0.0, 0.0}};
 };

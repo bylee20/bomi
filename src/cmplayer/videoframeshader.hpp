@@ -27,6 +27,7 @@ public:
 		x1 = m_coords.left(); y1 = m_coords.top();
 		x2 = m_coords.right(); y2 = m_coords.bottom();
 	}
+	void setChromaInterpolator(InterpolatorType type);
 private:
 	void release();
 	void updateColorMatrix();
@@ -49,6 +50,7 @@ private:
 	struct ShaderInfo {
 		QOpenGLShaderProgram program;
 		bool rebuild = true, kernel = false;
+		InterpolatorType interpolator = InterpolatorType::Lanczos3Approx;
 	};
 	void updateShader();
 	VideoFrame m_frame;
@@ -64,13 +66,15 @@ private:
 	int m_effects = 0;
 	DeintMethod m_deint = DeintMethod::None;
 	int loc_kern_d, loc_kern_c, loc_kern_n, loc_top_field;
-	int loc_sub_vec, loc_add_vec, loc_mul_mat, loc_vMatrix;
+	int loc_add_vec, loc_mul_mat, loc_vMatrix;
 	int loc_tex[3] = {-1, -1, -1}, loc_cc[3] = {-1, -1, -1};
+	int loc_lut_int1 = -1, loc_lut_int2 = -1, loc_lut_int1_mul = -1, loc_lut_int2_mul = -1;
 	QList<VideoTexture> m_textures;
 	QByteArray m_texel;
 	bool m_dma = false, m_check = true;
 	QRectF m_coords, m_positions;
 	QPointF m_chroma = {0.0, 0.0};
+	InterpolatorLutTexture m_lutInt1, m_lutInt2;
 #ifdef Q_OS_LINUX
 	void *m_vaSurfaceGLX = nullptr;
 #endif

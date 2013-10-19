@@ -59,16 +59,11 @@ QVector<T> convertToIntegerVector(const QVector<GLfloat> &v, float &mul) {
 	auto s = v.data();
 	auto d = ret.data();
 	mul = 0.0;
-	for (auto f : v) {
-		qDebug() << "mul:" << mul << qAbs(f);
+	for (auto f : v)
 		mul = qMax(mul, qAbs(f));
-
-	}
 	mul *= 2.0f;
-	for (int i=0; i<size; ++i) {
-		Q_ASSERT(0 <= ((*s)/mul+0.5f) && ((*s)/mul+0.5f) <= 1.0);
+	for (int i=0; i<size; ++i)
 		*d++ = qBound<quint64>(0, ((*s++)/mul+0.5f)*_Max<T>(), _Max<T>());
-	}
 	return ret;
 }
 
@@ -98,7 +93,6 @@ void makeInterpolatorLut4(QVector<GLfloat> &lut, Func func) {
 		const auto f1 = fract(g1, f0);
 		*p++ = h0;		*p++ = h1;
 		*p++ = f0;		*p++ = f1;
-		qDebug() << h0*_Max<GLushort>() << h1*_Max<GLushort>() << f0*_Max<GLushort>() << f1*_Max<GLushort>() << w2 << w3;
 	}
 }
 
@@ -126,7 +120,6 @@ void makeInterpolatorLut6(QVector<GLfloat> &lut1, QVector<GLfloat> &lut2, Func f
 		const auto f1 = fract(g2, (g0 + g1 + g2));
 		*p1++ = h0;		*p1++ = h1;		*p1++ = h2; ++p1;
 		*p2++ = f0;		*p2++ = f1;		p2 += 2;
-		qDebug() << h0 << h1 << h2 << f0 << f1;
 	}
 }
 
@@ -224,7 +217,6 @@ void OpenGLCompat::allocateInterpolatorLutTexture(InterpolatorLutTexture &textur
 		if (!lut2.isEmpty()) {
 			texture2.copyAttributesFrom(texture1);
 			texture2.allocate(GL_LINEAR, GL_REPEAT, lut2.data());
-			qDebug() << "allocated";
 		}
 	} else {
 		texture1.format.type = GL_UNSIGNED_SHORT;
@@ -234,10 +226,8 @@ void OpenGLCompat::allocateInterpolatorLutTexture(InterpolatorLutTexture &textur
 			texture2.copyAttributesFrom(texture1);
 			data = convertToIntegerVector<GLushort>(lut2, texture2.multiply);
 			texture2.allocate(GL_LINEAR, GL_REPEAT, data.data());
-			qDebug() << "allocated";
 		}
 	}
-	qDebug() << texture1.multiply << texture2.multiply;
 }
 
 /*	m00 m01 m02  v0
@@ -337,4 +327,96 @@ OpenGLTexture OpenGLCompat::allocateDitheringTexture(GLuint id, Dithering type) 
 	//	 gl->PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	texture.allocate(GL_NEAREST, GL_REPEAT, data.data());
 	return texture;
+}
+
+QByteArray OpenGLCompat::interpolatorCodes(int category) {
+	QByteArray code;
+	if (c.m_hasFloat)
+		code += R"(
+#ifndef HAS_FLOAT_TEXTURE
+#define HAS_FLOAT_TEXTURE 1
+#endif
+)";
+	if (category >= 0)
+		code += "#define USE_INTERPOLATOR " + QByteArray::number(category) + "\n";
+	code += R"(
+#if USE_INTERPOLATOR
+varying vec2 lutIntCoord;
+#ifdef DEC_UNIFORM_DXY
+uniform vec2 dxy;
+#endif
+#endif
+
+#ifdef FRAGMENT
+#if USE_INTERPOLATOR
+uniform sampler1D lut_int1;
+uniform float lut_int1_mul;
+#if HAS_FLOAT_TEXTURE
+#define renormalize(a, b) (a)
+#else
+vec4 renormalize(const in vec4 v, float mul) {
+	return v*mul-0.5*mul;
+}
+#endif
+#if USE_INTERPOLATOR == 2
+uniform sampler1D lut_int2;
+uniform float lut_int2_mul;
+vec4 mix3(const in vec4 v1, const in vec4 v2, const in vec4 v3, const in float a, const in float b) {
+	return mix(mix(v1, v2, a), v3, b);
+}
+#endif
+#endif
+
+vec4 interpolated(const in sampler2D tex, const in vec2 coord) {
+#if USE_INTERPOLATOR == 0
+	return texture2D(tex, coord);
+#elif USE_INTERPOLATOR == 1
+	// b: h0, g: h1, r: g0+g1, a: g1/(g0+g1)
+	vec4 hg_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul);
+	vec4 hg_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul);
+
+	vec4 tex00 = texture2D(tex, coord + vec2(-hg_x.b, -hg_y.b)*dxy);
+	vec4 tex10 = texture2D(tex, coord + vec2( hg_x.g, -hg_y.b)*dxy);
+	vec4 tex01 = texture2D(tex, coord + vec2(-hg_x.b,  hg_y.g)*dxy);
+	vec4 tex11 = texture2D(tex, coord + vec2( hg_x.g,  hg_y.g)*dxy);
+
+	tex00 = mix(tex00, tex10, hg_x.a);
+	tex01 = mix(tex01, tex11, hg_x.a);
+	return  mix(tex00, tex01, hg_y.a);
+#elif USE_INTERPOLATOR == 2
+	vec4 h_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul);
+	vec4 h_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul);
+	vec4 f_x = renormalize(texture1D(lut_int2, lutIntCoord.x), lut_int2_mul);
+	vec4 f_y = renormalize(texture1D(lut_int2, lutIntCoord.y), lut_int2_mul);
+
+	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b)*dxy);
+	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g)*dxy);
+	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r)*dxy);
+	tex00 = mix3(tex00, tex01, tex02, f_y.b, f_y.g);
+
+	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b)*dxy);
+	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g)*dxy);
+	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r)*dxy);
+	tex10 = mix3(tex10, tex11, tex12, f_y.b, f_y.g);
+
+	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b)*dxy);
+	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g)*dxy);
+	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r)*dxy);
+	tex20 = mix3(tex20, tex21, tex22, f_y.b, f_y.g);
+	return mix3(tex00, tex10, tex20, f_x.b, f_x.g);
+#endif
+}
+#endif
+
+#ifdef VERTEX
+#if USE_INTERPOLATOR
+void setLutIntCoord(const in vec2 vCoord) {
+	lutIntCoord = vCoord/dxy - vec2(0.5, 0.5);
+}
+#else
+#define setLutIntCoord(a)
+#endif
+#endif
+)";
+	return code;
 }

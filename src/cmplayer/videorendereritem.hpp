@@ -64,6 +64,8 @@ public:
 	GLuint texture() const;
 	void setOverlayInLetterbox(bool letterbox);
 	bool overlayInLetterbox() const;
+	void setChromaUpscaler(InterpolatorType tpe);
+	InterpolatorType chromaUpscaler() const;
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);

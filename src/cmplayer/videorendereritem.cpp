@@ -29,6 +29,7 @@ struct VideoRendererItem::Data {
 	DeintMethod deint = DeintMethod::None;
 	OpenGLTexture black;
 	QSize displaySize{1, 1}, frameSize{0, 0};
+	InterpolatorType chromaUpscaler = InterpolatorType::Bilinear;
 	bool overlayInLetterbox = true;
 	void repaint() { render = true; p->update(); }
 	void fillKernel() {
@@ -53,21 +54,19 @@ struct VideoRendererItem::Data {
 
 			QPointF xy(area.width(), area.height());
 			xy.rx() -= letter.width(); xy.ry() -= letter.height();	xy *= 0.5;
-			if (!off.isNull()) {
-				QPointF offset = off;
-				offset.rx() *= letter.width()/100.0;
-				offset.ry() *= letter.height()/100.0;
-				if (alignment & Qt::AlignLeft)
-					offset.rx() -= xy.x();
-				else if (alignment & Qt::AlignRight)
-					offset.rx() += xy.x();
-				if (alignment & Qt::AlignTop)
-					offset.ry() -= xy.y();
-				else if (alignment & Qt::AlignBottom)
-					offset.ry() += xy.y();
-				rect.translate(offset);
-				xy += offset;
-			}
+			QPointF offset = off;
+			offset.rx() *= letter.width()/100.0;
+			offset.ry() *= letter.height()/100.0;
+			if (alignment & Qt::AlignLeft)
+				offset.rx() -= xy.x();
+			else if (alignment & Qt::AlignRight)
+				offset.rx() += xy.x();
+			if (alignment & Qt::AlignTop)
+				offset.ry() -= xy.y();
+			else if (alignment & Qt::AlignBottom)
+				offset.ry() += xy.y();
+			rect.translate(offset);
+			xy += offset;
 			if (letterbox)
 				*letterbox = {xy, letter};
 		}
@@ -132,7 +131,7 @@ void VideoRendererItem::initializeGL() {
 	d->shader->setEffects(d->effects);
 	d->black = OpenGLCompat::makeTexture(1, 1, GL_BGRA);
 	const quint32 p = 0x0;
-	d->black.upload2D(&p);
+	d->black.upload(&p);
 	d->initialized = true;
 	setRenderTarget(d->black);
 }
@@ -321,6 +320,18 @@ void VideoRendererItem::setCropRatio(double ratio) {
 	}
 }
 
+InterpolatorType VideoRendererItem::chromaUpscaler() const {
+	return d->chromaUpscaler;
+}
+
+void VideoRendererItem::setChromaUpscaler(InterpolatorType type) {
+	if (_Change(d->chromaUpscaler, type)) {
+		if (d->shader)
+			d->shader->setChromaInterpolator(d->chromaUpscaler);
+		rerender();
+	}
+}
+
 double VideoRendererItem::cropRatio() const {
 	return d->crop;
 }
@@ -378,7 +389,7 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 
 	if (d->render && !d->frameSize.isEmpty()) {
 		if (!d->fbo || d->fbo->size() != d->frameSize) {
-			_Renew(d->fbo, d->frameSize, OpenGLCompat::textureFormat(GL_RGBA, 2), GL_TEXTURE_2D);
+			_Renew(d->fbo, d->frameSize, OpenGLCompat::textureFormat(GL_BGRA, 2), GL_TEXTURE_2D);
 			setRenderTarget(d->fbo->texture());
 		}
 		d->fbo->bind();
