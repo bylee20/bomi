@@ -297,7 +297,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	addPage(tr("Priority"), d->ui.sub_unified, ":/img/view-sort-descending-32.png", subtitle);
 
 	auto ui = addCategory(tr("User interface"));
-	addPage(tr("Keyboard shorcuts"), d->ui.ui_shortcut, ":/img/preferences-desktop-keyboard-32.png", ui);
+	addPage(tr("Keyboard shortcuts"), d->ui.ui_shortcut, ":/img/preferences-desktop-keyboard-32.png", ui);
 	addPage(tr("Mouse actions"), d->ui.ui_mouse, ":/img/input-mouse-32.png", ui);
 	addPage(tr("Control step"), d->ui.ui_step, ":/img/run-build-32.png", ui);
 

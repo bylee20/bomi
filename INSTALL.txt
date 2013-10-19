@@ -1,4 +1,4 @@
-To compile CMPlayer, you need next things:
+To compile CMPlayer, you need these dependencies:
 
 * g++ >= 4.7
 * Qt >= 5.1
@@ -19,12 +19,12 @@ To compile CMPlayer, you need next things:
 Also, you need VGA(graphics board) and driver which support OpenGL 2.0 or later.
 
 
-Follow next steps to build and install CMPlayer:
+Follow these steps to build and install CMPlayer:
 
 - On Linux
 
-There exist some package scripts to build .deb, .rpm or pkg.tar.xz(for Arch Linux).
-You can modify and use theses ones to build your own package  for your system. 
+Some package scripts exist to build .deb, .rpm or pkg.tar.xz(for Arch Linux).
+You can modify and use theses ones to build your own package for your system. 
 
 If you want build cmplayer, follow next:
 
@@ -36,9 +36,9 @@ $ ./build-libchardet && ./build-ffmpeg && ./build-mpv
 
 $ make <args> cmplayer 
 
-where <args> means arguments to build and install cmplayer succesufully .
+where <args> means arguments to build and install cmplayer successfully .
 
-Here's some usefule arguments:
+Here's some useful arguments:
 
 PREFIX=<prefix>			CMPlayer will be built to install in <prefix> (default: /usr/local)
 CXX=<cxx>				CMPlayer will be complied with the C++ compiler <cxx> (default:g++)

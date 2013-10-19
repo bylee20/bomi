@@ -1670,7 +1670,7 @@ e.g.: English, Korean</source>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="300"/>
-        <source>Keyboard shorcuts</source>
+        <source>Keyboard shortcuts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
