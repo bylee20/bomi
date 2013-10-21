@@ -1,3 +1,23 @@
+0.8.0
+
+  * New: cache information in playback information
+  * New: Italian translation (thanks to M0Rf30)
+  * New: media name for extended m3u
+  * New: m3u8 support
+  * New: 'Color Range' submenu in 'Video' menu
+  * New: chroma upscaler
+  * New: add Spline16/Spline36/Splin36Approx/Lancoz3 interpolators
+  * New: 'Dithering' submenu in video menu
+  * Mod: remove background of playback info and make it opaque and smaller
+  * Fix: change strings 'Inactivated' to 'Deactivated'
+  * Fix: display 'Unavailable' when hardware decoding failed
+  * Fix: add CP1252 and remove ISO-8859-1 which is a subset of CP1252
+  * Fix: cannot disable autodetection for subtitle encoding
+  * Fix: wrong range for interpolator LUT textures
+  * Fix: use app indicator instead of system tray icon in Unity
+  * Fix: wrong video color for non-8bit-encoded sources
+  * Fix: wrong chroma location
+
 0.7.10
 
   * New: 16:10 aspect ratio for wide monitors
