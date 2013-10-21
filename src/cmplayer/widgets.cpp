@@ -5,7 +5,7 @@
 EncodingComboBox::EncodingComboBox(QWidget *parent)
 : QComboBox(parent) {
 	enc = QStringList() << "UTF-8" << "Unicode"
-			<< tr("Western European Languages") + " (ISO-8859-1)"
+			<< tr("Western European Languages") + " (CP1252)"
 			<< tr("Western European Languages With Euro") + " (ISO-8859-15)"
 			<< tr("Slavic/Central European Languages") + " (ISO-8859-2)"
 			<< tr("Slavic/Central European Windows") + " (CP1250)"
