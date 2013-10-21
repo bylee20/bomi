@@ -26,12 +26,32 @@ extern "C" {
 #include <video/filter/vf.h>
 #include <audio/out/ao.h>
 #include <stream/stream.h>
+#include <stream/stream_dvd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+#include <mpvcore/mp_msg.h>
+#define MSGSIZE_MAX 6144
+
+void mp_msg_log_va2(struct mp_log *log, int lev, const char *format, va_list va) {
+	if (!mp_msg_test_log(log, lev))
+		return; // do not display
+	if (format[0] == '[')
+		return;
+	char tmp[MSGSIZE_MAX];
+	vsnprintf(tmp, MSGSIZE_MAX, format, va);
+	tmp[MSGSIZE_MAX-2] = '\n';
+	tmp[MSGSIZE_MAX-1] = '\0';
+	qDebug(tmp);
+}
+
 }
 #undef min
 
 enum EventType {
 	UserType = QEvent::User, TimeRangeChange, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged, VideoFormatChanged, UpdateChapterList,
-	HwAccChanged
+	HwAccChanged, UpdateDVDInfo
 };
 
 enum MpCmd : int {

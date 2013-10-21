@@ -24,6 +24,7 @@ struct VideoRendererItem::Data {
 	GeometryItem *overlay = nullptr;
 	VideoFrameShader *shader = nullptr;
 	Kernel3x3 blur, sharpen, kernel;
+	ColorRange range = ColorRange::Auto;
 	Effects effects = 0;
 	VideoColor color;
 	DeintMethod deint = DeintMethod::None;
@@ -129,6 +130,8 @@ void VideoRendererItem::initializeGL() {
 	d->shader->setDeintMethod(d->deint);
 	d->shader->setColor(d->color);
 	d->shader->setEffects(d->effects);
+	d->shader->setChromaInterpolator(d->chromaUpscaler);
+	d->shader->setRange(d->range);
 	d->black = OpenGLCompat::makeTexture(1, 1, GL_BGRA);
 	const quint32 p = 0x0;
 	d->black.upload(&p);
@@ -294,6 +297,17 @@ void VideoRendererItem::setColor(const VideoColor &prop) {
 		d->shader->setColor(d->color);
 		d->repaint();
 	}
+}
+
+void VideoRendererItem::setRange(ColorRange range) {
+	if (_Change(d->range, range) && d->shader) {
+		d->shader->setRange(d->range);
+		d->repaint();
+	}
+}
+
+ColorRange VideoRendererItem::range() const {
+	return d->range;
 }
 
 const VideoColor &VideoRendererItem::color() const {

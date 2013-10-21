@@ -25,7 +25,7 @@ public:
 	Q_INVOKABLE void play(int row) {emit playRequested(m_items[row].mrl);}
 	Q_INVOKABLE QString name(int row) const {return m_items[row].mrl.displayName();}
 	Q_INVOKABLE QString latestPlay(int row) const {return m_items[row].date.toString(Qt::ISODate);}
-	Q_INVOKABLE QString location(int row) const {return m_items[row].mrl.toString();}
+	Q_INVOKABLE QString location(int row) const {return m_items[row].mrl.location();}
 	void setRememberImage(bool on) {m_rememberImage = on;}
 	QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 public slots:

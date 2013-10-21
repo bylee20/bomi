@@ -42,7 +42,7 @@ void RecentInfo::save() const {
 	set.beginGroup("recent-info");
 	d->openList.save("recent-open-list", &set);
 	d->lastList.save("last-playlist", &set);
-	set.setValue("last-mrl", d->lastMrl.toString());
+	set.setValue("last-mrl", d->lastMrl.location());
 	set.endGroup();
 }
 

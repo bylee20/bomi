@@ -26,6 +26,7 @@ AppState::AppState() {
 	READ(video_interpolator);
 	READ(video_chroma_upscaler);
 	READ(video_dithering);
+	READ(video_range);
 
 	READ(audio_volume);
 	READ(audio_volume_normalizer);
@@ -74,6 +75,7 @@ void AppState::save() const {
 	WRITE(video_chroma_upscaler);
 	WRITE(video_interpolator);
 	WRITE(video_dithering);
+	WRITE(video_range);
 
 	WRITE(audio_volume);
 	WRITE(audio_volume_normalizer);

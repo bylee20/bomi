@@ -35,7 +35,7 @@ struct PlayEngine::Data {
 	QMap<QString, QString> subtitleNames;
 	QList<QTemporaryFile*> subtitleFiles;
 
-	int duration = 0, title = 0, audioSync = 0, begin = 0;
+	int duration = 0, audioSync = 0, begin = 0;
 	StreamList subStreams, audioStreams, videoStreams;
 	VideoRendererItem *renderer = nullptr;
 	DvdInfo dvd;
@@ -111,7 +111,7 @@ struct PlayEngine::Data {
 	int getCache(const Mrl &mrl) { return getCacheFunc ? getCacheFunc(mrl) : 0; }
 	QByteArray &setFileName(const Mrl &mrl) {
 		fileName = "\"";
-		fileName += mrl.toString().toLocal8Bit();
+		fileName += mrl.location().toLocal8Bit();
 		fileName += "\"";
 		return fileName;
 	}
@@ -174,7 +174,6 @@ struct PlayEngine::Data {
 		emit p->audioStreamsChanged(audioStreams);
 		emit p->videoStreamsChanged(videoStreams);
 		emit p->subtitleStreamsChanged(subStreams);
-		title = 0;
 	}
 
 	void play(int time) {
@@ -208,19 +207,18 @@ struct PlayEngine::Data {
 	int position = 0;
 
 	void updateMediaName() {
-		QString name;
+		QString name, category;
 		auto mrl = p->mrl();
 		if (mrl.isLocalFile())
-			name = tr("File") % _L(": ") % QFileInfo(mrl.toLocalFile()).fileName();
+			category = tr("File");
 		else if (mrl.isDvd()) {
-			const auto dvd = p->dvd();
-			if (dvd.volume.isEmpty())
-				name = _L("DVD: ") % dvd.volume;
-			else
-				name = _L("DVD: ") % mrl.toLocalFile();
+			category = _L("DVD");
+			name = dvd.volume;
 		} else
-			name = _L("URL: ") % mrl.toString();
-		mediaInfo.setName(name);
+			category = _L("URL");
+		if (name.isEmpty())
+			name = mrl.displayName();
+		mediaInfo.setName(category % _L(": ") % name);
 	}
 	HardwareAcceleration getHwAcc() const {
 		auto sh = mpctx->sh[STREAM_VIDEO];
@@ -299,7 +297,7 @@ int PlayEngine::duration() const {
 }
 
 const DvdInfo &PlayEngine::dvd() const {return d->dvd;}
-int PlayEngine::currentDvdTitle() const {return d->title;}
+int PlayEngine::currentDvdTitle() const {return d->dvd.currentTitle;}
 ChapterList PlayEngine::chapters() const {return d->chapters;}
 
 StreamList PlayEngine::subtitleStreams() const {return d->subStreams;}
@@ -525,7 +523,11 @@ void PlayEngine::customEvent(QEvent *event) {
 		if (_CheckSwap(d->chapters, chapters))
 			emit chaptersChanged(d->chapters);
 		break;
-	} case UpdateTrack: {
+	} case UpdateDVDInfo:
+		d->dvd = getData<DvdInfo>(event);
+		emit dvdInfoChanged();
+		break;
+	case UpdateTrack: {
 		auto streams = getData<std::array<StreamList, STREAM_TYPE_COUNT>>(event);
 		if (_CheckSwap(d->videoStreams, streams[STREAM_VIDEO]))
 			emit videoStreamsChanged(d->videoStreams);
@@ -636,60 +638,15 @@ void PlayEngine::setCurrentChapter(int id) {
 void PlayEngine::setCurrentDvdTitle(int id) {
 	auto mrl = d->playlist.loadedMrl();
 	if (mrl.isDvd()) {
-		const QString path = "dvd://" % QString::number(id) % mrl.toString().mid(6);
+		const QString path = "dvd://" % QString::number(id) % mrl.location().mid(6);
 		d->fileName = path.toLocal8Bit();
 		d->tellmp("loadfile", path, 0);
 	}
 }
 
-bool PlayEngine::parse(const Id &id) {
-	if (id.name.isEmpty())
-		return false;
-	if (id.name.startsWith(_L("DVD_"))) {
-		auto dvd = id.name.midRef(4);
-		if (_Same(dvd, "TITLES")) {
-//			m_dvd.titles[id.value.toInt()];
-		} else if(dvd.startsWith(_L("TITLE_"))) {
-			auto title = _MidRef(dvd, 6);
-			int idx = id.name.indexOf(_L("_"), title.position());
-			if (idx != -1) {
-				bool ok = false;
-				int tid = id.name.mid(title.position(), idx-title.position()).toInt(&ok);
-				if (ok) {
-					auto var = id.name.midRef(idx+1);
-					auto &title = d->dvd.titles[tid];
-					title.m_id = tid;
-					title.number = tid;
-					title.m_name = tr("Title %1").arg(tid);
-					if (_Same(var, "CHAPTERS"))
-						title.chapters = id.value.toInt();
-					else if (_Same(var, "ANGLES"))
-						title.angles = id.value.toInt();
-					else if (_Same(var, "LENGTH"))
-						title.length = id.value.toDouble()*1000+0.5;
-					else
-						return false;
-				} else
-					return false;
-			} else
-				return false;
-		} else if (_Same(dvd, "VOLUME_ID")) {
-			d->dvd.volume = id.value;
-		} else if (_Same(dvd, "CURRENT_TITLE")) {
-			d->title = id.value.toInt();
-		} else
-			return false;
-		return true;
-	} else
-		return false;
-	return true;
-}
-
 MPContext *PlayEngine::context() const {
 	return d->mpctx;
 }
-
-
 
 bool PlayEngine::isInitialized() const {
 	return d->init;
@@ -750,7 +707,22 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	d->updateAudioLevel();
 	if (error != MPERROR_NONE)
 		return error;
-	postData(this, StreamOpen);
+	DvdInfo dvd;
+	if (!strcmp(mpctx->stream->info->name, "dvd")) {
+		char buffer[256];
+		if (dvd_volume_id(mpctx->stream, buffer, sizeof(buffer)))
+			dvd.volume = QString::fromLocal8Bit(buffer);
+		int titles = 0;
+		stream_control(mpctx->stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
+		stream_control(mpctx->stream, STREAM_CTRL_GET_CURRENT_TITLE, &dvd.currentTitle);
+		dvd.titles.resize(titles);
+		for (int tid=0; tid<titles; ++tid) {
+			auto &title = dvd.titles[tid];
+			title.m_id = tid;
+			title.m_name = tr("Title %1").arg(tid+1);
+		}
+	}
+	postData(this, UpdateDVDInfo, dvd);
 	ChapterList chapters(get_chapter_count(mpctx));
 	for (int i=0; i<chapters.size(); ++i) {
 		const QString time = _MSecToString(chapter_start_time(mpctx, i)*1000, _L("hh:mm:ss.zzz"));
@@ -768,12 +740,14 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 		stream->control(stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
 	}
 	postData(this, UpdateChapterList, chapters);
+
 	int begin = 0; duration = 0;
 	auto checkTimeRange = [this, &begin, &duration] () {
 		if (_Change(begin, int(get_start_time(d->mpctx)*1000))
 				| _Change(duration, int(get_time_length(d->mpctx)*1000)))
 			postData(this, TimeRangeChange, begin, duration);
 	};
+	postData(this, StreamOpen);
 	d->tellmp("vf set", d->vfs);
 	auto state = this->state(), newState = Loading;
 	while (!mpctx->stop_play) {
@@ -900,7 +874,7 @@ void PlayEngine::exec() {
 					if (prev != mrl)
 						postData(this, MrlChanged, mrl);
 					d->start = d->getStartTime(mrl);
-					playlist_add(mpctx->playlist, playlist_entry_new(mrl.toString().toLocal8Bit()));
+					playlist_add(mpctx->playlist, playlist_entry_new(mrl.location().toLocal8Bit()));
 					entry = mpctx->playlist->first;
 				} else
 					postData(this, PlaylistFinished);

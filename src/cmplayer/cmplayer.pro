@@ -89,7 +89,6 @@ HEADERS += playengine.hpp \
     richtexthelper.hpp \
     richtextblock.hpp \
     richtextdocument.hpp \
-    mpmessage.hpp \
     stdafx.hpp \
     videorendereritem.hpp \
     texturerendereritem.hpp \
@@ -169,7 +168,6 @@ SOURCES += main.cpp \
     richtexthelper.cpp \
     richtextblock.cpp \
     richtextdocument.cpp \
-    mpmessage.cpp \
     playengine.cpp \
     videorendereritem.cpp \
     texturerendereritem.cpp \

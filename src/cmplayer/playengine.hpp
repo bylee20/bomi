@@ -3,7 +3,6 @@
 
 #include "stdafx.hpp"
 #include "mrl.hpp"
-#include "mpmessage.hpp"
 #include "global.hpp"
 #include "mediamisc.hpp"
 #include <functional>
@@ -19,7 +18,7 @@ typedef std::function<int(const Mrl&)> GetMrlInt;
 
 typedef QLinkedList<QString> FilterList;
 
-class PlayEngine : public QObject, public MpMessage {
+class PlayEngine : public QObject {
 	Q_OBJECT
 	Q_ENUMS(State)
 	Q_ENUMS(HardwareAcceleration)
@@ -185,8 +184,6 @@ private:
 	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);
 	void exec();
 	void setState(PlayEngine::State state);
-	bool parse(const Id &id);
-	bool parse(const QString &line);
 	void customEvent(QEvent *event);
 	class Thread; struct Data; Data *d;
 	PlayEngine::State m_state = PlayEngine::Stopped;

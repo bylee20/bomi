@@ -1,4 +1,10 @@
 #include "enums.hpp"
+const std::array<ColorRangeInfo::Item, 3> ColorRangeInfo::info{{
+	{ColorRange::Auto, "Auto", "auto", (int)0},
+	{ColorRange::Limited, "Limited", "limited", (int)1},
+	{ColorRange::Full, "Full", "full", (int)2}
+}};
+
 const std::array<AdjustColorInfo::Item, 9> AdjustColorInfo::info{{
 	{AdjustColor::Reset, "Reset", "reset", {0, 0, 0, 0}},
 	{AdjustColor::BrightnessInc, "BrightnessInc", "brightness+", {1, 0, 0, 0}},

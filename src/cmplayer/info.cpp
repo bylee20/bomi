@@ -20,7 +20,7 @@ Info::Info() {
 	m_audioExt << "aac" << "ac3" << "aiff" << "m4a" << "mka" << "mp3"
 		<< "ogg" << "pcm" << "vaw" << "wav" << "waw" << "wma";
 	m_subExt << "ass" << "smi" << "srt" << "ssa" << "sub" << "txt";
-	m_plExt << "pls" << "m3u";
+	m_plExt << "pls" << "m3u" << "m3u8";
 }
 
 Info::~Info() {}

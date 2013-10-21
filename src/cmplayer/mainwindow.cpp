@@ -397,10 +397,9 @@ struct MainWindow::Data {
 		connect(&engine, &PlayEngine::volumeNormalizerActivatedChanged, menu("audio")["normalizer"], &QAction::setChecked);
 		connect(&engine, &PlayEngine::tempoScaledChanged, menu("audio")["tempo-scaler"], &QAction::setChecked);
 		connect(&engine, &PlayEngine::mutedChanged, menu("audio")("volume")["mute"], &QAction::setChecked);
-		connect(&engine, &PlayEngine::started, [this] () {
+		connect(&engine, &PlayEngine::started, [this] () { subtitle.setFPS(engine.fps()); });
+		connect(&engine, &PlayEngine::dvdInfoChanged, [this] () {
 			updateListMenu(menu("play")("title"), engine.dvd().titles, engine.currentDvdTitle());
-	//		updateListMenu(menu("play")("chapter"), engine.chapters(), engine.currentChapter());
-			subtitle.setFPS(engine.fps());
 		});
 		connect(&engine, &PlayEngine::audioStreamsChanged, [this] (const StreamList &streams) {
 			updateListMenu(menu("audio")("track"), streams, engine.currentAudioStream());
@@ -527,7 +526,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->dontShowMsg = false;
 
 	d->engine.setPlaylist(d->recent.lastPlaylist());
-	d->engine.load(d->recent.lastMrl());
+	if (!d->recent.lastMrl().isEmpty())
+		d->engine.load(d->recent.lastMrl());
 	updateRecentActions(d->recent.openList());
 
 	d->winState = d->prevWinState = windowState();
@@ -698,6 +698,9 @@ void MainWindow::connectMenus() {
 	});
 	d->connectEnumMenu<Dithering>(video, "video_dithering", &AppState::videoDitheringChanged, [this] () {
 		d->renderer.setDithering(d->as.video_dithering);
+	});
+	d->connectEnumMenu<ColorRange>(video, "video_range", &AppState::videoRangeChanged, [this] () {
+		d->renderer.setRange(d->as.video_range);
 	});
 
 	connect(&video("filter"), &Menu::triggered, [this] () {
@@ -1031,7 +1034,7 @@ void MainWindow::updateRecentActions(const QList<Mrl> &list) {
 	QList<QAction*> acts = group->actions();
 	for (int i=0; i<list.size(); ++i) {
 		QAction *act = acts[i];
-		act->setData(list[i].toString());
+		act->setData(list[i].location());
 		act->setText(list[i].displayName());
 		act->setVisible(!list[i].isEmpty());
 	}

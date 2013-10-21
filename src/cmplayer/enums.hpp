@@ -8,6 +8,78 @@
 
 template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 
+enum class ColorRange : int {
+	Auto = (int)0,
+	Limited = (int)1,
+	Full = (int)2
+};
+
+inline bool operator == (ColorRange e, int i) { return (int)e == i; }
+inline bool operator != (ColorRange e, int i) { return (int)e != i; }
+inline bool operator == (int i, ColorRange e) { return (int)e == i; }
+inline bool operator != (int i, ColorRange e) { return (int)e != i; }
+inline int operator & (ColorRange e, int i) { return (int)e & i; }
+inline int operator & (int i, ColorRange e) { return (int)e & i; }
+inline int &operator &= (int &i, ColorRange e) { return i &= (int)e; }
+inline int operator ~ (ColorRange e) { return ~(int)e; }
+inline int operator | (ColorRange e, int i) { return (int)e | i; }
+inline int operator | (int i, ColorRange e) { return (int)e | i; }
+inline int operator | (ColorRange e1, ColorRange e2) { return (int)e1 | (int)e2; }
+inline int &operator |= (int &i, ColorRange e) { return i |= (int)e; }
+inline bool operator > (ColorRange e, int i) { return (int)e > i; }
+inline bool operator < (ColorRange e, int i) { return (int)e < i; }
+inline bool operator >= (ColorRange e, int i) { return (int)e >= i; }
+inline bool operator <= (ColorRange e, int i) { return (int)e <= i; }
+inline bool operator > (int i, ColorRange e) { return i > (int)e; }
+inline bool operator < (int i, ColorRange e) { return i < (int)e; }
+inline bool operator >= (int i, ColorRange e) { return i >= (int)e; }
+inline bool operator <= (int i, ColorRange e) { return i <= (int)e; }
+
+Q_DECLARE_METATYPE(ColorRange)
+
+template<>
+class EnumInfo<ColorRange> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
+	typedef ColorRange Enum;
+public:
+    typedef ColorRange type;
+    using Data =  QVariant;
+    struct Item { Enum value; QString name, key; QVariant data; };
+	static constexpr int size() { return 3; }
+    static constexpr const char *typeName() { return "ColorRange"; }
+    static constexpr const char *typeKey() { return "range"; }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Color Range")); }
+    static const Item *item(Enum e) {
+        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
+    }
+    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
+    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
+    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
+	static QString description(int e) { return description((Enum)e); }
+	static QString description(Enum e) {
+		switch (e) {
+		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Auto"));
+		case Enum::Limited: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Limited Range (MPEG)"));
+		case Enum::Full: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Full Range (JPEG)"));
+		default: return tr("");
+		};
+	}
+	static constexpr const std::array<Item, 3> &items() { return info; }
+    static Enum from(int id, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+		return it != info.cend() ? it->value : def;
+	}
+    static Enum from(const QString &name, Enum def = default_()) {
+        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		return it != info.cend() ? it->value : def;
+	}
+    static constexpr Enum default_() { return ColorRange::Auto; }
+private:
+	static const std::array<Item, 3> info;
+};
+
+using ColorRangeInfo = EnumInfo<ColorRange>;
+
 enum class AdjustColor : int {
 	Reset = (int)0,
 	BrightnessInc = (int)1,

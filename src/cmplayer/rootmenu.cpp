@@ -205,6 +205,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	addEnumActions<MoveToward>(move);
 	video.addSeparator();
 
+	addEnumMenuCheckable<ColorRange>(video, true);
 	addEnumActionsCheckable<InterpolatorType>(*video.addMenu("chroma-upscaler"), true);
 	addEnumActionsCheckable<InterpolatorType>(*video.addMenu("interpolator"), true);
 	addEnumMenuCheckable<Dithering>(video, true);
@@ -438,6 +439,7 @@ void RootMenu::update(const Pref &p) {
 	updateEnumActions<HorizontalAlignment>(align);
 	updateEnumActions<MoveToward>(video("move", tr("Screen Position")));
 
+	updateEnumMenu<ColorRange>(video);
 	updateEnumActions<InterpolatorType>(video("chroma-upscaler", tr("Chroma Upscaler")));
 	updateEnumActions<InterpolatorType>(video("interpolator", tr("Interpolator")));
 	updateEnumMenu<Dithering>(video);

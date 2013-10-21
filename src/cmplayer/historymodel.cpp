@@ -30,7 +30,7 @@ QVariant HistoryModel::data(const QModelIndex &index, int role) const {
 		case LatestPlayRole:
 			return m_items[row].date.toString(Qt::ISODate);
 		case LocationRole:
-			return m_items[row].mrl.toString();
+			return m_items[row].mrl.location();
 		default:
 			return QVariant();
 		}
@@ -118,7 +118,7 @@ void HistoryModel::save() const {
 	for (int i=0; i<size; ++i) {
 		const Item &item = m_items[i];
 		set.setArrayIndex(i);
-		set.setValue("mrl", item.mrl.toString());
+		set.setValue("mrl", item.mrl.location());
 		set.setValue("date", item.date);
 		set.setValue("stopped-position", item.stopped);
 	}

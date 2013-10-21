@@ -8,12 +8,13 @@ Mrl::Mrl(const QUrl &url) {
 		m_loc = url.toString();
 }
 
-Mrl::Mrl(const QString &location) {
+Mrl::Mrl(const QString &location, const QString &name) {
 	const int idx = location.indexOf("://");
 	if (idx < 0)
 		m_loc = _L("file://") % location;
 	else
 		m_loc = location;
+	m_name = name;
 }
 
 bool Mrl::isPlaylist() const {
@@ -33,18 +34,18 @@ QString Mrl::suffix() const {
 }
 
 QString Mrl::displayName() const {
+	if (!m_name.isEmpty())
+		return m_name;
 	if (isLocalFile())
 		return fileName();
 	if (isDvd())
 		return "DVD";
-	return toString();
+	return location();
 }
 
 bool Mrl::isImage() const { return Info::readableImageExt().contains(suffix(), Qt::CaseInsensitive); }
 
 bool Mrl::isEmpty() const {
 	const int idx = m_loc.indexOf("://");
-	if (idx < 0)
-		return true;
-	return (idx+3 >= m_loc.size());
+	return (idx < 0) || !(idx+3 < m_loc.size());
 }

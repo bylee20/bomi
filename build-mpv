@@ -15,7 +15,7 @@ args="--disable-encoding --disable-libguess --disable-terminfo --disable-termcap
   --disable-gl --disable-caca --disable-direct3d --disable-sdl --disable-sdl2 --disable-xv --disable-vdpau \
   --disable-vm --disable-xinerama --disable-x11 --disable-wayland --disable-xss --disable-corevideo --disable-cocoa \
   --disable-ossaudio --disable-rsound --enable-portaudio --enable-openal --disable-dsound --disable-wasapi --enable-select \
-  --disable-gettext --disable-cross-compile --disable-shm"
+  --disable-cross-compile --disable-shm"
 
 kern=`uname -s`
 if test $kern = "Darwin"; then

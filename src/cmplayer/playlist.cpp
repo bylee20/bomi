@@ -29,6 +29,7 @@ bool Playlist::save(const QString &filePath, Type type) const {
 	case PLS:
 		return savePLS(&file);
 	case M3U:
+	case M3U8:
 		return saveM3U(&file);
 	default:
 		return false;
@@ -60,6 +61,8 @@ bool Playlist::load(QFile *file, const QString &enc, Type type) {
 		return loadPLS(file, enc);
 	case M3U:
 		return loadM3U(file, enc);
+	case M3U8:
+		return loadM3U(file, "UTF-8");
 	default:
 		return false;
 	}
@@ -81,6 +84,8 @@ Playlist::Type Playlist::getType(const QString &fileName) {
 		return PLS;
 	else if (suffix == "m3u")
 		return M3U;
+	else if (suffix == "m3u8")
+		return M3U8;
 	else
 		return Unknown;
 }
@@ -132,10 +137,31 @@ bool Playlist::loadM3U(QFile *file, const QString &enc) {
 		in.setCodec(QTextCodec::codecForName(enc.toLocal8Bit()));
 	const qint64 pos = in.pos();
 	in.seek(0);
+	auto getNextLocation = [&in] () {
+		while (!in.atEnd()) {
+			const QString line = in.readLine().trimmed();
+			if (!line.isEmpty() && !line.startsWith("#"))
+				return line;
+		}
+		return QString();
+	};
+
+	QRegularExpression rxExtInf(R"(#EXTINF\s*:\s*(?<num>(-|)\d+)\s*\,\s*(?<name>.*)\s*$)");
 	while (!in.atEnd()) {
 		const QString line = in.readLine().trimmed();
-		if (!line.isEmpty() && !line.startsWith("#"))
-			append(Mrl(line));
+		if (line.isEmpty())
+			continue;
+		QString name, location;
+		if (line.startsWith('#')) {
+			auto matched = rxExtInf.match(line);
+			if (matched.hasMatch()) {
+				name = matched.captured(_L("name"));
+				location = getNextLocation();
+			}
+		} else
+			location = getNextLocation();
+		if (!location.isEmpty())
+			append(Mrl(location, name));
 	}
 	in.seek(pos);
 	return true;
@@ -146,6 +172,7 @@ void Playlist::save(const QString &name, QSettings *set) const {
 	for (int i=0; i<size(); ++i) {
 		set->setArrayIndex(i);
 		set->setValue("mrl", at(i).toString());
+		set->setValue("name", at(i).name());
 	}
 	set->endArray();
 }
@@ -155,7 +182,9 @@ void Playlist::load(const QString &name, QSettings *set) {
 	const int size = set->beginReadArray(name);
 	for (int i=0; i<size; ++i) {
 		set->setArrayIndex(i);
-		push_back(set->value("mrl", QString()).toString());
+		const Mrl mrl(set->value("mrl").toString(), set->value("name").toString());
+		if (!mrl.isEmpty())
+			push_back(mrl);
 	}
 	set->endArray();
 }

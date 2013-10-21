@@ -61,6 +61,11 @@ void VideoFrameShader::setColor(const VideoColor &color) {
 	updateColorMatrix();
 }
 
+void VideoFrameShader::setRange(ColorRange range) {
+	m_range = range;
+	updateColorMatrix();
+}
+
 void VideoFrameShader::setChromaInterpolator(InterpolatorType type) {
 	for (auto &shader : m_shaders) {
 		if (_Change(shader.interpolator, type))
@@ -72,7 +77,13 @@ void VideoFrameShader::updateColorMatrix() {
 	auto color = m_color;
 	if (m_effects & VideoRendererItem::Grayscale)
 		color.setSaturation(-1.0);
-	color.matrix(m_mul_mat, m_add_vec, m_csp, m_range);
+	auto range = m_frame.format().range();
+	qDebug() << ColorRangeInfo::name(m_range);
+	if (m_range == ColorRange::Full)
+		range = MP_CSP_LEVELS_PC;
+	else if (m_range == ColorRange::Limited)
+		range = MP_CSP_LEVELS_TV;
+	color.matrix(m_mul_mat, m_add_vec, m_csp, range);
 	if (m_effects & VideoRendererItem::InvertColor) {
 		m_mul_mat *= -1;
 		m_add_vec += QVector3D(1, 1, 1);
@@ -300,7 +311,6 @@ void VideoFrameShader::fillInfo() {
 	m_shaders[0].rebuild = m_shaders[1].rebuild = true;
 
 	m_csp = format.colorspace();
-	m_range = format.range();
 	m_target = m_dma ? GL_TEXTURE_RECTANGLE : GL_TEXTURE_2D;
 	auto cc = [this, &format] (int factor, double rect) {
 		for (int i=1; i<m_textures.size(); ++i) {

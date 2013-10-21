@@ -1,5 +1,10 @@
 #(+|-)(*)name([[key]])([=value=])([-desc-])([:data:])
 
++ColorRange[[range]][-Color Range-]
+-Auto[[auto]][-Auto-]
+-Limited[[limited]][-Limited Range (MPEG)-]
+-Full[[full]][-Full Range (JPEG)-]
+
 +AdjustColor[[color]][-Adjust Color-][:VideoColor:]
 -Reset[[reset]][-Reset-][:{0, 0, 0, 0}:]
 -BrightnessInc[[brightness+]][-Brightness +%1%-][:{1, 0, 0, 0}:]

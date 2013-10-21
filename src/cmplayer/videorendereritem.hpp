@@ -66,6 +66,8 @@ public:
 	bool overlayInLetterbox() const;
 	void setChromaUpscaler(InterpolatorType tpe);
 	InterpolatorType chromaUpscaler() const;
+	void setRange(ColorRange range);
+	ColorRange range() const;
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);

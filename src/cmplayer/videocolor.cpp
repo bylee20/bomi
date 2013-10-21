@@ -67,6 +67,7 @@ void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, mp_c
 	add = {0.f, 0.f, 0.f};
 	const float *spec = specs[colorspace];
 	const float *range = ranges[levels];
+	qDebug() << levels;
 	switch (colorspace) {
 	case MP_CSP_RGB:
 		spec = specs[MP_CSP_BT_601];

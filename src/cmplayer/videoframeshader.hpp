@@ -21,6 +21,7 @@ public:
 	void setDeintMethod(DeintMethod method);
 	void setEffects(int effects);
 	void setColor(const VideoColor &color);
+	void setRange(ColorRange range);
 	bool upload(VideoFrame &frame);
 	const QRectF &textureRect() const { return m_coords; }
 	void getCoords(double &x1, double &y1, double &x2, double &y2) {
@@ -57,7 +58,7 @@ private:
 	ShaderInfo m_shaders[2];
 	QOpenGLShaderProgram *m_prog = nullptr;
 	VideoColor m_color;
-	mp_csp m_csp; mp_csp_levels m_range;
+	mp_csp m_csp; ColorRange m_range = ColorRange::Auto;
 	GLenum m_target = GL_TEXTURE_2D;
 	QMatrix3x3 m_mul_mat;
 	QMatrix4x4 m_vMatrix;

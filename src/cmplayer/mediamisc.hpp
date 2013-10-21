@@ -75,16 +75,38 @@ struct DvdInfo {
 	struct Title {
 		QString name() const {return m_name;}
 		int id() const {return m_id;}
-		int m_id = 0;
-		int number = 0, chapters = 0, angles = 0, length = 0;
 	private:
 		friend class PlayEngine;
+		int m_id = 0;
 		QString m_name;
 	};
-	void clear() {titles.clear(); titles.clear(); }
-	QMap<int, Title> titles;
+	void clear() { titles.clear(); titles.clear(); currentTitle = 0; }
+	QVector<Title> titles;
+	int currentTitle = 0;
 	QString volume;
 };
+
+struct Stream {
+	enum Type {Unknown, Audio, Video, Subtitle};
+	QString name() const {
+		QString name = m_title.isEmpty() ? m_name : m_title;
+		if (!m_lang.isEmpty())
+			name += name.isEmpty() ? m_lang : " (" % m_lang % ")";
+		return name;
+	}
+	int id() const {return m_id;}
+	bool operator == (const Stream &rhs) const {
+		return m_title == rhs.m_title && m_lang == rhs.m_lang && m_name == rhs.m_name && m_id == rhs.m_id;
+	}
+	QString fileName() const {return m_fileName;}
+private:
+	friend class MpMessage;
+	friend class PlayEngine;
+	QString m_title, m_lang, m_name; int m_id = -1;
+	QString m_fileName;
+};
+
+typedef QMap<int, Stream> StreamList;
 
 struct Chapter {
 	QString name() const {return m_name;}

@@ -8,7 +8,7 @@ class QFile;		class QDir;
 
 class Playlist : public QList<Mrl> {
 public:
-	enum Type {Unknown, PLS, M3U};
+	enum Type {Unknown, PLS, M3U, M3U8};
 	Playlist();
 	Playlist(const Playlist &rhs);
 	Playlist(const Mrl &mrl);
