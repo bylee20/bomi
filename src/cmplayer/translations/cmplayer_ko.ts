@@ -2561,77 +2561,77 @@ Please wait for a while.</source>
         <translation type="obsolete">DVD 메뉴</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="537"/>
+        <location filename="../playengine.cpp" line="546"/>
         <source>No Subtitle</source>
         <translation>자막 없음</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="91"/>
+        <location filename="../playengine.cpp" line="92"/>
         <source>Audio %1</source>
         <translation>오디오 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="92"/>
+        <location filename="../playengine.cpp" line="93"/>
         <source>Video %1</source>
         <translation>비디오 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="93"/>
+        <location filename="../playengine.cpp" line="94"/>
         <source>Subtitle %1</source>
         <translation>자막 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="213"/>
+        <location filename="../playengine.cpp" line="214"/>
         <source>File</source>
         <translation>파일</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="319"/>
+        <location filename="../playengine.cpp" line="324"/>
         <source>Activated</source>
         <translation>활성화</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="322"/>
+        <location filename="../playengine.cpp" line="327"/>
         <source>Deactivated</source>
         <translation>비활성</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="325"/>
+        <location filename="../playengine.cpp" line="330"/>
         <source>Unavailable</source>
         <translation>사용 불가</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="722"/>
+        <location filename="../playengine.cpp" line="733"/>
         <source>Title %1</source>
         <translation>타이틀 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1113"/>
+        <location filename="../playengine.cpp" line="1127"/>
         <source>Playing</source>
         <translation>재생중</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1115"/>
+        <location filename="../playengine.cpp" line="1129"/>
         <source>Stopped</source>
         <translation>정지</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1117"/>
+        <location filename="../playengine.cpp" line="1131"/>
         <source>Finished</source>
         <translation>마침</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1119"/>
+        <location filename="../playengine.cpp" line="1133"/>
         <source>Loading</source>
         <translation>로딩중</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1121"/>
+        <location filename="../playengine.cpp" line="1135"/>
         <source>Error</source>
         <translation>에러</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1123"/>
+        <location filename="../playengine.cpp" line="1137"/>
         <source>Paused</source>
         <translation>일시정지</translation>
     </message>
@@ -2868,37 +2868,47 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation>비활성</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="133"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
+        <source>Cache: %1</source>
+        <translation>캐쉬: %1</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
+        <source>Unavailable</source>
+        <translation>사용 불가</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="146"/>
         <source>Video Codec: %1</source>
         <translation>비디오 코덱: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="135"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="148"/>
         <source>Input : %1 %2x%3 %4fps(%5MB/s)</source>
         <translation>입력: %1 %2x%3 %4fps(%5MB/s)</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="142"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="155"/>
         <source>Output: %1 %2x%3 %4fps(%5MB/s)</source>
         <translation>출력: %1 %2x%3 %4fps(%5MB/s)</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="163"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="176"/>
         <source>Hardware Acceleration: %1</source>
         <translation>하드웨어 가속: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="179"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="192"/>
         <source>Audio Codec: %1</source>
         <translation>오디오 코덱: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="181"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="194"/>
         <source>Input : %1 %2kbps %3kHz %4ch %5bits</source>
         <translation>입력: %1 %2kbps %3kHz %4ch %5bits</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="195"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="208"/>
         <source>Output Driver: %1</source>
         <translation>출력 드라이버: %1</translation>
     </message>
@@ -2923,7 +2933,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
 </translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="188"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="201"/>
         <source>Output: %1 %2kbps %3kHz %4ch %5bits</source>
         <translation>출력: %1 %2kbps %3kHz %4ch %5bits</translation>
     </message>

@@ -1269,77 +1269,77 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">Меню DVD</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="537"/>
+        <location filename="../playengine.cpp" line="546"/>
         <source>No Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="91"/>
+        <location filename="../playengine.cpp" line="92"/>
         <source>Audio %1</source>
         <translation type="unfinished">Аудио %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="92"/>
+        <location filename="../playengine.cpp" line="93"/>
         <source>Video %1</source>
         <translation type="unfinished">Видео %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="93"/>
+        <location filename="../playengine.cpp" line="94"/>
         <source>Subtitle %1</source>
         <translation type="unfinished">Субтитры %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="213"/>
+        <location filename="../playengine.cpp" line="214"/>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="319"/>
+        <location filename="../playengine.cpp" line="324"/>
         <source>Activated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="322"/>
+        <location filename="../playengine.cpp" line="327"/>
         <source>Deactivated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="325"/>
+        <location filename="../playengine.cpp" line="330"/>
         <source>Unavailable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="722"/>
+        <location filename="../playengine.cpp" line="733"/>
         <source>Title %1</source>
         <translation>Заголовок %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1113"/>
+        <location filename="../playengine.cpp" line="1127"/>
         <source>Playing</source>
         <translation type="unfinished">Проигрывается</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1115"/>
+        <location filename="../playengine.cpp" line="1129"/>
         <source>Stopped</source>
         <translation type="unfinished">Остановлен</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1117"/>
+        <location filename="../playengine.cpp" line="1131"/>
         <source>Finished</source>
         <translation type="unfinished">Завершён</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1119"/>
+        <location filename="../playengine.cpp" line="1133"/>
         <source>Loading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1121"/>
+        <location filename="../playengine.cpp" line="1135"/>
         <source>Error</source>
         <translation type="unfinished">Ошибка</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1123"/>
+        <location filename="../playengine.cpp" line="1137"/>
         <source>Paused</source>
         <translation type="unfinished">Пристановлен</translation>
     </message>
@@ -1446,42 +1446,52 @@ Do you want to start from where it&apos;s stopped?
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="133"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
+        <source>Cache: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="146"/>
         <source>Video Codec: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="135"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="148"/>
         <source>Input : %1 %2x%3 %4fps(%5MB/s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="142"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="155"/>
         <source>Output: %1 %2x%3 %4fps(%5MB/s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="163"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="176"/>
         <source>Hardware Acceleration: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="179"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="192"/>
         <source>Audio Codec: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="181"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="194"/>
         <source>Input : %1 %2kbps %3kHz %4ch %5bits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="195"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="208"/>
         <source>Output Driver: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="188"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="201"/>
         <source>Output: %1 %2kbps %3kHz %4ch %5bits</source>
         <translation type="unfinished"></translation>
     </message>

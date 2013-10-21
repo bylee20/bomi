@@ -1115,77 +1115,77 @@ Fermato alla Posizione: %2</translation>
 <context>
     <name>PlayEngine</name>
     <message>
-        <location filename="../playengine.cpp" line="537"/>
+        <location filename="../playengine.cpp" line="546"/>
         <source>No Subtitle</source>
         <translation>Nessun Sottotitolo</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="91"/>
+        <location filename="../playengine.cpp" line="92"/>
         <source>Audio %1</source>
         <translation>Audio %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="92"/>
+        <location filename="../playengine.cpp" line="93"/>
         <source>Video %1</source>
         <translation>Video %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="93"/>
+        <location filename="../playengine.cpp" line="94"/>
         <source>Subtitle %1</source>
         <translation>Sottotitoli %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="213"/>
+        <location filename="../playengine.cpp" line="214"/>
         <source>File</source>
         <translation>File</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="319"/>
+        <location filename="../playengine.cpp" line="324"/>
         <source>Activated</source>
         <translation type="unfinished">Attivato</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="322"/>
+        <location filename="../playengine.cpp" line="327"/>
         <source>Deactivated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="325"/>
+        <location filename="../playengine.cpp" line="330"/>
         <source>Unavailable</source>
         <translation type="unfinished">Non Disponibile</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="722"/>
+        <location filename="../playengine.cpp" line="733"/>
         <source>Title %1</source>
         <translation>Titolo %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1113"/>
+        <location filename="../playengine.cpp" line="1127"/>
         <source>Playing</source>
         <translation>In Riproduzione</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1115"/>
+        <location filename="../playengine.cpp" line="1129"/>
         <source>Stopped</source>
         <translation>Fermato</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1117"/>
+        <location filename="../playengine.cpp" line="1131"/>
         <source>Finished</source>
         <translation>Terminato</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1119"/>
+        <location filename="../playengine.cpp" line="1133"/>
         <source>Loading</source>
         <translation>In Caricamento</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1121"/>
+        <location filename="../playengine.cpp" line="1135"/>
         <source>Error</source>
         <translation>Errore</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1123"/>
+        <location filename="../playengine.cpp" line="1137"/>
         <source>Paused</source>
         <translation>Sospeso</translation>
     </message>
@@ -1232,42 +1232,52 @@ Fermato alla Posizione: %2</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="133"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
+        <source>Cache: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
+        <source>Unavailable</source>
+        <translation type="unfinished">Non Disponibile</translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="146"/>
         <source>Video Codec: %1</source>
         <translation>Codec Video: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="135"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="148"/>
         <source>Input : %1 %2x%3 %4fps(%5MB/s)</source>
         <translation>Ingresso : %1 %2x%3 %4fps(%5MB/s)</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="142"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="155"/>
         <source>Output: %1 %2x%3 %4fps(%5MB/s)</source>
         <translation>Uscita: %1 %2x%3 %4fps(%5MB/s)</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="163"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="176"/>
         <source>Hardware Acceleration: %1</source>
         <translation>Accelerazione Hardware: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="179"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="192"/>
         <source>Audio Codec: %1</source>
         <translation>Codec Audio: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="181"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="194"/>
         <source>Input : %1 %2kbps %3kHz %4ch %5bits</source>
         <translation>Ingresso : %1 %2kbps %3kHz %4ch %5bits</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="195"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="208"/>
         <source>Output Driver: %1</source>
         <translation>Driver Uscita: %1</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="188"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="201"/>
         <source>Output: %1 %2kbps %3kHz %4ch %5bits</source>
         <translation>Uscita: %1 %2kbps %3kHz %4 canali %5bits</translation>
     </message>
