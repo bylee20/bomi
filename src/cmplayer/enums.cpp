@@ -22,15 +22,6 @@ const std::array<SubtitleDisplayInfo::Item, 2> SubtitleDisplayInfo::info{{
 	{SubtitleDisplay::InVideo, "InVideo", "in-video", (int)1}
 }};
 
-const std::array<WindowSizeInfo::Item, 6> WindowSizeInfo::info{{
-	{WindowSize::Proper, "Proper", "proper", 0},
-	{WindowSize::_100, "_100", "100%", 1},
-	{WindowSize::_200, "_200", "200%", 2},
-	{WindowSize::_300, "_300", "300%", 3},
-	{WindowSize::_400, "_400", "400%", 4},
-	{WindowSize::Full, "Full", "full", -1}
-}};
-
 const std::array<VideoRatioInfo::Item, 7> VideoRatioInfo::info{{
 	{VideoRatio::Source, "Source", "source", -1.0},
 	{VideoRatio::Window, "Window", "window", 0.0},

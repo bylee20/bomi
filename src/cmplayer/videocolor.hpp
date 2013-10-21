@@ -58,6 +58,8 @@ public:
 	VideoColor() = default;
 	bool operator == (const VideoColor &rhs) const { return m == rhs.m; }
 	bool operator != (const VideoColor &rhs) const { return m != rhs.m; }
+	VideoColor &operator *= (int rhs) { m[0] *= rhs; m[1] *= rhs; m[2] *= rhs; m[3] *= rhs; return *this; }
+	VideoColor operator * (int rhs) const { return VideoColor(*this) *= rhs; }
 	Type operator & (const VideoColor &rhs) const {
 		int count = 0;
 		Type type = TypeMax;

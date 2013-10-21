@@ -126,7 +126,7 @@ public:
 	static constexpr int size() { return 9; }
     static constexpr const char *typeName() { return "AdjustColor"; }
     static constexpr const char *typeKey() { return "color"; }
-    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Adjust Color")); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -136,15 +136,15 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Reset: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Reset"));
-		case Enum::BrightnessInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Brightness +%1%"));
-		case Enum::BrightnessDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Brightness -%1%"));
-		case Enum::ContrastInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Contrast +%1%"));
-		case Enum::ContrastDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Contrast -%1%"));
-		case Enum::SaturationInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Saturation +%1%"));
-		case Enum::SaturationDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Saturation -%1%"));
-		case Enum::HueInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Hue +%1%"));
-		case Enum::HueDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Hue -%1%"));
+		case Enum::Reset: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BrightnessInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BrightnessDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::ContrastInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::ContrastDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::SaturationInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::SaturationDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::HueInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::HueDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		default: return tr("");
 		};
 	}
@@ -233,84 +233,6 @@ private:
 };
 
 using SubtitleDisplayInfo = EnumInfo<SubtitleDisplay>;
-
-enum class WindowSize : int {
-	Proper = (int)0,
-	_100 = (int)1,
-	_200 = (int)2,
-	_300 = (int)3,
-	_400 = (int)4,
-	Full = (int)5
-};
-
-inline bool operator == (WindowSize e, int i) { return (int)e == i; }
-inline bool operator != (WindowSize e, int i) { return (int)e != i; }
-inline bool operator == (int i, WindowSize e) { return (int)e == i; }
-inline bool operator != (int i, WindowSize e) { return (int)e != i; }
-inline int operator & (WindowSize e, int i) { return (int)e & i; }
-inline int operator & (int i, WindowSize e) { return (int)e & i; }
-inline int &operator &= (int &i, WindowSize e) { return i &= (int)e; }
-inline int operator ~ (WindowSize e) { return ~(int)e; }
-inline int operator | (WindowSize e, int i) { return (int)e | i; }
-inline int operator | (int i, WindowSize e) { return (int)e | i; }
-inline int operator | (WindowSize e1, WindowSize e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, WindowSize e) { return i |= (int)e; }
-inline bool operator > (WindowSize e, int i) { return (int)e > i; }
-inline bool operator < (WindowSize e, int i) { return (int)e < i; }
-inline bool operator >= (WindowSize e, int i) { return (int)e >= i; }
-inline bool operator <= (WindowSize e, int i) { return (int)e <= i; }
-inline bool operator > (int i, WindowSize e) { return i > (int)e; }
-inline bool operator < (int i, WindowSize e) { return i < (int)e; }
-inline bool operator >= (int i, WindowSize e) { return i >= (int)e; }
-inline bool operator <= (int i, WindowSize e) { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(WindowSize)
-
-template<>
-class EnumInfo<WindowSize> {
-	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
-	typedef WindowSize Enum;
-public:
-    typedef WindowSize type;
-    using Data =  int;
-    struct Item { Enum value; QString name, key; int data; };
-	static constexpr int size() { return 6; }
-    static constexpr const char *typeName() { return "WindowSize"; }
-    static constexpr const char *typeKey() { return "size"; }
-    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Window Size")); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static int data(Enum e) { auto i = item(e); return i ? i->data : int(); }
-	static QString description(int e) { return description((Enum)e); }
-	static QString description(Enum e) {
-		switch (e) {
-		case Enum::Proper: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Proper Size"));
-		case Enum::_100: return tr(QT_TRANSLATE_NOOP("EnumInfo", "100%"));
-		case Enum::_200: return tr(QT_TRANSLATE_NOOP("EnumInfo", "200%"));
-		case Enum::_300: return tr(QT_TRANSLATE_NOOP("EnumInfo", "300%"));
-		case Enum::_400: return tr(QT_TRANSLATE_NOOP("EnumInfo", "400%"));
-		case Enum::Full: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Fullscreen"));
-		default: return tr("");
-		};
-	}
-	static constexpr const std::array<Item, 6> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
-		return it != info.cend() ? it->value : def;
-	}
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
-		return it != info.cend() ? it->value : def;
-	}
-    static constexpr Enum default_() { return WindowSize::Proper; }
-private:
-	static const std::array<Item, 6> info;
-};
-
-using WindowSizeInfo = EnumInfo<WindowSize>;
 
 enum class VideoRatio : int {
 	Source = (int)0,

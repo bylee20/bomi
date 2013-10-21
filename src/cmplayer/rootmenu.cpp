@@ -455,15 +455,15 @@ void RootMenu::update(const Pref &p) {
 	effect.a("invert", tr("Invert Color"));
 	effect.a("disable", tr("Disable Filters"));
 
-	auto updateVideoColorAdjust = [&video] (int step) {
-		auto &color = video("color", AdjustColorInfo::typeDescription());
+	auto updateVideoColorAdjust = [&video] (Menu &color, int step) {
 		auto actions = color.g(AdjustColorInfo::typeKey())->actions();
 		for (int i=0; i<actions.size(); ++i) {
-			auto action = static_cast<EnumAction<AdjustColor>*>(actions[i]);
-			action->setText(action->description().arg(step));
+			const auto action = static_cast<EnumAction<AdjustColor>*>(actions[i]);
+			const auto color = action->data() * step;
+			action->setText(color.getText(color & VideoColor()));
 		}
 	};
-	updateVideoColorAdjust(p.brightness_step);
+	updateVideoColorAdjust(video("color", tr("Adjust Color")), p.brightness_step);
 
 	video.a("snapshot", tr("Take Snapshot"));
 
