@@ -43,6 +43,7 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(QString hardwareAccelerationText READ hwAccText NOTIFY hwAccChanged)
 	Q_PROPERTY(double relativePosition READ relativePosition NOTIFY relativePositionChanged)
 	Q_PROPERTY(QQuickItem *screen READ screen)
+	Q_PROPERTY(qreal cache READ cache NOTIFY cacheChanged)
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Loading = 16, Error = 32, Running = Playing | Loading };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
@@ -136,6 +137,7 @@ public:
 	double relativePosition() const { return (double)(time()-begin())/duration(); }
 	Q_INVOKABLE double bps(double fps) const;
 	static void registerObjects();
+	qreal cache() const;
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);
@@ -179,6 +181,7 @@ signals:
 	void runningChanged();
 	void relativePositionChanged();
 	void hwAccChanged();
+	void cacheChanged();
 private:
 	int playImage(const Mrl &mrl, int &terminated, int &duration);
 	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);

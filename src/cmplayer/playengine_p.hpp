@@ -51,7 +51,7 @@ void mp_msg_log_va2(struct mp_log *log, int lev, const char *format, va_list va)
 
 enum EventType {
 	UserType = QEvent::User, TimeRangeChange, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged, VideoFormatChanged, UpdateChapterList,
-	HwAccChanged, UpdateDVDInfo
+	HwAccChanged, UpdateDVDInfo, UpdateCache
 };
 
 enum MpCmd : int {

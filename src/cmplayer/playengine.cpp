@@ -26,6 +26,7 @@ struct PlayEngine::Data {
 	int volume = 100;
 	double amp = 1.0;
 	double speed = 1.0;
+	qreal cache = -1.0;
 	MPContext *mpctx = nullptr;
 	VideoOutput *video = nullptr;
 	GetMrlInt getStartTimeFunc, getCacheFunc;
@@ -285,6 +286,10 @@ PlayEngine::~PlayEngine() {
 	delete d;
 }
 
+qreal PlayEngine::cache() const {
+	return d->cache;
+}
+
 int PlayEngine::begin() const { return d->begin; }
 int PlayEngine::end() const { return d->begin + d->duration; }
 
@@ -527,6 +532,10 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->dvd = getData<DvdInfo>(event);
 		emit dvdInfoChanged();
 		break;
+	case UpdateCache:
+		d->cache = getData<int>(event)*1e-2;
+		emit cacheChanged();
+		break;
 	case UpdateTrack: {
 		auto streams = getData<std::array<StreamList, STREAM_TYPE_COUNT>>(event);
 		if (_CheckSwap(d->videoStreams, streams[STREAM_VIDEO]))
@@ -551,11 +560,13 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->audioInfo.setAudio(this);
 		d->start = 0;
 		d->position = 0;
+		d->cache = -1;
 		emit tick(d->position);
 		emit seekableChanged(isSeekable());
 		emit started(d->playlist.loadedMrl());
 		emit mediaChanged();
 		emit audioChanged();
+		emit cacheChanged();
 		break;
 	case StateChange: {
 		const auto state = getData<PlayEngine::State>(event);
@@ -708,7 +719,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	if (error != MPERROR_NONE)
 		return error;
 	DvdInfo dvd;
-	if (!strcmp(mpctx->stream->info->name, "dvd")) {
+	if (mpctx->stream && mpctx->stream->info && !strcmp(mpctx->stream->info->name, "dvd")) {
 		char buffer[256];
 		if (dvd_volume_id(mpctx->stream, buffer, sizeof(buffer)))
 			dvd.volume = QString::fromLocal8Bit(buffer);
@@ -750,6 +761,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	postData(this, StreamOpen);
 	d->tellmp("vf set", d->vfs);
 	auto state = this->state(), newState = Loading;
+	int cache = -1;
 	while (!mpctx->stop_play) {
 		if (!duration)
 			checkTimeRange();
@@ -763,6 +775,8 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 			newState = Paused;
 		if (_Change(state, newState))
 			setState(state);
+		if (_Change(cache, mp_get_cache_percent(mpctx)))
+			postData(this, UpdateCache, cache);
 	}
 	terminated = time();
 	duration = this->duration();

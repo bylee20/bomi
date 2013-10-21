@@ -121,8 +121,21 @@ Item {
 			styleColor: "black"
 		}
 		Text {
-			id: videoinfo
+			id: cacheinfo
 			anchors.top: resources.bottom
+			anchors.left: parent.left
+			width: contentWidth
+			height: contentHeight
+			font.pixelSize: wrapper.fontSize
+			font.family: wrapper.fontFamily
+			color: "yellow"
+			style: Text.Outline
+			styleColor: "black"
+			text: qsTr("Cache: %1").arg(engine.cache < 0 ? qsTr("Unavailable") : (engine.cache*100.0).toFixed(0) + "%");
+		}
+		Text {
+			id: videoinfo
+			anchors.top: cacheinfo.bottom
 			anchors.left: parent.left
 			anchors.topMargin: wrapper.fontSize
 			width: contentWidth
