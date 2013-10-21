@@ -40,11 +40,13 @@ class PlayEngine : public QObject, public MpMessage {
 	Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
 	Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
 	Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated NOTIFY volumeNormalizerActivatedChanged)
+	Q_PROPERTY(HardwareAcceleration hardwareAccelaration READ hwAcc NOTIFY hwAccChanged)
+	Q_PROPERTY(QString hardwareAccelerationText READ hwAccText NOTIFY hwAccChanged)
 	Q_PROPERTY(double relativePosition READ relativePosition NOTIFY relativePositionChanged)
 	Q_PROPERTY(QQuickItem *screen READ screen)
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Loading = 16, Error = 32, Running = Playing | Loading };
-	enum HardwareAcceleration { HwAccUnavailable, HwAccInactivated, HwAccActivated };
+	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
 	PlayEngine();
 	PlayEngine(const PlayEngine&) = delete;
 	PlayEngine &operator = (const PlayEngine &) = delete;
@@ -81,7 +83,6 @@ public:
 	void setCurrentDvdTitle(int id);
 	void setCurrentChapter(int id);
 	bool hasVideo() const;
-	bool isHwAccActivated() const;
 	void setVolumeNormalizerActivated(bool on);
 	void setTempoScalerActivated(bool on);
 	bool isVolumeNormalizerActivated() const;
@@ -99,6 +100,8 @@ public:
 	const PlaylistModel &playlist() const;
 	PlaylistModel &playlist();
 
+	HardwareAcceleration hwAcc() const;
+	QString hwAccText() const;
 	int volume() const;
 	int currentAudioStream() const;
 	bool isMuted() const;
@@ -176,6 +179,7 @@ signals:
 	void videoChanged();
 	void runningChanged();
 	void relativePositionChanged();
+	void hwAccChanged();
 private:
 	int playImage(const Mrl &mrl, int &terminated, int &duration);
 	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);

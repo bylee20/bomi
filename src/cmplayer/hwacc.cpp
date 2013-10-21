@@ -80,6 +80,8 @@ const char *HwAcc::codecName(int id) {
 }
 
 AVCodecID HwAcc::codecId(const char *name) {
+	if (!name)
+		return AV_CODEC_ID_NONE;
 	for (auto &info : codecs) {
 		if (qstrcmp(info.name, name) == 0)
 			return info.id;

@@ -40,17 +40,14 @@ class AvInfoObject : public QObject {
 	Q_PROPERTY(QString codec READ codec)
 	Q_PROPERTY(AvIoFormat *input READ input)
 	Q_PROPERTY(AvIoFormat *output READ output)
-	Q_PROPERTY(QString hardwareAccelerationText READ hwAccText)
 	Q_PROPERTY(QString audioDriverText READ audioDriverText)
 public:
 	AvInfoObject(QObject *parent = nullptr);
 	QString codec() const {return m_codec;}
-	int hwAcc() const {return m_hwAcc;}
 	AvIoFormat *input() const {return m_input;}
 	AvIoFormat *output() const {return m_output;}
 	void setVideo(const PlayEngine *engine);
 	void setAudio(const PlayEngine *engine);
-	QString hwAccText() const { return m_hwAccText; }
 	QString audioDriverText() const { return m_audioDriver; }
 private:
 	void setHwAcc(int acc);
@@ -58,7 +55,6 @@ private:
 	static QString bps(int Bps) {return (Bps ? _N(Bps*8/1000) % _L("kbps") : QString());}
 	AvIoFormat *m_input = new AvIoFormat(this);
 	AvIoFormat *m_output = new AvIoFormat(this);
-	int m_hwAcc = 0;
 	QString m_codec, m_hwAccText, &m_audioDriver = m_hwAccText;
 };
 

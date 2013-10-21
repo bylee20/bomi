@@ -11,21 +11,6 @@ extern "C" {
 
 AvInfoObject::AvInfoObject(QObject *parent)
 : QObject(parent) {
-	setHwAcc(PlayEngine::HwAccUnavailable);
-}
-
-void AvInfoObject::setHwAcc(int acc) {
-	switch (m_hwAcc = acc) {
-	case PlayEngine::HwAccActivated:
-		m_hwAccText = tr("Activated");
-		break;
-	case PlayEngine::HwAccInactivated:
-		m_hwAccText = tr("Inactivated");
-		break;
-	default:
-		m_hwAccText = tr("Unavailable");
-		break;
-	}
 }
 
 void AvInfoObject::setVideo(const PlayEngine *engine) {
@@ -38,12 +23,6 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	const auto out = fmt.imgfmt();
 	const auto in = sh->vfilter ? sh->vfilter->fmt_in.params.imgfmt : out;
 
-	if (!HwAcc::supports(HwAcc::codecId(mpctx->sh[STREAM_VIDEO]->codec)))
-		setHwAcc(PlayEngine::HwAccUnavailable);
-	else if (engine->isHwAccActivated())
-		setHwAcc(PlayEngine::HwAccActivated);
-	else
-		setHwAcc(PlayEngine::HwAccInactivated);
 	m_codec = _U(mpctx->sh[STREAM_VIDEO]->decoder_desc);
 
 	m_input->m_type = format(sh->format);
@@ -64,7 +43,6 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 		return;
 	auto sh = mpctx->sh_audio;
 	auto ao = mpctx->ao;
-	m_hwAcc = PlayEngine::HwAccUnavailable;
 	m_audioDriver = AudioDriverInfo::name(engine->audioDriver());
 	m_codec = _U(mpctx->sh[STREAM_AUDIO]->decoder_desc);
 

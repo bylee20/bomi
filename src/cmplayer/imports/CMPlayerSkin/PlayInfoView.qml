@@ -113,7 +113,7 @@ Item {
 					.arg(fps.toFixed(3)).arg((engine.bps(fps)/(8*1024*1024)).toFixed(2));
 				txt += '\n';
 				txt += qsTr("Volume Normalizer: %1")
-					.arg(engine.volumeNormalizerActivated ? ((engine.volumeNormalizer*100.0).toFixed(1) + "%") : qsTr("Inactivated"));
+					.arg(engine.volumeNormalizerActivated ? ((engine.volumeNormalizer*100.0).toFixed(1) + "%") : qsTr("Deactivated"));
 				text = txt;
 			}
 			color: "yellow"
@@ -145,10 +145,22 @@ Item {
 					.arg(engine.video.output.size.height)
 					.arg(engine.video.output.fps.toFixed(3))
 					.arg((engine.video.output.bps/(8*1024*1024)).toFixed(2));
-				txt += '\n';
-				txt += qsTr("Hardware Acceleration: %1").arg(engine.video.hardwareAccelerationText);
 				text = txt
 			}
+			color: "yellow"
+			style: Text.Outline
+			styleColor: "black"
+		}
+		Text {
+			id: hwaccinfo
+			anchors.top: videoinfo.bottom
+			anchors.left: parent.left
+			anchors.topMargin: 0
+			width: contentWidth
+			height: contentHeight
+			font.pixelSize: wrapper.fontSize
+			font.family: wrapper.fontFamily
+			text: qsTr("Hardware Acceleration: %1").arg(engine.hardwareAccelerationText);
 			color: "yellow"
 			style: Text.Outline
 			styleColor: "black"
@@ -156,7 +168,7 @@ Item {
 
 		Text {
 			id: audioinfo
-			anchors.top: videoinfo.bottom
+			anchors.top: hwaccinfo.bottom
 			anchors.left: parent.left
 			anchors.topMargin: wrapper.fontSize
 			width: contentWidth

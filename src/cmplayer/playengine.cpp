@@ -11,6 +11,7 @@ struct PlayEngine::Data {
 
 	MediaInfoObject mediaInfo;
 	AvInfoObject videoInfo, audioInfo;
+	HardwareAcceleration hwAcc = HardwareAcceleration::Unavailable;
 
 	bool hasImage = false;
 	bool subStreamsVisible = true;
@@ -221,6 +222,18 @@ struct PlayEngine::Data {
 			name = _L("URL: ") % mrl.toString();
 		mediaInfo.setName(name);
 	}
+	HardwareAcceleration getHwAcc() const {
+		auto sh = mpctx->sh[STREAM_VIDEO];
+		if (sh && sh->codec) {
+			if (HwAcc::supports(HwAcc::codecId(sh->codec))) {
+				if (video->hwAcc())
+					return HardwareAcceleration::Activated;
+				if (!hwAccCodecs.contains(sh->codec))
+					return HardwareAcceleration::Deactivated;
+			}
+		}
+		return HardwareAcceleration::Unavailable;
+	}
 };
 
 PlayEngine::PlayEngine()
@@ -257,6 +270,10 @@ PlayEngine::PlayEngine()
 	});
 	connect(d->video, &VideoOutput::formatChanged, [this] (const VideoFormat &format) {
 		postData(this, VideoFormatChanged, format);
+		postData(this, HwAccChanged, d->getHwAcc());
+	});
+	connect(d->video, &VideoOutput::hwAccChanged, [this] () {
+		postData(this, HwAccChanged, d->getHwAcc());
 	});
 	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
 		d->load(row, d->getStartTime(d->playlist[row]));
@@ -293,6 +310,23 @@ StreamList PlayEngine::videoStreams() const {return d->videoStreams;}
 
 int PlayEngine::audioSync() const {return d->audioSync;}
 StreamList PlayEngine::audioStreams() const {return d->audioStreams;}
+
+PlayEngine::HardwareAcceleration PlayEngine::hwAcc() const {
+	return d->hwAcc;
+}
+
+QString PlayEngine::hwAccText() const {
+	switch (d->hwAcc) {
+	case HardwareAcceleration::Activated:
+		return tr("Activated");
+		break;
+	case HardwareAcceleration::Deactivated:
+		return tr("Deactivated");
+		break;
+	default:
+		return tr("Unavailable");
+	}
+}
 
 void PlayEngine::run() {
 	d->thread.start();
@@ -393,10 +427,6 @@ void PlayEngine::setGetStartTimeFunction(const GetMrlInt &func) {
 
 double PlayEngine::volumeNormalizer() const {
 	auto gain = d->audio->gain(); return gain < 0 ? 1.0 : gain;
-}
-
-bool PlayEngine::isHwAccActivated() const {
-	return d->video->hwAcc() != nullptr;
 }
 
 void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
@@ -575,7 +605,10 @@ void PlayEngine::customEvent(QEvent *event) {
 			emit videoFormatChanged(d->videoFormat);
 			emit videoChanged();
 		}
-	} default:
+	} case HwAccChanged:
+		if (_Change(d->hwAcc, getData<HardwareAcceleration>(event)))
+			emit hwAccChanged();
+	default:
 		break;
 	}
 }

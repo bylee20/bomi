@@ -86,7 +86,8 @@ VideoOutput::~VideoOutput() {
 }
 
 void VideoOutput::setHwAcc(HwAcc *acc) {
-	d->acc = acc;
+	if (_Change(d->acc, acc))
+		emit hwAccChanged(d->acc);
 }
 
 int VideoOutput::preinit(struct vo *vo) {

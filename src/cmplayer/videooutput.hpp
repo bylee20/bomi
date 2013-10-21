@@ -28,6 +28,7 @@ public:
 	void setDeintOptions(const DeintOption &sw, const DeintOption &hw);
 	void setDeintEnabled(bool on);
 signals:
+	void hwAccChanged(bool activated);
 	void formatChanged(const VideoFormat &format);
 private:
 	void updateDeint();
