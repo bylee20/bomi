@@ -1589,7 +1589,7 @@ void MainWindow::clearSubtitleFiles() {
 }
 
 bool MainWindow::load(Subtitle &sub, const QString &fileName, const QString &encoding) {
-	if (sub.load(fileName, encoding, d->pref().sub_enc_accuracy*0.01))
+	if (sub.load(fileName, encoding, d->pref().sub_enc_autodetection ? d->pref().sub_enc_accuracy*0.01 : -1.0))
 		return true;
 	d->engine.addSubtitleStream(fileName, encoding);
 	return false;
