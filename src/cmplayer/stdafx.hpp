@@ -30,6 +30,12 @@ static inline QString _N(quint64 n, int base = 10) {return QString::number(n, ba
 static inline QString _N(double n, int dec = 1) {return QString::number(n, 'f', dec);}
 static inline QString _N(double n, int dec, int width, const QChar &c = QChar(QChar::Nbsp)) {return QString("%1").arg(n, width, 'f', dec, c);}
 static inline QString _Chopped(const QString &str, int n) {QString ret = str; ret.chop(n); return ret;}
+// number with sign
+template<typename N>
+static inline QString _SignSymbol(N n) { return n < 0 ? _L("-") : (n > 0 ? _L("+") : _U("±")); }
+static inline QString _NS(int n) { return _SignSymbol(n) % _N(qAbs(n)); }
+static inline QString _NS(double n, int dec = 1) { return _SignSymbol(n) % _N(qAbs(n), dec); }
+
 template<typename T>
 static inline bool _InRange(const T &min, const T &val, const T &max) {return min <= val && val <= max;}
 static inline bool _IsNumber(ushort c) {return _InRange<ushort>('0', c, '9');}

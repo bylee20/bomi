@@ -25,7 +25,7 @@ struct VideoRendererItem::Data {
 	VideoFrameShader *shader = nullptr;
 	Kernel3x3 blur, sharpen, kernel;
 	Effects effects = 0;
-	ColorProperty color;
+	VideoColor color;
 	DeintMethod deint = DeintMethod::None;
 	OpenGLTexture black;
 	QSize displaySize{1, 1}, frameSize{0, 0};
@@ -113,7 +113,7 @@ double VideoRendererItem::avgfps() const {
 	return fps;
 }
 
-void VideoRendererItem::setOverlayInLetterbox(bool letterbox) {
+void VideoRendererItem::setOverlayOnLetterbox(bool letterbox) {
 	if (_Change(d->overlayInLetterbox, letterbox))
 		d->updateGeometry(false);
 }
@@ -289,14 +289,14 @@ QRectF VideoRendererItem::frameRect(const QRectF &area) const {
 	return d->frameRect(area);
 }
 
-void VideoRendererItem::setColor(const ColorProperty &prop) {
+void VideoRendererItem::setColor(const VideoColor &prop) {
 	if (_Change(d->color, prop) && d->shader) {
 		d->shader->setColor(d->color);
 		d->repaint();
 	}
 }
 
-const ColorProperty &VideoRendererItem::color() const {
+const VideoColor &VideoRendererItem::color() const {
 	return d->color;
 }
 

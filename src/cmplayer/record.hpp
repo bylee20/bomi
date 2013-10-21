@@ -3,7 +3,7 @@
 
 #include "stdafx.hpp"
 #include "info.hpp"
-#include "colorproperty.hpp"
+#include "videocolor.hpp"
 #include "deintinfo.hpp"
 #include "enums.hpp"
 #include <type_traits>
@@ -64,14 +64,14 @@ struct RecordIoList {
 };
 
 template <>
-struct RecordIoOne<ColorProperty, false> {
-	static void write(QSettings &r, const ColorProperty &value, const QString &key) {
+struct RecordIoOne<VideoColor, false> {
+	static void write(QSettings &r, const VideoColor &value, const QString &key) {
 		r.setValue(key % _L("_brightness"), value.brightness());
 		r.setValue(key % _L("_contrast"), value.contrast());
 		r.setValue(key % _L("_saturation"), value.saturation());
 		r.setValue(key % _L("_hue"), value.hue());
 	}
-	static void read(QSettings &r, ColorProperty &value, const QString &key) {
+	static void read(QSettings &r, VideoColor &value, const QString &key) {
 		value.brightness() = r.value(key % _L("_brightness"), value.brightness()).toDouble();
 		value.contrast() = r.value(key % _L("_contrast"), value.contrast()).toDouble();
 		value.saturation() = r.value(key % _L("_saturation"), value.saturation()).toDouble();

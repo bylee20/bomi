@@ -74,7 +74,37 @@ struct MainWindow::Data {
 // methods
 	int startFromStopped = -1;
 	QAction *subtrackSep = nullptr;
-	QAction *currentAspect = nullptr, *currentCrop = nullptr;
+
+	void initContextMenu() {
+		auto d = this;
+		auto addContextMenu = [d] (Menu &menu) {d->contextMenu.addMenu(menu.copied(&d->contextMenu));};
+		addContextMenu(d->menu("open"));
+		d->contextMenu.addSeparator();
+		addContextMenu(d->menu("play"));
+		addContextMenu(d->menu("video"));
+		addContextMenu(d->menu("audio"));
+		addContextMenu(d->menu("subtitle"));
+		d->contextMenu.addSeparator();
+		addContextMenu(d->menu("tool"));
+		addContextMenu(d->menu("window"));
+		d->contextMenu.addSeparator();
+		d->contextMenu.addAction(d->menu("help")["about"]);
+		d->contextMenu.addAction(d->menu["exit"]);
+#ifdef Q_OS_MAC
+	////	qt_mac_set_dock_menu(&d->menu);
+		QMenuBar *mb = cApp.globalMenuBar();
+		qDeleteAll(mb->actions());
+		auto addMenuBar = [this, mb] (Menu &menu) {mb->addMenu(menu.copied(mb));};
+		addMenuBar(d->menu("open"));
+		addMenuBar(d->menu("play"));
+		addMenuBar(d->menu("video"));
+		addMenuBar(d->menu("audio"));
+		addMenuBar(d->menu("subtitle"));
+		addMenuBar(d->menu("tool"));
+		addMenuBar(d->menu("window"));
+		addMenuBar(d->menu("help"));
+#endif
+	}
 
 	void openWith(const Pref::OpenMedia &mode, const QList<Mrl> &mrls) {
 		if (mrls.isEmpty())
@@ -181,30 +211,13 @@ struct MainWindow::Data {
 	void commitData() {
 		static bool first = true;
 		if (first) {
-			const int sot = menu("window").g("stays-on-top")->checkedAction()->data().toInt();
 			recent.setLastPlaylist(playlist.playlist());
 			recent.setLastMrl(engine.mrl());
 			engine.quit();
 			auto &as = AppState::get();
 			if (!p->isFullScreen())
 				updateWindowPosState();
-			as.audio_volume = engine.volume();
-			as.audio_muted = engine.isMuted();
-			as.audio_preamp = engine.amp();
-			as.audio_normalizer = engine.isVolumeNormalizerActivated();
-			as.audio_scaletempo = engine.isTempoScaled();
-			as.video_aspect_ratio = renderer.aspectRatio();
-			as.video_crop_ratio = renderer.cropRatio();
-			as.video_alignment = PositionInfo::from(renderer.alignment(), Position::CC);
-			as.video_offset = renderer.offset();
 			as.video_effects = renderer.effects();
-			as.video_color = renderer.color();
-			as.play_speed = engine.speed();
-			as.sub_pos = subtitle.pos();
-			as.sub_sync_delay = subtitle.delay();
-			as.screen_stays_on_top = StaysOnTopInfo::from(sot, StaysOnTop::Playing);
-			as.sub_letterbox = renderer.overlayInLetterbox();
-			as.sub_align_top = subtitle.isTopAligned();
 			as.save();
 
 			engine.waitUntilTerminated();
@@ -224,21 +237,6 @@ struct MainWindow::Data {
 			return nullptr;
 		}
 	}
-
-	template<typename Func>
-	void connect(ActionGroup *g, Func func) {
-		MainWindow::connect(g, &ActionGroup::triggered, [this, g, func] (QAction *a) {
-			push(a, currentActions[g], [this, func, g] (QAction *a) {
-				if (a) {
-					func(a);
-					a->setChecked(true);
-				}
-				currentActions[g] = a;
-			});
-		});
-	}
-
-	QMap<ActionGroup*, QAction*> currentActions;
 	void showMessageBox(const QVariant &msg) {
 		if (player)
 			QMetaObject::invokeMethod(player, "showMessageBox", Q_ARG(QVariant, msg));
@@ -246,6 +244,249 @@ struct MainWindow::Data {
 	void showOSD(const QVariant &msg) {
 		if (player)
 			QMetaObject::invokeMethod(player, "showOSD", Q_ARG(QVariant, msg));
+	}
+	template<typename T, typename F, typename OnTriggered>
+	void connectEnumActions(Menu &menu, OnTriggered onTriggered, const char *asprop, void(AppState::*sig)(), F f) {
+		Q_ASSERT(as.property(asprop).isValid());
+		const int size = EnumInfo<T>::size();
+		auto cycle = _C(menu)[size > 2 ? "next" : "toggle"];
+		auto group = menu.g(_L(EnumInfo<T>::typeKey()));
+		if (cycle) {
+			connect(cycle, &QAction::triggered, [this, group] () {
+				auto actions = group->actions();
+				int i = 0;
+				for (; i<actions.size(); ++i)
+					if (actions[i]->isChecked())
+						break;
+				if (++i >= actions.size())
+					i = 0;
+				actions[i]->trigger();
+			});
+		}
+		connect(group, &QActionGroup::triggered, onTriggered);
+		connect(&as, sig, f);
+		group->trigger(as.property(asprop));
+		emit (as.*sig)();
+	}
+	template<typename T, typename F>
+	void connectEnumActions(Menu &menu, const char *asprop, void(AppState::*sig)(), F f) {
+		auto group = menu.g(_L(EnumInfo<T>::typeKey()));
+		connectEnumActions<T, F>(menu, [this, asprop, group, &menu] (QAction *a) {
+			auto action = static_cast<EnumAction<T>*>(a);
+			auto t = action->enum_();
+			auto current = as.property(asprop).value<T>();
+			if (current != t)
+				push<T>(t, current, [this, asprop, group, &menu] (T t) {
+					if (auto action = group->find(t)) {
+						action->setChecked(true);
+						p->showMessage(menu.title(), action->text());
+						as.setProperty(asprop, action->data());
+					}
+				});
+		}, asprop, sig, f);
+	}
+	template<typename T, typename F, typename GetNew>
+	void connectEnumDataActions(Menu &menu, const char *asprop, GetNew getNew, void(AppState::*sig)(), F f) {
+		using Data = typename EnumInfo<T>::Data;
+		connectEnumActions<T, F>(menu, [this, asprop, getNew, &menu] (QAction *a) {
+			auto action = static_cast<EnumAction<T>*>(a);
+			auto old = as.property(asprop).value<Data>();
+			auto new_ = getNew(action->data());
+			auto step = dynamic_cast<StepAction*>(action);
+			if (step)
+				new_ = step->clamp(new_);
+			if (old != new_)
+				push<Data>(new_, old, [this, asprop, &menu, step] (const Data &data) {
+					as.setProperty(asprop, QVariant::fromValue<Data>(data));
+					if (step)
+						p->showMessage(menu.title(), step->format(data));
+				});
+		}, asprop, sig, f);
+	}
+	template<typename T, typename F>
+	void connectEnumMenu(Menu &parent, const char *asprop, void(AppState::*sig)(), F f) {
+		connectEnumActions<T, F>(parent(EnumInfo<T>::typeKey()), asprop, sig, f);
+	}
+	template<typename F>
+	void connectStepActions(Menu &menu, const char *asprop, void(AppState::*sig)(), F f) {
+		connectEnumDataActions<ChangeValue, F>(menu, asprop, [this, asprop] (int diff) {
+			return diff ? (as.property(asprop).toInt() + diff) : 0;
+		}, sig, f);
+	}
+
+	void initWidget() {
+		view = new MainView(p);
+		view->setPersistentOpenGLContext(true);
+		view->setPersistentSceneGraph(true);
+
+		auto widget = createWindowContainer(view, p);
+		auto l = new QVBoxLayout;
+		l->addWidget(widget);
+		l->setMargin(0);
+		p->setLayout(l);
+
+		subtitleView = new SubtitleView(p);
+		p->setAcceptDrops(true);
+		p->resize(400, 300);
+		p->setMinimumSize(QSize(400, 300));
+
+		MainWindow::connect(view, &QQuickView::sceneGraphInitialized, [this] () {
+			OpenGLCompat::initialize(view->openglContext());
+		});
+	}
+	void initEngine() {
+		engine.setVideoRenderer(&renderer);
+		engine.setGetStartTimeFunction([this] (const Mrl &mrl) {
+			if (!pref().remember_stopped || mrl.isImage())
+				return 0;
+			const int start = history.stoppedTime(mrl);
+			if (start <= 0)
+				return 0;
+			if (pref().ask_record_found) {
+				if (QThread::currentThread() == engine.thread()) {
+					startFromStopped = -1;
+					qApp->postEvent(p, new AskStartTimeEvent(mrl, start));
+					while (startFromStopped == -1)
+						QThread::msleep(50);
+				} else {
+					AskStartTimeEvent event(mrl, start);
+					qApp->sendEvent(p, &event);
+				}
+				if (startFromStopped <= 0)
+					return 0;
+			}
+			return start;
+		});
+		engine.setGetCacheFunction([this] (const Mrl &mrl) {
+			if (mrl.isLocalFile()) {
+				auto path = mrl.toLocalFile();
+				if (_ContainsIf(pref().network_folders, [path] (const QString &folder) {
+					return path.startsWith(folder);
+				}))
+					return pref().cache_network;
+				return pref().cache_local;
+			} if (mrl.isDvd())
+				return pref().cache_dvd;
+			return pref().cache_network;
+		});
+
+		connect(&engine, &PlayEngine::mrlChanged, p, &MainWindow::updateMrl);
+		connect(&engine, &PlayEngine::stateChanged, [this] (PlayEngine::State state) {
+			stateChanging = true;
+			showMessageBox(QString());
+			if ((loading = state == PlayEngine::Loading))
+				loadingTimer.start();
+			else
+				loadingTimer.stop();
+			if (state == PlayEngine::Error)
+				showMessageBox(tr("Error!\nCannot open the media."));
+			switch (state) {
+			case PlayEngine::Loading:
+			case PlayEngine::Playing:
+				menu("play")["pause"]->setText(tr("Pause"));
+				break;
+			default:
+				menu("play")["pause"]->setText(tr("Play"));
+			}
+			cApp.setScreensaverDisabled(pref().disable_screensaver && state == PlayEngine::Playing);
+			p->updateStaysOnTop();
+			stateChanging = false;
+		});
+		connect(&engine, &PlayEngine::tick, &subtitle, &SubtitleRendererItem::render);
+		connect(&engine, &PlayEngine::volumeChanged, [this] (int volume) { _Change(as.audio_volume, volume); });
+		connect(&engine, &PlayEngine::volumeNormalizerActivatedChanged, menu("audio")["normalizer"], &QAction::setChecked);
+		connect(&engine, &PlayEngine::tempoScaledChanged, menu("audio")["tempo-scaler"], &QAction::setChecked);
+		connect(&engine, &PlayEngine::mutedChanged, menu("audio")("volume")["mute"], &QAction::setChecked);
+		connect(&engine, &PlayEngine::started, [this] () {
+			updateListMenu(menu("play")("title"), engine.dvd().titles, engine.currentDvdTitle());
+	//		updateListMenu(menu("play")("chapter"), engine.chapters(), engine.currentChapter());
+			subtitle.setFPS(engine.fps());
+		});
+		connect(&engine, &PlayEngine::audioStreamsChanged, [this] (const StreamList &streams) {
+			updateListMenu(menu("audio")("track"), streams, engine.currentAudioStream());
+		});
+		connect(&engine, &PlayEngine::videoStreamsChanged, [this] (const StreamList &streams) {
+			updateListMenu(menu("video")("track"), streams, engine.currentVideoStream());
+		});
+		connect(&engine, &PlayEngine::subtitleStreamsChanged, [this] (const StreamList &streams) {
+			updateListMenu(menu("subtitle")("track"), streams, engine.currentSubtitleStream(), _L("internal"));
+		});
+		connect(&engine, &PlayEngine::chaptersChanged, [this] (const ChapterList &chapters) {
+			updateListMenu(menu("play")("chapter"), chapters, engine.currentChapter());
+		});
+
+		connect(&engine, &PlayEngine::started, &history, &HistoryModel::setStarted);
+		connect(&engine, &PlayEngine::stopped, &history, &HistoryModel::setStopped);
+		connect(&engine, &PlayEngine::finished, &history, &HistoryModel::setFinished);
+
+		engine.waitUntilInitilaized();
+	}
+	void initItems() {
+		connect(&recent, &RecentInfo::openListChanged, p, &MainWindow::updateRecentActions);
+		connect(&hider, &QTimer::timeout, [this] () { p->setCursorVisible(false); });
+		connect(&history, &HistoryModel::playRequested, [this] (const Mrl &mrl) { p->openMrl(mrl); });
+		connect(&playlist, &PlaylistModel::finished, [this] () {
+			if (menu("tool")["auto-exit"]->isChecked()) p->exit();
+			if (menu("tool")["auto-shutdown"]->isChecked()) cApp.shutdown();
+		});
+		connect(&subtitle, &SubtitleRendererItem::modelsChanged, subtitleView, &SubtitleView::setModels);
+
+		renderer.setOverlay(&subtitle);
+		auto showSize = [this] {
+			p->showMessage(_N(qRound(renderer.width())) % _U("\303\227") % _N(qRound(renderer.height())), &pref().show_osd_on_resized);
+		};
+		connect(&renderer, &VideoRendererItem::widthChanged, showSize);
+		connect(&renderer, &VideoRendererItem::heightChanged, showSize);
+	}
+	void initTimers() {
+		hider.setSingleShot(true);
+
+		loadingTimer.setInterval(500);
+		loadingTimer.setSingleShot(true);
+		connect(&loadingTimer, &QTimer::timeout, [this] () {
+			if (loading) showMessageBox(tr("Loading ...\nPlease wait for a while."));
+		});
+
+		initializer.setSingleShot(true);
+		connect(&initializer, &QTimer::timeout, [this] () { p->applyPref(); cApp.runCommands(); });
+		initializer.start(1);
+	}
+
+	template<typename T, typename F, typename GetNew>
+	void connectPropertyDiff(ActionGroup *g, const char *asprop, GetNew getNew, void(AppState::*sig)(), F f) {
+		Q_ASSERT(as.property(asprop).isValid());
+		connect(g, &ActionGroup::triggered, [this, getNew, asprop] (QAction *a) {
+			const auto old = as.property(asprop).value<T>();
+			const auto new_ = getNew(a, old);
+			if (old != new_) {
+				push(new_, old, [this, asprop] (const T &t) {
+					as.setProperty(asprop, QVariant::fromValue<T>(t));
+				});
+			}
+		});
+		connect(&as, sig, f);
+		emit (as.*sig)();
+	}
+	template<typename T, typename F>
+	void connectPropertyDiff(ActionGroup *g, const char *asprop, T min, T max, void(AppState::*sig)(), F f) {
+		connectPropertyDiff<T, F>(g, asprop, [min, max] (QAction *a, const T &old) { return qBound<T>(min, a->data().value<T>() + old, max); }, sig, f);
+	}
+	template<typename F>
+	void connectPropertyCheckable(QAction *action, const char *asprop, void(AppState::*sig)(), F f) {
+		Q_ASSERT(as.property(asprop).isValid() && as.property(asprop).type() == QVariant::Bool);
+		Q_ASSERT(action->isCheckable());
+		connect(action, &QAction::triggered, [action, this, asprop] (bool new_) {
+			const bool old = as.property(asprop).toBool();
+			if (new_ != old) {
+				push(new_, old, [action, asprop, this](bool checked) {
+					as.setProperty(asprop, checked);
+					action->setChecked(checked);
+					p->showMessage(action->text(), checked);
+				});
+			}
+		});
+		connect(&as, sig, f);
+		emit (as.*sig)();
 	}
 };
 
@@ -257,138 +498,16 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	initialize_vaapi();
 	initialize_vdpau();
 
-	setAcceptDrops(true);
-	d->view = new MainView(this);
-	auto widget = createWindowContainer(d->view, this);
-	auto l = new QVBoxLayout;
-	l->addWidget(widget);
-	l->setMargin(0);
-	setLayout(l);
-
 	d->engine.run();
-	d->engine.setGetStartTimeFunction([this] (const Mrl &mrl){return getStartTime(mrl);});
-	d->engine.setGetCacheFunction([this] (const Mrl &mrl) {
-		if (mrl.isLocalFile()) {
-			auto path = mrl.toLocalFile();
-			if (_ContainsIf(d->pref().network_folders, [path] (const QString &folder) {
-				return path.startsWith(folder);
-			}))
-				return d->pref().cache_network;
-			return d->pref().cache_local;
-		} if (mrl.isDvd())
-			return d->pref().cache_dvd;
-		return d->pref().cache_network;
-	});
-	d->engine.setVideoRenderer(&d->renderer);
-	d->renderer.setOverlay(&d->subtitle);
-	d->subtitleView = new SubtitleView(this);
-
-	resize(400, 300);
-	setMinimumSize(QSize(400, 300));
-	d->hider.setSingleShot(true);
-
-	connectMenus();
-
-	connect(d->view, &QQuickView::sceneGraphInitialized, [this] () {
-		OpenGLCompat::initialize(d->view->openglContext());
-	});
-
-	connect(&d->engine, &PlayEngine::mrlChanged, this, &MainWindow::updateMrl);
-	connect(&d->engine, &PlayEngine::stateChanged, [this] (PlayEngine::State state) {
-		d->stateChanging = true;
-		d->showMessageBox(QString());
-		if ((d->loading = state == PlayEngine::Loading))
-			d->loadingTimer.start();
-		else
-			d->loadingTimer.stop();
-		if (state == PlayEngine::Error)
-			d->showMessageBox(tr("Error!\nCannot open the media."));
-		switch (state) {
-		case PlayEngine::Loading:
-		case PlayEngine::Playing:
-			d->menu("play")["pause"]->setText(tr("Pause"));
-			break;
-		default:
-			d->menu("play")["pause"]->setText(tr("Play"));
-		}
-		cApp.setScreensaverDisabled(d->pref().disable_screensaver && state == PlayEngine::Playing);
-		updateStaysOnTop();
-		d->stateChanging = false;
-	});
-	connect(&d->engine, &PlayEngine::tick, &d->subtitle, &SubtitleRendererItem::render);
-	connect(&d->engine, &PlayEngine::volumeNormalizerActivatedChanged, d->menu("audio")["normalizer"], &QAction::setChecked);
-	connect(&d->engine, &PlayEngine::tempoScaledChanged, d->menu("audio")["tempo-scaler"], &QAction::setChecked);
-	connect(&d->engine, &PlayEngine::mutedChanged, d->menu("audio")["mute"], &QAction::setChecked);
-	connect(&d->recent, &RecentInfo::openListChanged, this, &MainWindow::updateRecentActions);
-	connect(&d->hider, &QTimer::timeout, [this] () {setCursorVisible(false);});
-	connect(&d->history, &HistoryModel::playRequested, [this] (const Mrl &mrl) {openMrl(mrl);});
-	connect(&d->playlist, &PlaylistModel::finished, [this] () {
-		if (d->menu("tool")["auto-exit"]->isChecked()) exit();
-		if (d->menu("tool")["auto-shutdown"]->isChecked()) cApp.shutdown();
-	});
-	connect(&d->subtitle, &SubtitleRendererItem::modelsChanged, d->subtitleView, &SubtitleView::setModels);
-	connect(&d->engine, &PlayEngine::started, [this] () {
-		d->updateListMenu(d->menu("play")("title"), d->engine.dvd().titles, d->engine.currentDvdTitle());
-//		d->updateListMenu(d->menu("play")("chapter"), d->engine.chapters(), d->engine.currentChapter());
-		d->subtitle.setFPS(d->engine.fps());
-	});
-	connect(&d->engine, &PlayEngine::audioStreamsChanged, [this] (const StreamList &streams) {
-		d->updateListMenu(d->menu("audio")("track"), streams, d->engine.currentAudioStream());
-	});
-	connect(&d->engine, &PlayEngine::videoStreamsChanged, [this] (const StreamList &streams) {
-		d->updateListMenu(d->menu("video")("track"), streams, d->engine.currentVideoStream());
-	});
-	connect(&d->engine, &PlayEngine::subtitleStreamsChanged, [this] (const StreamList &streams) {
-		d->updateListMenu(d->menu("subtitle")("track"), streams, d->engine.currentSubtitleStream(), _L("internal"));
-	});
-	connect(&d->engine, &PlayEngine::chaptersChanged, [this] (const ChapterList &chapters) {
-		d->updateListMenu(d->menu("play")("chapter"), chapters, d->engine.currentChapter());
-	});
-
-	connect(&d->engine, &PlayEngine::started, &d->history, &HistoryModel::setStarted);
-	connect(&d->engine,	&PlayEngine::stopped, &d->history, &HistoryModel::setStopped);
-	connect(&d->engine, &PlayEngine::finished, &d->history, &HistoryModel::setFinished);
-	d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentDvdTitle);
-	d->connectCurrentStreamActions(&d->menu("play")("chapter"), &PlayEngine::currentChapter);
-	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);
-	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
-	d->connectCurrentStreamActions(&d->menu("subtitle")("track"), &PlayEngine::currentSubtitleStream);
-	auto showSize = [this] {
-		showMessage(_N(qRound(d->renderer.width())) % _U("\303\227") % _N(qRound(d->renderer.height())), &d->pref().show_osd_on_resized);
-	};
-	connect(&d->renderer, &VideoRendererItem::widthChanged, showSize);
-	connect(&d->renderer, &VideoRendererItem::heightChanged, showSize);
-
-	auto addContextMenu = [this] (Menu &menu) {d->contextMenu.addMenu(menu.copied(&d->contextMenu));};
-	addContextMenu(d->menu("open"));
-	d->contextMenu.addSeparator();
-	addContextMenu(d->menu("play"));
-	addContextMenu(d->menu("video"));
-	addContextMenu(d->menu("audio"));
-	addContextMenu(d->menu("subtitle"));
-	d->contextMenu.addSeparator();
-	addContextMenu(d->menu("tool"));
-	addContextMenu(d->menu("window"));
-	d->contextMenu.addSeparator();
-	d->contextMenu.addAction(d->menu("help")["about"]);
-	d->contextMenu.addAction(d->menu["exit"]);
-#ifdef Q_OS_MAC
-////	qt_mac_set_dock_menu(&d->menu);
-	QMenuBar *mb = cApp.globalMenuBar();
-	qDeleteAll(mb->actions());
-	auto addMenuBar = [this, mb] (Menu &menu) {mb->addMenu(menu.copied(mb));};
-	addMenuBar(d->menu("open"));
-	addMenuBar(d->menu("play"));
-	addMenuBar(d->menu("video"));
-	addMenuBar(d->menu("audio"));
-	addMenuBar(d->menu("subtitle"));
-	addMenuBar(d->menu("tool"));
-	addMenuBar(d->menu("window"));
-	addMenuBar(d->menu("help"));
-#endif
-	d->engine.waitUntilInitilaized();
+	d->initWidget();
+	d->initContextMenu();
+	d->initTimers();
+	d->initItems();
+	d->initEngine();
 
 	d->dontShowMsg = true;
+
+	connectMenus();
 
 	const AppState &as = AppState::get();
 
@@ -398,49 +517,14 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 		resize(as.win_size);
 	}
 
-	d->engine.setSpeed(as.play_speed);
-	d->engine.setVolume(as.audio_volume);
-	d->engine.setMuted(as.audio_muted);
-	d->engine.setAmp(as.audio_preamp);
-	d->engine.setVolumeNormalizerActivated(as.audio_normalizer);
-	d->engine.setTempoScalerActivated(as.audio_scaletempo);
-
-	d->renderer.setOffset(as.video_offset);
 	d->renderer.setEffects((VideoRendererItem::Effects)as.video_effects);
-	d->renderer.setColor(as.video_color);
-
-	d->subtitle.setPos(as.sub_pos);
-	d->subtitle.setDelay(as.sub_sync_delay);
-
-	d->menu("video")("aspect").g()->trigger(as.video_aspect_ratio);
-	d->menu("video")("crop").g()->trigger(as.video_crop_ratio);
-	d->menu("video")("align").g("horizontal")->trigger(as.video_alignment & 0x0f);
-	d->menu("video")("align").g("vertical")->trigger(as.video_alignment & 0xf0);
-	d->menu("video")("deint").g()->trigger((int)as.video_deint);
-	d->menu("video")("interpolator").g()->trigger((int)as.video_interpolator);
-	d->menu("video")("dithering").g()->trigger((int)as.video_dithering);
 	for (int i=0; i<16; ++i) {
 		if ((as.video_effects >> i) & 1)
 			d->menu("video")("filter").g()->setChecked(1 << i, true);
 	}
-	d->menu("subtitle").g("display")->trigger((int)as.sub_letterbox);
-	d->menu("subtitle").g("align")->trigger((int)as.sub_align_top);
 	d->menu("tool")["auto-exit"]->setChecked(as.auto_exit);
-	d->menu("window").g("stays-on-top")->trigger((int)as.screen_stays_on_top);
-
-	auto setCurrentAction = [this] (ActionGroup *g) { d->currentActions[g] = g->checkedAction(); };
-	setCurrentAction(d->menu("video")("aspect").g());
-	setCurrentAction(d->menu("video")("crop").g());
-	setCurrentAction(d->menu("video")("align").g("horizontal"));
-	setCurrentAction(d->menu("video")("align").g("vertical"));
-//	setCurrentAction(d->menu("video")("filter").g());
-	setCurrentAction(d->menu("subtitle").g("display"));
-	setCurrentAction(d->menu("subtitle").g("align"));
-	setCurrentAction(d->menu("window").g("stays-on-top"));
 
 	d->dontShowMsg = false;
-
-//	applyPref();
 
 	d->engine.setPlaylist(d->recent.lastPlaylist());
 	d->engine.load(d->recent.lastMrl());
@@ -473,8 +557,6 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 //	});
 
 	d->undo = new QUndoStack(this);
-	d->currentAspect = d->menu("video")("aspect").g()->checkedAction();
-	d->currentCrop = d->menu("video")("crop").g()->checkedAction();
 	auto undo = d->menu("tool")["undo"];
 	auto redo = d->menu("tool")["redo"];
 	connect(d->undo, &QUndoStack::canUndoChanged, undo, &QAction::setEnabled);
@@ -485,20 +567,6 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->menu("tool")["redo"]->setEnabled(d->undo->canRedo());
 
 	d->dontShowMsg = false;
-
-	d->loadingTimer.setInterval(500);
-	d->loadingTimer.setSingleShot(true);
-	connect(&d->loadingTimer, &QTimer::timeout, [this] () {
-		if (d->loading)
-			d->showMessageBox(tr("Loading ...\nPlease wait for a while."));
-	});
-
-	connect(&d->initializer, &QTimer::timeout, [this] () { applyPref(); cApp.runCommands(); });
-	d->initializer.setSingleShot(true);
-	d->initializer.start(1);
-
-	d->view->setPersistentOpenGLContext(true);
-	d->view->setPersistentSceneGraph(true);
 }
 
 MainWindow::~MainWindow() {
@@ -542,14 +610,8 @@ void MainWindow::connectMenus() {
 
 	Menu &play = d->menu("play");
 	connect(play["stop"], &QAction::triggered, [this] () {d->engine.stop();});
-	connect(play("speed").g(), &ActionGroup::triggered, [this] (QAction *a) {
-		const int diff = a->data().toInt();
-		const double speed = qBound(0.1, diff ? (d->engine.speed() + diff/100.0) : 1, 10.0);
-		if (!qFuzzyCompare(d->engine.speed(), speed))
-			d->push(speed, d->engine.speed(), [this] (double v) {
-				d->engine.setSpeed(v);
-				showMessage(tr("Speed"), QString::fromUtf8("\303\227%1").arg(d->engine.speed()));
-			});
+	d->connectStepActions(play("speed"), "play_speed", &AppState::playSpeedChanged, [this]() {
+		d->engine.setSpeed(1e-2*d->as.play_speed);
 	});
 	connect(play["pause"], &QAction::triggered, [this] () {
 		if (!d->stateChanging) {
@@ -608,111 +670,35 @@ void MainWindow::connectMenus() {
 	connect(video("track").g(), &ActionGroup::triggered, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentVideoStream(a->data().toInt()); showMessage(tr("Current Video Track"), a->text());
 	});
-	d->connect(video("aspect").g(), [this] (QAction *a) {
-		d->renderer.setAspectRatio(a->data().toDouble());
-		showMessage(tr("Aspect Ratio"), a->text());
+	d->connectEnumActions<VideoRatio>(video("aspect"), "video_aspect_ratio", &AppState::videoAspectRatioChanged, [this] () {
+		d->renderer.setAspectRatio(VideoRatioInfo::data(d->as.video_aspect_ratio));
 	});
-	d->connect(video("crop").g(), [this] (QAction *a) {
-		d->renderer.setCropRatio(a->data().toDouble());
-		showMessage(tr("Crop"), a->text());
+	d->connectEnumActions<VideoRatio>(video("crop"), "video_crop_ratio", &AppState::videoCropRatioChanged, [this] () {
+		d->renderer.setCropRatio(VideoRatioInfo::data(d->as.video_crop_ratio));
 	});
 	connect(video["snapshot"], &QAction::triggered, [this] () {
 		static SnapshotDialog *dlg = new SnapshotDialog(this);
 		dlg->setVideoRenderer(&d->renderer); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
 		if (!dlg->isVisible()) {dlg->adjustSize(); dlg->show();}
 	});
-	connect(&video("align"), &Menu::triggered, [this] () {
-		int key = 0;
-		for (auto action : d->menu("video")("align").actions()) {
-			if (action->isChecked())
-				key |= action->data().toInt();
-		}
-		if (d->renderer.alignment() != key)
-			d->push(key, d->renderer.alignment(), [this] (int key) {
-				d->renderer.setAlignment(key);
-				for (auto action : d->menu("video")("align").actions())
-					action->setChecked(action->data().toInt() & key);
-			});
+	auto setVideoAlignment = [this] () { d->renderer.setAlignment(VerticalAlignmentInfo::data(d->as.video_vertical_alignment) | HorizontalAlignmentInfo::data(d->as.video_horizontal_alignment)); };
+	d->connectEnumActions<VerticalAlignment>(video("align"), "video_vertical_alignment", &AppState::videoVerticalAlignmentChanged, setVideoAlignment);
+	d->connectEnumActions<HorizontalAlignment>(video("align"), "video_horizontal_alignment", &AppState::videoHorizontalAlignmentChanged, setVideoAlignment);
+	d->connectEnumDataActions<MoveToward>(video("move")
+		, "video_offset", [this] (const QPoint &diff) { return diff.isNull() ? diff : d->as.video_offset + diff; }
+		, &AppState::videoOffsetChanged, [this] () { d->renderer.setOffset(d->as.video_offset); });
+	d->connectEnumMenu<DeintMode>(video, "video_deinterlacing", &AppState::videoDeinterlacingChanged, [this] () {
+		d->engine.setDeintMode(d->as.video_deinterlacing);
 	});
-	connect(&video("move"), &Menu::triggered, [this] (QAction *action) {
-		const int move = action->data().toInt();
-		QPoint offset(0, 0);
-		if (move != Qt::NoArrow) {
-			const auto x = move == Qt::LeftArrow ? -1 : (move == Qt::RightArrow ? 1 : 0);
-			const auto y = move == Qt::UpArrow ? -1 : (move == Qt::DownArrow ? 1 : 0);
-			offset = d->renderer.offset() += QPoint(x, y);
-		}
-		if (d->renderer.offset() != offset)
-			d->push(offset, d->renderer.offset(), [this](const QPoint &v) { d->renderer.setOffset(v); });
+	d->connectEnumActions<InterpolatorType>(video("interpolator"), "video_interpolator", &AppState::videoInterpolatorChanged, [this] () {
+		d->renderer.setInterpolator(d->as.video_interpolator);
 	});
-	connect(video("deint")["toggle"], &QAction::triggered, [this] () {
-		auto actions = d->menu("video")("deint").g()->actions();
-		int i = 0;
-		for (; i<actions.size(); ++i)
-			if (actions[i]->isChecked())
-				break;
-		if (++i >= actions.size())
-			i = 0;
-		actions[i]->trigger();
+	d->connectEnumActions<InterpolatorType>(video("chroma-upscaler"), "video_chroma_upscaler", &AppState::videoChromaUpscalerChanged, [this] () {
+		d->renderer.setChromaUpscaler(d->as.video_chroma_upscaler);
 	});
-	connect(video("deint").g(), &QActionGroup::triggered, [this] (QAction *action) {
-		auto mode = DeintModeInfo::from(action->data().toInt(), DeintMode::Auto);
-		if (d->engine.deintMode() != mode)
-			d->push(mode, d->engine.deintMode(), [this] (DeintMode mode) {
-				d->as.video_deint = mode;
-				if (auto action = d->menu("video")("deint").g()->find((int)mode)) {
-					action->setChecked(true);
-					showMessage(tr("Deinterlace"), action->text());
-					d->engine.setDeintMode(mode);
-				}
-			});
+	d->connectEnumMenu<Dithering>(video, "video_dithering", &AppState::videoDitheringChanged, [this] () {
+		d->renderer.setDithering(d->as.video_dithering);
 	});
-	connect(video("interpolator")["next"], &QAction::triggered, [this] () {
-		auto actions = d->menu("video")("interpolator").g()->actions();
-		int i = 0;
-		for (; i<actions.size(); ++i)
-			if (actions[i]->isChecked())
-				break;
-		if (++i >= actions.size())
-			i = 0;
-		actions[i]->trigger();
-	});
-	connect(video("interpolator").g(), &QActionGroup::triggered, [this] (QAction *action) {
-		auto type = InterpolatorTypeInfo::from(action->data().toInt(), InterpolatorType::Bilinear);
-		if (d->renderer.interpolator() != type)
-			d->push(type, d->renderer.interpolator(), [this] (InterpolatorType type) {
-				d->as.video_interpolator = type;
-				if (auto action = d->menu("video")("interpolator").g()->find((int)type)) {
-					action->setChecked(true);
-					showMessage(tr("Interpolator"), action->text());
-					d->renderer.setInterpolator(type);
-				}
-			});
-	});
-	connect(video("dithering")["next"], &QAction::triggered, [this] () {
-		auto actions = d->menu("video")("dithering").g()->actions();
-		int i = 0;
-		for (; i<actions.size(); ++i)
-			if (actions[i]->isChecked())
-				break;
-		if (++i >= actions.size())
-			i = 0;
-		actions[i]->trigger();
-	});
-	connect(video("dithering").g(), &QActionGroup::triggered, [this] (QAction *action) {
-		auto type = DitheringInfo::from(action->data().toInt(), Dithering::None);
-		if (d->renderer.dithering() != type)
-			d->push(type, d->renderer.dithering(), [this] (Dithering type) {
-				d->as.video_dithering = type;
-				auto &menu = d->menu("video")("dithering");
-				if (auto action = menu.g()->find((int)type)) {
-					action->setChecked(true);
-					showMessage(menu.title(), action->text());
-					d->renderer.setDithering(type);
-				}
-			});
-	});
-
 
 	connect(&video("filter"), &Menu::triggered, [this] () {
 		VideoRendererItem::Effects effects = 0;
@@ -727,86 +713,34 @@ void MainWindow::connectMenus() {
 					action->setChecked(action->data().toInt() & effects);
 			});
 	});
-	connect(video("color").g(), &ActionGroup::triggered, [this] (QAction *action) {
-		const auto data = action->data().toList();
-		const auto prop = ColorProperty::Value(data[0].toInt());
-		ColorProperty color; QString cmd;
-		if (prop != ColorProperty::PropMax) {
-			switch(prop) {
-			case ColorProperty::Brightness: cmd = tr("Brightness"); break;
-			case ColorProperty::Saturation: cmd = tr("Saturation"); break;
-			case ColorProperty::Hue: cmd = tr("Hue"); break;
-			case ColorProperty::Contrast: cmd = tr("Contrast"); break;
-			default: return;
-			}
-			color = d->renderer.color();
-			color.setValue(prop, color.value(prop) + data[1].toInt()*0.01);
-			color.clamp();
-		}
-		if (d->renderer.color() != color)
-			d->push(color, d->renderer.color(), [this, cmd, prop] (const ColorProperty &color) {
-				d->renderer.setColor(color);
-				if (prop == ColorProperty::PropMax)
-					showMessage(tr("Reset/Adjust brightness, contrast, saturation and hue"));
-				else
-					showMessage(cmd, qRound(d->renderer.color()[prop]*100.0), "%", true);
-			});
+	d->connectEnumDataActions<AdjustColor>(video("color"), "video_color"
+		, [this] (const VideoColor &diff) { return diff.isZero() ? diff : d->as.video_color + diff; }, &AppState::videoColorChanged
+		, [this] () {
+		showMessage(tr("Adjust Video Color"), d->as.video_color.getText(d->as.video_color & d->renderer.color()));
+		d->renderer.setColor(d->as.video_color);
 	});
 
 	Menu &audio = d->menu("audio");
 	connect(audio("track").g(), &ActionGroup::triggered, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentAudioStream(a->data().toInt()); showMessage(tr("Current Audio Track"), a->text());
 	});
-	connect(audio.g("volume"), &ActionGroup::triggered, [this] (QAction *a) {
-		if (const int diff = a->data().toInt()) {
-			const int volume = qBound(0, d->engine.volume() + diff, 100);
-			if (d->engine.volume() != volume)
-				d->push(volume, d->engine.volume(), [this] (int v) {
-					d->engine.setVolume(v);
-					showMessage(tr("Volume"), v, "%");
-				});
-		}
+	d->connectStepActions(audio("volume"), "audio_volume", &AppState::audioVolumeChanged, [this] () {
+		auto v = d->as.audio_volume; d->engine.setVolume(v);
 	});
-	connect(audio["mute"], &QAction::triggered, [this] (bool on) {
-		if (on != d->engine.isMuted())
-			d->push(on, d->engine.isMuted(), [this] (bool on) {
-				d->engine.setMuted(on);
-				d->menu("audio")["mute"]->setChecked(on);
-				showMessage(tr("Mute"), on);
-			});
+	d->connectPropertyCheckable(audio("volume")["mute"], "audio_muted", &AppState::audioMutedChanged, [this] () {
+		d->engine.setMuted(d->as.audio_muted);
 	});
-	connect(audio.g("sync"), &ActionGroup::triggered, [this] (QAction *a) {
-		const int diff = a->data().toInt();
-		const int sync = diff ? d->engine.audioSync() + diff : 0;
-		if (d->engine.audioSync() != sync)
-			d->push(sync, d->engine.audioSync(), [this] (int sync) {
-				d->engine.setAudioSync(sync);
-				showMessage(tr("Audio Sync"), (double)sync*0.001, "sec", true);
-			});
+	d->connectStepActions(audio("sync"), "audio_sync", &AppState::audioSyncChanged, [this] () {
+		auto v = d->as.audio_sync; d->engine.setAudioSync(v);
 	});
-	connect(audio.g("amp"), &ActionGroup::triggered, [this] (QAction *a) {
-		const int amp = qBound(0, qRound(d->engine.amp()*100 + a->data().toInt()), 1000);
-		if (amp != qRound(d->engine.amp()*100))
-			d->push(amp*0.01, d->engine.amp(), [this] (double amp) {
-				d->engine.setAmp(amp);
-				showMessage(tr("Amplifier"), qRound(amp*100), "%");
-			});
+	d->connectStepActions(audio("amp"), "audio_amp", &AppState::audioAmpChanged, [this] () {
+		auto v = d->as.audio_amp; d->engine.setAmp(v*1e-2);
 	});
-	connect(audio["normalizer"], &QAction::triggered, [this] (bool on) {
-		if (on != d->engine.isVolumeNormalizerActivated())
-			d->push(on, d->engine.isVolumeNormalizerActivated(), [this] (bool on) {
-				d->engine.setVolumeNormalizerActivated(on);
-				showMessage(tr("Volume Normalizer"), on);
-				d->menu("audio")["normalizer"]->setChecked(on);
-			});
+	d->connectPropertyCheckable(audio["normalizer"], "audio_volume_normalizer", &AppState::audioVolumeNormalizerChanged, [this] () {
+		d->engine.setVolumeNormalizerActivated(d->as.audio_volume_normalizer);
 	});
-	connect(audio["tempo-scaler"], &QAction::triggered, [this] (bool on) {
-		if (on != d->engine.isTempoScaled())
-			d->push(on, d->engine.isTempoScaled(), [this] (bool on) {
-				d->engine.setTempoScalerActivated(on);
-				showMessage(tr("Tempo Scaler"), on);
-				d->menu("audio")["tempo-scaler"]->setChecked(on);
-			});
+	d->connectPropertyCheckable(audio["tempo-scaler"], "audio_tempo_scaler", &AppState::audioTempoScalerChanged, [this] () {
+		d->engine.setTempoScalerActivated(d->as.audio_tempo_scaler);
 	});
 	auto  selectNext = [this] (const QList<QAction*> &actions) {
 		if (!actions.isEmpty()) {
@@ -885,29 +819,17 @@ void MainWindow::connectMenus() {
 		a->setChecked(true); d->engine.setCurrentSubtitleStream(a->data().toInt());
 		showMessage(tr("Selected Subtitle"), a->text());
 	});
-	d->connect(sub.g("display"), [this] (QAction *action) {
-		d->renderer.setOverlayInLetterbox(action->data().toInt());
-		showMessage(tr("Subtitle Display"), action->text());
+	d->connectEnumMenu<SubtitleDisplay>(sub, "sub_display", &AppState::subDisplayChanged, [this] () {
+		d->renderer.setOverlayOnLetterbox(d->as.sub_display == SubtitleDisplay::OnLetterbox);
 	});
-	d->connect(sub.g("align"), [this] (QAction *action) {
-		d->subtitle.setTopAligned(action->data().toInt());
-		showMessage(tr("Subtitle Alignment"), action->text());
+	d->connectEnumActions<VerticalAlignment>(sub("align"), "sub_alignment", &AppState::subAlignmentChanged, [this] () {
+		d->subtitle.setTopAligned(d->as.sub_alignment == VerticalAlignment::Top);
 	});
-	connect(sub.g("pos"), &ActionGroup::triggered, [this] (QAction *a) {
-		const int pos = qBound(0, qRound(d->subtitle.pos()*100.0 + a->data().toInt()), 100);
-		if (pos != qRound(d->subtitle.pos()*100))
-			d->push(pos*0.01, d->subtitle.pos(), [this] (double pos) {
-				d->subtitle.setPos(pos);
-				showMessage(tr("Subtitle Position"), qRound(pos*100), "%");
-			});
+	d->connectStepActions(sub("position"), "sub_position", &AppState::subPositionChanged, [this] () {
+		d->subtitle.setPos(d->as.sub_position*1e-2);
 	});
-	connect(sub.g("sync"), &ActionGroup::triggered, [this] (QAction *a) {
-		const int diff = a->data().toInt(); const int delay = diff ? d->subtitle.delay() + diff : 0;
-		if (delay != d->subtitle.delay())
-			d->push(delay, d->subtitle.delay(), [this] (int delay) {
-				d->subtitle.setDelay(delay);
-				showMessage("Subtitle Sync", delay*0.001, "sec", true);
-			});
+	d->connectStepActions(sub("sync"), "sub_sync", &AppState::subSyncChanged, [this] () {
+		d->subtitle.setDelay(d->as.sub_sync);
 	});
 
 	Menu &tool = d->menu("tool");
@@ -1016,11 +938,7 @@ void MainWindow::connectMenus() {
 	});
 
 	Menu &win = d->menu("window");		Menu &help = d->menu("help");
-
-	d->connect(win.g("stays-on-top"), [this] (QAction *action) {
-		updateStaysOnTop();
-		showMessage(tr("Stays on Top"), action->text());
-	});
+	d->connectEnumMenu<StaysOnTop>(win, "window_stays_on_top", &AppState::windowStaysOnTopChanged, [this] () { updateStaysOnTop(); });
 	connect(win.g("size"), &ActionGroup::triggered, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
 	connect(win["minimize"], &QAction::triggered, this, &MainWindow::showMinimized);
 	connect(win["maximize"], &QAction::triggered, this, &MainWindow::showMaximized);
@@ -1028,6 +946,12 @@ void MainWindow::connectMenus() {
 
 	connect(help["about"], &QAction::triggered, [this] () {AboutDialog dlg(this); dlg.exec();});
 	connect(d->menu["exit"], &QAction::triggered, this, &MainWindow::exit);
+
+	d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentDvdTitle);
+	d->connectCurrentStreamActions(&d->menu("play")("chapter"), &PlayEngine::currentChapter);
+	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);
+	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
+	d->connectCurrentStreamActions(&d->menu("subtitle")("track"), &PlayEngine::currentSubtitleStream);
 }
 
 Playlist MainWindow::generatePlaylist(const Mrl &mrl) const {
@@ -1542,12 +1466,12 @@ void MainWindow::updateStaysOnTop() {
 	if (windowState() & Qt::WindowMinimized)
 		return;
 	d->sotChanging = true;
-	const int id = d->menu("window").g("stays-on-top")->checkedAction()->data().toInt();
+	const auto id = d->as.window_stays_on_top;
 	bool onTop = false;
 	if (!isFullScreen()) {
 		if (id == StaysOnTop::Always)
 			onTop = true;
-		else if (id == StaysOnTop::Never)
+		else if (id == StaysOnTop::None)
 			onTop = false;
 		else
 			onTop = d->engine.isPlaying();
@@ -1700,27 +1624,7 @@ void MainWindow::customEvent(QEvent *event) {
 	}
 }
 
-int MainWindow::getStartTime(const Mrl &mrl) {
-	if (!d->pref().remember_stopped || mrl.isImage())
-		return 0;
-	const int start = d->history.stoppedTime(mrl);
-	if (start <= 0)
-		return 0;
-	if (d->pref().ask_record_found) {
-		if (QThread::currentThread() == d->engine.thread()) {
-			d->startFromStopped = -1;
-			qApp->postEvent(this, new AskStartTimeEvent(mrl, start));
-			while (d->startFromStopped == -1)
-				QThread::msleep(50);
-		} else {
-			AskStartTimeEvent event(mrl, start);
-			qApp->sendEvent(this, &event);
-		}
-		if (d->startFromStopped <= 0)
-			return 0;
-	}
-	return start;
-}
+
 
 void MainWindow::setCursorVisible(bool visible) {
 	if (visible && cursor().shape() == Qt::BlankCursor) {

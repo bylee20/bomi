@@ -8,12 +8,13 @@
 
 using namespace std;
 
-struct EnumData {
-	struct Item {string name, value, desc;};
-	EnumData() {continuous = true;}
-	string name;
+struct EnumType {
+    struct Item {string key, name, value, desc, data;};
+	EnumType() {continuous = true;}
+    string key, name, desc, data;
 	bool continuous;
 	vector<Item> items;
+    int default_ = 0;
 };
 
 static inline std::string trim(const std::string &str) {
@@ -64,44 +65,72 @@ static string addOne(const string &value) {
 	return value.substr(0, idx+1) + str.str();
 }
 
-static vector<EnumData> readEnums() {
+static vector<EnumType> readEnums() {
 	fstream in;
 	in.open("enum-list", ios::in);
 	assert(in.is_open());
 
-	vector<EnumData> data;
+    auto substr = [] (std::string &str, const std::string &open, const string &close) {
+        auto from = str.find(open);
+	if (from == string::npos)
+		return string();
+	from += open.size();
+        auto to   = str.find(close, from);
+	if (to == string::npos)
+		return string();
+        return str.substr(from, to - from);
+    };
+
+    vector<EnumType> type;
 	string line;
 	while (getline(in, line)) {
 		line = trim(line);
-		if (line.empty() || line[0] == '#')
+        if (line.empty())
 			continue;
-		if (line[0] == '+') {
-			data.push_back(EnumData());
-			data.back().name = line.substr(1);
-		} else if (line[0] == '-') {
-			const string::size_type desc_idx = line.find('-', 1);
-			const string::size_type value_idx = line.find('=', 1);
-
-			data.back().items.push_back(EnumData::Item());
-			EnumData::Item &item = data.back().items.back();
-			if (value_idx != string::npos)
-				item.name = line.substr(1, value_idx - 1);
-			else if (desc_idx != string::npos)
-				item.name = line.substr(1, desc_idx - 1);
-			else
-				item.name = line.substr(1);
-			if (value_idx != string::npos) {
-				item.value = line.substr(value_idx + 1, desc_idx - (value_idx + 1));
-				data.back().continuous = false;
-			} else {
-				const size_t size = data.back().items.size();
-				item.value = size == 1u ? string("0") : addOne(data.back().items[size-2].value);
-			}
-			if (desc_idx != string::npos)
-				item.desc = line.substr(desc_idx + 1);
-		}
+        bool isType = false;
+        if (line[0] == '+')
+            isType = true;
+        else if (line[0] == '-')
+            isType = false;
+        else
+            continue;
+        line = line.substr(1);
+        const auto def = line.front() == '*';
+        if (def)
+            line = line.substr(1);
+        const auto key = substr(line, "[[", "]]");
+        const auto value = substr(line, "[=", "=]");
+        const auto desc = substr(line, "[-", "-]");
+        const auto data = substr(line, "[:", ":]");
+        const auto idx = {line.find("[["), line.find("[="), line.find("[-"), line.find("[:")};
+        const auto name = line.substr(0, *std::min_element(std::begin(idx), std::end(idx)));
+        if (isType) {
+            type.push_back(EnumType());
+            auto &one = type.back();
+            one.name = name;
+            one.key = key;
+            one.desc = desc;
+            one.data = data.empty() ? "QVariant" : data;
+        } else {
+            auto &items = type.back().items;
+            items.push_back(EnumType::Item());
+            auto &item = items.back();
+            item.name = name;
+            item.key = key;
+            item.desc = desc;
+            if (!value.empty()) {
+                item.value = value;
+                type.back().continuous = false;
+            } else {
+                const size_t size = items.size();
+                item.value = size == 1u ? string("0") : addOne(items[size-2].value);
+            }
+            if (def)
+                type.back().default_ = items.size()-1;
+            item.data = data.empty() ? ("(int)" + item.value) : data;
+        }
 	}
-	return data;
+    return type;
 }
 
 static string &replace(string &str, const string &substr, const string &overwrite) {
@@ -142,16 +171,26 @@ inline bool operator < (int i, __ENUM_NAME e) { return i < (int)e; }
 inline bool operator >= (int i, __ENUM_NAME e) { return i >= (int)e; }
 inline bool operator <= (int i, __ENUM_NAME e) { return i <= (int)e; }
 
+Q_DECLARE_METATYPE(__ENUM_NAME)
+
 template<>
 class EnumInfo<__ENUM_NAME> {
 	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef __ENUM_NAME Enum;
 public:
-	struct Item { Enum value; const char *name; };
+    typedef __ENUM_NAME type;
+    using Data =  __ENUM_DATA_TYPE;
+    struct Item { Enum value; QString name, key; __ENUM_DATA_TYPE data; };
 	static constexpr int size() { return __ENUM_COUNT; }
-	static const char *name(Enum e) {
-		__ENUM_FUNC_NAME
-	}
+    static constexpr const char *typeName() { return "__ENUM_NAME"; }
+    static constexpr const char *typeKey() { return "__ENUM_KEY"; }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "__ENUM_DESC")); }
+    static const Item *item(Enum e) {
+        __ENUM_FUNC_ITEM
+    }
+    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
+    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
+    static __ENUM_DATA_TYPE data(Enum e) { auto i = item(e); return i ? i->data : __ENUM_DATA_TYPE(); }
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
@@ -159,14 +198,15 @@ __ENUM_FUNC_DESC_CASES
 		};
 	}
 	static constexpr const std::array<Item, __ENUM_COUNT> &items() { return info; }
-	static Enum from(int id, Enum def = info[0].value) {
+    static Enum from(int id, Enum def = default_()) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
 	}
-	static Enum from(const QString &name, Enum def = info[0].value) {
-		auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(QLatin1String(item.name));});
+    static Enum from(const QString &name, Enum def = default_()) {
+        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
 		return it != info.cend() ? it->value : def;
 	}
+    static constexpr Enum default_() { return __ENUM_NAME::__ENUM_DEFAULT; }
 private:
 	static const std::array<Item, __ENUM_COUNT> info;
 };
@@ -189,35 +229,40 @@ static void generate() {
 
 #include <QCoreApplication>
 #include <array>
+#include "videocolor.hpp"
 
 template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 )";
 	string cpp = "#include \"enums.hpp\"";
-	for (const EnumData &data : enums) {
+    for (const EnumType &type : enums) {
 		string htmpl = hppTmp;
 		string ctmpl = cppTmp;
-		replace(htmpl, "__ENUM_NAME", data.name);
+        replace(htmpl, "__ENUM_NAME", type.name);
+        replace(htmpl, "__ENUM_KEY", type.key);
+        replace(htmpl, "__ENUM_DESC", type.desc);
+        replace(htmpl, "__ENUM_DEFAULT", type.items[type.default_].name);
+        replace(htmpl, "__ENUM_DATA_TYPE", type.data);
 		string value, infos, cases;
-		for (const EnumData::Item &item : data.items) {
+        for (const EnumType::Item &item : type.items) {
 			value += "\t" + item.name + " = (int)" + item.value;
-			infos += "\t{" + data.name + "::" + item.name + ", " + '"' + item.name + "\"}";
+            infos += "\t{" + type.name + "::" + item.name + ", " + '"' + item.name + "\", \"" + item.key + "\", " + item.data + "}";
 			cases += "\t\tcase Enum::" + item.name + ": return tr(QT_TRANSLATE_NOOP(\"EnumInfo\", \"" + item.desc + "\"));\n";
-			if (&item != &data.items.back()) {
+            if (&item != &type.items.back()) {
 				value += ",\n";
 				infos += ",\n";
 			}
 		}
 		cases += "\t\tdefault: return tr(\"\");";
 		replace(htmpl, "__ENUM_VALUES", value);
-		replace(htmpl, "__ENUM_COUNT", toString(data.items.size()));
+        replace(htmpl, "__ENUM_COUNT", toString(type.items.size()));
 		replace(htmpl, "__ENUM_FUNC_DESC_CASES", cases);
-		if (data.continuous)
-			replace(htmpl, "__ENUM_FUNC_NAME", R"(return 0 <= e && e < size() ? info[(int)e].name : "";)");
-		else
-			replace(htmpl, "__ENUM_FUNC_NAME", R"(auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? it->name : "";)");
+        if (type.continuous)
+            replace(htmpl, "__ENUM_FUNC_ITEM", R"(return 0 <= e && e < size() ? &info[(int)e] : nullptr;)");
+        else
+            replace(htmpl, "__ENUM_FUNC_ITEM", R"(auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;)");
 
-		replace(ctmpl, "__ENUM_NAME", data.name);
-		replace(ctmpl, "__ENUM_COUNT", toString(data.items.size()));
+        replace(ctmpl, "__ENUM_NAME", type.name);
+        replace(ctmpl, "__ENUM_COUNT", toString(type.items.size()));
 		replace(ctmpl, "__ENUM_INFOS", infos);
 
 		cout << htmpl;

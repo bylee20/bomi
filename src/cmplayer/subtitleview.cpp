@@ -66,12 +66,8 @@ SubtitleView::~SubtitleView() {
 void SubtitleView::updateModels() {
 	if (d->models.isEmpty()) {
 		d->splitter->setVisible(false);
-		for (int i=0; i<d->comp.size(); ++i) {
+		for (int i=0; i<d->comp.size(); ++i)
 			d->comp[i]->setModel(nullptr);
-//			d->comp[i]->setModel(d->pended[i]);
-//			d->comp[i]->view()->setAutoScrollEnabled(d->autoScroll->isChecked());
-//			d->comp[i]->view()->setTimeVisible(d->timeVisible->isChecked());
-		}
 	} else  {
 		while (d->comp.size() > d->models.size())
 			delete d->comp.takeLast();

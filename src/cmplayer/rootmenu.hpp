@@ -61,7 +61,7 @@ private:
 	}
 
 	inline static void setVideoPropStep(Menu &menu, const QString &key
-			, ColorProperty::Value prop, const QString &text, int step) {
+			, VideoColor::Type prop, const QString &text, int step) {
 		setActionAttr(menu[key + "+"], QList<QVariant>() << prop << step, text, step);
 		setActionAttr(menu[key + "-"], QList<QVariant>() << prop << -step, text, -step);
 	}

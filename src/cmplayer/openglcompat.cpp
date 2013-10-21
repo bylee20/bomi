@@ -1,5 +1,5 @@
 #include "openglcompat.hpp"
-#include "colorproperty.hpp"
+#include "videocolor.hpp"
 #include <cmath>
 extern "C" {
 #include <video/out/dither.h>

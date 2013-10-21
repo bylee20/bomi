@@ -52,15 +52,15 @@ DeintCaps DeintCaps::default_(DecoderDevice dec) {
 }
 
 QString DeintCaps::toString() const {
-	QString text = _L(DeintMethodInfo::name(m_method)) % _L('|');
+	QString text = DeintMethodInfo::name(m_method) % _L('|');
 	for (auto dec : DecoderDeviceInfo::items()) {
 		if (dec.value & m_decoder)
-			text += _L(dec.name) % _L(':');
+			text += dec.name % _L(':');
 	}
 	text += "|";
 	for (auto dev : DeintDeviceInfo::items()) {
 		if (dev.value & m_device)
-			text += _L(dev.name) % _L(':');
+			text += dev.name % _L(':');
 	}
 	text += "|" % _N(m_doubler);
 	return text;
@@ -81,7 +81,7 @@ DeintCaps DeintCaps::fromString(const QString &text) {
 }
 
 QString DeintOption::toString() const {
-	return _L(DeintMethodInfo::name(method)) % "|" % _N(doubler) % "|" % DeintDeviceInfo::name(device);
+	return DeintMethodInfo::name(method) % "|" % _N(doubler) % "|" % DeintDeviceInfo::name(device);
 }
 
 DeintOption DeintOption::fromString(const QString &string) {
@@ -205,7 +205,7 @@ DeintCaps DeintWidget::get() const {
 
 QString DeintWidget::informations() {
 	auto methodText = [] (DeintMethod method, const QString &desc) -> QString {
-		return _L(DeintMethodInfo::name(method)) % ": " % desc;
+		return DeintMethodInfo::name(method) % ": " % desc;
 	};
 	QString text =
 		'\n' % tr("Methods") % "\n\n" %

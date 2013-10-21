@@ -56,7 +56,7 @@ void VideoFrameShader::updateTexCoords() {
 	m_coords = {p1, p2};
 }
 
-void VideoFrameShader::setColor(const ColorProperty &color) {
+void VideoFrameShader::setColor(const VideoColor &color) {
 	m_color = color;
 	updateColorMatrix();
 }

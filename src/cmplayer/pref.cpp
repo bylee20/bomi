@@ -28,9 +28,9 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("play/pause")] << Qt::Key_Space;
 	keys[_L("play/prev")] << Qt::CTRL + Qt::Key_Left;
 	keys[_L("play/next")] << Qt::CTRL + Qt::Key_Right;
-	keys[_L("play/speed/slower")] << Qt::Key_Minus;
 	keys[_L("play/speed/reset")] << Qt::Key_Backspace;
-	keys[_L("play/speed/faster")] << Qt::Key_Plus << Qt::Key_Equal;
+	keys[_L("play/speed/increase")] << Qt::Key_Plus << Qt::Key_Equal;
+	keys[_L("play/speed/decrease")] << Qt::Key_Minus;
 	keys[_L("play/repeat/range")] << Qt::Key_R;
 	keys[_L("play/repeat/subtitle")] << Qt::Key_E;
 	keys[_L("play/repeat/quit")] << Qt::Key_Escape;
@@ -48,11 +48,11 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("subtitle/track/next")] << Qt::SHIFT + Qt::Key_N;
 	keys[_L("subtitle/track/all")] << Qt::SHIFT + Qt::Key_B;
 	keys[_L("subtitle/track/hide")] << Qt::SHIFT + Qt::Key_H;
-	keys[_L("subtitle/pos-up")] << Qt::Key_W;
-	keys[_L("subtitle/pos-down")] << Qt::Key_S;
-	keys[_L("subtitle/sync-add")] << Qt::Key_D;
-	keys[_L("subtitle/sync-reset")] << Qt::Key_Q;
-	keys[_L("subtitle/sync-sub")] << Qt::Key_A;
+	keys[_L("subtitle/position/increase")] << Qt::Key_W;
+	keys[_L("subtitle/position/decrease")] << Qt::Key_S;
+	keys[_L("subtitle/sync/increase")] << Qt::Key_D;
+	keys[_L("subtitle/sync/reset")] << Qt::Key_Q;
+	keys[_L("subtitle/sync/decrease")] << Qt::Key_A;
 
 	keys[_L("video/snapshot")] << Qt::CTRL + Qt::Key_S;
 	keys[_L("video/move/reset")] << Qt::SHIFT + Qt::Key_X;
@@ -60,7 +60,8 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("video/move/down")] << Qt::SHIFT + Qt::Key_S;
 	keys[_L("video/move/left")] << Qt::SHIFT + Qt::Key_A;
 	keys[_L("video/move/right")] << Qt::SHIFT + Qt::Key_D;
-	keys[_L("video/deint/toggle")] << Qt::CTRL + Qt::Key_D;
+	keys[_L("video/deinterlacing/toggle")] << Qt::CTRL + Qt::Key_D;
+	keys[_L("video/color/reset")] << Qt::Key_O;
 	keys[_L("video/color/brightness+")] << Qt::Key_T;
 	keys[_L("video/color/brightness-")] << Qt::Key_G;
 	keys[_L("video/color/contrast+")] << Qt::Key_Y;
@@ -73,16 +74,16 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("video/dithering/next")] << Qt::CTRL+ Qt::Key_T;
 
 	keys[_L("audio/track/next")] << Qt::CTRL + Qt::Key_A;
-	keys[_L("audio/volume-up")] << Qt::Key_Up;
-	keys[_L("audio/volume-down")] << Qt::Key_Down;
-	keys[_L("audio/mute")] << Qt::Key_M;
+	keys[_L("audio/volume/increase")] << Qt::Key_Up;
+	keys[_L("audio/volume/decrease")] << Qt::Key_Down;
+	keys[_L("audio/volume/mute")] << Qt::Key_M;
 	keys[_L("audio/normalizer")] << Qt::Key_N;
 	keys[_L("audio/tempo-scaler")] << Qt::Key_Z;
-	keys[_L("audio/amp-up")] << Qt::CTRL + Qt::Key_Up;
-	keys[_L("audio/amp-down")] << Qt::CTRL + Qt::Key_Down;
-	keys[_L("audio/sync-reset")] << Qt::Key_Backslash;
-	keys[_L("audio/sync-add")] << Qt::Key_BracketRight;
-	keys[_L("audio/sync-sub")] << Qt::Key_BracketLeft;
+	keys[_L("audio/amp/increase")] << Qt::CTRL + Qt::Key_Up;
+	keys[_L("audio/amp/decrease")] << Qt::CTRL + Qt::Key_Down;
+	keys[_L("audio/sync/reset")] << Qt::Key_Backslash;
+	keys[_L("audio/sync/increase")] << Qt::Key_BracketRight;
+	keys[_L("audio/sync/decrease")] << Qt::Key_BracketLeft;
 
 	keys[_L("tool/playlist/toggle")] << Qt::Key_L;
 	keys[_L("tool/history")] << Qt::Key_C;
@@ -129,9 +130,9 @@ Shortcuts Pref::preset(ShortcutPreset id) {
 		keys[_L("audio/sync-reset")] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_Backslash;
 		keys[_L("audio/sync-add")] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_Right;
 		keys[_L("audio/sync-sub")] << Qt::META + Qt::ALT + Qt::CTRL + Qt::Key_Left;
-		keys[_L("audio/volume-up")] << Qt::ALT + Qt::Key_Up << Qt::Key_Up;
-		keys[_L("audio/volume-down")] << Qt::ALT + Qt::Key_Down << Qt::Key_Down;
-		keys[_L("audio/mute")] << Qt::ALT + Qt::CTRL + Qt::Key_Down;
+		keys[_L("audio/volume/increase")] << Qt::ALT + Qt::Key_Up << Qt::Key_Up;
+		keys[_L("audio/volume/decrease")] << Qt::ALT + Qt::Key_Down << Qt::Key_Down;
+		keys[_L("audio/volume/mute")] << Qt::ALT + Qt::CTRL + Qt::Key_Down;
 		keys[_L("subtitle/track/next")] << Qt::META + Qt::CTRL + Qt::Key_S;
 		keys[_L("subtitle/track/hide")] << Qt::META + Qt::CTRL + Qt::Key_V;
 		keys[_L("subtitle/sync-reset")] << Qt::META + Qt::SHIFT + Qt::Key_Equal;
@@ -251,7 +252,6 @@ void Pref::save() const {
 
 void Pref::load() {
 	Record r(PREF_GROUP);
-	const int version = r.value("version", 0).toInt();
 #define READ(a) r.read(a, #a)
 	READ(remember_stopped);
 	READ(ask_record_found);
@@ -294,7 +294,7 @@ void Pref::load() {
 	READ(skin_name);
     READ(enable_hwaccel);
     READ(hwaccel_codecs);
-	if (version > 0x000709) {
+	if (r.version() > 0x000709) {
 		READ(enable_hwdeint);
 		READ(hwdeints);
 	}

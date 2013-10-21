@@ -374,6 +374,18 @@ C_{0}
 \end{pmatrix}+\begin{pmatrix}Y_{0}\\
 C_{0}\\
 C_{0}
+\end{pmatrix}=S_{C}M_{SH}^{Y}\begin{pmatrix}Y'\\
+C_{B}\\
+C_{R}
+\end{pmatrix}+\begin{pmatrix}S_{B}\\
+0\\
+0
+\end{pmatrix}+\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}-S_{C}M_{SH}^{Y}\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
 \end{pmatrix}
 \]
 
@@ -400,6 +412,16 @@ B'
 E_{B}\\
 E_{R}
 \end{pmatrix}-\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}\right]\\
+ & =S_{C}M_{Y\leftarrow R}^{-1}M_{SH}^{Y}\begin{pmatrix}Y'\\
+C_{B}\\
+C_{R}
+\end{pmatrix}+M_{Y\leftarrow R}^{-1}\left[\begin{pmatrix}S_{B}\\
+0\\
+0
+\end{pmatrix}-S_{C}M_{SH}^{Y}\begin{pmatrix}Y_{0}\\
 C_{0}\\
 C_{0}
 \end{pmatrix}\right]\\

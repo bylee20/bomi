@@ -1,22 +1,56 @@
-+Dithering
--None-Off
--Fruit-Random Dithering
--Ordered-Ordered Dithering
+#(+|-)(*)name([[key]])([=value=])([-desc-])([:data:])
+
++AdjustColor[[color]][-Adjust Color-][:VideoColor:]
+-Reset[[reset]][-Reset-][:{0, 0, 0, 0}:]
+-BrightnessInc[[brightness+]][-Brightness +%1%-][:{1, 0, 0, 0}:]
+-BrightnessDec[[brightness-]][-Brightness -%1%-][:{-1, 0, 0, 0}:]
+-ContrastInc[[contrast+]][-Contrast +%1%-][:{0, 1, 0, 0}:]
+-ContrastDec[[contrast-]][-Contrast -%1%-][:{0, -1, 0, 0}:]
+-SaturationInc[[saturation+]][-Saturation +%1%-][:{0, 0, 1, 0}:]
+-SaturationDec[[saturation-]][-Saturation -%1%-][:{0, 0, -1, 0}:]
+-HueInc[[hue+]][-Hue +%1%-][:{0, 0, 0, 1}:]
+-HueDec[[hue-]][-Hue -%1%-][:{0, 0, 0, -1}:]
+
++SubtitleDisplay[[display]][-Subtitle Display-]
+-OnLetterbox[[on-letterbox]][-Display on Letterbox-]
+-InVideo[[in-video]][-Display in Video-]
+
++WindowSize[[size]][-Window Size-][:int:]
+-Proper[[proper]][-Proper Size-][:0:]
+-_100[[100%]][-100%-][:1:]
+-_200[[200%]][-200%-][:2:]
+-_300[[300%]][-300%-][:3:]
+-_400[[400%]][-400%-][:4:]
+-Full[[full]][-Fullscreen-][:-1:]
+
++VideoRatio[[size]][-Size-][:qreal:]
+-Source[[source]][-Same as Source-][:-1.0:]
+-Window[[window]][-Same as Window-][:0.0:]
+-_4__3[[4:3]][-4:3 (TV)-][:4.0/3.0:]
+-_16__10[[16:10]][-16:10 (Wide Monitor)-][:16.0/10.0:]
+-_16__9[[16:9]][-16:9 (HDTV)-][:16.0/9.0:]
+-_1_85__1[[1.85:1]][-1.85:1 (Wide Vision)-][:1.85:]
+-_2_35__1[[2.35:1]][-2.35:1 (CinemaScope)-][:2.35:]
+
++Dithering[[dithering]][-Dithering-]
+-None[[off]][-Off-]
+-*Fruit[[random]][-Random Dithering-]
+-Ordered[[ordered]][-Ordered Dithering-]
 
 +DecoderDevice
--None=0
--CPU=1
--GPU=2
+-None[=0=]
+-CPU[=1=]
+-GPU[=2=]
 
-+DeintMode
--Off
--Auto
++DeintMode[[deinterlacing]][-Deinterlacing-]
+-None[[off]][-Off-]
+-*Auto[[auto]][-Auto-]
 
 +DeintDevice
--None=0
--CPU=1
--GPU=2
--OpenGL=4
+-None[=0=]
+-CPU[=1=]
+-GPU[=2=]
+-OpenGL[=4=]
 
 +DeintMethod
 -None
@@ -29,16 +63,16 @@
 -MotionAdaptive
 
 +InterpolatorType
--Bilinear-Bilinear
--BicubicCR-Catmull-Rom
--BicubicMN-Mitchell-Netravali
--BicubicBS-B-spline
--Spline16-2-Lobed Spline
--Lanczos2-2-Lobed Lanczos
--Spline36Approx-3-Lobed Spline (Approx.)
--Lanczos3Approx-3-Lobed Lanczos (Approx.)
--Spline36-3-Lobed Spline
--Lanczos3-3-Lobed Lanczos
+-Bilinear[[bilinear]][-Bilinear-]
+-BicubicCR[[catmull]][-Catmull-Rom-]
+-BicubicMN[[mitchell]][-Mitchell-Netravali-]
+-BicubicBS[[b-spline]][-B-Spline-]
+-Spline16[[spline16]][-2-Lobed Spline-]
+-Lanczos2[[lancoz2]][-2-Lobed Lanczos-]
+-Spline36Approx[[spline36-approx]][-3-Lobed Spline (Approx.)-]
+-Lanczos3Approx[[lanczos3-approx]][-3-Lobed Lanczos (Approx.)-]
+-Spline36[[spline36]][-3-Lobed Spline-]
+-Lanczos3[[lanczos3]][-3-Lobed Lanczos-]
 
 +AudioDriver
 -Auto
@@ -50,14 +84,14 @@
 -OpenAL
 
 +ClippingMethod
--Auto-Auto-clipping
--Soft-Soft-clipping
--Hard-Hard-clipping
+-Auto[-Auto-clipping-]
+-Soft[-Soft-clipping-]
+-Hard[-Hard-clipping-]
 
-+StaysOnTop
--Always
--Playing
--Never
++StaysOnTop[[stays-on-top]][-Stays on Top-]
+-None[[off]][-Off-]
+-*Playing[[playing]][-Playing-]	
+-Always[[always]][-Always-]
 
 +SeekingStep
 -Step1
@@ -65,59 +99,70 @@
 -Step3
 
 +GeneratePlaylist
--Similar-Add files which have similar names
--Folder-Add all files in the same folder
+-Similar[-Add files which have similar names-]
+-Folder[-Add all files in the same folder-]
 #-None-Do not add any other files
 
 +PlaylistBehaviorWhenOpenMedia
--AppendToPlaylist-Append the open media to the playlist
--ClearAndAppendToPlaylist-Clear the playlist and append the open media to the playlist
--ClearAndGenerateNewPlaylist-Clear the playlist and generate new playlist
+-AppendToPlaylist[-Append the open media to the playlist-]
+-ClearAndAppendToPlaylist[-Clear the playlist and append the open media to the playlist-]
+-ClearAndGenerateNewPlaylist[-Clear the playlist and generate new playlist-]
 
 +SubtitleAutoload
--Matched-Subtitles which have the same name as that of playing file
--Contain-Subtitles whose names contain the name of playing file
--Folder-All subtitles in the folder where the playing file is located
+-Matched[-Subtitles which have the same name as that of playing file-]
+-Contain[-Subtitles whose names contain the name of playing file-]
+-Folder[-All subtitles in the folder where the playing file is located-]
 #-None-Do not load any other subtitles
 
 +SubtitleAutoselect
--Matched-Subtitle which has the same name as that of playing file
--First-First subtitle from loaded ones
--All-All loaded subtitles
--EachLanguage-Each language subtitle
+-Matched[-Subtitle which has the same name as that of playing file-]
+-First[-First subtitle from loaded ones-]
+-All[-All loaded subtitles-]
+-EachLanguage[-Each language subtitle-]
 
 +OsdScalePolicy
--Width-Fit to width of video
--Height-Fit to height of video
--Diagonal-Fit to diagonal of video
+-Width[-Fit to width of video-]
+-Height[-Fit to height of video-]
+-Diagonal[-Fit to diagonal of video-]
 
 +ClickAction
--OpenFile-Open a file
--Fullscreen-Toggle fullscreen mode
--Pause-Toggle play/pause
--Mute-Toggle mute/unmute
+-OpenFile[-Open a file-]
+-Fullscreen[-Toggle fullscreen mode-]
+-Pause[-Toggle play/pause-]
+-Mute[-Toggle mute/unmute-]
 
 +WheelAction
--Seek1-Seek playback for step 1
--Seek2-Seek playback for step 2
--Seek3-Seek playback for step 3
--PrevNext-Play previous/next
--Volume-Volumn up/down
--Amp-Amp. up/down
+-Seek1[-Seek playback for step 1-]
+-Seek2[-Seek playback for step 2-]
+-Seek3[-Seek playback for step 3-]
+-PrevNext[-Play previous/next-]
+-Volume[-Volumn up/down-]
+-Amp[-Amp. up/down-]
 
 +KeyModifier
--None=Qt::NoModifier
--Ctrl=Qt::ControlModifier
--Shift=Qt::ShiftModifier
--Alt=Qt::AltModifier
+-None[=Qt::NoModifier=]
+-Ctrl[=Qt::ControlModifier=]
+-Shift[=Qt::ShiftModifier=]
+-Alt[=Qt::AltModifier=]
 
-+Position
--CC=Qt::AlignVCenter|Qt::AlignHCenter
--TL=Qt::AlignTop|Qt::AlignLeft
--TC=Qt::AlignTop|Qt::AlignHCenter
--TR=Qt::AlignTop|Qt::AlignRight
--CL=Qt::AlignVCenter|Qt::AlignLeft
--CR=Qt::AlignVCenter|Qt::AlignRight
--BL=Qt::AlignBottom|Qt::AlignLeft
--BC=Qt::AlignBottom|Qt::AlignHCenter
--BR=Qt::AlignBottom|Qt::AlignRight
++VerticalAlignment[[vertical-alignment]][:Qt::Alignment:]
+-Top[[top]][:Qt::AlignTop:][-Top-]
+-*Center[[v-center]][:Qt::AlignVCenter:][-Vertical Center-]
+-Bottom[[bottom]][:Qt::AlignBottom:][-Bottom-]
+
++HorizontalAlignment[[horizontal-alignment]][:Qt::Alignment:]
+-Left[[left]][:Qt::AlignLeft:][-Left-]
+-*Center[[h-center]][:Qt::AlignHCenter:][-Horizontal Center-]
+-Right[[right]][:Qt::AlignRight:][-Right-]
+
++MoveToward[[move]][:QPoint:]
+-Reset[[reset]][-Reset-][:{0, 0}:]
+-Upward[[up]][-Upward-][:{0, -1}:]
+-Downward[[down]][-Downward-][:{0, 1}:]
+-Leftward[[left]][-Leftward-][:{-1, 0}:]
+-Rightward[[right]][-Rightward-][:{1, 0}:]
+
++ChangeValue[:int:]
+-Reset[[reset]][-Reset-][:0:]
+-Increase[[increase]][-Increase %1-][:1:]
+-Decrease[[decrease]][-Decrease %1-][:-1:]

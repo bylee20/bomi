@@ -6,7 +6,7 @@
 #include "texturerendereritem.hpp"
 
 class DeintInfo;				class OpenGLFramebufferObject;
-class VideoRendererItem;		class ColorProperty;
+class VideoRendererItem;		class VideoColor;
 class VideoFrame;				class VideoFormat;
 class MpOsdItem;				class OpenGLTexture;
 enum class InterpolatorType;	enum class DeintMethod;
@@ -37,7 +37,7 @@ public:
 	QRectF screenRect() const;
 	QPoint offset() const;
 	quint64 drawnFrames() const;
-	const ColorProperty &color() const;
+	const VideoColor &color() const;
 	double aspectRatio() const;
 	double cropRatio() const;
 	int alignment() const;
@@ -62,14 +62,14 @@ public:
 	void swap(OpenGLTexture &texture, const VideoFormat &format);
 	void rerender() override;
 	GLuint texture() const;
-	void setOverlayInLetterbox(bool letterbox);
+	void setOverlayOnLetterbox(bool letterbox);
 	bool overlayInLetterbox() const;
 	void setChromaUpscaler(InterpolatorType tpe);
 	InterpolatorType chromaUpscaler() const;
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
-	void setColor(const ColorProperty &prop);
+	void setColor(const VideoColor &prop);
 	void setOffset(const QPoint &offset);
 	void setCropRatio(double ratio);
 signals:

@@ -55,7 +55,6 @@ HEADERS += playengine.hpp \
     mrl.hpp \
     global.hpp \
     menu.hpp \
-    colorproperty.hpp \
     translator.hpp \
     pref.hpp \
     videoframe.hpp \
@@ -128,14 +127,14 @@ HEADERS += playengine.hpp \
     playengine_p.hpp \
     mediamisc.hpp \
     ../mpv/video/out/dither.h \
-    trayicon.hpp
+    trayicon.hpp \
+    videocolor.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
     mrl.cpp \
     global.cpp \
     menu.cpp \
-    colorproperty.cpp \
     translator.cpp \
     pref.cpp \
     videoframe.cpp \
@@ -203,7 +202,8 @@ SOURCES += main.cpp \
     geometryitem.cpp \
     mediamisc.cpp \
     ../mpv/video/out/dither.c \
-    trayicon.cpp
+    trayicon.cpp \
+    videocolor.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -5,7 +5,6 @@
 #include "global.hpp"
 #include "actiongroup.hpp"
 #include "enums.hpp"
-#include "colorproperty.hpp"
 
 class Record;
 
@@ -25,23 +24,42 @@ public:
 	typedef QHash<QString, QAction*> ActionHash;
 	typedef QHash<QString, ActionGroup*> GroupHash;
 
-	inline Menu &operator() (const QLatin1String &key) const {return *m(key);}
-	inline QAction *operator[] (const QLatin1String &key) const {return a(key);}
-	inline ActionGroup *g(const QLatin1String &key) const {return m_g[key];}
-	inline QAction *a(const QLatin1String &key) const {return m_a[key];}
-	inline Menu *m(const QLatin1String &key) const {return m_m[key];}
+	inline Menu &operator() (const char *key) const { return operator ()(_L(key)); }
+	inline Menu &operator() (const char *key, const QString &title) const { return operator ()(_L(key), title); }
+	inline QAction *operator[] (const char *key) const {return operator[] (_L(key));}
+	inline ActionGroup *g(const char *key) const { return g(_L(key)); }
+	inline QAction *a(const char *key) const { return a(_L(key)); }
+	inline Menu *m(const char *key) const { return m(_L(key)); }
+	inline Menu *addMenu(const char *key) { return addMenu(_L(key)); }
+	inline QAction *addActionToGroup(const char *key, bool ch = false, const char *g = "") {
+		return addActionToGroup(_L(key), ch, _L(g));
+	}
+	inline QAction *addActionToGroup(QAction *action, const char *key, const char *g = "") {
+		return addActionToGroup(action, _L(key), _L(g));
+	}
+	inline QAction *addAction(const char *key, bool ch = false) { return addAction(_L(key), ch); }
+	inline ActionGroup *addGroup(const char *key) { return addGroup(_L(key)); }
+	inline QAction *a(const char *key, const QString &text) const { return a(_L(key), text); }
 
 	inline Menu &operator() (const QString &key) const {return *m(key);}
+	inline Menu &operator() (const QString &key, const QString &title) const {
+		auto &menu = *m(key); menu.setTitle(title); return menu;
+	}
 	inline QAction *operator[] (const QString &key) const {return a(key);}
-	inline ActionGroup *g(const QString &key = "") const {return m_g[key];}
+	inline ActionGroup *g(const QString &key = _L("")) const {return m_g[key];}
 	inline QAction *a(const QString &key) const {return m_a[key];}
 	inline Menu *m(const QString &key) const {return m_m[key];}
-
 	inline Menu *addMenu(const QString &key) {
 		Menu *m = m_m[key] = new Menu(key, this); QMenu::addMenu(m); m_ids[key] = m->menuAction(); return m;
 	}
+	inline QAction *addActionToGroup(QAction *action, const QString &key, const QString &g = "") {
+		return m_ids[key] = addGroup(g)->addAction(addAction(action, key));
+	}
 	inline QAction *addActionToGroup(const QString &key, bool ch = false, const QString &g = "") {
 		return m_ids[key] = addGroup(g)->addAction(addAction(key, ch));
+	}
+	inline QAction *addAction(QAction *a, const QString &key) {
+		QMenu::addAction(a); a->setParent(this); return m_a[key] = m_ids[key] = a;
 	}
 	inline QAction *addAction(const QString &key, bool ch = false) {
 		QAction *a = m_a[key] = QMenu::addAction(key); a->setCheckable(ch); m_ids[key] = a; return a;
@@ -49,8 +67,11 @@ public:
 	inline QAction *addActionToGroupWithoutKey(const QString &name, bool ch = false, const QString &g = "") {
 		QAction *a = QMenu::addAction(name); a->setCheckable(ch); return addGroup(g)->addAction(a);
 	}
-	inline ActionGroup *addGroup(const QString &name) {
-		ActionGroup *g = m_g.value(name, 0); return g ? g : (m_g[name] = new ActionGroup(this));
+	inline ActionGroup *addGroup(const QString &key) {
+		ActionGroup *g = m_g.value(key, 0); return g ? g : (m_g[key] = new ActionGroup(this));
+	}
+	inline QAction *a(const QString &key, const QString &text) const {
+		auto action = a(key); action->setText(text); return action;
 	}
 	inline QString id(QAction *action) const {return m_a.key(action, QString());}
 	inline QString id(Menu *menu) const {return m_m.key(menu, QString());}

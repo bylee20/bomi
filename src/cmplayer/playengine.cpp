@@ -63,7 +63,7 @@ struct PlayEngine::Data {
 				d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
 				break;
 			case MpSetDeintEnabled:
-				d->video->setDeintEnabled(d->deint != DeintMode::Off);
+				d->video->setDeintEnabled(d->deint != DeintMode::None);
 				break;
 			default:
 				break;
@@ -712,7 +712,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
 	d->setmp("audio-delay", d->audioSync*0.001);
 	d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
-	d->video->setDeintEnabled(d->deint != DeintMode::Off);
+	d->video->setDeintEnabled(d->deint != DeintMode::None);
 	auto error = prepare_playback(mpctx);
 	d->updateAudioLevel();
 	if (error != MPERROR_NONE)

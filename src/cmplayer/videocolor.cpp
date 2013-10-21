@@ -1,4 +1,4 @@
-#include "colorproperty.hpp"
+#include "videocolor.hpp"
 #include <QVector3D>
 #include <QtMath>
 
@@ -62,7 +62,7 @@ static ColumnVector3 make3x1(float v1, float v23) {
 	return make3x1(v1, v23, v23);
 }
 
-void ColorProperty::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, mp_csp_levels levels) const {
+void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, mp_csp_levels levels) const {
 	mul.setToIdentity();
 	add = {0.f, 0.f, 0.f};
 	const float *spec = specs[colorspace];
@@ -89,8 +89,8 @@ void ColorProperty::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, m
 	const float y1 = range[0], y2 = range[1], c1 = range[2], c2 = range[3];
 	const auto r2y = matRgbToYCbCr(kb, kr, y1, y2, c1, c2);
 	const auto y2r = matYCbCrToRgb(kb, kr, y1, y2, c1, c2);
-	const auto shc = matSHC(saturation(), hue(), contrast());
-	auto bvec = make3x1(qBound(-1.0, brightness(), 1.0), 0);
+	const auto shc = matSHC(saturation()*1e-2, hue()*1e-2, contrast()*1e-2);
+	auto bvec = make3x1(qBound(-1.0, brightness()*1e-2, 1.0), 0);
 
 	mul = y2r*shc;
 	if (colorspace == MP_CSP_RGB)
