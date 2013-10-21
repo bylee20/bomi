@@ -229,15 +229,10 @@ public:
 	int width() const { return m_texture.width; }
 	int height() const { return m_texture.height; }
 	QSize size() const { return {m_texture.width, m_texture.height}; }
-	void bind() { func()->glBindFramebuffer(GL_FRAMEBUFFER, m_id); }
-	void release() { QOpenGLFramebufferObject::bindDefault(); }
+	void bind() const { func()->glBindFramebuffer(GL_FRAMEBUFFER, m_id); }
+	void release() const { QOpenGLFramebufferObject::bindDefault(); }
 	const OpenGLTexture &texture() const { return m_texture; }
-	QImage toImage() const {
-		QImage image(m_texture.width, m_texture.height, QImage::Format_ARGB32);
-		m_texture.bind();
-		glGetTexImage(m_texture.target, 0, m_texture.format.pixel, m_texture.format.type, image.bits());
-		return image;
-	}
+	QImage toImage() const;
 	void getCoords(double &x1, double &y1, double &x2, double &y2) {
 		if (m_texture.target == GL_TEXTURE_RECTANGLE) {
 			x1 = y1 = 0; x2 = m_texture.width; y2 = m_texture.height;

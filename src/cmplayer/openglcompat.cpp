@@ -420,3 +420,36 @@ void setLutIntCoord(const in vec2 vCoord) {
 )";
 	return code;
 }
+
+
+
+template<typename T>
+static QImage getImage(const QSize &size, const OpenGLTextureFormat &format) {
+	if (size.isEmpty())
+		return QImage();
+	QImage image(size, QImage::Format_ARGB32);
+	QVector<T> data(size.width()*size.height()*4);
+	auto src = data.data();
+	glReadPixels(0, 0, size.width(), size.height(), format.pixel, format.type, src);
+	uchar *dst = image.bits();
+	const qreal r = qreal(_Max<uchar>())/qreal(_Max<T>());
+	for (int i=0; i<size.width()*size.height()*4; ++i)
+		*dst++ = qRound(qreal(*src++)*r);
+	return image;
+}
+
+QImage OpenGLFramebufferObject::toImage() const {
+	bind();
+	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
+	switch (m_texture.format.type) {
+	case GL_UNSIGNED_BYTE:
+	case GL_UNSIGNED_INT_8_8_8_8:
+	case GL_UNSIGNED_INT_8_8_8_8_REV:
+		return getImage<uchar>(m_texture.size(), m_texture.format);
+	case GL_UNSIGNED_SHORT:
+		return getImage<GLushort>(m_texture.size(), m_texture.format);
+	default:
+		return QImage();
+	}
+	release();
+}
