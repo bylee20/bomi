@@ -78,7 +78,6 @@ void VideoFrameShader::updateColorMatrix() {
 	if (m_effects & VideoRendererItem::Grayscale)
 		color.setSaturation(-1.0);
 	auto range = m_frame.format().range();
-	qDebug() << ColorRangeInfo::name(m_range);
 	if (m_range == ColorRange::Full)
 		range = MP_CSP_LEVELS_PC;
 	else if (m_range == ColorRange::Limited)
@@ -156,6 +155,8 @@ void VideoFrameShader::updateShader() {
 #ifdef USE_RECTANGLE
 const vec4 dxdy = vec4(1.0, 1.0, -1.0, 0.0);
 const vec2 chroma_offset = chroma_location;
+#define sampler2D sampler2DRect
+#define texture2D texture2DRect
 #else
 const vec4 dxdy = vec4(1.0/texWidth, 1.0/texHeight, -1.0/texWidth, 0.0);
 const vec2 chroma_offset = chroma_location*dxdy.xy;

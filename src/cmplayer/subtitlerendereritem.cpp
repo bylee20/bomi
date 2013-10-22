@@ -63,7 +63,7 @@ public:
 			uniform sampler2D tex;
 			uniform vec2 shadowOffset;
 			uniform vec4 shadowColor;
-			varying highp vec2 texCoord;
+			varying vec2 texCoord;
 			void main() {
 				vec4 top = texture2D(tex, texCoord);
 				float alpha = texture2D(tex, texCoord - shadowOffset).a;

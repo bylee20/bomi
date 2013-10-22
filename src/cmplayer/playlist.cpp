@@ -137,7 +137,7 @@ bool Playlist::loadM3U(QFile *file, const QString &enc) {
 		in.setCodec(QTextCodec::codecForName(enc.toLocal8Bit()));
 	const qint64 pos = in.pos();
 	in.seek(0);
-	auto getNextLocation = [&in] () {
+	auto getNextLocation = [&in] () -> QString {
 		while (!in.atEnd()) {
 			const QString line = in.readLine().trimmed();
 			if (!line.isEmpty() && !line.startsWith("#"))

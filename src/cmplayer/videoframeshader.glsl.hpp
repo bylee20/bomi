@@ -5,12 +5,7 @@ varying vec2 texCoord;
 
 #ifdef FRAGMENT
 
-#ifdef USE_RECTANGLE
-#define highp sampler2D sampler2DRect
-#define highp texture2D texture2DRect
-#endif
-
-uniform highp sampler2D tex0, tex1, tex2;
+uniform sampler2D tex0, tex1, tex2;
 
 #define texture0(c) texture2D(tex0, c)
 #define texture1(c) texture2D(tex1, c)
@@ -48,7 +43,7 @@ vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2);
 #endif
 
 #if USE_DEINT
-uniform highp float top_field;
+uniform float top_field;
 #endif
 vec3 deint(const in vec2 coord) {
 #if USE_DEINT

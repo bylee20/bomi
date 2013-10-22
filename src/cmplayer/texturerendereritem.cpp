@@ -5,7 +5,7 @@
 
 static const char *code = R"(
 
-varying highp vec2 texCoord;
+varying vec2 texCoord;
 
 /***********************************************************************/
 
@@ -37,8 +37,8 @@ void main() {
 
 #ifdef VERTEX
 uniform mat4 vMatrix;
-attribute highp vec4 vPosition;
-attribute highp vec2 vCoord;
+attribute vec4 vPosition;
+attribute vec2 vCoord;
 void main() {
 	setLutIntCoord(vCoord);
 	texCoord = vCoord;

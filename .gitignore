@@ -1,5 +1,6 @@
 *.directory
-src/ffmpeg
+src/libchardet*
+src/ffmpeg*
 src/build-*
 *~
 .qmake.cache

@@ -1,4 +1,6 @@
-cache()
+QT_CONFIG -= no-pkg-config
+
+#cache()
 
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header c++11
@@ -19,6 +21,9 @@ LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../../build/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavfilter -lavcodec -lpostproc -lavformat -lavutil \
         -lmpg123 -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio -lquvi$${LIBQUVI_SUFFIX}
+
+
+PKGCONFIG += dvdread
 
 macx {
     QT += gui-private

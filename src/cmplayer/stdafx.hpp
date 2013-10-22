@@ -73,10 +73,10 @@ static inline QString _GetOpenFileName(QWidget *p, const QString &t, const QStri
 static inline QString _GetSaveFileName(QWidget *p, const QString &t, const QString &dir, const QString &f) {
     return QFileDialog::getSaveFileName(p, t, dir, f, 0);
 }
-template<typename T, typename S = T> static constexpr inline S _Max() { return (S)std::numeric_limits<T>::max(); }
-template<typename T, typename S = T> static constexpr inline S _Min() { return (S)std::numeric_limits<T>::min(); }
 
 #ifndef __OBJC__
+template<typename T, typename S = T> constexpr static inline S _Max() { return (S)std::numeric_limits<T>::max(); }
+template<typename T, typename S = T> constexpr static inline S _Min() { return (S)std::numeric_limits<T>::min(); }
 
 template<typename T> static typename std::enable_if<std::is_pointer<T>::value, T>::type address_cast(const char *address, int base = 10) {
     bool ok = false;

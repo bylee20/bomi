@@ -1,5 +1,7 @@
 #include "trayicon.hpp"
+#ifdef Q_OS_LINUX
 #include <glib-object.h>
+#endif
 
 enum AppIndicatorCategory { APP_INDICATOR_CATEGORY_APPLICATION_STATUS };
 enum AppIndicatorStatus {

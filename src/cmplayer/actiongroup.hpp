@@ -43,7 +43,7 @@ template<typename T> static inline EnumAction<T> *_NewEnumAction(T t) { return n
 class StepAction : public EnumAction<ChangeValue> {
 	Q_OBJECT
 public:
-	using EnumAction::EnumAction;
+	StepAction(ChangeValue t, QObject *parent = nullptr): EnumAction<ChangeValue>(t, parent) {}
 	void setRange(int min, int def, int max) { m_min = min; m_max = max; m_default = def; }
 	template<typename T> T clamp(const T &t) { return t; } // dummy to kill compile error
 	int clamp(int value) { return isReset() ? m_default : qBound(m_min, value, m_max); }
