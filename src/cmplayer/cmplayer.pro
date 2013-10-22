@@ -1,7 +1,4 @@
-QT_CONFIG -= no-pkg-config
-
-#cache()
-
+cache()
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header c++11
 macx:CONFIG -= app_bundle
@@ -18,21 +15,22 @@ PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
-INCLUDEPATH += ../mpv ../../build/include
-LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lswresample -lswscale -lavfilter -lavcodec -lpostproc -lavformat -lavutil \
-        -lmpg123 -ldvdread -lcdio_paranoia -lcdio -lcdio_cdda -lass -lbz2 -lz -lportaudio -lquvi$${LIBQUVI_SUFFIX}
+INCLUDEPATH += ../mpv $${DESTDIR}/include
+LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lbz2 -lz
 
-
-PKGCONFIG += dvdread
+PKGCONFIG += dvdread libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
+    libmpg123 libcdio_paranoia libcdio libcdio_cdda libass portaudio-2.0 libquvi$${LIBQUVI_SUFFIX}
 
 macx {
+    QT_CONFIG -= no-pkg-config
     QT += gui-private
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
     QMAKE_MAC_SDK = macosx
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
-    LIBS += -L/usr/local/lib -liconv -lfribidi -llua -ldvdcss -lcurl -L/usr/X11/lib -lfreetype -lfontconfig -framework IOSurface \
+    PKGCONFIG += libdvdcss lua libcurl fribidi freetype2 fontconfig
+    LIBS += -liconv -framework IOSurface \
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
         -framework IOKit -framework Carbon -framework OpenAL
