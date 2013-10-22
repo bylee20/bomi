@@ -116,6 +116,7 @@ public:
 	bool enable_system_tray = true, hide_rather_close = true;
 	ClickActionMap double_click_map = defaultDoubleClick(), middle_click_map = defaultMiddleClick();
 	WheelActionMap wheel_scroll_map = defaultWheelAction();
+	bool invert_wheel = false;
 	int seek_step1 = 5000, seek_step2 = 30000, seek_step3 = 60000, speed_step = 10;
 	int brightness_step = 1, saturation_step = 1, contrast_step = 1, hue_step = 1;
 	int volume_step = 2, sub_sync_step = 500, amp_step = 10, sub_pos_step = 1, audio_sync_step = 200;

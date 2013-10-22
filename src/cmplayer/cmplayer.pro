@@ -41,9 +41,9 @@ macx {
     QT += dbus x11extras
     QMAKE_CC = "gcc -std=c99 -w"
     QMAKE_CXXFLAGS += -std=c++11
-    PKGCONFIG += glib-2.0
+    PKGCONFIG += glib-2.0 libva libva-glx libva-x11 xcb xcb-icccm x11 alsa openal libpulse gobject-2.0 jack
     TARGET = cmplayer
-    LIBS += -lX11 -lxcb -lxcb-icccm -lva -lva-glx -lva-x11 -lasound -ldl -lass -lpulse -lopenal -ljack -lgobject-2.0
+    LIBS += -ldl
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }

@@ -1028,7 +1028,7 @@ Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1619"/>
+        <location filename="../mainwindow.cpp" line="1621"/>
         <source>Do you want to resume the playback at the last played position?
 Played Date: %1
 Stopped Position: %2
@@ -1036,12 +1036,12 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1622"/>
+        <location filename="../mainwindow.cpp" line="1624"/>
         <source>Don&apos;t ask again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1623"/>
+        <location filename="../mainwindow.cpp" line="1625"/>
         <source>Resume Playback</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1145,12 +1145,12 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">Положение субтитров</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1450"/>
+        <location filename="../mainwindow.cpp" line="1452"/>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
         <translation>Когда окно закрыто, CMPlayer будет находиться в системном лотке.&lt;br&gt;Вы можете изменить это в Параметрах.&lt;br&gt;Если вы хотите выйти из CMPlayer, используйте меню &apos;Выход&apos;.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1454"/>
+        <location filename="../mainwindow.cpp" line="1456"/>
         <source>Do not display this message again</source>
         <translation>Не показывать больше это сообщение</translation>
     </message>
@@ -1762,11 +1762,11 @@ Do you want to start from where it&apos;s stopped?
         <location filename="../ui/prefdialog.ui" line="217"/>
         <location filename="../ui/prefdialog.ui" line="1698"/>
         <location filename="../ui/prefdialog.ui" line="2547"/>
-        <location filename="../ui/prefdialog.ui" line="2683"/>
-        <location filename="../ui/prefdialog.ui" line="2706"/>
-        <location filename="../ui/prefdialog.ui" line="2729"/>
-        <location filename="../ui/prefdialog.ui" line="2813"/>
-        <location filename="../ui/prefdialog.ui" line="2901"/>
+        <location filename="../ui/prefdialog.ui" line="2703"/>
+        <location filename="../ui/prefdialog.ui" line="2726"/>
+        <location filename="../ui/prefdialog.ui" line="2749"/>
+        <location filename="../ui/prefdialog.ui" line="2833"/>
+        <location filename="../ui/prefdialog.ui" line="2921"/>
         <source>sec</source>
         <translation>сек</translation>
     </message>
@@ -1843,7 +1843,7 @@ Do you want to start from where it&apos;s stopped?
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="632"/>
-        <location filename="../ui/prefdialog.ui" line="2780"/>
+        <location filename="../ui/prefdialog.ui" line="2800"/>
         <location filename="../prefdialog.cpp" line="294"/>
         <source>Subtitle</source>
         <translation>Субтитры</translation>
@@ -2076,7 +2076,7 @@ Do you want to start from where it&apos;s stopped?
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2868"/>
+        <location filename="../ui/prefdialog.ui" line="2888"/>
         <source>Amplifier</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2100,7 +2100,7 @@ Do you want to start from where it&apos;s stopped?
     <message>
         <location filename="../ui/prefdialog.ui" line="2031"/>
         <location filename="../ui/prefdialog.ui" line="2120"/>
-        <location filename="../ui/prefdialog.ui" line="2920"/>
+        <location filename="../ui/prefdialog.ui" line="2940"/>
         <source>Color</source>
         <translation>Цвета</translation>
     </message>
@@ -2204,44 +2204,49 @@ e.g.: English, Korean</source>
         <translation>Комбинация 4</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2667"/>
+        <location filename="../ui/prefdialog.ui" line="2659"/>
+        <source>Invert direction of mouse wheel scroll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2687"/>
         <source>Seek</source>
         <translation>Перейти</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2676"/>
+        <location filename="../ui/prefdialog.ui" line="2696"/>
         <source>Step 1</source>
         <translation>Шаг 1</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2699"/>
+        <location filename="../ui/prefdialog.ui" line="2719"/>
         <source>Step 2</source>
         <translation>Шаг 2</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2722"/>
+        <location filename="../ui/prefdialog.ui" line="2742"/>
         <source>Step 3</source>
         <translation>Шаг 3</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2748"/>
+        <location filename="../ui/prefdialog.ui" line="2768"/>
         <location filename="../prefdialog.cpp" line="279"/>
         <source>Playback</source>
         <translation>Воспроизведение</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2757"/>
+        <location filename="../ui/prefdialog.ui" line="2777"/>
         <source>Speed</source>
         <translation>Скорость</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2836"/>
+        <location filename="../ui/prefdialog.ui" line="2856"/>
         <location filename="../prefdialog.cpp" line="290"/>
         <source>Audio</source>
         <translation>Аудио</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2842"/>
+        <location filename="../ui/prefdialog.ui" line="2862"/>
         <source>Volume</source>
         <translation>Громкость</translation>
     </message>
@@ -2250,33 +2255,33 @@ e.g.: English, Korean</source>
         <translation type="obsolete">Усиление.</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2786"/>
+        <location filename="../ui/prefdialog.ui" line="2806"/>
         <source>Position</source>
         <translation>Положение</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2806"/>
-        <location filename="../ui/prefdialog.ui" line="2894"/>
+        <location filename="../ui/prefdialog.ui" line="2826"/>
+        <location filename="../ui/prefdialog.ui" line="2914"/>
         <source>Sync Delay</source>
         <translation>Задержка синхронизации</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2926"/>
+        <location filename="../ui/prefdialog.ui" line="2946"/>
         <source>Brightness</source>
         <translation>Яркость</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2946"/>
+        <location filename="../ui/prefdialog.ui" line="2966"/>
         <source>Contrast</source>
         <translation>Контрастность</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2966"/>
+        <location filename="../ui/prefdialog.ui" line="2986"/>
         <source>Saturation</source>
         <translation>Насыщеность</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2986"/>
+        <location filename="../ui/prefdialog.ui" line="3006"/>
         <source>Hue</source>
         <translation>Оттенок</translation>
     </message>
@@ -3476,12 +3481,12 @@ e.g.: English, Korean</source>
 <context>
     <name>TrayIcon</name>
     <message>
-        <location filename="../trayicon.cpp" line="57"/>
+        <location filename="../trayicon.cpp" line="59"/>
         <source>Quit</source>
         <translation type="unfinished">Выход</translation>
     </message>
     <message>
-        <location filename="../trayicon.cpp" line="58"/>
+        <location filename="../trayicon.cpp" line="60"/>
         <source>Show</source>
         <translation type="unfinished"></translation>
     </message>

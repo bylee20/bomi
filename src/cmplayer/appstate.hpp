@@ -14,14 +14,14 @@ class AppState : public QObject {
 	Q_PROPERTY(DeintMode video_deinterlacing MEMBER video_deinterlacing NOTIFY videoDeinterlacingChanged)
 	Q_PROPERTY(Dithering video_dithering MEMBER video_dithering NOTIFY videoDitheringChanged)
 	Q_PROPERTY(StaysOnTop window_stays_on_top MEMBER window_stays_on_top NOTIFY windowStaysOnTopChanged)
-	Q_PROPERTY(int play_speed MEMBER play_speed NOTIFY playSpeedChanged)
+	Q_PROPERTY(int play_speed MEMBER playback_speed NOTIFY playSpeedChanged)
 	Q_PROPERTY(QPoint video_offset MEMBER video_offset NOTIFY videoOffsetChanged)
 	Q_PROPERTY(VerticalAlignment video_vertical_alignment MEMBER video_vertical_alignment NOTIFY videoVerticalAlignmentChanged)
 	Q_PROPERTY(HorizontalAlignment video_horizontal_alignment MEMBER video_horizontal_alignment NOTIFY videoHorizontalAlignmentChanged)
 	Q_PROPERTY(VideoColor video_color MEMBER video_color NOTIFY videoColorChanged)
 	Q_PROPERTY(ColorRange video_range MEMBER video_range NOTIFY videoRangeChanged)
 	Q_PROPERTY(int audio_volume MEMBER audio_volume NOTIFY audioVolumeChanged)
-	Q_PROPERTY(int audio_amp MEMBER audio_amp NOTIFY audioAmpChanged)
+	Q_PROPERTY(int audio_amp MEMBER audio_amplifier NOTIFY audioAmpChanged)
 	Q_PROPERTY(int audio_sync MEMBER audio_sync NOTIFY audioSyncChanged)
 	Q_PROPERTY(bool audio_muted MEMBER audio_muted NOTIFY audioMutedChanged)
 	Q_PROPERTY(bool audio_volume_normalizer MEMBER audio_volume_normalizer NOTIFY audioVolumeNormalizerChanged)
@@ -35,7 +35,7 @@ public:
 	QSize win_size;
 
 // play state
-	int play_speed = 100;
+	int playback_speed = 100;
 
 // video state
 	VideoRatio video_aspect_ratio = VideoRatio::Source;
@@ -54,7 +54,7 @@ public:
 
 
 // audio state
-	int audio_amp = 100;
+	int audio_amplifier = 100;
 	int audio_volume = 100, audio_sync = 0;
 	bool audio_muted = false, audio_volume_normalizer = false, audio_tempo_scaler = true;
 

@@ -611,7 +611,7 @@ void MainWindow::connectMenus() {
 	Menu &play = d->menu("play");
 	connect(play["stop"], &QAction::triggered, [this] () {d->engine.stop();});
 	d->connectStepActions(play("speed"), "play_speed", &AppState::playSpeedChanged, [this]() {
-		d->engine.setSpeed(1e-2*d->as.play_speed);
+		d->engine.setSpeed(1e-2*d->as.playback_speed);
 	});
 	connect(play["pause"], &QAction::triggered, [this] () {
 		if (!d->stateChanging) {
@@ -737,7 +737,7 @@ void MainWindow::connectMenus() {
 		auto v = d->as.audio_sync; d->engine.setAudioSync(v);
 	});
 	d->connectStepActions(audio("amp"), "audio_amp", &AppState::audioAmpChanged, [this] () {
-		auto v = d->as.audio_amp; d->engine.setAmp(v*1e-2);
+		auto v = d->as.audio_amplifier; d->engine.setAmp(v*1e-2);
 	});
 	d->connectPropertyCheckable(audio["normalizer"], "audio_volume_normalizer", &AppState::audioVolumeNormalizerChanged, [this] () {
 		d->engine.setVolumeNormalizerActivated(d->as.audio_volume_normalizer);
@@ -1249,7 +1249,9 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 void MainWindow::wheelEvent(QWheelEvent *event) {
 	QWidget::wheelEvent(event);
 	if (!event->isAccepted() && event->delta()) {
-		if (auto action = d->menu.wheelScrollAction(d->pref().wheel_scroll_map[event->modifiers()], event->delta() > 0)) {
+		const auto &info = d->pref().wheel_scroll_map[event->modifiers()];
+		const bool up = event->delta() > 0;
+		if (auto action = d->menu.wheelScrollAction(info, d->pref().invert_wheel ? !up : up)) {
 			action->trigger();
 			event->accept();
 		}

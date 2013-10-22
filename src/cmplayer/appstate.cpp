@@ -10,11 +10,7 @@ AppState::AppState() {
 	Record r("app-state");
 
 #define READ(a) r.read(a, #a)
-	if (r.version() > 0x000710) {
-		READ(play_speed);
-		READ(audio_amp);
-	}
-
+	READ(playback_speed);
 	READ(video_aspect_ratio);
 	READ(video_crop_ratio);
 	READ(video_vertical_alignment);
@@ -29,6 +25,7 @@ AppState::AppState() {
 	READ(video_range);
 
 	READ(audio_volume);
+	READ(audio_amplifier);
 	READ(audio_volume_normalizer);
 	READ(audio_tempo_scaler);
 	READ(audio_muted);
@@ -62,7 +59,7 @@ AppState::AppState() {
 void AppState::save() const {
 	Record r("app-state");
 #define WRITE(a) r.write(a, #a);
-	WRITE(play_speed);
+	WRITE(playback_speed);
 
 	WRITE(video_aspect_ratio);
 	WRITE(video_crop_ratio);
@@ -81,7 +78,7 @@ void AppState::save() const {
 	WRITE(audio_volume_normalizer);
 	WRITE(audio_tempo_scaler);
 	WRITE(audio_muted);
-	WRITE(audio_amp);
+	WRITE(audio_amplifier);
 	WRITE(audio_sync);
 
 	WRITE(sub_position);

@@ -1527,7 +1527,7 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">맨위로</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1619"/>
+        <location filename="../mainwindow.cpp" line="1621"/>
         <source>Do you want to resume the playback at the last played position?
 Played Date: %1
 Stopped Position: %2
@@ -1538,12 +1538,12 @@ Stopped Position: %2
 </translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1622"/>
+        <location filename="../mainwindow.cpp" line="1624"/>
         <source>Don&apos;t ask again</source>
         <translation>다시 묻지 않기</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1623"/>
+        <location filename="../mainwindow.cpp" line="1625"/>
         <source>Resume Playback</source>
         <translation>재생 다시 시작하기</translation>
     </message>
@@ -1840,12 +1840,12 @@ Please wait for a while.</source>
         <translation type="obsolete">창이 닫혀도 CMPlayer는 종료되지 않고 시스템 트레이상에서 작동할 것입니다.&lt;br&gt;CMPlayer를 종료하려면 종료 메뉴를 이용해주세요.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1454"/>
+        <location filename="../mainwindow.cpp" line="1456"/>
         <source>Do not display this message again</source>
         <translation>이 메시지를 다시 표시하지 않기</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1450"/>
+        <location filename="../mainwindow.cpp" line="1452"/>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
         <translation>창이 닫혀도 CMPlayer는 종료되지 않고 시스템 트레이상에서 작동할 것입니다.&lt;br&gt;환경 설정에서 동작방식을 변경할 수 있습니다.&lt;br&gt;CMPlayer를 종료하려면 종료 메뉴를 이용해주세요.</translation>
     </message>
@@ -3681,11 +3681,11 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <location filename="../ui/prefdialog.ui" line="217"/>
         <location filename="../ui/prefdialog.ui" line="1698"/>
         <location filename="../ui/prefdialog.ui" line="2547"/>
-        <location filename="../ui/prefdialog.ui" line="2683"/>
-        <location filename="../ui/prefdialog.ui" line="2706"/>
-        <location filename="../ui/prefdialog.ui" line="2729"/>
-        <location filename="../ui/prefdialog.ui" line="2813"/>
-        <location filename="../ui/prefdialog.ui" line="2901"/>
+        <location filename="../ui/prefdialog.ui" line="2703"/>
+        <location filename="../ui/prefdialog.ui" line="2726"/>
+        <location filename="../ui/prefdialog.ui" line="2749"/>
+        <location filename="../ui/prefdialog.ui" line="2833"/>
+        <location filename="../ui/prefdialog.ui" line="2921"/>
         <source>sec</source>
         <translation>초</translation>
     </message>
@@ -3877,7 +3877,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="632"/>
-        <location filename="../ui/prefdialog.ui" line="2780"/>
+        <location filename="../ui/prefdialog.ui" line="2800"/>
         <location filename="../prefdialog.cpp" line="294"/>
         <source>Subtitle</source>
         <translation>자막</translation>
@@ -4118,7 +4118,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <translation>창의 크기가 바뀌었을 때 OSD 메시지를 표시</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2868"/>
+        <location filename="../ui/prefdialog.ui" line="2888"/>
         <source>Amplifier</source>
         <translation>앰프</translation>
     </message>
@@ -4142,7 +4142,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
     <message>
         <location filename="../ui/prefdialog.ui" line="2031"/>
         <location filename="../ui/prefdialog.ui" line="2120"/>
-        <location filename="../ui/prefdialog.ui" line="2920"/>
+        <location filename="../ui/prefdialog.ui" line="2940"/>
         <source>Color</source>
         <translation>색</translation>
     </message>
@@ -4286,44 +4286,49 @@ e.g.: English, Korean</source>
         <translation>단축키4</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2667"/>
+        <location filename="../ui/prefdialog.ui" line="2659"/>
+        <source>Invert direction of mouse wheel scroll</source>
+        <translation>마우스 휠 스크롤 방향을 반대로</translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2687"/>
         <source>Seek</source>
         <translation>탐색</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2676"/>
+        <location filename="../ui/prefdialog.ui" line="2696"/>
         <source>Step 1</source>
         <translation>1단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2699"/>
+        <location filename="../ui/prefdialog.ui" line="2719"/>
         <source>Step 2</source>
         <translation>2단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2722"/>
+        <location filename="../ui/prefdialog.ui" line="2742"/>
         <source>Step 3</source>
         <translation>3단계</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2748"/>
+        <location filename="../ui/prefdialog.ui" line="2768"/>
         <location filename="../prefdialog.cpp" line="279"/>
         <source>Playback</source>
         <translation>재생</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2757"/>
+        <location filename="../ui/prefdialog.ui" line="2777"/>
         <source>Speed</source>
         <translation>속도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2836"/>
+        <location filename="../ui/prefdialog.ui" line="2856"/>
         <location filename="../prefdialog.cpp" line="290"/>
         <source>Audio</source>
         <translation>오디오</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2842"/>
+        <location filename="../ui/prefdialog.ui" line="2862"/>
         <source>Volume</source>
         <translation>소리</translation>
     </message>
@@ -4332,33 +4337,33 @@ e.g.: English, Korean</source>
         <translation type="obsolete">앰프</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2786"/>
+        <location filename="../ui/prefdialog.ui" line="2806"/>
         <source>Position</source>
         <translation>위치</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2806"/>
-        <location filename="../ui/prefdialog.ui" line="2894"/>
+        <location filename="../ui/prefdialog.ui" line="2826"/>
+        <location filename="../ui/prefdialog.ui" line="2914"/>
         <source>Sync Delay</source>
         <translation>싱크 지연</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2926"/>
+        <location filename="../ui/prefdialog.ui" line="2946"/>
         <source>Brightness</source>
         <translation>밝기</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2946"/>
+        <location filename="../ui/prefdialog.ui" line="2966"/>
         <source>Contrast</source>
         <translation>대비</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2966"/>
+        <location filename="../ui/prefdialog.ui" line="2986"/>
         <source>Saturation</source>
         <translation>채도</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2986"/>
+        <location filename="../ui/prefdialog.ui" line="3006"/>
         <source>Hue</source>
         <translation>색조</translation>
     </message>
@@ -6973,12 +6978,12 @@ e.g.: English, Korean</source>
 <context>
     <name>TrayIcon</name>
     <message>
-        <location filename="../trayicon.cpp" line="57"/>
+        <location filename="../trayicon.cpp" line="59"/>
         <source>Quit</source>
         <translation>종료</translation>
     </message>
     <message>
-        <location filename="../trayicon.cpp" line="58"/>
+        <location filename="../trayicon.cpp" line="60"/>
         <source>Show</source>
         <translation>보이기</translation>
     </message>

@@ -610,6 +610,7 @@ void PrefDialog::set(const Pref &p) {
 	d->dbl->setValues(p.double_click_map);
 	d->mdl->setValues(p.middle_click_map);
 	d->whl->setValues(p.wheel_scroll_map);
+	d->ui.ui_mouse_invert_wheel->setChecked(p.invert_wheel);
 
 	d->ui.seek_step1->setValue(p.seek_step1/1000);
 	d->ui.seek_step2->setValue(p.seek_step2/1000);
@@ -723,6 +724,7 @@ void PrefDialog::get(Pref &p) {
 	p.double_click_map = d->dbl->values();
 	p.middle_click_map = d->mdl->values();
 	p.wheel_scroll_map = d->whl->values();
+	p.invert_wheel = d->ui.ui_mouse_invert_wheel->isChecked();
 
 	p.seek_step1 = d->ui.seek_step1->value()*1000;
 	p.seek_step2 = d->ui.seek_step2->value()*1000;

@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>7</number>
+        <number>15</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2652,6 +2652,26 @@ e.g.: English, Korean</string>
          </property>
          <item>
           <layout class="QVBoxLayout" name="ui_mouse_layout"/>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="ui_mouse_invert_wheel">
+           <property name="text">
+            <string>Invert direction of mouse wheel scroll</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_13">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </widget>

@@ -162,6 +162,7 @@ void Pref::save() const {
 	WRITE(enable_system_tray);
 	WRITE(hide_rather_close);
 
+	WRITE(invert_wheel);
 	WRITE(disable_screensaver);
 	WRITE(sub_enc);
 	WRITE(sub_priority);
@@ -268,6 +269,7 @@ void Pref::load() {
 	READ(remap_luma_min);
 	READ(remap_luma_max);
 
+	READ(invert_wheel);
 	READ(enable_system_tray);
 	READ(hide_rather_close);
 	READ(disable_screensaver);
