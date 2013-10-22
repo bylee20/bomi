@@ -1,5 +1,6 @@
 0.8.0
 
+  * New: 'Invert direction of mouse wheel scroll' in mouse action tab of preferences
   * New: cache information in playback information
   * New: Italian translation (thanks to M0Rf30)
   * New: media name for extended m3u
