@@ -284,7 +284,7 @@ void VideoRendererItem::setEffects(Effects effects) {
 		if (d->shader)
 			d->shader->setEffects(d->effects);
 		d->fillKernel();
-		update();
+		d->repaint();
 	}
 }
 

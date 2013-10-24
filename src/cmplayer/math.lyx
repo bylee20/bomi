@@ -477,6 +477,29 @@ B'
 \end_inset
 
 
+\begin_inset Formula 
+\[
+\begin{pmatrix}R'\\
+G'\\
+B'
+\end{pmatrix}=\begin{pmatrix}1\\
+1\\
+1
+\end{pmatrix}-\left[S_{C}M_{Y\leftarrow R}^{-1}M_{SH}^{Y}\begin{pmatrix}Y'\\
+C_{B}\\
+C_{R}
+\end{pmatrix}+M_{Y\leftarrow R}^{-1}\left[\begin{pmatrix}S_{B}\\
+0\\
+0
+\end{pmatrix}-S_{C}M_{SH}^{Y}\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}\right]\right]
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Subsection
