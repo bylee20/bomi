@@ -4,7 +4,7 @@
 _pkgbase=cmplayer
 
 pkgname=cmplayer-git
-pkgver=0.8.0
+pkgver=0.7.6.200.g056b46b
 pkgrel=1
 pkgdesc="Powerful and easy-to-use multimedia player (git version)"
 arch=('i686' 'x86_64')
@@ -15,11 +15,13 @@ depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu'
          'alsa-lib' 'libpulse' 'portaudio' 'openal' 'jack' 'libchardet'
          'mpg123' 'libva' 'libgl' 'fribidi' 'libass' 'ffmpeg')
 makedepends=('git' 'mesa' 'gcc' 'pkg-config')
+provides=('cmplayer')
+conflicts=('cmplayer')
 source=(git+https://github.com/xylosper/${_pkgbase}.git)
 md5sums=('SKIP')
 
 pkgver() {
-  cd local_repo
+  cd "$srcdir/$_pkgbase"
   local ver="$(git describe --long)"
   printf "%s" "${ver//-/.}"
 }
