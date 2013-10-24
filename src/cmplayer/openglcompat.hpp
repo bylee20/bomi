@@ -36,8 +36,8 @@ public:
 	void generate() { glGenTextures(1, &id); }
 	void delete_() { glDeleteTextures(1, &id); }
 	void bind() const { glBindTexture(target, id); }
-	bool allocate(int filter = GL_LINEAR, const void *data = nullptr) const {
-		return allocate(filter, GL_CLAMP_TO_EDGE, data);
+	bool allocate(const void *data = nullptr) const {
+		return allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, data);
 	}
 	bool expand(const QSize &size, double mul = 1.2) {
 		if (width >= size.width() && height >= size.height())
@@ -155,13 +155,13 @@ public:
 	static OpenGLTexture allocate3dLutTexture(GLuint id);
 	static void upload3dLutTexture(const OpenGLTexture &texture, const QVector3D &sub, const QMatrix3x3 &mul, const QVector3D &add);
 	static QOpenGLFunctions *functions() { auto ctx = QOpenGLContext::currentContext(); return ctx ? ctx->functions() : nullptr; }
-	static OpenGLTexture makeTexture(int width, int height, GLenum format, GLenum target = GL_TEXTURE_2D, GLenum filter = GL_LINEAR) {
+	static OpenGLTexture makeTexture(int width, int height, GLenum format, GLenum target = GL_TEXTURE_2D) {
 		OpenGLTexture texture;
 		texture.width = width; texture.height = height;
 		texture.target = target;
 		texture.format = textureFormat(format);
 		texture.generate();
-		texture.allocate(filter);
+		texture.allocate();
 		return texture;
 	}
 	static QByteArray interpolatorCodes(int category);

@@ -82,7 +82,7 @@ struct MpOsdItem::Data {
 			glEnable(atlas.target);
 			if (atlas.id == GL_NONE)
 				atlas.generate();
-			atlas.allocate(GL_NEAREST);
+			atlas.allocate(GL_NEAREST, GL_CLAMP_TO_EDGE);
 		}
 	}
 

@@ -238,7 +238,7 @@ void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 			const auto len = d->texture.width*d->texture.height;
 			if (d->zeros.size() < len)
 				d->zeros.resize(len);
-			d->texture.allocate(GL_LINEAR, d->zeros.data());
+			d->texture.allocate(d->zeros.data());
 			int y = 0;
 			d->shadowOffset = {0, 0};
 			d->selection.forImages([this, &y] (const SubCompImage &image) {

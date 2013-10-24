@@ -78,6 +78,7 @@ void main() {
 	const vec2 one = vec2(1.0, 0.0);
 	vec3 tex = filtered(texCoord);
 	tex = mul_mat*tex + add_vec;
+	tex = clamp(tex, 0.0, 1.0);
 	gl_FragColor = tex.rgbr*one.xxxy + one.yyyx;
 }
 #endif

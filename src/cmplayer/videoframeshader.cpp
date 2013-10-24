@@ -143,7 +143,7 @@ void VideoFrameShader::updateShader() {
 		};
 		header += cc2string(1).toLatin1();
 		header += cc2string(2).toLatin1();
-		const double chroma_x = m_frame.format().chroma() == MP_CHROMA_LEFT ? 0.5 : 0.0;
+		const double chroma_x = m_frame.format().chroma() == MP_CHROMA_LEFT ? -0.5 : 0.0;
 		header += declareVec2("chroma_location", {chroma_x, 0.0});
 		if (m_target != GL_TEXTURE_2D || format.isEmpty())
 			header += "#define USE_RECTANGLE\n";
@@ -339,7 +339,7 @@ void VideoFrameShader::fillInfo() {
 				texture.bind();
 				glTexParameteri(texture.target, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
 				glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-				texture.allocate(GL_LINEAR, m_frame.data(plane));
+				texture.allocate(m_frame.data(plane));
 				glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 			} else
 				texture.allocate();
