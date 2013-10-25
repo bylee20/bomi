@@ -4,8 +4,6 @@
 #include "playengine.hpp"
 #include "videoformat.hpp"
 #include "hwacc.hpp"
-#include <QtGui/private/qguiapplication_p.h>
-#include <QtGui/qpa/qplatformintegration.h>
 
 int main(int argc, char **argv) {
 #ifdef Q_OS_LINUX

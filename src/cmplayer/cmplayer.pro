@@ -10,7 +10,7 @@ macx:CONFIG -= app_bundle
     #LIBQUVI_SUFFIX = -0.9
 }
 
-QT = core gui network quick widgets core-private gui-private
+QT = core gui network quick widgets
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
