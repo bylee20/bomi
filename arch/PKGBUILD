@@ -3,7 +3,7 @@
 
 pkgname=cmplayer
 pkgver=0.8.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
 url="http://$pkgname.github.io"
@@ -20,6 +20,7 @@ build() {
   export MAKE="make -j $(nproc)"
   cd "$srcdir/$pkgname-$pkgver"
   install -d build/lib
+  sed -i 's/--disable-wasapi/--disable-sndio --disable-wasapi/g' build-mpv
   ./build-mpv
   make PREFIX=/usr cmplayer
 }
