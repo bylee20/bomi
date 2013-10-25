@@ -437,9 +437,13 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>DeintWidget</name>
     <message>
+        <source>Make the framerate doubled</source>
+        <translation type="obsolete">프레임레이트를 두배로</translation>
+    </message>
+    <message>
         <location filename="../deintinfo.cpp" line="131"/>
         <location filename="../deintinfo.cpp" line="218"/>
-        <source>Make the framerate doubled</source>
+        <source>Double framerate</source>
         <translation>프레임레이트를 두배로</translation>
     </message>
     <message>
@@ -684,17 +688,17 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>EnumInfo</name>
     <message>
-        <location filename="../enums.hpp" line="744"/>
+        <location filename="../enums.hpp" line="748"/>
         <source>Bilinear</source>
         <translation>이중선형</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="745"/>
+        <location filename="../enums.hpp" line="749"/>
         <source>Catmull-Rom</source>
         <translation>캐트멀-롬</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="746"/>
+        <location filename="../enums.hpp" line="750"/>
         <source>Mitchell-Netravali</source>
         <translation>미첼-네트라발리</translation>
     </message>
@@ -707,48 +711,66 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">2중 </translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="51"/>
+        <location filename="../enums.hpp" line="53"/>
         <source>Color Range</source>
         <translation>색상 범위</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="61"/>
-        <location filename="../enums.hpp" line="511"/>
+        <location filename="../enums.hpp" line="63"/>
+        <location filename="../enums.hpp" line="515"/>
         <source>Auto</source>
         <translation>자동</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="62"/>
         <source>Limited Range (MPEG)</source>
-        <translation>제한 범위 (MPEG)</translation>
+        <translation type="obsolete">제한 범위 (MPEG)</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="63"/>
         <source>Full Range (JPEG)</source>
-        <translation>전 범위 (JPEG)</translation>
+        <translation type="obsolete">전 범위 (JPEG)</translation>
     </message>
     <message>
         <source>Adjust Color</source>
         <translation type="obsolete">색상 조절</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1851"/>
-        <location filename="../enums.hpp" line="1925"/>
+        <location filename="../enums.hpp" line="1855"/>
+        <location filename="../enums.hpp" line="1929"/>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="206"/>
+        <location filename="../enums.hpp" line="210"/>
         <source>Subtitle Display</source>
         <translation>자막 표시</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="216"/>
+        <location filename="../enums.hpp" line="64"/>
+        <source>Limited Range</source>
+        <translation>제한 범위</translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="65"/>
+        <source>Full Range</source>
+        <translation>전 범위</translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="66"/>
+        <source>Remap Range</source>
+        <translation>범위 재규격화</translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="67"/>
+        <source>Extented Range</source>
+        <translation>범위 확장</translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="220"/>
         <source>Display on Letterbox</source>
         <translation>레터박스에 표시</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="217"/>
+        <location filename="../enums.hpp" line="221"/>
         <source>Display in Video</source>
         <translation>비디오에 표시</translation>
     </message>
@@ -761,319 +783,319 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">전체 화면</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="281"/>
+        <location filename="../enums.hpp" line="285"/>
         <source>Size</source>
         <translation>크기</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="291"/>
+        <location filename="../enums.hpp" line="295"/>
         <source>Same as Source</source>
         <translation>원본 비율에 맞춤</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="292"/>
+        <location filename="../enums.hpp" line="296"/>
         <source>Same as Window</source>
         <translation>창 비율에 맞춤</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="293"/>
+        <location filename="../enums.hpp" line="297"/>
         <source>4:3 (TV)</source>
         <translation>4:3 (TV)</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="294"/>
+        <location filename="../enums.hpp" line="298"/>
         <source>16:10 (Wide Monitor)</source>
         <translation>16:10 (와이드 모니터)</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="295"/>
+        <location filename="../enums.hpp" line="299"/>
         <source>16:9 (HDTV)</source>
         <translation>16:9 (HDTV)</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="296"/>
+        <location filename="../enums.hpp" line="300"/>
         <source>1.85:1 (Wide Vision)</source>
         <translation>1.85:1 (와이드비전)</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="297"/>
+        <location filename="../enums.hpp" line="301"/>
         <source>2.35:1 (CinemaScope)</source>
         <translation>2.35:1 (시네마스코프)</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="357"/>
+        <location filename="../enums.hpp" line="361"/>
         <source>Dithering</source>
         <translation>디더링</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="367"/>
-        <location filename="../enums.hpp" line="510"/>
-        <location filename="../enums.hpp" line="975"/>
+        <location filename="../enums.hpp" line="371"/>
+        <location filename="../enums.hpp" line="514"/>
+        <location filename="../enums.hpp" line="979"/>
         <source>Off</source>
         <translation>끄기</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="368"/>
+        <location filename="../enums.hpp" line="372"/>
         <source>Random Dithering</source>
         <translation>무작위 디더링</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="369"/>
+        <location filename="../enums.hpp" line="373"/>
         <source>Ordered Dithering</source>
         <translation>순차적 디더링</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="500"/>
+        <location filename="../enums.hpp" line="504"/>
         <source>Deinterlacing</source>
         <translation>디인터레이스</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="747"/>
+        <location filename="../enums.hpp" line="751"/>
         <source>B-Spline</source>
         <translation>B-스플라인</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="748"/>
+        <location filename="../enums.hpp" line="752"/>
         <source>2-Lobed Spline</source>
         <translation>2중 스플라인</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="749"/>
+        <location filename="../enums.hpp" line="753"/>
         <source>2-Lobed Lanczos</source>
         <translation>2중 랑초쉬</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="750"/>
+        <location filename="../enums.hpp" line="754"/>
         <source>3-Lobed Spline (Approx.)</source>
         <translation>3중 스플라인 (근사)</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="751"/>
+        <location filename="../enums.hpp" line="755"/>
         <source>3-Lobed Lanczos (Approx.)</source>
         <translation>3중 랑초쉬 (근사)</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="752"/>
+        <location filename="../enums.hpp" line="756"/>
         <source>3-Lobed Spline</source>
         <translation>3중 스플라인</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="753"/>
+        <location filename="../enums.hpp" line="757"/>
         <source>3-Lobed Lanczos</source>
         <translation>3중 랑초쉬</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="903"/>
+        <location filename="../enums.hpp" line="907"/>
         <source>Auto-clipping</source>
         <translation>자동 클리핑</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="904"/>
+        <location filename="../enums.hpp" line="908"/>
         <source>Soft-clipping</source>
         <translation>소프트 클리핑</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="905"/>
+        <location filename="../enums.hpp" line="909"/>
         <source>Hard-clipping</source>
         <translation>하드 클리핑</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="965"/>
+        <location filename="../enums.hpp" line="969"/>
         <source>Stays on Top</source>
         <translation>맨위에 표시</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="976"/>
+        <location filename="../enums.hpp" line="980"/>
         <source>Playing</source>
         <translation>재생중</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="977"/>
+        <location filename="../enums.hpp" line="981"/>
         <source>Always</source>
         <translation>항상</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1118"/>
+        <location filename="../enums.hpp" line="1122"/>
         <source>Add files which have similar names</source>
         <translation>비슷한 이름의 파일을 추가</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1119"/>
+        <location filename="../enums.hpp" line="1123"/>
         <source>Add all files in the same folder</source>
         <translation>같은 폴더의 모든 파일을 추가</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1189"/>
+        <location filename="../enums.hpp" line="1193"/>
         <source>Append the open media to the playlist</source>
         <translation>열린 미디어 파일을 재생 목록에 추가</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1190"/>
+        <location filename="../enums.hpp" line="1194"/>
         <source>Clear the playlist and append the open media to the playlist</source>
         <translation>재생목록을 비우고 열린 미디어 파일을 재생목록에 추가</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1191"/>
+        <location filename="../enums.hpp" line="1195"/>
         <source>Clear the playlist and generate new playlist</source>
         <translation>재생목록을 비우고 새로운 재생목록을 생성</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1261"/>
+        <location filename="../enums.hpp" line="1265"/>
         <source>Subtitles which have the same name as that of playing file</source>
         <translation>재생 파일과 파일명이 같은 자막 파일</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1262"/>
+        <location filename="../enums.hpp" line="1266"/>
         <source>Subtitles whose names contain the name of playing file</source>
         <translation>재생 파일의 이름이 파일명에 포함된 자막 파일</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1263"/>
+        <location filename="../enums.hpp" line="1267"/>
         <source>All subtitles in the folder where the playing file is located</source>
         <translation>재생 파일과 같은 폴더에 있는 모든 자막</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1334"/>
+        <location filename="../enums.hpp" line="1338"/>
         <source>Subtitle which has the same name as that of playing file</source>
         <translation>재생 파일과 파일명이 같은 자막 파일</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1335"/>
+        <location filename="../enums.hpp" line="1339"/>
         <source>First subtitle from loaded ones</source>
         <translation>불러온 자막중 첫번째 자막</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1336"/>
+        <location filename="../enums.hpp" line="1340"/>
         <source>All loaded subtitles</source>
         <translation>불러온 모든 자막</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1337"/>
+        <location filename="../enums.hpp" line="1341"/>
         <source>Each language subtitle</source>
         <translation>각 언어별 자막</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1407"/>
+        <location filename="../enums.hpp" line="1411"/>
         <source>Fit to width of video</source>
         <translation>가로 길이에 맞추기</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1408"/>
+        <location filename="../enums.hpp" line="1412"/>
         <source>Fit to height of video</source>
         <translation>세로 길이에 맞추기</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1409"/>
+        <location filename="../enums.hpp" line="1413"/>
         <source>Fit to diagonal of video</source>
         <translation>대각선 길이에 맞추기</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1480"/>
+        <location filename="../enums.hpp" line="1484"/>
         <source>Open a file</source>
         <translation>파일 열기</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1481"/>
+        <location filename="../enums.hpp" line="1485"/>
         <source>Toggle fullscreen mode</source>
         <translation>전체화면 전환</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1482"/>
+        <location filename="../enums.hpp" line="1486"/>
         <source>Toggle play/pause</source>
         <translation>재생/일시정지 전환</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1483"/>
+        <location filename="../enums.hpp" line="1487"/>
         <source>Toggle mute/unmute</source>
         <translation>음소거 전환</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1556"/>
+        <location filename="../enums.hpp" line="1560"/>
         <source>Seek playback for step 1</source>
         <translation>1단계 탐색</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1557"/>
+        <location filename="../enums.hpp" line="1561"/>
         <source>Seek playback for step 2</source>
         <translation>2단계 탐색</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1558"/>
+        <location filename="../enums.hpp" line="1562"/>
         <source>Seek playback for step 3</source>
         <translation>3단계 탐색</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1559"/>
+        <location filename="../enums.hpp" line="1563"/>
         <source>Play previous/next</source>
         <translation>이전/다음 재생</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1560"/>
+        <location filename="../enums.hpp" line="1564"/>
         <source>Volumn up/down</source>
         <translation>볼륨 크게/작게</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1561"/>
+        <location filename="../enums.hpp" line="1565"/>
         <source>Amp. up/down</source>
         <translation>앰프 증가/감소</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1705"/>
+        <location filename="../enums.hpp" line="1709"/>
         <source>Top</source>
         <translation>상단</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1706"/>
+        <location filename="../enums.hpp" line="1710"/>
         <source>Vertical Center</source>
         <translation>수직 중앙</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1707"/>
+        <location filename="../enums.hpp" line="1711"/>
         <source>Bottom</source>
         <translation>하단</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1777"/>
+        <location filename="../enums.hpp" line="1781"/>
         <source>Left</source>
         <translation>왼쪽</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1778"/>
+        <location filename="../enums.hpp" line="1782"/>
         <source>Horizontal Center</source>
         <translation>수평 중앙</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1779"/>
+        <location filename="../enums.hpp" line="1783"/>
         <source>Right</source>
         <translation>오른쪽</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1852"/>
+        <location filename="../enums.hpp" line="1856"/>
         <source>Upward</source>
         <translation>위로</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1853"/>
+        <location filename="../enums.hpp" line="1857"/>
         <source>Downward</source>
         <translation>아래로</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1854"/>
+        <location filename="../enums.hpp" line="1858"/>
         <source>Leftward</source>
         <translation>왼쪽으로</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1855"/>
+        <location filename="../enums.hpp" line="1859"/>
         <source>Rightward</source>
         <translation>오른쪽으로</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1926"/>
+        <location filename="../enums.hpp" line="1930"/>
         <source>Increase %1</source>
         <translation>%1 증가</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1927"/>
+        <location filename="../enums.hpp" line="1931"/>
         <source>Decrease %1</source>
         <translation>%1 증가</translation>
     </message>
@@ -6991,27 +7013,27 @@ e.g.: English, Korean</source>
 <context>
     <name>VideoColor</name>
     <message>
-        <location filename="../videocolor.hpp" line="110"/>
+        <location filename="../videocolor.hpp" line="112"/>
         <source>Brightness %1%</source>
         <translation>밝기 %1%</translation>
     </message>
     <message>
-        <location filename="../videocolor.hpp" line="112"/>
+        <location filename="../videocolor.hpp" line="114"/>
         <source>Saturation %1%</source>
         <translation>채도 %1%</translation>
     </message>
     <message>
-        <location filename="../videocolor.hpp" line="114"/>
+        <location filename="../videocolor.hpp" line="116"/>
         <source>Contrast %1%</source>
         <translation>대비 %1%</translation>
     </message>
     <message>
-        <location filename="../videocolor.hpp" line="116"/>
+        <location filename="../videocolor.hpp" line="118"/>
         <source>Hue %1%</source>
         <translation>색조 %1%</translation>
     </message>
     <message>
-        <location filename="../videocolor.hpp" line="118"/>
+        <location filename="../videocolor.hpp" line="120"/>
         <source>Reset</source>
         <translation>초기화</translation>
     </message>
