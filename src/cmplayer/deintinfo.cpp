@@ -128,7 +128,7 @@ DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
 			d->caps[method] = caps;
 		d->caps[method].m_decoder = (int)d->decoder;
 	}
-	d->doubler = new QCheckBox(tr("Make the framerate doubled"), this);
+	d->doubler = new QCheckBox(tr("Double framerate"), this);
 	d->gl = new QCheckBox(tr("Use OpenGL"), this);
 	d->gpu = new QCheckBox(tr("Use hardware acceleration if available"), this);
 	auto hbox = new QHBoxLayout;
@@ -215,7 +215,7 @@ QString DeintWidget::informations() {
 		methodText(DeintMethod::LinearBlend, tr("Blend linearly each line with (1 2 1) filter.")) % '\n' %
 		methodText(DeintMethod::Median, tr("Apply median filter to every second line.")) % '\n' %
 		methodText(DeintMethod::Yadif, tr("Use complicated temporal and spatial interpolation.")) % "\n\n" %
-		tr("Make the framerate doubled") % "\n\n" %
+		tr("Double framerate") % "\n\n" %
 		tr("This option makes the framerate doubled. You can get smoother and fluid motions but it requires more CPU or GPU usage.") % "\n\n" %
 		tr("Use OpenGL") % "\n\n" %
 		tr("In most case, deinterlacing with OpenGL can be performed faster unless your graphics driver has poor support of OpenGL.") % "\n\n" %
