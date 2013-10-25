@@ -804,7 +804,7 @@ void MainWindow::connectMenus() {
 		const QString filter = tr("Subtitle Files") % ' ' % Info::subtitleExt().toFilter();
 		const auto dir = d->engine.mrl().isLocalFile() ? QFileInfo(d->engine.mrl().toLocalFile()).absolutePath() : _L("");
 		QString enc = d->pref().sub_enc;
-		const auto files = EncodingFileDialog::getOpenFileNames(nullptr, tr("Open Subtitle"), dir, filter, &enc);
+		const auto files = EncodingFileDialog::getOpenFileNames(this, tr("Open Subtitle"), dir, filter, &enc);
 		if (!files.isEmpty())
 			appendSubFiles(files, true, enc);
 	});
