@@ -1129,7 +1129,7 @@ void MainWindow::setFullScreen(bool full) {
 			updateStaysOnTop();
 		} else
 #endif
-			setWindowState(full ? Qt::WindowFullScreen : d->prevWinState);
+			setWindowState(full ? Qt::WindowFullScreen : (d->prevWinState & ~(Qt::WindowMinimized | Qt::WindowFullScreen)));
 	}
 	d->dontPause = false;
 }
