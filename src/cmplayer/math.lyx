@@ -392,6 +392,44 @@ C_{0}
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{pmatrix}E_{Y}\\
+E_{B}\\
+E_{R}
+\end{pmatrix}-\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}=S_{C}M_{SH}^{Y}R\begin{pmatrix}Y'\\
+C_{B}\\
+C_{R}
+\end{pmatrix}+\begin{pmatrix}S_{B}\\
+0\\
+0
+\end{pmatrix}-S_{C}M_{SH}^{Y}\left[R\begin{pmatrix}Y_{1}\\
+C_{1}\\
+C_{2}
+\end{pmatrix}+\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}\right]=S_{C}M_{SH}^{Y}\begin{pmatrix}Y'\\
+C_{B}\\
+C_{R}
+\end{pmatrix}+\begin{pmatrix}S_{B}\\
+0\\
+0
+\end{pmatrix}-S_{C}M_{SH}^{Y}\begin{pmatrix}Y_{0}\\
+C_{0}\\
+C_{0}
+\end{pmatrix}
+\]
+
+\end_inset
+
+
 \begin_inset Formula 
 \[
 M_{SH}=\begin{pmatrix}1 & 0 & 0\\

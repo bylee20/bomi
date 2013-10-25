@@ -8,6 +8,8 @@ extern "C" {
 #include <video/csputils.h>
 }
 
+enum class ColorRange;
+
 struct Kernel3x3 {
 	Kernel3x3() { mat(0, 0) = mat(2, 2) = 0.f; }
 	Kernel3x3(double center, double neighbor, double diagonal) {
@@ -102,7 +104,7 @@ public:
 		m[Hue] = qBound(-100, m[Hue], 100);
 	}
 	bool isZero() const { return !m[Brightness] && !m[Saturation] && !m[Contrast] && !m[Hue]; }
-	void matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, mp_csp_levels range) const;
+	void matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, ColorRange range) const;
 	QString getText(Type type) const {
 		const QString value = 0 <= type && type < TypeMax ? _NS(m[type]) : QString();
 		switch (type) {

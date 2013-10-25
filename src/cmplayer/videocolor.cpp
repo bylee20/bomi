@@ -1,10 +1,15 @@
 #include "videocolor.hpp"
+#include "enums.hpp"
 #include <QVector3D>
 #include <QtMath>
 
-static QMatrix3x3 matYCbCrToRgb(double kb, double kr, double y1, double y2, double c1, double c2) {
-	const double dy = 1.0/(y2-y1);
-	const double dc = 2.0/(c2-c1);
+struct YCbCrRange {
+	float y1, y2, c1, c2;
+};
+
+static QMatrix3x3 matYCbCrToRgb(double kb, double kr, const YCbCrRange &range) {
+	const double dy = 1.0/(range.y2-range.y1);
+	const double dc = 2.0/(range.c2-range.c1);
 	const double kg = 1.0 - kb - kr;
 	QMatrix3x3 mat;
 	mat(0, 0) = dy; mat(0, 1) = 0.0;                mat(0, 2) = (1.0 - kr)*dc;
@@ -13,9 +18,9 @@ static QMatrix3x3 matYCbCrToRgb(double kb, double kr, double y1, double y2, doub
 	return mat;
 }
 
-static QMatrix3x3 matRgbToYCbCr(double kb, double kr, double y1, double y2, double c1, double c2) {
-	const double dy = (y2-y1);
-	const double dc = (c2-c1)/2.0;
+static QMatrix3x3 matRgbToYCbCr(double kb, double kr, const YCbCrRange &range) {
+	const double dy = (range.y2-range.y1);
+	const double dc = (range.c2-range.c1)/2.0;
 	const double kg = 1.0 - kb - kr;
 	QMatrix3x3 mat;
 	mat(0, 0) = dy*kr;              mat(0, 1) = dy*kg;              mat(0, 2) = dy*kb;
@@ -37,10 +42,12 @@ static QMatrix3x3 matSHC(double s, double h, double c) {
 }
 
 						//  y1,y2,c1,c2
-const float ranges[MP_CSP_LEVELS_COUNT][4] = {
-	{	     0.f,         1.f,        0.f,         1.f}, //MP_CSP_LEVELS_AUTO
-	{ 16.f/255.f, 235.f/255.f,  16./255.f, 240.f/255.f}, // MP_CSP_LEVELS_TV
-	{        0.f,         1.f,        0.f,         1.f}  // MP_CSP_LEVELS_PC
+const YCbCrRange ranges[5] = {
+	{        0.f,         1.f,        0.f,         1.f}, // Auto
+	{ 16.f/255.f, 235.f/255.f,  16./255.f, 240.f/255.f}, // Limited
+	{        0.f,         1.f,        0.f,         1.f}, // Full
+	{        0.f,         1.f,        0.f,         1.f}, // Remap
+	{        0.f,         1.f,  16./255.f, 240.f/255.f}  // RemapLuma
 };
 
 const float specs[MP_CSP_COUNT][2] = {
@@ -62,16 +69,15 @@ static ColumnVector3 make3x1(float v1, float v23) {
 	return make3x1(v1, v23, v23);
 }
 
-void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, mp_csp_levels levels) const {
+void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, ColorRange cr) const {
 	mul.setToIdentity();
 	add = {0.f, 0.f, 0.f};
 	const float *spec = specs[colorspace];
-	const float *range = ranges[levels];
-	qDebug() << levels;
+	auto range = ranges[(int)cr];
 	switch (colorspace) {
 	case MP_CSP_RGB:
 		spec = specs[MP_CSP_BT_601];
-		range = ranges[MP_CSP_LEVELS_TV];
+		range = ranges[(int)ColorRange::Full];
 	case MP_CSP_BT_601:
 	case MP_CSP_BT_709:
 	case MP_CSP_SMPTE_240M:
@@ -79,35 +85,33 @@ void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, mp_c
 	default:
 		return;
 	}
-	switch (levels) {
-	case MP_CSP_LEVELS_TV:
-	case MP_CSP_LEVELS_PC:
-		break;
-	default:
-		return;
-	}
 	const float kb = spec[0], kr = spec[1];
-	const float y1 = range[0], y2 = range[1], c1 = range[2], c2 = range[3];
-	const auto r2y = matRgbToYCbCr(kb, kr, y1, y2, c1, c2);
-	const auto y2r = matYCbCrToRgb(kb, kr, y1, y2, c1, c2);
+	const auto ycbcrFromRgb = matRgbToYCbCr(kb, kr, range);
+	const auto rgbFromYCbCr = matYCbCrToRgb(kb, kr, range);
 	const auto shc = matSHC(saturation()*1e-2, hue()*1e-2, contrast()*1e-2);
 	auto bvec = make3x1(qBound(-1.0, brightness()*1e-2, 1.0), 0);
 
-	mul = y2r*shc;
-	if (colorspace == MP_CSP_RGB)
-		mul = mul*r2y;
-	else
-		bvec -= shc*make3x1(y1, (c1 + c2)/2.0f);
-	bvec = y2r*bvec;
+	mul = rgbFromYCbCr*shc;
+	if (colorspace == MP_CSP_RGB) {
+		mul = mul*ycbcrFromRgb;
+	} else {
+		auto sub = make3x1(range.y1, (range.c1 + range.c2)/2.0f);
+		const auto &tv = ranges[(int)ColorRange::Limited];
+		if (cr == ColorRange::Remap) {
+			QMatrix3x3 scaler;
+			scaler(0, 0) = 1.0/(tv.y2 - tv.y1);
+			scaler(1, 1) = scaler(2, 2) = 1.0/(tv.c2 - tv.c1);
+			mul = mul*scaler;
+			sub += scaler*make3x1(tv.y1, tv.c1);
+		} else if (cr == ColorRange::Extended) {
+			QMatrix3x3 scaler;
+			scaler(0, 0) = scaler(1, 1) = scaler(2, 2) = 1.0/(tv.y2 - tv.y1);
+			mul = mul*scaler;
+			sub += scaler*make3x1(tv.y1, tv.y1);
+		}
+		bvec -= shc*sub;
+	}
+	bvec = rgbFromYCbCr*bvec;
 	add = {bvec(0, 0), bvec(1, 0), bvec(2, 0)};
-
-//	QMatrix3x3 mat = matYCbCrToRgb(kb, kr, y1, y2, c1, c2)*matSHC(saturation(), hue(), contrast());
-//	if (colorspace == MP_CSP_RGB) {
-//		mat = mat*matRgbToYCbCr(kb, kr, y1, y2, c1, c2);
-//		mat(0, 3) = mat(1, 3) = mat(2, 3) = qBound(-1.0, brightness(), 1.0)/(y2 - y1);
-//	}
-//	if (colorspace != MP_CSP_RGB) {
-//		mat(3, 0) = y1;	mat(3, 1) = mat(3, 2) = (c1 + c2)/2.0f;
-//	}
 }
 

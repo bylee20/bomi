@@ -2,8 +2,10 @@
 
 +ColorRange[[range]][-Color Range-]
 -Auto[[auto]][-Auto-]
--Limited[[limited]][-Limited Range (MPEG)-]
--Full[[full]][-Full Range (JPEG)-]
+-Limited[[limited]][-Limited Range-]
+-Full[[full]][-Full Range-]
+-Remap[[remap]][-Remap Range-]
+-Extended[[luma]][-Extented Range-]
 
 +AdjustColor[[color]][:VideoColor:]
 -Reset[[reset]][:{0, 0, 0, 0}:]

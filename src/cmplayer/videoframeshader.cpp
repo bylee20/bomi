@@ -77,11 +77,20 @@ void VideoFrameShader::updateColorMatrix() {
 	auto color = m_color;
 	if (m_effects & VideoRendererItem::Grayscale)
 		color.setSaturation(-100);
-	auto range = m_frame.format().range();
-	if (m_range == ColorRange::Full)
-		range = MP_CSP_LEVELS_PC;
-	else if (m_range == ColorRange::Limited)
-		range = MP_CSP_LEVELS_TV;
+	auto range = m_range;
+	const bool pc = m_frame.format().range() == MP_CSP_LEVELS_PC;
+	switch (range) {
+	case ColorRange::Auto:
+		range = pc ? ColorRange::Full : ColorRange::Limited;
+		break;
+	case ColorRange::Remap:
+	case ColorRange::Extended:
+		if (pc)
+			range = ColorRange::Full;
+		break;
+	default:
+		break;
+	}
 	color.matrix(m_mul_mat, m_add_vec, m_csp, range);
 	if (m_effects & VideoRendererItem::InvertColor) {
 		m_mul_mat *= -1;

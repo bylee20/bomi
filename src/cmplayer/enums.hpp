@@ -11,7 +11,9 @@ template<typename T> class EnumInfo { static constexpr int size() { return 0; } 
 enum class ColorRange : int {
 	Auto = (int)0,
 	Limited = (int)1,
-	Full = (int)2
+	Full = (int)2,
+	Remap = (int)3,
+	Extended = (int)4
 };
 
 inline bool operator == (ColorRange e, int i) { return (int)e == i; }
@@ -45,7 +47,7 @@ public:
     typedef ColorRange type;
     using Data =  QVariant;
     struct Item { Enum value; QString name, key; QVariant data; };
-	static constexpr int size() { return 3; }
+	static constexpr int size() { return 5; }
     static constexpr const char *typeName() { return "ColorRange"; }
     static constexpr const char *typeKey() { return "range"; }
     static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Color Range")); }
@@ -59,12 +61,14 @@ public:
 	static QString description(Enum e) {
 		switch (e) {
 		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Auto"));
-		case Enum::Limited: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Limited Range (MPEG)"));
-		case Enum::Full: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Full Range (JPEG)"));
+		case Enum::Limited: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Limited Range"));
+		case Enum::Full: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Full Range"));
+		case Enum::Remap: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Remap Range"));
+		case Enum::Extended: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Extented Range"));
 		default: return tr("");
 		};
 	}
-	static constexpr const std::array<Item, 3> &items() { return info; }
+	static constexpr const std::array<Item, 5> &items() { return info; }
     static Enum from(int id, Enum def = default_()) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
@@ -75,7 +79,7 @@ public:
 	}
     static constexpr Enum default_() { return ColorRange::Auto; }
 private:
-	static const std::array<Item, 3> info;
+	static const std::array<Item, 5> info;
 };
 
 using ColorRangeInfo = EnumInfo<ColorRange>;
