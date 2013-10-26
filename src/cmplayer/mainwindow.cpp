@@ -1443,7 +1443,7 @@ void MainWindow::changeEvent(QEvent *event) {
 void MainWindow::closeEvent(QCloseEvent *event) {
 	QWidget::closeEvent(event);
 #ifndef Q_OS_MAC
-	if (d->pref().enable_system_tray && d->pref().hide_rather_close) {
+	if (d->tray && d->pref().enable_system_tray && d->pref().hide_rather_close) {
 		hide();
 		AppState &as = AppState::get();
 		if (as.ask_system_tray) {
