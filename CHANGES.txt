@@ -1,3 +1,15 @@
+0.8.1
+
+  * New: Remap Range/Extended Range in Color Range menu
+  * Mod: change fbo color depth to 16bit from 8bit
+  * Fix: too blurry scene when interpolator is enabled
+  * Fix: subtitle open dialog was covered by main window
+  * Fix: minimized when exit fullscreen mode in some WM
+  * Fix: wrong translation
+  * Fix: apply filters immediately
+  * Fix: 'Invert Color' and 'Grayscale' filter didn't work.
+  * Fix: green line on right edge for H.264
+
 0.8.0
 
   * New: 'Invert direction of mouse wheel scroll' in mouse action tab of preferences
