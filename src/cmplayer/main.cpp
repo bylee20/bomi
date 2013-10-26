@@ -6,6 +6,7 @@
 #include "hwacc.hpp"
 
 int main(int argc, char **argv) {
+	qputenv("PX_MODULE_PATH", "/this-is-dummy-path-to-disable-libproxy");
 #ifdef Q_OS_LINUX
     auto gtk_disable_setlocale = (void(*)(void))QLibrary::resolve(_L("gtk-x11-2.0"), 0, "gtk_disable_setlocale");
     if (gtk_disable_setlocale)

@@ -7,7 +7,7 @@ macx:CONFIG -= app_bundle
     CONFIG += release
     macx:CONFIG += app_bundle
 } else {
-    #LIBQUVI_SUFFIX = -0.9
+    isEmpty(LIBQUVI_SUFFIX): LIBQUVI_SUFFIX = $$system(if `pkg-config --exists libquvi-0.9`; then echo "-0.9"; fi)
 }
 
 QT = core gui network quick widgets

@@ -1,4 +1,4 @@
-LIBQUVI_SUFFIX ?= 
+LIBQUVI_SUFFIX ?= $(shell if `pkg-config --exists libquvi-0.9`; then echo "-0.9"; fi)
 CXX ?= g++
 
 kern := $(shell uname -s)
