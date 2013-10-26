@@ -23,7 +23,6 @@ build-stamp:
 
 	# Add here commands to compile the package.
 	export MAKE="make -j $(nproc)"
-	export PKG_CONFIG_PATH=$(CURDIR)/build/lib/pkgconfig:${PKG_CONFIG_PATH}
 	./build-libchardet
 	./build-ffmpeg
 	./build-mpv

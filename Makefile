@@ -4,10 +4,10 @@ CXX ?= g++
 kern := $(shell uname -s)
 os := $(shell if test $(kern) = "Darwin"; then echo "osx"; elif test $(kern) = "Linux"; then echo "linux"; else echo "unknown"; fi)
 qmake_vars := RELEASE=\\\"yes\\\" LIBQUVI_SUFFIX=$(LIBQUVI_SUFFIX)
-vlc_plugins_dir := vlc-plugins
 install_file := install -m 644
 install_exe := install -m 755
 install_dir := sh install_dir.sh
+pkg_confg_path := $(shell pwd)/build/lib/pkgconfig
 
 ifeq ($(os),osx)
 	QT_PATH = /Users/xylosper/Qt5.1.1/5.1.1/clang_64
@@ -33,7 +33,7 @@ else
 endif
 
 cmplayer: skins imports
-	cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && $(MAKE) release
+	cd src/cmplayer && PKG_CONFIG_PATH=$(pkg_confg_path) $(QMAKE) $(qmake_vars) cmplayer.pro && $(MAKE) release
 ifeq ($(os),osx)
 	cp -r build/skins $(cmplayer_exec_path)
 	cp -r build/imports $(cmplayer_exec_path)

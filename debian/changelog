@@ -1,3 +1,119 @@
+cmplayer (0.8.1-1) saucy; urgency=low
+
+  * New: Remap Range/Extended Range in Color Range menu
+  * New: 'Invert direction of mouse wheel scroll' in mouse action tab of preferences
+  * New: cache information in playback information
+  * New: Italian translation (thanks to M0Rf30)
+  * New: media name for extended m3u
+  * New: m3u8 support
+  * New: 'Color Range' submenu in 'Video' menu
+  * New: chroma upscaler
+  * New: add Spline16/Spline36/Splin36Approx/Lancoz3 interpolators
+  * New: 'Dithering' submenu in video menu
+  * New: 16:10 aspect ratio for wide monitors
+  * New: message for showing/hiding subtitle
+  * New: 'Interpolator' submenu in video menu
+  * New: internal subtitles are not scaled anymore which brings better quality
+  * New: 'Deinterlace' submenu in 'Video' menu
+  * New: options for hardware accleration, deinterlace
+  * New: options for default cache and minimum cache
+  * New: options for audio output driver, software volume, clipping method
+  * New: more verbose playback info (output format conversion/audio output driver)
+  * New: more specific descriptions for H/W Acc. and volumn normalizer in playback info
+  * New: supports for non-8-bits planar 4:2:0 formats (9/10/12/14/16-bits)
+  * New: supports for 32bit signed integer type audio samples
+  * New: trp/tp/ts file extensions are selectable
+  * New: (Linux) hardware accelerated deinterlacer
+  * New: 'CMPLAYER_MPV_OPTIONS' environment value for support mpv's options
+  * New: playback speed in playback information
+  * New: 'Clear' menu in history
+  * New: context menu for history on right click
+  * New: undo/redo for some actions (e.g., playback speed, volume etc.)
+  * New: fallback to software decoding when hw. acc. failed
+  * New: buffer length option for volume normalzer
+  * New: supports BT.709 and SMPTE 420M colorspace
+  * New: supports fullrange YCbCr format
+  * New: supports flipped frame
+  * New: display messagebox on loading or error
+  * New: option to show logo or fill color
+  * New: remember the visibilities of tools
+  * New: add horizontal scrollbar to playlist
+  * New: OSD options on actions and window resizing in 'Behaviours' tab
+  * Mod: change fbo color depth to 16bit from 8bit
+  * Mod: remove background of playback info and make it opaque and smaller
+  * Mod: display CPU usage as integer
+  * Mod: use software volume always
+  * Mod: remove 'Always' menu in 'Deinterlace'
+  * Mod: make 'Auto' default deinterlacer mode
+  * Mod: change faster/slower to seek forward/backward in 'modern' skin
+  * Mod: disable volume normalizer by default
+  * Mod: remove '=' in --open and --action (e.g., --action play/pause not --action=play/pause)
+  * Mod: remove remap luma filter
+  * Mod: enlarge location font in playlist
+  * Mod: remove scheme(file://) of location for local file 
+  * Mod: better performance of hardware decoding
+  * Mod: default options for volume normalizer are changed
+  * Fix: too blurry scene when interpolator is enabled
+  * Fix: subtitle open dialog was covered by main window
+  * Fix: minimized when exit fullscreen mode in some WM
+  * Fix: wrong translation
+  * Fix: apply filters immediately
+  * Fix: 'Invert Color' and 'Grayscale' filter didn't work.
+  * Fix: green line on right edge for H.264
+  * Fix: change strings 'Inactivated' to 'Deactivated'
+  * Fix: display 'Unavailable' when hardware decoding failed
+  * Fix: add CP1252 and remove ISO-8859-1 which is a subset of CP1252
+  * Fix: cannot disable autodetection for subtitle encoding
+  * Fix: wrong range for interpolator LUT textures
+  * Fix: use app indicator instead of system tray icon in Unity
+  * Fix: wrong video color for non-8bit-encoded sources
+  * Fix: wrong chroma location
+  * Fix: some typo (Corrected audio spelling)
+  * Fix: draw subtitles in only needed parts
+  * Fix: wrong track number (started from 2)
+  * Fix: show/hide subtitle didn't work
+  * Fix: crash when GTK+ style is loaded with some locales
+  * Fix: crash on startup in some locales
+  * Fix: crash when no va-vpp exists
+  * Fix: Disable OpenGL deinterlacer when VA-API deinterlacer is activated
+  * Fix: do not hide internal subtitles on pause
+  * Fix: couldn't take snapshot when paused
+  * Fix: ocassional crash on changing media files when H/W acc. is activated
+  * Fix: update audio/video information when skin is reloaded
+  * Fix: pass through audio data when modification is not needed
+  * Fix: remove executable argument in message from other instance
+  * Fix: occasional freezing when tab key is pressed
+  * Fix: wrong state of player in skins
+  * Fix: cannot open media from file manager
+  * Fix: start time was fixed to zero
+  * Fix: (OS X) wrong Qt library path
+  * Fix: (OS X) preserve stays-on-top state when full screen mode is changed
+  * Fix: (OS X) wrong width/height with VDA which causes distorted or painted-out picture
+  * Fix: (OS X) VDA cannot handle interlaced formats (workaround: just disable it)
+  * Fix: (OS X) drag-and-drop didn't be accepted
+  * Fix: (OS X) cannot set a shortcut to an arrow key with modifiers
+  * Fix: cannot control audio of format unmatched
+  * Fix: playlist and history located in wrong place on resized or initially shown
+  * Fix: 'disable screensaver' didn't work in OS X
+  * Fix: occasional black out of video when new media is played
+  * Fix: cannot parse path which containts '~'
+  * Fix: add a borderline to messagebox
+  * Fix: hide empty messagebox on executed
+  * Fix: crash on saving preferences
+  * Fix: WM_CLASS and WM_NAME for windows
+  * Fix: broken SubRip subtitle(srt) support
+  * Fix: cannot reach the scrollbar of history and playlist in fullscreen mode
+  * Fix: internal subtitles don't move with video
+  * Fix: couldn't save & restore aspect ratio and crop state
+  * Fix: smooth volume normalization
+  * Fix: clipping color property values in [-1, 1]
+  * Fix: cannot select images in open folder dialog
+  * Fix: some filters weren't applied immediately
+  * Fix: cannot open a file whose name contains special characters by drop
+  * Fix: missing WM_CLASS
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Sat, 26 Oct 2013 13:00:00 +0900
+
 cmplayer (0.7.5-1) raring; urgency=low
 
   * Add: introduce OSD options in 'Behaviours' tab

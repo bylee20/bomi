@@ -2,8 +2,8 @@ Source: cmplayer
 Section: graphics
 Priority: optional
 Maintainer: xylosper <darklin20@gmail.com>
-Build-Depends: g++ (>= 4.7), debhelper (>= 7), pkg-config
- , qt5-qmake, qtbase5-dev, qtdeclarative5-dev
+Build-Depends: g++ (>= 4.8), debhelper (>= 7), pkg-config
+ , qt5-qmake, qtbase5-dev (>= 5.1.1), qtdeclarative5-dev
  , yasm, zlib1g-dev, libx11-dev, libdvdread-dev
  , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
  , libopenal-dev, libasound2-dev, libva-dev, libquvi-dev
