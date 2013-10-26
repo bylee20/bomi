@@ -36,9 +36,10 @@ struct TrayIcon::Data {
 #ifdef Q_OS_LINUX
 		unity = qgetenv("XDG_CURRENT_DESKTOP").toLower() == "unity";
 		if (unity) {
+			return false; // disable till the bug fixed
 			qDebug() << "DE is Unity. Fallback to AppIndicator instead of QSytemTrayIcon";
 			QLibrary gtk(_L("gtk-x11-2.0"), 0), ai(_L("libappindicator"), 1);
-			if (!gtk.isLoaded() || !ai.isLoaded())
+			if (!gtk.load() || !ai.load())
 				return false;
 #define DEC_FUNC(name) auto name = (f_##name)gtk.resolve(#name)
 			DEC_FUNC(gtk_menu_new);
