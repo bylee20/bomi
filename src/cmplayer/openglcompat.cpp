@@ -210,8 +210,8 @@ void OpenGLCompat::allocateInterpolatorLutTexture(InterpolatorLutTexture &textur
 	texture1.width = IntSamples;
 	texture1.height = 0;
 	texture1.format.pixel = GL_BGRA;
-	texture1.format.internal = GL_RGBA16;
 	if (c.m_hasFloat) {
+		texture1.format.internal = GL_RGBA16F;
 		texture1.format.type = GL_FLOAT;
 		texture1.allocate(GL_LINEAR, GL_REPEAT, lut1.data());
 		if (!lut2.isEmpty()) {
@@ -219,6 +219,7 @@ void OpenGLCompat::allocateInterpolatorLutTexture(InterpolatorLutTexture &textur
 			texture2.allocate(GL_LINEAR, GL_REPEAT, lut2.data());
 		}
 	} else {
+		texture1.format.internal = GL_RGBA16;
 		texture1.format.type = GL_UNSIGNED_SHORT;
 		auto data = convertToIntegerVector<GLushort>(lut1, texture1.multiply);
 		texture1.allocate(GL_LINEAR, GL_REPEAT, data.data());
