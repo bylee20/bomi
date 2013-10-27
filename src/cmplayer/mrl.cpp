@@ -12,6 +12,8 @@ Mrl::Mrl(const QString &location, const QString &name) {
 	const int idx = location.indexOf("://");
 	if (idx < 0)
 		m_loc = _L("file://") % location;
+	else if (location.startsWith("file://", Qt::CaseInsensitive))
+		m_loc = QUrl::fromPercentEncoding(location.toUtf8());
 	else
 		m_loc = location;
 	m_name = name;
