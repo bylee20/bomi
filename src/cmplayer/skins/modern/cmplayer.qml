@@ -65,7 +65,7 @@ Skin.AppWithFloating {
 					height: parent.height*0.75; anchors.verticalCenter: parent.verticalCenter; spacing: 3
 					Skin.Button {
                         id: mute; checked: engine.muted; width: parent.height; height: parent.height
-						icon: getStateIconName("volume"); action: "audio/mute"
+						icon: getStateIconName("volume"); action: "audio/volume/mute"
 						Item {
 							id: volume; anchors.fill: parent
 							visible: (!mute.checked && !(mute.hovered && mute.pressed))

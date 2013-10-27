@@ -113,7 +113,7 @@ Skin.AppWithDock {
 						width: parent.width; spacing: 1; height: 10
 						Skin.TimeSlider { id: timeslider; style: slider; Layout.fillWidth: true }
 						FramedButton {
-							id: mute; width: height; height: parent.height; action: "audio/mute"
+							id: mute; width: height; height: parent.height; action: "audio/volume/mute"
 							icon: engine.muted ? "speaker-off.png" : "speaker-on.png"
 						}
 						Skin.VolumeSlider { id: volumeslider; width: 70; style: slider }
