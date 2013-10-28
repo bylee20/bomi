@@ -89,7 +89,7 @@ Sito progetto: %3</translation>
         <location filename="../deintinfo.cpp" line="131"/>
         <location filename="../deintinfo.cpp" line="218"/>
         <source>Double framerate</source>
-        <translation type="unfinished"></translation>
+        <translation>Framerate doppio</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="132"/>
@@ -291,54 +291,54 @@ Sito progetto: %3</translation>
     <message>
         <location filename="../enums.hpp" line="53"/>
         <source>Color Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Gamma Colori</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="63"/>
         <location filename="../enums.hpp" line="515"/>
         <source>Auto</source>
-        <translation type="unfinished">Auto</translation>
+        <translation>Auto</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1855"/>
         <location filename="../enums.hpp" line="1929"/>
         <source>Reset</source>
-        <translation type="unfinished">Azzera</translation>
+        <translation>Azzera</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="210"/>
         <source>Subtitle Display</source>
-        <translation type="unfinished">Aspetto Sottotitoli</translation>
+        <translation>Aspetto Sottotitoli</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="64"/>
         <source>Limited Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Gamma Limitata</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="65"/>
         <source>Full Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Gamma Piena</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="66"/>
         <source>Remap Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rimappa Gamma</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="67"/>
         <source>Extented Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Gamma Estesa</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="220"/>
         <source>Display on Letterbox</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostra in Bande Nere</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="221"/>
         <source>Display in Video</source>
-        <translation type="unfinished">Mostra nel Video</translation>
+        <translation>Mostra nel Video</translation>
     </message>
     <message>
         <source>Proper Size</source>
@@ -351,79 +351,79 @@ Sito progetto: %3</translation>
     <message>
         <location filename="../enums.hpp" line="285"/>
         <source>Size</source>
-        <translation type="unfinished">Dimensione</translation>
+        <translation>Dimensione</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="295"/>
         <source>Same as Source</source>
-        <translation type="unfinished"></translation>
+        <translation>Stesso della Sorgente</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="296"/>
         <source>Same as Window</source>
-        <translation type="unfinished">Stesso della Finestra</translation>
+        <translation>Stesso della Finestra</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="297"/>
         <source>4:3 (TV)</source>
-        <translation type="unfinished">4:3 (TV)</translation>
+        <translation>4:3 (TV)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="298"/>
         <source>16:10 (Wide Monitor)</source>
-        <translation type="unfinished">16:10</translation>
+        <translation>16:10</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="299"/>
         <source>16:9 (HDTV)</source>
-        <translation type="unfinished">16:9 (HDTV)</translation>
+        <translation>16:9 (HDTV)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="300"/>
         <source>1.85:1 (Wide Vision)</source>
-        <translation type="unfinished">1.85:1</translation>
+        <translation>1.85:1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="301"/>
         <source>2.35:1 (CinemaScope)</source>
-        <translation type="unfinished">2.35:1 (CinemaScope)</translation>
+        <translation>2.35:1 (CinemaScope)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="361"/>
         <source>Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Dithering</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="371"/>
         <location filename="../enums.hpp" line="514"/>
         <location filename="../enums.hpp" line="979"/>
         <source>Off</source>
-        <translation type="unfinished">Disabilitato</translation>
+        <translation>Disabilitato</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="372"/>
         <source>Random Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Dithering Casuale</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="373"/>
         <source>Ordered Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Dithering Ordinato</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="504"/>
         <source>Deinterlacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Deinterlacciatura</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="751"/>
         <source>B-Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>B-Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="752"/>
         <source>2-Lobed Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>2-Lobed Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="753"/>
@@ -433,7 +433,7 @@ Sito progetto: %3</translation>
     <message>
         <location filename="../enums.hpp" line="754"/>
         <source>3-Lobed Spline (Approx.)</source>
-        <translation type="unfinished"></translation>
+        <translation>3-Lobed Spline (Approssimativo)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="755"/>
@@ -443,12 +443,12 @@ Sito progetto: %3</translation>
     <message>
         <location filename="../enums.hpp" line="756"/>
         <source>3-Lobed Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>3-Lobed Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="757"/>
         <source>3-Lobed Lanczos</source>
-        <translation type="unfinished">2-Lobed Lanczos {3-?}</translation>
+        <translation>3-Lobed Lanczos</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="907"/>
@@ -468,17 +468,17 @@ Sito progetto: %3</translation>
     <message>
         <location filename="../enums.hpp" line="969"/>
         <source>Stays on Top</source>
-        <translation type="unfinished">In Primo Piano</translation>
+        <translation>In Primo Piano</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="980"/>
         <source>Playing</source>
-        <translation type="unfinished">In Riproduzione</translation>
+        <translation>In Riproduzione</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="981"/>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>Sempre</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1122"/>
@@ -608,62 +608,62 @@ Sito progetto: %3</translation>
     <message>
         <location filename="../enums.hpp" line="1709"/>
         <source>Top</source>
-        <translation type="unfinished">Sopra</translation>
+        <translation>Sopra</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1710"/>
         <source>Vertical Center</source>
-        <translation type="unfinished">Centro Verticale</translation>
+        <translation>Centro Verticale</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1711"/>
         <source>Bottom</source>
-        <translation type="unfinished">Sotto</translation>
+        <translation>Sotto</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1781"/>
         <source>Left</source>
-        <translation type="unfinished">Sinistra</translation>
+        <translation>Sinistra</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1782"/>
         <source>Horizontal Center</source>
-        <translation type="unfinished">Centro Orizzontale</translation>
+        <translation>Centro Orizzontale</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1783"/>
         <source>Right</source>
-        <translation type="unfinished">Destra</translation>
+        <translation>Destra</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1856"/>
         <source>Upward</source>
-        <translation type="unfinished"></translation>
+        <translation>In Alto</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1857"/>
         <source>Downward</source>
-        <translation type="unfinished"></translation>
+        <translation>In Basso</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1858"/>
         <source>Leftward</source>
-        <translation type="unfinished"></translation>
+        <translation>A Sinistra</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1859"/>
         <source>Rightward</source>
-        <translation type="unfinished"></translation>
+        <translation>A Destra</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1930"/>
         <source>Increase %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Aumenta %1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1931"/>
         <source>Decrease %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Diminuisci %1</translation>
     </message>
 </context>
 <context>
@@ -796,7 +796,7 @@ Sito progetto: %3</translation>
     <message>
         <location filename="../mainwindow.cpp" line="722"/>
         <source>Adjust Video Color</source>
-        <translation type="unfinished"></translation>
+        <translation>Regola Colore Video</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="804"/>
@@ -1156,17 +1156,17 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../playengine.cpp" line="324"/>
         <source>Activated</source>
-        <translation type="unfinished">Attivato</translation>
+        <translation>Attivo</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="327"/>
         <source>Deactivated</source>
-        <translation type="unfinished"></translation>
+        <translation>Non Attivo</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="330"/>
         <source>Unavailable</source>
-        <translation type="unfinished">Non Disponibile</translation>
+        <translation>Non Disponibile</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="733"/>
@@ -1243,17 +1243,17 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="116"/>
         <source>Deactivated</source>
-        <translation type="unfinished"></translation>
+        <translation>Non Attivo</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
         <source>Cache: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Cache: %1</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
         <source>Unavailable</source>
-        <translation type="unfinished">Non Disponibile</translation>
+        <translation>Non Disponibile</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="146"/>
@@ -1826,7 +1826,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="2659"/>
         <source>Invert direction of mouse wheel scroll</source>
-        <translation type="unfinished"></translation>
+        <translation>Inverti rotellina del mouse </translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2687"/>
@@ -1988,7 +1988,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../prefdialog.cpp" line="300"/>
         <source>Keyboard shortcuts</source>
-        <translation type="unfinished"></translation>
+        <translation>Scorciatoie da tastiera</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="304"/>
@@ -2043,7 +2043,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../prefdialog.cpp" line="490"/>
         <source>Italian</source>
-        <translation type="unfinished"></translation>
+        <translation>Italiano</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="502"/>
@@ -2508,28 +2508,28 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../rootmenu.cpp" line="427"/>
         <source>Subtitle Alignment</source>
-        <translation type="unfinished">Allineamento Sottotitoli</translation>
+        <translation>Allineamento Sottotitoli</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="428"/>
         <source>Subtitle Position</source>
-        <translation type="unfinished">Posizione Sottotitoli</translation>
+        <translation>Posizione Sottotitoli</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="429"/>
         <source>Subtitle Sync</source>
-        <translation type="unfinished"></translation>
+        <translation>Sincronizzazione Sottotitoli</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="429"/>
         <location filename="../rootmenu.cpp" line="472"/>
         <source>%1sec</source>
-        <translation type="unfinished"></translation>
+        <translation>%1sec</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="443"/>
         <source>Chroma Upscaler</source>
-        <translation type="unfinished"></translation>
+        <translation>Chroma Upscaler</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="444"/>
@@ -2579,22 +2579,22 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../rootmenu.cpp" line="466"/>
         <source>Adjust Color</source>
-        <translation type="unfinished"></translation>
+        <translation>Regola Colore</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="472"/>
         <source>Audio Sync</source>
-        <translation type="unfinished">Sincronizzazione Audio</translation>
+        <translation>Sincronizzazione Audio</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="474"/>
         <source>Volume</source>
-        <translation type="unfinished">Volume</translation>
+        <translation>Volume</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="475"/>
         <source>Amp</source>
-        <translation type="unfinished"></translation>
+        <translation>Amplificazione</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="476"/>
@@ -2975,12 +2975,12 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../trayicon.cpp" line="59"/>
         <source>Quit</source>
-        <translation type="unfinished">Esci</translation>
+        <translation>Esci</translation>
     </message>
     <message>
         <location filename="../trayicon.cpp" line="60"/>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostra</translation>
     </message>
 </context>
 <context>
@@ -2988,27 +2988,27 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../videocolor.hpp" line="112"/>
         <source>Brightness %1%</source>
-        <translation type="unfinished">Luminosità %1%</translation>
+        <translation>Luminosità %1%</translation>
     </message>
     <message>
         <location filename="../videocolor.hpp" line="114"/>
         <source>Saturation %1%</source>
-        <translation type="unfinished">Saturazione %1%</translation>
+        <translation>Saturazione %1%</translation>
     </message>
     <message>
         <location filename="../videocolor.hpp" line="116"/>
         <source>Contrast %1%</source>
-        <translation type="unfinished">Contrasto %1%</translation>
+        <translation>Contrasto %1%</translation>
     </message>
     <message>
         <location filename="../videocolor.hpp" line="118"/>
         <source>Hue %1%</source>
-        <translation type="unfinished">Tonalità %1%</translation>
+        <translation>Tonalità %1%</translation>
     </message>
     <message>
         <location filename="../videocolor.hpp" line="120"/>
         <source>Reset</source>
-        <translation type="unfinished">Azzera</translation>
+        <translation>Azzera</translation>
     </message>
 </context>
 </TS>
