@@ -1,3 +1,10 @@
+0.8.2
+
+  * Fix: too distorted color in Extended Range
+  * Fix: cannot open media in some file managers which call cmplayer with url)
+  * Fix: mute button in skin didn't work
+  * Fix: workaround to enable libquvi-0.9 (libproxy is always disabled)
+
 0.8.1
 
   * New: Remap Range/Extended Range in Color Range menu
