@@ -47,7 +47,7 @@ const YCbCrRange ranges[5] = {
 	{ 16.f/255.f, 235.f/255.f,  16./255.f, 240.f/255.f}, // Limited
 	{        0.f,         1.f,        0.f,         1.f}, // Full
 	{        0.f,         1.f,        0.f,         1.f}, // Remap
-	{        0.f,         1.f,  16./255.f, 240.f/255.f}  // RemapLuma
+	{        0.f,         1.f,        0.f,         1.f}  // Extended
 };
 
 const float specs[MP_CSP_COUNT][2] = {
