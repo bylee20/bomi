@@ -31,6 +31,13 @@ else
 fi
 
 export PKG_CONFIG_PATH="../../build/lib/pkgconfig:${PKG_CONFIG_PATH}"
+
+if `pkg-config --exists libquvi-0.9`; then # libquvi9 exists
+  args="$args --disable-libquvi4"
+else # libquvi9 doesn't exist
+  args="$args --disable-libquvi9"
+fi
+
 cd src/mpv && make distclean;  ./configure $args
 make -j $njobs mpv
 
