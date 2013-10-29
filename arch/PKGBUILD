@@ -8,6 +8,7 @@ pkgdesc="Powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
 url="http://$pkgname.github.io"
 license=('GPL')
+install=$pkgname.install
 depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu'
          'libdvdread' 'libcdio-paranoia' 'libcdio' 'libquvi'
          'alsa-lib' 'libpulse' 'portaudio' 'openal' 'jack' 'libchardet'
