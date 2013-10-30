@@ -45,11 +45,11 @@ static QMatrix3x3 matSHC(double s, double h, double c) {
 
 						//  y1,y2,c1,c2
 const YCbCrRange ranges[5] = {
-	{        0.f,         1.f,        0.f,         1.f}, // Auto
-	{ 16.f, 235.f,  16.f, 240.f}, // Limited
-	{        0.f,         1.f,        0.f,         1.f}, // Full
-	{        0.f,         1.f,        0.f,         1.f}, // Remap
-	{        0.f,         1.f,        0.f,         1.f}  // Extended
+	{  0.f, 255.f,  0.f, 255.f}, // Auto
+	{ 16.f, 235.f, 16.f, 240.f}, // Limited
+	{  0.f, 255.f,  0.f, 255.f}, // Full
+	{  0.f, 255.f,  0.f, 255.f}, // Remap
+	{  0.f, 255.f,  0.f, 255.f}  // Extended
 };
 
 const float specs[MP_CSP_COUNT][2] = {
