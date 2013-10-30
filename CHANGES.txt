@@ -1,3 +1,8 @@
+0.8.3
+
+  * Fix: restoring window position didn't work
+  * Fix: wrong color display of non-8bit-encoded sources
+
 0.8.2
 
   * Fix: too distorted color in Extended Range
