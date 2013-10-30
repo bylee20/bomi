@@ -100,15 +100,16 @@ void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, Colo
 	} else {
 		auto sub = make3x1(range.y1, (range.c1 + range.c2)/2.0f);
 		const auto tv = ranges[(int)ColorRange::Limited]*s;
+		const auto pc = ranges[(int)ColorRange::Full]*s;
 		if (cr == ColorRange::Remap) {
 			QMatrix3x3 scaler;
-			scaler(0, 0) = 1.0/(tv.y2 - tv.y1);
-			scaler(1, 1) = scaler(2, 2) = 1.0/(tv.c2 - tv.c1);
+			scaler(0, 0) = (pc.y2 - pc.y1)/(tv.y2 - tv.y1);
+			scaler(1, 1) = scaler(2, 2) = (pc.c2 - pc.c1)/(tv.c2 - tv.c1);
 			mul = mul*scaler;
 			sub += scaler*make3x1(tv.y1, tv.c1);
 		} else if (cr == ColorRange::Extended) {
 			QMatrix3x3 scaler;
-			scaler(0, 0) = scaler(1, 1) = scaler(2, 2) = 1.0/(tv.y2 - tv.y1);
+			scaler(0, 0) = scaler(1, 1) = scaler(2, 2) = (pc.y2 - pc.y1)/(tv.y2 - tv.y1);
 			mul = mul*scaler;
 			sub += scaler*make3x1(tv.y1, tv.y1);
 		}
