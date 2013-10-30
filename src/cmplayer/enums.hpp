@@ -695,10 +695,8 @@ enum class InterpolatorType : int {
 	BicubicBS = (int)3,
 	Spline16 = (int)4,
 	Lanczos2 = (int)5,
-	Spline36Approx = (int)6,
-	Lanczos3Approx = (int)7,
-	Spline36 = (int)8,
-	Lanczos3 = (int)9
+	Spline36 = (int)6,
+	Lanczos3 = (int)7
 };
 
 inline bool operator == (InterpolatorType e, int i) { return (int)e == i; }
@@ -732,7 +730,7 @@ public:
     typedef InterpolatorType type;
     using Data =  QVariant;
     struct Item { Enum value; QString name, key; QVariant data; };
-	static constexpr int size() { return 10; }
+	static constexpr int size() { return 8; }
     static constexpr const char *typeName() { return "InterpolatorType"; }
     static constexpr const char *typeKey() { return ""; }
     static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
@@ -751,14 +749,12 @@ public:
 		case Enum::BicubicBS: return tr(QT_TRANSLATE_NOOP("EnumInfo", "B-Spline"));
 		case Enum::Spline16: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2-Lobed Spline"));
 		case Enum::Lanczos2: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2-Lobed Lanczos"));
-		case Enum::Spline36Approx: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Spline (Approx.)"));
-		case Enum::Lanczos3Approx: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Lanczos (Approx.)"));
 		case Enum::Spline36: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Spline"));
 		case Enum::Lanczos3: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Lanczos"));
 		default: return tr("");
 		};
 	}
-	static constexpr const std::array<Item, 10> &items() { return info; }
+	static constexpr const std::array<Item, 8> &items() { return info; }
     static Enum from(int id, Enum def = default_()) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
@@ -769,7 +765,7 @@ public:
 	}
     static constexpr Enum default_() { return InterpolatorType::Bilinear; }
 private:
-	static const std::array<Item, 10> info;
+	static const std::array<Item, 8> info;
 };
 
 using InterpolatorTypeInfo = EnumInfo<InterpolatorType>;

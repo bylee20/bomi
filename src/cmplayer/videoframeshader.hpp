@@ -51,7 +51,7 @@ private:
 	struct ShaderInfo {
 		QOpenGLShaderProgram program;
 		bool rebuild = true, kernel = false;
-		InterpolatorType interpolator = InterpolatorType::Lanczos3Approx;
+		InterpolatorType interpolator = InterpolatorType::Bilinear;
 	};
 	void updateShader();
 	VideoFrame m_frame;

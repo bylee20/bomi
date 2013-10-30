@@ -48,7 +48,6 @@ void OpenGLCompat::fill(QOpenGLContext *ctx) {
 	m_bicubicParams[(int)InterpolatorType::BicubicCR] = {0.0, 0.5};
 	m_bicubicParams[(int)InterpolatorType::BicubicMN] = {1./3., 1./3.};
 	m_bicubicParams[(int)InterpolatorType::Lanczos2] = {2.0, 2.0};
-	m_bicubicParams[(int)InterpolatorType::Lanczos3Approx] = {3.0, 3.0};
 }
 
 template<typename T>
@@ -179,12 +178,8 @@ void OpenGLCompat::fillInterpolatorLut(InterpolatorType interpolator) {
 	case InterpolatorType::Spline16:
 		makeInterpolatorLut4(m_intLuts1[type], spline16);
 		break;
-	case InterpolatorType::Spline36Approx:
-		makeInterpolatorLut4(m_intLuts1[type], spline36);
-		break;
 	case InterpolatorType::Lanczos2:
-	case InterpolatorType::Lanczos3Approx:
-		makeInterpolatorLut4(m_intLuts1[type], [b] (double x) { return lanczos(x, b); });
+		makeInterpolatorLut4(m_intLuts1[type], [] (double x) { return lanczos(x, 2.0); });
 		break;
 	case InterpolatorType::Spline36:
 		makeInterpolatorLut6(m_intLuts1[type], m_intLuts2[type], spline36);
