@@ -91,7 +91,7 @@ void VideoFrameShader::updateColorMatrix() {
 	default:
 		break;
 	}
-	color.matrix(m_mul_mat, m_add_vec, m_csp, range);
+	color.matrix(m_mul_mat, m_add_vec, m_csp, range, m_bitScale);
 	if (m_effects & VideoRendererItem::InvertColor) {
 		m_mul_mat *= -1;
 		m_add_vec = QVector3D(1, 1, 1) - m_add_vec;
@@ -320,6 +320,7 @@ void VideoFrameShader::fillInfo() {
 	const auto &format = m_frame.format();
 	m_shaders[0].rebuild = m_shaders[1].rebuild = true;
 
+	m_bitScale = 1.0/255.0;
 	m_csp = format.colorspace();
 	m_target = m_dma ? GL_TEXTURE_RECTANGLE : GL_TEXTURE_2D;
 	auto cc = [this, &format] (int factor, double rect) {
@@ -377,11 +378,10 @@ void VideoFrameShader::fillInfo() {
 	case IMGFMT_420P9:
 		m_texel = R"(
 			vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {
-				return vec3(tex0.r, tex1.r, tex2.r)*??;
+				return vec3(tex0.r, tex1.r, tex2.r);
 			}
 		)";
-		m_texel.replace("??", QByteArray::number(double(_Max<GLushort>())/double((1 << (bits))-1)));
-
+		m_bitScale = (1 << (bits-8)) / _Max<GLushort, double>();
 		for (int i=0; i<3; ++i)
 			addCustom(i, format.bytesPerLine(i)/2, format.lines(i), OpenGLCompat::textureFormat(1, 2));
 		cc(2, 0.5);

@@ -4,6 +4,8 @@
 #include <QtMath>
 
 struct YCbCrRange {
+	YCbCrRange &operator *= (float rhs) { y1 *= rhs; y2 *= rhs;  c1 *= rhs; c2 *= rhs; return *this; }
+	YCbCrRange operator * (float rhs) const { return YCbCrRange(*this) *= rhs; }
 	float y1, y2, c1, c2;
 };
 
@@ -44,7 +46,7 @@ static QMatrix3x3 matSHC(double s, double h, double c) {
 						//  y1,y2,c1,c2
 const YCbCrRange ranges[5] = {
 	{        0.f,         1.f,        0.f,         1.f}, // Auto
-	{ 16.f/255.f, 235.f/255.f,  16./255.f, 240.f/255.f}, // Limited
+	{ 16.f, 235.f,  16.f, 240.f}, // Limited
 	{        0.f,         1.f,        0.f,         1.f}, // Full
 	{        0.f,         1.f,        0.f,         1.f}, // Remap
 	{        0.f,         1.f,        0.f,         1.f}  // Extended
@@ -69,7 +71,7 @@ static ColumnVector3 make3x1(float v1, float v23) {
 	return make3x1(v1, v23, v23);
 }
 
-void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, ColorRange cr) const {
+void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, ColorRange cr, float s) const {
 	mul.setToIdentity();
 	add = {0.f, 0.f, 0.f};
 	const float *spec = specs[colorspace];
@@ -85,6 +87,7 @@ void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, Colo
 	default:
 		return;
 	}
+	range *= s;
 	const float kb = spec[0], kr = spec[1];
 	const auto ycbcrFromRgb = matRgbToYCbCr(kb, kr, range);
 	const auto rgbFromYCbCr = matYCbCrToRgb(kb, kr, range);
@@ -96,7 +99,7 @@ void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, Colo
 		mul = mul*ycbcrFromRgb;
 	} else {
 		auto sub = make3x1(range.y1, (range.c1 + range.c2)/2.0f);
-		const auto &tv = ranges[(int)ColorRange::Limited];
+		const auto tv = ranges[(int)ColorRange::Limited]*s;
 		if (cr == ColorRange::Remap) {
 			QMatrix3x3 scaler;
 			scaler(0, 0) = 1.0/(tv.y2 - tv.y1);

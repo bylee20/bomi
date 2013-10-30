@@ -104,7 +104,7 @@ public:
 		m[Hue] = qBound(-100, m[Hue], 100);
 	}
 	bool isZero() const { return !m[Brightness] && !m[Saturation] && !m[Contrast] && !m[Hue]; }
-	void matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, ColorRange range) const;
+	void matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, ColorRange range, float s) const;
 	QString getText(Type type) const {
 		const QString value = 0 <= type && type < TypeMax ? _NS(m[type]) : QString();
 		switch (type) {
