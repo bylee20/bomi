@@ -157,6 +157,12 @@ p, li { white-space: pre-wrap; }
 Developer's E-mail: %2
 Project page: %3</string>
            </property>
+           <property name="openExternalLinks">
+            <bool>true</bool>
+           </property>
+           <property name="textInteractionFlags">
+            <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
+           </property>
           </widget>
          </item>
          <item>
