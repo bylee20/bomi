@@ -134,6 +134,7 @@ public:
 	double avgsync() const;
 	double avgfps() const;
 	QString stateText() const;
+	static QString stateText(State state);
 	double relativePosition() const { return (double)(time()-begin())/duration(); }
 	Q_INVOKABLE double bps(double fps) const;
 	static void registerObjects();

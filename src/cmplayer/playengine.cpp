@@ -760,7 +760,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	};
 	postData(this, StreamOpen);
 	d->tellmp("vf set", d->vfs);
-	auto state = this->state(), newState = Loading;
+	auto state = Loading, newState = Loading;
 	int cache = -1;
 	while (!mpctx->stop_play) {
 		if (!duration)
@@ -1121,8 +1121,8 @@ DeintMode PlayEngine::deintMode() const {
 	return d->deint;
 }
 
-QString PlayEngine::stateText() const {
-	switch (m_state) {
+QString PlayEngine::stateText(State state) {
+	switch (state) {
 	case Playing:
 		return tr("Playing");
 	case Stopped:
@@ -1137,3 +1137,5 @@ QString PlayEngine::stateText() const {
 		return tr("Paused");
 	}
 }
+
+QString PlayEngine::stateText() const { return stateText(m_state); }
