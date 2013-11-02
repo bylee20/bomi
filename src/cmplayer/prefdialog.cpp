@@ -492,6 +492,9 @@ QString PrefDialog::toString(const QLocale &locale) {
 	case QLocale::Italian:
 		text = tr("Italian");
 		break;
+	case QLocale::Czech:
+		text = tr("Czech");
+		break;
 	default:
 		text = QLocale::languageToString(locale.language());
 		break;
