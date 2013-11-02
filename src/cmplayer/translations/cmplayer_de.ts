@@ -6,7 +6,7 @@
     <message>
         <location filename="../ui/aboutdialog.ui" line="14"/>
         <source>About CMPlayer</source>
-        <translation type="unfinished"></translation>
+        <translation>Über CMPlayer</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="106"/>
@@ -27,27 +27,27 @@ p, li { white-space: pre-wrap; }
         <source>Developer&apos;s blog: %1
 Developer&apos;s E-mail: %2
 Project page: %3</source>
-        <translation type="unfinished"></translation>
+        <translation>Entwickler Blog</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="184"/>
         <source>License</source>
-        <translation type="unfinished"></translation>
+        <translation>Lizenz</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="217"/>
         <source>View Full Text of GPL</source>
-        <translation type="unfinished"></translation>
+        <translation>Sehen Volltext GPL</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="227"/>
         <source>View Full Text of MPL </source>
-        <translation type="unfinished"></translation>
+        <translation>Sehen Volltext MPL</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="339"/>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation>schließen</translation>
     </message>
 </context>
 <context>
@@ -64,29 +64,29 @@ Project page: %3</source>
         <location filename="../deintinfo.cpp" line="131"/>
         <location filename="../deintinfo.cpp" line="218"/>
         <source>Double framerate</source>
-        <translation type="unfinished"></translation>
+        <translation>doppelter Bildrate</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="132"/>
         <location filename="../deintinfo.cpp" line="220"/>
         <source>Use OpenGL</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwenden OpenGL</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="133"/>
         <location filename="../deintinfo.cpp" line="222"/>
         <source>Use hardware acceleration if available</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwenden Sie Hardware-Beschleunigung, wenn verfügbar</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="135"/>
         <source>Method</source>
-        <translation type="unfinished"></translation>
+        <translation>Verfahren</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="211"/>
         <source>Methods</source>
-        <translation type="unfinished"></translation>
+        <translation>Methoden</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="212"/>
@@ -179,7 +179,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="16"/>
         <source>Arabic</source>
-        <translation type="unfinished"></translation>
+        <translation>Arabisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="17"/>
