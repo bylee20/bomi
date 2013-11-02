@@ -189,7 +189,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="18"/>
         <source>Turkish</source>
-        <translation type="unfinished"></translation>
+        <translation>Türkisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="19"/>
@@ -199,7 +199,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="20"/>
         <source>Celtic</source>
-        <translation type="unfinished"></translation>
+        <translation>Celtic</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="21"/>
@@ -209,7 +209,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="22"/>
         <source>Russian</source>
-        <translation type="unfinished"></translation>
+        <translation>Russisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="23"/>
@@ -247,7 +247,7 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="748"/>
         <source>Bilinear</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilinear</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="749"/>
@@ -262,13 +262,13 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="53"/>
         <source>Color Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Farbbereich</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="63"/>
         <location filename="../enums.hpp" line="515"/>
         <source>Auto</source>
-        <translation type="unfinished"></translation>
+        <translation>Auto</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1855"/>
@@ -279,7 +279,7 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="210"/>
         <source>Subtitle Display</source>
-        <translation type="unfinished"></translation>
+        <translation>Untertitel-Anzeige</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="64"/>
@@ -314,7 +314,7 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="285"/>
         <source>Size</source>
-        <translation type="unfinished"></translation>
+        <translation>Größe</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="295"/>
@@ -361,7 +361,7 @@ Project page: %3</source>
         <location filename="../enums.hpp" line="514"/>
         <location filename="../enums.hpp" line="979"/>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>ausgeschaltet</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="372"/>
@@ -436,12 +436,12 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="980"/>
         <source>Playing</source>
-        <translation type="unfinished"></translation>
+        <translation>Spielend</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="981"/>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>Immer</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1122"/>
@@ -586,7 +586,7 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="1781"/>
         <source>Left</source>
-        <translation type="unfinished"></translation>
+        <translation>Links</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1782"/>
@@ -621,12 +621,12 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="1930"/>
         <source>Increase %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Erhöhen %1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1931"/>
         <source>Decrease %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Verkleinern %1</translation>
     </message>
 </context>
 <context>
@@ -639,12 +639,12 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="64"/>
         <source>Italic</source>
-        <translation type="unfinished"></translation>
+        <translation>Kursiv</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="65"/>
         <source>Underline</source>
-        <translation type="unfinished"></translation>
+        <translation>Unterstrichen</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="66"/>
@@ -662,7 +662,7 @@ Project page: %3</source>
     <message>
         <location filename="../dialogs.cpp" line="89"/>
         <source>Erase</source>
-        <translation type="unfinished"></translation>
+        <translation>Löschen</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="92"/>
@@ -672,7 +672,7 @@ Project page: %3</source>
     <message>
         <location filename="../dialogs.cpp" line="94"/>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation>Stornieren</translation>
     </message>
 </context>
 <context>
@@ -703,7 +703,7 @@ Project page: %3</source>
     <message>
         <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="53"/>
         <source>Location</source>
-        <translation type="unfinished"></translation>
+        <translation>Stelle</translation>
     </message>
 </context>
 <context>
@@ -721,7 +721,7 @@ Project page: %3</source>
     <message>
         <location filename="../historymodel.cpp" line="58"/>
         <source>Location</source>
-        <translation type="unfinished"></translation>
+        <translation>Stelle</translation>
     </message>
 </context>
 <context>
@@ -729,22 +729,22 @@ Project page: %3</source>
     <message>
         <location filename="../info.cpp" line="49"/>
         <source>Video Files</source>
-        <translation type="unfinished"></translation>
+        <translation>Video-Dateien</translation>
     </message>
     <message>
         <location filename="../info.cpp" line="51"/>
         <source>Audio Files</source>
-        <translation type="unfinished"></translation>
+        <translation>Audio-Dateien</translation>
     </message>
     <message>
         <location filename="../info.cpp" line="53"/>
         <source>Image Files</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilddateien</translation>
     </message>
     <message>
         <location filename="../info.cpp" line="55"/>
         <source>All Files</source>
-        <translation type="unfinished"></translation>
+        <translation>Alle Dateien</translation>
     </message>
 </context>
 <context>
@@ -754,7 +754,7 @@ Project page: %3</source>
         <location filename="../mainwindow.cpp" line="857"/>
         <location filename="../mainwindow.cpp" line="875"/>
         <source>Open File</source>
-        <translation type="unfinished"></translation>
+        <translation>Datei öffnen</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="722"/>
@@ -769,7 +769,7 @@ Project page: %3</source>
     <message>
         <location filename="../mainwindow.cpp" line="807"/>
         <source>Open Subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>Offene Untertitel</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="654"/>
@@ -834,17 +834,17 @@ Stopped Position: %2
     <message>
         <location filename="../mainwindow.cpp" line="389"/>
         <source>Play</source>
-        <translation type="unfinished"></translation>
+        <translation>abspielen</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="796"/>
         <source>Hide Subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Untertitel ausblenden</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="798"/>
         <source>Show Subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Untertitel anzeigen</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="819"/>
@@ -861,7 +861,7 @@ Stopped Position: %2
     <message>
         <location filename="../mainwindow.cpp" line="864"/>
         <source>Save File</source>
-        <translation type="unfinished"></translation>
+        <translation>Datei speichern</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="927"/>
@@ -947,12 +947,12 @@ Stopped Position: %2
     <message>
         <location filename="../mainwindow.hpp" line="56"/>
         <source>On</source>
-        <translation type="unfinished"></translation>
+        <translation>Einschalten</translation>
     </message>
     <message>
         <location filename="../mainwindow.hpp" line="56"/>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>Ausschalten</translation>
     </message>
 </context>
 <context>
@@ -997,7 +997,7 @@ Stopped Position: %2
     <message>
         <location filename="../ui/openmediafolderdialog.ui" line="51"/>
         <source>Images</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilder</translation>
     </message>
     <message>
         <location filename="../ui/openmediafolderdialog.ui" line="58"/>
@@ -1010,7 +1010,7 @@ Stopped Position: %2
     <message>
         <location filename="../playengine.cpp" line="546"/>
         <source>No Subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>Nicht Untertitel</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="92"/>
@@ -1025,27 +1025,27 @@ Stopped Position: %2
     <message>
         <location filename="../playengine.cpp" line="94"/>
         <source>Subtitle %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Untertitel %1</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="214"/>
         <source>File</source>
-        <translation type="unfinished"></translation>
+        <translation>Datei</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="324"/>
         <source>Activated</source>
-        <translation type="unfinished"></translation>
+        <translation>Aktiviert</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="327"/>
         <source>Deactivated</source>
-        <translation type="unfinished"></translation>
+        <translation>Deaktiviert</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="330"/>
         <source>Unavailable</source>
-        <translation type="unfinished"></translation>
+        <translation>Nicht verfügbar</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="733"/>
