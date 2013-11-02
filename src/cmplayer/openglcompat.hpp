@@ -175,8 +175,6 @@ public:
 		case InterpolatorType::BicubicMN:
 		case InterpolatorType::Lanczos2:
 		case InterpolatorType::Spline16:
-		case InterpolatorType::Lanczos3Approx:
-		case InterpolatorType::Spline36Approx:
 			return 1;
 		case InterpolatorType::Spline36:
 		case InterpolatorType::Lanczos3:

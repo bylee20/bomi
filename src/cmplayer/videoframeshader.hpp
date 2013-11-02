@@ -51,13 +51,14 @@ private:
 	struct ShaderInfo {
 		QOpenGLShaderProgram program;
 		bool rebuild = true, kernel = false;
-		InterpolatorType interpolator = InterpolatorType::Lanczos3Approx;
+		InterpolatorType interpolator = InterpolatorType::Bilinear;
 	};
 	void updateShader();
 	VideoFrame m_frame;
 	ShaderInfo m_shaders[2];
 	QOpenGLShaderProgram *m_prog = nullptr;
 	VideoColor m_color;
+	float m_bitScale = 1.0/255.0;
 	mp_csp m_csp; ColorRange m_range = ColorRange::Auto;
 	GLenum m_target = GL_TEXTURE_2D;
 	QMatrix3x3 m_mul_mat;

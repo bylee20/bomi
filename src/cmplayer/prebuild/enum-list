@@ -76,8 +76,6 @@
 -BicubicBS[[b-spline]][-B-Spline-]
 -Spline16[[spline16]][-2-Lobed Spline-]
 -Lanczos2[[lancoz2]][-2-Lobed Lanczos-]
--Spline36Approx[[spline36-approx]][-3-Lobed Spline (Approx.)-]
--Lanczos3Approx[[lanczos3-approx]][-3-Lobed Lanczos (Approx.)-]
 -Spline36[[spline36]][-3-Lobed Spline-]
 -Lanczos3[[lanczos3]][-3-Lobed Lanczos-]
 

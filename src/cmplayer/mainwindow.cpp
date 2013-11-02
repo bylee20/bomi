@@ -170,7 +170,7 @@ struct MainWindow::Data {
 	void updateWindowPosState() const {
 		if (!p->isFullScreen() && !p->isMinimized() && p->isVisible()) {
 			auto &as = AppState::get();
-			const auto screen = p->window()->windowHandle()->size();
+			const auto screen = p->window()->windowHandle()->screen()->size();
 			as.win_pos.rx() = qBound(0.0, (double)p->x()/(double)screen.width(), 1.0);
 			as.win_pos.ry() = qBound(0.0, (double)p->y()/(double)screen.height(), 1.0);
 		}

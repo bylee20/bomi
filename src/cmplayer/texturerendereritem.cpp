@@ -203,8 +203,6 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 	if (_Change(m_interpolator, m_newInt)) {
 		m_intCategory = OpenGLCompat::interpolatorCategory(m_interpolator);
 		OpenGLCompat::allocateInterpolatorLutTexture(m_lutInt1, m_lutInt2, m_interpolator);
-		if (m_interpolator > 0)
-			qDebug() << InterpolatorTypeInfo::name(m_interpolator);
 	}
 	if (_Change(m_dithering, m_newDithering))
 		m_ditheringTex = OpenGLCompat::allocateDitheringTexture(m_ditheringTex.id, m_dithering);
