@@ -1052,6 +1052,7 @@ void MainWindow::updateRecentActions(const QList<Mrl> &list) {
 	if (diff < 0) {
 		QList<QAction*> acts = recent.actions();
 		QAction *sprt = acts[acts.size()-2];
+		Q_ASSERT(sprt->isSeparator());
 		for (int i=0; i<-diff; ++i) {
 			QAction *action = new QAction(&recent);
 			recent.insertAction(sprt, action);
@@ -1068,7 +1069,9 @@ void MainWindow::updateRecentActions(const QList<Mrl> &list) {
 		act->setData(list[i].location());
 		act->setText(list[i].displayName());
 		act->setVisible(!list[i].isEmpty());
+//		qDebug() << act->isVisible();
 	}
+	recent.syncActions();
 }
 
 void MainWindow::openMrl(const Mrl &mrl) {
