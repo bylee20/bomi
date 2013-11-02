@@ -1050,37 +1050,37 @@ Stopped Position: %2
     <message>
         <location filename="../playengine.cpp" line="733"/>
         <source>Title %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Titel %1</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="1127"/>
         <source>Playing</source>
-        <translation type="unfinished"></translation>
+        <translation>Spielend</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="1129"/>
         <source>Stopped</source>
-        <translation type="unfinished"></translation>
+        <translation>Gestoppt</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="1131"/>
         <source>Finished</source>
-        <translation type="unfinished"></translation>
+        <translation>Fertig</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="1133"/>
         <source>Loading</source>
-        <translation type="unfinished"></translation>
+        <translation>Verladung</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="1135"/>
         <source>Error</source>
-        <translation type="unfinished"></translation>
+        <translation>Fehler</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="1137"/>
         <source>Paused</source>
-        <translation type="unfinished"></translation>
+        <translation>Angehalten</translation>
     </message>
 </context>
 <context>
@@ -1118,7 +1118,7 @@ Stopped Position: %2
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="116"/>
         <source>Deactivated</source>
-        <translation type="unfinished"></translation>
+        <translation>Deaktiviert</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
@@ -1128,7 +1128,7 @@ Stopped Position: %2
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
         <source>Unavailable</source>
-        <translation type="unfinished"></translation>
+        <translation>nicht verfügbar</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="146"/>
@@ -1186,7 +1186,7 @@ Stopped Position: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="131"/>
         <source>Play</source>
-        <translation type="unfinished"></translation>
+        <translation>Abspielen</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="167"/>
@@ -1233,7 +1233,7 @@ Stopped Position: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="204"/>
         <source>Duration</source>
-        <translation type="unfinished"></translation>
+        <translation>Dauer</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1674"/>
@@ -1280,7 +1280,7 @@ Stopped Position: %2
         <location filename="../ui/prefdialog.ui" line="947"/>
         <location filename="../ui/prefdialog.ui" line="1298"/>
         <source>Neighbor</source>
-        <translation type="unfinished"></translation>
+        <translation>Nächste</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="961"/>
@@ -1306,7 +1306,7 @@ Stopped Position: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="345"/>
         <source>Language</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprache</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="361"/>
@@ -1349,7 +1349,7 @@ Stopped Position: %2
         <location filename="../ui/prefdialog.ui" line="2800"/>
         <location filename="../prefdialog.cpp" line="294"/>
         <source>Subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>Untertitel</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="183"/>
@@ -1476,7 +1476,7 @@ Stopped Position: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="708"/>
         <source>Extension</source>
-        <translation type="unfinished"></translation>
+        <translation>Erweiterung</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="749"/>
@@ -1546,12 +1546,12 @@ Stopped Position: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2259"/>
         <source>New line</source>
-        <translation type="unfinished"></translation>
+        <translation>Neue Zeile</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2291"/>
         <source>New paragraph</source>
-        <translation type="unfinished"></translation>
+        <translation>Neuer Absatz</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2384"/>
@@ -1581,7 +1581,7 @@ Stopped Position: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2888"/>
         <source>Amplifier</source>
-        <translation type="unfinished"></translation>
+        <translation>Verstärker</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1939"/>
@@ -1593,7 +1593,7 @@ Stopped Position: %2
         <location filename="../ui/prefdialog.ui" line="2120"/>
         <location filename="../ui/prefdialog.ui" line="2940"/>
         <source>Color</source>
-        <translation type="unfinished"></translation>
+        <translation>Farbe</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1933"/>
@@ -1603,27 +1603,27 @@ Stopped Position: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2006"/>
         <source>Outline</source>
-        <translation type="unfinished"></translation>
+        <translation>umreißen</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1966"/>
         <source>Size</source>
-        <translation type="unfinished"></translation>
+        <translation>Größe</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2048"/>
         <source>Width</source>
-        <translation type="unfinished"></translation>
+        <translation>Breite</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2240"/>
         <source>Line spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Zeilenabstand</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2090"/>
         <source>Shadow</source>
-        <translation type="unfinished"></translation>
+        <translation>Schatten</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="141"/>
@@ -1643,12 +1643,12 @@ Stopped Position: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="211"/>
         <source>Infinite</source>
-        <translation type="unfinished"></translation>
+        <translation>Unendlich</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2143"/>
         <source>Opacity</source>
-        <translation type="unfinished"></translation>
+        <translation>Deckkraft</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2164"/>
@@ -1670,7 +1670,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/prefdialog.ui" line="2414"/>
         <source>Menu</source>
-        <translation type="unfinished"></translation>
+        <translation>Menü</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2419"/>
@@ -1704,7 +1704,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/prefdialog.ui" line="2687"/>
         <source>Seek</source>
-        <translation type="unfinished"></translation>
+        <translation>Suche</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2696"/>
@@ -1757,12 +1757,12 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/prefdialog.ui" line="2946"/>
         <source>Brightness</source>
-        <translation type="unfinished"></translation>
+        <translation>Helligkeit</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2966"/>
         <source>Contrast</source>
-        <translation type="unfinished"></translation>
+        <translation>Kontrast</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2986"/>
@@ -1782,12 +1782,12 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../prefdialog.cpp" line="278"/>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation>Öffnen</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="296"/>
         <source>Appearance</source>
-        <translation type="unfinished"></translation>
+        <translation>Aussehen</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="297"/>
@@ -1852,7 +1852,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../prefdialog.cpp" line="291"/>
         <source>Sound</source>
-        <translation type="unfinished"></translation>
+        <translation>Ertönen</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="292"/>
@@ -1872,7 +1872,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../prefdialog.cpp" line="315"/>
         <source>Not supported</source>
-        <translation type="unfinished"></translation>
+        <translation>Nicht unterstützt</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="436"/>
@@ -1892,12 +1892,17 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../prefdialog.cpp" line="478"/>
         <source>English</source>
-        <translation type="unfinished"></translation>
+        <translation>Englisch</translation>
+    </message>
+    <message>
+        <location filename="../prefdialog.cpp" line="478"/>
+        <source>German</source>
+        <translation>Deutsch</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="481"/>
         <source>Japanese</source>
-        <translation type="unfinished"></translation>
+        <translation>Japanisch</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="484"/>
@@ -1907,12 +1912,12 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../prefdialog.cpp" line="487"/>
         <source>Russian</source>
-        <translation type="unfinished"></translation>
+        <translation>Russisch</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="490"/>
         <source>Italian</source>
-        <translation type="unfinished"></translation>
+        <translation>Italienisch</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="502"/>
@@ -1932,7 +1937,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../prefdialog.cpp" line="505"/>
         <source>All</source>
-        <translation type="unfinished"></translation>
+        <translation>Alle</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="508"/>
@@ -1942,12 +1947,12 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../prefdialog.cpp" line="509"/>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation>Stornieren</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="510"/>
         <source>Apply</source>
-        <translation type="unfinished"></translation>
+        <translation>Zutreffen</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="511"/>
@@ -1957,7 +1962,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../prefdialog.cpp" line="512"/>
         <source>Reset</source>
-        <translation type="unfinished"></translation>
+        <translation>Zurücksetzen</translation>
     </message>
 </context>
 <context>
@@ -1983,49 +1988,49 @@ e.g.: English, Korean</source>
         <location filename="../qtcolorpicker.cpp" line="278"/>
         <location filename="../qtcolorpicker.cpp" line="381"/>
         <source>Black</source>
-        <translation type="unfinished"></translation>
+        <translation>Schwarz</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="279"/>
         <location filename="../qtcolorpicker.cpp" line="382"/>
         <source>White</source>
-        <translation type="unfinished"></translation>
+        <translation>Weiß</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="280"/>
         <location filename="../qtcolorpicker.cpp" line="383"/>
         <source>Red</source>
-        <translation type="unfinished"></translation>
+        <translation>Rot</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="281"/>
         <location filename="../qtcolorpicker.cpp" line="384"/>
         <source>Dark red</source>
-        <translation type="unfinished"></translation>
+        <translation>Dunkelrot</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="282"/>
         <location filename="../qtcolorpicker.cpp" line="385"/>
         <source>Green</source>
-        <translation type="unfinished"></translation>
+        <translation>Grün</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="283"/>
         <location filename="../qtcolorpicker.cpp" line="386"/>
         <source>Dark green</source>
-        <translation type="unfinished"></translation>
+        <translation>Dunkelgrün</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="284"/>
         <location filename="../qtcolorpicker.cpp" line="387"/>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
+        <translation>Blau</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="285"/>
         <location filename="../qtcolorpicker.cpp" line="388"/>
         <source>Dark blue</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Dunkelblau</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="286"/>
@@ -2037,7 +2042,7 @@ e.g.: English, Korean</source>
         <location filename="../qtcolorpicker.cpp" line="287"/>
         <location filename="../qtcolorpicker.cpp" line="390"/>
         <source>Dark cyan</source>
-        <translation type="unfinished"></translation>
+        <translation>Dunkel cyan</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="288"/>
@@ -2055,13 +2060,13 @@ e.g.: English, Korean</source>
         <location filename="../qtcolorpicker.cpp" line="290"/>
         <location filename="../qtcolorpicker.cpp" line="393"/>
         <source>Yellow</source>
-        <translation type="unfinished"></translation>
+        <translation>Gelb</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="291"/>
         <location filename="../qtcolorpicker.cpp" line="394"/>
         <source>Dark yellow</source>
-        <translation type="unfinished"></translation>
+        <translation>Dunkelgelb</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="292"/>
@@ -2073,13 +2078,13 @@ e.g.: English, Korean</source>
         <location filename="../qtcolorpicker.cpp" line="293"/>
         <location filename="../qtcolorpicker.cpp" line="396"/>
         <source>Dark gray</source>
-        <translation type="unfinished"></translation>
+        <translation>Grau</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="294"/>
         <location filename="../qtcolorpicker.cpp" line="397"/>
         <source>Light gray</source>
-        <translation type="unfinished"></translation>
+        <translation>Hellgrau</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="312"/>
@@ -2093,45 +2098,45 @@ e.g.: English, Korean</source>
         <location filename="../rootmenu.cpp" line="376"/>
         <location filename="../rootmenu.cpp" line="486"/>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation>öffnen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="377"/>
         <source>Open File</source>
-        <translation type="unfinished"></translation>
+        <translation>Datei öffnen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="378"/>
         <source>Open Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Ordner öffnen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="379"/>
         <source>Load URL</source>
-        <translation type="unfinished"></translation>
+        <translation>URL laden</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="380"/>
         <source>Open DVD</source>
-        <translation type="unfinished"></translation>
+        <translation>DVD öffnen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="384"/>
         <location filename="../rootmenu.cpp" line="488"/>
         <location filename="../rootmenu.cpp" line="498"/>
         <source>Clear</source>
-        <translation type="unfinished"></translation>
+        <translation>Leeren</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="386"/>
         <location filename="../rootmenu.cpp" line="387"/>
         <source>Play</source>
-        <translation type="unfinished"></translation>
+        <translation>Abspielen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="388"/>
         <source>Stop</source>
-        <translation type="unfinished"></translation>
+        <translation>Stoppen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="389"/>
@@ -2166,7 +2171,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="398"/>
         <source>Quit</source>
-        <translation type="unfinished"></translation>
+        <translation>Verlassen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="400"/>
@@ -2201,17 +2206,17 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="414"/>
         <source>Title</source>
-        <translation type="unfinished"></translation>
+        <translation>Titel</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="415"/>
         <source>Chapter</source>
-        <translation type="unfinished"></translation>
+        <translation>Kapitel</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="417"/>
         <source>Subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>Untertitel</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="106"/>
@@ -2228,7 +2233,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="424"/>
         <source>Hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Ausblenden</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="419"/>
@@ -2253,7 +2258,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="435"/>
         <source>Crop</source>
-        <translation type="unfinished"></translation>
+        <translation>Scheren</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="437"/>
@@ -2324,7 +2329,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="453"/>
         <source>Sharpen</source>
-        <translation type="unfinished"></translation>
+        <translation>Schärfen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="454"/>
@@ -2369,7 +2374,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="480"/>
         <source>Undo</source>
-        <translation type="unfinished"></translation>
+        <translation>Rückgängig</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="481"/>
@@ -2394,12 +2399,12 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="420"/>
         <source>Open File(s)</source>
-        <translation type="unfinished"></translation>
+        <translation>Datei öffnen(en)</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="421"/>
         <source>Clear File(s)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Klar Datei(en)</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="466"/>
@@ -2429,7 +2434,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="482"/>
         <source>Tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Werkzeuge</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="484"/>
@@ -2445,17 +2450,17 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="487"/>
         <source>Save</source>
-        <translation type="unfinished"></translation>
+        <translation>Speichern</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="489"/>
         <source>Append File</source>
-        <translation type="unfinished"></translation>
+        <translation>Datei anhängen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="491"/>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>Entfernen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="492"/>
@@ -2475,7 +2480,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="496"/>
         <source>History</source>
-        <translation type="unfinished"></translation>
+        <translation>Geschichte</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="500"/>
@@ -2485,7 +2490,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="501"/>
         <source>Preferences</source>
-        <translation type="unfinished"></translation>
+        <translation>Einstellungen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="502"/>
@@ -2505,7 +2510,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="507"/>
         <source>Window</source>
-        <translation type="unfinished"></translation>
+        <translation>Fenster</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="509"/>
@@ -2515,27 +2520,27 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="510"/>
         <source>Fullscreen</source>
-        <translation type="unfinished"></translation>
+        <translation>Vollbild</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="511"/>
         <source>Minimize</source>
-        <translation type="unfinished"></translation>
+        <translation>Minimieren</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="512"/>
         <source>Maximize</source>
-        <translation type="unfinished"></translation>
+        <translation>Maximieren</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="513"/>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation>Abschließen</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="516"/>
         <source>Help</source>
-        <translation type="unfinished"></translation>
+        <translation>Hilfe</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="517"/>
@@ -2545,7 +2550,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="518"/>
         <source>Exit</source>
-        <translation type="unfinished"></translation>
+        <translation>Verlassen</translation>
     </message>
 </context>
 <context>
@@ -2554,12 +2559,12 @@ e.g.: English, Korean</source>
         <location filename="../simplelistwidget.cpp" line="12"/>
         <location filename="../simplelistwidget.cpp" line="74"/>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation>hinzufügen</translation>
     </message>
     <message>
         <location filename="../simplelistwidget.cpp" line="13"/>
         <source>Erase</source>
-        <translation type="unfinished"></translation>
+        <translation>Löschen</translation>
     </message>
     <message>
         <location filename="../simplelistwidget.cpp" line="14"/>
@@ -2579,7 +2584,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../simplelistwidget.cpp" line="77"/>
         <source>&amp;Cancel</source>
-        <translation type="unfinished"></translation>
+        <translation>Stornieren</translation>
     </message>
 </context>
 <context>
@@ -2628,22 +2633,22 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/snapshotdialog.ui" line="114"/>
         <source>Save</source>
-        <translation type="unfinished"></translation>
+        <translation>Speichern</translation>
     </message>
     <message>
         <location filename="../ui/snapshotdialog.ui" line="121"/>
         <source>Close</source>
-        <translation type="unfinished"></translation>
+        <translation>schließen</translation>
     </message>
     <message>
         <location filename="../snapshotdialog.cpp" line="28"/>
         <source>Images</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilder</translation>
     </message>
     <message>
         <location filename="../snapshotdialog.cpp" line="30"/>
         <source>Save File</source>
-        <translation type="unfinished"></translation>
+        <translation>Datei speichern</translation>
     </message>
     <message>
         <location filename="../snapshotdialog.cpp" line="79"/>
@@ -2656,12 +2661,12 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../subtitlemodel.cpp" line="78"/>
         <source>Start</source>
-        <translation type="unfinished"></translation>
+        <translation>Starten</translation>
     </message>
     <message>
         <location filename="../subtitlemodel.cpp" line="79"/>
         <source>End</source>
-        <translation type="unfinished"></translation>
+        <translation>Ende</translation>
     </message>
     <message>
         <location filename="../subtitlemodel.cpp" line="80"/>
@@ -2692,12 +2697,12 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../trayicon.cpp" line="59"/>
         <source>Quit</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Verlassen</translation>
     </message>
     <message>
         <location filename="../trayicon.cpp" line="60"/>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Zeigen</translation>
     </message>
 </context>
 <context>
