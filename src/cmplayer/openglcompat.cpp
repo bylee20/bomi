@@ -51,7 +51,7 @@ void OpenGLCompat::fill(QOpenGLContext *ctx) {
 }
 
 template<typename T>
-QVector<T> convertToIntegerVector(const QVector<GLfloat> &v, float &mul) {
+static QVector<T> convertToIntegerVector(const QVector<GLfloat> &v, float &mul) {
 	static_assert(std::is_unsigned<T>::value, "wrong type");
 	const int size = v.size();
 	QVector<T> ret(size);
@@ -66,43 +66,49 @@ QVector<T> convertToIntegerVector(const QVector<GLfloat> &v, float &mul) {
 	return ret;
 }
 
-double fract(double v1, double v2) {
-	static constexpr auto e = std::numeric_limits<float>::epsilon();
-	if (qAbs(v1) < e)
-		return qAbs(v2) < e ? 1.0 : 0.0;
-	return v1/v2;
+static QVector<double> interpolatorArray() {
+	QVector<double> array(OpenGLCompat::IntSamples);
+	for (int i=0; i<array.size(); ++i)
+		array[i] = (double)i/(OpenGLCompat::IntSamples-1);
+	Q_ASSERT(array.front() == 0.0);
+	Q_ASSERT(array.last() == 1.0);
+	array.front() = 1e-10;
+	array.last() = 1.0-1e-10;
+	return array;
 }
 
+static inline double fract(double v1, double v2) { return v1/v2; }
+
 template<typename Func>
-void makeInterpolatorLut4(QVector<GLfloat> &lut, Func func) {
+static void makeInterpolatorLut4(QVector<GLfloat> &lut, Func func) {
 	lut.resize(OpenGLCompat::IntLutSize);
 	auto p = lut.data();
-
+	auto as = interpolatorArray();
 	for (int i=0; i<OpenGLCompat::IntSamples; ++i) {
-		const auto a = (double)i/(OpenGLCompat::IntSamples-1);
-		const auto w0 = func(a + 1.0) + func(a + 2.0);
+		const auto a = as[i];
+		const auto w0 = func(a + 1.0);
 		const auto w1 = func(a + 0.0);
 		const auto w2 = func(a - 1.0);
-		const auto w3 = func(a - 2.0) + func(a - 3.0);
+		const auto w3 = func(a - 2.0);
 		const auto g0 = w0 + w1;
 		const auto g1 = w2 + w3;
 		const auto h0 = 1.0 + a - fract(w1, g0);
 		const auto h1 = 1.0 - a + fract(w3, g1);
-		const auto f0 = g0 + g1;
-		const auto f1 = fract(g1, f0);
+		const auto f1 = fract(g1, (g0 + g1));
 		*p++ = h0;		*p++ = h1;
-		*p++ = f0;		*p++ = f1;
+		*p++ = f1;		*p++ = f1;
 	}
 }
 
 template<typename Func>
-void makeInterpolatorLut6(QVector<GLfloat> &lut1, QVector<GLfloat> &lut2, Func func) {
+static void makeInterpolatorLut6(QVector<GLfloat> &lut1, QVector<GLfloat> &lut2, Func func) {
 	lut1.resize(OpenGLCompat::IntLutSize);
 	lut2.resize(OpenGLCompat::IntLutSize);
 	auto p1 = lut1.data();
 	auto p2 = lut2.data();
+	auto as = interpolatorArray();
 	for (int i=0; i<OpenGLCompat::IntSamples; ++i) {
-		const auto a = (double)i/(OpenGLCompat::IntSamples-1);
+		const auto a = as[i];
 		const auto w0 = func(a + 2.0);
 		const auto w1 = func(a + 1.0);
 		const auto w2 = func(a + 0.0);
@@ -117,8 +123,53 @@ void makeInterpolatorLut6(QVector<GLfloat> &lut1, QVector<GLfloat> &lut2, Func f
 		const auto h2 = 2.0 - a + fract(w5, g2);
 		const auto f0 = fract(g1, (g0 + g1));
 		const auto f1 = fract(g2, (g0 + g1 + g2));
-		*p1++ = h0;		*p1++ = h1;		*p1++ = h2; ++p1;
-		*p2++ = f0;		*p2++ = f1;		p2 += 2;
+		*p1++ = h0;		*p1++ = h1;		*p1++ = h2;		*p1++ = .0;
+		*p2++ = f0;		*p2++ = f1;		*p2++ = .0;		*p2++ = .0;
+	}
+}
+
+template<typename Func>
+static void makeInterpolatorLut8(QVector<GLfloat> &lut1, QVector<GLfloat> &lut2, Func func) {
+	lut1.resize(OpenGLCompat::IntLutSize);
+	lut2.resize(OpenGLCompat::IntLutSize);
+	auto p1 = lut1.data();
+	auto p2 = lut2.data();
+	auto as = interpolatorArray();
+	for (int i=0; i<OpenGLCompat::IntSamples; ++i) {
+		const auto a = as[i];
+		const auto w0 = func(a + 3.0);
+		const auto w1 = func(a + 2.0);
+		const auto w2 = func(a + 1.0);
+		const auto w3 = func(a + 0.0);
+		const auto w4 = func(a - 1.0);
+		const auto w5 = func(a - 2.0);
+		const auto w6 = func(a - 3.0);
+		const auto w7 = func(a - 4.0);
+		const auto g0 = w0 + w1;
+		const auto g1 = w2 + w3;
+		const auto g2 = w4 + w5;
+		const auto g3 = w6 + w7;
+		const auto h0 = 3.0 + a - fract(w1, g0);
+		const auto h1 = 1.0 + a - fract(w3, g1);
+		const auto h2 = 1.0 - a + fract(w5, g2);
+		const auto h3 = 3.0 - a + fract(w7, g3);
+		const auto f0 = fract(g1, (g0 + g1));
+		const auto f1 = fract(g2, (g0 + g1 + g2));
+		const auto f2 = fract(g3, (g0 + g1 + g2 + g3));
+		*p1++ = h0;		*p1++ = h1;		*p1++ = h2;		*p1++ = h3;
+		*p2++ = f0;		*p2++ = f1;		*p2++ = f2;		*p2++ = .0;
+
+
+//		qDebug() << InterpolatorTypeInfo::name(interpolator);
+
+//		auto p1 = lut1.data();
+//		auto p2 = lut2.data();
+//		for (int i=0; i<OpenGLCompat::IntSamples; ++i, p1+=4, p2+=4) {
+//			const auto a = (double)i/(OpenGLCompat::IntSamples-1);
+//			qDebug() << a << p1[0] << p1[1] << p1[2] << p1[3] << p2[0] << p2[1] << p2[2] << p2[3];
+//		}
+//		qDebug() << a << w0 << w1 << w2 << w3 << w4 << w5 << w6 << w7;
+		qDebug() << a << h0 << h1 << h2 << h3 << f0 << f1 << f2 << .0;
 	}
 }
 
@@ -136,11 +187,12 @@ static double bicubic(double x, double b, double c) {
 }
 
 static double lanczos(double x, double a) {
+	static constexpr auto e = std::numeric_limits<float>::epsilon();
 	x = qAbs(x);
-	if (x == 0.0)
+	if (x < e)
 		return 1.0;
 	const double pix = M_PI*x;
-	if (x < a)
+	if (x <= a)
 		return a*std::sin(pix)*std::sin(pix/a)/(pix*pix);
 	return 0.0;
 }
@@ -167,27 +219,32 @@ static double spline36(double x) {
 
 void OpenGLCompat::fillInterpolatorLut(InterpolatorType interpolator) {
 	const int type = (int)interpolator;
-	const double b = m_bicubicParams[type].first;
-	const double c = m_bicubicParams[type].second;
+	auto &lut1 = m_intLuts1[type];
+	auto &lut2 = m_intLuts2[type];
 	switch (interpolator) {
+	case InterpolatorType::Bilinear:
+		break;
 	case InterpolatorType::BicubicBS:
 	case InterpolatorType::BicubicCR:
-	case InterpolatorType::BicubicMN:
-		makeInterpolatorLut4(m_intLuts1[type], [b, c] (double x) { return bicubic(x, b, c); });
+	case InterpolatorType::BicubicMN: {
+		const double b = m_bicubicParams[type].first;
+		const double c = m_bicubicParams[type].second;
+		makeInterpolatorLut4(lut1, [b, c] (double x) { return bicubic(x, b, c); });
 		break;
-	case InterpolatorType::Spline16:
-		makeInterpolatorLut4(m_intLuts1[type], spline16);
+	} case InterpolatorType::Spline16:
+		makeInterpolatorLut4(lut1, spline16);
 		break;
 	case InterpolatorType::Lanczos2:
-		makeInterpolatorLut4(m_intLuts1[type], [] (double x) { return lanczos(x, 2.0); });
+		makeInterpolatorLut4(lut1, [] (double x) { return lanczos(x, 2.0); });
 		break;
 	case InterpolatorType::Spline36:
-		makeInterpolatorLut6(m_intLuts1[type], m_intLuts2[type], spline36);
+		makeInterpolatorLut6(lut1, lut2, spline36);
 		break;
 	case InterpolatorType::Lanczos3:
-		makeInterpolatorLut6(m_intLuts1[type], m_intLuts2[type], [] (double x) { return lanczos(x, 3.0); });
+		makeInterpolatorLut6(lut1, lut2, [] (double x) { return lanczos(x, 3.0); });
 		break;
-	default:
+	case InterpolatorType::Lanczos4:
+		makeInterpolatorLut8(lut1, lut2, [] (double x) { return lanczos(x, 4.0); });
 		break;
 	}
 }
@@ -226,13 +283,7 @@ void OpenGLCompat::allocateInterpolatorLutTexture(InterpolatorLutTexture &textur
 	}
 }
 
-/*	m00 m01 m02  v0
- *  m10 m11 m12  v1
- *  m20 m21 m22  v2
- *   o0  o1  o2   x
- */
-
-QVector3D operator*(const QMatrix3x3 &mat, const QVector3D &vec) {
+static QVector3D operator*(const QMatrix3x3 &mat, const QVector3D &vec) {
 	QVector3D ret;
 	ret.setX(mat(0, 0)*vec.x() + mat(0, 1)*vec.y() + mat(0, 2)*vec.z());
 	ret.setY(mat(1, 0)*vec.x() + mat(1, 1)*vec.y() + mat(1, 2)*vec.z());
@@ -354,12 +405,18 @@ vec4 renormalize(const in vec4 v, float mul) {
 	return v*mul-0.5*mul;
 }
 #endif
-#if USE_INTERPOLATOR == 2
+#if USE_INTERPOLATOR > 1
 uniform sampler1D lut_int2;
 uniform float lut_int2_mul;
+#if USE_INTERPOLATOR == 2
 vec4 mix3(const in vec4 v1, const in vec4 v2, const in vec4 v3, const in float a, const in float b) {
 	return mix(mix(v1, v2, a), v3, b);
 }
+#elif USE_INTERPOLATOR == 3
+vec4 mix4(const in vec4 v1, const in vec4 v2, const in vec4 v3, const in vec4 v4, const in float a, const in float b, const in float c) {
+	return mix(mix(mix(v1, v2, a), v3, b), v4, c);
+}
+#endif
 #endif
 #endif
 
@@ -380,26 +437,56 @@ vec4 interpolated(const in sampler2D tex, const in vec2 coord) {
 	tex01 = mix(tex01, tex11, hg_x.a);
 	return  mix(tex00, tex01, hg_y.a);
 #elif USE_INTERPOLATOR == 2
-	vec4 h_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul);
-	vec4 h_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul);
+	vec4 h_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul)*dxy.x;
+	vec4 h_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul)*dxy.y;
 	vec4 f_x = renormalize(texture1D(lut_int2, lutIntCoord.x), lut_int2_mul);
 	vec4 f_y = renormalize(texture1D(lut_int2, lutIntCoord.y), lut_int2_mul);
 
-	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b)*dxy);
-	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g)*dxy);
-	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r)*dxy);
+	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b));
+	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g));
+	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r));
 	tex00 = mix3(tex00, tex01, tex02, f_y.b, f_y.g);
 
-	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b)*dxy);
-	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g)*dxy);
-	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r)*dxy);
+	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b));
+	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g));
+	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r));
 	tex10 = mix3(tex10, tex11, tex12, f_y.b, f_y.g);
 
-	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b)*dxy);
-	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g)*dxy);
-	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r)*dxy);
+	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b));
+	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g));
+	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r));
 	tex20 = mix3(tex20, tex21, tex22, f_y.b, f_y.g);
 	return mix3(tex00, tex10, tex20, f_x.b, f_x.g);
+#elif USE_INTERPOLATOR == 3
+	vec4 h_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul)*dxy.x;
+	vec4 h_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul)*dxy.y;
+	vec4 f_x = renormalize(texture1D(lut_int2, lutIntCoord.x), lut_int2_mul);
+	vec4 f_y = renormalize(texture1D(lut_int2, lutIntCoord.y), lut_int2_mul);
+
+	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b));
+	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g));
+	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r));
+	vec4 tex03 = texture2D(tex, coord + vec2(-h_x.b,  h_y.a));
+	tex00 = mix4(tex00, tex01, tex02, tex03, f_y.b, f_y.g, f_y.r);
+
+	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b));
+	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g));
+	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r));
+	vec4 tex13 = texture2D(tex, coord + vec2(-h_x.g,  h_y.a));
+	tex10 = mix4(tex10, tex11, tex12, tex13, f_y.b, f_y.g, f_y.r);
+
+	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b));
+	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g));
+	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r));
+	vec4 tex23 = texture2D(tex, coord + vec2( h_x.r,  h_y.a));
+	tex20 = mix4(tex20, tex21, tex22, tex23, f_y.b, f_y.g, f_y.r);
+
+	vec4 tex30 = texture2D(tex, coord + vec2( h_x.a, -h_y.b));
+	vec4 tex31 = texture2D(tex, coord + vec2( h_x.a, -h_y.g));
+	vec4 tex32 = texture2D(tex, coord + vec2( h_x.a,  h_y.r));
+	vec4 tex33 = texture2D(tex, coord + vec2( h_x.a,  h_y.a));
+	tex30 = mix4(tex30, tex31, tex32, tex33, f_y.b, f_y.g, f_y.r);
+	return mix4(tex00, tex10, tex20, tex30, f_x.b, f_x.g, f_x.r);
 #endif
 }
 #endif

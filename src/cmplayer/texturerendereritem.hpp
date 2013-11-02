@@ -51,7 +51,7 @@ private:
 	bool m_dirtyGeomerty = true, m_init = false;
 	InterpolatorType m_interpolator = InterpolatorType::Bilinear;
 	InterpolatorType m_newInt = InterpolatorType::Bilinear;
-	mutable QSGMaterialType m_types[3][2];
+	mutable QSGMaterialType m_types[4][2];
 	int m_intCategory = 0;
 	InterpolatorLutTexture m_lutInt1, m_lutInt2;
 	OpenGLTexture m_texture, m_ditheringTex;

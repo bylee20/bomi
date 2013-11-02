@@ -179,6 +179,8 @@ public:
 		case InterpolatorType::Spline36:
 		case InterpolatorType::Lanczos3:
 			return 2;
+		case InterpolatorType::Lanczos4:
+			return 3;
 		}
 		return 0;
 	}

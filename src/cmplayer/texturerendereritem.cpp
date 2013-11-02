@@ -50,16 +50,17 @@ void main() {
 
 TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, int interpolator, bool dithering)
 : m_item(item), m_interpolator(interpolator), m_dithering(dithering) {
+	const auto interpolatorCodes = OpenGLCompat::interpolatorCodes(m_interpolator);
 	QByteArray header;
 	header += "#define DEC_UNIFORM_DXY\n";
 	header += "#define USE_DITHERING " + QByteArray::number(dithering) + "\n";
 	m_fragCode = header;
 	m_fragCode += "#define FRAGMENT\n";
-	m_fragCode += OpenGLCompat::interpolatorCodes(m_interpolator);
+	m_fragCode += interpolatorCodes;
 	m_fragCode += code;
 	m_vertexCode = header;
 	m_vertexCode += "#define VERTEX\n";
-	m_vertexCode += OpenGLCompat::interpolatorCodes(m_interpolator);
+	m_vertexCode += interpolatorCodes;
 	m_vertexCode += code;
 }
 
