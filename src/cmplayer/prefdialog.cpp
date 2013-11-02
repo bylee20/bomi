@@ -477,6 +477,9 @@ QString PrefDialog::toString(const QLocale &locale) {
 	case QLocale::English:
 		text = tr("English");
 		break;
+	case QLocale::German:
+		text = tr("German");
+		break;
 	case QLocale::Japanese:
 		text = tr("Japanese");
 		break;
