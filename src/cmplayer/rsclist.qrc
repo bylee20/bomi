@@ -39,5 +39,6 @@
         <file>img/preferences-web-browser-cache.png</file>
         <file>translations/cmplayer_it.qm</file>
         <file>translations/cmplayer_cs.qm</file>
+        <file>translations/cmplayer_de.qm</file>
     </qresource>
 </RCC>
