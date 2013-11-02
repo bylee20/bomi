@@ -153,6 +153,7 @@ Shortcuts Pref::preset(ShortcutPreset id) {
 void Pref::save() const {
 	Record r(PREF_GROUP);
 #define WRITE(a) r.write(a, #a)
+	WRITE(fit_to_video);
 	WRITE(remember_stopped);
 	WRITE(ask_record_found);
 	WRITE(pause_minimized);
@@ -254,6 +255,7 @@ void Pref::save() const {
 void Pref::load() {
 	Record r(PREF_GROUP);
 #define READ(a) r.read(a, #a)
+	READ(fit_to_video);
 	READ(remember_stopped);
 	READ(ask_record_found);
 	READ(pause_minimized);

@@ -26,6 +26,7 @@
 #include "subtitle_parser.hpp"
 #include "subtitlemodel.hpp"
 #include "openglcompat.hpp"
+#include "videoformat.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 #endif
@@ -418,6 +419,11 @@ struct MainWindow::Data {
 		connect(&engine, &PlayEngine::stopped, &history, &HistoryModel::setStopped);
 		connect(&engine, &PlayEngine::finished, &history, &HistoryModel::setFinished);
 
+		connect(&engine, &PlayEngine::videoFormatChanged, [this] (const VideoFormat &format) {
+			if (pref().fit_to_video && !format.displaySize().isEmpty())
+				setVideoSize(format.displaySize());
+		});
+
 		engine.waitUntilInitilaized();
 	}
 	void initItems() {
@@ -486,6 +492,31 @@ struct MainWindow::Data {
 		});
 		connect(&as, sig, f);
 		emit (as.*sig)();
+	}
+
+	void setVideoSize(const QSize &video) {
+		if (p->isFullScreen() || p->isMaximized())
+			return;
+		// patched by Handrake
+		const QSizeF desktop = p->window()->windowHandle()->screen()->availableVirtualSize();
+		const QSize size = (p->size() - renderer.size().toSize() + video);
+		if (size != p->size()) {
+			p->resize(size);
+			int dx = 0;
+			const int rightDiff = desktop.width() - (p->x() + p->width());
+			if (rightDiff < 10) {
+				if (rightDiff < 0)
+					dx = desktop.width() - p->x() - size.width();
+				else
+					dx = p->width() - size.width();
+			}
+			if (dx) {
+				int x = p->x() + dx;
+				if (x < 0)
+					x = 0;
+				p->move(x, p->y());
+			}
+		}
 	}
 };
 
@@ -1140,14 +1171,18 @@ void MainWindow::setVideoSize(double rate) {
 	if (rate < 0) {
 		setFullScreen(!isFullScreen());
 	} else {
+		if (isFullScreen())
+			setFullScreen(false);
+		if (isMaximized())
+			showNormal();
 		// patched by Handrake
 		const QSizeF video = d->renderer.sizeHint();
 		const QSizeF desktop = window()->windowHandle()->screen()->availableVirtualSize();
 		const double target = 0.15;
-		if (isFullScreen())
-			setFullScreen(false);
 		if (rate == 0.0)
 			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
+		d->setVideoSize((video*qSqrt(rate)).toSize());
+		return;
 		const QSize size = (this->size() - d->renderer.size() + d->renderer.sizeHint()*qSqrt(rate)).toSize();
 		if (size != this->size()) {
 			if (isMaximized())

@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>15</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2594,6 +2594,13 @@ e.g.: English, Korean</string>
           <widget class="QCheckBox" name="single_app">
            <property name="text">
             <string>Run only single CMPlayer application at the same time</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="fit_to_video">
+           <property name="text">
+            <string>Resize to video resolution in windowed-mode when video is changed</string>
            </property>
           </widget>
          </item>
