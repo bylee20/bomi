@@ -209,7 +209,8 @@ SOURCES += main.cpp \
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
     translations/cmplayer_ru.ts \
-    translations/cmplayer_it.ts
+    translations/cmplayer_it.ts \
+    translations/cmplayer_cs.ts
 
 FORMS += \
     ui/aboutdialog.ui \
