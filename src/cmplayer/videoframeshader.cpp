@@ -171,6 +171,7 @@ const vec4 dxdy = vec4(1.0/texWidth, 1.0/texHeight, -1.0/texWidth, 0.0);
 const vec2 chroma_offset = chroma_location*dxdy.xy;
 #endif
 const vec2 dxy = dxdy.xy;
+const vec2 tex_size = vec2(texWidth, texHeight);
 )";
 
 		auto common = OpenGLCompat::interpolatorCodes(shader.interpolator) + shaderTemplate;
@@ -307,7 +308,7 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 	m_prog->setAttributeArray(vPosition, m_vPositions.data(), 2);
 
 	f->glActiveTexture(GL_TEXTURE0);
-	glDrawArrays(GL_QUADS, 0, 4);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	m_prog->disableAttributeArray(0);
 	m_prog->disableAttributeArray(1);

@@ -67,9 +67,9 @@ struct MpOsdItem::Data {
 		atlas.upload(part.map().x(), part.map().y(), part.strideAsPixel(), part.height(), osd.data(i));
 		QPointF tp = part.map(); tp.rx() /= (double)atlas.width; tp.ry() /= (double)atlas.height;
 		QSizeF ts = part.size(); ts.rwidth() /= (double)atlas.width; ts.rheight() /= (double)atlas.height;
-		shader->uploadCoord(i, {tp, ts});
-		shader->uploadPosition(i, part.display());
-		shader->uploadColor(i, part.color());
+		shader->uploadCoordAsTriangles(i, {tp, ts});
+		shader->uploadPositionAsTriangles(i, part.display());
+		shader->uploadColorAsTriangles(i, part.color());
 	}
 
 	void initializeAtlas(const MpOsdBitmap &osd) {
@@ -113,7 +113,7 @@ struct MpOsdItem::Data {
 		glBindTexture(GL_TEXTURE_2D, atlas.id);
 		glEnable(GL_BLEND);
 		glBlendFunc(srcFactor, GL_ONE_MINUS_SRC_ALPHA);
-		glDrawArrays(GL_QUADS, 0, 4*osd.count());
+		glDrawArrays(GL_TRIANGLES, 0, shader->N*osd.count());
 		glDisable(GL_BLEND);
 		glBindTexture(GL_TEXTURE_2D, 0);
 

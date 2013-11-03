@@ -42,8 +42,8 @@ private:
 		auto p = vec.data();
 		*p++ = p1.x(); *p++ = p1.y();
 		*p++ = p1.x(); *p++ = p2.y();
-		*p++ = p2.x(); *p++ = p2.y();
 		*p++ = p2.x(); *p++ = p1.y();
+		*p++ = p2.x(); *p++ = p2.y();
 		return vec;
 	}
 	void updateTexCoords();

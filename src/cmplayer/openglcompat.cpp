@@ -47,7 +47,6 @@ void OpenGLCompat::fill(QOpenGLContext *ctx) {
 	m_bicubicParams[(int)InterpolatorType::BicubicBS] = {1.0, 0.0};
 	m_bicubicParams[(int)InterpolatorType::BicubicCR] = {0.0, 0.5};
 	m_bicubicParams[(int)InterpolatorType::BicubicMN] = {1./3., 1./3.};
-	m_bicubicParams[(int)InterpolatorType::Lanczos2] = {2.0, 2.0};
 }
 
 template<typename T>
@@ -77,26 +76,25 @@ static QVector<double> interpolatorArray() {
 	return array;
 }
 
-static inline double fract(double v1, double v2) { return v1/v2; }
+bool isNormalized(float v) { return 0.0 <= v && v <= 1.0; }
 
 template<typename Func>
 static void makeInterpolatorLut4(QVector<GLfloat> &lut, Func func) {
 	lut.resize(OpenGLCompat::IntLutSize);
 	auto p = lut.data();
 	auto as = interpolatorArray();
+
 	for (int i=0; i<OpenGLCompat::IntSamples; ++i) {
 		const auto a = as[i];
 		const auto w0 = func(a + 1.0);
 		const auto w1 = func(a + 0.0);
 		const auto w2 = func(a - 1.0);
 		const auto w3 = func(a - 2.0);
-		const auto g0 = w0 + w1;
-		const auto g1 = w2 + w3;
-		const auto h0 = 1.0 + a - fract(w1, g0);
-		const auto h1 = 1.0 - a + fract(w3, g1);
-		const auto f1 = fract(g1, (g0 + g1));
-		*p++ = h0;		*p++ = h1;
-		*p++ = f1;		*p++ = f1;
+		const auto div = w0 + w1 + w2 + w3;
+		*p++ = w0/div;
+		*p++ = w1/div;
+		*p++ = w2/div;
+		*p++ = w3/div;
 	}
 }
 
@@ -115,16 +113,18 @@ static void makeInterpolatorLut6(QVector<GLfloat> &lut1, QVector<GLfloat> &lut2,
 		const auto w3 = func(a - 1.0);
 		const auto w4 = func(a - 2.0);
 		const auto w5 = func(a - 3.0);
-		const auto g0 = w0 + w1;
-		const auto g1 = w2 + w3;
-		const auto g2 = w4 + w5;
-		const auto h0 = 2.0 + a - fract(w1, g0);
-		const auto h1 = 0.0 + a - fract(w3, g1);
-		const auto h2 = 2.0 - a + fract(w5, g2);
-		const auto f0 = fract(g1, (g0 + g1));
-		const auto f1 = fract(g2, (g0 + g1 + g2));
-		*p1++ = h0;		*p1++ = h1;		*p1++ = h2;		*p1++ = .0;
-		*p2++ = f0;		*p2++ = f1;		*p2++ = .0;		*p2++ = .0;
+		const auto div = w0 + w1 + w2 + w3 + w4 + w5;
+		*p1++ = w0/div;
+		*p1++ = w1/div;
+		*p1++ = w2/div;
+		*p1++ = w3/div;
+
+		*p2++ = w4/div;
+		*p2++ = w5/div;
+		*p2++ = 0.0;
+		*p2++ = 0.0;
+
+		qDebug() << a << w1/(w0+w1) << w3/(w2+w3) << w5/(w4+w5) << "w" << w0 << w1 << w4 << w5;
 	}
 }
 
@@ -145,31 +145,15 @@ static void makeInterpolatorLut8(QVector<GLfloat> &lut1, QVector<GLfloat> &lut2,
 		const auto w5 = func(a - 2.0);
 		const auto w6 = func(a - 3.0);
 		const auto w7 = func(a - 4.0);
-		const auto g0 = w0 + w1;
-		const auto g1 = w2 + w3;
-		const auto g2 = w4 + w5;
-		const auto g3 = w6 + w7;
-		const auto h0 = 3.0 + a - fract(w1, g0);
-		const auto h1 = 1.0 + a - fract(w3, g1);
-		const auto h2 = 1.0 - a + fract(w5, g2);
-		const auto h3 = 3.0 - a + fract(w7, g3);
-		const auto f0 = fract(g1, (g0 + g1));
-		const auto f1 = fract(g2, (g0 + g1 + g2));
-		const auto f2 = fract(g3, (g0 + g1 + g2 + g3));
-		*p1++ = h0;		*p1++ = h1;		*p1++ = h2;		*p1++ = h3;
-		*p2++ = f0;		*p2++ = f1;		*p2++ = f2;		*p2++ = .0;
-
-
-//		qDebug() << InterpolatorTypeInfo::name(interpolator);
-
-//		auto p1 = lut1.data();
-//		auto p2 = lut2.data();
-//		for (int i=0; i<OpenGLCompat::IntSamples; ++i, p1+=4, p2+=4) {
-//			const auto a = (double)i/(OpenGLCompat::IntSamples-1);
-//			qDebug() << a << p1[0] << p1[1] << p1[2] << p1[3] << p2[0] << p2[1] << p2[2] << p2[3];
-//		}
-//		qDebug() << a << w0 << w1 << w2 << w3 << w4 << w5 << w6 << w7;
-		qDebug() << a << h0 << h1 << h2 << h3 << f0 << f1 << f2 << .0;
+		const auto div = w0 + w1 + w2 + w3 + w4 + w5 + w6 + w7;
+		*p1++ = w0/div;
+		*p1++ = w1/div;
+		*p1++ = w2/div;
+		*p1++ = w3/div;
+		*p2++ = w4/div;
+		*p2++ = w5/div;
+		*p2++ = w6/div;
+		*p2++ = w7/div;
 	}
 }
 
@@ -180,9 +164,9 @@ static void makeInterpolatorLut8(QVector<GLfloat> &lut1, QVector<GLfloat> &lut2,
 static double bicubic(double x, double b, double c) {
 	x = qAbs(x);
 	if (x < 1.0)
-		return ((12.0 - 9.0*b - 6.0*c)*x*x*x + (-18.0 + 12.0*b + 6.0*c)*x*x + (6.0 - 2.0*b))/6.0;
+		return ((12.0 - 9.0*b - 6.0*c)*x*x*x + (-18.0 + 12.0*b +  6.0*c)*x*x                        + (6.0 - 2.0*b         ))/6.0;
 	if (x < 2.0)
-		return ((-b - 6.0*c)*x*x*x + (6.0*b + 30.0*c)*x*x + (-12.0*b - 48.0*c)*x + (8.0*b + 24.0*c))/6.0;
+		return ((          -b - 6.0*c)*x*x*x + (         6.0*b + 30.0*c)*x*x + (-12.0*b - 48.0*c)*x + (      8.0*b + 24.0*c))/6.0;
 	return 0.0;
 }
 
@@ -193,27 +177,40 @@ static double lanczos(double x, double a) {
 		return 1.0;
 	const double pix = M_PI*x;
 	if (x <= a)
-		return a*std::sin(pix)*std::sin(pix/a)/(pix*pix);
+		return qSin(pix)*qSin(pix/a)/(pix*(pix/a));
 	return 0.0;
 }
 
 static double spline16(double x) {
 	x = qAbs(x);
 	if (x < 1.0)
-		return ((x-9.0/5.0)*x-1.0/5.0)*x+1.0;
+		return ((         (x      ) - 9.0/5.0)*(x      ) - 1.0/5.0 )*(x      )+1.0;
 	if (x < 2.0)
-		return ((-1.0/3.0*(x-1.0)+4.0/5.0)*(x-1.0)-7.0/15.0)*(x-1.0);
+		return ((-1.0/3.0*(x - 1.0) + 4.0/5.0)*(x - 1.0) - 7.0/15.0)*(x - 1.0);
 	return 0.0;
 }
 
 static double spline36(double x) {
 	x = qAbs(x);
 	if (x < 1.0)
-		return ((13.0/11.0*x-453.0/209.0)*x-3.0/209.0)*x+1.0;
+		return ((13.0/11.0*(x    ) - 453.0/209.0)*(x    ) -   3.0/209.0)*(x    )+1.0;
 	if (x < 2.0)
-		return ((-6.0/11.0*(x-1)+270.0/209.0)*(x-1)-156.0/209.0)*(x-1);
+		return ((-6.0/11.0*(x - 1) + 270.0/209.0)*(x - 1) - 156.0/209.0)*(x - 1);
 	if (x < 3.0)
-		return ((1.0/11.0*(x-2)-45.0/209.0)*(x-2)+26.0/209.0)*(x-2);
+		return (( 1.0/11.0*(x - 2) -  45.0/209.0)*(x - 2) +  26.0/209.0)*(x - 2);
+	return 0.0;
+}
+
+static double spline64(double x) {
+	x = qAbs(x);
+	if(x < 1.0)
+		return (( 49.0/41.0*(x      ) - 6387.0/2911.0)*(x      ) -    3.0/2911.0)*(x      ) + 1.0;
+	if(x < 2.0)
+		return ((-24.0/41.0*(x - 1.0) + 4032.0/2911.0)*(x - 1.0) - 2328.0/2911.0)*(x - 1.0);
+	if(x < 3.0)
+		return ((  6.0/41.0*(x - 2.0) - 1008.0/2911.0)*(x - 2.0) +  582.0/2911.0)*(x - 2.0);
+	if(x < 4.0)
+		return ((- 1.0/41.0*(x - 3.0) +  168.0/2911.0)*(x - 3.0) -   97.0/2911.0)*(x - 3.0);
 	return 0.0;
 }
 
@@ -243,6 +240,9 @@ void OpenGLCompat::fillInterpolatorLut(InterpolatorType interpolator) {
 	case InterpolatorType::Lanczos3:
 		makeInterpolatorLut6(lut1, lut2, [] (double x) { return lanczos(x, 3.0); });
 		break;
+	case InterpolatorType::Spline64:
+		makeInterpolatorLut8(lut1, lut2, spline64);
+		break;
 	case InterpolatorType::Lanczos4:
 		makeInterpolatorLut8(lut1, lut2, [] (double x) { return lanczos(x, 4.0); });
 		break;
@@ -265,20 +265,20 @@ void OpenGLCompat::allocateInterpolatorLutTexture(InterpolatorLutTexture &textur
 	if (c.m_hasFloat) {
 		texture1.format.internal = GL_RGBA16F;
 		texture1.format.type = GL_FLOAT;
-		texture1.allocate(GL_LINEAR, GL_REPEAT, lut1.data());
+		texture1.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, lut1.data());
 		if (!lut2.isEmpty()) {
 			texture2.copyAttributesFrom(texture1);
-			texture2.allocate(GL_LINEAR, GL_REPEAT, lut2.data());
+			texture2.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, lut2.data());
 		}
 	} else {
 		texture1.format.internal = GL_RGBA16;
 		texture1.format.type = GL_UNSIGNED_SHORT;
 		auto data = convertToIntegerVector<GLushort>(lut1, texture1.multiply);
-		texture1.allocate(GL_LINEAR, GL_REPEAT, data.data());
+		texture1.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, data.data());
 		if (!lut2.isEmpty()) {
 			texture2.copyAttributesFrom(texture1);
 			data = convertToIntegerVector<GLushort>(lut2, texture2.multiply);
-			texture2.allocate(GL_LINEAR, GL_REPEAT, data.data());
+			texture2.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, data.data());
 		}
 	}
 }
@@ -391,6 +391,7 @@ QByteArray OpenGLCompat::interpolatorCodes(int category) {
 varying vec2 lutIntCoord;
 #ifdef DEC_UNIFORM_DXY
 uniform vec2 dxy;
+uniform vec2 tex_size;
 #endif
 #endif
 
@@ -408,85 +409,191 @@ vec4 renormalize(const in vec4 v, float mul) {
 #if USE_INTERPOLATOR > 1
 uniform sampler1D lut_int2;
 uniform float lut_int2_mul;
+
+vec4 fetch(const in sampler2D tex, const in vec2 c) {
+	vec2 coord = floor(c);
+	vec4 tex00 = texture2D(tex, coord);
+	vec4 tex10 = texture2D(tex, coord + vec2(dxy.x, 0.0));
+	vec4 tex01 = texture2D(tex, coord + vec2(0.0, dxy.y));
+	vec4 tex11 = texture2D(tex, coord + dxy);
+	vec2 a = fract(c);
+	tex00 = mix(tex00, tex10, a.x);
+	tex01 = mix(tex01, tex11, a.x);
+	return mix(tex00, tex01, a.y);
+}
+
 #if USE_INTERPOLATOR == 2
 vec4 mix3(const in vec4 v1, const in vec4 v2, const in vec4 v3, const in float a, const in float b) {
 	return mix(mix(v1, v2, a), v3, b);
 }
 #elif USE_INTERPOLATOR == 3
 vec4 mix4(const in vec4 v1, const in vec4 v2, const in vec4 v3, const in vec4 v4, const in float a, const in float b, const in float c) {
-	return mix(mix(mix(v1, v2, a), v3, b), v4, c);
+	return mix(mix(v1, v2, a), mix(v3, v4, b), c);
 }
 #endif
 #endif
 #endif
 
 vec4 interpolated(const in sampler2D tex, const in vec2 coord) {
-#if USE_INTERPOLATOR == 0
+#if USE_INTERPOLATOR < 1
 	return texture2D(tex, coord);
-#elif USE_INTERPOLATOR == 1
-	// b: h0, g: h1, r: g0+g1, a: g1/(g0+g1)
-	vec4 hg_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul);
-	vec4 hg_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul);
+#else
+	const float N = 256.0;
+	const float scale = (N-1.0)/N;
+	const float offset = 1.0/(2.0*N);
+	vec2 lut_int_coord = fract(lutIntCoord);
+	vec2 lutCoord = scale*lut_int_coord + offset;
+	vec2 c = coord - lut_int_coord*dxy;
+	vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
+# if USE_INTERPOLATOR < 2
+	vec4 w_x = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul);
+	vec4 w_y = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul);
+#define FETCH(a, b, i, j) (w_x.a*w_y.b)*texture2D(tex, c + vec2(i.0, j.0)*dxy)
+	color += FETCH(b, b,-1,-1);
+	color += FETCH(b, g,-1, 0);
+	color += FETCH(b, r,-1, 1);
+	color += FETCH(b, a,-1, 2);
 
-	vec4 tex00 = texture2D(tex, coord + vec2(-hg_x.b, -hg_y.b)*dxy);
-	vec4 tex10 = texture2D(tex, coord + vec2( hg_x.g, -hg_y.b)*dxy);
-	vec4 tex01 = texture2D(tex, coord + vec2(-hg_x.b,  hg_y.g)*dxy);
-	vec4 tex11 = texture2D(tex, coord + vec2( hg_x.g,  hg_y.g)*dxy);
+	color += FETCH(g, b, 0,-1);
+	color += FETCH(g, g, 0, 0);
+	color += FETCH(g, r, 0, 1);
+	color += FETCH(g, a, 0, 2);
 
-	tex00 = mix(tex00, tex10, hg_x.a);
-	tex01 = mix(tex01, tex11, hg_x.a);
-	return  mix(tex00, tex01, hg_y.a);
-#elif USE_INTERPOLATOR == 2
-	vec4 h_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul)*dxy.x;
-	vec4 h_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul)*dxy.y;
-	vec4 f_x = renormalize(texture1D(lut_int2, lutIntCoord.x), lut_int2_mul);
-	vec4 f_y = renormalize(texture1D(lut_int2, lutIntCoord.y), lut_int2_mul);
+	color += FETCH(r, b, 1,-1);
+	color += FETCH(r, g, 1, 0);
+	color += FETCH(r, r, 1, 1);
+	color += FETCH(r, a, 1, 2);
 
-	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b));
-	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g));
-	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r));
-	tex00 = mix3(tex00, tex01, tex02, f_y.b, f_y.g);
+	color += FETCH(a, b, 2,-1);
+	color += FETCH(a, g, 2, 0);
+	color += FETCH(a, r, 2, 1);
+	color += FETCH(a, a, 2, 2);
+#undef FETCH
+# else
+	vec4 w_x[2], w_y[2];
+	w_x[0] = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul);
+	w_x[1] = renormalize(texture1D(lut_int2, lutCoord.x), lut_int2_mul);
+	w_y[0] = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul);
+	w_y[1] = renormalize(texture1D(lut_int2, lutCoord.y), lut_int2_mul);
+#define FETCH(n, m, a, b, i, j) (w_x[n].a*w_y[m].b)*texture2D(tex, c + vec2(i.0, j.0)*dxy)
+#  if USE_INTERPOLATOR == 2
+	color += FETCH(0, 0, b, b,-2,-2);
+	color += FETCH(0, 0, b, g,-2,-1);
+	color += FETCH(0, 0, b, r,-2, 0);
+	color += FETCH(0, 0, b, a,-2, 1);
+	color += FETCH(0, 1, b, b,-2, 2);
+	color += FETCH(0, 1, b, g,-2, 3);
 
-	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b));
-	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g));
-	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r));
-	tex10 = mix3(tex10, tex11, tex12, f_y.b, f_y.g);
+	color += FETCH(0, 0, g, b,-1,-2);
+	color += FETCH(0, 0, g, g,-1,-1);
+	color += FETCH(0, 0, g, r,-1, 0);
+	color += FETCH(0, 0, g, a,-1, 1);
+	color += FETCH(0, 1, g, b,-1, 2);
+	color += FETCH(0, 1, g, g,-1, 3);
 
-	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b));
-	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g));
-	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r));
-	tex20 = mix3(tex20, tex21, tex22, f_y.b, f_y.g);
-	return mix3(tex00, tex10, tex20, f_x.b, f_x.g);
-#elif USE_INTERPOLATOR == 3
-	vec4 h_x = renormalize(texture1D(lut_int1, lutIntCoord.x), lut_int1_mul)*dxy.x;
-	vec4 h_y = renormalize(texture1D(lut_int1, lutIntCoord.y), lut_int1_mul)*dxy.y;
-	vec4 f_x = renormalize(texture1D(lut_int2, lutIntCoord.x), lut_int2_mul);
-	vec4 f_y = renormalize(texture1D(lut_int2, lutIntCoord.y), lut_int2_mul);
+	color += FETCH(0, 0, r, b, 0,-2);
+	color += FETCH(0, 0, r, g, 0,-1);
+	color += FETCH(0, 0, r, r, 0, 0);
+	color += FETCH(0, 0, r, a, 0, 1);
+	color += FETCH(0, 1, r, b, 0, 2);
+	color += FETCH(0, 1, r, g, 0, 3);
 
-	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b));
-	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g));
-	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r));
-	vec4 tex03 = texture2D(tex, coord + vec2(-h_x.b,  h_y.a));
-	tex00 = mix4(tex00, tex01, tex02, tex03, f_y.b, f_y.g, f_y.r);
+	color += FETCH(0, 0, a, b, 1,-2);
+	color += FETCH(0, 0, a, g, 1,-1);
+	color += FETCH(0, 0, a, r, 1, 0);
+	color += FETCH(0, 0, a, a, 1, 1);
+	color += FETCH(0, 1, a, b, 1, 2);
+	color += FETCH(0, 1, a, g, 1, 3);
 
-	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b));
-	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g));
-	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r));
-	vec4 tex13 = texture2D(tex, coord + vec2(-h_x.g,  h_y.a));
-	tex10 = mix4(tex10, tex11, tex12, tex13, f_y.b, f_y.g, f_y.r);
+	color += FETCH(1, 0, b, b, 2,-2);
+	color += FETCH(1, 0, b, g, 2,-1);
+	color += FETCH(1, 0, b, r, 2, 0);
+	color += FETCH(1, 0, b, a, 2, 1);
+	color += FETCH(1, 1, b, b, 2, 2);
+	color += FETCH(1, 1, b, g, 2, 3);
 
-	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b));
-	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g));
-	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r));
-	vec4 tex23 = texture2D(tex, coord + vec2( h_x.r,  h_y.a));
-	tex20 = mix4(tex20, tex21, tex22, tex23, f_y.b, f_y.g, f_y.r);
+	color += FETCH(1, 0, g, b, 3,-2);
+	color += FETCH(1, 0, g, g, 3,-1);
+	color += FETCH(1, 0, g, r, 3, 0);
+	color += FETCH(1, 0, g, a, 3, 1);
+	color += FETCH(1, 1, g, b, 3, 2);
+	color += FETCH(1, 1, g, g, 3, 3);
+#  elif USE_INTERPOLATOR == 3
+	color += FETCH(0, 0, b, b,-3,-3);
+	color += FETCH(0, 0, b, g,-3,-2);
+	color += FETCH(0, 0, b, r,-3,-1);
+	color += FETCH(0, 0, b, a,-3, 0);
+	color += FETCH(0, 1, b, b,-3, 1);
+	color += FETCH(0, 1, b, g,-3, 2);
+	color += FETCH(0, 1, b, r,-3, 3);
+	color += FETCH(0, 1, b, a,-3, 4);
 
-	vec4 tex30 = texture2D(tex, coord + vec2( h_x.a, -h_y.b));
-	vec4 tex31 = texture2D(tex, coord + vec2( h_x.a, -h_y.g));
-	vec4 tex32 = texture2D(tex, coord + vec2( h_x.a,  h_y.r));
-	vec4 tex33 = texture2D(tex, coord + vec2( h_x.a,  h_y.a));
-	tex30 = mix4(tex30, tex31, tex32, tex33, f_y.b, f_y.g, f_y.r);
-	return mix4(tex00, tex10, tex20, tex30, f_x.b, f_x.g, f_x.r);
+	color += FETCH(0, 0, g, b,-2,-3);
+	color += FETCH(0, 0, g, g,-2,-2);
+	color += FETCH(0, 0, g, r,-2,-1);
+	color += FETCH(0, 0, g, a,-2, 0);
+	color += FETCH(0, 1, g, b,-2, 1);
+	color += FETCH(0, 1, g, g,-2, 2);
+	color += FETCH(0, 1, g, r,-2, 3);
+	color += FETCH(0, 1, g, a,-2, 4);
+
+	color += FETCH(0, 0, r, b,-1,-3);
+	color += FETCH(0, 0, r, g,-1,-2);
+	color += FETCH(0, 0, r, r,-1,-1);
+	color += FETCH(0, 0, r, a,-1, 0);
+	color += FETCH(0, 1, r, b,-1, 1);
+	color += FETCH(0, 1, r, g,-1, 2);
+	color += FETCH(0, 1, r, r,-1, 3);
+	color += FETCH(0, 1, r, a,-1, 4);
+
+	color += FETCH(0, 0, a, b, 0,-3);
+	color += FETCH(0, 0, a, g, 0,-2);
+	color += FETCH(0, 0, a, r, 0,-1);
+	color += FETCH(0, 0, a, a, 0, 0);
+	color += FETCH(0, 1, a, b, 0, 1);
+	color += FETCH(0, 1, a, g, 0, 2);
+	color += FETCH(0, 1, a, r, 0, 3);
+	color += FETCH(0, 1, a, a, 0, 4);
+
+	color += FETCH(1, 0, b, b, 1,-3);
+	color += FETCH(1, 0, b, g, 1,-2);
+	color += FETCH(1, 0, b, r, 1,-1);
+	color += FETCH(1, 0, b, a, 1, 0);
+	color += FETCH(1, 1, b, b, 1, 1);
+	color += FETCH(1, 1, b, g, 1, 2);
+	color += FETCH(1, 1, b, r, 1, 3);
+	color += FETCH(1, 1, b, a, 1, 4);
+
+	color += FETCH(1, 0, g, b, 2,-3);
+	color += FETCH(1, 0, g, g, 2,-2);
+	color += FETCH(1, 0, g, r, 2,-1);
+	color += FETCH(1, 0, g, a, 2, 0);
+	color += FETCH(1, 1, g, b, 2, 1);
+	color += FETCH(1, 1, g, g, 2, 2);
+	color += FETCH(1, 1, g, r, 2, 3);
+	color += FETCH(1, 1, g, a, 2, 4);
+
+	color += FETCH(1, 0, r, b, 3,-3);
+	color += FETCH(1, 0, r, g, 3,-2);
+	color += FETCH(1, 0, r, r, 3,-1);
+	color += FETCH(1, 0, r, a, 3, 0);
+	color += FETCH(1, 1, r, b, 3, 1);
+	color += FETCH(1, 1, r, g, 3, 2);
+	color += FETCH(1, 1, r, r, 3, 3);
+	color += FETCH(1, 1, r, a, 3, 4);
+
+	color += FETCH(1, 0, a, b, 4,-3);
+	color += FETCH(1, 0, a, g, 4,-2);
+	color += FETCH(1, 0, a, r, 4,-1);
+	color += FETCH(1, 0, a, a, 4, 0);
+	color += FETCH(1, 1, a, b, 4, 1);
+	color += FETCH(1, 1, a, g, 4, 2);
+	color += FETCH(1, 1, a, r, 4, 3);
+	color += FETCH(1, 1, a, a, 4, 4);
+#  endif
+#undef FETCH
+# endif
+	return color;
 #endif
 }
 #endif

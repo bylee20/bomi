@@ -86,7 +86,8 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 	int texPos = 0;
 	if (m_interpolator) {
 		prog->setUniformValue(loc_lut_int1, ++texPos);
-		prog->setUniformValue(loc_dxy, QVector2D(1.f/(float)texture.width, 1.f/(float)texture.height));
+		prog->setUniformValue(loc_dxy, QVector2D(1.0/(double)texture.width, 1.0/(double)texture.height));
+		prog->setUniformValue(loc_tex_size, QVector2D(texture.width, texture.height));
 		prog->setUniformValue(loc_lut_int1_mul, m_item->lutInterpolatorTexture1().multiply);
 		f->glActiveTexture(GL_TEXTURE0 + texPos);
 		m_item->lutInterpolatorTexture1().bind();
@@ -123,6 +124,7 @@ void TextureRendererShader::initialize() {
 		loc_lut_int1 = prog->uniformLocation("lut_int1");
 		loc_lut_int1_mul = prog->uniformLocation("lut_int1_mul");
 		loc_dxy = prog->uniformLocation("dxy");
+		loc_tex_size = prog->uniformLocation("tex_size");
 		if (m_interpolator > 1) {
 			loc_lut_int2 = prog->uniformLocation("lut_int2");
 			loc_lut_int2_mul = prog->uniformLocation("lut_int2_mul");

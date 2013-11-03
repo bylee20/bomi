@@ -78,6 +78,7 @@
 -Lanczos2[[lancoz2]][-2-Lobed Lanczos-]
 -Spline36[[spline36]][-3-Lobed Spline-]
 -Lanczos3[[lanczos3]][-3-Lobed Lanczos-]
+-Spline64[[spline64]][-4-Lobed Spline-]
 -Lanczos4[[lanczos4]][-4-Lobed Lanczos-]
 
 +AudioDriver

@@ -628,6 +628,38 @@ F_{x,y} & =F_{i+\alpha,j+\beta}=\mathrm{mix}\left[\mix\left(f_{i,j},f_{i,j+1},\b
 
 \end_inset
 
+
+\begin_inset Formula 
+\[
+af_{i}+bf_{i+1}=\left(a+b\right)F_{i+\frac{b}{a+b}}=\left(a+b\right)\left(a'f_{i}+b'f_{i+1}\right)
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+i=1
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+a=1.2;b=-0.2
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+F_{1-0.2}=F_{0+0.8}=0.2f_{0}+0.8f_{1}
+\]
+
+\end_inset
+
 We can generalize this formula to a summation of neighbouring four colors:
 \begin_inset Formula 
 \begin{align*}
@@ -639,11 +671,47 @@ F_{ij}^{ab}= & w_{ab}f_{i,j}+w_{a,b+1}f_{i,j+1}+w_{a+1,b}f_{i+1,j}+w_{a+1,b+1}f_
 
 \end_inset
 
+
+\begin_inset Formula 
+\[
+\left[\left[w_{a}^{\alpha}w_{b}^{\beta}f_{i,j}+w_{a}^{\alpha}w_{b+1}^{\beta}f_{i,j+1}\right]+\left[w_{a+1}^{\alpha}w_{b}^{\beta}f_{i+1,j}+w_{a+1}^{\alpha}w_{b+1}^{\beta}f_{i+1,j+1}\right]\right]F_{i+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}},j+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}}=
+\]
+
+\end_inset
+
 With help of above equation, we can rewrite 
 \begin_inset Formula $F(x,y)$
 \end_inset
 
  as
+\begin_inset Formula 
+\begin{align*}
+AF\left(x,y\right) & =\left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i-1+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j-1+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}}\\
+ & +\left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)F_{i+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}},j+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}}\\
+ & +\left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)F_{i+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}},j+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}}\\
+ & +\left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)F_{i+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}},j+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}}\\
+ & w_{00}f_{i-1,j-1}+w_{01}f_{i-1,j}+w_{02}f_{i-1,j+1}+w_{03}f_{i-1,j+2}\\
+ & +w_{10}f_{i+0,j-1}+w_{11}f_{i+0,j}+w_{12}f_{i+0,j+1}+w_{13}f_{i+0,j+2}\\
+ & +w_{20}f_{i+1,j-1}+w_{21}f_{i+1,j}+w_{22}f_{i+1,j+1}+w_{23}f_{i+1,j+2}\\
+ & +w_{30}f_{i+2,j-1}+w_{31}f_{i+2,j}+w_{32}f_{i+2,j+1}+w_{33}f_{i+2,j+2}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+AF\left(x,y\right) & =w_{00}f_{i-1,j-1}+w_{01}f_{i-1,j}+w_{10}f_{i,j-1}+w_{11}f_{i,j}\\
+ & +w_{02}f_{i-1,j+1}+w_{03}f_{i-1,j+2}+w_{12}f_{i+0,j+1}+w_{13}f_{i+0,j+2}\\
+ & +w_{20}f_{i+1,j-1}+w_{21}f_{i+1,j}+w_{30}f_{i+2,j-1}+w_{31}f_{i+2,j}\\
+ & +w_{22}f_{i+1,j+1}+w_{23}f_{i+1,j+2}+w_{32}f_{i+2,j+1}+w_{33}f_{i+2,j+2}\\
+ & =\left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{x-h_{0}^{\alpha},y-h_{0}^{\beta}}+\left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{x-h_{0}^{\alpha},y+h_{1}^{\beta}}\\
+ & +\left(w_{2}^{\alpha}+w_{3}^{\alpha}\right)\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{x+h_{1}^{\alpha},y-h_{0}^{\beta}}+\left(w_{2}^{\alpha}+w_{3}^{\alpha}\right)\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{x+h_{1}^{\alpha},y+h_{1}^{\beta}}
+\end{align*}
+
+\end_inset
+
+
 \begin_inset Formula 
 \begin{align*}
 AF\left(x,y\right) & =w_{00}f_{i-1,j-1}+w_{01}f_{i-1,j}+w_{10}f_{i,j-1}+w_{11}f_{i,j}\\
@@ -673,10 +741,78 @@ F\left(x,y\right) & =\left(1-g^{\alpha}\right)\mix\left(F_{x-h_{0}^{\alpha},y-h_
 
 \end_inset
 
+
+\begin_inset Formula 
+\[
+h_{0}^{\alpha}=0,\quad h_{1}^{\alpha}=1
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+F\left(x,y\right) & =\left(1-g^{\alpha}\right)\mix\left(F_{x,y},F_{x-h_{0}^{\alpha},y+h_{1}^{\beta}},0\right)+g^{\alpha}\mix\left(F_{x+h_{1}^{\alpha},y-h_{0}^{\beta}},F_{x+h_{1}^{\alpha},y+h_{1}^{\beta}},g^{\beta}\right)\\
+ & =F_{x,y}
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+F\left(x,y\right) & =\mix\left(F_{x+1,y+1}\right)\\
+ & =\mix\left[\mix\left(F_{x-h_{0}^{\alpha},y-h_{0}^{\beta}},F_{x-h_{0}^{\alpha},y+h_{1}^{\beta}},g^{\beta}\right),\mix\left(F_{x+h_{1}^{\alpha},y-h_{0}^{\beta}},F_{x+h_{1}^{\alpha},y+h_{1}^{\beta}},g^{\beta}\right),g^{\alpha}\right]
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+w_{0} & =0 &  &  & w_{2} & =0\\
+w_{1} & =1 &  &  & w_{3} & =0
+\end{align*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+h_{0}^{\alpha}=1,\quad h_{1}^{\alpha}=1+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\frac{N-1}{N}c+\frac{1}{2N}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+F\left(x,y\right) & =\mix\left(F_{x-h_{0}^{\alpha},y-h_{0}^{\beta}}\right)\\
+ & =\mix\left[\mix\left(F_{x-h_{0}^{\alpha},y-h_{0}^{\beta}},F_{x-h_{0}^{\alpha},y+h_{1}^{\beta}},g^{\beta}\right),\mix\left(F_{x+h_{1}^{\alpha},y-h_{0}^{\beta}},F_{x+h_{1}^{\alpha},y+h_{1}^{\beta}},g^{\beta}\right),g^{\alpha}\right]
+\end{align*}
+
+\end_inset
+
 with
 \begin_inset Formula 
 \[
-g^{\alpha}=\frac{w_{2}^{\alpha}+w_{3}^{\alpha}}{\sum_{b}w_{b}^{\alpha}}
+g^{\alpha}=\frac{w_{2}^{\alpha}+w_{3}^{\alpha}}{\sum_{b}w_{b}^{\alpha}}=1
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+h_{1}^{\alpha}=1
 \]
 
 \end_inset

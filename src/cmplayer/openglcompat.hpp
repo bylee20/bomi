@@ -179,6 +179,7 @@ public:
 		case InterpolatorType::Spline36:
 		case InterpolatorType::Lanczos3:
 			return 2;
+		case InterpolatorType::Spline64:
 		case InterpolatorType::Lanczos4:
 			return 3;
 		}
@@ -247,6 +248,7 @@ private:
 class OpenGLTextureShaderProgram : public QOpenGLShaderProgram {
 	enum {vPosition, vCoord, vColor};
 public:
+	static constexpr int N = 6;
 	OpenGLTextureShaderProgram(QObject *parent = nullptr): QOpenGLShaderProgram(parent) { }
 	void setFragmentShader(const QByteArray &code) {
 		if (!m_frag)
@@ -266,29 +268,29 @@ public:
 		return QOpenGLShaderProgram::link();
 	}
 	void setTextureCount(int textures) {
-		if (textures > m_vPositions.size()/(2*4)) {
+		if (textures > m_vPositions.size()/(2*N)) {
 			textures *= 1.5;
-			m_vCoords.resize(2*4*textures);
-			m_vPositions.resize(2*4*textures);
+			m_vCoords.resize(2*N*textures);
+			m_vPositions.resize(2*N*textures);
 			if (m_hasColor)
-				m_vColors.resize(4*textures);
+				m_vColors.resize(N*textures);
 		}
 	}
-	void uploadPosition(int i, const QPointF &p1, const QPointF &p2) {
-		uploadRect(m_vPositions.data(), i, p1, p2);
+	void uploadPositionAsTriangles(int i, const QPointF &p1, const QPointF &p2) {
+		uploadRectAsTriangles(m_vPositions.data(), i, p1, p2);
 	}
-	void uploadPosition(int i, const QRectF &rect) {
-		uploadRect(m_vPositions.data(), i, rect.topLeft(), rect.bottomRight());
+	void uploadPositionAsTriangles(int i, const QRectF &rect) {
+		uploadRectAsTriangles(m_vPositions.data(), i, rect.topLeft(), rect.bottomRight());
 	}
-	void uploadCoord(int i, const QPointF &p1, const QPointF &p2) {
-		uploadRect(m_vCoords.data(), i, p1, p2);
+	void uploadCoordAsTriangles(int i, const QPointF &p1, const QPointF &p2) {
+		uploadRectAsTriangles(m_vCoords.data(), i, p1, p2);
 	}
-	void uploadCoord(int i, const QRectF &rect) {
-		uploadRect(m_vCoords.data(), i, rect.topLeft(), rect.bottomRight());
+	void uploadCoordAsTriangles(int i, const QRectF &rect) {
+		uploadRectAsTriangles(m_vCoords.data(), i, rect.topLeft(), rect.bottomRight());
 	}
-	void uploadColor(int i, quint32 color) {
-		auto p = m_vColors.data() + 4*i;
-		*p++ = color; *p++ = color; *p++ = color; *p++ = color;
+	void uploadColorAsTriangles(int i, quint32 color) {
+		auto p = m_vColors.data() + N*i;
+		*p++ = color; *p++ = color; *p++ = color; *p++ = color; *p++ = color; *p++ = color;
 	}
 	void begin() {
 		bind();
@@ -310,9 +312,12 @@ public:
 	}
 	void reset() { removeAllShaders(); m_frag = m_vertex = false; }
 private:
-	void uploadRect(float *p, int i, const QPointF &p1, const QPointF &p2) {
-		p += 4*2*i;
+	void uploadRectAsTriangles(float *p, int i, const QPointF &p1, const QPointF &p2) {
+		p += N*2*i;
 		*p++ = p1.x(); *p++ = p1.y();
+		*p++ = p2.x(); *p++ = p1.y();
+		*p++ = p1.x(); *p++ = p2.y();
+
 		*p++ = p1.x(); *p++ = p2.y();
 		*p++ = p2.x(); *p++ = p2.y();
 		*p++ = p2.x(); *p++ = p1.y();

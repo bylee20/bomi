@@ -697,7 +697,8 @@ enum class InterpolatorType : int {
 	Lanczos2 = (int)5,
 	Spline36 = (int)6,
 	Lanczos3 = (int)7,
-	Lanczos4 = (int)8
+	Spline64 = (int)8,
+	Lanczos4 = (int)9
 };
 
 inline bool operator == (InterpolatorType e, int i) { return (int)e == i; }
@@ -731,7 +732,7 @@ public:
     typedef InterpolatorType type;
     using Data =  QVariant;
     struct Item { Enum value; QString name, key; QVariant data; };
-	static constexpr int size() { return 9; }
+	static constexpr int size() { return 10; }
     static constexpr const char *typeName() { return "InterpolatorType"; }
     static constexpr const char *typeKey() { return ""; }
     static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
@@ -752,11 +753,12 @@ public:
 		case Enum::Lanczos2: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2-Lobed Lanczos"));
 		case Enum::Spline36: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Spline"));
 		case Enum::Lanczos3: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Lanczos"));
+		case Enum::Spline64: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4-Lobed Spline"));
 		case Enum::Lanczos4: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4-Lobed Lanczos"));
 		default: return tr("");
 		};
 	}
-	static constexpr const std::array<Item, 9> &items() { return info; }
+	static constexpr const std::array<Item, 10> &items() { return info; }
     static Enum from(int id, Enum def = default_()) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
@@ -767,7 +769,7 @@ public:
 	}
     static constexpr Enum default_() { return InterpolatorType::Bilinear; }
 private:
-	static const std::array<Item, 9> info;
+	static const std::array<Item, 10> info;
 };
 
 using InterpolatorTypeInfo = EnumInfo<InterpolatorType>;

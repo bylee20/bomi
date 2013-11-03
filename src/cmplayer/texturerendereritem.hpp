@@ -76,6 +76,7 @@ private:
 	int m_interpolator = 0;
 	bool m_dithering = false;
 	int loc_tex = -1, loc_lut_int1 = -1, loc_lut_int1_mul = -1, loc_lut_int2 = -1, loc_lut_int2_mul = -1, loc_vMatrix = -1, loc_dxy = -1;
+	int loc_tex_size = -1;
 	int loc_dithering = -1, loc_dithering_quantization = -1, loc_dithering_center = -1, loc_dithering_size = -1;
 	QByteArray m_fragCode, m_vertexCode;
 };
