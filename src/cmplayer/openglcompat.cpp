@@ -73,12 +73,6 @@ OpenGLTextureFormat OpenGLCompat::textureFormat(GLenum format, int bpc) {
 	return c.d->formats[bpc-1][format];
 }
 
-//static int maximumTextureSize() { return c.d->maxTextureSize; }
-
-
-
-
-
 // copied from mpv's gl_video.c
 OpenGLTexture OpenGLCompat::allocateDitheringTexture(GLuint id, Dithering type) {
 	OpenGLTexture texture;
@@ -121,8 +115,6 @@ OpenGLTexture OpenGLCompat::allocateDitheringTexture(GLuint id, Dithering type) 
 	texture.allocate(GL_NEAREST, GL_REPEAT, data.data());
 	return texture;
 }
-
-
 
 template<typename T>
 static QImage getImage(const QSize &size, const OpenGLTextureFormat &format) {

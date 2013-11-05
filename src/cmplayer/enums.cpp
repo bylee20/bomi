@@ -69,17 +69,18 @@ const std::array<DeintMethodInfo::Item, 8> DeintMethodInfo::info{{
 	{DeintMethod::MotionAdaptive, "MotionAdaptive", "", (int)7}
 }};
 
-const std::array<InterpolatorTypeInfo::Item, 10> InterpolatorTypeInfo::info{{
+const std::array<InterpolatorTypeInfo::Item, 11> InterpolatorTypeInfo::info{{
 	{InterpolatorType::Bilinear, "Bilinear", "bilinear", (int)0},
-	{InterpolatorType::BicubicCR, "BicubicCR", "catmull", (int)1},
-	{InterpolatorType::BicubicMN, "BicubicMN", "mitchell", (int)2},
-	{InterpolatorType::BicubicBS, "BicubicBS", "b-spline", (int)3},
+	{InterpolatorType::BicubicBS, "BicubicBS", "b-spline", (int)1},
+	{InterpolatorType::BicubicCR, "BicubicCR", "catmull", (int)2},
+	{InterpolatorType::BicubicMN, "BicubicMN", "mitchell", (int)3},
 	{InterpolatorType::Spline16, "Spline16", "spline16", (int)4},
-	{InterpolatorType::Lanczos2, "Lanczos2", "lancoz2", (int)5},
-	{InterpolatorType::Spline36, "Spline36", "spline36", (int)6},
-	{InterpolatorType::Lanczos3, "Lanczos3", "lanczos3", (int)7},
-	{InterpolatorType::Spline64, "Spline64", "spline64", (int)8},
-	{InterpolatorType::Lanczos4, "Lanczos4", "lanczos4", (int)9}
+	{InterpolatorType::Spline36, "Spline36", "spline36", (int)5},
+	{InterpolatorType::Spline64, "Spline64", "spline64", (int)6},
+	{InterpolatorType::LanczosFast, "LanczosFast", "lanczos-fast", (int)7},
+	{InterpolatorType::Lanczos2, "Lanczos2", "lancoz2", (int)8},
+	{InterpolatorType::Lanczos3, "Lanczos3", "lanczos3", (int)9},
+	{InterpolatorType::Lanczos4, "Lanczos4", "lanczos4", (int)10}
 }};
 
 const std::array<AudioDriverInfo::Item, 7> AudioDriverInfo::info{{

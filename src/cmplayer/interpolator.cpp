@@ -99,10 +99,27 @@ struct Interpolator::Data {
 	Type type = Type::Bilinear;
 	Category category = None;
 	QVector<GLfloat> lut1, lut2;
-	int textures = 1;
+	template<typename Func>
+	void fill(Func func, int n) {
+		auto p1 = lut1.data();
+		auto p2 = lut2.data();
+		QVector<double> ws(8, 0.0);
+		for (int i=0; i<IntSamples; ++i) {
+			const auto a = as[i];
+			double sum = 0.0;
+			for (int i=0; i<8; ++i) {
+				ws[i] = func(a + double((n/2) - 1 - i));
+				sum += ws[i];
+			}
+			for (int i=0; i<4; ++i) {
+				*p1++ = ws[i]/sum;
+				*p2++ = ws[i+4]/sum;
+			}
+		}
+	}
 
 	template<typename Func>
-	void makeInterpolatorLut4(Func func) {
+	void fillFast4(Func func) {
 		auto p = lut1.data();
 		for (int i=0; i<IntSamples; ++i) {
 			const auto a = as[i];
@@ -110,16 +127,17 @@ struct Interpolator::Data {
 			const auto w1 = func(a + 0.0);
 			const auto w2 = func(a - 1.0);
 			const auto w3 = func(a - 2.0);
-			const auto div = w0 + w1 + w2 + w3;
-			*p++ = w0/div;
-			*p++ = w1/div;
-			*p++ = w2/div;
-			*p++ = w3/div;
+			const auto g0 = w0 + w1;
+			const auto g1 = w2 + w3;
+			const auto h0 = 1.0 + a - w1/g0;
+			const auto h1 = 1.0 - a + w3/g1;
+			const auto f1 = g1/(g0 + g1);
+			*p++ = h0;    *p++ = h1;
+			*p++ = f1;    *p++ = .0;
 		}
 	}
-
 	template<typename Func>
-	void makeInterpolatorLut6(Func func) {
+	void fillFast9(Func func) {
 		auto p1 = lut1.data();
 		auto p2 = lut2.data();
 		for (int i=0; i<IntSamples; ++i) {
@@ -130,41 +148,16 @@ struct Interpolator::Data {
 			const auto w3 = func(a - 1.0);
 			const auto w4 = func(a - 2.0);
 			const auto w5 = func(a - 3.0);
-			const auto div = w0 + w1 + w2 + w3 + w4 + w5;
-			*p1++ = w0/div;
-			*p1++ = w1/div;
-			*p1++ = w2/div;
-			*p1++ = w3/div;
-			*p2++ = w4/div;
-			*p2++ = w5/div;
-			*p2++ = 0.0;
-			*p2++ = 0.0;
-		}
-	}
-
-	template<typename Func>
-	void makeInterpolatorLut8(Func func) {
-		auto p1 = lut1.data();
-		auto p2 = lut2.data();
-		for (int i=0; i<IntSamples; ++i) {
-			const auto a = as[i];
-			const auto w0 = func(a + 3.0);
-			const auto w1 = func(a + 2.0);
-			const auto w2 = func(a + 1.0);
-			const auto w3 = func(a + 0.0);
-			const auto w4 = func(a - 1.0);
-			const auto w5 = func(a - 2.0);
-			const auto w6 = func(a - 3.0);
-			const auto w7 = func(a - 4.0);
-			const auto div = w0 + w1 + w2 + w3 + w4 + w5 + w6 + w7;
-			*p1++ = w0/div;
-			*p1++ = w1/div;
-			*p1++ = w2/div;
-			*p1++ = w3/div;
-			*p2++ = w4/div;
-			*p2++ = w5/div;
-			*p2++ = w6/div;
-			*p2++ = w7/div;
+			const auto g0 = w0 + w1;
+			const auto g1 = w2 + w3;
+			const auto g2 = w4 + w5;
+			const auto h0 = 2.0 + a - w1/g0;
+			const auto h1 = 0.0 + a - w3/g1;
+			const auto h2 = 2.0 - a + w5/g2;
+			const auto f0 = g1/(g0 + g1);
+			const auto f1 = g2/(g0 + g1 + g2);
+			*p1++ = h0;    *p1++ = h1;    *p1++ = h2;    *p1++ = .0;
+			*p2++ = f0;    *p2++ = f1;    *p2++ = .0;    *p2++ = .0;
 		}
 	}
 };
@@ -180,35 +173,36 @@ Interpolator::Interpolator(Type type)
 	case InterpolatorType::Bilinear:
 		break;
 	case InterpolatorType::BicubicBS:
-		d->makeInterpolatorLut4([] (double x) { return bicubic(x, 1.0, 0.0); });
+		d->fillFast4([] (double x) { return bicubic(x, 1.0, 0.0); });
 		break;
 	case InterpolatorType::BicubicCR:
-		d->makeInterpolatorLut4([] (double x) { return bicubic(x, 0.0, 0.5); });
+		d->fill([] (double x) { return bicubic(x, 0.0, 0.5); }, 4);
 		break;
 	case InterpolatorType::BicubicMN:
-		d->makeInterpolatorLut4([] (double x) { return bicubic(x, 1.0/3.0, 1.0/3.0); });
+		d->fill([] (double x) { return bicubic(x, 1.0/3.0, 1.0/3.0); }, 4);
 		break;
 	case InterpolatorType::Spline16:
-		d->makeInterpolatorLut4(spline16);
+		d->fill(spline16, 4);
 		break;
 	case InterpolatorType::Lanczos2:
-		d->makeInterpolatorLut4([] (double x) { return lanczos(x, 2.0); });
+		d->fill([] (double x) { return lanczos(x, 2.0); }, 4);
 		break;
 	case InterpolatorType::Spline36:
-		d->makeInterpolatorLut6(spline36);
+		d->fill(spline36, 6);
 		break;
 	case InterpolatorType::Lanczos3:
-		d->makeInterpolatorLut6([] (double x) { return lanczos(x, 3.0); });
+		d->fill([] (double x) { return lanczos(x, 3.0); }, 6);
 		break;
 	case InterpolatorType::Spline64:
-		d->makeInterpolatorLut8(spline64);
+		d->fill(spline64, 8);
 		break;
 	case InterpolatorType::Lanczos4:
-		d->makeInterpolatorLut8([] (double x) { return lanczos(x, 4.0); });
+		d->fill([] (double x) { return lanczos(x, 4.0); }, 8);
+		break;
+	case InterpolatorType::LanczosFast:
+		d->fillFast9([] (double x) { return lanczos(x, 3.0); });
 		break;
 	}
-
-
 }
 
 Interpolator::~Interpolator() {
@@ -235,6 +229,7 @@ Interpolator::Category Interpolator::category(Type type) {
 	case InterpolatorType::Bilinear:
 		return None;
 	case InterpolatorType::BicubicBS:
+		return Fast4;
 	case InterpolatorType::BicubicCR:
 	case InterpolatorType::BicubicMN:
 	case InterpolatorType::Lanczos2:
@@ -246,6 +241,8 @@ Interpolator::Category Interpolator::category(Type type) {
 	case InterpolatorType::Spline64:
 	case InterpolatorType::Lanczos4:
 		return Fetch64;
+	case InterpolatorType::LanczosFast:
+		return Fast9;
 	}
 	return None;
 }
@@ -469,6 +466,45 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
 	color += FETCH(1, 1, a, a, 4, 4);
 )";
 		interpolated += "#undef FETCH\n";
+		break;
+	case Fast4:
+		interpolated += R"(
+	vec4 hg_x = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul);
+	vec4 hg_y = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul);
+
+	vec4 tex00 = texture2D(tex, coord + vec2(-hg_x.b, -hg_y.b)*dxy);
+	vec4 tex10 = texture2D(tex, coord + vec2( hg_x.g, -hg_y.b)*dxy);
+	vec4 tex01 = texture2D(tex, coord + vec2(-hg_x.b,  hg_y.g)*dxy);
+	vec4 tex11 = texture2D(tex, coord + vec2( hg_x.g,  hg_y.g)*dxy);
+
+	tex00 = mix(tex00, tex10, hg_x.r);
+	tex01 = mix(tex01, tex11, hg_x.r);
+	color = mix(tex00, tex01, hg_y.r);
+)";
+		break;
+	case Fast9:
+		interpolated += R"(
+	vec4 h_x = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul)*dxy.x;
+	vec4 h_y = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul)*dxy.y;
+	vec4 f_x = renormalize(texture1D(lut_int2, lutCoord.x), lut_int2_mul);
+	vec4 f_y = renormalize(texture1D(lut_int2, lutCoord.y), lut_int2_mul);
+
+	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b));
+	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g));
+	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r));
+	tex00 = mix3(tex00, tex01, tex02, f_y.b, f_y.g);
+
+	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b));
+	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g));
+	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r));
+	tex10 = mix3(tex10, tex11, tex12, f_y.b, f_y.g);
+
+	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b));
+	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g));
+	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r));
+	tex20 = mix3(tex20, tex21, tex22, f_y.b, f_y.g);
+	color = mix3(tex00, tex10, tex20, f_x.b, f_x.g);
+)";
 		break;
 	default:
 		break;

@@ -71,14 +71,15 @@
 
 +InterpolatorType
 -Bilinear[[bilinear]][-Bilinear-]
+-BicubicBS[[b-spline]][-B-Spline-]
 -BicubicCR[[catmull]][-Catmull-Rom-]
 -BicubicMN[[mitchell]][-Mitchell-Netravali-]
--BicubicBS[[b-spline]][-B-Spline-]
 -Spline16[[spline16]][-2-Lobed Spline-]
--Lanczos2[[lancoz2]][-2-Lobed Lanczos-]
 -Spline36[[spline36]][-3-Lobed Spline-]
--Lanczos3[[lanczos3]][-3-Lobed Lanczos-]
 -Spline64[[spline64]][-4-Lobed Spline-]
+-LanczosFast[[lanczos-fast]][-Fast Lanczos-]
+-Lanczos2[[lancoz2]][-2-Lobed Lanczos-]
+-Lanczos3[[lanczos3]][-3-Lobed Lanczos-]
 -Lanczos4[[lanczos4]][-4-Lobed Lanczos-]
 
 +AudioDriver
