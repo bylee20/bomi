@@ -1,4 +1,5 @@
 #include "prefdialog.hpp"
+#include "trayicon.hpp"
 #include "deintinfo.hpp"
 #include "translator.hpp"
 #include "dialogs.hpp"
@@ -446,9 +447,9 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	retranslate();
 
-#ifdef Q_OS_MAC
-	d->ui.system_tray_group->hide();
-#else
+	if (!TrayIcon::isAvailable())
+		d->ui.system_tray_group->hide();
+#ifndef Q_OS_MAC
 	d->ui.lion_style_fullscreen->hide();
 #endif
 	adjustSize();

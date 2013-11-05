@@ -563,9 +563,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->winState = d->prevWinState = windowState();
 
-#ifndef Q_OS_MAC
-	d->tray = new TrayIcon(cApp.defaultIcon(), this);
-	if (d->tray->isAvailable()) {
+	if (TrayIcon::isAvailable()) {
+		d->tray = new TrayIcon(cApp.defaultIcon(), this);
 		connect(d->tray, &TrayIcon::activated, [this] (TrayIcon::ActivationReason reason) {
 			if (reason == TrayIcon::Trigger)
 				setVisible(!isVisible());
@@ -577,9 +576,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 				exit();
 		});
 		d->tray->setVisible(d->preferences.enable_system_tray);
-	} else
-		_Delete(d->tray);
-#endif
+	}
 
 //	Currently, session management does not works.
 //	connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
