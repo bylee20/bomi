@@ -68,8 +68,10 @@ void VideoFrameShader::setRange(ColorRange range) {
 
 void VideoFrameShader::setChromaInterpolator(InterpolatorType type) {
 	for (auto &shader : m_shaders) {
-		if (_Change(shader.interpolator, type))
+		if (shader.interpolator->type() != type) {
+			shader.interpolator = Interpolator::get(type);
 			shader.rebuild = true;
+		}
 	}
 }
 
@@ -174,7 +176,7 @@ const vec2 dxy = dxdy.xy;
 const vec2 tex_size = vec2(texWidth, texHeight);
 )";
 
-		auto common = OpenGLCompat::interpolatorCodes(shader.interpolator) + shaderTemplate;
+		auto common = Interpolator::shader(shader.interpolator->category()) + shaderTemplate;
 		auto fragCode = header;
 		fragCode += "#define FRAGMENT\n";
 		fragCode += common;

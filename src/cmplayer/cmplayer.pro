@@ -130,7 +130,8 @@ HEADERS += playengine.hpp \
     mediamisc.hpp \
     ../mpv/video/out/dither.h \
     trayicon.hpp \
-    videocolor.hpp
+    videocolor.hpp \
+    interpolator.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -204,7 +205,8 @@ SOURCES += main.cpp \
     mediamisc.cpp \
     ../mpv/video/out/dither.c \
     trayicon.cpp \
-    videocolor.cpp
+    videocolor.cpp \
+    interpolator.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -655,6 +655,14 @@ a=1.2;b=-0.2
 
 \begin_inset Formula 
 \[
+1.2f_{1}-0.2f_{2}=f_{1}-f_{2}+0.2f_{1}+0.8f_{2}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
 F_{1-0.2}=F_{0+0.8}=0.2f_{0}+0.8f_{1}
 \]
 
@@ -970,6 +978,82 @@ where
 \begin_inset Formula 
 \begin{align*}
 F_{ij}^{ab}= & \left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)F_{i+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}},j+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}},
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{w_{1}}{w_{0}+w_{1}}>1,\quad\frac{w_{3}}{w_{2}+w_{3}}>1,\quad\frac{w_{5}}{w_{4}+w_{5}}<0,\quad\frac{w_{7}}{w_{6}+w_{7}}<0
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+\left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)F_{i+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}},j+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}}= & \left(w_{a}^{\alpha}+w_{a+1}^{\alpha}\right)\left(w_{b}^{\beta}+w_{b+1}^{\beta}\right)\left[\frac{w_{a}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}}\left(\frac{w_{b}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i,j}+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i,j+1}\right)+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}}\left(\frac{w_{b}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i+1,j}+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i+1,j+1}\right)\right]
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+for 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+F_{i+A_{a},j+B_{b}}= & \left(1-A_{a}\right)\left(\left(1-B_{b}\right)f_{i,j}+B_{b}f_{i,j+1}\right)+A_{a}\left(\left(1-B_{b}\right)f_{i+1,j}+B_{b}f_{i+1,j+1}\right)
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+for 
+\begin_inset Formula $A_{a}>1,B_{b}>1$
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+F_{i+A_{a},j+B_{b}}= & F_{i+A_{a}-1,j+B_{b}-1}+\left(A_{a}+B_{b}-3\right)f_{i,j}-\left(A_{a}+B_{b}-2\right)f_{i,j+1}+\left(2-B_{b}-A_{a}\right)f_{i+1,j}+A_{a}f_{i+1,j+1}+\left(B_{b}-1\right)f_{i+1,j+1}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{eqnarray*}
+\left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i-3+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j-3+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}} & = & \left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left(w_{0}^{\beta}+w_{1}^{\beta}\right)\left[\frac{w_{a}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}}\left(\frac{w_{b}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i,j}+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i,j+1}\right)+\frac{w_{a+1}^{\alpha}}{w_{a}^{\alpha}+w_{a+1}^{\alpha}}\left(\frac{w_{b}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i+1,j}+\frac{w_{b+1}^{\beta}}{w_{b}^{\beta}+w_{b+1}^{\beta}}f_{i+1,j+1}\right)\right]
+\end{eqnarray*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align*}
+AF\left(x,y\right) & =\left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i-3+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j-3+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{i-3+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j-1+\frac{w_{3}^{\beta}}{w_{2}^{\beta}+w_{3}^{\beta}}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{i-3+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j+1+\frac{w_{5}^{\beta}}{w_{4}^{\beta}+w_{5}^{\beta}}}+\left(w_{6}^{\beta}+w_{7}^{\beta}\right)F_{i-3+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j+3+\frac{w_{7}^{\beta}}{w_{6}^{\beta}+w_{7}^{\beta}}}\right]\\
+ & +\left(w_{2}^{\alpha}+w_{3}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i-1+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}},j-3+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{i-1+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}},j-1+\frac{w_{3}^{\beta}}{w_{2}^{\beta}+w_{3}^{\beta}}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{i-1+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}},j+1+\frac{w_{5}^{\beta}}{w_{4}^{\beta}+w_{5}^{\beta}}}+\left(w_{6}^{\beta}+w_{7}^{\beta}\right)F_{i-1+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}},j+3+\frac{w_{7}^{\beta}}{w_{6}^{\beta}+w_{7}^{\beta}}}\right]\\
+ & +\left(w_{4}^{\alpha}+w_{5}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i+1+\frac{w_{5}^{\alpha}}{w_{4}^{\alpha}+w_{5}^{\alpha}},j-3+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{i+1+\frac{w_{5}^{\alpha}}{w_{4}^{\alpha}+w_{5}^{\alpha}},j-1+\frac{w_{3}^{\beta}}{w_{2}^{\beta}+w_{3}^{\beta}}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{i+1+\frac{w_{5}^{\alpha}}{w_{4}^{\alpha}+w_{5}^{\alpha}},j+1+\frac{w_{5}^{\beta}}{w_{4}^{\beta}+w_{5}^{\beta}}}+\left(w_{6}^{\beta}+w_{7}^{\beta}\right)F_{i+1+\frac{w_{5}^{\alpha}}{w_{4}^{\alpha}+w_{5}^{\alpha}},j+3+\frac{w_{7}^{\beta}}{w_{6}^{\beta}+w_{7}^{\beta}}}\right]\\
+ & +\left(w_{6}^{\alpha}+w_{7}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i+3+\frac{w_{7}^{\alpha}}{w_{6}^{\alpha}+w_{7}^{\alpha}},j-3+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{i+3+\frac{w_{7}^{\alpha}}{w_{6}^{\alpha}+w_{7}^{\alpha}},j-1+\frac{w_{3}^{\beta}}{w_{2}^{\beta}+w_{3}^{\beta}}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{i+3+\frac{w_{7}^{\alpha}}{w_{6}^{\alpha}+w_{7}^{\alpha}},j+1+\frac{w_{5}^{\beta}}{w_{4}^{\beta}+w_{5}^{\beta}}}+\left(w_{6}^{\beta}+w_{7}^{\beta}\right)F_{i+3+\frac{w_{7}^{\alpha}}{w_{6}^{\alpha}+w_{7}^{\alpha}},j+3+\frac{w_{7}^{\beta}}{w_{6}^{\beta}+w_{7}^{\beta}}}\right]\\
+= & =\left(w_{0}^{\alpha}+w_{1}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i-3+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j-3+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{i-3+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j-1+\frac{w_{3}^{\beta}}{w_{2}^{\beta}+w_{3}^{\beta}}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{i-3+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j+1+\frac{w_{5}^{\beta}}{w_{4}^{\beta}+w_{5}^{\beta}}}+\left(w_{6}^{\beta}+w_{7}^{\beta}\right)F_{i-3+\frac{w_{1}^{\alpha}}{w_{0}^{\alpha}+w_{1}^{\alpha}},j+3+\frac{w_{7}^{\beta}}{w_{6}^{\beta}+w_{7}^{\beta}}}\right]\\
+ & +\left(w_{2}^{\alpha}+w_{3}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i-1+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}},j-3+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{i-1+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}},j-1+\frac{w_{3}^{\beta}}{w_{2}^{\beta}+w_{3}^{\beta}}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{i-1+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}},j+1+\frac{w_{5}^{\beta}}{w_{4}^{\beta}+w_{5}^{\beta}}}+\left(w_{6}^{\beta}+w_{7}^{\beta}\right)F_{i-1+\frac{w_{3}^{\alpha}}{w_{2}^{\alpha}+w_{3}^{\alpha}},j+3+\frac{w_{7}^{\beta}}{w_{6}^{\beta}+w_{7}^{\beta}}}\right]\\
+ & +\left(w_{4}^{\alpha}+w_{5}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i+1+\frac{w_{5}^{\alpha}}{w_{4}^{\alpha}+w_{5}^{\alpha}},j-3+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{i+1+\frac{w_{5}^{\alpha}}{w_{4}^{\alpha}+w_{5}^{\alpha}},j-1+\frac{w_{3}^{\beta}}{w_{2}^{\beta}+w_{3}^{\beta}}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{i+1+\frac{w_{5}^{\alpha}}{w_{4}^{\alpha}+w_{5}^{\alpha}},j+1+\frac{w_{5}^{\beta}}{w_{4}^{\beta}+w_{5}^{\beta}}}+\left(w_{6}^{\beta}+w_{7}^{\beta}\right)F_{i+1+\frac{w_{5}^{\alpha}}{w_{4}^{\alpha}+w_{5}^{\alpha}},j+3+\frac{w_{7}^{\beta}}{w_{6}^{\beta}+w_{7}^{\beta}}}\right]\\
+ & +\left(w_{6}^{\alpha}+w_{7}^{\alpha}\right)\left[\left(w_{0}^{\beta}+w_{1}^{\beta}\right)F_{i+3+\frac{w_{7}^{\alpha}}{w_{6}^{\alpha}+w_{7}^{\alpha}},j-3+\frac{w_{1}^{\beta}}{w_{0}^{\beta}+w_{1}^{\beta}}}+\left(w_{2}^{\beta}+w_{3}^{\beta}\right)F_{i+3+\frac{w_{7}^{\alpha}}{w_{6}^{\alpha}+w_{7}^{\alpha}},j-1+\frac{w_{3}^{\beta}}{w_{2}^{\beta}+w_{3}^{\beta}}}+\left(w_{4}^{\beta}+w_{5}^{\beta}\right)F_{i+3+\frac{w_{7}^{\alpha}}{w_{6}^{\alpha}+w_{7}^{\alpha}},j+1+\frac{w_{5}^{\beta}}{w_{4}^{\beta}+w_{5}^{\beta}}}+\left(w_{6}^{\beta}+w_{7}^{\beta}\right)F_{i+3+\frac{w_{7}^{\alpha}}{w_{6}^{\alpha}+w_{7}^{\alpha}},j+3+\frac{w_{7}^{\beta}}{w_{6}^{\beta}+w_{7}^{\beta}}}\right]
 \end{align*}
 
 \end_inset

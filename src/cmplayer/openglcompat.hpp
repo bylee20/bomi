@@ -132,28 +132,16 @@ public:
 	void unbind() const { glBindTexture(target, 0); }
 };
 
-class InterpolatorLutTexture : public OpenGLTexture {
-public:
-	float multiply = 2.0f;
-};
-
 class OpenGLCompat {
 public:
-	static constexpr int IntSamples = 256;
-	static constexpr int IntLutSize = IntSamples*4;
-	static void initialize(QOpenGLContext *ctx) { c.fill(ctx); }
-	static OpenGLTextureFormat textureFormat(GLenum format, int bpc = 1) {
-		Q_ASSERT(bpc == 1 || bpc == 2); return c.m_formats[bpc-1][format];
-	}
-	static bool hasRG() { return c.m_hasRG; } // use alpha instead of g if this returns false
-	static bool hasFloat() { return c.m_hasFloat; }
-	static QByteArray rg(const char *rg) { return c.m_hasRG ? QByteArray(rg) : QByteArray(rg).replace('g', 'a'); }
-	static int maximumTextureSize() { return c.m_maxTextureSize; }
+	static void initialize(QOpenGLContext *ctx);
+	static OpenGLTextureFormat textureFormat(GLenum format, int bpc = 1);
+	static QByteArray rg(const char *rg) { return HasRG ? QByteArray(rg) : QByteArray(rg).replace('g', 'a'); }
+	static int maximumTextureSize() { return MaxTexSize; }
+	static bool hasRG() { return HasRG; }
+	static bool hasFloat() { return HasFloat; }
 	static const OpenGLCompat &get() { return c; }
-	static void allocateInterpolatorLutTexture(InterpolatorLutTexture &texture1, InterpolatorLutTexture &texture2, InterpolatorType type);
 	static OpenGLTexture allocateDitheringTexture(GLuint id, Dithering type);
-	static OpenGLTexture allocate3dLutTexture(GLuint id);
-	static void upload3dLutTexture(const OpenGLTexture &texture, const QVector3D &sub, const QMatrix3x3 &mul, const QVector3D &add);
 	static QOpenGLFunctions *functions() { auto ctx = QOpenGLContext::currentContext(); return ctx ? ctx->functions() : nullptr; }
 	static OpenGLTexture makeTexture(int width, int height, GLenum format, GLenum target = GL_TEXTURE_2D) {
 		OpenGLTexture texture;
@@ -164,45 +152,14 @@ public:
 		texture.allocate();
 		return texture;
 	}
-	static QByteArray interpolatorCodes(int category);
-	static QByteArray interpolatorCodes(InterpolatorType type) { return interpolatorCodes(interpolatorCategory(type)); }
-	static int interpolatorCategory(InterpolatorType type) {
-		switch (type) {
-		case InterpolatorType::Bilinear:
-			return 0;
-		case InterpolatorType::BicubicBS:
-		case InterpolatorType::BicubicCR:
-		case InterpolatorType::BicubicMN:
-		case InterpolatorType::Lanczos2:
-		case InterpolatorType::Spline16:
-			return 1;
-		case InterpolatorType::Spline36:
-		case InterpolatorType::Lanczos3:
-			return 2;
-		case InterpolatorType::Spline64:
-		case InterpolatorType::Lanczos4:
-			return 3;
-		}
-		return 0;
-	}
+	~OpenGLCompat();
 private:
-	void fillInterpolatorLut(InterpolatorType type);
-	void fill(QOpenGLContext *ctx);
-	OpenGLCompat() = default;
+	OpenGLCompat();
 	static OpenGLCompat c;
-	bool m_init = false;
-	QOpenGLVersionProfile m_profile;
-	int m_major = 0, m_minor = 0;
-	int m_maxTextureSize = 0;
-	bool m_hasRG = false, m_hasFloat = false;
-	QMap<GLenum, OpenGLTextureFormat> m_formats[2];
-	std::array<QVector<GLfloat>, InterpolatorTypeInfo::size()> m_intLuts1, m_intLuts2;
-	QVector<GLushort> m_3dLut;
-	QVector<GLfloat> m_fruit;
-	QVector3D m_subLut, m_addLut;
-	QMatrix3x3 m_mulLut;
-	std::array<QPair<double, double>, InterpolatorTypeInfo::size()> m_bicubicParams;
-	std::array<QPair<int, int>, InterpolatorTypeInfo::size()> m_lanczosParams;
+	struct Data;
+	Data *d;
+	static bool HasRG, HasFloat;
+	static int MaxTexSize;
 };
 
 class OpenGLFramebufferObject {

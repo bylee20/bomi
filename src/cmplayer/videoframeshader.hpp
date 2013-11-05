@@ -51,7 +51,7 @@ private:
 	struct ShaderInfo {
 		QOpenGLShaderProgram program;
 		bool rebuild = true, kernel = false;
-		InterpolatorType interpolator = InterpolatorType::Bilinear;
+		const Interpolator *interpolator = Interpolator::get(InterpolatorType::Bilinear);
 	};
 	void updateShader();
 	VideoFrame m_frame;
@@ -76,7 +76,7 @@ private:
 	bool m_dma = false, m_check = true;
 	QRectF m_coords, m_positions;
 	QPointF m_chroma = {0.0, 0.0};
-	InterpolatorLutTexture m_lutInt1, m_lutInt2;
+	Interpolator::Texture m_lutInt1, m_lutInt2;
 #ifdef Q_OS_LINUX
 	void *m_vaSurfaceGLX = nullptr;
 #endif
