@@ -39,11 +39,8 @@ void mp_msg_log_va2(struct mp_log *log, int lev, const char *format, va_list va)
 		return; // do not display
 	if (format[0] == '[')
 		return;
-	char tmp[MSGSIZE_MAX];
-	vsnprintf(tmp, MSGSIZE_MAX, format, va);
-	tmp[MSGSIZE_MAX-2] = '\n';
-	tmp[MSGSIZE_MAX-1] = '\0';
-	qDebug(tmp);
+	vprintf(format, va);
+	fflush(stdout);
 }
 
 }
