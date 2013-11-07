@@ -52,6 +52,9 @@ struct SubtitleRendererItem::Data {
 		if (!hidden && !empty && msec > 0)
 			selection.render(msec - delay, flags);
 	}
+	void updateVisible() {
+		p->setVisible(!hidden && !empty && !texture.size().isEmpty());
+	}
 };
 
 class SubtitleRendererShader : public TextureRendererShader {
@@ -256,7 +259,8 @@ void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 		}
 		d->redraw = false;
 	}
-	setVisible(!d->hidden && !d->texture.size().isEmpty());
+	d->updateVisible();
+	setVisible(!d->hidden && !d->empty && !d->texture.size().isEmpty());
 }
 
 bool SubtitleRendererItem::isHidden() const {
@@ -284,7 +288,7 @@ void SubtitleRendererItem::setPos(double pos) {
 
 void SubtitleRendererItem::setHidden(bool hidden) {
 	if (_Change(d->hidden, hidden))
-		setVisible(!d->hidden && !d->texture.size().isEmpty());
+		d->updateVisible();
 }
 
 void SubtitleRendererItem::setFPS(double fps) {
