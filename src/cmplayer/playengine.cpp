@@ -367,6 +367,8 @@ void PlayEngine::seek(int pos) {
 		d->image.seek(pos, false);
 	else
 		d->tellmp("seek", (double)pos/1000.0, 2);
+	if (m_state == Paused && _Change(d->position, qBound(d->begin, pos, d->begin + d->duration)))
+		emit tick(d->position);
 }
 
 void PlayEngine::relativeSeek(int pos) {
@@ -375,6 +377,8 @@ void PlayEngine::relativeSeek(int pos) {
 	else
 		d->tellmp("seek", (double)pos/1000.0, 0);
 	emit sought();
+	if (m_state == Paused && _Change(d->position, qBound(d->begin, pos, d->begin + d->duration)))
+		emit tick(d->position);
 }
 
 void PlayEngine::setClippingMethod(ClippingMethod method) {
