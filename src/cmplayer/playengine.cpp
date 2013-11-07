@@ -538,8 +538,10 @@ void PlayEngine::customEvent(QEvent *event) {
 		break;
 	case UpdateTrack: {
 		auto streams = getData<std::array<StreamList, STREAM_TYPE_COUNT>>(event);
-		if (_CheckSwap(d->videoStreams, streams[STREAM_VIDEO]))
+		if (_CheckSwap(d->videoStreams, streams[STREAM_VIDEO])) {
 			emit videoStreamsChanged(d->videoStreams);
+			emit hasVideoChanged(!d->videoStreams.isEmpty());
+		}
 		if (_CheckSwap(d->audioStreams, streams[STREAM_AUDIO]))
 			emit audioStreamsChanged(d->audioStreams);
 		if (!streams[STREAM_SUB].isEmpty()) {
@@ -953,7 +955,7 @@ bool PlayEngine::isSeekable() const {
 }
 
 bool PlayEngine::hasVideo() const {
-	return d->mpctx && d->mpctx->sh_video;
+	return !d->videoStreams.isEmpty();
 }
 
 bool PlayEngine::atEnd() const {

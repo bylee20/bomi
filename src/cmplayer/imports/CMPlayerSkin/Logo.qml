@@ -6,7 +6,7 @@ Rectangle {
 	objectName: "logo"
 	property bool show: false
 	color: "black"
-    visible: engine.state == Engine.Stopped
+	visible: engine.state == Engine.Stopped || !engine.hasVideo
 	Image {
         visible: logo.show
 		anchors.fill: parent
