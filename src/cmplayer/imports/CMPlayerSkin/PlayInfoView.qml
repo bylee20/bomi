@@ -116,14 +116,14 @@ Item {
 			function update() {
 				var txt = qsTr("Audio Codec: %1").arg(engine.audio.codec);
 				txt += '\n';
-				txt += qsTr("Input : %1 %2kbps %3kHz %4ch %5bits")
+				txt += qsTr("Input : %1 %2kbps %3kHz %4 %5bits")
 					.arg(engine.audio.input.type)
 					.arg((engine.audio.input.bps*1e-3).toFixed(0))
 					.arg(engine.audio.input.samplerate)
 					.arg(engine.audio.input.channels)
 					.arg(engine.audio.input.bits);
 				txt += '\n';
-				txt += qsTr("Output: %1 %2kbps %3kHz %4ch %5bits")
+				txt += qsTr("Output: %1 %2kbps %3kHz %4 %5bits")
 					.arg(engine.audio.output.type)
 					.arg((engine.audio.output.bps*1e-3).toFixed(0))
 					.arg(engine.audio.output.samplerate)

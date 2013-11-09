@@ -14,13 +14,13 @@ class AvIoFormat : public QObject {
 	Q_PROPERTY(double fps READ fps)
 	Q_PROPERTY(int bits READ bits)
 	Q_PROPERTY(double samplerate READ samplerate)
-	Q_PROPERTY(int channels READ channels)
+	Q_PROPERTY(QString channels READ channels)
 public:
 	AvIoFormat(QObject *parent = nullptr): QObject(parent) {}
 	QSize size() const {return m_size;}
 	double samplerate() const {return m_samplerate;}
 	int bits() const {return m_bits;}
-	int channels() const {return m_channels;}
+	QString channels() const {return m_channels;}
 	QString type() const {return m_type;}
 	double bps() const {return m_bps;}
 	double fps() const {return m_fps;}
@@ -32,7 +32,7 @@ private:
 	double m_fps = 0.0;
 	double &m_samplerate = m_fps;
 	int &m_bits = m_size.rwidth();
-	int &m_channels = m_size.rheight();
+	QString m_channels;
 };
 
 class AvInfoObject : public QObject {
