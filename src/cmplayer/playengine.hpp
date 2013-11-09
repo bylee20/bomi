@@ -45,6 +45,7 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(QQuickItem *screen READ screen)
 	Q_PROPERTY(qreal cache READ cache NOTIFY cacheChanged)
 	Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
+	Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Loading = 16, Error = 32, Running = Playing | Loading };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
@@ -140,6 +141,7 @@ public:
 	Q_INVOKABLE double bps(double fps) const;
 	static void registerObjects();
 	qreal cache() const;
+	int droppedFrames() const;
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);
@@ -184,7 +186,8 @@ signals:
 	void relativePositionChanged();
 	void hwAccChanged();
 	void cacheChanged();
-	void hasVideoChanged(bool has);
+	void hasVideoChanged();
+	void droppedFramesChanged();
 private:
 	int playImage(const Mrl &mrl, int &terminated, int &duration);
 	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);

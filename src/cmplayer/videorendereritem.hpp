@@ -68,6 +68,8 @@ public:
 	InterpolatorType chromaUpscaler() const;
 	void setRange(ColorRange range);
 	ColorRange range() const;
+	int droppedFrames() const;
+	void reset();
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -75,6 +77,7 @@ public slots:
 	void setOffset(const QPoint &offset);
 	void setCropRatio(double ratio);
 signals:
+	void droppedFramesChanged(int dropped);
 	void frameImageObtained(const QImage &image) const;
 	void effectsChanged(Effects effects);
 	void offsetChanged(const QPoint &pos);

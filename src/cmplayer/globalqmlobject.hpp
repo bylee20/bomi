@@ -42,6 +42,7 @@ public:
 	Q_INVOKABLE double textWidth(const QString &text, int size);
 	Q_INVOKABLE double textWidth(const QString &text, int size, const QString &family);
 	Q_INVOKABLE QString msecToString(int ms) {return Pch::_NullTime.addSecs(qRound((double)ms*1e-3)).toString(_L("h:mm:ss"));}
+	Q_INVOKABLE QString secToString(int s) {return Pch::_NullTime.addSecs(s).toString(_L("h:mm:ss"));}
 	Q_INVOKABLE QPointF mousePos(QQuickItem *item);
 	Q_INVOKABLE QPointF mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) const;
 	Q_INVOKABLE bool execute(const QString &key);

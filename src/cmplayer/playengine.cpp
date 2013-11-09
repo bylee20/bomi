@@ -44,6 +44,8 @@ struct PlayEngine::Data {
 
 	QByteArray vfs;
 
+	QList<QMetaObject::Connection> rendererConnections;
+
 	static int mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 		auto e = static_cast<PlayEngine*>(mpctx->priv); auto d = e->d;
 		if (cmd->id < 0) {
@@ -544,7 +546,7 @@ void PlayEngine::customEvent(QEvent *event) {
 		auto streams = getData<std::array<StreamList, STREAM_TYPE_COUNT>>(event);
 		if (_CheckSwap(d->videoStreams, streams[STREAM_VIDEO])) {
 			emit videoStreamsChanged(d->videoStreams);
-			emit hasVideoChanged(!d->videoStreams.isEmpty());
+			emit hasVideoChanged();
 		}
 		if (_CheckSwap(d->audioStreams, streams[STREAM_AUDIO]))
 			emit audioStreamsChanged(d->audioStreams);
@@ -567,6 +569,8 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->start = 0;
 		d->position = 0;
 		d->cache = -1;
+		if (d->renderer)
+			d->renderer->reset();
 		emit tick(d->position);
 		emit seekableChanged(isSeekable());
 		emit started(d->playlist.loadedMrl());
@@ -1044,8 +1048,20 @@ double PlayEngine::fps() const {
 }
 
 void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
-	if (_Change(d->renderer, renderer))
+	if (d->renderer != renderer) {
+		for (auto &conn : d->rendererConnections)
+			disconnect(conn);
+		d->rendererConnections.clear();
+		d->renderer = renderer;
 		d->video->setRenderer(d->renderer);
+		if (d->renderer)
+			d->rendererConnections << connect(d->renderer
+				, &VideoRendererItem::droppedFramesChanged, this, &PlayEngine::droppedFramesChanged);
+	}
+}
+
+int PlayEngine::droppedFrames() const {
+	return d->renderer ? d->renderer->droppedFrames() : 0;
 }
 
 double PlayEngine::bps(double fps) const {
