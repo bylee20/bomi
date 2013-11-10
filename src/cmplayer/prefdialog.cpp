@@ -573,6 +573,7 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.normalizer_min->setValue(p.normalizer_min*100.0);
 	d->ui.normalizer_max->setValue(p.normalizer_max*100.0);
 	d->ui.normalizer_length->setValue(p.normalizer_length);
+	d->ui.channel_manipulation->setMap(p.channel_manipulation);
 
 	d->ui.blur_kern_c->setValue(p.blur_kern_c);
 	d->ui.blur_kern_n->setValue(p.blur_kern_n);
@@ -696,6 +697,7 @@ void PrefDialog::get(Pref &p) {
 	p.normalizer_min = d->ui.normalizer_min->value()/100.0;
 	p.normalizer_max = d->ui.normalizer_max->value()/100.0;
 	p.normalizer_length = d->ui.normalizer_length->value();
+	p.channel_manipulation = d->ui.channel_manipulation->map();
 
 	p.sub_enable_autoload = d->ui.sub_enable_autoload->isChecked();
 	p.sub_enable_autoselect = d->ui.sub_enable_autoselect->isChecked();

@@ -10,9 +10,10 @@
 class VideoRendererItem;	struct MPContext;
 class VideoFormat;			struct mp_cmd;
 class PlaylistModel;		class Playlist;
-class DeintOption;
+class DeintOption;			class ChannelLayoutMap;
 enum class AudioDriver;		enum class ClippingMethod;
 enum class DeintMethod;		enum class DeintMode;
+enum class ChannelLayout;
 
 typedef std::function<int(const Mrl&)> GetMrlInt;
 
@@ -142,6 +143,8 @@ public:
 	static void registerObjects();
 	qreal cache() const;
 	int droppedFrames() const;
+	void setChannelLayoutMap(const ChannelLayoutMap &map);
+	void setChannelLayout(ChannelLayout layout);
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);

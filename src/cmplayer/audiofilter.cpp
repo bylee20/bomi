@@ -1,5 +1,6 @@
 #include "audiofilter.hpp"
 #include "audiocontroller.hpp"
+#include "channelmanipulation.hpp"
 
 #ifdef max
 #undef max
@@ -11,18 +12,19 @@
 #undef clamp
 #endif
 
-bool AudioFilter::reconfigure(const mp_audio *data) {
+bool AudioFilter::reconfigure(const mp_audio *data, const mp_audio *input) {
 	if (m_format != data->format)
 		return false;
-	m_channels = data->channels.num;
+	memcpy(&m_channels, &data->channels, sizeof(m_channels));
+	memcpy(&m_channels_in, &input->channels, sizeof(m_channels_in));
 	m_samplerate = data->rate;
 	m_bps = data->bps;
 	reinitialize();
 	return true;
 }
 
-bool AudioFilter::prepare(const AudioController *ac, const mp_audio *data) {
-	if (!isCompatibleWith(data) && !reconfigure(data))
+bool AudioFilter::prepare(const AudioController *ac, const mp_audio *data, const mp_audio *input) {
+	if (!isCompatibleWith(data, input) && !reconfigure(data, input))
 		return false;
 	prepareToPlay(ac, data);
 	return true;
@@ -127,7 +129,7 @@ public:
 	}
 	void reinitialize() override {
 		const double frames_per_ms = fps() / 1000.0;
-		const int samples_per_frames = channels();
+		const int samples_per_frames = channels().num;
 		const int frames_stride = frames_per_ms * m_ms_stride;
 		const int frames_overlap = qMax(0, int(frames_stride * m_percent_overlap));
 
@@ -194,7 +196,7 @@ private:
 	}
 
 	int best_overlap_samples_offset() {
-		const int samples_per_frame = channels();
+		const int samples_per_frame = channels().num;
 		auto pw  = m_table_window.constData();
 		auto po  = m_overlap.constData() + samples_per_frame;
 		auto ppc = m_buf_pre_corr.data();
@@ -270,40 +272,86 @@ class VolumeControllerImpl : public VolumeController {
 		int frames = 0; double level = 0.0;
 	};
 public:
-	VolumeControllerImpl(int format): VolumeController(format, method) {
-		qDebug() << "Clipping Method:" << ClippingMethodInfo::name(method);
-	}
+	VolumeControllerImpl(int format): VolumeController(format, method) { }
 	mp_audio *play(mp_audio *data) override {
-		auto p = (T*)(data->audio);
+		const int srcNch = channels_in().num;
+		const int dstNch = channels().num;
+		auto src = (T*)(data->audio);
+		auto dest = src;
+		int len = data->len*dstNch/srcNch;
+		if (len != data->len) {
+			if (m_buffer.size() < len)
+				m_buffer.resize(len*1.5);
+			dest = m_buffer.data();
+		}
 		if (m_muted)
-			std::fill_n(p, b2s(data->len), 0);
-		else {
-			const int nch = channels();
+			std::fill_n(dest, b2s(len), 0);
+		else if (m_map.isEmpty()) {
+			Q_ASSERT(channels() == channels_in());
+			Q_ASSERT(dest == src);
 			const int frames = s2f(b2s(data->len));
 			for (int i=0; i<frames; ++i) {
-				for (int ch = 0; ch < nch; ++ch, ++p)
-					*p = Clip<method, T>::apply((*p)*m_level[ch]*m_gain);
+				for (int ch = 0; ch < dstNch; ++ch)
+					src[ch] = Clip<method, T>::apply(src[ch]*m_level[ch]*m_gain[ch]);
+				src += dstNch;
+			}
+		} else {
+			const int frames = s2f(b2s(data->len));
+			for (int i=0; i<frames; ++i) {
+				for (int ch = 0; ch < dstNch; ++ch) {
+					auto dstSpeaker = (mp_speaker_id)channels().speaker[ch];
+					auto &sources = m_ch_man.sources(dstSpeaker);
+					double v = 0;
+					for (int s = 0; s<sources.size(); ++s) {
+						const auto srcIdx = m_ch_index_src[sources[s]];
+						v += src[srcIdx]*m_level[srcIdx]*m_gain[srcIdx];
+					}
+					m_frame[ch] = Clip<method, T>::apply(v);
+				}
+				memcpy(dest, m_frame.data(), sizeof(T)*dstNch);
+				dest += dstNch;
+				if (src != dest)
+					src += srcNch;
+			}
+			if (len != data->len) {
+				data->audio = m_buffer.data();
+				data->len = len;
+				mp_audio_set_channels(data, &channels());
 			}
 		}
 		return data;
 	}
 private:
-	void reinitialize() {
-		m_gain = 1.0;
+	void reinitialize() override {
+		std::fill_n(m_gain, AF_NCH, 1.0);
 		m_buffers.clear();
+		m_its.clear();
+		for (int i=0; i<channels().num; ++i)
+			m_ch_index_dst[channels().speaker[i]] = i;
+		for (int i=0; i<channels_in().num; ++i)
+			m_ch_index_src[channels_in().speaker[i]] = i;
+		m_frame.resize(channels().num);
+		m_ch_man = m_map(channels_in(), channels());
+		m_mul = (double)channels().num/(double)channels_in().num;
 	}
-	BufferInfo getInfo(const mp_audio *data) const {
+	QVector<BufferInfo> getInfo(const mp_audio *data) const {
 		const int samples = b2s(data->len);
-		BufferInfo info(s2f(samples));
+		const int frames = s2f(samples);
+		const int nch = data->nch;
+		QVector<BufferInfo> infos(nch, BufferInfo(frames));
 		auto p = static_cast<const T*>(data->audio);
-		for (int i=0; i<samples; ++i)
-			info.level += toLevel<T>(*p++);
-		info.level /= samples;
-		return info;
+		for (int i=0; i<frames; ++i) {
+			for (int ch = 0; ch < nch; ++ch)
+				infos[ch].level += toLevel<T>(p[ch]);
+			p += nch;
+		}
+		for (auto &info : infos)
+			info.level /= frames;
+		return infos;
 	}
-	BufferInfo calculateAverage(const BufferInfo &data) const {
+	BufferInfo calculateAverage(const BufferInfo &data, int ch) const {
 		BufferInfo total;
-		for (const auto &one : m_buffers) {
+		for (const auto &one : m_buffers[ch]) {
 			total.level += one.level*one.frames;
 			total.frames += one.frames;
 		}
@@ -314,45 +362,56 @@ private:
 	}
 	void prepareToPlay(const AudioController *ac, const mp_audio *data) override {
 		m_muted = ac->isMuted();
-		const int nch = channels();
-		std::fill_n(m_level, nch, ac->level());
+		std::fill_n(m_level, AF_NCH, ac->level());
 		if (_Change(m_normalizer, ac->isNormalizerActivated()))
 			m_buffers.clear();
 		if (_Change(m_option, ac->normalizerOption()))
 			m_buffers.clear();
 		if (!m_normalizer || data->len <= 0) {
-			m_gain = 1.0;
+			std::fill_n(m_gain, AF_NCH, 1.0);
 			return;
 		}
-		const auto info = getInfo(data);
-		const auto avg = calculateAverage(info);
-		const double targetGain = m_option.gain(avg.level);
-		if (targetGain < 0)
-			m_gain = 1.0;
-		else {
-			const double rate = targetGain/m_gain;
-			if (rate > 1.05) {
-				m_gain *= 1.05;
-			} else if (rate < 0.95)
-				m_gain *= 0.95;
-			else
-				m_gain = targetGain;
-		}
-		if ((double)avg.frames/(double)fps() >= m_option.bufferLengthInSeconds) {
-			if (++m_it == m_buffers.end())
-				m_it = m_buffers.begin();
-			*m_it = info;
-		} else {
-			m_buffers.push_back(info);
-			m_it = --m_buffers.end();
+		const auto infos = getInfo(data);
+		m_its.resize(infos.size());
+		m_buffers.resize(infos.size());
+		for (int ch = 0; ch < infos.size(); ++ch) {
+			auto &info = infos[ch];
+			auto &gain = m_gain[ch];
+			const auto avg = calculateAverage(info, ch);
+			const double targetGain = m_option.gain(avg.level);
+			if (targetGain < 0)
+				gain = 1.0;
+			else {
+				const double rate = targetGain/gain;
+				if (rate > 1.05) {
+					gain *= 1.05;
+				} else if (rate < 0.95)
+					gain *= 0.95;
+				else
+					gain = targetGain;
+			}
+			auto &it = m_its[ch];
+			auto &buffers = m_buffers[ch];
+			if ((double)avg.frames/(double)fps() >= m_option.bufferLengthInSeconds) {
+				if (++it == buffers.end())
+					it = buffers.begin();
+				*it = info;
+			} else {
+				buffers.push_back(info);
+				it = --buffers.end();
+			}
 		}
 	}
 
 	bool m_normalizer = false, m_muted = false;
 	double m_level[AF_NCH];
 	NormalizerOption m_option;
-	QLinkedList<BufferInfo> m_buffers;
-	typename QLinkedList<BufferInfo>::iterator m_it;
+	QVector<QLinkedList<BufferInfo>> m_buffers;
+	QVector<typename QLinkedList<BufferInfo>::iterator> m_its;
+	QVector<T> m_buffer;
+	std::array<int, MP_SPEAKER_ID_COUNT> m_ch_index_src, m_ch_index_dst;
+	std::vector<T> m_frame;
+	ChannelManipulation m_ch_man;
 };
 
 #define DEC_CREATE(Class) \

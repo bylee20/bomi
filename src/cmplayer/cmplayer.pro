@@ -131,7 +131,8 @@ HEADERS += playengine.hpp \
     ../mpv/video/out/dither.h \
     trayicon.hpp \
     videocolor.hpp \
-    interpolator.hpp
+    interpolator.hpp \
+    channelmanipulation.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -206,7 +207,8 @@ SOURCES += main.cpp \
     ../mpv/video/out/dither.c \
     trayicon.cpp \
     videocolor.cpp \
-    interpolator.cpp
+    interpolator.cpp \
+    channelmanipulation.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -35,7 +35,7 @@ struct PlayEngine::Data {
 	QMutex mutex;
 	QMap<QString, QString> subtitleNames;
 	QList<QTemporaryFile*> subtitleFiles;
-
+	ChannelLayout layout = ChannelLayout::Default;
 	int duration = 0, audioSync = 0, begin = 0;
 	StreamList subStreams, audioStreams, videoStreams;
 	VideoRendererItem *renderer = nullptr;
@@ -59,6 +59,10 @@ struct PlayEngine::Data {
 				break;
 			case MpSetAudioMuted:
 				d->audio->setMuted(cmd->args[0].v.i);
+				break;
+			case MpSetAudioLayout:
+				d->audio->setChannelLayout(d->layout);
+				reinit_audio_chain(mpctx);
 				break;
 			case MpResetAudioChain:
 				reinit_audio_chain(mpctx);
@@ -385,6 +389,15 @@ void PlayEngine::relativeSeek(int pos) {
 
 void PlayEngine::setClippingMethod(ClippingMethod method) {
 	d->audio->setClippingMethod(method);
+}
+
+void PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) {
+	d->audio->setChannelLayoutMap(map);
+}
+
+void PlayEngine::setChannelLayout(ChannelLayout layout) {
+	if (_Change(d->layout, layout))
+		d->enqueue(MpSetAudioLayout, "", (int)d->layout);
 }
 
 typedef QPair<AudioDriver, const char*> AudioDriverName;
@@ -833,7 +846,7 @@ void PlayEngine::exec() {
 	auto mpvOptions = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
 	if (!mpvOptions.isEmpty())
 		args += QString::fromLocal8Bit(mpvOptions).split(' ', QString::SkipEmptyParts);
-	args << "--no-config" << "--idle" << "--no-fs"
+	args << "--no-config" << "--idle" << "--no-fs" << "-v"
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--softvol=yes" << "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"

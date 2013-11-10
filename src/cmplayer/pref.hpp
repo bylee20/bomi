@@ -105,6 +105,7 @@ public:
 	int blur_kern_c = 1, blur_kern_n = 2, blur_kern_d = 1;
 	int sharpen_kern_c = 5, sharpen_kern_n = -1, sharpen_kern_d = 0;
 	int remap_luma_min = 16, remap_luma_max = 235;
+	ChannelLayoutMap channel_manipulation = ChannelLayoutMap::default_();
 
 	bool sub_enable_autoload = true, sub_enable_autoselect = true, sub_enc_autodetection = true;
 	SubtitleAutoload sub_autoload = SubtitleAutoload::Contain;

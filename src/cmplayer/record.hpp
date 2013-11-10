@@ -5,6 +5,7 @@
 #include "info.hpp"
 #include "videocolor.hpp"
 #include "deintinfo.hpp"
+#include "channelmanipulation.hpp"
 #include "enums.hpp"
 #include <type_traits>
 
@@ -16,6 +17,7 @@ template<> inline QVariant toVariant(const T &t) { return t.toString(); }
 DEC_WITH_STRING(DeintOption)
 DEC_WITH_STRING(DeintCaps)
 DEC_WITH_STRING(QKeySequence)
+DEC_WITH_STRING(ChannelLayoutMap)
 #undef DEC_WITH_STRING
 
 template<class T> struct is_list : std::false_type {};

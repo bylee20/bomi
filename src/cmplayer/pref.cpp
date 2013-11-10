@@ -81,6 +81,7 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("audio/tempo-scaler")] << Qt::Key_Z;
 	keys[_L("audio/amp/increase")] << Qt::CTRL + Qt::Key_Up;
 	keys[_L("audio/amp/decrease")] << Qt::CTRL + Qt::Key_Down;
+	keys[_L("audio/channel/next")] << Qt::ALT + Qt::Key_C;
 	keys[_L("audio/sync/reset")] << Qt::Key_Backslash;
 	keys[_L("audio/sync/increase")] << Qt::Key_BracketRight;
 	keys[_L("audio/sync/decrease")] << Qt::Key_BracketLeft;
@@ -193,6 +194,7 @@ void Pref::save() const {
 	WRITE(sharpen_kern_d);
 	WRITE(remap_luma_min);
 	WRITE(remap_luma_max);
+	WRITE(channel_manipulation);
 
 	WRITE(enable_generate_playist);
 	WRITE(sub_enable_autoload);
@@ -270,6 +272,7 @@ void Pref::load() {
 	READ(sharpen_kern_d);
 	READ(remap_luma_min);
 	READ(remap_luma_max);
+	READ(channel_manipulation);
 
 	READ(invert_wheel);
 	READ(enable_system_tray);

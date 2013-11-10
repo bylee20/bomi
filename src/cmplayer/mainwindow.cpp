@@ -767,6 +767,9 @@ void MainWindow::connectMenus() {
 	d->connectStepActions(audio("amp"), "audio_amp", &AppState::audioAmpChanged, [this] () {
 		auto v = d->as.audio_amplifier; d->engine.setAmp(v*1e-2);
 	});
+	d->connectEnumMenu<ChannelLayout>(audio, "audio_channel_layout", &AppState::audioChannelLayoutChanged, [this] () {
+		d->engine.setChannelLayout(d->as.audio_channel_layout);
+	});
 	d->connectPropertyCheckable(audio["normalizer"], "audio_volume_normalizer", &AppState::audioVolumeNormalizerChanged, [this] () {
 		d->engine.setVolumeNormalizerActivated(d->as.audio_volume_normalizer);
 	});
@@ -1374,6 +1377,7 @@ void MainWindow::applyPref() {
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
+	d->engine.setChannelLayoutMap(p.channel_manipulation);
 
 	auto conv = [&p] (const DeintCaps &caps) {
 		DeintOption option;

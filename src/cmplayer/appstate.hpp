@@ -30,6 +30,7 @@ class AppState : public QObject {
 	Q_PROPERTY(SubtitleDisplay sub_display MEMBER sub_display NOTIFY subDisplayChanged)
 	Q_PROPERTY(int sub_position MEMBER sub_position NOTIFY subPositionChanged)
 	Q_PROPERTY(int sub_sync MEMBER sub_sync NOTIFY subSyncChanged)
+	Q_PROPERTY(ChannelLayout audio_channel_layout MEMBER audio_channel_layout NOTIFY audioChannelLayoutChanged)
 public:
 	QPointF win_pos;
 	QSize win_size;
@@ -57,6 +58,7 @@ public:
 	int audio_amplifier = 100;
 	int audio_volume = 100, audio_sync = 0;
 	bool audio_muted = false, audio_volume_normalizer = false, audio_tempo_scaler = true;
+	ChannelLayout audio_channel_layout = ChannelLayout::Default;
 
 // subtitle state
 	int sub_position = 100;
@@ -103,6 +105,7 @@ signals:
 	void audioSyncChanged();
 	void audioVolumeNormalizerChanged();
 	void audioTempoScalerChanged();
+	void audioChannelLayoutChanged();
 	void subPositionChanged();
 	void subSyncChanged();
 	void subDisplayChanged();

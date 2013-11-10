@@ -53,7 +53,7 @@ enum EventType {
 
 enum MpCmd : int {
 	MpSetProperty = std::numeric_limits<int>::min(),
-	MpResetAudioChain, MpResetDeint, MpSetDeintEnabled, MpSetAudioLevel, MpSetAudioMuted
+	MpResetAudioChain, MpResetDeint, MpSetDeintEnabled, MpSetAudioLevel, MpSetAudioMuted, MpSetAudioLayout
 };
 
 template<typename T> static QByteArray qbytearray_from(const T &t);
