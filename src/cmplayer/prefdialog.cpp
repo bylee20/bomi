@@ -468,40 +468,11 @@ PrefDialog::~PrefDialog() {
 
 
 QString PrefDialog::toString(const QLocale &locale) {
-	QString text;
-	bool addName = true;
-	switch (locale.language()) {
-	case QLocale::C:
+	QString text = Translator::languageName(locale.language());
+	if (text.isEmpty())
 		text = tr("Use the system default language");
-		addName = false;
-		break;
-	case QLocale::English:
-		text = tr("English");
-		break;
-	case QLocale::German:
-		text = tr("German");
-		break;
-	case QLocale::Japanese:
-		text = tr("Japanese");
-		break;
-	case QLocale::Korean:
-		text = tr("Korean");
-		break;
-	case QLocale::Russian:
-		text = tr("Russian");
-		break;
-	case QLocale::Italian:
-		text = tr("Italian");
-		break;
-	case QLocale::Czech:
-		text = tr("Czech");
-		break;
-	default:
-		text = QLocale::languageToString(locale.language());
-		break;
-	}
-	if (addName)
-		text += " (" + locale.name() + ')';
+	else
+		text += " (" % locale.name() % ')';
 	return text;
 }
 

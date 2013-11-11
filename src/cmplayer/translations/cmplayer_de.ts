@@ -30,17 +30,17 @@ Project page: %3</source>
         <translation>Entwickler Blog</translation>
     </message>
     <message>
-        <location filename="../ui/aboutdialog.ui" line="184"/>
+        <location filename="../ui/aboutdialog.ui" line="190"/>
         <source>License</source>
         <translation>Lizenz</translation>
     </message>
     <message>
-        <location filename="../ui/aboutdialog.ui" line="217"/>
+        <location filename="../ui/aboutdialog.ui" line="223"/>
         <source>View Full Text of GPL</source>
         <translation>Sehen Volltext GPL</translation>
     </message>
     <message>
-        <location filename="../ui/aboutdialog.ui" line="227"/>
+        <location filename="../ui/aboutdialog.ui" line="233"/>
         <source>View Full Text of MPL </source>
         <translation>Sehen Volltext MPL</translation>
     </message>
@@ -48,6 +48,24 @@ Project page: %3</source>
         <location filename="../dialogs.cpp" line="339"/>
         <source>Close</source>
         <translation>schließen</translation>
+    </message>
+</context>
+<context>
+    <name>ChannelManipulationWidget</name>
+    <message>
+        <location filename="../channelmanipulation.cpp" line="379"/>
+        <source>Layout:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../channelmanipulation.cpp" line="390"/>
+        <source>Inputs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../channelmanipulation.cpp" line="394"/>
+        <source>Outputs</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -245,386 +263,531 @@ Project page: %3</source>
 <context>
     <name>EnumInfo</name>
     <message>
-        <location filename="../enums.hpp" line="748"/>
+        <location filename="../enums.hpp" line="960"/>
         <source>Bilinear</source>
         <translation>Bilinear</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="749"/>
+        <location filename="../enums.hpp" line="962"/>
         <source>Catmull-Rom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="750"/>
+        <location filename="../enums.hpp" line="963"/>
         <source>Mitchell-Netravali</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="53"/>
+        <location filename="../enums.hpp" line="264"/>
         <source>Color Range</source>
         <translation>Farbbereich</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="63"/>
-        <location filename="../enums.hpp" line="515"/>
+        <location filename="../enums.hpp" line="274"/>
+        <location filename="../enums.hpp" line="726"/>
         <source>Auto</source>
         <translation>Auto</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1855"/>
-        <location filename="../enums.hpp" line="1929"/>
+        <location filename="../enums.hpp" line="2068"/>
+        <location filename="../enums.hpp" line="2142"/>
         <source>Reset</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Zurücksetzen</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="210"/>
+        <location filename="../enums.hpp" line="421"/>
         <source>Subtitle Display</source>
         <translation>Untertitel-Anzeige</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="64"/>
+        <location filename="../enums.hpp" line="166"/>
+        <source>Channel Layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="176"/>
+        <source>Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="177"/>
+        <source>Mono</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="178"/>
+        <source>Stereo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="275"/>
         <source>Limited Range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="65"/>
+        <location filename="../enums.hpp" line="276"/>
         <source>Full Range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="66"/>
+        <location filename="../enums.hpp" line="277"/>
         <source>Remap Range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="67"/>
+        <location filename="../enums.hpp" line="278"/>
         <source>Extented Range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="220"/>
+        <location filename="../enums.hpp" line="431"/>
         <source>Display on Letterbox</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="221"/>
+        <location filename="../enums.hpp" line="432"/>
         <source>Display in Video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="285"/>
+        <location filename="../enums.hpp" line="496"/>
         <source>Size</source>
         <translation>Größe</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="295"/>
+        <location filename="../enums.hpp" line="506"/>
         <source>Same as Source</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="296"/>
+        <location filename="../enums.hpp" line="507"/>
         <source>Same as Window</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="297"/>
+        <location filename="../enums.hpp" line="508"/>
         <source>4:3 (TV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="298"/>
+        <location filename="../enums.hpp" line="509"/>
         <source>16:10 (Wide Monitor)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="299"/>
+        <location filename="../enums.hpp" line="510"/>
         <source>16:9 (HDTV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="300"/>
+        <location filename="../enums.hpp" line="511"/>
         <source>1.85:1 (Wide Vision)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="301"/>
+        <location filename="../enums.hpp" line="512"/>
         <source>2.35:1 (CinemaScope)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="361"/>
+        <location filename="../enums.hpp" line="572"/>
         <source>Dithering</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="371"/>
-        <location filename="../enums.hpp" line="514"/>
-        <location filename="../enums.hpp" line="979"/>
+        <location filename="../enums.hpp" line="582"/>
+        <location filename="../enums.hpp" line="725"/>
+        <location filename="../enums.hpp" line="1192"/>
         <source>Off</source>
         <translation>ausgeschaltet</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="372"/>
+        <location filename="../enums.hpp" line="583"/>
         <source>Random Dithering</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="373"/>
+        <location filename="../enums.hpp" line="584"/>
         <source>Ordered Dithering</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="504"/>
+        <location filename="../enums.hpp" line="715"/>
         <source>Deinterlacing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="751"/>
+        <location filename="../enums.hpp" line="961"/>
         <source>B-Spline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="752"/>
+        <location filename="../enums.hpp" line="964"/>
         <source>2-Lobed Spline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="753"/>
+        <location filename="../enums.hpp" line="966"/>
+        <source>4-Lobed Spline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="967"/>
+        <source>Fast Lanczos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="968"/>
         <source>2-Lobed Lanczos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="754"/>
-        <source>3-Lobed Spline (Approx.)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../enums.hpp" line="755"/>
-        <source>3-Lobed Lanczos (Approx.)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../enums.hpp" line="756"/>
+        <location filename="../enums.hpp" line="965"/>
         <source>3-Lobed Spline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="757"/>
-        <source>3-Lobed Lanczos</source>
+        <location filename="../enums.hpp" line="179"/>
+        <source>2.1ch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="907"/>
-        <source>Auto-clipping</source>
+        <location filename="../enums.hpp" line="180"/>
+        <source>3.0ch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="908"/>
-        <source>Soft-clipping</source>
+        <location filename="../enums.hpp" line="181"/>
+        <source>3.0ch(Back)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="909"/>
-        <source>Hard-clipping</source>
+        <location filename="../enums.hpp" line="182"/>
+        <source>3.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="183"/>
+        <source>4.0ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="184"/>
+        <source>4.0ch(Side)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="185"/>
+        <source>4.0ch(Diamond)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="186"/>
+        <source>4.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="187"/>
+        <source>4.1ch(Diamond)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="188"/>
+        <source>5.0ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="189"/>
+        <source>5.0ch(Side)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="190"/>
+        <source>5.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="191"/>
+        <source>5.1ch(Side)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="192"/>
+        <source>6.0ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="193"/>
+        <source>6.0ch(Front)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="194"/>
+        <source>6.0ch(Hexagonal)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="195"/>
+        <source>6.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="196"/>
+        <source>6.1ch(Back)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="197"/>
+        <source>6.1ch(Front)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="198"/>
+        <source>7.0ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="199"/>
+        <source>7.0ch(Front)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="200"/>
+        <source>7.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="201"/>
+        <source>7.1ch(Wide)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="202"/>
+        <source>7.1ch(Side)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="969"/>
+        <source>3-Lobed Lanczos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="970"/>
+        <source>4-Lobed Lanczos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="1120"/>
+        <source>Auto-clipping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="1121"/>
+        <source>Soft-clipping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="1122"/>
+        <source>Hard-clipping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="1182"/>
         <source>Stays on Top</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="980"/>
+        <location filename="../enums.hpp" line="1193"/>
         <source>Playing</source>
         <translation>Spielend</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="981"/>
+        <location filename="../enums.hpp" line="1194"/>
         <source>Always</source>
         <translation>Immer</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1122"/>
+        <location filename="../enums.hpp" line="1335"/>
         <source>Add files which have similar names</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1123"/>
+        <location filename="../enums.hpp" line="1336"/>
         <source>Add all files in the same folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1193"/>
+        <location filename="../enums.hpp" line="1406"/>
         <source>Append the open media to the playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1194"/>
+        <location filename="../enums.hpp" line="1407"/>
         <source>Clear the playlist and append the open media to the playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1195"/>
+        <location filename="../enums.hpp" line="1408"/>
         <source>Clear the playlist and generate new playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1265"/>
+        <location filename="../enums.hpp" line="1478"/>
         <source>Subtitles which have the same name as that of playing file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1266"/>
+        <location filename="../enums.hpp" line="1479"/>
         <source>Subtitles whose names contain the name of playing file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1267"/>
+        <location filename="../enums.hpp" line="1480"/>
         <source>All subtitles in the folder where the playing file is located</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1338"/>
+        <location filename="../enums.hpp" line="1551"/>
         <source>Subtitle which has the same name as that of playing file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1339"/>
+        <location filename="../enums.hpp" line="1552"/>
         <source>First subtitle from loaded ones</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1340"/>
+        <location filename="../enums.hpp" line="1553"/>
         <source>All loaded subtitles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1341"/>
+        <location filename="../enums.hpp" line="1554"/>
         <source>Each language subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1411"/>
+        <location filename="../enums.hpp" line="1624"/>
         <source>Fit to width of video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1412"/>
+        <location filename="../enums.hpp" line="1625"/>
         <source>Fit to height of video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1413"/>
+        <location filename="../enums.hpp" line="1626"/>
         <source>Fit to diagonal of video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1484"/>
+        <location filename="../enums.hpp" line="1697"/>
         <source>Open a file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1485"/>
+        <location filename="../enums.hpp" line="1698"/>
         <source>Toggle fullscreen mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1486"/>
+        <location filename="../enums.hpp" line="1699"/>
         <source>Toggle play/pause</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1487"/>
+        <location filename="../enums.hpp" line="1700"/>
         <source>Toggle mute/unmute</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1560"/>
+        <location filename="../enums.hpp" line="1773"/>
         <source>Seek playback for step 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1561"/>
+        <location filename="../enums.hpp" line="1774"/>
         <source>Seek playback for step 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1562"/>
+        <location filename="../enums.hpp" line="1775"/>
         <source>Seek playback for step 3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1563"/>
+        <location filename="../enums.hpp" line="1776"/>
         <source>Play previous/next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1564"/>
+        <location filename="../enums.hpp" line="1777"/>
         <source>Volumn up/down</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1565"/>
+        <location filename="../enums.hpp" line="1778"/>
         <source>Amp. up/down</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1709"/>
+        <location filename="../enums.hpp" line="1922"/>
         <source>Top</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1710"/>
+        <location filename="../enums.hpp" line="1923"/>
         <source>Vertical Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1711"/>
+        <location filename="../enums.hpp" line="1924"/>
         <source>Bottom</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1781"/>
+        <location filename="../enums.hpp" line="1994"/>
         <source>Left</source>
         <translation>Links</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1782"/>
+        <location filename="../enums.hpp" line="1995"/>
         <source>Horizontal Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1783"/>
+        <location filename="../enums.hpp" line="1996"/>
         <source>Right</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1856"/>
+        <location filename="../enums.hpp" line="2069"/>
         <source>Upward</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1857"/>
+        <location filename="../enums.hpp" line="2070"/>
         <source>Downward</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1858"/>
+        <location filename="../enums.hpp" line="2071"/>
         <source>Leftward</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1859"/>
+        <location filename="../enums.hpp" line="2072"/>
         <source>Rightward</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1930"/>
+        <location filename="../enums.hpp" line="2143"/>
         <source>Increase %1</source>
         <translation>Erhöhen %1</translation>
     </message>
     <message>
-        <location filename="../enums.hpp" line="1931"/>
+        <location filename="../enums.hpp" line="2144"/>
         <source>Decrease %1</source>
         <translation type="unfinished">Verkleinern %1</translation>
     </message>
@@ -750,66 +913,66 @@ Project page: %3</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../mainwindow.cpp" line="587"/>
-        <location filename="../mainwindow.cpp" line="857"/>
-        <location filename="../mainwindow.cpp" line="875"/>
+        <location filename="../mainwindow.cpp" line="615"/>
+        <location filename="../mainwindow.cpp" line="888"/>
+        <location filename="../mainwindow.cpp" line="906"/>
         <source>Open File</source>
         <translation>Datei öffnen</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="722"/>
+        <location filename="../mainwindow.cpp" line="750"/>
         <source>Adjust Video Color</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="804"/>
+        <location filename="../mainwindow.cpp" line="835"/>
         <source>Subtitle Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="807"/>
+        <location filename="../mainwindow.cpp" line="838"/>
         <source>Open Subtitle</source>
         <translation>Offene Untertitel</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="654"/>
+        <location filename="../mainwindow.cpp" line="682"/>
         <source>Seeking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="382"/>
+        <location filename="../mainwindow.cpp" line="383"/>
         <source>Error!
 Cannot open the media.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="446"/>
+        <location filename="../mainwindow.cpp" line="452"/>
         <source>Loading ...
 Please wait for a while.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="654"/>
+        <location filename="../mainwindow.cpp" line="682"/>
         <source>sec</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="788"/>
+        <location filename="../mainwindow.cpp" line="819"/>
         <source>Select All Subtitles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="788"/>
+        <location filename="../mainwindow.cpp" line="819"/>
         <source>%1 Subtitle(s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="940"/>
+        <location filename="../mainwindow.cpp" line="971"/>
         <source>Auto-shutdown is canceled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1621"/>
+        <location filename="../mainwindow.cpp" line="1660"/>
         <source>Do you want to resume the playback at the last played position?
 Played Date: %1
 Stopped Position: %2
@@ -817,130 +980,130 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1624"/>
+        <location filename="../mainwindow.cpp" line="1663"/>
         <source>Don&apos;t ask again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1625"/>
+        <location filename="../mainwindow.cpp" line="1664"/>
         <source>Resume Playback</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="386"/>
+        <location filename="../mainwindow.cpp" line="387"/>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="389"/>
+        <location filename="../mainwindow.cpp" line="390"/>
         <source>Play</source>
         <translation>abspielen</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="796"/>
+        <location filename="../mainwindow.cpp" line="827"/>
         <source>Hide Subtitles</source>
         <translation>Untertitel ausblenden</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="798"/>
+        <location filename="../mainwindow.cpp" line="829"/>
         <source>Show Subtitles</source>
         <translation>Untertitel anzeigen</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="819"/>
-        <location filename="../mainwindow.cpp" line="823"/>
+        <location filename="../mainwindow.cpp" line="850"/>
+        <location filename="../mainwindow.cpp" line="854"/>
         <source>Selected Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="856"/>
-        <location filename="../mainwindow.cpp" line="864"/>
+        <location filename="../mainwindow.cpp" line="887"/>
+        <location filename="../mainwindow.cpp" line="895"/>
         <source>Playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="864"/>
+        <location filename="../mainwindow.cpp" line="895"/>
         <source>Save File</source>
         <translation>Datei speichern</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="927"/>
+        <location filename="../mainwindow.cpp" line="958"/>
         <source>Exit CMPlayer when the playlist has finished.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="927"/>
+        <location filename="../mainwindow.cpp" line="958"/>
         <source>Auto-exit is canceled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="933"/>
+        <location filename="../mainwindow.cpp" line="964"/>
         <source>Auto-shutdown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="934"/>
-        <location filename="../mainwindow.cpp" line="938"/>
+        <location filename="../mainwindow.cpp" line="965"/>
+        <location filename="../mainwindow.cpp" line="969"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="728"/>
+        <location filename="../mainwindow.cpp" line="756"/>
         <source>Current Audio Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="671"/>
+        <location filename="../mainwindow.cpp" line="699"/>
         <source>Current Video Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="663"/>
+        <location filename="../mainwindow.cpp" line="691"/>
         <source>Current DVD Title</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="666"/>
+        <location filename="../mainwindow.cpp" line="694"/>
         <source>Current Chapter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="639"/>
+        <location filename="../mainwindow.cpp" line="667"/>
         <source>Set A to %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="642"/>
+        <location filename="../mainwindow.cpp" line="670"/>
         <source>Range is too short!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="643"/>
+        <location filename="../mainwindow.cpp" line="671"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="645"/>
+        <location filename="../mainwindow.cpp" line="673"/>
         <source>Quit repeating</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="646"/>
+        <location filename="../mainwindow.cpp" line="674"/>
         <source>Repeat current subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="636"/>
+        <location filename="../mainwindow.cpp" line="664"/>
         <source>A-B Repeat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1452"/>
+        <location filename="../mainwindow.cpp" line="1491"/>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1456"/>
+        <location filename="../mainwindow.cpp" line="1495"/>
         <source>Do not display this message again</source>
         <translation type="unfinished"></translation>
     </message>
@@ -987,7 +1150,7 @@ Stopped Position: %2
         <location filename="../ui/openmediafolderdialog.ui" line="14"/>
         <location filename="../openmediafolderdialog.cpp" line="114"/>
         <source>Open Folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ordner öffnen</translation>
     </message>
     <message>
         <location filename="../ui/openmediafolderdialog.ui" line="44"/>
@@ -1008,77 +1171,77 @@ Stopped Position: %2
 <context>
     <name>PlayEngine</name>
     <message>
-        <location filename="../playengine.cpp" line="546"/>
+        <location filename="../playengine.cpp" line="567"/>
         <source>No Subtitle</source>
         <translation>Nicht Untertitel</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="92"/>
+        <location filename="../playengine.cpp" line="98"/>
         <source>Audio %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="93"/>
+        <location filename="../playengine.cpp" line="99"/>
         <source>Video %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="94"/>
+        <location filename="../playengine.cpp" line="100"/>
         <source>Subtitle %1</source>
         <translation>Untertitel %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="214"/>
+        <location filename="../playengine.cpp" line="220"/>
         <source>File</source>
         <translation>Datei</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="324"/>
+        <location filename="../playengine.cpp" line="330"/>
         <source>Activated</source>
         <translation>Aktiviert</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="327"/>
+        <location filename="../playengine.cpp" line="333"/>
         <source>Deactivated</source>
         <translation>Deaktiviert</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="330"/>
+        <location filename="../playengine.cpp" line="336"/>
         <source>Unavailable</source>
         <translation>Nicht verfügbar</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="733"/>
+        <location filename="../playengine.cpp" line="756"/>
         <source>Title %1</source>
         <translation>Titel %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1127"/>
+        <location filename="../playengine.cpp" line="1162"/>
         <source>Playing</source>
         <translation>Spielend</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1129"/>
+        <location filename="../playengine.cpp" line="1164"/>
         <source>Stopped</source>
         <translation>Gestoppt</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1131"/>
+        <location filename="../playengine.cpp" line="1166"/>
         <source>Finished</source>
         <translation>Fertig</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1133"/>
+        <location filename="../playengine.cpp" line="1168"/>
         <source>Loading</source>
         <translation>Verladung</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1135"/>
+        <location filename="../playengine.cpp" line="1170"/>
         <source>Error</source>
         <translation>Fehler</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1137"/>
+        <location filename="../playengine.cpp" line="1172"/>
         <source>Paused</source>
         <translation>Angehalten</translation>
     </message>
@@ -1086,97 +1249,102 @@ Stopped Position: %2
 <context>
     <name>PlayInfoView</name>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="88"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="60"/>
         <source>Playback Speed: ×%1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="101"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="65"/>
         <source>CPU Usage: %1%(avg. %2%/core)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="105"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="69"/>
         <source>RAM Usage: %3MB(%4% of %5GB)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="110"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="76"/>
         <source>Audio/Video Sync: %6ms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="112"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="79"/>
         <source>Avg. Frame Rate: %7fps(%8MB/s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="115"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="82"/>
+        <source>Dropped Frames: %1 frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="86"/>
         <source>Volume Normalizer: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="116"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="86"/>
         <source>Deactivated</source>
         <translation>Deaktiviert</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="119"/>
+        <source>Input : %1 %2kbps %3kHz %4 %5bits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="126"/>
+        <source>Output: %1 %2kbps %3kHz %4 %5bits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="73"/>
         <source>Cache: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="134"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="73"/>
         <source>Unavailable</source>
         <translation>nicht verfügbar</translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="146"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="93"/>
         <source>Video Codec: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="148"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="95"/>
         <source>Input : %1 %2x%3 %4fps(%5MB/s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="155"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="102"/>
         <source>Output: %1 %2x%3 %4fps(%5MB/s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="176"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="111"/>
         <source>Hardware Acceleration: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="192"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="117"/>
         <source>Audio Codec: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="194"/>
-        <source>Input : %1 %2kbps %3kHz %4ch %5bits</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="208"/>
+        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="133"/>
         <source>Output Driver: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="201"/>
-        <source>Output: %1 %2kbps %3kHz %4ch %5bits</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../prefdialog.cpp" line="461"/>
+        <location filename="../prefdialog.cpp" line="462"/>
         <source>Preferences</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Einstellungen</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="88"/>
@@ -1204,24 +1372,24 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2531"/>
+        <location filename="../ui/prefdialog.ui" line="2542"/>
         <source>Timeout</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="217"/>
-        <location filename="../ui/prefdialog.ui" line="1698"/>
-        <location filename="../ui/prefdialog.ui" line="2547"/>
-        <location filename="../ui/prefdialog.ui" line="2703"/>
-        <location filename="../ui/prefdialog.ui" line="2726"/>
-        <location filename="../ui/prefdialog.ui" line="2749"/>
-        <location filename="../ui/prefdialog.ui" line="2833"/>
-        <location filename="../ui/prefdialog.ui" line="2921"/>
+        <location filename="../ui/prefdialog.ui" line="1709"/>
+        <location filename="../ui/prefdialog.ui" line="2558"/>
+        <location filename="../ui/prefdialog.ui" line="2721"/>
+        <location filename="../ui/prefdialog.ui" line="2744"/>
+        <location filename="../ui/prefdialog.ui" line="2767"/>
+        <location filename="../ui/prefdialog.ui" line="2851"/>
+        <location filename="../ui/prefdialog.ui" line="2939"/>
         <source>sec</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2575"/>
+        <location filename="../ui/prefdialog.ui" line="2586"/>
         <source>Disable screensaver while playing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1236,70 +1404,70 @@ Stopped Position: %2
         <translation>Dauer</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1674"/>
+        <location filename="../ui/prefdialog.ui" line="1685"/>
         <source>Volume Normalizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1737"/>
+        <location filename="../ui/prefdialog.ui" line="1748"/>
         <source>Target level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1766"/>
+        <location filename="../ui/prefdialog.ui" line="1777"/>
         <source>Silence level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1799"/>
+        <location filename="../ui/prefdialog.ui" line="1810"/>
         <source>Minimum gain</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1828"/>
+        <location filename="../ui/prefdialog.ui" line="1839"/>
         <source>Maximum gain</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="288"/>
+        <location filename="../prefdialog.cpp" line="289"/>
         <source>Video filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="912"/>
+        <location filename="../ui/prefdialog.ui" line="923"/>
         <source>Blur kernel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="933"/>
-        <location filename="../ui/prefdialog.ui" line="1284"/>
+        <location filename="../ui/prefdialog.ui" line="944"/>
+        <location filename="../ui/prefdialog.ui" line="1295"/>
         <source>Center</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="947"/>
-        <location filename="../ui/prefdialog.ui" line="1298"/>
+        <location filename="../ui/prefdialog.ui" line="958"/>
+        <location filename="../ui/prefdialog.ui" line="1309"/>
         <source>Neighbor</source>
         <translation>Nächste</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="961"/>
-        <location filename="../ui/prefdialog.ui" line="1312"/>
+        <location filename="../ui/prefdialog.ui" line="972"/>
+        <location filename="../ui/prefdialog.ui" line="1323"/>
         <source>Diagonal</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1263"/>
+        <location filename="../ui/prefdialog.ui" line="1274"/>
         <source>Sharpen kernel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2596"/>
+        <location filename="../ui/prefdialog.ui" line="2607"/>
         <source>Run only single CMPlayer application at the same time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2603"/>
+        <location filename="../ui/prefdialog.ui" line="2621"/>
         <source>Use Lion-style fullscreen mode</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1330,24 +1498,24 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2610"/>
+        <location filename="../ui/prefdialog.ui" line="2628"/>
         <source>System tray</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2616"/>
+        <location filename="../ui/prefdialog.ui" line="2634"/>
         <source>Show system tray icon</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2626"/>
+        <location filename="../ui/prefdialog.ui" line="2644"/>
         <source>Hide the window rather than quit when closed </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="632"/>
-        <location filename="../ui/prefdialog.ui" line="2800"/>
-        <location filename="../prefdialog.cpp" line="294"/>
+        <location filename="../ui/prefdialog.ui" line="643"/>
+        <location filename="../ui/prefdialog.ui" line="2818"/>
+        <location filename="../prefdialog.cpp" line="295"/>
         <source>Subtitle</source>
         <translation>Untertitel</translation>
     </message>
@@ -1377,14 +1545,14 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1682"/>
+        <location filename="../ui/prefdialog.ui" line="1693"/>
         <source>Buffer length for calculating average level</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="642"/>
-        <location filename="../ui/prefdialog.ui" line="2401"/>
-        <location filename="../prefdialog.cpp" line="295"/>
+        <location filename="../ui/prefdialog.ui" line="653"/>
+        <location filename="../ui/prefdialog.ui" line="2412"/>
+        <location filename="../prefdialog.cpp" line="296"/>
         <source>Load</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1404,224 +1572,229 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="489"/>
+        <location filename="../ui/prefdialog.ui" line="472"/>
+        <source>Channel Manipulation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="500"/>
         <source>Default Cache</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="497"/>
+        <location filename="../ui/prefdialog.ui" line="508"/>
         <source>Local files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="514"/>
+        <location filename="../ui/prefdialog.ui" line="525"/>
         <source>Network media</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="538"/>
+        <location filename="../ui/prefdialog.ui" line="549"/>
         <source>DVD drives</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="560"/>
+        <location filename="../ui/prefdialog.ui" line="571"/>
         <source>Minimum Cache</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="568"/>
+        <location filename="../ui/prefdialog.ui" line="579"/>
         <source>For playback</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="586"/>
+        <location filename="../ui/prefdialog.ui" line="597"/>
         <source>For seeking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="605"/>
+        <location filename="../ui/prefdialog.ui" line="616"/>
         <source>Network folders</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="611"/>
+        <location filename="../ui/prefdialog.ui" line="622"/>
         <source>Folders of network drives or NFS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="648"/>
+        <location filename="../ui/prefdialog.ui" line="659"/>
         <source>Load subtitle files when a local media file is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="658"/>
+        <location filename="../ui/prefdialog.ui" line="669"/>
         <source>Load next subtitles when starting to play a file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="671"/>
+        <location filename="../ui/prefdialog.ui" line="682"/>
         <source>Auto-selection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="677"/>
+        <location filename="../ui/prefdialog.ui" line="688"/>
         <source>Select subtitles from loaded ones automatically</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="687"/>
+        <location filename="../ui/prefdialog.ui" line="698"/>
         <source>Select next subtitles in automatically loaded subtitles.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="708"/>
+        <location filename="../ui/prefdialog.ui" line="719"/>
         <source>Extension</source>
         <translation>Erweiterung</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="749"/>
+        <location filename="../ui/prefdialog.ui" line="760"/>
         <source>Encoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="755"/>
+        <location filename="../ui/prefdialog.ui" line="766"/>
         <source>Open subtitle file with selected encoding.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="768"/>
+        <location filename="../ui/prefdialog.ui" line="779"/>
         <source>Enable encoding auto-detection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="780"/>
+        <location filename="../ui/prefdialog.ui" line="791"/>
         <source>Accuracy to enforce</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="827"/>
+        <location filename="../ui/prefdialog.ui" line="838"/>
         <source>Default display time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="833"/>
+        <location filename="../ui/prefdialog.ui" line="844"/>
         <source>Caculate the end time of a subtitle when the time is not specified</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="842"/>
+        <location filename="../ui/prefdialog.ui" line="853"/>
         <source>Display time per one character</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="852"/>
+        <location filename="../ui/prefdialog.ui" line="863"/>
         <source>When display time is not specifid in subtitle, caculate interval wih this value.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="858"/>
+        <location filename="../ui/prefdialog.ui" line="869"/>
         <source>msec</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="334"/>
+        <location filename="../prefdialog.cpp" line="335"/>
         <source>For S/W decoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="335"/>
+        <location filename="../prefdialog.cpp" line="336"/>
         <source>For H/W decoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1879"/>
+        <location filename="../ui/prefdialog.ui" line="1890"/>
         <source>Use hardware-accelerated decoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1901"/>
+        <location filename="../ui/prefdialog.ui" line="1912"/>
         <source>Use hardware-accelerated deinterlacing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2259"/>
+        <location filename="../ui/prefdialog.ui" line="2270"/>
         <source>New line</source>
         <translation>Neue Zeile</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2291"/>
+        <location filename="../ui/prefdialog.ui" line="2302"/>
         <source>New paragraph</source>
         <translation>Neuer Absatz</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2384"/>
+        <location filename="../ui/prefdialog.ui" line="2395"/>
         <source>Preset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2439"/>
+        <location filename="../ui/prefdialog.ui" line="2450"/>
         <source>ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2522"/>
+        <location filename="../ui/prefdialog.ui" line="2533"/>
         <source>Hide mouse after timeout</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2582"/>
+        <location filename="../ui/prefdialog.ui" line="2593"/>
         <source>Show OSD messages when actions are triggered</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2589"/>
+        <location filename="../ui/prefdialog.ui" line="2600"/>
         <source>Show OSD messages when the window is resized</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2888"/>
+        <location filename="../ui/prefdialog.ui" line="2906"/>
         <source>Amplifier</source>
         <translation>Verstärker</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1939"/>
+        <location filename="../ui/prefdialog.ui" line="1950"/>
         <source>Font</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2031"/>
-        <location filename="../ui/prefdialog.ui" line="2120"/>
-        <location filename="../ui/prefdialog.ui" line="2940"/>
+        <location filename="../ui/prefdialog.ui" line="2042"/>
+        <location filename="../ui/prefdialog.ui" line="2131"/>
+        <location filename="../ui/prefdialog.ui" line="2958"/>
         <source>Color</source>
         <translation>Farbe</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1933"/>
+        <location filename="../ui/prefdialog.ui" line="1944"/>
         <source>Text</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2006"/>
+        <location filename="../ui/prefdialog.ui" line="2017"/>
         <source>Outline</source>
         <translation>umreißen</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="1966"/>
+        <location filename="../ui/prefdialog.ui" line="1977"/>
         <source>Size</source>
         <translation>Größe</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2048"/>
+        <location filename="../ui/prefdialog.ui" line="2059"/>
         <source>Width</source>
         <translation>Breite</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2240"/>
+        <location filename="../ui/prefdialog.ui" line="2251"/>
         <source>Line spacing</source>
         <translation>Zeilenabstand</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2090"/>
+        <location filename="../ui/prefdialog.ui" line="2101"/>
         <source>Shadow</source>
         <translation>Schatten</translation>
     </message>
@@ -1646,171 +1819,176 @@ Stopped Position: %2
         <translation>Unendlich</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2143"/>
+        <location filename="../ui/prefdialog.ui" line="2154"/>
         <source>Opacity</source>
         <translation>Deckkraft</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2164"/>
+        <location filename="../ui/prefdialog.ui" line="2175"/>
         <source>X-offset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2193"/>
+        <location filename="../ui/prefdialog.ui" line="2204"/>
         <source>Y-offset</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2356"/>
+        <location filename="../ui/prefdialog.ui" line="2367"/>
         <source>You can specify the order of unified(mulit) subtitles with the &apos;Name&apos; property in a subtitle file.
 If not specified, they will be displayed in selected order.
 e.g.: English, Korean</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2414"/>
+        <location filename="../ui/prefdialog.ui" line="2425"/>
         <source>Menu</source>
         <translation>Menü</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2419"/>
-        <location filename="../ui/prefdialog.ui" line="2461"/>
+        <location filename="../ui/prefdialog.ui" line="2430"/>
+        <location filename="../ui/prefdialog.ui" line="2472"/>
         <source>Shortcut1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2424"/>
-        <location filename="../ui/prefdialog.ui" line="2477"/>
+        <location filename="../ui/prefdialog.ui" line="2435"/>
+        <location filename="../ui/prefdialog.ui" line="2488"/>
         <source>Shortcut2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2429"/>
-        <location filename="../ui/prefdialog.ui" line="2493"/>
+        <location filename="../ui/prefdialog.ui" line="2440"/>
+        <location filename="../ui/prefdialog.ui" line="2504"/>
         <source>Shortcut3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2434"/>
-        <location filename="../ui/prefdialog.ui" line="2509"/>
+        <location filename="../ui/prefdialog.ui" line="2445"/>
+        <location filename="../ui/prefdialog.ui" line="2520"/>
         <source>Shortcut4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2659"/>
+        <location filename="../ui/prefdialog.ui" line="2614"/>
+        <source>Resize to video resolution in windowed-mode when video is changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/prefdialog.ui" line="2677"/>
         <source>Invert direction of mouse wheel scroll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2687"/>
+        <location filename="../ui/prefdialog.ui" line="2705"/>
         <source>Seek</source>
         <translation>Suche</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2696"/>
+        <location filename="../ui/prefdialog.ui" line="2714"/>
         <source>Step 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2719"/>
+        <location filename="../ui/prefdialog.ui" line="2737"/>
         <source>Step 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2742"/>
+        <location filename="../ui/prefdialog.ui" line="2760"/>
         <source>Step 3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2768"/>
-        <location filename="../prefdialog.cpp" line="279"/>
+        <location filename="../ui/prefdialog.ui" line="2786"/>
+        <location filename="../prefdialog.cpp" line="280"/>
         <source>Playback</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2777"/>
+        <location filename="../ui/prefdialog.ui" line="2795"/>
         <source>Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2856"/>
-        <location filename="../prefdialog.cpp" line="290"/>
+        <location filename="../ui/prefdialog.ui" line="2874"/>
+        <location filename="../prefdialog.cpp" line="291"/>
         <source>Audio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2862"/>
+        <location filename="../ui/prefdialog.ui" line="2880"/>
         <source>Volume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2806"/>
+        <location filename="../ui/prefdialog.ui" line="2824"/>
         <source>Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2826"/>
-        <location filename="../ui/prefdialog.ui" line="2914"/>
+        <location filename="../ui/prefdialog.ui" line="2844"/>
+        <location filename="../ui/prefdialog.ui" line="2932"/>
         <source>Sync Delay</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2946"/>
+        <location filename="../ui/prefdialog.ui" line="2964"/>
         <source>Brightness</source>
         <translation>Helligkeit</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2966"/>
+        <location filename="../ui/prefdialog.ui" line="2984"/>
         <source>Contrast</source>
         <translation>Kontrast</translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="2986"/>
+        <location filename="../ui/prefdialog.ui" line="3004"/>
         <source>Saturation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/prefdialog.ui" line="3006"/>
+        <location filename="../ui/prefdialog.ui" line="3024"/>
         <source>Hue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="277"/>
+        <location filename="../prefdialog.cpp" line="278"/>
         <source>General</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="278"/>
+        <location filename="../prefdialog.cpp" line="279"/>
         <source>Open</source>
         <translation>Öffnen</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="296"/>
+        <location filename="../prefdialog.cpp" line="297"/>
         <source>Appearance</source>
         <translation>Aussehen</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="297"/>
+        <location filename="../prefdialog.cpp" line="298"/>
         <source>Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="299"/>
+        <location filename="../prefdialog.cpp" line="300"/>
         <source>User interface</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="300"/>
+        <location filename="../prefdialog.cpp" line="301"/>
         <source>Keyboard shortcuts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="301"/>
+        <location filename="../prefdialog.cpp" line="302"/>
         <source>Mouse actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="302"/>
+        <location filename="../prefdialog.cpp" line="303"/>
         <source>Control step</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1820,147 +1998,137 @@ e.g.: English, Korean</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="280"/>
+        <location filename="../prefdialog.cpp" line="281"/>
         <source>Behaviour</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="281"/>
+        <location filename="../prefdialog.cpp" line="282"/>
         <source>Look</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="282"/>
+        <location filename="../prefdialog.cpp" line="283"/>
         <source>Cache</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="285"/>
+        <location filename="../prefdialog.cpp" line="286"/>
         <source>Video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="286"/>
+        <location filename="../prefdialog.cpp" line="287"/>
         <source>Hardware acceleration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="287"/>
+        <location filename="../prefdialog.cpp" line="288"/>
         <source>Deinterlace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="291"/>
+        <location filename="../prefdialog.cpp" line="292"/>
         <source>Sound</source>
         <translation>Ertönen</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="292"/>
+        <location filename="../prefdialog.cpp" line="293"/>
         <source>Audio filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="304"/>
+        <location filename="../prefdialog.cpp" line="305"/>
         <source>Open from file manager</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="305"/>
+        <location filename="../prefdialog.cpp" line="306"/>
         <source>Open by drag-and-drop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="315"/>
+        <location filename="../prefdialog.cpp" line="316"/>
         <source>Not supported</source>
         <translation>Nicht unterstützt</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="436"/>
+        <location filename="../prefdialog.cpp" line="437"/>
         <source>CMPlayer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="437"/>
+        <location filename="../prefdialog.cpp" line="438"/>
         <source>Movist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="474"/>
+        <location filename="../prefdialog.cpp" line="473"/>
         <source>Use the system default language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="478"/>
         <source>English</source>
-        <translation>Englisch</translation>
+        <translation type="obsolete">Englisch</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="478"/>
         <source>German</source>
-        <translation>Deutsch</translation>
+        <translation type="obsolete">Deutsch</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="481"/>
         <source>Japanese</source>
-        <translation>Japanisch</translation>
+        <translation type="obsolete">Japanisch</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="484"/>
-        <source>Korean</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../prefdialog.cpp" line="487"/>
         <source>Russian</source>
-        <translation>Russisch</translation>
+        <translation type="obsolete">Russisch</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="490"/>
         <source>Italian</source>
-        <translation>Italienisch</translation>
+        <translation type="obsolete">Italienisch</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="502"/>
+        <location filename="../prefdialog.cpp" line="480"/>
         <source>Double Click</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="503"/>
+        <location filename="../prefdialog.cpp" line="481"/>
         <source>Middle Click</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="504"/>
+        <location filename="../prefdialog.cpp" line="482"/>
         <source>Wheel Scroll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="505"/>
+        <location filename="../prefdialog.cpp" line="483"/>
         <source>All</source>
         <translation>Alle</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="508"/>
+        <location filename="../prefdialog.cpp" line="486"/>
         <source>Ok</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="509"/>
+        <location filename="../prefdialog.cpp" line="487"/>
         <source>Cancel</source>
         <translation>Stornieren</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="510"/>
+        <location filename="../prefdialog.cpp" line="488"/>
         <source>Apply</source>
         <translation>Zutreffen</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="511"/>
+        <location filename="../prefdialog.cpp" line="489"/>
         <source>Restore Defaults</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="512"/>
+        <location filename="../prefdialog.cpp" line="490"/>
         <source>Reset</source>
         <translation>Zurücksetzen</translation>
     </message>
@@ -1968,7 +2136,7 @@ e.g.: English, Korean</source>
 <context>
     <name>PrefOpenMediaGroup</name>
     <message>
-        <location filename="../prefdialog.cpp" line="31"/>
+        <location filename="../prefdialog.cpp" line="32"/>
         <source>Start the playback</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2095,178 +2263,178 @@ e.g.: English, Korean</source>
 <context>
     <name>RootMenu</name>
     <message>
-        <location filename="../rootmenu.cpp" line="376"/>
-        <location filename="../rootmenu.cpp" line="486"/>
+        <location filename="../rootmenu.cpp" line="377"/>
+        <location filename="../rootmenu.cpp" line="488"/>
         <source>Open</source>
         <translation>öffnen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="377"/>
+        <location filename="../rootmenu.cpp" line="378"/>
         <source>Open File</source>
         <translation>Datei öffnen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="378"/>
+        <location filename="../rootmenu.cpp" line="379"/>
         <source>Open Folder</source>
         <translation>Ordner öffnen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="379"/>
+        <location filename="../rootmenu.cpp" line="380"/>
         <source>Load URL</source>
         <translation>URL laden</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="380"/>
+        <location filename="../rootmenu.cpp" line="381"/>
         <source>Open DVD</source>
         <translation>DVD öffnen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="384"/>
-        <location filename="../rootmenu.cpp" line="488"/>
-        <location filename="../rootmenu.cpp" line="498"/>
+        <location filename="../rootmenu.cpp" line="385"/>
+        <location filename="../rootmenu.cpp" line="490"/>
+        <location filename="../rootmenu.cpp" line="500"/>
         <source>Clear</source>
         <translation>Leeren</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="386"/>
         <location filename="../rootmenu.cpp" line="387"/>
+        <location filename="../rootmenu.cpp" line="388"/>
         <source>Play</source>
         <translation>Abspielen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="388"/>
+        <location filename="../rootmenu.cpp" line="389"/>
         <source>Stop</source>
         <translation>Stoppen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="389"/>
+        <location filename="../rootmenu.cpp" line="390"/>
         <source>Play Previous</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="390"/>
+        <location filename="../rootmenu.cpp" line="391"/>
         <source>Play Next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="392"/>
+        <location filename="../rootmenu.cpp" line="393"/>
         <source>Playback Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="395"/>
+        <location filename="../rootmenu.cpp" line="396"/>
         <source>A-B Repeat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="396"/>
+        <location filename="../rootmenu.cpp" line="397"/>
         <source>Set Range to Current Time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="397"/>
+        <location filename="../rootmenu.cpp" line="398"/>
         <source>Repeat Current Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="398"/>
+        <location filename="../rootmenu.cpp" line="399"/>
         <source>Quit</source>
         <translation>Verlassen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="400"/>
+        <location filename="../rootmenu.cpp" line="401"/>
         <source>Seek</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Suche</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="401"/>
+        <location filename="../rootmenu.cpp" line="402"/>
         <source>Forward %1sec</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="405"/>
+        <location filename="../rootmenu.cpp" line="406"/>
         <source>Backward %1sec</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="410"/>
+        <location filename="../rootmenu.cpp" line="411"/>
         <source>To Previous Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="411"/>
+        <location filename="../rootmenu.cpp" line="412"/>
         <source>To Beginning of Current Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="412"/>
+        <location filename="../rootmenu.cpp" line="413"/>
         <source>To Next Subtitle</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="414"/>
+        <location filename="../rootmenu.cpp" line="415"/>
         <source>Title</source>
         <translation>Titel</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="415"/>
+        <location filename="../rootmenu.cpp" line="416"/>
         <source>Chapter</source>
         <translation>Kapitel</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="417"/>
+        <location filename="../rootmenu.cpp" line="418"/>
         <source>Subtitle</source>
         <translation>Untertitel</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="106"/>
-        <location filename="../rootmenu.cpp" line="422"/>
-        <location filename="../rootmenu.cpp" line="471"/>
+        <location filename="../rootmenu.cpp" line="423"/>
+        <location filename="../rootmenu.cpp" line="472"/>
         <source>Select Next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="423"/>
+        <location filename="../rootmenu.cpp" line="424"/>
         <source>Select All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="424"/>
+        <location filename="../rootmenu.cpp" line="425"/>
         <source>Hide</source>
         <translation>Ausblenden</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="419"/>
+        <location filename="../rootmenu.cpp" line="420"/>
         <source>Subtitle Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="431"/>
+        <location filename="../rootmenu.cpp" line="432"/>
         <source>Video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="432"/>
+        <location filename="../rootmenu.cpp" line="433"/>
         <source>Video Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="434"/>
+        <location filename="../rootmenu.cpp" line="435"/>
         <source>Aspect Ratio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="435"/>
+        <location filename="../rootmenu.cpp" line="436"/>
         <source>Crop</source>
         <translation>Scheren</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="437"/>
+        <location filename="../rootmenu.cpp" line="438"/>
         <source>Screen Alignment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="440"/>
+        <location filename="../rootmenu.cpp" line="441"/>
         <source>Screen Position</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2276,279 +2444,279 @@ e.g.: English, Korean</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="427"/>
+        <location filename="../rootmenu.cpp" line="428"/>
         <source>Subtitle Alignment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="428"/>
+        <location filename="../rootmenu.cpp" line="429"/>
         <source>Subtitle Position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="429"/>
+        <location filename="../rootmenu.cpp" line="430"/>
         <source>Subtitle Sync</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="429"/>
-        <location filename="../rootmenu.cpp" line="472"/>
+        <location filename="../rootmenu.cpp" line="430"/>
+        <location filename="../rootmenu.cpp" line="473"/>
         <source>%1sec</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="443"/>
+        <location filename="../rootmenu.cpp" line="444"/>
         <source>Chroma Upscaler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="444"/>
+        <location filename="../rootmenu.cpp" line="445"/>
         <source>Interpolator</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="449"/>
+        <location filename="../rootmenu.cpp" line="450"/>
         <source>Filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="450"/>
+        <location filename="../rootmenu.cpp" line="451"/>
         <source>Flip Vertically</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="451"/>
+        <location filename="../rootmenu.cpp" line="452"/>
         <source>Flip Horizontally</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="452"/>
+        <location filename="../rootmenu.cpp" line="453"/>
         <source>Blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="453"/>
+        <location filename="../rootmenu.cpp" line="454"/>
         <source>Sharpen</source>
         <translation>Schärfen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="454"/>
+        <location filename="../rootmenu.cpp" line="455"/>
         <source>Grayscale</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="455"/>
+        <location filename="../rootmenu.cpp" line="456"/>
         <source>Invert Color</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="456"/>
+        <location filename="../rootmenu.cpp" line="457"/>
         <source>Disable Filters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="472"/>
+        <location filename="../rootmenu.cpp" line="473"/>
         <source>Audio Sync</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="474"/>
+        <location filename="../rootmenu.cpp" line="475"/>
         <source>Volume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="475"/>
+        <location filename="../rootmenu.cpp" line="476"/>
         <source>Amp</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="476"/>
+        <location filename="../rootmenu.cpp" line="478"/>
         <source>Volume Normalizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="477"/>
+        <location filename="../rootmenu.cpp" line="479"/>
         <source>Tempo Scaler</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="480"/>
+        <location filename="../rootmenu.cpp" line="482"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="481"/>
+        <location filename="../rootmenu.cpp" line="483"/>
         <source>Redo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="490"/>
+        <location filename="../rootmenu.cpp" line="492"/>
         <source>Append URL</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="503"/>
+        <location filename="../rootmenu.cpp" line="505"/>
         <source>Playback Information</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="383"/>
+        <location filename="../rootmenu.cpp" line="384"/>
         <source>Recently Opened</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="420"/>
+        <location filename="../rootmenu.cpp" line="421"/>
         <source>Open File(s)</source>
         <translation>Datei öffnen(en)</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="421"/>
+        <location filename="../rootmenu.cpp" line="422"/>
         <source>Clear File(s)</source>
         <translation type="unfinished">Klar Datei(en)</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="466"/>
+        <location filename="../rootmenu.cpp" line="467"/>
         <source>Adjust Color</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="468"/>
+        <location filename="../rootmenu.cpp" line="469"/>
         <source>Take Snapshot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="470"/>
+        <location filename="../rootmenu.cpp" line="471"/>
         <source>Audio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="471"/>
+        <location filename="../rootmenu.cpp" line="472"/>
         <source>Audio Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="473"/>
+        <location filename="../rootmenu.cpp" line="474"/>
         <source>Mute</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="482"/>
+        <location filename="../rootmenu.cpp" line="484"/>
         <source>Tools</source>
         <translation>Werkzeuge</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="484"/>
+        <location filename="../rootmenu.cpp" line="486"/>
         <source>Playlist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="485"/>
-        <location filename="../rootmenu.cpp" line="497"/>
+        <location filename="../rootmenu.cpp" line="487"/>
+        <location filename="../rootmenu.cpp" line="499"/>
         <source>Show/Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="487"/>
+        <location filename="../rootmenu.cpp" line="489"/>
         <source>Save</source>
         <translation>Speichern</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="489"/>
+        <location filename="../rootmenu.cpp" line="491"/>
         <source>Append File</source>
         <translation>Datei anhängen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="491"/>
+        <location filename="../rootmenu.cpp" line="493"/>
         <source>Remove</source>
         <translation>Entfernen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="492"/>
+        <location filename="../rootmenu.cpp" line="494"/>
         <source>Move Up</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="493"/>
+        <location filename="../rootmenu.cpp" line="495"/>
         <source>Move Down</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="494"/>
+        <location filename="../rootmenu.cpp" line="496"/>
         <source>Favorites</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="496"/>
+        <location filename="../rootmenu.cpp" line="498"/>
         <source>History</source>
         <translation>Geschichte</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="500"/>
+        <location filename="../rootmenu.cpp" line="502"/>
         <source>Subtitle View</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="501"/>
+        <location filename="../rootmenu.cpp" line="503"/>
         <source>Preferences</source>
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="502"/>
+        <location filename="../rootmenu.cpp" line="504"/>
         <source>Reload Skin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="504"/>
+        <location filename="../rootmenu.cpp" line="506"/>
         <source>Auto-exit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="505"/>
+        <location filename="../rootmenu.cpp" line="507"/>
         <source>Auto-shutdown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="507"/>
+        <location filename="../rootmenu.cpp" line="509"/>
         <source>Window</source>
         <translation>Fenster</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="509"/>
+        <location filename="../rootmenu.cpp" line="511"/>
         <source>Proper Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="510"/>
+        <location filename="../rootmenu.cpp" line="512"/>
         <source>Fullscreen</source>
         <translation>Vollbild</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="511"/>
+        <location filename="../rootmenu.cpp" line="513"/>
         <source>Minimize</source>
         <translation>Minimieren</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="512"/>
+        <location filename="../rootmenu.cpp" line="514"/>
         <source>Maximize</source>
         <translation>Maximieren</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="513"/>
+        <location filename="../rootmenu.cpp" line="515"/>
         <source>Close</source>
         <translation>Abschließen</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="516"/>
+        <location filename="../rootmenu.cpp" line="518"/>
         <source>Help</source>
         <translation>Hilfe</translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="517"/>
+        <location filename="../rootmenu.cpp" line="519"/>
         <source>About %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../rootmenu.cpp" line="518"/>
+        <location filename="../rootmenu.cpp" line="520"/>
         <source>Exit</source>
         <translation>Verlassen</translation>
     </message>
@@ -2695,12 +2863,12 @@ e.g.: English, Korean</source>
 <context>
     <name>TrayIcon</name>
     <message>
-        <location filename="../trayicon.cpp" line="59"/>
+        <location filename="../trayicon.cpp" line="47"/>
         <source>Quit</source>
         <translation type="unfinished">Verlassen</translation>
     </message>
     <message>
-        <location filename="../trayicon.cpp" line="60"/>
+        <location filename="../trayicon.cpp" line="48"/>
         <source>Show</source>
         <translation type="unfinished">Zeigen</translation>
     </message>
@@ -2730,7 +2898,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../videocolor.hpp" line="120"/>
         <source>Reset</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Zurücksetzen</translation>
     </message>
 </context>
 </TS>
