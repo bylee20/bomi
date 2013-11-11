@@ -58,7 +58,7 @@ build_dir:
 	install -d build
 
 clean:
-	-cd src/cmplayer && $(QMAKE) $(qmake_vars) cmplayer.pro && make clean && rm -rf Makefile* debug release
+	-cd src/cmplayer && PKG_CONFIG_PATH=$(pkg_config_path) $(QMAKE) $(qmake_vars) cmplayer.pro && make clean && rm -rf Makefile* debug release
 	-rm -rf build/CMPlayer*
 	-rm -rf build/cmplayer*
 	-rm -rf build/skins
