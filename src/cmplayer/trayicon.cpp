@@ -18,6 +18,7 @@ using GtkMenuShell = void;
 #define GTK_MENU_SHELL(a) a
 #define GTK_MENU(a)       a
 
+#ifdef Q_OS_LINUX
 #define DEC_FUNC(name, prototype) using f_##name = prototype; static f_##name name = nullptr;
 DEC_FUNC(app_indicator_new           , AppIndicator*(*)(const char *id, const char *icon_name, AppIndicatorCategory category))
 DEC_FUNC(app_indicator_set_status    , void(*)(AppIndicator *self, AppIndicatorStatus status))
@@ -27,6 +28,7 @@ DEC_FUNC(gtk_menu_item_new_with_label, GtkWidget*(*)(const char *label))
 DEC_FUNC(gtk_menu_shell_append       , void(*)(GtkMenuShell *menu_shell, GtkWidget *child))
 DEC_FUNC(gtk_widget_show             , void(*)(GtkWidget *widget))
 #undef DEC_FUNC
+#endif
 
 struct TrayIcon::Data {
 	TrayIcon *p = nullptr;
@@ -69,11 +71,13 @@ TrayIcon::~TrayIcon() {
 }
 
 void TrayIcon::setVisible(bool visible) {
+#ifdef Q_OS_LINUX
 	if (d->unity && d->indicator) {
 		app_indicator_set_status(d->indicator, visible ? APP_INDICATOR_STATUS_ACTIVE : APP_INDICATOR_STATUS_PASSIVE);
-	} else if (d->tray) {
+	} else
+#endif
+	if (d->tray)
 		d->tray->setVisible(visible);
-	}
 }
 
 void TrayIcon::onShow(void *menu, void *arg) {

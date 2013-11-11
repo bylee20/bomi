@@ -1,7 +1,11 @@
 cache()
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header c++11
-macx:CONFIG -= app_bundle
+macx {
+    CONFIG -= app_bundle
+    QT_CONFIG -= no-pkg-config
+}
+
 !isEmpty(RELEASE) {
     DEFINES += CMPLAYER_RELEASE
     CONFIG += release
@@ -22,15 +26,14 @@ PKGCONFIG += dvdread libswresample libswscale libavfilter libavcodec libpostproc
     libmpg123 libcdio_paranoia libcdio libcdio_cdda libass portaudio-2.0 libquvi$${LIBQUVI_SUFFIX}
 
 macx {
-    QT_CONFIG -= no-pkg-config
     QT += gui-private
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
     QMAKE_MAC_SDK = macosx
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
-    PKGCONFIG += libdvdcss lua libcurl fribidi freetype2 fontconfig
-    LIBS += -liconv -framework IOSurface \
+    PKGCONFIG += libdvdcss lua fribidi freetype2 fontconfig
+    LIBS += -lcurl -liconv -framework IOSurface \
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
         -framework IOKit -framework Carbon -framework OpenAL

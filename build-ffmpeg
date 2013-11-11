@@ -7,14 +7,17 @@ args="--prefix=../../build --enable-gpl --disable-debug --disable-shared --enabl
   --disable-encoders --disable-muxers --disable-devices --enable-filters"
   
 kern=`uname -s`
+procs=$(nproc)
+
 if test $kern = "Darwin"
 then
   echo "Build for OS X"
   args="$args --enable-vda --disable-vaapi"
+  procs=5
 elif test $kern = "Linux"
 then
   echo "Build for Linux"
   args="$args --disable-vda --enable-vaapi"
 fi
 
-cd src/ffmpeg* && make distclean; ./configure $args && make -j $(nproc) && make install
+cd src/ffmpeg* && make distclean; ./configure $args && make -j $procs && make install

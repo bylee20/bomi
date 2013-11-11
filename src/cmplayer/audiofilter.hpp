@@ -18,7 +18,6 @@ public:
 	void add(mp_speaker_id dest, mp_speaker_id src) { m_mix[dest].append(src); }
 private:
 	std::array<SpeakerArray, MP_SPEAKER_ID_COUNT> m_mix;
-	mp_chmap m_in, m_out;
 };
 
 class AudioController;
