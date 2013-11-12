@@ -23,8 +23,8 @@ VideoFrameShader::VideoFrameShader() {
 		qDebug() << "Use direct memory access.";
 	m_vPositions = makeArray({-1.0, -1.0}, {1.0, 1.0});
 	m_vMatrix.setToIdentity();
-	m_lutInt1.generate();
-	m_lutInt2.generate();
+	m_lutInt[0].generate();
+	m_lutInt[1].generate();
 }
 
 VideoFrameShader::~VideoFrameShader() {
@@ -176,7 +176,11 @@ const vec2 dxy = dxdy.xy;
 const vec2 tex_size = vec2(texWidth, texHeight);
 )";
 
-		auto common = Interpolator::shader(shader.interpolator->category()) + shaderTemplate;
+		m_lutCount = shader.interpolator->textures();
+		Q_ASSERT(0 <= m_lutCount && m_lutCount < 3);
+
+		shader.interpolator->allocate(m_lutInt[0], m_lutInt[1]);
+		auto common = shader.interpolator->shader() + shaderTemplate;
 		auto fragCode = header;
 		fragCode += "#define FRAGMENT\n";
 		fragCode += common;
@@ -209,6 +213,11 @@ const vec2 tex_size = vec2(texWidth, texHeight);
 		loc_kern_c = m_prog->uniformLocation("kern_c");
 		loc_kern_d = m_prog->uniformLocation("kern_d");
 		loc_kern_n = m_prog->uniformLocation("kern_n");
+		for (int i=0; i<m_lutCount; ++i) {
+			auto name = QByteArray("lut_int") + QByteArray::number(i+1);
+			loc_lut_int[i] = m_prog->uniformLocation(name);
+			loc_lut_int_mul[i] = m_prog->uniformLocation(name + "_mul");
+		}
 	}
 }
 
@@ -296,11 +305,18 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 	}
 
 	auto f = QOpenGLContext::currentContext()->functions();
-	for (int i=0; i<m_textures.size(); ++i) {
-		m_prog->setUniformValue(loc_tex[i], i);
+	auto texPos = 0;
+	for (int i=0; i<m_textures.size(); ++i, ++texPos) {
+		m_prog->setUniformValue(loc_tex[i], texPos);
 		m_prog->setUniformValue(loc_cc[i], m_textures[i].cc);
-		f->glActiveTexture(GL_TEXTURE0 + i);
+		f->glActiveTexture(GL_TEXTURE0 + texPos);
 		m_textures[i].bind();
+	}
+	for (int i=0; i<m_lutCount; ++i, ++texPos) {
+		m_prog->setUniformValue(loc_lut_int[i], texPos);
+		m_prog->setUniformValue(loc_lut_int_mul[i], m_lutInt[i].multiply);
+		f->glActiveTexture(GL_TEXTURE0 + texPos);
+		m_lutInt[i].bind();
 	}
 
 	m_prog->enableAttributeArray(vCoord);

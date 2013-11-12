@@ -28,8 +28,8 @@ public:
 	Dithering dithering() const { return m_newDithering; }
 	int depth() const { return 8; }
 protected slots:
-	virtual void initializeGL() { m_lutInt1.generate(); m_lutInt2.generate(); m_ditheringTex.generate(); }
-	virtual void finalizeGL() { m_lutInt1.delete_(); m_lutInt2.delete_(); m_ditheringTex.delete_(); }
+	virtual void initializeGL() { m_lutInt[0].generate(); m_lutInt[1].generate(); m_ditheringTex.generate(); }
+	virtual void finalizeGL() { m_lutInt[0].delete_(); m_lutInt[1].delete_(); m_ditheringTex.delete_(); }
 protected:
 	static QOpenGLFunctions *func() { return QOpenGLContext::currentContext()->functions(); }
 	void setGeometryDirty() { m_dirtyGeomerty = true; }
@@ -44,8 +44,7 @@ private slots:
 private:
 	const OpenGLTexture &texture() const { return m_texture; }
 	const OpenGLTexture &ditheringTexture() const { return m_ditheringTex; }
-	const Interpolator::Texture &lutInterpolatorTexture1() const { return m_lutInt1; }
-	const Interpolator::Texture &lutInterpolatorTexture2() const { return m_lutInt2; }
+	const Interpolator::Texture &lutInterpolatorTexture(int i) const { return m_lutInt[i]; }
 	QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) final override;
 	friend class TextureRendererShader;
 	struct Material;	struct Node;	struct Data; Data *d;
@@ -53,7 +52,7 @@ private:
 	const Interpolator *m_interpolator = Interpolator::get(InterpolatorType::Bilinear);
 	InterpolatorType m_newInt = InterpolatorType::Bilinear;
 	mutable QSGMaterialType m_types[Interpolator::CategoryMax][2];
-	Interpolator::Texture m_lutInt1, m_lutInt2;
+	Interpolator::Texture m_lutInt[2];
 	OpenGLTexture m_texture, m_ditheringTex;
 	QQuickWindow *m_win = nullptr;
 	Dithering m_dithering = Dithering::None, m_newDithering = Dithering::None;
@@ -75,7 +74,9 @@ private:
 	const TextureRendererItem *m_item = nullptr;
 	Interpolator::Category m_category = Interpolator::None;
 	bool m_dithering = false;
-	int loc_tex = -1, loc_lut_int1 = -1, loc_lut_int1_mul = -1, loc_lut_int2 = -1, loc_lut_int2_mul = -1, loc_vMatrix = -1, loc_dxy = -1;
+	int m_lutCount = 0;
+	int loc_lut_int[2] = {-1, -1}, loc_lut_int_mul[2] = {-1, -1};
+	int loc_tex = -1, loc_vMatrix = -1, loc_dxy = -1;
 	int loc_tex_size = -1;
 	int loc_dithering = -1, loc_dithering_quantization = -1, loc_dithering_center = -1, loc_dithering_size = -1;
 	QByteArray m_fragCode, m_vertexCode;

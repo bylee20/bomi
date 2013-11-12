@@ -62,6 +62,8 @@ TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, In
 	m_vertexCode += "#define VERTEX\n";
 	m_vertexCode += interpolator;
 	m_vertexCode += code;
+	m_lutCount = Interpolator::textures(m_category);
+	Q_ASSERT(0 <= m_lutCount && m_lutCount < 3);
 }
 
 const char *const *TextureRendererShader::attributeNames() const {
@@ -77,26 +79,25 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 	auto prog = program();
 	auto f = func();
 
-	prog->setUniformValue(loc_tex, 0);
+	auto texPos = 0;
+	prog->setUniformValue(loc_tex, texPos);
 	if (state.isMatrixDirty())
 		prog->setUniformValue(loc_vMatrix, state.combinedMatrix());
 	bind(prog);
-	f->glActiveTexture(GL_TEXTURE0);
+	f->glActiveTexture(GL_TEXTURE0 + texPos);
 	texture.bind();
-	int texPos = 0;
-	if (m_category) {
-		prog->setUniformValue(loc_lut_int1, ++texPos);
+
+	if (m_lutCount > 0) {
 		prog->setUniformValue(loc_dxy, QVector2D(1.0/(double)texture.width, 1.0/(double)texture.height));
 		prog->setUniformValue(loc_tex_size, QVector2D(texture.width, texture.height));
-		prog->setUniformValue(loc_lut_int1_mul, m_item->lutInterpolatorTexture1().multiply);
+	}
+
+	++texPos;
+	for (int i=0; i<m_lutCount; ++i, ++texPos) {
+		prog->setUniformValue(loc_lut_int[i], texPos);
+		prog->setUniformValue(loc_lut_int_mul[i], m_item->lutInterpolatorTexture(i).multiply);
 		f->glActiveTexture(GL_TEXTURE0 + texPos);
-		m_item->lutInterpolatorTexture1().bind();
-		if (m_category > 1) {
-			prog->setUniformValue(loc_lut_int2, ++texPos);
-			prog->setUniformValue(loc_lut_int2_mul, m_item->lutInterpolatorTexture2().multiply);
-			f->glActiveTexture(GL_TEXTURE0 + texPos);
-			m_item->lutInterpolatorTexture2().bind();
-		}
+		m_item->lutInterpolatorTexture(i).bind();
 	}
 	if (m_dithering) {
 		auto &dithering = m_item->ditheringTexture();
@@ -106,7 +107,7 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 		Q_ASSERT(loc_dithering_center != -1);
 		Q_ASSERT(loc_dithering_size != -1);
 		const int size = dithering.width;
-		prog->setUniformValue(loc_dithering, ++texPos);
+		prog->setUniformValue(loc_dithering, texPos);
 		prog->setUniformValue(loc_dithering_quantization, float(1 << m_item->depth()) - 1.f);
 		prog->setUniformValue(loc_dithering_center, 0.5f / size*size);
 		prog->setUniformValue(loc_dithering_size, size);
@@ -120,15 +121,14 @@ void TextureRendererShader::initialize() {
 	auto prog = program();
 	loc_vMatrix = prog->uniformLocation("vMatrix");
 	loc_tex = prog->uniformLocation("tex");
-	if (m_category) {
-		loc_lut_int1 = prog->uniformLocation("lut_int1");
-		loc_lut_int1_mul = prog->uniformLocation("lut_int1_mul");
+	if (m_lutCount > 0) {
 		loc_dxy = prog->uniformLocation("dxy");
 		loc_tex_size = prog->uniformLocation("tex_size");
-		if (m_category > 1) {
-			loc_lut_int2 = prog->uniformLocation("lut_int2");
-			loc_lut_int2_mul = prog->uniformLocation("lut_int2_mul");
-		}
+	}
+	for (int i=0; i<m_lutCount; ++i) {
+		auto name = QByteArray("lut_int") + QByteArray::number(i+1);
+		loc_lut_int[i] = prog->uniformLocation(name);
+		loc_lut_int_mul[i] = prog->uniformLocation(name + "_mul");
 	}
 	if (m_dithering) {
 		loc_dithering = prog->uniformLocation("dithering");
@@ -205,7 +205,7 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 	}
 	if (m_interpolator->type() != m_newInt) {
 		m_interpolator = Interpolator::get(m_newInt);
-		m_interpolator->allocate(m_lutInt1, m_lutInt2);
+		m_interpolator->allocate(m_lutInt[0], m_lutInt[1]);
 	}
 	if (_Change(m_dithering, m_newDithering))
 		m_ditheringTex = OpenGLCompat::allocateDitheringTexture(m_ditheringTex.id, m_dithering);

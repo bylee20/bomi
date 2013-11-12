@@ -70,13 +70,14 @@ private:
 	int loc_kern_d, loc_kern_c, loc_kern_n, loc_top_field;
 	int loc_add_vec, loc_mul_mat, loc_vMatrix;
 	int loc_tex[3] = {-1, -1, -1}, loc_cc[3] = {-1, -1, -1};
-	int loc_lut_int1 = -1, loc_lut_int2 = -1, loc_lut_int1_mul = -1, loc_lut_int2_mul = -1;
+	int loc_lut_int[2] = {-1, -1}, loc_lut_int_mul[2] = {-1, -1};
+	int m_lutCount = 0;
 	QList<VideoTexture> m_textures;
 	QByteArray m_texel;
 	bool m_dma = false, m_check = true;
 	QRectF m_coords, m_positions;
 	QPointF m_chroma = {0.0, 0.0};
-	Interpolator::Texture m_lutInt1, m_lutInt2;
+	Interpolator::Texture m_lutInt[2];
 #ifdef Q_OS_LINUX
 	void *m_vaSurfaceGLX = nullptr;
 #endif

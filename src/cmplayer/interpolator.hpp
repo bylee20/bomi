@@ -29,6 +29,8 @@ public:
 	static QByteArray shader(Category category);
 	static int textures(Category category);
 	static const Interpolator *get(Type type);
+	QByteArray shader() const { return shader(category()); }
+	int textures() const { return textures(category()); }
 	void allocate(Texture &texture1, Texture &texture2) const;
 private:
 	Interpolator(Type type);
