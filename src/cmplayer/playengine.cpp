@@ -778,9 +778,11 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	for (int i=0; i<chapters.size(); ++i) {
 		chapters[i].m_time = chapter_start_time(mpctx, i)*1000;
 		const QString time = _MSecToString(chapters[i].m_time, _L("hh:mm:ss.zzz"));
-		if (char *name = chapter_name(mpctx, i)) {
-			chapters[i].m_name = QString::fromLocal8Bit(name) % '(' % time % ')';
-			talloc_free(name);
+		if (char *str = chapter_name(mpctx, i)) {
+			chapters[i].m_name = QString::fromLocal8Bit(str);
+			if (chapters[i].m_name != time)
+				chapters[i].m_name += '(' % time % ')';
+			talloc_free(str);
 		} else
 			chapters[i].m_name = '(' % QString::number(i+1) % ") " % time;
 		chapters[i].m_id = i;
