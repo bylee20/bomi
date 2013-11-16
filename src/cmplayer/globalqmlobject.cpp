@@ -75,6 +75,10 @@ bool UtilObject::execute(const QString &key) {
 	return RootMenu::execute(key);
 }
 
+QAction *UtilObject::action(const QString &key) {
+	return RootMenu::instance().action(key);
+}
+
 #ifdef Q_OS_MAC
 #include <sys/sysctl.h>
 #include <mach/mach_host.h>

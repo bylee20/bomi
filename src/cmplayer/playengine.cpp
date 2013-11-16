@@ -1115,6 +1115,7 @@ void PlayEngine::registerObjects() {
 	qRegisterMetaType<VideoFormat>("VideoFormat");
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 	qRegisterMetaType<StreamList>("StreamList");
+	qmlRegisterType<QAction>();
 	qmlRegisterType<ChapterObject>();
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();

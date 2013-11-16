@@ -1,8 +1,8 @@
 import QtQuick 2.0
 import CMPlayerCore 1.0 as Core
 
-Text {
-	width: contentWidth; height: parent.height; color: "white"
+Button {
+	width: textWidth; height: parent.height; textColor: "white"
 	property int msecs: 0
 	property int __secs: (msecs/1000.0).toFixed(0)
 	property bool showMSecs: false

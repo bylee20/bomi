@@ -7,7 +7,17 @@ Item {
 	property alias icon: icon.source
 	property alias smooth: icon.smooth
 	property string action: ""
-	property string tooltip: ""
+	property string action2: ""
+	property var _action: Core.Util.action(action)
+	property var _action2: Core.Util.action(action2)
+	property string tooltip: makeToolTip(_action, _action2)
+	property alias text: _text.text
+	property alias textColor: _text.color
+	property alias textAlignmentV: _text.verticalAlignment
+	property alias textAlignmentH: _text.horizontalAlignment
+	property alias textWidth: _text.contentWidth
+	property alias textHeight: _text.contentHeight
+	property alias font: _text.font
 	property alias tooltipDelay: tooltipTimer.interval
 	property bool checked: false
 	property alias border: box.border
@@ -18,6 +28,13 @@ Item {
 	property alias gradient: box.gradient
 	signal clicked
 	onPaddingsChanged: icon.anchors.margins = paddings
+	function makeToolTip(action, action2) {
+		if (action && action2)
+			return qsTr("Left click: %1\nRight click: %2").arg(action.text).arg(action2.text)
+		else if (action || action2)
+			return action ? action.text : action2.text
+		return ""
+	}
 	function getStateIconName(prefix) {
 		if (checked)
 			prefix += "-checked";
@@ -26,10 +43,15 @@ Item {
 	}
 	Rectangle {
 		id: box; anchors.fill: parent; color: "transparent"
+		Text { id: _text; anchors.fill: parent }
 		Image { id: icon; anchors.fill: parent; smooth: true }
 		MouseArea {
 			id: mouseArea; anchors.fill: parent; hoverEnabled: true
-			onReleased: if (containsMouse && action.length) Core.Util.execute(action)
+			acceptedButtons: Qt.LeftButton | (item._action2 ? Qt.RightButton : 0)
+			onReleased: {
+				var action = mouse.button & Qt.RightButton ? item.action2 : item.action
+				if (containsMouse && action.length) Core.Util.execute(action)
+			}
 			onClicked: item.clicked(); onExited: Core.Util.hideToolTip(); onCanceled: Core.Util.hideToolTip()
 			Timer {
 				id: tooltipTimer; interval: 1000

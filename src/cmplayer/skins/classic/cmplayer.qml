@@ -104,9 +104,9 @@ Skin.AppWithDock {
 								font { pixelSize: 11; family: Core.Util.monospace }
 								verticalAlignment: Text.AlignVCenter
 							}
-							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: engine.time }
-							Skin.TimeText { color: "black"; font.pixelSize: 11; text: "/" }
-							Skin.TimeText { color: "black"; font.pixelSize: 11; msecs: engine.end }
+							Skin.TimeText { textColor: "black"; font.pixelSize: 11; msecs: engine.time }
+							Skin.TimeText { textColor: "black"; font.pixelSize: 11; text: "/" }
+							Skin.TimeText { textColor: "black"; font.pixelSize: 11; msecs: engine.end }
 						}
 					}
 					RowLayout {
