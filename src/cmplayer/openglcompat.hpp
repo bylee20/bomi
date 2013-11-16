@@ -225,12 +225,10 @@ public:
 		return QOpenGLShaderProgram::link();
 	}
 	void setTextureCount(int textures) {
-		if (textures > m_vPositions.size()/(2*N)) {
-			textures *= 1.5;
-			m_vCoords.resize(2*N*textures);
-			m_vPositions.resize(2*N*textures);
+		if (_Expand(m_vPositions, 2*N*textures)) {
+			m_vCoords.resize(m_vPositions.size());
 			if (m_hasColor)
-				m_vColors.resize(N*textures);
+				m_vColors.resize(m_vPositions.size()/2);
 		}
 	}
 	void uploadPositionAsTriangles(int i, const QPointF &p1, const QPointF &p2) {

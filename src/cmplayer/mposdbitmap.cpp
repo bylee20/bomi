@@ -8,11 +8,8 @@ bool MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) {
 	if (imgs->num_parts <= 0 || (id == imgs->bitmap_id && pos == imgs->bitmap_pos_id))
 		return false;
 	m_renderSize = renderSize;
-	if (m_size < imgs->num_parts) {
-		m_size = imgs->num_parts;
-		const int count = m_size*1.5;
-		m_parts.resize(count);
-	}
+	if (m_size < imgs->num_parts)
+		_Expand(m_parts, m_size = imgs->num_parts);
 
 	id = imgs->bitmap_id;
 	pos = imgs->bitmap_pos_id;
@@ -70,8 +67,7 @@ bool MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) {
 			m_sheet.rwidth() = map.x();
 	}
 	m_sheet.rheight() = map.y() + lineHeight;
-	if (m_data.size() < offset)
-		m_data.resize(offset);
+	_Expand(m_data, offset);
 	for (int i=0; i<imgs->num_parts; ++i) {
 		auto &img = imgs->parts[i];
 		auto &part = m_parts[i];

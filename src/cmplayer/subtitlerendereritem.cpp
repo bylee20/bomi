@@ -246,8 +246,7 @@ void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 		});
 		if (!d->texture.size().isEmpty()) {
 			const auto len = d->texture.width*d->texture.height;
-			if (d->zeros.size() < len)
-				d->zeros.resize(len);
+			_Expand(d->zeros, len);
 			d->texture.allocate(d->zeros.data());
 			d->bbox.copyAttributesFrom(d->texture);
 			d->bbox.allocate(d->zeros.data());

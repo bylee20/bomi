@@ -280,8 +280,7 @@ public:
 		auto dest = src;
 		int len = data->len*dstNch/srcNch;
 		if (len != data->len) {
-			if (m_buffer.size() < len)
-				m_buffer.resize(len*1.5);
+			_Expand(m_buffer, len);
 			dest = m_buffer.data();
 		}
 		if (m_muted)
