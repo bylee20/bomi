@@ -693,6 +693,15 @@ void MainWindow::connectMenus() {
 	connect(play("chapter").g(), &ActionGroup::triggered, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentChapter(a->data().toInt()); showMessage(tr("Current Chapter"), a->text());
 	});
+	auto seekChapter = [this] (int offset) {
+		int chapter = d->engine.currentChapter() + offset;
+		if (chapter < 0)
+			d->engine.seek(0);
+		else
+			d->engine.setCurrentChapter(chapter);
+	};
+	connect(play("chapter")["prev"], &QAction::triggered, [seekChapter] () { seekChapter(-1); });
+	connect(play("chapter")["next"], &QAction::triggered, [seekChapter] () { seekChapter(+1); });
 
 	Menu &video = d->menu("video");
 	connect(video("track").g(), &ActionGroup::triggered, [this] (QAction *a) {

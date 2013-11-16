@@ -45,8 +45,7 @@ Skin.AppWithDock {
 			GradientStop { position: 1.0; color: "#aaa" }
 		}
 		RowLayout {
-			anchors.fill: parent; spacing: 3;
-			anchors.margins: 4
+			anchors { fill: parent; margins: 4 } spacing: 3;
 			Skin.Button {
 				id: playPause; width: height; height: parent.height
 				action: "play/pause"; icon: (player.state === Core.Engine.Playing) ? "pause.png" : "play.png"
@@ -54,11 +53,10 @@ Skin.AppWithDock {
 			}
 			Skin.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
 			Row {
-				width: childrenRect.width
-				height: parent.height
-				Skin.TimeText { color: "black"; msecs: engine.time }
-				Skin.TimeText { color: "black"; text: "/" }
-				Skin.TimeText { color: "black"; msecs: engine.end }
+				width: childrenRect.width; height: parent.height
+				Skin.TimeText { textColor: "black"; msecs: engine.time }
+				Skin.TimeText { textColor: "black"; text: "/" }
+				Skin.TimeText { textColor: "black"; msecs: engine.end }
 			}
 			Skin.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
 		}

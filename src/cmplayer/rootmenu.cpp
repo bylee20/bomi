@@ -170,7 +170,12 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		seek.addActionToGroup(_L("current-subtitle"), false, _L("subtitle"))->setData(0);
 		seek.addActionToGroup(_L("next-subtitle"), false, _L("subtitle"))->setData(1);
 	play.addMenu(_L("title"))->setEnabled(false);
-	play.addMenu(_L("chapter"))->setEnabled(false);
+	auto &chapter = *play.addMenu(_L("chapter"));
+	chapter.setEnabled(false);
+	chapter.g()->setExclusive(true);
+	chapter.addAction(_L("prev"));
+	chapter.addAction(_L("next"));
+	chapter.addSeparator();
 
 	auto &subtitle = *addMenu(_L("subtitle"));
 	auto &spu = *subtitle.addMenu(_L("track"));
@@ -413,7 +418,9 @@ void RootMenu::update(const Pref &p) {
 	seek.a("next-subtitle", tr("To Next Subtitle"));
 
 	play("title", tr("Title"));
-	play("chapter", tr("Chapter"));
+	auto &chapter = play("chapter", tr("Chapter"));
+	chapter.a("prev", tr("Previous Chapter"));
+	chapter.a("next", tr("Next Chapter"));
 
 	auto &sub = root("subtitle", tr("Subtitle"));
 

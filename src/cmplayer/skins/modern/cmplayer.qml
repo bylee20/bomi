@@ -45,7 +45,7 @@ Skin.AppWithFloating {
 			id: inner; width: parent.width-50; anchors.centerIn: parent; spacing: 5
 			RowLayout {
 				id: texts; width: parent.width; height: 15; spacing: 5
-                Skin.TimeText { id: position; msecs: engine.time; Layout.alignment: Qt.AlignBottom }
+				Skin.TimeText { id: position; msecs: engine.time; Layout.alignment: Qt.AlignBottom; textAlignmentV: Text.AlignBottom }
 				Text {
 					id: name
 					Layout.alignment: Qt.AlignBottom; Layout.fillWidth: true
@@ -53,7 +53,7 @@ Skin.AppWithFloating {
 					color: "white"; font { bold: true; pixelSize: 12 }
 					horizontalAlignment: Text.AlignHCenter
 				}
-                Skin.TimeText { id: duration; msecs: engine.end; Layout.alignment: Qt.AlignBottom }
+				Skin.TimeText { id: duration; msecs: engine.end; Layout.alignment: Qt.AlignBottom; textAlignmentV: Text.AlignBottom }
 			}
 			RowLayout {
 				id: seekbarwrapper; width: parent.width; height: 10; spacing: 10
