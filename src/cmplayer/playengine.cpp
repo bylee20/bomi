@@ -41,7 +41,7 @@ struct PlayEngine::Data {
 	VideoRendererItem *renderer = nullptr;
 	DvdInfo dvd;
 	ChapterList chapters;
-
+	QList<ChapterObject*> chapterObjects;
 	QByteArray vfs;
 
 	QList<QMetaObject::Connection> rendererConnections;
@@ -246,7 +246,7 @@ PlayEngine::PlayEngine()
 	d->audio = new AudioController(this);
 	d->video = new VideoOutput(this);
 	d->imageTicker.setInterval(20);
-	d->avTicker.setInterval(200);
+	d->avTicker.setInterval(50);
 	d->updateMediaName();
 	mp_register_player_command_filter(Data::mpCommandFilter);
 	mp_register_player_event_filter(Data::mpEventFilter);
@@ -286,10 +286,21 @@ PlayEngine::PlayEngine()
 }
 
 PlayEngine::~PlayEngine() {
+	qDeleteAll(d->chapterObjects);
 	delete d->audio;
 	delete d->video;
 //	finalizeGL();
 	delete d;
+}
+
+QQmlListProperty<ChapterObject> PlayEngine::chapterObjects() const {
+	auto count = [] (QQmlListProperty<ChapterObject> *p) -> int {
+		return static_cast<PlayEngine*>(p->object)->d->chapterObjects.size();
+	};
+	auto at = [] (QQmlListProperty<ChapterObject> *p, int i) -> ChapterObject* {
+		return static_cast<PlayEngine*>(p->object)->d->chapterObjects.value(i);
+	};
+	return QQmlListProperty<ChapterObject>(const_cast<PlayEngine*>(this), nullptr, count, at);
 }
 
 qreal PlayEngine::cache() const {
@@ -544,8 +555,14 @@ void PlayEngine::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
 	case UpdateChapterList: {
 		auto chapters = getData<ChapterList>(event);
-		if (_CheckSwap(d->chapters, chapters))
+		if (_CheckSwap(d->chapters, chapters)) {
+			qDeleteAll(d->chapterObjects);
+			d->chapterObjects.clear();
+			d->chapterObjects.reserve(d->chapters.size());
+			for (const auto &chapter : d->chapters)
+				d->chapterObjects << new ChapterObject(chapter.time(), chapter.name());
 			emit chaptersChanged(d->chapters);
+		}
 		break;
 	} case UpdateDVDInfo:
 		d->dvd = getData<DvdInfo>(event);
@@ -759,7 +776,8 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	postData(this, UpdateDVDInfo, dvd);
 	ChapterList chapters(get_chapter_count(mpctx));
 	for (int i=0; i<chapters.size(); ++i) {
-		const QString time = _MSecToString(chapter_start_time(mpctx, i)*1000, _L("hh:mm:ss.zzz"));
+		chapters[i].m_time = chapter_start_time(mpctx, i)*1000;
+		const QString time = _MSecToString(chapters[i].m_time, _L("hh:mm:ss.zzz"));
 		if (char *name = chapter_name(mpctx, i)) {
 			chapters[i].m_name = QString::fromLocal8Bit(name) % '(' % time % ')';
 			talloc_free(name);
@@ -773,8 +791,6 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 		stream->control(stream, STREAM_CTRL_GET_CURRENT_TITLE, &title);
 		stream->control(stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
 	}
-	postData(this, UpdateChapterList, chapters);
-
 	int begin = 0; duration = 0;
 	auto checkTimeRange = [this, &begin, &duration] () {
 		if (_Change(begin, int(get_start_time(d->mpctx)*1000))
@@ -786,8 +802,11 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	auto state = Loading, newState = Loading;
 	int cache = -1;
 	while (!mpctx->stop_play) {
-		if (!duration)
+		if (!duration) {
 			checkTimeRange();
+			if (duration)
+				postData(this, UpdateChapterList, chapters);
+		}
 		run_playloop(mpctx);
 		if (mpctx->stop_play)
 			break;
@@ -1094,6 +1113,7 @@ void PlayEngine::registerObjects() {
 	qRegisterMetaType<VideoFormat>("VideoFormat");
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 	qRegisterMetaType<StreamList>("StreamList");
+	qmlRegisterType<ChapterObject>();
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();

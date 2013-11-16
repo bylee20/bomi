@@ -47,6 +47,7 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(qreal cache READ cache NOTIFY cacheChanged)
 	Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
 	Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
+	Q_PROPERTY(QQmlListProperty<ChapterObject> chapters READ chapterObjects NOTIFY chaptersChanged)
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Loading = 16, Error = 32, Running = Playing | Loading };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
@@ -145,6 +146,7 @@ public:
 	int droppedFrames() const;
 	void setChannelLayoutMap(const ChannelLayoutMap &map);
 	void setChannelLayout(ChannelLayout layout);
+	QQmlListProperty<ChapterObject> chapterObjects() const;
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);

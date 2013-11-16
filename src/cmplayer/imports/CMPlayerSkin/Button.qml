@@ -7,6 +7,8 @@ Item {
 	property alias icon: icon.source
 	property alias smooth: icon.smooth
 	property string action: ""
+	property string tooltip: ""
+	property alias tooltipDelay: tooltipTimer.interval
 	property bool checked: false
 	property alias border: box.border
 	property alias radius: box.radius
@@ -23,20 +25,17 @@ Item {
 		return prefix;
 	}
 	Rectangle {
-		id: box
-		anchors.fill: parent
-		color: "transparent"
-		Image {
-			id: icon
-			anchors.fill: parent
-			smooth: true
-		}
+		id: box; anchors.fill: parent; color: "transparent"
+		Image { id: icon; anchors.fill: parent; smooth: true }
 		MouseArea {
-			id: mouseArea
-			anchors.fill: parent
-			hoverEnabled: true
-			onReleased: if (containsMouse && action) Core.Util.execute(action)
-			onClicked: item.clicked()
+			id: mouseArea; anchors.fill: parent; hoverEnabled: true
+			onReleased: if (containsMouse && action.length) Core.Util.execute(action)
+			onClicked: item.clicked(); onExited: Core.Util.hideToolTip(); onCanceled: Core.Util.hideToolTip()
+			Timer {
+				id: tooltipTimer; interval: 1000
+				running: parent.containsMouse && !pressed && tooltip.length
+				onTriggered: Core.Util.showToolTip(parent, Qt.point(parent.mouseX, parent.mouseY), tooltip)
+			}
 		}
 	}
 }

@@ -29,7 +29,7 @@ struct SubtitleStyle {
 		QFont qfont;
 	};
 	struct BoundingBox { bool enabled = false; QColor color = {0, 0, 0, 127}; QPointF padding = {0.3, 0.1}; };
-	struct Shadow { bool enabled = true, blur = false; QColor color = {0, 0, 0, 127}; QPointF offset = {0.1, 0.1}; };
+	struct Shadow { bool enabled = true, blur = true; QColor color = {0, 0, 0, 127}; QPointF offset = {0.1, 0.1}; };
 	struct Outline { QColor color = {Qt::black}; double width = 0.05; bool enabled = true; };
 	struct Spacing { double line = 0, paragraph = 0; };
 	QTextOption::WrapMode wrapMode = QTextOption::WrapAtWordBoundaryOrAnywhere;

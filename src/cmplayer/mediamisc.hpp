@@ -109,6 +109,7 @@ private:
 typedef QMap<int, Stream> StreamList;
 
 struct Chapter {
+	int time() const { return m_time; }
 	QString name() const {return m_name;}
 	int id() const {return m_id;}
 	bool operator == (const Chapter &rhs) const {
@@ -117,7 +118,24 @@ struct Chapter {
 private:
 	friend class PlayEngine;
 	QString m_name;
-	int m_id = 0;
+	int m_id = 0, m_time = 0;
+};
+
+class ChapterObject : public QObject {
+	Q_OBJECT
+	Q_PROPERTY(QString name READ name NOTIFY nameChanged)
+	Q_PROPERTY(int time READ time NOTIFY timeChanged)
+public:
+	ChapterObject(int time, const QString &name, QObject *parent = nullptr)
+	: QObject(parent), m_time(time), m_name(name) {}
+	QString name() const { return m_name; }
+	int time() const { return m_time; }
+signals:
+	void timeChanged();
+	void nameChanged();
+private:
+	const int m_time = 0;
+	const QString m_name;
 };
 
 typedef QVector<Chapter> ChapterList;

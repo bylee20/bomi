@@ -47,7 +47,8 @@ public:
 	Q_INVOKABLE QPointF mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) const;
 	Q_INVOKABLE bool execute(const QString &key);
 	Q_INVOKABLE double bound(double min, double v, double max) const {return qBound(min, v, max);}
-
+	Q_INVOKABLE void showToolTip(QQuickItem *item, const QPointF &pos, const QString &text) { QToolTip::showText(item->window()->mapToGlobal(item->mapToScene(pos).toPoint()), text); }
+	Q_INVOKABLE void hideToolTip() { QToolTip::hideText(); }
 	Q_INVOKABLE void trigger(Event event) {m_triggered[event] = true;}
 	static bool isTriggered(Event event) {return m_triggered[event];}
 	static void resetTriggered(Event event) {m_triggered[event] = false;}
