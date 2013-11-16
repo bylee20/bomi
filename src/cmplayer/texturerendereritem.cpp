@@ -79,12 +79,11 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 	auto prog = program();
 	auto f = func();
 
-	auto texPos = 0;
-	prog->setUniformValue(loc_tex, texPos);
+	prog->setUniformValue(loc_tex, 0);
 	if (state.isMatrixDirty())
 		prog->setUniformValue(loc_vMatrix, state.combinedMatrix());
 	bind(prog);
-	f->glActiveTexture(GL_TEXTURE0 + texPos);
+	f->glActiveTexture(GL_TEXTURE0);
 	texture.bind();
 
 	if (m_lutCount > 0) {
@@ -92,7 +91,7 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 		prog->setUniformValue(loc_tex_size, QVector2D(texture.width, texture.height));
 	}
 
-	++texPos;
+	auto texPos = 1;
 	for (int i=0; i<m_lutCount; ++i, ++texPos) {
 		prog->setUniformValue(loc_lut_int[i], texPos);
 		prog->setUniformValue(loc_lut_int_mul[i], m_item->lutInterpolatorTexture(i).multiply);

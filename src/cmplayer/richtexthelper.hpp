@@ -2,7 +2,6 @@
 #define RICHTEXTHELPER_HPP
 
 #include "stdafx.hpp"
-#include "richtextblock.hpp"
 
 class RichTextHelper {
 public:
@@ -73,19 +72,6 @@ public:
 	static int innerText(const char *open, const char *close, const QString &text, QStringRef &block, int &pos, Tag &tag) {
 		return innerText(open, close, text.midRef(0, -1), block, pos, tag);
 	}
-};
-
-
-class RichTextBlockParser : public RichTextHelper {
-public:
-	RichTextBlockParser(const QStringRef &text): m_text(text), m_pos(0), m_good(1) {}
-	inline bool atEnd() const {return m_pos >= m_text.size();}
-	QStringRef get(const char *open, const char *close, Tag *tag = nullptr);
-	QList<RichTextBlock> paragraph(Tag *tag = nullptr);
-protected:
-	static QList<RichTextBlock> parse(const QStringRef &text, const RichTextBlock::Style &style = RichTextBlock::Style());
-	QStringRef m_text;
-	int m_pos, m_good;
 };
 
 #endif // RICHTEXTHELPER_HPP

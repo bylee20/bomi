@@ -552,8 +552,6 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.sharpen_kern_c->setValue(p.sharpen_kern_c);
 	d->ui.sharpen_kern_n->setValue(p.sharpen_kern_n);
 	d->ui.sharpen_kern_d->setValue(p.sharpen_kern_d);
-//	d->ui.min_luma->setValue(p.remap_luma_min);
-//	d->ui.max_luma->setValue(p.remap_luma_max);
 
 	d->ui.sub_enable_autoload->setChecked(p.sub_enable_autoload);
 	d->ui.sub_enable_autoselect->setChecked(p.sub_enable_autoselect);
@@ -576,7 +574,12 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.sub_shadow_opacity->setValue(p.sub_style.shadow.color.alphaF()*100.0);
 	d->ui.sub_shadow_offset_x->setValue(p.sub_style.shadow.offset.x()*100.0);
 	d->ui.sub_shadow_offset_y->setValue(p.sub_style.shadow.offset.y()*100.0);
-//	d->ui.sub_shadow_blur->setChecked(p.sub_style.shadow_blur);
+	d->ui.sub_shadow_blur->setChecked(p.sub_style.shadow.blur);
+	d->ui.sub_bbox->setChecked(p.sub_style.bbox.enabled);
+	d->ui.sub_bbox_color->setColor(p.sub_style.bbox.color, false);
+	d->ui.sub_bbox_opacity->setValue(p.sub_style.bbox.color.alphaF()*100.0);
+	d->ui.sub_bbox_hpadding->setValue(p.sub_style.bbox.padding.x()*100.0);
+	d->ui.sub_bbox_vpadding->setValue(p.sub_style.bbox.padding.y()*100.0);
 	d->ui.sub_spacing_line->setValue(p.sub_style.spacing.line*100.0);
 	d->ui.sub_spacing_paragraph->setValue(p.sub_style.spacing.paragraph*100.0);
 	d->ui.ms_per_char->setValue(p.ms_per_char);
@@ -660,8 +663,6 @@ void PrefDialog::get(Pref &p) {
 	p.sharpen_kern_c = d->ui.sharpen_kern_c->value();
 	p.sharpen_kern_n = d->ui.sharpen_kern_n->value();
 	p.sharpen_kern_d = d->ui.sharpen_kern_d->value();
-//	p.remap_luma_min = d->ui.min_luma->value();
-//	p.remap_luma_max = d->ui.max_luma->value();
 
 	p.normalizer_target = d->ui.normalizer_target->value();
 	p.normalizer_silence = d->ui.normalizer_silence->value();
@@ -691,7 +692,12 @@ void PrefDialog::get(Pref &p) {
 	p.sub_style.shadow.color.setAlphaF(d->ui.sub_shadow_opacity->value()/100.0);
 	p.sub_style.shadow.offset.rx() = d->ui.sub_shadow_offset_x->value()/100.0;
 	p.sub_style.shadow.offset.ry() = d->ui.sub_shadow_offset_y->value()/100.0;
-//	p.sub_style.shadow_blur = d->ui.sub_shadow_blur->isChecked();
+	p.sub_style.shadow.blur = d->ui.sub_shadow_blur->isChecked();
+	p.sub_style.bbox.enabled = d->ui.sub_bbox->isChecked();
+	p.sub_style.bbox.color = d->ui.sub_bbox_color->color();
+	p.sub_style.bbox.color.setAlphaF(d->ui.sub_bbox_opacity->value()/100.0);
+	p.sub_style.bbox.padding.rx() = d->ui.sub_bbox_hpadding->value()/100.0;
+	p.sub_style.bbox.padding.ry() = d->ui.sub_bbox_vpadding->value()/100.0;
 	p.sub_style.spacing.line = d->ui.sub_spacing_line->value()/100.0;
 	p.sub_style.spacing.paragraph = d->ui.sub_spacing_paragraph->value()/100.0;
 	p.ms_per_char = d->ui.ms_per_char->value();

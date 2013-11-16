@@ -24,10 +24,8 @@ public:
 	}
 	inline bool hasWords() const {
 		for (auto &block : m_blocks) {
-			for (auto &c : block.text) {
-				if (!isSeparator(c.unicode()))
-					return true;
-			}
+			if (block.hasWords())
+				return true;
 		}
 		return false;
 	}
@@ -42,6 +40,7 @@ public:
 	void setWrapMode(QTextOption::WrapMode wrapMode);
 	void setFormat(QTextFormat::Property property, const QVariant &data);
 	void draw(QPainter *painter, const QPointF &pos);
+	void drawBoudingBoxes(QPainter *painter, const QPointF &pos);
 	void doLayout(double maxWidth);
 	void updateLayoutInfo();
 	void setText(const QString &text);
@@ -51,6 +50,7 @@ public:
 	QSizeF naturalSize() const {return m_natural.size();}
 	void setLeading(double newLine, double paragraph);
 	void clear() { freeLayouts(); m_blocks.clear(); setChanged(true); }
+	const QVector<QRectF> &boundingBoxes() const { return m_boxes; }
 private:
 	struct Layout {
 		QTextLayout block;
@@ -62,6 +62,7 @@ private:
 	}
 	QVector<Layout*> m_layouts;
 	QList<RichTextBlock> m_blocks;
+	QVector<QRectF> m_boxes;
 	QTextOption m_option;
 	QTextCharFormat m_format;
 	bool m_blockChanged, m_formatChanged, m_optionChanged, m_pxChanged, m_dirty;

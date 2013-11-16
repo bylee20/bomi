@@ -105,6 +105,9 @@ bool _Contains(const List &list, const T &t) { return std::find(std::begin(list)
 #endif
 
 static inline quint64 _SystemTime() { struct timeval t; gettimeofday(&t, 0); return t.tv_sec*1000000u + t.tv_usec; }
+
+template<typename T> bool _Expand(T &t, int size, double extra = 1.2) { if (t.size() < size) {t.resize(size*extra); return true;} return false; }
+
 }
 
 using namespace Pch;

@@ -12,7 +12,6 @@ struct SubtitleRendererItem::Data {
 	bool selecting = false, redraw = false, textChanged = true;
 	bool top = false, hidden = false, empty = true;
 	double pos = 1.0;
-	QPointF shadowOffset = {0, 0};
 	QMap<QString, int> langMap;
 	QMutex mutex;
 	QWaitCondition wait;
@@ -21,9 +20,9 @@ struct SubtitleRendererItem::Data {
 //		return langMap.value(r->comp->language().id(), -1);
 		return langMap.value(comp.language(), -1);
 	}
-	QVector<quint32> zeros;
+	QVector<quint32> zeros, bboxData;
 	SubCompSelection selection{p};
-	OpenGLTexture texture;
+	OpenGLTexture texture, bbox;
 	double fps() const { return selection.fps(); }
 	void updateDrawer() {
 		selection.setDrawer(drawer);
@@ -64,30 +63,32 @@ public:
 	const char *fragmentShader() const {
 		const char *shader = (R"(
 			uniform sampler2D tex;
-			uniform vec2 shadowOffset;
-			uniform vec4 shadowColor;
+			uniform sampler2D bbox;
+			uniform vec4 bboxColor;
 			varying vec2 texCoord;
 			void main() {
 				vec4 top = texture2D(tex, texCoord);
-				float alpha = texture2D(tex, texCoord - shadowOffset).a;
-				gl_FragColor = top + alpha*shadowColor*(1.0 - top.a);
+				float alpha = texture2D(bbox, texCoord).a*bboxColor.a*(1.0 - top.a);
+				gl_FragColor = top + bboxColor*alpha;
 			}
 		)");
 		return shader;
 	}
 	void link(QOpenGLShaderProgram *prog) override {
 		loc_tex = prog->uniformLocation("tex");
-		loc_shadowColor = prog->uniformLocation("shadowColor");
-		loc_shadowOffset = prog->uniformLocation("shadowOffset");
+		loc_bbox = prog->uniformLocation("bbox");
+		loc_bboxColor = prog->uniformLocation("bboxColor");
 	}
 	void bind(QOpenGLShaderProgram *prog) override {
 		auto d = static_cast<const SubtitleRendererItem*>(item())->d;
 		prog->setUniformValue(loc_tex, 0);
-		prog->setUniformValue(loc_shadowColor, d->drawer.style().shadow.color);
-		prog->setUniformValue(loc_shadowOffset, d->shadowOffset);
+		prog->setUniformValue(loc_bbox, 1);
+		prog->setUniformValue(loc_bboxColor, d->drawer.style().bbox.color);
+		func()->glActiveTexture(GL_TEXTURE1);
+		d->bbox.bind();
 	}
 private:
-	int loc_tex = -1, loc_shadowColor = -1, loc_shadowOffset = -1;
+	int loc_tex = -1, loc_bbox = -1, loc_bboxColor = -1;
 };
 
 SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
@@ -160,28 +161,34 @@ static inline QRectF operator / (const QRectF &rect, double p) {
 }
 
 QImage SubtitleRendererItem::draw(const QRectF &rect, QRectF *put) const {
-	QImage sub; QPointF offset;
-	if (!d->drawer.draw(sub, offset, text(), rect, 1.0))
+	QImage sub; int gap = 0;
+	auto boxes = d->drawer.draw(sub, gap, text(), rect, 1.0);
+	if (sub.isNull())
 		return QImage();
-	sub.setDevicePixelRatio(1.0);
-	if (!d->drawer.style().shadow.enabled)
-		return sub;
-	QImage shadow(sub.size(), QImage::Format_ARGB32_Premultiplied);
-	const auto color = d->drawer.style().shadow.color;
-	const int r = color.red(), g = color.green(), b = color.blue();
-	const double alpha = color.alphaF();
-	for (int x=0; x<shadow.width(); ++x) {
-		for (int y=0; y<shadow.height(); ++y)
-			shadow.setPixel(x, y, qRgba(r, g, b, alpha*qAlpha(sub.pixel(x, y))));
-	}
-	QImage image(sub.size(), QImage::Format_ARGB32_Premultiplied);
-	image.fill(0x0);
-	QPainter painter(&image);
-	painter.drawImage(offset, shadow);
-	painter.drawImage(QPoint(0, 0), sub);
 	if (put)
 		*put = {d->drawer.pos(sub.size(), rect), sub.size()};
-	return image;
+	if (!boxes.isEmpty()) {
+		QImage bg(sub.size(), QImage::Format_ARGB32_Premultiplied);
+		bg.fill(0x0);
+		QPainter painter(&bg);
+		auto bcolor = d->drawer.style().bbox.color;
+		bcolor.setAlpha(255);
+		for (auto &bbox : boxes)
+			painter.fillRect(bbox, bcolor);
+		auto p = bg.bits();
+		for (int i=0; i<bg.width(); ++i) {
+			for (int j=0; j<bg.height(); ++j) {
+				*p++ *= d->drawer.style().bbox.color.alphaF();
+				*p++ *= d->drawer.style().bbox.color.alphaF();
+				*p++ *= d->drawer.style().bbox.color.alphaF();
+				*p++ *= d->drawer.style().bbox.color.alphaF();
+			}
+		}
+		painter.drawImage(QPoint(0, 0), sub);
+		painter.end();
+		sub.swap(bg);
+	}
+	return sub;
 }
 
 double SubtitleRendererItem::pos() const {
@@ -242,18 +249,22 @@ void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 			if (d->zeros.size() < len)
 				d->zeros.resize(len);
 			d->texture.allocate(d->zeros.data());
+			d->bbox.copyAttributesFrom(d->texture);
+			d->bbox.allocate(d->zeros.data());
 			int y = 0;
-			d->shadowOffset = {0, 0};
 			d->selection.forImages([this, &y] (const SubCompImage &image) {
 				const int x = (d->texture.width - image.width())*0.5;
-				if (!image.isNull())
+				if (!image.isNull()) {
 					d->texture.upload(x, y, image.size(), image.bits());
+					for (auto &bbox : image.boundingBoxes()) {
+						const auto rect = bbox.toRect().translated(x, y);
+						if (_Expand(d->bboxData, rect.width()*rect.height()))
+							d->bboxData.fill(_Max<quint32>());
+						d->bbox.upload(rect.topLeft(), rect.size(), d->bboxData.data());
+					}
+				}
 				y += image.height();
-				if (qAbs(d->shadowOffset.x()) < qAbs(image.shadowOffset().x()))
-					d->shadowOffset = image.shadowOffset();
 			});
-			d->shadowOffset.rx() /= (double)d->texture.width;
-			d->shadowOffset.ry() /= (double)d->texture.height;
 			setGeometryDirty();
 			node->markDirty(QSGNode::DirtyMaterial);
 		}

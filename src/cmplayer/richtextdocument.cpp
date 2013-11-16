@@ -121,6 +121,7 @@ void RichTextDocument::doLayout(double maxWidth) {
 		return;
 	double width = -1;
 	const int px = m_format.intProperty(QTextFormat::FontPixelSize);
+	m_boxes.clear();
 	QPointF pos(0, 0);
 	for (int i=0; i<m_layouts.size(); ++i) {
 		auto &block = m_layouts[i]->block;
@@ -156,7 +157,7 @@ void RichTextDocument::doLayout(double maxWidth) {
 				++rt_idx;
 			}
 
-			const bool empty = m_blocks[i].text.isEmpty();
+			const bool empty = !m_blocks[i].hasWords();
 			if (!empty) {
 				if (width < 0) {// first line
 					pos.ry() += rt_height;
@@ -168,6 +169,7 @@ void RichTextDocument::doLayout(double maxWidth) {
 				pos.ry() += line.height();
 				if (line.naturalTextWidth() > width)
 					width = line.naturalTextWidth();
+				m_boxes << line.naturalTextRect();
 			} else if (width >= 0)
 				pos.ry() += px;
 		}
@@ -265,4 +267,12 @@ void RichTextDocument::draw(QPainter *painter, const QPointF &pos) {
 		for (auto ruby : layout->rubies)
 			ruby->draw(painter, pos);
 	}
+}
+
+void RichTextDocument::drawBoudingBoxes(QPainter *painter, const QPointF &pos) {
+	painter->save();
+	painter->translate(pos);
+	painter->setBrush(Qt::black);
+	painter->drawRects(m_boxes);
+	painter->restore();
 }

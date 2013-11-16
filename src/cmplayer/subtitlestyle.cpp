@@ -17,6 +17,9 @@ void SubtitleStyle::save(Record &r, const QString &group) const {
 	WRITE(shadow.offset);
 	WRITE(spacing.line);
 	WRITE(spacing.paragraph);
+	WRITE(bbox.enabled);
+	WRITE(bbox.color);
+	WRITE(bbox.padding);
 #undef WRITE
 	r.endGroup();
 }
@@ -37,6 +40,9 @@ void SubtitleStyle::load(Record &r, const QString &group) {
 	READ(shadow.offset);
 	READ(spacing.line);
 	READ(spacing.paragraph);
+	READ(bbox.enabled);
+	READ(bbox.color);
+	READ(bbox.padding);
 #undef READ
 	r.endGroup();
 }
