@@ -31,9 +31,8 @@ Item {
 	function makeToolTip(action, action2) {
 		if (action && action2)
 			return qsTr("Left click: %1\nRight click: %2").arg(action.text).arg(action2.text)
-		else if (action || action2)
-			return action ? action.text : action2.text
-		return ""
+		else
+			return action ? action.text : (action2 ? action2.text : "")
 	}
 	function getStateIconName(prefix) {
 		if (checked)
