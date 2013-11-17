@@ -121,23 +121,24 @@ private:
 	int m_id = 0, m_time = 0;
 };
 
-class ChapterObject : public QObject {
-	Q_OBJECT
-	Q_PROPERTY(QString name READ name NOTIFY nameChanged)
-	Q_PROPERTY(int time READ time NOTIFY timeChanged)
-public:
-	ChapterObject(int time, const QString &name, QObject *parent = nullptr)
-	: QObject(parent), m_time(time), m_name(name) {}
-	QString name() const { return m_name; }
-	int time() const { return m_time; }
-signals:
-	void timeChanged();
-	void nameChanged();
-private:
-	const int m_time = 0;
-	const QString m_name;
-};
-
 typedef QVector<Chapter> ChapterList;
+
+class ChapterInfoObject : public QObject {
+	Q_OBJECT
+	Q_PROPERTY(int current READ current NOTIFY currentChanged)
+	Q_PROPERTY(int count READ count NOTIFY countChanged)
+	Q_PROPERTY(int length READ count NOTIFY countChanged)
+public:
+	ChapterInfoObject(const PlayEngine *engine, QObject *parent = nullptr);
+	Q_INVOKABLE int time(int i) const;
+	Q_INVOKABLE QString name(int i) const;
+	int current() const;
+	int count() const;
+signals:
+	void currentChanged();
+	void countChanged();
+private:
+	const PlayEngine *m_engine = nullptr;
+};
 
 #endif // MEDIAMISC_HPP

@@ -47,7 +47,7 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(qreal cache READ cache NOTIFY cacheChanged)
 	Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
 	Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
-	Q_PROPERTY(QQmlListProperty<ChapterObject> chapters READ chapterObjects NOTIFY chaptersChanged)
+	Q_PROPERTY(ChapterInfoObject *chapter READ chapterInfo NOTIFY chaptersChanged)
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Loading = 16, Error = 32, Running = Playing | Loading };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
@@ -80,9 +80,9 @@ public:
 	const DvdInfo &dvd() const;
 	int currentDvdTitle() const;
 	int currentChapter() const;
-	ChapterList chapters() const;
+	const ChapterList &chapters() const;
 	int currentSubtitleStream() const;
-	StreamList subtitleStreams() const;
+	const StreamList &subtitleStreams() const;
 	void setCurrentSubtitleStream(int id);
 	void setCurrentDvdTitle(int id);
 	void setCurrentChapter(int id);
@@ -94,7 +94,7 @@ public:
 	double fps() const;
 	VideoRendererItem *videoRenderer() const;
 	VideoFormat videoFormat() const;
-	StreamList videoStreams() const;
+	const StreamList &videoStreams() const;
 	void setCurrentVideoStream(int id);
 	int currentVideoStream() const;
 	void setGetStartTimeFunction(const GetMrlInt &func);
@@ -111,7 +111,7 @@ public:
 	bool isMuted() const;
 	double volumeNormalizer() const;
 	double amp() const;
-	StreamList audioStreams() const;
+	const StreamList &audioStreams() const;
 	void setCurrentAudioStream(int id);
 	void setVolumeNormalizerOption(double length, double target, double silence, double min, double max);
 	void addSubtitleStream(const QString &fileName, const QString &enc);
@@ -146,7 +146,7 @@ public:
 	int droppedFrames() const;
 	void setChannelLayoutMap(const ChannelLayoutMap &map);
 	void setChannelLayout(ChannelLayout layout);
-	QQmlListProperty<ChapterObject> chapterObjects() const;
+	ChapterInfoObject *chapterInfo() const;
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);
@@ -193,6 +193,7 @@ signals:
 	void cacheChanged();
 	void hasVideoChanged();
 	void droppedFramesChanged();
+	void currentChapterChanged(int chapter);
 private:
 	int playImage(const Mrl &mrl, int &terminated, int &duration);
 	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);

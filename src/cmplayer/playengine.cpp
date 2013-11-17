@@ -37,11 +37,12 @@ struct PlayEngine::Data {
 	QList<QTemporaryFile*> subtitleFiles;
 	ChannelLayout layout = ChannelLayout::Default;
 	int duration = 0, audioSync = 0, begin = 0;
+	int chapter = -1;
 	StreamList subStreams, audioStreams, videoStreams;
 	VideoRendererItem *renderer = nullptr;
 	DvdInfo dvd;
 	ChapterList chapters;
-	QList<ChapterObject*> chapterObjects;
+	ChapterInfoObject *chapterInfo = nullptr;
 	QByteArray vfs;
 
 	QList<QMetaObject::Connection> rendererConnections;
@@ -245,6 +246,7 @@ PlayEngine::PlayEngine()
 : d(new Data(this)) {
 	d->audio = new AudioController(this);
 	d->video = new VideoOutput(this);
+	d->chapterInfo = new ChapterInfoObject(this, this);
 	d->imageTicker.setInterval(20);
 	d->avTicker.setInterval(50);
 	d->updateMediaName();
@@ -286,21 +288,15 @@ PlayEngine::PlayEngine()
 }
 
 PlayEngine::~PlayEngine() {
-	qDeleteAll(d->chapterObjects);
+	delete d->chapterInfo;
 	delete d->audio;
 	delete d->video;
 //	finalizeGL();
 	delete d;
 }
 
-QQmlListProperty<ChapterObject> PlayEngine::chapterObjects() const {
-	auto count = [] (QQmlListProperty<ChapterObject> *p) -> int {
-		return static_cast<PlayEngine*>(p->object)->d->chapterObjects.size();
-	};
-	auto at = [] (QQmlListProperty<ChapterObject> *p, int i) -> ChapterObject* {
-		return static_cast<PlayEngine*>(p->object)->d->chapterObjects.value(i);
-	};
-	return QQmlListProperty<ChapterObject>(const_cast<PlayEngine*>(this), nullptr, count, at);
+ChapterInfoObject *PlayEngine::chapterInfo() const {
+	return d->chapterInfo;
 }
 
 qreal PlayEngine::cache() const {
@@ -320,16 +316,16 @@ int PlayEngine::duration() const {
 
 const DvdInfo &PlayEngine::dvd() const {return d->dvd;}
 int PlayEngine::currentDvdTitle() const {return d->dvd.currentTitle;}
-ChapterList PlayEngine::chapters() const {return d->chapters;}
+const ChapterList &PlayEngine::chapters() const {return d->chapters;}
 
-StreamList PlayEngine::subtitleStreams() const {return d->subStreams;}
+const StreamList &PlayEngine::subtitleStreams() const {return d->subStreams;}
 
 VideoRendererItem *PlayEngine::videoRenderer() const {return d->renderer;}
 
-StreamList PlayEngine::videoStreams() const {return d->videoStreams;}
+const StreamList &PlayEngine::videoStreams() const {return d->videoStreams;}
 
 int PlayEngine::audioSync() const {return d->audioSync;}
-StreamList PlayEngine::audioStreams() const {return d->audioStreams;}
+const StreamList &PlayEngine::audioStreams() const {return d->audioStreams;}
 
 PlayEngine::HardwareAcceleration PlayEngine::hwAcc() const {
 	return d->hwAcc;
@@ -380,6 +376,7 @@ void PlayEngine::setSpeed(double speed) {
 }
 
 void PlayEngine::seek(int pos) {
+	d->chapter = -1;
 	if (d->hasImage)
 		d->image.seek(pos, false);
 	else
@@ -555,14 +552,8 @@ void PlayEngine::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
 	case UpdateChapterList: {
 		auto chapters = getData<ChapterList>(event);
-		if (_CheckSwap(d->chapters, chapters)) {
-			qDeleteAll(d->chapterObjects);
-			d->chapterObjects.clear();
-			d->chapterObjects.reserve(d->chapters.size());
-			for (const auto &chapter : d->chapters)
-				d->chapterObjects << new ChapterObject(chapter.time(), chapter.name());
+		if (_CheckSwap(d->chapters, chapters))
 			emit chaptersChanged(d->chapters);
-		}
 		break;
 	} case UpdateDVDInfo:
 		d->dvd = getData<DvdInfo>(event);
@@ -571,6 +562,10 @@ void PlayEngine::customEvent(QEvent *event) {
 	case UpdateCache:
 		d->cache = getData<int>(event)*1e-2;
 		emit cacheChanged();
+		break;
+	case UpdateCurrentChapter:
+		d->chapter = getData<int>(event);
+		emit currentChapterChanged(d->chapter);
 		break;
 	case UpdateTrack: {
 		auto streams = getData<std::array<StreamList, STREAM_TYPE_COUNT>>(event);
@@ -802,7 +797,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	postData(this, StreamOpen);
 	d->tellmp("vf set", d->vfs);
 	auto state = Loading, newState = Loading;
-	int cache = -1;
+	int cache = -1, chapter = -2;
 	while (!mpctx->stop_play) {
 		if (!duration) {
 			checkTimeRange();
@@ -821,6 +816,8 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 			setState(state);
 		if (_Change(cache, mp_get_cache_percent(mpctx)))
 			postData(this, UpdateCache, cache);
+		if (_Change(chapter, get_current_chapter(mpctx)))
+			postData(this, UpdateCurrentChapter, chapter);
 	}
 	terminated = time();
 	duration = this->duration();
@@ -1006,7 +1003,7 @@ bool PlayEngine::atEnd() const {
 
 int PlayEngine::currentChapter() const {
 	if (d->looping)
-		return get_current_chapter(d->mpctx);
+		return d->chapter;
 	return -2;
 }
 
@@ -1116,7 +1113,7 @@ void PlayEngine::registerObjects() {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 	qRegisterMetaType<StreamList>("StreamList");
 	qmlRegisterType<QAction>();
-	qmlRegisterType<ChapterObject>();
+	qmlRegisterType<ChapterInfoObject>();
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();

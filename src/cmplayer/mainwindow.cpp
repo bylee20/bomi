@@ -694,11 +694,11 @@ void MainWindow::connectMenus() {
 		a->setChecked(true); d->engine.setCurrentChapter(a->data().toInt()); showMessage(tr("Current Chapter"), a->text());
 	});
 	auto seekChapter = [this] (int offset) {
-		int chapter = d->engine.currentChapter() + offset;
-		if (chapter < 0)
-			d->engine.seek(0);
-		else
-			d->engine.setCurrentChapter(chapter);
+		if (!d->engine.chapters().isEmpty()) {
+			auto target = d->engine.currentChapter() + offset;
+			if (target > -2)
+				d->engine.setCurrentChapter(target);
+		}
 	};
 	connect(play("chapter")["prev"], &QAction::triggered, [seekChapter] () { seekChapter(-1); });
 	connect(play("chapter")["next"], &QAction::triggered, [seekChapter] () { seekChapter(+1); });
