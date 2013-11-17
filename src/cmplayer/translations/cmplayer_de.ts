@@ -27,7 +27,9 @@ p, li { white-space: pre-wrap; }
         <source>Developer&apos;s blog: %1
 Developer&apos;s E-mail: %2
 Project page: %3</source>
-        <translation>Entwickler Blog</translation>
+        <translation>Entwickler Blog %1
+Des Entwicklers E-Mail %2
+Projekt-Seite %3</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="184"/>
@@ -55,7 +57,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="128"/>
         <source>Transparency</source>
-        <translation type="unfinished"></translation>
+        <translation>Transparenz</translation>
     </message>
 </context>
 <context>
@@ -91,7 +93,7 @@ Project page: %3</source>
     <message>
         <location filename="../deintinfo.cpp" line="212"/>
         <source>Display each line twice.</source>
-        <translation type="unfinished"></translation>
+        <translation>Anzeige jeder Zeile zweimal.</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="213"/>
@@ -139,42 +141,43 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="8"/>
         <source>Western European Languages</source>
-        <translation type="unfinished"></translation>
+        <translation>Westeuropäischen Sprachen</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="9"/>
         <source>Western European Languages With Euro</source>
-        <translation type="unfinished"></translation>
+        <translation>Westeuropäischen Sprachen mit Euro</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="10"/>
         <source>Slavic/Central European Languages</source>
-        <translation type="unfinished"></translation>
+        <translation>Slawische/Mitteleuropäischen Sprachen</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="11"/>
         <source>Slavic/Central European Windows</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>I&apos;m assuming Mitteleuropäischen is correct here. </translatorcomment>
+        <translation>Slawische/Mitteleuropäischen Fenster</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="12"/>
         <source>Esperanto, Galician, Maltese, Turkish</source>
-        <translation type="unfinished"></translation>
+        <translation>Esperanto, Galicier, Maltesisch, Türkisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="13"/>
         <source>Old Baltic Charset</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="14"/>
         <source>Cyrillic</source>
-        <translation type="unfinished"></translation>
+        <translation>Kyrillisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="15"/>
         <source>Cyrillic Windows</source>
-        <translation type="unfinished"></translation>
+        <translation>Kyrillisch Fenster</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="16"/>
@@ -184,7 +187,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="17"/>
         <source>Modern Greek</source>
-        <translation type="unfinished"></translation>
+        <translation>Neugriechisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="18"/>
@@ -194,7 +197,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="19"/>
         <source>Baltic</source>
-        <translation type="unfinished"></translation>
+        <translation>Baltisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="20"/>
@@ -204,7 +207,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="21"/>
         <source>Hebrew Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>hebräischen Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="22"/>
@@ -214,32 +217,32 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="23"/>
         <source>Ukrainian, Belarusian</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukrainisch, Weißrussisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="24"/>
         <source>Simplified Chinese Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>Vereinfachtes Chinesisch Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="25"/>
         <source>Traditional Chinese Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>Traditionelle Chinesische Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="26"/>
         <source>Japanese Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>japanischen Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="27"/>
         <source>Korean Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>koreanisch Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="28"/>
         <source>Thai Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>thailändisch Zeichensatz</translation>
     </message>
 </context>
 <context>
