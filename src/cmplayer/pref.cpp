@@ -1,4 +1,5 @@
 #include "pref.hpp"
+#include "translator.hpp"
 #include "hwacc.hpp"
 #include "info.hpp"
 
@@ -385,3 +386,11 @@ QList<int> Pref::defaultHwAccCodecs() {
 }
 
 #undef PREF_GROUP
+
+QString Pref::defaultSubtitleEncoding() {
+	return Translator::defaultEncoding();
+}
+
+QString Pref::defaultSkinName() {
+	return "GaN";
+}

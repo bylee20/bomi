@@ -128,17 +128,22 @@ class TrackInfoObject : public QObject {
 	Q_PROPERTY(int current READ current NOTIFY currentChanged)
 	Q_PROPERTY(int count READ count NOTIFY countChanged)
 	Q_PROPERTY(int length READ count NOTIFY countChanged)
+	Q_PROPERTY(QString currentText READ currentText NOTIFY currentChanged)
+	Q_PROPERTY(QString countText READ countText NOTIFY countChanged)
 public:
 	TrackInfoObject(QObject *parent = nullptr): QObject(parent) {}
 	int current() const { return m_current; }
 	int count() const { return m_count; }
 	void setCount(int count) { m_count = count; emit countChanged(); }
+	QString currentText() const { return toString(m_current); }
+	QString countText() const { return toString(m_count); }
 signals:
 	void currentChanged();
 	void countChanged();
 protected slots:
 	void setCurrent(int current) { m_current = current; emit currentChanged(); }
 private:
+	static QString toString(int i) { return i < 1 ? _L("-") : QString::number(i); }
 	int m_current = -2;
 	int m_count = 0;
 };

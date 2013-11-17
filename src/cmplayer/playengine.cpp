@@ -247,7 +247,7 @@ PlayEngine::PlayEngine()
 	d->chapterInfo = new ChapterInfoObject(this, this);
 	d->audioTrackInfo = new AudioTrackInfoObject(this, this);
 	d->imageTicker.setInterval(20);
-	d->avTicker.setInterval(50);
+	d->avTicker.setInterval(100);
 	d->updateMediaName();
 	mp_register_player_command_filter(Data::mpCommandFilter);
 	mp_register_player_event_filter(Data::mpEventFilter);

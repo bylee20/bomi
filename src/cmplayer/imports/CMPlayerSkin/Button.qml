@@ -3,6 +3,7 @@ import CMPlayerCore 1.0 as Core
 
 Item {
 	id: item
+	property var bind: undefined
 	property alias color: box.color
 	property alias icon: icon.source
 	property alias smooth: icon.smooth
@@ -12,6 +13,7 @@ Item {
 	property var _action2: Core.Util.action(action2)
 	property string tooltip: makeToolTip(_action, _action2)
 	property alias text: _text.text
+	property alias textElide: _text.elide
 	property alias textColor: _text.color
 	property alias textAlignmentV: _text.verticalAlignment
 	property alias textAlignmentH: _text.horizontalAlignment
@@ -34,10 +36,12 @@ Item {
 		else
 			return action ? action.text : (action2 ? action2.text : "")
 	}
-	function getStateIconName(prefix) {
+	function getStateIconName(prefix, hovered, pressed) {
+		if (!prefix || !prefix.length)
+			return ""
 		if (checked)
 			prefix += "-checked";
-		prefix += hovered ? (pressed ? "-pressed.png" : "-hovered.png") : ".png"
+		prefix += pressed ? "-pressed.png" : ( hovered ? "-hovered.png" : ".png")
 		return prefix;
 	}
 	Rectangle {

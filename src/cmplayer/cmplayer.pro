@@ -248,7 +248,10 @@ OTHER_FILES += \
     imports/CMPlayerSkin/AppWithDock.qml \
     imports/CMPlayerSkin/TimeSlider.qml \
     imports/CMPlayerSkin/VolumeSlider.qml \
-    imports/CMPlayerSkin/PlayInfoText.qml
+    imports/CMPlayerSkin/PlayInfoText.qml \
+    skins/GaN/cmplayer.qml \
+    skins/GaN/TimeText.qml \
+    skins/GaN/Button.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}

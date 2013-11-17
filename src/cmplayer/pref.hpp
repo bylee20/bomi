@@ -110,7 +110,7 @@ public:
 	bool sub_enable_autoload = true, sub_enable_autoselect = true, sub_enc_autodetection = true;
 	SubtitleAutoload sub_autoload = SubtitleAutoload::Contain;
 	SubtitleAutoselect sub_autoselect = SubtitleAutoselect::Matched;
-	QString sub_enc = {QLocale::system().language() == QLocale::Korean ? "CP949" : "UTF-8"}, sub_ext;
+	QString sub_enc = defaultSubtitleEncoding(), sub_ext;
 	int sub_enc_accuracy = 70, ms_per_char = 500;
 	SubtitleStyle sub_style;		QStringList sub_priority;
 
@@ -137,7 +137,7 @@ public:
 	double normalizer_silence = 0.0001, normalizer_target = 0.07, normalizer_min = 0.1, normalizer_max = 10.0;
 	double normalizer_length = 5.0;
 
-	QString skin_name = "modern";
+	QString skin_name = defaultSkinName();
 
 	Shortcuts shortcuts = defaultShortcuts();
 
@@ -154,6 +154,8 @@ public:
 	void load();
 private:
 //	static Pref &get();
+	static QString defaultSkinName();
+	static QString defaultSubtitleEncoding();
 	static QList<int> defaultHwAccCodecs();
 	static QList<DeintMethod> defaultHwAccDeints();
 	static Shortcuts defaultShortcuts();

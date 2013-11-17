@@ -84,3 +84,7 @@ QString Translator::languageName(QLocale::Language lang) {
 		return QLocale::languageToString(lang);
 	}
 }
+
+QString Translator::defaultEncoding() {
+	return tr("UTF-8", "Specify most popular encoding here in target localization.");
+}
