@@ -277,7 +277,7 @@ Projekt-Seite %3</translation>
         <location filename="../enums.hpp" line="1855"/>
         <location filename="../enums.hpp" line="1929"/>
         <source>Reset</source>
-        <translation type="unfinished"></translation>
+        <translation>zurückstellen</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="210"/>
@@ -287,17 +287,18 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../enums.hpp" line="64"/>
         <source>Limited Range</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Roughly translates to &quot;Limited selection&quot;, but seems a better choice than &quot;Begrenzte Reichweite&quot;, which translates to &quot;Limited reach/range/scope&quot;.</translatorcomment>
+        <translation>Begrenzte Auswahl</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="65"/>
         <source>Full Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Voll Auswahl</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="66"/>
         <source>Remap Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Remappen Auswahl </translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="67"/>
