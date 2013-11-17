@@ -123,22 +123,40 @@ private:
 
 typedef QVector<Chapter> ChapterList;
 
-class ChapterInfoObject : public QObject {
+class TrackInfoObject : public QObject {
 	Q_OBJECT
 	Q_PROPERTY(int current READ current NOTIFY currentChanged)
 	Q_PROPERTY(int count READ count NOTIFY countChanged)
 	Q_PROPERTY(int length READ count NOTIFY countChanged)
 public:
-	ChapterInfoObject(const PlayEngine *engine, QObject *parent = nullptr);
-	Q_INVOKABLE int time(int i) const;
-	Q_INVOKABLE QString name(int i) const;
-	int current() const;
-	int count() const;
+	TrackInfoObject(QObject *parent = nullptr): QObject(parent) {}
+	int current() const { return m_current; }
+	int count() const { return m_count; }
+	void setCount(int count) { m_count = count; emit countChanged(); }
 signals:
 	void currentChanged();
 	void countChanged();
+protected slots:
+	void setCurrent(int current) { m_current = current; emit currentChanged(); }
+private:
+	int m_current = -2;
+	int m_count = 0;
+};
+
+class ChapterInfoObject : public TrackInfoObject {
+	Q_OBJECT
+public:
+	ChapterInfoObject(const PlayEngine *engine, QObject *parent = nullptr);
+	Q_INVOKABLE int time(int i) const;
+	Q_INVOKABLE QString name(int i) const;
 private:
 	const PlayEngine *m_engine = nullptr;
+};
+
+class AudioTrackInfoObject : public TrackInfoObject {
+	Q_OBJECT
+public:
+	AudioTrackInfoObject(const PlayEngine *engine, QObject *parent = nullptr);
 };
 
 #endif // MEDIAMISC_HPP

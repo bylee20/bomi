@@ -65,9 +65,8 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 }
 
 ChapterInfoObject::ChapterInfoObject(const PlayEngine *engine, QObject *parent)
-: QObject(parent), m_engine(engine) {
-	connect(engine, &PlayEngine::currentChapterChanged, this, &ChapterInfoObject::currentChanged);
-	connect(engine, &PlayEngine::chaptersChanged, this, &ChapterInfoObject::countChanged);
+: TrackInfoObject(parent), m_engine(engine) {
+	connect(engine, &PlayEngine::currentChapterChanged, this, &ChapterInfoObject::setCurrent);
 }
 
 int ChapterInfoObject::time(int i) const {
@@ -78,10 +77,7 @@ QString ChapterInfoObject::name(int i) const {
 	return m_engine->chapters().value(i).name();
 }
 
-int ChapterInfoObject::current() const {
-	return m_engine->currentChapter();
-}
-
-int ChapterInfoObject::count() const {
-	return m_engine->chapters().size();
+AudioTrackInfoObject::AudioTrackInfoObject(const PlayEngine *engine, QObject *parent)
+: TrackInfoObject(parent) {
+	connect(engine, &PlayEngine::currentAudioStreamChanged, this, &AudioTrackInfoObject::setCurrent);
 }

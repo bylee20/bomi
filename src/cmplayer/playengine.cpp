@@ -37,8 +37,10 @@ struct PlayEngine::Data {
 	QList<QTemporaryFile*> subtitleFiles;
 	ChannelLayout layout = ChannelLayout::Default;
 	int duration = 0, audioSync = 0, begin = 0;
-	int chapter = -1;
+	int chapter = -2;
+	int stream[STREAM_TYPE_COUNT] = { -1, -1, -1 };
 	StreamList subStreams, audioStreams, videoStreams;
+	AudioTrackInfoObject *audioTrackInfo = nullptr;
 	VideoRendererItem *renderer = nullptr;
 	DvdInfo dvd;
 	ChapterList chapters;
@@ -167,10 +169,6 @@ struct PlayEngine::Data {
 //		QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);
 //	}
 
-	int currentTrackId(int type) const {
-		return (mpctx && mpctx->current_track[type]) ? mpctx->current_track[type]->user_tid : -1;
-	}
-
 	void clear() {
 		dvd.clear();
 		audioStreams.clear();
@@ -247,6 +245,7 @@ PlayEngine::PlayEngine()
 	d->audio = new AudioController(this);
 	d->video = new VideoOutput(this);
 	d->chapterInfo = new ChapterInfoObject(this, this);
+	d->audioTrackInfo = new AudioTrackInfoObject(this, this);
 	d->imageTicker.setInterval(20);
 	d->avTicker.setInterval(50);
 	d->updateMediaName();
@@ -289,6 +288,7 @@ PlayEngine::PlayEngine()
 
 PlayEngine::~PlayEngine() {
 	delete d->chapterInfo;
+	delete d->audioTrackInfo;
 	delete d->audio;
 	delete d->video;
 //	finalizeGL();
@@ -297,6 +297,10 @@ PlayEngine::~PlayEngine() {
 
 ChapterInfoObject *PlayEngine::chapterInfo() const {
 	return d->chapterInfo;
+}
+
+AudioTrackInfoObject *PlayEngine::audioTrackInfo() const {
+	return d->audioTrackInfo;
 }
 
 qreal PlayEngine::cache() const {
@@ -484,7 +488,7 @@ void PlayEngine::setCurrentSubtitleStream(int id) {
 }
 
 int PlayEngine::currentSubtitleStream() const {
-	return d->currentTrackId(STREAM_SUB);
+	return d->stream[STREAM_SUB];
 }
 
 void PlayEngine::addSubtitleStream(const QString &fileName, const QString &enc) {
@@ -552,8 +556,10 @@ void PlayEngine::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
 	case UpdateChapterList: {
 		auto chapters = getData<ChapterList>(event);
-		if (_CheckSwap(d->chapters, chapters))
+		if (_CheckSwap(d->chapters, chapters)) {
+			d->chapterInfo->setCount(d->chapters.size());
 			emit chaptersChanged(d->chapters);
+		}
 		break;
 	} case UpdateDVDInfo:
 		d->dvd = getData<DvdInfo>(event);
@@ -567,14 +573,34 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->chapter = getData<int>(event);
 		emit currentChapterChanged(d->chapter);
 		break;
-	case UpdateTrack: {
+	case UpdateCurrentStream: {
+		int type, id;
+		getAllData(event, type, id);
+		d->stream[type] = id;
+		switch (type) {
+		case STREAM_AUDIO:
+			emit currentAudioStreamChanged(id);
+			break;
+		case STREAM_VIDEO:
+			emit currentVideoStreamChanged(id);
+			break;
+		case STREAM_SUB:
+			emit currentSubtitleStreamChanged(id);
+			break;
+		default:
+			break;
+		}
+		break;
+	} case UpdateTrack: {
 		auto streams = getData<std::array<StreamList, STREAM_TYPE_COUNT>>(event);
 		if (_CheckSwap(d->videoStreams, streams[STREAM_VIDEO])) {
 			emit videoStreamsChanged(d->videoStreams);
 			emit hasVideoChanged();
 		}
-		if (_CheckSwap(d->audioStreams, streams[STREAM_AUDIO]))
+		if (_CheckSwap(d->audioStreams, streams[STREAM_AUDIO])) {
+			d->audioTrackInfo->setCount(d->audioStreams.size());
 			emit audioStreamsChanged(d->audioStreams);
+		}
 		if (!streams[STREAM_SUB].isEmpty()) {
 			streams[STREAM_SUB][-1].m_name = tr("No Subtitle");
 			for (auto &one : streams[STREAM_SUB]) {
@@ -797,7 +823,9 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	postData(this, StreamOpen);
 	d->tellmp("vf set", d->vfs);
 	auto state = Loading, newState = Loading;
-	int cache = -1, chapter = -2;
+	int cache = -1, chapter = d->chapter;
+	int stream[STREAM_TYPE_COUNT];
+	memcpy(stream, d->stream, sizeof(int)*STREAM_TYPE_COUNT);
 	while (!mpctx->stop_play) {
 		if (!duration) {
 			checkTimeRange();
@@ -818,6 +846,10 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 			postData(this, UpdateCache, cache);
 		if (_Change(chapter, get_current_chapter(mpctx)))
 			postData(this, UpdateCurrentChapter, chapter);
+		for (int i=0; i<STREAM_TYPE_COUNT; ++i) {
+			if (_Change(stream[i], mpctx->current_track[i] ? mpctx->current_track[i]->user_tid : -1))
+				postData(this, UpdateCurrentStream, i, stream[i]);
+		}
 	}
 	terminated = time();
 	duration = this->duration();
@@ -1046,7 +1078,7 @@ Mrl PlayEngine::mrl() const {
 }
 
 int PlayEngine::currentAudioStream() const {
-	return d->currentTrackId(STREAM_AUDIO);
+	return d->stream[STREAM_AUDIO];
 }
 
 void PlayEngine::setCurrentVideoStream(int id) {
@@ -1054,7 +1086,7 @@ void PlayEngine::setCurrentVideoStream(int id) {
 }
 
 int PlayEngine::currentVideoStream() const {
-	return hasVideo() ? d->currentTrackId(STREAM_VIDEO) : -1;
+	return hasVideo() ? d->stream[STREAM_VIDEO] : -1;
 }
 
 void PlayEngine::setCurrentAudioStream(int id) {
@@ -1114,6 +1146,7 @@ void PlayEngine::registerObjects() {
 	qRegisterMetaType<StreamList>("StreamList");
 	qmlRegisterType<QAction>();
 	qmlRegisterType<ChapterInfoObject>();
+	qmlRegisterType<AudioTrackInfoObject>();
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();
