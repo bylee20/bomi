@@ -784,7 +784,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 				chapters[i].m_name += '(' % time % ')';
 			talloc_free(str);
 		} else
-			chapters[i].m_name = '(' % QString::number(i+1) % ") " % time;
+			chapters[i].m_name = time;
 		chapters[i].m_id = i;
 	}
 	uint title = 0, titles = 0;
