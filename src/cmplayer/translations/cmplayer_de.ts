@@ -57,7 +57,7 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../channelmanipulation.cpp" line="379"/>
         <source>Layout:</source>
-        <translation type="unfinished"></translation>
+        <translation>Anordnung:</translation>
     </message>
     <message>
         <location filename="../channelmanipulation.cpp" line="390"/>
@@ -185,7 +185,7 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../widgets.cpp" line="13"/>
         <source>Old Baltic Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>Alte Baltisch Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="14"/>
@@ -310,17 +310,17 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../enums.hpp" line="176"/>
         <source>Default</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="177"/>
         <source>Mono</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="178"/>
         <source>Stereo</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="275"/>
@@ -341,7 +341,8 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../enums.hpp" line="278"/>
         <source>Extended Range</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>&quot;Enhanced Range&quot; seems close enough</translatorcomment>
+        <translation>Erweiterter Auswahl</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="431"/>
@@ -738,17 +739,17 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../enums.hpp" line="1922"/>
         <source>Top</source>
-        <translation type="unfinished"></translation>
+        <translation>Spitze</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1923"/>
         <source>Vertical Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Vertikal Mittig</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1924"/>
         <source>Bottom</source>
-        <translation type="unfinished"></translation>
+        <translation>Unterseite</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1994"/>
@@ -758,32 +759,32 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../enums.hpp" line="1995"/>
         <source>Horizontal Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Horizontal Mittig</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1996"/>
         <source>Right</source>
-        <translation type="unfinished"></translation>
+        <translation>Rechts</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2069"/>
         <source>Upward</source>
-        <translation type="unfinished"></translation>
+        <translation>Nach oben</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2070"/>
         <source>Downward</source>
-        <translation type="unfinished"></translation>
+        <translation>Nach unten</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2071"/>
         <source>Leftward</source>
-        <translation type="unfinished"></translation>
+        <translation>Nach links</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2072"/>
         <source>Rightward</source>
-        <translation type="unfinished"></translation>
+        <translation>Nach rechts</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2143"/>
@@ -793,7 +794,7 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../enums.hpp" line="2144"/>
         <source>Decrease %1</source>
-        <translation type="unfinished">Verkleinern %1</translation>
+        <translation>Verkleinern %1</translation>
     </message>
 </context>
 <context>
