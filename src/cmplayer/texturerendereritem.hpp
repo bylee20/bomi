@@ -5,6 +5,7 @@
 #include "geometryitem.hpp"
 #include "enums.hpp"
 #include "openglcompat.hpp"
+#include "interpolator.hpp"
 
 class TextureRendererShader;
 
@@ -27,8 +28,8 @@ public:
 	Dithering dithering() const { return m_newDithering; }
 	int depth() const { return 8; }
 protected slots:
-	virtual void initializeGL() { m_lutInt1.generate(); m_lutInt2.generate(); m_ditheringTex.generate(); }
-	virtual void finalizeGL() { m_lutInt1.delete_(); m_lutInt2.delete_(); m_ditheringTex.delete_(); }
+	virtual void initializeGL() { m_lutInt[0].generate(); m_lutInt[1].generate(); m_ditheringTex.generate(); }
+	virtual void finalizeGL() { m_lutInt[0].delete_(); m_lutInt[1].delete_(); m_ditheringTex.delete_(); }
 protected:
 	static QOpenGLFunctions *func() { return QOpenGLContext::currentContext()->functions(); }
 	void setGeometryDirty() { m_dirtyGeomerty = true; }
@@ -36,24 +37,22 @@ protected:
 	virtual void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	virtual void prepare(QSGGeometryNode *node) = 0;
 	virtual void getCoords(QRectF &vertices, QRectF &/*texCoords*/) { vertices = boundingRect(); }
-	virtual QSGMaterialType *shaderId() const { return &m_types[m_intCategory][m_dithering > 0]; }
+	virtual QSGMaterialType *shaderId() const { return &m_types[m_interpolator->category()][m_dithering > 0]; }
 	virtual TextureRendererShader *createShader() const;
 private slots:
 	void tryInitGL() { if (!m_init && QOpenGLContext::currentContext()) { initializeGL(); m_init = true; } }
 private:
 	const OpenGLTexture &texture() const { return m_texture; }
 	const OpenGLTexture &ditheringTexture() const { return m_ditheringTex; }
-	const InterpolatorLutTexture &lutInterpolatorTexture1() const { return m_lutInt1; }
-	const InterpolatorLutTexture &lutInterpolatorTexture2() const { return m_lutInt2; }
+	const Interpolator::Texture &lutInterpolatorTexture(int i) const { return m_lutInt[i]; }
 	QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) final override;
 	friend class TextureRendererShader;
 	struct Material;	struct Node;	struct Data; Data *d;
 	bool m_dirtyGeomerty = true, m_init = false;
-	InterpolatorType m_interpolator = InterpolatorType::Bilinear;
+	const Interpolator *m_interpolator = Interpolator::get(InterpolatorType::Bilinear);
 	InterpolatorType m_newInt = InterpolatorType::Bilinear;
-	mutable QSGMaterialType m_types[3][2];
-	int m_intCategory = 0;
-	InterpolatorLutTexture m_lutInt1, m_lutInt2;
+	mutable QSGMaterialType m_types[Interpolator::CategoryMax][2];
+	Interpolator::Texture m_lutInt[2];
 	OpenGLTexture m_texture, m_ditheringTex;
 	QQuickWindow *m_win = nullptr;
 	Dithering m_dithering = Dithering::None, m_newDithering = Dithering::None;
@@ -61,7 +60,7 @@ private:
 
 class TextureRendererShader : public QSGMaterialShader {
 public:
-	TextureRendererShader(const TextureRendererItem *item, int interpolator = 0, bool dithering = false);
+	TextureRendererShader(const TextureRendererItem *item, Interpolator::Category category = Interpolator::None, bool dithering = false);
 	static QOpenGLFunctions *func() { return QOpenGLContext::currentContext()->functions(); }
 	const char *fragmentShader() const override { return m_fragCode.constData(); }
 	const char *vertexShader() const override { return m_vertexCode.constData(); }
@@ -73,9 +72,12 @@ private:
 	void updateState(const RenderState &state, QSGMaterial */*new_*/, QSGMaterial */*old*/) final override;
 	void initialize() final override;
 	const TextureRendererItem *m_item = nullptr;
-	int m_interpolator = 0;
+	Interpolator::Category m_category = Interpolator::None;
 	bool m_dithering = false;
-	int loc_tex = -1, loc_lut_int1 = -1, loc_lut_int1_mul = -1, loc_lut_int2 = -1, loc_lut_int2_mul = -1, loc_vMatrix = -1, loc_dxy = -1;
+	int m_lutCount = 0;
+	int loc_lut_int[2] = {-1, -1}, loc_lut_int_mul[2] = {-1, -1};
+	int loc_tex = -1, loc_vMatrix = -1, loc_dxy = -1;
+	int loc_tex_size = -1;
 	int loc_dithering = -1, loc_dithering_quantization = -1, loc_dithering_center = -1, loc_dithering_size = -1;
 	QByteArray m_fragCode, m_vertexCode;
 };

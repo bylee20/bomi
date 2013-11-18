@@ -2,6 +2,7 @@ cache()
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header c++11
 macx:CONFIG -= app_bundle
+
 !isEmpty(RELEASE) {
     DEFINES += CMPLAYER_RELEASE
     CONFIG += release
@@ -22,15 +23,17 @@ PKGCONFIG += dvdread libswresample libswscale libavfilter libavcodec libpostproc
     libmpg123 libcdio_paranoia libcdio libcdio_cdda libass portaudio-2.0 libquvi$${LIBQUVI_SUFFIX}
 
 macx {
-    QT_CONFIG -= no-pkg-config
     QT += gui-private
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.7
+    CONFIG += sdk
+    QT_CONFIG -= no-pkg-config
+    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
     QMAKE_MAC_SDK = macosx
+    QMAKE_MAC_SDK.$${QMAKE_MAC_SDK}.path = $$system(/usr/bin/xcodebuild -sdk macosx -version Path)
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
-    PKGCONFIG += libdvdcss lua libcurl fribidi freetype2 fontconfig
-    LIBS += -liconv -framework IOSurface \
+    PKGCONFIG += libdvdcss lua fribidi freetype2 fontconfig
+    LIBS += -lcurl -liconv -framework IOSurface \
         -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
         -framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
         -framework IOKit -framework Carbon -framework OpenAL
@@ -130,7 +133,9 @@ HEADERS += playengine.hpp \
     mediamisc.hpp \
     ../mpv/video/out/dither.h \
     trayicon.hpp \
-    videocolor.hpp
+    videocolor.hpp \
+    interpolator.hpp \
+    channelmanipulation.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -204,7 +209,9 @@ SOURCES += main.cpp \
     mediamisc.cpp \
     ../mpv/video/out/dither.c \
     trayicon.cpp \
-    videocolor.cpp
+    videocolor.cpp \
+    interpolator.cpp \
+    channelmanipulation.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -240,7 +247,8 @@ OTHER_FILES += \
     imports/CMPlayerSkin/AppWithFloating.qml \
     imports/CMPlayerSkin/AppWithDock.qml \
     imports/CMPlayerSkin/TimeSlider.qml \
-    imports/CMPlayerSkin/VolumeSlider.qml
+    imports/CMPlayerSkin/VolumeSlider.qml \
+    imports/CMPlayerSkin/PlayInfoText.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}

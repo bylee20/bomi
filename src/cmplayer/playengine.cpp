@@ -35,7 +35,7 @@ struct PlayEngine::Data {
 	QMutex mutex;
 	QMap<QString, QString> subtitleNames;
 	QList<QTemporaryFile*> subtitleFiles;
-
+	ChannelLayout layout = ChannelLayout::Default;
 	int duration = 0, audioSync = 0, begin = 0;
 	StreamList subStreams, audioStreams, videoStreams;
 	VideoRendererItem *renderer = nullptr;
@@ -43,6 +43,8 @@ struct PlayEngine::Data {
 	ChapterList chapters;
 
 	QByteArray vfs;
+
+	QList<QMetaObject::Connection> rendererConnections;
 
 	static int mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 		auto e = static_cast<PlayEngine*>(mpctx->priv); auto d = e->d;
@@ -57,6 +59,10 @@ struct PlayEngine::Data {
 				break;
 			case MpSetAudioMuted:
 				d->audio->setMuted(cmd->args[0].v.i);
+				break;
+			case MpSetAudioLayout:
+				d->audio->setChannelLayout(d->layout);
+				reinit_audio_chain(mpctx);
 				break;
 			case MpResetAudioChain:
 				reinit_audio_chain(mpctx);
@@ -367,6 +373,8 @@ void PlayEngine::seek(int pos) {
 		d->image.seek(pos, false);
 	else
 		d->tellmp("seek", (double)pos/1000.0, 2);
+	if (m_state == Paused && _Change(d->position, qBound(d->begin, pos, d->begin + d->duration)))
+		emit tick(d->position);
 }
 
 void PlayEngine::relativeSeek(int pos) {
@@ -375,10 +383,21 @@ void PlayEngine::relativeSeek(int pos) {
 	else
 		d->tellmp("seek", (double)pos/1000.0, 0);
 	emit sought();
+	if (m_state == Paused && _Change(d->position, qBound(d->begin, pos, d->begin + d->duration)))
+		emit tick(d->position);
 }
 
 void PlayEngine::setClippingMethod(ClippingMethod method) {
 	d->audio->setClippingMethod(method);
+}
+
+void PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) {
+	d->audio->setChannelLayoutMap(map);
+}
+
+void PlayEngine::setChannelLayout(ChannelLayout layout) {
+	if (_Change(d->layout, layout))
+		d->enqueue(MpSetAudioLayout, "", (int)d->layout);
 }
 
 typedef QPair<AudioDriver, const char*> AudioDriverName;
@@ -538,8 +557,10 @@ void PlayEngine::customEvent(QEvent *event) {
 		break;
 	case UpdateTrack: {
 		auto streams = getData<std::array<StreamList, STREAM_TYPE_COUNT>>(event);
-		if (_CheckSwap(d->videoStreams, streams[STREAM_VIDEO]))
+		if (_CheckSwap(d->videoStreams, streams[STREAM_VIDEO])) {
 			emit videoStreamsChanged(d->videoStreams);
+			emit hasVideoChanged();
+		}
 		if (_CheckSwap(d->audioStreams, streams[STREAM_AUDIO]))
 			emit audioStreamsChanged(d->audioStreams);
 		if (!streams[STREAM_SUB].isEmpty()) {
@@ -561,6 +582,8 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->start = 0;
 		d->position = 0;
 		d->cache = -1;
+		if (d->renderer)
+			d->renderer->reset();
 		emit tick(d->position);
 		emit seekableChanged(isSeekable());
 		emit started(d->playlist.loadedMrl());
@@ -760,7 +783,7 @@ int PlayEngine::playAudioVideo(const Mrl &/*mrl*/, int &terminated, int &duratio
 	};
 	postData(this, StreamOpen);
 	d->tellmp("vf set", d->vfs);
-	auto state = this->state(), newState = Loading;
+	auto state = Loading, newState = Loading;
 	int cache = -1;
 	while (!mpctx->stop_play) {
 		if (!duration)
@@ -823,7 +846,7 @@ void PlayEngine::exec() {
 	auto mpvOptions = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
 	if (!mpvOptions.isEmpty())
 		args += QString::fromLocal8Bit(mpvOptions).split(' ', QString::SkipEmptyParts);
-	args << "--no-config" << "--idle" << "--no-fs"
+	args << "--no-config" << "--idle" << "--no-fs" << "-v"
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--softvol=yes" << "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
@@ -953,7 +976,7 @@ bool PlayEngine::isSeekable() const {
 }
 
 bool PlayEngine::hasVideo() const {
-	return d->mpctx && d->mpctx->sh_video;
+	return !d->videoStreams.isEmpty();
 }
 
 bool PlayEngine::atEnd() const {
@@ -1038,8 +1061,20 @@ double PlayEngine::fps() const {
 }
 
 void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
-	if (_Change(d->renderer, renderer))
+	if (d->renderer != renderer) {
+		for (auto &conn : d->rendererConnections)
+			disconnect(conn);
+		d->rendererConnections.clear();
+		d->renderer = renderer;
 		d->video->setRenderer(d->renderer);
+		if (d->renderer)
+			d->rendererConnections << connect(d->renderer
+				, &VideoRendererItem::droppedFramesChanged, this, &PlayEngine::droppedFramesChanged);
+	}
+}
+
+int PlayEngine::droppedFrames() const {
+	return d->renderer ? d->renderer->droppedFrames() : 0;
 }
 
 double PlayEngine::bps(double fps) const {
@@ -1121,8 +1156,8 @@ DeintMode PlayEngine::deintMode() const {
 	return d->deint;
 }
 
-QString PlayEngine::stateText() const {
-	switch (m_state) {
+QString PlayEngine::stateText(State state) {
+	switch (state) {
 	case Playing:
 		return tr("Playing");
 	case Stopped:
@@ -1137,3 +1172,5 @@ QString PlayEngine::stateText() const {
 		return tr("Paused");
 	}
 }
+
+QString PlayEngine::stateText() const { return stateText(m_state); }

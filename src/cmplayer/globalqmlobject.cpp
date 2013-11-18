@@ -46,11 +46,18 @@ double UtilObject::textWidth(const QString &text, int size) {
 }
 
 double UtilObject::cpuUsage() {
-	static quint64 ptime1 = -1, stime1 = -1;
-	const quint64 ptime2 = processTime(), stime2 = systemTime();
-	const double percent = (double)(ptime2 - ptime1)/(double)(stime2 - stime1)*100.0;
-	ptime1 = ptime2; stime1 = stime2;
-	return (ptime1 == quint64(-1) || stime1 == quint64(-1)) ? 0.0 : percent;
+	static double percent = 0.0;
+	static quint64 ptime1 = processTime(), stime1 = systemTime();
+	const quint64 ptime2 = processTime();
+	static constexpr quint64 th = 10000;
+	if (ptime2 > ptime1 + th) {
+		const quint64 stime2 = systemTime();
+		if (stime2 > stime1 + th) {
+			percent = (double)(ptime2 - ptime1)/(double)(stime2 - stime1)*100.0;
+			ptime1 = ptime2; stime1 = stime2;
+		}
+	}
+	return percent;
 }
 
 QPointF UtilObject::mousePos(QQuickItem *item) {

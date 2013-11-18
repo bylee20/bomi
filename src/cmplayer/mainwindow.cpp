@@ -26,6 +26,7 @@
 #include "subtitle_parser.hpp"
 #include "subtitlemodel.hpp"
 #include "openglcompat.hpp"
+#include "videoformat.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 #endif
@@ -418,6 +419,11 @@ struct MainWindow::Data {
 		connect(&engine, &PlayEngine::stopped, &history, &HistoryModel::setStopped);
 		connect(&engine, &PlayEngine::finished, &history, &HistoryModel::setFinished);
 
+		connect(&engine, &PlayEngine::videoFormatChanged, [this] (const VideoFormat &format) {
+			if (pref().fit_to_video && !format.displaySize().isEmpty())
+				setVideoSize(format.displaySize());
+		});
+
 		engine.waitUntilInitilaized();
 	}
 	void initItems() {
@@ -487,6 +493,31 @@ struct MainWindow::Data {
 		connect(&as, sig, f);
 		emit (as.*sig)();
 	}
+
+	void setVideoSize(const QSize &video) {
+		if (p->isFullScreen() || p->isMaximized())
+			return;
+		// patched by Handrake
+		const QSizeF desktop = p->window()->windowHandle()->screen()->availableVirtualSize();
+		const QSize size = (p->size() - renderer.size().toSize() + video);
+		if (size != p->size()) {
+			p->resize(size);
+			int dx = 0;
+			const int rightDiff = desktop.width() - (p->x() + p->width());
+			if (rightDiff < 10) {
+				if (rightDiff < 0)
+					dx = desktop.width() - p->x() - size.width();
+				else
+					dx = p->width() - size.width();
+			}
+			if (dx) {
+				int x = p->x() + dx;
+				if (x < 0)
+					x = 0;
+				p->move(x, p->y());
+			}
+		}
+	}
 };
 
 #ifdef Q_OS_MAC
@@ -532,9 +563,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->winState = d->prevWinState = windowState();
 
-#ifndef Q_OS_MAC
-	d->tray = new TrayIcon(cApp.defaultIcon(), this);
-	if (d->tray->isAvailable()) {
+	if (TrayIcon::isAvailable()) {
+		d->tray = new TrayIcon(cApp.defaultIcon(), this);
 		connect(d->tray, &TrayIcon::activated, [this] (TrayIcon::ActivationReason reason) {
 			if (reason == TrayIcon::Trigger)
 				setVisible(!isVisible());
@@ -546,9 +576,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 				exit();
 		});
 		d->tray->setVisible(d->preferences.enable_system_tray);
-	} else
-		_Delete(d->tray);
-#endif
+	}
 
 //	Currently, session management does not works.
 //	connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
@@ -738,6 +766,9 @@ void MainWindow::connectMenus() {
 	});
 	d->connectStepActions(audio("amp"), "audio_amp", &AppState::audioAmpChanged, [this] () {
 		auto v = d->as.audio_amplifier; d->engine.setAmp(v*1e-2);
+	});
+	d->connectEnumMenu<ChannelLayout>(audio, "audio_channel_layout", &AppState::audioChannelLayoutChanged, [this] () {
+		d->engine.setChannelLayout(d->as.audio_channel_layout);
 	});
 	d->connectPropertyCheckable(audio["normalizer"], "audio_volume_normalizer", &AppState::audioVolumeNormalizerChanged, [this] () {
 		d->engine.setVolumeNormalizerActivated(d->as.audio_volume_normalizer);
@@ -1021,6 +1052,7 @@ void MainWindow::updateRecentActions(const QList<Mrl> &list) {
 	if (diff < 0) {
 		QList<QAction*> acts = recent.actions();
 		QAction *sprt = acts[acts.size()-2];
+		Q_ASSERT(sprt->isSeparator());
 		for (int i=0; i<-diff; ++i) {
 			QAction *action = new QAction(&recent);
 			recent.insertAction(sprt, action);
@@ -1037,7 +1069,9 @@ void MainWindow::updateRecentActions(const QList<Mrl> &list) {
 		act->setData(list[i].location());
 		act->setText(list[i].displayName());
 		act->setVisible(!list[i].isEmpty());
+//		qDebug() << act->isVisible();
 	}
+	recent.syncActions();
 }
 
 void MainWindow::openMrl(const Mrl &mrl) {
@@ -1140,14 +1174,18 @@ void MainWindow::setVideoSize(double rate) {
 	if (rate < 0) {
 		setFullScreen(!isFullScreen());
 	} else {
+		if (isFullScreen())
+			setFullScreen(false);
+		if (isMaximized())
+			showNormal();
 		// patched by Handrake
 		const QSizeF video = d->renderer.sizeHint();
 		const QSizeF desktop = window()->windowHandle()->screen()->availableVirtualSize();
 		const double target = 0.15;
-		if (isFullScreen())
-			setFullScreen(false);
 		if (rate == 0.0)
 			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
+		d->setVideoSize((video*qSqrt(rate)).toSize());
+		return;
 		const QSize size = (this->size() - d->renderer.size() + d->renderer.sizeHint()*qSqrt(rate)).toSize();
 		if (size != this->size()) {
 			if (isMaximized())
@@ -1339,6 +1377,7 @@ void MainWindow::applyPref() {
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
+	d->engine.setChannelLayoutMap(p.channel_manipulation);
 
 	auto conv = [&p] (const DeintCaps &caps) {
 		DeintOption option;

@@ -240,6 +240,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 	addStepActions(volume, 0, 100, 100, false);
 	auto &amp = *audio.addMenu("amp");
 	addStepActions(amp, 10, 100, 1000);
+	addEnumMenuCheckable<ChannelLayout>(audio, true);
 	audio.addSeparator();
 
 	audio.addSeparator();
@@ -473,6 +474,7 @@ void RootMenu::update(const Pref &p) {
 	audio("volume").a("mute", tr("Mute"));
 	updateStepActions(audio("volume", tr("Volume")), "%1%", p.volume_step);
 	updateStepActions(audio("amp", tr("Amp")), "%1%", p.amp_step);
+	updateEnumMenu<ChannelLayout>(audio);
 	audio.a("normalizer", tr("Volume Normalizer"));
 	audio.a("tempo-scaler", tr("Tempo Scaler"));
 

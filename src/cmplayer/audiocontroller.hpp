@@ -5,7 +5,9 @@
 
 struct af_instance;		struct mp_audio;
 struct af_cfg;			struct af_info;
+class ChannelLayoutMap;
 enum class ClippingMethod;
+enum class ChannelLayout;
 struct NormalizerOption;
 
 class AudioController : public QObject {
@@ -26,6 +28,8 @@ public:
 	bool isMuted() const;
 	const NormalizerOption &normalizerOption() const;
 	void setClippingMethod(ClippingMethod method);
+	void setChannelLayoutMap(const ChannelLayoutMap &map);
+	void setChannelLayout(ChannelLayout layout);
 private:
 	static int open(af_instance *af);
 	int reinitialize(mp_audio *data);

@@ -1,3 +1,25 @@
+0.8.4
+
+  * New: channel manipulation options and channel layout menu
+  * New: 'Dropped Frames' item in playback informations
+  * New: 'Resize to video resolution in windowed mode when video is changed' option
+  * New: 4-Lobed interpolators (Lanczos and Spline)
+  * New: Czech translations (thanks to Pavel Fric)
+  * New: German translations (thanks to Ben R)
+  * Mod: display channel layout instead of the number of channels in playback informations
+  * Fix: previous video's subtitles were displayed on resized with empty subtitles
+  * Fix: current time wasn't updated on seeking in paused state
+  * Fix: previous video scene was still visible when next audio is started
+  * Fix: don't display system tray icon and related options when not available
+  * Fix: previous video's subtitles were displayed on resized with empty subtitles
+  * Fix: current time wasn't updated on seeking in paused state
+  * Fix: previous video scene was still visible when next audio is started
+  * Fix: don't display system tray icon and related options when not available
+  * Fix: interpolators were inaccurate
+  * Fix: recent open list in context menu didn't work
+  * Fix: falling into Loading state even while playing occasionally
+  * Fix: links in About dialog didn't work
+
 0.8.3
 
   * Mod: remove approx. interpolators which is useless

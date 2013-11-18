@@ -1,4 +1,5 @@
 #include "prefdialog.hpp"
+#include "trayicon.hpp"
 #include "deintinfo.hpp"
 #include "translator.hpp"
 #include "dialogs.hpp"
@@ -446,9 +447,9 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	retranslate();
 
-#ifdef Q_OS_MAC
-	d->ui.system_tray_group->hide();
-#else
+	if (!TrayIcon::isAvailable())
+		d->ui.system_tray_group->hide();
+#ifndef Q_OS_MAC
 	d->ui.lion_style_fullscreen->hide();
 #endif
 	adjustSize();
@@ -467,37 +468,11 @@ PrefDialog::~PrefDialog() {
 
 
 QString PrefDialog::toString(const QLocale &locale) {
-	QString text;
-	bool addName = true;
-	switch (locale.language()) {
-	case QLocale::C:
+	QString text = Translator::languageName(locale.language());
+	if (text.isEmpty())
 		text = tr("Use the system default language");
-		addName = false;
-		break;
-	case QLocale::English:
-		text = tr("English");
-		break;
-	case QLocale::German:
-		text = tr("German");
-		break;
-	case QLocale::Japanese:
-		text = tr("Japanese");
-		break;
-	case QLocale::Korean:
-		text = tr("Korean");
-		break;
-	case QLocale::Russian:
-		text = tr("Russian");
-		break;
-	case QLocale::Italian:
-		text = tr("Italian");
-		break;
-	default:
-		text = QLocale::languageToString(locale.language());
-		break;
-	}
-	if (addName)
-		text += " (" + locale.name() + ')';
+	else
+		text += " (" % locale.name() % ')';
 	return text;
 }
 
@@ -538,6 +513,7 @@ void PrefDialog::set(const Pref &p) {
 	d->open_media_from_file_manager->setValue(p.open_media_from_file_manager);
 	d->open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
 
+	d->ui.fit_to_video->setChecked(p.fit_to_video);
 	d->ui.show_osd_on_action->setChecked(p.show_osd_on_action);
 	d->ui.show_osd_on_resized->setChecked(p.show_osd_on_resized);
 	d->ui.pause_minimized->setChecked(p.pause_minimized);
@@ -568,6 +544,7 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.normalizer_min->setValue(p.normalizer_min*100.0);
 	d->ui.normalizer_max->setValue(p.normalizer_max*100.0);
 	d->ui.normalizer_length->setValue(p.normalizer_length);
+	d->ui.channel_manipulation->setMap(p.channel_manipulation);
 
 	d->ui.blur_kern_c->setValue(p.blur_kern_c);
 	d->ui.blur_kern_n->setValue(p.blur_kern_n);
@@ -575,8 +552,6 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.sharpen_kern_c->setValue(p.sharpen_kern_c);
 	d->ui.sharpen_kern_n->setValue(p.sharpen_kern_n);
 	d->ui.sharpen_kern_d->setValue(p.sharpen_kern_d);
-//	d->ui.min_luma->setValue(p.remap_luma_min);
-//	d->ui.max_luma->setValue(p.remap_luma_max);
 
 	d->ui.sub_enable_autoload->setChecked(p.sub_enable_autoload);
 	d->ui.sub_enable_autoselect->setChecked(p.sub_enable_autoselect);
@@ -599,7 +574,12 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.sub_shadow_opacity->setValue(p.sub_style.shadow.color.alphaF()*100.0);
 	d->ui.sub_shadow_offset_x->setValue(p.sub_style.shadow.offset.x()*100.0);
 	d->ui.sub_shadow_offset_y->setValue(p.sub_style.shadow.offset.y()*100.0);
-//	d->ui.sub_shadow_blur->setChecked(p.sub_style.shadow_blur);
+	d->ui.sub_shadow_blur->setChecked(p.sub_style.shadow.blur);
+	d->ui.sub_bbox->setChecked(p.sub_style.bbox.enabled);
+	d->ui.sub_bbox_color->setColor(p.sub_style.bbox.color, false);
+	d->ui.sub_bbox_opacity->setValue(p.sub_style.bbox.color.alphaF()*100.0);
+	d->ui.sub_bbox_hpadding->setValue(p.sub_style.bbox.padding.x()*100.0);
+	d->ui.sub_bbox_vpadding->setValue(p.sub_style.bbox.padding.y()*100.0);
 	d->ui.sub_spacing_line->setValue(p.sub_style.spacing.line*100.0);
 	d->ui.sub_spacing_paragraph->setValue(p.sub_style.spacing.paragraph*100.0);
 	d->ui.ms_per_char->setValue(p.ms_per_char);
@@ -654,6 +634,7 @@ void PrefDialog::get(Pref &p) {
 	p.open_media_from_file_manager = d->open_media_from_file_manager->value();
 	p.open_media_by_drag_and_drop = d->open_media_by_drag_and_drop->value();
 
+	p.fit_to_video = d->ui.fit_to_video->isChecked();
 	p.show_osd_on_action = d->ui.show_osd_on_action->isChecked();
 	p.show_osd_on_resized = d->ui.show_osd_on_resized->isChecked();
 	p.pause_minimized = d->ui.pause_minimized->isChecked();
@@ -682,14 +663,13 @@ void PrefDialog::get(Pref &p) {
 	p.sharpen_kern_c = d->ui.sharpen_kern_c->value();
 	p.sharpen_kern_n = d->ui.sharpen_kern_n->value();
 	p.sharpen_kern_d = d->ui.sharpen_kern_d->value();
-//	p.remap_luma_min = d->ui.min_luma->value();
-//	p.remap_luma_max = d->ui.max_luma->value();
 
 	p.normalizer_target = d->ui.normalizer_target->value();
 	p.normalizer_silence = d->ui.normalizer_silence->value();
 	p.normalizer_min = d->ui.normalizer_min->value()/100.0;
 	p.normalizer_max = d->ui.normalizer_max->value()/100.0;
 	p.normalizer_length = d->ui.normalizer_length->value();
+	p.channel_manipulation = d->ui.channel_manipulation->map();
 
 	p.sub_enable_autoload = d->ui.sub_enable_autoload->isChecked();
 	p.sub_enable_autoselect = d->ui.sub_enable_autoselect->isChecked();
@@ -712,7 +692,12 @@ void PrefDialog::get(Pref &p) {
 	p.sub_style.shadow.color.setAlphaF(d->ui.sub_shadow_opacity->value()/100.0);
 	p.sub_style.shadow.offset.rx() = d->ui.sub_shadow_offset_x->value()/100.0;
 	p.sub_style.shadow.offset.ry() = d->ui.sub_shadow_offset_y->value()/100.0;
-//	p.sub_style.shadow_blur = d->ui.sub_shadow_blur->isChecked();
+	p.sub_style.shadow.blur = d->ui.sub_shadow_blur->isChecked();
+	p.sub_style.bbox.enabled = d->ui.sub_bbox->isChecked();
+	p.sub_style.bbox.color = d->ui.sub_bbox_color->color();
+	p.sub_style.bbox.color.setAlphaF(d->ui.sub_bbox_opacity->value()/100.0);
+	p.sub_style.bbox.padding.rx() = d->ui.sub_bbox_hpadding->value()/100.0;
+	p.sub_style.bbox.padding.ry() = d->ui.sub_bbox_vpadding->value()/100.0;
 	p.sub_style.spacing.line = d->ui.sub_spacing_line->value()/100.0;
 	p.sub_style.spacing.paragraph = d->ui.sub_spacing_paragraph->value()/100.0;
 	p.ms_per_char = d->ui.ms_per_char->value();

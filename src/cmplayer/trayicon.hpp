@@ -13,8 +13,9 @@ public:
 	};
 	TrayIcon(const QIcon &icon, QObject *parent = nullptr);
 	~TrayIcon();
-	bool isAvailable() const;
+	static bool isAvailable();
 	void setVisible(bool visible);
+	static bool isUnity() { return (qgetenv("XDG_CURRENT_DESKTOP").toLower() == "unity"); }
 signals:
 	void activated(ActivationReason reason);
 private:

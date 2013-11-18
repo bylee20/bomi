@@ -24,8 +24,8 @@ QSGNode *LetterboxItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data)
 
 	if (!node) {
 		node = new QSGGeometryNode;
-		geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 16);
-		geometry->setDrawingMode(GL_QUADS);
+		geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 3*2*4);
+		geometry->setDrawingMode(GL_TRIANGLES);
 		node->setGeometry(geometry);
 		node->setFlag(QSGNode::OwnsGeometry);
 		QSGFlatColorMaterial *material = new QSGFlatColorMaterial;
@@ -38,26 +38,23 @@ QSGNode *LetterboxItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data)
 	}
 
 	if (m_rectChanged) {
+
 		auto vtx = geometry->vertexDataAsPoint2D();
-			vtx->set(m_outer.left(), m_outer.top());
-		(++vtx)->set(m_outer.right(), m_outer.top());
-		(++vtx)->set(m_outer.right(), m_inner.top());
-		(++vtx)->set(m_outer.left(), m_inner.top());
 
-		(++vtx)->set(m_outer.left(), m_inner.bottom());
-		(++vtx)->set(m_outer.right(), m_inner.bottom());
-		(++vtx)->set(m_outer.right(), m_outer.bottom());
-		(++vtx)->set(m_outer.left(), m_outer.bottom());
+		auto make = [this, &vtx] (const QPointF &p1, const QPointF &p2) {
+			vtx++->set(p1.x(), p1.y());
+			vtx++->set(p2.x(), p1.y());
+			vtx++->set(p1.x(), p2.y());
 
-		(++vtx)->set(m_outer.left(), m_outer.top());
-		(++vtx)->set(m_inner.left(), m_outer.top());
-		(++vtx)->set(m_inner.left(), m_outer.bottom());
-		(++vtx)->set(m_outer.left(), m_outer.bottom());
+			vtx++->set(p1.x(), p2.y());
+			vtx++->set(p2.x(), p2.y());
+			vtx++->set(p2.x(), p1.y());
+		};
 
-		(++vtx)->set(m_inner.right(), m_outer.top());
-		(++vtx)->set(m_outer.right(), m_outer.top());
-		(++vtx)->set(m_outer.right(), m_outer.bottom());
-		(++vtx)->set(m_inner.right(), m_outer.bottom());
+		make(m_outer.topLeft(), {m_outer.right(), m_inner.top()});
+		make({m_outer.left(), m_inner.bottom()}, m_outer.bottomRight());
+		make(m_outer.topLeft(), {m_inner.left(), m_outer.bottom()});
+		make({m_inner.right(), m_outer.top()}, m_outer.bottomRight());
 
 		m_rectChanged = false;
 		node->markDirty(QSGNode::DirtyGeometry);

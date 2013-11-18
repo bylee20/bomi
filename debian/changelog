@@ -1,3 +1,34 @@
+cmplayer (0.8.4-1) saucy; urgency=low
+
+  * New: channel manipulation options and channel layout menu
+  * New: 'Dropped Frames' item in playback informations
+  * New: 'Resize to video resolution in windowed mode when video is changed' option
+  * New: 4-Lobed interpolators (Lanczos and Spline)
+  * New: Czech translations (thanks to Pavel Fric)
+  * New: German translations (thanks to Ben R)
+  * Mod: display channel layout instead of the number of channels in playback informations
+  * Fix: previous video's subtitles were displayed on resized with empty subtitles
+  * Fix: current time wasn't updated on seeking in paused state
+  * Fix: previous video scene was still visible when next audio is started
+  * Fix: don't display system tray icon and related options when not available
+  * Fix: previous video's subtitles were displayed on resized with empty subtitles
+  * Fix: current time wasn't updated on seeking in paused state
+  * Fix: previous video scene was still visible when next audio is started
+  * Fix: don't display system tray icon and related options when not available
+  * Fix: interpolators were inaccurate
+  * Fix: recent open list in context menu didn't work
+  * Fix: falling into Loading state even while playing occasionally
+  * Fix: links in About dialog didn't work
+  * Mod: remove approx. interpolators which is useless
+  * Fix: restoring window position didn't work
+  * Fix: wrong color display of non-8bit-encoded sources
+  * Fix: too distorted color in Extended Range
+  * Fix: cannot open media in some file managers which call cmplayer with url)
+  * Fix: mute button in skin didn't work
+  * Fix: workaround to enable libquvi-0.9 (libproxy is always disabled)
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Mon, 11 Nov 2013 10:27:00 +0900
+
 cmplayer (0.8.1-2) saucy; urgency=low
 
   * Fix: disable tray icon in Unity(workaround)

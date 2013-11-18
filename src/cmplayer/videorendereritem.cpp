@@ -31,6 +31,7 @@ struct VideoRendererItem::Data {
 	OpenGLTexture black;
 	QSize displaySize{1, 1}, frameSize{0, 0};
 	InterpolatorType chromaUpscaler = InterpolatorType::Bilinear;
+	int dropped = 0;
 	bool overlayInLetterbox = true;
 	void repaint() { render = true; p->update(); }
 	void fillKernel() {
@@ -361,12 +362,24 @@ QSize VideoRendererItem::sizeHint() const {
 	return crop.toSize();
 }
 
+int VideoRendererItem::droppedFrames() const {
+	return d->dropped;
+}
+
 MpOsdItem *VideoRendererItem::mpOsd() const {
 	return d->mposd;
 }
 
 int VideoRendererItem::delay() const {
 	return (d->ptsIn == MP_NOPTS_VALUE || d->ptsOut == MP_NOPTS_VALUE) ? 0.0 : (d->ptsOut - d->ptsIn)*1000.0;
+}
+
+void VideoRendererItem::reset() {
+	if (_Change(d->dropped, 0))
+		emit droppedFramesChanged(d->dropped);
+	d->drawnFrames = 0;
+	d->lastCheckedFrames = 0;
+	d->lastCheckedTime = 0;
 }
 
 void VideoRendererItem::prepare(QSGGeometryNode *node) {
@@ -394,10 +407,16 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 		}
 		d->queue.pop_front();
 		if (!d->queue.isEmpty()) {
-			if (d->queue.size() > 3)
+			if (d->queue.size() > 3) {
+				emit droppedFramesChanged(d->dropped += d->queue.size());
 				d->queue.clear();
-			else
+			} else {
+				if (d->queue.size() > 1) {
+					d->queue.pop_front();
+					emit droppedFramesChanged(++d->dropped);
+				}
 				update();
+			}
 		}
 	}
 

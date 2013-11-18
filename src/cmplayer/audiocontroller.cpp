@@ -1,5 +1,6 @@
 #include "audiocontroller.hpp"
 #include "audiofilter.hpp"
+#include "channelmanipulation.hpp"
 #include "enums.hpp"
 
 af_info create_info();
@@ -29,6 +30,8 @@ struct AudioController::Data {
 	NormalizerOption normalizerOption;
 
 	ClippingMethod clip = ClippingMethod::Auto;
+	ChannelLayoutMap map = ChannelLayoutMap::default_();
+	ChannelLayout layout = ChannelLayout::Default;
 };
 
 AudioController::AudioController(QObject *parent): QObject(parent), d(new Data) {
@@ -72,24 +75,28 @@ void AudioController::uninit(af_instance *af) {
 }
 
 template<typename Filter>
-Filter *check(Filter *&filter, const mp_audio &data) {
-	if (!filter || !filter->isCompatibleWith(&data)) {
+Filter *check(Filter *&filter, const mp_audio *data, const mp_audio *input) {
+	if (!filter || !filter->isCompatibleWith(data, input)) {
 		delete filter;
-		filter = Filter::create(data.format);
+		filter = Filter::create(data->format);
 	}
 	if (filter)
-		filter->reconfigure(&data);
+		filter->reconfigure(data, input);
 	return filter;
 }
 
-VolumeController *check(VolumeController *&filter, ClippingMethod clip, const mp_audio &data) {
-	if (!filter || !filter->isCompatibleWith(&data) || filter->clippingMethod() != clip) {
+VolumeController *check(VolumeController *&filter, ClippingMethod clip, const mp_audio *data, const mp_audio *input) {
+	if (!filter || !filter->isCompatibleWith(data, input) || filter->clippingMethod() != clip) {
 		delete filter;
-		filter = VolumeController::create(data.format, clip);
+		filter = VolumeController::create(data->format, clip);
 	}
 	if (filter)
-		filter->reconfigure(&data);
+		filter->reconfigure(data, input);
 	return filter;
+}
+
+void AudioController::setChannelLayout(ChannelLayout layout) {
+	d->layout = layout;
 }
 
 int AudioController::reinitialize(mp_audio *data) {
@@ -106,9 +113,19 @@ int AudioController::reinitialize(mp_audio *data) {
 	default:
 		mp_audio_set_format(&d->data, AF_FORMAT_FLOAT_NE);
 	}
-	check(d->volume, d->clip, d->data);
-	check(d->scaler, d->data);
-	return af_test_output(d->af, data);
+	if (!af_test_output(d->af, data))
+		return false;
+	if (d->layout != ChannelLayout::Default) {
+		mp_chmap map;
+		if (mp_chmap_from_str(&map, bstr0(ChannelLayoutInfo::data(d->layout).constData())))
+			mp_audio_set_channels(&d->data, &map);
+		else
+			qDebug() << "Cannot load channel layout:" << ChannelLayoutInfo::name(d->layout);
+	}
+	check(d->volume, d->clip, &d->data, data);
+	check(d->scaler, &d->data, &d->data);
+	d->volume->setChannelLayoutMap(d->layout == ChannelLayout::Default ? ChannelLayoutMap() : d->map);
+	return true;
 }
 
 void AudioController::setLevel(double level) {
@@ -153,11 +170,14 @@ mp_audio *AudioController::play(af_instance *af, mp_audio *data) {
 	auto ac = priv(af); auto d = ac->d;
 	af->mul = 1.0;
 	af->delay = 0.0;
-	if (d->volume && d->volume->prepare(ac, data))
+	Q_ASSERT(d->volume != nullptr);
+	if (d->volume && d->volume->prepare(ac, &d->data, data)) {
 		data = d->volume->play(data);
-	if (d->scaler && d->scaler->prepare(ac, data)) {
+		af->mul *= d->volume->multiplier();
+	}
+	if (d->scaler && d->scaler->prepare(ac, data, data)) {
 		data = d->scaler->play(data);
-		af->mul = d->scaler->multiplier();
+		af->mul *= d->scaler->multiplier();
 		af->delay = d->scaler->delay();
 	}
 	return data;
@@ -197,6 +217,10 @@ bool AudioController::isNormalizerActivated() const {
 
 const NormalizerOption &AudioController::normalizerOption() const {
 	return d->normalizerOption;
+}
+
+void AudioController::setChannelLayoutMap(const ChannelLayoutMap &map) {
+	d->map = map;
 }
 
 af_info create_info() {

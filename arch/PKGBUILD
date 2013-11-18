@@ -2,8 +2,8 @@
 # Contributor: willemw <willemw12@gmail.com>
 
 pkgname=cmplayer
-pkgver=0.8.3
-pkgrel=2
+pkgver=0.8.4
+pkgrel=1
 pkgdesc="Powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
 url="http://$pkgname.github.io"
@@ -15,7 +15,7 @@ depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu'
          'mpg123' 'libva' 'libgl' 'fribidi' 'libass' 'ffmpeg')
 makedepends=('mesa' 'gcc' 'pkg-config')
 source=(https://github.com/xylosper/cmplayer/releases/download/v$pkgver/cmplayer-$pkgver-source.tar.gz)
-md5sums=('12734a375210a4c744e94c8474b2ce58')
+md5sums=('4cdfe74e4e8deb52abb26c545a0ad398')
 
 build() {
   export MAKE="make -j $(nproc)"

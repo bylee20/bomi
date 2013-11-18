@@ -52,7 +52,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 	m_input->m_type = format(sh->format);
 	m_input->m_bps = sh->i_bps*8;
 	m_input->m_samplerate = sh->samplerate/1000.0; // kHz
-	m_input->m_channels = sh->channels.num;
+	m_input->m_channels = QString::fromLatin1(mp_chmap_to_str(&sh->channels));
 	m_input->m_bits = af_fmt2bits(sh->sample_format);
 
 	m_output->m_type = _L(af_fmt2str_short(out));
@@ -60,6 +60,6 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 		m_output->m_type = _L(af_fmt2str_short(in)) % _U("→") % m_output->m_type;
 	m_output->m_bps = ao->bps*8;
 	m_output->m_samplerate = ao->samplerate/1000.0;
-	m_output->m_channels = ao->channels.num;
+	m_output->m_channels = QString::fromLatin1(mp_chmap_to_str(&ao->channels));
 	m_output->m_bits = af_fmt2bits(ao->format);
 }

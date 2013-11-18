@@ -10,9 +10,10 @@
 class VideoRendererItem;	struct MPContext;
 class VideoFormat;			struct mp_cmd;
 class PlaylistModel;		class Playlist;
-class DeintOption;
+class DeintOption;			class ChannelLayoutMap;
 enum class AudioDriver;		enum class ClippingMethod;
 enum class DeintMethod;		enum class DeintMode;
+enum class ChannelLayout;
 
 typedef std::function<int(const Mrl&)> GetMrlInt;
 
@@ -44,6 +45,8 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(double relativePosition READ relativePosition NOTIFY relativePositionChanged)
 	Q_PROPERTY(QQuickItem *screen READ screen)
 	Q_PROPERTY(qreal cache READ cache NOTIFY cacheChanged)
+	Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
+	Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Loading = 16, Error = 32, Running = Playing | Loading };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
@@ -134,10 +137,14 @@ public:
 	double avgsync() const;
 	double avgfps() const;
 	QString stateText() const;
+	static QString stateText(State state);
 	double relativePosition() const { return (double)(time()-begin())/duration(); }
 	Q_INVOKABLE double bps(double fps) const;
 	static void registerObjects();
 	qreal cache() const;
+	int droppedFrames() const;
+	void setChannelLayoutMap(const ChannelLayoutMap &map);
+	void setChannelLayout(ChannelLayout layout);
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);
@@ -182,6 +189,8 @@ signals:
 	void relativePositionChanged();
 	void hwAccChanged();
 	void cacheChanged();
+	void hasVideoChanged();
+	void droppedFramesChanged();
 private:
 	int playImage(const Mrl &mrl, int &terminated, int &duration);
 	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);

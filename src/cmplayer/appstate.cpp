@@ -30,6 +30,7 @@ AppState::AppState() {
 	READ(audio_tempo_scaler);
 	READ(audio_muted);
 	READ(audio_sync);
+	READ(audio_channel_layout);
 
 	READ(sub_position);
 	READ(sub_display);
@@ -80,6 +81,7 @@ void AppState::save() const {
 	WRITE(audio_muted);
 	WRITE(audio_amplifier);
 	WRITE(audio_sync);
+	WRITE(audio_channel_layout);
 
 	WRITE(sub_position);
 	WRITE(sub_display);

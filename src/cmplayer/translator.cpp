@@ -61,3 +61,26 @@ bool Translator::load(const QLocale &locale) {
 		QLocale::setDefault(l);
 	return d->succ;
 }
+
+QString Translator::languageName(QLocale::Language lang) {
+	switch (lang) {
+	case QLocale::C:
+		return QString();
+	case QLocale::English:
+		return _U("English");
+	case QLocale::German:
+		return _U("Deutsch");
+	case QLocale::Japanese:
+		return _U("日本語");
+	case QLocale::Korean:
+		return _U("한국어");
+	case QLocale::Russian:
+		return _U("Русский");
+	case QLocale::Italian:
+		return _U("Italiano");
+	case QLocale::Czech:
+		return _U("Čeština");
+	default:
+		return QLocale::languageToString(lang);
+	}
+}
