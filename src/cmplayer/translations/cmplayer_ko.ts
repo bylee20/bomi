@@ -799,7 +799,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../enums.hpp" line="278"/>
-        <source>Extented Range</source>
+        <source>Extended Range</source>
         <translation>범위 확장</translation>
     </message>
     <message>

@@ -47,7 +47,7 @@
 -Limited[[limited]][-Limited Range-]
 -Full[[full]][-Full Range-]
 -Remap[[remap]][-Remap Range-]
--Extended[[luma]][-Extented Range-]
+-Extended[[luma]][-Extended Range-]
 
 +AdjustColor[[color]][:VideoColor:]
 -Reset[[reset]][:{0, 0, 0, 0}:]

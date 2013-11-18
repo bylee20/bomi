@@ -336,7 +336,7 @@ Project page: %3</source>
     </message>
     <message>
         <location filename="../enums.hpp" line="278"/>
-        <source>Extented Range</source>
+        <source>Extended Range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

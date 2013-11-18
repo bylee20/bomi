@@ -275,7 +275,7 @@ public:
 		case Enum::Limited: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Limited Range"));
 		case Enum::Full: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Full Range"));
 		case Enum::Remap: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Remap Range"));
-		case Enum::Extended: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Extented Range"));
+		case Enum::Extended: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Extended Range"));
 		default: return tr("");
 		};
 	}

@@ -27,7 +27,9 @@ p, li { white-space: pre-wrap; }
         <source>Developer&apos;s blog: %1
 Developer&apos;s E-mail: %2
 Project page: %3</source>
-        <translation>Entwickler Blog</translation>
+        <translation>Entwickler Blog %1
+Des Entwicklers E-Mail %2
+Projekt-Seite %3</translation>
     </message>
     <message>
         <location filename="../ui/aboutdialog.ui" line="190"/>
@@ -55,7 +57,7 @@ Project page: %3</source>
     <message>
         <location filename="../channelmanipulation.cpp" line="379"/>
         <source>Layout:</source>
-        <translation type="unfinished"></translation>
+        <translation>Anordnung:</translation>
     </message>
     <message>
         <location filename="../channelmanipulation.cpp" line="390"/>
@@ -73,7 +75,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="128"/>
         <source>Transparency</source>
-        <translation type="unfinished"></translation>
+        <translation>Transparenz</translation>
     </message>
 </context>
 <context>
@@ -109,7 +111,7 @@ Project page: %3</source>
     <message>
         <location filename="../deintinfo.cpp" line="212"/>
         <source>Display each line twice.</source>
-        <translation type="unfinished"></translation>
+        <translation>Anzeige jeder Zeile zweimal.</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="213"/>
@@ -157,42 +159,43 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="8"/>
         <source>Western European Languages</source>
-        <translation type="unfinished"></translation>
+        <translation>Westeuropäischen Sprachen</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="9"/>
         <source>Western European Languages With Euro</source>
-        <translation type="unfinished"></translation>
+        <translation>Westeuropäischen Sprachen mit Euro</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="10"/>
         <source>Slavic/Central European Languages</source>
-        <translation type="unfinished"></translation>
+        <translation>Slawische/Mitteleuropäischen Sprachen</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="11"/>
         <source>Slavic/Central European Windows</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>I&apos;m assuming Mitteleuropäischen is correct here. </translatorcomment>
+        <translation>Slawische/Mitteleuropäischen Fenster</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="12"/>
         <source>Esperanto, Galician, Maltese, Turkish</source>
-        <translation type="unfinished"></translation>
+        <translation>Esperanto, Galicier, Maltesisch, Türkisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="13"/>
         <source>Old Baltic Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>Alte Baltisch Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="14"/>
         <source>Cyrillic</source>
-        <translation type="unfinished"></translation>
+        <translation>Kyrillisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="15"/>
         <source>Cyrillic Windows</source>
-        <translation type="unfinished"></translation>
+        <translation>Kyrillisch Fenster</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="16"/>
@@ -202,7 +205,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="17"/>
         <source>Modern Greek</source>
-        <translation type="unfinished"></translation>
+        <translation>Neugriechisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="18"/>
@@ -212,7 +215,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="19"/>
         <source>Baltic</source>
-        <translation type="unfinished"></translation>
+        <translation>Baltisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="20"/>
@@ -222,7 +225,7 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="21"/>
         <source>Hebrew Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>Hebräischen Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="22"/>
@@ -232,32 +235,32 @@ Project page: %3</source>
     <message>
         <location filename="../widgets.cpp" line="23"/>
         <source>Ukrainian, Belarusian</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukrainisch, Weißrussisch</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="24"/>
         <source>Simplified Chinese Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>Vereinfachtes Chinesisch Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="25"/>
         <source>Traditional Chinese Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>Traditionelle Chinesische Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="26"/>
         <source>Japanese Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>japanischen Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="27"/>
         <source>Korean Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>Koreanisch Zeichensatz</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="28"/>
         <source>Thai Charset</source>
-        <translation type="unfinished"></translation>
+        <translation>Thailändisch Zeichensatz</translation>
     </message>
 </context>
 <context>
@@ -292,7 +295,7 @@ Project page: %3</source>
         <location filename="../enums.hpp" line="2068"/>
         <location filename="../enums.hpp" line="2142"/>
         <source>Reset</source>
-        <translation type="unfinished">Zurücksetzen</translation>
+        <translation>Zurückstellen</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="421"/>
@@ -307,37 +310,39 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="176"/>
         <source>Default</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="177"/>
         <source>Mono</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="178"/>
         <source>Stereo</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="275"/>
         <source>Limited Range</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>Roughly translates to &quot;Limited selection&quot;, but seems a better choice than &quot;Begrenzte Reichweite&quot;, which translates to &quot;Limited reach/range/scope&quot;.</translatorcomment>
+        <translation>Begrenzte Auswahl</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="276"/>
         <source>Full Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Voll Auswahl</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="277"/>
         <source>Remap Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Remappen Auswahl</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="278"/>
-        <source>Extented Range</source>
-        <translation type="unfinished"></translation>
+        <source>Extended Range</source>
+        <translatorcomment>&quot;Enhanced Range&quot; seems close enough</translatorcomment>
+        <translation>Erweiterter Auswahl</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="431"/>
@@ -734,17 +739,17 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="1922"/>
         <source>Top</source>
-        <translation type="unfinished"></translation>
+        <translation>Spitze</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1923"/>
         <source>Vertical Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Vertikal Mittig</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1924"/>
         <source>Bottom</source>
-        <translation type="unfinished"></translation>
+        <translation>Unterseite</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1994"/>
@@ -754,32 +759,32 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="1995"/>
         <source>Horizontal Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Horizontal Mittig</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1996"/>
         <source>Right</source>
-        <translation type="unfinished"></translation>
+        <translation>Rechts</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2069"/>
         <source>Upward</source>
-        <translation type="unfinished"></translation>
+        <translation>Nach oben</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2070"/>
         <source>Downward</source>
-        <translation type="unfinished"></translation>
+        <translation>Nach unten</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2071"/>
         <source>Leftward</source>
-        <translation type="unfinished"></translation>
+        <translation>Nach links</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2072"/>
         <source>Rightward</source>
-        <translation type="unfinished"></translation>
+        <translation>Nach rechts</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2143"/>
@@ -789,7 +794,7 @@ Project page: %3</source>
     <message>
         <location filename="../enums.hpp" line="2144"/>
         <source>Decrease %1</source>
-        <translation type="unfinished">Verkleinern %1</translation>
+        <translation>Verkleinern %1</translation>
     </message>
 </context>
 <context>
@@ -830,7 +835,7 @@ Project page: %3</source>
     <message>
         <location filename="../dialogs.cpp" line="92"/>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation>In Ordnung</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="94"/>
@@ -843,7 +848,7 @@ Project page: %3</source>
     <message>
         <location filename="../dialogs.cpp" line="246"/>
         <source>URL</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="250"/>
@@ -856,12 +861,12 @@ Project page: %3</source>
     <message>
         <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="51"/>
         <source>Name</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="52"/>
         <source>Latest Playback</source>
-        <translation type="unfinished"></translation>
+        <translation>Neueste Wiedergabe</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="53"/>
@@ -874,12 +879,12 @@ Project page: %3</source>
     <message>
         <location filename="../historymodel.cpp" line="54"/>
         <source>Name</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../historymodel.cpp" line="56"/>
         <source>Latest Playback</source>
-        <translation type="unfinished"></translation>
+        <translation>Neueste Wiedergabe</translation>
     </message>
     <message>
         <location filename="../historymodel.cpp" line="58"/>
@@ -1150,7 +1155,7 @@ Stopped Position: %2
         <location filename="../ui/openmediafolderdialog.ui" line="14"/>
         <location filename="../openmediafolderdialog.cpp" line="114"/>
         <source>Open Folder</source>
-        <translation type="unfinished">Ordner öffnen</translation>
+        <translation>Ordner öffnen</translation>
     </message>
     <message>
         <location filename="../ui/openmediafolderdialog.ui" line="44"/>
@@ -1344,7 +1349,7 @@ Stopped Position: %2
     <message>
         <location filename="../prefdialog.cpp" line="462"/>
         <source>Preferences</source>
-        <translation type="unfinished">Einstellungen</translation>
+        <translation>Einstellungen</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="88"/>
@@ -2344,7 +2349,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="401"/>
         <source>Seek</source>
-        <translation type="unfinished">Suche</translation>
+        <translation>Suche</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="402"/>
@@ -2898,7 +2903,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../videocolor.hpp" line="120"/>
         <source>Reset</source>
-        <translation type="unfinished">Zurücksetzen</translation>
+        <translation>Zurücksetzen</translation>
     </message>
 </context>
 </TS>
