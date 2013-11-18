@@ -12,8 +12,7 @@ Item {
 	TextOsd { id: msgosd }
 	Rectangle {
 		id: msgbox
-		color: "#ddd"
-		opacity: 0.8
+		color: Qt.rgba(0.86, 0.86, 0.86, 0.8)
 		visible: false
 		anchors.centerIn: parent
 		width: boxmsg.width + pad*2
@@ -22,7 +21,6 @@ Item {
 		Text {
 			id: boxmsg
 			anchors.centerIn: parent
-			opacity: 1.0
 			width: contentWidth
 			height: contentHeight
 			font.bold: true

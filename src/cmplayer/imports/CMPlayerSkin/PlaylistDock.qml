@@ -10,7 +10,6 @@ Item {
 	property real dest: 0
 	property bool show: false
 	x: parent.width; y: 20; width: widthHint; height: parent.height-2*y; visible: false
-	Rectangle { id: rect; anchors.fill: parent; color: "gray"; opacity: 0.8; radius: 5 }
 	states: State {
 		name: "show"; when: dock.show
 		PropertyChanges { target: dock; visible: true }
@@ -23,8 +22,8 @@ Item {
 			NumberAnimation { property: "x" }
 		}
 	}
-
-	function updateDestination() { dock.dest = dock.parent.width-dock.width+rect.radius }
+	onVisibleChanged: console.log(visible)
+	function updateDestination() { dock.dest = dock.parent.width-dock.width }
 	Component.onCompleted: updateDestination()
 	Connections { target: parent; onWidthChanged: { updateDestination() } }
 	onWidthChanged: { updateDestination() }
@@ -35,11 +34,8 @@ Item {
 		x: table.x-1; y: table.y-1
 		width: table.width+2
 		height: table.height+2
-		border { color: "black"; width: 1 }
-		gradient: Gradient {
-			GradientStop {position: 0.0; color: "#ccc"}
-			GradientStop {position: 1.0; color: "#333"}
-		}
+		border { color: "white"; width: 1 }
+		color: Qt.rgba(0, 0, 0, 0.4)
 	}
 
 	TableView {
@@ -72,80 +68,71 @@ Item {
 		}
 
 		onRowCountChanged:column.width = contentWidth()
-		property Gradient __loadedGradient : Gradient {
-			GradientStop {position: 0.0; color: "#5af"}
-			GradientStop {position: 1.0; color: "#8cf"}
-		}
 		TableViewColumn { role: "name"; width: 0; id: column }
-		rowDelegate: Rectangle {
-			property bool loaded: playlist.loaded === styleData.row
-			height: 40
-			color: (0 <= styleData.row && styleData.row < table.rowCount)
-				? styleData.selected ? Qt.rgba(0.4, 0.6, 1.0, 1.0) : (loaded ? "white" : (styleData.alternate ? "#333" :  "#555" ))
-				: "transparent"
-			gradient: !styleData.selected && loaded ? table.__loadedGradient : undefined
-		}
 
-		itemDelegate: Item {
-			Column {
-				width: parent.width
-				Text {
-					anchors.margins: 5
-					anchors.left: parent.left
-					anchors.right: parent.right
-					font { family: table.nameFontFamily; pixelSize: table.nameFontSize }
-					font.italic: playlist.loaded === styleData.row
-					font.bold: playlist.loaded === styleData.row
-
-					verticalAlignment: Text.AlignVCenter
-					height: 25
-					color: playlist.loaded === styleData.row ? "black" : "white";
-					text: styleData.value;
-					elide: Text.ElideRight
-				}
-				Text {
-					anchors.margins: 5
-					anchors.left: parent.left
-					anchors.right: parent.right
-					font { family: table.locationFontFamily; pixelSize: table.locationFontSize }
-					width: parent.width
-					height: table.locationFontSize
-					verticalAlignment: Text.AlignTop
-					color: playlist.loaded == styleData.row ? "black" : "white";
-					text: playlist.location(styleData.row)
-					elide: Text.ElideRight
-				}
-			}
-		}
 		onDoubleClicked: playlist.play(row)
 		frameVisible: false
 		style: TableViewStyle {
 			backgroundColor: "#555"
 			alternateBackgroundColor: "#333"
 			decrementControl: Item {} incrementControl: Item {} corner: Item {}
-			scrollBarBackground: Rectangle {
-				color: "#ddd"
-				implicitWidth: table.scrollArea; implicitHeight: table.scrollArea
-				x: styleData.horizontal ? -1 : 1
-				y: styleData.horizontal ? 1 : 0
+			scrollBarBackground: Item {
+				implicitWidth:  table.scrollArea
+				implicitHeight: table.scrollArea
+				x: styleData.horizontal ? -2 :  2
+				y: styleData.horizontal ?  2 : -2
 				Rectangle {
-					visible: styleData.horizontal
-					color: parent.color
-					x: parent.width
-					width: 2
-					height: table.scrollArea
+					border { color: "white"; width: 1 } color: Qt.rgba(0, 0, 0, 0)
+					x: styleData.horizontal ?  0 : -2
+					y: styleData.horizontal ? -2 :  0
+					width:  parent.width  + (styleData.horizontal ?  3 : 2)
+					height: parent.height + (styleData.horizontal ?  2 : 3)
 				}
 			}
 			handle: Item {
 				implicitWidth: table.scrollArea; implicitHeight: table.scrollArea
 				Rectangle {
 					anchors {
-						margins: 1
-						fill: parent;
+						fill: parent
 						leftMargin: styleData.horizontal ? 1 : 3
+						rightMargin: styleData.horizontal ? 3 : 1
 						topMargin: styleData.horizontal ? 3 : 1
+						bottomMargin: styleData.horizontal ? 1 : 3
 					}
-					opacity: 0.8; radius: 3; smooth: true; color: "black"
+					radius: 3; smooth: true;
+					color: styleData.pressed ? Qt.rgba(0, 0.93, 1, 0.5) : (styleData.hovered ? Qt.rgba(0, 0.73, 1, 0.5) : Qt.rgba(1, 1, 1, 0.5))
+				}
+			}
+
+			rowDelegate: Rectangle {
+				property bool loaded: playlist.loaded === styleData.row
+				height: 40
+				function plain(alternate) { return styleData.alternate ? Qt.rgba(0.0, 0.0, 0.0, 0.5) : Qt.rgba(0.25, 0.25, 0.25, 0.5) }
+				function selected(ok, fallback) { return ok ? Qt.rgba(0, 0.93, 1.0, 0.5) : fallback }
+				function current(ok, fallback) { return ok ? Qt.rgba(0, 0.73, 1, .5) : fallback }
+				function inside(row, fallback) { return (0 <= row && row < table.rowCount) ? fallback : Qt.rgba(0, 0, 0, 0) }
+				color: inside(styleData.row, selected(styleData.selected, current(loaded, plain(styleData.alternate))))
+			}
+
+			itemDelegate: Item {
+				Column {
+					width: parent.width
+					Text {
+						anchors { margins: 5; left: parent.left; right: parent.right }
+						font {
+							family: table.nameFontFamily; pixelSize: table.nameFontSize
+							italic: playlist.loaded === styleData.row
+							bold: playlist.loaded === styleData.row
+						}
+						verticalAlignment: Text.AlignVCenter; height: 25
+						color: "white"; text: styleData.value; elide: Text.ElideRight
+					}
+					Text {
+						anchors { margins: 5; left: parent.left; right: parent.right }
+						font { family: table.locationFontFamily; pixelSize: table.locationFontSize }
+						width: parent.width; height: table.locationFontSize; verticalAlignment: Text.AlignTop
+						color: "white"; text: playlist.location(styleData.row); elide: Text.ElideRight
+					}
 				}
 			}
 		}
