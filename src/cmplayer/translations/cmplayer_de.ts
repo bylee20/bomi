@@ -336,11 +336,11 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../enums.hpp" line="277"/>
         <source>Remap Range</source>
-        <translation>Remappen Auswahl </translation>
+        <translation>Remappen Auswahl</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="278"/>
-        <source>Extented Range</source>
+        <source>Extended Range</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

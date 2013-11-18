@@ -462,7 +462,7 @@ Stránka projektu: %3</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="278"/>
-        <source>Extented Range</source>
+        <source>Extended Range</source>
         <translation>Rozšířený rozsah</translation>
     </message>
     <message>
