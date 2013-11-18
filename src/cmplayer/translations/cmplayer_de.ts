@@ -835,7 +835,7 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../dialogs.cpp" line="92"/>
         <source>Ok</source>
-        <translation type="unfinished"></translation>
+        <translation>In Ordnung</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="94"/>
@@ -848,7 +848,7 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../dialogs.cpp" line="246"/>
         <source>URL</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="250"/>
@@ -861,12 +861,12 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="51"/>
         <source>Name</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="52"/>
         <source>Latest Playback</source>
-        <translation type="unfinished"></translation>
+        <translation>Neueste Wiedergabe</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/HistoryDock.qml" line="53"/>
@@ -879,12 +879,12 @@ Projekt-Seite %3</translation>
     <message>
         <location filename="../historymodel.cpp" line="54"/>
         <source>Name</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../historymodel.cpp" line="56"/>
         <source>Latest Playback</source>
-        <translation type="unfinished"></translation>
+        <translation>Neueste Wiedergabe</translation>
     </message>
     <message>
         <location filename="../historymodel.cpp" line="58"/>
