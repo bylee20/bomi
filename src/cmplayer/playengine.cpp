@@ -49,6 +49,16 @@ struct PlayEngine::Data {
 
 	QList<QMetaObject::Connection> rendererConnections;
 
+	VideoFormat videoFormat;
+	DeintOption deint_swdec, deint_hwdec;
+	DeintMode deint = DeintMode::Auto;
+	QByteArray ao = "";
+	AudioDriver audioDriver = AudioDriver::Auto;
+
+	int position = 0;
+
+	SubtitleTrackInfoObject subtitleTrackInfo;
+
 	static int mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 		auto e = static_cast<PlayEngine*>(mpctx->priv); auto d = e->d;
 		if (cmd->id < 0) {
@@ -204,14 +214,6 @@ struct PlayEngine::Data {
 		return true;
 	}
 
-	VideoFormat videoFormat;
-	DeintOption deint_swdec, deint_hwdec;
-	DeintMode deint = DeintMode::Auto;
-	QByteArray ao = "";
-	AudioDriver audioDriver = AudioDriver::Auto;
-
-	int position = 0;
-
 	void updateMediaName() {
 		QString name, category;
 		auto mrl = p->mrl();
@@ -293,6 +295,19 @@ PlayEngine::~PlayEngine() {
 	delete d->video;
 //	finalizeGL();
 	delete d;
+}
+
+SubtitleTrackInfoObject *PlayEngine::subtitleTrackInfo() const {
+	return &d->subtitleTrackInfo;
+}
+
+void PlayEngine::setSubtitleTracks(const QStringList &tracks) {
+	d->subtitleTrackInfo.set(tracks);
+	emit subtitleTrackInfoChanged();
+}
+
+void PlayEngine::setCurrentSubtitleIndex(int idx) {
+	d->subtitleTrackInfo.setCurrentIndex(idx);
 }
 
 ChapterInfoObject *PlayEngine::chapterInfo() const {
@@ -1147,6 +1162,7 @@ void PlayEngine::registerObjects() {
 	qmlRegisterType<QAction>();
 	qmlRegisterType<ChapterInfoObject>();
 	qmlRegisterType<AudioTrackInfoObject>();
+	qmlRegisterType<SubtitleTrackInfoObject>();
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();

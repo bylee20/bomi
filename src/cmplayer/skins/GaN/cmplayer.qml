@@ -6,8 +6,9 @@ import CMPlayerCore 1.0 as Core
 
 Skin.AppWithFloating {
 	id: skin; name: "net.xylosper.cmplayer.skin.GaN"
+	onWidthChanged: controls.width = width < 550 ? 400 : 550
 	controls: Item {
-		width: 400; height: topBox.height + timeslide.height + bottomBox.height + 5
+		width: 550; height: topBox.height + timeslide.height + bottomBox.height + 5
 		Rectangle {
 			id: bg; anchors.fill: parent; border { color: "white"; width: 1 } radius: 10; color: Qt.rgba(0, 0, 0, 0.5)
 			Column {
@@ -27,9 +28,13 @@ Skin.AppWithFloating {
 						}
 						Item { width: 2; height: 1 }
 						Button {
-							width: 20; height: 12; iconName: "subs"
+							id: subTrackIcon; bind: subTrackText; width: 20; height: 12; iconName: "subs"
 							action: "subtitle/track/next"; action2: "subtitle/track"
 							tooltip: qsTr("Left click: Next subtitle track\nRight click: Show subtitle tracks")
+						}
+						TimeText {
+							id: subTrackText; bind: subTrackIcon; width: textWidth; height: 12
+							text: engine.subtitleTrack.currentText + "/" + engine.subtitleTrack.countText
 						}
 						Item { Layout.fillWidth: true }
 						Button {
@@ -45,7 +50,7 @@ Skin.AppWithFloating {
 					Item {
 						anchors { fill: parent; topMargin: 4 }
 						Text {
-							anchors.centerIn: parent; width: 200; height: parent.height
+							anchors.centerIn: parent; width: parent.width-230; height: parent.height
 							text: engine.media.name; elide: Text.ElideMiddle
 							color: "white"; font { family: "Sans"; pixelSize: 13 }
 							horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
@@ -103,7 +108,7 @@ Skin.AppWithFloating {
 					}
 
 					Row {
-						spacing: 5; anchors.centerIn: parent; property real size: 28
+						spacing: 5; anchors.centerIn: parent; property real size: 24
 						Button { size: parent.size; iconName: "prev"; action: "play/prev"; action2: "play/chapter/prev"}
 						Button { size: parent.size; iconName: "backward"; action: "play/seek/backward1"; action2: "play/seek/backward2" }
 						Button { size: parent.size; iconName: engine.running ? "pause" : "play"; action: "play/pause" }

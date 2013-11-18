@@ -139,6 +139,35 @@ struct MainWindow::Data {
 			p->show();
 	}
 
+	int lastCheckedSubtitleIndex() const {
+		auto &list = menu("subtitle")("track");
+		const auto internal = list.g("internal")->actions();
+		const auto external = list.g("external")->actions();
+		for (int i = external.size()-1; i >= 0; --i) {
+			if (external[i]->isChecked())
+				return internal.size() + i;
+		}
+		for (int i = internal.size()-1; i >= 0; --i) {
+			if (internal[i]->isChecked())
+				return i;
+		}
+		return -1;
+	}
+	void setCurrentSubtitleIndexToEngine() {
+		engine.setCurrentSubtitleIndex(lastCheckedSubtitleIndex());
+	}
+	void setSubtitleTracksToEngine() {
+		auto &list = menu("subtitle")("track");
+		const auto internal = list.g("internal")->actions();
+		const auto external = list.g("external")->actions();
+		QStringList tracks; tracks.reserve(internal.size() + external.size());
+		for (auto action : internal)
+			tracks.append(action->text());
+		for (auto action : external)
+			tracks.append(action->text());
+		engine.setSubtitleTracks(tracks);
+	}
+
 	void syncSubtitleFileMenu() {
 		if (changingSub)
 			return;
@@ -826,6 +855,7 @@ void MainWindow::connectMenus() {
 		for (auto action : d->menu("subtitle")("track").g("external")->actions())
 			action->setChecked(true);
 		showMessage(tr("Select All Subtitles"), tr("%1 Subtitle(s)").arg(d->subtitle.componentsCount()));
+		d->setCurrentSubtitleIndexToEngine();
 	});
 	connect(sub("track")["hide"], &QAction::triggered, [this] (bool hide) {
 		if (hide != d->subtitle.isHidden()) {
@@ -857,11 +887,14 @@ void MainWindow::connectMenus() {
 				d->subtitle.deselect(a->data().toInt());
 		}
 		showMessage(tr("Selected Subtitle"), a->text());
+		d->setCurrentSubtitleIndexToEngine();
 	});
 	connect(sub("track").g("internal"), &ActionGroup::triggered, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentSubtitleStream(a->data().toInt());
 		showMessage(tr("Selected Subtitle"), a->text());
+		d->setCurrentSubtitleIndexToEngine();
 	});
+	connect(&sub("track"), &Menu::actionsSynchronized, [this] () { d->setSubtitleTracksToEngine(); d->setCurrentSubtitleIndexToEngine(); });
 	d->connectEnumMenu<SubtitleDisplay>(sub, "sub_display", &AppState::subDisplayChanged, [this] () {
 		d->renderer.setOverlayOnLetterbox(d->as.sub_display == SubtitleDisplay::OnLetterbox);
 	});

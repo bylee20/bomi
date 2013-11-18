@@ -49,6 +49,7 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
 	Q_PROPERTY(ChapterInfoObject *chapter READ chapterInfo NOTIFY chaptersChanged)
 	Q_PROPERTY(AudioTrackInfoObject *audioTrack READ audioTrackInfo NOTIFY audioStreamsChanged)
+	Q_PROPERTY(SubtitleTrackInfoObject *subtitleTrack READ subtitleTrackInfo NOTIFY subtitleTrackInfoChanged)
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Loading = 16, Error = 32, Running = Playing | Loading };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
@@ -149,6 +150,9 @@ public:
 	void setChannelLayout(ChannelLayout layout);
 	ChapterInfoObject *chapterInfo() const;
 	AudioTrackInfoObject *audioTrackInfo() const;
+	SubtitleTrackInfoObject *subtitleTrackInfo() const;
+	void setSubtitleTracks(const QStringList &tracks);
+	void setCurrentSubtitleIndex(int idx);
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);
@@ -199,6 +203,7 @@ signals:
 	void currentAudioStreamChanged(int stream);
 	void currentSubtitleStreamChanged(int stream);
 	void currentVideoStreamChanged(int stream);
+	void subtitleTrackInfoChanged();
 private:
 	int playImage(const Mrl &mrl, int &terminated, int &duration);
 	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);

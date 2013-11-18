@@ -134,14 +134,14 @@ public:
 	TrackInfoObject(QObject *parent = nullptr): QObject(parent) {}
 	int current() const { return m_current; }
 	int count() const { return m_count; }
-	void setCount(int count) { m_count = count; emit countChanged(); }
+	void setCount(int count) { if (_Change(m_count, count)) emit countChanged(); }
 	QString currentText() const { return toString(m_current); }
 	QString countText() const { return toString(m_count); }
 signals:
 	void currentChanged();
 	void countChanged();
 protected slots:
-	void setCurrent(int current) { m_current = current; emit currentChanged(); }
+	void setCurrent(int current) { if (_Change(m_current, current)) emit currentChanged(); }
 private:
 	static QString toString(int i) { return i < 1 ? _L("-") : QString::number(i); }
 	int m_current = -2;
@@ -162,6 +162,17 @@ class AudioTrackInfoObject : public TrackInfoObject {
 	Q_OBJECT
 public:
 	AudioTrackInfoObject(const PlayEngine *engine, QObject *parent = nullptr);
+};
+
+class SubtitleTrackInfoObject : public TrackInfoObject {
+	Q_OBJECT
+public:
+	SubtitleTrackInfoObject(QObject *parent = nullptr): TrackInfoObject(parent) {}
+	void set(const QStringList &tracks) { m_tracks = tracks; setCount(m_tracks.size()); }
+	void setCurrentIndex(int idx) { setCurrent(idx+1); }
+	Q_INVOKABLE QString name(int i) const { return m_tracks.value(i); }
+private:
+	QStringList m_tracks;
 };
 
 #endif // MEDIAMISC_HPP

@@ -80,8 +80,10 @@ public:
 	QList<QMenu*> copies() const {return m_copies;}
 	void setEnabledSync(bool enabled) {setEnabled(enabled); for (QMenu *m : m_copies) m->setEnabled(enabled);}
 	void syncTitle() {for (QMenu *m : m_copies) m->setTitle(title()); for (Menu *m : m_m) m->syncTitle();}
-	void syncActions() {for (QMenu *m : m_copies) {m->addActions(actions());}}
+	void syncActions() {for (QMenu *m : m_copies) {m->addActions(actions());} emit actionsSynchronized();}
 	inline QHash<QString, QAction*> ids() const {return m_ids;}
+signals:
+	void actionsSynchronized();
 protected:
 	Menu(const QString &id, QWidget *parent);
 //	void save(Record &set) const;
