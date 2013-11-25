@@ -11,7 +11,7 @@ Item {
 	property string action2: ""
 	property var _action: Core.Util.action(action)
 	property var _action2: Core.Util.action(action2)
-	property string tooltip: makeToolTip(_action, _action2)
+	property string tooltip: __makeToolTip(_action, _action2)
 	property alias text: _text.text
 	property alias textElide: _text.elide
 	property alias textColor: _text.color
@@ -30,9 +30,12 @@ Item {
 	property alias gradient: box.gradient
 	signal clicked
 	onPaddingsChanged: icon.anchors.margins = paddings
-	function makeToolTip(action, action2) {
+	function makeToolTip(left, right) {
+		return qsTr("Left click: %1\nRight click: %2").arg(left).arg(right)
+	}
+	function __makeToolTip(action, action2) {
 		if (action && action2)
-			return qsTr("Left click: %1\nRight click: %2").arg(action.text).arg(action2.text)
+			return makeToolTip(action.text, action2.text)
 		else
 			return action ? action.text : (action2 ? action2.text : "")
 	}

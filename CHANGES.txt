@@ -1,3 +1,16 @@
+0.8.5
+
+  * New: new default skin 'GaN'
+  * New: Previous/Next Chapter actions
+  * New: bounding box for subtitle
+  * New: blur option for subtitle shadow
+  * Mod: redesign history/playlist view
+  * Mod: remove chapter number in chapter name
+  * Mod: remove duplicated time text in chapter name
+  * Fix: wrong update timing for audio and video informations
+  * Fix: remove whitespaces at end of captions
+  * Fix: chroma upscaling didn't work
+
 0.8.4
 
   * New: channel manipulation options and channel layout menu

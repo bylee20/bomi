@@ -20,7 +20,7 @@ Skin.AppWithFloating {
 						Button {
 							id: audioTrackIcon; bind: audioTrackText; width: 20; height: 12; iconName: "audios"
 							action: "audio/track/next"; action2: "audio/track"
-							tooltip: qsTr("Left click: Next audio track\nRight click: Show audio tracks")
+							tooltip: makeToolTip(qsTr("Next Audio Track"), qsTr("Show Audio tracks"))
 						}
 						TimeText {
 							id: audioTrackText; bind: audioTrackIcon; width: textWidth; height: 12
@@ -30,7 +30,7 @@ Skin.AppWithFloating {
 						Button {
 							id: subTrackIcon; bind: subTrackText; width: 20; height: 12; iconName: "subs"
 							action: "subtitle/track/next"; action2: "subtitle/track"
-							tooltip: qsTr("Left click: Next subtitle track\nRight click: Show subtitle tracks")
+							tooltip: makeToolTip(qsTr("Next Subtitle"), qsTr("Show Subtitles"))
 						}
 						TimeText {
 							id: subTrackText; bind: subTrackIcon; width: textWidth; height: 12
@@ -40,7 +40,7 @@ Skin.AppWithFloating {
 						Button {
 							id: playlistIcon; bind: playlistText; width: 20; height: 12; iconName: "playlist"
 							action: "tool/playlist/toggle"; action2: "tool/playlist"
-							tooltip: qsTr("Left click: Show/Hide playlist\nRight click: Show playlist menu")
+							tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
 						}
 						TimeText {
 							id: playlistText; bind: playlistIcon; width: textWidth; height: 12
@@ -103,7 +103,7 @@ Skin.AppWithFloating {
 						}
 						TimeText {
 							id: endtext; msecs: checked ? (engine.end - engine.time) : engine.end
-							showMSecs: timetext.checked; tooltip: qsTr("Show end time/left time")
+							showMSecs: timetext.checked; tooltip: qsTr("Toggle end time/left time")
 						}
 					}
 
