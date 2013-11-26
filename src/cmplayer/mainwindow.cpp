@@ -1608,13 +1608,13 @@ void MainWindow::updateTitle() {
 void MainWindow::updateMrl(const Mrl &mrl) {
 	if (mrl.isLocalFile()) {
 		const auto &p = d->pref();
-		auto autoselection = [this, &mrl, &p] (const QList<SubComp> &loaded) {
+		const QFileInfo file(mrl.toLocalFile());
+		auto autoselection = [this, &file, &p] (const QList<SubComp> &loaded) {
 			QList<int> selected;
-			if (loaded.isEmpty() || !mrl.isLocalFile() || !p.sub_enable_autoselect)
+			if (loaded.isEmpty() || !p.sub_enable_autoselect)
 				return selected;
-
 			QSet<QString> langSet;
-			const QString base = QFileInfo(mrl.toLocalFile()).completeBaseName();
+			const QString base = file.completeBaseName();
 			for (int i=0; i<loaded.size(); ++i) {
 				bool select = false;
 				if (p.sub_autoselect == SubtitleAutoselect::Matched) {
@@ -1675,6 +1675,7 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 			return loaded;
 		};
 		d->subtitle.setComponents(autoload(true));
+		d->as.open_last_file = file.absoluteFilePath();
 	} else
 		clearSubtitleFiles();
 	updateTitle();
