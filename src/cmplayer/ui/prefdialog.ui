@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>11</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2716,59 +2716,97 @@ e.g.: English, Korean</string>
         </layout>
        </widget>
        <widget class="QWidget" name="gen_behaviours">
-        <layout class="QVBoxLayout" name="verticalLayout_26">
+        <layout class="QVBoxLayout" name="verticalLayout_28">
          <item>
-          <widget class="QCheckBox" name="hide_cursor">
-           <property name="text">
-            <string>Hide mouse after timeout</string>
+          <widget class="QGroupBox" name="hide_cursor">
+           <property name="title">
+            <string>Hide mouse cursor</string>
            </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_26">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout">
+              <item>
+               <widget class="QLabel" name="label_23">
+                <property name="text">
+                 <string>Apply after timeout</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QSpinBox" name="hide_delay">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="accelerated">
+                 <bool>true</bool>
+                </property>
+                <property name="suffix">
+                 <string>sec</string>
+                </property>
+                <property name="minimum">
+                 <number>1</number>
+                </property>
+                <property name="value">
+                 <number>3</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="hide_cursor_fs_only">
+              <property name="text">
+               <string>Apply in fullscreen mode only</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
-           <item>
-            <widget class="QLabel" name="label_23">
-             <property name="text">
-              <string>Timeout</string>
-             </property>
-             <property name="indent">
-              <number>20</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QSpinBox" name="hide_delay">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="suffix">
-              <string>sec</string>
-             </property>
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="value">
-              <number>3</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
+          <widget class="QGroupBox" name="system_tray_group">
+           <property name="title">
+            <string>System tray</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <widget class="QCheckBox" name="enable_system_tray">
+              <property name="text">
+               <string>Show system tray icon</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="hide_rather_close">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Hide the window rather than quit when closed </string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="disable_screensaver">
@@ -2810,32 +2848,6 @@ e.g.: English, Korean</string>
            <property name="text">
             <string>Use Lion-style fullscreen mode</string>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="system_tray_group">
-           <property name="title">
-            <string>System tray</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_2">
-            <item>
-             <widget class="QCheckBox" name="enable_system_tray">
-              <property name="text">
-               <string>Show system tray icon</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QCheckBox" name="hide_rather_close">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Hide the window rather than quit when closed </string>
-              </property>
-             </widget>
-            </item>
-           </layout>
           </widget>
          </item>
          <item>
@@ -3403,7 +3415,7 @@ e.g.: English, Korean</string>
    </hints>
   </connection>
   <connection>
-   <sender>hide_cursor</sender>
+   <sender>hide_cursor_fs_only</sender>
    <signal>toggled(bool)</signal>
    <receiver>hide_delay</receiver>
    <slot>setEnabled(bool)</slot>

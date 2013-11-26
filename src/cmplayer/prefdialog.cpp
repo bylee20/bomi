@@ -523,6 +523,7 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.enable_generate_playlist->setChecked(p.enable_generate_playist);
 	d->ui.generate_playlist->setCurrentValue(p.generate_playlist);
 	d->ui.hide_cursor->setChecked(p.hide_cursor);
+	d->ui.hide_cursor_fs_only->setChecked(p.hide_cursor);
 	d->ui.hide_delay->setValue(p.hide_cursor_delay/1000);
 	d->ui.disable_screensaver->setChecked(p.disable_screensaver);
 	d->ui.remember_image->setChecked(p.remember_image);
@@ -644,6 +645,7 @@ void PrefDialog::get(Pref &p) {
 	p.enable_generate_playist = d->ui.enable_generate_playlist->isChecked();
 	p.generate_playlist = d->ui.generate_playlist->currentValue();
 	p.hide_cursor = d->ui.hide_cursor->isChecked();
+	p.hide_cursor_fs_only = d->ui.hide_cursor_fs_only->isChecked();
 	p.hide_cursor_delay = d->ui.hide_delay->value()*1000;
 	p.disable_screensaver = d->ui.disable_screensaver->isChecked();
 	p.remember_image = d->ui.remember_image->isChecked();

@@ -76,6 +76,28 @@ struct MainWindow::Data {
 	int startFromStopped = -1;
 	QAction *subtrackSep = nullptr;
 
+	void setCursorVisible(bool visible) {
+		if (visible && p->cursor().shape() == Qt::BlankCursor) {
+			p->unsetCursor();
+			UtilObject::setCursorVisible(true);
+		} else if (!visible && p->cursor().shape() != Qt::BlankCursor) {
+			p->setCursor(Qt::BlankCursor);
+			UtilObject::setCursorVisible(false);
+		}
+	}
+
+	void cancelToHideCursor() {
+		hider.stop();
+		setCursorVisible(true);
+	}
+
+	void readyToHideCursor() {
+		if (pref().hide_cursor && (p->isFullScreen() || !pref().hide_cursor_fs_only))
+			hider.start(pref().hide_cursor_delay);
+		else
+			cancelToHideCursor();
+	}
+
 	void initContextMenu() {
 		auto d = this;
 		auto addContextMenu = [d] (Menu &menu) {d->contextMenu.addMenu(menu.copied(&d->contextMenu));};
@@ -457,7 +479,7 @@ struct MainWindow::Data {
 	}
 	void initItems() {
 		connect(&recent, &RecentInfo::openListChanged, p, &MainWindow::updateRecentActions);
-		connect(&hider, &QTimer::timeout, [this] () { p->setCursorVisible(false); });
+		connect(&hider, &QTimer::timeout, [this] () { setCursorVisible(false); });
 		connect(&history, &HistoryModel::playRequested, [this] (const Mrl &mrl) { p->openMrl(mrl); });
 		connect(&playlist, &PlaylistModel::finished, [this] () {
 			if (menu("tool")["auto-exit"]->isChecked()) p->exit();
@@ -1161,14 +1183,11 @@ void MainWindow::checkWindowState() {
 	if (full) {
 		cApp.setAlwaysOnTop(window()->windowHandle(), false);
 		setVisible(true);
-		if (d->pref().hide_cursor)
-			d->hider.start(d->pref().hide_cursor_delay);
 	} else {
-		d->hider.stop();
-		setCursorVisible(true);
 		updateStaysOnTop();
 		setVisible(true);
 	}
+	d->readyToHideCursor();
 	d->dontPause = false;
 	if (!d->stateChanging)
 		doVisibleAction(state != Qt::WindowMinimized);
@@ -1253,16 +1272,13 @@ void MainWindow::setVideoSize(double rate) {
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 	QWidget::mouseMoveEvent(event);
-	d->hider.stop();
-	setCursorVisible(true);
+	d->cancelToHideCursor();
 	const bool full = isFullScreen();
 	if (full) {
 		if (d->moving) {
 			d->moving = false;
 			d->prevPos = QPoint();
 		}
-		if (d->pref().hide_cursor)
-			d->hider.start(d->pref().hide_cursor_delay);
 	} else {
 		if (d->moving) {
 			const QPoint pos = event->globalPos();
@@ -1270,6 +1286,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 			d->prevPos = pos;
 		}
 	}
+	d->readyToHideCursor();
 }
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
@@ -1707,18 +1724,6 @@ void MainWindow::customEvent(QEvent *event) {
 		d->startFromStopped = dlg.exec() == QDialogButtonBox::Yes;
 		if (_Change(d->preferences.ask_record_found, !dlg.isChecked()))
 			d->preferences.save();
-	}
-}
-
-
-
-void MainWindow::setCursorVisible(bool visible) {
-	if (visible && cursor().shape() == Qt::BlankCursor) {
-		unsetCursor();
-		UtilObject::setCursorVisible(true);
-	} else if (!visible && cursor().shape() != Qt::BlankCursor) {
-		setCursor(Qt::BlankCursor);
-		UtilObject::setCursorVisible(false);
 	}
 }
 

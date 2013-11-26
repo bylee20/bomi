@@ -47,7 +47,6 @@ private:
 	Playlist generatePlaylist(const Mrl &mrl) const;
 	bool load(Subtitle &subtitle, const QString &fileName, const QString &encoding);
 
-	void setCursorVisible(bool visible);
 	void doVisibleAction(bool visible);
 	void showMessage(const QString &message, const bool *force = nullptr);
 	void showMessage(const QString &cmd, int value, const QString &unit, bool sign = false) {showMessage(cmd, toString(value, sign) + unit);}

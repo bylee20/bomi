@@ -161,6 +161,7 @@ void Pref::save() const {
 	WRITE(pause_minimized);
 	WRITE(pause_video_only);
 	WRITE(hide_cursor);
+	WRITE(hide_cursor_fs_only);
 	WRITE(hide_cursor_delay);
 	WRITE(enable_system_tray);
 	WRITE(hide_rather_close);
@@ -264,6 +265,7 @@ void Pref::load() {
 	READ(pause_minimized);
 	READ(pause_video_only);
 	READ(hide_cursor);
+	READ(hide_cursor_fs_only);
 	READ(hide_cursor_delay);
 	READ(blur_kern_c);
 	READ(blur_kern_n);
