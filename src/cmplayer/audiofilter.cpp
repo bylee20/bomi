@@ -26,7 +26,7 @@ bool AudioFilter::reconfigure(const mp_audio *data, const mp_audio *input) {
 bool AudioFilter::prepare(const AudioController *ac, const mp_audio *data, const mp_audio *input) {
 	if (!isCompatibleWith(data, input) && !reconfigure(data, input))
 		return false;
-	prepareToPlay(ac, data);
+	prepareToPlay(ac, input);
 	return true;
 }
 
