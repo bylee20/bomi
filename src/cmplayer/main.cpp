@@ -26,7 +26,6 @@ int main(int argc, char **argv) {
 	MainWindow *mw = new MainWindow;
 	mw->show();
 	app.setMainWindow(mw);
-	qDebug() << mw->window()->windowHandle()->screen()->depth();
 	qDebug() << "Start main event loop";
 	auto ret = app.exec();
 	HwAcc::finalize();

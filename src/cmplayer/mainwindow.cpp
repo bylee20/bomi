@@ -579,6 +579,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	initialize_vaapi();
 	initialize_vdpau();
 
+	qDebug() << "Initialize engine";
+
 	d->engine.run();
 	d->initWidget();
 	d->initContextMenu();
@@ -588,8 +590,10 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->dontShowMsg = true;
 
+	qDebug() << "Make connections";
 	connectMenus();
 
+	qDebug() << "Recover states";
 	const AppState &as = AppState::get();
 
 	if (as.win_size.isValid()) {
@@ -614,21 +618,6 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->winState = d->prevWinState = windowState();
 
-	if (TrayIcon::isAvailable()) {
-		d->tray = new TrayIcon(cApp.defaultIcon(), this);
-		connect(d->tray, &TrayIcon::activated, [this] (TrayIcon::ActivationReason reason) {
-			if (reason == TrayIcon::Trigger)
-				setVisible(!isVisible());
-			else if (reason == TrayIcon::Context)
-				d->contextMenu.exec(QCursor::pos());
-			else if (reason == TrayIcon::Show)
-				setVisible(true);
-			else if (reason == TrayIcon::Quit)
-				exit();
-		});
-		d->tray->setVisible(d->preferences.enable_system_tray);
-	}
-
 //	Currently, session management does not works.
 //	connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
 //	connect(&cApp, &App::saveStateRequest, [this] (QSessionManager &session) {
@@ -645,7 +634,22 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->menu("tool")["undo"]->setEnabled(d->undo->canUndo());
 	d->menu("tool")["redo"]->setEnabled(d->undo->canRedo());
 
-	d->dontShowMsg = false;
+	qDebug() << "Try system tray icon";
+	if (TrayIcon::isAvailable()) {
+		qDebug() << "Create system tray icon";
+		d->tray = new TrayIcon(cApp.defaultIcon(), this);
+		connect(d->tray, &TrayIcon::activated, [this] (TrayIcon::ActivationReason reason) {
+			if (reason == TrayIcon::Trigger)
+				setVisible(!isVisible());
+			else if (reason == TrayIcon::Context)
+				d->contextMenu.exec(QCursor::pos());
+			else if (reason == TrayIcon::Show)
+				setVisible(true);
+			else if (reason == TrayIcon::Quit)
+				exit();
+		});
+		d->tray->setVisible(d->preferences.enable_system_tray);
+	}
 }
 
 MainWindow::~MainWindow() {
@@ -1392,12 +1396,8 @@ void MainWindow::reloadSkin() {
 	d->view->rootContext()->setContextProperty("history", &d->history);
 	d->view->rootContext()->setContextProperty("playlist", &d->playlist);
 	Skin::apply(d->view, d->pref().skin_name);
-	if (d->view->status() == QQuickView::Error) {
-//		auto errors = d->view->errors();
-//		for (auto error : errors)
-//			qDebug() << error.toString();
+	if (d->view->status() == QQuickView::Error)
 		d->view->setSource(QUrl("qrc:/emptyskin.qml"));
-	}
 	auto root = d->view->rootObject();
 	if (!root)
 		return;

@@ -49,7 +49,6 @@ mp_image *FFmpegFilterGraph::pull() {
 }
 
 bool FFmpegFilterGraph::linkGraph(AVFilterInOut *&in, AVFilterInOut *&out) {
-	qDebug() << m_size;
 	QString tmp;
 #define	args (tmp.toLocal8Bit().constData())
 	tmp.sprintf("width=%d:height=%d:pix_fmt=%d:time_base=1/%d:sar=1", m_size.width(), m_size.height(), imgfmt2pixfmt(m_imgfmt), AV_TIME_BASE);
