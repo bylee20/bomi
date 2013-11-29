@@ -130,8 +130,8 @@ bool AppMac::eventFilter( QObject *o, QEvent *e ) {
 	return QObject::eventFilter( o, e );
 }
 
-void AppMac::setAlwaysOnTop(QWindow *w, bool onTop) {
-	NSView *view = (NSView*)(void*)w->winId();
+void AppMac::setAlwaysOnTop(QWidget *widget, bool onTop) {
+	NSView *view = (NSView*)(void*)widget->effectiveWinId();
 	NSWindow *window = [view window];
 	if (onTop)
 		[window setLevel:NSFloatingWindowLevel];

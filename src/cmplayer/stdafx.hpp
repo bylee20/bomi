@@ -45,6 +45,7 @@ static inline bool _Same(const QString &str, const char *latin1) {return !str.co
 static inline bool _Same(const QStringRef &str, const char *latin1) {return !str.compare(_L(latin1), Qt::CaseInsensitive);}
 static inline QStringRef _MidRef(const QStringRef &ref, int from, int n = -1) {return ref.string()->midRef(ref.position() + from, n < 0 ? ref.size() - from : n);}
 static inline int _Area(const QSize &size) {return size.width()*size.height();}
+static inline qreal _Area(const QSizeF &size) { return size.width()*size.height(); }
 template <typename T>
 static inline bool _Change(T &the, const T &one) {if (the != one) {the = one; return true;} return false;}
 static inline bool _ChangeF(double &the, double one) {if (!qFuzzyCompare(the, one)) {the = one; return true;} return false;}

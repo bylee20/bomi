@@ -190,11 +190,11 @@ void App::setMainWindow(MainWindow *mw) {
 #endif
 }
 
-void App::setWindowTitle(QWidget *w, const QString &title) {
+void App::setWindowTitle(QWidget *widget, const QString &title) {
 	const QString text = title % (title.isEmpty() ? "" : " - ") % applicationName();
-	w->setWindowTitle(text);
+	widget->setWindowTitle(text);
 #ifdef Q_OS_LINUX
-	d->helper.setWmName(w->window()->windowHandle(), text);
+	d->helper.setWmName(widget, text);
 #endif
 }
 
@@ -220,8 +220,8 @@ QIcon App::defaultIcon() {
 	return icon;
 }
 
-void App::setAlwaysOnTop(QWindow *window, bool onTop) {
-	d->helper.setAlwaysOnTop(window, onTop);
+void App::setAlwaysOnTop(QWidget *widget, bool onTop) {
+	d->helper.setAlwaysOnTop(widget, onTop);
 }
 
 void App::setScreensaverDisabled(bool disabled) {

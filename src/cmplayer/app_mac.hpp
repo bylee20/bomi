@@ -31,7 +31,7 @@ class AppMac: public QObject {
 public:
 	AppMac( QObject *parent = 0 );
 	~AppMac();
-	void setAlwaysOnTop(QWindow *window, bool onTop);
+	void setAlwaysOnTop(QWidget *widget, bool onTop);
 	QStringList devices() const;
 	void setScreensaverDisabled(bool disabled);
 	bool shutdown();

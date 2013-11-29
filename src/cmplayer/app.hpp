@@ -23,7 +23,7 @@ public:
 	QMenuBar *globalMenuBar() const;
 #endif
 	void setStyleName(const QString &name);
-	void setAlwaysOnTop(QWindow *window, bool onTop);
+	void setAlwaysOnTop(QWidget *widget, bool onTop);
 	void setScreensaverDisabled(bool disabled);
 	void setUnique(bool unique);
 	bool shutdown();

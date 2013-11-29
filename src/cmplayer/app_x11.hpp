@@ -9,10 +9,10 @@ public:
 	AppX11(QObject *parent = 0);
 	~AppX11();
 	void setScreensaverDisabled(bool disabled);
-	void setAlwaysOnTop(QWindow *window, bool onTop);
+	void setAlwaysOnTop(QWidget *widget, bool onTop);
 	QStringList devices() const;
 	bool shutdown();
-	void setWmName(QWindow *window, const QString &name);
+	void setWmName(QWidget *widget, const QString &name);
 private:
 	AppX11(const AppX11&) = delete;
 	AppX11 &operator = (const AppX11&) = delete;

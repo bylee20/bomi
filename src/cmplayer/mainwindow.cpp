@@ -72,9 +72,10 @@ struct MainWindow::Data {
 	QString filePath;
 	Pref preferences;
 	const Pref &pref() const {return preferences;}
-// methods
 	int startFromStopped = -1;
 	QAction *subtrackSep = nullptr;
+	QDesktopWidget *desktop = nullptr;
+	QSize virtualDesktopSize;
 
 	void setCursorVisible(bool visible) {
 		if (visible && p->cursor().shape() == Qt::BlankCursor) {
@@ -219,10 +220,13 @@ struct MainWindow::Data {
 		if (!p->isFullScreen() && !p->isMinimized() && p->isVisible())
 			AppState::get().win_size = p->size();
 	}
+	QSize screenSize() const {
+		return desktop->isVirtualDesktop() ? virtualDesktopSize : desktop->availableGeometry(p).size();
+	}
 	void updateWindowPosState() const {
 		if (!p->isFullScreen() && !p->isMinimized() && p->isVisible()) {
 			auto &as = AppState::get();
-			const auto screen = p->window()->windowHandle()->screen()->size();
+			const auto screen = screenSize();
 			as.win_pos.rx() = qBound(0.0, (double)p->x()/(double)screen.width(), 1.0);
 			as.win_pos.ry() = qBound(0.0, (double)p->y()/(double)screen.height(), 1.0);
 		}
@@ -382,9 +386,26 @@ struct MainWindow::Data {
 		p->resize(400, 300);
 		p->setMinimumSize(QSize(400, 300));
 
-		MainWindow::connect(view, &QQuickView::sceneGraphInitialized, [this] () {
+		connect(view, &QQuickView::sceneGraphInitialized, [this] () {
 			OpenGLCompat::initialize(view->openglContext());
 		});
+
+		desktop = cApp.desktop();
+		auto reset = [this] () {
+			if (!desktop->isVirtualDesktop())
+				virtualDesktopSize = QSize();
+			else {
+				const int count = desktop->screenCount();
+				QRect rect = desktop->availableGeometry(0);
+				for (int i=1; i<count; ++i)
+					rect |= desktop->availableGeometry(i);
+				virtualDesktopSize = rect.size();
+			}
+		};
+		connect(desktop, &QDesktopWidget::resized, reset);
+		connect(desktop, &QDesktopWidget::screenCountChanged, reset);
+		connect(desktop, &QDesktopWidget::workAreaResized, reset);
+		reset();
 	}
 	void initEngine() {
 		engine.setVideoRenderer(&renderer);
@@ -549,15 +570,15 @@ struct MainWindow::Data {
 		if (p->isFullScreen() || p->isMaximized())
 			return;
 		// patched by Handrake
-		const QSizeF desktop = p->window()->windowHandle()->screen()->availableVirtualSize();
+		const QSizeF screen = screenSize();
 		const QSize size = (p->size() - renderer.size().toSize() + video);
 		if (size != p->size()) {
 			p->resize(size);
 			int dx = 0;
-			const int rightDiff = desktop.width() - (p->x() + p->width());
+			const int rightDiff = screen.width() - (p->x() + p->width());
 			if (rightDiff < 10) {
 				if (rightDiff < 0)
-					dx = desktop.width() - p->x() - size.width();
+					dx = screen.width() - p->x() - size.width();
 				else
 					dx = p->width() - size.width();
 			}
@@ -597,7 +618,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	const AppState &as = AppState::get();
 
 	if (as.win_size.isValid()) {
-		const auto screen = this->windowHandle()->screen()->size();
+		auto screen = d->screenSize();
 		move(screen.width()*as.win_pos.x(), screen.height()*as.win_pos.y());
 		resize(as.win_size);
 	}
@@ -1185,7 +1206,7 @@ void MainWindow::checkWindowState() {
 	d->prevPos = QPoint();
 	const auto full = isFullScreen();
 	if (full) {
-		cApp.setAlwaysOnTop(window()->windowHandle(), false);
+		cApp.setAlwaysOnTop(this, false);
 		setVisible(true);
 	} else {
 		updateStaysOnTop();
@@ -1243,34 +1264,10 @@ void MainWindow::setVideoSize(double rate) {
 			setFullScreen(false);
 		if (isMaximized())
 			showNormal();
-		// patched by Handrake
 		const QSizeF video = d->renderer.sizeHint();
-		const QSizeF desktop = window()->windowHandle()->screen()->availableVirtualSize();
-		const double target = 0.15;
 		if (rate == 0.0)
-			rate = desktop.width()*desktop.height()*target/(video.width()*video.height());
+			rate = _Area(d->screenSize())*0.15/_Area(video);
 		d->setVideoSize((video*qSqrt(rate)).toSize());
-		return;
-		const QSize size = (this->size() - d->renderer.size() + d->renderer.sizeHint()*qSqrt(rate)).toSize();
-		if (size != this->size()) {
-			if (isMaximized())
-				showNormal();
-			resize(size);
-			int dx = 0;
-			const int rightDiff = desktop.width() - (x() + width());
-			if (rightDiff < 10) {
-				if (rightDiff < 0)
-					dx = desktop.width() - x() - size.width();
-				else
-					dx = width() - size.width();
-			}
-			if (dx && !isFullScreen()) {
-				int x = this->x() + dx;
-				if (x < 0)
-					x = 0;
-				move(x, this->y());
-			}
-		}
 	}
 }
 
@@ -1579,7 +1576,7 @@ void MainWindow::updateStaysOnTop() {
 		else
 			onTop = d->engine.isPlaying();
 	}
-	cApp.setAlwaysOnTop(window()->windowHandle(), onTop);
+	cApp.setAlwaysOnTop(this, onTop);
 	d->sotChanging = false;
 }
 

@@ -107,12 +107,14 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 	d->inhibit = disabled;
 }
 
-void AppX11::setAlwaysOnTop(QWindow *window, bool onTop) {
+void AppX11::setAlwaysOnTop(QWidget *widget, bool onTop) {
+	if (!widget)
+		return;
 	xcb_client_message_event_t event;
 	memset(&event, 0, sizeof(event));
 	event.response_type = XCB_CLIENT_MESSAGE;
 	event.format = 32;
-	event.window = window->winId();
+	event.window = widget->winId();
 	event.type = d->aNetWmState;
 	event.data.data32[0] = onTop ? 1 : 0;
 	event.data.data32[1] = d->aNetWmStateAbove;
@@ -125,10 +127,10 @@ QStringList AppX11::devices() const {
 	return QStringList();
 }
 
-void AppX11::setWmName(QWindow *window, const QString &name) {
+void AppX11::setWmName(QWidget *widget, const QString &name) {
 	d->wmName = name.toUtf8();
 	char *utf8 = d->wmName.data();
-	auto wid = window->winId();
+	auto wid = widget->effectiveWinId();
 	if (d->connection && d->display) {
 		XTextProperty text;
 		Xutf8TextListToTextProperty(d->display, &utf8, 1, XCompoundTextStyle, &text);
