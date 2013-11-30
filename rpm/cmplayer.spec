@@ -6,6 +6,9 @@
 # $ rpmdev-setuptree
 # Copy source tarball (cmplayer-x.x.x-src.tar.gz) into ${HOME}/rpmbuild/SOURCES and
 # place this spec file into ${HOME}/rpmbuild/SPECS
+# Install build dependencies:
+# $ yum-builddep cmplayer.spec # Fedora
+# $ zypper build-deps-install cmplayer.spec # OpenSUSE
 # Now build the package with rpmbuild:
 # $ rpmbuild -ba cmplayer.spec
 # Built rpms are in ${HOME}/rpmbuild/RPMS and source RPMs are located in ${HOME}/rpmbuild/SRPMS
