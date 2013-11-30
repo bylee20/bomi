@@ -78,11 +78,11 @@ struct MainWindow::Data {
 	QSize virtualDesktopSize;
 
 	void setCursorVisible(bool visible) {
-		if (visible && p->cursor().shape() == Qt::BlankCursor) {
-			p->unsetCursor();
+		if (visible && view->cursor().shape() == Qt::BlankCursor) {
+			view->unsetCursor();
 			UtilObject::setCursorVisible(true);
-		} else if (!visible && p->cursor().shape() != Qt::BlankCursor) {
-			p->setCursor(Qt::BlankCursor);
+		} else if (!visible && view->cursor().shape() != Qt::BlankCursor) {
+			view->setCursor(Qt::BlankCursor);
 			UtilObject::setCursorVisible(false);
 		}
 	}
