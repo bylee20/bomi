@@ -1,7 +1,7 @@
 # Presteps for building the rpm in ${HOME}
 # Make sure you have the rpm dev tools installed:
 # $ yum install @development-tools fedora-packager # Fedora
-# $ zypper in rpmdevtools
+# $ zypper in rpmdevtools # OpenSUSE
 # Then setup your RPM development folders
 # $ rpmdev-setuptree
 # Copy source tarball (cmplayer-x.x.x-src.tar.gz) into ${HOME}/rpmbuild/SOURCES and
