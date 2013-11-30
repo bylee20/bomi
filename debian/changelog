@@ -1,3 +1,24 @@
+cmplayer (0.8.6-1) saucy; urgency=low
+
+  * New: new option 'Apply in fullscreen mode only' for 'Hide mouse cursor'
+  * Fix: hiding mouse cursor with Qt 5.2.0 didn't work (#22)
+  * Fix: crash when linked with Qt 5.2.0
+  * Fix: open file dialog will open in the folder where last played is located
+  * Fix: urlencoded URLs doesn't open when passed as a parameter (issue #18)
+  * Fix: volume normalizer is broken(issue #17)
+  * New: new default skin 'GaN'
+  * New: Previous/Next Chapter actions
+  * New: bounding box for subtitle
+  * New: blur option for subtitle shadow
+  * Mod: redesign history/playlist view
+  * Mod: remove chapter number in chapter name
+  * Mod: remove duplicated time text in chapter name
+  * Fix: wrong update timing for audio and video informations
+  * Fix: remove whitespaces at end of captions
+  * Fix: chroma upscaling didn't work
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Mon, 11 Nov 2013 10:27:00 +0900
+ 
 cmplayer (0.8.4-1) saucy; urgency=low
 
   * New: channel manipulation options and channel layout menu
