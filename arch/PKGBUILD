@@ -15,7 +15,7 @@ depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu'
          'mpg123' 'libva' 'libgl' 'fribidi' 'libass' 'ffmpeg')
 makedepends=('mesa' 'gcc' 'pkg-config')
 source=(https://github.com/xylosper/cmplayer/releases/download/v$pkgver/cmplayer-$pkgver-source.tar.gz)
-md5sums=('a1846534b19d5b5d5052a94cb168f7ee')
+md5sums=('be81dac2717a8bcd2196a54d630391d8')
 
 build() {
   export MAKE="make -j $(nproc)"
