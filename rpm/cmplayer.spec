@@ -21,6 +21,7 @@
 %define version 0.8.6
 %define lrelease lrelease
 %define gpp_pkg gcc-c++
+%define qmake qmake-qt5
 
 %define _prefix /usr
 
@@ -86,10 +87,10 @@ make clean
 ./download-libchardet
 ./build-libchardet
 ./build-mpv
-make PREFIX=%{_prefix} LIBQUIVI_SUFFIX=-0.9 cmplayer
+make QMAKE=%{qmake} PREFIX=%{_prefix} LIBQUIVI_SUFFIX=-0.9 cmplayer
 
 %install
-make DEST_DIR=%{?buildroot:%{buildroot}} PREFIX=%{_prefix} LIBQUIVI_SUFFIX=-0.9 install
+make QMAKE=%{qmake} DEST_DIR=%{?buildroot:%{buildroot}} PREFIX=%{_prefix} LIBQUIVI_SUFFIX=-0.9 install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
