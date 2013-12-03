@@ -43,7 +43,6 @@
 %if %is_suse
 %define distro %(head -1 /etc/SuSE-release)
 %define qt_dev libqt5-qtbase-devel
-%define 
 %endif
 
 Name: %{name}
@@ -54,10 +53,6 @@ Version: %{version}
 
 %if %is_fedora
 Release: 1%{dist}
-%else
-Release: 1
-%endif
-
 Source: %{name}-%{version}-source.tar.gz
 Packager: xylosper <darklin20@gmail.com>
 Distribution: %{distro}
@@ -75,7 +70,7 @@ BuildRequires: qt5-qtx11extras-devel
 %endif
 
 %if %is_suse
-BuildRequires: bzip
+BuildRequires: libbz2-devel
 BuildRequires: libffmpeg-devel
 BuildRequires: libjack-devel
 BuildRequires: libpulse-devel
@@ -89,7 +84,7 @@ BuildRequires: %{qt_dev} >= 5.1.1
 BuildRequires: glib2-devel
 BuildRequires: libass-devel
 BuildRequires: libcdio-paranoia-devel
-BuildRequires: libchardet
+BuildRequires: libchardet-devel
 BuildRequires: libdvdread-devel
 BuildRequires: libmpg123-devel
 BuildRequires: libquvi-devel
@@ -99,7 +94,11 @@ BuildRequires: portaudio-devel
 BuildRequires: xcb-util-devel
 BuildRequires: xcb-util-wm-devel
 # rpmbuild's automatic dependency handling misses qt5-qtquickcontrols
+%if %is_fedora
 Requires: qt5-qtquickcontrols
+%else
+Requires: libqt5-qtquickcontrols
+%endif
 Prefix: %{_prefix}
 Autoreqprov: on
 
