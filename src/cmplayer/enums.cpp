@@ -127,14 +127,15 @@ const std::array<InterpolatorTypeInfo::Item, 11> InterpolatorTypeInfo::info{{
 	{InterpolatorType::Lanczos4, "Lanczos4", "lanczos4", (int)10}
 }};
 
-const std::array<AudioDriverInfo::Item, 7> AudioDriverInfo::info{{
+const std::array<AudioDriverInfo::Item, 8> AudioDriverInfo::info{{
 	{AudioDriver::Auto, "Auto", "", (int)0},
 	{AudioDriver::CoreAudio, "CoreAudio", "", (int)1},
 	{AudioDriver::PulseAudio, "PulseAudio", "", (int)2},
-	{AudioDriver::ALSA, "ALSA", "", (int)3},
-	{AudioDriver::JACK, "JACK", "", (int)4},
-	{AudioDriver::PortAudio, "PortAudio", "", (int)5},
-	{AudioDriver::OpenAL, "OpenAL", "", (int)6}
+	{AudioDriver::OSS, "OSS", "", (int)3},
+	{AudioDriver::ALSA, "ALSA", "", (int)4},
+	{AudioDriver::JACK, "JACK", "", (int)5},
+	{AudioDriver::PortAudio, "PortAudio", "", (int)6},
+	{AudioDriver::OpenAL, "OpenAL", "", (int)7}
 }};
 
 const std::array<ClippingMethodInfo::Item, 3> ClippingMethodInfo::info{{

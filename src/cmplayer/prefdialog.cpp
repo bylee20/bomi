@@ -358,7 +358,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	QList<AudioDriver> audioDrivers;
 	audioDrivers << AudioDriver::Auto;
 #ifdef Q_OS_LINUX
-	audioDrivers << AudioDriver::ALSA << AudioDriver::PulseAudio << AudioDriver::JACK;
+	audioDrivers << AudioDriver::ALSA << AudioDriver::OSS << AudioDriver::PulseAudio << AudioDriver::JACK;
 #endif
 #ifdef Q_OS_MAC
 	audioDrivers << AudioDriver::CoreAudio;

@@ -991,10 +991,11 @@ enum class AudioDriver : int {
 	Auto = (int)0,
 	CoreAudio = (int)1,
 	PulseAudio = (int)2,
-	ALSA = (int)3,
-	JACK = (int)4,
-	PortAudio = (int)5,
-	OpenAL = (int)6
+	OSS = (int)3,
+	ALSA = (int)4,
+	JACK = (int)5,
+	PortAudio = (int)6,
+	OpenAL = (int)7
 };
 
 inline bool operator == (AudioDriver e, int i) { return (int)e == i; }
@@ -1028,7 +1029,7 @@ public:
     typedef AudioDriver type;
     using Data =  QVariant;
     struct Item { Enum value; QString name, key; QVariant data; };
-	static constexpr int size() { return 7; }
+	static constexpr int size() { return 8; }
     static constexpr const char *typeName() { return "AudioDriver"; }
     static constexpr const char *typeKey() { return ""; }
     static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
@@ -1044,6 +1045,7 @@ public:
 		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		case Enum::CoreAudio: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		case Enum::PulseAudio: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::OSS: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		case Enum::ALSA: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		case Enum::JACK: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
 		case Enum::PortAudio: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
@@ -1051,7 +1053,7 @@ public:
 		default: return tr("");
 		};
 	}
-	static constexpr const std::array<Item, 7> &items() { return info; }
+	static constexpr const std::array<Item, 8> &items() { return info; }
     static Enum from(int id, Enum def = default_()) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
@@ -1062,7 +1064,7 @@ public:
 	}
     static constexpr Enum default_() { return AudioDriver::Auto; }
 private:
-	static const std::array<Item, 7> info;
+	static const std::array<Item, 8> info;
 };
 
 using AudioDriverInfo = EnumInfo<AudioDriver>;

@@ -430,6 +430,7 @@ void PlayEngine::setChannelLayout(ChannelLayout layout) {
 typedef QPair<AudioDriver, const char*> AudioDriverName;
 const std::array<AudioDriverName, AudioDriverInfo::size()-1> audioDriverNames = {{
 	{AudioDriver::ALSA, "alsa"},
+	{AudioDriver::OSS, "oss"},
 	{AudioDriver::PulseAudio, "pulse"},
 	{AudioDriver::CoreAudio, "coreaudio"},
 	{AudioDriver::PortAudio, "portaudio"},

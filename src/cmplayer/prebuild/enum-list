@@ -128,6 +128,7 @@
 -Auto
 -CoreAudio
 -PulseAudio
+-OSS
 -ALSA
 -JACK
 -PortAudio
