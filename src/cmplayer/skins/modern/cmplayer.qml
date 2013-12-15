@@ -99,7 +99,7 @@ Skin.AppWithFloating {
 
 					Skin.Button {
 						id: faster; width: parent.height*0.9; height: width; anchors.verticalCenter: pause.verticalCenter
-                        icon: getStateIconName("seek-forward"); action: "play/seek/backward2"
+						icon: getStateIconName("seek-forward"); action: "play/seek/forward2"
 					}
 				}
 			}
