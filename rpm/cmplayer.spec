@@ -36,7 +36,7 @@
 %if 0%{?mdkversion}
 %define distro %(head -1 /etc/mandrake-release)
 %endif
-%if %is_suse
+%if 0%{?suse_version}
 %define distro %(head -1 /etc/SuSE-release)
 %define qt_dev libqt5-qtbase-devel
 %endif
