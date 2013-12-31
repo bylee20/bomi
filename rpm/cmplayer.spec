@@ -20,10 +20,6 @@
 # Note that OpenSUSE users will need to have the Packman Essentials and Multimedia repositories enabled
 # see http://en.opensuse.org/Additional_package_repositories#Packman for more details.
 
-%define is_fedora %(test -e /etc/fedora-release && echo 1 || echo 0)
-%define is_mandrake %(test -e /etc/mandrake-release && echo 1 || echo 0)
-%define is_suse %(test -e /etc/SuSE-release && echo 1 || echo 0)
-
 %define name cmplayer
 %define version 0.8.6
 %define lrelease lrelease
@@ -32,34 +28,31 @@
 
 %define _prefix /usr
 
-%if %is_fedora
+%if 0%{?fedora}
 %define distro %(head -1 /etc/fedora-release)
 %define lrelease lrelease-qt4
 %define qt_dev qt5-qtbase-devel
 %endif
-%if %is_mandrake
+%if 0%{?mdkversion}
 %define distro %(head -1 /etc/mandrake-release)
 %endif
-%if %is_suse
+%if 0%{?suse_version}
 %define distro %(head -1 /etc/SuSE-release)
 %define qt_dev libqt5-qtbase-devel
 %endif
 
 Name: %{name}
 Summary: A multimedia player
-License: GPL
+License: GPLv2
 Group: Applications/Multimedia
 Version: %{version}
-
-%if %is_fedora
-Release: 1%{dist}
-Source: %{name}-%{version}-source.tar.gz
+Release: 1%{?dist}
+Url:	http://cmplayer.github.io/
+Source: https://github.com/xylosper/%{name}/releases/download/v%{version}/%{name}-%{version}-source.tar.gz
 Packager: xylosper <darklin20@gmail.com>
-Distribution: %{distro}
-BuildRoot: %{_tmppath}/%{name}-buildroot
 
 # Distro-specific dependencies
-%if %is_fedora
+%if 0%{?fedora}
 BuildRequires: ffmpeg-devel
 BuildRequires: bzip2-devel
 BuildRequires: jack-audio-connection-kit-devel
@@ -84,7 +77,7 @@ BuildRequires: %{qt_dev} >= 5.1.1
 BuildRequires: glib2-devel
 BuildRequires: libass-devel
 BuildRequires: libcdio-paranoia-devel
-BuildRequires: libchardet-devel
+#BuildRequires: libchardet-devel
 BuildRequires: libdvdread-devel
 BuildRequires: libmpg123-devel
 BuildRequires: libquvi-devel
@@ -94,16 +87,15 @@ BuildRequires: portaudio-devel
 BuildRequires: xcb-util-devel
 BuildRequires: xcb-util-wm-devel
 # rpmbuild's automatic dependency handling misses qt5-qtquickcontrols
-%if %is_fedora
+%if 0%{?fedora}
 Requires: qt5-qtquickcontrols
 %else
 Requires: libqt5-qtquickcontrols
 %endif
 Prefix: %{_prefix}
-Autoreqprov: on
 
 %description
-CMPlayer is a Qt-based multimedia player utilizing the MPV video backend.
+CMPlayer is a Qt-based multimedia player utilizing the MPV video back-end.
 
 %prep
 %setup -q
@@ -119,9 +111,6 @@ make QMAKE=%{qmake} PREFIX=%{_prefix} LIBQUIVI_SUFFIX=-0.9 cmplayer
 %install
 make QMAKE=%{qmake} DEST_DIR=%{?buildroot:%{buildroot}} PREFIX=%{_prefix} LIBQUIVI_SUFFIX=-0.9 install
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
 %post
 /usr/bin/update-desktop-database -q
 xdg-icon-resource forceupdate --theme hicolor &> /dev/null
@@ -131,12 +120,13 @@ xdg-icon-resource forceupdate --theme hicolor &> /dev/null
 xdg-icon-resource forceupdate --theme hicolor &> /dev/null
 
 %files
-%attr (-,root,root)
 %{_bindir}/*
 %{_datadir}/applications/*
 %{_datadir}/apps/solid/actions/*
 %{_datadir}/%{name}/*
 %{_datadir}/icons/hicolor/*/*/%{name}.png
+
+%doc COPYING.txt CHANGES.txt GPL.txt ICON-AUTHORS.txt ICON-COPYING.txt MPL.txt README.md
 
 %changelog
 * Sun Dec 01 2013 Ben Reedy <thebenj88@gmail.com> - 0.8.6-1
