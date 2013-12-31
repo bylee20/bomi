@@ -46,16 +46,10 @@ Summary: A multimedia player
 License: GPLv2
 Group: Applications/Multimedia
 Version: %{version}
-
-%if 0%{?fedora}
-Release: 2%{dist}
-%else
-Release: 2
-%endif
+Release: 1%{?dist}
 Url:	http://cmplayer.github.io/
 Source: https://github.com/xylosper/%{name}/releases/download/v%{version}/%{name}-%{version}-source.tar.gz
 Packager: xylosper <darklin20@gmail.com>
-Distribution: %{distro}
 
 # Distro-specific dependencies
 %if 0%{?fedora}
