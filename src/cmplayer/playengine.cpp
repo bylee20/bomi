@@ -438,8 +438,6 @@ void PlayEngine::seek(int pos) {
 		d->image.seek(pos, false);
 	else
 		d->tellmp("seek", (double)pos/1000.0, 2);
-	if (m_state == Paused && _Change(d->position, qBound(d->begin, pos, d->begin + d->duration)))
-		emit tick(d->position);
 }
 
 void PlayEngine::relativeSeek(int pos) {
@@ -448,8 +446,6 @@ void PlayEngine::relativeSeek(int pos) {
 	else
 		d->tellmp("seek", (double)pos/1000.0, 0);
 	emit sought();
-	if (m_state == Paused && _Change(d->position, qBound(d->begin, pos, d->begin + d->duration)))
-		emit tick(d->position);
 }
 
 void PlayEngine::setClippingMethod(ClippingMethod method) {
@@ -688,7 +684,7 @@ void PlayEngine::customEvent(QEvent *event) {
 		const bool wasRunning = isRunning();
 		if (_Change(m_state, state)) {
 			emit stateChanged(m_state);
-			if (m_state == Playing) {
+			if (m_state & (Playing | Paused)) {
 				if (d->hasImage)
 					d->imageTicker.start();
 				else if (d->mpctx && d->mpctx->demuxer)
