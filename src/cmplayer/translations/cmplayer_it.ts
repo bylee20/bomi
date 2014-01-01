@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="it_IT">
+<TS version="2.1" language="it_IT">
 <context>
     <name>AboutDialog</name>
     <message>
@@ -77,7 +77,8 @@ Sito progetto: %3</translation>
         <location filename="../imports/CMPlayerSkin/Button.qml" line="34"/>
         <source>Left click: %1
 Right click: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Clic sinistro: %1
+Clic destro: %2</translation>
     </message>
 </context>
 <context>
@@ -85,17 +86,17 @@ Right click: %2</source>
     <message>
         <location filename="../channelmanipulation.cpp" line="379"/>
         <source>Layout:</source>
-        <translation type="unfinished"></translation>
+        <translation>Disposizione:</translation>
     </message>
     <message>
         <location filename="../channelmanipulation.cpp" line="390"/>
         <source>Inputs</source>
-        <translation type="unfinished"></translation>
+        <translation>Ingressi</translation>
     </message>
     <message>
         <location filename="../channelmanipulation.cpp" line="394"/>
         <source>Outputs</source>
-        <translation type="unfinished"></translation>
+        <translation>Uscite</translation>
     </message>
 </context>
 <context>
@@ -340,22 +341,22 @@ Right click: %2</source>
     <message>
         <location filename="../enums.hpp" line="166"/>
         <source>Channel Layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Disposizione Canali</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="176"/>
         <source>Default</source>
-        <translation type="unfinished"></translation>
+        <translation>Predefinito</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="177"/>
         <source>Mono</source>
-        <translation type="unfinished"></translation>
+        <translation>Mono</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="178"/>
         <source>Stereo</source>
-        <translation type="unfinished"></translation>
+        <translation>Stereo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="275"/>
@@ -450,12 +451,12 @@ Right click: %2</source>
     <message>
         <location filename="../enums.hpp" line="583"/>
         <source>Random Dithering</source>
-        <translation>Dithering Casuale</translation>
+        <translation>Casuale</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="584"/>
         <source>Ordered Dithering</source>
-        <translation>Dithering Ordinato</translation>
+        <translation>Ordinato</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="715"/>
@@ -488,122 +489,122 @@ Right click: %2</source>
     <message>
         <location filename="../enums.hpp" line="179"/>
         <source>2.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>2.1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="180"/>
         <source>3.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>3.0</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="181"/>
         <source>3.0ch(Back)</source>
-        <translation type="unfinished"></translation>
+        <translation>3.0(Posteriore)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="182"/>
         <source>3.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>3.1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="183"/>
         <source>4.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>4.0</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="184"/>
         <source>4.0ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>4.0(Laterale)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="185"/>
         <source>4.0ch(Diamond)</source>
-        <translation type="unfinished"></translation>
+        <translation>4.0(Diamante)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="186"/>
         <source>4.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>4.1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="187"/>
         <source>4.1ch(Diamond)</source>
-        <translation type="unfinished"></translation>
+        <translation>4.1(Diamante)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="188"/>
         <source>5.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>5.0</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="189"/>
         <source>5.0ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>5.0(Laterale)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="190"/>
         <source>5.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>5.1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="191"/>
         <source>5.1ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>5.1(Laterale)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="192"/>
         <source>6.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>6.0</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="193"/>
         <source>6.0ch(Front)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.0(Frontale)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="194"/>
         <source>6.0ch(Hexagonal)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.0(Esagonale)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="195"/>
         <source>6.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>6.1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="196"/>
         <source>6.1ch(Back)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.1(Posteriore)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="197"/>
         <source>6.1ch(Front)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.1(Frontale)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="198"/>
         <source>7.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>7.0</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="199"/>
         <source>7.0ch(Front)</source>
-        <translation type="unfinished"></translation>
+        <translation>7.0(Frontale)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="200"/>
         <source>7.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>7.1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="201"/>
         <source>7.1ch(Wide)</source>
-        <translation type="unfinished"></translation>
+        <translation>7.1(Ampio)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="202"/>
         <source>7.1ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>7.1(Laterale)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="965"/>
@@ -613,12 +614,12 @@ Right click: %2</source>
     <message>
         <location filename="../enums.hpp" line="966"/>
         <source>4-Lobed Spline</source>
-        <translation type="unfinished">3-Lobed Spline {4-?}</translation>
+        <translation>4-Lobed Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="967"/>
         <source>Fast Lanczos</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanczos Rapido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="969"/>
@@ -628,7 +629,7 @@ Right click: %2</source>
     <message>
         <location filename="../enums.hpp" line="970"/>
         <source>4-Lobed Lanczos</source>
-        <translation type="unfinished">3-Lobed Lanczos {4-?}</translation>
+        <translation>4-Lobed Lanczos</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1120"/>
@@ -1438,7 +1439,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="82"/>
         <source>Dropped Frames: %1 frames</source>
-        <translation type="unfinished"></translation>
+        <translation>Frame Scartati: %1 frame</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="93"/>
@@ -1468,12 +1469,12 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="119"/>
         <source>Input : %1 %2kbps %3kHz %4 %5bits</source>
-        <translation type="unfinished"></translation>
+        <translation>Ingresso : %1 %2kbps %3kHz %4 %5bits</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayerSkin/PlayInfoView.qml" line="126"/>
         <source>Output: %1 %2kbps %3kHz %4 %5bits</source>
-        <translation type="unfinished"></translation>
+        <translation>Uscita: %1 %2kbps %3kHz %4 %5bits</translation>
     </message>
     <message>
         <source>Input : %1 %2kbps %3kHz %4ch %5bits</source>
@@ -1724,7 +1725,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="472"/>
         <source>Channel Manipulation</source>
-        <translation type="unfinished"></translation>
+        <translation>Disposizione Canali</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="500"/>
@@ -1972,7 +1973,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="2182"/>
         <source>Blur</source>
-        <translation type="unfinished">Sfoca</translation>
+        <translation>Sfoca</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2191"/>
@@ -1993,17 +1994,17 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="2390"/>
         <source>Bounding Box</source>
-        <translation type="unfinished"></translation>
+        <translation>Riquadro di Selezione</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2464"/>
         <source>Horizontal padding</source>
-        <translation type="unfinished"></translation>
+        <translation>Padding orizzontale</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2493"/>
         <source>Vertical padding</source>
-        <translation type="unfinished"></translation>
+        <translation>Padding verticale</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2557"/>
@@ -2046,7 +2047,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="2804"/>
         <source>Resize to video resolution in windowed-mode when video is changed</source>
-        <translation type="unfinished"></translation>
+        <translation>Ridimensiona a risoluzione video in modalità a finestra quando il video cambia</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2867"/>
@@ -2728,12 +2729,12 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../rootmenu.cpp" line="422"/>
         <source>Previous Chapter</source>
-        <translation type="unfinished"></translation>
+        <translation>Capitolo Precedente</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="423"/>
         <source>Next Chapter</source>
-        <translation type="unfinished"></translation>
+        <translation>Capitolo Successivo</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="435"/>
@@ -3206,7 +3207,7 @@ esempio: Inglese, Coreano</translation>
         <location filename="../translator.cpp" line="89"/>
         <source>UTF-8</source>
         <comment>Specify most popular encoding here in target localization.</comment>
-        <translation type="unfinished"></translation>
+        <translation>UTF-8</translation>
     </message>
 </context>
 <context>
@@ -3255,42 +3256,42 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="23"/>
         <source>Next Audio Track</source>
-        <translation type="unfinished"></translation>
+        <translation>Traccia Audio Successiva</translation>
     </message>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="23"/>
         <source>Show Audio tracks</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostra tracce Audio</translation>
     </message>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="33"/>
         <source>Next Subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>Sottotitoli Successivi</translation>
     </message>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="33"/>
         <source>Show Subtitles</source>
-        <translation type="unfinished">Mostra Sottotitoli</translation>
+        <translation>Mostra Sottotitoli</translation>
     </message>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="43"/>
         <source>Show/Hide Playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostra/Nascondi Lista di Riproduzione</translation>
     </message>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="43"/>
         <source>Show Playlist Menu</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostra Menu Lista di Riproduzione</translation>
     </message>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="102"/>
         <source>Show/Hide milliseconds</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostra/Nascondi millisecondi</translation>
     </message>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="106"/>
         <source>Toggle end time/left time</source>
-        <translation type="unfinished"></translation>
+        <translation>Alterna tempo fine/tempo rimanente</translation>
     </message>
 </context>
 </TS>
