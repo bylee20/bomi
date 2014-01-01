@@ -94,7 +94,7 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 				auto fmtIt = fmtStack.begin();
 				auto tagIt = tagStack.begin();
 				for (; tagIt != tagStack.end(); ++tagIt, ++fmtIt) {
-					if (tagIt->compare(_MidRef(tag.name, 1)) == 0) {
+					if (tagIt->compare(_MidRef(tag.name, 1), Qt::CaseInsensitive) == 0) {
 						add_format(*fmtIt);
 						fmtStack.erase(fmtIt);
 						tagStack.erase(tagIt);
