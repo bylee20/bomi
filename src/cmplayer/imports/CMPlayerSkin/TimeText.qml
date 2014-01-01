@@ -4,7 +4,7 @@ import CMPlayerCore 1.0 as Core
 Button {
 	width: textWidth; height: parent.height; textColor: "white"
 	property int msecs: 0
-	property int __secs: (msecs/1000.0).toFixed(0)
+	property int __secs: (msecs/1000.0) | 0
 	property bool showMSecs: false
 	function getText(msec, point) {
 		var text = "";
@@ -20,13 +20,8 @@ Button {
 		text += hours.toString();
 		text += mins < 10 ? ":0" : ":";
 		text += mins.toString();
-		if (point) {
-			text += secs < 10 ? ":0" : ":";
-			text += secs.toFixed(3);
-		} else {
-			text += secs < 9.5 ? ":0" : ":";
-			text += secs.toFixed(0);
-		}
+		text += secs < 10 ? ":0" : ":";
+		text += point ? secs.toFixed(3) : (secs | 0);
 		return text;
 	}
 	text: getText(msecs, showMSecs)
