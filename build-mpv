@@ -4,27 +4,27 @@ njobs=$(nproc)
 if [ ! $njobs ]; then
   njobs=5
 fi
-
-args="--disable-encoding --disable-libguess --disable-terminfo --disable-termcap --disable-termios --enable-iconv \
-  --disable-lirc --disable-lircc --disable-joystick --disable-vm --disable-xf86keysym --disable-radio \
-  --disable-radio-capture --disable-radio-v4l2 --disable-tv --disable-tv-v4l2 --disable-pvr \
-  --disable-smb --disable-lcms2 --disable-vcd --disable-bluray --enable-dvdread \
-  --disable-enca --enable-pthreads --disable-lua \
-  --disable-rpath --disable-libpostproc --disable-libavdevice --disable-libavfilter --disable-vf-lavfi --disable-af-lavfi --disable-mng \
-  --disable-jpeg --enable-libcdio --disable-ladspa --disable-libbs2b --enable-mpg123 --disable-libavresample \
-  --disable-gl --disable-caca --disable-direct3d --disable-sdl --disable-sdl2 --disable-xv --disable-vdpau \
-  --disable-vm --disable-xinerama --disable-x11 --disable-wayland --disable-xss --disable-corevideo --disable-cocoa \
-  --disable-rsound --enable-portaudio --enable-openal --disable-dsound --disable-wasapi --disable-sndio --enable-select \
-  --disable-cross-compile --disable-shm"
+args="--disable-debug-build --disable-manpage-build --disable-pdf-build --disable-vf-dlopen-filters --disable-macosx-bundle \
+  --enable-iconv --disable-terminfo --disable-termcap --disable-termios --disable-shm --disable-libguess --disable-libsmbclient \
+  --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --disable-dvdnav --enable-cdda \
+  --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
+  --disable-vf-lavfi --disable-af-lavfi --disable-libavdevice --disable-libpostproc --disable-libavresample \
+  --disable-sdl2 --disable-sdl --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi --enable-portaudio \
+  --disable-cocoa --disable-wayland --disable-x11 --disable-xss --disable-xext --disable-xv --disable-xinerama \
+  --disable-xf86vm --disable-xf86xk --disable-gl-cocoa --disable-gl-x11 --disable-gl-wayland --disable-gl-win32 --disable-gl \
+  --disable-corevideo --disable-vdpau --disable-vdpau-gl-x11 --disable-vaapi --disable-vaapi-vpp --disable-vaapi-glx --disable-caca \
+  --disable-dvb --disable-dvbin --disable-jpeg --disable-direct3d --disable-vda-gl --disable-vdpau-decoder --disable-vdpau-hwaccel \
+  --disable-radio --disable-radio-capture --disable-radio-v4l2 --disable-tv --disable-tv-v4l2 --disable-libv4l2 --disable-pvr \
+  --disable-audio-input --disable-lua"
 
 kern=`uname -s`
 if test $kern = "Darwin"; then
   echo "Build for OS X"
-  args="$args --enable-coreaudio --disable-alsa --disable-pulse --disable-jack --disable-vaapi --enable-vda"
+  args="$args --enable-coreaudio --enable-vda-hwaccel"
   PKG_CONFIG_PATH="/usr/X11/lib/pkgconfig:${PKG_CONFIG_PATH}"
 elif test $kern = "Linux"; then
   echo "Build for Linux"
-  args="$args --disable-coreaudio --enable-alsa --enable-pulse --enable-jack --enable-vaapi --disable-vda --enable-ossaudio"
+  args="$args --enable-oss-audio --enable-pulse --enable-jack --enable-alsa" # --enable-vaapi-hwaccel
 else
   echo "Not supported!"
   exit
@@ -38,16 +38,16 @@ else # libquvi9 doesn't exist
   args="$args --disable-libquvi9"
 fi
 
-cd src/mpv && make distclean;  ./configure $args
-make -j $njobs mpv
+cd src/mpv && ./waf distclean;  ./waf configure $args
+./waf build -j $njobs
 
 allobjs=`find . -name '*.o'`
 objs=""
 for obj in $allobjs; do
-	if [[ $obj =~ ^.*(vo_null|af_dummy|vo_vaapi|decode/vaapi|vdpau|vda).o$ ]]; then
-		continue
-	fi
-	objs+=" $obj"
+  if [[ $obj =~ ^.*(vo_null|af_dummy|vo_vaapi|decode/vaapi|vdpau|vda|conf_check_.*).o$ ]]; then
+    continue
+  fi
+  objs+=" $obj"
 done
 
 install -d ../../build/lib

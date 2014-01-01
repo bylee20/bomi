@@ -7,7 +7,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <video/mp_image.h>
 #include <video/fmt-conversion.h>
-#include <mpvcore/cpudetect.h>
+#include <common/cpudetect.h>
 }
 
 mp_image *nullMpImage(void *arg = nullptr, void(*free)(void*) = nullptr);

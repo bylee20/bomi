@@ -8,7 +8,7 @@
 extern "C" {
 #include <video/decode/lavc.h>
 #include <video/decode/dec_video.h>
-#include <mpvcore/av_common.h>
+#include <common/av_common.h>
 }
 
 static mp_image null;

@@ -1,7 +1,7 @@
 #include "mposdbitmap.hpp"
 #include "openglcompat.hpp"
 extern "C" {
-#include <sub/sub.h>
+#include <sub/osd.h>
 }
 
 bool MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) {

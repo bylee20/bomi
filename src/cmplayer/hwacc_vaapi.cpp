@@ -7,7 +7,7 @@ extern "C" {
 #include <video/decode/dec_video.h>
 #include <video/decode/lavc.h>
 #include <video/mp_image.h>
-#include <mpvcore/av_common.h>
+#include <common/av_common.h>
 #include <video/mp_image_pool.h>
 #include <va/va_glx.h>
 #include <va/va_x11.h>
@@ -177,7 +177,7 @@ void VaApiSurfacePool::clear() {
 }
 
 VaApiSurface *VaApiSurfacePool::getSurface(mp_image *mpi) {
-	return IMGFMT_IS_VAAPI(mpi->imgfmt) ? (VaApiSurface*)(quintptr)mpi->planes[1] : nullptr;
+	return mpi->imgfmt == IMGFMT_VAAPI ? (VaApiSurface*)(quintptr)mpi->planes[1] : nullptr;
 }
 
 VaApiSurface *VaApiSurfacePool::getSurface() {

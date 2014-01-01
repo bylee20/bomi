@@ -57,9 +57,8 @@ int AudioController::open(af_instance *af) {
 
 	af->control = AudioController::control;
 	af->uninit = AudioController::uninit;
-	af->play = AudioController::play;
+	af->filter = AudioController::filter;
 	af->mul = 1;
-	af->setup = nullptr;
 	af->data = &d->data;
 
 
@@ -67,7 +66,6 @@ int AudioController::open(af_instance *af) {
 }
 
 void AudioController::uninit(af_instance *af) {
-	free(af->data->audio);
 	memset(af->data, 0, sizeof(d->data));
 	auto ac = priv(af);
 	if (ac)
@@ -103,15 +101,16 @@ int AudioController::reinitialize(mp_audio *data) {
 	d->volumeChanged = false;
 	if (!data)
 		return AF_ERROR;
+	mp_audio_force_interleaved_format(data);
 	mp_audio_copy_config(&d->data, data);
 	switch (data->format) {
-	case AF_FORMAT_S16_NE:
-	case AF_FORMAT_S32_NE:
-	case AF_FORMAT_FLOAT_NE:
-	case AF_FORMAT_DOUBLE_NE:
+	case AF_FORMAT_S16:
+	case AF_FORMAT_S32:
+	case AF_FORMAT_FLOAT:
+	case AF_FORMAT_DOUBLE:
 		break;
 	default:
-		mp_audio_set_format(&d->data, AF_FORMAT_FLOAT_NE);
+		mp_audio_set_format(&d->data, AF_FORMAT_FLOAT);
 	}
 	if (!af_test_output(d->af, data))
 		return false;
@@ -150,23 +149,19 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 	switch(cmd){
 	case AF_CONTROL_REINIT:
 		return ac->reinitialize(static_cast<mp_audio*>(arg));
-	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_SET:
+	case AF_CONTROL_SET_VOLUME:
 		return AF_OK;
-	case AF_CONTROL_VOLUME_LEVEL | AF_CONTROL_GET:
-		std::copy_n(d->level, AF_NCH, (float*)arg);
+	case AF_CONTROL_GET_VOLUME:
+		*((float*)arg) = d->level[0];
 		return AF_OK;
-	case AF_CONTROL_PLAYBACK_SPEED | AF_CONTROL_SET:
-	case AF_CONTROL_SCALETEMPO_AMOUNT | AF_CONTROL_SET:
+	case AF_CONTROL_SET_PLAYBACK_SPEED:
 		d->scale = *(double*)arg;
-	case AF_CONTROL_SCALETEMPO_AMOUNT | AF_CONTROL_GET:
-		*(double*)arg = d->scale;
-		return d->tempoScalerActivated ? AF_OK : AF_UNKNOWN;
 	default:
 		return AF_UNKNOWN;
 	}
 }
 
-mp_audio *AudioController::play(af_instance *af, mp_audio *data) {
+int AudioController::filter(af_instance *af, mp_audio *data, int /*flags*/) {
 	auto ac = priv(af); auto d = ac->d;
 	af->mul = 1.0;
 	af->delay = 0.0;
@@ -180,7 +175,7 @@ mp_audio *AudioController::play(af_instance *af, mp_audio *data) {
 		af->mul *= d->scaler->multiplier();
 		af->delay = d->scaler->delay();
 	}
-	return data;
+	return 0;
 }
 
 bool AudioController::setNormalizerActivated(bool on) {
@@ -236,8 +231,6 @@ af_info create_info() {
 	static af_info info = {
 		"CMPlayer audio controller",
 		"dummy",
-		"xylosper",
-		"",
 		AF_FLAGS_NOT_REENTRANT,
 		AudioController::open,
 		nullptr,

@@ -88,7 +88,7 @@ public:
 			reset(ac);
 		if (!needToApply())
 			return;
-		const int max_samples_out = ((int)(b2s(data->len) / m_samples_stride_scaled) + 1) * m_samples_stride;
+		const int max_samples_out = ((int)(s2f(data->samples) / m_samples_stride_scaled) + 1) * m_samples_stride;
 		if (max_samples_out > m_buffer.size())
 			m_buffer.resize(max_samples_out);
 
@@ -122,8 +122,8 @@ public:
 	mp_audio* play(mp_audio* data) override {
 		if (needToApply()) {
 			Q_ASSERT(m_buffer_end != nullptr);
-			data->audio = m_buffer.data();
-			data->len   = s2b(m_buffer_end - m_buffer.data());
+			data->planes[0] = m_buffer.data();
+			data->samples   = (m_buffer_end - m_buffer.data())/data->sstride;
 		}
 		return data;
 	}
@@ -164,7 +164,7 @@ public:
 	}
 private:
 	int fill_queue(const mp_audio* data, int samples_offset) {
-		int samples_in = b2s(data->len) - samples_offset;
+		int samples_in = f2s(data->samples) - samples_offset;
 		int offset_unchanged = samples_offset;
 
 		if (m_samples_to_slide > 0) {
@@ -176,7 +176,7 @@ private:
 			} else {
 				int samples_skip;
 				m_samples_to_slide -= m_samples_queued;
-				samples_skip = MPMIN(m_samples_to_slide, samples_in);
+				samples_skip = qMin(m_samples_to_slide, samples_in);
 				m_samples_queued = 0;
 				m_samples_to_slide -= samples_skip;
 				samples_offset += samples_skip;
@@ -185,9 +185,9 @@ private:
 		}
 
 		if (samples_in > 0) {
-			int samples_copy = MPMIN(m_queue.size() - m_samples_queued, samples_in);
+			int samples_copy = qMin(m_queue.size() - m_samples_queued, samples_in);
 			Q_ASSERT(samples_copy >= 0);
-			std::copy_n((const SampleType*)data->audio + samples_offset, samples_copy, m_queue.data() + m_samples_queued);
+			std::copy_n((const SampleType*)data->planes[0] + samples_offset, samples_copy, m_queue.data() + m_samples_queued);
 			m_samples_queued += samples_copy;
 			samples_offset += samples_copy;
 		}
@@ -276,10 +276,11 @@ public:
 	mp_audio *play(mp_audio *data) override {
 		const int srcNch = channels_in().num;
 		const int dstNch = channels().num;
-		auto src = (T*)(data->audio);
+		auto src = (T*)(data->planes[0]);
 		auto dest = src;
-		int len = data->len*dstNch/srcNch;
-		if (len != data->len) {
+		const int srcLen = data->samples*data->sstride;
+		int len = srcLen*dstNch/srcNch;
+		if (len != srcLen) {
 			_Expand(m_buffer, len);
 			dest = m_buffer.data();
 		}
@@ -288,14 +289,14 @@ public:
 		else if (m_map.isEmpty()) {
 			Q_ASSERT(channels() == channels_in());
 			Q_ASSERT(dest == src);
-			const int frames = s2f(b2s(data->len));
+			const int frames = data->samples;
 			for (int i=0; i<frames; ++i) {
 				for (int ch = 0; ch < dstNch; ++ch)
 					src[ch] = Clip<method, T>::apply(src[ch]*m_level[ch]*m_gain[ch]);
 				src += dstNch;
 			}
 		} else {
-			const int frames = s2f(b2s(data->len));
+			const int frames = data->samples;
 			for (int i=0; i<frames; ++i) {
 				for (int ch = 0; ch < dstNch; ++ch) {
 					auto dstSpeaker = (mp_speaker_id)channels().speaker[ch];
@@ -312,9 +313,9 @@ public:
 				if (src != dest)
 					src += srcNch;
 			}
-			if (len != data->len) {
-				data->audio = m_buffer.data();
-				data->len = len;
+			if (len != srcLen) {
+				data->planes[0] = m_buffer.data();
+				data->samples = m_buffer.size()/data->sstride;
 				mp_audio_set_channels(data, &channels());
 			}
 		}
@@ -334,11 +335,10 @@ private:
 		m_mul = (double)channels().num/(double)channels_in().num;
 	}
 	QVector<BufferInfo> getInfo(const mp_audio *data) const {
-		const int samples = b2s(data->len);
-		const int frames = s2f(samples);
+		const int frames = data->samples;
 		const int nch = data->nch;
 		QVector<BufferInfo> infos(nch, BufferInfo(frames));
-		auto p = static_cast<const T*>(data->audio);
+		auto p = static_cast<const T*>(data->planes[0]);
 		for (int i=0; i<frames; ++i) {
 			for (int ch = 0; ch < nch; ++ch)
 				infos[ch].level += toLevel<T>(p[ch]);
@@ -366,7 +366,7 @@ private:
 			m_buffers.clear();
 		if (_Change(m_option, ac->normalizerOption()))
 			m_buffers.clear();
-		if (!m_normalizer || data->len <= 0) {
+		if (!m_normalizer || data->samples <= 0) {
 			std::fill_n(m_gain, AF_NCH, 1.0);
 			return;
 		}
@@ -416,10 +416,10 @@ private:
 #define DEC_CREATE(Class) \
 Class *Class::create(int format) { \
 	switch (format) { \
-	case AF_FORMAT_S16_NE:    return new Class##Impl<qint16>(format); \
-	case AF_FORMAT_S32_NE:    return new Class##Impl<qint32>(format); \
-	case AF_FORMAT_FLOAT_NE:  return new Class##Impl<float> (format);  \
-	case AF_FORMAT_DOUBLE_NE: return new Class##Impl<double>(format); \
+	case AF_FORMAT_S16:    return new Class##Impl<qint16>(format); \
+	case AF_FORMAT_S32:    return new Class##Impl<qint32>(format); \
+	case AF_FORMAT_FLOAT:  return new Class##Impl<float> (format);  \
+	case AF_FORMAT_DOUBLE: return new Class##Impl<double>(format); \
 	default:			   return nullptr; \
 	} \
 }
@@ -428,13 +428,13 @@ DEC_CREATE(TempoScaler)
 template<ClippingMethod method>
 VolumeController *create(int format) {
 	switch (format) {
-	case AF_FORMAT_S16_NE:
+	case AF_FORMAT_S16:
 		return new VolumeControllerImpl<method, qint16>(format);
-	case AF_FORMAT_S32_NE:
+	case AF_FORMAT_S32:
 		return new VolumeControllerImpl<method, qint32>(format);
-	case AF_FORMAT_FLOAT_NE:
+	case AF_FORMAT_FLOAT:
 		return new VolumeControllerImpl<method, float> (format);
-	case AF_FORMAT_DOUBLE_NE:
+	case AF_FORMAT_DOUBLE:
 		return new VolumeControllerImpl<method, double>(format);
 	default:
 		return nullptr;

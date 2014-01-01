@@ -10,18 +10,18 @@
 #include "deintinfo.hpp"
 #include "dataevent.hpp"
 #include "playengine.hpp"
-#include <mpvcore/mp_cmplayer.h>
+#include <player/mp_cmplayer.h>
 #include <array>
 
 extern "C" {
 #include <video/decode/lavc.h>
-#include <mpvcore/command.h>
+#include <player/command.h>
 #include <video/out/vo.h>
 #include <video/decode/vd.h>
-#include <mpvcore/playlist.h>
-#include <mpvcore/codecs.h>
-#include <mpvcore/m_property.h>
-#include <mpvcore/input/input.h>
+#include <common/playlist.h>
+#include <common/codecs.h>
+#include <options/m_property.h>
+#include <input/input.h>
 #include <audio/filter/af.h>
 #include <video/filter/vf.h>
 #include <audio/out/ao.h>
@@ -31,18 +31,6 @@ extern "C" {
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <mpvcore/mp_msg.h>
-#define MSGSIZE_MAX 6144
-
-void mp_msg_log_va2(struct mp_log *log, int lev, const char *format, va_list va) {
-	if (!mp_msg_test_log(log, lev))
-		return; // do not display
-	if (format[0] == '[')
-		return;
-	vprintf(format, va);
-	fflush(stdout);
-}
-
 }
 #undef min
 

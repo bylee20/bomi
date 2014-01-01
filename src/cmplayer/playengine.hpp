@@ -205,8 +205,7 @@ signals:
 	void currentVideoStreamChanged(int stream);
 	void subtitleTrackInfoChanged();
 private:
-	int playImage(const Mrl &mrl, int &terminated, int &duration);
-	int playAudioVideo(const Mrl &mrl, int &terminated, int &duration);
+	void onMpvStageChanged(int stage);
 	void exec();
 	void setState(PlayEngine::State state);
 	void customEvent(QEvent *event);

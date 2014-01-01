@@ -33,7 +33,7 @@ public:
 private:
 	static int open(af_instance *af);
 	int reinitialize(mp_audio *data);
-	static mp_audio *play(af_instance *af, mp_audio *data);
+	static int filter(af_instance *af, mp_audio *data, int flags);
 	static void uninit(af_instance *af);
 	static int control(af_instance *af, int cmd, void *arg);
 	struct Data;

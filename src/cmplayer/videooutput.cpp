@@ -13,9 +13,8 @@ extern "C" {
 #include <video/out/vo.h>
 #include <video/vfcap.h>
 #include <video/decode/dec_video.h>
-#include <mpvcore/m_option.h>
-#include <mpvcore/mp_core.h>
-#include <sub/sub.h>
+#include <options/m_option.h>
+#include <player/core.h>
 #include <sub/sd.h>
 struct sd *sub_get_last_sd(struct dec_sub *sub);
 }
@@ -34,15 +33,10 @@ vo_driver create_driver() {
 	options[0].is_new_option = 1;
 	options[0].type = &m_option_type_string;
 
-	static vo_info_t info;
-	info.name = "CMPlayer video output";
-	info.short_name	= "null";
-	info.author = "xylosper <darklin20@gmail.com>";
-	info.comment = "";
-
 	static vo_driver driver;
 	memset(&driver, 0, sizeof(driver));
-	driver.info = &info;
+	driver.description = "CMPlayer video output";
+	driver.name = "null";
 	driver.buffer_frames = true;
 	driver.preinit = VideoOutput::preinit;
 	driver.reconfig = VideoOutput::reconfig;
@@ -212,26 +206,26 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 	};
 	auto d = priv(vo)->d;
 	if (auto r = d->renderer) {
-		bool ass = false;
-		if (osd->dec_sub) {
-			auto s = sub_get_last_sd(osd->dec_sub);
-			ass = s && !qstrcmp(s->driver->name, "ass");
-		}
+//		bool ass = false;
+//		if (osd->dec_sub) {
+//			auto s = sub_get_last_sd(osd->dec_sub);
+//			ass = s && !qstrcmp(s->driver->name, "ass");
+//		}
 		const auto dpr = r->devicePixelRatio();
 		auto item = r->mpOsd();
-		if (!ass) { // never software scaling
-			d->osd.w = d->format.width();
-			d->osd.h = d->format.height();
-			d->osd.video_par = 1.0;
-		} else {
+//		if (!ass) { // never software scaling
+//			d->osd.w = d->format.width();
+//			d->osd.h = d->format.height();
+//			d->osd.video_par = 1.0;
+//		} else {
 			auto size = item->targetSize();
-			const auto unscaled = d->renderer->sizeHint();
-			if (_Area(size) < _Area(unscaled))
-				size = unscaled; // scale-down
+//			const auto unscaled = d->renderer->sizeHint();
+//			if (_Area(size) < _Area(unscaled))
+//				size = unscaled; // scale-down
 			d->osd.w = size.width();
 			d->osd.h = size.height();
-			d->osd.video_par = vo->aspdat.par;
-		}
+//			d->osd.video_par = vo->aspdat.par;
+//		}
 		d->osd.w *= dpr;
 		d->osd.h *= dpr;
 		d->osd.display_par = vo->aspdat.monitor_par;
@@ -265,7 +259,7 @@ int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	case IMGFMT_NV12:		case IMGFMT_NV21:
 	case IMGFMT_YUYV:		case IMGFMT_UYVY:
 	case IMGFMT_BGRA:		case IMGFMT_RGBA:
-		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW | VFCAP_FLIP;
+		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
 	default:
 		return 0;
 	}
