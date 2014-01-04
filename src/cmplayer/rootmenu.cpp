@@ -158,6 +158,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		repeat.addActionToGroup(_L("subtitle"), false)->setData(int('s'));
 		repeat.addActionToGroup(_L("quit"), false)->setData(int('q'));
 	play.addSeparator();
+	play.addAction(_L("dvd-menu"));
 	auto &seek = *play.addMenu(_L("seek"));
 		auto forward1 = seek.addActionToGroup(_L("forward1"), false, _L("relative"));
 		auto forward2 = seek.addActionToGroup(_L("forward2"), false, _L("relative"));
@@ -394,6 +395,7 @@ void RootMenu::update(const Pref &p) {
 	play.a("stop", tr("Stop"));
 	play.a("prev", tr("Play Previous"));
 	play.a("next", tr("Play Next"));
+	play.a("dvd-menu", tr("DVD Menu"));
 
 	auto &speed = play("speed", tr("Playback Speed"));
 	updateStepActions(speed, "%1%", p.speed_step);

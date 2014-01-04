@@ -53,6 +53,7 @@ class PlayEngine : public QObject {
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Loading = 16, Error = 32, Running = Playing | Loading };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
+	enum DVDCmd { DVDMenu };
 	PlayEngine();
 	PlayEngine(const PlayEngine&) = delete;
 	PlayEngine &operator = (const PlayEngine &) = delete;
@@ -153,6 +154,9 @@ public:
 	SubtitleTrackInfoObject *subtitleTrackInfo() const;
 	void setSubtitleTracks(const QStringList &tracks);
 	void setCurrentSubtitleIndex(int idx);
+	void sendMouseClick(const QPointF &pos);
+	void sendMouseMove(const QPointF &pos);
+	void sendDVDCommand(DVDCmd cmd);
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);

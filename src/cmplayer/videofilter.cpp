@@ -18,7 +18,7 @@ VideoFilter::~VideoFilter() {
 }
 
 double VideoFilter::nextPTS(int split) const {
-	return d->pts + d->i_pts++*d->step(split);
+	return d->pts != MP_NOPTS_VALUE ? d->pts + d->i_pts++*d->step(split) : MP_NOPTS_VALUE;
 }
 
 bool VideoFilter::apply(const VideoFrame &in, QLinkedList<VideoFrame> &queue) {

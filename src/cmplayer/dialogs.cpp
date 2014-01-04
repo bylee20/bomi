@@ -369,13 +369,14 @@ OpenDvdDialog::OpenDvdDialog(QWidget *parent)
 	d->ok = d->ui.buttonBox->button(QDialogButtonBox::Ok);
 	d->ok->setEnabled(false);
 	connect(d->ui.device, SIGNAL(editTextChanged(QString)), this, SLOT(checkDevice(QString)));
+	checkDevice(d->ui.device->currentText());
 }
 
 OpenDvdDialog::~OpenDvdDialog() {
 	delete d;
 }
 
-void OpenDvdDialog::setDevices(const QStringList &devices) {
+void OpenDvdDialog::setDeviceList(const QStringList &devices) {
 	d->ui.device->clear();
 	d->ui.device->addItems(devices);
 }
@@ -384,14 +385,22 @@ void OpenDvdDialog::checkDevice(const QString &device) {
 	const QFileInfo info(device);
 	const bool exists = info.exists();
 	d->ok->setEnabled(exists);
-	if (exists)
-		d->ui.available->setText(tr("Selected device is available."));
-	else {
-		d->ui.available->setText(_L("<font color='red'>") % tr("Selected device doesn't exists.") % _L("</font>"));
-	}
+	d->ui.available->setText(exists ? tr("Selected device is available.")
+		: _L("<font color='red'>") % tr("Selected device doesn't exists.") % _L("</font>"));
 }
 
 QString OpenDvdDialog::device() const {
 	return d->ui.device->currentText();
 }
 
+void OpenDvdDialog::setUseMenu(bool use) {
+	d->ui.menu->setChecked(use);
+}
+
+bool OpenDvdDialog::useMenu() const {
+	return d->ui.menu->isChecked();
+}
+
+void OpenDvdDialog::setDevice(const QString &device) {
+	d->ui.device->setCurrentText(device);
+}

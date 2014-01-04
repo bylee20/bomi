@@ -170,6 +170,7 @@ void MpOsdItem::customEvent(QEvent *event) {
 		setVisible(false);
 		break;
 	case EnqueueFrame:
+		setVisible(true);
 		getAllData(event, d->osd);
 		forceRepaint();
 		break;

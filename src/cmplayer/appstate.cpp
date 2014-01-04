@@ -54,6 +54,8 @@ AppState::AppState() {
 	READ(playlist_visible);
 	READ(history_visible);
 	READ(playinfo_visible);
+	READ(dvd_menu);
+	READ(dvd_device);
 #undef READ
 }
 
@@ -105,6 +107,8 @@ void AppState::save() const {
 	WRITE(playlist_visible);
 	WRITE(history_visible);
 	WRITE(playinfo_visible);
+	WRITE(dvd_menu);
+	WRITE(dvd_device);
 #undef WRITE
 }
 

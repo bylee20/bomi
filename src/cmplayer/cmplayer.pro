@@ -19,7 +19,7 @@ LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv $${DESTDIR}/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lbz2 -lz
 
-PKGCONFIG += dvdread libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
+PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
     libmpg123 libcdio_paranoia libcdio libcdio_cdda libass portaudio-2.0 libquvi$${LIBQUVI_SUFFIX}
 
 macx {

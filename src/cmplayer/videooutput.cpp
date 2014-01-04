@@ -67,6 +67,9 @@ struct VideoOutput::Data {
 	mp_image_params params;
 	DeintOption deint_swdec, deint_hwdec;
 	SoftwareDeinterlacer deinterlacer;
+	struct vo *vo = nullptr;
+	QSize size, newSize;
+	bool resized = false;
 //	VaApiPostProcessor vaapi;
 };
 
@@ -79,6 +82,16 @@ VideoOutput::~VideoOutput() {
 	delete d;
 }
 
+void VideoOutput::setTargetSize(const QSize &size) {
+	if (d->vo)
+		d->newSize = size;
+}
+
+void VideoOutput::setFrameRect(const QRectF &rect) {
+	if (d->vo)
+		d->newSize = rect.size().toSize();
+}
+
 void VideoOutput::setHwAcc(HwAcc *acc) {
 	if (_Change(d->acc, acc))
 		emit hwAccChanged(d->acc);
@@ -87,6 +100,7 @@ void VideoOutput::setHwAcc(HwAcc *acc) {
 int VideoOutput::preinit(struct vo *vo) {
 	auto priv = static_cast<cmplayer_vo_priv*>(vo->priv);
 	priv->vo = address_cast<VideoOutput*>(priv->address);
+	priv->vo->d->vo = vo;
 	return 0;
 }
 
@@ -96,8 +110,11 @@ void VideoOutput::output(const QImage &image) {
 }
 
 void VideoOutput::setRenderer(VideoRendererItem *renderer) {
-	if (_Change(d->renderer, renderer))
+	if (_Change(d->renderer, renderer)) {
+		if (d->renderer)
+			connect(d->renderer->mpOsd(), &MpOsdItem::targetSizeChanged, this, &VideoOutput::setTargetSize);
 		updateDeint();
+	}
 }
 
 const VideoFormat &VideoOutput::format() const {
@@ -194,9 +211,14 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	case VOCTRL_RESET:
 		v->reset();
 		return true;
+	case VOCTRL_CHECK_EVENTS:
+		if (_Change(d->size, d->newSize))
+			vo->want_redraw = true;
+		return true;
 	default:
 		return VO_NOTIMPL;
 	}
+
 }
 
 void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
@@ -206,26 +228,11 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 	};
 	auto d = priv(vo)->d;
 	if (auto r = d->renderer) {
-//		bool ass = false;
-//		if (osd->dec_sub) {
-//			auto s = sub_get_last_sd(osd->dec_sub);
-//			ass = s && !qstrcmp(s->driver->name, "ass");
-//		}
 		const auto dpr = r->devicePixelRatio();
 		auto item = r->mpOsd();
-//		if (!ass) { // never software scaling
-//			d->osd.w = d->format.width();
-//			d->osd.h = d->format.height();
-//			d->osd.video_par = 1.0;
-//		} else {
-			auto size = item->targetSize();
-//			const auto unscaled = d->renderer->sizeHint();
-//			if (_Area(size) < _Area(unscaled))
-//				size = unscaled; // scale-down
-			d->osd.w = size.width();
-			d->osd.h = size.height();
-//			d->osd.video_par = vo->aspdat.par;
-//		}
+		auto size = item->targetSize();
+		d->osd.w = size.width();
+		d->osd.h = size.height();
 		d->osd.w *= dpr;
 		d->osd.h *= dpr;
 		d->osd.display_par = vo->aspdat.monitor_par;

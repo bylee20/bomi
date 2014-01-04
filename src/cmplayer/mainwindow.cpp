@@ -706,8 +706,21 @@ void MainWindow::connectMenus() {
 		GetUrlDialog dlg; if (dlg.exec()) {openMrl(dlg.url().toString(), dlg.encoding());}
 	});
 	connect(open["dvd"], &QAction::triggered, [this] () {
-		OpenDvdDialog dlg; dlg.setDevices(cApp.devices());
-		if (dlg.exec()) {openMrl(Mrl(_L("dvd://") % (dlg.device().isEmpty() ? QString("") : ("/" % dlg.device()))));}
+		OpenDvdDialog dlg;
+		dlg.setDeviceList(cApp.devices());
+		if (!d->as.dvd_device.isEmpty())
+			dlg.setDevice(d->as.dvd_device);
+		dlg.setUseMenu(d->as.dvd_menu);
+		if (dlg.exec()) {
+			d->as.dvd_menu = dlg.useMenu();
+			d->as.dvd_device = dlg.device();
+			QString mrl("dvdnav://");
+			if (d->as.dvd_menu)
+				mrl += _L("menu");
+			if (!d->as.dvd_device.isEmpty())
+				mrl += _L("/") % d->as.dvd_device;
+			openMrl(Mrl(mrl));
+		}
 	});
 	connect(open("recent").g(), &ActionGroup::triggered, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
 	connect(open("recent")["clear"], &QAction::triggered, &d->recent, &RecentInfo::clear);
@@ -758,6 +771,7 @@ void MainWindow::connectMenus() {
 			showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
 		}
 	});
+	connect(play["dvd-menu"], &QAction::triggered, [this] () { d->engine.sendDVDCommand(PlayEngine::DVDMenu); });
 	connect(play("seek").g("subtitle"), &ActionGroup::triggered, [this] (QAction *a) {
 		const int key = a->data().toInt();
 		const int time = (key < 0 ? d->subtitle.previous() : (key > 0 ? d->subtitle.next() : d->subtitle.current()));
@@ -1275,6 +1289,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 	QWidget::mouseMoveEvent(event);
 	d->cancelToHideCursor();
 	const bool full = isFullScreen();
+	const auto gpos = event->globalPos();
 	if (full) {
 		if (d->moving) {
 			d->moving = false;
@@ -1282,12 +1297,12 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 		}
 	} else {
 		if (d->moving) {
-			const QPoint pos = event->globalPos();
-			move(this->pos() + pos - d->prevPos);
-			d->prevPos = pos;
+			move(this->pos() + gpos - d->prevPos);
+			d->prevPos = gpos;
 		}
 	}
 	d->readyToHideCursor();
+	d->engine.sendMouseMove(d->renderer.mapToVideo(event->pos()));
 }
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
@@ -1343,6 +1358,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 		d->contextMenu.exec(QCursor::pos());
 	else
 		d->contextMenu.hide();
+	d->engine.sendMouseClick(d->renderer.mapToVideo(event->pos()));
 }
 void MainWindow::wheelEvent(QWheelEvent *event) {
 	QWidget::wheelEvent(event);
@@ -1677,6 +1693,10 @@ void MainWindow::updateMrl(const Mrl &mrl) {
 		clearSubtitleFiles();
 	updateTitle();
 	d->syncSubtitleFileMenu();
+	const auto dvd = mrl.isDvd();
+	auto menu = d->menu("play")["dvd-menu"];
+	menu->setEnabled(dvd);
+	menu->setVisible(dvd);
 }
 
 void MainWindow::clearSubtitleFiles() {

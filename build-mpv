@@ -6,7 +6,7 @@ if [ ! $njobs ]; then
 fi
 args="--disable-debug-build --disable-manpage-build --disable-pdf-build --disable-vf-dlopen-filters --disable-macosx-bundle \
   --enable-iconv --disable-terminfo --disable-termcap --disable-termios --disable-shm --disable-libguess --disable-libsmbclient \
-  --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --disable-dvdnav --enable-cdda \
+  --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --enable-dvdnav --enable-cdda \
   --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
   --disable-vf-lavfi --disable-af-lavfi --disable-libavdevice --disable-libpostproc --disable-libavresample \
   --disable-sdl2 --disable-sdl --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi --enable-portaudio \
@@ -38,7 +38,7 @@ else # libquvi9 doesn't exist
   args="$args --disable-libquvi9"
 fi
 
-cd src/mpv && ./waf distclean;  ./waf configure $args
+cd src/mpv && ./waf clean; ./waf distclean; ./waf configure $args
 ./waf build -j $njobs
 
 allobjs=`find . -name '*.o'`

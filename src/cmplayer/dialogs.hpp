@@ -104,8 +104,11 @@ class OpenDvdDialog : public QDialog {
 public:
 	OpenDvdDialog(QWidget *parent = 0);
 	~OpenDvdDialog();
-	void setDevices(const QStringList &devices);
+	void setDeviceList(const QStringList &devices);
+	void setDevice(const QString &device);
 	QString device() const;
+	bool useMenu() const;
+	void setUseMenu(bool use);
 public slots:
 	void checkDevice(const QString &device);
 private:

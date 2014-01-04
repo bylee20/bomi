@@ -70,6 +70,7 @@ public:
 	ColorRange range() const;
 	int droppedFrames() const;
 	void reset();
+	QPointF mapToVideo(const QPointF &pos);
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -81,7 +82,8 @@ signals:
 	void frameImageObtained(const QImage &image) const;
 	void effectsChanged(Effects effects);
 	void offsetChanged(const QPoint &pos);
-	void screenRectChanged(const QRectF rect);
+	void screenRectChanged(const QRectF &rect);
+	void frameRectChanged(const QRectF &rect);
 private:
 	void initializeGL() override;
 	void finalizeGL() override;

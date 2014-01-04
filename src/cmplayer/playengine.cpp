@@ -4,6 +4,7 @@
 #include "globalqmlobject.hpp"
 
 extern "C" {
+#include <input/keycodes.h>
 #include <audio/decode/dec_audio.h>
 #include <demux/demux.h>
 }
@@ -81,8 +82,24 @@ struct PlayEngine::Data {
 		if (_Change(playback.begin, int(get_start_time(mpctx)*1000))
 				| _Change(playback.duration, int(get_time_length(mpctx)*1000))) {
 			postData(p, TimeRangeChange, playback.begin, playback.duration);
-			if (playback.duration)
+			auto d = this;
+			if (playback.duration) {
+				auto &chapters = d->playback.chapters;
+				chapters.resize(get_chapter_count(d->mpctx));
+				for (int i=0; i<chapters.size(); ++i) {
+					chapters[i].m_time = chapter_start_time(d->mpctx, i)*1000;
+					const QString time = _MSecToString(chapters[i].m_time, _L("hh:mm:ss.zzz"));
+					if (char *str = chapter_name(d->mpctx, i)) {
+						chapters[i].m_name = QString::fromLocal8Bit(str);
+						if (chapters[i].m_name != time)
+							chapters[i].m_name += '(' % time % ')';
+						talloc_free(str);
+					} else
+						chapters[i].m_name = time;
+					chapters[i].m_id = i;
+				}
 				postData(p, UpdateChapterList, playback.chapters);
+			}
 		}
 	}
 	void checkCurrentStreams() {
@@ -291,6 +308,7 @@ PlayEngine::PlayEngine()
 	mp_register_player_stage_notifier(stageNotifier);
 	mp_register_player_command_filter(Data::mpCommandFilter);
 	mp_register_player_event_filter(Data::mpEventFilter);
+
 	connect(&d->imageTicker, &QTimer::timeout, [this] () {
 		bool begin = false, duration = false, pos = false;
 		if (d->hasImage) {
@@ -760,9 +778,19 @@ void PlayEngine::setCurrentChapter(int id) {
 void PlayEngine::setCurrentDvdTitle(int id) {
 	auto mrl = d->playlist.loadedMrl();
 	if (mrl.isDvd()) {
-		const QString path = "dvd://" % QString::number(id) % mrl.location().mid(6);
+		const QString path = "dvdnav://" % QString::number(id) % mrl.location().mid(6);
 		d->fileName = path.toLocal8Bit();
 		d->tellmp("loadfile", path, 0);
+	}
+}
+
+void PlayEngine::sendDVDCommand(DVDCmd cmd) {
+	if (!d->playback.mrl.isDvd())
+		return;
+	switch (cmd) {
+	case DVDMenu:
+		mp_nav_user_input(d->mpctx, const_cast<char*>("menu"));
+		break;
 	}
 }
 
@@ -802,12 +830,17 @@ void PlayEngine::onMpvStageChanged(int stage) {
 		}
 		d->mpctx->opts->stream_cache_size = d->getCache(Mrl(QString::fromLocal8Bit(d->mpctx->playlist->current->filename)));
 		d->mpctx->opts->audio_driver_list->name = d->ao.data();
-		d->mpctx->opts->play_start.pos = d->start*1e-3;
-		d->mpctx->opts->play_start.type = REL_TIME_ABSOLUTE;
+		auto &start = d->mpctx->opts->play_start;
+		if (!d->playback.mrl.isDvd()) {
+			start.pos = d->start*1e-3;
+			start.type = REL_TIME_ABSOLUTE;
+		} else {
+			start.pos = 0.0;
+			start.type = REL_TIME_NONE;
+		}
 		d->setmp("audio-delay", d->audioSync*0.001);
 		d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
 		d->video->setDeintEnabled(d->deint != DeintMode::None);
-
 		break;
 	} case MP_STAGE_OPEN_STREAM:
 		break;
@@ -829,20 +862,6 @@ void PlayEngine::onMpvStageChanged(int stage) {
 			}
 		}
 		postData(this, UpdateDVDInfo, dvd);
-		auto &chapters = d->playback.chapters;
-		chapters.resize(get_chapter_count(d->mpctx));
-		for (int i=0; i<chapters.size(); ++i) {
-			chapters[i].m_time = chapter_start_time(d->mpctx, i)*1000;
-			const QString time = _MSecToString(chapters[i].m_time, _L("hh:mm:ss.zzz"));
-			if (char *str = chapter_name(d->mpctx, i)) {
-				chapters[i].m_name = QString::fromLocal8Bit(str);
-				if (chapters[i].m_name != time)
-					chapters[i].m_name += '(' % time % ')';
-				talloc_free(str);
-			} else
-				chapters[i].m_name = time;
-			chapters[i].m_id = i;
-		}
 		uint title = 0, titles = 0;
 		if (d->mpctx->demuxer && d->mpctx->demuxer->stream) {
 			auto stream = d->mpctx->demuxer->stream;
@@ -869,7 +888,7 @@ void PlayEngine::onMpvStageChanged(int stage) {
 				setState(state);
 			if (_Change(d->playback.cache, mp_get_cache_percent(d->mpctx)))
 				postData(this, UpdateCache, d->playback.cache);
-			if (_Change(d->playback.chapter, get_current_chapter(d->mpctx)))
+			if (_Change(d->playback.chapter, !d->chapters.isEmpty() ? get_current_chapter(d->mpctx) : -2))
 				postData(this, UpdateCurrentChapter, d->playback.chapter);
 			d->checkCurrentStreams();
 		}
@@ -951,7 +970,7 @@ void PlayEngine::exec() {
 	auto mpvOptions = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
 	if (!mpvOptions.isEmpty())
 		args += QString::fromLocal8Bit(mpvOptions).split(' ', QString::SkipEmptyParts);
-	args << "--no-config" << "--idle" << "--no-fs" << "-v"
+	args << "--no-config" << "--idle" << "--no-fs" << "--mouse-movements" //<< "-v"
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--softvol=yes" << "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet" << "--identify"
@@ -1098,7 +1117,7 @@ PlaylistModel &PlayEngine::playlist() {
 }
 
 double PlayEngine::fps() const {
-	return hasVideo() ? d->mpctx->d_video->fps : 25;
+	return hasVideo() && d->mpctx->d_video ? d->mpctx->d_video->fps : 25;
 }
 
 void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
@@ -1219,3 +1238,16 @@ QString PlayEngine::stateText(State state) {
 }
 
 QString PlayEngine::stateText() const { return stateText(m_state); }
+
+void PlayEngine::sendMouseClick(const QPointF &pos) {
+	sendMouseMove(pos);
+	if (d->mpctx && d->init && d->mpctx->input) {
+		mp_input_put_key(d->mpctx->input, MP_MOUSE_BTN0 | MP_KEY_STATE_DOWN);
+		mp_input_put_key(d->mpctx->input, MP_MOUSE_BTN0 | MP_KEY_STATE_UP);
+	}
+}
+
+void PlayEngine::sendMouseMove(const QPointF &pos) {
+	if (d->init && d->video)
+		mp_input_set_mouse_pos(d->mpctx->input, pos.x(), pos.y());
+}

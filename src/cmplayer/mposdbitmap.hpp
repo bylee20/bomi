@@ -43,7 +43,7 @@ public:
 	void drawOn(QImage &frame) const;
 private:
 	QByteArray m_data;
-	int m_size = 0, id = -1, pos = -1;
+	int m_size = 0, m_id = -1, m_pos = -1;
 	QVector<PartInfo> m_parts;
 	Format m_format = RgbaPA;
 	QSize m_sheet = {0, 0}, m_maximumSize = {0, 0}, m_renderSize = {0, 0};

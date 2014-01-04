@@ -30,6 +30,9 @@ public:
 signals:
 	void hwAccChanged(bool activated);
 	void formatChanged(const VideoFormat &format);
+private slots:
+	void setFrameRect(const QRectF &rect);
+	void setTargetSize(const QSize &size);
 private:
 	void updateDeint();
 	void reset();

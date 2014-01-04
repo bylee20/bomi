@@ -83,6 +83,7 @@ struct VideoRendererItem::Data {
 					mposd->forceUpdateTargetSize();
 			}
 			mposd->setGeometry(vtx);
+			emit p->frameRectChanged(vtx);
 		}
 		if (letterbox->set(p->rect(), letter))
 			emit p->screenRectChanged(letterbox->screen());
@@ -456,4 +457,13 @@ void VideoRendererItem::setKernel(int blur_c, int blur_n, int blur_d, int sharpe
 	d->sharpen.set(sharpen_c, sharpen_n, sharpen_d);
 	d->fillKernel();
 	d->repaint();
+}
+
+QPointF VideoRendererItem::mapToVideo(const QPointF &pos) {
+	auto hratio = d->mposd->targetSize().width()/d->vtx.width();
+	auto vratio = d->mposd->targetSize().height()/d->vtx.height();
+	auto p = pos - d->vtx.topLeft();
+	p.rx() *= hratio;
+	p.ry() *= vratio;
+	return p;
 }

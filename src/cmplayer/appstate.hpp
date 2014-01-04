@@ -31,6 +31,7 @@ class AppState : public QObject {
 	Q_PROPERTY(int sub_position MEMBER sub_position NOTIFY subPositionChanged)
 	Q_PROPERTY(int sub_sync MEMBER sub_sync NOTIFY subSyncChanged)
 	Q_PROPERTY(ChannelLayout audio_channel_layout MEMBER audio_channel_layout NOTIFY audioChannelLayoutChanged)
+	Q_PROPERTY(bool dvd_menu MEMBER dvd_menu NOTIFY dvdMenuChanged)
 public:
 	QPointF win_pos;
 	QSize win_size;
@@ -82,6 +83,9 @@ public:
 	QStringList open_url_list;
 	bool ask_system_tray = true;
 
+	bool dvd_menu = true;
+	QString dvd_device;
+
 	void save() const;
 	static AppState &get();
 
@@ -110,6 +114,7 @@ signals:
 	void subSyncChanged();
 	void subDisplayChanged();
 	void subAlignmentChanged();
+	void dvdMenuChanged();
 private:
 	AppState();
 };
