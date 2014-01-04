@@ -17,7 +17,7 @@ Mrl::Mrl(const QString &location, const QString &name) {
 	else if (location.startsWith("dvd", Qt::CaseInsensitive))
 		m_loc = location;
 	else
-		m_loc = QUrl(location).toString();
+		m_loc = QUrl::fromPercentEncoding(location.toUtf8());
 	m_name = name;
 }
 
