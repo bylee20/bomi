@@ -84,6 +84,7 @@ BuildRequires: libquvi-devel
 BuildRequires: libva-devel
 BuildRequires: openal-soft-devel
 BuildRequires: portaudio-devel
+BuildRequires: python
 BuildRequires: xcb-util-devel
 BuildRequires: xcb-util-wm-devel
 # rpmbuild's automatic dependency handling misses qt5-qtquickcontrols
@@ -129,6 +130,9 @@ xdg-icon-resource forceupdate --theme hicolor &> /dev/null
 %doc COPYING.txt CHANGES.txt GPL.txt ICON-AUTHORS.txt ICON-COPYING.txt MPL.txt README.md
 
 %changelog
+* Mon Jan 06 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.6-1
+- Added python to BuildRequires
+
 * Sun Dec 01 2013 Ben Reedy <thebenj88@gmail.com> - 0.8.6-1
 - Updated build instructions for OpenSUSE users.
 - Updated build dependencies for OpenSUSE users.
