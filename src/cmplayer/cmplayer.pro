@@ -11,7 +11,7 @@ macx:CONFIG -= app_bundle
     isEmpty(LIBQUVI_SUFFIX): LIBQUVI_SUFFIX = $$system(if `pkg-config --exists libquvi-0.9`; then echo "-0.9"; fi)
 }
 
-QT = core gui network quick widgets sql
+QT = core gui network quick widgets
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
