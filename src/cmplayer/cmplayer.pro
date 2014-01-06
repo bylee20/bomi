@@ -11,12 +11,12 @@ macx:CONFIG -= app_bundle
     isEmpty(LIBQUVI_SUFFIX): LIBQUVI_SUFFIX = $$system(if `pkg-config --exists libquvi-0.9`; then echo "-0.9"; fi)
 }
 
-QT = core gui network quick widgets
+QT = core gui network quick widgets sql
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
-INCLUDEPATH += ../mpv $${DESTDIR}/include
+INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lbz2 -lz
 
 PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
@@ -135,7 +135,9 @@ HEADERS += playengine.hpp \
     trayicon.hpp \
     videocolor.hpp \
     interpolator.hpp \
-    channelmanipulation.hpp
+    channelmanipulation.hpp \
+    murmurhash3.hpp \
+    historydatabasemodel.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -211,7 +213,9 @@ SOURCES += main.cpp \
     trayicon.cpp \
     videocolor.cpp \
     interpolator.cpp \
-    channelmanipulation.cpp
+    channelmanipulation.cpp \
+    murmurhash3.cpp \
+    historydatabasemodel.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
