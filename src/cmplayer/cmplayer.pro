@@ -135,9 +135,7 @@ HEADERS += playengine.hpp \
     trayicon.hpp \
     videocolor.hpp \
     interpolator.hpp \
-    channelmanipulation.hpp \
-    murmurhash3.hpp \
-    historydatabasemodel.hpp
+    channelmanipulation.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -213,9 +211,7 @@ SOURCES += main.cpp \
     trayicon.cpp \
     videocolor.cpp \
     interpolator.cpp \
-    channelmanipulation.cpp \
-    murmurhash3.cpp \
-    historydatabasemodel.cpp
+    channelmanipulation.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
