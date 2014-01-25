@@ -45,7 +45,7 @@ BuildRequires:	qt5-qtquickcontrols
 BuildRequires:	qt5-qtx11extras-devel
 %endif
 
-%if %is_suse
+%if 0%{?suse_version}
 BuildRequires:	libbz2-devel
 BuildRequires:	libffmpeg-devel
 BuildRequires:	libjack-devel
