@@ -365,10 +365,9 @@ struct ChannelManipulationWidget::Data {
 
 ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
 : QWidget(parent), d(new Data) {
-	d->output = new ChannelComboBox;
-	d->input = new ChannelComboBox;
-	d->output->removeItem(0);
-	d->input->removeItem(0);
+	auto makeChannelCombo = [] () { auto c = new ChannelComboBox; c->removeItem(0); c->setRetranslatable(false); return c; };
+	d->output = makeChannelCombo();
+	d->input = makeChannelCombo();
 	d->table = new QTableWidget;
 	d->table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
