@@ -1,4 +1,4 @@
-module CMPlayerSkin
+module CMPlayer
 TextOsd			1.0 TextOsd.qml
 ProgressOsd		1.0 ProgressOsd.qml
 Logo			1.0 Logo.qml

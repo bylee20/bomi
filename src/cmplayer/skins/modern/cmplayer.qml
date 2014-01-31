@@ -1,8 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
-import CMPlayerSkin 1.0 as Skin
-import CMPlayerCore 1.0 as Core
+import CMPlayer 1.0 as Skin
 
 Skin.AppWithFloating {
 	id: app
@@ -129,13 +128,13 @@ Skin.AppWithFloating {
 		}
 	}
 	Component.onCompleted: {
-		Core.Settings.open(app.name)
-		toggler.checked = Core.Settings.getBool("toggled", false)
-		Core.Settings.close()
+		Skin.Settings.open(app.name)
+		toggler.checked = Skin.Settings.getBool("toggled", false)
+		Skin.Settings.close()
 	}
 	Component.onDestruction: {
-		Core.Settings.open(app.name)
-		Core.Settings.set("toggled", toggler.checked)
-		Core.Settings.close()
+		Skin.Settings.open(app.name)
+		Skin.Settings.set("toggled", toggler.checked)
+		Skin.Settings.close()
 	}
 }

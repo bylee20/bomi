@@ -233,27 +233,27 @@ FORMS += \
     ui/openmediafolderdialog.ui
 
 OTHER_FILES += \
-    imports/CMPlayerSkin/qmldir \
-    imports/CMPlayerSkin/TextOsd.qml \
-    imports/CMPlayerSkin/ProgressOsd.qml \
-    imports/CMPlayerSkin/PlayInfoView.qml \
-    imports/CMPlayerSkin/Osd.qml \
-    imports/CMPlayerSkin/Logo.qml \
+    imports/CMPlayer/qmldir \
+    imports/CMPlayer/TextOsd.qml \
+    imports/CMPlayer/ProgressOsd.qml \
+    imports/CMPlayer/PlayInfoView.qml \
+    imports/CMPlayer/Osd.qml \
+    imports/CMPlayer/Logo.qml \
     skins/simple/cmplayer.qml \
-    imports/CMPlayerSkin/PlaylistDock.qml \
-    imports/CMPlayerSkin/HistoryDock.qml \
-    imports/CMPlayerSkin/Button.qml \
-    imports/CMPlayerSkin/Player.qml \
-    imports/CMPlayerSkin/TimeText.qml \
+    imports/CMPlayer/PlaylistDock.qml \
+    imports/CMPlayer/HistoryDock.qml \
+    imports/CMPlayer/Button.qml \
+    imports/CMPlayer/Player.qml \
+    imports/CMPlayer/TimeText.qml \
     skins/classic/FramedButton.qml \
     skins/classic/cmplayer.qml \
     skins/modern/cmplayer.qml \
     emptyskin.qml \
-    imports/CMPlayerSkin/AppWithFloating.qml \
-    imports/CMPlayerSkin/AppWithDock.qml \
-    imports/CMPlayerSkin/TimeSlider.qml \
-    imports/CMPlayerSkin/VolumeSlider.qml \
-    imports/CMPlayerSkin/PlayInfoText.qml \
+    imports/CMPlayer/AppWithFloating.qml \
+    imports/CMPlayer/AppWithDock.qml \
+    imports/CMPlayer/TimeSlider.qml \
+    imports/CMPlayer/VolumeSlider.qml \
+    imports/CMPlayer/PlayInfoText.qml \
     skins/GaN/cmplayer.qml \
     skins/GaN/TimeText.qml \
     skins/GaN/Button.qml

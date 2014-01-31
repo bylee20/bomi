@@ -1,10 +1,9 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
-import CMPlayerCore 1.0 as Core
-import CMPlayerSkin 1.0 as Skin
+import CMPlayer 1.0
 
-Skin.AppWithDock {
+AppWithDock {
 	id: app
 	readonly property real margin: 5
 	Component {
@@ -95,28 +94,28 @@ Skin.AppWithDock {
 								id: medianumber
 								verticalAlignment: Text.AlignVCenter
 								text: "[%1/%2](%3) ".arg(playlist.loaded+1).arg(playlist.count).arg(engine.stateText)
-								font { pixelSize: 11; family: Core.Util.monospace }
+								font { pixelSize: 11; family: Util.monospace }
 							}
 							Text {
 								id: medianame
 								Layout.fillWidth: true
 								text: engine.media.name; elide: Text.ElideMiddle
-								font { pixelSize: 11; family: Core.Util.monospace }
+								font { pixelSize: 11; family: Util.monospace }
 								verticalAlignment: Text.AlignVCenter
 							}
-							Skin.TimeText { textColor: "black"; font.pixelSize: 11; msecs: engine.time }
-							Skin.TimeText { textColor: "black"; font.pixelSize: 11; text: "/" }
-							Skin.TimeText { textColor: "black"; font.pixelSize: 11; msecs: engine.end }
+							TimeText { textColor: "black"; font.pixelSize: 11; msecs: engine.time }
+							TimeText { textColor: "black"; font.pixelSize: 11; text: "/" }
+							TimeText { textColor: "black"; font.pixelSize: 11; msecs: engine.end }
 						}
 					}
 					RowLayout {
 						width: parent.width; spacing: 1; height: 10
-						Skin.TimeSlider { id: timeslider; style: slider; Layout.fillWidth: true }
+						TimeSlider { id: timeslider; style: slider; Layout.fillWidth: true }
 						FramedButton {
 							id: mute; width: height; height: parent.height; action: "audio/volume/mute"
 							icon: engine.muted ? "speaker-off.png" : "speaker-on.png"
 						}
-						Skin.VolumeSlider { id: volumeslider; width: 70; style: slider }
+						VolumeSlider { id: volumeslider; width: 70; style: slider }
 					}
 				}
 			}

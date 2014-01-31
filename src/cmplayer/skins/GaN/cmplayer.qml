@@ -1,11 +1,10 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
-import CMPlayerSkin 1.0 as Skin
-import CMPlayerCore 1.0 as Core
+import CMPlayer 1.0 as Skin
 
 Skin.AppWithFloating {
-	id: skin; name: "net.xylosper.cmplayer.skin.GaN"
+	id: skin; name: "net.xylosper.cmplayer.GaN"
 	onWidthChanged: controls.width = width < 550 ? 400 : 550
 	controls: Item {
 		width: 550; height: topBox.height + timeslide.height + bottomBox.height + 5
@@ -132,7 +131,7 @@ Skin.AppWithFloating {
 								}
 								handle: Item {}
 							}
-							Skin.Button {
+							Button {
 								width: 12; height: 12; checked: engine.muted; action: "audio/volume/mute"
 								icon: pressed ? "mute-pressed.png" : (hovered || checked ? "mute-checked.png" : "mute.png")
 							}
@@ -143,16 +142,16 @@ Skin.AppWithFloating {
 		}
 	}
 	Component.onCompleted: {
-		Core.Settings.open(skin.name)
-		timetext.checked = Core.Settings.getBool("time-checked", false)
-		endtext.checked = Core.Settings.getBool("end-checked", false)
-		Core.Settings.close()
+		Skin.Settings.open(name)
+		timetext.checked = Skin.Settings.getBool("time-checked", false)
+		endtext.checked = Skin.Settings.getBool("end-checked", false)
+		Skin.Settings.close()
 		timeslide.generateChapters()
 	}
 	Component.onDestruction: {
-		Core.Settings.open(skin.name)
-		Core.Settings.set("time-checked", timetext.checked)
-		Core.Settings.set("end-checked", endtext.checked)
-		Core.Settings.close()
+		Skin.Settings.open(name)
+		Skin.Settings.set("time-checked", timetext.checked)
+		Skin.Settings.set("end-checked", endtext.checked)
+		Skin.Settings.close()
 	}
 }

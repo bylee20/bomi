@@ -1167,9 +1167,9 @@ void PlayEngine::registerObjects() {
 	qmlRegisterType<AvInfoObject>();
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();
-	qmlRegisterType<PlayEngine>("CMPlayerCore", 1, 0, "Engine");
-	qmlRegisterSingletonType<UtilObject>("CMPlayerCore", 1, 0, "Util", utilProvider);
-	qmlRegisterSingletonType<SettingsObject>("CMPlayerCore", 1, 0, "Settings", settingsProvider);
+	qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
+	qmlRegisterSingletonType<UtilObject>("CMPlayer", 1, 0, "Util", utilProvider);
+	qmlRegisterSingletonType<SettingsObject>("CMPlayer", 1, 0, "Settings", settingsProvider);
 }
 
 void PlayEngine::setVolumeNormalizerActivated(bool on) {

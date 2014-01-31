@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import CMPlayerCore 1.0
+import CMPlayer 1.0
 
 Text {
 	id: item

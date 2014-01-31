@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import CMPlayerCore 1.0 as Core
+import CMPlayer 1.0 as Core
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
 

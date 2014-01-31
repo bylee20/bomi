@@ -1,6 +1,6 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.0
-import CMPlayerCore 1.0
+import CMPlayer 1.0
 
 Slider {
 	id: seeker

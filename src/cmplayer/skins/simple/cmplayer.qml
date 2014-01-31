@@ -2,8 +2,7 @@ import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
-import CMPlayerSkin 1.0 as Skin
-import CMPlayerCore 1.0 as Core
+import CMPlayer 1.0 as Skin
 
 Skin.AppWithDock {
 	id: app
@@ -48,7 +47,7 @@ Skin.AppWithDock {
 			anchors { fill: parent; margins: 4 } spacing: 3;
 			Skin.Button {
 				id: playPause; width: height; height: parent.height
-				action: "play/pause"; icon: (player.state === Core.Engine.Playing) ? "pause.png" : "play.png"
+				action: "play/pause"; icon: (player.state === Skin.Engine.Playing) ? "pause.png" : "play.png"
 				paddings: pressed ? 2 : (hovered ? 0 : 1)
 			}
 			Skin.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
