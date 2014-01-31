@@ -11,7 +11,7 @@ macx:CONFIG -= app_bundle
     isEmpty(LIBQUVI_SUFFIX): LIBQUVI_SUFFIX = $$system(if `pkg-config --exists libquvi-0.9`; then echo "-0.9"; fi)
 }
 
-QT = core gui network quick widgets
+QT = core gui network quick widgets sql
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
@@ -102,7 +102,6 @@ HEADERS += playengine.hpp \
     videoformat.hpp \
     mposditem.hpp \
     globalqmlobject.hpp \
-    historymodel.hpp \
     hwacc.hpp \
     subtitlestyle.hpp \
     audiocontroller.hpp \
@@ -135,7 +134,10 @@ HEADERS += playengine.hpp \
     trayicon.hpp \
     videocolor.hpp \
     interpolator.hpp \
-    channelmanipulation.hpp
+    channelmanipulation.hpp \
+    mrlstate.hpp \
+    submisc.hpp \
+    historymodel.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -182,7 +184,6 @@ SOURCES += main.cpp \
     subtitlerendereritem.cpp \
     mposditem.cpp \
     globalqmlobject.cpp \
-    historymodel.cpp \
     subtitlestyle.cpp hwacc.cpp \
     videoformat.cpp \
     audiocontroller.cpp \
@@ -211,14 +212,18 @@ SOURCES += main.cpp \
     trayicon.cpp \
     videocolor.cpp \
     interpolator.cpp \
-    channelmanipulation.cpp
+    channelmanipulation.cpp \
+    mrlstate.cpp \
+    historymodel.cpp \
+    submisc.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
     translations/cmplayer_de.ts \
     translations/cmplayer_ru.ts \
     translations/cmplayer_it.ts \
-    translations/cmplayer_cs.ts
+    translations/cmplayer_cs.ts \
+    translations/cmplayer_sr.ts
 
 FORMS += \
     ui/aboutdialog.ui \

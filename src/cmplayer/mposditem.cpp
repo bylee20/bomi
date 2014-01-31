@@ -141,7 +141,7 @@ void MpOsdItem::drawOn(sub_bitmaps *imgs) {
 	d->show = true;
 	MpOsdBitmap osd;
 	if (osd.copy(imgs, d->imageSize))
-		postData(this, EnqueueFrame, osd);
+		_PostEvent(this, EnqueueFrame, osd);
 }
 
 void MpOsdItem::drawOn(QImage &frame) {
@@ -153,10 +153,10 @@ void MpOsdItem::present(bool redraw) {
 	if (redraw)
 		return;
 	if (d->show) {
-		postData(this, Show);
+		_PostEvent(this, Show);
 		d->show = false;
 	} else
-		postData(this, Hide);
+		_PostEvent(this, Hide);
 }
 
 void MpOsdItem::customEvent(QEvent *event) {
@@ -171,7 +171,7 @@ void MpOsdItem::customEvent(QEvent *event) {
 		break;
 	case EnqueueFrame:
 		setVisible(true);
-		getAllData(event, d->osd);
+		_GetAllData(event, d->osd);
 		forceRepaint();
 		break;
 	default:

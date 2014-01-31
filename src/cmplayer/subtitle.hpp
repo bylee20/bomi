@@ -3,6 +3,7 @@
 
 #include "stdafx.hpp"
 #include "richtextdocument.hpp"
+#include "submisc.hpp"
 
 struct SubCapt : public RichTextDocument {
 	SubCapt() {index = -1;}
@@ -32,8 +33,9 @@ public:
 //		QString name, locale, klass;
 //	};
 	enum SyncType {Time, Frame};
-	SubComp(const QString &file = QString(), SyncType base = Time);
-	bool operator == (const SubComp &rhs) const {return name() == rhs.name();}
+	SubComp();
+	SubComp(const QFileInfo &file, const QString &enc, int id, SyncType base);
+	bool operator == (const SubComp &rhs) const {return m_info.path == rhs.m_info.path && m_klass == rhs.m_klass;}
 	bool operator != (const SubComp &rhs) const {return !operator==(rhs);}
 	SubCapt &operator[] (int key) { return m_capts[key]; }
 	SubCapt operator[] (int key) const { return m_capts[key]; }
@@ -56,6 +58,8 @@ public:
 
 	QString name() const;
 	const QString &fileName() const {return m_file;}
+	const QString &path() const { return m_info.path; }
+	const SubtitleFileInfo &fileInfo() const { return m_info; }
 	SyncType base() const {return m_base;}
 	bool isBasedOnFrame() const {return m_base == Frame;}
 //	const Language &language() const {return m_lang;}
@@ -69,14 +73,16 @@ public:
 	void setLanguage(const QString &lang) { m_klass = lang; }
 	bool selection() const { return m_selection; }
 	bool &selection() { return m_selection; }
+	int id() const { return m_id; }
 private:
 	friend class Parser;
-	QString m_file;
-	QString m_klass;
-	SyncType m_base;
+	QString m_file, m_klass;
+	SubtitleFileInfo m_info;
+	SyncType m_base = Time;
 //	Language m_lang;
 	Map m_capts;
-	mutable bool m_selection = false;
+	bool m_selection = false;
+	int m_id = -1;
 };
 
 typedef QMapIterator<int, SubCapt> SubtitleComponentIterator;
@@ -89,6 +95,7 @@ public:
 	int size() const {return m_comp.size();}
 	bool isEmpty() const;
 	SubComp component(double frameRate) const;
+	const QList<SubComp> &components() const { return m_comp; }
 //	int start(int time, double frameRate) const;
 //	int end(int time, double frameRate) const;
 	RichTextDocument caption(int time, double frameRate) const;

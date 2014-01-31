@@ -20,17 +20,22 @@ private:
 };
 
 template<typename... Args>
-static inline void postData(QObject *obj, int type, const Args&... args) {
+static inline void _PostEvent(QObject *obj, int type, const Args&... args) {
 	qApp->postEvent(obj, new DataEvent<Args...>(type, args...));
 }
 
 template<typename... Args>
-static inline void getAllData(QEvent *event, Args&... args) {
+static inline void _SendEvent(QObject *obj, int type, const Args&... args) {
+	DataEvent<Args...> event(type, args...); qApp->sendEvent(obj, &event);
+}
+
+template<typename... Args>
+static inline void _GetAllData(QEvent *event, Args&... args) {
 	static_cast<DataEvent<Args...>*>(event)->get(args...);
 }
 
 template<typename... Args, const int i = 0>
-static inline const typename DataEvent<Args...>::template DataType<i> &getData(QEvent *event) {
+static inline const typename DataEvent<Args...>::template DataType<i> &_GetData(QEvent *event) {
 	return static_cast<DataEvent<Args...>*>(event)->template data<i>();
 }
 

@@ -7,6 +7,7 @@
 #include <QtGui>
 #include <QtWidgets>
 #include <QtQuick>
+#include <QtSql>
 #include <set>
 #include <sys/time.h>
 #include <qmath.h>

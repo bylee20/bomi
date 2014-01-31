@@ -4,8 +4,45 @@
 #include "stdafx.hpp"
 #include "enums.hpp"
 #include "videocolor.hpp"
+#include "mrl.hpp"
+#include "mrlstate.hpp"
 
 class AppState : public QObject {
+	Q_OBJECT
+	Q_PROPERTY(StaysOnTop win_stays_on_top MEMBER win_stays_on_top NOTIFY winStaysOnTopChanged)
+public:
+	QPointF win_pos;
+	QSize win_size;
+	MrlState state;
+	// tool state
+	bool auto_exit = false;
+	bool playlist_visible = false;
+	bool history_visible = false;
+	bool playinfo_visible = false;
+	// window state
+	StaysOnTop win_stays_on_top = StaysOnTop::Playing;
+
+	// misc
+	QString open_last_folder;
+	QString open_folder_types = _L("vi");
+	QString open_last_file;
+	QString open_url_enc;
+	QStringList open_url_list;
+	bool ask_system_tray = true;
+
+	bool dvd_menu = true;
+	QString dvd_device;
+	void save() const;
+	static AppState &get() {
+		static AppState obj; return obj;
+	}
+signals:
+	void winStaysOnTopChanged();
+private:
+	AppState();
+};
+
+class AppStateOld : public QObject {
 	Q_OBJECT
 	Q_PROPERTY(InterpolatorType video_interpolator MEMBER video_interpolator NOTIFY videoInterpolatorChanged)
 	Q_PROPERTY(InterpolatorType video_chroma_upscaler MEMBER video_chroma_upscaler NOTIFY videoChromaUpscalerChanged)
@@ -33,13 +70,15 @@ class AppState : public QObject {
 	Q_PROPERTY(ChannelLayout audio_channel_layout MEMBER audio_channel_layout NOTIFY audioChannelLayoutChanged)
 	Q_PROPERTY(bool dvd_menu MEMBER dvd_menu NOTIFY dvdMenuChanged)
 public:
+	AppStateOld();
+
 	QPointF win_pos;
 	QSize win_size;
 
-// play state
+	// play state
 	int playback_speed = 100;
 
-// video state
+	// video state
 	VideoRatio video_aspect_ratio = VideoRatio::Source;
 	VideoRatio video_crop_ratio = VideoRatio::Source;
 	DeintMode video_deinterlacing = DeintMode::Auto;
@@ -55,27 +94,27 @@ public:
 	int video_effects = 0;
 
 
-// audio state
+	// audio state
 	int audio_amplifier = 100;
 	int audio_volume = 100, audio_sync = 0;
 	bool audio_muted = false, audio_volume_normalizer = false, audio_tempo_scaler = true;
 	ChannelLayout audio_channel_layout = ChannelLayout::Default;
 
-// subtitle state
+	// subtitle state
 	int sub_position = 100;
 	int sub_sync = 0;
 	SubtitleDisplay sub_display = SubtitleDisplay::OnLetterbox;
 	VerticalAlignment sub_alignment = VerticalAlignment::Bottom;
 
-// tool state
+	// tool state
 	bool auto_exit = false;
 	bool playlist_visible = false;
 	bool history_visible = false;
 	bool playinfo_visible = false;
-// window state
+	// window state
 	StaysOnTop window_stays_on_top = StaysOnTop::Playing;
 
-// misc
+	// misc
 	QString open_last_folder;
 	QString open_folder_types = _L("vi");
 	QString open_last_file;
@@ -85,10 +124,6 @@ public:
 
 	bool dvd_menu = true;
 	QString dvd_device;
-
-	void save() const;
-	static AppState &get();
-
 signals:
 	void playSpeedChanged();
 	void videoInterpolatorChanged();
@@ -116,7 +151,7 @@ signals:
 	void subAlignmentChanged();
 	void dvdMenuChanged();
 private:
-	AppState();
+	void save() const;
 };
 
 #endif // APPSTATE_HPP

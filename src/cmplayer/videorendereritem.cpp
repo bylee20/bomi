@@ -154,7 +154,7 @@ void VideoRendererItem::customEvent(QEvent *event) {
 	switch ((int)event->type()) {
 	case NewFrame:
 		if (d->queue.size() < 3)
-			d->queue.push_back(getData<VideoFrame>(event));
+			d->queue.push_back(_GetData<VideoFrame>(event));
 		update();
 		break;
 	case NextFrame:
@@ -164,7 +164,7 @@ void VideoRendererItem::customEvent(QEvent *event) {
 		d->repaint();
 		break;
 	case UpdateDeint: {
-		if (_Change(d->deint, getData<DeintMethod>(event)) && d->shader) {
+		if (_Change(d->deint, _GetData<DeintMethod>(event)) && d->shader) {
 			d->shader->setDeintMethod(d->deint);
 			d->repaint();
 		}
@@ -199,7 +199,7 @@ void VideoRendererItem::present(const VideoFrame &frame) {
 	if (!d->initialized)
 		return;
 	if (d->shader && d->queue.size() < 3)
-		postData(this, NewFrame, frame);
+		_PostEvent(this, NewFrame, frame);
 	d->mposd->present(false);
 	d->ptsIn = frame.pts();
 }
@@ -221,11 +221,11 @@ void VideoRendererItem::setAlignment(int alignment) {
 }
 
 void VideoRendererItem::rerender() {
-	postData(this, Rerender);
+	_PostEvent(this, Rerender);
 }
 
 void VideoRendererItem::setDeintMethod(DeintMethod method) {
-	postData(this, UpdateDeint, method);
+	_PostEvent(this, UpdateDeint, method);
 }
 
 double VideoRendererItem::targetAspectRatio() const {

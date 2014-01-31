@@ -29,9 +29,10 @@ Subtitle SubtitleParser::parse(const QString &fileName, const QString &enc) {
 	QFileInfo info(fileName);
 	Subtitle sub;
 
-	auto tryIt = [&sub, &all, &info] (SubtitleParser *p) {
+	auto tryIt = [enc, &sub, &all, &info] (SubtitleParser *p) {
 		p->m_all = all;
 		p->m_file = info;
+		p->m_encoding = enc;
 		const bool parsable = p->isParsable();
 		if (parsable)
 			p->_parse(sub);

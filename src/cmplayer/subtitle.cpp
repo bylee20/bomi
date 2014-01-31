@@ -4,7 +4,7 @@
 #include "charsetdetector.hpp"
 
 QString SubComp::name() const {
-	return m_klass.isEmpty() ? fileName() : fileName() % _L("(") % m_klass % _L(")");
+	return m_klass.isEmpty() ? m_file : m_file % _L("(") % m_klass % _L(")");
 }
 
 SubComp Subtitle::component(double frameRate) const {
@@ -16,9 +16,12 @@ SubComp Subtitle::component(double frameRate) const {
 	return comp;
 }
 
+SubComp::SubComp() {
+	m_capts[0].index = 0;
+}
 
-SubComp::SubComp(const QString &file, SyncType base)
-: m_file(file), m_base(base) {
+SubComp::SubComp(const QFileInfo &file, const QString &enc, int id, SyncType base)
+: m_file(file.fileName()), m_info(file.absoluteFilePath(), enc), m_base(base), m_id(id) {
 	m_capts[0].index = 0;
 }
 

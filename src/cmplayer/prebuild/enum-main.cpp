@@ -236,6 +236,7 @@ extern "C" {
 
 template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 )";
+	string isEnum = "static inline bool _IsEnumTypeId(int userType) {\n\treturn ";
 	string cpp = "#include \"enums.hpp\"";
     for (const EnumType &type : enums) {
 		string htmpl = hppTmp;
@@ -268,16 +269,21 @@ template<typename T> class EnumInfo { static constexpr int size() { return 0; } 
         replace(ctmpl, "__ENUM_COUNT", toString(type.items.size()));
 		replace(ctmpl, "__ENUM_INFOS", infos);
 
-		cout << htmpl;
 		hpp += htmpl;
 		cpp += ctmpl;
+
+		isEnum += "userType == qMetaTypeId<" + type.name + ">()\n\t\t|| ";
 	}
+	isEnum += "false;\n}\n\n";
+	hpp += isEnum;
 	hpp += "\n#endif\n";
 	fstream s_hpp, s_cpp;
 	s_hpp.open("../enums.hpp", ios::out);
 	s_cpp.open("../enums.cpp", ios::out);
 	s_hpp << hpp;
 	s_cpp << cpp;
+
+	cout << hpp;
 }
 
 int main() {

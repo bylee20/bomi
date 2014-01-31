@@ -1,153 +1,228 @@
-#include "listmodel.hpp"
 #include "historymodel.hpp"
-#include "playengine.hpp"
-#include "recentinfo.hpp"
+#include "appstate.hpp"
+
+using namespace MrlStateHelpers;
+
+struct HistoryModel::Data {
+	HistoryModel *p = nullptr;
+	QSqlQuery query, finder;
+	QSqlError error;
+	QList<Field> fields = MrlStateHelpers::fields<MrlState>();
+	QString insertTemplate, columns;
+	MrlState cached;
+	bool rememberImage = false, reload = true;
+	bool insertApp(const MrlState *state) {
+		QString q = _L("INSERT OR REPLACE INTO app (id, ") % columns % _L(") VALUES (0, %1)");
+		QString values;
+		for (auto &f : fields)
+			values += f.toSql(state->property(f.property())) % _L(", ");
+		values.chop(2);
+		return query.exec(q.arg(values));
+	}
+
+	bool insert(const MrlState *state) {
+		if (state->mrl == cached.mrl)
+			cached.mrl = Mrl();
+		QString values = toSql(state->mrl.toString()) % _L(", ")
+						% toSql(state->mrl.displayName()) % _L(", ");
+		for (auto &f : fields)
+			values += f.toSql(state->property(f.property())) % _L(", ");
+		values.chop(2);
+		return finder.exec(insertTemplate.arg(values));
+	}
+	int rows = 0;
+	bool load() {
+		if (!query.exec("SELECT mrl, name, last_played_date_time, (SELECT COUNT(*) FROM state) as total FROM state ORDER BY last_played_date_time DESC"))
+			return false;
+		Q_ASSERT(!query.isForwardOnly());
+		p->beginResetModel();
+		rows = 0;
+		if (query.next()) {
+			rows = query.value("total").toInt();
+			query.seek(-1);
+		}
+		error = QSqlError();
+		p->endResetModel();
+		reload = false;
+		return true;
+	}
+
+	void import(const QList<MrlState*> &states) {
+		db.transaction();
+		query.exec("DROP TABLE IF EXISTS state");
+		query.exec("DROP TABLE IF EXISTS app");
+		QString columns;
+		for (auto &f : this->fields)
+			columns += f.name() % _L(' ') % f.type() % _L(", ");
+		columns.chop(2);
+
+		query.exec(_L("CREATE TABLE state (mrl TEXT UNIQUE, name TEXT, ") % columns % _L(')'));
+		query.exec(_L("CREATE TABLE app (id INTEGER UNIQUE, ") % columns % _L(')'));
+		if (!states.isEmpty()) {
+			insertApp(states[0]);
+			delete states[0];
+			for (int i=1; i<states.size(); ++i) {
+				insert(states[i]);
+				delete states[i];
+			}
+		}
+		db.commit();
+	}
+	QSqlDatabase db;
+};
+
+struct SqlField {
+	QString name, type;
+};
 
 HistoryModel::HistoryModel(QObject *parent)
-: BaseListModel(parent, ColumnCount) {
-	load();
+: QAbstractTableModel(parent), d(new Data) {
+	d->p = this;
+	d->db = QSqlDatabase::addDatabase("QSQLITE", "history-model");
+	auto open = [this] () {
+		auto path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+		if (!QDir().mkpath(path))
+			return false;
+		path += "/history.db";
+		d->db.setDatabaseName(path);
+		if (!d->db.open())
+			return false;
+		return true;
+	};
+	if (!open()) {
+		qDebug() << "Cannot create database!" << d->db.lastError().text();
+		return;
+	}
+
+	for (auto &f : d->fields)
+		d->columns += f.name() % _L(", ");
+	d->columns.chop(2);
+	d->insertTemplate = _L("INSERT OR REPLACE INTO state (mrl, name, ") % d->columns % _L(") VALUES (%1)");
+	d->query = QSqlQuery(d->db);
+	d->finder = QSqlQuery(d->db);
+	d->query.exec("PRAGMA user_version");
+	int version = 0;
+	if (d->query.next())
+		version = d->query.value(0).toLongLong();
+	if (version != MrlState::Version) {
+		d->import(_ImportMrlStatesFromPreviousVersion(version, d->db));
+		d->query.exec("PRAGMA user_version = " % _N(MrlState::Version));
+	}
+	d->load();
 }
 
-HistoryModel::~HistoryModel(){
-	save();
+HistoryModel::~HistoryModel() {
+	delete d;
 }
 
-QList<Mrl> HistoryModel::top(int count) const {
-	QList<Mrl> list;
-	for (int i=0; i<count && i<m_items.size(); ++i)
-		list.push_back(m_items[i].mrl);
-	return list;
+int HistoryModel::rowCount(const QModelIndex &index) const {
+	return index.isValid() ? 0 : d->rows;
+}
+
+int HistoryModel::columnCount(const QModelIndex &index) const {
+	return index.isValid() ? 0 : 3;
+}
+
+void HistoryModel::getAppState(MrlState *appState) {
+	d->finder.exec(_L("SELECT * FROM app LIMIT 1"));
+	if (!d->finder.next()) {
+		qDebug() << "no previous app state!";
+		return;
+	}
+	for (auto &f : d->fields)
+		appState->setProperty(f.property(), f.fromSql(d->finder.value(f.name())));
+}
+
+void HistoryModel::setAppState(const MrlState *state) {
+	d->db.transaction();
+	d->insertApp(state);
+	d->db.commit();
+}
+
+bool HistoryModel::getState(MrlState *state) const {
+	if (d->cached.mrl == state->mrl) {
+		for (auto &f : d->fields)
+			state->setProperty(f.property(), d->cached.property(f.property()));
+		return true;
+	}
+	d->finder.exec(_L("SELECT * FROM state WHERE mrl = ") % toSql(state->mrl.toString()));
+	if (!d->finder.next())
+		return false;
+	for (auto &f : d->fields)
+		state->setProperty(f.property(), f.fromSql(d->finder.value(f.name())));
+	return true;
+}
+
+const MrlState *HistoryModel::find(const Mrl &mrl) const {
+	if (d->cached.mrl == mrl)
+		return &d->cached;
+	d->finder.exec(_L("SELECT * FROM state WHERE mrl = ") % toSql(mrl.toString()));
+	if (!d->finder.next())
+		return nullptr;
+	d->cached.mrl = mrl;
+	for (auto &f : d->fields)
+		d->cached.setProperty(f.property(), f.fromSql(d->finder.value(f.name())));
+	return &d->cached;
+}
+
+void HistoryModel::play(int row) {
+	if (0 <= row && row < d->rows && d->query.seek(row))
+		emit playRequested(Mrl::fromString(d->query.value("mrl").toString()));
 }
 
 QVariant HistoryModel::data(const QModelIndex &index, int role) const {
-	const int row = index.row();
-	if (0 <= row && row < m_items.size()) {
-		if (role == Qt::DisplayRole)
-			role = columnToRole(index.column());
-		switch (role) {
-		case NameRole:
-			return m_items[row].mrl.displayName();
-		case LatestPlayRole:
-			return m_items[row].date.toString(Qt::ISODate);
-		case LocationRole:
-			return m_items[row].mrl.location();
-		default:
-			return QVariant();
-		}
+	if (d->reload) {
+		d->load();
+		d->reload = false;
 	}
-	return QVariant();
+	const int row = index.row();
+	if (!(0 <= row && row < d->rows))
+		return QVariant();
+	if (!d->query.seek(row))
+		return QVariant();
+	switch (role) {
+	case NameRole:
+		return Mrl::fromString(d->query.value("mrl").toString()).displayName();
+	case LatestPlayRole:
+		return dateTimeFromSql(d->query.value("last_played_date_time").toLongLong());
+	case LocationRole:
+		return d->query.value("mrl");
+	default:
+		return QVariant();
+	}
 }
 
-HistoryModel::RoleHash HistoryModel::roleNames() const {
-	RoleHash hash;
+QHash<int, QByteArray> HistoryModel::roleNames() const {
+	QHash<int, QByteArray> hash;
 	hash[NameRole] = "name";
 	hash[LatestPlayRole] = "latestplay";
 	hash[LocationRole] = "location";
 	return hash;
 }
 
-QVariant HistoryModel::headerData(int section, Qt::Orientation orientation, int role) const {
-	if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
-		return QVariant();
-	switch (section) {
-	case Name:
-		return tr("Name");
-	case LatestPlay:
-		return tr("Latest Playback");
-	case LocationRole:
-		return tr("Location");
-	default:
-		return QVariant();
-	}
-	return QVariant();
+QSqlError HistoryModel::error() const {
+	return d->error;
 }
 
-void HistoryModel::setStarted(Mrl mrl) {
-	if (!m_rememberImage && mrl.isImage())
+
+void HistoryModel::update(const MrlState *state, bool reload) {
+	if (!d->rememberImage && state->mrl.isImage())
 		return;
-	int index = findIndex(mrl);
-	Item item;
-	if (index < 0) {
-		item.mrl = mrl;
-	} else {
-		beginRemoveRows(QModelIndex(), index, index);
-		item = m_items.takeAt(index);
-		endRemoveRows();
-	}
-	item.date = QDateTime::currentDateTime();
-	beginInsertRows(QModelIndex(), 0, 0);
-	m_items.prepend(item);
-	endInsertRows();
-	if (m_items.size() > 999) {
-		beginRemoveRows(QModelIndex(), 999, m_items.size()-1);
-		while (m_items.size() > 999)
-			m_items.removeLast();
-		endRemoveRows();
-	}
+	d->db.transaction();
+	d->insert(state);
+	if (!d->db.commit())
+		d->db.rollback();
+	if (reload)
+		d->load();
 }
 
-void HistoryModel::setStopped(Mrl mrl, int time, int duration) {
-	if (!m_rememberImage && mrl.isImage())
-		return;
-	if (!mrl.isDvd() && duration > 500 && duration - time > 500) {
-		const int row = findIndex(mrl);
-		if (row != -1) {
-			m_items[row].date = QDateTime::currentDateTime();
-			m_items[row].stopped = time;
-			emit rowChanged(row);
-		}
-	}
+void HistoryModel::setRememberImage(bool on) {
+	d->rememberImage = on;
 }
 
-void HistoryModel::setFinished(Mrl mrl) {
-	if (!m_rememberImage && mrl.isImage())
-		return;
-	const int row = findIndex(mrl);
-	if (row != -1) {
-		m_items[row].date = QDateTime::currentDateTime();
-		m_items[row].stopped = -1;
-		emit rowChanged(row);
-	}
-}
-
-void HistoryModel::save() const {
-	QSettings set;
-	set.beginGroup("history");
-	const int size = m_items.size();
-	set.beginWriteArray("list", size);
-	for (int i=0; i<size; ++i) {
-		const Item &item = m_items[i];
-		set.setArrayIndex(i);
-		set.setValue("mrl", item.mrl.location());
-		set.setValue("date", item.date);
-		set.setValue("stopped-position", item.stopped);
-	}
-	set.endArray();
-	set.endGroup();
-}
-
-void HistoryModel::load() {
-	QSettings set;
-	set.beginGroup("history");
-	const int size = set.beginReadArray("list");
-	for (int i=0; i<size; ++i) {
-		set.setArrayIndex(i);
-		const Mrl mrl = set.value("mrl", QString()).toString();
-		if (mrl.isEmpty() || mrl.isImage())
-			continue;
-		Item item;
-		item.mrl = mrl;
-		item.date = set.value("date", QDateTime()).toDateTime();
-		item.stopped = set.value("stopped-position", -1).toInt();
-		m_items.append(item);
-	}
-}
-
-
-int HistoryModel::findIndex(const Mrl &mrl) const {
-	for (int i=0; i<m_items.size(); ++i) {
-		if (m_items[i].mrl == mrl)
-			return i;
-	}
-	return -1;
+void HistoryModel::clear() {
+	d->db.transaction();
+	d->query.exec("DELETE FROM state");
+	d->db.commit();
+	d->load();
 }

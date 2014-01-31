@@ -1,12 +1,57 @@
 #include "appstate.hpp"
 #include "record.hpp"
 
-AppState &AppState::get() {
-	static AppState obj;
-	return obj;
+AppState::AppState() {
+	Record r("app-state");
+#define READ(a) r.read(a, #a)
+	READ(win_stays_on_top);
+
+	READ(open_folder_types);
+	READ(open_last_folder);
+	READ(open_last_file);
+	READ(open_url_list);
+	READ(open_url_enc);
+	READ(ask_system_tray);
+
+	READ(auto_exit);
+
+	READ(win_pos);
+	READ(win_size);
+
+	READ(playlist_visible);
+	READ(history_visible);
+	READ(playinfo_visible);
+	READ(dvd_menu);
+	READ(dvd_device);
+#undef READ
 }
 
-AppState::AppState() {
+void AppState::save() const {
+	Record r("app-state");
+#define WRITE(a) r.write(a, #a);
+	WRITE(win_stays_on_top);
+
+	WRITE(open_folder_types);
+	WRITE(open_last_folder);
+	WRITE(open_last_file);
+	WRITE(ask_system_tray);
+	WRITE(open_url_list);
+	WRITE(open_url_enc);
+
+	WRITE(auto_exit);
+
+	WRITE(win_pos);
+	WRITE(win_size);
+
+	WRITE(playlist_visible);
+	WRITE(history_visible);
+	WRITE(playinfo_visible);
+	WRITE(dvd_menu);
+	WRITE(dvd_device);
+#undef WRITE
+}
+
+AppStateOld::AppStateOld() {
 	Record r("app-state");
 
 #define READ(a) r.read(a, #a)
@@ -59,7 +104,7 @@ AppState::AppState() {
 #undef READ
 }
 
-void AppState::save() const {
+void AppStateOld::save() const {
 	Record r("app-state");
 #define WRITE(a) r.write(a, #a);
 	WRITE(playback_speed);

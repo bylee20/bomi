@@ -32,12 +32,12 @@ protected:
 	const QFileInfo &file() const {return m_file;}
 	bool skipSeparators() const {return RichTextHelper::skipSeparator(m_pos, m_all);}
 	SubComp &append(Subtitle &sub, SubComp::SyncType base = SubComp::Time) {
-		sub.m_comp.append(SubComp(m_file.fileName(), base));
+		sub.m_comp.append(SubComp(m_file, m_encoding, sub.m_comp.size(), base));
 		return sub.m_comp.last();
 	}
 private:
 	static int msPerChar;
-	QString m_all;
+	QString m_all, m_encoding;
 	QFileInfo m_file;
 	mutable int m_pos = 0;
 };

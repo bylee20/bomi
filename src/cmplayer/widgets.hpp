@@ -105,12 +105,14 @@ public:
 	}
 	Enum currentValue() const { return EnumInfo<Enum>::from(currentData().toInt()); }
 	void setCurrentValue(Enum e) { setCurrentData((int)e); }
+	void setRetranslatable(bool retrans) { m_retrans = retrans; }
 private:
 	void changeEvent(QEvent *event) {
 		QComboBox::changeEvent(event);
-		if (event->type() == QEvent::LanguageChange)
+		if (event->type() == QEvent::LanguageChange && m_retrans)
 			retranslate(this);
 	}
+	bool m_retrans = true;
 };
 
 typedef EnumComboBox<GeneratePlaylist> GeneratePlaylistComboBox;

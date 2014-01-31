@@ -13,7 +13,7 @@ class PlaylistModel;		class Playlist;
 class DeintOption;			class ChannelLayoutMap;
 enum class AudioDriver;		enum class ClippingMethod;
 enum class DeintMethod;		enum class DeintMode;
-enum class ChannelLayout;
+enum class ChannelLayout;	struct SubtitleFileInfo;
 
 typedef std::function<int(const Mrl&)> GetMrlInt;
 
@@ -76,7 +76,7 @@ public:
 	bool isFinished() const {return m_state & Finished;}
 	bool isInitialized() const;
 	double speed() const;
-	PlayEngine::State state() const { return m_state; }
+	State state() const { return m_state; }
 	void load(const Mrl &mrl, int start = -1);
 	void load(const Mrl &mrl, bool play);
 	void setSpeed(double speed);
@@ -157,6 +157,7 @@ public:
 	void sendMouseClick(const QPointF &pos);
 	void sendMouseMove(const QPointF &pos);
 	void sendDVDCommand(DVDCmd cmd);
+	QList<SubtitleFileInfo> subtitleFiles() const;
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);

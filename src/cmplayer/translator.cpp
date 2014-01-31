@@ -80,6 +80,16 @@ QString Translator::languageName(QLocale::Language lang) {
 		return _U("Italiano");
 	case QLocale::Czech:
 		return _U("Čeština");
+	case QLocale::Spanish:
+		return _U("Español");
+	case QLocale::French:
+		return _U("Français");
+	case QLocale::Portuguese:
+		return _U("Português");
+	case QLocale::Catalan:
+		return _U("Català");
+	case QLocale::Serbian:
+		return _U("српски");
 	default:
 		return QLocale::languageToString(lang);
 	}

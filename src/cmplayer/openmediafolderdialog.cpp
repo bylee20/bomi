@@ -109,7 +109,7 @@ Playlist OpenMediaFolderDialog::playlist() const {
 }
 
 void OpenMediaFolderDialog::getFolder() {
-	AppState &as = AppState::get();
+	auto &as = AppState::get();
 	const QString dir = QFileInfo(as.open_last_folder).absolutePath();
 	const QString folder = QFileDialog::getExistingDirectory(this, tr("Open Folder"),  dir);
 	if (!folder.isEmpty()) {

@@ -2162,5 +2162,37 @@ private:
 };
 
 using ChangeValueInfo = EnumInfo<ChangeValue>;
+static inline bool _IsEnumTypeId(int userType) {
+	return userType == qMetaTypeId<SpeakerId>()
+		|| userType == qMetaTypeId<ChannelLayout>()
+		|| userType == qMetaTypeId<ColorRange>()
+		|| userType == qMetaTypeId<AdjustColor>()
+		|| userType == qMetaTypeId<SubtitleDisplay>()
+		|| userType == qMetaTypeId<VideoRatio>()
+		|| userType == qMetaTypeId<Dithering>()
+		|| userType == qMetaTypeId<DecoderDevice>()
+		|| userType == qMetaTypeId<DeintMode>()
+		|| userType == qMetaTypeId<DeintDevice>()
+		|| userType == qMetaTypeId<DeintMethod>()
+		|| userType == qMetaTypeId<InterpolatorType>()
+		|| userType == qMetaTypeId<AudioDriver>()
+		|| userType == qMetaTypeId<ClippingMethod>()
+		|| userType == qMetaTypeId<StaysOnTop>()
+		|| userType == qMetaTypeId<SeekingStep>()
+		|| userType == qMetaTypeId<GeneratePlaylist>()
+		|| userType == qMetaTypeId<PlaylistBehaviorWhenOpenMedia>()
+		|| userType == qMetaTypeId<SubtitleAutoload>()
+		|| userType == qMetaTypeId<SubtitleAutoselect>()
+		|| userType == qMetaTypeId<OsdScalePolicy>()
+		|| userType == qMetaTypeId<ClickAction>()
+		|| userType == qMetaTypeId<WheelAction>()
+		|| userType == qMetaTypeId<KeyModifier>()
+		|| userType == qMetaTypeId<VerticalAlignment>()
+		|| userType == qMetaTypeId<HorizontalAlignment>()
+		|| userType == qMetaTypeId<MoveToward>()
+		|| userType == qMetaTypeId<ChangeValue>()
+		|| false;
+}
+
 
 #endif

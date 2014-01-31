@@ -85,11 +85,12 @@ Skin.AppWithFloating {
 					property var markers: []
 					Connections { target: engine; onChapterChanged: timeslide.generateChapters() }
 					function generateChapters() {
-						for (var i=0; i<markers.length; ++i)
+						var i;
+						for (i=0; i<markers.length; ++i)
 							markers[i].destroy()
 						markers = []
 						var chapter = engine.chapter
-						for (var i=0; i<chapter.count; ++i)
+						for (i=0; i<chapter.count; ++i)
 							markers.push(chapterMarker.createObject(timeslide, { "chapter": i }));
 					}
 				}

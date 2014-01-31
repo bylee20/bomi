@@ -27,6 +27,7 @@ public:
 	QString name() const { return m_name; }
 	bool isImage() const;
 	void setName(const QString &name) { m_name = name; }
+	static Mrl fromString(const QString str) { Mrl mrl; mrl.m_loc = str; return mrl; }
 private:
 	QString m_loc = {};
 	QString m_name;

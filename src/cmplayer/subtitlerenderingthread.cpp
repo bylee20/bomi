@@ -27,7 +27,7 @@ struct SubCompSelection::Thread::Data {
 		return pic;
 	}
 	void update() {
-		auto post = [this] (const SubCompImage &pic) { postData(receiver, ImagePrepared, pic); };
+		auto post = [this] (const SubCompImage &pic) { _PostEvent(receiver, ImagePrepared, pic); };
 		if (it != its.end()) {
 			auto cache = pool.find(it);
 			if (cache == pool.end())

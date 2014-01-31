@@ -443,7 +443,7 @@ QVector<SubCompModel*> SubtitleRendererItem::models() const {
 
 void SubtitleRendererItem::customEvent(QEvent *event) {
 	if (event->type() == SubCompSelection::ImagePrepared) {
-		if (d->selection.update(getData<SubCompImage>(event)))
+		if (d->selection.update(_GetData<SubCompImage>(event)))
 			d->textChanged = true;
 		d->redraw = true;
 		update();

@@ -2,48 +2,32 @@
 #define HISTORYMODEL_HPP
 
 #include "stdafx.hpp"
-#include "dialogs.hpp"
-#include "global.hpp"
-#include "mrl.hpp"
-#include "listmodel.hpp"
+#include "mrlstate.hpp"
 
-class PlayEngine;		class QModelIndex;
-
-class HistoryModel : public BaseListModel {
+class HistoryModel: public QAbstractTableModel {
 	Q_OBJECT
 public:
-	enum Column {Name = 0, LatestPlay, Location, ColumnCount};
 	enum Role {NameRole = Qt::UserRole + 1, LatestPlayRole, LocationRole};
 	HistoryModel(QObject *parent = nullptr);
 	~HistoryModel();
-	QList<Mrl> top(int count = 10) const;
-	int stoppedTime(const Mrl &mrl) const { const int i = findIndex(mrl); return i < 0 ? -1 : m_items[i].stopped; }
-	QDateTime stoppedDate(const Mrl &mrl) const { const int i = findIndex(mrl); return i < 0 ? QDateTime() : m_items[i].date; }
-	int rowCount(const QModelIndex &parent = QModelIndex()) const { return parent.isValid() ? 0 : m_items.size(); }
-	int columnCount(const QModelIndex &parent = QModelIndex()) const { return parent.isValid() ? 0 : ColumnCount; }
+	int rowCount(const QModelIndex &parent = QModelIndex()) const;
+	int columnCount(const QModelIndex &parent = QModelIndex()) const;
 	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-	Q_INVOKABLE void play(int row) {emit playRequested(m_items[row].mrl);}
-	Q_INVOKABLE QString name(int row) const {return m_items[row].mrl.displayName();}
-	Q_INVOKABLE QString latestPlay(int row) const {return m_items[row].date.toString(Qt::ISODate);}
-	Q_INVOKABLE QString location(int row) const {return m_items[row].mrl.location();}
-	void setRememberImage(bool on) {m_rememberImage = on;}
-	QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-public slots:
-	void clear() {beginResetModel(); m_items.clear(); endResetModel();}
-	void setStarted(Mrl mrl);
-	void setStopped(Mrl mrl, int time, int duration);
-	void setFinished(Mrl mrl);
+	QSqlError error() const;
+	QHash<int, QByteArray> roleNames() const;
+	const MrlState *find(const Mrl &mrl) const;
+	bool getState(MrlState *state) const;
+	Q_INVOKABLE void play(int row);
+	void update(const MrlState *state, bool reload);
+	void setRememberImage(bool on);
+	void getAppState(MrlState *appState);
+	void setAppState(const MrlState *appState);
+	void clear();
 signals:
 	void playRequested(const Mrl &mrl);
 private:
-	static Role columnToRole(int column) {return static_cast<Role>(NameRole + column);}
-	struct Item { Mrl mrl; QDateTime date; int stopped = 0; };
-	void save() const;
-	void load();
-	RoleHash roleNames() const;
-	int findIndex(const Mrl &mrl) const;
-	QList<Item> m_items;
-	bool m_rememberImage = false;
+	struct Data;
+	Data *d;
 };
 
 #endif // HISTORYMODEL_HPP
