@@ -2,6 +2,8 @@
 
 git clone --depth=1 git://github.com/xylosper/cmplayer cmplayer
 git clone --depth=1 git://github.com/xylosper/mpv cmplayer/src/mpv
+cd cmplayer/src/mpv && python ./bootstrap.py && cd ../../..
+
 rm -rf `find ./cmplayer -name '.git*'`
 
 ver=`head -1 cmplayer/CHANGES.txt`

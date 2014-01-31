@@ -38,7 +38,7 @@ else # libquvi9 doesn't exist
   args="$args --disable-libquvi9"
 fi
 
-cd src/mpv && python ./bootstrap.py && ./waf clean; ./waf distclean; ./waf configure $args
+cd src/mpv && ./waf clean; ./waf distclean; ./waf configure $args
 ./waf build -j $njobs
 
 allobjs=`find . -name '*.o'`

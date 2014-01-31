@@ -1,3 +1,17 @@
+0.8.7
+
+  * New: states such as volume, subtitle selections, and so on, are preserved for each playback
+  * New: Serbian translations (thanks to Alen)
+  * New: DVD menu support recovered, partially.
+  * New: OSS audio output driver
+  * Mod: remove display duration for image slides
+  * Fix: crash on change language
+  * Fix: Urlencoded URLs doesn't open when passed as a parameter(#18)
+  * Fix: subtitle rendering state was not recovered properly(#29)
+  * Fix: 0m 60s should be displayed as 1m 00s(#29)
+  * Fix: wrong time display in paused state(#29)
+  * Fix: wrong action binding for forward button in 'modern' skin (#25)
+
 0.8.6
 
   * New: new option 'Apply in fullscreen mode only' for 'Hide mouse cursor'

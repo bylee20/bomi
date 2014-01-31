@@ -2,7 +2,7 @@
 # Contributor: willemw <willemw12@gmail.com>
 
 pkgname=cmplayer
-pkgver=0.8.6
+pkgver=0.8.7
 pkgrel=1
 pkgdesc="Powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
