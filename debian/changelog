@@ -12,6 +12,8 @@ cmplayer (0.8.7-1) saucy; urgency=low
   * Fix: wrong time display in paused state(#29)
   * Fix: wrong action binding for forward button in 'modern' skin (#25)
 
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 31 Jan 2013 23:56:00 +0900
+
 cmplayer (0.8.6-1) saucy; urgency=low
 
   * New: new option 'Apply in fullscreen mode only' for 'Hide mouse cursor'
