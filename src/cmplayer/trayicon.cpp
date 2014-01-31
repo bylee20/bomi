@@ -94,7 +94,6 @@ void TrayIcon::onQuit(void *menu, void *arg) {
 
 #ifdef Q_OS_LINUX
 static bool tryUnity() {
-	return false; // disable till the bug fixed
 	static bool init = false;
 	static bool good = false;
 	if (!init) {

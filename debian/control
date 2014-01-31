@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: xylosper <darklin20@gmail.com>
 Build-Depends: g++ (>= 4.8), debhelper (>= 7), pkg-config
  , qt5-qmake, qtbase5-dev (>= 5.1.1), qtdeclarative5-dev
- , libqt5x11extras-dev
+ , libqt5x11extras-dev, python
  , yasm, zlib1g-dev, libx11-dev, libdvdread-dev, libdvdnav-dev
  , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
  , libopenal-dev, libasound2-dev, libva-dev, libquvi-dev
@@ -16,6 +16,7 @@ Package: cmplayer
 Architecture: any
 Depends: ${shlibs:Depends}, qtdeclarative5-qtquick2-plugin
  , qtdeclarative5-quicklayouts-plugin, libqt5qml-quickcontrols
+ , libqt5sql5, libqt5sql5-sqlite
 Description: CMPlayer - a multimedia player
  CMPlayer is a multimedia player.
 
