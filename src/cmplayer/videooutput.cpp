@@ -16,6 +16,7 @@ extern "C" {
 #include <options/m_option.h>
 #include <player/core.h>
 #include <sub/sd.h>
+#include <sub/osd_state.h>
 struct sd *sub_get_last_sd(struct dec_sub *sub);
 }
 
@@ -235,7 +236,7 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
 		d->osd.h = size.height();
 		d->osd.w *= dpr;
 		d->osd.h *= dpr;
-		d->osd.display_par = vo->aspdat.monitor_par;
+		d->osd.display_par = 1.0;
 		item->setImageSize({d->osd.w, d->osd.h});
 		osd_draw(osd, d->osd, osd->vo_pts, 0, format, cb, item);
 	}

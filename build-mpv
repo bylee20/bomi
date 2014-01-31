@@ -9,7 +9,7 @@ args="--disable-debug-build --disable-manpage-build --disable-pdf-build --disabl
   --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --enable-dvdnav --enable-cdda \
   --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
   --disable-vf-lavfi --disable-af-lavfi --disable-libavdevice --disable-libpostproc --disable-libavresample \
-  --disable-sdl2 --disable-sdl --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi --enable-portaudio \
+  --disable-sdl2 --disable-sdl1 --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi --enable-portaudio \
   --disable-cocoa --disable-wayland --disable-x11 --disable-xss --disable-xext --disable-xv --disable-xinerama \
   --disable-xf86vm --disable-xf86xk --disable-gl-cocoa --disable-gl-x11 --disable-gl-wayland --disable-gl-win32 --disable-gl \
   --disable-corevideo --disable-vdpau --disable-vdpau-gl-x11 --disable-vaapi --disable-vaapi-vpp --disable-vaapi-glx --disable-caca \
