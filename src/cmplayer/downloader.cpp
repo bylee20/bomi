@@ -1,60 +1,122 @@
-//#include "downloader.hpp"
+#include "downloader.hpp"
 
-//struct Downloader::Data {
-//	QHttp *http;
-//	int id;
-//	QEventLoop loop;
-//	QTimer timer;
-//};
+struct Downloader::Data {
+	QNetworkAccessManager *nam = nullptr;
+	bool running = false;
+	QByteArray data;
+};
 
-//Downloader::Downloader()
-//: d(new Data) {
-//	d->http = new QHttp(this);
-//	d->id = -1;
-//	d->timer.setSingleShot(true);
-//	connect(d->http, SIGNAL(requestFinished(int, bool))
-//			, this, SLOT(slotHttpFinished(int)));
-//	connect(&d->timer, SIGNAL(timeout()), this, SLOT(slotTimeout()));
+Downloader::Downloader(QObject *parent)
+: QObject(parent), d(new Data) {
+	d->nam = new QNetworkAccessManager;
+}
+
+Downloader::~Downloader() {
+	delete d->nam;
+	delete d;
+}
+
+void Downloader::start(const QUrl &url) {
+	if (d->running)
+		return;
+	d->running = true;
+	emit started();
+	auto reply = d->nam->get(QNetworkRequest(url));
+	connect(reply, &QNetworkReply::downloadProgress, this, &Downloader::downloaded);
+	connect(reply, &QNetworkReply::finished, [reply, this] () {
+		d->data = reply->readAll();
+		d->running = false;
+		emit finished();
+		reply->deleteLater();
+	});
+}
+
+bool Downloader::isRunning() const {
+	return d->running;
+}
+
+QByteArray Downloader::data() const {
+	return d->data;
+}
+
+//void Downloader::downloadFinished(QNetworkReply *reply)
+//{
+//	QUrl url = reply->url();
+//	if (reply->error()) {
+//		fprintf(stderr, "Download of %s failed: %s\n",
+//				url.toEncoded().constData(),
+//				qPrintable(reply->errorString()));
+//	} else {
+//		QString filename = saveFileName(url);
+//		if (saveToDisk(filename, reply))
+//			printf("Download of %s succeeded (saved to %s)\n",
+//				   url.toEncoded().constData(), qPrintable(filename));
+//	}
+
+//	d->currentDownloads.removeAll(reply);
+//	reply->deleteLater();
+
+//	if (d->currentDownloads.isEmpty())
+//		// all downloads finished
+//		QCoreApplication::instance()->quit();
 //}
 
 
-//Downloader::~Downloader() {
-//	delete d;
+//QString Downloader::saveFileName(const QUrl &url)
+//{
+//	QString path = url.path();
+//	QString basename = QFileInfo(path).fileName();
+
+//	if (basename.isEmpty())
+//		basename = "download";
+
+//	if (QFile::exists(basename)) {
+//		// already exists, don't overwrite
+//		int i = 0;
+//		basename += '.';
+//		while (QFile::exists(basename + QString::number(i)))
+//			++i;
+
+//		basename += QString::number(i);
+//	}
+
+//	return basename;
 //}
 
-//bool Downloader::download(const QUrl &url, QIODevice *file, int timeout) {
-//	const bool open = file->isOpen();
-//	if (!open && !file->open(QFile::WriteOnly))
-//			return false;
-//	const QString scheme = url.scheme().toLower();
-//	QHttp::ConnectionMode mode = QHttp::ConnectionModeHttp;
-//	if (scheme == "https")
-//		mode = QHttp::ConnectionModeHttps;
-//	else if (scheme != "http")
+//bool Downloader::saveToDisk(const QString &filename, QIODevice *data)
+//{
+//	QFile file(filename);
+//	if (!file.open(QIODevice::WriteOnly)) {
+//		fprintf(stderr, "Could not open %s for writing: %s\n",
+//				qPrintable(filename),
+//				qPrintable(file.errorString()));
 //		return false;
-//	d->http->setHost(url.host(), mode, url.port() == -1 ? 0 : url.port());
-//	if (!url.userName().isEmpty())
-//		d->http->setUser(url.userName(), url.password());
-//	const QByteArray path = QUrl::toPercentEncoding(url.path(), "!$&'()*+,;=:@/");
-//	d->id = d->http->get(path, file);
-//	if (timeout != -1)
-//		d->timer.start(timeout);
-//	d->loop.exec();
-//	if (!open)
-//		file->close();
-//	return (d->http->error() == QHttp::NoError);
+//	}
+
+//	file.write(data->readAll());
+//	file.close();
+
+//	return true;
 //}
 
+//void Downloader::execute()
+//{
+//	QStringList args = QCoreApplication::instance()->arguments();
+//	args.takeFirst();           // skip the first argument, which is the program's name
+//	if (args.isEmpty()) {
+//		printf("Qt Download example - downloads all URLs in parallel\n"
+//			   "Usage: download url1 [url2... urlN]\n"
+//			   "\n"
+//			   "Downloads the URLs passed in the command-line to the local directory\n"
+//			   "If the target file already exists, a .0, .1, .2, etc. is appended to\n"
+//			   "differentiate.\n");
+//		QCoreApplication::instance()->quit();
+//		return;
+//	}
 
-
-//void Downloader::slotHttpFinished(int id) {
-//	if (id == d->id) {
-//		d->timer.stop();
-//		d->loop.quit();
+//	foreach (QString arg, args) {
+//		QUrl url = QUrl::fromEncoded(arg.toLocal8Bit());
+//		doDownload(url);
 //	}
 //}
 
-//void Downloader::slotTimeout() {
-//	d->http->abort();
-//	d->loop.quit();
-//}

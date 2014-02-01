@@ -11,7 +11,7 @@ macx:CONFIG -= app_bundle
     isEmpty(LIBQUVI_SUFFIX): LIBQUVI_SUFFIX = $$system(if `pkg-config --exists libquvi-0.9`; then echo "-0.9"; fi)
 }
 
-QT = core gui network quick widgets sql
+QT = core gui network quick widgets sql xml
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
@@ -20,7 +20,7 @@ INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lbz2 -lz
 
 PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
-    libmpg123 libcdio_paranoia libcdio libcdio_cdda libass portaudio-2.0 libquvi$${LIBQUVI_SUFFIX}
+    libmpg123 libcdio_paranoia libcdio libcdio_cdda libass portaudio-2.0 libquvi$${LIBQUVI_SUFFIX} icu-uc
 
 macx {
     QT += gui-private
@@ -137,7 +137,10 @@ HEADERS += playengine.hpp \
     channelmanipulation.hpp \
     mrlstate.hpp \
     submisc.hpp \
-    historymodel.hpp
+    historymodel.hpp \
+    xmlrpcclient.hpp \
+    opensubtitlesfinder.hpp \
+    subtitlefinddialog.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -215,7 +218,10 @@ SOURCES += main.cpp \
     channelmanipulation.cpp \
     mrlstate.cpp \
     historymodel.cpp \
-    submisc.cpp
+    submisc.cpp \
+    xmlrpcclient.cpp \
+    opensubtitlesfinder.cpp \
+    subtitlefinddialog.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -230,7 +236,8 @@ FORMS += \
     ui/opendvddialog.ui \
     ui/snapshotdialog.ui \
     ui/prefdialog.ui \
-    ui/openmediafolderdialog.ui
+    ui/openmediafolderdialog.ui \
+    ui/subtitlefinddialog.ui
 
 OTHER_FILES += \
     imports/CMPlayer/qmldir \

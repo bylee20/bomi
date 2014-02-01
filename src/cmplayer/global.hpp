@@ -47,6 +47,8 @@ static inline QString toString(const QSize &size) {
 static inline QPointF toPointF(const QSizeF &size) {return QPointF(size.width(), size.height());}
 
 QDialogButtonBox *makeButtonBox(QDialog *dlg);
+
+QByteArray _Uncompress(const QByteArray &data);
 }
 
 using namespace Global;

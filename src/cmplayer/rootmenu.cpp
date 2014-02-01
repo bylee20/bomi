@@ -278,6 +278,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		history.addAction(_L("clear"));
 
 	tool.addAction(_L("subtitle"))->setShortcut(Qt::Key_V);
+	tool.addAction(_L("find-subtitle"));
 	tool.addAction(_L("playinfo"));
 	tool.addSeparator();
 	tool.addAction(_L("pref"))->setMenuRole(QAction::PreferencesRole);
@@ -508,6 +509,7 @@ void RootMenu::update(const Pref &p) {
 		history.a("toggle", tr("Show/Hide"));
 		history.a("clear", tr("Clear"));
 
+	tool.a("find-subtitle", tr("Find Subtitle"));
 	tool.a("subtitle", tr("Subtitle View"));
 	tool.a("pref", tr("Preferences"));
 	tool.a("reload-skin", tr("Reload Skin"));

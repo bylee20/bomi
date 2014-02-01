@@ -8,6 +8,7 @@
 #include <QtWidgets>
 #include <QtQuick>
 #include <QtSql>
+#include <QtXml>
 #include <set>
 #include <sys/time.h>
 #include <qmath.h>

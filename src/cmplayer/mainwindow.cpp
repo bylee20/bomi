@@ -4,6 +4,7 @@
 #include "mainwindow.hpp"
 #include "rootmenu.hpp"
 #include "recentinfo.hpp"
+#include "subtitlefinddialog.hpp"
 #include "pref.hpp"
 #include "abrepeater.hpp"
 #include "playlistview.hpp"
@@ -59,6 +60,7 @@ struct MainWindow::Data {
 	ABRepeater ab = {&engine, &subtitle};
 	QMenu contextMenu;
 	PrefDialog *prefDlg = nullptr;
+	SubtitleFindDialog *subFindDlg = nullptr;
 	QStringList loadedSubtitleFiles;
 	SubtitleView *subtitleView = nullptr;
 	PlaylistModel &playlist = engine.playlist();
@@ -1192,6 +1194,16 @@ void MainWindow::connectMenus() {
 		}
 		d->prefDlg->set(d->pref());
 		d->prefDlg->show();
+	});
+	connect(tool["find-subtitle"], &QAction::triggered, [this] () {
+		if (!d->subFindDlg) {
+			d->subFindDlg = new SubtitleFindDialog(this);
+			connect(d->subFindDlg, &SubtitleFindDialog::loadRequested, [this] (const QString &fileName) {
+				appendSubFiles(QStringList() << fileName, true, d->pref().sub_enc);
+			});
+		}
+		d->subFindDlg->find(d->engine.mrl());
+		d->subFindDlg->show();
 	});
 	connect(tool["reload-skin"], &QAction::triggered, this, &MainWindow::reloadSkin);
 	connect(tool["auto-exit"], &QAction::triggered, [this] (bool on) {
