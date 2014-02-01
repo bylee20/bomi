@@ -1,4 +1,5 @@
 #include "widgets.hpp"
+#include "translator.hpp"
 #include "playengine.hpp"
 #include "qtcolorpicker.hpp"
 
@@ -45,7 +46,46 @@ void EncodingComboBox::setEncoding(const QString &encoding) {
 		setEditText(encoding);
 }
 
+/***************************************************************************************/
 
+struct LocaleComboBox::Item {
+	bool operator == (const Item &rhs) const { return locale == rhs.locale; }
+	bool operator < (const Item &rhs) const { return name < rhs.name; }
+	Item(const QLocale &locale): locale(locale) { }
+	void update() { name = Translator::displayName(locale); }
+	QString name;
+	QLocale locale;
+};
+
+struct LocaleComboBox::Data {
+	QList<Item> items;
+};
+
+LocaleComboBox::LocaleComboBox(QWidget *parent)
+: QComboBox(parent), d(new Data) {
+	auto locales = Translator::availableLocales();
+	d->items.reserve(locales.size());
+	for (auto &locale : locales)
+		d->items.append(Item{locale});
+	reset();
+}
+
+LocaleComboBox::~LocaleComboBox() {
+	delete d;
+}
+
+void LocaleComboBox::reset() {
+	clear();
+	for (auto &it : d->items)
+		it.update();
+	qSort(d->items);
+	addItem(tr("System default locale"), QLocale::c());
+	for (auto &it : d->items)
+		addItem(it.name, it.locale);
+}
+
+
+/***************************************************************************************/
 
 struct FontOptionWidget::Data {
 	QToolButton *bold, *italic, *underline, *strikeout;

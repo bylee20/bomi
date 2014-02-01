@@ -1,10 +1,13 @@
 #include "translator.hpp"
+#include <unicode/locid.h>
 
 struct Translator::Data {
 	bool succ = false;
 	QTranslator trans;
 	QString path, def, file;
 	QSet<QLocale> locales;
+	icu::Locale icu;
+	QMap<QString, QString> langs;
 };
 
 static inline uint qHash(const QLocale &key) {
@@ -43,6 +46,7 @@ Translator &Translator::get() {
 }
 
 LocaleList Translator::availableLocales() {
+	return get().d->locales.toList();
 	QList<QLocale> list = get().d->locales.toList();
 	list.prepend(QLocale::c());
 	return list;
@@ -56,45 +60,35 @@ bool Translator::load(const QLocale &locale) {
 	Translator::Data *d = get().d;
 	if (file == d->file)
 		return d->succ;
+	d->icu = icu::Locale::createFromName(l.name().toLatin1().data());
+	d->langs.clear();
 	d->file = file;
 	if ((d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def))))
 		QLocale::setDefault(l);
 	return d->succ;
 }
 
-QString Translator::languageName(QLocale::Language lang) {
-	switch (lang) {
-	case QLocale::C:
-		return QString();
-	case QLocale::English:
-		return _U("English");
-	case QLocale::German:
-		return _U("Deutsch");
-	case QLocale::Japanese:
-		return _U("日本語");
-	case QLocale::Korean:
-		return _U("한국어");
-	case QLocale::Russian:
-		return _U("Русский");
-	case QLocale::Italian:
-		return _U("Italiano");
-	case QLocale::Czech:
-		return _U("Čeština");
-	case QLocale::Spanish:
-		return _U("Español");
-	case QLocale::French:
-		return _U("Français");
-	case QLocale::Portuguese:
-		return _U("Português");
-	case QLocale::Catalan:
-		return _U("Català");
-	case QLocale::Serbian:
-		return _U("српски");
-	default:
-		return QLocale::languageToString(lang);
-	}
-}
-
 QString Translator::defaultEncoding() {
 	return tr("UTF-8", "Specify most popular encoding here in target localization.");
 }
+
+QString Translator::displayLanguage(const QString &iso) {
+	auto d = get().d;
+	auto &name = d->langs[iso];
+	if (name.isEmpty()) {
+		icu::UnicodeString str;
+		icu::Locale locale(iso.toLatin1());
+		locale.getDisplayLanguage(d->icu, str);
+		name.setUtf16(str.getBuffer(), str.length());
+	}
+	return name;
+}
+
+QString Translator::displayName(const QLocale &locale) {
+	auto d = get().d;
+	auto l = ::icu::Locale::createFromName(locale.name().toLatin1().data());
+	icu::UnicodeString str;
+	l.getDisplayName(d->icu, str);
+	return QString::fromUtf16(str.getBuffer(), str.length());
+}
+

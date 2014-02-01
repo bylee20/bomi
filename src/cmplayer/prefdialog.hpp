@@ -20,7 +20,6 @@ private:
 	void setShortcuts(const QHash<QString, QList<QKeySequence> > &shortcuts);
 	void changeEvent(QEvent *event);
 	void showEvent(QShowEvent *event);
-	QString toString(const QLocale &locale);
 	void retranslate();
 	class MenuTreeItem;
 	class Delegate;

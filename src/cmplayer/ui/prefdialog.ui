@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>14</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -342,11 +342,11 @@
          <item>
           <widget class="QGroupBox" name="groupBox_15">
            <property name="title">
-            <string>Language</string>
+            <string>Locale</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_15">
             <item>
-             <widget class="DataComboBox" name="locale">
+             <widget class="LocaleComboBox" name="locale">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -3344,6 +3344,11 @@ e.g.: English, Korean</string>
    <extends>QWidget</extends>
    <header>channelmanipulation.hpp</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>LocaleComboBox</class>
+   <extends>QComboBox</extends>
+   <header>widgets.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

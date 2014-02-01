@@ -11,8 +11,9 @@ public:
 	~Translator();
 	static bool load(const QLocale &locale = QLocale::system());
 	static LocaleList availableLocales();
-	static QString languageName(QLocale::Language lang);
 	static QString defaultEncoding();
+	static QString displayLanguage(const QString &iso);
+	static QString displayName(const QLocale &locale);
 private:
 	Translator();
 	static Translator &get();

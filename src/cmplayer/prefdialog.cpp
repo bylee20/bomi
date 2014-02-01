@@ -1,7 +1,6 @@
 #include "prefdialog.hpp"
 #include "trayicon.hpp"
 #include "deintinfo.hpp"
-#include "translator.hpp"
 #include "dialogs.hpp"
 #include "ui_prefdialog.h"
 #include "info.hpp"
@@ -338,7 +337,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 
 	d->ui.sub_ext->addItem(QString(), QString());
 	d->ui.sub_ext->addItemTextData(Info::subtitleExt());
-	d->ui.locale->addItemData(Translator::availableLocales());
 	d->ui.window_style->addItemTextData(cApp.availableStyleNames());
 
 	d->dbl = new PrefMouseGroup<ClickAction>(d->ui.ui_mouse_layout);
@@ -467,22 +465,11 @@ PrefDialog::~PrefDialog() {
 }
 
 
-QString PrefDialog::toString(const QLocale &locale) {
-	QString text = Translator::languageName(locale.language());
-	if (text.isEmpty())
-		text = tr("Use the system default language");
-	else
-		text += " (" % locale.name() % ')';
-	return text;
-}
-
 void PrefDialog::retranslate() {
 	d->dbl->retranslate(tr("Double Click"));
 	d->mdl->retranslate(tr("Middle Click"));
 	d->whl->retranslate(tr("Wheel Scroll"));
 	d->ui.sub_ext->setItemText(0, tr("All"));
-	for (int i=0; i<d->ui.locale->count(); ++i)
-		d->ui.locale->setItemText(i, toString(d->ui.locale->itemData(i).toLocale()));
 	d->ui.dbb->button(DBB::Ok)->setText(tr("Ok"));
 	d->ui.dbb->button(DBB::Cancel)->setText(tr("Cancel"));
 	d->ui.dbb->button(DBB::Apply)->setText(tr("Apply"));
@@ -610,7 +597,7 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.sub_sync_step->setValue(p.sub_sync_step*0.001);
 	d->ui.audio_sync_step->setValue(p.audio_sync_step*0.001);
 
-	d->ui.locale->setCurrentData(p.locale);
+	d->ui.locale->setCurrentLocale(p.locale);
 	d->ui.skin_name->setCurrentText(p.skin_name);
 
 	d->ui.audio_driver->setCurrentData((int)p.audio_driver);
@@ -706,7 +693,7 @@ void PrefDialog::get(Pref &p) {
 	p.sub_priority = d->ui.sub_priority->values();
 
 	cApp.setUnique(d->ui.single_app->isChecked());
-	p.locale = d->ui.locale->currentData().toLocale();
+	p.locale = d->ui.locale->currentLocale();
 	cApp.setStyleName(d->ui.window_style->currentData().toString());
 	p.enable_system_tray = d->ui.enable_system_tray->isChecked();
 	p.hide_rather_close = d->ui.hide_rather_close->isChecked();

@@ -14,6 +14,25 @@ private:
 	QStringList enc;
 };
 
+class LocaleComboBox : public QComboBox {
+	Q_OBJECT
+public:
+	LocaleComboBox(QWidget *parent = nullptr);
+	~LocaleComboBox();
+	QLocale currentLocale() const { return currentData().toLocale(); }
+	void setCurrentLocale(const QLocale &locale) { setCurrentIndex(findData(locale)); }
+private:
+	void reset();
+	void changeEvent(QEvent *event) {
+		QComboBox::changeEvent(event);
+		if (event->type() == QEvent::LanguageChange)
+			reset();
+	}
+	struct Item;
+	struct Data;
+	Data *d;
+};
+
 class FontOptionWidget : public QWidget {
 	Q_OBJECT
 public:
