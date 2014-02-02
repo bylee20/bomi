@@ -10,12 +10,12 @@ install_dir := sh install_dir.sh
 pkg_config_path := $(shell pwd)/build/lib/pkgconfig:${PKG_CONFIG_PATH}
 
 ifeq ($(os),osx)
-	QT_PATH = /usr/local/opt/qt5
+	QT_PATH ?= /usr/local/opt/qt5
 	QMAKE ?= $(QT_PATH)/bin/qmake -spec macx-clang
 	MACDEPLOYQT ?= $(QT_PATH)/bin/macdeployqt
 	cmplayer_exec := CMPlayer
 	cmplayer_exec_path := build/$(cmplayer_exec).app/Contents/MacOS
-	njobs = $(shell sysctl hw.ncpu | awk '{print $$2}')
+	njobs := $(shell sysctl hw.ncpu | awk '{print $$2}')
 else
 	PREFIX ?= /usr/local
 	QMAKE ?= qmake-qt5
@@ -31,7 +31,7 @@ else
 		DEFINES+="CMPLAYER_SKINS_PATH=\\\\\\\"$(CMPLAYER_SKINS_PATH)\\\\\\\"" \
 		DEFINES+="CMPLAYER_IMPORTS_PATH=\\\\\\\"$(CMPLAYER_IMPORTS_PATH)\\\\\\\"" \
 		QMAKE_CXX=$(CXX)
-	njobs = $(shell nproc)
+	njobs := $(shell nproc)
 endif
 
 cmplayer: skins imports
@@ -98,4 +98,6 @@ ifeq ($(os),linux)
 #	$(install_file) icons/cmplayer.svg $(DEST_DIR)$(ICON_PATH)/scalable/apps/cmplayer.svg
 	-cp -r build/skins/* $(DEST_DIR)$(CMPLAYER_SKINS_PATH)/
 	-cp -r build/imports/* $(DEST_DIR)$(CMPLAYER_IMPORTS_PATH)/
+else
+	mv build/$(cmplayer_exec).app $(DEST_DIR)$(PREFIX)
 endif
