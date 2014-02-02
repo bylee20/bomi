@@ -1,3 +1,11 @@
+0.8.8
+
+  * New: download subtitle from opensubtitles.org
+  * Fix: broken synchronization of app state and menu state
+  * Fix: 'Apply in fullscreen mode only' for 'Hide mouse cursor' was always checked
+  * Fix: remove previous internal subtitles with new playback(#36)
+  * Fix: first caption in subtitle view is duplicated
+
 0.8.7
 
   * New: states such as volume, subtitle selections, and so on, are preserved for each playback

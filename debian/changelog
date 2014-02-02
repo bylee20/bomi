@@ -1,3 +1,13 @@
+cmplayer (0.8.8-1) saucy; urgency=low
+
+  * New: download subtitle from opensubtitles.org
+  * Fix: broken synchronization of app state and menu state
+  * Fix: 'Apply in fullscreen mode only' for 'Hide mouse cursor' was always checked
+  * Fix: remove previous internal subtitles with new playback(#36)
+  * Fix: first caption in subtitle view is duplicated
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Sun, 2 Feb 2014 17:09:00 +0900
+
 cmplayer (0.8.7-1) saucy; urgency=low
 
   * New: states such as volume, subtitle selections, and so on, are preserved for each playback
@@ -12,7 +22,7 @@ cmplayer (0.8.7-1) saucy; urgency=low
   * Fix: wrong time display in paused state(#29)
   * Fix: wrong action binding for forward button in 'modern' skin (#25)
 
- -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 31 Jan 2013 23:56:00 +0900
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 31 Jan 2014 23:56:00 +0900
 
 cmplayer (0.8.6-1) saucy; urgency=low
 
