@@ -112,8 +112,6 @@ int AudioController::reinitialize(mp_audio *data) {
 	default:
 		mp_audio_set_format(&d->data, AF_FORMAT_FLOAT);
 	}
-	if (!af_test_output(d->af, data))
-		return false;
 	if (d->layout != ChannelLayout::Default) {
 		mp_chmap map;
 		if (mp_chmap_from_str(&map, bstr0(ChannelLayoutInfo::data(d->layout).constData())))
@@ -121,6 +119,8 @@ int AudioController::reinitialize(mp_audio *data) {
 		else
 			qDebug() << "Cannot load channel layout:" << ChannelLayoutInfo::name(d->layout);
 	}
+	if (!af_test_output(d->af, data))
+		return false;
 	check(d->volume, d->clip, &d->data, data);
 	check(d->scaler, &d->data, &d->data);
 	d->volume->setChannelLayoutMap(d->layout == ChannelLayout::Default ? ChannelLayoutMap() : d->map);
