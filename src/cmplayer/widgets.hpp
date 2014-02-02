@@ -19,7 +19,7 @@ class LocaleComboBox : public QComboBox {
 public:
 	LocaleComboBox(QWidget *parent = nullptr);
 	~LocaleComboBox();
-	QLocale currentLocale() const { return currentData().toLocale(); }
+    QLocale currentLocale() const { return itemData(currentIndex()).toLocale(); }
 	void setCurrentLocale(const QLocale &locale) { setCurrentIndex(findData(locale)); }
 private:
 	void reset();
