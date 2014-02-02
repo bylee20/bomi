@@ -1200,6 +1200,7 @@ void MainWindow::connectMenus() {
 			d->subFindDlg = new SubtitleFindDialog(this);
 			connect(d->subFindDlg, &SubtitleFindDialog::loadRequested, [this] (const QString &fileName) {
 				appendSubFiles(QStringList() << fileName, true, d->pref().sub_enc);
+				showMessage(tr("Downloaded"), QFileInfo(fileName).fileName());
 			});
 		}
 		d->subFindDlg->find(d->engine.mrl());

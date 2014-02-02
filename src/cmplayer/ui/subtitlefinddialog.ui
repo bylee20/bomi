@@ -51,9 +51,9 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="download">
+      <widget class="QPushButton" name="get">
        <property name="text">
-        <string>Download</string>
+        <string>Get</string>
        </property>
       </widget>
      </item>

@@ -63,7 +63,7 @@ struct SubtitleFindDialog::Data {
 		ui.open->setEnabled(ok);
 		ui.state->setEnabled(ok);
 		ui.language->setEnabled(ok);
-		ui.download->setEnabled(ok);
+		ui.get->setEnabled(ok);
 		ui.view->setEnabled(ok);
 		if (ok) {
 			ui.prog->setMaximum(1);
@@ -124,7 +124,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 	connect(d->ui.language, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this] (int index) {
 		d->proxy.setFilterFixedString(index > 0 ? d->ui.language->itemText(index) : "");
 	});
-	connect(d->ui.download, &QPushButton::clicked, [this] () {
+	connect(d->ui.get, &QPushButton::clicked, [this] () {
 		auto url = d->ui.view->currentIndex().data(UrlRole).toUrl();
 		d->downloader.start(url);
 	});

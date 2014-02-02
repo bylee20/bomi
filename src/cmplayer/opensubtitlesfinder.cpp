@@ -10,7 +10,13 @@ struct OpenSubtitlesFinder::Data {
 	OpenSubtitlesFinder *p = nullptr;
 	XmlRpcClient client;
 	QString token, error;
-	void setState(State s) { if (_Change(state, s)) emit p->stateChanged(); }
+	void setState(State s) {
+		if (_Change(state, s)) {
+			if (state != Error)
+				error.clear();
+			emit p->stateChanged();
+		}
+	}
 	void logout() {
 		if (!token.isEmpty()) {
 			client.call("LogOut", QVariantList() << token);
