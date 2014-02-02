@@ -65,7 +65,7 @@ SubCompModel::SubCompModel(const SubComp *comp, QObject *parent)
 		}
 	}
 	if (!isEmpty()) {
-		for (; it != comp->end(); ++it) {
+		for (++it; it != comp->end(); ++it) {
 			Item *last = static_cast<Item*>(this->last());
 			if (last->m_end < 0)
 				last->m_end = it.key();
