@@ -88,7 +88,7 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
 		start = pos;
 		while (pos < text.size()) {
 			const ushort c = at(pos);
-			if (isSeparator(c) || c == '=')
+			if (isSeparator(c) || c == '=' || c == '>')
 				break;
 			++pos;
 		}
@@ -172,8 +172,8 @@ int RichTextHelper::innerText(const char *open, const char *close, const QString
 			const QStringRef closer = cap.midRef(1, -1);
 			if (_Same(closer, open))
 				pos += rx.matchedLength();
-			if (_Same(closer, "body") || _Same(closer, "sami"))
-				ret = -1;
+//			if (_Same(closer, "body") || _Same(closer, "sami"))
+//				ret = -1;
 		}
 	}
 	block = _MidRef(text, start, end - start);

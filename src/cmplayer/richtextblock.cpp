@@ -25,14 +25,14 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 	QList<RichTextBlock> ret;
 
 	auto add_format = [&ret] (const RichTextBlock::Style &style) {
-		ret.last().formats << RichTextBlock::Format();
+		ret.last().formats.append(RichTextBlock::Format());
 		ret.last().formats.last().begin = ret.last().text.size();
 		ret.last().formats.last().end = -1;
 		ret.last().formats.last().style = style;
 	};
 
 	auto add_block = [&ret, &add_format] (bool paragraph, const RichTextBlock::Style &style) {
-		ret << RichTextBlock(paragraph);
+		ret.append(RichTextBlock(paragraph));
 		add_format(style);
 	};
 
@@ -87,7 +87,7 @@ QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const Ri
 			continue;
 		ret.last().formats.last().end = ret.last().text.size();
 
-		if (_Same(tag.name, "br")) { // new block
+		if (_Same(tag.name, "br") || _Same(tag.name, "/br")) { // new block
 			add_block(false, ret.last().formats.last().style);
 		} else {
 			if (tag.name.startsWith('/')) { // restore format
