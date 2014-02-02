@@ -1,3 +1,9 @@
+0.8.9
+
+  * New: display language name instead of ISO code
+  * Fix: wrong information in menu about current video/audio/subtitle tracks(#36)
+  * Fix: crash on output channel layout changed
+
 0.8.8
 
   * New: download subtitle from opensubtitles.org
