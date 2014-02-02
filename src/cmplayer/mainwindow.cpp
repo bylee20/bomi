@@ -41,7 +41,15 @@ extern void finalize_vdpau();
 static const int AskStartTimeEvent = (QEvent::User + 1);
 
 struct MainWindow::Data {
+	struct EnumGroup {
+		EnumGroup() {}
+		EnumGroup(const char *p, ActionGroup *g): property(p), group(g) {}
+		const char *property = nullptr;
+		ActionGroup *group = nullptr;
+	};
+
 	Data(MainWindow *p): p(p) {preferences.load();}
+	QList<EnumGroup> enumGroups;
 	MainView *view = nullptr;
 	MainWindow *p = nullptr;
 	bool visible = false, sotChanging = false, fullScreen = false;
@@ -74,6 +82,19 @@ struct MainWindow::Data {
 	QAction *subtrackSep = nullptr;
 	QDesktopWidget *desktop = nullptr;
 	QSize virtualDesktopSize;
+
+	void syncState() {
+		for (auto &eg : enumGroups) {
+			Q_ASSERT(as.state.property(eg.property).isValid());
+			auto data = eg.group->data();
+			if (data.isValid())
+				as.state.setProperty(eg.property, data);
+		}
+	}
+	void syncWithState() {
+		for (auto &eg : enumGroups)
+			eg.group->setChecked(as.state.property(eg.property), true);
+	}
 
 //	void loadSubtitles(const QStringList &files) {
 //		QList<SubComp> loaded;
@@ -374,6 +395,7 @@ struct MainWindow::Data {
 				updateWindowPosState();
 			as.state.video_effects = renderer.effects();
 			as.save();
+			syncState();
 			history.setAppState(&as.state);
 
 			engine.waitUntilTerminated();
@@ -401,6 +423,7 @@ struct MainWindow::Data {
 		if (player)
 			QMetaObject::invokeMethod(player, "showOSD", Q_ARG(QVariant, msg));
 	}
+
 	template<typename T, typename F, typename OnTriggered, typename State>
 	void connectEnumActions(State &state, Menu &menu, OnTriggered onTriggered, const char *asprop, void(State::*sig)(), F f) {
 		Q_ASSERT(state.property(asprop).isValid());
@@ -423,6 +446,8 @@ struct MainWindow::Data {
 		connect(&state, sig, f);
 		group->trigger(state.property(asprop));
 		emit (state.*sig)();
+		if (std::is_same<State, MrlState>::value)
+			enumGroups.append(EnumGroup{asprop, group});
 	}
 	template<typename T, typename F, typename State>
 	void connectEnumActions(State &state, Menu &menu, const char *asprop, void(State::*sig)(), F f) {
@@ -605,21 +630,25 @@ struct MainWindow::Data {
 				const auto parsed = subtitle.components();
 				for (auto c : parsed)
 					as.state.sub_track.append(*c);
+				syncState();
 			}
 			history.update(&as.state, !end);
 		};
 
 		connect(&engine, &PlayEngine::started, [this, updateMrlState] (Mrl mrl) {
 			as.state.mrl = mrl;
-			const bool found = history.getState(&as.state);
-			if (found)
-				engine.setCurrentAudioStream(as.state.audio_track);
-			if (found && as.state.sub_track.isValid()) {
-				for (auto &f : as.state.sub_track.mpv())
+			auto &state = as.state;
+			const bool found = history.getState(&state);
+			if (found) {
+				engine.setCurrentAudioStream(state.audio_track);
+				syncWithState();
+			}
+			if (found && state.sub_track.isValid()) {
+				for (auto &f : state.sub_track.mpv())
 					engine.addSubtitleStream(f.path, f.encoding);
-				auto loaded = as.state.sub_track.load();
+				auto loaded = state.sub_track.load();
 				subtitle.setComponents(loaded);
-				engine.setCurrentSubtitleStream(as.state.sub_track.track());
+				engine.setCurrentSubtitleStream(state.sub_track.track());
 				syncSubtitleFileMenu();
 			} else
 				updateSubtitleState();
@@ -759,6 +788,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	qDebug() << "Recover states";
 	auto &as = AppState::get();
 	d->history.getAppState(&as.state);
+	d->syncWithState();
 
 	if (as.win_size.isValid()) {
 		auto screen = d->screenSize();
