@@ -339,7 +339,8 @@ struct MainWindow::Data {
 				auto act = menu.addActionToGroupWithoutKey(it->name(), true, group);
 				act->setData(it->id()); if (current == it->id()) act->setChecked(true);
 			}
-		}
+		} else if (!group.isEmpty()) // partial in menu
+			menu.g(group)->clear();
 		menu.syncActions();
 	}
 	template<typename F>
