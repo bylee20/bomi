@@ -9,7 +9,6 @@
 #include <OpenGL/CGLIOSurface.h>
 #include <OpenGL/OpenGL.h>
 #include <CoreVideo/CVPixelBuffer.h>
-#include <qpa/qplatformnativeinterface.h>
 #endif
 
 static const QByteArray shaderTemplate(
@@ -240,7 +239,7 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 #ifdef Q_OS_MAC
 	if (m_frame.format().imgfmt() == IMGFMT_VDA) {
 		for (const VideoTexture &texture : m_textures) {
-			const auto cgl = static_cast<CGLContextObj>(qApp->platformNativeInterface()->nativeResourceForContext("cglcontextobj", QOpenGLContext::currentContext()));
+			const auto cgl = CGLGetCurrentContext();
 			const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)m_frame.data(3));
 			texture.bind();
 			const auto w = IOSurfaceGetWidthOfPlane(surface, texture.plane);

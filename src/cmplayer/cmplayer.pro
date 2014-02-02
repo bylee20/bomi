@@ -20,10 +20,17 @@ INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include
 LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lbz2 -lz
 
 PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
-    libmpg123 libcdio_paranoia libcdio libcdio_cdda libass portaudio-2.0 libquvi$${LIBQUVI_SUFFIX} icu-uc
+    libmpg123 libass libquvi$${LIBQUVI_SUFFIX} icu-uc
+HAVE_PORTAUDIO = $$system(if `pkg-config --exists libcdio_paranoia`; then echo "yes"; fi)
+!isEmpty(HAVE_PORTAUDIO) {
+    PKGCONFIG += $$system(if `pkg-config --exists libcdio_paranoia`; then echo "libcdio_paranoia libcdio libcdio_cdda"; fi)
+    DEFINES += HAVE_PORTAUDIO=1
+}
+
+PKGCONFIG += $$system(if `pkg-config --exists portaudio-2.0`; then echo "portaudio-2.0"; fi)
 
 macx {
-    QT += gui-private
+    QT += macextras
     CONFIG += sdk
     QT_CONFIG -= no-pkg-config
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
@@ -32,14 +39,13 @@ macx {
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
-    PKGCONFIG += libdvdcss lua fribidi freetype2 fontconfig
-    LIBS += -lcurl -liconv -framework IOSurface \
-        -framework VideoDecodeAcceleration -framework CoreVideo -framework Cocoa \
-        -framework CoreFoundation -framework AudioUnit -framework AudioToolBox -framework CoreAudio \
-        -framework IOKit -framework Carbon -framework OpenAL
+    LIBS += -liconv -framework Cocoa -framework CoreVideo -framework IOKit \
+	-framework IOSurface -framework Carbon -framework AudioUnit -framework CoreAudio \
+	-framework VideoDecodeAcceleration -framework AudioToolBox
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
+    LIBS -= -L/opt/X11/lib
 } else:unix {
     QT += dbus x11extras
     QMAKE_CC = "gcc -std=c99 -w"

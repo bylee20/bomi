@@ -7,14 +7,15 @@ qmake_vars := RELEASE=\\\"yes\\\" LIBQUVI_SUFFIX=$(LIBQUVI_SUFFIX)
 install_file := install -m 644
 install_exe := install -m 755
 install_dir := sh install_dir.sh
-pkg_config_path := $(shell pwd)/build/lib/pkgconfig
+pkg_config_path := $(shell pwd)/build/lib/pkgconfig:${PKG_CONFIG_PATH}
 
 ifeq ($(os),osx)
-	QT_PATH = /Users/xylosper/Qt5.1.1/5.1.1/clang_64
+	QT_PATH = /usr/local/opt/qt5
 	QMAKE ?= $(QT_PATH)/bin/qmake -spec macx-clang
 	MACDEPLOYQT ?= $(QT_PATH)/bin/macdeployqt
 	cmplayer_exec := CMPlayer
 	cmplayer_exec_path := build/$(cmplayer_exec).app/Contents/MacOS
+	njobs = $(shell sysctl hw.ncpu | awk '{print $$2}')
 else
 	PREFIX ?= /usr/local
 	QMAKE ?= qmake-qt5
@@ -30,13 +31,17 @@ else
 		DEFINES+="CMPLAYER_SKINS_PATH=\\\\\\\"$(CMPLAYER_SKINS_PATH)\\\\\\\"" \
 		DEFINES+="CMPLAYER_IMPORTS_PATH=\\\\\\\"$(CMPLAYER_IMPORTS_PATH)\\\\\\\"" \
 		QMAKE_CXX=$(CXX)
+	njobs = $(shell nproc)
 endif
 
 cmplayer: skins imports
-	cd src/cmplayer && PKG_CONFIG_PATH=$(pkg_config_path) $(QMAKE) $(qmake_vars) cmplayer.pro && $(MAKE) release
+	cd src/cmplayer && PKG_CONFIG_PATH=$(pkg_config_path) $(QMAKE) $(qmake_vars) cmplayer.pro && $(MAKE) -j$(njobs) release
 ifeq ($(os),osx)
 	cp -r build/skins $(cmplayer_exec_path)
 	cp -r build/imports $(cmplayer_exec_path)
+endif
+
+cmplayer-bundle: cmplayer
 	cp -r $(QT_PATH)/qml/QtQuick.2 $(cmplayer_exec_path)/imports
 	install -d $(cmplayer_exec_path)/imports/QtQuick
 	cp -r $(QT_PATH)/qml/QtQuick/Controls $(cmplayer_exec_path)/imports/QtQuick
@@ -46,7 +51,6 @@ ifeq ($(os),osx)
 #	cd build && $(MACDEPLOYQT) $(cmplayer_exec).app
 #	./fix-dep
 	cd build && $(MACDEPLOYQT) $(cmplayer_exec).app -dmg
-endif
 
 skins: build_dir
 	cp -r src/cmplayer/skins build

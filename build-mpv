@@ -1,15 +1,11 @@
 #!/bin/bash
 
-njobs=$(nproc)
-if [ ! $njobs ]; then
-  njobs=5
-fi
 args="--disable-debug-build --disable-manpage-build --disable-pdf-build --disable-vf-dlopen-filters --disable-macosx-bundle \
   --enable-iconv --disable-terminfo --disable-termcap --disable-termios --disable-shm --disable-libguess --disable-libsmbclient \
-  --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --enable-dvdnav --enable-cdda \
+  --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --enable-dvdnav \
   --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
   --disable-vf-lavfi --disable-af-lavfi --disable-libavdevice --disable-libpostproc --disable-libavresample \
-  --disable-sdl2 --disable-sdl1 --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi --enable-portaudio \
+  --disable-sdl2 --disable-sdl1 --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi \
   --disable-cocoa --disable-wayland --disable-x11 --disable-xss --disable-xext --disable-xv --disable-xinerama \
   --disable-xf86vm --disable-xf86xk --disable-gl-cocoa --disable-gl-x11 --disable-gl-wayland --disable-gl-win32 --disable-gl \
   --disable-corevideo --disable-vdpau --disable-vdpau-gl-x11 --disable-vaapi --disable-vaapi-vpp --disable-vaapi-glx --disable-caca \
@@ -21,10 +17,11 @@ kern=`uname -s`
 if test $kern = "Darwin"; then
   echo "Build for OS X"
   args="$args --enable-coreaudio --enable-vda-hwaccel"
-  PKG_CONFIG_PATH="/usr/X11/lib/pkgconfig:${PKG_CONFIG_PATH}"
+  njobs=`sysctl hw.ncpu | awk '{print $2}'`
 elif test $kern = "Linux"; then
   echo "Build for Linux"
   args="$args --enable-oss-audio --enable-pulse --enable-jack --enable-alsa" # --enable-vaapi-hwaccel
+  njobs=$(nproc)
 else
   echo "Not supported!"
   exit
@@ -51,4 +48,5 @@ for obj in $allobjs; do
 done
 
 install -d ../../build/lib
+rm ../../build/lib/libcmplayer_mpv.a
 ar rcsv ../../build/lib/libcmplayer_mpv.a $objs

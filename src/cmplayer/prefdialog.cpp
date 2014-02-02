@@ -361,7 +361,9 @@ PrefDialog::PrefDialog(QWidget *parent)
 #ifdef Q_OS_MAC
 	audioDrivers << AudioDriver::CoreAudio;
 #endif
-	audioDrivers << AudioDriver::PortAudio << AudioDriver::OpenAL;
+#ifdef HAVE_PORTAUDIO
+	audioDrivers << AudioDriver::PortAudio;
+#endif
 	for (auto driver : audioDrivers)
 		d->ui.audio_driver->addItem(AudioDriverInfo::name(driver), (int)driver);
 

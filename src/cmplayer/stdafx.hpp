@@ -21,6 +21,9 @@
 #ifdef Q_OS_LINUX
 #include <QX11Info>
 #endif
+#ifdef Q_OS_MAC
+#include <QtMacExtras>
+#endif
 
 namespace Pch {
 static inline QLatin1String _L(const char *str) {return QLatin1String(str);}

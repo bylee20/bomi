@@ -179,6 +179,9 @@ static inline QPoint pointFromSql(const QString &str) {
 	return {str.midRef(0, index).toInt(), str.midRef(index+1).toInt()};
 }
 
+struct Field;
+template<typename T> static QList<Field> fields();
+
 struct Field {
 	QString name() const { return m_name; }
 	QString type() const { return m_type; }
