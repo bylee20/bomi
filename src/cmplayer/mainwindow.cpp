@@ -96,29 +96,6 @@ struct MainWindow::Data {
 			eg.group->setChecked(as.state.property(eg.property), true);
 	}
 
-//	void loadSubtitles(const QStringList &files) {
-//		QList<SubComp> loaded;
-//			for (int i=0; i<files.size(); ++i) {
-//				Subtitle sub;
-//				if (this->p->load(sub, files[i], p.sub_enc)) {
-//					for (int i=0; i<sub.size(); ++i)
-//						loaded.push_back(sub[i]);
-//				}
-//			}
-//			if (autoselect) {
-//				const QList<int> selected = autoselection(loaded);
-//				for (int i=0; i<selected.size(); ++i)
-//					loaded[selected[i]].selection() = true;
-//			}
-//			return loaded;
-//		};
-//			subtitle.setComponents(autoload(true));
-//			as.open_last_file = file.absoluteFilePath();
-//		} else
-//			this->p->clearSubtitleFiles();
-//		syncSubtitleFileMenu();
-//	}
-
 	void updateSubtitleState() {
 		const auto &mrl = as.state.mrl;
 		if (mrl.isLocalFile()) {
@@ -287,11 +264,11 @@ struct MainWindow::Data {
 		const auto external = list.g("external")->actions();
 		for (int i = external.size()-1; i >= 0; --i) {
 			if (external[i]->isChecked())
-				return internal.size() + i;
+				return qMax(0, internal.size()-1) + i;
 		}
-		for (int i = internal.size()-1; i >= 0; --i) {
+		for (int i = internal.size()-1; i >= 1; --i) {
 			if (internal[i]->isChecked())
-				return i;
+				return i-1;
 		}
 		return -1;
 	}
@@ -303,8 +280,8 @@ struct MainWindow::Data {
 		const auto internal = list.g("internal")->actions();
 		const auto external = list.g("external")->actions();
 		QStringList tracks; tracks.reserve(internal.size() + external.size());
-		for (auto action : internal)
-			tracks.append(action->text());
+		for (int i=1; i<internal.size(); ++i)
+			tracks.append(internal[i]->text());
 		for (auto action : external)
 			tracks.append(action->text());
 		engine.setSubtitleTracks(tracks);
@@ -617,7 +594,28 @@ struct MainWindow::Data {
 		connect(&engine, &PlayEngine::chaptersChanged, [this] (const ChapterList &chapters) {
 			updateListMenu(menu("play")("chapter"), chapters, engine.currentChapter());
 		});
-
+		connect(&engine, &PlayEngine::currentAudioStreamChanged, [this] (int stream) {
+			auto action = menu("audio")("track").g()->find(stream);
+			if (action && !action->isChecked()) {
+				action->setChecked(true);
+				menu("audio")("track").syncActions();
+			}
+		});
+		connect(&engine, &PlayEngine::currentVideoStreamChanged, [this] (int stream) {
+			auto action = menu("video")("track").g()->find(stream);
+			if (action && !action->isChecked()) {
+				action->setChecked(true);
+				menu("video")("track").syncActions();
+			}
+		});
+		connect(&engine, &PlayEngine::currentSubtitleStreamChanged, [this] (int stream) {
+			auto action = menu("subtitle")("track").g("internal")->find(stream);
+			if (action && !action->isChecked()) {
+				action->setChecked(true);
+				menu("subtitle")("track").syncActions();
+				setCurrentSubtitleIndexToEngine();
+			}
+		});
 		auto updateMrlState = [this] (const Mrl &mrl, bool end, int time) {
 			as.state.mrl = mrl;
 			as.state.last_played_date_time = QDateTime::currentDateTime();
@@ -1270,9 +1268,6 @@ void MainWindow::connectMenus() {
 
 	d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentDvdTitle);
 	d->connectCurrentStreamActions(&d->menu("play")("chapter"), &PlayEngine::currentChapter);
-	d->connectCurrentStreamActions(&d->menu("audio")("track"), &PlayEngine::currentAudioStream);
-	d->connectCurrentStreamActions(&d->menu("video")("track"), &PlayEngine::currentVideoStream);
-	d->connectCurrentStreamActions(&d->menu("subtitle")("track"), &PlayEngine::currentSubtitleStream);
 }
 
 Playlist MainWindow::generatePlaylist(const Mrl &mrl) const {
