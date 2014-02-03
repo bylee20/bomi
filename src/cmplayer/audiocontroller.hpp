@@ -5,6 +5,7 @@
 
 struct af_instance;		struct mp_audio;
 struct af_cfg;			struct af_info;
+struct mp_chmap;
 class ChannelLayoutMap;
 enum class ClippingMethod;
 enum class ChannelLayout;
@@ -30,6 +31,7 @@ public:
 	void setClippingMethod(ClippingMethod method);
 	void setChannelLayoutMap(const ChannelLayoutMap &map);
 	void setChannelLayout(ChannelLayout layout);
+	mp_chmap *chmap() const;
 private:
 	static int open(af_instance *af);
 	int reinitialize(mp_audio *data);

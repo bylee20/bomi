@@ -15,6 +15,8 @@ struct AudioController::Data {
 		double level = 0.0; int samples = 0;
 	};
 
+	mp_chmap mp_ch;
+
 	bool normalizerActivated = false;
 	bool tempoScalerActivated = false;
 	bool volumeChanged = false;
@@ -93,8 +95,19 @@ VolumeController *check(VolumeController *&filter, ClippingMethod clip, const mp
 	return filter;
 }
 
+mp_chmap *AudioController::chmap() const {
+	return &d->mp_ch;
+}
+
 void AudioController::setChannelLayout(ChannelLayout layout) {
-	d->layout = layout;
+	if (mp_chmap_from_str(&d->mp_ch, bstr0(ChannelLayoutInfo::data(layout).constData()))) {
+		d->layout = layout;
+	} else {
+		qDebug() << "Cannot load channel layout:" << ChannelLayoutInfo::name(d->layout);
+		qDebug() << "Fallback to default";
+		d->layout = ChannelLayout::Default;
+		mp_chmap_from_str(&d->mp_ch, bstr0("stereo"));
+	}
 }
 
 int AudioController::reinitialize(mp_audio *data) {
@@ -112,13 +125,8 @@ int AudioController::reinitialize(mp_audio *data) {
 	default:
 		mp_audio_set_format(&d->data, AF_FORMAT_FLOAT);
 	}
-	if (d->layout != ChannelLayout::Default) {
-		mp_chmap map;
-		if (mp_chmap_from_str(&map, bstr0(ChannelLayoutInfo::data(d->layout).constData())))
-			mp_audio_set_channels(&d->data, &map);
-		else
-			qDebug() << "Cannot load channel layout:" << ChannelLayoutInfo::name(d->layout);
-	}
+	if (d->layout != ChannelLayout::Default)
+		mp_audio_set_channels(&d->data, &d->mp_ch);
 	if (!af_test_output(d->af, data))
 		return false;
 	check(d->volume, d->clip, &d->data, data);

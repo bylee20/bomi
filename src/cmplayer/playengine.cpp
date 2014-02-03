@@ -127,6 +127,7 @@ struct PlayEngine::Data {
 				break;
 			case MpSetAudioLayout:
 				d->audio->setChannelLayout(d->layout);
+				memcpy(&d->mpctx->opts->audio_output_channels, d->audio->chmap(), sizeof(mp_chmap));
 				reinit_audio_chain(mpctx);
 				break;
 			case MpResetAudioChain:
@@ -985,7 +986,7 @@ void PlayEngine::exec() {
 	auto mpvOptions = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
 	if (!mpvOptions.isEmpty())
 		args += QString::fromLocal8Bit(mpvOptions).split(' ', QString::SkipEmptyParts);
-	args << "--no-config" << "--idle" << "--no-fs" << "--mouse-movements" //<< "-v" << "--identify"
+	args << "--no-config" << "--idle" << "--no-fs" << "--mouse-movements" << "-v" << "--identify"
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--softvol=yes" << "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet"
