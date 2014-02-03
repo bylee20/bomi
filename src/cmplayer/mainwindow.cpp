@@ -636,7 +636,7 @@ struct MainWindow::Data {
 		connect(&engine, &PlayEngine::started, [this, updateMrlState] (Mrl mrl) {
 			as.state.mrl = mrl;
 			auto &state = as.state;
-			const bool found = history.getState(&state);
+			const bool found = history.getState(&state, pref().restore_properties);
 			if (found) {
 				engine.setCurrentAudioStream(state.audio_track);
 				syncWithState();

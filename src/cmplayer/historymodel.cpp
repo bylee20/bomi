@@ -15,7 +15,7 @@ struct HistoryModel::Data {
 		QString q = _L("INSERT OR REPLACE INTO app (id, ") % columns % _L(") VALUES (0, %1)");
 		QString values;
 		for (auto &f : fields)
-			values += f.toSql(state->property(f.property())) % _L(", ");
+			values += f.toSql(f.property().read(state)) % _L(", ");
 		values.chop(2);
 		return query.exec(q.arg(values));
 	}
@@ -26,7 +26,7 @@ struct HistoryModel::Data {
 		QString values = toSql(state->mrl.toString()) % _L(", ")
 						% toSql(state->mrl.displayName()) % _L(", ");
 		for (auto &f : fields)
-			values += f.toSql(state->property(f.property())) % _L(", ");
+			values += f.toSql(f.property().read(state)) % _L(", ");
 		values.chop(2);
 		return finder.exec(insertTemplate.arg(values));
 	}
@@ -53,7 +53,7 @@ struct HistoryModel::Data {
 		query.exec("DROP TABLE IF EXISTS app");
 		QString columns;
 		for (auto &f : this->fields)
-			columns += f.name() % _L(' ') % f.type() % _L(", ");
+			columns += f.property().name() % _L(' ') % f.type() % _L(", ");
 		columns.chop(2);
 
 		query.exec(_L("CREATE TABLE state (mrl TEXT UNIQUE, name TEXT, ") % columns % _L(')'));
@@ -95,7 +95,7 @@ HistoryModel::HistoryModel(QObject *parent)
 	}
 
 	for (auto &f : d->fields)
-		d->columns += f.name() % _L(", ");
+		d->columns += f.property().name() % _L(", ");
 	d->columns.chop(2);
 	d->insertTemplate = _L("INSERT OR REPLACE INTO state (mrl, name, ") % d->columns % _L(") VALUES (%1)");
 	d->query = QSqlQuery(d->db);
@@ -130,7 +130,7 @@ void HistoryModel::getAppState(MrlState *appState) {
 		return;
 	}
 	for (auto &f : d->fields)
-		appState->setProperty(f.property(), f.fromSql(d->finder.value(f.name())));
+		f.property().write(appState, f.fromSql(d->finder.value(f.property().name())));
 }
 
 void HistoryModel::setAppState(const MrlState *state) {
@@ -139,17 +139,21 @@ void HistoryModel::setAppState(const MrlState *state) {
 	d->db.commit();
 }
 
-bool HistoryModel::getState(MrlState *state) const {
+bool HistoryModel::getState(MrlState *state, const QList<QMetaProperty> &restores) const {
 	if (d->cached.mrl == state->mrl) {
-		for (auto &f : d->fields)
-			state->setProperty(f.property(), d->cached.property(f.property()));
+		for (auto &f : d->fields) {
+			if (restores.contains(f.property()))
+				f.property().write(state, f.property().read(&d->cached));
+		}
 		return true;
 	}
 	d->finder.exec(_L("SELECT * FROM state WHERE mrl = ") % toSql(state->mrl.toString()));
 	if (!d->finder.next())
 		return false;
-	for (auto &f : d->fields)
-		state->setProperty(f.property(), f.fromSql(d->finder.value(f.name())));
+	for (auto &f : d->fields) {
+		if (restores.contains(f.property()))
+			f.property().write(state, f.fromSql(d->finder.value(f.property().name())));
+	}
 	return true;
 }
 
@@ -161,7 +165,7 @@ const MrlState *HistoryModel::find(const Mrl &mrl) const {
 		return nullptr;
 	d->cached.mrl = mrl;
 	for (auto &f : d->fields)
-		d->cached.setProperty(f.property(), f.fromSql(d->finder.value(f.name())));
+		f.property().write(&d->cached, f.fromSql(d->finder.value(f.property().name())));
 	return &d->cached;
 }
 

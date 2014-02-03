@@ -6,48 +6,36 @@
 #include "mrl.hpp"
 #include "ui_subtitlefinddialog.h"
 #include "downloader.hpp"
+#include "simplelistmodel.hpp"
 
 static constexpr int UrlRole = Qt::UserRole + 1;
 static constexpr int FileNameRole = UrlRole + 1;
 
-class SubtitleLinkModel : public QAbstractListModel {
+class SubtitleLinkModel : public SimpleListModel<SubtitleLink> {
 public:
 	enum Column { Language, FileName, Date, ColumnCount };
-	SubtitleLinkModel(QObject *parent = nullptr): QAbstractListModel(parent) { }
-	int rowCount(const QModelIndex &parent = QModelIndex()) const { return parent.isValid() ? 0 : m_list.size(); }
-	int columnCount(const QModelIndex &parent = QModelIndex()) const { Q_UNUSED(parent); return ColumnCount; }
-	void setList(const QList<SubtitleLink> &list) { beginResetModel(); m_list = list; endResetModel(); }
-	QVariant headerData(int section, Qt::Orientation orientation, int role) const {
-		if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
-			return QVariant();
-		switch (section) {
+	SubtitleLinkModel(QObject *parent = nullptr): SimpleListModel(ColumnCount, parent) { }
+	QVariant headerText(int column) const {
+		switch (column) {
 			case Language: return tr("Language");
 			case FileName: return tr("File Name");
 			case Date:     return tr("Date");
 			default:       return QVariant();
 		}
 	}
-	QVariant data(const QModelIndex &index, int role) const {
-		const int row = index.row(), col = index.column();
-		if (!(0 <= row && row < m_list.size() && 0 <= col && col < ColumnCount))
-			return QVariant();
-		if (role == UrlRole)
-			return m_list[row].url;
-		if (role == FileNameRole)
-			return m_list[row].fileName;
-		else if (role != Qt::DisplayRole)
-			return QVariant();
-		const auto &link = m_list[row];
-		switch (col) {
-			case Language: return link.language;
-			case FileName: return link.fileName;
-			case Date:     return link.date;
+	QVariant roleData(int row, int /*column*/, int role) const {
+		if (role == UrlRole)      return at(row).url;
+		if (role == FileNameRole) return at(row).fileName;
+		return QVariant();
+	}
+	QVariant displayData(int row, int column) const {
+		switch (column) {
+			case Language: return at(row).language;
+			case FileName: return at(row).fileName;
+			case Date:     return at(row).date;
 			default:       return QVariant();
 		}
 	}
-	SubtitleLink link(int row) const { return m_list.value(row); }
-private:
-	QList<SubtitleLink> m_list;
 };
 
 struct SubtitleFindDialog::Data {

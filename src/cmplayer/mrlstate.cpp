@@ -1,6 +1,47 @@
 #include "mrlstate.hpp"
 #include "appstate.hpp"
 
+QList<MrlStateProperty> MrlStateV1::restorableProperties() {
+	QList<MrlStateProperty> properties;
+	properties.reserve(staticMetaObject.propertyCount());
+	auto add = [&properties] (const char *name, const QString &info) {
+		const int index = staticMetaObject.indexOfProperty(name);
+		Q_ASSERT(index != -1);
+		properties.append(MrlStateProperty{staticMetaObject.property(index), info});
+	};
+#define ADD(n, i) add(#n, i)
+	ADD(play_speed, tr("Playback Speed"));
+
+	ADD(video_interpolator, tr("Video Interpolator"));
+	ADD(video_chroma_upscaler, tr("Video Chroma Upscaler"));
+	ADD(video_aspect_ratio, tr("Video Aspect Ratio"));
+	ADD(video_crop_ratio, tr("Video Crop Ratio"));
+	ADD(video_deinterlacing, tr("Video Deinterlacing"));
+	ADD(video_dithering, tr("Video Dithering"));
+	ADD(video_offset, tr("Video Screen Position"));
+	ADD(video_vertical_alignment, tr("Video Vertical Alignment"));
+	ADD(video_horizontal_alignment, tr("Video Horizontal Alignment"));
+	ADD(video_color, tr("Video Color Adjustment"));
+	ADD(video_range, tr("Video Color Range"));
+
+	ADD(audio_volume, tr("Audio Volume"));
+	ADD(audio_amplifier, tr("Audio Amp"));
+	ADD(audio_sync, tr("Audio Sync"));
+	ADD(audio_track, tr("Audio Track"));
+	ADD(audio_muted, tr("Audio Mute"));
+	ADD(audio_volume_normalizer, tr("Audio Volume Normalizer"));
+	ADD(audio_tempo_scaler, tr("Audio Tempo Scaler"));
+	ADD(audio_channel_layout, tr("Audio Channel Layout"));
+
+	ADD(sub_track, tr("Subtitle Track"));
+	ADD(sub_alignment, tr("Subtitle Alignment"));
+	ADD(sub_display, tr("Subtitle Display"));
+	ADD(sub_position, tr("Subtitle Position"));
+	ADD(sub_sync, tr("Subtitle Sync"));
+
+	return properties;
+}
+
 namespace MrlStateHelpers {
 
 QList<MrlState*> _ImportMrlStatesFromPreviousVersion(int version, QSqlDatabase db) {

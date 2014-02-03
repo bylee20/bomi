@@ -16,7 +16,7 @@ public:
 	QSqlError error() const;
 	QHash<int, QByteArray> roleNames() const;
 	const MrlState *find(const Mrl &mrl) const;
-	bool getState(MrlState *state) const;
+	bool getState(MrlState *state, const QList<QMetaProperty> &restores) const;
 	Q_INVOKABLE void play(int row);
 	void update(const MrlState *state, bool reload);
 	void setRememberImage(bool on);

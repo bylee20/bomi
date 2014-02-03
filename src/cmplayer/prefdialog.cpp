@@ -16,6 +16,22 @@
 #undef None
 #endif
 
+#include "simplelistmodel.hpp"
+
+class MrlStatePropertyListModel : public SimpleListModel<MrlStateProperty> {
+public:
+	MrlStatePropertyListModel() {
+		setCheckable(0, true);
+	}
+	Qt::ItemFlags flags(int row, int column) const {
+		return Super::flags(row, column) | Qt::ItemIsUserCheckable;
+	}
+	QVariant displayData(int row, int /*column*/) const {
+		return at(row).info();
+	}
+private:
+};
+
 // from clementine's preferences dialog
 typedef QDialogButtonBox DBB;
 
@@ -237,6 +253,7 @@ struct PrefDialog::Data {
 	QStringList imports;
 	QList<MenuTreeItem*> actionItems;
 	DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
+	MrlStatePropertyListModel properties;
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
@@ -446,7 +463,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 	});
 
 	retranslate();
-
+	d->ui.restore_properties->setModel(&d->properties);
 	if (!TrayIcon::isAvailable())
 		d->ui.system_tray_group->hide();
 #ifndef Q_OS_MAC
@@ -477,6 +494,7 @@ void PrefDialog::retranslate() {
 	d->ui.dbb->button(DBB::Apply)->setText(tr("Apply"));
 	d->ui.dbb->button(DBB::RestoreDefaults)->setText(tr("Restore Defaults"));
 	d->ui.dbb->button(DBB::Reset)->setText(tr("Reset"));
+	d->properties.setList(MrlState::restorableProperties());
 }
 
 template<class T>
@@ -613,6 +631,11 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.network_folders->setValues(p.network_folders);
 
 	setShortcuts(p.shortcuts);
+
+	QVector<bool> restores(d->properties.size(), false);
+	for (int i=0; i<d->properties.size(); ++i)
+		restores[i] = p.restore_properties.contains(d->properties.at(i).property());
+	d->properties.setChecked(0, restores);
 }
 
 void PrefDialog::setShortcuts(const Shortcuts &shortcuts) {
@@ -736,6 +759,13 @@ void PrefDialog::get(Pref &p) {
 		const auto keys = item->shortcuts();
 		if (!keys.isEmpty())
 			p.shortcuts[item->id()] = keys;
+	}
+
+	auto restores = d->properties.checkedList(0);
+	p.restore_properties.clear();
+	for (int i=0; i<restores.size(); ++i) {
+		if (restores[i])
+			p.restore_properties.append(d->properties.at(i).property());
 	}
 }
 

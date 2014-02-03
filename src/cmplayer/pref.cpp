@@ -166,6 +166,12 @@ void Pref::save() const {
 	WRITE(enable_system_tray);
 	WRITE(hide_rather_close);
 
+	QList<QByteArray> restore_properties;
+	restore_properties.reserve(this->restore_properties.size());
+	for (auto &property : this->restore_properties)
+		restore_properties.append(property.name());
+	WRITE(restore_properties);
+
 	WRITE(invert_wheel);
 	WRITE(disable_screensaver);
 	WRITE(sub_enc);
@@ -276,6 +282,17 @@ void Pref::load() {
 	READ(remap_luma_min);
 	READ(remap_luma_max);
 	READ(channel_manipulation);
+
+	QList<QByteArray> restore_properties;
+	READ(restore_properties);
+	this->restore_properties.clear();
+	this->restore_properties.reserve(restore_properties.size());
+	for (auto &name : _C(restore_properties)) {
+		auto &mo = MrlState::staticMetaObject;
+		const int idx = mo.indexOfProperty(name.constData());
+		if (idx != -1)
+			this->restore_properties.append(mo.property(idx));
+	}
 
 	READ(invert_wheel);
 	READ(enable_system_tray);
@@ -395,4 +412,16 @@ QString Pref::defaultSubtitleEncoding() {
 
 QString Pref::defaultSkinName() {
 	return "GaN";
+}
+
+QList<QMetaProperty> Pref::defaultRestoreProperties() {
+	QList<QMetaProperty> list;
+	auto &mo = MrlState::staticMetaObject;
+	const int count = mo.propertyCount();
+	for (int i=mo.propertyOffset(); i<count; ++i) {
+		const auto property = mo.property(i);
+		if (property.revision())
+			list.append(property);
+	}
+	return list;
 }

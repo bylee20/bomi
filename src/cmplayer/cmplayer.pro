@@ -146,7 +146,8 @@ HEADERS += playengine.hpp \
     historymodel.hpp \
     xmlrpcclient.hpp \
     opensubtitlesfinder.hpp \
-    subtitlefinddialog.hpp
+    subtitlefinddialog.hpp \
+    simplelistmodel.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -227,7 +228,8 @@ SOURCES += main.cpp \
     submisc.cpp \
     xmlrpcclient.cpp \
     opensubtitlesfinder.cpp \
-    subtitlefinddialog.cpp
+    subtitlefinddialog.cpp \
+    simplelistmodel.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -7,6 +7,7 @@
 #include "deintinfo.hpp"
 #include "channelmanipulation.hpp"
 #include "enums.hpp"
+#include "mrlstate.hpp"
 #include <type_traits>
 
 template <typename T> static inline T fromVariant(const QVariant &data) {return data.value<T>();}

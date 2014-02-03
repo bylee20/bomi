@@ -6,6 +6,12 @@
 #include "mrl.hpp"
 #include "submisc.hpp"
 
+class MrlStateProperty;
+static inline bool operator == (const QMetaProperty &lhs, const QMetaProperty &rhs) {
+	return lhs.enclosingMetaObject() == rhs.enclosingMetaObject() && lhs.propertyIndex() == rhs.propertyIndex();
+}
+
+// REVISION means default
 class MrlStateV1 : public QObject {
 	Q_OBJECT
 	Q_PROPERTY(QDateTime last_played_date_time MEMBER last_played_date_time)
@@ -26,8 +32,8 @@ class MrlStateV1 : public QObject {
 
 	Q_PROPERTY(int audio_volume MEMBER audio_volume NOTIFY audioVolumeChanged)
 	Q_PROPERTY(int audio_amplifier MEMBER audio_amplifier NOTIFY audioAmpChanged)
-	Q_PROPERTY(int audio_sync MEMBER audio_sync NOTIFY audioSyncChanged)
-	Q_PROPERTY(int audio_track MEMBER audio_track)
+	Q_PROPERTY(int audio_sync MEMBER audio_sync NOTIFY audioSyncChanged REVISION 1)
+	Q_PROPERTY(int audio_track MEMBER audio_track REVISION 1)
 	Q_PROPERTY(bool audio_muted MEMBER audio_muted NOTIFY audioMutedChanged)
 	Q_PROPERTY(bool audio_volume_normalizer MEMBER audio_volume_normalizer NOTIFY audioVolumeNormalizerChanged)
 	Q_PROPERTY(bool audio_tempo_scaler MEMBER audio_tempo_scaler NOTIFY audioTempoScalerChanged)
@@ -36,8 +42,8 @@ class MrlStateV1 : public QObject {
 	Q_PROPERTY(VerticalAlignment sub_alignment MEMBER sub_alignment NOTIFY subAlignmentChanged)
 	Q_PROPERTY(SubtitleDisplay sub_display MEMBER sub_display NOTIFY subDisplayChanged)
 	Q_PROPERTY(int sub_position MEMBER sub_position NOTIFY subPositionChanged)
-	Q_PROPERTY(int sub_sync MEMBER sub_sync NOTIFY subSyncChanged)
-	Q_PROPERTY(SubtitleStateInfo sub_track MEMBER sub_track)
+	Q_PROPERTY(int sub_sync MEMBER sub_sync NOTIFY subSyncChanged REVISION 1)
+	Q_PROPERTY(SubtitleStateInfo sub_track MEMBER sub_track REVISION 1)
 public:
 	Mrl mrl;
 
@@ -78,6 +84,7 @@ public:
 
 	void save() const;
 
+	static QList<MrlStateProperty> restorableProperties();
 signals:
 	void playSpeedChanged();
 
@@ -106,12 +113,26 @@ signals:
 	void subSyncChanged();
 	void subDisplayChanged();
 	void subAlignmentChanged();
-	void subInternalTrackChanged();
-	void subExternalTracksChanged();
-	void subLoadedTracksChanged();
 };
 
 using MrlState = MrlStateV1;
+
+class MrlStateProperty {
+public:
+	MrlStateProperty() {}
+	bool operator == (const MrlStateProperty &rhs) const {
+		return m_property.propertyIndex() == rhs.m_property.propertyIndex();
+	}
+	QString info() const { return m_info; }
+	const QMetaProperty &property() const { return m_property; }
+private:
+	MrlStateProperty(const QMetaProperty &p, const QString &info)
+	: m_property(p), m_info(info) {}
+	QMetaProperty m_property;
+	QString m_info;
+	friend class MrlStateV1;
+};
+
 
 namespace MrlStateHelpers {
 
@@ -183,19 +204,17 @@ struct Field;
 template<typename T> static QList<Field> fields();
 
 struct Field {
-	QString name() const { return m_name; }
 	QString type() const { return m_type; }
 	QString toSql(const QVariant &var) const { return m_toSql(var); }
-	QVariant fromSql(const QVariant &var) const { return m_fromSql(var, m_variantType); }
-	const char *property() const { return m_property; }
+	QVariant fromSql(const QVariant &var) const { return m_fromSql(var, m_property.userType()); }
+	const QMetaProperty &property() const { return m_property; }
 private:
 	template<typename T> friend QList<Field> fields();
 	static QVariant pass(const QVariant &var, int) { return var; }
-	QString m_name, m_type;
-	const char *m_property = nullptr;
+	QString m_type;
+	QMetaProperty m_property;
 	QString (*m_toSql)(const QVariant&);
 	QVariant (*m_fromSql)(const QVariant&, int) = pass;
-	int m_variantType = QVariant::Invalid;
 };
 
 //static inline QString nameList(const QList<Field> &list) {
@@ -241,13 +260,10 @@ static QList<Field> fields() {
 		const int offset = metaObject.propertyOffset();
 		fields.reserve(count - offset);
 		for (int i=offset; i<count; ++i) {
-			auto p = metaObject.property(i);
 			Field field;
-			field.m_name = p.name();
-			field.m_property = p.name();
+			field.m_property = metaObject.property(i);
 			field.m_type = "INTEGER";
-			field.m_variantType = p.type();
-			switch (p.type()) {
+			switch (field.m_property.type()) {
 			case QVariant::Int:
 				field.m_toSql = [] (const QVariant &var) { return toSql(var.toInt()); };
 				break;
@@ -270,9 +286,8 @@ static QList<Field> fields() {
 				field.m_toSql = [] (const QVariant &var) { return toSql(var.toString()); };
 				break;
 			default: {
-				Q_ASSERT(p.type() == QVariant::UserType);
-				const auto type = p.userType();
-				field.m_variantType = p.userType();
+				Q_ASSERT(field.m_property.type() == QVariant::UserType);
+				const auto type = field.m_property.userType();
 				if (_IsEnumTypeId(type)) {
 					field.m_toSql = [] (const QVariant &var) { return toSql(var.toInt()); };
 					field.m_fromSql = [] (const QVariant &var, int type) -> QVariant { const int i = var.toInt(); return QVariant(type, &i); };

@@ -7,6 +7,7 @@
 #include "deintinfo.hpp"
 #include "record.hpp"
 #include "subtitlestyle.hpp"
+#include "mrlstate.hpp"
 
 class QLocale;
 
@@ -97,6 +98,7 @@ public:
 	bool pause_minimized = true, pause_video_only = true, pause_to_play_next_image = true;
 	bool remember_stopped = true, ask_record_found = true, remember_image = false;
 	bool enable_generate_playist = true;
+	QList<QMetaProperty> restore_properties = defaultRestoreProperties();
 	GeneratePlaylist generate_playlist = GeneratePlaylist::Folder;
 	bool hide_cursor = true, disable_screensaver = true, lion_style_fullscreen = false;
 	bool hide_cursor_fs_only = false;
@@ -155,6 +157,7 @@ public:
 	void load();
 private:
 //	static Pref &get();
+	static QList<QMetaProperty> defaultRestoreProperties();
 	static QString defaultSkinName();
 	static QString defaultSubtitleEncoding();
 	static QList<int> defaultHwAccCodecs();
