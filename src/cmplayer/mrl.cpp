@@ -11,7 +11,7 @@ Mrl::Mrl(const QUrl &url) {
 Mrl::Mrl(const QString &location, const QString &name) {
 	const int idx = location.indexOf("://");
 	if (idx < 0)
-		m_loc = _L("file://") % location;
+		m_loc = _L("file://") % QFileInfo(location).absoluteFilePath();
 	else if (location.startsWith("file://", Qt::CaseInsensitive))
 		m_loc = QUrl::fromPercentEncoding(location.toUtf8());
 	else if (location.startsWith("dvd", Qt::CaseInsensitive))
