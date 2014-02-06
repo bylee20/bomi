@@ -87,6 +87,10 @@ Item {
 		}
 		PlayInfoText { }
 
+		function number(v, n) {
+			return v > 0 ? ("" + (n === undefined ? v : v.toFixed(n))) : "--";
+		}
+
 		PlayInfoText {
 			id: videoinfo
 			function update() {
@@ -94,17 +98,17 @@ Item {
 				txt += '\n';
 				txt += qsTr("Input : %1 %2x%3 %4fps(%5MB/s)")
 					.arg(engine.video.input.type)
-					.arg(engine.video.input.size.width)
-					.arg(engine.video.input.size.height)
-					.arg(engine.video.input.fps.toFixed(3))
-					.arg((engine.video.input.bps/(8*1024*1024)).toFixed(2));
+					.arg(box.number(engine.video.input.size.width))
+					.arg(box.number(engine.video.input.size.height))
+					.arg(box.number(engine.video.input.fps, 3))
+					.arg(box.number(engine.video.input.bps/(8*1024*1024), 2));
 				txt += '\n';
 				txt += qsTr("Output: %1 %2x%3 %4fps(%5MB/s)")
 					.arg(engine.video.output.type)
-					.arg(engine.video.output.size.width)
-					.arg(engine.video.output.size.height)
-					.arg(engine.video.output.fps.toFixed(3))
-					.arg((engine.video.output.bps/(8*1024*1024)).toFixed(2));
+					.arg(box.number(engine.video.output.size.width))
+					.arg(box.number(engine.video.output.size.height))
+					.arg(box.number(engine.video.output.fps, 3))
+					.arg(box.number(engine.video.output.bps/(8*1024*1024), 2));
 				text = txt
 			}
 		}
@@ -118,17 +122,17 @@ Item {
 				txt += '\n';
 				txt += qsTr("Input : %1 %2kbps %3kHz %4 %5bits")
 					.arg(engine.audio.input.type)
-					.arg((engine.audio.input.bps*1e-3).toFixed(0))
-					.arg(engine.audio.input.samplerate)
+					.arg(box.number(engine.audio.input.bps*1e-3, 0))
+					.arg(box.number(engine.audio.input.samplerate))
 					.arg(engine.audio.input.channels)
-					.arg(engine.audio.input.bits);
+					.arg(box.number(engine.audio.input.bits));
 				txt += '\n';
 				txt += qsTr("Output: %1 %2kbps %3kHz %4 %5bits")
 					.arg(engine.audio.output.type)
-					.arg((engine.audio.output.bps*1e-3).toFixed(0))
-					.arg(engine.audio.output.samplerate)
+					.arg(box.number(engine.audio.output.bps*1e-3, 0))
+					.arg(box.number(engine.audio.output.samplerate))
 					.arg(engine.audio.output.channels)
-					.arg(engine.audio.output.bits);
+					.arg(box.number(engine.audio.output.bits));
 				txt += '\n';
 				txt += qsTr("Output Driver: %1").arg(engine.audio.audioDriverText);
 				text = txt
