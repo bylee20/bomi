@@ -350,6 +350,9 @@ PlayEngine::PlayEngine()
 	connect(d->video, &VideoOutput::hwAccChanged, [this] () {
 		_PostEvent(this, HwAccChanged, d->getHwAcc());
 	});
+	connect(d->audio, &AudioController::started, [this] () {
+		_PostEvent(this, UpdateAudioFormat);
+	});
 	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
 		d->load(row, d->getStartTime(d->playlist[row]));
 	});
@@ -656,6 +659,10 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->chapter = _GetData<int>(event);
 		emit currentChapterChanged(d->chapter);
 		break;
+	case UpdateAudioFormat:
+		d->audioInfo.setAudio(this);
+		emit audioChanged();
+		break;
 	case UpdateCurrentStream: {
 		int type, id;
 		_GetAllData(event, type, id);
@@ -699,7 +706,6 @@ void PlayEngine::customEvent(QEvent *event) {
 		break;
 	} case StreamOpen:
 		d->updateMediaName();
-		d->audioInfo.setAudio(this);
 		d->start = 0;
 		d->position = 0;
 		d->cache = -1;

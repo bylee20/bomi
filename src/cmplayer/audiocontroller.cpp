@@ -37,7 +37,7 @@ struct AudioController::Data {
 	AudioMixer *mixer = nullptr;
 	SwrContext *swr = nullptr;
 	int fmt_conv = AF_FORMAT_UNKNOWN, outrate = 0;
-	bool normalizerActivated = false, tempoScalerActivated = false, muted = false, resample = false;
+	bool normalizerActivated = false, tempoScalerActivated = false, muted = false, resample = false, first = false;
 	double scale = 1.0, amp = 1.0;
 	mp_chmap chmap;
 	mp_audio *resampled = nullptr;
@@ -148,6 +148,7 @@ int AudioController::reinitialize(mp_audio *in) {
 	d->mixer->setOutput(out);
 	d->mixer->setChannelLayoutMap(d->map);
 	d->dirty = 0xffffffff;
+	d->first = true;
 	return true;
 }
 
@@ -230,6 +231,11 @@ int AudioController::filter(af_instance *af, mp_audio *data, int /*flags*/) {
 	d->mixer->apply(in);
 	*data = *d->af->data;
 	af->delay += d->mixer->delay();
+
+	if (d->first) {
+		emit ac->started();
+		d->first = false;
+	}
 	return 0;
 }
 

@@ -28,6 +28,8 @@ public:
 	void setClippingMethod(ClippingMethod method);
 	void setChannelLayoutMap(const ChannelLayoutMap &map);
 	mp_chmap *chmap() const;
+signals:
+	void started();
 private:
 	static int open(af_instance *af);
 	static bool test(int fmt_in, int fmt_out);

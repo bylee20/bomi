@@ -36,7 +36,7 @@ extern "C" {
 
 enum EventType {
 	UserType = QEvent::User, TimeRangeChange, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged, VideoFormatChanged, UpdateChapterList,
-	HwAccChanged, UpdateDVDInfo, UpdateCache, UpdateCurrentChapter, UpdateCurrentStream
+	HwAccChanged, UpdateDVDInfo, UpdateCache, UpdateCurrentChapter, UpdateCurrentStream, UpdateAudioFormat
 };
 
 enum MpCmd : int {
