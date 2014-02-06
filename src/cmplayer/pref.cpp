@@ -89,7 +89,8 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 
 	keys[_L("tool/playlist/toggle")] << Qt::Key_L;
 	keys[_L("tool/history")] << Qt::Key_C;
-	keys[_L("tool/subtitle")] << Qt::Key_V;
+	keys[_L("tool/subtitle")] << Qt::SHIFT + Qt::Key_V;
+	keys[_L("tool/find-subtitle")] << Qt::SHIFT + Qt::CTRL + Qt::Key_F;
 	keys[_L("tool/pref")] << Qt::Key_P;
 	keys[_L("tool/reload-skin")] << Qt::Key_R + Qt::CTRL;
 	keys[_L("tool/playinfo")] << Qt::Key_Tab;
