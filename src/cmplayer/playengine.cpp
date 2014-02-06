@@ -120,14 +120,13 @@ struct PlayEngine::Data {
 				mp_property_do(cmd->name, M_PROPERTY_SET, &cmd->args[0].v, mpctx);
 				break;
 			case MpSetAudioLevel:
-				d->audio->setLevel(cmd->args[0].v.d);
+				d->audio->setAmpLevel(cmd->args[0].v.d);
 				break;
 			case MpSetAudioMuted:
 				d->audio->setMuted(cmd->args[0].v.i);
 				break;
-			case MpSetAudioLayout:
-				d->audio->setChannelLayout(d->layout);
-				memcpy(&d->mpctx->opts->audio_output_channels, d->audio->chmap(), sizeof(mp_chmap));
+			case MpSetTempoScaler:
+				d->audio->setTempoScalerActivated(cmd->args[0].v.i);
 				reinit_audio_chain(mpctx);
 				break;
 			case MpResetAudioChain:
@@ -487,8 +486,8 @@ void PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) {
 }
 
 void PlayEngine::setChannelLayout(ChannelLayout layout) {
-	if (_Change(d->layout, layout))
-		d->enqueue(MpSetAudioLayout, "", (int)d->layout);
+	(_Change(d->layout, layout));
+//		d->enqueue(MpSetAudioLayout, "", (int)d->layout);
 }
 
 typedef QPair<AudioDriver, const char*> AudioDriverName;
@@ -990,7 +989,9 @@ void PlayEngine::exec() {
 		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--softvol=yes" << "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet"
-		<< "--no-consolecontrols" << "--no-mouse-movements" << "--subcp=utf8" << "--ao=null,";
+		<< "--no-consolecontrols" << "--no-mouse-movements" << "--subcp=utf8" << "--ao=null,"
+		<< "--ad-lavc-downmix=no";
+
 	QVector<QByteArray> args_byte(args.size());
 	QVector<char*> args_raw(args.size());
 	for (int i=0; i<args.size(); ++i) {
@@ -1183,14 +1184,15 @@ void PlayEngine::registerObjects() {
 }
 
 void PlayEngine::setVolumeNormalizerActivated(bool on) {
-	if (d->audio->setNormalizerActivated(on))
+	if (d->audio->isNormalizerActivated() != on) {
+		d->audio->setNormalizerActivated(on);
 		emit volumeNormalizerActivatedChanged(on);
+	}
 }
 
 void PlayEngine::setTempoScalerActivated(bool on) {
-	if (d->audio->setTempoScalerActivated(on)) {
-		if (d->looping)
-			d->enqueue(MpResetAudioChain);
+	if (d->audio->isTempoScalerActivated() != on) {
+		d->enqueue(MpSetTempoScaler, "", (int)on);
 		emit tempoScaledChanged(on);
 	}
 }

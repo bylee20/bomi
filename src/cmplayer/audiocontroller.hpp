@@ -9,31 +9,28 @@ struct mp_chmap;
 class ChannelLayoutMap;
 enum class ClippingMethod;
 enum class ChannelLayout;
-struct NormalizerOption;
+struct AudioNormalizerOption;
 
 class AudioController : public QObject {
 	Q_OBJECT
 public:
 	AudioController(QObject *parent = nullptr);
 	~AudioController();
-	void setLevel(double level);
-	double level() const;
-	bool setNormalizerActivated(bool on);
-	bool setTempoScalerActivated(bool on);
+	void setAmpLevel(double level);
+	void setNormalizerActivated(bool on);
+	void setTempoScalerActivated(bool on);
 	double gain() const;
 	bool isTempoScalerActivated() const;
 	bool isNormalizerActivated() const;
 	void setNormalizerOption(double length, double target, double silence, double min, double max);
 	double scale() const;
 	void setMuted(bool muted);
-	bool isMuted() const;
-	const NormalizerOption &normalizerOption() const;
 	void setClippingMethod(ClippingMethod method);
 	void setChannelLayoutMap(const ChannelLayoutMap &map);
-	void setChannelLayout(ChannelLayout layout);
 	mp_chmap *chmap() const;
 private:
 	static int open(af_instance *af);
+	static bool test(int fmt_in, int fmt_out);
 	int reinitialize(mp_audio *data);
 	static int filter(af_instance *af, mp_audio *data, int flags);
 	static void uninit(af_instance *af);

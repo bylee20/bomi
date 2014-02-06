@@ -203,7 +203,11 @@ __ENUM_FUNC_DESC_CASES
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const __ENUM_DATA_TYPE &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return __ENUM_NAME::__ENUM_DEFAULT; }

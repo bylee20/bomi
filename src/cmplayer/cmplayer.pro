@@ -120,7 +120,6 @@ HEADERS += playengine.hpp \
     hwacc_vdpau.hpp \
     hwacc_vda.hpp \
     tmp.hpp \
-    audiofilter.hpp \
     videofilter.hpp \
     deintinfo.hpp \
     letterboxitem.hpp \
@@ -147,7 +146,9 @@ HEADERS += playengine.hpp \
     xmlrpcclient.hpp \
     opensubtitlesfinder.hpp \
     subtitlefinddialog.hpp \
-    simplelistmodel.hpp
+    simplelistmodel.hpp \
+    audiomixer.hpp \
+    audiomixer_p.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -204,7 +205,6 @@ SOURCES += main.cpp \
     hwacc_vaapi.cpp \
     hwacc_vdpau.cpp \
     hwacc_vda.cpp \
-    audiofilter.cpp \
     videofilter.cpp \
     deintinfo.cpp \
     letterboxitem.cpp \
@@ -229,7 +229,8 @@ SOURCES += main.cpp \
     xmlrpcclient.cpp \
     opensubtitlesfinder.cpp \
     subtitlefinddialog.cpp \
-    simplelistmodel.cpp
+    simplelistmodel.cpp \
+    audiomixer.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

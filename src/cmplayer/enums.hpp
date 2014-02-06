@@ -89,7 +89,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const mp_speaker_id &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return SpeakerId::FrontLeft; }
@@ -209,7 +213,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QByteArray &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return ChannelLayout::Default; }
@@ -285,7 +293,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return ColorRange::Auto; }
@@ -369,7 +381,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const VideoColor &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return AdjustColor::Reset; }
@@ -439,7 +455,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return SubtitleDisplay::OnLetterbox; }
@@ -519,7 +539,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const qreal &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return VideoRatio::Source; }
@@ -591,7 +615,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return Dithering::Fruit; }
@@ -663,7 +691,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return DecoderDevice::None; }
@@ -733,7 +765,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return DeintMode::Auto; }
@@ -807,7 +843,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return DeintDevice::None; }
@@ -889,7 +929,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return DeintMethod::None; }
@@ -977,7 +1021,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return InterpolatorType::Bilinear; }
@@ -1059,7 +1107,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return AudioDriver::Auto; }
@@ -1131,7 +1183,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return ClippingMethod::Auto; }
@@ -1203,7 +1259,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return StaysOnTop::Playing; }
@@ -1275,7 +1335,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return SeekingStep::Step1; }
@@ -1345,7 +1409,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return GeneratePlaylist::Similar; }
@@ -1417,7 +1485,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return PlaylistBehaviorWhenOpenMedia::AppendToPlaylist; }
@@ -1489,7 +1561,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return SubtitleAutoload::Matched; }
@@ -1563,7 +1639,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return SubtitleAutoselect::Matched; }
@@ -1635,7 +1715,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return OsdScalePolicy::Width; }
@@ -1709,7 +1793,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return ClickAction::OpenFile; }
@@ -1787,7 +1875,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return WheelAction::Seek1; }
@@ -1861,7 +1953,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QVariant &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return KeyModifier::None; }
@@ -1933,7 +2029,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const Qt::Alignment &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return VerticalAlignment::Center; }
@@ -2005,7 +2105,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const Qt::Alignment &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return HorizontalAlignment::Center; }
@@ -2081,7 +2185,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const QPoint &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return MoveToward::Reset; }
@@ -2153,7 +2261,11 @@ public:
 		return it != info.cend() ? it->value : def;
 	}
     static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [name] (const Item &item) { return !name.compare(item.name);});
+		auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+		return it != info.cend() ? it->value : def;
+	}
+	static Enum fromData(const int &data, Enum def = default_()) {
+		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
     static constexpr Enum default_() { return ChangeValue::Reset; }

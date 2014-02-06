@@ -100,7 +100,7 @@ ChannelLayoutMap ChannelLayoutMap::default_() {
 			const auto dstLayout = dstItem.value;
 			if (dstLayout == ChannelLayout::Default)
 				continue;
-			auto &mix = map(srcLayout, dstLayout).m_mix;
+			auto &mix = map.get(srcLayout, dstLayout).m_mix;
 			for (auto srcSpeaker : srcSpeakers) {
 				const auto mps = to_mp_speaker_id(srcSpeaker);
 				if (srcSpeaker & (int)dstLayout) {
@@ -175,26 +175,24 @@ ChannelLayoutMap ChannelLayoutMap::default_() {
 	return map;
 }
 
-ChannelManipulation &ChannelLayoutMap::operator () (const mp_chmap &src, const mp_chmap &dest) {
+ChannelLayout ChannelLayoutMap::toLayout(const mp_chmap &chmap) {
 	auto &items = SpeakerIdInfo::items();
-	auto toSpeakerId = [&items] (uchar mp){
+	int layout = 0;
+	for (int i=0; i<chmap.num; ++i) {
+		auto id = (SpeakerId)(-1);
 		for (auto &item : items) {
-			if (item.data == mp)
-				return item.value;
+			if (item.data == chmap.speaker[i]) {
+				id = item.value;
+				break;
+			}
 		}
-		qDebug() << "Cannot convert mp_chmap!!";
-		return SpeakerId::FrontLeft;
-	};
-	auto toLayout = [toSpeakerId] (const mp_chmap &chmap) {
-		int layout = 0;
-		for (int i=0; i<chmap.num; ++i)
-			layout |= toSpeakerId(chmap.speaker[i]);
-		return ChannelLayoutInfo::from(layout);
-	};
-	auto srcLayout = toLayout(src);
-	auto destLayout = toLayout(dest);
-	qDebug() << ChannelLayoutInfo::name(srcLayout) << "-->" << ChannelLayoutInfo::name(destLayout);
-	return operator()(srcLayout, destLayout);
+		if (id < 0) {
+			qDebug() << "Cannot convert mp_chmap!!";
+			return ChannelLayout::Default;
+		}
+		layout |= id;
+	}
+	return ChannelLayoutInfo::from(layout);
 }
 
 QString ChannelLayoutMap::toString() const {
@@ -219,7 +217,7 @@ ChannelLayoutMap ChannelLayoutMap::fromString(const QString &text) {
 		auto src = ChannelLayoutInfo::from(parts[0]);
 		auto dst = ChannelLayoutInfo::from(parts[1]);
 		auto man = ChannelManipulation::fromString(parts[2]);
-		map(src, dst) = man;
+		map.get(src, dst) = man;
 	}
 	return map;
 }
@@ -302,7 +300,7 @@ struct ChannelManipulationWidget::Data {
 			for (int i=0; i<chmap.num; ++i) {
 				const int speaker = chmap.speaker[i];
 				Q_ASSERT(MP_SPEAKER_ID_FL <= speaker && speaker <= MP_SPEAKER_ID_SR);
-				header << QString::fromLatin1(ChNames[speaker].abbr);
+				header.append(QString::fromLatin1(ChNames[speaker].abbr));
 			}
 			return header;
 		};
@@ -324,7 +322,7 @@ struct ChannelManipulationWidget::Data {
 		for (int i=0; i<table->rowCount(); ++i) {
 			for (int j=0; j<table->columnCount(); ++j) {
 				auto item = table->item(i, j);
-				auto &man = map(input, output);
+				auto &man = map.get(input, output);
 				if (!item) {
 					item = new QTableWidgetItem;
 					table->setItem(i, j, item);
@@ -348,7 +346,7 @@ struct ChannelManipulationWidget::Data {
 		};
 		getChMap(src, currentInput);
 		getChMap(dst, currentOutput);
-		auto &man = map(currentInput, currentOutput);
+		auto &man = map.get(currentInput, currentOutput);
 		for (int i=0; i<table->rowCount(); ++i) {
 			ChannelManipulation::SourceArray sources;
 			for (int j=0; j<table->columnCount(); ++j) {
