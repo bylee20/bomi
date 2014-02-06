@@ -45,6 +45,7 @@ template<typename T>
 static inline bool _InRange(const T &min, const T &val, const T &max) {return min <= val && val <= max;}
 static inline bool _IsNumber(ushort c) {return _InRange<ushort>('0', c, '9');}
 static inline bool _IsAlphabet(ushort c) {return _InRange<ushort>('a', c, 'z') || _InRange<ushort>('A', c, 'Z');}
+static inline bool _IsAlphabet(const QString &text) { for (auto &c : text) if (!_IsAlphabet(c.unicode())) return false; return true; }
 static inline bool _IsHexNumber(ushort c) {return _IsNumber(c) || _InRange<ushort>('a', c, 'f') || _InRange<ushort>('A', c, 'F');}
 static inline bool _Same(const QString &str, const char *latin1) {return !str.compare(_L(latin1), Qt::CaseInsensitive);}
 static inline bool _Same(const QStringRef &str, const char *latin1) {return !str.compare(_L(latin1), Qt::CaseInsensitive);}

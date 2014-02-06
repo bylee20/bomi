@@ -170,14 +170,8 @@ struct PlayEngine::Data {
 					auto &stream = list[track->user_tid];
 					stream.m_title = QString::fromLocal8Bit(track->title);
 					stream.m_lang = QString::fromLocal8Bit(track->lang);
-					if (stream.m_lang.size() == 2 || stream.m_lang.size() == 3) {
-						for (int i=0; i<stream.m_lang.size(); ++i) {
-							if (!_IsAlphabet(stream.m_lang[i].unicode()))
-								goto skip_lang_conv;
-						}
+					if (_InRange(2, stream.m_lang.size(), 3) && _IsAlphabet(stream.m_lang))
 						stream.m_lang = Translator::displayLanguage(stream.m_lang);
-					}
-skip_lang_conv:
 					stream.m_id = track->user_tid;
 					stream.m_name = name[track->type].arg(track->user_tid);
 				}
