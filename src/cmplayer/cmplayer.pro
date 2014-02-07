@@ -1,4 +1,3 @@
-cache()
 TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header c++11
 macx:CONFIG -= app_bundle
@@ -33,9 +32,6 @@ macx {
     QT += macextras
     CONFIG += sdk
     QT_CONFIG -= no-pkg-config
-    QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
-    QMAKE_MAC_SDK = macosx
-    QMAKE_MAC_SDK.$${QMAKE_MAC_SDK}.path = $$system(/usr/bin/xcodebuild -sdk macosx -version Path)
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer

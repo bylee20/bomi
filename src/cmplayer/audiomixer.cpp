@@ -95,7 +95,7 @@ public:
 	const AudioFrameIterator<fmt_out> &output() const { return m_dst; }
 private:
 	template<int s, typename T>
-	constexpr inline T rshift(const T &t) const { T ret = t; H::template rshift<s, T>(ret); return ret; }
+	constexpr inline T rshift(const T &t) const { return H::template rshift<s, T>(t); }
 
 	int fill_queue(int frames_offset) {
 		int frames_in = m_src.size() - frames_offset;

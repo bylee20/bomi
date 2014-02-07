@@ -3,6 +3,7 @@
 
 #include "stdafx.hpp"
 #include "tmp.hpp"
+#include <cmath>
 extern "C" {
 #include <audio/format.h>
 }
@@ -58,9 +59,9 @@ struct Help {
 	static constexpr inline S clip(S p) { return Clip<method, S>::apply(p); }
 
 	template<int s, class T = S, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-	static constexpr inline void rshift(T &t) { t >>= s; }
+	static constexpr inline T rshift(const T &t) { return t >> s; }
 	template<int s, class T = S, typename std::enable_if<!std::is_integral<T>::value, int>::type = 0>
-	static constexpr inline void rshift(T &) { }
+	static constexpr inline T rshift(const T &t) { return t; }
 
 	template<class T, class U, bool same = std::is_same<U, T>::value> struct Conv { };
 	template<class T> struct Conv<T, T, true> {
@@ -71,7 +72,7 @@ struct Help {
 	static constexpr inline T conv(S s) { return Conv<T, S>::apply(s); }
 };
 
-template<int fmt, bool planar = fmt & AF_FORMAT_PLANAR> struct ToInterleaving { };
+template<int fmt, bool planar = !!(fmt & AF_FORMAT_PLANAR)> struct ToInterleaving { };
 template<int fmt> struct ToInterleaving<fmt, false> { static constexpr int value = fmt; };
 template<> struct ToInterleaving<AF_FORMAT_S16P, true> { static constexpr int value = AF_FORMAT_S16; };
 template<> struct ToInterleaving<AF_FORMAT_S32P, true> { static constexpr int value = AF_FORMAT_S32; };
