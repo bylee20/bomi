@@ -127,6 +127,7 @@ bool VideoRendererItem::overlayInLetterbox() const {
 
 void VideoRendererItem::initializeGL() {
 	TextureRendererItem::initializeGL();
+	LOG_GL_ERROR_Q
 	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
 	_Renew(d->shader);
 	d->shader->setDeintMethod(d->deint);
@@ -139,6 +140,7 @@ void VideoRendererItem::initializeGL() {
 	d->black.upload(&p);
 	d->initialized = true;
 	setRenderTarget(d->black);
+	LOG_GL_ERROR_Q
 }
 
 void VideoRendererItem::finalizeGL() {
@@ -386,15 +388,16 @@ void VideoRendererItem::reset() {
 void VideoRendererItem::prepare(QSGGeometryNode *node) {
 	Q_ASSERT(d->shader);
 	if (d->take) {
-		if (d->fbo) {
+		if (d->fbo && !d->fbo->isNull()) {
 			auto image = d->fbo->toImage();
 			d->mposd->drawOn(image);
 			emit frameImageObtained(image);
 		} else
 			emit frameImageObtained(QImage());
 		d->take = false;
+		LOG_GL_ERROR_Q
 	}
-
+LOG_GL_ERROR_Q
 	if (!d->queue.isEmpty()) {
 		auto &frame = d->queue.front();
 		if (!frame.format().isEmpty()) {
@@ -432,6 +435,7 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 		node->markDirty(QSGNode::DirtyMaterial);
 	}
 	d->render = false;
+	LOG_GL_ERROR_Q
 }
 
 void VideoRendererItem::getCoords(QRectF &vertices, QRectF &texCoords) {

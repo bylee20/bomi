@@ -48,11 +48,13 @@ private:
 			if (!m_fbo || m_fbo->size() != size) {
 				_Renew(m_fbo, size);
 				setRenderTarget(m_fbo->texture());
+				LOG_GL_ERROR_Q
 			}
 			paint(m_fbo);
 			setGeometryDirty();
 			node->markDirty(QSGNode::DirtyMaterial);
 			m_repaint = false;
+			LOG_GL_ERROR_Q
 		}
 	}
 	QTimer m_sizeChecker;
@@ -62,6 +64,7 @@ private:
 };
 
 class MpOsdItem : public FramebufferObjectRendererItem {
+	Q_OBJECT
 public:
 	MpOsdItem(QQuickItem *parent = nullptr);
 	~MpOsdItem();

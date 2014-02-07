@@ -96,6 +96,7 @@ public:
 			return false;
 		}
 	}
+	bool isNull() const { return id != GL_NONE; }
 	bool isEmpty() const { return !width && !height && !depth; }
 	bool upload1D(const void *data) const { return upload(0, width, data); }
 	bool upload2D(const void *data) const { return upload(0, 0, width, height, data); }
@@ -142,7 +143,10 @@ public:
 	static bool hasFloat() { return HasFloat; }
 	static const OpenGLCompat &get() { return c; }
 	static OpenGLTexture allocateDitheringTexture(GLuint id, Dithering type);
-	static QOpenGLFunctions *functions() { auto ctx = QOpenGLContext::currentContext(); return ctx ? ctx->functions() : nullptr; }
+	static QOpenGLFunctions *functions() {
+		auto ctx = QOpenGLContext::currentContext();
+		return ctx ? ctx->functions() : nullptr;
+	}
 	static OpenGLTexture makeTexture(int width, int height, GLenum format, GLenum target = GL_TEXTURE_2D) {
 		OpenGLTexture texture;
 		texture.width = width; texture.height = height;
@@ -153,14 +157,40 @@ public:
 		return texture;
 	}
 	~OpenGLCompat();
+	static void logError(const char *at) {
+		const auto e = glGetError();
+		if (e != GL_NO_ERROR)
+			qWarning("OpenGL error: %s(0x%x) at %s", OpenGLCompat::errorString(e), e, at);
+	}
+	static const char *errorString(GLenum error);
 private:
 	OpenGLCompat();
 	static OpenGLCompat c;
 	struct Data;
 	Data *d;
-	static bool HasRG, HasFloat;
+	static bool HasRG, HasFloat, HasFbo;
 	static int MaxTexSize;
 };
+
+#ifdef CMPLAYER_RELEASE
+#define LOG_GL_ERROR
+#define LOG_GL_ERROR_Q
+#else
+#define LOG_GL_ERROR {\
+	auto e = glGetError(); \
+		if (e != GL_NO_ERROR) \
+			qWarning("OpenGL error: %s(0x%x) at %s line %d in %s", \
+				OpenGLCompat::errorString(e), e, __FILE__, __LINE__, __PRETTY_FUNCTION__);\
+	}
+
+#define LOG_GL_ERROR_Q {\
+	auto e = glGetError(); \
+		if (e != GL_NO_ERROR) \
+			qWarning("OpenGL error: %s(0x%x) at %s line %d in %s::%s", \
+				OpenGLCompat::errorString(e), e, __FILE__, __LINE__, metaObject()->className(), __func__);\
+	}
+#endif
+
 
 class OpenGLFramebufferObject {
 public:
@@ -168,26 +198,32 @@ public:
 	: OpenGLFramebufferObject(size, OpenGLCompat::textureFormat(GL_BGRA), target) {}
 	OpenGLFramebufferObject(const QSize &size, const OpenGLTextureFormat &format, int target = GL_TEXTURE_2D) {
 		auto f = func();
-		f->glGenFramebuffers(1, &m_id);
-		f->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
 		m_texture.width = size.width();
 		m_texture.height = size.height();
 		m_texture.target = target;
 		m_texture.format = format;
-		m_texture.generate();
-		m_texture.allocate();
-		f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, m_texture.id, 0);
-		QOpenGLFramebufferObject::bindDefault();
+		if (!m_texture.isEmpty()) {
+			f->glGenFramebuffers(1, &m_id);
+			LOG_GL_ERROR
+			f->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
+			LOG_GL_ERROR
+			m_texture.generate();
+			m_texture.allocate();
+			f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, m_texture.id, 0);
+			LOG_GL_ERROR
+			QOpenGLFramebufferObject::bindDefault();
+		}
 	}
 	virtual ~OpenGLFramebufferObject() {
 		m_texture.delete_();
-		func()->glDeleteFramebuffers(1, &m_id);
+		if (m_id != GL_NONE)
+			func()->glDeleteFramebuffers(1, &m_id);
 	}
 	QRect rect() const { return {0, 0, width(), height()}; }
 	int width() const { return m_texture.width; }
 	int height() const { return m_texture.height; }
 	QSize size() const { return {m_texture.width, m_texture.height}; }
-	void bind() const { func()->glBindFramebuffer(GL_FRAMEBUFFER, m_id); }
+	void bind() const { if (!isNull()) func()->glBindFramebuffer(GL_FRAMEBUFFER, m_id); }
 	void release() const { QOpenGLFramebufferObject::bindDefault(); }
 	const OpenGLTexture &texture() const { return m_texture; }
 	QImage toImage() const;
@@ -196,6 +232,7 @@ public:
 			x1 = y1 = 0; x2 = m_texture.width; y2 = m_texture.height;
 		} else { x1 = y1 = 0; x2 = y2 = 1; }
 	}
+	bool isNull() const { return m_id == GL_NONE; }
 private:
 	static QOpenGLFunctions *func() { return OpenGLCompat::functions(); }
 	GLuint m_id = GL_NONE;

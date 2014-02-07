@@ -27,8 +27,9 @@ public:
 	void setDithering(Dithering dithering) { if (_Change(m_newDithering, dithering)) rerender(); }
 	Dithering dithering() const { return m_newDithering; }
 	int depth() const { return 8; }
+	QByteArray logAt(const char *func) const { return QByteArray(metaObject()->className()) + "::" + func; }
 protected slots:
-	virtual void initializeGL() { m_lutInt[0].generate(); m_lutInt[1].generate(); m_ditheringTex.generate(); }
+	virtual void initializeGL();
 	virtual void finalizeGL() { m_lutInt[0].delete_(); m_lutInt[1].delete_(); m_ditheringTex.delete_(); }
 protected:
 	static QOpenGLFunctions *func() { return QOpenGLContext::currentContext()->functions(); }
@@ -79,7 +80,7 @@ private:
 	int loc_tex = -1, loc_vMatrix = -1, loc_dxy = -1;
 	int loc_tex_size = -1;
 	int loc_dithering = -1, loc_dithering_quantization = -1, loc_dithering_center = -1, loc_dithering_size = -1;
-	QByteArray m_fragCode, m_vertexCode;
+	QByteArray m_fragCode, m_vertexCode, m_forLog;
 };
 
 #endif // TEXTURERENDERERITEM_HPP

@@ -87,6 +87,8 @@ struct MpOsdItem::Data {
 	}
 
 	void draw(OpenGLFramebufferObject *fbo, const MpOsdBitmap &osd) {
+		if (fbo->isNull())
+			return;
 		build(osd.format());
 		if (!shader->isLinked())
 			return;
@@ -119,6 +121,7 @@ struct MpOsdItem::Data {
 
 		shader->end();
 		fbo->release();
+		LOG_GL_ERROR
 	}
 };
 
@@ -131,9 +134,12 @@ MpOsdItem::~MpOsdItem() {
 	delete d;
 }
 
-void MpOsdItem::initializeGL() { }
+void MpOsdItem::initializeGL() {
+	FramebufferObjectRendererItem::initializeGL();
+}
 
 void MpOsdItem::finalizeGL() {
+	FramebufferObjectRendererItem::finalizeGL();
 	_Delete(d->shader);
 }
 

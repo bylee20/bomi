@@ -9,6 +9,7 @@ OpenGLCompat OpenGLCompat::c;
 bool OpenGLCompat::HasRG = false;
 bool OpenGLCompat::HasFloat = false;
 int OpenGLCompat::MaxTexSize = 0;
+bool OpenGLCompat::HasFbo = false;
 
 struct OpenGLCompat::Data {
 	bool init = false;
@@ -26,6 +27,7 @@ struct OpenGLCompat::Data {
 		minor = version.second;
 		HasRG = major >= 3 || ctx->hasExtension("GL_ARB_texture_rg");
 		HasFloat = major >= 3 || ctx->hasExtension("GL_ARB_texture_float");
+		HasFbo = QOpenGLFramebufferObject::hasOpenGLFramebufferObjects();
 
 		formats[0][GL_RED] = {GL_R8, GL_RED, GL_UNSIGNED_BYTE};
 		formats[0][GL_RG] = {GL_RG8, GL_RG, GL_UNSIGNED_BYTE};
@@ -50,8 +52,8 @@ struct OpenGLCompat::Data {
 			format[3] = format[GL_BGR];
 			format[4] = format[GL_BGRA];
 		}
-
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxTexSize);
+		logError("OpenGLCompat::Data::fill()");
 	}
 };
 
@@ -62,6 +64,24 @@ OpenGLCompat::OpenGLCompat()
 
 OpenGLCompat::~OpenGLCompat() {
 	delete d;
+}
+
+const char *OpenGLCompat::errorString(GLenum error) {
+	static QHash<GLenum, const char*> strings;
+	if (strings.isEmpty()) {
+#define ADD(e) {strings[e] = #e;}
+		ADD(GL_NO_ERROR);
+		ADD(GL_INVALID_ENUM);
+		ADD(GL_INVALID_VALUE);
+		ADD(GL_INVALID_OPERATION);
+		ADD(GL_STACK_OVERFLOW);
+		ADD(GL_STACK_UNDERFLOW);
+		ADD(GL_OUT_OF_MEMORY);
+		ADD(GL_INVALID_FRAMEBUFFER_OPERATION);
+		ADD(GL_TABLE_TOO_LARGE);
+#undef ADD
+	}
+	return strings.value(error, "");
 }
 
 void OpenGLCompat::initialize(QOpenGLContext *ctx) {
@@ -132,6 +152,8 @@ static QImage getImage(const QSize &size, const OpenGLTextureFormat &format) {
 }
 
 QImage OpenGLFramebufferObject::toImage() const {
+	if (m_texture.isNull())
+		return QImage();
 	bind();
 	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
 	switch (m_texture.format.type) {

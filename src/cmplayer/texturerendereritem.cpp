@@ -64,6 +64,7 @@ TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, In
 	m_vertexCode += code;
 	m_lutCount = Interpolator::textures(m_category);
 	Q_ASSERT(0 <= m_lutCount && m_lutCount < 3);
+	LOG_GL_ERROR
 }
 
 const char *const *TextureRendererShader::attributeNames() const {
@@ -78,14 +79,12 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 	auto &texture = m_item->texture();
 	auto prog = program();
 	auto f = func();
-
 	prog->setUniformValue(loc_tex, 0);
 	if (state.isMatrixDirty())
 		prog->setUniformValue(loc_vMatrix, state.combinedMatrix());
 	bind(prog);
 	f->glActiveTexture(GL_TEXTURE0);
 	texture.bind();
-
 	if (m_lutCount > 0) {
 		prog->setUniformValue(loc_dxy, QVector2D(1.0/(double)texture.width, 1.0/(double)texture.height));
 		prog->setUniformValue(loc_tex_size, QVector2D(texture.width, texture.height));
@@ -109,11 +108,12 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 		prog->setUniformValue(loc_dithering, texPos);
 		prog->setUniformValue(loc_dithering_quantization, float(1 << m_item->depth()) - 1.f);
 		prog->setUniformValue(loc_dithering_center, 0.5f / size*size);
-		prog->setUniformValue(loc_dithering_size, size);
+		prog->setUniformValue(loc_dithering_size, QSize(size, size));
 		f->glActiveTexture(GL_TEXTURE0 + texPos);
 		dithering.bind();
 	}
 	f->glActiveTexture(GL_TEXTURE0);
+	OpenGLCompat::logError(m_forLog.constData());
 }
 
 void TextureRendererShader::initialize() {
@@ -136,6 +136,12 @@ void TextureRendererShader::initialize() {
 		loc_dithering_size = prog->uniformLocation("dithering_size");
 	}
 	link(prog);
+	LOG_GL_ERROR
+	m_forLog = m_item->metaObject()->className();
+	m_forLog += "->TextureRendererShader::";
+	const auto at = m_forLog + "initialize()";
+	OpenGLCompat::logError(at.constData());
+	m_forLog += "updateState()";
 }
 
 struct TextureRendererItem::Material : public QSGMaterial {
@@ -157,6 +163,7 @@ struct TextureRendererItem::Node : public QSGGeometryNode {
 
 struct TextureRendererItem::Data {
 	Node *node = nullptr;
+	QByteArray forLog;
 	static void set(QSGGeometry::TexturedPoint2D *tp, const QRectF &vtx, const QRectF &txt) {
 		auto set = [&tp] (const QPointF &vtx, const QPointF &txt) {
 			tp++->set(vtx.x(), vtx.y(), txt.x(), txt.y());
@@ -170,6 +177,7 @@ struct TextureRendererItem::Data {
 
 TextureRendererItem::TextureRendererItem(QQuickItem *parent)
 : GeometryItem(parent), d(new Data) {
+
 	setFlag(ItemHasContents, true);
 	connect(this, &QQuickItem::windowChanged, [this] (QQuickWindow *window) {
 		m_win = window;
@@ -187,6 +195,16 @@ TextureRendererItem::~TextureRendererItem() {
 
 TextureRendererShader *TextureRendererItem::createShader() const {
 	return new TextureRendererShader(this, m_interpolator->category(), m_dithering > 0);
+}
+
+void TextureRendererItem::initializeGL() {
+	m_lutInt[0].generate();
+	m_lutInt[1].generate();
+	m_ditheringTex.generate();
+
+	d->forLog = metaObject()->className();
+	d->forLog += "::updatePaintNode()";
+	LOG_GL_ERROR_Q
 }
 
 QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
@@ -208,6 +226,7 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 	}
 	if (_Change(m_dithering, m_newDithering))
 		m_ditheringTex = OpenGLCompat::allocateDitheringTexture(m_ditheringTex.id, m_dithering);
+	OpenGLCompat::logError(d->forLog.constData());
 	return d->node;
 }
 
