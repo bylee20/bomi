@@ -59,6 +59,7 @@ struct LocaleComboBox::Item {
 
 struct LocaleComboBox::Data {
 	QList<Item> items;
+	Item system{QLocale::system()};
 };
 
 LocaleComboBox::LocaleComboBox(QWidget *parent)
@@ -80,7 +81,8 @@ void LocaleComboBox::reset() {
 	for (auto &it : d->items)
 		it.update();
 	qSort(d->items);
-	addItem(tr("System default locale"), QLocale::c());
+	d->system.update();
+	addItem(tr("System locale[%1]").arg(d->system.name), d->system.locale);
 	for (auto &it : d->items)
 		addItem(it.name, it.locale);
 	setCurrentIndex(findData(locale));

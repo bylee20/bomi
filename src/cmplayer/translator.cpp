@@ -76,9 +76,6 @@ Translator &Translator::get() {
 
 LocaleList Translator::availableLocales() {
 	return get().d->locales.toList();
-	QList<QLocale> list = get().d->locales.toList();
-	list.prepend(QLocale::c());
-	return list;
 }
 
 bool Translator::load(const QLocale &locale) {
