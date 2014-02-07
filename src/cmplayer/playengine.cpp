@@ -11,6 +11,13 @@ extern "C" {
 #include <demux/demux.h>
 }
 
+static QByteArray fileNameAsArg(const QString &fileName) {
+	const auto file = fileName.toLocal8Bit();
+	QByteArray arg; arg.reserve(file.size() + 2);
+	arg += '"'; arg += file; arg += '"';
+	return arg;
+}
+
 struct PlaybackData {
 	int begin = 0, duration = 0, terminated = 0;
 	PlayEngine::State state = PlayEngine::Loading;
@@ -183,12 +190,7 @@ struct PlayEngine::Data {
 	}
 	int getStartTime(const Mrl &mrl) { return getStartTimeFunc ? getStartTimeFunc(mrl) : 0; }
 	int getCache(const Mrl &mrl) { return getCacheFunc ? getCacheFunc(mrl) : 0; }
-	QByteArray &setFileName(const Mrl &mrl) {
-		fileName = "\"";
-		fileName += mrl.location().toLocal8Bit();
-		fileName += "\"";
-		return fileName;
-	}
+	QByteArray &setFileName(const Mrl &mrl) { return fileName = fileNameAsArg(mrl.location()); }
 	template<typename T = int>
 	bool enqueue(int id, const char *name = "", const T &v = 0) {
 		const bool ret = mpctx && mpctx->input;
@@ -223,11 +225,11 @@ struct PlayEngine::Data {
 	}
 	template<typename T, typename S>
 	void tellmp(const QByteArray &cmd, const T &a1, const S &a2) {
-		tellmp(cmd, {qbytearray_from(a1), qbytearray_from(a2)});
+		tellmp(cmd, {qbytearray_from<T>(a1), qbytearray_from<S>(a2)});
 	}
 	template<typename T, typename S, typename R>
 	void tellmp(const QByteArray &cmd, const T &a1, const S &a2, const R &a3) {
-		tellmp(cmd, {qbytearray_from(a1), qbytearray_from(a2), qbytearray_from(a3)});
+		tellmp(cmd, {qbytearray_from<T>(a1), qbytearray_from<S>(a2), qbytearray_from<R>(a3)});
 	}
 //	template<template <typename> class T> void tellmp(const QByteArray &cmd, const T<QString> &args) {
 //		QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);
@@ -593,7 +595,7 @@ void PlayEngine::addSubtitleStream(const QString &fileName, const QString &enc) 
 		item.file = out;
 		d->subtitleFiles.append(item);
 		d->subtitleNames[out->fileName()] = info.fileName();
-		d->tellmp("sub_add", out->fileName());
+		d->tellmp("sub_add", {fileNameAsArg(out->fileName())});
 	}
 }
 
