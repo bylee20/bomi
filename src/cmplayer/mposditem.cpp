@@ -16,7 +16,7 @@ struct MpOsdItem::Data {
 	QMatrix4x4 vMatrix;
 
 	void build(MpOsdBitmap::Format inFormat) {
-		if (!_Change(format, inFormat))
+		if (!_Change(format, inFormat) && shader)
 			return;
 		_Renew(shader);
 		srcFactor = (format & MpOsdBitmap::PaMask) ? GL_ONE : GL_SRC_ALPHA;
