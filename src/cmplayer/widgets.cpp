@@ -75,6 +75,7 @@ LocaleComboBox::~LocaleComboBox() {
 }
 
 void LocaleComboBox::reset() {
+	auto locale = currentLocale();
 	clear();
 	for (auto &it : d->items)
 		it.update();
@@ -82,6 +83,7 @@ void LocaleComboBox::reset() {
 	addItem(tr("System default locale"), QLocale::c());
 	for (auto &it : d->items)
 		addItem(it.name, it.locale);
+	setCurrentIndex(findData(locale));
 }
 
 
