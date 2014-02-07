@@ -258,7 +258,7 @@ void VideoOutput::flipPage(struct vo *vo) {
 int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	switch (format) {
 	case IMGFMT_VDPAU:	case IMGFMT_VDA:	case IMGFMT_VAAPI:
-	case IMGFMT_420P:
+	case IMGFMT_420P:	case IMGFMT_444P:
 	case IMGFMT_420P16_LE:	case IMGFMT_420P16_BE:
 	case IMGFMT_420P14_LE:	case IMGFMT_420P14_BE:
 	case IMGFMT_420P12_LE:	case IMGFMT_420P12_BE:

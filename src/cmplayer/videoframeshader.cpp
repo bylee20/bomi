@@ -381,6 +381,14 @@ void VideoFrameShader::fillInfo() {
 
 	m_texel = "vec3 texel(const in vec4 tex0) {return tex0.rgb;}"; // passthrough
 	switch (format.type()) {
+	case IMGFMT_444P:
+		add(0, 1); add(1, 1); add(2, 1);
+		m_texel = R"(
+			vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {
+				return vec3(tex0.r, tex1.r, tex2.r);
+			}
+		)";
+		break;
 	case IMGFMT_420P:
 		add(0, 1); add(1, 1); add(2, 1); cc(2, 0.5);
 		m_texel = R"(
