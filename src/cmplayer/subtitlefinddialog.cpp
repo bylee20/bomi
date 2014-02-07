@@ -46,6 +46,8 @@ struct SubtitleFindDialog::Data {
 	Mrl pending;
 	SubtitleLinkModel model;
 	QSortFilterProxyModel proxy;
+	QString fileName;
+	QMap<QUrl, QString> downloads;
 	void updateState() {
 		const bool ok = finder->isAvailable() && !downloader.isRunning();
 		ui.open->setEnabled(ok);
@@ -93,15 +95,17 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 		d->ui.prog->setValue(written);
 	});
 	connect(&d->downloader, &Downloader::finished, [this] () {
+		auto it = d->downloads.find(d->downloader.url());
+		Q_ASSERT(it != d->downloads.end());
 		auto data = _Uncompress(d->downloader.data());
 		if (!data.isEmpty()) {
-			QFileInfo info(d->ui.file->text());
-			QFile file(info.absolutePath() + "/" + d->ui.view->currentIndex().data(FileNameRole).toString());
+			QFile file(*it);
 			file.open(QFile::WriteOnly | QFile::Truncate);
 			file.write(data);
 			file.close();
 			emit loadRequested(file.fileName());
 		}
+		d->downloads.erase(it);
 		d->updateState();
 	});
 	connect(d->ui.open, &QPushButton::clicked, [this] () {
@@ -113,8 +117,31 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 		d->proxy.setFilterFixedString(index > 0 ? d->ui.language->itemText(index) : "");
 	});
 	connect(d->ui.get, &QPushButton::clicked, [this] () {
-		auto url = d->ui.view->currentIndex().data(UrlRole).toUrl();
-		d->downloader.start(url);
+		auto file = QFileInfo(d->ui.file->text()).dir().absoluteFilePath(d->ui.view->currentIndex().data(FileNameRole).toString());
+		const QFileInfo info(file);
+		if (info.exists()) {
+			QMessageBox mbox(QMessageBox::Question, tr("Find Subtitle"), tr("A file with the same name already exists. Do you want overwrite it?"), QMessageBox::NoButton, this);
+			mbox.addButton(tr("Overwrite"), QMessageBox::AcceptRole);
+			mbox.addButton(tr("Save as..."), QMessageBox::ActionRole);
+			mbox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+			mbox.exec();
+			switch (mbox.buttonRole(mbox.clickedButton())) {
+			case QMessageBox::ActionRole: {
+				const QString suffix = _L('.') % info.suffix();
+				file = _GetSaveFileName(this, tr("Save As..."), file, tr("Subtitle Files") % _L(" (*") % suffix % _L(')'));
+				if (file.isEmpty())
+					return;
+				if (!file.endsWith(suffix))
+					file += suffix;
+				file = QFileInfo(file).absoluteFilePath();
+			} case QMessageBox::AcceptRole:
+				break;
+			default:
+				return;
+			}
+		}
+		if (d->downloader.start(d->ui.view->currentIndex().data(UrlRole).toUrl()))
+			d->downloads[d->downloader.url()] = file;
 	});
 	connect(d->finder, &OpenSubtitlesFinder::stateChanged, [this] () { d->updateState(); });
 	connect(d->finder, &OpenSubtitlesFinder::found, [this] (const QList<SubtitleLink> &links) {

@@ -10,9 +10,10 @@ class Downloader: public QObject {
 public:
 	Downloader(QObject *parent = nullptr);
 	~Downloader();
-	void start(const QUrl &url);
+	bool start(const QUrl &url);
 	bool isRunning() const;
 	QByteArray data() const;
+	QUrl url() const;
 signals:
 	void downloaded(qint64 written, qint64 total);
 	void finished();

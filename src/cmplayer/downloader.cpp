@@ -1,6 +1,7 @@
 #include "downloader.hpp"
 
 struct Downloader::Data {
+	QUrl url;
 	QNetworkAccessManager *nam = nullptr;
 	bool running = false;
 	QByteArray data;
@@ -16,9 +17,10 @@ Downloader::~Downloader() {
 	delete d;
 }
 
-void Downloader::start(const QUrl &url) {
+bool Downloader::start(const QUrl &url) {
 	if (d->running)
-		return;
+		return false;
+	d->url = url;
 	d->running = true;
 	emit started();
 	auto reply = d->nam->get(QNetworkRequest(url));
@@ -29,6 +31,11 @@ void Downloader::start(const QUrl &url) {
 		emit finished();
 		reply->deleteLater();
 	});
+	return true;
+}
+
+QUrl Downloader::url() const {
+	return d->url;
 }
 
 bool Downloader::isRunning() const {
