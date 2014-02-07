@@ -25,16 +25,17 @@ Info::Info() {
 
 Info::~Info() {}
 
-QString Info::ExtList::toFilter() const {
-	QString filter;
-	for (QStringList::const_iterator it = begin(); it != end(); ++it)
-		filter += "*." + *it + ' ';
-	const int size = filter.size();
-	if (size) {
-		filter.remove(size-1, 1);
-		return '(' + filter + ')';
-	} else
+QString Info::ExtList::toFilter(const QString &name) const {
+	if (isEmpty())
 		return QString();
+	QString filter;
+	if (!name.isEmpty())
+		filter += name % _L(' ');
+	filter += _L('(');
+	for (auto &ext : *this)
+		filter += _L("*.") % ext % _L(' ');
+	filter[filter.size() - 1] = _L(')');
+	return filter;
 }
 
 QStringList Info::ExtList::toNameFilter() const {
@@ -42,18 +43,6 @@ QStringList Info::ExtList::toNameFilter() const {
 	for (QStringList::const_iterator it = begin(); it != end(); ++it)
 		nameFilter << ("*." + *it);
 	return nameFilter;
-}
-
-QString Info::mediaExtFilter() {
-	static const QString filter
-		= QCoreApplication::translate("Info", "Video Files") + ' '
-			+ Info::videoExt().toFilter() + ";;"
-			+ QCoreApplication::translate("Info", "Audio Files") + ' '
-			+ Info::audioExt().toFilter() + ";;"
-			+ QCoreApplication::translate("Info", "Image Files") + ' '
-			+ Info::readableImageExt().toFilter() + ";;"
-			+ QCoreApplication::translate("Info", "All Files") + ' ' + "(*.*)";
-	return filter;
 }
 
 const char *Info::pluginPath() {

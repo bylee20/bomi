@@ -1103,10 +1103,9 @@ void MainWindow::connectMenus() {
 		}
 	});
 	connect(sub("track")["open"], &QAction::triggered, [this] () {
-		const QString filter = tr("Subtitle Files") % ' ' % Info::subtitleExt().toFilter();
 		const auto dir = d->engine.mrl().isLocalFile() ? QFileInfo(d->engine.mrl().toLocalFile()).absolutePath() : _L("");
 		QString enc = d->pref().sub_enc;
-		const auto files = EncodingFileDialog::getOpenFileNames(this, tr("Open Subtitle"), dir, filter, &enc);
+		const auto files = EncodingFileDialog::getOpenFileNames(this, tr("Open Subtitle"), dir, Info::subtitleExtFilter(), &enc);
 		if (!files.isEmpty())
 			appendSubFiles(files, true, enc);
 	});
@@ -1158,8 +1157,7 @@ void MainWindow::connectMenus() {
 	connect(playlist["toggle"], &QAction::triggered, [toggleTool] () {toggleTool("playlist", AppState::get().playlist_visible);});
 	connect(playlist["open"], &QAction::triggered, [this] () {
 		QString enc;
-		const QString filter = tr("Playlist") +' '+ Info::playlistExt().toFilter();
-		const QString file = EncodingFileDialog::getOpenFileName(this, tr("Open File"), QString(), filter, &enc);
+		const QString file = EncodingFileDialog::getOpenFileName(this, tr("Open File"), QString(), Info::playlistExtFilter(), &enc);
 		if (!file.isEmpty())
 			d->playlist.setPlaylist(Playlist(file, enc));
 	});

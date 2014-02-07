@@ -4,13 +4,14 @@
 #include "stdafx.hpp"
 
 class Info {
+	Q_DECLARE_TR_FUNCTIONS(Info)
 public:
 	class ExtList : public QStringList {
 	public:
 		ExtList() {}
 		ExtList(const QStringList &other): QStringList(other) {}
 		ExtList(const ExtList &other): QStringList(other) {}
-		QString toFilter() const;
+		QString toFilter(const QString &name = QString()) const;
 		QStringList toNameFilter() const;
 	};
 	~Info();
@@ -21,6 +22,12 @@ public:
 	static const ExtList &audioExt() {return self.m_audioExt;}
 	static const ExtList &subtitleExt() {return self.m_subExt;}
 	static const ExtList &playlistExt() {return self.m_plExt;}
+	static QString readableImageExtFilter(const QString &name = tr("Images")) { return readableImageExt().toFilter(name); }
+	static QString writableImageExtFilter(const QString &name = tr("Images")) { return writableImageExt().toFilter(name); }
+	static QString videoExtFilter(const QString &name = tr("Video Files")) {return self.m_videoExt.toFilter(name);}
+	static QString audioExtFilter(const QString &name = tr("Audio Files")) {return self.m_audioExt.toFilter(name);}
+	static QString subtitleExtFilter(const QString &name = tr("Subtitle Files")) {return self.m_subExt.toFilter(name);}
+	static QString playlistExtFilter(const QString &name = tr("Playlist Files")) {return self.m_plExt.toFilter(name);}
 	static QStringList videoNameFilter() {return self.m_videoExt.toNameFilter();}
 	static QStringList audioNameFilter() {return self.m_audioExt.toNameFilter();}
 	static QStringList subtitleNameFilter() {return self.m_subExt.toNameFilter();}
@@ -28,7 +35,10 @@ public:
 	static constexpr int versionNumber() { return 0x00809; }
 	static constexpr const char *version() {return "0.8.9";}
 	static constexpr const char *name() {return "CMPlayer";}
-	static QString mediaExtFilter();
+	static QString mediaExtFilter() {
+		return videoExtFilter() % _L(";;") % audioExtFilter() % _L(";;")
+			% readableImageExtFilter() % ";;" % tr("All Files") % _L(' ') % _L("(*.*)");
+	}
 	static QStringList mediaNameFilter() {return videoNameFilter() + audioNameFilter() + readableImageExt().toNameFilter();}
 	static const char *pluginPath();
 private:
