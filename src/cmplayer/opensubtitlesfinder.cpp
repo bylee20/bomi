@@ -28,7 +28,7 @@ struct OpenSubtitlesFinder::Data {
 		if (state == Connecting)
 			return;
 		setState(Connecting);
-		const auto args = _Args() << "" << "" << "" << "OS Test User Agent v1";
+		const auto args = _Args() << "" << "" << "" << "CMPlayerXmlRpcClient v0.1";
 		client.call("LogIn", args, [this] (const QVariantList &results) {
 			if (!results.isEmpty()) {
 				const auto map = results[0].toMap();
