@@ -65,6 +65,7 @@ struct PlayEngine::Data {
 	QList<SubtitleTempFile> subtitleFiles;
 	ChannelLayout layout = ChannelLayout::Default;
 	int duration = 0, audioSync = 0, begin = 0;
+	int subDelay = 0;
 	int chapter = -2;
 	QVector<int> streams = {-1, -1, -1};
 	StreamList subStreams, audioStreams, videoStreams;
@@ -365,6 +366,11 @@ PlayEngine::~PlayEngine() {
 
 SubtitleTrackInfoObject *PlayEngine::subtitleTrackInfo() const {
 	return &d->subtitleTrackInfo;
+}
+
+void PlayEngine::setSubtitleDelay(int ms) {
+	if (_Change(d->subDelay, ms))
+		d->setmp("sub-delay", (float)(d->subDelay/1000.0f));
 }
 
 void PlayEngine::setSubtitleTracks(const QStringList &tracks) {
@@ -855,7 +861,8 @@ void PlayEngine::onMpvStageChanged(int stage) {
 			start.pos = 0.0;
 			start.type = REL_TIME_NONE;
 		}
-		d->setmp("audio-delay", d->audioSync*0.001);
+		d->setmp("audio-delay", (float)(d->audioSync/1000.0f));
+		d->setmp("sub-delay", (float)(d->subDelay/1000.0f));
 		d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
 		d->video->setDeintEnabled(d->deint != DeintMode::None);
 		break;

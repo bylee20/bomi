@@ -1150,6 +1150,7 @@ void MainWindow::connectMenus() {
 	});
 	d->connectStepActions(sub("sync"), "sub_sync", &MrlState::subSyncChanged, [this] () {
 		d->subtitle.setDelay(d->as.state.sub_sync);
+		d->engine.setSubtitleDelay(d->as.state.sub_sync);
 	});
 
 	Menu &tool = d->menu("tool");

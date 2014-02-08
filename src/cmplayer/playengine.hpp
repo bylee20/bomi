@@ -158,6 +158,7 @@ public:
 	void sendMouseMove(const QPointF &pos);
 	void sendDVDCommand(DVDCmd cmd);
 	QList<SubtitleFileInfo> subtitleFiles() const;
+	void setSubtitleDelay(int ms);
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);
