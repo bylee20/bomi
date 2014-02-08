@@ -256,7 +256,7 @@ private:
 		mp_audio_realloc_min(m_output, frames);
 		m_output->samples = frames;
 		m_dst = m_output;
-		if (frames <= 0)
+		if (frames <= 0 || !m_normalizer)
 			return;
 		m_inputLevels.fill(LevelInfo(frames));
 		src.for_ch([this, &src] (int ch) {
