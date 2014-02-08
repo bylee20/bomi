@@ -19,14 +19,6 @@ Item {
 	}
 
 	MouseArea {
-		anchors.fill: parent
-		acceptedButtons: Qt.AllButtons
-		onPressed: Util.trigger(Util.MousePress)
-		onWheel: Util.trigger(Util.Wheel)
-		onDoubleClicked: Util.trigger(Util.MouseDoubleClick)
-	}
-
-	MouseArea {
         id: catcher; z: player.z+1;
 		width: parent.width
 		height: controls.height

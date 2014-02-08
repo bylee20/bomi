@@ -87,7 +87,9 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 	d->proxy.setSourceModel(&d->model);
 	d->proxy.setFilterKeyColumn(d->model.Language);
 	d->ui.view->setModel(&d->proxy);
-	d->ui.view->setRootIsDecorated(false);
+	d->ui.view->header()->resizeSection(0, 100);
+	d->ui.view->header()->resizeSection(1, 450);
+	d->ui.view->header()->resizeSection(2, 150);
 	d->finder = new OpenSubtitlesFinder;
 	connect(&d->downloader, &Downloader::started, [this] () { d->updateState(); });
 	connect(&d->downloader, &Downloader::downloaded, [this] (qint64 written, qint64 total) {
@@ -117,7 +119,10 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 		d->proxy.setFilterFixedString(index > 0 ? d->ui.language->itemText(index) : "");
 	});
 	connect(d->ui.get, &QPushButton::clicked, [this] () {
-		auto file = QFileInfo(d->ui.file->text()).dir().absoluteFilePath(d->ui.view->currentIndex().data(FileNameRole).toString());
+		const auto index = d->ui.view->currentIndex();
+		if (!index.isValid())
+			return;
+		auto file = QFileInfo(d->ui.file->text()).dir().absoluteFilePath(index.data(FileNameRole).toString());
 		const QFileInfo info(file);
 		if (info.exists()) {
 			QMessageBox mbox(QMessageBox::Question, tr("Find Subtitle"), tr("A file with the same name already exists. Do you want overwrite it?"), QMessageBox::NoButton, this);

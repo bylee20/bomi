@@ -12,18 +12,14 @@ void SettingsObject::open(const QString &name) {
 	}
 }
 
+UtilObject::Data UtilObject::data;
+UtilObject::Data *UtilObject::d = &UtilObject::data;
+
+bool UtilObject::m_filterDoubleClick = false;
 bool UtilObject::m_fullScreen = false;
 bool UtilObject::m_cursor = true;
 
-static QMap<UtilObject::Event, bool> createFilters() {
-	QMap<UtilObject::Event, bool> ret;
-	for (int i=0; i<UtilObject::EventCount; ++i)
-		ret[(UtilObject::Event)i] = false;
-	return ret;
-}
-
 QLinkedList<UtilObject*> UtilObject::objs;
-QMap<UtilObject::Event, bool> UtilObject::m_triggered = createFilters();
 
 UtilObject::UtilObject(QObject *parent)
 : QObject(parent) {
@@ -185,3 +181,27 @@ quint64 UtilObject::processTime() {
 	return len > 0 ? quint64(utime + stime)*Q_UINT64_C(1000000)/tick : 0;
 }
 #endif
+
+void UtilObject::registerItemToAcceptKey(QQuickItem *item) {
+	if (d->itemsToAcceptKey.contains(item))
+		return;
+	d->itemsToAcceptKey.insert(item);
+	if (item->isVisible())
+		d->keyItems.push_front(item);
+	connect(item, &QQuickItem::destroyed, [item] (QObject *obj) {
+		Q_ASSERT(item == obj);
+		d->itemsToAcceptKey.remove(item);
+		d->removeKeyItem(item);
+	});
+	connect(item, &QQuickItem::visibleChanged, [item] () {
+		d->removeKeyItem(item);
+		if (item->isVisible())
+			d->keyItems.push_front(item);
+	});
+}
+
+void UtilObject::setItemPressed(QQuickItem *item) {
+	if (d->itemsToAcceptKey.contains(item) && d->removeKeyItem(item))
+		d->keyItems.push_front(item);
+}
+

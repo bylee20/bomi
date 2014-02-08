@@ -19,13 +19,12 @@ Item {
                 controls.parent = floating
                 floating.hidden = !containsMouse
             }
-            acceptedButtons: Qt.AllButtons
+			acceptedButtons: Qt.AllButtons
             anchors.fill: parent
             hoverEnabled: true;
-            onPressed: Util.trigger(Util.MousePress)
-            onDoubleClicked: Util.trigger(Util.MouseDoubleClick)
-            onWheel: Util.trigger(Util.Wheel)
-            onEntered: floating.hidden = false;
+			onPressed: mouse.accepted = false
+			onReleased: mouse.accepted = false
+			onEntered: floating.hidden = false
             onExited: floating.hidden = true
             MouseArea {
                 id: floating
@@ -39,7 +38,7 @@ Item {
                 drag.target: floating; drag.axis: Drag.XAndYAxis
                 drag.minimumX: 0; drag.maximumX: root.width-width
                 drag.minimumY: 0; drag.maximumY: root.height-height
-                onDoubleClicked: Util.trigger(Util.MouseDoubleClick)
+				onDoubleClicked: Util.filterDoubleClick()
                 states: State {
                     name: "hidden"; when: floating.hidden
                     PropertyChanges { target: floating; opacity: 0.0 }

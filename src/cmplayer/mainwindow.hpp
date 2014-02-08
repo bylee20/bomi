@@ -33,6 +33,7 @@ private slots:
 	void checkWindowState();
 private:
 	// init functions
+	void resetMoving();
 	MainView *createView();
 	void connectMenus();
 	void connectObjects();
@@ -62,12 +63,12 @@ private:
 	int getCache(const Mrl &mrl);
 	void showEvent(QShowEvent *event);
 	void hideEvent(QHideEvent *event);
-	void keyPressEvent(QKeyEvent *event);
-	void mouseMoveEvent(QMouseEvent *event);
-	void mouseDoubleClickEvent(QMouseEvent *event);
-	void mouseReleaseEvent(QMouseEvent *event);
-	void mousePressEvent(QMouseEvent *event);
-	void wheelEvent(QWheelEvent *event);
+	void onKeyPressEvent(QKeyEvent *event);
+	void onMouseMoveEvent(QMouseEvent *event);
+	void onMouseDoubleClickEvent(QMouseEvent *event);
+	void onMouseReleaseEvent(QMouseEvent *event);
+	void onMousePressEvent(QMouseEvent *event);
+	void onWheelEvent(QWheelEvent *event);
 	void dropEvent(QDropEvent *event);
 	void dragEnterEvent(QDragEnterEvent *event);
 	void resizeEvent(QResizeEvent *event);
@@ -79,60 +80,84 @@ private:
 	class CropCmd;
 };
 
-template<typename Func, typename T>
-class ValueCmd : public QUndoCommand {
-public:
-	ValueCmd(const T &to, const T &from, const Func &func): to(to), from(from), func(func) { }
-	void redo() { func(to); }
-	void undo() { func(from); }
-private:
-	T to, from; Func  func;
-};
-
 class MainView : public QQuickView {
 	Q_OBJECT
 public:
 	MainView(MainWindow *main): QQuickView(main->windowHandle()), m_main(main) {
 		setColor(Qt::black);
 		setResizeMode(QQuickView::SizeRootObjectToView);
+		main->installEventFilter(this);
 	}
 private:
+	bool eventFilter(QObject *obj, QEvent *ev) {
+		if (obj != m_main)
+			return false;
+		switch (ev->type()) {
+		case QEvent::KeyPress:
+			keyPressEvent(static_cast<QKeyEvent*>(ev));
+			break;
+//		case QEvent::KeyRelease:
+//			keyReleaseEvent(static_cast<QKeyEvent*>(ev));
+//			break;
+		case QEvent::MouseButtonPress:
+			mousePressEvent(static_cast<QMouseEvent*>(ev));
+			break;
+		case QEvent::MouseButtonRelease:
+			mouseReleaseEvent(static_cast<QMouseEvent*>(ev));
+			break;
+		case QEvent::MouseMove:
+			mouseMoveEvent(static_cast<QMouseEvent*>(ev));
+			break;
+		case QEvent::MouseButtonDblClick:
+			mouseDoubleClickEvent(static_cast<QMouseEvent*>(ev));
+			break;
+		case QEvent::Wheel:
+			wheelEvent(static_cast<QWheelEvent*>(ev));
+			break;
+		default:
+			return false;
+		}
+		return true;
+	}
+
 	void mouseDoubleClickEvent(QMouseEvent *event) {
-//		UtilObject::resetFilter(UtilObject::MouseDoubleClick);
-		UtilObject::resetTriggered(UtilObject::MouseDoubleClick);
+		m_main->resetMoving();
+		UtilObject::resetFilterDoubleClick();
 		QQuickView::mouseDoubleClickEvent(event);
-		if (UtilObject::isTriggered(UtilObject::MouseDoubleClick))
-			m_main->mouseDoubleClickEvent(event);
+		if (!UtilObject::isDoubleClickFiltered())
+			m_main->onMouseDoubleClickEvent(event);
 	}
 	void mousePressEvent(QMouseEvent *event) {
-		UtilObject::resetTriggered(UtilObject::MousePress);
+		m_main->resetMoving();
+		event->setAccepted(false);
 		QQuickView::mousePressEvent(event);
-		if (UtilObject::isTriggered(UtilObject::MousePress))
-			m_main->mousePressEvent(event);
+		if (!event->isAccepted())
+			m_main->onMousePressEvent(event);
 	}
 	void mouseReleaseEvent(QMouseEvent *event) {
-//		UtilObject::resetFilter(UtilObject::MouseRelease);
+		m_main->resetMoving();
+		event->setAccepted(false);
 		QQuickView::mouseReleaseEvent(event);
-//		if (!UtilObject::isFiltered(UtilObject::MouseRelease))
-			m_main->mouseReleaseEvent(event);
+		if (!event->isAccepted())
+			m_main->onMouseReleaseEvent(event);
 	}
 	void mouseMoveEvent(QMouseEvent *event) {
-//		UtilObject::resetFilter(UtilObject::MouseMove);
+		event->setAccepted(false);
 		QQuickView::mouseMoveEvent(event);
-//		if (!UtilObject::isFiltered(UtilObject::MouseMove))
-			m_main->mouseMoveEvent(event);
+		m_main->onMouseMoveEvent(event);
 	}
 	void keyPressEvent(QKeyEvent *event) {
-//		UtilObject::resetFilter(UtilObject::KeyPress);
-//		QQuickView::keyPressEvent(event);
-//		if (!UtilObject::isFiltered(UtilObject::KeyPress))
-			m_main->keyPressEvent(event);
+		event->setAccepted(false);
+		if (auto item = UtilObject::itemToAcceptKey())
+			sendEvent(item, event);
+		if (!event->isAccepted())
+			m_main->onKeyPressEvent(event);
 	}
 	void wheelEvent(QWheelEvent *event) {
-		UtilObject::resetTriggered(UtilObject::Wheel);
+		event->setAccepted(false);
 		QQuickView::wheelEvent(event);
-		if (UtilObject::isTriggered(UtilObject::Wheel))
-			m_main->wheelEvent(event);
+		if (!event->isAccepted())
+			m_main->onWheelEvent(event);
 	}
 	bool event(QEvent *event) {
 		if (QQuickView::event(event))

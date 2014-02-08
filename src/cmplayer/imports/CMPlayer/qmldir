@@ -12,3 +12,6 @@ AppWithFloating         1.0 AppWithFloating.qml
 TimeSlider              1.0 TimeSlider.qml
 VolumeSlider            1.0 VolumeSlider.qml
 AppWithDock             1.0 AppWithDock.qml
+ItemColumn              1.0 ItemColumn.qml
+ModelView               1.0 ModelView.qml
+ScrollBar               1.0 ScrollBar.qml

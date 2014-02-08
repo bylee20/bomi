@@ -35,10 +35,9 @@ class UtilObject : public QObject {
 	Q_PROPERTY(bool cursorVisible READ isCursorVisible NOTIFY cursorVisibleChanged)
 	Q_PROPERTY(QString tr READ tr NOTIFY trChanged)
 	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
-	Q_ENUMS(Event)
 public:
-	enum Event {MouseDoubleClick = 0, MousePress, MouseRelease, MouseMove, Wheel, KeyPress, EventCount};
 	UtilObject(QObject *parent = nullptr);
+	~UtilObject();
 	Q_INVOKABLE double textWidth(const QString &text, int size);
 	Q_INVOKABLE double textWidth(const QString &text, int size, const QString &family);
 	Q_INVOKABLE QString msecToString(int ms) {return Pch::_NullTime.addSecs(qRound((double)ms*1e-3)).toString(_L("h:mm:ss"));}
@@ -50,15 +49,13 @@ public:
 	Q_INVOKABLE double bound(double min, double v, double max) const {return qBound(min, v, max);}
 	Q_INVOKABLE void showToolTip(QQuickItem *item, const QPointF &pos, const QString &text) { QToolTip::showText(item->window()->mapToGlobal(item->mapToScene(pos).toPoint()), text); }
 	Q_INVOKABLE void hideToolTip() { QToolTip::hideText(); }
-	Q_INVOKABLE void trigger(Event event) {m_triggered[event] = true;}
-	static bool isTriggered(Event event) {return m_triggered[event];}
-	static void resetTriggered(Event event) {m_triggered[event] = false;}
-	static void resetFilter(Event event) {m_triggered[event] = false;}
-	static bool isFiltered(Event event) {return m_triggered[event];}
-	Q_INVOKABLE void filter(Event event) {m_triggered[event] = true;}
+	Q_INVOKABLE void filterDoubleClick() { m_filterDoubleClick = true; }
+	static bool isDoubleClickFiltered() { return m_filterDoubleClick; }
+	static void resetFilterDoubleClick() { m_filterDoubleClick = false; }
 	static bool isCursorVisible() {return m_cursor;}
 	static void setCursorVisible(bool visible) {if (_Change(m_cursor, visible)) for (auto obj : objs) emit obj->cursorVisibleChanged(m_cursor);}
-	static void setMouseReleased(const QPointF &scenePos) {	for (auto obj : objs) emit obj->mouseReleased(scenePos); }
+	Q_INVOKABLE void setCursor(QQuickItem *item, Qt::CursorShape cursor) { if (item) item->setCursor(cursor); }
+	Q_INVOKABLE void unsetCursor(QQuickItem *item) { if (item) item->unsetCursor(); }
 	static double totalMemory(MemoryUnit unit);
 	static double usingMemory(MemoryUnit unit);
 	static double totalMemory() { return totalMemory(Megabyte); }
@@ -71,7 +68,9 @@ public:
 	bool isFullScreen() const {return m_fullScreen;}
 	static void setFullScreen(bool fs) {if (_Change(m_fullScreen, fs)) for (auto obj : objs) emit obj->fullScreenChanged(m_fullScreen);}
 	QString tr() const {return QString();}
-	~UtilObject();
+	Q_INVOKABLE void registerItemToAcceptKey(QQuickItem *item);
+	static QQuickItem *itemToAcceptKey() { return d->keyItems.isEmpty() ? nullptr : d->keyItems.front(); }
+	static void setItemPressed(QQuickItem *item);
 signals:
 	void trChanged();
 	void mouseReleased(const QPointF &scenePos);
@@ -82,10 +81,23 @@ private:
 		if (event->type() == QEvent::LanguageChange)
 			emit trChanged();
 	}
-	static bool m_fullScreen, m_cursor;
+	static bool m_fullScreen, m_cursor, m_filterDoubleClick;
 //	static UtilObject &get();
 	static QLinkedList<UtilObject*> objs;
-	static QMap<Event, bool> m_triggered;
+	struct Data {
+		QSet<QQuickItem*> itemsToAcceptKey;
+		QLinkedList<QQuickItem*> keyItems;
+		bool removeKeyItem(QQuickItem *item) {
+			auto it = _Find(keyItems.begin(), keyItems.end(), item);
+			if (it == keyItems.end())
+				return false;
+			keyItems.erase(it);
+			return true;
+		}
+	};
+
+	static Data data;
+	static Data *d;
 };
 
 #endif // GLOBALQMLOBJECT_HPP

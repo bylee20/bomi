@@ -40,6 +40,16 @@ extern void finalize_vdpau();
 
 static const int AskStartTimeEvent = (QEvent::User + 1);
 
+template<typename Func, typename T>
+class ValueCmd : public QUndoCommand {
+public:
+	ValueCmd(const T &to, const T &from, const Func &func): to(to), from(from), func(func) { }
+	void redo() { func(to); }
+	void undo() { func(from); }
+private:
+	T to, from; Func  func;
+};
+
 struct MainWindow::Data {
 	struct EnumGroup {
 		EnumGroup() {}
@@ -497,6 +507,9 @@ struct MainWindow::Data {
 		l->addWidget(widget);
 		l->setMargin(0);
 		p->setLayout(l);
+		p->setFocusProxy(widget);
+		p->setFocus();
+//		widget->setFocus();
 
 		subtitleView = new SubtitleView(p);
 		p->setAcceptDrops(true);
@@ -1461,16 +1474,20 @@ void MainWindow::setVideoSize(double rate) {
 	}
 }
 
-void MainWindow::mouseMoveEvent(QMouseEvent *event) {
+void MainWindow::resetMoving() {
+	if (d->moving) {
+		d->moving = false;
+		d->prevPos = QPoint();
+	}
+}
+
+void MainWindow::onMouseMoveEvent(QMouseEvent *event) {
 	QWidget::mouseMoveEvent(event);
 	d->cancelToHideCursor();
 	const bool full = isFullScreen();
 	const auto gpos = event->globalPos();
 	if (full) {
-		if (d->moving) {
-			d->moving = false;
-			d->prevPos = QPoint();
-		}
+		resetMoving();
 	} else {
 		if (d->moving) {
 			move(this->pos() + gpos - d->prevPos);
@@ -1481,7 +1498,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event) {
 	d->engine.sendMouseMove(d->renderer.mapToVideo(event->pos()));
 }
 
-void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
+void MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) {
 	QWidget::mouseDoubleClickEvent(event);
 	if (event->buttons() & Qt::LeftButton) {
 		if (auto action = d->menu.doubleClickAction(d->pref().double_click_map[event->modifiers()])) {
@@ -1495,23 +1512,17 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event) {
 	}
 }
 
-void MainWindow::mouseReleaseEvent(QMouseEvent *event) {
+void MainWindow::onMouseReleaseEvent(QMouseEvent *event) {
 	QWidget::mouseReleaseEvent(event);
-	if (d->moving) {
-		d->moving = false;
-		d->prevPos = QPoint();
-	}
 	const auto rect = geometry();
 	if (d->middleClicked && event->button() == Qt::MiddleButton && rect.contains(event->localPos().toPoint()+rect.topLeft())) {
 		if (auto action = d->menu.middleClickAction(d->pref().middle_click_map[event->modifiers()]))
 			action->trigger();
 	}
-	UtilObject::setMouseReleased(event->localPos());
 }
-void MainWindow::mousePressEvent(QMouseEvent *event) {
+
+void MainWindow::onMousePressEvent(QMouseEvent *event) {
 	QWidget::mousePressEvent(event);
-	if (event->isAccepted())
-		return;
 	d->middleClicked = false;
 	bool showContextMenu = false;
 	switch (event->button()) {
@@ -1536,9 +1547,10 @@ void MainWindow::mousePressEvent(QMouseEvent *event) {
 		d->contextMenu.hide();
 	d->engine.sendMouseClick(d->renderer.mapToVideo(event->pos()));
 }
-void MainWindow::wheelEvent(QWheelEvent *event) {
+
+void MainWindow::onWheelEvent(QWheelEvent *event) {
 	QWidget::wheelEvent(event);
-	if (!event->isAccepted() && event->delta()) {
+	if (event->delta()) {
 		const auto &info = d->pref().wheel_scroll_map[event->modifiers()];
 		const bool up = event->delta() > 0;
 		if (auto action = d->menu.wheelScrollAction(info, d->pref().invert_wheel ? !up : up)) {
@@ -1679,12 +1691,11 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 		d->updateWindowSizeState();
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *event) {
+void MainWindow::onKeyPressEvent(QKeyEvent *event) {
 	QWidget::keyPressEvent(event);
-	if (!event->isAccepted()) {
-		constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
-		if (auto action = RootMenu::instance().action(QKeySequence(event->key() + (event->modifiers() & modMask))))
-			action->trigger();
+	constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
+	if (auto action = RootMenu::instance().action(QKeySequence(event->key() + (event->modifiers() & modMask)))) {
+		action->trigger();
 		event->accept();
 	}
 }
@@ -1859,4 +1870,3 @@ void MainWindow::moveEvent(QMoveEvent *event) {
 	if (!d->fullScreen)
 		d->updateWindowPosState();
 }
-

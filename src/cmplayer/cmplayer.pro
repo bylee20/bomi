@@ -268,7 +268,10 @@ OTHER_FILES += \
     imports/CMPlayer/PlayInfoText.qml \
     skins/GaN/cmplayer.qml \
     skins/GaN/TimeText.qml \
-    skins/GaN/Button.qml
+    skins/GaN/Button.qml \
+    imports/CMPlayer/ItemColumn.qml \
+    imports/CMPlayer/ModelView.qml \
+    imports/CMPlayer/ScrollBar.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}

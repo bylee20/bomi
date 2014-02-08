@@ -25,7 +25,7 @@ void AvInfoObject::setVideo(const PlayEngine *engine) {
 	const auto out = fmt.imgfmt();
 	const auto in = dv->vf_input.imgfmt;
 
-	m_codec = _U(dv->decoder_desc);
+	m_codec = _L(dv->decoder_desc);
 
 	m_input->m_type = format(dv->header->format);
 	m_input->m_size = QSize(dv->vf_input.d_w, dv->vf_input.d_h);
