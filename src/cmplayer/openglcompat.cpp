@@ -10,9 +10,11 @@ bool OpenGLCompat::HasRG = false;
 bool OpenGLCompat::HasFloat = false;
 int OpenGLCompat::MaxTexSize = 0;
 bool OpenGLCompat::HasFbo = false;
+bool OpenGLCompat::HasDebug = false;
 
 struct OpenGLCompat::Data {
 	bool init = false;
+	QOpenGLDebugLogger *logger = nullptr;
 	QOpenGLVersionProfile profile;
 	int major = 0, minor = 0;
 	QMap<GLenum, OpenGLTextureFormat> formats[2];
@@ -25,9 +27,6 @@ struct OpenGLCompat::Data {
 		const auto version = profile.version();
 		major = version.first;
 		minor = version.second;
-		HasRG = major >= 3 || ctx->hasExtension("GL_ARB_texture_rg");
-		HasFloat = major >= 3 || ctx->hasExtension("GL_ARB_texture_float");
-		HasFbo = QOpenGLFramebufferObject::hasOpenGLFramebufferObjects();
 
 		formats[0][GL_RED] = {GL_R8, GL_RED, GL_UNSIGNED_BYTE};
 		formats[0][GL_RG] = {GL_RG8, GL_RG, GL_UNSIGNED_BYTE};
@@ -54,16 +53,27 @@ struct OpenGLCompat::Data {
 		}
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxTexSize);
 		logError("OpenGLCompat::Data::fill()");
+		if (HasDebug && ctx->format().testOption(QSurfaceFormat::DebugContext)) {
+			logger = new QOpenGLDebugLogger;
+			const bool ok = logger->initialize();
+			Q_ASSERT(ok);
+		}
 	}
 };
 
 OpenGLCompat::OpenGLCompat()
 : d(new Data) {
-
 }
 
 OpenGLCompat::~OpenGLCompat() {
+	delete d->logger;
 	delete d;
+}
+
+QOpenGLDebugLogger *OpenGLCompat::logger() {
+	if (qgetenv("CMPLAYER_GL_DEBUG").toInt())
+		return c.d->logger;
+	return nullptr;
 }
 
 const char *OpenGLCompat::errorString(GLenum error) {
@@ -82,6 +92,17 @@ const char *OpenGLCompat::errorString(GLenum error) {
 #undef ADD
 	}
 	return strings.value(error, "");
+}
+
+void OpenGLCompat::check() {
+	auto ctx = QOpenGLContext::currentContext();
+	Q_ASSERT(ctx != nullptr);
+	auto version = QOpenGLVersionProfile(ctx->format()).version();
+	auto major = version.first;
+	HasRG = major >= 3 || ctx->hasExtension("GL_ARB_texture_rg");
+	HasFloat = major >= 3 || ctx->hasExtension("GL_ARB_texture_float");
+	HasFbo = QOpenGLFramebufferObject::hasOpenGLFramebufferObjects();
+	HasDebug = ctx->hasExtension("GL_KHR_debug");
 }
 
 void OpenGLCompat::initialize(QOpenGLContext *ctx) {

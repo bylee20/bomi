@@ -141,6 +141,7 @@ public:
 	static int maximumTextureSize() { return MaxTexSize; }
 	static bool hasRG() { return HasRG; }
 	static bool hasFloat() { return HasFloat; }
+	static bool hasKhrDebug() { return HasDebug; }
 	static const OpenGLCompat &get() { return c; }
 	static OpenGLTexture allocateDitheringTexture(GLuint id, Dithering type);
 	static QOpenGLFunctions *functions() {
@@ -162,13 +163,15 @@ public:
 		if (e != GL_NO_ERROR)
 			qWarning("OpenGL error: %s(0x%x) at %s", OpenGLCompat::errorString(e), e, at);
 	}
+	static void check();
 	static const char *errorString(GLenum error);
+	static QOpenGLDebugLogger *logger();
 private:
 	OpenGLCompat();
 	static OpenGLCompat c;
 	struct Data;
 	Data *d;
-	static bool HasRG, HasFloat, HasFbo;
+	static bool HasRG, HasFloat, HasFbo, HasDebug;
 	static int MaxTexSize;
 };
 

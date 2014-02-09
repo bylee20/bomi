@@ -499,6 +499,10 @@ struct MainWindow::Data {
 
 	void initWidget() {
 		view = new MainView(p);
+		auto format = view->requestedFormat();
+		if (OpenGLCompat::hasKhrDebug())
+			format.setOption(QSurfaceFormat::DebugContext);
+		view->setFormat(format);
 		view->setPersistentOpenGLContext(true);
 		view->setPersistentSceneGraph(true);
 
@@ -518,8 +522,23 @@ struct MainWindow::Data {
 
 		connect(view, &QQuickView::sceneGraphInitialized, [this] () {
 			OpenGLCompat::initialize(view->openglContext());
+			QOpenGLDebugLogger *logger = OpenGLCompat::logger();
+			if (!logger)
+				return;
+			connect(logger, &QOpenGLDebugLogger::messageLogged, [] (const QOpenGLDebugMessage & msg) {
+				qDebug() << msg;
+			});
+#ifdef CMPLAYER_RELEASE
+			logger->startLogging(QOpenGLDebugLogger::AsynchronousLogging);
+#else
+			logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
+#endif
 		});
-
+		connect(view, &QQuickView::sceneGraphInvalidated, [] () {
+			auto logger = OpenGLCompat::logger();
+			if (logger)
+				logger->stopLogging();
+		});
 		desktop = cApp.desktop();
 		auto reset = [this] () {
 			if (!desktop->isVirtualDesktop())
