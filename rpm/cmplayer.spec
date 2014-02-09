@@ -27,11 +27,10 @@ Name:		cmplayer
 Summary:	A multimedia player
 License:	GPLv2
 Group:		Applications/Multimedia
-Version:	0.8.6
+Version:	0.8.10
 Release:	1%{?dist}
 Url:		http://cmplayer.github.io/
 Source:		https://github.com/xylosper/%{name}/releases/download/v%{version}/%{name}-%{version}-source.tar.gz
-Packager:	xylosper <darklin20@gmail.com>
 
 # Distro-specific dependencies
 %if 0%{?fedora}
@@ -66,12 +65,11 @@ BuildRequires:	libdvdread-devel
 BuildRequires:	libmpg123-devel
 BuildRequires:	libquvi-devel
 BuildRequires:	libva-devel
-BuildRequires:	openal-soft-devel
 BuildRequires:	portaudio-devel
 BuildRequires:	python
 BuildRequires:	xcb-util-devel
 BuildRequires:	xcb-util-wm-devel
-# rpmbuild's automatic dependency handling misses qt5-qtquickcontrols
+# rpm's automatic dependency handling misses qt5-qtquickcontrols
 %if 0%{?fedora}
 Requires: qt5-qtquickcontrols
 %else
@@ -113,13 +111,25 @@ xdg-icon-resource forceupdate --theme hicolor &> /dev/null
 %doc COPYING.txt CHANGES.txt GPL.txt ICON-AUTHORS.txt ICON-COPYING.txt MPL.txt README.md
 
 %changelog
-* Mon Jan 06 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.6-1
-- Added python to BuildRequires
-- Removed unnecessary %defines
-- Aligned BuildRequires and metadata with tabs.
+* Sun Feb 09 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.10-1
+- Upstream release
+- Openal dependency removed; upstream has dropped openal support
+
+* Mon Feb 03 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.9-1
+- Upstream release
+
+* Sun Feb 02 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.8-1
+- Upstream release
+
+* Sat Feb 01 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.7-1
+- Upstream release
+
+* Thu Dec 12 2013 Ben Reedy <thebenj88@gmail.com> - 0.8.6-2
+- Updated dependencies
 
 * Sun Dec 01 2013 Ben Reedy <thebenj88@gmail.com> - 0.8.6-1
-- Updated build instructions/dependencies for OpenSUSE users.
+- Updated build instructions for OpenSUSE users.
+- Updated build dependencies for OpenSUSE users.
 
 * Sat Nov 30 2013 xylosper <darklin20@gmail.com> - 0.8.6-1
 - Upstream Release
