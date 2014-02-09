@@ -93,11 +93,12 @@ Item { id: view
 				Repeater {
 					model: view.columns
 					Loader {
+                        id: headerItemLoaders
 						readonly property ItemColumn column: modelData
 						sourceComponent: headerItemDelegate
 						width: column.width; height: parent.height
 						onLoaded: {
-							column.header = this
+                            column.header = headerItemLoaders
 							column.index = index
 							column.separator = sep
 						}
@@ -115,7 +116,7 @@ Item { id: view
 					}
 				}
 			}
-			onContentXChanged: d.syncContentX(this, list)
+            onContentXChanged: d.syncContentX(headerFlickable, list)
 		}
 	}
 
@@ -152,8 +153,8 @@ Item { id: view
 				}
 			}
 		}
-		onContentXChanged: d.syncContentX(this, headerFlickable)
-		Component.onCompleted: Util.registerItemToAcceptKey(this)
+        onContentXChanged: d.syncContentX(list, headerFlickable)
+        Component.onCompleted: Util.registerItemToAcceptKey(list)
 		function getIndex(y) {
 			var pos = list.contentItem.mapFromItem(list, 0.5, y)
 			return list.indexAt(pos.x, pos.y);
