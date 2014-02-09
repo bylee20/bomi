@@ -20,80 +20,61 @@
 # Note that OpenSUSE users will need to have the Packman Essentials and Multimedia repositories enabled
 # see http://en.opensuse.org/Additional_package_repositories#Packman for more details.
 
-%define name cmplayer
-%define version 0.8.6
-%define lrelease lrelease
-%define gpp_pkg gcc-c++
+%define gpp_pkg 
 %define qmake qmake-qt5
 
-%define _prefix /usr
-
-%if 0%{?fedora}
-%define distro %(head -1 /etc/fedora-release)
-%define lrelease lrelease-qt4
-%define qt_dev qt5-qtbase-devel
-%endif
-%if 0%{?mdkversion}
-%define distro %(head -1 /etc/mandrake-release)
-%endif
-%if 0%{?suse_version}
-%define distro %(head -1 /etc/SuSE-release)
-%define qt_dev libqt5-qtbase-devel
-%endif
-
-Name: %{name}
-Summary: A multimedia player
-License: GPLv2
-Group: Applications/Multimedia
-Version: %{version}
-Release: 1%{?dist}
-Url:	http://cmplayer.github.io/
-Source: https://github.com/xylosper/%{name}/releases/download/v%{version}/%{name}-%{version}-source.tar.gz
-Packager: xylosper <darklin20@gmail.com>
+Name:		cmplayer
+Summary:	A multimedia player
+License:	GPLv2
+Group:		Applications/Multimedia
+Version:	0.8.10
+Release:	1%{?dist}
+Url:		http://cmplayer.github.io/
+Source:		https://github.com/xylosper/%{name}/releases/download/v%{version}/%{name}-%{version}-source.tar.gz
 
 # Distro-specific dependencies
 %if 0%{?fedora}
-BuildRequires: ffmpeg-devel
-BuildRequires: bzip2-devel
-BuildRequires: jack-audio-connection-kit-devel
-BuildRequires: pulseaudio-libs-devel
-BuildRequires: qt5-qtdeclarative-devel
-BuildRequires: qt5-qtquickcontrols
-BuildRequires: qt5-qtx11extras-devel
+BuildRequires:	ffmpeg-devel
+BuildRequires:	bzip2-devel
+BuildRequires:	jack-audio-connection-kit-devel
+BuildRequires:	pulseaudio-libs-devel
+BuildRequires:	qt5-qtbase-devel >= 5.1.1
+BuildRequires:	qt5-qtdeclarative-devel
+BuildRequires:	qt5-qtquickcontrols
+BuildRequires:	qt5-qtx11extras-devel
 %endif
 
-%if %is_suse
-BuildRequires: libbz2-devel
-BuildRequires: libffmpeg-devel
-BuildRequires: libjack-devel
-BuildRequires: libpulse-devel
-BuildRequires: libQt5Declarative-devel
-BuildRequires: libQt5Quick-devel
-BuildRequires: libQt5X11Extras-devel
+%if 0%{?suse_version}
+BuildRequires:	libbz2-devel
+BuildRequires:	libffmpeg-devel
+BuildRequires:	libjack-devel
+BuildRequires:	libpulse-devel
+BuildRequires:	libqt5-qtbase-devel >= 5.1.1
+BuildRequires:	libQt5Declarative-devel
+BuildRequires:	libQt5Quick-devel
+BuildRequires:	libQt5X11Extras-devel
 %endif
 
-BuildRequires: %{gpp_pkg} >= 4.8
-BuildRequires: %{qt_dev} >= 5.1.1
-BuildRequires: glib2-devel
-BuildRequires: libass-devel
-BuildRequires: libcdio-paranoia-devel
+BuildRequires:	gcc-c++ >= 4.8
+BuildRequires:	glib2-devel
+BuildRequires:	libass-devel
+BuildRequires:	libcdio-paranoia-devel
 #BuildRequires: libchardet-devel
-BuildRequires: libdvdread-devel
-BuildRequires: libmpg123-devel
-BuildRequires: libquvi-devel
-BuildRequires: libva-devel
-BuildRequires: openal-soft-devel
-BuildRequires: portaudio-devel
-BuildRequires: python
-BuildRequires: xcb-util-devel
-BuildRequires: xcb-util-wm-devel
-# rpmbuild's automatic dependency handling misses qt5-qtquickcontrols
+BuildRequires:	libdvdnav-devel
+BuildRequires:	libdvdread-devel
+BuildRequires:	libmpg123-devel
+BuildRequires:	libquvi-devel
+BuildRequires:	libva-devel
+BuildRequires:	portaudio-devel
+BuildRequires:	python
+BuildRequires:	xcb-util-devel
+BuildRequires:	xcb-util-wm-devel
+# rpm's automatic dependency handling misses qt5-qtquickcontrols
 %if 0%{?fedora}
 Requires: qt5-qtquickcontrols
 %else
 Requires: libqt5-qtquickcontrols
 %endif
-Prefix: %{_prefix}
 
 %description
 CMPlayer is a Qt-based multimedia player utilizing the MPV video back-end.
@@ -130,8 +111,21 @@ xdg-icon-resource forceupdate --theme hicolor &> /dev/null
 %doc COPYING.txt CHANGES.txt GPL.txt ICON-AUTHORS.txt ICON-COPYING.txt MPL.txt README.md
 
 %changelog
-* Mon Jan 06 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.6-1
-- Added python to BuildRequires
+* Sun Feb 09 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.10-1
+- Upstream release
+- Openal dependency removed; upstream has dropped openal support
+
+* Mon Feb 03 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.9-1
+- Upstream release
+
+* Sun Feb 02 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.8-1
+- Upstream release
+
+* Sat Feb 01 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.7-1
+- Upstream release
+
+* Thu Dec 12 2013 Ben Reedy <thebenj88@gmail.com> - 0.8.6-2
+- Updated dependencies
 
 * Sun Dec 01 2013 Ben Reedy <thebenj88@gmail.com> - 0.8.6-1
 - Updated build instructions for OpenSUSE users.
