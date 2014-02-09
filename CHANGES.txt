@@ -1,3 +1,24 @@
+0.8.10
+
+  * New: keyboard navigation in history and playlist
+  * New: 444P image format support
+  * New: configurable save & restore state per media playback
+  * Mod: change default shortcut for Subtitle View and Find Subtitle
+  * Mod: drop OpenAL support
+  * Fix: subtitle sync was not applied to internal subtitles
+  * Fix: ask overwrite or save as when a subtitle with the same name to be downloaded exists
+  * Fix: cannot open .ass file whose name contains blank
+  * Fix: crash or broken display of internal subtitles
+  * Fix: display locale name of system in preferences
+  * Fix: locale was reverted to system default one when preferences applied
+  * Fix: some OpenGL errors in dithering texture and internal subtitle renderer
+  * Fix: convert ISO 639-2 B code to localized language name
+  * Fix: display '--' instead of meaningless value in codec info of playback info
+  * Fix: broken audio info in playback info
+  * Fix: improvement of handling audio sample format
+  * Fix: notify channel layout to audio output
+  * Fix: enforce absolute file path always
+
 0.8.9
 
   * New: display language name instead of ISO code

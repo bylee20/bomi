@@ -1,3 +1,29 @@
+cmplayer (0.8.10-1) saucy; urgency=low
+
+  * New: keyboard navigation in history and playlist
+  * New: 444P image format support
+  * New: configurable save & restore state per media playback
+  * Mod: change default shortcut for Subtitle View and Find Subtitle
+  * Mod: drop OpenAL support
+  * Fix: subtitle sync was not applied to internal subtitles
+  * Fix: ask overwrite or save as when a subtitle with the same name to be downloaded exists
+  * Fix: cannot open .ass file whose name contains blank
+  * Fix: crash or broken display of internal subtitles
+  * Fix: display locale name of system in preferences
+  * Fix: locale was reverted to system default one when preferences applied
+  * Fix: some OpenGL errors in dithering texture and internal subtitle renderer
+  * Fix: convert ISO 639-2 B code to localized language name
+  * Fix: display '--' instead of meaningless value in codec info of playback info
+  * Fix: broken audio info in playback info
+  * Fix: improvement of handling audio sample format
+  * Fix: notify channel layout to audio output
+  * Fix: enforce absolute file path always
+  * New: display language name instead of ISO code
+  * Fix: wrong information in menu about current video/audio/subtitle tracks(#36)
+  * Fix: crash on output channel layout changed
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Sun, 9 Feb 2014 13:12:00 +0900
+
 cmplayer (0.8.8-1) saucy; urgency=low
 
   * New: download subtitle from opensubtitles.org

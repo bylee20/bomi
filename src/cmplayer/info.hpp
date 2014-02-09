@@ -32,8 +32,8 @@ public:
 	static QStringList audioNameFilter() {return self.m_audioExt.toNameFilter();}
 	static QStringList subtitleNameFilter() {return self.m_subExt.toNameFilter();}
 	static QStringList playlistNameFilter() {return self.m_plExt.toNameFilter();}
-	static constexpr int versionNumber() { return 0x00809; }
-	static constexpr const char *version() {return "0.8.9";}
+	static constexpr int versionNumber() { return 0x00810; }
+	static constexpr const char *version() {return "0.8.10";}
 	static constexpr const char *name() {return "CMPlayer";}
 	static QString mediaExtFilter() {
 		return videoExtFilter() % _L(";;") % audioExtFilter() % _L(";;")
