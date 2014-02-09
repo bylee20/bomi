@@ -500,7 +500,7 @@ struct MainWindow::Data {
 	void initWidget() {
 		view = new MainView(p);
 		auto format = view->requestedFormat();
-		if (OpenGLCompat::hasKhrDebug())
+		if (OpenGLCompat::hasDebug())
 			format.setOption(QSurfaceFormat::DebugContext);
 		view->setFormat(format);
 		view->setPersistentOpenGLContext(true);

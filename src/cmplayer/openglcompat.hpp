@@ -141,7 +141,7 @@ public:
 	static int maximumTextureSize() { return MaxTexSize; }
 	static bool hasRG() { return HasRG; }
 	static bool hasFloat() { return HasFloat; }
-	static bool hasKhrDebug() { return HasDebug; }
+	static bool hasDebug() { return HasDebug; }
 	static const OpenGLCompat &get() { return c; }
 	static OpenGLTexture allocateDitheringTexture(GLuint id, Dithering type);
 	static QOpenGLFunctions *functions() {

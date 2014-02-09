@@ -71,9 +71,7 @@ OpenGLCompat::~OpenGLCompat() {
 }
 
 QOpenGLDebugLogger *OpenGLCompat::logger() {
-	if (qgetenv("CMPLAYER_GL_DEBUG").toInt())
-		return c.d->logger;
-	return nullptr;
+	return c.d->logger;
 }
 
 const char *OpenGLCompat::errorString(GLenum error) {
@@ -102,7 +100,8 @@ void OpenGLCompat::check() {
 	HasRG = major >= 3 || ctx->hasExtension("GL_ARB_texture_rg");
 	HasFloat = major >= 3 || ctx->hasExtension("GL_ARB_texture_float");
 	HasFbo = QOpenGLFramebufferObject::hasOpenGLFramebufferObjects();
-	HasDebug = ctx->hasExtension("GL_KHR_debug");
+	if (qgetenv("CMPLAYER_GL_DEBUG").toInt())
+		HasDebug = ctx->hasExtension("GL_KHR_debug");
 }
 
 void OpenGLCompat::initialize(QOpenGLContext *ctx) {
