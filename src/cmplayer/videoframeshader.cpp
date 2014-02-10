@@ -325,6 +325,8 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 	m_prog->setAttributeArray(vPosition, m_vPositions.data(), 2);
 
 	f->glActiveTexture(GL_TEXTURE0);
+
+    glDisable(GL_BLEND);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	m_prog->disableAttributeArray(0);
@@ -352,6 +354,8 @@ void VideoFrameShader::fillInfo() {
 	const int bits = format.encodedBits();
 	const bool little = format.isLittleEndian();
 	auto ctx = QOpenGLContext::currentContext();
+    qDebug() << ctx->format();
+
 
 	auto addCustom = [this, &format] (int plane, int width, int height, const OpenGLTextureFormat &fmt) {
 		VideoTexture texture;
@@ -391,6 +395,11 @@ void VideoFrameShader::fillInfo() {
 		break;
 	case IMGFMT_420P:
 		add(0, 1); add(1, 1); add(2, 1); cc(2, 0.5);
+        for (int i=0; i<m_textures.size(); ++i) {
+            auto &f = m_textures[i].format;
+            qDebug() << _N(f.internal, 16) << _N(f.pixel, 16) << _N(f.type, 16);
+            qDebug() << _N(GL_R8, 16) << _N(GL_RED, 16) << _N(GL_UNSIGNED_BYTE, 16);
+        }
 		m_texel = R"(
 			vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {
 				return vec3(tex0.r, tex1.r, tex2.r);
