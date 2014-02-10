@@ -399,34 +399,16 @@ void VideoFrameShader::fillInfo() {
 			}
 		)";
 		break;
-	case IMGFMT_420P16:
-	case IMGFMT_420P14:
-	case IMGFMT_420P12:
-	case IMGFMT_420P10:
-	case IMGFMT_420P9:
-		m_texel = R"(
-			vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {
-				return vec3(tex0.r, tex1.r, tex2.r);
-			}
-		)";
-		m_bitScale = (1 << (bits-8)) / _Max<GLushort, double>();
-		for (int i=0; i<3; ++i)
-			addCustom(i, format.bytesPerLine(i)/2, format.lines(i), OpenGLCompat::textureFormat(1, 2));
-		cc(2, 0.5);
-		break;
-#if IMGFMT_420P16 == IMGFMT_420P16_LE
 	case IMGFMT_420P16_BE:
 	case IMGFMT_420P14_BE:
 	case IMGFMT_420P12_BE:
 	case IMGFMT_420P10_BE:
 	case IMGFMT_420P9_BE:
-#else
 	case IMGFMT_420P16_LE:
 	case IMGFMT_420P14_LE:
 	case IMGFMT_420P12_LE:
 	case IMGFMT_420P10_LE:
 	case IMGFMT_420P9_LE:
-#endif
 		m_texel = R"(
 			float convBits(const in vec4 tex) {
 				const vec2 c = vec2(256.0, 1.0)/(256.0*??.0/255.0 + 1.0);
@@ -438,7 +420,7 @@ void VideoFrameShader::fillInfo() {
 		)";
 		m_texel.replace("??", QByteArray::number((1 << (bits-8))-1));
 		m_texel.replace("!!", OpenGLCompat::rg(little ? "gr" : "rg"));
-		add(0, 2); add(1 ,2); add(2, 2); cc(2, 0.5);
+		add(0, 2); add(1, 2); add(2, 2); cc(2, 0.5);
 		break;
 	case IMGFMT_NV12:
 	case IMGFMT_NV21:
