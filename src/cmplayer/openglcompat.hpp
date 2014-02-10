@@ -213,6 +213,7 @@ public:
 			m_texture.generate();
 			m_texture.allocate();
 			f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, target, m_texture.id, 0);
+            m_complete = f->glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 			LOG_GL_ERROR
 			QOpenGLFramebufferObject::bindDefault();
 		}
@@ -222,11 +223,12 @@ public:
 		if (m_id != GL_NONE)
 			func()->glDeleteFramebuffers(1, &m_id);
 	}
+    bool isComplete() const { return m_complete; }
 	QRect rect() const { return {0, 0, width(), height()}; }
 	int width() const { return m_texture.width; }
 	int height() const { return m_texture.height; }
 	QSize size() const { return {m_texture.width, m_texture.height}; }
-	void bind() const { if (!isNull()) func()->glBindFramebuffer(GL_FRAMEBUFFER, m_id); }
+    void bind() const { if (m_complete) func()->glBindFramebuffer(GL_FRAMEBUFFER, m_id); }
 	void release() const { QOpenGLFramebufferObject::bindDefault(); }
 	const OpenGLTexture &texture() const { return m_texture; }
 	QImage toImage() const;
@@ -235,11 +237,11 @@ public:
 			x1 = y1 = 0; x2 = m_texture.width; y2 = m_texture.height;
 		} else { x1 = y1 = 0; x2 = y2 = 1; }
 	}
-	bool isNull() const { return m_id == GL_NONE; }
 private:
 	static QOpenGLFunctions *func() { return OpenGLCompat::functions(); }
 	GLuint m_id = GL_NONE;
 	OpenGLTexture m_texture;
+    bool m_complete = false;
 };
 
 class OpenGLTextureShaderProgram : public QOpenGLShaderProgram {

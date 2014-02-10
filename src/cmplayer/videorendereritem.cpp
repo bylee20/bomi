@@ -31,7 +31,7 @@ struct VideoRendererItem::Data {
 	OpenGLTexture black;
 	QSize displaySize{1, 1}, frameSize{0, 0};
 	InterpolatorType chromaUpscaler = InterpolatorType::Bilinear;
-	int dropped = 0;
+    int dropped = 0, fboDepth = 2;
 	bool overlayInLetterbox = true;
 	void repaint() { render = true; p->update(); }
 	void fillKernel() {
@@ -388,7 +388,7 @@ void VideoRendererItem::reset() {
 void VideoRendererItem::prepare(QSGGeometryNode *node) {
 	Q_ASSERT(d->shader);
 	if (d->take) {
-		if (d->fbo && !d->fbo->isNull()) {
+        if (d->fbo && d->fbo->isComplete()) {
 			auto image = d->fbo->toImage();
 			d->mposd->drawOn(image);
 			emit frameImageObtained(image);
@@ -426,7 +426,14 @@ LOG_GL_ERROR_Q
 
 	if (d->render && !d->frameSize.isEmpty()) {
 		if (!d->fbo || d->fbo->size() != d->frameSize) {
-			_Renew(d->fbo, d->frameSize, OpenGLCompat::textureFormat(GL_BGRA, 2), GL_TEXTURE_2D);
+            _Renew(d->fbo, d->frameSize, OpenGLCompat::textureFormat(GL_BGRA, d->fboDepth), GL_TEXTURE_2D);
+            if (!d->fbo->isComplete()) {
+                if (d->fboDepth == 2) {
+                    qDebug() << "RGBA16 fbo is not supported. fallback to RGBA8 fbo.";
+                    _Renew(d->fbo, d->frameSize, OpenGLCompat::textureFormat(GL_BGRA, d->fboDepth = 1), GL_TEXTURE_2D);
+                    Q_ASSERT(d->fbo->isComplete());
+                }
+            }
 			setRenderTarget(d->fbo->texture());
 		}
 		d->fbo->bind();

@@ -87,7 +87,7 @@ struct MpOsdItem::Data {
 	}
 
 	void draw(OpenGLFramebufferObject *fbo, const MpOsdBitmap &osd) {
-		if (fbo->isNull())
+        if (!fbo->isComplete())
 			return;
 		build(osd.format());
 		if (!shader->isLinked())
