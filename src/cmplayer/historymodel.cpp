@@ -14,10 +14,13 @@ struct HistoryModel::Data {
 	const QString stateTable = _L("state") % _N(MrlState::Version), appTable = _L("app") % _N(MrlState::Version);
 	bool rememberImage = false, reload = true;
 	bool insertToApp(const MrlState *state) {
-		if (_InsertMrlState(finder, fields, state, _MakeInsertQueryTemplate(appTable, fields)))
-			return true;
-		qDebug() << finder.lastError().text() << "in" << finder.lastQuery();
-		return false;
+		const auto mrl = state->mrl;
+		const_cast<MrlState*>(state)->mrl = Mrl();
+		const bool res = _InsertMrlState(finder, fields, state, _MakeInsertQueryTemplate(appTable, fields));
+		const_cast<MrlState*>(state)->mrl = mrl;
+		if (!res)
+			qDebug() << finder.lastError().text() << "in" << finder.lastQuery();
+		return res;
 	}
 	bool insert(const MrlState *state) {
 		if (insertTemplate.isEmpty())
@@ -129,12 +132,9 @@ void HistoryModel::getAppState(MrlState *appState) {
 }
 
 void HistoryModel::setAppState(const MrlState *state) {
-	const auto mrl = state->mrl;
-	const_cast<MrlState*>(state)->mrl = Mrl();
 	d->db.transaction();
 	d->insertToApp(state);
 	d->db.commit();
-	const_cast<MrlState*>(state)->mrl = mrl;
 }
 
 bool HistoryModel::getState(MrlState *state) const {

@@ -47,7 +47,7 @@ struct PlayEngine::Data {
 	AudioController *audio = nullptr;
 	QByteArray fileName;
 	QTimer imageTicker, avTicker;
-	bool quit = false, looping = false, init = false;
+	bool quit = false, looping = false, init = false, pause = false;
 	PlaybackData playback;
 	int start = 0;
 	bool muted = false;
@@ -145,6 +145,9 @@ struct PlayEngine::Data {
 				break;
 			case MpSetDeintEnabled:
 				d->video->setDeintEnabled(d->deint != DeintMode::None);
+				break;
+			case MpPauseOnStart:
+				d->pause = true;
 				break;
 			default:
 				break;
@@ -898,13 +901,17 @@ void PlayEngine::onMpvStageChanged(int stage) {
 		d->checkTimeRange();
 		break;
 	} case MP_STAGE_START_PLAYBACK:
+		if (d->pause) {
+			pause_player(d->mpctx);
+			d->pause = false;
+		}
 		break;
 	case MP_STAGE_IN_PLAYLOOP:
 		if (!d->playback.duration)
 			d->checkTimeRange();
 		if (d->playback.loops++) {
 			auto state = Playing;
-			if (d->mpctx->paused_for_cache && !d->mpctx->opts->pause)
+			if (d->mpctx->paused_for_cache && !d->mpctx->paused)
 				state = Loading;
 			else if (d->mpctx->paused)
 				state = Paused;
@@ -1039,6 +1046,8 @@ void PlayEngine::quit() {
 }
 
 void PlayEngine::reload() {
+	if (isPaused())
+		d->enqueue(MpPauseOnStart);
 	d->play(time());
 }
 
