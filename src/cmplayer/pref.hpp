@@ -25,6 +25,7 @@ using ClickActionEnumInfo = ActionEnumInfo<ClickAction>;
 using WheelActionEnumInfo = ActionEnumInfo<WheelAction>;
 
 class Pref {
+	Q_DECLARE_TR_FUNCTIONS(Pref)
 public:
 	enum ShortcutPreset {CMPlayer, Movist};
 //	static const Pref &instance() {return get();}
@@ -114,7 +115,7 @@ public:
 	SubtitleAutoload sub_autoload = SubtitleAutoload::Contain;
 	SubtitleAutoselect sub_autoselect = SubtitleAutoselect::Matched;
 	QString sub_enc = defaultSubtitleEncoding(), sub_ext;
-	int sub_enc_accuracy = 70, ms_per_char = 500;
+	int sub_enc_accuracy = defaultSubtitleEncodingDetectionAccuracy(), ms_per_char = 500;
 	SubtitleStyle sub_style;		QStringList sub_priority;
 
 	QLocale locale = QLocale::system();
@@ -160,6 +161,7 @@ private:
 	static QList<QMetaProperty> defaultRestoreProperties();
 	static QString defaultSkinName();
 	static QString defaultSubtitleEncoding();
+	static int defaultSubtitleEncodingDetectionAccuracy();
 	static QList<int> defaultHwAccCodecs();
 	static QList<DeintMethod> defaultHwAccDeints();
 	static Shortcuts defaultShortcuts();

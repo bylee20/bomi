@@ -426,3 +426,12 @@ QList<QMetaProperty> Pref::defaultRestoreProperties() {
 	}
 	return list;
 }
+
+int Pref::defaultSubtitleEncodingDetectionAccuracy() {
+	const QString value = tr("70",
+		"This is default value for accuracy to enfoce auto-detected subtitle encoding in preferences. "
+		"Higher value means that auto-detection will be applied only if the result is more reliable.");
+	bool ok = false;
+	const int accuracy = value.toInt(&ok);
+	return ok ? qBound(0, accuracy, 100) : 70;
+}
