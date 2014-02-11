@@ -55,7 +55,7 @@ Item {
 			readonly property int end: engine.end/1000
 			readonly property int pos10: engine.relativePosition*1000
 			text: "[%1]%2/%3(%4%)".arg(engine.stateText)
-				.arg(Util.secToString(time)).arg(Util.secToString(end)).arg((pos10/10.0).toFixed(1))
+				.arg(Util.secToString(time)).arg(Util.secToString(end)).arg(time > 0 && end > 0 ? (pos10/10.0).toFixed(1) : 0)
 		}
 		PlayInfoText { text: qsTr("Playback Speed: ×%1").arg(engine.speed.toFixed(2)); }
 		PlayInfoText { }
