@@ -1514,7 +1514,7 @@ Right click: %2</source>
         <location filename="../info.hpp" line="25"/>
         <location filename="../info.hpp" line="26"/>
         <source>Images</source>
-        <translation type="unfinished">이미지</translation>
+        <translation>이미지</translation>
     </message>
     <message>
         <location filename="../info.hpp" line="27"/>
@@ -1529,12 +1529,12 @@ Right click: %2</source>
     <message>
         <location filename="../info.hpp" line="29"/>
         <source>Subtitle Files</source>
-        <translation type="unfinished">자막 파일</translation>
+        <translation>자막 파일</translation>
     </message>
     <message>
         <location filename="../info.hpp" line="30"/>
         <source>Playlist Files</source>
-        <translation type="unfinished"></translation>
+        <translation>재생 목록 파일</translation>
     </message>
     <message>
         <source>Image Files</source>
@@ -1551,7 +1551,7 @@ Right click: %2</source>
     <message>
         <location filename="../widgets.cpp" line="85"/>
         <source>System locale[%1]</source>
-        <translation type="unfinished"></translation>
+        <translation>시스템 로캘</translation>
     </message>
 </context>
 <context>
@@ -1867,7 +1867,7 @@ Please wait for a while.</source>
     <message>
         <location filename="../mainwindow.cpp" line="1267"/>
         <source>Downloaded</source>
-        <translation type="unfinished"></translation>
+        <translation>다운로드</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="960"/>
@@ -2493,17 +2493,17 @@ Please wait for a while.</source>
     <message>
         <location filename="../ui/opendvddialog.ui" line="14"/>
         <source>Select DVD Device</source>
-        <translation>DVD장치 선택</translation>
+        <translation>DVD 장치 선택</translation>
     </message>
     <message>
         <location filename="../ui/opendvddialog.ui" line="22"/>
         <source>Device:</source>
-        <translation type="unfinished"></translation>
+        <translation>장치:</translation>
     </message>
     <message>
         <location filename="../ui/opendvddialog.ui" line="65"/>
         <source>Use DVD menu</source>
-        <translation type="unfinished"></translation>
+        <translation>DVD 메뉴 사용</translation>
     </message>
     <message>
         <source>Open next device:</source>
@@ -2560,7 +2560,7 @@ Please wait for a while.</source>
     <message>
         <location filename="../opensubtitlesfinder.cpp" line="41"/>
         <source>Cannot connect to server</source>
-        <translation type="unfinished"></translation>
+        <translation>서버에 연결할 수 없습니다</translation>
     </message>
 </context>
 <context>
@@ -3320,7 +3320,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
         <location filename="../pref.cpp" line="431"/>
         <source>70</source>
         <comment>This is default value for accuracy to enfoce auto-detected subtitle encoding in preferences. Higher value means that auto-detection will be applied only if the result is more reliable.</comment>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
 </context>
 <context>
@@ -4059,7 +4059,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
     <message>
         <location filename="../ui/prefdialog.ui" line="259"/>
         <source>Save and restore state per media playback</source>
-        <translation type="unfinished"></translation>
+        <translation>미디어별 재생 상태 저장 및 복구</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="305"/>
@@ -4069,7 +4069,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
     <message>
         <location filename="../ui/prefdialog.ui" line="349"/>
         <source>Locale</source>
-        <translation type="unfinished">로케일</translation>
+        <translation>로캘</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1697"/>
@@ -4478,17 +4478,17 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/prefdialog.ui" line="2727"/>
         <source>Hide mouse cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>마우스 커서 숨기기</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2741"/>
         <source>Apply after timeout</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 시간이 경과하면 적용</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2782"/>
         <source>Apply in fullscreen mode only</source>
-        <translation type="unfinished"></translation>
+        <translation>전체 화면 상태에서만 적용</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2846"/>
@@ -6226,7 +6226,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="399"/>
         <source>DVD Menu</source>
-        <translation type="unfinished">DVD 메뉴</translation>
+        <translation>DVD 메뉴</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="401"/>
@@ -6321,7 +6321,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../rootmenu.cpp" line="512"/>
         <source>Find Subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 찾기</translation>
     </message>
     <message>
         <source>Subtitle File</source>
@@ -7144,84 +7144,84 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="14"/>
         <source>Find Subtitle from OpenSubtitles.org</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 찾기(OpenSubtitles.org)</translation>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="22"/>
         <location filename="../subtitlefinddialog.cpp" line="114"/>
         <source>Open</source>
-        <translation type="unfinished">열기</translation>
+        <translation>열기</translation>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="63"/>
         <source>Get</source>
-        <translation type="unfinished"></translation>
+        <translation>받기</translation>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="70"/>
         <source>Close</source>
-        <translation type="unfinished">닫기</translation>
+        <translation>닫기</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="71"/>
         <source>Connecting...</source>
-        <translation type="unfinished"></translation>
+        <translation>연결중...</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="74"/>
         <source>Finding...</source>
-        <translation type="unfinished"></translation>
+        <translation>찾는중...</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="77"/>
         <source>Find</source>
-        <translation type="unfinished"></translation>
+        <translation>찾기</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="128"/>
         <location filename="../subtitlefinddialog.cpp" line="177"/>
         <source>Find Subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 찾기</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="128"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
-        <translation type="unfinished"></translation>
+        <translation>같은 이름의 파일이 이미 존재합니다. 덮어쓰겠습니까?</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="129"/>
         <source>Overwrite</source>
-        <translation type="unfinished"></translation>
+        <translation>덮어쓰기</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="130"/>
         <source>Save as...</source>
-        <translation type="unfinished"></translation>
+        <translation>다른 이름으로 저장</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="131"/>
         <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
+        <translation>취소</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="136"/>
         <source>Save As...</source>
-        <translation type="unfinished"></translation>
+        <translation>다른 이름으로 저장</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="136"/>
         <source>Subtitle Files</source>
-        <translation type="unfinished">자막 파일</translation>
+        <translation>자막 파일</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="158"/>
         <source>All</source>
-        <translation type="unfinished">모든 파일</translation>
+        <translation>모든 파일</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="177"/>
         <source>Cannot find subtitles for %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1의 자막을 찾을 수 없습니다.</translation>
     </message>
 </context>
 <context>
@@ -7229,17 +7229,17 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="20"/>
         <source>Language</source>
-        <translation type="unfinished">언어</translation>
+        <translation>언어</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="21"/>
         <source>File Name</source>
-        <translation type="unfinished"></translation>
+        <translation>파일명</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="22"/>
         <source>Date</source>
-        <translation type="unfinished"></translation>
+        <translation>날짜</translation>
     </message>
 </context>
 <context>
