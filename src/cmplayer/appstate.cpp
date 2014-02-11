@@ -157,3 +157,10 @@ void AppStateOld::save() const {
 #undef WRITE
 }
 
+void AppState::setOpen(const Mrl &mrl) {
+	if (mrl.isLocalFile()) {
+		QFileInfo file(mrl.toLocalFile());
+		open_last_file = file.absoluteFilePath();
+		open_last_folder = file.absolutePath();
+	}
+}

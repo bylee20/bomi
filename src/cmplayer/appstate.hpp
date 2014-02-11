@@ -36,6 +36,7 @@ public:
 	static AppState &get() {
 		static AppState obj; return obj;
 	}
+	void setOpen(const Mrl &mrl);
 signals:
 	void winStaysOnTopChanged();
 private:

@@ -177,7 +177,6 @@ struct MainWindow::Data {
 				return loaded;
 			};
 			subtitle.setComponents(autoload(true));
-			as.open_last_file = file.absoluteFilePath();
 		} else
 			this->p->clearSubtitleFiles();
 		syncSubtitleFileMenu();
@@ -666,6 +665,7 @@ struct MainWindow::Data {
 		};
 
 		connect(&engine, &PlayEngine::started, [this, updateMrlState] (Mrl mrl) {
+			as.setOpen(mrl);
 			as.state.mrl = mrl;
 			auto &state = as.state;
 			const bool found = history.getState(&state);
@@ -837,8 +837,10 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->dontShowMsg = false;
 
 	d->engine.setPlaylist(d->recent.lastPlaylist());
-	if (!d->recent.lastMrl().isEmpty())
+	if (!d->recent.lastMrl().isEmpty()) {
 		d->engine.load(d->recent.lastMrl());
+		as.setOpen(d->recent.lastMrl());
+	}
 	updateRecentActions(d->recent.openList());
 
 	d->winState = d->prevWinState = windowState();
@@ -893,7 +895,8 @@ void MainWindow::connectMenus() {
 		const QString filter = Info::mediaExtFilter();
 		const QString dir = QFileInfo(as.open_last_file).absolutePath();
 		const QString file = _GetOpenFileName(this, tr("Open File"), dir, filter);
-		if (!file.isEmpty()) {openMrl(Mrl(file)); as.open_last_file = file;}
+		if (!file.isEmpty())
+			openMrl(Mrl(file));
 	});
 	connect(open["folder"], &QAction::triggered, [this] () {
 		OpenMediaFolderDialog dlg(this);
