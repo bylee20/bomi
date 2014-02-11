@@ -9,6 +9,8 @@ Mrl::Mrl(const QUrl &url) {
 }
 
 Mrl::Mrl(const QString &location, const QString &name) {
+	if (location.isEmpty())
+		return;
 	const int idx = location.indexOf("://");
 	if (idx < 0)
 		m_loc = _L("file://") % QFileInfo(location).absoluteFilePath();
