@@ -1,7 +1,10 @@
 #include "mrlstate.hpp"
 #include "appstate.hpp"
+#include "mrlstate_old.hpp"
 
-QList<MrlStateProperty> MrlStateV1::restorableProperties() {
+using namespace MrlStateHelpers;
+
+QList<MrlStateProperty> MrlState::restorableProperties() {
 	QList<MrlStateProperty> properties;
 	properties.reserve(staticMetaObject.propertyCount());
 	auto add = [&properties] (const char *name, const QString &info) {
@@ -42,18 +45,95 @@ QList<MrlStateProperty> MrlStateV1::restorableProperties() {
 	return properties;
 }
 
+template<typename T> static inline bool _Is(int type) { return qMetaTypeId<T>() == type; }
+
+QList<MrlField> MrlField::list() {
+	static QList<MrlField> fields;
+	if (fields.isEmpty()) {
+		MrlState default_;
+		auto &metaObject = MrlState::staticMetaObject;
+		const int count = metaObject.propertyCount();
+		const int offset = metaObject.propertyOffset();
+		Q_ASSERT(offset == 1);
+		fields.reserve(count - offset);
+		for (int i=offset; i<count; ++i) {
+			MrlField field;
+			field.m_property = metaObject.property(i);
+			field.m_type = "INTEGER";
+			field.m_default = field.m_property.read(&default_);
+			switch (field.m_property.type()) {
+			case QVariant::Int:
+				field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toInt()); };
+				break;
+			case QVariant::LongLong:
+				field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toLongLong()); };
+				break;
+			case QVariant::Bool:
+				field.m_toSql = [] (const QVariant &var) { return _ToSql((int)var.toBool()); };
+				break;
+			case QVariant::Point:
+				field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toPoint()); };
+				field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
+					return _PointFromSql(var.toString(), def.toPoint());
+				};
+				break;
+			case QVariant::DateTime:
+				field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toDateTime()); };
+				field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
+					return var.isNull() ? def : _DateTimeFromSql(var.toLongLong());
+				};
+				break;
+			case QVariant::String:
+				field.m_type = "TEXT";
+				field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toString()); };
+				break;
+			default: {
+				Q_ASSERT(field.m_property.type() == QVariant::UserType);
+				const auto type = field.m_property.userType();
+				if (_GetEnumFunctionsForSql(type, field.m_toSql, field.m_fromSql)) {
+					field.m_type = "TEXT";
+				} else if (_Is<VideoColor>(type)) {
+					field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<VideoColor>().packed()); };
+					field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
+						return var.isNull() ? def : QVariant::fromValue(VideoColor::fromPacked(var.toLongLong()));
+					};
+				} else if (_Is<SubtitleStateInfo>(type)) {
+					field.m_type = "TEXT";
+					field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<SubtitleStateInfo>().toString()); };
+					field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
+						return var.isNull() ? def : QVariant::fromValue(SubtitleStateInfo::fromString(var.toString()));
+					};
+				} else if (_Is<Mrl>(type)) {
+					field.m_type = "TEXT PRIMARY KEY NOT NULL";
+					field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<Mrl>().toString()); };
+					field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
+						return var.isNull() ? def : QVariant::fromValue(Mrl::fromString(var.toString()));
+					};
+				} else
+					Q_ASSERT_X(false, "HistoryDatabaseModel::HistoryDatabaseModel()", "wrong type!");
+
+			}}
+			fields.append(field);
+		}
+	}
+	return fields;
+}
+
+
 namespace MrlStateHelpers {
 
-QList<MrlState*> _ImportMrlStatesFromPreviousVersion(int version, QSqlDatabase db) {
-	QList<MrlState*> states;
-	if (version < MrlStateV1::Version) {
+std::tuple<MrlState*, QList<MrlState*>> _ImportMrlStatesFromPreviousVersion(int version, QSqlDatabase db) {
+	std::tuple<MrlState*, QList<MrlState*>> tuple;
+	MrlState *&app = std::get<0>(tuple);
+	app = new MrlState;
+	QList<MrlState*> &states = std::get<1>(tuple);
+	if (version < 1) {
 		AppStateOld as;
 		QSettings set;
 		set.beginGroup("history");
 		const int size = set.beginReadArray("list");
-		states.reserve(size+1);
-		auto make = [&as] () {
-			auto state = new MrlState;
+		states.reserve(size);
+		auto fill = [&as] (MrlState *state) {
 			state->play_speed = as.playback_speed;
 
 			state->video_aspect_ratio = as.video_aspect_ratio;
@@ -83,21 +163,45 @@ QList<MrlState*> _ImportMrlStatesFromPreviousVersion(int version, QSqlDatabase d
 			state->sub_alignment = as.sub_alignment;
 			return state;
 		};
-		states.append(make());
+		fill(app);
 		for (int i=0; i<size; ++i) {
 			set.setArrayIndex(i);
 			const Mrl mrl = set.value("mrl", QString()).toString();
 			if (mrl.isEmpty())
 				continue;
-			auto state = make();
+			auto state = new MrlState;
+			fill(state);
 			state->mrl = mrl;
 			state->last_played_date_time = set.value("date", QDateTime()).toDateTime();
 			state->resume_position = set.value("stopped-position", 0).toInt();
 			states.append(state);
 		}
+	} else if (version < 2) {
+		QSqlQuery query(db);
+		db.transaction();
+		query.exec("SELECT * FROM app LIMIT 1");
+		app = new MrlState;
+		MrlStateV1 prev;
+		const auto fields = MrlFieldV1::list();
+		if (query.next()) {
+			_FillMrlStateFromQuery<MrlStateV1>(&prev, fields, query);
+			prev.fillCurrentVersion(app);
+		}
+		query.exec("SELECT *, (SELECT COUNT(*) FROM state) as total FROM state");
+		if (!query.next())
+			return tuple;
+		const int rows = query.value("total").toInt();
+		query.seek(-1);
+		states.reserve(rows);
+		while (query.next()) {
+			_FillMrlStateFromQuery(&prev, fields, query);
+			auto state = new MrlState;
+			prev.fillCurrentVersion(state);
+			states.append(state);
+		}
+		db.rollback();
 	}
-	Q_UNUSED(db);
-	return states;
+	return tuple;
 }
 
 }

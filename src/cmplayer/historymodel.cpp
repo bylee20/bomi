@@ -5,41 +5,41 @@ using namespace MrlStateHelpers;
 
 struct HistoryModel::Data {
 	HistoryModel *p = nullptr;
-	QSqlQuery query, finder;
+	QSqlQuery loader, finder;
 	QSqlError error;
-	QList<Field> fields = MrlStateHelpers::fields<MrlState>();
-	QString insertTemplate, columns;
+	QList<MrlField> fields = MrlField::list();
+	QList<MrlField> restores;
+	QString insertTemplate;
 	MrlState cached;
+	const QString stateTable = _L("state") % _N(MrlState::Version), appTable = _L("app") % _N(MrlState::Version);
 	bool rememberImage = false, reload = true;
-	bool insertApp(const MrlState *state) {
-		QString q = _L("INSERT OR REPLACE INTO app (id, ") % columns % _L(") VALUES (0, %1)");
-		QString values;
-		for (auto &f : fields)
-			values += f.toSql(f.property().read(state)) % _L(", ");
-		values.chop(2);
-		return query.exec(q.arg(values));
+	bool insertToApp(const MrlState *state) {
+		if (_InsertMrlState(finder, fields, state, _MakeInsertQueryTemplate(appTable, fields)))
+			return true;
+		qDebug() << finder.lastError().text() << "in" << finder.lastQuery();
+		return false;
 	}
-
 	bool insert(const MrlState *state) {
+		if (insertTemplate.isEmpty())
+			insertTemplate = _MakeInsertQueryTemplate(stateTable, fields);
 		if (state->mrl == cached.mrl)
 			cached.mrl = Mrl();
-		QString values = toSql(state->mrl.toString()) % _L(", ")
-						% toSql(state->mrl.displayName()) % _L(", ");
-		for (auto &f : fields)
-			values += f.toSql(f.property().read(state)) % _L(", ");
-		values.chop(2);
-		return finder.exec(insertTemplate.arg(values));
+		if (_InsertMrlState(finder, fields, state, insertTemplate))
+			return true;
+		qDebug() << finder.lastError().text() << "in" << finder.lastQuery();
+		return false;
 	}
 	int rows = 0;
 	bool load() {
-		if (!query.exec("SELECT mrl, name, last_played_date_time, (SELECT COUNT(*) FROM state) as total FROM state ORDER BY last_played_date_time DESC"))
+		const QString select = QString::fromLatin1("SELECT *, (SELECT COUNT(*) FROM %1) as total FROM %2 ORDER BY last_played_date_time DESC");
+		if (!loader.exec(select.arg(stateTable).arg(stateTable)))
 			return false;
-		Q_ASSERT(!query.isForwardOnly());
+		Q_ASSERT(!loader.isForwardOnly());
 		p->beginResetModel();
 		rows = 0;
-		if (query.next()) {
-			rows = query.value("total").toInt();
-			query.seek(-1);
+		if (loader.next()) {
+			rows = loader.value("total").toInt();
+			loader.seek(-1);
 		}
 		error = QSqlError();
 		p->endResetModel();
@@ -47,24 +47,24 @@ struct HistoryModel::Data {
 		return true;
 	}
 
-	void import(const QList<MrlState*> &states) {
+	void import(const std::tuple<MrlState*, QList<MrlState*>> &tuple) {
 		db.transaction();
-		query.exec("DROP TABLE IF EXISTS state");
-		query.exec("DROP TABLE IF EXISTS app");
+		finder.exec(QString::fromLatin1("DROP TABLE IF EXISTS %1").arg(stateTable));
+		finder.exec(QString::fromLatin1("DROP TABLE IF EXISTS %1").arg(appTable));
+
+
 		QString columns;
-		for (auto &f : this->fields)
+		for (auto &f : fields)
 			columns += f.property().name() % _L(' ') % f.type() % _L(", ");
 		columns.chop(2);
-
-		query.exec(_L("CREATE TABLE state (mrl TEXT UNIQUE, name TEXT, ") % columns % _L(')'));
-		query.exec(_L("CREATE TABLE app (id INTEGER UNIQUE, ") % columns % _L(')'));
-		if (!states.isEmpty()) {
-			insertApp(states[0]);
-			delete states[0];
-			for (int i=1; i<states.size(); ++i) {
-				insert(states[i]);
-				delete states[i];
-			}
+		finder.exec(QString::fromLatin1("CREATE TABLE %1 (%2)").arg(stateTable).arg(columns));
+		finder.exec(QString::fromLatin1("CREATE TABLE %1 (%2)").arg(appTable).arg(columns));
+		auto app = std::get<0>(tuple);
+		insertToApp(app);
+		delete app;
+		for (auto state : std::get<1>(tuple)) {
+			insert(state);
+			delete state;
 		}
 		db.commit();
 	}
@@ -94,19 +94,15 @@ HistoryModel::HistoryModel(QObject *parent)
 		return;
 	}
 
-	for (auto &f : d->fields)
-		d->columns += f.property().name() % _L(", ");
-	d->columns.chop(2);
-	d->insertTemplate = _L("INSERT OR REPLACE INTO state (mrl, name, ") % d->columns % _L(") VALUES (%1)");
-	d->query = QSqlQuery(d->db);
+	d->loader = QSqlQuery(d->db);
 	d->finder = QSqlQuery(d->db);
-	d->query.exec("PRAGMA user_version");
+	d->finder.exec("PRAGMA user_version");
 	int version = 0;
-	if (d->query.next())
-		version = d->query.value(0).toLongLong();
+	if (d->finder.next())
+		version = d->finder.value(0).toLongLong();
 	if (version != MrlState::Version) {
 		d->import(_ImportMrlStatesFromPreviousVersion(version, d->db));
-		d->query.exec("PRAGMA user_version = " % _N(MrlState::Version));
+		d->finder.exec("PRAGMA user_version = " % _N(MrlState::Version));
 	}
 	d->load();
 }
@@ -124,54 +120,50 @@ int HistoryModel::columnCount(const QModelIndex &index) const {
 }
 
 void HistoryModel::getAppState(MrlState *appState) {
-	d->finder.exec(_L("SELECT * FROM app LIMIT 1"));
+	d->finder.exec(QString::fromLatin1("SELECT * FROM %1 LIMIT 1").arg(d->appTable));
 	if (!d->finder.next()) {
 		qDebug() << "no previous app state!";
 		return;
 	}
-	for (auto &f : d->fields)
-		f.property().write(appState, f.fromSql(d->finder.value(f.property().name())));
+	_FillMrlStateFromQuery(appState, d->fields, d->finder);
 }
 
 void HistoryModel::setAppState(const MrlState *state) {
+	const auto mrl = state->mrl;
+	const_cast<MrlState*>(state)->mrl = Mrl();
 	d->db.transaction();
-	d->insertApp(state);
+	d->insertToApp(state);
 	d->db.commit();
+	const_cast<MrlState*>(state)->mrl = mrl;
 }
 
-bool HistoryModel::getState(MrlState *state, const QList<QMetaProperty> &restores) const {
+bool HistoryModel::getState(MrlState *state) const {
 	if (d->cached.mrl == state->mrl) {
-		for (auto &f : d->fields) {
-			if (restores.contains(f.property()))
-				f.property().write(state, f.property().read(&d->cached));
-		}
+		for (auto &f : d->restores)
+			f.property().write(state, f.property().read(&d->cached));
 		return true;
 	}
-	d->finder.exec(_L("SELECT * FROM state WHERE mrl = ") % toSql(state->mrl.toString()));
+	d->finder.exec(QString::fromLatin1("SELECT * FROM %1 WHERE mrl = %2 ").arg(d->stateTable).arg(_ToSql(state->mrl.toString())));
 	if (!d->finder.next())
 		return false;
-	for (auto &f : d->fields) {
-		if (restores.contains(f.property()))
-			f.property().write(state, f.fromSql(d->finder.value(f.property().name())));
-	}
+	_FillMrlStateFromQuery(state, d->restores, d->finder);
 	return true;
 }
 
 const MrlState *HistoryModel::find(const Mrl &mrl) const {
 	if (d->cached.mrl == mrl)
 		return &d->cached;
-	d->finder.exec(_L("SELECT * FROM state WHERE mrl = ") % toSql(mrl.toString()));
+	d->finder.exec(QString::fromLatin1("SELECT * FROM %1 WHERE mrl = %2").arg(d->stateTable).arg(_ToSql(mrl.toString())));
 	if (!d->finder.next())
 		return nullptr;
 	d->cached.mrl = mrl;
-	for (auto &f : d->fields)
-		f.property().write(&d->cached, f.fromSql(d->finder.value(f.property().name())));
+	_FillMrlStateFromQuery(&d->cached, d->fields, d->finder);
 	return &d->cached;
 }
 
 void HistoryModel::play(int row) {
-	if (0 <= row && row < d->rows && d->query.seek(row))
-		emit playRequested(Mrl::fromString(d->query.value("mrl").toString()));
+	if (0 <= row && row < d->rows && d->loader.seek(row))
+		emit playRequested(Mrl::fromString(d->loader.value("mrl").toString()));
 }
 
 QVariant HistoryModel::data(const QModelIndex &index, int role) const {
@@ -182,15 +174,15 @@ QVariant HistoryModel::data(const QModelIndex &index, int role) const {
 	const int row = index.row();
 	if (!(0 <= row && row < d->rows))
 		return QVariant();
-	if (!d->query.seek(row))
+	if (!d->loader.seek(row))
 		return QVariant();
 	switch (role) {
 	case NameRole:
-		return Mrl::fromString(d->query.value("mrl").toString()).displayName();
+		return Mrl::fromString(d->loader.value("mrl").toString()).displayName();
 	case LatestPlayRole:
-		return dateTimeFromSql(d->query.value("last_played_date_time").toLongLong());
+		return _DateTimeFromSql(d->loader.value("last_played_date_time").toLongLong());
 	case LocationRole:
-		return d->query.value("mrl");
+		return d->loader.value("mrl");
 	default:
 		return QVariant();
 	}
@@ -224,9 +216,18 @@ void HistoryModel::setRememberImage(bool on) {
 	d->rememberImage = on;
 }
 
+void HistoryModel::setPropertiesToRestore(const QList<QMetaProperty> &properties) {
+	d->restores.clear();
+	d->restores.reserve(properties.size());
+	for (auto &f : d->fields) {
+		if (properties.contains(f.property()))
+			d->restores.push_back(f);
+	}
+}
+
 void HistoryModel::clear() {
 	d->db.transaction();
-	d->query.exec("DELETE FROM state");
+	d->loader.exec("DELETE FROM " % d->stateTable);
 	d->db.commit();
 	d->load();
 }

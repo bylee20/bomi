@@ -77,32 +77,17 @@ public:
 		m[0] += rhs.m[0]; m[1] += rhs.m[1]; m[2] += rhs.m[2]; m[3] += rhs.m[3]; return *this;
 	}
 	VideoColor operator + (const VideoColor &rhs) const { return VideoColor(*this) += rhs; }
-	int &operator [] (Type p) {return m[p];}
-	const int &operator [] (Type p) const {return m[p];}
+	int operator [] (Type p) const {return m[p];}
 	int value(Type v) const {return m[v];}
 	int brightness() const {return m[Brightness];}
 	int saturation() const {return m[Saturation];}
 	int contrast() const {return m[Contrast];}
 	int hue() const {return m[Hue];}
-
-	int &value(Type v) {return m[v];}
-	int &brightness() {return m[Brightness];}
-	int &saturation() {return m[Saturation];}
-	int &contrast() {return m[Contrast];}
-	int &hue() {return m[Hue];}
-
-	void setValue(Type p, int val) {m[p] = qFuzzyCompare(val, 0.0) ? 0.0 : val;}
-	void setBrightness(int v) {m[Brightness] = v;}
-	void setSaturation(int v) {m[Saturation] = v;}
-	void setContrast(int v) {m[Contrast] = v;}
-	void setHue(int v) {m[Hue] = v;}
-#undef clamp
-	void clamp() {
-		m[Brightness] = qBound(-100, m[Brightness], 100);
-		m[Contrast] = qBound(-100, m[Contrast], 100);
-		m[Saturation] = qBound(-100, m[Saturation], 100);
-		m[Hue] = qBound(-100, m[Hue], 100);
-	}
+	void setValue(Type p, int val) {m[p] = clip(val);}
+	void setBrightness(int v) {m[Brightness] = clip(v);}
+	void setSaturation(int v) {m[Saturation] = clip(v);}
+	void setContrast(int v) {m[Contrast] = clip(v);}
+	void setHue(int v) {m[Hue] = clip(v);}
 	bool isZero() const { return !m[Brightness] && !m[Saturation] && !m[Contrast] && !m[Hue]; }
 	void matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, ColorRange range, float s) const;
 	QString getText(Type type) const {
@@ -120,7 +105,10 @@ public:
 			return tr("Reset");
 		}
 	}
+	qint64 packed() const;
+	static VideoColor fromPacked(qint64 packed);
 private:
+	static int clip(int v) { v = qFuzzyCompare(v + 1.0, 1.0) ? 0.0 : v; return qBound(-100, v, 100); }
 	std::array<int, TypeMax> m{{0, 0, 0, 0}};
 };
 

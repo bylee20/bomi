@@ -75,10 +75,10 @@ struct RecordIoOne<VideoColor, false> {
 		r.setValue(key % _L("_hue"), value.hue());
 	}
 	static void read(QSettings &r, VideoColor &value, const QString &key) {
-		value.brightness() = r.value(key % _L("_brightness"), value.brightness()).toDouble();
-		value.contrast() = r.value(key % _L("_contrast"), value.contrast()).toDouble();
-		value.saturation() = r.value(key % _L("_saturation"), value.saturation()).toDouble();
-		value.hue() = r.value(key % _L("_hue"), value.hue()).toDouble();
+		value.setBrightness(r.value(key % _L("_brightness"), value.brightness()).toDouble());
+		value.setContrast(r.value(key % _L("_contrast"), value.contrast()).toDouble());
+		value.setSaturation(r.value(key % _L("_saturation"), value.saturation()).toDouble());
+		value.setHue(r.value(key % _L("_hue"), value.hue()).toDouble());
 	}
 };
 

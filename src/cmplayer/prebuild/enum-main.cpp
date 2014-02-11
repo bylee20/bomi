@@ -239,7 +239,26 @@ extern "C" {
 }
 
 template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
+
+typedef QString (*EnumVariantToSqlFunc)(const QVariant &var);
+typedef QVariant (*EnumVariantFromSqlFunc)(const QVariant &var, const QVariant &def);
+
+template<typename T>
+QString _EnumVariantToSql(const QVariant &var) {
+	Q_ASSERT(var.userType() == qMetaTypeId<T>());
+	return QLatin1Char('\'') % EnumInfo<T>::name(var.value<T>()) % QLatin1Char('\'');
+}
+
+template<typename T>
+QVariant _EnumVariantFromSql(const QVariant &name, const QVariant &def) {
+	const auto enum_ = EnumInfo<T>::from(name.toString(), def.value<T>());
+	return QVariant::fromValue<T>(enum_);
+}
+
 )";
+
+	const string convtmpl = "\tif (varType == qMetaTypeId<__ENUM_NAME>()) {\n\t\ttoSql = _EnumVariantToSql<__ENUM_NAME>;\n\t\tfromSql = _EnumVariantFromSql<__ENUM_NAME>;\n\t} else";
+	string enumConv = "static inline bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVariantFromSqlFunc &fromSql) {\n";
 	string isEnum = "static inline bool _IsEnumTypeId(int userType) {\n\treturn ";
 	string cpp = "#include \"enums.hpp\"";
     for (const EnumType &type : enums) {
@@ -276,10 +295,14 @@ template<typename T> class EnumInfo { static constexpr int size() { return 0; } 
 		hpp += htmpl;
 		cpp += ctmpl;
 
+		string conv = convtmpl;
+		enumConv += replace(conv, "__ENUM_NAME", type.name);
 		isEnum += "userType == qMetaTypeId<" + type.name + ">()\n\t\t|| ";
 	}
 	isEnum += "false;\n}\n\n";
+	enumConv += "\n\t\treturn false;\n\treturn true;\n}";
 	hpp += isEnum;
+	hpp += enumConv;
 	hpp += "\n#endif\n";
 	fstream s_hpp, s_cpp;
 	s_hpp.open("../enums.hpp", ios::out);

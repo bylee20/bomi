@@ -668,7 +668,7 @@ struct MainWindow::Data {
 		connect(&engine, &PlayEngine::started, [this, updateMrlState] (Mrl mrl) {
 			as.state.mrl = mrl;
 			auto &state = as.state;
-			const bool found = history.getState(&state, pref().restore_properties);
+			const bool found = history.getState(&state);
 			if (found) {
 				engine.setCurrentAudioStream(state.audio_track);
 				syncWithState();
@@ -817,6 +817,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	qDebug() << "Recover states";
 	auto &as = AppState::get();
+	qDebug() << as.state.mrl.toString();
 	d->history.getAppState(&as.state);
 	d->syncWithState();
 
@@ -1654,6 +1655,7 @@ void MainWindow::applyPref() {
 	auto &p = d->pref();
 	Translator::load(p.locale);
 	d->history.setRememberImage(p.remember_image);
+	d->history.setPropertiesToRestore(p.restore_properties);
 	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);

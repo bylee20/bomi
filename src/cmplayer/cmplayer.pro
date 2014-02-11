@@ -144,7 +144,8 @@ HEADERS += playengine.hpp \
     subtitlefinddialog.hpp \
     simplelistmodel.hpp \
     audiomixer.hpp \
-    audiomixer_p.hpp
+    audiomixer_p.hpp \
+    mrlstate_old.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -226,7 +227,8 @@ SOURCES += main.cpp \
     opensubtitlesfinder.cpp \
     subtitlefinddialog.cpp \
     simplelistmodel.cpp \
-    audiomixer.cpp
+    audiomixer.cpp \
+    mrlstate_old.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

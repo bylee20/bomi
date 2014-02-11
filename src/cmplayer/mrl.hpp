@@ -33,4 +33,6 @@ private:
 	QString m_name;
 };
 
+Q_DECLARE_METATYPE(Mrl)
+
 #endif // MRL_HPP

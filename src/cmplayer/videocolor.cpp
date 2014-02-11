@@ -119,3 +119,14 @@ void VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, Colo
 	add = {bvec(0, 0), bvec(1, 0), bvec(2, 0)};
 }
 
+qint64 VideoColor::packed() const {
+#define PACK(p, s) ((0xffu & ((quint32)p() + 100u)) << s)
+	return PACK(brightness, 24) | PACK(contrast, 16) | PACK(saturation, 8) | PACK(hue, 0);
+#undef PACK
+}
+
+VideoColor VideoColor::fromPacked(qint64 packed) {
+#define UNPACK(s) (((packed >> s) & 0xff) - 100)
+	return VideoColor(UNPACK(24), UNPACK(16), UNPACK(8), UNPACK(0));
+#undef UNPACK
+}
