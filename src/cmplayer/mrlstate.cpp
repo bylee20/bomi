@@ -13,34 +13,34 @@ QList<MrlStateProperty> MrlState::restorableProperties() {
 		properties.append(MrlStateProperty{staticMetaObject.property(index), info});
 	};
 #define ADD(n, i) add(#n, i)
-	ADD(play_speed, tr("Playback Speed"));
+	ADD(play_speed, qApp->translate("MrlState", "Playback Speed"));
 
-	ADD(video_interpolator, tr("Video Interpolator"));
-	ADD(video_chroma_upscaler, tr("Video Chroma Upscaler"));
-	ADD(video_aspect_ratio, tr("Video Aspect Ratio"));
-	ADD(video_crop_ratio, tr("Video Crop Ratio"));
-	ADD(video_deinterlacing, tr("Video Deinterlacing"));
-	ADD(video_dithering, tr("Video Dithering"));
-	ADD(video_offset, tr("Video Screen Position"));
-	ADD(video_vertical_alignment, tr("Video Vertical Alignment"));
-	ADD(video_horizontal_alignment, tr("Video Horizontal Alignment"));
-	ADD(video_color, tr("Video Color Adjustment"));
-	ADD(video_range, tr("Video Color Range"));
+	ADD(video_interpolator, qApp->translate("MrlState", "Video Interpolator"));
+	ADD(video_chroma_upscaler,  qApp->translate("MrlState", "Video Chroma Upscaler"));
+	ADD(video_aspect_ratio,  qApp->translate("MrlState", "Video Aspect Ratio"));
+	ADD(video_crop_ratio,  qApp->translate("MrlState", "Video Crop Ratio"));
+	ADD(video_deinterlacing,  qApp->translate("MrlState", "Video Deinterlacing"));
+	ADD(video_dithering,  qApp->translate("MrlState", "Video Dithering"));
+	ADD(video_offset,  qApp->translate("MrlState", "Video Screen Position"));
+	ADD(video_vertical_alignment,  qApp->translate("MrlState", "Video Vertical Alignment"));
+	ADD(video_horizontal_alignment,  qApp->translate("MrlState", "Video Horizontal Alignment"));
+	ADD(video_color,  qApp->translate("MrlState", "Video Color Adjustment"));
+	ADD(video_range,  qApp->translate("MrlState", "Video Color Range"));
 
-	ADD(audio_volume, tr("Audio Volume"));
-	ADD(audio_amplifier, tr("Audio Amp"));
-	ADD(audio_sync, tr("Audio Sync"));
-	ADD(audio_track, tr("Audio Track"));
-	ADD(audio_muted, tr("Audio Mute"));
-	ADD(audio_volume_normalizer, tr("Audio Volume Normalizer"));
-	ADD(audio_tempo_scaler, tr("Audio Tempo Scaler"));
-	ADD(audio_channel_layout, tr("Audio Channel Layout"));
+	ADD(audio_volume,  qApp->translate("MrlState", "Audio Volume"));
+	ADD(audio_amplifier,  qApp->translate("MrlState", "Audio Amp"));
+	ADD(audio_sync,  qApp->translate("MrlState", "Audio Sync"));
+	ADD(audio_track,  qApp->translate("MrlState", "Audio Track"));
+	ADD(audio_muted,  qApp->translate("MrlState", "Audio Mute"));
+	ADD(audio_volume_normalizer,  qApp->translate("MrlState", "Audio Volume Normalizer"));
+	ADD(audio_tempo_scaler,  qApp->translate("MrlState", "Audio Tempo Scaler"));
+	ADD(audio_channel_layout,  qApp->translate("MrlState", "Audio Channel Layout"));
 
-	ADD(sub_track, tr("Subtitle Track"));
-	ADD(sub_alignment, tr("Subtitle Alignment"));
-	ADD(sub_display, tr("Subtitle Display"));
-	ADD(sub_position, tr("Subtitle Position"));
-	ADD(sub_sync, tr("Subtitle Sync"));
+	ADD(sub_track,  qApp->translate("MrlState", "Subtitle Track"));
+	ADD(sub_alignment,  qApp->translate("MrlState", "Subtitle Alignment"));
+	ADD(sub_display,  qApp->translate("MrlState", "Subtitle Display"));
+	ADD(sub_position,  qApp->translate("MrlState", "Subtitle Position"));
+	ADD(sub_sync,  qApp->translate("MrlState", "Subtitle Sync"));
 
 	return properties;
 }

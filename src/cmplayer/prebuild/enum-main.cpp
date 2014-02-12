@@ -175,7 +175,6 @@ Q_DECLARE_METATYPE(__ENUM_NAME)
 
 template<>
 class EnumInfo<__ENUM_NAME> {
-	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef __ENUM_NAME Enum;
 public:
     typedef __ENUM_NAME type;
@@ -184,7 +183,7 @@ public:
 	static constexpr int size() { return __ENUM_COUNT; }
     static constexpr const char *typeName() { return "__ENUM_NAME"; }
     static constexpr const char *typeKey() { return "__ENUM_KEY"; }
-    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "__ENUM_DESC")); }
+    static QString typeDescription() { return qApp->translate("EnumInfo", "__ENUM_DESC"); }
     static const Item *item(Enum e) {
         __ENUM_FUNC_ITEM
     }
@@ -273,13 +272,13 @@ QVariant _EnumVariantFromSql(const QVariant &name, const QVariant &def) {
         for (const EnumType::Item &item : type.items) {
 			value += "\t" + item.name + " = (int)" + item.value;
             infos += "\t{" + type.name + "::" + item.name + ", " + '"' + item.name + "\", \"" + item.key + "\", " + item.data + "}";
-			cases += "\t\tcase Enum::" + item.name + ": return tr(QT_TRANSLATE_NOOP(\"EnumInfo\", \"" + item.desc + "\"));\n";
+			cases += "\t\tcase Enum::" + item.name + ": return qApp->translate(\"EnumInfo\", \"" + item.desc + "\");\n";
             if (&item != &type.items.back()) {
 				value += ",\n";
 				infos += ",\n";
 			}
 		}
-		cases += "\t\tdefault: return tr(\"\");";
+		cases += "\t\tdefault: return \"\";";
 		replace(htmpl, "__ENUM_VALUES", value);
         replace(htmpl, "__ENUM_COUNT", toString(type.items.size()));
 		replace(htmpl, "__ENUM_FUNC_DESC_CASES", cases);
