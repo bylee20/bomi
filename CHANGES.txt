@@ -1,3 +1,16 @@
+0.8.11
+
+  * Fix: audio output channel layout didn't work
+  * Fix: hide scrollbar in history/playlist when no scrolling is needed
+  * Fix: keep paused state when applying preferences(#40)
+  * Fix: open file dialog at the folder where last open local media file(#40)
+  * Fix: store enum values for MRL state as string rather than integer
+  * Fix: useless value for playback percentage till start playback
+  * Fix: recognized directory as MRL(#40)
+  * Fix: workaround to suppor non-8bit encoded sources for NVIDIA driver
+  * Fix: FBO format woll fall back to GL_RGBA8 when GL_RGBA16 is not available
+  * Fix: workaround for NVIDIA driver issue which disables hardware rasterization
+
 0.8.10
 
   * New: keyboard navigation in history and playlist
