@@ -27,6 +27,7 @@ public:
 	void setMuted(bool muted);
 	void setClippingMethod(ClippingMethod method);
 	void setChannelLayoutMap(const ChannelLayoutMap &map);
+	void setOutputChannelLayout(ChannelLayout layout);
 	mp_chmap *chmap() const;
 signals:
 	void started();

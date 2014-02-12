@@ -2,6 +2,7 @@
 #include "hwacc.hpp"
 #include "videoformat.hpp"
 #include "playengine.hpp"
+#include "channelmanipulation.hpp"
 extern "C" {
 #include <player/core.h>
 #include <audio/filter/af.h>
@@ -51,10 +52,12 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 	const auto out = ao->format;
 	const auto in = da->decoded.format;
 
+	auto channel = [] (const mp_chmap &chmap) { return ChannelLayoutInfo::description(ChannelLayoutMap::toLayout(chmap)); };
+
 	m_input->m_type = format(da->header->format);
 	m_input->m_bps = da->i_bps*8;
 	m_input->m_samplerate = da->decoded.rate/1000.0; // kHz
-	m_input->m_channels = QString::fromLatin1(mp_chmap_to_str(&da->decoded.channels));
+	m_input->m_channels = channel(da->decoded.channels);
 	m_input->m_bits = af_fmt2bits(da->decoded.format);
 
 	m_output->m_type = _L(af_fmt_to_str(out));
@@ -62,7 +65,7 @@ void AvInfoObject::setAudio(const PlayEngine *engine) {
 		m_output->m_type = _L(af_fmt_to_str(in)) % _U("→") % m_output->m_type;
 	m_output->m_bps = ao->bps*8;
 	m_output->m_samplerate = ao->samplerate/1000.0;
-	m_output->m_channels = QString::fromLatin1(mp_chmap_to_str(&ao->channels));
+	m_output->m_channels = channel(ao->channels);
 	m_output->m_bits = af_fmt2bits(ao->format);
 }
 

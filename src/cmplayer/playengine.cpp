@@ -494,8 +494,8 @@ void PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) {
 }
 
 void PlayEngine::setChannelLayout(ChannelLayout layout) {
-	(_Change(d->layout, layout));
-//		d->enqueue(MpSetAudioLayout, "", (int)d->layout);
+	if (_Change(d->layout, layout))
+		reload();
 }
 
 typedef QPair<AudioDriver, const char*> AudioDriverName;
@@ -868,6 +868,7 @@ void PlayEngine::onMpvStageChanged(int stage) {
 		d->setmp("sub-delay", (float)(d->subDelay/1000.0f));
 		d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
 		d->video->setDeintEnabled(d->deint != DeintMode::None);
+		d->audio->setOutputChannelLayout(d->layout);
 		break;
 	} case MP_STAGE_OPEN_STREAM:
 		break;
@@ -1006,7 +1007,7 @@ void PlayEngine::exec() {
 		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
 		<< "--softvol=yes" << "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet"
 		<< "--no-consolecontrols" << "--no-mouse-movements" << "--subcp=utf8" << "--ao=null,"
-		<< "--ad-lavc-downmix=no";
+		<< "--ad-lavc-downmix=no" << "--channels=3";
 
 	QVector<QByteArray> args_byte(args.size());
 	QVector<char*> args_raw(args.size());

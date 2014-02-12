@@ -35,7 +35,8 @@ extern "C" {
 #undef min
 
 enum EventType {
-	UserType = QEvent::User, TimeRangeChange, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished, MrlChanged, VideoFormatChanged, UpdateChapterList,
+	UserType = QEvent::User, TimeRangeChange, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished,
+	MrlChanged, VideoFormatChanged, UpdateChapterList,
 	HwAccChanged, UpdateDVDInfo, UpdateCache, UpdateCurrentChapter, UpdateCurrentStream, UpdateAudioFormat
 };
 

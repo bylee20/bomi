@@ -114,8 +114,9 @@ int AudioController::reinitialize(mp_audio *in) {
 		d->fmt_conv = AF_FORMAT_UNKNOWN;
 	} else
 		mp_audio_set_format(out, in->format);
-	if (d->layout == ChannelLayout::Default)
-		d->chmap = in->channels;
+	d->chmap = in->channels;
+	if (d->layout != ChannelLayout::Default && !mp_chmap_from_str(&d->chmap, bstr0(ChannelLayoutInfo::data(d->layout).constData())))
+		qDebug() << "Cannot find matched channel layout for" << ChannelLayoutInfo::description(d->layout);
 	mp_audio_set_channels(out, &d->chmap);
 	if (d->outrate != 0)
 		out->rate = d->outrate;
@@ -187,8 +188,7 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 		d->dirty |= Resample;
 		return AF_OK;
 	case AF_CONTROL_SET_CHANNELS:
-		d->chmap = *(mp_chmap*)arg;
-		d->layout = ChannelLayoutMap::toLayout(d->chmap);
+		d->layout = ChannelLayoutMap::toLayout(*(mp_chmap*)arg);
 		return d->layout != ChannelLayout::Default;
 	case AF_CONTROL_RESET:
 		if (d->swr)
@@ -276,6 +276,11 @@ bool AudioController::isNormalizerActivated() const {
 
 void AudioController::setChannelLayoutMap(const ChannelLayoutMap &map) {
 	d->map = map;
+	d->dirty |= ChMap;
+}
+
+void AudioController::setOutputChannelLayout(ChannelLayout layout) {
+	d->layout = layout;
 	d->dirty |= ChMap;
 }
 
