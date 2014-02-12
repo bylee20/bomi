@@ -134,6 +134,7 @@ public:
 };
 
 class OpenGLCompat {
+
 public:
 	static void initialize(QOpenGLContext *ctx);
 	static OpenGLTextureFormat textureFormat(GLenum format, int bpc = 1);
@@ -166,6 +167,7 @@ public:
 	static void check();
 	static const char *errorString(GLenum error);
 	static QOpenGLDebugLogger *logger();
+	static GLenum framebufferObjectTextureFormat();
 private:
 	OpenGLCompat();
 	static OpenGLCompat c;

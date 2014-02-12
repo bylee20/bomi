@@ -1,9 +1,13 @@
-#include "openglcompat.hpp"
+﻿#include "openglcompat.hpp"
 #include "videocolor.hpp"
+#include "app.hpp"
 #include <cmath>
 extern "C" {
 #include <video/out/dither.h>
 }
+#include "log.hpp"
+
+DEC_LOG_FUNCS(OpenGL)
 
 OpenGLCompat OpenGLCompat::c;
 bool OpenGLCompat::HasRG = false;
@@ -15,50 +19,11 @@ bool OpenGLCompat::HasDebug = false;
 struct OpenGLCompat::Data {
 	bool init = false;
 	QOpenGLDebugLogger *logger = nullptr;
-	QOpenGLVersionProfile profile;
 	int major = 0, minor = 0;
 	QMap<GLenum, OpenGLTextureFormat> formats[2];
 	QVector<GLfloat> fruit;
-	void fill(QOpenGLContext *ctx) {
-		if (init)
-			return;
-		init = true;
-		profile = QOpenGLVersionProfile{ctx->format()};
-		const auto version = profile.version();
-		major = version.first;
-		minor = version.second;
+	GLenum fboFormat = GL_RGBA8;
 
-		formats[0][GL_RED] = {GL_R8, GL_RED, GL_UNSIGNED_BYTE};
-		formats[0][GL_RG] = {GL_RG8, GL_RG, GL_UNSIGNED_BYTE};
-		formats[0][GL_LUMINANCE] = {GL_LUMINANCE8, GL_LUMINANCE, GL_UNSIGNED_BYTE};
-		formats[0][GL_LUMINANCE_ALPHA] = {GL_LUMINANCE8_ALPHA8, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE};
-		formats[0][GL_RGB] = {GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE};
-		formats[0][GL_BGR] = {GL_RGB8, GL_BGR, GL_UNSIGNED_BYTE};
-		formats[0][GL_BGRA] = {GL_RGBA8, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV};
-		formats[0][GL_RGBA] = {GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV};
-
-		formats[1][GL_RED] = {GL_R16, GL_RED, GL_UNSIGNED_SHORT};
-		formats[1][GL_RG] = {GL_RG16, GL_RG, GL_UNSIGNED_SHORT};
-		formats[1][GL_LUMINANCE] = {GL_LUMINANCE16, GL_LUMINANCE, GL_UNSIGNED_SHORT};
-		formats[1][GL_LUMINANCE_ALPHA] = {GL_LUMINANCE16_ALPHA16, GL_LUMINANCE_ALPHA, GL_UNSIGNED_SHORT};
-		formats[1][GL_RGB] = {GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT};
-		formats[1][GL_BGR] = {GL_RGB16, GL_BGR, GL_UNSIGNED_SHORT};
-		formats[1][GL_BGRA] = {GL_RGBA16, GL_BGRA, GL_UNSIGNED_SHORT};
-		formats[1][GL_RGBA] = {GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT};
-		for (auto &format : formats) {
-			format[1] = HasRG ? format[GL_RED] : format[GL_LUMINANCE];
-			format[2] = HasRG ? format[GL_RG]  : format[GL_LUMINANCE_ALPHA];
-			format[3] = format[GL_BGR];
-			format[4] = format[GL_BGRA];
-		}
-		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxTexSize);
-		logError("OpenGLCompat::Data::fill()");
-		if (HasDebug && ctx->format().testOption(QSurfaceFormat::DebugContext)) {
-			logger = new QOpenGLDebugLogger;
-			const bool ok = logger->initialize();
-			Q_ASSERT(ok);
-		}
-	}
 };
 
 OpenGLCompat::OpenGLCompat()
@@ -92,20 +57,96 @@ const char *OpenGLCompat::errorString(GLenum error) {
 	return strings.value(error, "");
 }
 
+GLenum OpenGLCompat::framebufferObjectTextureFormat() {
+	return c.d->fboFormat;
+}
+
 void OpenGLCompat::check() {
-	auto ctx = QOpenGLContext::currentContext();
-	Q_ASSERT(ctx != nullptr);
-	auto version = QOpenGLVersionProfile(ctx->format()).version();
-	auto major = version.first;
-	HasRG = major >= 3 || ctx->hasExtension("GL_ARB_texture_rg");
-	HasFloat = major >= 3 || ctx->hasExtension("GL_ARB_texture_float");
+	QOpenGLContext gl;
+	if (!gl.create())
+		_Fatal("Cannot create OpenGL context!");
+	QOffscreenSurface off;
+	off.setFormat(gl.format());
+	off.create();
+	if (!gl.makeCurrent(&off))
+		_Fatal("Cannot make OpenGL context current!");
+
+	auto d = c.d;
+
+	_Info("Check OpenGL stuffs.");
+	const auto version = QOpenGLVersionProfile(gl.format()).version();
+	d->major = version.first;
+	d->minor = version.second;
+	_Info("Version: %%.%%", d->major, d->minor);
+	if (version.first*10+version.second < 21)
+		_Fatal("OpenGL version is too low. CMPlayer requires OpenGL 2.1 or higher.");
+
+	QStringList extensions;
+	if ((HasRG = d->major >= 3 || gl.hasExtension("GL_ARB_texture_rg")))
+		extensions.append("GL_ARB_texture_rg");
+	if ((HasFloat = d->major >= 3 || gl.hasExtension("GL_ARB_texture_float")))
+		extensions.append("GL_ARB_texture_float");
+	if ((HasDebug = gl.hasExtension("GL_KHR_debug")))
+		extensions.append("GL_KHR_debug");
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxTexSize);
+
+	d->formats[0][GL_RED] = {GL_R8, GL_RED, GL_UNSIGNED_BYTE};
+	d->formats[0][GL_RG] = {GL_RG8, GL_RG, GL_UNSIGNED_BYTE};
+	d->formats[0][GL_LUMINANCE] = {GL_LUMINANCE8, GL_LUMINANCE, GL_UNSIGNED_BYTE};
+	d->formats[0][GL_LUMINANCE_ALPHA] = {GL_LUMINANCE8_ALPHA8, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE};
+	d->formats[0][GL_RGB] = {GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE};
+	d->formats[0][GL_BGR] = {GL_RGB8, GL_BGR, GL_UNSIGNED_BYTE};
+	d->formats[0][GL_BGRA] = {GL_RGBA8, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV};
+	d->formats[0][GL_RGBA] = {GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV};
+
+	d->formats[1][GL_RED] = {GL_R16, GL_RED, GL_UNSIGNED_SHORT};
+	d->formats[1][GL_RG] = {GL_RG16, GL_RG, GL_UNSIGNED_SHORT};
+	d->formats[1][GL_LUMINANCE] = {GL_LUMINANCE16, GL_LUMINANCE, GL_UNSIGNED_SHORT};
+	d->formats[1][GL_LUMINANCE_ALPHA] = {GL_LUMINANCE16_ALPHA16, GL_LUMINANCE_ALPHA, GL_UNSIGNED_SHORT};
+	d->formats[1][GL_RGB] = {GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT};
+	d->formats[1][GL_BGR] = {GL_RGB16, GL_BGR, GL_UNSIGNED_SHORT};
+	d->formats[1][GL_BGRA] = {GL_RGBA16, GL_BGRA, GL_UNSIGNED_SHORT};
+	d->formats[1][GL_RGBA] = {GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT};
+	for (auto &format : d->formats) {
+		format[1] = HasRG ? format[GL_RED] : format[GL_LUMINANCE];
+		format[2] = HasRG ? format[GL_RG]  : format[GL_LUMINANCE_ALPHA];
+		format[3] = format[GL_BGR];
+		format[4] = format[GL_BGRA];
+	}
+
 	HasFbo = QOpenGLFramebufferObject::hasOpenGLFramebufferObjects();
-	if (qgetenv("CMPLAYER_GL_DEBUG").toInt())
-		HasDebug = ctx->hasExtension("GL_KHR_debug");
+	if (!HasFbo)
+		_Fatal("FBO is not available. FBO support is essential.");
+	auto fbo = new OpenGLFramebufferObject(QSize(16, 16), textureFormat(GL_BGRA, 2));
+	if (fbo->isComplete()) {
+		d->fboFormat = GL_RGBA16;
+		_Info("FBO texture format: GL_RGBA16");
+	} else {
+		if (!_Renew(fbo, QSize(16, 16), textureFormat(GL_BGRA, 1))->isComplete())
+			_Fatal("No available FBO texture format. One of GL_BGRA8 and GL_BGRA16 must be supported at least.");
+		else
+			_Info("FBO texture format: GL_RGBA8");
+	}
+	_Delete(fbo);
+	if (!extensions.isEmpty())
+		_Info("Extensions: " % extensions.join(", "));
 }
 
 void OpenGLCompat::initialize(QOpenGLContext *ctx) {
-	c.d->fill(ctx);
+	auto d = c.d;
+	if (d->init)
+		return;
+	d->init = true;
+	if (cApp.isOpenGLDebugLoggerRequested()) {
+		if (HasDebug && ctx->format().testOption(QSurfaceFormat::DebugContext)) {
+			d->logger = new QOpenGLDebugLogger;
+			if (!d->logger->initialize()) {
+				logError("OpenGLCompat::initialize()");
+				delete d->logger;
+			}
+		} else
+			_Error("OpenGL debug logger was requested but it is not supported.");
+	}
 }
 
 OpenGLTextureFormat OpenGLCompat::textureFormat(GLenum format, int bpc) {

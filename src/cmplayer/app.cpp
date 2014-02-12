@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "log.hpp"
 #include "rootmenu.hpp"
 #include "playengine.hpp"
 #include "mainwindow.hpp"
@@ -14,66 +15,17 @@
 #define APP_GROUP _L("application")
 
 enum class LineCmd {
-	Unknown,
-	WakeUp,
+	Wake,
 	Open,
 	Action,
-	Count
+	LogLevel,
+	OpenGLDebug
 };
-
-struct CmdInfo {
-	CmdInfo(LineCmd cmd, const char *name, bool hasArg)
-	: cmd(cmd), name(name), hasArg(hasArg) {}
-	CmdInfo() {}
-	LineCmd cmd = LineCmd::Unknown;
-	const char *name = ""; // never nullptr
-	bool hasArg = false;
-};
-
-static CmdInfo cmds[] = {
-	{LineCmd::WakeUp, "wake-up", false},
-	{LineCmd::Open, "open", true},
-	{LineCmd::Action, "action", true}
-};
-
-struct Argument {
-	LineCmd cmd = LineCmd::Unknown;
-	QString value;
-};
-
-typedef QList<Argument> Arguments;
-
-static Arguments parse(const QStringList &cmds) {
-	auto fromCommand = [](const QStringList &cmds, int &cmdidx) {
-		const QString cmd = cmds[cmdidx];
-		if (!cmd.startsWith(_L("--")))
-			return Argument();
-		auto ref = cmd.midRef(2);
-		for (const CmdInfo &info : ::cmds) {
-			if (ref != _L(info.name))
-				continue;
-			Argument arg;
-			arg.cmd = info.cmd;
-			if (info.hasArg && ++cmdidx < cmds.size())
-				arg.value = cmds[cmdidx];
-			return arg;
-		}
-		return Argument();
-	};
-	Arguments args;
-	for (int i=0; i<cmds.size(); ++i) {
-		auto arg = fromCommand(cmds, i);
-		if (arg.cmd == LineCmd::Unknown)
-			qDebug() << "Not valid option:" << cmds[i];
-		else
-			args << arg;
-	}
-	return args;
-}
 
 struct App::Data {
 	Data(App *p): p(p) {}
 	App *p = nullptr;
+	bool gldebug = false;
 	QStringList styleNames;
 #ifdef Q_OS_MAC
 	QMenuBar *mb = new QMenuBar;
@@ -86,46 +38,45 @@ struct App::Data {
 #elif defined(Q_OS_LINUX)
 	AppX11 helper;
 #endif
+	QCommandLineOption dummy{"__dummy__"};
+	QCommandLineParser cmdParser, msgParser;
+	QMap<LineCmd, QCommandLineOption> options;
 	LocalConnection connection = {"net.xylosper.CMPlayer", nullptr};
-	Arguments args() const {
-		auto args = p->arguments();
-		args.pop_front();
-		return parse(args);
+	void addOption(LineCmd cmd, const char *name, const QString desc, const char *valueName = "", const QString &def = QString()) {
+		options.insert(cmd, QCommandLineOption(_L(name), desc, _L(valueName), def));
 	}
-	static QPair<QString, QString> splitEq(const QString &cmd) {
-		QPair<QString,QString> pair;
-		const int eq = cmd.indexOf('=');
-		if (eq < 0)
-			pair.first = cmd;
-		else {
-			pair.first = cmd.left(eq);
-			pair.second = cmd.mid(eq+1);
-		}
-		return pair;
+	void addOption(LineCmd cmd, const QStringList &names, const QString desc, const char *valueName = "", const QString &def = QString()) {
+		options.insert(cmd, QCommandLineOption(names, desc, _L(valueName), def));
 	}
-	void execute(const Arguments &args) {
-		for (const Argument &arg : args) {
-			switch (arg.cmd) {
-			case LineCmd::WakeUp:
+	void execute(const QCommandLineParser *parser) {
+		auto isSet = [parser, this] (LineCmd cmd) { return parser->isSet(options.value(cmd, dummy)); };
+		auto value = [parser, this] (LineCmd cmd) { return parser->value(options.value(cmd, dummy)); };
+		auto values = [parser, this] (LineCmd cmd) { return parser->values(options.value(cmd, dummy)); };
+		if (isSet(LineCmd::LogLevel))
+			_Change(Log::Helper::m_logLevel, Log::logLevelFromOption(value(LineCmd::LogLevel)));
+		if (isSet(LineCmd::OpenGLDebug))
+			gldebug = true;
+		if (main) {
+			if (isSet(LineCmd::Wake)) {
 				main->setVisible(true);
 				main->raise();
 				main->activateWindow();
-				break;
-			case LineCmd::Open: {
-				const Mrl mrl(arg.value);
-				if (!mrl.isEmpty() && main)
-					main->openFromFileManager(mrl);
-				break;
-			} case LineCmd::Action:
-				if (main) {
-					const auto pair = splitEq(arg.value);
-					RootMenu::execute(pair.first, pair.second);
-				}
-				break;
-			default:
-				break;
 			}
+			const Mrl mrl(value(LineCmd::Open));
+			if (!mrl.isEmpty())
+				main->openFromFileManager(mrl);
+			const auto args = values(LineCmd::Action);
+			if (!args.isEmpty())
+				RootMenu::execute(args[0], args.value(1));
 		}
+	}
+	QCommandLineParser *getCommandParser(QCommandLineParser *parser) const {
+		for (auto it = options.begin(); it != options.end(); ++it)
+			parser->addOption(*it);
+		parser->addHelpOption();
+		parser->addVersionOption();
+		parser->addPositionalArgument("mrl", tr("The file path or url to open."), "mrl");
+		return parser;
 	}
 };
 
@@ -143,7 +94,18 @@ App::App(int &argc, char **argv)
 #endif
 	setOrganizationName("xylosper");
 	setOrganizationDomain("xylosper.net");
-	setApplicationName("CMPlayer");
+	setApplicationName(Info::name());
+	setApplicationVersion(Info::version());
+
+	d->addOption(LineCmd::Open, "open", tr("Open given mrl for file path or url."), "mrl");
+	d->addOption(LineCmd::Wake, QStringList() << "wake" << "wake-up", tr("Bring the application window in front."));
+	d->addOption(LineCmd::Action, "action", tr("Exectute <id> action or open <id> menu."), "id");
+	d->addOption(LineCmd::LogLevel, "log-level", tr("Maximum verbosity for log from one of next levels:") % "\n    " % Log::logLevelsForOption().join(", "));
+	d->addOption(LineCmd::OpenGLDebug, "opengl-debug", tr("Turn on OpenGL debug logger."));
+	d->getCommandParser(&d->cmdParser)->process(arguments());
+	d->getCommandParser(&d->msgParser);
+	d->execute(&d->cmdParser);
+
 	setQuitOnLastWindowClosed(false);
 #ifndef Q_OS_MAC
 	setWindowIcon(defaultIcon());
@@ -173,7 +135,7 @@ App::App(int &argc, char **argv)
 	d->styleNames = makeStyleNameList();
 	makeStyle();
 	connect(&d->connection, &LocalConnection::messageReceived, [this] (const QString &message) {
-		auto args = message.split("[:sep:]"); args.pop_front(); d->execute(parse(args));
+		d->msgParser.parse(message.split("[:sep:]")); d->execute(&d->msgParser);
 	});
 }
 
@@ -181,6 +143,10 @@ App::~App() {
 	delete d->main;
 	delete d->mb;
 	delete d;
+}
+
+bool App::isOpenGLDebugLoggerRequested() const {
+	return d->gldebug;
 }
 
 void App::setMainWindow(MainWindow *mw) {
@@ -255,7 +221,7 @@ QMenuBar *App::globalMenuBar() const {
 #endif
 
 void App::runCommands() {
-	d->execute(d->args());
+	d->execute(&d->cmdParser);
 }
 
 bool App::sendMessage(const QString &message, int timeout) {

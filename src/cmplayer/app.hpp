@@ -28,6 +28,7 @@ public:
 	void setUnique(bool unique);
 	bool shutdown();
 	void runCommands();
+	bool isOpenGLDebugLoggerRequested() const;
 public slots:
 	bool sendMessage(const QString &message, int timeout = 5000);
 signals:
@@ -36,7 +37,6 @@ private:
 	static constexpr int ReopenEvent = QEvent::User + 1;
 	App(const App&) = delete;
 	App &operator = (const App&) = delete;
-	static void messageHandler(QtMsgType type, const char *msg);
 	bool event(QEvent *event);
 	struct Data;
 	Data *d = nullptr;

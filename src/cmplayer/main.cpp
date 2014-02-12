@@ -5,6 +5,7 @@
 #include "videoformat.hpp"
 #include "hwacc.hpp"
 #include "openglcompat.hpp"
+#include "log.hpp"
 
 int main(int argc, char **argv) {
 	qputenv("PX_MODULE_PATH", "/this-is-dummy-path-to-disable-libproxy");
@@ -16,21 +17,10 @@ int main(int argc, char **argv) {
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
 	PlayEngine::registerObjects();
-	qDebug() << "Create App instance";
 	App app(argc, argv);
-	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]"))) {
-		qDebug() << "Another instance is already running. Exit this.";
-		return 0;
-	}
-	{
-		QOpenGLContext gl;
-		gl.create();
-		QOffscreenSurface off;
-		off.setFormat(gl.format());
-		off.create();
-		gl.makeCurrent(&off);
-		OpenGLCompat::check();
-	}
+	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]")))
+		Log::_Fatal("Another instance of CMPlayer is already running. Exit this...");
+	OpenGLCompat::check();
 	qDebug() << "Create MainWindow instance";
 	HwAcc::initialize();
 	MainWindow *mw = new MainWindow;
