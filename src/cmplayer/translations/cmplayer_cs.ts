@@ -278,116 +278,303 @@ Right click: %2</source>
 <context>
     <name>EnumInfo</name>
     <message>
+        <location filename="../enums.hpp" line="1008"/>
         <source>Bilinear</source>
-        <translation type="vanished">Dvojně lineární (bilineární)</translation>
+        <translation>Dvojně lineární (bilineární)</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="285"/>
         <source>Color Range</source>
-        <translation type="vanished">Rozsah barev</translation>
+        <translation>Rozsah barev</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="295"/>
+        <location filename="../enums.hpp" line="765"/>
         <source>Auto</source>
-        <translation type="vanished">Automaticky</translation>
+        <translation>Automaticky</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2163"/>
+        <location filename="../enums.hpp" line="2240"/>
         <source>Reset</source>
-        <translation type="vanished">Nastavit znovu</translation>
+        <translation>Nastavit znovu</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="448"/>
         <source>Subtitle Display</source>
-        <translation type="vanished">Zobrazení titulků</translation>
+        <translation>Zobrazení titulků</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="184"/>
+        <source>Channel Layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="194"/>
+        <source>Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="195"/>
+        <source>Mono</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="196"/>
+        <source>Stereo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="197"/>
+        <source>2.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="198"/>
+        <source>3.0ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="199"/>
+        <source>3.0ch(Back)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="200"/>
+        <source>3.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="201"/>
+        <source>4.0ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="202"/>
+        <source>4.0ch(Side)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="203"/>
+        <source>4.0ch(Diamond)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="204"/>
+        <source>4.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="205"/>
+        <source>4.1ch(Diamond)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="206"/>
+        <source>5.0ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="207"/>
+        <source>5.0ch(Side)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="208"/>
+        <source>5.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="209"/>
+        <source>5.1ch(Side)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="210"/>
+        <source>6.0ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="211"/>
+        <source>6.0ch(Front)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="212"/>
+        <source>6.0ch(Hexagonal)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="213"/>
+        <source>6.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="214"/>
+        <source>6.1ch(Back)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="215"/>
+        <source>6.1ch(Front)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="216"/>
+        <source>7.0ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="217"/>
+        <source>7.0ch(Front)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="218"/>
+        <source>7.1ch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="219"/>
+        <source>7.1ch(Wide)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="220"/>
+        <source>7.1ch(Side)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="296"/>
         <source>Limited Range</source>
-        <translation type="vanished">Omezený rozsah</translation>
+        <translation>Omezený rozsah</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="297"/>
         <source>Full Range</source>
-        <translation type="vanished">Plný rozsah</translation>
+        <translation>Plný rozsah</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="298"/>
         <source>Remap Range</source>
-        <translation type="vanished">Přemapovat rozsah</translation>
+        <translation>Přemapovat rozsah</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="299"/>
         <source>Extended Range</source>
-        <translation type="vanished">Rozšířený rozsah</translation>
+        <translation>Rozšířený rozsah</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="458"/>
         <source>Display on Letterbox</source>
-        <translation type="vanished">Zobrazení ve formátu na šířku</translation>
+        <translation>Zobrazení ve formátu na šířku</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="459"/>
         <source>Display in Video</source>
-        <translation type="vanished">Zobrazit v obrazu</translation>
+        <translation>Zobrazit v obrazu</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="526"/>
         <source>Size</source>
-        <translation type="vanished">Velikost</translation>
+        <translation>Velikost</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="536"/>
         <source>Same as Source</source>
-        <translation type="vanished">Stejné jako zdroj</translation>
+        <translation>Stejné jako zdroj</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="537"/>
         <source>Same as Window</source>
-        <translation type="vanished">Stejné jako okno</translation>
+        <translation>Stejné jako okno</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="538"/>
         <source>4:3 (TV)</source>
-        <translation type="vanished">4:3 (TV)</translation>
+        <translation>4:3 (TV)</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="539"/>
         <source>16:10 (Wide Monitor)</source>
-        <translation type="vanished">16:10 (široká obrazovka)</translation>
+        <translation>16:10 (široká obrazovka)</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="540"/>
         <source>16:9 (HDTV)</source>
-        <translation type="vanished">16:9 (HDTV)</translation>
+        <translation>16:9 (HDTV)</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="541"/>
         <source>1.85:1 (Wide Vision)</source>
-        <translation type="vanished">1.85:1 (široké vidění)</translation>
+        <translation>1.85:1 (široké vidění)</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="542"/>
         <source>2.35:1 (CinemaScope)</source>
-        <translation type="vanished">2.35:1 (CinemaScope)</translation>
+        <translation>2.35:1 (CinemaScope)</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="605"/>
         <source>Dithering</source>
-        <translation type="vanished">Vložení šumu</translation>
+        <translation>Vložení šumu</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="615"/>
+        <location filename="../enums.hpp" line="764"/>
+        <location filename="../enums.hpp" line="1251"/>
         <source>Off</source>
-        <translation type="vanished">Vypnuto</translation>
+        <translation>Vypnuto</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="616"/>
         <source>Random Dithering</source>
-        <translation type="vanished">Náhodné vložení šumu</translation>
+        <translation>Náhodné vložení šumu</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="617"/>
         <source>Ordered Dithering</source>
-        <translation type="vanished">Nařízené vložení šumu</translation>
+        <translation>Nařízené vložení šumu</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="754"/>
         <source>Deinterlacing</source>
-        <translation type="vanished">Odstranění prokládání</translation>
+        <translation>Odstranění prokládání</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1009"/>
         <source>B-Spline</source>
-        <translation type="vanished">B křivka</translation>
+        <translation>B křivka</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1010"/>
+        <source>Catmull-Rom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="1011"/>
+        <source>Mitchell-Netravali</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="1012"/>
         <source>2-Lobed Spline</source>
-        <translation type="vanished">2-Lobed Spline</translation>
+        <translation>2-Lobed Spline</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1014"/>
         <source>4-Lobed Spline</source>
-        <translation type="obsolete">3-Lobed Spline {4-?}</translation>
+        <translation type="unfinished">3-Lobed Spline {4-?}</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1015"/>
+        <source>Fast Lanczos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../enums.hpp" line="1016"/>
         <source>2-Lobed Lanczos</source>
-        <translation type="vanished">2-Lobed Lanczos</translation>
+        <translation>2-Lobed Lanczos</translation>
     </message>
     <message>
         <source>3-Lobed Spline (Approx.)</source>
@@ -398,188 +585,234 @@ Right click: %2</source>
         <translation type="obsolete">3-Lobed Lanczos (Approx.)</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1013"/>
         <source>3-Lobed Spline</source>
-        <translation type="vanished">3-Lobed Spline</translation>
+        <translation>3-Lobed Spline</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1017"/>
         <source>3-Lobed Lanczos</source>
-        <translation type="vanished">3-Lobed Lanczos</translation>
+        <translation>3-Lobed Lanczos</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1018"/>
         <source>4-Lobed Lanczos</source>
-        <translation type="obsolete">3-Lobed Lanczos {4-?}</translation>
+        <translation type="unfinished">3-Lobed Lanczos {4-?}</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1176"/>
         <source>Auto-clipping</source>
-        <translation type="vanished">Automatické přebuzení</translation>
+        <translation>Automatické přebuzení</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1177"/>
         <source>Soft-clipping</source>
-        <translation type="vanished">Jemné přebuzení</translation>
+        <translation>Jemné přebuzení</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1178"/>
         <source>Hard-clipping</source>
-        <translation type="vanished">Hrubé přebuzení</translation>
+        <translation>Hrubé přebuzení</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1241"/>
         <source>Stays on Top</source>
-        <translation type="vanished">Zůstává nahoře</translation>
+        <translation>Zůstává nahoře</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1252"/>
         <source>Playing</source>
-        <translation type="vanished">Přehrávání</translation>
+        <translation>Přehrávání</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1253"/>
         <source>Always</source>
-        <translation type="vanished">Vždy</translation>
+        <translation>Vždy</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1400"/>
         <source>Add files which have similar names</source>
-        <translation type="vanished">Přidat soubory s podobným názvem</translation>
+        <translation>Přidat soubory s podobným názvem</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1401"/>
         <source>Add all files in the same folder</source>
-        <translation type="vanished">Přidat  všechny soubory ve stejné složce</translation>
+        <translation>Přidat  všechny soubory ve stejné složce</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1474"/>
         <source>Append the open media to the playlist</source>
-        <translation type="vanished">Připojit otevřený soubor do seznamu skladeb</translation>
+        <translation>Připojit otevřený soubor do seznamu skladeb</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1475"/>
         <source>Clear the playlist and append the open media to the playlist</source>
-        <translation type="vanished">Vyprázdnit seznam skladeb a připojit otevřený soubor do seznamu skladeb</translation>
+        <translation>Vyprázdnit seznam skladeb a připojit otevřený soubor do seznamu skladeb</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1476"/>
         <source>Clear the playlist and generate new playlist</source>
-        <translation type="vanished">Vyprázdnit seznam skladeb a vytvořit nový seznam skladeb</translation>
+        <translation>Vyprázdnit seznam skladeb a vytvořit nový seznam skladeb</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1549"/>
         <source>Subtitles which have the same name as that of playing file</source>
-        <translation type="vanished">Titulky, které mají stejný název, jaký má přehrávaný soubor</translation>
+        <translation>Titulky, které mají stejný název, jaký má přehrávaný soubor</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1550"/>
         <source>Subtitles whose names contain the name of playing file</source>
-        <translation type="vanished">Titulky, jejichž názvy obsahují název přehrávaného souboru</translation>
+        <translation>Titulky, jejichž názvy obsahují název přehrávaného souboru</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1551"/>
         <source>All subtitles in the folder where the playing file is located</source>
-        <translation type="vanished">Všechny titulky ve složce, v níž je umístěn přehrávaný soubor</translation>
+        <translation>Všechny titulky ve složce, v níž je umístěn přehrávaný soubor</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1625"/>
         <source>Subtitle which has the same name as that of playing file</source>
-        <translation type="vanished">Titulek, který mástejný název, jaký má přehrávaný soubor</translation>
+        <translation>Titulek, který mástejný název, jaký má přehrávaný soubor</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1626"/>
         <source>First subtitle from loaded ones</source>
-        <translation type="vanished">První titulek z nahraného</translation>
+        <translation>První titulek z nahraného</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1627"/>
         <source>All loaded subtitles</source>
-        <translation type="vanished">Všechny nahrané titulky</translation>
+        <translation>Všechny nahrané titulky</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1628"/>
         <source>Each language subtitle</source>
-        <translation type="vanished">Titulek každého jazyka</translation>
+        <translation>Titulek každého jazyka</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1701"/>
         <source>Fit to width of video</source>
-        <translation type="vanished">Přizpůsobit šířce obrazu</translation>
+        <translation>Přizpůsobit šířce obrazu</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1702"/>
         <source>Fit to height of video</source>
-        <translation type="vanished">Přizpůsobit výšce obrazu</translation>
+        <translation>Přizpůsobit výšce obrazu</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1703"/>
         <source>Fit to diagonal of video</source>
-        <translation type="vanished">Přizpůsobit diagonále obrazu</translation>
+        <translation>Přizpůsobit diagonále obrazu</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1777"/>
         <source>Open a file</source>
-        <translation type="vanished">Otevřít soubor</translation>
+        <translation>Otevřít soubor</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1778"/>
         <source>Toggle fullscreen mode</source>
-        <translation type="vanished">Přepnout režim zobrazení na celou obrazovku</translation>
+        <translation>Přepnout režim zobrazení na celou obrazovku</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1779"/>
         <source>Toggle play/pause</source>
-        <translation type="vanished">Přepnout Přehrát/Pozastavit</translation>
+        <translation>Přepnout Přehrát/Pozastavit</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1780"/>
         <source>Toggle mute/unmute</source>
-        <translation type="vanished">Přepnout Ztlumit/Zrušit ztlumení</translation>
+        <translation>Přepnout Ztlumit/Zrušit ztlumení</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1856"/>
         <source>Seek playback for step 1</source>
-        <translation type="vanished">Posunout přehrávání pro krok 1</translation>
+        <translation>Posunout přehrávání pro krok 1</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1857"/>
         <source>Seek playback for step 2</source>
-        <translation type="vanished">Posunout přehrávání pro krok 2</translation>
+        <translation>Posunout přehrávání pro krok 2</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1858"/>
         <source>Seek playback for step 3</source>
-        <translation type="vanished">Posunout přehrávání pro krok 3</translation>
+        <translation>Posunout přehrávání pro krok 3</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1859"/>
         <source>Play previous/next</source>
-        <translation type="vanished">Přehrát předchozí/další</translation>
+        <translation>Přehrát předchozí/další</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1860"/>
         <source>Volumn up/down</source>
-        <translation type="vanished">Hlasitost nahoru/dolů</translation>
+        <translation>Hlasitost nahoru/dolů</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="1861"/>
         <source>Amp. up/down</source>
-        <translation type="vanished">Zesílení nahoru/dolů</translation>
+        <translation>Zesílení nahoru/dolů</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2011"/>
         <source>Top</source>
-        <translation type="vanished">Nahoře</translation>
+        <translation>Nahoře</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2012"/>
         <source>Vertical Center</source>
-        <translation type="vanished">Svislé vystředění</translation>
+        <translation>Svislé vystředění</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2013"/>
         <source>Bottom</source>
-        <translation type="vanished">Dole</translation>
+        <translation>Dole</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2086"/>
         <source>Left</source>
-        <translation type="vanished">Vlevo</translation>
+        <translation>Vlevo</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2087"/>
         <source>Horizontal Center</source>
-        <translation type="vanished">Vodorovné vystředění</translation>
+        <translation>Vodorovné vystředění</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2088"/>
         <source>Right</source>
-        <translation type="vanished">Vpravo</translation>
+        <translation>Vpravo</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2164"/>
         <source>Upward</source>
-        <translation type="vanished">Nahoru</translation>
+        <translation>Nahoru</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2165"/>
         <source>Downward</source>
-        <translation type="vanished">Dolů</translation>
+        <translation>Dolů</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2166"/>
         <source>Leftward</source>
-        <translation type="vanished">Vlevo</translation>
+        <translation>Vlevo</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2167"/>
         <source>Rightward</source>
-        <translation type="vanished">Vpravo</translation>
+        <translation>Vpravo</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2241"/>
         <source>Increase %1</source>
-        <translation type="vanished">Zvýšit %1</translation>
+        <translation>Zvýšit %1</translation>
     </message>
     <message>
+        <location filename="../enums.hpp" line="2242"/>
         <source>Decrease %1</source>
-        <translation type="vanished">Snížit %1</translation>
+        <translation>Snížit %1</translation>
     </message>
 </context>
 <context>
@@ -936,6 +1169,134 @@ Poloha zastavení: %2</translation>
     </message>
 </context>
 <context>
+    <name>MrlState</name>
+    <message>
+        <location filename="../mrlstate.cpp" line="16"/>
+        <source>Playback Speed</source>
+        <translation type="unfinished">Rychlost přehrávání</translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="18"/>
+        <source>Video Interpolator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="19"/>
+        <source>Video Chroma Upscaler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="20"/>
+        <source>Video Aspect Ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="21"/>
+        <source>Video Crop Ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="22"/>
+        <source>Video Deinterlacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="23"/>
+        <source>Video Dithering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="24"/>
+        <source>Video Screen Position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="25"/>
+        <source>Video Vertical Alignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="26"/>
+        <source>Video Horizontal Alignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="27"/>
+        <source>Video Color Adjustment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="28"/>
+        <source>Video Color Range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="30"/>
+        <source>Audio Volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="31"/>
+        <source>Audio Amp</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="32"/>
+        <source>Audio Sync</source>
+        <translation type="unfinished">Seřízení zvuku</translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="33"/>
+        <source>Audio Track</source>
+        <translation type="unfinished">Zvuková stopa</translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="34"/>
+        <source>Audio Mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="35"/>
+        <source>Audio Volume Normalizer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="36"/>
+        <source>Audio Tempo Scaler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="37"/>
+        <source>Audio Channel Layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="39"/>
+        <source>Subtitle Track</source>
+        <translation type="unfinished">Stopa titulku</translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="40"/>
+        <source>Subtitle Alignment</source>
+        <translation type="unfinished">Zarovnání titulku</translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="41"/>
+        <source>Subtitle Display</source>
+        <translation type="unfinished">Zobrazení titulků</translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="42"/>
+        <source>Subtitle Position</source>
+        <translation type="unfinished">Poloha titulku</translation>
+    </message>
+    <message>
+        <location filename="../mrlstate.cpp" line="43"/>
+        <source>Subtitle Sync</source>
+        <translation type="unfinished">Seřízení titulku</translation>
+    </message>
+</context>
+<context>
     <name>OpenDVDDialog</name>
     <message>
         <location filename="../ui/opendvddialog.ui" line="14"/>
@@ -1045,37 +1406,37 @@ Poloha zastavení: %2</translation>
         <translation>Nedostupné</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="888"/>
+        <location filename="../playengine.cpp" line="889"/>
         <source>Title %1</source>
         <translation>Název %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1262"/>
+        <location filename="../playengine.cpp" line="1263"/>
         <source>Playing</source>
         <translation>Přehrává se</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1264"/>
+        <location filename="../playengine.cpp" line="1265"/>
         <source>Stopped</source>
         <translation>Zastaveno</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1266"/>
+        <location filename="../playengine.cpp" line="1267"/>
         <source>Finished</source>
         <translation>Dokončeno</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1268"/>
+        <location filename="../playengine.cpp" line="1269"/>
         <source>Loading</source>
         <translation>Nahrává se</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1270"/>
+        <location filename="../playengine.cpp" line="1271"/>
         <source>Error</source>
         <translation>Chyba</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1272"/>
+        <location filename="../playengine.cpp" line="1273"/>
         <source>Paused</source>
         <translation>Pozastaveno</translation>
     </message>
