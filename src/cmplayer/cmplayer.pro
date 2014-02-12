@@ -15,18 +15,17 @@ PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
-INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include
-LIBS += -L$${LIB_DIR} -lchardet -lcmplayer_mpv -lbz2 -lz
+INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include $${DESTDIR}/include/chardet
+LIBS += -L$${LIB_DIR} -lcmplayer_mpv -lbz2 -lz -lchardet
 
 PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
     libmpg123 libass libquvi$${LIBQUVI_SUFFIX} icu-uc
-HAVE_PORTAUDIO = $$system(if `pkg-config --exists libcdio_paranoia`; then echo "yes"; fi)
+HAVE_PORTAUDIO = $$system(if `pkg-config --exists portaudio-2.0`; then echo "portaudio-2.0"; fi)
 !isEmpty(HAVE_PORTAUDIO) {
-    PKGCONFIG += $$system(if `pkg-config --exists libcdio_paranoia`; then echo "libcdio_paranoia libcdio libcdio_cdda"; fi)
+    PKGCONFIG += $${HAVE_PORTAUDIO}
     DEFINES += HAVE_PORTAUDIO=1
 }
-
-PKGCONFIG += $$system(if `pkg-config --exists portaudio-2.0`; then echo "portaudio-2.0"; fi)
+PKGCONFIG += $$system(if `pkg-config --exists libcdio_paranoia`; then echo "libcdio_paranoia libcdio libcdio_cdda"; fi)
 
 macx {
     QT += macextras

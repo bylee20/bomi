@@ -2,9 +2,9 @@
 
 install -d src
 
-url=ftp://ftp.oops.org/pub/oops/libchardet/libchardet-1.0.2.tar.bz2
+url=http://ftp.oops.org/pub/oops/libchardet/libchardet-1.0.3.tar.bz2
 out=libchardet.tar.bz2
 if ! [ -f ${out} ]; then
   curl -o src/${out} "${url}"
-  cd src && tar xvfj ${out} && mv libchardet-1.0.2 libchardet && rm ${out}
+  cd src && tar xvfj ${out} && mv libchardet-* libchardet && rm ${out}
 fi
