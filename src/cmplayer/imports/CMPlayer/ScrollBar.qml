@@ -1,7 +1,7 @@
 import QtQuick 2.0
 
 Item { id: item;
-	property Flickable scrollable
+	property Flickable target
 	property alias color: handle.color
 	property alias border: handle.border
 	property alias radius: handle.radius
@@ -14,17 +14,17 @@ Item { id: item;
 		Rectangle {
 			id: handle
 			color: Qt.rgba(0.0, 0.0, 0.0, 0.5)
-			readonly property real rh: item.scrollable.visibleArea.heightRatio
-			readonly property real ry: item.scrollable.visibleArea.yPosition
-			readonly property real target: (ry + rh*0.5)*parent.height
+			readonly property real rh: item.target.visibleArea.heightRatio
+			readonly property real ry: item.target.visibleArea.yPosition
+			readonly property real trgt: (ry + rh*0.5)*parent.height
 			property real hMin: 35
 			readonly property real half: Math.max(rh*parent.height, hMin)*0.5
-			x: 0; y: Math.min(Math.max(0, target - half), parent.height)
+			x: 0; y: Math.min(Math.max(0, trgt - half), parent.height)
 			width: parent.width; height: half + size()
 			function size() {
-				if (target < half)
-					return target
-				var dt = parent.height - target;
+				if (trgt < half)
+					return trgt
+				var dt = parent.height - trgt;
 				return (dt < half) ? dt : half;
 			}
 		}
@@ -35,7 +35,7 @@ Item { id: item;
 		anchors.fill: parent
 		property bool moving: false
 		function move(y) {
-			scrollable.contentY = (scrollable.contentHeight - scrollable.height)*Math.max(0, Math.min(1, (y-gap)/(height-2*gap)))
+			target.contentY = (target.contentHeight - target.height)*Math.max(0, Math.min(1, (y-gap)/(height-2*gap)))
 		}
 		onPressed: move(mouse.y)
 		onPositionChanged: if (pressed) move(mouse.y)
@@ -49,13 +49,13 @@ Item { id: item;
 		}
 		preventStealing: true
 		Connections {
-			target: scrollable
+			target: item.target
 			onContentYChanged: {
 				mouseArea.moving = true
 				timer.restart()
 			}
 			onMovingVerticallyChanged: {
-				if (scrollable.movingVertically) {
+				if (item.target.movingVertically) {
 					mouseArea.moving = true
 					timer.restart()
 				}
@@ -65,7 +65,7 @@ Item { id: item;
 
 	states: State {
 		name: "visible"
-		when: scrollable.movingVertically || mouseArea.moving || mouseArea.containsMouse
+		when: target && target.visibleArea.heightRatio < 1 && (target.movingVertically || mouseArea.moving || mouseArea.containsMouse)
 		PropertyChanges { target: item; opacity: 1.0 }
 	}
 

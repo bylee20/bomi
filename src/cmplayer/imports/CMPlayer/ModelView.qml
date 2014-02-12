@@ -231,7 +231,7 @@ Item { id: view
 			border.color: Qt.rgba(0.5, 0.5, 0.5, 0.5)
 			radius: 2
 			border.width: 1
-			scrollable: parent
+			target: parent
 			color: Qt.rgba(1.0, 1.0, 1.0, 0.8)
 		}
 	}
