@@ -461,7 +461,7 @@ Clic destro: %2</translation>
     <message>
         <location filename="../enums.hpp" line="754"/>
         <source>Deinterlacing</source>
-        <translation>Deinterlacciatura</translation>
+        <translation>Deinterlacciamento</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1009"/>
@@ -945,7 +945,7 @@ Clic destro: %2</translation>
         <location filename="../info.hpp" line="25"/>
         <location filename="../info.hpp" line="26"/>
         <source>Images</source>
-        <translation type="unfinished">Immagini</translation>
+        <translation>Immagini</translation>
     </message>
     <message>
         <location filename="../info.hpp" line="27"/>
@@ -960,12 +960,12 @@ Clic destro: %2</translation>
     <message>
         <location filename="../info.hpp" line="29"/>
         <source>Subtitle Files</source>
-        <translation type="unfinished">File Sottotitoli</translation>
+        <translation>File Sottotitoli</translation>
     </message>
     <message>
         <location filename="../info.hpp" line="30"/>
         <source>Playlist Files</source>
-        <translation type="unfinished"></translation>
+        <translation>File Scaletta</translation>
     </message>
     <message>
         <source>Image Files</source>
@@ -982,7 +982,7 @@ Clic destro: %2</translation>
     <message>
         <location filename="../widgets.cpp" line="85"/>
         <source>System locale[%1]</source>
-        <translation type="unfinished"></translation>
+        <translation>Lingua di sistema[%1]</translation>
     </message>
 </context>
 <context>
@@ -1152,7 +1152,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../mainwindow.cpp" line="1204"/>
         <source>Playlist</source>
-        <translation>Lista di Riproduzione</translation>
+        <translation>Scaletta</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1204"/>
@@ -1162,7 +1162,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../mainwindow.cpp" line="1267"/>
         <source>Downloaded</source>
-        <translation type="unfinished"></translation>
+        <translation>Scaricati</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1278"/>
@@ -1285,127 +1285,127 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../mrlstate.cpp" line="16"/>
         <source>Playback Speed</source>
-        <translation type="unfinished">Velocità Riproduzione</translation>
+        <translation>Velocità Riproduzione</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="18"/>
         <source>Video Interpolator</source>
-        <translation type="unfinished"></translation>
+        <translation>Interpolazione Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="19"/>
         <source>Video Chroma Upscaler</source>
-        <translation type="unfinished"></translation>
+        <translation>Chroma Upscaler Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="20"/>
         <source>Video Aspect Ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Rapporto d&apos;Aspetto Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="21"/>
         <source>Video Crop Ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Rapporto di Ritaglio Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="22"/>
         <source>Video Deinterlacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Deinterlacciamento Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="23"/>
         <source>Video Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Dithering Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="24"/>
         <source>Video Screen Position</source>
-        <translation type="unfinished"></translation>
+        <translation>Posizione Schermo Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="25"/>
         <source>Video Vertical Alignment</source>
-        <translation type="unfinished"></translation>
+        <translation>Allineamento Verticale Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="26"/>
         <source>Video Horizontal Alignment</source>
-        <translation type="unfinished"></translation>
+        <translation>Allineamento Orizzontale Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="27"/>
         <source>Video Color Adjustment</source>
-        <translation type="unfinished"></translation>
+        <translation>Regolazione Colore Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="28"/>
         <source>Video Color Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Gamma Colori Video</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="30"/>
         <source>Audio Volume</source>
-        <translation type="unfinished"></translation>
+        <translation>Volume Audio</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="31"/>
         <source>Audio Amp</source>
-        <translation type="unfinished"></translation>
+        <translation>Amplificazione Audio</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="32"/>
         <source>Audio Sync</source>
-        <translation type="unfinished">Sincronizzazione Audio</translation>
+        <translation>Sincronizzazione Audio</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="33"/>
         <source>Audio Track</source>
-        <translation type="unfinished">Traccia Audio</translation>
+        <translation>Traccia Audio</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="34"/>
         <source>Audio Mute</source>
-        <translation type="unfinished"></translation>
+        <translation>Muto Audio</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="35"/>
         <source>Audio Volume Normalizer</source>
-        <translation type="unfinished"></translation>
+        <translation>Normalizza Volume Audio</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="36"/>
         <source>Audio Tempo Scaler</source>
-        <translation type="unfinished"></translation>
+        <translation>Scala Tempo Audio</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="37"/>
         <source>Audio Channel Layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Disposizione Canali Audio</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="39"/>
         <source>Subtitle Track</source>
-        <translation type="unfinished">Traccia Sottotitoli</translation>
+        <translation>Traccia Sottotitoli</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="40"/>
         <source>Subtitle Alignment</source>
-        <translation type="unfinished">Allineamento Sottotitoli</translation>
+        <translation>Allineamento Sottotitoli</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="41"/>
         <source>Subtitle Display</source>
-        <translation type="unfinished">Aspetto Sottotitoli</translation>
+        <translation>Aspetto Sottotitoli</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="42"/>
         <source>Subtitle Position</source>
-        <translation type="unfinished">Posizione Sottotitoli</translation>
+        <translation>Posizione Sottotitoli</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="43"/>
         <source>Subtitle Sync</source>
-        <translation type="unfinished">Sincronizzazione Sottotitoli</translation>
+        <translation>Sincronizzazione Sottotitoli</translation>
     </message>
 </context>
 <context>
@@ -1418,12 +1418,12 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../ui/opendvddialog.ui" line="22"/>
         <source>Device:</source>
-        <translation type="unfinished"></translation>
+        <translation>Periferica:</translation>
     </message>
     <message>
         <location filename="../ui/opendvddialog.ui" line="65"/>
         <source>Use DVD menu</source>
-        <translation type="unfinished"></translation>
+        <translation>Visualizza menu DVD</translation>
     </message>
     <message>
         <source>Open next device:</source>
@@ -1472,7 +1472,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../opensubtitlesfinder.cpp" line="41"/>
         <source>Cannot connect to server</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossibile contattare il server</translation>
     </message>
 </context>
 <context>
@@ -1664,7 +1664,7 @@ Fermato alla Posizione: %2</translation>
         <location filename="../pref.cpp" line="431"/>
         <source>70</source>
         <comment>This is default value for accuracy to enfoce auto-detected subtitle encoding in preferences. Higher value means that auto-detection will be applied only if the result is more reliable.</comment>
-        <translation type="unfinished"></translation>
+        <translation>70</translation>
     </message>
 </context>
 <context>
@@ -1885,12 +1885,12 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="259"/>
         <source>Save and restore state per media playback</source>
-        <translation type="unfinished"></translation>
+        <translation>Salva e ripristina stato di riproduzione per file</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="349"/>
         <source>Locale</source>
-        <translation type="unfinished"></translation>
+        <translation>Lingua</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="429"/>
@@ -2231,17 +2231,17 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="2727"/>
         <source>Hide mouse cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>Nascondi cursore mouse</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2741"/>
         <source>Apply after timeout</source>
-        <translation type="unfinished"></translation>
+        <translation>Applica dopo tempo d&apos;attesa</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2782"/>
         <source>Apply in fullscreen mode only</source>
-        <translation type="unfinished"></translation>
+        <translation>Applica solo in modalità schermo intero</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2846"/>
@@ -2696,7 +2696,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../rootmenu.cpp" line="399"/>
         <source>DVD Menu</source>
-        <translation type="unfinished"></translation>
+        <translation>Menu DVD</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="401"/>
@@ -2834,7 +2834,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../rootmenu.cpp" line="445"/>
         <source>Aspect Ratio</source>
-        <translation>Rapporto di Aspetto</translation>
+        <translation>Rapporto d&apos;Aspetto</translation>
     </message>
     <message>
         <source>Auto</source>
@@ -3056,7 +3056,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../rootmenu.cpp" line="512"/>
         <source>Find Subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>Cerca Sottotitoli</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="516"/>
@@ -3146,7 +3146,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../rootmenu.cpp" line="496"/>
         <source>Playlist</source>
-        <translation>Lista Riproduzione</translation>
+        <translation>Scaletta</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="497"/>
@@ -3393,84 +3393,84 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="14"/>
         <source>Find Subtitle from OpenSubtitles.org</source>
-        <translation type="unfinished"></translation>
+        <translation>Cerca Sottotitoli su OpenSubtitles.org</translation>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="22"/>
         <location filename="../subtitlefinddialog.cpp" line="114"/>
         <source>Open</source>
-        <translation type="unfinished">Apri</translation>
+        <translation>Apri</translation>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="63"/>
         <source>Get</source>
-        <translation type="unfinished"></translation>
+        <translation>Ottieni</translation>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="70"/>
         <source>Close</source>
-        <translation type="unfinished">Chiudi</translation>
+        <translation>Chiudi</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="71"/>
         <source>Connecting...</source>
-        <translation type="unfinished"></translation>
+        <translation>In Connessione...</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="74"/>
         <source>Finding...</source>
-        <translation type="unfinished"></translation>
+        <translation>Ricerca...</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="77"/>
         <source>Find</source>
-        <translation type="unfinished"></translation>
+        <translation>Cerca</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="128"/>
         <location filename="../subtitlefinddialog.cpp" line="177"/>
         <source>Find Subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>Cerca Sottotitoli</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="128"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
-        <translation type="unfinished"></translation>
+        <translation>File con nome identico già presente. Sovrascriverlo?</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="129"/>
         <source>Overwrite</source>
-        <translation type="unfinished"></translation>
+        <translation>Sovrascrivi</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="130"/>
         <source>Save as...</source>
-        <translation type="unfinished"></translation>
+        <translation>Salva come...</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="131"/>
         <source>Cancel</source>
-        <translation type="unfinished">Annulla</translation>
+        <translation>Annulla</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="136"/>
         <source>Save As...</source>
-        <translation type="unfinished"></translation>
+        <translation>Salva Come...</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="136"/>
         <source>Subtitle Files</source>
-        <translation type="unfinished">File Sottotitoli</translation>
+        <translation>File Sottotitoli</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="158"/>
         <source>All</source>
-        <translation type="unfinished">Tutto</translation>
+        <translation>Tutto</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="177"/>
         <source>Cannot find subtitles for %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Impossibile trovare sottotitoli per %1.</translation>
     </message>
 </context>
 <context>
@@ -3478,17 +3478,17 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="20"/>
         <source>Language</source>
-        <translation type="unfinished">Lingua</translation>
+        <translation>Lingua</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="21"/>
         <source>File Name</source>
-        <translation type="unfinished"></translation>
+        <translation>Nome File</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="22"/>
         <source>Date</source>
-        <translation type="unfinished"></translation>
+        <translation>Data</translation>
     </message>
 </context>
 <context>
