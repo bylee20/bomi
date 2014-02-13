@@ -388,7 +388,7 @@ void VideoRendererItem::reset() {
 void VideoRendererItem::prepare(QSGGeometryNode *node) {
 	Q_ASSERT(d->shader);
 	if (d->take) {
-        if (d->fbo && d->fbo->isComplete()) {
+		if (d->fbo && d->fbo->isValid()) {
 			auto image = d->fbo->toImage();
 			d->mposd->drawOn(image);
 			emit frameImageObtained(image);
@@ -426,14 +426,8 @@ LOG_GL_ERROR_Q
 
 	if (d->render && !d->frameSize.isEmpty()) {
 		if (!d->fbo || d->fbo->size() != d->frameSize) {
-            _Renew(d->fbo, d->frameSize, OpenGLCompat::textureFormat(GL_BGRA, d->fboDepth), GL_TEXTURE_2D);
-            if (!d->fbo->isComplete()) {
-                if (d->fboDepth == 2) {
-                    qDebug() << "RGBA16 fbo is not supported. fallback to RGBA8 fbo.";
-                    _Renew(d->fbo, d->frameSize, OpenGLCompat::textureFormat(GL_BGRA, d->fboDepth = 1), GL_TEXTURE_2D);
-                    Q_ASSERT(d->fbo->isComplete());
-                }
-            }
+			_Renew(d->fbo, d->frameSize, OpenGLCompat::framebufferObjectTextureFormat());
+			Q_ASSERT(d->fbo->isValid());
 			setRenderTarget(d->fbo->texture());
 		}
 		d->fbo->bind();

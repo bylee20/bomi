@@ -15,11 +15,11 @@ PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
-INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include $${DESTDIR}/include/chardet /usr/include/chardet
-LIBS += -L$${LIB_DIR} -lcmplayer_mpv -lbz2 -lz -lchardet
+INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include
+LIBS += -L$${LIB_DIR} -lcmplayer_mpv -lbz2 -lz
 
 PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
-    libmpg123 libass libquvi$${LIBQUVI_SUFFIX} icu-uc
+    libmpg123 libass libquvi$${LIBQUVI_SUFFIX} icu-uc chardet
 HAVE_PORTAUDIO = $$system(if `pkg-config --exists portaudio-2.0`; then echo "portaudio-2.0"; fi)
 !isEmpty(HAVE_PORTAUDIO) {
     PKGCONFIG += $${HAVE_PORTAUDIO}
@@ -145,7 +145,8 @@ HEADERS += playengine.hpp \
     audiomixer.hpp \
     audiomixer_p.hpp \
     mrlstate_old.hpp \
-    log.hpp
+    log.hpp \
+    openglmisc.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -229,7 +230,8 @@ SOURCES += main.cpp \
     simplelistmodel.cpp \
     audiomixer.cpp \
     mrlstate_old.cpp \
-    log.cpp
+    log.cpp \
+    openglmisc.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

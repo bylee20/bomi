@@ -64,10 +64,6 @@ extern void finalize_vdpau();
 extern void initialize_vaapi();
 extern void finalize_vaapi();
 
-void _ForVariadic() {}
-template<typename Func, typename Arg1, typename... Args>
-void _ForVariadic(Func func, const Arg1& arg1, const Args&... args) { func(arg1); _ForVariadic(args...); }
-
 class PlayEngine::Thread : public QThread {
 public:
 	Thread(PlayEngine *engine): engine(engine) {}

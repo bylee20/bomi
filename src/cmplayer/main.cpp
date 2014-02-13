@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "translator.hpp"
 #include "mrl.hpp"
 #include "mainwindow.hpp"
 #include "playengine.hpp"

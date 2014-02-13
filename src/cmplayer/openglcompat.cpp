@@ -7,7 +7,6 @@ extern "C" {
 }
 #include "log.hpp"
 
-//DEC_LOG_FUNCS(OpenGL)
 DECLARE_LOG_CONTEXT(OpenGL)
 
 OpenGLCompat OpenGLCompat::c;
@@ -23,7 +22,7 @@ struct OpenGLCompat::Data {
 	int major = 0, minor = 0;
 	QMap<GLenum, OpenGLTextureFormat> formats[2];
 	QVector<GLfloat> fruit;
-	GLenum fboFormat = GL_RGBA8;
+	QOpenGLTexture::TextureFormat fboFormat = QOpenGLTexture::RGBA8_UNorm;
 
 };
 
@@ -78,7 +77,10 @@ static inline QByteArray _ToLog(QOpenGLDebugMessage::Severity severity) {
 }
 
 void OpenGLCompat::debug(const QOpenGLDebugMessage &message) {
-	_Debug("Logger: %% (%%/%%/%%)", message.message().trimmed(), message.source(), message.severity(), message.type());
+	if (message.type() == QOpenGLDebugMessage::ErrorType)
+		_Error("Error: %%", message.message().trimmed());
+	else
+		_Debug("Logger: %% (%%/%%/%%)", message.message().trimmed(), message.source(), message.severity(), message.type());
 }
 
 const char *OpenGLCompat::errorString(GLenum error) {
@@ -99,7 +101,7 @@ const char *OpenGLCompat::errorString(GLenum error) {
 	return strings.value(error, "");
 }
 
-GLenum OpenGLCompat::framebufferObjectTextureFormat() {
+QOpenGLTexture::TextureFormat OpenGLCompat::framebufferObjectTextureFormat() {
 	return c.d->fboFormat;
 }
 
@@ -159,12 +161,12 @@ void OpenGLCompat::check() {
 	HasFbo = QOpenGLFramebufferObject::hasOpenGLFramebufferObjects();
 	if (!HasFbo)
 		_Fatal("FBO is not available. FBO support is essential.");
-	auto fbo = new OpenGLFramebufferObject(QSize(16, 16), textureFormat(GL_BGRA, 2));
-	if (fbo->isComplete()) {
-		d->fboFormat = GL_RGBA16;
+	auto fbo = new OpenGLFramebufferObject(QSize(16, 16), QOpenGLTexture::RGBA16_UNorm);
+	if (fbo->isValid()) {
+		d->fboFormat = QOpenGLTexture::RGBA8_UNorm;
 		_Info("FBO texture format: GL_RGBA16");
 	} else {
-		if (!_Renew(fbo, QSize(16, 16), textureFormat(GL_BGRA, 1))->isComplete())
+		if (!_Renew(fbo, QSize(16, 16), QOpenGLTexture::RGBA8_UNorm)->isValid())
 			_Fatal("No available FBO texture format. One of GL_BGRA8 and GL_BGRA16 must be supported at least.");
 		else
 			_Info("FBO texture format: GL_RGBA8");
@@ -268,7 +270,9 @@ static QImage getImage(const QSize &size, const OpenGLTextureFormat &format) {
 QImage OpenGLFramebufferObject::toImage() const {
 	if (m_texture.isNull())
 		return QImage();
-	bind();
+	const bool wasBound = isBound();
+	if (!wasBound)
+		const_cast<OpenGLFramebufferObject*>(this)->bind();
 	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
 	switch (m_texture.format.type) {
 	case GL_UNSIGNED_BYTE:
@@ -280,5 +284,6 @@ QImage OpenGLFramebufferObject::toImage() const {
 	default:
 		return QImage();
 	}
-	release();
+	if (!wasBound)
+		const_cast<OpenGLFramebufferObject*>(this)->release();
 }

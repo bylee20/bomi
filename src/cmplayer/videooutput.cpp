@@ -8,6 +8,7 @@
 #include "mposditem.hpp"
 #include "softwaredeinterlacer.hpp"
 #include "vaapipostprocessor.hpp"
+#include "log.hpp"
 
 extern "C" {
 #include <video/out/vo.h>
@@ -22,6 +23,8 @@ struct sd *sub_get_last_sd(struct dec_sub *sub);
 
 struct cmplayer_vo_priv { VideoOutput *vo; char *address; };
 static VideoOutput *priv(struct vo *vo) { return static_cast<cmplayer_vo_priv*>(vo->priv)->vo; }
+
+DECLARE_LOG_CONTEXT(Video)
 
 #define OPT_BASE_STRUCT struct cmplayer_vo_priv
 vo_driver create_driver() {
