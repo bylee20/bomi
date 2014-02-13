@@ -40,6 +40,47 @@ QOpenGLDebugLogger *OpenGLCompat::logger() {
 	return c.d->logger;
 }
 
+static inline QByteArray _ToLog(QOpenGLDebugMessage::Source source) {
+	switch (source) {
+#define SWITCH_SOURCE(s) case QOpenGLDebugMessage::s##Source: return _ByteArrayLiteral(#s);
+	SWITCH_SOURCE(API)				SWITCH_SOURCE(Invalid)
+	SWITCH_SOURCE(WindowSystem)		SWITCH_SOURCE(ShaderCompiler)
+	SWITCH_SOURCE(ThirdParty)		SWITCH_SOURCE(Application)
+	SWITCH_SOURCE(Other)			SWITCH_SOURCE(Any)
+#undef SWITCH_SOURCE
+	}
+	return QByteArray::number(source, 16);
+}
+
+static inline QByteArray _ToLog(QOpenGLDebugMessage::Type type) {
+	switch (type) {
+#define SWITCH_TYPE(t) case QOpenGLDebugMessage::t##Type: return _ByteArrayLiteral(#t);
+	SWITCH_TYPE(Invalid)			SWITCH_TYPE(Error)
+	SWITCH_TYPE(DeprecatedBehavior)	SWITCH_TYPE(UndefinedBehavior)
+	SWITCH_TYPE(Portability)		SWITCH_TYPE(Performance)
+	SWITCH_TYPE(Other)				SWITCH_TYPE(Marker)
+	SWITCH_TYPE(GroupPush)			SWITCH_TYPE(GroupPop)
+	SWITCH_TYPE(Any)
+#undef SWITCH_TYPE
+	}
+	return QByteArray::number(type, 16);
+}
+
+static inline QByteArray _ToLog(QOpenGLDebugMessage::Severity severity) {
+	switch (severity) {
+#define SWITCH_SEVERITY(s) case QOpenGLDebugMessage::s##Severity: return _ByteArrayLiteral(#s);
+	SWITCH_SEVERITY(Invalid)		SWITCH_SEVERITY(High)
+	SWITCH_SEVERITY(Medium)			SWITCH_SEVERITY(Low)
+	SWITCH_SEVERITY(Notification)	SWITCH_SEVERITY(Any)
+#undef SWITCH_SEVERITY
+	}
+	return QByteArray::number(severity, 16);
+}
+
+void OpenGLCompat::debug(const QOpenGLDebugMessage &message) {
+	_Debug("Logger: %% (%%/%%/%%)", message.message().trimmed(), message.source(), message.severity(), message.type());
+}
+
 const char *OpenGLCompat::errorString(GLenum error) {
 	static QHash<GLenum, const char*> strings;
 	if (strings.isEmpty()) {
@@ -131,6 +172,16 @@ void OpenGLCompat::check() {
 	_Delete(fbo);
 	if (!extensions.isEmpty())
 		_Info("Extensions: %%", extensions.join(", "));
+}
+
+void OpenGLCompat::finalize(QOpenGLContext */*ctx*/) {
+	auto d = c.d;
+	if (d->init) {
+		if (d->logger && d->logger->isLogging())
+			d->logger->stopLogging();
+		_Delete(d->logger);
+		d->init = false;
+	}
 }
 
 void OpenGLCompat::initialize(QOpenGLContext *ctx) {

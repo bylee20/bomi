@@ -7,6 +7,8 @@
 #include "openglcompat.hpp"
 #include "log.hpp"
 
+DECLARE_LOG_CONTEXT(Main)
+
 int main(int argc, char **argv) {
 	qputenv("PX_MODULE_PATH", "/this-is-dummy-path-to-disable-libproxy");
 #ifdef Q_OS_LINUX
@@ -19,15 +21,16 @@ int main(int argc, char **argv) {
 	PlayEngine::registerObjects();
 	App app(argc, argv);
 	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]")))
-		qFatal("Another instance of CMPlayer is already running. Exit this...");
+		_Fatal("Another instance of CMPlayer is already running. Exit this...");
 	OpenGLCompat::check();
 	HwAcc::initialize();
 	MainWindow *mw = new MainWindow;
+	_Debug("Show MainWindow.");
 	mw->show();
 	app.setMainWindow(mw);
-	qDebug() << "Start main event loop";
+	_Debug("Start main event loop.");
 	auto ret = app.exec();
 	HwAcc::finalize();
-	qDebug() << "Exit...";
+	_Debug("Exit...");
 	return ret;
 }

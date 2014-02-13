@@ -34,7 +34,7 @@
 #include <Carbon/Carbon.h>
 #endif
 
-DECLARE_LOG_CONTEXT(MainWindow)
+DECLARE_LOG_CONTEXT(Main)
 
 extern void initialize_vaapi();
 extern void finalize_vaapi();
@@ -522,25 +522,21 @@ struct MainWindow::Data {
 		p->resize(400, 300);
 		p->setMinimumSize(QSize(400, 300));
 
-		connect(view, &QQuickView::sceneGraphInitialized, [this] () {
+		connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
 			OpenGLCompat::initialize(view->openglContext());
-			QOpenGLDebugLogger *logger = OpenGLCompat::logger();
-			if (!logger)
-				return;
-			connect(logger, &QOpenGLDebugLogger::messageLogged, [] (const QOpenGLDebugMessage & msg) {
-				qDebug() << msg;
-			});
+			auto *logger = OpenGLCompat::logger();
+			if (logger) {
+				connect(logger, &QOpenGLDebugLogger::messageLogged, p
+					, [] (const QOpenGLDebugMessage & msg) { OpenGLCompat::debug(msg); }, Qt::DirectConnection);
 #ifdef CMPLAYER_RELEASE
-			logger->startLogging(QOpenGLDebugLogger::AsynchronousLogging);
+				logger->startLogging(QOpenGLDebugLogger::AsynchronousLogging);
 #else
-			logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
+				logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
 #endif
-		});
-		connect(view, &QQuickView::sceneGraphInvalidated, [] () {
-			auto logger = OpenGLCompat::logger();
-			if (logger)
-				logger->stopLogging();
-		});
+			}
+		}, Qt::DirectConnection);
+		connect(view, &QQuickView::sceneGraphInvalidated, p
+			, [this] () { OpenGLCompat::finalize(view->openglContext()); }, Qt::DirectConnection);
 		desktop = cApp.desktop();
 		auto reset = [this] () {
 			if (!desktop->isVirtualDesktop())

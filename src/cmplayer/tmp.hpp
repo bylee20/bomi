@@ -20,6 +20,26 @@ namespace tmp { // simple template meta progamming
 	template <int bits> struct floating_point { typedef char type; };
 	template <> struct floating_point<32> { typedef float  type; };
 	template <> struct floating_point<64> { typedef double type; };
+
+	template<int idx, int size, bool go = idx < size>
+	struct static_for { };
+
+	template<int idx, int size>
+	struct static_for<idx, size, true> {
+		template<class... Args, class F>
+		static inline void run(const std::tuple<Args...> &tuple, const F &func) {
+			func(std::get<idx>(tuple));
+			static_for<idx+1, size>::run(tuple, func);
+		}
+	};
+
+	template<int idx, int size>
+	struct static_for<idx, size, false> {
+		template<class T, class F>
+		static inline void run(const T &, const F &) { }
+		template<class T, class F>
+		static inline void run(T &&, const F &) { }
+	};
 }
 
 

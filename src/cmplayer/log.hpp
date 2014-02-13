@@ -2,29 +2,8 @@
 #define LOG_HPP
 
 #include "stdafx.hpp"
-#include <tuple>
 
-class App;
-
-namespace Log {
-
-enum LogLevel { Fatal, Error, Warn, Info, Debug, Trace };
-
-extern LogLevel MaxLogLevel;
-
-static inline QStringList logLevelsForOption() {
-	return QStringList() << "fatal" << "error" << "warn" << "info" << "debug" << "trace";
-}
-
-static inline LogLevel logLevelFromOption(const QString &option) {
-	const int index = logLevelsForOption().indexOf(option);
-	return index < 0 ? Info : (LogLevel)index;
-}
-
-void setLogLevel(LogLevel lv);
-LogLevel logLevel();
-
-#define _ByteArrayLiteral(data) QByteArray(data, sizeof(data))
+#define _ByteArrayLiteral(data) QByteArray::fromRawData(data, sizeof(data)-1)
 
 static inline QByteArray _ToLog(char n) { return QByteArray::number(n); }
 static inline QByteArray _ToLog(qint8 n) { return QByteArray::number(n); }
@@ -39,85 +18,75 @@ static inline QByteArray _ToLog(float n) { return QByteArray::number(n); }
 static inline QByteArray _ToLog(double n) { return QByteArray::number(n); }
 static inline QByteArray _ToLog(const QString &str) { return str.toLocal8Bit(); }
 static inline QByteArray _ToLog(const char *str) { return QByteArray(str); }
+static inline QByteArray _ToLog(const QByteArray &str) { return str; }
 static inline QByteArray _ToLog(bool b) { return b ? _ByteArrayLiteral("true") : _ByteArrayLiteral("false"); }
 
-
-template<int idx, int size, bool go = idx < size>
-struct StaticFor { };
-
-template<int idx, int size>
-struct StaticFor<idx, size, true> {
-	static_assert(idx < size, "Wrong index");
-	template<class... Args, class F>
-	static inline void run(const std::tuple<Args...> &tuple, const F &func) {
-		func(std::get<idx>(tuple));
-		StaticFor<idx+1, size>::run(tuple, func);
+class Log {
+public:
+	enum Level { Fatal, Error, Warn, Info, Debug, Trace };
+	static inline Level maximumLevel() { return m_maxLevel; }
+	static inline void setMaximumLevel(Level level) { m_maxLevel = level; }
+	template<typename F>
+	static void write(const char *context, Level level, const F &getLogText) {
+		if (level <= m_maxLevel)
+			print(context, level, getLogText());
 	}
-};
-
-template<int idx, int size>
-struct StaticFor<idx, size, false> {
-	static_assert(idx >= size, "Wrong index");
-	template<class T, class F>
-	static inline void run(const T &, const F &) { }
-	template<class T, class F>
-	static inline void run(T &&, const F &) { }
-};
-
-struct ToLog {
 	template<class... Args>
-	ToLog(const QString &format, const std::tuple<Args...> &tuple): m_format(format) {
-		using Tuple = std::tuple<Args...>;
-		StaticFor<0, std::tuple_size<Tuple>::value>::run(tuple, *this);
-		flush();
+	static inline void write(const char *context, Level level, const QByteArray &format, const Args &... args) {
+		if (level <= m_maxLevel)
+			print(context, level, Helper(format, args...).log());
 	}
 	template<typename... Args>
-	ToLog(const QString &format, const Args &... args): ToLog(format, std::tie(args...)) { }
-	template<typename T>
-	inline void operator () (const T &t) const {
-		const int to = m_format.indexOf(QLatin1String("%%"), m_pos);
-		if (Q_UNLIKELY(to < 0)) {
-			qDebug() << "Wrong log format";
-			return;
-		}
-		m_log += m_format.midRef(m_pos, to-m_pos).toLocal8Bit();
-		m_log += _ToLog(t);
-		m_pos = to + 2;
+	static inline QByteArray parse(const QByteArray &format, const Args &... args) { return Helper(format, args...).log(); }
+	static inline QStringList options() { return m_options; }
+	static inline void setMaximumLevel(const QString &option) {
+		const int index = m_options.indexOf(option);
+		setMaximumLevel(index < 0 ? Info : (Level)index);
 	}
-	const QByteArray &log() const { return m_log; }
 private:
-	void flush() { m_log += m_format.midRef(m_pos).toLocal8Bit(); m_pos = m_format.size(); }
-	const QString &m_format;
-	mutable int m_pos = 0;
-	mutable QByteArray m_log;
+	static inline void print(const char *context, Level level, const QByteArray &log) {
+		qDebug("[%s] %s", context, log.constData());
+		if (level == Fatal)
+			qApp->quit();
+	}
+	struct Helper {
+		template<typename... Args>
+		inline Helper(const QByteArray &format, const Args &... args): m_format(format) { write(args...); }
+		QByteArray log() const { return m_log; }
+	private:
+		inline void write() { m_log.append(m_format.data() + m_pos, m_format.size()-m_pos); }
+		template<class T, class... Args>
+		inline void write(const T &t, const Args &... args) {
+			for (; m_pos<m_format.size(); ++m_pos) {
+				const char c = m_format.at(m_pos);
+				if (c == '%' && m_pos+1 < m_format.size() && m_format.at(m_pos+1) == '%') {
+					m_log += _ToLog(t);
+					m_pos += 2;
+					break;
+				} else
+					m_log.push_back(c);
+			}
+			if (m_pos >= m_format.size()) {
+				qDebug("Wrong log placeholders");
+				return;
+			}
+			write(args...);
+		}
+		const QByteArray &m_format;
+		mutable int m_pos = 0;
+		mutable QByteArray m_log;
+	};
+	static Level m_maxLevel;
+	static const QStringList m_options;
 };
 
-template<typename F>
-static inline void write(const char *context, LogLevel lv, const QString &fmt, const F &make_tuple) {
-	if (lv <= MaxLogLevel) {
-		qDebug("[%s] %s", context, ToLog(fmt, make_tuple()).log().constData());
-		if (lv == Fatal)
-			exit(1);
-	}
-}
-
-//							for (; m_pos<m_format.size(); ++m_pos) {
-//								const char c = m_format.at(m_pos);
-//								if (c == '%' && m_pos+1 < m_format.size() && m_format.at(m_pos+1) == '%') {
-//									m_log += _ToLog(t);
-//									m_pos += 2;
-//									return;
-//								} else
-//									m_log.push_back(c);
-//							}
-}
-
 #define DECLARE_LOG_CONTEXT(ctx) static inline const char *getLogContext() { return (#ctx); }
-#define _Fatal(fmt, ...) ::Log::write(getLogContext(), ::Log::Fatal, fmt, [&] { return std::make_tuple(__VA_ARGS__); })
-#define _Error(fmt, ...) ::Log::write(getLogContext(), ::Log::Error, fmt, [&] { return std::make_tuple(__VA_ARGS__); })
-#define _Warn(fmt, ...) ::Log::write(getLogContext(), ::Log::Warn, fmt, [&] { return std::make_tuple(__VA_ARGS__); })
-#define _Info(fmt, ...) ::Log::write(getLogContext(), ::Log::Info, fmt, [&] { return std::make_tuple(__VA_ARGS__); })
-#define _Debug(fmt, ...) ::Log::write(getLogContext(), ::Log::Debug, fmt, [&] { return std::make_tuple(__VA_ARGS__); })
-#define _Trace(fmt, ...) ::Log::write(getLogContext(), ::Log::Trace, fmt, [&] { return std::make_tuple(__VA_ARGS__); })
+#define _WRITE_LOG(lv, fmt, ...) Log::write(getLogContext(), Log::lv , [&]() { return Log::parse(_ByteArrayLiteral(fmt), ##__VA_ARGS__); })
+#define _Fatal(fmt, ...) _WRITE_LOG(Fatal, fmt, ##__VA_ARGS__)
+#define _Error(fmt, ...) _WRITE_LOG(Error, fmt, ##__VA_ARGS__)
+#define _Warn(fmt, ...) _WRITE_LOG(Warn, fmt, ##__VA_ARGS__)
+#define _Info(fmt, ...) _WRITE_LOG(Info, fmt, ##__VA_ARGS__)
+#define _Debug(fmt, ...) _WRITE_LOG(Debug, fmt, ##__VA_ARGS__)
+#define _Trace(fmt, ...) _WRITE_LOG(Trace, fmt, ##__VA_ARGS__)
 
 #endif // LOG_HPP

@@ -6,7 +6,7 @@
 #include "translator.hpp"
 #include "log.hpp"
 
-DECLARE_LOG_CONTEXT(PlayEngine)
+DECLARE_LOG_CONTEXT(Engine)
 
 extern "C" {
 #include <input/keycodes.h>

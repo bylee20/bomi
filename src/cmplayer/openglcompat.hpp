@@ -137,6 +137,7 @@ class OpenGLCompat {
 
 public:
 	static void initialize(QOpenGLContext *ctx);
+	static void finalize(QOpenGLContext *ctx);
 	static OpenGLTextureFormat textureFormat(GLenum format, int bpc = 1);
 	static QByteArray rg(const char *rg) { return HasRG ? QByteArray(rg) : QByteArray(rg).replace('g', 'a'); }
 	static int maximumTextureSize() { return MaxTexSize; }
@@ -168,6 +169,7 @@ public:
 	static const char *errorString(GLenum error);
 	static QOpenGLDebugLogger *logger();
 	static GLenum framebufferObjectTextureFormat();
+	static void debug(const QOpenGLDebugMessage &message);
 private:
 	OpenGLCompat();
 	static OpenGLCompat c;

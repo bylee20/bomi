@@ -6,6 +6,9 @@ extern "C" {
 #include <audio/filter/af.h>
 #include <audio/fmt-conversion.h>
 }
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(Audio)
 
 af_info create_info();
 af_info af_info_dummy = create_info();
@@ -116,7 +119,7 @@ int AudioController::reinitialize(mp_audio *in) {
 		mp_audio_set_format(out, in->format);
 	d->chmap = in->channels;
 	if (d->layout != ChannelLayout::Default && !mp_chmap_from_str(&d->chmap, bstr0(ChannelLayoutInfo::data(d->layout).constData())))
-		qDebug() << "Cannot find matched channel layout for" << ChannelLayoutInfo::description(d->layout);
+		_Error("Cannot find matched channel layout for '%%'", ChannelLayoutInfo::description(d->layout));
 	mp_audio_set_channels(out, &d->chmap);
 	if (d->outrate != 0)
 		out->rate = d->outrate;

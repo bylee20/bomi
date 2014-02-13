@@ -60,7 +60,7 @@ struct App::Data {
 		auto value = [parser, this] (LineCmd cmd) { return parser->value(options.value(cmd, dummy)); };
 		auto values = [parser, this] (LineCmd cmd) { return parser->values(options.value(cmd, dummy)); };
 		if (isSet(LineCmd::LogLevel))
-			Log::MaxLogLevel = Log::logLevelFromOption(value(LineCmd::LogLevel));
+			Log::setMaximumLevel(value(LineCmd::LogLevel));
 		if (isSet(LineCmd::OpenGLDebug))
 			gldebug = true;
 		if (main) {
@@ -81,8 +81,8 @@ struct App::Data {
 				RootMenu::execute(args[0], args.value(1));
 		}
 		if (isSet(LineCmd::Debug)) {
-			if (Log::MaxLogLevel < Log::Debug)
-				Log::MaxLogLevel = Log::Debug;
+			if (Log::maximumLevel() < Log::Debug)
+				Log::setMaximumLevel(Log::Debug);
 			gldebug = true;
 		}
 	}
@@ -111,7 +111,7 @@ App::App(int &argc, char **argv)
 	d->addOption(LineCmd::Wake, QStringList() << "wake", tr("Bring the application window in front."));
 	d->addOption(LineCmd::Action, "action", tr("Exectute %1 action or open %1 menu."), "id");
 	d->addOption(LineCmd::LogLevel, "log-level", tr("Maximum verbosity for log. %1 should be one of nexts:")
-				 % "\n    " % Log::logLevelsForOption().join(", "), "lv");
+				 % "\n    " % Log::options().join(", "), "lv");
 	d->addOption(LineCmd::OpenGLDebug, "opengl-debug", tr("Turn on OpenGL debug logger."));
 	d->addOption(LineCmd::Debug, "debug", tr("Turn on options for debug."));
 	d->getCommandParser(&d->cmdParser)->process(arguments());
