@@ -1,4 +1,7 @@
 #include "app_x11.hpp"
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(App)
 
 #ifdef Q_OS_LINUX
 #include "app.hpp"
@@ -46,8 +49,11 @@ AppX11::AppX11(QObject *parent)
 : QObject(parent), d(new Data) {
 	d->ss_timer.setInterval(20000);
 	connect(&d->ss_timer, &QTimer::timeout, [this] () {
-		if (d->xss && d->display)
+		if (d->xss && d->display) {
+			_Trace("Call XResetScreenSaver().");
 			XResetScreenSaver(d->display);
+		} else
+			_Error("Cannot run XResetScreenSaver().");
 	});
 	d->connection = QX11Info::connection();
 	d->display = QX11Info::display();
@@ -67,11 +73,15 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 		return;
 	if (disabled) {
 		if (!d->iface && !d->xss) {
+			_Debug("Initialize screensaver functions.");
+			_Debug("Try to connect 'org.gnome.SessionManager'.");
 			d->iface = new QDBusInterface("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager");
 			if (!(d->gnome = d->iface->isValid())) {
+				_Debug("Failed to connect 'org.gnome.SessionManager'. Fallback to 'org.freedesktop.ScreenSaver'.");
 				delete d->iface;
 				d->iface = new QDBusInterface("org.freedesktop.ScreenSaver", "/ScreenSaver", "org.freedesktop.ScreenSaver");
 				if (!d->iface->isValid()) {
+					_Debug("Failed to connect 'org.freedesktop.ScreenSaver'. Fallback to XResetScreenSaver().");
 					delete d->iface;
 					d->iface = nullptr;
 					d->xss = true;
@@ -84,25 +94,29 @@ void AppX11::setScreensaverDisabled(bool disabled) {
 			else
 				d->reply = d->iface->call("Inhibit", "CMPlayer", "Running player");
 			if (!d->reply.isValid()) {
-				qDebug() << "DBus failed:" << d->reply.error().message();
-				qDebug() << "fallback to XResetScreenSaver()";
+				_Error("DBus '%%' error: %%", d->iface->interface(), d->reply.error().message());
+				_Error("Fallback to XResetScreenSaver().");
 				delete d->iface;
 				d->iface = nullptr;
 				d->xss = true;
 			} else
-				qDebug() << "disable with" << d->iface->interface();
+				_Debug("Disable screensaver with '%%'.", d->iface->interface());
 		}
-		if (d->xss)
+		if (d->xss) {
+			_Debug("Disable screensaver with XResetScreenSaver().");
 			d->ss_timer.start();
+		}
 	} else {
 		if (d->iface) {
 			auto response = d->iface->call(d->gnome ? "Uninhibit" : "UnInhibit", d->reply.value());
 			if (response.type() == QDBusMessage::ErrorMessage)
-				qDebug() << response.errorName() << response.errorMessage();
+				_Error("DBus '%%' error: [%%] %%", d->iface->interface(), response.errorName(), response.errorMessage());
 			else
-				qDebug() << "enable with" << d->iface->interface();
-		} else if (d->xss)
+				_Debug("Enable screensaver with '%%'.", d->iface->interface());
+		} else if (d->xss) {
+			_Debug("Enable screensaver with XResetScreenSaver().");
 			d->ss_timer.stop();
+		}
 	}
 	d->inhibit = disabled;
 }
@@ -142,31 +156,35 @@ void AppX11::setWmName(QWidget *widget, const QString &name) {
 }
 
 bool AppX11::shutdown() {
-	qDebug() << "Start to try shutdown";
+	_Debug("Try KDE session manger to shutdown.");
 	QDBusInterface kde("org.kde.ksmserver", "/KSMServer", "org.kde.KSMServerInterface", QDBusConnection::sessionBus());
 	auto response = kde.call("logout", 0, 2, 2);
 	if (response.type() != QDBusMessage::ErrorMessage)
 		return true;
-	qDebug() << "KDE session manager does not work!" << response.errorName() << ":" << response.errorMessage();
+	_Debug("KDE session manager does not work: [%%] %%", response.errorName(), response.errorMessage());
+	_Debug("Fallback to Gnome session manager.");
 	QDBusInterface gnome("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager", QDBusConnection::sessionBus());
 	response = gnome.call("RequestShutdown");
 	if (response.type() != QDBusMessage::ErrorMessage)
 		return true;
-	qDebug() << "Gnome session manager does not work!" << response.errorName() << ":" << response.errorMessage();
+	_Debug("Gnome session manager does not work: [%%] %%", response.errorName(), response.errorMessage());
+	_Debug("Fallback to gnome-power-cmd.sh.");
 	if (QProcess::startDetached("gnome-power-cmd.sh shutdown") || QProcess::startDetached("gnome-power-cmd shutdown"))
 		return true;
-	qDebug() << "gnome-power-cmd does not work!";
+	_Debug("gnome-power-cmd.sh does not work.");
+	_Debug("Fallback to HAL.");
 	QDBusInterface hal("org.freedesktop.Hal", "/org/freedesktop/Hal/devices/computer", "org.freedesktop.Hal.Device.SystemPowerManagement", QDBusConnection::systemBus());
 	response = hal.call("Shutdown");
 	if (response.type() != QDBusMessage::ErrorMessage)
 		return true;
-	qDebug() << "HAL does not work!";
+	_Debug("HAL does not work: [%%] %%", response.errorName(), response.errorMessage());
+	_Debug("Fallback to ConsoleKit.");
 	QDBusInterface consoleKit("org.freedesktop.ConsoleKit", "/org/freedesktop/ConsoleKit/Manager", "org.freedesktop.ConsoleKit.Manager", QDBusConnection::systemBus());
 	response = consoleKit.call("Stop");
 	if (response.type() != QDBusMessage::ErrorMessage)
 		return true;
-	qDebug() << "ConsoleKit does not work!";
-	qDebug() << "Sorry, there's nothing I can do.";
+	_Debug("ConsoleKit does not work: [%%] %%", response.errorName(), response.errorMessage());
+	_Debug("Sorry, there's no way to shutdown.");
 	return false;
 }
 

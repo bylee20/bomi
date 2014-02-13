@@ -7,7 +7,8 @@ extern "C" {
 }
 #include "log.hpp"
 
-DEC_LOG_FUNCS(OpenGL)
+//DEC_LOG_FUNCS(OpenGL)
+DECLARE_LOG_CONTEXT(OpenGL)
 
 OpenGLCompat OpenGLCompat::c;
 bool OpenGLCompat::HasRG = false;
@@ -129,7 +130,7 @@ void OpenGLCompat::check() {
 	}
 	_Delete(fbo);
 	if (!extensions.isEmpty())
-		_Info("Extensions: " % extensions.join(", "));
+		_Info("Extensions: %%", extensions.join(", "));
 }
 
 void OpenGLCompat::initialize(QOpenGLContext *ctx) {
@@ -143,7 +144,8 @@ void OpenGLCompat::initialize(QOpenGLContext *ctx) {
 			if (!d->logger->initialize()) {
 				logError("OpenGLCompat::initialize()");
 				delete d->logger;
-			}
+			} else
+				_Debug("OpenGL debug logger is running.");
 		} else
 			_Error("OpenGL debug logger was requested but it is not supported.");
 	}

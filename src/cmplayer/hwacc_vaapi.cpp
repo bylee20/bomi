@@ -204,21 +204,21 @@ VaApi::VaApi() {
 	init = true;
 	auto xdpy = QX11Info::display();
 	VADisplay display = m_display = vaGetDisplayGLX(xdpy);
-	if (!display)
+	if (!check(display ? VA_STATUS_SUCCESS : VA_STATUS_ERROR_UNIMPLEMENTED, "Cannot create VADisplay."))
 		return;
 	int major, minor;
-	if (!isSuccess(vaInitialize(m_display, &major, &minor)))
+	if (!check(vaInitialize(m_display, &major, &minor), "Cannot initialize VA-API."))
 		return;
 	auto size = vaMaxNumProfiles(display);
 	m_profiles.resize(size);
-	if (vaQueryConfigProfiles(display, m_profiles.data(), &size) != VA_STATUS_SUCCESS)
+	if (!check(vaQueryConfigProfiles(display, m_profiles.data(), &size), "No available profiles."))
 		return;
 	m_profiles.resize(size);
 
 	for (auto profile : m_profiles) {
 		int size = vaMaxNumEntrypoints(display);
         QVector<VAEntrypoint> entries(size);
-		if (vaQueryConfigEntrypoints(display, profile, entries.data(), &size) != VA_STATUS_SUCCESS)
+		if (!isSuccess(vaQueryConfigEntrypoints(display, profile, entries.data(), &size)))
 			continue;
 		entries.resize(size);
 		m_entries.insert(profile, entries);

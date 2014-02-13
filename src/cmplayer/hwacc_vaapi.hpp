@@ -2,6 +2,7 @@
 #define HWACC_VAAPI_HPP
 
 #include "hwacc.hpp"
+#include "log.hpp"
 
 #ifdef Q_OS_LINUX
 
@@ -18,11 +19,19 @@ static constexpr VAProfile VAProfileNone = (VAProfile)-1;
 #endif
 
 struct VaApiStatusChecker {
+	DECLARE_LOG_CONTEXT(VA-API)
 	virtual ~VaApiStatusChecker() {}
-	bool isSuccess(bool status) { return (m_status = status) == VA_STATUS_SUCCESS; }
+	bool isSuccess(VAStatus status) { m_status = status; return isSuccess(); }
 	bool isSuccess() const { return m_status == VA_STATUS_SUCCESS; }
 	VAStatus status() const { return m_status; }
 	const char *error() const { return vaErrorStr(m_status); }
+	bool check(VAStatus status, const QString &onError = QString()) {
+		if (isSuccess(status))
+			return true;
+		_Error("Error %%(0x%%): %%", error(), QString::number(m_status, 16), onError);
+		return false;
+	}
+	bool check(VAStatus status, const char *onError = "") { return check(status, _L(onError)); }
 private:
 	VAStatus m_status = VA_STATUS_SUCCESS;
 };

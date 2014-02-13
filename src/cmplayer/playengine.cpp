@@ -4,6 +4,9 @@
 #include "globalqmlobject.hpp"
 #include "submisc.hpp"
 #include "translator.hpp"
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(PlayEngine)
 
 extern "C" {
 #include <input/keycodes.h>
@@ -306,13 +309,17 @@ struct PlayEngine::Data {
 
 PlayEngine::PlayEngine()
 : d(new Data(this)) {
+	_Debug("Create audio/video plugins.");
 	d->audio = new AudioController(this);
 	d->video = new VideoOutput(this);
+
 	d->chapterInfo = new ChapterInfoObject(this, this);
 	d->audioTrackInfo = new AudioTrackInfoObject(this, this);
 	d->imageTicker.setInterval(20);
 	d->avTicker.setInterval(100);
 	d->updateMediaName();
+
+	_Debug("Make registrations and connections");
 	static auto stageNotifier = [] (MPContext *mpctx, int stage) {
 		static_cast<PlayEngine*>(mpctx->priv)->onMpvStageChanged(stage);
 	};

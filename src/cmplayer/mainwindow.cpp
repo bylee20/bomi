@@ -29,9 +29,12 @@
 #include "openglcompat.hpp"
 #include "videoformat.hpp"
 #include "dataevent.hpp"
+#include "log.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 #endif
+
+DECLARE_LOG_CONTEXT(MainWindow)
 
 extern void initialize_vaapi();
 extern void finalize_vaapi();

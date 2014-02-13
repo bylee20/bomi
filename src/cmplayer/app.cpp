@@ -14,12 +14,15 @@
 
 #define APP_GROUP _L("application")
 
+DECLARE_LOG_CONTEXT(App)
+
 enum class LineCmd {
 	Wake,
 	Open,
 	Action,
 	LogLevel,
-	OpenGLDebug
+	OpenGLDebug,
+	Debug
 };
 
 struct App::Data {
@@ -43,17 +46,21 @@ struct App::Data {
 	QMap<LineCmd, QCommandLineOption> options;
 	LocalConnection connection = {"net.xylosper.CMPlayer", nullptr};
 	void addOption(LineCmd cmd, const char *name, const QString desc, const char *valueName = "", const QString &def = QString()) {
-		options.insert(cmd, QCommandLineOption(_L(name), desc, _L(valueName), def));
+		addOption(cmd, QStringList() << _L(name), desc, valueName, def);
 	}
 	void addOption(LineCmd cmd, const QStringList &names, const QString desc, const char *valueName = "", const QString &def = QString()) {
-		options.insert(cmd, QCommandLineOption(names, desc, _L(valueName), def));
+		const QLatin1String vname = _L(valueName);
+		if (desc.contains(_L("%1")))
+			options.insert(cmd, QCommandLineOption(names, desc.arg(_L('<') % vname % _L('>')), vname, def));
+		else
+			options.insert(cmd, QCommandLineOption(names, desc, vname, def));
 	}
 	void execute(const QCommandLineParser *parser) {
 		auto isSet = [parser, this] (LineCmd cmd) { return parser->isSet(options.value(cmd, dummy)); };
 		auto value = [parser, this] (LineCmd cmd) { return parser->value(options.value(cmd, dummy)); };
 		auto values = [parser, this] (LineCmd cmd) { return parser->values(options.value(cmd, dummy)); };
 		if (isSet(LineCmd::LogLevel))
-			_Change(Log::Helper::m_logLevel, Log::logLevelFromOption(value(LineCmd::LogLevel)));
+			Log::MaxLogLevel = Log::logLevelFromOption(value(LineCmd::LogLevel));
 		if (isSet(LineCmd::OpenGLDebug))
 			gldebug = true;
 		if (main) {
@@ -62,12 +69,21 @@ struct App::Data {
 				main->raise();
 				main->activateWindow();
 			}
-			const Mrl mrl(value(LineCmd::Open));
+			Mrl mrl;
+			if (isSet(LineCmd::Open))
+				mrl = Mrl(value(LineCmd::Open));
+			if (!parser->positionalArguments().isEmpty())
+				mrl = Mrl(parser->positionalArguments().first());
 			if (!mrl.isEmpty())
 				main->openFromFileManager(mrl);
 			const auto args = values(LineCmd::Action);
 			if (!args.isEmpty())
 				RootMenu::execute(args[0], args.value(1));
+		}
+		if (isSet(LineCmd::Debug)) {
+			if (Log::MaxLogLevel < Log::Debug)
+				Log::MaxLogLevel = Log::Debug;
+			gldebug = true;
 		}
 	}
 	QCommandLineParser *getCommandParser(QCommandLineParser *parser) const {
@@ -86,25 +102,28 @@ App::App(int &argc, char **argv)
 #ifdef Q_OS_LINUX
 	setlocale(LC_NUMERIC,"C");
 #endif
-#if defined(Q_OS_MAC) && defined(CMPLAYER_RELEASE)
-	static const QByteArray path = QApplication::applicationDirPath().toLocal8Bit();
-	qDebug() << "set $LIBQUVI_SCRIPTSDIR:" << path;
-	if (setenv("LIBQUVI_SCRIPTSDIR", path.data(), 1) < 0)
-		qDebug() << "Cannot set $LIBQUVI_SCRIPTSDIR. Some streaming functions won't work.";
-#endif
 	setOrganizationName("xylosper");
 	setOrganizationDomain("xylosper.net");
 	setApplicationName(Info::name());
 	setApplicationVersion(Info::version());
 
-	d->addOption(LineCmd::Open, "open", tr("Open given mrl for file path or url."), "mrl");
-	d->addOption(LineCmd::Wake, QStringList() << "wake" << "wake-up", tr("Bring the application window in front."));
-	d->addOption(LineCmd::Action, "action", tr("Exectute <id> action or open <id> menu."), "id");
-	d->addOption(LineCmd::LogLevel, "log-level", tr("Maximum verbosity for log from one of next levels:") % "\n    " % Log::logLevelsForOption().join(", "));
+	d->addOption(LineCmd::Open, "open", tr("Open given %1 for file path or url."), "mrl");
+	d->addOption(LineCmd::Wake, QStringList() << "wake", tr("Bring the application window in front."));
+	d->addOption(LineCmd::Action, "action", tr("Exectute %1 action or open %1 menu."), "id");
+	d->addOption(LineCmd::LogLevel, "log-level", tr("Maximum verbosity for log. %1 should be one of nexts:")
+				 % "\n    " % Log::logLevelsForOption().join(", "), "lv");
 	d->addOption(LineCmd::OpenGLDebug, "opengl-debug", tr("Turn on OpenGL debug logger."));
+	d->addOption(LineCmd::Debug, "debug", tr("Turn on options for debug."));
 	d->getCommandParser(&d->cmdParser)->process(arguments());
 	d->getCommandParser(&d->msgParser);
 	d->execute(&d->cmdParser);
+
+#if defined(Q_OS_MAC) && defined(CMPLAYER_RELEASE)
+	static const QByteArray path = QApplication::applicationDirPath().toLocal8Bit();
+	_Debug("Set $LIBQUVI_SCRIPTSDIR=\"%%\"", QApplication::applicationDirPath());
+	if (setenv("LIBQUVI_SCRIPTSDIR", path.data(), 1) < 0)
+		_Error("Cannot set $LIBQUVI_SCRIPTSDIR. Some streaming functions won't work.");
+#endif
 
 	setQuitOnLastWindowClosed(false);
 #ifndef Q_OS_MAC
@@ -157,6 +176,7 @@ void App::setMainWindow(MainWindow *mw) {
 }
 
 void App::setWindowTitle(QWidget *widget, const QString &title) {
+//	_Trace("Set window title of %% to '%%'.", widget->metaObject()->className(), title);
 	const QString text = title % (title.isEmpty() ? "" : " - ") % applicationName();
 	widget->setWindowTitle(text);
 #ifdef Q_OS_LINUX

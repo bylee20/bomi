@@ -19,9 +19,8 @@ int main(int argc, char **argv) {
 	PlayEngine::registerObjects();
 	App app(argc, argv);
 	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]")))
-		Log::_Fatal("Another instance of CMPlayer is already running. Exit this...");
+		qFatal("Another instance of CMPlayer is already running. Exit this...");
 	OpenGLCompat::check();
-	qDebug() << "Create MainWindow instance";
 	HwAcc::initialize();
 	MainWindow *mw = new MainWindow;
 	mw->show();

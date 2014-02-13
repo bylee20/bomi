@@ -4,7 +4,6 @@
 #include "hwacc_vaapi.hpp"
 #include "hwacc_vdpau.hpp"
 #include "hwacc_vda.hpp"
-
 extern "C" {
 #include <video/decode/lavc.h>
 #include <video/decode/dec_video.h>
