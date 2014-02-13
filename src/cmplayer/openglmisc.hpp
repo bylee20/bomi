@@ -1,13 +1,9 @@
 #ifndef OPENGLMISC_HPP
 #define OPENGLMISC_HPP
 
-#include "openglcompat.hpp"
+#include "stdafx.hpp"
 
-#ifndef GL_YCBCR_MESA
-#define GL_YCBCR_MESA                   0x8757
-#define GL_UNSIGNED_SHORT_8_8_MESA      0x85BA
-#define GL_UNSIGNED_SHORT_8_8_REV_MESA  0x85BB
-#endif
+typedef QOpenGLTexture OGL;
 
 static constexpr QOpenGLTexture::PixelType UInt32_RGBA8 = (QOpenGLTexture::PixelType)GL_UNSIGNED_INT_8_8_8_8;
 static constexpr QOpenGLTexture::PixelType UInt32_RGBA8_Rev = (QOpenGLTexture::PixelType)GL_UNSIGNED_INT_8_8_8_8_REV;
@@ -133,6 +129,115 @@ public:
 		return true;
 	}
 	void unbind() const { glBindTexture(target, 0); }
+};
+
+class OpenGLFramebufferObject : public QOpenGLFramebufferObject {
+public:
+	OpenGLFramebufferObject(const QSize &size, QOpenGLTexture::TextureFormat internal = QOpenGLTexture::RGBA8_UNorm)
+	: QOpenGLFramebufferObject(size, NoAttachment, GL_TEXTURE_2D, internal) {
+		m_texture.id = QOpenGLFramebufferObject::texture();
+		m_texture.width = size.width();
+		m_texture.height = size.height();
+		m_texture.target = GL_TEXTURE_2D;
+		m_texture.format.internal = internal;
+		m_texture.format.pixel = GL_RGBA;
+		m_texture.format.type = GL_UNSIGNED_BYTE;
+		if (isValid()) {
+			m_texture.bind();
+			glTexParameterf(m_texture.target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(m_texture.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			m_texture.unbind();
+		}
+	}
+	const OpenGLTexture &texture() const { return m_texture; }
+	void getCoords(double &x1, double &y1, double &x2, double &y2) {
+		if (m_texture.target == GL_TEXTURE_RECTANGLE) {
+			x1 = y1 = 0; x2 = m_texture.width; y2 = m_texture.height;
+		} else { x1 = y1 = 0; x2 = y2 = 1; }
+	}
+	QImage toImage() const;
+private:
+	OpenGLTexture m_texture;
+};
+
+class OpenGLTextureShaderProgram : public QOpenGLShaderProgram {
+	enum {vPosition, vCoord, vColor};
+public:
+	static constexpr int N = 6;
+	OpenGLTextureShaderProgram(QObject *parent = nullptr): QOpenGLShaderProgram(parent) { }
+	void setFragmentShader(const QByteArray &code) {
+		if (!m_frag)
+			m_frag = addShaderFromSourceCode(QOpenGLShader::Fragment, code);
+	}
+	void setVertexShader(const QByteArray &code) {
+		if (!m_vertex) {
+			m_vertex = addShaderFromSourceCode(QOpenGLShader::Vertex, code);
+			m_hasColor = code.contains("vColor");
+		}
+	}
+	bool link() override {
+		bindAttributeLocation("vCoord", vCoord);
+		bindAttributeLocation("vPosition", vPosition);
+		if (m_hasColor)
+			bindAttributeLocation("vColor", vColor);
+		return QOpenGLShaderProgram::link();
+	}
+	void setTextureCount(int textures) {
+		if (_Expand(m_vPositions, 2*N*textures)) {
+			m_vCoords.resize(m_vPositions.size());
+			if (m_hasColor)
+				m_vColors.resize(m_vPositions.size()/2);
+		}
+	}
+	void uploadPositionAsTriangles(int i, const QPointF &p1, const QPointF &p2) {
+		uploadRectAsTriangles(m_vPositions.data(), i, p1, p2);
+	}
+	void uploadPositionAsTriangles(int i, const QRectF &rect) {
+		uploadRectAsTriangles(m_vPositions.data(), i, rect.topLeft(), rect.bottomRight());
+	}
+	void uploadCoordAsTriangles(int i, const QPointF &p1, const QPointF &p2) {
+		uploadRectAsTriangles(m_vCoords.data(), i, p1, p2);
+	}
+	void uploadCoordAsTriangles(int i, const QRectF &rect) {
+		uploadRectAsTriangles(m_vCoords.data(), i, rect.topLeft(), rect.bottomRight());
+	}
+	void uploadColorAsTriangles(int i, quint32 color) {
+		auto p = m_vColors.data() + N*i;
+		*p++ = color; *p++ = color; *p++ = color; *p++ = color; *p++ = color; *p++ = color;
+	}
+	void begin() {
+		bind();
+		enableAttributeArray(vPosition);
+		enableAttributeArray(vCoord);
+		setAttributeArray(vCoord, m_vCoords.data(), 2);
+		setAttributeArray(vPosition, m_vPositions.data(), 2);
+		if (m_hasColor) {
+			enableAttributeArray(vColor);
+			setAttributeArray(vColor, GL_UNSIGNED_BYTE, m_vColors.data(), 4);
+		}
+	}
+	void end() {
+		disableAttributeArray(vCoord);
+		disableAttributeArray(vPosition);
+		if (m_hasColor)
+			disableAttributeArray(vColor);
+		release();
+	}
+	void reset() { removeAllShaders(); m_frag = m_vertex = false; }
+private:
+	void uploadRectAsTriangles(float *p, int i, const QPointF &p1, const QPointF &p2) {
+		p += N*2*i;
+		*p++ = p1.x(); *p++ = p1.y();
+		*p++ = p2.x(); *p++ = p1.y();
+		*p++ = p1.x(); *p++ = p2.y();
+
+		*p++ = p1.x(); *p++ = p2.y();
+		*p++ = p2.x(); *p++ = p2.y();
+		*p++ = p2.x(); *p++ = p1.y();
+	}
+	QVector<float> m_vPositions, m_vCoords;
+	QVector<quint32> m_vColors;
+	bool m_hasColor = false, m_frag = false, m_vertex = false;
 };
 
 #endif // OPENGLMISC_HPP

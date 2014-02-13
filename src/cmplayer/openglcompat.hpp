@@ -5,6 +5,12 @@
 #include "enums.hpp"
 #include "openglmisc.hpp"
 
+#ifndef GL_YCBCR_MESA
+#define GL_YCBCR_MESA                   0x8757
+#define GL_UNSIGNED_SHORT_8_8_MESA      0x85BA
+#define GL_UNSIGNED_SHORT_8_8_REV_MESA  0x85BB
+#endif
+
 class OpenGLCompat {
 public:
 	static void initialize(QOpenGLContext *ctx);
@@ -68,7 +74,5 @@ private:
 				OpenGLCompat::errorString(e), e, __FILE__, __LINE__, metaObject()->className(), __func__);\
 	}
 #endif
-
-
 
 #endif // OPENGLCOMPAT_HPP

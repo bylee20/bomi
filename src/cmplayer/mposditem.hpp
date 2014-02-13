@@ -3,6 +3,7 @@
 
 #include "stdafx.hpp"
 #include "texturerendereritem.hpp"
+#include "openglmisc.hpp"
 
 enum EventType {EnqueueFrame = QEvent::User + 1, NextFrame, EmptyQueue, Rerender, UpdateDeint, Show, Hide, NewFrame };
 

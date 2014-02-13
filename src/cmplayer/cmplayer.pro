@@ -15,7 +15,7 @@ PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
-INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include
+INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include/chardet /usr/include/chardet
 LIBS += -L$${LIB_DIR} -lcmplayer_mpv -lbz2 -lz
 
 PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
