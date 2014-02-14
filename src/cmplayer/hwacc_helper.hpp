@@ -20,6 +20,8 @@ template<mp_imgfmt imgfmt> struct HwAccX11Trait {
 	static constexpr SurfaceID invalid = (SurfaceID)0;
 	static constexpr Status success = (Status)0;
 	static constexpr const char *name = "";
+	static void destroySurface(SurfaceID id);
+	static bool createSurfaces(int w, int h, int f, QVector<SurfaceID> &ids);
 	static const char *error(Status status) { return ""; }
 };
 
@@ -82,7 +84,12 @@ public:
 	SurfaceID id() const { return m_id; }
 	int format() const { return m_format; }
 	Pool *pool() const { return m_pool; }
-private:
+	virtual ~HwAccX11Surface() {
+		Q_ASSERT(!m_ref);
+		if (m_id != Trait::invalid)
+			Trait::destroySurface(m_id);
+	}
+//private:
 	HwAccX11Surface() = default;
 	friend class HwAccX11SurfacePool<imgfmt>;
 	SurfaceID m_id = Trait::invalid;
@@ -92,81 +99,100 @@ private:
 	Pool *m_pool = nullptr;
 };
 
-//template<class SurfaceID, SurfaceID _invalid>
-//class HwAccX11SurfacePool {
-//public:
-//	using Surface = HwAccX11Surface<SurfaceID, _invalid>;
-//	HwAccX11SurfacePool() = default;
-//	virtual ~HwAccX11SurfacePool() { clear(); }
-//	bool create(int size, int width, int height, uint format) {
-//		if (m_width == width && m_height == height && m_format == format && m_surfaces.size() == size)
-//			return true;
-//		clear();
-//		m_width = width; m_height = height;
-//		m_format = format; m_ids.resize(size);
-//		if (!fillSurfaces(m_ids)) {
-//			m_ids.clear();
-//			return false;
-//		}
-//		m_surfaces.resize(size);
-//		for (int i=0; i<size; ++i) {
-//			m_surfaces[i] = new Surface;
-//			m_surfaces[i]->m_id = m_ids[i];
-//			m_surfaces[i]->m_format = format;
-//		}
-//		return true;
-//	}
-//	VaApiSurface *VaApiSurfacePool::getSurface(mp_image *mpi) {
-//		return mpi->imgfmt == IMGFMT_VAAPI ? (VaApiSurface*)(quintptr)mpi->planes[1] : nullptr;
-//	}
-//	mp_image *getMpImage();
-//	void clear() {
-//		m_mutex.lock();
-//		for (auto surface : m_surfaces) {
-//			if (surface->m_ref)
-//				surface->m_orphan = true;
-//			else
-//				delete surface;
-//		}
-//		m_surfaces.clear();
-//		m_ids.clear();
-//		m_mutex.unlock();
-//	}
-//	QVector<SurfaceID> ids() const {return m_ids;}
-//	uint format() const {return m_format;}
+template<mp_imgfmt imgfmt>
+class HwAccX11SurfacePool {
+public:
+	static const char *getLogContext() { return Trait::name; }
+	using Trait = HwAccX11Trait<imgfmt>;
+	using Surface = HwAccX11Surface<imgfmt>;
+	using SurfaceID = typename Trait::SurfaceID;
+	HwAccX11SurfacePool() = default;
+	virtual ~HwAccX11SurfacePool() { clear(); }
+	bool create(int size, int width, int height, uint format) {
+		if (m_width == width && m_height == height && m_format == format && m_surfaces.size() == size)
+			return true;
+		clear();
+		m_width = width; m_height = height;
+		m_format = format; m_ids.resize(size);
+		if (!Trait::createSurfaces(m_width, m_height, m_format, m_ids)) {
+			_Error("Cannot create hwacc surfaces. Decoding will fail.");
+			m_ids.clear();
+			return false;
+		}
+		m_surfaces.resize(size);
+		for (int i=0; i<size; ++i) {
+			auto surface = new Surface;
+			surface->m_id = m_ids[i];
+			surface->m_format = format;
+			surface->m_pool = this;
+			m_surfaces[i] = surface;
+		}
+		return true;
+	}
+	static Surface *getSurface(mp_image *mpi) {
+		return mpi->imgfmt == imgfmt ? (Surface*)(quintptr)mpi->planes[1] : nullptr;
+	}
+	mp_image *getMpImage() {
+		auto surface = getSurface();
+		if (!surface)
+			return nullptr;
+		auto release = [](void *arg) {
+			m_mutex.lock();
+			auto surface = static_cast<Surface*>(arg);
+			surface->m_ref = false;
+			if (surface->m_orphan)
+				delete surface;
+			m_mutex.unlock();
+		};
+		auto mpi = nullMpImage(IMGFMT_VAAPI, m_width, m_height, surface, release);
+		mpi->planes[1] = (uchar*)(quintptr)surface;
+		mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)surface->id();
+		return mpi;
+	}
+	void clear() {
+		m_mutex.lock();
+		for (auto surface : m_surfaces) {
+			if (surface->m_ref)
+				surface->m_orphan = true;
+			else
+				delete surface;
+		}
+		m_surfaces.clear();
+		m_ids.clear();
+		m_mutex.unlock();
+	}
+	QVector<SurfaceID> ids() const {return m_ids;}
+	uint format() const {return m_format;}
+	int width() const { return m_width; }
+	int height() const { return m_height; }
+private:
+	static QMutex m_mutex;
+	Surface *getSurface() {
+		Surface *best = nullptr, *oldest = nullptr;
+		for (Surface *s : m_surfaces) {
+			if (!oldest || s->m_order < oldest->m_order)
+				oldest = s;
+			if (s->m_ref)
+				continue;
+			if (!best || best->m_order > s->m_order)
+				best = s;
+		}
+		if (!best) {
+			_Warn(_ByteArrayLiteral("No usable SurfaceID. Decoding could fail"));
+			best = oldest;
+		}
+		best->m_ref = true;
+		best->m_order = ++m_order;
+		return best;
+	}
+	QVector<SurfaceID> m_ids;
+	QVector<Surface*> m_surfaces;
+	uint m_format = 0;
+	int m_width = 0, m_height = 0;
+	quint64 m_order = 0LL;
+};
 
-
-//	int width() const { return m_width; }
-//	int height() const { return m_height; }
-//private:
-//	virtual bool fillSurfaces(QVector<SurfaceID> &ids) = 0;
-//	QMutex m_mutex;
-//	Surface *getSurface() {
-//		VaApiSurface *best = nullptr, *oldest = nullptr;
-//		for (VaApiSurface *s : m_surfaces) {
-//			if (!oldest || s->m_order < oldest->m_order)
-//				oldest = s;
-//			if (s->m_ref)
-//				continue;
-//			if (!best || best->m_order > s->m_order)
-//				best = s;
-//		}
-//		if (!best) {
-//			qDebug() << "No usable VASurfaceID!! decoding could fail";
-//			best = oldest;
-//		}
-//		best->m_ref = true;
-//		best->m_order = ++m_order;
-//		return best;
-//	}
-
-//	QVector<SurfaceID> m_ids;
-//	QVector<Surface*> m_surfaces;
-//	uint m_format = 0;
-//	int m_width = 0, m_height = 0;
-//	quint64 m_order = 0LL;
-//};
-
+template<mp_imgfmt imgfmt> QMutex HwAccX11SurfacePool<imgfmt>::m_mutex;
 
 #endif
 

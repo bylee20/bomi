@@ -24,10 +24,16 @@ template<> struct HwAccX11Trait<IMGFMT_VAAPI> {
 	static constexpr Status success = VA_STATUS_SUCCESS;
 	static constexpr const char *name = "VA-API";
 	static const char *error(Status status) { return vaErrorStr(status); }
+	using SurfaceID = VASurfaceID;
+	static constexpr SurfaceID invalid = VA_INVALID_SURFACE;
+	static void destroySurface(SurfaceID id);
+	static bool createSurfaces(int width, int height, int format, QVector<SurfaceID> &ids);
 };
 
-typedef HwAccX11StatusChecker<IMGFMT_VAAPI> VaApiStatusChecker;
-typedef HwAccX11Codec<IMGFMT_VAAPI> VaApiCodec;
+using VaApiStatusChecker = HwAccX11StatusChecker<IMGFMT_VAAPI>;
+using VaApiCodec = HwAccX11Codec<IMGFMT_VAAPI> ;
+using VaApiSurface = HwAccX11Surface<IMGFMT_VAAPI>;
+using VaApiSurfacePool = HwAccX11SurfacePool<IMGFMT_VAAPI>;
 
 class HwAccVaApi : public HwAcc, public VaApiStatusChecker {
 public:
@@ -109,39 +115,6 @@ private:
 	static VADisplay m_display;
 	static bool init;
 	friend class HwAccVaApi;
-};
-
-class VaApiSurface {
-public:
-	~VaApiSurface();
-	VASurfaceID id() const { return m_id; }
-	int format() const { return m_format; }
-private:
-	VaApiSurface() = default;
-	friend class VaApiSurfacePool;
-	VASurfaceID m_id = VA_INVALID_SURFACE;
-	bool m_ref = false, m_orphan = false;
-	quint64 m_order = 0;
-	int m_format = 0;
-};
-
-class VaApiSurfacePool : public VaApiStatusChecker {
-public:
-	VaApiSurfacePool() {  }
-	~VaApiSurfacePool() { clear(); }
-	VAStatus create(int size, int width, int height, uint format);
-	mp_image *getMpImage();
-	void clear();
-	QVector<VASurfaceID> ids() const {return m_ids;}
-	uint format() const {return m_format;}
-	static VaApiSurface *getSurface(mp_image *mpi);
-private:
-	VaApiSurface *getSurface();
-	QVector<VASurfaceID> m_ids;
-	QVector<VaApiSurface*> m_surfaces;
-	uint m_format = 0;
-	int m_width = 0, m_height = 0;
-	quint64 m_order = 0LL;
 };
 
 #endif

@@ -23,6 +23,22 @@ const char *HwAccX11Trait<IMGFMT_VDPAU>::error(Status status) {
 	return status == success ? "SUCCESS" : "ERROR";
 }
 
+void HwAccX11Trait<IMGFMT_VDPAU>::destroySurface(SurfaceID id) {
+	if (id != invalid)
+		Vdpau::videoSurfaceDestroy(id);
+}
+
+bool HwAccX11Trait<IMGFMT_VDPAU>::createSurfaces(int w, int h, int f, QVector<SurfaceID> &ids) {
+	VdpauStatusChecker checker;
+	for (int i=0; i<ids.size(); ++i) {
+		if (!checker.isSuccess(Vdpau::videoSurfaceCreate(f, w, h, &ids[i])))
+			return false;
+		if (ids[i] == invalid)
+			return false;
+	}
+	return true;
+}
+
 Vdpau::Data Vdpau::d;
 
 void Vdpau::initialize() {
@@ -118,36 +134,27 @@ struct VdpauVideoSurface {
 struct HwAccVdpau::Data {
 	AVVDPAUContext context;
 	QSize avSize = {0, 0};
-	QVector<VdpauVideoSurface> surfaces;
-	QVector<VdpauVideoSurface>::iterator it;
-	mp_image_pool *pool = nullptr;
-	QSize surfaceSize = {0, 0};
+	mp_image_pool *mp_pool = nullptr;
 	VdpYCbCrFormat format = VdpYCbCrFormat(-1);
 	mp_imgfmt imgfmt = IMGFMT_NONE;
+	VdpauSurfacePool pool;
 };
 
 HwAccVdpau::HwAccVdpau(AVCodecID cid)
 : HwAcc(cid), d(new Data) {
 	memset(&d->context, 0, sizeof(d->context));
 	d->context.decoder = VDP_INVALID_HANDLE;
-	d->it = d->surfaces.end();
-	d->pool = mp_image_pool_new(5);
+	d->mp_pool = mp_image_pool_new(5);
 }
 
 HwAccVdpau::~HwAccVdpau() {
 	freeContext();
-	if (d->pool)
-		mp_image_pool_clear(d->pool);
+	if (d->mp_pool)
+		mp_image_pool_clear(d->mp_pool);
 	delete d;
 }
 
 void HwAccVdpau::freeContext() {
-	for (auto it = d->surfaces.begin(); it != d->surfaces.end(); ++it) {
-		if (it->id != VDP_INVALID_HANDLE)
-			Vdpau::videoSurfaceDestroy(it->id);
-	}
-	d->surfaces.clear();
-	d->it = d->surfaces.end();
 	if (d->context.decoder != VDP_INVALID_HANDLE) {
 		Vdpau::decoderDestroy(d->context.decoder);
 		d->context.decoder = VDP_INVALID_HANDLE;
@@ -190,34 +197,16 @@ bool HwAccVdpau::fillContext(AVCodecContext *avctx) {
 		d->context.decoder = VDP_INVALID_HANDLE;
 		return false;
 	}
-	d->surfaces.resize(codec->surfaces + 1);
-	for (auto it = d->surfaces.begin(); it != d->surfaces.end(); ++it) {
-		if (!isSuccess(Vdpau::videoSurfaceCreate(chroma, width, height, &it->id)))
-			return false;
-		if (it->id == VDP_INVALID_HANDLE)
-			return false;
-	}
+	if (!d->pool.create(codec->surfaces + 1, width, height, chroma))
+		return false;
 	d->format = format;
-	d->surfaceSize = QSize(width, height);
-	d->it = d->surfaces.begin();
 	d->avSize = QSize(avctx->width, avctx->height);
 	d->context.render = Vdpau::decoderRender;
 	return true;
 }
 
 mp_image *HwAccVdpau::getSurface() {
-	if (d->surfaces.isEmpty())
-		return nullptr;
-	if (++d->it == d->surfaces.end())
-		d->it = d->surfaces.begin();
-	Q_ASSERT(!d->it->ref);
-	Q_ASSERT(d->it->id != VDP_INVALID_HANDLE);
-	d->it->ref = true;
-	auto release = [] (void *arg) {*(bool*)arg = false;};
-	auto mpi = nullMpImage(IMGFMT_VDPAU, d->avSize.width(), d->avSize.height(), &d->it->ref, release);
-	mpi->planes[0] = mpi->planes[3] = (uchar*)(void*)(uintptr_t)(d->it->id);
-	mpi->planes[1] = mpi->planes[2] = nullptr;
-	return mpi;
+	return d->pool.getMpImage();
 }
 
 void *HwAccVdpau::context() const {
@@ -225,17 +214,17 @@ void *HwAccVdpau::context() const {
 }
 
 mp_image *HwAccVdpau::getImage(mp_image *mpi) {
-	return mpi;
 	const auto id = (VdpVideoSurface)(uintptr_t)(void*)mpi->planes[3];
-	auto img = mp_image_pool_get(d->pool, d->imgfmt, d->avSize.width(), d->avSize.height());
+	auto img = mp_image_pool_get(d->mp_pool, d->imgfmt, d->avSize.width(), d->avSize.height());
 	void *data[] = { img->planes[0], img->planes[1], img->planes[2] };
 	quint32 pitches[] = { (quint32)img->stride[0], (quint32)img->stride[1], (quint32)img->stride[2] };
 	if (!isSuccess(Vdpau::videoSurfaceGetBitsYCbCr(id, d->format, data, pitches))) {
-//		return nullptr;
+		talloc_free(img);
+		return mpi;
 	}
-	img->pts = mpi->pts;
-//	if (d->format == VDP_YCBCR_FORMAT_YV12)
-//		qSwap(img->planes[1], img->planes[2]);
+	mp_image_copy_attributes(img, mpi);
+	if (d->format == VDP_YCBCR_FORMAT_YV12)
+		qSwap(img->planes[1], img->planes[2]);
 	return img;
 }
 
