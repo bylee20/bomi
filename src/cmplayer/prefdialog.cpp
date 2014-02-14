@@ -462,6 +462,8 @@ PrefDialog::PrefDialog(QWidget *parent)
 		}
 	});
 
+	d->ui.hwacc_backend->setText(HwAcc::backendName());
+
 	retranslate();
 	d->ui.restore_properties->setModel(&d->properties);
 	if (!TrayIcon::isAvailable())

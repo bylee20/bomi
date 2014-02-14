@@ -24,6 +24,7 @@ public:
 	static bool supports(AVCodecID codec);
 	static bool supports(DeintMethod method);
 	static Type backend();
+	static QString backendName();
 	static const char *codecName(int id);
 	static AVCodecID codecId(const char *name);
 	virtual mp_image *getImage(mp_image *mpi) = 0;

@@ -20,6 +20,19 @@ HwAcc::Type HwAcc::backend() {
 #endif
 }
 
+QString HwAcc::backendName() {
+	switch (backend()) {
+	case Vda:
+		return QString("VDA(Video Decode Acceleration");
+	case VaApiGLX:
+		return QString("VA-API(Video Acceleration API)");
+	case VdpauX11:
+		return QString("VDPAU(Video Decode and Presentation API for Unix)");
+	default:
+		return QString();
+	}
+}
+
 bool HwAcc::supports(AVCodecID codec) {
 #ifdef Q_OS_MAC
 	return codec == AV_CODEC_ID_H264;

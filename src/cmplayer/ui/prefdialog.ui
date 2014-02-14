@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>4</number>
+        <number>10</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -1887,7 +1887,35 @@
         </layout>
        </widget>
        <widget class="QWidget" name="video_hwacc">
-        <layout class="QVBoxLayout" name="verticalLayout_33">
+        <layout class="QVBoxLayout" name="verticalLayout_29">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_24">
+           <item>
+            <widget class="QLabel" name="label_55">
+             <property name="text">
+              <string>Backend</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_52">
+             <property name="text">
+              <string notr="true">:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="hwacc_backend">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
          <item>
           <widget class="QGroupBox" name="enable_hwdec">
            <property name="title">
