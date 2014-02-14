@@ -15,7 +15,7 @@ struct mp_hwdec_info;	class VideoOutput;
 
 class HwAcc {
 public:
-	enum Type {VaApiGLX, VaApiX11, VdpauX11, Vda};
+	enum Type {VaApiGLX, VdpauX11, Vda};
 	virtual ~HwAcc();
 	static void initialize();
 	static void finalize();
@@ -23,6 +23,7 @@ public:
 	static QList<DeintMethod> fullDeintList();
 	static bool supports(AVCodecID codec);
 	static bool supports(DeintMethod method);
+	static Type backend();
 	static const char *codecName(int id);
 	static AVCodecID codecId(const char *name);
 	virtual mp_image *getImage(mp_image *mpi) = 0;

@@ -855,8 +855,10 @@ void PlayEngine::onMpvStageChanged(int stage) {
 			d->mpctx->opts->hwdec_codecs = nullptr;
 		} else {
 	#ifdef Q_OS_LINUX
-			d->mpctx->opts->hwdec_api = HWDEC_VAAPI;
-//			d->mpctx->opts->hwdec_api = HWDEC_VDPAU;
+			if (HwAcc::backend() == HwAcc::VdpauX11)
+				d->mpctx->opts->hwdec_api = HWDEC_VDPAU;
+			else
+				d->mpctx->opts->hwdec_api = HWDEC_VAAPI;
 	#elif defined(Q_OS_MAC)
 			d->mpctx->opts->hwdec_api = HWDEC_VDA;
 	#endif

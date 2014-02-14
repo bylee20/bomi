@@ -18,13 +18,25 @@ mp_image *nullMpImage(uint imgfmt, int width, int height, void *arg, void(*free)
 	auto mpi = nullMpImage(arg, free); mp_image_setfmt(mpi, imgfmt); mp_image_set_size(mpi, width, height); return mpi;
 }
 
+HwAcc::Type HwAcc::backend() {
+#ifdef Q_OS_MAC
+	return Vda;
+#endif
+#ifdef Q_OS_LINUX
+	static const Type type = (qgetenv("CMPLAYER_HWACC_BACKEND").toLower() == "vdpau") ? VdpauX11 : VaApiGLX;
+	return type;
+#endif
+}
+
 bool HwAcc::supports(AVCodecID codec) {
 #ifdef Q_OS_MAC
 	return codec == AV_CODEC_ID_H264;
 #endif
 #ifdef Q_OS_LINUX
-	return Vdpau::codec(codec) != nullptr;
-	return VaApi::codec(codec) != nullptr;
+	if (backend() == VdpauX11)
+		return Vdpau::codec(codec) != nullptr;
+	else
+		return VaApi::codec(codec) != nullptr;
 #endif
 }
 
@@ -49,13 +61,17 @@ QList<DeintMethod> HwAcc::fullDeintList() {
 }
 
 void HwAcc::initialize() {
-	VaApi::initialize();
-	Vdpau::initialize();
+	if (backend() == VdpauX11)
+		Vdpau::initialize();
+	else
+		VaApi::initialize();
 }
 
 void HwAcc::finalize() {
-	VaApi::finalize();
-	Vdpau::finalize();
+	if (backend() == VdpauX11)
+		Vdpau::finalize();
+	else
+		VaApi::finalize();
 }
 
 struct CodecInfo {
@@ -128,9 +144,9 @@ int HwAcc::init(lavc_ctx *ctx) {
 		return -1;
 	HwAcc *acc = nullptr;
 #ifdef Q_OS_LINUX
-	if (format[0] == IMGFMT_VAAPI)
+	if (format[0] == IMGFMT_VAAPI && backend() == VaApiGLX)
 		acc = new HwAccVaApi(ctx->avctx->codec_id);
-	else if (format[0] == IMGFMT_VDPAU)
+	else if (format[0] == IMGFMT_VDPAU && backend() == VdpauX11)
 		acc = new HwAccVdpau(ctx->avctx->codec_id);
 #endif
 #ifdef Q_OS_MAC

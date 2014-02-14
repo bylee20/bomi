@@ -77,14 +77,6 @@ void Vdpau::initialize() {
 	push(VDP_DECODER_PROFILE_MPEG4_PART2_ASP, FF_PROFILE_MPEG4_ADVANCED_SIMPLE, AV_CODEC_ID_MPEG4, 2);
 	push(VDP_DECODER_PROFILE_MPEG4_PART2_SP, FF_PROFILE_MPEG4_SIMPLE, AV_CODEC_ID_MPEG4, 2);
 	_Debug("VDPAU device is initialized.");
-//	d.gl = new QOpenGLContext;
-//	d.gl->create();
-
-//	QOffscreenSurface *surface = new QOffscreenSurface;
-//	surface->setFormat(d.gl->format());
-//	surface->create();
-//	d.gl->makeCurrent(surface);
-//	initializeInterop(d.gl);
 }
 
 void Vdpau::finalize() {
@@ -95,7 +87,7 @@ void Vdpau::finalize() {
 }
 
 void Vdpau::initializeInterop(QOpenGLContext *ctx) {
-	if (!d.initialize) {
+	if (d.init && !d.initialize) {
 		d.gl = ctx;
 		proc("glVDPAUInitNV", d.initialize);
 		proc("glVDPAUFiniNV", d.finalize);

@@ -228,6 +228,7 @@ VaApi::VaApi() {
 #ifdef USE_VAVPP
 	initFilters();
 #endif
+	_Debug("VA-API is initialized.");
 }
 
 void VaApi::initialize() {
