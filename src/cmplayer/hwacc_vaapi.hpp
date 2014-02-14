@@ -2,7 +2,7 @@
 #define HWACC_VAAPI_HPP
 
 #include "hwacc.hpp"
-#include "log.hpp"
+#include "hwacc_helper.hpp"
 
 #ifdef Q_OS_LINUX
 
@@ -18,25 +18,16 @@ static constexpr VAProfile VAProfileNone = (VAProfile)-1;
 #include <va/va_vpp.h>
 #endif
 
-struct VaApiStatusChecker {
-	DECLARE_LOG_CONTEXT(VA-API)
-	virtual ~VaApiStatusChecker() {}
-	bool isSuccess(VAStatus status) { m_status = status; return isSuccess(); }
-	bool isSuccess() const { return m_status == VA_STATUS_SUCCESS; }
-	VAStatus status() const { return m_status; }
-	const char *error() const { return vaErrorStr(m_status); }
-	bool check(VAStatus status, const QString &onError = QString()) {
-		if (isSuccess(status))
-			return true;
-		_Error("Error %%(0x%%): %%", error(), QString::number(m_status, 16), onError);
-		return false;
-	}
-	bool check(VAStatus status, const char *onError = "") { return check(status, _L(onError)); }
-private:
-	VAStatus m_status = VA_STATUS_SUCCESS;
+template<> struct HwAccX11Trait<IMGFMT_VAAPI> {
+	using Profile = VAProfile;
+	using Status = VAStatus;
+	static constexpr Status success = VA_STATUS_SUCCESS;
+	static constexpr const char *name = "VA-API";
+	static const char *error(Status status) { return vaErrorStr(status); }
 };
 
-struct vaapi_context;
+typedef HwAccX11StatusChecker<IMGFMT_VAAPI> VaApiStatusChecker;
+typedef HwAccX11Codec<IMGFMT_VAAPI> VaApiCodec;
 
 class HwAccVaApi : public HwAcc, public VaApiStatusChecker {
 public:
@@ -82,8 +73,6 @@ private:
 };
 #endif
 
-typedef HwAccCodec<VAProfile> VaApiCodec;
-
 struct VaApi : public VaApiStatusChecker {
 	static const VaApiCodec *codec(AVCodecID id) { return find(id, get().m_supported); }
 	static VADisplay glx() {return m_display;}
@@ -95,6 +84,8 @@ struct VaApi : public VaApiStatusChecker {
 #endif
 	static int surfaceFormat() {return get().m_surfaceFormat;}
 	static int toVAType(int mp_fields, bool first);
+	static void finalize();
+	static void initialize();
 private:
 	void setSurfaceFormat(int format) { m_surfaceFormat = format; }
 	bool hasEntryPoint(VAEntrypoint point, VAProfile profile = VAProfileNone) {
@@ -111,15 +102,12 @@ private:
 #endif
 	static VaApi &get();
 	VaApi();
-	void finalize();
 	QVector<VAProfile> m_profiles;
 	QMap<AVCodecID, VaApiCodec> m_supported;
 	QMap<VAProfile, QVector<VAEntrypoint>> m_entries;
 	int m_surfaceFormat = 0;
 	static VADisplay m_display;
 	static bool init;
-	friend void initialize_vaapi();
-	friend void finalize_vaapi();
 	friend class HwAccVaApi;
 };
 
@@ -157,8 +145,5 @@ private:
 };
 
 #endif
-
-void initialize_vaapi();
-void finalize_vaapi();
 
 #endif // HWACC_VAAPI_HPP

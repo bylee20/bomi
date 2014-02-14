@@ -66,7 +66,7 @@ private:
 				} else
 					m_log.push_back(c);
 			}
-			if (m_pos >= m_format.size()) {
+			if (m_pos > m_format.size()) {
 				qDebug("Wrong log placeholders");
 				return;
 			}

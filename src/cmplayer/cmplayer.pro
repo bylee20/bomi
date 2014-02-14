@@ -16,7 +16,7 @@ precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include/chardet /usr/include/chardet
-LIBS += -L$${LIB_DIR} -lcmplayer_mpv -lbz2 -lz
+LIBS += -L$${LIB_DIR} -lcmplayer_mpv -lbz2 -lz -lvdpau
 
 PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
     libmpg123 libass libquvi$${LIBQUVI_SUFFIX} icu-uc chardet
@@ -146,7 +146,8 @@ HEADERS += playengine.hpp \
     audiomixer_p.hpp \
     mrlstate_old.hpp \
     log.hpp \
-    openglmisc.hpp
+    openglmisc.hpp \
+    hwacc_helper.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -231,7 +232,8 @@ SOURCES += main.cpp \
     audiomixer.cpp \
     mrlstate_old.cpp \
     log.cpp \
-    openglmisc.cpp
+    openglmisc.cpp \
+    hwacc_helper.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

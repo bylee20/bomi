@@ -230,20 +230,20 @@ VaApi::VaApi() {
 #endif
 }
 
-void VaApi::finalize() {
-	auto close = [] (VADisplay &dpy) { if (dpy) { vaTerminate(dpy); dpy = nullptr; } };
-	close(m_display);
-	init = false;
-}
-
-void initialize_vaapi() {
+void VaApi::initialize() {
 	if (!VaApi::init)
 		VaApi::get().glx();
 }
 
-void finalize_vaapi() {
-	if (VaApi::init)
-		VaApi::get().finalize();
+void VaApi::finalize() {
+	if (!VaApi::init)
+		return;
+	auto &dpy = VaApi::get().m_display;
+	if (dpy) {
+		vaTerminate(dpy);
+		dpy = nullptr;
+	}
+	init = false;
 }
 
 void VaApi::initCodecs() {

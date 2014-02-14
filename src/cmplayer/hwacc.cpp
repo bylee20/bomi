@@ -23,6 +23,7 @@ bool HwAcc::supports(AVCodecID codec) {
 	return codec == AV_CODEC_ID_H264;
 #endif
 #ifdef Q_OS_LINUX
+	return Vdpau::codec(codec) != nullptr;
 	return VaApi::codec(codec) != nullptr;
 #endif
 }
@@ -48,11 +49,13 @@ QList<DeintMethod> HwAcc::fullDeintList() {
 }
 
 void HwAcc::initialize() {
-	initialize_vaapi();
+	VaApi::initialize();
+	Vdpau::initialize();
 }
 
 void HwAcc::finalize() {
-	finalize_vaapi();
+	VaApi::finalize();
+	Vdpau::finalize();
 }
 
 struct CodecInfo {
@@ -127,8 +130,8 @@ int HwAcc::init(lavc_ctx *ctx) {
 #ifdef Q_OS_LINUX
 	if (format[0] == IMGFMT_VAAPI)
 		acc = new HwAccVaApi(ctx->avctx->codec_id);
-//	else if (format[0] == IMGFMT_VDPAU)
-//		acc = new HwAccVdpau(ctx->avctx->codec_id);
+	else if (format[0] == IMGFMT_VDPAU)
+		acc = new HwAccVdpau(ctx->avctx->codec_id);
 #endif
 #ifdef Q_OS_MAC
 	if (format[0] == IMGFMT_VDA)

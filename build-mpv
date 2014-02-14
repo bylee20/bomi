@@ -9,7 +9,7 @@ args="--disable-manpage-build --disable-pdf-build --disable-vf-dlopen-filters --
   --disable-cocoa --disable-wayland --disable-x11 --disable-xss --disable-xext --disable-xv --disable-xinerama \
   --disable-xf86vm --disable-xf86xk --disable-gl-cocoa --disable-gl-x11 --disable-gl-wayland --disable-gl-win32 --disable-gl \
   --disable-corevideo --disable-vdpau --disable-vdpau-gl-x11 --disable-vaapi --disable-vaapi-vpp --disable-vaapi-glx --disable-caca \
-  --disable-dvb --disable-dvbin --disable-jpeg --disable-direct3d --disable-vda-gl --disable-vdpau-decoder --disable-vdpau-hwaccel \
+  --disable-dvb --disable-dvbin --disable-jpeg --disable-direct3d --disable-vda-gl --disable-vdpau-decoder \
   --disable-radio --disable-radio-capture --disable-radio-v4l2 --disable-tv --disable-tv-v4l2 --disable-libv4l2 --disable-pvr \
   --disable-audio-input --disable-lua"
 
@@ -20,7 +20,7 @@ if test $kern = "Darwin"; then
   njobs=`sysctl hw.ncpu | awk '{print $2}'`
 elif test $kern = "Linux"; then
   echo "Build for Linux"
-  args="$args --enable-oss-audio --enable-pulse --enable-jack --enable-alsa" # --enable-vaapi-hwaccel
+  args="$args --enable-oss-audio --enable-pulse --enable-jack --enable-alsa" # --enable-vaapi-hwaccel  --enable-vdpau-hwaccel
   njobs=$(nproc)
 else
   echo "Not supported!"

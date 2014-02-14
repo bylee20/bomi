@@ -13,14 +13,21 @@
 
 class OpenGLCompat {
 public:
+	enum Extension {
+		TextureRG,
+		TextureFloat,
+		Debug,
+		NvVdpauInterop,
+		FramebufferObject,
+		AppleYCbCr422,
+		MesaYCbCrTexture
+	};
 	static void initialize(QOpenGLContext *ctx);
 	static void finalize(QOpenGLContext *ctx);
 	static OpenGLTextureFormat textureFormat(GLenum format, int bpc = 1);
-	static QByteArray rg(const char *rg) { return HasRG ? QByteArray(rg) : QByteArray(rg).replace('g', 'a'); }
-	static int maximumTextureSize() { return MaxTexSize; }
-	static bool hasRG() { return HasRG; }
-	static bool hasFloat() { return HasFloat; }
-	static bool hasDebug() { return HasDebug; }
+	static QByteArray rg(const char *rg) { return  hasExtension(TextureRG) ? QByteArray(rg) : QByteArray(rg).replace('g', 'a'); }
+	static int maximumTextureSize() { return m_maxTexSize; }
+	static bool hasExtension(Extension ext) { return m_extensions & ext; }
 	static const OpenGLCompat &get() { return c; }
 	static OpenGLTexture allocateDitheringTexture(GLuint id, Dithering type);
 	static QOpenGLFunctions *functions() {
@@ -52,8 +59,8 @@ private:
 	static OpenGLCompat c;
 	struct Data;
 	Data *d;
-	static bool HasRG, HasFloat, HasFbo, HasDebug;
-	static int MaxTexSize;
+	static int m_maxTexSize;
+	static int m_extensions;
 };
 
 #ifdef CMPLAYER_RELEASE

@@ -307,7 +307,8 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
 #endif
 )";
 
-	code.replace("__DEC_RENORM__", OpenGLCompat::hasFloat() ? "#define renormalize(a, b) (a)" : "vec4 renormalize(const in vec4 v, float mul) { return v*mul-0.5*mul; }");
+	const bool texf = OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat);
+	code.replace("__DEC_RENORM__", texf ? "#define renormalize(a, b) (a)" : "vec4 renormalize(const in vec4 v, float mul) { return v*mul-0.5*mul; }");
 	QByteArray interpolated;
 	switch (category) {
 	case Fetch16:
@@ -521,7 +522,7 @@ void Interpolator::allocate(Texture &texture1, Texture &texture2) const {
 	texture1.width = IntSamples;
 	texture1.height = 0;
 	texture1.format.pixel = GL_BGRA;
-	if (OpenGLCompat::hasFloat()) {
+	if (OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat)) {
 		texture1.format.internal = GL_RGBA16F;
 		texture1.format.type = GL_FLOAT;
 		texture1.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, d->lut1.data());

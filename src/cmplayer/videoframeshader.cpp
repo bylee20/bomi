@@ -486,6 +486,9 @@ void VideoFrameShader::fillInfo() {
 		m_csp = MP_CSP_RGB;
 		m_textures[0].bind();
 		vaCreateSurfaceGLX(VaApi::glx(), m_textures[0].target, m_textures[0].id, &m_vaSurfaceGLX);
+	} else if (format.imgfmt() == IMGFMT_VDPAU) {
+		qDebug() << "vdpau!";
+		Q_ASSERT(m_textures.isEmpty());
 	}
 #endif
 }

@@ -13,32 +13,6 @@ struct lavc_ctx;		struct AVFrame;
 struct mp_image;		struct vd_lavc_hwdec;
 struct mp_hwdec_info;	class VideoOutput;
 
-template<typename T>
-struct HwAccCodec {
-	HwAccCodec() {}
-	HwAccCodec(const QVector<T> &available, const QVector<T> &p, const QVector<int> &av, int surfaces, AVCodecID id) {
-		Q_ASSERT(p.size() == av.size());
-		for (int i=0; i<p.size(); ++i) {
-			if (available.contains(p[i])) {
-				profiles.push_back(p[i]);
-				avProfiles.push_back(av[i]);
-			}
-		}
-		if (!profiles.isEmpty()) {
-			this->surfaces = surfaces;
-			this->id = id;
-		}
-	}
-	T profile(int av) const {
-		const int idx = avProfiles.indexOf(av);
-		return profiles[idx < 0 || av == FF_PROFILE_UNKNOWN ? 0 : idx];
-	}
-	AVCodecID id = AV_CODEC_ID_NONE;
-	int surfaces = 0, level = 0;
-	QVector<T> profiles;
-	QVector<int> avProfiles;
-};
-
 class HwAcc {
 public:
 	enum Type {VaApiGLX, VaApiX11, VdpauX11, Vda};

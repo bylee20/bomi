@@ -36,10 +36,8 @@
 
 DECLARE_LOG_CONTEXT(Main)
 
-extern void initialize_vaapi();
-extern void finalize_vaapi();
-extern void initialize_vdpau();
-extern void finalize_vdpau();
+extern void initialize_vdpau_interop(QOpenGLContext *context);
+extern void finalize_vdpau_interop(QOpenGLContext *context);
 
 static const int AskStartTimeEvent = (QEvent::User + 1);
 
@@ -502,7 +500,7 @@ struct MainWindow::Data {
 	void initWidget() {
 		view = new MainView(p);
 		auto format = view->requestedFormat();
-		if (OpenGLCompat::hasDebug())
+		if (OpenGLCompat::hasExtension(OpenGLCompat::Debug))
 			format.setOption(QSurfaceFormat::DebugContext);
 		view->setFormat(format);
 		view->setPersistentOpenGLContext(true);
@@ -523,7 +521,8 @@ struct MainWindow::Data {
 		p->setMinimumSize(QSize(400, 300));
 
 		connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
-			OpenGLCompat::initialize(view->openglContext());
+			auto context = view->openglContext();
+			OpenGLCompat::initialize(context);
 			auto *logger = OpenGLCompat::logger();
 			if (logger) {
 				connect(logger, &QOpenGLDebugLogger::messageLogged, p
@@ -534,9 +533,13 @@ struct MainWindow::Data {
 				logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
 #endif
 			}
+			initialize_vdpau_interop(context);
 		}, Qt::DirectConnection);
-		connect(view, &QQuickView::sceneGraphInvalidated, p
-			, [this] () { OpenGLCompat::finalize(view->openglContext()); }, Qt::DirectConnection);
+		connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
+			auto context = QOpenGLContext::currentContext();
+			finalize_vdpau_interop(context);
+			OpenGLCompat::finalize(context);
+		}, Qt::DirectConnection);
 		desktop = cApp.desktop();
 		auto reset = [this] () {
 			if (!desktop->isVirtualDesktop())
@@ -796,10 +799,6 @@ void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
 MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data(this)) {
-
-	initialize_vaapi();
-	initialize_vdpau();
-
 	qDebug() << "Initialize engine";
 
 	d->engine.run();
@@ -883,8 +882,6 @@ MainWindow::~MainWindow() {
 	exit();
 	delete d->view;
 	delete d;
-	finalize_vdpau();
-	finalize_vaapi();
 }
 
 void MainWindow::connectMenus() {

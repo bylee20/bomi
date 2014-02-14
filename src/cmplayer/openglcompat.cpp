@@ -10,11 +10,8 @@ extern "C" {
 DECLARE_LOG_CONTEXT(OpenGL)
 
 OpenGLCompat OpenGLCompat::c;
-bool OpenGLCompat::HasRG = false;
-bool OpenGLCompat::HasFloat = false;
-int OpenGLCompat::MaxTexSize = 0;
-bool OpenGLCompat::HasFbo = false;
-bool OpenGLCompat::HasDebug = false;
+int OpenGLCompat::m_maxTexSize = 0;
+int OpenGLCompat::m_extensions = 0;
 
 struct OpenGLCompat::Data {
 	bool init = false;
@@ -23,7 +20,6 @@ struct OpenGLCompat::Data {
 	QMap<GLenum, OpenGLTextureFormat> formats[2];
 	QVector<GLfloat> fruit;
 	QOpenGLTexture::TextureFormat fboFormat = QOpenGLTexture::RGBA8_UNorm;
-
 };
 
 OpenGLCompat::OpenGLCompat()
@@ -122,17 +118,30 @@ void OpenGLCompat::check() {
 	d->major = version.first;
 	d->minor = version.second;
 	_Info("Version: %%.%%", d->major, d->minor);
-	if (version.first*10+version.second < 21)
+	auto versionNumber = [] (int major, int minor) { return major*100 + minor; };
+	const int current = versionNumber(version.first, version.second);
+	if (current < versionNumber(2, 1))
 		_Fatal("OpenGL version is too low. CMPlayer requires OpenGL 2.1 or higher.");
 
 	QStringList extensions;
-	if ((HasRG = d->major >= 3 || gl.hasExtension("GL_ARB_texture_rg")))
-		extensions.append("GL_ARB_texture_rg");
-	if ((HasFloat = d->major >= 3 || gl.hasExtension("GL_ARB_texture_float")))
-		extensions.append("GL_ARB_texture_float");
-	if ((HasDebug = gl.hasExtension("GL_KHR_debug")))
-		extensions.append("GL_KHR_debug");
-	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &MaxTexSize);
+	auto checkExtension = [&] (const char *name, Extension ext, int major = -1, int minor = 0) {
+		if ((major > 0 && current >= versionNumber(major, minor)) || gl.hasExtension(name)) {
+			extensions.append(name);
+			m_extensions |= ext;
+		}
+	};
+
+	checkExtension("GL_ARB_texture_rg", TextureRG, 3);
+	checkExtension("GL_ARB_texture_float", TextureFloat, 3);
+	checkExtension("GL_KHR_debug", Debug);
+	checkExtension("GL_NV_vdpau_interop", NvVdpauInterop);
+	checkExtension("GL_APPLE_ycbcr_422", AppleYCbCr422);
+	checkExtension("GL_MESA_ycbcr_texture", MesaYCbCrTexture);
+	if (QOpenGLFramebufferObject::hasOpenGLFramebufferObjects()) {
+		extensions.append("GL_ARB_framebuffer_object");
+		m_extensions |= FramebufferObject;
+	}
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTexSize);
 
 	d->formats[0][GL_RED] = {GL_R8, GL_RED, GL_UNSIGNED_BYTE};
 	d->formats[0][GL_RG] = {GL_RG8, GL_RG, GL_UNSIGNED_BYTE};
@@ -151,15 +160,16 @@ void OpenGLCompat::check() {
 	d->formats[1][GL_BGR] = {GL_RGB16, GL_BGR, GL_UNSIGNED_SHORT};
 	d->formats[1][GL_BGRA] = {GL_RGBA16, GL_BGRA, GL_UNSIGNED_SHORT};
 	d->formats[1][GL_RGBA] = {GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT};
+
+	const bool rg = hasExtension(TextureRG);
 	for (auto &format : d->formats) {
-		format[1] = HasRG ? format[GL_RED] : format[GL_LUMINANCE];
-		format[2] = HasRG ? format[GL_RG]  : format[GL_LUMINANCE_ALPHA];
+		format[1] = rg ? format[GL_RED] : format[GL_LUMINANCE];
+		format[2] = rg ? format[GL_RG]  : format[GL_LUMINANCE_ALPHA];
 		format[3] = format[GL_BGR];
 		format[4] = format[GL_BGRA];
 	}
 
-	HasFbo = QOpenGLFramebufferObject::hasOpenGLFramebufferObjects();
-	if (!HasFbo)
+	if (hasExtension(FramebufferObject))
 		_Fatal("FBO is not available. FBO support is essential.");
 	auto fbo = new OpenGLFramebufferObject(QSize(16, 16), QOpenGLTexture::RGBA16_UNorm);
 	if (fbo->isValid()) {
@@ -173,7 +183,7 @@ void OpenGLCompat::check() {
 	}
 	_Delete(fbo);
 	if (!extensions.isEmpty())
-		_Info("Extensions: %%", extensions.join(", "));
+		_Info("Available extensions: %%", extensions.join(", "));
 }
 
 void OpenGLCompat::finalize(QOpenGLContext */*ctx*/) {
@@ -192,7 +202,7 @@ void OpenGLCompat::initialize(QOpenGLContext *ctx) {
 		return;
 	d->init = true;
 	if (cApp.isOpenGLDebugLoggerRequested()) {
-		if (HasDebug && ctx->format().testOption(QSurfaceFormat::DebugContext)) {
+		if (hasExtension(Debug) && ctx->format().testOption(QSurfaceFormat::DebugContext)) {
 			d->logger = new QOpenGLDebugLogger;
 			if (!d->logger->initialize()) {
 				logError("OpenGLCompat::initialize()");
@@ -225,9 +235,10 @@ OpenGLTexture OpenGLCompat::allocateDitheringTexture(GLuint id, Dithering type) 
 			fruit.resize(size*size);
 			mp_make_fruit_dither_matrix(fruit.data(), sizeb);
 		}
-		texture.format.internal = HasRG ? GL_R16 : GL_LUMINANCE16;
-		texture.format.pixel = HasRG ? GL_RED : GL_LUMINANCE;
-		if (HasFloat) {
+		const bool rg = hasExtension(TextureRG);
+		texture.format.internal = rg ? GL_R16 : GL_LUMINANCE16;
+		texture.format.pixel = rg ? GL_RED : GL_LUMINANCE;
+		if (hasExtension(TextureFloat)) {
 			texture.format.type = GL_FLOAT;
 			data.resize(sizeof(GLfloat)*fruit.size());
 			memcpy(data.data(), fruit.data(), data.size());

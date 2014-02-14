@@ -856,6 +856,7 @@ void PlayEngine::onMpvStageChanged(int stage) {
 		} else {
 	#ifdef Q_OS_LINUX
 			d->mpctx->opts->hwdec_api = HWDEC_VAAPI;
+//			d->mpctx->opts->hwdec_api = HWDEC_VDPAU;
 	#elif defined(Q_OS_MAC)
 			d->mpctx->opts->hwdec_api = HWDEC_VDA;
 	#endif
@@ -1028,8 +1029,6 @@ void PlayEngine::exec() {
 	auto tmp_ao = d->mpctx->opts->audio_driver_list->name;
 	d->init = true;
 	d->quit = false;
-	initialize_vaapi();
-	initialize_vdpau();
 	mp_play_files(mpctx);
 	d->hasImage = false;
 	qDebug() << "terminate loop";
@@ -1037,8 +1036,6 @@ void PlayEngine::exec() {
 	mpctx->opts->hwdec_api = HWDEC_NONE;
 	mpctx->opts->audio_driver_list->name = tmp_ao;
 	exit_player(mpctx, EXIT_QUIT);
-	finalize_vaapi();
-	finalize_vdpau();
 	d->mpctx = nullptr;
 	d->init = false;
 	qDebug() << "terminate engine";

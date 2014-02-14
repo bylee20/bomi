@@ -1,16 +1,26 @@
 #include "hwacc_vdpau.hpp"
 #include "stdafx.hpp"
 
-void initialize_vdpau() {}
-void finalize_vdpau() {}
-
-#if 0
-
 extern "C" {
 #include <libavcodec/vdpau.h>
 #include <vdpau/vdpau_x11.h>
+#include <vdpau/vdpau.h>
 #include <video/mp_image.h>
 #include <video/mp_image_pool.h>
+}
+
+void initialize_vdpau_interop(QOpenGLContext *ctx) {
+	Vdpau::initializeInterop(ctx);
+}
+
+void finalize_vdpau_interop(QOpenGLContext *ctx) {
+	Vdpau::finalizeInterop(ctx);
+}
+
+const char *HwAccX11Trait<IMGFMT_VDPAU>::error(Status status) {
+	if (Vdpau::isInitialized())
+		return Vdpau::getErrorString(status);
+	return status == success ? "SUCCESS" : "ERROR";
 }
 
 Vdpau::Data Vdpau::d;
@@ -18,9 +28,10 @@ Vdpau::Data Vdpau::d;
 void Vdpau::initialize() {
 	if (d.init)
 		return;
-	if ((d.status = vdp_device_create_x11(QX11Info::display(), QX11Info::appScreen(), &d.device, &d.proc)) != VDP_STATUS_OK)
+	if (!d.isSuccess(vdp_device_create_x11(QX11Info::display(), QX11Info::appScreen(), &d.device, &d.proc))) {
+		_Error("Cannot intialize VDPAU device");
 		return;
-	d.init = true;
+	}
 	proc(VDP_FUNC_ID_GET_ERROR_STRING, d.getErrorString);
 	proc(VDP_FUNC_ID_GET_INFORMATION_STRING, d.getInformationString);
 	proc(VDP_FUNC_ID_DEVICE_DESTROY, d.deviceDestroy);
@@ -33,8 +44,11 @@ void Vdpau::initialize() {
 	proc(VDP_FUNC_ID_DECODER_DESTROY, d.decoderDestroy);
 	proc(VDP_FUNC_ID_DECODER_RENDER, d.decoderRender);
 	proc(VDP_FUNC_ID_DECODER_QUERY_CAPABILITIES, d.decoderQueryCapabilities);
-	if (d.status != VDP_STATUS_OK)
+	d.init = true;
+	if (!d.isSuccess()) {
+		_Error("Cannot get VDPAU functions.");
 		return;
+	}
 	auto push = [] (VdpDecoderProfile profile, int avProfile, AVCodecID codec, int surfaces) {
 		VdpBool supported = false; quint32 level = 0, blocks = 0, width = 0, height = 0;
 		if (d.decoderQueryCapabilities(d.device, profile, &supported, &level, &blocks, &width, &height) != VDP_STATUS_OK || !supported)
@@ -62,8 +76,15 @@ void Vdpau::initialize() {
 	push(VDP_DECODER_PROFILE_VC1_ADVANCED, FF_PROFILE_VC1_ADVANCED, AV_CODEC_ID_WMV3, 2);
 	push(VDP_DECODER_PROFILE_MPEG4_PART2_ASP, FF_PROFILE_MPEG4_ADVANCED_SIMPLE, AV_CODEC_ID_MPEG4, 2);
 	push(VDP_DECODER_PROFILE_MPEG4_PART2_SP, FF_PROFILE_MPEG4_SIMPLE, AV_CODEC_ID_MPEG4, 2);
+	_Debug("VDPAU device is initialized.");
+//	d.gl = new QOpenGLContext;
+//	d.gl->create();
 
-	qDebug() << "VDPAU initialized!";
+//	QOffscreenSurface *surface = new QOffscreenSurface;
+//	surface->setFormat(d.gl->format());
+//	surface->create();
+//	d.gl->makeCurrent(surface);
+//	initializeInterop(d.gl);
 }
 
 void Vdpau::finalize() {
@@ -73,8 +94,29 @@ void Vdpau::finalize() {
 	}
 }
 
-void initialize_vdpau() { Vdpau::initialize(); }
-void finalize_vdpau() { Vdpau::finalize(); }
+void Vdpau::initializeInterop(QOpenGLContext *ctx) {
+	if (!d.initialize) {
+		d.gl = ctx;
+		proc("glVDPAUInitNV", d.initialize);
+		proc("glVDPAUFiniNV", d.finalize);
+		proc("glVDPAURegisterVideoSurfaceNV", d.registerVideoSurface);
+		proc("glVDPAURegisterOutputSurfaceNV", d.registerOutputSurface);
+		proc("glVDPAUIsSurfaceNV", d.isSurface);
+		proc("glVDPAUUnregisterSurfaceNV", d.unregisterSurface);
+		proc("glVDPAUGetSurfaceivNV", d.getSurfaceiv);
+		proc("glVDPAUSurfaceAccessNV", d.surfaceAccess);
+		proc("glVDPAUMapSurfacesNV", d.mapSurfaces);
+		proc("glVDPAUUnmapSurfacesNV", d.unmapSurfaces);
+		d.initialize(reinterpret_cast<void*>(d.device), reinterpret_cast<void*>(d.proc));
+	}
+}
+
+void Vdpau::finalizeInterop(QOpenGLContext *ctx) {
+	if (d.initialize) {
+		Q_ASSERT(ctx == d.gl);
+		d.finalize();
+	}
+}
 
 struct VdpauVideoSurface {
 	VdpVideoSurface id = VDP_INVALID_HANDLE;
@@ -83,9 +125,7 @@ struct VdpauVideoSurface {
 
 struct HwAccVdpau::Data {
 	AVVDPAUContext context;
-	VdpStatus status = VDP_STATUS_OK;
 	QSize avSize = {0, 0};
-	bool isSuccess(VdpStatus s) { return (status = s) == VDP_STATUS_OK; }
 	QVector<VdpauVideoSurface> surfaces;
 	QVector<VdpauVideoSurface>::iterator it;
 	mp_image_pool *pool = nullptr;
@@ -109,10 +149,6 @@ HwAccVdpau::~HwAccVdpau() {
 	delete d;
 }
 
-bool HwAccVdpau::isOk() const {
-	return d->status == VDP_STATUS_OK;
-}
-
 void HwAccVdpau::freeContext() {
 	for (auto it = d->surfaces.begin(); it != d->surfaces.end(); ++it) {
 		if (it->id != VDP_INVALID_HANDLE)
@@ -122,30 +158,29 @@ void HwAccVdpau::freeContext() {
 	d->it = d->surfaces.end();
 	if (d->context.decoder != VDP_INVALID_HANDLE) {
 		Vdpau::decoderDestroy(d->context.decoder);
-		av_freep(&d->context.bitstream_buffers);
 		d->context.decoder = VDP_INVALID_HANDLE;
 	}
 }
 
 bool HwAccVdpau::fillContext(AVCodecContext *avctx) {
+	if (!isSuccess())
+		return false;
 	freeContext();
-	d->status = VDP_STATUS_ERROR;
 	auto codec = Vdpau::codec(avctx->codec_id);
 	if (!codec)
 		return false;
 	const auto profile = codec->profile(avctx->profile);
-	qDebug() << "level" << avctx->level;
 	if (profile.width < avctx->width || profile.height < avctx->height || profile.level < avctx->level)
 		return false;
 	VdpBool supports = false; uint mwidth = 0, mheight = 0;
 	const VdpChromaType chroma = VDP_CHROMA_TYPE_420;
-	if (!d->isSuccess(Vdpau::videoSurfaceQueryCapabilities(chroma, &supports, &mwidth, &mheight)))
+	if (!isSuccess(Vdpau::videoSurfaceQueryCapabilities(chroma, &supports, &mwidth, &mheight)))
 		return false;
 	if (!supports || (int)mwidth < avctx->width || (int)mheight < avctx->height)
 		return false;
 	VdpYCbCrFormat format;
 	auto check = [this, &format, &supports] (VdpYCbCrFormat f) {
-		if (!d->isSuccess(Vdpau::videoSurfaceQueryGetPutBitsYCbCrCapabilities(chroma, format = f, &supports)))
+		if (!isSuccess(Vdpau::videoSurfaceQueryGetPutBitsYCbCrCapabilities(chroma, format = f, &supports)))
 			return false;
 		return (bool)supports;
 	};
@@ -159,13 +194,13 @@ bool HwAccVdpau::fillContext(AVCodecContext *avctx) {
 		d->imgfmt = IMGFMT_NV12;
 	const int width = (avctx->width + 1) & ~1;
 	const int height = (avctx->height + 3) & ~3;
-	if (!d->isSuccess(Vdpau::decoderCreate(profile.id, width, height, codec->surfaces, &d->context.decoder))) {
+	if (!isSuccess(Vdpau::decoderCreate(profile.id, width, height, codec->surfaces, &d->context.decoder))) {
 		d->context.decoder = VDP_INVALID_HANDLE;
 		return false;
 	}
 	d->surfaces.resize(codec->surfaces + 1);
 	for (auto it = d->surfaces.begin(); it != d->surfaces.end(); ++it) {
-		if (!d->isSuccess(Vdpau::videoSurfaceCreate(chroma, width, height, &it->id)))
+		if (!isSuccess(Vdpau::videoSurfaceCreate(chroma, width, height, &it->id)))
 			return false;
 		if (it->id == VDP_INVALID_HANDLE)
 			return false;
@@ -174,17 +209,8 @@ bool HwAccVdpau::fillContext(AVCodecContext *avctx) {
 	d->surfaceSize = QSize(width, height);
 	d->it = d->surfaces.begin();
 	d->avSize = QSize(avctx->width, avctx->height);
-	d->status = VDP_STATUS_OK;
 	d->context.render = Vdpau::decoderRender;
 	return true;
-}
-
-bool HwAccVdpau::check(AVCodecContext *avctx) {
-	if (avctx->pix_fmt != AV_PIX_FMT_VDPAU || !HwAccVdpau::isOk())
-		return false;
-	if (d->avSize.width() == avctx->width && d->avSize.height() == avctx->height)
-		return true;
-	return fillContext(avctx);
 }
 
 mp_image *HwAccVdpau::getSurface() {
@@ -196,14 +222,10 @@ mp_image *HwAccVdpau::getSurface() {
 	Q_ASSERT(d->it->id != VDP_INVALID_HANDLE);
 	d->it->ref = true;
 	auto release = [] (void *arg) {*(bool*)arg = false;};
-	auto mpi = nullImage(IMGFMT_VDPAU, d->avSize.width(), d->avSize.height(), &d->it->ref, release);
+	auto mpi = nullMpImage(IMGFMT_VDPAU, d->avSize.width(), d->avSize.height(), &d->it->ref, release);
 	mpi->planes[0] = mpi->planes[3] = (uchar*)(void*)(uintptr_t)(d->it->id);
 	mpi->planes[1] = mpi->planes[2] = nullptr;
 	return mpi;
-}
-
-bool HwAccVdpau::isAvailable(AVCodecID codec) const {
-	return Vdpau::codec(codec) != nullptr;
 }
 
 void *HwAccVdpau::context() const {
@@ -211,15 +233,17 @@ void *HwAccVdpau::context() const {
 }
 
 mp_image *HwAccVdpau::getImage(mp_image *mpi) {
+	return mpi;
 	const auto id = (VdpVideoSurface)(uintptr_t)(void*)mpi->planes[3];
 	auto img = mp_image_pool_get(d->pool, d->imgfmt, d->avSize.width(), d->avSize.height());
 	void *data[] = { img->planes[0], img->planes[1], img->planes[2] };
 	quint32 pitches[] = { (quint32)img->stride[0], (quint32)img->stride[1], (quint32)img->stride[2] };
-	if (!d->isSuccess(Vdpau::videoSurfaceGetBitsYCbCr(id, d->format, data, pitches)))
-		qDebug() << Vdpau::getErrorString(d->status);
-	if (d->format == VDP_YCBCR_FORMAT_YV12)
-		qSwap(img->planes[1], img->planes[2]);
+	if (!isSuccess(Vdpau::videoSurfaceGetBitsYCbCr(id, d->format, data, pitches))) {
+//		return nullptr;
+	}
+	img->pts = mpi->pts;
+//	if (d->format == VDP_YCBCR_FORMAT_YV12)
+//		qSwap(img->planes[1], img->planes[2]);
 	return img;
 }
 
-#endif

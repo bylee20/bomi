@@ -1,23 +1,37 @@
 #ifndef HWACC_VDPAU_HPP
 #define HWACC_VDPAU_HPP
 
-#if 0
-
 #include "hwacc.hpp"
+#include "hwacc_helper.hpp"
 extern "C" {
 #include <libavcodec/vdpau.h>
 }
-// TODO: GL_NV_vdpau_interop implementation
+#include "log.hpp"
 
+void initialize_vdpau_interop(QOpenGLContext *ctx);
+void finalize_vdpau_interop(QOpenGLContext *ctx);
 
 struct VdpauProfile {
 	VdpDecoderProfile id = (VdpDecoderProfile)-1;
 	int level = 0, blocks = 0, width = 0, height = 0; // maximum infos
 };
 
-typedef HwAccCodec<VdpauProfile> VdpauCodec;
+#undef Status
+template<> struct HwAccX11Trait<IMGFMT_VDPAU> {
+	using Profile = VdpauProfile;
+	using Status = VdpStatus;
+	static constexpr Status success = VDP_STATUS_OK;
+	static constexpr const char *name = "VDPAU";
+	static const char *error(Status status);
+	using SurfaceID = VdpVideoSurface;
+	static constexpr SurfaceID invalid = VDP_INVALID_HANDLE;
+};
+
+typedef HwAccX11Codec<IMGFMT_VDPAU> VdpauCodec;
+typedef HwAccX11StatusChecker<IMGFMT_VDPAU> VdpauStatusChecker;
 
 class Vdpau {
+	DECLARE_LOG_CONTEXT(VDPAU)
 public:
 	Vdpau() {}
 	static const VdpauCodec *codec(AVCodecID id) {
@@ -27,6 +41,8 @@ public:
 	static VdpDevice device() {return d.device;}
 	static void initialize();
 	static void finalize();
+	static void initializeInterop(QOpenGLContext *ctx);
+	static void finalizeInterop(QOpenGLContext *ctx);
 
 	static char const *getErrorString(VdpStatus status) {return d.getErrorString(status);}
 	static VdpStatus getInformationString(char const **information_string) {return d.getInformationString(information_string);}
@@ -54,12 +70,27 @@ public:
 		return d.decoderRender(decoder, target, picture_info, count, buffers);
 	}
 	static VdpStatus decoderDestroy(VdpDecoder decoder) {return d.decoderDestroy(decoder);}
+
+	static GLvdpauSurfaceNV registerVideoSurface(const GLvoid *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) {
+		return d.registerVideoSurface(vdpSurface, target, numTextureNames, textureNames);
+	}
+	static GLvdpauSurfaceNV registerOutputSurface(const GLvoid *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) {
+		return d.registerOutputSurface(vdpSurface, target, numTextureNames, textureNames);
+	}
+	static GLboolean isSurface(GLvdpauSurfaceNV surface) { return d.isSurface(surface); }
+	static void unregisterSurface(GLvdpauSurfaceNV surface) { d.unregisterSurface(surface); }
+	static void getSurfaceiv(GLvdpauSurfaceNV surface, GLenum pname, GLsizei bufSize, GLsizei *length, int *values) {
+		d.getSurfaceiv(surface, pname, bufSize, length, values);
+	}
+	static void surfaceAccess(GLvdpauSurfaceNV surface, GLenum access) { d.surfaceAccess(surface, access); }
+	static void mapSurfaces(GLsizei numSurfaces, const GLvdpauSurfaceNV *surfaces) { d.mapSurfaces(numSurfaces, surfaces); }
+	static void unmapSurfaces(GLsizei numSurface, const GLvdpauSurfaceNV *surfaces) { d.unmapSurfaces(numSurface, surfaces); }
+	static bool isInitialized() { return d.init; }
 private:
-	struct Data {
+	struct Data : public VdpauStatusChecker {
 		VdpDevice device = 0;
 		VdpGetProcAddress *proc = nullptr;
 		bool init = false;
-		VdpStatus status = VDP_STATUS_ERROR;
 		VdpGetErrorString *getErrorString = nullptr;
 		VdpGetInformationString *getInformationString = nullptr;
 		VdpDeviceDestroy *deviceDestroy = nullptr;
@@ -72,35 +103,49 @@ private:
 		VdpDecoderCreate *decoderCreate = nullptr;
 		VdpDecoderRender *decoderRender = nullptr;
 		VdpDecoderDestroy *decoderDestroy = nullptr;
+
+		GLvdpauSurfaceNV (*registerVideoSurface) (const GLvoid *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) = nullptr;
+		GLvdpauSurfaceNV (*registerOutputSurface) (const GLvoid *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) = nullptr;
+		GLboolean (*isSurface) (GLvdpauSurfaceNV surface) = nullptr;
+		void (*unregisterSurface) (GLvdpauSurfaceNV surface) = nullptr;
+		void (*getSurfaceiv) (GLvdpauSurfaceNV surface, GLenum pname, GLsizei bufSize, GLsizei *length, int *values) = nullptr;
+		void (*surfaceAccess) (GLvdpauSurfaceNV surface, GLenum access) = nullptr;
+		void (*mapSurfaces) (GLsizei numSurfaces, const GLvdpauSurfaceNV *surfaces) = nullptr;
+		void (*unmapSurfaces) (GLsizei numSurface, const GLvdpauSurfaceNV *surfaces) = nullptr;
+		void (*initialize) (const GLvoid *vdpDevice, const GLvoid *getProcAddress) = nullptr;
+		void (*finalize) (void) = nullptr;
+
+		QOpenGLContext *gl = nullptr;
 		QMap<AVCodecID, VdpauCodec> supports;
 	};
 	static Data d;
 	template<typename F>
 	static VdpStatus proc(VdpFuncId id, F &func) {
-		if (!d.proc || d.status != VDP_STATUS_OK)
-			return d.status;
-		return (d.status = d.proc(d.device, id, &reinterpret_cast<void*&>(func)));
+		if (!d.proc || !d.isSuccess())
+			return d.status();
+		d.isSuccess(d.proc(d.device, id, &reinterpret_cast<void*&>(func)));
+		return d.status();
 	}
+	template<typename T>
+	static bool proc(const QByteArray &name, T &func) { return (func = reinterpret_cast<T>(d.gl->getProcAddress(name))) != nullptr; }
 };
 
-class HwAccVdpau : public HwAcc {
+class HwAccVdpau : public HwAcc, public VdpauStatusChecker {
 public:
 	HwAccVdpau(AVCodecID cid);
 	~HwAccVdpau();
-	virtual bool isOk() const override;
-	virtual bool check(AVCodecContext *avctx) override;
-	virtual mp_image *getSurface() override;
-	virtual bool isAvailable(AVCodecID codec) const override;
+	virtual bool isOk() const override { return isSuccess(); }
 	virtual void *context() const override;
-	virtual mp_image *getImage(mp_image *mpi) override;
+	virtual mp_image *getSurface() override;
 	virtual Type type() const override {return VdpauX11;}
-	bool fillContext(AVCodecContext *avctx);
+	virtual mp_image *getImage(mp_image *mpi);
+private:
 	void freeContext();
+	bool fillContext(AVCodecContext *avctx) override;
+
 private:
 	struct Data;
 	Data *d;
 };
-
-#endif
 
 #endif // HWACC_VDPAU_HPP
