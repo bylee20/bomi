@@ -53,7 +53,4 @@ private:
 	QSize m_size = {0,0};
 };
 
-mp_image *nullMpImage(void *arg = nullptr, void(*free)(void*) = nullptr);
-mp_image *nullMpImage(uint imgfmt, int width, int height, void *arg = nullptr, void(*free)(void*) = nullptr);
-
 #endif // HWACC_HPP

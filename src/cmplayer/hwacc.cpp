@@ -10,14 +10,6 @@ extern "C" {
 #include <common/av_common.h>
 }
 
-static mp_image null;
-
-mp_image *nullMpImage(void *arg, void(*free)(void*)) { return mp_image_new_custom_ref(&null, arg, free); }
-
-mp_image *nullMpImage(uint imgfmt, int width, int height, void *arg, void(*free)(void*)) {
-	auto mpi = nullMpImage(arg, free); mp_image_setfmt(mpi, imgfmt); mp_image_set_size(mpi, width, height); return mpi;
-}
-
 HwAcc::Type HwAcc::backend() {
 #ifdef Q_OS_MAC
 	return Vda;

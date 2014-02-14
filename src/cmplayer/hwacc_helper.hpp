@@ -2,15 +2,17 @@
 #define HWACC_HELPER_HPP
 
 #include "stdafx.hpp"
-
-#ifdef Q_OS_LINUX
-
 #include "log.hpp"
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <video/img_format.h>
 #include <video/mp_image.h>
 }
+
+mp_image *null_mp_image(void *arg = nullptr, void(*free)(void*) = nullptr);
+mp_image *null_mp_image(uint imgfmt, int width, int height, void *arg = nullptr, void(*free)(void*) = nullptr);
+
+#ifdef Q_OS_LINUX
 
 template<mp_imgfmt imgfmt> struct HwAccX11Trait {
 	static_assert(imgfmt == IMGFMT_VAAPI || imgfmt == IMGFMT_VDPAU, "wrong format");
@@ -144,7 +146,7 @@ public:
 				delete surface;
 			m_mutex.unlock();
 		};
-		auto mpi = nullMpImage(IMGFMT_VAAPI, m_width, m_height, surface, release);
+		auto mpi = null_mp_image(IMGFMT_VAAPI, m_width, m_height, surface, release);
 		mpi->planes[1] = (uchar*)(quintptr)surface;
 		mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)surface->id();
 		return mpi;

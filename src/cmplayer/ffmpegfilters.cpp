@@ -10,8 +10,8 @@ extern "C" {
 #include <common/cpudetect.h>
 }
 
-mp_image *nullMpImage(void *arg = nullptr, void(*free)(void*) = nullptr);
-mp_image *nullMpImage(uint imgfmt, int width, int height, void *arg = nullptr, void(*free)(void*) = nullptr);
+mp_image *null_mp_image(void *arg = nullptr, void(*free)(void*) = nullptr);
+mp_image *null_mp_image(uint imgfmt, int width, int height, void *arg = nullptr, void(*free)(void*) = nullptr);
 
 bool FFmpegFilterGraph::push(mp_image *in) {
 	Q_ASSERT(m_imgfmt == in->imgfmt && m_size == QSize(in->w, in->h));
@@ -43,7 +43,7 @@ mp_image *FFmpegFilterGraph::pull() {
 		return nullptr;
 	}
 	auto freeAvFrame = [](void *frame) { av_frame_free((AVFrame**)&frame); };
-	auto mpi = nullMpImage(frame, freeAvFrame);
+	auto mpi = null_mp_image(frame, freeAvFrame);
 	mp_image_copy_fields_from_av_frame(mpi, frame);
 	return mpi;
 }
