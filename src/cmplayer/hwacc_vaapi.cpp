@@ -299,7 +299,7 @@ bool HwAccVaApi::fillContext(AVCodecContext *avctx) {
 	if(!isSuccess(vaCreateConfig(d->context.display, d->profile, VAEntrypointVLD, &attr, 1, &d->context.config_id)))
 		return false;
 	const int w = avctx->width, h = avctx->height;
-	auto tryRtFormat = [rts, this, codec, w, h] (uint rt) { return (rts & rt) && isSuccess(d->pool.create(codec->surfaces, w, h, rt)); };
+	auto tryRtFormat = [rts, this, codec, w, h] (uint rt) { return (rts & rt) && d->pool.create(codec->surfaces, w, h, rt); };
 	if (!tryRtFormat(VA_RT_FORMAT_YUV420) && !tryRtFormat(VA_RT_FORMAT_YUV422))
 		return false;
 	VaApi::get().setSurfaceFormat(d->pool.format());
