@@ -169,7 +169,7 @@ void OpenGLCompat::check() {
 		format[4] = format[GL_BGRA];
 	}
 
-	if (hasExtension(FramebufferObject))
+	if (!hasExtension(FramebufferObject))
 		_Fatal("FBO is not available. FBO support is essential.");
 	auto fbo = new OpenGLFramebufferObject(QSize(16, 16), QOpenGLTexture::RGBA16_UNorm);
 	if (fbo->isValid()) {

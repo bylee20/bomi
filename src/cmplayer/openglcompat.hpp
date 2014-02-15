@@ -14,13 +14,13 @@
 class OpenGLCompat {
 public:
 	enum Extension {
-		TextureRG,
-		TextureFloat,
-		Debug,
-		NvVdpauInterop,
-		FramebufferObject,
-		AppleYCbCr422,
-		MesaYCbCrTexture
+		TextureRG = 1,
+		TextureFloat = 2,
+		Debug = 4,
+		NvVdpauInterop = 8,
+		FramebufferObject = 16,
+		AppleYCbCr422 = 32,
+		MesaYCbCrTexture = 64
 	};
 	static void initialize(QOpenGLContext *ctx);
 	static void finalize(QOpenGLContext *ctx);

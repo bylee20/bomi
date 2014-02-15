@@ -47,7 +47,7 @@ private:
 	static inline void print(const char *context, Level level, const QByteArray &log) {
 		qDebug("[%s] %s", context, log.constData());
 		if (level == Fatal)
-			qApp->quit();
+			exit(1);
 	}
 	struct Helper {
 		template<typename... Args>
