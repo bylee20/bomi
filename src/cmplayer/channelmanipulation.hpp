@@ -14,14 +14,16 @@ public:
 	ChannelManipulation(): m_mix(MP_SPEAKER_ID_COUNT) {}
 	using SourceArray = QVector<mp_speaker_id>;
 	const SourceArray &sources(mp_speaker_id out) const { return m_mix[out]; }
-	void set(mp_speaker_id dest, const SourceArray &src) { m_mix[dest] = src; }
-	void set(mp_speaker_id dest, mp_speaker_id src) { m_mix[dest].resize(1); m_mix[dest][0] = src; }
-	void add(mp_speaker_id dest, mp_speaker_id src) { m_mix[dest].append(src); }
 	QString toString() const;
 	static ChannelManipulation fromString(const QString &text);
 	bool hasSources(mp_speaker_id dest) const { return !m_mix[dest].isEmpty(); }
+	bool isIdentity() const;
 private:
+	void set(mp_speaker_id dest, const SourceArray &src) { m_mix[dest] = src; }
+	void set(mp_speaker_id dest, mp_speaker_id src) { m_mix[dest].resize(1); m_mix[dest][0] = src; }
+	void add(mp_speaker_id dest, mp_speaker_id src) { m_mix[dest].append(src); }
 	friend class ChannelLayoutMap;
+	friend class ChannelManipulationWidget;
 	QVector<SourceArray> m_mix;
 };
 

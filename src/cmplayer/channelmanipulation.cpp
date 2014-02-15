@@ -21,6 +21,16 @@ ChannelName ChNames[] = {
 
 static constexpr int ChNamesSize = sizeof(ChNames)/sizeof(ChNames[0]);
 
+bool ChannelManipulation::isIdentity() const {
+	for (int i=0; i<m_mix.size(); ++i) {
+		const auto speaker_out = (mp_speaker_id)i;
+		auto &sources = this->sources(speaker_out);
+		if (sources.size() != 1 || sources.first() == speaker_out)
+			return false;
+	}
+	return true;
+}
+
 QString ChannelManipulation::toString() const {
 	QStringList list;
 	for (int i=0; i<(int)m_mix.size(); ++i) {
