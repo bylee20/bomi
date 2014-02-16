@@ -219,11 +219,8 @@ private:
 					const int dch = it.channel();
 					auto &map = m_ch_man.sources((mp_speaker_id)m_out.channels.speaker[dch]);
 					double value = 0;
-					for (int i=0; i<map.size(); ++i) {
-						const int sch = m_ch_index_src[map[i]];
-						value += schannels[sch]*gain;
-
-					}
+					for (int i=0; i<map.size(); ++i)
+						value += schannels[m_ch_index_src[map[i]]]*gain;
 					*it = trans(value);
 				}
 			}

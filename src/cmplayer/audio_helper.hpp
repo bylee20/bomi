@@ -40,26 +40,26 @@ struct AudioSampleHelper {
 
 	static constexpr inline S hardclip(S p) { return qBound<S>(-max(), p, max()); }
 	template<class T = S, typename std::enable_if<!std::is_integral<T>::value, int>::type = 0>
-	static constexpr inline T softclip(S p) { return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : std::sin(p)); }
+	static constexpr inline T softclip(T p) { return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : std::sin(p)); }
 	template<class T = S, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-	static constexpr inline T softclip(S p) { return max()*softclip<float>((float)p/max()); }
+	static constexpr inline T softclip(T p) { return max()*softclip<float>((float)p/max()); }
 	template<class T = S, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-	static constexpr inline T autoclip(S p) { return hardclip(p); }
+	static constexpr inline T autoclip(T p) { return hardclip(p); }
 	template<class T = S, typename std::enable_if<!std::is_integral<T>::value, int>::type = 0>
-	static constexpr inline T autoclip(S p) { return softclip<S>(p); }
+	static constexpr inline T autoclip(T p) { return softclip<S>(p); }
 
 	template<ClippingMethod method, typename T> struct Clip { };
 	template<typename T> struct Clip<ClippingMethod::Auto, T> {
-		static constexpr inline T apply (double p) { return autoclip(p); }
-		constexpr inline T operator() (double p) const { return apply(p); }
+		static constexpr inline T apply (T p) { return autoclip(p); }
+		constexpr inline T operator() (T p) const { return apply(p); }
 	};
 	template<typename T> struct Clip<ClippingMethod::Hard, T> {
-		static constexpr inline T apply (double p) { return hardclip(p); }
-		constexpr inline T operator() (double p) const { return apply(p); }
+		static constexpr inline T apply (T p) { return hardclip(p); }
+		constexpr inline T operator() (T p) const { return apply(p); }
 	};
 	template<typename T> struct Clip<ClippingMethod::Soft, T> {
-		static constexpr inline T apply (double p) { return softclip(p); }
-		constexpr inline T operator() (double p) const { return apply(p); }
+		static constexpr inline T apply (T p) { return softclip(p); }
+		constexpr inline T operator() (T p) const { return apply(p); }
 	};
 	template<ClippingMethod method>
 	static constexpr inline S clip(S p) { return Clip<method, S>::apply(p); }
