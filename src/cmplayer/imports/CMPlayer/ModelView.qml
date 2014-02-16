@@ -82,7 +82,7 @@ Item { id: view
 	Rectangle { id: headerBox
 		color: Qt.rgba(1, 1, 1, 0.7)
 		visible: headerVisible
-		height: 15; anchors { top: parent.top; left: parent.left; right: parent.right }
+		height: 15; anchors { top: parent.top; left: parent.left; right: parent.right; margins: frame.border.width }
 
 		Flickable { id: headerFlickable
 			anchors.fill: parent; clip: true
@@ -124,7 +124,7 @@ Item { id: view
 		id: list
 		property int selectedIndex: -1
 		currentIndex: -1
-		anchors { fill: frame; margins: frame.border.width; topMargin: headerBox.visible ? headerBox.height : 0 } clip: true
+		anchors { fill: frame; margins: frame.border.width; topMargin: headerBox.visible ? headerBox.height+1 : 1 } clip: true
 		contentWidth: view.contentWidth
 		flickableDirection: Flickable.HorizontalAndVerticalFlick
 		delegate: Item {

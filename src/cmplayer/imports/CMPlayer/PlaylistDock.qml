@@ -27,14 +27,14 @@ Item {
 	onWidthChanged: { updateDestination() }
 	onDestChanged: { if (dock.show) dock.x = dock.dest }
 
-	Rectangle {
-		id: frame
-		x: table.x-1; y: table.y-1
-		width: table.width+2
-		height: table.height+2
-		border { color: "white"; width: 1 }
-		color: Qt.rgba(0, 0, 0, 0.4)
-	}
+//	Rectangle {
+//		id: frame
+//		x: table.x-1; y: table.y-1
+//		width: table.width+2
+//		height: table.height+2
+//		border { color: "white"; width: 1 }
+//		color: Qt.rgba(0, 0, 0, 0.4)
+//	}
 
 	Cp.ModelView {
 		id: table
