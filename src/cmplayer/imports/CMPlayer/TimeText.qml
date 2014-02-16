@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import CMPlayer 1.0 as Core
+import CMPlayer 1.0 as Cp
 
 Button {
 	width: textWidth; height: parent.height; textColor: "white"
@@ -25,5 +25,5 @@ Button {
 		return text;
 	}
 	text: getText(msecs, showMSecs)
-	font { pixelSize: 10; family: Core.Util.monospace }
+	font { pixelSize: 10; family: Cp.Util.monospace }
 }

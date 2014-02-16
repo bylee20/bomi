@@ -2,9 +2,9 @@ import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
-import CMPlayer 1.0 as Skin
+import CMPlayer 1.0 as Cp
 
-Skin.AppWithDock {
+Cp.AppWithDock {
 	id: app
 
 	Component {
@@ -45,19 +45,19 @@ Skin.AppWithDock {
 		}
 		RowLayout {
 			anchors { fill: parent; margins: 4 } spacing: 3;
-			Skin.Button {
+			Cp.Button {
 				id: playPause; width: height; height: parent.height
-				action: "play/pause"; icon: (player.state === Skin.Engine.Playing) ? "pause.png" : "play.png"
+				action: "play/pause"; icon: (player.state === Cp.Engine.Playing) ? "pause.png" : "play.png"
 				paddings: pressed ? 2 : (hovered ? 0 : 1)
 			}
-			Skin.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
+			Cp.TimeSlider { id: timeslider; style: sliders; Layout.fillWidth: true; Layout.fillHeight: true }
 			Row {
 				width: childrenRect.width; height: parent.height
-				Skin.TimeText { textColor: "black"; msecs: engine.time }
-				Skin.TimeText { textColor: "black"; text: "/" }
-				Skin.TimeText { textColor: "black"; msecs: engine.end }
+				Cp.TimeText { textColor: "black"; msecs: engine.time }
+				Cp.TimeText { textColor: "black"; text: "/" }
+				Cp.TimeText { textColor: "black"; msecs: engine.end }
 			}
-			Skin.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
+			Cp.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
 		}
 	}
 }

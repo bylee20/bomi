@@ -1,9 +1,9 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
-import CMPlayer 1.0 as Skin
+import CMPlayer 1.0 as Cp
 
-Skin.AppWithFloating {
+Cp.AppWithFloating {
 	id: app
 	name: "net.xylosper.cmplayer.skin.modern"
 	Component {
@@ -44,7 +44,7 @@ Skin.AppWithFloating {
 			id: inner; width: parent.width-50; anchors.centerIn: parent; spacing: 5
 			RowLayout {
 				id: texts; width: parent.width; height: 15; spacing: 5
-				Skin.TimeText { id: position; msecs: engine.time; Layout.alignment: Qt.AlignBottom; textAlignmentV: Text.AlignBottom }
+				Cp.TimeText { id: position; msecs: engine.time; Layout.alignment: Qt.AlignBottom; textAlignmentV: Text.AlignBottom }
 				Text {
 					id: name
 					Layout.alignment: Qt.AlignBottom; Layout.fillWidth: true
@@ -52,17 +52,17 @@ Skin.AppWithFloating {
 					color: "white"; font { bold: true; pixelSize: 12 }
 					horizontalAlignment: Text.AlignHCenter
 				}
-				Skin.TimeText { id: duration; msecs: engine.end; Layout.alignment: Qt.AlignBottom; textAlignmentV: Text.AlignBottom }
+				Cp.TimeText { id: duration; msecs: engine.end; Layout.alignment: Qt.AlignBottom; textAlignmentV: Text.AlignBottom }
 			}
 			RowLayout {
 				id: seekbarwrapper; width: parent.width; height: 10; spacing: 10
-                Skin.TimeSlider { id: seekbar; style: slider; Layout.fillWidth: true }
+				Cp.TimeSlider { id: seekbar; style: slider; Layout.fillWidth: true }
 			}
 			Item {
 				id: buttons; width: parent.width; height: 22
 				RowLayout {
 					height: parent.height*0.75; anchors.verticalCenter: parent.verticalCenter; spacing: 3
-					Skin.Button {
+					Cp.Button {
                         id: mute; checked: engine.muted; width: parent.height; height: parent.height
 						icon: getStateIconName("volume"); action: "audio/volume/mute"
 						Item {
@@ -83,27 +83,27 @@ Skin.AppWithFloating {
 							}
 						}
 					}
-                    Skin.VolumeSlider { id: volumebar; width: 70; style: slider }
+					Cp.VolumeSlider { id: volumebar; width: 70; style: slider }
 				}
 				Row {
 					height: parent.height; spacing: 10; anchors.horizontalCenter: parent.horizontalCenter;
-					Skin.Button {
+					Cp.Button {
 						width: parent.height*0.9; height: width; anchors.verticalCenter: pause.verticalCenter
                         icon: getStateIconName("seek-backward"); action: "play/seek/backward2"
 					}
-					Skin.Button {
+					Cp.Button {
 						id: pause; width: parent.height; height: width
                         icon: getStateIconName(engine.running ? "pause" : "play"); action: "play/pause"
 					}
 
-					Skin.Button {
+					Cp.Button {
 						id: faster; width: parent.height*0.9; height: width; anchors.verticalCenter: pause.verticalCenter
 						icon: getStateIconName("seek-forward"); action: "play/seek/forward2"
 					}
 				}
 			}
 		}
-		Skin.Button {
+		Cp.Button {
 			id: toggler; parent: checked ? seekbarwrapper : buttons; icon: getStateIconName("toggle")
 			width: 20; height: 10; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
 			onClicked: checked = !checked
@@ -128,13 +128,13 @@ Skin.AppWithFloating {
 		}
 	}
 	Component.onCompleted: {
-		Skin.Settings.open(app.name)
-		toggler.checked = Skin.Settings.getBool("toggled", false)
-		Skin.Settings.close()
+		Cp.Settings.open(app.name)
+		toggler.checked = Cp.Settings.getBool("toggled", false)
+		Cp.Settings.close()
 	}
 	Component.onDestruction: {
-		Skin.Settings.open(app.name)
-		Skin.Settings.set("toggled", toggler.checked)
-		Skin.Settings.close()
+		Cp.Settings.open(app.name)
+		Cp.Settings.set("toggled", toggler.checked)
+		Cp.Settings.close()
 	}
 }

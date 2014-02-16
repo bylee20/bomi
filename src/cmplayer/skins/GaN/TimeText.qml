@@ -1,7 +1,7 @@
 import QtQuick 2.0
-import CMPlayer 1.0
+import CMPlayer 1.0 as Cp
 
-TimeText {
+Cp.TimeText {
 	width: Util.textWidth(showMSecs ? "00:00:00.000" : "00:00:00", font.pixelSize, font.family);
 	height: textHeight; font.pixelSize: 12;
 	textColor: getStateTextColor(hovered || (bind && bind.hovered), pressed || (bind && bind.pressed))

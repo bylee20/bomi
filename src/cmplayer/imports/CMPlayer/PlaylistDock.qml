@@ -1,5 +1,5 @@
 import QtQuick 2.0
-import CMPlayer 1.0 as Core
+import CMPlayer 1.0 as Cp
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
 
@@ -36,7 +36,7 @@ Item {
 		color: Qt.rgba(0, 0, 0, 0.4)
 	}
 
-	Core.ModelView {
+	Cp.ModelView {
 		id: table
 
 		model: playlist
@@ -44,22 +44,22 @@ Item {
 		rowHeight: 40
 		readonly property int nameFontSize: 15
 		readonly property int locationFontSize: 10
-		readonly property string nameFontFamily: Core.Util.monospace
-		readonly property string locationFontFamily: Core.Util.monospace
+		readonly property string nameFontFamily: Cp.Util.monospace
+		readonly property string locationFontFamily: Cp.Util.monospace
 		currentIndex: playlist.loaded
 		function contentWidth() {
 			var max = 0;
 			for (var i=0; i<table.count; ++i) {
-				var number = Core.Util.textWidth(playlist.number(i), table.nameFontSize, table.nameFontFamily);
-				var name = Core.Util.textWidth(playlist.name(i), table.nameFontSize, table.nameFontFamily);
-				var loc = Core.Util.textWidth(playlist.location(i), table.locationFontSize, table.locationFontFamily);
+				var number = Cp.Util.textWidth(playlist.number(i), table.nameFontSize, table.nameFontFamily);
+				var name = Cp.Util.textWidth(playlist.name(i), table.nameFontSize, table.nameFontFamily);
+				var loc = Cp.Util.textWidth(playlist.location(i), table.locationFontSize, table.locationFontFamily);
 				max = Math.max(number + name, loc, max);
 			}
 			return max+30
 		}
 
 		onCountChanged: column.width = contentWidth()
-		columns: Core.ItemColumn { title: "Name"; role: "name"; width: 200; id: column}
+		columns: Cp.ItemColumn { title: "Name"; role: "name"; width: 200; id: column}
 
 		onActivated: playlist.play(index)
 		itemDelegate: Item {
@@ -88,6 +88,6 @@ Item {
 	MouseArea {
 		anchors.fill: parent
 		acceptedButtons: Qt.RightButton
-		onClicked: Core.Util.execute("tool/playlist")
+		onClicked: Cp.Util.execute("tool/playlist")
 	}
 }

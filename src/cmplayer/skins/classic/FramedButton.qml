@@ -1,7 +1,7 @@
 import QtQuick 2.0
-import CMPlayer 1.0 as Skin
+import CMPlayer 1.0 as Cp
 
-Skin.Button {
+Cp.Button {
 	id: item
 	radius: 3
 	border.width: pressed ? 2 : (hovered ? 1 : 0)

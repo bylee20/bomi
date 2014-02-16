@@ -1,7 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Controls 1.0
 import QtQuick.Controls.Styles 1.0
-import CMPlayer 1.0 as Core
+import CMPlayer 1.0 as Cp
 
 Item {
 	id: dock
@@ -20,7 +20,7 @@ Item {
 		NumberAnimation { property: "x" }
 	}
 
-	Core.ModelView {
+	Cp.ModelView {
 		id: view
 		model: history
 		columns: [
@@ -35,6 +35,6 @@ Item {
 	MouseArea {
 		anchors.fill: parent
 		acceptedButtons: Qt.RightButton
-		onClicked: Core.Util.execute("tool/history")
+		onClicked: Cp.Util.execute("tool/history")
 	}
 }

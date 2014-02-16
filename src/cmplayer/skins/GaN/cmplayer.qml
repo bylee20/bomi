@@ -1,9 +1,9 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.0
 import QtQuick.Controls.Styles 1.0
-import CMPlayer 1.0 as Skin
+import CMPlayer 1.0 as Cp
 
-Skin.AppWithFloating {
+Cp.AppWithFloating {
 	id: skin; name: "net.xylosper.cmplayer.GaN"
 	onWidthChanged: controls.width = width < 550 ? 400 : 550
 	controls: Item {
@@ -57,7 +57,7 @@ Skin.AppWithFloating {
 					}
 				}
 
-				Skin.TimeSlider {
+				Cp.TimeSlider {
 					id: timeslide; width: parent.width; height: 10
 					style: SliderStyle {
 						groove: Rectangle {
@@ -119,7 +119,7 @@ Skin.AppWithFloating {
 					Item {
 						width: 48; height: 22
 						anchors { verticalCenter: parent.verticalCenter; right: parent.right; rightMargin: 10 }
-						Skin.VolumeSlider {
+						Cp.VolumeSlider {
 							id: volume; anchors.fill: parent
 							style: SliderStyle {
 								groove: Image {
@@ -142,16 +142,16 @@ Skin.AppWithFloating {
 		}
 	}
 	Component.onCompleted: {
-		Skin.Settings.open(name)
-		timetext.checked = Skin.Settings.getBool("time-checked", false)
-		endtext.checked = Skin.Settings.getBool("end-checked", false)
-		Skin.Settings.close()
+		Cp.Settings.open(name)
+		timetext.checked = Cp.Settings.getBool("time-checked", false)
+		endtext.checked = Cp.Settings.getBool("end-checked", false)
+		Cp.Settings.close()
 		timeslide.generateChapters()
 	}
 	Component.onDestruction: {
-		Skin.Settings.open(name)
-		Skin.Settings.set("time-checked", timetext.checked)
-		Skin.Settings.set("end-checked", endtext.checked)
-		Skin.Settings.close()
+		Cp.Settings.open(name)
+		Cp.Settings.set("time-checked", timetext.checked)
+		Cp.Settings.set("end-checked", endtext.checked)
+		Cp.Settings.close()
 	}
 }
