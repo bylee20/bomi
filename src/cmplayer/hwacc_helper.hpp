@@ -24,7 +24,7 @@ template<mp_imgfmt imgfmt> struct HwAccX11Trait {
 	static constexpr const char *name = "";
 	static void destroySurface(SurfaceID id);
 	static bool createSurfaces(int w, int h, int f, QVector<SurfaceID> &ids);
-	static const char *error(Status status) { return ""; }
+	static const char *error(Status) { return ""; }
 };
 
 template<mp_imgfmt imgfmt>
