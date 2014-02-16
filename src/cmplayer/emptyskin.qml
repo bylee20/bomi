@@ -1,6 +1,6 @@
-import QtQuick 2.0
-import CMPlayer 1.0 as Core
+import QtQuick 2.2
+import CMPlayer 1.0 as Cp
 
-Core.Engine {
+Cp.Engine {
 	id: player
 }

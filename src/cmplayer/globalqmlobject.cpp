@@ -71,7 +71,7 @@ bool UtilObject::execute(const QString &key) {
 	return RootMenu::execute(key);
 }
 
-QAction *UtilObject::action(const QString &key) {
+QObject *UtilObject::action(const QString &key) {
 	return RootMenu::instance().action(key);
 }
 
