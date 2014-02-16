@@ -170,6 +170,7 @@ private:
 template<int fmt_src, int fmt_dst, ClippingMethod method>
 class AudioMixerImpl : public AudioMixer {
 public:
+	static_assert(method != ClippingMethod::Auto, "invalid specialization");
 	using Trait = AudioFormatTrait<fmt_src>;
 	template<class T>
 	using Helper = AudioSampleHelper<T>;
@@ -189,9 +190,14 @@ public:
 	void configured() { m_scaler.setFormat(m_in); }
 	void setScaler(bool on, double scale) override { m_scaler.setScale(on, scale); m_scale = on ? scale : 1.0; }
 private:
+	bool checkClippingMethod(ClippingMethod _method) const override {
+		if (_method == ClippingMethod::Auto)
+			return method == Trait::AutoClipping;
+		return _method == method;
+	}
 	LevelInfo calculateAverage(const LevelInfo &add) const {
 		LevelInfo total;
-		for (const auto &one : m_inputLevelHistory) {
+		for (const auto &one : m_history) {
 			total.level += one.level*one.frames;
 			total.frames += one.frames;
 		}
@@ -250,15 +256,13 @@ private:
 			else
 				m_gain = targetGain;
 		}
-		auto &it = m_inputLevelHistoryIt;
-		auto &buffers = m_inputLevelHistory;
-		if ((double)avg.frames/(double)m_in.fps >= m_normalizerOption.bufferLengthInSeconds) {
-			if (++it == buffers.end())
-				it = buffers.begin();
-			*it = input;
+		if (avg.frames/(double)m_in.fps >= m_normalizerOption.bufferLengthInSeconds) {
+			if (++m_historyIt == m_history.end())
+				m_historyIt = m_history.begin();
+			*m_historyIt = input;
 		} else {
-			buffers.push_back(input);
-			it = --buffers.end();
+			m_history.push_back(input);
+			m_historyIt = --m_history.end();
 		}
 	}
 	mutable AudioDataBuffer<D, AudioFormatTrait<fmt_dst>::IsPlanar> m_dst;
@@ -269,7 +273,7 @@ template<int fmt_in, int fmt_out>
 static AudioMixer *createImpl(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip) {
 	switch (clip) {
 	case ClippingMethod::Auto:
-		return new AudioMixerImpl<fmt_in, fmt_out, ClippingMethod::Auto>(in, out);
+		return new AudioMixerImpl<fmt_in, fmt_out, AudioFormatTrait<fmt_in>::AutoClipping>(in, out);
 	case ClippingMethod::Hard:
 		return new AudioMixerImpl<fmt_in, fmt_out, ClippingMethod::Hard>(in, out);
 	case ClippingMethod::Soft:

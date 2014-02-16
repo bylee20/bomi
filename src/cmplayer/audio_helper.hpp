@@ -23,6 +23,7 @@ struct AudioFormatTrait {
 	static constexpr int Bytes = Bits/8;
 	static constexpr bool IsPlanar = fmt_in & AF_FORMAT_PLANAR;
 	using SampleType = typename std::conditional<IsInt, typename tmp::integer<Bits, IsSigned>::type, typename tmp::floating_point<Bits>::type>::type;
+	static constexpr ClippingMethod AutoClipping = IsInt ? ClippingMethod::Hard : ClippingMethod::Soft;
 };
 
 template<class SampleType>
@@ -43,16 +44,8 @@ struct AudioSampleHelper {
 	static constexpr inline T softclip(T p) { return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : std::sin(p)); }
 	template<class T = S, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
 	static constexpr inline T softclip(T p) { return max()*softclip<float>((float)p/max()); }
-	template<class T = S, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-	static constexpr inline T autoclip(T p) { return hardclip(p); }
-	template<class T = S, typename std::enable_if<!std::is_integral<T>::value, int>::type = 0>
-	static constexpr inline T autoclip(T p) { return softclip<S>(p); }
 
 	template<ClippingMethod method, typename T> struct Clip { };
-	template<typename T> struct Clip<ClippingMethod::Auto, T> {
-		static constexpr inline T apply (T p) { return autoclip(p); }
-		constexpr inline T operator() (T p) const { return apply(p); }
-	};
 	template<typename T> struct Clip<ClippingMethod::Hard, T> {
 		static constexpr inline T apply (T p) { return hardclip(p); }
 		constexpr inline T operator() (T p) const { return apply(p); }
@@ -295,7 +288,7 @@ public:
 	S *get(int frame = 0, int ch = 0) { return iterator::get(&d, frame, ch); }
 	const S *get(int frame = 0, int ch = 0) const { return const_iterator::get(&d, frame, ch); }
 	int samples() const { return d.frames*d.nch; }
-	bool expand(int frames, bool over = 1.2) {
+	bool expand(int frames, double over = 1.2) {
 		if (m_allocated && frames <= m_capacity)
 			return false;
 		m_allocated = true;

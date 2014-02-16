@@ -39,7 +39,7 @@ public:
 	virtual ~AudioMixer() {}
 	float gain() const { return m_gain; }
 	bool configure(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip) {
-		if (m_in.type != in.type || m_out.type != out.type || m_clip != clip)
+		if (m_in.type != in.type || m_out.type != out.type || !checkClippingMethod(clip))
 			return false;
 		m_in = in; m_out = out;
 		for (int i=0; i<out.channels.num; ++i)
@@ -50,8 +50,8 @@ public:
 		m_mix = !m_ch_man.isIdentity();
 		m_updateChmap = !mp_chmap_equals(&in.channels, &out.channels);
 		m_updateFormat = in.type != out.type;
-		m_inputLevelHistory.clear();
-		m_inputLevelHistoryIt = m_inputLevelHistory.end();
+		m_history.clear();
+		m_historyIt = m_history.end();
 		configured();
 		return true;
 	}
@@ -61,12 +61,11 @@ public:
 		m_normalizer = on;
 		m_normalizerOption = option;
 		m_gain = 1.0;
-		m_inputLevelHistory.clear();
-		m_inputLevelHistoryIt = m_inputLevelHistory.end();
+		m_history.clear();
+		m_historyIt = m_history.end();
 	}
 	void setMuted(bool muted) { m_muted = muted; }
 	void setAmp(float level) { m_amp = level; }
-	ClippingMethod clippingMethod() const { return m_clip; }
 	void setChannelLayoutMap(const ChannelLayoutMap &map) {
 		m_map = map;
 		m_ch_man = map(m_in.channels, m_out.channels);
@@ -75,6 +74,7 @@ public:
 	virtual void setScaler(bool on, double scale) = 0;
 	virtual void setOutput(mp_audio *output) = 0;
 protected:
+	virtual bool checkClippingMethod(ClippingMethod method) const = 0;
 	virtual void configured() = 0;
 	AudioMixer(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip)
 	: m_in(in), m_out(out), m_clip(clip) {  }
@@ -84,10 +84,10 @@ protected:
 	double m_delay = 0.0, m_scale = 1.0;
 	float m_gain = 1.0, m_amp = 1.0;
 	ClippingMethod m_clip;
-	QLinkedList<LevelInfo> m_inputLevelHistory;
+	QLinkedList<LevelInfo> m_history;
 	bool m_scaleChanged = false, m_mix = true;
 	bool m_normalizer = false, m_muted = false, m_updateChmap = false, m_updateFormat = false;
-	typename QLinkedList<LevelInfo>::iterator m_inputLevelHistoryIt;
+	typename QLinkedList<LevelInfo>::iterator m_historyIt;
 	AudioNormalizerOption m_normalizerOption;
 	std::array<int, MP_SPEAKER_ID_COUNT> m_ch_index_src, m_ch_index_dst;
 	ChannelManipulation m_ch_man;
