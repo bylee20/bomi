@@ -143,11 +143,11 @@ HEADERS += playengine.hpp \
     subtitlefinddialog.hpp \
     simplelistmodel.hpp \
     audiomixer.hpp \
-    audiomixer_p.hpp \
     mrlstate_old.hpp \
     log.hpp \
     openglmisc.hpp \
-    hwacc_helper.hpp
+    hwacc_helper.hpp \
+    audio_helper.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -233,7 +233,8 @@ SOURCES += main.cpp \
     mrlstate_old.cpp \
     log.cpp \
     openglmisc.cpp \
-    hwacc_helper.cpp
+    hwacc_helper.cpp \
+    audio_helper.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

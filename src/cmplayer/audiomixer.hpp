@@ -37,11 +37,7 @@ class AudioMixer {
 public:
 	static AudioMixer *create(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip);
 	virtual ~AudioMixer() {}
-	float gain() const {
-		float ret = 0.0; int count = 0;
-		for (auto g : m_gain) { if (g > 1.0001f) { ret += g; ++count; } }
-		return count > 0 ? ret/count : 1.0;
-	}
+	float gain() const { return m_gain; }
 	bool configure(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip) {
 		if (m_in.type != in.type || m_out.type != out.type || m_clip != clip)
 			return false;
@@ -51,11 +47,11 @@ public:
 		for (int i=0; i<in.channels.num; ++i)
 			m_ch_index_src[in.channels.speaker[i]] = i;
 		m_ch_man = m_map(in.channels, out.channels);
+		m_mix = !m_ch_man.isIdentity();
 		m_updateChmap = !mp_chmap_equals(&in.channels, &out.channels);
 		m_updateFormat = in.type != out.type;
-		m_inputLevels.resize(in.channels.num);
-		m_its.resize(in.channels.num);
-		m_inputLevelHistory.resize(in.channels.num);
+		m_inputLevelHistory.clear();
+		m_inputLevelHistoryIt = m_inputLevelHistory.end();
 		configured();
 		return true;
 	}
@@ -64,12 +60,12 @@ public:
 	void setNormalizer(bool on, const AudioNormalizerOption &option) {
 		m_normalizer = on;
 		m_normalizerOption = option;
-		std::fill_n(m_gain, MP_NUM_CHANNELS, 1.0);
-		for (auto &it : m_inputLevelHistory)
-			it.clear();
+		m_gain = 1.0;
+		m_inputLevelHistory.clear();
+		m_inputLevelHistoryIt = m_inputLevelHistory.end();
 	}
 	void setMuted(bool muted) { m_muted = muted; }
-	void setAmp(float level) { std::fill_n(m_amp, MP_NUM_CHANNELS, level); }
+	void setAmp(float level) { m_amp = level; }
 	ClippingMethod clippingMethod() const { return m_clip; }
 	void setChannelLayoutMap(const ChannelLayoutMap &map) {
 		m_map = map;
@@ -86,13 +82,12 @@ protected:
 	AudioFormat m_in, m_out;
 	struct LevelInfo { LevelInfo(int frames = 0): frames(frames) {} int frames = 0; double level = 0.0; };
 	double m_delay = 0.0, m_scale = 1.0;
-	float m_gain[MP_NUM_CHANNELS], m_amp[MP_NUM_CHANNELS];
+	float m_gain = 1.0, m_amp = 1.0;
 	ClippingMethod m_clip;
-	QVector<QLinkedList<LevelInfo>> m_inputLevelHistory;
-	QVector<LevelInfo> m_inputLevels;
-	bool m_scaleChanged = false;
+	QLinkedList<LevelInfo> m_inputLevelHistory;
+	bool m_scaleChanged = false, m_mix = true;
 	bool m_normalizer = false, m_muted = false, m_updateChmap = false, m_updateFormat = false;
-	QVector<typename QLinkedList<LevelInfo>::iterator> m_its;
+	typename QLinkedList<LevelInfo>::iterator m_inputLevelHistoryIt;
 	AudioNormalizerOption m_normalizerOption;
 	std::array<int, MP_SPEAKER_ID_COUNT> m_ch_index_src, m_ch_index_dst;
 	ChannelManipulation m_ch_man;

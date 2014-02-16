@@ -1,17 +1,18 @@
 #include "audiomixer.hpp"
 #include "audiomixer_p.hpp"
+#include "audio_helper.hpp"
 
 template<int fmt_in>
 class AudioScaler {
 public:
-	using H = Help<fmt_in>;
-	AudioScaler() {}
-	using S = typename H::SampleType;
-	using MaxType = typename std::conditional<H::IsInt, qint64, double>::type;
+	using Trait = AudioFormatTrait<fmt_in>;
+	using S = typename Trait::SampleType;
+	using Helper = AudioSampleHelper<S>;
+	using MaxType = typename std::conditional<Trait::IsInt, qint64, double>::type;
 	using CorrType = MaxType;
 	using TableType = MaxType;
-
-	static constexpr int fmt_out = ToInterleaving<fmt_in>::value;
+	AudioScaler() {}
+	static constexpr int fmt_out = to_interleaving<fmt_in>::value;
 
 	double delay() const { return m_delay; }
 
@@ -24,27 +25,25 @@ public:
 
 		m_frames_search = (m_frames_overlap > 1) ? frames_per_ms * m_ms_search : 0;
 		m_frames_standing = m_frames_stride - m_frames_overlap;
-		m_overlap.resize(m_frames_overlap, nch);
+		m_overlap.setData(m_frames_overlap, nch);
 		if (m_overlap.isEmpty())
 			return;
 
-		m_table_blend.resize(m_frames_overlap, nch);
-		const MaxType blend = H::IsInt ? 65536 : 1.0;
+		m_table_blend.setData(m_frames_overlap, nch);
+		const MaxType blend = Trait::IsInt ? 65536 : 1.0;
 		for (int i=0; i<m_frames_overlap; ++i)
 			m_table_blend.fill(i, blend*i/m_frames_overlap);
 
-		m_table_window.resize(m_frames_overlap-1, nch);
+		m_table_window.setData(m_frames_overlap-1, nch);
 		const MaxType t = m_frames_overlap;
-		const MaxType n = H::IsInt ? 8589934588LL / (t * t) : 1.0;  // 4 * (2^31 - 1) / t^2
+		const MaxType n = Trait::IsInt ? 8589934588LL / (t * t) : 1.0;  // 4 * (2^31 - 1) / t^2
 		for (int i=1; i<m_frames_overlap; ++i)
 			m_table_window.fill(i-1, rshift<15, TableType>(i*(t - i)*n));
 
-		m_buf_pre_corr.resize(m_frames_overlap, nch);
-		m_queue.resize(m_frames_search + m_frames_overlap + m_frames_stride, nch);
+		m_buf_pre_corr.setData(m_frames_overlap, nch);
+		m_queue.setData(m_frames_search + m_frames_overlap + m_frames_stride, nch);
 
 		m_src = {nch}; m_dst = {nch};
-
-		m_buffer = {nch};
 	}
 
 	void setScale(bool on, double scale) {
@@ -57,17 +56,16 @@ public:
 	}
 
 	bool adjusted(const mp_audio *in) {
-		m_src.setBuffer(in);
+		m_src.setData(in);
 		m_delay = 0;
 		if (!m_enabled || in->samples <= 0)
 			return false;
 		const int max_frames_out = ((int)(in->samples / m_frames_stride_scaled) + 1) * m_frames_stride;
-		if (_Expand(m_buffer, max_frames_out) || m_dst.isEmpty())
-			m_dst = {m_format, max_frames_out, m_buffer.data()};
-		m_dst.resize(max_frames_out);
+		if (!m_dst.expand(max_frames_out))
+			m_dst.adjust(max_frames_out);
 		int frames_offset_in = fill_queue(0);
 		int frames_out = 0;
-		while (m_frames_queued >= m_queue.size()) {
+		while (m_frames_queued >= m_queue.frames()) {
 			int frames_off = 0;
 
 			// output stride
@@ -77,11 +75,11 @@ public:
 				output_overlap(frames_out, frames_off);
 			}
 
-			m_queue.copyTo(m_buffer.frame(frames_out + m_frames_overlap), frames_off + m_frames_overlap, m_frames_standing);
+			m_dst.copy(frames_out + m_frames_overlap, m_queue, frames_off + m_frames_overlap, m_frames_standing);
 			frames_out += m_frames_stride;
 
 			// input stride
-			m_queue.copyTo(m_overlap.data(), frames_off + m_frames_stride, m_frames_overlap);
+			m_overlap.copy(0, m_queue, frames_off + m_frames_stride, m_frames_overlap);
 			const auto target_frames = m_frames_stride_scaled + m_frames_stride_error;
 			const auto target_frames_integer = (int)target_frames;
 			m_frames_stride_error = target_frames - target_frames_integer;
@@ -89,22 +87,22 @@ public:
 			frames_offset_in += fill_queue(frames_offset_in);
 		}
 		m_delay = (m_frames_queued - m_frames_to_slide)/m_scale/m_format.fps;
-		m_dst.resize(frames_out);
+		m_dst.adjust(frames_out);
 		return true;
 	}
-	const AudioFrameIterator<fmt_out> &output() const { return m_dst; }
+	const AudioDataBuffer<S, false> &output() const { return m_dst; }
 private:
 	template<int s, typename T>
-	constexpr inline T rshift(const T &t) const { return H::template rshift<s, T>(t); }
+	constexpr inline T rshift(const T &t) const { return Helper::template rshift<s, T>(t); }
 
 	int fill_queue(int frames_offset) {
-		int frames_in = m_src.size() - frames_offset;
+		int frames_in = m_src.frames() - frames_offset;
 		const int offset_unchanged = frames_offset;
 
 		if (m_frames_to_slide > 0) {
 			if (m_frames_to_slide < m_frames_queued) {
 				const int frames_move = m_frames_queued - m_frames_to_slide;
-				m_queue.copyTo(m_queue.data(), m_frames_to_slide, frames_move);
+				m_queue.move(0, m_queue, m_frames_to_slide, frames_move);
 				m_frames_to_slide = 0;
 				m_frames_queued = frames_move;
 			} else {
@@ -118,14 +116,8 @@ private:
 		}
 
 		if (frames_in > 0) {
-			const int frames_copy = qMin(m_queue.size() - m_frames_queued, frames_in);
-			m_src.seek(frames_offset);
-			for (int i=0; i<frames_copy; ++i, m_src.next()) {
-				Q_ASSERT(m_src.ok());
-				auto frame = m_queue.frame(m_frames_queued+i);
-				for (int ch=0; ch<m_queue.channels(); ++ch)
-					frame[ch] = m_src.get(ch);
-			}
+			const int frames_copy = qMin(m_queue.frames() - m_frames_queued, frames_in);
+			m_queue.copy(m_frames_queued, m_src, frames_offset, frames_copy);
 			m_frames_queued += frames_copy;
 			frames_offset += frames_copy;
 		}
@@ -133,48 +125,29 @@ private:
 	}
 
 	void calculate_correlations() {
-		const int nch = m_format.channels.num;
-		auto pw  = _C(m_table_window).data();
-		auto po  = _C(m_overlap).frame(1);
-		auto ppc = m_buf_pre_corr.data();
-		const int samples_overlap = m_overlap.samples();
-		for (int i=nch; i<samples_overlap; ++i)
-			*ppc++ = rshift<15, MaxType>(*pw++ * *po++);
+		_AudioManipulate([&] (CorrType &c, TableType w, S o) { c = rshift<15, MaxType>(w*o); }
+			, m_buf_pre_corr, 0, m_overlap.frames()-1, m_table_window, 0, m_overlap, 1);
 	}
 
 	int best_overlap_frames_offset() {
 		calculate_correlations();
-
-		const int samples_overlap = m_overlap.samples();
-		const int nch = m_format.channels.num;
-		int best_off = 0;
-		MaxType best_corr = _Min<qint64>(), corr;
-		auto search_start = _C(m_queue).frame(1);
-		auto corr_start = _C(m_buf_pre_corr).data();
-		const CorrType *pc; const S *ps;
+		int best_off = 0; MaxType best_corr = _Min<qint64>(), corr;
 		for (int off=0; off<m_frames_search; ++off) {
 			corr = 0;
-			pc = corr_start;
-			ps = search_start;
-			for (int i=nch; i<samples_overlap; ++i)
-				corr += *pc++ * *ps++;
+			_AudioManipulate([&] (CorrType c, S q) { corr += c*q; }
+				, _C(m_buf_pre_corr), 0, m_overlap.frames()-1, _C(m_queue), 1+off);
 			if (corr > best_corr) {
 				best_corr = corr;
 				best_off  = off;
 			}
-			search_start += nch;
 		}
 		return best_off;
 	}
 
 	void output_overlap(int pos, int frames_off) {
-		auto pb = _C(m_table_blend).data();
-		auto po = _C(m_overlap).data();
-		auto pin = m_queue.frame(frames_off);
-		const int samples = m_overlap.samples();
-		auto p = m_buffer.frame(pos);
-		for (int i=0; i<samples; ++i, ++po)
-			*p++ = *po - rshift<16, MaxType>(*pb++ * (*po - *pin++));
+		_AudioManipulate([&] (S &d, TableType b, S o, S q) {
+			d = o - rshift<16, MaxType>(b*(o - q));
+		} , m_dst, pos, m_overlap.frames(), m_table_blend, 0, m_overlap, 0, m_queue, frames_off);
 	}
 	static constexpr const double m_ms_stride = 60.0;
 	static constexpr const double m_percent_overlap = 0.20;
@@ -186,23 +159,24 @@ private:
 	int m_frames_stride = 0, m_frames_overlap = 0, m_frames_queued = 0;
 	int m_frames_search = 0, m_frames_standing = 0, m_frames_to_slide = 0;
 
-	AudioFrameBuffer<TableType> m_table_blend, m_table_window;
-	AudioFrameBuffer<CorrType> m_buf_pre_corr;
-	AudioFrameBuffer<S> m_queue, m_overlap;
+	AudioDataBuffer<TableType, false> m_table_blend, m_table_window;
+	AudioDataBuffer<CorrType, false> m_buf_pre_corr;
+	AudioDataBuffer<S, false> m_queue, m_overlap;
 	double m_delay = 0.0, m_scale = 1.0;
 
-	AudioFrameIterator<fmt_in> m_src;
-	AudioFrameIterator<fmt_out> m_dst;
-	AudioFrameBuffer<S> m_buffer;
+	AudioDataBuffer<S, Trait::IsPlanar> m_src;
+	AudioDataBuffer<S, false> m_dst;
 };
 
 template<int fmt_src, int fmt_dst, ClippingMethod method>
 class AudioMixerImpl : public AudioMixer {
 public:
-	using H = Help<fmt_src>;
-	using T = typename H::SampleType;
-	using D = typename Help<fmt_dst>::SampleType;
-	static constexpr D trans(T t) { return H::template conv<D>(H::template clip<method>(t)); }
+	using Trait = AudioFormatTrait<fmt_src>;
+	template<class T>
+	using Helper = AudioSampleHelper<T>;
+	using S = typename Trait::SampleType;
+	using D = typename AudioFormatTrait<fmt_dst>::SampleType;
+	static constexpr D trans(S s) { return Helper<S>::template conv<D>(Helper<S>::template clip<method>(s)); }
 	AudioMixerImpl(const AudioFormat &in, const AudioFormat &out)
 	: AudioMixer(in, out, method) { }
 	void apply(const mp_audio *in) override {
@@ -216,83 +190,81 @@ public:
 	void configured() { m_scaler.setFormat(m_in); }
 	void setScaler(bool on, double scale) override { m_scaler.setScale(on, scale); m_scale = on ? scale : 1.0; }
 private:
-	LevelInfo calculateAverage(const LevelInfo &data, int ch) const {
+	LevelInfo calculateAverage(const LevelInfo &add) const {
 		LevelInfo total;
-		for (const auto &one : m_inputLevelHistory[ch]) {
+		for (const auto &one : m_inputLevelHistory) {
 			total.level += one.level*one.frames;
 			total.frames += one.frames;
 		}
-		total.level += data.level*data.frames;
-		total.frames += data.frames;
+		total.level += add.level*add.frames;
+		total.frames += add.frames;
 		total.level /= total.frames;
 		return total;
 	}
 
-	template<int fmt>
-	void process(const AudioFrameIterator<fmt> &src) {
+	template<bool planar>
+	void process(const AudioDataBuffer<S, planar> &src) {
 		prepare(src);
-		if (m_dst.size() <= 0)
+		if (m_dst.isEmpty())
 			return;
+		const auto gain = m_amp*m_gain;
 		if (m_muted)
 			m_dst.fill(0);
-		else {
-			for (src.start(), m_dst.start(); src.ok(); src.next(), m_dst.next()) {
-				Q_ASSERT(m_dst.ok());
-				for (int ch = 0; ch < m_dst.channels(); ++ch) {
-					auto &sources = m_ch_man.sources((mp_speaker_id)m_out.channels.speaker[ch]);
+		else if (!m_mix) {
+			_AudioManipulate([&] (D &out, S in) { out = trans(in*gain); }, m_dst, 0, m_dst.frames(), src, 0);
+		} else {
+			for (int frame = 0; frame<m_dst.frames(); ++frame) {
+				const auto dchannels = m_dst.channels(frame);
+				const auto schannels = _C(src).channels(frame);
+				for (auto it = dchannels.begin(); it != dchannels.end(); ++it) {
+					const int dch = it.channel();
+					auto &map = m_ch_man.sources((mp_speaker_id)m_out.channels.speaker[dch]);
 					double value = 0;
-					for (int s = 0; s<sources.size(); ++s) {
-						const auto srcIdx = m_ch_index_src[sources[s]];
-						value += src.get(srcIdx)*m_amp[srcIdx]*m_gain[srcIdx];
+					for (int i=0; i<map.size(); ++i) {
+						const int sch = m_ch_index_src[map[i]];
+						value += schannels[sch]*gain;
 					}
-					m_dst.get(ch) = trans(value);
+					*it = trans(value);
 				}
 			}
 		}
 	}
-	template<int fmt>
-	void prepare(const AudioFrameIterator<fmt> &src) {
-		const int frames = src.size();
+	template<bool planar>
+	void prepare(const AudioDataBuffer<S, planar> &src) {
+		const int frames = src.frames();
 		mp_audio_realloc_min(m_output, frames);
 		m_output->samples = frames;
 		m_dst = m_output;
 		if (frames <= 0 || !m_normalizer)
 			return;
-		m_inputLevels.fill(LevelInfo(frames));
-		src.for_ch([this, &src] (int ch) {
-			m_inputLevels[ch].level += H::toLevel(src.get(ch));
-		});
-		for (auto &input : m_inputLevels)
-			input.level /= frames;
-		for (int ch = 0; ch < m_inputLevels.size(); ++ch) {
-			auto &input = m_inputLevels[ch];
-			auto &gain = m_gain[ch];
-			const auto avg = calculateAverage(input, ch);
-			const double targetGain = m_normalizerOption.gain(avg.level);
-			if (targetGain < 0)
-				gain = 1.0;
-			else {
-				const double rate = targetGain/gain;
-				if (rate > 1.05) {
-					gain *= 1.05;
-				} else if (rate < 0.95)
-					gain *= 0.95;
-				else
-					gain = targetGain;
-			}
-			auto &it = m_its[ch];
-			auto &buffers = m_inputLevelHistory[ch];
-			if ((double)avg.frames/(double)m_in.fps >= m_normalizerOption.bufferLengthInSeconds) {
-				if (++it == buffers.end())
-					it = buffers.begin();
-				*it = input;
-			} else {
-				buffers.push_back(input);
-				it = --buffers.end();
-			}
+		LevelInfo input(frames);
+		_AudioManipulate([&] (S s) { input.level += Helper<S>::toLevel(s); }, src, 0, src.frames());
+		input.level /= src.samples();
+		const auto avg = calculateAverage(input);
+		const double targetGain = m_normalizerOption.gain(avg.level);
+		if (targetGain < 0)
+			m_gain = 1.0;
+		else {
+			const double rate = targetGain/m_gain;
+			if (rate > 1.05) {
+				m_gain *= 1.05;
+			} else if (rate < 0.95)
+				m_gain *= 0.95;
+			else
+				m_gain = targetGain;
+		}
+		auto &it = m_inputLevelHistoryIt;
+		auto &buffers = m_inputLevelHistory;
+		if ((double)avg.frames/(double)m_in.fps >= m_normalizerOption.bufferLengthInSeconds) {
+			if (++it == buffers.end())
+				it = buffers.begin();
+			*it = input;
+		} else {
+			buffers.push_back(input);
+			it = --buffers.end();
 		}
 	}
-	mutable AudioFrameIterator<fmt_dst> m_dst;
+	mutable AudioDataBuffer<D, AudioFormatTrait<fmt_dst>::IsPlanar> m_dst;
 	AudioScaler<fmt_src> m_scaler;
 };
 
