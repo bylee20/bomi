@@ -1,5 +1,4 @@
 #include "audiomixer.hpp"
-#include "audiomixer_p.hpp"
 #include "audio_helper.hpp"
 
 template<int fmt_in>
@@ -183,7 +182,7 @@ public:
 		if (m_scaler.adjusted(in)) {
 			process(m_scaler.output());
 		} else
-			process<fmt_src>(in);
+			process<Trait::IsPlanar>(in);
 		m_delay = m_scaler.delay();
 	}
 	void setOutput(mp_audio *output) override { m_output = output; m_dst = {output}; }
@@ -223,6 +222,7 @@ private:
 					for (int i=0; i<map.size(); ++i) {
 						const int sch = m_ch_index_src[map[i]];
 						value += schannels[sch]*gain;
+
 					}
 					*it = trans(value);
 				}
