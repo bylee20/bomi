@@ -31,7 +31,7 @@ template<> struct HwAccX11Trait<IMGFMT_VDPAU> {
 
 using VdpauCodec = HwAccX11Codec<IMGFMT_VDPAU>;
 using VdpauStatusChecker = HwAccX11StatusChecker<IMGFMT_VDPAU>;
-using VdpauSurface = HwAccX11Codec<IMGFMT_VDPAU>;
+using VdpauSurface = HwAccX11Surface<IMGFMT_VDPAU>;
 using VdpauSurfacePool = HwAccX11SurfacePool<IMGFMT_VDPAU>;
 
 class Vdpau {
@@ -54,9 +54,6 @@ public:
 	static VdpStatus videoSurfaceQueryCapabilities(VdpChromaType type, VdpBool *supported, uint32_t *max_width, uint32_t *max_height) {
 		return d.videoSurfaceQueryCapabilities(d.device, type, supported, max_width, max_height);
 	}
-	static VdpStatus videoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpChromaType type, VdpYCbCrFormat format, VdpBool *supported) {
-		return d.videoSurfaceQueryGetPutBitsYCbCrCapabilities(d.device, type, format, supported);
-	}
 	static VdpStatus videoSurfaceCreate(VdpChromaType type, uint32_t width, uint32_t height, VdpVideoSurface *surface) {
 		return d.videoSurfaceCreate(d.device, type, width, height, surface);
 	}
@@ -74,12 +71,30 @@ public:
 		return d.decoderRender(decoder, target, picture_info, count, buffers);
 	}
 	static VdpStatus decoderDestroy(VdpDecoder decoder) {return d.decoderDestroy(decoder);}
-
-	static GLvdpauSurfaceNV registerVideoSurface(const GLvoid *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) {
-		return d.registerVideoSurface(vdpSurface, target, numTextureNames, textureNames);
+	static VdpStatus videoMixerCreate(uint32_t feature_count, const VdpVideoMixerFeature *features
+		, uint32_t parameter_count, const VdpVideoMixerParameter *parameters, const void *const *parameter_values, VdpVideoMixer *mixer) {
+		return d.videoMixerCreate(d.device, feature_count, features, parameter_count, parameters, parameter_values, mixer);
 	}
-	static GLvdpauSurfaceNV registerOutputSurface(const GLvoid *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) {
-		return d.registerOutputSurface(vdpSurface, target, numTextureNames, textureNames);
+	static VdpStatus videoMixerDestroy(VdpVideoMixer mixer) { return d.videoMixerDestroy(mixer); }
+	static VdpStatus videoMixerRender(VdpVideoMixer mixer, VdpOutputSurface background_surface, const VdpRect *background_source_rect
+		, VdpVideoMixerPictureStructure current_picture_structure, uint32_t video_surface_past_count, const VdpVideoSurface *video_surface_past
+		, VdpVideoSurface video_surface_current,uint32_t video_surface_future_count, const VdpVideoSurface *video_surface_future
+		, const VdpRect *video_source_rect, VdpOutputSurface destination_surface
+		, const VdpRect *destination_rect, const VdpRect *destination_video_rect, uint32_t layer_count, const VdpLayer *layers) {
+		return d.videoMixerRender(mixer, background_surface, background_source_rect
+								  , current_picture_structure, video_surface_past_count, video_surface_past
+								  , video_surface_current, video_surface_future_count, video_surface_future
+								  , video_source_rect, destination_surface
+								  , destination_rect, destination_video_rect, layer_count, layers);
+	}
+
+	static VdpStatus outputSurfaceCreate(VdpRGBAFormat rgba_format, uint32_t width, uint32_t height, VdpOutputSurface * surface) {
+		return d.outputSurfaceCreate(d.device, rgba_format, width, height, surface);
+	}
+	static VdpStatus outputSurfaceDestroy(VdpOutputSurface surface) { return d.outputSurfaceDestroy(surface); }
+
+	static GLvdpauSurfaceNV registerOutputSurface(VdpOutputSurface surface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) {
+		return d.registerOutputSurface(TO_INTEROP(surface), target, numTextureNames, textureNames);
 	}
 	static GLboolean isSurface(GLvdpauSurfaceNV surface) { return d.isSurface(surface); }
 	static void unregisterSurface(GLvdpauSurfaceNV surface) { d.unregisterSurface(surface); }
@@ -91,6 +106,8 @@ public:
 	static void unmapSurfaces(GLsizei numSurface, const GLvdpauSurfaceNV *surfaces) { d.unmapSurfaces(numSurface, surfaces); }
 	static bool isInitialized() { return d.init; }
 private:
+	template<class T, class = typename std::enable_if<!std::is_pointer<T>::value>::type>
+	static const void *TO_INTEROP(T handle) { return (const void*)(quintptr)(handle); }
 	struct Data : public VdpauStatusChecker {
 		VdpDevice device = 0;
 		VdpGetProcAddress *proc = nullptr;
@@ -99,7 +116,6 @@ private:
 		VdpGetInformationString *getInformationString = nullptr;
 		VdpDeviceDestroy *deviceDestroy = nullptr;
 		VdpVideoSurfaceQueryCapabilities *videoSurfaceQueryCapabilities = nullptr;
-		VdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities *videoSurfaceQueryGetPutBitsYCbCrCapabilities = nullptr;
 		VdpVideoSurfaceCreate *videoSurfaceCreate = nullptr;
 		VdpVideoSurfaceDestroy *videoSurfaceDestroy = nullptr;
 		VdpVideoSurfaceGetBitsYCbCr *videoSurfaceGetBitsYCbCr = nullptr;
@@ -107,8 +123,12 @@ private:
 		VdpDecoderCreate *decoderCreate = nullptr;
 		VdpDecoderRender *decoderRender = nullptr;
 		VdpDecoderDestroy *decoderDestroy = nullptr;
+		VdpVideoMixerCreate *videoMixerCreate = nullptr;
+		VdpVideoMixerDestroy *videoMixerDestroy = nullptr;
+		VdpVideoMixerRender *videoMixerRender = nullptr;
+		VdpOutputSurfaceCreate *outputSurfaceCreate = nullptr;
+		VdpOutputSurfaceDestroy *outputSurfaceDestroy = nullptr;
 
-		GLvdpauSurfaceNV (*registerVideoSurface) (const GLvoid *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) = nullptr;
 		GLvdpauSurfaceNV (*registerOutputSurface) (const GLvoid *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) = nullptr;
 		GLboolean (*isSurface) (GLvdpauSurfaceNV surface) = nullptr;
 		void (*unregisterSurface) (GLvdpauSurfaceNV surface) = nullptr;
@@ -150,6 +170,19 @@ private:
 private:
 	struct Data;
 	Data *d;
+};
+
+class VdpauMixer : public HwAccMixer, public VdpauStatusChecker {
+public:
+	VdpauMixer(const OpenGLTexture &texture, const VideoFormat &format);
+	~VdpauMixer();
+	bool upload(VideoFrame &frame, bool deint) override;
+private:
+	quint32 m_width = 0, m_height = 0;
+	VdpVideoMixer m_mixer = VDP_INVALID_HANDLE;
+	VdpChromaType m_chroma = VDP_CHROMA_TYPE_420;
+	VdpOutputSurface m_surface = VDP_INVALID_HANDLE;
+	GLvdpauSurfaceNV m_glSurface = GL_NONE;
 };
 
 #endif // HWACC_VDPAU_HPP

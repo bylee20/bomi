@@ -13,7 +13,7 @@ struct VideoRendererItem::Data {
 	VideoRendererItem *p = nullptr;
 	QLinkedList<VideoFrame> queue;
 	OpenGLFramebufferObject *fbo = nullptr;
-	bool take = false, initialized = false, render = false;
+	bool take = false, initialized = false, render = false, direct = false;
 	quint64 drawnFrames = 0, lastCheckedFrames = 0, lastCheckedTime = 0;
 	QRectF vtx;
 	QPoint offset = {0, 0};
@@ -139,6 +139,7 @@ void VideoRendererItem::initializeGL() {
 	const quint32 p = 0x0;
 	d->black.upload(&p);
 	d->initialized = true;
+	d->direct = false;
 	setRenderTarget(d->black);
 	LOG_GL_ERROR_Q
 }
@@ -407,6 +408,7 @@ LOG_GL_ERROR_Q
 			if (_Change(d->displaySize, frame.format().displaySize()))
 				d->updateGeometry(true);
 			d->shader->upload(frame);
+			d->direct = d->shader->directRendering();
 			++d->drawnFrames;
 		}
 		d->queue.pop_front();
@@ -425,14 +427,18 @@ LOG_GL_ERROR_Q
 	}
 
 	if (d->render && !d->frameSize.isEmpty()) {
-		if (!d->fbo || d->fbo->size() != d->frameSize) {
-			_Renew(d->fbo, d->frameSize, OpenGLCompat::framebufferObjectTextureFormat());
-			Q_ASSERT(d->fbo->isValid());
-			setRenderTarget(d->fbo->texture());
+		if (d->direct) {
+			setRenderTarget(d->shader->renderTarget());
+		} else {
+			if (!d->fbo || d->fbo->size() != d->frameSize) {
+				_Renew(d->fbo, d->frameSize, OpenGLCompat::framebufferObjectTextureFormat());
+				Q_ASSERT(d->fbo->isValid());
+				setRenderTarget(d->fbo->texture());
+			}
+			d->fbo->bind();
+			d->shader->render(d->kernel);
+			d->fbo->release();
 		}
-		d->fbo->bind();
-		d->shader->render(d->kernel);
-		d->fbo->release();
 		node->markDirty(QSGNode::DirtyMaterial);
 	}
 	d->render = false;

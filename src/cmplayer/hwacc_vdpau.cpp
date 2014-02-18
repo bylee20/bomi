@@ -1,5 +1,6 @@
 #include "hwacc_vdpau.hpp"
 #include "stdafx.hpp"
+#include "videoframe.hpp"
 
 extern "C" {
 #include <libavcodec/vdpau.h>
@@ -8,6 +9,8 @@ extern "C" {
 #include <video/mp_image.h>
 #include <video/mp_image_pool.h>
 }
+
+#define TO_INTEROP(a) (void*)(quintptr)(a)
 
 void initialize_vdpau_interop(QOpenGLContext *ctx) {
 	Vdpau::initializeInterop(ctx);
@@ -44,15 +47,12 @@ Vdpau::Data Vdpau::d;
 void Vdpau::initialize() {
 	if (d.init)
 		return;
-	if (!d.isSuccess(vdp_device_create_x11(QX11Info::display(), QX11Info::appScreen(), &d.device, &d.proc))) {
-		_Error("Cannot intialize VDPAU device");
+	if (!d.check(vdp_device_create_x11(QX11Info::display(), QX11Info::appScreen(), &d.device, &d.proc), "Cannot intialize VDPAU device"))
 		return;
-	}
 	proc(VDP_FUNC_ID_GET_ERROR_STRING, d.getErrorString);
 	proc(VDP_FUNC_ID_GET_INFORMATION_STRING, d.getInformationString);
 	proc(VDP_FUNC_ID_DEVICE_DESTROY, d.deviceDestroy);
 	proc(VDP_FUNC_ID_VIDEO_SURFACE_QUERY_CAPABILITIES, d.videoSurfaceQueryCapabilities);
-	proc(VDP_FUNC_ID_VIDEO_SURFACE_QUERY_GET_PUT_BITS_Y_CB_CR_CAPABILITIES, d.videoSurfaceQueryGetPutBitsYCbCrCapabilities);
 	proc(VDP_FUNC_ID_VIDEO_SURFACE_CREATE, d.videoSurfaceCreate);
 	proc(VDP_FUNC_ID_VIDEO_SURFACE_DESTROY, d.videoSurfaceDestroy);
 	proc(VDP_FUNC_ID_VIDEO_SURFACE_GET_BITS_Y_CB_CR, d.videoSurfaceGetBitsYCbCr);
@@ -60,11 +60,14 @@ void Vdpau::initialize() {
 	proc(VDP_FUNC_ID_DECODER_DESTROY, d.decoderDestroy);
 	proc(VDP_FUNC_ID_DECODER_RENDER, d.decoderRender);
 	proc(VDP_FUNC_ID_DECODER_QUERY_CAPABILITIES, d.decoderQueryCapabilities);
+	proc(VDP_FUNC_ID_VIDEO_MIXER_CREATE, d.videoMixerCreate);
+	proc(VDP_FUNC_ID_VIDEO_MIXER_DESTROY, d.videoMixerDestroy);
+	proc(VDP_FUNC_ID_VIDEO_MIXER_RENDER, d.videoMixerRender);
+	proc(VDP_FUNC_ID_OUTPUT_SURFACE_CREATE, d.outputSurfaceCreate);
+	proc(VDP_FUNC_ID_OUTPUT_SURFACE_DESTROY, d.outputSurfaceDestroy);
 	d.init = true;
-	if (!d.isSuccess()) {
-		_Error("Cannot get VDPAU functions.");
+	if (!d.check(d.status(), "Cannot get VDPAU functions."))
 		return;
-	}
 	auto push = [] (VdpDecoderProfile profile, int avProfile, AVCodecID codec, int surfaces) {
 		VdpBool supported = false; quint32 level = 0, blocks = 0, width = 0, height = 0;
 		if (d.decoderQueryCapabilities(d.device, profile, &supported, &level, &blocks, &width, &height) != VDP_STATUS_OK || !supported)
@@ -103,21 +106,22 @@ void Vdpau::finalize() {
 }
 
 void Vdpau::initializeInterop(QOpenGLContext *ctx) {
-	if (d.init && !d.initialize) {
-		d.gl = ctx;
-		proc("glVDPAUInitNV", d.initialize);
-		proc("glVDPAUFiniNV", d.finalize);
-		proc("glVDPAURegisterVideoSurfaceNV", d.registerVideoSurface);
-		proc("glVDPAURegisterOutputSurfaceNV", d.registerOutputSurface);
-		proc("glVDPAUIsSurfaceNV", d.isSurface);
-		proc("glVDPAUUnregisterSurfaceNV", d.unregisterSurface);
-		proc("glVDPAUGetSurfaceivNV", d.getSurfaceiv);
-		proc("glVDPAUSurfaceAccessNV", d.surfaceAccess);
-		proc("glVDPAUMapSurfacesNV", d.mapSurfaces);
-		proc("glVDPAUUnmapSurfacesNV", d.unmapSurfaces);
-		d.initialize(reinterpret_cast<void*>(d.device), reinterpret_cast<void*>(d.proc));
-	}
+	if (!d.init || d.initialize)
+		return;
+	d.gl = ctx;
+	proc("glVDPAUInitNV", d.initialize);
+	proc("glVDPAUFiniNV", d.finalize);
+	proc("glVDPAURegisterOutputSurfaceNV", d.registerOutputSurface);
+	proc("glVDPAUIsSurfaceNV", d.isSurface);
+	proc("glVDPAUUnregisterSurfaceNV", d.unregisterSurface);
+	proc("glVDPAUGetSurfaceivNV", d.getSurfaceiv);
+	proc("glVDPAUSurfaceAccessNV", d.surfaceAccess);
+	proc("glVDPAUMapSurfacesNV", d.mapSurfaces);
+	proc("glVDPAUUnmapSurfacesNV", d.unmapSurfaces);
+	d.initialize(TO_INTEROP(d.device), TO_INTEROP(d.proc));
 }
+
+
 
 void Vdpau::finalizeInterop(QOpenGLContext *ctx) {
 	if (d.initialize) {
@@ -134,9 +138,6 @@ struct VdpauVideoSurface {
 struct HwAccVdpau::Data {
 	AVVDPAUContext context;
 	QSize avSize = {0, 0};
-	mp_image_pool *mp_pool = nullptr;
-	VdpYCbCrFormat format = VdpYCbCrFormat(-1);
-	mp_imgfmt imgfmt = IMGFMT_NONE;
 	VdpauSurfacePool pool;
 };
 
@@ -144,13 +145,10 @@ HwAccVdpau::HwAccVdpau(AVCodecID cid)
 : HwAcc(cid), d(new Data) {
 	memset(&d->context, 0, sizeof(d->context));
 	d->context.decoder = VDP_INVALID_HANDLE;
-	d->mp_pool = mp_image_pool_new(5);
 }
 
 HwAccVdpau::~HwAccVdpau() {
 	freeContext();
-	if (d->mp_pool)
-		mp_image_pool_clear(d->mp_pool);
 	delete d;
 }
 
@@ -172,25 +170,11 @@ bool HwAccVdpau::fillContext(AVCodecContext *avctx) {
 	if (profile.width < avctx->width || profile.height < avctx->height || profile.level < avctx->level)
 		return false;
 	VdpBool supports = false; uint mwidth = 0, mheight = 0;
-	const VdpChromaType chroma = VDP_CHROMA_TYPE_420;
+	constexpr VdpChromaType chroma = VDP_CHROMA_TYPE_420;
 	if (!isSuccess(Vdpau::videoSurfaceQueryCapabilities(chroma, &supports, &mwidth, &mheight)))
 		return false;
 	if (!supports || (int)mwidth < avctx->width || (int)mheight < avctx->height)
 		return false;
-	VdpYCbCrFormat format;
-	auto check = [this, &format, &supports] (VdpYCbCrFormat f) {
-		if (!isSuccess(Vdpau::videoSurfaceQueryGetPutBitsYCbCrCapabilities(chroma, format = f, &supports)))
-			return false;
-		return (bool)supports;
-	};
-	if (!check(VDP_YCBCR_FORMAT_YV12) && !check(VDP_YCBCR_FORMAT_NV12))
-		return false;
-	Q_ASSERT(format == VDP_YCBCR_FORMAT_YV12 || format == VDP_YCBCR_FORMAT_NV12);
-	Q_ASSERT(supports == true);
-	if (format == VDP_YCBCR_FORMAT_YV12)
-		d->imgfmt = IMGFMT_420P;
-	else
-		d->imgfmt = IMGFMT_NV12;
 	const int width = (avctx->width + 1) & ~1;
 	const int height = (avctx->height + 3) & ~3;
 	if (!isSuccess(Vdpau::decoderCreate(profile.id, width, height, codec->surfaces, &d->context.decoder))) {
@@ -199,7 +183,6 @@ bool HwAccVdpau::fillContext(AVCodecContext *avctx) {
 	}
 	if (!d->pool.create(codec->surfaces + 1, width, height, chroma))
 		return false;
-	d->format = format;
 	d->avSize = QSize(avctx->width, avctx->height);
 	d->context.render = Vdpau::decoderRender;
 	return true;
@@ -214,17 +197,51 @@ void *HwAccVdpau::context() const {
 }
 
 mp_image *HwAccVdpau::getImage(mp_image *mpi) {
-	const auto id = (VdpVideoSurface)(uintptr_t)(void*)mpi->planes[3];
-	auto img = mp_image_pool_get(d->mp_pool, d->imgfmt, d->avSize.width(), d->avSize.height());
-	void *data[] = { img->planes[0], img->planes[1], img->planes[2] };
-	quint32 pitches[] = { (quint32)img->stride[0], (quint32)img->stride[1], (quint32)img->stride[2] };
-	if (!isSuccess(Vdpau::videoSurfaceGetBitsYCbCr(id, d->format, data, pitches))) {
-		talloc_free(img);
-		return mpi;
-	}
-	mp_image_copy_attributes(img, mpi);
-	if (d->format == VDP_YCBCR_FORMAT_YV12)
-		qSwap(img->planes[1], img->planes[2]);
-	return img;
+	return mpi;
 }
 
+/******************************************************************/
+
+VdpauMixer::VdpauMixer(const OpenGLTexture &texture, const VideoFormat &format)
+: m_width(format.width()), m_height(format.height()) {
+	static const QVector<VdpVideoMixerParameter> params = {
+		VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH,
+		VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT,
+		VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE,
+	};
+	const QVector<void *> values = { &m_width, &m_height, &m_chroma };
+	if (!check(Vdpau::videoMixerCreate(0, nullptr, params.size(), params.data(), values.data(), &m_mixer), "Cannot create videp mixer."))
+		return;
+	if (!check(Vdpau::outputSurfaceCreate(VDP_RGBA_FORMAT_B8G8R8A8, m_width, m_height, &m_surface), "Cannot create output surface."))
+		return;
+	m_glSurface = Vdpau::registerOutputSurface(m_surface, texture.target, 1, &texture.id);
+	if (m_glSurface == GL_NONE && !check(VDP_STATUS_ERROR, "Cannot register output surface."))
+		return;
+	Vdpau::surfaceAccess(m_glSurface, GL_READ_ONLY);
+	Vdpau::mapSurfaces(1, &m_glSurface);
+	_Debug("VDPAU Mixer initialized.");
+}
+
+VdpauMixer::~VdpauMixer() {
+	if (m_glSurface) {
+		Vdpau::unmapSurfaces(1, &m_glSurface);
+		Vdpau::unregisterSurface(m_glSurface);
+	}
+	if (m_surface != VDP_INVALID_HANDLE)
+		Vdpau::outputSurfaceDestroy(m_surface);
+	if (m_mixer != VDP_INVALID_HANDLE)
+		Vdpau::videoMixerDestroy(m_mixer);
+}
+
+bool VdpauMixer::upload(VideoFrame &frame, bool deint) {
+	static const VdpVideoMixerPictureStructure structures[] = {
+		// Picture = 0,   Top = 1,      Bottom = 2
+		VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD
+	};
+	VdpVideoMixerPictureStructure structure = VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME;
+	if (deint)
+		structure = structures[frame.field() & VideoFrame::Interlaced];
+	const auto id = (VdpVideoSurface)(quintptr)(frame.data(3));
+	return check(Vdpau::videoMixerRender(m_mixer, VDP_INVALID_HANDLE, nullptr, structure, 0, nullptr, id, 0, nullptr
+		, nullptr, m_surface, nullptr, nullptr, 0, nullptr), "Cannot render video surface.");
+}

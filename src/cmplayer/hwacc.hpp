@@ -12,6 +12,14 @@ extern "C" {
 struct lavc_ctx;		struct AVFrame;
 struct mp_image;		struct vd_lavc_hwdec;
 struct mp_hwdec_info;	class VideoOutput;
+class OpenGLTexture;	class VideoFormat;
+class VideoFrame;
+
+class HwAccMixer {
+public:
+	virtual ~HwAccMixer() {}
+	virtual bool upload(VideoFrame &frame, bool deint) = 0;
+};
 
 class HwAcc {
 public:
@@ -27,6 +35,7 @@ public:
 	static QString backendName();
 	static const char *codecName(int id);
 	static AVCodecID codecId(const char *name);
+	static HwAccMixer *createMixer(const OpenGLTexture &texture, const VideoFormat &format);
 	virtual mp_image *getImage(mp_image *mpi) = 0;
 	virtual Type type() const = 0;
 	int imgfmt() const;

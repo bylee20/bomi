@@ -20,6 +20,14 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
 			alignedSize = QSize(stride/4, mpi->h);
 			alignedByteSize[0] = QSize(stride, mpi->h);
 			bpp = 32;
+		} else if (imgfmt == IMGFMT_VDPAU) {
+			type = IMGFMT_BGRA;
+			planes = 1;
+			const int width = (mpi->w + 1) & ~1;
+			const int height = (mpi->h + 3) & ~3;
+			alignedSize = QSize(width, height);
+			alignedByteSize[0] = QSize(width*4, height);
+			bpp = 32;
 		}
 #endif
 #ifdef Q_OS_MAC

@@ -39,7 +39,7 @@ struct HwAccX11StatusChecker {
 	bool check(Status status, const QString &onError = QString()) {
 		if (isSuccess(status))
 			return true;
-		_Error("Error %%(0x%%): %%", Trait::error(status), QString::number(m_status, 16), onError);
+		_Error("Error: %%(0x%%) %%", Trait::error(status), QString::number(m_status, 16), onError);
 		return false;
 	}
 	bool check(Status status, const char *onError = "") { return check(status, _L(onError)); }
@@ -91,7 +91,7 @@ public:
 		if (m_id != Trait::invalid)
 			Trait::destroySurface(m_id);
 	}
-//private:
+private:
 	HwAccX11Surface() = default;
 	friend class HwAccX11SurfacePool<imgfmt>;
 	SurfaceID m_id = Trait::invalid;

@@ -61,7 +61,7 @@ struct App::Data {
 		auto values = [parser, this] (LineCmd cmd) { return parser->values(options.value(cmd, dummy)); };
 		if (isSet(LineCmd::LogLevel))
 			Log::setMaximumLevel(value(LineCmd::LogLevel));
-		if (isSet(LineCmd::OpenGLDebug))
+		if (isSet(LineCmd::OpenGLDebug) || qgetenv("CMPLAYER_GL_DEBUG").toInt())
 			gldebug = true;
 		if (main) {
 			if (isSet(LineCmd::Wake)) {

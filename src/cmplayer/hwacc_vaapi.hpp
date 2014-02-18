@@ -117,6 +117,15 @@ private:
 	friend class HwAccVaApi;
 };
 
+class VaApiMixer : public HwAccMixer, public VaApiStatusChecker{
+public:
+	VaApiMixer(const OpenGLTexture &texture, const VideoFormat &format);
+	~VaApiMixer();
+	bool upload(VideoFrame &frame, bool deint) override;
+private:
+	void *m_glSurface = nullptr;
+};
+
 #endif
 
 #endif // HWACC_VAAPI_HPP

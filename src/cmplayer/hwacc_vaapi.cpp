@@ -1,5 +1,6 @@
 #include "hwacc_vaapi.hpp"
 #include "stdafx.hpp"
+#include "videoframe.hpp"
 
 #ifdef Q_OS_LINUX
 
@@ -311,6 +312,46 @@ bool HwAccVaApi::fillContext(AVCodecContext *avctx) {
 
 mp_image *HwAccVaApi::getImage(mp_image *mpi) {
 	return mpi;
+}
+
+/****************************************************************************************/
+
+VaApiMixer::VaApiMixer(const OpenGLTexture &texture, const VideoFormat &/*format*/) {
+	if (!check(vaCreateSurfaceGLX(VaApi::glx(), texture.target, texture.id, &m_glSurface), "Cannot create OpenGL surface."))
+		return;
+}
+
+VaApiMixer::~VaApiMixer() {
+	if (m_glSurface)
+		vaDestroySurfaceGLX(VaApi::glx(), m_glSurface);
+}
+
+
+bool VaApiMixer::upload(VideoFrame &frame, bool deint) {
+	if (!m_glSurface)
+		return false;
+	static const int specs[MP_CSP_COUNT] = {
+		0,					//MP_CSP_AUTO,
+		VA_SRC_BT601,		//MP_CSP_BT_601,
+		VA_SRC_BT709,		//MP_CSP_BT_709,
+		VA_SRC_SMPTE_240,	//MP_CSP_SMPTE_240M,
+		0,					//MP_CSP_RGB,
+		0,					//MP_CSP_XYZ,
+		0,					//MP_CSP_YCGCO,
+	};
+	static const int field[] = {
+		// Picture = 0,   Top = 1,      Bottom = 2
+		VA_FRAME_PICTURE, VA_TOP_FIELD, VA_BOTTOM_FIELD, VA_FRAME_PICTURE
+	};
+	const auto id = (VASurfaceID)(quintptr)frame.data(3);
+	int flags = specs[frame.format().colorspace()];
+	if (deint)
+		flags |= field[frame.field() & VideoFrame::Interlaced];
+	if (!check(vaCopySurfaceGLX(VaApi::glx(), m_glSurface, id,  flags), "Cannot copy OpenGL surface."))
+		return false;
+	if (!check(vaSyncSurface(VaApi::glx(), id), "Cannot sync video surface."))
+		return false;
+	return true;
 }
 
 #endif

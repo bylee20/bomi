@@ -4,6 +4,10 @@
 #include "stdafx.hpp"
 #include "videoformat.hpp"
 
+#ifdef None
+#undef None
+#endif
+
 class VideoFrame {
 public:
 	enum Field {None = 0, Picture = 0, Top = 1, Bottom = 2, Interlaced = Top | Bottom, Additional = 4, Flipped = 8};

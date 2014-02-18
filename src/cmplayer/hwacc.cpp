@@ -79,6 +79,17 @@ void HwAcc::finalize() {
 		VaApi::finalize();
 }
 
+HwAccMixer *HwAcc::createMixer(const OpenGLTexture &texture, const VideoFormat &format) {
+	switch (backend()) {
+	case VdpauX11:
+		return new VdpauMixer(texture, format);
+	case VaApiGLX:
+		return new VaApiMixer(texture, format);
+	default:
+		return nullptr;
+	}
+}
+
 struct CodecInfo {
 	CodecInfo(AVCodecID id = AV_CODEC_ID_NONE, const char *name = "unknown")
 	: id(id), name(name) {}

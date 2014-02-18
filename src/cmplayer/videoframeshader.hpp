@@ -9,6 +9,8 @@
 #include "deintinfo.hpp"
 #include "videoframe.hpp"
 
+class HwAccMixer;
+
 class VideoFrameShader {
 	enum {vPosition, vCoord};
 public:
@@ -29,6 +31,8 @@ public:
 		x2 = m_coords.right(); y2 = m_coords.bottom();
 	}
 	void setChromaInterpolator(InterpolatorType type);
+	bool directRendering() const { return m_mixer != nullptr; }
+	const OpenGLTexture &renderTarget() const { return m_textures[0]; }
 private:
 	void release();
 	void updateColorMatrix();
@@ -78,9 +82,7 @@ private:
 	QRectF m_coords, m_positions;
 	QPointF m_chroma = {0.0, 0.0};
 	Interpolator::Texture m_lutInt[2];
-#ifdef Q_OS_LINUX
-	void *m_vaSurfaceGLX = nullptr;
-#endif
+	HwAccMixer *m_mixer = nullptr;
 };
 
 #endif // VIDEOFRAMESHADER_HPP

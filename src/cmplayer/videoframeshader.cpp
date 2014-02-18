@@ -1,15 +1,14 @@
 #include "videoframeshader.hpp"
 #include "videoframe.hpp"
-#ifdef Q_OS_LINUX
-#include "hwacc_vaapi.hpp"
-#include <va/va_glx.h>
-#include <va/va_x11.h>
-#endif
+#include "hwacc.hpp"
+#include "log.hpp"
 #ifdef Q_OS_MAC
 #include <OpenGL/CGLIOSurface.h>
 #include <OpenGL/OpenGL.h>
 #include <CoreVideo/CVPixelBuffer.h>
 #endif
+
+DECLARE_LOG_CONTEXT(VideoFrameShader)
 
 static const QByteArray shaderTemplate(
 #include "videoframeshader.glsl.hpp"
@@ -31,13 +30,11 @@ VideoFrameShader::~VideoFrameShader() {
 }
 
 void VideoFrameShader::release() {
-#ifdef Q_OS_LINUX
-	if (m_vaSurfaceGLX) {
+	if (m_mixer) {
 		m_textures[0].bind();
-		vaDestroySurfaceGLX(VaApi::glx(), m_vaSurfaceGLX);
-		m_vaSurfaceGLX = nullptr;
+		_Delete(m_mixer);
+		m_textures[0].unbind();
 	}
-#endif
 	for (auto &texture : m_textures)
 		texture.delete_();
 	m_textures.clear();
@@ -251,27 +248,10 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 	}
 #endif
 #ifdef Q_OS_LINUX
-	if (m_frame.format().imgfmt() == IMGFMT_VAAPI) {
-		static const int specs[MP_CSP_COUNT] = {
-			0,					//MP_CSP_AUTO,
-			VA_SRC_BT601,		//MP_CSP_BT_601,
-			VA_SRC_BT709,		//MP_CSP_BT_709,
-			VA_SRC_SMPTE_240,	//MP_CSP_SMPTE_240M,
-			0,					//MP_CSP_RGB,
-			0,					//MP_CSP_XYZ,
-			0,					//MP_CSP_YCGCO,
-		};
-		static const int field[] = {
-			// Picture = 0,   Top = 1,      Bottom = 2
-			VA_FRAME_PICTURE, VA_TOP_FIELD, VA_BOTTOM_FIELD, VA_FRAME_PICTURE
-		};
-		auto id = (VASurfaceID)(uintptr_t)m_frame.data(3);
-		int flags = specs[m_frame.format().colorspace()];
-		if (m_deint == DeintMethod::Bob)
-			flags |= field[m_frame.field() & VideoFrame::Interlaced];
+	if (m_mixer) {
 		m_textures[0].bind();
-		vaCopySurfaceGLX(VaApi::glx(), m_vaSurfaceGLX, id,  flags);
-		vaSyncSurface(VaApi::glx(), id);
+		m_mixer->upload(frame, m_deint != DeintMethod::None);
+		m_textures[0].unbind();
 		return changed;
 	}
 #endif
@@ -288,9 +268,6 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 	if (!m_prog)
 		return;
 	glViewport(0, 0, m_frame.format().width(), m_frame.format().height());
-//  VideoFrame is always opaque. No need to clear background.
-//	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-//	glClear(GL_COLOR_BUFFER_BIT);
 
 	m_prog->bind();
 	m_prog->setUniformValue(loc_top_field, (float)m_frame.isTopField());
@@ -435,7 +412,7 @@ void VideoFrameShader::fillInfo() {
 	case IMGFMT_YUYV:
 	case IMGFMT_UYVY:
 		if (ctx->hasExtension("GL_APPLE_ycbcr_422")) {
-			qDebug() << "Good! We have GL_APPLE_ycbcr_422.";
+			_Debug("Good! We have GL_APPLE_ycbcr_422.");
 			OpenGLTextureFormat fmt;
 			fmt.internal = GL_RGB8;
 			fmt.pixel = GL_YCBCR_422_APPLE;
@@ -443,7 +420,7 @@ void VideoFrameShader::fillInfo() {
 			addCustom(0, format.width(), format.height(), fmt);
 			m_csp = MP_CSP_RGB;
 		} else if (ctx->hasExtension("GL_MESA_ycbcr_texture")) {
-			qDebug() << "Good! We have GL_MESA_ycbcr_texture.";
+			_Debug("Good! We have GL_MESA_ycbcr_texture.");
 			m_texel = R"(vec3 texel(const in int coord) { return texture0(coord).g!!; })";
 			m_texel.replace("!!", format.type() == IMGFMT_YUYV ? "br" : "rb");
 			OpenGLTextureFormat fmt;
@@ -476,19 +453,22 @@ void VideoFrameShader::fillInfo() {
 	case IMGFMT_ARGB:
 		add(0, GL_BGRA);
 		m_texel.replace(".rgb", ".gra");
-		break;
 	default:
 		break;
 	}
 #ifdef Q_OS_LINUX
-	if (format.imgfmt() == IMGFMT_VAAPI) {
+	switch (format.imgfmt()) {
+	case IMGFMT_VAAPI:
+	case IMGFMT_VDPAU:
 		Q_ASSERT(format.type() == IMGFMT_BGRA);
+		Q_ASSERT(m_mixer == nullptr);
 		m_csp = MP_CSP_RGB;
 		m_textures[0].bind();
-		vaCreateSurfaceGLX(VaApi::glx(), m_textures[0].target, m_textures[0].id, &m_vaSurfaceGLX);
-	} else if (format.imgfmt() == IMGFMT_VDPAU) {
-		qDebug() << "vdpau!";
-		Q_ASSERT(m_textures.isEmpty());
+		m_mixer = HwAcc::createMixer(m_textures[0], format);
+		m_textures[0].unbind();
+		break;
+	default:
+		break;
 	}
 #endif
 }
