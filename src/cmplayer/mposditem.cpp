@@ -82,7 +82,7 @@ struct MpOsdItem::Data {
 			glEnable(atlas.target);
 			if (atlas.id == GL_NONE)
 				atlas.generate();
-			atlas.allocate(GL_NEAREST, GL_CLAMP_TO_EDGE);
+			atlas.allocate(GL_NEAREST, OGL::ClampToEdge);
 		}
 	}
 
@@ -112,12 +112,12 @@ struct MpOsdItem::Data {
 		shader->setUniformValue(loc_vMatrix, vMatrix);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, atlas.id);
+		glBindTexture(OGL::Target2D, atlas.id);
 		glEnable(GL_BLEND);
 		glBlendFunc(srcFactor, GL_ONE_MINUS_SRC_ALPHA);
 		glDrawArrays(GL_TRIANGLES, 0, shader->N*osd.count());
 		glDisable(GL_BLEND);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindTexture(OGL::Target2D, 0);
 
 		shader->end();
 		fbo->release();

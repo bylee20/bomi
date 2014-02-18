@@ -79,7 +79,7 @@ public slots:
 	void setCropRatio(double ratio);
 signals:
 	void droppedFramesChanged(int dropped);
-	void frameImageObtained(const QImage &image) const;
+	void frameImageObtained(QImage image) const;
 	void effectsChanged(Effects effects);
 	void offsetChanged(const QPoint &pos);
 	void screenRectChanged(const QRectF &rect);

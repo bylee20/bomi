@@ -143,30 +143,30 @@ void OpenGLCompat::check() {
 	}
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTexSize);
 
-	d->formats[0][GL_RED] = {GL_R8, GL_RED, GL_UNSIGNED_BYTE};
-	d->formats[0][GL_RG] = {GL_RG8, GL_RG, GL_UNSIGNED_BYTE};
-	d->formats[0][GL_LUMINANCE] = {GL_LUMINANCE8, GL_LUMINANCE, GL_UNSIGNED_BYTE};
-	d->formats[0][GL_LUMINANCE_ALPHA] = {GL_LUMINANCE8_ALPHA8, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE};
-	d->formats[0][GL_RGB] = {GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE};
-	d->formats[0][GL_BGR] = {GL_RGB8, GL_BGR, GL_UNSIGNED_BYTE};
-	d->formats[0][GL_BGRA] = {GL_RGBA8, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV};
-	d->formats[0][GL_RGBA] = {GL_RGBA8, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV};
+	d->formats[0][OGL::Red] = {OGL::R8_UNorm, OGL::Red, OGL::UInt8};
+	d->formats[0][OGL::RG] = {OGL::RG8_UNorm, OGL::RG, OGL::UInt8};
+	d->formats[0][OGL::Luminance] = {OGL_Luminance8_UNorm, OGL::Luminance, OGL::UInt8};
+	d->formats[0][OGL::LuminanceAlpha] = {OGL_LuminanceAlpha8_UNorm, OGL::LuminanceAlpha, OGL::UInt8};
+	d->formats[0][OGL::RGB] = {OGL::RGB8_UNorm, OGL::RGB, OGL::UInt8};
+	d->formats[0][OGL::BGR] = {OGL::RGB8_UNorm, OGL::BGR, OGL::UInt8};
+	d->formats[0][OGL::BGRA] = {OGL::RGBA8_UNorm, OGL::BGRA, OGL_UInt32_RGBA8_Rev};
+	d->formats[0][OGL::RGBA] = {OGL::RGBA8_UNorm, OGL::RGBA, OGL_UInt32_RGBA8_Rev};
 
-	d->formats[1][GL_RED] = {GL_R16, GL_RED, GL_UNSIGNED_SHORT};
-	d->formats[1][GL_RG] = {GL_RG16, GL_RG, GL_UNSIGNED_SHORT};
-	d->formats[1][GL_LUMINANCE] = {GL_LUMINANCE16, GL_LUMINANCE, GL_UNSIGNED_SHORT};
-	d->formats[1][GL_LUMINANCE_ALPHA] = {GL_LUMINANCE16_ALPHA16, GL_LUMINANCE_ALPHA, GL_UNSIGNED_SHORT};
-	d->formats[1][GL_RGB] = {GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT};
-	d->formats[1][GL_BGR] = {GL_RGB16, GL_BGR, GL_UNSIGNED_SHORT};
-	d->formats[1][GL_BGRA] = {GL_RGBA16, GL_BGRA, GL_UNSIGNED_SHORT};
-	d->formats[1][GL_RGBA] = {GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT};
+	d->formats[1][OGL::Red] = {OGL::R16_UNorm, OGL::Red, OGL::UInt16};
+	d->formats[1][OGL::RG] = {OGL::R16_UNorm, OGL::RG, OGL::UInt16};
+	d->formats[1][OGL::Luminance] = {OGL_Luminance16_UNorm, OGL::Luminance, OGL::UInt16};
+	d->formats[1][OGL::LuminanceAlpha] = {OGL_LuminanceAlpha16_UNorm, OGL::LuminanceAlpha, OGL::UInt16};
+	d->formats[1][OGL::RGB] = {OGL::RGB16_UNorm, OGL::RGB, OGL::UInt16};
+	d->formats[1][OGL::BGR] = {OGL::RGB16_UNorm, OGL::BGR, OGL::UInt16};
+	d->formats[1][OGL::BGRA] = {OGL::RGBA16_UNorm, OGL::BGRA, OGL::UInt16};
+	d->formats[1][OGL::RGBA] = {OGL::RGBA16_UNorm, OGL::RGBA, OGL::UInt16};
 
 	const bool rg = hasExtension(TextureRG);
 	for (auto &format : d->formats) {
-		format[1] = rg ? format[GL_RED] : format[GL_LUMINANCE];
-		format[2] = rg ? format[GL_RG]  : format[GL_LUMINANCE_ALPHA];
-		format[3] = format[GL_BGR];
-		format[4] = format[GL_BGRA];
+		format[1] = rg ? format[OGL::Red] : format[OGL::Luminance];
+		format[2] = rg ? format[OGL::RG]  : format[OGL::LuminanceAlpha];
+		format[3] = format[OGL::BGR];
+		format[4] = format[OGL::BGRA];
 	}
 
 	if (!hasExtension(FramebufferObject))
@@ -179,7 +179,7 @@ void OpenGLCompat::check() {
 		if (!_Renew(fbo, QSize(16, 16), QOpenGLTexture::RGBA8_UNorm)->isValid())
 			_Fatal("No available FBO texture format. One of GL_BGRA8 and GL_BGRA16 must be supported at least.");
 		else
-			_Info("FBO texture format: GL_RGBA8");
+			_Info("FBO texture format: OGL::RGBA8_UNorm");
 	}
 	_Delete(fbo);
 	if (!extensions.isEmpty())
@@ -236,14 +236,14 @@ OpenGLTexture OpenGLCompat::allocateDitheringTexture(GLuint id, Dithering type) 
 			mp_make_fruit_dither_matrix(fruit.data(), sizeb);
 		}
 		const bool rg = hasExtension(TextureRG);
-		texture.format.internal = rg ? GL_R16 : GL_LUMINANCE16;
-		texture.format.pixel = rg ? GL_RED : GL_LUMINANCE;
+		texture.format.internal = rg ? OGL::R16_UNorm : OGL_Luminance16_UNorm;
+		texture.format.pixel = rg ? OGL::Red : OGL::Luminance;
 		if (hasExtension(TextureFloat)) {
-			texture.format.type = GL_FLOAT;
+			texture.format.type = OGL::Float32;
 			data.resize(sizeof(GLfloat)*fruit.size());
 			memcpy(data.data(), fruit.data(), data.size());
 		} else {
-			texture.format.type = GL_UNSIGNED_SHORT;
+			texture.format.type = OGL::UInt16;
 			data.resize(sizeof(GLushort)*fruit.size());
 			auto p = (GLushort*)data.data();
 			for (auto v : fruit)
@@ -256,45 +256,9 @@ OpenGLTexture OpenGLCompat::allocateDitheringTexture(GLuint id, Dithering type) 
 		texture.format = textureFormat(1);
 	}
 	texture.width = texture.height = size;
-	texture.target = GL_TEXTURE_2D;
+	texture.target = OGL::Target2D;
 	//	 gl->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	//	 gl->PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	texture.allocate(GL_NEAREST, GL_REPEAT, data.data());
 	return texture;
-}
-
-template<typename T>
-static QImage getImage(const QSize &size, const OpenGLTextureFormat &format) {
-	if (size.isEmpty())
-		return QImage();
-	QImage image(size, QImage::Format_ARGB32);
-	QVector<T> data(size.width()*size.height()*4);
-	auto src = data.data();
-	glReadPixels(0, 0, size.width(), size.height(), format.pixel, format.type, src);
-	uchar *dst = image.bits();
-	const qreal r = qreal(_Max<uchar>())/qreal(_Max<T>());
-	for (int i=0; i<size.width()*size.height()*4; ++i)
-		*dst++ = qRound(qreal(*src++)*r);
-	return image;
-}
-
-QImage OpenGLFramebufferObject::toImage() const {
-	if (m_texture.isNull())
-		return QImage();
-	const bool wasBound = isBound();
-	if (!wasBound)
-		const_cast<OpenGLFramebufferObject*>(this)->bind();
-	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
-	switch (m_texture.format.type) {
-	case GL_UNSIGNED_BYTE:
-	case GL_UNSIGNED_INT_8_8_8_8:
-	case GL_UNSIGNED_INT_8_8_8_8_REV:
-		return getImage<uchar>(m_texture.size(), m_texture.format);
-	case GL_UNSIGNED_SHORT:
-		return getImage<GLushort>(m_texture.size(), m_texture.format);
-	default:
-		return QImage();
-	}
-	if (!wasBound)
-		const_cast<OpenGLFramebufferObject*>(this)->release();
 }

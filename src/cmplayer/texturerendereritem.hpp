@@ -35,6 +35,7 @@ protected:
 	static QOpenGLFunctions *func() { return QOpenGLContext::currentContext()->functions(); }
 	void setGeometryDirty() { m_dirtyGeomerty = true; }
 	void setRenderTarget(const OpenGLTexture &texture) { m_texture = texture; }
+	const OpenGLTexture &renderTarget() const { return m_texture; }
 	virtual void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	virtual void prepare(QSGGeometryNode *node) = 0;
 	virtual void getCoords(QRectF &vertices, QRectF &/*texCoords*/) { vertices = boundingRect(); }

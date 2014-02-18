@@ -42,7 +42,7 @@ void VideoFrameShader::release() {
 
 void VideoFrameShader::updateTexCoords() {
 	QPointF p1 = {0.0, 0.0}, p2 = {1.0, 1.0};
-	if (m_target == GL_TEXTURE_2D)
+	if (m_target == OGL::Target2D)
 		p2.rx() = _Ratio(m_frame.format().width(), m_frame.format().alignedWidth());
 	else
 		p2 = QPointF(m_frame.format().width(), m_frame.format().height());
@@ -152,7 +152,7 @@ void VideoFrameShader::updateShader() {
 		header += cc2string(2).toLatin1();
 		const double chroma_x = m_frame.format().chroma() == MP_CHROMA_LEFT ? -0.5 : 0.0;
 		header += declareVec2("chroma_location", {chroma_x, 0.0});
-		if (m_target != GL_TEXTURE_2D || format.isEmpty())
+		if (m_target != OGL::Target2D || format.isEmpty())
 			header += "#define USE_RECTANGLE\n";
 		if (hasKernelEffects())
 			header += "#define USE_KERNEL3x3\n";
@@ -319,12 +319,12 @@ void VideoFrameShader::fillInfo() {
 
 	m_bitScale = 1.0/255.0;
 	m_csp = format.colorspace();
-	m_target = m_dma ? GL_TEXTURE_RECTANGLE : GL_TEXTURE_2D;
+	m_target = m_dma ? OGL::TargetRectangle : OGL::Target2D;
 	auto cc = [this, &format] (int factor, double rect) {
 		for (int i=1; i<m_textures.size(); ++i) {
 			if (format.imgfmt() != IMGFMT_VDA && i < format.planes())
 				m_textures[i].cc.rx() = (double)format.bytesPerLine(0)/(double)(format.bytesPerLine(i)*factor);
-			if (m_target == GL_TEXTURE_RECTANGLE)
+			if (m_target == OGL::TargetRectangle)
 				m_textures[i].cc *= rect;
 		}
 	};
@@ -414,9 +414,9 @@ void VideoFrameShader::fillInfo() {
 		if (ctx->hasExtension("GL_APPLE_ycbcr_422")) {
 			_Debug("Good! We have GL_APPLE_ycbcr_422.");
 			OpenGLTextureFormat fmt;
-			fmt.internal = GL_RGB8;
-			fmt.pixel = GL_YCBCR_422_APPLE;
-			fmt.type = format.type() == IMGFMT_YUYV ? GL_UNSIGNED_SHORT_8_8_REV_APPLE : GL_UNSIGNED_SHORT_8_8_APPLE;
+			fmt.internal = OGL::RGB8_UNorm;
+			fmt.pixel = OGL_YCbCr_422_Apple;
+			fmt.type = format.type() == IMGFMT_YUYV ? OGL_UInt16_Rev_Apple : OGL_UInt16_Apple;
 			addCustom(0, format.width(), format.height(), fmt);
 			m_csp = MP_CSP_RGB;
 		} else if (ctx->hasExtension("GL_MESA_ycbcr_texture")) {
@@ -424,8 +424,9 @@ void VideoFrameShader::fillInfo() {
 			m_texel = R"(vec3 texel(const in int coord) { return texture0(coord).g!!; })";
 			m_texel.replace("!!", format.type() == IMGFMT_YUYV ? "br" : "rb");
 			OpenGLTextureFormat fmt;
-			fmt.internal = fmt.pixel = GL_YCBCR_MESA;
-			fmt.type = format.type() == IMGFMT_YUYV ? GL_UNSIGNED_SHORT_8_8_REV_MESA : GL_UNSIGNED_SHORT_8_8_MESA;
+			fmt.internal = OGL_YCbCr_UNorm_Mesa;
+			fmt.pixel = OGL_YCbCr_Mesa;
+			fmt.type = format.type() == IMGFMT_YUYV ? OGL_UInt16_Rev_Mesa : OGL_UInt16_Mesa;
 			addCustom(0, format.width(), format.height(), fmt);
 		} else {
 			m_texel = R"(
@@ -436,7 +437,7 @@ void VideoFrameShader::fillInfo() {
 			m_texel.replace("?", format.type() == IMGFMT_YUYV ? "r" : OpenGLCompat::rg("g"));
 			m_texel.replace("!!", format.type() == IMGFMT_YUYV ? "ga" : "br");
 			add(0, 2); add(0, 4);
-			if (m_target == GL_TEXTURE_RECTANGLE)
+			if (m_target == OGL::TargetRectangle)
 				m_textures[1].cc.rx() *= 0.5;
 		}
 		break;

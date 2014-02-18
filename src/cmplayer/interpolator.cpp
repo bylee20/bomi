@@ -518,23 +518,23 @@ void Interpolator::allocate(Texture &texture1, Texture &texture2) const {
 	if (d->type == InterpolatorType::Bilinear)
 		return;
 	Q_ASSERT(texture1.id != GL_NONE && texture2.id != GL_NONE);
-	texture1.target = GL_TEXTURE_1D;
+	texture1.target = OGL::Target1D;
 	texture1.width = IntSamples;
 	texture1.height = 0;
-	texture1.format.pixel = GL_BGRA;
+	texture1.format.pixel = OGL::BGRA;
 	if (OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat)) {
-		texture1.format.internal = GL_RGBA16F;
-		texture1.format.type = GL_FLOAT;
-		texture1.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, d->lut1.data());
+		texture1.format.internal = OGL::RGBA16F;
+		texture1.format.type = OGL::Float32;
+		texture1.allocate(OGL::Linear, OGL::ClampToEdge, d->lut1.data());
 		texture2.copyAttributesFrom(texture1);
-		texture2.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, d->lut2.data());
+		texture2.allocate(OGL::Linear, OGL::ClampToEdge, d->lut2.data());
 	} else {
-		texture1.format.internal = GL_RGBA16;
-		texture1.format.type = GL_UNSIGNED_SHORT;
+		texture1.format.internal = OGL::RGBA16_UNorm;
+		texture1.format.type = OGL::UInt16;
 		auto data = convertToIntegerVector<GLushort>(d->lut1, texture1.multiply);
-		texture1.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, data.data());
+		texture1.allocate(OGL::Linear, OGL::ClampToEdge, data.data());
 		texture2.copyAttributesFrom(texture1);
 		data = convertToIntegerVector<GLushort>(d->lut2, texture2.multiply);
-		texture2.allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, data.data());
+		texture2.allocate(OGL::Linear, OGL::ClampToEdge, data.data());
 	}
 }

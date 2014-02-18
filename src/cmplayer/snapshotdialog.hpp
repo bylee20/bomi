@@ -12,12 +12,9 @@ public:
 	~SnapshotDialog();
 	void setVideoRenderer(const VideoRendererItem *video);
 	void setSubtitleRenderer(const SubtitleRendererItem *subtitle);
-public slots:
 	void take();
-private slots:
-	void onFrameImageObtained(const QImage &image);
-	void updateSnapshot(bool sub);
 private:
+	void updateSnapshot(bool sub);
 	void updateSubtitleImage();
 	void redraw();
 	struct Data;

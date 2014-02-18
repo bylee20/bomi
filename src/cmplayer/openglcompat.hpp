@@ -7,8 +7,8 @@
 
 #ifndef GL_YCBCR_MESA
 #define GL_YCBCR_MESA                   0x8757
-#define GL_UNSIGNED_SHORT_8_8_MESA      0x85BA
-#define GL_UNSIGNED_SHORT_8_8_REV_MESA  0x85BB
+#define OGL::UInt16_8_8_MESA      0x85BA
+#define OGL::UInt16_8_8_REV_MESA  0x85BB
 #endif
 
 class OpenGLCompat {
@@ -34,7 +34,7 @@ public:
 		auto ctx = QOpenGLContext::currentContext();
 		return ctx ? ctx->functions() : nullptr;
 	}
-	static OpenGLTexture makeTexture(int width, int height, GLenum format, GLenum target = GL_TEXTURE_2D) {
+	static OpenGLTexture makeTexture(int width, int height, GLenum format, OGL::Target target = OGL::Target2D) {
 		OpenGLTexture texture;
 		texture.width = width; texture.height = height;
 		texture.target = target;

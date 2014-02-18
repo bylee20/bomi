@@ -3,23 +3,43 @@
 
 #include "stdafx.hpp"
 
+#ifdef PixelFormat
+#undef PixelFormat
+#endif
+
 typedef QOpenGLTexture OGL;
 
-static constexpr QOpenGLTexture::PixelType UInt32_RGBA8 = (QOpenGLTexture::PixelType)GL_UNSIGNED_INT_8_8_8_8;
-static constexpr QOpenGLTexture::PixelType UInt32_RGBA8_Rev = (QOpenGLTexture::PixelType)GL_UNSIGNED_INT_8_8_8_8_REV;
+static constexpr OGL::PixelType OGL_UInt32_RGBA8 = (OGL::PixelType)GL_UNSIGNED_INT_8_8_8_8;
+static constexpr OGL::PixelType OGL_UInt32_RGBA8_Rev = (OGL::PixelType)GL_UNSIGNED_INT_8_8_8_8_REV;
+static constexpr OGL::PixelType OGL_UInt16_Apple = (OGL::PixelType)GL_UNSIGNED_SHORT_8_8_APPLE;
+static constexpr OGL::PixelType OGL_UInt16_Rev_Apple = (OGL::PixelType)GL_UNSIGNED_SHORT_8_8_REV_APPLE;
+static constexpr OGL::PixelType OGL_UInt16_Mesa = (OGL::PixelType)GL_UNSIGNED_SHORT_8_8_MESA;
+static constexpr OGL::PixelType OGL_UInt16_Rev_Mesa = (OGL::PixelType)GL_UNSIGNED_SHORT_8_8_REV_MESA;
+
+static constexpr OGL::TextureFormat OGL_Luminance8_UNorm = (OGL::TextureFormat)GL_LUMINANCE8;
+static constexpr OGL::TextureFormat OGL_Luminance16_UNorm = (OGL::TextureFormat)GL_LUMINANCE16;
+static constexpr OGL::TextureFormat OGL_LuminanceAlpha8_UNorm = (OGL::TextureFormat)GL_LUMINANCE8_ALPHA8;
+static constexpr OGL::TextureFormat OGL_LuminanceAlpha16_UNorm = (OGL::TextureFormat)GL_LUMINANCE16_ALPHA16;
+static constexpr OGL::TextureFormat OGL_YCbCr_UNorm_Mesa = (OGL::TextureFormat)GL_YCBCR_MESA;
+
+static constexpr OGL::PixelFormat OGL_YCbCr_422_Apple = (OGL::PixelFormat)GL_YCBCR_422_APPLE;
+static constexpr OGL::PixelFormat OGL_YCbCr_Mesa = (OGL::PixelFormat)GL_YCBCR_MESA;
+
 
 struct OpenGLTextureFormat {
 	OpenGLTextureFormat() {}
-	OpenGLTextureFormat(GLint internal, GLenum pixel, GLenum type)
+	OpenGLTextureFormat(OGL::TextureFormat internal, OGL::PixelFormat pixel, OGL::PixelType type)
 	: internal(internal), pixel(pixel), type(type) {}
-	GLint internal = GL_NONE; GLenum pixel = GL_NONE, type = GL_NONE;
+	OGL::TextureFormat internal = OGL::NoFormat;
+	OGL::PixelFormat pixel = OGL::NoSourceFormat;
+	OGL::PixelType type = OGL::NoPixelType;
 };
 
 class OpenGLTexture {
 public:
 	virtual ~OpenGLTexture() = default;
 	GLuint id = GL_NONE;
-	GLenum target = GL_TEXTURE_2D;
+	OGL::Target target = OGL::Target2D;
 	int width = 0, height = 0, depth = 0;
 	OpenGLTextureFormat format;
 	QSize size() const { return {width, height}; }
@@ -35,7 +55,7 @@ public:
 	void delete_() { glDeleteTextures(1, &id); }
 	void bind() const { glBindTexture(target, id); }
 	bool allocate(const void *data = nullptr) const {
-		return allocate(GL_LINEAR, GL_CLAMP_TO_EDGE, data);
+		return allocate(OGL::Linear, OGL::ClampToEdge, data);
 	}
 	bool expand(const QSize &size, double mul = 1.2) {
 		if (width >= size.width() && height >= size.height())
@@ -54,11 +74,11 @@ public:
 		case GL_TEXTURE_3D:
 			glTexImage3D(target, 0, format.internal, width, height, depth, 0, format.pixel, format.type, data);
 			break;
-		case GL_TEXTURE_2D:
-		case GL_TEXTURE_RECTANGLE:
+		case OGL::Target2D:
+		case OGL::TargetRectangle:
 			glTexImage2D(target, 0, format.internal, width, height, 0, format.pixel, format.type, data);
 			break;
-		case GL_TEXTURE_1D:
+		case OGL::Target1D:
 			glTexImage1D(target, 0, format.internal, width, 0, format.pixel, format.type, data);
 			break;
 		default:
@@ -69,10 +89,10 @@ public:
 		switch (target) {
 		case GL_TEXTURE_3D:
 			glTexParameterf(target, GL_TEXTURE_WRAP_R, clamp);
-		case GL_TEXTURE_2D:
-		case GL_TEXTURE_RECTANGLE:
+		case OGL::Target2D:
+		case OGL::TargetRectangle:
 			glTexParameterf(target, GL_TEXTURE_WRAP_T, clamp);
-		case GL_TEXTURE_1D:
+		case OGL::Target1D:
 			glTexParameterf(target, GL_TEXTURE_WRAP_S, clamp);
 			break;
 		default:
@@ -85,16 +105,16 @@ public:
 		switch (target) {
 		case GL_TEXTURE_3D:
 			return upload(0, 0, 0, width, height, depth, data);
-		case GL_TEXTURE_2D:
-		case GL_TEXTURE_RECTANGLE:
+		case OGL::Target2D:
+		case OGL::TargetRectangle:
 			return upload(0, 0, width, height, data);
-		case GL_TEXTURE_1D:
+		case OGL::Target1D:
 			return upload(0, width, data);
 		default:
 			return false;
 		}
 	}
-	bool isNull() const { return id != GL_NONE; }
+	bool isNull() const { return id == GL_NONE; }
 	bool isEmpty() const { return !width && !height && !depth; }
 	bool upload1D(const void *data) const { return upload(0, width, data); }
 	bool upload2D(const void *data) const { return upload(0, 0, width, height, data); }
@@ -129,29 +149,30 @@ public:
 		return true;
 	}
 	void unbind() const { glBindTexture(target, 0); }
+	QImage toImage() const;
 };
 
 class OpenGLFramebufferObject : public QOpenGLFramebufferObject {
 public:
 	OpenGLFramebufferObject(const QSize &size, QOpenGLTexture::TextureFormat internal = QOpenGLTexture::RGBA8_UNorm)
-	: QOpenGLFramebufferObject(size, NoAttachment, GL_TEXTURE_2D, internal) {
+	: QOpenGLFramebufferObject(size, NoAttachment, OGL::Target2D, internal) {
 		m_texture.id = QOpenGLFramebufferObject::texture();
 		m_texture.width = size.width();
 		m_texture.height = size.height();
-		m_texture.target = GL_TEXTURE_2D;
+		m_texture.target = OGL::Target2D;
 		m_texture.format.internal = internal;
-		m_texture.format.pixel = GL_RGBA;
-		m_texture.format.type = GL_UNSIGNED_BYTE;
+		m_texture.format.pixel = OGL::RGBA;
+		m_texture.format.type = OGL::UInt8;
 		if (isValid()) {
 			m_texture.bind();
-			glTexParameterf(m_texture.target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameterf(m_texture.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf(m_texture.target, GL_TEXTURE_MAG_FILTER, OGL::Linear);
+			glTexParameterf(m_texture.target, GL_TEXTURE_MIN_FILTER, OGL::Linear);
 			m_texture.unbind();
 		}
 	}
 	const OpenGLTexture &texture() const { return m_texture; }
 	void getCoords(double &x1, double &y1, double &x2, double &y2) {
-		if (m_texture.target == GL_TEXTURE_RECTANGLE) {
+		if (m_texture.target == OGL::TargetRectangle) {
 			x1 = y1 = 0; x2 = m_texture.width; y2 = m_texture.height;
 		} else { x1 = y1 = 0; x2 = y2 = 1; }
 	}
@@ -213,7 +234,7 @@ public:
 		setAttributeArray(vPosition, m_vPositions.data(), 2);
 		if (m_hasColor) {
 			enableAttributeArray(vColor);
-			setAttributeArray(vColor, GL_UNSIGNED_BYTE, m_vColors.data(), 4);
+			setAttributeArray(vColor, OGL::UInt8, m_vColors.data(), 4);
 		}
 	}
 	void end() {

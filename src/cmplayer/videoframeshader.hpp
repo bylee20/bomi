@@ -64,7 +64,7 @@ private:
 	VideoColor m_color;
 	float m_bitScale = 1.0/255.0;
 	mp_csp m_csp; ColorRange m_range = ColorRange::Auto;
-	GLenum m_target = GL_TEXTURE_2D;
+	OGL::Target m_target = OGL::Target2D;
 	QMatrix3x3 m_mul_mat;
 	QMatrix4x4 m_vMatrix;
 	QVector3D m_sub_vec, m_add_vec;

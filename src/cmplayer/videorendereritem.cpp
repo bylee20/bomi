@@ -389,16 +389,12 @@ void VideoRendererItem::reset() {
 void VideoRendererItem::prepare(QSGGeometryNode *node) {
 	Q_ASSERT(d->shader);
 	if (d->take) {
-		if (d->fbo && d->fbo->isValid()) {
-			auto image = d->fbo->toImage();
+		auto image = renderTarget().toImage();
+		if (!image.isNull())
 			d->mposd->drawOn(image);
-			emit frameImageObtained(image);
-		} else
-			emit frameImageObtained(QImage());
+		emit frameImageObtained(image);
 		d->take = false;
-		LOG_GL_ERROR_Q
 	}
-LOG_GL_ERROR_Q
 	if (!d->queue.isEmpty()) {
 		auto &frame = d->queue.front();
 		if (!frame.format().isEmpty()) {
