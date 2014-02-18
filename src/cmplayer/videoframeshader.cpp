@@ -250,7 +250,7 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 #ifdef Q_OS_LINUX
 	if (m_mixer) {
 		m_textures[0].bind();
-		m_mixer->upload(frame, m_deint != DeintMethod::None);
+		m_mixer->upload(m_frame, m_deint != DeintMethod::None);
 		m_textures[0].unbind();
 		return changed;
 	}
