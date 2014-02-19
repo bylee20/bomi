@@ -42,7 +42,7 @@ QImage OpenGLTexture2D::toImage() const {
 	OpenGLTextureBinder<OGL::Target2D> binder(const_cast<OpenGLTexture2D*>(this));
 	QImage image(size(), QImage::Format_ARGB32);
 	image.fill(0x0);
-	glGetTexImage(target(), 0, m_info.transfer.format, m_info.transfer.type, image.bits());
+	glGetTexImage(target(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, image.bits());
 	return image;
 }
 
