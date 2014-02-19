@@ -2,9 +2,6 @@
 #include "videocolor.hpp"
 #include "app.hpp"
 #include <cmath>
-extern "C" {
-#include <video/out/dither.h>
-}
 #include "log.hpp"
 
 DECLARE_LOG_CONTEXT(OpenGL)
@@ -17,9 +14,8 @@ struct OpenGLCompat::Data {
 	bool init = false;
 	QOpenGLDebugLogger *logger = nullptr;
 	int major = 0, minor = 0;
-	QMap<GLenum, OpenGLTextureFormat> formats[2];
-	QVector<GLfloat> fruit;
-	QOpenGLTexture::TextureFormat fboFormat = QOpenGLTexture::RGBA8_UNorm;
+	QMap<OGL::TransferFormat, OpenGLTextureTransferInfo> formats[2];
+	OGL::TextureFormat fboFormat = OGL::RGBA8_UNorm;
 };
 
 OpenGLCompat::OpenGLCompat()
@@ -97,7 +93,7 @@ const char *OpenGLCompat::errorString(GLenum error) {
 	return strings.value(error, "");
 }
 
-QOpenGLTexture::TextureFormat OpenGLCompat::framebufferObjectTextureFormat() {
+OGL::TextureFormat OpenGLCompat::framebufferObjectTextureFormat() {
 	return c.d->fboFormat;
 }
 
@@ -145,17 +141,17 @@ void OpenGLCompat::check() {
 
 	d->formats[0][OGL::Red] = {OGL::R8_UNorm, OGL::Red, OGL::UInt8};
 	d->formats[0][OGL::RG] = {OGL::RG8_UNorm, OGL::RG, OGL::UInt8};
-	d->formats[0][OGL::Luminance] = {OGL_Luminance8_UNorm, OGL::Luminance, OGL::UInt8};
-	d->formats[0][OGL::LuminanceAlpha] = {OGL_LuminanceAlpha8_UNorm, OGL::LuminanceAlpha, OGL::UInt8};
+	d->formats[0][OGL::Luminance] = {OGL::Luminance8_UNorm, OGL::Luminance, OGL::UInt8};
+	d->formats[0][OGL::LuminanceAlpha] = {OGL::LuminanceAlpha8_UNorm, OGL::LuminanceAlpha, OGL::UInt8};
 	d->formats[0][OGL::RGB] = {OGL::RGB8_UNorm, OGL::RGB, OGL::UInt8};
 	d->formats[0][OGL::BGR] = {OGL::RGB8_UNorm, OGL::BGR, OGL::UInt8};
-	d->formats[0][OGL::BGRA] = {OGL::RGBA8_UNorm, OGL::BGRA, OGL_UInt32_RGBA8_Rev};
-	d->formats[0][OGL::RGBA] = {OGL::RGBA8_UNorm, OGL::RGBA, OGL_UInt32_RGBA8_Rev};
+	d->formats[0][OGL::BGRA] = {OGL::RGBA8_UNorm, OGL::BGRA, OGL::UInt32_8_8_8_8_Rev};
+	d->formats[0][OGL::RGBA] = {OGL::RGBA8_UNorm, OGL::RGBA, OGL::UInt32_8_8_8_8_Rev};
 
 	d->formats[1][OGL::Red] = {OGL::R16_UNorm, OGL::Red, OGL::UInt16};
 	d->formats[1][OGL::RG] = {OGL::R16_UNorm, OGL::RG, OGL::UInt16};
-	d->formats[1][OGL::Luminance] = {OGL_Luminance16_UNorm, OGL::Luminance, OGL::UInt16};
-	d->formats[1][OGL::LuminanceAlpha] = {OGL_LuminanceAlpha16_UNorm, OGL::LuminanceAlpha, OGL::UInt16};
+	d->formats[1][OGL::Luminance] = {OGL::Luminance16_UNorm, OGL::Luminance, OGL::UInt16};
+	d->formats[1][OGL::LuminanceAlpha] = {OGL::LuminanceAlpha16_UNorm, OGL::LuminanceAlpha, OGL::UInt16};
 	d->formats[1][OGL::RGB] = {OGL::RGB16_UNorm, OGL::RGB, OGL::UInt16};
 	d->formats[1][OGL::BGR] = {OGL::RGB16_UNorm, OGL::BGR, OGL::UInt16};
 	d->formats[1][OGL::BGRA] = {OGL::RGBA16_UNorm, OGL::BGRA, OGL::UInt16};
@@ -163,20 +159,18 @@ void OpenGLCompat::check() {
 
 	const bool rg = hasExtension(TextureRG);
 	for (auto &format : d->formats) {
-		format[1] = rg ? format[OGL::Red] : format[OGL::Luminance];
-		format[2] = rg ? format[OGL::RG]  : format[OGL::LuminanceAlpha];
-		format[3] = format[OGL::BGR];
-		format[4] = format[OGL::BGRA];
+		format[OGL::OneComponent] = rg ? format[OGL::Red] : format[OGL::Luminance];
+		format[OGL::TwoComponents] = rg ? format[OGL::RG]  : format[OGL::LuminanceAlpha];
 	}
 
 	if (!hasExtension(FramebufferObject))
 		_Fatal("FBO is not available. FBO support is essential.");
-	auto fbo = new OpenGLFramebufferObject(QSize(16, 16), QOpenGLTexture::RGBA16_UNorm);
+	auto fbo = new OpenGLFramebufferObject(QSize(16, 16), OGL::RGBA16_UNorm);
 	if (fbo->isValid()) {
-		d->fboFormat = QOpenGLTexture::RGBA8_UNorm;
+		d->fboFormat = OGL::RGBA8_UNorm;
 		_Info("FBO texture format: GL_RGBA16");
 	} else {
-		if (!_Renew(fbo, QSize(16, 16), QOpenGLTexture::RGBA8_UNorm)->isValid())
+		if (!_Renew(fbo, QSize(16, 16), OGL::RGBA8_UNorm)->isValid())
 			_Fatal("No available FBO texture format. One of GL_BGRA8 and GL_BGRA16 must be supported at least.");
 		else
 			_Info("FBO texture format: OGL::RGBA8_UNorm");
@@ -214,51 +208,7 @@ void OpenGLCompat::initialize(QOpenGLContext *ctx) {
 	}
 }
 
-OpenGLTextureFormat OpenGLCompat::textureFormat(GLenum format, int bpc) {
-	Q_ASSERT(bpc == 1 || bpc == 2);
-	return c.d->formats[bpc-1][format];
-}
-
-// copied from mpv's gl_video.c
-OpenGLTexture OpenGLCompat::allocateDitheringTexture(GLuint id, Dithering type) {
-	OpenGLTexture texture;
-	texture.id = id;
-	if (type == Dithering::None)
-		return texture;
-	const int sizeb = 6;
-	int size = 0;
-	QByteArray data;
-	if (type == Dithering::Fruit) {
-		size = 1 << 6;
-		auto &fruit = c.d->fruit;
-		if (fruit.size() != size*size) {
-			fruit.resize(size*size);
-			mp_make_fruit_dither_matrix(fruit.data(), sizeb);
-		}
-		const bool rg = hasExtension(TextureRG);
-		texture.format.internal = rg ? OGL::R16_UNorm : OGL_Luminance16_UNorm;
-		texture.format.pixel = rg ? OGL::Red : OGL::Luminance;
-		if (hasExtension(TextureFloat)) {
-			texture.format.type = OGL::Float32;
-			data.resize(sizeof(GLfloat)*fruit.size());
-			memcpy(data.data(), fruit.data(), data.size());
-		} else {
-			texture.format.type = OGL::UInt16;
-			data.resize(sizeof(GLushort)*fruit.size());
-			auto p = (GLushort*)data.data();
-			for (auto v : fruit)
-				*p++ = v*_Max<GLushort>();
-		}
-	} else {
-		size = 8;
-		data.resize(size*size);
-		mp_make_ordered_dither_matrix((uchar*)data.data(), size);
-		texture.format = textureFormat(1);
-	}
-	texture.width = texture.height = size;
-	texture.target = OGL::Target2D;
-	//	 gl->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	//	 gl->PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	texture.allocate(GL_NEAREST, GL_REPEAT, data.data());
-	return texture;
+OpenGLTextureTransferInfo OpenGLCompat::textureTransferInfo(OGL::TransferFormat format, int bytesPerComponent) {
+	Q_ASSERT(bytesPerComponent == 1 || bytesPerComponent == 2);
+	return c.d->formats[bytesPerComponent-1][format];
 }

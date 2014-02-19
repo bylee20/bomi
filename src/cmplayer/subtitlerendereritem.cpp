@@ -7,6 +7,7 @@ struct SubtitleRendererItem::Data {
 	Data(SubtitleRendererItem *p): p(p) {}
 	SubtitleRendererItem *p = nullptr;
 	QList<SubComp*> loaded;
+	QSize imageSize{0, 0};
 	SubtitleDrawer drawer;
 	int delay = 0, msec = 0;
 	bool selecting = false, redraw = false, textChanged = true;
@@ -22,7 +23,7 @@ struct SubtitleRendererItem::Data {
 	}
 	QVector<quint32> zeros, bboxData;
 	SubCompSelection selection{p};
-	OpenGLTexture texture, bbox;
+	OpenGLTexture2D texture, bbox;
 	double fps() const { return selection.fps(); }
 	void updateDrawer() {
 		selection.setDrawer(drawer);
@@ -52,7 +53,7 @@ struct SubtitleRendererItem::Data {
 			selection.render(msec - delay, flags);
 	}
 	void updateVisible() {
-		p->setVisible(!hidden && !empty && !texture.size().isEmpty());
+		p->setVisible(!hidden && !empty && !imageSize.isEmpty());
 	}
 };
 
@@ -121,14 +122,15 @@ TextureRendererShader *SubtitleRendererItem::createShader() const {
 
 void SubtitleRendererItem::initializeGL() {
 	TextureRendererItem::initializeGL();
-	d->texture.format = OpenGLCompat::textureFormat(GL_BGRA);
-	d->texture.generate();
+	d->texture.create();
+	d->bbox.create();
 	setRenderTarget(d->texture);
 }
 
 void SubtitleRendererItem::finalizeGL() {
 	TextureRendererItem::finalizeGL();
-	d->texture.delete_();
+	d->bbox.destroy();
+	d->texture.destroy();
 }
 
 const RichTextDocument &SubtitleRendererItem::text() const {
@@ -233,33 +235,37 @@ void SubtitleRendererItem::unload() {
 
 void SubtitleRendererItem::getCoords(QRectF &vertices, QRectF &) {
 	const auto dpr = devicePixelRatio();
-	vertices = QRectF(d->drawer. pos(d->texture.size()/dpr, rect()), d->texture.size()/dpr);
+	vertices = QRectF(d->drawer. pos(d->imageSize/dpr, rect()), d->imageSize/dpr);
 }
 
 void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 	if (d->redraw) {
-		d->texture.width = d->texture.height = 0;
+		d->imageSize = {0, 0};
 		d->selection.forImages([this] (const SubCompImage &image) {
-			if (d->texture.width < image.width())
-				d->texture.width = image.width();
-			d->texture.height += image.height();
+			if (d->imageSize.width() < image.width())
+				d->imageSize.rwidth() = image.width();
+			d->imageSize.rheight() += image.height();
 		});
-		if (!d->texture.size().isEmpty()) {
-			const auto len = d->texture.width*d->texture.height;
+		if (!d->imageSize.isEmpty()) {
+			const auto len = d->imageSize.width()*d->imageSize.height();
 			_Expand(d->zeros, len);
-			d->texture.allocate(d->zeros.data());
-			d->bbox.copyAttributesFrom(d->texture);
-			d->bbox.allocate(d->zeros.data());
+			OpenGLTextureBinder<OGL::Target2D> binder;
+			binder.bind(&d->texture);
+			d->texture.initialize(d->imageSize, d->zeros.data());
+			binder.bind(&d->bbox);
+			d->bbox.initialize(d->imageSize, d->zeros.data());
 			int y = 0;
-			d->selection.forImages([this, &y] (const SubCompImage &image) {
-				const int x = (d->texture.width - image.width())*0.5;
+			d->selection.forImages([this, &y, &binder] (const SubCompImage &image) {
+				const int x = (d->texture.width() - image.width())*0.5;
 				if (!image.isNull()) {
-					d->texture.upload(x, y, image.size(), image.bits());
+					binder.bind(&d->texture);
+					d->texture.upload(x, y, image.width(), image.height(), image.bits());
+					binder.bind(&d->bbox);
 					for (auto &bbox : image.boundingBoxes()) {
 						const auto rect = bbox.toRect().translated(x, y);
 						if (_Expand(d->bboxData, rect.width()*rect.height()))
 							d->bboxData.fill(_Max<quint32>());
-						d->bbox.upload(rect.topLeft(), rect.size(), d->bboxData.data());
+						d->bbox.upload(rect, d->bboxData.data());
 					}
 				}
 				y += image.height();
@@ -270,7 +276,7 @@ void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
 		d->redraw = false;
 	}
 	d->updateVisible();
-	setVisible(!d->hidden && !d->empty && !d->texture.size().isEmpty());
+	setVisible(!d->hidden && !d->empty && !d->imageSize.isEmpty());
 }
 
 bool SubtitleRendererItem::isHidden() const {

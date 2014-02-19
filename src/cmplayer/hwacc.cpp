@@ -79,7 +79,7 @@ void HwAcc::finalize() {
 		VaApi::finalize();
 }
 
-HwAccMixer *HwAcc::createMixer(const OpenGLTexture &texture, const VideoFormat &format) {
+HwAccMixer *HwAcc::createMixer(const OpenGLTexture2D &texture, const VideoFormat &format) {
 	switch (backend()) {
 	case VdpauX11:
 		return new VdpauMixer(texture, format);

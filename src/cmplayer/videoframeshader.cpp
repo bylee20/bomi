@@ -2,6 +2,7 @@
 #include "videoframe.hpp"
 #include "hwacc.hpp"
 #include "log.hpp"
+#include <tuple>
 #ifdef Q_OS_MAC
 #include <OpenGL/CGLIOSurface.h>
 #include <OpenGL/OpenGL.h>
@@ -21,8 +22,8 @@ VideoFrameShader::VideoFrameShader() {
 		qDebug() << "Use direct memory access.";
 	m_vPositions = makeArray({-1.0, -1.0}, {1.0, 1.0});
 	m_vMatrix.setToIdentity();
-	m_lutInt[0].generate();
-	m_lutInt[1].generate();
+	m_lutInt[0].create();
+	m_lutInt[1].create();
 }
 
 VideoFrameShader::~VideoFrameShader() {
@@ -30,13 +31,15 @@ VideoFrameShader::~VideoFrameShader() {
 }
 
 void VideoFrameShader::release() {
+	if (m_textures.isEmpty())
+		return;
+	OpenGLTextureBaseBinder binder(m_target, m_binding);
 	if (m_mixer) {
 		m_textures[0].bind();
 		_Delete(m_mixer);
-		m_textures[0].unbind();
 	}
 	for (auto &texture : m_textures)
-		texture.delete_();
+		texture.destroy();
 	m_textures.clear();
 }
 
@@ -233,6 +236,9 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 		updateColorMatrix();
 	}
 	updateShader();
+	if (m_textures.isEmpty())
+		return changed;
+	OpenGLTextureBaseBinder binder(m_target, m_binding);
 #ifdef Q_OS_MAC
 	if (m_frame.format().imgfmt() == IMGFMT_VDA) {
 		for (const VideoTexture &texture : m_textures) {
@@ -242,7 +248,7 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 			const auto w = IOSurfaceGetWidthOfPlane(surface, texture.plane);
 			const auto h = IOSurfaceGetHeightOfPlane(surface, texture.plane);
 			CGLTexImageIOSurface2D(cgl, texture.target, texture.format.internal, w, h, texture.format.pixel, texture.format.type, surface, texture.plane);
-			texture.unbind();
+			texture.release();
 		}
 		return changed;
 	}
@@ -251,23 +257,28 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 	if (m_mixer) {
 		m_textures[0].bind();
 		m_mixer->upload(m_frame, m_deint != DeintMethod::None);
-		m_textures[0].unbind();
 		return changed;
 	}
 #endif
 	if (m_dma)
 		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-	for (int i=0; i<m_textures.size(); ++i)
-		m_textures[i].upload2D(m_frame.data(m_textures[i].plane));
+	for (int i=0; i<m_textures.size(); ++i) {
+		m_textures[i].bind();
+		m_textures[i].upload(m_frame.data(m_textures[i].plane));
+	}
 	if (m_dma)
 		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 	return changed;
 }
 
 void VideoFrameShader::render(const Kernel3x3 &k3x3) {
-	if (!m_prog)
+	if (!m_prog || m_textures.isEmpty())
 		return;
 	glViewport(0, 0, m_frame.format().width(), m_frame.format().height());
+	auto f = QOpenGLContext::currentContext()->functions();
+	f->glActiveTexture(GL_TEXTURE0);
+	OpenGLTextureBinder<OGL::Target1D> binder1;
+	OpenGLTextureBaseBinder binder2(m_target, m_binding);
 
 	m_prog->bind();
 	m_prog->setUniformValue(loc_top_field, (float)m_frame.isTopField());
@@ -280,7 +291,6 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 		m_prog->setUniformValue(loc_kern_d, k3x3.diagonal());
 	}
 
-	auto f = QOpenGLContext::currentContext()->functions();
 	auto texPos = 0;
 	for (int i=0; i<m_textures.size(); ++i, ++texPos) {
 		m_prog->setUniformValue(loc_tex[i], texPos);
@@ -290,7 +300,7 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 	}
 	for (int i=0; i<m_lutCount; ++i, ++texPos) {
 		m_prog->setUniformValue(loc_lut_int[i], texPos);
-		m_prog->setUniformValue(loc_lut_int_mul[i], m_lutInt[i].multiply);
+		m_prog->setUniformValue(loc_lut_int_mul[i], m_lutInt[i].multiplier());
 		f->glActiveTexture(GL_TEXTURE0 + texPos);
 		m_lutInt[i].bind();
 	}
@@ -302,9 +312,9 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 	m_prog->setAttributeArray(vPosition, m_vPositions.data(), 2);
 
 	f->glActiveTexture(GL_TEXTURE0);
-
-    glDisable(GL_BLEND);
+	glDisable(GL_BLEND);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glEnable(GL_BLEND);
 
 	m_prog->disableAttributeArray(0);
 	m_prog->disableAttributeArray(1);
@@ -319,7 +329,9 @@ void VideoFrameShader::fillInfo() {
 
 	m_bitScale = 1.0/255.0;
 	m_csp = format.colorspace();
-	m_target = m_dma ? OGL::TargetRectangle : OGL::Target2D;
+	std::tie(m_target, m_binding) = !m_dma ? std::forward_as_tuple(OGL::Target2D, OGL::Binding2D)
+										: std::forward_as_tuple(OGL::TargetRectangle, OGL::BindingRectangle);
+	OpenGLTextureBaseBinder binder(m_target, m_binding);
 	auto cc = [this, &format] (int factor, double rect) {
 		for (int i=1; i<m_textures.size(); ++i) {
 			if (format.imgfmt() != IMGFMT_VDA && i < format.planes())
@@ -332,36 +344,37 @@ void VideoFrameShader::fillInfo() {
 	const bool little = format.isLittleEndian();
 	auto ctx = QOpenGLContext::currentContext();
 
-	auto addCustom = [this, &format] (int plane, int width, int height, const OpenGLTextureFormat &fmt) {
-		VideoTexture texture;
-		texture.target = m_target;
+	auto addCustom = [this, &format] (int plane, int width, int height, const OpenGLTextureTransferInfo &fmt) {
+		Texture texture;
 		texture.plane = plane;
-		texture.width = width;
-		texture.height = height;
-		texture.format = fmt;
-		texture.generate();
+		texture.create();
 		if (format.imgfmt() != IMGFMT_VDA) {
+			texture.bind();
 			if (m_dma) {
-				glEnable(texture.target);
-				texture.bind();
-				glTexParameteri(texture.target, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
+				glEnable(texture.target());
+				glTexParameteri(texture.target(), GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
 				glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-				texture.allocate(m_frame.data(plane));
+				texture.initialize(width, height, fmt, m_frame.data(plane));
 				glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 			} else
-				texture.allocate();
+				texture.initialize(width, height, fmt);
 		}
 		m_textures.append(texture);
 	};
 
-	auto add = [this, addCustom, &format] (int plane, GLenum fmt) {
-		addCustom(plane, format.bytesPerLine(plane)/qMin<int>(4, fmt), format.lines(plane), OpenGLCompat::textureFormat(fmt));
+	auto add = [this, addCustom, &format] (int plane, OGL::TransferFormat fmt) {
+		int components = 4;
+		if (fmt == OGL::OneComponent)
+			components = 1;
+		else if (fmt == OGL::TwoComponents)
+			components = 2;
+		addCustom(plane, format.bytesPerLine(plane)/components, format.lines(plane), OpenGLCompat::textureTransferInfo(fmt));
 	};
 
 	m_texel = "vec3 texel(const in vec4 tex0) {return tex0.rgb;}"; // passthrough
 	switch (format.type()) {
 	case IMGFMT_444P:
-		add(0, 1); add(1, 1); add(2, 1);
+		add(0, OGL::OneComponent); add(1, OGL::OneComponent); add(2, OGL::OneComponent);
 		m_texel = R"(
 			vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {
 				return vec3(tex0.r, tex1.r, tex2.r);
@@ -369,7 +382,7 @@ void VideoFrameShader::fillInfo() {
 		)";
 		break;
 	case IMGFMT_420P:
-		add(0, 1); add(1, 1); add(2, 1); cc(2, 0.5);
+		add(0, OGL::OneComponent); add(1, OGL::OneComponent); add(2, OGL::OneComponent); cc(2, 0.5);
 		m_texel = R"(
 			vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {
 				return vec3(tex0.r, tex1.r, tex2.r);
@@ -397,7 +410,7 @@ void VideoFrameShader::fillInfo() {
 		)";
 		m_texel.replace("??", QByteArray::number((1 << (bits-8))-1));
 		m_texel.replace("!!", OpenGLCompat::rg(little ? "gr" : "rg"));
-		add(0, 2); add(1, 2); add(2, 2); cc(2, 0.5);
+		add(0, OGL::TwoComponents); add(1, OGL::TwoComponents); add(2, OGL::TwoComponents); cc(2, 0.5);
 		break;
 	case IMGFMT_NV12:
 	case IMGFMT_NV21:
@@ -407,26 +420,26 @@ void VideoFrameShader::fillInfo() {
 			}
 		)";
 		m_texel.replace("!!", OpenGLCompat::rg(format.type() == IMGFMT_NV12 ? "rg" : "gr"));
-		add(0, 1); add(1, 2); cc(1, 0.5);
+		add(0, OGL::OneComponent); add(1, OGL::TwoComponents); cc(1, 0.5);
 		break;
 	case IMGFMT_YUYV:
 	case IMGFMT_UYVY:
 		if (ctx->hasExtension("GL_APPLE_ycbcr_422")) {
 			_Debug("Good! We have GL_APPLE_ycbcr_422.");
-			OpenGLTextureFormat fmt;
-			fmt.internal = OGL::RGB8_UNorm;
-			fmt.pixel = OGL_YCbCr_422_Apple;
-			fmt.type = format.type() == IMGFMT_YUYV ? OGL_UInt16_Rev_Apple : OGL_UInt16_Apple;
+			OpenGLTextureTransferInfo fmt;
+			fmt.texture = OGL::RGB8_UNorm;
+			fmt.transfer.format = OGL::YCbCr_422_Apple;
+			fmt.transfer.type = format.type() == IMGFMT_YUYV ? OGL::UInt16_8_8_Rev_Apple : OGL::UInt16_8_8_Apple;
 			addCustom(0, format.width(), format.height(), fmt);
 			m_csp = MP_CSP_RGB;
 		} else if (ctx->hasExtension("GL_MESA_ycbcr_texture")) {
 			_Debug("Good! We have GL_MESA_ycbcr_texture.");
 			m_texel = R"(vec3 texel(const in int coord) { return texture0(coord).g!!; })";
 			m_texel.replace("!!", format.type() == IMGFMT_YUYV ? "br" : "rb");
-			OpenGLTextureFormat fmt;
-			fmt.internal = OGL_YCbCr_UNorm_Mesa;
-			fmt.pixel = OGL_YCbCr_Mesa;
-			fmt.type = format.type() == IMGFMT_YUYV ? OGL_UInt16_Rev_Mesa : OGL_UInt16_Mesa;
+			OpenGLTextureTransferInfo fmt;
+			fmt.texture = OGL::YCbCr_UNorm_Mesa;
+			fmt.transfer.format = OGL::YCbCr_Mesa;
+			fmt.transfer.type = format.type() == IMGFMT_YUYV ? OGL::UInt16_8_8_Rev_Mesa : OGL::UInt16_8_8_Mesa;
 			addCustom(0, format.width(), format.height(), fmt);
 		} else {
 			m_texel = R"(
@@ -436,23 +449,23 @@ void VideoFrameShader::fillInfo() {
 			)";
 			m_texel.replace("?", format.type() == IMGFMT_YUYV ? "r" : OpenGLCompat::rg("g"));
 			m_texel.replace("!!", format.type() == IMGFMT_YUYV ? "ga" : "br");
-			add(0, 2); add(0, 4);
+			add(0, OGL::TwoComponents); add(0, OGL::BGRA);
 			if (m_target == OGL::TargetRectangle)
 				m_textures[1].cc.rx() *= 0.5;
 		}
 		break;
 	case IMGFMT_BGRA:
-		add(0, GL_BGRA);
+		add(0, OGL::BGRA);
 		break;
 	case IMGFMT_RGBA:
-		add(0, GL_RGBA);
+		add(0, OGL::RGBA);
 		break;
 	case IMGFMT_ABGR:
-		add(0, GL_BGRA);
+		add(0, OGL::BGRA);
 		m_texel.replace(".rgb", ".arg");
 		break;
 	case IMGFMT_ARGB:
-		add(0, GL_BGRA);
+		add(0, OGL::BGRA);
 		m_texel.replace(".rgb", ".gra");
 	default:
 		break;
@@ -466,10 +479,10 @@ void VideoFrameShader::fillInfo() {
 		m_csp = MP_CSP_RGB;
 		m_textures[0].bind();
 		m_mixer = HwAcc::createMixer(m_textures[0], format);
-		m_textures[0].unbind();
 		break;
 	default:
 		break;
 	}
 #endif
+	Q_ASSERT(m_textures.size() == m_textures.size());
 }

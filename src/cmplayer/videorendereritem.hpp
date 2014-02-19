@@ -59,9 +59,7 @@ public:
 	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
 	int delay() const;
 	void setDeintMethod(DeintMethod method);
-	void swap(OpenGLTexture &texture, const VideoFormat &format);
 	void rerender() override;
-	GLuint texture() const;
 	void setOverlayOnLetterbox(bool letterbox);
 	bool overlayInLetterbox() const;
 	void setChromaUpscaler(InterpolatorType tpe);

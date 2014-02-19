@@ -202,7 +202,7 @@ mp_image *HwAccVdpau::getImage(mp_image *mpi) {
 
 /******************************************************************/
 
-VdpauMixer::VdpauMixer(const OpenGLTexture &texture, const VideoFormat &format)
+VdpauMixer::VdpauMixer(const OpenGLTexture2D &texture, const VideoFormat &format)
 : m_width(format.width()), m_height(format.height()) {
 	static const QVector<VdpVideoMixerParameter> params = {
 		VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH,
@@ -214,7 +214,8 @@ VdpauMixer::VdpauMixer(const OpenGLTexture &texture, const VideoFormat &format)
 		return;
 	if (!check(Vdpau::outputSurfaceCreate(VDP_RGBA_FORMAT_B8G8R8A8, m_width, m_height, &m_surface), "Cannot create output surface."))
 		return;
-	m_glSurface = Vdpau::registerOutputSurface(m_surface, texture.target, 1, &texture.id);
+	const auto id = texture.id();
+	m_glSurface = Vdpau::registerOutputSurface(m_surface, texture.target(), 1, &id);
 	if (m_glSurface == GL_NONE && !check(VDP_STATUS_ERROR, "Cannot register output surface."))
 		return;
 	Vdpau::surfaceAccess(m_glSurface, GL_READ_ONLY);
@@ -233,7 +234,7 @@ VdpauMixer::~VdpauMixer() {
 		Vdpau::videoMixerDestroy(m_mixer);
 }
 
-bool VdpauMixer::upload(VideoFrame &frame, bool deint) {
+bool VdpauMixer::upload(const VideoFrame &frame, bool deint) {
 	static const VdpVideoMixerPictureStructure structures[] = {
 		// Picture = 0,   Top = 1,      Bottom = 2
 		VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD, VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD

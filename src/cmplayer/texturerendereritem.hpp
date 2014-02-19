@@ -10,7 +10,6 @@
 class TextureRendererShader;
 
 enum class InterpolatorType;
-class OpenGLTexture;
 
 class TextureRendererItem : public GeometryItem {
 	Q_OBJECT
@@ -30,12 +29,12 @@ public:
 	QByteArray logAt(const char *func) const { return QByteArray(metaObject()->className()) + "::" + func; }
 protected slots:
 	virtual void initializeGL();
-	virtual void finalizeGL() { m_lutInt[0].delete_(); m_lutInt[1].delete_(); m_ditheringTex.delete_(); }
+	virtual void finalizeGL() { m_lutInt[0].destroy(); m_lutInt[1].destroy(); m_ditheringTex.destroy(); }
 protected:
 	static QOpenGLFunctions *func() { return QOpenGLContext::currentContext()->functions(); }
 	void setGeometryDirty() { m_dirtyGeomerty = true; }
-	void setRenderTarget(const OpenGLTexture &texture) { m_texture = texture; }
-	const OpenGLTexture &renderTarget() const { return m_texture; }
+	void setRenderTarget(const OpenGLTexture2D &texture) { m_texture = texture; }
+	const OpenGLTexture2D &renderTarget() const { return m_texture; }
 	virtual void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	virtual void prepare(QSGGeometryNode *node) = 0;
 	virtual void getCoords(QRectF &vertices, QRectF &/*texCoords*/) { vertices = boundingRect(); }
@@ -44,8 +43,7 @@ protected:
 private slots:
 	void tryInitGL() { if (!m_init && QOpenGLContext::currentContext()) { initializeGL(); m_init = true; } }
 private:
-	const OpenGLTexture &texture() const { return m_texture; }
-	const OpenGLTexture &ditheringTexture() const { return m_ditheringTex; }
+	const OpenGLTexture2D &ditheringTexture() const { return m_ditheringTex; }
 	const Interpolator::Texture &lutInterpolatorTexture(int i) const { return m_lutInt[i]; }
 	QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) final override;
 	friend class TextureRendererShader;
@@ -55,7 +53,7 @@ private:
 	InterpolatorType m_newInt = InterpolatorType::Bilinear;
 	mutable QSGMaterialType m_types[Interpolator::CategoryMax][2];
 	Interpolator::Texture m_lutInt[2];
-	OpenGLTexture m_texture, m_ditheringTex;
+	OpenGLTexture2D m_texture, m_ditheringTex;
 	QQuickWindow *m_win = nullptr;
 	Dithering m_dithering = Dithering::None, m_newDithering = Dithering::None;
 };

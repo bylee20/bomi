@@ -32,8 +32,12 @@ public:
 	}
 	void setChromaInterpolator(InterpolatorType type);
 	bool directRendering() const { return m_mixer != nullptr; }
-	const OpenGLTexture &renderTarget() const { return m_textures[0]; }
+	const OpenGLTexture2D &renderTarget() const { return m_textures[0]; }
 private:
+	struct Texture : public OpenGLTexture2D {
+		int plane = 0;
+		QPointF cc = {1.0, 1.0}; // coordinate correction
+	};
 	void release();
 	void updateColorMatrix();
 	static bool isKernelEffect(int effect) { return VideoRendererItem::KernelEffects & effect; }
@@ -65,6 +69,7 @@ private:
 	float m_bitScale = 1.0/255.0;
 	mp_csp m_csp; ColorRange m_range = ColorRange::Auto;
 	OGL::Target m_target = OGL::Target2D;
+	OGL::Binding m_binding = OGL::Binding2D;
 	QMatrix3x3 m_mul_mat;
 	QMatrix4x4 m_vMatrix;
 	QVector3D m_sub_vec, m_add_vec;
@@ -76,7 +81,7 @@ private:
 	int loc_tex[3] = {-1, -1, -1}, loc_cc[3] = {-1, -1, -1};
 	int loc_lut_int[2] = {-1, -1}, loc_lut_int_mul[2] = {-1, -1};
 	int m_lutCount = 0;
-	QList<VideoTexture> m_textures;
+	QList<Texture> m_textures;
 	QByteArray m_texel;
 	bool m_dma = false, m_check = true;
 	QRectF m_coords, m_positions;

@@ -28,7 +28,7 @@ struct VideoRendererItem::Data {
 	Effects effects = 0;
 	VideoColor color;
 	DeintMethod deint = DeintMethod::None;
-	OpenGLTexture black;
+	OpenGLTexture2D black;
 	QSize displaySize{1, 1}, frameSize{0, 0};
 	InterpolatorType chromaUpscaler = InterpolatorType::Bilinear;
     int dropped = 0, fboDepth = 2;
@@ -127,7 +127,6 @@ bool VideoRendererItem::overlayInLetterbox() const {
 
 void VideoRendererItem::initializeGL() {
 	TextureRendererItem::initializeGL();
-	LOG_GL_ERROR_Q
 	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
 	_Renew(d->shader);
 	d->shader->setDeintMethod(d->deint);
@@ -135,19 +134,19 @@ void VideoRendererItem::initializeGL() {
 	d->shader->setEffects(d->effects);
 	d->shader->setChromaInterpolator(d->chromaUpscaler);
 	d->shader->setRange(d->range);
-	d->black = OpenGLCompat::makeTexture(1, 1, GL_BGRA);
+	d->black.create(OGL::Repeat);
+	OpenGLTextureBinder<OGL::Target2D> binder(&d->black);
 	const quint32 p = 0x0;
-	d->black.upload(&p);
+	d->black.initialize(1, 1, OGL::BGRA, &p);
 	d->initialized = true;
 	d->direct = false;
 	setRenderTarget(d->black);
-	LOG_GL_ERROR_Q
 }
 
 void VideoRendererItem::finalizeGL() {
 	TextureRendererItem::finalizeGL();
 	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
-	d->black.delete_();
+	d->black.destroy();
 	_Delete(d->fbo);
 	_Delete(d->shader);
 	d->initialized = false;
@@ -426,14 +425,14 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 		if (d->direct) {
 			setRenderTarget(d->shader->renderTarget());
 		} else {
-			if (!d->fbo || d->fbo->size() != d->frameSize) {
-				_Renew(d->fbo, d->frameSize, OpenGLCompat::framebufferObjectTextureFormat());
-				Q_ASSERT(d->fbo->isValid());
-				setRenderTarget(d->fbo->texture());
-			}
-			d->fbo->bind();
-			d->shader->render(d->kernel);
-			d->fbo->release();
+//			if (!d->fbo || d->fbo->size() != d->frameSize) {
+//				_Renew(d->fbo, d->frameSize, OpenGLCompat::framebufferObjectTextureFormat());
+//				Q_ASSERT(d->fbo->isValid());
+//				setRenderTarget(d->fbo->texture());
+//			}
+//			d->fbo->bind();
+//			d->shader->render(d->kernel);
+//			d->fbo->release();
 		}
 		node->markDirty(QSGNode::DirtyMaterial);
 	}

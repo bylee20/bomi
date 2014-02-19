@@ -119,9 +119,9 @@ private:
 
 class VaApiMixer : public HwAccMixer, public VaApiStatusChecker{
 public:
-	VaApiMixer(const OpenGLTexture &texture, const VideoFormat &format);
+	VaApiMixer(const OpenGLTexture2D &texture, const VideoFormat &format);
 	~VaApiMixer();
-	bool upload(VideoFrame &frame, bool deint) override;
+	bool upload(const VideoFrame &frame, bool deint) override;
 private:
 	void *m_glSurface = nullptr;
 };

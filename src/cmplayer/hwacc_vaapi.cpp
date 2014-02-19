@@ -316,8 +316,8 @@ mp_image *HwAccVaApi::getImage(mp_image *mpi) {
 
 /****************************************************************************************/
 
-VaApiMixer::VaApiMixer(const OpenGLTexture &texture, const VideoFormat &/*format*/) {
-	if (!check(vaCreateSurfaceGLX(VaApi::glx(), texture.target, texture.id, &m_glSurface), "Cannot create OpenGL surface."))
+VaApiMixer::VaApiMixer(const OpenGLTexture2D &texture, const VideoFormat &/*format*/) {
+	if (!check(vaCreateSurfaceGLX(VaApi::glx(), texture.target(), texture.id(), &m_glSurface), "Cannot create OpenGL surface."))
 		return;
 }
 
@@ -327,7 +327,7 @@ VaApiMixer::~VaApiMixer() {
 }
 
 
-bool VaApiMixer::upload(VideoFrame &frame, bool deint) {
+bool VaApiMixer::upload(const VideoFrame &frame, bool deint) {
 	if (!m_glSurface)
 		return false;
 	static const int specs[MP_CSP_COUNT] = {

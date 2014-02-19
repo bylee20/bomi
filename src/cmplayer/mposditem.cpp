@@ -3,16 +3,99 @@
 #include "dataevent.hpp"
 #include "openglcompat.hpp"
 
+class MpOsdItemShaderProgram : public QOpenGLShaderProgram {
+	enum {vPosition, vCoord, vColor};
+public:
+	static constexpr int N = 6;
+	MpOsdItemShaderProgram(QObject *parent = nullptr)
+		: QOpenGLShaderProgram(parent) { }
+	void setFragmentShader(const QByteArray &code) {
+		if (!m_frag)
+			m_frag = addShaderFromSourceCode(QOpenGLShader::Fragment, code);
+	}
+	void setVertexShader(const QByteArray &code) {
+		if (!m_vertex) {
+			m_vertex = addShaderFromSourceCode(QOpenGLShader::Vertex, code);
+			m_hasColor = code.contains("vColor");
+		}
+	}
+	bool link() override {
+		bindAttributeLocation("vCoord", vCoord);
+		bindAttributeLocation("vPosition", vPosition);
+		if (m_hasColor)
+			bindAttributeLocation("vColor", vColor);
+		return QOpenGLShaderProgram::link();
+	}
+	void setTextureCount(int textures) {
+		if (_Expand(m_vPositions, 2*N*textures)) {
+			m_vCoords.resize(m_vPositions.size());
+			if (m_hasColor)
+				m_vColors.resize(m_vPositions.size()/2);
+		}
+	}
+	void uploadPositionAsTriangles(int i, const QPointF &p1, const QPointF &p2) {
+		uploadRectAsTriangles(m_vPositions.data(), i, p1, p2);
+	}
+	void uploadPositionAsTriangles(int i, const QRectF &rect) {
+		uploadRectAsTriangles(m_vPositions.data(), i, rect.topLeft(), rect.bottomRight());
+	}
+	void uploadCoordAsTriangles(int i, const QPointF &p1, const QPointF &p2) {
+		uploadRectAsTriangles(m_vCoords.data(), i, p1, p2);
+	}
+	void uploadCoordAsTriangles(int i, const QRectF &rect) {
+		uploadRectAsTriangles(m_vCoords.data(), i, rect.topLeft(), rect.bottomRight());
+	}
+	void uploadColorAsTriangles(int i, quint32 color) {
+		auto p = m_vColors.data() + N*i;
+		*p++ = color; *p++ = color; *p++ = color; *p++ = color; *p++ = color; *p++ = color;
+	}
+	void begin() {
+		bind();
+		enableAttributeArray(vPosition);
+		enableAttributeArray(vCoord);
+		setAttributeArray(vCoord, m_vCoords.data(), 2);
+		setAttributeArray(vPosition, m_vPositions.data(), 2);
+		if (m_hasColor) {
+			enableAttributeArray(vColor);
+			setAttributeArray(vColor, OGL::UInt8, m_vColors.data(), 4);
+		}
+	}
+	void end() {
+		disableAttributeArray(vCoord);
+		disableAttributeArray(vPosition);
+		if (m_hasColor)
+			disableAttributeArray(vColor);
+		release();
+	}
+	void reset() { removeAllShaders(); m_frag = m_vertex = false; }
+private:
+	void uploadRectAsTriangles(float *p, int i, const QPointF &p1, const QPointF &p2) {
+		p += N*2*i;
+		*p++ = p1.x(); *p++ = p1.y();
+		*p++ = p2.x(); *p++ = p1.y();
+		*p++ = p1.x(); *p++ = p2.y();
+
+		*p++ = p1.x(); *p++ = p2.y();
+		*p++ = p2.x(); *p++ = p2.y();
+		*p++ = p2.x(); *p++ = p1.y();
+	}
+	QVector<float> m_vPositions, m_vCoords;
+	QVector<quint32> m_vColors;
+	bool m_hasColor = false, m_frag = false, m_vertex = false;
+};
+
+
 struct MpOsdItem::Data {
 	MpOsdItem *p = nullptr;
 	MpOsdBitmap osd;
-	QSize imageSize = {0, 0};
+	QSize imageSize = {0, 0}, atlasSize = {0, 0};
 	bool show = false;
 	MpOsdBitmap::Format format = MpOsdBitmap::Ass;
 	GLenum srcFactor = GL_SRC_ALPHA;
 	int loc_atlas = 0, loc_vMatrix = 0;
-	OpenGLTextureShaderProgram *shader = nullptr;
-	OpenGLTexture atlas;
+	MpOsdItemShaderProgram *shader = nullptr;
+	OpenGLTexture2D atlas;
+	OpenGLTextureTransferInfo textureTransfer;
 	QMatrix4x4 vMatrix;
 
 	void build(MpOsdBitmap::Format inFormat) {
@@ -20,8 +103,8 @@ struct MpOsdItem::Data {
 			return;
 		_Renew(shader);
 		srcFactor = (format & MpOsdBitmap::PaMask) ? GL_ONE : GL_SRC_ALPHA;
-		atlas.width = atlas.height = 0;
-		atlas.format = OpenGLCompat::textureFormat(format & MpOsdBitmap::Rgba ? GL_BGRA : 1);
+		atlasSize = {};
+		textureTransfer = OpenGLCompat::textureTransferInfo(format & MpOsdBitmap::Rgba ? OGL::BGRA : OGL::OneComponent);
 
 		QByteArray frag;
 		if (format == MpOsdBitmap::Ass) {
@@ -65,8 +148,8 @@ struct MpOsdItem::Data {
 	void upload(const MpOsdBitmap &osd, int i) {
 		auto &part = osd.part(i);
 		atlas.upload(part.map().x(), part.map().y(), part.strideAsPixel(), part.height(), osd.data(i));
-		QPointF tp = part.map(); tp.rx() /= (double)atlas.width; tp.ry() /= (double)atlas.height;
-		QSizeF ts = part.size(); ts.rwidth() /= (double)atlas.width; ts.rheight() /= (double)atlas.height;
+		QPointF tp = part.map(); tp.rx() /= (double)atlas.width(); tp.ry() /= (double)atlas.height();
+		QSizeF ts = part.size(); ts.rwidth() /= (double)atlas.width(); ts.rheight() /= (double)atlas.height();
 		shader->uploadCoordAsTriangles(i, {tp, ts});
 		shader->uploadPositionAsTriangles(i, part.display());
 		shader->uploadColorAsTriangles(i, part.color());
@@ -74,15 +157,16 @@ struct MpOsdItem::Data {
 
 	void initializeAtlas(const MpOsdBitmap &osd) {
 		static const int max = OpenGLCompat::maximumTextureSize();
-		if (osd.sheet().width() > atlas.width || osd.sheet().height() > atlas.height) {
-			if (osd.sheet().width() > atlas.width)
-				atlas.width = qMin<int>(_Aligned<4>(osd.sheet().width()*1.5), max);
-			if (osd.sheet().height() > atlas.height)
-				atlas.height = qMin<int>(_Aligned<4>(osd.sheet().height()*1.5), max);
-			glEnable(atlas.target);
-			if (atlas.id == GL_NONE)
-				atlas.generate();
-			atlas.allocate(GL_NEAREST, OGL::ClampToEdge);
+		if (osd.sheet().width() > atlasSize.width() || osd.sheet().height() > atlasSize.height()) {
+			if (osd.sheet().width() > atlasSize.width())
+				atlasSize.rwidth() = qMin<int>(_Aligned<4>(osd.sheet().width()*1.5), max);
+			if (osd.sheet().height() > atlasSize.height())
+				atlasSize.rheight() = qMin<int>(_Aligned<4>(osd.sheet().height()*1.5), max);
+			glEnable(atlas.target());
+			if (atlas.id() == GL_NONE)
+				atlas.create(OGL::Linear, OGL::ClampToEdge);
+			OpenGLTextureBinder<OGL::Target2D> binder(&atlas);
+			atlas.initialize(atlasSize, textureTransfer);
 		}
 	}
 
@@ -103,6 +187,8 @@ struct MpOsdItem::Data {
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		OpenGLTextureBinder<OGL::Target2D> binder(&atlas);
+
 		shader->setTextureCount(osd.count());
 		for (int i=0; i<osd.count(); ++i)
 			upload(osd, i);
@@ -112,16 +198,13 @@ struct MpOsdItem::Data {
 		shader->setUniformValue(loc_vMatrix, vMatrix);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(OGL::Target2D, atlas.id);
 		glEnable(GL_BLEND);
 		glBlendFunc(srcFactor, GL_ONE_MINUS_SRC_ALPHA);
 		glDrawArrays(GL_TRIANGLES, 0, shader->N*osd.count());
 		glDisable(GL_BLEND);
-		glBindTexture(OGL::Target2D, 0);
 
 		shader->end();
 		fbo->release();
-		LOG_GL_ERROR
 	}
 };
 

@@ -517,24 +517,22 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
 void Interpolator::allocate(Texture &texture1, Texture &texture2) const {
 	if (d->type == InterpolatorType::Bilinear)
 		return;
-	Q_ASSERT(texture1.id != GL_NONE && texture2.id != GL_NONE);
-	texture1.target = OGL::Target1D;
-	texture1.width = IntSamples;
-	texture1.height = 0;
-	texture1.format.pixel = OGL::BGRA;
-	if (OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat)) {
-		texture1.format.internal = OGL::RGBA16F;
-		texture1.format.type = OGL::Float32;
-		texture1.allocate(OGL::Linear, OGL::ClampToEdge, d->lut1.data());
-		texture2.copyAttributesFrom(texture1);
-		texture2.allocate(OGL::Linear, OGL::ClampToEdge, d->lut2.data());
-	} else {
-		texture1.format.internal = OGL::RGBA16_UNorm;
-		texture1.format.type = OGL::UInt16;
-		auto data = convertToIntegerVector<GLushort>(d->lut1, texture1.multiply);
-		texture1.allocate(OGL::Linear, OGL::ClampToEdge, data.data());
-		texture2.copyAttributesFrom(texture1);
-		data = convertToIntegerVector<GLushort>(d->lut2, texture2.multiply);
-		texture2.allocate(OGL::Linear, OGL::ClampToEdge, data.data());
+	Q_ASSERT(texture1.id() != GL_NONE && texture2.id() != GL_NONE);
+	OpenGLTextureTransferInfo info(OGL::RGBA16F, OGL::BGRA, OGL::Float32);
+	QVector<GLushort> conv1, conv2;
+	const void *data1 = d->lut1.data();
+	const void *data2 = d->lut2.data();
+	if (!OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat)) {
+		info.texture = OGL::RGBA16_UNorm;
+		info.transfer.type = OGL::UInt16;
+		conv1 = convertToIntegerVector<GLushort>(d->lut1, texture1.m_mul);
+		conv2 = convertToIntegerVector<GLushort>(d->lut2, texture2.m_mul);
+		data1 = conv1.data();
+		data2 = conv2.data();
 	}
+	OpenGLTextureBinder<OGL::Target1D> binder;
+	auto alloc = [&] (Texture &tex, const void *data) {
+		tex.bind(); tex.initialize(IntSamples, info, data);
+	};
+	alloc(texture1, data1); alloc(texture2, data2);
 }

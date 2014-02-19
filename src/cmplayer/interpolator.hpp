@@ -6,11 +6,13 @@
 
 class Interpolator {
 public:
-	class Texture : public OpenGLTexture {
+	class Texture : public OpenGLTexture1D {
 	public:
-		float multiply = 2.0f;
+		float multiplier() const { return m_mul; }
+	private:
+		friend class Interpolator;
+		float m_mul = 2.0f;
 	};
-
 	enum Category {
 		None = 0,
 		Fetch16 = 1,

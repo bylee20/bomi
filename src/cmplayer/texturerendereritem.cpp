@@ -2,6 +2,9 @@
 #include "enums.hpp"
 #include "global.hpp"
 #include "openglcompat.hpp"
+extern "C" {
+#include <video/out/dither.h>
+}
 
 static const char *code = R"(
 
@@ -76,7 +79,7 @@ void TextureRendererShader::link(QOpenGLShaderProgram */*prog*/) { }
 void TextureRendererShader::bind(QOpenGLShaderProgram */*prog*/) { }
 
 void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */*new_*/, QSGMaterial */*old*/) {
-	auto &texture = m_item->texture();
+	auto &texture = m_item->renderTarget();
 	auto prog = program();
 	auto f = func();
 	prog->setUniformValue(loc_tex, 0);
@@ -86,25 +89,25 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 	f->glActiveTexture(GL_TEXTURE0);
 	texture.bind();
 	if (m_lutCount > 0) {
-		prog->setUniformValue(loc_dxy, QVector2D(1.0/(double)texture.width, 1.0/(double)texture.height));
-		prog->setUniformValue(loc_tex_size, QVector2D(texture.width, texture.height));
+		prog->setUniformValue(loc_dxy, QVector2D(1.0/(double)texture.width(), 1.0/(double)texture.height()));
+		prog->setUniformValue(loc_tex_size, QVector2D(texture.width(), texture.height()));
 	}
 
 	auto texPos = 1;
 	for (int i=0; i<m_lutCount; ++i, ++texPos) {
 		prog->setUniformValue(loc_lut_int[i], texPos);
-		prog->setUniformValue(loc_lut_int_mul[i], m_item->lutInterpolatorTexture(i).multiply);
+		prog->setUniformValue(loc_lut_int_mul[i], m_item->lutInterpolatorTexture(i).multiplier());
 		f->glActiveTexture(GL_TEXTURE0 + texPos);
 		m_item->lutInterpolatorTexture(i).bind();
 	}
 	if (m_dithering) {
 		auto &dithering = m_item->ditheringTexture();
-		Q_ASSERT(dithering.width == dithering.height);
+		Q_ASSERT(dithering.width() == dithering.height());
 		Q_ASSERT(loc_dithering != -1);
 		Q_ASSERT(loc_dithering_quantization != -1);
 		Q_ASSERT(loc_dithering_center != -1);
 		Q_ASSERT(loc_dithering_size != -1);
-		const int size = dithering.width;
+		const int size = dithering.width();
 		prog->setUniformValue(loc_dithering, texPos);
 		prog->setUniformValue(loc_dithering_quantization, float(1 << m_item->depth()) - 1.f);
 		prog->setUniformValue(loc_dithering_center, 0.5f / size*size);
@@ -163,7 +166,6 @@ struct TextureRendererItem::Node : public QSGGeometryNode {
 
 struct TextureRendererItem::Data {
 	Node *node = nullptr;
-	QByteArray forLog;
 	static void set(QSGGeometry::TexturedPoint2D *tp, const QRectF &vtx, const QRectF &txt) {
 		auto set = [&tp] (const QPointF &vtx, const QPointF &txt) {
 			tp++->set(vtx.x(), vtx.y(), txt.x(), txt.y());
@@ -198,13 +200,51 @@ TextureRendererShader *TextureRendererItem::createShader() const {
 }
 
 void TextureRendererItem::initializeGL() {
-	m_lutInt[0].generate();
-	m_lutInt[1].generate();
-	m_ditheringTex.generate();
+	m_lutInt[0].create();
+	m_lutInt[1].create();
+	m_ditheringTex.create(OGL::Nearest, OGL::Repeat);
+	m_init = true;
+	//	 gl->PixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	//	 gl->PixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+}
 
-	d->forLog = metaObject()->className();
-	d->forLog += "::updatePaintNode()";
-	LOG_GL_ERROR_Q
+static void makeDitheringTexture(OpenGLTexture2D &texture, Dithering type) {
+	if (type == Dithering::None)
+		return;
+	const int sizeb = 6;
+	int size = 0;
+	const void *data = nullptr;
+	QByteArray buffer;
+	OpenGLTextureTransferInfo info;
+	if (type == Dithering::Fruit) {
+		size = 1 << 6;
+		static QVector<GLfloat> fruit;
+		if (fruit.size() != size*size) {
+			fruit.resize(size*size);
+			mp_make_fruit_dither_matrix(fruit.data(), sizeb);
+		}
+		const bool rg = OpenGLCompat::hasExtension(OpenGLCompat::TextureRG);
+		info.texture = rg ? OGL::R16_UNorm : OGL::Luminance16_UNorm;
+		info.transfer.format = rg ? OGL::Red : OGL::Luminance;
+		if (OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat)) {
+			info.transfer.type = OGL::Float32;
+			data = fruit.data();
+		} else {
+			info.transfer.type = OGL::UInt16;
+			buffer.resize(sizeof(GLushort)*fruit.size());
+			auto p = (GLushort*)buffer.data();
+			for (auto v : fruit)
+				*p++ = v*_Max<GLushort>();
+			data = buffer.data();
+		}
+	} else {
+		size = 8;
+		buffer.resize(size*size);
+		mp_make_ordered_dither_matrix((uchar*)buffer.data(), size);
+		info = OpenGLCompat::textureTransferInfo(OGL::OneComponent);
+		data = buffer.data();
+	}
+	OpenGLTextureBinder<OGL::Target2D>(&texture)->initialize(size, size, info, data);
 }
 
 QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
@@ -225,8 +265,7 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 		m_interpolator->allocate(m_lutInt[0], m_lutInt[1]);
 	}
 	if (_Change(m_dithering, m_newDithering))
-		m_ditheringTex = OpenGLCompat::allocateDitheringTexture(m_ditheringTex.id, m_dithering);
-	OpenGLCompat::logError(d->forLog.constData());
+		makeDitheringTexture(m_ditheringTex, m_dithering);
 	return d->node;
 }
 

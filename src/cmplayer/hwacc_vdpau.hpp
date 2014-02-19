@@ -174,9 +174,9 @@ private:
 
 class VdpauMixer : public HwAccMixer, public VdpauStatusChecker {
 public:
-	VdpauMixer(const OpenGLTexture &texture, const VideoFormat &format);
+	VdpauMixer(const OpenGLTexture2D &texture, const VideoFormat &format);
 	~VdpauMixer();
-	bool upload(VideoFrame &frame, bool deint) override;
+	bool upload(const VideoFrame &frame, bool deint) override;
 private:
 	quint32 m_width = 0, m_height = 0;
 	VdpVideoMixer m_mixer = VDP_INVALID_HANDLE;
