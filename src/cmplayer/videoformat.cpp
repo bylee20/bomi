@@ -1,7 +1,5 @@
 #include "videoformat.hpp"
-#ifdef Q_OS_MAC
-#include <VideoDecodeAcceleration/VDADecoder.h>
-#endif
+#include "hwacc.hpp"
 extern "C" {
 #include <video/img_format.h>
 #include <libavutil/common.h>
@@ -31,43 +29,7 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
 		}
 #endif
 #ifdef Q_OS_MAC
-		if (imgfmt == IMGFMT_VDA) {
-			auto buffer = (CVPixelBufferRef)mpi->planes[3];
-			switch (CVPixelBufferGetPixelFormatType(buffer)) {
-			case kCVPixelFormatType_422YpCbCr8:
-				type = IMGFMT_UYVY;
-				break;
-			case kCVPixelFormatType_422YpCbCr8_yuvs:
-				type = IMGFMT_YUYV;
-				break;
-			case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:
-				type = IMGFMT_NV12;
-				break;
-			case kCVPixelFormatType_420YpCbCr8Planar:
-				type = IMGFMT_420P;
-				break;
-			default:
-				qDebug() << "Not supported format!";
-				type = IMGFMT_NONE;
-			}
-			auto desc = mp_imgfmt_get_desc(type);
-			if (CVPixelBufferIsPlanar(buffer)) {
-				planes = CVPixelBufferGetPlaneCount(buffer);
-				Q_ASSERT(planes == desc.num_planes);
-				for (int i=0; i<planes; ++i) {
-					alignedByteSize[i].rwidth() = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
-					alignedByteSize[i].rheight() = CVPixelBufferGetHeightOfPlane(buffer, i);
-					bpp += desc.bpp[i] >> (desc.xs[i] + desc.ys[i]);
-				}
-			} else {
-				planes = 1;
-				alignedByteSize[0].rwidth() = CVPixelBufferGetBytesPerRow(buffer);
-				alignedByteSize[0].rheight() = CVPixelBufferGetHeight(buffer);
-				bpp = desc.bpp[0];
-			}
-			alignedSize = alignedByteSize[0];
-			alignedSize.rwidth() /= desc.bytes[0];
-		}
+		HwAcc::fillFormat(this, mpi);
 #endif
 	} else {
 		alignedSize = QSize(mpi->stride[0]/mpi->fmt.bytes[0], mpi->h);

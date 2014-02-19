@@ -6,9 +6,6 @@ extern "C" {
 #include <video/mp_image.h>
 #include <libavutil/pixfmt.h>
 }
-#include "openglcompat.hpp"
-//struct mp_image;
-
 //constexpr static inline quint32 cc4(char a, char b, char c, char d) {
 //#if (Q_BYTE_ORDER == Q_BIG_ENDIAN)
 //	return (((quint32)d)|(((quint32)c)<<8)|(((quint32)b)<<16)|(((quint32)a)<<24));
@@ -76,6 +73,10 @@ private:
 		mp_chroma_location chroma = MP_CHROMA_LEFT;
 	};
 	QExplicitlySharedDataPointer<Data> d;
+	friend class HwAcc;
+	friend class VdaMixer;
+	friend class VaApiMixer;
+	friend class VdpauMixer;
 };
 
 #endif // VIDEOFORMAT_HPP

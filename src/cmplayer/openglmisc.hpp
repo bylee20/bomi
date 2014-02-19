@@ -165,6 +165,8 @@ public:
 	void setFilter(OGL::Filter filter);
 	void setWrapMode(OGL::WrapMode wrap);
 	bool isValid() const { return m_id != GL_NONE; }
+	OGL::TextureFormat format() const { return m_info.texture; }
+	const OGL::TransferInfo &transfer() const { return m_info.transfer; }
 protected:
 	OpenGLTextureBase(OGL::Target target): m_target(target) {}
 	OpenGLTextureTransferInfo m_info;
@@ -244,11 +246,15 @@ public:
 	}
 	void initialize(const QSize &size, const void *data = nullptr) { initialize(size.width(), size.height(), data); }
 	void initialize(int width, int height, const void *data = nullptr) {
-		m_width = width; m_height = height;
+		m_width = width; m_height = height; initialize(data);
+	}
+	void setAttributes(int width, int height, const OpenGLTextureTransferInfo &info) {
+		m_width = width; m_height = height; m_info = info;
+	}
+	void initialize(const void *data = nullptr) {
 		if (!isEmpty())
 			glTexImage2D(target(), 0, m_info.texture, m_width, m_height, 0, m_info.transfer.format, m_info.transfer.type, data);
 	}
-
 	bool isEmpty() const { return !isValid() || m_width <= 0 || m_height <= 0; }
 	void upload(int x, int y, int width, int height, const void *data) {
 		glTexSubImage2D(target(), 0, x, y, width, height, m_info.transfer.format, m_info.transfer.type, data);
@@ -257,8 +263,14 @@ public:
 	void upload(int width, int height, const void *data) { upload(0, 0, width, height, data); }
 	void upload(const void *data) { upload(0, 0, m_width, m_height, data); }
 	QImage toImage() const;
+	int &plane() { return m_plane; }
+	int plane() const { return m_plane; }
+	const QPointF &correction() const { return m_correction; }
+	QPointF &correction() { return m_correction; }
 private:
-	int m_width = 0, m_height = 0;
+	friend class VideoFrameShader;
+	int m_width = 0, m_height = 0, m_plane = 0;
+	QPointF m_correction = {1.0, 1.0};
 };
 
 class OpenGLFramebufferObject : public QOpenGLFramebufferObject {

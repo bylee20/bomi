@@ -1,6 +1,10 @@
 #ifndef HWACC_VDPAU_HPP
 #define HWACC_VDPAU_HPP
 
+#include "stdafx.hpp"
+
+#ifdef Q_OS_LINUX
+
 #include "hwacc.hpp"
 #include "hwacc_helper.hpp"
 extern "C" {
@@ -184,5 +188,7 @@ private:
 	VdpOutputSurface m_surface = VDP_INVALID_HANDLE;
 	GLvdpauSurfaceNV m_glSurface = GL_NONE;
 };
+
+#endif
 
 #endif // HWACC_VDPAU_HPP

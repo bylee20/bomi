@@ -262,9 +262,13 @@ int Interpolator::textures(Category category) {
 QByteArray Interpolator::shader(Category category) {
 	if (category == None)
 		return R"(
+#ifdef DEC_UNIFORM_DXY
+uniform vec2 dxy;
+uniform vec2 tex_size;
+#endif
 #ifdef FRAGMENT
-vec4 interpolated(const in sampler2D tex, const in vec2 coord) {
-	return texture2D(tex, coord);
+vec4 interpolated(const in sampler2Dg tex, const in vec2 coord) {
+	return texture2Dg(tex, coord);
 }
 #endif
 
@@ -289,7 +293,7 @@ vec4 mix3(const in vec4 v1, const in vec4 v2, const in vec4 v3, const in float a
 
 __DEC_RENORM__
 
-vec4 interpolated(const in sampler2D tex, const in vec2 coord) {
+vec4 interpolated(const in sampler2Dg tex, const in vec2 coord) {
 	const float N = 256.0;
 	const float scale = (N-1.0)/N;
 	const float offset = 1.0/(2.0*N);
@@ -315,7 +319,7 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
 		interpolated = R"(
 	vec4 w_x = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul);
 	vec4 w_y = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul);
-#define FETCH(a, b, i, j) (w_x.a*w_y.b)*texture2D(tex, c + vec2(i.0, j.0)*dxy)
+#define FETCH(a, b, i, j) (w_x.a*w_y.b)*texture2Dg(tex, c + vec2(i.0, j.0)*dxy)
 	color += FETCH(b, b,-1,-1);
 	color += FETCH(b, g,-1, 0);
 	color += FETCH(b, r,-1, 1);
@@ -346,7 +350,7 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
 	w_x[1] = renormalize(texture1D(lut_int2, lutCoord.x), lut_int2_mul);
 	w_y[0] = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul);
 	w_y[1] = renormalize(texture1D(lut_int2, lutCoord.y), lut_int2_mul);
-#define FETCH(n, m, a, b, i, j) (w_x[n].a*w_y[m].b)*texture2D(tex, c + vec2(i.0, j.0)*dxy)
+#define FETCH(n, m, a, b, i, j) (w_x[n].a*w_y[m].b)*texture2Dg(tex, c + vec2(i.0, j.0)*dxy)
 )";
 		if (category == Fetch36)
 			interpolated += R"(
@@ -473,10 +477,10 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
 	vec4 hg_x = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul);
 	vec4 hg_y = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul);
 
-	vec4 tex00 = texture2D(tex, coord + vec2(-hg_x.b, -hg_y.b)*dxy);
-	vec4 tex10 = texture2D(tex, coord + vec2( hg_x.g, -hg_y.b)*dxy);
-	vec4 tex01 = texture2D(tex, coord + vec2(-hg_x.b,  hg_y.g)*dxy);
-	vec4 tex11 = texture2D(tex, coord + vec2( hg_x.g,  hg_y.g)*dxy);
+	vec4 tex00 = texture2Dg(tex, coord + vec2(-hg_x.b, -hg_y.b)*dxy);
+	vec4 tex10 = texture2Dg(tex, coord + vec2( hg_x.g, -hg_y.b)*dxy);
+	vec4 tex01 = texture2Dg(tex, coord + vec2(-hg_x.b,  hg_y.g)*dxy);
+	vec4 tex11 = texture2Dg(tex, coord + vec2( hg_x.g,  hg_y.g)*dxy);
 
 	tex00 = mix(tex00, tex10, hg_x.r);
 	tex01 = mix(tex01, tex11, hg_x.r);
@@ -490,19 +494,19 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
 	vec4 f_x = renormalize(texture1D(lut_int2, lutCoord.x), lut_int2_mul);
 	vec4 f_y = renormalize(texture1D(lut_int2, lutCoord.y), lut_int2_mul);
 
-	vec4 tex00 = texture2D(tex, coord + vec2(-h_x.b, -h_y.b));
-	vec4 tex01 = texture2D(tex, coord + vec2(-h_x.b, -h_y.g));
-	vec4 tex02 = texture2D(tex, coord + vec2(-h_x.b,  h_y.r));
+	vec4 tex00 = texture2Dg(tex, coord + vec2(-h_x.b, -h_y.b));
+	vec4 tex01 = texture2Dg(tex, coord + vec2(-h_x.b, -h_y.g));
+	vec4 tex02 = texture2Dg(tex, coord + vec2(-h_x.b,  h_y.r));
 	tex00 = mix3(tex00, tex01, tex02, f_y.b, f_y.g);
 
-	vec4 tex10 = texture2D(tex, coord + vec2(-h_x.g, -h_y.b));
-	vec4 tex11 = texture2D(tex, coord + vec2(-h_x.g, -h_y.g));
-	vec4 tex12 = texture2D(tex, coord + vec2(-h_x.g,  h_y.r));
+	vec4 tex10 = texture2Dg(tex, coord + vec2(-h_x.g, -h_y.b));
+	vec4 tex11 = texture2Dg(tex, coord + vec2(-h_x.g, -h_y.g));
+	vec4 tex12 = texture2Dg(tex, coord + vec2(-h_x.g,  h_y.r));
 	tex10 = mix3(tex10, tex11, tex12, f_y.b, f_y.g);
 
-	vec4 tex20 = texture2D(tex, coord + vec2( h_x.r, -h_y.b));
-	vec4 tex21 = texture2D(tex, coord + vec2( h_x.r, -h_y.g));
-	vec4 tex22 = texture2D(tex, coord + vec2( h_x.r,  h_y.r));
+	vec4 tex20 = texture2Dg(tex, coord + vec2( h_x.r, -h_y.b));
+	vec4 tex21 = texture2Dg(tex, coord + vec2( h_x.r, -h_y.g));
+	vec4 tex22 = texture2Dg(tex, coord + vec2( h_x.r,  h_y.r));
 	tex20 = mix3(tex20, tex21, tex22, f_y.b, f_y.g);
 	color = mix3(tex00, tex10, tex20, f_x.b, f_x.g);
 )";

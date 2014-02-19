@@ -38,7 +38,7 @@ protected:
 	virtual void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	virtual void prepare(QSGGeometryNode *node) = 0;
 	virtual void getCoords(QRectF &vertices, QRectF &/*texCoords*/) { vertices = boundingRect(); }
-	virtual QSGMaterialType *shaderId() const { return &m_types[m_interpolator->category()][m_dithering > 0]; }
+	virtual QSGMaterialType *shaderId() const;
 	virtual TextureRendererShader *createShader() const;
 private slots:
 	void tryInitGL() { if (!m_init && QOpenGLContext::currentContext()) { initializeGL(); m_init = true; } }
@@ -51,7 +51,7 @@ private:
 	bool m_dirtyGeomerty = true, m_init = false;
 	const Interpolator *m_interpolator = Interpolator::get(InterpolatorType::Bilinear);
 	InterpolatorType m_newInt = InterpolatorType::Bilinear;
-	mutable QSGMaterialType m_types[Interpolator::CategoryMax][2];
+	mutable QSGMaterialType m_types[Interpolator::CategoryMax][2][2];
 	Interpolator::Texture m_lutInt[2];
 	OpenGLTexture2D m_texture, m_ditheringTex;
 	QQuickWindow *m_win = nullptr;
@@ -60,7 +60,7 @@ private:
 
 class TextureRendererShader : public QSGMaterialShader {
 public:
-	TextureRendererShader(const TextureRendererItem *item, Interpolator::Category category = Interpolator::None, bool dithering = false);
+	TextureRendererShader(const TextureRendererItem *item, Interpolator::Category category = Interpolator::None, bool dithering = false, bool rectangle = false);
 	static QOpenGLFunctions *func() { return QOpenGLContext::currentContext()->functions(); }
 	const char *fragmentShader() const override { return m_fragCode.constData(); }
 	const char *vertexShader() const override { return m_vertexCode.constData(); }
@@ -73,7 +73,7 @@ private:
 	void initialize() final override;
 	const TextureRendererItem *m_item = nullptr;
 	Interpolator::Category m_category = Interpolator::None;
-	bool m_dithering = false;
+	bool m_dithering = false, m_rectangle = false;
 	int m_lutCount = 0;
 	int loc_lut_int[2] = {-1, -1}, loc_lut_int_mul[2] = {-1, -1};
 	int loc_tex = -1, loc_vMatrix = -1, loc_dxy = -1;

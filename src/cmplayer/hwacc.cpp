@@ -1,4 +1,5 @@
 #include "hwacc.hpp"
+#include "videoformat.hpp"
 #include "videooutput.hpp"
 #include "stdafx.hpp"
 #include "hwacc_vaapi.hpp"
@@ -66,27 +67,55 @@ QList<DeintMethod> HwAcc::fullDeintList() {
 }
 
 void HwAcc::initialize() {
+#ifdef Q_OS_LINUX
 	if (backend() == VdpauX11)
 		Vdpau::initialize();
 	else
 		VaApi::initialize();
+#endif
 }
 
 void HwAcc::finalize() {
+#ifdef Q_OS_LINUX
 	if (backend() == VdpauX11)
 		Vdpau::finalize();
 	else
 		VaApi::finalize();
+#endif
 }
 
-HwAccMixer *HwAcc::createMixer(const OpenGLTexture2D &texture, const VideoFormat &format) {
+HwAccMixer *HwAcc::createMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format) {
 	switch (backend()) {
+#ifdef Q_OS_LINUX
 	case VdpauX11:
-		return new VdpauMixer(texture, format);
+		return new VdpauMixer(textures, format);
 	case VaApiGLX:
-		return new VaApiMixer(texture, format);
+		return new VaApiMixer(textures, format);
+#endif
+#ifdef Q_OS_MAC
+	case Vda:
+		return new VdaMixer(textures, format);
+#endif
 	default:
 		return nullptr;
+	}
+}
+
+bool HwAcc::fillFormat(void *formatData, const mp_image *mpi) {
+	auto data = static_cast<VideoFormat::Data*>(formatData);
+	switch (data->imgfmt) {
+#ifdef Q_OS_LINUX
+	case IMGFMT_VAAPI:
+	case IMGFMT_VDPAU:
+		return true;
+#endif
+#ifdef Q_OS_MAC
+	case IMGFMT_VDA:
+		VdaMixer::fill(data, mpi);
+		return true;
+#endif
+	default:
+		return false;
 	}
 }
 

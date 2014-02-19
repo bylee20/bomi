@@ -35,7 +35,8 @@ public:
 	static QString backendName();
 	static const char *codecName(int id);
 	static AVCodecID codecId(const char *name);
-	static HwAccMixer *createMixer(const OpenGLTexture2D &texture, const VideoFormat &format);
+	static HwAccMixer *createMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format);
+	static bool fillFormat(void *formatData, const mp_image *mpi);
 	virtual mp_image *getImage(mp_image *mpi) = 0;
 	virtual Type type() const = 0;
 	int imgfmt() const;

@@ -1,5 +1,21 @@
 #include "hwacc_vdpau.hpp"
-#include "stdafx.hpp"
+
+void initialize_vdpau_interop(QOpenGLContext *ctx) {
+#ifdef Q_OS_LINUX
+	Vdpau::initializeInterop(ctx);
+#endif
+	Q_UNUSED(ctx);
+}
+
+void finalize_vdpau_interop(QOpenGLContext *ctx) {
+#ifdef Q_OS_LINUX
+	Vdpau::finalizeInterop(ctx);
+#endif
+	Q_UNUSED(ctx);
+}
+
+#ifdef Q_OS_LINUX
+
 #include "videoframe.hpp"
 
 extern "C" {
@@ -11,14 +27,6 @@ extern "C" {
 }
 
 #define TO_INTEROP(a) (void*)(quintptr)(a)
-
-void initialize_vdpau_interop(QOpenGLContext *ctx) {
-	Vdpau::initializeInterop(ctx);
-}
-
-void finalize_vdpau_interop(QOpenGLContext *ctx) {
-	Vdpau::finalizeInterop(ctx);
-}
 
 const char *HwAccX11Trait<IMGFMT_VDPAU>::error(Status status) {
 	if (Vdpau::isInitialized())
@@ -246,3 +254,5 @@ bool VdpauMixer::upload(const VideoFrame &frame, bool deint) {
 	return check(Vdpau::videoMixerRender(m_mixer, VDP_INVALID_HANDLE, nullptr, structure, 0, nullptr, id, 0, nullptr
 		, nullptr, m_surface, nullptr, nullptr, 0, nullptr), "Cannot render video surface.");
 }
+
+#endif

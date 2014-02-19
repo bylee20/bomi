@@ -442,8 +442,13 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 
 void VideoRendererItem::getCoords(QRectF &vertices, QRectF &texCoords) {
 	double top = 0.0, left = 0.0, right = 1.0, bottom = 1.0;
-	if (d->fbo)
-		d->fbo->getCoords(left, top, right, bottom);
+	if (d->direct) {
+		if (d->shader)
+			d->shader->getCoords(left, top, right, bottom);
+	} else {
+		if (d->fbo)
+			d->fbo->getCoords(left, top, right, bottom);
+	}
 	if (!(d->effects & Disable)) {
 		if (d->effects & FlipVertically)
 			qSwap(top, bottom);

@@ -6,27 +6,33 @@ extern "C" {
 #include <video/out/dither.h>
 }
 
-static const char *code = R"(
-
+static const char *head = R"(
 varying vec2 texCoord;
+#define DEC_UNIFORM_DXY
+#if USE_RECTANGLE
+varying vec2 normalizedTexCoord;
+#define sampler2Dg sampler2DRect
+#define texture2Dg texture2DRect
+#else
+#define normalizedTexCoord texCoord
+#define sampler2Dg sampler2D
+#define texture2Dg texture2D
+#endif
+)";
 
-/***********************************************************************/
-
-#ifdef FRAGMENT
-uniform sampler2D tex;
-
+static const char *fragCode = R"(
+uniform sampler2Dg tex;
 #if USE_DITHERING
 uniform sampler2D dithering;
 uniform float dithering_quantization;
 uniform float dithering_center;
 uniform vec2 dithering_size;
 vec4 ditheringed(const in vec4 color) {
-	vec2 dithering_pos = texCoord.xy / dithering_size;
+	vec2 dithering_pos = normalizedTexCoord.xy / dithering_size;
 	float dithering_value = texture2D(dithering, dithering_pos).r + dithering_center;
 	return floor(color * dithering_quantization + dithering_value) / dithering_quantization;
 }
 #endif
-
 void main() {
 	vec4 color = interpolated(tex, texCoord);
 #if USE_DITHERING
@@ -34,37 +40,37 @@ void main() {
 #endif
 	gl_FragColor = color;
 }
+)";
 
-#endif
-/***********************************************************************/
-
-#ifdef VERTEX
+static const char *vtxCode = R"(
 uniform mat4 vMatrix;
 attribute vec4 vPosition;
 attribute vec2 vCoord;
 void main() {
 	setLutIntCoord(vCoord);
 	texCoord = vCoord;
+#if (USE_RECTANGLE && USE_DITHERING)
+	normalizedTexCoord = vCoord/tex_size;
+#endif
 	gl_Position = vMatrix * vPosition;
 }
-#endif
-
 )";
 
-TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, Interpolator::Category category, bool dithering)
-: m_item(item), m_category(category), m_dithering(dithering) {
+TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, Interpolator::Category category, bool dithering, bool rectangle)
+: m_item(item), m_category(category), m_dithering(dithering), m_rectangle(rectangle) {
 	const auto interpolator = Interpolator::shader(m_category);
 	QByteArray header;
-	header += "#define DEC_UNIFORM_DXY\n";
 	header += "#define USE_DITHERING " + QByteArray::number(dithering) + "\n";
+	header += "#define USE_RECTANGLE " + QByteArray::number(rectangle) + "\n";
+	header += head;
 	m_fragCode = header;
 	m_fragCode += "#define FRAGMENT\n";
 	m_fragCode += interpolator;
-	m_fragCode += code;
+	m_fragCode += fragCode;
 	m_vertexCode = header;
 	m_vertexCode += "#define VERTEX\n";
 	m_vertexCode += interpolator;
-	m_vertexCode += code;
+	m_vertexCode += vtxCode;
 	m_lutCount = Interpolator::textures(m_category);
 	Q_ASSERT(0 <= m_lutCount && m_lutCount < 3);
 	LOG_GL_ERROR
@@ -88,10 +94,11 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 	bind(prog);
 	f->glActiveTexture(GL_TEXTURE0);
 	texture.bind();
-	if (m_lutCount > 0) {
+	if (m_rectangle)
+		prog->setUniformValue(loc_dxy, QVector2D(1.0, 1.0));
+	else
 		prog->setUniformValue(loc_dxy, QVector2D(1.0/(double)texture.width(), 1.0/(double)texture.height()));
-		prog->setUniformValue(loc_tex_size, QVector2D(texture.width(), texture.height()));
-	}
+	prog->setUniformValue(loc_tex_size, QVector2D(texture.width(), texture.height()));
 
 	auto texPos = 1;
 	for (int i=0; i<m_lutCount; ++i, ++texPos) {
@@ -103,10 +110,6 @@ void TextureRendererShader::updateState(const RenderState &state, QSGMaterial */
 	if (m_dithering) {
 		auto &dithering = m_item->ditheringTexture();
 		Q_ASSERT(dithering.width() == dithering.height());
-		Q_ASSERT(loc_dithering != -1);
-		Q_ASSERT(loc_dithering_quantization != -1);
-		Q_ASSERT(loc_dithering_center != -1);
-		Q_ASSERT(loc_dithering_size != -1);
 		const int size = dithering.width();
 		prog->setUniformValue(loc_dithering, texPos);
 		prog->setUniformValue(loc_dithering_quantization, float(1 << m_item->depth()) - 1.f);
@@ -137,6 +140,10 @@ void TextureRendererShader::initialize() {
 		loc_dithering_quantization = prog->uniformLocation("dithering_quantization");
 		loc_dithering_center = prog->uniformLocation("dithering_center");
 		loc_dithering_size = prog->uniformLocation("dithering_size");
+		Q_ASSERT(loc_dithering != -1);
+		Q_ASSERT(loc_dithering_quantization != -1);
+		Q_ASSERT(loc_dithering_center != -1);
+		Q_ASSERT(loc_dithering_size != -1);
 	}
 	link(prog);
 	LOG_GL_ERROR
@@ -195,8 +202,12 @@ TextureRendererItem::~TextureRendererItem() {
 	delete d;
 }
 
+QSGMaterialType *TextureRendererItem::shaderId() const {
+	return &m_types[m_interpolator->category()][m_dithering > 0][m_texture.isRectangle()];
+}
+
 TextureRendererShader *TextureRendererItem::createShader() const {
-	return new TextureRendererShader(this, m_interpolator->category(), m_dithering > 0);
+	return new TextureRendererShader(this, m_interpolator->category(), m_dithering > 0, m_texture.isRectangle());
 }
 
 void TextureRendererItem::initializeGL() {

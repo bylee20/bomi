@@ -5,13 +5,13 @@ varying vec2 texCoord;
 
 #ifdef FRAGMENT
 
-uniform sampler2D tex0, tex1, tex2;
+uniform sampler2Dg tex0, tex1, tex2;
 
-#define texture0(c) texture2D(tex0, c)
-#define texture1(c) texture2D(tex1, c)
-#define texture2(c) texture2D(tex2, c)
+#define texture0(c) texture2Dg(tex0, c)
+#define texture1(c) texture2Dg(tex1, c)
+#define texture2(c) texture2Dg(tex2, c)
 
-#define TEXTURE_0(i) texture2D(tex0, i)
+#define TEXTURE_0(i) texture2Dg(tex0, i)
 #if TEX_COUNT > 1
 #define TEXTURE_1(i) interpolated(tex1, (i+chroma_offset)*cc1)
 #if TEX_COUNT > 2

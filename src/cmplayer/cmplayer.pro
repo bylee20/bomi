@@ -15,8 +15,8 @@ PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
-INCLUDEPATH += ../mpv ../mpv/build $${DESTDIR}/include/chardet /usr/include/chardet
-LIBS += -L$${LIB_DIR} -lcmplayer_mpv -lbz2 -lz -lvdpau
+INCLUDEPATH += ../mpv ../mpv/build
+LIBS += -L$${LIB_DIR} -lcmplayer_mpv -lbz2 -lz
 
 PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
     libmpg123 libass libquvi$${LIBQUVI_SUFFIX} icu-uc chardet
@@ -40,12 +40,11 @@ macx {
     HEADERS += app_mac.hpp
     OBJECTIVE_SOURCES += app_mac.mm
     INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
-    LIBS -= -L/opt/X11/lib
 } else:unix {
     QT += dbus x11extras
     PKGCONFIG += glib-2.0 libva libva-glx libva-x11 xcb xcb-icccm x11 alsa libpulse gobject-2.0 jack
     TARGET = cmplayer
-    LIBS += -ldl
+    LIBS += -ldl -lvdpau
     HEADERS += app_x11.hpp
     SOURCES += app_x11.cpp
 }
@@ -124,7 +123,6 @@ HEADERS += playengine.hpp \
     ffmpegfilters.hpp \
     softwaredeinterlacer.hpp \
     vaapipostprocessor.hpp \
-    texturenode.hpp \
     geometryitem.hpp \
     playengine_p.hpp \
     mediamisc.hpp \
@@ -212,7 +210,6 @@ SOURCES += main.cpp \
     ffmpegfilters.cpp \
     softwaredeinterlacer.cpp \
     vaapipostprocessor.cpp \
-    texturenode.cpp \
     geometryitem.cpp \
     mediamisc.cpp \
     ../mpv/video/out/dither.c \

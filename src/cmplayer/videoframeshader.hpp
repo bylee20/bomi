@@ -25,19 +25,15 @@ public:
 	void setColor(const VideoColor &color);
 	void setRange(ColorRange range);
 	bool upload(VideoFrame &frame);
-	const QRectF &textureRect() const { return m_coords; }
+//	const QRectF &textureRect() const { return m_coords; }
 	void getCoords(double &x1, double &y1, double &x2, double &y2) {
 		x1 = m_coords.left(); y1 = m_coords.top();
 		x2 = m_coords.right(); y2 = m_coords.bottom();
 	}
 	void setChromaInterpolator(InterpolatorType type);
-	bool directRendering() const { return m_mixer != nullptr; }
+	bool directRendering() const { return m_direct; }
 	const OpenGLTexture2D &renderTarget() const { return m_textures[0]; }
 private:
-	struct Texture : public OpenGLTexture2D {
-		int plane = 0;
-		QPointF cc = {1.0, 1.0}; // coordinate correction
-	};
 	void release();
 	void updateColorMatrix();
 	static bool isKernelEffect(int effect) { return VideoRendererItem::KernelEffects & effect; }
@@ -81,9 +77,9 @@ private:
 	int loc_tex[3] = {-1, -1, -1}, loc_cc[3] = {-1, -1, -1};
 	int loc_lut_int[2] = {-1, -1}, loc_lut_int_mul[2] = {-1, -1};
 	int m_lutCount = 0;
-	QList<Texture> m_textures;
+	QList<OpenGLTexture2D> m_textures;
 	QByteArray m_texel;
-	bool m_dma = false, m_check = true;
+	bool m_dma = false, m_check = true, m_direct = false;
 	QRectF m_coords, m_positions;
 	QPointF m_chroma = {0.0, 0.0};
 	Interpolator::Texture m_lutInt[2];

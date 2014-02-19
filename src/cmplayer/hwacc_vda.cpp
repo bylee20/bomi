@@ -1,23 +1,22 @@
 #include "hwacc_vda.hpp"
-extern "C" {
-#include <video/mp_image.h>
-}
 
 #ifdef Q_OS_MAC
-
+#include "hwacc_helper.hpp"
+#include "videoframe.hpp"
+#include "openglmisc.hpp"
+#include "log.hpp"
+#include <OpenGL/CGLIOSurface.h>
+#include <OpenGL/OpenGL.h>
+#include <CoreVideo/CVPixelBuffer.h>
 extern "C" {
+#include <video/mp_image.h>
 #include <libavcodec/vda.h>
-//#define class ____class
-//#define new ____new
-//#define Picture ____Picture
-//#include <../ffmpeg/libavcodec/h264.h>
-//#undef Picture
-//#undef new
-//#undef class
 }
 #ifdef check
 #undef check
 #endif
+
+DECLARE_LOG_CONTEXT(HwAcc)
 
 struct HwAccVda::Data {
 	vda_context context;
@@ -48,7 +47,7 @@ mp_image *HwAccVda::getImage(mp_image *mpi) {
 		CVPixelBufferRelease(buffer);
 	};
 	CVPixelBufferRetain(buffer);
-	auto img = nullMpImage(IMGFMT_VDA, size().width(), size().height(), buffer, release);
+	auto img = null_mp_image(IMGFMT_VDA, size().width(), size().height(), buffer, release);
 	mp_image_copy_attributes(img, mpi);
 	img->planes[3] = mpi->planes[3];
 	return img;
@@ -59,7 +58,7 @@ bool HwAccVda::isOk() const {
 }
 
 mp_image *HwAccVda::getSurface() {
-	auto mpi = nullMpImage(IMGFMT_VDA, size().width(), size().height(), nullptr, nullptr);
+	auto mpi = null_mp_image(IMGFMT_VDA, size().width(), size().height(), nullptr, nullptr);
 	mpi->planes[0] = (uchar*)(void*)(uintptr_t)1;
 	return mpi;
 }
@@ -88,7 +87,6 @@ static CFArrayRef vda_create_pixel_format_array() {
 /* Decoder callback that adds the vda frame to the queue in display order. */
 static void vda_decoder_callback (void *vda_hw_ctx, CFDictionaryRef /*user_info*/, OSStatus /*status*/, uint32_t /*infoFlags*/, CVImageBufferRef image_buffer) {
 	vda_context *vda_ctx = (vda_context*)vda_hw_ctx;
-
 	if (!image_buffer)
 		return;
 	const auto fmt = CVPixelBufferGetPixelFormatType(image_buffer);
@@ -188,24 +186,78 @@ static int _ff_vda_create_decoder(struct vda_context *vda_ctx, uint8_t *extradat
 
 bool HwAccVda::fillContext(AVCodecContext *avctx) {
 	freeContext();
-
 	d->ok = false;
-
-//	const auto h264 = static_cast<H264Context*>(avctx->priv_data);
-//	if (h264 && h264->sps.pic_struct_present_flag && h264->sei_pic_struct != SEI_PIC_STRUCT_FRAME)
-//		return false;
-//	if (h264 && FIELD_OR_MBAFF_PICTURE(h264))
-//		return false;
-
 	d->context.width = avctx->width;
 	d->context.height = avctx->height;
 	d->context.format = 'avc1';
 	d->context.use_sync_decoding = 1;
 	d->context.use_ref_buffer = 1;
-
 	if (kVDADecoderNoErr != _ff_vda_create_decoder(&d->context, avctx->extradata, avctx->extradata_size))
 		return false;
 	return (d->ok = true);
+}
+
+/*****************************************************************************/
+
+VdaMixer::VdaMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format)
+: m_textures(textures) {
+	Q_ASSERT(format.imgfmt() == IMGFMT_VDA);
+}
+
+bool VdaMixer::upload(const VideoFrame &frame, bool /*deint*/) {
+	Q_ASSERT(frame.format().imgfmt() == IMGFMT_VDA);
+	CGLError error = kCGLNoError;
+	for (auto &texture : m_textures) {
+		const auto cgl = CGLGetCurrentContext();
+		const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)frame.data(3));
+		texture.bind();
+		const auto w = IOSurfaceGetWidthOfPlane(surface, texture.plane());
+		const auto h = IOSurfaceGetHeightOfPlane(surface, texture.plane());
+		if (_Change(error, CGLTexImageIOSurface2D(cgl, texture.target(), texture.format(), w, h, texture.transfer().format, texture.transfer().type, surface, texture.plane()))) {
+			_Error("CGLError: %%(0x%%)", CGLErrorString(error), _N(error, 16));
+			return false;
+		}
+	}
+	return true;
+}
+
+void VdaMixer::fill(VideoFormat::Data *data, const mp_image *mpi) {
+	Q_ASSERT(data->imgfmt == IMGFMT_VDA);
+	auto buffer = (CVPixelBufferRef)mpi->planes[3];
+	switch (CVPixelBufferGetPixelFormatType(buffer)) {
+	case kCVPixelFormatType_422YpCbCr8:
+		data->type = IMGFMT_UYVY;
+		break;
+	case kCVPixelFormatType_422YpCbCr8_yuvs:
+		data->type = IMGFMT_YUYV;
+		break;
+	case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange:
+		data->type = IMGFMT_NV12;
+		break;
+	case kCVPixelFormatType_420YpCbCr8Planar:
+		data->type = IMGFMT_420P;
+		break;
+	default:
+		qDebug() << "Not supported format!";
+		data->type = IMGFMT_NONE;
+	}
+	auto desc = mp_imgfmt_get_desc(data->type);
+	if (CVPixelBufferIsPlanar(buffer)) {
+		data->planes = CVPixelBufferGetPlaneCount(buffer);
+		Q_ASSERT(data->planes == desc.num_planes);
+		for (int i=0; i<data->planes; ++i) {
+			data->alignedByteSize[i].rwidth() = CVPixelBufferGetBytesPerRowOfPlane(buffer, i);
+			data->alignedByteSize[i].rheight() = CVPixelBufferGetHeightOfPlane(buffer, i);
+			data->bpp += desc.bpp[i] >> (desc.xs[i] + desc.ys[i]);
+		}
+	} else {
+		data->planes = 1;
+		data->alignedByteSize[0].rwidth() = CVPixelBufferGetBytesPerRow(buffer);
+		data->alignedByteSize[0].rheight() = CVPixelBufferGetHeight(buffer);
+		data->bpp = desc.bpp[0];
+	}
+	data->alignedSize = data->alignedByteSize[0];
+	data->alignedSize.rwidth() /= desc.bytes[0];
 }
 
 #endif
