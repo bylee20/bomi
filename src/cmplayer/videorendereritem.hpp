@@ -69,6 +69,7 @@ public:
 	int droppedFrames() const;
 	void reset();
 	QPointF mapToVideo(const QPointF &pos);
+	bool isOpaque() const { return true; }
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
