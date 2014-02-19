@@ -8,6 +8,7 @@ Item {
 	x: -dock.width; y: 20; visible: false
 	width: 300; height: parent.height-y*2
 	readonly property real widthHint: view.contentWidth+view.margins*2
+	property alias selectedIndex: view.selectedIndex
 	property bool show: false
 	states: State {
 		name: "show"; when: dock.show

@@ -6,6 +6,7 @@ import QtQuick.Controls.Styles 1.0
 Item {
 	id: dock
 	readonly property real widthHint: 500
+	property alias selectedIndex: table.selectedIndex
 	property real dest: 0
 	property bool show: false
 	x: parent.width; y: 20; width: widthHint; height: parent.height-2*y; visible: false
@@ -26,15 +27,6 @@ Item {
 	Connections { target: parent; onWidthChanged: { updateDestination() } }
 	onWidthChanged: { updateDestination() }
 	onDestChanged: { if (dock.show) dock.x = dock.dest }
-
-//	Rectangle {
-//		id: frame
-//		x: table.x-1; y: table.y-1
-//		width: table.width+2
-//		height: table.height+2
-//		border { color: "white"; width: 1 }
-//		color: Qt.rgba(0, 0, 0, 0.4)
-//	}
 
 	Cp.ModelView {
 		id: table
