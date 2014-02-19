@@ -425,14 +425,14 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 		if (d->direct) {
 			setRenderTarget(d->shader->renderTarget());
 		} else {
-//			if (!d->fbo || d->fbo->size() != d->frameSize) {
-//				_Renew(d->fbo, d->frameSize, OpenGLCompat::framebufferObjectTextureFormat());
-//				Q_ASSERT(d->fbo->isValid());
-//				setRenderTarget(d->fbo->texture());
-//			}
-//			d->fbo->bind();
-//			d->shader->render(d->kernel);
-//			d->fbo->release();
+			if (!d->fbo || d->fbo->size() != d->frameSize) {
+				_Renew(d->fbo, d->frameSize, OpenGLCompat::framebufferObjectTextureFormat());
+				Q_ASSERT(d->fbo->isValid());
+				setRenderTarget(d->fbo->texture());
+			}
+			d->fbo->bind();
+			d->shader->render(d->kernel);
+			d->fbo->release();
 		}
 		node->markDirty(QSGNode::DirtyMaterial);
 	}
