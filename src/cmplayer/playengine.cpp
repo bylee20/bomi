@@ -7,8 +7,14 @@
 #include "log.hpp"
 
 DECLARE_LOG_CONTEXT(Engine)
-
+#include <libmpv/client.h>
 extern "C" {
+struct mpv_handle {
+	// -- immmutable
+	char *name;
+	struct mp_log *log;
+	struct MPContext *mpctx;
+};
 #include <input/keycodes.h>
 #include <audio/decode/dec_audio.h>
 #include <demux/demux.h>
@@ -46,6 +52,23 @@ struct PlayEngine::Data {
 	bool hasImage = false;
 	bool subStreamsVisible = true;
 
+	mpv_error errorStatus = MPV_ERROR_SUCCESS;
+	const char *error() const { return mpv_error_string(errorStatus); }
+	bool isSuccess() const { return errorStatus == MPV_ERROR_SUCCESS; }
+	bool isSuccess(int error) { errorStatus = (mpv_error)error; return isSuccess(); }
+	template<class... Args>
+	bool check(int err, const char *msg, const Args &... args) {
+		if (isSuccess(err))
+			return true;
+		Log::write(getLogContext(), Log::Error, _ByteArrayLiteral("Error %%: %%"), error(), Log::parse(msg, args...));
+		return false;
+	}
+	template<class... Args>
+	void fatal(int err, const char *msg, const Args &... args) {
+		if (!isSuccess(err))
+			Log::write(getLogContext(), Log::Fatal, _ByteArrayLiteral("Error %%: %% Exit..."), error(), Log::parse(msg, args...));
+	}
+
 	Thread thread{p};
 	AudioController *audio = nullptr;
 	QByteArray fileName;
@@ -59,6 +82,7 @@ struct PlayEngine::Data {
 	double speed = 1.0;
 	qreal cache = -1.0;
 	MPContext *mpctx = nullptr;
+	mpv_handle *handle = nullptr;
 	VideoOutput *video = nullptr;
 	GetMrlInt getStartTimeFunc, getCacheFunc;
 	PlaylistModel playlist;
@@ -77,6 +101,7 @@ struct PlayEngine::Data {
 	DvdInfo dvd;
 	ChapterList chapters;
 	ChapterInfoObject *chapterInfo = nullptr;
+
 	QByteArray vfs;
 
 	QList<QMetaObject::Connection> rendererConnections;
@@ -160,41 +185,7 @@ struct PlayEngine::Data {
 		}
 		return false;
 	}
-	static int mpEventFilter(MPContext *mpctx) {
-		enum MpEvent : uint {
-			None = 1u << MP_EVENT_NONE,
-			Tick = 1u << MP_EVENT_TICK,
-			PropertyChanged = 1u << MP_EVENT_PROPERTY,
-			TracksChanged = 1u << MP_EVENT_TRACKS_CHANGED,
-			StartFile  = 1u << MP_EVENT_START_FILE,
-			EndFile = 1u << MP_EVENT_END_FILE
-		};
-		auto e = static_cast<PlayEngine*>(mpctx->priv);
-		int &events = *reinterpret_cast<int*>(mpctx->command_ctx);
-		if (events & TracksChanged) {
-			std::array<StreamList, STREAM_TYPE_COUNT> streams;
-			QString name[STREAM_TYPE_COUNT];
-			name[STREAM_AUDIO] = tr("Audio %1");
-			name[STREAM_VIDEO] = tr("Video %1");
-			name[STREAM_SUB] = tr("Subtitle %1");
-			for (int i=0; i<mpctx->num_tracks; ++i) {
-				const auto track = mpctx->tracks[i];
-				auto &list = streams[track->type];
-				if (!list.contains(track->user_tid)) {
-					auto &stream = list[track->user_tid];
-					stream.m_title = QString::fromLocal8Bit(track->title);
-					stream.m_lang = QString::fromLocal8Bit(track->lang);
-					if (_InRange(2, stream.m_lang.size(), 3) && _IsAlphabet(stream.m_lang))
-						stream.m_lang = Translator::displayLanguage(stream.m_lang);
-					stream.m_id = track->user_tid;
-					stream.m_name = name[track->type].arg(track->user_tid);
-				}
-			}
-			_PostEvent(e, UpdateTrack, streams);
-		}
-		events = 0;
-		return true;
-	}
+
 	int getStartTime(const Mrl &mrl) { return getStartTimeFunc ? getStartTimeFunc(mrl) : 0; }
 	int getCache(const Mrl &mrl) { return getCacheFunc ? getCacheFunc(mrl) : 0; }
 	QByteArray &setFileName(const Mrl &mrl) { return fileName = fileNameAsArg(mrl.location()); }
@@ -325,7 +316,6 @@ PlayEngine::PlayEngine()
 	};
 	mp_register_player_stage_notifier(stageNotifier);
 	mp_register_player_command_filter(Data::mpCommandFilter);
-	mp_register_player_event_filter(Data::mpEventFilter);
 
 	connect(&d->imageTicker, &QTimer::timeout, [this] () {
 		bool begin = false, duration = false, pos = false;
@@ -363,6 +353,54 @@ PlayEngine::PlayEngine()
 	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
 		d->load(row, d->getStartTime(d->playlist[row]));
 	});
+
+	d->handle = mpv_create();
+	Q_ASSERT(d->handle);
+	auto mpctx = d->mpctx = d->handle->mpctx;
+	d->mpctx->priv = this;
+	auto option = [this] (const char *name, const char *data) {
+		d->fatal(mpv_set_option_string(d->handle, name, data), "Couldn't set option %%=%%.", name, data);
+	};
+	option("config", "no");
+	option("idle", "yes");
+	option("fs", "no");
+	option("mouse-movements", "yes");
+	option("af", "dummy:address=" + QByteArray::number((quint64)(quintptr)(void*)(d->audio)));
+	option("vo", "null:address="  + QByteArray::number((quint64)(quintptr)(void*)(d->video)));
+	option("softvol", "yes");
+	option("softvol-max", "1000.0");
+	option("fixed-vo", "yes");
+	option("autosub", "no");
+	option("osd-level", "0");
+	option("quiet", "yes");
+	option("consolecontrols", "no");
+	option("subcp", "utf8");
+	option("ao", "null,");
+	option("ad-lavc-downmix", "no");
+	option("channels", "3");
+
+	auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
+	if (!overrides.isEmpty()) {
+		const auto args = QString::fromLocal8Bit(overrides).split(QRegularExpression(R"([\s\t]+)"), QString::SkipEmptyParts);
+		for (int i=0; i<args.size(); ++i) {
+			if (!args[i].startsWith("--")) {
+				_Error("Cannot parse option %%.", args[i]);
+				continue;
+			}
+			const auto arg = args[i].midRef(2);
+			const int index = arg.indexOf('=');
+			if (index < 0) {
+				if (arg.startsWith("no-"))
+					option(arg.mid(3).toLatin1(), "no");
+				else
+					option(arg.toLatin1(), "yes");
+			} else
+				option(arg.left(index).toLatin1(), arg.mid(index+1).toLatin1());
+		}
+	}
+
+	if (!d->isSuccess(mpv_initialize(d->handle)))
+		_Fatal("Error %%: Couldn't initialize mpv. Exit...", d->error());
 }
 
 PlayEngine::~PlayEngine() {
@@ -865,6 +903,8 @@ void PlayEngine::onMpvStageChanged(int stage) {
 			d->mpctx->opts->hwdec_codecs = d->hwAccCodecs.data();
 		}
 		d->mpctx->opts->stream_cache_size = d->getCache(Mrl(QString::fromLocal8Bit(d->mpctx->playlist->current->filename)));
+//		mpv_set_option_string(d->handle, "ao", d->ao.data());
+//		mpv_set_property_string(d->handle, "ao", d->ao.data());
 		d->mpctx->opts->audio_driver_list->name = d->ao.data();
 		auto &start = d->mpctx->opts->play_start;
 		if (!d->playback.mrl.isDvd()) {
@@ -1007,37 +1047,59 @@ void PlayEngine::setMuted(bool muted) {
 }
 
 void PlayEngine::exec() {
-	QStringList args;
-	args << "cmplayer-mpv";
-	auto mpvOptions = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
-	if (!mpvOptions.isEmpty())
-		args += QString::fromLocal8Bit(mpvOptions).split(' ', QString::SkipEmptyParts);
-	args << "--no-config" << "--idle" << "--no-fs" << "--mouse-movements"
-		<< ("--af=dummy:address=" % QString::number((quint64)(quintptr)(void*)(d->audio)))
-		<< ("--vo=null:address=" % QString::number((quint64)(quintptr)(void*)(d->video)))
-		<< "--softvol=yes" << "--softvol-max=1000.0" << "--fixed-vo" << "--no-autosub" << "--osd-level=0" << "--quiet"
-		<< "--no-consolecontrols" << "--no-mouse-movements" << "--subcp=utf8" << "--ao=null,"
-		<< "--ad-lavc-downmix=no" << "--channels=3";
+	auto mpctx = d->mpctx;
 
-	QVector<QByteArray> args_byte(args.size());
-	QVector<char*> args_raw(args.size());
-	for (int i=0; i<args.size(); ++i) {
-		args_byte[i] = args[i].toLocal8Bit();
-		args_raw[i] = args_byte[i].data();
-	}
-	qDebug() << "Initialize mpv with" << args;
-	auto mpctx = d->mpctx = mpv_main(args_raw.size(), args_raw.data());
-	d->mpctx->priv = this;
 	auto tmp_ao = d->mpctx->opts->audio_driver_list->name;
 	d->init = true;
 	d->quit = false;
-	mp_play_files(mpctx);
+	while (1) {
+		const auto event = mpv_wait_event(d->handle, 10000);
+		switch (event->event_id) {
+		case MPV_EVENT_IDLE:
+			break;
+		case MPV_EVENT_START_FILE:
+			break;
+		case MPV_EVENT_PLAYBACK_START:
+			break;
+		case MPV_EVENT_END_FILE:
+			break;
+		case MPV_EVENT_TICK:
+			break;
+		case MPV_EVENT_TRACKS_CHANGED: {
+			std::array<StreamList, STREAM_TYPE_COUNT> streams;
+			QString name[STREAM_TYPE_COUNT];
+			name[STREAM_AUDIO] = tr("Audio %1");
+			name[STREAM_VIDEO] = tr("Video %1");
+			name[STREAM_SUB] = tr("Subtitle %1");
+			for (int i=0; i<mpctx->num_tracks; ++i) {
+				const auto track = mpctx->tracks[i];
+				auto &list = streams[track->type];
+				if (!list.contains(track->user_tid)) {
+					auto &stream = list[track->user_tid];
+					stream.m_title = QString::fromLocal8Bit(track->title);
+					stream.m_lang = QString::fromLocal8Bit(track->lang);
+					if (_InRange(2, stream.m_lang.size(), 3) && _IsAlphabet(stream.m_lang))
+						stream.m_lang = Translator::displayLanguage(stream.m_lang);
+					stream.m_id = track->user_tid;
+					stream.m_name = name[track->type].arg(track->user_tid);
+				}
+			}
+			_PostEvent(this, UpdateTrack, streams);
+			break;
+		} case MPV_EVENT_SHUTDOWN:
+			goto shutdown;
+		default:
+			break;
+		}
+	}
+shutdown:
+//	mp_play_files(mpctx);
 	d->hasImage = false;
 	qDebug() << "terminate loop";
 	mpctx->opts->hwdec_codecs = nullptr;
 	mpctx->opts->hwdec_api = HWDEC_NONE;
 	mpctx->opts->audio_driver_list->name = tmp_ao;
-	exit_player(mpctx, EXIT_QUIT);
+	mpv_destroy(d->handle);
 	d->mpctx = nullptr;
 	d->init = false;
 	qDebug() << "terminate engine";

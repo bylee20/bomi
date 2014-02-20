@@ -1,6 +1,6 @@
 #!/bin/bash
 
-args="--disable-manpage-build --disable-pdf-build --disable-vf-dlopen-filters --disable-macosx-bundle \
+args="--prefix=../../build --disable-manpage-build --enable-shared --disable-pdf-build --disable-vf-dlopen-filters --disable-macosx-bundle \
   --enable-iconv --disable-terminfo --disable-termcap --disable-termios --disable-shm --disable-libguess --disable-libsmbclient \
   --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --enable-dvdnav \
   --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
@@ -36,7 +36,7 @@ else # libquvi9 doesn't exist
 fi
 
 cd src/mpv && ./waf clean; ./waf distclean; ./waf configure $args
-./waf build -j $njobs
+./waf build -j $njobs && ./waf install
 
 allobjs=`find . -name '*.o'`
 objs=""

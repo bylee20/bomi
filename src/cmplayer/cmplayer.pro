@@ -16,7 +16,7 @@ precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../mpv/build
-LIBS += -L$${LIB_DIR} -lcmplayer_mpv -lbz2 -lz
+LIBS += -L$${LIB_DIR} ../../build/lib/libmpv.a -lbz2 -lz
 
 PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
     libmpg123 libass libquvi$${LIBQUVI_SUFFIX} icu-uc chardet
