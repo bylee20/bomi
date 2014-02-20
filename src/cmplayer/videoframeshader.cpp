@@ -88,11 +88,12 @@ void VideoFrameShader::updateColorMatrix() {
 	default:
 		break;
 	}
-	color.matrix(m_mul_mat, m_add_vec, m_csp, range, m_bitScale);
+	color.matrix(m_mul_mat, m_add_vec, m_csp, range);
 	if (m_effects & VideoRendererItem::InvertColor) {
 		m_mul_mat *= -1;
 		m_add_vec = QVector3D(1, 1, 1) - m_add_vec;
 	}
+	m_defaultColor = m_color.isZero();
 }
 
 void VideoFrameShader::setEffects(int effects) {
@@ -138,8 +139,8 @@ void VideoFrameShader::updateShader() {
 		header += "#define TEX_COUNT " + QByteArray::number(m_textures.size()) + "\n";
 		header += "const float texWidth = " + _N((double)format.alignedWidth(), 1).toLatin1() + ";\n";
 		header += "const float texHeight = " + _N((double)format.alignedHeight(), 1).toLatin1() + ";\n";
-		auto declareVec2 = [] (const QString &name, const QPointF &p) {
-			return _L("const vec2 ") + name + _L(" = vec2(") + _N(p.x(), 6) + _L(", ") + _N(p.y(), 6) + _L(");\n");
+		auto declareVec2 = [] (const QString &name, const QPointF &p) -> QString {
+			return _L("const vec2 ") % name % _L(" = vec2(") % _N(p.x(), 6) % _L(", ") % _N(p.y(), 6) % _L(");\n");
 		};
 		auto cc2string = [declareVec2, this] (int i) -> QString {
 			QPointF cc = {1.0, 1.0};
@@ -172,12 +173,13 @@ const vec2 chroma_offset = chroma_location*dxdy.xy;
 const vec2 dxy = dxdy.xy;
 const vec2 tex_size = vec2(texWidth, texHeight);
 )";
-
-		m_lutCount = shader.interpolator->textures();
+		auto interpolator = m_csp != MP_CSP_RGB ? shader.interpolator
+			: Interpolator::get(InterpolatorType::Bilinear);
+		m_lutCount = interpolator->textures();
 		Q_ASSERT(0 <= m_lutCount && m_lutCount < 3);
 
-		shader.interpolator->allocate(m_lutInt[0], m_lutInt[1]);
-		auto common = shader.interpolator->shader() + shaderTemplate;
+		interpolator->allocate(m_lutInt[0], m_lutInt[1]);
+		auto common = interpolator->shader() + shaderTemplate;
 		auto fragCode = header;
 		fragCode += "#define FRAGMENT\n";
 		fragCode += common;
@@ -242,16 +244,16 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 		m_textures[0].bind();
 #endif
 		m_mixer->upload(m_frame, m_deint != DeintMethod::None);
-		return changed;
+	} else {
+		if (m_dma)
+			glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+		for (int i=0; i<m_textures.size(); ++i) {
+			m_textures[i].bind();
+			m_textures[i].upload(m_frame.data(m_textures[i].plane()));
+		}
+		if (m_dma)
+			glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 	}
-	if (m_dma)
-		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-	for (int i=0; i<m_textures.size(); ++i) {
-		m_textures[i].bind();
-		m_textures[i].upload(m_frame.data(m_textures[i].plane()));
-	}
-	if (m_dma)
-		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 	return changed;
 }
 
@@ -311,7 +313,6 @@ void VideoFrameShader::fillInfo() {
 	const auto &format = m_frame.format();
 	m_shaders[0].rebuild = m_shaders[1].rebuild = true;
 
-	m_bitScale = 1.0/255.0;
 	m_csp = format.colorspace();
 	std::tie(m_target, m_binding) = !m_dma && format.imgfmt() != IMGFMT_VDA
 		? std::forward_as_tuple(OGL::Target2D, OGL::Binding2D)
@@ -325,9 +326,6 @@ void VideoFrameShader::fillInfo() {
 				m_textures[i].correction() *= rect;
 		}
 	};
-	const int bits = format.encodedBits();
-	const bool little = format.isLittleEndian();
-	auto ctx = QOpenGLContext::currentContext();
 
 	auto addCustom = [this, &format] (int plane, int width, int height, const OpenGLTextureTransferInfo &fmt) {
 		OpenGLTexture2D texture(m_target);
@@ -359,6 +357,8 @@ void VideoFrameShader::fillInfo() {
 		addCustom(plane, format.bytesPerLine(plane)/components, format.lines(plane), OpenGLCompat::textureTransferInfo(fmt));
 	};
 
+	const int bits = format.encodedBits();
+	const bool little = format.isLittleEndian();
 	m_texel = "vec3 texel(const in vec4 tex0) {return tex0.rgb;}"; // passthrough
 	switch (format.type()) {
 	case IMGFMT_444P:
@@ -413,17 +413,15 @@ void VideoFrameShader::fillInfo() {
 	case IMGFMT_YUYV:
 	case IMGFMT_UYVY:
 		if (OpenGLCompat::hasExtension(OpenGLCompat::AppleYCbCr422)) {
-			_Debug("Good! We have GL_APPLE_ycbcr_422.");
+			_Debug("Use GL_APPLE_ycbcr_422.");
 			OpenGLTextureTransferInfo info;
 			info.texture = OGL::RGB8_UNorm;
 			info.transfer.format = OGL::YCbCr_422_Apple;
 			info.transfer.type = format.type() == IMGFMT_YUYV ? OGL::UInt16_8_8_Rev_Apple : OGL::UInt16_8_8_Apple;
 			addCustom(0, format.width(), format.height(), info);
 			m_csp = MP_CSP_RGB;
-			if (format.imgfmt() == IMGFMT_VDA)
-				m_direct = true;
-		} else if (ctx->hasExtension("GL_MESA_ycbcr_texture")) {
-			_Debug("Good! We have GL_MESA_ycbcr_texture.");
+		} else if (OpenGLCompat::hasExtension(OpenGLCompat::MesaYCbCrTexture)) {
+			_Debug("Use GL_MESA_ycbcr_texture.");
 			m_texel = R"(vec3 texel(const in int coord) { return texture0(coord).g!!; })";
 			m_texel.replace("!!", format.type() == IMGFMT_YUYV ? "br" : "rb");
 			OpenGLTextureTransferInfo info;
@@ -445,39 +443,29 @@ void VideoFrameShader::fillInfo() {
 		}
 		break;
 	case IMGFMT_BGRA:
+	case IMGFMT_BGR0:
 		add(0, OGL::BGRA);
+		m_direct = true;
 		break;
 	case IMGFMT_RGBA:
+	case IMGFMT_RGB0:
 		add(0, OGL::RGBA);
+		m_direct = true;
 		break;
 	case IMGFMT_ABGR:
+	case IMGFMT_0BGR:
 		add(0, OGL::BGRA);
 		m_texel.replace(".rgb", ".arg");
 		break;
 	case IMGFMT_ARGB:
+	case IMGFMT_0RGB:
 		add(0, OGL::BGRA);
 		m_texel.replace(".rgb", ".gra");
+		break;
 	default:
 		break;
 	}
-	switch (format.imgfmt()) {
-#ifdef Q_OS_LINUX
-	case IMGFMT_VAAPI:
-	case IMGFMT_VDPAU:
-		Q_ASSERT(format.type() == IMGFMT_BGRA);
-		m_csp = MP_CSP_RGB;
-		m_textures[0].bind();
-		m_mixer = HwAcc::createMixer(m_textures[0], format);
-		m_direct = true;
-		break;
-#endif
-#ifdef Q_OS_MAC
-	case IMGFMT_VDA:
-		m_mixer = HwAcc::createMixer(m_textures, format);
-		break;
-#endif
-	default:
-		break;
-	}
-	Q_ASSERT(m_textures.size() == m_textures.size());
+	m_mixer = HwAcc::createMixer(m_textures, format);
+	if (m_mixer)
+		m_direct = m_mixer->directRendering();
 }

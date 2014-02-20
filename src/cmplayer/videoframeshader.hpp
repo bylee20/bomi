@@ -25,13 +25,12 @@ public:
 	void setColor(const VideoColor &color);
 	void setRange(ColorRange range);
 	bool upload(VideoFrame &frame);
-//	const QRectF &textureRect() const { return m_coords; }
 	void getCoords(double &x1, double &y1, double &x2, double &y2) {
 		x1 = m_coords.left(); y1 = m_coords.top();
 		x2 = m_coords.right(); y2 = m_coords.bottom();
 	}
 	void setChromaInterpolator(InterpolatorType type);
-	bool directRendering() const { return m_direct; }
+	bool directRendering() const { return m_direct && m_defaultColor; }
 	const OpenGLTexture2D &renderTarget() const { return m_textures[0]; }
 private:
 	void release();
@@ -62,7 +61,6 @@ private:
 	ShaderInfo m_shaders[2];
 	QOpenGLShaderProgram *m_prog = nullptr;
 	VideoColor m_color;
-	float m_bitScale = 1.0/255.0;
 	mp_csp m_csp; ColorRange m_range = ColorRange::Auto;
 	OGL::Target m_target = OGL::Target2D;
 	OGL::Binding m_binding = OGL::Binding2D;
@@ -79,7 +77,7 @@ private:
 	int m_lutCount = 0;
 	QList<OpenGLTexture2D> m_textures;
 	QByteArray m_texel;
-	bool m_dma = false, m_check = true, m_direct = false;
+	bool m_dma = false, m_check = true, m_direct = false, m_defaultColor = true;
 	QRectF m_coords, m_positions;
 	QPointF m_chroma = {0.0, 0.0};
 	Interpolator::Texture m_lutInt[2];

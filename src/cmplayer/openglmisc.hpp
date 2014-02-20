@@ -297,4 +297,72 @@ private:
 	OpenGLTexture2D m_texture;
 };
 
+#define ENUM_CASE(e) case e: return QByteArray::fromRawData(#e, sizeof(e)-1)
+static inline QByteArray _ToLog(OGL::TransferType type) {
+	switch (type) {
+	ENUM_CASE(OGL::UInt8);
+	ENUM_CASE(OGL::UInt16);
+	ENUM_CASE(OGL::Float32);
+	ENUM_CASE(OGL::UInt32_8_8_8_8);
+	ENUM_CASE(OGL::UInt32_8_8_8_8_Rev);
+#ifdef Q_OS_MAC
+	ENUM_CASE(OGL::UInt16_8_8_Apple);
+	ENUM_CASE(OGL::UInt16_8_8_Rev_Apple);
+#else
+	ENUM_CASE(OGL::UInt16_8_8_Mesa);
+	ENUM_CASE(OGL::UInt16_8_8_Rev_Mesa);
+	ENUM_CASE(OGL::NoTransferType);
+#endif
+	}
+	return QByteArray("OGL::InvalidTransferType");
+}
+
+static inline QByteArray _ToLog(OGL::TextureFormat format) {
+	switch (format) {
+	ENUM_CASE(OGL::R8_UNorm);
+	ENUM_CASE(OGL::RG8_UNorm);
+	ENUM_CASE(OGL::RGB8_UNorm);
+	ENUM_CASE(OGL::RGBA8_UNorm);
+	ENUM_CASE(OGL::R16_UNorm);
+	ENUM_CASE(OGL::RG16_UNorm);
+	ENUM_CASE(OGL::RGB16_UNorm);
+	ENUM_CASE(OGL::RGBA16_UNorm);
+	ENUM_CASE(OGL::Luminance8_UNorm);
+	ENUM_CASE(OGL::Luminance16_UNorm);
+	ENUM_CASE(OGL::LuminanceAlpha8_UNorm);
+	ENUM_CASE(OGL::LuminanceAlpha16_UNorm);
+	ENUM_CASE(OGL::YCbCr_UNorm_Mesa);
+	ENUM_CASE(OGL::R16F);
+	ENUM_CASE(OGL::RG16F);
+	ENUM_CASE(OGL::RGB16F);
+	ENUM_CASE(OGL::RGBA16F);
+	ENUM_CASE(OGL::R32F);
+	ENUM_CASE(OGL::RG32F);
+	ENUM_CASE(OGL::RGB32F);
+	ENUM_CASE(OGL::RGBA32F);
+	ENUM_CASE(OGL::NoTextureFormat);
+	}
+	return QByteArray("OGL::InvalidTextureFormat");
+}
+
+static inline QByteArray _ToLog(OGL::TransferFormat format) {
+	switch (format) {
+	ENUM_CASE(OGL::Red);
+	ENUM_CASE(OGL::RG);
+	ENUM_CASE(OGL::RGB);
+	ENUM_CASE(OGL::BGR);
+	ENUM_CASE(OGL::RGBA);
+	ENUM_CASE(OGL::BGRA);
+	ENUM_CASE(OGL::Luminance);
+	ENUM_CASE(OGL::LuminanceAlpha);
+	ENUM_CASE(OGL::YCbCr_422_Apple);
+	ENUM_CASE(OGL::YCbCr_Mesa);
+	ENUM_CASE(OGL::OneComponent);
+	ENUM_CASE(OGL::TwoComponents);
+	ENUM_CASE(OGL::NoTransferFormat);
+	}
+	return QByteArray("OGL::InvalidTransferFormat");
+}
+#undef ENUM_CASE
+
 #endif // OPENGLMISC_HPP

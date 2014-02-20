@@ -2,7 +2,6 @@
 #define HWACC_VDA_HPP
 
 #include "hwacc.hpp"
-#include "videoformat.hpp"
 
 class HwAccVda : public HwAcc {
 public:
@@ -25,9 +24,11 @@ class VdaMixer : public HwAccMixer {
 public:
 	VdaMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format);
 	bool upload(const VideoFrame &frame, bool deint) override;
-	static void fill(VideoFormat::Data *data, const mp_image *mpi);
+	static void adjust(VideoFormatData *data, const mp_image *mpi);
+	bool directRendering() const override { return m_direct; }
 private:
 	const QList<OpenGLTexture2D> &m_textures;
+	bool m_direct = false;
 };
 
 #endif // HWACC_VDA_HPP

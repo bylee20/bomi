@@ -85,15 +85,15 @@ void HwAcc::finalize() {
 }
 
 HwAccMixer *HwAcc::createMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format) {
-	switch (backend()) {
+	switch (format.imgfmt()) {
 #ifdef Q_OS_LINUX
-	case VdpauX11:
+	case IMGFMT_VDPAU:
 		return new VdpauMixer(textures, format);
-	case VaApiGLX:
+	case IMGFMT_VAAPI:
 		return new VaApiMixer(textures, format);
 #endif
 #ifdef Q_OS_MAC
-	case Vda:
+	case IMGFMT_VDA:
 		return new VdaMixer(textures, format);
 #endif
 	default:
@@ -101,17 +101,19 @@ HwAccMixer *HwAcc::createMixer(const QList<OpenGLTexture2D> &textures, const Vid
 	}
 }
 
-bool HwAcc::fillFormat(void *formatData, const mp_image *mpi) {
-	auto data = static_cast<VideoFormat::Data*>(formatData);
+bool HwAcc::adjust(VideoFormatData *data, const mp_image *mpi) {
 	switch (data->imgfmt) {
 #ifdef Q_OS_LINUX
 	case IMGFMT_VAAPI:
+		VaApiMixer::adjust(data, mpi);
+		return true;
 	case IMGFMT_VDPAU:
+		VdpauMixer::adjust(data, mpi);
 		return true;
 #endif
 #ifdef Q_OS_MAC
 	case IMGFMT_VDA:
-		VdaMixer::fill(data, mpi);
+		VdaMixer::adjust(data, mpi);
 		return true;
 #endif
 	default:

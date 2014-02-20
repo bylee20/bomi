@@ -1,4 +1,5 @@
 #include "hwacc_vdpau.hpp"
+#include "openglmisc.hpp"
 
 void initialize_vdpau_interop(QOpenGLContext *ctx) {
 #ifdef Q_OS_LINUX
@@ -210,8 +211,11 @@ mp_image *HwAccVdpau::getImage(mp_image *mpi) {
 
 /******************************************************************/
 
-VdpauMixer::VdpauMixer(const OpenGLTexture2D &texture, const VideoFormat &format)
+VdpauMixer::VdpauMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format)
 : m_width(format.width()), m_height(format.height()) {
+	Q_ASSERT(textures.size() == 1);
+	auto &texture = textures[0];
+	texture.bind();
 	static const QVector<VdpVideoMixerParameter> params = {
 		VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH,
 		VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT,
@@ -253,6 +257,18 @@ bool VdpauMixer::upload(const VideoFrame &frame, bool deint) {
 	const auto id = (VdpVideoSurface)(quintptr)(frame.data(3));
 	return check(Vdpau::videoMixerRender(m_mixer, VDP_INVALID_HANDLE, nullptr, structure, 0, nullptr, id, 0, nullptr
 		, nullptr, m_surface, nullptr, nullptr, 0, nullptr), "Cannot render video surface.");
+}
+
+void VdpauMixer::adjust(VideoFormatData *data, const mp_image *mpi) {
+	Q_ASSERT(data->imgfmt == IMGFMT_VDPAU);
+	data->type = IMGFMT_BGRA;
+	data->planes = 1;
+	const int width = (mpi->w + 1) & ~1;
+	const int height = (mpi->h + 3) & ~3;
+	data->alignedSize = QSize(width, height);
+	data->alignedByteSize[0] = QSize(width*4, height);
+	data->bpp = 32;
+	data->colorspace = MP_CSP_RGB;
 }
 
 #endif

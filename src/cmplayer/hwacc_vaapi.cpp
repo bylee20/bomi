@@ -1,6 +1,7 @@
 #include "hwacc_vaapi.hpp"
 #include "stdafx.hpp"
 #include "videoframe.hpp"
+#include "openglmisc.hpp"
 
 #ifdef Q_OS_LINUX
 
@@ -11,7 +12,6 @@ extern "C" {
 #include <common/av_common.h>
 #include <video/mp_image_pool.h>
 #include <va/va_glx.h>
-#include <va/va_x11.h>
 #include <video/sws_utils.h>
 #include <libavcodec/vaapi.h>
 }
@@ -316,7 +316,10 @@ mp_image *HwAccVaApi::getImage(mp_image *mpi) {
 
 /****************************************************************************************/
 
-VaApiMixer::VaApiMixer(const OpenGLTexture2D &texture, const VideoFormat &/*format*/) {
+VaApiMixer::VaApiMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &/*format*/) {
+	Q_ASSERT(textures.size() == 1);
+	const auto &texture = textures.first();
+	texture.bind();
 	if (!check(vaCreateSurfaceGLX(VaApi::glx(), texture.target(), texture.id(), &m_glSurface), "Cannot create OpenGL surface."))
 		return;
 }
@@ -326,6 +329,16 @@ VaApiMixer::~VaApiMixer() {
 		vaDestroySurfaceGLX(VaApi::glx(), m_glSurface);
 }
 
+void VaApiMixer::adjust(VideoFormatData *data, const mp_image *mpi) {
+	Q_ASSERT(data->imgfmt == IMGFMT_VAAPI);
+	data->type = IMGFMT_BGRA;
+	data->planes = 1;
+	const int stride = FFALIGN((mpi->w * 32 + 7) / 8, 16);
+	data->alignedSize = QSize(stride/4, mpi->h);
+	data->alignedByteSize[0] = QSize(stride, mpi->h);
+	data->bpp = 32;
+	data->colorspace = MP_CSP_RGB;
+}
 
 bool VaApiMixer::upload(const VideoFrame &frame, bool deint) {
 	if (!m_glSurface)

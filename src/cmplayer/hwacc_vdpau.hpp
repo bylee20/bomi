@@ -178,15 +178,18 @@ private:
 
 class VdpauMixer : public HwAccMixer, public VdpauStatusChecker {
 public:
-	VdpauMixer(const OpenGLTexture2D &texture, const VideoFormat &format);
 	~VdpauMixer();
 	bool upload(const VideoFrame &frame, bool deint) override;
+	bool directRendering() const override { return true; }
 private:
+	VdpauMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format);
+	static void adjust(VideoFormatData *data, const mp_image *mpi);
 	quint32 m_width = 0, m_height = 0;
 	VdpVideoMixer m_mixer = VDP_INVALID_HANDLE;
 	VdpChromaType m_chroma = VDP_CHROMA_TYPE_420;
 	VdpOutputSurface m_surface = VDP_INVALID_HANDLE;
 	GLvdpauSurfaceNV m_glSurface = GL_NONE;
+	friend class HwAcc;
 };
 
 #endif

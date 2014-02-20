@@ -5,33 +5,11 @@ extern "C" {
 #include <libavutil/common.h>
 }
 
-VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
+VideoFormatData::VideoFormatData(const mp_image *mpi)
 : size(mpi->w, mpi->h), displaySize(mpi->display_w, mpi->display_h)
 , planes(mpi->fmt.num_planes), flags(mpi->flags), type(mpi->imgfmt), imgfmt(mpi->imgfmt)
 , colorspace(mpi->colorspace), range(mpi->levels), chroma(mpi->chroma_location) {
-	if ((native = IMGFMT_IS_HWACCEL(imgfmt))) {
-#ifdef Q_OS_LINUX
-		if (imgfmt == IMGFMT_VAAPI) {
-			type = IMGFMT_BGRA;
-			planes = 1;
-			const int stride = FFALIGN((mpi->w * 32 + 7) / 8, 16);
-			alignedSize = QSize(stride/4, mpi->h);
-			alignedByteSize[0] = QSize(stride, mpi->h);
-			bpp = 32;
-		} else if (imgfmt == IMGFMT_VDPAU) {
-			type = IMGFMT_BGRA;
-			planes = 1;
-			const int width = (mpi->w + 1) & ~1;
-			const int height = (mpi->h + 3) & ~3;
-			alignedSize = QSize(width, height);
-			alignedByteSize[0] = QSize(width*4, height);
-			bpp = 32;
-		}
-#endif
-#ifdef Q_OS_MAC
-		HwAcc::fillFormat(this, mpi);
-#endif
-	} else {
+	if (!(hwacc = HwAcc::adjust(this, mpi))) {
 		alignedSize = QSize(mpi->stride[0]/mpi->fmt.bytes[0], mpi->h);
 		for (int i=0; i<(int)alignedByteSize.size(); ++i) {
 			alignedByteSize[i].rwidth() = mpi->stride[i];
@@ -41,7 +19,7 @@ VideoFormat::VideoFormat::Data::Data(const mp_image *mpi)
 	}
 }
 
-VideoFormat::VideoFormat::Data::Data(const QImage &image) {
+VideoFormatData::VideoFormatData(const QImage &image) {
 	auto desc = mp_imgfmt_get_desc(IMGFMT_BGRA);
 	displaySize = alignedSize = size = image.size();
 	alignedByteSize[0] = QSize(size.width()*4, size.height());

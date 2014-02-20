@@ -119,11 +119,14 @@ private:
 
 class VaApiMixer : public HwAccMixer, public VaApiStatusChecker{
 public:
-	VaApiMixer(const OpenGLTexture2D &texture, const VideoFormat &format);
 	~VaApiMixer();
 	bool upload(const VideoFrame &frame, bool deint) override;
+	bool directRendering() const override { return true; }
 private:
+	VaApiMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format);
+	static void adjust(VideoFormatData *data, const mp_image *mpi);
 	void *m_glSurface = nullptr;
+	friend class HwAcc;
 };
 
 #endif

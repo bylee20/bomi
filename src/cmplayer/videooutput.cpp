@@ -270,6 +270,9 @@ int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 	case IMGFMT_NV12:		case IMGFMT_NV21:
 	case IMGFMT_YUYV:		case IMGFMT_UYVY:
 	case IMGFMT_BGRA:		case IMGFMT_RGBA:
+	case IMGFMT_ARGB:		case IMGFMT_ABGR:
+	case IMGFMT_BGR0:		case IMGFMT_RGB0:
+	case IMGFMT_0RGB:		case IMGFMT_0BGR:
 		return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
 	default:
 		return 0;

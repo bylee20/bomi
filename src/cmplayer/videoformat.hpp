@@ -14,12 +14,43 @@ extern "C" {
 //#endif
 //}
 
+class VideoFormatData : public QSharedData {
+	VideoFormatData() {}
+	VideoFormatData(const mp_image *mpi);
+	VideoFormatData(const QImage &image);
+	inline bool compare(const mp_image *mpi) const {
+		return mpi->fmt.id == imgfmt && QSize(mpi->w, mpi->h) == size
+			&& QSize(mpi->display_w, mpi->display_h) == displaySize
+			&& mpi->colorspace == colorspace && mpi->levels == range
+			&& mpi->chroma_location == chroma && (int)mpi->flags == flags
+			&& (hwacc || (alignedByteSize[0].width() == mpi->stride[0] && alignedByteSize[1].width() == mpi->stride[1] && alignedByteSize[2].width() == mpi->stride[2]));
+	}
+	inline bool compare(const VideoFormatData *other) const {
+		return flags == other->flags && colorspace == other->colorspace
+			&& range == other->range && type == other->type && chroma == other->chroma
+			&& size == other->size && alignedSize == other->alignedSize && displaySize == other->displaySize;
+	}
+	QSize size = {0, 0}, alignedSize = {0, 0}, displaySize = {0, 0};
+	std::array<QSize, 3> alignedByteSize{{QSize(0, 0), QSize(0, 0), QSize(0, 0)}};
+	int planes = 0, bpp = 0, flags = 0;
+	mp_imgfmt type = IMGFMT_NONE, imgfmt = IMGFMT_NONE;
+	bool hwacc = false;
+	mp_csp colorspace = MP_CSP_BT_601;
+	mp_csp_levels range = MP_CSP_LEVELS_TV;
+	mp_chroma_location chroma = MP_CHROMA_LEFT;
+	friend class VideoFormat;
+	friend class HwAcc;
+	friend class VdaMixer;
+	friend class VaApiMixer;
+	friend class VdpauMixer;
+};
+
 class VideoFormat {
 public:
 	typedef mp_imgfmt Type;
-	VideoFormat(const mp_image *mpi): d(new Data(mpi)) {}
-	VideoFormat(const QImage &image): d(new Data(image)) {}
-	VideoFormat(): d(new Data) {}
+	VideoFormat(const mp_image *mpi): d(new VideoFormatData(mpi)) {}
+	VideoFormat(const QImage &image): d(new VideoFormatData(image)) {}
+	VideoFormat(): d(new VideoFormatData) {}
 	inline bool operator == (const VideoFormat &rhs) const {return d->compare(rhs.d.constData());}
 	inline bool operator != (const VideoFormat &rhs) const {return !operator == (rhs);}
 	inline QSize size() const {return d->size;} // original pixel size
@@ -39,7 +70,7 @@ public:
 	inline int lines(int plane) const {return d->alignedByteSize[plane].height();}
 	inline int bytesPerPlain(int plane) const { return bytesPerLine(plane)*lines(plane); }
 	inline bool compare(const mp_image *mpi) const {return d->compare(mpi);}
-	inline bool isNative() const {return d->native;}
+	inline bool isHwAcc() const {return d->hwacc;}
 	inline mp_csp colorspace() const { return d->colorspace; }
 	inline mp_csp_levels range() const { return d->range; }
 	inline mp_chroma_location chroma() const { return d->chroma; }
@@ -47,36 +78,8 @@ public:
 	inline bool isLittleEndian() const { return d->flags & MP_IMGFLAG_LE; }
 	int encodedBits() const;
 private:
-	struct Data : public QSharedData {
-		Data() {}
-		Data(const mp_image *mpi);
-		Data(const QImage &image);
-		inline bool compare(const mp_image *mpi) const {
-			return mpi->fmt.id == imgfmt && QSize(mpi->w, mpi->h) == size
-				&& QSize(mpi->display_w, mpi->display_h) == displaySize
-				&& mpi->colorspace == colorspace && mpi->levels == range
-				&& mpi->chroma_location == chroma && (int)mpi->flags == flags
-				&& (native || (alignedByteSize[0].width() == mpi->stride[0] && alignedByteSize[1].width() == mpi->stride[1] && alignedByteSize[2].width() == mpi->stride[2]));
-		}
-		inline bool compare(const Data *other) const {
-			return flags == other->flags && colorspace == other->colorspace
-				&& range == other->range && type == other->type && chroma == other->chroma
-				&& size == other->size && alignedSize == other->alignedSize && displaySize == other->displaySize;
-		}
-		QSize size = {0, 0}, alignedSize = {0, 0}, displaySize = {0, 0};
-		std::array<QSize, 3> alignedByteSize{{QSize(0, 0), QSize(0, 0), QSize(0, 0)}};
-		int planes = 0, bpp = 0, flags = 0;
-		Type type = IMGFMT_NONE, imgfmt = IMGFMT_NONE;
-		bool native = false;
-		mp_csp colorspace = MP_CSP_BT_601;
-		mp_csp_levels range = MP_CSP_LEVELS_TV;
-		mp_chroma_location chroma = MP_CHROMA_LEFT;
-	};
-	QExplicitlySharedDataPointer<Data> d;
+	QExplicitlySharedDataPointer<VideoFormatData> d;
 	friend class HwAcc;
-	friend class VdaMixer;
-	friend class VaApiMixer;
-	friend class VdpauMixer;
 };
 
 #endif // VIDEOFORMAT_HPP
