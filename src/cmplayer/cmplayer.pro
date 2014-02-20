@@ -42,7 +42,7 @@ macx {
     INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
 } else:unix {
     QT += dbus x11extras
-    PKGCONFIG += glib-2.0 libva vdpau libva-glx xcb xcb-icccm x11 alsa libpulse gobject-2.0 jack
+    PKGCONFIG += glib-2.0 libva vdpau libva-glx libva-x11 xcb xcb-icccm x11 alsa libpulse gobject-2.0 jack
     TARGET = cmplayer
     LIBS += -ldl
     HEADERS += app_x11.hpp

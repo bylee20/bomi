@@ -140,9 +140,13 @@ struct MpOsdItem::Data {
 				gl_Position = vMatrix*vPosition;
 			}
 		)");
-		shader->link();
+		if (!shader->link())
+			return;
 		loc_atlas = shader->uniformLocation("atlas");
 		loc_vMatrix = shader->uniformLocation("vMatrix");
+		shader->bind();
+		shader->setUniformValue(loc_atlas, 0);
+		shader->release();
 	}
 
 	void upload(const MpOsdBitmap &osd, int i) {
@@ -162,10 +166,6 @@ struct MpOsdItem::Data {
 				atlasSize.rwidth() = qMin<int>(_Aligned<4>(osd.sheet().width()*1.5), max);
 			if (osd.sheet().height() > atlasSize.height())
 				atlasSize.rheight() = qMin<int>(_Aligned<4>(osd.sheet().height()*1.5), max);
-			glEnable(atlas.target());
-			if (atlas.id() == GL_NONE)
-				atlas.create(OGL::Linear, OGL::ClampToEdge);
-			OpenGLTextureBinder<OGL::Target2D> binder(&atlas);
 			atlas.initialize(atlasSize, textureTransfer);
 		}
 	}
@@ -176,6 +176,8 @@ struct MpOsdItem::Data {
 		build(osd.format());
 		if (!shader->isLinked())
 			return;
+		glActiveTexture(GL_TEXTURE0);
+		OpenGLTextureBinder<OGL::Target2D> binder(&atlas);
 		initializeAtlas(osd);
 
 		Q_ASSERT(fbo->size() == osd.renderSize());
@@ -187,17 +189,13 @@ struct MpOsdItem::Data {
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		OpenGLTextureBinder<OGL::Target2D> binder(&atlas);
-
 		shader->setTextureCount(osd.count());
 		for (int i=0; i<osd.count(); ++i)
 			upload(osd, i);
 
 		shader->begin();
-		shader->setUniformValue(loc_atlas, 0);
 		shader->setUniformValue(loc_vMatrix, vMatrix);
 
-		glActiveTexture(GL_TEXTURE0);
 		glEnable(GL_BLEND);
 		glBlendFunc(srcFactor, GL_ONE_MINUS_SRC_ALPHA);
 		glDrawArrays(GL_TRIANGLES, 0, shader->N*osd.count());
@@ -219,10 +217,12 @@ MpOsdItem::~MpOsdItem() {
 
 void MpOsdItem::initializeGL() {
 	FramebufferObjectRendererItem::initializeGL();
+	d->atlas.create(OGL::Linear, OGL::ClampToEdge);
 }
 
 void MpOsdItem::finalizeGL() {
 	FramebufferObjectRendererItem::finalizeGL();
+	d->atlas.destroy();
 	_Delete(d->shader);
 }
 
