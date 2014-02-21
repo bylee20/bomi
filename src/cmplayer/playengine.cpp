@@ -68,6 +68,9 @@ struct PlayEngine::Data {
 		if (!isSuccess(err))
 			Log::write(getLogContext(), Log::Fatal, _ByteArrayLiteral("Error %%: %% Exit..."), error(), Log::parse(msg, args...));
 	}
+	void setOption(const char *name, const char *data) {
+		fatal(mpv_set_option_string(handle, name, data), "Couldn't set option %%=%%.", name, data);
+	};
 
 	Thread thread{p};
 	AudioController *audio = nullptr;
@@ -355,29 +358,24 @@ PlayEngine::PlayEngine()
 	});
 
 	d->handle = mpv_create();
-	Q_ASSERT(d->handle);
-	auto mpctx = d->mpctx = d->handle->mpctx;
+	d->mpctx = d->handle->mpctx;
 	d->mpctx->priv = this;
-	auto option = [this] (const char *name, const char *data) {
-		d->fatal(mpv_set_option_string(d->handle, name, data), "Couldn't set option %%=%%.", name, data);
-	};
-	option("config", "no");
-	option("idle", "yes");
-	option("fs", "no");
-	option("mouse-movements", "yes");
-	option("af", "dummy:address=" + QByteArray::number((quint64)(quintptr)(void*)(d->audio)));
-	option("vo", "null:address="  + QByteArray::number((quint64)(quintptr)(void*)(d->video)));
-	option("softvol", "yes");
-	option("softvol-max", "1000.0");
-	option("fixed-vo", "yes");
-	option("autosub", "no");
-	option("osd-level", "0");
-	option("quiet", "yes");
-	option("consolecontrols", "no");
-	option("subcp", "utf8");
-	option("ao", "null,");
-	option("ad-lavc-downmix", "no");
-	option("channels", "3");
+	mpv_set_event_filter_callback(d->handle, mpvEventFilter, this);
+	d->setOption("fs", "no");
+	d->setOption("mouse-movements", "yes");
+	d->setOption("af", "dummy:address=" + QByteArray::number((quint64)(quintptr)(void*)(d->audio)));
+	d->setOption("vo", "null:address="  + QByteArray::number((quint64)(quintptr)(void*)(d->video)));
+	d->setOption("softvol", "yes");
+	d->setOption("softvol-max", "1000.0");
+	d->setOption("fixed-vo", "yes");
+	d->setOption("autosub", "no");
+	d->setOption("osd-level", "0");
+	d->setOption("quiet", "yes");
+	d->setOption("consolecontrols", "no");
+	d->setOption("subcp", "utf8");
+	d->setOption("ao", "null,");
+	d->setOption("ad-lavc-downmix", "no");
+	d->setOption("channels", "3");
 
 	auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
 	if (!overrides.isEmpty()) {
@@ -391,11 +389,11 @@ PlayEngine::PlayEngine()
 			const int index = arg.indexOf('=');
 			if (index < 0) {
 				if (arg.startsWith("no-"))
-					option(arg.mid(3).toLatin1(), "no");
+					d->setOption(arg.mid(3).toLatin1(), "no");
 				else
-					option(arg.toLatin1(), "yes");
+					d->setOption(arg.toLatin1(), "yes");
 			} else
-				option(arg.left(index).toLatin1(), arg.mid(index+1).toLatin1());
+				d->setOption(arg.left(index).toLatin1(), arg.mid(index+1).toLatin1());
 		}
 	}
 
@@ -888,24 +886,10 @@ void PlayEngine::onMpvStageChanged(int stage) {
 
 		d->playback.mrl = d->playlist.loadedMrl();
 		d->mpctx->opts->pause = d->hasImage = d->playback.mrl.isImage();
-		if (d->hwAccCodecs.isEmpty() || d->hasImage) {
-			d->mpctx->opts->hwdec_api = HWDEC_NONE;
-			d->mpctx->opts->hwdec_codecs = nullptr;
-		} else {
-	#ifdef Q_OS_LINUX
-			if (HwAcc::backend() == HwAcc::VdpauX11)
-				d->mpctx->opts->hwdec_api = HWDEC_VDPAU;
-			else
-				d->mpctx->opts->hwdec_api = HWDEC_VAAPI;
-	#elif defined(Q_OS_MAC)
-			d->mpctx->opts->hwdec_api = HWDEC_VDA;
-	#endif
-			d->mpctx->opts->hwdec_codecs = d->hwAccCodecs.data();
-		}
-		d->mpctx->opts->stream_cache_size = d->getCache(Mrl(QString::fromLocal8Bit(d->mpctx->playlist->current->filename)));
+
 //		mpv_set_option_string(d->handle, "ao", d->ao.data());
 //		mpv_set_property_string(d->handle, "ao", d->ao.data());
-		d->mpctx->opts->audio_driver_list->name = d->ao.data();
+//		d->mpctx->opts->audio_driver_list->name = d->ao.data();
 		auto &start = d->mpctx->opts->play_start;
 		if (!d->playback.mrl.isDvd()) {
 			start.pos = d->start*1e-3;
@@ -916,9 +900,6 @@ void PlayEngine::onMpvStageChanged(int stage) {
 		}
 		d->setmp("audio-delay", (float)(d->audioSync/1000.0f));
 		d->setmp("sub-delay", (float)(d->subDelay/1000.0f));
-		d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
-		d->video->setDeintEnabled(d->deint != DeintMode::None);
-		d->audio->setOutputChannelLayout(d->layout);
 		break;
 	} case MP_STAGE_OPEN_STREAM:
 		break;
@@ -1046,18 +1027,53 @@ void PlayEngine::setMuted(bool muted) {
 	}
 }
 
+int PlayEngine::mpvEventFilter(mpv_event *event, void *ctx) {
+	auto e = static_cast<PlayEngine*>(ctx);
+	auto d = e->d;
+	switch (event->event_id) {
+	case MPV_EVENT_START_FILE: {
+		const bool init = d->mpctx->initialized;
+		d->mpctx->initialized = false;
+		d->setOption("ao", d->ao.data());
+		if (d->hwAccCodecs.isEmpty()) {
+			d->setOption("hwdec", "no");
+			d->setOption("hwdec-codecs", "");
+		} else {
+	#ifdef Q_OS_LINUX
+			if (HwAcc::backend() == HwAcc::VdpauX11)
+				d->setOption("hwdec", "vdpau");
+			else
+				d->setOption("hwdec", "vaapi");
+	#elif defined(Q_OS_MAC)
+			d->setOption("hwdec", "vda");
+	#endif
+			d->setOption("hwdec-codecs", d->hwAccCodecs);
+		}
+		const auto cache = d->getCache(Mrl(QString::fromLocal8Bit(d->mpctx->playlist->current->filename)));
+		d->setOption("cache", cache > 0 ? QByteArray::number(cache) : "no");
+		d->mpctx->initialized = init;
+		d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
+		d->video->setDeintEnabled(d->deint != DeintMode::None);
+		d->audio->setOutputChannelLayout(d->layout);
+		return false;
+	} default:
+		return false;
+	}
+}
+
 void PlayEngine::exec() {
 	auto mpctx = d->mpctx;
-
-	auto tmp_ao = d->mpctx->opts->audio_driver_list->name;
 	d->init = true;
 	d->quit = false;
-	while (1) {
+	while (!d->quit) {
 		const auto event = mpv_wait_event(d->handle, 10000);
 		switch (event->event_id) {
 		case MPV_EVENT_IDLE:
+//			d->check(mpv_set_option_string(d->handle, "ao", d->ao.data()), "Couldn't set ao=%%.", "alsa");
+
 			break;
 		case MPV_EVENT_START_FILE:
+
 			break;
 		case MPV_EVENT_PLAYBACK_START:
 			break;
@@ -1093,12 +1109,10 @@ void PlayEngine::exec() {
 		}
 	}
 shutdown:
-//	mp_play_files(mpctx);
 	d->hasImage = false;
 	qDebug() << "terminate loop";
 	mpctx->opts->hwdec_codecs = nullptr;
 	mpctx->opts->hwdec_api = HWDEC_NONE;
-	mpctx->opts->audio_driver_list->name = tmp_ao;
 	mpv_destroy(d->handle);
 	d->mpctx = nullptr;
 	d->init = false;

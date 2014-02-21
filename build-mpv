@@ -38,15 +38,3 @@ fi
 cd src/mpv && ./waf clean; ./waf distclean; ./waf configure $args
 ./waf build -j $njobs && ./waf install
 
-allobjs=`find . -name '*.o'`
-objs=""
-for obj in $allobjs; do
-  if [[ $obj =~ ^.*(vo_null|af_dummy|vo_vaapi|decode/vaapi|vdpau|vda|conf_check_.*).o$ ]]; then
-    continue
-  fi
-  objs+=" $obj"
-done
-
-install -d ../../build/lib
-rm ../../build/lib/libcmplayer_mpv.a
-ar rcsv ../../build/lib/libcmplayer_mpv.a $objs

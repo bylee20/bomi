@@ -14,6 +14,7 @@ class DeintOption;			class ChannelLayoutMap;
 enum class AudioDriver;		enum class ClippingMethod;
 enum class DeintMethod;		enum class DeintMode;
 enum class ChannelLayout;	struct SubtitleFileInfo;
+struct mpv_event;
 
 typedef std::function<int(const Mrl&)> GetMrlInt;
 
@@ -215,6 +216,7 @@ private:
 	void exec();
 	void setState(PlayEngine::State state);
 	void customEvent(QEvent *event);
+	static int mpvEventFilter(mpv_event *event, void *ctx);
 	class Thread; struct Data; Data *d;
 	PlayEngine::State m_state = PlayEngine::Stopped;
 };
