@@ -19,7 +19,7 @@ public:
 	QVariant data(const QModelIndex &index, int role) const;
 	Qt::ItemFlags flags(const QModelIndex &index) const;
 	int rowCount(const QModelIndex &parent = QModelIndex()) const;
-	void setPlaylist(const Playlist &list) {beginResetModel(); m_list = list; m_loaded = -1; endResetModel();}
+	void set(const Playlist &list) {beginResetModel(); m_list = list; m_loaded = -1; endResetModel();}
 	const Playlist &playlist() const {return m_list;}
 	int append(const Mrl &mrl);
 	void append(const Playlist &list);
@@ -37,6 +37,7 @@ public:
 	bool hasPrevious() const {return isValidRow(previous());}
 	bool swap(int r1, int r2);
 	Mrl loadedMrl() const {return m_list.value(m_loaded);}
+	void setLoaded(const Mrl &mrl);
 	void merge(const Playlist &playlist);
 	QHash<int, QByteArray> roleNames() const override;
 	Q_INVOKABLE void play(int row);

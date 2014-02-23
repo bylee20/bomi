@@ -35,15 +35,14 @@ extern "C" {
 #undef min
 
 enum EventType {
-	UserType = QEvent::User, TimeRangeChange, StreamOpen, UpdateTrack, StateChange, MrlStopped, MrlFinished, PlaylistFinished,
-	MrlChanged, VideoFormatChanged, UpdateChapterList,
-	HwAccChanged, UpdateDVDInfo, UpdateCache, UpdateCurrentChapter, UpdateCurrentStream, UpdateAudioFormat
+	UserType = QEvent::User, UpdateTimeRange, UpdateTrackList, StateChange, PreparePlayback,
+	VideoFormatChanged, UpdateChapterList, Tick, EndPlayback, StartPlayback,
+	HwAccChanged, UpdateDVDInfo, UpdateCache, UpdateCurrentStream, UpdateAudioFormat
 };
 
 enum MpCmd : int {
 	MpSetProperty = std::numeric_limits<int>::min(),
-	MpResetAudioChain, MpResetDeint, MpSetDeintEnabled, MpSetAudioLevel, MpSetAudioMuted, MpSetTempoScaler,
-	MpPauseOnStart
+	MpResetDeint, MpSetDeintEnabled, MpSetTempoScaler
 };
 
 template<typename T> static QByteArray qbytearray_from(const T &t);

@@ -7,6 +7,7 @@
 #include "hwacc.hpp"
 #include "openglcompat.hpp"
 #include "log.hpp"
+#include "tmp.hpp"
 
 DECLARE_LOG_CONTEXT(Main)
 

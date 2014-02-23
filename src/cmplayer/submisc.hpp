@@ -5,6 +5,20 @@
 
 class SubComp;
 
+struct JsonKeyValue {
+	JsonKeyValue(const QString &key, const QJsonValue &value): key(key), value(value) {}
+	JsonKeyValue(const char *key, const QJsonValue &value): key(_L(key)), value(value) {}
+	JsonKeyValue(const char *key, const char *value): key(_L(key)), value(_L(value)) {}
+	QString key; QJsonValue value;
+};
+
+static inline QJsonObject _MakeJson(std::initializer_list<JsonKeyValue> &&list) {
+	QJsonObject json;
+	for (auto &item : list)
+		json.insert(item.key, item.value);
+	return json;
+}
+
 struct SubtitleFileInfo {
 	SubtitleFileInfo() {}
 	SubtitleFileInfo(const QString &path, const QString &encoding): path(path), encoding(encoding) {}
@@ -16,6 +30,14 @@ struct SubtitleFileInfo {
 		if (index < 0)
 			return SubtitleFileInfo();
 		return SubtitleFileInfo(text.mid(0, index), text.mid(index+1));
+	}
+	QJsonObject toJson() const { return _MakeJson({{"path", path}, {"encoding", encoding}}); }
+	static SubtitleFileInfo fromJson(const QJsonObject &json) {
+		auto path = json.value("path");
+		auto encoding = json.value("encoding");
+		if (path.isUndefined() || encoding.isUndefined())
+			return SubtitleFileInfo();
+		return SubtitleFileInfo(path.toString(), encoding.toString());
 	}
 	QString path, encoding;
 };
@@ -33,6 +55,15 @@ struct SubtitleStateInfo {
 	}
 	bool operator != (const SubtitleStateInfo &rhs) const { return !operator == (rhs); }
 	QString toString() const;
+	QJsonObject toJson() const;
+	static SubtitleStateInfo fromJson(const QJsonObject &json);
+	static SubtitleStateInfo fromJson(const QString &str) {
+		QJsonParseError error;
+		auto json = QJsonDocument::fromJson(str.toUtf8(), &error).object();
+		if (error.error != QJsonParseError::NoError)
+			return SubtitleStateInfo();
+		return fromJson(json);
+	}
 	static SubtitleStateInfo fromString(const QString &str);
 	void append(const SubComp &comp);
 	bool isValid() const { return m_track != InvalidTrack; }
@@ -49,10 +80,5 @@ private:
 };
 
 Q_DECLARE_METATYPE(SubtitleStateInfo)
-
-struct SubtitleTempFile {
-	SubtitleFileInfo info;
-	QTemporaryFile *file = nullptr;
-};
 
 #endif // SUBMISC_HPP

@@ -213,7 +213,7 @@ private:
 		if (m_dst.isEmpty())
 			return;
 		const auto gain = m_amp*m_gain;
-		if (m_muted)
+		if (m_amp < 1e-8)
 			m_dst.fill(0);
 		else if (!m_mix) {
 			_AudioManipulate([&] (D &out, S in) { out = trans(in*gain); }, m_dst, 0, m_dst.frames(), src, 0);

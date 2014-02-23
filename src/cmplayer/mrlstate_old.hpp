@@ -144,6 +144,7 @@ struct MrlFieldV1 {
 	QVariant fromSql(const QVariant &var) const { return m_fromSql(var, m_property.userType()); }
 	const QMetaProperty &property() const { return m_property; }
 	static QList<MrlFieldV1> list();
+	QVariant default_() const { return QVariant(); }
 private:
 	static QVariant pass(const QVariant &var, int) { return var; }
 	QString m_type;

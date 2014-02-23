@@ -64,7 +64,6 @@ public:
 		m_history.clear();
 		m_historyIt = m_history.end();
 	}
-	void setMuted(bool muted) { m_muted = muted; }
 	void setAmp(float level) { m_amp = level; }
 	void setChannelLayoutMap(const ChannelLayoutMap &map) {
 		m_map = map;
@@ -86,7 +85,7 @@ protected:
 	ClippingMethod m_clip;
 	QLinkedList<LevelInfo> m_history;
 	bool m_scaleChanged = false, m_mix = true;
-	bool m_normalizer = false, m_muted = false, m_updateChmap = false, m_updateFormat = false;
+	bool m_normalizer = false, m_updateChmap = false, m_updateFormat = false;
 	typename QLinkedList<LevelInfo>::iterator m_historyIt;
 	AudioNormalizerOption m_normalizerOption;
 	std::array<int, MP_SPEAKER_ID_COUNT> m_ch_index_src, m_ch_index_dst;

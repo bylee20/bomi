@@ -40,7 +40,7 @@ struct AudioController::Data {
 	AudioMixer *mixer = nullptr;
 	SwrContext *swr = nullptr;
 	int fmt_conv = AF_FORMAT_UNKNOWN, outrate = 0;
-	bool normalizerActivated = false, tempoScalerActivated = false, muted = false, resample = false, first = false;
+	bool normalizerActivated = false, tempoScalerActivated = false, resample = false, first = false;
 	double scale = 1.0, amp = 1.0;
 	mp_chmap chmap;
 	mp_audio *resampled = nullptr;
@@ -156,16 +156,6 @@ int AudioController::reinitialize(mp_audio *in) {
 	return true;
 }
 
-void AudioController::setAmpLevel(double amp) {
-	d->amp = amp;
-	d->dirty |= Amp;
-}
-
-void AudioController::setMuted(bool muted) {
-	d->muted = muted;
-	d->dirty |= Muted;
-}
-
 int AudioController::control(af_instance *af, int cmd, void *arg) {
 	auto ac = priv(af);
 	auto d = ac->d;
@@ -173,6 +163,8 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 	case AF_CONTROL_REINIT:
 		return ac->reinitialize(static_cast<mp_audio*>(arg));
 	case AF_CONTROL_SET_VOLUME:
+		d->amp = *((float*)arg);
+		d->dirty |= Amp;
 		return AF_OK;
 	case AF_CONTROL_GET_VOLUME:
 		*((float*)arg) = d->amp;
@@ -208,8 +200,6 @@ int AudioController::filter(af_instance *af, mp_audio *data, int /*flags*/) {
 
 	Q_ASSERT(d->mixer != nullptr);
 	if (d->dirty) {
-		if (d->dirty & Muted)
-			d->mixer->setMuted(d->muted);
 		if (d->dirty & Amp)
 			d->mixer->setAmp(d->amp);
 		if (d->dirty & Normalizer)
@@ -258,10 +248,6 @@ double AudioController::gain() const {
 
 bool AudioController::isTempoScalerActivated() const {
 	return d->tempoScalerActivated;
-}
-
-double AudioController::scale() const {
-	return d->scale;
 }
 
 void AudioController::setNormalizerOption(double length, double target, double silence, double min, double max) {

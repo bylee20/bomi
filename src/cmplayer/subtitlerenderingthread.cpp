@@ -27,6 +27,8 @@ struct SubCompSelection::Thread::Data {
 		return pic;
 	}
 	void update() {
+		if (quit)
+			return;
 		auto post = [this] (const SubCompImage &pic) { _PostEvent(receiver, ImagePrepared, pic); };
 		if (it != its.end()) {
 			auto cache = pool.find(it);
@@ -171,6 +173,7 @@ void SubCompSelection::clear() {
 	for (auto &item : items)
 		item.thread->finish();
 	wait.wakeAll();
+	qApp->removePostedEvents(d->renderer, ImagePrepared);
 	for (auto &item : items)
 		item.release();
 	items.clear();

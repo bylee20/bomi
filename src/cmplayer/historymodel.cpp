@@ -72,6 +72,15 @@ struct HistoryModel::Data {
 		db.commit();
 	}
 	QSqlDatabase db;
+
+	bool findAndFill(MrlState *state, const QList<MrlField> &fields, const Mrl &mrl) {
+		static const auto query = QString("SELECT %3 FROM %1 WHERE mrl = %2").arg(stateTable);
+		finder.exec(query.arg(_ToSql(mrl.toString())).arg(_MrlFieldColumnListString(fields)));
+		if (!finder.next())
+			return false;
+		_FillMrlStateFromRecord(state, fields, finder.record());
+		return true;
+	}
 };
 
 struct SqlField {
@@ -123,12 +132,12 @@ int HistoryModel::columnCount(const QModelIndex &index) const {
 }
 
 void HistoryModel::getAppState(MrlState *appState) {
-	d->finder.exec(QString::fromLatin1("SELECT * FROM %1 LIMIT 1").arg(d->appTable));
+	d->finder.exec(QString::fromLatin1("SELECT %1 FROM %2 LIMIT 1").arg(_MrlFieldColumnListString(d->fields)).arg(d->appTable));
 	if (!d->finder.next()) {
 		qDebug() << "no previous app state!";
 		return;
 	}
-	_FillMrlStateFromQuery(appState, d->fields, d->finder);
+	_FillMrlStateFromRecord(appState, d->fields, d->finder.record());
 }
 
 void HistoryModel::setAppState(const MrlState *state) {
@@ -138,26 +147,19 @@ void HistoryModel::setAppState(const MrlState *state) {
 }
 
 bool HistoryModel::getState(MrlState *state) const {
-	if (d->cached.mrl == state->mrl) {
-		for (auto &f : d->restores)
-			f.property().write(state, f.property().read(&d->cached));
-		return true;
-	}
-	d->finder.exec(QString::fromLatin1("SELECT * FROM %1 WHERE mrl = %2 ").arg(d->stateTable).arg(_ToSql(state->mrl.toString())));
-	if (!d->finder.next())
-		return false;
-	_FillMrlStateFromQuery(state, d->restores, d->finder);
+	if (d->cached.mrl != state->mrl)
+		return d->findAndFill(state, d->restores, state->mrl);
+	for (auto &f : d->restores)
+		f.property().write(state, f.property().read(&d->cached));
 	return true;
 }
 
 const MrlState *HistoryModel::find(const Mrl &mrl) const {
 	if (d->cached.mrl == mrl)
 		return &d->cached;
-	d->finder.exec(QString::fromLatin1("SELECT * FROM %1 WHERE mrl = %2").arg(d->stateTable).arg(_ToSql(mrl.toString())));
-	if (!d->finder.next())
+	if (!d->findAndFill(&d->cached, d->fields, mrl))
 		return nullptr;
 	d->cached.mrl = mrl;
-	_FillMrlStateFromQuery(&d->cached, d->fields, d->finder);
 	return &d->cached;
 }
 

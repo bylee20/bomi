@@ -39,8 +39,6 @@ DECLARE_LOG_CONTEXT(Main)
 extern void initialize_vdpau_interop(QOpenGLContext *context);
 extern void finalize_vdpau_interop(QOpenGLContext *context);
 
-static const int AskStartTimeEvent = (QEvent::User + 1);
-
 template<typename Func, typename T>
 class ValueCmd : public QUndoCommand {
 public:
@@ -82,14 +80,13 @@ struct MainWindow::Data {
 	SubtitleFindDialog *subFindDlg = nullptr;
 	QStringList loadedSubtitleFiles;
 	SubtitleView *subtitleView = nullptr;
-	PlaylistModel &playlist = engine.playlist();
+	PlaylistModel playlist;
 	QUndoStack *undo = nullptr;
 //	FavoritesView *favorite;
 	TrayIcon *tray = nullptr;
 	QString filePath;
 	Pref preferences;
 	const Pref &pref() const {return preferences;}
-	int resume = -1;
 	QAction *subtrackSep = nullptr;
 	QDesktopWidget *desktop = nullptr;
 	QSize virtualDesktopSize;
@@ -105,6 +102,10 @@ struct MainWindow::Data {
 	void syncWithState() {
 		for (auto &eg : enumGroups)
 			eg.group->setChecked(as.state.property(eg.property), true);
+	}
+
+	void load(const Mrl &mrl, bool play = true) {
+		engine.load(play ? getStartInfo(mrl) : StartInfo(mrl));
 	}
 
 	void updateSubtitleState() {
@@ -245,7 +246,7 @@ struct MainWindow::Data {
 			if (mrl != engine.mrl())
 				return false;
 			if (!engine.isPlaying())
-				engine.play();
+				load(mrl);
 			return true;
 		};
 		if (!checkAndPlay(mrl)) {
@@ -260,7 +261,7 @@ struct MainWindow::Data {
 				playlist = p->generatePlaylist(mrl);
 			}
 			d->playlist.merge(playlist);
-			d->engine.load(mrl, mode.start_playback);
+			d->load(mrl, mode.start_playback);
 			if (!mrl.isDvd())
 				d->recent.stack(mrl);
 		}
@@ -274,11 +275,11 @@ struct MainWindow::Data {
 		const auto external = list.g("external")->actions();
 		for (int i = external.size()-1; i >= 0; --i) {
 			if (external[i]->isChecked())
-				return qMax(0, internal.size()-1) + i;
+				return internal.size() + i;
 		}
-		for (int i = internal.size()-1; i >= 1; --i) {
+		for (int i = internal.size()-1; i >= 0; --i) {
 			if (internal[i]->isChecked())
-				return i-1;
+				return i;
 		}
 		return -1;
 	}
@@ -290,7 +291,7 @@ struct MainWindow::Data {
 		const auto internal = list.g("internal")->actions();
 		const auto external = list.g("external")->actions();
 		QStringList tracks; tracks.reserve(internal.size() + external.size());
-		for (int i=1; i<internal.size(); ++i)
+		for (int i=0; i<internal.size(); ++i)
 			tracks.append(internal[i]->text());
 		for (auto action : external)
 			tracks.append(action->text());
@@ -418,7 +419,7 @@ struct MainWindow::Data {
 		auto cycle = _C(menu)[size > 2 ? "next" : "toggle"];
 		auto group = menu.g(_L(EnumInfo<T>::typeKey()));
 		if (cycle) {
-			connect(cycle, &QAction::triggered, [this, group] () {
+			connect(cycle, &QAction::triggered, p, [this, group] () {
 				auto actions = group->actions();
 				int i = 0;
 				for (; i<actions.size(); ++i)
@@ -557,35 +558,52 @@ struct MainWindow::Data {
 		connect(desktop, &QDesktopWidget::workAreaResized, reset);
 		reset();
 	}
+	StartInfo getStartInfo(const Mrl &mrl) {
+		StartInfo info;
+		info.mrl = mrl;
+		info.resume = resume(mrl);
+		info.cache = cache(mrl);
+		return info;
+	}
+
+	int resume(const Mrl &mrl) {
+		if (!pref().remember_stopped || mrl.isImage())
+			return 0;
+		auto state = history.find(mrl);
+		if (!state || state->resume_position <= 0)
+			return 0;
+		if (!preferences.ask_record_found)
+			return state->resume_position;
+		CheckDialog dlg(p, QDialogButtonBox::Yes | QDialogButtonBox::No);
+		dlg.setChecked(false);
+		dlg.setLabelText(tr("Do you want to resume the playback at the last played position?\n"
+			"Played Date: %1\nStopped Position: %2\n")
+			.arg(state->last_played_date_time.toString(Qt::ISODate)).arg(_MSecToString(state->resume_position, "h:mm:ss")));
+		dlg.setCheckBoxText(tr("Don't ask again"));
+		dlg.setWindowTitle(tr("Resume Playback"));
+		int resume = 0;
+		if (dlg.exec() == QDialogButtonBox::Yes)
+			resume = state->resume_position;
+		if (_Change(preferences.ask_record_found, !dlg.isChecked()))
+			preferences.save();
+		return resume;
+	}
+	int cache(const Mrl &mrl) {
+		if (mrl.isLocalFile()) {
+			auto path = mrl.toLocalFile();
+			if (_ContainsIf(pref().network_folders, [path] (const QString &folder) {
+				return path.startsWith(folder);
+			}))
+				return pref().cache_network;
+			return pref().cache_local;
+		} if (mrl.isDvd())
+			return pref().cache_dvd;
+		return pref().cache_network;
+	}
 	void initEngine() {
 		engine.setVideoRenderer(&renderer);
-		engine.setGetStartTimeFunction([this] (const Mrl &mrl) {
-			if (!pref().remember_stopped || mrl.isImage())
-				return 0;
-			resume = -1;
-			if (QThread::currentThread() == engine.thread()) {
-				_PostEvent(p, AskStartTimeEvent, mrl);
-				while (resume == -1)
-					QThread::msleep(50);
-			} else
-				_SendEvent(p, AskStartTimeEvent, mrl);
-			return resume;
-		});
-		engine.setGetCacheFunction([this] (const Mrl &mrl) {
-			if (mrl.isLocalFile()) {
-				auto path = mrl.toLocalFile();
-				if (_ContainsIf(pref().network_folders, [path] (const QString &folder) {
-					return path.startsWith(folder);
-				}))
-					return pref().cache_network;
-				return pref().cache_local;
-			} if (mrl.isDvd())
-				return pref().cache_dvd;
-			return pref().cache_network;
-		});
-
 		connect(&engine, &PlayEngine::mrlChanged, p, &MainWindow::updateMrl);
-		connect(&engine, &PlayEngine::stateChanged, [this] (PlayEngine::State state) {
+		connect(&engine, &PlayEngine::stateChanged, p, [this] (PlayEngine::State state) {
 			stateChanging = true;
 			showMessageBox(QString());
 			if ((loading = state == PlayEngine::Loading))
@@ -607,41 +625,41 @@ struct MainWindow::Data {
 			stateChanging = false;
 		});
 		connect(&engine, &PlayEngine::tick, &subtitle, &SubtitleRendererItem::render);
-		connect(&engine, &PlayEngine::volumeChanged, [this] (int volume) { _Change(as.state.audio_volume, volume); });
+		connect(&engine, &PlayEngine::volumeChanged, p, [this] (int volume) { _Change(as.state.audio_volume, volume); });
 		connect(&engine, &PlayEngine::volumeNormalizerActivatedChanged, menu("audio")["normalizer"], &QAction::setChecked);
 		connect(&engine, &PlayEngine::tempoScaledChanged, menu("audio")["tempo-scaler"], &QAction::setChecked);
 		connect(&engine, &PlayEngine::mutedChanged, menu("audio")("volume")["mute"], &QAction::setChecked);
-		connect(&engine, &PlayEngine::started, [this] () { subtitle.setFPS(engine.fps()); });
-		connect(&engine, &PlayEngine::dvdInfoChanged, [this] () {
+		connect(&engine, &PlayEngine::started, p, [this] () { subtitle.setFPS(engine.fps()); });
+		connect(&engine, &PlayEngine::dvdInfoChanged, p, [this] () {
 			updateListMenu(menu("play")("title"), engine.dvd().titles, engine.currentDvdTitle());
 		});
-		connect(&engine, &PlayEngine::audioStreamsChanged, [this] (const StreamList &streams) {
+		connect(&engine, &PlayEngine::audioStreamsChanged, p, [this] (const StreamList &streams) {
 			updateListMenu(menu("audio")("track"), streams, engine.currentAudioStream());
 		});
-		connect(&engine, &PlayEngine::videoStreamsChanged, [this] (const StreamList &streams) {
+		connect(&engine, &PlayEngine::videoStreamsChanged, p, [this] (const StreamList &streams) {
 			updateListMenu(menu("video")("track"), streams, engine.currentVideoStream());
 		});
-		connect(&engine, &PlayEngine::subtitleStreamsChanged, [this] (const StreamList &streams) {
+		connect(&engine, &PlayEngine::subtitleStreamsChanged, p, [this] (const StreamList &streams) {
 			updateListMenu(menu("subtitle")("track"), streams, engine.currentSubtitleStream(), _L("internal"));
 		});
-		connect(&engine, &PlayEngine::chaptersChanged, [this] (const ChapterList &chapters) {
+		connect(&engine, &PlayEngine::chaptersChanged, p, [this] (const ChapterList &chapters) {
 			updateListMenu(menu("play")("chapter"), chapters, engine.currentChapter());
 		});
-		connect(&engine, &PlayEngine::currentAudioStreamChanged, [this] (int stream) {
+		connect(&engine, &PlayEngine::currentAudioStreamChanged, p, [this] (int stream) {
 			auto action = menu("audio")("track").g()->find(stream);
 			if (action && !action->isChecked()) {
 				action->setChecked(true);
 				menu("audio")("track").syncActions();
 			}
 		});
-		connect(&engine, &PlayEngine::currentVideoStreamChanged, [this] (int stream) {
+		connect(&engine, &PlayEngine::currentVideoStreamChanged, p, [this] (int stream) {
 			auto action = menu("video")("track").g()->find(stream);
 			if (action && !action->isChecked()) {
 				action->setChecked(true);
 				menu("video")("track").syncActions();
 			}
 		});
-		connect(&engine, &PlayEngine::currentSubtitleStreamChanged, [this] (int stream) {
+		connect(&engine, &PlayEngine::currentSubtitleStreamChanged, p, [this] (int stream) {
 			auto action = menu("subtitle")("track").g("internal")->find(stream);
 			if (action && !action->isChecked()) {
 				action->setChecked(true);
@@ -666,10 +684,11 @@ struct MainWindow::Data {
 			history.update(&as.state, !end);
 		};
 
-		connect(&engine, &PlayEngine::started, [this, updateMrlState] (Mrl mrl) {
+		connect(&engine, &PlayEngine::started, p, [this, updateMrlState] (Mrl mrl) {
 			as.setOpen(mrl);
 			as.state.mrl = mrl;
 			auto &state = as.state;
+			state.sub_track = SubtitleStateInfo();
 			const bool found = history.getState(&state);
 			if (found) {
 				engine.setCurrentAudioStream(state.audio_track);
@@ -686,24 +705,24 @@ struct MainWindow::Data {
 				updateSubtitleState();
 			updateMrlState(mrl, false, 0);
 		});
-		connect(&engine, &PlayEngine::stopped, [this, updateMrlState] (Mrl mrl, int time, int duration) {
-			if (!mrl.isDvd() && duration > 500 && duration - time > 500)
-				updateMrlState(mrl, true, time);
+		connect(&engine, &PlayEngine::finished, p, [this, updateMrlState] (Mrl mrl, int time, int remain) {
+			updateMrlState(mrl, true, !mrl.isDvd() && remain > 500 ? time : -1);
 		});
-		connect(&engine, &PlayEngine::finished, [this, updateMrlState] (Mrl mrl) { updateMrlState(mrl, true, -1); });
-
-		connect(&engine, &PlayEngine::videoFormatChanged, [this] (const VideoFormat &format) {
+		connect(&engine, &PlayEngine::videoFormatChanged, p, [this] (const VideoFormat &format) {
 			if (pref().fit_to_video && !format.displaySize().isEmpty())
 				setVideoSize(format.displaySize());
 		});
-
+		connect(&engine, &PlayEngine::requestNextStartInfo, p, [this] () {
+			const auto mrl = playlist.nextMrl(); if (!mrl.isEmpty()) load(mrl);
+		});
 		engine.waitUntilInitilaized();
 	}
 	void initItems() {
 		connect(&recent, &RecentInfo::openListChanged, p, &MainWindow::updateRecentActions);
-		connect(&hider, &QTimer::timeout, [this] () { setCursorVisible(false); });
-		connect(&history, &HistoryModel::playRequested, [this] (const Mrl &mrl) { p->openMrl(mrl); });
-		connect(&playlist, &PlaylistModel::finished, [this] () {
+		connect(&hider, &QTimer::timeout, p, [this] () { setCursorVisible(false); });
+		connect(&history, &HistoryModel::playRequested, p, [this] (const Mrl &mrl) { p->openMrl(mrl); });
+		connect(&playlist, &PlaylistModel::playRequested, p, [this] (int row) { p->openMrl(playlist[row]); });
+		connect(&playlist, &PlaylistModel::finished, p, [this] () {
 			if (menu("tool")["auto-exit"]->isChecked()) p->exit();
 			if (menu("tool")["auto-shutdown"]->isChecked()) cApp.shutdown();
 		});
@@ -721,19 +740,19 @@ struct MainWindow::Data {
 
 		loadingTimer.setInterval(500);
 		loadingTimer.setSingleShot(true);
-		connect(&loadingTimer, &QTimer::timeout, [this] () {
+		connect(&loadingTimer, &QTimer::timeout, p, [this] () {
 			if (loading) showMessageBox(tr("Loading ...\nPlease wait for a while."));
 		});
 
 		initializer.setSingleShot(true);
-		connect(&initializer, &QTimer::timeout, [this] () { p->applyPref(); cApp.runCommands(); });
+		connect(&initializer, &QTimer::timeout, p, [this] () { p->applyPref(); cApp.runCommands(); });
 		initializer.start(1);
 	}
 
 	template<typename T, typename F, typename GetNew>
 	void connectPropertyDiff(ActionGroup *g, const char *asprop, GetNew getNew, void(MrlState::*sig)(), F f) {
 		Q_ASSERT(as.state.property(asprop).isValid());
-		connect(g, &ActionGroup::triggered, [this, getNew, asprop] (QAction *a) {
+		connect(g, &ActionGroup::triggered, p, [this, getNew, asprop] (QAction *a) {
 			const auto old = as.state.property(asprop).value<T>();
 			const auto new_ = getNew(a, old);
 			if (old != new_) {
@@ -753,7 +772,7 @@ struct MainWindow::Data {
 	void connectPropertyCheckable(QAction *action, const char *asprop, void(MrlState::*sig)(), F f) {
 		Q_ASSERT(as.state.property(asprop).isValid() && as.state.property(asprop).type() == QVariant::Bool);
 		Q_ASSERT(action->isCheckable());
-		connect(action, &QAction::triggered, [action, this, asprop] (bool new_) {
+		connect(action, &QAction::triggered, p, [action, this, asprop] (bool new_) {
 			const bool old = as.state.property(asprop).toBool();
 			if (new_ != old) {
 				push(new_, old, [action, asprop, this](bool checked) {
@@ -815,7 +834,6 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	qDebug() << "Recover states";
 	auto &as = AppState::get();
-	qDebug() << as.state.mrl.toString();
 	d->history.getAppState(&as.state);
 	d->syncWithState();
 
@@ -834,9 +852,9 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->dontShowMsg = false;
 
-	d->engine.setPlaylist(d->recent.lastPlaylist());
+	d->playlist.set(d->recent.lastPlaylist());
 	if (!d->recent.lastMrl().isEmpty()) {
-		d->engine.load(d->recent.lastMrl());
+		d->load(d->recent.lastMrl(), false);
 		as.setOpen(d->recent.lastMrl());
 	}
 	updateRecentActions(d->recent.openList());
@@ -863,7 +881,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	if (TrayIcon::isAvailable()) {
 		qDebug() << "Create system tray icon";
 		d->tray = new TrayIcon(cApp.defaultIcon(), this);
-		connect(d->tray, &TrayIcon::activated, [this] (TrayIcon::ActivationReason reason) {
+		connect(d->tray, &TrayIcon::activated, this, [this] (TrayIcon::ActivationReason reason) {
 			if (reason == TrayIcon::Trigger)
 				setVisible(!isVisible());
 			else if (reason == TrayIcon::Context)
@@ -886,7 +904,7 @@ MainWindow::~MainWindow() {
 
 void MainWindow::connectMenus() {
 	Menu &open = d->menu("open");
-	connect(open["file"], &QAction::triggered, [this] () {
+	connect(open["file"], &QAction::triggered, this, [this] () {
 		auto &as = AppState::get();
 		const QString filter = Info::mediaExtFilter();
 		const QString dir = QFileInfo(as.open_last_file).absolutePath();
@@ -894,21 +912,21 @@ void MainWindow::connectMenus() {
 		if (!file.isEmpty())
 			openMrl(Mrl(file));
 	});
-	connect(open["folder"], &QAction::triggered, [this] () {
+	connect(open["folder"], &QAction::triggered, this, [this] () {
 		OpenMediaFolderDialog dlg(this);
 		if (dlg.exec()) {
 			const auto list = dlg.playlist();
 			if (!list.isEmpty()) {
-				d->engine.setPlaylist(list);
-				d->engine.load(list.first(), true);
+				d->playlist.set(list);
+				d->load(list.first());
 				d->recent.stack(list.first());
 			}
 		}
 	});
-	connect(open["url"], &QAction::triggered, [this] () {
+	connect(open["url"], &QAction::triggered, this, [this] () {
 		GetUrlDialog dlg; if (dlg.exec()) {openMrl(dlg.url().toString(), dlg.encoding());}
 	});
-	connect(open["dvd"], &QAction::triggered, [this] () {
+	connect(open["dvd"], &QAction::triggered, this, [this] () {
 		OpenDvdDialog dlg;
 		dlg.setDeviceList(cApp.devices());
 		if (!d->as.dvd_device.isEmpty())
@@ -925,15 +943,15 @@ void MainWindow::connectMenus() {
 			openMrl(Mrl(mrl));
 		}
 	});
-	connect(open("recent").g(), &ActionGroup::triggered, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
+	connect(open("recent").g(), &ActionGroup::triggered, this, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
 	connect(open("recent")["clear"], &QAction::triggered, &d->recent, &RecentInfo::clear);
 
 	Menu &play = d->menu("play");
-	connect(play["stop"], &QAction::triggered, [this] () {d->engine.stop();});
+	connect(play["stop"], &QAction::triggered, this, [this] () {d->engine.stop();});
 	d->connectStepActions(play("speed"), "play_speed", &MrlState::playSpeedChanged, [this]() {
 		d->engine.setSpeed(1e-2*d->as.state.play_speed);
 	});
-	connect(play["pause"], &QAction::triggered, [this] () {
+	connect(play["pause"], &QAction::triggered, this, [this] () {
 		if (!d->stateChanging) {
 			if (d->pref().pause_to_play_next_image && d->pref().image_duration == 0 && d->engine.mrl().isImage())
 				d->menu("play")["next"]->trigger();
@@ -944,14 +962,17 @@ void MainWindow::connectMenus() {
 				case PlayEngine::Loading:
 					d->engine.pause();
 					break;
+				case PlayEngine::Paused:
+					d->engine.unpause();
+					break;
 				default:
-					d->engine.play();
+					d->load(d->engine.mrl());
 					break;
 				}
 			}
 		}
 	});
-	connect(play("repeat").g(), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(play("repeat").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
 		const int key = a->data().toInt();
 		auto msg = [this] (const QString &ex) {showMessage(tr("A-B Repeat"), ex);};
 		if (key == 'r') {
@@ -967,23 +988,23 @@ void MainWindow::connectMenus() {
 	});
 	connect(play["prev"], &QAction::triggered, &d->playlist, &PlaylistModel::playPrevious);
 	connect(play["next"], &QAction::triggered, &d->playlist, &PlaylistModel::playNext);
-	connect(play("seek").g("relative"), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(play("seek").g("relative"), &ActionGroup::triggered, this, [this] (QAction *a) {
 		const int diff = a->data().toInt();
 		if (diff && !d->engine.isStopped() && d->engine.isSeekable()) {
 			d->engine.relativeSeek(diff);
 			showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
 		}
 	});
-	connect(play["dvd-menu"], &QAction::triggered, [this] () { d->engine.sendDVDCommand(PlayEngine::DVDMenu); });
-	connect(play("seek").g("subtitle"), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(play["dvd-menu"], &QAction::triggered, this, [this] () { d->engine.sendDVDCommand(PlayEngine::DVDMenu); });
+	connect(play("seek").g("subtitle"), &ActionGroup::triggered, this, [this] (QAction *a) {
 		const int key = a->data().toInt();
 		const int time = (key < 0 ? d->subtitle.previous() : (key > 0 ? d->subtitle.next() : d->subtitle.current()));
 		if (time >= 0) d->engine.seek(time-100);
 	});
-	connect(play("title").g(), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(play("title").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentDvdTitle(a->data().toInt()); showMessage(tr("Current DVD Title"), a->text());
 	});
-	connect(play("chapter").g(), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(play("chapter").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentChapter(a->data().toInt()); showMessage(tr("Current Chapter"), a->text());
 	});
 	auto seekChapter = [this] (int offset) {
@@ -993,11 +1014,11 @@ void MainWindow::connectMenus() {
 				d->engine.setCurrentChapter(target);
 		}
 	};
-	connect(play("chapter")["prev"], &QAction::triggered, [seekChapter] () { seekChapter(-1); });
-	connect(play("chapter")["next"], &QAction::triggered, [seekChapter] () { seekChapter(+1); });
+	connect(play("chapter")["prev"], &QAction::triggered, this, [seekChapter] () { seekChapter(-1); });
+	connect(play("chapter")["next"], &QAction::triggered, this, [seekChapter] () { seekChapter(+1); });
 
 	Menu &video = d->menu("video");
-	connect(video("track").g(), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(video("track").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentVideoStream(a->data().toInt()); showMessage(tr("Current Video Track"), a->text());
 	});
 	d->connectEnumActions<VideoRatio>(video("aspect"), "video_aspect_ratio", &MrlState::videoAspectRatioChanged, [this] () {
@@ -1006,7 +1027,7 @@ void MainWindow::connectMenus() {
 	d->connectEnumActions<VideoRatio>(video("crop"), "video_crop_ratio", &MrlState::videoCropRatioChanged, [this] () {
 		d->renderer.setCropRatio(VideoRatioInfo::data(d->as.state.video_crop_ratio));
 	});
-	connect(video["snapshot"], &QAction::triggered, [this] () {
+	connect(video["snapshot"], &QAction::triggered, this, [this] () {
 		static SnapshotDialog *dlg = new SnapshotDialog(this);
 		dlg->setVideoRenderer(&d->renderer); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
 		if (!dlg->isVisible()) {dlg->adjustSize(); dlg->show();}
@@ -1033,7 +1054,7 @@ void MainWindow::connectMenus() {
 		d->renderer.setRange(d->as.state.video_range);
 	});
 
-	connect(&video("filter"), &Menu::triggered, [this] () {
+	connect(&video("filter"), &Menu::triggered, this, [this] () {
 		VideoRendererItem::Effects effects = 0;
 		for (auto act : d->menu("video")("filter").actions()) {
 			if (act->isChecked())
@@ -1054,7 +1075,7 @@ void MainWindow::connectMenus() {
 	});
 
 	Menu &audio = d->menu("audio");
-	connect(audio("track").g(), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(audio("track").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentAudioStream(a->data().toInt()); showMessage(tr("Current Audio Track"), a->text());
 	});
 	d->connectStepActions(audio("volume"), "audio_volume", &MrlState::audioVolumeChanged, [this] () {
@@ -1087,13 +1108,13 @@ void MainWindow::connectMenus() {
 			(*it)->trigger();
 		}
 	};
-	connect(audio("track")["next"], &QAction::triggered, [this, selectNext] () {
+	connect(audio("track")["next"], &QAction::triggered, this, [this, selectNext] () {
 		selectNext(d->menu("audio")("track").g()->actions());
 	});
 
 	Menu &sub = d->menu("subtitle");
 	d->subtrackSep = sub("track").addSeparator();
-	connect(sub("track")["next"], &QAction::triggered, [this] () {
+	connect(sub("track")["next"], &QAction::triggered, this, [this] () {
 		int checked = -1;
 		auto list = d->menu("subtitle")("track").g("external")->actions();
 		list += d->menu("subtitle")("track").g("internal")->actions();
@@ -1114,14 +1135,14 @@ void MainWindow::connectMenus() {
 		if (!d->menu("subtitle")("track").g("internal")->checkedAction())
 			d->engine.setCurrentSubtitleStream(-2);
 	});
-	connect(sub("track")["all"], &QAction::triggered, [this] () {
+	connect(sub("track")["all"], &QAction::triggered, this, [this] () {
 		d->subtitle.select(-1);
 		for (auto action : d->menu("subtitle")("track").g("external")->actions())
 			action->setChecked(true);
 		showMessage(tr("Select All Subtitles"), tr("%1 Subtitle(s)").arg(d->subtitle.componentsCount()));
 		d->setCurrentSubtitleIndexToEngine();
 	});
-	connect(sub("track")["hide"], &QAction::triggered, [this] (bool hide) {
+	connect(sub("track")["hide"], &QAction::triggered, this, [this] (bool hide) {
 		if (hide != d->subtitle.isHidden()) {
 			d->push(hide, d->subtitle.isHidden(), [this] (bool hide) {
 				d->subtitle.setHidden(hide);
@@ -1134,7 +1155,7 @@ void MainWindow::connectMenus() {
 			});
 		}
 	});
-	connect(sub("track")["open"], &QAction::triggered, [this] () {
+	connect(sub("track")["open"], &QAction::triggered, this, [this] () {
 		const auto dir = d->engine.mrl().isLocalFile() ? QFileInfo(d->engine.mrl().toLocalFile()).absolutePath() : _L("");
 		QString enc = d->pref().sub_enc;
 		const auto files = EncodingFileDialog::getOpenFileNames(this, tr("Open Subtitle"), dir, Info::subtitleExtFilter(), &enc);
@@ -1142,7 +1163,7 @@ void MainWindow::connectMenus() {
 			appendSubFiles(files, true, enc);
 	});
 	connect(sub("track")["clear"], &QAction::triggered, this, &MainWindow::clearSubtitleFiles);
-	connect(sub("track").g("external"), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(sub("track").g("external"), &ActionGroup::triggered, this, [this] (QAction *a) {
 		if (!d->changingSub) {
 			if (a->isChecked())
 				d->subtitle.select(a->data().toInt());
@@ -1152,12 +1173,12 @@ void MainWindow::connectMenus() {
 		showMessage(tr("Selected Subtitle"), a->text());
 		d->setCurrentSubtitleIndexToEngine();
 	});
-	connect(sub("track").g("internal"), &ActionGroup::triggered, [this] (QAction *a) {
+	connect(sub("track").g("internal"), &ActionGroup::triggered, this, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentSubtitleStream(a->data().toInt());
 		showMessage(tr("Selected Subtitle"), a->text());
 		d->setCurrentSubtitleIndexToEngine();
 	});
-	connect(&sub("track"), &Menu::actionsSynchronized, [this] () { d->setSubtitleTracksToEngine(); d->setCurrentSubtitleIndexToEngine(); });
+	connect(&sub("track"), &Menu::actionsSynchronized, this, [this] () { d->setSubtitleTracksToEngine(); d->setCurrentSubtitleIndexToEngine(); });
 	d->connectEnumMenu<SubtitleDisplay>(sub, "sub_display", &MrlState::subDisplayChanged, [this] () {
 		d->renderer.setOverlayOnLetterbox(d->as.state.sub_display == SubtitleDisplay::OnLetterbox);
 	});
@@ -1187,14 +1208,14 @@ void MainWindow::connectMenus() {
 			item->setProperty("selectedIndex", idx);
 	};
 	auto &playlist = tool("playlist");
-	connect(playlist["toggle"], &QAction::triggered, [toggleTool] () {toggleTool("playlist", AppState::get().playlist_visible);});
-	connect(playlist["open"], &QAction::triggered, [this] () {
+	connect(playlist["toggle"], &QAction::triggered, this, [toggleTool] () {toggleTool("playlist", AppState::get().playlist_visible);});
+	connect(playlist["open"], &QAction::triggered, this, [this] () {
 		QString enc;
 		const QString file = EncodingFileDialog::getOpenFileName(this, tr("Open File"), QString(), Info::playlistExtFilter(), &enc);
 		if (!file.isEmpty())
-			d->playlist.setPlaylist(Playlist(file, enc));
+			d->playlist.set(Playlist(file, enc));
 	});
-	connect(playlist["save"], &QAction::triggered, [this] () {
+	connect(playlist["save"], &QAction::triggered, this, [this] () {
 		const Playlist &list = d->playlist.playlist();
 		if (!list.isEmpty()) {
 			auto file = _GetSaveFileName(this, tr("Save File"), QString(), tr("Playlist") + " (*.pls)");
@@ -1205,8 +1226,8 @@ void MainWindow::connectMenus() {
 			}
 		}
 	});
-	connect(playlist["clear"], &QAction::triggered, [this] () { d->playlist.clear(); });
-	connect(playlist["append-file"], &QAction::triggered, [this] () {
+	connect(playlist["clear"], &QAction::triggered, this, [this] () { d->playlist.clear(); });
+	connect(playlist["append-file"], &QAction::triggered, this, [this] () {
 		const auto filter = Info::mediaExtFilter();
 		auto files = _GetOpenFileNames(this, tr("Open File"), QString(), filter);
 		Playlist list;
@@ -1214,7 +1235,7 @@ void MainWindow::connectMenus() {
 			list << Mrl(files[i]);
 		d->playlist.append(list);
 	});
-	connect(playlist["append-url"], &QAction::triggered, [this] () {
+	connect(playlist["append-url"], &QAction::triggered, this, [this] () {
 		GetUrlDialog dlg(this);
 		if (dlg.exec()) {
 			const Mrl mrl = dlg.url().toString();
@@ -1226,39 +1247,39 @@ void MainWindow::connectMenus() {
 				d->playlist.append(mrl);
 		}
 	});
-	connect(playlist["remove"], &QAction::triggered, [this, selectedIndex] () {
+	connect(playlist["remove"], &QAction::triggered, this, [this, selectedIndex] () {
 		d->playlist.erase(selectedIndex("playlist"));
 	});
-	connect(playlist["move-up"], &QAction::triggered, [this, selectedIndex, selectIndex] () {
+	connect(playlist["move-up"], &QAction::triggered, this, [this, selectedIndex, selectIndex] () {
 		const auto idx = selectedIndex("playlist");
 		if (d->playlist.swap(idx, idx-1))
 			selectIndex("playlist", idx-1);
 	});
-	connect(playlist["move-down"], &QAction::triggered, [this, selectedIndex, selectIndex] () {
+	connect(playlist["move-down"], &QAction::triggered, this, [this, selectedIndex, selectIndex] () {
 		const auto idx = selectedIndex("playlist");
 		if (d->playlist.swap(idx, idx+1))
 			selectIndex("playlist", idx+1);
 	});
 
 	auto &history = tool("history");
-	connect(history["toggle"], &QAction::triggered, [toggleTool] () {toggleTool("history", AppState::get().history_visible);});
-	connect(history["clear"], &QAction::triggered, [this] () { d->history.clear(); });
+	connect(history["toggle"], &QAction::triggered, this, [toggleTool] () {toggleTool("history", AppState::get().history_visible);});
+	connect(history["clear"], &QAction::triggered, this, [this] () { d->history.clear(); });
 
-	connect(tool["playinfo"], &QAction::triggered, [toggleTool] () {toggleTool("playinfo", AppState::get().playinfo_visible);});
-	connect(tool["subtitle"], &QAction::triggered, [this] () {d->subtitleView->setVisible(!d->subtitleView->isVisible());});
-	connect(tool["pref"], &QAction::triggered, [this] () {
+	connect(tool["playinfo"], &QAction::triggered, this, [toggleTool] () {toggleTool("playinfo", AppState::get().playinfo_visible);});
+	connect(tool["subtitle"], &QAction::triggered, this, [this] () {d->subtitleView->setVisible(!d->subtitleView->isVisible());});
+	connect(tool["pref"], &QAction::triggered, this, [this] () {
 		if (!d->prefDlg) {
 			d->prefDlg = new PrefDialog(this);
-			connect(d->prefDlg, &PrefDialog::applyRequested, [this] {d->prefDlg->get(d->preferences); applyPref();});
-			connect(d->prefDlg, &PrefDialog::resetRequested, [this] {d->prefDlg->set(d->pref());});
+			connect(d->prefDlg, &PrefDialog::applyRequested, this, [this] {d->prefDlg->get(d->preferences); applyPref();});
+			connect(d->prefDlg, &PrefDialog::resetRequested, this, [this] {d->prefDlg->set(d->pref());});
 		}
 		d->prefDlg->set(d->pref());
 		d->prefDlg->show();
 	});
-	connect(tool["find-subtitle"], &QAction::triggered, [this] () {
+	connect(tool["find-subtitle"], &QAction::triggered, this, [this] () {
 		if (!d->subFindDlg) {
 			d->subFindDlg = new SubtitleFindDialog(this);
-			connect(d->subFindDlg, &SubtitleFindDialog::loadRequested, [this] (const QString &fileName) {
+			connect(d->subFindDlg, &SubtitleFindDialog::loadRequested, this, [this] (const QString &fileName) {
 				appendSubFiles(QStringList() << fileName, true, d->pref().sub_enc);
 				showMessage(tr("Downloaded"), QFileInfo(fileName).fileName());
 			});
@@ -1267,7 +1288,7 @@ void MainWindow::connectMenus() {
 		d->subFindDlg->show();
 	});
 	connect(tool["reload-skin"], &QAction::triggered, this, &MainWindow::reloadSkin);
-	connect(tool["auto-exit"], &QAction::triggered, [this] (bool on) {
+	connect(tool["auto-exit"], &QAction::triggered, this, [this] (bool on) {
 		if (on != AppState::get().auto_exit)
 			d->push(on, AppState::get().auto_exit, [this] (bool on) {
 				AppState::get().auto_exit = on;
@@ -1275,7 +1296,7 @@ void MainWindow::connectMenus() {
 				d->menu("tool")["auto-exit"]->setChecked(on);
 			});
 	});
-	connect(tool["auto-shutdown"], &QAction::toggled, [this] (bool on) {
+	connect(tool["auto-shutdown"], &QAction::toggled, this, [this] (bool on) {
 		if (on) {
 			if (QMessageBox::warning(nullptr, tr("Auto-shutdown")
 					, tr("The system will shut down when the play list has finished.")
@@ -1289,12 +1310,12 @@ void MainWindow::connectMenus() {
 
 	Menu &win = d->menu("window");		Menu &help = d->menu("help");
 	d->connectEnumMenu<StaysOnTop>(d->as, win, "win_stays_on_top", &AppState::winStaysOnTopChanged, [this] () { updateStaysOnTop(); });
-	connect(win.g("size"), &ActionGroup::triggered, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
+	connect(win.g("size"), &ActionGroup::triggered, this, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
 	connect(win["minimize"], &QAction::triggered, this, &MainWindow::showMinimized);
 	connect(win["maximize"], &QAction::triggered, this, &MainWindow::showMaximized);
-	connect(win["close"], &QAction::triggered, [this] () { d->menu.hide(); close(); });
+	connect(win["close"], &QAction::triggered, this, [this] () { d->menu.hide(); close(); });
 
-	connect(help["about"], &QAction::triggered, [this] () {AboutDialog dlg(this); dlg.exec();});
+	connect(help["about"], &QAction::triggered, this, [this] () {AboutDialog dlg(this); dlg.exec();});
 	connect(d->menu["exit"], &QAction::triggered, this, &MainWindow::exit);
 
 	d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentDvdTitle);
@@ -1392,14 +1413,14 @@ void MainWindow::openMrl(const Mrl &mrl) {
 
 void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
 	if (mrl == d->engine.mrl()) {
-		if (!d->engine.isPlaying())
-			d->engine.play();
+		if (!d->engine.startInfo().isValid())
+			d->load(mrl);
 	} else {
 		if (mrl.isPlaylist()) {
-			d->engine.setPlaylist(Playlist(mrl, enc));
+			d->playlist.set({mrl, enc});
 		} else {
-			d->engine.setPlaylist(generatePlaylist(mrl));
-			d->engine.load(mrl, true);
+			d->playlist.set(generatePlaylist(mrl));
+			d->load(mrl);
 			if (!mrl.isDvd())
 				d->recent.stack(mrl);
 		}
@@ -1690,8 +1711,12 @@ void MainWindow::applyPref() {
 	d->menu.resetKeyMap();
 
 	reloadSkin();
-	if (time >= 0)
-		d->engine.reload();
+	if (time >= 0) {
+		auto info = d->engine.startInfo();
+		info.resume = time;
+		info.cache = d->cache(info.mrl);
+		d->engine.load(info);
+	}
 
 	if (d->tray)
 		d->tray->setVisible(p.enable_system_tray);
@@ -1726,7 +1751,7 @@ void MainWindow::doVisibleAction(bool visible) {
 	d->visible = visible;
 	if (d->visible) {
 		if (d->pausedByHiding && d->engine.isPaused()) {
-			d->engine.play();
+			d->engine.unpause();
 			d->pausedByHiding = false;
 		}
 		setWindowFilePath(d->filePath);
@@ -1829,6 +1854,7 @@ void MainWindow::updateTitle() {
 void MainWindow::updateMrl(const Mrl &mrl) {
 	updateTitle();
 	const auto dvd = mrl.isDvd();
+	d->playlist.setLoaded(mrl);
 	auto menu = d->menu("play")["dvd-menu"];
 	menu->setEnabled(dvd);
 	menu->setVisible(dvd);
@@ -1839,7 +1865,7 @@ void MainWindow::clearSubtitleFiles() {
 	qDeleteAll(d->menu("subtitle")("track").g("external")->actions());
 	for (auto action : d->menu("subtitle")("track").g("internal")->actions()) {
 		auto id = action->data().toInt();
-		if (!d->engine.subtitleStreams()[id].fileName().isEmpty())
+		if (d->engine.subtitleStreams()[id].isExternal())
 			d->engine.removeSubtitleStream(id);
 	}
 }
@@ -1859,30 +1885,6 @@ void MainWindow::appendSubFiles(const QStringList &files, bool checked, const QS
 				d->subtitle.load(sub, checked);
 		}
 		d->syncSubtitleFileMenu();
-	}
-}
-
-void MainWindow::customEvent(QEvent *event) {
-	if (event->type() == AskStartTimeEvent) {
-		const auto mrl = _GetData<Mrl>(event);
-		auto state = d->history.find(mrl);
-		if (state && state->resume_position > 0) {
-			if (d->preferences.ask_record_found) {
-				CheckDialog dlg(this, QDialogButtonBox::Yes | QDialogButtonBox::No);
-				dlg.setChecked(false);
-				dlg.setLabelText(tr("Do you want to resume the playback at the last played position?\n"
-					"Played Date: %1\nStopped Position: %2\n")
-					.arg(state->last_played_date_time.toString(Qt::ISODate)).arg(_MSecToString(state->resume_position, "h:mm:ss")));
-				dlg.setCheckBoxText(tr("Don't ask again"));
-				dlg.setWindowTitle(tr("Resume Playback"));
-				if (dlg.exec() == QDialogButtonBox::Yes)
-					d->resume = state->resume_position;
-				if (_Change(d->preferences.ask_record_found, !dlg.isChecked()))
-					d->preferences.save();
-			} else
-				d->resume = state->resume_position;
-		} else
-			d->resume = 0;
 	}
 }
 

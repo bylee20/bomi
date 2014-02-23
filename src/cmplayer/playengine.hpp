@@ -16,9 +16,16 @@ enum class DeintMethod;		enum class DeintMode;
 enum class ChannelLayout;	struct SubtitleFileInfo;
 struct mpv_event;
 
-typedef std::function<int(const Mrl&)> GetMrlInt;
-
 typedef QLinkedList<QString> FilterList;
+
+struct StartInfo {
+	StartInfo() {}
+	StartInfo(const Mrl &mrl): mrl(mrl) {}
+	Mrl mrl;
+	int resume = -1;
+	int cache = -1;
+	bool isValid() const { return !mrl.isEmpty() && resume >= 0 && cache >= 0; }
+};
 
 class PlayEngine : public QObject {
 	Q_OBJECT
@@ -52,7 +59,7 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(AudioTrackInfoObject *audioTrack READ audioTrackInfo NOTIFY audioStreamsChanged)
 	Q_PROPERTY(SubtitleTrackInfoObject *subtitleTrack READ subtitleTrackInfo NOTIFY subtitleTrackInfoChanged)
 public:
-	enum State {Stopped = 1, Playing = 2, Paused = 4, Finished = 8, Loading = 16, Error = 32, Running = Playing | Loading };
+	enum State {Stopped = 1, Playing = 2, Paused = 4, Loading = 16, Error = 32, Running = Playing | Loading };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
 	enum DVDCmd { DVDMenu };
 	PlayEngine();
@@ -65,21 +72,21 @@ public:
 	int end() const;
 	void setImageDuration(int duration);
 	int duration() const;
-	void setPlaylist(const Playlist &playlist);
 	Mrl mrl() const;
-	bool atEnd() const;
 	bool isSeekable() const;
 	void setHwAccCodecs(const QList<int> &codecs);
 	bool isRunning() const { return m_state & Running; }
 	bool isPlaying() const {return m_state & Playing;}
 	bool isPaused() const {return m_state & Paused;}
 	bool isStopped() const {return m_state & Stopped;}
-	bool isFinished() const {return m_state & Finished;}
 	bool isInitialized() const;
 	double speed() const;
 	State state() const { return m_state; }
-	void load(const Mrl &mrl, int start = -1);
-	void load(const Mrl &mrl, bool play);
+//	void setCurrentMrl(const Mrl &mrl);
+	void load(const StartInfo &info);
+	const StartInfo &startInfo() const;
+//	void play(int start, int cache);
+//	void load(const MrlStartInfo &mrl, bool play);
 	void setSpeed(double speed);
 	const DvdInfo &dvd() const;
 	int currentDvdTitle() const;
@@ -101,8 +108,6 @@ public:
 	const StreamList &videoStreams() const;
 	void setCurrentVideoStream(int id);
 	int currentVideoStream() const;
-	void setGetStartTimeFunction(const GetMrlInt &func);
-	void setGetCacheFunction(const GetMrlInt &func);
 	void setAudioSync(int sync);
 	int audioSync() const;
 	const PlaylistModel &playlist() const;
@@ -122,7 +127,6 @@ public:
 	void removeSubtitleStream(int id);
 	void setSubtitleStreamsVisible(bool visible);
 	bool isSubtitleStreamsVisible() const;
-	void setVideoFilters(const QString &vfs);
 	void setDeintOptions(const DeintOption &swdec, const DeintOption &hwdec);
 	void setDeintMode(DeintMode mode);
 	DeintMode deintMode() const;
@@ -160,15 +164,16 @@ public:
 	void sendDVDCommand(DVDCmd cmd);
 	QList<SubtitleFileInfo> subtitleFiles() const;
 	void setSubtitleDelay(int ms);
+	void setNextStartInfo(const StartInfo &startInfo);
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);
 	void setMuted(bool muted);
 	void setVideoRenderer(VideoRendererItem *renderer);
-	void play();
+//	void play();
 	void stop();
 	void quit();
-	void reload();
+//	void reload();
 	void pause();
 	void unpause();
 	void seek(int pos);
@@ -178,8 +183,7 @@ signals:
 	void tempoScaledChanged(bool on);
 	void volumeNormalizerActivatedChanged(bool on);
 	void started(Mrl mrl);
-	void stopped(Mrl mrl, int pos, int duration);
-	void finished(Mrl mrl);
+	void finished(Mrl mrl, int position, int remain);
 	void tick(int pos);
 	void mrlChanged(const Mrl &mrl);
 	void stateChanged(PlayEngine::State state);
@@ -211,7 +215,9 @@ signals:
 	void currentSubtitleStreamChanged(int stream);
 	void currentVideoStreamChanged(int stream);
 	void subtitleTrackInfoChanged();
+	void requestNextStartInfo();
 private:
+	void updateState(State state);
 	void onMpvStageChanged(int stage);
 	void exec();
 	void setState(PlayEngine::State state);

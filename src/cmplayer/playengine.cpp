@@ -20,24 +20,12 @@ struct mpv_handle {
 #include <demux/demux.h>
 }
 
-static QByteArray fileNameAsArg(const QString &fileName) {
+static QByteArray doubleQuoted(const QString &fileName) {
 	const auto file = fileName.toLocal8Bit();
 	QByteArray arg; arg.reserve(file.size() + 2);
 	arg += '"'; arg += file; arg += '"';
 	return arg;
 }
-
-struct PlaybackData {
-	int begin = 0, duration = 0, terminated = 0;
-	PlayEngine::State state = PlayEngine::Loading;
-	PlayEngine::State newState = PlayEngine::Loading;
-	ChapterList chapters;
-	int cache = -1, chapter = -1;
-	quint64 loops = 0;
-	Mrl mrl;
-	QVector<int> streams = {-1, 1, -1}; // vid aid sid
-	QImage image;
-};
 
 struct PlayEngine::Data {
 	Data(PlayEngine *engine): p(engine) {}
@@ -50,7 +38,7 @@ struct PlayEngine::Data {
 	HardwareAcceleration hwAcc = HardwareAcceleration::Unavailable;
 
 	bool hasImage = false;
-	bool subStreamsVisible = true;
+	bool subStreamsVisible = true, userPaused = false, startPaused = false;
 
 	mpv_error errorStatus = MPV_ERROR_SUCCESS;
 	const char *error() const { return mpv_error_string(errorStatus); }
@@ -70,42 +58,32 @@ struct PlayEngine::Data {
 	}
 	void setOption(const char *name, const char *data) {
 		fatal(mpv_set_option_string(handle, name, data), "Couldn't set option %%=%%.", name, data);
-	};
+	}
 
 	Thread thread{p};
 	AudioController *audio = nullptr;
-	QByteArray fileName;
-	QTimer imageTicker, avTicker;
-	bool quit = false, looping = false, init = false, pause = false;
-	PlaybackData playback;
-	int start = 0;
-	bool muted = false;
+	QTimer imageTicker;
+	bool quit = false, init = false;
+	bool muted = false, tick = false;
 	int volume = 100;
-	double amp = 1.0;
-	double speed = 1.0;
+	double amp = 1.0, speed = 1.0;
+	int cacheForPlayback = 20, cacheForSeeking = 50;
 	qreal cache = -1.0;
 	MPContext *mpctx = nullptr;
 	mpv_handle *handle = nullptr;
 	VideoOutput *video = nullptr;
-	GetMrlInt getStartTimeFunc, getCacheFunc;
-	PlaylistModel playlist;
-	QByteArray hwAccCodecs;
+	QByteArray hwaccCodecs;
 	QMutex mutex;
-	QMap<QString, QString> subtitleNames;
-	QList<SubtitleTempFile> subtitleFiles;
+	QList<SubtitleFileInfo> subtitleFiles;
 	ChannelLayout layout = ChannelLayout::Default;
-	int duration = 0, audioSync = 0, begin = 0;
-	int subDelay = 0;
-	int chapter = -2;
-	QVector<int> streams = {-1, -1, -1};
-	StreamList subStreams, audioStreams, videoStreams;
+	int duration = 0, audioSync = 0, begin = 0, position = 0, subDelay = 0, chapter = -2;
+	QVector<int> streamIds = {-1, -1, -1};
+	QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
 	AudioTrackInfoObject *audioTrackInfo = nullptr;
 	VideoRendererItem *renderer = nullptr;
 	DvdInfo dvd;
-	ChapterList chapters;
+	ChapterList chapters, chapterFakeList;
 	ChapterInfoObject *chapterInfo = nullptr;
-
-	QByteArray vfs;
 
 	QList<QMetaObject::Connection> rendererConnections;
 
@@ -115,40 +93,9 @@ struct PlayEngine::Data {
 	QByteArray ao = "";
 	AudioDriver audioDriver = AudioDriver::Auto;
 
-	int position = 0;
+	StartInfo startInfo, nextInfo;
 
 	SubtitleTrackInfoObject subtitleTrackInfo;
-
-	void checkTimeRange() {
-		if (_Change(playback.begin, int(get_start_time(mpctx)*1000))
-				| _Change(playback.duration, int(get_time_length(mpctx)*1000))) {
-			_PostEvent(p, TimeRangeChange, playback.begin, playback.duration);
-			auto d = this;
-			if (playback.duration) {
-				auto &chapters = d->playback.chapters;
-				chapters.resize(get_chapter_count(d->mpctx));
-				for (int i=0; i<chapters.size(); ++i) {
-					chapters[i].m_time = chapter_start_time(d->mpctx, i)*1000;
-					const QString time = _MSecToString(chapters[i].m_time, _L("hh:mm:ss.zzz"));
-					if (char *str = chapter_name(d->mpctx, i)) {
-						chapters[i].m_name = QString::fromLocal8Bit(str);
-						if (chapters[i].m_name != time)
-							chapters[i].m_name += '(' % time % ')';
-						talloc_free(str);
-					} else
-						chapters[i].m_name = time;
-					chapters[i].m_id = i;
-				}
-				_PostEvent(p, UpdateChapterList, playback.chapters);
-			}
-		}
-	}
-	void checkCurrentStreams() {
-		for (int i=0; i<STREAM_TYPE_COUNT; ++i) {
-			if (_Change(playback.streams[i], mpctx->current_track[0][i] ? mpctx->current_track[0][i]->user_tid : -1))
-				_PostEvent(p, UpdateCurrentStream, i, playback.streams[i]);
-		}
-	}
 
 	static int mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 		auto e = static_cast<PlayEngine*>(mpctx->priv); auto d = e->d;
@@ -158,17 +105,8 @@ struct PlayEngine::Data {
 			case MpSetProperty:
 				mp_property_do(cmd->name, M_PROPERTY_SET, &cmd->args[0].v, mpctx);
 				break;
-			case MpSetAudioLevel:
-				d->audio->setAmpLevel(cmd->args[0].v.d);
-				break;
-			case MpSetAudioMuted:
-				d->audio->setMuted(cmd->args[0].v.i);
-				break;
 			case MpSetTempoScaler:
 				d->audio->setTempoScalerActivated(cmd->args[0].v.i);
-				reinit_audio_chain(mpctx);
-				break;
-			case MpResetAudioChain:
 				reinit_audio_chain(mpctx);
 				break;
 			case MpResetDeint:
@@ -176,9 +114,6 @@ struct PlayEngine::Data {
 				break;
 			case MpSetDeintEnabled:
 				d->video->setDeintEnabled(d->deint != DeintMode::None);
-				break;
-			case MpPauseOnStart:
-				d->pause = true;
 				break;
 			default:
 				break;
@@ -189,9 +124,6 @@ struct PlayEngine::Data {
 		return false;
 	}
 
-	int getStartTime(const Mrl &mrl) { return getStartTimeFunc ? getStartTimeFunc(mrl) : 0; }
-	int getCache(const Mrl &mrl) { return getCacheFunc ? getCacheFunc(mrl) : 0; }
-	QByteArray &setFileName(const Mrl &mrl) { return fileName = fileNameAsArg(mrl.location()); }
 	template<typename T = int>
 	bool enqueue(int id, const char *name = "", const T &v = 0) {
 		const bool ret = mpctx && mpctx->input;
@@ -207,71 +139,86 @@ struct PlayEngine::Data {
 		}
 		return ret;
 	}
-	void updateAudioLevel() { enqueue(MpSetAudioLevel, "", (double)(volume)*0.01*amp); }
-	template<typename T> void setmp(const char *name, T value) { enqueue(MpSetProperty, name, value); }
-	void tellmp(const QByteArray &cmd) {
-		if (mpctx && mpctx->input)
-			mp_input_queue_cmd(mpctx->input, mp_input_parse_cmd(mpctx->input, bstr0(cmd.data()), ""));
+	double mpVolume() const { return volume*amp/10.0; }
+	template<typename T>
+	void setmpv(const char *name, T value) {
+		mpv_set_property_async(handle, 0, name, MPV_FORMAT_STRING, qbytearray_from<T>(value).data());
 	}
-	void tellmp(const QByteArray &cmd, std::initializer_list<QByteArray> list) {
+
+	template<typename T> void setmp(const char *name, T value) { enqueue(MpSetProperty, name, value); }
+	void tellmpv(const QByteArray &cmd) {
+		check(mpv_command_string(handle, cmd.constData()), "Cannaot execute: %%", cmd);
+	}
+	void tellmpv(const QByteArray &cmd, std::initializer_list<QByteArray> list) {
 		int size = cmd.size();
 		for (auto &one : list) size += one.size();
 		QByteArray str; str.reserve(size + list.size()*2 + 2); str = cmd;
 		for (auto &one : list) { str += ' '; str += one; }
-		tellmp(str);
+		tellmpv(str);
 	}
 	template<typename T>
-	void tellmp(const QByteArray &cmd, const T &arg) {
-		tellmp(cmd, {qbytearray_from<T>(arg)});
+	void tellmpv(const QByteArray &cmd, const T &arg) {
+		tellmpv(cmd, {qbytearray_from<T>(arg)});
 	}
 	template<typename T, typename S>
-	void tellmp(const QByteArray &cmd, const T &a1, const S &a2) {
-		tellmp(cmd, {qbytearray_from<T>(a1), qbytearray_from<S>(a2)});
+	void tellmpv(const QByteArray &cmd, const T &a1, const S &a2) {
+		tellmpv(cmd, {qbytearray_from<T>(a1), qbytearray_from<S>(a2)});
 	}
 	template<typename T, typename S, typename R>
-	void tellmp(const QByteArray &cmd, const T &a1, const S &a2, const R &a3) {
-		tellmp(cmd, {qbytearray_from<T>(a1), qbytearray_from<S>(a2), qbytearray_from<R>(a3)});
+	void tellmpv(const QByteArray &cmd, const T &a1, const S &a2, const R &a3) {
+		tellmpv(cmd, {qbytearray_from<T>(a1), qbytearray_from<S>(a2), qbytearray_from<R>(a3)});
 	}
 //	template<template <typename> class T> void tellmp(const QByteArray &cmd, const T<QString> &args) {
 //		QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);
 //	}
 
+	void updateMrl() {
+		hasImage = startInfo.mrl.isImage();
+		updateMediaName();
+		emit p->mrlChanged(startInfo.mrl);
+		emit p->mediaChanged();
+	}
+
 	void clear() {
 		dvd.clear();
-		audioStreams.clear();
-		videoStreams.clear();
-		subStreams.clear();
-		subtitleFiles.clear();
-		for (auto &f : subtitleFiles)
-			delete f.file;
-		subtitleFiles.clear();
-		emit p->audioStreamsChanged(audioStreams);
-		emit p->videoStreamsChanged(videoStreams);
-		emit p->subtitleStreamsChanged(subStreams);
-	}
 
-	void play(int time) {
-		start = time;
-		tellmp("loadfile", setFileName(playlist.loadedMrl()), 0);
 	}
-
-	bool load(int row, int start) {
-		if (!playlist.isValidRow(row))
-			return false;
-		if (playlist.loaded() == row) {
-			if (start >= 0 && !looping)
-				play(start);
-		} else {
-			playlist.setLoaded(row);
-			_PostEvent(p, MrlChanged, playlist.loadedMrl());
-			if (start < 0)
-				p->stop();
+	void loadfile(const QByteArray &file, int resume, int cache) {
+		if (file.isEmpty())
+			return;
+		QByteArray cmd = "loadfile \"" + file + "\" replace ";
+		cmd += "ao=" + (ao.isEmpty() ? "\"\"" : ao);
+		if (hwaccCodecs.isEmpty())
+			cmd += ",hwdec=no";
+		else {
+#ifdef Q_OS_LINUX
+			if (HwAcc::backend() == HwAcc::VdpauX11)
+				cmd += ",hwdec=vdpau";
 			else
-				play(start);
+				cmd += ",hwdec=vaapi";
+#elif defined(Q_OS_MAC)
+			cmd += ",hwdec=vda";
+#endif
+			cmd += ",hwdec-codecs=\"" + hwaccCodecs + '"';
 		}
-		return true;
+		cmd += ",cache=" + (cache > 0 ? QByteArray::number(cache) : "no");
+		if (resume > 0)
+			cmd += ",start=" + QByteArray::number(resume/1000.0);
+		cmd += ",volume=" + QByteArray::number(mpVolume());
+		cmd += muted ? ",mute=yes" : ",mute=no";
+		cmd += ",audio-delay=" + QByteArray::number(audioSync/1000.0);
+		cmd += ",sub-delay=" + QByteArray::number(subDelay/1000.0);
+		cmd += ",cache-pause=" + (cacheForPlayback > 0 ? QByteArray::number((int)(cacheForPlayback*0.5)) : "no");
+		cmd += ",cache-min=" + QByteArray::number(cacheForPlayback);
+		cmd += ",cache-seek-min=" + QByteArray::number(cacheForSeeking);
+		cmd += (p->isPaused() || hasImage) ? ",pause=yes" : ",pause=no";
+		_Debug("Call: %%", cmd);
+		tellmpv(cmd);
 	}
-
+	void loadfile() {
+		if (startInfo.isValid())
+			loadfile(startInfo.mrl.toString().toLocal8Bit(), startInfo.resume, startInfo.cache);
+	}
 	void updateMediaName() {
 		QString name, category;
 		auto mrl = p->mrl();
@@ -293,7 +240,7 @@ struct PlayEngine::Data {
 			if (HwAcc::supports(HwAcc::codecId(codec))) {
 				if (video->hwAcc())
 					return HardwareAcceleration::Activated;
-				if (!hwAccCodecs.contains(codec))
+				if (!hwaccCodecs.contains(codec))
 					return HardwareAcceleration::Deactivated;
 			}
 		}
@@ -310,7 +257,6 @@ PlayEngine::PlayEngine()
 	d->chapterInfo = new ChapterInfoObject(this, this);
 	d->audioTrackInfo = new AudioTrackInfoObject(this, this);
 	d->imageTicker.setInterval(20);
-	d->avTicker.setInterval(100);
 	d->updateMediaName();
 
 	_Debug("Make registrations and connections");
@@ -338,11 +284,6 @@ PlayEngine::PlayEngine()
 		if (pos || begin || duration)
 			emit relativePositionChanged();
 	});
-	connect(&d->avTicker, &QTimer::timeout, [this] () {
-		d->position = get_current_time(d->mpctx)*1000.0 + 0.5;
-		emit tick(d->position);
-		emit relativePositionChanged();
-	});
 	connect(d->video, &VideoOutput::formatChanged, [this] (const VideoFormat &format) {
 		_PostEvent(this, VideoFormatChanged, format);
 		_PostEvent(this, HwAccChanged, d->getHwAcc());
@@ -353,14 +294,13 @@ PlayEngine::PlayEngine()
 	connect(d->audio, &AudioController::started, [this] () {
 		_PostEvent(this, UpdateAudioFormat);
 	});
-	connect(&d->playlist, &PlaylistModel::playRequested, [this] (int row) {
-		d->load(row, d->getStartTime(d->playlist[row]));
-	});
 
 	d->handle = mpv_create();
 	d->mpctx = d->handle->mpctx;
 	d->mpctx->priv = this;
 	mpv_set_event_filter_callback(d->handle, mpvEventFilter, this);
+	mpv_request_event(d->handle, MPV_EVENT_TICK, true);
+//	mpv_request_log_messages(d->handle, "v");
 	d->setOption("fs", "no");
 	d->setOption("mouse-movements", "yes");
 	d->setOption("af", "dummy:address=" + QByteArray::number((quint64)(quintptr)(void*)(d->audio)));
@@ -396,9 +336,7 @@ PlayEngine::PlayEngine()
 				d->setOption(arg.left(index).toLatin1(), arg.mid(index+1).toLatin1());
 		}
 	}
-
-	if (!d->isSuccess(mpv_initialize(d->handle)))
-		_Fatal("Error %%: Couldn't initialize mpv. Exit...", d->error());
+	d->fatal(mpv_initialize(d->handle), "Couldn't initialize mpv.");
 }
 
 PlayEngine::~PlayEngine() {
@@ -455,14 +393,14 @@ const DvdInfo &PlayEngine::dvd() const {return d->dvd;}
 int PlayEngine::currentDvdTitle() const {return d->dvd.currentTitle;}
 const ChapterList &PlayEngine::chapters() const {return d->chapters;}
 
-const StreamList &PlayEngine::subtitleStreams() const {return d->subStreams;}
+const StreamList &PlayEngine::subtitleStreams() const {return d->streams[Stream::Subtitle];}
 
 VideoRendererItem *PlayEngine::videoRenderer() const {return d->renderer;}
 
-const StreamList &PlayEngine::videoStreams() const {return d->videoStreams;}
+const StreamList &PlayEngine::videoStreams() const {return d->streams[Stream::Video];}
 
 int PlayEngine::audioSync() const {return d->audioSync;}
-const StreamList &PlayEngine::audioStreams() const {return d->audioStreams;}
+const StreamList &PlayEngine::audioStreams() const {return d->streams[Stream::Audio];}
 
 PlayEngine::HardwareAcceleration PlayEngine::hwAcc() const {
 	return d->hwAcc;
@@ -507,7 +445,7 @@ double PlayEngine::speed() const {
 
 void PlayEngine::setSpeed(double speed) {
 	if (_ChangeZ(d->speed, speed)) {
-		d->setmp("speed", speed);
+		d->setmpv("speed", speed);
 		emit speedChanged(d->speed);
 	}
 }
@@ -517,14 +455,14 @@ void PlayEngine::seek(int pos) {
 	if (d->hasImage)
 		d->image.seek(pos, false);
 	else
-		d->tellmp("seek", (double)pos/1000.0, 2);
+		d->tellmpv("seek", (double)pos/1000.0, 2);
 }
 
 void PlayEngine::relativeSeek(int pos) {
 	if (d->hasImage)
 		d->image.seek(pos, true);
 	else
-		d->tellmp("seek", (double)pos/1000.0, 0);
+		d->tellmpv("seek", (double)pos/1000.0, 0);
 	emit sought();
 }
 
@@ -537,8 +475,8 @@ void PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) {
 }
 
 void PlayEngine::setChannelLayout(ChannelLayout layout) {
-	if (_Change(d->layout, layout))
-		reload();
+	if (_Change(d->layout, layout) && d->position > 0)
+		d->loadfile(d->startInfo.mrl.toString().toLocal8Bit(), d->position, d->startInfo.cache);
 }
 
 typedef QPair<AudioDriver, const char*> AudioDriverName;
@@ -576,17 +514,8 @@ AudioDriver PlayEngine::audioDriver() const {
 }
 
 void PlayEngine::setMinimumCache(int playback, int seeking) {
-	d->mpctx->opts->stream_cache_min_percent = playback;
-	d->mpctx->opts->stream_cache_pause = playback*0.5;
-	d->mpctx->opts->stream_cache_seek_min_percent = seeking;
-}
-
-void PlayEngine::setGetCacheFunction(const GetMrlInt &func) {
-	d->getCacheFunc = func;
-}
-
-void PlayEngine::setGetStartTimeFunction(const GetMrlInt &func) {
-	d->getStartTimeFunc = func;
+	d->cacheForPlayback = playback;
+	d->cacheForSeeking = seeking;
 }
 
 double PlayEngine::volumeNormalizer() const {
@@ -594,14 +523,14 @@ double PlayEngine::volumeNormalizer() const {
 }
 
 void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
-	d->hwAccCodecs.clear();
+	d->hwaccCodecs.clear();
 	for (auto id : codecs) {
 		if (const char *name = HwAcc::codecName(id)) {
-			d->hwAccCodecs.append(name);
-			d->hwAccCodecs.append(',');
+			d->hwaccCodecs.append(name);
+			d->hwaccCodecs.append(',');
 		}
 	}
-	d->hwAccCodecs.chop(1);
+	d->hwaccCodecs.chop(1);
 }
 
 bool PlayEngine::isSubtitleStreamsVisible() const {return d->subStreamsVisible;}
@@ -618,53 +547,31 @@ void PlayEngine::setCurrentSubtitleStream(int id) {
 }
 
 int PlayEngine::currentSubtitleStream() const {
-	return d->streams[STREAM_SUB];
+	return d->streamIds[Stream::Subtitle];
 }
 
 void PlayEngine::addSubtitleStream(const QString &fileName, const QString &enc) {
 	QFileInfo info(fileName);
-	QFile in(fileName);
-	QTemporaryFile *out = new QTemporaryFile(QDir::tempPath() % "/XXXXXX_" % info.fileName());
-	if (in.open(QFile::ReadOnly) && out->open()) {
-		QTextStream sin, sout;
-		sin.setDevice(&in);
-		sin.setCodec(enc.toLocal8Bit());
-		sout.setDevice(out);
-		sout.setCodec("UTF-8");
-		QString line;
-		while (!(line = sin.readLine()).isNull())
-			sout << line << endl;
-		sout.flush();
-	} else {
-		delete out;
-		out = nullptr;
-	}
-	if (out) {
-		out->close();
-		SubtitleTempFile item;
-		item.info.path = info.absoluteFilePath();
-		item.info.encoding = enc;
-		item.file = out;
-		d->subtitleFiles.append(item);
-		d->subtitleNames[out->fileName()] = info.fileName();
-		d->tellmp("sub_add", {fileNameAsArg(out->fileName())});
+	if (info.exists()) {
+		SubtitleFileInfo file;
+		file.path = info.absoluteFilePath();
+		file.encoding = enc;
+		d->subtitleFiles.append(file);
+		d->tellmpv("sub_add", doubleQuoted(file.path), enc);
 	}
 }
 
 void PlayEngine::removeSubtitleStream(int id) {
-	auto it = d->subStreams.find(id);
-	if (it != d->subStreams.end()) {
-		auto fileName = it->fileName();
-		if (!fileName.isEmpty()) {
-			d->subtitleNames.remove(fileName);
+	auto &streams = d->streams[Stream::Subtitle];
+	auto it = streams.find(id);
+	if (it != streams.end()) {
+		if (it->isExternal()) {
 			for (int i=0; i<d->subtitleFiles.size(); ++i) {
-				if (d->subtitleFiles[i].file->fileName() == fileName) {
-					delete d->subtitleFiles.takeAt(i).file;
-					break;
-				}
+				if (d->subtitleFiles[i].path == it->m_fileName)
+					d->subtitleFiles.removeAt(i);
 			}
 		}
-		d->tellmp("sub_remove", id);
+		d->tellmpv("sub_remove", id);
 	}
 }
 
@@ -683,6 +590,28 @@ double PlayEngine::avgsync() const {
 	return sync;
 }
 
+void PlayEngine::setNextStartInfo(const StartInfo &startInfo) {
+	d->nextInfo = startInfo;
+}
+
+void PlayEngine::updateState(State state) {
+	const bool wasRunning = isRunning();
+	if (_Change(m_state, state)) {
+		emit stateChanged(m_state);
+		if (m_state & (Playing | Paused)) {
+			if (d->hasImage)
+				d->imageTicker.start();
+		} else {
+			if (d->hasImage)
+				d->imageTicker.stop();
+		}
+		if (wasRunning != isRunning())
+			emit runningChanged();
+	}
+	if (m_state != Paused)
+		d->userPaused = false;
+}
+
 template<typename T>
 static bool _CheckSwap(T &the, T &one) { if (the != one) { the.swap(one); return true; } return false; }
 
@@ -693,6 +622,14 @@ void PlayEngine::customEvent(QEvent *event) {
 		if (_CheckSwap(d->chapters, chapters)) {
 			d->chapterInfo->setCount(d->chapters.size());
 			emit chaptersChanged(d->chapters);
+			if (!d->chapters.isEmpty()) {
+				Chapter prev; prev.m_id = -1; prev.m_time = _Min<int>();
+				Chapter last; last.m_id = d->chapters.last().id() + 1; last.m_time = _Max<int>();
+				d->chapterFakeList.append(prev);
+				d->chapterFakeList += d->chapters;
+				d->chapterFakeList.append(last);
+			} else
+				d->chapterFakeList.clear();
 		}
 		break;
 	} case UpdateDVDInfo:
@@ -700,115 +637,116 @@ void PlayEngine::customEvent(QEvent *event) {
 		emit dvdInfoChanged();
 		break;
 	case UpdateCache:
-		d->cache = _GetData<int>(event)*1e-2;
+		d->cache = _GetData<int>(event)/(qreal)d->startInfo.cache;
 		emit cacheChanged();
-		break;
-	case UpdateCurrentChapter:
-		d->chapter = _GetData<int>(event);
-		emit currentChapterChanged(d->chapter);
 		break;
 	case UpdateAudioFormat:
 		d->audioInfo.setAudio(this);
 		emit audioChanged();
 		break;
 	case UpdateCurrentStream: {
-		int type, id;
-		_GetAllData(event, type, id);
-		d->streams[type] = id;
-		switch (type) {
-		case STREAM_AUDIO:
-			emit currentAudioStreamChanged(id);
-			break;
-		case STREAM_VIDEO:
-			emit currentVideoStreamChanged(id);
-			break;
-		case STREAM_SUB:
-			emit currentSubtitleStreamChanged(id);
-			break;
-		default:
-			break;
-		}
+		const auto ids = _GetData<QVector<int>>(event);
+		Q_ASSERT(ids.size() == 3);
+		auto check = [&] (Stream::Type type, void (PlayEngine::*sig)(int)) {
+			const int id = ids[type];
+			if (id == d->streamIds[type])
+				return;
+			auto &streams = d->streams[type];
+			for (auto it = streams.begin(); it != streams.end(); ++it)
+				it->m_selected = it->id() == id;
+			emit (this->*sig)(id);
+		};
+		check(Stream::Audio, &PlayEngine::currentAudioStreamChanged);
+		check(Stream::Video, &PlayEngine::currentVideoStreamChanged);
+		check(Stream::Subtitle, &PlayEngine::currentSubtitleStreamChanged);
 		break;
-	} case UpdateTrack: {
-		auto streams = _GetData<std::array<StreamList, STREAM_TYPE_COUNT>>(event);
-		if (_CheckSwap(d->videoStreams, streams[STREAM_VIDEO])) {
-			emit videoStreamsChanged(d->videoStreams);
-			emit hasVideoChanged();
-		}
-		if (_CheckSwap(d->audioStreams, streams[STREAM_AUDIO])) {
-			d->audioTrackInfo->setCount(d->audioStreams.size());
-			emit audioStreamsChanged(d->audioStreams);
-		}
-		if (!streams[STREAM_SUB].isEmpty()) {
-			streams[STREAM_SUB][-1].m_name = tr("No Subtitle");
-			for (auto &one : streams[STREAM_SUB]) {
-				auto it = d->subtitleNames.constFind(one.m_title);
-				if (it != d->subtitleNames.constEnd()) {
-					one.m_fileName.swap(one.m_title);
-					one.m_title = *it;
+	} case UpdateTrackList: {
+		auto streams = _GetData<QVector<StreamList>>(event);
+		Q_ASSERT(streams.size() == 3);
+		auto check = [&] (Stream::Type type, void (PlayEngine::*sig)(const StreamList&)) {
+			auto &_streams = d->streams[type];
+			if (!_CheckSwap(_streams, streams[type]))
+				return false;
+			d->streamIds[type] = -1;
+			for (auto it = _streams.begin(); it != _streams.end(); ++it) {
+				if (it->isSelected()) {
+					d->streamIds[type] = it->id();
+					break;
 				}
 			}
+			emit (this->*sig)(_streams);
+			return true;
+		};
+		if (check(Stream::Video, &PlayEngine::videoStreamsChanged))
+			emit hasVideoChanged();
+		if (check(Stream::Audio, &PlayEngine::audioStreamsChanged)) {
+			d->audioTrackInfo->setCount(d->streams[Stream::Audio].size());
+			d->audioTrackInfo->setCurrent(d->streamIds[Stream::Audio]);
 		}
-		if (_CheckSwap(d->subStreams, streams[STREAM_SUB]))
-			emit subtitleStreamsChanged(d->subStreams);
+		check(Stream::Subtitle, &PlayEngine::subtitleStreamsChanged);
 		break;
-	} case StreamOpen:
-		d->updateMediaName();
-		d->start = 0;
-		d->position = 0;
-		d->cache = -1;
+	} case StateChange:
+		updateState(_GetData<PlayEngine::State>(event));
+		break;
+	case PreparePlayback: {
+		d->subtitleFiles.clear();
+		break;
+	} case StartPlayback: {
 		if (d->renderer)
 			d->renderer->reset();
-		emit tick(d->position);
 		emit seekableChanged(isSeekable());
-		emit started(d->playlist.loadedMrl());
 		emit mediaChanged();
 		emit audioChanged();
 		emit cacheChanged();
+		updateState(Playing);
+		emit started(d->startInfo.mrl);
 		break;
-	case StateChange: {
-		const auto state = _GetData<PlayEngine::State>(event);
-		const bool wasRunning = isRunning();
-		if (_Change(m_state, state)) {
-			emit stateChanged(m_state);
-			if (m_state & (Playing | Paused)) {
-				if (d->hasImage)
-					d->imageTicker.start();
-				else if (d->mpctx && d->mpctx->demuxer)
-					d->avTicker.start();
-			} else {
-				if (d->hasImage)
-					d->imageTicker.stop();
-				else
-					d->avTicker.stop();
-			}
-			if (wasRunning != isRunning())
-				emit runningChanged();
-		}
+	} case EndPlayback: {
+		Mrl mrl; bool error; _GetAllData(event, mrl, error);
+		const int remain = (d->duration + d->begin) - d->position;
+		const bool eof = remain <= 500;
+		d->nextInfo = StartInfo();
+		if (!error && eof)
+			emit requestNextStartInfo();
+		updateState(error ? Error : (d->nextInfo.isValid() ? Loading : Stopped));
+		if (!error && !mrl.isEmpty())
+			emit finished(mrl, d->position, remain);
+		if (d->nextInfo.isValid())
+			load(d->nextInfo);
 		break;
-	} case MrlStopped: {
-		Mrl mrl; int terminated = 0, duration = 0;
-		_GetAllData(event, mrl, terminated, duration);
-		emit stopped(mrl, terminated, duration);
-		break;
-	} case MrlFinished: {
-		const auto mrl = _GetData<Mrl>(event);
-		emit finished(mrl);
-		break;
-	} case PlaylistFinished:
-		emit d->playlist.finished();
-		break;
-	case TimeRangeChange:
+	} case UpdateTimeRange:
 		_GetAllData(event, d->begin, d->duration);
 		emit durationChanged(d->duration);
 		emit beginChanged(d->begin);
 		emit endChanged(end());
 		break;
-	case MrlChanged: {
-		const auto mrl = _GetData<Mrl>(event);
-		d->updateMediaName();
-		emit mrlChanged(mrl);
-		emit mediaChanged();
+	case Tick: {
+		d->position = _GetData<int>(event);
+		emit tick(d->position);
+		emit relativePositionChanged();
+		d->tick = false;
+		auto findChapterIn = [&] (int begin, int end) {
+			end = qMin(end, d->chapterFakeList.size());
+			begin = qMax(0, begin);
+			for (int i=begin; i<end-1; ++i) {
+				if (d->chapterFakeList[i].time() <= d->position && d->position < d->chapterFakeList[i+1].time())
+					return d->chapterFakeList[i].id();
+			}
+			return -2;
+		};
+		int chapter = -2;
+		if (d->chapterFakeList.isEmpty())
+			chapter = -2;
+		else if (d->chapter < -1)
+			chapter = findChapterIn(0, d->chapterFakeList.size());
+		else {
+			chapter = findChapterIn(d->chapter+1, d->chapterFakeList.size());
+			if (chapter == -2)
+				chapter = findChapterIn(0, d->chapter+1);
+		}
+		if (_Change(d->chapter, chapter))
+			emit currentChapterChanged(d->chapter);
+		break;
 	} case VideoFormatChanged: {
 		const auto format = _GetData<VideoFormat>(event);
 		if (_Change(d->videoFormat, format)) {
@@ -845,16 +783,15 @@ void PlayEngine::setCurrentChapter(int id) {
 }
 
 void PlayEngine::setCurrentDvdTitle(int id) {
-	auto mrl = d->playlist.loadedMrl();
+	auto mrl = d->startInfo.mrl;
 	if (mrl.isDvd()) {
 		const QString path = "dvdnav://" % QString::number(id) % mrl.location().mid(6);
-		d->fileName = path.toLocal8Bit();
-		d->tellmp("loadfile", path, 0);
+		d->loadfile(path.toLocal8Bit(), 0, d->startInfo.cache);
 	}
 }
 
 void PlayEngine::sendDVDCommand(DVDCmd cmd) {
-	if (!d->playback.mrl.isDvd())
+	if (!d->startInfo.mrl.isDvd())
 		return;
 	switch (cmd) {
 	case DVDMenu:
@@ -873,44 +810,19 @@ bool PlayEngine::isInitialized() const {
 
 void PlayEngine::onMpvStageChanged(int stage) {
 	switch (stage) {
-	case MP_STAGE_START_IDLING: {
-		while (d->mpctx->playlist->current && d->mpctx->playlist->current->prev)
-			playlist_remove(d->mpctx->playlist, d->mpctx->playlist->current->prev);
-		break;
-	} case MP_STAGE_PREPARE_TO_OPEN: {
+	case MP_STAGE_PREPARE_TO_OPEN: {
 		d->clear();
-		d->playback = PlaybackData();
 		d->video->output(QImage());
-		d->looping = true;
 		setState(PlayEngine::Loading);
-
-		d->playback.mrl = d->playlist.loadedMrl();
-		d->mpctx->opts->pause = d->hasImage = d->playback.mrl.isImage();
-
-//		mpv_set_option_string(d->handle, "ao", d->ao.data());
-//		mpv_set_property_string(d->handle, "ao", d->ao.data());
-//		d->mpctx->opts->audio_driver_list->name = d->ao.data();
-		auto &start = d->mpctx->opts->play_start;
-		if (!d->playback.mrl.isDvd()) {
-			start.pos = d->start*1e-3;
-			start.type = REL_TIME_ABSOLUTE;
-		} else {
-			start.pos = 0.0;
-			start.type = REL_TIME_NONE;
-		}
-		d->setmp("audio-delay", (float)(d->audioSync/1000.0f));
-		d->setmp("sub-delay", (float)(d->subDelay/1000.0f));
 		break;
-	} case MP_STAGE_OPEN_STREAM:
-		break;
-	case MP_STAGE_OPEN_DEMUXER: {
-		d->updateAudioLevel();
+	} case MP_STAGE_OPEN_DEMUXER: {
 		DvdInfo dvd;
 		if (d->mpctx->stream && d->mpctx->stream->info && !strcmp(d->mpctx->stream->info->name, "dvd")) {
-			char buffer[256];
-			if (dvd_volume_id(d->mpctx->stream, buffer, sizeof(buffer)))
-				dvd.volume = QString::fromLocal8Bit(buffer);
+//			char buffer[256];
+//			if (dvd_volume_id(d->mpctx->stream, buffer, sizeof(buffer)))
+//				dvd.volume = QString::fromLocal8Bit(buffer);
 			int titles = 0;
+
 			stream_control(d->mpctx->stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
 			stream_control(d->mpctx->stream, STREAM_CTRL_GET_CURRENT_TITLE, &dvd.currentTitle);
 			dvd.titles.resize(titles);
@@ -921,73 +833,8 @@ void PlayEngine::onMpvStageChanged(int stage) {
 			}
 		}
 		_PostEvent(this, UpdateDVDInfo, dvd);
-		uint title = 0, titles = 0;
-		if (d->mpctx->demuxer && d->mpctx->demuxer->stream) {
-			auto stream = d->mpctx->demuxer->stream;
-			stream->control(stream, STREAM_CTRL_GET_CURRENT_TITLE, &title);
-			stream->control(stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
-		}
-		_PostEvent(this, StreamOpen);
-		d->tellmp("vf set", d->vfs);
-		d->playback.chapter = d->chapter;
-		d->checkTimeRange();
 		break;
-	} case MP_STAGE_START_PLAYBACK:
-		if (d->pause) {
-			pause_player(d->mpctx);
-			d->pause = false;
-		}
-		break;
-	case MP_STAGE_IN_PLAYLOOP:
-		if (!d->playback.duration)
-			d->checkTimeRange();
-		if (d->playback.loops++) {
-			auto state = Playing;
-			if (d->mpctx->paused_for_cache && !d->mpctx->paused)
-				state = Loading;
-			else if (d->mpctx->paused)
-				state = Paused;
-			if (_Change(d->playback.state, state))
-				setState(state);
-			if (_Change(d->playback.cache, mp_get_cache_percent(d->mpctx)))
-				_PostEvent(this, UpdateCache, d->playback.cache);
-			if (_Change(d->playback.chapter, !d->chapters.isEmpty() ? get_current_chapter(d->mpctx) : -2))
-				_PostEvent(this, UpdateCurrentChapter, d->playback.chapter);
-			d->checkCurrentStreams();
-		}
-		break;
-	case MP_STAGE_TERMINATE_PLAYBACK:
-		d->playback.terminated = time();
-		d->looping = false;
-
-		if (d->mpctx->error_playing) {
-			if (d->mpctx->stop_play == PT_QUIT) {
-				setState(Stopped);
-				_PostEvent(this, MrlStopped, d->playback.mrl, d->playback.terminated, d->playback.duration);
-			} else
-				setState(Error);
-		} else {
-			switch (d->mpctx->stop_play) {
-			case KEEP_PLAYING:
-			case AT_END_OF_FILE: {// finished
-				setState(Finished);
-				_PostEvent(this, MrlFinished, d->playback.mrl);
-				if (d->playlist.hasNext()) {
-					d->playlist.setLoaded(d->playlist.next());
-					const auto mrl = d->playlist.loadedMrl();
-					if (d->playback.mrl != mrl)
-						_PostEvent(this, MrlChanged, mrl);
-					d->start = d->getStartTime(mrl);
-					playlist_add(d->mpctx->playlist, playlist_entry_new(mrl.location().toLocal8Bit()));
-				} else
-					_PostEvent(this, PlaylistFinished);
-				break;
-			} default: // just stopped
-				setState(Stopped);
-				_PostEvent(this, MrlStopped, d->playback.mrl, d->playback.terminated, d->playback.duration);
-				break;
-			}
-		}
+	} default:
 		break;
 	}
 }
@@ -995,7 +842,7 @@ void PlayEngine::onMpvStageChanged(int stage) {
 
 void PlayEngine::setVolume(int volume) {
 	if (_Change(d->volume, qBound(0, volume, 100))) {
-		d->updateAudioLevel();
+		d->setmpv("volume", d->mpVolume());
 		emit volumeChanged(d->volume);
 	}
 }
@@ -1014,15 +861,14 @@ double PlayEngine::amp() const {
 
 void PlayEngine::setAmp(double amp) {
 	if (_ChangeZ(d->amp, qBound(0.0, amp, 10.0))) {
-		d->updateAudioLevel();
+		d->setmpv("volume", d->mpVolume());
 		emit preampChanged(d->amp);
 	}
 }
 
 void PlayEngine::setMuted(bool muted) {
 	if (_Change(d->muted, muted)) {
-		d->enqueue(MpSetAudioMuted, "", (int)muted);
-		d->setmp("mute", (int)d->muted);
+		d->tellmpv("mute", (int)d->muted);
 		emit mutedChanged(d->muted);
 	}
 }
@@ -1032,26 +878,6 @@ int PlayEngine::mpvEventFilter(mpv_event *event, void *ctx) {
 	auto d = e->d;
 	switch (event->event_id) {
 	case MPV_EVENT_START_FILE: {
-		const bool init = d->mpctx->initialized;
-		d->mpctx->initialized = false;
-		d->setOption("ao", d->ao.data());
-		if (d->hwAccCodecs.isEmpty()) {
-			d->setOption("hwdec", "no");
-			d->setOption("hwdec-codecs", "");
-		} else {
-	#ifdef Q_OS_LINUX
-			if (HwAcc::backend() == HwAcc::VdpauX11)
-				d->setOption("hwdec", "vdpau");
-			else
-				d->setOption("hwdec", "vaapi");
-	#elif defined(Q_OS_MAC)
-			d->setOption("hwdec", "vda");
-	#endif
-			d->setOption("hwdec-codecs", d->hwAccCodecs);
-		}
-		const auto cache = d->getCache(Mrl(QString::fromLocal8Bit(d->mpctx->playlist->current->filename)));
-		d->setOption("cache", cache > 0 ? QByteArray::number(cache) : "no");
-		d->mpctx->initialized = init;
 		d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
 		d->video->setDeintEnabled(d->deint != DeintMode::None);
 		d->audio->setOutputChannelLayout(d->layout);
@@ -1065,44 +891,165 @@ void PlayEngine::exec() {
 	auto mpctx = d->mpctx;
 	d->init = true;
 	d->quit = false;
+	int begin = 0, duration = 0, position = 0, cache = -1;
+	bool error = true;
+	Mrl mrl;
+	QRegularExpression regList(_L(R"(((^\d+): )?([^=]+)=(.+)$)"));
 	while (!d->quit) {
 		const auto event = mpv_wait_event(d->handle, 10000);
 		switch (event->event_id) {
-		case MPV_EVENT_IDLE:
-//			d->check(mpv_set_option_string(d->handle, "ao", d->ao.data()), "Couldn't set ao=%%.", "alsa");
-
-			break;
-		case MPV_EVENT_START_FILE:
-
-			break;
-		case MPV_EVENT_PLAYBACK_START:
-			break;
-		case MPV_EVENT_END_FILE:
-			break;
-		case MPV_EVENT_TICK:
-			break;
-		case MPV_EVENT_TRACKS_CHANGED: {
-			std::array<StreamList, STREAM_TYPE_COUNT> streams;
-			QString name[STREAM_TYPE_COUNT];
-			name[STREAM_AUDIO] = tr("Audio %1");
-			name[STREAM_VIDEO] = tr("Video %1");
-			name[STREAM_SUB] = tr("Subtitle %1");
-			for (int i=0; i<mpctx->num_tracks; ++i) {
-				const auto track = mpctx->tracks[i];
-				auto &list = streams[track->type];
-				if (!list.contains(track->user_tid)) {
-					auto &stream = list[track->user_tid];
-					stream.m_title = QString::fromLocal8Bit(track->title);
-					stream.m_lang = QString::fromLocal8Bit(track->lang);
-					if (_InRange(2, stream.m_lang.size(), 3) && _IsAlphabet(stream.m_lang))
-						stream.m_lang = Translator::displayLanguage(stream.m_lang);
-					stream.m_id = track->user_tid;
-					stream.m_name = name[track->type].arg(track->user_tid);
+		case MPV_EVENT_TICK: {
+			auto data = static_cast<const double*>(event->data);
+			if (_Change<int>(begin, data[1]*1000 + 0.5) | _Change<int>(duration, data[2]*1000 + 0.5)) {
+				_PostEvent(this, UpdateTimeRange, begin, duration);
+				auto data = mpv_get_property_string(d->handle, "chapter-list");
+				const auto str = QString::fromLocal8Bit(data);
+				mpv_free(data);
+				if (!str.isEmpty()) {
+					const auto lines = str.split('\n', QString::KeepEmptyParts);
+					ChapterList chapters; chapters.reserve(lines.size()/3);
+					Chapter chapter;
+					for (auto &line : lines) {
+						if (line.isEmpty()) {
+							if (chapter.id() >= -1) {
+								if (chapter.m_name.isEmpty())
+									chapter.m_name = _MSecToString(chapter.m_time, _L("hh:mm:ss.zzz"));
+								chapters.append(chapter);
+								chapter = Chapter();
+							}
+						} else {
+							auto match = regList.match(line);
+							if (match.hasMatch()) {
+								if (!match.capturedRef(2).isEmpty())
+									chapter.m_id = match.capturedRef(2).toInt();
+								const auto key = match.capturedRef(3);
+								const auto value = match.capturedRef(4);
+								if (key == _L("title"))
+									chapter.m_name = value.toString();
+								else if (key == _L("time"))
+									chapter.m_time = value.toDouble()*1000 + 0.5;
+							}
+						}
+					}
+					_PostEvent(this, UpdateChapterList, chapters);
 				}
 			}
-			_PostEvent(this, UpdateTrack, streams);
+			if (!d->tick && _Change<int>(position, data[0]*1000 + 0.5)) {
+				d->tick = true;
+				_PostEvent(this, Tick, position);
+			}
+			const auto arg = mpv_get_property_string(d->handle, "cache");
+			int newCache = -1;
+			if (arg) {
+				newCache = atoi(arg);
+				mpv_free(arg);
+			}
+			if (_Change(cache, newCache))
+				_PostEvent(this, UpdateCache, cache);
 			break;
-		} case MPV_EVENT_SHUTDOWN:
+		} case MPV_EVENT_LOG_MESSAGE: {
+			auto message = static_cast<mpv_event_log_message*>(event->data);
+			qDebug() << QString::fromLocal8Bit(message->text);
+			break;
+		} case MPV_EVENT_IDLE:
+			break;
+		case MPV_EVENT_START_FILE:
+			error = true;
+			position = d->position;
+			begin = d->begin;
+			duration = d->duration;
+			cache = d->cache < 0 ? -1 : d->cache*d->startInfo.cache;
+			mrl = d->startInfo.mrl;
+			_PostEvent(this, StateChange, Loading);
+			_PostEvent(this, PreparePlayback);
+			break;
+		case MPV_EVENT_PLAYBACK_START: {
+			error = false;
+			_PostEvent(this, StartPlayback);
+			auto data = mpv_get_property_string(d->handle, "media-title");
+			qDebug() << "media-title" << data;
+			mpv_free(data);
+			break;
+		} case MPV_EVENT_END_FILE: {
+			_PostEvent(this, EndPlayback, mrl, error);
+			break;
+		} case MPV_EVENT_TRACKS_CHANGED: {
+			QVector<StreamList> streams(3);
+			auto data = mpv_get_property_string(d->handle, "track-list");
+			const auto str = QString::fromLocal8Bit(data);
+			mpv_free(data);
+			if (!str.isEmpty()) {
+				const auto lines = str.split('\n', QString::KeepEmptyParts);
+				Stream stream;
+				QRegularExpression id(_L(R"(^\d+: id=(\d+)$)"));
+				QRegularExpression item(_L(R"(^([^=]+)=(.+)$)"));
+				QString titles[3];
+				titles[Stream::Audio] = tr("Audio %1");
+				titles[Stream::Video] = tr("Video %1");
+				titles[Stream::Subtitle] = tr("Subtitle %1");
+				for (auto &line : lines) {
+					if (line.isEmpty()) {
+						if (stream.id() >= 0 && stream.type() != Stream::Unknown) {
+							if (stream.title().isEmpty())
+								stream.m_title = titles[stream.type()].arg(stream.id());
+							streams[stream.type()].insert(stream.id(), stream);
+							stream = Stream();
+						}
+					} else if (stream.id() < 0) {
+						auto match = id.match(line);
+						if (match.hasMatch())
+							stream.m_id = match.capturedRef(1).toInt();
+					} else {
+						auto match = item.match(line);
+						if (match.hasMatch()) {
+							const auto key = match.capturedRef(1);
+							const auto value = match.capturedRef(2);
+							if (key == _L("type")) {
+								if (value == _L("audio"))
+									stream.m_type = Stream::Audio;
+								else if (value == _L("video"))
+									stream.m_type = Stream::Video;
+								else if (value == _L("sub"))
+									stream.m_type = Stream::Subtitle;
+								else
+									_Error("Cannot parse %%=%% in track list.", key, value);
+							} else if (key == _L("title"))
+								stream.m_title = value.toString();
+							else if (key == _L("lang"))
+								stream.m_lang = value.toString();
+							else if (key == _L("external-filename")) {
+								stream.m_fileName = value.toString();
+								stream.m_title = QFileInfo(stream.m_fileName).fileName();
+							} else if (key == _L("selected"))
+								stream.m_selected = value == _L("yes");
+							else if (key == _L("codec"))
+								stream.m_codec = value.toString();
+							else if (key == _L("default"))
+								stream.m_default = value == _L("yes");
+						}
+					}
+				}
+			}
+			_PostEvent(this, UpdateTrackList, streams);
+			break;
+		} case MPV_EVENT_TRACK_SWITCHED: {
+			auto get = [this] (const char *name) {
+				const auto data = mpv_get_property_string(d->handle, name);
+				const int id = std::atoi(data); mpv_free(data); return id;
+			};
+			QVector<int> ids(3, -1);
+			ids[Stream::Video] = get("vid");
+			ids[Stream::Audio] = get("aid");
+			ids[Stream::Subtitle] = get("sid");
+			_PostEvent(this, UpdateCurrentStream, ids);
+			break;
+		} case MPV_EVENT_PAUSE:
+			_PostEvent(this, StateChange, d->userPaused ? Paused : Loading);
+			break;
+		case MPV_EVENT_UNPAUSE:
+			_PostEvent(this, StateChange, Playing);
+			break;
+		case MPV_EVENT_SHUTDOWN:
 			goto shutdown;
 		default:
 			break;
@@ -1119,30 +1066,21 @@ shutdown:
 	qDebug() << "terminate engine";
 }
 
-void PlayEngine::setVideoFilters(const QString &vfs) {
-	if (_Change(d->vfs, vfs.toLocal8Bit()) && d->looping)
-		d->tellmp("vf set", d->vfs);
-}
-
 void PlayEngine::quit() {
-	d->tellmp("quit 1");
+	d->tellmpv("quit 1");
 }
 
-void PlayEngine::reload() {
-	if (isPaused())
-		d->enqueue(MpPauseOnStart);
-	d->play(time());
+const StartInfo &PlayEngine::startInfo() const {
+	return d->startInfo;
 }
 
-void PlayEngine::load(const Mrl &mrl, bool play) {
-	load(mrl, play ? d->getStartTime(mrl) : -1);
-}
-
-void PlayEngine::load(const Mrl &mrl, int start) {
-	auto row = d->playlist.rowOf(mrl);
-	if (row < 0)
-		row = d->playlist.append(mrl);
-	d->load(row, start);
+void PlayEngine::load(const StartInfo &info) {
+	const bool changed = d->startInfo.mrl != info.mrl;
+	d->startInfo = info;
+	if (changed)
+		d->updateMrl();
+	if (info.isValid())
+		d->loadfile();
 }
 
 int PlayEngine::time() const {
@@ -1154,59 +1092,37 @@ bool PlayEngine::isSeekable() const {
 }
 
 bool PlayEngine::hasVideo() const {
-	return !d->videoStreams.isEmpty();
-}
-
-bool PlayEngine::atEnd() const {
-	return d->mpctx->stop_play == AT_END_OF_FILE;
+	return !d->streams[Stream::Video].isEmpty();
 }
 
 int PlayEngine::currentChapter() const {
-	if (d->looping)
-		return d->chapter;
-	return -2;
+	return d->chapter;
 }
 
 void PlayEngine::pause() {
 	if (d->hasImage)
 		setState(PlayEngine::Paused);
-	else
-		d->setmp("pause", 1);
+	else {
+		d->userPaused = true;
+		d->tellmpv("pause", 1);
+	}
 }
 
 void PlayEngine::unpause() {
 	if (d->hasImage)
 		setState(PlayEngine::Playing);
-	else
-		d->setmp("pause", 0);
-}
-
-void PlayEngine::play() {
-	switch (m_state) {
-	case PlayEngine::Stopped:
-	case PlayEngine::Finished:
-	case PlayEngine::Error:
-		d->play(d->getStartTime(d->playlist.loadedMrl()));
-		break;
-	case PlayEngine::Loading:
-		// do nothing. just wait
-		break;
-	default:
-		unpause();
-		break;
+	else {
+		d->userPaused = false;
+		d->tellmpv("pause", 0);
 	}
 }
 
-void PlayEngine::setPlaylist(const Playlist &playlist) {
-	d->playlist.setPlaylist(playlist);
-}
-
 Mrl PlayEngine::mrl() const {
-	return d->playlist.loadedMrl();
+	return d->startInfo.mrl;
 }
 
 int PlayEngine::currentAudioStream() const {
-	return d->streams[STREAM_AUDIO];
+	return d->streamIds[Stream::Audio];
 }
 
 void PlayEngine::setCurrentVideoStream(int id) {
@@ -1214,7 +1130,7 @@ void PlayEngine::setCurrentVideoStream(int id) {
 }
 
 int PlayEngine::currentVideoStream() const {
-	return hasVideo() ? d->streams[STREAM_VIDEO] : -1;
+	return hasVideo() ? d->streamIds[Stream::Video] : -1;
 }
 
 void PlayEngine::setCurrentAudioStream(int id) {
@@ -1224,14 +1140,6 @@ void PlayEngine::setCurrentAudioStream(int id) {
 void PlayEngine::setAudioSync(int sync) {
 	if (_Change(d->audioSync, sync))
 		d->setmp("audio-delay", (float)(sync*0.001));
-}
-
-const PlaylistModel &PlayEngine::playlist() const {
-	return d->playlist;
-}
-
-PlaylistModel &PlayEngine::playlist() {
-	return d->playlist;
 }
 
 double PlayEngine::fps() const {
@@ -1306,7 +1214,7 @@ bool PlayEngine::isTempoScaled() const {
 }
 
 void PlayEngine::stop() {
-	d->tellmp("stop");
+	d->tellmpv("stop");
 }
 
 void PlayEngine::setVolumeNormalizerOption(double length, double target, double silence, double min, double max) {
@@ -1344,8 +1252,6 @@ QString PlayEngine::stateText(State state) {
 		return tr("Playing");
 	case Stopped:
 		return tr("Stopped");
-	case Finished:
-		return tr("Finished");
 	case Loading:
 		return tr("Loading");
 	case Error:
@@ -1371,9 +1277,5 @@ void PlayEngine::sendMouseMove(const QPointF &pos) {
 }
 
 QList<SubtitleFileInfo> PlayEngine::subtitleFiles() const {
-	QList<SubtitleFileInfo> list;
-	list.reserve(d->subtitleFiles.size());
-	for (auto &f : d->subtitleFiles)
-		list.append(f.info);
-	return list;
+	return d->subtitleFiles;
 }

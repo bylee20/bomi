@@ -17,6 +17,7 @@ static inline QByteArray _ToLog(quint64 n) { return QByteArray::number(n); }
 static inline QByteArray _ToLog(float n) { return QByteArray::number(n); }
 static inline QByteArray _ToLog(double n) { return QByteArray::number(n); }
 static inline QByteArray _ToLog(const QString &str) { return str.toLocal8Bit(); }
+static inline QByteArray _ToLog(const QStringRef &str) { return str.toLocal8Bit(); }
 static inline QByteArray _ToLog(const char *str) { return QByteArray(str); }
 static inline QByteArray _ToLog(const QByteArray &str) { return str; }
 static inline QByteArray _ToLog(bool b) { return b ? _ByteArrayLiteral("true") : _ByteArrayLiteral("false"); }

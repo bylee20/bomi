@@ -16,15 +16,12 @@ class AudioController : public QObject {
 public:
 	AudioController(QObject *parent = nullptr);
 	~AudioController();
-	void setAmpLevel(double level);
 	void setNormalizerActivated(bool on);
 	void setTempoScalerActivated(bool on);
 	double gain() const;
 	bool isTempoScalerActivated() const;
 	bool isNormalizerActivated() const;
 	void setNormalizerOption(double length, double target, double silence, double min, double max);
-	double scale() const;
-	void setMuted(bool muted);
 	void setClippingMethod(ClippingMethod method);
 	void setChannelLayoutMap(const ChannelLayoutMap &map);
 	void setOutputChannelLayout(ChannelLayout layout);

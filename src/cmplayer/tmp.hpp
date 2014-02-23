@@ -1,6 +1,7 @@
 #ifndef TMP_HPP
 #define TMP_HPP
 
+#include "stdafx.hpp"
 #include <type_traits>
 #include <cstdint>
 
@@ -44,7 +45,17 @@ struct static_for<idx, size, false> {
 	static inline void run(T &&, const F &) { }
 };
 
-template<int... S>                  struct index_list { };
+template<int... S>
+struct index_list {
+	template<int n>
+	constexpr auto added() const -> decltype(index_list<S+n...>()) {
+		return index_list<S+n...>();
+	}
+	template<int n>
+	constexpr auto multiplied() const -> decltype(index_list<S+n...>()) {
+		return index_list<S*n...>();
+	}
+};
 
 namespace detail {
 
@@ -115,6 +126,72 @@ static inline void call_with_tuple(const F &func, std::tuple<Args...> &tuple) {
 template<class F, class... Args>
 static inline void call_with_tuple(const F &func, const std::tuple<Args...> &tuple) {
 	detail::call_with_tuple_impl(func, tuple, make_tuple_index(tuple));
+}
+
+template<class... Args>
+static inline constexpr int tuple_size(const std::tuple<Args...> &) { return sizeof...(Args); }
+
+namespace detail {
+
+template<int n, int size>
+struct for_each_tuple_impl {
+	template<class F, class... Args>
+	static inline void run(const std::tuple<Args...> &tuple, F &&func) {
+		func(std::get<n>(tuple));
+		for_each_tuple_impl<n+1, size>::run(tuple, std::forward<F>(func));
+	}
+	template<class F, class... Args1, class... Args2>
+	static inline void run(const std::tuple<Args1...> &tuple1, const std::tuple<Args2...> &tuple2, F &&func) {
+		static_assert(sizeof...(Args1) == sizeof...(Args2), "tuple size does not match");
+		func(std::get<n>(tuple1), std::get<n>(tuple2));
+		for_each_tuple_impl<n+1, size>::run(tuple1, tuple2, std::forward<F>(func));
+	}
+};
+
+template<int size>
+struct for_each_tuple_impl<size, size> {
+	template<class... Args> static inline void run(Args&... ) {}
+	template<class... Args> static inline void run(const Args&... ) {}
+	template<class... Args> static inline void run(Args&&... ) {}
+};
+
+struct make_json_impl {
+	make_json_impl(QJsonObject &json): m_json(json) {}
+	void operator () (const QString &key, const QJsonValue &value) const {
+		m_json.insert(key, value);
+	}
+	void operator () (const char *key, const QJsonValue &value) const {
+		m_json.insert(_L(key), value);
+	}
+	void operator () (const char *key, const char *value) const {
+		m_json.insert(_L(key), _L(value));
+	}
+private:
+	QJsonObject &m_json;
+};
+
+}
+
+template<class F, class... Args>
+void for_each(const std::tuple<Args...> &tuple, const F &func) {
+	detail::for_each_tuple_impl<0, sizeof...(Args)>::run(tuple, func);
+}
+
+template<class F, class... Args1, class... Args2>
+void for_each(const std::tuple<Args1...> &tuple1, const std::tuple<Args2...> &tuple2, F &&func) {
+	detail::for_each_tuple_impl<0, sizeof...(Args1)>::run(tuple1, tuple2, std::forward<F>(func));
+}
+
+template<class... Args>
+static QJsonObject make_json(const Args &... args) {
+	const auto params = std::tie(args...);
+	const auto keyIdx = tmp::make_tuple_index<2>(params);
+	const auto valueIdx = keyIdx.template added<1>();
+	const auto keys = tmp::extract_tuple(params, keyIdx);
+	const auto values = tmp::extract_tuple(params, valueIdx);
+	QJsonObject json;
+	for_each(keys, values, detail::make_json_impl(json));
+	return json;
 }
 
 }

@@ -21,6 +21,54 @@ QList<T> _Split(const QString &text, F fromString, const QString &sep, QString::
 	return list;
 }
 
+QJsonObject SubtitleStateInfo::toJson() const {
+	QJsonArray mpv;
+	for (auto &item : m_mpv)
+		mpv.push_back(item.toJson());
+	QJsonArray cmplayer;
+	for (auto it = m_cmplayer.begin(); it != m_cmplayer.end(); ++it) {
+		QJsonArray list;
+		for (auto &comp : *it)
+			list.push_back(_MakeJson({{"id", comp.id}, {"selected", comp.selected}}));
+		cmplayer.push_back(_MakeJson({{"file", it.key().toJson()}, {"list", list}}));
+	}
+	return _MakeJson({{"track", m_track}, {"mpv", mpv}, {"cmplayer", cmplayer}});
+}
+
+SubtitleStateInfo SubtitleStateInfo::fromJson(const QJsonObject &json) {
+	SubtitleStateInfo info; QJsonValue value;
+	auto get = [&] (const char *key) { value = json.value(_L(key)); return !value.isUndefined(); };
+#define CHECK(a) { if (!get(a)) return SubtitleStateInfo(); }
+	CHECK("track");
+	info.m_track = value.toInt(InvalidTrack);
+	CHECK("mpv");
+	auto array = value.toArray();
+	for (auto item : array)
+		info.m_mpv.push_back(SubtitleFileInfo::fromJson(item.toObject()));
+	CHECK("cmplayer");
+	array = value.toArray();
+	for (auto item : array) {
+		auto cmp = item.toObject();
+		auto file = SubtitleFileInfo::fromJson(cmp.value("file").toObject());
+		auto list = cmp.value("list").toArray();
+		if (file.path.isEmpty())
+			return SubtitleStateInfo();
+		if (list.isEmpty())
+			continue;
+		auto &comps = info.m_cmplayer[file];
+		for (auto comp : list) {
+			const auto obj = comp.toObject();
+			const auto id = obj.value("id");
+			const auto se = obj.value("selected");
+			if (id.isUndefined() || se.isUndefined())
+				return SubtitleStateInfo();
+			comps.push_back({id.toInt(), se.toBool()});
+		}
+	}
+#undef CHECK
+	return info;
+}
+
 QString SubtitleStateInfo::toString() const {
 	QStringList list;
 	list.append(_N(m_track));

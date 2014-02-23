@@ -58,7 +58,6 @@ private:
 	void setFullScreen(bool full);
 	void changeEvent(QEvent *event);
 	void closeEvent(QCloseEvent *event);
-	void customEvent(QEvent *event);
 	int getStartTime(const Mrl &mrl);
 	int getCache(const Mrl &mrl);
 	void showEvent(QShowEvent *event);

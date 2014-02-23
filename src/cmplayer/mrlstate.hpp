@@ -210,6 +210,12 @@ static inline QString _ToSql(qint64 integer) { return QString::number(integer); 
 static inline QString _ToSql(const QPoint &p) {
 	return _L('\'') % QString::number(p.x()) % "," % QString::number(p.y()) % _L('\'');
 }
+static inline QString _ToSql(const QJsonObject &json) {
+	return _ToSql(QString::fromUtf8(QJsonDocument(json).toJson(QJsonDocument::Compact)));
+}
+//static inline QJsonObject _JsonFromSql(const QString &str, const QJsonObject &def) {
+
+//}
 
 static inline QPoint _PointFromSql(const QString &str, const QPoint &def) {
 	auto index = str.indexOf(',');
@@ -255,15 +261,19 @@ static inline QString _MakeInsertQuery(const QString &table, const QList<MrlFiel
 
 
 template<typename T = MrlState, typename F>
-void _FillMrlStateFromQuery(T *state, const QList<F> &fields, const QSqlQuery &query) {
-	for (auto &f : fields)
-		f.property().write(state, f.fromSql(query.value(f.property().name())));
+void _FillMrlStateFromRecord(T *state, const QList<F> &fields, const QSqlRecord &record) {
+	for (int i=0; i<fields.size(); ++i) {
+		const auto &f = fields[i];
+		const QMetaProperty p = f.property();
+		Q_ASSERT(p.name() == record.fieldName(i));
+		p.write(state, f.fromSql(record.value(i)));
+	}
 }
 
 template<typename T = MrlState, typename F>
 T *_MakeMrlStateFromQuery(const QList<F> &fields, const QSqlQuery &query) {
 	auto state = new T;
-	_FillMrlStateFromQuery(state, fields, query);
+	_FillMrlStateFromRecord(state, fields, query);
 	return state;
 }
 

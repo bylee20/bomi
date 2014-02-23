@@ -99,9 +99,9 @@ QList<MrlField> MrlField::list() {
 					};
 				} else if (_Is<SubtitleStateInfo>(type)) {
 					field.m_type = "TEXT";
-					field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<SubtitleStateInfo>().toString()); };
+					field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<SubtitleStateInfo>().toJson()); };
 					field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
-						return var.isNull() ? def : QVariant::fromValue(SubtitleStateInfo::fromString(var.toString()));
+						return var.isNull() ? def : QVariant::fromValue(SubtitleStateInfo::fromJson(var.toString()));
 					};
 				} else if (_Is<Mrl>(type)) {
 					field.m_type = "TEXT PRIMARY KEY NOT NULL";
@@ -179,22 +179,23 @@ std::tuple<MrlState*, QList<MrlState*>> _ImportMrlStatesFromPreviousVersion(int 
 	} else if (version < 2) {
 		QSqlQuery query(db);
 		db.transaction();
-		query.exec("SELECT * FROM app LIMIT 1");
+		const auto fields = MrlFieldV1::list();
+		const auto columns = _MrlFieldColumnListString(fields);
+		query.exec(QString("SELECT %1 FROM app LIMIT 1").arg(columns));
 		app = new MrlState;
 		MrlStateV1 prev;
-		const auto fields = MrlFieldV1::list();
 		if (query.next()) {
-			_FillMrlStateFromQuery<MrlStateV1>(&prev, fields, query);
+			_FillMrlStateFromRecord<MrlStateV1>(&prev, fields, query.record());
 			prev.fillCurrentVersion(app);
 		}
-		query.exec("SELECT *, (SELECT COUNT(*) FROM state) as total FROM state");
+		query.exec(QString("SELECT %1, (SELECT COUNT(*) FROM state) as total FROM state").arg(columns));
 		if (!query.next())
 			return tuple;
 		const int rows = query.value("total").toInt();
 		query.seek(-1);
 		states.reserve(rows);
 		while (query.next()) {
-			_FillMrlStateFromQuery(&prev, fields, query);
+			_FillMrlStateFromRecord(&prev, fields, query.record());
 			auto state = new MrlState;
 			prev.fillCurrentVersion(state);
 			states.append(state);

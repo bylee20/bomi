@@ -87,23 +87,30 @@ struct DvdInfo {
 };
 
 struct Stream {
-	enum Type {Unknown, Audio, Video, Subtitle};
+	enum Type {Audio = 0, Video, Subtitle, Unknown};
 	QString name() const {
-		QString name = m_title.isEmpty() ? m_name : m_title;
+		QString name = m_title;
 		if (!m_lang.isEmpty())
 			name += name.isEmpty() ? m_lang : " (" % m_lang % ")";
 		return name;
 	}
 	int id() const {return m_id;}
 	bool operator == (const Stream &rhs) const {
-		return m_title == rhs.m_title && m_lang == rhs.m_lang && m_name == rhs.m_name && m_id == rhs.m_id;
+		return m_title == rhs.m_title && m_lang == rhs.m_lang && m_codec == rhs.m_codec && m_id == rhs.m_id && m_type == rhs.m_type && m_selected == rhs.m_selected;
 	}
-	QString fileName() const {return m_fileName;}
+	bool isSelected() const { return m_selected; }
+	const QString &codec() const { return m_codec; }
+	const QString &title() const { return m_title; }
+	Type type() const { return m_type; }
+	bool isExternal() const { return !m_fileName.isEmpty(); }
+	bool isDefault() const { return m_default; }
 private:
 	friend class MpMessage;
 	friend class PlayEngine;
-	QString m_title, m_lang, m_name; int m_id = -1;
-	QString m_fileName;
+	Type m_type = Unknown;
+	int m_id = -1;
+	QString m_title, m_lang, m_fileName, m_codec;
+	bool m_selected = false, m_default = false;
 };
 
 typedef QMap<int, Stream> StreamList;
@@ -118,7 +125,7 @@ struct Chapter {
 private:
 	friend class PlayEngine;
 	QString m_name;
-	int m_id = 0, m_time = 0;
+	int m_id = -2, m_time = 0;
 };
 
 typedef QVector<Chapter> ChapterList;
@@ -135,13 +142,12 @@ public:
 	int current() const { return m_current; }
 	int count() const { return m_count; }
 	void setCount(int count) { if (_Change(m_count, count)) emit countChanged(); }
+	void setCurrent(int current) { if (_Change(m_current, current)) emit currentChanged(); }
 	QString currentText() const { return toString(m_current); }
 	QString countText() const { return toString(m_count); }
 signals:
 	void currentChanged();
 	void countChanged();
-protected slots:
-	void setCurrent(int current) { if (_Change(m_current, current)) emit currentChanged(); }
 private:
 	static QString toString(int i) { return i < 1 ? _L("-") : QString::number(i); }
 	int m_current = -2;

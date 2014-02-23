@@ -127,6 +127,10 @@ void PlaylistModel::setLoaded(int row) {
 	emit loadedChanged(m_loaded);
 }
 
+void PlaylistModel::setLoaded(const Mrl &mrl) {
+	setLoaded(rowOf(mrl));
+}
+
 bool PlaylistModel::swap(int r1, int r2) {
 	if (!isValidRow(r1) || !isValidRow(r2))
 		return false;
