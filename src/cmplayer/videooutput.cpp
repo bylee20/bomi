@@ -109,7 +109,6 @@ int VideoOutput::preinit(struct vo *vo) {
 		d->deint_swdec = DeintOption::fromString(priv->swdec_deint);
 	if (priv->hwdec_deint)
 		d->deint_hwdec = DeintOption::fromString(priv->hwdec_deint);
-	qDebug() << "swdec" << priv->swdec_deint;
 	priv->vo->updateDeint();
 	return 0;
 }

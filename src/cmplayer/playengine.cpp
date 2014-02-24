@@ -158,8 +158,10 @@ struct PlayEngine::Data {
 	double mpVolume() const { return volume*amp/10.0; }
 	template<typename T>
 	void setmpv(const char *name, T value) {
-		if (handle)
-			mpv_set_property_async(handle, (uint64_t)name, name, MPV_FORMAT_STRING, qbytearray_from(value).data());
+		if (handle) {
+			auto data = new QByteArray(name); auto v = qbytearray_from(value); *data += '=' + v;
+			mpv_set_property_async(handle, (uint64_t)(void*)data, name, MPV_FORMAT_STRING, v.data());
+		}
 	}
 
 	void tellmpv(const QByteArray &cmd) {
@@ -226,9 +228,6 @@ struct PlayEngine::Data {
 		vo.add("address", video);
 		vo.add("swdec_deint", deint_swdec.toString().toLatin1());
 		vo.add("hwdec_deint", deint_hwdec.toString().toLatin1());
-//		cmd += ",vo=\"null:address=" + QByteArray::number((quint64)(quintptr)(void*)(video)) + '"';
-//		d->video->setDeintOptions(deint_swdec, d->deint_hwdec);
-//		d->video->setDeintEnabled(d->deint != DeintMode::None);
 		opts.add("vo", "null:" + vo.get(), true);
 		_Debug("Call: %%", cmd + opts.get());
 		tellmpv(cmd + opts.get());
@@ -322,7 +321,6 @@ PlayEngine::PlayEngine()
 	d->setOption("vo", "null:address="  + QByteArray::number((quint64)(quintptr)(void*)(d->video)));
 	d->setOption("softvol", "yes");
 	d->setOption("softvol-max", "1000.0");
-//	d->setOption("fixed-vo", "yes");
 	d->setOption("autosub", "no");
 	d->setOption("osd-level", "0");
 	d->setOption("quiet", "yes");
@@ -1067,10 +1065,14 @@ void PlayEngine::exec() {
 		case MPV_EVENT_UNPAUSE:
 			_PostEvent(this, StateChange, Playing);
 			break;
-		case MPV_EVENT_SET_PROPERTY_REPLY: {
-			d->check(event->error, "Couldn't set property '%%'.", (const char*)event->reply_userdata);
+		case MPV_EVENT_SET_PROPERTY_REPLY:
+			if (!d->isSuccess(event->error)) {
+				auto data = static_cast<QByteArray*>((void*)event->reply_userdata);
+				_Debug("Error %%: Couldn't set property %%.", mpv_error_string(event->error), *data);
+				delete data;
+			}
 			break;
-		} case MPV_EVENT_SHUTDOWN:
+		case MPV_EVENT_SHUTDOWN:
 			goto shutdown;
 		default:
 			break;
