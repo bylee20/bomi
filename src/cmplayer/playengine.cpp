@@ -20,6 +20,33 @@ struct mpv_handle {
 #include <demux/demux.h>
 }
 
+class OptionList {
+public:
+	OptionList(char join = ','): m_join(join) {}
+	void add(const char *key, const char *value, bool quote = false) {
+		add(key, QByteArray::fromRawData(value, qstrlen(value)), quote);
+	}
+	void add(const char *key, const QByteArray &value, bool quote = false) {
+		if (!m_data.isEmpty())
+			m_data.append(m_join);
+		m_data.append(key);
+		m_data.append('=');
+		if (quote)
+			m_data.append('"');
+		m_data.append(value);
+		if (quote)
+			m_data.append('"');
+	}
+	void add(const char *key, void *value) { add(key, QByteArray::number((quint64)(quintptr)value)); }
+	void add(const char *key, double value) { add(key, QByteArray::number(value)); }
+	void add(const char *key, int value) { add(key, QByteArray::number(value)); }
+	void add(const char *key, bool value) { add(key, value ? "yes" : "no"); }
+	const QByteArray &get() const { return m_data; }
+	const char *data() const { return m_data.data(); }
+private:
+	QByteArray m_data; char m_join;
+};
+
 static QByteArray doubleQuoted(const QString &fileName) {
 	const auto file = fileName.toLocal8Bit();
 	QByteArray arg; arg.reserve(file.size() + 2);
@@ -48,13 +75,13 @@ struct PlayEngine::Data {
 	bool check(int err, const char *msg, const Args &... args) {
 		if (isSuccess(err))
 			return true;
-		Log::write(getLogContext(), Log::Error, _ByteArrayLiteral("Error %%: %%"), error(), Log::parse(msg, args...));
+		_Error("Error %%: %%", error(), Log::parse(msg, args...));
 		return false;
 	}
 	template<class... Args>
 	void fatal(int err, const char *msg, const Args &... args) {
 		if (!isSuccess(err))
-			Log::write(getLogContext(), Log::Fatal, _ByteArrayLiteral("Error %%: %% Exit..."), error(), Log::parse(msg, args...));
+			_Fatal("Error %%: %% Exit...", error(), Log::parse(msg, args...));
 	}
 	void setOption(const char *name, const char *data) {
 		fatal(mpv_set_option_string(handle, name, data), "Couldn't set option %%=%%.", name, data);
@@ -73,7 +100,6 @@ struct PlayEngine::Data {
 	mpv_handle *handle = nullptr;
 	VideoOutput *video = nullptr;
 	QByteArray hwaccCodecs;
-	QMutex mutex;
 	QList<SubtitleFileInfo> subtitleFiles;
 	ChannelLayout layout = ChannelLayout::Default;
 	int duration = 0, audioSync = 0, begin = 0, position = 0, subDelay = 0, chapter = -2;
@@ -100,20 +126,10 @@ struct PlayEngine::Data {
 	static int mpCommandFilter(MPContext *mpctx, mp_cmd *cmd) {
 		auto e = static_cast<PlayEngine*>(mpctx->priv); auto d = e->d;
 		if (cmd->id < 0) {
-			QMutexLocker locker(&d->mutex);
 			switch (cmd->id) {
-			case MpSetProperty:
-				mp_property_do(cmd->name, M_PROPERTY_SET, &cmd->args[0].v, mpctx);
-				break;
 			case MpSetTempoScaler:
 				d->audio->setTempoScalerActivated(cmd->args[0].v.i);
 				reinit_audio_chain(mpctx);
-				break;
-			case MpResetDeint:
-				d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
-				break;
-			case MpSetDeintEnabled:
-				d->video->setDeintEnabled(d->deint != DeintMode::None);
 				break;
 			default:
 				break;
@@ -142,12 +158,13 @@ struct PlayEngine::Data {
 	double mpVolume() const { return volume*amp/10.0; }
 	template<typename T>
 	void setmpv(const char *name, T value) {
-		mpv_set_property_async(handle, 0, name, MPV_FORMAT_STRING, qbytearray_from<T>(value).data());
+		if (handle)
+			mpv_set_property_async(handle, (uint64_t)name, name, MPV_FORMAT_STRING, qbytearray_from(value).data());
 	}
 
-	template<typename T> void setmp(const char *name, T value) { enqueue(MpSetProperty, name, value); }
 	void tellmpv(const QByteArray &cmd) {
-		check(mpv_command_string(handle, cmd.constData()), "Cannaot execute: %%", cmd);
+		if (handle)
+			check(mpv_command_string(handle, cmd.constData()), "Cannaot execute: %%", cmd);
 	}
 	void tellmpv(const QByteArray &cmd, std::initializer_list<QByteArray> list) {
 		int size = cmd.size();
@@ -156,17 +173,9 @@ struct PlayEngine::Data {
 		for (auto &one : list) { str += ' '; str += one; }
 		tellmpv(str);
 	}
-	template<typename T>
-	void tellmpv(const QByteArray &cmd, const T &arg) {
-		tellmpv(cmd, {qbytearray_from<T>(arg)});
-	}
-	template<typename T, typename S>
-	void tellmpv(const QByteArray &cmd, const T &a1, const S &a2) {
-		tellmpv(cmd, {qbytearray_from<T>(a1), qbytearray_from<S>(a2)});
-	}
-	template<typename T, typename S, typename R>
-	void tellmpv(const QByteArray &cmd, const T &a1, const S &a2, const R &a3) {
-		tellmpv(cmd, {qbytearray_from<T>(a1), qbytearray_from<S>(a2), qbytearray_from<R>(a3)});
+	template<class... Args>
+	void tellmpv(const QByteArray &cmd, const Args &... args) {
+		tellmpv(cmd, {qbytearray_from(args)...});
 	}
 //	template<template <typename> class T> void tellmp(const QByteArray &cmd, const T<QString> &args) {
 //		QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);
@@ -186,33 +195,43 @@ struct PlayEngine::Data {
 		if (file.isEmpty())
 			return;
 		QByteArray cmd = "loadfile \"" + file + "\" replace ";
-		cmd += "ao=" + (ao.isEmpty() ? "\"\"" : ao);
+		OptionList opts;
+		opts.add("ao", ao.isEmpty() ? "\"\"" : ao);
 		if (hwaccCodecs.isEmpty())
-			cmd += ",hwdec=no";
+			opts.add("hwdec", "no");
 		else {
 #ifdef Q_OS_LINUX
 			if (HwAcc::backend() == HwAcc::VdpauX11)
-				cmd += ",hwdec=vdpau";
+				opts.add("hwdec", "vdpau");
 			else
-				cmd += ",hwdec=vaapi";
+				opts.add("hwdec", "vaapi");
 #elif defined(Q_OS_MAC)
-			cmd += ",hwdec=vda";
+			opts.add("hwdec", "vda");
 #endif
-			cmd += ",hwdec-codecs=\"" + hwaccCodecs + '"';
+			opts.add("hwdec-codecs", hwaccCodecs, true);
 		}
-		cmd += ",cache=" + (cache > 0 ? QByteArray::number(cache) : "no");
+		opts.add("cache", (cache > 0 ? QByteArray::number(cache) : "no"));
 		if (resume > 0)
-			cmd += ",start=" + QByteArray::number(resume/1000.0);
-		cmd += ",volume=" + QByteArray::number(mpVolume());
-		cmd += muted ? ",mute=yes" : ",mute=no";
-		cmd += ",audio-delay=" + QByteArray::number(audioSync/1000.0);
-		cmd += ",sub-delay=" + QByteArray::number(subDelay/1000.0);
-		cmd += ",cache-pause=" + (cacheForPlayback > 0 ? QByteArray::number((int)(cacheForPlayback*0.5)) : "no");
-		cmd += ",cache-min=" + QByteArray::number(cacheForPlayback);
-		cmd += ",cache-seek-min=" + QByteArray::number(cacheForSeeking);
-		cmd += (p->isPaused() || hasImage) ? ",pause=yes" : ",pause=no";
-		_Debug("Call: %%", cmd);
-		tellmpv(cmd);
+			opts.add("start", resume/1000.0);
+		opts.add("volume", mpVolume());
+		opts.add("mute", muted);
+		opts.add("audio-delay", audioSync/1000.0);
+		opts.add("sub-delay", subDelay/1000.0);
+		opts.add("cache-pause", (cacheForPlayback > 0 ? QByteArray::number((int)(cacheForPlayback*0.5)) : "no"));
+		opts.add("cache-min", cacheForPlayback);
+		opts.add("cache-seek-min", cacheForSeeking);
+		opts.add("pause", p->isPaused() || hasImage);
+
+		OptionList vo(':');
+		vo.add("address", video);
+		vo.add("swdec_deint", deint_swdec.toString().toLatin1());
+		vo.add("hwdec_deint", deint_hwdec.toString().toLatin1());
+//		cmd += ",vo=\"null:address=" + QByteArray::number((quint64)(quintptr)(void*)(video)) + '"';
+//		d->video->setDeintOptions(deint_swdec, d->deint_hwdec);
+//		d->video->setDeintEnabled(d->deint != DeintMode::None);
+		opts.add("vo", "null:" + vo.get(), true);
+		_Debug("Call: %%", cmd + opts.get());
+		tellmpv(cmd + opts.get());
 	}
 	void loadfile() {
 		if (startInfo.isValid())
@@ -296,14 +315,14 @@ PlayEngine::PlayEngine()
 	d->mpctx->priv = this;
 	mpv_set_event_filter_callback(d->handle, mpvEventFilter, this);
 	mpv_request_event(d->handle, MPV_EVENT_TICK, true);
-//	mpv_request_log_messages(d->handle, "v");
+	mpv_request_log_messages(d->handle, "v");
 	d->setOption("fs", "no");
 	d->setOption("mouse-movements", "yes");
 	d->setOption("af", "dummy:address=" + QByteArray::number((quint64)(quintptr)(void*)(d->audio)));
 	d->setOption("vo", "null:address="  + QByteArray::number((quint64)(quintptr)(void*)(d->video)));
 	d->setOption("softvol", "yes");
 	d->setOption("softvol-max", "1000.0");
-	d->setOption("fixed-vo", "yes");
+//	d->setOption("fixed-vo", "yes");
 	d->setOption("autosub", "no");
 	d->setOption("osd-level", "0");
 	d->setOption("quiet", "yes");
@@ -350,7 +369,7 @@ SubtitleTrackInfoObject *PlayEngine::subtitleTrackInfo() const {
 
 void PlayEngine::setSubtitleDelay(int ms) {
 	if (_Change(d->subDelay, ms))
-		d->setmp("sub-delay", (float)(d->subDelay/1000.0f));
+		d->setmpv("sub-delay", (float)(d->subDelay/1000.0f));
 }
 
 void PlayEngine::setSubtitleTracks(const QStringList &tracks) {
@@ -534,12 +553,12 @@ bool PlayEngine::isSubtitleStreamsVisible() const {return d->subStreamsVisible;}
 void PlayEngine::setSubtitleStreamsVisible(bool visible) {
 	d->subStreamsVisible = visible;
 	const auto id = currentSubtitleStream();
-	d->setmp("sub-visibility", (d->subStreamsVisible && id >= 0));
+	d->setmpv("sub-visibility", (d->subStreamsVisible && id >= 0));
 }
 
 void PlayEngine::setCurrentSubtitleStream(int id) {
-	d->setmp("sub-visibility", (d->subStreamsVisible && id >= 0));
-	d->setmp("sub", id);
+	d->setmpv("sub-visibility", (d->subStreamsVisible && id >= 0));
+	d->setmpv("sub", id);
 }
 
 int PlayEngine::currentSubtitleStream() const {
@@ -775,7 +794,7 @@ void PlayEngine::setState(PlayEngine::State state) {
 }
 
 void PlayEngine::setCurrentChapter(int id) {
-	d->setmp("chapter", id);
+	d->setmpv("chapter", id);
 }
 
 void PlayEngine::setCurrentDvdTitle(int id) {
@@ -869,8 +888,6 @@ int PlayEngine::mpvEventFilter(mpv_event *event, void *ctx) {
 	auto d = e->d;
 	switch (event->event_id) {
 	case MPV_EVENT_START_FILE: {
-		d->video->setDeintOptions(d->deint_swdec, d->deint_hwdec);
-		d->video->setDeintEnabled(d->deint != DeintMode::None);
 		d->audio->setOutputChannelLayout(d->layout);
 		return false;
 	} default:
@@ -886,6 +903,7 @@ void PlayEngine::exec() {
 	bool error = true;
 	Mrl mrl;
 	QRegularExpression regList(_L(R"(((^\d+): )?([^=]+)=(.+)$)"));
+	QByteArray leftmsg;
 	while (!d->quit) {
 		const auto event = mpv_wait_event(d->handle, 10000);
 		switch (event->event_id) {
@@ -940,7 +958,16 @@ void PlayEngine::exec() {
 			break;
 		} case MPV_EVENT_LOG_MESSAGE: {
 			auto message = static_cast<mpv_event_log_message*>(event->data);
-			qDebug() << QString::fromLocal8Bit(message->text);
+			leftmsg += message->text;
+			int from = 0;
+			for (;;) {
+				auto to = leftmsg.indexOf('\n', from);
+				if (to < 0)
+					break;
+				Log::write(Log::Info, "[mpv/%%] %%", message->prefix, leftmsg.mid(from, to-from));
+				from = to + 1;
+			}
+			leftmsg = leftmsg.mid(from);
 			break;
 		} case MPV_EVENT_IDLE:
 			break;
@@ -1040,7 +1067,10 @@ void PlayEngine::exec() {
 		case MPV_EVENT_UNPAUSE:
 			_PostEvent(this, StateChange, Playing);
 			break;
-		case MPV_EVENT_SHUTDOWN:
+		case MPV_EVENT_SET_PROPERTY_REPLY: {
+			d->check(event->error, "Couldn't set property '%%'.", (const char*)event->reply_userdata);
+			break;
+		} case MPV_EVENT_SHUTDOWN:
 			goto shutdown;
 		default:
 			break;
@@ -1051,7 +1081,9 @@ shutdown:
 	qDebug() << "terminate loop";
 	mpctx->opts->hwdec_codecs = nullptr;
 	mpctx->opts->hwdec_api = HWDEC_NONE;
-	mpv_destroy(d->handle);
+	auto handle = d->handle;
+	d->handle = nullptr;
+	mpv_destroy(handle);
 	d->mpctx = nullptr;
 	d->init = false;
 	qDebug() << "terminate engine";
@@ -1117,7 +1149,7 @@ int PlayEngine::currentAudioStream() const {
 }
 
 void PlayEngine::setCurrentVideoStream(int id) {
-	d->setmp("video", id);
+	d->setmpv("video", id);
 }
 
 int PlayEngine::currentVideoStream() const {
@@ -1125,12 +1157,12 @@ int PlayEngine::currentVideoStream() const {
 }
 
 void PlayEngine::setCurrentAudioStream(int id) {
-	d->setmp("audio", id);
+	d->setmpv("audio", id);
 }
 
 void PlayEngine::setAudioSync(int sync) {
 	if (_Change(d->audioSync, sync))
-		d->setmp("audio-delay", (float)(sync*0.001));
+		d->setmpv("audio-delay", (float)(sync*0.001));
 }
 
 double PlayEngine::fps() const {
@@ -1213,24 +1245,13 @@ void PlayEngine::setVolumeNormalizerOption(double length, double target, double 
 }
 
 void PlayEngine::setDeintOptions(const DeintOption &swdec, const DeintOption &hwdec) {
-	if (d->deint_swdec == swdec && d->deint_hwdec == hwdec)
-		return;
-	QMutexLocker locker(&d->mutex);
-	if (d->deint_swdec == swdec && d->deint_hwdec == hwdec)
-		return;
 	d->deint_swdec = swdec;
 	d->deint_hwdec = hwdec;
-	d->enqueue(MpResetDeint);
 }
 
 void PlayEngine::setDeintMode(DeintMode mode) {
-	if (d->deint == mode)
-		return;
-	QMutexLocker locker(&d->mutex);
-	if (d->deint == mode)
-		return;
-	d->deint = mode;
-	d->enqueue(MpSetDeintEnabled);
+	if (_Change(d->deint, mode))
+		d->setmpv("deinterlace", !!mode ? "yes" : "no");
 }
 
 DeintMode PlayEngine::deintMode() const {

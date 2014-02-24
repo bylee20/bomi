@@ -33,7 +33,7 @@ QOpenGLDebugLogger *OpenGLCompat::logger() {
 
 static inline QByteArray _ToLog(QOpenGLDebugMessage::Source source) {
 	switch (source) {
-#define SWITCH_SOURCE(s) case QOpenGLDebugMessage::s##Source: return _ByteArrayLiteral(#s);
+#define SWITCH_SOURCE(s) case QOpenGLDebugMessage::s##Source: return #s;
 	SWITCH_SOURCE(API)				SWITCH_SOURCE(Invalid)
 	SWITCH_SOURCE(WindowSystem)		SWITCH_SOURCE(ShaderCompiler)
 	SWITCH_SOURCE(ThirdParty)		SWITCH_SOURCE(Application)
@@ -45,7 +45,7 @@ static inline QByteArray _ToLog(QOpenGLDebugMessage::Source source) {
 
 static inline QByteArray _ToLog(QOpenGLDebugMessage::Type type) {
 	switch (type) {
-#define SWITCH_TYPE(t) case QOpenGLDebugMessage::t##Type: return _ByteArrayLiteral(#t);
+#define SWITCH_TYPE(t) case QOpenGLDebugMessage::t##Type: return #t;
 	SWITCH_TYPE(Invalid)			SWITCH_TYPE(Error)
 	SWITCH_TYPE(DeprecatedBehavior)	SWITCH_TYPE(UndefinedBehavior)
 	SWITCH_TYPE(Portability)		SWITCH_TYPE(Performance)
@@ -59,7 +59,7 @@ static inline QByteArray _ToLog(QOpenGLDebugMessage::Type type) {
 
 static inline QByteArray _ToLog(QOpenGLDebugMessage::Severity severity) {
 	switch (severity) {
-#define SWITCH_SEVERITY(s) case QOpenGLDebugMessage::s##Severity: return _ByteArrayLiteral(#s);
+#define SWITCH_SEVERITY(s) case QOpenGLDebugMessage::s##Severity: return #s;
 	SWITCH_SEVERITY(Invalid)		SWITCH_SEVERITY(High)
 	SWITCH_SEVERITY(Medium)			SWITCH_SEVERITY(Low)
 	SWITCH_SEVERITY(Notification)	SWITCH_SEVERITY(Any)

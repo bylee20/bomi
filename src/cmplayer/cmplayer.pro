@@ -143,7 +143,8 @@ HEADERS += playengine.hpp \
     log.hpp \
     openglmisc.hpp \
     hwacc_helper.hpp \
-    audio_helper.hpp
+    audio_helper.hpp \
+    mpv_helper.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -229,7 +230,8 @@ SOURCES += main.cpp \
     log.cpp \
     openglmisc.cpp \
     hwacc_helper.cpp \
-    audio_helper.cpp
+    audio_helper.cpp \
+    mpv_helper.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

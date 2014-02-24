@@ -41,16 +41,16 @@ enum EventType {
 };
 
 enum MpCmd : int {
-	MpSetProperty = std::numeric_limits<int>::min(),
-	MpResetDeint, MpSetDeintEnabled, MpSetTempoScaler
+	MpSetTempoScaler
 };
 
-template<typename T> static QByteArray qbytearray_from(const T &t);
-template<> inline QByteArray qbytearray_from(const QByteArray &t) { return t; }
-template<> inline QByteArray qbytearray_from(const int &t) { return QByteArray::number(t); }
-template<> inline QByteArray qbytearray_from(const float &t) { return QByteArray::number(t); }
-template<> inline QByteArray qbytearray_from(const double &t) { return QByteArray::number(t); }
-template<> inline QByteArray qbytearray_from(const QString &t) { return t.toLocal8Bit(); }
+static inline QByteArray qbytearray_from(const QByteArray &t) { return t; }
+static inline QByteArray qbytearray_from(const bool &t) { return QByteArray::number((int)t); }
+static inline QByteArray qbytearray_from(const int &t) { return QByteArray::number(t); }
+static inline QByteArray qbytearray_from(const float &t) { return QByteArray::number(t); }
+static inline QByteArray qbytearray_from(const double &t) { return QByteArray::number(t); }
+static inline QByteArray qbytearray_from(const QString &t) { return t.toLocal8Bit(); }
+static inline QByteArray qbytearray_from(const char *str) { return QByteArray(str); }
 
 template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0) { static T t; (void)cmd->args[idx]; return t; }
 template<> inline double&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.d;}

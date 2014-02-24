@@ -25,8 +25,6 @@ public:
 	void setHwAcc(HwAcc *acc);
 	HwAcc *hwAcc() const;
 	static int queryFormat(struct vo *vo, quint32 format);
-	void setDeintOptions(const DeintOption &sw, const DeintOption &hw);
-	void setDeintEnabled(bool on);
 signals:
 	void hwAccChanged(bool activated);
 	void formatChanged(const VideoFormat &format);

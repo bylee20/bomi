@@ -3,8 +3,6 @@
 
 #include "stdafx.hpp"
 
-#define _ByteArrayLiteral(data) QByteArray::fromRawData(data, sizeof(data)-1)
-
 static inline QByteArray _ToLog(char n) { return QByteArray::number(n); }
 static inline QByteArray _ToLog(qint8 n) { return QByteArray::number(n); }
 static inline QByteArray _ToLog(qint16 n) { return QByteArray::number(n); }
@@ -20,7 +18,7 @@ static inline QByteArray _ToLog(const QString &str) { return str.toLocal8Bit(); 
 static inline QByteArray _ToLog(const QStringRef &str) { return str.toLocal8Bit(); }
 static inline QByteArray _ToLog(const char *str) { return QByteArray(str); }
 static inline QByteArray _ToLog(const QByteArray &str) { return str; }
-static inline QByteArray _ToLog(bool b) { return b ? _ByteArrayLiteral("true") : _ByteArrayLiteral("false"); }
+static inline QByteArray _ToLog(bool b) { return b ? "true" : "false"; }
 
 class Log {
 public:
@@ -37,6 +35,11 @@ public:
 		if (level <= m_maxLevel)
 			print(context, level, Helper(format, args...).log());
 	}
+	template<class... Args>
+	static inline void write(Level level, const QByteArray &format, const Args &... args) {
+		if (level <= m_maxLevel)
+			print(level, Helper(format, args...).log());
+	}
 	template<typename... Args>
 	static inline QByteArray parse(const QByteArray &format, const Args &... args) { return Helper(format, args...).log(); }
 	static inline QStringList options() { return m_options; }
@@ -47,6 +50,11 @@ public:
 private:
 	static inline void print(const char *context, Level level, const QByteArray &log) {
 		qDebug("[%s] %s", context, log.constData());
+		if (level == Fatal)
+			exit(1);
+	}
+	static inline void print(Level level, const QByteArray &log) {
+		qDebug("%s", log.constData());
 		if (level == Fatal)
 			exit(1);
 	}
@@ -82,7 +90,7 @@ private:
 };
 
 #define DECLARE_LOG_CONTEXT(ctx) static inline const char *getLogContext() { return (#ctx); }
-#define _WRITE_LOG(lv, fmt, ...) Log::write(getLogContext(), Log::lv , [&]() { return Log::parse(_ByteArrayLiteral(fmt), ##__VA_ARGS__); })
+#define _WRITE_LOG(lv, fmt, ...) Log::write(getLogContext(), Log::lv , [&]() { return Log::parse(fmt, ##__VA_ARGS__); })
 #define _Fatal(fmt, ...) _WRITE_LOG(Fatal, fmt, ##__VA_ARGS__)
 #define _Error(fmt, ...) _WRITE_LOG(Error, fmt, ##__VA_ARGS__)
 #define _Warn(fmt, ...) _WRITE_LOG(Warn, fmt, ##__VA_ARGS__)

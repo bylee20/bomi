@@ -9,7 +9,7 @@
 #include "softwaredeinterlacer.hpp"
 #include "vaapipostprocessor.hpp"
 #include "log.hpp"
-
+#include "mpv_helper.hpp"
 extern "C" {
 #include <video/out/vo.h>
 #include <video/vfcap.h>
@@ -21,24 +21,23 @@ extern "C" {
 struct sd *sub_get_last_sd(struct dec_sub *sub);
 }
 
-struct cmplayer_vo_priv { VideoOutput *vo; char *address; };
+struct cmplayer_vo_priv {
+	VideoOutput *vo; char *address, *swdec_deint, *hwdec_deint;
+};
 static VideoOutput *priv(struct vo *vo) { return static_cast<cmplayer_vo_priv*>(vo->priv)->vo; }
 
 DECLARE_LOG_CONTEXT(Video)
 
-#define OPT_BASE_STRUCT struct cmplayer_vo_priv
 vo_driver create_driver() {
-	static m_option options[2];
-	memset(options, 0, sizeof(options));
-	options[0].name = "address";
-	options[0].flags = 0;
-	options[0].defval = 0;
-	options[0].offset = MP_CHECKED_OFFSETOF(OPT_BASE_STRUCT, address, char*);
-	options[0].is_new_option = 1;
-	options[0].type = &m_option_type_string;
+#define MPV_OPTION_BASE cmplayer_vo_priv
+	static m_option options[] = {
+		MPV_OPTION(address),
+		MPV_OPTION(swdec_deint),
+		MPV_OPTION(hwdec_deint),
+		mpv::null_option
+	};
 
 	static vo_driver driver;
-	memset(&driver, 0, sizeof(driver));
 	driver.description = "CMPlayer video output";
 	driver.name = "null";
 	driver.buffer_frames = true;
@@ -105,6 +104,13 @@ int VideoOutput::preinit(struct vo *vo) {
 	auto priv = static_cast<cmplayer_vo_priv*>(vo->priv);
 	priv->vo = address_cast<VideoOutput*>(priv->address);
 	priv->vo->d->vo = vo;
+	auto d = priv->vo->d;
+	if (priv->swdec_deint)
+		d->deint_swdec = DeintOption::fromString(priv->swdec_deint);
+	if (priv->hwdec_deint)
+		d->deint_hwdec = DeintOption::fromString(priv->hwdec_deint);
+	qDebug() << "swdec" << priv->swdec_deint;
+	priv->vo->updateDeint();
 	return 0;
 }
 
@@ -123,11 +129,6 @@ void VideoOutput::setRenderer(VideoRendererItem *renderer) {
 
 const VideoFormat &VideoOutput::format() const {
 	return d->format;
-}
-
-void VideoOutput::setDeintEnabled(bool on) {
-	if (_Change(d->deint, on))
-		updateDeint();
 }
 
 void VideoOutput::updateDeint() {
@@ -175,14 +176,6 @@ void VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) {
 		emit v->formatChanged(d->format);
 }
 
-void VideoOutput::setDeintOptions(const DeintOption &swdec, const DeintOption &hwdec) {
-	if (d->deint_swdec == swdec && d->deint_hwdec == hwdec)
-		return;
-	d->deint_swdec = swdec;
-	d->deint_hwdec = hwdec;
-	updateDeint();
-}
-
 void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto v = priv(vo); auto d = v->d;
 	if (_Change(d->prevAcc, d->acc))
@@ -214,6 +207,13 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 		return true;
 	case VOCTRL_RESET:
 		v->reset();
+		return true;
+	case VOCTRL_GET_DEINTERLACE:
+		*(int*)data = d->deint;
+		return true;
+	case VOCTRL_SET_DEINTERLACE:
+		if (_Change(d->deint, (bool)*(int*)data))
+			v->updateDeint();
 		return true;
 	case VOCTRL_WINDOW_TO_OSD_COORDS:
 		return true;
