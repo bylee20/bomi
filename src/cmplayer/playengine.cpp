@@ -176,7 +176,6 @@ struct PlayEngine::Data {
 		hasImage = startInfo.mrl.isImage();
 		updateMediaName();
 		emit p->mrlChanged(startInfo.mrl);
-		emit p->mediaChanged();
 	}
 
 	void clear() {
@@ -219,19 +218,16 @@ struct PlayEngine::Data {
 		if (startInfo.isValid())
 			loadfile(startInfo.mrl.toString().toLocal8Bit(), startInfo.resume, startInfo.cache);
 	}
-	void updateMediaName() {
-		QString name, category;
+	void updateMediaName(const QString &name = QString()) {
+		QString category;
 		auto mrl = p->mrl();
 		if (mrl.isLocalFile())
 			category = tr("File");
 		else if (mrl.isDvd()) {
 			category = _L("DVD");
-			name = dvd.volume;
 		} else
 			category = _L("URL");
-		if (name.isEmpty())
-			name = mrl.displayName();
-		mediaInfo.setName(category % _L(": ") % name);
+		mediaInfo.setName(category % _L(": ") % (name.isEmpty() ? mrl.displayName() : name));
 	}
 	HardwareAcceleration getHwAcc() const {
 		auto dv = mpctx->d_video;
@@ -695,11 +691,11 @@ void PlayEngine::customEvent(QEvent *event) {
 		if (d->renderer)
 			d->renderer->reset();
 		emit seekableChanged(isSeekable());
-		emit mediaChanged();
 		emit audioChanged();
 		emit cacheChanged();
 		updateState(Playing);
 		emit started(d->startInfo.mrl);
+		d->updateMediaName(_GetData<QString>(event));
 		break;
 	} case EndPlayback: {
 		Mrl mrl; bool error; _GetAllData(event, mrl, error);
@@ -813,16 +809,11 @@ void PlayEngine::onMpvStageChanged(int stage) {
 	case MP_STAGE_PREPARE_TO_OPEN: {
 		d->clear();
 		d->video->output(QImage());
-		setState(PlayEngine::Loading);
 		break;
 	} case MP_STAGE_OPEN_DEMUXER: {
 		DvdInfo dvd;
 		if (d->mpctx->stream && d->mpctx->stream->info && !strcmp(d->mpctx->stream->info->name, "dvd")) {
-//			char buffer[256];
-//			if (dvd_volume_id(d->mpctx->stream, buffer, sizeof(buffer)))
-//				dvd.volume = QString::fromLocal8Bit(buffer);
 			int titles = 0;
-
 			stream_control(d->mpctx->stream, STREAM_CTRL_GET_NUM_TITLES, &titles);
 			stream_control(d->mpctx->stream, STREAM_CTRL_GET_CURRENT_TITLE, &dvd.currentTitle);
 			dvd.titles.resize(titles);
@@ -934,7 +925,7 @@ void PlayEngine::exec() {
 					_PostEvent(this, UpdateChapterList, chapters);
 				}
 			}
-			if (!d->tick && _Change<int>(position, data[0]*1000 + 0.5)) {
+			if (_Change<int>(position, data[0]*1000 + 0.5) && !d->tick) {
 				d->tick = true;
 				_PostEvent(this, Tick, position);
 			}
@@ -965,10 +956,10 @@ void PlayEngine::exec() {
 			break;
 		case MPV_EVENT_PLAYBACK_START: {
 			error = false;
-			_PostEvent(this, StartPlayback);
 			auto data = mpv_get_property_string(d->handle, "media-title");
-			qDebug() << "media-title" << data;
+			const auto name = QString::fromLocal8Bit(data);
 			mpv_free(data);
+			_PostEvent(this, StartPlayback, name);
 			break;
 		} case MPV_EVENT_END_FILE: {
 			_PostEvent(this, EndPlayback, mrl, error);
@@ -1264,16 +1255,19 @@ QString PlayEngine::stateText(State state) {
 QString PlayEngine::stateText() const { return stateText(m_state); }
 
 void PlayEngine::sendMouseClick(const QPointF &pos) {
-	sendMouseMove(pos);
-	if (d->mpctx && d->init && d->mpctx->input) {
-		mp_input_put_key(d->mpctx->input, MP_MOUSE_BTN0 | MP_KEY_STATE_DOWN);
-		mp_input_put_key(d->mpctx->input, MP_MOUSE_BTN0 | MP_KEY_STATE_UP);
+	if (d->handle) {
+		d->renderer->setMousePosition(pos);
+		static const char *cmds[] = {"dvdnav", "mouse", nullptr};
+		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse.");
 	}
 }
 
 void PlayEngine::sendMouseMove(const QPointF &pos) {
-	if (d->init && d->video)
-		mp_input_set_mouse_pos(d->mpctx->input, pos.x(), pos.y());
+	if (d->handle) {
+		d->renderer->setMousePosition(pos);
+		static const char *cmds[] = {"dvdnav", "mouse_move", nullptr};
+		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse_move.");
+	}
 }
 
 QList<SubtitleFileInfo> PlayEngine::subtitleFiles() const {

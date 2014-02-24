@@ -99,6 +99,8 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
 	setZ(-1);
+	setAcceptHoverEvents(true);
+	setAcceptedMouseButtons(Qt::AllButtons);
 }
 
 VideoRendererItem::~VideoRendererItem() {

@@ -215,7 +215,14 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	case VOCTRL_RESET:
 		v->reset();
 		return true;
+	case VOCTRL_WINDOW_TO_OSD_COORDS:
+		return true;
 	case VOCTRL_CHECK_EVENTS:
+		if (d->renderer) {
+			Q_ASSERT(vo->opts->enable_mouse_movements);
+			auto pos = d->renderer->mousePosition();
+			vo_mouse_movement(vo, pos.x(), pos.y());
+		}
 		if (_Change(d->size, d->newSize))
 			vo->want_redraw = true;
 		return true;

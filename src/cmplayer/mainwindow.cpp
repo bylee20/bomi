@@ -935,9 +935,7 @@ void MainWindow::connectMenus() {
 		if (dlg.exec()) {
 			d->as.dvd_menu = dlg.useMenu();
 			d->as.dvd_device = dlg.device();
-			QString mrl("dvdnav://");
-			if (d->as.dvd_menu)
-				mrl += _L("menu");
+			QString mrl("dvdnav://menu");
 			if (!d->as.dvd_device.isEmpty())
 				mrl += _L("/") % d->as.dvd_device;
 			openMrl(Mrl(mrl));

@@ -368,6 +368,7 @@ OpenDvdDialog::OpenDvdDialog(QWidget *parent)
 	d->ui.setupUi(this);
 	d->ok = d->ui.buttonBox->button(QDialogButtonBox::Ok);
 	d->ok->setEnabled(false);
+	d->ui.menu->hide();
 	connect(d->ui.device, SIGNAL(editTextChanged(QString)), this, SLOT(checkDevice(QString)));
 	checkDevice(d->ui.device->currentText());
 }
@@ -398,6 +399,7 @@ void OpenDvdDialog::setUseMenu(bool use) {
 }
 
 bool OpenDvdDialog::useMenu() const {
+	return true;
 	return d->ui.menu->isChecked();
 }
 

@@ -180,7 +180,8 @@ private:
 				best = s;
 		}
 		if (!best) {
-			_Warn(_ByteArrayLiteral("No usable SurfaceID. Decoding could fail"));
+			static const QByteArray warn("No usable SurfaceID. Decoding could fail");
+			_Warn(warn);
 			best = oldest;
 		}
 		best->m_ref = true;

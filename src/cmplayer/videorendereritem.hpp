@@ -70,6 +70,8 @@ public:
 	void reset();
 	QPointF mapToVideo(const QPointF &pos);
 	bool isOpaque() const { return true; }
+	void setMousePosition(const QPointF &pos) { m_mouse = pos; }
+	const QPointF &mousePosition() const { return m_mouse; }
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -93,6 +95,7 @@ private:
 	MpOsdItem *mpOsd() const;
 	struct Data;
 	Data *d;
+	QPointF m_mouse;
 	friend class VideoOutput;
 };
 

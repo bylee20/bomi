@@ -31,7 +31,7 @@ class PlayEngine : public QObject {
 	Q_OBJECT
 	Q_ENUMS(State)
 	Q_ENUMS(HardwareAcceleration)
-	Q_PROPERTY(MediaInfoObject *media READ mediaInfo NOTIFY mediaChanged)
+	Q_PROPERTY(MediaInfoObject *media READ mediaInfo CONSTANT FINAL)
 	Q_PROPERTY(AvInfoObject *audio READ audioInfo NOTIFY audioChanged)
 	Q_PROPERTY(AvInfoObject *video READ videoInfo NOTIFY videoChanged)
 	Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
@@ -201,7 +201,6 @@ signals:
 	void chaptersChanged(const ChapterList &chapters);
 	void dvdInfoChanged();
 	void speedChanged(double speed);
-	void mediaChanged();
 	void audioChanged();
 	void videoChanged();
 	void runningChanged();
