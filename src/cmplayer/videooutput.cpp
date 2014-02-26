@@ -96,8 +96,7 @@ void VideoOutput::setFrameRect(const QRectF &rect) {
 }
 
 void VideoOutput::setHwAcc(HwAcc *acc) {
-	if (_Change(d->acc, acc))
-		emit hwAccChanged(d->acc);
+	d->acc = acc;
 }
 
 int VideoOutput::preinit(struct vo *vo) {
@@ -158,8 +157,6 @@ int VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) {
 	d->params = *params;
 	return 0;
 }
-
-HwAcc *VideoOutput::hwAcc() const {return d->acc;}
 
 void VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) {
 	auto v = priv(vo); auto d = v->d;

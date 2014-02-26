@@ -48,8 +48,7 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
 	Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
 	Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated NOTIFY volumeNormalizerActivatedChanged)
-	Q_PROPERTY(HardwareAcceleration hardwareAccelaration READ hwAcc NOTIFY hwAccChanged)
-	Q_PROPERTY(QString hardwareAccelerationText READ hwAccText NOTIFY hwAccChanged)
+	Q_PROPERTY(HardwareAcceleration hardwareAccelaration READ hwAcc NOTIFY hwaccChanged)
 	Q_PROPERTY(double relativePosition READ relativePosition NOTIFY relativePositionChanged)
 	Q_PROPERTY(QQuickItem *screen READ screen)
 	Q_PROPERTY(qreal cache READ cache NOTIFY cacheChanged)
@@ -79,7 +78,6 @@ public:
 	bool isPlaying() const {return m_state & Playing;}
 	bool isPaused() const {return m_state & Paused;}
 	bool isStopped() const {return m_state & Stopped;}
-	bool isInitialized() const;
 	double speed() const;
 	State state() const { return m_state; }
 //	void setCurrentMrl(const Mrl &mrl);
@@ -114,7 +112,6 @@ public:
 	PlaylistModel &playlist();
 
 	HardwareAcceleration hwAcc() const;
-	QString hwAccText() const;
 	int volume() const;
 	int currentAudioStream() const;
 	bool isMuted() const;
@@ -132,12 +129,11 @@ public:
 	DeintMode deintMode() const;
 	void setAudioDriver(AudioDriver driver);
 	AudioDriver preferredAudioDriver() const;
-	AudioDriver audioDriver() const;
+//	AudioDriver audioDriver() const;
 	void setClippingMethod(ClippingMethod method);
 	void setMinimumCache(int playback, int seeking);
 	void run();
 	void waitUntilTerminated();
-	void waitUntilInitilaized();
 	QThread *thread() const;
 	QQuickItem *screen() const;
 	MediaInfoObject *mediaInfo() const;
@@ -148,7 +144,7 @@ public:
 	QString stateText() const;
 	static QString stateText(State state);
 	double relativePosition() const { return (double)(time()-begin())/duration(); }
-	Q_INVOKABLE double bps(double fps) const;
+	Q_INVOKABLE double bitrate(double fps) const;
 	static void registerObjects();
 	qreal cache() const;
 	int droppedFrames() const;
@@ -165,6 +161,7 @@ public:
 	QList<SubtitleFileInfo> subtitleFiles() const;
 	void setSubtitleDelay(int ms);
 	void setNextStartInfo(const StartInfo &startInfo);
+	void shutdown();
 public slots:
 	void setVolume(int volume);
 	void setAmp(double amp);
@@ -172,7 +169,6 @@ public slots:
 	void setVideoRenderer(VideoRendererItem *renderer);
 //	void play();
 	void stop();
-	void quit();
 //	void reload();
 	void pause();
 	void unpause();
@@ -205,7 +201,7 @@ signals:
 	void videoChanged();
 	void runningChanged();
 	void relativePositionChanged();
-	void hwAccChanged();
+	void hwaccChanged();
 	void cacheChanged();
 	void hasVideoChanged();
 	void droppedFramesChanged();
@@ -217,11 +213,9 @@ signals:
 	void requestNextStartInfo();
 private:
 	void updateState(State state);
-	void onMpvStageChanged(int stage);
 	void exec();
 	void setState(PlayEngine::State state);
 	void customEvent(QEvent *event);
-	static int mpvEventFilter(mpv_event *event, void *ctx);
 	class Thread; struct Data; Data *d;
 	PlayEngine::State m_state = PlayEngine::Stopped;
 };

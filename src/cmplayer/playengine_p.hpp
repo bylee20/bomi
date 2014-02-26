@@ -10,38 +10,35 @@
 #include "deintinfo.hpp"
 #include "dataevent.hpp"
 #include "playengine.hpp"
-#include <player/mp_cmplayer.h>
 #include <array>
 
 extern "C" {
-#include <video/decode/lavc.h>
-#include <player/command.h>
-#include <video/out/vo.h>
-#include <video/decode/vd.h>
-#include <common/playlist.h>
-#include <common/codecs.h>
-#include <options/m_property.h>
-#include <input/input.h>
-#include <audio/filter/af.h>
-#include <video/filter/vf.h>
-#include <audio/out/ao.h>
-#include <stream/stream.h>
-#include <stream/stream_dvd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
+//#include <player/core.h>
+//#include <video/decode/lavc.h>
+//#include <player/command.h>
+//#include <video/out/vo.h>
+//#include <video/decode/vd.h>
+//#include <common/playlist.h>
+//#include <common/codecs.h>
+//#include <options/m_property.h>
+//#include <input/input.h>
+//#include <audio/filter/af.h>
+//#include <video/filter/vf.h>
+//#include <audio/out/ao.h>
+//#include <stream/stream.h>
+//#include <stream/stream_dvd.h>
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <stdarg.h>
+//#include <string.h>
 }
 #undef min
 
 enum EventType {
 	UserType = QEvent::User, UpdateTimeRange, UpdateTrackList, StateChange, PreparePlayback,
-	VideoFormatChanged, UpdateChapterList, Tick, EndPlayback, StartPlayback,
-	HwAccChanged, UpdateDVDInfo, UpdateCache, UpdateCurrentStream, UpdateAudioFormat
-};
-
-enum MpCmd : int {
-	MpSetTempoScaler
+	UpdateChapterList, Tick, EndPlayback, StartPlayback,
+	UpdateDVDInfo, UpdateCache, UpdateCurrentStream,
+	UpdateVideoInfo, UpdateAudioInfo
 };
 
 static inline QByteArray qbytearray_from(const QByteArray &t) { return t; }
@@ -51,12 +48,6 @@ static inline QByteArray qbytearray_from(const float &t) { return QByteArray::nu
 static inline QByteArray qbytearray_from(const double &t) { return QByteArray::number(t); }
 static inline QByteArray qbytearray_from(const QString &t) { return t.toLocal8Bit(); }
 static inline QByteArray qbytearray_from(const char *str) { return QByteArray(str); }
-
-template<typename T> static inline T &getCmdArg(mp_cmd *cmd, int idx = 0) { static T t; (void)cmd->args[idx]; return t; }
-template<> inline double&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.d;}
-template<> inline float	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.f;}
-template<> inline int	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.i;}
-template<> inline char*	&getCmdArg(mp_cmd *cmd, int idx) {return cmd->args[idx].v.s;}
 
 extern void initialize_vdpau();
 extern void finalize_vdpau();

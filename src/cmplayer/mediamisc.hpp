@@ -8,13 +8,13 @@ class PlayEngine;
 
 class AvIoFormat : public QObject {
 	Q_OBJECT
-	Q_PROPERTY(QSize size READ size)
-	Q_PROPERTY(QString type READ type)
-	Q_PROPERTY(double bps READ bps)
-	Q_PROPERTY(double fps READ fps)
-	Q_PROPERTY(int bits READ bits)
-	Q_PROPERTY(double samplerate READ samplerate)
-	Q_PROPERTY(QString channels READ channels)
+	Q_PROPERTY(QSize size READ size CONSTANT FINAL)
+	Q_PROPERTY(QString type READ type CONSTANT FINAL)
+	Q_PROPERTY(int bitrate READ bitrate NOTIFY bitrateChanged)
+	Q_PROPERTY(double fps READ fps CONSTANT FINAL)
+	Q_PROPERTY(int bits READ bits CONSTANT FINAL)
+	Q_PROPERTY(double samplerate READ samplerate CONSTANT FINAL)
+	Q_PROPERTY(QString channels READ channels CONSTANT FINAL)
 public:
 	AvIoFormat(QObject *parent = nullptr): QObject(parent) {}
 	QSize size() const {return m_size;}
@@ -22,13 +22,17 @@ public:
 	int bits() const {return m_bits;}
 	QString channels() const {return m_channels;}
 	QString type() const {return m_type;}
-	double bps() const {return m_bps;}
+	int bitrate() const {return m_bitrate;}
 	double fps() const {return m_fps;}
+signals:
+	void bitrateChanged();
 private:
+	void setBps(int bitrate) { if (_Change(m_bitrate, bitrate)) emit bitrateChanged(); }
 	friend class AvInfoObject;
+	friend class PlayEngine;
 	QSize m_size;
 	QString m_type;
-	double m_bps = 0;
+	int m_bitrate = 0;
 	double m_fps = 0.0;
 	double &m_samplerate = m_fps;
 	int &m_bits = m_size.rwidth();
@@ -37,25 +41,24 @@ private:
 
 class AvInfoObject : public QObject {
 	Q_OBJECT
-	Q_PROPERTY(QString codec READ codec)
-	Q_PROPERTY(AvIoFormat *input READ input)
-	Q_PROPERTY(AvIoFormat *output READ output)
-	Q_PROPERTY(QString audioDriverText READ audioDriverText)
+	Q_PROPERTY(QString codec READ codecDescription CONSTANT FINAL)
+	Q_PROPERTY(AvIoFormat *input READ input CONSTANT FINAL)
+	Q_PROPERTY(AvIoFormat *output READ output CONSTANT FINAL)
+	Q_PROPERTY(QString driver READ driver CONSTANT FINAL)
+	Q_PROPERTY(QString hwacc READ driver CONSTANT FINAL)
 public:
 	AvInfoObject(QObject *parent = nullptr);
-	QString codec() const {return m_codec;}
+	QString codecDescription() const {return m_codecDescription;}
+	QString codec() const { return m_codec; }
 	AvIoFormat *input() const {return m_input;}
 	AvIoFormat *output() const {return m_output;}
-	void setVideo(const PlayEngine *engine);
-	void setAudio(const PlayEngine *engine);
-	QString audioDriverText() const { return m_audioDriver; }
+	QString driver() const { return m_driver; }
 private:
 	void setHwAcc(int acc);
-	static QString format(quint32 fmt) { return fmt >= 0x20202020 ? _U((const char*)&fmt, 4) : _L("0x") % _N(fmt, 16); }
-	static QString bps(int Bps) {return (Bps ? _N(Bps*8/1000) % _L("kbps") : QString());}
 	AvIoFormat *m_input = new AvIoFormat(this);
 	AvIoFormat *m_output = new AvIoFormat(this);
-	QString m_codec, m_hwAccText, &m_audioDriver = m_hwAccText;
+	QString m_codecDescription, m_hwacc, &m_driver = m_hwacc, m_codec;
+	friend class PlayEngine;
 };
 
 class MediaInfoObject : public QObject {
@@ -96,7 +99,8 @@ struct Stream {
 	}
 	int id() const {return m_id;}
 	bool operator == (const Stream &rhs) const {
-		return m_title == rhs.m_title && m_lang == rhs.m_lang && m_codec == rhs.m_codec && m_id == rhs.m_id && m_type == rhs.m_type && m_selected == rhs.m_selected;
+		return m_title == rhs.m_title && m_lang == rhs.m_lang && m_codec == rhs.m_codec
+				&& m_id == rhs.m_id && m_type == rhs.m_type && m_selected == rhs.m_selected;
 	}
 	bool isSelected() const { return m_selected; }
 	const QString &codec() const { return m_codec; }
@@ -104,13 +108,14 @@ struct Stream {
 	Type type() const { return m_type; }
 	bool isExternal() const { return !m_fileName.isEmpty(); }
 	bool isDefault() const { return m_default; }
+	bool isAlbumArt() const { return m_albumart; }
 private:
 	friend class MpMessage;
 	friend class PlayEngine;
 	Type m_type = Unknown;
 	int m_id = -1;
 	QString m_title, m_lang, m_fileName, m_codec;
-	bool m_selected = false, m_default = false;
+	bool m_selected = false, m_default = false, m_albumart = false;
 };
 
 typedef QMap<int, Stream> StreamList;

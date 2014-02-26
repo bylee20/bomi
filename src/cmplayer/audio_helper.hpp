@@ -278,10 +278,10 @@ public:
 	static constexpr bool isPlanar() { return IsPlanar; }
 	AudioDataBuffer(int nch = 0) { d.nch = nch; }
 	AudioDataBuffer(const mp_audio *data) { setData(data); }
-	AudioDataBuffer(const AudioFormat &format, int frames) {
+	AudioDataBuffer(const AudioDataFormat &format, int frames) {
 		d.nch = format.channels.num; expand(frames, 1);
 	}
-	AudioDataBuffer(const AudioFormat &format, int frames, S *s) {
+	AudioDataBuffer(const AudioDataFormat &format, int frames, S *s) {
 		d.nch = format.channels.num; m_capacity = d.frames = frames;
 		setup([&] (int i) { return s + frames*i; });
 	}

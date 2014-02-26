@@ -1,5 +1,6 @@
 #include "audiocontroller.hpp"
 #include "audiomixer.hpp"
+#include "mpv_helper.hpp"
 extern "C" {
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
@@ -12,7 +13,7 @@ DECLARE_LOG_CONTEXT(Audio)
 
 af_info create_info();
 af_info af_info_dummy = create_info();
-struct cmplayer_af_priv { AudioController *ac; char *address; };
+struct cmplayer_af_priv { AudioController *ac; char *address; int use_scaler; int layout; };
 static AudioController *priv(af_instance *af) { return static_cast<cmplayer_af_priv*>(af->priv)->ac; }
 
 static bool isSupported(int type) {
@@ -50,6 +51,7 @@ struct AudioController::Data {
 	ClippingMethod clip = ClippingMethod::Auto;
 	ChannelLayoutMap map = ChannelLayoutMap::default_();
 	ChannelLayout layout = ChannelLayout::Default;
+	AudioFormat input, output;
 };
 
 AudioController::AudioController(QObject *parent): QObject(parent), d(new Data) {
@@ -73,6 +75,8 @@ int AudioController::open(af_instance *af) {
 	priv->ac = address_cast<AudioController*>(priv->address);
 	auto d = priv->ac->d;
 	d->af = af;
+	d->tempoScalerActivated = priv->use_scaler;
+	d->layout = ChannelLayoutInfo::from(priv->layout);
 
 	af->control = AudioController::control;
 	af->uninit = AudioController::uninit;
@@ -93,7 +97,7 @@ void AudioController::uninit(af_instance *af) {
 	d->resampled = nullptr;
 }
 
-AudioMixer *check(AudioMixer *&filter, ClippingMethod clip, const AudioFormat &in, const AudioFormat &out) {
+AudioMixer *check(AudioMixer *&filter, ClippingMethod clip, const AudioDataFormat &in, const AudioDataFormat &out) {
 	if (!filter || !filter->configure(in, out, clip)) {
 		delete filter;
 		filter = AudioMixer::create(in, out, clip);
@@ -105,6 +109,16 @@ AudioMixer *check(AudioMixer *&filter, ClippingMethod clip, const AudioFormat &i
 int AudioController::reinitialize(mp_audio *in) {
 	if (!in)
 		return AF_ERROR;
+	auto makeFormat = [] (const mp_audio *audio) {
+		AudioFormat format;
+		format.m_samplerate = audio->rate/1000.0; // kHz
+		format.m_bitrate = audio->rate*audio->nch*audio->bps*8;
+		format.m_bits = audio->bps*8;
+		format.m_channels = ChannelLayoutInfo::description(ChannelLayoutMap::toLayout(audio->channels));
+		format.m_type = af_fmt_to_str(audio->format);
+		return format;
+	};
+	d->input = makeFormat(in);
 	auto out = d->af->data;
 	out->rate = in->rate;
 	bool ret = true;
@@ -147,7 +161,8 @@ int AudioController::reinitialize(mp_audio *in) {
 		d->resampled->rate = out->rate;
 		in = d->resampled;
 	}
-	const AudioFormat fmt_in(*in), fmt_out(*out);
+	d->output = makeFormat(out);
+	const AudioDataFormat fmt_in(*in), fmt_out(*out);
 	check(d->mixer, d->clip, fmt_in, fmt_out);
 	d->mixer->setOutput(out);
 	d->mixer->setChannelLayoutMap(d->map);
@@ -226,7 +241,7 @@ int AudioController::filter(af_instance *af, mp_audio *data, int /*flags*/) {
 	af->delay += d->mixer->delay();
 
 	if (d->first) {
-		emit ac->started();
+		emit ac->started(d->input, d->output);
 		d->first = false;
 	}
 	return 0;
@@ -235,11 +250,6 @@ int AudioController::filter(af_instance *af, mp_audio *data, int /*flags*/) {
 void AudioController::setNormalizerActivated(bool on) {
 	if (_Change(d->normalizerActivated, on))
 		d->dirty |= Normalizer;
-}
-
-void AudioController::setTempoScalerActivated(bool on) {
-	d->tempoScalerActivated = on;
-	d->dirty |= Scale;
 }
 
 double AudioController::gain() const {
@@ -274,15 +284,13 @@ void AudioController::setOutputChannelLayout(ChannelLayout layout) {
 }
 
 af_info create_info() {
-	static m_option options[2];
-	memset(options, 0, sizeof(options));
-	options[0].name = "address";
-	options[0].flags = 0;
-	options[0].defval = 0;
-	options[0].offset = MP_CHECKED_OFFSETOF(cmplayer_af_priv, address, char*);
-	options[0].is_new_option = 1;
-	options[0].type = &m_option_type_string;
-
+#define MPV_OPTION_BASE cmplayer_af_priv
+	static m_option options[] = {
+		MPV_OPTION(address),
+		MPV_OPTION(use_scaler),
+		MPV_OPTION(layout),
+		mpv::null_option
+	};
 	static af_info info = {
 		"CMPlayer audio controller",
 		"dummy",

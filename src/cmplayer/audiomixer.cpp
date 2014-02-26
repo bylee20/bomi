@@ -15,7 +15,7 @@ public:
 
 	double delay() const { return m_delay; }
 
-	void setFormat(const AudioFormat &format) {
+	void setFormat(const AudioDataFormat &format) {
 		m_format = format;
 		const int nch = m_format.channels.num;
 		const double frames_per_ms = m_format.fps / 1000.0;
@@ -152,7 +152,7 @@ private:
 	static constexpr const double m_percent_overlap = 0.20;
 	static constexpr const double m_ms_search = 14.0;
 
-	AudioFormat m_format;
+	AudioDataFormat m_format;
 	bool m_enabled = false;
 	double m_frames_stride_scaled = 0.0, m_frames_stride_error = 0.0;
 	int m_frames_stride = 0, m_frames_overlap = 0, m_frames_queued = 0;
@@ -177,7 +177,7 @@ public:
 	using S = typename Trait::SampleType;
 	using D = typename AudioFormatTrait<fmt_dst>::SampleType;
 	static constexpr D trans(S s) { return Helper<S>::template conv<D>(Helper<S>::template clip<method>(s)); }
-	AudioMixerImpl(const AudioFormat &in, const AudioFormat &out)
+	AudioMixerImpl(const AudioDataFormat &in, const AudioDataFormat &out)
 	: AudioMixer(in, out, method) { }
 	void apply(const mp_audio *in) override {
 		if (m_scaler.adjusted(in)) {
@@ -270,7 +270,7 @@ private:
 };
 
 template<int fmt_in, int fmt_out>
-static AudioMixer *createImpl(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip) {
+static AudioMixer *createImpl(const AudioDataFormat &in, const AudioDataFormat &out, ClippingMethod clip) {
 	switch (clip) {
 	case ClippingMethod::Auto:
 		return new AudioMixerImpl<fmt_in, fmt_out, AudioFormatTrait<fmt_in>::AutoClipping>(in, out);
@@ -284,7 +284,7 @@ static AudioMixer *createImpl(const AudioFormat &in, const AudioFormat &out, Cli
 }
 
 template<int fmt_in>
-static AudioMixer *create1(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip) {
+static AudioMixer *create1(const AudioDataFormat &in, const AudioDataFormat &out, ClippingMethod clip) {
 	switch (out.type) {
 	case AF_FORMAT_S16:
 		return createImpl<fmt_in, AF_FORMAT_S16>(in, out, clip);
@@ -307,7 +307,7 @@ static AudioMixer *create1(const AudioFormat &in, const AudioFormat &out, Clippi
 	}
 }
 
-AudioMixer *AudioMixer::create(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip) {
+AudioMixer *AudioMixer::create(const AudioDataFormat &in, const AudioDataFormat &out, ClippingMethod clip) {
 	auto make = [&in, &out, clip] () -> AudioMixer * {
 		switch (in.type) {
 		case AF_FORMAT_S16:

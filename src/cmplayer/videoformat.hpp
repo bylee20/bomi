@@ -57,7 +57,7 @@ public:
 	inline QSize alignedSize() const {return d->alignedSize;} // aligned pixel size
 	inline QSize displaySize() const {return d->displaySize;} // display pixel size
 	inline bool isEmpty() const {return d->size.isEmpty() || d->type == IMGFMT_NONE;}
-	inline double bps(double fps) const {return fps*_Area(d->size)*d->bpp;}
+	inline double bitrate(double fps) const {return fps*_Area(d->size)*d->bpp;}
 	inline Type type() const {return d->type;} // output type != d->imgfmt
 	QString name() const;
 	inline int bpp() const {return d->bpp;}

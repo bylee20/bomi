@@ -2,10 +2,11 @@
 #define VIDEOOUTPUT_HPP
 
 #include "stdafx.hpp"
+#include "videoformat.hpp"
 
 // CAUTION: NEVER CALL THIS CLASS FROM Qt's GUI
 
-struct MPContext;			struct vo_driver;
+struct vo_driver;
 class VideoFormat;			class PlayEngine;
 struct mp_image;			class DeintOption;
 class VideoRendererItem;	class HwAcc;
@@ -16,18 +17,15 @@ class VideoOutput : public QObject {
 public:
 	VideoOutput(PlayEngine *engine);
 	~VideoOutput();
-	struct vo *vo_create(MPContext *mpctx);
 	void prepare(void *avctx);
 	void release();
 	const VideoFormat &format() const;
 	void setRenderer(VideoRendererItem *renderer);
 	void output(const QImage &image);
 	void setHwAcc(HwAcc *acc);
-	HwAcc *hwAcc() const;
 	static int queryFormat(struct vo *vo, quint32 format);
 signals:
-	void hwAccChanged(bool activated);
-	void formatChanged(const VideoFormat &format);
+	void formatChanged(VideoFormat format);
 private slots:
 	void setFrameRect(const QRectF &rect);
 	void setTargetSize(const QSize &size);

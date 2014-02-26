@@ -7,15 +7,15 @@ extern "C" {
 #include <audio/audio.h>
 }
 
-struct AudioFormat {
-	AudioFormat() {}
-	AudioFormat(const mp_audio &mpv)
+struct AudioDataFormat {
+	AudioDataFormat() {}
+	AudioDataFormat(const mp_audio &mpv)
 	: fps(mpv.rate), type(mpv.format), channels(mpv.channels) {
 	}
-	bool operator == (const AudioFormat &rhs) const {
+	bool operator == (const AudioDataFormat &rhs) const {
 		return type == rhs.type && mp_chmap_equals(&channels, &rhs.channels) && fps == rhs.fps;
 	}
-	bool operator != (const AudioFormat &rhs) const { return !operator == (rhs); }
+	bool operator != (const AudioDataFormat &rhs) const { return !operator == (rhs); }
 	int fps = 0, type = 0;
 	mp_chmap channels;
 };
@@ -35,10 +35,10 @@ struct AudioNormalizerOption {
 
 class AudioMixer {
 public:
-	static AudioMixer *create(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip);
+	static AudioMixer *create(const AudioDataFormat &in, const AudioDataFormat &out, ClippingMethod clip);
 	virtual ~AudioMixer() {}
 	float gain() const { return m_gain; }
-	bool configure(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip) {
+	bool configure(const AudioDataFormat &in, const AudioDataFormat &out, ClippingMethod clip) {
 		if (m_in.type != in.type || m_out.type != out.type || !checkClippingMethod(clip))
 			return false;
 		m_in = in; m_out = out;
@@ -75,10 +75,10 @@ public:
 protected:
 	virtual bool checkClippingMethod(ClippingMethod method) const = 0;
 	virtual void configured() = 0;
-	AudioMixer(const AudioFormat &in, const AudioFormat &out, ClippingMethod clip)
+	AudioMixer(const AudioDataFormat &in, const AudioDataFormat &out, ClippingMethod clip)
 	: m_in(in), m_out(out), m_clip(clip) {  }
 
-	AudioFormat m_in, m_out;
+	AudioDataFormat m_in, m_out;
 	struct LevelInfo { LevelInfo(int frames = 0): frames(frames) {} int frames = 0; double level = 0.0; };
 	double m_delay = 0.0, m_scale = 1.0;
 	float m_gain = 1.0, m_amp = 1.0;

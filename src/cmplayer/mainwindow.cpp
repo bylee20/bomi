@@ -377,7 +377,7 @@ struct MainWindow::Data {
 		if (first) {
 			recent.setLastPlaylist(playlist.playlist());
 			recent.setLastMrl(engine.mrl());
-			engine.quit();
+			engine.shutdown();
 			auto &as = AppState::get();
 			if (!p->isFullScreen())
 				updateWindowPosState();
@@ -715,7 +715,6 @@ struct MainWindow::Data {
 		connect(&engine, &PlayEngine::requestNextStartInfo, p, [this] () {
 			const auto mrl = playlist.nextMrl(); if (!mrl.isEmpty()) load(mrl);
 		});
-		engine.waitUntilInitilaized();
 	}
 	void initItems() {
 		connect(&recent, &RecentInfo::openListChanged, p, &MainWindow::updateRecentActions);
