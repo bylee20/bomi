@@ -73,6 +73,7 @@ struct VideoOutput::Data {
 	struct vo *vo = nullptr;
 	QSize size, newSize;
 	bool resized = false;
+	QPoint mouse{-1, -1};
 //	VaApiPostProcessor vaapi;
 };
 
@@ -216,8 +217,8 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	case VOCTRL_CHECK_EVENTS:
 		if (d->renderer) {
 			Q_ASSERT(vo->opts->enable_mouse_movements);
-			auto pos = d->renderer->mousePosition();
-			vo_mouse_movement(vo, pos.x(), pos.y());
+			if (_Change(d->mouse, d->renderer->mousePosition().toPoint()))
+				vo_mouse_movement(vo, d->mouse.x(), d->mouse.y());
 		}
 		if (_Change(d->size, d->newSize))
 			vo->want_redraw = true;
