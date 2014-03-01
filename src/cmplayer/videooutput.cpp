@@ -11,14 +11,13 @@
 #include "log.hpp"
 #include "mpv_helper.hpp"
 extern "C" {
+#include <video/hwdec.h>
 #include <video/out/vo.h>
 #include <video/vfcap.h>
-#include <video/decode/dec_video.h>
 #include <options/m_option.h>
 #include <player/core.h>
 #include <sub/sd.h>
 #include <sub/osd_state.h>
-struct sd *sub_get_last_sd(struct dec_sub *sub);
 }
 
 struct cmplayer_vo_priv {
@@ -217,7 +216,7 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 	case VOCTRL_CHECK_EVENTS:
 		if (d->renderer) {
 			Q_ASSERT(vo->opts->enable_mouse_movements);
-			if (_Change(d->mouse, d->renderer->mousePosition().toPoint()))
+			if (_Change(d->mouse, d->renderer->mousePosition()))
 				vo_mouse_movement(vo, d->mouse.x(), d->mouse.y());
 		}
 		if (_Change(d->size, d->newSize))

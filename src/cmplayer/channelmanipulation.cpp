@@ -53,7 +53,7 @@ ChannelManipulation ChannelManipulation::fromString(const QString &text) {
 			if (name == _L(ChNames[i].abbr))
 				return (mp_speaker_id)i;
 		}
-		return MP_SPEAKER_ID_NONE;
+		return MP_SPEAKER_ID_COUNT;
 	};
 
 	for (auto &one : list) {
@@ -61,13 +61,13 @@ ChannelManipulation ChannelManipulation::fromString(const QString &text) {
 		if (map.size() != 2)
 			continue;
 		auto dest = nameToId(map[0]);
-		if (dest == MP_SPEAKER_ID_NONE)
+		if (dest == MP_SPEAKER_ID_COUNT)
 			continue;
 		auto srcs = map[1].split('/', QString::SkipEmptyParts);
 		SourceArray sources;
 		for (int i=0; i<srcs.size(); ++i) {
 			auto src = nameToId(srcs[i]);
-			if (src != MP_SPEAKER_ID_NONE)
+			if (src != MP_SPEAKER_ID_COUNT)
 				sources.append(src);
 		}
 		if (!sources.isEmpty())

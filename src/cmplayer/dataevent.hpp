@@ -15,6 +15,7 @@ public:
 	void get(Args&... args) { std::tie(args...) = m_data; }
 	template<int i>
 	const DataType<i> &data() const { return std::get<i>(m_data); }
+	const Data &tuple() const { return m_data; }
 private:
 	Data m_data;
 };
@@ -34,9 +35,16 @@ static inline void _GetAllData(QEvent *event, Args&... args) {
 	static_cast<DataEvent<Args...>*>(event)->get(args...);
 }
 
-template<typename... Args, const int i = 0>
-static inline const typename DataEvent<Args...>::template DataType<i> &_GetData(QEvent *event) {
-	return static_cast<DataEvent<Args...>*>(event)->template data<i>();
+template<class T>
+static inline const T &_GetData(QEvent *event) {
+	return static_cast<DataEvent<T>*>(event)->template data<0>();
 }
+
+template<class T, class S, class... Args>
+static inline const std::tuple<T, S, Args...> &_GetData(QEvent *event) {
+	return static_cast<DataEvent<T, S, Args...>*>(event)->tuple();
+}
+
+using std::tie;
 
 #endif // DATAEVENT_HPP

@@ -375,7 +375,7 @@ MpOsdItem *VideoRendererItem::mpOsd() const {
 	return d->mposd;
 }
 
-int VideoRendererItem::delay() const {
+double VideoRendererItem::delay() const {
 	return (d->ptsIn == MP_NOPTS_VALUE || d->ptsOut == MP_NOPTS_VALUE) ? 0.0 : (d->ptsOut - d->ptsIn)*1000.0;
 }
 
@@ -430,8 +430,8 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 			if (!d->fbo || d->fbo->size() != d->frameSize) {
 				_Renew(d->fbo, d->frameSize, OpenGLCompat::framebufferObjectTextureFormat());
 				Q_ASSERT(d->fbo->isValid());
-				setRenderTarget(d->fbo->texture());
 			}
+			setRenderTarget(d->fbo->texture());
 			d->fbo->bind();
 			d->shader->render(d->kernel);
 			d->fbo->release();

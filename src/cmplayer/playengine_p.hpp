@@ -12,28 +12,6 @@
 #include "playengine.hpp"
 #include <array>
 
-extern "C" {
-//#include <player/core.h>
-//#include <video/decode/lavc.h>
-//#include <player/command.h>
-//#include <video/out/vo.h>
-//#include <video/decode/vd.h>
-//#include <common/playlist.h>
-//#include <common/codecs.h>
-//#include <options/m_property.h>
-//#include <input/input.h>
-//#include <audio/filter/af.h>
-//#include <video/filter/vf.h>
-//#include <audio/out/ao.h>
-//#include <stream/stream.h>
-//#include <stream/stream_dvd.h>
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <stdarg.h>
-//#include <string.h>
-}
-#undef min
-
 enum EventType {
 	UserType = QEvent::User, UpdateTimeRange, UpdateTrackList, StateChange, PreparePlayback,
 	UpdateChapterList, Tick, EndPlayback, StartPlayback,

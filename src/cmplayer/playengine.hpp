@@ -58,7 +58,7 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(AudioTrackInfoObject *audioTrack READ audioTrackInfo NOTIFY audioStreamsChanged)
 	Q_PROPERTY(SubtitleTrackInfoObject *subtitleTrack READ subtitleTrackInfo NOTIFY subtitleTrackInfoChanged)
 public:
-	enum State {Stopped = 1, Playing = 2, Paused = 4, Loading = 16, Error = 32, Running = Playing | Loading };
+	enum State {Stopped = 1, Playing = 2, Paused = 4, Loading = 16, Error = 32, Buffering = 64, Running = Playing | Loading | Buffering };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
 	enum DVDCmd { DVDMenu };
 	PlayEngine();
@@ -128,8 +128,6 @@ public:
 	void setDeintMode(DeintMode mode);
 	DeintMode deintMode() const;
 	void setAudioDriver(AudioDriver driver);
-	AudioDriver preferredAudioDriver() const;
-//	AudioDriver audioDriver() const;
 	void setClippingMethod(ClippingMethod method);
 	void setMinimumCache(int playback, int seeking);
 	void run();

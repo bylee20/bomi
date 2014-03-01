@@ -57,7 +57,7 @@ public:
 	void requestFrameImage() const;
 	QRectF frameRect(const QRectF &area) const;
 	void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
-	int delay() const;
+	double delay() const;
 	void setDeintMethod(DeintMethod method);
 	void rerender() override;
 	void setOverlayOnLetterbox(bool letterbox);
@@ -70,8 +70,8 @@ public:
 	void reset();
 	QPointF mapToVideo(const QPointF &pos);
 	bool isOpaque() const { return true; }
-	void setMousePosition(const QPointF &pos) { m_mouse = pos; }
-	const QPointF &mousePosition() const { return m_mouse; }
+	void setMousePosition(const QPoint &pos) { m_mouse = pos; }
+	const QPoint &mousePosition() const { return m_mouse; }
 public slots:
 	void setAlignment(int alignment);
 	void setEffects(Effects effect);
@@ -95,7 +95,7 @@ private:
 	MpOsdItem *mpOsd() const;
 	struct Data;
 	Data *d;
-	QPointF m_mouse;
+	QPoint m_mouse;
 	friend class VideoOutput;
 };
 

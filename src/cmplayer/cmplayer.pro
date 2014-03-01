@@ -213,7 +213,6 @@ SOURCES += main.cpp \
     vaapipostprocessor.cpp \
     geometryitem.cpp \
     mediamisc.cpp \
-    ../mpv/video/out/dither.c \
     trayicon.cpp \
     videocolor.cpp \
     interpolator.cpp \

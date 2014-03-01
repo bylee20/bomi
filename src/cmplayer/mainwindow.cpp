@@ -606,7 +606,7 @@ struct MainWindow::Data {
 		connect(&engine, &PlayEngine::stateChanged, p, [this] (PlayEngine::State state) {
 			stateChanging = true;
 			showMessageBox(QString());
-			if ((loading = state == PlayEngine::Loading))
+			if ((loading = state & (PlayEngine::Loading | PlayEngine::Buffering)))
 				loadingTimer.start();
 			else
 				loadingTimer.stop();
@@ -614,6 +614,7 @@ struct MainWindow::Data {
 				showMessageBox(tr("Error!\nCannot open the media."));
 			switch (state) {
 			case PlayEngine::Loading:
+			case PlayEngine::Buffering:
 			case PlayEngine::Playing:
 				menu("play")["pause"]->setText(tr("Pause"));
 				break;
