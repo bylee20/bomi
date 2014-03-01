@@ -109,12 +109,16 @@ struct PlayEngine::Data {
 	template <class T>
 	void setmpv_async(const char *name, const T &value) {
 		if (handle) {
-			using trait = mpv_format_trait<T>;
-			typename trait::mpv_type data = value;
-			auto userdata = new QByteArray(name);
-			*userdata += "=" + trait::userdata(value);
-			Q_ASSERT(!std::is_floating_point<T>::value || trait::format == MPV_FORMAT_DOUBLE);
+			using trait = mpv_format_trait<T>;    typename trait::mpv_type data = value;
+			auto userdata = new QByteArray(name); *userdata += "=" + trait::userdata(value);
 			check(mpv_set_property_async(handle, (quint64)(void*)userdata, name, trait::format, &data), "Error on %%", *userdata);
+		}
+	}
+	template <class T>
+	void setmpv(const char *name, const T &value) {
+		if (handle) {
+			using trait = mpv_format_trait<T>; typename trait::mpv_type data = value;
+			check(mpv_set_property(handle, trait::format, &data), "Error on %%=%%", name, value);
 		}
 	}
 	template<class T>
@@ -162,8 +166,7 @@ struct PlayEngine::Data {
 	Thread thread{p};
 	AudioController *audio = nullptr;
 	QTimer imageTicker;
-	bool quit = false;
-	bool muted = false, tick = false;
+	bool quit = false, timing = false, muted = false, tick = false;
 	int volume = 100;
 	double amp = 1.0, speed = 1.0, avsync = 0;
 	int cacheForPlayback = 20, cacheForSeeking = 50;
@@ -207,20 +210,26 @@ struct PlayEngine::Data {
 		if (handle)
 			check(mpv_command_string(handle, cmd.constData()), "Cannaot execute: %%", cmd);
 	}
-	void tellmpv(const QByteArray &cmd, std::initializer_list<QByteArray> list) {
-		int size = cmd.size();
-		for (auto &one : list) size += one.size();
-		QByteArray str; str.reserve(size + list.size()*2 + 2); str = cmd;
-		for (auto &one : list) { str += ' '; str += one; }
-		tellmpv(str);
+	void tellmpv_async(const QByteArray &cmd, std::initializer_list<QByteArray> &&list) {
+		QVector<const char*> args(list.size()+1, nullptr);
+		auto it = args.begin(); for (auto &one : list) { *it++ = one.constData(); }
+		if (handle)
+			check(mpv_command_async(handle, 0, args.data()), "Cannot execute: %%", cmd);
+	}
+	void tellmpv(const QByteArray &cmd, std::initializer_list<QByteArray> &&list) {
+		QVector<const char*> args(list.size()+2, nullptr);
+		auto it = args.begin(); *it++ = cmd.constData(); for (auto &one : list) { *it++ = one.constData(); }
+		if (handle)
+			check(mpv_command(handle, args.data()), "Cannot execute: %%", cmd);
 	}
 	template<class... Args>
 	void tellmpv(const QByteArray &cmd, const Args &... args) {
 		tellmpv(cmd, {qbytearray_from(args)...});
 	}
-//	template<template <typename> class T> void tellmp(const QByteArray &cmd, const T<QString> &args) {
-//		QString c = cmd; for (auto arg : args) {c += _L(' ') % arg;} tellmp(c);
-//	}
+	template<class... Args>
+	void tellmpv_async(const QByteArray &cmd, const Args &... args) {
+		tellmpv_async(cmd, {qbytearray_from(args)...});
+	}
 
 	void updateMrl() {
 		hasImage = startInfo.mrl.isImage();
@@ -235,7 +244,7 @@ struct PlayEngine::Data {
 	void loadfile(const QByteArray &file, int resume, int cache) {
 		if (file.isEmpty())
 			return;
-		QByteArray cmd = "loadfile \"" + file + "\" replace ";
+		timing = false;
 		OptionList opts;
 		opts.add("ao", ao.isEmpty() ? "\"\"" : ao);
 		if (hwaccCodecs.isEmpty())
@@ -271,9 +280,8 @@ struct PlayEngine::Data {
 		vo.add("swdec_deint", deint_swdec.toString().toLatin1());
 		vo.add("hwdec_deint", deint_hwdec.toString().toLatin1());
 		opts.add("vo", "null:" + vo.get(), true);
-
-		_Debug("Call: %%", cmd + opts.get());
-		tellmpv(cmd + opts.get());
+		_Debug("Load: %% (%%)", file, opts.get());
+		tellmpv("loadfile", file, "replace", opts.get());
 	}
 	void loadfile() {
 		if (startInfo.isValid())
@@ -864,7 +872,7 @@ void PlayEngine::setMuted(bool muted) {
 void PlayEngine::exec() {
 	d->quit = false;
 	int position = 0, cache = -1, length = -1;
-	bool error = true, first = false, posted = false, timing = false;
+	bool error = true, first = false, posted = false;
 	Mrl mrl;
 	QByteArray leftmsg;
 	auto time = [] (double s) -> int { return s*1000 + 0.5; };
@@ -872,7 +880,7 @@ void PlayEngine::exec() {
 		const auto event = mpv_wait_event(d->handle, 0.005);
 		switch (event->event_id) {
 		case MPV_EVENT_NONE: {
-			if (!timing)
+			if (!d->timing)
 				break;
 			if (first && (length = time(d->getmpv<double>("length"))) > 0) {
 				_PostEvent(this, UpdateTimeRange, time(d->getmpv<double>("time-start")), length);
@@ -937,12 +945,12 @@ void PlayEngine::exec() {
 			break;
 		case MPV_EVENT_FILE_LOADED: {
 			error = false;
-			timing = first = true;
+			d->timing = first = true;
 			const auto name = d->getmpv<QString>("media-title");
 			_PostEvent(this, StartPlayback, name, d->getmpv<bool>("seekable", false));
 			break;
 		} case MPV_EVENT_END_FILE: {
-			timing = false; length = -1;
+			d->timing = false; length = -1;
 			_PostEvent(this, EndPlayback, mrl, error);
 			posted = true;
 			break;
@@ -996,7 +1004,9 @@ void PlayEngine::exec() {
 				delete data;
 			}
 			break;
-		case MPV_EVENT_AUDIO_RECONFIG: {
+		case MPV_EVENT_GET_PROPERTY_REPLY: {
+			break;
+		} case MPV_EVENT_AUDIO_RECONFIG: {
 			auto audio = new AvInfoObject;
 			audio->m_driver = AudioDriverInfo::name(d->audioDriver);
 			audio->m_codec = d->getmpv<QString>("audio-format");
