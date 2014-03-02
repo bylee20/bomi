@@ -8,13 +8,16 @@
 class OpenGLCompat {
 public:
 	enum Extension {
-		TextureRG = 1,
-		TextureFloat = 2,
-		Debug = 4,
-		NvVdpauInterop = 8,
-		FramebufferObject = 16,
-		AppleYCbCr422 = 32,
-		MesaYCbCrTexture = 64
+		TextureRG         = 1 << 0,
+		TextureFloat      = 1 << 1,
+		Debug             = 1 << 2,
+		NvVdpauInterop    = 1 << 3,
+		FramebufferObject = 1 << 4,
+		AppleYCbCr422     = 1 << 5,
+		MesaYCbCrTexture  = 1 << 6,
+		ExtSwapControl    = 1 << 7,
+		SgiSwapControl    = 1 << 8,
+		MesaSwapControl   = 1 << 9
 	};
 	static void initialize(QOpenGLContext *ctx);
 	static void finalize(QOpenGLContext *ctx);
@@ -38,6 +41,7 @@ public:
 	static QOpenGLDebugLogger *logger();
 	static OGL::TextureFormat framebufferObjectTextureFormat();
 	static void debug(const QOpenGLDebugMessage &message);
+	static void setSwapInterval(int frames);
 private:
 	OpenGLCompat();
 	static OpenGLCompat c;

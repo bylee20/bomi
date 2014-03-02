@@ -3,6 +3,9 @@
 #include "app.hpp"
 #include <cmath>
 #include "log.hpp"
+#ifdef Q_OS_LINUX
+#include <GL/glx.h>
+#endif
 
 DECLARE_LOG_CONTEXT(OpenGL)
 
@@ -16,6 +19,10 @@ struct OpenGLCompat::Data {
 	int major = 0, minor = 0;
 	QMap<OGL::TransferFormat, OpenGLTextureTransferInfo> formats[2];
 	OGL::TextureFormat fboFormat = OGL::RGBA8_UNorm;
+	int (*swapInterval)(int interval) = nullptr; // GLX_MESA, GLX_SGI, WGL_EXT
+	void (*swapIntervalExt)(Display *dpy, GLXDrawable drawable, int interval) = nullptr; // GLX_EXT
+
+
 };
 
 OpenGLCompat::OpenGLCompat()
@@ -119,9 +126,13 @@ void OpenGLCompat::check() {
 	if (current < versionNumber(2, 1))
 		_Fatal("OpenGL version is too low. CMPlayer requires OpenGL 2.1 or higher.");
 
+	auto exts = gl.extensions();
+#ifdef Q_OS_LINUX
+	exts += QSet<QByteArray>::fromList(QByteArray(glXQueryExtensionsString(QX11Info::display(), QX11Info::appScreen())).split(' '));
+#endif
 	QStringList extensions;
 	auto checkExtension = [&] (const char *name, Extension ext, int major = -1, int minor = 0) {
-		if ((major > 0 && current >= versionNumber(major, minor)) || gl.hasExtension(name)) {
+		if ((major > 0 && current >= versionNumber(major, minor)) || exts.contains(name)) {
 			extensions.append(name);
 			m_extensions |= ext;
 		}
@@ -133,6 +144,10 @@ void OpenGLCompat::check() {
 	checkExtension("GL_NV_vdpau_interop", NvVdpauInterop);
 	checkExtension("GL_APPLE_ycbcr_422", AppleYCbCr422);
 	checkExtension("GL_MESA_ycbcr_texture", MesaYCbCrTexture);
+	checkExtension("GLX_EXT_swap_control", ExtSwapControl);
+	checkExtension("GLX_SGI_swap_control", SgiSwapControl);
+	checkExtension("GLX_MESA_swap_control", MesaSwapControl);
+
 	if (QOpenGLFramebufferObject::hasOpenGLFramebufferObjects()) {
 		extensions.append("GL_ARB_framebuffer_object");
 		m_extensions |= FramebufferObject;
@@ -206,9 +221,22 @@ void OpenGLCompat::initialize(QOpenGLContext *ctx) {
 		} else
 			_Error("OpenGL debug logger was requested but it is not supported.");
 	}
+#ifdef Q_OS_LINUX
+	if (hasExtension(ExtSwapControl))
+		d->swapIntervalExt = (decltype(d->swapIntervalExt))ctx->getProcAddress("glXSwapIntervalEXT");
+	if (hasExtension(MesaSwapControl))
+		d->swapInterval = (decltype(d->swapInterval))ctx->getProcAddress("glxSwapIntervalMESA");
+	else if (hasExtension(SgiSwapControl))
+		d->swapInterval = (decltype(d->swapInterval))ctx->getProcAddress("glXSwapIntervalSGI");
+#endif
 }
 
 OpenGLTextureTransferInfo OpenGLCompat::textureTransferInfo(OGL::TransferFormat format, int bytesPerComponent) {
 	Q_ASSERT(bytesPerComponent == 1 || bytesPerComponent == 2);
 	return c.d->formats[bytesPerComponent-1][format];
+}
+
+void OpenGLCompat::setSwapInterval(int frames) {
+	if (c.d->swapInterval)
+		c.d->swapInterval(frames);
 }
