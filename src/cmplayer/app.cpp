@@ -84,6 +84,7 @@ struct App::Data {
 			if (Log::maximumLevel() < Log::Debug)
 				Log::setMaximumLevel(Log::Debug);
 			gldebug = true;
+			qputenv("CMPLAYER_MPV_VERBOSE", "v");
 		}
 	}
 	QCommandLineParser *getCommandParser(QCommandLineParser *parser) const {

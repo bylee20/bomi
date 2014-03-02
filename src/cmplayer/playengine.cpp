@@ -118,7 +118,7 @@ struct PlayEngine::Data {
 	void setmpv(const char *name, const T &value) {
 		if (handle) {
 			using trait = mpv_format_trait<T>; typename trait::mpv_type data = value;
-			check(mpv_set_property(handle, trait::format, &data), "Error on %%=%%", name, value);
+			check(mpv_set_property(handle, name, trait::format, &data), "Error on %%=%%", name, value);
 		}
 	}
 	template<class T>
@@ -141,23 +141,23 @@ struct PlayEngine::Data {
 	HardwareAcceleration hwacc = HardwareAcceleration::Unavailable;
 
 	bool hasImage = false, tempoScaler = false, seekable = false;
-	bool subStreamsVisible = true, userPaused = false, startPaused = false;
+	bool subStreamsVisible = true, startPaused = false;
 
-	mpv_error errorStatus = MPV_ERROR_SUCCESS;
-	const char *error() const { return mpv_error_string(errorStatus); }
-	bool isSuccess() const { return errorStatus == MPV_ERROR_SUCCESS; }
-	bool isSuccess(int error) { errorStatus = (mpv_error)error; return isSuccess(); }
+	static const char *error(int err) { return mpv_error_string(err); }
+	bool isSuccess(int error) { return error == MPV_ERROR_SUCCESS; }
 	template<class... Args>
 	bool check(int err, const char *msg, const Args &... args) {
 		if (isSuccess(err))
 			return true;
-		Log::write(getLogContext(), Log::Error, "Error %%: %%", error(), Log::parse(msg, args...));
+		const auto lv = err == MPV_ERROR_PROPERTY_UNAVAILABLE ? Log::Debug : Log::Error;
+		if (lv <= Log::maximumLevel())
+			Log::write(getLogContext(), lv, "Error %%: %%", error(err), Log::parse(msg, args...));
 		return false;
 	}
 	template<class... Args>
 	void fatal(int err, const char *msg, const Args &... args) {
 		if (!isSuccess(err))
-			Log::write(getLogContext(), Log::Fatal, "Error %%: %%", error(), Log::parse(msg, args...));
+			Log::write(getLogContext(), Log::Fatal, "Error %%: %%", error(err), Log::parse(msg, args...));
 	}
 	void setOption(const char *name, const char *data) {
 		fatal(mpv_set_option_string(handle, name, data), "Couldn't set option %%=%%.", name, data);
@@ -262,6 +262,7 @@ struct PlayEngine::Data {
 		}
 		if (resume > 0)
 			opts.add("start", resume/1000.0);
+		opts.add("deinterlace", deint != DeintMode::None);
 		opts.add("volume", mpVolume());
 		opts.add("mute", muted);
 		opts.add("audio-delay", audioSync/1000.0);
@@ -350,7 +351,9 @@ PlayEngine::PlayEngine()
 	});
 
 	d->handle = mpv_create();
-	mpv_request_log_messages(d->handle, "status");
+	auto verbose = qgetenv("CMPLAYER_MPV_VERBOSE").toLower();
+	if (!verbose.isEmpty())
+		mpv_request_log_messages(d->handle, verbose.constData());
 	d->setOption("fs", "no");
 	d->setOption("mouse-movements", "yes");
 	d->setOption("softvol", "yes");
@@ -621,8 +624,6 @@ void PlayEngine::updateState(State state) {
 		if (wasRunning != isRunning())
 			emit runningChanged();
 	}
-	if (m_state != Paused)
-		d->userPaused = false;
 }
 
 template<typename T>
@@ -882,25 +883,23 @@ void PlayEngine::exec() {
 		case MPV_EVENT_NONE: {
 			if (!d->timing)
 				break;
-			if (first && (length = time(d->getmpv<double>("length"))) > 0) {
-				_PostEvent(this, UpdateTimeRange, time(d->getmpv<double>("time-start")), length);
-				const auto array = d->getmpv<QVariant>("chapter-list").toList();
-				ChapterList chapters; chapters.resize(array.size());
-				for (int i=0; i<array.size(); ++i) {
-					const auto map = array[i].toMap();
-					auto &chapter = chapters[i];
-					chapter.m_id = i;
-					chapter.m_time = time(map["time"].toDouble());
-					chapter.m_name = map["title"].toString();
-					if (chapter.m_name.isEmpty())
-						chapter.m_name = _MSecToString(chapter.m_time, _L("hh:mm:ss.zzz"));
+			if (_Change(position, time(d->getmpv<double>("time-pos"))) && position > 0) {
+				if (first) {
+					_PostEvent(this, UpdateTimeRange, time(d->getmpv<double>("time-start")), time(d->getmpv<double>("length")));
+					const auto array = d->getmpv<QVariant>("chapter-list").toList();
+					ChapterList chapters; chapters.resize(array.size());
+					for (int i=0; i<array.size(); ++i) {
+						const auto map = array[i].toMap();
+						auto &chapter = chapters[i];
+						chapter.m_id = i;
+						chapter.m_time = time(map["time"].toDouble());
+						chapter.m_name = map["title"].toString();
+						if (chapter.m_name.isEmpty())
+							chapter.m_name = _MSecToString(chapter.m_time, _L("hh:mm:ss.zzz"));
+					}
+					_PostEvent(this, UpdateChapterList, chapters);
+					first = false;
 				}
-				_PostEvent(this, UpdateChapterList, chapters);
-				d->tick = false;
-				first = false;
-			}
-			if (_Change(position, time(d->getmpv<double>("time-pos"))) && position > 0 && !d->tick) {
-				d->tick = true;
 				double sync = 0;
 				if (d->isSuccess(mpv_get_property(d->handle, "avsync", MPV_FORMAT_DOUBLE, &sync)) && d->renderer)
 					sync = sync*1000.0 - d->renderer->delay();
@@ -1080,19 +1079,15 @@ int PlayEngine::currentChapter() const {
 void PlayEngine::pause() {
 	if (d->hasImage)
 		setState(PlayEngine::Paused);
-	else {
-		d->userPaused = true;
-		d->tellmpv("pause", 1);
-	}
+	else
+		d->setmpv("pause", true);
 }
 
 void PlayEngine::unpause() {
 	if (d->hasImage)
 		setState(PlayEngine::Playing);
-	else {
-		d->userPaused = false;
-		d->tellmpv("pause", 0);
-	}
+	else
+		d->setmpv("pause", false);
 }
 
 Mrl PlayEngine::mrl() const {
@@ -1239,16 +1234,16 @@ void PlayEngine::sendMouseClick(const QPointF &pos) {
 	if (d->handle) {
 		if (_Change(d->mouse, pos.toPoint()))
 			d->renderer->setMousePosition(d->mouse);
-//		static const char *cmds[] = {"dvdnav", "mouse", nullptr};
-//		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse.");
+		static const char *cmds[] = {"dvdnav", "mouse", nullptr};
+		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse.");
 	}
 }
 
 void PlayEngine::sendMouseMove(const QPointF &pos) {
 	if (d->handle && _Change(d->mouse, pos.toPoint())) {
 		d->renderer->setMousePosition(d->mouse);
-//		static const char *cmds[] = {"dvdnav", "mouse_move", nullptr};
-//		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse_move.");
+		static const char *cmds[] = {"dvdnav", "mouse_move", nullptr};
+		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse_move.");
 	}
 }
 
