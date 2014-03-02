@@ -23,8 +23,8 @@ public:
 	Playlist &loadAll(const QDir &dir);
 	static Type guessType(const QString &fileName);
 private:
-	bool savePLS(QFile *file) const;
-	bool saveM3U(QFile *file) const;
+	bool savePLS(QTextStream &out) const;
+	bool saveM3U(QTextStream &out) const;
 	bool load(QTextStream &in, QString enc, Type type);
 	bool loadPLS(QTextStream &in);
 	bool loadM3U(QTextStream &in);

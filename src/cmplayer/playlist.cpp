@@ -24,12 +24,14 @@ bool Playlist::save(const QString &filePath, Type type) const {
 		return false;
 	if (type == Unknown)
 		type = guessType(file.fileName());
+	QTextStream out(&file);
+	out.setCodec("UTF-8");
 	switch (type) {
 	case PLS:
-		return savePLS(&file);
+		return savePLS(out);
 	case M3U:
 	case M3U8:
-		return saveM3U(&file);
+		return saveM3U(out);
 	default:
 		return false;
 	}
@@ -94,8 +96,7 @@ Playlist::Type Playlist::guessType(const QString &fileName) {
 		return Unknown;
 }
 
-bool Playlist::savePLS(QFile *file) const {
-	QTextStream out(file);
+bool Playlist::savePLS(QTextStream &out) const {
 	const int count = size();
 	out << "[playlist]" << endl << "NumberOfEntries=" << count << endl << endl;
 	for (int i=0; i<count; ++i)
@@ -105,8 +106,7 @@ bool Playlist::savePLS(QFile *file) const {
 	return true;
 }
 
-bool Playlist::saveM3U(QFile *file) const {
-	QTextStream out(file);
+bool Playlist::saveM3U(QTextStream &out) const {
 	const int count = size();
 	out << "#EXTM3U\n";
 	for (int i=0; i<count; ++i) {

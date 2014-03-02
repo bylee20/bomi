@@ -1223,9 +1223,9 @@ void MainWindow::connectMenus() {
 	connect(playlist["save"], &QAction::triggered, this, [this] () {
 		const Playlist &list = d->playlist.playlist();
 		if (!list.isEmpty()) {
-			auto file = _GetSaveFileName(this, tr("Save File"), QString(), tr("Playlist") + " (*.pls)");
+			auto file = _GetSaveFileName(this, tr("Save File"), QString(), Info::playlistExtFilter());
 			if (!file.isEmpty()) {
-				if (QFileInfo(file).suffix().compare("pls", Qt::CaseInsensitive) != 0)
+				if (QFileInfo(file).suffix().isEmpty())
 					file += ".pls";
 				list.save(file);
 			}
