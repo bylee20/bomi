@@ -42,6 +42,12 @@ bool Downloader::isRunning() const {
 	return d->running;
 }
 
+QByteArray Downloader::takeData() {
+	auto data = d->data;
+	d->data = QByteArray();
+	return data;
+}
+
 QByteArray Downloader::data() const {
 	return d->data;
 }

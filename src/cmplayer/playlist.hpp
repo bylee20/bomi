@@ -19,14 +19,15 @@ public:
 	bool save(const QString &filePath, Type type = Unknown) const;
 	bool load(const QString &filePath, const QString &enc = QString(), Type type = Unknown);
 	bool load(const Mrl &url, const QString &enc = QString(), Type type = Unknown);
-	bool load(QFile *file, const QString &enc = QString(), Type type = Unknown);
+	bool load(QByteArray *data, const QString &enc, Type type);
 	Playlist &loadAll(const QDir &dir);
+	static Type guessType(const QString &fileName);
 private:
-	static Type getType(const QString &fileName);
 	bool savePLS(QFile *file) const;
 	bool saveM3U(QFile *file) const;
-	bool loadPLS(QFile *file, const QString &enc);
-	bool loadM3U(QFile *file, const QString &enc);
+	bool load(QTextStream &in, QString enc, Type type);
+	bool loadPLS(QTextStream &in);
+	bool loadM3U(QTextStream &in);
 };
 
 #endif // PLAYLIST_HPP

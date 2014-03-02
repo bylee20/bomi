@@ -1,5 +1,4 @@
 #include "playlist.hpp"
-#include "downloader.hpp"
 #include "info.hpp"
 
 Playlist::Playlist()
@@ -24,7 +23,7 @@ bool Playlist::save(const QString &filePath, Type type) const {
 	if (!file.open(QFile::WriteOnly | QFile::Truncate))
 		return false;
 	if (type == Unknown)
-		type = getType(file.fileName());
+		type = guessType(file.fileName());
 	switch (type) {
 	case PLS:
 		return savePLS(&file);
@@ -45,40 +44,45 @@ Playlist &Playlist::loadAll(const QDir &dir) {
 	return *this;
 }
 
-bool Playlist::load(const QString &filePath, const QString &enc, Type type) {
-	QFile file(filePath);
-	return load(&file, enc, type);
-}
-
-bool Playlist::load(QFile *file, const QString &enc, Type type) {
+bool Playlist::load(QTextStream &in, QString enc, Type type) {
 	clear();
-	if (!file->isOpen() && !file->open(QFile::ReadOnly))
-		return false;
-	if (type == Unknown)
-		type = getType(file->fileName());
+	if (type == M3U8)
+		enc = "UTF-8";
+	if (!enc.isEmpty())
+		in.setCodec(QTextCodec::codecForName(enc.toLocal8Bit()));
 	switch (type) {
 	case PLS:
-		return loadPLS(file, enc);
+		return loadPLS(in);
 	case M3U:
-		return loadM3U(file, enc);
 	case M3U8:
-		return loadM3U(file, "UTF-8");
+		return loadM3U(in);
 	default:
 		return false;
 	}
+}
+
+bool Playlist::load(QByteArray *data, const QString &enc, Type type) {
+	QTextStream in(data);
+	return load(in, enc, type);
+}
+
+bool Playlist::load(const QString &filePath, const QString &enc, Type type) {
+	QFile file(filePath);
+	if (!file.open(QFile::ReadOnly))
+		return false;
+	if (type == Unknown)
+		type = guessType(filePath);
+	QTextStream in(&file);
+	return load(in, enc, type);
 }
 
 bool Playlist::load(const Mrl &mrl, const QString &enc, Type type) {
 	if (mrl.isLocalFile())
 		return load(mrl.toLocalFile(), enc, type);
 	return false;
-//	QTemporaryFile file(QDir::tempPath() + "/cmplayer_temp_XXXXXX_" + mrl.fileName());
-//	if (!file.open() || !Downloader::get(mrl.toString(), &file, 30000))
-//		return false;
-//	return load(&file, enc, type);
 }
 
-Playlist::Type Playlist::getType(const QString &fileName) {
+Playlist::Type Playlist::guessType(const QString &fileName) {
 	const QString suffix = QFileInfo(fileName).suffix().toLower();
 	if (suffix == "pls")
 		return PLS;
@@ -113,10 +117,7 @@ bool Playlist::saveM3U(QFile *file) const {
 }
 
 
-bool Playlist::loadPLS(QFile *file, const QString &enc) {
-	QTextStream in(file);
-	if (!enc.isEmpty())
-		in.setCodec(QTextCodec::codecForName(enc.toLocal8Bit()));
+bool Playlist::loadPLS(QTextStream &in) {
 	const qint64 pos = in.pos();
 	in.seek(0);
 	while (!in.atEnd()) {
@@ -131,10 +132,7 @@ bool Playlist::loadPLS(QFile *file, const QString &enc) {
 	return true;
 }
 
-bool Playlist::loadM3U(QFile *file, const QString &enc) {
-	QTextStream in(file);
-	if (!enc.isEmpty())
-		in.setCodec(QTextCodec::codecForName(enc.toLocal8Bit()));
+bool Playlist::loadM3U(QTextStream &in) {
 	const qint64 pos = in.pos();
 	in.seek(0);
 	auto getNextLocation = [&in] () -> QString {

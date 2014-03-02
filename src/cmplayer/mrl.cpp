@@ -24,7 +24,7 @@ Mrl::Mrl(const QString &location, const QString &name) {
 }
 
 bool Mrl::isPlaylist() const {
-	return fileName().endsWith(".pls", Qt::CaseInsensitive);
+	return Info::playlistExt().contains(suffix(), Qt::CaseInsensitive);
 }
 
 QString Mrl::fileName() const {

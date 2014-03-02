@@ -705,6 +705,7 @@ struct MainWindow::Data {
 			} else
 				updateSubtitleState();
 			updateMrlState(mrl, false, 0);
+			qDebug() << playlist.count();
 		});
 		connect(&engine, &PlayEngine::finished, p, [this, updateMrlState] (Mrl mrl, int time, int remain) {
 			updateMrlState(mrl, true, !mrl.isDvd() && remain > 500 ? time : -1);
@@ -924,7 +925,13 @@ void MainWindow::connectMenus() {
 		}
 	});
 	connect(open["url"], &QAction::triggered, this, [this] () {
-		GetUrlDialog dlg; if (dlg.exec()) {openMrl(dlg.url().toString(), dlg.encoding());}
+		GetUrlDialog dlg(this);
+		if (dlg.exec()) {
+			if (dlg.isPlaylist())
+				d->playlist.set(dlg.playlist());
+			else
+				openMrl(dlg.url().toString(), dlg.encoding());
+		}
 	});
 	connect(open["dvd"], &QAction::triggered, this, [this] () {
 		OpenDvdDialog dlg;
@@ -1417,7 +1424,8 @@ void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
 		if (mrl.isPlaylist()) {
 			d->playlist.set({mrl, enc});
 		} else {
-			d->playlist.set(generatePlaylist(mrl));
+			if (d->playlist.rowOf(mrl) < 0)
+				d->playlist.set(generatePlaylist(mrl));
 			d->load(mrl);
 			if (!mrl.isDvd())
 				d->recent.stack(mrl);

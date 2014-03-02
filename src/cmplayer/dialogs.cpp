@@ -1,4 +1,5 @@
 #include "dialogs.hpp"
+#include "downloader.hpp"
 #include "ui_aboutdialog.h"
 #include "info.hpp"
 #include "widgets.hpp"
@@ -227,19 +228,30 @@ QStringList EncodingFileDialog::getOpenFileNames(QWidget *parent
 /******************************************************************************/
 
 struct GetUrlDialog::Data {
-	QLineEdit *url;
+	GetUrlDialog *p;
+	QComboBox *url;
 	EncodingComboBox *enc;
 	QCompleter *c;
+	QProgressBar *prog;
+	Downloader downloader;
+	QDialogButtonBox *bbox;
+	Playlist playlist;
 };
 
 GetUrlDialog::GetUrlDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
+	d->p = this;
 	const auto &as = AppState::get();
 	d->c = new QCompleter(as.open_url_list, this);
-	d->url = new QLineEdit(this);
+	d->url = new QComboBox(this);
+	d->url->setEditable(true);
+	d->url->addItems(as.open_url_list);
 	d->url->setCompleter(d->c);
+	d->url->setMaximumWidth(600);
 	d->enc = new EncodingComboBox(this);
 	d->enc->setEncoding(as.open_url_enc);
+	d->prog = new QProgressBar(this);
+	d->bbox = makeButtonBox(this);
 
 	auto vbox = new QVBoxLayout(this);
 	auto hbox = new QHBoxLayout;
@@ -249,17 +261,31 @@ GetUrlDialog::GetUrlDialog(QWidget *parent)
 	hbox = new QHBoxLayout;
 	hbox->addWidget(new QLabel(tr("Encoding for Playlist"), this));
 	hbox->addWidget(d->enc);
-	hbox->addWidget(makeButtonBox(this));
+	hbox->addWidget(d->bbox);
 	vbox->addLayout(hbox);
+	vbox->addWidget(d->prog);
+	d->prog->hide();
+
+	connect(&d->downloader, &Downloader::started, [this] () { d->prog->setRange(0, 0); d->prog->setVisible(true); });
+	connect(&d->downloader, &Downloader::downloaded, [this] (qint64 written, qint64 total) {
+		d->prog->setRange(0, total);
+		d->prog->setValue(written);
+	});
+	connect(&d->downloader, &Downloader::finished, [this] () {
+		auto data = d->downloader.takeData();
+		d->playlist.load(&data, d->enc->encoding(), Playlist::guessType(url().path()));
+		_accept();
+	});
+	setWindowTitle(tr("Open URL"));
 }
 
 GetUrlDialog::~GetUrlDialog() {
 	delete d;
 }
 
-void GetUrlDialog::accept() {
+void GetUrlDialog::_accept() {
 	auto &as = AppState::get();
-	const auto url = d->url->text().trimmed();
+	const auto url = d->url->currentText().trimmed();
 	const int idx = as.open_url_list.indexOf(url);
 	if (idx >= 0)
 		as.open_url_list.takeAt(idx);
@@ -268,22 +294,27 @@ void GetUrlDialog::accept() {
 	QDialog::accept();
 }
 
-QUrl GetUrlDialog::url() const {
-	return QUrl(d->url->text().trimmed());
+void GetUrlDialog::accept() {
+	if (isPlaylist()) {
+		d->downloader.start(url());
+		d->bbox->setEnabled(false);
+		d->enc->setEnabled(false);
+		d->url->setEnabled(false);
+	} else
+		_accept();
 }
 
-//bool GetUrlDialog::isPlaylist() const {
-//	const QString suffix = QFileInfo(url().path()).suffix();
-//	return suffix.compare("pls", Qt::CaseInsensitive) == 0;
-//}
+QUrl GetUrlDialog::url() const {
+	return QUrl(d->url->currentText().trimmed());
+}
 
-//Playlist GetUrlDialog::playlist() const {
-//	if (!isPlaylist())
-//		return Playlist();
-//	Playlist list;
-//	list.load(url(), d->enc->encoding());
-//	return list;
-//}
+bool GetUrlDialog::isPlaylist() const {
+	return Info::playlistExt().contains(QFileInfo(url().path()).suffix(), Qt::CaseInsensitive);
+}
+
+Playlist GetUrlDialog::playlist() const {
+	return d->playlist;
+}
 
 QString GetUrlDialog::encoding() const {
 	return d->enc->encoding();

@@ -78,11 +78,12 @@ public:
 	~GetUrlDialog();
 	void setUrl(const QUrl &url);
 	QUrl url() const;
-//	bool isPlaylist() const;
-//	Playlist playlist() const;
+	bool isPlaylist() const;
+	Playlist playlist() const;
 	QString encoding() const;
 private:
 	void accept();
+	void _accept();
 	struct Data;
 	Data *d;
 };

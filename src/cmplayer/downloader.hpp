@@ -13,6 +13,7 @@ public:
 	bool start(const QUrl &url);
 	bool isRunning() const;
 	QByteArray data() const;
+	QByteArray takeData();
 	QUrl url() const;
 signals:
 	void downloaded(qint64 written, qint64 total);
