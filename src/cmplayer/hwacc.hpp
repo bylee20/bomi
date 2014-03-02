@@ -24,16 +24,21 @@ public:
 
 class HwAcc {
 public:
-	enum Type {VaApiGLX, VdpauX11, Vda};
+	enum Type {None, VaApiGLX, VdpauX11, Vda};
 	virtual ~HwAcc();
 	static void initialize();
 	static void finalize();
+	static QList<Type> availableBackends();
 	static QList<AVCodecID> fullCodecList();
 	static QList<DeintMethod> fullDeintList();
 	static bool supports(AVCodecID codec);
+	static bool supports(Type backend, AVCodecID codec);
 	static bool supports(DeintMethod method);
-	static Type backend();
-	static QString backendName();
+//	static Type backend();
+	static Type backend(const QString &name);
+//	static void setBackend(Type type);
+	static QString backendDescription(Type type);
+	static QString backendName(Type type);
 	static const char *codecName(int id);
 	static AVCodecID codecId(const char *name);
 	static HwAccMixer *createMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format);

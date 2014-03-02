@@ -186,7 +186,7 @@ struct PlayEngine::Data {
 	ChapterInfoObject *chapterInfo = nullptr;
 	QPoint mouse{-1, -1};
 	QList<QMetaObject::Connection> rendererConnections;
-
+	HwAcc::Type hwaccBackend = HwAcc::None;
 	VideoFormat videoFormat;
 	DeintOption deint_swdec, deint_hwdec;
 	DeintMode deint = DeintMode::Auto;
@@ -247,17 +247,10 @@ struct PlayEngine::Data {
 		timing = false;
 		OptionList opts;
 		opts.add("ao", ao.isEmpty() ? "\"\"" : ao);
-		if (hwaccCodecs.isEmpty())
+		if (hwaccCodecs.isEmpty() || hwaccBackend == HwAcc::None)
 			opts.add("hwdec", "no");
 		else {
-#ifdef Q_OS_LINUX
-			if (HwAcc::backend() == HwAcc::VdpauX11)
-				opts.add("hwdec", "vdpau");
-			else
-				opts.add("hwdec", "vaapi");
-#elif defined(Q_OS_MAC)
-			opts.add("hwdec", "vda");
-#endif
+			opts.add("hwdec", HwAcc::backendName(hwaccBackend).toLatin1());
 			opts.add("hwdec-codecs", hwaccCodecs, true);
 		}
 		if (resume > 0)
@@ -543,8 +536,7 @@ double PlayEngine::volumeNormalizer() const {
 	auto gain = d->audio->gain(); return gain < 0 ? 1.0 : gain;
 }
 
-void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
-	d->hwaccCodecs.clear();
+void PlayEngine::setHwAcc(int backend, const QList<int> &codecs) {
 	for (auto id : codecs) {
 		if (const char *name = HwAcc::codecName(id)) {
 			d->hwaccCodecs.append(name);
@@ -552,6 +544,7 @@ void PlayEngine::setHwAccCodecs(const QList<int> &codecs) {
 		}
 	}
 	d->hwaccCodecs.chop(1);
+	d->hwaccBackend = HwAcc::Type(backend);
 }
 
 bool PlayEngine::isSubtitleStreamsVisible() const {return d->subStreamsVisible;}
@@ -770,7 +763,7 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->videoInfo = _GetData<AvInfoObject*>(event);
 		d->videoInfo->m_output->m_bitrate = d->videoFormat.bitrate(d->videoInfo->m_output->m_fps);
 		auto hwacc = [&] () {
-			if (!HwAcc::supports(HwAcc::codecId(d->videoInfo->codec().toLatin1())))
+			if (!HwAcc::supports(d->hwaccBackend, HwAcc::codecId(d->videoInfo->codec().toLatin1())))
 				return HardwareAcceleration::Unavailable;
 			static QVector<QString> types = { _L("vaapi"), _L("vdpau"), _L("vda") };
 			if (types.contains(d->videoInfo->m_output->m_type))
@@ -872,7 +865,7 @@ void PlayEngine::setMuted(bool muted) {
 
 void PlayEngine::exec() {
 	d->quit = false;
-	int position = 0, cache = -1, length = -1;
+	int position = 0, cache = -1;
 	bool error = true, first = false, posted = false;
 	Mrl mrl;
 	QByteArray leftmsg;
@@ -949,7 +942,7 @@ void PlayEngine::exec() {
 			_PostEvent(this, StartPlayback, name, d->getmpv<bool>("seekable", false));
 			break;
 		} case MPV_EVENT_END_FILE: {
-			d->timing = false; length = -1;
+			d->timing = false;
 			_PostEvent(this, EndPlayback, mrl, error);
 			posted = true;
 			break;

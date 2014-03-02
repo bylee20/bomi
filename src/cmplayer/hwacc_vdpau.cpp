@@ -30,7 +30,7 @@ extern "C" {
 #define TO_INTEROP(a) (void*)(quintptr)(a)
 
 const char *HwAccX11Trait<IMGFMT_VDPAU>::error(Status status) {
-	if (Vdpau::isInitialized())
+	if (Vdpau::isAvailable())
 		return Vdpau::getErrorString(status);
 	return status == success ? "SUCCESS" : "ERROR";
 }
@@ -56,6 +56,7 @@ Vdpau::Data Vdpau::d;
 void Vdpau::initialize() {
 	if (d.init)
 		return;
+	d.init = true;
 	if (!d.check(vdp_device_create_x11(QX11Info::display(), QX11Info::appScreen(), &d.device, &d.proc), "Cannot intialize VDPAU device"))
 		return;
 	proc(VDP_FUNC_ID_GET_ERROR_STRING, d.getErrorString);
@@ -74,7 +75,6 @@ void Vdpau::initialize() {
 	proc(VDP_FUNC_ID_VIDEO_MIXER_RENDER, d.videoMixerRender);
 	proc(VDP_FUNC_ID_OUTPUT_SURFACE_CREATE, d.outputSurfaceCreate);
 	proc(VDP_FUNC_ID_OUTPUT_SURFACE_DESTROY, d.outputSurfaceDestroy);
-	d.init = true;
 	if (!d.check(d.status(), "Cannot get VDPAU functions."))
 		return;
 	auto push = [] (VdpDecoderProfile profile, int avProfile, AVCodecID codec, int surfaces) {
@@ -128,6 +128,7 @@ void Vdpau::initializeInterop(QOpenGLContext *ctx) {
 	proc("glVDPAUMapSurfacesNV", d.mapSurfaces);
 	proc("glVDPAUUnmapSurfacesNV", d.unmapSurfaces);
 	d.initialize(TO_INTEROP(d.device), TO_INTEROP(d.proc));
+	d.ok = true;
 }
 
 

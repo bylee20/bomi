@@ -73,7 +73,7 @@ public:
 	int duration() const;
 	Mrl mrl() const;
 	bool isSeekable() const;
-	void setHwAccCodecs(const QList<int> &codecs);
+	void setHwAcc(int backend, const QList<int> &codecs);
 	bool isRunning() const { return m_state & Running; }
 	bool isPlaying() const {return m_state & Playing;}
 	bool isPaused() const {return m_state & Paused;}

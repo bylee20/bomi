@@ -281,8 +281,3 @@ int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
 		return 0;
 	}
 }
-
-#ifdef Q_OS_LINUX
-vo_driver video_out_vaapi;
-vo_driver video_out_vdpau;
-#endif

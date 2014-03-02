@@ -215,9 +215,8 @@ void Pref::save() const {
     WRITE(enable_hwaccel);
 	WRITE(skin_name);
 	WRITE(hwaccel_codecs);
-	WRITE(enable_hwdeint);
 	WRITE(hwdeints);
-
+	r.write(HwAcc::backendName(hwaccel_backend), "hwaccel_backend");
 	WRITE(normalizer_silence);
 	WRITE(normalizer_target);
 	WRITE(normalizer_min);
@@ -322,10 +321,10 @@ void Pref::load() {
 	READ(skin_name);
     READ(enable_hwaccel);
     READ(hwaccel_codecs);
-	if (r.version() > 0x000709) {
-		READ(enable_hwdeint);
-		READ(hwdeints);
-	}
+	READ(hwdeints);
+	QString backend;
+	r.read(backend, "hwaccel_backend");
+	hwaccel_backend = HwAcc::backend(backend);
 
 	READ(enable_generate_playist);
 	READ(sub_enable_autoload);
@@ -398,10 +397,8 @@ QList<DeintMethod> Pref::defaultHwAccDeints() {
 
 QList<int> Pref::defaultHwAccCodecs() {
 	QList<int> codecs;
-	for (auto codec : HwAcc::fullCodecList()) {
-		if (HwAcc::supports(codec))
-			codecs.push_back(codec);
-	}
+	for (auto codec : HwAcc::fullCodecList())
+		codecs.push_back(codec);
 	return codecs;
 }
 

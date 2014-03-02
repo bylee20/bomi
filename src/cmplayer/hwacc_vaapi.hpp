@@ -92,6 +92,7 @@ struct VaApi : public VaApiStatusChecker {
 	static int toVAType(int mp_fields, bool first);
 	static void finalize();
 	static void initialize();
+	static bool isAvailable() { return ok; }
 private:
 	void setSurfaceFormat(int format) { m_surfaceFormat = format; }
 	bool hasEntryPoint(VAEntrypoint point, VAProfile profile = VAProfileNone) {
@@ -113,7 +114,7 @@ private:
 	QMap<VAProfile, QVector<VAEntrypoint>> m_entries;
 	int m_surfaceFormat = 0;
 	static VADisplay m_display;
-	static bool init;
+	static bool init, ok;
 	friend class HwAccVaApi;
 };
 

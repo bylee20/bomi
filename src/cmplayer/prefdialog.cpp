@@ -254,6 +254,20 @@ struct PrefDialog::Data {
 	QList<MenuTreeItem*> actionItems;
 	DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
 	MrlStatePropertyListModel properties;
+	void updateCodecCheckBox() {
+		const auto type = static_cast<HwAcc::Type>(ui.hwacc_backend->currentData().toInt());
+		const auto codecs = HwAcc::fullCodecList();
+		for (const auto codec : codecs) {
+			auto box = hwdec[codec];
+			const auto supported = HwAcc::supports(type, codec);
+			const QString desc = avcodec_descriptor_get(codec)->long_name;
+			if (supported)
+				box->setText(desc);
+			else
+				box->setText(desc % _L(" (") % tr("Not supported") % _L(')'));
+			box->setEnabled(supported);
+		}
+	}
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
@@ -324,29 +338,21 @@ PrefDialog::PrefDialog(QWidget *parent)
 	auto vbox = new QVBoxLayout;
 	vbox->setMargin(0);
 
-	auto makeCheckBox = [&vbox, this] (const QString desc, bool supported) {
-		QCheckBox *box = new QCheckBox;
-		if (supported)
-			box->setText(desc);
-		else
-			box->setText(desc % _L(" (") % tr("Not supported") % _L(')'));
-		box->setEnabled(supported);
-		vbox->addWidget(box);
-		return box;
-	};
+	auto backends = HwAcc::availableBackends();
+	for (auto type : backends)
+		d->ui.hwacc_backend->addItem(HwAcc::backendDescription(type), (int)type);
 
 	const auto codecs = HwAcc::fullCodecList();
 	for (const auto codec : codecs)
-		d->hwdec[codec] = makeCheckBox(avcodec_descriptor_get(codec)->long_name, HwAcc::supports(codec));
+		vbox->addWidget(d->hwdec[codec] = new QCheckBox);
 	d->ui.hwdec_list->setLayout(vbox);
+
+	connect(d->ui.hwacc_backend, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged)
+		, [this] () { d->updateCodecCheckBox(); });
+	d->updateCodecCheckBox();
 
 	vbox = new QVBoxLayout;
 	vbox->setMargin(0);
-
-	const auto deints = HwAcc::fullDeintList();
-	for (const auto deint : deints)
-		d->hwdeint[deint] = makeCheckBox(DeintMethodInfo::name(deint), HwAcc::supports(deint));
-	d->ui.hwdeint_list->setLayout(vbox);
 
 	d->ui.deint_tabs->addTab(d->deint_swdec = new DeintWidget(DecoderDevice::CPU), tr("For S/W decoding"));
 	d->ui.deint_tabs->addTab(d->deint_hwdec = new DeintWidget(DecoderDevice::GPU), tr("For H/W decoding"));
@@ -462,8 +468,6 @@ PrefDialog::PrefDialog(QWidget *parent)
 		}
 	});
 
-	d->ui.hwacc_backend->setText(HwAcc::backendName());
-
 	retranslate();
 	d->ui.restore_properties->setModel(&d->properties);
 	if (!TrayIcon::isAvailable())
@@ -516,7 +520,7 @@ static void getHw(bool &enabled, QGroupBox *group, QList<T> &keys, const QMap<T,
 		if (*it && (*it)->isChecked())
 			keys << it.key();
 	}
-};
+}
 
 void PrefDialog::set(const Pref &p) {
 	d->open_media_from_file_manager->setValue(p.open_media_from_file_manager);
@@ -544,8 +548,8 @@ void PrefDialog::set(const Pref &p) {
 		d->ui.fill_bg_color->setChecked(true);
 	d->ui.bg_color->setColor(p.bg_color, false);
 
+	d->ui.hwacc_backend->setCurrentIndex(d->ui.hwacc_backend->findData(p.hwaccel_backend));
 	setHw(d->ui.enable_hwdec, p.enable_hwaccel, d->hwdec, p.hwaccel_codecs);
-	setHw(d->ui.enable_hwdeint, p.enable_hwdeint, d->hwdeint, p.hwdeints);
 	d->deint_swdec->set(p.deint_swdec);
 	d->deint_hwdec->set(p.deint_hwdec);
 
@@ -668,8 +672,8 @@ void PrefDialog::get(Pref &p) {
 	p.show_logo = d->ui.show_logo->isChecked();
 	p.bg_color = d->ui.bg_color->color();
 
+	p.hwaccel_backend = HwAcc::Type(d->ui.hwacc_backend->currentData().toInt());
 	getHw(p.enable_hwaccel, d->ui.enable_hwdec, p.hwaccel_codecs, d->hwdec);
-	getHw(p.enable_hwdeint, d->ui.enable_hwdeint, p.hwdeints, d->hwdeint);
 	p.deint_swdec = d->deint_swdec->get();
 	p.deint_hwdec = d->deint_hwdec->get();
 

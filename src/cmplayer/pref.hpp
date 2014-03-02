@@ -8,6 +8,7 @@
 #include "record.hpp"
 #include "subtitlestyle.hpp"
 #include "mrlstate.hpp"
+#include "hwacc.hpp"
 
 class QLocale;
 
@@ -126,13 +127,13 @@ public:
 	int seek_step1 = 5000, seek_step2 = 30000, seek_step3 = 60000, speed_step = 10;
 	int brightness_step = 1, saturation_step = 1, contrast_step = 1, hue_step = 1;
 	int volume_step = 2, sub_sync_step = 500, amp_step = 10, sub_pos_step = 1, audio_sync_step = 200;
+	bool enable_hwaccel = false;
 #ifdef Q_OS_LINUX
-#define DEF_ENABLE_HWDEINT true
-#else
-#define DEF_ENABLE_HWDEINT false
+	HwAcc::Type hwaccel_backend = HwAcc::VaApiGLX;
 #endif
-	bool enable_hwaccel = false, enable_hwdeint = DEF_ENABLE_HWDEINT;
-#undef DEF_ENABLE_HWDEINT
+#ifdef Q_OS_MAC
+	HwAcc::Type hwaccel_backend = HwAcc::Vda;
+#endif
     QList<int> hwaccel_codecs = defaultHwAccCodecs();
 	QList<DeintMethod> hwdeints = defaultHwAccDeints();
 	DeintCaps deint_hwdec = DeintCaps::default_(DecoderDevice::GPU);
@@ -163,6 +164,7 @@ private:
 	static QString defaultSubtitleEncoding();
 	static int defaultSubtitleEncodingDetectionAccuracy();
 	static QList<int> defaultHwAccCodecs();
+
 	static QList<DeintMethod> defaultHwAccDeints();
 	static Shortcuts defaultShortcuts();
 	static ClickActionMap defaultDoubleClick() {

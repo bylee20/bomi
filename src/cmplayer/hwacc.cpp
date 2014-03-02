@@ -1,28 +1,56 @@
 #include "hwacc.hpp"
 #include "videoformat.hpp"
 #include "videooutput.hpp"
-#include "stdafx.hpp"
 #include "hwacc_vaapi.hpp"
 #include "hwacc_vdpau.hpp"
 #include "hwacc_vda.hpp"
 extern "C" {
+#undef bswap_16
+#undef bswap_32
 #include <video/decode/lavc.h>
-#include <video/decode/dec_video.h>
 #include <common/av_common.h>
 }
 
-HwAcc::Type HwAcc::backend() {
+QList<HwAcc::Type> HwAcc::availableBackends() {
+	QList<Type> list;
 #ifdef Q_OS_MAC
-	return Vda;
+	list.append(Vda);
 #endif
 #ifdef Q_OS_LINUX
-	static const Type type = (qgetenv("CMPLAYER_HWACC_BACKEND").toLower() == "vdpau") ? VdpauX11 : VaApiGLX;
-	return type;
+	if (VaApi::isAvailable())
+		list.append(VaApiGLX);
+	if (Vdpau::isAvailable())
+		list.append(VdpauX11);
 #endif
+	return list;
 }
 
-QString HwAcc::backendName() {
-	switch (backend()) {
+HwAcc::Type HwAcc::backend(const QString &name) {
+	if (name == "vaapi")
+		return VaApiGLX;
+	if (name == "vdpau")
+		return VdpauX11;
+	if (name == "vda")
+		return Vda;
+#undef None
+	return None;
+}
+
+QString HwAcc::backendName(Type type) {
+	switch (type) {
+	case Vda:
+		return "vda";
+	case VaApiGLX:
+		return "vaapi";
+	case VdpauX11:
+		return "vdpau";
+	default:
+		return QString();
+	}
+}
+
+QString HwAcc::backendDescription(Type type) {
+	switch (type) {
 	case Vda:
 		return QString("VDA(Video Decode Acceleration");
 	case VaApiGLX:
@@ -34,16 +62,17 @@ QString HwAcc::backendName() {
 	}
 }
 
-bool HwAcc::supports(AVCodecID codec) {
-#ifdef Q_OS_MAC
-	return codec == AV_CODEC_ID_H264;
-#endif
-#ifdef Q_OS_LINUX
-	if (backend() == VdpauX11)
+bool HwAcc::supports(Type backend, AVCodecID codec) {
+	switch (backend) {
+	case Vda:
+		return codec == AV_CODEC_ID_H264;
+	case VdpauX11:
 		return Vdpau::codec(codec) != nullptr;
-	else
+	case VaApiGLX:
 		return VaApi::codec(codec) != nullptr;
-#endif
+	default:
+		return false;
+	}
 }
 
 bool HwAcc::supports(DeintMethod method) {
@@ -68,19 +97,15 @@ QList<DeintMethod> HwAcc::fullDeintList() {
 
 void HwAcc::initialize() {
 #ifdef Q_OS_LINUX
-	if (backend() == VdpauX11)
-		Vdpau::initialize();
-	else
-		VaApi::initialize();
+	Vdpau::initialize();
+	VaApi::initialize();
 #endif
 }
 
 void HwAcc::finalize() {
 #ifdef Q_OS_LINUX
-	if (backend() == VdpauX11)
-		Vdpau::finalize();
-	else
-		VaApi::finalize();
+	Vdpau::finalize();
+	VaApi::finalize();
 #endif
 }
 
@@ -191,9 +216,9 @@ int HwAcc::init(lavc_ctx *ctx) {
 		return -1;
 	HwAcc *acc = nullptr;
 #ifdef Q_OS_LINUX
-	if (format[0] == IMGFMT_VAAPI && backend() == VaApiGLX)
+	if (format[0] == IMGFMT_VAAPI)
 		acc = new HwAccVaApi(ctx->avctx->codec_id);
-	else if (format[0] == IMGFMT_VDPAU && backend() == VdpauX11)
+	else if (format[0] == IMGFMT_VDPAU)
 		acc = new HwAccVdpau(ctx->avctx->codec_id);
 #endif
 #ifdef Q_OS_MAC
@@ -233,7 +258,15 @@ int HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder)
 	Q_UNUSED(hwdec);	Q_UNUSED(decoder);
 	if (!info || !info->vdpau_ctx)
 		return HWDEC_ERR_NO_CTX;
-	if (supports((AVCodecID)mp_codec_to_av_codec_id(decoder)))
+	auto conv = [](hwdec_type mptype) {
+		switch (mptype) {
+		case HWDEC_VAAPI: return HwAcc::VaApiGLX;
+		case HWDEC_VDPAU: return HwAcc::VdpauX11;
+		case HWDEC_VDA: return HwAcc::Vda;
+		default: return HwAcc::None;
+		}
+	};
+	if (supports(conv(hwdec->type), (AVCodecID)mp_codec_to_av_codec_id(decoder)))
 			return 0;
 	return HWDEC_ERR_NO_CODEC;
 }

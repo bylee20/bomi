@@ -534,11 +534,13 @@ struct MainWindow::Data {
 				logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
 #endif
 			}
-			initialize_vdpau_interop(context);
+			if (OpenGLCompat::hasExtension(OpenGLCompat::NvVdpauInterop))
+				initialize_vdpau_interop(context);
 		}, Qt::DirectConnection);
 		connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
 			auto context = QOpenGLContext::currentContext();
-			finalize_vdpau_interop(context);
+			if (OpenGLCompat::hasExtension(OpenGLCompat::NvVdpauInterop))
+				finalize_vdpau_interop(context);
 			OpenGLCompat::finalize(context);
 		}, Qt::DirectConnection);
 		desktop = cApp.desktop();
@@ -1682,7 +1684,7 @@ void MainWindow::applyPref() {
 	Translator::load(p.locale);
 	d->history.setRememberImage(p.remember_image);
 	d->history.setPropertiesToRestore(p.restore_properties);
-	d->engine.setHwAccCodecs(p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
+	d->engine.setHwAcc(p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None, p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
 	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
 	d->engine.setChannelLayoutMap(p.channel_manipulation);
@@ -1717,6 +1719,7 @@ void MainWindow::applyPref() {
 	d->menu.resetKeyMap();
 
 	reloadSkin();
+
 	if (time >= 0) {
 		auto info = d->engine.startInfo();
 		info.resume = time;

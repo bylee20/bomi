@@ -1898,16 +1898,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_52">
-             <property name="text">
-              <string notr="true">:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="hwacc_backend">
+            <widget class="QComboBox" name="hwacc_backend">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -1934,21 +1927,6 @@
                <bool>false</bool>
               </property>
              </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="enable_hwdeint">
-           <property name="title">
-            <string>Use hardware-accelerated deinterlacing</string>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_34">
-            <item>
-             <widget class="QWidget" name="hwdeint_list" native="true"/>
             </item>
            </layout>
           </widget>

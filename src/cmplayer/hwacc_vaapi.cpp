@@ -15,6 +15,7 @@ extern "C" {
 }
 
 bool VaApi::init = false;
+bool VaApi::ok = false;
 VADisplay VaApi::m_display = nullptr;
 VaApi &VaApi::get() {static VaApi info; return info;}
 
@@ -152,6 +153,7 @@ VaApi::VaApi() {
 	initFilters();
 #endif
 	_Debug("VA-API is initialized.");
+	ok = true;
 }
 
 void VaApi::initialize() {
