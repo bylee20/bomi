@@ -6,8 +6,6 @@
 #ifdef Q_OS_LINUX
 
 extern "C" {
-#include <video/decode/dec_video.h>
-#include <video/decode/lavc.h>
 #include <video/mp_image.h>
 #include <common/av_common.h>
 #include <video/mp_image_pool.h>

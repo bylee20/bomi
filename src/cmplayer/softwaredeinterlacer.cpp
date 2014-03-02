@@ -25,7 +25,7 @@ struct SoftwareDeinterlacer::Data {
 		++pushed;
 	}
 	void push(int field) {
-		queue->push_back(VideoFrame(false, in->mpi(), p->nextPTS(), field | in->field()));
+		queue->push_back(VideoFrame(false, in->mpi(), p->nextPTS(), field | (in->field() & ~VideoFrame::Interlaced)));
 		++pushed;
 	}
 	void tryGraph() {

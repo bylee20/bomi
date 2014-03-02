@@ -116,11 +116,10 @@ void VideoFrameShader::setDeintMethod(DeintMethod method) {
 void VideoFrameShader::updateShader() {
 	Q_ASSERT(!m_frame.format().isEmpty());
 	int deint = 0;
-	if (m_frame.isInterlaced()) {
+	if (m_frame.isInterlaced() && !isX11HwAcc(m_frame)) {
 		switch (m_deint) {
 		case DeintMethod::Bob:
-			if (m_frame.format().imgfmt() != IMGFMT_VAAPI)
-				deint = 1;
+			deint = 1;
 			break;
 		case DeintMethod::LinearBob:
 			deint = 2;
@@ -220,31 +219,21 @@ const vec2 tex_size = vec2(texWidth, texHeight);
 	}
 }
 
-bool VideoFrameShader::upload(VideoFrame &frame) {
-	if (frame.isAdditional())
-		return false;
-	bool changed = m_frame.format() != frame.format();
-	if (m_dma && frame.format().imgfmt() != IMGFMT_VDA) {
-		if (changed)
-			m_frame.allocate(frame.format());
-		m_frame.doDeepCopy(frame);
-	} else
-		m_frame.swap(frame);
-	if (changed) {
-		fillInfo();
-		updateTexCoords();
-		updateColorMatrix();
-	}
+void VideoFrameShader::reupload() {
 	updateShader();
+	upload();
+}
+
+void VideoFrameShader::upload() {
 	if (m_textures.isEmpty())
-		return changed;
+		return;
 	OpenGLTextureBaseBinder binder(m_target, m_binding);
 	if (m_mixer) {
 #ifndef Q_OS_MAC
 		m_textures[0].bind();
 #endif
 		m_mixer->upload(m_frame, m_deint != DeintMethod::None);
-	} else {
+	} else if (!m_frame.isAdditional()) {
 		if (m_dma)
 			glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 		for (int i=0; i<m_textures.size(); ++i) {
@@ -254,6 +243,29 @@ bool VideoFrameShader::upload(VideoFrame &frame) {
 		if (m_dma)
 			glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 	}
+}
+
+bool VideoFrameShader::upload(VideoFrame &frame) {
+	bool changed = false;
+	if (!frame.isAdditional()) {
+		changed = m_frame.format() != frame.format();
+		if (m_dma && frame.format().imgfmt() != IMGFMT_VDA) {
+			if (changed)
+				m_frame.allocate(frame.format());
+			m_frame.doDeepCopy(frame);
+		} else
+			m_frame.swap(frame);
+		if (changed) {
+			fillInfo();
+			updateTexCoords();
+			updateColorMatrix();
+		}
+		updateShader();
+		if (m_textures.isEmpty())
+			return changed;
+	} else
+		m_frame.copyInterlaced(frame);
+	upload();
 	return changed;
 }
 

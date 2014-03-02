@@ -32,8 +32,8 @@ struct VideoRendererItem::Data {
 	QSize displaySize{1, 1}, frameSize{0, 0};
 	InterpolatorType chromaUpscaler = InterpolatorType::Bilinear;
     int dropped = 0, fboDepth = 2;
-	bool overlayInLetterbox = true;
-	void repaint() { render = true; p->update(); }
+	bool overlayInLetterbox = true, rerender = false;
+	void repaint() { rerender = render = true; p->update(); }
 	void fillKernel() {
 		kernel = Kernel3x3();
 		if (effects & Blur)
@@ -424,6 +424,8 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 	}
 
 	if (d->render && !d->frameSize.isEmpty()) {
+		if (d->rerender)
+			d->shader->reupload();
 		if (d->direct) {
 			setRenderTarget(d->shader->renderTarget());
 		} else {
@@ -438,7 +440,7 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
 		}
 		node->markDirty(QSGNode::DirtyMaterial);
 	}
-	d->render = false;
+	d->rerender = d->render = false;
 	LOG_GL_ERROR_Q
 }
 

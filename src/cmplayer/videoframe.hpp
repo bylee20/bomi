@@ -41,6 +41,7 @@ public:
 	void doDeepCopy(const VideoFrame &frame);
 	void clear() { d.reset(); }
 	bool isNull() const { return !d; }
+	void copyInterlaced(const VideoFrame &frame) { d->field = (d->field & ~Interlaced) | (frame.field() & Interlaced); }
 private:
 	struct Data : public QSharedData {
 		Data() {}

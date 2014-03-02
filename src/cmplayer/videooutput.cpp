@@ -179,7 +179,7 @@ void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
 	auto img = mpi;
 	if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
 		img = d->acc->getImage(mpi);
-	VideoFrame in(img != mpi, img, d->upsideDown);
+	VideoFrame in(img != mpi, img, d->upsideDown | (img->fields & MP_IMGFIELD_INTERLACED ? VideoFrame::Top : VideoFrame::Picture));
 //	if (IMGFMT_IS_VAAPI(mpi->imgfmt) && d->vaapi.apply(in, d->queue))
 //		return;
 	if (!d->deinterlacer.apply(in, d->queue))

@@ -32,7 +32,9 @@ public:
 	void setChromaInterpolator(InterpolatorType type);
 	bool directRendering() const { return m_direct && m_defaultColor; }
 	const OpenGLTexture2D &renderTarget() const { return m_textures[0]; }
+	void reupload();
 private:
+	void upload();
 	void release();
 	void updateColorMatrix();
 	static bool isKernelEffect(int effect) { return VideoRendererItem::KernelEffects & effect; }
@@ -57,8 +59,11 @@ private:
 		const Interpolator *interpolator = Interpolator::get(InterpolatorType::Bilinear);
 	};
 	void updateShader();
+	bool isX11HwAcc(const VideoFrame &frame) {
+		return frame.format().imgfmt() == IMGFMT_VAAPI || frame.format().imgfmt() == IMGFMT_VDPAU;
+	}
 	VideoFrame m_frame;
-	ShaderInfo m_shaders[2];
+	ShaderInfo m_shaders[3];
 	QOpenGLShaderProgram *m_prog = nullptr;
 	VideoColor m_color;
 	mp_csp m_csp; ColorRange m_range = ColorRange::Auto;
