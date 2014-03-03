@@ -1,4 +1,7 @@
 #include "richtexthelper.hpp"
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(RichText)
 
 QString RichTextHelper::replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s) {
 	QString text;
@@ -201,7 +204,7 @@ QMap<int, QVariant> RichTextHelper::Tag::style() const {
 				if (color.isValid())
 					style[QTextFormat::ForegroundBrush] = QBrush(color);
 				else
-					qDebug() << trim(attr[i].value) << "is not a valid color name";
+					_Debug("%% is not a valid name for color", trim(attr[i].value));
 			} else if (_Same(attr[i].name, "face"))
 				style[QTextFormat::FontFamily] = trim(attr[i].value).toString();
 			else if (_Same(attr[i].name, "size"))

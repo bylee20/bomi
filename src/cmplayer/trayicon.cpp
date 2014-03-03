@@ -2,6 +2,9 @@
 #ifdef Q_OS_LINUX
 #include <glib-object.h>
 #endif
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(Tray)
 
 enum AppIndicatorCategory { APP_INDICATOR_CATEGORY_APPLICATION_STATUS };
 enum AppIndicatorStatus {
@@ -98,7 +101,7 @@ static bool tryUnity() {
 	static bool good = false;
 	if (!init) {
 		init = true;
-		qDebug() << "DE is Unity. Fallback to AppIndicator instead of QSytemTrayIcon";
+		_Debug("DE is Unity. Fallback to AppIndicator instead of QSytemTrayIcon.");
 		QLibrary gtk(_L("gtk-x11-2.0"), 0), ai(_L("libappindicator"), 1);
 		if (!gtk.load() || !ai.load())
 			return false;

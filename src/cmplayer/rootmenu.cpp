@@ -4,6 +4,9 @@
 #include "pref.hpp"
 #include "videocolor.hpp"
 #include "record.hpp"
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(Menu)
 
 void addStepActions(Menu &menu, int min, int def, int max, qreal textRate, bool reset = true) {
 	const QString g = _L(ChangeValueInfo::typeKey());
@@ -337,7 +340,7 @@ bool RootMenu::execute(const QString &longId, const QString &argument) {
 		}
 		return true;
 	} else {
-		qDebug() << "Cannot find action:" << longId;
+		_Warn("Cannot execute '%%'", longId);
 		return false;
 	}
 }
@@ -351,7 +354,7 @@ void RootMenu::setShortcuts(const Shortcuts &shortcuts) {
 		if (found != m_actions.cend())
 			found.value().action->setShortcuts(it.value());
 		else
-			qDebug() << "Cannot find action:" << id;
+			_Warn("Cannot set shortcuts for '%%'", id);
 	}
 #ifdef Q_OS_MAC
 	a(_L("exit"))->setShortcut(QKeySequence());

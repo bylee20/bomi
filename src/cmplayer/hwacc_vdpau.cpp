@@ -1,5 +1,5 @@
 #include "hwacc_vdpau.hpp"
-#include "openglmisc.hpp"
+#include "openglcompat.hpp"
 
 void initialize_vdpau_interop(QOpenGLContext *ctx) {
 #ifdef Q_OS_LINUX
@@ -54,9 +54,8 @@ bool HwAccX11Trait<IMGFMT_VDPAU>::createSurfaces(int w, int h, int f, QVector<Su
 Vdpau::Data Vdpau::d;
 
 void Vdpau::initialize() {
-	if (d.init)
+	if (d.init || !OpenGLCompat::hasExtension(OpenGLCompat::NvVdpauInterop))
 		return;
-	d.init = true;
 	if (!d.check(vdp_device_create_x11(QX11Info::display(), QX11Info::appScreen(), &d.device, &d.proc), "Cannot intialize VDPAU device"))
 		return;
 	proc(VDP_FUNC_ID_GET_ERROR_STRING, d.getErrorString);
@@ -105,6 +104,7 @@ void Vdpau::initialize() {
 	push(VDP_DECODER_PROFILE_MPEG4_PART2_ASP, FF_PROFILE_MPEG4_ADVANCED_SIMPLE, AV_CODEC_ID_MPEG4, 2);
 	push(VDP_DECODER_PROFILE_MPEG4_PART2_SP, FF_PROFILE_MPEG4_SIMPLE, AV_CODEC_ID_MPEG4, 2);
 	_Debug("VDPAU device is initialized.");
+	d.init = true;
 }
 
 void Vdpau::finalize() {

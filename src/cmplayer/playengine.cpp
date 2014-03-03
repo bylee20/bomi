@@ -296,7 +296,7 @@ struct PlayEngine::Data {
 
 PlayEngine::PlayEngine()
 : d(new Data(this)) {
-	_Debug("Create audio/video plugins.");
+	_Debug("Create audio/video plugins");
 	d->audio = new AudioController(this);
 	d->video = new VideoOutput(this);
 
@@ -380,6 +380,7 @@ PlayEngine::PlayEngine()
 		}
 	}
 	d->fatal(mpv_initialize(d->handle), "Couldn't initialize mpv.");
+	_Debug("Initialized");
 }
 
 PlayEngine::~PlayEngine() {
@@ -392,6 +393,7 @@ PlayEngine::~PlayEngine() {
 //	finalizeGL();
 	mpv_destroy(d->handle);
 	delete d;
+	_Debug("Finalized");
 }
 
 SubtitleTrackInfoObject *PlayEngine::subtitleTrackInfo() const {
@@ -864,6 +866,7 @@ void PlayEngine::setMuted(bool muted) {
 }
 
 void PlayEngine::exec() {
+	_Debug("Start playloop thread");
 	d->quit = false;
 	int position = 0, cache = -1;
 	bool error = true, first = false, posted = false;
@@ -1033,6 +1036,7 @@ void PlayEngine::exec() {
 	}
 	if (!posted)
 		_PostEvent(this, EndPlayback, mrl, error);
+	_Debug("Finish playloop thread");
 }
 
 void PlayEngine::shutdown() {

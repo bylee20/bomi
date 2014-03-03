@@ -1,5 +1,8 @@
 #include "historymodel.hpp"
 #include "appstate.hpp"
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(History)
 
 using namespace MrlStateHelpers;
 
@@ -13,24 +16,26 @@ struct HistoryModel::Data {
 	MrlState cached;
 	const QString stateTable = _L("state") % _N(MrlState::Version), appTable = _L("app") % _N(MrlState::Version);
 	bool rememberImage = false, reload = true;
+	bool check(const QSqlQuery &query) {
+		if (!query.lastError().isValid())
+			return true;
+		_Error("Query Error: %% for %%", query.lastError().text(), query.lastQuery());
+		return false;
+	}
 	bool insertToApp(const MrlState *state) {
 		const auto mrl = state->mrl;
 		const_cast<MrlState*>(state)->mrl = Mrl();
-		const bool res = _InsertMrlState(finder, fields, state, _MakeInsertQueryTemplate(appTable, fields));
+		_InsertMrlState(finder, fields, state, _MakeInsertQueryTemplate(appTable, fields));
 		const_cast<MrlState*>(state)->mrl = mrl;
-		if (!res)
-			qDebug() << finder.lastError().text() << "in" << finder.lastQuery();
-		return res;
+		return check(finder);
 	}
 	bool insert(const MrlState *state) {
 		if (insertTemplate.isEmpty())
 			insertTemplate = _MakeInsertQueryTemplate(stateTable, fields);
 		if (state->mrl == cached.mrl)
 			cached.mrl = Mrl();
-		if (_InsertMrlState(finder, fields, state, insertTemplate))
-			return true;
-		qDebug() << finder.lastError().text() << "in" << finder.lastQuery();
-		return false;
+		_InsertMrlState(finder, fields, state, insertTemplate);
+		return check(finder);
 	}
 	int rows = 0;
 	bool load() {
@@ -102,7 +107,7 @@ HistoryModel::HistoryModel(QObject *parent)
 		return true;
 	};
 	if (!open()) {
-		qDebug() << "Cannot create database!" << d->db.lastError().text();
+		_Error("Error: %%. Couldn't create database.", d->db.lastError().text());
 		return;
 	}
 
@@ -134,7 +139,7 @@ int HistoryModel::columnCount(const QModelIndex &index) const {
 void HistoryModel::getAppState(MrlState *appState) {
 	d->finder.exec(QString::fromLatin1("SELECT %1 FROM %2 LIMIT 1").arg(_MrlFieldColumnListString(d->fields)).arg(d->appTable));
 	if (!d->finder.next()) {
-		qDebug() << "no previous app state!";
+		_Debug("No previous app state exists");
 		return;
 	}
 	_FillMrlStateFromRecord(appState, d->fields, d->finder.record());

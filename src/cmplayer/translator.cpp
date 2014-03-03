@@ -1,5 +1,8 @@
 #include "translator.hpp"
 #include <unicode/locid.h>
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(Translator)
 
 struct Iso639_2 { QString b, t; };
 
@@ -111,7 +114,7 @@ QString Translator::displayLanguage(const QString &_iso) {
 		locale.getDisplayLanguage(d->icu, str);
 		name.setUtf16(str.getBuffer(), str.length());
 		if (iso == name)
-			qDebug() << "Cannot find locale for" << iso;
+			_Error("Cannot find locale for %%", iso);
 	}
 	return name;
 }

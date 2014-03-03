@@ -1,7 +1,10 @@
 #include "channelmanipulation.hpp"
+#include "log.hpp"
 #include "enums.hpp"
 #include "widgets.hpp"
 #include "record.hpp"
+
+DECLARE_LOG_CONTEXT(Audio)
 
 struct ChannelName {const char *abbr; const char *desc;};
 
@@ -197,7 +200,9 @@ ChannelLayout ChannelLayoutMap::toLayout(const mp_chmap &chmap) {
 			}
 		}
 		if (id < 0) {
-			qDebug() << "Cannot convert mp_chmap!!";
+			char *str = nullptr;
+			_Error("Cannot convert mp_chmap(%%) to ChannelLayout", str = mp_chmap_to_str(&chmap));
+			talloc_free(str);
 			return ChannelLayout::Default;
 		}
 		layout |= id;

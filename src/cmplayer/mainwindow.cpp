@@ -534,13 +534,11 @@ struct MainWindow::Data {
 				logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
 #endif
 			}
-			if (OpenGLCompat::hasExtension(OpenGLCompat::NvVdpauInterop))
-				initialize_vdpau_interop(context);
+			initialize_vdpau_interop(context);
 		}, Qt::DirectConnection);
 		connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
 			auto context = QOpenGLContext::currentContext();
-			if (OpenGLCompat::hasExtension(OpenGLCompat::NvVdpauInterop))
-				finalize_vdpau_interop(context);
+			finalize_vdpau_interop(context);
 			OpenGLCompat::finalize(context);
 		}, Qt::DirectConnection);
 		desktop = cApp.desktop();
@@ -707,7 +705,6 @@ struct MainWindow::Data {
 			} else
 				updateSubtitleState();
 			updateMrlState(mrl, false, 0);
-			qDebug() << playlist.count();
 		});
 		connect(&engine, &PlayEngine::finished, p, [this, updateMrlState] (Mrl mrl, int time, int remain) {
 			updateMrlState(mrl, true, !mrl.isDvd() && remain > 500 ? time : -1);
@@ -821,8 +818,6 @@ void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
 MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data(this)) {
-	qDebug() << "Initialize engine";
-
 	d->engine.run();
 	d->initWidget();
 	d->initContextMenu();
@@ -832,10 +827,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->dontShowMsg = true;
 
-	qDebug() << "Make connections";
 	connectMenus();
 
-	qDebug() << "Recover states";
 	auto &as = AppState::get();
 	d->history.getAppState(&as.state);
 	d->syncWithState();
@@ -880,9 +873,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	d->menu("tool")["undo"]->setEnabled(d->undo->canUndo());
 	d->menu("tool")["redo"]->setEnabled(d->undo->canRedo());
 
-	qDebug() << "Try system tray icon";
 	if (TrayIcon::isAvailable()) {
-		qDebug() << "Create system tray icon";
 		d->tray = new TrayIcon(cApp.defaultIcon(), this);
 		connect(d->tray, &TrayIcon::activated, this, [this] (TrayIcon::ActivationReason reason) {
 			if (reason == TrayIcon::Trigger)

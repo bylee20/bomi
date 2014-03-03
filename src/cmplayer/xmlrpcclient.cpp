@@ -1,5 +1,8 @@
 #include "xmlrpcclient.hpp"
 #include "global.hpp"
+#include "log.hpp"
+
+DECLARE_LOG_CONTEXT(XML-RPC)
 
 static QDomNode toValueNode(QDomDocument &doc, const QVariant &var) {
 	auto value = doc.createElement(_L("value"));
@@ -40,7 +43,7 @@ static QDomNode toValueNode(QDomDocument &doc, const QVariant &var) {
 		}
 		break;
 	} default:
-		qDebug() << var.type() << "is not handled. convert to string...";
+		_Error("%% was not handle. Convert it to string...", var.typeName());
 		elem = te("string", var.toString());
 		break;
 	}
@@ -123,7 +126,7 @@ QVariant parseValue(const QDomElement &elem) {
 		}
 		return map;
 	} else
-		qDebug() << tag << "is not handled.";
+		_Error("'%%' element was not handle.", tag);
 	return QVariant();
 }
 
