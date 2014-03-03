@@ -661,12 +661,11 @@ struct MainWindow::Data {
 			}
 		});
 		connect(&engine, &PlayEngine::currentSubtitleStreamChanged, p, [this] (int stream) {
-			auto action = menu("subtitle")("track").g("internal")->find(stream);
-			if (action && !action->isChecked()) {
-				action->setChecked(true);
-				menu("subtitle")("track").syncActions();
-				setCurrentSubtitleIndexToEngine();
-			}
+			auto actions = menu("subtitle")("track").g("internal")->actions();
+			for (auto action : actions)
+				action->setChecked(action->data().toInt() == stream);
+			menu("subtitle")("track").syncActions();
+			setCurrentSubtitleIndexToEngine();
 		});
 		auto updateMrlState = [this] (const Mrl &mrl, bool end, int time) {
 			as.state.mrl = mrl;
@@ -1172,8 +1171,16 @@ void MainWindow::connectMenus() {
 		d->setCurrentSubtitleIndexToEngine();
 	});
 	connect(sub("track").g("internal"), &ActionGroup::triggered, this, [this] (QAction *a) {
-		a->setChecked(true); d->engine.setCurrentSubtitleStream(a->data().toInt());
-		showMessage(tr("Selected Subtitle"), a->text());
+		const bool checked = a->isChecked();
+		auto actions = d->menu("subtitle")("track").g("internal")->actions();
+		for (auto action : actions)
+			action->setChecked(false);
+		a->setChecked(checked);
+		if (checked) {
+			d->engine.setCurrentSubtitleStream(a->data().toInt());
+			showMessage(tr("Selected Subtitle"), a->text());
+		} else
+			d->engine.setCurrentSubtitleStream(-1);
 		d->setCurrentSubtitleIndexToEngine();
 	});
 	connect(&sub("track"), &Menu::actionsSynchronized, this, [this] () { d->setSubtitleTracksToEngine(); d->setCurrentSubtitleIndexToEngine(); });

@@ -120,7 +120,7 @@ public:
 	const StreamList &audioStreams() const;
 	void setCurrentAudioStream(int id);
 	void setVolumeNormalizerOption(double length, double target, double silence, double min, double max);
-	void addSubtitleStream(const QString &fileName, const QString &enc);
+	bool addSubtitleStream(const QString &fileName, const QString &enc);
 	void removeSubtitleStream(int id);
 	void setSubtitleStreamsVisible(bool visible);
 	bool isSubtitleStreamsVisible() const;

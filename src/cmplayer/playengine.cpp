@@ -36,6 +36,14 @@ template<> struct mpv_format_trait<QString> {
 	static inline QString cast(const char *from) { return QString::fromLocal8Bit(from); }
 	static inline void free(mpv_type &data) { mpv_free((void*)data); }
 };
+template<> struct mpv_format_trait<const char *> {
+	using mpv_type = const char*;
+	static constexpr mpv_format format = MPV_FORMAT_STRING;
+	static constexpr bool use_free = true;
+	static QByteArray userdata(mpv_type v) { return v; }
+	static inline const char *cast(const char *from) { return from; }
+	static inline void free(mpv_type &data) { mpv_free((void*)data); }
+};
 template<> struct mpv_format_trait<QVariant> {
 	using mpv_type = mpv_node;
 	static constexpr mpv_format format = MPV_FORMAT_NODE;
@@ -97,13 +105,6 @@ public:
 private:
 	QByteArray m_data; char m_join;
 };
-
-static QByteArray doubleQuoted(const QString &fileName) {
-	const auto file = fileName.toLocal8Bit();
-	QByteArray arg; arg.reserve(file.size() + 2);
-	arg += '"'; arg += file; arg += '"';
-	return arg;
-}
 
 struct PlayEngine::Data {
 	template <class T>
@@ -355,7 +356,6 @@ PlayEngine::PlayEngine()
 	d->setOption("osd-level", "0");
 	d->setOption("quiet", "yes");
 	d->setOption("consolecontrols", "no");
-	d->setOption("subcp", "utf8");
 	d->setOption("ao", "null,");
 	d->setOption("ad-lavc-downmix", "no");
 	d->setOption("channels", "3");
@@ -559,24 +559,31 @@ void PlayEngine::setSubtitleStreamsVisible(bool visible) {
 
 void PlayEngine::setCurrentSubtitleStream(int id) {
 	d->setmpv_async("sub-visibility", (d->subStreamsVisible && id > 0));
-	if (d->streams[Stream::Subtitle].contains(id))
+	if (id > 0)
 		d->setmpv_async("sub", id);
 }
 
 int PlayEngine::currentSubtitleStream() const {
-	return d->streamIds[Stream::Subtitle];
+	return d->streams[Stream::Subtitle].isEmpty() ? 0 : d->streamIds[Stream::Subtitle];
 }
 
-void PlayEngine::addSubtitleStream(const QString &fileName, const QString &enc) {
+bool PlayEngine::addSubtitleStream(const QString &fileName, const QString &enc) {
 	QFileInfo info(fileName);
+	for (auto &file : d->subtitleFiles)
+		if (file.path == info.absoluteFilePath())
+			return false;
 	if (info.exists()) {
 		SubtitleFileInfo file;
 		file.path = info.absoluteFilePath();
 		file.encoding = enc;
 		d->subtitleFiles.append(file);
-		d->setOption("subcp", enc.toLatin1().constData());
-		d->tellmpv("sub_add", doubleQuoted(file.path), "Uasdasd");
+		d->setmpv("options/subcp", enc.toLatin1().constData());
+		d->tellmpv("sub_add", file.path);
+		if (d->subStreamsVisible)
+			d->setmpv_async("sub-visibility", true);
+		return true;
 	}
+	return false;
 }
 
 void PlayEngine::removeSubtitleStream(int id) {

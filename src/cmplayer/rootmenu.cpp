@@ -183,7 +183,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 
 	auto &subtitle = *addMenu(_L("subtitle"));
 	auto &spu = *subtitle.addMenu(_L("track"));
-		spu.addGroup("internal")->setExclusive(true);
+		spu.addGroup("internal")->setExclusive(false);
 		spu.addGroup("external")->setExclusive(false);
 		spu.addAction(_L("open"));
 		spu.addAction(_L("clear"));
