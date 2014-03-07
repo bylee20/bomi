@@ -50,7 +50,7 @@ struct AudioController::Data {
 	AudioNormalizerOption normalizerOption;
 	ClippingMethod clip = ClippingMethod::Auto;
 	ChannelLayoutMap map = ChannelLayoutMap::default_();
-	ChannelLayout layout = ChannelLayout::Default;
+	ChannelLayout layout = ChannelLayoutInfo::default_();
 	AudioFormat input, output;
 };
 
@@ -132,7 +132,7 @@ int AudioController::reinitialize(mp_audio *in) {
 	} else
 		mp_audio_set_format(out, in->format);
 	d->chmap = in->channels;
-	if (d->layout != ChannelLayout::Default && !mp_chmap_from_str(&d->chmap, bstr0(ChannelLayoutInfo::data(d->layout).constData())))
+	if (!mp_chmap_from_str(&d->chmap, bstr0(ChannelLayoutInfo::data(d->layout).constData())))
 		_Error("Cannot find matched channel layout for '%%'", ChannelLayoutInfo::description(d->layout));
 	mp_audio_set_channels(out, &d->chmap);
 	if (d->outrate != 0)
@@ -199,7 +199,7 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
 		return AF_OK;
 	case AF_CONTROL_SET_CHANNELS:
 		d->layout = ChannelLayoutMap::toLayout(*(mp_chmap*)arg);
-		return d->layout != ChannelLayout::Default;
+		return AF_OK;
 	case AF_CONTROL_RESET:
 		if (d->swr)
 			while (swr_drop_output(d->swr, 1000) > 0) ;

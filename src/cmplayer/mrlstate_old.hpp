@@ -66,7 +66,7 @@ public:
 	int audio_amplifier = 100;
 	int audio_volume = 100, audio_sync = 0;
 	bool audio_muted = false, audio_volume_normalizer = false, audio_tempo_scaler = true;
-	ChannelLayout audio_channel_layout = ChannelLayout::Default;
+	ChannelLayout audio_channel_layout = ChannelLayoutInfo::default_();
 	int audio_track = -1;
 
 // subtitle state

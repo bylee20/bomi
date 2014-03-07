@@ -1,0 +1,4 @@
+CONFIG += @config@
+LIBS += @libs@
+QMAKE_CXXFLAGS += @cflags@
+DEFINES += @defines@

@@ -14,9 +14,8 @@
 -SideRight[=(1 << 10)=][:MP_SPEAKER_ID_SR:]
 
 +ChannelLayout[[channel]][:QByteArray:][-Channel Layout-]
--Default[=0=][[default]][:"empty":][-Default-]
 -Mono[=((int)SpeakerId::FrontCenter)=][[1.0]][:"mono":][-Mono-]
--_2_0[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight)=][[2.0]][:"stereo":][-Stereo-]
+-*_2_0[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight)=][[2.0]][:"stereo":][-Stereo-]
 -_2_1[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::LowFrequency)=][[2.1]][:"2.1":][-2.1ch-]
 -_3_0[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::FrontCenter)=][[3.0]][:"3.0":][-3.0ch-]
 -_3_0_Back[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::BackCenter)=][[3.0(back)]][:"3.0(back)":][-3.0ch(Back)-]

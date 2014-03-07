@@ -1,0 +1,113 @@
+os := @os@
+install_file := install -m 644
+install_exe := install -m 755
+install_dir := sh install_dir.sh
+pkg_config_path := @PKG_CONFIG_PATH@
+
+prefix := @prefix@
+qmake := @qmake@ DEFINES+=CMPLAYER_RELEASE
+bin_dir := @bindir@
+DATADIR := @datadir@
+icon_dir := @icondir@
+app_dir := @appdir@
+action_dir := @actiondir@
+skin_dir := @skindir@
+import_dir := @import_dir@
+njobs := @parallel@
+qt_sdk := @qtsdk@
+macdeployqt := @macdeployqt@
+
+ifeq ($(os),osx)
+	cmplayer_exec := CMPlayer
+	cmplayer_exec_dir := build/$(cmplayer_exec).app/Contents/MacOS
+else
+	cmplayer_exec := cmplayer
+	cmplayer_exec_dir := build/$(cmplayer_exec)
+endif
+
+cmplayer_exec_path := $(cmplayer_exec_dir)/$(cmplayer_exec)
+
+cmplayer: build/$(cmplayer_exec_path)
+
+build/$(cmplayer_exec_path): mpv skins imports
+	cd src/cmplayer && $(qmake) cmplayer.pro && $(MAKE) -j$(njobs) release
+ifeq ($(os),osx)
+	cp -r build/skins $(cmplayer_exec_dir)
+	cp -r build/imports $(cmplayer_exec_dir)
+endif
+
+cmplayer-bundle: cmplayer
+	cp -r $(qt_sdk)/qml/QtQuick.2 $(cmplayer_exec_dir)/imports
+	install -d $(cmplayer_exec_dir)/imports/QtQuick
+	cp -r $(qt_sdk)/qml/QtQuick/Controls $(cmplayer_exec_dir)/imports/QtQuick
+	cp -r $(qt_sdk)/qml/QtQuick/Layouts $(cmplayer_exec_dir)/imports/QtQuick
+	cp -r /usr/local/Cellar/libquvi/0.4.1/libquvi-scripts/share/libquvi-scripts/lua $(cmplayer_exec_dir)
+#	rm `find $(cmplayer_exec_dir) -name '*_debug.dylib'`
+#	cd build && $(macdeployqt) $(cmplayer_exec).app
+#	./fix-dep
+	cd build && $(macdeployqt) $(cmplayer_exec).app -dmg
+
+build/lib/libmpv.a: build-mpv
+	@./build-mpv
+
+mpv: build/lib/libmpv.a
+
+build/skins: build
+	cp -r src/cmplayer/skins build
+
+build/imports: build
+	cp -r src/cmplayer/imports build
+
+skins: build/skins
+
+imports: build/imports
+
+build:
+	install -d build
+
+clean:
+	-cd src/mpv && ./waf uninstall
+	-cd src/mpv && ./waf clean
+	-cd src/mpv && ./waf distclean
+	-cd src/cmplayer && make clean
+	-cd src/cmplayer && rm -rf Makefile* debug release
+	-rm -rf build/CMPlayer*
+	-rm -rf build/cmplayer*
+	-rm -rf build/skins
+	-rm -rf build/imports
+
+install: cmplayer
+ifeq ($(os),linux)
+	-install -d $(DEST_DIR)$(bin_dir)
+	-install -d $(DEST_DIR)$(app_dir)
+	-install -d $(DEST_DIR)$(action_dir)
+	-install -d $(DEST_DIR)$(icon_dir)/16x16/apps
+	-install -d $(DEST_DIR)$(icon_dir)/22x22/apps
+	-install -d $(DEST_DIR)$(icon_dir)/24x24/apps
+	-install -d $(DEST_DIR)$(icon_dir)/32x32/apps
+	-install -d $(DEST_DIR)$(icon_dir)/48x48/apps
+	-install -d $(DEST_DIR)$(icon_dir)/64x64/apps
+	-install -d $(DEST_DIR)$(icon_dir)/128x128/apps
+	-install -d $(DEST_DIR)$(icon_dir)/256x256/apps
+	-install -d $(DEST_DIR)$(skin_dir)
+	-install -d $(DEST_DIR)$(import_dir)
+#	-install -d $(DEST_DIR)$(icon_dir)/scalable/apps
+	$(install_exe) build/$(cmplayer_exec) $(DEST_DIR)$(bin_dir)
+	$(install_file) cmplayer.desktop $(DEST_DIR)$(app_dir)
+	$(install_file) cmplayer-opendvd.desktop $(DEST_DIR)$(action_dir)
+	$(install_file) icons/cmplayer16.png $(DEST_DIR)$(icon_dir)/16x16/apps/cmplayer.png
+	$(install_file) icons/cmplayer22.png $(DEST_DIR)$(icon_dir)/22x22/apps/cmplayer.png
+	$(install_file) icons/cmplayer24.png $(DEST_DIR)$(icon_dir)/24x24/apps/cmplayer.png
+	$(install_file) icons/cmplayer32.png $(DEST_DIR)$(icon_dir)/32x32/apps/cmplayer.png
+	$(install_file) icons/cmplayer48.png $(DEST_DIR)$(icon_dir)/48x48/apps/cmplayer.png
+	$(install_file) icons/cmplayer64.png $(DEST_DIR)$(icon_dir)/64x64/apps/cmplayer.png
+	$(install_file) icons/cmplayer128.png $(DEST_DIR)$(icon_dir)/128x128/apps/cmplayer.png
+	$(install_file) icons/cmplayer256.png $(DEST_DIR)$(icon_dir)/256x256/apps/cmplayer.png
+#	$(install_file) icons/cmplayer.svg $(DEST_DIR)$(icon_dir)/scalable/apps/cmplayer.svg
+	-cp -r build/skins/* $(DEST_DIR)$(skin_dir)/
+	-cp -r build/imports/* $(DEST_DIR)$(import_dir)/
+else
+	mv build/$(cmplayer_exec).app $(DEST_DIR)$(prefix)
+endif
+
+.PHONY: cmplayer mpv clean skins imports install

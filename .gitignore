@@ -11,6 +11,8 @@ src/build-*
 moc_*.cpp
 a.out
 *-build-*
+build-mpv
+Makefile
 build/*
 arch/pkg
 arch/src
@@ -55,6 +57,7 @@ src/libchardet-1.0.2/src/nsUTF8Prober.lo
 src/libchardet-1.0.2/src/nsUniversalDetector.lo
 src/cmplayer/release
 src/cmplayer/debug
+src/cmplayer/configure.pro
 ui_*.h
 *.user
 src/cmplayer/Makefile

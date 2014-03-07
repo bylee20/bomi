@@ -66,6 +66,7 @@ Q_DECLARE_METATYPE(SpeakerId)
 
 template<>
 class EnumInfo<SpeakerId> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef SpeakerId Enum;
 public:
     typedef SpeakerId type;
@@ -74,7 +75,7 @@ public:
 	static constexpr int size() { return 11; }
     static constexpr const char *typeName() { return "SpeakerId"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
     }
@@ -84,18 +85,18 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::FrontLeft: return qApp->translate("EnumInfo", "");
-		case Enum::FrontRight: return qApp->translate("EnumInfo", "");
-		case Enum::FrontCenter: return qApp->translate("EnumInfo", "");
-		case Enum::LowFrequency: return qApp->translate("EnumInfo", "");
-		case Enum::BackLeft: return qApp->translate("EnumInfo", "");
-		case Enum::BackRight: return qApp->translate("EnumInfo", "");
-		case Enum::FrontLeftCenter: return qApp->translate("EnumInfo", "");
-		case Enum::FrontRightCenter: return qApp->translate("EnumInfo", "");
-		case Enum::BackCenter: return qApp->translate("EnumInfo", "");
-		case Enum::SideLeft: return qApp->translate("EnumInfo", "");
-		case Enum::SideRight: return qApp->translate("EnumInfo", "");
-		default: return "";
+		case Enum::FrontLeft: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::FrontRight: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::FrontCenter: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::LowFrequency: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BackLeft: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BackRight: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::FrontLeftCenter: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::FrontRightCenter: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BackCenter: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::SideLeft: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::SideRight: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 11> &items() { return info; }
@@ -119,7 +120,6 @@ private:
 using SpeakerIdInfo = EnumInfo<SpeakerId>;
 
 enum class ChannelLayout : int {
-	Default = (int)0,
 	Mono = (int)((int)SpeakerId::FrontCenter),
 	_2_0 = (int)((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight),
 	_2_1 = (int)((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::LowFrequency),
@@ -173,15 +173,16 @@ Q_DECLARE_METATYPE(ChannelLayout)
 
 template<>
 class EnumInfo<ChannelLayout> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef ChannelLayout Enum;
 public:
     typedef ChannelLayout type;
     using Data =  QByteArray;
     struct Item { Enum value; QString name, key; QByteArray data; };
-	static constexpr int size() { return 27; }
+	static constexpr int size() { return 26; }
     static constexpr const char *typeName() { return "ChannelLayout"; }
     static constexpr const char *typeKey() { return "channel"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Channel Layout"); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Channel Layout")); }
     static const Item *item(Enum e) {
         auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
     }
@@ -191,37 +192,36 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Default: return qApp->translate("EnumInfo", "Default");
-		case Enum::Mono: return qApp->translate("EnumInfo", "Mono");
-		case Enum::_2_0: return qApp->translate("EnumInfo", "Stereo");
-		case Enum::_2_1: return qApp->translate("EnumInfo", "2.1ch");
-		case Enum::_3_0: return qApp->translate("EnumInfo", "3.0ch");
-		case Enum::_3_0_Back: return qApp->translate("EnumInfo", "3.0ch(Back)");
-		case Enum::_3_1: return qApp->translate("EnumInfo", "3.1ch");
-		case Enum::_4_0: return qApp->translate("EnumInfo", "4.0ch");
-		case Enum::_4_0_Side: return qApp->translate("EnumInfo", "4.0ch(Side)");
-		case Enum::_4_0_Diamond: return qApp->translate("EnumInfo", "4.0ch(Diamond)");
-		case Enum::_4_1: return qApp->translate("EnumInfo", "4.1ch");
-		case Enum::_4_1_Diamond: return qApp->translate("EnumInfo", "4.1ch(Diamond)");
-		case Enum::_5_0: return qApp->translate("EnumInfo", "5.0ch");
-		case Enum::_5_0_Side: return qApp->translate("EnumInfo", "5.0ch(Side)");
-		case Enum::_5_1: return qApp->translate("EnumInfo", "5.1ch");
-		case Enum::_5_1_Side: return qApp->translate("EnumInfo", "5.1ch(Side)");
-		case Enum::_6_0: return qApp->translate("EnumInfo", "6.0ch");
-		case Enum::_6_0_Front: return qApp->translate("EnumInfo", "6.0ch(Front)");
-		case Enum::_6_0_Hex: return qApp->translate("EnumInfo", "6.0ch(Hexagonal)");
-		case Enum::_6_1: return qApp->translate("EnumInfo", "6.1ch");
-		case Enum::_6_1_Hex: return qApp->translate("EnumInfo", "6.1ch(Back)");
-		case Enum::_6_1_Front: return qApp->translate("EnumInfo", "6.1ch(Front)");
-		case Enum::_7_0: return qApp->translate("EnumInfo", "7.0ch");
-		case Enum::_7_0_Front: return qApp->translate("EnumInfo", "7.0ch(Front)");
-		case Enum::_7_1: return qApp->translate("EnumInfo", "7.1ch");
-		case Enum::_7_1_Wide: return qApp->translate("EnumInfo", "7.1ch(Wide)");
-		case Enum::_7_1_Side: return qApp->translate("EnumInfo", "7.1ch(Side)");
-		default: return "";
+		case Enum::Mono: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Mono"));
+		case Enum::_2_0: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Stereo"));
+		case Enum::_2_1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2.1ch"));
+		case Enum::_3_0: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3.0ch"));
+		case Enum::_3_0_Back: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3.0ch(Back)"));
+		case Enum::_3_1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3.1ch"));
+		case Enum::_4_0: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4.0ch"));
+		case Enum::_4_0_Side: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4.0ch(Side)"));
+		case Enum::_4_0_Diamond: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4.0ch(Diamond)"));
+		case Enum::_4_1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4.1ch"));
+		case Enum::_4_1_Diamond: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4.1ch(Diamond)"));
+		case Enum::_5_0: return tr(QT_TRANSLATE_NOOP("EnumInfo", "5.0ch"));
+		case Enum::_5_0_Side: return tr(QT_TRANSLATE_NOOP("EnumInfo", "5.0ch(Side)"));
+		case Enum::_5_1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "5.1ch"));
+		case Enum::_5_1_Side: return tr(QT_TRANSLATE_NOOP("EnumInfo", "5.1ch(Side)"));
+		case Enum::_6_0: return tr(QT_TRANSLATE_NOOP("EnumInfo", "6.0ch"));
+		case Enum::_6_0_Front: return tr(QT_TRANSLATE_NOOP("EnumInfo", "6.0ch(Front)"));
+		case Enum::_6_0_Hex: return tr(QT_TRANSLATE_NOOP("EnumInfo", "6.0ch(Hexagonal)"));
+		case Enum::_6_1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "6.1ch"));
+		case Enum::_6_1_Hex: return tr(QT_TRANSLATE_NOOP("EnumInfo", "6.1ch(Back)"));
+		case Enum::_6_1_Front: return tr(QT_TRANSLATE_NOOP("EnumInfo", "6.1ch(Front)"));
+		case Enum::_7_0: return tr(QT_TRANSLATE_NOOP("EnumInfo", "7.0ch"));
+		case Enum::_7_0_Front: return tr(QT_TRANSLATE_NOOP("EnumInfo", "7.0ch(Front)"));
+		case Enum::_7_1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "7.1ch"));
+		case Enum::_7_1_Wide: return tr(QT_TRANSLATE_NOOP("EnumInfo", "7.1ch(Wide)"));
+		case Enum::_7_1_Side: return tr(QT_TRANSLATE_NOOP("EnumInfo", "7.1ch(Side)"));
+		default: return tr("");
 		};
 	}
-	static constexpr const std::array<Item, 27> &items() { return info; }
+	static constexpr const std::array<Item, 26> &items() { return info; }
     static Enum from(int id, Enum def = default_()) {
 		auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
 		return it != info.cend() ? it->value : def;
@@ -234,9 +234,9 @@ public:
 		auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
 		return it != info.cend() ? it->value : def;
 	}
-    static constexpr Enum default_() { return ChannelLayout::Default; }
+    static constexpr Enum default_() { return ChannelLayout::_2_0; }
 private:
-	static const std::array<Item, 27> info;
+	static const std::array<Item, 26> info;
 };
 
 using ChannelLayoutInfo = EnumInfo<ChannelLayout>;
@@ -274,6 +274,7 @@ Q_DECLARE_METATYPE(ColorRange)
 
 template<>
 class EnumInfo<ColorRange> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef ColorRange Enum;
 public:
     typedef ColorRange type;
@@ -282,7 +283,7 @@ public:
 	static constexpr int size() { return 5; }
     static constexpr const char *typeName() { return "ColorRange"; }
     static constexpr const char *typeKey() { return "range"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Color Range"); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Color Range")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -292,12 +293,12 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Auto: return qApp->translate("EnumInfo", "Auto");
-		case Enum::Limited: return qApp->translate("EnumInfo", "Limited Range");
-		case Enum::Full: return qApp->translate("EnumInfo", "Full Range");
-		case Enum::Remap: return qApp->translate("EnumInfo", "Remap Range");
-		case Enum::Extended: return qApp->translate("EnumInfo", "Extended Range");
-		default: return "";
+		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Auto"));
+		case Enum::Limited: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Limited Range"));
+		case Enum::Full: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Full Range"));
+		case Enum::Remap: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Remap Range"));
+		case Enum::Extended: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Extended Range"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 5> &items() { return info; }
@@ -357,6 +358,7 @@ Q_DECLARE_METATYPE(AdjustColor)
 
 template<>
 class EnumInfo<AdjustColor> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef AdjustColor Enum;
 public:
     typedef AdjustColor type;
@@ -365,7 +367,7 @@ public:
 	static constexpr int size() { return 9; }
     static constexpr const char *typeName() { return "AdjustColor"; }
     static constexpr const char *typeKey() { return "color"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -375,16 +377,16 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Reset: return qApp->translate("EnumInfo", "");
-		case Enum::BrightnessInc: return qApp->translate("EnumInfo", "");
-		case Enum::BrightnessDec: return qApp->translate("EnumInfo", "");
-		case Enum::ContrastInc: return qApp->translate("EnumInfo", "");
-		case Enum::ContrastDec: return qApp->translate("EnumInfo", "");
-		case Enum::SaturationInc: return qApp->translate("EnumInfo", "");
-		case Enum::SaturationDec: return qApp->translate("EnumInfo", "");
-		case Enum::HueInc: return qApp->translate("EnumInfo", "");
-		case Enum::HueDec: return qApp->translate("EnumInfo", "");
-		default: return "";
+		case Enum::Reset: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BrightnessInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::BrightnessDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::ContrastInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::ContrastDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::SaturationInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::SaturationDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::HueInc: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::HueDec: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 9> &items() { return info; }
@@ -437,6 +439,7 @@ Q_DECLARE_METATYPE(SubtitleDisplay)
 
 template<>
 class EnumInfo<SubtitleDisplay> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef SubtitleDisplay Enum;
 public:
     typedef SubtitleDisplay type;
@@ -445,7 +448,7 @@ public:
 	static constexpr int size() { return 2; }
     static constexpr const char *typeName() { return "SubtitleDisplay"; }
     static constexpr const char *typeKey() { return "display"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Subtitle Display"); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Subtitle Display")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -455,9 +458,9 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::OnLetterbox: return qApp->translate("EnumInfo", "Display on Letterbox");
-		case Enum::InVideo: return qApp->translate("EnumInfo", "Display in Video");
-		default: return "";
+		case Enum::OnLetterbox: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Display on Letterbox"));
+		case Enum::InVideo: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Display in Video"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 2> &items() { return info; }
@@ -515,6 +518,7 @@ Q_DECLARE_METATYPE(VideoRatio)
 
 template<>
 class EnumInfo<VideoRatio> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef VideoRatio Enum;
 public:
     typedef VideoRatio type;
@@ -523,7 +527,7 @@ public:
 	static constexpr int size() { return 7; }
     static constexpr const char *typeName() { return "VideoRatio"; }
     static constexpr const char *typeKey() { return "size"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Size"); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Size")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -533,14 +537,14 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Source: return qApp->translate("EnumInfo", "Same as Source");
-		case Enum::Window: return qApp->translate("EnumInfo", "Same as Window");
-		case Enum::_4__3: return qApp->translate("EnumInfo", "4:3 (TV)");
-		case Enum::_16__10: return qApp->translate("EnumInfo", "16:10 (Wide Monitor)");
-		case Enum::_16__9: return qApp->translate("EnumInfo", "16:9 (HDTV)");
-		case Enum::_1_85__1: return qApp->translate("EnumInfo", "1.85:1 (Wide Vision)");
-		case Enum::_2_35__1: return qApp->translate("EnumInfo", "2.35:1 (CinemaScope)");
-		default: return "";
+		case Enum::Source: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Same as Source"));
+		case Enum::Window: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Same as Window"));
+		case Enum::_4__3: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4:3 (TV)"));
+		case Enum::_16__10: return tr(QT_TRANSLATE_NOOP("EnumInfo", "16:10 (Wide Monitor)"));
+		case Enum::_16__9: return tr(QT_TRANSLATE_NOOP("EnumInfo", "16:9 (HDTV)"));
+		case Enum::_1_85__1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "1.85:1 (Wide Vision)"));
+		case Enum::_2_35__1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2.35:1 (CinemaScope)"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 7> &items() { return info; }
@@ -594,6 +598,7 @@ Q_DECLARE_METATYPE(Dithering)
 
 template<>
 class EnumInfo<Dithering> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef Dithering Enum;
 public:
     typedef Dithering type;
@@ -602,7 +607,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "Dithering"; }
     static constexpr const char *typeKey() { return "dithering"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Dithering"); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Dithering")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -612,10 +617,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return qApp->translate("EnumInfo", "Off");
-		case Enum::Fruit: return qApp->translate("EnumInfo", "Random Dithering");
-		case Enum::Ordered: return qApp->translate("EnumInfo", "Ordered Dithering");
-		default: return "";
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Off"));
+		case Enum::Fruit: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Random Dithering"));
+		case Enum::Ordered: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Ordered Dithering"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -669,6 +674,7 @@ Q_DECLARE_METATYPE(DecoderDevice)
 
 template<>
 class EnumInfo<DecoderDevice> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef DecoderDevice Enum;
 public:
     typedef DecoderDevice type;
@@ -677,7 +683,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "DecoderDevice"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
     }
@@ -687,10 +693,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return qApp->translate("EnumInfo", "");
-		case Enum::CPU: return qApp->translate("EnumInfo", "");
-		case Enum::GPU: return qApp->translate("EnumInfo", "");
-		default: return "";
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CPU: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::GPU: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -743,6 +749,7 @@ Q_DECLARE_METATYPE(DeintMode)
 
 template<>
 class EnumInfo<DeintMode> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef DeintMode Enum;
 public:
     typedef DeintMode type;
@@ -751,7 +758,7 @@ public:
 	static constexpr int size() { return 2; }
     static constexpr const char *typeName() { return "DeintMode"; }
     static constexpr const char *typeKey() { return "deinterlacing"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Deinterlacing"); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Deinterlacing")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -761,9 +768,9 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return qApp->translate("EnumInfo", "Off");
-		case Enum::Auto: return qApp->translate("EnumInfo", "Auto");
-		default: return "";
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Off"));
+		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Auto"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 2> &items() { return info; }
@@ -818,6 +825,7 @@ Q_DECLARE_METATYPE(DeintDevice)
 
 template<>
 class EnumInfo<DeintDevice> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef DeintDevice Enum;
 public:
     typedef DeintDevice type;
@@ -826,7 +834,7 @@ public:
 	static constexpr int size() { return 4; }
     static constexpr const char *typeName() { return "DeintDevice"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
     }
@@ -836,11 +844,11 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return qApp->translate("EnumInfo", "");
-		case Enum::CPU: return qApp->translate("EnumInfo", "");
-		case Enum::GPU: return qApp->translate("EnumInfo", "");
-		case Enum::OpenGL: return qApp->translate("EnumInfo", "");
-		default: return "";
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CPU: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::GPU: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::OpenGL: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 4> &items() { return info; }
@@ -899,6 +907,7 @@ Q_DECLARE_METATYPE(DeintMethod)
 
 template<>
 class EnumInfo<DeintMethod> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef DeintMethod Enum;
 public:
     typedef DeintMethod type;
@@ -907,7 +916,7 @@ public:
 	static constexpr int size() { return 8; }
     static constexpr const char *typeName() { return "DeintMethod"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -917,15 +926,15 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return qApp->translate("EnumInfo", "");
-		case Enum::Bob: return qApp->translate("EnumInfo", "");
-		case Enum::LinearBob: return qApp->translate("EnumInfo", "");
-		case Enum::CubicBob: return qApp->translate("EnumInfo", "");
-		case Enum::Median: return qApp->translate("EnumInfo", "");
-		case Enum::LinearBlend: return qApp->translate("EnumInfo", "");
-		case Enum::Yadif: return qApp->translate("EnumInfo", "");
-		case Enum::MotionAdaptive: return qApp->translate("EnumInfo", "");
-		default: return "";
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Bob: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::LinearBob: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CubicBob: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Median: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::LinearBlend: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Yadif: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::MotionAdaptive: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 8> &items() { return info; }
@@ -987,6 +996,7 @@ Q_DECLARE_METATYPE(InterpolatorType)
 
 template<>
 class EnumInfo<InterpolatorType> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef InterpolatorType Enum;
 public:
     typedef InterpolatorType type;
@@ -995,7 +1005,7 @@ public:
 	static constexpr int size() { return 11; }
     static constexpr const char *typeName() { return "InterpolatorType"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1005,18 +1015,18 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Bilinear: return qApp->translate("EnumInfo", "Bilinear");
-		case Enum::BicubicBS: return qApp->translate("EnumInfo", "B-Spline");
-		case Enum::BicubicCR: return qApp->translate("EnumInfo", "Catmull-Rom");
-		case Enum::BicubicMN: return qApp->translate("EnumInfo", "Mitchell-Netravali");
-		case Enum::Spline16: return qApp->translate("EnumInfo", "2-Lobed Spline");
-		case Enum::Spline36: return qApp->translate("EnumInfo", "3-Lobed Spline");
-		case Enum::Spline64: return qApp->translate("EnumInfo", "4-Lobed Spline");
-		case Enum::LanczosFast: return qApp->translate("EnumInfo", "Fast Lanczos");
-		case Enum::Lanczos2: return qApp->translate("EnumInfo", "2-Lobed Lanczos");
-		case Enum::Lanczos3: return qApp->translate("EnumInfo", "3-Lobed Lanczos");
-		case Enum::Lanczos4: return qApp->translate("EnumInfo", "4-Lobed Lanczos");
-		default: return "";
+		case Enum::Bilinear: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Bilinear"));
+		case Enum::BicubicBS: return tr(QT_TRANSLATE_NOOP("EnumInfo", "B-Spline"));
+		case Enum::BicubicCR: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Catmull-Rom"));
+		case Enum::BicubicMN: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Mitchell-Netravali"));
+		case Enum::Spline16: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2-Lobed Spline"));
+		case Enum::Spline36: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Spline"));
+		case Enum::Spline64: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4-Lobed Spline"));
+		case Enum::LanczosFast: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Fast Lanczos"));
+		case Enum::Lanczos2: return tr(QT_TRANSLATE_NOOP("EnumInfo", "2-Lobed Lanczos"));
+		case Enum::Lanczos3: return tr(QT_TRANSLATE_NOOP("EnumInfo", "3-Lobed Lanczos"));
+		case Enum::Lanczos4: return tr(QT_TRANSLATE_NOOP("EnumInfo", "4-Lobed Lanczos"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 11> &items() { return info; }
@@ -1075,6 +1085,7 @@ Q_DECLARE_METATYPE(AudioDriver)
 
 template<>
 class EnumInfo<AudioDriver> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef AudioDriver Enum;
 public:
     typedef AudioDriver type;
@@ -1083,7 +1094,7 @@ public:
 	static constexpr int size() { return 8; }
     static constexpr const char *typeName() { return "AudioDriver"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1093,15 +1104,15 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Auto: return qApp->translate("EnumInfo", "");
-		case Enum::CoreAudio: return qApp->translate("EnumInfo", "");
-		case Enum::PulseAudio: return qApp->translate("EnumInfo", "");
-		case Enum::OSS: return qApp->translate("EnumInfo", "");
-		case Enum::ALSA: return qApp->translate("EnumInfo", "");
-		case Enum::JACK: return qApp->translate("EnumInfo", "");
-		case Enum::PortAudio: return qApp->translate("EnumInfo", "");
-		case Enum::OpenAL: return qApp->translate("EnumInfo", "");
-		default: return "";
+		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::CoreAudio: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::PulseAudio: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::OSS: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::ALSA: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::JACK: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::PortAudio: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::OpenAL: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 8> &items() { return info; }
@@ -1155,6 +1166,7 @@ Q_DECLARE_METATYPE(ClippingMethod)
 
 template<>
 class EnumInfo<ClippingMethod> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef ClippingMethod Enum;
 public:
     typedef ClippingMethod type;
@@ -1163,7 +1175,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "ClippingMethod"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1173,10 +1185,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Auto: return qApp->translate("EnumInfo", "Auto-clipping");
-		case Enum::Soft: return qApp->translate("EnumInfo", "Soft-clipping");
-		case Enum::Hard: return qApp->translate("EnumInfo", "Hard-clipping");
-		default: return "";
+		case Enum::Auto: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Auto-clipping"));
+		case Enum::Soft: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Soft-clipping"));
+		case Enum::Hard: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Hard-clipping"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -1230,6 +1242,7 @@ Q_DECLARE_METATYPE(StaysOnTop)
 
 template<>
 class EnumInfo<StaysOnTop> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef StaysOnTop Enum;
 public:
     typedef StaysOnTop type;
@@ -1238,7 +1251,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "StaysOnTop"; }
     static constexpr const char *typeKey() { return "stays-on-top"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Stays on Top"); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "Stays on Top")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1248,10 +1261,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return qApp->translate("EnumInfo", "Off");
-		case Enum::Playing: return qApp->translate("EnumInfo", "Playing");
-		case Enum::Always: return qApp->translate("EnumInfo", "Always");
-		default: return "";
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Off"));
+		case Enum::Playing: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Playing"));
+		case Enum::Always: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Always"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -1305,6 +1318,7 @@ Q_DECLARE_METATYPE(SeekingStep)
 
 template<>
 class EnumInfo<SeekingStep> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef SeekingStep Enum;
 public:
     typedef SeekingStep type;
@@ -1313,7 +1327,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "SeekingStep"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1323,10 +1337,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Step1: return qApp->translate("EnumInfo", "");
-		case Enum::Step2: return qApp->translate("EnumInfo", "");
-		case Enum::Step3: return qApp->translate("EnumInfo", "");
-		default: return "";
+		case Enum::Step1: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Step2: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Step3: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -1379,6 +1393,7 @@ Q_DECLARE_METATYPE(GeneratePlaylist)
 
 template<>
 class EnumInfo<GeneratePlaylist> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef GeneratePlaylist Enum;
 public:
     typedef GeneratePlaylist type;
@@ -1387,7 +1402,7 @@ public:
 	static constexpr int size() { return 2; }
     static constexpr const char *typeName() { return "GeneratePlaylist"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1397,9 +1412,9 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Similar: return qApp->translate("EnumInfo", "Add files which have similar names");
-		case Enum::Folder: return qApp->translate("EnumInfo", "Add all files in the same folder");
-		default: return "";
+		case Enum::Similar: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Add files which have similar names"));
+		case Enum::Folder: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Add all files in the same folder"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 2> &items() { return info; }
@@ -1453,6 +1468,7 @@ Q_DECLARE_METATYPE(PlaylistBehaviorWhenOpenMedia)
 
 template<>
 class EnumInfo<PlaylistBehaviorWhenOpenMedia> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef PlaylistBehaviorWhenOpenMedia Enum;
 public:
     typedef PlaylistBehaviorWhenOpenMedia type;
@@ -1461,7 +1477,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "PlaylistBehaviorWhenOpenMedia"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1471,10 +1487,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::AppendToPlaylist: return qApp->translate("EnumInfo", "Append the open media to the playlist");
-		case Enum::ClearAndAppendToPlaylist: return qApp->translate("EnumInfo", "Clear the playlist and append the open media to the playlist");
-		case Enum::ClearAndGenerateNewPlaylist: return qApp->translate("EnumInfo", "Clear the playlist and generate new playlist");
-		default: return "";
+		case Enum::AppendToPlaylist: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Append the open media to the playlist"));
+		case Enum::ClearAndAppendToPlaylist: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Clear the playlist and append the open media to the playlist"));
+		case Enum::ClearAndGenerateNewPlaylist: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Clear the playlist and generate new playlist"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -1528,6 +1544,7 @@ Q_DECLARE_METATYPE(SubtitleAutoload)
 
 template<>
 class EnumInfo<SubtitleAutoload> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef SubtitleAutoload Enum;
 public:
     typedef SubtitleAutoload type;
@@ -1536,7 +1553,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "SubtitleAutoload"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1546,10 +1563,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Matched: return qApp->translate("EnumInfo", "Subtitles which have the same name as that of playing file");
-		case Enum::Contain: return qApp->translate("EnumInfo", "Subtitles whose names contain the name of playing file");
-		case Enum::Folder: return qApp->translate("EnumInfo", "All subtitles in the folder where the playing file is located");
-		default: return "";
+		case Enum::Matched: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Subtitles which have the same name as that of playing file"));
+		case Enum::Contain: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Subtitles whose names contain the name of playing file"));
+		case Enum::Folder: return tr(QT_TRANSLATE_NOOP("EnumInfo", "All subtitles in the folder where the playing file is located"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -1604,6 +1621,7 @@ Q_DECLARE_METATYPE(SubtitleAutoselect)
 
 template<>
 class EnumInfo<SubtitleAutoselect> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef SubtitleAutoselect Enum;
 public:
     typedef SubtitleAutoselect type;
@@ -1612,7 +1630,7 @@ public:
 	static constexpr int size() { return 4; }
     static constexpr const char *typeName() { return "SubtitleAutoselect"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1622,11 +1640,11 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Matched: return qApp->translate("EnumInfo", "Subtitle which has the same name as that of playing file");
-		case Enum::First: return qApp->translate("EnumInfo", "First subtitle from loaded ones");
-		case Enum::All: return qApp->translate("EnumInfo", "All loaded subtitles");
-		case Enum::EachLanguage: return qApp->translate("EnumInfo", "Each language subtitle");
-		default: return "";
+		case Enum::Matched: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Subtitle which has the same name as that of playing file"));
+		case Enum::First: return tr(QT_TRANSLATE_NOOP("EnumInfo", "First subtitle from loaded ones"));
+		case Enum::All: return tr(QT_TRANSLATE_NOOP("EnumInfo", "All loaded subtitles"));
+		case Enum::EachLanguage: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Each language subtitle"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 4> &items() { return info; }
@@ -1680,6 +1698,7 @@ Q_DECLARE_METATYPE(OsdScalePolicy)
 
 template<>
 class EnumInfo<OsdScalePolicy> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef OsdScalePolicy Enum;
 public:
     typedef OsdScalePolicy type;
@@ -1688,7 +1707,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "OsdScalePolicy"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1698,10 +1717,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Width: return qApp->translate("EnumInfo", "Fit to width of video");
-		case Enum::Height: return qApp->translate("EnumInfo", "Fit to height of video");
-		case Enum::Diagonal: return qApp->translate("EnumInfo", "Fit to diagonal of video");
-		default: return "";
+		case Enum::Width: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Fit to width of video"));
+		case Enum::Height: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Fit to height of video"));
+		case Enum::Diagonal: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Fit to diagonal of video"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -1756,6 +1775,7 @@ Q_DECLARE_METATYPE(ClickAction)
 
 template<>
 class EnumInfo<ClickAction> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef ClickAction Enum;
 public:
     typedef ClickAction type;
@@ -1764,7 +1784,7 @@ public:
 	static constexpr int size() { return 4; }
     static constexpr const char *typeName() { return "ClickAction"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1774,11 +1794,11 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::OpenFile: return qApp->translate("EnumInfo", "Open a file");
-		case Enum::Fullscreen: return qApp->translate("EnumInfo", "Toggle fullscreen mode");
-		case Enum::Pause: return qApp->translate("EnumInfo", "Toggle play/pause");
-		case Enum::Mute: return qApp->translate("EnumInfo", "Toggle mute/unmute");
-		default: return "";
+		case Enum::OpenFile: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Open a file"));
+		case Enum::Fullscreen: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Toggle fullscreen mode"));
+		case Enum::Pause: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Toggle play/pause"));
+		case Enum::Mute: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Toggle mute/unmute"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 4> &items() { return info; }
@@ -1835,6 +1855,7 @@ Q_DECLARE_METATYPE(WheelAction)
 
 template<>
 class EnumInfo<WheelAction> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef WheelAction Enum;
 public:
     typedef WheelAction type;
@@ -1843,7 +1864,7 @@ public:
 	static constexpr int size() { return 6; }
     static constexpr const char *typeName() { return "WheelAction"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -1853,13 +1874,13 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Seek1: return qApp->translate("EnumInfo", "Seek playback for step 1");
-		case Enum::Seek2: return qApp->translate("EnumInfo", "Seek playback for step 2");
-		case Enum::Seek3: return qApp->translate("EnumInfo", "Seek playback for step 3");
-		case Enum::PrevNext: return qApp->translate("EnumInfo", "Play previous/next");
-		case Enum::Volume: return qApp->translate("EnumInfo", "Volumn up/down");
-		case Enum::Amp: return qApp->translate("EnumInfo", "Amp. up/down");
-		default: return "";
+		case Enum::Seek1: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Seek playback for step 1"));
+		case Enum::Seek2: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Seek playback for step 2"));
+		case Enum::Seek3: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Seek playback for step 3"));
+		case Enum::PrevNext: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Play previous/next"));
+		case Enum::Volume: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Volumn up/down"));
+		case Enum::Amp: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Amp. up/down"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 6> &items() { return info; }
@@ -1914,6 +1935,7 @@ Q_DECLARE_METATYPE(KeyModifier)
 
 template<>
 class EnumInfo<KeyModifier> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef KeyModifier Enum;
 public:
     typedef KeyModifier type;
@@ -1922,7 +1944,7 @@ public:
 	static constexpr int size() { return 4; }
     static constexpr const char *typeName() { return "KeyModifier"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
     }
@@ -1932,11 +1954,11 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::None: return qApp->translate("EnumInfo", "");
-		case Enum::Ctrl: return qApp->translate("EnumInfo", "");
-		case Enum::Shift: return qApp->translate("EnumInfo", "");
-		case Enum::Alt: return qApp->translate("EnumInfo", "");
-		default: return "";
+		case Enum::None: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Ctrl: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Shift: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		case Enum::Alt: return tr(QT_TRANSLATE_NOOP("EnumInfo", ""));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 4> &items() { return info; }
@@ -1990,6 +2012,7 @@ Q_DECLARE_METATYPE(VerticalAlignment)
 
 template<>
 class EnumInfo<VerticalAlignment> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef VerticalAlignment Enum;
 public:
     typedef VerticalAlignment type;
@@ -1998,7 +2021,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "VerticalAlignment"; }
     static constexpr const char *typeKey() { return "vertical-alignment"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -2008,10 +2031,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Top: return qApp->translate("EnumInfo", "Top");
-		case Enum::Center: return qApp->translate("EnumInfo", "Vertical Center");
-		case Enum::Bottom: return qApp->translate("EnumInfo", "Bottom");
-		default: return "";
+		case Enum::Top: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Top"));
+		case Enum::Center: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Vertical Center"));
+		case Enum::Bottom: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Bottom"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -2065,6 +2088,7 @@ Q_DECLARE_METATYPE(HorizontalAlignment)
 
 template<>
 class EnumInfo<HorizontalAlignment> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef HorizontalAlignment Enum;
 public:
     typedef HorizontalAlignment type;
@@ -2073,7 +2097,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "HorizontalAlignment"; }
     static constexpr const char *typeKey() { return "horizontal-alignment"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -2083,10 +2107,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Left: return qApp->translate("EnumInfo", "Left");
-		case Enum::Center: return qApp->translate("EnumInfo", "Horizontal Center");
-		case Enum::Right: return qApp->translate("EnumInfo", "Right");
-		default: return "";
+		case Enum::Left: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Left"));
+		case Enum::Center: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Horizontal Center"));
+		case Enum::Right: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Right"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }
@@ -2142,6 +2166,7 @@ Q_DECLARE_METATYPE(MoveToward)
 
 template<>
 class EnumInfo<MoveToward> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef MoveToward Enum;
 public:
     typedef MoveToward type;
@@ -2150,7 +2175,7 @@ public:
 	static constexpr int size() { return 5; }
     static constexpr const char *typeName() { return "MoveToward"; }
     static constexpr const char *typeKey() { return "move"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -2160,12 +2185,12 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Reset: return qApp->translate("EnumInfo", "Reset");
-		case Enum::Upward: return qApp->translate("EnumInfo", "Upward");
-		case Enum::Downward: return qApp->translate("EnumInfo", "Downward");
-		case Enum::Leftward: return qApp->translate("EnumInfo", "Leftward");
-		case Enum::Rightward: return qApp->translate("EnumInfo", "Rightward");
-		default: return "";
+		case Enum::Reset: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Reset"));
+		case Enum::Upward: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Upward"));
+		case Enum::Downward: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Downward"));
+		case Enum::Leftward: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Leftward"));
+		case Enum::Rightward: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Rightward"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 5> &items() { return info; }
@@ -2219,6 +2244,7 @@ Q_DECLARE_METATYPE(ChangeValue)
 
 template<>
 class EnumInfo<ChangeValue> {
+	Q_DECLARE_TR_FUNCTIONS(EnumInfo)
 	typedef ChangeValue Enum;
 public:
     typedef ChangeValue type;
@@ -2227,7 +2253,7 @@ public:
 	static constexpr int size() { return 3; }
     static constexpr const char *typeName() { return "ChangeValue"; }
     static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
+    static QString typeDescription() { return tr(QT_TRANSLATE_NOOP("EnumInfo", "")); }
     static const Item *item(Enum e) {
         return 0 <= e && e < size() ? &info[(int)e] : nullptr;
     }
@@ -2237,10 +2263,10 @@ public:
 	static QString description(int e) { return description((Enum)e); }
 	static QString description(Enum e) {
 		switch (e) {
-		case Enum::Reset: return qApp->translate("EnumInfo", "Reset");
-		case Enum::Increase: return qApp->translate("EnumInfo", "Increase %1");
-		case Enum::Decrease: return qApp->translate("EnumInfo", "Decrease %1");
-		default: return "";
+		case Enum::Reset: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Reset"));
+		case Enum::Increase: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Increase %1"));
+		case Enum::Decrease: return tr(QT_TRANSLATE_NOOP("EnumInfo", "Decrease %1"));
+		default: return tr("");
 		};
 	}
 	static constexpr const std::array<Item, 3> &items() { return info; }

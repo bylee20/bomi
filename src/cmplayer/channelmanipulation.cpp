@@ -106,13 +106,9 @@ ChannelLayoutMap ChannelLayoutMap::default_() {
 
 	for (auto &srcItem : items) {
 		const auto srcLayout = srcItem.value;
-		if (srcLayout == ChannelLayout::Default)
-			continue;
 		const auto srcSpeakers = speakersInLayout(srcLayout);
 		for (auto &dstItem : items) {
 			const auto dstLayout = dstItem.value;
-			if (dstLayout == ChannelLayout::Default)
-				continue;
 			auto &mix = map.get(srcLayout, dstLayout).m_mix;
 			for (auto srcSpeaker : srcSpeakers) {
 				const auto mps = to_mp_speaker_id(srcSpeaker);
@@ -203,7 +199,7 @@ ChannelLayout ChannelLayoutMap::toLayout(const mp_chmap &chmap) {
 			char *str = nullptr;
 			_Error("Cannot convert mp_chmap(%%) to ChannelLayout", str = mp_chmap_to_str(&chmap));
 			talloc_free(str);
-			return ChannelLayout::Default;
+			return ChannelLayoutInfo::default_();
 		}
 		layout |= id;
 	}
@@ -378,9 +374,8 @@ struct ChannelManipulationWidget::Data {
 
 ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
 : QWidget(parent), d(new Data) {
-	auto makeChannelCombo = [] () { auto c = new ChannelComboBox; c->removeItem(0); c->setRetranslatable(false); return c; };
-	d->output = makeChannelCombo();
-	d->input = makeChannelCombo();
+	d->output = new ChannelComboBox;
+	d->input = new ChannelComboBox;
 	d->table = new QTableWidget;
 	d->table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 

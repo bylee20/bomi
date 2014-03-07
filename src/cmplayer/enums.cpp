@@ -13,8 +13,7 @@ const std::array<SpeakerIdInfo::Item, 11> SpeakerIdInfo::info{{
 	{SpeakerId::SideRight, "SideRight", "", MP_SPEAKER_ID_SR}
 }};
 
-const std::array<ChannelLayoutInfo::Item, 27> ChannelLayoutInfo::info{{
-	{ChannelLayout::Default, "Default", "default", "empty"},
+const std::array<ChannelLayoutInfo::Item, 26> ChannelLayoutInfo::info{{
 	{ChannelLayout::Mono, "Mono", "1.0", "mono"},
 	{ChannelLayout::_2_0, "_2_0", "2.0", "stereo"},
 	{ChannelLayout::_2_1, "_2_1", "2.1", "2.1"},

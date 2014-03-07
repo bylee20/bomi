@@ -176,7 +176,7 @@ struct PlayEngine::Data {
 	VideoOutput *video = nullptr;
 	QByteArray hwaccCodecs;
 	QList<SubtitleFileInfo> subtitleFiles;
-	ChannelLayout layout = ChannelLayout::Default;
+	ChannelLayout layout = ChannelLayoutInfo::default_();
 	int duration = 0, audioSync = 0, begin = 0, position = 0, subDelay = 0, chapter = -2;
 	QVector<int> streamIds = {0, 0, 0};
 	QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
@@ -908,18 +908,20 @@ void PlayEngine::exec() {
 					sync = sync*1000.0 - d->renderer->delay();
 				_PostEvent(this, Tick, position, sync);
 			}
-			qint64 newCache = -1;
-			const auto res = mpv_get_property(d->handle, "cache", MPV_FORMAT_INT64, &newCache);
-			switch (res) {
-			case MPV_ERROR_SUCCESS:
-				break;
-			default:
-				newCache = -1;
-				if (res != MPV_ERROR_PROPERTY_UNAVAILABLE)
-					_Error("Error for cache: %%", mpv_error_string(res));
+			if (position > 0 && cache >= 0) {
+				qint64 newCache = -1;
+				const auto res = mpv_get_property(d->handle, "cache", MPV_FORMAT_INT64, &newCache);
+				switch (res) {
+				case MPV_ERROR_SUCCESS:
+					break;
+				default:
+					newCache = -1;
+					if (res != MPV_ERROR_PROPERTY_UNAVAILABLE)
+						_Error("Error for cache: %%", mpv_error_string(res));
+				}
+				if (_Change(cache, (int)newCache))
+					_PostEvent(this, UpdateCache, cache);
 			}
-			if (_Change(cache, (int)newCache))
-				_PostEvent(this, UpdateCache, cache);
 			break;
 		} case MPV_EVENT_LOG_MESSAGE: {
 			auto message = static_cast<mpv_event_log_message*>(event->data);
@@ -940,7 +942,7 @@ void PlayEngine::exec() {
 			posted = false;
 			error = true;
 			position = -1;
-			cache = d->cache;
+			cache = 0;
 			mrl = d->startInfo.mrl;
 			_PostEvent(this, StateChange, Loading);
 			_PostEvent(this, PreparePlayback);

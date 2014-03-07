@@ -2,14 +2,6 @@ TEMPLATE = app
 CONFIG += link_pkgconfig debug_and_release precompile_header c++11
 macx:CONFIG -= app_bundle
 
-!isEmpty(RELEASE) {
-    DEFINES += CMPLAYER_RELEASE
-    CONFIG += release
-    macx:CONFIG += app_bundle
-} else {
-    isEmpty(LIBQUVI_SUFFIX): LIBQUVI_SUFFIX = $$system(if `pkg-config --exists libquvi-0.9`; then echo "-0.9"; fi)
-}
-
 QT = core gui network quick widgets sql xml
 PRECOMPILED_HEADER = stdafx.hpp
 precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
@@ -18,14 +10,11 @@ LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../mpv/build
 LIBS += -L$${LIB_DIR} ../../build/lib/libmpv.a -lbz2 -lz
 
-PKGCONFIG += dvdread dvdnav libswresample libswscale libavfilter libavcodec libpostproc libavformat libavutil \
-    libmpg123 libass libquvi$${LIBQUVI_SUFFIX} icu-uc chardet
-HAVE_PORTAUDIO = $$system(if `pkg-config --exists portaudio-2.0`; then echo "portaudio-2.0"; fi)
-!isEmpty(HAVE_PORTAUDIO) {
-    PKGCONFIG += $${HAVE_PORTAUDIO}
-    DEFINES += HAVE_PORTAUDIO=1
-}
-PKGCONFIG += $$system(if `pkg-config --exists libcdio_paranoia`; then echo "libcdio_paranoia libcdio libcdio_cdda"; fi)
+include(configure.pro)
+contains( DEFINES, CMPLAYER_RELEASE ) {
+    CONFIG += release
+    macx:CONFIG += app_bundle
+} else:CONFIG -= release
 
 macx {
     QT += macextras
@@ -42,7 +31,6 @@ macx {
     INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
 } else:unix {
     QT += dbus x11extras
-    PKGCONFIG += glib-2.0 libva vdpau libva-glx libva-x11 xcb xcb-icccm x11 alsa libpulse gobject-2.0 jack
     TARGET = cmplayer
     LIBS += -ldl
     HEADERS += app_x11.hpp
