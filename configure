@@ -1,4 +1,7 @@
 #!/bin/bash
+
+export PKG_CONFIG_PATH="./build/lib/pkgconfig:$PKG_CONFIG_PATH"
+
 arguments="$@"
 
 has_arg() {

@@ -10,14 +10,59 @@ Just install and enjoy it!
 There will be already what you expect.
 If you don't like, you can configure almost everything.
 
+For more details, please visit [CMPlayer Project Page](http://cmplayer.github.io).
 
 ## Requirements
 
-* Linux / OS X (for OS X, you need 10.7 or later)
-* OpenGL 2.0 or later
+Items in next list are the name of each package for pkg-config except OpenGL.
+Some packages marked with (*) can be in-tree-built.
 
-For more details, please visit [CMPlayer Project Page](http://cmplayer.github.io).
+### Common dependencies
 
+* Linux / OS X >= 10.7
+* OpenGL >= 2.1 with framebuffer object
+* FFmpeg >= 2.0 (libav is not supported)
+  * libavformat (*)
+  * libavcodec (*)
+  * libavfilter (*)
+  * libpostproc (*)
+  * libswresample (*)
+  * libswscale (*)
+  * libavutil (*)
+* chardet (*)
+* libmpg123
+* libass
+* dvdread
+* dvdnav
+* icu-uc
+* libquvi-0.9 (or libquvi)
+
+### Specific dependencies for Linux
+
+* xcb xcb-icccm x11
+* libva libva-glx libva-x11
+* vdpau
+* alsa
+
+## Compilation
+
+FFmpeg and chardet packages cannot be prepared easily for some Linux ditros.
+In such cases, you can build them with in-tree source.
+
+* In-tree build for FFmpeg
+  1. Run `./download-ffmpeg` to download FFmpeg source.
+  2. Run `./build-ffmpeg` to build FFmpeg packages.
+* In-tree build for chardet
+  1. Run `./download-libchardet` to download chardet source.
+  2. Run `./build-libchardet` to build chardet package.
+
+In order to build and install CMPlayer, follow next:
+
+1. Run `./configure` with proper options. For details, run `./configure --help`.
+2. Run `make` to build CMPlayer
+
+You can find built executable (for Linux) or application bundle (for OS X) in `./build` directory.
+If you want to install CMPlayer into specified directory by `--prefix` option, run `make install`.
 
 ## Contacts
 

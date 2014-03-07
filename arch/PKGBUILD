@@ -2,7 +2,7 @@
 # Contributor: willemw <willemw12@gmail.com>
 
 pkgname=cmplayer
-pkgver=0.8.11
+pkgver=0.8.12
 pkgrel=1
 pkgdesc="Powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
@@ -15,17 +15,16 @@ depends=('qt5-base' 'qt5-declarative' 'qt5-x11extras' 'qt5-quickcontrols' 'icu'
          'mpg123' 'libva' 'libgl' 'fribidi' 'libass' 'ffmpeg')
 makedepends=('mesa' 'gcc' 'pkg-config' 'python')
 source=(https://github.com/xylosper/cmplayer/releases/download/v$pkgver/cmplayer-$pkgver-source.tar.gz)
-md5sums=('25a145b691638dd9de6e8bc8ad4ba3e3')
+md5sums=('cf641faf7c65ffb1d220c976e0065749')
 options=(debug !strip)
 
 build() {
-  export MAKE="make -j $(nproc)"
   cd "$srcdir/$pkgname-$pkgver"
-  ./build-mpv
-  make PREFIX=/usr LIBQUVI_SUFFIX=-0.9 cmplayer
+  ./configure --prefix=/usr --enable-jack --enable-portaudio --enable-pulseaudio --enable-cdda
+  make
 }
 
 package() {
   cd "$srcdir/$pkgname-$pkgver"
-  make DEST_DIR=$pkgdir PREFIX=/usr LIBQUVI_SUFFIX=-0.9 install
+  make DEST_DIR=$pkgdir install
 }
