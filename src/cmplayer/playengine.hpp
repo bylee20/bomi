@@ -14,7 +14,7 @@ class DeintOption;			class ChannelLayoutMap;
 enum class AudioDriver;		enum class ClippingMethod;
 enum class DeintMethod;		enum class DeintMode;
 enum class ChannelLayout;	struct SubtitleFileInfo;
-struct mpv_event;
+struct mpv_event;			class AudioFormat;
 
 typedef QLinkedList<QString> FilterList;
 
@@ -214,6 +214,8 @@ private:
 	void exec();
 	void setState(PlayEngine::State state);
 	void customEvent(QEvent *event);
+	void updateVideoFormat(VideoFormat format);
+	void updateAudioFormat(AudioFormat in, AudioFormat out);
 	class Thread; struct Data; Data *d;
 	PlayEngine::State m_state = PlayEngine::Stopped;
 };

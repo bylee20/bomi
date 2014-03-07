@@ -326,23 +326,8 @@ PlayEngine::PlayEngine()
 		if (pos || begin || duration)
 			emit relativePositionChanged();
 	});
-	connect(d->video, &VideoOutput::formatChanged, this, [this] (VideoFormat format) {
-		if (_Change(d->videoFormat, format))
-			emit videoFormatChanged(d->videoFormat);
-		d->videoInfo->m_output->setBps(d->videoFormat.bitrate(d->videoInfo->m_output->m_fps));
-	});
-	connect(d->audio, &AudioController::started, this, [this] (AudioFormat in, AudioFormat out) {
-		d->audioInfo->m_input->m_channels = in.channels();
-		d->audioInfo->m_input->m_bits = in.bits();
-		d->audioInfo->m_input->m_type = in.type();
-
-		d->audioInfo->m_output->m_bitrate = out.bitrate();
-		d->audioInfo->m_output->m_samplerate = out.samplerate();
-		d->audioInfo->m_output->m_channels = out.channels();
-		d->audioInfo->m_output->m_bits = out.bits();
-		d->audioInfo->m_output->m_type = out.type();
-		emit audioChanged();
-	});
+	connect(d->video, &VideoOutput::formatChanged, this, &PlayEngine::updateVideoFormat);
+	connect(d->audio, &AudioController::started, this, &PlayEngine::updateAudioFormat);
 
 	d->handle = mpv_create();
 	auto verbose = qgetenv("CMPLAYER_MPV_VERBOSE").toLower();
@@ -394,6 +379,25 @@ PlayEngine::~PlayEngine() {
 	mpv_destroy(d->handle);
 	delete d;
 	_Debug("Finalized");
+}
+
+void PlayEngine::updateVideoFormat(VideoFormat format) {
+	if (_Change(d->videoFormat, format))
+		emit videoFormatChanged(d->videoFormat);
+	d->videoInfo->m_output->setBps(d->videoFormat.bitrate(d->videoInfo->m_output->m_fps));
+}
+
+void PlayEngine::updateAudioFormat(AudioFormat in, AudioFormat out) {
+	d->audioInfo->m_input->m_channels = in.channels();
+	d->audioInfo->m_input->m_bits = in.bits();
+	d->audioInfo->m_input->m_type = in.type();
+
+	d->audioInfo->m_output->m_bitrate = out.bitrate();
+	d->audioInfo->m_output->m_samplerate = out.samplerate();
+	d->audioInfo->m_output->m_channels = out.channels();
+	d->audioInfo->m_output->m_bits = out.bits();
+	d->audioInfo->m_output->m_type = out.type();
+	emit audioChanged();
 }
 
 SubtitleTrackInfoObject *PlayEngine::subtitleTrackInfo() const {
