@@ -1,3 +1,21 @@
+0.8.12
+
+  * New: new configure sciprt
+  * New: VDPAU support (experimental)
+  * New: save support for m3u/m3u8 playlist
+  * New: download remote playlist
+  * Mod: set default channel layout to stereo
+  * Fix: ass subtitle was invisible when open
+  * Fix: hwacc deinterlacer didn't work as doubler
+  * Fix: turning on/off didn't affect while paused
+  * Fix: linear bob deinterlacer by OpenGL causes crash
+  * Fix: partially broken graphics in skins
+  * Fix: playlist always removes and moves (up/down) the first file #44
+  * Fix: no image but garbage in snapshots(#43)
+  * Fix: hwacc-texture will be rendered directly.
+  * Fix: remove duplicated frame for playlist and adjust margins
+  * Fix: soft-clipping for integer-type audio format didn't work
+
 0.8.11
 
   * Fix: audio output channel layout didn't work
