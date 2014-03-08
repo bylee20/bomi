@@ -30,7 +30,7 @@ public:
 		x2 = m_coords.right(); y2 = m_coords.bottom();
 	}
 	void setChromaInterpolator(InterpolatorType type);
-	bool directRendering() const { return m_direct && m_defaultColor; }
+	bool directRendering() const { return m_direct && m_defaultColor && !(m_effects & VideoRendererItem::ShaderEffects); }
 	const OpenGLTexture2D &renderTarget() const { return m_textures[0]; }
 	void reupload();
 private:

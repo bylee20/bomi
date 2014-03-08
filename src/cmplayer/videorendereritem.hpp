@@ -28,6 +28,7 @@ public:
 	Q_DECLARE_FLAGS(Effects, Effect)
 	static const int KernelEffects = Blur | Sharpen;
 	static const int ColorEffects = Grayscale | InvertColor;
+	static const int ShaderEffects = KernelEffects | ColorEffects;
 	VideoRendererItem(QQuickItem *parent = 0);
 	~VideoRendererItem();
 	double targetAspectRatio() const;
