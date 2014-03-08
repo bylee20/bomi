@@ -250,7 +250,6 @@ heredoc
                         if [ -z $name ]; then continue; fi
                         if [ $key = $name ]; then
                                 var=$(echo "$key" | sed -E 's/^--(.+)$/\1/g')
-                                                        		echo $var $key
                                 value=$(parse_for_value $arg)
                                 local ph=$(parse_for_value $(get_option_field $f_key))
                                 if [ -n "$ph" ]; then
