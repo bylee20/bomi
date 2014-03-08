@@ -15,6 +15,8 @@
   * Fix: hwacc-texture will be rendered directly.
   * Fix: remove duplicated frame for playlist and adjust margins
   * Fix: soft-clipping for integer-type audio format didn't work
+  * Fix: some filters didn't work for harware acceleration
+  * Fix: flipping filters are not properly enabled #54 
 
 0.8.11
 
