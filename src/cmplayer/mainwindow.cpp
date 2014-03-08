@@ -856,11 +856,10 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
 	d->winState = d->prevWinState = windowState();
 
-//	Currently, session management does not works.
-//	connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
-//	connect(&cApp, &App::saveStateRequest, [this] (QSessionManager &session) {
-//		session.setRestartHint(QSessionManager::RestartIfRunning);
-//	});
+	connect(&cApp, &App::commitDataRequest, [this] () { d->commitData(); });
+	connect(&cApp, &App::saveStateRequest, [this] (QSessionManager &session) {
+		session.setRestartHint(QSessionManager::RestartIfRunning);
+	});
 
 	d->undo = new QUndoStack(this);
 	auto undo = d->menu("tool")["undo"];
