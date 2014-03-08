@@ -20,6 +20,7 @@ Some packages marked with (*) can be in-tree-built.
 ### Common dependencies
 
 * Linux / OS X >= 10.7
+* Qt5 >= 5.2
 * OpenGL >= 2.1 with framebuffer object
 * FFmpeg >= 2.0 (libav is not supported)
   * libavformat (*)
