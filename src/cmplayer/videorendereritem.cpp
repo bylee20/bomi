@@ -286,6 +286,8 @@ VideoRendererItem::Effects VideoRendererItem::effects() const {
 }
 
 void VideoRendererItem::setEffects(Effects effects) {
+	if ((effects^d->effects) & (FlipHorizontally | FlipVertically))
+		setGeometryDirty();
 	if (_Change(d->effects, effects)) {
 		if (d->shader)
 			d->shader->setEffects(d->effects);
