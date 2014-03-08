@@ -66,10 +66,12 @@ bool HwAcc::supports(Type backend, AVCodecID codec) {
 	switch (backend) {
 	case Vda:
 		return codec == AV_CODEC_ID_H264;
+#ifdef Q_OS_LINUX
 	case VdpauX11:
 		return Vdpau::codec(codec) != nullptr;
 	case VaApiGLX:
 		return VaApi::codec(codec) != nullptr;
+#endif
 	default:
 		return false;
 	}
@@ -255,7 +257,6 @@ mp_image *HwAcc::allocateImage(struct lavc_ctx *ctx, int imgfmt, int width, int 
 }
 
 int HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder) {
-	Q_UNUSED(hwdec);	Q_UNUSED(decoder);
 	if (!info || !info->vdpau_ctx)
 		return HWDEC_ERR_NO_CTX;
 	auto conv = [](hwdec_type mptype) {

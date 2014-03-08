@@ -311,8 +311,8 @@ static inline QByteArray _ToLog(OGL::TransferType type) {
 #else
 	ENUM_CASE(OGL::UInt16_8_8_Mesa);
 	ENUM_CASE(OGL::UInt16_8_8_Rev_Mesa);
-	ENUM_CASE(OGL::NoTransferType);
 #endif
+	ENUM_CASE(OGL::NoTransferType);
 	}
 	return QByteArray("OGL::InvalidTransferType");
 }

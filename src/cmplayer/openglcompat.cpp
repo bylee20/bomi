@@ -19,10 +19,10 @@ struct OpenGLCompat::Data {
 	int major = 0, minor = 0;
 	QMap<OGL::TransferFormat, OpenGLTextureTransferInfo> formats[2];
 	OGL::TextureFormat fboFormat = OGL::RGBA8_UNorm;
+#ifdef Q_OS_LINUX
 	int (*swapInterval)(int interval) = nullptr; // GLX_MESA, GLX_SGI, WGL_EXT
 	void (*swapIntervalExt)(Display *dpy, GLXDrawable drawable, int interval) = nullptr; // GLX_EXT
-
-
+#endif
 };
 
 OpenGLCompat::OpenGLCompat()
@@ -237,6 +237,9 @@ OpenGLTextureTransferInfo OpenGLCompat::textureTransferInfo(OGL::TransferFormat 
 }
 
 void OpenGLCompat::setSwapInterval(int frames) {
+	Q_UNUSED(frames);
+#ifdef Q_OS_LINUX
 	if (c.d->swapInterval)
 		c.d->swapInterval(frames);
+#endif
 }

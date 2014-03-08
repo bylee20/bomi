@@ -23,7 +23,7 @@ macx {
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
-    LIBS += -liconv -framework Cocoa -framework CoreVideo -framework IOKit \
+    LIBS += -liconv -framework Cocoa -framework QuartzCore -framework IOKit \
 	-framework IOSurface -framework Carbon -framework AudioUnit -framework CoreAudio \
 	-framework VideoDecodeAcceleration -framework AudioToolBox
     HEADERS += app_mac.hpp

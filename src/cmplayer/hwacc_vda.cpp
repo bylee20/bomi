@@ -206,7 +206,7 @@ static inline bool directRendering(mp_imgfmt type) {
 VdaMixer::VdaMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format)
 : m_textures(textures) {
 	Q_ASSERT(format.imgfmt() == IMGFMT_VDA);
-	m_direct = directRendering(format.type());
+	m_direct = ::directRendering(format.type());
 }
 
 bool VdaMixer::upload(const VideoFrame &frame, bool /*deint*/) {
@@ -263,7 +263,7 @@ void VdaMixer::adjust(VideoFormatData *data, const mp_image *mpi) {
 	}
 	data->alignedSize = data->alignedByteSize[0];
 	data->alignedSize.rwidth() /= desc.bytes[0];
-	if (directRendering(data->type))
+	if (::directRendering(data->type))
 		data->colorspace = MP_CSP_RGB;
 }
 
