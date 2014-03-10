@@ -1,5 +1,5 @@
 #include "charsetdetector.hpp"
-#include <chardet.h>
+#include <chardet/chardet.h>
 
 struct CharsetDetector::Data {
 	DetectObj *obj;
