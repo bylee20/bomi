@@ -344,6 +344,7 @@ check_pkg_or_exit "libmpg123"
 check_pkg_or_exit "libass"
 check_pkg_or_exit "dvdread"
 check_pkg_or_exit "dvdnav"
+check_pkg_or_exit "libbluray"
 check_pkg_or_exit "icu-uc"
 check_pkg_or_exit "chardet"
 if [ $os = "linux" ]; then

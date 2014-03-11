@@ -12,7 +12,8 @@ args="--prefix=../../build --disable-client-api-examples --disable-manpage-build
   --disable-corevideo --disable-vdpau --disable-vdpau-gl-x11 --disable-vaapi --disable-vaapi-vpp --disable-vaapi-glx --disable-caca \
   --disable-dvb --disable-dvbin --disable-jpeg --disable-direct3d --disable-vda-gl --disable-vdpau-decoder \
   --disable-radio --disable-radio-capture --disable-radio-v4l2 --disable-tv --disable-tv-v4l2 --disable-libv4l2 --disable-pvr \
-  --disable-audio-input --disable-lua @mpv_args@"
+  --disable-audio-input --disable-lua --enable-libbluray \
+  @mpv_args@"
 
 os=@os@
 njobs=@parallel@
