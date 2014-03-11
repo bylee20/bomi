@@ -36,10 +36,9 @@ class UtilObject : public QObject {
 	Q_PROPERTY(QString tr READ tr NOTIFY trChanged)
 	Q_PROPERTY(bool fullScreen READ isFullScreen NOTIFY fullScreenChanged)
 public:
-	UtilObject(QObject *parent = nullptr);
 	~UtilObject();
-	Q_INVOKABLE double textWidth(const QString &text, int size);
-	Q_INVOKABLE double textWidth(const QString &text, int size, const QString &family);
+	Q_INVOKABLE static double textWidth(const QString &text, int size);
+	Q_INVOKABLE static double textWidth(const QString &text, int size, const QString &family);
 	Q_INVOKABLE QString msecToString(int ms) {return Pch::_NullTime.addSecs(qRound((double)ms*1e-3)).toString(_L("h:mm:ss"));}
 	Q_INVOKABLE QString secToString(int s) {return Pch::_NullTime.addSecs(s).toString(_L("h:mm:ss"));}
 	Q_INVOKABLE QPointF mousePos(QQuickItem *item);
@@ -50,10 +49,10 @@ public:
 	Q_INVOKABLE void showToolTip(QQuickItem *item, const QPointF &pos, const QString &text) { QToolTip::showText(item->window()->mapToGlobal(item->mapToScene(pos).toPoint()), text); }
 	Q_INVOKABLE void hideToolTip() { QToolTip::hideText(); }
 	Q_INVOKABLE void filterDoubleClick() { m_filterDoubleClick = true; }
-	static bool isDoubleClickFiltered() { return m_filterDoubleClick; }
-	static void resetFilterDoubleClick() { m_filterDoubleClick = false; }
-	static bool isCursorVisible() {return m_cursor;}
-	static void setCursorVisible(bool visible) {if (_Change(m_cursor, visible)) for (auto obj : objs) emit obj->cursorVisibleChanged(m_cursor);}
+	static bool isDoubleClickFiltered() { return get().m_filterDoubleClick; }
+	static void resetFilterDoubleClick() { get().m_filterDoubleClick = false; }
+	static bool isCursorVisible() {return get().m_cursor;}
+	static void setCursorVisible(bool visible) {auto &o = get(); if (_Change(o.m_cursor, visible)) emit o.cursorVisibleChanged(o.m_cursor);}
 	Q_INVOKABLE void setCursor(QQuickItem *item, Qt::CursorShape cursor) { if (item) item->setCursor(cursor); }
 	Q_INVOKABLE void unsetCursor(QQuickItem *item) { if (item) item->unsetCursor(); }
 	static double totalMemory(MemoryUnit unit);
@@ -65,39 +64,36 @@ public:
 	static quint64 systemTime() { return _SystemTime(); }
 	static quint64 processTime(); // usec
 	static QString monospace();
-	bool isFullScreen() const {return m_fullScreen;}
-	static void setFullScreen(bool fs) {if (_Change(m_fullScreen, fs)) for (auto obj : objs) emit obj->fullScreenChanged(m_fullScreen);}
+	static bool isFullScreen() {return get().m_fullScreen;}
+	static void setFullScreen(bool fs) { auto &o = get(); if (_Change(o.m_fullScreen, fs)) emit o.fullScreenChanged(o.m_fullScreen);}
 	QString tr() const {return QString();}
 	Q_INVOKABLE void registerItemToAcceptKey(QQuickItem *item);
-	static QQuickItem *itemToAcceptKey() { return d->keyItems.isEmpty() ? nullptr : d->keyItems.front(); }
+	static QQuickItem *itemToAcceptKey() { return get().m_keyItems.isEmpty() ? nullptr : get().m_keyItems.front(); }
 	static void setItemPressed(QQuickItem *item);
+	static UtilObject &get() { if (!object) create(); return *object; }
 signals:
 	void trChanged();
 	void mouseReleased(const QPointF &scenePos);
 	void cursorVisibleChanged(bool cursorVisible);
 	void fullScreenChanged(bool fullScreen);
 private:
+	UtilObject(QObject *parent = nullptr);
+	static void create();
 	void changeEvent(QEvent *event) {
 		if (event->type() == QEvent::LanguageChange)
 			emit trChanged();
 	}
-	static bool m_fullScreen, m_cursor, m_filterDoubleClick;
-//	static UtilObject &get();
-	static QLinkedList<UtilObject*> objs;
-	struct Data {
-		QSet<QQuickItem*> itemsToAcceptKey;
-		QLinkedList<QQuickItem*> keyItems;
-		bool removeKeyItem(QQuickItem *item) {
-			auto it = _Find(keyItems.begin(), keyItems.end(), item);
-			if (it == keyItems.end())
-				return false;
-			keyItems.erase(it);
-			return true;
-		}
-	};
-
-	static Data data;
-	static Data *d;
+	QSet<QQuickItem*> m_itemsToAcceptKey;
+	QLinkedList<QQuickItem*> m_keyItems;
+	bool removeKeyItem(QQuickItem *item) {
+		auto it = _Find(m_keyItems.begin(), m_keyItems.end(), item);
+		if (it == m_keyItems.end())
+			return false;
+		m_keyItems.erase(it);
+		return true;
+	}
+	bool m_fullScreen, m_cursor, m_filterDoubleClick;
+	static UtilObject *object;
 };
 
 #endif // GLOBALQMLOBJECT_HPP

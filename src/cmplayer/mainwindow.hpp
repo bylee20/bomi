@@ -7,7 +7,8 @@
 
 class Mrl;			class PrefDialog;
 class MainView;		class Playlist;
-class Subtitle;
+class Subtitle;		class PlaylistModel;
+class PlayEngine;
 
 class MainWindow : public QWidget {
 	Q_OBJECT
@@ -18,6 +19,16 @@ public:
 	~MainWindow();
 	void openFromFileManager(const Mrl &mrl);
 	bool isFullScreen() const;
+	void setFullScreen(bool full);
+	void wake() {
+		setVisible(true);
+		raise();
+		activateWindow();
+	}
+	void togglePlayPause();
+	void play();
+	PlayEngine *engine() const;
+	PlaylistModel *playlist() const;
 public slots:
 	void openMrl(const Mrl &mrl);
 	void openMrl(const Mrl &mrl, const QString &enc);
@@ -55,7 +66,6 @@ private:
 	void showMessage(const QString &cmd, const QString &desc) {showMessage(cmd + ": " + desc);}
 	void showMessage(const QString &cmd, bool value) {showMessage(cmd, value ? tr("On") : tr("Off"));}
 	void appendSubFiles(const QStringList &files, bool checked, const QString &enc);
-	void setFullScreen(bool full);
 	void changeEvent(QEvent *event);
 	void closeEvent(QCloseEvent *event);
 	int getStartTime(const Mrl &mrl);

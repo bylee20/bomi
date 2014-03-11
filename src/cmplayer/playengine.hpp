@@ -15,6 +15,7 @@ enum class AudioDriver;		enum class ClippingMethod;
 enum class DeintMethod;		enum class DeintMode;
 enum class ChannelLayout;	struct SubtitleFileInfo;
 struct mpv_event;			class AudioFormat;
+class MetaData;
 
 typedef QLinkedList<QString> FilterList;
 
@@ -111,6 +112,7 @@ public:
 	const PlaylistModel &playlist() const;
 	PlaylistModel &playlist();
 
+	const MetaData &metaData() const;
 	HardwareAcceleration hwAcc() const;
 	int volume() const;
 	int currentAudioStream() const;
@@ -173,6 +175,7 @@ public slots:
 	void seek(int pos);
 	void relativeSeek(int pos);
 signals:
+	void seeked(int time);
 	void sought();
 	void tempoScaledChanged(bool on);
 	void volumeNormalizerActivatedChanged(bool on);
@@ -209,13 +212,13 @@ signals:
 	void currentVideoStreamChanged(int stream);
 	void subtitleTrackInfoChanged();
 	void requestNextStartInfo();
+	void metaDataChanged();
 private:
 	void updateState(State state);
 	void exec();
 	void setState(PlayEngine::State state);
 	void customEvent(QEvent *event);
 	void updateVideoFormat(VideoFormat format);
-	void updateAudioFormat(AudioFormat in, AudioFormat out);
 	class Thread; struct Data; Data *d;
 	PlayEngine::State m_state = PlayEngine::Stopped;
 };

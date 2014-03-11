@@ -2,7 +2,7 @@ import QtQuick 2.0
 import CMPlayer 1.0 as Cp
 
 Cp.TimeText {
-	width: Cp.Util.textWidth(showMSecs ? "00:00:00.000" : "00:00:00", font.pixelSize, font.family);
+	width: Util.textWidth(showMSecs ? "00:00:00.000" : "00:00:00", font.pixelSize, font.family);
 	height: textHeight; font.pixelSize: 12;
 	textColor: getStateTextColor(hovered || (bind && bind.hovered), pressed || (bind && bind.pressed))
 	onClicked: checked = !checked

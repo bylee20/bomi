@@ -96,7 +96,7 @@ public:
 	OpenMedia open_media_from_file_manager = {true, PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist};
 	OpenMedia open_media_by_drag_and_drop = {true, PlaylistBehaviorWhenOpenMedia::AppendToPlaylist};
 
-	bool fit_to_video = false;
+	bool fit_to_video = false, use_mpris2 = true;
 	bool pause_minimized = true, pause_video_only = true, pause_to_play_next_image = true;
 	bool remember_stopped = true, ask_record_found = true, remember_image = false;
 	bool enable_generate_playist = true;

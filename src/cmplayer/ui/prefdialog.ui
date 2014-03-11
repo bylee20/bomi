@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>10</number>
+        <number>14</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -2857,6 +2857,13 @@ e.g.: English, Korean</string>
           <widget class="QCheckBox" name="lion_style_fullscreen">
            <property name="text">
             <string>Use Lion-style fullscreen mode</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="use_mpris2">
+           <property name="text">
+            <string>Use D-Bus interface for MPRISv2</string>
            </property>
           </widget>
          </item>

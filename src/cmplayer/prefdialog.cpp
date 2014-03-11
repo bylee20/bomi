@@ -532,6 +532,7 @@ void PrefDialog::set(const Pref &p) {
 	d->open_media_from_file_manager->setValue(p.open_media_from_file_manager);
 	d->open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
 
+	d->ui.use_mpris2->setChecked(p.use_mpris2);
 	d->ui.fit_to_video->setChecked(p.fit_to_video);
 	d->ui.show_osd_on_action->setChecked(p.show_osd_on_action);
 	d->ui.show_osd_on_resized->setChecked(p.show_osd_on_resized);
@@ -659,6 +660,7 @@ void PrefDialog::get(Pref &p) {
 	p.open_media_from_file_manager = d->open_media_from_file_manager->value();
 	p.open_media_by_drag_and_drop = d->open_media_by_drag_and_drop->value();
 
+	p.use_mpris2 = d->ui.use_mpris2->isChecked();
 	p.fit_to_video = d->ui.fit_to_video->isChecked();
 	p.show_osd_on_action = d->ui.show_osd_on_action->isChecked();
 	p.show_osd_on_resized = d->ui.show_osd_on_resized->isChecked();

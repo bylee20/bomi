@@ -239,6 +239,7 @@ void Pref::save() const {
 	WRITE(cache_min_playback);
 	WRITE(cache_min_seeking);
 	WRITE(network_folders);
+	WRITE(use_mpris2);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -355,6 +356,7 @@ void Pref::load() {
 	READ(cache_min_playback);
 	READ(cache_min_seeking);
 	READ(network_folders);
+	READ(use_mpris2);
 #undef READ
 
 #define READ2(a) a.load(r, #a)

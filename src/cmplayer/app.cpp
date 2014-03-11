@@ -64,11 +64,8 @@ struct App::Data {
 		if (isSet(LineCmd::OpenGLDebug) || qgetenv("CMPLAYER_GL_DEBUG").toInt())
 			gldebug = true;
 		if (main) {
-			if (isSet(LineCmd::Wake)) {
-				main->setVisible(true);
-				main->raise();
-				main->activateWindow();
-			}
+			if (isSet(LineCmd::Wake))
+				main->wake();
 			Mrl mrl;
 			if (isSet(LineCmd::Open))
 				mrl = Mrl(value(LineCmd::Open));

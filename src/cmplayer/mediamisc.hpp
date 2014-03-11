@@ -6,6 +6,22 @@
 
 class PlayEngine;
 
+class MetaData {
+public:
+	QString title() const { return m_title; }
+	QString artist() const { return m_artist; }
+	QString album() const { return m_album; }
+	QString genre() const { return m_genre; }
+	QString date() const { return m_date; }
+	Mrl mrl() const { return m_mrl; }
+	int duration() const { return m_duration; }
+private:
+	friend class PlayEngine;
+	QString m_title, m_artist, m_album, m_genre, m_date;
+	Mrl m_mrl;
+	int m_duration = 0;
+};
+
 class AvIoFormat : public QObject {
 	Q_OBJECT
 	Q_PROPERTY(QSize size READ size CONSTANT FINAL)

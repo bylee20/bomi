@@ -25,5 +25,5 @@ Button {
 		return text;
 	}
 	text: getText(msecs, showMSecs)
-	font { pixelSize: 10; family: Cp.Util.monospace }
+	font { pixelSize: 10; family: Util.monospace }
 }

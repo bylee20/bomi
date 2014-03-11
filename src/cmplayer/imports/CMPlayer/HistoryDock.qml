@@ -36,6 +36,6 @@ Item {
 	MouseArea {
 		anchors.fill: parent
 		acceptedButtons: Qt.RightButton
-		onClicked: Cp.Util.execute("tool/history")
+		onClicked: Util.execute("tool/history")
 	}
 }

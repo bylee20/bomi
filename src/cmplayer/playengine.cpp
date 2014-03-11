@@ -140,6 +140,7 @@ struct PlayEngine::Data {
 	MediaInfoObject mediaInfo;
 	AvInfoObject *videoInfo = new AvInfoObject, *audioInfo = new AvInfoObject;
 	HardwareAcceleration hwacc = HardwareAcceleration::Unavailable;
+	MetaData metaData;
 
 	bool hasImage = false, tempoScaler = false, seekable = false;
 	bool subStreamsVisible = true, startPaused = false;
@@ -327,7 +328,6 @@ PlayEngine::PlayEngine()
 			emit relativePositionChanged();
 	});
 	connect(d->video, &VideoOutput::formatChanged, this, &PlayEngine::updateVideoFormat);
-	connect(d->audio, &AudioController::started, this, &PlayEngine::updateAudioFormat);
 
 	d->handle = mpv_create();
 	auto verbose = qgetenv("CMPLAYER_MPV_VERBOSE").toLower();
@@ -381,23 +381,14 @@ PlayEngine::~PlayEngine() {
 	_Debug("Finalized");
 }
 
+const MetaData &PlayEngine::metaData() const {
+	return d->metaData;
+}
+
 void PlayEngine::updateVideoFormat(VideoFormat format) {
 	if (_Change(d->videoFormat, format))
 		emit videoFormatChanged(d->videoFormat);
 	d->videoInfo->m_output->setBps(d->videoFormat.bitrate(d->videoInfo->m_output->m_fps));
-}
-
-void PlayEngine::updateAudioFormat(AudioFormat in, AudioFormat out) {
-	d->audioInfo->m_input->m_channels = in.channels();
-	d->audioInfo->m_input->m_bits = in.bits();
-	d->audioInfo->m_input->m_type = in.type();
-
-	d->audioInfo->m_output->m_bitrate = out.bitrate();
-	d->audioInfo->m_output->m_samplerate = out.samplerate();
-	d->audioInfo->m_output->m_channels = out.channels();
-	d->audioInfo->m_output->m_bits = out.bits();
-	d->audioInfo->m_output->m_type = out.type();
-	emit audioChanged();
 }
 
 SubtitleTrackInfoObject *PlayEngine::subtitleTrackInfo() const {
@@ -800,6 +791,13 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->videoInfo->m_hwacc = hwtxt(d->hwacc);
 		emit videoChanged();
 		break;
+	} case NotifySeek:
+		emit sought();
+		break;
+	case UpdateMetaData: {
+		d->metaData = _GetData<MetaData>(event);
+		emit metaDataChanged();
+		break;
 	} default:
 		break;
 	}
@@ -879,39 +877,69 @@ void PlayEngine::setMuted(bool muted) {
 void PlayEngine::exec() {
 	_Debug("Start playloop thread");
 	d->quit = false;
-	int position = 0, cache = -1;
+	int position = 0, cache = -1, duration = 0;
 	bool error = true, first = false, posted = false;
 	Mrl mrl;
 	QByteArray leftmsg;
+
+	auto metaData = [&] () {
+		auto list = d->getmpv<QVariant>("metadata").toList();
+		MetaData metaData;
+		for (int i=0; i+1<list.size(); i+=2) {
+			const auto key = list[i].toString();
+			const auto value = list[i+1].toString();
+			if (key == _L("title"))
+				metaData.m_title = value;
+			else if (key == _L("artist"))
+				metaData.m_artist = value;
+			else if (key == _L("album"))
+				metaData.m_album = value;
+			else if (key == _L("genre"))
+				metaData.m_genre = value;
+			else if (key == _L("date"))
+				metaData.m_date = value;
+		}
+		metaData.m_mrl = mrl;
+		metaData.m_duration = duration;
+		return metaData;
+	};
+
 	auto time = [] (double s) -> int { return s*1000 + 0.5; };
+
+	auto checkTime = [&] () {
+		if (_Change(position, time(d->getmpv<double>("time-pos"))) && position > 0) {
+			if (first) {
+				duration = time(d->getmpv<double>("length"));
+				_PostEvent(this, UpdateTimeRange, time(d->getmpv<double>("time-start")), duration);
+				const auto array = d->getmpv<QVariant>("chapter-list").toList();
+				ChapterList chapters; chapters.resize(array.size());
+				for (int i=0; i<array.size(); ++i) {
+					const auto map = array[i].toMap();
+					auto &chapter = chapters[i];
+					chapter.m_id = i;
+					chapter.m_time = time(map["time"].toDouble());
+					chapter.m_name = map["title"].toString();
+					if (chapter.m_name.isEmpty())
+						chapter.m_name = _MSecToString(chapter.m_time, _L("hh:mm:ss.zzz"));
+				}
+				_PostEvent(this, UpdateChapterList, chapters);
+				_PostEvent(this, UpdateMetaData, metaData());
+				first = false;
+			}
+			double sync = 0;
+			if (d->isSuccess(mpv_get_property(d->handle, "avsync", MPV_FORMAT_DOUBLE, &sync)) && d->renderer)
+				sync = sync*1000.0 - d->renderer->delay();
+			_PostEvent(this, Tick, position, sync);
+		}
+	};
+
 	while (!d->quit) {
 		const auto event = mpv_wait_event(d->handle, 0.005);
 		switch (event->event_id) {
 		case MPV_EVENT_NONE: {
 			if (!d->timing)
 				break;
-			if (_Change(position, time(d->getmpv<double>("time-pos"))) && position > 0) {
-				if (first) {
-					_PostEvent(this, UpdateTimeRange, time(d->getmpv<double>("time-start")), time(d->getmpv<double>("length")));
-					const auto array = d->getmpv<QVariant>("chapter-list").toList();
-					ChapterList chapters; chapters.resize(array.size());
-					for (int i=0; i<array.size(); ++i) {
-						const auto map = array[i].toMap();
-						auto &chapter = chapters[i];
-						chapter.m_id = i;
-						chapter.m_time = time(map["time"].toDouble());
-						chapter.m_name = map["title"].toString();
-						if (chapter.m_name.isEmpty())
-							chapter.m_name = _MSecToString(chapter.m_time, _L("hh:mm:ss.zzz"));
-					}
-					_PostEvent(this, UpdateChapterList, chapters);
-					first = false;
-				}
-				double sync = 0;
-				if (d->isSuccess(mpv_get_property(d->handle, "avsync", MPV_FORMAT_DOUBLE, &sync)) && d->renderer)
-					sync = sync*1000.0 - d->renderer->delay();
-				_PostEvent(this, Tick, position, sync);
-			}
+			checkTime();
 			if (position > 0 && cache >= 0) {
 				qint64 newCache = -1;
 				const auto res = mpv_get_property(d->handle, "cache", MPV_FORMAT_INT64, &newCache);
@@ -1019,8 +1047,20 @@ void PlayEngine::exec() {
 			audio->m_driver = AudioDriverInfo::name(d->audioDriver);
 			audio->m_codec = d->getmpv<QString>("audio-format");
 			audio->m_codecDescription = d->getmpv<QString>("audio-codec");
+
+			const auto in = d->audio->inputFormat(), out = d->audio->outputFormat();
 			audio->m_input->m_bitrate = d->getmpv<int>("audio-bitrate")*8;
 			audio->m_input->m_samplerate = d->getmpv<int>("samplerate")/1000.0;
+			audio->m_input->m_channels = in.channels();
+			audio->m_input->m_bits = in.bits();
+			audio->m_input->m_type = in.type();
+
+			audio->m_output->m_bitrate = out.bitrate();
+			audio->m_output->m_samplerate = out.samplerate();
+			audio->m_output->m_channels = out.channels();
+			audio->m_output->m_bits = out.bits();
+			audio->m_output->m_type = out.type();
+
 			_PostEvent(this, UpdateAudioInfo, audio);
 			break;
 		} case MPV_EVENT_VIDEO_RECONFIG: {
@@ -1042,7 +1082,14 @@ void PlayEngine::exec() {
 			_PostEvent(this, UpdateVideoInfo, video);
 			break;
 		} case MPV_EVENT_SHUTDOWN:
-			return;
+			break;
+		case MPV_EVENT_PLAYBACK_RESTART:
+			checkTime();
+			_PostEvent(this, NotifySeek);
+			break;
+		case MPV_EVENT_METADATA_UPDATE:
+			_PostEvent(this, UpdateMetaData, metaData());
+			break;
 		default:
 			break;
 		}
@@ -1157,7 +1204,6 @@ VideoFormat PlayEngine::videoFormat() const {
 }
 
 void PlayEngine::registerObjects() {
-	static auto utilProvider = [](QQmlEngine *, QJSEngine *) -> QObject* {return new UtilObject;};
 	static auto settingsProvider = [](QQmlEngine *, QJSEngine *) -> QObject* {return new SettingsObject;};
 
 	qRegisterMetaType<PlayEngine::State>("State");
@@ -1173,7 +1219,6 @@ void PlayEngine::registerObjects() {
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();
 	qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
-	qmlRegisterSingletonType<UtilObject>("CMPlayer", 1, 0, "Util", utilProvider);
 	qmlRegisterSingletonType<SettingsObject>("CMPlayer", 1, 0, "Settings", settingsProvider);
 }
 

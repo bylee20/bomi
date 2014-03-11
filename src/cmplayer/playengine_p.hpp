@@ -16,7 +16,7 @@ enum EventType {
 	UserType = QEvent::User, UpdateTimeRange, UpdateTrackList, StateChange, PreparePlayback,
 	UpdateChapterList, Tick, EndPlayback, StartPlayback,
 	UpdateDVDInfo, UpdateCache, UpdateCurrentStream,
-	UpdateVideoInfo, UpdateAudioInfo
+	UpdateVideoInfo, UpdateAudioInfo, NotifySeek, UpdateMetaData
 };
 
 static inline QByteArray qbytearray_from(const QByteArray &t) { return t; }

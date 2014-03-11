@@ -20,6 +20,7 @@
 
 #ifdef Q_OS_LINUX
 #include <QX11Info>
+#include <QtDBus>
 #endif
 #ifdef Q_OS_MAC
 #include <QtMacExtras>

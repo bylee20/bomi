@@ -36,15 +36,15 @@ Item {
 		rowHeight: 40
 		readonly property int nameFontSize: 15
 		readonly property int locationFontSize: 10
-		readonly property string nameFontFamily: Cp.Util.monospace
-		readonly property string locationFontFamily: Cp.Util.monospace
+		readonly property string nameFontFamily: Util.monospace
+		readonly property string locationFontFamily: Util.monospace
 		currentIndex: playlist.loaded
 		function contentWidth() {
 			var max = 0;
 			for (var i=0; i<table.count; ++i) {
-				var number = Cp.Util.textWidth(playlist.number(i), table.nameFontSize, table.nameFontFamily);
-				var name = Cp.Util.textWidth(playlist.name(i), table.nameFontSize, table.nameFontFamily);
-				var loc = Cp.Util.textWidth(playlist.location(i), table.locationFontSize, table.locationFontFamily);
+				var number = Util.textWidth(playlist.number(i), table.nameFontSize, table.nameFontFamily);
+				var name = Util.textWidth(playlist.name(i), table.nameFontSize, table.nameFontFamily);
+				var loc = Util.textWidth(playlist.location(i), table.locationFontSize, table.locationFontFamily);
 				max = Math.max(number + name, loc, max);
 			}
 			return max+30
@@ -80,6 +80,6 @@ Item {
 	MouseArea {
 		anchors.fill: parent
 		acceptedButtons: Qt.RightButton
-		onClicked: Cp.Util.execute("tool/playlist")
+		onClicked: Util.execute("tool/playlist")
 	}
 }

@@ -12,22 +12,17 @@ void SettingsObject::open(const QString &name) {
 	}
 }
 
-UtilObject::Data UtilObject::data;
-UtilObject::Data *UtilObject::d = &UtilObject::data;
+UtilObject *UtilObject::object = nullptr;
 
-bool UtilObject::m_filterDoubleClick = false;
-bool UtilObject::m_fullScreen = false;
-bool UtilObject::m_cursor = true;
-
-QLinkedList<UtilObject*> UtilObject::objs;
+void UtilObject::create() {
+	if (!object) { static UtilObject obj; object = &obj; }
+}
 
 UtilObject::UtilObject(QObject *parent)
 : QObject(parent) {
-	objs.append(this);
 }
 
 UtilObject::~UtilObject() {
-	objs.removeOne(this);
 }
 
 double UtilObject::textWidth(const QString &text, int size, const QString &family) {
@@ -183,25 +178,26 @@ quint64 UtilObject::processTime() {
 #endif
 
 void UtilObject::registerItemToAcceptKey(QQuickItem *item) {
-	if (d->itemsToAcceptKey.contains(item))
+	if (m_itemsToAcceptKey.contains(item))
 		return;
-	d->itemsToAcceptKey.insert(item);
+	m_itemsToAcceptKey.insert(item);
 	if (item->isVisible())
-		d->keyItems.push_front(item);
-	connect(item, &QQuickItem::destroyed, [item] (QObject *obj) {
+		m_keyItems.push_front(item);
+	connect(item, &QQuickItem::destroyed, [item, this] (QObject *obj) {
 		Q_ASSERT(item == obj);
-		d->itemsToAcceptKey.remove(item);
-		d->removeKeyItem(item);
+		m_itemsToAcceptKey.remove(item);
+		removeKeyItem(item);
 	});
-	connect(item, &QQuickItem::visibleChanged, [item] () {
-		d->removeKeyItem(item);
+	connect(item, &QQuickItem::visibleChanged, [item, this] () {
+		removeKeyItem(item);
 		if (item->isVisible())
-			d->keyItems.push_front(item);
+			m_keyItems.push_front(item);
 	});
 }
 
 void UtilObject::setItemPressed(QQuickItem *item) {
-	if (d->itemsToAcceptKey.contains(item) && d->removeKeyItem(item))
-		d->keyItems.push_front(item);
+	auto &o = get();
+	if (o.m_itemsToAcceptKey.contains(item) && o.removeKeyItem(item))
+		o.m_keyItems.push_front(item);
 }
 

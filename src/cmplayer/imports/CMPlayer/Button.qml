@@ -9,8 +9,8 @@ Item {
 	property alias smooth: icon.smooth
 	property string action: ""
 	property string action2: ""
-	property var _action: Cp.Util.action(action)
-	property var _action2: Cp.Util.action(action2)
+	property var _action: Util.action(action)
+	property var _action2: Util.action(action2)
 	property string tooltip: __makeToolTip(_action, _action2)
 	property alias text: _text.text
 	property alias textElide: _text.elide
@@ -56,13 +56,13 @@ Item {
 			acceptedButtons: Qt.LeftButton | (item._action2 ? Qt.RightButton : 0)
 			onReleased: {
 				var action = mouse.button & Qt.RightButton ? item.action2 : item.action
-				if (containsMouse && action.length) Cp.Util.execute(action)
+				if (containsMouse && action.length) Util.execute(action)
 			}
-			onClicked: item.clicked(); onExited: Cp.Util.hideToolTip(); onCanceled: Cp.Util.hideToolTip()
+			onClicked: item.clicked(); onExited: Util.hideToolTip(); onCanceled: Util.hideToolTip()
 			Timer {
 				id: tooltipTimer; interval: 1000
 				running: parent.containsMouse && !pressed && tooltip.length
-				onTriggered: Cp.Util.showToolTip(parent, Qt.point(parent.mouseX, parent.mouseY), tooltip)
+				onTriggered: Util.showToolTip(parent, Qt.point(parent.mouseX, parent.mouseY), tooltip)
 			}
 		}
 	}

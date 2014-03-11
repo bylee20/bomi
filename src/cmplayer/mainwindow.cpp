@@ -1,4 +1,5 @@
 #include "stdafx.hpp"
+#include "mpris.hpp"
 #include "openmediafolderdialog.hpp"
 #include "snapshotdialog.hpp"
 #include "mainwindow.hpp"
@@ -90,7 +91,7 @@ struct MainWindow::Data {
 	QAction *subtrackSep = nullptr;
 	QDesktopWidget *desktop = nullptr;
 	QSize virtualDesktopSize;
-
+	mpris::RootObject *mpris = nullptr;
 	void syncState() {
 		for (auto &eg : enumGroups) {
 			Q_ASSERT(as.state.property(eg.property).isValid());
@@ -888,6 +889,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 }
 
 MainWindow::~MainWindow() {
+	delete d->mpris;
 	d->view->engine()->clearComponentCache();
 	exit();
 	delete d->view;
@@ -947,27 +949,7 @@ void MainWindow::connectMenus() {
 	d->connectStepActions(play("speed"), "play_speed", &MrlState::playSpeedChanged, [this]() {
 		d->engine.setSpeed(1e-2*d->as.state.play_speed);
 	});
-	connect(play["pause"], &QAction::triggered, this, [this] () {
-		if (!d->stateChanging) {
-			if (d->pref().pause_to_play_next_image && d->pref().image_duration == 0 && d->engine.mrl().isImage())
-				d->menu("play")["next"]->trigger();
-			else {
-				const auto state = d->engine.state();
-				switch (state) {
-				case PlayEngine::Playing:
-				case PlayEngine::Loading:
-					d->engine.pause();
-					break;
-				case PlayEngine::Paused:
-					d->engine.unpause();
-					break;
-				default:
-					d->load(d->engine.mrl());
-					break;
-				}
-			}
-		}
-	});
+	connect(play["pause"], &QAction::triggered, this, &MainWindow::togglePlayPause);
 	connect(play("repeat").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
 		const int key = a->data().toInt();
 		auto msg = [this] (const QString &ex) {showMessage(tr("A-B Repeat"), ex);};
@@ -1372,6 +1354,14 @@ void MainWindow::openFromFileManager(const Mrl &mrl) {
 	d->openWith(d->pref().open_media_from_file_manager, QList<Mrl>() << mrl);
 }
 
+PlayEngine *MainWindow::engine() const {
+	return &d->engine;
+}
+
+PlaylistModel *MainWindow::playlist() const {
+	return &d->playlist;
+}
+
 void MainWindow::exit() {
 	static bool done = false;
 	if (!done) {
@@ -1380,6 +1370,46 @@ void MainWindow::exit() {
 		d->renderer.setOverlay(nullptr);
 		cApp.quit();
 		done = true;
+	}
+}
+
+void MainWindow::play() {
+	if (d->stateChanging)
+		return;
+	if (d->pref().pause_to_play_next_image && d->pref().image_duration == 0 && d->engine.mrl().isImage())
+		d->menu("play")["next"]->trigger();
+	else {
+		const auto state = d->engine.state();
+		switch (state) {
+		case PlayEngine::Playing:
+		case PlayEngine::Loading:
+			break;
+		case PlayEngine::Paused:
+			d->engine.unpause();
+			break;
+		default:
+			d->load(d->engine.mrl());
+			break;
+		}
+	}
+}
+
+void MainWindow::togglePlayPause() {
+	if (d->stateChanging)
+		return;
+	if (d->pref().pause_to_play_next_image && d->pref().image_duration == 0 && d->engine.mrl().isImage())
+		d->menu("play")["next"]->trigger();
+	else {
+		const auto state = d->engine.state();
+		switch (state) {
+		case PlayEngine::Playing:
+		case PlayEngine::Loading:
+			d->engine.pause();
+			break;
+		default:
+			play();
+			break;
+		}
 	}
 }
 
@@ -1639,6 +1669,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
 void MainWindow::reloadSkin() {
 	d->player = nullptr;
 	d->view->engine()->clearComponentCache();
+	d->view->rootContext()->setContextProperty("Util", &UtilObject::get());
 	d->view->rootContext()->setContextProperty("engine", &d->engine);
 	d->view->rootContext()->setContextProperty("history", &d->history);
 	d->view->rootContext()->setContextProperty("playlist", &d->playlist);
@@ -1727,6 +1758,11 @@ void MainWindow::applyPref() {
 	if (d->tray)
 		d->tray->setVisible(p.enable_system_tray);
 	d->preferences.save();
+
+	if (d->preferences.use_mpris2 && !d->mpris)
+		d->mpris = new mpris::RootObject(this);
+	else if (!d->preferences.use_mpris2)
+		_Delete(d->mpris);
 }
 
 template<typename Slot>

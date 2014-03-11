@@ -40,8 +40,8 @@ public:
 	void setChannelLayoutMap(const ChannelLayoutMap &map);
 	void setOutputChannelLayout(ChannelLayout layout);
 	mp_chmap *chmap() const;
-signals:
-	void started(AudioFormat input, AudioFormat output);
+	AudioFormat inputFormat() const;
+	AudioFormat outputFormat() const;
 private:
 	static int open(af_instance *af);
 	static bool test(int fmt_in, int fmt_out);
