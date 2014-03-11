@@ -143,7 +143,6 @@ Player::Player(QObject *parent): QDBusAbstractAdaptor(parent), d(new Data) {
 	d->metaData = d->toDBus(d->engine->metaData());
 	connect(d->engine, &PlayEngine::metaDataChanged, this, [this] () {
 		d->metaData = d->toDBus(d->engine->metaData());
-		qDebug() << d->metaData;
 		sendPropertiesChanged(this, "Metadata", d->metaData);
 	});
 	connect(d->engine, &PlayEngine::stateChanged, this, [this] (PlayEngine::State state) {
@@ -166,7 +165,7 @@ Player::Player(QObject *parent): QDBusAbstractAdaptor(parent), d(new Data) {
 	connect(d->engine, &PlayEngine::seekableChanged, this, [this] (bool seekable) {
 		sendPropertiesChanged(this, "CanSeek", seekable);
 	});
-	connect(d->engine, &PlayEngine::sought, this, [this] () { qDebug() << "seekd"; emit Seeked(time()); });
+	connect(d->engine, &PlayEngine::sought, this, [this] () { emit Seeked(time()); });
 }
 
 Player::~Player() {
