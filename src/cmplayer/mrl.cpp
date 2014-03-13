@@ -16,7 +16,7 @@ Mrl::Mrl(const QString &location, const QString &name) {
 		m_loc = _L("file://") % QFileInfo(location).absoluteFilePath();
 	else if (location.startsWith("file://", Qt::CaseInsensitive))
 		m_loc = QUrl::fromPercentEncoding(location.toUtf8());
-	else if (location.startsWith("dvd", Qt::CaseInsensitive))
+	else if (location.startsWith("dvdnav://", Qt::CaseInsensitive) || location.startsWith("bd://", Qt::CaseInsensitive))
 		m_loc = location;
 	else
 		m_loc = QUrl::fromPercentEncoding(location.toUtf8());
@@ -45,7 +45,9 @@ QString Mrl::displayName() const {
 	if (isLocalFile())
 		return fileName();
 	if (isDvd())
-		return "DVD";
+		return _L("DVD");
+	if (isBluray())
+		return _L("Blu-ray");
 	return location();
 }
 
@@ -54,4 +56,21 @@ bool Mrl::isImage() const { return Info::readableImageExt().contains(suffix(), Q
 bool Mrl::isEmpty() const {
 	const int idx = m_loc.indexOf("://");
 	return (idx < 0) || !(idx+3 < m_loc.size());
+}
+
+static const QStringList discSchemes = QStringList() << _L("dvdnav") << _L("bd");
+
+bool Mrl::isDisc() const {
+	return discSchemes.contains(scheme(), Qt::CaseInsensitive);
+}
+
+QString Mrl::device() const {
+	const auto scheme = this->scheme();
+	if (!discSchemes.contains(scheme, Qt::CaseInsensitive))
+		return QString();
+	auto path = m_loc.midRef(scheme.size() + 3);
+	const int idx = path.indexOf(_L('/'));
+	if (idx < 0)
+		return QString();
+	return path.mid(idx+1).toString();
 }

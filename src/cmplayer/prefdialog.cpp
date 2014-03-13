@@ -638,7 +638,7 @@ void PrefDialog::set(const Pref &p) {
 
 	d->ui.cache_local->setValue(p.cache_local);
 	d->ui.cache_network->setValue(p.cache_network);
-	d->ui.cache_dvd->setValue(p.cache_dvd);
+	d->ui.cache_disc->setValue(p.cache_disc);
 	d->ui.cache_min_playback->setValue(p.cache_min_playback);
 	d->ui.cache_min_seeking->setValue(p.cache_min_seeking);
 	d->ui.network_folders->setValues(p.network_folders);
@@ -763,7 +763,7 @@ void PrefDialog::get(Pref &p) {
 
 	p.cache_local = d->ui.cache_local->value();
 	p.cache_network = d->ui.cache_network->value();
-	p.cache_dvd = d->ui.cache_dvd->value();
+	p.cache_disc = d->ui.cache_disc->value();
 	p.cache_min_playback = d->ui.cache_min_playback->value();
 	p.cache_min_seeking = d->ui.cache_min_seeking->value();
 	p.network_folders = d->ui.network_folders->values();

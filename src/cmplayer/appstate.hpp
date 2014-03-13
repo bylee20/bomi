@@ -30,8 +30,7 @@ public:
 	QStringList open_url_list;
 	bool ask_system_tray = true;
 
-	bool dvd_menu = true;
-	QString dvd_device;
+	QString dvd_device, bluray_device;
 	void save() const;
 	static AppState &get() {
 		static AppState obj; return obj;

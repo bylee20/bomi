@@ -823,21 +823,16 @@ void PlayEngine::setCurrentChapter(int id) {
 	d->setmpv_async("chapter", id);
 }
 
-void PlayEngine::setCurrentDvdTitle(int id) {
-	auto mrl = d->startInfo.mrl;
-	if (mrl.isDvd()) {
-		const QString path = "dvdnav://" % QString::number(id) % mrl.location().mid(6);
-		d->loadfile(path.toLocal8Bit(), 0, d->startInfo.cache);
-	}
-}
-
-void PlayEngine::sendDVDCommand(DVDCmd cmd) {
-	if (!d->startInfo.mrl.isDvd())
+void PlayEngine::setCurrentTitle(int id) {
+	const auto mrl = d->startInfo.mrl;
+	if (!mrl.isDisc())
 		return;
-	switch (cmd) {
-	case DVDMenu:
-//		mp_nav_user_input(d->mpctx, const_cast<char*>("menu"));
-		break;
+	if (id == DVDMenu && mrl.isDvd()) {
+		static const char *cmds[] = {"dvdnav", "menu", nullptr};
+		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send 'dvdnav menu'.");
+	} else if (id > 0) {
+		const QString path = mrl.scheme() % _L("://") % QString::number(id) % '/' % mrl.device();
+		d->loadfile(path.toLocal8Bit(), 0, d->startInfo.cache);
 	}
 }
 

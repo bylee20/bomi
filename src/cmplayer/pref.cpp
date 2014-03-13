@@ -234,7 +234,7 @@ void Pref::save() const {
 	WRITE(clipping_method);
 
 	WRITE(cache_local);
-	WRITE(cache_dvd);
+	WRITE(cache_disc);
 	WRITE(cache_network);
 	WRITE(cache_min_playback);
 	WRITE(cache_min_seeking);
@@ -351,7 +351,7 @@ void Pref::load() {
 	READ(clipping_method);
 
 	READ(cache_local);
-	READ(cache_dvd);
+	READ(cache_disc);
 	READ(cache_network);
 	READ(cache_min_playback);
 	READ(cache_min_seeking);

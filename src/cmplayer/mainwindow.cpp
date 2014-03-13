@@ -35,7 +35,7 @@
 #include <Carbon/Carbon.h>
 #endif
 
-DECLARE_LOG_CONTEXT(Main)
+//DECLARE_LOG_CONTEXT(Main)
 
 extern void initialize_vdpau_interop(QOpenGLContext *context);
 extern void finalize_vdpau_interop(QOpenGLContext *context);
@@ -597,8 +597,8 @@ struct MainWindow::Data {
 			}))
 				return pref().cache_network;
 			return pref().cache_local;
-		} if (mrl.isDvd())
-			return pref().cache_dvd;
+		} if (mrl.isDisc())
+			return pref().cache_disc;
 		return pref().cache_network;
 	}
 	void initEngine() {
@@ -926,20 +926,24 @@ void MainWindow::connectMenus() {
 				openMrl(dlg.url().toString(), dlg.encoding());
 		}
 	});
-	connect(open["dvd"], &QAction::triggered, this, [this] () {
-		OpenDvdDialog dlg;
+	auto openDisc = [this] (const QString &title, QString &device) {
+		OpenDiscDialog dlg(this);
+		dlg.setWindowTitle(title);
 		dlg.setDeviceList(cApp.devices());
-		if (!d->as.dvd_device.isEmpty())
-			dlg.setDevice(d->as.dvd_device);
-		dlg.setUseMenu(d->as.dvd_menu);
-		if (dlg.exec()) {
-			d->as.dvd_menu = dlg.useMenu();
-			d->as.dvd_device = dlg.device();
-			QString mrl("dvdnav://menu");
-			if (!d->as.dvd_device.isEmpty())
-				mrl += _L("/") % d->as.dvd_device;
-			openMrl(Mrl(mrl));
-		}
+		if (!device.isEmpty())
+			dlg.setDevice(device);
+		if (dlg.exec())
+			device = dlg.device();
+		return dlg.result() && !device.isEmpty();
+	};
+
+	connect(open["dvd"], &QAction::triggered, this, [openDisc, this] () {
+		if (openDisc(tr("Select DVD device"), d->as.dvd_device))
+			openMrl(Mrl(_L("dvdnav://menu/") + d->as.dvd_device));
+	});
+	connect(open["bluray"], &QAction::triggered, this, [openDisc, this] () {
+		if (openDisc(tr("Select Blu-ray device"), d->as.bluray_device))
+			openMrl(Mrl(_L("bd:///") + d->as.bluray_device));
 	});
 	connect(open("recent").g(), &ActionGroup::triggered, this, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
 	connect(open("recent")["clear"], &QAction::triggered, &d->recent, &RecentInfo::clear);
@@ -973,14 +977,14 @@ void MainWindow::connectMenus() {
 			showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
 		}
 	});
-	connect(play["dvd-menu"], &QAction::triggered, this, [this] () { d->engine.sendDVDCommand(PlayEngine::DVDMenu); });
+	connect(play["dvd-menu"], &QAction::triggered, this, [this] () { d->engine.setCurrentTitle(PlayEngine::DVDMenu); });
 	connect(play("seek").g("subtitle"), &ActionGroup::triggered, this, [this] (QAction *a) {
 		const int key = a->data().toInt();
 		const int time = (key < 0 ? d->subtitle.previous() : (key > 0 ? d->subtitle.next() : d->subtitle.current()));
 		if (time >= 0) d->engine.seek(time-100);
 	});
 	connect(play("title").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
-		a->setChecked(true); d->engine.setCurrentDvdTitle(a->data().toInt()); showMessage(tr("Current DVD Title"), a->text());
+		a->setChecked(true); d->engine.setCurrentTitle(a->data().toInt()); showMessage(tr("Current DVD Title"), a->text());
 	});
 	connect(play("chapter").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentChapter(a->data().toInt()); showMessage(tr("Current Chapter"), a->text());

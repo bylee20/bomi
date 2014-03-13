@@ -151,6 +151,17 @@ private:
 
 typedef QVector<Chapter> ChapterList;
 
+struct Title {
+	QString name() const { return m_name; }
+	int id() const { return m_id; }
+	bool operator == (const Title &rhs) const { return m_id == rhs.m_id; }
+private:
+	int m_id = 0;
+	QString m_name;
+};
+
+typedef QVector<Title> TitleList;
+
 class TrackInfoObject : public QObject {
 	Q_OBJECT
 	Q_PROPERTY(int current READ current NOTIFY currentChanged)

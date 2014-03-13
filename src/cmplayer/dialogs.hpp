@@ -100,16 +100,14 @@ private:
 	Data *d = nullptr;
 };
 
-class OpenDvdDialog : public QDialog {
+class OpenDiscDialog : public QDialog {
 	Q_OBJECT
 public:
-	OpenDvdDialog(QWidget *parent = 0);
-	~OpenDvdDialog();
+	OpenDiscDialog(QWidget *parent = 0);
+	~OpenDiscDialog();
 	void setDeviceList(const QStringList &devices);
 	void setDevice(const QString &device);
 	QString device() const;
-	bool useMenu() const;
-	void setUseMenu(bool use);
 public slots:
 	void checkDevice(const QString &device);
 private:

@@ -389,31 +389,30 @@ void AboutDialog::showFullLicense() {
 #include "ui_opendvddialog.h"
 #include <QtCore/QFileInfo>
 
-struct OpenDvdDialog::Data {
-	Ui::OpenDVDDialog ui;
+struct OpenDiscDialog::Data {
+	Ui::OpenDiscDialog ui;
 	QPushButton *ok;
 };
 
-OpenDvdDialog::OpenDvdDialog(QWidget *parent)
+OpenDiscDialog::OpenDiscDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
 	d->ui.setupUi(this);
 	d->ok = d->ui.buttonBox->button(QDialogButtonBox::Ok);
 	d->ok->setEnabled(false);
-	d->ui.menu->hide();
 	connect(d->ui.device, SIGNAL(editTextChanged(QString)), this, SLOT(checkDevice(QString)));
 	checkDevice(d->ui.device->currentText());
 }
 
-OpenDvdDialog::~OpenDvdDialog() {
+OpenDiscDialog::~OpenDiscDialog() {
 	delete d;
 }
 
-void OpenDvdDialog::setDeviceList(const QStringList &devices) {
+void OpenDiscDialog::setDeviceList(const QStringList &devices) {
 	d->ui.device->clear();
 	d->ui.device->addItems(devices);
 }
 
-void OpenDvdDialog::checkDevice(const QString &device) {
+void OpenDiscDialog::checkDevice(const QString &device) {
 	const QFileInfo info(device);
 	const bool exists = info.exists();
 	d->ok->setEnabled(exists);
@@ -421,19 +420,10 @@ void OpenDvdDialog::checkDevice(const QString &device) {
 		: _L("<font color='red'>") % tr("Selected device doesn't exists.") % _L("</font>"));
 }
 
-QString OpenDvdDialog::device() const {
+QString OpenDiscDialog::device() const {
 	return d->ui.device->currentText();
 }
 
-void OpenDvdDialog::setUseMenu(bool use) {
-	d->ui.menu->setChecked(use);
-}
-
-bool OpenDvdDialog::useMenu() const {
-	return true;
-	return d->ui.menu->isChecked();
-}
-
-void OpenDvdDialog::setDevice(const QString &device) {
+void OpenDiscDialog::setDevice(const QString &device) {
 	d->ui.device->setCurrentText(device);
 }

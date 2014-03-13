@@ -25,7 +25,7 @@ struct StartInfo {
 	Mrl mrl;
 	int resume = -1;
 	int cache = -1;
-	bool isValid() const { return !mrl.isEmpty() && resume >= 0 && cache >= 0; }
+	bool isValid() const { return (!mrl.isEmpty() || mrl.isDisc()) && resume >= 0 && cache >= 0; }
 };
 
 class PlayEngine : public QObject {
@@ -61,7 +61,7 @@ class PlayEngine : public QObject {
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Loading = 16, Error = 32, Buffering = 64, Running = Playing | Loading | Buffering };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
-	enum DVDCmd { DVDMenu };
+	enum DVDCmd { DVDMenu = -1 };
 	PlayEngine();
 	PlayEngine(const PlayEngine&) = delete;
 	PlayEngine &operator = (const PlayEngine &) = delete;
@@ -94,7 +94,7 @@ public:
 	int currentSubtitleStream() const;
 	const StreamList &subtitleStreams() const;
 	void setCurrentSubtitleStream(int id);
-	void setCurrentDvdTitle(int id);
+	void setCurrentTitle(int id);
 	void setCurrentChapter(int id);
 	bool hasVideo() const;
 	void setVolumeNormalizerActivated(bool on);
@@ -157,7 +157,6 @@ public:
 	void setCurrentSubtitleIndex(int idx);
 	void sendMouseClick(const QPointF &pos);
 	void sendMouseMove(const QPointF &pos);
-	void sendDVDCommand(DVDCmd cmd);
 	QList<SubtitleFileInfo> subtitleFiles() const;
 	void setSubtitleDelay(int ms);
 	void setNextStartInfo(const StartInfo &startInfo);

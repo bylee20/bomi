@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>OpenDVDDialog</class>
- <widget class="QDialog" name="OpenDVDDialog">
+ <class>OpenDiscDialog</class>
+ <widget class="QDialog" name="OpenDiscDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -9,9 +9,6 @@
     <width>427</width>
     <height>72</height>
    </rect>
-  </property>
-  <property name="windowTitle">
-   <string>Select DVD Device</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -60,13 +57,6 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QCheckBox" name="menu">
-       <property name="text">
-        <string>Use DVD menu</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QDialogButtonBox" name="buttonBox">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -85,7 +75,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>OpenDVDDialog</receiver>
+   <receiver>OpenDiscDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -101,7 +91,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>OpenDVDDialog</receiver>
+   <receiver>OpenDiscDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
