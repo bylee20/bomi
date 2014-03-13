@@ -399,12 +399,26 @@ OpenDiscDialog::OpenDiscDialog(QWidget *parent)
 	d->ui.setupUi(this);
 	d->ok = d->ui.buttonBox->button(QDialogButtonBox::Ok);
 	d->ok->setEnabled(false);
-	connect(d->ui.device, SIGNAL(editTextChanged(QString)), this, SLOT(checkDevice(QString)));
+	connect(d->ui.device, &QComboBox::editTextChanged, this, &OpenDiscDialog::checkDevice);
 	checkDevice(d->ui.device->currentText());
+	connect(d->ui.folder, &QPushButton::clicked, this, [this] () {
+		auto dir = QFileDialog::getExistingDirectory(this, tr("Open device or folder"), d->ui.device->currentText());
+		if (!dir.isEmpty())
+			d->ui.device->setCurrentText(dir);
+	});
+	connect(d->ui.iso, &QPushButton::clicked, this, [this] () {
+		auto iso = _GetOpenFileName(this, tr("Open ISO file"), d->ui.device->currentText(), tr("ISO Image Files") % _L(" (*.iso"));
+		if (!iso.isEmpty())
+			d->ui.device->setCurrentText(iso);
+	});
 }
 
 OpenDiscDialog::~OpenDiscDialog() {
 	delete d;
+}
+
+void OpenDiscDialog::setIsoEnabled(bool on) {
+	d->ui.iso->setVisible(on);
 }
 
 void OpenDiscDialog::setDeviceList(const QStringList &devices) {

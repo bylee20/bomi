@@ -568,7 +568,7 @@ struct MainWindow::Data {
 	}
 
 	int resume(const Mrl &mrl) {
-		if (!pref().remember_stopped || mrl.isImage())
+		if (!pref().remember_stopped || mrl.isImage() || mrl.isDisc())
 			return 0;
 		auto state = history.find(mrl);
 		if (!state || state->resume_position <= 0)
@@ -686,28 +686,31 @@ struct MainWindow::Data {
 		};
 
 		connect(&engine, &PlayEngine::started, p, [this, updateMrlState] (Mrl mrl) {
-			as.setOpen(mrl);
-			as.state.mrl = mrl;
-			auto &state = as.state;
-			state.sub_track = SubtitleStateInfo();
-			const bool found = history.getState(&state);
-			if (found) {
-				engine.setCurrentAudioStream(state.audio_track);
-				syncWithState();
+			if (!mrl.isDisc()) {
+				as.setOpen(mrl);
+				as.state.mrl = mrl;
+				auto &state = as.state;
+				state.sub_track = SubtitleStateInfo();
+				const bool found = history.getState(&state);
+				if (found) {
+					engine.setCurrentAudioStream(state.audio_track);
+					syncWithState();
+				}
+				if (found && state.sub_track.isValid()) {
+					for (auto &f : state.sub_track.mpv())
+						engine.addSubtitleStream(f.path, f.encoding);
+					auto loaded = state.sub_track.load();
+					subtitle.setComponents(loaded);
+					engine.setCurrentSubtitleStream(state.sub_track.track());
+					syncSubtitleFileMenu();
+				} else
+					updateSubtitleState();
+				updateMrlState(mrl, false, 0);
 			}
-			if (found && state.sub_track.isValid()) {
-				for (auto &f : state.sub_track.mpv())
-					engine.addSubtitleStream(f.path, f.encoding);
-				auto loaded = state.sub_track.load();
-				subtitle.setComponents(loaded);
-				engine.setCurrentSubtitleStream(state.sub_track.track());
-				syncSubtitleFileMenu();
-			} else
-				updateSubtitleState();
-			updateMrlState(mrl, false, 0);
 		});
 		connect(&engine, &PlayEngine::finished, p, [this, updateMrlState] (Mrl mrl, int time, int remain) {
-			updateMrlState(mrl, true, !mrl.isDvd() && remain > 500 ? time : -1);
+			if (!mrl.isDisc())
+				updateMrlState(mrl, true, remain > 500 ? time : -1);
 		});
 		connect(&engine, &PlayEngine::videoFormatChanged, p, [this] (const VideoFormat &format) {
 			if (pref().fit_to_video && !format.displaySize().isEmpty())
@@ -926,8 +929,9 @@ void MainWindow::connectMenus() {
 				openMrl(dlg.url().toString(), dlg.encoding());
 		}
 	});
-	auto openDisc = [this] (const QString &title, QString &device) {
+	auto openDisc = [this] (const QString &title, QString &device, bool dvd) {
 		OpenDiscDialog dlg(this);
+		dlg.setIsoEnabled(dvd);
 		dlg.setWindowTitle(title);
 		dlg.setDeviceList(cApp.devices());
 		if (!device.isEmpty())
@@ -938,11 +942,11 @@ void MainWindow::connectMenus() {
 	};
 
 	connect(open["dvd"], &QAction::triggered, this, [openDisc, this] () {
-		if (openDisc(tr("Select DVD device"), d->as.dvd_device))
+		if (openDisc(tr("Select DVD device"), d->as.dvd_device, true))
 			openMrl(Mrl(_L("dvdnav://menu/") + d->as.dvd_device));
 	});
 	connect(open["bluray"], &QAction::triggered, this, [openDisc, this] () {
-		if (openDisc(tr("Select Blu-ray device"), d->as.bluray_device))
+		if (openDisc(tr("Select Blu-ray device"), d->as.bluray_device, false))
 			openMrl(Mrl(_L("bd:///") + d->as.bluray_device));
 	});
 	connect(open("recent").g(), &ActionGroup::triggered, this, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});

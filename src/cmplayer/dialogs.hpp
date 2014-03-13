@@ -107,6 +107,7 @@ public:
 	~OpenDiscDialog();
 	void setDeviceList(const QStringList &devices);
 	void setDevice(const QString &device);
+	void setIsoEnabled(bool on);
 	QString device() const;
 public slots:
 	void checkDevice(const QString &device);

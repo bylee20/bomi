@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>427</width>
-    <height>72</height>
+    <width>390</width>
+    <height>74</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -40,6 +40,38 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="folder">
+       <property name="toolTip">
+        <string>Open device/folder</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="../rsclist.qrc">
+         <normaloff>:/img/document-open-folder.png</normaloff>:/img/document-open-folder.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="iso">
+       <property name="toolTip">
+        <string>Open ISO file</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="../rsclist.qrc">
+         <normaloff>:/img/media-optical.png</normaloff>:/img/media-optical.png</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
       <widget class="QLabel" name="available">
        <property name="minimumSize">
         <size>
@@ -52,10 +84,6 @@
        </property>
       </widget>
      </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QDialogButtonBox" name="buttonBox">
        <property name="orientation">
@@ -70,7 +98,9 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../rsclist.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>
