@@ -1,6 +1,6 @@
 #!/bin/bash
 
-args="--prefix=../../build --disable-client-api-examples --disable-manpage-build --enable-shared --disable-pdf-build \
+args="--prefix=../../build --disable-client-api-examples --disable-manpage-build --enable-libmpv-shared --disable-pdf-build \
   --disable-vf-dlopen-filters --disable-macosx-bundle \
   --enable-iconv --disable-terminfo --disable-termcap --disable-termios --disable-shm --disable-libguess --disable-libsmbclient \
   --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --enable-dvdnav \
