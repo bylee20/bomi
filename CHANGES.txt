@@ -1,3 +1,11 @@
+0.8.13
+
+  * New: Blu-ray support
+  * New: basic support for MPRISv2
+  * New: session management (autosave state when logout or shutdown)
+  * Fix: add MIME video/mp2t (mpeg2 transport streams and Blu-ray format) #56
+  * Fix: remove disabled audio drivers in preferences
+
 0.8.12
 
   * New: new configure sciprt
