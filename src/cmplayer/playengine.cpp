@@ -344,6 +344,7 @@ PlayEngine::PlayEngine()
 	d->setOption("ao", "null,");
 	d->setOption("ad-lavc-downmix", "no");
 	d->setOption("channels", "3");
+	d->setOption("title", "\"\"");
 
 	auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
 	if (!overrides.isEmpty()) {
