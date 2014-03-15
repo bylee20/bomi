@@ -76,7 +76,7 @@ int AudioController::open(af_instance *af) {
 	auto d = priv->ac->d;
 	d->af = af;
 	d->tempoScalerActivated = priv->use_scaler;
-	d->layout = ChannelLayoutInfo::from(priv->layout);
+//	d->layout = ChannelLayoutInfo::from(priv->layout);
 
 	af->control = AudioController::control;
 	af->uninit = AudioController::uninit;
@@ -94,6 +94,7 @@ void AudioController::uninit(af_instance *af) {
 	if (d->swr)
 		swr_free(&d->swr);
 	talloc_free(d->resampled);
+	d->layout = ChannelLayoutInfo::default_();
 	d->resampled = nullptr;
 }
 

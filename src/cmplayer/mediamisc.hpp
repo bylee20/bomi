@@ -90,21 +90,6 @@ private:
 	QString m_name;
 };
 
-struct DvdInfo {
-	struct Title {
-		QString name() const {return m_name;}
-		int id() const {return m_id;}
-	private:
-		friend class PlayEngine;
-		int m_id = 0;
-		QString m_name;
-	};
-	void clear() { titles.clear(); titles.clear(); currentTitle = 0; }
-	QVector<Title> titles;
-	int currentTitle = 0;
-	QString volume;
-};
-
 struct Stream {
 	enum Type {Audio = 0, Video, Subtitle, Unknown};
 	QString name() const {
@@ -154,13 +139,16 @@ typedef QVector<Chapter> ChapterList;
 struct Title {
 	QString name() const { return m_name; }
 	int id() const { return m_id; }
-	bool operator == (const Title &rhs) const { return m_id == rhs.m_id; }
+	bool isSelected() const { return m_selected; }
+	bool operator == (const Title &rhs) const { return m_id == rhs.m_id && m_selected == rhs.m_selected; }
 private:
+	friend class PlayEngine;
 	int m_id = 0;
 	QString m_name;
+	bool m_selected = false;
 };
 
-typedef QVector<Title> TitleList;
+typedef QMap<int, Title> TitleList;
 
 class TrackInfoObject : public QObject {
 	Q_OBJECT

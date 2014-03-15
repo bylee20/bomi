@@ -74,3 +74,12 @@ QString Mrl::device() const {
 		return QString();
 	return path.mid(idx+1).toString();
 }
+
+Mrl Mrl::fromDisc(const QString &scheme, const QString &device, int title) {
+	QString loc = scheme % _L("://");
+	if (title == 0)
+		loc += _L("menu");
+	else if (title > 0)
+		loc += QString::number(title);
+	return Mrl(loc % _L('/') % device);
+}

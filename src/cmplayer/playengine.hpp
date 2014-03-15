@@ -61,7 +61,7 @@ class PlayEngine : public QObject {
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Loading = 16, Error = 32, Buffering = 64, Running = Playing | Loading | Buffering };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
-	enum DVDCmd { DVDMenu = -1 };
+	enum DVDCmd { DVDMenu = 0 };
 	PlayEngine();
 	PlayEngine(const PlayEngine&) = delete;
 	PlayEngine &operator = (const PlayEngine &) = delete;
@@ -87,14 +87,14 @@ public:
 //	void play(int start, int cache);
 //	void load(const MrlStartInfo &mrl, bool play);
 	void setSpeed(double speed);
-	const DvdInfo &dvd() const;
-	int currentDvdTitle() const;
+	int currentTitle() const;
+	const TitleList &titles() const;
 	int currentChapter() const;
 	const ChapterList &chapters() const;
 	int currentSubtitleStream() const;
 	const StreamList &subtitleStreams() const;
 	void setCurrentSubtitleStream(int id);
-	void setCurrentTitle(int id);
+	void setCurrentTitle(int id, int from = 0);
 	void setCurrentChapter(int id);
 	bool hasVideo() const;
 	void setVolumeNormalizerActivated(bool on);
@@ -113,6 +113,7 @@ public:
 	PlaylistModel &playlist();
 
 	const MetaData &metaData() const;
+	QString mediaName() const;
 	HardwareAcceleration hwAcc() const;
 	int volume() const;
 	int currentAudioStream() const;
@@ -168,7 +169,7 @@ public slots:
 	void setVideoRenderer(VideoRendererItem *renderer);
 //	void play();
 	void stop();
-//	void reload();
+	void reload();
 	void pause();
 	void unpause();
 	void seek(int pos);
@@ -195,6 +196,7 @@ signals:
 	void videoStreamsChanged(const StreamList &streams);
 	void subtitleStreamsChanged(const StreamList &streams);
 	void chaptersChanged(const ChapterList &chapters);
+	void titlesChanged(const TitleList &titles);
 	void dvdInfoChanged();
 	void speedChanged(double speed);
 	void audioChanged();

@@ -30,7 +30,9 @@ public:
 	bool isImage() const;
 	void setName(const QString &name) { m_name = name; }
 	static Mrl fromString(const QString str) { Mrl mrl; mrl.m_loc = str; return mrl; }
+	static Mrl fromDisc(const QString &scheme, const QString &device, int title = -1);
 	QString device() const;
+	QByteArray toLocal8Bit() const { return m_loc.toLocal8Bit(); }
 private:
 	QString m_loc = {};
 	QString m_name;

@@ -630,8 +630,8 @@ struct MainWindow::Data {
 		connect(&engine, &PlayEngine::tempoScaledChanged, menu("audio")["tempo-scaler"], &QAction::setChecked);
 		connect(&engine, &PlayEngine::mutedChanged, menu("audio")("volume")["mute"], &QAction::setChecked);
 		connect(&engine, &PlayEngine::started, p, [this] () { subtitle.setFPS(engine.fps()); });
-		connect(&engine, &PlayEngine::dvdInfoChanged, p, [this] () {
-			updateListMenu(menu("play")("title"), engine.dvd().titles, engine.currentDvdTitle());
+		connect(&engine, &PlayEngine::titlesChanged, p, [this] (const TitleList &titles) {
+			updateListMenu(menu("play")("title"), titles, engine.currentTitle());
 		});
 		connect(&engine, &PlayEngine::audioStreamsChanged, p, [this] (const StreamList &streams) {
 			updateListMenu(menu("audio")("track"), streams, engine.currentAudioStream());
@@ -941,11 +941,11 @@ void MainWindow::connectMenus() {
 
 	connect(open["dvd"], &QAction::triggered, this, [openDisc, this] () {
 		if (openDisc(tr("Select DVD device"), d->as.dvd_device, true))
-			openMrl(Mrl(_L("dvdnav://menu/") + d->as.dvd_device));
+			openMrl(Mrl::fromDisc("dvdnav", d->as.dvd_device, 0));
 	});
 	connect(open["bluray"], &QAction::triggered, this, [openDisc, this] () {
 		if (openDisc(tr("Select Blu-ray device"), d->as.bluray_device, false))
-			openMrl(Mrl(_L("bd:///") + d->as.bluray_device));
+			openMrl(Mrl::fromDisc("bd", d->as.bluray_device));
 	});
 	connect(open("recent").g(), &ActionGroup::triggered, this, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
 	connect(open("recent")["clear"], &QAction::triggered, &d->recent, &RecentInfo::clear);
@@ -986,7 +986,7 @@ void MainWindow::connectMenus() {
 		if (time >= 0) d->engine.seek(time-100);
 	});
 	connect(play("title").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
-		a->setChecked(true); d->engine.setCurrentTitle(a->data().toInt()); showMessage(tr("Current DVD Title"), a->text());
+		a->setChecked(true); d->engine.setCurrentTitle(a->data().toInt()); showMessage(tr("Current Title"), a->text());
 	});
 	connect(play("chapter").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
 		a->setChecked(true); d->engine.setCurrentChapter(a->data().toInt()); showMessage(tr("Current Chapter"), a->text());
@@ -1310,7 +1310,7 @@ void MainWindow::connectMenus() {
 	connect(help["about"], &QAction::triggered, this, [this] () {AboutDialog dlg(this); dlg.exec();});
 	connect(d->menu["exit"], &QAction::triggered, this, &MainWindow::exit);
 
-	d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentDvdTitle);
+	d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentTitle);
 	d->connectCurrentStreamActions(&d->menu("play")("chapter"), &PlayEngine::currentChapter);
 }
 
@@ -1704,12 +1704,13 @@ void MainWindow::reloadSkin() {
 }
 
 void MainWindow::applyPref() {
-	int time = -1;
+	int time = -1, title = -1;
 	switch (d->engine.state()) {
 	case PlayEngine::Playing:
 	case PlayEngine::Loading:
 	case PlayEngine::Paused:
 		time = d->engine.time();
+		title = d->engine.currentTitle();
 		break;
 	default:
 		break;
@@ -1758,6 +1759,8 @@ void MainWindow::applyPref() {
 		auto info = d->engine.startInfo();
 		info.resume = time;
 		info.cache = d->cache(info.mrl);
+		if (info.mrl.isDisc())
+			info.mrl = Mrl::fromDisc(info.mrl.scheme(), info.mrl.device(), title);
 		d->engine.load(info);
 	}
 
@@ -1884,13 +1887,8 @@ void MainWindow::updateTitle() {
 			fileName = file.fileName();
 			if (isVisible())
 				setWindowFilePath(d->filePath);
-		} else {
-			if (mrl.isDvd()) {
-				fileName = d->engine.dvd().volume;
-				if (fileName.isEmpty())
-					fileName = _L("DVD");
-			}
-		}
+		} else
+			fileName = d->engine.mediaName();
 	}
 	cApp.setWindowTitle(this, fileName);
 }

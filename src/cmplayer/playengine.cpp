@@ -141,6 +141,7 @@ struct PlayEngine::Data {
 	AvInfoObject *videoInfo = new AvInfoObject, *audioInfo = new AvInfoObject;
 	HardwareAcceleration hwacc = HardwareAcceleration::Unavailable;
 	MetaData metaData;
+	QString mediaName;
 
 	bool hasImage = false, tempoScaler = false, seekable = false;
 	bool subStreamsVisible = true, startPaused = false;
@@ -183,8 +184,9 @@ struct PlayEngine::Data {
 	QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
 	AudioTrackInfoObject *audioTrackInfo = nullptr;
 	VideoRendererItem *renderer = nullptr;
-	DvdInfo dvd;
 	ChapterList chapters, chapterFakeList;
+	TitleList titles;
+	int title = -1;
 	ChapterInfoObject *chapterInfo = nullptr;
 	QPoint mouse{-1, -1};
 	QList<QMetaObject::Connection> rendererConnections;
@@ -239,10 +241,6 @@ struct PlayEngine::Data {
 		emit p->mrlChanged(startInfo.mrl);
 	}
 
-	void clear() {
-		dvd.clear();
-
-	}
 	void loadfile(const QByteArray &file, int resume, int cache) {
 		if (file.isEmpty())
 			return;
@@ -271,6 +269,7 @@ struct PlayEngine::Data {
 			opts.add("cache", "no");
 		opts.add("pause", p->isPaused() || hasImage);
 		opts.add("af", af(), true);
+		opts.add("channels", ChannelLayoutInfo::data(layout), true);
 		OptionList vo(':');
 		vo.add("address", video);
 		vo.add("swdec_deint", deint_swdec.toString().toLatin1());
@@ -284,6 +283,7 @@ struct PlayEngine::Data {
 			loadfile(startInfo.mrl.toString().toLocal8Bit(), startInfo.resume, startInfo.cache);
 	}
 	void updateMediaName(const QString &name = QString()) {
+		mediaName = name;
 		QString category;
 		auto mrl = p->mrl();
 		if (mrl.isLocalFile())
@@ -343,7 +343,6 @@ PlayEngine::PlayEngine()
 	d->setOption("consolecontrols", "no");
 	d->setOption("ao", "null,");
 	d->setOption("ad-lavc-downmix", "no");
-	d->setOption("channels", "3");
 	d->setOption("title", "\"\"");
 
 	auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
@@ -418,6 +417,10 @@ AudioTrackInfoObject *PlayEngine::audioTrackInfo() const {
 	return d->audioTrackInfo;
 }
 
+QString PlayEngine::mediaName() const {
+	return d->mediaName;
+}
+
 qreal PlayEngine::cache() const {
 	return d->cache/100.0;
 }
@@ -433,8 +436,10 @@ int PlayEngine::duration() const {
 	return d->duration;
 }
 
-const DvdInfo &PlayEngine::dvd() const {return d->dvd;}
-int PlayEngine::currentDvdTitle() const {return d->dvd.currentTitle;}
+int PlayEngine::currentTitle() const {return d->title; }
+const TitleList &PlayEngine::titles() const {
+	return d->titles;
+}
 const ChapterList &PlayEngine::chapters() const {return d->chapters;}
 
 const StreamList &PlayEngine::subtitleStreams() const {return d->streams[Stream::Subtitle];}
@@ -498,9 +503,17 @@ void PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) {
 	d->audio->setChannelLayoutMap(map);
 }
 
+void PlayEngine::reload() {
+	auto mrl = d->startInfo.mrl;
+	if (mrl.isDisc())
+		setCurrentTitle(d->title, d->position);
+	else
+		d->loadfile(d->startInfo.mrl.toString().toLocal8Bit(), d->position, d->startInfo.cache);
+}
+
 void PlayEngine::setChannelLayout(ChannelLayout layout) {
 	if (_Change(d->layout, layout) && d->position > 0)
-		d->loadfile(d->startInfo.mrl.toString().toLocal8Bit(), d->position, d->startInfo.cache);
+		reload();
 }
 
 typedef QPair<AudioDriver, const char*> AudioDriverName;
@@ -644,11 +657,7 @@ void PlayEngine::customEvent(QEvent *event) {
 				d->chapterFakeList.clear();
 		}
 		break;
-	} case UpdateDVDInfo:
-		d->dvd = _GetData<DvdInfo>(event);
-		emit dvdInfoChanged();
-		break;
-	case UpdateCache:
+	} case UpdateCache:
 		d->cache = _GetData<int>(event);
 		emit cacheChanged();
 		break;
@@ -702,15 +711,22 @@ void PlayEngine::customEvent(QEvent *event) {
 	} case StartPlayback: {
 		if (d->renderer)
 			d->renderer->reset();
-		QString title; bool seekable = false;
-		_GetAllData(event, title, seekable);
+		QString name; bool seekable = false;
+		_GetAllData(event, name, seekable, d->titles);
 		if (_Change(d->seekable, seekable))
 			emit seekableChanged(d->seekable);
 		emit audioChanged();
 		emit cacheChanged();
+		int title = -1;
+		for (auto &item : d->titles) {
+			if (item.isSelected())
+				title = item.id();
+		}
+		d->title = title;
+		emit titlesChanged(d->titles);
 		updateState(Playing);
 		emit started(d->startInfo.mrl);
-		d->updateMediaName(title);
+		d->updateMediaName(name);
 		break;
 	} case EndPlayback: {
 		Mrl mrl; bool error; _GetAllData(event, mrl, error);
@@ -724,6 +740,8 @@ void PlayEngine::customEvent(QEvent *event) {
 			emit finished(mrl, d->position, remain);
 		if (d->nextInfo.isValid())
 			load(d->nextInfo);
+		else if (_Change(d->seekable, false))
+			emit seekableChanged(d->seekable);
 		break;
 	} case UpdateTimeRange:
 		tie(d->begin, d->duration) = _GetData<int, int>(event);
@@ -824,7 +842,7 @@ void PlayEngine::setCurrentChapter(int id) {
 	d->setmpv_async("chapter", id);
 }
 
-void PlayEngine::setCurrentTitle(int id) {
+void PlayEngine::setCurrentTitle(int id, int from) {
 	const auto mrl = d->startInfo.mrl;
 	if (!mrl.isDisc())
 		return;
@@ -832,8 +850,8 @@ void PlayEngine::setCurrentTitle(int id) {
 		static const char *cmds[] = {"dvdnav", "menu", nullptr};
 		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send 'dvdnav menu'.");
 	} else if (id > 0) {
-		const QString path = mrl.scheme() % _L("://") % QString::number(id) % '/' % mrl.device();
-		d->loadfile(path.toLocal8Bit(), 0, d->startInfo.cache);
+		const auto path = Mrl::fromDisc(mrl.scheme(), mrl.device(), id);
+		d->loadfile(path.toLocal8Bit(), from, d->startInfo.cache);
 	}
 }
 
@@ -978,8 +996,24 @@ void PlayEngine::exec() {
 		case MPV_EVENT_FILE_LOADED: {
 			error = false;
 			d->timing = first = true;
+			TitleList titles;
+			if (mrl.isDisc()) {
+				auto add = [&] (int id) -> Title& {
+					auto &title = titles[id];
+					title.m_id = id;
+					title.m_name = tr("Title %1").arg(id);
+					return title;
+				};
+				const int titles = d->getmpv<int>("titles", 0);
+				for (int i=1; i<=titles; ++i)
+					add(i);
+				const int title = d->getmpv<int>("title");
+				if (title >= 0)
+					add(title).m_selected = true;
+			}
 			const auto name = d->getmpv<QString>("media-title");
-			_PostEvent(this, StartPlayback, name, d->getmpv<bool>("seekable", false));
+			const auto seekable = d->getmpv<bool>("seekable", false);
+			_PostEvent(this, StartPlayback, name, seekable, titles);
 			break;
 		} case MPV_EVENT_END_FILE: {
 			d->timing = false;
