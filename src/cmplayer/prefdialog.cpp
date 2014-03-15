@@ -478,9 +478,13 @@ PrefDialog::PrefDialog(QWidget *parent)
 	d->ui.restore_properties->setModel(&d->properties);
 	if (!TrayIcon::isAvailable())
 		d->ui.system_tray_group->hide();
+#ifndef Q_OS_LINUX
+	d->ui.use_mpris2->hide();
+#endif
 #ifndef Q_OS_MAC
 	d->ui.lion_style_fullscreen->hide();
 #endif
+
 	adjustSize();
 
 	auto group = new QButtonGroup(this);

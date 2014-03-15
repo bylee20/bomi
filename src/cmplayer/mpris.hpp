@@ -5,6 +5,8 @@
 
 namespace mpris {
 
+#ifdef Q_OS_LINUX
+
 class MediaPlayer2 : public QDBusAbstractAdaptor {
 	Q_OBJECT
 	Q_CLASSINFO("D-Bus Interface", "org.mpris.MediaPlayer2")
@@ -107,7 +109,15 @@ private:
 
 };
 
-bool startService(MediaPlayer2 *mp2, Player *player);
+#else
+
+class RootObject : public QObject {
+	Q_OBJECT
+public:
+	RootObject(QObject *parent = nullptr): QObject(parent) {}
+};
+
+#endif
 
 }
 
