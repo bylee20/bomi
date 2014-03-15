@@ -979,6 +979,9 @@ void MainWindow::connectMenus() {
 			showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
 		}
 	});
+	connect(play("seek").g("frame"), &ActionGroup::triggered, this, [this] (QAction *a) {
+		d->engine.stepFrame(a->data().toInt());
+	});
 	connect(play["dvd-menu"], &QAction::triggered, this, [this] () { d->engine.setCurrentTitle(PlayEngine::DVDMenu); });
 	connect(play("seek").g("subtitle"), &ActionGroup::triggered, this, [this] (QAction *a) {
 		const int key = a->data().toInt();

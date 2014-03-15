@@ -163,6 +163,7 @@ public:
 	void setNextStartInfo(const StartInfo &startInfo);
 	void shutdown();
 public slots:
+	void stepFrame(int direction);
 	void setVolume(int volume);
 	void setAmp(double amp);
 	void setMuted(bool muted);

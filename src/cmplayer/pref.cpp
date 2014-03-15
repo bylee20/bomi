@@ -41,6 +41,8 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("play/seek/backward1")] << Qt::Key_Left;
 	keys[_L("play/seek/backward2")] << Qt::Key_PageUp;
 	keys[_L("play/seek/backward3")] << Qt::Key_Home;
+	keys[_L("play/seek/prev-frame")] << Qt::ALT + Qt::Key_Left;
+	keys[_L("play/seek/next-frame")] << Qt::ALT + Qt::Key_Right;
 	keys[_L("play/seek/prev-subtitle")] << Qt::Key_Comma;
 	keys[_L("play/seek/current-subtitle")] << Qt::Key_Period;
 	keys[_L("play/seek/next-subtitle")] << Qt::Key_Slash;

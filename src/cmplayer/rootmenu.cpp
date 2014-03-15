@@ -171,6 +171,9 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		auto backward2 = seek.addActionToGroup(_L("backward2"), false, _L("relative"));
 		auto backward3 = seek.addActionToGroup(_L("backward3"), false, _L("relative"));
 		seek.addSeparator();
+		seek.addActionToGroup(_L("prev-frame"), false, _L("frame"))->setData(-1);
+		seek.addActionToGroup(_L("next-frame"), false, _L("frame"))->setData(1);
+		seek.addSeparator();
 		seek.addActionToGroup(_L("prev-subtitle"), false, _L("subtitle"))->setData(-1);
 		seek.addActionToGroup(_L("current-subtitle"), false, _L("subtitle"))->setData(0);
 		seek.addActionToGroup(_L("next-subtitle"), false, _L("subtitle"))->setData(1);
@@ -420,6 +423,9 @@ void RootMenu::update(const Pref &p) {
 	setActionAttr(seek["backward1"], -p.seek_step1, backward, p.seek_step1*0.001, false);
 	setActionAttr(seek["backward2"], -p.seek_step2, backward, p.seek_step2*0.001, false);
 	setActionAttr(seek["backward3"], -p.seek_step3, backward, p.seek_step3*0.001, false);
+
+	seek.a("prev-frame", tr("Previous Frame"));
+	seek.a("prev-frame", tr("Next Frame"));
 
 	seek.a("prev-subtitle", tr("To Previous Subtitle"));
 	seek.a("current-subtitle", tr("To Beginning of Current Subtitle"));

@@ -144,7 +144,7 @@ struct PlayEngine::Data {
 	QString mediaName;
 
 	bool hasImage = false, tempoScaler = false, seekable = false;
-	bool subStreamsVisible = true, startPaused = false;
+	bool subStreamsVisible = true, startPaused = false, dvd = false;
 
 	static const char *error(int err) { return mpv_error_string(err); }
 	bool isSuccess(int error) { return error == MPV_ERROR_SUCCESS; }
@@ -215,8 +215,8 @@ struct PlayEngine::Data {
 			check(mpv_command_string(handle, cmd.constData()), "Cannaot execute: %%", cmd);
 	}
 	void tellmpv_async(const QByteArray &cmd, std::initializer_list<QByteArray> &&list) {
-		QVector<const char*> args(list.size()+1, nullptr);
-		auto it = args.begin(); for (auto &one : list) { *it++ = one.constData(); }
+		QVector<const char*> args(list.size()+2, nullptr);
+		auto it = args.begin(); *it++ = cmd.constData(); for (auto &one : list) { *it++ = one.constData(); }
 		if (handle)
 			check(mpv_command_async(handle, 0, args.data()), "Cannot execute: %%", cmd);
 	}
@@ -621,6 +621,11 @@ void PlayEngine::setNextStartInfo(const StartInfo &startInfo) {
 	d->nextInfo = startInfo;
 }
 
+void PlayEngine::stepFrame(int direction) {
+	if ((m_state & (Playing | Paused)) && d->seekable)
+		d->tellmpv_async(direction > 0 ? "frame_step" : "frame_back_step");
+}
+
 void PlayEngine::updateState(State state) {
 	const bool wasRunning = isRunning();
 	if (_Change(m_state, state)) {
@@ -997,6 +1002,7 @@ void PlayEngine::exec() {
 		case MPV_EVENT_FILE_LOADED: {
 			error = false;
 			d->timing = first = true;
+			d->dvd = mrl.scheme() == _L("dvdnav");
 			TitleList titles;
 			if (mrl.isDisc()) {
 				auto add = [&] (int id) -> Title& {
@@ -1017,7 +1023,7 @@ void PlayEngine::exec() {
 			_PostEvent(this, StartPlayback, name, seekable, titles);
 			break;
 		} case MPV_EVENT_END_FILE: {
-			d->timing = false;
+			d->dvd = d->timing = false;
 			_PostEvent(this, EndPlayback, mrl, error);
 			posted = true;
 			break;
@@ -1317,7 +1323,7 @@ QString PlayEngine::stateText(State state) {
 QString PlayEngine::stateText() const { return stateText(m_state); }
 
 void PlayEngine::sendMouseClick(const QPointF &pos) {
-	if (d->handle) {
+	if (d->handle && d->dvd) {
 		if (_Change(d->mouse, pos.toPoint()))
 			d->renderer->setMousePosition(d->mouse);
 		static const char *cmds[] = {"dvdnav", "mouse", nullptr};
@@ -1326,7 +1332,7 @@ void PlayEngine::sendMouseClick(const QPointF &pos) {
 }
 
 void PlayEngine::sendMouseMove(const QPointF &pos) {
-	if (d->handle && _Change(d->mouse, pos.toPoint())) {
+	if (d->handle && d->dvd && _Change(d->mouse, pos.toPoint())) {
 		d->renderer->setMousePosition(d->mouse);
 		static const char *cmds[] = {"dvdnav", "mouse_move", nullptr};
 		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse_move.");
