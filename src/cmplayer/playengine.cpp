@@ -724,7 +724,8 @@ void PlayEngine::customEvent(QEvent *event) {
 		}
 		d->title = title;
 		emit titlesChanged(d->titles);
-		updateState(Playing);
+		if (!d->getmpv<bool>("pause"))
+			updateState(Playing);
 		emit started(d->startInfo.mrl);
 		d->updateMediaName(name);
 		break;
