@@ -1,7 +1,4 @@
 #include "mpris.hpp"
-
-#ifdef Q_OS_LINUX
-
 #include "playengine.hpp"
 #include "playlistmodel.hpp"
 #include "globalqmlobject.hpp"
@@ -291,5 +288,3 @@ void Player::SetPosition(const QDBusObjectPath &track, qint64 position) {
 }
 
 }
-
-#endif

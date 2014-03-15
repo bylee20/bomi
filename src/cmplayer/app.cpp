@@ -10,6 +10,7 @@
 #include "app_mac.hpp"
 #elif defined(Q_OS_LINUX)
 #include "app_x11.hpp"
+#include "mpris.hpp"
 #endif
 
 #define APP_GROUP _L("application")
@@ -40,6 +41,7 @@ struct App::Data {
 	AppMac helper;
 #elif defined(Q_OS_LINUX)
 	AppX11 helper;
+	mpris::RootObject *mpris = nullptr;
 #endif
 	QCommandLineOption dummy{"__dummy__"};
 	QCommandLineParser cmdParser, msgParser;
@@ -157,6 +159,7 @@ App::App(int &argc, char **argv)
 }
 
 App::~App() {
+	setMprisActivated(false);
 	delete d->main;
 	delete d->mb;
 	delete d;
@@ -179,6 +182,17 @@ void App::setWindowTitle(QWidget *widget, const QString &title) {
 	widget->setWindowTitle(text);
 #ifdef Q_OS_LINUX
 	d->helper.setWmName(widget, text);
+#endif
+}
+
+void App::setMprisActivated(bool activated) {
+#ifdef Q_OS_LINUX
+	if (activated && !d->mpris)
+		d->mpris = new mpris::RootObject(this);
+	else if (!activated && d->mpris)
+		_Delete(d->mpris);
+#else
+	Q_UNUSED(activated);
 #endif
 }
 

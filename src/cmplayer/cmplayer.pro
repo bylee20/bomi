@@ -33,8 +33,8 @@ macx {
     QT += dbus x11extras
     TARGET = cmplayer
     LIBS += -ldl
-    HEADERS += app_x11.hpp
-    SOURCES += app_x11.cpp
+    HEADERS += app_x11.hpp mpris.hpp
+    SOURCES += app_x11.cpp mpris.cpp
 }
 
 QML_IMPORT_PATH += imports
@@ -132,8 +132,7 @@ HEADERS += playengine.hpp \
     openglmisc.hpp \
     hwacc_helper.hpp \
     audio_helper.hpp \
-    mpv_helper.hpp \
-    mpris.hpp
+    mpv_helper.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -219,8 +218,7 @@ SOURCES += main.cpp \
     openglmisc.cpp \
     hwacc_helper.cpp \
     audio_helper.cpp \
-    mpv_helper.cpp \
-    mpris.cpp
+    mpv_helper.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

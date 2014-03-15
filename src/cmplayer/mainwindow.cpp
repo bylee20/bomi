@@ -1,5 +1,4 @@
 #include "stdafx.hpp"
-#include "mpris.hpp"
 #include "openmediafolderdialog.hpp"
 #include "snapshotdialog.hpp"
 #include "mainwindow.hpp"
@@ -91,7 +90,6 @@ struct MainWindow::Data {
 	QAction *subtrackSep = nullptr;
 	QDesktopWidget *desktop = nullptr;
 	QSize virtualDesktopSize;
-	mpris::RootObject *mpris = nullptr;
 	void syncState() {
 		for (auto &eg : enumGroups) {
 			Q_ASSERT(as.state.property(eg.property).isValid());
@@ -892,7 +890,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 }
 
 MainWindow::~MainWindow() {
-	delete d->mpris;
+	cApp.setMprisActivated(false);
 	d->view->engine()->clearComponentCache();
 	exit();
 	delete d->view;
@@ -1766,11 +1764,7 @@ void MainWindow::applyPref() {
 	if (d->tray)
 		d->tray->setVisible(p.enable_system_tray);
 	d->preferences.save();
-
-	if (d->preferences.use_mpris2 && !d->mpris)
-		d->mpris = new mpris::RootObject(this);
-	else if (!d->preferences.use_mpris2)
-		_Delete(d->mpris);
+	cApp.setMprisActivated(d->preferences.use_mpris2);
 }
 
 template<typename Slot>

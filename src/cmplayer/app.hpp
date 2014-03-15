@@ -29,6 +29,7 @@ public:
 	bool shutdown();
 	void runCommands();
 	bool isOpenGLDebugLoggerRequested() const;
+	void setMprisActivated(bool activated);
 public slots:
 	bool sendMessage(const QString &message, int timeout = 5000);
 signals:
