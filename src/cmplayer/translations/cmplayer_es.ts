@@ -86,12 +86,12 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../app.cpp" line="115"/>
         <source>Turn on OpenGL debug logger.</source>
-        <translation>Encender el registro de depuración de OpenGL.</translation>
+        <translation>Activar el registro de depuración de OpenGL.</translation>
     </message>
     <message>
         <location filename="../app.cpp" line="116"/>
         <source>Turn on options for debugging.</source>
-        <translation>Encender el registro de depuración de las opciones.</translation>
+        <translation>Activar el registro de depuración de las opciones.</translation>
     </message>
 </context>
 <context>
@@ -647,12 +647,12 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.hpp" line="67"/>
         <source>On</source>
-        <translation>Encender</translation>
+        <translation>Activado</translation>
     </message>
     <message>
         <location filename="../mainwindow.hpp" line="67"/>
         <source>Off</source>
-        <translation>Apagado</translation>
+        <translation>Desactivado</translation>
     </message>
 </context>
 <context>
@@ -1309,13 +1309,13 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="692"/>
         <source>Select subtitles from loaded ones automatically</source>
-        <translatorcomment>ni idea para que sirve</translatorcomment>
+        <translatorcomment>no está muy claro lo que quiere decir</translatorcomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="702"/>
         <source>Select next subtitles in automatically loaded subtitles.</source>
-        <translatorcomment>ni idea para que sirve</translatorcomment>
+        <translatorcomment>no está muy claro lo que quiere decir</translatorcomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2263,7 +2263,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="427"/>
         <source>Previous Frame</source>
-        <translation>frame anterior</translation>
+        <translation>Frame anterior</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="428"/>
