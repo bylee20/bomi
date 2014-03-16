@@ -1587,7 +1587,7 @@ Right click: %2</source>
     <message>
         <location filename="../widgets.cpp" line="85"/>
         <source>System locale[%1]</source>
-        <translation>시스템 로캘</translation>
+        <translation>시스템 로캘[%1]</translation>
     </message>
 </context>
 <context>
