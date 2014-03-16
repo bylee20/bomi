@@ -1046,6 +1046,8 @@ void PlayEngine::exec() {
 				stream.m_default = map["default"].toBool();
 				stream.m_id = map["id"].toInt();
 				stream.m_lang = map["lang"].toString();
+				if (_InRange(2, stream.m_lang.size(), 3) && _IsAlphabet(stream.m_lang))
+					stream.m_lang = Translator::displayLanguage(stream.m_lang);
 				stream.m_title = map["title"].toString();
 				stream.m_fileName = map["external-filename"].toString();
 				if (!stream.m_fileName.isEmpty())
