@@ -1011,10 +1011,10 @@ void PlayEngine::exec() {
 					title.m_name = tr("Title %1").arg(id);
 					return title;
 				};
-				const int titles = d->getmpv<int>("titles", 0);
+				const int titles = d->getmpv<int>("disc-titles", 0);
 				for (int i=1; i<=titles; ++i)
 					add(i);
-				const int title = d->getmpv<int>("title");
+				const int title = d->getmpv<int>("disc-title");
 				if (title >= 0)
 					add(title).m_selected = true;
 			}
