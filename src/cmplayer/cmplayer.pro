@@ -19,7 +19,6 @@ contains( DEFINES, CMPLAYER_RELEASE ) {
 macx {
     QT += macextras
     CONFIG += sdk
-    QT_CONFIG -= no-pkg-config
     QMAKE_INFO_PLIST = Info.plist
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
