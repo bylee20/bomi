@@ -172,18 +172,15 @@ struct udf_dir_t {
   udf_dirent_t entry;
 };
 
-class File;
+class File;		class Dir;
 
 class udf25
 {
 
 public:
   udf25( );
-  virtual ~udf25( );
-  bool   Open(const char *isofile);
-  udf_dir_t *OpenDir( const char *subdir );
-  udf_dirent_t *ReadDir( udf_dir_t *dirp );
-  int CloseDir( udf_dir_t *dirp );
+  ~udf25( );
+  bool Open(const char *isofile);
 private:
   FileAD *UDFFindFile( const char* filename, quint64 *filesize );
   int UDFScanDirX( udf_dir_t *dirp );
@@ -200,10 +197,10 @@ private:
   int SetUDFCache(UDFCacheType type, quint32 nr, void *data);
 protected:
   friend class File;
+  friend class Dir;
 	/* Filesystem cache */
   int m_udfcache_level; /* 0 - turned off, 1 - on */
   void *m_udfcache;
-//  XFILE::CFile* m_fp;
   std::fstream *m_fp;
 };
 
@@ -216,7 +213,8 @@ public:
 	bool isOpen() const { return m_file; }
 	quint64 size() const { return m_size; }
 	FileAD *handle() const { return m_file; }
-	long read(udf25 *udf, char *buffer, long size);
+	qint64 read(char *buffer, qint64 size);
+	QByteArray read(qint64 size);
 	int64_t seek(int64_t lOffset, int whence);
 	QString fileName() const { return m_fileName; }
 private:
@@ -227,8 +225,22 @@ private:
 	quint64 m_seek_pos = 0;  // in bytes
 	quint64 m_size = 0;  // in bytes
 	QString m_fileName;
+	udf25 *m_udf = nullptr;
 };
 
+class Dir {
+public:
+	Dir();
+	Dir(udf25 *udf, const QString &path);
+	bool isOpen() const { return m_open; }
+	QString path() const { return m_path; }
+	QStringList files(bool withPath = true) const;
+private:
+	udf25 *m_udf = nullptr;
+	bool m_open = false;
+	QString m_path;
+	QStringList m_files;
+};
 
 }
 

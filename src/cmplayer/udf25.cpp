@@ -595,14 +595,11 @@ int udf25::GetUDFCache(UDFCacheType type, quint32 nr, void *data)
 
 int udf25::ReadAt( int64_t pos, size_t len, unsigned char *data )
 {
-  int64_t ret;
   if (!m_fp->seekg(pos))
 	return -1;
-  if (!m_fp->read((char*)data, len)) {
+  if (!m_fp->read((char*)data, len))
 	_Error("ReadFile - less data than requested available!");
-	return -1;
-  }
-  return ret = len;
+  return m_fp->gcount();
 }
 
 int udf25::DVDReadLBUDF( quint32 lb_number, size_t block_count, unsigned char *data, int /*encrypted*/ )
@@ -1097,44 +1094,10 @@ bool udf25::Open(const char *isofile)
 //  return bdfile->seek_pos;
 //}
 
-udf_dir_t *udf25::OpenDir( const char *subdir )
-{
-  udf_dir_t *result;
-  File bd_file(this, subdir);
-  if (!bd_file.isOpen())
-	return NULL;
-
-  result = (udf_dir_t *)calloc(1, sizeof(udf_dir_t));
-  if (!result) {
-	return NULL;
-  }
-
-  result->dir_location = UDFFileBlockPos(bd_file.handle(), 0);
-  result->dir_current  = UDFFileBlockPos(bd_file.handle(), 0);
-  result->dir_length   = (quint32) bd_file.size();
-
-  return result;
-}
-
-udf_dirent_t *udf25::ReadDir( udf_dir_t *dirp )
-{
-  if (!UDFScanDirX(dirp)) {
-	dirp->current_p = 0;
-	dirp->dir_current = dirp->dir_location; // this is a rewind, wanted?
-	return NULL;
-  }
-
-  return &dirp->entry;
-}
-
-int udf25::CloseDir( udf_dir_t *dirp ) {
-  if (dirp)
-	free(dirp);
-  return 0;
-}
 
 
-File::File(udf25 *udf, const QString &fileName) {
+
+File::File(udf25 *udf, const QString &fileName): m_udf(udf) {
 	if (udf->m_fp)
 		m_file = udf->UDFFindFile(fileName.toLocal8Bit(), &m_size);
 }
@@ -1143,11 +1106,18 @@ File::~File() {
 	close();
 }
 
-long File::read(udf25 *udf, char *buffer, long size) {
+QByteArray File::read(qint64 size) {
+	QByteArray data;
+	data.resize(size);
+	data.resize(read(data.data(), size));
+	return data;
+}
+
+qint64 File::read(char *buffer, qint64 size) {
 	/* Check arguments. */
 	if(!isOpen() || !buffer)
 		return -1;
-	long    len_origin = size;
+	qint64 len_origin = size;
 	quint64 pos;
 	int      ret;
 	while(size > 0) {
@@ -1160,7 +1130,7 @@ long File::read(udf25 *udf, char *buffer, long size) {
 		if((quint32)size < len)
 			len = size;
 
-		ret = udf->ReadAt(pos, len, (uchar*)buffer);
+		ret = m_udf->ReadAt(pos, len, (uchar*)buffer);
 		if(ret < 0) {
 			_Error("ReadFile - error during read" );
 			return ret;
@@ -1206,6 +1176,45 @@ int64_t File::seek(int64_t offset, int whence) {
 	if (m_seek_pos > m_size)
 		m_seek_pos = seek_pos;
 	return m_seek_pos;
+}
+
+Dir::Dir(udf25 *udf, const QString &path): m_udf(udf), m_path(path) {
+	File file(udf, path.toLocal8Bit());
+	if (!file.isOpen())
+	  return;
+	udf_dir_t dir; memset(&dir, 0, sizeof(dir));
+	dir.dir_location = UDFFileBlockPos(file.handle(), 0);
+	dir.dir_current = UDFFileBlockPos(file.handle(), 0);
+	dir.dir_length = file.size();
+	m_open = true;
+
+	auto read = [this, &dir] () -> QString {
+		if (!m_udf->UDFScanDirX(&dir)) {
+			dir.current_p = 9;
+			dir.dir_current = dir.dir_location;
+			return QString();
+		} else
+			return QString::fromLocal8Bit((char*)dir.entry.d_name);
+	};
+	for (;;) {
+		auto file = read();
+		if (file.isEmpty())
+			break;
+		if (file == _L(".") || file == _L("..") || dir.entry.d_type == DVD_DT_DIR)
+			continue;
+		m_files.append(file);
+	}
+}
+
+QStringList Dir::files(bool withPath) const {
+	if (!m_open)
+		return QStringList();
+	if (!withPath)
+		return m_files;
+	QStringList files; files.reserve(m_files.size());
+	for (auto &file : m_files)
+		files.append(m_path % _L('/') % file);
+	return files;
 }
 
 }
