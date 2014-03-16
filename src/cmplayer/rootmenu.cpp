@@ -393,7 +393,7 @@ void RootMenu::update(const Pref &p) {
 	open.a("folder", tr("Open Folder"));
 	open.a("url", tr("Load URL"));
 	open.a("dvd", tr("Open DVD"));
-	open.a("bluray", tr("Open Blu-ray Disc"));
+	open.a("bluray", tr("Open Blu-ray"));
 
 	auto &recent = open("recent");
 	recent.setTitle(tr("Recently Opened"));

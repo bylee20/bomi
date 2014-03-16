@@ -91,7 +91,7 @@ struct App::Data {
 			parser->addOption(*it);
 		parser->addHelpOption();
 		parser->addVersionOption();
-		parser->addPositionalArgument("mrl", tr("The file path or url to open."), "mrl");
+		parser->addPositionalArgument("mrl", tr("The file path or URL to open."), "mrl");
 		return parser;
 	}
 };
@@ -107,13 +107,13 @@ App::App(int &argc, char **argv)
 	setApplicationName(Info::name());
 	setApplicationVersion(Info::version());
 
-	d->addOption(LineCmd::Open, "open", tr("Open given %1 for file path or url."), "mrl");
+	d->addOption(LineCmd::Open, "open", tr("Open given %1 for file path or URL."), "mrl");
 	d->addOption(LineCmd::Wake, QStringList() << "wake", tr("Bring the application window in front."));
 	d->addOption(LineCmd::Action, "action", tr("Exectute %1 action or open %1 menu."), "id");
 	d->addOption(LineCmd::LogLevel, "log-level", tr("Maximum verbosity for log. %1 should be one of nexts:")
 				 % "\n    " % Log::options().join(", "), "lv");
 	d->addOption(LineCmd::OpenGLDebug, "opengl-debug", tr("Turn on OpenGL debug logger."));
-	d->addOption(LineCmd::Debug, "debug", tr("Turn on options for debug."));
+	d->addOption(LineCmd::Debug, "debug", tr("Turn on options for debugging."));
 	d->getCommandParser(&d->cmdParser)->process(arguments());
 	d->getCommandParser(&d->msgParser);
 	d->execute(&d->cmdParser);
