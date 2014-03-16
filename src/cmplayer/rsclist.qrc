@@ -9,9 +9,6 @@
         <file>img/format-text-strikethrough.png</file>
         <file>img/format-text-underline.png</file>
         <file>mpl.html</file>
-        <file>translations/cmplayer_en.qm</file>
-        <file>translations/cmplayer_ko.qm</file>
-        <file>translations/cmplayer_ru.qm</file>
         <file>img/cmplayer-32.png</file>
         <file>img/format-text-color-32.png</file>
         <file>img/games-config-background-32.png</file>
@@ -37,10 +34,14 @@
         <file>img/chronometer.png</file>
         <file>img/audio-volume-high.png</file>
         <file>img/preferences-web-browser-cache.png</file>
+        <file>translations/cmplayer_en.qm</file>
+        <file>translations/cmplayer_ko.qm</file>
+        <file>translations/cmplayer_ru.qm</file>
         <file>translations/cmplayer_it.qm</file>
         <file>translations/cmplayer_cs.qm</file>
         <file>translations/cmplayer_de.qm</file>
         <file>translations/cmplayer_sr.qm</file>
+        <file>translations/cmplayer_es.qm</file>
         <file>img/media-optical.png</file>
     </qresource>
 </RCC>
