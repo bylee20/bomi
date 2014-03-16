@@ -415,7 +415,7 @@ parse_file() {
         cp $1.in $1
         local var
         local sed="sed -i"
-        if [ $os = osx ]; then sed="$sed '' -e"; fi
+        if [ "$os" = "osx" ]; then sed="sed -i .conf.bk -e"; fi
         for token in "${@:2}"; do
                 var=$(eval echo \$$token)
                 $sed 's#@'"$token"'@#'"$var"'#g' $1

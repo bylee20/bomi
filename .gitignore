@@ -1,3 +1,4 @@
+*.conf.bk
 *.directory
 src/libchardet*
 src/ffmpeg*
