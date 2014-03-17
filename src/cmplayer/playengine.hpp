@@ -61,7 +61,7 @@ class PlayEngine : public QObject {
 public:
 	enum State {Stopped = 1, Playing = 2, Paused = 4, Loading = 16, Error = 32, Buffering = 64, Running = Playing | Loading | Buffering };
 	enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
-	enum DVDCmd { DVDMenu = 0 };
+	enum DVDCmd { DVDMenu = -1 };
 	PlayEngine();
 	PlayEngine(const PlayEngine&) = delete;
 	PlayEngine &operator = (const PlayEngine &) = delete;

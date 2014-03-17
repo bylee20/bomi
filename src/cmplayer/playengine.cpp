@@ -850,17 +850,12 @@ void PlayEngine::setCurrentChapter(int id) {
 
 void PlayEngine::setCurrentTitle(int id, int from) {
 	const auto mrl = d->startInfo.mrl;
-	if (mrl.isDisc()) {
-		if (id == DVDMenu && mrl.isDvd()) {
-			static const char *cmds[] = {"dvdnav", "menu", nullptr};
-			d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send 'dvdnav menu'.");
-		} else if (id > 0) {
-			const auto path = mrl.titleMrl(id);
-			d->loadfile(path.toLocal8Bit(), from, d->startInfo.cache);
-		}
-	} else {
-		d->setmpv("edition", id);
-		d->setmpv("time-pos", from/1000.0);
+	if (id == DVDMenu && mrl.isDvd()) {
+		static const char *cmds[] = {"dvdnav", "menu", nullptr};
+		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send 'dvdnav menu'.");
+	} else if (d->titles.contains(id)) {
+		d->setmpv(mrl.isDisc() ? "disc-title" : "edition", id);
+		seek(from);
 	}
 }
 
@@ -1006,26 +1001,24 @@ void PlayEngine::exec() {
 			error = false;
 			d->timing = first = true;
 			d->dvd = mrl.scheme() == _L("dvdnav");
+			const char *listprop = mrl.isDisc() ? "disc-titles" : "editions";
+			const char *itemprop = mrl.isDisc() ? "disc-title"  : "edition";
+			const QString tmp = mrl.isDisc() ? tr("Title %1") : tr("Edition %1");
 			TitleList titles;
 			auto add = [&] (int id) -> Title& {
 				auto &title = titles[id];
 				title.m_id = id;
+				title.m_name = tmp.arg(id+1);
 				return title;
 			};
-			const char *listprop = mrl.isDisc() ? "disc-titles" : "editions";
-			const char *itemprop = mrl.isDisc() ? "disc-title"  : "edition";
-			const int offset = mrl.isDvd() ? 1 : 0;
 			const int list = d->getmpv<int>(listprop, 0);
 			for (int i=0; i<list; ++i)
-				add(i+offset);
+				add(i);
 			if (list > 0) {
 				const int item = d->getmpv<int>(itemprop);
 				if (item >= 0)
 					add(item).m_selected = true;
 			}
-			int i = 1;
-			for (auto it = titles.begin(); it != titles.end(); ++it, ++i)
-				it->m_name = tr("Title %1").arg(i);
 			const auto name = d->getmpv<QString>("media-title");
 			const auto seekable = d->getmpv<bool>("seekable", false);
 			_PostEvent(this, StartPlayback, name, seekable, titles);
