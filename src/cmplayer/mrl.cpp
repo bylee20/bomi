@@ -185,3 +185,24 @@ QByteArray Mrl::calculateHash(const Mrl &mrl) {
 void Mrl::updateHash() {
 	m_hash = calculateHash(*this);
 }
+
+Mrl Mrl::toUnique() const {
+	if (!isDisc())
+		return *this;
+	if (m_hash.isEmpty())
+		return Mrl();
+	Mrl mrl;
+	mrl.m_loc = scheme() % _L(":///") % QString::fromLatin1(m_hash);
+	mrl.m_hash = m_hash;
+	mrl.m_name = m_name;
+	return mrl;
+}
+
+Mrl Mrl::fromUniqueId(const QString &id) {
+	Mrl mrl(id);
+	if (!mrl.isDisc())
+		return mrl;
+	mrl.m_hash = mrl.device().toLatin1();
+	mrl.m_loc = mrl.scheme() % _L("://");
+	return mrl;
+}

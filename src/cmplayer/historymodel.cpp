@@ -185,6 +185,8 @@ bool HistoryModel::getState(MrlState *state) const {
 }
 
 const MrlState *HistoryModel::find(const Mrl &mrl) const {
+	if (!mrl.isUnique())
+		return nullptr;
 	if (d->cached.mrl == mrl)
 		return &d->cached;
 	if (!d->findAndFill(&d->cached, d->fields, mrl))
@@ -235,6 +237,8 @@ QSqlError HistoryModel::error() const {
 
 void HistoryModel::update(const MrlState *state, bool reload) {
 	if (!d->rememberImage && state->mrl.isImage())
+		return;
+	if (!state->mrl.isUnique())
 		return;
 	d->db.transaction();
 	d->insert(state);

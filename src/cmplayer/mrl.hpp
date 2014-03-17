@@ -37,6 +37,8 @@ public:
 	void updateHash();
 	static QByteArray calculateHash(const Mrl &mrl);
 	bool isUnique() const { return !isDisc() || !m_hash.isEmpty(); }
+	Mrl toUnique() const;
+	static Mrl fromUniqueId(const QString &id);
 private:
 	QString m_loc = {};
 	QString m_name;

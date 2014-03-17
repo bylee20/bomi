@@ -136,11 +136,11 @@ private:
 
 typedef QVector<Chapter> ChapterList;
 
-struct Title {
+struct Edition {
 	QString name() const { return m_name; }
 	int id() const { return m_id; }
 	bool isSelected() const { return m_selected; }
-	bool operator == (const Title &rhs) const { return m_id == rhs.m_id && m_selected == rhs.m_selected; }
+	bool operator == (const Edition &rhs) const { return m_id == rhs.m_id && m_selected == rhs.m_selected; }
 private:
 	friend class PlayEngine;
 	int m_id = 0;
@@ -148,7 +148,7 @@ private:
 	bool m_selected = false;
 };
 
-typedef QMap<int, Title> TitleList;
+typedef QMap<int, Edition> EditionList;
 
 class TrackInfoObject : public QObject {
 	Q_OBJECT

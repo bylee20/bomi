@@ -185,8 +185,8 @@ struct PlayEngine::Data {
 	AudioTrackInfoObject *audioTrackInfo = nullptr;
 	VideoRendererItem *renderer = nullptr;
 	ChapterList chapters, chapterFakeList;
-	TitleList titles;
-	int title = -1;
+	EditionList editions;
+	int edition = -1;
 	ChapterInfoObject *chapterInfo = nullptr;
 	QPoint mouse{-1, -1};
 	QList<QMetaObject::Connection> rendererConnections;
@@ -241,7 +241,8 @@ struct PlayEngine::Data {
 		emit p->mrlChanged(startInfo.mrl);
 	}
 
-	void loadfile(const QByteArray &file, int resume, int cache) {
+	void loadfile(const Mrl &mrl, int resume, int cache, int edition) {
+		QString file = mrl.toString();
 		if (file.isEmpty())
 			return;
 		timing = false;
@@ -255,6 +256,12 @@ struct PlayEngine::Data {
 		}
 		if (resume > 0)
 			opts.add("start", resume/1000.0);
+		if (edition >= 0) {
+			if (mrl.isDisc())
+				file = mrl.titleMrl(edition).toString();
+			else
+				opts.add("edition", edition);
+		}
 		opts.add("deinterlace", deint != DeintMode::None);
 		opts.add("volume", mpVolume());
 		opts.add("mute", muted);
@@ -276,12 +283,13 @@ struct PlayEngine::Data {
 		vo.add("hwdec_deint", deint_hwdec.toString().toLatin1());
 		opts.add("vo", "null:" + vo.get(), true);
 		_Debug("Load: %% (%%)", file, opts.get());
-		tellmpv("loadfile", file, "replace", opts.get());
+		tellmpv("loadfile", file.toLocal8Bit(), "replace", opts.get());
 	}
-	void loadfile() {
+	void loadfile(int resume) {
 		if (startInfo.isValid())
-			loadfile(startInfo.mrl.toString().toLocal8Bit(), startInfo.resume, startInfo.cache);
+			loadfile(startInfo.mrl, resume, startInfo.cache, startInfo.edition);
 	}
+	void loadfile() { loadfile(startInfo.resume); }
 	void updateMediaName(const QString &name = QString()) {
 		mediaName = name;
 		QString category;
@@ -388,7 +396,8 @@ const MetaData &PlayEngine::metaData() const {
 void PlayEngine::updateVideoFormat(VideoFormat format) {
 	if (_Change(d->videoFormat, format))
 		emit videoFormatChanged(d->videoFormat);
-	d->videoInfo->m_output->setBps(d->videoFormat.bitrate(d->videoInfo->m_output->m_fps));
+	auto output = d->videoInfo->m_output;
+	output->setBps(d->videoFormat.bitrate(d->videoInfo->m_output->m_fps));
 }
 
 SubtitleTrackInfoObject *PlayEngine::subtitleTrackInfo() const {
@@ -425,8 +434,13 @@ qreal PlayEngine::cache() const {
 	return d->cache/100.0;
 }
 
-int PlayEngine::begin() const { return d->begin; }
-int PlayEngine::end() const { return d->begin + d->duration; }
+int PlayEngine::begin() const {
+	return d->begin;
+}
+
+int PlayEngine::end() const {
+	return d->begin + d->duration;
+}
 
 void PlayEngine::setImageDuration(int duration) {
 	d->image.setDuration(duration);
@@ -436,20 +450,37 @@ int PlayEngine::duration() const {
 	return d->duration;
 }
 
-int PlayEngine::currentTitle() const {return d->title; }
-const TitleList &PlayEngine::titles() const {
-	return d->titles;
+int PlayEngine::currentEdition() const {
+	return d->edition;
 }
-const ChapterList &PlayEngine::chapters() const {return d->chapters;}
 
-const StreamList &PlayEngine::subtitleStreams() const {return d->streams[Stream::Subtitle];}
+const EditionList &PlayEngine::editions() const {
+	return d->editions;
+}
 
-VideoRendererItem *PlayEngine::videoRenderer() const {return d->renderer;}
+const ChapterList &PlayEngine::chapters() const {
+	return d->chapters;
+}
 
-const StreamList &PlayEngine::videoStreams() const {return d->streams[Stream::Video];}
+const StreamList &PlayEngine::subtitleStreams() const {
+	return d->streams[Stream::Subtitle];
+}
 
-int PlayEngine::audioSync() const {return d->audioSync;}
-const StreamList &PlayEngine::audioStreams() const {return d->streams[Stream::Audio];}
+VideoRendererItem *PlayEngine::videoRenderer() const {
+	return d->renderer;
+}
+
+const StreamList &PlayEngine::videoStreams() const {
+	return d->streams[Stream::Video];
+}
+
+int PlayEngine::audioSync() const {
+	return d->audioSync;
+}
+
+const StreamList &PlayEngine::audioStreams() const {
+	return d->streams[Stream::Audio];
+}
 
 PlayEngine::HardwareAcceleration PlayEngine::hwAcc() const {
 	return d->hwacc;
@@ -504,11 +535,8 @@ void PlayEngine::setChannelLayoutMap(const ChannelLayoutMap &map) {
 }
 
 void PlayEngine::reload() {
-	auto mrl = d->startInfo.mrl;
-	if (mrl.isDisc())
-		setCurrentTitle(d->title, d->position);
-	else
-		d->loadfile(d->startInfo.mrl.toString().toLocal8Bit(), d->position, d->startInfo.cache);
+	d->startInfo.edition = d->edition;
+	d->loadfile(d->position);
 }
 
 void PlayEngine::setChannelLayout(ChannelLayout layout) {
@@ -529,7 +557,9 @@ const std::array<AudioDriverName, AudioDriverInfo::size()-1> audioDriverNames = 
 
 void PlayEngine::setAudioDriver(AudioDriver driver) {
 	if (_Change(d->audioDriver, driver)) {
-		auto it = _FindIf(audioDriverNames, [driver] (const AudioDriverName &one) { return one.first == driver; });
+		auto it = _FindIf(audioDriverNames, [driver] (const AudioDriverName &one) {
+			return one.first == driver;
+		});
 		d->ao = it != audioDriverNames.end() ? it->second : "";
 	}
 }
@@ -717,18 +747,18 @@ void PlayEngine::customEvent(QEvent *event) {
 		if (d->renderer)
 			d->renderer->reset();
 		QString name; bool seekable = false;
-		_GetAllData(event, name, seekable, d->titles);
+		_GetAllData(event, name, seekable, d->editions);
 		if (_Change(d->seekable, seekable))
 			emit seekableChanged(d->seekable);
 		emit audioChanged();
 		emit cacheChanged();
 		int title = -1;
-		for (auto &item : d->titles) {
+		for (auto &item : d->editions) {
 			if (item.isSelected())
 				title = item.id();
 		}
-		d->title = title;
-		emit titlesChanged(d->titles);
+		d->edition = title;
+		emit editionsChanged(d->editions);
 		if (!d->getmpv<bool>("pause"))
 			updateState(Playing);
 		emit started(d->startInfo.mrl);
@@ -848,12 +878,12 @@ void PlayEngine::setCurrentChapter(int id) {
 	d->setmpv_async("chapter", id);
 }
 
-void PlayEngine::setCurrentTitle(int id, int from) {
+void PlayEngine::setCurrentEdition(int id, int from) {
 	const auto mrl = d->startInfo.mrl;
 	if (id == DVDMenu && mrl.isDvd()) {
 		static const char *cmds[] = {"dvdnav", "menu", nullptr};
 		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send 'dvdnav menu'.");
-	} else if (d->titles.contains(id)) {
+	} else if (d->editions.contains(id)) {
 		d->setmpv(mrl.isDisc() ? "disc-title" : "edition", id);
 		seek(from);
 	}
@@ -1004,8 +1034,8 @@ void PlayEngine::exec() {
 			const char *listprop = mrl.isDisc() ? "disc-titles" : "editions";
 			const char *itemprop = mrl.isDisc() ? "disc-title"  : "edition";
 			const QString tmp = mrl.isDisc() ? tr("Title %1") : tr("Edition %1");
-			TitleList titles;
-			auto add = [&] (int id) -> Title& {
+			EditionList titles;
+			auto add = [&] (int id) -> Edition& {
 				auto &title = titles[id];
 				title.m_id = id;
 				title.m_name = tmp.arg(id+1);

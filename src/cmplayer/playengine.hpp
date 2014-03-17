@@ -25,6 +25,7 @@ struct StartInfo {
 	Mrl mrl;
 	int resume = -1;
 	int cache = -1;
+	int edition = -1;
 	bool isValid() const { return (!mrl.isEmpty() || mrl.isDisc()) && resume >= 0 && cache >= 0; }
 };
 
@@ -87,14 +88,14 @@ public:
 //	void play(int start, int cache);
 //	void load(const MrlStartInfo &mrl, bool play);
 	void setSpeed(double speed);
-	int currentTitle() const;
-	const TitleList &titles() const;
+	int currentEdition() const;
+	const EditionList &editions() const;
 	int currentChapter() const;
 	const ChapterList &chapters() const;
 	int currentSubtitleStream() const;
 	const StreamList &subtitleStreams() const;
 	void setCurrentSubtitleStream(int id);
-	void setCurrentTitle(int id, int from = 0);
+	void setCurrentEdition(int id, int from = 0);
 	void setCurrentChapter(int id);
 	bool hasVideo() const;
 	void setVolumeNormalizerActivated(bool on);
@@ -197,7 +198,7 @@ signals:
 	void videoStreamsChanged(const StreamList &streams);
 	void subtitleStreamsChanged(const StreamList &streams);
 	void chaptersChanged(const ChapterList &chapters);
-	void titlesChanged(const TitleList &titles);
+	void editionsChanged(const EditionList &editions);
 	void dvdInfoChanged();
 	void speedChanged(double speed);
 	void audioChanged();

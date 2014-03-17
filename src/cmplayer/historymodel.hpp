@@ -17,8 +17,8 @@ public:
 	QHash<int, QByteArray> roleNames() const;
 	const MrlState *find(const Mrl &mrl) const;
 	bool getState(MrlState *state) const;
-	Q_INVOKABLE void play(int row);
 	void update(const MrlState *state, bool reload);
+	Q_INVOKABLE void play(int row);
 	void setRememberImage(bool on);
 	void setPropertiesToRestore(const QList<QMetaProperty> &properties);
 	void getAppState(MrlState *appState);
