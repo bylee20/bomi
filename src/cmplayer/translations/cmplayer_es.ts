@@ -319,526 +319,526 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enums.hpp" line="183"/>
         <source>Channel Layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Disposición de Canales</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="193"/>
         <source>Mono</source>
-        <translation type="unfinished"></translation>
+        <translation>Mono</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="194"/>
         <source>Stereo</source>
-        <translation type="unfinished"></translation>
+        <translation>Estereo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="195"/>
         <source>2.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>2.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="196"/>
         <source>3.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>3.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="197"/>
         <source>3.0ch(Back)</source>
-        <translation type="unfinished"></translation>
+        <translation>3.0ch(Trasera)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="198"/>
         <source>3.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>3.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="199"/>
         <source>4.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>4.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="200"/>
         <source>4.0ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>4.0ch(Lados)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="201"/>
         <source>4.0ch(Diamond)</source>
-        <translation type="unfinished"></translation>
+        <translation>4.0ch(Diamante)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="202"/>
         <source>4.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>4.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="203"/>
         <source>4.1ch(Diamond)</source>
-        <translation type="unfinished"></translation>
+        <translation>4.1ch(Diamante)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="204"/>
         <source>5.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>5.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="205"/>
         <source>5.0ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>5.0ch(Lado)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="206"/>
         <source>5.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>5.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="207"/>
         <source>5.1ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>5.1ch(Lado)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="208"/>
         <source>6.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>6.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="209"/>
         <source>6.0ch(Front)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.0ch(Frontal)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="210"/>
         <source>6.0ch(Hexagonal)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.0ch(Hexagonal)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="211"/>
         <source>6.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>6.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="212"/>
         <source>6.1ch(Back)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.1ch(Trasera)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="213"/>
         <source>6.1ch(Front)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.1ch(Frontal)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="214"/>
         <source>7.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>7.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="215"/>
         <source>7.0ch(Front)</source>
-        <translation type="unfinished"></translation>
+        <translation>7.0ch(Frontal)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="216"/>
         <source>7.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>7.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="217"/>
         <source>7.1ch(Wide)</source>
-        <translation type="unfinished"></translation>
+        <translation>7.1ch(Ancho)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="218"/>
         <source>7.1ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>7.1ch(Lado)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="283"/>
         <source>Color Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango de color</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="293"/>
         <location filename="../enums.hpp" line="763"/>
         <source>Auto</source>
-        <translation type="unfinished"></translation>
+        <translation>Auto</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="294"/>
         <source>Limited Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango limitado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="295"/>
         <source>Full Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango completo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="296"/>
         <source>Remap Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango remapeado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="297"/>
         <source>Extended Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango extendido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="446"/>
         <source>Subtitle Display</source>
-        <translation type="unfinished">Mostrar subtítulos</translation>
+        <translation>Mostrar subtítulos</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="456"/>
         <source>Display on Letterbox</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostrar en el borde</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="457"/>
         <source>Display in Video</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostrar en el vídeo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="524"/>
         <source>Size</source>
-        <translation type="unfinished">Tamaño</translation>
+        <translation>Tamaño</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="534"/>
         <source>Same as Source</source>
-        <translation type="unfinished"></translation>
+        <translation>Mismo que el original</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="535"/>
         <source>Same as Window</source>
-        <translation type="unfinished"></translation>
+        <translation>Mismo que la ventana</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="536"/>
         <source>4:3 (TV)</source>
-        <translation type="unfinished"></translation>
+        <translation>4:3 (TV)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="537"/>
         <source>16:10 (Wide Monitor)</source>
-        <translation type="unfinished"></translation>
+        <translation>16:10 (Monitor ancho)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="538"/>
         <source>16:9 (HDTV)</source>
-        <translation type="unfinished"></translation>
+        <translation>16:9 (HDTV)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="539"/>
         <source>1.85:1 (Wide Vision)</source>
-        <translation type="unfinished"></translation>
+        <translation>1.85:1 (Visión ancha)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="540"/>
         <source>2.35:1 (CinemaScope)</source>
-        <translation type="unfinished"></translation>
+        <translation>2.35:1 (CinemaScope)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="603"/>
         <source>Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Difuminado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="613"/>
         <location filename="../enums.hpp" line="762"/>
         <location filename="../enums.hpp" line="1249"/>
         <source>Off</source>
-        <translation type="unfinished">Apagado</translation>
+        <translation>Apagado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="614"/>
         <source>Random Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Difuminado al azar</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="615"/>
         <source>Ordered Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Difuminado ordenado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="752"/>
         <source>Deinterlacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Desentrelazador</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1006"/>
         <source>Bilinear</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilineal</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1007"/>
         <source>B-Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>B-Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1008"/>
         <source>Catmull-Rom</source>
-        <translation type="unfinished"></translation>
+        <translation>Catmull-Rom</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1009"/>
         <source>Mitchell-Netravali</source>
-        <translation type="unfinished"></translation>
+        <translation>Mitchell-Netravali</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1010"/>
         <source>2-Lobed Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>2-Lobed Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1011"/>
         <source>3-Lobed Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>3-Lobed Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1012"/>
         <source>4-Lobed Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>4-Lobed Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1013"/>
         <source>Fast Lanczos</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanczos rápido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1014"/>
         <source>2-Lobed Lanczos</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanczos 2-Lobed</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1015"/>
         <source>3-Lobed Lanczos</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanczos 3-Lobed</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1016"/>
         <source>4-Lobed Lanczos</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanczos 4-Lobed</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1174"/>
         <source>Auto-clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>Recorte automático</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1175"/>
         <source>Soft-clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>Recorte suave</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1176"/>
         <source>Hard-clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>Recorte fuerte</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1239"/>
         <source>Stays on Top</source>
-        <translation type="unfinished"></translation>
+        <translation>Permanecer encima</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1250"/>
         <source>Playing</source>
-        <translation type="unfinished">Reproduciendo</translation>
+        <translation>Reproduciendo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1251"/>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>Siempre</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1398"/>
         <source>Add files which have similar names</source>
-        <translation type="unfinished"></translation>
+        <translation>Añadir archivos con nombres similares</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1399"/>
         <source>Add all files in the same folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Añadir todos los archivos de la carpeta</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1472"/>
         <source>Append the open media to the playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Agregar al final el medio abierto a la lista de reproducción</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1473"/>
         <source>Clear the playlist and append the open media to the playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Limpiar la lista de reproducción y añadir el medio abierto al final</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1474"/>
         <source>Clear the playlist and generate new playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Limpiar la lista de reproducción y generar una lista nueva</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1547"/>
         <source>Subtitles which have the same name as that of playing file</source>
-        <translation type="unfinished"></translation>
+        <translation>Subtítulos que tienen el mismo nombre que el archivo reproducido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1548"/>
         <source>Subtitles whose names contain the name of playing file</source>
-        <translation type="unfinished"></translation>
+        <translation>Subtítulos cuyo nombre contengan el nombre del archivo reproducido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1549"/>
         <source>All subtitles in the folder where the playing file is located</source>
-        <translation type="unfinished"></translation>
+        <translation>Todos los subtítulos en la carpeta cuando el archivo reproducido es localizado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1623"/>
         <source>Subtitle which has the same name as that of playing file</source>
-        <translation type="unfinished"></translation>
+        <translation>Subtítulos que tiene el mismo nombre que el archivo reproducido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1624"/>
         <source>First subtitle from loaded ones</source>
-        <translation type="unfinished"></translation>
+        <translation>Primero los subtítulos ya cargados</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1625"/>
         <source>All loaded subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Todos los subtítulos cargados</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1626"/>
         <source>Each language subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>Según lenguaje del subtítulo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1699"/>
         <source>Fit to width of video</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajustar al ancho del vídeo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1700"/>
         <source>Fit to height of video</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajustar a la altura del vídeo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1701"/>
         <source>Fit to diagonal of video</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajustar a la diagonal del vídeo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1775"/>
         <source>Open a file</source>
-        <translation type="unfinished"></translation>
+        <translation>Abrir un archivo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1776"/>
         <source>Toggle fullscreen mode</source>
-        <translation type="unfinished"></translation>
+        <translation>Cambiar a pantalla completa</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1777"/>
         <source>Toggle play/pause</source>
-        <translation type="unfinished"></translation>
+        <translation>Cambiar reproducir/pausar</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1778"/>
         <source>Toggle mute/unmute</source>
-        <translation type="unfinished"></translation>
+        <translation>Cambiar silenciar/no silenciar</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1854"/>
         <source>Seek playback for step 1</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar reproducción para paso 1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1855"/>
         <source>Seek playback for step 2</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar reproducción para paso 2</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1856"/>
         <source>Seek playback for step 3</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar reproducción para paso 3</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1857"/>
         <source>Play previous/next</source>
-        <translation type="unfinished"></translation>
+        <translation>Reproducir anterior/siguiente</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1858"/>
         <source>Volumn up/down</source>
-        <translation type="unfinished"></translation>
+        <translation>Subir/Bajar volumen</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1859"/>
         <source>Amp. up/down</source>
-        <translation type="unfinished"></translation>
+        <translation>Subir/Bajar amplificación</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2009"/>
         <source>Top</source>
-        <translation type="unfinished"></translation>
+        <translation>Arriba</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2010"/>
         <source>Vertical Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Centrar verticalmente</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2011"/>
         <source>Bottom</source>
-        <translation type="unfinished"></translation>
+        <translation>Abajo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2084"/>
         <source>Left</source>
-        <translation type="unfinished"></translation>
+        <translation>Izquierda</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2085"/>
         <source>Horizontal Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Centrar horizontalmente</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2086"/>
         <source>Right</source>
-        <translation type="unfinished"></translation>
+        <translation>Derecha</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2161"/>
         <location filename="../enums.hpp" line="2238"/>
         <source>Reset</source>
-        <translation type="unfinished">Reiniciar</translation>
+        <translation>Reiniciar</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2162"/>
         <source>Upward</source>
-        <translation type="unfinished"></translation>
+        <translation>Hacia arriba</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2163"/>
         <source>Downward</source>
-        <translation type="unfinished"></translation>
+        <translation>Hacia abajo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2164"/>
         <source>Leftward</source>
-        <translation type="unfinished"></translation>
+        <translation>Hacia la izquierda</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2165"/>
         <source>Rightward</source>
-        <translation type="unfinished"></translation>
+        <translation>Hacia la derecha</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2239"/>
         <source>Increase %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Aumentar %1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2240"/>
         <source>Decrease %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Disminuir %1</translation>
     </message>
 </context>
 <context>
@@ -892,7 +892,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../dialogs.cpp" line="258"/>
         <source>URL</source>
-        <translation></translation>
+        <translation>URL</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="262"/>
@@ -1370,7 +1370,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/openmediafolderdialog.ui" line="58"/>
         <source>Audios</source>
-        <translation></translation>
+        <translation>Audios</translation>
     </message>
 </context>
 <context>
@@ -1431,7 +1431,7 @@ Parado en la posición: %2
     <message>
         <location filename="../playengine.cpp" line="1319"/>
         <source>Error</source>
-        <translation></translation>
+        <translation>Error</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="1321"/>
@@ -1538,7 +1538,7 @@ Parado en la posición: %2
         <location filename="../pref.cpp" line="432"/>
         <source>70</source>
         <comment>This is default value for accuracy to enfoce auto-detected subtitle encoding in preferences. Higher value means that auto-detection will be applied only if the result is more reliable.</comment>
-        <translation></translation>
+        <translation>70</translation>
     </message>
 </context>
 <context>
@@ -1928,7 +1928,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2650"/>
         <source>ID</source>
-        <translation></translation>
+        <translation>ID</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2831"/>
@@ -1956,7 +1956,7 @@ Parado en la posición: %2
         <location filename="../ui/prefdialog.ui" line="2430"/>
         <location filename="../ui/prefdialog.ui" line="3177"/>
         <source>Color</source>
-        <translation></translation>
+        <translation>Color</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1954"/>
@@ -2158,7 +2158,7 @@ Por ejemplo: English, Korean</translation>
         <location filename="../ui/prefdialog.ui" line="3093"/>
         <location filename="../prefdialog.cpp" line="321"/>
         <source>Audio</source>
-        <translation></translation>
+        <translation>Audio</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3099"/>
@@ -2199,7 +2199,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../prefdialog.cpp" line="308"/>
         <source>General</source>
-        <translation></translation>
+        <translation>General</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="309"/>
@@ -2299,12 +2299,12 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../prefdialog.cpp" line="466"/>
         <source>CMPlayer</source>
-        <translation></translation>
+        <translation>CMPlayer</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="467"/>
         <source>Movist</source>
-        <translation></translation>
+        <translation>Movist</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="504"/>
@@ -2830,7 +2830,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="492"/>
         <source>Audio</source>
-        <translation></translation>
+        <translation>Audio</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="493"/>
@@ -3212,7 +3212,7 @@ Por ejemplo: English, Korean</translation>
         <location filename="../translator.cpp" line="101"/>
         <source>UTF-8</source>
         <comment>Specify most popular encoding here in target localization.</comment>
-        <translation></translation>
+        <translation>UTF-8</translation>
     </message>
 </context>
 <context>
