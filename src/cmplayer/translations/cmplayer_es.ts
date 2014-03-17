@@ -76,7 +76,7 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../app.cpp" line="112"/>
         <source>Exectute %1 action or open %1 menu.</source>
-        <translation>Ejecuta acción %1 o abre menú %1.</translation>
+        <translation>Ejecuta la acción %1 o abre el menú %1.</translation>
     </message>
     <message>
         <location filename="../app.cpp" line="113"/>
@@ -86,12 +86,12 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../app.cpp" line="115"/>
         <source>Turn on OpenGL debug logger.</source>
-        <translation>Encender el registro de depuración de OpenGL.</translation>
+        <translation>Activar el registro de depuración de OpenGL.</translation>
     </message>
     <message>
         <location filename="../app.cpp" line="116"/>
         <source>Turn on options for debugging.</source>
-        <translation>Encender el registro de depuración de las opciones.</translation>
+        <translation>Activar las opciones del registro de depuración.</translation>
     </message>
 </context>
 <context>
@@ -163,7 +163,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../deintinfo.cpp" line="212"/>
         <source>Display each line twice.</source>
-        <translation>Visualiza cada linea dos veces.</translation>
+        <translation>Visualiza cada línea dos veces.</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="213"/>
@@ -193,7 +193,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../deintinfo.cpp" line="219"/>
         <source>This option makes the framerate doubled. You can get smoother and fluid motions but it requires more CPU or GPU usage.</source>
-        <translation>Esta opción dobla eĺ framerate. Se puede conseguir movimientos suaves y fluidos, pero necesita mucho más uso de CPU o GPU.</translation>
+        <translation>Esta opción dobla eĺ framerate. Se pueden conseguir movimientos suaves y fluidos, pero necesita mucho más uso de CPU o GPU.</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="221"/>
@@ -203,7 +203,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../deintinfo.cpp" line="223"/>
         <source>Some methods can be accelerated with GPU by turning on this option if your hardware supports VA-API well.</source>
-        <translation>Muchos métodos pueden ser acelerados con la GPU si se activa esta opción (si su hardware tiene buen soporte VA-API).</translation>
+        <translation>Algunos métodos pueden ser acelerados mediante la GPU si se activa esta opción (si su hardware tiene buen soporte VA-API).</translation>
     </message>
 </context>
 <context>
@@ -211,12 +211,12 @@ Click derecho: %2</translation>
     <message>
         <location filename="../widgets.cpp" line="9"/>
         <source>Western European Languages</source>
-        <translation>Idiomas de Europa Occidental</translation>
+        <translation>Europa Occidental</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="10"/>
         <source>Western European Languages With Euro</source>
-        <translation>Idiomas de Europa Occidental con €uro</translation>
+        <translation>Europa Occidental con €uro</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="11"/>
@@ -226,7 +226,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../widgets.cpp" line="12"/>
         <source>Slavic/Central European Windows</source>
-        <translation>Windows Eslavo/Centro Europeo</translation>
+        <translation>Eslavo/Centro Europeo Windows</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="13"/>
@@ -246,7 +246,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../widgets.cpp" line="16"/>
         <source>Cyrillic Windows</source>
-        <translation>Windows Cirílico</translation>
+        <translation>Cirílico Windows</translation>
     </message>
     <message>
         <location filename="../widgets.cpp" line="17"/>
@@ -319,526 +319,526 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enums.hpp" line="183"/>
         <source>Channel Layout</source>
-        <translation type="unfinished"></translation>
+        <translation>Disposición de Canales</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="193"/>
         <source>Mono</source>
-        <translation type="unfinished"></translation>
+        <translation>Mono</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="194"/>
         <source>Stereo</source>
-        <translation type="unfinished"></translation>
+        <translation>Estereo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="195"/>
         <source>2.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>2.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="196"/>
         <source>3.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>3.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="197"/>
         <source>3.0ch(Back)</source>
-        <translation type="unfinished"></translation>
+        <translation>3.0ch(Trasera)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="198"/>
         <source>3.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>3.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="199"/>
         <source>4.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>4.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="200"/>
         <source>4.0ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>4.0ch(Lados)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="201"/>
         <source>4.0ch(Diamond)</source>
-        <translation type="unfinished"></translation>
+        <translation>4.0ch(Diamante)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="202"/>
         <source>4.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>4.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="203"/>
         <source>4.1ch(Diamond)</source>
-        <translation type="unfinished"></translation>
+        <translation>4.1ch(Diamante)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="204"/>
         <source>5.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>5.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="205"/>
         <source>5.0ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>5.0ch(Lado)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="206"/>
         <source>5.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>5.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="207"/>
         <source>5.1ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>5.1ch(Lado)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="208"/>
         <source>6.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>6.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="209"/>
         <source>6.0ch(Front)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.0ch(Frontal)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="210"/>
         <source>6.0ch(Hexagonal)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.0ch(Hexagonal)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="211"/>
         <source>6.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>6.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="212"/>
         <source>6.1ch(Back)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.1ch(Trasera)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="213"/>
         <source>6.1ch(Front)</source>
-        <translation type="unfinished"></translation>
+        <translation>6.1ch(Frontal)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="214"/>
         <source>7.0ch</source>
-        <translation type="unfinished"></translation>
+        <translation>7.0ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="215"/>
         <source>7.0ch(Front)</source>
-        <translation type="unfinished"></translation>
+        <translation>7.0ch(Frontal)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="216"/>
         <source>7.1ch</source>
-        <translation type="unfinished"></translation>
+        <translation>7.1ch</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="217"/>
         <source>7.1ch(Wide)</source>
-        <translation type="unfinished"></translation>
+        <translation>7.1ch(Ancho)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="218"/>
         <source>7.1ch(Side)</source>
-        <translation type="unfinished"></translation>
+        <translation>7.1ch(Lado)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="283"/>
         <source>Color Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango de color</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="293"/>
         <location filename="../enums.hpp" line="763"/>
         <source>Auto</source>
-        <translation type="unfinished"></translation>
+        <translation>Auto</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="294"/>
         <source>Limited Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango limitado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="295"/>
         <source>Full Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango completo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="296"/>
         <source>Remap Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango remapeado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="297"/>
         <source>Extended Range</source>
-        <translation type="unfinished"></translation>
+        <translation>Rango extendido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="446"/>
         <source>Subtitle Display</source>
-        <translation type="unfinished">Mostrar subtítulos</translation>
+        <translation>Mostrar subtítulos</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="456"/>
         <source>Display on Letterbox</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostrar en el borde</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="457"/>
         <source>Display in Video</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostrar en el vídeo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="524"/>
         <source>Size</source>
-        <translation type="unfinished">Tamaño</translation>
+        <translation>Tamaño</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="534"/>
         <source>Same as Source</source>
-        <translation type="unfinished"></translation>
+        <translation>Mismo que el original</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="535"/>
         <source>Same as Window</source>
-        <translation type="unfinished"></translation>
+        <translation>Mismo que la ventana</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="536"/>
         <source>4:3 (TV)</source>
-        <translation type="unfinished"></translation>
+        <translation>4:3 (TV)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="537"/>
         <source>16:10 (Wide Monitor)</source>
-        <translation type="unfinished"></translation>
+        <translation>16:10 (Monitor ancho)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="538"/>
         <source>16:9 (HDTV)</source>
-        <translation type="unfinished"></translation>
+        <translation>16:9 (HDTV)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="539"/>
         <source>1.85:1 (Wide Vision)</source>
-        <translation type="unfinished"></translation>
+        <translation>1.85:1 (Visión ancha)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="540"/>
         <source>2.35:1 (CinemaScope)</source>
-        <translation type="unfinished"></translation>
+        <translation>2.35:1 (CinemaScope)</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="603"/>
         <source>Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Difuminado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="613"/>
         <location filename="../enums.hpp" line="762"/>
         <location filename="../enums.hpp" line="1249"/>
         <source>Off</source>
-        <translation type="unfinished">Apagado</translation>
+        <translation>Apagado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="614"/>
         <source>Random Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Difuminado al azar</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="615"/>
         <source>Ordered Dithering</source>
-        <translation type="unfinished"></translation>
+        <translation>Difuminado ordenado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="752"/>
         <source>Deinterlacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Desentrelazador</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1006"/>
         <source>Bilinear</source>
-        <translation type="unfinished"></translation>
+        <translation>Bilineal</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1007"/>
         <source>B-Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>B-Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1008"/>
         <source>Catmull-Rom</source>
-        <translation type="unfinished"></translation>
+        <translation>Catmull-Rom</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1009"/>
         <source>Mitchell-Netravali</source>
-        <translation type="unfinished"></translation>
+        <translation>Mitchell-Netravali</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1010"/>
         <source>2-Lobed Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>2-Lobed Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1011"/>
         <source>3-Lobed Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>3-Lobed Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1012"/>
         <source>4-Lobed Spline</source>
-        <translation type="unfinished"></translation>
+        <translation>4-Lobed Spline</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1013"/>
         <source>Fast Lanczos</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanczos rápido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1014"/>
         <source>2-Lobed Lanczos</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanczos 2-Lobed</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1015"/>
         <source>3-Lobed Lanczos</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanczos 3-Lobed</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1016"/>
         <source>4-Lobed Lanczos</source>
-        <translation type="unfinished"></translation>
+        <translation>Lanczos 4-Lobed</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1174"/>
         <source>Auto-clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>Recorte automático</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1175"/>
         <source>Soft-clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>Recorte suave</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1176"/>
         <source>Hard-clipping</source>
-        <translation type="unfinished"></translation>
+        <translation>Recorte fuerte</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1239"/>
         <source>Stays on Top</source>
-        <translation type="unfinished"></translation>
+        <translation>Permanecer encima</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1250"/>
         <source>Playing</source>
-        <translation type="unfinished">Reproduciendo</translation>
+        <translation>Reproduciendo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1251"/>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>Siempre</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1398"/>
         <source>Add files which have similar names</source>
-        <translation type="unfinished"></translation>
+        <translation>Añadir archivos con nombres similares</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1399"/>
         <source>Add all files in the same folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Añadir todos los archivos de la carpeta</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1472"/>
         <source>Append the open media to the playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Agregar al final el medio abierto a la lista de reproducción</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1473"/>
         <source>Clear the playlist and append the open media to the playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Limpiar la lista de reproducción y añadir el medio abierto al final</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1474"/>
         <source>Clear the playlist and generate new playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Limpiar la lista de reproducción y generar una lista nueva</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1547"/>
         <source>Subtitles which have the same name as that of playing file</source>
-        <translation type="unfinished"></translation>
+        <translation>Subtítulos que tienen el mismo nombre que el archivo reproducido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1548"/>
         <source>Subtitles whose names contain the name of playing file</source>
-        <translation type="unfinished"></translation>
+        <translation>Subtítulos cuyo nombre contengan el nombre del archivo reproducido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1549"/>
         <source>All subtitles in the folder where the playing file is located</source>
-        <translation type="unfinished"></translation>
+        <translation>Todos los subtítulos en la carpeta cuando el archivo reproducido es localizado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1623"/>
         <source>Subtitle which has the same name as that of playing file</source>
-        <translation type="unfinished"></translation>
+        <translation>Subtítulos que tiene el mismo nombre que el archivo reproducido</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1624"/>
         <source>First subtitle from loaded ones</source>
-        <translation type="unfinished"></translation>
+        <translation>Primero los subtítulos ya cargados</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1625"/>
         <source>All loaded subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Todos los subtítulos cargados</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1626"/>
         <source>Each language subtitle</source>
-        <translation type="unfinished"></translation>
+        <translation>Según lenguaje del subtítulo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1699"/>
         <source>Fit to width of video</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajustar al ancho del vídeo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1700"/>
         <source>Fit to height of video</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajustar a la altura del vídeo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1701"/>
         <source>Fit to diagonal of video</source>
-        <translation type="unfinished"></translation>
+        <translation>Ajustar a la diagonal del vídeo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1775"/>
         <source>Open a file</source>
-        <translation type="unfinished"></translation>
+        <translation>Abrir un archivo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1776"/>
         <source>Toggle fullscreen mode</source>
-        <translation type="unfinished"></translation>
+        <translation>Cambiar a pantalla completa</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1777"/>
         <source>Toggle play/pause</source>
-        <translation type="unfinished"></translation>
+        <translation>Cambiar reproducir/pausar</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1778"/>
         <source>Toggle mute/unmute</source>
-        <translation type="unfinished"></translation>
+        <translation>Cambiar silenciar/no silenciar</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1854"/>
         <source>Seek playback for step 1</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar reproducción para paso 1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1855"/>
         <source>Seek playback for step 2</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar reproducción para paso 2</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1856"/>
         <source>Seek playback for step 3</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar reproducción para paso 3</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1857"/>
         <source>Play previous/next</source>
-        <translation type="unfinished"></translation>
+        <translation>Reproducir anterior/siguiente</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1858"/>
         <source>Volumn up/down</source>
-        <translation type="unfinished"></translation>
+        <translation>Subir/Bajar volumen</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1859"/>
         <source>Amp. up/down</source>
-        <translation type="unfinished"></translation>
+        <translation>Subir/Bajar amplificación</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2009"/>
         <source>Top</source>
-        <translation type="unfinished"></translation>
+        <translation>Arriba</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2010"/>
         <source>Vertical Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Centrar verticalmente</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2011"/>
         <source>Bottom</source>
-        <translation type="unfinished"></translation>
+        <translation>Abajo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2084"/>
         <source>Left</source>
-        <translation type="unfinished"></translation>
+        <translation>Izquierda</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2085"/>
         <source>Horizontal Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Centrar horizontalmente</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2086"/>
         <source>Right</source>
-        <translation type="unfinished"></translation>
+        <translation>Derecha</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2161"/>
         <location filename="../enums.hpp" line="2238"/>
         <source>Reset</source>
-        <translation type="unfinished">Reiniciar</translation>
+        <translation>Reiniciar</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2162"/>
         <source>Upward</source>
-        <translation type="unfinished"></translation>
+        <translation>Hacia arriba</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2163"/>
         <source>Downward</source>
-        <translation type="unfinished"></translation>
+        <translation>Hacia abajo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2164"/>
         <source>Leftward</source>
-        <translation type="unfinished"></translation>
+        <translation>Hacia la izquierda</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2165"/>
         <source>Rightward</source>
-        <translation type="unfinished"></translation>
+        <translation>Hacia la derecha</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2239"/>
         <source>Increase %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Aumentar %1</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="2240"/>
         <source>Decrease %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Disminuir %1</translation>
     </message>
 </context>
 <context>
@@ -892,7 +892,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../dialogs.cpp" line="258"/>
         <source>URL</source>
-        <translation></translation>
+        <translation>URL</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="262"/>
@@ -934,7 +934,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../info.hpp" line="27"/>
         <source>Video Files</source>
-        <translation>Archivos de video</translation>
+        <translation>Archivos de vídeo</translation>
     </message>
     <message>
         <location filename="../info.hpp" line="28"/>
@@ -1011,7 +1011,7 @@ Por favor espere un momento.</translation>
     <message>
         <location filename="../mainwindow.cpp" line="1129"/>
         <source>Select All Subtitles</source>
-        <translation>Seleccionar Todos los Subtítulos</translation>
+        <translation>Seleccionar todos los subtítulos</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1129"/>
@@ -1021,7 +1021,7 @@ Por favor espere un momento.</translation>
     <message>
         <location filename="../mainwindow.cpp" line="1303"/>
         <source>Auto-shutdown is canceled.</source>
-        <translation>Auto-apagar está cancelado.</translation>
+        <translation>El apagado automático está cancelado.</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="578"/>
@@ -1042,7 +1042,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="582"/>
         <source>Resume Playback</source>
-        <translation>Continuar Reproducción</translation>
+        <translation>Continuar la reproducción</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="618"/>
@@ -1072,23 +1072,23 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="1138"/>
         <source>Hide Subtitles</source>
-        <translation>Esconder Subtítulos</translation>
+        <translation>Esconder subtítulos</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1140"/>
         <source>Show Subtitles</source>
-        <translation>Mostrar Subtítulos</translation>
+        <translation>Mostrar subtítulos</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1160"/>
         <location filename="../mainwindow.cpp" line="1171"/>
         <source>Selected Subtitle</source>
-        <translation>Subtítulo Seleccionado</translation>
+        <translation>Subtítulo seleccionado</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1216"/>
         <source>Save File</source>
-        <translation>Guardar Archivo</translation>
+        <translation>Guardar archivo</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1279"/>
@@ -1098,23 +1098,23 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="1290"/>
         <source>Exit CMPlayer when the playlist has finished.</source>
-        <translation>Salir de CMPlayer cuando la lista de reproducción se haya terminado.</translation>
+        <translation>Salir de CMPlayer cuando la lista de reproducción haya terminado.</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1290"/>
         <source>Auto-exit is canceled.</source>
-        <translation>Auto-salir esta cancelado.</translation>
+        <translation>La salida automática está cancelada.</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1296"/>
         <source>Auto-shutdown</source>
-        <translation>Auto-apagar</translation>
+        <translation>Apagar automáticamente</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1297"/>
         <location filename="../mainwindow.cpp" line="1301"/>
         <source>The system will shut down when the play list has finished.</source>
-        <translation>El equipo se apagará cuando la lista de reproducción se haya terminado.</translation>
+        <translation>El equipo se apagará cuando la lista de reproducción haya terminado.</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1066"/>
@@ -1124,12 +1124,12 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="1009"/>
         <source>Current Video Track</source>
-        <translation>Pista de video actual</translation>
+        <translation>Pista de vídeo actual</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="995"/>
         <source>Current Chapter</source>
-        <translation>Capítulo Actual</translation>
+        <translation>Capítulo actual</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="964"/>
@@ -1149,7 +1149,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="970"/>
         <source>Quit repeating</source>
-        <translation>Salir de la repetición</translation>
+        <translation>Salir del bucle</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="971"/>
@@ -1164,7 +1164,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="1846"/>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
-        <translation>CMPlayer seguirá funcionando en la bandeja de sistema cuando la ventana se haya cerrado.&lt;br&gt;Puedes cambiar este comportamiento en las preferencias.&lt;br&gt;Si desea salir de CMPlayer, por favor use el menú &apos;Salir&apos;.</translation>
+        <translation>CMPlayer seguirá funcionando en la bandeja de sistema cuando la ventana se haya cerrado.&lt;br&gt;Puedes cambiar este comportamiento en las preferencias.&lt;br&gt;Si deseas salir de CMPlayer, por favor usa el menú &apos;Salir&apos;.</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1850"/>
@@ -1174,12 +1174,12 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.hpp" line="67"/>
         <source>On</source>
-        <translation>Encender</translation>
+        <translation>Activado</translation>
     </message>
     <message>
         <location filename="../mainwindow.hpp" line="67"/>
         <source>Off</source>
-        <translation>Apagado</translation>
+        <translation>Desactivado</translation>
     </message>
 </context>
 <context>
@@ -1192,57 +1192,57 @@ Parado en la posición: %2
     <message>
         <location filename="../mrlstate.cpp" line="18"/>
         <source>Video Interpolator</source>
-        <translation>Video Interpolador</translation>
+        <translation>Vídeo interpolado</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="19"/>
         <source>Video Chroma Upscaler</source>
-        <translation>Video Mejorador de chroma</translation>
+        <translation>Mejorador de chroma del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="20"/>
         <source>Video Aspect Ratio</source>
-        <translation>Relación de aspecto del video</translation>
+        <translation>Relación de aspecto del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="21"/>
         <source>Video Crop Ratio</source>
-        <translation>Relación de corte del video</translation>
+        <translation>Relación de corte del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="22"/>
         <source>Video Deinterlacing</source>
-        <translation>Desentrelazador del video</translation>
+        <translation>Desentrelazador del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="23"/>
         <source>Video Dithering</source>
-        <translation>Difuminado del video</translation>
+        <translation>Difuminado del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="24"/>
         <source>Video Screen Position</source>
-        <translation>Posición de pantalla del video</translation>
+        <translation>Posición de pantalla del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="25"/>
         <source>Video Vertical Alignment</source>
-        <translation>Alineación vertical del video</translation>
+        <translation>Alineación vertical del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="26"/>
         <source>Video Horizontal Alignment</source>
-        <translation>Alineación horizontal del video</translation>
+        <translation>Alineación horizontal del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="27"/>
         <source>Video Color Adjustment</source>
-        <translation>Ajuste de color del video</translation>
+        <translation>Ajuste de color del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="28"/>
         <source>Video Color Range</source>
-        <translation>Rango de color del video</translation>
+        <translation>Rango de color del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="30"/>
@@ -1320,7 +1320,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/opendvddialog.ui" line="45"/>
         <source>Open device/folder</source>
-        <translation>Abrir unidad/directorio</translation>
+        <translation>Abrir unidad/carpeta</translation>
     </message>
     <message>
         <location filename="../ui/opendvddialog.ui" line="59"/>
@@ -1331,7 +1331,7 @@ Parado en la posición: %2
     <message>
         <location filename="../dialogs.cpp" line="405"/>
         <source>Open device or folder</source>
-        <translation>Abrir unidad o directorio</translation>
+        <translation>Abrir unidad o carpeta</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="410"/>
@@ -1346,7 +1346,7 @@ Parado en la posición: %2
     <message>
         <location filename="../dialogs.cpp" line="434"/>
         <source>Selected device doesn&apos;t exists.</source>
-        <translation>La unidad seleccionada no está disponible.</translation>
+        <translation>La unidad seleccionada no existe.</translation>
     </message>
 </context>
 <context>
@@ -1378,7 +1378,7 @@ Parado en la posición: %2
     <message>
         <location filename="../opensubtitlesfinder.cpp" line="41"/>
         <source>Cannot connect to server</source>
-        <translation>No se ha conectado con el servidor</translation>
+        <translation>No se ha podido conectar con el servidor</translation>
     </message>
 </context>
 <context>
@@ -1416,7 +1416,7 @@ Parado en la posición: %2
     <message>
         <location filename="../playengine.cpp" line="1313"/>
         <source>Stopped</source>
-        <translation>Parado</translation>
+        <translation>Detenido</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="1315"/>
@@ -1431,7 +1431,7 @@ Parado en la posición: %2
     <message>
         <location filename="../playengine.cpp" line="1319"/>
         <source>Error</source>
-        <translation></translation>
+        <translation>Error</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="1321"/>
@@ -1459,7 +1459,7 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="76"/>
         <source>Audio/Video Sync: %6ms</source>
-        <translation>Sincronización Audio/Video: %6ms</translation>
+        <translation>Sincronización Audio/Vídeo: %6ms</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="79"/>
@@ -1504,7 +1504,7 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="97"/>
         <source>Video Codec: %1</source>
-        <translation>Codec de vídeo: %1</translation>
+        <translation>Códec de vídeo: %1</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="99"/>
@@ -1524,7 +1524,7 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="122"/>
         <source>Audio Codec: %1</source>
-        <translation>Codec de audio: %1</translation>
+        <translation>Códec de audio: %1</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="138"/>
@@ -1538,7 +1538,7 @@ Parado en la posición: %2
         <location filename="../pref.cpp" line="432"/>
         <source>70</source>
         <comment>This is default value for accuracy to enfoce auto-detected subtitle encoding in preferences. Higher value means that auto-detection will be applied only if the result is more reliable.</comment>
-        <translation></translation>
+        <translation>70</translation>
     </message>
 </context>
 <context>
@@ -1561,7 +1561,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="167"/>
         <source>Auto-pausing</source>
-        <translation>Auto-pausar</translation>
+        <translation>Pausar automáticamente</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="173"/>
@@ -1618,22 +1618,22 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="1814"/>
         <source>Minimum gain</source>
-        <translation>Ganancia Máxima</translation>
+        <translation>Ganancia Mínima</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1843"/>
         <source>Maximum gain</source>
-        <translation>Ganancia Mínima</translation>
+        <translation>Ganancia Máxima</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="319"/>
         <source>Video filter</source>
-        <translation>Filtros de video</translation>
+        <translation>Filtros de vídeo</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="927"/>
         <source>Blur kernel</source>
-        <translation>Núcleo desenfoque</translation>
+        <translation>Núcleo de desenfoque</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="948"/>
@@ -1656,7 +1656,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="1278"/>
         <source>Sharpen kernel</source>
-        <translation>Núcleo difuminado</translation>
+        <translation>Núcleo de enfoque</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2845"/>
@@ -1697,19 +1697,19 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2804"/>
         <source>Show system tray icon</source>
-        <translation>mostrar icono en la bandeja de sistema</translation>
+        <translation>Mostrar icono en la bandeja de sistema</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2814"/>
         <source>Hide the window rather than quit when closed </source>
-        <translation>Esconder la ventana en vez de salir cuando se cierra </translation>
+        <translation>Ocultar la ventana en vez de salir cuando se cierra </translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="647"/>
         <location filename="../ui/prefdialog.ui" line="3037"/>
         <location filename="../prefdialog.cpp" line="325"/>
         <source>Subtitle</source>
-        <translation>Subtítulo</translation>
+        <translation>Subtítulos</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="183"/>
@@ -1751,17 +1751,17 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="259"/>
         <source>Save and restore state per media playback</source>
-        <translation>Guardar y restaurar estado cada medio reproducido</translation>
+        <translation>Guardar y restaurar estado por cada medio reproducido</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="349"/>
         <source>Locale</source>
-        <translation>Lugar</translation>
+        <translation>Idioma</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="429"/>
         <source>Preferred Output driver</source>
-        <translation>Preferir dispositivo de salida</translation>
+        <translation>Dispositivo de salida preferido</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="454"/>
@@ -1796,7 +1796,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="575"/>
         <source>Minimum Cache</source>
-        <translation>Caché mínimo</translation>
+        <translation>Caché mínima</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="583"/>
@@ -1821,29 +1821,29 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="663"/>
         <source>Load subtitle files when a local media file is open</source>
-        <translation>Cargar archivos subtítulos cuando un archivo de medio local es abierto</translation>
+        <translation>Cargar los archivos de subtítulos cuando un archivo de medio local esta abierto</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="673"/>
         <source>Load next subtitles when starting to play a file.</source>
-        <translation>Cargar los siguiente subtítulos cuando se empieza a reproducir un archivo.</translation>
+        <translation>Cargar los siguientes subtítulos cuando se empieza a reproducir un archivo.</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="686"/>
         <source>Auto-selection</source>
-        <translation>Auto-selección</translation>
+        <translation>Selección automática</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="692"/>
         <source>Select subtitles from loaded ones automatically</source>
-        <translatorcomment>ni idea para que sirve</translatorcomment>
-        <translation type="unfinished"></translation>
+        <translatorcomment>no está muy claro lo que quiere decir</translatorcomment>
+        <translation>Selecciona automáticamente los subtítulos de entre los cargados</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="702"/>
         <source>Select next subtitles in automatically loaded subtitles.</source>
-        <translatorcomment>ni idea para que sirve</translatorcomment>
-        <translation type="unfinished"></translation>
+        <translatorcomment>no está muy claro lo que quiere decir</translatorcomment>
+        <translation>Selecciona los siguientes subtítulos como los subtítulos cargados de forma predeterminada.</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="723"/>
@@ -1863,12 +1863,12 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="783"/>
         <source>Enable encoding auto-detection</source>
-        <translation>Habilitar auto-detección de la codificación</translation>
+        <translation>Habilitar la detección automática de la codificación</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="795"/>
         <source>Accuracy to enforce</source>
-        <translation>precisión para aplicar</translation>
+        <translation>Precisión para aplicar</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="842"/>
@@ -1893,7 +1893,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="873"/>
         <source>msec</source>
-        <translation>mseg</translation>
+        <translation>miliseg</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="357"/>
@@ -1928,7 +1928,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2650"/>
         <source>ID</source>
-        <translation></translation>
+        <translation>ID</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2831"/>
@@ -1956,7 +1956,7 @@ Parado en la posición: %2
         <location filename="../ui/prefdialog.ui" line="2430"/>
         <location filename="../ui/prefdialog.ui" line="3177"/>
         <source>Color</source>
-        <translation></translation>
+        <translation>Color</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1954"/>
@@ -1981,7 +1981,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2301"/>
         <source>Line spacing</source>
-        <translation>Separación</translation>
+        <translation>Interlineado</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2137"/>
@@ -1991,7 +1991,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="141"/>
         <source>Resume playback</source>
-        <translation>Continuar Reproducción</translation>
+        <translation>Continuar reproducción</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="147"/>
@@ -2011,7 +2011,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="553"/>
         <source>Optical disc</source>
-        <translation>Disco Optico</translation>
+        <translation>Disco Óptico</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1896"/>
@@ -2047,7 +2047,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2474"/>
         <source>Horizontal padding</source>
-        <translation>Relleno Horizontal</translation>
+        <translation>Relleno horizontal</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2503"/>
@@ -2060,9 +2060,9 @@ Parado en la posición: %2
 If not specified, they will be displayed in selected order.
 e.g.: English, Korean</source>
         <translatorcomment>sin terminar, no está muy claro lo que quiere decir</translatorcomment>
-        <translation type="unfinished">Aquí puedes especificar el orden de preferencia por el que CMPlayer deberá elegir el archivos de subtítulos a usar según el campo &apos;Name&apos; del archivo
+        <translation>Aquí se puede especificar el orden de preferencia por el que CMPlayer deberá elegir el archivo de subtítulos a usar según el campo &apos;Name&apos; del archivo.
 Si no se especifica, estos se mostrarán en orden seleccionado. 
-por ejemplo: English, Korean</translation>
+Por ejemplo: English, Korean</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2625"/>
@@ -2199,7 +2199,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../prefdialog.cpp" line="308"/>
         <source>General</source>
-        <translation></translation>
+        <translation>General</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="309"/>
@@ -2229,7 +2229,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../prefdialog.cpp" line="332"/>
         <source>Mouse actions</source>
-        <translation>Acciones del Ratón</translation>
+        <translation>Acciones del ratón</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="333"/>
@@ -2299,22 +2299,22 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../prefdialog.cpp" line="466"/>
         <source>CMPlayer</source>
-        <translation></translation>
+        <translation>CMPlayer</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="467"/>
         <source>Movist</source>
-        <translation></translation>
+        <translation>Movist</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="504"/>
         <source>Double Click</source>
-        <translation>Doble click</translation>
+        <translation>Doble clic</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="505"/>
         <source>Middle Click</source>
-        <translation>Botón central</translation>
+        <translation>Clic del botón central</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="506"/>
@@ -2435,13 +2435,13 @@ por ejemplo: English, Korean</translation>
         <location filename="../qtcolorpicker.cpp" line="288"/>
         <location filename="../qtcolorpicker.cpp" line="391"/>
         <source>Magenta</source>
-        <translation>Púrpura</translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="289"/>
         <location filename="../qtcolorpicker.cpp" line="392"/>
         <source>Dark magenta</source>
-        <translation>Púrpura oscuro</translation>
+        <translation>Magenta oscuro</translation>
     </message>
     <message>
         <location filename="../qtcolorpicker.cpp" line="290"/>
@@ -2573,12 +2573,12 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="418"/>
         <source>Forward %1sec</source>
-        <translation>Retroceder %1seg</translation>
+        <translation>Adelantar %1seg</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="422"/>
         <source>Backward %1sec</source>
-        <translation>Adelantar %1seg</translation>
+        <translation>Retroceder %1seg</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="430"/>
@@ -2588,7 +2588,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="431"/>
         <source>To Beginning of Current Subtitle</source>
-        <translation>Al principio del subtitulo actual</translation>
+        <translation>Al principio del subtítulo actual</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="432"/>
@@ -2624,7 +2624,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="446"/>
         <source>Hide</source>
-        <translation>Esconder</translation>
+        <translation>Ocultar</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="441"/>
@@ -2639,7 +2639,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="454"/>
         <source>Video Track</source>
-        <translation>Pista de video</translation>
+        <translation>Pista de vídeo</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="456"/>
@@ -2685,7 +2685,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="465"/>
         <source>Chroma Upscaler</source>
-        <translation>Mejorador de croma</translation>
+        <translation>Mejorador de chroma</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="466"/>
@@ -2710,12 +2710,12 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="474"/>
         <source>Blur</source>
-        <translation>Desenfoque</translation>
+        <translation>Desenfocar</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="475"/>
         <source>Sharpen</source>
-        <translation>Afinar</translation>
+        <translation>Enfocar</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="476"/>
@@ -2755,7 +2755,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="500"/>
         <source>Tempo Scaler</source>
-        <translation>Escalar tiempo</translation>
+        <translation>Escalar tempo</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="503"/>
@@ -2790,7 +2790,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="427"/>
         <source>Previous Frame</source>
-        <translation>frame anterior</translation>
+        <translation>Frame anterior</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="428"/>
@@ -2856,7 +2856,7 @@ por ejemplo: English, Korean</translation>
         <location filename="../rootmenu.cpp" line="508"/>
         <location filename="../rootmenu.cpp" line="520"/>
         <source>Show/Hide</source>
-        <translation>Mostrar/Esconder</translation>
+        <translation>Mostrar/Ocultar</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="510"/>
@@ -2916,12 +2916,12 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="528"/>
         <source>Auto-exit</source>
-        <translation>Auto-salir</translation>
+        <translation>Salir automáticamente</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="529"/>
         <source>Auto-shutdown</source>
-        <translation>Auto-apagar</translation>
+        <translation>Apagar automáticamente</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="531"/>
@@ -3034,7 +3034,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../ui/snapshotdialog.ui" line="70"/>
         <source>Zoom Original</source>
-        <translation></translation>
+        <translation>Zoom original</translation>
     </message>
     <message>
         <location filename="../ui/snapshotdialog.ui" line="81"/>
@@ -3077,7 +3077,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../subtitlemodel.cpp" line="79"/>
         <source>End</source>
-        <translation>Final</translation>
+        <translation>Fin</translation>
     </message>
     <message>
         <location filename="../subtitlemodel.cpp" line="80"/>
@@ -3101,7 +3101,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="63"/>
         <source>Get</source>
-        <translation>Coger</translation>
+        <translation>Obtener</translation>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="70"/>
@@ -3132,7 +3132,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="128"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
-        <translation>Ya existía un archivo con el mismo nombre. ¿Desea sobreescribirlo?</translation>
+        <translation>Ya existe un archivo con el mismo nombre. ¿Desea sobreescribirlo?</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="129"/>
@@ -3175,7 +3175,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="20"/>
         <source>Language</source>
-        <translation>Lenguaje</translation>
+        <translation>Idioma</translation>
     </message>
     <message>
         <location filename="../subtitlefinddialog.cpp" line="21"/>
@@ -3296,7 +3296,7 @@ por ejemplo: English, Korean</translation>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="106"/>
         <source>Toggle end time/left time</source>
-        <translation>Conmuta tiempo final/tiempo restante</translation>
+        <translation>Cambia tiempo final/tiempo restante</translation>
     </message>
 </context>
 </TS>
