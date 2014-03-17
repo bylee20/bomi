@@ -310,7 +310,7 @@ check_pkg() {
                         err_pkg="$1"
                 fi
         else
-                for pkg in ${@:2}; do
+                for pkg in "${@:2}"; do
                         if has_pkg "$pkg"; then
                                 pkgs="$pkgs $pkg"
                         else
@@ -354,7 +354,7 @@ if has_arg "developer"; then
         fi
 fi
 
-check_pkg_or_exit ffmpeg "libswresample" "libswscale" "libavfilter" "libavcodec" "libpostproc" "libavformat" "libavutil"
+check_pkg_or_exit ffmpeg "libavformat >= 55.12.0" "libavutil >= 52.48.101" "libavcodec >= 55.34.1" "libswresample" "libswscale" "libavfilter" "libpostproc"
 check_pkg_or_exit "libmpg123"
 check_pkg_or_exit "libass"
 check_pkg_or_exit "dvdread"

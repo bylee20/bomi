@@ -17,9 +17,9 @@ public:
 	SubtitleLinkModel(QObject *parent = nullptr): SimpleListModel(ColumnCount, parent) { }
 	QVariant headerText(int column) const {
 		switch (column) {
-			case Language: return tr("Language");
-			case FileName: return tr("File Name");
-			case Date:     return tr("Date");
+			case Language: return qApp->translate("SubtitleLinkModel", "Language");
+			case FileName: return qApp->translate("SubtitleLinkModel", "File Name");
+			case Date:     return qApp->translate("SubtitleLinkModel", "Date");
 			default:       return QVariant();
 		}
 	}
