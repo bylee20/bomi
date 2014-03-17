@@ -484,7 +484,7 @@ Por favor espere un momento.</translation>
     <message>
         <location filename="../mainwindow.cpp" line="1129"/>
         <source>Select All Subtitles</source>
-        <translation>Seleccionar Todos los Subtítulos</translation>
+        <translation>Seleccionar todos los subtítulos</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1129"/>
@@ -515,7 +515,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="582"/>
         <source>Resume Playback</source>
-        <translation>Continuar Reproducción</translation>
+        <translation>Continuar la reproducción</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="618"/>
@@ -545,23 +545,23 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="1138"/>
         <source>Hide Subtitles</source>
-        <translation>Esconder Subtítulos</translation>
+        <translation>Esconder subtítulos</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1140"/>
         <source>Show Subtitles</source>
-        <translation>Mostrar Subtítulos</translation>
+        <translation>Mostrar subtítulos</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1160"/>
         <location filename="../mainwindow.cpp" line="1171"/>
         <source>Selected Subtitle</source>
-        <translation>Subtítulo Seleccionado</translation>
+        <translation>Subtítulo seleccionado</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1216"/>
         <source>Save File</source>
-        <translation>Guardar Archivo</translation>
+        <translation>Guardar archivo</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1279"/>
@@ -602,7 +602,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="995"/>
         <source>Current Chapter</source>
-        <translation>Capítulo Actual</translation>
+        <translation>Capítulo actual</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="964"/>
@@ -665,12 +665,12 @@ Parado en la posición: %2
     <message>
         <location filename="../mrlstate.cpp" line="18"/>
         <source>Video Interpolator</source>
-        <translation>Vídeo Interpolador</translation>
+        <translation>Vídeo interpolado</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="19"/>
         <source>Video Chroma Upscaler</source>
-        <translation>Vídeo Mejorador de chroma</translation>
+        <translation>Mejorador de chroma del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="20"/>
@@ -819,7 +819,7 @@ Parado en la posición: %2
     <message>
         <location filename="../dialogs.cpp" line="434"/>
         <source>Selected device doesn&apos;t exists.</source>
-        <translation>La unidad seleccionada no está disponible.</translation>
+        <translation>La unidad seleccionada no existe.</translation>
     </message>
 </context>
 <context>
@@ -1224,12 +1224,12 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="259"/>
         <source>Save and restore state per media playback</source>
-        <translation>Guardar y restaurar estado cada medio reproducido</translation>
+        <translation>Guardar y restaurar estado por cada medio reproducido</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="349"/>
         <source>Locale</source>
-        <translation>Lugar</translation>
+        <translation>Idioma</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="429"/>
@@ -1366,7 +1366,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="873"/>
         <source>msec</source>
-        <translation>mseg</translation>
+        <translation>miliseg</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="357"/>
@@ -1464,7 +1464,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="141"/>
         <source>Resume playback</source>
-        <translation>Continuar Reproducción</translation>
+        <translation>Continuar reproducción</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="147"/>
@@ -1520,7 +1520,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="2474"/>
         <source>Horizontal padding</source>
-        <translation>Relleno Horizontal</translation>
+        <translation>Relleno horizontal</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2503"/>
@@ -2097,7 +2097,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="446"/>
         <source>Hide</source>
-        <translation>Esconder</translation>
+        <translation>Ocultar</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="441"/>
@@ -2158,7 +2158,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="465"/>
         <source>Chroma Upscaler</source>
-        <translation>Mejorador de croma</translation>
+        <translation>Mejorador de chroma</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="466"/>
@@ -2183,7 +2183,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="474"/>
         <source>Blur</source>
-        <translation>Desenfoque</translation>
+        <translation>Desenfocar</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="475"/>
@@ -2228,7 +2228,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="500"/>
         <source>Tempo Scaler</source>
-        <translation>Escalar tiempo</translation>
+        <translation>Escalar tempo</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="503"/>
@@ -2507,7 +2507,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../ui/snapshotdialog.ui" line="70"/>
         <source>Zoom Original</source>
-        <translation></translation>
+        <translation>Zoom original</translation>
     </message>
     <message>
         <location filename="../ui/snapshotdialog.ui" line="81"/>
@@ -2769,7 +2769,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../skins/GaN/cmplayer.qml" line="106"/>
         <source>Toggle end time/left time</source>
-        <translation>Conmuta tiempo final/tiempo restante</translation>
+        <translation>Cambia tiempo final/tiempo restante</translation>
     </message>
 </context>
 </TS>
