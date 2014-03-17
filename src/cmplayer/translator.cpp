@@ -98,7 +98,8 @@ bool Translator::load(const QLocale &locale) {
 }
 
 QString Translator::defaultEncoding() {
-	return tr("UTF-8", "Specify most popular encoding here in target localization.");
+	auto enc = tr("UTF-8", "Specify most popular encoding here in target localization.");
+	return enc.isEmpty() ? _L("UTF-8") : enc;
 }
 
 QString Translator::displayLanguage(const QString &_iso) {

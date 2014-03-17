@@ -3212,7 +3212,7 @@ Por ejemplo: English, Korean</translation>
         <location filename="../translator.cpp" line="101"/>
         <source>UTF-8</source>
         <comment>Specify most popular encoding here in target localization.</comment>
-        <translation></translation>
+        <translation>UTF-8</translation>
     </message>
 </context>
 <context>
