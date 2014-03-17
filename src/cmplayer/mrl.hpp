@@ -28,14 +28,19 @@ public:
 	QString suffix() const;
 	QString name() const { return m_name; }
 	bool isImage() const;
-	void setName(const QString &name) { m_name = name; }
 	static Mrl fromString(const QString str) { Mrl mrl; mrl.m_loc = str; return mrl; }
-	static Mrl fromDisc(const QString &scheme, const QString &device, int title = -1);
+	static Mrl fromDisc(const QString &scheme, const QString &device, int title, bool hash);
+	Mrl titleMrl(int title) const;
 	QString device() const;
 	QByteArray toLocal8Bit() const { return m_loc.toLocal8Bit(); }
+	QByteArray hash() const { return m_hash; }
+	void updateHash();
+	static QByteArray calculateHash(const Mrl &mrl);
+	bool isUnique() const { return !isDisc() || !m_hash.isEmpty(); }
 private:
 	QString m_loc = {};
 	QString m_name;
+	QByteArray m_hash;
 };
 
 Q_DECLARE_METATYPE(Mrl)

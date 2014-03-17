@@ -104,7 +104,15 @@ struct MainWindow::Data {
 	}
 
 	void load(const Mrl &mrl, bool play = true) {
-		engine.load(play ? getStartInfo(mrl) : StartInfo(mrl));
+		StartInfo info;
+		info.mrl = mrl;
+		if (play) {
+			if (info.mrl.hash().isEmpty() && info.mrl.isDisc())
+				info.mrl.updateHash();
+			info.resume = resume(mrl);
+			info.cache = cache(mrl);
+		}
+		engine.load(info);
 	}
 
 	void updateSubtitleState() {
@@ -557,13 +565,6 @@ struct MainWindow::Data {
 		connect(desktop, &QDesktopWidget::workAreaResized, reset);
 		reset();
 	}
-	StartInfo getStartInfo(const Mrl &mrl) {
-		StartInfo info;
-		info.mrl = mrl;
-		info.resume = resume(mrl);
-		info.cache = cache(mrl);
-		return info;
-	}
 
 	int resume(const Mrl &mrl) {
 		if (!pref().remember_stopped || mrl.isImage() || mrl.isDisc())
@@ -666,7 +667,7 @@ struct MainWindow::Data {
 			menu("subtitle")("track").syncActions();
 			setCurrentSubtitleIndexToEngine();
 		});
-		auto updateMrlState = [this] (const Mrl &mrl, bool end, int time) {
+		auto updateMrlState = [this] (const Mrl &mrl, bool end, int time, int title) {
 			as.state.mrl = mrl;
 			as.state.last_played_date_time = QDateTime::currentDateTime();
 			if (end) {
@@ -684,31 +685,29 @@ struct MainWindow::Data {
 		};
 
 		connect(&engine, &PlayEngine::started, p, [this, updateMrlState] (Mrl mrl) {
-			if (!mrl.isDisc()) {
-				as.setOpen(mrl);
-				as.state.mrl = mrl;
-				auto &state = as.state;
-				state.sub_track = SubtitleStateInfo();
-				const bool found = history.getState(&state);
-				if (found) {
-					engine.setCurrentAudioStream(state.audio_track);
-					syncWithState();
-				}
-				if (found && state.sub_track.isValid()) {
-					for (auto &f : state.sub_track.mpv())
-						engine.addSubtitleStream(f.path, f.encoding);
-					auto loaded = state.sub_track.load();
-					subtitle.setComponents(loaded);
-					engine.setCurrentSubtitleStream(state.sub_track.track());
-					syncSubtitleFileMenu();
-				} else
-					updateSubtitleState();
-				updateMrlState(mrl, false, 0);
+			as.setOpen(mrl);
+			as.state.mrl = mrl;
+			auto &state = as.state;
+			state.sub_track = SubtitleStateInfo();
+			const bool found = history.getState(&state);
+			if (found) {
+				engine.setCurrentAudioStream(state.audio_track);
+				syncWithState();
 			}
+			if (found && state.sub_track.isValid()) {
+				for (auto &f : state.sub_track.mpv())
+					engine.addSubtitleStream(f.path, f.encoding);
+				auto loaded = state.sub_track.load();
+				subtitle.setComponents(loaded);
+				engine.setCurrentSubtitleStream(state.sub_track.track());
+				syncSubtitleFileMenu();
+			} else
+				updateSubtitleState();
+			updateMrlState(mrl, false, 0, -1);
 		});
 		connect(&engine, &PlayEngine::finished, p, [this, updateMrlState] (Mrl mrl, int time, int remain) {
-			if (!mrl.isDisc())
-				updateMrlState(mrl, true, remain > 500 ? time : -1);
+			if (mrl.isUnique())
+				updateMrlState(mrl, true, remain > 500 ? time : -1, -1);
 		});
 		connect(&engine, &PlayEngine::videoFormatChanged, p, [this] (const VideoFormat &format) {
 			if (pref().fit_to_video && !format.displaySize().isEmpty())
@@ -941,11 +940,11 @@ void MainWindow::connectMenus() {
 
 	connect(open["dvd"], &QAction::triggered, this, [openDisc, this] () {
 		if (openDisc(tr("Select DVD device"), d->as.dvd_device, true))
-			openMrl(Mrl::fromDisc("dvdnav", d->as.dvd_device, 0));
+			openMrl(Mrl::fromDisc("dvdnav", d->as.dvd_device, 0, true));
 	});
 	connect(open["bluray"], &QAction::triggered, this, [openDisc, this] () {
 		if (openDisc(tr("Select Blu-ray device"), d->as.bluray_device, false))
-			openMrl(Mrl::fromDisc("bd", d->as.bluray_device));
+			openMrl(Mrl::fromDisc("bd", d->as.bluray_device, -1, true));
 	});
 	connect(open("recent").g(), &ActionGroup::triggered, this, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
 	connect(open("recent")["clear"], &QAction::triggered, &d->recent, &RecentInfo::clear);
@@ -1763,7 +1762,7 @@ void MainWindow::applyPref() {
 		info.resume = time;
 		info.cache = d->cache(info.mrl);
 		if (info.mrl.isDisc())
-			info.mrl = Mrl::fromDisc(info.mrl.scheme(), info.mrl.device(), title);
+			info.mrl = info.mrl.titleMrl(title);
 		d->engine.load(info);
 	}
 

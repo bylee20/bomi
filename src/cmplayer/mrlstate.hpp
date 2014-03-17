@@ -18,6 +18,7 @@ class MrlStateV2 : public QObject {
 	Q_PROPERTY(QDateTime last_played_date_time MEMBER last_played_date_time)
 	Q_PROPERTY(int resume_position MEMBER resume_position)
 	Q_PROPERTY(int play_speed MEMBER play_speed NOTIFY playSpeedChanged)
+//	Q_PROPERTY(int disc_title MEMBER disc_title)
 
 	Q_PROPERTY(InterpolatorType video_interpolator MEMBER video_interpolator NOTIFY videoInterpolatorChanged)
 	Q_PROPERTY(InterpolatorType video_chroma_upscaler MEMBER video_chroma_upscaler NOTIFY videoChromaUpscalerChanged)
@@ -52,6 +53,7 @@ public:
 	QDateTime last_played_date_time;
 	int resume_position = 0;
 	int play_speed = 100;
+	int disc_title = -1;
 
 // video state
 	VideoRatio video_aspect_ratio = VideoRatio::Source;

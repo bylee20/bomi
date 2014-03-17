@@ -850,14 +850,17 @@ void PlayEngine::setCurrentChapter(int id) {
 
 void PlayEngine::setCurrentTitle(int id, int from) {
 	const auto mrl = d->startInfo.mrl;
-	if (!mrl.isDisc())
-		return;
-	if (id == DVDMenu && mrl.isDvd()) {
-		static const char *cmds[] = {"dvdnav", "menu", nullptr};
-		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send 'dvdnav menu'.");
-	} else if (id > 0) {
-		const auto path = Mrl::fromDisc(mrl.scheme(), mrl.device(), id);
-		d->loadfile(path.toLocal8Bit(), from, d->startInfo.cache);
+	if (mrl.isDisc()) {
+		if (id == DVDMenu && mrl.isDvd()) {
+			static const char *cmds[] = {"dvdnav", "menu", nullptr};
+			d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send 'dvdnav menu'.");
+		} else if (id > 0) {
+			const auto path = mrl.titleMrl(id);
+			d->loadfile(path.toLocal8Bit(), from, d->startInfo.cache);
+		}
+	} else {
+		d->setmpv("edition", id);
+		d->setmpv("time-pos", from/1000.0);
 	}
 }
 
@@ -1004,20 +1007,25 @@ void PlayEngine::exec() {
 			d->timing = first = true;
 			d->dvd = mrl.scheme() == _L("dvdnav");
 			TitleList titles;
-			if (mrl.isDisc()) {
-				auto add = [&] (int id) -> Title& {
-					auto &title = titles[id];
-					title.m_id = id;
-					title.m_name = tr("Title %1").arg(id);
-					return title;
-				};
-				const int titles = d->getmpv<int>("disc-titles", 0);
-				for (int i=1; i<=titles; ++i)
-					add(i);
-				const int title = d->getmpv<int>("disc-title");
-				if (title >= 0)
-					add(title).m_selected = true;
+			auto add = [&] (int id) -> Title& {
+				auto &title = titles[id];
+				title.m_id = id;
+				return title;
+			};
+			const char *listprop = mrl.isDisc() ? "disc-titles" : "editions";
+			const char *itemprop = mrl.isDisc() ? "disc-title"  : "edition";
+			const int offset = mrl.isDvd() ? 1 : 0;
+			const int list = d->getmpv<int>(listprop, 0);
+			for (int i=0; i<list; ++i)
+				add(i+offset);
+			if (list > 0) {
+				const int item = d->getmpv<int>(itemprop);
+				if (item >= 0)
+					add(item).m_selected = true;
 			}
+			int i = 1;
+			for (auto it = titles.begin(); it != titles.end(); ++it, ++i)
+				it->m_name = tr("Title %1").arg(i);
 			const auto name = d->getmpv<QString>("media-title");
 			const auto seekable = d->getmpv<bool>("seekable", false);
 			_PostEvent(this, StartPlayback, name, seekable, titles);

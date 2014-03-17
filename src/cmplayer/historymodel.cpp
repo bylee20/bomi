@@ -14,18 +14,21 @@ struct HistoryModel::Data {
 	QList<MrlField> restores;
 	QString insertTemplate;
 	MrlState cached;
-	const QString stateTable = _L("state") % _N(MrlState::Version), appTable = _L("app") % _N(MrlState::Version);
+	const QString stateTable = _L("state") % _N(MrlState::Version);
+	const QString appTable   = _L("app")   % _N(MrlState::Version);
 	bool rememberImage = false, reload = true;
 	bool check(const QSqlQuery &query) {
 		if (!query.lastError().isValid())
 			return true;
-		_Error("Query Error: %% for %%", query.lastError().text(), query.lastQuery());
+		_Error("Query Error: %% for %%"
+			   , query.lastError().text(), query.lastQuery());
 		return false;
 	}
 	bool insertToApp(const MrlState *state) {
 		const auto mrl = state->mrl;
 		const_cast<MrlState*>(state)->mrl = Mrl();
-		_InsertMrlState(finder, fields, state, _MakeInsertQueryTemplate(appTable, fields));
+		_InsertMrlState(finder, fields, state
+						, _MakeInsertQueryTemplate(appTable, fields));
 		const_cast<MrlState*>(state)->mrl = mrl;
 		return check(finder);
 	}
@@ -39,7 +42,8 @@ struct HistoryModel::Data {
 	}
 	int rows = 0;
 	bool load() {
-		const QString select = QString::fromLatin1("SELECT *, (SELECT COUNT(*) FROM %1) as total FROM %2 ORDER BY last_played_date_time DESC");
+		const QString select = QString::fromLatin1("SELECT *, (SELECT COUNT(*)"
+			" FROM %1) as total FROM %2 ORDER BY last_played_date_time DESC");
 		if (!loader.exec(select.arg(stateTable).arg(stateTable)))
 			return false;
 		Q_ASSERT(!loader.isForwardOnly());
@@ -120,6 +124,24 @@ HistoryModel::HistoryModel(QObject *parent)
 	if (version != MrlState::Version) {
 		d->import(_ImportMrlStatesFromPreviousVersion(version, d->db));
 		d->finder.exec("PRAGMA user_version = " % _N(MrlState::Version));
+	} else {
+		auto record = d->db.record(d->stateTable);
+		QList<MrlField> lacks;
+		for (const auto &field : d->fields) {
+			if (!record.contains(_L(field.property().name())))
+				lacks.append(field);
+		}
+		if (!lacks.isEmpty()) {
+			d->db.transaction();
+			for (auto &field : lacks) {
+				const QString query = QString("ALTER TABLE %3 ADD COLUMN %1 %2")
+						.arg(field.property().name()).arg(field.type());
+				d->finder.exec(query.arg(d->appTable));
+				d->finder.exec(query.arg(d->stateTable));
+				d->check(d->finder);
+			}
+			d->db.commit();
+		}
 	}
 	d->load();
 }
@@ -137,7 +159,8 @@ int HistoryModel::columnCount(const QModelIndex &index) const {
 }
 
 void HistoryModel::getAppState(MrlState *appState) {
-	d->finder.exec(QString::fromLatin1("SELECT %1 FROM %2 LIMIT 1").arg(_MrlFieldColumnListString(d->fields)).arg(d->appTable));
+	d->finder.exec(QString::fromLatin1("SELECT %1 FROM %2 LIMIT 1")
+				   .arg(_MrlFieldColumnListString(d->fields)).arg(d->appTable));
 	if (!d->finder.next()) {
 		_Debug("No previous app state exists");
 		return;
@@ -152,6 +175,8 @@ void HistoryModel::setAppState(const MrlState *state) {
 }
 
 bool HistoryModel::getState(MrlState *state) const {
+	if (!state->mrl.isUnique())
+		return false;
 	if (d->cached.mrl != state->mrl)
 		return d->findAndFill(state, d->restores, state->mrl);
 	for (auto &f : d->restores)

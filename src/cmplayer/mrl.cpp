@@ -1,5 +1,6 @@
 #include "mrl.hpp"
 #include "info.hpp"
+#include "udf25.hpp"
 
 Mrl::Mrl(const QUrl &url) {
 	if (url.isLocalFile())
@@ -40,8 +41,6 @@ QString Mrl::suffix() const {
 }
 
 QString Mrl::displayName() const {
-	if (!m_name.isEmpty())
-		return m_name;
 	if (isLocalFile())
 		return fileName();
 	if (isDvd())
@@ -75,11 +74,114 @@ QString Mrl::device() const {
 	return path.mid(idx+1).toString();
 }
 
-Mrl Mrl::fromDisc(const QString &scheme, const QString &device, int title) {
+Mrl Mrl::fromDisc(const QString &scheme, const QString &device, int title, bool hash) {
 	QString loc = scheme % _L("://");
 	if (title == 0)
 		loc += _L("menu");
 	else if (title > 0)
 		loc += QString::number(title);
-	return Mrl(loc % _L('/') % device);
+	Mrl mrl(loc % _L('/') % device);
+	if (hash)
+		mrl.updateHash();
+	return mrl;
+}
+
+Mrl Mrl::titleMrl(int title) const {
+	auto mrl = fromDisc(scheme(), device(), title, false);
+	mrl.m_hash = m_hash;
+	return mrl;
+}
+
+static QByteArray dvdHash(const QString &device) {
+	static QStringList files = QStringList()
+		<< _L("/VIDEO_TS/VIDEO_TS.IFO")
+		<< _L("/VIDEO_TS/VTS_01_0.IFO")
+		<< _L("/VIDEO_TS/VTS_02_0.IFO")
+		<< _L("/VIDEO_TS/VTS_03_0.IFO")
+		<< _L("/VIDEO_TS/VTS_04_0.IFO")
+		<< _L("/VIDEO_TS/VTS_05_0.IFO")
+		<< _L("/VIDEO_TS/VTS_06_0.IFO")
+		<< _L("/VIDEO_TS/VTS_07_0.IFO")
+		<< _L("/VIDEO_TS/VTS_08_0.IFO")
+		<< _L("/VIDEO_TS/VTS_09_0.IFO");
+	static constexpr int block = 2048;
+	QByteArray data;
+	if (QFileInfo(device).isDir()) {
+		for (auto &fileName : files) {
+			QFile file(device % fileName);
+			if (!file.open(QFile::ReadOnly))
+				break;
+			data += file.read(block);
+		}
+	} else {
+		udf::udf25 udf;
+		if (!udf.Open(device.toLocal8Bit()))
+			return QByteArray();
+		for (auto &fileName : files) {
+			::udf::File file(&udf, fileName);
+			if (!file.isOpen())
+				break;
+			data += file.read(block);
+		}
+	}
+	return QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
+}
+
+static QByteArray blurayHash(const QString &device) {
+	static constexpr int block = 2048;
+	QStringList files = QStringList() << _L("/BDMV/index.bdmv")
+		<< _L("/BDMV/MovieObject.bdmv");
+	QByteArray data;
+	if (QFileInfo(device).isDir()) {
+		auto dir = [&] (const QString &path) {
+			QDir dir(device % path);
+			auto list = dir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+			const int count = qMin(5, list.size());
+			for (int i=0; i<count; ++i)
+				files.append(path % _L('/') % list[i]);
+		};
+		dir("/BDMV/PLAYLIST");
+		dir("/BDMV/CLIPINF");
+		dir("/BDMV/STREAM");
+		qSort(files);
+		for (auto &fileName : files) {
+			QFile file(device % fileName);
+			if (file.open(QFile::ReadOnly))
+				data += file.read(block);
+		}
+	} else {
+		udf::udf25 fs;
+		if (!fs.Open(device.toLocal8Bit()))
+			return QByteArray();
+		auto dir = [&] (const QString &path) {
+			::udf::Dir dir(&fs, path);
+			const auto list = dir.files();
+			const int count = qMin(5, list.size());
+			for (int i=0; i<count; ++i)
+				files.append(list[i]);
+		};
+		dir("/BDMV/PLAYLIST");
+		dir("/BDMV/CLIPINF");
+		dir("/BDMV/STREAM");
+		qSort(files);
+		for (auto &fileName : files) {
+			::udf::File file(&fs, fileName);
+			if (file.isOpen())
+				data += file.read(block);
+		}
+	}
+	return QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
+}
+
+QByteArray Mrl::calculateHash(const Mrl &mrl) {
+	if (!mrl.isDisc())
+		return QByteArray();
+	const auto device = mrl.device();
+	if (device.isEmpty())
+		return QByteArray();
+	return mrl.isDvd() ? dvdHash(device) : blurayHash(device);
+}
+
+void Mrl::updateHash() {
+	m_hash = calculateHash(*this);
 }
