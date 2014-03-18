@@ -106,11 +106,11 @@ void updateEnumActions(Menu &menu) {
 	if (actions.size() > 2) {
 		auto next = _C(menu).a("next");
 		if (next)
-			next->setText(RootMenu::tr(QT_TRANSLATE_NOOP("RootMenu", "Select Next")));
+			next->setText(qApp->translate("RootMenu", "Select Next"));
 	} else {
 		auto toggle = _C(menu).a("toggle");
 		if (toggle)
-			toggle->setText(RootMenu::tr(QT_TRANSLATE_NOOP("RootMenu", "Toggle")));
+			toggle->setText(qApp->translate("RootMenu", "Toggle"));
 	}
 	for (auto a : actions) {
 		auto action = static_cast<EnumAction<T>*>(a);
@@ -425,7 +425,7 @@ void RootMenu::update(const Pref &p) {
 	setActionAttr(seek["backward3"], -p.seek_step3, backward, p.seek_step3*0.001, false);
 
 	seek.a("prev-frame", tr("Previous Frame"));
-	seek.a("prev-frame", tr("Next Frame"));
+	seek.a("next-frame", tr("Next Frame"));
 
 	seek.a("prev-subtitle", tr("To Previous Subtitle"));
 	seek.a("current-subtitle", tr("To Beginning of Current Subtitle"));
