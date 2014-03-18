@@ -579,7 +579,7 @@ struct MainWindow::Data {
 		dlg.setChecked(false);
 		QString time = _MSecToString(state->resume_position, "h:mm:ss");
 		if (state->edition >= 0)
-			time += _L('[') % qApp->translate("PlayEngine", "Title %1").arg(state->edition) % _L(']');
+			time += _L('[') % tr("Title %1").arg(state->edition) % _L(']');
 		dlg.setLabelText(tr("Do you want to resume the playback "
 			"at the last played position?\n"
 			"Played Date: %1\nStopped Position: %2\n")

@@ -983,88 +983,88 @@ Desni klik: %2</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../mainwindow.cpp" line="617"/>
+        <location filename="../mainwindow.cpp" line="621"/>
         <source>Error!
 Cannot open the media.</source>
         <translation>Greška!
 Nemogućnost otvaranja medija.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="622"/>
+        <location filename="../mainwindow.cpp" line="626"/>
         <source>Pause</source>
         <translation>Pauza</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="625"/>
+        <location filename="../mainwindow.cpp" line="629"/>
         <source>Play</source>
         <translation>Pusti</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="749"/>
+        <location filename="../mainwindow.cpp" line="754"/>
         <source>Loading ...
 Please wait for a while.</source>
         <translation>Učitavam ...
 Molimo Vas sačekajte malo.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="910"/>
-        <location filename="../mainwindow.cpp" line="1213"/>
-        <location filename="../mainwindow.cpp" line="1231"/>
+        <location filename="../mainwindow.cpp" line="915"/>
+        <location filename="../mainwindow.cpp" line="1218"/>
+        <location filename="../mainwindow.cpp" line="1236"/>
         <source>Open File</source>
         <translation>Otvori Fajl</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="947"/>
+        <location filename="../mainwindow.cpp" line="952"/>
         <source>Select DVD device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="951"/>
+        <location filename="../mainwindow.cpp" line="956"/>
         <source>Select Blu-ray device</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="965"/>
+        <location filename="../mainwindow.cpp" line="970"/>
         <source>A-B Repeat</source>
         <translation>A-B Ponavljanje</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="968"/>
+        <location filename="../mainwindow.cpp" line="973"/>
         <source>Set A to %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="971"/>
+        <location filename="../mainwindow.cpp" line="976"/>
         <source>Range is too short!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="972"/>
+        <location filename="../mainwindow.cpp" line="977"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="974"/>
+        <location filename="../mainwindow.cpp" line="979"/>
         <source>Quit repeating</source>
         <translation>Prekini ponavljanje</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="975"/>
+        <location filename="../mainwindow.cpp" line="980"/>
         <source>Repeat current subtitle</source>
         <translation>Ponovi trenutni prevod</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="983"/>
+        <location filename="../mainwindow.cpp" line="988"/>
         <source>Seeking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="983"/>
+        <location filename="../mainwindow.cpp" line="988"/>
         <source>sec</source>
         <translation>sek</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="996"/>
+        <location filename="../mainwindow.cpp" line="1001"/>
         <source>Current Title</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1073,42 +1073,42 @@ Molimo Vas sačekajte malo.</translation>
         <translation type="vanished">Trenutni DVD Naslov</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="999"/>
+        <location filename="../mainwindow.cpp" line="1004"/>
         <source>Current Chapter</source>
         <translation>Trenutno Poglavlje</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1013"/>
+        <location filename="../mainwindow.cpp" line="1018"/>
         <source>Current Video Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1064"/>
+        <location filename="../mainwindow.cpp" line="1069"/>
         <source>Adjust Video Color</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1070"/>
+        <location filename="../mainwindow.cpp" line="1075"/>
         <source>Current Audio Track</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1133"/>
+        <location filename="../mainwindow.cpp" line="1138"/>
         <source>Select All Subtitles</source>
         <translation>Izaberi Sve Prevode</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1133"/>
+        <location filename="../mainwindow.cpp" line="1138"/>
         <source>%1 Subtitle(s)</source>
         <translation>%1 Prevodi</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1142"/>
+        <location filename="../mainwindow.cpp" line="1147"/>
         <source>Hide Subtitles</source>
         <translation>Sakrij Prevod</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1144"/>
+        <location filename="../mainwindow.cpp" line="1149"/>
         <source>Show Subtitles</source>
         <translation>Prikaži Prevode</translation>
     </message>
@@ -1117,13 +1117,13 @@ Molimo Vas sačekajte malo.</translation>
         <translation type="vanished">Fajlovi Prevoda</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1152"/>
+        <location filename="../mainwindow.cpp" line="1157"/>
         <source>Open Subtitle</source>
         <translation>Otvori Prevod</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1164"/>
-        <location filename="../mainwindow.cpp" line="1175"/>
+        <location filename="../mainwindow.cpp" line="1169"/>
+        <location filename="../mainwindow.cpp" line="1180"/>
         <source>Selected Subtitle</source>
         <translation>Izabrani Prevod</translation>
     </message>
@@ -1132,53 +1132,53 @@ Molimo Vas sačekajte malo.</translation>
         <translation type="vanished">Plejlista</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1220"/>
+        <location filename="../mainwindow.cpp" line="1225"/>
         <source>Save File</source>
         <translation>Snimi Fajl</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1283"/>
+        <location filename="../mainwindow.cpp" line="1288"/>
         <source>Downloaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1294"/>
+        <location filename="../mainwindow.cpp" line="1299"/>
         <source>Exit CMPlayer when the playlist has finished.</source>
         <translation>Ugasi CMPLayer kada se lista završi.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1294"/>
+        <location filename="../mainwindow.cpp" line="1299"/>
         <source>Auto-exit is canceled.</source>
         <translation>Auto-Gašenje je otkazano.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1300"/>
+        <location filename="../mainwindow.cpp" line="1305"/>
         <source>Auto-shutdown</source>
         <translation>Automatski-Ugasi</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1301"/>
-        <location filename="../mainwindow.cpp" line="1305"/>
+        <location filename="../mainwindow.cpp" line="1306"/>
+        <location filename="../mainwindow.cpp" line="1310"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>Sistem će se ugasiti kada se lista završi.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1307"/>
+        <location filename="../mainwindow.cpp" line="1312"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>Automatsko-gašenje sistema je otkazano.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1850"/>
+        <location filename="../mainwindow.cpp" line="1855"/>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
         <translation>CMPlayer će raditi u sistemskoj traci kada se ugasi.&lt;br&gt;Ovo možete promeniti u podešavanjima.&lt;br&gt;ako želite ugasiti CMPlayer,koristite &apos;Exit&apos; meni.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1854"/>
+        <location filename="../mainwindow.cpp" line="1859"/>
         <source>Do not display this message again</source>
         <translation>Ne prikazuj ovo poruku ponovo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="580"/>
+        <location filename="../mainwindow.cpp" line="583"/>
         <source>Do you want to resume the playback at the last played position?
 Played Date: %1
 Stopped Position: %2
@@ -1186,12 +1186,17 @@ Stopped Position: %2
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="583"/>
+        <location filename="../mainwindow.cpp" line="582"/>
+        <source>Title %1</source>
+        <translation type="unfinished">Naslov %1</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="587"/>
         <source>Don&apos;t ask again</source>
         <translation>Ne pitaj ponovo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="584"/>
+        <location filename="../mainwindow.cpp" line="588"/>
         <source>Resume Playback</source>
         <translation>Nastavite Reprodukciju</translation>
     </message>
@@ -1204,6 +1209,19 @@ Stopped Position: %2
         <location filename="../mainwindow.hpp" line="67"/>
         <source>Off</source>
         <translation>Isključen</translation>
+    </message>
+</context>
+<context>
+    <name>Mrl</name>
+    <message>
+        <location filename="../mrl.cpp" line="48"/>
+        <source>DVD</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mrl.cpp" line="50"/>
+        <source>Blu-ray</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1442,22 +1460,22 @@ Stopped Position: %2
         <translation type="vanished">Prevod %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="298"/>
+        <location filename="../playengine.cpp" line="296"/>
         <source>File</source>
         <translation>Fajl</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="837"/>
+        <location filename="../playengine.cpp" line="835"/>
         <source>Activated</source>
         <translation>Aktiviran</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="839"/>
+        <location filename="../playengine.cpp" line="837"/>
         <source>Deactivated</source>
         <translation>Deaktiviran</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="841"/>
+        <location filename="../playengine.cpp" line="839"/>
         <source>Unavailable</source>
         <translation>Nedostupan</translation>
     </message>
@@ -1466,22 +1484,17 @@ Stopped Position: %2
         <translation type="vanished">Nema Prevoda</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1036"/>
+        <location filename="../playengine.cpp" line="1038"/>
         <source>Title %1</source>
         <translation>Naslov %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1036"/>
-        <source>Edition %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../playengine.cpp" line="1342"/>
+        <location filename="../playengine.cpp" line="1339"/>
         <source>Playing</source>
         <translation>Pusti</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1344"/>
+        <location filename="../playengine.cpp" line="1341"/>
         <source>Stopped</source>
         <translation>Zaustavljen</translation>
     </message>
@@ -1490,22 +1503,22 @@ Stopped Position: %2
         <translation type="vanished">Završen</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1346"/>
+        <location filename="../playengine.cpp" line="1343"/>
         <source>Loading</source>
         <translation>Učitavanje</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1348"/>
+        <location filename="../playengine.cpp" line="1345"/>
         <source>Buffering</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1350"/>
+        <location filename="../playengine.cpp" line="1347"/>
         <source>Error</source>
         <translation>Greška</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1352"/>
+        <location filename="../playengine.cpp" line="1349"/>
         <source>Paused</source>
         <translation>Pauziran</translation>
     </message>

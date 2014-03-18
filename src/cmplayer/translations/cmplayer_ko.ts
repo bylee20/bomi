@@ -1701,9 +1701,9 @@ Right click: %2</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../mainwindow.cpp" line="910"/>
-        <location filename="../mainwindow.cpp" line="1213"/>
-        <location filename="../mainwindow.cpp" line="1231"/>
+        <location filename="../mainwindow.cpp" line="915"/>
+        <location filename="../mainwindow.cpp" line="1218"/>
+        <location filename="../mainwindow.cpp" line="1236"/>
         <source>Open File</source>
         <translation>파일 열기</translation>
     </message>
@@ -1712,7 +1712,7 @@ Right click: %2</source>
         <translation type="obsolete">자막</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1152"/>
+        <location filename="../mainwindow.cpp" line="1157"/>
         <source>Open Subtitle</source>
         <translation>자막 열기</translation>
     </message>
@@ -1758,12 +1758,12 @@ Right click: %2</source>
         <translation type="obsolete">앰프</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1133"/>
+        <location filename="../mainwindow.cpp" line="1138"/>
         <source>Select All Subtitles</source>
         <translation>모든 자막 선택</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1133"/>
+        <location filename="../mainwindow.cpp" line="1138"/>
         <source>%1 Subtitle(s)</source>
         <translation>%1개 자막</translation>
     </message>
@@ -1776,7 +1776,7 @@ Right click: %2</source>
         <translation type="obsolete">자막 정렬</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1307"/>
+        <location filename="../mainwindow.cpp" line="1312"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>자동 시스템 종료가 취소되었습니다.</translation>
     </message>
@@ -1785,7 +1785,7 @@ Right click: %2</source>
         <translation type="obsolete">맨위로</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="580"/>
+        <location filename="../mainwindow.cpp" line="583"/>
         <source>Do you want to resume the playback at the last played position?
 Played Date: %1
 Stopped Position: %2
@@ -1796,12 +1796,12 @@ Stopped Position: %2
 </translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="583"/>
+        <location filename="../mainwindow.cpp" line="587"/>
         <source>Don&apos;t ask again</source>
         <translation>다시 묻지 않기</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="584"/>
+        <location filename="../mainwindow.cpp" line="588"/>
         <source>Resume Playback</source>
         <translation>재생 다시 시작하기</translation>
     </message>
@@ -1814,7 +1814,7 @@ Stopped Position: %2
         <translation type="vanished">재생 목록</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1220"/>
+        <location filename="../mainwindow.cpp" line="1225"/>
         <source>Save File</source>
         <translation>파일 저장</translation>
     </message>
@@ -1839,12 +1839,12 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">속도: ×%1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="622"/>
+        <location filename="../mainwindow.cpp" line="626"/>
         <source>Pause</source>
         <translation>일시정지</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="625"/>
+        <location filename="../mainwindow.cpp" line="629"/>
         <source>Play</source>
         <translation>재생</translation>
     </message>
@@ -1877,12 +1877,12 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">구간 반복: %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="983"/>
+        <location filename="../mainwindow.cpp" line="988"/>
         <source>Seeking</source>
         <translation>탐색</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="983"/>
+        <location filename="../mainwindow.cpp" line="988"/>
         <source>sec</source>
         <translation>초</translation>
     </message>
@@ -1907,23 +1907,23 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">소리 증폭</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1294"/>
+        <location filename="../mainwindow.cpp" line="1299"/>
         <source>Exit CMPlayer when the playlist has finished.</source>
         <translation>재생목록을 마치면 CMPlayer를 종료합니다.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1294"/>
+        <location filename="../mainwindow.cpp" line="1299"/>
         <source>Auto-exit is canceled.</source>
         <translation>자동 종료가 취소되었습니다.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1300"/>
+        <location filename="../mainwindow.cpp" line="1305"/>
         <source>Auto-shutdown</source>
         <translation>자동 시스템 종료</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1301"/>
-        <location filename="../mainwindow.cpp" line="1305"/>
+        <location filename="../mainwindow.cpp" line="1306"/>
+        <location filename="../mainwindow.cpp" line="1310"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>재생목록을 마치면 시스템이 종료됩니다.</translation>
     </message>
@@ -1932,7 +1932,7 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">오디오 %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1070"/>
+        <location filename="../mainwindow.cpp" line="1075"/>
         <source>Current Audio Track</source>
         <translation>현재 오디오 트랙</translation>
     </message>
@@ -1949,7 +1949,7 @@ Do you want to start from where it&apos;s stopped?
         <translation type="obsolete">비디오 %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1013"/>
+        <location filename="../mainwindow.cpp" line="1018"/>
         <source>Current Video Track</source>
         <translation>현재 비디오 트랙</translation>
     </message>
@@ -1958,76 +1958,81 @@ Do you want to start from where it&apos;s stopped?
         <translation type="vanished">현재 DVD 타이</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="999"/>
+        <location filename="../mainwindow.cpp" line="1004"/>
         <source>Current Chapter</source>
         <translation>현재 챕터</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="968"/>
+        <location filename="../mainwindow.cpp" line="973"/>
         <source>Set A to %1</source>
         <translation>시작 %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="617"/>
+        <location filename="../mainwindow.cpp" line="582"/>
+        <source>Title %1</source>
+        <translation>타이틀 %1</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="621"/>
         <source>Error!
 Cannot open the media.</source>
         <translation>에러!
 미디어를 열 수 없습니다.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="749"/>
+        <location filename="../mainwindow.cpp" line="754"/>
         <source>Loading ...
 Please wait for a while.</source>
         <translation>로딩중 ...
 잠시만 기다려 주세요.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="947"/>
+        <location filename="../mainwindow.cpp" line="952"/>
         <source>Select DVD device</source>
         <translation>DVD 장치 선택</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="951"/>
+        <location filename="../mainwindow.cpp" line="956"/>
         <source>Select Blu-ray device</source>
         <translation>블루레이 장치 선택</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="971"/>
+        <location filename="../mainwindow.cpp" line="976"/>
         <source>Range is too short!</source>
         <translation>구간이 너무 짧습니다!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="972"/>
+        <location filename="../mainwindow.cpp" line="977"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation>마지막 %1. 반복 시작!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="974"/>
+        <location filename="../mainwindow.cpp" line="979"/>
         <source>Quit repeating</source>
         <translation>반복 마침</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="975"/>
+        <location filename="../mainwindow.cpp" line="980"/>
         <source>Repeat current subtitle</source>
         <translation>현재 자막 반복</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="996"/>
+        <location filename="../mainwindow.cpp" line="1001"/>
         <source>Current Title</source>
         <translation>현재 타이틀</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1064"/>
+        <location filename="../mainwindow.cpp" line="1069"/>
         <source>Adjust Video Color</source>
         <translation>비디오 색상 조절</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1283"/>
+        <location filename="../mainwindow.cpp" line="1288"/>
         <source>Downloaded</source>
         <translation>다운로드</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="965"/>
+        <location filename="../mainwindow.cpp" line="970"/>
         <source>A-B Repeat</source>
         <translation>A-B 구간 반복</translation>
     </message>
@@ -2052,18 +2057,18 @@ Please wait for a while.</source>
         <translation type="obsolete">템포 스케일러</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1142"/>
+        <location filename="../mainwindow.cpp" line="1147"/>
         <source>Hide Subtitles</source>
         <translation>자막 숨기기</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1144"/>
+        <location filename="../mainwindow.cpp" line="1149"/>
         <source>Show Subtitles</source>
         <translation>자막 보이기</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1164"/>
-        <location filename="../mainwindow.cpp" line="1175"/>
+        <location filename="../mainwindow.cpp" line="1169"/>
+        <location filename="../mainwindow.cpp" line="1180"/>
         <source>Selected Subtitle</source>
         <translation>선택된 자막</translation>
     </message>
@@ -2114,12 +2119,12 @@ Please wait for a while.</source>
         <translation type="obsolete">창이 닫혀도 CMPlayer는 종료되지 않고 시스템 트레이상에서 작동할 것입니다.&lt;br&gt;CMPlayer를 종료하려면 종료 메뉴를 이용해주세요.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1854"/>
+        <location filename="../mainwindow.cpp" line="1859"/>
         <source>Do not display this message again</source>
         <translation>이 메시지를 다시 표시하지 않기</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1850"/>
+        <location filename="../mainwindow.cpp" line="1855"/>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
         <translation>창이 닫혀도 CMPlayer는 종료되지 않고 시스템 트레이상에서 작동할 것입니다.&lt;br&gt;환경 설정에서 동작방식을 변경할 수 있습니다.&lt;br&gt;CMPlayer를 종료하려면 종료 메뉴를 이용해주세요.</translation>
     </message>
@@ -2646,6 +2651,19 @@ Please wait for a while.</source>
     </message>
 </context>
 <context>
+    <name>Mrl</name>
+    <message>
+        <location filename="../mrl.cpp" line="48"/>
+        <source>DVD</source>
+        <translation>DVD</translation>
+    </message>
+    <message>
+        <location filename="../mrl.cpp" line="50"/>
+        <source>Blu-ray</source>
+        <translation>블루레이</translation>
+    </message>
+</context>
+<context>
     <name>MrlState</name>
     <message>
         <location filename="../mrlstate.cpp" line="16"/>
@@ -3030,42 +3048,41 @@ Please wait for a while.</source>
         <translation type="vanished">자막 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="298"/>
+        <location filename="../playengine.cpp" line="296"/>
         <source>File</source>
         <translation>파일</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="837"/>
+        <location filename="../playengine.cpp" line="835"/>
         <source>Activated</source>
         <translation>활성화</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="839"/>
+        <location filename="../playengine.cpp" line="837"/>
         <source>Deactivated</source>
         <translation>비활성</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="841"/>
+        <location filename="../playengine.cpp" line="839"/>
         <source>Unavailable</source>
         <translation>사용 불가</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1036"/>
+        <location filename="../playengine.cpp" line="1038"/>
         <source>Title %1</source>
         <translation>타이틀 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1036"/>
         <source>Edition %1</source>
-        <translation>에디션 %1</translation>
+        <translation type="vanished">에디션 %1</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1342"/>
+        <location filename="../playengine.cpp" line="1339"/>
         <source>Playing</source>
         <translation>재생중</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1344"/>
+        <location filename="../playengine.cpp" line="1341"/>
         <source>Stopped</source>
         <translation>정지</translation>
     </message>
@@ -3074,22 +3091,22 @@ Please wait for a while.</source>
         <translation type="vanished">마침</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1346"/>
+        <location filename="../playengine.cpp" line="1343"/>
         <source>Loading</source>
         <translation>로딩중</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1348"/>
+        <location filename="../playengine.cpp" line="1345"/>
         <source>Buffering</source>
         <translation>버퍼링</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1350"/>
+        <location filename="../playengine.cpp" line="1347"/>
         <source>Error</source>
         <translation>에러</translation>
     </message>
     <message>
-        <location filename="../playengine.cpp" line="1352"/>
+        <location filename="../playengine.cpp" line="1349"/>
         <source>Paused</source>
         <translation>일시정지</translation>
     </message>
