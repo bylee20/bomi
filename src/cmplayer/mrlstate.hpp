@@ -15,6 +15,7 @@ static inline bool operator == (const QMetaProperty &lhs, const QMetaProperty &r
 class MrlStateV2 : public QObject {
 	Q_OBJECT
 	Q_PROPERTY(Mrl mrl MEMBER mrl)
+	Q_PROPERTY(QString device MEMBER device)
 	Q_PROPERTY(QDateTime last_played_date_time MEMBER last_played_date_time)
 	Q_PROPERTY(int resume_position MEMBER resume_position)
 	Q_PROPERTY(int edition MEMBER edition)
@@ -48,6 +49,7 @@ class MrlStateV2 : public QObject {
 	Q_PROPERTY(SubtitleStateInfo sub_track MEMBER sub_track REVISION 1)
 public:
 	Mrl mrl;
+	QString device;
 
 // play state
 	QDateTime last_played_date_time;

@@ -795,8 +795,6 @@ void PrefDialog::changeEvent(QEvent *event) {
 	}
 }
 
-
-
 void PrefDialog::showEvent(QShowEvent *event) {
 	QDialog::showEvent(event);
 }

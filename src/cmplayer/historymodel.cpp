@@ -6,6 +6,11 @@ DECLARE_LOG_CONTEXT(History)
 
 using namespace MrlStateHelpers;
 
+struct RowCache {
+	Mrl mrl;
+	int row = -1;
+};
+
 struct HistoryModel::Data {
 	HistoryModel *p = nullptr;
 	QSqlQuery loader, finder;
@@ -41,6 +46,8 @@ struct HistoryModel::Data {
 		return check(finder);
 	}
 	int rows = 0;
+
+	int idx_mrl, idx_last, idx_device;
 	bool load() {
 		const QString select = QString::fromLatin1("SELECT *, (SELECT COUNT(*)"
 			" FROM %1) as total FROM %2 ORDER BY last_played_date_time DESC");
@@ -51,11 +58,17 @@ struct HistoryModel::Data {
 		rows = 0;
 		if (loader.next()) {
 			rows = loader.value("total").toInt();
+			auto record = loader.record();
+			idx_mrl = record.indexOf("mrl");
+			idx_last = record.indexOf("last_played_date_time");
+			idx_device = record.indexOf("device");
+			Q_ASSERT(idx_mrl >= 0 && idx_last >= 0 && idx_device >= 0);
 			loader.seek(-1);
 		}
 		error = QSqlError();
 		p->endResetModel();
 		reload = false;
+		rowCache = RowCache();
 		return true;
 	}
 
@@ -90,6 +103,12 @@ struct HistoryModel::Data {
 		_FillMrlStateFromRecord(state, fields, finder.record());
 		return true;
 	}
+	Mrl getMrl() const {
+		const auto id = loader.value(idx_mrl).toString();
+		const auto dev = loader.value(idx_device).toString();
+		return Mrl::fromUniqueId(id, dev);
+	}
+	RowCache rowCache;
 };
 
 struct SqlField {
@@ -197,7 +216,7 @@ const MrlState *HistoryModel::find(const Mrl &mrl) const {
 
 void HistoryModel::play(int row) {
 	if (0 <= row && row < d->rows && d->loader.seek(row))
-		emit playRequested(Mrl::fromString(d->loader.value("mrl").toString()));
+		emit playRequested(d->getMrl());
 }
 
 QVariant HistoryModel::data(const QModelIndex &index, int role) const {
@@ -210,13 +229,22 @@ QVariant HistoryModel::data(const QModelIndex &index, int role) const {
 		return QVariant();
 	if (!d->loader.seek(row))
 		return QVariant();
+	if (d->rowCache.row != row) {
+		d->rowCache.row = row;
+		d->rowCache.mrl = Mrl();
+	}
+	auto fillMrl = [this] () -> const Mrl& {
+		if (d->rowCache.mrl.isEmpty())
+			d->rowCache.mrl = d->getMrl();
+		return d->rowCache.mrl;
+	};
 	switch (role) {
 	case NameRole:
-		return Mrl::fromString(d->loader.value("mrl").toString()).displayName();
+		return fillMrl().displayName();
 	case LatestPlayRole:
-		return _DateTimeFromSql(d->loader.value("last_played_date_time").toLongLong());
+		return _DateTimeFromSql(d->loader.value(d->idx_last).toLongLong());
 	case LocationRole:
-		return d->loader.value("mrl");
+		return fillMrl().toString();
 	default:
 		return QVariant();
 	}

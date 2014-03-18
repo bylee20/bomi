@@ -577,9 +577,13 @@ struct MainWindow::Data {
 			return state->resume_position;
 		CheckDialog dlg(p, QDialogButtonBox::Yes | QDialogButtonBox::No);
 		dlg.setChecked(false);
-		dlg.setLabelText(tr("Do you want to resume the playback at the last played position?\n"
+		QString time = _MSecToString(state->resume_position, "h:mm:ss");
+		if (state->edition >= 0)
+			time += _L('[') % qApp->translate("PlayEngine", "Title %1").arg(state->edition) % _L(']');
+		dlg.setLabelText(tr("Do you want to resume the playback "
+			"at the last played position?\n"
 			"Played Date: %1\nStopped Position: %2\n")
-			.arg(state->last_played_date_time.toString(Qt::ISODate)).arg(_MSecToString(state->resume_position, "h:mm:ss")));
+			.arg(state->last_played_date_time.toString(Qt::ISODate)).arg(time));
 		dlg.setCheckBoxText(tr("Don't ask again"));
 		dlg.setWindowTitle(tr("Resume Playback"));
 		int resume = 0;
@@ -672,6 +676,7 @@ struct MainWindow::Data {
 		});
 		auto updateMrlState = [this] (const Mrl &mrl, bool end, int time) {
 			as.state.mrl = mrl.toUnique();
+			as.state.device = mrl.device();
 			as.state.last_played_date_time = QDateTime::currentDateTime();
 			if (end) {
 				as.state.resume_position = time;

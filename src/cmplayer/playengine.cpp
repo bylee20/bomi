@@ -256,12 +256,10 @@ struct PlayEngine::Data {
 		}
 		if (resume > 0)
 			opts.add("start", resume/1000.0);
-		if (edition >= 0) {
-			if (mrl.isDisc())
-				file = mrl.titleMrl(edition).toString();
-			else
-				opts.add("edition", edition);
-		}
+		if (mrl.isDisc())
+			file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
+		else if (edition >= 0)
+			opts.add("edition", edition);
 		opts.add("deinterlace", deint != DeintMode::None);
 		opts.add("volume", mpVolume());
 		opts.add("mute", muted);
@@ -1033,12 +1031,11 @@ void PlayEngine::exec() {
 			d->dvd = mrl.scheme() == _L("dvdnav");
 			const char *listprop = mrl.isDisc() ? "disc-titles" : "editions";
 			const char *itemprop = mrl.isDisc() ? "disc-title"  : "edition";
-			const QString tmp = mrl.isDisc() ? tr("Title %1") : tr("Edition %1");
-			EditionList titles;
+			EditionList editions;
 			auto add = [&] (int id) -> Edition& {
-				auto &title = titles[id];
+				auto &title = editions[id];
 				title.m_id = id;
-				title.m_name = tmp.arg(id+1);
+				title.m_name = tr("Title %1").arg(id+1);
 				return title;
 			};
 			const int list = d->getmpv<int>(listprop, 0);
@@ -1051,7 +1048,7 @@ void PlayEngine::exec() {
 			}
 			const auto name = d->getmpv<QString>("media-title");
 			const auto seekable = d->getmpv<bool>("seekable", false);
-			_PostEvent(this, StartPlayback, name, seekable, titles);
+			_PostEvent(this, StartPlayback, name, seekable, editions);
 			break;
 		} case MPV_EVENT_END_FILE: {
 			d->dvd = d->timing = false;

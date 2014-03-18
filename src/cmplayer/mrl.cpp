@@ -43,11 +43,23 @@ QString Mrl::suffix() const {
 QString Mrl::displayName() const {
 	if (isLocalFile())
 		return fileName();
+	QString disc;
 	if (isDvd())
-		return _L("DVD");
-	if (isBluray())
-		return _L("Blu-ray");
-	return location();
+		disc = qApp->translate("Mrl", "DVD");
+	else if (isBluray())
+		disc = qApp->translate("Mrl", "Blu-ray");
+	if (disc.isEmpty())
+		return location();
+	auto dev = device();
+	if (dev.isEmpty())
+		return disc;
+	if (!dev.startsWith(_L("/dev/"))) {
+		QRegularExpression regex("/([^/]+)/*$");
+		auto match = regex.match(dev);
+		if (match.hasMatch())
+			dev = match.captured(1);
+	}
+	return disc % _L(" (") % dev % _L(')');
 }
 
 bool Mrl::isImage() const { return Info::readableImageExt().contains(suffix(), Qt::CaseInsensitive); }
@@ -76,9 +88,9 @@ QString Mrl::device() const {
 
 Mrl Mrl::fromDisc(const QString &scheme, const QString &device, int title, bool hash) {
 	QString loc = scheme % _L("://");
-	if (title == 0)
+	if (scheme == _L("dvdnav") && title < 0)
 		loc += _L("menu");
-	else if (title > 0)
+	else if (title >= 0)
 		loc += QString::number(title);
 	Mrl mrl(loc % _L('/') % device);
 	if (hash)
@@ -198,11 +210,14 @@ Mrl Mrl::toUnique() const {
 	return mrl;
 }
 
-Mrl Mrl::fromUniqueId(const QString &id) {
-	Mrl mrl(id);
+Mrl Mrl::fromUniqueId(const QString &id, const QString &device) {
+	Mrl mrl;
+	mrl.m_loc = id;
 	if (!mrl.isDisc())
 		return mrl;
 	mrl.m_hash = mrl.device().toLatin1();
 	mrl.m_loc = mrl.scheme() % _L("://");
+	if (!device.isEmpty())
+		mrl.m_loc += _L('/') % device;
 	return mrl;
 }
