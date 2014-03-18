@@ -138,7 +138,13 @@ void AppX11::setAlwaysOnTop(QWidget *widget, bool onTop) {
 }
 
 QStringList AppX11::devices() const {
-	return QStringList();
+	static const QStringList filter = QStringList() << _L("sr*")
+		<< _L("sg*") << _L("scd*") << _L("dvd*") << _L("cd*");
+	QDir dir("/dev");
+	QStringList devices;
+	for (auto &dev : dir.entryList(filter, QDir::System))
+		devices.append(_L("/dev/") % dev);
+	return devices;
 }
 
 void AppX11::setWmName(QWidget *widget, const QString &name) {
