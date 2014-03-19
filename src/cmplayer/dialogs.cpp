@@ -8,65 +8,54 @@
 #include "info.hpp"
 #include "appstate.hpp"
 
-struct CheckDialog::Data {
-	QCheckBox *check;
-	QLabel *label;
-	QDialogButtonBox *button;
-	QDialogButtonBox::StandardButton clicked;
-};
-
-CheckDialog::CheckDialog(QWidget *parent, QDialogButtonBox::StandardButtons buttons)
-: QDialog(parent), d(new Data) {
-	d->check = new QCheckBox(this);
-	d->label = new QLabel(this);
-	d->button = new QDialogButtonBox(this);
-	d->button->setCenterButtons(true);
-	d->clicked = QDialogButtonBox::NoButton;
-
-	auto vbox = new QVBoxLayout(this);
-	vbox->addWidget(d->label);
-	vbox->addWidget(d->check);
-	auto hbox = new QHBoxLayout;
-	hbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
-	hbox->addWidget(d->button);
-	hbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
-	vbox->addLayout(hbox);
-	connect(d->button, SIGNAL(clicked(QAbstractButton*)), this, SLOT(onButtonClicked(QAbstractButton*)));
-	setButtonBox(buttons);
-}
-
-CheckDialog::~CheckDialog() {
-	delete d;
-}
-
-void CheckDialog::setLabelText(const QString &text) {
-	d->label->setText(text);
-}
-
-void CheckDialog::setCheckBoxText(const QString &text) {
-	d->check->setText(text);
-}
-
-void CheckDialog::setChecked(bool checked) {
-	d->check->setChecked(checked);
-}
-
-bool CheckDialog::isChecked() const {
-	return d->check->isChecked();
-}
-
-void CheckDialog::setButtonBox(QDialogButtonBox::StandardButtons buttons) {
-	d->button->setStandardButtons(buttons);
-}
-
-int CheckDialog::exec() {
-	QDialog::exec();
-	return d->clicked;
-}
-
-void CheckDialog::onButtonClicked(QAbstractButton *button) {
-	d->clicked = d->button->standardButton(button);
-	accept();
+QString BBox::buttonText(Button button, Layout layout) {
+	const auto gnome = (layout == GnomeLayout);
+	switch (button) {
+	case QDialogButtonBox::Ok:
+		return gnome ? tr("&OK") : tr("OK");
+	case QDialogButtonBox::Save:
+		return gnome ? tr("&Save") : tr("Save");
+	case QDialogButtonBox::Open:
+		return tr("Open");
+	case QDialogButtonBox::Cancel:
+		return gnome ? tr("&Cancel") : tr("Cancel");
+	case QDialogButtonBox::Close:
+		return gnome ? tr("&Close") : tr("Close");
+	case QDialogButtonBox::Apply:
+		return tr("Apply");
+	case QDialogButtonBox::Reset:
+		return tr("Reset");
+	case QDialogButtonBox::Help:
+		return tr("Help");
+	case QDialogButtonBox::Discard:
+		if (layout == MacLayout)
+			return tr("Don't Save");
+		if (layout == GnomeLayout)
+			return tr("Close without Saving");
+		return tr("Discard");
+	case QDialogButtonBox::Yes:
+		return tr("&Yes");
+	case QDialogButtonBox::YesToAll:
+		return tr("Yes to &All");
+	case QDialogButtonBox::No:
+		return tr("&No");
+	case QDialogButtonBox::NoToAll:
+		return tr("N&o to All");
+	case QDialogButtonBox::SaveAll:
+		return tr("Save All");
+	case QDialogButtonBox::Abort:
+		return tr("Abort");
+	case QDialogButtonBox::Retry:
+		return tr("Retry");
+	case QDialogButtonBox::Ignore:
+		return tr("Ignore");
+	case QDialogButtonBox::RestoreDefaults:
+		return tr("Restore Defaults");
+	case QDialogButtonBox::NoButton:
+		return QString();
+	}
+	Q_ASSERT(false);
+	return QString();
 }
 
 /*******************************************************************************************/

@@ -33,7 +33,6 @@ private:
 };
 
 // from clementine's preferences dialog
-typedef QDialogButtonBox DBB;
 
 static const int CategoryRole = Qt::UserRole + 1;
 static const int WidgetRole = Qt::UserRole + CategoryRole;
@@ -452,13 +451,13 @@ PrefDialog::PrefDialog(QWidget *parent)
 	connect(d->ui.sharpen_kern_n, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
 	connect(d->ui.sharpen_kern_d, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
 
-	connect(d->ui.dbb, &DBB::clicked, [this] (QAbstractButton *button) {
+	connect(d->ui.dbb, &BBox::clicked, [this] (QAbstractButton *button) {
 		switch (d->ui.dbb->standardButton(button)) {
-		case DBB::Ok:		hide();
-		case DBB::Apply:	emit applyRequested();		break;
-		case DBB::Cancel:	hide();
-		case DBB::Reset:	emit resetRequested();		break;
-		case DBB::RestoreDefaults:	set(Pref());		break;
+		case BBox::Ok:		hide();
+		case BBox::Apply:	emit applyRequested();		break;
+		case BBox::Cancel:	hide();
+		case BBox::Reset:	emit resetRequested();		break;
+		case BBox::RestoreDefaults:	set(Pref());		break;
 		default:										break;
 		}
 	});
@@ -505,11 +504,6 @@ void PrefDialog::retranslate() {
 	d->mdl->retranslate(tr("Middle Click"));
 	d->whl->retranslate(tr("Wheel Scroll"));
 	d->ui.sub_ext->setItemText(0, tr("All"));
-	d->ui.dbb->button(DBB::Ok)->setText(tr("Ok"));
-	d->ui.dbb->button(DBB::Cancel)->setText(tr("Cancel"));
-	d->ui.dbb->button(DBB::Apply)->setText(tr("Apply"));
-	d->ui.dbb->button(DBB::RestoreDefaults)->setText(tr("Restore Defaults"));
-	d->ui.dbb->button(DBB::Reset)->setText(tr("Reset"));
 	d->properties.setList(MrlState::restorableProperties());
 }
 

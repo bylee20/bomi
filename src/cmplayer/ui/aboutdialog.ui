@@ -53,7 +53,7 @@
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap resource="../rsclist.qrc">:/img/cmplayer-logo.png</pixmap>
+            <pixmap>:/img/cmplayer-logo.png</pixmap>
            </property>
            <property name="scaledContents">
             <bool>true</bool>
@@ -272,7 +272,7 @@ Project page: %3</string>
     </widget>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
+    <widget class="BBox" name="buttonBox">
      <property name="standardButtons">
       <set>QDialogButtonBox::Close</set>
      </property>
@@ -283,15 +283,20 @@ Project page: %3</string>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>BBox</class>
+   <extends>QDialogButtonBox</extends>
+   <header>dialogs.hpp</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>buttonBox</tabstop>
   <tabstop>tab</tabstop>
   <tabstop>view_gpl</tabstop>
   <tabstop>view_mpl</tabstop>
  </tabstops>
- <resources>
-  <include location="../rsclist.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>buttonBox</sender>

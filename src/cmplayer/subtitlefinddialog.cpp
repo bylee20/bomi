@@ -1,4 +1,5 @@
 #include "subtitlefinddialog.hpp"
+#include "dialogs.hpp"
 #include "global.hpp"
 #include "info.hpp"
 #include "appstate.hpp"
@@ -125,13 +126,14 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 		auto file = QFileInfo(d->ui.file->text()).dir().absoluteFilePath(index.data(FileNameRole).toString());
 		const QFileInfo info(file);
 		if (info.exists()) {
-			QMessageBox mbox(QMessageBox::Question, tr("Find Subtitle"), tr("A file with the same name already exists. Do you want overwrite it?"), QMessageBox::NoButton, this);
-			mbox.addButton(tr("Overwrite"), QMessageBox::AcceptRole);
-			mbox.addButton(tr("Save as..."), QMessageBox::ActionRole);
-			mbox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+			MBox mbox(this, MBox::Icon::Question, tr("Find Subtitle")
+				, tr("A file with the same name already exists. Do you want overwrite it?"));
+			mbox.addButton(tr("Overwrite"), BBox::AcceptRole);
+			mbox.addButton(tr("Save as..."), BBox::ActionRole);
+			mbox.addButton(BBox::Cancel);
 			mbox.exec();
-			switch (mbox.buttonRole(mbox.clickedButton())) {
-			case QMessageBox::ActionRole: {
+			switch (mbox.clickedRole()) {
+			case BBox::ActionRole: {
 				const QString suffix = _L('.') % info.suffix();
 				file = _GetSaveFileName(this, tr("Save As..."), file, tr("Subtitle Files") % _L(" (*") % suffix % _L(')'));
 				if (file.isEmpty())
@@ -139,7 +141,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 				if (!file.endsWith(suffix))
 					file += suffix;
 				file = QFileInfo(file).absoluteFilePath();
-			} case QMessageBox::AcceptRole:
+			} case BBox::AcceptRole:
 				break;
 			default:
 				return;

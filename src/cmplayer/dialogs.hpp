@@ -3,23 +3,94 @@
 
 #include "stdafx.hpp"
 
-class CheckDialog : public QDialog {
+class BBox : public QDialogButtonBox {
 	Q_OBJECT
 public:
-	CheckDialog(QWidget *parent = 0, QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::Ok);
-	~CheckDialog();
-	void setButtonBox(QDialogButtonBox::StandardButtons buttons);
-	void setLabelText(const QString &text);
-	void setCheckBoxText(const QString &text);
-	void setChecked(bool checked);
-	bool isChecked() const;
-public slots:
-	int exec();
-private slots:
-	void onButtonClicked(QAbstractButton *button);
+	using Role = QDialogButtonBox::ButtonRole;
+	using Button = QDialogButtonBox::StandardButton;
+	using Layout = QDialogButtonBox::ButtonLayout;
+	BBox(QWidget *parent = nullptr): QDialogButtonBox(parent) {
+		m_layout = buttonLayout(this);
+	}
+	void setStandardButtons(StandardButtons buttons) {
+		uint flags = buttons;
+		for (int i=0; i<32 && flags; ++i) {
+			const Button button = Button(1 << i);
+			if (flags & button) {
+				addButton(button);
+				flags &= ~button;
+			}
+		}
+	}
+	void addButton(StandardButton button) {
+		QDialogButtonBox::addButton(button)->setText(buttonText(button, m_layout));
+	}
+	static QString buttonText(Button button, Layout layout);
+	static Layout buttonLayout(QWidget *w) {
+		return Layout(w->style()->styleHint(QStyle::SH_DialogButtonLayout, 0, w));
+	}
 private:
-	struct Data;
-	Data *d = nullptr;
+	Layout m_layout;
+};
+
+class MBox : public QObject {
+	Q_OBJECT
+public:
+	using Role = BBox::Role;
+	using Button = BBox::Button;
+	using Icon = QMessageBox::Icon;
+	MBox(QWidget *parent = nullptr): QObject(parent) {
+		m_mbox = new QMessageBox(parent);
+		m_layout = BBox::Layout(m_mbox->style()->styleHint(QStyle::SH_DialogButtonLayout, 0, m_mbox));
+	}
+	MBox(QWidget *parent, Icon icon, const QString &title
+		, const QString &text = QString()
+		, std::initializer_list<Button> &&buttons = {}
+		, Button def = BBox::NoButton)
+	: MBox(parent) {
+		addButtons(std::forward<std::initializer_list<Button>>(buttons));
+		setTitle(title);
+		setText(text);
+		setDefaultButton(def);
+		setIcon(icon);
+	}
+	~MBox() { delete m_mbox; }
+	void addButton(const QString &text, Role role) {
+		m_mbox->addButton(text, (QMessageBox::ButtonRole)role);
+	}
+	void addButton(Button button) {
+		m_mbox->addButton((QMessageBox::StandardButton)button)->setText(BBox::buttonText(button, m_layout));
+	}
+	void addButtons(std::initializer_list<Button> &&buttons) {
+		for (auto b : buttons)
+			addButton(b);
+	}
+
+	int exec() { return m_mbox->exec(); }
+	QMessageBox *mbox() const { return m_mbox; }
+	QCheckBox *checkBox() const {
+		if (!m_mbox->checkBox())
+			m_mbox->setCheckBox(new QCheckBox);
+		return m_mbox->checkBox();
+	}
+	bool isChecked() const { return m_mbox->checkBox() && m_mbox->checkBox()->isCheckable(); }
+	void setInformativeText(const QString &text) { m_mbox->setInformativeText(text); }
+	void setDetailedText(const QString &text) { m_mbox->setDetailedText(text); }
+	void setDefaultButton(Button button) { m_mbox->setDefaultButton((QMessageBox::StandardButton)button); }
+	void setIcon(Icon icon) { m_mbox->setIcon(icon); }
+	void setTitle(const QString &title) { m_mbox->setWindowTitle(title); }
+	void setText(const QString &text) { m_mbox->setText(text); }
+#define DEC_POPUP(func, icon) \
+	static int func(QWidget *parent, const QString &title, const QString &text, std::initializer_list<Button> &&buttons, Button def = BBox::NoButton) { \
+		MBox mbox(parent, icon, title, text, std::forward<std::initializer_list<Button>>(buttons), def); return mbox.exec(); }
+	DEC_POPUP(warn, Icon::Warning)
+	DEC_POPUP(info, Icon::Information)
+#undef DEC_POPUP
+	Role role(QAbstractButton *button) const { return (Role)m_mbox->buttonRole(button); }
+	Role clickedRole() const { return role(m_mbox->clickedButton()); }
+private:
+	QMessageBox *m_mbox = nullptr;
+	BBox::Layout m_layout;
 };
 
 class GetShortcutDialog : public QDialog {

@@ -48,7 +48,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../rsclist.qrc">
+        <iconset>
          <normaloff>:/img/document-open-folder.png</normaloff>:/img/document-open-folder.png</iconset>
        </property>
       </widget>
@@ -62,7 +62,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset resource="../rsclist.qrc">
+        <iconset>
          <normaloff>:/img/media-optical.png</normaloff>:/img/media-optical.png</iconset>
        </property>
       </widget>
@@ -85,7 +85,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QDialogButtonBox" name="buttonBox">
+      <widget class="BBox" name="buttonBox">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -98,9 +98,14 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rsclist.qrc"/>
- </resources>
+ <customwidgets>
+  <customwidget>
+   <class>BBox</class>
+   <extends>QDialogButtonBox</extends>
+   <header>dialogs.hpp</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
  <connections>
   <connection>
    <sender>buttonBox</sender>

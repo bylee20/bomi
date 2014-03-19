@@ -29,7 +29,7 @@
         <string notr="true"/>
        </property>
        <property name="icon">
-        <iconset resource="../rsclist.qrc">
+        <iconset>
          <normaloff>:/img/document-open-folder.png</normaloff>:/img/document-open-folder.png</iconset>
        </property>
       </widget>
@@ -65,7 +65,7 @@
     <widget class="QListWidget" name="list"/>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="dbb">
+    <widget class="BBox" name="dbb">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
@@ -76,9 +76,14 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../rsclist.qrc"/>
- </resources>
+ <customwidgets>
+  <customwidget>
+   <class>BBox</class>
+   <extends>QDialogButtonBox</extends>
+   <header>dialogs.hpp</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
  <connections>
   <connection>
    <sender>dbb</sender>

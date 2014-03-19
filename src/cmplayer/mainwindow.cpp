@@ -575,23 +575,20 @@ struct MainWindow::Data {
 		*edition = state->edition;
 		if (!preferences.ask_record_found)
 			return state->resume_position;
-		CheckDialog dlg(p, QDialogButtonBox::Yes | QDialogButtonBox::No);
-		dlg.setChecked(false);
+		MBox mbox(p, MBox::Icon::Question, tr("Resume Playback"));
+		mbox.setText(tr("Do you want to resume the playback at the last played position?"));
 		QString time = _MSecToString(state->resume_position, "h:mm:ss");
 		if (state->edition >= 0)
 			time += _L('[') % tr("Title %1").arg(state->edition) % _L(']');
-		dlg.setLabelText(tr("Do you want to resume the playback "
-			"at the last played position?\n"
-			"Played Date: %1\nStopped Position: %2\n")
-			.arg(state->last_played_date_time.toString(Qt::ISODate)).arg(time));
-		dlg.setCheckBoxText(tr("Don't ask again"));
-		dlg.setWindowTitle(tr("Resume Playback"));
+		mbox.setInformativeText(tr("Played Date: %1\nStopped Position: %2").arg(state->last_played_date_time.toString(Qt::ISODate)).arg(time));
+		mbox.checkBox()->setText(tr("Don't ask again"));
+		mbox.addButtons({BBox::Yes, BBox::No});
 		int resume = 0;
-		if (dlg.exec() == QDialogButtonBox::Yes)
+		if (mbox.exec() == BBox::Yes)
 			resume = state->resume_position;
 		else
 			*edition = -1;
-		if (_Change(preferences.ask_record_found, !dlg.isChecked()))
+		if (_Change(preferences.ask_record_found, !mbox.isChecked()))
 			preferences.save();
 		return resume;
 	}
@@ -1302,9 +1299,9 @@ void MainWindow::connectMenus() {
 	});
 	connect(tool["auto-shutdown"], &QAction::toggled, this, [this] (bool on) {
 		if (on) {
-			if (QMessageBox::warning(nullptr, tr("Auto-shutdown")
+			if (MBox::warn(this, tr("Auto-shutdown")
 					, tr("The system will shut down when the play list has finished.")
-					, QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Cancel) {
+					, {BBox::Ok, BBox::Cancel}) == BBox::Cancel) {
 				d->menu("tool")["auto-shutdown"]->setChecked(false);
 			} else
 				showMessage(tr("The system will shut down when the play list has finished."));
@@ -1850,15 +1847,17 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 		hide();
 		auto &as = AppState::get();
 		if (as.ask_system_tray) {
-			CheckDialog dlg(this);
-			dlg.setChecked(true);
-			dlg.setLabelText(tr("CMPlayer will be running in the system tray "
-					"when the window closed.<br>"
-					"You can change this behavior in the preferences.<br>"
+			MBox mbox(this);
+			mbox.setIcon(MBox::Icon::Information);
+			mbox.setTitle(tr("System Tray Icon"));
+			mbox.setText(tr("CMPlayer will be running in "
+				"the system tray when the window closed."));
+			mbox.setInformativeText(tr("You can change this behavior in the preferences. "
 					"If you want to exit CMPlayer, please use 'Exit' menu."));
-			dlg.setCheckBoxText(tr("Do not display this message again"));
-			dlg.exec();
-			as.ask_system_tray = !dlg.isChecked();
+			mbox.addButton(BBox::Ok);
+			mbox.checkBox()->setText(tr("Do not display this message again"));
+			mbox.exec();
+			as.ask_system_tray = !mbox.checkBox()->isChecked();
 		}
 		event->ignore();
 	} else {

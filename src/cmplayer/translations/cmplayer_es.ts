@@ -51,7 +51,7 @@ Página del proyecto:%3</translation>
         <translation>Ver todo el texto de la MPL</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="370"/>
+        <location filename="../dialogs.cpp" line="359"/>
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
@@ -92,6 +92,129 @@ Página del proyecto:%3</translation>
         <location filename="../app.cpp" line="116"/>
         <source>Turn on options for debugging.</source>
         <translation>Activar las opciones del registro de depuración.</translation>
+    </message>
+</context>
+<context>
+    <name>BBox</name>
+    <message>
+        <location filename="../dialogs.cpp" line="15"/>
+        <source>&amp;OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="15"/>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="17"/>
+        <source>&amp;Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="17"/>
+        <source>Save</source>
+        <translation type="unfinished">Guardar</translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="19"/>
+        <source>Open</source>
+        <translation type="unfinished">Abrir</translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="21"/>
+        <source>&amp;Cancel</source>
+        <translation type="unfinished">&amp;Cancelar</translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="21"/>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancelar</translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="23"/>
+        <source>&amp;Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="23"/>
+        <source>Close</source>
+        <translation type="unfinished">Cerrar</translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="25"/>
+        <source>Apply</source>
+        <translation type="unfinished">Aplicar</translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="27"/>
+        <source>Reset</source>
+        <translation type="unfinished">Reiniciar</translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="29"/>
+        <source>Help</source>
+        <translation type="unfinished">Ayuda</translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="32"/>
+        <source>Don&apos;t Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="34"/>
+        <source>Close without Saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="35"/>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="37"/>
+        <source>&amp;Yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="39"/>
+        <source>Yes to &amp;All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="41"/>
+        <source>&amp;No</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="43"/>
+        <source>N&amp;o to All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="45"/>
+        <source>Save All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="47"/>
+        <source>Abort</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="49"/>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="51"/>
+        <source>Ignore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../dialogs.cpp" line="53"/>
+        <source>Restore Defaults</source>
+        <translation type="unfinished">Restaurar por defecto</translation>
     </message>
 </context>
 <context>
@@ -867,22 +990,22 @@ Click derecho: %2</translation>
 <context>
     <name>GetShortcutDialog</name>
     <message>
-        <location filename="../dialogs.cpp" line="86"/>
+        <location filename="../dialogs.cpp" line="75"/>
         <source>Get Shortcut</source>
         <translation>Obtener acceso directo</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="90"/>
+        <location filename="../dialogs.cpp" line="79"/>
         <source>Erase</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="93"/>
+        <location filename="../dialogs.cpp" line="82"/>
         <source>Ok</source>
         <translation>Acepar</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="95"/>
+        <location filename="../dialogs.cpp" line="84"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
@@ -890,17 +1013,17 @@ Click derecho: %2</translation>
 <context>
     <name>GetUrlDialog</name>
     <message>
-        <location filename="../dialogs.cpp" line="258"/>
+        <location filename="../dialogs.cpp" line="247"/>
         <source>URL</source>
         <translation>URL</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="262"/>
+        <location filename="../dialogs.cpp" line="251"/>
         <source>Encoding for Playlist</source>
         <translation>Codificación para la lista de reproducción</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="279"/>
+        <location filename="../dialogs.cpp" line="268"/>
         <source>Open URL</source>
         <translation>Abrir URL</translation>
     </message>
@@ -968,68 +1091,82 @@ Click derecho: %2</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../mainwindow.cpp" line="915"/>
-        <location filename="../mainwindow.cpp" line="1218"/>
-        <location filename="../mainwindow.cpp" line="1236"/>
+        <location filename="../mainwindow.cpp" line="912"/>
+        <location filename="../mainwindow.cpp" line="1215"/>
+        <location filename="../mainwindow.cpp" line="1233"/>
         <source>Open File</source>
         <translation>Abrir archivo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1069"/>
+        <location filename="../mainwindow.cpp" line="1066"/>
         <source>Adjust Video Color</source>
         <translation>Ajustar color del vídeo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1157"/>
+        <location filename="../mainwindow.cpp" line="1154"/>
         <source>Open Subtitle</source>
         <translation>Abrir Subtítulo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="988"/>
+        <location filename="../mainwindow.cpp" line="985"/>
         <source>Seeking</source>
         <translation>Desplazando</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="621"/>
+        <source>Resume playback</source>
+        <translation type="obsolete">Continuar reproducción</translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="579"/>
+        <source>Do you want to resume the playback at the last played position?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="583"/>
+        <source>Played Date: %1
+Stopped Position: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="618"/>
         <source>Error!
 Cannot open the media.</source>
         <translation>¡Error!
 No se puede abrir el medio.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="754"/>
+        <location filename="../mainwindow.cpp" line="751"/>
         <source>Loading ...
 Please wait for a while.</source>
         <translation>Cargando ...
 Por favor espere un momento.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="988"/>
+        <location filename="../mainwindow.cpp" line="985"/>
         <source>sec</source>
         <translation>seg</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1138"/>
+        <location filename="../mainwindow.cpp" line="1135"/>
         <source>Select All Subtitles</source>
         <translation>Seleccionar todos los subtítulos</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1138"/>
+        <location filename="../mainwindow.cpp" line="1135"/>
         <source>%1 Subtitle(s)</source>
         <translation>%1 Subtítulo(s)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1312"/>
+        <location filename="../mainwindow.cpp" line="1309"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>El apagado automático está cancelado.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="583"/>
         <source>Do you want to resume the playback at the last played position?
 Played Date: %1
 Stopped Position: %2
 </source>
-        <translation>¿Desea continuar la reproducción desde el último punto reproducido?
+        <translation type="vanished">¿Desea continuar la reproducción desde el último punto reproducido?
 Fecha de reproducción: %1
 Parado en la posición: %2
 </translation>
@@ -1040,139 +1177,153 @@ Parado en la posición: %2
         <translation type="unfinished">Título %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="587"/>
+        <location filename="../mainwindow.cpp" line="584"/>
         <source>Don&apos;t ask again</source>
         <translation>No preguntar de nuevo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="588"/>
+        <location filename="../mainwindow.cpp" line="578"/>
         <source>Resume Playback</source>
         <translation>Continuar la reproducción</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="626"/>
+        <location filename="../mainwindow.cpp" line="623"/>
         <source>Pause</source>
         <translation>Pausa</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="629"/>
+        <location filename="../mainwindow.cpp" line="626"/>
         <source>Play</source>
         <translation>Reproducir</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="952"/>
+        <location filename="../mainwindow.cpp" line="949"/>
         <source>Select DVD device</source>
         <translation>Seleccionar unidad DVD</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="956"/>
+        <location filename="../mainwindow.cpp" line="953"/>
         <source>Select Blu-ray device</source>
         <translation>Seleccionar unidad Blu-ray</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1001"/>
+        <location filename="../mainwindow.cpp" line="998"/>
         <source>Current Title</source>
         <translation>Título actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1147"/>
+        <location filename="../mainwindow.cpp" line="1144"/>
         <source>Hide Subtitles</source>
         <translation>Esconder subtítulos</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1149"/>
+        <location filename="../mainwindow.cpp" line="1146"/>
         <source>Show Subtitles</source>
         <translation>Mostrar subtítulos</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1169"/>
-        <location filename="../mainwindow.cpp" line="1180"/>
+        <location filename="../mainwindow.cpp" line="1166"/>
+        <location filename="../mainwindow.cpp" line="1177"/>
         <source>Selected Subtitle</source>
         <translation>Subtítulo seleccionado</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1225"/>
+        <location filename="../mainwindow.cpp" line="1222"/>
         <source>Save File</source>
         <translation>Guardar archivo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1288"/>
+        <location filename="../mainwindow.cpp" line="1285"/>
         <source>Downloaded</source>
         <translation>Descargado</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1299"/>
+        <location filename="../mainwindow.cpp" line="1296"/>
         <source>Exit CMPlayer when the playlist has finished.</source>
         <translation>Salir de CMPlayer cuando la lista de reproducción haya terminado.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1299"/>
+        <location filename="../mainwindow.cpp" line="1296"/>
         <source>Auto-exit is canceled.</source>
         <translation>La salida automática está cancelada.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1305"/>
+        <location filename="../mainwindow.cpp" line="1302"/>
         <source>Auto-shutdown</source>
         <translation>Apagar automáticamente</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1306"/>
-        <location filename="../mainwindow.cpp" line="1310"/>
+        <location filename="../mainwindow.cpp" line="1303"/>
+        <location filename="../mainwindow.cpp" line="1307"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>El equipo se apagará cuando la lista de reproducción haya terminado.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1075"/>
+        <location filename="../mainwindow.cpp" line="1852"/>
+        <source>System Tray Icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="1853"/>
+        <source>CMPlayer will be running in the system tray when the window closed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="1855"/>
+        <source>You can change this behavior in the preferences. If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../mainwindow.cpp" line="1072"/>
         <source>Current Audio Track</source>
         <translation>Pista de Audio Actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1018"/>
+        <location filename="../mainwindow.cpp" line="1015"/>
         <source>Current Video Track</source>
         <translation>Pista de vídeo actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1004"/>
+        <location filename="../mainwindow.cpp" line="1001"/>
         <source>Current Chapter</source>
         <translation>Capítulo actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="973"/>
+        <location filename="../mainwindow.cpp" line="970"/>
         <source>Set A to %1</source>
         <translation>Seleccionar A desde %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="976"/>
+        <location filename="../mainwindow.cpp" line="973"/>
         <source>Range is too short!</source>
         <translation>¡El rango es muy corto!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="977"/>
+        <location filename="../mainwindow.cpp" line="974"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation>Seleccionar B hasta %1. Inicia para repetir!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="979"/>
+        <location filename="../mainwindow.cpp" line="976"/>
         <source>Quit repeating</source>
         <translation>Salir del bucle</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="980"/>
+        <location filename="../mainwindow.cpp" line="977"/>
         <source>Repeat current subtitle</source>
         <translation>Repetir subtítulo actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="970"/>
+        <location filename="../mainwindow.cpp" line="967"/>
         <source>A-B Repeat</source>
         <translation>Repetir A-B</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1855"/>
         <source>CMPlayer will be running in the system tray when the window closed.&lt;br&gt;You can change this behavior in the preferences.&lt;br&gt;If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
-        <translation>CMPlayer seguirá funcionando en la bandeja de sistema cuando la ventana se haya cerrado.&lt;br&gt;Puedes cambiar este comportamiento en las preferencias.&lt;br&gt;Si deseas salir de CMPlayer, por favor usa el menú &apos;Salir&apos;.</translation>
+        <translation type="vanished">CMPlayer seguirá funcionando en la bandeja de sistema cuando la ventana se haya cerrado.&lt;br&gt;Puedes cambiar este comportamiento en las preferencias.&lt;br&gt;Si deseas salir de CMPlayer, por favor usa el menú &apos;Salir&apos;.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1859"/>
+        <location filename="../mainwindow.cpp" line="1858"/>
         <source>Do not display this message again</source>
         <translation>No mostrar este mensaje de nuevo</translation>
     </message>
@@ -1342,27 +1493,27 @@ Parado en la posición: %2
     </message>
     <message>
         <location filename="../ui/opendvddialog.ui" line="59"/>
-        <location filename="../dialogs.cpp" line="410"/>
+        <location filename="../dialogs.cpp" line="399"/>
         <source>Open ISO file</source>
         <translation>Abrir archivo ISO</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="405"/>
+        <location filename="../dialogs.cpp" line="394"/>
         <source>Open device or folder</source>
         <translation>Abrir unidad o carpeta</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="410"/>
+        <location filename="../dialogs.cpp" line="399"/>
         <source>ISO Image Files</source>
         <translation>Archivo ISO</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="433"/>
+        <location filename="../dialogs.cpp" line="422"/>
         <source>Selected device is available.</source>
         <translation>La unidad seleccionada está disponible.</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="434"/>
+        <location filename="../dialogs.cpp" line="423"/>
         <source>Selected device doesn&apos;t exists.</source>
         <translation>La unidad seleccionada no existe.</translation>
     </message>
@@ -1562,7 +1713,7 @@ Parado en la posición: %2
 <context>
     <name>PrefDialog</name>
     <message>
-        <location filename="../prefdialog.cpp" line="495"/>
+        <location filename="../prefdialog.cpp" line="494"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
@@ -1644,7 +1795,7 @@ Parado en la posición: %2
         <translation>Ganancia Máxima</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="319"/>
+        <location filename="../prefdialog.cpp" line="318"/>
         <source>Video filter</source>
         <translation>Filtros de vídeo</translation>
     </message>
@@ -1725,7 +1876,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="647"/>
         <location filename="../ui/prefdialog.ui" line="3037"/>
-        <location filename="../prefdialog.cpp" line="325"/>
+        <location filename="../prefdialog.cpp" line="324"/>
         <source>Subtitle</source>
         <translation>Subtítulos</translation>
     </message>
@@ -1762,7 +1913,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="657"/>
         <location filename="../ui/prefdialog.ui" line="2612"/>
-        <location filename="../prefdialog.cpp" line="326"/>
+        <location filename="../prefdialog.cpp" line="325"/>
         <source>Load</source>
         <translation>Cargar</translation>
     </message>
@@ -1914,12 +2065,12 @@ Parado en la posición: %2
         <translation>miliseg</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="357"/>
+        <location filename="../prefdialog.cpp" line="356"/>
         <source>For S/W decoding</source>
         <translation>Para decodificar por software</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="358"/>
+        <location filename="../prefdialog.cpp" line="357"/>
         <source>For H/W decoding</source>
         <translation>Para decodificar por hardware</translation>
     </message>
@@ -2163,7 +2314,7 @@ Por ejemplo: English, Korean</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3005"/>
-        <location filename="../prefdialog.cpp" line="310"/>
+        <location filename="../prefdialog.cpp" line="309"/>
         <source>Playback</source>
         <translation>Lista de Reproducción</translation>
     </message>
@@ -2174,7 +2325,7 @@ Por ejemplo: English, Korean</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3093"/>
-        <location filename="../prefdialog.cpp" line="321"/>
+        <location filename="../prefdialog.cpp" line="320"/>
         <source>Audio</source>
         <translation>Audio</translation>
     </message>
@@ -2215,42 +2366,42 @@ Por ejemplo: English, Korean</translation>
         <translation>Tono</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="308"/>
+        <location filename="../prefdialog.cpp" line="307"/>
         <source>General</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="309"/>
+        <location filename="../prefdialog.cpp" line="308"/>
         <source>Open</source>
         <translation>Abrir</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="327"/>
+        <location filename="../prefdialog.cpp" line="326"/>
         <source>Appearance</source>
         <translation>Apariencia</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="328"/>
+        <location filename="../prefdialog.cpp" line="327"/>
         <source>Priority</source>
         <translation>Prioridad</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="330"/>
+        <location filename="../prefdialog.cpp" line="329"/>
         <source>User interface</source>
         <translation>Interfaz de usuario</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="331"/>
+        <location filename="../prefdialog.cpp" line="330"/>
         <source>Keyboard shortcuts</source>
         <translation>Atajos del teclado</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="332"/>
+        <location filename="../prefdialog.cpp" line="331"/>
         <source>Mouse actions</source>
         <translation>Acciones del ratón</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="333"/>
+        <location filename="../prefdialog.cpp" line="332"/>
         <source>Control step</source>
         <translation>Pasos de control</translation>
     </message>
@@ -2260,120 +2411,115 @@ Por ejemplo: English, Korean</translation>
         <translation>Estilo</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="311"/>
+        <location filename="../prefdialog.cpp" line="310"/>
         <source>Behaviour</source>
         <translation>Comportamiento</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="312"/>
+        <location filename="../prefdialog.cpp" line="311"/>
         <source>Look</source>
         <translation>Vista</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="313"/>
+        <location filename="../prefdialog.cpp" line="312"/>
         <source>Cache</source>
         <translation>Caché</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="316"/>
+        <location filename="../prefdialog.cpp" line="315"/>
         <source>Video</source>
         <translation>Vídeo</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="317"/>
+        <location filename="../prefdialog.cpp" line="316"/>
         <source>Hardware acceleration</source>
         <translation>Aceleración por Hardware</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="318"/>
+        <location filename="../prefdialog.cpp" line="317"/>
         <source>Deinterlace</source>
         <translation>Desentrelazado</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="322"/>
+        <location filename="../prefdialog.cpp" line="321"/>
         <source>Sound</source>
         <translation>Sonido</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="323"/>
+        <location filename="../prefdialog.cpp" line="322"/>
         <source>Audio filter</source>
         <translation>Filtros de audio</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="335"/>
+        <location filename="../prefdialog.cpp" line="334"/>
         <source>Open from file manager</source>
         <translation>Abrir archivo desde el gestor de archivos</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="336"/>
+        <location filename="../prefdialog.cpp" line="335"/>
         <source>Open by drag-and-drop</source>
         <translation>Abrir por arrastrar-y-soltar</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="267"/>
+        <location filename="../prefdialog.cpp" line="266"/>
         <source>Not supported</source>
         <translation>No soportado</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="466"/>
+        <location filename="../prefdialog.cpp" line="465"/>
         <source>CMPlayer</source>
         <translation>CMPlayer</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="467"/>
+        <location filename="../prefdialog.cpp" line="466"/>
         <source>Movist</source>
         <translation>Movist</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="504"/>
+        <location filename="../prefdialog.cpp" line="503"/>
         <source>Double Click</source>
         <translation>Doble clic</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="505"/>
+        <location filename="../prefdialog.cpp" line="504"/>
         <source>Middle Click</source>
         <translation>Clic del botón central</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="506"/>
+        <location filename="../prefdialog.cpp" line="505"/>
         <source>Wheel Scroll</source>
         <translation>Rueda de desplazamiento</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="507"/>
+        <location filename="../prefdialog.cpp" line="506"/>
         <source>All</source>
         <translation>Todo</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="508"/>
         <source>Ok</source>
-        <translation>Acepar</translation>
+        <translation type="vanished">Acepar</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="509"/>
         <source>Cancel</source>
-        <translation>Cancelar</translation>
+        <translation type="vanished">Cancelar</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="510"/>
         <source>Apply</source>
-        <translation>Aplicar</translation>
+        <translation type="vanished">Aplicar</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="511"/>
         <source>Restore Defaults</source>
-        <translation>Restaurar por defecto</translation>
+        <translation type="vanished">Restaurar por defecto</translation>
     </message>
     <message>
-        <location filename="../prefdialog.cpp" line="512"/>
         <source>Reset</source>
-        <translation>Reiniciar</translation>
+        <translation type="vanished">Reiniciar</translation>
     </message>
 </context>
 <context>
     <name>PrefOpenMediaGroup</name>
     <message>
-        <location filename="../prefdialog.cpp" line="47"/>
+        <location filename="../prefdialog.cpp" line="46"/>
         <source>Start the playback</source>
         <translation>Empezar la reproducción</translation>
     </message>
@@ -3118,7 +3264,7 @@ Por ejemplo: English, Korean</translation>
     </message>
     <message>
         <location filename="../ui/subtitlefinddialog.ui" line="22"/>
-        <location filename="../subtitlefinddialog.cpp" line="114"/>
+        <location filename="../subtitlefinddialog.cpp" line="115"/>
         <source>Open</source>
         <translation>Abrir</translation>
     </message>
@@ -3133,63 +3279,62 @@ Por ejemplo: English, Korean</translation>
         <translation>Cerrar</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="71"/>
+        <location filename="../subtitlefinddialog.cpp" line="72"/>
         <source>Connecting...</source>
         <translation>Conectando...</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="74"/>
+        <location filename="../subtitlefinddialog.cpp" line="75"/>
         <source>Finding...</source>
         <translation>Buscando...</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="77"/>
+        <location filename="../subtitlefinddialog.cpp" line="78"/>
         <source>Find</source>
         <translation>Buscar</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="128"/>
-        <location filename="../subtitlefinddialog.cpp" line="177"/>
+        <location filename="../subtitlefinddialog.cpp" line="129"/>
+        <location filename="../subtitlefinddialog.cpp" line="179"/>
         <source>Find Subtitle</source>
         <translation>Buscar subtítulo</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="128"/>
+        <location filename="../subtitlefinddialog.cpp" line="130"/>
         <source>A file with the same name already exists. Do you want overwrite it?</source>
         <translation>Ya existe un archivo con el mismo nombre. ¿Desea sobreescribirlo?</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="129"/>
+        <location filename="../subtitlefinddialog.cpp" line="131"/>
         <source>Overwrite</source>
         <translation>Sobreescribir</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="130"/>
+        <location filename="../subtitlefinddialog.cpp" line="132"/>
         <source>Save as...</source>
         <translation>Guardar como...</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="131"/>
         <source>Cancel</source>
-        <translation>Cancelar</translation>
+        <translation type="vanished">Cancelar</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="136"/>
+        <location filename="../subtitlefinddialog.cpp" line="138"/>
         <source>Save As...</source>
         <translation>Guardar como...</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="136"/>
+        <location filename="../subtitlefinddialog.cpp" line="138"/>
         <source>Subtitle Files</source>
         <translation>Archivo de subtítulos</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="158"/>
+        <location filename="../subtitlefinddialog.cpp" line="160"/>
         <source>All</source>
         <translation>Todo</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="177"/>
+        <location filename="../subtitlefinddialog.cpp" line="179"/>
         <source>Cannot find subtitles for %1.</source>
         <translation>No se ha encontrado subtítulos para %1.</translation>
     </message>
@@ -3197,17 +3342,17 @@ Por ejemplo: English, Korean</translation>
 <context>
     <name>SubtitleLinkModel</name>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="20"/>
+        <location filename="../subtitlefinddialog.cpp" line="21"/>
         <source>Language</source>
         <translation>Idioma</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="21"/>
+        <location filename="../subtitlefinddialog.cpp" line="22"/>
         <source>File Name</source>
         <translation>Nombre de archivo</translation>
     </message>
     <message>
-        <location filename="../subtitlefinddialog.cpp" line="22"/>
+        <location filename="../subtitlefinddialog.cpp" line="23"/>
         <source>Date</source>
         <translation>Fecha</translation>
     </message>

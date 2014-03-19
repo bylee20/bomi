@@ -131,7 +131,7 @@
          <string>Play</string>
         </property>
         <property name="icon" stdset="0">
-         <iconset resource="../rsclist.qrc">
+         <iconset>
           <normaloff>:/img/media-playback-start-32.png</normaloff>:/img/media-playback-start-32.png</iconset>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -3289,7 +3289,7 @@ e.g.: English, Korean</string>
       </widget>
      </item>
      <item>
-      <widget class="QDialogButtonBox" name="dbb">
+      <widget class="BBox" name="dbb">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -3303,6 +3303,11 @@ e.g.: English, Korean</string>
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>BBox</class>
+   <extends>QDialogButtonBox</extends>
+   <header>dialogs.hpp</header>
+  </customwidget>
   <customwidget>
    <class>EncodingComboBox</class>
    <extends>QComboBox</extends>
@@ -3368,9 +3373,7 @@ e.g.: English, Korean</string>
    <header>widgets.hpp</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="../rsclist.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>sub_enc_autodetection</sender>
