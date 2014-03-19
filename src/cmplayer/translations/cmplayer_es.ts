@@ -51,7 +51,7 @@ Página del proyecto:%3</translation>
         <translation>Ver todo el texto de la MPL</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="359"/>
+        <location filename="../dialogs.cpp" line="366"/>
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
@@ -435,6 +435,14 @@ Click derecho: %2</translation>
         <location filename="../widgets.cpp" line="29"/>
         <source>Thai Charset</source>
         <translation>Tailandés</translation>
+    </message>
+</context>
+<context>
+    <name>EncodingFileDialog</name>
+    <message>
+        <location filename="../dialogs.cpp" line="192"/>
+        <source>Encoding</source>
+        <translation type="unfinished">Codificación</translation>
     </message>
 </context>
 <context>
@@ -990,22 +998,22 @@ Click derecho: %2</translation>
 <context>
     <name>GetShortcutDialog</name>
     <message>
-        <location filename="../dialogs.cpp" line="75"/>
+        <location filename="../dialogs.cpp" line="85"/>
         <source>Get Shortcut</source>
         <translation>Obtener acceso directo</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="79"/>
+        <location filename="../dialogs.cpp" line="89"/>
         <source>Erase</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="82"/>
+        <location filename="../dialogs.cpp" line="92"/>
         <source>Ok</source>
         <translation>Acepar</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="84"/>
+        <location filename="../dialogs.cpp" line="94"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
@@ -1013,17 +1021,17 @@ Click derecho: %2</translation>
 <context>
     <name>GetUrlDialog</name>
     <message>
-        <location filename="../dialogs.cpp" line="247"/>
+        <location filename="../dialogs.cpp" line="255"/>
         <source>URL</source>
         <translation>URL</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="251"/>
+        <location filename="../dialogs.cpp" line="256"/>
         <source>Encoding for Playlist</source>
         <translation>Codificación para la lista de reproducción</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="268"/>
+        <location filename="../dialogs.cpp" line="274"/>
         <source>Open URL</source>
         <translation>Abrir URL</translation>
     </message>
@@ -1091,24 +1099,24 @@ Click derecho: %2</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../mainwindow.cpp" line="912"/>
-        <location filename="../mainwindow.cpp" line="1215"/>
-        <location filename="../mainwindow.cpp" line="1233"/>
+        <location filename="../mainwindow.cpp" line="916"/>
+        <location filename="../mainwindow.cpp" line="1220"/>
+        <location filename="../mainwindow.cpp" line="1238"/>
         <source>Open File</source>
         <translation>Abrir archivo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1066"/>
+        <location filename="../mainwindow.cpp" line="1071"/>
         <source>Adjust Video Color</source>
         <translation>Ajustar color del vídeo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1154"/>
+        <location filename="../mainwindow.cpp" line="1159"/>
         <source>Open Subtitle</source>
         <translation>Abrir Subtítulo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="985"/>
+        <location filename="../mainwindow.cpp" line="989"/>
         <source>Seeking</source>
         <translation>Desplazando</translation>
     </message>
@@ -1117,47 +1125,47 @@ Click derecho: %2</translation>
         <translation type="obsolete">Continuar reproducción</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="579"/>
+        <location filename="../mainwindow.cpp" line="583"/>
         <source>Do you want to resume the playback at the last played position?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="583"/>
+        <location filename="../mainwindow.cpp" line="587"/>
         <source>Played Date: %1
 Stopped Position: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="618"/>
+        <location filename="../mainwindow.cpp" line="622"/>
         <source>Error!
 Cannot open the media.</source>
         <translation>¡Error!
 No se puede abrir el medio.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="751"/>
+        <location filename="../mainwindow.cpp" line="755"/>
         <source>Loading ...
 Please wait for a while.</source>
         <translation>Cargando ...
 Por favor espere un momento.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="985"/>
+        <location filename="../mainwindow.cpp" line="989"/>
         <source>sec</source>
         <translation>seg</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1135"/>
+        <location filename="../mainwindow.cpp" line="1140"/>
         <source>Select All Subtitles</source>
         <translation>Seleccionar todos los subtítulos</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1135"/>
+        <location filename="../mainwindow.cpp" line="1140"/>
         <source>%1 Subtitle(s)</source>
         <translation>%1 Subtítulo(s)</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1309"/>
+        <location filename="../mainwindow.cpp" line="1314"/>
         <source>Auto-shutdown is canceled.</source>
         <translation>El apagado automático está cancelado.</translation>
     </message>
@@ -1172,149 +1180,149 @@ Parado en la posición: %2
 </translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="582"/>
+        <location filename="../mainwindow.cpp" line="586"/>
         <source>Title %1</source>
         <translation type="unfinished">Título %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="584"/>
+        <location filename="../mainwindow.cpp" line="588"/>
         <source>Don&apos;t ask again</source>
         <translation>No preguntar de nuevo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="578"/>
+        <location filename="../mainwindow.cpp" line="582"/>
         <source>Resume Playback</source>
         <translation>Continuar la reproducción</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="623"/>
+        <location filename="../mainwindow.cpp" line="627"/>
         <source>Pause</source>
         <translation>Pausa</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="626"/>
+        <location filename="../mainwindow.cpp" line="630"/>
         <source>Play</source>
         <translation>Reproducir</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="949"/>
+        <location filename="../mainwindow.cpp" line="953"/>
         <source>Select DVD device</source>
         <translation>Seleccionar unidad DVD</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="953"/>
+        <location filename="../mainwindow.cpp" line="957"/>
         <source>Select Blu-ray device</source>
         <translation>Seleccionar unidad Blu-ray</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="998"/>
+        <location filename="../mainwindow.cpp" line="1003"/>
         <source>Current Title</source>
         <translation>Título actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1144"/>
+        <location filename="../mainwindow.cpp" line="1149"/>
         <source>Hide Subtitles</source>
         <translation>Esconder subtítulos</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1146"/>
+        <location filename="../mainwindow.cpp" line="1151"/>
         <source>Show Subtitles</source>
         <translation>Mostrar subtítulos</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1166"/>
-        <location filename="../mainwindow.cpp" line="1177"/>
+        <location filename="../mainwindow.cpp" line="1171"/>
+        <location filename="../mainwindow.cpp" line="1182"/>
         <source>Selected Subtitle</source>
         <translation>Subtítulo seleccionado</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1222"/>
+        <location filename="../mainwindow.cpp" line="1227"/>
         <source>Save File</source>
         <translation>Guardar archivo</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1285"/>
+        <location filename="../mainwindow.cpp" line="1290"/>
         <source>Downloaded</source>
         <translation>Descargado</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1296"/>
+        <location filename="../mainwindow.cpp" line="1301"/>
         <source>Exit CMPlayer when the playlist has finished.</source>
         <translation>Salir de CMPlayer cuando la lista de reproducción haya terminado.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1296"/>
+        <location filename="../mainwindow.cpp" line="1301"/>
         <source>Auto-exit is canceled.</source>
         <translation>La salida automática está cancelada.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1302"/>
+        <location filename="../mainwindow.cpp" line="1307"/>
         <source>Auto-shutdown</source>
         <translation>Apagar automáticamente</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1303"/>
-        <location filename="../mainwindow.cpp" line="1307"/>
+        <location filename="../mainwindow.cpp" line="1308"/>
+        <location filename="../mainwindow.cpp" line="1312"/>
         <source>The system will shut down when the play list has finished.</source>
         <translation>El equipo se apagará cuando la lista de reproducción haya terminado.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1852"/>
+        <location filename="../mainwindow.cpp" line="1857"/>
         <source>System Tray Icon</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1853"/>
+        <location filename="../mainwindow.cpp" line="1858"/>
         <source>CMPlayer will be running in the system tray when the window closed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1855"/>
+        <location filename="../mainwindow.cpp" line="1861"/>
         <source>You can change this behavior in the preferences. If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1072"/>
+        <location filename="../mainwindow.cpp" line="1077"/>
         <source>Current Audio Track</source>
         <translation>Pista de Audio Actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1015"/>
+        <location filename="../mainwindow.cpp" line="1020"/>
         <source>Current Video Track</source>
         <translation>Pista de vídeo actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1001"/>
+        <location filename="../mainwindow.cpp" line="1006"/>
         <source>Current Chapter</source>
         <translation>Capítulo actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="970"/>
+        <location filename="../mainwindow.cpp" line="974"/>
         <source>Set A to %1</source>
         <translation>Seleccionar A desde %1</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="973"/>
+        <location filename="../mainwindow.cpp" line="977"/>
         <source>Range is too short!</source>
         <translation>¡El rango es muy corto!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="974"/>
+        <location filename="../mainwindow.cpp" line="978"/>
         <source>Set B to %1. Start to repeat!</source>
         <translation>Seleccionar B hasta %1. Inicia para repetir!</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="976"/>
+        <location filename="../mainwindow.cpp" line="980"/>
         <source>Quit repeating</source>
         <translation>Salir del bucle</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="977"/>
+        <location filename="../mainwindow.cpp" line="981"/>
         <source>Repeat current subtitle</source>
         <translation>Repetir subtítulo actual</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="967"/>
+        <location filename="../mainwindow.cpp" line="971"/>
         <source>A-B Repeat</source>
         <translation>Repetir A-B</translation>
     </message>
@@ -1323,7 +1331,7 @@ Parado en la posición: %2
         <translation type="vanished">CMPlayer seguirá funcionando en la bandeja de sistema cuando la ventana se haya cerrado.&lt;br&gt;Puedes cambiar este comportamiento en las preferencias.&lt;br&gt;Si deseas salir de CMPlayer, por favor usa el menú &apos;Salir&apos;.</translation>
     </message>
     <message>
-        <location filename="../mainwindow.cpp" line="1858"/>
+        <location filename="../mainwindow.cpp" line="1864"/>
         <source>Do not display this message again</source>
         <translation>No mostrar este mensaje de nuevo</translation>
     </message>
@@ -1493,27 +1501,27 @@ Parado en la posición: %2
     </message>
     <message>
         <location filename="../ui/opendvddialog.ui" line="59"/>
-        <location filename="../dialogs.cpp" line="399"/>
+        <location filename="../dialogs.cpp" line="406"/>
         <source>Open ISO file</source>
         <translation>Abrir archivo ISO</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="394"/>
+        <location filename="../dialogs.cpp" line="401"/>
         <source>Open device or folder</source>
         <translation>Abrir unidad o carpeta</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="399"/>
+        <location filename="../dialogs.cpp" line="406"/>
         <source>ISO Image Files</source>
         <translation>Archivo ISO</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="422"/>
+        <location filename="../dialogs.cpp" line="429"/>
         <source>Selected device is available.</source>
         <translation>La unidad seleccionada está disponible.</translation>
     </message>
     <message>
-        <location filename="../dialogs.cpp" line="423"/>
+        <location filename="../dialogs.cpp" line="430"/>
         <source>Selected device doesn&apos;t exists.</source>
         <translation>La unidad seleccionada no existe.</translation>
     </message>
@@ -3378,7 +3386,7 @@ Por ejemplo: English, Korean</translation>
 <context>
     <name>Translator</name>
     <message>
-        <location filename="../translator.cpp" line="101"/>
+        <location filename="../translator.cpp" line="107"/>
         <source>UTF-8</source>
         <comment>Specify most popular encoding here in target localization.</comment>
         <translation>UTF-8</translation>
