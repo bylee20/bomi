@@ -8,7 +8,7 @@ struct Iso639_2 { QString b, t; };
 
 struct Translator::Data {
 	bool succ = false;
-	QTranslator trans;
+	QTranslator trans, qt;
 	QString path, def, file;
 	QSet<QLocale> locales;
 	icu::Locale icu;
@@ -36,6 +36,7 @@ Translator::Translator()
 : d(new Data) {
 	d->def = ":/translations";
 	qApp->installTranslator(&d->trans);
+	qApp->installTranslator(&d->qt);
 	d->locales += getLocales(d->def, "*.qm", "(.*).qm");
 	d->path = QString::fromLocal8Bit(qgetenv("CMPLAYER_TRANSLATION_PATH"));
 	if (!d->path.isEmpty())
@@ -92,8 +93,13 @@ bool Translator::load(const QLocale &locale) {
 	d->icu = icu::Locale::createFromName(l.name().toLatin1().data());
 	d->langs.clear();
 	d->file = file;
-	if ((d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def))))
+	if ((d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def)))) {
+		const auto path = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
+		const QString qm = _L("qt_") % l.name();
+		if (path.isEmpty() || d->qt.load(qm, path))
+			_Error("Cannot find translations for Qt, %% in %%", qm, path);
 		QLocale::setDefault(l);
+	}
 	return d->succ;
 }
 
