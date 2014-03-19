@@ -12,6 +12,8 @@
   * Fix: enable 'Title' menu for DVD/Blu-ray
   * Fix: show device list in 'Open DVD/Blu-ray' dialog for Linux
   * Fix: check ffmpeg version (see #62)
+  * Fix: device list in 'Open DVD/Blu-ray' dialog for Linux
+  * Fix: make buttons in dialogs translatable
 
 0.8.12
 
