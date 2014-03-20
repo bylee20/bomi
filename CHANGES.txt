@@ -3,7 +3,7 @@
   * New: Blu-ray support
   * New: basic support for MPRISv2
   * New: session management (autosave state when logout or shutdown)
-  * New: Spanish translations (thanks to @sl1pkn07 and @Nekmo)
+  * New: Spanish translations (thanks to EOL-Fansub people including @sl1pkn07 and @Nekmo)
   * New: 'Previous Frame'/'Next Frame' for seek by frame
   * New: playback resuming for DVD/Blu-rays
   * Fix: add MIME video/mp2t (mpeg2 transport streams and Blu-ray format) #56
