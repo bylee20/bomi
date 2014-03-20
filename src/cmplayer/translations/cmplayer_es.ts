@@ -66,7 +66,7 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../app.cpp" line="110"/>
         <source>Open given %1 for file path or URL.</source>
-        <translation>Abra ha dado %1 para la ruta de archivo o URL.</translation>
+        <translation>Abre la ruta del archivo %1o URL.</translation>
     </message>
     <message>
         <location filename="../app.cpp" line="111"/>
@@ -86,12 +86,12 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../app.cpp" line="115"/>
         <source>Turn on OpenGL debug logger.</source>
-        <translation>Activar el registro de depuración de OpenGL.</translation>
+        <translation>Activa el registro de depuración de OpenGL.</translation>
     </message>
     <message>
         <location filename="../app.cpp" line="116"/>
         <source>Turn on options for debugging.</source>
-        <translation>Activar las opciones del registro de depuración.</translation>
+        <translation>Activa las opciones del registro de depuración.</translation>
     </message>
 </context>
 <context>
