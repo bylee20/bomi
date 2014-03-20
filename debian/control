@@ -3,7 +3,7 @@ Section: graphics
 Priority: optional
 Maintainer: xylosper <darklin20@gmail.com>
 Build-Depends: g++ (>= 4.8), debhelper (>= 7), pkg-config
- , qt5-qmake, qtbase5-dev (>= 5.1.1), qtdeclarative5-dev
+ , qt5-qmake, qtbase5-dev (>= 5.2.0), qtdeclarative5-dev
  , libqt5x11extras5-dev, python, libicu-dev, libbluray-dev
  , yasm, zlib1g-dev, libx11-dev, libdvdread-dev, libdvdnav-dev
  , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
