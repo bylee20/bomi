@@ -15,18 +15,16 @@ else
 CFLAGS += -O2
 endif
 
-MAKE_VARS = QMAKE=qmake PREFIX=/usr ACTION_PATH=/usr/share/kde4/apps/solid/actions
-
 build: build-stamp
 build-stamp:
 	dh_testdir
 
 	# Add here commands to compile the package.
-	export MAKE="make -j $(nproc)"
 	./build-libchardet
 	./build-ffmpeg
-	./build-mpv
-	make $(MAKE_VARS) cmplayer
+	./configure --prefix=/usr --qmake=qmake --enable-quvi4 \
+		--actiondir=/usr/share/kde4/apps/solid/actions
+	make
 
 	#touch build-stamp
 	touch $@
@@ -37,7 +35,7 @@ clean:
 	rm -f build-stamp
 
 	# Add here commands to clean up after the build process.
-	-make $(MAKE_VARS) clean
+	-make clean
 	-cd src/libchardet* && make distclean
 	-cd src/ffmpeg && make distclean
 	-cd src/mpv && make distclean
@@ -53,7 +51,7 @@ install: build
 
 	# Add here commands to install the package into debian/gentoo.
 	# The DESTDIR Has To Be Exactly /usr/src/packages/BUILD/debian/debian/<nameOfPackage>
-	make $(MAKE_VARS) DEST_DIR=$(CURDIR)/debian/cmplayer install
+	make DEST_DIR=$(CURDIR)/debian/cmplayer install
 	
 # Build architecture-independent files here.
 binary-indep: build install

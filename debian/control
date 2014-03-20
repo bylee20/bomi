@@ -4,10 +4,10 @@ Priority: optional
 Maintainer: xylosper <darklin20@gmail.com>
 Build-Depends: g++ (>= 4.8), debhelper (>= 7), pkg-config
  , qt5-qmake, qtbase5-dev (>= 5.1.1), qtdeclarative5-dev
- , libqt5x11extras-dev, python, libicu-dev
+ , libqt5x11extras5-dev, python, libicu-dev, libbluray-dev
  , yasm, zlib1g-dev, libx11-dev, libdvdread-dev, libdvdnav-dev
  , libcdio-dev, libcdio-paranoia-dev, libcdio-cdda-dev
- , libasound2-dev, libva-dev, libquvi-dev
+ , libasound2-dev, libva-dev, libquvi-dev, libvdpau-dev
  , libmpg123-dev, libbz2-dev, libass-dev, libjack-dev
  , libpulse-dev, portaudio19-dev, libxcb-icccm4-dev
  , libxcb-util0-dev, qt5-default
