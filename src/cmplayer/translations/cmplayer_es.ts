@@ -99,122 +99,122 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../dialogs.cpp" line="15"/>
         <source>&amp;OK</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Aceptar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="15"/>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>Acepar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="17"/>
         <source>&amp;Save</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Guardar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="17"/>
         <source>Save</source>
-        <translation type="unfinished">Guardar</translation>
+        <translation>Guardar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="19"/>
         <source>Open</source>
-        <translation type="unfinished">Abrir</translation>
+        <translation>Abrir</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="21"/>
         <source>&amp;Cancel</source>
-        <translation type="unfinished">&amp;Cancelar</translation>
+        <translation>&amp;Cancelar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="21"/>
         <source>Cancel</source>
-        <translation type="unfinished">Cancelar</translation>
+        <translation>Cancelar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="23"/>
         <source>&amp;Close</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Cerrar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="23"/>
         <source>Close</source>
-        <translation type="unfinished">Cerrar</translation>
+        <translation>Cerrar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="25"/>
         <source>Apply</source>
-        <translation type="unfinished">Aplicar</translation>
+        <translation>Aplicar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="27"/>
         <source>Reset</source>
-        <translation type="unfinished">Reiniciar</translation>
+        <translation>Reiniciar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="29"/>
         <source>Help</source>
-        <translation type="unfinished">Ayuda</translation>
+        <translation>Ayuda</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="32"/>
         <source>Don&apos;t Save</source>
-        <translation type="unfinished"></translation>
+        <translation>No gradar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="34"/>
         <source>Close without Saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Cerrar sin guardar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="35"/>
         <source>Discard</source>
-        <translation type="unfinished"></translation>
+        <translation>Descartar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="37"/>
         <source>&amp;Yes</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Si</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="39"/>
         <source>Yes to &amp;All</source>
-        <translation type="unfinished"></translation>
+        <translation>Si a &amp;todo</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="41"/>
         <source>&amp;No</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;No</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="43"/>
         <source>N&amp;o to All</source>
-        <translation type="unfinished"></translation>
+        <translation>N&amp;o a todo</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="45"/>
         <source>Save All</source>
-        <translation type="unfinished"></translation>
+        <translation>Guardar todo</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="47"/>
         <source>Abort</source>
-        <translation type="unfinished"></translation>
+        <translation>Abortar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="49"/>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation>Reintentar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="51"/>
         <source>Ignore</source>
-        <translation type="unfinished"></translation>
+        <translation>Ignorar</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="53"/>
         <source>Restore Defaults</source>
-        <translation type="unfinished">Restaurar por defecto</translation>
+        <translation>Restaurar por defecto</translation>
     </message>
 </context>
 <context>
@@ -442,7 +442,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../dialogs.cpp" line="192"/>
         <source>Encoding</source>
-        <translation type="unfinished">Codificación</translation>
+        <translation>Codificación</translation>
     </message>
 </context>
 <context>
@@ -693,7 +693,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enums.hpp" line="752"/>
         <source>Deinterlacing</source>
-        <translation>Desentrelazador</translation>
+        <translation>Desentrelazado</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="1006"/>
@@ -1127,13 +1127,14 @@ Click derecho: %2</translation>
     <message>
         <location filename="../mainwindow.cpp" line="583"/>
         <source>Do you want to resume the playback at the last played position?</source>
-        <translation type="unfinished"></translation>
+        <translation>¿Quieres resumir la reproducción desde la última posición reproducida?</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="587"/>
         <source>Played Date: %1
 Stopped Position: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Reproducido el: %1
+Parado en la posición: %2</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="622"/>
@@ -1182,7 +1183,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="586"/>
         <source>Title %1</source>
-        <translation type="unfinished">Título %1</translation>
+        <translation>Título %1</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="588"/>
@@ -1269,17 +1270,17 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="1857"/>
         <source>System Tray Icon</source>
-        <translation type="unfinished"></translation>
+        <translation>Icono de la Bandeja de sistema</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1858"/>
         <source>CMPlayer will be running in the system tray when the window closed.</source>
-        <translation type="unfinished"></translation>
+        <translation>CMPlayer seguirá funcionando en la bandeja de sistema cuando la ventana se haya cerrado.</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1861"/>
         <source>You can change this behavior in the preferences. If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
-        <translation type="unfinished"></translation>
+        <translation>Puedes cambiar este comportamiento en las preferencias. Si deseas salir de CMPlayer, por favor usa el menú &apos;Salir&apos;.</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="1077"/>
@@ -1351,12 +1352,12 @@ Parado en la posición: %2
     <message>
         <location filename="../mrl.cpp" line="48"/>
         <source>DVD</source>
-        <translation type="unfinished"></translation>
+        <translation>DVD</translation>
     </message>
     <message>
         <location filename="../mrl.cpp" line="50"/>
         <source>Blu-ray</source>
-        <translation type="unfinished"></translation>
+        <translation>Blu-ray</translation>
     </message>
 </context>
 <context>
@@ -1369,12 +1370,12 @@ Parado en la posición: %2
     <message>
         <location filename="../mrlstate.cpp" line="18"/>
         <source>Video Interpolator</source>
-        <translation>Vídeo interpolado</translation>
+        <translation>Interpolación del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="19"/>
         <source>Video Chroma Upscaler</source>
-        <translation>Mejorador de chroma del vídeo</translation>
+        <translation>Chroma Upscaler del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="20"/>
@@ -1389,7 +1390,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mrlstate.cpp" line="22"/>
         <source>Video Deinterlacing</source>
-        <translation>Desentrelazador del vídeo</translation>
+        <translation>Desentrelazado del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="23"/>
@@ -1454,7 +1455,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mrlstate.cpp" line="36"/>
         <source>Audio Tempo Scaler</source>
-        <translation>Escalador de tiempo del audio</translation>
+        <translation>Tempo Scaler del audio</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="37"/>
@@ -1911,7 +1912,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="305"/>
         <source>Show default CMPlayer logo</source>
-        <translation>Mostrar logo del CMPlayer por defecto</translation>
+        <translation>Mostrar por defecto el logo de CMPlayer</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1697"/>
@@ -2045,7 +2046,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="795"/>
         <source>Accuracy to enforce</source>
-        <translation>Precisión para aplicar</translation>
+        <translation>Con una precisión del</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="842"/>
@@ -2060,7 +2061,8 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="857"/>
         <source>Display time per one character</source>
-        <translation>Tiempo de visualización por caracter</translation>
+        <translatorcomment>i don&apos;t know if this is refers character like a letter, or character like a actor</translatorcomment>
+        <translation>Tiempo de visualización por personaje</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="867"/>
@@ -2278,7 +2280,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="2747"/>
         <source>Apply after timeout</source>
-        <translation>Aplicar después de fuera de tiempo</translation>
+        <translation>Aplicar después de</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2788"/>
@@ -2858,12 +2860,12 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="465"/>
         <source>Chroma Upscaler</source>
-        <translation>Mejorador de chroma</translation>
+        <translation>Chroma Upscaler</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="466"/>
         <source>Interpolator</source>
-        <translation>Interpolador</translation>
+        <translation>Interpolación</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="471"/>
@@ -2928,7 +2930,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="500"/>
         <source>Tempo Scaler</source>
-        <translation>Escalar tempo</translation>
+        <translation>Tempo Scaler</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="503"/>
@@ -2958,7 +2960,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="113"/>
         <source>Toggle</source>
-        <translation type="unfinished"></translation>
+        <translation>Cambiar</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="407"/>
