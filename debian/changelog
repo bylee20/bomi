@@ -1,3 +1,23 @@
+cmplayer (0.8.13-1~trusty1) trusty; urgency=low
+
+  * New: Blu-ray support
+  * New: basic support for MPRISv2
+  * New: session management (autosave state when logout or shutdown)
+  * New: Spanish translations (thanks to @sl1pkn07 and @Nekmo)
+  * New: 'Previous Frame'/'Next Frame' for seek by frame
+  * New: playback resuming for DVD/Blu-rays
+  * Fix: add MIME video/mp2t (mpeg2 transport streams and Blu-ray format) #56
+  * Fix: remove disabled audio drivers in preferences
+  * Fix: wrong player state when change media in paused state
+  * Fix: enable 'Title' menu for DVD/Blu-ray
+  * Fix: show device list in 'Open DVD/Blu-ray' dialog for Linux
+  * Fix: check ffmpeg version (see #62)
+  * Fix: device list in 'Open DVD/Blu-ray' dialog for Linux
+  * Fix: make buttons in dialogs translatable
+  * Fix: load Qt's translation file on changing locale
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Thu, 20 Mar 2014 22:03:00 +0900
+
 cmplayer (0.8.11-1~saucy1) saucy; urgency=low
 
   * Fix: audio output channel layout didn't work
