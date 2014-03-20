@@ -442,7 +442,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../dialogs.cpp" line="192"/>
         <source>Encoding</source>
-        <translation type="unfinished">Codificación</translation>
+        <translation>Codificación</translation>
     </message>
 </context>
 <context>
@@ -1375,7 +1375,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mrlstate.cpp" line="19"/>
         <source>Video Chroma Upscaler</source>
-        <translation type="unfinished">Chroma Upscaler del vídeo</translation>
+        <translation>Chroma Upscaler del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="20"/>
