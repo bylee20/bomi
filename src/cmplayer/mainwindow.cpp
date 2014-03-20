@@ -1730,7 +1730,6 @@ void MainWindow::applyPref() {
 		break;
 	}
 	auto &p = d->pref();
-	Translator::load(p.locale);
 	d->history.setRememberImage(p.remember_image);
 	d->history.setPropertiesToRestore(p.restore_properties);
 	d->engine.setHwAcc(p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None, p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());

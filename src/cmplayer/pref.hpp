@@ -119,7 +119,6 @@ public:
 	int sub_enc_accuracy = defaultSubtitleEncodingDetectionAccuracy(), ms_per_char = 500;
 	SubtitleStyle sub_style;		QStringList sub_priority;
 
-	QLocale locale = QLocale::system();
 	bool enable_system_tray = true, hide_rather_close = true;
 	ClickActionMap double_click_map = defaultDoubleClick(), middle_click_map = defaultMiddleClick();
 	WheelActionMap wheel_scroll_map = defaultWheelAction();

@@ -96,7 +96,7 @@ bool Translator::load(const QLocale &locale) {
 	if ((d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def)))) {
 		const auto path = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
 		const QString qm = _L("qt_") % l.name();
-		if (path.isEmpty() || d->qt.load(qm, path))
+		if (path.isEmpty() || !d->qt.load(qm, path))
 			_Error("Cannot find translations for Qt, %% in %%", qm, path);
 		QLocale::setDefault(l);
 	}

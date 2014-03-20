@@ -195,7 +195,6 @@ void Pref::save() const {
 	WRITE(saturation_step);
 	WRITE(contrast_step);
 	WRITE(hue_step);
-	WRITE(locale);
 	WRITE(sub_ext);
 	WRITE(blur_kern_c);
 	WRITE(blur_kern_n);
@@ -301,7 +300,6 @@ void Pref::load() {
 	READ(enable_system_tray);
 	READ(hide_rather_close);
 	READ(disable_screensaver);
-	READ(locale);
 	READ(sub_enc);
 	READ(sub_enc_autodetection);
 	READ(sub_enc_accuracy);
