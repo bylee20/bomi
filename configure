@@ -2,7 +2,7 @@
 
 SED=sed
 
-export PKG_CONFIG_PATH="./build/lib/pkgconfig:$PKG_CONFIG_PATH"
+export PKG_CONFIG_PATH="`pwd`/build/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 arguments="$@"
 

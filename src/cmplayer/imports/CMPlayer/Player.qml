@@ -57,9 +57,5 @@ Item {
 
 	function showOSD(msg) { msgosd.text = msg; msgosd.show(); }
 	function showMessageBox(msg) { msgbox.visible = !!msg; boxmsg.text = msg }
-
-	Connections {
-		target: engine;
-		onSought: {timeline.show();}
-	}
+	function showTimeLine() { timeline.show(); }
 }

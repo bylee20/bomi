@@ -1,9 +1,9 @@
 #!/bin/sh
 
-args="--prefix=../../build --enable-gpl --disable-debug --disable-shared --enable-static \
+args="--prefix=`pwd`/build --enable-gpl --disable-debug --disable-shared --enable-static \
   --enable-runtime-cpudetect --disable-doc --disable-programs \
   --disable-avdevice --enable-avfilter --enable-swresample \
-  --disable-avresample --enable-pthreads --disable-dxva2 --disable-vdpau --enable-postproc \
+  --disable-avresample --enable-pthreads --disable-dxva2 --enable-postproc \
   --disable-encoders --disable-muxers --disable-devices --enable-filters"
   
 kern=`uname -s`
@@ -12,12 +12,12 @@ procs=$(nproc)
 if test $kern = "Darwin"
 then
   echo "Build for OS X"
-  args="$args --enable-vda --disable-vaapi"
+  args="$args --enable-vda --disable-vaapi --disable-vdpau"
   procs=5
 elif test $kern = "Linux"
 then
   echo "Build for Linux"
-  args="$args --disable-vda --enable-vaapi"
+  args="$args --disable-vda --enable-vaapi --enable-vdpau"
 fi
 
 cd src/ffmpeg* && make distclean; ./configure $args && make -j $procs && make install

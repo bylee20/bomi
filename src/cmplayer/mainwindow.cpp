@@ -410,6 +410,10 @@ struct MainWindow::Data {
 			return nullptr;
 		}
 	}
+	void showTimeLine() {
+		if (player)
+			QMetaObject::invokeMethod(player, "showTimeLine");
+	}
 	void showMessageBox(const QVariant &msg) {
 		if (player)
 			QMetaObject::invokeMethod(player, "showMessageBox", Q_ARG(QVariant, msg));
@@ -983,6 +987,7 @@ void MainWindow::connectMenus() {
 		if (diff && !d->engine.isStopped() && d->engine.isSeekable()) {
 			d->engine.relativeSeek(diff);
 			showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
+			d->showTimeLine();
 		}
 	});
 	connect(play("seek").g("frame"), &ActionGroup::triggered, this, [this] (QAction *a) {
@@ -1725,7 +1730,6 @@ void MainWindow::applyPref() {
 		break;
 	}
 	auto &p = d->pref();
-	Translator::load(p.locale);
 	d->history.setRememberImage(p.remember_image);
 	d->history.setPropertiesToRestore(p.restore_properties);
 	d->engine.setHwAcc(p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None, p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
@@ -1852,7 +1856,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 			mbox.setTitle(tr("System Tray Icon"));
 			mbox.setText(tr("CMPlayer will be running in "
 				"the system tray when the window closed."));
-			mbox.setInformativeText(tr("You can change this behavior in the preferences. "
+			mbox.setInformativeText(
+				tr("You can change this behavior in the preferences. "
 					"If you want to exit CMPlayer, please use 'Exit' menu."));
 			mbox.addButton(BBox::Ok);
 			mbox.checkBox()->setText(tr("Do not display this message again"));

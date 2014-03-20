@@ -14,6 +14,7 @@
   * Fix: check ffmpeg version (see #62)
   * Fix: device list in 'Open DVD/Blu-ray' dialog for Linux
   * Fix: make buttons in dialogs translatable
+  * Fix: load Qt's translation file on changing locale
 
 0.8.12
 

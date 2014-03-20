@@ -606,6 +606,8 @@ void PrefDialog::set(const Pref &p) {
 
 	d->ui.single_app->setChecked(cApp.isUnique());
 	d->ui.window_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
+	d->ui.locale->setCurrentLocale(cApp.locale());
+	d->ui.skin_name->setCurrentText(p.skin_name);
 	d->ui.enable_system_tray->setChecked(p.enable_system_tray);
 	d->ui.hide_rather_close->setChecked(p.hide_rather_close);
 
@@ -627,9 +629,6 @@ void PrefDialog::set(const Pref &p) {
 	d->ui.sub_pos_step->setValue(p.sub_pos_step);
 	d->ui.sub_sync_step->setValue(p.sub_sync_step*0.001);
 	d->ui.audio_sync_step->setValue(p.audio_sync_step*0.001);
-
-	d->ui.locale->setCurrentLocale(p.locale);
-	d->ui.skin_name->setCurrentText(p.skin_name);
 
 	d->ui.audio_driver->setCurrentData((int)p.audio_driver);
 	d->ui.clipping_method->setCurrentValue(p.clipping_method);
@@ -730,7 +729,7 @@ void PrefDialog::get(Pref &p) {
 	p.sub_priority = d->ui.sub_priority->values();
 
 	cApp.setUnique(d->ui.single_app->isChecked());
-	p.locale = d->ui.locale->currentLocale();
+	cApp.setLocale(d->ui.locale->currentLocale());
 	cApp.setStyleName(d->ui.window_style->currentData().toString());
 	p.enable_system_tray = d->ui.enable_system_tray->isChecked();
 	p.hide_rather_close = d->ui.hide_rather_close->isChecked();

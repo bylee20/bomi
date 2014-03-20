@@ -23,6 +23,8 @@ public:
 	QMenuBar *globalMenuBar() const;
 #endif
 	void setStyleName(const QString &name);
+	void setLocale(const QLocale &locale);
+	QLocale locale() const;
 	void setAlwaysOnTop(QWidget *widget, bool onTop);
 	void setScreensaverDisabled(bool disabled);
 	void setUnique(bool unique);

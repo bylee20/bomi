@@ -1,4 +1,5 @@
 #include "app.hpp"
+#include "translator.hpp"
 #include "log.hpp"
 #include "rootmenu.hpp"
 #include "playengine.hpp"
@@ -43,6 +44,7 @@ struct App::Data {
 	AppX11 helper;
 	mpris::RootObject *mpris = nullptr;
 #endif
+	QLocale locale = QLocale::system();
 	QCommandLineOption dummy{"__dummy__"};
 	QCommandLineParser cmdParser, msgParser;
 	QMap<LineCmd, QCommandLineOption> options;
@@ -96,7 +98,6 @@ struct App::Data {
 	}
 };
 
-
 App::App(int &argc, char **argv)
 : QApplication(argc, argv), d(new Data(this)) {
 #ifdef Q_OS_LINUX
@@ -106,6 +107,7 @@ App::App(int &argc, char **argv)
 	setOrganizationDomain("xylosper.net");
 	setApplicationName(Info::name());
 	setApplicationVersion(Info::version());
+	setLocale(Record(APP_GROUP).value("locale", QLocale::system()).toLocale());
 
 	d->addOption(LineCmd::Open, "open", tr("Open given %1 for file path or URL."), "mrl");
 	d->addOption(LineCmd::Wake, QStringList() << "wake", tr("Bring the application window in front."));
@@ -258,6 +260,17 @@ void App::runCommands() {
 
 bool App::sendMessage(const QString &message, int timeout) {
 	return d->connection.sendMessage(message, timeout);
+}
+
+void App::setLocale(const QLocale &locale) {
+	if (Translator::load(locale)) {
+		Record r(APP_GROUP);
+		r.write(d->locale = locale, "locale");
+	}
+}
+
+QLocale App::locale() const {
+	return d->locale;
 }
 
 QStringList App::availableStyleNames() const {

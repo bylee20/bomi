@@ -58,6 +58,16 @@ QString BBox::buttonText(Button button, Layout layout) {
 	return QString();
 }
 
+BBox *BBox::make(QDialog *dlg) {
+	auto bbox = new BBox(dlg);
+	bbox->setOrientation(Qt::Horizontal);
+	bbox->addButton(Ok);
+	bbox->addButton(Cancel);
+	connect(bbox, &BBox::accepted, dlg, &QDialog::accept);
+	connect(bbox, &BBox::rejected, dlg, &QDialog::reject);
+	return bbox;
+}
+
 /*******************************************************************************************/
 
 struct GetShortcutDialog::Data {
@@ -179,7 +189,7 @@ EncodingFileDialog::EncodingFileDialog(QWidget *parent, const QString &caption
 	auto grid = qobject_cast<QGridLayout*>(layout());
 	if (grid) {
 		const int row = grid->rowCount();
-		grid->addWidget(new QLabel("Encoding:", this), row, 0, 1, 1);
+		grid->addWidget(new QLabel(tr("Encoding") % ':', this), row, 0, 1, 1);
 		grid->addWidget(combo, row, 1, 1, grid->columnCount()-1);
 	}
 	if (!encoding.isEmpty())
@@ -223,7 +233,7 @@ struct GetUrlDialog::Data {
 	QCompleter *c;
 	QProgressBar *prog;
 	Downloader downloader;
-	QDialogButtonBox *bbox;
+	BBox *bbox;
 	Playlist playlist;
 };
 
@@ -236,22 +246,18 @@ GetUrlDialog::GetUrlDialog(QWidget *parent)
 	d->url->setEditable(true);
 	d->url->addItems(as.open_url_list);
 	d->url->setCompleter(d->c);
-	d->url->setMaximumWidth(600);
 	d->enc = new EncodingComboBox(this);
 	d->enc->setEncoding(as.open_url_enc);
 	d->prog = new QProgressBar(this);
-	d->bbox = makeButtonBox(this);
+	d->bbox = BBox::make(this);
+
+	auto form = new QFormLayout;
+	form->addRow(tr("URL"), d->url);
+	form->addRow(tr("Encoding for Playlist"), d->enc);
 
 	auto vbox = new QVBoxLayout(this);
-	auto hbox = new QHBoxLayout;
-	hbox->addWidget(new QLabel(tr("URL"), this));
-	hbox->addWidget(d->url);
-	vbox->addLayout(hbox);
-	hbox = new QHBoxLayout;
-	hbox->addWidget(new QLabel(tr("Encoding for Playlist"), this));
-	hbox->addWidget(d->enc);
-	hbox->addWidget(d->bbox);
-	vbox->addLayout(hbox);
+	vbox->addLayout(form);
+	vbox->addWidget(d->bbox);
 	vbox->addWidget(d->prog);
 	d->prog->hide();
 
@@ -266,6 +272,7 @@ GetUrlDialog::GetUrlDialog(QWidget *parent)
 		_accept();
 	});
 	setWindowTitle(tr("Open URL"));
+	setMaximumWidth(700);
 }
 
 GetUrlDialog::~GetUrlDialog() {

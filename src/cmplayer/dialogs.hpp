@@ -29,6 +29,7 @@ public:
 	static Layout buttonLayout(QWidget *w) {
 		return Layout(w->style()->styleHint(QStyle::SH_DialogButtonLayout, 0, w));
 	}
+	static BBox *make(QDialog *dlg);
 private:
 	Layout m_layout;
 };

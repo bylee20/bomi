@@ -1,5 +1,7 @@
 #!/bin/bash
 
+path=`pwd`/build
+
 cd src/libchardet* && make distclean; \
-./configure --prefix=`pwd`/../../build --disable-shared --enable-static && \
+./configure --prefix=$path --disable-shared --enable-static && \
 	make -j $(nproc) && make && make install
