@@ -20,14 +20,13 @@
 # Note that OpenSUSE users will need to have the Packman Essentials and Multimedia repositories enabled
 # see http://en.opensuse.org/Additional_package_repositories#Packman for more details.
 
-%define gpp_pkg 
 %define qmake qmake-qt5
 
 Name:		cmplayer
 Summary:	A multimedia player
 License:	GPLv2
 Group:		Applications/Multimedia
-Version:	0.8.10
+Version:	0.8.13
 Release:	1%{?dist}
 Url:		http://cmplayer.github.io/
 Source:		https://github.com/xylosper/%{name}/releases/download/v%{version}/%{name}-%{version}-source.tar.gz
@@ -37,6 +36,7 @@ Source:		https://github.com/xylosper/%{name}/releases/download/v%{version}/%{nam
 BuildRequires:	ffmpeg-devel
 BuildRequires:	bzip2-devel
 BuildRequires:	jack-audio-connection-kit-devel
+BuildRequires:	libvdpau-devel
 BuildRequires:	pulseaudio-libs-devel
 BuildRequires:	qt5-qtbase-devel >= 5.1.1
 BuildRequires:	qt5-qtdeclarative-devel
@@ -58,6 +58,7 @@ BuildRequires:	libQt5X11Extras-devel
 BuildRequires:	gcc-c++ >= 4.8
 BuildRequires:	glib2-devel
 BuildRequires:	libass-devel
+BuildRequires:	libbluray-devel
 BuildRequires:	libcdio-paranoia-devel
 #BuildRequires: libchardet-devel
 BuildRequires:	libdvdnav-devel
@@ -83,15 +84,14 @@ CMPlayer is a Qt-based multimedia player utilizing the MPV video back-end.
 %setup -q
 
 %build
-make clean
 # Build libchardet statically.
 ./download-libchardet
 ./build-libchardet
-./build-mpv
-make QMAKE=%{qmake} PREFIX=%{_prefix} LIBQUIVI_SUFFIX=-0.9 cmplayer
+./configure --prefix=/usr --enable-jack --enable-portaudio --enable-pulseaudio --enable-cdda
+make %{?_smp_mflags}
 
 %install
-make QMAKE=%{qmake} DEST_DIR=%{?buildroot:%{buildroot}} PREFIX=%{_prefix} LIBQUIVI_SUFFIX=-0.9 install
+make DEST_DIR=%{?buildroot:%{buildroot}} install
 
 %post
 /usr/bin/update-desktop-database -q
@@ -111,6 +111,16 @@ xdg-icon-resource forceupdate --theme hicolor &> /dev/null
 %doc COPYING.txt CHANGES.txt GPL.txt ICON-AUTHORS.txt ICON-COPYING.txt MPL.txt README.md
 
 %changelog
+* Fri Mar 21 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.13-1
+- Upstream release
+- Added libbluray-devel build dependency
+
+* Sat Mar 08 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.12-1
+- Upstream release
+
+* Wed Feb 12 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.11-1
+- Upstream release
+
 * Sun Feb 09 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.10-1
 - Upstream release
 - Openal dependency removed; upstream has dropped openal support
