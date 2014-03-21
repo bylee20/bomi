@@ -20,8 +20,6 @@
 # Note that OpenSUSE users will need to have the Packman Essentials and Multimedia repositories enabled
 # see http://en.opensuse.org/Additional_package_repositories#Packman for more details.
 
-%define qmake qmake-qt5
-
 Name:		cmplayer
 Summary:	A multimedia player
 License:	GPLv2
