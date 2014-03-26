@@ -30,6 +30,7 @@ public:
 		quint32 m_color = 0;
 		int m_stride = 0, m_offset = 0, m_strideAsPixel = 0;
 	};
+	bool needToCopy(const sub_bitmaps *imgs) const;
 	bool copy(const sub_bitmaps *imgs, const QSize &renderSize);
 	template<typename T = uchar>
 	T *data(int i) { return (T*)(m_data.data() + m_parts[i].m_offset); }
