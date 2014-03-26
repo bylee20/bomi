@@ -66,7 +66,7 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../app.cpp" line="110"/>
         <source>Open given %1 for file path or URL.</source>
-        <translation>Abre la ruta del archivo %1o URL.</translation>
+        <translation>Abre la ruta del archivo %1 o URL.</translation>
     </message>
     <message>
         <location filename="../app.cpp" line="111"/>
@@ -291,12 +291,12 @@ Click derecho: %2</translation>
     <message>
         <location filename="../deintinfo.cpp" line="213"/>
         <source>Bob with linear interpolation.</source>
-        <translation>Bob con interpolación lineal.</translation>
+        <translation>Bob con interpolado lineal.</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="214"/>
         <source>Bob with cubic interpolation.</source>
-        <translation>Bob con interpolación cúbica.</translation>
+        <translation>Bob con interpolado cúbico.</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="215"/>
@@ -311,7 +311,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../deintinfo.cpp" line="217"/>
         <source>Use complicated temporal and spatial interpolation.</source>
-        <translation>Usar una complicada interpolación espacial y temporal.</translation>
+        <translation>Usar un complicado interpolado espacial y temporal.</translation>
     </message>
     <message>
         <location filename="../deintinfo.cpp" line="219"/>
@@ -616,7 +616,7 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enums.hpp" line="446"/>
         <source>Subtitle Display</source>
-        <translation>Mostrar subtítulos</translation>
+        <translation>Mostrar subtítulo</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="456"/>
@@ -636,12 +636,12 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enums.hpp" line="534"/>
         <source>Same as Source</source>
-        <translation>Mismo que el original</translation>
+        <translation>Misma que el original</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="535"/>
         <source>Same as Window</source>
-        <translation>Mismo que la ventana</translation>
+        <translation>Misma que la ventana</translation>
     </message>
     <message>
         <location filename="../enums.hpp" line="536"/>
@@ -1310,7 +1310,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mainwindow.cpp" line="978"/>
         <source>Set B to %1. Start to repeat!</source>
-        <translation>Seleccionar B hasta %1. Inicia para repetir!</translation>
+        <translation>Seleccionar B hasta %1. ¡Inicia para repetir!</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="980"/>
@@ -1370,7 +1370,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mrlstate.cpp" line="18"/>
         <source>Video Interpolator</source>
-        <translation>Interpolación del vídeo</translation>
+        <translation>Interpolado del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="19"/>
@@ -1385,7 +1385,7 @@ Parado en la posición: %2
     <message>
         <location filename="../mrlstate.cpp" line="21"/>
         <source>Video Crop Ratio</source>
-        <translation>Relación de corte del vídeo</translation>
+        <translation>Relación de recorte del vídeo</translation>
     </message>
     <message>
         <location filename="../mrlstate.cpp" line="22"/>
@@ -2865,7 +2865,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="466"/>
         <source>Interpolator</source>
-        <translation>Interpolación</translation>
+        <translation>Interpolado</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="471"/>
@@ -3382,7 +3382,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../subtitleview.cpp" line="59"/>
         <source>Subtitle View</source>
-        <translation>Mostrar subtítulos</translation>
+        <translation>Mostrar subtítulo</translation>
     </message>
 </context>
 <context>
