@@ -148,7 +148,7 @@ private:
 	bool m_selected = false;
 };
 
-typedef QMap<int, Edition> EditionList;
+typedef QVector<Edition> EditionList;
 
 class TrackInfoObject : public QObject {
 	Q_OBJECT

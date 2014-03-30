@@ -144,7 +144,7 @@ struct PlayEngine::Data {
 	QString mediaName;
 
 	bool hasImage = false, tempoScaler = false, seekable = false;
-	bool subStreamsVisible = true, startPaused = false, dvd = false;
+	bool subStreamsVisible = true, startPaused = false, disc = false;
 
 	static const char *error(int err) { return mpv_error_string(err); }
 	bool isSuccess(int error) { return error == MPV_ERROR_SUCCESS; }
@@ -173,7 +173,7 @@ struct PlayEngine::Data {
 	int volume = 100;
 	double amp = 1.0, speed = 1.0, avsync = 0;
 	int cacheForPlayback = 20, cacheForSeeking = 50;
-	int cache = -1.0;
+	int cache = -1.0, initSeek = -1;
 	mpv_handle *handle = nullptr;
 	VideoOutput *video = nullptr;
 	QByteArray hwaccCodecs;
@@ -254,12 +254,17 @@ struct PlayEngine::Data {
 			opts.add("hwdec", HwAcc::backendName(hwaccBackend).toLatin1());
 			opts.add("hwdec-codecs", hwaccCodecs, true);
 		}
-		if (resume > 0)
-			opts.add("start", resume/1000.0);
-		if (mrl.isDisc())
+
+		if (mrl.isDisc()) {
 			file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
-		else if (edition >= 0)
-			opts.add("edition", edition);
+			initSeek = resume;
+		} else {
+			if (edition >= 0)
+				opts.add("edition", edition);
+			if (resume > 0)
+				opts.add("start", resume/1000.0);
+			initSeek = -1;
+		}
 		opts.add("deinterlace", deint != DeintMode::None);
 		opts.add("volume", mpVolume());
 		opts.add("mute", muted);
@@ -294,9 +299,11 @@ struct PlayEngine::Data {
 		auto mrl = p->mrl();
 		if (mrl.isLocalFile())
 			category = tr("File");
-		else if (mrl.isDvd()) {
+		else if (mrl.isDvd())
 			category = _L("DVD");
-		} else
+		else if (mrl.isBluray())
+			category = tr("Blu-ray");
+		else
 			category = _L("URL");
 		mediaInfo.setName(category % _L(": ") % (name.isEmpty() ? mrl.displayName() : name));
 	}
@@ -878,10 +885,10 @@ void PlayEngine::setCurrentChapter(int id) {
 
 void PlayEngine::setCurrentEdition(int id, int from) {
 	const auto mrl = d->startInfo.mrl;
-	if (id == DVDMenu && mrl.isDvd()) {
-		static const char *cmds[] = {"dvdnav", "menu", nullptr};
-		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send 'dvdnav menu'.");
-	} else if (d->editions.contains(id)) {
+	if (id == DVDMenu && mrl.isDisc()) {
+		static const char *cmds[] = {"discnav", "menu", nullptr};
+		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send 'discnav menu'.");
+	} else if (0 <= id && id < d->editions.size()) {
 		d->setmpv(mrl.isDisc() ? "disc-title" : "edition", id);
 		seek(from);
 	}
@@ -1028,9 +1035,13 @@ void PlayEngine::exec() {
 		case MPV_EVENT_FILE_LOADED: {
 			error = false;
 			d->timing = first = true;
-			d->dvd = mrl.scheme() == _L("dvdnav");
-			const char *listprop = mrl.isDisc() ? "disc-titles" : "editions";
-			const char *itemprop = mrl.isDisc() ? "disc-title"  : "edition";
+			d->disc = mrl.isDisc();
+			if (d->initSeek > 0) {
+				d->tellmpv("seek", d->initSeek, 2);
+				d->initSeek = -1;
+			}
+			const char *listprop = d->disc ? "disc-titles" : "editions";
+			const char *itemprop = d->disc ? "disc-title"  : "edition";
 			EditionList editions;
 			auto add = [&] (int id) -> Edition& {
 				auto &title = editions[id];
@@ -1039,19 +1050,20 @@ void PlayEngine::exec() {
 				return title;
 			};
 			const int list = d->getmpv<int>(listprop, 0);
+			editions.resize(list);
 			for (int i=0; i<list; ++i)
 				add(i);
 			if (list > 0) {
 				const int item = d->getmpv<int>(itemprop);
-				if (item >= 0)
-					add(item).m_selected = true;
+				if (0 <= item && item < list)
+					editions[item].m_selected = true;
 			}
 			const auto name = d->getmpv<QString>("media-title");
 			const auto seekable = d->getmpv<bool>("seekable", false);
 			_PostEvent(this, StartPlayback, name, seekable, editions);
 			break;
 		} case MPV_EVENT_END_FILE: {
-			d->dvd = d->timing = false;
+			d->disc = d->timing = false;
 			_PostEvent(this, EndPlayback, mrl, error);
 			posted = true;
 			break;
@@ -1353,18 +1365,18 @@ QString PlayEngine::stateText(State state) {
 QString PlayEngine::stateText() const { return stateText(m_state); }
 
 void PlayEngine::sendMouseClick(const QPointF &pos) {
-	if (d->handle && d->dvd) {
+	if (d->handle && d->disc) {
 		if (_Change(d->mouse, pos.toPoint()))
 			d->renderer->setMousePosition(d->mouse);
-		static const char *cmds[] = {"dvdnav", "mouse", nullptr};
+		static const char *cmds[] = {"discnav", "mouse", nullptr};
 		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse.");
 	}
 }
 
 void PlayEngine::sendMouseMove(const QPointF &pos) {
-	if (d->handle && d->dvd && _Change(d->mouse, pos.toPoint())) {
+	if (d->handle && d->disc && _Change(d->mouse, pos.toPoint())) {
 		d->renderer->setMousePosition(d->mouse);
-		static const char *cmds[] = {"dvdnav", "mouse_move", nullptr};
+		static const char *cmds[] = {"discnav", "mouse_move", nullptr};
 		d->check(mpv_command_async(d->handle, 0, cmds), "Couldn't send mouse_move.");
 	}
 }

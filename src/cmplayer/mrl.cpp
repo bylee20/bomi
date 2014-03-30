@@ -17,7 +17,7 @@ Mrl::Mrl(const QString &location, const QString &name) {
 		m_loc = _L("file://") % QFileInfo(location).absoluteFilePath();
 	else if (location.startsWith("file://", Qt::CaseInsensitive))
 		m_loc = QUrl::fromPercentEncoding(location.toUtf8());
-	else if (location.startsWith("dvdnav://", Qt::CaseInsensitive) || location.startsWith("bd://", Qt::CaseInsensitive))
+	else if (location.startsWith("dvdnav://", Qt::CaseInsensitive) || location.startsWith("bdnav://", Qt::CaseInsensitive))
 		m_loc = location;
 	else
 		m_loc = QUrl::fromPercentEncoding(location.toUtf8());
@@ -69,7 +69,7 @@ bool Mrl::isEmpty() const {
 	return (idx < 0) || !(idx+3 < m_loc.size());
 }
 
-static const QStringList discSchemes = QStringList() << _L("dvdnav") << _L("bd");
+static const QStringList discSchemes = QStringList() << _L("dvdnav") << _L("bdnav");
 
 bool Mrl::isDisc() const {
 	return discSchemes.contains(scheme(), Qt::CaseInsensitive);
@@ -88,7 +88,7 @@ QString Mrl::device() const {
 
 Mrl Mrl::fromDisc(const QString &scheme, const QString &device, int title, bool hash) {
 	QString loc = scheme % _L("://");
-	if (scheme == _L("dvdnav") && title < 0)
+	if (title < 0)
 		loc += _L("menu");
 	else if (title >= 0)
 		loc += QString::number(title);
