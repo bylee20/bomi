@@ -27,12 +27,6 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-
-//	qDebug() << dvd.open(QFile::ReadOnly);
-//	qDebug() << dvd.read
-//	dvd.close();
-//	qDebug() << dvd.isReadable() << dvd.entryList(QDir::AllEntries);
-
 	OpenGLCompat::check();
 	HwAcc::initialize();
 	MainWindow *mw = new MainWindow;

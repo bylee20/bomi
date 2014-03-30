@@ -228,6 +228,8 @@ void MpOsdItem::finalizeGL() {
 
 void MpOsdItem::drawOn(sub_bitmaps *imgs) {
 	d->show = true;
+	if (!d->osd.needToCopy(imgs))
+		return;
 	MpOsdBitmap osd;
 	if (osd.copy(imgs, d->imageSize))
 		_PostEvent(this, EnqueueFrame, osd);

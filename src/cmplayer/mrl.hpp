@@ -17,7 +17,7 @@ public:
 	QString toString() const { return m_loc; }
 	bool isLocalFile() const {return m_loc.startsWith(_L("file://"), Qt::CaseInsensitive);}
 	bool isDvd() const {return m_loc.startsWith(_L("dvdnav://"), Qt::CaseInsensitive);}
-	bool isBluray() const { return m_loc.startsWith(_L("bd://"), Qt::CaseInsensitive); }
+	bool isBluray() const { return m_loc.startsWith(_L("bdnav://"), Qt::CaseInsensitive); }
 	bool isDisc() const;
 	QString scheme() const {return m_loc.left(m_loc.indexOf(_L("://")));}
 	QString toLocalFile() const {return isLocalFile() ? m_loc.right(m_loc.size() - 7) : QString();}

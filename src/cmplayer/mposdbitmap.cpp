@@ -4,8 +4,12 @@ extern "C" {
 #include <sub/osd.h>
 }
 
+bool MpOsdBitmap::needToCopy(const sub_bitmaps *imgs) const {
+	return m_id != imgs->bitmap_id || m_pos != imgs->bitmap_pos_id;
+}
+
 bool MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) {
-	if (imgs->num_parts <= 0 || imgs->format == SUBBITMAP_EMPTY || (m_id == imgs->bitmap_id && m_pos == imgs->bitmap_pos_id))
+	if (imgs->num_parts <= 0 || !needToCopy(imgs))
 		return false;
 	m_renderSize = renderSize;
 	if (m_size < imgs->num_parts)
@@ -71,6 +75,7 @@ bool MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) {
 					*dest++ = bmp->palette[*src++];
 			}
 		} else {
+			Q_ASSERT(img.stride > 0 && img.stride/4 < 10000);
 			if (part.m_stride == img.stride)
 				memcpy(data(i), img.bitmap, img.stride*img.h);
 			else {

@@ -951,11 +951,11 @@ void MainWindow::connectMenus() {
 
 	connect(open["dvd"], &QAction::triggered, this, [openDisc, this] () {
 		if (openDisc(tr("Select DVD device"), d->as.dvd_device, true))
-			openMrl(Mrl::fromDisc("dvdnav", d->as.dvd_device, 0, true));
+			openMrl(Mrl::fromDisc("dvdnav", d->as.dvd_device, -1, true));
 	});
 	connect(open["bluray"], &QAction::triggered, this, [openDisc, this] () {
 		if (openDisc(tr("Select Blu-ray device"), d->as.bluray_device, false))
-			openMrl(Mrl::fromDisc("bd", d->as.bluray_device, -1, true));
+			openMrl(Mrl::fromDisc("bdnav", d->as.bluray_device, -1, true));
 	});
 	connect(open("recent").g(), &ActionGroup::triggered, this, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
 	connect(open("recent")["clear"], &QAction::triggered, &d->recent, &RecentInfo::clear);
@@ -993,7 +993,7 @@ void MainWindow::connectMenus() {
 	connect(play("seek").g("frame"), &ActionGroup::triggered, this, [this] (QAction *a) {
 		d->engine.stepFrame(a->data().toInt());
 	});
-	connect(play["dvd-menu"], &QAction::triggered, this, [this] () { d->engine.setCurrentEdition(PlayEngine::DVDMenu); });
+	connect(play["disc-menu"], &QAction::triggered, this, [this] () { d->engine.setCurrentEdition(PlayEngine::DVDMenu); });
 	connect(play("seek").g("subtitle"), &ActionGroup::triggered, this, [this] (QAction *a) {
 		const int key = a->data().toInt();
 		const int time = (key < 0 ? d->subtitle.previous() : (key > 0 ? d->subtitle.next() : d->subtitle.current()));
@@ -1911,11 +1911,11 @@ void MainWindow::updateTitle() {
 
 void MainWindow::updateMrl(const Mrl &mrl) {
 	updateTitle();
-	const auto dvd = mrl.isDvd();
+	const auto disc = mrl.isDisc();
 	d->playlist.setLoaded(mrl);
-	auto menu = d->menu("play")["dvd-menu"];
-	menu->setEnabled(dvd);
-	menu->setVisible(dvd);
+	auto menu = d->menu("play")["disc-menu"];
+	menu->setEnabled(disc);
+	menu->setVisible(disc);
 }
 
 void MainWindow::clearSubtitleFiles() {
