@@ -5,6 +5,7 @@
 #include "submisc.hpp"
 #include "translator.hpp"
 #include "log.hpp"
+#include "subtitlestyle.hpp"
 
 DECLARE_LOG_CONTEXT(Engine)
 #include <libmpv/client.h>
@@ -183,6 +184,7 @@ struct PlayEngine::Data {
 	QVector<int> streamIds = {0, 0, 0};
 	QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
 	AudioTrackInfoObject *audioTrackInfo = nullptr;
+	SubtitleStyle subStyle;
 	VideoRendererItem *renderer = nullptr;
 	ChapterList chapters, chapterFakeList;
 	EditionList editions;
@@ -270,6 +272,44 @@ struct PlayEngine::Data {
 		opts.add("mute", muted);
 		opts.add("audio-delay", audioSync/1000.0);
 		opts.add("sub-delay", subDelay/1000.0);
+
+		const auto &font = subStyle.font;
+		opts.add("sub-text-color", font.color.name(QColor::HexArgb).toLatin1());
+		QStringList fontStyles;
+		if (font.bold())
+			fontStyles.append("Bold");
+		if (font.italic())
+			fontStyles.append("Italic");
+		QString family = font.family();
+		if (!fontStyles.isEmpty())
+			family += ":style=" + fontStyles.join(' ');
+		double factor = font.size;
+		if (font.scale == OsdScalePolicy::Width)
+			factor *= 1280;
+		else if (font.scale == OsdScalePolicy::Diagonal)
+			factor *= sqrt(1280*1280 + 720*720);
+		else
+			factor *= 720.0;
+		opts.add("sub-text-font", family.toLatin1(), true);
+		opts.add("sub-text-font-size", factor);
+		const auto &outline = subStyle.outline;
+		const auto scaled = [factor] (double v) { return qBound(0., v*factor, 10.); };
+		if (outline.enabled) {
+			opts.add("sub-text-border-size", scaled(outline.width));
+			opts.add("sub-text-border-color", outline.color.name(QColor::HexArgb).toLatin1());
+		} else
+			opts.add("sub-text-border-size", 0.0);
+		const auto &bbox = subStyle.bbox;
+		if (bbox.enabled)
+			opts.add("sub-text-back-color", bbox.color.name(QColor::HexArgb).toLatin1());
+		auto norm = [] (const QPointF &p) { return sqrt(p.x()*p.x() + p.y()*p.y()); };
+		const auto &shadow = subStyle.shadow;
+		if (shadow.enabled) {
+			opts.add("sub-text-shadow-color", shadow.color.name(QColor::HexArgb).toLatin1());
+			opts.add("sub-text-shadow-offset", scaled(norm(shadow.offset)));
+		} else
+			opts.add("sub-text-shadow-offset", 0.0);
+
 		if (cache > 0) {
 			opts.add("cache", cache);
 			opts.add("cache-pause", (cacheForPlayback > 0 ? QByteArray::number(qMax<int>(1, cacheForPlayback*0.01)) : "no"));
@@ -513,6 +553,10 @@ void PlayEngine::setSpeed(double speed) {
 		d->setmpv_async("speed", speed);
 		emit speedChanged(d->speed);
 	}
+}
+
+void PlayEngine::setSubtitleStyle(const SubtitleStyle &style) {
+	d->subStyle = style;
 }
 
 void PlayEngine::seek(int pos) {

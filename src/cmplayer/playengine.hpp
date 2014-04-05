@@ -15,7 +15,7 @@ enum class AudioDriver;		enum class ClippingMethod;
 enum class DeintMethod;		enum class DeintMode;
 enum class ChannelLayout;	struct SubtitleFileInfo;
 struct mpv_event;			class AudioFormat;
-class MetaData;
+class MetaData;				class SubtitleStyle;
 
 typedef QLinkedList<QString> FilterList;
 
@@ -97,6 +97,7 @@ public:
 	void setCurrentSubtitleStream(int id);
 	void setCurrentEdition(int id, int from = 0);
 	void setCurrentChapter(int id);
+	void setSubtitleStyle(const SubtitleStyle &style);
 	bool hasVideo() const;
 	void setVolumeNormalizerActivated(bool on);
 	void setTempoScalerActivated(bool on);

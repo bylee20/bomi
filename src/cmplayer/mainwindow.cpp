@@ -1736,7 +1736,7 @@ void MainWindow::applyPref() {
 	d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
 	d->engine.setImageDuration(p.image_duration);
 	d->engine.setChannelLayoutMap(p.channel_manipulation);
-
+	d->engine.setSubtitleStyle(p.sub_style);
 	auto conv = [&p] (const DeintCaps &caps) {
 		DeintOption option;
 		option.method = caps.method();
