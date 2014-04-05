@@ -75,8 +75,30 @@ struct App::Data {
 				mrl = Mrl(value(LineCmd::Open));
 			if (!parser->positionalArguments().isEmpty())
 				mrl = Mrl(parser->positionalArguments().first());
-			if (!mrl.isEmpty())
-				main->openFromFileManager(mrl);
+			if (!mrl.isEmpty()){
+				// start ugly workaround for download playlist
+				if(!mrl.isDisc() && mrl.isPlaylist()){ 
+					QNetworkAccessManager nmgr;
+					QNetworkRequest request(QUrl(mrl.location()));
+					auto *reply = nmgr.get(request);
+					QEventLoop loop;
+					connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+					loop.exec();
+					QString file_name(QDir::tempPath()+"/"+mrl.fileName());
+					QFile file(file_name);
+					if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)){
+						file.write(reply->readAll());
+						file.flush();
+						file.close();
+					}
+					mrl=Mrl(file_name);
+					reply->deleteLater();
+				}
+				// end ugly workaround for download playlist
+				main->openMrl(mrl);
+				if(main->playlist()->hasNext())
+					main->playlist()->playNext();
+			}
 			const auto args = values(LineCmd::Action);
 			if (!args.isEmpty())
 				RootMenu::execute(args[0], args.value(1));
