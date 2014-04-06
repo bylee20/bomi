@@ -157,7 +157,7 @@ bool Playlist::loadM3U(QTextStream &in) {
 				location = getNextLocation();
 			}
 		} else
-			location = getNextLocation();
+			location = line;
 		if (!location.isEmpty())
 			append(Mrl(location, name));
 	}
