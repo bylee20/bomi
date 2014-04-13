@@ -148,3 +148,10 @@ bool PlaylistModel::swap(int r1, int r2) {
 	emit rowChanged(r2);
 	return true;
 }
+
+bool PlaylistModel::open(const Mrl &mrl, const QString &enc) {
+	if (!mrl.isLocalFile() || !mrl.isPlaylist())
+		return false;
+	set({mrl, enc});
+	return true;
+}

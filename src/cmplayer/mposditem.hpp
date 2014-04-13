@@ -9,11 +9,11 @@ enum EventType {EnqueueFrame = QEvent::User + 1, NextFrame, EmptyQueue, Rerender
 
 struct sub_bitmaps;
 
-class FramebufferObjectRendererItem : public TextureRendererItem {
+class FramebufferObjectRendererItem : public HQTextureRendererItem {
 	Q_OBJECT
 public:
 	FramebufferObjectRendererItem(QQuickItem *parent = nullptr)
-	: TextureRendererItem(parent) {
+	: HQTextureRendererItem(parent) {
 		connect(&m_sizeChecker, &QTimer::timeout, [this] () {
 			if (!_Change(m_prevSize, QSizeF(width(), height()).toSize())) {
 				m_sizeChecker.stop();
@@ -30,7 +30,7 @@ signals:
 	void targetSizeChanged(const QSize &size);
 protected:
 	void forceRepaint() { m_repaint = true; update(); }
-	void finalizeGL() { TextureRendererItem::finalizeGL(); _Delete(m_fbo); }
+	void finalizeGL() { HQTextureRendererItem::finalizeGL(); _Delete(m_fbo); }
 	virtual void paint(OpenGLFramebufferObject *fbo) = 0;
 	void geometryChanged(const QRectF &newOne, const QRectF &old) {
 		if (m_forced) {
@@ -40,7 +40,7 @@ protected:
 		}else
 			m_sizeChecker.start();
 		m_repaint = true;
-		TextureRendererItem::geometryChanged(newOne, old);
+		HQTextureRendererItem::geometryChanged(newOne, old);
 	}
 private:
 	void prepare(QSGGeometryNode *node) final override {

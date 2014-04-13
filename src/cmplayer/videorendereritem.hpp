@@ -11,7 +11,7 @@ class VideoFrame;				class VideoFormat;
 class MpOsdItem;				class OpenGLTexture;
 enum class InterpolatorType;	enum class DeintMethod;
 
-class VideoRendererItem : public TextureRendererItem {
+class VideoRendererItem : public HQTextureRendererItem {
 	Q_OBJECT
 	static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
 public:

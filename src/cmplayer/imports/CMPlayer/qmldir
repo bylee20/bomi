@@ -15,3 +15,5 @@ AppWithDock             1.0 AppWithDock.qml
 ItemColumn              1.0 ItemColumn.qml
 ModelView               1.0 ModelView.qml
 ScrollBar               1.0 ScrollBar.qml
+MessageBox 1.0 MessageBox.qml
+ProgressBar 1.0 ProgressBar.qml

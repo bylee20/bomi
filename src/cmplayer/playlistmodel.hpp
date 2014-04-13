@@ -21,6 +21,7 @@ public:
 	int rowCount(const QModelIndex &parent = QModelIndex()) const;
 	void set(const Playlist &list) {beginResetModel(); m_list = list; m_loaded = -1; endResetModel();}
 	const Playlist &playlist() const {return m_list;}
+	bool open(const Mrl &mrl, const QString &enc = QString());
 	int append(const Mrl &mrl);
 	void append(const Playlist &list);
 	void erase(int row);

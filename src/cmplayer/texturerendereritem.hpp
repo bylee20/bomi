@@ -11,11 +11,11 @@ class TextureRendererShader;
 
 enum class InterpolatorType;
 
-class TextureRendererItem : public GeometryItem {
+class HQTextureRendererItem : public GeometryItem {
 	Q_OBJECT
 public:
-	TextureRendererItem(QQuickItem *parent = 0);
-	~TextureRendererItem();
+	HQTextureRendererItem(QQuickItem *parent = 0);
+	~HQTextureRendererItem();
 	virtual bool isOpaque() const { return false; }
 	InterpolatorType interpolator() const { return m_newInt; }
 	void setInterpolator(InterpolatorType type) { if (_Change(m_newInt, type)) rerender(); }
@@ -38,6 +38,7 @@ protected:
 	virtual void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry);
 	virtual void prepare(QSGGeometryNode *node) = 0;
 	virtual void getCoords(QRectF &vertices, QRectF &/*texCoords*/) { vertices = boundingRect(); }
+	virtual void updateTextureGeometry(QSGGeometry *geometry);
 	virtual QSGMaterialType *shaderId() const;
 	virtual TextureRendererShader *createShader() const;
 private slots:
@@ -60,18 +61,18 @@ private:
 
 class TextureRendererShader : public QSGMaterialShader {
 public:
-	TextureRendererShader(const TextureRendererItem *item, Interpolator::Category category = Interpolator::None, bool dithering = false, bool rectangle = false);
+	TextureRendererShader(const HQTextureRendererItem *item, Interpolator::Category category = Interpolator::None, bool dithering = false, bool rectangle = false);
 	static QOpenGLFunctions *func() { return QOpenGLContext::currentContext()->functions(); }
 	const char *fragmentShader() const override { return m_fragCode.constData(); }
 	const char *vertexShader() const override { return m_vertexCode.constData(); }
 	const char *const *attributeNames() const override;
 	virtual void link(QOpenGLShaderProgram *prog);
 	virtual void bind(QOpenGLShaderProgram *prog);
-	const TextureRendererItem *item() const { return m_item; }
+	const HQTextureRendererItem *item() const { return m_item; }
 private:
 	void updateState(const RenderState &state, QSGMaterial */*new_*/, QSGMaterial */*old*/) final override;
 	void initialize() final override;
-	const TextureRendererItem *m_item = nullptr;
+	const HQTextureRendererItem *m_item = nullptr;
 	Interpolator::Category m_category = Interpolator::None;
 	bool m_dithering = false, m_rectangle = false;
 	int m_lutCount = 0;

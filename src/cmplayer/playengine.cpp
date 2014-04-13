@@ -2,6 +2,7 @@
 #include "playengine_p.hpp"
 #include "videorendereritem.hpp"
 #include "globalqmlobject.hpp"
+#include "busyiconitem.hpp"
 #include "submisc.hpp"
 #include "translator.hpp"
 #include "log.hpp"
@@ -1335,6 +1336,7 @@ void PlayEngine::registerObjects() {
 	qRegisterMetaType<QVector<int>>("QVector<int>");
 	qRegisterMetaType<StreamList>("StreamList");
 	qRegisterMetaType<AudioFormat>("AudioFormat");
+	qmlRegisterType<BusyIconItem>("CMPlayer", 1, 0, "BusyIcon");
 	qmlRegisterType<ChapterInfoObject>();
 	qmlRegisterType<AudioTrackInfoObject>();
 	qmlRegisterType<SubtitleTrackInfoObject>();

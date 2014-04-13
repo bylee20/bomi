@@ -58,4 +58,27 @@ Item {
 	function showOSD(msg) { msgosd.text = msg; msgosd.show(); }
 	function showMessageBox(msg) { msgbox.visible = !!msg; boxmsg.text = msg }
 	function showTimeLine() { timeline.show(); }
+
+	property Item progressMessageBox: Item {
+		parent: player; width: 300; height: 70
+		anchors.centerIn: parent
+		property string title
+		property string text
+		property alias progress: prog.value
+		property alias dismissable: downmbox.dismissable
+		visible: false
+		Cp.MessageBox {
+			id: downmbox
+			width: parent.width
+			height: parent.height
+			visible: parent.visible
+			title.text: parent.title
+			dismissable: false
+			message.elide: Text.ElideMiddle
+			message.verticalAlignment: Text.AlignVCenter
+			message.height: 100
+			message.text: parent.text
+			customItem: Cp.ProgressBar { id: prog }
+		}
+	}
 }

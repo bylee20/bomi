@@ -56,7 +56,7 @@ void main() {
 }
 )";
 
-TextureRendererShader::TextureRendererShader(const TextureRendererItem *item, Interpolator::Category category, bool dithering, bool rectangle)
+TextureRendererShader::TextureRendererShader(const HQTextureRendererItem *item, Interpolator::Category category, bool dithering, bool rectangle)
 : m_item(item), m_category(category), m_dithering(dithering), m_rectangle(rectangle) {
 	const auto interpolator = Interpolator::shader(m_category);
 	QByteArray header;
@@ -154,16 +154,16 @@ void TextureRendererShader::initialize() {
 	m_forLog += "updateState()";
 }
 
-struct TextureRendererItem::Material : public QSGMaterial {
-	Material(TextureRendererItem *item): m_item(item) { setFlag(Blending, !item->isOpaque()); }
+struct HQTextureRendererItem::Material : public QSGMaterial {
+	Material(HQTextureRendererItem *item): m_item(item) { setFlag(Blending, !item->isOpaque()); }
 	QSGMaterialType *type() const { return m_item->shaderId(); }
 	QSGMaterialShader *createShader() const { return m_item->createShader(); }
 private:
-    TextureRendererItem *m_item = nullptr;
+	HQTextureRendererItem *m_item = nullptr;
 };
 
-struct TextureRendererItem::Node : public QSGGeometryNode {
-	Node(TextureRendererItem *item) {
+struct HQTextureRendererItem::Node : public QSGGeometryNode {
+	Node(HQTextureRendererItem *item) {
 		setFlags(OwnsGeometry | OwnsMaterial);
         setMaterial(new Material(item));
 		setGeometry(new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4*item->quads()));
@@ -171,7 +171,7 @@ struct TextureRendererItem::Node : public QSGGeometryNode {
 	}
 };
 
-struct TextureRendererItem::Data {
+struct HQTextureRendererItem::Data {
 	Node *node = nullptr;
 	static void set(QSGGeometry::TexturedPoint2D *tp, const QRectF &vtx, const QRectF &txt) {
 		auto set = [&tp] (const QPointF &vtx, const QPointF &txt) {
@@ -184,33 +184,33 @@ struct TextureRendererItem::Data {
 	}
 };
 
-TextureRendererItem::TextureRendererItem(QQuickItem *parent)
+HQTextureRendererItem::HQTextureRendererItem(QQuickItem *parent)
 : GeometryItem(parent), d(new Data) {
 
 	setFlag(ItemHasContents, true);
 	connect(this, &QQuickItem::windowChanged, [this] (QQuickWindow *window) {
 		m_win = window;
 		if (window) {
-			connect(window, &QQuickWindow::sceneGraphInitialized, this, &TextureRendererItem::tryInitGL, Qt::DirectConnection);
-			connect(window, &QQuickWindow::beforeRendering, this, &TextureRendererItem::tryInitGL, Qt::DirectConnection);
-			connect(window, &QQuickWindow::sceneGraphInvalidated, this, &TextureRendererItem::finalizeGL, Qt::DirectConnection);
+			connect(window, &QQuickWindow::sceneGraphInitialized, this, &HQTextureRendererItem::tryInitGL, Qt::DirectConnection);
+			connect(window, &QQuickWindow::beforeRendering, this, &HQTextureRendererItem::tryInitGL, Qt::DirectConnection);
+			connect(window, &QQuickWindow::sceneGraphInvalidated, this, &HQTextureRendererItem::finalizeGL, Qt::DirectConnection);
 		}
 	});
 }
 
-TextureRendererItem::~TextureRendererItem() {
+HQTextureRendererItem::~HQTextureRendererItem() {
 	delete d;
 }
 
-QSGMaterialType *TextureRendererItem::shaderId() const {
+QSGMaterialType *HQTextureRendererItem::shaderId() const {
 	return &m_types[m_interpolator->category()][m_dithering > 0][m_texture.isRectangle()];
 }
 
-TextureRendererShader *TextureRendererItem::createShader() const {
+TextureRendererShader *HQTextureRendererItem::createShader() const {
 	return new TextureRendererShader(this, m_interpolator->category(), m_dithering > 0, m_texture.isRectangle());
 }
 
-void TextureRendererItem::initializeGL() {
+void HQTextureRendererItem::initializeGL() {
 	m_lutInt[0].create();
 	m_lutInt[1].create();
 	m_ditheringTex.create(OGL::Nearest, OGL::Repeat);
@@ -258,7 +258,12 @@ static void makeDitheringTexture(OpenGLTexture2D &texture, Dithering type) {
 	OpenGLTextureBinder<OGL::Target2D>(&texture)->initialize(size, size, info, data);
 }
 
-QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
+void HQTextureRendererItem::updateTextureGeometry(QSGGeometry *geometry) {
+	QRectF vtx, txt{0.0, 0.0, 1.0, 1.0}; getCoords(vtx, txt);
+	d->set(geometry->vertexDataAsTexturedPoint2D(), vtx, txt);
+}
+
+QSGNode *HQTextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) {
 	tryInitGL();
 	Q_UNUSED(data);
 	d->node = static_cast<Node*>(old);
@@ -280,7 +285,7 @@ QSGNode *TextureRendererItem::updatePaintNode(QSGNode *old, UpdatePaintNodeData 
 	return d->node;
 }
 
-void TextureRendererItem::geometryChanged(const QRectF &newOne, const QRectF &old) {
+void HQTextureRendererItem::geometryChanged(const QRectF &newOne, const QRectF &old) {
 	GeometryItem::geometryChanged(newOne, old);
 	m_dirtyGeomerty = true;
 	update();

@@ -1219,7 +1219,7 @@ void MainWindow::connectMenus() {
 		QString enc;
 		const QString file = EncodingFileDialog::getOpenFileName(this, tr("Open File"), QString(), Info::playlistExtFilter(), &enc);
 		if (!file.isEmpty())
-			d->playlist.set(Playlist(file, enc));
+			d->playlist.open(file, enc);
 	});
 	connect(playlist["save"], &QAction::triggered, this, [this] () {
 		const Playlist &list = d->playlist.playlist();
@@ -1371,7 +1371,10 @@ Playlist MainWindow::generatePlaylist(const Mrl &mrl) const {
 }
 
 void MainWindow::openFromFileManager(const Mrl &mrl) {
-	d->openWith(d->pref().open_media_from_file_manager, QList<Mrl>() << mrl);
+	if (mrl.isPlaylist())
+		d->playlist.open(mrl);
+	else
+		d->openWith(d->pref().open_media_from_file_manager, QList<Mrl>() << mrl);
 }
 
 PlayEngine *MainWindow::engine() const {
@@ -1471,7 +1474,7 @@ void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
 			d->load(mrl);
 	} else {
 		if (mrl.isPlaylist()) {
-			d->playlist.set({mrl, enc});
+			d->playlist.open(mrl, enc);
 		} else {
 			if (d->playlist.rowOf(mrl) < 0)
 				d->playlist.set(generatePlaylist(mrl));

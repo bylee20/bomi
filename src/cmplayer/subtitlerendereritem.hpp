@@ -8,7 +8,7 @@
 class RichTextDocument;		class SubCompModel;
 struct SubtitleStyle;		class SubtitleDrawer;
 
-class SubtitleRendererItem : public TextureRendererItem  {
+class SubtitleRendererItem : public HQTextureRendererItem  {
 	Q_OBJECT
 public:
 	SubtitleRendererItem(QQuickItem *parent = nullptr);

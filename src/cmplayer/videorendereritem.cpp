@@ -94,7 +94,7 @@ struct VideoRendererItem::Data {
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
-: TextureRendererItem(parent), d(new Data(this)) {
+: HQTextureRendererItem(parent), d(new Data(this)) {
 	setFlag(ItemAcceptsDrops, true);
 	d->mposd = new MpOsdItem(this);
 	d->letterbox = new LetterboxItem(this);
@@ -128,7 +128,7 @@ bool VideoRendererItem::overlayInLetterbox() const {
 }
 
 void VideoRendererItem::initializeGL() {
-	TextureRendererItem::initializeGL();
+	HQTextureRendererItem::initializeGL();
 	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
 	_Renew(d->shader);
 	d->shader->setDeintMethod(d->deint);
@@ -146,7 +146,7 @@ void VideoRendererItem::initializeGL() {
 }
 
 void VideoRendererItem::finalizeGL() {
-	TextureRendererItem::finalizeGL();
+	HQTextureRendererItem::finalizeGL();
 	Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
 	d->black.destroy();
 	_Delete(d->fbo);

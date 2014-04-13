@@ -93,7 +93,7 @@ private:
 };
 
 SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
-	: TextureRendererItem(parent), d(new Data(this)) {
+	: HQTextureRendererItem(parent), d(new Data(this)) {
 	d->drawer.setAlignment(Qt::AlignBottom | Qt::AlignHCenter);
 	d->updateDrawer();
 }
@@ -121,14 +121,14 @@ TextureRendererShader *SubtitleRendererItem::createShader() const {
 }
 
 void SubtitleRendererItem::initializeGL() {
-	TextureRendererItem::initializeGL();
+	HQTextureRendererItem::initializeGL();
 	d->texture.create();
 	d->bbox.create();
 	setRenderTarget(d->texture);
 }
 
 void SubtitleRendererItem::finalizeGL() {
-	TextureRendererItem::finalizeGL();
+	HQTextureRendererItem::finalizeGL();
 	d->bbox.destroy();
 	d->texture.destroy();
 }
@@ -285,7 +285,7 @@ bool SubtitleRendererItem::isHidden() const {
 
 void SubtitleRendererItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) {
 	d->selection.setArea(rect(), devicePixelRatio());
-	TextureRendererItem::geometryChanged(newGeometry, oldGeometry);
+	HQTextureRendererItem::geometryChanged(newGeometry, oldGeometry);
 }
 
 int SubtitleRendererItem::delay() const {
