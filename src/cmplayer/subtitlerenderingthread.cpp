@@ -108,7 +108,8 @@ void SubCompSelection::Thread::run() {
 	int flags = 0;
 	while (!d->quit) {
 		QMutexLocker locker(d->mutex);
-		d->wait->wait(d->mutex);
+		if (!(this->flags & ForceUpdate))
+			d->wait->wait(d->mutex);
 		if (d->quit)
 			break;
 		flags = this->flags;
