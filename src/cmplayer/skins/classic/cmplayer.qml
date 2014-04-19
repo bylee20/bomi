@@ -6,6 +6,7 @@ import CMPlayer 1.0
 AppWithDock {
 	id: app
 	readonly property real margin: 5
+	readonly property Engine engine: App.engine
 	Component {
 		id: slider
 		SliderStyle {
@@ -93,7 +94,7 @@ AppWithDock {
 							Text {
 								id: medianumber
 								verticalAlignment: Text.AlignVCenter
-								text: "[%1/%2](%3) ".arg(playlist.loaded+1).arg(playlist.count).arg(engine.stateText)
+								text: "[%1/%2](%3) ".arg(App.playlist.loaded+1).arg(App.playlist.count).arg(engine.stateText)
 								font { pixelSize: 11; family: Util.monospace }
 							}
 							Text {

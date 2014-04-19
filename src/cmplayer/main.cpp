@@ -8,8 +8,19 @@
 #include "openglcompat.hpp"
 #include "log.hpp"
 #include "tmp.hpp"
+#include "globalqmlobject.hpp"
+#include "historymodel.hpp"
+#include "playlistmodel.hpp"
+#include "downloader.hpp"
+#include "quick/toplevelitem.hpp"
+#include "quick/dialogitem.hpp"
 
 DECLARE_LOG_CONTEXT(Main)
+
+template<typename T>
+static QObject *singletonProvider(QQmlEngine *, QJSEngine *) {
+	return new T;
+}
 
 int main(int argc, char **argv) {
 	qputenv("PX_MODULE_PATH", "/this-is-dummy-path-to-disable-libproxy");
@@ -20,6 +31,13 @@ int main(int argc, char **argv) {
 #endif
 	QApplication::setAttribute(Qt::AA_X11InitThreads);
 
+	qmlRegisterType<PlaylistModel>();
+	qmlRegisterType<HistoryModel>();
+	qmlRegisterType<Downloader>();
+	qmlRegisterType<TopLevelItem>();
+	qmlRegisterType<ButtonBoxItem>("CMPlayer", 1, 0, "ButtonBox");
+	qmlRegisterSingletonType<SettingsObject>("CMPlayer", 1, 0, "Settings", singletonProvider<SettingsObject>);
+	qmlRegisterSingletonType<QmlApp>("CMPlayer", 1, 0, "App", singletonProvider<QmlApp>);
 	PlayEngine::registerObjects();
 	App app(argc, argv);
 	if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]"))) {

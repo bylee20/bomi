@@ -6,6 +6,7 @@
 
 class HistoryModel: public QAbstractTableModel {
 	Q_OBJECT
+	Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
 public:
 	enum Role {NameRole = Qt::UserRole + 1, LatestPlayRole, LocationRole};
 	HistoryModel(QObject *parent = nullptr);
@@ -24,8 +25,13 @@ public:
 	void getAppState(MrlState *appState);
 	void setAppState(const MrlState *appState);
 	void clear();
+	bool isVisible() const;
+	void setVisible(bool visible);
+	void toggle() { setVisible(!isVisible()); }
 signals:
 	void playRequested(const Mrl &mrl);
+	void changeVisibilityRequested(bool visible);
+	void visibleChanged(bool visible);
 private:
 	struct Data;
 	Data *d;

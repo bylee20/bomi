@@ -1,4 +1,5 @@
 #include "stdafx.hpp"
+#include "downloader.hpp"
 #include "openmediafolderdialog.hpp"
 #include "snapshotdialog.hpp"
 #include "mainwindow.hpp"
@@ -29,6 +30,8 @@
 #include "openglcompat.hpp"
 #include "videoformat.hpp"
 #include "dataevent.hpp"
+#include "quick/toplevelitem.hpp"
+#include "quick/textitemwrapper.hpp"
 #include "log.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
@@ -74,6 +77,7 @@ struct MainWindow::Data {
 	bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
 	bool stateChanging = false, loading = false;
 	QTimer loadingTimer, hider, initializer;
+	TopLevelItem topLevelItem;
 	ABRepeater ab = {&engine, &subtitle};
 	QMenu contextMenu;
 	PrefDialog *prefDlg = nullptr;
@@ -82,6 +86,7 @@ struct MainWindow::Data {
 	SubtitleView *subtitleView = nullptr;
 	PlaylistModel playlist;
 	QUndoStack *undo = nullptr;
+	Downloader downloader;
 //	FavoritesView *favorite;
 	TrayIcon *tray = nullptr;
 	QString filePath;
@@ -90,6 +95,7 @@ struct MainWindow::Data {
 	QAction *subtrackSep = nullptr;
 	QDesktopWidget *desktop = nullptr;
 	QSize virtualDesktopSize;
+
 	void syncState() {
 		for (auto &eg : enumGroups) {
 			Q_ASSERT(as.state.property(eg.property).isValid());
@@ -113,6 +119,21 @@ struct MainWindow::Data {
 			info.cache = cache(info.mrl);
 		}
 		engine.load(info);
+	}
+	QList<QAction*> unblockedActions;
+	void trigger(QAction *action) {
+		if (!action)
+			return;
+		if (topLevelItem.isVisible()) {
+			if (unblockedActions.isEmpty()) {
+				unblockedActions += menu("window").actions();
+				qSort(unblockedActions);
+			}
+			const auto it = qBinaryFind(_C(unblockedActions), action);
+			if (it == unblockedActions.cend())
+				return;
+		}
+		action->trigger();
 	}
 
 	void updateSubtitleState() {
@@ -389,6 +410,8 @@ struct MainWindow::Data {
 			if (!p->isFullScreen())
 				updateWindowPosState();
 			as.state.video_effects = renderer.effects();
+			as.playlist_visible = playlist.isVisible();
+			as.history_visible = history.isVisible();
 			as.save();
 			syncState();
 			history.setAppState(&as.state);
@@ -511,6 +534,7 @@ struct MainWindow::Data {
 
 	void initWidget() {
 		view = new MainView(p);
+		UtilObject::setQmlEngine(view->engine());
 		auto format = view->requestedFormat();
 		if (OpenGLCompat::hasExtension(OpenGLCompat::Debug))
 			format.setOption(QSurfaceFormat::DebugContext);
@@ -829,6 +853,13 @@ void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
 MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data(this)) {
+	QmlApp::setEngine(&d->engine);
+	QmlApp::setHistory(&d->history);
+	QmlApp::setPlaylist(&d->playlist);
+	QmlApp::setTopLevelItem(&d->topLevelItem);
+	QmlApp::setDownloader(&d->downloader);
+	d->playlist.setDownloader(&d->downloader);
+
 	d->engine.run();
 	d->initWidget();
 	d->initContextMenu();
@@ -843,6 +874,9 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 	auto &as = AppState::get();
 	d->history.getAppState(&as.state);
 	d->syncWithState();
+
+	d->playlist.setVisible(as.playlist_visible);
+	d->history.setVisible(as.history_visible);
 
 	if (as.win_size.isValid()) {
 		auto screen = d->screenSize();
@@ -932,7 +966,7 @@ void MainWindow::connectMenus() {
 		GetUrlDialog dlg(this);
 		if (dlg.exec()) {
 			if (dlg.isPlaylist())
-				d->playlist.set(dlg.playlist());
+				d->playlist.open(dlg.url(), dlg.encoding());
 			else
 				openMrl(dlg.url().toString(), dlg.encoding());
 		}
@@ -1214,7 +1248,7 @@ void MainWindow::connectMenus() {
 			item->setProperty("selectedIndex", idx);
 	};
 	auto &playlist = tool("playlist");
-	connect(playlist["toggle"], &QAction::triggered, this, [toggleTool] () {toggleTool("playlist", AppState::get().playlist_visible);});
+	connect(playlist["toggle"], &QAction::triggered, &d->playlist, &PlaylistModel::toggle);
 	connect(playlist["open"], &QAction::triggered, this, [this] () {
 		QString enc;
 		const QString file = EncodingFileDialog::getOpenFileName(this, tr("Open File"), QString(), Info::playlistExtFilter(), &enc);
@@ -1268,7 +1302,7 @@ void MainWindow::connectMenus() {
 	});
 
 	auto &history = tool("history");
-	connect(history["toggle"], &QAction::triggered, this, [toggleTool] () {toggleTool("history", AppState::get().history_visible);});
+	connect(history["toggle"], &QAction::triggered, &d->history, &HistoryModel::toggle);
 	connect(history["clear"], &QAction::triggered, this, [this] () { d->history.clear(); });
 
 	connect(tool["playinfo"], &QAction::triggered, this, [toggleTool] () {toggleTool("playinfo", AppState::get().playinfo_visible);});
@@ -1485,6 +1519,10 @@ void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
 	}
 }
 
+TopLevelItem *MainWindow::topLevelItem() const {
+	return &d->topLevelItem;
+}
+
 void MainWindow::showMessage(const QString &message, const bool *force) {
 	if (force) {
 		if (!*force)
@@ -1600,23 +1638,24 @@ void MainWindow::onMouseMoveEvent(QMouseEvent *event) {
 void MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) {
 	QWidget::mouseDoubleClickEvent(event);
 	if (event->buttons() & Qt::LeftButton) {
-		if (auto action = d->menu.doubleClickAction(d->pref().double_click_map[event->modifiers()])) {
+		const auto &info = d->pref().double_click_map[event->modifiers()];
+		const auto action = d->menu.doubleClickAction(info);
 #ifdef Q_OS_MAC
-			if (action == d->menu("window")["full"])
-				QTimer::singleShot(300, action, SLOT(trigger()));
-			else
+		if (action == d->menu("window")["full"])
+			QTimer::singleShot(300, action, SLOT(trigger()));
+		else
 #endif
-				action->trigger();
-		}
+		d->trigger(action);
 	}
 }
 
 void MainWindow::onMouseReleaseEvent(QMouseEvent *event) {
 	QWidget::mouseReleaseEvent(event);
 	const auto rect = geometry();
-	if (d->middleClicked && event->button() == Qt::MiddleButton && rect.contains(event->localPos().toPoint()+rect.topLeft())) {
-		if (auto action = d->menu.middleClickAction(d->pref().middle_click_map[event->modifiers()]))
-			action->trigger();
+	if (d->middleClicked && event->button() == Qt::MiddleButton
+		&& rect.contains(event->localPos().toPoint()+rect.topLeft())) {
+		const auto &info = d->pref().middle_click_map[event->modifiers()];
+		d->trigger(d->menu.middleClickAction(info));
 	}
 }
 
@@ -1651,11 +1690,10 @@ void MainWindow::onWheelEvent(QWheelEvent *event) {
 	QWidget::wheelEvent(event);
 	if (event->delta()) {
 		const auto &info = d->pref().wheel_scroll_map[event->modifiers()];
-		const bool up = event->delta() > 0;
-		if (auto action = d->menu.wheelScrollAction(info, d->pref().invert_wheel ? !up : up)) {
-			action->trigger();
-			event->accept();
-		}
+		const auto delta = event->delta();
+		const bool up = d->pref().invert_wheel ? delta < 0 : delta > 0;
+		d->trigger(d->menu.wheelScrollAction(info, up));
+		event->accept();
 	}
 }
 
@@ -1692,10 +1730,8 @@ void MainWindow::dropEvent(QDropEvent *event) {
 void MainWindow::reloadSkin() {
 	d->player = nullptr;
 	d->view->engine()->clearComponentCache();
+
 	d->view->rootContext()->setContextProperty("Util", &UtilObject::get());
-	d->view->rootContext()->setContextProperty("engine", &d->engine);
-	d->view->rootContext()->setContextProperty("history", &d->history);
-	d->view->rootContext()->setContextProperty("playlist", &d->playlist);
 	Skin::apply(d->view, d->pref().skin_name);
 	if (d->view->status() == QQuickView::Error)
 		d->view->setSource(QUrl("qrc:/emptyskin.qml"));
@@ -1707,10 +1743,6 @@ void MainWindow::reloadSkin() {
 	if (!d->player)
 		d->player = root->findChild<QQuickItem*>("player");
 	if (d->player) {
-		if (auto item = d->findItem("playlist"))
-			item->setProperty("show", AppState::get().playlist_visible);
-		if (auto item = d->findItem("history"))
-			item->setProperty("show", AppState::get().history_visible);
 		if (auto item = d->findItem("playinfo"))
 			item->setProperty("show", AppState::get().playinfo_visible);
 		if (auto item = d->findItem("logo")) {
@@ -1718,6 +1750,7 @@ void MainWindow::reloadSkin() {
 			item->setProperty("color", d->pref().bg_color);
 		}
 	}
+	d->topLevelItem.setParentItem(d->view->contentItem());
 }
 
 void MainWindow::applyPref() {
@@ -1803,10 +1836,9 @@ void MainWindow::resizeEvent(QResizeEvent *event) {
 void MainWindow::onKeyPressEvent(QKeyEvent *event) {
 	QWidget::keyPressEvent(event);
 	constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
-	if (auto action = RootMenu::instance().action(QKeySequence(event->key() + (event->modifiers() & modMask)))) {
-		action->trigger();
-		event->accept();
-	}
+	const QKeySequence shortcut(event->key() + (event->modifiers() & modMask));
+	d->trigger(RootMenu::instance().action(shortcut));
+	event->accept();
 }
 
 

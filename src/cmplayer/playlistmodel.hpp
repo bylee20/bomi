@@ -5,11 +5,14 @@
 #include "playlist.hpp"
 #include "listmodel.hpp"
 
+class Downloader;
+
 class PlaylistModel : public BaseListModel {
 	Q_OBJECT
 	Q_PROPERTY(int loaded READ loaded NOTIFY loadedChanged)
 	Q_PROPERTY(int count READ count NOTIFY countChanged)
 	Q_PROPERTY(QChar fillChar READ fillChar WRITE setFillChar)
+	Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged)
 	Q_ENUMS(Role)
 public:
 	enum Role {NameRole = Qt::UserRole + 1, LocationRole, LoadedRole};
@@ -22,6 +25,7 @@ public:
 	void set(const Playlist &list) {beginResetModel(); m_list = list; m_loaded = -1; endResetModel();}
 	const Playlist &playlist() const {return m_list;}
 	bool open(const Mrl &mrl, const QString &enc = QString());
+	bool open(const QByteArray &data, const QString &enc = QString());
 	int append(const Mrl &mrl);
 	void append(const Playlist &list);
 	void erase(int row);
@@ -48,6 +52,10 @@ public:
 	Q_INVOKABLE bool isLoaded(int row) const {return m_loaded == row;}
 	QChar fillChar() const {return m_fill;}
 	void setFillChar(QChar c) {if (_Change(m_fill, c)) emit fillCharChanged();}
+	bool isVisible() const { return m_visible; }
+	void setVisible(bool visible) { if (_Change(m_visible, visible)) emit visibleChanged(m_visible); }
+	void toggle() { setVisible(!isVisible()); }
+	void setDownloader(Downloader *downloader);
 public slots:
 	void clear() {beginResetModel(); m_list.clear(); m_loaded = -1; endResetModel();}
 	void playNext() {play(next());}
@@ -59,13 +67,18 @@ signals:
 	void contentWidthChanged();
 //	void playRequested(const Mrl &mrl);
 	void playRequested(int row);
+	void changeVisibilityRequested(bool visible);
 	void fillCharChanged();
+	void visibleChanged(bool visible);
 private:
 	friend class PlayEngine;
 	void setLoaded(int row);
 	Playlist m_list;
 	int m_loaded = -1;
 	QChar m_fill = QChar::Null;
+	bool m_visible = false;
+	Downloader *m_downloader = nullptr;
+	QString m_enc;
 };
 
 #endif // PLAYLISTMODEL_HPP

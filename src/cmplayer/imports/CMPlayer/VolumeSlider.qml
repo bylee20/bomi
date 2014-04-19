@@ -5,7 +5,7 @@ import CMPlayer 1.0
 Slider {
 	id: item
 	minimumValue: 0; maximumValue: 100
-	Connections { target: engine; onVolumeChanged: item.value = engine.volume }
-	onValueChanged: engine.volume = value
-	Component.onCompleted: item.value = engine.volume
+	Connections { target: App.engine; onVolumeChanged: item.value = App.engine.volume }
+	onValueChanged: App.engine.volume = value
+	Component.onCompleted: item.value = App.engine.volume
 }

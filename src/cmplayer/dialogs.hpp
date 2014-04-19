@@ -9,6 +9,7 @@ public:
 	using Role = QDialogButtonBox::ButtonRole;
 	using Button = QDialogButtonBox::StandardButton;
 	using Layout = QDialogButtonBox::ButtonLayout;
+	static constexpr Layout SkinLayout = (Layout)-1;
 	BBox(QWidget *parent = nullptr): QDialogButtonBox(parent) {
 		m_layout = buttonLayout(this);
 	}

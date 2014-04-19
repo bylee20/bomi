@@ -21,7 +21,7 @@ struct HistoryModel::Data {
 	MrlState cached;
 	const QString stateTable = _L("state") % _N(MrlState::Version);
 	const QString appTable   = _L("app")   % _N(MrlState::Version);
-	bool rememberImage = false, reload = true;
+	bool rememberImage = false, reload = true, visible = false;
 	bool check(const QSqlQuery &query) {
 		if (!query.lastError().isValid())
 			return true;
@@ -294,4 +294,13 @@ void HistoryModel::clear() {
 	d->loader.exec("DELETE FROM " % d->stateTable);
 	d->db.commit();
 	d->load();
+}
+
+bool HistoryModel::isVisible() const {
+	return d->visible;
+}
+
+void HistoryModel::setVisible(bool visible) {
+	if (_Change(d->visible, visible))
+		emit visibleChanged(d->visible);
 }

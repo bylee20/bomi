@@ -30,6 +30,12 @@ Rectangle {
 		}
 	}
 	Rectangle {
+		visible: frame.value < 0
+		anchors.fill: parent
+		anchors.margins: parent.pad
+		color: "gray"
+	}
+	Rectangle {
 		id: busybar
 		visible: frame.value < 0
 		width: 20

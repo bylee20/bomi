@@ -1,37 +1,88 @@
 #include "downloader.hpp"
 
 struct Downloader::Data {
+	Downloader *p = nullptr;
 	QUrl url;
 	QNetworkAccessManager *nam = nullptr;
-	bool running = false;
+	bool running = false, canceled = false;
 	QByteArray data;
+	qint64 written = -1, total = -1;
+	qreal rate = -1.0;
+	QNetworkReply *reply = nullptr;
 };
 
 Downloader::Downloader(QObject *parent)
 : QObject(parent), d(new Data) {
+	d->p = this;
 	d->nam = new QNetworkAccessManager;
 }
 
 Downloader::~Downloader() {
+	if (d->reply)
+		cancel();
 	delete d->nam;
 	delete d;
+}
+
+qint64 Downloader::writtenSize() const {
+	return d->written;
+}
+
+qint64 Downloader::totalSize() const {
+	return d->total;
+}
+
+bool Downloader::isCanceled() const {
+	return d->canceled;
+}
+
+void Downloader::cancel() {
+	if (d->reply) {
+		d->canceled = true;
+		d->reply->abort();
+		if (d->reply)
+			_Delete(d->reply);
+		if (_Change(d->running, false))
+			emit runningChanged();
+		emit canceledChanged();
+	}
 }
 
 bool Downloader::start(const QUrl &url) {
 	if (d->running)
 		return false;
-	d->url = url;
+	if (_Change(d->url, url))
+		emit urlChanged();
 	d->running = true;
+	if (_Change(d->canceled, false))
+		emit canceledChanged();
 	emit started();
-	auto reply = d->nam->get(QNetworkRequest(url));
-	connect(reply, &QNetworkReply::downloadProgress, this, &Downloader::downloaded);
-	connect(reply, &QNetworkReply::finished, [reply, this] () {
-		d->data = reply->readAll();
+	emit runningChanged();
+	progress(-1, -1);
+	d->reply = d->nam->get(QNetworkRequest(url));
+	connect(d->reply, &QNetworkReply::downloadProgress, this, &Downloader::progress);
+	connect(d->reply, &QNetworkReply::finished, [this] () {
+		d->data = d->reply->readAll();
 		d->running = false;
 		emit finished();
-		reply->deleteLater();
+		emit runningChanged();
+		d->reply->deleteLater();
+		d->reply = nullptr;
 	});
 	return true;
+}
+
+void Downloader::progress(qint64 written, qint64 total) {
+	if (_Change(d->total, total))
+		emit totalSizeChanged(total);
+	if (_Change(d->written, written))
+		emit writtenSizeChanged(written);
+	qreal rate = -1.0;
+	if (total > 0)
+		rate = written/(double)total;
+	if (_Change(d->rate, rate))
+		emit rateChanged();
+	emit progressed(written, total);
 }
 
 QUrl Downloader::url() const {
@@ -40,6 +91,10 @@ QUrl Downloader::url() const {
 
 bool Downloader::isRunning() const {
 	return d->running;
+}
+
+qreal Downloader::rate() const {
+	return d->rate;
 }
 
 QByteArray Downloader::takeData() {

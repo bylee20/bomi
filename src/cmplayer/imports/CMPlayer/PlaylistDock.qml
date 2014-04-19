@@ -6,6 +6,7 @@ import QtQuick.Controls.Styles 1.0
 Item {
 	id: dock
 	readonly property real widthHint: 500
+	readonly property QtObject playlist: Cp.App.playlist
 	property alias selectedIndex: table.selectedIndex
 	property real dest: 0
 	property bool show: false

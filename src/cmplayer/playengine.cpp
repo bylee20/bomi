@@ -7,6 +7,7 @@
 #include "translator.hpp"
 #include "log.hpp"
 #include "subtitlestyle.hpp"
+#include "quick/dialogitem.hpp"
 
 DECLARE_LOG_CONTEXT(Engine)
 #include <libmpv/client.h>
@@ -379,7 +380,7 @@ PlayEngine::PlayEngine()
 		if (begin || duration)
 			emit endChanged(end());
 		if (pos || begin || duration)
-			emit relativePositionChanged();
+			emit rateChanged();
 	});
 	connect(d->video, &VideoOutput::formatChanged, this, &PlayEngine::updateVideoFormat);
 
@@ -838,7 +839,7 @@ void PlayEngine::customEvent(QEvent *event) {
 	case Tick: {
 		_GetAllData(event, d->position, d->avsync);
 		emit tick(d->position);
-		emit relativePositionChanged();
+		emit rateChanged();
 		d->tick = false;
 		auto findChapterIn = [&] (int begin, int end) {
 			end = qMin(end, d->chapterFakeList.size());
@@ -1328,8 +1329,6 @@ VideoFormat PlayEngine::videoFormat() const {
 }
 
 void PlayEngine::registerObjects() {
-	static auto settingsProvider = [](QQmlEngine *, QJSEngine *) -> QObject* {return new SettingsObject;};
-
 	qRegisterMetaType<PlayEngine::State>("State");
 	qRegisterMetaType<Mrl>("Mrl");
 	qRegisterMetaType<VideoFormat>("VideoFormat");
@@ -1337,6 +1336,7 @@ void PlayEngine::registerObjects() {
 	qRegisterMetaType<StreamList>("StreamList");
 	qRegisterMetaType<AudioFormat>("AudioFormat");
 	qmlRegisterType<BusyIconItem>("CMPlayer", 1, 0, "BusyIcon");
+//	qmlRegisterType<DialogItem>("CMPlayer", 1, 0, "Dialog");
 	qmlRegisterType<ChapterInfoObject>();
 	qmlRegisterType<AudioTrackInfoObject>();
 	qmlRegisterType<SubtitleTrackInfoObject>();
@@ -1344,7 +1344,6 @@ void PlayEngine::registerObjects() {
 	qmlRegisterType<AvIoFormat>();
 	qmlRegisterType<MediaInfoObject>();
 	qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
-	qmlRegisterSingletonType<SettingsObject>("CMPlayer", 1, 0, "Settings", settingsProvider);
 }
 
 void PlayEngine::setVolumeNormalizerActivated(bool on) {

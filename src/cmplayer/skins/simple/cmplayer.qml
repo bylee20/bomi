@@ -6,7 +6,7 @@ import CMPlayer 1.0 as Cp
 
 Cp.AppWithDock {
 	id: app
-
+	readonly property QtObject engine: Cp.App.engine
 	Component {
 		id: sliders
 		SliderStyle {

@@ -2,6 +2,8 @@
 #include "rootmenu.hpp"
 #include <unistd.h>
 
+QmlApp::StaticData QmlApp::s;
+
 void SettingsObject::open(const QString &name) {
 	if (m_name != name) {
 		close();

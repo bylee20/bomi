@@ -6,6 +6,7 @@ import CMPlayer 1.0 as Cp
 Cp.AppWithFloating {
 	id: skin; name: "net.xylosper.cmplayer.GaN"
 	onWidthChanged: controls.width = width < 550 ? 400 : 550
+	readonly property QtObject engine: Cp.App.engine
 	controls: Item {
 		width: 550; height: topBox.height + timeslide.height + bottomBox.height + 5
 		Rectangle {
@@ -43,7 +44,7 @@ Cp.AppWithFloating {
 						}
 						TimeText {
 							id: playlistText; bind: playlistIcon; width: textWidth; height: 12
-							text: (playlist.loaded+1).toString() + "/" + playlist.count
+							text: (Cp.App.playlist.loaded+1).toString() + "/" + Cp.App.playlist.count
 						}
 					}
 					Item {
@@ -154,4 +155,10 @@ Cp.AppWithFloating {
 		Cp.Settings.set("end-checked", endtext.checked)
 		Cp.Settings.close()
 	}
+//	Cp.Dialog {
+//		width: 100
+//		height: 100
+//		anchors.centerIn: parent
+//		opacity: 0.75
+//	}
 }

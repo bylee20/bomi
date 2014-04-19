@@ -10,17 +10,18 @@
 
 QString BBox::buttonText(Button button, Layout layout) {
 	const auto gnome = (layout == GnomeLayout);
+	const auto skin = (layout == SkinLayout);
 	switch (button) {
 	case QDialogButtonBox::Ok:
-		return gnome ? tr("&OK") : tr("OK");
+		return gnome && !skin ? tr("&OK") : tr("OK");
 	case QDialogButtonBox::Save:
-		return gnome ? tr("&Save") : tr("Save");
+		return gnome && !skin ? tr("&Save") : tr("Save");
 	case QDialogButtonBox::Open:
 		return tr("Open");
 	case QDialogButtonBox::Cancel:
-		return gnome ? tr("&Cancel") : tr("Cancel");
+		return gnome && !skin ? tr("&Cancel") : tr("Cancel");
 	case QDialogButtonBox::Close:
-		return gnome ? tr("&Close") : tr("Close");
+		return gnome && !skin ? tr("&Close") : tr("Close");
 	case QDialogButtonBox::Apply:
 		return tr("Apply");
 	case QDialogButtonBox::Reset:
@@ -34,13 +35,13 @@ QString BBox::buttonText(Button button, Layout layout) {
 			return tr("Close without Saving");
 		return tr("Discard");
 	case QDialogButtonBox::Yes:
-		return tr("&Yes");
+		return skin ? tr("Yes") : tr("&Yes");
 	case QDialogButtonBox::YesToAll:
-		return tr("Yes to &All");
+		return skin ? tr("Yes to All") : tr("Yes to &All");
 	case QDialogButtonBox::No:
-		return tr("&No");
+		return skin ? tr("No") : tr("&No");
 	case QDialogButtonBox::NoToAll:
-		return tr("N&o to All");
+		return skin ? tr("No to All") : tr("N&o to All");
 	case QDialogButtonBox::SaveAll:
 		return tr("Save All");
 	case QDialogButtonBox::Abort:
@@ -231,8 +232,6 @@ struct GetUrlDialog::Data {
 	QComboBox *url;
 	EncodingComboBox *enc;
 	QCompleter *c;
-	QProgressBar *prog;
-	Downloader downloader;
 	BBox *bbox;
 	Playlist playlist;
 };
@@ -246,9 +245,9 @@ GetUrlDialog::GetUrlDialog(QWidget *parent)
 	d->url->setEditable(true);
 	d->url->addItems(as.open_url_list);
 	d->url->setCompleter(d->c);
+	d->url->setMaximumWidth(500);
 	d->enc = new EncodingComboBox(this);
 	d->enc->setEncoding(as.open_url_enc);
-	d->prog = new QProgressBar(this);
 	d->bbox = BBox::make(this);
 
 	auto form = new QFormLayout;
@@ -258,19 +257,7 @@ GetUrlDialog::GetUrlDialog(QWidget *parent)
 	auto vbox = new QVBoxLayout(this);
 	vbox->addLayout(form);
 	vbox->addWidget(d->bbox);
-	vbox->addWidget(d->prog);
-	d->prog->hide();
 
-	connect(&d->downloader, &Downloader::started, [this] () { d->prog->setRange(0, 0); d->prog->setVisible(true); });
-	connect(&d->downloader, &Downloader::downloaded, [this] (qint64 written, qint64 total) {
-		d->prog->setRange(0, total);
-		d->prog->setValue(written);
-	});
-	connect(&d->downloader, &Downloader::finished, [this] () {
-		auto data = d->downloader.takeData();
-		d->playlist.load(&data, d->enc->encoding(), Playlist::guessType(url().path()));
-		_accept();
-	});
 	setWindowTitle(tr("Open URL"));
 	setMaximumWidth(700);
 }
@@ -280,6 +267,11 @@ GetUrlDialog::~GetUrlDialog() {
 }
 
 void GetUrlDialog::_accept() {
+
+
+}
+
+void GetUrlDialog::accept() {
 	auto &as = AppState::get();
 	const auto url = d->url->currentText().trimmed();
 	const int idx = as.open_url_list.indexOf(url);
@@ -288,16 +280,6 @@ void GetUrlDialog::_accept() {
 	as.open_url_list.prepend(url);
 	as.open_url_enc = d->enc->encoding();
 	QDialog::accept();
-}
-
-void GetUrlDialog::accept() {
-	if (isPlaylist()) {
-		d->downloader.start(url());
-		d->bbox->setEnabled(false);
-		d->enc->setEnabled(false);
-		d->url->setEnabled(false);
-	} else
-		_accept();
 }
 
 QUrl GetUrlDialog::url() const {

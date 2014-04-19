@@ -3,6 +3,41 @@
 
 #include "stdafx.hpp"
 
+class PlayEngine;
+class HistoryModel;
+class PlaylistModel;
+class TopLevelItem;
+class Downloader;
+
+class QmlApp : public QObject {
+	Q_OBJECT
+	Q_PROPERTY(PlayEngine *engine READ engine CONSTANT FINAL)
+	Q_PROPERTY(HistoryModel *history READ history CONSTANT FINAL)
+	Q_PROPERTY(PlaylistModel *playlist READ playlist CONSTANT FINAL)
+	Q_PROPERTY(TopLevelItem *topLevelItem READ topLevelItem CONSTANT FINAL)
+	Q_PROPERTY(Downloader *download READ downloader CONSTANT FINAL)
+public:
+	PlayEngine *engine() const { return s.engine; }
+	HistoryModel *history() const { return s.history; }
+	PlaylistModel *playlist() const { return s.playlist; }
+	TopLevelItem *topLevelItem() const { return s.top; }
+	Downloader *downloader() const { return s.down; }
+	static void setEngine(PlayEngine *engine) { s.engine = engine; }
+	static void setHistory(HistoryModel *history) { s.history = history; }
+	static void setPlaylist(PlaylistModel *pl) { s.playlist = pl; }
+	static void setTopLevelItem(TopLevelItem *top) { s.top = top; }
+	static void setDownloader(Downloader *down) { s.down = down; }
+private:
+	struct StaticData {
+		PlayEngine *engine = nullptr;
+		HistoryModel *history = nullptr;
+		PlaylistModel *playlist = nullptr;
+		TopLevelItem *top = nullptr;
+		Downloader *down = nullptr;
+	};
+	static StaticData s;
+};
+
 enum MemoryUnit {
 	ByteUnit = 1, Kilobyte = 1024, Megabyte = 1024*1024, Gigabyte = 1024*1024*1024
 };
@@ -71,6 +106,9 @@ public:
 	static QQuickItem *itemToAcceptKey() { return get().m_keyItems.isEmpty() ? nullptr : get().m_keyItems.front(); }
 	static void setItemPressed(QQuickItem *item);
 	static UtilObject &get() { if (!object) create(); return *object; }
+//	static void setEngine(qmlEngine( *))
+	static void setQmlEngine(QQmlEngine *engine) { get().m_engine = engine; }
+	static QQmlEngine *qmlEngine() { return get().m_engine; }
 signals:
 	void trChanged();
 	void mouseReleased(const QPointF &scenePos);
@@ -93,6 +131,7 @@ private:
 		return true;
 	}
 	bool m_fullScreen, m_cursor, m_filterDoubleClick;
+	QQmlEngine *m_engine = nullptr;
 	static UtilObject *object;
 };
 

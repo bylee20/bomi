@@ -1,4 +1,5 @@
 #include "playlistmodel.hpp"
+#include "downloader.hpp"
 
 PlaylistModel::PlaylistModel(QObject *parent)
 : BaseListModel(parent) {
@@ -149,9 +150,29 @@ bool PlaylistModel::swap(int r1, int r2) {
 	return true;
 }
 
+void PlaylistModel::setDownloader(Downloader *downloader) {
+	m_downloader = downloader;
+	connect(m_downloader, &Downloader::finished, this, [this] () {
+		if (m_downloader->isCanceled())
+			return;
+		auto data = m_downloader->takeData();
+		const auto type = Playlist::guessType(m_downloader->url().path());
+		if (m_list.load(&data, m_enc, type))
+			setVisible(true);
+	});
+}
+
 bool PlaylistModel::open(const Mrl &mrl, const QString &enc) {
-	if (!mrl.isLocalFile() || !mrl.isPlaylist())
+	if (!mrl.isPlaylist())
 		return false;
-	set({mrl, enc});
+	if (mrl.isLocalFile()) {
+		set({mrl, enc});
+		setVisible(true);
+	} else {
+		if (m_downloader->isRunning())
+			m_downloader->cancel();
+		m_enc = enc;
+		m_downloader->start(mrl.toString());
+	}
 	return true;
 }

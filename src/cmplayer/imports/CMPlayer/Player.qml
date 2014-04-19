@@ -8,6 +8,7 @@ Item {
 	objectName: "player"
 	property real dockZ: 0.0
 	property real bottomPadding: 0.0
+	readonly property QtObject engine: Cp.App.engine
 	Logo { anchors.fill: parent }
 	TextOsd { id: msgosd }
 	Rectangle {
@@ -30,19 +31,19 @@ Item {
 		border.width: 1
 	}
 
-	ProgressOsd { id: timeline; value: engine.relativePosition }
+	ProgressOsd { id: timeline; value: engine.rate }
 	PlayInfoView { objectName: "playinfo" }
 	Item {
 		anchors.fill: parent; z: dockZ
 		PlaylistDock {
 			id: right
-			objectName: "playlist"
+			show: Cp.App.playlist.visible
 			width: Math.min(widthHint, player.width-(left.x+left.width)-20)
 			height: parent.height-2*y - bottomPadding
 		}
 		HistoryDock {
 			id: left
-			objectName: "history"
+			show: Cp.App.history.visible
 			width: Math.min(widthHint, player.width*0.4)
 			height: parent.height-2*y - bottomPadding
 		}
@@ -59,26 +60,75 @@ Item {
 	function showMessageBox(msg) { msgbox.visible = !!msg; boxmsg.text = msg }
 	function showTimeLine() { timeline.show(); }
 
-	property Item progressMessageBox: Item {
-		parent: player; width: 300; height: 70
+	Cp.MessageBox {
+		id: downloadMBox
+		parent: Cp.App.topLevelItem
+		width: 300
+		height: 100
 		anchors.centerIn: parent
-		property string title
-		property string text
-		property alias progress: prog.value
-		property alias dismissable: downmbox.dismissable
+		title.text: qsTr("Download")
+		message.text: Cp.App.download.url
+		message.elide: Text.ElideMiddle
+		message.verticalAlignment: Text.AlignVCenter
 		visible: false
-		Cp.MessageBox {
-			id: downmbox
-			width: parent.width
-			height: parent.height
-			visible: parent.visible
-			title.text: parent.title
-			dismissable: false
-			message.elide: Text.ElideMiddle
-			message.verticalAlignment: Text.AlignVCenter
-			message.height: 100
-			message.text: parent.text
-			customItem: Cp.ProgressBar { id: prog }
+		Connections {
+			target: Cp.App.download
+			onRunningChanged: {
+				downloadMBox.visible = Cp.App.download.running
+				if (Cp.App.download.running)
+					Cp.App.topLevelItem.visible = true
+				else
+					Cp.App.topLevelItem.check()
+			}
 		}
+		buttonBox.buttons: [Cp.ButtonBox.Cancel]
+		buttonBox.onClicked: {
+			if (button == Cp.ButtonBox.Cancel)
+				Cp.App.download.cancel()
+		}
+
+		readonly property QtObject download: Cp.App.download
+		customItem: Cp.ProgressBar {
+			id: prog
+			value: Cp.App.download.rate
+			property bool writing: Cp.App.download.writtenSize >= 0
+			function sizeText(size) {
+				if (size < 0)
+					return "??"
+				if (size < 1024*1024)
+					return (size/1024).toFixed(3) + "KiB"
+				return (size/(1024*1024)).toFixed(3) + "MiB"
+			}
+			Text {
+				height: parent.height
+				anchors.right: progSlash.left
+				anchors.rightMargin: 2
+				verticalAlignment: Text.AlignVCenter
+				horizontalAlignment: Text.AlignRight
+				color: "black"
+				visible: prog.writing
+				text: prog.sizeText(Cp.App.download.writtenSize)
+			}
+			Text {
+				id: progSlash
+				anchors.horizontalCenter: parent.horizontalCenter
+				width: 5; height: parent.height
+				verticalAlignment: Text.AlignVCenter
+				horizontalAlignment: Text.AlignHCenter
+				color: "black"
+				text: prog.writing ? "/" : qsTr("Connecting...")
+			}
+			Text {
+				height: parent.height
+				anchors.left: progSlash.right
+				anchors.leftMargin: 2
+				verticalAlignment: Text.AlignVCenter
+				horizontalAlignment: Text.AlignLeft
+				color: "black"
+				visible: prog.writing
+				text: prog.sizeText(Cp.App.download.totalSize)
+			}
+		}
+
 	}
 }

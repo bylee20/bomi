@@ -51,7 +51,7 @@ class PlayEngine : public QObject {
 	Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
 	Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated NOTIFY volumeNormalizerActivatedChanged)
 	Q_PROPERTY(HardwareAcceleration hardwareAccelaration READ hwAcc NOTIFY hwaccChanged)
-	Q_PROPERTY(double relativePosition READ relativePosition NOTIFY relativePositionChanged)
+	Q_PROPERTY(double rate READ rate NOTIFY rateChanged)
 	Q_PROPERTY(QQuickItem *screen READ screen)
 	Q_PROPERTY(qreal cache READ cache NOTIFY cacheChanged)
 	Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
@@ -146,7 +146,7 @@ public:
 	double avgfps() const;
 	QString stateText() const;
 	static QString stateText(State state);
-	double relativePosition() const { return (double)(time()-begin())/duration(); }
+	double rate() const { return (double)(time()-begin())/duration(); }
 	Q_INVOKABLE double bitrate(double fps) const;
 	static void registerObjects();
 	qreal cache() const;
@@ -205,7 +205,7 @@ signals:
 	void audioChanged();
 	void videoChanged();
 	void runningChanged();
-	void relativePositionChanged();
+	void rateChanged();
 	void hwaccChanged();
 	void cacheChanged();
 	void hasVideoChanged();

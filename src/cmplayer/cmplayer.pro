@@ -133,7 +133,10 @@ HEADERS += playengine.hpp \
     audio_helper.hpp \
     mpv_helper.hpp \
     udf25.hpp \
-    busyiconitem.hpp
+    busyiconitem.hpp \
+    quick/toplevelitem.hpp \
+    quick/dialogitem.hpp \
+    quick/textitemwrapper.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -221,7 +224,10 @@ SOURCES += main.cpp \
     audio_helper.cpp \
     mpv_helper.cpp \
     udf25.cpp \
-    busyiconitem.cpp
+    busyiconitem.cpp \
+    quick/toplevelitem.cpp \
+    quick/dialogitem.cpp \
+    quick/textitemwrapper.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -1,5 +1,6 @@
 import QtQuick 2.2
 import QtQuick.Layouts 1.1
+import CMPlayer 1.0 as Cp
 
 Rectangle {
 	id: box
@@ -8,9 +9,10 @@ Rectangle {
 	color: Qt.rgba(0, 0, 0, 1);
 	opacity: 0.75
 	visible: false
-	property alias title: titletxt
-	property alias message: messagetxt
+	property alias title: titleItem
+	property alias message: messageItem
 	property bool dismissable: true
+	property alias buttonBox: bboxItem
 	property Item customItem: Item { }
 	function dismiss() {
 		if (dismissable) {
@@ -26,7 +28,7 @@ Rectangle {
 		anchors.margins: 5
 		anchors.fill: parent
 		Text {
-			id: titletxt
+			id: titleItem
 			Layout.fillWidth: true
 			color: "white"
 			horizontalAlignment: Text.AlignHCenter
@@ -66,7 +68,7 @@ Rectangle {
 			}
 		}
 		Text {
-			id: messagetxt
+			id: messageItem
 			Layout.fillWidth: true
 			Layout.fillHeight: true
 			color: "white"
@@ -76,6 +78,32 @@ Rectangle {
 			id: custom
 			width: parent.width
 			height: childrenRect.height
+		}
+		Cp.ButtonBox {
+			id: bboxItem
+			buttons: [Cp.ButtonBox.Cancel, Cp.ButtonBox.Ok]
+			visible: buttons.length > 0
+			width: 150; height: 25
+			anchors.horizontalCenter: parent.horizontalCenter
+			source: Rectangle {
+				color: mouseArea.pressed ? Qt.rgba(1.0, 1.0, 1.0, 1.0)
+										 : Qt.rgba(0.3, 0.3, 0.3, 1.0)
+				property alias text: textItem.text
+				signal clicked
+				Text {
+					id: textItem
+					color: mouseArea.pressed ? Qt.rgba(0.0, 0.0, 0.0, 1.0)
+											 : Qt.rgba(1.0, 1.0, 1.0, 1.0)
+					anchors.fill: parent
+					verticalAlignment: Text.AlignVCenter
+					horizontalAlignment: Text.AlignHCenter
+				}
+				MouseArea {
+					id: mouseArea
+					anchors.fill: parent
+					onClicked: parent.clicked()
+				}
+			}
 		}
 	}
 }

@@ -4,6 +4,7 @@
 #include "stdafx.hpp"
 #include "global.hpp"
 #include "globalqmlobject.hpp"
+#include "quick/toplevelitem.hpp"
 
 class Mrl;			class PrefDialog;
 class MainView;		class Playlist;
@@ -29,6 +30,7 @@ public:
 	void play();
 	PlayEngine *engine() const;
 	PlaylistModel *playlist() const;
+	TopLevelItem *topLevelItem() const;
 public slots:
 	void openMrl(const Mrl &mrl);
 	void openMrl(const Mrl &mrl, const QString &enc);
@@ -138,9 +140,10 @@ private:
 	}
 	void mousePressEvent(QMouseEvent *event) {
 		m_main->resetMoving();
+		m_main->topLevelItem()->resetMousePressEventFilterState();
 		event->setAccepted(false);
 		QQuickView::mousePressEvent(event);
-		if (!event->isAccepted())
+		if (!event->isAccepted() || m_main->topLevelItem()->filteredMousePressEvent())
 			m_main->onMousePressEvent(event);
 	}
 	void mouseReleaseEvent(QMouseEvent *event) {

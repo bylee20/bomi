@@ -6,6 +6,7 @@ import CMPlayer 1.0 as Cp
 Cp.AppWithFloating {
 	id: app
 	name: "net.xylosper.cmplayer.skin.modern"
+	readonly property QtObject engine: Cp.App.engine
 	Component {
 		id: slider
 		SliderStyle {

@@ -93,7 +93,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
 	d->ui.view->header()->resizeSection(2, 150);
 	d->finder = new OpenSubtitlesFinder;
 	connect(&d->downloader, &Downloader::started, [this] () { d->updateState(); });
-	connect(&d->downloader, &Downloader::downloaded, [this] (qint64 written, qint64 total) {
+	connect(&d->downloader, &Downloader::progressed, [this] (qint64 written, qint64 total) {
 		d->ui.prog->setMaximum(total);
 		d->ui.prog->setValue(written);
 	});

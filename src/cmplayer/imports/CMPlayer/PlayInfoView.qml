@@ -10,6 +10,7 @@ Item {
 	anchors.centerIn: parent
 	property string fontFamily: Util.monospace
 	property alias show: wrapper.visible
+	readonly property Engine engine: App.engine
 	Connections {
 		target: engine
 		onAudioChanged: audioinfo.update()
@@ -53,7 +54,7 @@ Item {
 		PlayInfoText {
 			readonly property int time: engine.time/1000
 			readonly property int end: engine.end/1000
-			readonly property int pos10: engine.relativePosition*1000
+			readonly property int pos10: engine.rate*1000
 			text: "[%1]%2/%3(%4%)".arg(engine.stateText)
 				.arg(Util.secToString(time)).arg(Util.secToString(end)).arg(time > 0 && end > 0 ? (pos10/10.0).toFixed(1) : 0)
 		}
@@ -94,23 +95,24 @@ Item {
 		PlayInfoText {
 			id: videoinfo
 			function update() {
-				var txt = qsTr("Video Codec: %1").arg(engine.video.codec);
+				var video = engine.video
+				var txt = qsTr("Video Codec: %1").arg(video.codec);
 				txt += '\n';
 				txt += qsTr("Input : %1 %2x%3 %4fps(%5MB/s)")
-					.arg(engine.video.input.type)
-					.arg(box.number(engine.video.input.size.width))
-					.arg(box.number(engine.video.input.size.height))
-					.arg(box.number(engine.video.input.fps, 3))
-					.arg(box.number(engine.video.input.bitrate/(8*1024*1024), 2));
+					.arg(video.input.type)
+					.arg(box.number(video.input.size.width))
+					.arg(box.number(video.input.size.height))
+					.arg(box.number(video.input.fps, 3))
+					.arg(box.number(video.input.bitrate/(8*1024*1024), 2));
 				txt += '\n';
 				txt += qsTr("Output: %1 %2x%3 %4fps(%5MB/s)")
-					.arg(engine.video.output.type)
-					.arg(box.number(engine.video.output.size.width))
-					.arg(box.number(engine.video.output.size.height))
-					.arg(box.number(engine.video.output.fps, 3))
-					.arg(box.number(engine.video.output.bitrate/(8*1024*1024), 2));
+					.arg(video.output.type)
+					.arg(box.number(video.output.size.width))
+					.arg(box.number(video.output.size.height))
+					.arg(box.number(video.output.fps, 3))
+					.arg(box.number(video.output.bitrate/(8*1024*1024), 2));
 				txt += '\n';
-				txt += qsTr("Hardware Acceleration: %1").arg(engine.video.hwacc);
+				txt += qsTr("Hardware Acceleration: %1").arg(video.hwacc);
 				text = txt
 			}
 		}
@@ -119,23 +121,24 @@ Item {
 		PlayInfoText {
 			id: audioinfo
 			function update() {
-				var txt = qsTr("Audio Codec: %1").arg(engine.audio.codec);
+				var audio = engine.audio;
+				var txt = qsTr("Audio Codec: %1").arg(audio.codec);
 				txt += '\n';
 				txt += qsTr("Input : %1 %2kbps %3kHz %4 %5bits")
-					.arg(engine.audio.input.type)
-					.arg(box.number(engine.audio.input.bitrate/1024, 0))
-					.arg(box.number(engine.audio.input.samplerate))
-					.arg(engine.audio.input.channels)
-					.arg(box.number(engine.audio.input.bits));
+					.arg(audio.input.type)
+					.arg(box.number(audio.input.bitrate/1024, 0))
+					.arg(box.number(audio.input.samplerate))
+					.arg(audio.input.channels)
+					.arg(box.number(audio.input.bits));
 				txt += '\n';
 				txt += qsTr("Output: %1 %2kbps %3kHz %4 %5bits")
-					.arg(engine.audio.output.type)
-					.arg(box.number(engine.audio.output.bitrate/1024, 0))
-					.arg(box.number(engine.audio.output.samplerate))
-					.arg(engine.audio.output.channels)
-					.arg(box.number(engine.audio.output.bits));
+					.arg(audio.output.type)
+					.arg(box.number(audio.output.bitrate/1024, 0))
+					.arg(box.number(audio.output.samplerate))
+					.arg(audio.output.channels)
+					.arg(box.number(audio.output.bits));
 				txt += '\n';
-				txt += qsTr("Output Driver: %1").arg(engine.audio.driver);
+				txt += qsTr("Output Driver: %1").arg(audio.driver);
 				text = txt
 			}
 		}

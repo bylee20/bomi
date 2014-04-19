@@ -23,14 +23,14 @@ Item {
 
 	Cp.ModelView {
 		id: view
-		model: history
+		model: Cp.App.history
 		columns: [
 			ItemColumn { width: 200; title: qsTr("Name"); role: "name" },
 			ItemColumn { width: 150; title: qsTr("Latest Playback"); role: "latestplay" },
 			ItemColumn { width: 400; title: qsTr("Location"); role: "location" }
 		]
 		itemDelegate: Text { text: value; color: "white"; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter }
-		onActivated: history.play(index)
+		onActivated: Cp.App.history.play(index)
 	}
 
 	MouseArea {
