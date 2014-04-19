@@ -48,6 +48,7 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
 	keys[_L("play/seek/next-subtitle")] << Qt::Key_Slash;
 
 	keys[_L("subtitle/track/open")] << Qt::SHIFT + Qt::Key_F;
+	keys[_L("subtitle/track/reload")] << Qt::SHIFT + Qt::Key_R;
 	keys[_L("subtitle/track/next")] << Qt::SHIFT + Qt::Key_N;
 	keys[_L("subtitle/track/all")] << Qt::SHIFT + Qt::Key_B;
 	keys[_L("subtitle/track/hide")] << Qt::SHIFT + Qt::Key_H;

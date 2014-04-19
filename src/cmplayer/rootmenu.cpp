@@ -190,6 +190,7 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 		spu.addGroup("internal")->setExclusive(false);
 		spu.addGroup("external")->setExclusive(false);
 		spu.addAction(_L("open"));
+		spu.addAction(_L("reload"));
 		spu.addAction(_L("clear"));
 		spu.addSeparator();
 		spu.addAction(_L("next"));
@@ -440,6 +441,7 @@ void RootMenu::update(const Pref &p) {
 
 	auto &spu = sub("track", tr("Subtitle Track"));
 	spu.a("open", tr("Open File(s)"));
+	spu.a("reload", tr("Reload File(s)"));
 	spu.a("clear", tr("Clear File(s)"));
 	spu.a("next", tr("Select Next"));
 	spu.a("all", tr("Select All"));

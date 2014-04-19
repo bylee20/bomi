@@ -532,6 +532,26 @@ struct MainWindow::Data {
 		}, sig, f);
 	}
 
+	SubtitleStateInfo subtitleState() const {
+		SubtitleStateInfo state;
+		state.track() = engine.currentSubtitleStream();
+		state.mpv() = engine.subtitleFiles();
+		const auto parsed = subtitle.components();
+		for (auto c : parsed)
+			state.append(*c);
+		return state;
+	}
+	void setSubtitleState(const SubtitleStateInfo &state) {
+		if (!state.isValid())
+			return;
+		for (auto &f : state.mpv())
+			engine.addSubtitleStream(f.path, f.encoding);
+		auto loaded = state.load();
+		subtitle.setComponents(loaded);
+		engine.setCurrentSubtitleStream(state.track());
+		syncSubtitleFileMenu();
+	}
+
 	void initWidget() {
 		view = new MainView(p);
 		UtilObject::setQmlEngine(view->engine());
@@ -707,12 +727,7 @@ struct MainWindow::Data {
 				as.state.resume_position = time;
 				as.state.edition = engine.currentEdition();
 				as.state.audio_track = engine.currentAudioStream();
-				as.state.sub_track = SubtitleStateInfo();
-				as.state.sub_track.track() = engine.currentSubtitleStream();
-				as.state.sub_track.mpv() = engine.subtitleFiles();
-				const auto parsed = subtitle.components();
-				for (auto c : parsed)
-					as.state.sub_track.append(*c);
+				as.state.sub_track = subtitleState();
 				syncState();
 			}
 			history.update(&as.state, !end);
@@ -730,14 +745,9 @@ struct MainWindow::Data {
 				engine.setCurrentAudioStream(state.audio_track);
 				syncWithState();
 			}
-			if (found && state.sub_track.isValid()) {
-				for (auto &f : state.sub_track.mpv())
-					engine.addSubtitleStream(f.path, f.encoding);
-				auto loaded = state.sub_track.load();
-				subtitle.setComponents(loaded);
-				engine.setCurrentSubtitleStream(state.sub_track.track());
-				syncSubtitleFileMenu();
-			} else
+			if (found && state.sub_track.isValid())
+				setSubtitleState(state.sub_track);
+			else
 				updateSubtitleState();
 			updateMrlState(mrl, false, 0);
 		});
@@ -1193,6 +1203,11 @@ void MainWindow::connectMenus() {
 		const auto files = EncodingFileDialog::getOpenFileNames(this, tr("Open Subtitle"), dir, Info::subtitleExtFilter(), &enc);
 		if (!files.isEmpty())
 			appendSubFiles(files, true, enc);
+	});
+	connect(sub("track")["reload"], &QAction::triggered, this, [this] () {
+		auto state = d->subtitleState();
+		clearSubtitleFiles();
+		d->setSubtitleState(state);
 	});
 	connect(sub("track")["clear"], &QAction::triggered, this, &MainWindow::clearSubtitleFiles);
 	connect(sub("track").g("external"), &ActionGroup::triggered, this, [this] (QAction *a) {
