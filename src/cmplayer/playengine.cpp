@@ -7,7 +7,6 @@
 #include "translator.hpp"
 #include "log.hpp"
 #include "subtitlestyle.hpp"
-#include "quick/dialogitem.hpp"
 
 DECLARE_LOG_CONTEXT(Engine)
 #include <libmpv/client.h>

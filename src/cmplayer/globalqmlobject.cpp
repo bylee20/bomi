@@ -2,17 +2,6 @@
 #include "rootmenu.hpp"
 #include <unistd.h>
 
-QmlApp::StaticData QmlApp::s;
-
-void SettingsObject::open(const QString &name) {
-	if (m_name != name) {
-		close();
-		m_set.beginGroup("skin");
-		m_set.beginGroup(name);
-		m_open = true;
-		m_name = name;
-	}
-}
 
 UtilObject *UtilObject::object = nullptr;
 

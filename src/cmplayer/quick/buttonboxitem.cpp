@@ -1,5 +1,9 @@
-#include "dialogitem.hpp"
-#include "textitemwrapper.hpp"
+#include "buttonboxitem.hpp"
+#include "dialogs.hpp"
+
+void reg_button_box_item() {
+	qmlRegisterType<ButtonBoxItem>("CMPlayer", 1, 0, "ButtonBox");
+}
 
 static const char *code = R"(
 import QtQuick 2.2

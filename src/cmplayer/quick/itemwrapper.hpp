@@ -1,5 +1,5 @@
-#ifndef TEXTITEMWRAPPER_HPP
-#define TEXTITEMWRAPPER_HPP
+#ifndef ITEMWRAPPER_HPP
+#define ITEMWRAPPER_HPP
 
 #include "stdafx.hpp"
 
@@ -117,4 +117,4 @@ private:
 	QQmlProperty m_color, m_radius;
 };
 
-#endif // TEXTITEMWRAPPER_HPP
+#endif // ITEMWRAPPER_HPP

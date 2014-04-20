@@ -1,4 +1,4 @@
-#include "textitemwrapper.hpp"
+#include "itemwrapper.hpp"
 #include "globalqmlobject.hpp"
 
 QtItem::QtItem(const QByteArray &source, QQuickItem *parent)

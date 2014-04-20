@@ -1,8 +1,7 @@
-#ifndef DIALOGITEM_HPP
-#define DIALOGITEM_HPP
+#ifndef BUTTONBOXITEM_HPP
+#define BUTTONBOXITEM_HPP
 
 #include "stdafx.hpp"
-#include "dialogs.hpp"
 
 class ButtonBoxItem : public QQuickItem {
 	Q_OBJECT
@@ -12,8 +11,9 @@ class ButtonBoxItem : public QQuickItem {
 	Q_PROPERTY(qreal buttonWidth READ buttonWidth WRITE setButtonWidth NOTIFY buttonWidthChanged)
 	Q_PROPERTY(qreal gap READ gap WRITE setGap NOTIFY gapChanged)
 	Q_PROPERTY(QQuickItem *clickedButton READ clickedButton NOTIFY clickedButtonChanged)
+	using DBB = QDialogButtonBox;
 public:
-	enum Button { Ok = BBox::Ok, Cancel = BBox::Cancel, Yes = BBox::Yes, No = BBox::No };
+	enum Button { Ok = DBB::Ok, Cancel = DBB::Cancel, Yes = DBB::Yes, No = DBB::No };
 	ButtonBoxItem(QQuickItem *parent = nullptr);
 	~ButtonBoxItem();
 	QList<int> buttons() const;
@@ -41,4 +41,4 @@ private:
 	Data *d;
 };
 
-#endif // DIALOGITEM_HPP
+#endif // BUTTONBOXITEM_HPP

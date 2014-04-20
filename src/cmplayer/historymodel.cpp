@@ -4,6 +4,10 @@
 
 DECLARE_LOG_CONTEXT(History)
 
+void reg_history_model() {
+	qmlRegisterType<HistoryModel>();
+}
+
 using namespace MrlStateHelpers;
 
 struct RowCache {

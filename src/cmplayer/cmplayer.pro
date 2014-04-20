@@ -134,8 +134,10 @@ HEADERS += playengine.hpp \
     udf25.hpp \
     busyiconitem.hpp \
     quick/toplevelitem.hpp \
-    quick/dialogitem.hpp \
-    quick/textitemwrapper.hpp
+    quick/itemwrapper.hpp \
+    quick/buttonboxitem.hpp \
+    quick/appobject.hpp \
+    quick/settingsobject.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -225,8 +227,10 @@ SOURCES += main.cpp \
     udf25.cpp \
     busyiconitem.cpp \
     quick/toplevelitem.cpp \
-    quick/dialogitem.cpp \
-    quick/textitemwrapper.cpp
+    quick/itemwrapper.cpp \
+    quick/buttonboxitem.cpp \
+    quick/appobject.cpp \
+    quick/settingsobject.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

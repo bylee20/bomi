@@ -81,6 +81,8 @@ static inline QString _GetOpenFileName(QWidget *p, const QString &t, const QStri
 static inline QString _GetSaveFileName(QWidget *p, const QString &t, const QString &dir, const QString &f) {
     return QFileDialog::getSaveFileName(p, t, dir, f, 0);
 }
+template<typename T>
+static QObject *_QmlSingleton(QQmlEngine *, QJSEngine *) { return new T; }
 
 #ifndef __OBJC__
 template<typename T, typename S = T> constexpr static inline S _Max() { return (S)std::numeric_limits<T>::max(); }

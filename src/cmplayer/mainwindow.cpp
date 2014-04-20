@@ -31,7 +31,7 @@
 #include "videoformat.hpp"
 #include "dataevent.hpp"
 #include "quick/toplevelitem.hpp"
-#include "quick/textitemwrapper.hpp"
+#include "quick/appobject.hpp"
 #include "log.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
@@ -863,11 +863,11 @@ void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
 MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data(this)) {
-	QmlApp::setEngine(&d->engine);
-	QmlApp::setHistory(&d->history);
-	QmlApp::setPlaylist(&d->playlist);
-	QmlApp::setTopLevelItem(&d->topLevelItem);
-	QmlApp::setDownloader(&d->downloader);
+	AppObject::setEngine(&d->engine);
+	AppObject::setHistory(&d->history);
+	AppObject::setPlaylist(&d->playlist);
+	AppObject::setTopLevelItem(&d->topLevelItem);
+	AppObject::setDownloader(&d->downloader);
 	d->playlist.setDownloader(&d->downloader);
 
 	d->engine.run();

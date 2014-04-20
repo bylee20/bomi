@@ -1,5 +1,8 @@
 #include "toplevelitem.hpp"
 
+void reg_top_level_item() {
+	qmlRegisterType<TopLevelItem>();
+}
 
 struct TopLevelItem::Data {
 	QColor shade;

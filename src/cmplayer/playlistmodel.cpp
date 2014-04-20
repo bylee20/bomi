@@ -1,6 +1,10 @@
 #include "playlistmodel.hpp"
 #include "downloader.hpp"
 
+void reg_playlist_model() {
+	qmlRegisterType<PlaylistModel>();
+}
+
 PlaylistModel::PlaylistModel(QObject *parent)
 : BaseListModel(parent) {
 	connect(this, &PlaylistModel::modelReset, [this] () {
