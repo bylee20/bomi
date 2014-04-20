@@ -61,6 +61,10 @@ Cp.AppWithDock {
                 id: playPause; width: 24; height: 24
                 action: "play/pause"; icon: getStateIconName(engine.running ? "pause" : "play", hovered, pressed)
             }
+            Cp.Button {
+                id: playStop; width: 24; height: 24
+                action: "play/stop"; icon: getStateIconName("stop", hovered, pressed)
+            }
 
             Cp.Button {
                 id: playNext; width: 24; height: 24
@@ -78,18 +82,22 @@ Cp.AppWithDock {
 
             Row {
                 Cp.Button {
-                    id: playlistIcon; width: 24; height: 24
-                    action: "tool/playlist/toggle"; icon: getStateIconName("playlist", hovered, pressed); action2: "tool/playlist"
-                    tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
-                }
+                id: playlistIcon; width: 24; height: 24
+                action: "tool/playlist/toggle"; icon: getStateIconName("playlist", hovered, pressed); action2: "tool/playlist"
+                            tooltip: makeToolTip(qsTr("Show/Hide Playlist"), qsTr("Show Playlist Menu"))
+                    }
                 Cp.Button {
-                    id: fullscreen; width: 24; height: 24
-                    action: "window/full"; icon: getStateIconName("fullscreen", hovered, pressed)
-                }
+                id: fullscreen; width: 24; height: 24
+                action: "window/full"; icon: getStateIconName("fullscreen", hovered, pressed)
+                    }
                 Cp.Button {
-                    id: mute; width: 24; height: 24
-                    action: "audio/volume/mute"; icon: engine.muted ? getStateIconName("speaker-off", hovered, pressed) : getStateIconName("speaker-on", hovered, pressed)
-                }
+                id: openFolder; width: 24; height: 24
+                action: "open/folder"; icon: getStateIconName("open-folder", hovered, pressed)
+                    }
+                Cp.Button {
+                id: mute; width: 24; height: 24
+                action: "audio/volume/mute"; icon: engine.muted ? getStateIconName("speaker-off", hovered, pressed) : getStateIconName("speaker-on", hovered, pressed)
+                    }
             }
             Cp.VolumeSlider { id: volumeslider; width: 100; style: sliders; height: parent.height }
         }
