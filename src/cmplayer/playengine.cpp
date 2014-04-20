@@ -246,7 +246,7 @@ struct PlayEngine::Data {
 	}
 
 	void loadfile(const Mrl &mrl, int resume, int cache, int edition) {
-		QString file = mrl.toString();
+		QString file = mrl.isLocalFile() ? mrl.toLocalFile() : mrl.toString();
 		if (file.isEmpty())
 			return;
 		timing = false;
