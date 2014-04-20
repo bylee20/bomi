@@ -1,5 +1,9 @@
 #include "busyiconitem.hpp"
 
+void reg_busy_icon_item() {
+    qmlRegisterType<BusyIconItem>("CMPlayer", 1, 0, "BusyIcon");
+}
+
 struct ColorRing {
     QColor color;
     QImage image;

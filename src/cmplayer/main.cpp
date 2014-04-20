@@ -8,12 +8,12 @@
 #include "openglcompat.hpp"
 #include "log.hpp"
 #include "tmp.hpp"
-#include "globalqmlobject.hpp"
 
 DECLARE_LOG_CONTEXT(Main)
 
 void reg_top_level_item();
 void reg_button_box_item();
+void reg_busy_icon_item();
 void reg_downloader();
 void reg_history_model();
 void reg_playlist_model();
@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
     reg_playlist_model();
     reg_top_level_item();
     reg_button_box_item();
+    reg_busy_icon_item();
     reg_app_object();
     reg_settings_object();
     PlayEngine::registerObjects();
