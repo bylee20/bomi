@@ -278,7 +278,8 @@ OTHER_FILES += \
     imports/CMPlayer/ModelView.qml \
     imports/CMPlayer/ScrollBar.qml \
     imports/CMPlayer/MessageBox.qml \
-    imports/CMPlayer/ProgressBar.qml
+    imports/CMPlayer/ProgressBar.qml \
+    skins/Faenza-Zukitwo/cmplayer.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}
