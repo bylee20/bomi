@@ -1,8 +1,6 @@
 #include "playengine.hpp"
 #include "playengine_p.hpp"
 #include "videorendereritem.hpp"
-#include "globalqmlobject.hpp"
-#include "busyiconitem.hpp"
 #include "submisc.hpp"
 #include "translator.hpp"
 #include "log.hpp"
@@ -154,6 +152,7 @@ struct PlayEngine::Data {
     MetaData metaData;
     QString mediaName;
 
+    double fps = 1.0;
     bool hasImage = false, tempoScaler = false, seekable = false;
     bool subStreamsVisible = true, startPaused = false, disc = false;
 
@@ -452,7 +451,7 @@ void PlayEngine::updateVideoFormat(VideoFormat format) {
     if (_Change(d->videoFormat, format))
         emit videoFormatChanged(d->videoFormat);
     auto output = d->videoInfo->m_output;
-    output->setBps(d->videoFormat.bitrate(d->videoInfo->m_output->m_fps));
+    output->setBps(d->videoFormat.bitrate(output->m_fps));
 }
 
 SubtitleTrackInfoObject *PlayEngine::subtitleTrackInfo() const {
@@ -888,12 +887,14 @@ void PlayEngine::customEvent(QEvent *event) {
     } case UpdateVideoInfo: {
         delete d->videoInfo;
         d->videoInfo = _GetData<AvInfoObject*>(event);
-        d->videoInfo->m_output->m_bitrate = d->videoFormat.bitrate(d->videoInfo->m_output->m_fps);
+        auto output = d->videoInfo->m_output;
+        output->m_bitrate = d->videoFormat.bitrate(output->m_fps);
         auto hwacc = [&] () {
-            if (!HwAcc::supports(d->hwaccBackend, HwAcc::codecId(d->videoInfo->codec().toLatin1())))
+            auto codec = HwAcc::codecId(d->videoInfo->codec().toLatin1());
+            if (!HwAcc::supports(d->hwaccBackend, codec))
                 return HardwareAcceleration::Unavailable;
             static QVector<QString> types = { _L("vaapi"), _L("vdpau"), _L("vda") };
-            if (types.contains(d->videoInfo->m_output->m_type))
+            if (types.contains(output->m_type))
                 return HardwareAcceleration::Activated;
             if (d->hwaccCodecs.contains(d->videoInfo->codec().toLatin1()))
                 return HardwareAcceleration::Unavailable;
@@ -913,6 +914,8 @@ void PlayEngine::customEvent(QEvent *event) {
             emit hwaccChanged();
         d->videoInfo->m_hwacc = hwtxt(d->hwacc);
         emit videoChanged();
+        if (_Change(d->fps, output->m_fps))
+            emit fpsChanged(d->fps);
         break;
     } case NotifySeek:
         emit sought();
@@ -1321,7 +1324,7 @@ void PlayEngine::setAudioSync(int sync) {
 }
 
 double PlayEngine::fps() const {
-    return hasVideo() && d->videoInfo->input()->fps() > 1 ? d->videoInfo->input()->fps() : 25;
+    return d->fps;
 }
 
 void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
@@ -1356,8 +1359,6 @@ void PlayEngine::registerObjects() {
     qRegisterMetaType<QVector<int>>("QVector<int>");
     qRegisterMetaType<StreamList>("StreamList");
     qRegisterMetaType<AudioFormat>("AudioFormat");
-    qmlRegisterType<BusyIconItem>("CMPlayer", 1, 0, "BusyIcon");
-//    qmlRegisterType<DialogItem>("CMPlayer", 1, 0, "Dialog");
     qmlRegisterType<ChapterInfoObject>();
     qmlRegisterType<AudioTrackInfoObject>();
     qmlRegisterType<SubtitleTrackInfoObject>();

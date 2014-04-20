@@ -682,7 +682,7 @@ struct MainWindow::Data {
         connect(&engine, &PlayEngine::volumeNormalizerActivatedChanged, menu("audio")["normalizer"], &QAction::setChecked);
         connect(&engine, &PlayEngine::tempoScaledChanged, menu("audio")["tempo-scaler"], &QAction::setChecked);
         connect(&engine, &PlayEngine::mutedChanged, menu("audio")("volume")["mute"], &QAction::setChecked);
-        connect(&engine, &PlayEngine::started, p, [this] () { subtitle.setFPS(engine.fps()); });
+        connect(&engine, &PlayEngine::fpsChanged, &subtitle, &SubtitleRendererItem::setFPS);
         connect(&engine, &PlayEngine::editionsChanged, p, [this] (const EditionList &editions) {
             updateListMenu(menu("play")("title"), editions, engine.currentEdition());
         });

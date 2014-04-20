@@ -14,6 +14,7 @@ public:
     int currentRow() const;
     void setVisible(bool visible);
     QString name() const;
+    void setFps(double fps);
 signals:
     void currentRowChanged(int row);
 private:

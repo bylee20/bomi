@@ -8,8 +8,8 @@ class SubCompModel::Item : public ListModel::Item {
 public:
     Item(): m_end(-1) {}
     Item(c_iterator it): m_end(-1), m_it(it) {}
-    int start() const {return m_it.key();}
-    int end() const {return m_end;}
+    int start() const {return m_it.key()*m_mul;}
+    int end() const {return m_end*m_mul;}
     QString text() const {return m_it->toPlainText();}
     QVariant data(const int column, int role) const {
         if (role == Qt::DisplayRole) {
@@ -36,6 +36,7 @@ public:
 
     int m_end;
     c_iterator m_it;
+    double m_mul = 1.0;
     QFont m_font;
 };
 
@@ -82,6 +83,17 @@ SubCompModel::SubCompModel(const SubComp *comp, QObject *parent)
 
 QString SubCompModel::name() const {
     return d->comp->name();
+}
+
+void SubCompModel::setFps(double fps) {
+    if (d->comp->isBasedOnFrame()) {
+        beginResetModel();
+        const int rows = rowCount();
+        const auto mul = 1000.0/fps;
+        for (int i = 0; i < rows; ++i)
+            static_cast<Item*>(at(i))->m_mul = mul;
+        endResetModel();
+    }
 }
 
 void SubCompModel::setVisible(bool visible) {

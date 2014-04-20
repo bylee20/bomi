@@ -15,7 +15,7 @@ struct SubCompSelection::Thread::Data {
     QMap<SubCompItMapIt, SubCompImage> pool;
     QObject *receiver = nullptr;
     bool quit = false;
-    double fps = 1.0, dpr = 1.0;
+    double fps = 1.0, dpr = 1.0, mul = 1.0;
     QMutex *mutex; QWaitCondition *wait;
     QRectF rect; SubtitleDrawer drawer;
     SubCompSelection *selection = nullptr;
@@ -95,6 +95,11 @@ SubCompSelection::Thread::~Thread() {
     delete d;
 }
 
+void SubCompSelection::Thread::setFPS(double fps) {
+    this->fps = fps; flags |= Rebuild;
+    d->item->model->setFps(fps);
+}
+
 void SubCompSelection::Thread::finish() {
     d->quit = true;
     d->wait->wakeAll();
@@ -115,6 +120,7 @@ void SubCompSelection::Thread::run() {
         flags = this->flags;
         this->flags = 0;
         d->time = time;
+        d->fps = fps;
         if (flags & NewOption) {
             if (flags & NewDrawer)
                 d->drawer = drawer;

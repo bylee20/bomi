@@ -19,7 +19,7 @@ private:
     public:
         Thread(QMutex *mutex, QWaitCondition *wait, Item *item, SubCompSelection *selection, QObject *renderer);
         ~Thread();
-        void setFPS(double fps) { this->fps = fps; flags |= Rebuild; }
+        void setFPS(double fps);
         void render(int time, int flags) { this->time = time; this->flags |= flags; }
         void setArea(const QRectF &rect, double dpr) { this->rect = rect; this->dpr = dpr; flags |= NewArea; }
         void setDrawer(const SubtitleDrawer &drawer) { this->drawer = drawer; flags |= NewDrawer; }
@@ -27,7 +27,7 @@ private:
         void run();
     private:
         QRectF rect; double dpr = 1.0; SubtitleDrawer drawer;
-        int time = 0, flags = 0; double fps = -1.0;
+        int time = 0, flags = 0; double fps = 1.0;
         struct Data; Data *d;
     };
     struct Item {

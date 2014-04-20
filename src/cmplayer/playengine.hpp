@@ -178,6 +178,7 @@ public slots:
     void seek(int pos);
     void relativeSeek(int pos);
 signals:
+    void fpsChanged(double fps);
     void seeked(int time);
     void sought();
     void tempoScaledChanged(bool on);
