@@ -113,7 +113,6 @@ HEADERS += playengine.hpp \
     geometryitem.hpp \
     playengine_p.hpp \
     mediamisc.hpp \
-    ../mpv/video/out/dither.h \
     trayicon.hpp \
     videocolor.hpp \
     interpolator.hpp \
