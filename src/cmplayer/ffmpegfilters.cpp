@@ -7,7 +7,6 @@ extern "C" {
 #include <libswscale/swscale.h>
 #include <video/mp_image.h>
 #include <video/fmt-conversion.h>
-#include <common/cpudetect.h>
 }
 
 mp_image *null_mp_image(void *arg = nullptr, void(*free)(void*) = nullptr);
@@ -129,7 +128,7 @@ bool FFmpegPostProc::initialize(const QString &option, const QSize &size, mp_img
 	m_imgfmt = imgfmt;
 	if (m_option.isEmpty() || m_size.isEmpty())
 		return false;
-	int flags = 0;
+	int flags = PP_CPU_CAPS_AUTO;
 	switch (imgfmt) {
 	case IMGFMT_420P:
 		flags |= PP_FORMAT_420;
@@ -149,10 +148,6 @@ bool FFmpegPostProc::initialize(const QString &option, const QSize &size, mp_img
 	m_mode = pp_get_mode_by_name_and_quality(m_option.toLatin1().constData(), PP_QUALITY_MAX);
 	if (!m_mode)
 		return false;
-	if (gCpuCaps.hasMMX)
-		flags |= PP_CPU_CAPS_MMX;
-	if (gCpuCaps.hasMMX2)
-		flags |= PP_CPU_CAPS_MMX2;
 	m_context = pp_get_context(size.width(), size.height(), flags);
 	return m_context;
 }

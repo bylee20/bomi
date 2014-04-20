@@ -12,6 +12,15 @@
 DECLARE_LOG_CONTEXT(Engine)
 #include <libmpv/client.h>
 
+enum EndReason {
+	EndFailed = -1,
+	EndOfFile,
+	EndRestart,
+	EndRequest,
+	EndQuit,
+	EndUnknown
+};
+
 template<class T, bool number = std::is_arithmetic<T>::value> struct mpv_format_trait { };
 template<> struct mpv_format_trait<bool> {
 	using mpv_type = int;
@@ -816,14 +825,23 @@ void PlayEngine::customEvent(QEvent *event) {
 		d->updateMediaName(name);
 		break;
 	} case EndPlayback: {
-		Mrl mrl; bool error; _GetAllData(event, mrl, error);
+		Mrl mrl; EndReason reason; _GetAllData(event, mrl, reason);
 		const int remain = (d->duration + d->begin) - d->position;
-		const bool eof = remain <= 500;
 		d->nextInfo = StartInfo();
-		if (!error && eof && !d->quit)
+		auto state = Stopped;
+		switch (reason) {
+		case EndOfFile:
 			emit requestNextStartInfo();
-		updateState(error ? Error : (d->nextInfo.isValid() ? Loading : Stopped));
-		if (!error && !mrl.isEmpty())
+			if (d->nextInfo.isValid())
+				state = Loading;
+			break;
+		case EndQuit: case EndRequest:
+			break;
+		default:
+			state = Error;
+		}
+		updateState(state);
+		if (state != Error && !mrl.isEmpty())
 			emit finished(mrl, d->position, remain);
 		if (d->nextInfo.isValid())
 			load(d->nextInfo);
@@ -977,7 +995,7 @@ void PlayEngine::exec() {
 	_Debug("Start playloop thread");
 	d->quit = false;
 	int position = 0, cache = -1, duration = 0;
-	bool error = true, first = false, posted = false;
+	bool first = false, loaded = false;
 	Mrl mrl;
 	QByteArray leftmsg;
 
@@ -1032,6 +1050,15 @@ void PlayEngine::exec() {
 		}
 	};
 
+	auto reason = [&loaded] (void *data) {
+		const auto reason = static_cast<mpv_event_end_file*>(data)->reason;
+		if (reason > EndUnknown)
+			return EndUnknown;
+		if (reason > EndUnknown && !loaded)
+			return EndFailed;
+		return static_cast<EndReason>(reason);
+	};
+
 	while (!d->quit) {
 		const auto event = mpv_wait_event(d->handle, 0.005);
 		switch (event->event_id) {
@@ -1070,8 +1097,7 @@ void PlayEngine::exec() {
 		} case MPV_EVENT_IDLE:
 			break;
 		case MPV_EVENT_START_FILE:
-			posted = false;
-			error = true;
+			loaded = false;
 			position = -1;
 			cache = 0;
 			mrl = d->startInfo.mrl;
@@ -1079,7 +1105,7 @@ void PlayEngine::exec() {
 			_PostEvent(this, PreparePlayback);
 			break;
 		case MPV_EVENT_FILE_LOADED: {
-			error = false;
+			loaded = true;
 			d->timing = first = true;
 			d->disc = mrl.isDisc();
 			if (d->initSeek > 0) {
@@ -1110,8 +1136,7 @@ void PlayEngine::exec() {
 			break;
 		} case MPV_EVENT_END_FILE: {
 			d->disc = d->timing = false;
-			_PostEvent(this, EndPlayback, mrl, error);
-			posted = true;
+			_PostEvent(this, EndPlayback, mrl, reason(event->data));
 			break;
 		} case MPV_EVENT_TRACKS_CHANGED: {
 			QVector<StreamList> streams(3);
@@ -1152,11 +1177,10 @@ void PlayEngine::exec() {
 			break;
 		} case MPV_EVENT_PAUSE:
 		case MPV_EVENT_UNPAUSE: {
-			auto reason = static_cast<mpv_event_pause_reason*>(event->data);
-			if (!reason->real_paused)
-				_PostEvent(this, StateChange, Playing);
-			else
-				_PostEvent(this, StateChange, reason->by_cache ? Buffering : Paused);
+			const auto paused = d->getmpv<bool>("core-idle");
+			const auto byCache = d->getmpv<bool>("paused-for-cache");
+			const auto state = byCache ? Buffering : paused ? Paused : Playing;
+			_PostEvent(this, StateChange, state);
 			break;
 		} case MPV_EVENT_SET_PROPERTY_REPLY:
 			if (!d->isSuccess(event->error)) {
@@ -1207,6 +1231,7 @@ void PlayEngine::exec() {
 			_PostEvent(this, UpdateVideoInfo, video);
 			break;
 		} case MPV_EVENT_SHUTDOWN:
+			d->quit = true;
 			break;
 		case MPV_EVENT_PLAYBACK_RESTART:
 			checkTime();
@@ -1219,14 +1244,11 @@ void PlayEngine::exec() {
 			break;
 		}
 	}
-	if (!posted)
-		_PostEvent(this, EndPlayback, mrl, error);
 	_Debug("Finish playloop thread");
 }
 
 void PlayEngine::shutdown() {
 	d->tellmpv("quit 1");
-	d->quit = true;
 }
 
 const StartInfo &PlayEngine::startInfo() const {
