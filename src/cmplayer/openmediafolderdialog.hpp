@@ -6,24 +6,24 @@
 class Playlist;
 
 class OpenMediaFolderDialog : public QDialog {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	OpenMediaFolderDialog(QWidget *parent = nullptr);
-	~OpenMediaFolderDialog();
-	Playlist playlist() const;
+    OpenMediaFolderDialog(QWidget *parent = nullptr);
+    ~OpenMediaFolderDialog();
+    Playlist playlist() const;
 public slots:
-	void setFolder(const QString &folder);
-	int exec();
+    void setFolder(const QString &folder);
+    int exec();
 signals:
 
 private slots:
-	void updateList();
-	void checkList(bool checked);
-	void getFolder();
-	void updateOpenButton();
+    void updateList();
+    void checkList(bool checked);
+    void getFolder();
+    void updateOpenButton();
 private:
-	struct Data;
-	Data *d;
+    struct Data;
+    Data *d;
 };
 
 #endif // OPENMEDIAFOLDERDIALOG_HPP

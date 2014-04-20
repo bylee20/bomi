@@ -14,17 +14,17 @@ template<> inline const m_option_type_t *get_option_type<int>() { return &m_opti
 static m_option null_option;
 
 static inline m_option make_option(const char *name, int offset, const m_option_type_t *type) {
-	m_option opt = null_option;
-	opt.name = name;
-	opt.offset = offset;
-	opt.is_new_option = 1;
-	opt.type = type;
-	return opt;
+    m_option opt = null_option;
+    opt.name = name;
+    opt.offset = offset;
+    opt.is_new_option = 1;
+    opt.type = type;
+    return opt;
 }
 
 }
 
 #define MPV_OPTION(member) mpv::make_option(#member, \
-	offsetof(MPV_OPTION_BASE, member), mpv::get_option_type<decltype(MPV_OPTION_BASE::member)>())
+    offsetof(MPV_OPTION_BASE, member), mpv::get_option_type<decltype(MPV_OPTION_BASE::member)>())
 
 #endif // MPV_HELPER_HPP

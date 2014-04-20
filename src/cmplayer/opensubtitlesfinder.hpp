@@ -6,26 +6,26 @@
 class Mrl;
 
 struct SubtitleLink {
-	QString language, fileName, date;
-	QUrl url;
+    QString language, fileName, date;
+    QUrl url;
 };
 
 class OpenSubtitlesFinder : public QObject {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	enum State { Unavailable = 1, Error = 16, Connecting = 8, Available = 2, Finding = 4};
-	OpenSubtitlesFinder(QObject *parent = nullptr);
-	~OpenSubtitlesFinder();
-	bool find(const Mrl &mrl);
-	State state() const;
-	bool isAvailable() const { return state() == Available; }
-	QString error() const;
+    enum State { Unavailable = 1, Error = 16, Connecting = 8, Available = 2, Finding = 4};
+    OpenSubtitlesFinder(QObject *parent = nullptr);
+    ~OpenSubtitlesFinder();
+    bool find(const Mrl &mrl);
+    State state() const;
+    bool isAvailable() const { return state() == Available; }
+    QString error() const;
 signals:
-	void stateChanged();
-	void found(const QList<SubtitleLink> &links);
+    void stateChanged();
+    void found(const QList<SubtitleLink> &links);
 private:
-	struct Data;
-	Data *d;
+    struct Data;
+    Data *d;
 };
 
 #endif // OPENSUBTITLESFINDER_HPP

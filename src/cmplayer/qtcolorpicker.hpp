@@ -108,7 +108,7 @@ class ColorPickerItem : public QFrame
 
 public:
     ColorPickerItem(const QColor &color = Qt::white, const QString &text = QString::null,
-		      QWidget *parent = 0);
+              QWidget *parent = 0);
     ~ColorPickerItem();
 
     QColor color() const;
@@ -140,7 +140,7 @@ class ColorPickerPopup : public QFrame
 
 public:
     ColorPickerPopup(int width, bool withColorDialog,
-		       QWidget *parent = 0);
+               QWidget *parent = 0);
     ~ColorPickerPopup();
 
     void insertColor(const QColor &col, const QString &text, int index);
@@ -191,7 +191,7 @@ class QT_QTCOLORPICKER_EXPORT QtColorPicker : public QToolButton
 
 public:
     QtColorPicker(QWidget *parent = 0,
-		  int columns = -1, bool enableColorDialog = true);
+          int columns = -1, bool enableColorDialog = true);
 
     ~QtColorPicker();
 

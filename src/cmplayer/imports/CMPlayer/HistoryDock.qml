@@ -4,38 +4,38 @@ import QtQuick.Controls.Styles 1.0
 import CMPlayer 1.0 as Cp
 
 Item {
-	id: dock
-	x: -dock.width; y: 20; visible: false
-	width: 300; height: parent.height-y*2
-	readonly property real widthHint: view.contentWidth+view.margins*2
-	property alias selectedIndex: view.selectedIndex
-	property bool show: false
-	states: State {
-		name: "show"; when: dock.show
-		PropertyChanges { target: dock; explicit: true; x: 0 }
-		PropertyChanges { target: dock; visible: true }
-	}
-	transitions: Transition {
-		reversible: true; to: "show"
-		PropertyAction { property: "visible" }
-		NumberAnimation { property: "x" }
-	}
+    id: dock
+    x: -dock.width; y: 20; visible: false
+    width: 300; height: parent.height-y*2
+    readonly property real widthHint: view.contentWidth+view.margins*2
+    property alias selectedIndex: view.selectedIndex
+    property bool show: false
+    states: State {
+        name: "show"; when: dock.show
+        PropertyChanges { target: dock; explicit: true; x: 0 }
+        PropertyChanges { target: dock; visible: true }
+    }
+    transitions: Transition {
+        reversible: true; to: "show"
+        PropertyAction { property: "visible" }
+        NumberAnimation { property: "x" }
+    }
 
-	Cp.ModelView {
-		id: view
-		model: Cp.App.history
-		columns: [
-			ItemColumn { width: 200; title: qsTr("Name"); role: "name" },
-			ItemColumn { width: 150; title: qsTr("Latest Playback"); role: "latestplay" },
-			ItemColumn { width: 400; title: qsTr("Location"); role: "location" }
-		]
-		itemDelegate: Text { text: value; color: "white"; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter }
-		onActivated: Cp.App.history.play(index)
-	}
+    Cp.ModelView {
+        id: view
+        model: Cp.App.history
+        columns: [
+            ItemColumn { width: 200; title: qsTr("Name"); role: "name" },
+            ItemColumn { width: 150; title: qsTr("Latest Playback"); role: "latestplay" },
+            ItemColumn { width: 400; title: qsTr("Location"); role: "location" }
+        ]
+        itemDelegate: Text { text: value; color: "white"; elide: Text.ElideRight; verticalAlignment: Text.AlignVCenter }
+        onActivated: Cp.App.history.play(index)
+    }
 
-	MouseArea {
-		anchors.fill: parent
-		acceptedButtons: Qt.RightButton
-		onClicked: Util.execute("tool/history")
-	}
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        onClicked: Util.execute("tool/history")
+    }
 }
