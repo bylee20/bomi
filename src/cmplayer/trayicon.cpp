@@ -8,9 +8,9 @@ DECLARE_LOG_CONTEXT(Tray)
 
 enum AppIndicatorCategory { APP_INDICATOR_CATEGORY_APPLICATION_STATUS };
 enum AppIndicatorStatus {
-	APP_INDICATOR_STATUS_PASSIVE,
-	APP_INDICATOR_STATUS_ACTIVE,
-	APP_INDICATOR_STATUS_ATTENTION
+    APP_INDICATOR_STATUS_PASSIVE,
+    APP_INDICATOR_STATUS_ACTIVE,
+    APP_INDICATOR_STATUS_ATTENTION
 };
 
 using AppIndicator = void;
@@ -34,100 +34,100 @@ DEC_FUNC(gtk_widget_show             , void(*)(GtkWidget *widget))
 #endif
 
 struct TrayIcon::Data {
-	TrayIcon *p = nullptr;
-	bool unity = isUnity();
-	QSystemTrayIcon *tray = nullptr;
-	AppIndicator *indicator = nullptr;
-	GtkMenu *gmenu = nullptr;
+    TrayIcon *p = nullptr;
+    bool unity = isUnity();
+    QSystemTrayIcon *tray = nullptr;
+    AppIndicator *indicator = nullptr;
+    GtkMenu *gmenu = nullptr;
 };
 
 TrayIcon::TrayIcon(const QIcon &icon, QObject *parent)
 : QObject(parent), d(new Data) {
-	d->p = this;
-	if (!isAvailable())
-		return;
+    d->p = this;
+    if (!isAvailable())
+        return;
 #ifdef Q_OS_LINUX
-	if (d->unity) {
-		d->gmenu = gtk_menu_new();
-		auto quit = gtk_menu_item_new_with_label(tr("Quit").toLocal8Bit());
-		auto show = gtk_menu_item_new_with_label(tr("Show").toLocal8Bit());
-		gtk_menu_shell_append(GTK_MENU_SHELL(d->gmenu), show);
-		gtk_menu_shell_append(GTK_MENU_SHELL(d->gmenu), quit);
-		gtk_widget_show(show);
-		gtk_widget_show(quit);
-		g_signal_connect(show, "activate", G_CALLBACK(onShow), this);
-		g_signal_connect(quit, "activate", G_CALLBACK(onQuit), this);
-		d->indicator = app_indicator_new("net.xylosper.CMPlayer.AppIndicator", "cmplayer", APP_INDICATOR_CATEGORY_APPLICATION_STATUS);
-		app_indicator_set_menu(d->indicator, GTK_MENU(d->gmenu));
-		return;
-	}
+    if (d->unity) {
+        d->gmenu = gtk_menu_new();
+        auto quit = gtk_menu_item_new_with_label(tr("Quit").toLocal8Bit());
+        auto show = gtk_menu_item_new_with_label(tr("Show").toLocal8Bit());
+        gtk_menu_shell_append(GTK_MENU_SHELL(d->gmenu), show);
+        gtk_menu_shell_append(GTK_MENU_SHELL(d->gmenu), quit);
+        gtk_widget_show(show);
+        gtk_widget_show(quit);
+        g_signal_connect(show, "activate", G_CALLBACK(onShow), this);
+        g_signal_connect(quit, "activate", G_CALLBACK(onQuit), this);
+        d->indicator = app_indicator_new("net.xylosper.CMPlayer.AppIndicator", "cmplayer", APP_INDICATOR_CATEGORY_APPLICATION_STATUS);
+        app_indicator_set_menu(d->indicator, GTK_MENU(d->gmenu));
+        return;
+    }
 #endif
-	d->tray = new QSystemTrayIcon(icon, this);
-	connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason r) {
-		emit activated(static_cast<ActivationReason>(r));
-	});
+    d->tray = new QSystemTrayIcon(icon, this);
+    connect(d->tray, &QSystemTrayIcon::activated, [this] (QSystemTrayIcon::ActivationReason r) {
+        emit activated(static_cast<ActivationReason>(r));
+    });
 }
 
 TrayIcon::~TrayIcon() {
-	delete d->tray;
-	delete d;
+    delete d->tray;
+    delete d;
 }
 
 void TrayIcon::setVisible(bool visible) {
 #ifdef Q_OS_LINUX
-	if (d->unity && d->indicator) {
-		app_indicator_set_status(d->indicator, visible ? APP_INDICATOR_STATUS_ACTIVE : APP_INDICATOR_STATUS_PASSIVE);
-	} else
+    if (d->unity && d->indicator) {
+        app_indicator_set_status(d->indicator, visible ? APP_INDICATOR_STATUS_ACTIVE : APP_INDICATOR_STATUS_PASSIVE);
+    } else
 #endif
-	if (d->tray)
-		d->tray->setVisible(visible);
+    if (d->tray)
+        d->tray->setVisible(visible);
 }
 
 void TrayIcon::onShow(void *menu, void *arg) {
-	Q_UNUSED(menu);
-	auto p = static_cast<TrayIcon*>(arg);
-	emit p->activated(Show);
+    Q_UNUSED(menu);
+    auto p = static_cast<TrayIcon*>(arg);
+    emit p->activated(Show);
 }
 
 void TrayIcon::onQuit(void *menu, void *arg) {
-	Q_UNUSED(menu);
-	auto p = static_cast<TrayIcon*>(arg);
-	emit p->activated(Quit);
+    Q_UNUSED(menu);
+    auto p = static_cast<TrayIcon*>(arg);
+    emit p->activated(Quit);
 }
 
 #ifdef Q_OS_LINUX
 static bool tryUnity() {
-	static bool init = false;
-	static bool good = false;
-	if (!init) {
-		init = true;
-		_Debug("DE is Unity. Fallback to AppIndicator instead of QSytemTrayIcon.");
-		QLibrary gtk(_L("gtk-x11-2.0"), 0), ai(_L("libappindicator"), 1);
-		if (!gtk.load() || !ai.load())
-			return false;
-		auto lib = &gtk;
+    static bool init = false;
+    static bool good = false;
+    if (!init) {
+        init = true;
+        _Debug("DE is Unity. Fallback to AppIndicator instead of QSytemTrayIcon.");
+        QLibrary gtk(_L("gtk-x11-2.0"), 0), ai(_L("libappindicator"), 1);
+        if (!gtk.load() || !ai.load())
+            return false;
+        auto lib = &gtk;
 #define DEC_FUNC(name) if (!(name = (f_##name)lib->resolve(#name))) return false;
-		DEC_FUNC(gtk_menu_new)
-		DEC_FUNC(gtk_menu_item_new_with_label)
-		DEC_FUNC(gtk_menu_shell_append)
-		DEC_FUNC(gtk_widget_show)
-		lib = &ai;
-		DEC_FUNC(app_indicator_new)
-		DEC_FUNC(app_indicator_set_menu)
-		DEC_FUNC(app_indicator_set_status)
+        DEC_FUNC(gtk_menu_new)
+        DEC_FUNC(gtk_menu_item_new_with_label)
+        DEC_FUNC(gtk_menu_shell_append)
+        DEC_FUNC(gtk_widget_show)
+        lib = &ai;
+        DEC_FUNC(app_indicator_new)
+        DEC_FUNC(app_indicator_set_menu)
+        DEC_FUNC(app_indicator_set_status)
 #undef DEC_FUNC
-		good = true;
-	}
-	return good;
+        good = true;
+    }
+    return good;
 }
 #endif
 
 bool TrayIcon::isAvailable() {
 #ifdef Q_OS_MAC
-	return false;
+    return false;
 #elif defined(Q_OS_LINUX)
-	if (isUnity())
-		return tryUnity();
+    if (isUnity())
+        return tryUnity();
 #endif
-	return QSystemTrayIcon::isSystemTrayAvailable();
+    return QSystemTrayIcon::isSystemTrayAvailable();
 }

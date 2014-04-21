@@ -76,14 +76,14 @@ struct AD {
 #define UDF_MAX_AD_CHAINS 2000
 
 struct FileAD {
-	quint64 Length;
-	quint32 num_AD;
-	quint16 Partition;
-	quint32 Partition_Start;
-	quint32 Partition_Start_Correction;
-	quint8  Type;
-	quint16 Flags;
-	struct AD AD_chain[UDF_MAX_AD_CHAINS];
+    quint64 Length;
+    quint32 num_AD;
+    quint16 Partition;
+    quint32 Partition_Start;
+    quint32 Partition_Start_Correction;
+    quint8  Type;
+    quint16 Flags;
+    struct AD AD_chain[UDF_MAX_AD_CHAINS];
 };
 
 struct extent_ad {
@@ -167,12 +167,12 @@ struct udf_dir_t {
   quint32 dir_location;
   quint32 dir_length;
   quint32 dir_current;   // Separate to _location should we one day want to
-						  // implement dir_rewind()
+                          // implement dir_rewind()
   unsigned int current_p; // Internal implementation specific. UDFScanDirX
   udf_dirent_t entry;
 };
 
-class File;		class Dir;
+class File;        class Dir;
 
 class udf25
 {
@@ -198,7 +198,7 @@ private:
 protected:
   friend class File;
   friend class Dir;
-	/* Filesystem cache */
+    /* Filesystem cache */
   int m_udfcache_level; /* 0 - turned off, 1 - on */
   void *m_udfcache;
   std::fstream *m_fp;
@@ -207,39 +207,39 @@ protected:
 
 class File {
 public:
-	File();
-	~File();
-	File(udf25 *udf, const QString &fileName);
-	bool isOpen() const { return m_file; }
-	quint64 size() const { return m_size; }
-	FileAD *handle() const { return m_file; }
-	qint64 read(char *buffer, qint64 size);
-	QByteArray read(qint64 size);
-	int64_t seek(int64_t lOffset, int whence);
-	QString fileName() const { return m_fileName; }
+    File();
+    ~File();
+    File(udf25 *udf, const QString &fileName);
+    bool isOpen() const { return m_file; }
+    quint64 size() const { return m_size; }
+    FileAD *handle() const { return m_file; }
+    qint64 read(char *buffer, qint64 size);
+    QByteArray read(qint64 size);
+    int64_t seek(int64_t lOffset, int whence);
+    QString fileName() const { return m_fileName; }
 private:
-	void close();
-	File(const File&) = delete;
-	File &operator=(const File&) = delete;
-	FileAD *m_file = nullptr;
-	quint64 m_seek_pos = 0;  // in bytes
-	quint64 m_size = 0;  // in bytes
-	QString m_fileName;
-	udf25 *m_udf = nullptr;
+    void close();
+    File(const File&) = delete;
+    File &operator=(const File&) = delete;
+    FileAD *m_file = nullptr;
+    quint64 m_seek_pos = 0;  // in bytes
+    quint64 m_size = 0;  // in bytes
+    QString m_fileName;
+    udf25 *m_udf = nullptr;
 };
 
 class Dir {
 public:
-	Dir();
-	Dir(udf25 *udf, const QString &path);
-	bool isOpen() const { return m_open; }
-	QString path() const { return m_path; }
-	QStringList files(bool withPath = true) const;
+    Dir();
+    Dir(udf25 *udf, const QString &path);
+    bool isOpen() const { return m_open; }
+    QString path() const { return m_path; }
+    QStringList files(bool withPath = true) const;
 private:
-	udf25 *m_udf = nullptr;
-	bool m_open = false;
-	QString m_path;
-	QStringList m_files;
+    udf25 *m_udf = nullptr;
+    bool m_open = false;
+    QString m_path;
+    QStringList m_files;
 };
 
 }

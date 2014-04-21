@@ -27,18 +27,18 @@
 #ifdef Q_OS_MAC
 
 class AppMac: public QObject {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	AppMac( QObject *parent = 0 );
-	~AppMac();
-	void setAlwaysOnTop(QWidget *widget, bool onTop);
-	QStringList devices() const;
-	void setScreensaverDisabled(bool disabled);
-	bool shutdown();
+    AppMac( QObject *parent = 0 );
+    ~AppMac();
+    void setAlwaysOnTop(QWidget *widget, bool onTop);
+    QStringList devices() const;
+    void setScreensaverDisabled(bool disabled);
+    bool shutdown();
 private:
-	bool eventFilter( QObject *o, QEvent *e );
-	struct Data;
-	Data *d;
+    bool eventFilter( QObject *o, QEvent *e );
+    struct Data;
+    Data *d;
 };
 
 #endif

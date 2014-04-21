@@ -2,50 +2,50 @@
 #include <chardet.h>
 
 struct CharsetDetector::Data {
-	DetectObj *obj;
-	bool detected;
+    DetectObj *obj;
+    bool detected;
 };
 
 CharsetDetector::CharsetDetector(const QByteArray &data)
 : d(new Data) {
-	d->obj = detect_obj_init();
-	d->detected = (::detect(data.data(), &d->obj) == CHARDET_SUCCESS);
+    d->obj = detect_obj_init();
+    d->detected = (::detect(data.data(), &d->obj) == CHARDET_SUCCESS);
 }
 
 CharsetDetector::~CharsetDetector() {
-	detect_obj_free(&d->obj);
-	delete d;
+    detect_obj_free(&d->obj);
+    delete d;
 }
 
 bool CharsetDetector::isDetected() const {
-	return d->detected;
+    return d->detected;
 }
 
 QString CharsetDetector::encoding() const {
-	if (d->detected) {
-		const QString enc(d->obj->encoding);
-		if (enc.compare("EUC-KR", Qt::CaseInsensitive) == 0)
-			return QString("CP949");
-		return enc;
-	}
-	return QString();
+    if (d->detected) {
+        const QString enc(d->obj->encoding);
+        if (enc.compare("EUC-KR", Qt::CaseInsensitive) == 0)
+            return QString("CP949");
+        return enc;
+    }
+    return QString();
 }
 
 double CharsetDetector::confidence() const {
-	return d->detected ? d->obj->confidence : 0.0;
+    return d->detected ? d->obj->confidence : 0.0;
 }
 
 
 QString CharsetDetector::detect(const QByteArray &data, double confidence) {
-	CharsetDetector chardet(data);
-	if (chardet.isDetected() && chardet.confidence() > confidence)
-		return chardet.encoding();
-	return QString();
+    CharsetDetector chardet(data);
+    if (chardet.isDetected() && chardet.confidence() > confidence)
+        return chardet.encoding();
+    return QString();
 }
 
 QString CharsetDetector::detect(const QString &fileName, double confidence, int size) {
-	QFile file(fileName);
-	if (!file.open(QFile::ReadOnly))
-		return QString();
-	return detect(file.read(size), confidence);
+    QFile file(fileName);
+    if (!file.open(QFile::ReadOnly))
+        return QString();
+    return detect(file.read(size), confidence);
 }

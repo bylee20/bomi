@@ -2,7 +2,7 @@ import QtQuick 2.0
 import CMPlayer 1.0
 
 Item {
-	id: root
+    id: root
     Player {
         id: player
         anchors.fill: parent
@@ -19,12 +19,12 @@ Item {
                 controls.parent = floating
                 floating.hidden = !containsMouse
             }
-			acceptedButtons: Qt.AllButtons
+            acceptedButtons: Qt.AllButtons
             anchors.fill: parent
             hoverEnabled: true;
-			onPressed: mouse.accepted = false
-			onReleased: mouse.accepted = false
-			onEntered: floating.hidden = false
+            onPressed: mouse.accepted = false
+            onReleased: mouse.accepted = false
+            onEntered: floating.hidden = false
             onExited: floating.hidden = true
             MouseArea {
                 id: floating
@@ -38,7 +38,7 @@ Item {
                 drag.target: floating; drag.axis: Drag.XAndYAxis
                 drag.minimumX: 0; drag.maximumX: root.width-width
                 drag.minimumY: 0; drag.maximumY: root.height-height
-				onDoubleClicked: Util.filterDoubleClick()
+                onDoubleClicked: Util.filterDoubleClick()
                 states: State {
                     name: "hidden"; when: floating.hidden
                     PropertyChanges { target: floating; opacity: 0.0 }
@@ -56,21 +56,21 @@ Item {
         }
     }
 
-	property Item controls
-	property string name: undefined
+    property Item controls
+    property string name: undefined
 
-	property real initCx: 0.5
-	property real initCy: 0.0
-	Component.onCompleted: {
-		Settings.open(root.name)
-		initCx = Settings.getReal("cx", 0.5)
-		initCy = Settings.getReal("cy", 0.0)
-		Settings.close()
-	}
-	Component.onDestruction: {
-		Settings.open(root.name)
-		Settings.set("cx", floating.getCx(area.width))
-		Settings.set("cy", floating.getCy(area.height))
-		Settings.close()
-	}
+    property real initCx: 0.5
+    property real initCy: 0.0
+    Component.onCompleted: {
+        Settings.open(root.name)
+        initCx = Settings.getReal("cx", 0.5)
+        initCy = Settings.getReal("cy", 0.0)
+        Settings.close()
+    }
+    Component.onDestruction: {
+        Settings.open(root.name)
+        Settings.set("cx", floating.getCx(area.width))
+        Settings.set("cy", floating.getCy(area.height))
+        Settings.close()
+    }
 }

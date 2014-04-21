@@ -113,7 +113,6 @@ HEADERS += playengine.hpp \
     geometryitem.hpp \
     playengine_p.hpp \
     mediamisc.hpp \
-    ../mpv/video/out/dither.h \
     trayicon.hpp \
     videocolor.hpp \
     interpolator.hpp \
@@ -132,7 +131,13 @@ HEADERS += playengine.hpp \
     hwacc_helper.hpp \
     audio_helper.hpp \
     mpv_helper.hpp \
-    udf25.hpp
+    udf25.hpp \
+    busyiconitem.hpp \
+    quick/toplevelitem.hpp \
+    quick/itemwrapper.hpp \
+    quick/buttonboxitem.hpp \
+    quick/appobject.hpp \
+    quick/settingsobject.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -219,7 +224,13 @@ SOURCES += main.cpp \
     hwacc_helper.cpp \
     audio_helper.cpp \
     mpv_helper.cpp \
-    udf25.cpp
+    udf25.cpp \
+    busyiconitem.cpp \
+    quick/toplevelitem.cpp \
+    quick/itemwrapper.cpp \
+    quick/buttonboxitem.cpp \
+    quick/appobject.cpp \
+    quick/settingsobject.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -265,7 +276,10 @@ OTHER_FILES += \
     skins/GaN/Button.qml \
     imports/CMPlayer/ItemColumn.qml \
     imports/CMPlayer/ModelView.qml \
-    imports/CMPlayer/ScrollBar.qml
+    imports/CMPlayer/ScrollBar.qml \
+    imports/CMPlayer/MessageBox.qml \
+    imports/CMPlayer/ProgressBar.qml \
+    skins/Faenza-Zukitwo/cmplayer.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}
