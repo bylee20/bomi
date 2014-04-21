@@ -5,7 +5,7 @@ args="--prefix=../../build --disable-client-api-examples --disable-manpage-build
   --enable-iconv --disable-terminfo --disable-termcap --disable-termios --disable-shm --disable-libguess --disable-libsmbclient \
   --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --enable-dvdnav \
   --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
-  --disable-libavdevice --disable-libpostproc --disable-libavresample \
+  --disable-libavdevice --disable-libpostproc --disable-libavresample --disable-vapoursynth \
   --disable-sdl2 --disable-sdl1 --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi \
   --disable-cocoa --disable-wayland --disable-x11 --disable-xss --disable-xext --disable-xv --disable-xinerama \
   --disable-xf86vm --disable-xf86xk --disable-gl-cocoa --disable-gl-x11 --disable-gl-wayland --disable-gl-win32 --disable-gl \
