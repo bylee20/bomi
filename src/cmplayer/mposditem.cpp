@@ -207,7 +207,7 @@ struct MpOsdItem::Data {
 };
 
 MpOsdItem::MpOsdItem(QQuickItem *parent)
-: FramebufferObjectRendererItem(parent), d(new Data) {
+: SimpleFboItem(parent), d(new Data) {
     d->p = this;
 }
 
@@ -216,12 +216,12 @@ MpOsdItem::~MpOsdItem() {
 }
 
 void MpOsdItem::initializeGL() {
-    FramebufferObjectRendererItem::initializeGL();
+    SimpleFboItem::initializeGL();
     d->atlas.create(OGL::Linear, OGL::ClampToEdge);
 }
 
 void MpOsdItem::finalizeGL() {
-    FramebufferObjectRendererItem::finalizeGL();
+    SimpleFboItem::finalizeGL();
     d->atlas.destroy();
     _Delete(d->shader);
 }

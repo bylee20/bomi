@@ -459,9 +459,18 @@ struct MainWindow::Data {
                 for (; i<actions.size(); ++i)
                     if (actions[i]->isChecked())
                         break;
-                if (++i >= actions.size())
-                    i = 0;
-                actions[i]->trigger();
+                const int prev = i++;
+                forever {
+                    if (i >= actions.size())
+                        i = 0;
+                    if (i == prev)
+                        break;
+                    if (actions[i]->isEnabled())
+                        break;
+                    ++i;
+                }
+                if (i != prev)
+                    actions[i]->trigger();
             });
         }
         connect(group, &QActionGroup::triggered, onTriggered);
@@ -927,6 +936,20 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
     d->menu("tool")["undo"]->setEnabled(d->undo->canUndo());
     d->menu("tool")["redo"]->setEnabled(d->undo->canRedo());
 
+    if (!OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat)) {
+        auto &video = d->menu("video");
+        auto key = _L(DitheringInfo::typeKey());
+        video(key).g(key)->find(Dithering::Fruit)->setDisabled(true);
+        key = _L(InterpolatorTypeInfo::typeKey());
+        auto disable = [&] (const char *subkey) {
+            for (auto a : video(subkey).g(key)->actions()) {
+                if (a->data().toInt() != InterpolatorType::Bilinear)
+                    a->setDisabled(true);
+            }
+        };
+        disable("chroma-upscaler");
+        disable("interpolator");
+    }
     if (TrayIcon::isAvailable()) {
         d->tray = new TrayIcon(cApp.defaultIcon(), this);
         connect(d->tray, &TrayIcon::activated, this, [this] (TrayIcon::ActivationReason reason) {

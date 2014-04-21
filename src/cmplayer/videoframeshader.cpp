@@ -177,7 +177,7 @@ const vec2 tex_size = vec2(texWidth, texHeight);
         m_lutCount = interpolator->textures();
         Q_ASSERT(0 <= m_lutCount && m_lutCount < 3);
 
-        interpolator->allocate(m_lutInt[0], m_lutInt[1]);
+        interpolator->allocate(&m_lutInt[0], &m_lutInt[1]);
         auto common = interpolator->shader() + shaderTemplate;
         auto fragCode = header;
         fragCode += "#define FRAGMENT\n";
@@ -214,7 +214,6 @@ const vec2 tex_size = vec2(texWidth, texHeight);
         for (int i=0; i<m_lutCount; ++i) {
             auto name = QByteArray("lut_int") + QByteArray::number(i+1);
             loc_lut_int[i] = m_prog->uniformLocation(name);
-            loc_lut_int_mul[i] = m_prog->uniformLocation(name + "_mul");
         }
     }
 }
@@ -298,7 +297,6 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
     }
     for (int i=0; i<m_lutCount; ++i, ++texPos) {
         m_prog->setUniformValue(loc_lut_int[i], texPos);
-        m_prog->setUniformValue(loc_lut_int_mul[i], m_lutInt[i].multiplier());
         f->glActiveTexture(GL_TEXTURE0 + texPos);
         m_lutInt[i].bind();
     }

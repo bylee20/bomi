@@ -162,6 +162,11 @@ public:
     void create() { create(OGL::Linear, OGL::ClampToEdge); }
     void destroy() { glDeleteTextures(1, &m_id); }
     void bind() const { glBindTexture(m_target, m_id); }
+    void bind(QOpenGLShaderProgram *prog, int location, int index) const {
+        prog->setUniformValue(location, index);
+        glActiveTexture(GL_TEXTURE0 + index);
+        bind();
+    }
     void setFilter(OGL::Filter filter);
     void setWrapMode(OGL::WrapMode wrap);
     bool isValid() const { return m_id != GL_NONE; }

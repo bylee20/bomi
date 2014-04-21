@@ -286,12 +286,9 @@ uniform vec2 tex_size;
 
 #ifdef FRAGMENT
 uniform sampler1D lut_int1, lut_int2;
-uniform float lut_int1_mul, lut_int2_mul;
 vec4 mix3(const in vec4 v1, const in vec4 v2, const in vec4 v3, const in float a, const in float b) {
     return mix(mix(v1, v2, a), v3, b);
 }
-
-__DEC_RENORM__
 
 vec4 interpolated(const in sampler2Dg tex, const in vec2 coord) {
     const float N = 256.0;
@@ -311,14 +308,12 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
 #endif
 )";
 
-    const bool texf = OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat);
-    code.replace("__DEC_RENORM__", texf ? "#define renormalize(a, b) (a)" : "vec4 renormalize(const in vec4 v, float mul) { return v*mul-0.5*mul; }");
     QByteArray interpolated;
     switch (category) {
     case Fetch16:
         interpolated = R"(
-    vec4 w_x = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul);
-    vec4 w_y = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul);
+    vec4 w_x = texture1D(lut_int1, lutCoord.x);
+    vec4 w_y = texture1D(lut_int1, lutCoord.y);
 #define FETCH(a, b, i, j) (w_x.a*w_y.b)*texture2Dg(tex, c + vec2(i.0, j.0)*dxy)
     color += FETCH(b, b,-1,-1);
     color += FETCH(b, g,-1, 0);
@@ -346,10 +341,10 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
     case Fetch64:
         interpolated = R"(
     vec4 w_x[2], w_y[2];
-    w_x[0] = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul);
-    w_x[1] = renormalize(texture1D(lut_int2, lutCoord.x), lut_int2_mul);
-    w_y[0] = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul);
-    w_y[1] = renormalize(texture1D(lut_int2, lutCoord.y), lut_int2_mul);
+    w_x[0] = texture1D(lut_int1, lutCoord.x);
+    w_x[1] = texture1D(lut_int2, lutCoord.x);
+    w_y[0] = texture1D(lut_int1, lutCoord.y);
+    w_y[1] = texture1D(lut_int2, lutCoord.y);
 #define FETCH(n, m, a, b, i, j) (w_x[n].a*w_y[m].b)*texture2Dg(tex, c + vec2(i.0, j.0)*dxy)
 )";
         if (category == Fetch36)
@@ -474,8 +469,8 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
         break;
     case Fast4:
         interpolated += R"(
-    vec4 hg_x = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul);
-    vec4 hg_y = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul);
+    vec4 hg_x = texture1D(lut_int1, lutCoord.x);
+    vec4 hg_y = texture1D(lut_int1, lutCoord.y);
 
     vec4 tex00 = texture2Dg(tex, coord + vec2(-hg_x.b, -hg_y.b)*dxy);
     vec4 tex10 = texture2Dg(tex, coord + vec2( hg_x.g, -hg_y.b)*dxy);
@@ -489,10 +484,10 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
         break;
     case Fast9:
         interpolated += R"(
-    vec4 h_x = renormalize(texture1D(lut_int1, lutCoord.x), lut_int1_mul)*dxy.x;
-    vec4 h_y = renormalize(texture1D(lut_int1, lutCoord.y), lut_int1_mul)*dxy.y;
-    vec4 f_x = renormalize(texture1D(lut_int2, lutCoord.x), lut_int2_mul);
-    vec4 f_y = renormalize(texture1D(lut_int2, lutCoord.y), lut_int2_mul);
+    vec4 h_x = texture1D(lut_int1, lutCoord.x)*dxy.x;
+    vec4 h_y = texture1D(lut_int1, lutCoord.y)*dxy.y;
+    vec4 f_x = texture1D(lut_int2, lutCoord.x);
+    vec4 f_y = texture1D(lut_int2, lutCoord.y);
 
     vec4 tex00 = texture2Dg(tex, coord + vec2(-h_x.b, -h_y.b));
     vec4 tex01 = texture2Dg(tex, coord + vec2(-h_x.b, -h_y.g));
@@ -518,25 +513,17 @@ void setLutIntCoord(const in vec2 vCoord) { lutIntCoord = vCoord/dxy - vec2(0.5,
     return code;
 }
 
-void Interpolator::allocate(Texture &texture1, Texture &texture2) const {
+void Interpolator::allocate(OpenGLTexture1D *tex1, OpenGLTexture1D *tex2) const
+{
     if (d->type == InterpolatorType::Bilinear)
         return;
-    Q_ASSERT(texture1.id() != GL_NONE && texture2.id() != GL_NONE);
+    Q_ASSERT(tex1->id() != GL_NONE && tex2->id() != GL_NONE);
     OpenGLTextureTransferInfo info(OGL::RGBA16F, OGL::BGRA, OGL::Float32);
-    QVector<GLushort> conv1, conv2;
     const void *data1 = d->lut1.data();
     const void *data2 = d->lut2.data();
-    if (!OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat)) {
-        info.texture = OGL::RGBA16_UNorm;
-        info.transfer.type = OGL::UInt16;
-        conv1 = convertToIntegerVector<GLushort>(d->lut1, texture1.m_mul);
-        conv2 = convertToIntegerVector<GLushort>(d->lut2, texture2.m_mul);
-        data1 = conv1.data();
-        data2 = conv2.data();
-    }
     OpenGLTextureBinder<OGL::Target1D> binder;
-    auto alloc = [&] (Texture &tex, const void *data) {
-        tex.bind(); tex.initialize(IntSamples, info, data);
+    auto alloc = [&] (OpenGLTexture1D *tex, const void *data) {
+        tex->bind(); tex->initialize(IntSamples, info, data);
     };
-    alloc(texture1, data1); alloc(texture2, data2);
+    alloc(tex1, data1); alloc(tex2, data2);
 }

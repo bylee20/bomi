@@ -3,6 +3,55 @@
 #include "subtitlerenderingthread.hpp"
 #include "openglcompat.hpp"
 
+struct SubtitleShaderData : public SubtitleRendererItem::ShaderData {
+    const OpenGLTexture2D *texture, *bbox;
+    QColor bboxColor;
+};
+
+struct SubtitleShader : public SubtitleRendererItem::ShaderIface {
+    SubtitleShader()
+    {
+        vertexShader = R"(
+            uniform mat4 qt_Matrix;
+            attribute vec4 aPosition;
+            attribute vec2 aTexCoord;
+            varying vec2 texCoord;
+            void main() {
+                texCoord = aTexCoord;
+                gl_Position = qt_Matrix * aPosition;
+            }
+        )";
+        fragmentShader = (R"(
+            uniform sampler2D tex;
+            uniform sampler2D bbox;
+            uniform vec4 bboxColor;
+            varying vec2 texCoord;
+            void main() {
+                vec4 top = texture2D(tex, texCoord);
+                float alpha = texture2D(bbox, texCoord).a*bboxColor.a*(1.0 - top.a);
+                gl_FragColor = top + bboxColor*alpha;
+            }
+        )");
+        attributes << "aPosition" << "aTexCoord";
+    }
+    void resolve(QOpenGLShaderProgram *prog) override {
+        loc_tex = prog->uniformLocation("tex");
+        loc_bbox = prog->uniformLocation("bbox");
+        loc_bboxColor = prog->uniformLocation("bboxColor");
+    }
+    void update(QOpenGLShaderProgram *prog
+                , const SubtitleRendererItem::ShaderData *data) override {
+        auto d = static_cast<const SubtitleShaderData*>(data);
+        auto f = func();
+        d->texture->bind(prog, loc_tex, 0);
+        d->bbox->bind(prog, loc_bbox, 1);
+        prog->setUniformValue(loc_bboxColor, d->bboxColor);
+        f->glActiveTexture(GL_TEXTURE0);
+    }
+private:
+    int loc_tex = -1, loc_bbox = -1, loc_bboxColor = -1;
+};
+
 struct SubtitleRendererItem::Data {
     Data(SubtitleRendererItem *p): p(p) {}
     SubtitleRendererItem *p = nullptr;
@@ -10,7 +59,7 @@ struct SubtitleRendererItem::Data {
     QSize imageSize{0, 0};
     SubtitleDrawer drawer;
     int delay = 0, msec = 0;
-    bool selecting = false, redraw = false, textChanged = true;
+    bool selecting = false, textChanged = true;
     bool top = false, hidden = false, empty = true;
     double pos = 1.0;
     QMap<QString, int> langMap;
@@ -23,11 +72,11 @@ struct SubtitleRendererItem::Data {
     }
     QVector<quint32> zeros, bboxData;
     SubCompSelection selection{p};
-    OpenGLTexture2D texture, bbox;
+    OpenGLTexture2D bbox;
     double fps() const { return selection.fps(); }
     void updateDrawer() {
         selection.setDrawer(drawer);
-        p->setGeometryDirty();
+        p->reserve(UpdateGeometry);
     }
     void sort() {
         selection.sort([this] (const SubComp &lhs, const SubComp &rhs) {
@@ -36,8 +85,7 @@ struct SubtitleRendererItem::Data {
     }
     void setMargin(const Margin &margin) {
         drawer.setMargin(margin);
-        p->setGeometryDirty();
-        p->update();
+        p->reserve(UpdateGeometry);
     }
     void applySelection() {
         empty = selection.isEmpty();
@@ -57,43 +105,10 @@ struct SubtitleRendererItem::Data {
     }
 };
 
-class SubtitleRendererShader : public TextureRendererShader {
-public:
-    SubtitleRendererShader(const SubtitleRendererItem *item)
-    : TextureRendererShader(item) { }
-    const char *fragmentShader() const {
-        const char *shader = (R"(
-            uniform sampler2D tex;
-            uniform sampler2D bbox;
-            uniform vec4 bboxColor;
-            varying vec2 texCoord;
-            void main() {
-                vec4 top = texture2D(tex, texCoord);
-                float alpha = texture2D(bbox, texCoord).a*bboxColor.a*(1.0 - top.a);
-                gl_FragColor = top + bboxColor*alpha;
-            }
-        )");
-        return shader;
-    }
-    void link(QOpenGLShaderProgram *prog) override {
-        loc_tex = prog->uniformLocation("tex");
-        loc_bbox = prog->uniformLocation("bbox");
-        loc_bboxColor = prog->uniformLocation("bboxColor");
-    }
-    void bind(QOpenGLShaderProgram *prog) override {
-        auto d = static_cast<const SubtitleRendererItem*>(item())->d;
-        prog->setUniformValue(loc_tex, 0);
-        prog->setUniformValue(loc_bbox, 1);
-        prog->setUniformValue(loc_bboxColor, d->drawer.style().bbox.color);
-        func()->glActiveTexture(GL_TEXTURE1);
-        d->bbox.bind();
-    }
-private:
-    int loc_tex = -1, loc_bbox = -1, loc_bboxColor = -1;
-};
-
 SubtitleRendererItem::SubtitleRendererItem(QQuickItem *parent)
-    : HQTextureRendererItem(parent), d(new Data(this)) {
+    : SimpleTextureItem(parent)
+    , d(new Data(this))
+{
     d->drawer.setAlignment(Qt::AlignBottom | Qt::AlignHCenter);
     d->updateDrawer();
 }
@@ -116,21 +131,21 @@ void SubtitleRendererItem::rerender() {
     d->render(SubCompSelection::Rerender);
 }
 
-TextureRendererShader *SubtitleRendererItem::createShader() const {
-    return new SubtitleRendererShader(this);
+auto SubtitleRendererItem::createShader() const -> ShaderIface*
+{
+    return new SubtitleShader;
 }
 
 void SubtitleRendererItem::initializeGL() {
-    HQTextureRendererItem::initializeGL();
-    d->texture.create();
+    SimpleTextureItem::initializeGL();
+    texture().create();
     d->bbox.create();
-    setRenderTarget(d->texture);
 }
 
 void SubtitleRendererItem::finalizeGL() {
-    HQTextureRendererItem::finalizeGL();
+    SimpleTextureItem::finalizeGL();
     d->bbox.destroy();
-    d->texture.destroy();
+    texture().destroy();
 }
 
 const RichTextDocument &SubtitleRendererItem::text() const {
@@ -233,59 +248,75 @@ void SubtitleRendererItem::unload() {
     emit modelsChanged(models());
 }
 
-void SubtitleRendererItem::getCoords(QRectF &vertices, QRectF &) {
+void SubtitleRendererItem::updateVertex(Vertex *vertex)
+{
     const auto dpr = devicePixelRatio();
-    vertices = QRectF(d->drawer. pos(d->imageSize/dpr, rect()), d->imageSize/dpr);
+    const QRectF r(d->drawer. pos(d->imageSize/dpr, rect()), d->imageSize/dpr);
+    OGL::CoordAttr::fillTriangleStrip(vertex, &Vertex::position,
+                                      r.topLeft(), r.bottomRight());
 }
 
-void SubtitleRendererItem::prepare(QSGGeometryNode *node) {
-    if (d->redraw) {
-        d->imageSize = {0, 0};
-        d->selection.forImages([this] (const SubCompImage &image) {
-            if (d->imageSize.width() < image.width())
-                d->imageSize.rwidth() = image.width();
-            d->imageSize.rheight() += image.height();
-        });
-        if (!d->imageSize.isEmpty()) {
-            const auto len = d->imageSize.width()*d->imageSize.height();
-            _Expand(d->zeros, len);
-            OpenGLTextureBinder<OGL::Target2D> binder;
-            binder.bind(&d->texture);
-            d->texture.initialize(d->imageSize, d->zeros.data());
-            binder.bind(&d->bbox);
-            d->bbox.initialize(d->imageSize, d->zeros.data());
-            int y = 0;
-            d->selection.forImages([this, &y, &binder] (const SubCompImage &image) {
-                const int x = (d->texture.width() - image.width())*0.5;
-                if (!image.isNull()) {
-                    binder.bind(&d->texture);
-                    d->texture.upload(x, y, image.width(), image.height(), image.bits());
-                    binder.bind(&d->bbox);
-                    for (auto &bbox : image.boundingBoxes()) {
-                        const auto rect = bbox.toRect().translated(x, y);
-                        if (_Expand(d->bboxData, rect.width()*rect.height()))
-                            d->bboxData.fill(_Max<quint32>());
-                        d->bbox.upload(rect, d->bboxData.data());
-                    }
+auto SubtitleRendererItem::createData() const -> ShaderData*
+{
+    auto data = new SubtitleShaderData;
+    data->texture = &texture();
+    data->bbox = &d->bbox;
+    return data;
+}
+
+void SubtitleRendererItem::updateData(ShaderData *sd) {
+    auto data = static_cast<SubtitleShaderData*>(sd);
+    updateTexture(&texture());
+    data->bboxColor = d->drawer.style().bbox.color;
+}
+
+void SubtitleRendererItem::updateTexture(OpenGLTexture2D *texture) {
+    d->imageSize = {0, 0};
+    d->selection.forImages([this] (const SubCompImage &image) {
+        if (d->imageSize.width() < image.width())
+            d->imageSize.rwidth() = image.width();
+        d->imageSize.rheight() += image.height();
+    });
+    if (!d->imageSize.isEmpty()) {
+        const auto len = d->imageSize.width()*d->imageSize.height();
+        _Expand(d->zeros, len);
+        OpenGLTextureBinder<OGL::Target2D> binder;
+        binder.bind(texture);
+        texture->initialize(d->imageSize, d->zeros.data());
+        binder.bind(&d->bbox);
+        d->bbox.initialize(d->imageSize, d->zeros.data());
+        int y = 0;
+        d->selection.forImages([&] (const SubCompImage &image) {
+            const int x = (texture->width() - image.width())*0.5;
+            if (!image.isNull()) {
+                binder.bind(texture);
+                texture->upload(x, y, image.width(), image.height(), image.bits());
+                binder.bind(&d->bbox);
+                for (auto &bbox : image.boundingBoxes()) {
+                    const auto rect = bbox.toRect().translated(x, y);
+                    if (_Expand(d->bboxData, rect.width()*rect.height()))
+                        d->bboxData.fill(_Max<quint32>());
+                    d->bbox.upload(rect, d->bboxData.data());
                 }
-                y += image.height();
-            });
-            setGeometryDirty();
-            node->markDirty(QSGNode::DirtyMaterial);
-        }
-        d->redraw = false;
+            }
+            y += image.height();
+        });
+        reserve(UpdateGeometry, false);
     }
+}
+
+void SubtitleRendererItem::afterUpdate()
+{
     d->updateVisible();
-    setVisible(!d->hidden && !d->empty && !d->imageSize.isEmpty());
 }
 
 bool SubtitleRendererItem::isHidden() const {
     return d->hidden;
 }
 
-void SubtitleRendererItem::geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) {
+void SubtitleRendererItem::geometryChanged(const QRectF &new_, const QRectF &old) {
     d->selection.setArea(rect(), devicePixelRatio());
-    HQTextureRendererItem::geometryChanged(newGeometry, oldGeometry);
+    SimpleTextureItem::geometryChanged(new_, old);
 }
 
 int SubtitleRendererItem::delay() const {
@@ -451,7 +482,6 @@ void SubtitleRendererItem::customEvent(QEvent *event) {
     if (event->type() == SubCompSelection::ImagePrepared) {
         if (d->selection.update(_GetData<SubCompImage>(event)))
             d->textChanged = true;
-        d->redraw = true;
-        update();
+        reserve(UpdateMaterial);
     }
 }

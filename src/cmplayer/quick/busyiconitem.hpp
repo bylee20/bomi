@@ -2,7 +2,7 @@
 #define BUSYICONITEM_HPP
 
 #include "stdafx.hpp"
-#include "geometryitem.hpp"
+#include "quick/simpletextureitem.hpp"
 
 class BusyIconItem: public SimpleTextureItem {
     Q_OBJECT
@@ -31,7 +31,7 @@ private:
     void finalizeGL();
     GLenum drawingMode() const { return GL_TRIANGLES; }
     void updatePolish() override;
-    void updateTexture(OpenGLTexture2D &texture) override final;
+    void updateTexture(OpenGLTexture2D *texture) final;
     void geometryChanged(const QRectF &new_, const QRectF &old) override;
     void itemChange(ItemChange change, const ItemChangeData &data) override;
     struct Data;

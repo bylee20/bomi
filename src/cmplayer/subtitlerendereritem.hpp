@@ -2,13 +2,13 @@
 #define SUBTITLERENDERERITEM_HPP
 
 #include "stdafx.hpp"
-#include "texturerendereritem.hpp"
-#include "subtitle.hpp"
+#include "quick/simpletextureitem.hpp"
 
-class RichTextDocument;        class SubCompModel;
-struct SubtitleStyle;        class SubtitleDrawer;
+class SubComp;                         class Subtitle;
+class RichTextDocument;                class SubCompModel;
+struct SubtitleStyle;                  class SubtitleDrawer;
 
-class SubtitleRendererItem : public HQTextureRendererItem  {
+class SubtitleRendererItem : public SimpleTextureItem  {
     Q_OBJECT
 public:
     SubtitleRendererItem(QQuickItem *parent = nullptr);
@@ -37,8 +37,8 @@ public:
     const SubtitleStyle &style() const;
     void setStyle(const SubtitleStyle &style);
     const RichTextDocument &text() const;
-    bool isOpaque() const override {return false;}
     QImage draw(const QRectF &rect, QRectF *put = nullptr) const;
+    bool updateVertexOnGeometryChanged() const override { return true; }
 public slots:
     void setHidden(bool hidden);
     void render(int ms);
@@ -51,10 +51,15 @@ private:
     void finalizeGL();
     void rerender();
     void customEvent(QEvent *event) override;
-    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
-    void prepare(QSGGeometryNode *node) override;
-    void getCoords(QRectF &vertices, QRectF &) override;
-    TextureRendererShader *createShader() const override;
+    void geometryChanged(const QRectF &new_, const QRectF &old) override;
+    void afterUpdate();
+    ShaderIface *createShader() const override;
+    ShaderData *createData() const override;
+    Type *type() const override { static Type type; return &type; }
+    void updateTexture(OpenGLTexture2D *texture) override;
+    void updateData(ShaderData *data) override;
+    void updateVertex(Vertex *vertex) override;
+
     struct Data; Data *d;
     friend class SubtitleRendererShader;
 };

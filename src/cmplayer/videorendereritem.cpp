@@ -3,7 +3,7 @@
 #include "videoframe.hpp"
 #include "hwacc.hpp"
 #include "global.hpp"
-#include "letterboxitem.hpp"
+#include "quick/letterboxitem.hpp"
 #include "dataevent.hpp"
 #include "videoframeshader.hpp"
 
@@ -13,7 +13,8 @@ struct VideoRendererItem::Data {
     VideoRendererItem *p = nullptr;
     QLinkedList<VideoFrame> queue;
     OpenGLFramebufferObject *fbo = nullptr;
-    bool take = false, initialized = false, render = false, direct = false;
+    bool hurry = false;
+    bool take = false, direct = false;
     quint64 drawnFrames = 0, lastCheckedFrames = 0, lastCheckedTime = 0;
     QRectF vtx;
     QPoint offset = {0, 0};
@@ -32,8 +33,7 @@ struct VideoRendererItem::Data {
     QSize displaySize{1, 1}, frameSize{0, 0};
     InterpolatorType chromaUpscaler = InterpolatorType::Bilinear;
     int dropped = 0, fboDepth = 2;
-    bool overlayInLetterbox = true, rerender = false;
-    void repaint() { rerender = render = true; p->update(); }
+    bool overlayInLetterbox = true;
     void fillKernel() {
         kernel = Kernel3x3();
         if (effects & Blur)
@@ -74,30 +74,16 @@ struct VideoRendererItem::Data {
         }
         return rect;
     }
-
-    void updateGeometry(bool forceUpdateOsd) {
-        QRectF letter;
-        if (_Change(vtx, frameRect(p->geometry(), offset, &letter))) {
-            if (vtx.size() != QSizeF(mposd->width(), mposd->height())) {
-                if (forceUpdateOsd)
-                    mposd->forceUpdateTargetSize();
-            }
-            mposd->setGeometry(vtx);
-            emit p->frameRectChanged(vtx);
-        }
-        if (letterbox->set(p->rect(), letter))
-            emit p->screenRectChanged(letterbox->screen());
-        if (overlay)
-            overlay->setGeometry(overlayInLetterbox ? p->rect() : letterbox->screen());
-        p->setGeometryDirty();
-    }
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
-: HQTextureRendererItem(parent), d(new Data(this)) {
+    : HighQualityTextureItem(parent)
+    , d(new Data(this))
+{
     setFlag(ItemAcceptsDrops, true);
     d->mposd = new MpOsdItem(this);
     d->letterbox = new LetterboxItem(this);
+    QQmlProperty(d->letterbox, "anchors.centerIn").write(QVariant::fromValue(this));
     setZ(-1);
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::AllButtons);
@@ -120,7 +106,7 @@ double VideoRendererItem::avgfps() const {
 
 void VideoRendererItem::setOverlayOnLetterbox(bool letterbox) {
     if (_Change(d->overlayInLetterbox, letterbox))
-        d->updateGeometry(false);
+        reserve(UpdateGeometry);
 }
 
 bool VideoRendererItem::overlayInLetterbox() const {
@@ -128,8 +114,7 @@ bool VideoRendererItem::overlayInLetterbox() const {
 }
 
 void VideoRendererItem::initializeGL() {
-    HQTextureRendererItem::initializeGL();
-    Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    HighQualityTextureItem::initializeGL();
     _Renew(d->shader);
     d->shader->setDeintMethod(d->deint);
     d->shader->setColor(d->color);
@@ -140,18 +125,14 @@ void VideoRendererItem::initializeGL() {
     OpenGLTextureBinder<OGL::Target2D> binder(&d->black);
     const quint32 p = 0x0;
     d->black.initialize(1, 1, OGL::BGRA, &p);
-    d->initialized = true;
     d->direct = false;
-    setRenderTarget(d->black);
 }
 
 void VideoRendererItem::finalizeGL() {
-    HQTextureRendererItem::finalizeGL();
-    Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    HighQualityTextureItem::finalizeGL();
     d->black.destroy();
     _Delete(d->fbo);
     _Delete(d->shader);
-    d->initialized = false;
 }
 
 void VideoRendererItem::customEvent(QEvent *event) {
@@ -159,21 +140,19 @@ void VideoRendererItem::customEvent(QEvent *event) {
     case NewFrame:
         if (d->queue.size() < 3)
             d->queue.push_back(_GetData<VideoFrame>(event));
-        update();
+        reserve(UpdateMaterial);
         break;
-    case NextFrame:
-        update();
-        break;
-    case Rerender:
-        d->repaint();
-        break;
+//    case NextFrame:
+//        update();
+//        break;
     case UpdateDeint: {
-        if (_Change(d->deint, _GetData<DeintMethod>(event)) && d->shader) {
-            d->shader->setDeintMethod(d->deint);
-            d->repaint();
-        }
+        if (!_Change(d->deint, _GetData<DeintMethod>(event)) || !d->shader)
+            break;
+        d->shader->setDeintMethod(d->deint);
+    } case Rerender:
+        rerender();
         break;
-    } default:
+    default:
         break;
     }
 }
@@ -200,7 +179,7 @@ void VideoRendererItem::present(const QImage &image) {
 }
 
 void VideoRendererItem::present(const VideoFrame &frame) {
-    if (!d->initialized)
+    if (!isInitialized())
         return;
     if (d->shader && d->queue.size() < 3)
         _PostEvent(this, NewFrame, frame);
@@ -216,16 +195,10 @@ int VideoRendererItem::alignment() const {
     return d->alignment;
 }
 
-void VideoRendererItem::setAlignment(int alignment) {
-    if (d->alignment != alignment) {
-        d->alignment = alignment;
-        d->updateGeometry(false);
-        update();
-    }
-}
-
-void VideoRendererItem::rerender() {
-    _PostEvent(this, Rerender);
+void VideoRendererItem::setAlignment(int alignment)
+{
+    if (_Change(d->alignment, alignment))
+        reserve(UpdateGeometry);
 }
 
 void VideoRendererItem::setDeintMethod(DeintMethod method) {
@@ -257,19 +230,46 @@ void VideoRendererItem::setOverlay(GeometryItem *overlay) {
     }
 }
 
-void VideoRendererItem::geometryChanged(const QRectF &newOne, const QRectF &old) {
-    QQuickItem::geometryChanged(newOne, old);
-    d->letterbox->setWidth(width());
-    d->letterbox->setHeight(height());
-    d->updateGeometry(false);
+void VideoRendererItem::updateVertex(Vertex *vertex) {
+    QRectF letter;
+    if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter))) {
+//        if (d->vtx.size() != d->mposd->size()) {
+//            if (forceUpdateOsd)
+//                mposd->forceUpdateTargetSize();
+//        }
+        d->mposd->setGeometry(d->vtx);
+        emit frameRectChanged(d->vtx);
+    }
+    if (d->letterbox->set(rect(), letter))
+        emit screenRectChanged(d->letterbox->screen());
+    if (d->overlay) {
+        const auto g = d->overlayInLetterbox ? rect() : d->letterbox->screen();
+        d->overlay->setGeometry(g);
+    }
+
+    double top = 0.0, left = 0.0, right = 1.0, bottom = 1.0;
+    if (d->direct) {
+        if (d->shader)
+            d->shader->getCoords(left, top, right, bottom);
+    } else {
+        if (d->fbo)
+            d->fbo->getCoords(left, top, right, bottom);
+    }
+    if (!(d->effects & Disable)) {
+        if (d->effects & FlipVertically)
+            qSwap(top, bottom);
+        if (d->effects & FlipHorizontally)
+            qSwap(left, right);
+    }
+    Vertex::fillAsTriangleStrip(vertex, d->vtx.topLeft(), d->vtx.bottomRight(),
+                                {left, top}, {right, bottom});
 }
 
 void VideoRendererItem::setOffset(const QPoint &offset) {
     if (d->offset != offset) {
         d->offset = offset;
         emit offsetChanged(d->offset);
-        d->updateGeometry(false);
-        update();
+        reserve(UpdateGeometry);
     }
 }
 
@@ -287,12 +287,12 @@ VideoRendererItem::Effects VideoRendererItem::effects() const {
 
 void VideoRendererItem::setEffects(Effects effects) {
     if ((effects^d->effects) & (FlipHorizontally | FlipVertically))
-        setGeometryDirty();
+        reserve(UpdateGeometry);
     if (_Change(d->effects, effects)) {
         if (d->shader)
             d->shader->setEffects(d->effects);
         d->fillKernel();
-        d->repaint();
+        rerender();
     }
 }
 
@@ -303,46 +303,50 @@ QRectF VideoRendererItem::frameRect(const QRectF &area) const {
 void VideoRendererItem::setColor(const VideoColor &prop) {
     if (_Change(d->color, prop) && d->shader) {
         d->shader->setColor(d->color);
-        d->repaint();
+        rerender();
     }
 }
 
 void VideoRendererItem::setRange(ColorRange range) {
     if (_Change(d->range, range) && d->shader) {
         d->shader->setRange(d->range);
-        d->repaint();
+        rerender();
     }
 }
 
-ColorRange VideoRendererItem::range() const {
+ColorRange VideoRendererItem::range() const
+{
     return d->range;
 }
 
-const VideoColor &VideoRendererItem::color() const {
+const VideoColor &VideoRendererItem::color() const
+{
     return d->color;
 }
 
-void VideoRendererItem::setAspectRatio(double ratio) {
+void VideoRendererItem::setAspectRatio(double ratio)
+{
     if (!isSameRatio(d->aspect, ratio)) {
         d->aspect = ratio;
-        d->updateGeometry(true);
-        update();
+        reserve(UpdateGeometry);
     }
 }
 
-double VideoRendererItem::aspectRatio() const {
+double VideoRendererItem::aspectRatio() const
+{
     return d->aspect;
 }
 
-void VideoRendererItem::setCropRatio(double ratio) {
+void VideoRendererItem::setCropRatio(double ratio)
+{
     if (!isSameRatio(d->crop, ratio)) {
         d->crop = ratio;
-        d->updateGeometry(true);
-        update();
+        reserve(UpdateGeometry);
     }
 }
 
-InterpolatorType VideoRendererItem::chromaUpscaler() const {
+InterpolatorType VideoRendererItem::chromaUpscaler() const
+{
     return d->chromaUpscaler;
 }
 
@@ -389,26 +393,27 @@ void VideoRendererItem::reset() {
     d->lastCheckedTime = 0;
 }
 
-void VideoRendererItem::prepare(QSGGeometryNode *node) {
+void VideoRendererItem::updateTexture(OpenGLTexture2D *texture) {
     Q_ASSERT(d->shader);
     if (d->take) {
-        auto image = renderTarget().toImage();
+        auto image = texture->toImage();
         if (!image.isNull())
             d->mposd->drawOn(image);
         emit frameImageObtained(image);
         d->take = false;
     }
+    bool uploaded = false;
     if (!d->queue.isEmpty()) {
         auto &frame = d->queue.front();
         if (!frame.format().isEmpty()) {
             d->ptsOut = frame.pts();
-            d->render = true;
             d->frameSize = frame.format().size();
             if (_Change(d->displaySize, frame.format().displaySize()))
-                d->updateGeometry(true);
+                reserve(UpdateGeometry, false);
             d->shader->upload(frame);
             d->direct = d->shader->directRendering();
             ++d->drawnFrames;
+            uploaded = true;
         }
         d->queue.pop_front();
         if (!d->queue.isEmpty()) {
@@ -420,49 +425,34 @@ void VideoRendererItem::prepare(QSGGeometryNode *node) {
                     d->queue.pop_front();
                     emit droppedFramesChanged(++d->dropped);
                 }
-                update();
+                d->hurry = true;
             }
         }
     }
 
-    if (d->render && !d->frameSize.isEmpty()) {
-        if (d->rerender)
+    if (!d->frameSize.isEmpty()) {
+        if (!uploaded)
             d->shader->reupload();
         if (d->direct) {
-            setRenderTarget(d->shader->renderTarget());
+            *texture = d->shader->renderTarget();
         } else {
             if (!d->fbo || d->fbo->size() != d->frameSize) {
                 _Renew(d->fbo, d->frameSize, OpenGLCompat::framebufferObjectTextureFormat());
                 Q_ASSERT(d->fbo->isValid());
             }
-            setRenderTarget(d->fbo->texture());
+            *texture = d->fbo->texture();
             d->fbo->bind();
             d->shader->render(d->kernel);
             d->fbo->release();
         }
-        node->markDirty(QSGNode::DirtyMaterial);
     }
-    d->rerender = d->render = false;
-    LOG_GL_ERROR_Q
 }
 
-void VideoRendererItem::getCoords(QRectF &vertices, QRectF &texCoords) {
-    double top = 0.0, left = 0.0, right = 1.0, bottom = 1.0;
-    if (d->direct) {
-        if (d->shader)
-            d->shader->getCoords(left, top, right, bottom);
-    } else {
-        if (d->fbo)
-            d->fbo->getCoords(left, top, right, bottom);
+void VideoRendererItem::afterUpdate() {
+    if (d->hurry) {
+        reserve(UpdateMaterial);
+        d->hurry = false;
     }
-    if (!(d->effects & Disable)) {
-        if (d->effects & FlipVertically)
-            qSwap(top, bottom);
-        if (d->effects & FlipHorizontally)
-            qSwap(left, right);
-    }
-    vertices = d->vtx;
-    texCoords = {left, top, right-left, bottom-top};
 }
 
 QQuickItem *VideoRendererItem::osd() const {
@@ -473,7 +463,7 @@ void VideoRendererItem::setKernel(int blur_c, int blur_n, int blur_d, int sharpe
     d->blur.set(blur_c, blur_n, blur_d);
     d->sharpen.set(sharpen_c, sharpen_n, sharpen_d);
     d->fillKernel();
-    d->repaint();
+    rerender();
 }
 
 QPointF VideoRendererItem::mapToVideo(const QPointF &pos) {

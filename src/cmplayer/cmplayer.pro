@@ -82,7 +82,7 @@ HEADERS += playengine.hpp \
     richtextdocument.hpp \
     stdafx.hpp \
     videorendereritem.hpp \
-    texturerendereritem.hpp \
+	quick/highqualitytextureitem.hpp \
     subtitlerendereritem.hpp \
     videoformat.hpp \
     mposditem.hpp \
@@ -101,7 +101,7 @@ HEADERS += playengine.hpp \
     tmp.hpp \
     videofilter.hpp \
     deintinfo.hpp \
-    letterboxitem.hpp \
+	quick/letterboxitem.hpp \
     mposdbitmap.hpp \
     openglcompat.hpp \
     videoframeshader.glsl.hpp \
@@ -110,7 +110,7 @@ HEADERS += playengine.hpp \
     ffmpegfilters.hpp \
     softwaredeinterlacer.hpp \
     vaapipostprocessor.hpp \
-    geometryitem.hpp \
+	quick/geometryitem.hpp \
     playengine_p.hpp \
     mediamisc.hpp \
     trayicon.hpp \
@@ -132,12 +132,17 @@ HEADERS += playengine.hpp \
     audio_helper.hpp \
     mpv_helper.hpp \
     udf25.hpp \
-    busyiconitem.hpp \
+    quick/busyiconitem.hpp \
     quick/toplevelitem.hpp \
     quick/itemwrapper.hpp \
     quick/buttonboxitem.hpp \
     quick/appobject.hpp \
-    quick/settingsobject.hpp
+    quick/settingsobject.hpp \
+    quick/opengldrawitem.hpp \
+    quick/simpletextureitem.hpp \
+    quick/simplevertexitem.hpp \
+    quick/simplefboitem.hpp \
+    openglvertex.hpp
 
 SOURCES += main.cpp \
     mainwindow.cpp \
@@ -180,7 +185,7 @@ SOURCES += main.cpp \
     richtextdocument.cpp \
     playengine.cpp \
     videorendereritem.cpp \
-    texturerendereritem.cpp \
+	quick/highqualitytextureitem.cpp \
     subtitlerendereritem.cpp \
     mposditem.cpp \
     globalqmlobject.cpp \
@@ -196,7 +201,7 @@ SOURCES += main.cpp \
     hwacc_vda.cpp \
     videofilter.cpp \
     deintinfo.cpp \
-    letterboxitem.cpp \
+	quick/letterboxitem.cpp \
     mposdbitmap.cpp \
     openglcompat.cpp \
     videoframeshader.cpp \
@@ -204,7 +209,7 @@ SOURCES += main.cpp \
     ffmpegfilters.cpp \
     softwaredeinterlacer.cpp \
     vaapipostprocessor.cpp \
-    geometryitem.cpp \
+	quick/geometryitem.cpp \
     mediamisc.cpp \
     trayicon.cpp \
     videocolor.cpp \
@@ -225,12 +230,17 @@ SOURCES += main.cpp \
     audio_helper.cpp \
     mpv_helper.cpp \
     udf25.cpp \
-    busyiconitem.cpp \
+    quick/busyiconitem.cpp \
     quick/toplevelitem.cpp \
     quick/itemwrapper.cpp \
     quick/buttonboxitem.cpp \
     quick/appobject.cpp \
-    quick/settingsobject.cpp
+    quick/settingsobject.cpp \
+    quick/opengldrawitem.cpp \
+    quick/simpletextureitem.cpp \
+    quick/simplevertexitem.cpp \
+    quick/simplefboitem.cpp \
+    openglvertex.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

@@ -37,7 +37,7 @@ void OpenGLTextureBase::create(OGL::Filter filter, OGL::WrapMode wrap) {
 }
 
 QImage OpenGLTexture2D::toImage() const {
-    if (isEmpty())
+    if (isEmpty() || id() == GL_NONE)
         return QImage();
     OpenGLTextureBinder<OGL::Target2D> binder(const_cast<OpenGLTexture2D*>(this));
     QImage image(size(), QImage::Format_ARGB32);

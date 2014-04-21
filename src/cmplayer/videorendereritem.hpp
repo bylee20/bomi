@@ -3,27 +3,28 @@
 
 #include "stdafx.hpp"
 #include "skin.hpp"
-#include "texturerendereritem.hpp"
+#include "quick/highqualitytextureitem.hpp"
 
 class DeintInfo;                class OpenGLFramebufferObject;
 class VideoRendererItem;        class VideoColor;
 class VideoFrame;                class VideoFormat;
 class MpOsdItem;                class OpenGLTexture;
-enum class InterpolatorType;    enum class DeintMethod;
+enum class DeintMethod;
+enum class ColorRange;
 
-class VideoRendererItem : public HQTextureRendererItem {
+class VideoRendererItem : public HighQualityTextureItem {
     Q_OBJECT
     static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
 public:
     enum Effect {
-        NoEffect            = 0,
-        FlipVertically        = 1 << 0,
-        FlipHorizontally    = 1 << 1,
-        Grayscale            = 1 << 2,
-        InvertColor            = 1 << 3,
-        Blur                = 1 << 4,
-        Sharpen                = 1 << 5,
-        Disable                = 1 << 8
+        NoEffect         = 0,
+        FlipVertically   = 1 << 0,
+        FlipHorizontally = 1 << 1,
+        Grayscale        = 1 << 2,
+        InvertColor      = 1 << 3,
+        Blur             = 1 << 4,
+        Sharpen          = 1 << 5,
+        Disable          = 1 << 8
     };
     Q_DECLARE_FLAGS(Effects, Effect)
     static const int KernelEffects = Blur | Sharpen;
@@ -57,10 +58,10 @@ public:
     bool hasFrame() const;
     void requestFrameImage() const;
     QRectF frameRect(const QRectF &area) const;
-    void setKernel(int blur_c, int blur_n, int blur_d, int sharpen_c, int sharpen_n, int sharpen_d);
+    void setKernel(int blur_c, int blur_n, int blur_d,
+                   int sharpen_c, int sharpen_n, int sharpen_d);
     double delay() const;
     void setDeintMethod(DeintMethod method);
-    void rerender() override;
     void setOverlayOnLetterbox(bool letterbox);
     bool overlayInLetterbox() const;
     void setChromaUpscaler(InterpolatorType tpe);
@@ -70,9 +71,9 @@ public:
     int droppedFrames() const;
     void reset();
     QPointF mapToVideo(const QPointF &pos);
-    bool isOpaque() const { return true; }
     void setMousePosition(const QPoint &pos) { m_mouse = pos; }
     const QPoint &mousePosition() const { return m_mouse; }
+    bool updateVertexOnGeometryChanged() const override { return true; }
 public slots:
     void setAlignment(int alignment);
     void setEffects(Effects effect);
@@ -87,19 +88,20 @@ signals:
     void screenRectChanged(const QRectF &rect);
     void frameRectChanged(const QRectF &rect);
 private:
+    void afterUpdate();
     void initializeGL() override;
     void finalizeGL() override;
-    void getCoords(QRectF &vertices, QRectF &texCoords) override;
-    void prepare(QSGGeometryNode *node) override;
-    void geometryChanged(const QRectF &newGeometry, const QRectF &oldGeometry) override;
+//    void getCoords(QRectF &vertices, QRectF &texCoords) override;
+//    void prepare(QSGGeometryNode *node) override;
+//    void geometryChanged(const QRectF &new_, const QRectF &old) override;
     void customEvent(QEvent *event) override;
+    void updateVertex(Vertex *vertex) override;
+    void updateTexture(OpenGLTexture2D *texture) override;
     MpOsdItem *mpOsd() const;
     struct Data;
     Data *d;
     QPoint m_mouse;
     friend class VideoOutput;
 };
-
-extern VideoRendererItem *item;
 
 #endif // VIDEORENDERERITEM_HPP

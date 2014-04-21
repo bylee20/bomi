@@ -190,7 +190,7 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
     auto v = priv(vo); auto d = v->d;
     switch (req) {
     case VOCTRL_REDRAW_FRAME:
-        d->renderer->rerender();
+        qApp->postEvent(d->renderer, new QEvent(static_cast<QEvent::Type>(Rerender)));
         return true;
     case VOCTRL_GET_HWDEC_INFO:
         static_cast<mp_hwdec_info*>(data)->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);

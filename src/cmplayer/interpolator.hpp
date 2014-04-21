@@ -6,13 +6,6 @@
 
 class Interpolator {
 public:
-    class Texture : public OpenGLTexture1D {
-    public:
-        float multiplier() const { return m_mul; }
-    private:
-        friend class Interpolator;
-        float m_mul = 2.0f;
-    };
     enum Category {
         None = 0,
         Fetch16 = 1,
@@ -33,7 +26,7 @@ public:
     static const Interpolator *get(Type type);
     QByteArray shader() const { return shader(category()); }
     int textures() const { return textures(category()); }
-    void allocate(Texture &texture1, Texture &texture2) const;
+    void allocate(OpenGLTexture1D *tex1, OpenGLTexture1D *tex2) const;
 private:
     Interpolator(Type type);
     friend struct Objs;
