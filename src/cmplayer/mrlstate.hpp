@@ -4,7 +4,7 @@
 #include "stdafx.hpp"
 #include "enums.hpp"
 #include "mrl.hpp"
-#include "submisc.hpp"
+#include "subtitle/submisc.hpp"
 #include <tuple>
 
 class MrlStateProperty;

@@ -3,7 +3,7 @@
 #include "videoframe.hpp"
 #include "hwacc.hpp"
 #include "global.hpp"
-#include "quick/letterboxitem.hpp"
+#include "letterboxitem.hpp"
 #include "dataevent.hpp"
 #include "videoframeshader.hpp"
 

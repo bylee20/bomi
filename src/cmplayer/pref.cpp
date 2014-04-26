@@ -1,6 +1,6 @@
 #include "pref.hpp"
 #include "translator.hpp"
-#include "hwacc.hpp"
+#include "video/hwacc.hpp"
 #include "info.hpp"
 
 template<typename T>
@@ -386,7 +386,7 @@ void Pref::load() {
 }
 
 #ifdef Q_OS_LINUX
-#include "hwacc_vaapi.hpp"
+#include "video/hwacc_vaapi.hpp"
 #endif
 
 QList<DeintMethod> Pref::defaultHwAccDeints() {

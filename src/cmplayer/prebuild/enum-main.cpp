@@ -232,7 +232,7 @@ static void generate() {
 
 #include <QCoreApplication>
 #include <array>
-#include "videocolor.hpp"
+#include "video/videocolor.hpp"
 extern "C" {
 #include <audio/chmap.h>
 }

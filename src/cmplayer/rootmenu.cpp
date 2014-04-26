@@ -1,8 +1,8 @@
 #include "rootmenu.hpp"
-#include "videorendereritem.hpp"
+#include "video/videorendereritem.hpp"
 #include "enums.hpp"
 #include "pref.hpp"
-#include "videocolor.hpp"
+#include "video/videocolor.hpp"
 #include "record.hpp"
 #include "log.hpp"
 

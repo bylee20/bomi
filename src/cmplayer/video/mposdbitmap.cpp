@@ -1,5 +1,5 @@
 #include "mposdbitmap.hpp"
-#include "openglcompat.hpp"
+#include "opengl/openglcompat.hpp"
 extern "C" {
 #include <sub/osd.h>
 }

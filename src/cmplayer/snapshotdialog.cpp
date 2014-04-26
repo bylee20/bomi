@@ -1,9 +1,9 @@
 #include "snapshotdialog.hpp"
-#include "global.hpp"
-#include "subtitlerendereritem.hpp"
-#include "videorendereritem.hpp"
 #include "ui_snapshotdialog.h"
+#include "global.hpp"
 #include "info.hpp"
+#include "subtitle/subtitlerendereritem.hpp"
+#include "video/videorendereritem.hpp"
 
 struct SnapshotDialog::Data {
     Ui::SnapshotDialog ui;

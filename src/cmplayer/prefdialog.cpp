@@ -1,6 +1,6 @@
 #include "prefdialog.hpp"
 #include "trayicon.hpp"
-#include "deintinfo.hpp"
+#include "video/deintinfo.hpp"
 #include "dialogs.hpp"
 #include "ui_prefdialog.h"
 #include "info.hpp"
@@ -8,9 +8,9 @@
 #include "pref.hpp"
 #include "rootmenu.hpp"
 #include "skin.hpp"
-#include "hwacc.hpp"
+#include "video/hwacc.hpp"
 #include <array>
-#include "hwacc_vaapi.hpp"
+#include "video/hwacc_vaapi.hpp"
 
 #ifdef None
 #undef None

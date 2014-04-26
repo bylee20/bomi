@@ -1,5 +1,4 @@
 ﻿#include "openglcompat.hpp"
-#include "videocolor.hpp"
 #include "app.hpp"
 #include <cmath>
 #include "log.hpp"

@@ -2,8 +2,8 @@
 #define SIMPLETEXTUREITEM_HPP
 
 #include "opengldrawitem.hpp"
-#include "openglmisc.hpp"
-#include "openglvertex.hpp"
+#include "opengl/openglmisc.hpp"
+#include "opengl/openglvertex.hpp"
 
 class SimpleTextureItem : public ShaderRenderItem<OGL::TextureVertex> {
     Q_OBJECT

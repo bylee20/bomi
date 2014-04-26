@@ -3,9 +3,9 @@
 #include "mrl.hpp"
 #include "mainwindow.hpp"
 #include "playengine.hpp"
-#include "videoformat.hpp"
-#include "hwacc.hpp"
-#include "openglcompat.hpp"
+#include "video/videoformat.hpp"
+#include "video/hwacc.hpp"
+#include "opengl/openglcompat.hpp"
 #include "log.hpp"
 #include "tmp.hpp"
 

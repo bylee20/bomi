@@ -3,7 +3,7 @@
 
 #include "stdafx.hpp"
 #include "enums.hpp"
-#include "videocolor.hpp"
+#include "video/videocolor.hpp"
 #include "mrl.hpp"
 #include "mrlstate.hpp"
 

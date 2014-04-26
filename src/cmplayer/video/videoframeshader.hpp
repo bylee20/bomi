@@ -2,13 +2,13 @@
 #define VIDEOFRAMESHADER_HPP
 
 #include "stdafx.hpp"
-#include "openglcompat.hpp"
+#include "opengl/openglcompat.hpp"
+#include "opengl/interpolator.hpp"
 #include "videoformat.hpp"
 #include "videocolor.hpp"
 #include "videorendereritem.hpp"
 #include "deintinfo.hpp"
 #include "videoframe.hpp"
-#include "interpolator.hpp"
 
 class HwAccMixer;
 

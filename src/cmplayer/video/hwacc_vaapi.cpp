@@ -1,7 +1,7 @@
 #include "hwacc_vaapi.hpp"
 #include "stdafx.hpp"
 #include "videoframe.hpp"
-#include "openglmisc.hpp"
+#include "opengl/openglmisc.hpp"
 
 #ifdef Q_OS_LINUX
 

@@ -2,12 +2,12 @@
 #define PLAYENGINE_P_HPP
 
 #include "info.hpp"
-#include "videoframe.hpp"
-#include "videooutput.hpp"
-#include "hwacc.hpp"
-#include "audiocontroller.hpp"
+#include "video/videoframe.hpp"
+#include "video/videooutput.hpp"
+#include "video/hwacc.hpp"
+#include "audio/audiocontroller.hpp"
 #include "playlistmodel.hpp"
-#include "deintinfo.hpp"
+#include "video/deintinfo.hpp"
 #include "dataevent.hpp"
 #include "playengine.hpp"
 #include <array>

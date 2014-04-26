@@ -3,9 +3,9 @@
 
 #include "stdafx.hpp"
 #include "info.hpp"
-#include "videocolor.hpp"
-#include "deintinfo.hpp"
-#include "channelmanipulation.hpp"
+#include "video/videocolor.hpp"
+#include "video/deintinfo.hpp"
+#include "audio/channelmanipulation.hpp"
 #include "enums.hpp"
 #include "mrlstate.hpp"
 #include <type_traits>

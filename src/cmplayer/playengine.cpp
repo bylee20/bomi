@@ -1,10 +1,10 @@
 #include "playengine.hpp"
 #include "playengine_p.hpp"
-#include "videorendereritem.hpp"
-#include "submisc.hpp"
 #include "translator.hpp"
 #include "log.hpp"
-#include "subtitlestyle.hpp"
+#include "video/videorendereritem.hpp"
+#include "subtitle/submisc.hpp"
+#include "subtitle/subtitlestyle.hpp"
 
 DECLARE_LOG_CONTEXT(Engine)
 #include <libmpv/client.h>

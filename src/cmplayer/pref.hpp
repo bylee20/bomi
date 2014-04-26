@@ -4,11 +4,11 @@
 #include "stdafx.hpp"
 #include "global.hpp"
 #include "enums.hpp"
-#include "deintinfo.hpp"
+#include "video/deintinfo.hpp"
 #include "record.hpp"
-#include "subtitlestyle.hpp"
+#include "subtitle/subtitlestyle.hpp"
 #include "mrlstate.hpp"
-#include "hwacc.hpp"
+#include "video/hwacc.hpp"
 
 class QLocale;
 

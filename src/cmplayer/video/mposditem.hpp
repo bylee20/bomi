@@ -3,7 +3,7 @@
 
 #include "stdafx.hpp"
 #include "quick/simplefboitem.hpp"
-#include "openglmisc.hpp"
+#include "opengl/openglmisc.hpp"
 
 enum EventType {EnqueueFrame = QEvent::User + 1, NextFrame, EmptyQueue, Rerender, UpdateDeint, Show, Hide, NewFrame };
 

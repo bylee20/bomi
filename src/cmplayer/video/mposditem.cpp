@@ -1,10 +1,11 @@
 #include "mposditem.hpp"
+#include "opengl/openglvertex.hpp"
 #include "mposdbitmap.hpp"
 #include "dataevent.hpp"
-#include "openglcompat.hpp"
+#include "opengl/openglcompat.hpp"
 
 class MpOsdItemShaderProgram : public QOpenGLShaderProgram {
-    enum {vPosition, vCoord, vColor};
+    enum Attr {AttrPosition, AttrTexCoord, AttrColor};
 public:
     static constexpr int N = 6;
     MpOsdItemShaderProgram(QObject *parent = nullptr)
@@ -16,14 +17,14 @@ public:
     void setVertexShader(const QByteArray &code) {
         if (!m_vertex) {
             m_vertex = addShaderFromSourceCode(QOpenGLShader::Vertex, code);
-            m_hasColor = code.contains("vColor");
+            m_hasColor = code.contains("aColor");
         }
     }
     bool link() override {
-        bindAttributeLocation("vCoord", vCoord);
-        bindAttributeLocation("vPosition", vPosition);
+        bindAttributeLocation("aTexCoord", AttrTexCoord);
+        bindAttributeLocation("aPosition", AttrPosition);
         if (m_hasColor)
-            bindAttributeLocation("vColor", vColor);
+            bindAttributeLocation("aColor", AttrColor);
         return QOpenGLShaderProgram::link();
     }
     void setTextureCount(int textures) {
@@ -51,20 +52,20 @@ public:
     }
     void begin() {
         bind();
-        enableAttributeArray(vPosition);
-        enableAttributeArray(vCoord);
-        setAttributeArray(vCoord, m_vCoords.data(), 2);
-        setAttributeArray(vPosition, m_vPositions.data(), 2);
+        enableAttributeArray(AttrPosition);
+        enableAttributeArray(AttrTexCoord);
+        setAttributeArray(AttrTexCoord, m_vCoords.data(), 2);
+        setAttributeArray(AttrPosition, m_vPositions.data(), 2);
         if (m_hasColor) {
-            enableAttributeArray(vColor);
-            setAttributeArray(vColor, OGL::UInt8, m_vColors.data(), 4);
+            enableAttributeArray(AttrColor);
+            setAttributeArray(AttrColor, OGL::UInt8, m_vColors.data(), 4);
         }
     }
     void end() {
-        disableAttributeArray(vCoord);
-        disableAttributeArray(vPosition);
+        disableAttributeArray(AttrTexCoord);
+        disableAttributeArray(AttrPosition);
         if (m_hasColor)
-            disableAttributeArray(vColor);
+            disableAttributeArray(AttrColor);
         release();
     }
     void reset() { removeAllShaders(); m_frag = m_vertex = false; }
@@ -131,13 +132,13 @@ struct MpOsdItem::Data {
             uniform mat4 vMatrix;
             varying vec4 c;
             varying vec2 texCoord;
-            attribute vec4 vPosition;
-            attribute vec2 vCoord;
-            attribute vec4 vColor;
+            attribute vec4 aPosition;
+            attribute vec2 aTexCoord;
+            attribute vec4 aColor;
             void main() {
-                c = vColor.abgr;
-                texCoord = vCoord;
-                gl_Position = vMatrix*vPosition;
+                c = aColor.abgr;
+                texCoord = aTexCoord;
+                gl_Position = vMatrix*aPosition;
             }
         )");
         if (!shader->link())

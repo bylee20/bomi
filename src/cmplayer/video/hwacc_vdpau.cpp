@@ -1,5 +1,5 @@
 #include "hwacc_vdpau.hpp"
-#include "openglcompat.hpp"
+#include "opengl/openglcompat.hpp"
 
 void initialize_vdpau_interop(QOpenGLContext *ctx) {
 #ifdef Q_OS_LINUX

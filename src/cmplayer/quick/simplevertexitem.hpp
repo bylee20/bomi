@@ -2,7 +2,7 @@
 #define SIMPLEVERTEXITEM_HPP
 
 #include "opengldrawitem.hpp"
-#include "openglvertex.hpp"
+#include "opengl/openglvertex.hpp"
 
 class SimpleVertexItem : public VertexDrawItem<OGL::PositionVertex> {
     Q_OBJECT
