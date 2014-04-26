@@ -4,25 +4,30 @@
 #include "log.hpp"
 #include <tuple>
 
+using Vertex = OGL::TextureVertex;
+
 DECLARE_LOG_CONTEXT(VideoFrameShader)
 
 static const QByteArray shaderTemplate(
 #include "videoframeshader.glsl.hpp"
 );
 
-VideoFrameShader::VideoFrameShader() {
+VideoFrameShader::VideoFrameShader()
+    : m_vbo(QOpenGLBuffer::VertexBuffer)
+{
     auto ctx = QOpenGLContext::currentContext();
     m_dma = ctx->hasExtension("GL_APPLE_client_storage") && ctx->hasExtension("GL_APPLE_texture_range");
     if (m_dma)
         _Info("Direct memoery access(DMA) is available.");
-    m_vPositions = makeArray({-1.0, -1.0}, {1.0, 1.0});
-    m_vMatrix.setToIdentity();
     m_lutInt[0].create();
     m_lutInt[1].create();
+    m_vbo.create();
+    m_vbo.setUsagePattern(QOpenGLBuffer::StaticDraw);
 }
 
 VideoFrameShader::~VideoFrameShader() {
     release();
+    m_vbo.destroy();
 }
 
 void VideoFrameShader::release() {
@@ -41,14 +46,21 @@ void VideoFrameShader::release() {
 
 void VideoFrameShader::updateTexCoords() {
     QPointF p1 = {0.0, 0.0}, p2 = {1.0, 1.0};
+    const auto &format = m_frame.format();
     if (m_target == OGL::Target2D)
-        p2.rx() = _Ratio(m_frame.format().width(), m_frame.format().alignedWidth());
+        p2.rx() = _Ratio(format.width(), format.alignedWidth());
     else
-        p2 = QPointF(m_frame.format().width(), m_frame.format().height());
+        p2 = QPointF(format.width(), format.height());
     if (m_frame.isFlipped())
         qSwap(p1.ry(), p2.ry());
-    m_vCoords = makeArray(p1, p2);
-    m_coords = {p1, p2};
+    m_texRect = {p1, p2};
+
+    m_vbo.bind();
+    m_vbo.allocate(4*sizeof(Vertex));
+    auto v = static_cast<Vertex*>(m_vbo.map(QOpenGLBuffer::WriteOnly));
+    Vertex::fillAsTriangleStrip(v, {-1, -1}, {1, 1}, p1, p2);
+    m_vbo.unmap();
+    m_vbo.release();
 }
 
 void VideoFrameShader::setColor(const VideoColor &color) {
@@ -101,6 +113,7 @@ void VideoFrameShader::setEffects(int effects) {
         return;
     const int old = m_effects;
     m_effects = effects;
+    auto isColorEffect = [] (int e) -> bool { return e & ColorEffects; };
     if (isColorEffect(old) != isColorEffect(m_effects))
         updateColorMatrix();
     for (auto &shader : m_shaders) {
@@ -116,6 +129,10 @@ void VideoFrameShader::setDeintMethod(DeintMethod method) {
 void VideoFrameShader::updateShader() {
     Q_ASSERT(!m_frame.format().isEmpty());
     int deint = 0;
+    auto isX11HwAcc = [] (const VideoFrame &frame) {
+        return frame.format().imgfmt() == IMGFMT_VAAPI
+               || frame.format().imgfmt() == IMGFMT_VDPAU;
+    };
     if (m_frame.isInterlaced() && !isX11HwAcc(m_frame)) {
         switch (m_deint) {
         case DeintMethod::Bob:
@@ -191,8 +208,8 @@ const vec2 tex_size = vec2(texWidth, texHeight);
         prog.addShaderFromSourceCode(QOpenGLShader::Fragment, fragCode);
         prog.addShaderFromSourceCode(QOpenGLShader::Vertex, vertexCode);
 
-        prog.bindAttributeLocation("vPosition", vPosition);
-        prog.bindAttributeLocation("vCoord", vCoord);
+        prog.bindAttributeLocation("vPosition", AttrPosition);
+        prog.bindAttributeLocation("vCoord", AttrTexCoord);
 
         prog.link();
         m_prog = nullptr;
@@ -281,7 +298,6 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
     m_prog->setUniformValue(loc_top_field, (float)m_frame.isTopField());
     m_prog->setUniformValue(loc_add_vec, m_add_vec);
     m_prog->setUniformValue(loc_mul_mat, m_mul_mat);
-    m_prog->setUniformValue(loc_vMatrix, m_vMatrix);
     if (hasKernelEffects()) {
         m_prog->setUniformValue(loc_kern_c, k3x3.center());
         m_prog->setUniformValue(loc_kern_n, k3x3.neighbor());
@@ -290,31 +306,27 @@ void VideoFrameShader::render(const Kernel3x3 &k3x3) {
 
     auto texPos = 0;
     for (int i=0; i<m_textures.size(); ++i, ++texPos) {
-        m_prog->setUniformValue(loc_tex[i], texPos);
+        m_textures[i].bind(m_prog, loc_tex[i], texPos);
         m_prog->setUniformValue(loc_cc[i], m_textures[i].correction());
-        f->glActiveTexture(GL_TEXTURE0 + texPos);
-        m_textures[i].bind();
     }
-    for (int i=0; i<m_lutCount; ++i, ++texPos) {
-        m_prog->setUniformValue(loc_lut_int[i], texPos);
-        f->glActiveTexture(GL_TEXTURE0 + texPos);
-        m_lutInt[i].bind();
-    }
+    for (int i=0; i<m_lutCount; ++i, ++texPos)
+        m_lutInt[i].bind(m_prog, loc_lut_int[i], texPos);
 
-    m_prog->enableAttributeArray(vCoord);
-    m_prog->enableAttributeArray(vPosition);
-
-    m_prog->setAttributeArray(vCoord, m_vCoords.data(), 2);
-    m_prog->setAttributeArray(vPosition, m_vPositions.data(), 2);
+    m_vbo.bind();
+    SET_ATTR_COORD(m_prog, AttrPosition, Vertex, position);
+    SET_ATTR_COORD(m_prog, AttrTexCoord, Vertex, texCoord);
+    m_prog->enableAttributeArray(AttrPosition);
+    m_prog->enableAttributeArray(AttrTexCoord);
 
     f->glActiveTexture(GL_TEXTURE0);
     glDisable(GL_BLEND);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glEnable(GL_BLEND);
 
-    m_prog->disableAttributeArray(0);
-    m_prog->disableAttributeArray(1);
+    m_prog->disableAttributeArray(AttrTexCoord);
+    m_prog->disableAttributeArray(AttrPosition);
     m_prog->release();
+    m_vbo.release();
 }
 
 

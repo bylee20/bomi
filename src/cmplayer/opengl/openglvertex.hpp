@@ -10,12 +10,14 @@ using AttrInfo = QSGGeometry::AttributeSet;
 
 struct ColorAttr {
     uchar r, g, b, a;
-    ColorAttr &operator = (const QColor &rhs) {
-        r = rhs.red();
-        g = rhs.green();
-        b = rhs.blue();
-        a = rhs.alpha();
-        return *this;
+    void set(const QColor &color) {
+        r = color.red();
+        g = color.green();
+        b = color.blue();
+        a = color.alpha();
+    }
+    void set(quint32 color) {
+        *reinterpret_cast<quint32*>(this) = color;
     }
     void set(uchar _r, uchar _g, uchar _b, uchar _a) {
         r = _r; g = _g; b = _b; a = _a;
@@ -25,16 +27,20 @@ struct ColorAttr {
     }
 };
 
+#define SET_ATTR_COLOR(prog, loc, type, mem) { prog->setAttributeBuffer(loc, \
+    GL_UNSIGNED_BYTE, offsetof(type, mem), 4, sizeof(type)); }
+
+#define SET_ATTR_COORD(prog, loc, type, mem) { prog->setAttributeBuffer(loc, \
+    GL_FLOAT, offsetof(type, mem), 2, sizeof(type)); }
+
 template<class T> using VecIt = typename QVector<T>::iterator;
 
 struct CoordAttr {
     float x, y;
-    CoordAttr &operator = (const QPointF &rhs) {
-        x = rhs.x(); y = rhs.y(); return *this;
-    }
     static inline AttrData data(int index, bool isPos = false) {
         return AttrData::create(index, 2, GL_FLOAT, isPos);
     }
+    void set(const QPointF &p) { x = p.x(); y = p.y(); }
     void set(float x, float y) { this->x = x; this->y = y; }
 
     template<typename T>
@@ -77,25 +83,26 @@ struct CoordAttr {
         (it->*attr2).set(br2.x(), br2.y()); ++it;
         return it;
     }
-    template<typename T>
+    template<typename T, typename F = void(*)(const VecIt<T>&)>
     static inline VecIt<T> fillTriangles(VecIt<T> it, CoordAttr T::*attr1,
-                                            const QPointF &tl1,
-                                            const QPointF &br1,
-                                            CoordAttr T::*attr2,
-                                            const QPointF &tl2,
-                                            const QPointF &br2) {
+                                         const QPointF &tl1,
+                                         const QPointF &br1,
+                                         CoordAttr T::*attr2,
+                                         const QPointF &tl2,
+                                         const QPointF &br2,
+                                         F f = [] (const VecIt<T>&) {}) {
         (it->*attr1).set(tl1.x(), tl1.y());
-        (it->*attr2).set(tl2.x(), tl2.y()); ++it;
+        (it->*attr2).set(tl2.x(), tl2.y()); f(it); ++it;
         (it->*attr1).set(br1.x(), tl1.y());
-        (it->*attr2).set(br2.x(), tl2.y()); ++it;
+        (it->*attr2).set(br2.x(), tl2.y()); f(it); ++it;
         (it->*attr1).set(tl1.x(), br1.y());
-        (it->*attr2).set(tl2.x(), br2.y()); ++it;
+        (it->*attr2).set(tl2.x(), br2.y()); f(it); ++it;
         (it->*attr1).set(tl1.x(), br1.y());
-        (it->*attr2).set(tl2.x(), br2.y()); ++it;
+        (it->*attr2).set(tl2.x(), br2.y()); f(it); ++it;
         (it->*attr1).set(br1.x(), br1.y());
-        (it->*attr2).set(br2.x(), br2.y()); ++it;
+        (it->*attr2).set(br2.x(), br2.y()); f(it); ++it;
         (it->*attr1).set(br1.x(), tl1.y());
-        (it->*attr2).set(br2.x(), tl2.y()); ++it;
+        (it->*attr2).set(br2.x(), tl2.y()); f(it); ++it;
         return it;
     }
 };

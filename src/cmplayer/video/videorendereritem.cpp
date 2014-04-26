@@ -411,7 +411,7 @@ void VideoRendererItem::updateTexture(OpenGLTexture2D *texture) {
             if (_Change(d->displaySize, frame.format().displaySize()))
                 reserve(UpdateGeometry, false);
             d->shader->upload(frame);
-            d->direct = d->shader->directRendering();
+            d->direct = d->shader->isDirectlyRenderable();
             ++d->drawnFrames;
             uploaded = true;
         }

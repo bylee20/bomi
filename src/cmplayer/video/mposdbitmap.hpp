@@ -9,10 +9,10 @@ class MpOsdBitmap {
 public:
     enum Format {
         NoFormat = 0,
-        PaMask = 0x01, /*Premultipled Alpha*/
-        Ass = 0x10 | PaMask,
-        Rgba = 0x20,
-        RgbaPA = 0x20 | PaMask
+        PaMask   = 0x01, /*Premultipled Alpha*/
+        Ass      = 0x10 | PaMask,
+        Rgba     = 0x20,
+        RgbaPA   = 0x20 | PaMask
     };
     struct PartInfo {
         const QRect &display() const { return m_display; }

@@ -194,13 +194,13 @@ void BusyIconItem::updatePolish() {
         QMatrix4x4 mat;
         mat.translate(o.x(), o.y());
         mat.rotate(90.0*quater, 0, 0, 1);
-        it->position = mat*QPointF{d->radius*tan1, -d->radius};
+        it->position.set(mat*QPointF{d->radius*tan1, -d->radius});
         it->texCoord.set(tx0 + txrad*tan1, ty0 + tymax);
         ++it;
-        it->position = mat*QPointF{d->radius*tan2, -d->radius};
+        it->position.set(mat*QPointF{d->radius*tan2, -d->radius});
         it->texCoord.set(tx0 + txrad*tan2, ty0 + tymax);
         ++it;
-        it->position = mat*QPointF{0, 0};
+        it->position.set(mat*QPointF{0, 0});
         it->texCoord.set(tx0, ty0);
         ++it;
     };

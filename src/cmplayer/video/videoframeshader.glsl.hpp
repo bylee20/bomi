@@ -87,14 +87,13 @@ void main() {
 /***********************************************************************/
 
 #ifdef VERTEX
-uniform mat4 vMatrix;
 attribute vec4 vPosition;
 attribute vec2 vCoord;
 
 void main() {
     setLutIntCoord(vCoord);
     texCoord = vCoord;
-    gl_Position = vMatrix*vPosition;
+    gl_Position = vPosition;
 }
 #endif
 // VERTEX
