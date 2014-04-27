@@ -1,3 +1,20 @@
+0.8.14
+
+  * New: can map every action to mouse behaviours
+  * New: 'Faenza-Zukitwo' skin written by varlesh
+  * New: reload subtitle files
+  * New: menu navigation support for Blu-ray disc
+  * Fix: internal subtitle selection wasn't restored
+  * Fix: 'Next subtitle' didn't work
+  * Fix: frame-based subtitle didn't work
+  * Fix: filename which contains % didn't work (#73)
+  * Fix: clipping on downmixing audio
+  * Fix: rerendering subtitle didn't work
+  * Fix: open remote playlist from command line
+  * Fix: wrong behavour of m3u playlist parser
+  * Fix: apply subtitle style to internal subtitles
+  * Fix: reduce redundant copy of internal subtitle data
+
 0.8.13
 
   * New: Blu-ray support
