@@ -2501,12 +2501,12 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../prefdialog.cpp" line="514"/>
         <source>Scroll Up</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar arriba</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="515"/>
         <source>Scroll Down</source>
-        <translation type="unfinished"></translation>
+        <translation>Desplazar abajo</translation>
     </message>
     <message>
         <location filename="../prefdialog.cpp" line="274"/>
