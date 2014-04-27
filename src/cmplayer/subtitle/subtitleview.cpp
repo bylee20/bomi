@@ -7,7 +7,7 @@
 class SubtitleView::CompView : public QWidget {
 public:
     CompView(QWidget *parent = 0): QWidget(parent) {
-        m_view = new SubtitleComponentView(this);
+        m_view = new SubCompView(this);
         m_name = new QLabel(this);
 
         QVBoxLayout *vbox = new QVBoxLayout(this);
@@ -19,9 +19,9 @@ public:
             m_name->setText(model->name());
         m_view->setModel(model);
     }
-    SubtitleComponentView *view() const {return m_view;}
+    SubCompView *view() const {return m_view;}
 private:
-    SubtitleComponentView *m_view;
+    SubCompView *m_view;
     QLabel *m_name;
 };
 

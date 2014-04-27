@@ -403,7 +403,7 @@ struct MainWindow::Data {
     void commitData() {
         static bool first = true;
         if (first) {
-            recent.setLastPlaylist(playlist.playlist());
+            recent.setLastPlaylist(playlist.list());
             recent.setLastMrl(engine.mrl());
             engine.shutdown();
             auto &as = AppState::get();
@@ -775,7 +775,7 @@ struct MainWindow::Data {
         connect(&recent, &RecentInfo::openListChanged, p, &MainWindow::updateRecentActions);
         connect(&hider, &QTimer::timeout, p, [this] () { setCursorVisible(false); });
         connect(&history, &HistoryModel::playRequested, p, [this] (const Mrl &mrl) { p->openMrl(mrl); });
-        connect(&playlist, &PlaylistModel::playRequested, p, [this] (int row) { p->openMrl(playlist[row]); });
+        connect(&playlist, &PlaylistModel::playRequested, p, [this] (int row) { p->openMrl(playlist.at(row)); });
         connect(&playlist, &PlaylistModel::finished, p, [this] () {
             if (menu("tool")["auto-exit"]->isChecked()) p->exit();
             if (menu("tool")["auto-shutdown"]->isChecked()) cApp.shutdown();
@@ -912,7 +912,7 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
 
     d->dontShowMsg = false;
 
-    d->playlist.set(d->recent.lastPlaylist());
+    d->playlist.setList(d->recent.lastPlaylist());
     if (!d->recent.lastMrl().isEmpty()) {
         d->load(d->recent.lastMrl(), false);
         as.setOpen(d->recent.lastMrl());
@@ -989,7 +989,7 @@ void MainWindow::connectMenus() {
         if (dlg.exec()) {
             const auto list = dlg.playlist();
             if (!list.isEmpty()) {
-                d->playlist.set(list);
+                d->playlist.setList(list);
                 d->load(list.first());
                 d->recent.stack(list.first());
             }
@@ -1294,7 +1294,7 @@ void MainWindow::connectMenus() {
             d->playlist.open(file, enc);
     });
     connect(playlist["save"], &QAction::triggered, this, [this] () {
-        const Playlist &list = d->playlist.playlist();
+        const auto &list = d->playlist.list();
         if (!list.isEmpty()) {
             auto file = _GetSaveFileName(this, tr("Save File"), QString(), Info::playlistExtFilter());
             if (!file.isEmpty()) {
@@ -1326,7 +1326,7 @@ void MainWindow::connectMenus() {
         }
     });
     connect(playlist["remove"], &QAction::triggered, this, [this, selectedIndex] () {
-        d->playlist.erase(selectedIndex("playlist"));
+        d->playlist.remove(selectedIndex("playlist"));
     });
     connect(playlist["move-up"], &QAction::triggered, this, [this, selectedIndex, selectIndex] () {
         const auto idx = selectedIndex("playlist");
@@ -1549,7 +1549,7 @@ void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
             d->playlist.open(mrl, enc);
         } else {
             if (d->playlist.rowOf(mrl) < 0)
-                d->playlist.set(generatePlaylist(mrl));
+                d->playlist.setList(generatePlaylist(mrl));
             d->load(mrl);
             if (!mrl.isDvd())
                 d->recent.stack(mrl);

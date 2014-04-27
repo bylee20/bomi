@@ -6,12 +6,13 @@ void reg_playlist_model() {
 }
 
 PlaylistModel::PlaylistModel(QObject *parent)
-: BaseListModel(parent) {
-    connect(this, &PlaylistModel::modelReset, [this] () {
-        emit loadedChanged(m_loaded);
-        emit countChanged(rowCount());
-        emit contentWidthChanged();
-    });
+: Super(parent) {
+    connect(this, &PlaylistModel::modelReset,
+            this, &PlaylistModel::contentWidthChanged);
+    connect(this, &PlaylistModel::rowsChanged,
+            this, &PlaylistModel::countChanged);
+    connect(this, &PlaylistModel::specialRowChanged,
+            this, &PlaylistModel::loadedChanged);
 }
 
 PlaylistModel::~PlaylistModel() {}
@@ -27,7 +28,7 @@ QHash<int, QByteArray> PlaylistModel::roleNames() const {
 QString PlaylistModel::number(int row) const {
     if (m_fill.isNull())
         return QString::number(row+1);
-    int digits = 0, left = m_list.size();
+    int digits = 0, left = rows();
     do {
         ++digits;
         left = left/10;
@@ -41,12 +42,12 @@ void PlaylistModel::play(int row) {
 }
 
 QString PlaylistModel::location(int row) const {
-    auto mrl = m_list.value(row);
+    auto mrl = value(row);
     return mrl.isLocalFile() ? mrl.toLocalFile() : mrl.toString();
 }
 
-QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
-    const int row = index.row();
+auto PlaylistModel::roleData(int row, int, int role) const -> QVariant
+{
     if (!isValidRow(row))
         return QVariant();
     if (role == NameRole) {
@@ -54,104 +55,25 @@ QVariant PlaylistModel::data(const QModelIndex &index, int role) const {
     } else if (role == LocationRole) {
         return location(row);
     } else if (role == LoadedRole)
-        return m_loaded == row;
+        return loaded() == row;
     return QVariant();
-}
-
-Qt::ItemFlags PlaylistModel::flags(const QModelIndex &index) const {
-    if (!index.isValid())
-        return Qt::ItemIsEnabled;
-    return Qt::ItemIsSelectable | Qt::ItemIsEnabled;
-}
-
-int PlaylistModel::rowCount(const QModelIndex &parent) const {
-    return parent.isValid() ? 0 : m_list.size();
-}
-
-int PlaylistModel::append(const Mrl &mrl) {
-    Playlist list;
-    list.append(mrl);
-    append(list);
-    return m_list.size()-1;
-}
-
-void PlaylistModel::merge(const Playlist &playlist) {
-    beginResetModel();
-    if (m_list.isEmpty())
-        m_list = playlist;
-    else {
-        for (int i=0; i<playlist.size(); ++i) {
-            if (!m_list.contains(playlist[i]))
-                m_list.append(playlist[i]);
-        }
-    }
-    endResetModel();
-}
-
-void PlaylistModel::append(const Playlist &list) {
-    if (list.isEmpty())
-        return;
-    beginInsertRows(QModelIndex(), m_list.size(), m_list.size() + list.size() - 1);
-    m_list += list;
-    endInsertRows();
-    emit countChanged(rowCount());
-}
-
-void PlaylistModel::erase(int row) {
-    if (isValidRow(row))
-        erase(QModelIndexList() << index(row, 0));
-}
-
-void PlaylistModel::erase(const QModelIndexList &indexes) {
-    if (indexes.isEmpty())
-        return;
-    beginResetModel();
-    std::map<int, int> map;
-    for (int i=0; i<indexes.size(); ++i)
-        map[indexes[i].row()] = indexes[i].column();
-    for (std::map<int, int>::const_reverse_iterator it = map.rbegin()
-            ; it != map.rend(); ++it) {
-        m_list.removeAt(it->first);
-    }
-    if (map.count(m_loaded) > 0)
-        m_loaded = -1;
-    endResetModel();
 }
 
 void PlaylistModel::setLoaded(int row) {
     if (!isValidRow(row))
         row = -1;
-    if (m_loaded == row)
+    if (loaded() == row)
         return;
-    const int old = m_loaded;
-    m_loaded = row;
+    const int old = loaded();
+    setSpecialRow(row);
     if (old != -1)
-        emit rowChanged(old);
-    if (m_loaded != -1)
-        emit rowChanged(m_loaded);
-    emit loadedChanged(m_loaded);
+        emitDataChanged(old);
+    if (loaded() != -1)
+        emitDataChanged(loaded());
 }
 
 void PlaylistModel::setLoaded(const Mrl &mrl) {
     setLoaded(rowOf(mrl));
-}
-
-bool PlaylistModel::swap(int r1, int r2) {
-    if (!isValidRow(r1) || !isValidRow(r2))
-        return false;
-    if (r1 == r2)
-        return true;
-    m_list.swap(r1, r2);
-    if (r1 == m_loaded) {
-        m_loaded = r2;
-        emit loadedChanged(m_loaded);
-    } else if (r2 == m_loaded) {
-        m_loaded = r1;
-        emit loadedChanged(m_loaded);
-    }
-    emit rowChanged(r1);
-    emit rowChanged(r2);
-    return true;
 }
 
 void PlaylistModel::setDownloader(Downloader *downloader) {
@@ -161,8 +83,11 @@ void PlaylistModel::setDownloader(Downloader *downloader) {
             return;
         auto data = m_downloader->takeData();
         const auto type = Playlist::guessType(m_downloader->url().path());
-        if (m_list.load(&data, m_enc, type))
+        Playlist list;
+        if (list.load(&data, m_enc, type)) {
+            setList(list);
             setVisible(true);
+        }
     });
 }
 
@@ -170,7 +95,7 @@ bool PlaylistModel::open(const Mrl &mrl, const QString &enc) {
     if (!mrl.isPlaylist())
         return false;
     if (mrl.isLocalFile()) {
-        set({mrl, enc});
+        setList({mrl, enc});
         setVisible(true);
     } else {
         if (m_downloader->isRunning())

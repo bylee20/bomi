@@ -1,102 +1,83 @@
 #include "subtitlemodel.hpp"
 #include "global.hpp"
 
-#define ITEM(row) (static_cast<SubCompModel::Item*>(at(row)))
-#define C_ITEM(row) (static_cast<const SubCompModel::Item*>(at(row)))
-
-class SubCompModel::Item : public ListModel::Item {
-public:
-    Item(): m_end(-1) {}
-    Item(c_iterator it): m_end(-1), m_it(it) {}
-    int start() const {return m_it.key()*m_mul;}
-    int end() const {return m_end*m_mul;}
-    QString text() const {return m_it->toPlainText();}
-    QVariant data(const int column, int role) const {
-        if (role == Qt::DisplayRole) {
-            switch (column) {
-            case Start:
-                return _MSecToString(start());
-            case End:
-                return _MSecToString(end());
-            case Text:
-                return text();
-            default:
-                return QVariant();
-            }
-        } else if (role == Qt::FontRole && column == Text)
-            return m_font;
-        return QVariant();
-    }
-    void setFont(const QFont &font) {
-        if (m_font != font) {
-            m_font = font;
-            emitDataChanged(Text);
-        }
-    }
-
-    int m_end;
-    c_iterator m_it;
-    double m_mul = 1.0;
-    QFont m_font;
-};
-
 struct SubCompModel::Data {
-    int curRow;
-    QFont curFont, defFont;
     bool visible;
     const SubComp *comp;
     const SubCapt *pended;
 };
 
 SubCompModel::SubCompModel(const SubComp *comp, QObject *parent)
-: ListModel(ColumnCount, parent), d(new Data) {
+    : Super(ColumnCount, parent)
+    , d(new Data)
+{
     d->comp = comp;
-    d->curRow = -1;
     d->visible = false;
     d->pended = 0;
-    d->curFont.setBold(true);
-    d->curFont.setItalic(true);
+    QFont font; font.setBold(true); font.setItalic(true);
+    setSpecialFont(font);
 
-    c_iterator it = comp->begin();
+    auto it = comp->begin();
+    QList<SubCompModelData> list;
     for (; it != comp->end(); ++it) {
         if (it->hasWords()) {
             it->index = 0;
-            append(new Item(it));
+            list.append(it);
             break;
         }
     }
-    if (!isEmpty()) {
+    if (!list.isEmpty()) {
         for (++it; it != comp->end(); ++it) {
-            Item *last = static_cast<Item*>(this->last());
-            if (last->m_end < 0)
-                last->m_end = it.key();
+            auto &last = list.last();
+            if (last.m_end < 0)
+                last.m_end = it.key();
             if (it->hasWords())
-                append(new Item(it));
-            it->index = size() - 1;
+                list.append(it);
+            it->index = list.size() - 1;
         }
     }
-
-    setColumnTitle(Start, tr("Start"));
-    setColumnTitle(End, tr("End"));
-    setColumnTitle(Text, tr("Text"));
+    setList(list);
 }
 
-QString SubCompModel::name() const {
+auto SubCompModel::headerText(int column) const -> QString
+{
+    switch (column) {
+    case Start: return tr("Start");
+    case End:   return tr("End");
+    case Text:  return tr("Text");
+    default:    return QString();
+    }
+}
+
+auto SubCompModel::displayData(int row, int column) const -> QVariant
+{
+    auto &data = at(row);
+    switch (column) {
+    case Start: return _MSecToString(data.start());
+    case End:   return _MSecToString(data.end());
+    case Text:  return data.m_it->toPlainText();
+    default:    return QVariant();
+    }
+}
+
+auto SubCompModel::name() const -> QString
+{
     return d->comp->name();
 }
 
-void SubCompModel::setFps(double fps) {
+auto SubCompModel::setFps(double fps) -> void
+{
     if (d->comp->isBasedOnFrame()) {
         beginResetModel();
-        const int rows = rowCount();
         const auto mul = 1000.0/fps;
-        for (int i = 0; i < rows; ++i)
-            static_cast<Item*>(at(i))->m_mul = mul;
+        for (auto &data : getList())
+            data.m_mul = mul;
         endResetModel();
     }
 }
 
-void SubCompModel::setVisible(bool visible) {
+auto SubCompModel::setVisible(bool visible) -> void
+{
     if (d->visible != visible) {
         d->visible = visible;
         if (d->visible && d->pended)
@@ -104,63 +85,58 @@ void SubCompModel::setVisible(bool visible) {
     }
 }
 
-void SubCompModel::setCurrentCaption(const SubCapt *caption) {
+auto SubCompModel::setCurrentCaption(const SubCapt *caption) -> void
+{
     if (!d->visible) {
         d->pended = caption;
     } else {
         d->pended = 0;
-        const int row = caption ? caption->index : -1;
-        if (d->curRow == row)
-            return;
-        const int old = d->curRow;
-        d->curRow = row;
-        if (isValidRow(d->curRow))
-            ITEM(d->curRow)->setFont(d->curFont);
-        if (isValidRow(old))
-            ITEM(old)->setFont(d->defFont);
-        emit currentRowChanged(d->curRow);
+        setSpecialRow(caption ? caption->index : -1);
     }
-}
-
-int SubCompModel::currentRow() const {
-    return d->curRow;
 }
 
 /**********************************************************************/
 
-struct SubtitleComponentView::Data {
+struct SubCompView::Data {
     SubCompModel *model;
     bool autoScroll;
 };
 
-SubtitleComponentView::SubtitleComponentView(QWidget *parent)
-: QTreeView(parent), d(new Data) {
+SubCompView::SubCompView(QWidget *parent)
+    : QTreeView(parent)
+    , d(new Data)
+{
     d->model = 0;
     d->autoScroll = false;
     setAlternatingRowColors(true);
     setRootIsDecorated(false);
 }
 
-void SubtitleComponentView::setModelToNull() {
+auto SubCompView::setModelToNull() -> void
+{
     if (sender() == d->model)
         d->model = 0;
 }
 
-void SubtitleComponentView::setModel(QAbstractItemModel *model) {
+auto SubCompView::setModel(QAbstractItemModel *model) -> void
+{
     if (d->model)
         d->model->disconnect(this);
     d->model = qobject_cast<SubCompModel*>(model);
     QTreeView::setModel(d->model);
     if (d->model) {
-        connect(d->model, SIGNAL(destroyed()), this, SLOT(setModelToNull()));
-        connect(d->model, SIGNAL(currentRowChanged(int)), this, SLOT(updateCurrentRow(int)));
+        connect(d->model, &SubCompModel::destroyed,
+                this, &SubCompView::setModelToNull);
+        connect(d->model, &SubCompModel::specialRowChanged,
+                this, &SubCompView::updateCurrentRow);
         d->model->setVisible(isVisible());
         for (int i=0; i<SubCompModel::ColumnCount; ++i)
             resizeColumnToContents(i);
     }
 }
 
-void SubtitleComponentView::updateCurrentRow(int row) {
+auto SubCompView::updateCurrentRow(int row) -> void
+{
     if (!d->model || !d->autoScroll)
         return;
     const QModelIndex idx = d->model->index(row, SubCompModel::Text);
@@ -168,30 +144,31 @@ void SubtitleComponentView::updateCurrentRow(int row) {
         scrollTo(idx);
 }
 
-void SubtitleComponentView::setAutoScrollEnabled(bool enabled) {
+auto SubCompView::setAutoScrollEnabled(bool enabled) -> void
+{
     if (d->autoScroll != enabled) {
         d->autoScroll = enabled;
         if (d->autoScroll && d->model)
-            updateCurrentRow(d->model->currentRow());
+            updateCurrentRow(d->model->specialRow());
     }
 }
 
-void SubtitleComponentView::setTimeVisible(bool visible) {
+auto SubCompView::setTimeVisible(bool visible) -> void
+{
     setColumnHidden(SubCompModel::Start, !visible);
     setColumnHidden(SubCompModel::End, !visible);
 }
 
-void SubtitleComponentView::showEvent(QShowEvent *event) {
+auto SubCompView::showEvent(QShowEvent *event) -> void
+{
     QTreeView::showEvent(event);
     if (d->model)
         d->model->setVisible(true);
 }
 
-void SubtitleComponentView::hideEvent(QHideEvent *event) {
+auto SubCompView::hideEvent(QHideEvent *event) -> void
+{
     QTreeView::hideEvent(event);
     if (d->model)
         d->model->setVisible(false);
 }
-
-#undef ITEM
-#undef C_ITEM

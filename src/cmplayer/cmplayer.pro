@@ -116,7 +116,6 @@ HEADERS += \
     downloader.hpp \
     enums.hpp \
     snapshotdialog.hpp \
-    listmodel.hpp \
     widgets.hpp \
     qtcolorpicker.hpp \
     record.hpp \
@@ -220,7 +219,6 @@ SOURCES += \
     downloader.cpp \
     enums.cpp \
     snapshotdialog.cpp \
-    listmodel.cpp \
     widgets.cpp \
     qtcolorpicker.cpp \
     record.cpp \

@@ -16,25 +16,25 @@ class SubtitleLinkModel : public SimpleListModel<SubtitleLink> {
 public:
     enum Column { Language, FileName, Date, ColumnCount };
     SubtitleLinkModel(QObject *parent = nullptr): SimpleListModel(ColumnCount, parent) { }
-    QVariant headerText(int column) const {
+    auto headerText(int column) const -> QString {
         switch (column) {
-            case Language: return qApp->translate("SubtitleLinkModel", "Language");
-            case FileName: return qApp->translate("SubtitleLinkModel", "File Name");
-            case Date:     return qApp->translate("SubtitleLinkModel", "Date");
-            default:       return QVariant();
+        case Language: return qApp->translate("SubtitleLinkModel", "Language");
+        case FileName: return qApp->translate("SubtitleLinkModel", "File Name");
+        case Date:     return qApp->translate("SubtitleLinkModel", "Date");
+        default:       return QString();
         }
     }
-    QVariant roleData(int row, int /*column*/, int role) const {
+    auto roleData(int row, int /*column*/, int role) const -> QVariant {
         if (role == UrlRole)      return at(row).url;
         if (role == FileNameRole) return at(row).fileName;
         return QVariant();
     }
-    QVariant displayData(int row, int column) const {
+    auto displayData(int row, int column) const -> QVariant {
         switch (column) {
-            case Language: return at(row).language;
-            case FileName: return at(row).fileName;
-            case Date:     return at(row).date;
-            default:       return QVariant();
+        case Language: return at(row).language;
+        case FileName: return at(row).fileName;
+        case Date:     return at(row).date;
+        default:       return QVariant();
         }
     }
 };
