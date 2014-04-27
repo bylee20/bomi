@@ -185,22 +185,6 @@ const std::array<OsdScalePolicyInfo::Item, 3> OsdScalePolicyInfo::info{{
     {OsdScalePolicy::Diagonal, "Diagonal", "", (int)2}
 }};
 
-const std::array<ClickActionInfo::Item, 4> ClickActionInfo::info{{
-    {ClickAction::OpenFile, "OpenFile", "", (int)0},
-    {ClickAction::Fullscreen, "Fullscreen", "", (int)1},
-    {ClickAction::Pause, "Pause", "", (int)2},
-    {ClickAction::Mute, "Mute", "", (int)3}
-}};
-
-const std::array<WheelActionInfo::Item, 6> WheelActionInfo::info{{
-    {WheelAction::Seek1, "Seek1", "", (int)0},
-    {WheelAction::Seek2, "Seek2", "", (int)1},
-    {WheelAction::Seek3, "Seek3", "", (int)2},
-    {WheelAction::PrevNext, "PrevNext", "", (int)3},
-    {WheelAction::Volume, "Volume", "", (int)4},
-    {WheelAction::Amp, "Amp", "", (int)5}
-}};
-
 const std::array<KeyModifierInfo::Item, 4> KeyModifierInfo::info{{
     {KeyModifier::None, "None", "", (int)Qt::NoModifier},
     {KeyModifier::Ctrl, "Ctrl", "", (int)Qt::ControlModifier},

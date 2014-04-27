@@ -1,10 +1,10 @@
 #include "rootmenu.hpp"
-#include "video/videorendereritem.hpp"
 #include "enums.hpp"
 #include "pref.hpp"
-#include "video/videocolor.hpp"
 #include "record.hpp"
 #include "log.hpp"
+#include "video/videocolor.hpp"
+#include "video/videorendereritem.hpp"
 
 DECLARE_LOG_CONTEXT(Menu)
 
@@ -153,8 +153,8 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     play.addAction(_L("pause"));
     play.addAction(_L("stop"));
     play.addSeparator();
-    auto prev = play.addAction(_L("prev"));
-    auto next = play.addAction(_L("next"));
+    play.addAction(_L("prev"));
+    play.addAction(_L("next"));
     play.addSeparator();
     addStepActions(*play.addMenu("speed"), 10, 100, 1000);
     auto &repeat = *play.addMenu(_L("repeat"));
@@ -164,12 +164,12 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     play.addSeparator();
     play.addAction(_L("disc-menu"));
     auto &seek = *play.addMenu(_L("seek"));
-        auto forward1 = seek.addActionToGroup(_L("forward1"), false, _L("relative"));
-        auto forward2 = seek.addActionToGroup(_L("forward2"), false, _L("relative"));
-        auto forward3 = seek.addActionToGroup(_L("forward3"), false, _L("relative"));
-        auto backward1 = seek.addActionToGroup(_L("backward1"), false, _L("relative"));
-        auto backward2 = seek.addActionToGroup(_L("backward2"), false, _L("relative"));
-        auto backward3 = seek.addActionToGroup(_L("backward3"), false, _L("relative"));
+        seek.addActionToGroup(_L("forward1"), false, _L("relative"));
+        seek.addActionToGroup(_L("forward2"), false, _L("relative"));
+        seek.addActionToGroup(_L("forward3"), false, _L("relative"));
+        seek.addActionToGroup(_L("backward1"), false, _L("relative"));
+        seek.addActionToGroup(_L("backward2"), false, _L("relative"));
+        seek.addActionToGroup(_L("backward3"), false, _L("relative"));
         seek.addSeparator();
         seek.addActionToGroup(_L("prev-frame"), false, _L("frame"))->setData(-1);
         seek.addActionToGroup(_L("next-frame"), false, _L("frame"))->setData(1);
@@ -313,17 +313,6 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     help.addAction(_L("about"))->setMenuRole(QAction::AboutRole);
 
     addAction(_L("exit"))->setMenuRole(QAction::QuitRole);
-
-    m_click[ClickAction::OpenFile] = open["file"];
-    m_click[ClickAction::Fullscreen] = window["full"];
-    m_click[ClickAction::Pause] = play["pause"];
-    m_click[ClickAction::Mute] = volume["mute"];
-    m_wheel[WheelAction::Seek1] = WheelActionPair(forward1, backward1);
-    m_wheel[WheelAction::Seek2] = WheelActionPair(forward2, backward2);
-    m_wheel[WheelAction::Seek3] = WheelActionPair(forward3, backward3);
-    m_wheel[WheelAction::PrevNext] = WheelActionPair(prev, next);
-    m_wheel[WheelAction::Volume] = WheelActionPair(volume["increase"], volume["decrease"]);
-    m_wheel[WheelAction::Amp] = WheelActionPair(amp["increase"], amp["decrease"]);
 
     play("title").setEnabled(false);
     play("chapter").setEnabled(false);
@@ -556,16 +545,3 @@ void RootMenu::fillKeyMap(Menu *menu) {
         }
     }
 }
-
-QAction *RootMenu::doubleClickAction(const ClickActionEnumInfo &info) const {
-    return info.enabled ? m_click[info.action] : nullptr;
-}
-
-QAction *RootMenu::middleClickAction(const ClickActionEnumInfo &info) const {
-    return info.enabled ? m_click[info.action] : nullptr;
-}
-
-QAction *RootMenu::wheelScrollAction(const WheelActionEnumInfo &info, bool up) const {
-    return info.enabled ? (up ? m_wheel[info.action].up : m_wheel[info.action].down) : nullptr;
-}
-

@@ -14,43 +14,36 @@ class QLocale;
 
 typedef QHash<QString, QList<QKeySequence>> Shortcuts;
 
-template <typename Enum>
-struct ActionEnumInfo {
-    typedef Enum EnumType;
-    typedef ActionEnumInfo<Enum> Super ;
-    ActionEnumInfo(): enabled(false) {}
-    ActionEnumInfo(bool e, const Enum &a): enabled(e), action(a) {}
-    bool enabled; Enum action;
+struct MouseActionInfo {
+    MouseActionInfo(): enabled(false) {}
+    MouseActionInfo(bool e, const QString &id): enabled(e), id(id) {}
+    bool enabled; QString id;
 };
-using ClickActionEnumInfo = ActionEnumInfo<ClickAction>;
-using WheelActionEnumInfo = ActionEnumInfo<WheelAction>;
 
 class Pref {
     Q_DECLARE_TR_FUNCTIONS(Pref)
 public:
     enum ShortcutPreset {CMPlayer, Movist};
 //    static const Pref &instance() {return get();}
-    template <typename Enum>
     struct KeyModifierMap {
         typedef KeyModifier Modifier;
-        typedef ActionEnumInfo<Enum> InfoType;
-        typedef QMap<Modifier, InfoType> Map;
-        KeyModifierMap(bool enabled = false, const Enum &e = Enum()) {
-            const InfoType def(enabled, e);
+        typedef QMap<Modifier, MouseActionInfo> Map;
+        typedef MouseActionInfo Info;
+        KeyModifierMap() {
             const auto &list = EnumInfo<Modifier>::items();
-            for (auto &item : list) m_map[item.value] = def;
+            for (auto &item : list) m_map[item.value];
         }
-        InfoType &operator[](Modifier m) {return m_map[m];}
-        const InfoType operator[](Modifier m) const {return m_map[m];}
-        const InfoType operator[](int id) const {return m_map[EnumInfo<Modifier>::from(id, Modifier::None)];}
+        Info &operator[](Modifier m) {return m_map[m];}
+        const Info operator[](Modifier m) const {return m_map[m];}
+        const Info operator[](int id) const {return m_map[EnumInfo<Modifier>::from(id, Modifier::None)];}
         void save(Record &r, const QString &group) const {
             r.beginGroup(group);
             const auto &items = EnumInfo<Modifier>::items();
             for (auto &item : items) {
-                const InfoType &info = m_map[item.value];
+                const auto &info = m_map[item.value];
                 r.beginGroup(item.name);
                 r.write(info.enabled, "enabled");
-                r.write(info.action, "action");
+                r.write(info.id, "id");
                 r.endGroup();
             }
             r.endGroup();
@@ -59,10 +52,10 @@ public:
             r.beginGroup(group);
             const auto &items = EnumInfo<Modifier>::items();
             for (auto &item : items) {
-                InfoType &info = m_map[item.value];
+                auto &info = m_map[item.value];
                 r.beginGroup(item.name);
                 r.read(info.enabled, "enabled");
-                r.read(info.action, "action");
+                r.read(info.id, "id");
                 r.endGroup();
             }
             r.endGroup();
@@ -89,9 +82,6 @@ public:
             r.endGroup();
         }
     };
-
-    typedef KeyModifierMap<ClickAction> ClickActionMap;
-    typedef KeyModifierMap<WheelAction> WheelActionMap;
 
     OpenMedia open_media_from_file_manager = {true, PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist};
     OpenMedia open_media_by_drag_and_drop = {true, PlaylistBehaviorWhenOpenMedia::AppendToPlaylist};
@@ -120,8 +110,10 @@ public:
     SubtitleStyle sub_style;        QStringList sub_priority;
 
     bool enable_system_tray = true, hide_rather_close = true;
-    ClickActionMap double_click_map = defaultDoubleClick(), middle_click_map = defaultMiddleClick();
-    WheelActionMap wheel_scroll_map = defaultWheelAction();
+    KeyModifierMap double_click_map = defaultDoubleClick();
+    KeyModifierMap middle_click_map = defaultMiddleClick();
+    KeyModifierMap scroll_up_map = defaultWheelUpAction();
+    KeyModifierMap scroll_down_map = defaultWheelDownAction();
     bool invert_wheel = false;
     int seek_step1 = 5000, seek_step2 = 30000, seek_step3 = 60000, speed_step = 10;
     int brightness_step = 1, saturation_step = 1, contrast_step = 1, hue_step = 1;
@@ -166,24 +158,28 @@ private:
 
     static QList<DeintMethod> defaultHwAccDeints();
     static Shortcuts defaultShortcuts();
-    static ClickActionMap defaultDoubleClick() {
-        ClickActionMap map = {false, ClickAction::Fullscreen};
-        map[KeyModifier::None].enabled = true;
+    static KeyModifierMap defaultDoubleClick() {
+        KeyModifierMap map;
+        map[KeyModifier::None] = { true, "window/full" };
         return map;
     }
-    static ClickActionMap defaultMiddleClick() {
-        ClickActionMap map = {false, ClickAction::Fullscreen};
-        map[KeyModifier::None] = ClickActionEnumInfo(true, ClickAction::Pause);
+    static KeyModifierMap defaultMiddleClick() {
+        KeyModifierMap map;
+        map[KeyModifier::None] = { true, "play/pause" };
         return map;
     }
-    static WheelActionMap defaultWheelAction() {
-        WheelActionMap map(false, WheelAction::Volume);
-        map[KeyModifier::None].enabled = true;
-        map[KeyModifier::Ctrl] = WheelActionEnumInfo(true, WheelAction::Amp);
+    static KeyModifierMap defaultWheelUpAction() {
+        KeyModifierMap map;
+        map[KeyModifier::None] = { true, "audio/volume/increase" };
+        map[KeyModifier::Ctrl] = { true, "audio/amp/increase" };
+        return map;
+    }
+    static KeyModifierMap defaultWheelDownAction() {
+        KeyModifierMap map;
+        map[KeyModifier::None] = { true, "audio/volume/decrease" };
+        map[KeyModifier::Ctrl] = { true, "audio/amp/decrease" };
         return map;
     }
 };
-
-//#define cPref (Pref::instance())
 
 #endif // PREF_HPP

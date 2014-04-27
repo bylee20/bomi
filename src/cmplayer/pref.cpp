@@ -250,7 +250,8 @@ void Pref::save() const {
     WRITE2(sub_style);
     WRITE2(double_click_map);
     WRITE2(middle_click_map);
-    WRITE2(wheel_scroll_map);
+    WRITE2(scroll_up_map);
+    WRITE2(scroll_down_map);
 #undef WRITE2
 
     r.beginWriteArray("shortcuts", shortcuts.size());
@@ -366,7 +367,8 @@ void Pref::load() {
     READ2(sub_style);
     READ2(double_click_map);
     READ2(middle_click_map);
-    READ2(wheel_scroll_map);
+    READ2(scroll_up_map);
+    READ2(scroll_down_map);
 #undef READ2
 
     const auto size = r.beginReadArray("shortcuts");

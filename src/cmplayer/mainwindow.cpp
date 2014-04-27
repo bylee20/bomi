@@ -1677,7 +1677,9 @@ void MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) {
     QWidget::mouseDoubleClickEvent(event);
     if (event->buttons() & Qt::LeftButton) {
         const auto &info = d->pref().double_click_map[event->modifiers()];
-        const auto action = d->menu.doubleClickAction(info);
+        if (!info.enabled)
+            return;
+        const auto action = d->menu.action(info.id);
 #ifdef Q_OS_MAC
         if (action == d->menu("window")["full"])
             QTimer::singleShot(300, action, SLOT(trigger()));
@@ -1691,9 +1693,10 @@ void MainWindow::onMouseReleaseEvent(QMouseEvent *event) {
     QWidget::mouseReleaseEvent(event);
     const auto rect = geometry();
     if (d->middleClicked && event->button() == Qt::MiddleButton
-        && rect.contains(event->localPos().toPoint()+rect.topLeft())) {
+            && rect.contains(event->localPos().toPoint()+rect.topLeft())) {
         const auto &info = d->pref().middle_click_map[event->modifiers()];
-        d->trigger(d->menu.middleClickAction(info));
+        if (info.enabled)
+            d->trigger(d->menu.action(info.id));
     }
 }
 
@@ -1726,11 +1729,13 @@ void MainWindow::onMousePressEvent(QMouseEvent *event) {
 
 void MainWindow::onWheelEvent(QWheelEvent *event) {
     QWidget::wheelEvent(event);
-    if (event->delta()) {
-        const auto &info = d->pref().wheel_scroll_map[event->modifiers()];
-        const auto delta = event->delta();
+    const auto delta = event->delta();
+    if (delta) {
         const bool up = d->pref().invert_wheel ? delta < 0 : delta > 0;
-        d->trigger(d->menu.wheelScrollAction(info, up));
+        const auto &info = up ? d->pref().scroll_up_map[event->modifiers()]
+                              : d->pref().scroll_down_map[event->modifiers()];
+        if (info.enabled)
+            d->trigger(d->menu.action(info.id));
         event->accept();
     }
 }

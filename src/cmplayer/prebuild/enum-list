@@ -175,20 +175,6 @@
 -Height[-Fit to height of video-]
 -Diagonal[-Fit to diagonal of video-]
 
-+ClickAction
--OpenFile[-Open a file-]
--Fullscreen[-Toggle fullscreen mode-]
--Pause[-Toggle play/pause-]
--Mute[-Toggle mute/unmute-]
-
-+WheelAction
--Seek1[-Seek playback for step 1-]
--Seek2[-Seek playback for step 2-]
--Seek3[-Seek playback for step 3-]
--PrevNext[-Play previous/next-]
--Volume[-Volumn up/down-]
--Amp[-Amp. up/down-]
-
 +KeyModifier
 -None[=Qt::NoModifier=]
 -Ctrl[=Qt::ControlModifier=]

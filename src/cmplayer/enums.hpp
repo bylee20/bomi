@@ -1722,164 +1722,6 @@ private:
 
 using OsdScalePolicyInfo = EnumInfo<OsdScalePolicy>;
 
-enum class ClickAction : int {
-    OpenFile = (int)0,
-    Fullscreen = (int)1,
-    Pause = (int)2,
-    Mute = (int)3
-};
-
-inline bool operator == (ClickAction e, int i) { return (int)e == i; }
-inline bool operator != (ClickAction e, int i) { return (int)e != i; }
-inline bool operator == (int i, ClickAction e) { return (int)e == i; }
-inline bool operator != (int i, ClickAction e) { return (int)e != i; }
-inline int operator & (ClickAction e, int i) { return (int)e & i; }
-inline int operator & (int i, ClickAction e) { return (int)e & i; }
-inline int &operator &= (int &i, ClickAction e) { return i &= (int)e; }
-inline int operator ~ (ClickAction e) { return ~(int)e; }
-inline int operator | (ClickAction e, int i) { return (int)e | i; }
-inline int operator | (int i, ClickAction e) { return (int)e | i; }
-constexpr inline int operator | (ClickAction e1, ClickAction e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, ClickAction e) { return i |= (int)e; }
-inline bool operator > (ClickAction e, int i) { return (int)e > i; }
-inline bool operator < (ClickAction e, int i) { return (int)e < i; }
-inline bool operator >= (ClickAction e, int i) { return (int)e >= i; }
-inline bool operator <= (ClickAction e, int i) { return (int)e <= i; }
-inline bool operator > (int i, ClickAction e) { return i > (int)e; }
-inline bool operator < (int i, ClickAction e) { return i < (int)e; }
-inline bool operator >= (int i, ClickAction e) { return i >= (int)e; }
-inline bool operator <= (int i, ClickAction e) { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(ClickAction)
-
-template<>
-class EnumInfo<ClickAction> {
-    typedef ClickAction Enum;
-public:
-    typedef ClickAction type;
-    using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 4; }
-    static constexpr const char *typeName() { return "ClickAction"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
-        switch (e) {
-        case Enum::OpenFile: return qApp->translate("EnumInfo", "Open a file");
-        case Enum::Fullscreen: return qApp->translate("EnumInfo", "Toggle fullscreen mode");
-        case Enum::Pause: return qApp->translate("EnumInfo", "Toggle play/pause");
-        case Enum::Mute: return qApp->translate("EnumInfo", "Toggle mute/unmute");
-        default: return "";
-        };
-    }
-    static constexpr const std::array<Item, 4> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
-        return it != info.cend() ? it->value : def;
-    }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
-        return it != info.cend() ? it->value : def;
-    }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
-        return it != info.cend() ? it->value : def;
-    }
-    static constexpr Enum default_() { return ClickAction::OpenFile; }
-private:
-    static const std::array<Item, 4> info;
-};
-
-using ClickActionInfo = EnumInfo<ClickAction>;
-
-enum class WheelAction : int {
-    Seek1 = (int)0,
-    Seek2 = (int)1,
-    Seek3 = (int)2,
-    PrevNext = (int)3,
-    Volume = (int)4,
-    Amp = (int)5
-};
-
-inline bool operator == (WheelAction e, int i) { return (int)e == i; }
-inline bool operator != (WheelAction e, int i) { return (int)e != i; }
-inline bool operator == (int i, WheelAction e) { return (int)e == i; }
-inline bool operator != (int i, WheelAction e) { return (int)e != i; }
-inline int operator & (WheelAction e, int i) { return (int)e & i; }
-inline int operator & (int i, WheelAction e) { return (int)e & i; }
-inline int &operator &= (int &i, WheelAction e) { return i &= (int)e; }
-inline int operator ~ (WheelAction e) { return ~(int)e; }
-inline int operator | (WheelAction e, int i) { return (int)e | i; }
-inline int operator | (int i, WheelAction e) { return (int)e | i; }
-constexpr inline int operator | (WheelAction e1, WheelAction e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, WheelAction e) { return i |= (int)e; }
-inline bool operator > (WheelAction e, int i) { return (int)e > i; }
-inline bool operator < (WheelAction e, int i) { return (int)e < i; }
-inline bool operator >= (WheelAction e, int i) { return (int)e >= i; }
-inline bool operator <= (WheelAction e, int i) { return (int)e <= i; }
-inline bool operator > (int i, WheelAction e) { return i > (int)e; }
-inline bool operator < (int i, WheelAction e) { return i < (int)e; }
-inline bool operator >= (int i, WheelAction e) { return i >= (int)e; }
-inline bool operator <= (int i, WheelAction e) { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(WheelAction)
-
-template<>
-class EnumInfo<WheelAction> {
-    typedef WheelAction Enum;
-public:
-    typedef WheelAction type;
-    using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 6; }
-    static constexpr const char *typeName() { return "WheelAction"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
-        switch (e) {
-        case Enum::Seek1: return qApp->translate("EnumInfo", "Seek playback for step 1");
-        case Enum::Seek2: return qApp->translate("EnumInfo", "Seek playback for step 2");
-        case Enum::Seek3: return qApp->translate("EnumInfo", "Seek playback for step 3");
-        case Enum::PrevNext: return qApp->translate("EnumInfo", "Play previous/next");
-        case Enum::Volume: return qApp->translate("EnumInfo", "Volumn up/down");
-        case Enum::Amp: return qApp->translate("EnumInfo", "Amp. up/down");
-        default: return "";
-        };
-    }
-    static constexpr const std::array<Item, 6> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
-        return it != info.cend() ? it->value : def;
-    }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
-        return it != info.cend() ? it->value : def;
-    }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
-        return it != info.cend() ? it->value : def;
-    }
-    static constexpr Enum default_() { return WheelAction::Seek1; }
-private:
-    static const std::array<Item, 6> info;
-};
-
-using WheelActionInfo = EnumInfo<WheelAction>;
-
 enum class KeyModifier : int {
     None = (int)Qt::NoModifier,
     Ctrl = (int)Qt::ControlModifier,
@@ -2282,8 +2124,6 @@ static inline bool _IsEnumTypeId(int userType) {
         || userType == qMetaTypeId<SubtitleAutoload>()
         || userType == qMetaTypeId<SubtitleAutoselect>()
         || userType == qMetaTypeId<OsdScalePolicy>()
-        || userType == qMetaTypeId<ClickAction>()
-        || userType == qMetaTypeId<WheelAction>()
         || userType == qMetaTypeId<KeyModifier>()
         || userType == qMetaTypeId<VerticalAlignment>()
         || userType == qMetaTypeId<HorizontalAlignment>()
@@ -2356,12 +2196,6 @@ static inline bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &to
     } else    if (varType == qMetaTypeId<OsdScalePolicy>()) {
         toSql = _EnumVariantToSql<OsdScalePolicy>;
         fromSql = _EnumVariantFromSql<OsdScalePolicy>;
-    } else    if (varType == qMetaTypeId<ClickAction>()) {
-        toSql = _EnumVariantToSql<ClickAction>;
-        fromSql = _EnumVariantFromSql<ClickAction>;
-    } else    if (varType == qMetaTypeId<WheelAction>()) {
-        toSql = _EnumVariantToSql<WheelAction>;
-        fromSql = _EnumVariantFromSql<WheelAction>;
     } else    if (varType == qMetaTypeId<KeyModifier>()) {
         toSql = _EnumVariantToSql<KeyModifier>;
         fromSql = _EnumVariantFromSql<KeyModifier>;

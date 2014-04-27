@@ -60,20 +60,21 @@ private:
     EnumComboBox<PlaylistBehaviorWhenOpenMedia> *playlist;
 };
 
-template <typename Enum>
-class PrefMouseGroup : public QGroupBox {
+struct ActionInfo { QString name, id; };
+
+class MouseActionGroupBox : public QGroupBox {
 public:
     typedef ::KeyModifier Modifier;
-    typedef EnumComboBox<Enum> ComboBox;
-    typedef ActionEnumInfo<Enum> ActionInfo;
-    typedef Pref::KeyModifierMap<Enum> ActionMap;
-    PrefMouseGroup(QVBoxLayout *form, QWidget *parent = 0)
+    typedef Pref::KeyModifierMap ActionMap;
+    MouseActionGroupBox(const QList<ActionInfo> &list, QVBoxLayout *form, QWidget *parent = 0)
     : QGroupBox(parent), form(form) {
         mods << Modifier::None << Modifier::Ctrl << Modifier::Shift << Modifier::Alt;
         QGridLayout *grid = new QGridLayout(this);
         grid->setMargin(0);
         for (int i=0; i<mods.size(); ++i) {
-            ComboBox *combo = new ComboBox(this);
+            auto combo = new QComboBox(this);
+            for (auto &info : list)
+                combo->addItem(info.name, info.id);
             QCheckBox *check = new QCheckBox(this);
             combos.append(combo);
             checks.append(check);
@@ -89,25 +90,26 @@ public:
     }
     void setValues(const ActionMap &map) {
         for (int i=0; i<mods.size(); ++i) {
-            const ActionInfo info = map[mods[i]];
-            const int idx = combos[i]->findData((int)info.action);
-            Q_ASSERT(idx != -1);
-            combos[i]->setCurrentIndex(idx);
-            checks[i]->setChecked(info.enabled);
+            const auto info = map[mods[i]];
+            const int idx = combos[i]->findData(info.id);
+            if (idx != -1) {
+                combos[i]->setCurrentIndex(idx);
+                checks[i]->setChecked(info.enabled);
+            }
         }
     }
     ActionMap values() const {
         ActionMap map;
         for (int i=0; i<mods.size(); ++i) {
-            ActionInfo &info = map[mods[i]];
+            auto &info = map[mods[i]];
             info.enabled = checks[i]->isChecked();
-            info.action = combos[i]->currentValue();
+            info.id = combos[i]->currentData().toString();
         }
         return map;
     }
     void retranslate(const QString &name) {setTitle(name);}
 private:
-    QList<ComboBox*> combos;
+    QList<QComboBox*> combos;
     QList<Modifier> mods;
     QList<QCheckBox*> checks;
     QVBoxLayout *form;
@@ -138,16 +140,18 @@ public:
         return shortcuts;
     }
     QString id() const {return m_id;}
-    static QList<MenuTreeItem*> makeRoot(QTreeWidget *parent) {
+    static QList<MenuTreeItem*> makeRoot(QTreeWidget *parent, QList<ActionInfo> &info) {
         RootMenu &root = RootMenu::instance();
         QList<MenuTreeItem*> items;
-        auto item = create(&root, items);
+        auto item = create(&root, items, "", info);
         parent->addTopLevelItems(item->takeChildren());
         delete item;
         return items;
     }
 private:
-    static MenuTreeItem *create(Menu *menu, QList<MenuTreeItem*> &items) {
+    static MenuTreeItem *create(Menu *menu, QList<MenuTreeItem*> &items,
+                                const QString &prefix, QList<ActionInfo> &list)
+    {
         RootMenu &root = RootMenu::instance();
         QList<QAction*> actions = menu->actions();
         QList<QTreeWidgetItem*> children;
@@ -156,14 +160,19 @@ private:
             const auto id = root.longId(action);
             if (!id.isEmpty()) {
                 if (action->menu()) {
-                    Q_ASSERT(qobject_cast<Menu*>(action->menu()) != 0);
-                    if (auto child = create(static_cast<Menu*>(action->menu()), items))
+                    auto menu = qobject_cast<Menu*>(action->menu());
+                    Q_ASSERT(menu);
+                    if (auto child = create(menu, items, prefix % menu->title()  % " > ", list))
                         children.push_back(child);
                 } else {
                     auto child = new MenuTreeItem(action, 0);
                     child->setText(Id, child->m_id = id);
                     items.push_back(child);
                     children.push_back(child);
+                    ActionInfo info;
+                    info.id = id;
+                    info.name = prefix % action->text();
+                    list.append(info);
                 }
             }
         }
@@ -239,12 +248,11 @@ private:
 
 /********************************************************************************/
 
-
 struct PrefDialog::Data {
     Ui::PrefDialog ui;
+    QList<ActionInfo> actionInfo;
     QButtonGroup *shortcuts;
-    PrefMouseGroup<ClickAction> *dbl, *mdl;
-    PrefMouseGroup<WheelAction> *whl;
+    MouseActionGroupBox *dbl, *mdl, *up, *down;
     QMap<int, QCheckBox*> hwdec;
     QMap<DeintMethod, QCheckBox*> hwdeint;
     PrefOpenMediaGroup *open_media_from_file_manager;
@@ -267,6 +275,7 @@ struct PrefDialog::Data {
             box->setEnabled(supported);
         }
     }
+
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
@@ -361,19 +370,19 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.sub_ext->addItemTextData(Info::subtitleExt());
     d->ui.window_style->addItemTextData(cApp.availableStyleNames());
 
-    d->dbl = new PrefMouseGroup<ClickAction>(d->ui.ui_mouse_layout);
-    d->mdl = new PrefMouseGroup<ClickAction>(d->ui.ui_mouse_layout);
-    d->whl = new PrefMouseGroup<WheelAction>(d->ui.ui_mouse_layout);
-
     d->shortcuts = new QButtonGroup(this);
     d->shortcuts->addButton(d->ui.shortcut1, 0);
     d->shortcuts->addButton(d->ui.shortcut2, 1);
     d->shortcuts->addButton(d->ui.shortcut3, 2);
     d->shortcuts->addButton(d->ui.shortcut4, 3);
 
-    d->actionItems = MenuTreeItem::makeRoot(d->ui.shortcut_tree);
-
+    d->actionItems = MenuTreeItem::makeRoot(d->ui.shortcut_tree, d->actionInfo);
     d->ui.shortcut_tree->header()->resizeSection(0, 200);
+
+    d->dbl  = new MouseActionGroupBox(d->actionInfo, d->ui.ui_mouse_layout);
+    d->mdl  = new MouseActionGroupBox(d->actionInfo, d->ui.ui_mouse_layout);
+    d->up   = new MouseActionGroupBox(d->actionInfo, d->ui.ui_mouse_layout);
+    d->down = new MouseActionGroupBox(d->actionInfo, d->ui.ui_mouse_layout);
 
     QList<AudioDriver> audioDrivers;
     audioDrivers << AudioDriver::Auto;
@@ -502,7 +511,8 @@ PrefDialog::~PrefDialog() {
 void PrefDialog::retranslate() {
     d->dbl->retranslate(tr("Double Click"));
     d->mdl->retranslate(tr("Middle Click"));
-    d->whl->retranslate(tr("Wheel Scroll"));
+    d->up->retranslate(tr("Scroll Up"));
+    d->down->retranslate(tr("Scroll Down"));
     d->ui.sub_ext->setItemText(0, tr("All"));
     d->properties.setList(MrlState::restorableProperties());
 }
@@ -613,7 +623,8 @@ void PrefDialog::set(const Pref &p) {
 
     d->dbl->setValues(p.double_click_map);
     d->mdl->setValues(p.middle_click_map);
-    d->whl->setValues(p.wheel_scroll_map);
+    d->up->setValues(p.scroll_up_map);
+    d->down->setValues(p.scroll_down_map);
     d->ui.ui_mouse_invert_wheel->setChecked(p.invert_wheel);
 
     d->ui.seek_step1->setValue(p.seek_step1/1000);
@@ -736,7 +747,8 @@ void PrefDialog::get(Pref &p) {
 
     p.double_click_map = d->dbl->values();
     p.middle_click_map = d->mdl->values();
-    p.wheel_scroll_map = d->whl->values();
+    p.scroll_up_map = d->up->values();
+    p.scroll_down_map = d->down->values();
     p.invert_wheel = d->ui.ui_mouse_invert_wheel->isChecked();
 
     p.seek_step1 = d->ui.seek_step1->value()*1000;
