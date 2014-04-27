@@ -752,22 +752,8 @@ struct MainWindow::Data {
             menu("subtitle")("track").syncActions();
             setCurrentSubtitleIndexToEngine();
         });
-        auto updateMrlState = [this] (const Mrl &mrl, bool end, int time) {
-            as.state.mrl = mrl.toUnique();
-            as.state.device = mrl.device();
-            as.state.last_played_date_time = QDateTime::currentDateTime();
-            if (end) {
-                as.state.resume_position = time;
-                as.state.edition = engine.currentEdition();
-                as.state.audio_track = engine.currentAudioStream();
-                as.state.sub_track = subtitleState();
-                syncState();
-            }
-            history.update(&as.state, !end);
-            as.state.mrl = mrl;
-        };
 
-        connect(&engine, &PlayEngine::started, p, [this, updateMrlState] (Mrl mrl) {
+        connect(&engine, &PlayEngine::started, p, [this] (Mrl mrl) {
             as.setOpen(mrl);
             as.state.mrl = mrl.toUnique();
             auto &state = as.state;
@@ -782,10 +768,24 @@ struct MainWindow::Data {
                 setSubtitleState(state.sub_track);
             else
                 updateSubtitleState();
-            updateMrlState(mrl, false, 0);
+            as.state.mrl = mrl.toUnique();
+            as.state.device = mrl.device();
+            as.state.last_played_date_time = QDateTime::currentDateTime();
+            history.update(&as.state, true);
+            as.state.mrl = mrl;
         });
-        connect(&engine, &PlayEngine::finished, p, [this, updateMrlState] (Mrl mrl, int time, int remain) {
-            updateMrlState(mrl, true, remain > 500 ? time : -1);
+        connect(&engine, &PlayEngine::finished, p, [this] (const FinishInfo &info) {
+            as.state.mrl = info.mrl.toUnique();
+            as.state.device = info.mrl.device();
+            as.state.last_played_date_time = QDateTime::currentDateTime();
+            as.state.resume_position = info.remain > 500 ? info.position : -1;
+            as.state.edition = engine.currentEdition();
+            as.state.audio_track = info.streamIds[Stream::Audio];
+            as.state.sub_track = subtitleState();
+            as.state.sub_track.track() = info.streamIds[Stream::Subtitle];
+            syncState();
+            history.update(&as.state, false);
+            as.state.mrl = info.mrl;
         });
         connect(&engine, &PlayEngine::videoFormatChanged, p, [this] (const VideoFormat &format) {
             if (pref().fit_to_video && !format.displaySize().isEmpty())

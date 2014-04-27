@@ -190,7 +190,7 @@ struct PlayEngine::Data {
     QList<SubtitleFileInfo> subtitleFiles;
     ChannelLayout layout = ChannelLayoutInfo::default_();
     int duration = 0, audioSync = 0, begin = 0, position = 0, subDelay = 0, chapter = -2;
-    QVector<int> streamIds = {0, 0, 0};
+    QVector<int> streamIds = {0, 0, 0}, lastStreamIds = streamIds;
     QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
     AudioTrackInfoObject *audioTrackInfo = nullptr;
     SubtitleStyle subStyle;
@@ -759,7 +759,7 @@ void PlayEngine::customEvent(QEvent *event) {
         Q_ASSERT(ids.size() == 3);
         auto check = [&] (Stream::Type type, void (PlayEngine::*sig)(int)) {
             const int id = ids[type];
-            if (id == d->streamIds[type])
+            if (!_Change(d->streamIds[type], id))
                 return;
             auto &streams = d->streams[type];
             for (auto it = streams.begin(); it != streams.end(); ++it)
@@ -771,6 +771,7 @@ void PlayEngine::customEvent(QEvent *event) {
         check(Stream::Subtitle, &PlayEngine::currentSubtitleStreamChanged);
         break;
     } case UpdateTrackList: {
+        d->lastStreamIds = d->streamIds;
         auto streams = _GetData<QVector<StreamList>>(event);
         Q_ASSERT(streams.size() == 3);
         auto check = [&] (Stream::Type type, void (PlayEngine::*sig)(const StreamList&)) {
@@ -821,10 +822,11 @@ void PlayEngine::customEvent(QEvent *event) {
             updateState(Playing);
         emit started(d->startInfo.mrl);
         d->updateMediaName(name);
+        d->lastStreamIds = d->streamIds;
         break;
     } case EndPlayback: {
         Mrl mrl; EndReason reason; _GetAllData(event, mrl, reason);
-        const int remain = (d->duration + d->begin) - d->position;
+        int remain = (d->duration + d->begin) - d->position;
         d->nextInfo = StartInfo();
         auto state = Stopped;
         switch (reason) {
@@ -832,6 +834,7 @@ void PlayEngine::customEvent(QEvent *event) {
             emit requestNextStartInfo();
             if (d->nextInfo.isValid())
                 state = Loading;
+            remain = 0;
             break;
         case EndQuit: case EndRequest:
             break;
@@ -839,8 +842,14 @@ void PlayEngine::customEvent(QEvent *event) {
             state = Error;
         }
         updateState(state);
-        if (state != Error && !mrl.isEmpty())
-            emit finished(mrl, d->position, remain);
+        if (state != Error && !mrl.isEmpty()) {
+            FinishInfo info;
+            info.mrl = mrl;
+            info.position = d->position;
+            info.remain = remain;
+            info.streamIds = d->lastStreamIds;
+            emit finished(info);
+        }
         if (d->nextInfo.isValid())
             load(d->nextInfo);
         else if (_Change(d->seekable, false))
@@ -1141,8 +1150,6 @@ void PlayEngine::exec() {
             _PostEvent(this, EndPlayback, mrl, reason(event->data));
             break;
         } case MPV_EVENT_TRACKS_CHANGED: {
-            if (time(d->getmpv<double>("time-pos")) <= 0)
-                break; // not playing
             QVector<StreamList> streams(3);
             auto list = d->getmpv<QVariant>("track-list").toList();
             for (auto &var : list) {

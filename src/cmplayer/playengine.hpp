@@ -23,10 +23,15 @@ struct StartInfo {
     StartInfo() {}
     StartInfo(const Mrl &mrl): mrl(mrl) {}
     Mrl mrl;
-    int resume = -1;
-    int cache = -1;
-    int edition = -1;
-    bool isValid() const { return (!mrl.isEmpty() || mrl.isDisc()) && resume >= 0 && cache >= 0; }
+    int resume = -1, cache = -1, edition = -1;
+    bool isValid() const
+    { return (!mrl.isEmpty() || mrl.isDisc()) && resume >= 0 && cache >= 0; }
+};
+
+struct FinishInfo {
+    Mrl mrl;
+    int position = 0, remain = 0;
+    QVector<int> streamIds = { 0, 0, 0 };
 };
 
 class PlayEngine : public QObject {
@@ -184,7 +189,7 @@ signals:
     void tempoScaledChanged(bool on);
     void volumeNormalizerActivatedChanged(bool on);
     void started(Mrl mrl);
-    void finished(Mrl mrl, int position, int remain);
+    void finished(const FinishInfo &info);
     void tick(int pos);
     void mrlChanged(const Mrl &mrl);
     void stateChanged(PlayEngine::State state);
