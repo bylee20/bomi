@@ -18,6 +18,9 @@ public:
     void clear();
     QAction *find(const QVariant &data) const;
     template<typename T> QAction *find(const T &t) const { return find(QVariant::fromValue<T>(t)); }
+    QAction *firstCheckedAction() const;
+    QAction *lastCheckedAction() const;
+    QAction *checkedAction() const { return firstCheckedAction(); }
 };
 
 template<typename T>
