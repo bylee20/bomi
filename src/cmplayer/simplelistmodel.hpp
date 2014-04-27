@@ -71,9 +71,9 @@ public:
     auto remove(const QModelIndexList &indexes) -> int;
     auto rowOf(const T &t) const -> int {return m_list.indexOf(t);}
     auto swap(int r1, int r2) -> bool;
+    virtual auto header(int column) const -> QString;
 protected:
     virtual auto flags(int row, int column) const -> Qt::ItemFlags;
-    virtual auto headerText(int column) const -> QString;
     virtual auto displayData(int row, int column) const -> QVariant;
     virtual auto roleData(int row, int column, int role) const -> QVariant;
     virtual auto fontData(int row, int column) const -> QFont;
@@ -144,7 +144,7 @@ auto SimpleListModel<T, List>::flags(int row, int column) const -> Qt::ItemFlags
 { Q_UNUSED((row | column)); return Qt::ItemIsEnabled | Qt::ItemIsSelectable; }
 
 template<class T, class List>
-auto SimpleListModel<T, List>::headerText(int column) const -> QString
+auto SimpleListModel<T, List>::header(int column) const -> QString
 { Q_UNUSED(column); return QString(); }
 
 template<class T, class List>
@@ -164,7 +164,7 @@ auto SimpleListModel<T, List>::headerData(int idx, Qt::Orientation o,
                                     int role) const -> QVariant
 {
     if (o == Qt::Horizontal && role == Qt::DisplayRole && isValidColumn(idx))
-        return headerText(idx);
+        return header(idx);
     return QVariant();
 }
 
@@ -271,5 +271,14 @@ auto SimpleListModel<T, List>::swap(int r1, int r2) -> bool
         setSpecialRow(r1);
     return true;
 }
+
+class StringListModel : public SimpleListModel<QString, QStringList> {
+    Q_OBJECT
+public:
+    StringListModel(QObject *parent): Super(parent) { }
+private:
+    auto displayData(int row, int) const -> QVariant { return at(row); }
+};
+
 
 #endif // SIMPLELISTMODEL_HPP

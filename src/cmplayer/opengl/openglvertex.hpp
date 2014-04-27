@@ -83,14 +83,13 @@ struct CoordAttr {
         (it->*attr2).set(br2.x(), br2.y()); ++it;
         return it;
     }
-    template<typename T, typename F = void(*)(const VecIt<T>&)>
+    template<typename T, typename F>
     static inline VecIt<T> fillTriangles(VecIt<T> it, CoordAttr T::*attr1,
                                          const QPointF &tl1,
                                          const QPointF &br1,
                                          CoordAttr T::*attr2,
                                          const QPointF &tl2,
-                                         const QPointF &br2,
-                                         F f = [] (const VecIt<T>&) {}) {
+                                         const QPointF &br2, F f) {
         (it->*attr1).set(tl1.x(), tl1.y());
         (it->*attr2).set(tl2.x(), tl2.y()); f(it); ++it;
         (it->*attr1).set(br1.x(), tl1.y());
@@ -104,6 +103,16 @@ struct CoordAttr {
         (it->*attr1).set(br1.x(), tl1.y());
         (it->*attr2).set(br2.x(), tl2.y()); f(it); ++it;
         return it;
+    }
+    template<typename T>
+    static inline VecIt<T> fillTriangles(VecIt<T> it, CoordAttr T::*attr1,
+                                         const QPointF &tl1,
+                                         const QPointF &br1,
+                                         CoordAttr T::*attr2,
+                                         const QPointF &tl2,
+                                         const QPointF &br2) {
+        return fillTriangles(it, attr1, tl1, br1, attr2, tl2, br2,
+                             [] (const VecIt<T>&) {});
     }
 };
 

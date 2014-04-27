@@ -39,6 +39,30 @@
 
 //DECLARE_LOG_CONTEXT(Main)
 
+void MainView::mouseDoubleClickEvent(QMouseEvent *event) {
+    m_main->resetMoving();
+    UtilObject::resetFilterDoubleClick();
+    QQuickView::mouseDoubleClickEvent(event);
+    if (!UtilObject::isDoubleClickFiltered())
+        m_main->onMouseDoubleClickEvent(event);
+}
+void MainView::keyPressEvent(QKeyEvent *event) {
+    event->setAccepted(false);
+    if (auto item = UtilObject::itemToAcceptKey())
+        sendEvent(item, event);
+    if (!event->isAccepted())
+        m_main->onKeyPressEvent(event);
+}
+
+void MainView::mousePressEvent(QMouseEvent *event) {
+    m_main->resetMoving();
+    m_main->topLevelItem()->resetMousePressEventFilterState();
+    event->setAccepted(false);
+    QQuickView::mousePressEvent(event);
+    if (!event->isAccepted() || m_main->topLevelItem()->filteredMousePressEvent())
+        m_main->onMousePressEvent(event);
+}
+
 extern void initialize_vdpau_interop(QOpenGLContext *context);
 extern void finalize_vdpau_interop(QOpenGLContext *context);
 
@@ -2028,4 +2052,16 @@ void MainWindow::moveEvent(QMoveEvent *event) {
     QWidget::moveEvent(event);
     if (!d->fullScreen)
         d->updateWindowPosState();
+}
+
+void MainWindow::showMessage(const QString &cmd, int value,
+                             const QString &unit, bool sign)
+{
+    showMessage(cmd, toString(value, sign) + unit);
+}
+
+void MainWindow::showMessage(const QString &cmd, double value,
+                             const QString &unit, bool sign)
+{
+    showMessage(cmd, toString(value, sign) + unit);
 }

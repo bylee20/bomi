@@ -2,14 +2,11 @@
 #define MAINWINDOW_HPP
 
 #include "stdafx.hpp"
-#include "global.hpp"
-#include "globalqmlobject.hpp"
-#include "quick/toplevelitem.hpp"
 
-class Mrl;            class PrefDialog;
-class MainView;        class Playlist;
-class Subtitle;        class PlaylistModel;
-class PlayEngine;
+class Mrl;                             class PrefDialog;
+class MainView;                        class Playlist;
+class Subtitle;                        class PlaylistModel;
+class PlayEngine;                      class TopLevelItem;
 
 class MainWindow : public QWidget {
     Q_OBJECT
@@ -63,8 +60,8 @@ private:
 
     void doVisibleAction(bool visible);
     void showMessage(const QString &message, const bool *force = nullptr);
-    void showMessage(const QString &cmd, int value, const QString &unit, bool sign = false) {showMessage(cmd, toString(value, sign) + unit);}
-    void showMessage(const QString &cmd, double value, const QString &unit, bool sign = false) {showMessage(cmd, toString(value, sign) + unit);}
+    void showMessage(const QString &cmd, int value, const QString &unit, bool sign = false);
+    void showMessage(const QString &cmd, double value, const QString &unit, bool sign = false);
     void showMessage(const QString &cmd, const QString &desc) {showMessage(cmd + ": " + desc);}
     void showMessage(const QString &cmd, bool value) {showMessage(cmd, value ? tr("On") : tr("Off"));}
     void appendSubFiles(const QStringList &files, bool checked, const QString &enc);
@@ -130,22 +127,9 @@ private:
         }
         return true;
     }
-
-    void mouseDoubleClickEvent(QMouseEvent *event) {
-        m_main->resetMoving();
-        UtilObject::resetFilterDoubleClick();
-        QQuickView::mouseDoubleClickEvent(event);
-        if (!UtilObject::isDoubleClickFiltered())
-            m_main->onMouseDoubleClickEvent(event);
-    }
-    void mousePressEvent(QMouseEvent *event) {
-        m_main->resetMoving();
-        m_main->topLevelItem()->resetMousePressEventFilterState();
-        event->setAccepted(false);
-        QQuickView::mousePressEvent(event);
-        if (!event->isAccepted() || m_main->topLevelItem()->filteredMousePressEvent())
-            m_main->onMousePressEvent(event);
-    }
+    void keyPressEvent(QKeyEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event) {
         m_main->resetMoving();
         event->setAccepted(false);
@@ -158,13 +142,7 @@ private:
         QQuickView::mouseMoveEvent(event);
         m_main->onMouseMoveEvent(event);
     }
-    void keyPressEvent(QKeyEvent *event) {
-        event->setAccepted(false);
-        if (auto item = UtilObject::itemToAcceptKey())
-            sendEvent(item, event);
-        if (!event->isAccepted())
-            m_main->onKeyPressEvent(event);
-    }
+
     void wheelEvent(QWheelEvent *event) {
         event->setAccepted(false);
         QQuickView::wheelEvent(event);

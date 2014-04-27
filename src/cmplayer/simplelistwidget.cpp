@@ -1,75 +1,55 @@
 #include "simplelistwidget.hpp"
 
-struct SimpleListWidget::Data {
-    QListWidget *list;
-    QPushButton *add, *erase, *up, *down;
-    bool addable, movable;
-};
-
-SimpleListWidget::SimpleListWidget(QWidget *parent)
-: QWidget(parent), d(new Data) {
-    d->list = new QListWidget(this);
-    d->add = new QPushButton(tr("Add"), this);
-    d->erase = new QPushButton(tr("Erase"), this);
-    d->up = new QPushButton(tr("Move Up"), this);
-    d->down = new QPushButton(tr("Move Down"), this);
+SimpleListWidgetBase::SimpleListWidgetBase(QWidget *parent)
+    : QWidget(parent)
+{
+    m_view = new QTreeView(this);
+    m_add = new QPushButton(tr("Add"), this);
+    m_erase = new QPushButton(tr("Erase"), this);
+    m_up = new QPushButton(tr("Move Up"), this);
+    m_down = new QPushButton(tr("Move Down"), this);
 
     QVBoxLayout *vbox = new QVBoxLayout(this);
     QHBoxLayout *hbox = new QHBoxLayout;
-    hbox->addWidget(d->add);
-    hbox->addWidget(d->erase);
-    hbox->addWidget(d->up);
-    hbox->addWidget(d->down);
+    hbox->addWidget(m_add);
+    hbox->addWidget(m_erase);
+    hbox->addWidget(m_up);
+    hbox->addWidget(m_down);
     vbox->addLayout(hbox);
-    vbox->addWidget(d->list);
+    vbox->addWidget(m_view);
     vbox->setMargin(0);
     hbox->setMargin(0);
 
-    connect(d->list, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*))
-            , this, SLOT(slotCurrentItemChanged(QListWidgetItem*)));
-    connect(d->add, SIGNAL(clicked()), this, SLOT(slotAdd()));
-    connect(d->erase, SIGNAL(clicked()), this, SLOT(slotErase()));
-    connect(d->up, SIGNAL(clicked()), this, SLOT(slotUp()));
-    connect(d->down, SIGNAL(clicked()), this, SLOT(slotDown()));
+//    connect(m_tree, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*))
+//            , this, SLOT(slotCurrentItemChanged(QListWidgetItem*)));
+//    connect(m_add, SIGNAL(clicked()), this, SLOT(slotAdd()));
+//    connect(m_erase, SIGNAL(clicked()), this, SLOT(slotErase()));
+//    connect(m_up, SIGNAL(clicked()), this, SLOT(slotUp()));
+//    connect(m_down, SIGNAL(clicked()), this, SLOT(slotDown()));
 
-    slotCurrentItemChanged(0);
+//    slotCurrentItemChanged(0);
     setAddingAndErasingEnabled(false);
     setChangingOrderEnabled(false);
 }
 
-SimpleListWidget::~SimpleListWidget() {
-    delete d;
+void SimpleListWidgetBase::setAddingAndErasingEnabled(bool enabled) {
+    m_addable = enabled;
+    m_add->setEnabled(m_addable);
+    m_erase->setEnabled(m_addable);
+    m_add->setVisible(m_addable);
+    m_erase->setVisible(m_addable);
 }
 
-void SimpleListWidget::slotCurrentItemChanged(QListWidgetItem *item) {
-    d->erase->setEnabled(item && d->addable);
-    d->up->setEnabled(item && d->list->row(item) > 0);
-    d->down->setEnabled(item && d->list->row(item) < d->list->count() - 1);
+void SimpleListWidgetBase::setChangingOrderEnabled(bool enabled) {
+    m_movable = enabled;
+    m_up->setEnabled(m_movable);
+    m_down->setEnabled(m_movable);
+    m_up->setVisible(m_movable);
+    m_down->setVisible(m_movable);
 }
 
-void SimpleListWidget::slotErase() {
-    delete d->list->currentItem();
-}
-
-void SimpleListWidget::slotUp() {
-    const int row = d->list->currentRow();
-    if (row > 0) {
-        QListWidgetItem *item = d->list->takeItem(row);
-        d->list->insertItem(row-1, item);
-        d->list->setCurrentItem(item);
-    }
-}
-
-void SimpleListWidget::slotDown() {
-    const int row = d->list->currentRow();
-    if (row < d->list->count() - 1) {
-        QListWidgetItem *item = d->list->takeItem(row);
-        d->list->insertItem(row+1, item);
-        d->list->setCurrentItem(item);
-    }
-}
-
-void SimpleListWidget::slotAdd() {
+auto StringListWidget::getNewItem(QString *item) -> bool
+{
     QDialog dlg(this);
     dlg.setWindowTitle(tr("Add"));
     QLineEdit *edit = new QLineEdit(&dlg);
@@ -81,34 +61,8 @@ void SimpleListWidget::slotAdd() {
     hbox->addWidget(cancel);
     connect(ok, SIGNAL(clicked()), &dlg, SLOT(accept()));
     connect(cancel, SIGNAL(clicked()), &dlg, SLOT(reject()));
-    if (dlg.exec())
-        d->list->addItem(edit->text());
-}
-
-void SimpleListWidget::setValues(const QStringList &values) {
-    d->list->clear();
-    d->list->addItems(values);
-}
-
-QStringList SimpleListWidget::values() const {
-    QStringList values;
-    for (int i=0; i<d->list->count(); ++i)
-        values << d->list->item(i)->text();
-    return values;
-}
-
-void SimpleListWidget::setAddingAndErasingEnabled(bool enabled) {
-    d->addable = enabled;
-    d->add->setEnabled(d->addable);
-    d->erase->setEnabled(d->addable);
-    d->add->setVisible(d->addable);
-    d->erase->setVisible(d->addable);
-}
-
-void SimpleListWidget::setChangingOrderEnabled(bool enabled) {
-    d->movable = enabled;
-    d->up->setEnabled(d->movable);
-    d->down->setEnabled(d->movable);
-    d->up->setVisible(d->movable);
-    d->down->setVisible(d->movable);
+    if (!dlg.exec())
+        return false;
+    *item = edit->text();
+    return true;
 }

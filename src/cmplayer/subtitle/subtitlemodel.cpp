@@ -39,7 +39,7 @@ SubCompModel::SubCompModel(const SubComp *comp, QObject *parent)
     setList(list);
 }
 
-auto SubCompModel::headerText(int column) const -> QString
+auto SubCompModel::header(int column) const -> QString
 {
     switch (column) {
     case Start: return tr("Start");

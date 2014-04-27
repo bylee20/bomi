@@ -27,7 +27,7 @@ public:
     auto setCurrentCaption(const SubCapt *caption) -> void;
     auto setVisible(bool visible) -> void;
 private:
-    auto headerText(int column) const -> QString final;
+    auto header(int column) const -> QString final;
     auto displayData(int row, int column) const -> QVariant final;
     struct Data;
     Data *d;

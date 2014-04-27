@@ -16,7 +16,7 @@ class SubtitleLinkModel : public SimpleListModel<SubtitleLink> {
 public:
     enum Column { Language, FileName, Date, ColumnCount };
     SubtitleLinkModel(QObject *parent = nullptr): SimpleListModel(ColumnCount, parent) { }
-    auto headerText(int column) const -> QString {
+    auto header(int column) const -> QString {
         switch (column) {
         case Language: return qApp->translate("SubtitleLinkModel", "Language");
         case FileName: return qApp->translate("SubtitleLinkModel", "File Name");

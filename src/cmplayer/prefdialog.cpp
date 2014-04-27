@@ -612,7 +612,7 @@ void PrefDialog::set(const Pref &p) {
     d->ui.sub_spacing_line->setValue(p.sub_style.spacing.line*100.0);
     d->ui.sub_spacing_paragraph->setValue(p.sub_style.spacing.paragraph*100.0);
     d->ui.ms_per_char->setValue(p.ms_per_char);
-    d->ui.sub_priority->setValues(p.sub_priority);
+    d->ui.sub_priority->setList(p.sub_priority);
 
     d->ui.single_app->setChecked(cApp.isUnique());
     d->ui.window_style->setCurrentText(cApp.styleName(), Qt::MatchFixedString);
@@ -649,7 +649,7 @@ void PrefDialog::set(const Pref &p) {
     d->ui.cache_disc->setValue(p.cache_disc);
     d->ui.cache_min_playback->setValue(p.cache_min_playback);
     d->ui.cache_min_seeking->setValue(p.cache_min_seeking);
-    d->ui.network_folders->setValues(p.network_folders);
+    d->ui.network_folders->setList(p.network_folders);
 
     setShortcuts(p.shortcuts);
 
@@ -737,7 +737,7 @@ void PrefDialog::get(Pref &p) {
     p.sub_style.spacing.line = d->ui.sub_spacing_line->value()/100.0;
     p.sub_style.spacing.paragraph = d->ui.sub_spacing_paragraph->value()/100.0;
     p.ms_per_char = d->ui.ms_per_char->value();
-    p.sub_priority = d->ui.sub_priority->values();
+    p.sub_priority = d->ui.sub_priority->list();
 
     cApp.setUnique(d->ui.single_app->isChecked());
     cApp.setLocale(d->ui.locale->currentLocale());
@@ -775,7 +775,7 @@ void PrefDialog::get(Pref &p) {
     p.cache_disc = d->ui.cache_disc->value();
     p.cache_min_playback = d->ui.cache_min_playback->value();
     p.cache_min_seeking = d->ui.cache_min_seeking->value();
-    p.network_folders = d->ui.network_folders->values();
+    p.network_folders = d->ui.network_folders->list();
 
     p.shortcuts.clear();
     for (auto item : d->actionItems) {
