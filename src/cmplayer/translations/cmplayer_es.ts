@@ -179,7 +179,7 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../dialogs.cpp" line="38"/>
         <source>Yes</source>
-        <translation type="unfinished"></translation>
+        <translation>Si</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="40"/>
@@ -189,7 +189,7 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../dialogs.cpp" line="40"/>
         <source>Yes to All</source>
-        <translation type="unfinished"></translation>
+        <translation>Si a todo</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="42"/>
@@ -199,7 +199,7 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../dialogs.cpp" line="42"/>
         <source>No</source>
-        <translation type="unfinished"></translation>
+        <translation>No</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="44"/>
@@ -209,7 +209,7 @@ Página del proyecto:%3</translation>
     <message>
         <location filename="../dialogs.cpp" line="44"/>
         <source>No to All</source>
-        <translation type="unfinished"></translation>
+        <translation>No a todo</translation>
     </message>
     <message>
         <location filename="../dialogs.cpp" line="46"/>
@@ -1589,7 +1589,7 @@ Parado en la posición: %2
     <message>
         <location filename="../playengine.cpp" line="354"/>
         <source>Blu-ray</source>
-        <translation type="unfinished">Blu-ray</translation>
+        <translation>Blu-ray</translation>
     </message>
     <message>
         <location filename="../playengine.cpp" line="906"/>
@@ -1740,12 +1740,12 @@ Parado en la posición: %2
     <message>
         <location filename="../imports/CMPlayer/Player.qml" line="69"/>
         <source>Download</source>
-        <translation type="unfinished"></translation>
+        <translation>Descargando</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/Player.qml" line="119"/>
         <source>Connecting...</source>
-        <translation type="unfinished">Conectando...</translation>
+        <translation>Conectando...</translation>
     </message>
 </context>
 <context>
@@ -2755,7 +2755,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="408"/>
         <source>Disc Menu</source>
-        <translation type="unfinished"></translation>
+        <translation>Menú del disco</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="410"/>
@@ -3037,7 +3037,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../rootmenu.cpp" line="444"/>
         <source>Reload File(s)</source>
-        <translation type="unfinished"></translation>
+        <translation>Recargar archivo(s)</translation>
     </message>
     <message>
         <location filename="../rootmenu.cpp" line="445"/>
