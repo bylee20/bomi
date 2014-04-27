@@ -1141,6 +1141,8 @@ void PlayEngine::exec() {
             _PostEvent(this, EndPlayback, mrl, reason(event->data));
             break;
         } case MPV_EVENT_TRACKS_CHANGED: {
+            if (time(d->getmpv<double>("time-pos")) <= 0)
+                break; // not playing
             QVector<StreamList> streams(3);
             auto list = d->getmpv<QVariant>("track-list").toList();
             for (auto &var : list) {
