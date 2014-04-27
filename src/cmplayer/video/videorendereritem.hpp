@@ -74,6 +74,7 @@ public:
     void setMousePosition(const QPoint &pos) { m_mouse = pos; }
     const QPoint &mousePosition() const { return m_mouse; }
     bool updateVertexOnGeometryChanged() const override { return true; }
+    bool isOpaque() const override { return true; }
 public slots:
     void setAlignment(int alignment);
     void setEffects(Effects effect);
@@ -91,9 +92,6 @@ private:
     void afterUpdate();
     void initializeGL() override;
     void finalizeGL() override;
-//    void getCoords(QRectF &vertices, QRectF &texCoords) override;
-//    void prepare(QSGGeometryNode *node) override;
-//    void geometryChanged(const QRectF &new_, const QRectF &old) override;
     void customEvent(QEvent *event) override;
     void updateVertex(Vertex *vertex) override;
     void updateTexture(OpenGLTexture2D *texture) override;

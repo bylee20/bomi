@@ -103,6 +103,7 @@ public:
         virtual void update(QOpenGLShaderProgram *prog, const ShaderData *data) = 0;
         friend class ShaderRenderItem;
     };
+    virtual bool isOpaque() const { return false; }
 private:
     virtual QSGMaterialType *type() const = 0;
     virtual ShaderIface *createShader() const = 0;
@@ -113,7 +114,7 @@ private:
         Material(const ShaderRenderItem *item)
             : m_item(item)
         {
-            setFlag(Blending);
+            setFlag(Blending, !item->isOpaque());
             m_data = m_item->createData();
         }
         QSGMaterialType *type() const final { return m_item->type(); }
