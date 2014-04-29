@@ -1065,7 +1065,7 @@ void PlayEngine::exec() {
         const auto reason = static_cast<mpv_event_end_file*>(data)->reason;
         if (reason > EndUnknown)
             return EndUnknown;
-        if (reason > EndUnknown && !loaded)
+        if (reason == EndOfFile && !loaded)
             return EndFailed;
         return static_cast<EndReason>(reason);
     };
