@@ -1251,6 +1251,10 @@ void MainWindow::connectMenus() {
         if (!files.isEmpty())
             appendSubFiles(files, true, enc);
     });
+    connect(sub("track")["auto-load"], &QAction::triggered, this, [this] () {
+        clearSubtitleFiles();
+        d->updateSubtitleState();
+    });
     connect(sub("track")["reload"], &QAction::triggered, this, [this] () {
         auto state = d->subtitleState();
         clearSubtitleFiles();
