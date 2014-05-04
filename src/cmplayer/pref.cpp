@@ -242,6 +242,8 @@ void Pref::save() const {
     WRITE(cache_min_seeking);
     WRITE(network_folders);
     WRITE(use_mpris2);
+    WRITE(show_osd_on_action);
+    WRITE(show_osd_on_resized);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -359,6 +361,8 @@ void Pref::load() {
     READ(cache_min_seeking);
     READ(network_folders);
     READ(use_mpris2);
+    READ(show_osd_on_action);
+    READ(show_osd_on_resized);
 #undef READ
 
 #define READ2(a) a.load(r, #a)
