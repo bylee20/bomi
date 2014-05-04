@@ -1839,8 +1839,14 @@ void MainWindow::applyPref() {
     auto &p = d->pref();
     d->history.setRememberImage(p.remember_image);
     d->history.setPropertiesToRestore(p.restore_properties);
-    d->engine.setHwAcc(p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None, p.enable_hwaccel ? p.hwaccel_codecs : QList<int>());
-    d->engine.setVolumeNormalizerOption(p.normalizer_length, p.normalizer_target, p.normalizer_silence, p.normalizer_min, p.normalizer_max);
+    const auto backend = p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None;
+    const auto codecs = p.enable_hwaccel ? p.hwaccel_codecs : QList<int>();
+    d->engine.setHwAcc(backend, codecs);
+    d->engine.setVolumeNormalizerOption(p.normalizer_length,
+                                        p.normalizer_target,
+                                        p.normalizer_silence,
+                                        p.normalizer_min,
+                                        p.normalizer_max);
     d->engine.setImageDuration(p.image_duration);
     d->engine.setChannelLayoutMap(p.channel_manipulation);
     d->engine.setSubtitleStyle(p.sub_style);
@@ -1849,14 +1855,17 @@ void MainWindow::applyPref() {
         option.method = caps.method();
         option.doubler = caps.doubler();
         if (caps.hwdec()) {
-            if (!caps.supports(DeintDevice::GPU) && !caps.supports(DeintDevice::OpenGL))
+            if (!caps.supports(DeintDevice::GPU)
+                    && !caps.supports(DeintDevice::OpenGL))
                 return DeintOption();
-            if (caps.supports(DeintDevice::GPU) && p.hwdeints.contains(caps.method()))
+            if (caps.supports(DeintDevice::GPU)
+                    && p.hwdeints.contains(caps.method()))
                 option.device = DeintDevice::GPU;
             else
                 option.device = DeintDevice::OpenGL;
         } else
-            option.device = caps.supports(DeintDevice::OpenGL) ? DeintDevice::OpenGL : DeintDevice::CPU;
+            option.device = caps.supports(DeintDevice::OpenGL)
+                            ? DeintDevice::OpenGL : DeintDevice::CPU;
         return option;
     };
     const auto deint_swdec = conv(p.deint_swdec);
@@ -1865,13 +1874,16 @@ void MainWindow::applyPref() {
     d->engine.setAudioDriver(p.audio_driver);
     d->engine.setClippingMethod(p.clipping_method);
     d->engine.setMinimumCache(p.cache_min_playback, p.cache_min_seeking);
-    d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d, p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
+    d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d,
+                          p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
     SubtitleParser::setMsPerCharactor(p.ms_per_char);
     d->subtitle.setPriority(p.sub_priority);
     d->subtitle.setStyle(p.sub_style);
     d->menu.update(p);
     d->menu.syncTitle();
     d->menu.resetKeyMap();
+    cApp.setHeartbeat(p.use_heartbeat ? p.heartbeat_command : QString(),
+                      p.heartbeat_interval);
 
     reloadSkin();
 

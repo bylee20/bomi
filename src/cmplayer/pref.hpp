@@ -20,10 +20,11 @@ struct MouseActionInfo {
     bool enabled; QString id;
 };
 
+enum class KeyMapPreset {CMPlayer, Movist};
+
 class Pref {
     Q_DECLARE_TR_FUNCTIONS(Pref)
 public:
-    enum ShortcutPreset {CMPlayer, Movist};
 //    static const Pref &instance() {return get();}
     struct KeyModifierMap {
         typedef KeyModifier Modifier;
@@ -97,6 +98,10 @@ public:
     int hide_cursor_delay = 3000, image_duration = 0;
     bool show_osd_on_action = true, show_osd_on_resized = true;
     bool show_logo = true; QColor bg_color = Qt::black;
+    bool use_heartbeat = false;
+    QString heartbeat_command;
+    int heartbeat_interval = 60;
+
     int blur_kern_c = 1, blur_kern_n = 2, blur_kern_d = 1;
     int sharpen_kern_c = 5, sharpen_kern_n = -1, sharpen_kern_d = 0;
     int remap_luma_min = 16, remap_luma_max = 235;
@@ -144,7 +149,7 @@ public:
     int cache_min_playback = 20, cache_min_seeking = 50;
     QStringList network_folders;
 
-    static Shortcuts preset(ShortcutPreset id);
+    static Shortcuts preset(KeyMapPreset id);
 
     void save() const;
     void load();

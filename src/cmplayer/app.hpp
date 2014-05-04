@@ -27,6 +27,7 @@ public:
     QLocale locale() const;
     void setAlwaysOnTop(QWidget *widget, bool onTop);
     void setScreensaverDisabled(bool disabled);
+    void setHeartbeat(const QString &command, int interval);
     void setUnique(bool unique);
     bool shutdown();
     void runCommands();

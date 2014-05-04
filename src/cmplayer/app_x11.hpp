@@ -8,11 +8,12 @@ class AppX11 : public QObject {
 public:
     AppX11(QObject *parent = 0);
     ~AppX11();
-    void setScreensaverDisabled(bool disabled);
-    void setAlwaysOnTop(QWidget *widget, bool onTop);
-    QStringList devices() const;
-    bool shutdown();
-    void setWmName(QWidget *widget, const QString &name);
+    auto setScreensaverDisabled(bool disabled) -> void;
+    auto setHeartbeat(const QString &command, int interval) -> void;
+    auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
+    auto devices() const -> QStringList;
+    auto shutdown() -> bool;
+    auto setWmName(QWidget *widget, const QString &name) -> void;
 private:
     AppX11(const AppX11&) = delete;
     AppX11 &operator = (const AppX11&) = delete;

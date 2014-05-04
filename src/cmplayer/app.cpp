@@ -224,6 +224,13 @@ void App::setAlwaysOnTop(QWidget *widget, bool onTop) {
     d->helper.setAlwaysOnTop(widget, onTop);
 }
 
+void App::setHeartbeat(const QString &command, int interval) {
+    Q_UNUSED(command); Q_UNUSED(interval);
+#ifdef Q_OS_LINUX
+    d->helper.setHeartbeat(command, interval);
+#endif
+}
+
 void App::setScreensaverDisabled(bool disabled) {
     d->helper.setScreensaverDisabled(disabled);
 }

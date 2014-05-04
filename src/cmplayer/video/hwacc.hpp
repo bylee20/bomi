@@ -31,7 +31,6 @@ public:
     static QList<Type> availableBackends();
     static QList<AVCodecID> fullCodecList();
     static QList<DeintMethod> fullDeintList();
-    static bool supports(AVCodecID codec);
     static bool supports(Type backend, AVCodecID codec);
     static bool supports(DeintMethod method);
 //    static Type backend();

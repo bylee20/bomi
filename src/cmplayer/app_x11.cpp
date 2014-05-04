@@ -18,9 +18,10 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
-static xcb_atom_t getAtom(xcb_connection_t *connection, const char *name) {
-    auto cookie = xcb_intern_atom(connection, 0, strlen(name), name);
-    auto reply = xcb_intern_atom_reply(connection, cookie, nullptr);
+static auto getAtom(xcb_connection_t *conn, const char *name) -> xcb_atom_t
+{
+    auto cookie = xcb_intern_atom(conn, 0, strlen(name), name);
+    auto reply = xcb_intern_atom_reply(conn, cookie, nullptr);
     if (!reply)
         return 0;
     auto ret = reply->atom;
@@ -29,31 +30,41 @@ static xcb_atom_t getAtom(xcb_connection_t *connection, const char *name) {
 }
 
 struct AppX11::Data {
-    QTimer ss_timer;
+    QTimer xssTimer, hbTimer;
     QDBusInterface *iface = nullptr;
     QDBusReply<uint> reply;
-    bool inhibit = false;
-    bool xss = false;
-    bool gnome = false;
+    bool inhibit = false, xss = false, gnome = false;
     QByteArray wmName;
+    QString hbCommand;
 
     xcb_connection_t *connection = nullptr;
     xcb_window_t root = 0;
-    xcb_atom_t aNetWmState = 0, aNetWmStateAbove = 0, aNetWmStateStaysOnTop = 0, aWmName = 0, aWmClass = 0;
+    xcb_atom_t aNetWmState = 0, aNetWmStateAbove = 0;
+    xcb_atom_t aNetWmStateStaysOnTop = 0, aWmName = 0, aWmClass = 0;
     Display *display = nullptr;
 
-    xcb_atom_t getAtom(const char *name) { return ::getAtom(connection, name); }
+    auto getAtom(const char *name) -> xcb_atom_t
+    { return ::getAtom(connection, name); }
 };
 
 AppX11::AppX11(QObject *parent)
 : QObject(parent), d(new Data) {
-    d->ss_timer.setInterval(20000);
-    connect(&d->ss_timer, &QTimer::timeout, [this] () {
+    d->xssTimer.setInterval(20000);
+    connect(&d->xssTimer, &QTimer::timeout, this, [this] () {
         if (d->xss && d->display) {
             _Trace("Call XResetScreenSaver().");
             XResetScreenSaver(d->display);
         } else
             _Error("Cannot run XResetScreenSaver().");
+    });
+    connect(&d->hbTimer, &QTimer::timeout, this, [this] () {
+        if (!d->hbCommand.isEmpty()) {
+            if (QProcess::startDetached(d->hbCommand))
+                _Trace("Run command: %%", d->hbCommand);
+            else
+                _Error("Cannot run command: %%", d->hbCommand);
+        } else
+            _Error("No command for heartbeat");
     });
     d->connection = QX11Info::connection();
     d->display = QX11Info::display();
@@ -68,60 +79,78 @@ AppX11::~AppX11() {
     delete d;
 }
 
-void AppX11::setScreensaverDisabled(bool disabled) {
+auto AppX11::setHeartbeat(const QString &command, int interval) -> void
+{
+    d->hbCommand = command;
+    d->hbTimer.setInterval(interval*1000);
+}
+
+auto AppX11::setScreensaverDisabled(bool disabled) -> void
+{
     if (d->inhibit == disabled)
         return;
-    if (disabled) {
-        if (!d->iface && !d->xss) {
-            _Debug("Initialize screensaver functions.");
-            _Debug("Try to connect 'org.gnome.SessionManager'.");
-            d->iface = new QDBusInterface("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager");
-            if (!(d->gnome = d->iface->isValid())) {
-                _Debug("Failed to connect 'org.gnome.SessionManager'. Fallback to 'org.freedesktop.ScreenSaver'.");
-                delete d->iface;
-                d->iface = new QDBusInterface("org.freedesktop.ScreenSaver", "/ScreenSaver", "org.freedesktop.ScreenSaver");
-                if (!d->iface->isValid()) {
-                    _Debug("Failed to connect 'org.freedesktop.ScreenSaver'. Fallback to XResetScreenSaver().");
-                    delete d->iface;
-                    d->iface = nullptr;
-                    d->xss = true;
-                }
+    const auto heartbeat = !d->hbCommand.isEmpty();
+    if (!heartbeat && !d->iface && !d->xss) {
+        _Debug("Initialize screensaver functions.");
+        _Debug("Try to connect 'org.gnome.SessionManager'.");
+        _New(d->iface, "org.gnome.SessionManager",
+             "/org/gnome/SessionManager", "org.gnome.SessionManager");
+        if (!(d->gnome = d->iface->isValid())) {
+            _Debug("Failed to connect 'org.gnome.SessionManager'. "
+                   "Fallback to 'org.freedesktop.ScreenSaver'.");
+            _Renew(d->iface, "org.freedesktop.ScreenSaver",
+                   "/ScreenSaver", "org.freedesktop.ScreenSaver");
+            if (!d->iface->isValid()) {
+                _Debug("Failed to connect 'org.freedesktop.ScreenSaver'. "
+                       "Fallback to XResetScreenSaver().");
+                _Delete(d->iface);
+                d->xss = true;
             }
         }
-        if (d->iface) {
-            if (d->gnome)
-                d->reply = d->iface->call("Inhibit", "CMPlayer", 0u, "Running player", 4u | 8u);
-            else
-                d->reply = d->iface->call("Inhibit", "CMPlayer", "Running player");
-            if (!d->reply.isValid()) {
-                _Error("DBus '%%' error: %%", d->iface->interface(), d->reply.error().message());
-                _Error("Fallback to XResetScreenSaver().");
-                delete d->iface;
-                d->iface = nullptr;
-                d->xss = true;
-            } else
-                _Debug("Disable screensaver with '%%'.", d->iface->interface());
+    }
+    d->xssTimer.stop();
+    d->hbTimer.stop();
+    if (disabled) {
+        if (heartbeat) {
+            _Debug("Disable screensaver with external command.");
+            d->hbTimer.start();
+        } else {
+            if (d->iface) {
+                if (d->gnome)
+                    d->reply = d->iface->call("Inhibit", "CMPlayer", 0u,
+                                              "Running player", 4u | 8u);
+                else
+                    d->reply = d->iface->call("Inhibit", "CMPlayer",
+                                              "Running player");
+                if (!d->reply.isValid()) {
+                    _Error("DBus '%%' error: %%", d->iface->interface(),
+                           d->reply.error().message());
+                    _Error("Fallback to XResetScreenSaver().");
+                    _Delete(d->iface);
+                    d->xss = true;
+                } else
+                    _Debug("Disable screensaver with '%%'.",
+                           d->iface->interface());
+            }
+            if (d->xss) {
+                _Debug("Disable screensaver with XResetScreenSaver().");
+                d->xssTimer.start();
+            }
         }
-        if (d->xss) {
-            _Debug("Disable screensaver with XResetScreenSaver().");
-            d->ss_timer.start();
-        }
-    } else {
-        if (d->iface) {
-            auto response = d->iface->call(d->gnome ? "Uninhibit" : "UnInhibit", d->reply.value());
-            if (response.type() == QDBusMessage::ErrorMessage)
-                _Error("DBus '%%' error: [%%] %%", d->iface->interface(), response.errorName(), response.errorMessage());
-            else
-                _Debug("Enable screensaver with '%%'.", d->iface->interface());
-        } else if (d->xss) {
-            _Debug("Enable screensaver with XResetScreenSaver().");
-            d->ss_timer.stop();
-        }
+    } else if (d->iface) {
+        auto response = d->iface->call(d->gnome ? "Uninhibit" : "UnInhibit",
+                                       d->reply.value());
+        if (response.type() == QDBusMessage::ErrorMessage)
+            _Error("DBus '%%' error: [%%] %%", d->iface->interface(),
+                   response.errorName(), response.errorMessage());
+        else
+            _Debug("Enable screensaver with '%%'.", d->iface->interface());
     }
     d->inhibit = disabled;
 }
 
-void AppX11::setAlwaysOnTop(QWidget *widget, bool onTop) {
+auto AppX11::setAlwaysOnTop(QWidget *widget, bool onTop) -> void
+{
     if (!widget)
         return;
     xcb_client_message_event_t event;
@@ -133,11 +162,14 @@ void AppX11::setAlwaysOnTop(QWidget *widget, bool onTop) {
     event.data.data32[0] = onTop ? 1 : 0;
     event.data.data32[1] = d->aNetWmStateAbove;
     event.data.data32[2] = d->aNetWmStateStaysOnTop;
-    xcb_send_event(d->connection, 0, d->root, XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT, (const char *)&event);
+    const auto mask = XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY
+                      | XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT;
+    xcb_send_event(d->connection, 0, d->root, mask, (const char *)&event);
     xcb_flush(d->connection);
 }
 
-QStringList AppX11::devices() const {
+auto AppX11::devices() const -> QStringList
+{
     static const QStringList filter = QStringList() << _L("sr*")
         << _L("sg*") << _L("scd*") << _L("dvd*") << _L("cd*");
     QDir dir("/dev");
@@ -147,50 +179,65 @@ QStringList AppX11::devices() const {
     return devices;
 }
 
-void AppX11::setWmName(QWidget *widget, const QString &name) {
+auto AppX11::setWmName(QWidget *widget, const QString &name) -> void
+{
     d->wmName = name.toUtf8();
     char *utf8 = d->wmName.data();
     auto wid = widget->effectiveWinId();
-    if (d->connection && d->display) {
-        XTextProperty text;
-        Xutf8TextListToTextProperty(d->display, &utf8, 1, XCompoundTextStyle, &text);
-        XSetWMName(d->display, wid, &text);
-//        xcb_icccm_set_wm_name(d->x.connection, d->x.window, XCB_ATOM_STRING, 8, d->wmName.size(), d->wmName.constData());
-        const char className[] = "cmplayer\0CMPlayer";
-        xcb_icccm_set_wm_class(d->connection, wid, sizeof(className), className);
-    }
+    if (!d->connection || !d->display)
+        return;
+    XTextProperty text;
+    Xutf8TextListToTextProperty(d->display, &utf8, 1, XCompoundTextStyle, &text);
+    XSetWMName(d->display, wid, &text);
+//        xcb_icccm_set_wm_name(d->x.connection, d->x.window,
+        //XCB_ATOM_STRING, 8, d->wmName.size(), d->wmName.constData());
+    const char className[] = "cmplayer\0CMPlayer";
+    xcb_icccm_set_wm_class(d->connection, wid, sizeof(className), className);
 }
 
-bool AppX11::shutdown() {
+auto AppX11::shutdown() -> bool
+{
+    using Iface = QDBusInterface;
+    auto bus = QDBusConnection::sessionBus();
     _Debug("Try KDE session manger to shutdown.");
-    QDBusInterface kde("org.kde.ksmserver", "/KSMServer", "org.kde.KSMServerInterface", QDBusConnection::sessionBus());
+    Iface kde("org.kde.ksmserver", "/KSMServer",
+              "org.kde.KSMServerInterface", bus);
     auto response = kde.call("logout", 0, 2, 2);
-    if (response.type() != QDBusMessage::ErrorMessage)
+    auto check = [&] (const char *fmt, const char *fb) -> bool {
+        if (response.type() != QDBusMessage::ErrorMessage)
+            return true;
+        _Debug(fmt, response.errorName(), response.errorMessage());
+        _Debug(fb);
+        return false;
+    };
+    if (check("KDE session manager does not work: [%%] %%",
+              "Fallback to Gnome session manager."))
         return true;
-    _Debug("KDE session manager does not work: [%%] %%", response.errorName(), response.errorMessage());
-    _Debug("Fallback to Gnome session manager.");
-    QDBusInterface gnome("org.gnome.SessionManager", "/org/gnome/SessionManager", "org.gnome.SessionManager", QDBusConnection::sessionBus());
+    Iface gnome("org.gnome.SessionManager", "/org/gnome/SessionManager",
+                "org.gnome.SessionManager", bus);
     response = gnome.call("RequestShutdown");
-    if (response.type() != QDBusMessage::ErrorMessage)
+    if (check("Gnome session manager does not work: [%%] %%",
+              "Fallback to gnome-power-cmd.sh."))
         return true;
-    _Debug("Gnome session manager does not work: [%%] %%", response.errorName(), response.errorMessage());
-    _Debug("Fallback to gnome-power-cmd.sh.");
-    if (QProcess::startDetached("gnome-power-cmd.sh shutdown") || QProcess::startDetached("gnome-power-cmd shutdown"))
+    if (QProcess::startDetached("gnome-power-cmd.sh shutdown")
+            || QProcess::startDetached("gnome-power-cmd shutdown"))
         return true;
+    bus = QDBusConnection::systemBus();
     _Debug("gnome-power-cmd.sh does not work.");
     _Debug("Fallback to HAL.");
-    QDBusInterface hal("org.freedesktop.Hal", "/org/freedesktop/Hal/devices/computer", "org.freedesktop.Hal.Device.SystemPowerManagement", QDBusConnection::systemBus());
+    Iface hal("org.freedesktop.Hal", "/org/freedesktop/Hal/devices/computer",
+              "org.freedesktop.Hal.Device.SystemPowerManagement", bus);
     response = hal.call("Shutdown");
-    if (response.type() != QDBusMessage::ErrorMessage)
+    if (check("HAL does not work: [%%] %%",
+              "Fallback to ConsoleKit."))
         return true;
-    _Debug("HAL does not work: [%%] %%", response.errorName(), response.errorMessage());
-    _Debug("Fallback to ConsoleKit.");
-    QDBusInterface consoleKit("org.freedesktop.ConsoleKit", "/org/freedesktop/ConsoleKit/Manager", "org.freedesktop.ConsoleKit.Manager", QDBusConnection::systemBus());
+    Iface consoleKit("org.freedesktop.ConsoleKit",
+                     "/org/freedesktop/ConsoleKit/Manager",
+                     "org.freedesktop.ConsoleKit.Manager", bus);
     response = consoleKit.call("Stop");
-    if (response.type() != QDBusMessage::ErrorMessage)
+    if (check("ConsoleKit does not work: [%%] %%",
+              "Sorry, there's no way to shutdown."))
         return true;
-    _Debug("ConsoleKit does not work: [%%] %%", response.errorName(), response.errorMessage());
-    _Debug("Sorry, there's no way to shutdown.");
     return false;
 }
 

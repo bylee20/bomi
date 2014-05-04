@@ -20,16 +20,11 @@
 
 class MrlStatePropertyListModel : public SimpleListModel<MrlStateProperty> {
 public:
-    MrlStatePropertyListModel() {
-        setCheckable(0, true);
-    }
-    Qt::ItemFlags flags(int row, int column) const {
-        return Super::flags(row, column) | Qt::ItemIsUserCheckable;
-    }
-    QVariant displayData(int row, int /*column*/) const {
-        return at(row).info();
-    }
-private:
+    MrlStatePropertyListModel() { setCheckable(0, true); }
+    auto flags(int row, int column) const -> Qt::ItemFlags
+    { return Super::flags(row, column) | Qt::ItemIsUserCheckable; }
+    auto displayData(int row, int /*column*/) const -> QVariant
+    { return at(row).info(); }
 };
 
 // from clementine's preferences dialog
@@ -41,7 +36,8 @@ class PrefOpenMediaGroup : public QGroupBox {
     Q_DECLARE_TR_FUNCTIONS(PrefOpenMediaGroup)
 public:
     PrefOpenMediaGroup(const QString &title, QWidget *parent)
-    : QGroupBox(title, parent) {
+        : QGroupBox(title, parent)
+    {
         auto layout = new QVBoxLayout(this);
         start = new QCheckBox(tr("Start the playback"), this);
         playlist = new EnumComboBox<PlaylistBehaviorWhenOpenMedia>(this);
@@ -50,11 +46,13 @@ public:
         auto vbox = static_cast<QVBoxLayout*>(parent->layout());
         vbox->insertWidget(vbox->count()-1, this);
     }
-    void setValue(const Pref::OpenMedia &open) {
+    auto setValue(const Pref::OpenMedia &open) -> void
+    {
         start->setChecked(open.start_playback);
         playlist->setCurrentValue(open.playlist_behavior);
     }
-    Pref::OpenMedia value() const {return Pref::OpenMedia(start->isChecked(), playlist->currentValue());}
+    auto value() const -> Pref::OpenMedia
+    { return Pref::OpenMedia(start->isChecked(), playlist->currentValue()); }
 private:
     QCheckBox *start;
     EnumComboBox<PlaylistBehaviorWhenOpenMedia> *playlist;
@@ -66,9 +64,13 @@ class MouseActionGroupBox : public QGroupBox {
 public:
     typedef ::KeyModifier Modifier;
     typedef Pref::KeyModifierMap ActionMap;
-    MouseActionGroupBox(const QList<ActionInfo> &list, QVBoxLayout *form, QWidget *parent = 0)
-    : QGroupBox(parent), form(form) {
-        mods << Modifier::None << Modifier::Ctrl << Modifier::Shift << Modifier::Alt;
+    MouseActionGroupBox(const QList<ActionInfo> &list,
+                        QVBoxLayout *form, QWidget *parent = 0)
+        : QGroupBox(parent)
+        , form(form)
+    {
+        mods << Modifier::None << Modifier::Ctrl
+             << Modifier::Shift << Modifier::Alt;
         QGridLayout *grid = new QGridLayout(this);
         grid->setMargin(0);
         for (int i=0; i<mods.size(); ++i) {
@@ -78,17 +80,19 @@ public:
             QCheckBox *check = new QCheckBox(this);
             combos.append(combo);
             checks.append(check);
-            if (mods[i] != Modifier::None)
-                check->setText(QKeySequence((int)mods[i]).toString(QKeySequence::NativeText));
+            if (mods[i] != Modifier::None) {
+                const auto key = QKeySequence((int)mods[i]);
+                check->setText(key.toString(QKeySequence::NativeText));
+            }
             grid->addWidget(check, i, 0, 1, 1);
             grid->addWidget(combo, i, 1, 1, 1);
             combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
             combo->setEnabled(check->isChecked());
-            connect(check, SIGNAL(toggled(bool)), combo, SLOT(setEnabled(bool)));
+            connect(check, &QCheckBox::toggled, combo, &QWidget::setEnabled);
         }
         form->addWidget(this);
     }
-    void setValues(const ActionMap &map) {
+    auto setValues(const ActionMap &map) -> void {
         for (int i=0; i<mods.size(); ++i) {
             const auto info = map[mods[i]];
             const int idx = combos[i]->findData(info.id);
@@ -98,7 +102,7 @@ public:
             }
         }
     }
-    ActionMap values() const {
+    auto values() const -> ActionMap {
         ActionMap map;
         for (int i=0; i<mods.size(); ++i) {
             auto &info = map[mods[i]];
@@ -107,7 +111,7 @@ public:
         }
         return map;
     }
-    void retranslate(const QString &name) {setTitle(name);}
+    auto retranslate(const QString &name) -> void { setTitle(name); }
 private:
     QList<QComboBox*> combos;
     QList<Modifier> mods;
@@ -117,21 +121,23 @@ private:
 
 class PrefDialog::MenuTreeItem : public QTreeWidgetItem {
 public:
-    enum Column {Discription = 0, Shortcut1, Shortcut2, Shortcut3, Shortcut4, Id};
-    bool isMenu() const{return m_action->menu() != 0;}
-    bool isSeparator() const{return m_action->isSeparator();}
-    QKeySequence shortcut(int i) const {return m_shortcuts[i];}
-    void setShortcut(int idx, const QKeySequence &shortcut) {
+    enum Column {
+        Discription = 0, Shortcut1, Shortcut2, Shortcut3, Shortcut4, Id
+    };
+    auto isMenu() const -> bool { return m_action->menu() != 0; }
+    auto isSeparator() const -> bool { return m_action->isSeparator(); }
+    auto shortcut(int i) const -> QKeySequence {return m_shortcuts[i];}
+    auto setShortcut(int idx, const QKeySequence &shortcut) -> void {
         m_shortcuts[idx] = shortcut;
         setText(idx + Shortcut1, shortcut.toString(QKeySequence::NativeText));
     }
-    void setShortcuts(const QList<QKeySequence> &keys) {
+    auto setShortcuts(const QList<QKeySequence> &keys) -> void {
         for (int i = 0; i<(int)m_shortcuts.size(); ++i) {
             m_shortcuts[i] = (i < keys.size()) ? keys[i] : QKeySequence();
             setText(i+1, m_shortcuts[i].toString(QKeySequence::NativeText));
         }
     }
-    QList<QKeySequence> shortcuts() const {
+    auto shortcuts() const -> QList<QKeySequence> {
         QList<QKeySequence> shortcuts;
         for (auto key : m_shortcuts) {
             if (!key.isEmpty())
@@ -139,8 +145,9 @@ public:
         }
         return shortcuts;
     }
-    QString id() const {return m_id;}
-    static QList<MenuTreeItem*> makeRoot(QTreeWidget *parent, QList<ActionInfo> &info) {
+    auto id() const -> QString{ return m_id; }
+    static auto makeRoot(QTreeWidget *parent,
+                         QList<ActionInfo> &info) -> QList<MenuTreeItem*> {
         RootMenu &root = RootMenu::instance();
         QList<MenuTreeItem*> items;
         auto item = create(&root, items, "", info);
@@ -149,8 +156,9 @@ public:
         return items;
     }
 private:
-    static MenuTreeItem *create(Menu *menu, QList<MenuTreeItem*> &items,
-                                const QString &prefix, QList<ActionInfo> &list)
+    static auto create(Menu *menu, QList<MenuTreeItem*> &items,
+                       const QString &prefix,
+                       QList<ActionInfo> &list) -> MenuTreeItem*
     {
         RootMenu &root = RootMenu::instance();
         QList<QAction*> actions = menu->actions();
@@ -162,7 +170,8 @@ private:
                 if (action->menu()) {
                     auto menu = qobject_cast<Menu*>(action->menu());
                     Q_ASSERT(menu);
-                    if (auto child = create(menu, items, prefix % menu->title()  % " > ", list))
+                    const QString subprefix = prefix % menu->title()  % " > ";
+                    if (auto child = create(menu, items, subprefix, list))
                         children.push_back(child);
                 } else {
                     auto child = new MenuTreeItem(action, 0);
@@ -183,14 +192,17 @@ private:
         return item;
     }
     MenuTreeItem(Menu *menu, MenuTreeItem *parent)
-    : QTreeWidgetItem(parent), m_action(menu->menuAction()) {
+        : QTreeWidgetItem(parent)
+        , m_action(menu->menuAction())
+    {
         setText(Discription, menu->title());
     }
     MenuTreeItem(QAction *action, MenuTreeItem *parent)
-    : QTreeWidgetItem(parent), m_action(action) {
+        : QTreeWidgetItem(parent)
+        , m_action(action)
+    {
         Q_ASSERT(action->menu() == 0);
         setText(Discription, m_action->text());
-//        m_shortcuts.resize(4);
     }
     QAction *m_action; QString m_id;
     std::array<QKeySequence, 4> m_shortcuts;
@@ -199,23 +211,27 @@ private:
 
 class PrefDialog::Delegate : public QStyledItemDelegate {
 public:
-    Delegate(QObject* parent): QStyledItemDelegate(parent) {}
-    QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const {
+    Delegate(QObject* parent): QStyledItemDelegate(parent) { }
+    auto sizeHint(const QStyleOptionViewItem& option,
+                  const QModelIndex& index) const -> QSize {
         QSize size = QStyledItemDelegate::sizeHint(option, index);
         if (index.data(CategoryRole).toBool())
             size.rheight() *= 2;
         return size;
     }
-    void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
-        if (index.data(CategoryRole).toBool())
-            drawHeader(painter, option.rect, option.font, option.palette, index.data().toString());
+    auto paint(QPainter *p, const QStyleOptionViewItem &o,
+               const QModelIndex &idx) const -> void {
+        if (idx.data(CategoryRole).toBool())
+            drawHeader(p, o.rect, o.font, o.palette, idx.data().toString());
         else
-            QStyledItemDelegate::paint(painter, option, index);
+            QStyledItemDelegate::paint(p, o, idx);
     }
 private:
-    static const int kBarThickness = 2;
-    static const int kBarMarginTop = 3;
-    static void drawHeader(QPainter *painter, const QRect &rect, const QFont &font, const QPalette &palette, const QString &text) {
+    static constexpr int kBarThickness = 2;
+    static constexpr int kBarMarginTop = 3;
+    static auto drawHeader(QPainter *painter, const QRect &rect,
+                           const QFont &font, const QPalette &palette,
+                           const QString &text) -> void {
       painter->save();
 
       // Bold font
@@ -225,7 +241,9 @@ private:
 
       QRect text_rect(rect);
       text_rect.setHeight(metrics.height());
-      text_rect.moveTop(rect.top() + (rect.height() - text_rect.height() - kBarThickness - kBarMarginTop) / 2);
+      const auto by = (rect.height() - text_rect.height()
+                       - kBarThickness - kBarMarginTop) / 2;
+      text_rect.moveTop(rect.top() + by);
       text_rect.setLeft(text_rect.left() + 3);
 
       // Draw text
@@ -237,7 +255,8 @@ private:
       const QPoint end(rect.right(), start.y());
 
       painter->setRenderHint(QPainter::Antialiasing, true);
-      painter->setPen(QPen(palette.color(QPalette::Disabled, QPalette::Text), kBarThickness, Qt::SolidLine, Qt::RoundCap));
+      const auto color = palette.color(QPalette::Disabled, QPalette::Text);
+      painter->setPen(QPen(color, kBarThickness, Qt::SolidLine, Qt::RoundCap));
       painter->setOpacity(0.5);
       painter->drawLine(start, end);
 
@@ -246,7 +265,7 @@ private:
 };
 
 
-/********************************************************************************/
+/******************************************************************************/
 
 struct PrefDialog::Data {
     Ui::PrefDialog ui;
@@ -261,8 +280,10 @@ struct PrefDialog::Data {
     QList<MenuTreeItem*> actionItems;
     DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
     MrlStatePropertyListModel properties;
-    void updateCodecCheckBox() {
-        const auto type = static_cast<HwAcc::Type>(ui.hwacc_backend->currentData().toInt());
+    auto updateCodecCheckBox() -> void
+    {
+        const auto data = ui.hwacc_backend->currentData().toInt();
+        const auto type = static_cast<HwAcc::Type>(data);
         const auto codecs = HwAcc::fullCodecList();
         for (const auto codec : codecs) {
             auto box = hwdec[codec];
@@ -275,7 +296,20 @@ struct PrefDialog::Data {
             box->setEnabled(supported);
         }
     }
-
+    auto retranslate() -> void
+    {
+        dbl->retranslate(tr("Double Click"));
+        mdl->retranslate(tr("Middle Click"));
+        up->retranslate(tr("Scroll Up"));
+        down->retranslate(tr("Scroll Down"));
+        ui.sub_ext->setItemText(0, tr("All"));
+        properties.setList(MrlState::restorableProperties());
+    }
+    auto setShortcuts(const Shortcuts &shortcuts) -> void
+    {
+        for (auto item : actionItems)
+            item->setShortcuts(shortcuts[item->id()]);
+    }
 };
 
 PrefDialog::PrefDialog(QWidget *parent)
@@ -291,8 +325,10 @@ PrefDialog::PrefDialog(QWidget *parent)
         auto item = items.first();
         if (item->data(0, CategoryRole).toBool())
             return;
-        d->ui.page_name->setText(item->parent()->text(0) % " > " % item->text(0));
-        d->ui.stack->setCurrentWidget(item->data(0, WidgetRole).value<QWidget*>());
+        const QString text = item->parent()->text(0) % " > " % item->text(0);
+        const auto widget = item->data(0, WidgetRole).value<QWidget*>();
+        d->ui.page_name->setText(text);
+        d->ui.stack->setCurrentWidget(widget);
     });
     auto addCategory = [this] (const QString &name) {
         auto item = new QTreeWidgetItem;
@@ -304,7 +340,8 @@ PrefDialog::PrefDialog(QWidget *parent)
         return item;
     };
 
-    auto addPage = [this] (const QString &name, QWidget *widget, const QString &icon, QTreeWidgetItem *parent) {
+    auto addPage = [this] (const QString &name, QWidget *widget,
+                           const QString &icon, QTreeWidgetItem *parent) {
         auto item = new QTreeWidgetItem(parent);
         item->setText(0, name);
         item->setIcon(0, QIcon(icon));
@@ -314,56 +351,89 @@ PrefDialog::PrefDialog(QWidget *parent)
     };
 
     auto general = addCategory(tr("General"));
-    addPage(tr("Open"), d->ui.open_media, ":/img/document-open-32.png", general)->setSelected(true);
-    addPage(tr("Playback"), d->ui.playback, ":/img/media-playback-start-32.png", general);
-    addPage(tr("Behaviour"), d->ui.gen_behaviours, ":/img/preferences-system-session-services.png", general);
-    addPage(tr("Look"), d->ui.gen_appearance, ":/img/preferences-desktop-theme-32.png", general);
-    addPage(tr("Cache"), d->ui.cache, ":/img/preferences-web-browser-cache.png", general);
-//    addPage(tr("Advanced"), d->ui.advanced, ":/img/applications-education-miscellaneous-32.png", general);
+    addPage(tr("Open"), d->ui.open_media,
+            ":/img/document-open-32.png", general)->setSelected(true);
+    addPage(tr("Playback"), d->ui.playback,
+            ":/img/media-playback-start-32.png", general);
+    addPage(tr("Behaviour"), d->ui.gen_behaviours,
+            ":/img/preferences-system-session-services.png", general);
+    addPage(tr("Look"), d->ui.gen_appearance,
+            ":/img/preferences-desktop-theme-32.png", general);
+    addPage(tr("Cache"), d->ui.cache,
+            ":/img/preferences-web-browser-cache.png", general);
+//    addPage(tr("Advanced"), d->ui.advanced,
+//    ":/img/applications-education-miscellaneous-32.png", general);
 
     auto video = addCategory(tr("Video"));
-    addPage(tr("Hardware acceleration"), d->ui.video_hwacc, ":/img/apps-hardware-icon.png", video);
-    addPage(tr("Deinterlace"), d->ui.video_deint, ":/img/format-line-spacing-double.png", video);
-    addPage(tr("Video filter"), d->ui.video_filter, ":/img/draw-brush.png", video);
+    addPage(tr("Hardware acceleration"), d->ui.video_hwacc,
+            ":/img/apps-hardware-icon.png", video);
+    addPage(tr("Deinterlace"), d->ui.video_deint,
+            ":/img/format-line-spacing-double.png", video);
+    addPage(tr("Video filter"), d->ui.video_filter,
+            ":/img/draw-brush.png", video);
 
     auto audio = addCategory(tr("Audio"));
-    addPage(tr("Sound"), d->ui.audio_sound, ":/img/audio-volume-high.png", audio);
-    addPage(tr("Audio filter"), d->ui.audio_filter, ":/img/applications-multimedia.png", audio);
+    addPage(tr("Sound"), d->ui.audio_sound,
+            ":/img/audio-volume-high.png", audio);
+    addPage(tr("Audio filter"), d->ui.audio_filter,
+            ":/img/applications-multimedia.png", audio);
 
     auto subtitle = addCategory(tr("Subtitle"));
-    addPage(tr("Load"), d->ui.sub_load, ":/img/application-x-subrip-32.png", subtitle);
-    addPage(tr("Appearance"), d->ui.sub_appearance, ":/img/format-text-color-32.png", subtitle);
-    addPage(tr("Priority"), d->ui.sub_unified, ":/img/view-sort-descending-32.png", subtitle);
+    addPage(tr("Load"), d->ui.sub_load,
+            ":/img/application-x-subrip-32.png", subtitle);
+    addPage(tr("Appearance"), d->ui.sub_appearance,
+            ":/img/format-text-color-32.png", subtitle);
+    addPage(tr("Priority"), d->ui.sub_unified,
+            ":/img/view-sort-descending-32.png", subtitle);
 
     auto ui = addCategory(tr("User interface"));
-    addPage(tr("Keyboard shortcuts"), d->ui.ui_shortcut, ":/img/preferences-desktop-keyboard-32.png", ui);
-    addPage(tr("Mouse actions"), d->ui.ui_mouse, ":/img/input-mouse-32.png", ui);
-    addPage(tr("Control step"), d->ui.ui_step, ":/img/run-build-32.png", ui);
+    addPage(tr("Keyboard shortcuts"), d->ui.ui_shortcut,
+            ":/img/preferences-desktop-keyboard-32.png", ui);
+    addPage(tr("Mouse actions"), d->ui.ui_mouse,
+            ":/img/input-mouse-32.png", ui);
+    addPage(tr("Control step"), d->ui.ui_step,
+            ":/img/run-build-32.png", ui);
 
-    d->open_media_from_file_manager = new PrefOpenMediaGroup(tr("Open from file manager"), d->ui.open_media);
-    d->open_media_by_drag_and_drop = new PrefOpenMediaGroup(tr("Open by drag-and-drop"), d->ui.open_media);
+    _New(d->open_media_from_file_manager,
+         tr("Open from file manager"), d->ui.open_media);
+    _New(d->open_media_by_drag_and_drop,
+         tr("Open by drag-and-drop"), d->ui.open_media);
 
     auto vbox = new QVBoxLayout;
     vbox->setMargin(0);
 
     auto backends = HwAcc::availableBackends();
-    for (auto type : backends)
-        d->ui.hwacc_backend->addItem(HwAcc::backendDescription(type), (int)type);
+    for (auto type : backends) {
+        const auto desc = HwAcc::backendDescription(type);
+        d->ui.hwacc_backend->addItem(desc, (int)type);
+    }
 
     const auto codecs = HwAcc::fullCodecList();
     for (const auto codec : codecs)
         vbox->addWidget(d->hwdec[codec] = new QCheckBox);
     d->ui.hwdec_list->setLayout(vbox);
 
-    connect(d->ui.hwacc_backend, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged)
-        , [this] () { d->updateCodecCheckBox(); });
+    void(QComboBox::*currentIdxChanged)(int) = &QComboBox::currentIndexChanged;
+    connect(d->ui.hwacc_backend, currentIdxChanged,
+            [this] () { d->updateCodecCheckBox(); });
     d->updateCodecCheckBox();
+
+    auto checkHearbeat = [this] () {
+        const auto enable = d->ui.use_heartbeat->isChecked()
+                            && d->ui.disable_screensaver->isChecked();
+        d->ui.heartbeat_widget->setEnabled(enable);
+    };
+    const auto CheckBoxToggled = &QCheckBox::toggled;
+    connect(d->ui.use_heartbeat, CheckBoxToggled, this, checkHearbeat);
+    connect(d->ui.disable_screensaver, CheckBoxToggled, this, checkHearbeat);
 
     vbox = new QVBoxLayout;
     vbox->setMargin(0);
 
-    d->ui.deint_tabs->addTab(d->deint_swdec = new DeintWidget(DecoderDevice::CPU), tr("For S/W decoding"));
-    d->ui.deint_tabs->addTab(d->deint_hwdec = new DeintWidget(DecoderDevice::GPU), tr("For H/W decoding"));
+    d->deint_swdec = new DeintWidget(DecoderDevice::CPU);
+    d->deint_hwdec = new DeintWidget(DecoderDevice::GPU);
+    d->ui.deint_tabs->addTab(d->deint_swdec, tr("For S/W decoding"));
+    d->ui.deint_tabs->addTab(d->deint_hwdec, tr("For H/W decoding"));
     d->ui.deint_desc->setText(DeintWidget::informations());
 
     d->ui.sub_ext->addItem(QString(), QString());
@@ -427,18 +497,23 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.skin_name->addItems(Skin::names(true));
     updateSkinPath(d->ui.skin_name->currentIndex());
 
-    connect(d->ui.skin_name, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), updateSkinPath);
-    connect(d->ui.sub_autoselect, &DataComboBox::currentDataChanged, checkSubAutoselect);
-    connect(d->ui.sub_autoload, &DataComboBox::currentDataChanged, checkSubAutoselect);
-    connect(d->shortcuts, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), [this] (int idx) {
-        auto item = static_cast<MenuTreeItem*>(d->ui.shortcut_tree->currentItem());
+    connect(d->ui.skin_name, currentIdxChanged, this, updateSkinPath);
+
+    auto currentDataChanged = &DataComboBox::currentDataChanged;
+    connect(d->ui.sub_autoselect, currentDataChanged, checkSubAutoselect);
+    connect(d->ui.sub_autoload, currentDataChanged, checkSubAutoselect);
+    void(QButtonGroup::*buttonClicked)(int) = &QButtonGroup::buttonClicked;
+    connect(d->shortcuts, buttonClicked, [this] (int idx) {
+        auto treeItem = d->ui.shortcut_tree->currentItem();
+        auto item = static_cast<MenuTreeItem*>(treeItem);
         if (item && !item->isMenu()) {
             GetShortcutDialog dlg(item->shortcut(idx), this);
             if (dlg.exec())
                 item->setShortcut(idx, dlg.shortcut());
         }
     });
-    connect(d->ui.shortcut_tree, &QTreeWidget::currentItemChanged, [this] (QTreeWidgetItem *it) {
+    connect(d->ui.shortcut_tree, &QTreeWidget::currentItemChanged,
+            [this] (QTreeWidgetItem *it) {
         MenuTreeItem *item = static_cast<MenuTreeItem*>(it);
         const QList<QAbstractButton*> buttons = d->shortcuts->buttons();
         for (int i=0; i<buttons.size(); ++i)
@@ -446,19 +521,25 @@ PrefDialog::PrefDialog(QWidget *parent)
     });
 
     auto onBlurKernelChanged = [this] () {
-        d->ui.blur_sum->setText(QString::number(d->ui.blur_kern_c->value() + d->ui.blur_kern_n->value()*4 + d->ui.blur_kern_d->value()*4));
+        const auto number = d->ui.blur_kern_c->value()
+                            + d->ui.blur_kern_n->value()*4
+                            + d->ui.blur_kern_d->value()*4;
+        d->ui.blur_sum->setText(QString::number(number));
     };
     auto onSharpenKernelChanged = [this] () {
-        d->ui.sharpen_sum->setText(QString::number(d->ui.sharpen_kern_c->value() + d->ui.sharpen_kern_n->value()*4 + d->ui.sharpen_kern_d->value()*4));
+        const auto number = d->ui.sharpen_kern_c->value()
+                            + d->ui.sharpen_kern_n->value()*4
+                            + d->ui.sharpen_kern_d->value()*4;
+        d->ui.sharpen_sum->setText(QString::number(number));
     };
-    using ValueChanged = void(QSpinBox::*)(int);
-    connect(d->ui.blur_kern_c, static_cast<ValueChanged>(&QSpinBox::valueChanged), onBlurKernelChanged);
-    connect(d->ui.blur_kern_n, static_cast<ValueChanged>(&QSpinBox::valueChanged), onBlurKernelChanged);
-    connect(d->ui.blur_kern_d, static_cast<ValueChanged>(&QSpinBox::valueChanged), onBlurKernelChanged);
+    void(QSpinBox::*valueChanged)(int) = &QSpinBox::valueChanged;
+    connect(d->ui.blur_kern_c, valueChanged, onBlurKernelChanged);
+    connect(d->ui.blur_kern_n, valueChanged, onBlurKernelChanged);
+    connect(d->ui.blur_kern_d, valueChanged, onBlurKernelChanged);
 
-    connect(d->ui.sharpen_kern_c, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
-    connect(d->ui.sharpen_kern_n, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
-    connect(d->ui.sharpen_kern_d, static_cast<ValueChanged>(&QSpinBox::valueChanged), onSharpenKernelChanged);
+    connect(d->ui.sharpen_kern_c, valueChanged, onSharpenKernelChanged);
+    connect(d->ui.sharpen_kern_n, valueChanged, onSharpenKernelChanged);
+    connect(d->ui.sharpen_kern_d, valueChanged, onSharpenKernelChanged);
 
     connect(d->ui.dbb, &BBox::clicked, [this] (QAbstractButton *button) {
         switch (d->ui.dbb->standardButton(button)) {
@@ -471,18 +552,20 @@ PrefDialog::PrefDialog(QWidget *parent)
         }
     });
 
-    d->ui.shortcut_preset->addItem(tr("CMPlayer"), Pref::CMPlayer);
-    d->ui.shortcut_preset->addItem(tr("Movist"), Pref::Movist);
+    static constexpr auto cmplayer = static_cast<int>(KeyMapPreset::CMPlayer);
+    static constexpr auto movist = static_cast<int>(KeyMapPreset::Movist);
+    d->ui.shortcut_preset->addItem(tr("CMPlayer"), cmplayer);
+    d->ui.shortcut_preset->addItem(tr("Movist"), movist);
 
     connect(d->ui.load_preset, &QPushButton::clicked, [this] () {
         const int idx = d->ui.shortcut_preset->currentIndex();
         if (idx != -1) {
-            const auto preset = static_cast<Pref::ShortcutPreset>(d->ui.shortcut_preset->itemData(idx).toInt());
-            setShortcuts(Pref::preset(preset));
+            const auto data = d->ui.shortcut_preset->itemData(idx).toInt();
+            d->setShortcuts(Pref::preset(static_cast<KeyMapPreset>(data)));
         }
     });
 
-    retranslate();
+    d->retranslate();
     d->ui.restore_properties->setModel(&d->properties);
     if (!TrayIcon::isAvailable())
         d->ui.system_tray_group->hide();
@@ -508,17 +591,10 @@ PrefDialog::~PrefDialog() {
 }
 
 
-void PrefDialog::retranslate() {
-    d->dbl->retranslate(tr("Double Click"));
-    d->mdl->retranslate(tr("Middle Click"));
-    d->up->retranslate(tr("Scroll Up"));
-    d->down->retranslate(tr("Scroll Down"));
-    d->ui.sub_ext->setItemText(0, tr("All"));
-    d->properties.setList(MrlState::restorableProperties());
-}
 
 template<class T>
-static void setHw(QGroupBox *group, bool enabled, QMap<T, QCheckBox*> &map, const QList<T> &keys) {
+static void setHw(QGroupBox *group, bool enabled,
+                  QMap<T, QCheckBox*> &map, const QList<T> &keys) {
     group->setChecked(enabled);
     for (auto key : keys) {
         if (auto ch = map.value(key))
@@ -527,7 +603,8 @@ static void setHw(QGroupBox *group, bool enabled, QMap<T, QCheckBox*> &map, cons
 }
 
 template<class T>
-static void getHw(bool &enabled, QGroupBox *group, QList<T> &keys, const QMap<T, QCheckBox*> &map) {
+static void getHw(bool &enabled, QGroupBox *group,
+                  QList<T> &keys, const QMap<T, QCheckBox*> &map) {
     enabled = group->isChecked();
     keys.clear();
     for (auto it = map.begin(); it != map.end(); ++it) {
@@ -562,8 +639,12 @@ void PrefDialog::set(const Pref &p) {
     else
         d->ui.fill_bg_color->setChecked(true);
     d->ui.bg_color->setColor(p.bg_color, false);
+    d->ui.use_heartbeat->setChecked(p.use_heartbeat);
+    d->ui.heartbeat_command->setText(p.heartbeat_command);
+    d->ui.heartbeat_interval->setValue(p.heartbeat_interval);
 
-    d->ui.hwacc_backend->setCurrentIndex(d->ui.hwacc_backend->findData(p.hwaccel_backend));
+    const auto data = d->ui.hwacc_backend->findData(p.hwaccel_backend);
+    d->ui.hwacc_backend->setCurrentIndex(data);
     setHw(d->ui.enable_hwdec, p.enable_hwaccel, d->hwdec, p.hwaccel_codecs);
     d->deint_swdec->set(p.deint_swdec);
     d->deint_hwdec->set(p.deint_hwdec);
@@ -651,17 +732,14 @@ void PrefDialog::set(const Pref &p) {
     d->ui.cache_min_seeking->setValue(p.cache_min_seeking);
     d->ui.network_folders->setList(p.network_folders);
 
-    setShortcuts(p.shortcuts);
+    d->setShortcuts(p.shortcuts);
 
     QVector<bool> restores(d->properties.size(), false);
-    for (int i=0; i<d->properties.size(); ++i)
-        restores[i] = p.restore_properties.contains(d->properties.at(i).property());
+    for (int i=0; i<d->properties.size(); ++i) {
+        const auto property = d->properties.at(i).property();
+        restores[i] = p.restore_properties.contains(property);
+    }
     d->properties.setChecked(0, restores);
-}
-
-void PrefDialog::setShortcuts(const Shortcuts &shortcuts) {
-    for (auto item : d->actionItems)
-        item->setShortcuts(shortcuts[item->id()]);
 }
 
 void PrefDialog::get(Pref &p) {
@@ -687,6 +765,9 @@ void PrefDialog::get(Pref &p) {
     p.lion_style_fullscreen = d->ui.lion_style_fullscreen->isChecked();
     p.show_logo = d->ui.show_logo->isChecked();
     p.bg_color = d->ui.bg_color->color();
+    p.use_heartbeat = d->ui.use_heartbeat->isChecked();
+    p.heartbeat_command = d->ui.heartbeat_command->text();
+    p.heartbeat_interval = d->ui.heartbeat_interval->value();
 
     p.hwaccel_backend = HwAcc::Type(d->ui.hwacc_backend->currentData().toInt());
     getHw(p.enable_hwaccel, d->ui.enable_hwdec, p.hwaccel_codecs, d->hwdec);
@@ -767,7 +848,8 @@ void PrefDialog::get(Pref &p) {
 
     p.skin_name = d->ui.skin_name->currentText();
 
-    p.audio_driver = AudioDriverInfo::from(d->ui.audio_driver->currentData().toInt());
+    const auto data = d->ui.audio_driver->currentData().toInt();
+    p.audio_driver = AudioDriverInfo::from(data);
     p.clipping_method = d->ui.clipping_method->currentValue();
 
     p.cache_local = d->ui.cache_local->value();
@@ -796,7 +878,7 @@ void PrefDialog::changeEvent(QEvent *event) {
     QWidget::changeEvent(event);
     if (event->type() == QEvent::LanguageChange) {
         d->ui.retranslateUi(this);
-        retranslate();
+        d->retranslate();
     }
 }
 

@@ -11,16 +11,14 @@ class PrefDialog : public QDialog {
 public:
     PrefDialog(QWidget *parent = 0);
     ~PrefDialog();
-    void set(const Pref &pref);
-    void get(Pref &p);
+    auto set(const Pref &pref) -> void;
+    auto get(Pref &p) -> void;
 signals:
     void applyRequested();
     void resetRequested();
 private:
-    void setShortcuts(const QHash<QString, QList<QKeySequence> > &shortcuts);
     void changeEvent(QEvent *event);
     void showEvent(QShowEvent *event);
-    void retranslate();
     class MenuTreeItem;
     class Delegate;
     struct Data;

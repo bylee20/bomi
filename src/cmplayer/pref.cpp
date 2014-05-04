@@ -23,6 +23,7 @@ static QList<T> fromStringList(const QStringList &list) {
 
 QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
     QHash<QString, QList<QKeySequence> > keys;
+
     keys[_L("open/file")] << Qt::CTRL + Qt::Key_F;
     keys[_L("open/folder")] << Qt::CTRL + Qt::Key_G;
 
@@ -112,9 +113,9 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
     return keys;
 }
 
-Shortcuts Pref::preset(ShortcutPreset id) {
+Shortcuts Pref::preset(KeyMapPreset id) {
     Shortcuts keys;
-    if (id == Movist) {
+    if (id == KeyMapPreset::Movist) {
         keys[_L("open/file")] << Qt::CTRL + Qt::Key_O;
         keys[_L("window/close")] << Qt::CTRL + Qt::Key_W;
         keys[_L("tool/playlist/save")] << Qt::CTRL + Qt::Key_S << Qt::CTRL + Qt::SHIFT + Qt::Key_S;
@@ -244,6 +245,9 @@ void Pref::save() const {
     WRITE(use_mpris2);
     WRITE(show_osd_on_action);
     WRITE(show_osd_on_resized);
+    WRITE(use_heartbeat);
+    WRITE(heartbeat_command);
+    WRITE(heartbeat_interval);
 #undef WRITE
 
 #define WRITE2(a) a.save(r, #a);
@@ -363,6 +367,9 @@ void Pref::load() {
     READ(use_mpris2);
     READ(show_osd_on_action);
     READ(show_osd_on_resized);
+    READ(use_heartbeat);
+    READ(heartbeat_command);
+    READ(heartbeat_interval);
 #undef READ
 
 #define READ2(a) a.load(r, #a)
