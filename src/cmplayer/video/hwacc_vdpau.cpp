@@ -85,7 +85,7 @@ void Vdpau::initialize() {
         supports.id = codec;
         supports.profiles.push_back(p);
         supports.avProfiles.push_back(avProfile);
-        supports.surfaces = surfaces;
+        supports.surfaces = surfaces + 5;
     };
 
     push(VDP_DECODER_PROFILE_MPEG1, FF_PROFILE_UNKNOWN, AV_CODEC_ID_MPEG1VIDEO, 2);
