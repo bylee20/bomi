@@ -1,31 +1,153 @@
 #include "videofilter.hpp"
+#include "mpv_helper.hpp"
+#include "log.hpp"
+#include "hwacc.hpp"
+#include "deintinfo.hpp"
+#include "softwaredeinterlacer.hpp"
+extern "C" {
+#include <video/filter/vf.h>
+extern vf_info vf_info_noformat;
+}
 
-struct VideoFilter::Data {
-    double step(int split) {
-        if (pts == MP_NOPTS_VALUE || prev == MP_NOPTS_VALUE)
-            return 0.0;
-        const double step = (pts - prev)/double(split);
-        return (0.0 < step && step < 0.5) ? step : 0.0;
-    }
-    int i_pts = 0;
-    double pts = MP_NOPTS_VALUE, prev = MP_NOPTS_VALUE;
+DECLARE_LOG_CONTEXT(Video)
+
+struct cmplayer_vf_priv {
+    VideoFilter *vf;
+    char *address, *swdec_deint, *hwdec_deint;
 };
 
-VideoFilter::VideoFilter(): d(new Data) {}
+static auto priv(vf_instance *vf) -> VideoFilter*
+{
+    return reinterpret_cast<cmplayer_vf_priv*>(vf->priv)->vf;
+}
 
-VideoFilter::~VideoFilter() {
+auto create_vf_info() -> vf_info
+{
+#define MPV_OPTION_BASE cmplayer_vf_priv
+    static m_option options[] = {
+        MPV_OPTION(address),
+        MPV_OPTION(swdec_deint),
+        MPV_OPTION(hwdec_deint),
+        mpv::null_option
+    };
+
+    static vf_info info;
+    info.description = "CMPlayer video filter";
+    info.name = "noformat";
+    info.open = VideoFilter::open;
+    info.options = options;
+    info.priv_size = sizeof(cmplayer_vf_priv);
+    return info;
+}
+
+vf_info vf_info_noformat = create_vf_info();
+
+struct VideoFilter::Data {
+    VideoFilter *p = nullptr;
+    vf_instance *vf = nullptr;
+    DeintOption deint_swdec, deint_hwdec;
+    SoftwareDeinterlacer deinterlacer;
+    mp_image_params params;
+    HwAcc *acc = nullptr;
+    bool deint = false, hwacc = false;
+    auto updateDeint() -> void
+    {
+        DeintOption opt;
+        if (deint)
+            opt = hwacc ? deint_hwdec : deint_swdec;
+        deinterlacer.setOption(opt);
+    //    d->vaapi.setDeintOption(opt);
+        emit p->deintModeChanged(opt.method);
+    }
+};
+
+VideoFilter::VideoFilter()
+    : d(new Data)
+{
+    d->p = this;
+}
+
+VideoFilter::~VideoFilter()
+{
     delete d;
 }
 
-double VideoFilter::nextPts(int split) const {
-    return d->pts != MP_NOPTS_VALUE ? d->pts + d->i_pts++*d->step(split) : MP_NOPTS_VALUE;
+auto VideoFilter::open(vf_instance *vf) -> int
+{
+    auto priv = reinterpret_cast<cmplayer_vf_priv*>(vf->priv);
+    priv->vf = address_cast<VideoFilter*>(priv->address);
+    priv->vf->d->vf = vf;
+    auto d = priv->vf->d;
+    if (priv->swdec_deint)
+        d->deint_swdec = DeintOption::fromString(priv->swdec_deint);
+    if (priv->hwdec_deint)
+        d->deint_hwdec = DeintOption::fromString(priv->hwdec_deint);
+    d->updateDeint();
+    memset(&d->params, 0, sizeof(d->params));
+    vf->reconfig = reconfig;
+    vf->filter_ext = filter;
+    vf->query_format = queryFormat;
+    vf->uninit = uninit;
+    vf->control = control;
+    return true;
 }
 
-auto VideoFilter::setNewPts(double pts) -> void
+auto VideoFilter::reconfig(vf_instance *vf,
+                           mp_image_params *in, mp_image_params *out) -> int
 {
-    d->prev = d->pts;
-    d->i_pts = 0;
-    d->pts = pts;
-    if (d->prev != MP_NOPTS_VALUE && ((d->pts < d->prev) || (d->pts - d->prev > 0.5))) // reset
-        d->prev = MP_NOPTS_VALUE;
+    auto v = priv(vf); auto d = v->d;
+    d->params = *in;
+    *out = *in;
+    if (_Change(d->hwacc, IMGFMT_IS_HWACCEL(in->imgfmt)))
+        d->updateDeint();
+    return 0;
+}
+
+void VideoFilter::setHwAcc(HwAcc *acc)
+{
+    d->acc = acc;
+}
+
+auto VideoFilter::filter(vf_instance *vf, mp_image *mpi) -> int
+{
+    auto v = priv(vf); auto d = v->d;
+    auto img = mpi;
+    if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
+        img = d->acc->getImage(mpi);
+    d->deinterlacer.push(img);
+    if (img != mpi)
+        talloc_free(img);
+    while (auto img = d->deinterlacer.pop())
+        vf_add_output_frame(vf, img);
+    return 0;
+}
+
+auto VideoFilter::control(vf_instance *vf, int request, void* data) -> int
+{
+    auto v = priv(vf); auto d = v->d;
+    switch (request){
+    case VFCTRL_GET_DEINTERLACE:
+        *(int*)data = d->deint;
+        return true;
+    case VFCTRL_SET_DEINTERLACE:
+        if (_Change(d->deint, (bool)*(int*)data))
+            d->updateDeint();
+        return true;
+    default:
+        return CONTROL_UNKNOWN;
+    }
+}
+
+auto VideoFilter::uninit(vf_instance *vf) -> void {
+    auto v = priv(vf); auto d = v->d;
+    d->deinterlacer.clear();
+}
+
+auto queryVideoFormat(quint32 format) -> int;
+
+auto VideoFilter::queryFormat(vf_instance *vf, uint fmt) -> int
+{
+    if (queryVideoFormat(fmt))
+        return vf_next_query_format(vf, fmt);
+    return false;
 }

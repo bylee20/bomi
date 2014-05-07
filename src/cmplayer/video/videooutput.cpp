@@ -44,14 +44,12 @@ auto create_driver() -> vo_driver
     static vo_driver driver;
     driver.description = "CMPlayer video output";
     driver.name = "null";
-    driver.buffer_frames = true;
     driver.preinit = VideoOutput::preinit;
     driver.reconfig = VideoOutput::reconfig;
     driver.control = VideoOutput::control;
     driver.draw_osd = VideoOutput::drawOsd;
     driver.flip_page = VideoOutput::flipPage;
     driver.query_format = VideoOutput::queryFormat;
-    driver.get_buffered_frame = VideoOutput::getBufferedFrame;
     driver.draw_image = VideoOutput::drawImage;
     driver.uninit = VideoOutput::uninit;
     driver.options = options;
@@ -66,28 +64,14 @@ struct VideoOutput::Data {
     VideoFrame frame;
     mp_osd_res osd;
     PlayEngine *engine = nullptr;
-    bool flip = false, deint = false;
     VideoFrame::Field upsideDown = VideoFrame::None;
     VideoRendererItem *renderer = nullptr;
-    HwAcc *acc = nullptr, *prevAcc = nullptr;
+    HwAcc *acc = nullptr;
     mp_image_params params;
-    DeintOption deint_swdec, deint_hwdec;
-    SoftwareDeinterlacer deinterlacer;
     struct vo *vo = nullptr;
     QSize size, newSize;
     bool resized = false;
     QPoint mouse{-1, -1};
-//    VaApiPostProcessor vaapi;
-    auto updateDeint() -> void
-    {
-        DeintOption opt;
-        if (deint)
-            opt = acc ? deint_hwdec : deint_swdec;
-        deinterlacer.setOption(opt);
-    //    d->vaapi.setDeintOption(opt);
-        if (renderer)
-            renderer->setDeintMethod(opt.method);
-    }
     auto reset() -> void
     {
         memset(&params, 0, sizeof(params));
@@ -96,8 +80,6 @@ struct VideoOutput::Data {
         params.colorspace = MP_CSP_AUTO;
         format = VideoFormat();
         frame = VideoFrame();
-        deinterlacer.clear();
-        flip = false;
     }
 };
 
@@ -123,12 +105,6 @@ auto VideoOutput::preinit(struct vo *vo) -> int
     auto priv = static_cast<cmplayer_vo_priv*>(vo->priv);
     priv->vo = address_cast<VideoOutput*>(priv->address);
     priv->vo->d->vo = vo;
-    auto d = priv->vo->d;
-    if (priv->swdec_deint)
-        d->deint_swdec = DeintOption::fromString(priv->swdec_deint);
-    if (priv->hwdec_deint)
-        d->deint_hwdec = DeintOption::fromString(priv->hwdec_deint);
-    d->updateDeint();
     return 0;
 }
 
@@ -144,7 +120,6 @@ auto VideoOutput::setRenderer(VideoRendererItem *renderer) -> void
         if (d->renderer)
             connect(d->renderer->mpOsd(), &MpOsdItem::targetSizeChanged,
                     this, [this] (const QSize &size) { d->newSize = size; });
-        d->updateDeint();
     }
 }
 
@@ -163,41 +138,21 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
     return 0;
 }
 
-auto VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) -> void
-{
-    auto v = priv(vo); auto d = v->d;
-    auto mpi = d->deinterlacer.pop();
-    vo->frame_loaded = mpi;
-    if (vo->frame_loaded) {
-        int field = d->upsideDown;
-        if (mpi->fields & MP_IMGFIELD_TOP)
-            field |= VideoFrame::Top;
-        else if (mpi->fields & MP_IMGFIELD_BOTTOM)
-            field |= VideoFrame::Bottom;
-        else
-            field |= VideoFrame::Picture;
-        if (mpi->fields & MP_IMGFIELD_ADDITIONAL)
-            field |= VideoFrame::Additional;
-        d->frame = VideoFrame(true, mpi, field);
-        vo->next_pts = d->frame.pts();
-        if (auto next = d->deinterlacer.peekNext())
-            vo->next_pts2 = next->pts;
-    }
-    if (!d->frame.isNull() && _Change(d->format, d->frame.format()))
-        emit v->formatChanged(d->format);
-}
-
 auto VideoOutput::drawImage(struct vo *vo, mp_image *mpi) -> void
 {
     auto v = priv(vo); auto d = v->d;
-    if (_Change(d->prevAcc, d->acc))
-        d->updateDeint();
-    auto img = mpi;
-    if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
-        img = d->acc->getImage(mpi);
-    d->deinterlacer.push(img);
-    if (img != mpi)
-        talloc_free(img);
+    int field = d->upsideDown;
+    if (mpi->fields & MP_IMGFIELD_TOP)
+        field |= VideoFrame::Top;
+    else if (mpi->fields & MP_IMGFIELD_BOTTOM)
+        field |= VideoFrame::Bottom;
+    else
+        field |= VideoFrame::Picture;
+    if (mpi->fields & MP_IMGFIELD_ADDITIONAL)
+        field |= VideoFrame::Additional;
+    d->frame = VideoFrame(false, mpi, field);
+    if (!d->frame.isNull() && _Change(d->format, d->frame.format()))
+        emit v->formatChanged(d->format);
 }
 
 auto VideoOutput::control(struct vo *vo, uint32_t req, void *data) -> int
@@ -212,21 +167,8 @@ auto VideoOutput::control(struct vo *vo, uint32_t req, void *data) -> int
         const auto info = static_cast<mp_hwdec_info*>(data);
         info->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);
         return true;
-    } case VOCTRL_NEWFRAME:
-        d->flip = true;
-        return true;
-    case VOCTRL_SKIPFRAME:
-        d->flip = false;
-        return true;
-    case VOCTRL_RESET:
+    } case VOCTRL_RESET:
         d->reset();
-        return true;
-    case VOCTRL_GET_DEINTERLACE:
-        *(int*)data = d->deint;
-        return true;
-    case VOCTRL_SET_DEINTERLACE:
-        if (_Change(d->deint, (bool)*(int*)data))
-            d->updateDeint();
         return true;
     case VOCTRL_WINDOW_TO_OSD_COORDS:
         return true;
@@ -269,9 +211,6 @@ auto VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) -> void
 auto VideoOutput::flipPage(struct vo *vo) -> void
 {
     auto d = priv(vo)->d;
-    if (!d->flip)
-        return;
-    d->flip = false;
     if (d->frame.isNull())
         return;
     if (d->renderer)
@@ -280,7 +219,7 @@ auto VideoOutput::flipPage(struct vo *vo) -> void
 
 }
 
-auto VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) -> int
+auto queryVideoFormat(quint32 format) -> int
 {
     switch (format) {
     case IMGFMT_VDPAU:     case IMGFMT_VDA:       case IMGFMT_VAAPI:
@@ -300,4 +239,9 @@ auto VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) -> int
     default:
         return 0;
     }
+}
+
+auto VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) -> int
+{
+    return queryVideoFormat(format);
 }

@@ -5,6 +5,7 @@
 #include "video/videorendereritem.hpp"
 #include "subtitle/submisc.hpp"
 #include "subtitle/subtitlestyle.hpp"
+#include "video/videofilter.hpp"
 
 DECLARE_LOG_CONTEXT(Engine)
 #include <libmpv/client.h>
@@ -186,6 +187,7 @@ struct PlayEngine::Data {
     int cache = -1.0, initSeek = -1;
     mpv_handle *handle = nullptr;
     VideoOutput *video = nullptr;
+    VideoFilter *filter = nullptr;
     QByteArray hwaccCodecs;
     QList<SubtitleFileInfo> subtitleFiles;
     ChannelLayout layout = ChannelLayoutInfo::default_();
@@ -212,12 +214,21 @@ struct PlayEngine::Data {
 
     SubtitleTrackInfoObject subtitleTrackInfo;
 
-    QByteArray af() const {
+    auto af() const -> QByteArray
+    {
         OptionList af(':');
         af.add("dummy:address", audio);
         af.add("use_scaler", (int)tempoScaler);
         af.add("layout", (int)layout);
         return af.get();
+    }
+    auto vf() const -> QByteArray
+    {
+        OptionList vf(':');
+        vf.add("noformat:address", filter);
+        vf.add("swdec_deint", deint_swdec.toString().toLatin1());
+        vf.add("hwdec_deint", deint_hwdec.toString().toLatin1());
+        return vf.get();
     }
 
     double mpVolume() const { return volume*amp/10.0; }
@@ -329,10 +340,9 @@ struct PlayEngine::Data {
         opts.add("pause", p->isPaused() || hasImage);
         opts.add("af", af(), true);
         opts.add("channels", ChannelLayoutInfo::data(layout), true);
+        opts.add("vf", vf(), true);
         OptionList vo(':');
         vo.add("address", video);
-        vo.add("swdec_deint", deint_swdec.toString().toLatin1());
-        vo.add("hwdec_deint", deint_hwdec.toString().toLatin1());
         opts.add("vo", "null:" + vo.get(), true);
         _Debug("Load: %% (%%)", file, opts.get());
         tellmpv("loadfile", file.toLocal8Bit(), "replace", opts.get());
@@ -363,6 +373,7 @@ PlayEngine::PlayEngine()
     _Debug("Create audio/video plugins");
     d->audio = new AudioController(this);
     d->video = new VideoOutput(this);
+    d->filter = new VideoFilter;
 
     d->chapterInfo = new ChapterInfoObject(this, this);
     d->audioTrackInfo = new AudioTrackInfoObject(this, this);
@@ -396,13 +407,14 @@ PlayEngine::PlayEngine()
     if (!verbose.isEmpty())
         mpv_request_log_messages(d->handle, verbose.constData());
     d->setOption("fs", "no");
-    d->setOption("mouse-movements", "yes");
+//    d->setOption("input-cursor", "yes");
     d->setOption("softvol", "yes");
     d->setOption("softvol-max", "1000.0");
+//    d->setOption("sub-auto", "no");
     d->setOption("autosub", "no");
     d->setOption("osd-level", "0");
     d->setOption("quiet", "yes");
-    d->setOption("consolecontrols", "no");
+//    d->setOption("input-terminal", "no");
     d->setOption("ao", "null,");
     d->setOption("ad-lavc-downmix", "no");
     d->setOption("title", "\"\"");
@@ -437,6 +449,7 @@ PlayEngine::~PlayEngine() {
     delete d->audioTrackInfo;
     delete d->audio;
     delete d->video;
+    delete d->filter;
 //    finalizeGL();
     mpv_destroy(d->handle);
     delete d;
@@ -1343,9 +1356,12 @@ void PlayEngine::setVideoRenderer(VideoRendererItem *renderer) {
         d->rendererConnections.clear();
         d->renderer = renderer;
         d->video->setRenderer(d->renderer);
-        if (d->renderer)
+        if (d->renderer) {
             d->rendererConnections << connect(d->renderer
                 , &VideoRendererItem::droppedFramesChanged, this, &PlayEngine::droppedFramesChanged);
+            d->rendererConnections
+                    << connect(d->filter, &VideoFilter::deintModeChanged, d->renderer, &VideoRendererItem::setDeintMethod, Qt::QueuedConnection);
+        }
     }
 }
 

@@ -12,15 +12,18 @@ struct SoftwareDeinterlacer::Data {
     FFmpegPostProc pp;
     Type type = Pass;
     const VideoFrame *in = nullptr;
-
+    mutable int i_pts = 0;
+    double pts = MP_NOPTS_VALUE, prev = MP_NOPTS_VALUE;
     QLinkedList<mp_image*> pops;
 
-    mp_image *topField() const {
+    auto topField() const -> mp_image*
+    {
         auto out = pp.newImage(in->mpi());
         pp.process(out, in->mpi());
         return out;
     }
-    mp_image *bottomField() const {
+    auto bottomField() const -> mp_image*
+    {
         auto inm = in->mpi();
         auto out = pp.newImage(inm);
         inm->planes[0] += inm->stride[0];
@@ -33,6 +36,28 @@ struct SoftwareDeinterlacer::Data {
         out->h += 2;
         inm->h += 2;
         return out;
+    }
+
+    auto step(int split) const -> double
+    {
+        if (pts == MP_NOPTS_VALUE || prev == MP_NOPTS_VALUE)
+            return 0.0;
+        const double step = (pts - prev)/double(split);
+        return (0.0 < step && step < 0.5) ? step : 0.0;
+    }
+    auto nextPts(int split = 2) const -> double
+    {
+        return pts != MP_NOPTS_VALUE ? pts + i_pts++ * step(split)
+                                     : MP_NOPTS_VALUE;
+    }
+
+    auto setNewPts(double pts) -> void
+    {
+        prev = pts;
+        i_pts = 0;
+        this->pts = pts;
+        if (prev != MP_NOPTS_VALUE && ((pts < prev) || (pts - prev > 0.5))) // reset
+            prev = MP_NOPTS_VALUE;
     }
 };
 
@@ -49,21 +74,21 @@ SoftwareDeinterlacer::~SoftwareDeinterlacer()
 
 auto SoftwareDeinterlacer::push(mp_image *mpi) -> void
 {
-    setNewPts(mpi->pts);
+    d->setNewPts(mpi->pts);
     const int size = d->pops.size();
     if (mpi->fields & MP_IMGFIELD_INTERLACED) {
         switch (d->type) {
         case Mark: {
             static const int fields[] = { MP_IMGFIELD_BOTTOM, MP_IMGFIELD_TOP };
             const bool first = mpi->fields & MP_IMGFIELD_TOP_FIRST;
-            auto img = mp_image_new_ref(mpi);
-            img->fields |= fields[first];
-            img->pts = nextPts();
-            d->pops.push_back(img);
+            mpi->fields |= fields[first];
+            mpi->pts = d->nextPts();
+            d->pops.push_back(mpi);
             if (d->deint.doubler) {
-                img = mp_image_new_ref(img);
+                auto img = mp_image_new_ref(mpi);
+                img->fields &= ~(MP_IMGFIELD_BOTTOM | MP_IMGFIELD_TOP);
                 img->fields |= fields[!first] | MP_IMGFIELD_ADDITIONAL;
-                img->pts = nextPts();
+                img->pts = d->nextPts();
                 d->pops.push_back(img);
             }
             break;
@@ -73,9 +98,10 @@ auto SoftwareDeinterlacer::push(mp_image *mpi) -> void
             d->graph.push(mpi);
             while (auto out = d->graph.pull()) {
                 out->fields &= ~MP_IMGFIELD_INTERLACED;
-                out->pts = nextPts();
+                out->pts = d->nextPts();
                 d->pops.push_back(out);
             }
+            talloc_free(mpi);
             break;
         } case PP: {
             if (!d->pp.initialize(d->option, {mpi->w, mpi->h}, mpi->imgfmt))
@@ -86,18 +112,19 @@ auto SoftwareDeinterlacer::push(mp_image *mpi) -> void
                 img->levels = mpi->levels;
                 img->display_w = mpi->display_w;
                 img->display_h = mpi->display_h;
-                img->pts = nextPts();
+                img->pts = d->nextPts();
             };
             push(topFirst ? d->topField() : d->bottomField());
             if (d->deint.doubler)
                 push(!topFirst ? d->topField() : d->bottomField());
+            talloc_free(mpi);
             break;
         } default:
             break;
         }
     }
     if (size == d->pops.size())
-        d->pops.push_back(mp_image_new_ref(mpi));
+        d->pops.push_back(mpi);
 }
 
 auto SoftwareDeinterlacer::pop() -> mp_image*
@@ -111,7 +138,8 @@ void SoftwareDeinterlacer::setOption(const DeintOption &deint) {
     d->option.clear();
     if (d->deint.method == DeintMethod::None) {
         d->type = Pass;
-    } else if (deint.device == DeintDevice::OpenGL || d->deint.device == DeintDevice::GPU) {
+    } else if (deint.device == DeintDevice::OpenGL
+               || d->deint.device == DeintDevice::GPU) {
         d->type = Mark;
     } else {
         d->type = PP;

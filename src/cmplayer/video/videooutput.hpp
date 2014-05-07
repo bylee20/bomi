@@ -34,7 +34,6 @@ private:
     static auto drawOsd(struct vo *vo, struct osd_state *osd) -> void;
     static auto flipPage(struct vo *vo) -> void;
     static auto drawImage(struct vo *vo, mp_image *mpi) -> void;
-    static auto getBufferedFrame(struct vo *vo, bool eof) -> void;
     struct Data;
     Data *d;
     friend auto create_driver() -> vo_driver;
