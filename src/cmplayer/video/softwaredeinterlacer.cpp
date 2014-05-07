@@ -11,30 +11,10 @@ struct SoftwareDeinterlacer::Data {
     FFmpegFilterGraph graph;
     FFmpegPostProc pp;
     Type type = Pass;
-    double prev = MP_NOPTS_VALUE;
     const VideoFrame *in = nullptr;
-    QLinkedList<VideoFrame> *queue = nullptr;
-    int pushed = 0;
-    void push(mp_image *mpi) {
-        mpi->colorspace = in->format().colorspace();
-        mpi->levels = in->format().range();
-        mpi->display_w = in->format().displaySize().width();
-        mpi->display_h = in->format().displaySize().height();
-        mpi->pts = p->nextPTS();
-        queue->push_back(VideoFrame(true, mpi, in->field()));
-        ++pushed;
-    }
-    void push(int field) {
-        queue->push_back(VideoFrame(false, in->mpi(), p->nextPTS(), field | (in->field() & ~VideoFrame::Interlaced)));
-        ++pushed;
-    }
-    void tryGraph() {
-        if (type != Graph || !graph.initialize(option, in->format().size(), in->format().imgfmt())
-                || !graph.push(in->mpi()))
-            return;
-        while (auto out = graph.pull())
-            push(out);
-    }
+
+    QLinkedList<mp_image*> pops;
+
     mp_image *topField() const {
         auto out = pp.newImage(in->mpi());
         pp.process(out, in->mpi());
@@ -54,48 +34,75 @@ struct SoftwareDeinterlacer::Data {
         inm->h += 2;
         return out;
     }
-    void tryPostProc() {
-        if (type != PP || !pp.initialize(option, in->format().size(), in->format().imgfmt()))
-            return;
-        const bool topFirst = in->mpi()->fields & MP_IMGFIELD_TOP_FIRST;
-        push(topFirst ? topField() : bottomField());
-        if (deint.doubler)
-            push(!topFirst ? topField() : bottomField());
-    }
-    void split() {
-        static const VideoFrame::Field field[] = {VideoFrame::Bottom, VideoFrame::Top};
-        const bool topFirst = in->mpi()->fields & MP_IMGFIELD_TOP_FIRST;
-        push(field[topFirst]);
-        if (deint.doubler)
-            push(field[!topFirst] | VideoFrame::Additional);
-    }
 };
 
-SoftwareDeinterlacer::SoftwareDeinterlacer(): d(new Data) { d->p = this; }
+SoftwareDeinterlacer::SoftwareDeinterlacer()
+    : d(new Data)
+{
+    d->p = this;
+}
 
-SoftwareDeinterlacer::~SoftwareDeinterlacer() { delete d; }
+SoftwareDeinterlacer::~SoftwareDeinterlacer()
+{
+    delete d;
+}
 
-bool SoftwareDeinterlacer::process(const VideoFrame &in, QLinkedList<VideoFrame> &queue) {
-    if (!(in.mpi()->fields & MP_IMGFIELD_INTERLACED))
-        return 0;
-    if (d->prev != MP_NOPTS_VALUE && ((in.pts() < d->prev) || (in.pts() - d->prev > 0.5))) // reset
-        d->prev = MP_NOPTS_VALUE;
-    d->in = &in;
-    d->queue = &queue;
-    switch (d->type) {
-    case Mark:
-        d->split();
-        break;
-    case Graph:
-        d->tryGraph();
-        break;
-    case PP:
-        d->tryPostProc();
-        break;
-    default:
-        return 0;
+auto SoftwareDeinterlacer::push(mp_image *mpi) -> void
+{
+    setNewPts(mpi->pts);
+    const int size = d->pops.size();
+    if (mpi->fields & MP_IMGFIELD_INTERLACED) {
+        switch (d->type) {
+        case Mark: {
+            static const int fields[] = { MP_IMGFIELD_BOTTOM, MP_IMGFIELD_TOP };
+            const bool first = mpi->fields & MP_IMGFIELD_TOP_FIRST;
+            auto img = mp_image_new_ref(mpi);
+            img->fields |= fields[first];
+            img->pts = nextPts();
+            d->pops.push_back(img);
+            if (d->deint.doubler) {
+                img = mp_image_new_ref(img);
+                img->fields |= fields[!first] | MP_IMGFIELD_ADDITIONAL;
+                img->pts = nextPts();
+                d->pops.push_back(img);
+            }
+            break;
+        } case Graph: {
+            if (!d->graph.initialize(d->option, {mpi->w, mpi->h}, mpi->imgfmt))
+                break;
+            d->graph.push(mpi);
+            while (auto out = d->graph.pull()) {
+                out->fields &= ~MP_IMGFIELD_INTERLACED;
+                out->pts = nextPts();
+                d->pops.push_back(out);
+            }
+            break;
+        } case PP: {
+            if (!d->pp.initialize(d->option, {mpi->w, mpi->h}, mpi->imgfmt))
+                break;
+            const bool topFirst = mpi->fields & MP_IMGFIELD_TOP_FIRST;
+            auto push = [mpi, this] (mp_image *img) {
+                img->colorspace = mpi->colorspace;
+                img->levels = mpi->levels;
+                img->display_w = mpi->display_w;
+                img->display_h = mpi->display_h;
+                img->pts = nextPts();
+            };
+            push(topFirst ? d->topField() : d->bottomField());
+            if (d->deint.doubler)
+                push(!topFirst ? d->topField() : d->bottomField());
+            break;
+        } default:
+            break;
+        }
     }
-    return d->pushed;
+    if (size == d->pops.size())
+        d->pops.push_back(mp_image_new_ref(mpi));
+}
+
+auto SoftwareDeinterlacer::pop() -> mp_image*
+{
+    return d->pops.isEmpty() ? nullptr : d->pops.takeFirst();
 }
 
 void SoftwareDeinterlacer::setOption(const DeintOption &deint) {
@@ -130,4 +137,16 @@ void SoftwareDeinterlacer::setOption(const DeintOption &deint) {
             break;
         }
     }
+}
+
+auto SoftwareDeinterlacer::peekNext() -> const mp_image* const
+{
+    return d->pops.isEmpty() ? nullptr : d->pops.front();
+}
+
+auto SoftwareDeinterlacer::clear() -> void
+{
+    for (auto mpi : d->pops)
+        talloc_free(mpi);
+    d->pops.clear();
 }

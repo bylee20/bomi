@@ -7,6 +7,8 @@
 
 class DeintOption;        struct mp_image;
 
+static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
+
 class SoftwareDeinterlacer final : public VideoFilter {
     enum Type {Graph, PP, Mark, Pass};
 public:
@@ -15,8 +17,10 @@ public:
     SoftwareDeinterlacer(const SoftwareDeinterlacer &other) = delete;
     SoftwareDeinterlacer &operator = (const SoftwareDeinterlacer &rhs) = delete;
     void setOption(const DeintOption &deint);
-protected:
-    bool process(const VideoFrame &in, QLinkedList<VideoFrame> &queue) override;
+    auto push(mp_image *mpi) -> void;
+    auto pop() -> mp_image*;
+    auto clear() -> void;
+    auto peekNext() -> const mp_image* const;
 private:
     static double ptsStep(double pts, double prev, int split = 2) {
         if (pts == MP_NOPTS_VALUE || prev == MP_NOPTS_VALUE)

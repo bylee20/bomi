@@ -16,33 +16,28 @@ class VideoOutput : public QObject {
     Q_OBJECT
 public:
     VideoOutput(PlayEngine *engine);
-    ~VideoOutput();
-    void prepare(void *avctx);
-    void release();
-    const VideoFormat &format() const;
-    void setRenderer(VideoRendererItem *renderer);
-    void output(const QImage &image);
-    void setHwAcc(HwAcc *acc);
-    static int queryFormat(struct vo *vo, quint32 format);
+    ~VideoOutput() override;
+    auto prepare(void *avctx) -> void;
+    auto release() -> void;
+    auto format() const -> const VideoFormat&;
+    auto setRenderer(VideoRendererItem *renderer) -> void;
+    auto output(const QImage &image) -> void;
+    auto setHwAcc(HwAcc *acc) -> void;
+    static auto queryFormat(struct vo *vo, quint32 format) -> int;
 signals:
     void formatChanged(VideoFormat format);
-private slots:
-    void setFrameRect(const QRectF &rect);
-    void setTargetSize(const QSize &size);
 private:
-    void updateDeint();
-    void reset();
-    static int preinit(struct vo *vo);
-    static void uninit(struct vo */*vo*/) {}
-    static int reconfig(struct vo *out, struct mp_image_params *params, int flags);
-    static int control(struct vo *vo, quint32 request, void *data);
-    static void drawOsd(struct vo *vo, struct osd_state *osd);
-    static void flipPage(struct vo *vo);
-    static void drawImage(struct vo *vo, mp_image *mpi);
-    static void getBufferedFrame(struct vo *vo, bool eof);
+    static auto preinit(struct vo *vo) -> int;
+    static auto uninit(struct vo */*vo*/) -> void {}
+    static auto reconfig(struct vo *out, mp_image_params *p, int flags) -> int;
+    static auto control(struct vo *vo, quint32 request, void *data) -> int;
+    static auto drawOsd(struct vo *vo, struct osd_state *osd) -> void;
+    static auto flipPage(struct vo *vo) -> void;
+    static auto drawImage(struct vo *vo, mp_image *mpi) -> void;
+    static auto getBufferedFrame(struct vo *vo, bool eof) -> void;
     struct Data;
     Data *d;
-    friend vo_driver create_driver();
+    friend auto create_driver() -> vo_driver;
 };
 
 #endif // VIDEOOUTPUT_HPP

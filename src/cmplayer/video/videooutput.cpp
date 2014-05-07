@@ -23,11 +23,16 @@ extern "C" {
 struct cmplayer_vo_priv {
     VideoOutput *vo; char *address, *swdec_deint, *hwdec_deint;
 };
-static VideoOutput *priv(struct vo *vo) { return static_cast<cmplayer_vo_priv*>(vo->priv)->vo; }
+
+static auto priv(struct vo *vo) -> VideoOutput*
+{
+    return static_cast<cmplayer_vo_priv*>(vo->priv)->vo;
+}
 
 DECLARE_LOG_CONTEXT(Video)
 
-vo_driver create_driver() {
+auto create_driver() -> vo_driver
+{
 #define MPV_OPTION_BASE cmplayer_vo_priv
     static m_option options[] = {
         MPV_OPTION(address),
@@ -65,7 +70,6 @@ struct VideoOutput::Data {
     VideoFrame::Field upsideDown = VideoFrame::None;
     VideoRendererItem *renderer = nullptr;
     HwAcc *acc = nullptr, *prevAcc = nullptr;
-    QLinkedList<VideoFrame> queue;
     mp_image_params params;
     DeintOption deint_swdec, deint_hwdec;
     SoftwareDeinterlacer deinterlacer;
@@ -74,32 +78,48 @@ struct VideoOutput::Data {
     bool resized = false;
     QPoint mouse{-1, -1};
 //    VaApiPostProcessor vaapi;
+    auto updateDeint() -> void
+    {
+        DeintOption opt;
+        if (deint)
+            opt = acc ? deint_hwdec : deint_swdec;
+        deinterlacer.setOption(opt);
+    //    d->vaapi.setDeintOption(opt);
+        if (renderer)
+            renderer->setDeintMethod(opt.method);
+    }
+    auto reset() -> void
+    {
+        memset(&params, 0, sizeof(params));
+        memset(&osd, 0, sizeof(osd));
+        params.colorlevels = MP_CSP_LEVELS_AUTO;
+        params.colorspace = MP_CSP_AUTO;
+        format = VideoFormat();
+        frame = VideoFrame();
+        deinterlacer.clear();
+        flip = false;
+    }
 };
 
-VideoOutput::VideoOutput(PlayEngine *engine): d(new Data) {
-    reset();
+VideoOutput::VideoOutput(PlayEngine *engine)
+    : d(new Data)
+{
+    d->reset();
     d->engine = engine;
 }
 
-VideoOutput::~VideoOutput() {
+VideoOutput::~VideoOutput()
+{
     delete d;
 }
 
-void VideoOutput::setTargetSize(const QSize &size) {
-    if (d->vo)
-        d->newSize = size;
-}
-
-void VideoOutput::setFrameRect(const QRectF &rect) {
-    if (d->vo)
-        d->newSize = rect.size().toSize();
-}
-
-void VideoOutput::setHwAcc(HwAcc *acc) {
+void VideoOutput::setHwAcc(HwAcc *acc)
+{
     d->acc = acc;
 }
 
-int VideoOutput::preinit(struct vo *vo) {
+auto VideoOutput::preinit(struct vo *vo) -> int
+{
     auto priv = static_cast<cmplayer_vo_priv*>(vo->priv);
     priv->vo = address_cast<VideoOutput*>(priv->address);
     priv->vo->d->vo = vo;
@@ -108,108 +128,105 @@ int VideoOutput::preinit(struct vo *vo) {
         d->deint_swdec = DeintOption::fromString(priv->swdec_deint);
     if (priv->hwdec_deint)
         d->deint_hwdec = DeintOption::fromString(priv->hwdec_deint);
-    priv->vo->updateDeint();
+    d->updateDeint();
     return 0;
 }
 
-void VideoOutput::output(const QImage &image) {
+auto VideoOutput::output(const QImage &image) -> void
+{
     if (d->renderer)
         d->renderer->present(image);
 }
 
-void VideoOutput::setRenderer(VideoRendererItem *renderer) {
+auto VideoOutput::setRenderer(VideoRendererItem *renderer) -> void
+{
     if (_Change(d->renderer, renderer)) {
         if (d->renderer)
-            connect(d->renderer->mpOsd(), &MpOsdItem::targetSizeChanged, this, &VideoOutput::setTargetSize);
-        updateDeint();
+            connect(d->renderer->mpOsd(), &MpOsdItem::targetSizeChanged,
+                    this, [this] (const QSize &size) { d->newSize = size; });
+        d->updateDeint();
     }
 }
 
-const VideoFormat &VideoOutput::format() const {
+auto VideoOutput::format() const -> const VideoFormat&
+{
     return d->format;
 }
 
-void VideoOutput::updateDeint() {
-    DeintOption opt;
-    if (d->deint)
-        opt = d->acc ? d->deint_hwdec : d->deint_swdec;
-    d->deinterlacer.setOption(opt);
-//    d->vaapi.setDeintOption(opt);
-    if (d->renderer)
-        d->renderer->setDeintMethod(opt.method);
-}
-
-void VideoOutput::reset() {
-    memset(&d->params, 0, sizeof(d->params));
-    memset(&d->osd, 0, sizeof(d->osd));
-    d->params.colorlevels = MP_CSP_LEVELS_AUTO;
-    d->params.colorspace = MP_CSP_AUTO;
-    d->format = VideoFormat();
-    d->frame = VideoFrame();
-    d->queue.clear();
-    d->flip = false;
-}
-
-int VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) {
+auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
+{
     auto v = priv(out); auto d = v->d;
-    v->reset();
-    d->upsideDown = (flags & VOFLAG_FLIPPING) ? VideoFrame::Flipped : VideoFrame::None;
+    d->reset();
+    d->upsideDown = (flags & VOFLAG_FLIPPING) ? VideoFrame::Flipped
+                                              : VideoFrame::None;
     d->params = *params;
     return 0;
 }
 
-void VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) {
+auto VideoOutput::getBufferedFrame(struct vo *vo, bool /*eof*/) -> void
+{
     auto v = priv(vo); auto d = v->d;
-    vo->frame_loaded = !d->queue.isEmpty();
+    auto mpi = d->deinterlacer.pop();
+    vo->frame_loaded = mpi;
     if (vo->frame_loaded) {
-        d->frame.swap(d->queue.first());
-        d->queue.pop_front();
+        int field = d->upsideDown;
+        if (mpi->fields & MP_IMGFIELD_TOP)
+            field |= VideoFrame::Top;
+        else if (mpi->fields & MP_IMGFIELD_BOTTOM)
+            field |= VideoFrame::Bottom;
+        else
+            field |= VideoFrame::Picture;
+        if (mpi->fields & MP_IMGFIELD_ADDITIONAL)
+            field |= VideoFrame::Additional;
+        d->frame = VideoFrame(true, mpi, field);
         vo->next_pts = d->frame.pts();
-        if (!d->queue.isEmpty())
-            vo->next_pts2 = d->queue.front().pts();
+        if (auto next = d->deinterlacer.peekNext())
+            vo->next_pts2 = next->pts;
     }
     if (!d->frame.isNull() && _Change(d->format, d->frame.format()))
         emit v->formatChanged(d->format);
 }
 
-void VideoOutput::drawImage(struct vo *vo, mp_image *mpi) {
+auto VideoOutput::drawImage(struct vo *vo, mp_image *mpi) -> void
+{
     auto v = priv(vo); auto d = v->d;
     if (_Change(d->prevAcc, d->acc))
-        v->updateDeint();
+        d->updateDeint();
     auto img = mpi;
     if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
         img = d->acc->getImage(mpi);
-    VideoFrame in(img != mpi, img, d->upsideDown | (img->fields & MP_IMGFIELD_INTERLACED ? VideoFrame::Top : VideoFrame::Picture));
-//    if (IMGFMT_IS_VAAPI(mpi->imgfmt) && d->vaapi.apply(in, d->queue))
-//        return;
-    if (!d->deinterlacer.apply(in, d->queue))
-        d->queue.push_back(in);
+    d->deinterlacer.push(img);
+    if (img != mpi)
+        talloc_free(img);
 }
 
-int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
+auto VideoOutput::control(struct vo *vo, uint32_t req, void *data) -> int
+{
     auto v = priv(vo); auto d = v->d;
     switch (req) {
-    case VOCTRL_REDRAW_FRAME:
-        qApp->postEvent(d->renderer, new QEvent(static_cast<QEvent::Type>(Rerender)));
+    case VOCTRL_REDRAW_FRAME: {
+        auto event = new QEvent(static_cast<QEvent::Type>(Rerender));
+        qApp->postEvent(d->renderer, event);
         return true;
-    case VOCTRL_GET_HWDEC_INFO:
-        static_cast<mp_hwdec_info*>(data)->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);
+    } case VOCTRL_GET_HWDEC_INFO: {
+        const auto info = static_cast<mp_hwdec_info*>(data);
+        info->vdpau_ctx = (mp_vdpau_ctx*)(void*)(v);
         return true;
-    case VOCTRL_NEWFRAME:
+    } case VOCTRL_NEWFRAME:
         d->flip = true;
         return true;
     case VOCTRL_SKIPFRAME:
         d->flip = false;
         return true;
     case VOCTRL_RESET:
-        v->reset();
+        d->reset();
         return true;
     case VOCTRL_GET_DEINTERLACE:
         *(int*)data = d->deint;
         return true;
     case VOCTRL_SET_DEINTERLACE:
         if (_Change(d->deint, (bool)*(int*)data))
-            v->updateDeint();
+            d->updateDeint();
         return true;
     case VOCTRL_WINDOW_TO_OSD_COORDS:
         return true;
@@ -228,7 +245,8 @@ int VideoOutput::control(struct vo *vo, uint32_t req, void *data) {
 
 }
 
-void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
+auto VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) -> void
+{
     static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
     static auto cb = [] (void *pctx, struct sub_bitmaps *imgs) {
         static_cast<MpOsdItem*>(pctx)->drawOn(imgs);
@@ -248,7 +266,8 @@ void VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) {
     }
 }
 
-void VideoOutput::flipPage(struct vo *vo) {
+auto VideoOutput::flipPage(struct vo *vo) -> void
+{
     auto d = priv(vo)->d;
     if (!d->flip)
         return;
@@ -261,21 +280,22 @@ void VideoOutput::flipPage(struct vo *vo) {
 
 }
 
-int VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) {
+auto VideoOutput::queryFormat(struct vo */*vo*/, uint32_t format) -> int
+{
     switch (format) {
-    case IMGFMT_VDPAU:    case IMGFMT_VDA:    case IMGFMT_VAAPI:
-    case IMGFMT_420P:    case IMGFMT_444P:
-    case IMGFMT_420P16_LE:    case IMGFMT_420P16_BE:
-    case IMGFMT_420P14_LE:    case IMGFMT_420P14_BE:
-    case IMGFMT_420P12_LE:    case IMGFMT_420P12_BE:
-    case IMGFMT_420P10_LE:    case IMGFMT_420P10_BE:
-    case IMGFMT_420P9_LE:    case IMGFMT_420P9_BE:
-    case IMGFMT_NV12:        case IMGFMT_NV21:
-    case IMGFMT_YUYV:        case IMGFMT_UYVY:
-    case IMGFMT_BGRA:        case IMGFMT_RGBA:
-    case IMGFMT_ARGB:        case IMGFMT_ABGR:
-    case IMGFMT_BGR0:        case IMGFMT_RGB0:
-    case IMGFMT_0RGB:        case IMGFMT_0BGR:
+    case IMGFMT_VDPAU:     case IMGFMT_VDA:       case IMGFMT_VAAPI:
+    case IMGFMT_420P:      case IMGFMT_444P:
+    case IMGFMT_420P16_LE: case IMGFMT_420P16_BE:
+    case IMGFMT_420P14_LE: case IMGFMT_420P14_BE:
+    case IMGFMT_420P12_LE: case IMGFMT_420P12_BE:
+    case IMGFMT_420P10_LE: case IMGFMT_420P10_BE:
+    case IMGFMT_420P9_LE:  case IMGFMT_420P9_BE:
+    case IMGFMT_NV12:      case IMGFMT_NV21:
+    case IMGFMT_YUYV:      case IMGFMT_UYVY:
+    case IMGFMT_BGRA:      case IMGFMT_RGBA:
+    case IMGFMT_ARGB:      case IMGFMT_ABGR:
+    case IMGFMT_BGR0:      case IMGFMT_RGB0:
+    case IMGFMT_0RGB:      case IMGFMT_0BGR:
         return VFCAP_CSP_SUPPORTED | VFCAP_CSP_SUPPORTED_BY_HW;
     default:
         return 0;

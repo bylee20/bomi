@@ -17,16 +17,15 @@ VideoFilter::~VideoFilter() {
     delete d;
 }
 
-double VideoFilter::nextPTS(int split) const {
+double VideoFilter::nextPts(int split) const {
     return d->pts != MP_NOPTS_VALUE ? d->pts + d->i_pts++*d->step(split) : MP_NOPTS_VALUE;
 }
 
-bool VideoFilter::apply(const VideoFrame &in, QLinkedList<VideoFrame> &queue) {
+auto VideoFilter::setNewPts(double pts) -> void
+{
+    d->prev = d->pts;
     d->i_pts = 0;
-    d->pts = in.pts();
+    d->pts = pts;
     if (d->prev != MP_NOPTS_VALUE && ((d->pts < d->prev) || (d->pts - d->prev > 0.5))) // reset
         d->prev = MP_NOPTS_VALUE;
-    const auto ret = process(in, queue);
-    d->prev = d->pts;
-    return ret;
 }

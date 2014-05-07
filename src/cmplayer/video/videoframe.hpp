@@ -11,10 +11,10 @@
 class VideoFrame {
 public:
     enum Field {None = 0, Picture = 0, Top = 1, Bottom = 2, Interlaced = Top | Bottom, Additional = 4, Flipped = 8};
-    VideoFrame(bool free, mp_image *mpi, const VideoFormat &format, double pts, int field = Picture): d(new Data(free, mpi, format, pts, field)) {}
-    VideoFrame(bool free, mp_image *mpi, double pts, int field = Picture): d(new Data(free, mpi, VideoFormat(mpi), pts, field)) {}
-    VideoFrame(bool free, mp_image *mpi, int field = Picture): d(new Data(free, mpi, VideoFormat(mpi), mpi->pts, field)) {}
-    VideoFrame(bool free, mp_image *mpi, const VideoFormat &format, int field = Picture): d(new Data(free, mpi, format, mpi->pts, field)) {}
+    VideoFrame(bool take, mp_image *mpi, const VideoFormat &format, double pts, int field = Picture): d(new Data(take, mpi, format, pts, field)) {}
+    VideoFrame(bool take, mp_image *mpi, double pts, int field = Picture): d(new Data(take, mpi, VideoFormat(mpi), pts, field)) {}
+    VideoFrame(bool take, mp_image *mpi, int field = Picture): d(new Data(take, mpi, VideoFormat(mpi), mpi->pts, field)) {}
+    VideoFrame(bool take, mp_image *mpi, const VideoFormat &format, int field = Picture): d(new Data(take, mpi, format, mpi->pts, field)) {}
     VideoFrame(const QImage &image): d(new Data(image)) {}
     VideoFrame(): d(new Data) {}
     VideoFrame(VideoFrame &&other): d(nullptr) { d.swap(other.d); }

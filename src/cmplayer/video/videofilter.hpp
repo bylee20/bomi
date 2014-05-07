@@ -14,12 +14,9 @@ public:
     VideoFilter(const VideoFilter &) = delete;
     VideoFilter &operator = (const VideoFilter &) = delete;
     virtual ~VideoFilter();
-    bool apply(const VideoFrame &in, QLinkedList<VideoFrame> &queue);
 protected:
-    double nextPTS(int split = 2) const;
-    virtual bool process(const VideoFrame &in, QLinkedList<VideoFrame> &queue) {
-        Q_UNUSED(in); Q_UNUSED(queue); return 0;
-    }
+    auto setNewPts(double pts) -> void;
+    double nextPts(int split = 2) const;
     struct Data;
     Data *d;
 };
