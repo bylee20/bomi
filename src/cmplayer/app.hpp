@@ -11,37 +11,34 @@ class App : public QApplication {
 public:
     App(int &argc, char **argv);
     ~App();
-    static QIcon defaultIcon();
-    void setWindowTitle(QWidget *w, const QString &title);
-    void setMainWindow(MainWindow *mw);
-    MainWindow *mainWindow() const;
-    QStringList devices() const;
-    QString styleName() const;
-    bool isUnique() const;
-    QStringList availableStyleNames() const;
+    auto setWindowTitle(QWidget *w, const QString &title) -> void;
+    auto setMainWindow(MainWindow *mw) -> void;
+    auto mainWindow() const -> MainWindow*;
+    auto devices() const -> QStringList;
+    auto styleName() const -> QString;
+    auto isUnique() const -> bool;
+    auto availableStyleNames() const -> QStringList;
 #ifdef Q_OS_MAC
     QMenuBar *globalMenuBar() const;
 #endif
-    void setStyleName(const QString &name);
-    void setLocale(const QLocale &locale);
-    QLocale locale() const;
-    void setAlwaysOnTop(QWidget *widget, bool onTop);
-    void setScreensaverDisabled(bool disabled);
-    void setHeartbeat(const QString &command, int interval);
-    void setUnique(bool unique);
-    bool shutdown();
-    void runCommands();
-    bool isOpenGLDebugLoggerRequested() const;
-    void setMprisActivated(bool activated);
-public slots:
-    bool sendMessage(const QString &message, int timeout = 5000);
+    auto setStyleName(const QString &name) -> void;
+    auto setLocale(const QLocale &locale) -> void;
+    auto locale() const -> QLocale;
+    auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
+    auto setScreensaverDisabled(bool disabled) -> void;
+    auto setHeartbeat(const QString &command, int interval) -> void;
+    auto setUnique(bool unique) -> void;
+    auto shutdown() -> bool;
+    auto runCommands() -> void;
+    auto isOpenGLDebugLoggerRequested() const -> bool;
+    auto setMprisActivated(bool activated) -> void;
+    auto sendMessage(const QString &message, int timeout = 5000) -> bool;
+    static auto defaultIcon() -> QIcon;
 signals:
     void messageReceived(const QString &message);
 private:
     static constexpr int ReopenEvent = QEvent::User + 1;
-    App(const App&) = delete;
-    App &operator = (const App&) = delete;
-    bool event(QEvent *event);
+    auto event(QEvent *event) -> bool;
     struct Data;
     Data *d = nullptr;
 };
@@ -53,8 +50,8 @@ class LocalConnection : public QObject {
 public:
     LocalConnection(const QString &id, QObject *parent = 0);
     ~LocalConnection();
-    bool runServer();
-    bool sendMessage(const QString &message, int timeout);
+    auto runServer() -> bool;
+    auto sendMessage(const QString &message, int timeout) -> bool;
 signals:
     void messageReceived(const QString &message);
 private:

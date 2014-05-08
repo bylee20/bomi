@@ -7,24 +7,22 @@
 #include "mediamisc.hpp"
 #include <functional>
 
-class VideoRendererItem;    struct MPContext;
-class VideoFormat;            struct mp_cmd;
-class PlaylistModel;        class Playlist;
-class DeintOption;            class ChannelLayoutMap;
-enum class AudioDriver;        enum class ClippingMethod;
-enum class DeintMethod;        enum class DeintMode;
-enum class ChannelLayout;    struct SubtitleFileInfo;
-struct mpv_event;            class AudioFormat;
-class MetaData;                class SubtitleStyle;
-
-typedef QLinkedList<QString> FilterList;
+class VideoRendererItem;                class VideoFormat;
+class DeintOption;                      class ChannelLayoutMap;
+class AudioFormat;
+class MetaData;                         class SubtitleStyle;
+struct AudioNormalizerOption;           struct SubtitleFileInfo;
+enum class AudioDriver;                 enum class ClippingMethod;
+enum class DeintMethod;                 enum class DeintMode;
+enum class ChannelLayout;               class VideoColor;
+enum class ColorRange;                  enum class InterpolatorType;
 
 struct StartInfo {
     StartInfo() {}
     StartInfo(const Mrl &mrl): mrl(mrl) {}
     Mrl mrl;
     int resume = -1, cache = -1, edition = -1;
-    bool isValid() const
+    auto isValid() const -> bool
     { return (!mrl.isEmpty() || mrl.isDisc()) && resume >= 0 && cache >= 0; }
 };
 
@@ -65,123 +63,127 @@ class PlayEngine : public QObject {
     Q_PROPERTY(AudioTrackInfoObject *audioTrack READ audioTrackInfo NOTIFY audioStreamsChanged)
     Q_PROPERTY(SubtitleTrackInfoObject *subtitleTrack READ subtitleTrackInfo NOTIFY subtitleTrackInfoChanged)
 public:
-    enum State {Stopped = 1, Playing = 2, Paused = 4, Loading = 16, Error = 32, Buffering = 64, Running = Playing | Loading | Buffering };
+    enum State {
+        Stopped = 1, Playing = 2, Paused = 4,
+        Loading = 16, Error = 32, Buffering = 64,
+        Running = Playing | Loading | Buffering
+    };
     enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
     enum DVDCmd { DVDMenu = -1 };
     PlayEngine();
-    PlayEngine(const PlayEngine&) = delete;
-    PlayEngine &operator = (const PlayEngine &) = delete;
     ~PlayEngine();
-    MPContext *context() const;
-    int time() const;
-    int begin() const;
-    int end() const;
-    void setImageDuration(int duration);
-    int duration() const;
-    Mrl mrl() const;
-    bool isSeekable() const;
-    void setHwAcc(int backend, const QList<int> &codecs);
-    bool isRunning() const { return m_state & Running; }
-    bool isPlaying() const {return m_state & Playing;}
-    bool isPaused() const {return m_state & Paused;}
-    bool isStopped() const {return m_state & Stopped;}
-    double speed() const;
-    State state() const { return m_state; }
-//    void setCurrentMrl(const Mrl &mrl);
-    void load(const StartInfo &info);
-    const StartInfo &startInfo() const;
-//    void play(int start, int cache);
-//    void load(const MrlStartInfo &mrl, bool play);
-    void setSpeed(double speed);
-    int currentEdition() const;
-    const EditionList &editions() const;
-    int currentChapter() const;
-    const ChapterList &chapters() const;
-    int currentSubtitleStream() const;
-    const StreamList &subtitleStreams() const;
-    void setCurrentSubtitleStream(int id);
-    void setCurrentEdition(int id, int from = 0);
-    void setCurrentChapter(int id);
-    void setSubtitleStyle(const SubtitleStyle &style);
-    bool hasVideo() const;
-    void setVolumeNormalizerActivated(bool on);
-    void setTempoScalerActivated(bool on);
-    bool isVolumeNormalizerActivated() const;
-    bool isTempoScaled() const;
-    double fps() const;
-    VideoRendererItem *videoRenderer() const;
-    VideoFormat videoFormat() const;
-    const StreamList &videoStreams() const;
-    void setCurrentVideoStream(int id);
-    int currentVideoStream() const;
-    void setAudioSync(int sync);
-    int audioSync() const;
-    const PlaylistModel &playlist() const;
-    PlaylistModel &playlist();
+    auto initializeGL(QQuickWindow *window) -> void;
+    auto finalizeGL() -> void;
+    auto videoEqualizer() const -> const VideoColor&;
+    auto setVideoEqualizer(const VideoColor &prop) -> void;
+    auto setVideoColorRange(ColorRange range) -> void;
+    auto videoColorRange() const -> ColorRange;
+    auto setVideoChromaUpscaler(InterpolatorType tpe) -> void;
+    auto videoChromaUpscaler() const -> InterpolatorType;
 
-    const MetaData &metaData() const;
-    QString mediaName() const;
-    HardwareAcceleration hwAcc() const;
-    int volume() const;
-    int currentAudioStream() const;
-    bool isMuted() const;
-    double volumeNormalizer() const;
-    double amp() const;
-    const StreamList &audioStreams() const;
-    void setCurrentAudioStream(int id);
-    void setVolumeNormalizerOption(double length, double target, double silence, double min, double max);
-    bool addSubtitleStream(const QString &fileName, const QString &enc);
-    void removeSubtitleStream(int id);
-    void setSubtitleStreamsVisible(bool visible);
-    bool isSubtitleStreamsVisible() const;
-    void setDeintOptions(const DeintOption &swdec, const DeintOption &hwdec);
-    void setDeintMode(DeintMode mode);
-    DeintMode deintMode() const;
-    void setAudioDriver(AudioDriver driver);
-    void setClippingMethod(ClippingMethod method);
-    void setMinimumCache(int playback, int seeking);
-    void run();
-    void waitUntilTerminated();
-    QThread *thread() const;
-    QQuickItem *screen() const;
-    MediaInfoObject *mediaInfo() const;
-    AvInfoObject *audioInfo() const;
-    AvInfoObject *videoInfo() const;
-    double avgsync() const;
-    double avgfps() const;
-    QString stateText() const;
-    static QString stateText(State state);
-    double rate() const { return (double)(time()-begin())/duration(); }
+    auto time() const -> int;
+    auto begin() const -> int;
+    auto end() const -> int;
+    auto setImageDuration(int duration) -> void;
+    auto duration() const -> int;
+    auto mrl() const -> Mrl;
+    auto isSeekable() const -> bool;
+    auto setHwAcc(int backend, const QList<int> &codecs) -> void;
+    auto isRunning() const -> bool { return m_state & Running; }
+    auto isPlaying() const -> bool {return m_state & Playing;}
+    auto isPaused() const -> bool {return m_state & Paused;}
+    auto isStopped() const -> bool {return m_state & Stopped;}
+    auto speed() const -> double;
+    auto state() const -> State { return m_state; }
+    auto load(const StartInfo &info) -> void;
+    auto startInfo() const -> const StartInfo&;
+    auto setSpeed(double speed) -> void;
+    auto currentEdition() const -> int;
+    auto editions() const -> const EditionList&;
+    auto currentChapter() const -> int;
+    auto chapters() const -> const ChapterList&;
+    auto currentSubtitleStream() const -> int;
+    auto subtitleStreams() const -> const StreamList&;
+    auto setCurrentSubtitleStream(int id) -> void;
+    auto setCurrentEdition(int id, int from = 0) -> void;
+    auto setCurrentChapter(int id) -> void;
+    auto setSubtitleStyle(const SubtitleStyle &style) -> void;
+    auto hasVideo() const -> bool;
+    auto setVolumeNormalizerActivated(bool on) -> void;
+    auto setTempoScalerActivated(bool on) -> void;
+    auto isVolumeNormalizerActivated() const -> bool;
+    auto isTempoScaled() const -> bool;
+    auto fps() const -> double;
+    auto videoRenderer() const -> VideoRendererItem*;
+    auto videoFormat() const -> VideoFormat;
+    auto videoStreams() const -> const StreamList&;
+    auto setCurrentVideoStream(int id) -> void;
+    auto currentVideoStream() const -> int;
+    auto setAudioSync(int sync) -> void;
+    auto audioSync() const -> int;
+    auto metaData() const -> const MetaData&;
+    auto mediaName() const -> QString;
+    auto hwAcc() const -> HardwareAcceleration;
+    auto volume() const -> int;
+    auto currentAudioStream() const -> int;
+    auto isMuted() const -> bool;
+    auto volumeNormalizer() const -> double;
+    auto amp() const -> double;
+    auto audioStreams() const -> const StreamList&;
+    auto setCurrentAudioStream(int id) -> void;
+    auto setVolumeNormalizerOption(const AudioNormalizerOption &option) -> void;
+    auto addSubtitleStream(const QString &fileName, const QString &enc) -> bool;
+    auto removeSubtitleStream(int id) -> void;
+    auto setSubtitleStreamsVisible(bool visible) -> void;
+    auto isSubtitleStreamsVisible() const -> bool;
+    auto setDeintOptions(const DeintOption &swdec,
+                         const DeintOption &hwdec) -> void;
+    auto setDeintMode(DeintMode mode) -> void;
+    auto deintMode() const -> DeintMode;
+    auto setAudioDriver(AudioDriver driver) -> void;
+    auto setClippingMethod(ClippingMethod method) -> void;
+    auto setMinimumCache(int playback, int seeking) -> void;
+    auto run() -> void;
+    auto waitUntilTerminated() -> void;
+    auto thread() const -> QThread*;
+    auto screen() const -> QQuickItem*;
+    auto mediaInfo() const -> MediaInfoObject*;
+    auto audioInfo() const -> AvInfoObject*;
+    auto videoInfo() const -> AvInfoObject*;
+    auto avgsync() const -> double;
+    auto avgfps() const -> double;
+    auto stateText() const -> QString { return stateText(m_state); }
+    auto rate() const -> double { return (double)(time()-begin())/duration(); }
+    auto cache() const -> qreal;
+    auto droppedFrames() const -> int;
+    auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void;
+    auto setChannelLayout(ChannelLayout layout) -> void;
+    auto chapterInfo() const -> ChapterInfoObject*;
+    auto audioTrackInfo() const -> AudioTrackInfoObject*;
+    auto subtitleTrackInfo() const -> SubtitleTrackInfoObject*;
+    auto setSubtitleTracks(const QStringList &tracks) -> void;
+    auto setCurrentSubtitleIndex(int idx) -> void;
+    auto sendMouseClick(const QPointF &pos) -> void;
+    auto sendMouseMove(const QPointF &pos) -> void;
+    auto mousePosition() const -> const QPoint& { return m_mouse; }
+    auto subtitleFiles() const -> QList<SubtitleFileInfo>;
+    auto setSubtitleDelay(int ms) -> void;
+    auto setNextStartInfo(const StartInfo &startInfo) -> void;
+    auto shutdown() -> void;
+    auto stepFrame(int direction) -> void;
+    auto setVolume(int volume) -> void;
+    auto setAmp(double amp) -> void;
+    auto setMuted(bool muted) -> void;
+    auto setVideoRenderer(VideoRendererItem *renderer) -> void;
+    auto stop() -> void;
+    auto reload() -> void;
+    auto pause() -> void;
+    auto unpause() -> void;
+    auto relativeSeek(int pos) -> void;
     Q_INVOKABLE double bitrate(double fps) const;
-    static void registerObjects();
-    qreal cache() const;
-    int droppedFrames() const;
-    void setChannelLayoutMap(const ChannelLayoutMap &map);
-    void setChannelLayout(ChannelLayout layout);
-    ChapterInfoObject *chapterInfo() const;
-    AudioTrackInfoObject *audioTrackInfo() const;
-    SubtitleTrackInfoObject *subtitleTrackInfo() const;
-    void setSubtitleTracks(const QStringList &tracks);
-    void setCurrentSubtitleIndex(int idx);
-    void sendMouseClick(const QPointF &pos);
-    void sendMouseMove(const QPointF &pos);
-    QList<SubtitleFileInfo> subtitleFiles() const;
-    void setSubtitleDelay(int ms);
-    void setNextStartInfo(const StartInfo &startInfo);
-    void shutdown();
-public slots:
-    void stepFrame(int direction);
-    void setVolume(int volume);
-    void setAmp(double amp);
-    void setMuted(bool muted);
-    void setVideoRenderer(VideoRendererItem *renderer);
-//    void play();
-    void stop();
-    void reload();
-    void pause();
-    void unpause();
-    void seek(int pos);
-    void relativeSeek(int pos);
+    Q_INVOKABLE void seek(int pos);
+    static auto stateText(State state) -> QString;
+    static auto registerObjects() -> void;
 signals:
     void fpsChanged(double fps);
     void seeked(int time);
@@ -223,14 +225,17 @@ signals:
     void subtitleTrackInfoChanged();
     void requestNextStartInfo();
     void metaDataChanged();
+    void videoColorRangeChanged(ColorRange range);
+    void videoChromaUpscalerChanged(InterpolatorType type);
 private:
-    void updateState(State state);
-    void exec();
-    void setState(PlayEngine::State state);
-    void customEvent(QEvent *event);
-    void updateVideoFormat(VideoFormat format);
+    auto updateState(State state) -> void;
+    auto exec() -> void;
+    auto setState(PlayEngine::State state) -> void;
+    auto customEvent(QEvent *event) -> void;
+    auto updateVideoFormat(VideoFormat format) -> void;
     class Thread; struct Data; Data *d;
     PlayEngine::State m_state = PlayEngine::Stopped;
+    QPoint m_mouse;
 };
 
 #endif // PLAYENGINE_HPP

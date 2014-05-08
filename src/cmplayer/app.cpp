@@ -167,18 +167,21 @@ App::~App() {
     delete d;
 }
 
-bool App::isOpenGLDebugLoggerRequested() const {
+auto App::isOpenGLDebugLoggerRequested() const -> bool
+{
     return d->gldebug;
 }
 
-void App::setMainWindow(MainWindow *mw) {
+auto App::setMainWindow(MainWindow *mw) -> void
+{
     d->main = mw;
 #ifndef Q_OS_MAC
     d->main->setWindowIcon(defaultIcon());
 #endif
 }
 
-void App::setWindowTitle(QWidget *widget, const QString &title) {
+auto App::setWindowTitle(QWidget *widget, const QString &title) -> void
+{
 //    _Trace("Set window title of %% to '%%'.", widget->metaObject()->className(), title);
     const QString text = title % (title.isEmpty() ? "" : " - ") % applicationName();
     widget->setWindowTitle(text);
@@ -187,7 +190,8 @@ void App::setWindowTitle(QWidget *widget, const QString &title) {
 #endif
 }
 
-void App::setMprisActivated(bool activated) {
+auto App::setMprisActivated(bool activated) -> void
+{
 #ifdef Q_OS_LINUX
     if (activated && !d->mpris)
         d->mpris = new mpris::RootObject(this);
@@ -198,11 +202,13 @@ void App::setMprisActivated(bool activated) {
 #endif
 }
 
-MainWindow *App::mainWindow() const {
+auto App::mainWindow() const -> MainWindow*
+{
     return d->main;
 }
 
-QIcon App::defaultIcon() {
+auto App::defaultIcon() -> QIcon
+{
     static QIcon icon;
     static bool init = false;
     if (!init) {
@@ -220,22 +226,26 @@ QIcon App::defaultIcon() {
     return icon;
 }
 
-void App::setAlwaysOnTop(QWidget *widget, bool onTop) {
+auto App::setAlwaysOnTop(QWidget *widget, bool onTop) -> void
+{
     d->helper.setAlwaysOnTop(widget, onTop);
 }
 
-void App::setHeartbeat(const QString &command, int interval) {
+auto App::setHeartbeat(const QString &command, int interval) -> void
+{
     Q_UNUSED(command); Q_UNUSED(interval);
 #ifdef Q_OS_LINUX
     d->helper.setHeartbeat(command, interval);
 #endif
 }
 
-void App::setScreensaverDisabled(bool disabled) {
+auto App::setScreensaverDisabled(bool disabled) -> void
+{
     d->helper.setScreensaverDisabled(disabled);
 }
 
-bool App::event(QEvent *event) {
+auto App::event(QEvent *event) -> bool
+{
     switch ((int)event->type()) {
     case QEvent::FileOpen: {
         if (d->main)
@@ -251,40 +261,48 @@ bool App::event(QEvent *event) {
     }
 }
 
-QStringList App::devices() const {
+auto App::devices() const -> QStringList
+{
     return d->helper.devices();
 }
 
 #ifdef Q_OS_MAC
-QMenuBar *App::globalMenuBar() const {
+auto App::globalMenuBar() const -> QMenuBar*
+{
     return d->mb;
 }
 #endif
 
-void App::runCommands() {
+auto App::runCommands() -> void
+{
     d->execute(&d->cmdParser);
 }
 
-bool App::sendMessage(const QString &message, int timeout) {
+auto App::sendMessage(const QString &message, int timeout) -> bool
+{
     return d->connection.sendMessage(message, timeout);
 }
 
-void App::setLocale(const QLocale &locale) {
+auto App::setLocale(const QLocale &locale) -> void
+{
     if (Translator::load(locale)) {
         Record r(APP_GROUP);
         r.write(d->locale = locale, "locale");
     }
 }
 
-QLocale App::locale() const {
+auto App::locale() const -> QLocale
+{
     return d->locale;
 }
 
-QStringList App::availableStyleNames() const {
+auto App::availableStyleNames() const -> QStringList
+{
     return d->styleNames;
 }
 
-void App::setStyleName(const QString &name) {
+auto App::setStyleName(const QString &name) -> void
+{
     if (!d->styleNames.contains(name, Qt::CaseInsensitive))
         return;
     if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
@@ -294,23 +312,27 @@ void App::setStyleName(const QString &name) {
     r.write(name, "style");
 }
 
-void App::setUnique(bool unique) {
+auto App::setUnique(bool unique) -> void
+{
     Record r(APP_GROUP);
     r.write(unique, "unique");
 }
 
-QString App::styleName() const {
+auto App::styleName() const -> QString
+{
     return style()->objectName();
 }
 
-bool App::isUnique() const {
+auto App::isUnique() const -> bool
+{
     Record r(APP_GROUP);
     return r.value("unique", true).toBool();
 }
 
 #undef APP_GROUP
 
-bool App::shutdown() {
+auto App::shutdown() -> bool
+{
     return d->helper.shutdown();
 }
 
@@ -364,7 +386,8 @@ LocalConnection::~LocalConnection() {
     delete d;
 }
 
-bool LocalConnection::runServer() {
+auto LocalConnection::runServer() -> bool
+{
     if (d->lock->isLocked())
         return true;
     if (!d->lock->tryLock() && !(d->lock->removeStaleLockFile() && d->lock->tryLock()))
@@ -401,7 +424,8 @@ bool LocalConnection::runServer() {
     return true;
 }
 
-bool LocalConnection::sendMessage(const QString &message, int timeout) {
+auto LocalConnection::sendMessage(const QString &message, int timeout) -> bool
+{
     if (runServer())
         return false;
     QLocalSocket socket;

@@ -3,11 +3,13 @@
 #include "global.hpp"
 #include "charsetdetector.hpp"
 
-QString SubComp::name() const {
+auto SubComp::name() const -> QString
+{
     return m_klass.isEmpty() ? m_file : m_file % _L("(") % m_klass % _L(")");
 }
 
-SubComp Subtitle::component(double frameRate) const {
+auto Subtitle::component(double frameRate) const -> SubComp
+{
     if (m_comp.isEmpty())
         return SubComp();
     SubComp comp;
@@ -25,17 +27,20 @@ SubComp::SubComp(const QFileInfo &file, const QString &enc, int id, SyncType bas
     m_capts[0].index = 0;
 }
 
-SubComp SubComp::united(const SubComp &other, double frameRate) const {
+auto SubComp::united(const SubComp &other, double frameRate) const -> SubComp
+{
     return SubComp(*this).unite(other, frameRate);
 }
 
-SubComp::const_iterator SubComp::start(int time, double frameRate) const {
+auto SubComp::start(int time, double frameRate) const -> SubComp::const_iterator
+{
     if (isEmpty() || time < 0)
         return end();
     return --finish(time, frameRate);
 }
 
-SubComp::const_iterator SubComp::finish(int time, double frameRate) const {
+auto SubComp::finish(int time, double frameRate) const -> SubComp::const_iterator
+{
     if (isEmpty() || time < 0)
         return end();
     int key = time;
@@ -47,7 +52,8 @@ SubComp::const_iterator SubComp::finish(int time, double frameRate) const {
     return upperBound(key);
 }
 
-SubComp &SubComp::unite(const SubComp &rhs, double fps) {
+auto SubComp::unite(const SubComp &rhs, double fps) -> SubComp&
+{
     if (this == &rhs || rhs.isEmpty())
         return *this;
     else if (isEmpty())
@@ -97,7 +103,8 @@ SubComp &SubComp::unite(const SubComp &rhs, double fps) {
     return *this;
 }
 
-RichTextDocument Subtitle::caption(int time, double fps) const {
+auto Subtitle::caption(int time, double fps) const -> RichTextDocument
+{
     if (m_comp.isEmpty())
         return RichTextDocument();
     RichTextDocument caption;
@@ -109,7 +116,8 @@ RichTextDocument Subtitle::caption(int time, double fps) const {
     return caption;
 }
 
-bool Subtitle::load(const QString &file, const QString &enc, double accuracy) {
+auto Subtitle::load(const QString &file, const QString &enc, double accuracy) -> bool
+{
     QString encoding;
     if (accuracy > 0.0)
         encoding = CharsetDetector::detect(file, accuracy);
@@ -119,11 +127,13 @@ bool Subtitle::load(const QString &file, const QString &enc, double accuracy) {
     return !isEmpty();
 }
 
-Subtitle Subtitle::parse(const QString &file, const QString &enc) {
+auto Subtitle::parse(const QString &file, const QString &enc) -> Subtitle
+{
     return SubtitleParser::parse(file, enc);
 }
 
-bool Subtitle::isEmpty() const {
+auto Subtitle::isEmpty() const -> bool
+{
     if (m_comp.isEmpty())
         return true;
     for (int i=0; i<m_comp.size(); ++i) {

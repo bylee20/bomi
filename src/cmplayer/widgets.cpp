@@ -31,13 +31,15 @@ EncodingComboBox::EncodingComboBox(QWidget *parent)
     setEditable(true);
 }
 
-QString EncodingComboBox::encoding() const {
+auto EncodingComboBox::encoding() const -> QString
+{
     QString enc = currentText().trimmed();
     QRegExp rxEnc(".* \\((.*)\\)");
     return (rxEnc.indexIn(enc) == -1) ? enc : rxEnc.cap(1);
 }
 
-void EncodingComboBox::setEncoding(const QString &encoding) {
+auto EncodingComboBox::setEncoding(const QString &encoding) -> void
+{
     static const QRegExp rxEncoding(".* \\(" + encoding.toUpper() + "\\)");
     const int idx = enc.indexOf(rxEncoding);
     if (idx != -1)
@@ -75,7 +77,8 @@ LocaleComboBox::~LocaleComboBox() {
     delete d;
 }
 
-void LocaleComboBox::reset() {
+auto LocaleComboBox::reset() -> void
+{
     auto locale = currentLocale();
     clear();
     for (auto &it : d->items)
@@ -120,30 +123,36 @@ FontOptionWidget::~FontOptionWidget() {
     delete d;
 }
 
-void FontOptionWidget::set(bool bold, bool italic, bool underline, bool strikeout) {
+auto FontOptionWidget::set(bool bold, bool italic, bool underline, bool strikeout) -> void
+{
     d->bold->setChecked(bold);
     d->italic->setChecked(italic);
     d->underline->setChecked(underline);
     d->strikeout->setChecked(strikeout);
 }
 
-bool FontOptionWidget::bold() const {
+auto FontOptionWidget::bold() const -> bool
+{
     return d->bold->isChecked();
 }
 
-bool FontOptionWidget::italic() const {
+auto FontOptionWidget::italic() const -> bool
+{
     return d->italic->isChecked();
 }
 
-bool FontOptionWidget::underline() const {
+auto FontOptionWidget::underline() const -> bool
+{
     return d->underline->isChecked();
 }
 
-bool FontOptionWidget::strikeOut() const {
+auto FontOptionWidget::strikeOut() const -> bool
+{
     return d->strikeout->isChecked();
 }
 
-void FontOptionWidget::apply(QFont &font) {
+auto FontOptionWidget::apply(QFont &font) -> void
+{
     font.setBold(d->bold->isChecked());
     font.setItalic(d->italic->isChecked());
     font.setUnderline(d->underline->isChecked());
@@ -185,7 +194,8 @@ ColorSelectWidget::~ColorSelectWidget() {
     delete d;
 }
 
-void ColorSelectWidget::setColor(const QColor &color, bool hasAlpha) {
+auto ColorSelectWidget::setColor(const QColor &color, bool hasAlpha) -> void
+{
     d->hasAlpha = hasAlpha;
     d->alpha->setVisible(d->hasAlpha);
     d->alpha->setValue(d->hasAlpha ? color.alphaF()*100.0 : 100.0);
@@ -193,7 +203,8 @@ void ColorSelectWidget::setColor(const QColor &color, bool hasAlpha) {
     d->color->setCurrentColor(color.rgb());
 }
 
-QColor ColorSelectWidget::color() const {
+auto ColorSelectWidget::color() const -> QColor
+{
     QColor color = d->color->currentColor();
     color.setAlphaF(d->hasAlpha ? d->alpha->value()/100.0 : 1.0);
     return color;

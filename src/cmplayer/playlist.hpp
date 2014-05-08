@@ -14,20 +14,20 @@ public:
     Playlist(const Mrl &mrl);
     Playlist(const QList<Mrl> &rhs);
     Playlist(const Mrl &mrl, const QString &enc);
-    void save(const QString &prefix, QSettings *set) const;
-    void load(const QString &prefix, QSettings *set);
-    bool save(const QString &filePath, Type type = Unknown) const;
+    auto save(const QString &prefix, QSettings *set) const -> void;
+    auto load(const QString &prefix, QSettings *set) -> void;
+    auto save(const QString &filePath, Type type = Unknown) const -> bool;
     bool load(const QString &filePath, const QString &enc = QString(), Type type = Unknown);
     bool load(const Mrl &url, const QString &enc = QString(), Type type = Unknown);
-    bool load(QByteArray *data, const QString &enc, Type type);
+    auto load(QByteArray *data, const QString &enc, Type type) -> bool;
     Playlist &loadAll(const QDir &dir);
-    static Type guessType(const QString &fileName);
+    static auto guessType(const QString &fileName) -> Type;
 private:
-    bool savePLS(QTextStream &out) const;
-    bool saveM3U(QTextStream &out) const;
-    bool load(QTextStream &in, QString enc, Type type);
-    bool loadPLS(QTextStream &in);
-    bool loadM3U(QTextStream &in);
+    auto savePLS(QTextStream &out) const -> bool;
+    auto saveM3U(QTextStream &out) const -> bool;
+    auto load(QTextStream &in, QString enc, Type type) -> bool;
+    auto loadPLS(QTextStream &in) -> bool;
+    auto loadM3U(QTextStream &in) -> bool;
 };
 
 #endif // PLAYLIST_HPP

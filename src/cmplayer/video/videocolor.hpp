@@ -12,42 +12,49 @@ enum class ColorRange;
 
 struct Kernel3x3 {
     Kernel3x3() { mat(0, 0) = mat(2, 2) = 0.f; }
-    Kernel3x3(double center, double neighbor, double diagonal) {
-        set(center, neighbor, diagonal);
-    }
-    Kernel3x3 &operator = (const Kernel3x3 &rhs) { mat = rhs.mat; return *this; }
-    float &operator () (int i, int j) { return at(i, j); }
-    float  operator () (int i, int j) const {return at(i, j); }
-    Kernel3x3 &operator += (const Kernel3x3 &rhs) { mat += rhs.mat; return *this; }
-    Kernel3x3 operator + (const Kernel3x3 &rhs) { Kernel3x3 lhs = *this; return (lhs += rhs); }
-    Kernel3x3 merged(const Kernel3x3 &other, bool normalize = true) {
+    auto operator = (const Kernel3x3 &rhs) -> Kernel3x3&
+        { mat = rhs.mat; return *this; }
+    auto operator () (int i, int j) -> float& { return at(i, j); }
+    auto operator () (int i, int j) const -> float {return at(i, j); }
+    auto operator += (const Kernel3x3 &rhs) -> Kernel3x3&
+        { mat += rhs.mat; return *this; }
+    auto operator + (const Kernel3x3 &rhs) const -> Kernel3x3
+        { Kernel3x3 lhs = *this; return (lhs += rhs); }
+    auto operator == (const Kernel3x3 &rhs) const -> bool
+        { return mat == rhs.mat; }
+    auto operator != (const Kernel3x3 &rhs) const -> bool
+        { return !operator == (rhs); }
+    auto merged(const Kernel3x3 &other, bool normalize = true) -> Kernel3x3
+    {
         Kernel3x3 ret = *this + other;
         if (normalize)
             ret.normalize();
         return ret;
     }
-    void normalize() {
-        double den = 0.0;
+    auto normalize() -> void
+    {
+        float den = 0.0;
         for (int i=0; i<9; ++i)
             den += mat.data()[i];
         mat /= den;
     }
-    Kernel3x3 normalized() const {
+    auto normalized() const -> Kernel3x3
+    {
         Kernel3x3 kernel = *this;
         kernel.normalize();
         return kernel;
     }
     float &at(int i, int j) { return mat(i, j); }
-    float at(int i, int j) const {return mat(i, j); }
-    void set(double center, double neighbor, double diagonal) {
-        mat(1, 1) = center;
-        mat(0, 1) = mat(1, 0) = mat(1, 2) = mat(2, 1) = neighbor;
-        mat(0, 0) = mat(0, 2) = mat(2, 0) = mat(2, 2) = diagonal;
-    }
-    float center() const {return mat(1, 1);}
-    float neighbor() const {return mat(0, 1);}
-    float diagonal() const {return mat(0, 0);}
-    QMatrix3x3 matrix() const {return mat;}
+    auto at(int i, int j) const -> float {return mat(i, j); }
+    auto setCenter(float v)-> void { mat(1, 1) = v; }
+    auto setNeighbor(float v)-> void
+        { mat(0, 1) = mat(1, 0) = mat(1, 2) = mat(2, 1) = v; }
+    auto setDiagonal(float v)-> void
+        { mat(0, 0) = mat(0, 2) = mat(2, 0) = mat(2, 2) = v;; }
+    auto center() const -> float {return mat(1, 1);}
+    auto neighbor() const -> float {return mat(0, 1);}
+    auto diagonal() const -> float {return mat(0, 0);}
+    auto matrix() const -> QMatrix3x3 {return mat;}
 private:
     QMatrix3x3 mat;
 };
@@ -56,62 +63,84 @@ class VideoColor {
     Q_DECLARE_TR_FUNCTIONS(VideoColor)
 public:
     enum Type {Brightness = 0, Contrast, Saturation, Hue, TypeMax};
+    template<class T> using Array = std::array<T, TypeMax>;
     VideoColor(int b, int c, int s, int h): m{{b, c, s, h}} {}
     VideoColor() = default;
-    bool operator == (const VideoColor &rhs) const { return m == rhs.m; }
-    bool operator != (const VideoColor &rhs) const { return m != rhs.m; }
-    VideoColor &operator *= (int rhs) { m[0] *= rhs; m[1] *= rhs; m[2] *= rhs; m[3] *= rhs; return *this; }
-    VideoColor operator * (int rhs) const { return VideoColor(*this) *= rhs; }
-    Type operator & (const VideoColor &rhs) const {
-        int count = 0;
-        Type type = TypeMax;
-        for (uint i=0; i<m.size(); ++i) {
-            if (m[i] != rhs.m[i]) {
-                ++count;
-                type = (Type)i;
-            }
-        }
-        return count == 1 ? type : TypeMax;
-    }
-    VideoColor &operator += (const VideoColor &rhs) {
-        m[0] += rhs.m[0]; m[1] += rhs.m[1]; m[2] += rhs.m[2]; m[3] += rhs.m[3]; return *this;
-    }
-    VideoColor operator + (const VideoColor &rhs) const { return VideoColor(*this) += rhs; }
-    int operator [] (Type p) const {return m[p];}
-    int value(Type v) const {return m[v];}
-    int brightness() const {return m[Brightness];}
-    int saturation() const {return m[Saturation];}
-    int contrast() const {return m[Contrast];}
-    int hue() const {return m[Hue];}
-    void setValue(Type p, int val) {m[p] = clip(val);}
-    void setBrightness(int v) {m[Brightness] = clip(v);}
-    void setSaturation(int v) {m[Saturation] = clip(v);}
-    void setContrast(int v) {m[Contrast] = clip(v);}
-    void setHue(int v) {m[Hue] = clip(v);}
-    bool isZero() const { return !m[Brightness] && !m[Saturation] && !m[Contrast] && !m[Hue]; }
-    void matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace, ColorRange range, float s = 1.0/255.0) const;
-    QString getText(Type type) const {
-        const QString value = 0 <= type && type < TypeMax ? _NS(m[type]) : QString();
-        switch (type) {
-        case Brightness:
-            return tr("Brightness %1%").arg(value);
-        case Saturation:
-            return tr("Saturation %1%").arg(value);
-        case Contrast:
-            return tr("Contrast %1%").arg(value);
-        case Hue:
-            return tr("Hue %1%").arg(value);
-        default:
-            return tr("Reset");
-        }
-    }
-    qint64 packed() const;
-    static VideoColor fromPacked(qint64 packed);
+    auto operator == (const VideoColor &r) const -> bool { return m == r.m; }
+    auto operator != (const VideoColor &r) const -> bool { return m != r.m; }
+    auto operator *= (int rhs) -> VideoColor&
+        { m[0] *= rhs; m[1] *= rhs; m[2] *= rhs; m[3] *= rhs; return *this; }
+    auto operator * (int rhs) const -> VideoColor
+        { return VideoColor(*this) *= rhs; }
+    auto operator & (const VideoColor &rhs) const -> Type;
+    auto operator += (const VideoColor &rhs) -> VideoColor&;
+    auto operator + (const VideoColor &rhs) const -> VideoColor
+    { return VideoColor(*this) += rhs; }
+    auto operator [] (Type p) const -> int { return m[p]; }
+    auto get(Type v) const -> int { return m[v]; }
+    auto brightness() const -> int { return m[Brightness]; }
+    auto saturation() const -> int { return m[Saturation]; }
+    auto contrast() const -> int { return m[Contrast]; }
+    auto hue() const -> int { return m[Hue]; }
+    auto set(Type p, int val) -> void { m[p] = clip(val); }
+    auto setBrightness(int v) -> void { m[Brightness] = clip(v); }
+    auto setSaturation(int v) -> void { m[Saturation] = clip(v); }
+    auto setContrast(int v) -> void { m[Contrast] = clip(v); }
+    auto setHue(int v) -> void { m[Hue] = clip(v); }
+    auto isZero() const -> bool
+        { return !m[Brightness] && !m[Saturation] && !m[Contrast] && !m[Hue]; }
+    auto matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace,
+                ColorRange range, float s = 1.0/255.0) const -> void;
+    auto getText(Type type) const -> QString;
+    auto packed() const -> qint64;
+    static auto fromPacked(qint64 packed) -> VideoColor;
+    static auto getType(const char *name) -> Type;
+    static auto name(Type type) -> const char*
+        { return type < TypeMax ? s_names[type] : ""; }
+    template<class F>
+    static auto for_type(F func) -> void;
 private:
-    static int clip(int v) { v = qFuzzyCompare(v + 1.0, 1.0) ? 0.0 : v; return qBound(-100, v, 100); }
-    std::array<int, TypeMax> m{{0, 0, 0, 0}};
+    static auto clip(int v) -> int { return qBound(-100, v, 100); }
+    static Array<const char*> s_names;
+    Array<int> m{{0, 0, 0, 0}};
+
 };
 
 Q_DECLARE_METATYPE(VideoColor)
+
+inline auto VideoColor::operator & (const VideoColor &rhs) const -> Type
+{
+    int count = 0;
+    Type type = TypeMax;
+    for (uint i=0; i<m.size(); ++i) {
+        if (m[i] != rhs.m[i]) {
+            ++count;
+            type = static_cast<Type>(i);
+        }
+    }
+    return count == 1 ? type : TypeMax;
+}
+
+inline auto VideoColor::operator += (const VideoColor &rhs) -> VideoColor&
+{
+    m[0] += rhs.m[0]; m[1] += rhs.m[1];
+    m[2] += rhs.m[2]; m[3] += rhs.m[3]; return *this;
+}
+
+template<class F>
+inline auto VideoColor::for_type(F f) -> void
+{
+    for (int i = 0; i < TypeMax; ++i)
+        f(static_cast<Type>(i));
+}
+
+inline auto VideoColor::getType(const char *name) -> Type
+{
+    for (int i = 0; i < TypeMax; ++i) {
+        if (!strcmp(name, s_names[i]))
+            return static_cast<Type>(i);
+    }
+    return TypeMax;
+}
 
 #endif // COLORPROPERTY_HPP

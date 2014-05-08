@@ -18,11 +18,13 @@ RecentInfo::~RecentInfo() {
     delete d;
 }
 
-QList<Mrl> RecentInfo::openList() const {
+auto RecentInfo::openList() const -> QList<Mrl>
+{
     return d->openList;
 }
 
-void RecentInfo::stack(const Mrl &mrl) {
+auto RecentInfo::stack(const Mrl &mrl) -> void
+{
     if (mrl.isEmpty())
         return;
     d->openList.removeAll(mrl);
@@ -32,12 +34,14 @@ void RecentInfo::stack(const Mrl &mrl) {
     emit openListChanged(d->openList);
 }
 
-void RecentInfo::clear() {
+auto RecentInfo::clear() -> void
+{
     d->openList.clear();
     emit openListChanged(d->openList);
 }
 
-void RecentInfo::save() const {
+auto RecentInfo::save() const -> void
+{
     QSettings set;
     set.beginGroup("recent-info");
     d->openList.save("recent-open-list", &set);
@@ -46,7 +50,8 @@ void RecentInfo::save() const {
     set.endGroup();
 }
 
-void RecentInfo::load() {
+auto RecentInfo::load() -> void
+{
     QSettings set;
     set.beginGroup("recent-info");
     d->openList.load("recent-open-list", &set);
@@ -55,18 +60,22 @@ void RecentInfo::load() {
     set.endGroup();
 }
 
-void RecentInfo::setLastPlaylist(const Playlist &list) {
+auto RecentInfo::setLastPlaylist(const Playlist &list) -> void
+{
     d->lastList = list;
 }
 
-Playlist RecentInfo::lastPlaylist() const {
+auto RecentInfo::lastPlaylist() const -> Playlist
+{
     return d->lastList;
 }
 
-void RecentInfo::setLastMrl(const Mrl &mrl) {
+auto RecentInfo::setLastMrl(const Mrl &mrl) -> void
+{
     d->lastMrl = mrl;
 }
 
-Mrl RecentInfo::lastMrl() const {
+auto RecentInfo::lastMrl() const -> Mrl
+{
     return d->lastMrl;
 }

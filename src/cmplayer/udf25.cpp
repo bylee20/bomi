@@ -326,7 +326,7 @@ static int UDFDescriptor( quint8 *data, quint16 *TagID )
   return 0;
 }
 
-int udf25::UDFScanDirX( udf_dir_t *dirp )
+auto udf25::UDFScanDirX( udf_dir_t *dirp ) -> int
 {
   char filename[ MAX_UDF_FILE_NAME_LEN ];
   quint8 directory_base[ 2 * DVD_VIDEO_LB_LEN + 2048];
@@ -413,7 +413,7 @@ int udf25::UDFScanDirX( udf_dir_t *dirp )
   return 0;
 }
 
-int udf25::SetUDFCache(UDFCacheType type, quint32 nr, void *data)
+auto udf25::SetUDFCache(UDFCacheType type, quint32 nr, void *data) -> int
 {
   int n;
   struct udf_cache *c;
@@ -509,7 +509,7 @@ int udf25::SetUDFCache(UDFCacheType type, quint32 nr, void *data)
   return 1;
 }
 
-int udf25::DVDUDFCacheLevel(int level)
+auto udf25::DVDUDFCacheLevel(int level) -> int
 {
   if(level > 0) {
     level = 1;
@@ -522,17 +522,17 @@ int udf25::DVDUDFCacheLevel(int level)
   return level;
 }
 
-void *udf25::GetUDFCacheHandle()
+auto udf25::GetUDFCacheHandle() -> void*
 {
   return m_udfcache;
 }
 
-void udf25::SetUDFCacheHandle(void *cache)
+auto udf25::SetUDFCacheHandle(void *cache) -> void
 {
   m_udfcache = cache;
 }
 
-int udf25::GetUDFCache(UDFCacheType type, quint32 nr, void *data)
+auto udf25::GetUDFCache(UDFCacheType type, quint32 nr, void *data) -> int
 {
   int n;
   struct udf_cache *c;
@@ -593,7 +593,7 @@ int udf25::GetUDFCache(UDFCacheType type, quint32 nr, void *data)
   return 0;
 }
 
-int udf25::ReadAt( int64_t pos, size_t len, unsigned char *data )
+auto udf25::ReadAt( int64_t pos, size_t len, unsigned char *data ) -> int
 {
   if (!m_fp->seekg(pos))
     return -1;
@@ -602,7 +602,7 @@ int udf25::ReadAt( int64_t pos, size_t len, unsigned char *data )
   return m_fp->gcount();
 }
 
-int udf25::DVDReadLBUDF( quint32 lb_number, size_t block_count, unsigned char *data, int /*encrypted*/ )
+auto udf25::DVDReadLBUDF( quint32 lb_number, size_t block_count, unsigned char *data, int /*encrypted*/ ) -> int
 {
   int ret;
   size_t  len = block_count * DVD_VIDEO_LB_LEN;
@@ -621,7 +621,7 @@ int udf25::DVDReadLBUDF( quint32 lb_number, size_t block_count, unsigned char *d
   return len / DVD_VIDEO_LB_LEN;
 }
 
-int udf25::UDFGetAVDP( struct avdp_t *avdp)
+auto udf25::UDFGetAVDP( struct avdp_t *avdp) -> int
 {
   quint8 Anchor_base[ DVD_VIDEO_LB_LEN + 2048 ];
   quint8 *Anchor = (quint8 *)(((uintptr_t)Anchor_base & ~((uintptr_t)2047)) + 2048);
@@ -683,7 +683,7 @@ int udf25::UDFGetAVDP( struct avdp_t *avdp)
   return 1;
 }
 
-int udf25::UDFFindPartition( int partnum, struct Partition *part )
+auto udf25::UDFFindPartition( int partnum, struct Partition *part ) -> int
 {
   quint8 LogBlock_base[ DVD_VIDEO_LB_LEN + 2048 ];
   quint8 *LogBlock = (quint8 *)(((uintptr_t)LogBlock_base & ~((uintptr_t)2047)) + 2048);
@@ -776,7 +776,7 @@ int udf25::UDFFindPartition( int partnum, struct Partition *part )
   return part->valid;
 }
 
-int udf25::UDFMapICB( struct AD ICB, struct Partition *partition, struct FileAD *File )
+auto udf25::UDFMapICB( struct AD ICB, struct Partition *partition, struct FileAD *File ) -> int
 {
   quint8 LogBlock_base[DVD_VIDEO_LB_LEN + 2048];
   quint8 *LogBlock = (quint8 *)(((uintptr_t)LogBlock_base & ~((uintptr_t)2047)) + 2048);
@@ -849,7 +849,7 @@ int udf25::UDFMapICB( struct AD ICB, struct Partition *partition, struct FileAD 
   return 0;
 }
 
-int udf25::UDFScanDir( struct FileAD Dir, char *FileName, struct Partition *partition, struct AD *FileICB, int cache_file_info)
+auto udf25::UDFScanDir( struct FileAD Dir, char *FileName, struct Partition *partition, struct AD *FileICB, int cache_file_info) -> int
 {
   char filename[ MAX_UDF_FILE_NAME_LEN ];
   quint8 directory_base[ 2 * DVD_VIDEO_LB_LEN + 2048];
@@ -971,7 +971,7 @@ udf25::~udf25( )
   free(m_udfcache);
 }
 
-FileAD *udf25::UDFFindFile( const char* filename, quint64 *filesize )
+auto udf25::UDFFindFile( const char* filename, quint64 *filesize ) -> FileAD*
 {
   quint8 LogBlock_base[ DVD_VIDEO_LB_LEN + 2048 ];
   quint8 *LogBlock = (quint8 *)(((uintptr_t)LogBlock_base & ~((uintptr_t)2047)) + 2048);
@@ -1058,7 +1058,7 @@ FileAD *udf25::UDFFindFile( const char* filename, quint64 *filesize )
   return result;
 }
 
-bool udf25::Open(const char *isofile)
+auto udf25::Open(const char *isofile) -> bool
 {
   m_fp = new std::fstream(isofile, std::ios::binary | std::ios::in);
 
@@ -1106,14 +1106,16 @@ File::~File() {
     close();
 }
 
-QByteArray File::read(qint64 size) {
+auto File::read(qint64 size) -> QByteArray
+{
     QByteArray data;
     data.resize(size);
     data.resize(read(data.data(), size));
     return data;
 }
 
-qint64 File::read(char *buffer, qint64 size) {
+auto File::read(char *buffer, qint64 size) -> qint64
+{
     /* Check arguments. */
     if(!isOpen() || !buffer)
         return -1;
@@ -1146,7 +1148,8 @@ qint64 File::read(char *buffer, qint64 size) {
     return len_origin - size;
 }
 
-void File::close() {
+auto File::close() -> void
+{
     if (m_file)
         free(m_file);
     m_file = nullptr;
@@ -1154,7 +1157,8 @@ void File::close() {
     m_seek_pos = 0;
 }
 
-int64_t File::seek(int64_t offset, int whence) {
+auto File::seek(int64_t offset, int whence) -> int64_t
+{
     if (!isOpen())
         return -1;
     int64_t seek_pos = m_seek_pos;
@@ -1206,7 +1210,8 @@ Dir::Dir(udf25 *udf, const QString &path): m_udf(udf), m_path(path) {
     }
 }
 
-QStringList Dir::files(bool withPath) const {
+auto Dir::files(bool withPath) const -> QStringList
+{
     if (!m_open)
         return QStringList();
     if (!withPath)

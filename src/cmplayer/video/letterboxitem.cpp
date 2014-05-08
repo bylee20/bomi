@@ -7,7 +7,8 @@ LetterboxItem::LetterboxItem(QQuickItem *parent)
     vertices().resize(6*4);
 }
 
-bool LetterboxItem::set(const QRectF &outer, const QRectF &inner) {
+auto LetterboxItem::set(const QRectF &outer, const QRectF &inner) -> bool
+{
     if (!(_Change(m_outer, outer) | _Change(m_inner, inner)))
         return false;
     m_screen = outer & inner;
@@ -16,7 +17,8 @@ bool LetterboxItem::set(const QRectF &outer, const QRectF &inner) {
     return true;
 }
 
-void LetterboxItem::updatePolish() {
+auto LetterboxItem::updatePolish() -> void
+{
     if (!isReserved(UpdateGeometry))
         return;
     auto it = vertices().begin();

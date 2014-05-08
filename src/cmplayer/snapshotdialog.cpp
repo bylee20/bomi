@@ -39,7 +39,8 @@ SnapshotDialog::~SnapshotDialog() {
     delete d;
 }
 
-void SnapshotDialog::setVideoRenderer(const VideoRendererItem *video) {
+auto SnapshotDialog::setVideoRenderer(const VideoRendererItem *video) -> void
+{
     if (d->video)
         disconnect(d->video, 0, this, 0);
     if ((d->video = video))
@@ -59,7 +60,8 @@ void SnapshotDialog::setVideoRenderer(const VideoRendererItem *video) {
         }, Qt::QueuedConnection);
 }
 
-void SnapshotDialog::updateSubtitleImage() {
+auto SnapshotDialog::updateSubtitleImage() -> void
+{
     d->hasSubtitle = false;
     if (d->subtitle) {
         d->sub = d->subtitle->draw(d->image.rect(), &d->subRect);
@@ -67,11 +69,13 @@ void SnapshotDialog::updateSubtitleImage() {
     }
 }
 
-void SnapshotDialog::setSubtitleRenderer(const SubtitleRendererItem *subtitle) {
+auto SnapshotDialog::setSubtitleRenderer(const SubtitleRendererItem *subtitle) -> void
+{
     d->subtitle = subtitle;
 }
 
-void SnapshotDialog::updateSnapshot(bool sub) {
+auto SnapshotDialog::updateSnapshot(bool sub) -> void
+{
     if (!d->video || d->image.isNull()) {
         d->ui.viewer->setText(tr("Failed in getting a snapshot!"));
     } else {
@@ -85,7 +89,8 @@ void SnapshotDialog::updateSnapshot(bool sub) {
     d->ui.save->setEnabled(!d->image.isNull());
 }
 
-void SnapshotDialog::take() {
+auto SnapshotDialog::take() -> void
+{
     if (!d->video || !d->video->hasFrame())
         return;
     d->ui.take->setEnabled(false);
@@ -106,7 +111,7 @@ ImageViewer::ImageViewer(QWidget *parent)
     d->label->setScaledContents(true);
     d->label->setMinimumSize(200, 150);
     d->label->setAlignment(Qt::AlignCenter);
-    
+
     setBackgroundRole(QPalette::Dark);
     setWidget(d->label);
 }
@@ -115,26 +120,31 @@ ImageViewer::~ImageViewer() {
     delete d;
 }
 
-QSize ImageViewer::sizeHint() const {
+auto ImageViewer::sizeHint() const -> QSize
+{
     return d->label->sizeHint() + QSize(5, 5);
 }
 
-void ImageViewer::setText(const QString &text) {
+auto ImageViewer::setText(const QString &text) -> void
+{
     d->label->setText(text);
 }
 
-void ImageViewer::setImage(const QPixmap &image) {
+auto ImageViewer::setImage(const QPixmap &image) -> void
+{
     d->label->setPixmap(image);
     zoomOriginal();
 }
 
-void ImageViewer::zoomOriginal() {
+auto ImageViewer::zoomOriginal() -> void
+{
     d->label->adjustSize();
     d->scale = 1.0;
     emit scaleChanged(d->scale);
 }
 
-void ImageViewer::scale(double factor) {
+auto ImageViewer::scale(double factor) -> void
+{
     if (qAbs(1.0 - factor) < 1.0e-5)
         zoomOriginal();
     else if (d->label->pixmap()) {
@@ -146,10 +156,12 @@ void ImageViewer::scale(double factor) {
     }
 }
 
-void ImageViewer::adjustScrollBar(QScrollBar *scrollBar, double factor) {
+auto ImageViewer::adjustScrollBar(QScrollBar *scrollBar, double factor) -> void
+{
     scrollBar->setValue(int(factor * scrollBar->value() + ((factor - 1) * scrollBar->pageStep()/2)));
 }
 
-QPixmap ImageViewer::image() const {
+auto ImageViewer::image() const -> QPixmap
+{
     return d->label->pixmap() ? *d->label->pixmap() : QPixmap();
 }

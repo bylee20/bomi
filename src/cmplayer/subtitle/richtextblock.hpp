@@ -17,14 +17,14 @@ struct RichTextBlock {
     };
     typedef QMap<int, QVariant> Style;
     struct Format {
-        void mergeStyle(const Style &style) {
+        auto mergeStyle(const Style &style) -> void {
             for (auto it = style.begin(); it != style.end(); ++it)
                 this->style[it.key()] = it.value();
         }
         Style style; int begin, end;
     };
     struct Ruby { Style rb_style; QString rt; int rb_begin, rb_end; };
-    inline bool hasWords() const {
+    inline auto hasWords() const -> bool {
         for (auto &c : text) {
             if (!RichTextHelper::isSeparator(c.unicode()))
                 return true;
@@ -37,8 +37,8 @@ struct RichTextBlock {
 class RichTextBlockParser : public RichTextHelper {
 public:
     RichTextBlockParser(const QStringRef &text): m_text(text), m_pos(0), m_good(1) {}
-    inline bool atEnd() const {return m_pos >= m_text.size();}
-    QStringRef get(const char *open, const char *close, Tag *tag = nullptr);
+    inline auto atEnd() const -> bool {return m_pos >= m_text.size();}
+    auto get(const char *open, const char *close, Tag *tag = nullptr) -> QStringRef;
     QList<RichTextBlock> paragraph(Tag *tag = nullptr);
 protected:
     static QList<RichTextBlock> parse(const QStringRef &text, const RichTextBlock::Style &style = RichTextBlock::Style());

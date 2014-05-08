@@ -11,12 +11,14 @@ SimpleFboItem::SimpleFboItem(QQuickItem *parent)
     m_sizeChecker.setInterval(300);
 }
 
-void SimpleFboItem::updateVertex(Vertex *vertex) {
+auto SimpleFboItem::updateVertex(Vertex *vertex) -> void
+{
     OGL::CoordAttr::fillTriangleStrip(vertex, &Vertex::position,
                                       {0, 0}, {width(), height()});
 }
 
-void SimpleFboItem::geometryChanged(const QRectF &new_, const QRectF &old) {
+auto SimpleFboItem::geometryChanged(const QRectF &new_, const QRectF &old) -> void
+{
     if (m_forced) {
         if (_Change(m_targetSize, new_.size().toSize()))
             emit targetSizeChanged(m_targetSize);
@@ -27,7 +29,8 @@ void SimpleFboItem::geometryChanged(const QRectF &new_, const QRectF &old) {
     SimpleTextureItem::geometryChanged(new_, old);
 }
 
-void SimpleFboItem::updateTexture(OpenGLTexture2D *texture) {
+auto SimpleFboItem::updateTexture(OpenGLTexture2D *texture) -> void
+{
     const auto size = imageSize();
     if (size.isEmpty()) {
         _Delete(m_fbo);

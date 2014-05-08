@@ -177,12 +177,12 @@ HighQualityTextureItem::~HighQualityTextureItem()
     delete d;
 }
 
-InterpolatorType HighQualityTextureItem::interpolator() const
+auto HighQualityTextureItem::interpolator() const -> InterpolatorType
 {
     return d->interpolator->type();
 }
 
-void HighQualityTextureItem::setInterpolator(InterpolatorType type)
+auto HighQualityTextureItem::setInterpolator(InterpolatorType type) -> void
 {
     if (type != InterpolatorType::Bilinear
             && !OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat))
@@ -193,7 +193,7 @@ void HighQualityTextureItem::setInterpolator(InterpolatorType type)
     }
 }
 
-void HighQualityTextureItem::setDithering(Dithering dithering)
+auto HighQualityTextureItem::setDithering(Dithering dithering) -> void
 {
     if (dithering == Dithering::Fruit
             && !OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat))
@@ -202,13 +202,13 @@ void HighQualityTextureItem::setDithering(Dithering dithering)
         rerender();
 }
 
-Dithering HighQualityTextureItem::dithering() const
+auto HighQualityTextureItem::dithering() const -> Dithering
 {
     return d->dithering;
 }
 
 
-void HighQualityTextureItem::initializeGL()
+auto HighQualityTextureItem::initializeGL() -> void
 {
     SimpleTextureItem::initializeGL();
     d->lutInt[0].create();
@@ -216,7 +216,7 @@ void HighQualityTextureItem::initializeGL()
     d->lutDither.create(OGL::Nearest, OGL::Repeat);
 }
 
-void HighQualityTextureItem::finalizeGL()
+auto HighQualityTextureItem::finalizeGL() -> void
 {
     SimpleTextureItem::finalizeGL();
     d->lutInt[0].destroy();
@@ -273,10 +273,11 @@ static void makeDitheringTexture(OpenGLTexture2D &texture, Dithering type) {
         size = 8;
         buffer.resize(size*size);
         mp_make_ordered_dither_matrix((uchar*)buffer.data(), size);
-        info = OpenGLCompat::textureTransferInfo(OGL::OneComponent);
+        info = OpenGLCompat::transferInfo(OGL::OneComponent);
         data = buffer.data();
     }
-    OpenGLTextureBinder<OGL::Target2D>(&texture)->initialize(size, size, info, data);
+    OpenGLTextureBinder<OGL::Target2D> binder(&texture);
+    binder->initialize(size, size, info, data);
 }
 
 auto HighQualityTextureItem::updateData(ShaderData *sd) -> void

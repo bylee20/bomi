@@ -15,49 +15,49 @@ public:
     RichTextDocument &operator = (const QList<RichTextBlock> &rhs);
     RichTextDocument &operator += (const RichTextDocument &rhs);
     RichTextDocument &operator += (const QList<RichTextBlock> &rhs);
-    inline bool isEmpty() const {return m_blocks.isEmpty();}
-    inline int totalLength() const {
+    inline auto isEmpty() const -> bool {return m_blocks.isEmpty();}
+    inline auto totalLength() const -> int {
         int ret = 0;
         for (auto &block : m_blocks)
             ret += block.text.size();
         return ret;
     }
-    inline bool hasWords() const {
+    inline auto hasWords() const -> bool {
         for (auto &block : m_blocks) {
             if (block.hasWords())
                 return true;
         }
         return false;
     }
-    inline QString toPlainText() const {
+    inline auto toPlainText() const -> QString {
         QString ret;
         for (auto &block : m_blocks)
             ret += block.text;
         return ret;
     }
     inline const QList<RichTextBlock> &blocks() const {return m_blocks;}
-    void setAlignment(Qt::Alignment alignment);
-    void setWrapMode(QTextOption::WrapMode wrapMode);
-    void setFormat(QTextFormat::Property property, const QVariant &data);
-    void draw(QPainter *painter, const QPointF &pos);
-    void drawBoudingBoxes(QPainter *painter, const QPointF &pos);
-    void doLayout(double maxWidth);
-    void updateLayoutInfo();
-    void setText(const QString &text);
-    void setFontPixelSize(int px);
-    void setTextOutline(const QColor &color, double width) {setTextOutline(QPen(color, width));}
-    void setTextOutline(const QPen &pen);
-    QSizeF naturalSize() const {return m_natural.size();}
-    void setLeading(double newLine, double paragraph);
-    void clear() { freeLayouts(); m_blocks.clear(); setChanged(true); }
+    auto setAlignment(Qt::Alignment alignment) -> void;
+    auto setWrapMode(QTextOption::WrapMode wrapMode) -> void;
+    auto setFormat(QTextFormat::Property property, const QVariant &data) -> void;
+    auto draw(QPainter *painter, const QPointF &pos) -> void;
+    auto drawBoudingBoxes(QPainter *painter, const QPointF &pos) -> void;
+    auto doLayout(double maxWidth) -> void;
+    auto updateLayoutInfo() -> void;
+    auto setText(const QString &text) -> void;
+    auto setFontPixelSize(int px) -> void;
+    auto setTextOutline(const QColor &color, double width) -> void {setTextOutline(QPen(color, width));}
+    auto setTextOutline(const QPen &pen) -> void;
+    auto naturalSize() const -> QSizeF {return m_natural.size();}
+    auto setLeading(double newLine, double paragraph) -> void;
+    auto clear() -> void { freeLayouts(); m_blocks.clear(); setChanged(true); }
     const QVector<QRectF> &boundingBoxes() const { return m_boxes; }
 private:
     struct Layout {
         QTextLayout block;
         QVector<QTextLayout*> rubies;
     };
-    void freeLayouts();
-    inline void setChanged(bool changed) {
+    auto freeLayouts() -> void;
+    inline auto setChanged(bool changed) -> void {
         m_dirty = m_blockChanged = m_formatChanged = m_pxChanged = m_optionChanged = changed;
     }
     QVector<Layout*> m_layouts;

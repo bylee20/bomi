@@ -8,9 +8,9 @@
 
 DECLARE_LOG_CONTEXT(OpenGL)
 
-OpenGLCompat OpenGLCompat::c;
-int OpenGLCompat::m_maxTexSize = 0;
-int OpenGLCompat::m_extensions = 0;
+OpenGLCompat OpenGLCompat::s;
+int OpenGLCompat::s_maxTexSize = 0;
+int OpenGLCompat::s_extensions = 0;
 
 struct OpenGLCompat::Data {
     bool init = false;
@@ -18,10 +18,6 @@ struct OpenGLCompat::Data {
     int major = 0, minor = 0;
     QMap<OGL::TransferFormat, OpenGLTextureTransferInfo> formats[2];
     OGL::TextureFormat fboFormat = OGL::RGBA8_UNorm;
-#ifdef Q_OS_LINUX
-    int (*swapInterval)(int interval) = nullptr; // GLX_MESA, GLX_SGI, WGL_EXT
-    void (*swapIntervalExt)(Display *dpy, GLXDrawable drawable, int interval) = nullptr; // GLX_EXT
-#endif
 };
 
 OpenGLCompat::OpenGLCompat()
@@ -33,8 +29,9 @@ OpenGLCompat::~OpenGLCompat() {
     delete d;
 }
 
-QOpenGLDebugLogger *OpenGLCompat::logger() {
-    return c.d->logger;
+auto OpenGLCompat::logger() -> QOpenGLDebugLogger*
+{
+    return s.d->logger;
 }
 
 static inline QByteArray _ToLog(QOpenGLDebugMessage::Source source) {
@@ -74,14 +71,17 @@ static inline QByteArray _ToLog(QOpenGLDebugMessage::Severity severity) {
     return QByteArray::number(severity, 16);
 }
 
-void OpenGLCompat::debug(const QOpenGLDebugMessage &message) {
+auto OpenGLCompat::debug(const QOpenGLDebugMessage &message) -> void
+{
     if (message.type() == QOpenGLDebugMessage::ErrorType)
         _Error("Error: %%", message.message().trimmed());
     else
-        _Debug("Logger: %% (%%/%%/%%)", message.message().trimmed(), message.source(), message.severity(), message.type());
+        _Debug("Logger: %% (%%/%%/%%)", message.message().trimmed(),
+               message.source(), message.severity(), message.type());
 }
 
-const char *OpenGLCompat::errorString(GLenum error) {
+auto OpenGLCompat::errorString(GLenum error) -> const char*
+{
     static QHash<GLenum, const char*> strings;
     if (strings.isEmpty()) {
 #define ADD(e) {strings[e] = #e;}
@@ -99,11 +99,24 @@ const char *OpenGLCompat::errorString(GLenum error) {
     return strings.value(error, "");
 }
 
-OGL::TextureFormat OpenGLCompat::framebufferObjectTextureFormat() {
-    return c.d->fboFormat;
+auto OpenGLCompat::logError(const char *at) -> int
+{
+    int num = 0;
+    auto error = GL_NO_ERROR;
+    while ((error = glGetError()) != GL_NO_ERROR) {
+        _Error("Error: %%(0x%%) at %%", errorString(error), error, at);
+        ++num;
+    }
+    return num;
 }
 
-void OpenGLCompat::check() {
+auto OpenGLCompat::framebufferObjectTextureFormat() -> OGL::TextureFormat
+{
+    return s.d->fboFormat;
+}
+
+auto OpenGLCompat::check() -> void
+{
     QOpenGLContext gl;
     if (!gl.create())
         _Fatal("Cannot create OpenGL context!");
@@ -113,27 +126,33 @@ void OpenGLCompat::check() {
     if (!gl.makeCurrent(&off))
         _Fatal("Cannot make OpenGL context current!");
 
-    auto d = c.d;
+    auto d = s.d;
 
     _Info("Check OpenGL stuffs.");
     const auto version = QOpenGLVersionProfile(gl.format()).version();
     d->major = version.first;
     d->minor = version.second;
     _Info("Version: %%.%%", d->major, d->minor);
-    auto versionNumber = [] (int major, int minor) { return major*100 + minor; };
+    auto versionNumber = [] (int major, int minor)
+        { return major*100 + minor; };
     const int current = versionNumber(version.first, version.second);
     if (current < versionNumber(2, 1))
-        _Fatal("OpenGL version is too low. CMPlayer requires OpenGL 2.1 or higher.");
+        _Fatal("OpenGL version is too low. "
+               "CMPlayer requires OpenGL 2.1 or higher.");
 
     auto exts = gl.extensions();
 #ifdef Q_OS_LINUX
-    exts += QSet<QByteArray>::fromList(QByteArray(glXQueryExtensionsString(QX11Info::display(), QX11Info::appScreen())).split(' '));
+    const auto glx = glXQueryExtensionsString(QX11Info::display(),
+                                              QX11Info::appScreen());
+    exts += QSet<QByteArray>::fromList(QByteArray(glx).split(' '));
 #endif
     QStringList extensions;
-    auto checkExtension = [&] (const char *name, Extension ext, int major = -1, int minor = 0) {
-        if ((major > 0 && current >= versionNumber(major, minor)) || exts.contains(name)) {
+    auto checkExtension = [&] (const char *name, Extension ext,
+                               int major = -1, int minor = 0) {
+        if ((major > 0 && current >= versionNumber(major, minor))
+                || exts.contains(name)) {
             extensions.append(name);
-            m_extensions |= ext;
+            s_extensions |= ext;
         }
     };
 
@@ -149,23 +168,29 @@ void OpenGLCompat::check() {
 
     if (QOpenGLFramebufferObject::hasOpenGLFramebufferObjects()) {
         extensions.append("GL_ARB_framebuffer_object");
-        m_extensions |= FramebufferObject;
+        s_extensions |= FramebufferObject;
     }
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTexSize);
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &s_maxTexSize);
 
     d->formats[0][OGL::Red] = {OGL::R8_UNorm, OGL::Red, OGL::UInt8};
     d->formats[0][OGL::RG] = {OGL::RG8_UNorm, OGL::RG, OGL::UInt8};
-    d->formats[0][OGL::Luminance] = {OGL::Luminance8_UNorm, OGL::Luminance, OGL::UInt8};
-    d->formats[0][OGL::LuminanceAlpha] = {OGL::LuminanceAlpha8_UNorm, OGL::LuminanceAlpha, OGL::UInt8};
+    d->formats[0][OGL::Luminance] = {OGL::Luminance8_UNorm,
+                                     OGL::Luminance, OGL::UInt8};
+    d->formats[0][OGL::LuminanceAlpha] = {OGL::LuminanceAlpha8_UNorm,
+                                          OGL::LuminanceAlpha, OGL::UInt8};
     d->formats[0][OGL::RGB] = {OGL::RGB8_UNorm, OGL::RGB, OGL::UInt8};
     d->formats[0][OGL::BGR] = {OGL::RGB8_UNorm, OGL::BGR, OGL::UInt8};
-    d->formats[0][OGL::BGRA] = {OGL::RGBA8_UNorm, OGL::BGRA, OGL::UInt32_8_8_8_8_Rev};
-    d->formats[0][OGL::RGBA] = {OGL::RGBA8_UNorm, OGL::RGBA, OGL::UInt32_8_8_8_8_Rev};
+    d->formats[0][OGL::BGRA] = {OGL::RGBA8_UNorm,
+                                OGL::BGRA, OGL::UInt32_8_8_8_8_Rev};
+    d->formats[0][OGL::RGBA] = {OGL::RGBA8_UNorm,
+                                OGL::RGBA, OGL::UInt32_8_8_8_8_Rev};
 
     d->formats[1][OGL::Red] = {OGL::R16_UNorm, OGL::Red, OGL::UInt16};
     d->formats[1][OGL::RG] = {OGL::R16_UNorm, OGL::RG, OGL::UInt16};
-    d->formats[1][OGL::Luminance] = {OGL::Luminance16_UNorm, OGL::Luminance, OGL::UInt16};
-    d->formats[1][OGL::LuminanceAlpha] = {OGL::LuminanceAlpha16_UNorm, OGL::LuminanceAlpha, OGL::UInt16};
+    d->formats[1][OGL::Luminance] = {OGL::Luminance16_UNorm,
+                                     OGL::Luminance, OGL::UInt16};
+    d->formats[1][OGL::LuminanceAlpha] = {OGL::LuminanceAlpha16_UNorm,
+                                          OGL::LuminanceAlpha, OGL::UInt16};
     d->formats[1][OGL::RGB] = {OGL::RGB16_UNorm, OGL::RGB, OGL::UInt16};
     d->formats[1][OGL::BGR] = {OGL::RGB16_UNorm, OGL::BGR, OGL::UInt16};
     d->formats[1][OGL::BGRA] = {OGL::RGBA16_UNorm, OGL::BGRA, OGL::UInt16};
@@ -173,8 +198,13 @@ void OpenGLCompat::check() {
 
     const bool rg = hasExtension(TextureRG);
     for (auto &format : d->formats) {
-        format[OGL::OneComponent] = rg ? format[OGL::Red] : format[OGL::Luminance];
-        format[OGL::TwoComponents] = rg ? format[OGL::RG]  : format[OGL::LuminanceAlpha];
+        if (rg) {
+            format[OGL::OneComponent] = format[OGL::Red];
+            format[OGL::TwoComponents] = format[OGL::RG];
+        } else {
+            format[OGL::OneComponent] = format[OGL::Luminance];
+            format[OGL::TwoComponents] = format[OGL::LuminanceAlpha];
+        }
     }
 
     if (!hasExtension(FramebufferObject))
@@ -185,7 +215,8 @@ void OpenGLCompat::check() {
         _Info("FBO texture format: GL_RGBA16");
     } else {
         if (!_Renew(fbo, QSize(16, 16), OGL::RGBA8_UNorm)->isValid())
-            _Fatal("No available FBO texture format. One of GL_BGRA8 and GL_BGRA16 must be supported at least.");
+            _Fatal("No available FBO texture format.\n"
+                   "One of GL_BGRA8 and GL_BGRA16 must be supported at least.");
         else
             _Info("FBO texture format: OGL::RGBA8_UNorm");
     }
@@ -194,8 +225,9 @@ void OpenGLCompat::check() {
         _Info("Available extensions: %%", extensions.join(", "));
 }
 
-void OpenGLCompat::finalize(QOpenGLContext */*ctx*/) {
-    auto d = c.d;
+auto OpenGLCompat::finalize(QOpenGLContext */*ctx*/) -> void
+{
+    auto d = s.d;
     if (d->init) {
         if (d->logger && d->logger->isLogging())
             d->logger->stopLogging();
@@ -204,41 +236,29 @@ void OpenGLCompat::finalize(QOpenGLContext */*ctx*/) {
     }
 }
 
-void OpenGLCompat::initialize(QOpenGLContext *ctx) {
-    auto d = c.d;
+auto OpenGLCompat::initialize(QOpenGLContext *ctx) -> void
+{
+    auto d = s.d;
     if (d->init)
         return;
     d->init = true;
-    if (cApp.isOpenGLDebugLoggerRequested()) {
-        if (hasExtension(Debug) && ctx->format().testOption(QSurfaceFormat::DebugContext)) {
-            d->logger = new QOpenGLDebugLogger;
-            if (!d->logger->initialize()) {
-                logError("OpenGLCompat::initialize()");
-                delete d->logger;
-            } else
-                _Debug("OpenGL debug logger is running.");
+    if (!cApp.isOpenGLDebugLoggerRequested())
+        return;
+    if (hasExtension(Debug)
+            && ctx->format().testOption(QSurfaceFormat::DebugContext)) {
+        d->logger = new QOpenGLDebugLogger;
+        if (!d->logger->initialize()) {
+            logError("OpenGLCompat::initialize()");
+            delete d->logger;
         } else
-            _Error("OpenGL debug logger was requested but it is not supported.");
-    }
-#ifdef Q_OS_LINUX
-    if (hasExtension(ExtSwapControl))
-        d->swapIntervalExt = (decltype(d->swapIntervalExt))ctx->getProcAddress("glXSwapIntervalEXT");
-    if (hasExtension(MesaSwapControl))
-        d->swapInterval = (decltype(d->swapInterval))ctx->getProcAddress("glxSwapIntervalMESA");
-    else if (hasExtension(SgiSwapControl))
-        d->swapInterval = (decltype(d->swapInterval))ctx->getProcAddress("glXSwapIntervalSGI");
-#endif
+            _Debug("OpenGL debug logger is running.");
+    } else
+        _Error("OpenGL debug logger was requested but it is not supported.");
 }
 
-OpenGLTextureTransferInfo OpenGLCompat::textureTransferInfo(OGL::TransferFormat format, int bytesPerComponent) {
+auto OpenGLCompat::transferInfo(OGL::TransferFormat format,
+                                int bytesPerComponent) -> TransferInfo
+{
     Q_ASSERT(bytesPerComponent == 1 || bytesPerComponent == 2);
-    return c.d->formats[bytesPerComponent-1][format];
-}
-
-void OpenGLCompat::setSwapInterval(int frames) {
-    Q_UNUSED(frames);
-#ifdef Q_OS_LINUX
-    if (c.d->swapInterval)
-        c.d->swapInterval(frames);
-#endif
+    return s.d->formats[bytesPerComponent-1][format];
 }

@@ -16,7 +16,7 @@ class FastAlphaBlur {
 public:
     FastAlphaBlur(): radius(-1) {}
     // copied from openframeworks superfast blur and modified
-    void applyTo(QImage &mask, const QColor &color, int radius) {
+    auto applyTo(QImage &mask, const QColor &color, int radius) -> void {
         if (radius < 1 || mask.isNull())
             return;
         setSize(mask.size());
@@ -83,7 +83,7 @@ public:
     }
 
 private:
-    void setSize(const QSize &size) {
+    auto setSize(const QSize &size) -> void {
         if (size != s) {
             s = size;
             if (!s.isEmpty()) {
@@ -93,7 +93,7 @@ private:
             }
         }
     }
-    void setRadius(const int radius) {
+    auto setRadius(const int radius) -> void {
         if (this->radius != radius) {
             this->radius = radius;
             if (radius > 0) {
@@ -111,22 +111,23 @@ private:
 };
 
 class SubCompImage : public QImage {
+    using Iterator = SubComp::const_iterator;
 public:
-    SubCompImage(const SubComp *comp, SubComp::const_iterator it, void *creator)
-    : m_comp(comp), m_it(it), m_creator(creator) { if (m_it != comp->end()) m_text = *m_it; }
-    SubCompImage(const SubComp *comp): m_comp(comp) { if (comp) m_it = m_comp->end(); }
-    SubComp::const_iterator iterator() const { return m_it; }
-    const RichTextDocument &text() const { return m_text; }
-    const SubComp *component() const { return m_comp; }
-    QSize layoutSize() const { return size()/devicePixelRatio(); }
-    bool isValid() const { return m_comp && m_it != m_comp->end(); }
-    void *creator() const { return m_creator; }
-    const QVector<QRectF> &boundingBoxes() const { return m_bboxes; }
-    int gap() const { return m_gap; }
+    SubCompImage(const SubComp *comp, Iterator it, void *creator);
+    SubCompImage(const SubComp *comp);
+    auto iterator() const -> Iterator { return m_it; }
+    auto text() const -> const RichTextDocument& { return m_text; }
+    auto component() const -> const SubComp* { return m_comp; }
+    auto layoutSize() const -> QSize { return size()/devicePixelRatio(); }
+    auto isValid() const -> bool { return m_comp && m_it != m_comp->end(); }
+    auto creator() const -> void* { return m_creator; }
+    auto boundingBoxes() const -> const QVector<QRectF>& { return m_bboxes; }
+    auto gap() const -> int { return m_gap; }
 private:
     friend class SubtitleDrawer;
     const SubComp *m_comp = nullptr;
-    SubComp::const_iterator m_it; RichTextDocument m_text;
+    Iterator m_it;
+    RichTextDocument m_text;
     QVector<QRectF> m_bboxes;
     int m_gap = 0;
     void *m_creator = nullptr;
@@ -134,45 +135,21 @@ private:
 
 class SubtitleDrawer {
 public:
-    void setStyle(const SubtitleStyle &style);
-    void setAlignment(Qt::Alignment alignment) {
-        m_back.setAlignment(m_alignment = alignment);
-        m_front.setAlignment(alignment);
-    }
-    void setMargin(const Margin &margin) { m_margin = margin; }
-    bool hasDrawn() const {return m_drawn;}
-    QVector<QRectF> draw(QImage &image, int &gap, const RichTextDocument &text, const QRectF &area, double dpr = 1.0);
-    bool draw(SubCompImage &pic, const QRectF &area, double dpr = 1.0) {
-        pic.m_bboxes = draw(pic, pic.m_gap, pic.m_text, area, dpr);
-        return !pic.isNull();
-    }
-    QPointF pos(const QSizeF &image, const QRectF &area) const;
-    Qt::Alignment alignment() const { return m_alignment; }
-    const Margin &margin() const { return m_margin; }
-    const SubtitleStyle &style() const {return m_style;}
-    double scale(const QRectF &area) const {
-        const auto policy = m_style.font.scale;
-        double px = m_style.font.size;
-        if (policy == SubtitleStyle::Font::Scale::Diagonal)
-            px *= _Diagonal(area.size());
-        else if (policy == SubtitleStyle::Font::Scale::Width)
-            px *= area.width();
-        else
-            px *= area.height();
-        return px/m_style.font.height();
-    }
+    auto setStyle(const SubtitleStyle &style) -> void;
+    auto setAlignment(Qt::Alignment alignment) -> void;
+    auto setMargin(const Margin &margin) -> void { m_margin = margin; }
+    auto hasDrawn() const -> bool {return m_drawn;}
+    auto draw(QImage &image, int &gap, const RichTextDocument &text,
+              const QRectF &area, double dpr = 1.0) -> QVector<QRectF>;
+    auto draw(SubCompImage &pic, const QRectF &area, double dpr = 1.0) -> bool;
+    auto pos(const QSizeF &image, const QRectF &area) const -> QPointF;
+    auto alignment() const -> Qt::Alignment { return m_alignment; }
+    auto margin() const -> const Margin& { return m_margin; }
+    auto style() const -> const SubtitleStyle& {return m_style;}
+    auto scale(const QRectF &area) const -> double;
 private:
-    static void updateStyle(RichTextDocument &doc, const SubtitleStyle &style) {
-        doc.setFontPixelSize(style.font.height());
-        doc.setWrapMode(style.wrapMode);
-        doc.setFormat(QTextFormat::ForegroundBrush, QBrush(style.font.color));
-        doc.setFormat(QTextFormat::FontFamily, style.font.family());
-        doc.setFormat(QTextFormat::FontUnderline, style.font.underline());
-        doc.setFormat(QTextFormat::FontStrikeOut, style.font.strikeOut());
-        doc.setFormat(QTextFormat::FontWeight, style.font.weight());
-        doc.setFormat(QTextFormat::FontItalic, style.font.italic());
-        doc.setLeading(style.spacing.line, style.spacing.paragraph);
-    }
+    static auto updateStyle(RichTextDocument &doc,
+                            const SubtitleStyle &style) -> void;
     SubtitleStyle m_style;
     RichTextDocument m_front, m_back;
     Margin m_margin;
@@ -181,5 +158,44 @@ private:
     FastAlphaBlur m_blur;
     QByteArray m_buffer;
 };
+
+inline auto SubtitleDrawer::setAlignment(Qt::Alignment alignment) -> void
+{
+    m_back.setAlignment(m_alignment = alignment);
+    m_front.setAlignment(alignment);
+}
+
+inline auto SubtitleDrawer::draw(SubCompImage &pic, const QRectF &area,
+                                 double dpr) -> bool
+{
+    pic.m_bboxes = draw(pic, pic.m_gap, pic.m_text, area, dpr);
+    return !pic.isNull();
+}
+
+inline auto SubtitleDrawer::scale(const QRectF &area) const -> double
+{
+    const auto policy = m_style.font.scale;
+    double px = m_style.font.size;
+    if (policy == SubtitleStyle::Font::Scale::Diagonal)
+        px *= _Diagonal(area.size());
+    else if (policy == SubtitleStyle::Font::Scale::Width)
+        px *= area.width();
+    else
+        px *= area.height();
+    return px/m_style.font.height();
+}
+
+inline auto SubtitleDrawer::updateStyle(RichTextDocument &doc,
+                                        const SubtitleStyle &style) -> void {
+    doc.setFontPixelSize(style.font.height());
+    doc.setWrapMode(style.wrapMode);
+    doc.setFormat(QTextFormat::ForegroundBrush, QBrush(style.font.color));
+    doc.setFormat(QTextFormat::FontFamily, style.font.family());
+    doc.setFormat(QTextFormat::FontUnderline, style.font.underline());
+    doc.setFormat(QTextFormat::FontStrikeOut, style.font.strikeOut());
+    doc.setFormat(QTextFormat::FontWeight, style.font.weight());
+    doc.setFormat(QTextFormat::FontItalic, style.font.italic());
+    doc.setLeading(style.spacing.line, style.spacing.paragraph);
+}
 
 #endif // SUBTITLEDRAWER_HPP

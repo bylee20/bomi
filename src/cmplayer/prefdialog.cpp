@@ -613,7 +613,8 @@ static void getHw(bool &enabled, QGroupBox *group,
     }
 }
 
-void PrefDialog::set(const Pref &p) {
+auto PrefDialog::set(const Pref &p) -> void
+{
     d->open_media_from_file_manager->setValue(p.open_media_from_file_manager);
     d->open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
 
@@ -742,7 +743,8 @@ void PrefDialog::set(const Pref &p) {
     d->properties.setChecked(0, restores);
 }
 
-void PrefDialog::get(Pref &p) {
+auto PrefDialog::get(Pref &p) -> void
+{
     p.open_media_from_file_manager = d->open_media_from_file_manager->value();
     p.open_media_by_drag_and_drop = d->open_media_by_drag_and_drop->value();
 
@@ -874,7 +876,8 @@ void PrefDialog::get(Pref &p) {
     }
 }
 
-void PrefDialog::changeEvent(QEvent *event) {
+auto PrefDialog::changeEvent(QEvent *event) -> void
+{
     QWidget::changeEvent(event);
     if (event->type() == QEvent::LanguageChange) {
         d->ui.retranslateUi(this);
@@ -882,6 +885,7 @@ void PrefDialog::changeEvent(QEvent *event) {
     }
 }
 
-void PrefDialog::showEvent(QShowEvent *event) {
+auto PrefDialog::showEvent(QShowEvent *event) -> void
+{
     QDialog::showEvent(event);
 }

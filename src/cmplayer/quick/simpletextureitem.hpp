@@ -9,18 +9,18 @@ class SimpleTextureItem : public ShaderRenderItem<OGL::TextureVertex> {
     Q_OBJECT
 public:
     SimpleTextureItem(QQuickItem *parent = nullptr);
-    void setTexture(const OpenGLTexture2D &texture) {
+    auto setTexture(const OpenGLTexture2D &texture) -> void {
         m_texture = texture; reserve(UpdateMaterial);
     }
     OpenGLTexture2D &texture() { return m_texture; }
     const OpenGLTexture2D &texture() const { return m_texture; }
-    GLenum drawingMode() const override { return GL_TRIANGLE_STRIP; }
+    auto drawingMode() const -> GLenum override { return GL_TRIANGLE_STRIP; }
     Type *type() const override { static Type type; return &type; }
-    int vertexCount() const override { return 4; }
+    auto vertexCount() const -> int override { return 4; }
 protected:
-    virtual void updateTexture(OpenGLTexture2D *texture) { Q_UNUSED(texture); }
+    virtual auto updateTexture(OpenGLTexture2D *texture) -> void { Q_UNUSED(texture); }
 private:
-    void initializeVertex(Vertex *vertex) const override {
+    auto initializeVertex(Vertex *vertex) const -> void override {
         if (drawingMode() == GL_TRIANGLES)
             Vertex::fillAsTriangles(vertex, {0, 0}, {0, 0}, {0, 0}, {1, 1});
         else if (drawingMode() == GL_TRIANGLE_STRIP)
@@ -30,7 +30,7 @@ private:
     ShaderData *createData() const override;
     /** If updateData() is overridden,
      *  updateTexture() should be called in there.*/
-    void updateData(ShaderData *data) override;
+    auto updateData(ShaderData *data) -> void override;
     OpenGLTexture2D m_texture;
 };
 

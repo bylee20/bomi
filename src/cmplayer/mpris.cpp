@@ -64,27 +64,33 @@ MediaPlayer2::~MediaPlayer2() {
     delete d;
 }
 
-bool MediaPlayer2::isFullScreen() const {
+auto MediaPlayer2::isFullScreen() const -> bool
+{
     return d->mw->isFullScreen();
 }
 
-void MediaPlayer2::setFullScreen(bool fs) {
+auto MediaPlayer2::setFullScreen(bool fs) -> void
+{
     d->mw->setFullScreen(fs);
 }
 
-void MediaPlayer2::Raise() {
+auto MediaPlayer2::Raise() -> void
+{
     d->mw->wake();
 }
 
-void MediaPlayer2::Quit() {
+auto MediaPlayer2::Quit() -> void
+{
     d->mw->exit();
 }
 
-QStringList MediaPlayer2::supportedUriSchemes() const {
+auto MediaPlayer2::supportedUriSchemes() const -> QStringList
+{
     return QStringList() << "file" << "http" << "https" << "ftp" << "mms" << "rtmp" << "rtsp" << "sftp";
 }
 
-QStringList MediaPlayer2::supportedMimeTypes() const {
+auto MediaPlayer2::supportedMimeTypes() const -> QStringList
+{
     return QStringList() << "application/ogg" << "application/x-ogg" << "application/sdp" << "application/smil"
         << "application/x-smil" << "application/streamingmedia" << "application/x-streamingmedia" << "application/vnd.rn-realmedia"
         << "application/vnd.rn-realmedia-vbr" << "audio/aac" << "audio/x-aac" << "audio/m4a" << "audio/x-m4a" << "audio/mp1"
@@ -172,104 +178,127 @@ Player::~Player() {
     delete d;
 }
 
-QString Player::playbackStatus() const {
+auto Player::playbackStatus() const -> QString
+{
     return d->playbackStatus;
 }
 
-QString Player::loopStatus() const {
+auto Player::loopStatus() const -> QString
+{
     return _L("None");
 }
 
-void Player::setLoopStatus(const QString &/*status*/) {
+auto Player::setLoopStatus(const QString &/*status*/) -> void
+{
 
 }
 
-double Player::rate() const {
+auto Player::rate() const -> double
+{
     return d->engine->speed();
 }
 
-void Player::setRate(double rate) {
+auto Player::setRate(double rate) -> void
+{
     d->engine->setSpeed(rate);
 }
 
-bool Player::isShuffled() const {
+auto Player::isShuffled() const -> bool
+{
     return false;
 }
 
-void Player::setShuffled(bool /*s*/) {
+auto Player::setShuffled(bool /*s*/) -> void
+{
 
 }
 
-QVariantMap Player::metaData() const {
+auto Player::metaData() const -> QVariantMap
+{
     return d->metaData;
 }
 
-double Player::volume() const {
+auto Player::volume() const -> double
+{
     return d->volume;
 }
 
-void Player::setVolume(double volume) {
+auto Player::setVolume(double volume) -> void
+{
     if (_Change(d->volume, qBound(0.0, volume, 1.0))) {
         d->engine->setVolume(d->volume*100 + 0.5);
         sendPropertiesChanged(this, "Volume", d->volume);
     }
 }
 
-qint64 Player::time() const {
+auto Player::time() const -> qint64
+{
     return qBound<qint64>(0LL, d->engine->time()-d->engine->begin(), d->engine->duration())*1000LL;
 }
 
-bool Player::hasNext() const {
+auto Player::hasNext() const -> bool
+{
     return d->playlist->hasNext();
 }
 
-bool Player::hasPrevious() const {
+auto Player::hasPrevious() const -> bool
+{
     return d->playlist->hasPrevious();
 }
 
-bool Player::isPlayable() const {
+auto Player::isPlayable() const -> bool
+{
     return d->engine->state() != PlayEngine::Error;
 }
 
-bool Player::isPausable() const {
+auto Player::isPausable() const -> bool
+{
     return d->engine->state() != PlayEngine::Error;
 }
 
-bool Player::isSeekable() const {
+auto Player::isSeekable() const -> bool
+{
     return d->engine->isSeekable();
 }
 
-void Player::Next() {
+auto Player::Next() -> void
+{
     if (d->playlist->hasNext())
         d->playlist->playNext();
     else
         d->engine->stop();
 }
 
-void Player::Previous() {
+auto Player::Previous() -> void
+{
     if (d->playlist->hasPrevious())
         d->playlist->playPrevious();
     else
         d->engine->stop();
 }
 
-void Player::Pause() {
+auto Player::Pause() -> void
+{
     d->engine->pause();
 }
 
-void Player::PlayPause() {
+auto Player::PlayPause() -> void
+{
     d->mw->togglePlayPause();
 }
 
-void Player::Stop() {
+auto Player::Stop() -> void
+{
     d->engine->stop();
 }
 
-void Player::Play() {
+auto Player::Play() -> void
+{
     d->mw->play();
 }
 
-void Player::Seek(qint64 offset) {
+auto Player::Seek(qint64 offset) -> void
+{
     offset /= 1000;
     if (d->engine->duration() > 0 && (offset + d->engine->time() - d->engine->begin() > d->engine->duration()))
         Next();
@@ -277,11 +306,13 @@ void Player::Seek(qint64 offset) {
         d->engine->relativeSeek(offset);
 }
 
-void Player::OpenUri(const QString &url) {
+auto Player::OpenUri(const QString &url) -> void
+{
     d->mw->openFromFileManager(Mrl(QUrl(url)));
 }
 
-void Player::SetPosition(const QDBusObjectPath &track, qint64 position) {
+auto Player::SetPosition(const QDBusObjectPath &track, qint64 position) -> void
+{
     position /= 1000;
     if (track.path() == dbusTrackId(d->engine->mrl()))
         d->engine->seek(position + d->engine->begin());

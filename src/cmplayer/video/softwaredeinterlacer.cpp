@@ -2,6 +2,10 @@
 #include "ffmpegfilters.hpp"
 #include "deintinfo.hpp"
 #include "videoframe.hpp"
+extern "C" {
+#include <common/common.h>
+#include <video/mp_image.h>
+}
 
 struct SoftwareDeinterlacer::Data {
     SoftwareDeinterlacer *p = nullptr;
@@ -11,21 +15,20 @@ struct SoftwareDeinterlacer::Data {
     FFmpegFilterGraph graph;
     FFmpegPostProc pp;
     Type type = Pass;
-    const VideoFrame *in = nullptr;
     mutable int i_pts = 0;
     double pts = MP_NOPTS_VALUE, prev = MP_NOPTS_VALUE;
     QLinkedList<mp_image*> pops;
 
-    auto topField() const -> mp_image*
+    auto topField(const mp_image *in) const -> mp_image*
     {
-        auto out = pp.newImage(in->mpi());
-        pp.process(out, in->mpi());
+        auto out = pp.newImage(in);
+        pp.process(out, in);
         return out;
     }
-    auto bottomField() const -> mp_image*
+    auto bottomField(const mp_image *mpi) const -> mp_image*
     {
-        auto inm = in->mpi();
-        auto out = pp.newImage(inm);
+        auto inm = const_cast<mp_image*>(mpi);
+        auto out = pp.newImage(mpi);
         inm->planes[0] += inm->stride[0];
         out->planes[0] += out->stride[0];
         inm->h -= 2;
@@ -107,16 +110,14 @@ auto SoftwareDeinterlacer::push(mp_image *mpi) -> void
             if (!d->pp.initialize(d->option, {mpi->w, mpi->h}, mpi->imgfmt))
                 break;
             const bool topFirst = mpi->fields & MP_IMGFIELD_TOP_FIRST;
-            auto push = [mpi, this] (mp_image *img) {
-                img->colorspace = mpi->colorspace;
-                img->levels = mpi->levels;
-                img->display_w = mpi->display_w;
-                img->display_h = mpi->display_h;
+            auto push = [&] (bool top) {
+                auto img = top ? d->topField(mpi) : d->bottomField(mpi);
+                img->params = mpi->params;
                 img->pts = d->nextPts();
             };
-            push(topFirst ? d->topField() : d->bottomField());
+            push(topFirst);
             if (d->deint.doubler)
-                push(!topFirst ? d->topField() : d->bottomField());
+                push(!topFirst);
             talloc_free(mpi);
             break;
         } default:
@@ -132,7 +133,8 @@ auto SoftwareDeinterlacer::pop() -> mp_image*
     return d->pops.isEmpty() ? nullptr : d->pops.takeFirst();
 }
 
-void SoftwareDeinterlacer::setOption(const DeintOption &deint) {
+auto SoftwareDeinterlacer::setOption(const DeintOption &deint) -> void
+{
     if (!_Change(d->deint, deint))
         return;
     d->option.clear();

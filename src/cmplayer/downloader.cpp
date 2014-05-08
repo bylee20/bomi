@@ -1,6 +1,7 @@
 #include "downloader.hpp"
 
-void reg_downloader() {
+auto reg_downloader() -> void
+{
     qmlRegisterType<Downloader>();
 }
 
@@ -16,31 +17,38 @@ struct Downloader::Data {
 };
 
 Downloader::Downloader(QObject *parent)
-: QObject(parent), d(new Data) {
+    : QObject(parent)
+    , d(new Data)
+{
     d->p = this;
     d->nam = new QNetworkAccessManager;
 }
 
-Downloader::~Downloader() {
+Downloader::~Downloader()
+{
     if (d->reply)
         cancel();
     delete d->nam;
     delete d;
 }
 
-qint64 Downloader::writtenSize() const {
+auto Downloader::writtenSize() const -> qint64
+{
     return d->written;
 }
 
-qint64 Downloader::totalSize() const {
+auto Downloader::totalSize() const -> qint64
+{
     return d->total;
 }
 
-bool Downloader::isCanceled() const {
+auto Downloader::isCanceled() const -> bool
+{
     return d->canceled;
 }
 
-void Downloader::cancel() {
+auto Downloader::cancel() -> void
+{
     if (d->reply) {
         d->canceled = true;
         d->reply->abort();
@@ -52,7 +60,8 @@ void Downloader::cancel() {
     }
 }
 
-bool Downloader::start(const QUrl &url) {
+auto Downloader::start(const QUrl &url) -> bool
+{
     if (d->running)
         return false;
     if (_Change(d->url, url))
@@ -64,7 +73,8 @@ bool Downloader::start(const QUrl &url) {
     emit runningChanged();
     progress(-1, -1);
     d->reply = d->nam->get(QNetworkRequest(url));
-    connect(d->reply, &QNetworkReply::downloadProgress, this, &Downloader::progress);
+    connect(d->reply, &QNetworkReply::downloadProgress,
+            this, &Downloader::progress);
     connect(d->reply, &QNetworkReply::finished, [this] () {
         d->data = d->reply->readAll();
         d->running = false;
@@ -76,7 +86,8 @@ bool Downloader::start(const QUrl &url) {
     return true;
 }
 
-void Downloader::progress(qint64 written, qint64 total) {
+auto Downloader::progress(qint64 written, qint64 total) -> void
+{
     if (_Change(d->total, total))
         emit totalSizeChanged(total);
     if (_Change(d->written, written))
@@ -89,25 +100,30 @@ void Downloader::progress(qint64 written, qint64 total) {
     emit progressed(written, total);
 }
 
-QUrl Downloader::url() const {
+auto Downloader::url() const -> QUrl
+{
     return d->url;
 }
 
-bool Downloader::isRunning() const {
+auto Downloader::isRunning() const -> bool
+{
     return d->running;
 }
 
-qreal Downloader::rate() const {
+auto Downloader::rate() const -> qreal
+{
     return d->rate;
 }
 
-QByteArray Downloader::takeData() {
+auto Downloader::takeData() -> QByteArray
+{
     auto data = d->data;
     d->data = QByteArray();
     return data;
 }
 
-QByteArray Downloader::data() const {
+auto Downloader::data() const -> QByteArray
+{
     return d->data;
 }
 

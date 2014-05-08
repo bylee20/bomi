@@ -180,21 +180,21 @@ class udf25
 public:
   udf25( );
   ~udf25( );
-  bool Open(const char *isofile);
+  auto Open(const char *isofile) -> bool;
 private:
   FileAD *UDFFindFile( const char* filename, quint64 *filesize );
-  int UDFScanDirX( udf_dir_t *dirp );
-  int DVDUDFCacheLevel(int level);
+  auto UDFScanDirX( udf_dir_t *dirp ) -> int;
+  auto DVDUDFCacheLevel(int level) -> int;
   void *GetUDFCacheHandle();
-  void SetUDFCacheHandle(void *cache);
-  int GetUDFCache(UDFCacheType type,quint32 nr, void *data);
-  int UDFFindPartition( int partnum, struct Partition *part );
-  int UDFGetAVDP( struct avdp_t *avdp);
-  int DVDReadLBUDF(quint32 lb_number, size_t block_count, unsigned char *data, int);
-  int ReadAt( int64_t pos, size_t len, unsigned char *data );
-  int UDFMapICB( struct AD ICB, struct Partition *partition, struct FileAD *File );
-  int UDFScanDir( struct FileAD Dir, char *FileName, struct Partition *partition, struct AD *FileICB, int cache_file_info);
-  int SetUDFCache(UDFCacheType type, quint32 nr, void *data);
+  auto SetUDFCacheHandle(void *cache) -> void;
+  auto GetUDFCache(UDFCacheType type,quint32 nr, void *data) -> int;
+  auto UDFFindPartition( int partnum, struct Partition *part ) -> int;
+  auto UDFGetAVDP( struct avdp_t *avdp) -> int;
+  auto DVDReadLBUDF(quint32 lb_number, size_t block_count, unsigned char *data, int) -> int;
+  auto ReadAt( int64_t pos, size_t len, unsigned char *data ) -> int;
+  auto UDFMapICB( struct AD ICB, struct Partition *partition, struct FileAD *File ) -> int;
+  auto UDFScanDir( struct FileAD Dir, char *FileName, struct Partition *partition, struct AD *FileICB, int cache_file_info) -> int;
+  auto SetUDFCache(UDFCacheType type, quint32 nr, void *data) -> int;
 protected:
   friend class File;
   friend class Dir;
@@ -210,15 +210,15 @@ public:
     File();
     ~File();
     File(udf25 *udf, const QString &fileName);
-    bool isOpen() const { return m_file; }
-    quint64 size() const { return m_size; }
+    auto isOpen() const -> bool { return m_file; }
+    auto size() const -> quint64 { return m_size; }
     FileAD *handle() const { return m_file; }
-    qint64 read(char *buffer, qint64 size);
-    QByteArray read(qint64 size);
-    int64_t seek(int64_t lOffset, int whence);
-    QString fileName() const { return m_fileName; }
+    auto read(char *buffer, qint64 size) -> qint64;
+    auto read(qint64 size) -> QByteArray;
+    auto seek(int64_t lOffset, int whence) -> int64_t;
+    auto fileName() const -> QString { return m_fileName; }
 private:
-    void close();
+    auto close() -> void;
     File(const File&) = delete;
     File &operator=(const File&) = delete;
     FileAD *m_file = nullptr;
@@ -232,9 +232,9 @@ class Dir {
 public:
     Dir();
     Dir(udf25 *udf, const QString &path);
-    bool isOpen() const { return m_open; }
-    QString path() const { return m_path; }
-    QStringList files(bool withPath = true) const;
+    auto isOpen() const -> bool { return m_open; }
+    auto path() const -> QString { return m_path; }
+    auto files(bool withPath = true) const -> QStringList;
 private:
     udf25 *m_udf = nullptr;
     bool m_open = false;

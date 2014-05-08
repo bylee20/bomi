@@ -16,17 +16,17 @@ public:
     RootMenu();
     RootMenu(const RootMenu &) = delete;
     ~RootMenu() {obj = nullptr;}
-    void update(const Pref &p);
+    auto update(const Pref &p) -> void;
     static inline RootMenu &instance() {return *obj;}
-    QString longId(QAction *action) const {return m_ids.value(action);}
+    auto longId(QAction *action) const -> QString {return m_ids.value(action);}
     QAction *action(const QString &longId) const {return m_actions.value(longId).action;}
     QAction *action(const QKeySequence &shortcut) const {return m_keymap.value(shortcut);}
-    inline void resetKeyMap() {m_keymap.clear(); fillKeyMap(this);}
-    Shortcuts shortcuts() const;
-    void setShortcuts(const Shortcuts &shortcuts);
+    inline auto resetKeyMap() -> void {m_keymap.clear(); fillKeyMap(this);}
+    auto shortcuts() const -> Shortcuts;
+    auto setShortcuts(const Shortcuts &shortcuts) -> void;
     static bool execute(const QString &longId, const QString &argument = QString());
 private:
-    template<typename N>
+    template<class N>
     inline static void setActionAttr(QAction *act, const QVariant &data
             , const QString &text, N textValue, bool sign = true) {
         act->setData(data);
@@ -48,11 +48,11 @@ private:
 
     inline static void setVideoPropStep(Menu &menu, const QString &key
             , VideoColor::Type prop, const QString &text, int step) {
-        setActionAttr(menu[key + "+"], QList<QVariant>() << prop << step, text, step);
-        setActionAttr(menu[key + "-"], QList<QVariant>() << prop << -step, text, -step);
+        setActionAttr(menu[key + "+"], QVariantList() << prop << step, text, step);
+        setActionAttr(menu[key + "-"], QVariantList() << prop << -step, text, -step);
     }
-    void fillId(Menu *menu, const QString &parent);
-    void fillKeyMap(Menu *menu);
+    auto fillId(Menu *menu, const QString &parent) -> void;
+    auto fillKeyMap(Menu *menu) -> void;
     static RootMenu *obj;
     QHash<QAction*, QString> m_ids;
     QHash<QString, ArgAction> m_actions;

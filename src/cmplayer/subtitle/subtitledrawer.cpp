@@ -1,27 +1,49 @@
 #include "subtitledrawer.hpp"
 
-QPointF SubtitleDrawer::pos(const QSizeF &image, const QRectF &area) const {
+SubCompImage::SubCompImage(const SubComp *comp, Iterator it, void *creator)
+    : m_comp(comp)
+    , m_it(it)
+    , m_creator(creator)
+{
+    if (m_it != comp->end())
+        m_text = *m_it;
+}
+
+SubCompImage::SubCompImage(const SubComp *comp)
+    : m_comp(comp)
+{
+    if (comp)
+        m_it = m_comp->end();
+}
+
+/******************************************************************************/
+
+auto SubtitleDrawer::pos(const QSizeF &image, const QRectF &area) const -> QPointF
+{
     QPointF pos(0.0, 0.0);
-    if (m_alignment & Qt::AlignBottom) {
-        pos.ry() = qMax(0.0, area.height()*(1.0 - m_margin.bottom) - image.height());
-    } else if (m_alignment & Qt::AlignVCenter)
-        pos.ry() = (area.height() - image.height())*0.5;
+    const auto ih = image.height(), ah = area.height();
+    if (m_alignment & Qt::AlignBottom)
+        pos.ry() = qMax(0.0, ah*(1.0 - m_margin.bottom) - ih);
+    else if (m_alignment & Qt::AlignVCenter)
+        pos.ry() = (ah - ih)*0.5;
     else {
-        pos.ry() = area.height()*m_margin.top;
-        if (pos.y() + image.height() > area.height())
-            pos.ry() = area.height() - image.height();
+        pos.ry() = ah*m_margin.top;
+        if (pos.y() + ih > ah)
+            pos.ry() = ah - ih;
     }
+    const auto iw = image.width(), aw = area.width();
     if (m_alignment & Qt::AlignHCenter)
-        pos.rx() = (area.width() - image.width())*0.5;
+        pos.rx() = (aw - iw)*0.5;
     else if (m_alignment & Qt::AlignRight)
-        pos.rx() = area.width()*(1.0 - m_margin.right) - image.width();
+        pos.rx() = aw*(1.0 - m_margin.right) - iw;
     else
-        pos.rx() = area.width()*m_margin.left;
+        pos.rx() = aw*m_margin.left;
     pos += area.topLeft();
     return pos;
 }
 
-void SubtitleDrawer::setStyle(const SubtitleStyle &style) {
+auto SubtitleDrawer::setStyle(const SubtitleStyle &style) -> void
+{
     m_style = style;
     updateStyle(m_front, style);
     updateStyle(m_back, style);
@@ -31,7 +53,8 @@ void SubtitleDrawer::setStyle(const SubtitleStyle &style) {
         m_back.setTextOutline(Qt::NoPen);
 }
 
-QVector<QRectF> SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text, const QRectF &area, double dpr) {
+auto SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text, const QRectF &area, double dpr) -> QVector<QRectF>
+{
     QVector<QRectF> bboxes;
     gap = 0;
     if (!(m_drawn = text.hasWords()))

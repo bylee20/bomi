@@ -24,23 +24,27 @@ Mrl::Mrl(const QString &location, const QString &name) {
     m_name = name;
 }
 
-bool Mrl::isPlaylist() const {
+auto Mrl::isPlaylist() const -> bool
+{
     return Info::playlistExt().contains(suffix(), Qt::CaseInsensitive);
 }
 
-QString Mrl::fileName() const {
+auto Mrl::fileName() const -> QString
+{
     const int idx = m_loc.lastIndexOf('/');
     return m_loc.mid(idx + 1);
 }
 
-QString Mrl::suffix() const {
+auto Mrl::suffix() const -> QString
+{
     const int idx = m_loc.lastIndexOf('.');
     if (idx != -1)
         return m_loc.mid(idx + 1);
     return QString();
 }
 
-QString Mrl::displayName() const {
+auto Mrl::displayName() const -> QString
+{
     if (isLocalFile())
         return fileName();
     QString disc;
@@ -64,18 +68,21 @@ QString Mrl::displayName() const {
 
 bool Mrl::isImage() const { return Info::readableImageExt().contains(suffix(), Qt::CaseInsensitive); }
 
-bool Mrl::isEmpty() const {
+auto Mrl::isEmpty() const -> bool
+{
     const int idx = m_loc.indexOf("://");
     return (idx < 0) || !(idx+3 < m_loc.size());
 }
 
 static const QStringList discSchemes = QStringList() << _L("dvdnav") << _L("bdnav");
 
-bool Mrl::isDisc() const {
+auto Mrl::isDisc() const -> bool
+{
     return discSchemes.contains(scheme(), Qt::CaseInsensitive);
 }
 
-QString Mrl::device() const {
+auto Mrl::device() const -> QString
+{
     const auto scheme = this->scheme();
     if (!discSchemes.contains(scheme, Qt::CaseInsensitive))
         return QString();
@@ -86,7 +93,8 @@ QString Mrl::device() const {
     return path.mid(idx+1).toString();
 }
 
-Mrl Mrl::fromDisc(const QString &scheme, const QString &device, int title, bool hash) {
+auto Mrl::fromDisc(const QString &scheme, const QString &device, int title, bool hash) -> Mrl
+{
     QString loc = scheme % _L("://");
     if (title < 0)
         loc += _L("menu");
@@ -98,7 +106,8 @@ Mrl Mrl::fromDisc(const QString &scheme, const QString &device, int title, bool 
     return mrl;
 }
 
-Mrl Mrl::titleMrl(int title) const {
+auto Mrl::titleMrl(int title) const -> Mrl
+{
     auto mrl = fromDisc(scheme(), device(), title, false);
     mrl.m_hash = m_hash;
     return mrl;
@@ -185,7 +194,8 @@ static QByteArray blurayHash(const QString &device) {
     return QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
 }
 
-QByteArray Mrl::calculateHash(const Mrl &mrl) {
+auto Mrl::calculateHash(const Mrl &mrl) -> QByteArray
+{
     if (!mrl.isDisc())
         return QByteArray();
     const auto device = mrl.device();
@@ -194,11 +204,13 @@ QByteArray Mrl::calculateHash(const Mrl &mrl) {
     return mrl.isDvd() ? dvdHash(device) : blurayHash(device);
 }
 
-void Mrl::updateHash() {
+auto Mrl::updateHash() -> void
+{
     m_hash = calculateHash(*this);
 }
 
-Mrl Mrl::toUnique() const {
+auto Mrl::toUnique() const -> Mrl
+{
     if (!isDisc())
         return *this;
     if (m_hash.isEmpty())
@@ -210,7 +222,8 @@ Mrl Mrl::toUnique() const {
     return mrl;
 }
 
-Mrl Mrl::fromUniqueId(const QString &id, const QString &device) {
+auto Mrl::fromUniqueId(const QString &id, const QString &device) -> Mrl
+{
     Mrl mrl;
     mrl.m_loc = id;
     if (!mrl.isDisc())

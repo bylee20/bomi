@@ -1,14 +1,10 @@
 #include "hwacc_vaapi.hpp"
-#include "stdafx.hpp"
-#include "videoframe.hpp"
 #include "opengl/openglmisc.hpp"
 
 #ifdef Q_OS_LINUX
 
 extern "C" {
-#include <video/mp_image.h>
 #include <common/av_common.h>
-#include <video/mp_image_pool.h>
 #include <va/va_glx.h>
 #include <video/sws_utils.h>
 #include <libavcodec/vaapi.h>
@@ -23,12 +19,14 @@ void HwAccX11Trait<IMGFMT_VAAPI>::destroySurface(SurfaceID id) {
    vaDestroySurfaces(VaApi::glx(), &id, 1);
 }
 
-bool HwAccX11Trait<IMGFMT_VAAPI>::createSurfaces(int width, int height, int format, QVector<SurfaceID> &ids) {
+bool HwAccX11Trait<IMGFMT_VAAPI>::createSurfaces(int width, int height,
+                                                 int format, QVector<SurfaceID> &ids) {
     return VaApiStatusChecker().isSuccess(vaCreateSurfaces(VaApi::glx(), width, height, format, ids.size(), ids.data()));
 }
 
 #ifdef USE_VAVPP
-VAProcDeinterlacingType VaApi::toVAType(DeintMethod method) {
+auto VaApi::toVAType(DeintMethod method) -> VAProcDeinterlacingType
+{
     switch (method) {
     case DeintMethod::Bob:
         return VAProcDeinterlacingBob;
@@ -39,7 +37,8 @@ VAProcDeinterlacingType VaApi::toVAType(DeintMethod method) {
     }
 }
 
-QString VaApiFilterInfo::description(VAProcFilterType type, int algorithm) {
+auto VaApiFilterInfo::description(VAProcFilterType type, int algorithm) -> QString
+{
     switch (type) {
     case VAProcFilterNoiseReduction:
         return _L("Noise reduction filter");
@@ -64,7 +63,8 @@ QString VaApiFilterInfo::description(VAProcFilterType type, int algorithm) {
     return "";
 }
 
-QList<int> VaApi::algorithms(VAProcFilterType type) {
+auto VaApi::algorithms(VAProcFilterType type) -> QList<int>
+{
     QList<int> ret;
     switch (type) {
     case VAProcFilterNoiseReduction:
@@ -154,12 +154,14 @@ VaApi::VaApi() {
     ok = true;
 }
 
-void VaApi::initialize() {
+auto VaApi::initialize() -> void
+{
     if (!VaApi::init)
         VaApi::get().glx();
 }
 
-void VaApi::finalize() {
+auto VaApi::finalize() -> void
+{
     if (!VaApi::init)
         return;
     auto &dpy = VaApi::get().m_display;
@@ -170,7 +172,8 @@ void VaApi::finalize() {
     init = false;
 }
 
-void VaApi::initCodecs() {
+auto VaApi::initCodecs() -> void
+{
     auto supports = [this](const QVector<VAProfile> &va_all, const QVector<int> &av_all, int surfaces, AVCodecID id) {
         QVector<VAProfile> va; QVector<int> av;
         for (int i=0; i<va_all.size(); ++i) {
@@ -180,7 +183,7 @@ void VaApi::initCodecs() {
             }
         }
         if (!va.isEmpty())
-            m_supported.insert(id, VaApiCodec(m_profiles, va, av, surfaces + 4, id));
+            m_supported.insert(id, VaApiCodec(m_profiles, va, av, surfaces + 2, id));
     };
 #define NUM_VIDEO_SURFACES_MPEG2  3 /* 1 decode frame, up to  2 references */
 #define NUM_VIDEO_SURFACES_MPEG4  3 /* 1 decode frame, up to  2 references */
@@ -205,7 +208,8 @@ void VaApi::initCodecs() {
 }
 
 #ifdef USE_VAVPP
-void VaApi::initFilters() {
+auto VaApi::initFilters() -> void
+{
     if (!hasEntryPoint(VAEntrypointVideoProc, VAProfileNone))
         return;
     auto display = VaApi::glx();
@@ -234,7 +238,8 @@ void VaApi::initFilters() {
 }
 #endif
 
-int VaApi::toVAType(int mp_fields, bool first) {
+auto VaApi::toVAType(int mp_fields, bool first) -> int
+{
     static const int field[] = {VA_BOTTOM_FIELD, VA_TOP_FIELD};
     return field[(!(mp_fields & MP_IMGFIELD_TOP_FIRST)) ^ (int)first];
 }
@@ -258,19 +263,23 @@ HwAccVaApi::~HwAccVaApi() {
     delete d;
 }
 
-bool HwAccVaApi::isOk() const {
+auto HwAccVaApi::isOk() const -> bool
+{
     return status() == VA_STATUS_SUCCESS;
 }
 
-void *HwAccVaApi::context() const {
+auto HwAccVaApi::context() const -> void*
+{
     return &d->context;
 }
 
-mp_image *HwAccVaApi::getSurface() {
+auto HwAccVaApi::getSurface() -> mp_image*
+{
     return d->pool.getMpImage();
 }
 
-void HwAccVaApi::freeContext() {
+auto HwAccVaApi::freeContext() -> void
+{
     if (d->context.display) {
         if (d->context.context_id != VA_INVALID_ID)
             vaDestroyContext(d->context.display, d->context.context_id);
@@ -278,7 +287,8 @@ void HwAccVaApi::freeContext() {
     d->context.context_id = VA_INVALID_ID;
 }
 
-bool HwAccVaApi::fillContext(AVCodecContext *avctx) {
+auto HwAccVaApi::fillContext(AVCodecContext *avctx) -> bool
+{
     if (status() != VA_STATUS_SUCCESS)
         return false;
     freeContext();
@@ -308,18 +318,17 @@ bool HwAccVaApi::fillContext(AVCodecContext *avctx) {
     return true;
 }
 
-mp_image *HwAccVaApi::getImage(mp_image *mpi) {
+auto HwAccVaApi::getImage(mp_image *mpi) -> mp_image*
+{
     return mpi;
 }
 
 /****************************************************************************************/
 
-VaApiMixer::VaApiMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &/*format*/) {
-    Q_ASSERT(textures.size() == 1);
-    const auto &texture = textures.first();
-    texture.bind();
-    if (!check(vaCreateSurfaceGLX(VaApi::glx(), texture.target(), texture.id(), &m_glSurface), "Cannot create OpenGL surface."))
-        return;
+VaApiMixer::VaApiMixer(const QSize &size)
+    : HwAccMixer(size)
+{
+
 }
 
 VaApiMixer::~VaApiMixer() {
@@ -327,18 +336,27 @@ VaApiMixer::~VaApiMixer() {
         vaDestroySurfaceGLX(VaApi::glx(), m_glSurface);
 }
 
-void VaApiMixer::adjust(VideoFormatData *data, const mp_image *mpi) {
-    Q_ASSERT(data->imgfmt == IMGFMT_VAAPI);
-    data->type = IMGFMT_BGRA;
-    data->planes = 1;
-    const int stride = FFALIGN((mpi->w * 32 + 7) / 8, 16);
-    data->alignedSize = QSize(stride/4, mpi->h);
-    data->alignedByteSize[0] = QSize(stride, mpi->h);
-    data->bpp = 32;
-    data->colorspace = MP_CSP_RGB;
+auto VaApiMixer::create(const QList<OpenGLTexture2D> &textures) -> bool
+{
+    Q_ASSERT(textures.size() == 1);
+    const auto &texture = textures.first();
+    texture.bind();
+    return check(vaCreateSurfaceGLX(VaApi::glx(), texture.target(),
+                                    texture.id(), &m_glSurface),
+                 "Cannot create OpenGL surface.");
 }
 
-bool VaApiMixer::upload(const VideoFrame &frame, bool deint) {
+auto VaApiMixer::getAligned(const mp_image */*mpi*/,
+                            QVector<QSize> *bytes) -> mp_imgfmt
+{
+    bytes->resize(1);
+    const int stride = FFALIGN((width() * 32 + 7) / 8, 16);
+    (*bytes)[0] = QSize(stride, height());
+    return IMGFMT_BGRA;
+}
+
+auto VaApiMixer::upload(const mp_image *mpi, bool deint) -> bool
+{
     if (!m_glSurface)
         return false;
     static const int specs[MP_CSP_COUNT] = {
@@ -350,14 +368,14 @@ bool VaApiMixer::upload(const VideoFrame &frame, bool deint) {
         0,                    //MP_CSP_XYZ,
         0,                    //MP_CSP_YCGCO,
     };
-    static const int field[] = {
-        // Picture = 0,   Top = 1,      Bottom = 2
-        VA_FRAME_PICTURE, VA_TOP_FIELD, VA_BOTTOM_FIELD, VA_FRAME_PICTURE
-    };
-    const auto id = (VASurfaceID)(quintptr)frame.data(3);
-    int flags = specs[frame.format().colorspace()];
-    if (deint)
-        flags |= field[frame.field() & VideoFrame::Interlaced];
+    const auto id = (VASurfaceID)(quintptr)mpi->planes[3];
+    int flags = specs[mpi->params.colorspace];
+    if (deint) {
+        if (mpi->flags & MP_IMGFIELD_TOP)
+            flags |= VA_TOP_FIELD;
+        else if (mpi->flags & MP_IMGFIELD_BOTTOM)
+            flags |= VA_BOTTOM_FIELD;
+    }
     if (!check(vaCopySurfaceGLX(VaApi::glx(), m_glSurface, id,  flags), "Cannot copy OpenGL surface."))
         return false;
     if (!check(vaSyncSurface(VaApi::glx(), id), "Cannot sync video surface."))

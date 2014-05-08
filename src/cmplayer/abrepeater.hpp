@@ -11,30 +11,28 @@ class ABRepeater : public QObject {
 public:
     ABRepeater(PlayEngine *engine, const SubtitleRendererItem *sub);
     ~ABRepeater();
-    bool repeat(int a, int b, int times = -1) {m_a = a; m_b = b; return start(times);}
-    bool isRepeating() {return m_repeating;}
-    int a() const {return m_a;}
-    int b() const {return m_b;}
-    bool hasA() const {return m_a >= 0;}
-    bool hasB() const {return m_b >= 0;}
-    int restTimes() const {return m_times - m_nth;}
-    int times() const {return m_times;}
-public slots:
-    void stop();
-    bool start(int times = -1);
-    int setAToCurrentTime();
-    int setBToCurrentTime();
-    int setAToSubtitleTime();
-    int setBToSubtitleTime();
-    void setA(int a) {m_a = a;}
-    void setB(int b) {m_b = b;}
+    auto repeat(int a, int b, int times = -1) -> bool;
+    auto isRepeating() -> bool {return m_repeating;}
+    auto a() const -> int {return m_a;}
+    auto b() const -> int {return m_b;}
+    auto hasA() const -> bool {return m_a >= 0;}
+    auto hasB() const -> bool {return m_b >= 0;}
+    auto restTimes() const -> int {return m_times - m_nth;}
+    auto times() const -> int {return m_times;}
+    auto stop() -> void;
+    auto start(int times = -1) -> bool;
+    auto setAToCurrentTime() -> int;
+    auto setBToCurrentTime() -> int;
+    auto setAToSubtitleTime() -> int;
+    auto setBToSubtitleTime() -> int;
+    auto setA(int a) -> void {m_a = a;}
+    auto setB(int b) -> void {m_b = b;}
 signals:
     void repeated(int rest);
     void stopped();
     void started();
-private slots:
-    void onTick(int time);
 private:
+    auto onTick(int time) -> void;
     ABRepeater(const ABRepeater&) = delete;
     ABRepeater &operator = (const ABRepeater&) = delete;
     PlayEngine *m_engine = nullptr;
@@ -43,5 +41,8 @@ private:
     bool m_repeating = false;
     int m_times = 0, m_nth = 0;
 };
+
+inline auto ABRepeater::repeat(int a, int b, int times) -> bool
+{m_a = a; m_b = b; return start(times);}
 
 #endif // ABREPEATER_HPP

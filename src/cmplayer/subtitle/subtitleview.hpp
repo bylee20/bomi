@@ -12,14 +12,12 @@ class SubtitleView : public QDialog {
 public:
     SubtitleView(QWidget *parent = 0);
     ~SubtitleView();
-public slots:
-    void setModels(const QVector<SubCompModel*> &model);
-private slots:
-    void setTimeVisible(bool visible);
-    void setAutoScrollEnabled(bool enabled);
+    auto setModels(const QVector<SubCompModel*> &model) -> void;
 private:
-    void showEvent(QShowEvent *event);
-    void updateModels();
+    auto setTimeVisible(bool visible) -> void;
+    auto setAutoScrollEnabled(bool enabled) -> void;
+    auto showEvent(QShowEvent *event) -> void;
+    auto updateModels() -> void;
     class CompView;
     struct Data;
     Data *d;

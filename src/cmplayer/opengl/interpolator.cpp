@@ -16,7 +16,7 @@ static QVector<double> interpolatorArray() {
 
 static const QVector<double> as = interpolatorArray();
 
-template<typename T>
+template<class T>
 static QVector<T> convertToIntegerVector(const QVector<GLfloat> &v, float &mul) {
     static_assert(std::is_unsigned<T>::value, "wrong type");
     const int size = v.size();
@@ -99,7 +99,7 @@ struct Interpolator::Data {
     Type type = Type::Bilinear;
     Category category = None;
     QVector<GLfloat> lut1, lut2;
-    template<typename Func>
+    template<class Func>
     void fill(Func func, int n) {
         auto p1 = lut1.data();
         auto p2 = lut2.data();
@@ -118,7 +118,7 @@ struct Interpolator::Data {
         }
     }
 
-    template<typename Func>
+    template<class Func>
     void fillFast4(Func func) {
         auto p = lut1.data();
         for (int i=0; i<IntSamples; ++i) {
@@ -136,7 +136,7 @@ struct Interpolator::Data {
             *p++ = f1;    *p++ = .0;
         }
     }
-    template<typename Func>
+    template<class Func>
     void fillFast9(Func func) {
         auto p1 = lut1.data();
         auto p2 = lut2.data();
@@ -209,22 +209,26 @@ Interpolator::~Interpolator() {
     delete d;
 }
 
-const Interpolator *Interpolator::get(Type type) {
+auto Interpolator::get(Type type) -> const Interpolator*
+{
     auto &obj = objs.map[type];
     if (!obj)
         obj = new Interpolator(type);
     return obj;
 }
 
-InterpolatorType Interpolator::type() const {
+auto Interpolator::type() const -> InterpolatorType
+{
     return d->type;
 }
 
-Interpolator::Category Interpolator::category() const {
+auto Interpolator::category() const -> Interpolator::Category
+{
     return d->category;
 }
 
-Interpolator::Category Interpolator::category(Type type) {
+auto Interpolator::category(Type type) -> Interpolator::Category
+{
     switch (type) {
     case InterpolatorType::Bilinear:
         return None;
@@ -247,7 +251,8 @@ Interpolator::Category Interpolator::category(Type type) {
     return None;
 }
 
-int Interpolator::textures(Category category) {
+auto Interpolator::textures(Category category) -> int
+{
     switch (category) {
     case None:
         return 0;
@@ -259,7 +264,8 @@ int Interpolator::textures(Category category) {
     }
 }
 
-QByteArray Interpolator::shader(Category category) {
+auto Interpolator::shader(Category category) -> QByteArray
+{
     if (category == None)
         return R"(
 #ifdef DEC_UNIFORM_DXY

@@ -1,7 +1,8 @@
 #include "subtitlestyle.hpp"
 #include "record.hpp"
 
-void SubtitleStyle::save(Record &r, const QString &group) const {
+auto SubtitleStyle::save(Record &r, const QString &group) const -> void
+{
     r.beginGroup(group);
 #define WRITE(a) r.write(a, #a)
     WRITE(font.color);
@@ -24,7 +25,8 @@ void SubtitleStyle::save(Record &r, const QString &group) const {
     r.endGroup();
 }
 
-void SubtitleStyle::load(Record &r, const QString &group) {
+auto SubtitleStyle::load(Record &r, const QString &group) -> void
+{
     r.beginGroup(group);
 #define READ(a) r.read(a, #a)
     READ(font.color);

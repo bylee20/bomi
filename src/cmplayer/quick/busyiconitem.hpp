@@ -13,27 +13,27 @@ class BusyIconItem: public SimpleTextureItem {
 public:
     BusyIconItem(QQuickItem *parent = 0);
     ~BusyIconItem();
-    QColor darkColor() const;
-    QColor lightColor() const;
-    qreal thickness() const;
-    void setDarkColor(const QColor &color);
-    void setLightColor(const QColor &color);
-    void setThickness(qreal thickness);
-    bool isRunning() const;
-    void setRunning(bool running);
+    auto darkColor() const -> QColor;
+    auto lightColor() const -> QColor;
+    auto thickness() const -> qreal;
+    auto setDarkColor(const QColor &color) -> void;
+    auto setLightColor(const QColor &color) -> void;
+    auto setThickness(qreal thickness) -> void;
+    auto isRunning() const -> bool;
+    auto setRunning(bool running) -> void;
 signals:
     void thicknessChanged();
     void lightColorChanged();
     void darkColorChanged();
     void runningChanged();
 private:
-    void initializeGL();
-    void finalizeGL();
-    GLenum drawingMode() const { return GL_TRIANGLES; }
-    void updatePolish() override;
+    auto initializeGL() -> void;
+    auto finalizeGL() -> void;
+    auto drawingMode() const -> GLenum { return GL_TRIANGLES; }
+    auto updatePolish() -> void override;
     void updateTexture(OpenGLTexture2D *texture) final;
-    void geometryChanged(const QRectF &new_, const QRectF &old) override;
-    void itemChange(ItemChange change, const ItemChangeData &data) override;
+    auto geometryChanged(const QRectF &new_, const QRectF &old) -> void override;
+    auto itemChange(ItemChange change, const ItemChangeData &data) -> void override;
     struct Data;
     Data *d;
 };

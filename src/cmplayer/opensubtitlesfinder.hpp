@@ -13,13 +13,15 @@ struct SubtitleLink {
 class OpenSubtitlesFinder : public QObject {
     Q_OBJECT
 public:
-    enum State { Unavailable = 1, Error = 16, Connecting = 8, Available = 2, Finding = 4};
+    enum State {
+        Unavailable = 1, Error = 16, Connecting = 8, Available = 2, Finding = 4
+    };
     OpenSubtitlesFinder(QObject *parent = nullptr);
     ~OpenSubtitlesFinder();
-    bool find(const Mrl &mrl);
-    State state() const;
-    bool isAvailable() const { return state() == Available; }
-    QString error() const;
+    auto find(const Mrl &mrl) -> bool;
+    auto state() const -> State;
+    auto isAvailable() const -> bool { return state() == Available; }
+    auto error() const -> QString;
 signals:
     void stateChanged();
     void found(const QList<SubtitleLink> &links);

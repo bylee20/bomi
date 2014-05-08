@@ -17,7 +17,8 @@ PlaylistModel::PlaylistModel(QObject *parent)
 
 PlaylistModel::~PlaylistModel() {}
 
-QHash<int, QByteArray> PlaylistModel::roleNames() const {
+auto PlaylistModel::roleNames() const -> QHash<int, QByteArray>
+{
     QHash<int, QByteArray> names;
     names[NameRole] = "name";
     names[LocationRole] = "location";
@@ -25,7 +26,8 @@ QHash<int, QByteArray> PlaylistModel::roleNames() const {
     return names;
 }
 
-QString PlaylistModel::number(int row) const {
+auto PlaylistModel::number(int row) const -> QString
+{
     if (m_fill.isNull())
         return QString::number(row+1);
     int digits = 0, left = rows();
@@ -36,12 +38,14 @@ QString PlaylistModel::number(int row) const {
     return _N(row+1, 10, digits, m_fill);
 }
 
-void PlaylistModel::play(int row) {
+auto PlaylistModel::play(int row) -> void
+{
     if (isValidRow(row))
         emit playRequested(row);
 }
 
-QString PlaylistModel::location(int row) const {
+auto PlaylistModel::location(int row) const -> QString
+{
     auto mrl = value(row);
     return mrl.isLocalFile() ? mrl.toLocalFile() : mrl.toString();
 }
@@ -59,7 +63,8 @@ auto PlaylistModel::roleData(int row, int, int role) const -> QVariant
     return QVariant();
 }
 
-void PlaylistModel::setLoaded(int row) {
+auto PlaylistModel::setLoaded(int row) -> void
+{
     if (!isValidRow(row))
         row = -1;
     if (loaded() == row)
@@ -72,11 +77,13 @@ void PlaylistModel::setLoaded(int row) {
         emitDataChanged(loaded());
 }
 
-void PlaylistModel::setLoaded(const Mrl &mrl) {
+auto PlaylistModel::setLoaded(const Mrl &mrl) -> void
+{
     setLoaded(rowOf(mrl));
 }
 
-void PlaylistModel::setDownloader(Downloader *downloader) {
+auto PlaylistModel::setDownloader(Downloader *downloader) -> void
+{
     m_downloader = downloader;
     connect(m_downloader, &Downloader::finished, this, [this] () {
         if (m_downloader->isCanceled())
@@ -91,7 +98,8 @@ void PlaylistModel::setDownloader(Downloader *downloader) {
     });
 }
 
-bool PlaylistModel::open(const Mrl &mrl, const QString &enc) {
+auto PlaylistModel::open(const Mrl &mrl, const QString &enc) -> bool
+{
     if (!mrl.isPlaylist())
         return false;
     if (mrl.isLocalFile()) {

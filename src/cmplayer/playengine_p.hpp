@@ -19,32 +19,32 @@ enum EventType {
     UpdateVideoInfo, UpdateAudioInfo, NotifySeek, UpdateMetaData
 };
 
-static inline QByteArray qbytearray_from(const QByteArray &t) { return t; }
-static inline QByteArray qbytearray_from(const bool &t) { return QByteArray::number((int)t); }
-static inline QByteArray qbytearray_from(const int &t) { return QByteArray::number(t); }
-static inline QByteArray qbytearray_from(const float &t) { return QByteArray::number(t); }
-static inline QByteArray qbytearray_from(const double &t) { return QByteArray::number(t); }
-static inline QByteArray qbytearray_from(const QString &t) { return t.toLocal8Bit(); }
-static inline QByteArray qbytearray_from(const char *str) { return QByteArray(str); }
+static inline auto qbytearray_from(const QByteArray &t) -> QByteArray { return t; }
+static inline auto qbytearray_from(const bool &t) -> QByteArray { return QByteArray::number((int)t); }
+static inline auto qbytearray_from(const int &t) -> QByteArray { return QByteArray::number(t); }
+static inline auto qbytearray_from(const float &t) -> QByteArray { return QByteArray::number(t); }
+static inline auto qbytearray_from(const double &t) -> QByteArray { return QByteArray::number(t); }
+static inline auto qbytearray_from(const QString &t) -> QByteArray { return t.toLocal8Bit(); }
+static inline auto qbytearray_from(const char *str) -> QByteArray { return QByteArray(str); }
 
-extern void initialize_vdpau();
-extern void finalize_vdpau();
-extern void initialize_vaapi();
-extern void finalize_vaapi();
+extern auto initialize_vdpau() -> void;
+extern auto finalize_vdpau() -> void;
+extern auto initialize_vaapi() -> void;
+extern auto finalize_vaapi() -> void;
 
 class PlayEngine::Thread : public QThread {
 public:
     Thread(PlayEngine *engine): engine(engine) {}
 private:
     PlayEngine *engine = nullptr;
-    void run() { engine->exec(); }
+    auto run() -> void { engine->exec(); }
 };
 
 class ImagePlayback {
 public:
-    int pos() const {return qBound(0, m_ticking ? m_pos + m_time.elapsed() : m_pos, m_duration);}
+    auto pos() const -> int {return qBound(0, m_ticking ? m_pos + m_time.elapsed() : m_pos, m_duration);}
     void pause () { if (m_ticking) { m_pos += m_time.elapsed(); m_ticking = false; } }
-    void moveBy(int diff) {
+    auto moveBy(int diff) -> void {
         m_pos += diff;
         if (m_ticking) {
             if (m_pos + m_time.elapsed() < 0)
@@ -54,16 +54,16 @@ public:
                 m_pos = 0;
         }
     }
-    void start() { if (!m_ticking) { m_time.restart(); m_ticking = true; } }
-    void restart() {
+    auto start() -> void { if (!m_ticking) { m_time.restart(); m_ticking = true; } }
+    auto restart() -> void {
         m_pos = 0;
         m_time.restart();
         m_ticking = true;
     }
-    bool isTicking() const { return m_ticking; }
-    void setDuration(int duration) { m_duration = duration; }
-    int duration() const { return m_duration; }
-    void seek(int pos, bool relative) {
+    auto isTicking() const -> bool { return m_ticking; }
+    auto setDuration(int duration) -> void { m_duration = duration; }
+    auto duration() const -> int { return m_duration; }
+    auto seek(int pos, bool relative) -> void {
         if (m_duration > 0) {
             m_mutex.lock();
             m_by = pos;
@@ -72,7 +72,7 @@ public:
             m_mutex.unlock();
         }
     }
-    bool run(bool paused) {
+    auto run(bool paused) -> bool {
         m_mutex.lock();
         if (m_by)
             moveBy(m_by);

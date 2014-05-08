@@ -31,12 +31,12 @@ class AppMac: public QObject {
 public:
     AppMac( QObject *parent = 0 );
     ~AppMac();
-    void setAlwaysOnTop(QWidget *widget, bool onTop);
-    QStringList devices() const;
-    void setScreensaverDisabled(bool disabled);
-    bool shutdown();
+    auto setAlwaysOnTop(QWidget *widget, bool onTop) -> void;
+    auto devices() const -> QStringList;
+    auto setScreensaverDisabled(bool disabled) -> void;
+    auto shutdown() -> bool;
 private:
-    bool eventFilter( QObject *o, QEvent *e );
+    auto eventFilter( QObject *o, QEvent *e ) -> bool;
     struct Data;
     Data *d;
 };

@@ -4,7 +4,8 @@
 
 using namespace MrlStateHelpers;
 
-QList<MrlStateProperty> MrlState::restorableProperties() {
+auto MrlState::restorableProperties() -> QList<MrlStateProperty>
+{
     QList<MrlStateProperty> properties;
     properties.reserve(staticMetaObject.propertyCount());
     auto add = [&properties] (const char *name, const QString &info) {
@@ -45,9 +46,10 @@ QList<MrlStateProperty> MrlState::restorableProperties() {
     return properties;
 }
 
-template<typename T> static inline bool _Is(int type) { return qMetaTypeId<T>() == type; }
+template<class T> static inline bool _Is(int type) { return qMetaTypeId<T>() == type; }
 
-QList<MrlField> MrlField::list() {
+auto MrlField::list() -> QList<MrlField>
+{
     static QList<MrlField> fields;
     if (fields.isEmpty()) {
         MrlState default_;

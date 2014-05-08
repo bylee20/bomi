@@ -14,18 +14,18 @@ class HighQualityTextureItem : public SimpleTextureItem {
 public:
     HighQualityTextureItem(QQuickItem *parent = nullptr);
     ~HighQualityTextureItem();
-    InterpolatorType interpolator() const;
-    void setInterpolator(InterpolatorType type);
-    void setDithering(Dithering dithering);
-    Dithering dithering() const;
+    auto interpolator() const -> InterpolatorType;
+    auto setInterpolator(InterpolatorType type) -> void;
+    auto setDithering(Dithering dithering) -> void;
+    auto dithering() const -> Dithering;
     Type *type() const override;
 protected:
-    void initializeGL() override;
-    void finalizeGL() override;
+    auto initializeGL() -> void override;
+    auto finalizeGL() -> void override;
 private:
     ShaderIface *createShader() const override;
     ShaderData *createData() const override;
-    void updateData(ShaderData *data) override;
+    auto updateData(ShaderData *data) -> void override;
 private:
     struct Data;
     Data *d;

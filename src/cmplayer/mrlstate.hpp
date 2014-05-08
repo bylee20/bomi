@@ -126,7 +126,7 @@ public:
     bool operator == (const MrlStateProperty &rhs) const {
         return m_property.propertyIndex() == rhs.m_property.propertyIndex();
     }
-    QString info() const { return m_info; }
+    auto info() const -> QString { return m_info; }
     const QMetaProperty &property() const { return m_property; }
 private:
     MrlStateProperty(const QMetaProperty &p, const QString &info)
@@ -137,14 +137,14 @@ private:
 };
 
 struct MrlField {
-    QString type() const { return m_type; }
-    QString toSql(const QVariant &var) const { return m_toSql(var); }
-    QVariant fromSql(const QVariant &var) const { return m_fromSql(var, m_property.userType()); }
+    auto type() const -> QString { return m_type; }
+    auto toSql(const QVariant &var) const -> QString { return m_toSql(var); }
+    auto fromSql(const QVariant &var) const -> QVariant { return m_fromSql(var, m_property.userType()); }
     const QMetaProperty &property() const { return m_property; }
     const QVariant &default_() const { return m_default; }
     static QList<MrlField> list();
 private:
-    static QVariant pass(const QVariant &var, const QVariant &def) { return var.isNull() ? def : var; }
+    static auto pass(const QVariant &var, const QVariant &def) -> QVariant { return var.isNull() ? def : var; }
     QString m_type;
     QMetaProperty m_property;
     QVariant m_default;
@@ -174,12 +174,12 @@ enum ShiftHelper {
     S_Year = S_Month + B_Month
 };
 
-static inline QString _ToSql(const QString &text) {
+static inline auto _ToSql(const QString &text) -> QString {
     return _L('\'') % QString(text).replace(_L('\''), _L("''")) % _L('\'');
 }
 
 
-static inline QString _ToSql(const QDateTime &dt) {
+static inline auto _ToSql(const QDateTime &dt) -> QString {
     const auto date = dt.date();
     const auto time = dt.time();
 #define CV(v, s) (qint64(v) << S_##s)
@@ -195,7 +195,7 @@ static inline QString _ToSql(const QDateTime &dt) {
 #undef CV
 }
 
-static inline QString _DateTimeFromSql(qint64 dt) {
+static inline auto _DateTimeFromSql(qint64 dt) -> QString {
 #define XT(s) ((dt >> S_##s) & ((1 << B_##s)-1))
     const QString q("%1");
     auto pad = [&q] (int v, int n) -> QString { return q.arg(v, n, 10, _L('0')); };
@@ -204,22 +204,22 @@ static inline QString _DateTimeFromSql(qint64 dt) {
 #undef XT
 }
 
-static inline QString _ToSql(qint8 integer) { return QString::number(integer); }
-static inline QString _ToSql(qint16 integer) { return QString::number(integer); }
-static inline QString _ToSql(qint32 integer) { return QString::number(integer); }
-static inline QString _ToSql(qint64 integer) { return QString::number(integer); }
+static inline auto _ToSql(qint8 integer) -> QString { return QString::number(integer); }
+static inline auto _ToSql(qint16 integer) -> QString { return QString::number(integer); }
+static inline auto _ToSql(qint32 integer) -> QString { return QString::number(integer); }
+static inline auto _ToSql(qint64 integer) -> QString { return QString::number(integer); }
 
-static inline QString _ToSql(const QPoint &p) {
+static inline auto _ToSql(const QPoint &p) -> QString {
     return _L('\'') % QString::number(p.x()) % "," % QString::number(p.y()) % _L('\'');
 }
-static inline QString _ToSql(const QJsonObject &json) {
+static inline auto _ToSql(const QJsonObject &json) -> QString {
     return _ToSql(QString::fromUtf8(QJsonDocument(json).toJson(QJsonDocument::Compact)));
 }
-//static inline QJsonObject _JsonFromSql(const QString &str, const QJsonObject &def) {
+//static inline auto _JsonFromSql(const QString &str, const QJsonObject &def) -> QJsonObject {
 
 //}
 
-static inline QPoint _PointFromSql(const QString &str, const QPoint &def) {
+static inline auto _PointFromSql(const QString &str, const QPoint &def) -> QPoint {
     auto index = str.indexOf(',');
     if (index < 0)
         return def;
@@ -230,8 +230,8 @@ static inline QPoint _PointFromSql(const QString &str, const QPoint &def) {
 
 std::tuple<MrlState*, QList<MrlState*>> _ImportMrlStatesFromPreviousVersion(int version, QSqlDatabase db);
 
-template<typename F>
-static QString _MrlFieldColumnListString(const QList<F> &list) {
+template<class F>
+static auto _MrlFieldColumnListString(const QList<F> &list) -> QString {
     QString columns;
     for (auto &f : list)
         columns += f.property().name() % _L(", ");
@@ -239,8 +239,8 @@ static QString _MrlFieldColumnListString(const QList<F> &list) {
     return columns;
 }
 
-template<typename F>
-static QString _MrlFieldValueListString(const QList<F> &list, const QObject *state) {
+template<class F>
+static auto _MrlFieldValueListString(const QList<F> &list, const QObject *state) -> QString {
     QString values;
     for (auto &f : list)
         values += f.toSql(f.property().read(state)) % _L(", ");
@@ -249,21 +249,21 @@ static QString _MrlFieldValueListString(const QList<F> &list, const QObject *sta
 }
 
 //    QString q = _L("INSERT OR REPLACE INTO app (id, ") % columns % _L(") VALUES (0, %1)");
-static inline bool _InsertMrlState(QSqlQuery &query, const QList<MrlField> &fields, const MrlState *state, const QString &queryTemplate) {
+static inline auto _InsertMrlState(QSqlQuery &query, const QList<MrlField> &fields, const MrlState *state, const QString &queryTemplate) -> bool {
     return query.exec(queryTemplate.arg(_MrlFieldValueListString(fields, state)));
 }
 
-static inline QString _MakeInsertQueryTemplate(const QString &tableName, const QList<MrlField> &fields) {
+static inline auto _MakeInsertQueryTemplate(const QString &tableName, const QList<MrlField> &fields) -> QString {
     return QString::fromLatin1("INSERT OR REPLACE INTO %1 (%2) VALUES (%3)").arg(tableName).arg(_MrlFieldColumnListString(fields));
 }
 
-static inline QString _MakeInsertQuery(const QString &table, const QList<MrlField> &fields, const MrlState *state) {
+static inline auto _MakeInsertQuery(const QString &table, const QList<MrlField> &fields, const MrlState *state) -> QString {
     return _MakeInsertQueryTemplate(table, fields).arg(_MrlFieldValueListString(fields, state));
 }
 
 
-template<typename T = MrlState, typename F>
-void _FillMrlStateFromRecord(T *state, const QList<F> &fields, const QSqlRecord &record) {
+template<class T = MrlState, class F>
+auto _FillMrlStateFromRecord(T *state, const QList<F> &fields, const QSqlRecord &record) -> void {
     for (int i=0; i<fields.size(); ++i) {
         const auto &f = fields[i];
         const QMetaProperty p = f.property();
@@ -272,19 +272,19 @@ void _FillMrlStateFromRecord(T *state, const QList<F> &fields, const QSqlRecord 
     }
 }
 
-template<typename T = MrlState, typename F>
+template<class T = MrlState, class F>
 T *_MakeMrlStateFromQuery(const QList<F> &fields, const QSqlQuery &query) {
     auto state = new T;
     _FillMrlStateFromRecord(state, fields, query);
     return state;
 }
 
-//bool _InsertState(QSqlQuery &query, const MrlState *state, const QString &table, int version, prefix) {
+//auto _InsertState(QSqlQuery &query, const MrlState *state, const QString &table, int version, prefix) -> bool {
 
 //    return query.exec(q.arg(values));
 //}
 
-//bool insert(const MrlState *state) {
+//auto insert(const MrlState *state) -> bool {
 //    if (state->mrl == cached.mrl)
 //        cached.mrl = Mrl();
 //    QString values = toSql(state->mrl.toString()) % _L(", ")

@@ -18,15 +18,15 @@ public:
     using Type = InterpolatorType;
     using Info = InterpolatorTypeInfo;
     ~Interpolator();
-    Type type() const;
-    Category category() const;
-    static Category category(Type type);
-    static QByteArray shader(Category category);
-    static int textures(Category category);
+    auto type() const -> Type;
+    auto category() const -> Category;
+    static auto category(Type type) -> Category;
+    static auto shader(Category category) -> QByteArray;
+    static auto textures(Category category) -> int;
     static const Interpolator *get(Type type);
-    QByteArray shader() const { return shader(category()); }
-    int textures() const { return textures(category()); }
-    void allocate(OpenGLTexture1D *tex1, OpenGLTexture1D *tex2) const;
+    auto shader() const -> QByteArray { return shader(category()); }
+    auto textures() const -> int { return textures(category()); }
+    auto allocate(OpenGLTexture1D *tex1, OpenGLTexture1D *tex2) const -> void;
 private:
     Interpolator(Type type);
     friend struct Objs;

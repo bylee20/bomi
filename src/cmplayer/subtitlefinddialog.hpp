@@ -10,7 +10,7 @@ class SubtitleFindDialog : public QDialog {
 public:
     SubtitleFindDialog(QWidget *parent = nullptr);
     ~SubtitleFindDialog();
-    void find(const Mrl &mrl);
+    auto find(const Mrl &mrl) -> void;
 signals:
     void loadRequested(const QString &fileName);
 private:

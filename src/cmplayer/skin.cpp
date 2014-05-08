@@ -22,7 +22,8 @@ Skin::Data::Data() {
         append(QString::fromLocal8Bit(path.data(), path.size()), qmls);
 }
 
-QStringList Skin::names(bool reload/* = false*/) {
+auto Skin::names(bool reload/* = false*/) -> QStringList
+{
     auto d = data();
     if (d->skins.isEmpty() || reload) {
         d->skins.clear();
@@ -41,7 +42,8 @@ QStringList Skin::names(bool reload/* = false*/) {
     return d->skins.keys();
 }
 
-void Skin::apply(QQuickView *view, const QString &name) {
+auto Skin::apply(QQuickView *view, const QString &name) -> void
+{
     if (data()->skins.isEmpty())
         names(true);
     auto imports = view->engine()->importPathList();
@@ -52,4 +54,12 @@ void Skin::apply(QQuickView *view, const QString &name) {
     const auto skin = Skin::source(name);
     view->setResizeMode(QQuickView::SizeRootObjectToView);
     view->setSource(QUrl::fromLocalFile(skin.absoluteFilePath()));
+}
+
+auto Skin::source(const QString &name) -> QFileInfo
+{
+    auto it = data()->skins.find(name);
+    if (it != data()->skins.end())
+        return it.value();
+    return QFileInfo();
 }

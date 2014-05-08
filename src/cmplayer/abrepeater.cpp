@@ -13,7 +13,8 @@ ABRepeater::~ABRepeater() {
     stop();
 }
 
-void ABRepeater::onTick(int time) {
+auto ABRepeater::onTick(int time) -> void
+{
     if (m_repeating && time > m_b) {
         m_engine->seek(m_a);
         if (m_times < 0)
@@ -29,23 +30,28 @@ void ABRepeater::onTick(int time) {
     }
 }
 
-int ABRepeater::setAToCurrentTime() {
+auto ABRepeater::setAToCurrentTime() -> int
+{
     return (m_a = m_engine->time());
 }
 
-int ABRepeater::setBToCurrentTime() {
+auto ABRepeater::setBToCurrentTime() -> int
+{
     return (m_b = m_engine->time());
 }
 
-int ABRepeater::setAToSubtitleTime() {
+auto ABRepeater::setAToSubtitleTime() -> int
+{
     return m_a = m_sub->start(m_engine->time());
 }
 
-int ABRepeater::setBToSubtitleTime() {
+auto ABRepeater::setBToSubtitleTime() -> int
+{
     return m_b = m_sub->finish(m_engine->time());
 }
 
-bool ABRepeater::start(int times) {
+auto ABRepeater::start(int times) -> bool
+{
     if (m_repeating)
         stop();
     m_times = times;
@@ -57,7 +63,8 @@ bool ABRepeater::start(int times) {
     return m_repeating;
 }
 
-void ABRepeater::stop() {
+auto ABRepeater::stop() -> void
+{
     disconnect(m_engine, 0, this, 0);
     m_repeating = false;
     emit stopped();

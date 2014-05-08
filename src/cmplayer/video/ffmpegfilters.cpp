@@ -1,5 +1,4 @@
 #include "ffmpegfilters.hpp"
-#include "videooutput.hpp"
 extern "C" {
 #include <libavfilter/buffersink.h>
 #include <libavfilter/buffersrc.h>
@@ -13,6 +12,8 @@ auto null_mp_image(void *arg = nullptr,
                    void(*free)(void*) = nullptr) -> mp_image*;
 auto null_mp_image(uint imgfmt, int w, int h, void *arg = nullptr,
                    void(*free)(void*) = nullptr) -> mp_image*;
+
+auto query_video_format(quint32 format) -> int;
 
 auto FFmpegFilterGraph::push(mp_image *in) -> bool
 {
@@ -74,7 +75,7 @@ auto FFmpegFilterGraph::linkGraph(AVFilterInOut *&in,
     tmp = "pix_fmts=";
     for (int imgfmt = IMGFMT_START; imgfmt < IMGFMT_END; ++imgfmt) {
         if (!IMGFMT_IS_HWACCEL(imgfmt)
-                && VideoOutput::queryFormat(nullptr, imgfmt)) {
+                && query_video_format(imgfmt)) {
             const char *name = av_get_pix_fmt_name(imgfmt2pixfmt(imgfmt));
             if (name) {
                 tmp += name;

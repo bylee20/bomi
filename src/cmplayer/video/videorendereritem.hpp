@@ -5,16 +5,14 @@
 #include "skin.hpp"
 #include "quick/highqualitytextureitem.hpp"
 
-class DeintInfo;                class OpenGLFramebufferObject;
-class VideoRendererItem;        class VideoColor;
-class VideoFrame;                class VideoFormat;
-class MpOsdItem;                class OpenGLTexture;
-enum class DeintMethod;
-enum class ColorRange;
+class VideoColor;                       class MpOsdItem;
+enum class DeintMethod;                 enum class ColorRange;
+class Kernel3x3;
+template<class T> class VideoImageCache;class VideoFramebufferObject;
 
 class VideoRendererItem : public HighQualityTextureItem {
     Q_OBJECT
-    static bool isSameRatio(double r1, double r2) {return (r1 < 0.0 && r2 < 0.0) || qFuzzyCompare(r1, r2);}
+    using Cache = VideoImageCache<VideoFramebufferObject>;
 public:
     enum Effect {
         NoEffect         = 0,
@@ -32,69 +30,47 @@ public:
     static const int ShaderEffects = KernelEffects | ColorEffects;
     VideoRendererItem(QQuickItem *parent = 0);
     ~VideoRendererItem();
-    double targetAspectRatio() const;
-    double targetCropRatio(double fallback) const;
-    double targetCropRatio() const {return targetCropRatio(targetAspectRatio());}
-    double itemAspectRatio() const {return width()/height();}
-    QRectF screenRect() const;
-    QPoint offset() const;
-    quint64 drawnFrames() const;
-    const VideoColor &color() const;
-    double aspectRatio() const;
-    double cropRatio() const;
-    int alignment() const;
-    double avgfps() const;
-    Effects effects() const;
-    QSize sizeHint() const;
-    QSizeF size() const {return QSizeF(width(), height());}
-    QQuickItem *osd() const;
-    void setAspectRatio(double ratio);
-    void setOverlay(GeometryItem *overlay);
-    QQuickItem *overlay() const;
-    void present(const VideoFrame &frame);
-    void present(const QImage &image);
-    const VideoFrame &frame() const;
-    bool isFramePended() const;
-    bool hasFrame() const;
-    void requestFrameImage() const;
-    QRectF frameRect(const QRectF &area) const;
-    void setKernel(int blur_c, int blur_n, int blur_d,
-                   int sharpen_c, int sharpen_n, int sharpen_d);
-    double delay() const;
-    void setDeintMethod(DeintMethod method);
-    void setOverlayOnLetterbox(bool letterbox);
-    bool overlayInLetterbox() const;
-    void setChromaUpscaler(InterpolatorType tpe);
-    InterpolatorType chromaUpscaler() const;
-    void setRange(ColorRange range);
-    ColorRange range() const;
-    int droppedFrames() const;
-    void reset();
-    QPointF mapToVideo(const QPointF &pos);
-    void setMousePosition(const QPoint &pos) { m_mouse = pos; }
-    const QPoint &mousePosition() const { return m_mouse; }
-    bool updateVertexOnGeometryChanged() const override { return true; }
-    bool isOpaque() const override { return true; }
-public slots:
-    void setAlignment(int alignment);
-    void setEffects(Effects effect);
-    void setColor(const VideoColor &prop);
-    void setOffset(const QPoint &offset);
-    void setCropRatio(double ratio);
+    auto screenRect() const -> QRectF;
+    auto offset() const -> QPoint;
+    auto aspectRatio() const -> double;
+    auto cropRatio() const -> double;
+    auto alignment() const -> int;
+    auto effects() const -> Effects;
+    auto sizeHint() const -> QSize;
+    auto osd() const -> QQuickItem*;
+    auto setAspectRatio(double ratio) -> void;
+    auto setOverlay(GeometryItem *overlay) -> void;
+    auto overlay() const -> QQuickItem*;
+    auto present(const Cache &cache) -> void;
+    auto hasFrame() const -> bool;
+    auto requestFrameImage() const -> void;
+    auto frameRect(const QRectF &area) const -> QRectF;
+    void setKernel(const Kernel3x3 &blur, const Kernel3x3 &sharpen);
+    auto setOverlayOnLetterbox(bool letterbox) -> void;
+    auto overlayInLetterbox() const -> bool;
+    auto mapToVideo(const QPointF &pos) -> QPointF;
+    auto updateVertexOnGeometryChanged() const -> bool override { return true; }
+    auto isOpaque() const -> bool override { return true; }
+    auto setAlignment(int alignment) -> void;
+    auto setEffects(Effects effect) -> void;
+    auto setOffset(const QPoint &offset) -> void;
+    auto setCropRatio(double ratio) -> void;
+    auto kernel() const -> const Kernel3x3&;
 signals:
-    void droppedFramesChanged(int dropped);
+    void transferred();
     void frameImageObtained(QImage image) const;
     void effectsChanged(Effects effects);
     void offsetChanged(const QPoint &pos);
     void screenRectChanged(const QRectF &rect);
     void frameRectChanged(const QRectF &rect);
+    void kernelChanged(const Kernel3x3 &kernel);
 private:
-    void afterUpdate();
-    void initializeGL() override;
-    void finalizeGL() override;
-    void customEvent(QEvent *event) override;
-    void updateVertex(Vertex *vertex) override;
-    void updateTexture(OpenGLTexture2D *texture) override;
+    auto afterUpdate() -> void;
+    auto initializeGL() -> void override;
+    auto finalizeGL() -> void override;
+    auto customEvent(QEvent *event) -> void override;
+    auto updateVertex(Vertex *vertex) -> void override;
+    auto updateTexture(OpenGLTexture2D *texture) -> void override;
     MpOsdItem *mpOsd() const;
     struct Data;
     Data *d;

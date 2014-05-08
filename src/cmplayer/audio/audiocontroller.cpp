@@ -13,10 +13,18 @@ DECLARE_LOG_CONTEXT(Audio)
 
 af_info create_info();
 af_info af_info_dummy = create_info();
-struct cmplayer_af_priv { AudioController *ac; char *address; int use_scaler; int layout; };
-static AudioController *priv(af_instance *af) { return static_cast<cmplayer_af_priv*>(af->priv)->ac; }
 
-static bool isSupported(int type) {
+struct cmplayer_af_priv {
+    AudioController *ac;
+    char *address;
+    int use_scaler, layout;
+};
+
+static auto priv(af_instance *af) -> AudioController*
+    { return static_cast<cmplayer_af_priv*>(af->priv)->ac; }
+
+static auto isSupported(int type) -> bool
+{
     switch (type) {
     case AF_FORMAT_S16P:
     case AF_FORMAT_S32P:
@@ -33,7 +41,14 @@ static bool isSupported(int type) {
 }
 
 enum FilterDirty : quint32 {
-    Normalizer = 1, Muted = 2, Amp = 4, ChMap = 8, Format = 16, Scale = 32, Resample = 64
+    Normalizer = 1,
+    Muted = 2,
+    Amp = 4,
+    ChMap = 8,
+    Format = 16,
+    Scale = 32,
+    Resample = 64,
+    Clip = 128
 };
 
 struct AudioController::Data {
@@ -41,7 +56,8 @@ struct AudioController::Data {
     AudioMixer *mixer = nullptr;
     SwrContext *swr = nullptr;
     int fmt_conv = AF_FORMAT_UNKNOWN, outrate = 0;
-    bool normalizerActivated = false, tempoScalerActivated = false, resample = false;
+    bool normalizerActivated = false, tempoScalerActivated = false;
+    bool resample = false;
     double scale = 1.0, amp = 1.0;
     mp_chmap chmap;
     mp_audio *resampled = nullptr;
@@ -50,27 +66,36 @@ struct AudioController::Data {
     AudioNormalizerOption normalizerOption;
     ClippingMethod clip = ClippingMethod::Auto;
     ChannelLayoutMap map = ChannelLayoutMap::default_();
-    ChannelLayout layout = ChannelLayoutInfo::default_();
+    ::ChannelLayout layout = ChannelLayoutInfo::default_();
     AudioFormat input, output;
 };
 
-AudioController::AudioController(QObject *parent): QObject(parent), d(new Data) {
+AudioController::AudioController(QObject *parent)
+    : QObject(parent)
+    , d(new Data)
+{
+
 }
 
-AudioController::~AudioController() {
+AudioController::~AudioController()
+{
     delete d->mixer;
     delete d;
 }
 
-void AudioController::setClippingMethod(ClippingMethod method) {
+auto AudioController::setClippingMethod(ClippingMethod method) -> void
+{
     d->clip = method;
+    d->dirty |= Clip;
 }
 
-bool AudioController::test(int fmt_in, int fmt_out) {
+auto AudioController::test(int fmt_in, int fmt_out) -> bool
+{
     return isSupported(fmt_in) && isSupported(fmt_out);
 }
 
-int AudioController::open(af_instance *af) {
+auto AudioController::open(af_instance *af) -> int
+{
     auto priv = static_cast<cmplayer_af_priv*>(af->priv);
     priv->ac = address_cast<AudioController*>(priv->address);
     auto d = priv->ac->d;
@@ -87,7 +112,8 @@ int AudioController::open(af_instance *af) {
     return AF_OK;
 }
 
-void AudioController::uninit(af_instance *af) {
+auto AudioController::uninit(af_instance *af) -> void
+{
     auto ac = priv(af); auto d = ac->d;
     Q_ASSERT(ac != nullptr);
     d->af = nullptr;
@@ -98,16 +124,8 @@ void AudioController::uninit(af_instance *af) {
     d->resampled = nullptr;
 }
 
-AudioMixer *check(AudioMixer *&filter, ClippingMethod clip, const AudioDataFormat &in, const AudioDataFormat &out) {
-    if (!filter || !filter->configure(in, out, clip)) {
-        delete filter;
-        filter = AudioMixer::create(in, out, clip);
-    }
-    Q_ASSERT(filter != nullptr);
-    return filter;
-}
-
-int AudioController::reinitialize(mp_audio *in) {
+auto AudioController::reinitialize(mp_audio *in) -> int
+{
     if (!in)
         return AF_ERROR;
     auto makeFormat = [] (const mp_audio *audio) {
@@ -115,7 +133,8 @@ int AudioController::reinitialize(mp_audio *in) {
         format.m_samplerate = audio->rate/1000.0; // kHz
         format.m_bitrate = audio->rate*audio->nch*audio->bps*8;
         format.m_bits = audio->bps*8;
-        format.m_channels = ChannelLayoutInfo::description(ChannelLayoutMap::toLayout(audio->channels));
+        const auto layout = ChannelLayoutMap::toLayout(audio->channels);
+        format.m_channels = ChannelLayoutInfo::description(layout);
         format.m_type = af_fmt_to_str(audio->format);
         return format;
     };
@@ -125,7 +144,8 @@ int AudioController::reinitialize(mp_audio *in) {
     bool ret = true;
     if (!isSupported(in->format)) {
         ret = false;
-        mp_audio_set_format(in, af_fmt_is_planar(in->format) ? AF_FORMAT_FLOATP : AF_FORMAT_FLOAT);
+        mp_audio_set_format(in, af_fmt_is_planar(in->format) ? AF_FORMAT_FLOATP
+                                                             : AF_FORMAT_FLOAT);
     }
     if (d->fmt_conv) {
         mp_audio_set_format(out, d->fmt_conv);
@@ -133,8 +153,9 @@ int AudioController::reinitialize(mp_audio *in) {
     } else
         mp_audio_set_format(out, in->format);
     d->chmap = in->channels;
-    if (!mp_chmap_from_str(&d->chmap, bstr0(ChannelLayoutInfo::data(d->layout).constData())))
-        _Error("Cannot find matched channel layout for '%%'", ChannelLayoutInfo::description(d->layout));
+    if (!_ChmapFromLayout(&d->chmap, d->layout))
+        _Error("Cannot find matched channel layout for '%%'",
+               ChannelLayoutInfo::description(d->layout));
     mp_audio_set_channels(out, &d->chmap);
     if (d->outrate != 0)
         out->rate = d->outrate;
@@ -145,7 +166,8 @@ int AudioController::reinitialize(mp_audio *in) {
         d->af->mul /= d->scale;
     if ((d->resample = out->rate != in->rate)) {
         d->af->mul *= (double)out->rate/in->rate;
-        const auto nch = in->channels.num;/*mp_chmap_to_lavc_unchecked(&in->channels);*/
+        const auto nch = in->channels.num;
+        /*mp_chmap_to_lavc_unchecked(&in->channels);*/
         const auto fmt = af_to_avformat(in->format);
         if (!d->swr)
             d->swr = swr_alloc();
@@ -164,14 +186,20 @@ int AudioController::reinitialize(mp_audio *in) {
     }
     d->output = makeFormat(out);
     const AudioDataFormat fmt_in(*in), fmt_out(*out);
-    check(d->mixer, d->clip, fmt_in, fmt_out);
+    if (!d->mixer || !d->mixer->configure(fmt_in, fmt_out)) {
+        delete d->mixer;
+        d->mixer = AudioMixer::create(fmt_in, fmt_out);
+    }
+    Q_ASSERT(d->mixer);
     d->mixer->setOutput(out);
     d->mixer->setChannelLayoutMap(d->map);
+    d->mixer->setClippingMethod(d->clip);
     d->dirty = 0xffffffff;
     return true;
 }
 
-int AudioController::control(af_instance *af, int cmd, void *arg) {
+auto AudioController::control(af_instance *af, int cmd, void *arg) -> int
+{
     auto ac = priv(af);
     auto d = ac->d;
     switch(cmd){
@@ -209,7 +237,11 @@ int AudioController::control(af_instance *af, int cmd, void *arg) {
     }
 }
 
-int AudioController::filter(af_instance *af, mp_audio *data, int /*flags*/) {
+auto AudioController::filter(af_instance *af, mp_audio *data, int flags) -> int
+{
+    if (data->samples <= 0 && flags & AF_FILTER_FLAG_EOF)
+        return -1;
+
     auto ac = priv(af); auto d = ac->d;
     d->af->delay = 0.0;
 
@@ -218,22 +250,31 @@ int AudioController::filter(af_instance *af, mp_audio *data, int /*flags*/) {
         if (d->dirty & Amp)
             d->mixer->setAmp(d->amp);
         if (d->dirty & Normalizer)
-            d->mixer->setNormalizer(d->normalizerActivated, d->normalizerOption);
+            d->mixer->setNormalizer(d->normalizerActivated,
+                                    d->normalizerOption);
         if (d->dirty & ChMap)
             d->mixer->setChannelLayoutMap(d->map);
         if (d->dirty & Scale)
             d->mixer->setScaler(d->tempoScalerActivated, d->scale);
+        if (d->dirty & Clip)
+            d->mixer->setClippingMethod(d->clip);
         d->dirty = 0;
     }
 
     const mp_audio *in = data;
     if (d->resample) {
         const int frames_delay = swr_get_delay(d->swr, data->rate);
-        const int frames = av_rescale_rnd(frames_delay + data->samples, d->resampled->rate, data->rate, AV_ROUND_UP);
+        const int frames = av_rescale_rnd(frames_delay + data->samples,
+                                          d->resampled->rate,
+                                          data->rate, AV_ROUND_UP);
         mp_audio_realloc_min(d->resampled, frames);
         d->af->delay = (double)frames/data->rate;
         if ((d->resampled->samples = frames))
-            d->resampled->samples = swr_convert(d->swr, (uchar**)d->resampled->planes, d->resampled->samples, (const uchar**)data->planes, data->samples);
+            d->resampled->samples = swr_convert(d->swr,
+                                                (uchar**)d->resampled->planes,
+                                                d->resampled->samples,
+                                                (const uchar**)data->planes,
+                                                data->samples);
         in = d->resampled;
     }
     d->mixer->apply(in);
@@ -243,46 +284,52 @@ int AudioController::filter(af_instance *af, mp_audio *data, int /*flags*/) {
     return 0;
 }
 
-AudioFormat AudioController::inputFormat() const {
+auto AudioController::inputFormat() const -> AudioFormat
+{
     return d->input;
 }
 
-AudioFormat AudioController::outputFormat() const {
+auto AudioController::outputFormat() const -> AudioFormat
+{
     return d->output;
 }
 
-void AudioController::setNormalizerActivated(bool on) {
+auto AudioController::setNormalizerActivated(bool on) -> void
+{
     if (_Change(d->normalizerActivated, on))
         d->dirty |= Normalizer;
 }
 
-double AudioController::gain() const {
+auto AudioController::gain() const -> double
+{
     return d->normalizerActivated && d->mixer ? d->mixer->gain() : 1.0;
 }
 
-bool AudioController::isTempoScalerActivated() const {
+auto AudioController::isTempoScalerActivated() const -> bool
+{
     return d->tempoScalerActivated;
 }
 
-void AudioController::setNormalizerOption(double length, double target, double silence, double min, double max) {
-    d->normalizerOption.bufferLengthInSeconds = length;
-    d->normalizerOption.targetLevel = target;
-    d->normalizerOption.silenceLevel = silence;
-    d->normalizerOption.minimumGain = min;
-    d->normalizerOption.maximumGain = max;
+auto AudioController::setNormalizerOption(const AudioNormalizerOption &option)
+-> void
+{
+    d->normalizerOption = option;
     d->dirty |= Normalizer;
 }
 
-bool AudioController::isNormalizerActivated() const {
+auto AudioController::isNormalizerActivated() const -> bool
+{
     return d->normalizerActivated;
 }
 
-void AudioController::setChannelLayoutMap(const ChannelLayoutMap &map) {
+auto AudioController::setChannelLayoutMap(const ChannelLayoutMap &map) -> void
+{
     d->map = map;
     d->dirty |= ChMap;
 }
 
-void AudioController::setOutputChannelLayout(ChannelLayout layout) {
+auto AudioController::setOutputChannelLayout(ChannelLayout layout) -> void
+{
     d->layout = layout;
     d->dirty |= ChMap;
 }

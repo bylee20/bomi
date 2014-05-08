@@ -73,16 +73,19 @@ Translator::~Translator() {
     delete d;
 }
 
-Translator &Translator::get() {
+auto Translator::get() -> Translator&
+{
     static Translator self;
     return self;
 }
 
-LocaleList Translator::availableLocales() {
+auto Translator::availableLocales() -> LocaleList
+{
     return get().d->locales.toList();
 }
 
-bool Translator::load(const QLocale &locale) {
+auto Translator::load(const QLocale &locale) -> bool
+{
     QLocale l = locale;
     if (locale.language() == QLocale::C)
         l = QLocale::system();
@@ -103,12 +106,14 @@ bool Translator::load(const QLocale &locale) {
     return d->succ;
 }
 
-QString Translator::defaultEncoding() {
+auto Translator::defaultEncoding() -> QString
+{
     auto enc = tr("UTF-8", "Specify most popular encoding here in target localization.");
     return enc.isEmpty() ? _L("UTF-8") : enc;
 }
 
-QString Translator::displayLanguage(const QString &_iso) {
+auto Translator::displayLanguage(const QString &_iso) -> QString
+{
     auto d = get().d;
     QString iso = _iso.toLower();
     auto it = d->b2t.constFind(iso);
@@ -126,7 +131,8 @@ QString Translator::displayLanguage(const QString &_iso) {
     return name;
 }
 
-QString Translator::displayName(const QLocale &locale) {
+auto Translator::displayName(const QLocale &locale) -> QString
+{
     auto d = get().d;
     auto l = ::icu::Locale::createFromName(locale.name().toLatin1().data());
     icu::UnicodeString str;

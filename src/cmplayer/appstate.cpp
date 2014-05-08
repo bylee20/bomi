@@ -26,7 +26,8 @@ AppState::AppState() {
 #undef READ
 }
 
-void AppState::save() const {
+auto AppState::save() const -> void
+{
     Record r("app-state");
 #define WRITE(a) r.write(a, #a);
     WRITE(win_stays_on_top);
@@ -104,7 +105,8 @@ AppStateOld::AppStateOld() {
 #undef READ
 }
 
-void AppStateOld::save() const {
+auto AppStateOld::save() const -> void
+{
     Record r("app-state");
 #define WRITE(a) r.write(a, #a);
     WRITE(playback_speed);
@@ -157,7 +159,8 @@ void AppStateOld::save() const {
 #undef WRITE
 }
 
-void AppState::setOpen(const Mrl &mrl) {
+auto AppState::setOpen(const Mrl &mrl) -> void
+{
     if (mrl.isLocalFile()) {
         QFileInfo file(mrl.toLocalFile());
         open_last_file = file.absoluteFilePath();

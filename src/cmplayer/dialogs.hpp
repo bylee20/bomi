@@ -10,30 +10,17 @@ public:
     using Button = QDialogButtonBox::StandardButton;
     using Layout = QDialogButtonBox::ButtonLayout;
     static constexpr Layout SkinLayout = (Layout)-1;
-    BBox(QWidget *parent = nullptr): QDialogButtonBox(parent) {
-        m_layout = buttonLayout(this);
-    }
-    void setStandardButtons(StandardButtons buttons) {
-        uint flags = buttons;
-        for (int i=0; i<32 && flags; ++i) {
-            const Button button = Button(1 << i);
-            if (flags & button) {
-                addButton(button);
-                flags &= ~button;
-            }
-        }
-    }
-    void addButton(StandardButton button) {
-        QDialogButtonBox::addButton(button)->setText(buttonText(button, m_layout));
-    }
-    static QString buttonText(Button button, Layout layout);
-    static Layout buttonLayout(QWidget *w) {
-        return Layout(w->style()->styleHint(QStyle::SH_DialogButtonLayout, 0, w));
-    }
-    static BBox *make(QDialog *dlg);
+    BBox(QWidget *parent = nullptr);
+    auto setStandardButtons(StandardButtons buttons) -> void;
+    auto addButton(StandardButton button) -> void;
+    static auto buttonText(Button button, Layout layout) -> QString;
+    static auto buttonLayout(QWidget *w) -> Layout;
+    static auto make(QDialog *dlg) -> BBox*;
 private:
     Layout m_layout;
 };
+
+/******************************************************************************/
 
 class MBox : public QObject {
     Q_OBJECT
@@ -41,77 +28,97 @@ public:
     using Role = BBox::Role;
     using Button = BBox::Button;
     using Icon = QMessageBox::Icon;
-    MBox(QWidget *parent = nullptr): QObject(parent) {
-        m_mbox = new QMessageBox(parent);
-        m_layout = BBox::Layout(m_mbox->style()->styleHint(QStyle::SH_DialogButtonLayout, 0, m_mbox));
-    }
-    MBox(QWidget *parent, Icon icon, const QString &title
-        , const QString &text = QString()
-        , std::initializer_list<Button> &&buttons = {}
-        , Button def = BBox::NoButton)
-    : MBox(parent) {
-        addButtons(std::forward<std::initializer_list<Button>>(buttons));
-        setTitle(title);
-        setText(text);
-        setDefaultButton(def);
-        setIcon(icon);
-    }
+    MBox(QWidget *parent = nullptr);
+    MBox(QWidget *parent, Icon icon, const QString &title,
+         const QString &text = QString(),
+         std::initializer_list<Button> &&buttons = {},
+         Button def = BBox::NoButton);
     ~MBox() { delete m_mbox; }
-    void addButton(const QString &text, Role role) {
-        m_mbox->addButton(text, (QMessageBox::ButtonRole)role);
-    }
-    void addButton(Button button) {
-        m_mbox->addButton((QMessageBox::StandardButton)button)->setText(BBox::buttonText(button, m_layout));
-    }
-    void addButtons(std::initializer_list<Button> &&buttons) {
-        for (auto b : buttons)
-            addButton(b);
-    }
-
-    int exec() { return m_mbox->exec(); }
-    QMessageBox *mbox() const { return m_mbox; }
-    QCheckBox *checkBox() const {
-        if (!m_mbox->checkBox())
-            m_mbox->setCheckBox(new QCheckBox);
-        return m_mbox->checkBox();
-    }
-    bool isChecked() const { return m_mbox->checkBox() && m_mbox->checkBox()->isCheckable(); }
-    void setInformativeText(const QString &text) { m_mbox->setInformativeText(text); }
-    void setDetailedText(const QString &text) { m_mbox->setDetailedText(text); }
-    void setDefaultButton(Button button) { m_mbox->setDefaultButton((QMessageBox::StandardButton)button); }
-    void setIcon(Icon icon) { m_mbox->setIcon(icon); }
-    void setTitle(const QString &title) { m_mbox->setWindowTitle(title); }
-    void setText(const QString &text) { m_mbox->setText(text); }
+    auto addButton(const QString &text, Role role) -> void;
+    auto addButton(Button button) -> void;
+    auto addButtons(std::initializer_list<Button> &&buttons) -> void;
+    auto exec() -> int { return m_mbox->exec(); }
+    auto mbox() const -> QMessageBox* { return m_mbox; }
+    auto checkBox() const -> QCheckBox*;
+    auto isChecked() const -> bool;
+    auto setInformativeText(const QString &text) -> void;
+    auto setDetailedText(const QString &text) -> void;
+    auto setDefaultButton(Button button) -> void;
+    auto setIcon(Icon icon) -> void { m_mbox->setIcon(icon); }
+    auto setTitle(const QString &title) -> void;
+    auto setText(const QString &text) -> void { m_mbox->setText(text); }
+    auto role(QAbstractButton *button) const -> Role;
+    auto clickedRole() const -> Role { return role(m_mbox->clickedButton()); }
 #define DEC_POPUP(func, icon) \
-    static int func(QWidget *parent, const QString &title, const QString &text, std::initializer_list<Button> &&buttons, Button def = BBox::NoButton) { \
-        MBox mbox(parent, icon, title, text, std::forward<std::initializer_list<Button>>(buttons), def); return mbox.exec(); }
+    static auto func(QWidget *parent, const QString &title, \
+                     const QString &text, \
+                     std::initializer_list<Button> &&buttons,\
+                     Button def = BBox::NoButton) -> int \
+    { \
+        MBox mbox(parent, icon, title, text, \
+                  std::forward<std::initializer_list<Button>>(buttons), def); \
+        return mbox.exec();\
+    }
     DEC_POPUP(warn, Icon::Warning)
     DEC_POPUP(info, Icon::Information)
 #undef DEC_POPUP
-    Role role(QAbstractButton *button) const { return (Role)m_mbox->buttonRole(button); }
-    Role clickedRole() const { return role(m_mbox->clickedButton()); }
 private:
     QMessageBox *m_mbox = nullptr;
     BBox::Layout m_layout;
 };
+
+inline auto MBox::addButton(const QString &text, Role role) -> void
+{ m_mbox->addButton(text, (QMessageBox::ButtonRole)role); }
+
+inline auto MBox::addButton(Button button) -> void
+{
+    const auto b = static_cast<QMessageBox::StandardButton>(button);
+    m_mbox->addButton(b)->setText(BBox::buttonText(button, m_layout));
+}
+
+inline auto MBox::checkBox() const -> QCheckBox*
+{
+    if (!m_mbox->checkBox())
+        m_mbox->setCheckBox(new QCheckBox);
+    return m_mbox->checkBox();
+}
+
+inline auto MBox::isChecked() const -> bool
+{ return m_mbox->checkBox() && m_mbox->checkBox()->isCheckable(); }
+
+inline auto MBox::setInformativeText(const QString &text) -> void
+{ m_mbox->setInformativeText(text); }
+
+inline auto MBox::setDetailedText(const QString &text) -> void
+{ m_mbox->setDetailedText(text); }
+
+inline auto MBox::setDefaultButton(Button button) -> void
+{ m_mbox->setDefaultButton((QMessageBox::StandardButton)button); }
+
+inline auto MBox::setTitle(const QString &title) -> void
+{ m_mbox->setWindowTitle(title); }
+
+inline auto MBox::role(QAbstractButton *button) const -> Role
+{ return static_cast<Role>(m_mbox->buttonRole(button)); }
+
+/******************************************************************************/
 
 class GetShortcutDialog : public QDialog {
     Q_OBJECT
 public:
     GetShortcutDialog(const QKeySequence &shortcut, QWidget *parent = 0);
     ~GetShortcutDialog();
-    QKeySequence shortcut() const;
-    void setShortcut(const QKeySequence &shortcut);
+    auto shortcut() const -> QKeySequence;
+    auto setShortcut(const QKeySequence &shortcut) -> void;
 protected:
-    bool eventFilter(QObject *obj, QEvent *event);
-    void keyPressEvent(QKeyEvent *event);
-    void keyReleaseEvent(QKeyEvent *event);
-private slots:
-    void setGetting(bool on);
-    void erase();
+    auto eventFilter(QObject *obj, QEvent *event) -> bool;
+    auto keyPressEvent(QKeyEvent *event) -> void;
+    auto keyReleaseEvent(QKeyEvent *event) -> void;
 private:
+    auto setGetting(bool on) -> void;
+    auto erase() -> void;
+    auto getShortcut(QKeyEvent *event) -> void;
     static const int MaxKeyCount = 1;
-    void getShortcut(QKeyEvent *event);
     struct Data;
     Data *d = nullptr;
 };
@@ -121,24 +128,25 @@ class EncodingComboBox;
 class EncodingFileDialog : public QFileDialog {
     Q_OBJECT
 public:
-    static QString getOpenFileName(QWidget *parent = 0
-            , const QString &caption = QString()
-            , const QString &dir = QString()
-            , const QString &filter = QString()
-            , QString *enc = 0);
-    static QStringList getOpenFileNames(QWidget *parent = 0
-            , const QString &caption = QString()
-            , const QString &dir = QString()
-            , const QString &filter = QString()
-            , QString *enc = 0, FileMode = ExistingFiles);
+    static auto getOpenFileName(QWidget *parent = 0,
+                                const QString &caption = QString(),
+                                const QString &dir = QString(),
+                                const QString &filter = QString(),
+                                QString *enc = 0) -> QString;
+    static auto getOpenFileNames(QWidget *parent = 0,
+                                 const QString &caption = QString(),
+                                 const QString &dir = QString(),
+                                 const QString &filter = QString(),
+                                 QString *enc = 0,
+                                 FileMode = ExistingFiles) -> QStringList;
 private:
-    EncodingFileDialog(QWidget *parent = 0
-            , const QString &caption = QString::null
-            , const QString &directory = QString::null
-            , const QString &filter = QString::null
-            , const QString &encoding = QString::null);
-    void setEncoding(const QString &encoding);
-    QString encoding() const;
+    EncodingFileDialog(QWidget *parent = 0,
+                       const QString &caption = QString(),
+                       const QString &directory = QString(),
+                       const QString &filter = QString(),
+                       const QString &encoding = QString());
+    auto setEncoding(const QString &encoding) -> void;
+    auto encoding() const -> QString;
     EncodingComboBox *combo = nullptr;
 };
 
@@ -149,14 +157,14 @@ class GetUrlDialog : public QDialog {
 public:
     GetUrlDialog(QWidget *parent = 0);
     ~GetUrlDialog();
-    void setUrl(const QUrl &url);
-    QUrl url() const;
-    bool isPlaylist() const;
-    Playlist playlist() const;
-    QString encoding() const;
+    auto setUrl(const QUrl &url) -> void;
+    auto url() const -> QUrl;
+    auto isPlaylist() const -> bool;
+    auto playlist() const -> Playlist;
+    auto encoding() const -> QString;
 private:
-    void accept();
-    void _accept();
+    auto accept() -> void;
+    auto _accept() -> void;
     struct Data;
     Data *d;
 };
@@ -166,9 +174,8 @@ class AboutDialog : public QDialog {
 public:
     AboutDialog(QWidget *parent = 0);
     ~AboutDialog();
-private slots:
-    void showFullLicense();
 private:
+    auto showFullLicense() -> void;
     struct Data;
     Data *d = nullptr;
 };
@@ -178,12 +185,11 @@ class OpenDiscDialog : public QDialog {
 public:
     OpenDiscDialog(QWidget *parent = 0);
     ~OpenDiscDialog();
-    void setDeviceList(const QStringList &devices);
-    void setDevice(const QString &device);
-    void setIsoEnabled(bool on);
-    QString device() const;
-public slots:
-    void checkDevice(const QString &device);
+    auto setDeviceList(const QStringList &devices) -> void;
+    auto setDevice(const QString &device) -> void;
+    auto setIsoEnabled(bool on) -> void;
+    auto device() const -> QString;
+    auto checkDevice(const QString &device) -> void;
 private:
     struct Data;
     Data *d = nullptr;

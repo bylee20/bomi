@@ -4,7 +4,10 @@
 #include "stdafx.hpp"
 
 enum MemoryUnit {
-    ByteUnit = 1, Kilobyte = 1024, Megabyte = 1024*1024, Gigabyte = 1024*1024*1024
+    ByteUnit = 1,
+    Kilobyte = 1024,
+    Megabyte = 1024*1024,
+    Gigabyte = 1024*1024*1024
 };
 
 class UtilObject : public QObject {
@@ -20,42 +23,44 @@ class UtilObject : public QObject {
 public:
     ~UtilObject();
     Q_INVOKABLE static double textWidth(const QString &text, int size);
-    Q_INVOKABLE static double textWidth(const QString &text, int size, const QString &family);
-    Q_INVOKABLE QString msecToString(int ms) {return Pch::_NullTime.addSecs(qRound((double)ms*1e-3)).toString(_L("h:mm:ss"));}
-    Q_INVOKABLE QString secToString(int s) {return Pch::_NullTime.addSecs(s).toString(_L("h:mm:ss"));}
+    Q_INVOKABLE static double textWidth(const QString &text, int size,
+                                        const QString &family);
+    Q_INVOKABLE QString msecToString(int ms);
+    Q_INVOKABLE QString secToString(int s);
     Q_INVOKABLE QPointF mousePos(QQuickItem *item);
-    Q_INVOKABLE QPointF mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) const;
+    Q_INVOKABLE QPointF mapFromSceneTo(QQuickItem *item,
+                                       const QPointF &scenePos) const;
     Q_INVOKABLE bool execute(const QString &key);
     Q_INVOKABLE static QObject *action(const QString &key);
-    Q_INVOKABLE double bound(double min, double v, double max) const {return qBound(min, v, max);}
-    Q_INVOKABLE void showToolTip(QQuickItem *item, const QPointF &pos, const QString &text) { QToolTip::showText(item->window()->mapToGlobal(item->mapToScene(pos).toPoint()), text); }
+    Q_INVOKABLE double bound(double min, double v, double max) const;
+    Q_INVOKABLE void showToolTip(QQuickItem *item, const QPointF &pos,
+                                 const QString &text);
     Q_INVOKABLE void hideToolTip() { QToolTip::hideText(); }
     Q_INVOKABLE void filterDoubleClick() { m_filterDoubleClick = true; }
-    static bool isDoubleClickFiltered() { return get().m_filterDoubleClick; }
-    static void resetFilterDoubleClick() { get().m_filterDoubleClick = false; }
-    static bool isCursorVisible() {return get().m_cursor;}
-    static void setCursorVisible(bool visible) {auto &o = get(); if (_Change(o.m_cursor, visible)) emit o.cursorVisibleChanged(o.m_cursor);}
-    Q_INVOKABLE void setCursor(QQuickItem *item, Qt::CursorShape cursor) { if (item) item->setCursor(cursor); }
-    Q_INVOKABLE void unsetCursor(QQuickItem *item) { if (item) item->unsetCursor(); }
-    static double totalMemory(MemoryUnit unit);
-    static double usingMemory(MemoryUnit unit);
-    static double totalMemory() { return totalMemory(Megabyte); }
-    static double usingMemory() { return usingMemory(Megabyte); }
-    static double cpuUsage();
-    static int cores();
-    static quint64 systemTime() { return _SystemTime(); }
-    static quint64 processTime(); // usec
-    static QString monospace();
-    static bool isFullScreen() {return get().m_fullScreen;}
-    static void setFullScreen(bool fs) { auto &o = get(); if (_Change(o.m_fullScreen, fs)) emit o.fullScreenChanged(o.m_fullScreen);}
-    QString tr() const {return QString();}
+    Q_INVOKABLE void setCursor(QQuickItem *item, Qt::CursorShape cursor);
+    Q_INVOKABLE void unsetCursor(QQuickItem *item);
     Q_INVOKABLE void registerItemToAcceptKey(QQuickItem *item);
-    static QQuickItem *itemToAcceptKey() { return get().m_keyItems.isEmpty() ? nullptr : get().m_keyItems.front(); }
-    static void setItemPressed(QQuickItem *item);
-    static UtilObject &get() { if (!object) create(); return *object; }
-//    static void setEngine(qmlEngine( *))
-    static void setQmlEngine(QQmlEngine *engine) { get().m_engine = engine; }
-    static QQmlEngine *qmlEngine() { return get().m_engine; }
+    static auto isDoubleClickFiltered() -> bool;
+    static auto resetFilterDoubleClick() -> void;
+    static auto isCursorVisible() -> bool {return get().m_cursor;}
+    static auto setCursorVisible(bool visible) -> void;
+    static auto totalMemory(MemoryUnit unit) -> double;
+    static auto usingMemory(MemoryUnit unit) -> double;
+    static auto totalMemory() -> double { return totalMemory(Megabyte); }
+    static auto usingMemory() -> double { return usingMemory(Megabyte); }
+    static auto cpuUsage() -> double;
+    static auto cores() -> int;
+    static auto systemTime() -> quint64 { return _SystemTime(); }
+    static auto processTime() -> quint64; // usec
+    static auto monospace() -> QString;
+    static auto isFullScreen() -> bool {return get().m_fullScreen;}
+    static auto setFullScreen(bool fs) -> void;
+    static auto tr() -> QString {return QString();}
+    static auto itemToAcceptKey() -> QQuickItem*;
+    static auto setItemPressed(QQuickItem *item) -> void;
+    static auto get() -> UtilObject& { if (!object) create(); return *object; }
+    static auto setQmlEngine(QQmlEngine *engine) -> void;
+    static auto qmlEngine() -> QQmlEngine* { return get().m_engine; }
 signals:
     void trChanged();
     void mouseReleased(const QPointF &scenePos);
@@ -63,23 +68,70 @@ signals:
     void fullScreenChanged(bool fullScreen);
 private:
     UtilObject(QObject *parent = nullptr);
-    static void create();
-    void changeEvent(QEvent *event) {
-        if (event->type() == QEvent::LanguageChange)
-            emit trChanged();
-    }
+    auto removeKeyItem(QQuickItem *item) -> bool;
+    static auto create() -> void;
     QSet<QQuickItem*> m_itemsToAcceptKey;
     QLinkedList<QQuickItem*> m_keyItems;
-    bool removeKeyItem(QQuickItem *item) {
-        auto it = _Find(m_keyItems.begin(), m_keyItems.end(), item);
-        if (it == m_keyItems.end())
-            return false;
-        m_keyItems.erase(it);
-        return true;
-    }
     bool m_fullScreen, m_cursor, m_filterDoubleClick;
     QQmlEngine *m_engine = nullptr;
     static UtilObject *object;
 };
 
+inline auto UtilObject::msecToString(int ms) -> QString
+{ return secToString(qRound((double)ms*1e-3)); }
+
+inline auto UtilObject::secToString(int s) -> QString
+{return Pch::_NullTime.addSecs(s).toString(_L("h:mm:ss"));}
+
+inline auto UtilObject::bound(double min, double v, double max) const -> double
+{return qBound(min, v, max);}
+
+inline auto UtilObject::showToolTip(QQuickItem *item, const QPointF &pos,
+                                    const QString &text) -> void
+{
+    const auto p = item->mapToScene(pos).toPoint();
+    QToolTip::showText(item->window()->mapToGlobal(p), text);
+}
+
+inline auto UtilObject::isDoubleClickFiltered() -> bool
+{ return get().m_filterDoubleClick; }
+
+inline auto UtilObject::resetFilterDoubleClick() -> void
+{ get().m_filterDoubleClick = false; }
+
+inline auto UtilObject::setCursorVisible(bool visible) -> void
+{
+    auto &self = get();
+    if (_Change(self.m_cursor, visible))
+        emit self.cursorVisibleChanged(self.m_cursor);
+}
+
+inline auto UtilObject::setCursor(QQuickItem *item,
+                                  Qt::CursorShape cursor) -> void
+{ if (item) item->setCursor(cursor); }
+
+inline auto UtilObject::unsetCursor(QQuickItem *item) -> void
+{ if (item) item->unsetCursor(); }
+
+inline auto UtilObject::setFullScreen(bool fs) -> void
+{
+    auto &self = get();
+    if (_Change(self.m_fullScreen, fs))
+        emit self.fullScreenChanged(self.m_fullScreen);
+}
+
+inline auto UtilObject::itemToAcceptKey() -> QQuickItem*
+{ return get().m_keyItems.isEmpty() ? nullptr : get().m_keyItems.front(); }
+
+inline auto UtilObject::setQmlEngine(QQmlEngine *engine) -> void
+{ get().m_engine = engine; }
+
+inline auto UtilObject::removeKeyItem(QQuickItem *item) -> bool
+{
+    auto it = _Find(m_keyItems.begin(), m_keyItems.end(), item);
+    if (it == m_keyItems.end())
+        return false;
+    m_keyItems.erase(it);
+    return true;
+}
 #endif // GLOBALQMLOBJECT_HPP

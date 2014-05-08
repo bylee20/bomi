@@ -45,7 +45,8 @@ QStringList Info::ExtList::toNameFilter() const {
     return nameFilter;
 }
 
-const char *Info::pluginPath() {
+auto Info::pluginPath() -> const char*
+{
     return "";
 }
 
@@ -56,13 +57,15 @@ static Info::ExtList convert(const QList<QByteArray> &formats) {
     return exts;
 }
 
-const Info::ExtList &Info::readableImageExt() {
+auto Info::readableImageExt() -> const Info::ExtList&
+{
     if (self.m_rImgExt.isEmpty())
         self.m_rImgExt = convert(QImageReader::supportedImageFormats());
     return self.m_rImgExt;
 }
 
-const Info::ExtList &Info::writableImageExt() {
+auto Info::writableImageExt() -> const Info::ExtList&
+{
     if (self.m_wImgExt.isEmpty())
         self.m_wImgExt = convert(QImageWriter::supportedImageFormats());
     return self.m_wImgExt;

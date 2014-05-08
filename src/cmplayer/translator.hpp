@@ -10,10 +10,10 @@ class Translator : public QObject {
 public:
     ~Translator();
     static bool load(const QLocale &locale = QLocale::system());
-    static LocaleList availableLocales();
-    static QString defaultEncoding();
-    static QString displayLanguage(const QString &iso);
-    static QString displayName(const QLocale &locale);
+    static auto availableLocales() -> LocaleList;
+    static auto defaultEncoding() -> QString;
+    static auto displayLanguage(const QString &iso) -> QString;
+    static auto displayName(const QLocale &locale) -> QString;
 private:
     Translator();
     static Translator &get();

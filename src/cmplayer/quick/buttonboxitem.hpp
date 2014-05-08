@@ -17,13 +17,13 @@ public:
     ButtonBoxItem(QQuickItem *parent = nullptr);
     ~ButtonBoxItem();
     QList<int> buttons() const;
-    void setButtons(QList<int> buttons);
-    qreal buttonWidth() const;
-    qreal gap() const;
-    void setButtonWidth(qreal w);
-    void setGap(qreal g);
+    auto setButtons(QList<int> buttons) -> void;
+    auto buttonWidth() const -> qreal;
+    auto gap() const -> qreal;
+    auto setButtonWidth(qreal w) -> void;
+    auto setGap(qreal g) -> void;
     QQmlComponent *source() const;
-    void setSource(QQmlComponent *source);
+    auto setSource(QQmlComponent *source) -> void;
     QQuickItem *clickedButton() const;
 signals:
     void buttonsChanged();
@@ -35,8 +35,8 @@ signals:
 private slots:
     void emitClicked();
 private:
-    void updatePolish();
-    void geometryChanged(const QRectF &new_, const QRectF &old);
+    auto updatePolish() -> void;
+    auto geometryChanged(const QRectF &new_, const QRectF &old) -> void;
     struct Data;
     Data *d;
 };

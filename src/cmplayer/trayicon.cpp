@@ -73,7 +73,8 @@ TrayIcon::~TrayIcon() {
     delete d;
 }
 
-void TrayIcon::setVisible(bool visible) {
+auto TrayIcon::setVisible(bool visible) -> void
+{
 #ifdef Q_OS_LINUX
     if (d->unity && d->indicator) {
         app_indicator_set_status(d->indicator, visible ? APP_INDICATOR_STATUS_ACTIVE : APP_INDICATOR_STATUS_PASSIVE);
@@ -83,13 +84,15 @@ void TrayIcon::setVisible(bool visible) {
         d->tray->setVisible(visible);
 }
 
-void TrayIcon::onShow(void *menu, void *arg) {
+auto TrayIcon::onShow(void *menu, void *arg) -> void
+{
     Q_UNUSED(menu);
     auto p = static_cast<TrayIcon*>(arg);
     emit p->activated(Show);
 }
 
-void TrayIcon::onQuit(void *menu, void *arg) {
+auto TrayIcon::onQuit(void *menu, void *arg) -> void
+{
     Q_UNUSED(menu);
     auto p = static_cast<TrayIcon*>(arg);
     emit p->activated(Quit);
@@ -122,7 +125,8 @@ static bool tryUnity() {
 }
 #endif
 
-bool TrayIcon::isAvailable() {
+auto TrayIcon::isAvailable() -> bool
+{
 #ifdef Q_OS_MAC
     return false;
 #elif defined(Q_OS_LINUX)

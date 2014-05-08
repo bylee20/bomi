@@ -8,8 +8,8 @@ class EncodingComboBox : public QComboBox {
     Q_OBJECT
 public:
     EncodingComboBox(QWidget *parent = 0);
-    QString encoding() const;
-    void setEncoding(const QString &encoding);
+    auto encoding() const -> QString;
+    auto setEncoding(const QString &encoding) -> void;
 private:
     QStringList enc;
 };
@@ -19,11 +19,11 @@ class LocaleComboBox : public QComboBox {
 public:
     LocaleComboBox(QWidget *parent = nullptr);
     ~LocaleComboBox();
-    QLocale currentLocale() const { return itemData(currentIndex()).toLocale(); }
-    void setCurrentLocale(const QLocale &locale) { setCurrentIndex(findData(locale)); }
+    auto currentLocale() const -> QLocale { return itemData(currentIndex()).toLocale(); }
+    auto setCurrentLocale(const QLocale &locale) -> void { setCurrentIndex(findData(locale)); }
 private:
-    void reset();
-    void changeEvent(QEvent *event) {
+    auto reset() -> void;
+    auto changeEvent(QEvent *event) -> void {
         QComboBox::changeEvent(event);
         if (event->type() == QEvent::LanguageChange)
             reset();
@@ -38,13 +38,13 @@ class FontOptionWidget : public QWidget {
 public:
     FontOptionWidget(QWidget *parent = 0);
     ~FontOptionWidget();
-    void set(const QFont &f) {set(f.bold(), f.italic(), f.underline(), f.strikeOut());}
-    void set(bool bold, bool italic, bool underline, bool strikeout);
-    bool bold() const;
-    bool italic() const;
-    bool underline() const;
-    bool strikeOut() const;
-    void apply(QFont &font);
+    auto set(const QFont &f) -> void {set(f.bold(), f.italic(), f.underline(), f.strikeOut());}
+    auto set(bool bold, bool italic, bool underline, bool strikeout) -> void;
+    auto bold() const -> bool;
+    auto italic() const -> bool;
+    auto underline() const -> bool;
+    auto strikeOut() const -> bool;
+    auto apply(QFont &font) -> void;
 private:
     struct Data;
     Data *d;
@@ -55,8 +55,8 @@ class ColorSelectWidget : public QWidget {
 public:
     ColorSelectWidget(QWidget *parent = 0);
     ~ColorSelectWidget();
-    void setColor(const QColor &color, bool hasAlpha);
-    QColor color() const;
+    auto setColor(const QColor &color, bool hasAlpha) -> void;
+    auto color() const -> QColor;
 private:
     struct Data;
     Data *d;
@@ -72,16 +72,16 @@ public:
             emit currentDataChanged(idx < 0 ? QVariant() : itemData(idx));
         });
     }
-    void addItemTextData(const QStringList &list) {
+    auto addItemTextData(const QStringList &list) -> void {
         for (int i=0; i<list.size(); ++i)
             addItem(list[i], list[i]);
     }
-    template<typename T>
-    void addItemData(const QList<T> &list) {
+    template<class T>
+    auto addItemData(const QList<T> &list) -> void {
         for (int i=0; i<list.size(); ++i)
             addItem(QString(), list[i]);
     }
-    void setCurrentData(const QVariant &data, int role = Qt::UserRole) {
+    auto setCurrentData(const QVariant &data, int role = Qt::UserRole) -> void {
         const int idx = findData(data, role);
         if (idx >= 0)
             setCurrentIndex(idx);
@@ -91,12 +91,12 @@ public:
         if (idx >= 0)
             setCurrentIndex(idx);
     }
-//    template<typename T>
-//    T currentValue(int role = Qt::UserRole) const {
+//    template<class T>
+//    auto currentValue(int role = Qt::UserRole) const -> T {
 //        const int idx = currentIndex();
 //        return idx < 0 ? T() : itemData(idx, role).value<T>();
 //    }
-    QVariant currentData(int role = Qt::UserRole) const {
+    auto currentData(int role = Qt::UserRole) const -> QVariant {
         const int idx = currentIndex();
         return idx < 0 ? QVariant() : itemData(idx, role);
     }
@@ -104,29 +104,29 @@ signals:
     void currentDataChanged(const QVariant &data);
 };
 
-template<typename Enum>
+template<class Enum>
 class EnumComboBox : public DataComboBox {
 public:
     EnumComboBox(QWidget *parent = 0): DataComboBox(parent) {
         setup(this);
         retranslate(this);
     }
-    static void setup(QComboBox *combo) {
+    static auto setup(QComboBox *combo) -> void {
         combo->clear();
         for (auto &item : EnumInfo<Enum>::items())
             combo->addItem(QString(), (int)item.value);
     }
-    static void retranslate(QComboBox *combo) {
+    static auto retranslate(QComboBox *combo) -> void {
         const auto items = EnumInfo<Enum>::items();
         Q_ASSERT((int)items.size() == combo->count());
         for (int i=0; i<(int)items.size(); ++i)
             combo->setItemText(i, EnumInfo<Enum>::description(items[i].value));
     }
-    Enum currentValue() const { return EnumInfo<Enum>::from(currentData().toInt()); }
-    void setCurrentValue(Enum e) { setCurrentData((int)e); }
-    void setRetranslatable(bool retrans) { m_retrans = retrans; }
+    auto currentValue() const -> Enum { return EnumInfo<Enum>::from(currentData().toInt()); }
+    auto setCurrentValue(Enum e) -> void { setCurrentData((int)e); }
+    auto setRetranslatable(bool retrans) -> void { m_retrans = retrans; }
 private:
-    void changeEvent(QEvent *event) {
+    auto changeEvent(QEvent *event) -> void {
         QComboBox::changeEvent(event);
         if (event->type() == QEvent::LanguageChange && m_retrans)
             retranslate(this);

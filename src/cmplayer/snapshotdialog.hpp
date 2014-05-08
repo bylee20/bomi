@@ -10,13 +10,13 @@ class SnapshotDialog : public QDialog {
 public:
     SnapshotDialog(QWidget *parent = 0);
     ~SnapshotDialog();
-    void setVideoRenderer(const VideoRendererItem *video);
-    void setSubtitleRenderer(const SubtitleRendererItem *subtitle);
-    void take();
+    auto setVideoRenderer(const VideoRendererItem *video) -> void;
+    auto setSubtitleRenderer(const SubtitleRendererItem *subtitle) -> void;
+    auto take() -> void;
 private:
-    void updateSnapshot(bool sub);
-    void updateSubtitleImage();
-    void redraw();
+    auto updateSnapshot(bool sub) -> void;
+    auto updateSubtitleImage() -> void;
+    auto redraw() -> void;
     struct Data;
     Data *d;
 };
@@ -26,16 +26,16 @@ class ImageViewer : public QScrollArea {
 public:
     ImageViewer(QWidget *parent = 0);
     ~ImageViewer();
-    QSize sizeHint() const;
-    void setText(const QString &text);
-    void setImage(const QPixmap &image);
-    void scale(double factor);
-    QPixmap image() const;
+    auto sizeHint() const -> QSize;
+    auto setText(const QString &text) -> void;
+    auto setImage(const QPixmap &image) -> void;
+    auto scale(double factor) -> void;
+    auto image() const -> QPixmap;
 signals:
     void scaleChanged(double scale);
 private:
-    void zoomOriginal();
-    void adjustScrollBar(QScrollBar *scrollBar, double factor);
+    auto zoomOriginal() -> void;
+    auto adjustScrollBar(QScrollBar *scrollBar, double factor) -> void;
     struct Data;
     Data *d;
 };

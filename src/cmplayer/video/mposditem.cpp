@@ -28,7 +28,7 @@ struct MpOsdItem::Data {
         atlasSize = {};
         const auto tformat = format & MpOsdBitmap::Rgba ? OGL::BGRA
                                                         : OGL::OneComponent;
-        transfer = OpenGLCompat::textureTransferInfo(tformat);
+        transfer = OpenGLCompat::transferInfo(tformat);
 
         QByteArray frag;
         if (format == MpOsdBitmap::Ass) {
@@ -165,21 +165,24 @@ MpOsdItem::~MpOsdItem() {
     delete d;
 }
 
-void MpOsdItem::initializeGL() {
+auto MpOsdItem::initializeGL() -> void
+{
     SimpleFboItem::initializeGL();
     d->atlas.create(OGL::Linear, OGL::ClampToEdge);
     d->vbo.create();
     d->vbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 }
 
-void MpOsdItem::finalizeGL() {
+auto MpOsdItem::finalizeGL() -> void
+{
     SimpleFboItem::finalizeGL();
     d->atlas.destroy();
     _Delete(d->shader);
     d->vbo.destroy();
 }
 
-void MpOsdItem::drawOn(sub_bitmaps *imgs) {
+auto MpOsdItem::drawOn(sub_bitmaps *imgs) -> void
+{
     d->show = true;
     if (!d->osd.needToCopy(imgs))
         return;
@@ -188,12 +191,14 @@ void MpOsdItem::drawOn(sub_bitmaps *imgs) {
         _PostEvent(this, EnqueueFrame, osd);
 }
 
-void MpOsdItem::drawOn(QImage &frame) {
+auto MpOsdItem::drawOn(QImage &frame) -> void
+{
     if (isVisible())
         d->osd.drawOn(frame);
 }
 
-void MpOsdItem::present(bool redraw) {
+auto MpOsdItem::present(bool redraw) -> void
+{
     if (redraw)
         return;
     if (d->show) {
@@ -203,7 +208,8 @@ void MpOsdItem::present(bool redraw) {
         _PostEvent(this, Hide);
 }
 
-void MpOsdItem::customEvent(QEvent *event) {
+auto MpOsdItem::customEvent(QEvent *event) -> void
+{
     QQuickItem::customEvent(event);
     switch ((int)event->type()) {
     case Show:
@@ -223,14 +229,17 @@ void MpOsdItem::customEvent(QEvent *event) {
     }
 }
 
-QSize MpOsdItem::imageSize() const {
+auto MpOsdItem::imageSize() const -> QSize
+{
     return d->osd.renderSize();
 }
 
-void MpOsdItem::paint(OpenGLFramebufferObject *fbo) {
+auto MpOsdItem::paint(OpenGLFramebufferObject *fbo) -> void
+{
     d->draw(fbo, d->osd);
 }
 
-void MpOsdItem::setImageSize(const QSize &size) {
+auto MpOsdItem::setImageSize(const QSize &size) -> void
+{
     d->imageSize = size;
 }

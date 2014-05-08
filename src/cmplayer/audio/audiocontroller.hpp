@@ -3,21 +3,19 @@
 
 #include "stdafx.hpp"
 
-struct af_instance;        struct mp_audio;
-struct af_cfg;            struct af_info;
-struct mp_chmap;
+struct af_instance;                     struct mp_audio;
+struct af_cfg;                          struct af_info;
+struct mp_chmap;                        struct AudioNormalizerOption;
 class ChannelLayoutMap;
-enum class ClippingMethod;
-enum class ChannelLayout;
-struct AudioNormalizerOption;
+enum class ClippingMethod;              enum class ChannelLayout;
 
 class AudioFormat {
 public:
-    double samplerate() const { return m_samplerate; }
-    double bitrate() const { return m_bitrate; }
-    int bits() const { return m_bits; }
-    QString type() const { return m_type; }
-    QString channels() const { return m_channels; }
+    auto samplerate() const -> double { return m_samplerate; }
+    auto bitrate() const -> double { return m_bitrate; }
+    auto bits() const -> int { return m_bits; }
+    auto type() const -> QString { return m_type; }
+    auto channels() const -> QString { return m_channels; }
 private:
     friend class AudioController;
     double m_samplerate = 0.0, m_bitrate = 0.0;
@@ -31,27 +29,27 @@ class AudioController : public QObject {
 public:
     AudioController(QObject *parent = nullptr);
     ~AudioController();
-    void setNormalizerActivated(bool on);
-    double gain() const;
-    bool isTempoScalerActivated() const;
-    bool isNormalizerActivated() const;
-    void setNormalizerOption(double length, double target, double silence, double min, double max);
-    void setClippingMethod(ClippingMethod method);
-    void setChannelLayoutMap(const ChannelLayoutMap &map);
-    void setOutputChannelLayout(ChannelLayout layout);
-    mp_chmap *chmap() const;
-    AudioFormat inputFormat() const;
-    AudioFormat outputFormat() const;
+    auto setNormalizerActivated(bool on) -> void;
+    auto gain() const -> double;
+    auto isTempoScalerActivated() const -> bool;
+    auto isNormalizerActivated() const -> bool;
+    auto setNormalizerOption(const AudioNormalizerOption &option) -> void;
+    auto setClippingMethod(ClippingMethod method) -> void;
+    auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void;
+    auto setOutputChannelLayout(ChannelLayout layout) -> void;
+    auto chmap() const -> mp_chmap*;
+    auto inputFormat() const -> AudioFormat;
+    auto outputFormat() const -> AudioFormat;
 private:
-    static int open(af_instance *af);
-    static bool test(int fmt_in, int fmt_out);
-    int reinitialize(mp_audio *data);
-    static int filter(af_instance *af, mp_audio *data, int flags);
-    static void uninit(af_instance *af);
-    static int control(af_instance *af, int cmd, void *arg);
+    auto reinitialize(mp_audio *data) -> int;
+    static auto open(af_instance *af) -> int;
+    static auto test(int fmt_in, int fmt_out) -> bool;
+    static auto filter(af_instance *af, mp_audio *data, int flags) -> int;
+    static auto uninit(af_instance *af) -> void;
+    static auto control(af_instance *af, int cmd, void *arg) -> int;
     struct Data;
     Data *d;
-    friend af_info create_info();
+    friend auto create_info() -> af_info;
 };
 
 #endif // AUDIOCONTROLLER_HPP

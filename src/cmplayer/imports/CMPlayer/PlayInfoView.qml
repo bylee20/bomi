@@ -42,6 +42,13 @@ Item {
         onTriggered: {
             __cpu = Util.cpu
             __mem = Util.memory
+        }
+    }
+    Timer {
+        running: parent.visible
+        interval: 100
+        repeat: true
+        onTriggered: {
             __fps = engine.avgfps
             __sync = engine.avgsync
             __volnorm = engine.volumeNormalizerActivated ? engine.volumeNormalizer*100.0 : -1.0;
@@ -74,7 +81,10 @@ Item {
         PlayInfoText { text: qsTr("Cache: %1").arg(engine.cache < 0 ? qsTr("Unavailable") : (engine.cache*100.0).toFixed(0) + "%"); }
         PlayInfoText { }
 
-        PlayInfoText { text: qsTr("Audio/Video Sync: %6ms").arg(wrapper.__sync.toFixed(1)); }
+        PlayInfoText {
+            readonly property alias sync: wrapper.__sync
+            text: qsTr("Audio/Video Sync: %1%2ms").arg(sync < 0 ? "" : "+").arg(sync.toFixed(1));
+        }
         PlayInfoText {
             property alias fps: wrapper.__fps
             text: qsTr("Avg. Frame Rate: %7fps(%8MB/s)").arg(fps.toFixed(3)).arg((engine.bitrate(fps)/(8*1024*1024)).toFixed(2));

@@ -1,8 +1,7 @@
 #include "toplevelitem.hpp"
 
-void reg_top_level_item() {
-    qmlRegisterType<TopLevelItem>();
-}
+auto reg_top_level_item() -> void
+    { qmlRegisterType<TopLevelItem>(); }
 
 struct TopLevelItem::Data {
     bool pressed = false;
@@ -18,8 +17,10 @@ TopLevelItem::TopLevelItem(QQuickItem *parent)
 
     connect(this, &QQuickItem::windowChanged, this, [this] (QQuickWindow *w) {
         if (w) {
-            connect(w, &QQuickWindow::widthChanged, this, &QQuickItem::setWidth);
-            connect(w, &QQuickWindow::heightChanged, this, &QQuickItem::setHeight);
+            connect(w, &QQuickWindow::widthChanged,
+                    this, &QQuickItem::setWidth);
+            connect(w, &QQuickWindow::heightChanged,
+                    this, &QQuickItem::setHeight);
             setWidth(w->width());
             setHeight(w->height());
         }
@@ -30,33 +31,41 @@ TopLevelItem::~TopLevelItem() {
     delete d;
 }
 
-void TopLevelItem::updateVertex(Vertex *vertex) {
+auto TopLevelItem::updateVertex(Vertex *vertex) -> void
+{
     Vertex::fillAsTriangleStrip(vertex, {0, 0}, {width(), height()});
 }
 
-bool TopLevelItem::filteredMousePressEvent() const {
+auto TopLevelItem::filteredMousePressEvent() const -> bool
+{
     return d->pressed;
 }
 
-void TopLevelItem::resetMousePressEventFilterState() {
+auto TopLevelItem::resetMousePressEventFilterState() -> void
+{
     d->pressed = false;
 }
 
-void TopLevelItem::mousePressEvent(QMouseEvent *event) {
+auto TopLevelItem::mousePressEvent(QMouseEvent *event) -> void
+{
     QQuickItem::mousePressEvent(event);
     event->accept();
     d->pressed = true;
 }
 
-void TopLevelItem::itemChange(ItemChange change, const ItemChangeData &data) {
+auto TopLevelItem::itemChange(ItemChange change,
+                              const ItemChangeData &data) -> void
+{
     QQuickItem::itemChange(change, data);
     switch (change) {
     case ItemChildAddedChange:
-        connect(data.item, &QQuickItem::visibleChanged, this, &TopLevelItem::check);
+        connect(data.item, &QQuickItem::visibleChanged,
+                this, &TopLevelItem::check);
         check();
         break;
     case ItemChildRemovedChange:
-        disconnect(data.item, &QQuickItem::visibleChanged, this, nullptr);
+        disconnect(data.item, &QQuickItem::visibleChanged,
+                   this, &TopLevelItem::check);
         check();
         break;
     default:
@@ -64,7 +73,8 @@ void TopLevelItem::itemChange(ItemChange change, const ItemChangeData &data) {
     }
 }
 
-void TopLevelItem::check() {
+auto TopLevelItem::check() -> void
+{
     const auto items = childItems();
     for (auto item : items) {
         if (item->isVisible()) {

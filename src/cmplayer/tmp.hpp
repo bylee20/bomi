@@ -7,9 +7,9 @@
 
 namespace tmp { // simple template meta progamming
 
-template <int N> constexpr int log2() { static_assert(N != 0, "wrong argument for log2"); return log2<N/2>() + 1; }
+template <int N> constexpr auto log2() -> int { static_assert(N != 0, "wrong argument for log2"); return log2<N/2>() + 1; }
 template <> constexpr int log2<1>() { return 0; }
-template <typename T> constexpr int log2bitsof() { return log2<sizeof(T)*8>(); }
+template <class T> constexpr auto log2bitsof() -> int { return log2<sizeof(T)*8>(); }
 
 template <int bits, bool sign> struct integer { /*typedef char type;*/ };
 template <> struct integer<16, true>  { typedef std::int16_t  type; };
@@ -19,11 +19,26 @@ template <> struct integer<16, false> { typedef std::uint16_t type; };
 template <> struct integer<32, false> { typedef std::uint32_t type; };
 template <> struct integer<64, false> { typedef std::uint64_t type; };
 
+template<int bits, bool sign>
+using integer_t = typename integer<bits, sign>::type;
+
 template <int bits> struct floating_point { typedef char type; };
 template <> struct floating_point<32> { typedef float  type; };
 template <> struct floating_point<64> { typedef double type; };
 
-template<class... Args> static inline void pass(const Args &...) { }
+template<int bits>
+using floating_point_t = typename floating_point<bits>::type;
+
+template<class T>
+static inline constexpr bool is_integral() { return std::is_integral<T>::value; }
+
+template<bool b, class T, class S>
+using conditional_t = typename std::conditional<b, T, S>::type;
+
+template<bool b, class T = int>
+using enable_if_t = typename std::enable_if<b, T>::type;
+
+template<class... Args> static inline auto pass(const Args &...) -> void { }
 
 template<int idx, int size, bool go = idx < size>
 struct static_for { };
@@ -31,7 +46,7 @@ struct static_for { };
 template<int idx, int size>
 struct static_for<idx, size, true> {
     template<class... Args, class F>
-    static inline void run(const std::tuple<Args...> &tuple, const F &func) {
+    static inline auto run(const std::tuple<Args...> &tuple, const F &func) -> void {
         func(std::get<idx>(tuple));
         static_for<idx+1, size>::run(tuple, func);
     }
@@ -40,9 +55,9 @@ struct static_for<idx, size, true> {
 template<int idx, int size>
 struct static_for<idx, size, false> {
     template<class T, class F>
-    static inline void run(const T &, const F &) { }
+    static inline auto run(const T &, const F &) -> void { }
     template<class T, class F>
-    static inline void run(T &&, const F &) { }
+    static inline auto run(T &&, const F &) -> void { }
 };
 
 template<int... S>
@@ -66,17 +81,17 @@ template<int diff, int ...S>
 struct index_list_generate_interval<diff, 0, S...> { typedef index_list<S...> type; };
 
 template<class F, class... Args, int... I>
-static inline void call_with_tuple_impl(F &&func, std::tuple<Args...> &&tuple, index_list<I...>) {
+static inline auto call_with_tuple_impl(F &&func, std::tuple<Args...> &&tuple, index_list<I...>) -> void {
     func(std::get<I>(tuple)...);
 }
 
 template<class F, class... Args, int... I>
-static inline void call_with_tuple_impl(F &&func, std::tuple<Args...> &tuple, index_list<I...>) {
+static inline auto call_with_tuple_impl(F &&func, std::tuple<Args...> &tuple, index_list<I...>) -> void {
     func(std::get<I>(tuple)...);
 }
 
 template<class F, class... Args, int... I>
-static inline void call_with_tuple_impl(F &&func, const std::tuple<Args...> &tuple, index_list<I...>) {
+static inline auto call_with_tuple_impl(F &&func, const std::tuple<Args...> &tuple, index_list<I...>) -> void {
     func(std::get<I>(tuple)...);
 }
 
@@ -99,49 +114,49 @@ static inline auto extract_tuple(const std::tuple<Args...> &tuple, index_list<I.
 }
 
 template<class F, class... Args, int... I>
-static inline void call_with_tuple(const F &func, std::tuple<Args...> &&tuple, index_list<I...> index) {
+static inline auto call_with_tuple(const F &func, std::tuple<Args...> &&tuple, index_list<I...> index) -> void {
     detail::call_with_tuple_impl(func, tuple, index);
 }
 
 template<class F, class... Args, int... I>
-static inline void call_with_tuple(const F &func, std::tuple<Args...> &tuple, index_list<I...> index) {
+static inline auto call_with_tuple(const F &func, std::tuple<Args...> &tuple, index_list<I...> index) -> void {
     detail::call_with_tuple_impl(func, tuple, index);
 }
 
 template<class F, class... Args, int... I>
-static inline void call_with_tuple(const F &func, const std::tuple<Args...> &tuple, index_list<I...> index) {
+static inline auto call_with_tuple(const F &func, const std::tuple<Args...> &tuple, index_list<I...> index) -> void {
     detail::call_with_tuple_impl(func, tuple, index);
 }
 
 template<class F, class... Args>
-static inline void call_with_tuple(const F &func, std::tuple<Args...> &&tuple) {
+static inline auto call_with_tuple(const F &func, std::tuple<Args...> &&tuple) -> void {
     detail::call_with_tuple_impl(func, tuple, make_tuple_index(tuple));
 }
 
 template<class F, class... Args>
-static inline void call_with_tuple(const F &func, std::tuple<Args...> &tuple) {
+static inline auto call_with_tuple(const F &func, std::tuple<Args...> &tuple) -> void {
     detail::call_with_tuple_impl(func, tuple, make_tuple_index(tuple));
 }
 
 template<class F, class... Args>
-static inline void call_with_tuple(const F &func, const std::tuple<Args...> &tuple) {
+static inline auto call_with_tuple(const F &func, const std::tuple<Args...> &tuple) -> void {
     detail::call_with_tuple_impl(func, tuple, make_tuple_index(tuple));
 }
 
 template<class... Args>
-static inline constexpr int tuple_size(const std::tuple<Args...> &) { return sizeof...(Args); }
+static inline constexpr auto tuple_size(const std::tuple<Args...> &) -> int { return sizeof...(Args); }
 
 namespace detail {
 
 template<int n, int size>
 struct for_each_tuple_impl {
     template<class F, class... Args>
-    static inline void run(const std::tuple<Args...> &tuple, F &&func) {
+    static inline auto run(const std::tuple<Args...> &tuple, F &&func) -> void {
         func(std::get<n>(tuple));
         for_each_tuple_impl<n+1, size>::run(tuple, std::forward<F>(func));
     }
     template<class F, class... Args1, class... Args2>
-    static inline void run(const std::tuple<Args1...> &tuple1, const std::tuple<Args2...> &tuple2, F &&func) {
+    static inline auto run(const std::tuple<Args1...> &tuple1, const std::tuple<Args2...> &tuple2, F &&func) -> void {
         static_assert(sizeof...(Args1) == sizeof...(Args2), "tuple size does not match");
         func(std::get<n>(tuple1), std::get<n>(tuple2));
         for_each_tuple_impl<n+1, size>::run(tuple1, tuple2, std::forward<F>(func));
@@ -150,9 +165,9 @@ struct for_each_tuple_impl {
 
 template<int size>
 struct for_each_tuple_impl<size, size> {
-    template<class... Args> static inline void run(Args&... ) {}
-    template<class... Args> static inline void run(const Args&... ) {}
-    template<class... Args> static inline void run(Args&&... ) {}
+    template<class... Args> static inline auto run(Args&... ) -> void {}
+    template<class... Args> static inline auto run(const Args&... ) -> void {}
+    template<class... Args> static inline auto run(Args&&... ) -> void {}
 };
 
 struct make_json_impl {
@@ -173,17 +188,17 @@ private:
 }
 
 template<class F, class... Args>
-void for_each(const std::tuple<Args...> &tuple, const F &func) {
+auto for_each(const std::tuple<Args...> &tuple, const F &func) -> void {
     detail::for_each_tuple_impl<0, sizeof...(Args)>::run(tuple, func);
 }
 
 template<class F, class... Args1, class... Args2>
-void for_each(const std::tuple<Args1...> &tuple1, const std::tuple<Args2...> &tuple2, F &&func) {
+auto for_each(const std::tuple<Args1...> &tuple1, const std::tuple<Args2...> &tuple2, F &&func) -> void {
     detail::for_each_tuple_impl<0, sizeof...(Args1)>::run(tuple1, tuple2, std::forward<F>(func));
 }
 
 template<class... Args>
-static QJsonObject make_json(const Args &... args) {
+static auto make_json(const Args &... args) -> QJsonObject {
     const auto params = std::tie(args...);
     const auto keyIdx = tmp::make_tuple_index<2>(params);
     const auto valueIdx = keyIdx.template added<1>();

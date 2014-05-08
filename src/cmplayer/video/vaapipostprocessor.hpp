@@ -12,9 +12,9 @@ class VaApiPostProcessor final : public VideoFilter, public VaApiStatusChecker {
 public:
     VaApiPostProcessor();
     ~VaApiPostProcessor();
-    void setDeintOption(const DeintOption &option);
-    void setAvaiableList(const QList<VFType> &filters);
-    bool process(const VideoFrame &in, QLinkedList<VideoFrame> &queue) override;
+    auto setDeintOption(const DeintOption &option) -> void;
+    auto setAvaiableList(const QList<VFType> &filters) -> void;
+    auto process(const VideoFrame &in, QLinkedList<VideoFrame> &queue) -> ([\w\d]+) override;
 private:
     mp_image *render(const VideoFrame &in);
     struct Data;

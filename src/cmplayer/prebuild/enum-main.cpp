@@ -150,26 +150,26 @@ enum class __ENUM_NAME : int {
 __ENUM_VALUES
 };
 
-inline bool operator == (__ENUM_NAME e, int i) { return (int)e == i; }
-inline bool operator != (__ENUM_NAME e, int i) { return (int)e != i; }
-inline bool operator == (int i, __ENUM_NAME e) { return (int)e == i; }
-inline bool operator != (int i, __ENUM_NAME e) { return (int)e != i; }
-inline int operator & (__ENUM_NAME e, int i) { return (int)e & i; }
-inline int operator & (int i, __ENUM_NAME e) { return (int)e & i; }
-inline int &operator &= (int &i, __ENUM_NAME e) { return i &= (int)e; }
-inline int operator ~ (__ENUM_NAME e) { return ~(int)e; }
-inline int operator | (__ENUM_NAME e, int i) { return (int)e | i; }
-inline int operator | (int i, __ENUM_NAME e) { return (int)e | i; }
-constexpr inline int operator | (__ENUM_NAME e1, __ENUM_NAME e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, __ENUM_NAME e) { return i |= (int)e; }
-inline bool operator > (__ENUM_NAME e, int i) { return (int)e > i; }
-inline bool operator < (__ENUM_NAME e, int i) { return (int)e < i; }
-inline bool operator >= (__ENUM_NAME e, int i) { return (int)e >= i; }
-inline bool operator <= (__ENUM_NAME e, int i) { return (int)e <= i; }
-inline bool operator > (int i, __ENUM_NAME e) { return i > (int)e; }
-inline bool operator < (int i, __ENUM_NAME e) { return i < (int)e; }
-inline bool operator >= (int i, __ENUM_NAME e) { return i >= (int)e; }
-inline bool operator <= (int i, __ENUM_NAME e) { return i <= (int)e; }
+inline auto operator == (__ENUM_NAME e, int i) -> bool { return (int)e == i; }
+inline auto operator != (__ENUM_NAME e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, __ENUM_NAME e) -> bool { return (int)e == i; }
+inline auto operator != (int i, __ENUM_NAME e) -> bool { return (int)e != i; }
+inline auto operator & (__ENUM_NAME e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, __ENUM_NAME e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, __ENUM_NAME e) -> int& { return i &= (int)e; }
+inline auto operator ~ (__ENUM_NAME e) -> int { return ~(int)e; }
+inline auto operator | (__ENUM_NAME e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, __ENUM_NAME e) -> int { return (int)e | i; }
+constexpr inline auto operator | (__ENUM_NAME e1, __ENUM_NAME e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, __ENUM_NAME e) -> int& { return i |= (int)e; }
+inline auto operator > (__ENUM_NAME e, int i) -> bool { return (int)e > i; }
+inline auto operator < (__ENUM_NAME e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (__ENUM_NAME e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (__ENUM_NAME e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, __ENUM_NAME e) -> bool { return i > (int)e; }
+inline auto operator < (int i, __ENUM_NAME e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, __ENUM_NAME e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, __ENUM_NAME e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(__ENUM_NAME)
 
@@ -179,39 +179,64 @@ class EnumInfo<__ENUM_NAME> {
 public:
     typedef __ENUM_NAME type;
     using Data =  __ENUM_DATA_TYPE;
-    struct Item { Enum value; QString name, key; __ENUM_DATA_TYPE data; };
-    static constexpr int size() { return __ENUM_COUNT; }
-    static constexpr const char *typeName() { return "__ENUM_NAME"; }
-    static constexpr const char *typeKey() { return "__ENUM_KEY"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "__ENUM_DESC"); }
-    static const Item *item(Enum e) {
-        __ENUM_FUNC_ITEM
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static __ENUM_DATA_TYPE data(Enum e) { auto i = item(e); return i ? i->data : __ENUM_DATA_TYPE(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        __ENUM_DATA_TYPE data;
+    };
+    using ItemList = std::array<Item, __ENUM_COUNT>;
+    static constexpr auto size() -> int
+    { return __ENUM_COUNT; }
+    static constexpr auto typeName() -> const char*
+    { return "__ENUM_NAME"; }
+    static constexpr auto typeKey() -> const char*
+    { return "__ENUM_KEY"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", "__ENUM_DESC"); }
+    static auto item(Enum e) -> const Item*
+    { __ENUM_FUNC_ITEM }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> __ENUM_DATA_TYPE
+    { auto i = item(e); return i ? i->data : __ENUM_DATA_TYPE(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
 __ENUM_FUNC_DESC_CASES
-        };
+        }
     }
-    static constexpr const std::array<Item, __ENUM_COUNT> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const __ENUM_DATA_TYPE &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const __ENUM_DATA_TYPE &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return __ENUM_NAME::__ENUM_DEFAULT; }
+    static constexpr auto default_() -> Enum
+    { return __ENUM_NAME::__ENUM_DEFAULT; }
 private:
-    static const std::array<Item, __ENUM_COUNT> info;
+    static const ItemList info;
 };
 
 using __ENUM_NAMEInfo = EnumInfo<__ENUM_NAME>;
@@ -285,7 +310,12 @@ QVariant _EnumVariantFromSql(const QVariant &name, const QVariant &def) {
         if (type.continuous)
             replace(htmpl, "__ENUM_FUNC_ITEM", R"(return 0 <= e && e < size() ? &info[(int)e] : nullptr;)");
         else
-            replace(htmpl, "__ENUM_FUNC_ITEM", R"(auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;)");
+            replace(htmpl, "__ENUM_FUNC_ITEM", R"(
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [e] (const Item &info)
+                               { return info.value == e; });
+        return it != info.cend() ? &(*it) : nullptr;
+   )");
 
         replace(ctmpl, "__ENUM_NAME", type.name);
         replace(ctmpl, "__ENUM_COUNT", toString(type.items.size()));

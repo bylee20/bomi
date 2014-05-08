@@ -1,6 +1,7 @@
 #ifndef HWACC_VAAPI_HPP
 #define HWACC_VAAPI_HPP
 
+#include "stdafx.hpp"
 #include "hwacc.hpp"
 #include "hwacc_helper.hpp"
 
@@ -26,8 +27,8 @@ template<> struct HwAccX11Trait<IMGFMT_VAAPI> {
     static const char *error(Status status) { return vaErrorStr(status); }
     using SurfaceID = VASurfaceID;
     static constexpr SurfaceID invalid = VA_INVALID_SURFACE;
-    static void destroySurface(SurfaceID id);
-    static bool createSurfaces(int width, int height, int format, QVector<SurfaceID> &ids);
+    static auto destroySurface(SurfaceID id) -> void;
+    static auto createSurfaces(int width, int height, int format, QVector<SurfaceID> &ids) -> bool;
 };
 
 using VaApiStatusChecker = HwAccX11StatusChecker<IMGFMT_VAAPI>;
@@ -39,14 +40,14 @@ class HwAccVaApi : public HwAcc, public VaApiStatusChecker {
 public:
     HwAccVaApi(AVCodecID codec);
     virtual ~HwAccVaApi();
-    virtual bool isOk() const override;
-    virtual void *context() const override;
-    virtual mp_image *getSurface() override;
-    virtual Type type() const override {return VaApiGLX;}
-    virtual mp_image *getImage(mp_image *mpi);
+    virtual auto isOk() const -> bool override;
+    virtual auto context() const -> void* override;
+    virtual auto getSurface() -> mp_image* override;
+    virtual auto type() const -> Type override {return VaApiGLX;}
+    virtual auto getImage(mp_image *mpi) -> mp_image*;
 private:
-    void freeContext();
-    bool fillContext(AVCodecContext *avctx) override;
+    auto freeContext() -> void;
+    auto fillContext(AVCodecContext *avctx) -> bool override;
 private:
     struct Data;
     Data *d;
@@ -61,7 +62,7 @@ struct VaApiFilterCap {
 struct VaApiFilterInfo : public VaApiStatusChecker {
     VaApiFilterInfo() {}
     VaApiFilterInfo(VAContextID context, VAProcFilterType type);
-    VAProcFilterType type() const {return m_type;}
+    auto type() const -> VAProcFilterType {return m_type;}
     const VaApiFilterCap *cap(int algorithm) const {
         for (const auto &cap : m_caps) {
             if (cap.algorithm == algorithm)
@@ -70,8 +71,8 @@ struct VaApiFilterInfo : public VaApiStatusChecker {
         return nullptr;
     }
     const QVector<int> &algorithms() const { return m_algorithms; }
-    static QString description(VAProcFilterType type, int algorithm);
-    bool supports(int algorithm) const { return m_algorithms.contains(algorithm); }
+    static auto description(VAProcFilterType type, int algorithm) -> QString;
+    auto supports(int algorithm) const -> bool { return m_algorithms.contains(algorithm); }
 private:
     QVector<int> m_algorithms;
     VAProcFilterType m_type = VAProcFilterNone;
@@ -81,30 +82,30 @@ private:
 
 struct VaApi : public VaApiStatusChecker {
     static const VaApiCodec *codec(AVCodecID id) { return find(id, get().m_supported); }
-    static VADisplay glx() {return m_display;}
+    static auto glx() -> VADisplay {return m_display;}
 #ifdef USE_VAVPP
-    static VAProcDeinterlacingType toVAType(DeintMethod method);
+    static auto toVAType(DeintMethod method) -> VAProcDeinterlacingType;
     static const VaApiFilterInfo *filter(VAProcFilterType type) { return find(type, get().m_filters); }
     static QList<VaApiFilterInfo> filters() { return get().m_filters.values(); }
     static QList<int> algorithms(VAProcFilterType type);
 #endif
-    static int surfaceFormat() {return get().m_surfaceFormat;}
-    static int toVAType(int mp_fields, bool first);
-    static void finalize();
-    static void initialize();
-    static bool isAvailable() { return ok; }
+    static auto surfaceFormat() -> int {return get().m_surfaceFormat;}
+    static auto toVAType(int mp_fields, bool first) -> int;
+    static auto finalize() -> void;
+    static auto initialize() -> void;
+    static auto isAvailable() -> bool { return ok; }
 private:
-    void setSurfaceFormat(int format) { m_surfaceFormat = format; }
-    bool hasEntryPoint(VAEntrypoint point, VAProfile profile = VAProfileNone) {
+    auto setSurfaceFormat(int format) -> void { m_surfaceFormat = format; }
+    auto hasEntryPoint(VAEntrypoint point, VAProfile profile = VAProfileNone) -> bool {
         auto entries = find(profile, m_entries); return entries && entries->contains(point);
     }
-    template<typename Map>
+    template<class Map>
     static const typename Map::mapped_type *find(typename Map::key_type key, const Map &map) {
         const auto it = map.find(key); return (it != map.end()) ? &(*it) : nullptr;
     }
-    void initCodecs();
+    auto initCodecs() -> void;
 #ifdef USE_VAVPP
-    void initFilters();
+    auto initFilters() -> void;
     QMap<VAProcFilterType, VaApiFilterInfo> m_filters;
 #endif
     static VaApi &get();
@@ -121,11 +122,14 @@ private:
 class VaApiMixer : public HwAccMixer, public VaApiStatusChecker{
 public:
     ~VaApiMixer();
-    bool upload(const VideoFrame &frame, bool deint) override;
-    bool directRendering() const override { return true; }
+    auto create(const QList<OpenGLTexture2D> &textures) -> bool final;
+    auto upload(const mp_image *mpi, bool deint) -> bool override;
+    auto directRendering() const -> bool override { return true; }
+    auto getAligned(const mp_image *mpi,
+                    QVector<QSize> *bytes) -> mp_imgfmt final;
 private:
-    VaApiMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format);
-    static void adjust(VideoFormatData *data, const mp_image *mpi);
+    VaApiMixer(const QSize &size);
+
     void *m_glSurface = nullptr;
     friend class HwAcc;
 };

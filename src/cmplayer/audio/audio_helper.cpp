@@ -3,7 +3,7 @@
 // these classes are kept for test
 #if 0
 
-template<typename T, bool planar>
+template<class T, bool planar>
 class AudioDataRange {
     using Data = const AudioDataInfo<typename std::remove_const<T>::type>;
 public:
@@ -28,9 +28,9 @@ private:
     Data d;
 };
 
-template<typename T, bool isPlanar> class AudioFramesOneChannel;
+template<class T, bool isPlanar> class AudioFramesOneChannel;
 
-template<typename T>
+template<class T>
 class AudioFramesOneChannel<T, true> {
     using Data = const AudioDataInfo<typename std::remove_const<T>::type>;
     Data *d = nullptr; int m_ch = 0;
@@ -58,7 +58,7 @@ public:
     iterator end() const { return iterator(get(d->frames)); }
 };
 
-template<typename T>
+template<class T>
 class AudioFramesOneChannel<T, false> {
     using Data = const AudioDataInfo<typename std::remove_const<T>::type>;
     Data *d = nullptr; int m_ch = 0;

@@ -14,7 +14,7 @@ public:
     ~SoftwareDeinterlacer();
     SoftwareDeinterlacer(const SoftwareDeinterlacer &other) = delete;
     SoftwareDeinterlacer &operator = (const SoftwareDeinterlacer &rhs) = delete;
-    void setOption(const DeintOption &deint);
+    auto setOption(const DeintOption &deint) -> void;
     auto push(mp_image *mpi) -> void;
     auto pop() -> mp_image*;
     auto clear() -> void;

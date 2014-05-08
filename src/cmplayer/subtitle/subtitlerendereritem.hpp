@@ -13,53 +13,51 @@ class SubtitleRendererItem : public SimpleTextureItem  {
 public:
     SubtitleRendererItem(QQuickItem *parent = nullptr);
     ~SubtitleRendererItem();
-    int previous() const;
-    int next() const;
-    int current() const;
-    int start(int pos) const;
-    int finish(int pos) const;
-    int delay() const;
-    double fps() const;
-    double pos() const;
-    bool isTopAligned() const;
-    QVector<SubCompModel*> models() const;
-    QList<const SubComp *> components() const;
-    void setComponents(const QList<SubComp> &components);
-    int componentsCount() const;
-    void setPriority(const QStringList &priority);
-    void setPos(double pos);
-    bool isHidden() const;
-    void setDelay(int delay);
-    bool load(const Subtitle &subtitle, bool select);
-    void unload();
-    void select(int idx);
-    void deselect(int idx = -1);
-    const SubtitleStyle &style() const;
-    void setStyle(const SubtitleStyle &style);
-    const RichTextDocument &text() const;
-    QImage draw(const QRectF &rect, QRectF *put = nullptr) const;
-    bool updateVertexOnGeometryChanged() const override { return true; }
-public slots:
-    void setHidden(bool hidden);
-    void render(int ms);
-    void setTopAligned(bool top);
-    void setFPS(double fps);
+    auto previous() const -> int;
+    auto next() const -> int;
+    auto current() const -> int;
+    auto start(int pos) const -> int;
+    auto finish(int pos) const -> int;
+    auto delay() const -> int;
+    auto fps() const -> double;
+    auto pos() const -> double;
+    auto isTopAligned() const -> bool;
+    auto models() const -> QVector<SubCompModel*>;
+    auto components() const -> QList<const SubComp *>;
+    auto setComponents(const QList<SubComp> &components) -> void;
+    auto componentsCount() const -> int;
+    auto setPriority(const QStringList &priority) -> void;
+    auto setPos(double pos) -> void;
+    auto isHidden() const -> bool;
+    auto setDelay(int delay) -> void;
+    auto load(const Subtitle &subtitle, bool select) -> bool;
+    auto unload() -> void;
+    auto select(int idx) -> void;
+    auto deselect(int idx = -1) -> void;
+    auto style() const -> const SubtitleStyle&;
+    auto setStyle(const SubtitleStyle &style) -> void;
+    auto text() const -> const RichTextDocument&;
+    auto draw(const QRectF &rect, QRectF *put = nullptr) const -> QImage;
+    auto updateVertexOnGeometryChanged() const -> bool override { return true; }
+    auto setHidden(bool hidden) -> void;
+    auto render(int ms) -> void;
+    auto setTopAligned(bool top) -> void;
+    auto setFPS(double fps) -> void;
 signals:
     void modelsChanged(const QVector<SubCompModel*> &models);
 private:
-    void initializeGL();
-    void finalizeGL();
-    void rerender();
-    void customEvent(QEvent *event) override;
-    void geometryChanged(const QRectF &new_, const QRectF &old) override;
-    void afterUpdate();
-    ShaderIface *createShader() const override;
-    ShaderData *createData() const override;
-    Type *type() const override { static Type type; return &type; }
-    void updateTexture(OpenGLTexture2D *texture) override;
-    void updateData(ShaderData *data) override;
-    void updateVertex(Vertex *vertex) override;
-
+    auto initializeGL() -> void;
+    auto finalizeGL() -> void;
+    auto rerender() -> void;
+    auto customEvent(QEvent *event) -> void override;
+    auto geometryChanged(const QRectF &n, const QRectF &o) -> void override;
+    auto afterUpdate() -> void;
+    auto createShader() const -> ShaderIface* override;
+    auto createData() const -> ShaderData* override;
+    auto type() const -> Type* override { static Type type; return &type; }
+    auto updateTexture(OpenGLTexture2D *texture) -> void override;
+    auto updateData(ShaderData *data) -> void override;
+    auto updateVertex(Vertex *vertex) -> void override;
     struct Data; Data *d;
     friend class SubtitleRendererShader;
 };

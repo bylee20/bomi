@@ -23,25 +23,25 @@ struct FilterInfo<VAProcFilterColorBalance> {
 
 class BufferMan {
 public:
-    template<typename T>
+    template<class T>
     BufferMan(VABufferID id, T *&buf): m_id(id) { m_mapped = map(id, buf); }
     ~BufferMan() { if (m_mapped) unmap(m_id); }
     bool isMapped() const { return m_mapped; }
     VABufferID id() const { return m_id; }
 
-    template<typename T>
+    template<class T>
     static VABufferID create(VAContextID context, VABufferType type, T *param, int num = 1) {
         VABufferID id = VA_INVALID_ID;
         if (vaCreateBuffer(VaApi::glx(), context, type, sizeof(T), num, param, &id) != VA_STATUS_SUCCESS)
             return VA_INVALID_ID;
         return id;
     }
-    template<typename T>
+    template<class T>
     static VABufferID create(VAContextID context, VABufferType type, int num = 1) {
         return create(context, type, (T*)nullptr, num);
     }
     void unmap() { if (m_mapped) { unmap(m_id); m_mapped = false; } }
-    template<typename T>
+    template<class T>
     static bool map(VABufferID id, T *&buf) {
         return id != VA_INVALID_ID && vaMapBuffer(VaApi::glx(), id, (void**)&buf) == VA_STATUS_SUCCESS;
     }
@@ -53,7 +53,7 @@ private:
 
 class VaApiFilter : public VaApiStatusChecker {
 public:
-    template<typename T>
+    template<class T>
     VaApiFilter(int order, VAContextID context, VAProcFilterType type, T *&param, int num = 1)
     : m_pbuf((void**)&param), m_order(order) {
         if (!VaApi::filter(type))
@@ -296,17 +296,20 @@ VaApiPostProcessor::~VaApiPostProcessor() {
     delete d;
 }
 
-void VaApiPostProcessor::setAvaiableList(const QList<VFType> &filters) {
+auto VaApiPostProcessor::setAvaiableList(const QList<VFType> &filters) -> void
+{
     d->filters = filters;
     // TODO: update
 }
 
-void VaApiPostProcessor::setDeintOption(const DeintOption &option) {
+auto VaApiPostProcessor::setDeintOption(const DeintOption &option) -> void
+{
     if (_Change(d->deint, option) && d->deinterlacer)
         d->deinterlacer->setMethod(d->deintType());
 }
 
-bool VaApiPostProcessor::process(const VideoFrame &in, QLinkedList<VideoFrame> &queue) {
+auto VaApiPostProcessor::process(const VideoFrame &in, QLinkedList<VideoFrame> &queue) -> bool
+{
     if (!d->pipeline)
         return false;
     auto surface = VaApiSurfacePool::getSurface(in.mpi());

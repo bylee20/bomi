@@ -5,7 +5,8 @@
 
 UtilObject *UtilObject::object = nullptr;
 
-void UtilObject::create() {
+auto UtilObject::create() -> void
+{
     if (!object) { static UtilObject obj; object = &obj; }
 }
 
@@ -16,18 +17,21 @@ UtilObject::UtilObject(QObject *parent)
 UtilObject::~UtilObject() {
 }
 
-double UtilObject::textWidth(const QString &text, int size, const QString &family) {
+auto UtilObject::textWidth(const QString &text, int size, const QString &family) -> double
+{
     QFont font(family);
     font.setPixelSize(size);
     QFontMetricsF metrics(font);
     return metrics.width(text);
 }
 
-double UtilObject::textWidth(const QString &text, int size) {
+auto UtilObject::textWidth(const QString &text, int size) -> double
+{
     return textWidth(text, size, qApp->font().family());
 }
 
-double UtilObject::cpuUsage() {
+auto UtilObject::cpuUsage() -> double
+{
     static double percent = 0.0;
     static quint64 ptime1 = processTime(), stime1 = systemTime();
     const quint64 ptime2 = processTime();
@@ -42,22 +46,26 @@ double UtilObject::cpuUsage() {
     return percent;
 }
 
-QPointF UtilObject::mousePos(QQuickItem *item) {
+auto UtilObject::mousePos(QQuickItem *item) -> QPointF
+{
     if (item && item->window())
         return item->mapFromScene(item->window()->mapFromGlobal(QCursor::pos()));
     return QPointF();
 }
 
-QPointF UtilObject::mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) const {
+auto UtilObject::mapFromSceneTo(QQuickItem *item, const QPointF &scenePos) const -> QPointF
+{
     return item ? item->mapFromScene(scenePos) : scenePos;
 }
 
 
-bool UtilObject::execute(const QString &key) {
+auto UtilObject::execute(const QString &key) -> bool
+{
     return RootMenu::execute(key);
 }
 
-QObject *UtilObject::action(const QString &key) {
+auto UtilObject::action(const QString &key) -> QObject*
+{
     return RootMenu::instance().action(key);
 }
 
@@ -67,24 +75,27 @@ QObject *UtilObject::action(const QString &key) {
 #include <mach/task.h>
 #include <libproc.h>
 QString UtilObject::monospace() { return "monaco"; }
-template<typename T>
+template<class T>
 static T getSysctl(int name, const T def) {
     T ret; int names[] = {CTL_HW, name}; size_t len = sizeof(def);
     return (sysctl(names, 2u, &ret, &len, NULL, 0) < 0) ? def : ret;
 }
-double UtilObject::totalMemory(MemoryUnit unit) {
+auto UtilObject::totalMemory(MemoryUnit unit) -> double
+{
     static const quint64 total = getSysctl(HW_MEMSIZE, (quint64)0);
     return total/(double)unit;
 }
 int UtilObject::cores() { static const int count = getSysctl(HW_NCPU, 1); return count; }
-double UtilObject::usingMemory(MemoryUnit unit) {
+auto UtilObject::usingMemory(MemoryUnit unit) -> double
+{
     task_basic_info info; memset(&info, 0, sizeof(info));
     mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;
     if (task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&info, &count) != KERN_SUCCESS)
         return 0.0;
     return info.resident_size/(double)unit;
 }
-quint64 UtilObject::processTime() {
+auto UtilObject::processTime() -> quint64
+{
     static const pid_t pid = qApp->applicationPid();
     struct proc_taskinfo info;
     if (proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &info, sizeof(info)) < 0)
@@ -117,7 +128,8 @@ static int getField(const char *fileName, const char *fieldName, char *buffer, i
     close(fd);
     return ret;
 }
-double UtilObject::totalMemory(MemoryUnit unit) {
+auto UtilObject::totalMemory(MemoryUnit unit) -> double
+{
     static double mem = -1.0;
     if (mem < 0) {
         char buffer[BUFSIZ];
@@ -125,7 +137,8 @@ double UtilObject::totalMemory(MemoryUnit unit) {
     }
     return mem/(double)(unit);
 }
-int UtilObject::cores() {
+auto UtilObject::cores() -> int
+{
     static int count = -1;
     if (count < 0) {
         QFile file("/proc/cpuinfo");
@@ -143,11 +156,13 @@ int UtilObject::cores() {
     }
     return count;
 }
-double UtilObject::usingMemory(MemoryUnit unit) {
+auto UtilObject::usingMemory(MemoryUnit unit) -> double
+{
     static char buffer[BUFSIZ];
     return getField("/proc/self/status", "VmRSS", buffer)*1000.0/(double)unit;
 }
-quint64 UtilObject::processTime() {
+auto UtilObject::processTime() -> quint64
+{
     static char buffer[BUFSIZ];
     static const quint64 tick = sysconf(_SC_CLK_TCK);
     int pid, ppid, pgrp, session, tty_nr, tpgid; uint flags;
@@ -168,7 +183,8 @@ quint64 UtilObject::processTime() {
 }
 #endif
 
-void UtilObject::registerItemToAcceptKey(QQuickItem *item) {
+auto UtilObject::registerItemToAcceptKey(QQuickItem *item) -> void
+{
     if (m_itemsToAcceptKey.contains(item))
         return;
     m_itemsToAcceptKey.insert(item);
@@ -186,7 +202,8 @@ void UtilObject::registerItemToAcceptKey(QQuickItem *item) {
     });
 }
 
-void UtilObject::setItemPressed(QQuickItem *item) {
+auto UtilObject::setItemPressed(QQuickItem *item) -> void
+{
     auto &o = get();
     if (o.m_itemsToAcceptKey.contains(item) && o.removeKeyItem(item))
         o.m_keyItems.push_front(item);

@@ -17,7 +17,8 @@ RichTextDocument::~RichTextDocument() {
     freeLayouts();
 }
 
-void RichTextDocument::freeLayouts() {
+auto RichTextDocument::freeLayouts() -> void
+{
     for (auto &layout : m_layouts) {
         qDeleteAll(layout->rubies);
         _Delete(layout);
@@ -55,28 +56,32 @@ RichTextDocument &RichTextDocument::operator += (const QList<RichTextBlock> &rhs
     return *this;
 }
 
-void RichTextDocument::setAlignment(Qt::Alignment alignment) {
+auto RichTextDocument::setAlignment(Qt::Alignment alignment) -> void
+{
     if (m_option.alignment() != alignment) {
         m_option.setAlignment(alignment);
         m_dirty = m_optionChanged = true;
     }
 }
 
-void RichTextDocument::setWrapMode(QTextOption::WrapMode wrapMode) {
+auto RichTextDocument::setWrapMode(QTextOption::WrapMode wrapMode) -> void
+{
     if (m_option.wrapMode() != wrapMode) {
         m_option.setWrapMode(wrapMode);
         m_dirty = m_optionChanged = true;
     }
 }
 
-void RichTextDocument::setFormat(QTextFormat::Property property, const QVariant &data) {
+auto RichTextDocument::setFormat(QTextFormat::Property property, const QVariant &data) -> void
+{
     if (m_format.property(property) != data) {
         m_format.setProperty(property, data);
         m_dirty = m_formatChanged = true;
     }
 }
 
-void RichTextDocument::setLeading(double newLine, double paragraph) {
+auto RichTextDocument::setLeading(double newLine, double paragraph) -> void
+{
     if (!qFuzzyCompare(newLine, m_lineLeading) || !qFuzzyCompare(paragraph, m_paragraphLeading)) {
         m_lineLeading = newLine;
         m_paragraphLeading = paragraph;
@@ -84,21 +89,24 @@ void RichTextDocument::setLeading(double newLine, double paragraph) {
     }
 }
 
-void RichTextDocument::setFontPixelSize(int px) {
+auto RichTextDocument::setFontPixelSize(int px) -> void
+{
     if (m_format.intProperty(QTextFormat::FontPixelSize) != px) {
         m_format.setProperty(QTextFormat::FontPixelSize, px);
         m_dirty = m_pxChanged = true;
     }
 }
 
-void RichTextDocument::setTextOutline(const QPen &pen) {
+auto RichTextDocument::setTextOutline(const QPen &pen) -> void
+{
     if (m_format.penProperty(QTextFormat::TextOutline) != pen) {
         m_format.setProperty(QTextFormat::TextOutline, pen);
         m_dirty = m_pxChanged = true;
     }
 }
 
-void RichTextDocument::setText(const QString &text) {
+auto RichTextDocument::setText(const QString &text) -> void
+{
     m_blocks.clear();
     RichTextBlockParser parser(text.midRef(0));
     while (!parser.atEnd())
@@ -116,7 +124,8 @@ static QTextOption makeRubyOption() {
 
 static const QTextOption rubyOption = makeRubyOption();
 
-void RichTextDocument::doLayout(double maxWidth) {
+auto RichTextDocument::doLayout(double maxWidth) -> void
+{
     if (!m_dirty)
         return;
     double width = -1;
@@ -179,7 +188,8 @@ void RichTextDocument::doLayout(double maxWidth) {
     m_dirty = false;
 }
 
-void RichTextDocument::updateLayoutInfo() {
+auto RichTextDocument::updateLayoutInfo() -> void
+{
     if (m_blockChanged) {
         freeLayouts();
         m_layouts.resize(m_blocks.size());
@@ -261,7 +271,8 @@ void RichTextDocument::updateLayoutInfo() {
     m_blockChanged = m_formatChanged = m_pxChanged = m_optionChanged = false;
 }
 
-void RichTextDocument::draw(QPainter *painter, const QPointF &pos) {
+auto RichTextDocument::draw(QPainter *painter, const QPointF &pos) -> void
+{
     for (auto layout : m_layouts) {
         layout->block.draw(painter, pos);
         for (auto ruby : layout->rubies)
@@ -269,7 +280,8 @@ void RichTextDocument::draw(QPainter *painter, const QPointF &pos) {
     }
 }
 
-void RichTextDocument::drawBoudingBoxes(QPainter *painter, const QPointF &pos) {
+auto RichTextDocument::drawBoudingBoxes(QPainter *painter, const QPointF &pos) -> void
+{
     painter->save();
     painter->translate(pos);
     painter->setBrush(Qt::black);

@@ -8,13 +8,13 @@ class PlayEngine;
 
 class MetaData {
 public:
-    QString title() const { return m_title; }
-    QString artist() const { return m_artist; }
-    QString album() const { return m_album; }
-    QString genre() const { return m_genre; }
-    QString date() const { return m_date; }
-    Mrl mrl() const { return m_mrl; }
-    int duration() const { return m_duration; }
+    auto title() const -> QString { return m_title; }
+    auto artist() const -> QString { return m_artist; }
+    auto album() const -> QString { return m_album; }
+    auto genre() const -> QString { return m_genre; }
+    auto date() const -> QString { return m_date; }
+    auto mrl() const -> Mrl { return m_mrl; }
+    auto duration() const -> int { return m_duration; }
 private:
     friend class PlayEngine;
     QString m_title, m_artist, m_album, m_genre, m_date;
@@ -33,17 +33,18 @@ class AvIoFormat : public QObject {
     Q_PROPERTY(QString channels READ channels CONSTANT FINAL)
 public:
     AvIoFormat(QObject *parent = nullptr): QObject(parent) {}
-    QSize size() const {return m_size;}
-    double samplerate() const {return m_samplerate;}
-    int bits() const {return m_bits;}
-    QString channels() const {return m_channels;}
-    QString type() const {return m_type;}
-    int bitrate() const {return m_bitrate;}
-    double fps() const {return m_fps;}
+    auto size() const -> QSize {return m_size;}
+    auto samplerate() const -> double {return m_samplerate;}
+    auto bits() const -> int {return m_bits;}
+    auto channels() const -> QString {return m_channels;}
+    auto type() const -> QString {return m_type;}
+    auto bitrate() const -> int {return m_bitrate;}
+    auto fps() const -> double {return m_fps;}
 signals:
     void bitrateChanged();
 private:
-    void setBps(int bitrate) { if (_Change(m_bitrate, bitrate)) emit bitrateChanged(); }
+    auto setBps(int bitrate) -> void
+    { if (_Change(m_bitrate, bitrate)) emit bitrateChanged(); }
     friend class AvInfoObject;
     friend class PlayEngine;
     QSize m_size;
@@ -64,13 +65,13 @@ class AvInfoObject : public QObject {
     Q_PROPERTY(QString hwacc READ driver CONSTANT FINAL)
 public:
     AvInfoObject(QObject *parent = nullptr);
-    QString codecDescription() const {return m_codecDescription;}
-    QString codec() const { return m_codec; }
+    auto codecDescription() const -> QString {return m_codecDescription;}
+    auto codec() const -> QString { return m_codec; }
     AvIoFormat *input() const {return m_input;}
     AvIoFormat *output() const {return m_output;}
-    QString driver() const { return m_driver; }
+    auto driver() const -> QString { return m_driver; }
 private:
-    void setHwAcc(int acc);
+    auto setHwAcc(int acc) -> void;
     AvIoFormat *m_input = new AvIoFormat(this);
     AvIoFormat *m_output = new AvIoFormat(this);
     QString m_codecDescription, m_hwacc, &m_driver = m_hwacc, m_codec;
@@ -82,8 +83,8 @@ class MediaInfoObject : public QObject {
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
 public:
     MediaInfoObject(QObject *parent = nullptr): QObject(parent) {}
-    QString name() const {return m_name;}
-    void setName(const QString &name) { if (_Change(m_name, name)) emit nameChanged(m_name); }
+    auto name() const -> QString {return m_name;}
+    auto setName(const QString &name) -> void { if (_Change(m_name, name)) emit nameChanged(m_name); }
 signals:
     void nameChanged(const QString &name);
 private:
@@ -92,24 +93,27 @@ private:
 
 struct Stream {
     enum Type {Audio = 0, Video, Subtitle, Unknown};
-    QString name() const {
+    auto name() const -> QString
+    {
         QString name = m_title;
         if (!m_lang.isEmpty())
             name += name.isEmpty() ? m_lang : " (" % m_lang % ")";
         return name;
     }
-    int id() const {return m_id;}
-    bool operator == (const Stream &rhs) const {
-        return m_title == rhs.m_title && m_lang == rhs.m_lang && m_codec == rhs.m_codec
-                && m_id == rhs.m_id && m_type == rhs.m_type && m_selected == rhs.m_selected;
+    auto id() const -> int {return m_id;}
+    auto operator == (const Stream &rhs) const -> bool
+    {
+        return m_title == rhs.m_title && m_lang == rhs.m_lang
+               && m_codec == rhs.m_codec && m_id == rhs.m_id
+               && m_type == rhs.m_type && m_selected == rhs.m_selected;
     }
-    bool isSelected() const { return m_selected; }
-    const QString &codec() const { return m_codec; }
-    const QString &title() const { return m_title; }
-    Type type() const { return m_type; }
-    bool isExternal() const { return !m_fileName.isEmpty(); }
-    bool isDefault() const { return m_default; }
-    bool isAlbumArt() const { return m_albumart; }
+    auto isSelected() const -> bool { return m_selected; }
+    auto codec() const -> const QString& { return m_codec; }
+    auto title() const -> const QString& { return m_title; }
+    auto type() const -> Type { return m_type; }
+    auto isExternal() const -> bool { return !m_fileName.isEmpty(); }
+    auto isDefault() const -> bool { return m_default; }
+    auto isAlbumArt() const -> bool { return m_albumart; }
 private:
     friend class MpMessage;
     friend class PlayEngine;
@@ -122,12 +126,11 @@ private:
 typedef QMap<int, Stream> StreamList;
 
 struct Chapter {
-    int time() const { return m_time; }
-    QString name() const {return m_name;}
-    int id() const {return m_id;}
-    bool operator == (const Chapter &rhs) const {
-        return m_id == rhs.m_id && m_name == rhs.m_name;
-    }
+    auto time() const -> int { return m_time; }
+    auto name() const -> QString {return m_name;}
+    auto id() const -> int {return m_id;}
+    auto operator == (const Chapter &rhs) const -> bool
+    { return m_id == rhs.m_id && m_name == rhs.m_name; }
 private:
     friend class PlayEngine;
     QString m_name;
@@ -137,10 +140,11 @@ private:
 typedef QVector<Chapter> ChapterList;
 
 struct Edition {
-    QString name() const { return m_name; }
-    int id() const { return m_id; }
-    bool isSelected() const { return m_selected; }
-    bool operator == (const Edition &rhs) const { return m_id == rhs.m_id && m_selected == rhs.m_selected; }
+    auto name() const -> QString { return m_name; }
+    auto id() const -> int { return m_id; }
+    auto isSelected() const -> bool { return m_selected; }
+    auto operator == (const Edition &rhs) const -> bool
+    { return m_id == rhs.m_id && m_selected == rhs.m_selected; }
 private:
     friend class PlayEngine;
     int m_id = 0;
@@ -159,17 +163,20 @@ class TrackInfoObject : public QObject {
     Q_PROPERTY(QString countText READ countText NOTIFY countChanged)
 public:
     TrackInfoObject(QObject *parent = nullptr): QObject(parent) {}
-    int current() const { return m_current; }
-    int count() const { return m_count; }
-    void setCount(int count) { if (_Change(m_count, count)) emit countChanged(); }
-    void setCurrent(int current) { if (_Change(m_current, current)) emit currentChanged(); }
-    QString currentText() const { return toString(m_current); }
-    QString countText() const { return toString(m_count); }
+    auto current() const -> int { return m_current; }
+    auto count() const -> int { return m_count; }
+    auto setCount(int count) -> void
+    { if (_Change(m_count, count)) emit countChanged(); }
+    auto setCurrent(int current) -> void
+    { if (_Change(m_current, current)) emit currentChanged(); }
+    auto currentText() const -> QString { return toString(m_current); }
+    auto countText() const -> QString { return toString(m_count); }
 signals:
     void currentChanged();
     void countChanged();
 private:
-    static QString toString(int i) { return i < 1 ? _L("-") : QString::number(i); }
+    static auto toString(int i) -> QString
+    { return i < 1 ? _L("-") : QString::number(i); }
     int m_current = -2;
     int m_count = 0;
 };
@@ -194,8 +201,8 @@ class SubtitleTrackInfoObject : public TrackInfoObject {
     Q_OBJECT
 public:
     SubtitleTrackInfoObject(QObject *parent = nullptr): TrackInfoObject(parent) {}
-    void set(const QStringList &tracks) { m_tracks = tracks; setCount(m_tracks.size()); }
-    void setCurrentIndex(int idx) { setCurrent(idx+1); }
+    auto set(const QStringList &tracks) -> void { m_tracks = tracks; setCount(m_tracks.size()); }
+    auto setCurrentIndex(int idx) -> void { setCurrent(idx+1); }
     Q_INVOKABLE QString name(int i) const { return m_tracks.value(i); }
 private:
     QStringList m_tracks;

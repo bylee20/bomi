@@ -14,35 +14,35 @@
 //    ~PlaylistView();
 //    void load(const Mrl &mrl, const QString &enc = QString());
 //    const Playlist &playlist() const;
-//    void setPlaylist(const Playlist &list);
-//    void play(const Mrl &mrl);
-//    void append(const Playlist &list);
-//    void merge(const Playlist &list);
+//    auto setPlaylist(const Playlist &list) -> void;
+//    auto play(const Mrl &mrl) -> void;
+//    auto append(const Playlist &list) -> void;
+//    auto merge(const Playlist &list) -> void;
 //    PlaylistModel *model() const;
 //    static PlaylistView &get() {Q_ASSERT(obj != 0); return *obj;}
-//    static Playlist generatePlaylist(const Mrl &mrl);
+//    static auto generatePlaylist(const Mrl &mrl) -> Playlist;
 //public slots:
-//    void playNext();
-//    void playPrevious();
-//    void clear();
+//    auto playNext() -> void;
+//    auto playPrevious() -> void;
+//    auto clear() -> void;
 //signals:
-//    void finished();
-//    void playRequested(const Mrl &mrl);
+//    auto finished() -> void;
+//    auto playRequested(const Mrl &mrl) -> void;
 //private slots:
-//    void updateCurrentMrl(const Mrl &mrl);
-//    void handleFinished();
-//    void showContextMenu(const QPoint &pos);
-//    void addFile();
-//    void addUrl();
-//    void erase();
-//    void up();
-//    void down();
-//    void open();
-//    void save();
-//    void handleDoubleClick(const QModelIndex &index);
+//    auto updateCurrentMrl(const Mrl &mrl) -> void;
+//    auto handleFinished() -> void;
+//    auto showContextMenu(const QPoint &pos) -> void;
+//    auto addFile() -> void;
+//    auto addUrl() -> void;
+//    auto erase() -> void;
+//    auto up() -> void;
+//    auto down() -> void;
+//    auto open() -> void;
+//    auto save() -> void;
+//    auto handleDoubleClick(const QModelIndex &index) -> void;
 //private:
-//    void move(bool up);
-//    void setCurrentIndex(int idx);
+//    auto move(bool up) -> void;
+//    auto setCurrentIndex(int idx) -> void;
 //    class Item;
 //    class Table;
 //    struct Data;

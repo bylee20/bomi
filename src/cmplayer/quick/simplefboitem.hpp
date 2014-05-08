@@ -7,16 +7,16 @@ class SimpleFboItem : public SimpleTextureItem {
     Q_OBJECT
 public:
     SimpleFboItem(QQuickItem *parent = nullptr);
-    QSize targetSize() const { return m_targetSize; }
-    virtual QSize imageSize() const { return targetSize(); }
-    void forceUpdateTargetSize() { m_forced = true; }
-    bool updateVertexOnGeometryChanged() const override { return true; }
+    auto targetSize() const -> QSize { return m_targetSize; }
+    virtual auto imageSize() const -> QSize { return targetSize(); }
+    auto forceUpdateTargetSize() -> void { m_forced = true; }
+    auto updateVertexOnGeometryChanged() const -> bool override { return true; }
 signals:
     void targetSizeChanged(const QSize &size);
 protected:
-    void forceRepaint() { reserve(UpdateMaterial); }
-    void finalizeGL() { SimpleTextureItem::finalizeGL(); _Delete(m_fbo); }
-    void geometryChanged(const QRectF &new_, const QRectF &old) override;
+    auto forceRepaint() -> void { reserve(UpdateMaterial); }
+    auto finalizeGL() -> void { SimpleTextureItem::finalizeGL(); _Delete(m_fbo); }
+    auto geometryChanged(const QRectF &new_, const QRectF &old) -> void override;
     virtual void paint(OpenGLFramebufferObject *fbo) = 0;
 private:
     void updateVertex(Vertex *vertex) final;

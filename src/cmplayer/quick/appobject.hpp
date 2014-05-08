@@ -20,11 +20,11 @@ public:
     PlaylistModel *playlist() const { return s.playlist; }
     TopLevelItem *topLevelItem() const { return s.top; }
     Downloader *downloader() const { return s.down; }
-    static void setEngine(PlayEngine *engine) { s.engine = engine; }
-    static void setHistory(HistoryModel *history) { s.history = history; }
-    static void setPlaylist(PlaylistModel *pl) { s.playlist = pl; }
-    static void setTopLevelItem(TopLevelItem *top) { s.top = top; }
-    static void setDownloader(Downloader *down) { s.down = down; }
+    static auto setEngine(PlayEngine *engine) -> void { s.engine = engine; }
+    static auto setHistory(HistoryModel *history) -> void { s.history = history; }
+    static auto setPlaylist(PlaylistModel *pl) -> void { s.playlist = pl; }
+    static auto setTopLevelItem(TopLevelItem *top) -> void { s.top = top; }
+    static auto setDownloader(Downloader *down) -> void { s.down = down; }
 private:
     struct StaticData {
         PlayEngine *engine = nullptr;

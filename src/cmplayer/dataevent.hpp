@@ -4,34 +4,43 @@
 #include "stdafx.hpp"
 #include <tuple>
 
-template<typename... Args>
+template<class... Args>
 class DataEvent : public QEvent {
 public:
     using Data = std::tuple<Args...>;
     template<const int i>
     using DataType = typename std::tuple_element<i, Data>::type;
     static constexpr int size = sizeof...(Args);
-    DataEvent(int type, const Args&... args): QEvent(static_cast<Type>(type)), m_data(args...) {}
-    void get(Args&... args) { std::tie(args...) = m_data; }
+    DataEvent(int type, const Args&... args)
+        : QEvent(static_cast<Type>(type)), m_data(args...) { }
+    auto get(Args&... args) -> void { std::tie(args...) = m_data; }
     template<int i>
-    const DataType<i> &data() const { return std::get<i>(m_data); }
-    const Data &tuple() const { return m_data; }
+    auto data() const -> const DataType<i>& { return std::get<i>(m_data); }
+    auto tuple() const -> const Data& { return m_data; }
 private:
     Data m_data;
 };
 
-template<typename... Args>
-static inline void _PostEvent(QObject *obj, int type, const Args&... args) {
+template<class... Args>
+static inline auto _PostEvent(QObject *obj, int type,
+                              const Args&... args) -> void {
     qApp->postEvent(obj, new DataEvent<Args...>(type, args...));
 }
 
-template<typename... Args>
-static inline void _SendEvent(QObject *obj, int type, const Args&... args) {
+template<class... Args>
+static inline auto _PostEvent(Qt::EventPriority priority,QObject *obj, int type,
+                              const Args&... args) -> void {
+    qApp->postEvent(obj, new DataEvent<Args...>(type, args...), priority);
+}
+
+template<class... Args>
+static inline auto _SendEvent(QObject *obj, int type,
+                              const Args&... args) -> void {
     DataEvent<Args...> event(type, args...); qApp->sendEvent(obj, &event);
 }
 
-template<typename... Args>
-static inline void _GetAllData(QEvent *event, Args&... args) {
+template<class... Args>
+static inline auto _GetAllData(QEvent *event, Args&... args) -> void {
     static_cast<DataEvent<Args...>*>(event)->get(args...);
 }
 

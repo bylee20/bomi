@@ -4,11 +4,13 @@ extern "C" {
 #include <sub/osd.h>
 }
 
-bool MpOsdBitmap::needToCopy(const sub_bitmaps *imgs) const {
+auto MpOsdBitmap::needToCopy(const sub_bitmaps *imgs) const -> bool
+{
     return m_id != imgs->bitmap_id || m_pos != imgs->bitmap_pos_id;
 }
 
-bool MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) {
+auto MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) -> bool
+{
     if (imgs->num_parts <= 0 || !needToCopy(imgs))
         return false;
     m_renderSize = renderSize;
@@ -89,7 +91,8 @@ bool MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) {
     return true;
 }
 
-void MpOsdBitmap::drawOn(QImage &frame) const {
+auto MpOsdBitmap::drawOn(QImage &frame) const -> void
+{
     QPainter painter(&frame);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter.scale((double)frame.width()/(double)m_renderSize.width(), (double)frame.height()/(double)m_renderSize.height());

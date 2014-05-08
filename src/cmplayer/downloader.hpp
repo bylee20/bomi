@@ -3,8 +3,6 @@
 
 #include "stdafx.hpp"
 
-//class QUrl;                    class QIODevice;
-
 class Downloader: public QObject {
     Q_OBJECT
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
@@ -16,15 +14,15 @@ class Downloader: public QObject {
 public:
     Downloader(QObject *parent = nullptr);
     ~Downloader();
-    bool start(const QUrl &url);
-    bool isRunning() const;
-    QByteArray data() const;
-    QByteArray takeData();
-    QUrl url() const;
-    qint64 totalSize() const;
-    qint64 writtenSize() const;
-    qreal rate() const;
-    bool isCanceled() const;
+    auto start(const QUrl &url) -> bool;
+    auto isRunning() const -> bool;
+    auto data() const -> QByteArray;
+    auto takeData() -> QByteArray;
+    auto url() const -> QUrl;
+    auto totalSize() const -> qint64;
+    auto writtenSize() const -> qint64;
+    auto rate() const -> qreal;
+    auto isCanceled() const -> bool;
     Q_INVOKABLE void cancel();
 signals:
     void writtenSizeChanged(qint64 writtenSize);
@@ -37,7 +35,7 @@ signals:
     void urlChanged();
     void canceledChanged();
 private:
-    void progress(qint64 written, qint64 total);
+    auto progress(qint64 written, qint64 total) -> void;
     struct Data;
     Data *d;
 };

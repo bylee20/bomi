@@ -20,16 +20,16 @@ class MediaPlayer2 : public QDBusAbstractAdaptor {
 public:
     MediaPlayer2(QObject *parent);
     ~MediaPlayer2();
-    bool canQuit() const { return true; }
-    bool isFullScreen() const;
-    void setFullScreen(bool fs);
-    bool canSetFullScreen() const { return true; }
-    bool canRaise() const { return true; }
-    bool hasTrackList() const { return false; }
-    QString identity() const { return QLatin1String("CMPlayer"); }
-    QString desktopEntry() const { return QLatin1String("cmplayer"); }
-    QStringList supportedUriSchemes() const;
-    QStringList supportedMimeTypes() const;
+    auto canQuit() const -> bool { return true; }
+    auto isFullScreen() const -> bool;
+    auto setFullScreen(bool fs) -> void;
+    auto canSetFullScreen() const -> bool { return true; }
+    auto canRaise() const -> bool { return true; }
+    auto hasTrackList() const -> bool { return false; }
+    auto identity() const -> QString { return QLatin1String("CMPlayer"); }
+    auto desktopEntry() const -> QString { return QLatin1String("cmplayer"); }
+    auto supportedUriSchemes() const -> QStringList;
+    auto supportedMimeTypes() const -> QStringList;
 public slots:
     void Raise();
     void Quit();
@@ -59,25 +59,25 @@ class Player : public QDBusAbstractAdaptor {
 public:
     Player(QObject *parent);
     ~Player();
-    QString playbackStatus() const;
-    QString loopStatus() const;
-    void setLoopStatus(const QString &status);
-    double rate() const;
-    void setRate(double rate);
-    bool isShuffled() const;
-    void setShuffled(bool s);
-    QVariantMap metaData() const;
-    double volume() const;
-    void setVolume(double volume);
-    qint64 time() const;
-    double minRate() const { return 0.1; }
-    double maxRate() const { return 10.0; }
-    bool hasNext() const;
-    bool hasPrevious() const;
-    bool isPlayable() const;
-    bool isPausable() const;
-    bool isSeekable() const;
-    bool isControllable() const { return true; }
+    auto playbackStatus() const -> QString;
+    auto loopStatus() const -> QString;
+    auto setLoopStatus(const QString &status) -> void;
+    auto rate() const -> double;
+    auto setRate(double rate) -> void;
+    auto isShuffled() const -> bool;
+    auto setShuffled(bool s) -> void;
+    auto metaData() const -> QVariantMap;
+    auto volume() const -> double;
+    auto setVolume(double volume) -> void;
+    auto time() const -> qint64;
+    auto minRate() const -> double { return 0.1; }
+    auto maxRate() const -> double { return 10.0; }
+    auto hasNext() const -> bool;
+    auto hasPrevious() const -> bool;
+    auto isPlayable() const -> bool;
+    auto isPausable() const -> bool;
+    auto isSeekable() const -> bool;
+    auto isControllable() const -> bool { return true; }
 public slots:
     void Next();
     void Previous();

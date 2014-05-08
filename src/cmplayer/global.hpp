@@ -3,17 +3,15 @@
 
 #include "stdafx.hpp"
 
-#define CONNECT(a, b, c, d) (QObject::connect(a, SIGNAL(b), c, SLOT(d)))
-
 namespace Global {
 
-template<typename T>
+template<class T>
 struct Range {
     Range() {}
     Range(const T &min, const T &max): min(min), max(max) {}
-    bool contains(const T &t) {return min <= t && t <= max;}
-    bool isValid() const {return min <= max;}
-    T difference() const {return max - min;}
+    auto contains(const T &t) -> bool {return min <= t && t <= max;}
+    auto isValid() const -> bool {return min <= max;}
+    auto difference() const -> T {return max - min;}
     T min = 0, max = 0;
 };
 typedef Range<double> RangeF;
@@ -22,12 +20,12 @@ typedef Range<int> RangeI;
 enum StreamType {UnknownStream = 0, VideoStream, AudioStream, SubPicStream};
 enum MediaMetaData {LanguageCode};
 
-static inline QString toString(int value, bool sign) {
+static inline auto toString(int value, bool sign) -> QString {
     if (!sign || value < 0) return QString::number(value);
     return (value > 0 ? _L("+") : _U("±")) += QString::number(value);
 }
 
-static inline QString toString(double value, bool sign, int n = 1) {
+static inline auto toString(double value, bool sign, int n = 1) -> QString {
     if (n <= 0)
         return toString(qRound(value), sign);
     QString ret;
@@ -38,15 +36,15 @@ static inline QString toString(double value, bool sign, int n = 1) {
     return ret += QString().sprintf(fmt.data(), value);
 }
 
-static inline QString toString(const QSize &size) {
+static inline auto toString(const QSize &size) -> QString {
     QString ret = QString::number(size.width()); ret.reserve(ret.size()*2 + 5);
     ret += QString::fromUtf8("\303\227"); ret += QString::number(size.height());
     return ret;
 }
 
-static inline QPointF toPointF(const QSizeF &size) {return QPointF(size.width(), size.height());}
+static inline auto toPointF(const QSizeF &size) -> QPointF {return QPointF(size.width(), size.height());}
 
-QByteArray _Uncompress(const QByteArray &data);
+auto _Uncompress(const QByteArray &data) -> QByteArray;
 }
 
 using namespace Global;

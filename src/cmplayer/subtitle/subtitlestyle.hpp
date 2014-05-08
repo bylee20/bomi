@@ -10,19 +10,19 @@ struct SubtitleStyle {
     struct Font {
         typedef OsdScalePolicy Scale;
         Font() { qfont.setPixelSize(height()); }
-        QString family() const {return qfont.family();}
-        bool bold() const {return qfont.bold();}
-        bool italic() const {return qfont.italic();}
-        bool underline() const {return qfont.underline();}
-        bool strikeOut() const {return qfont.strikeOut();}
-        void setFamily(const QString &family) {qfont.setFamily(family);}
-        void setBold(bool bold) {qfont.setBold(bold);}
-        void setItalic(bool italic) {qfont.setItalic(italic);}
-        void setUnderline(bool underline) {qfont.setUnderline(underline);}
-        void setStrikeOut(bool strikeOut) {qfont.setStrikeOut(strikeOut);}
+        auto family() const -> QString {return qfont.family();}
+        auto bold() const -> bool {return qfont.bold();}
+        auto italic() const -> bool {return qfont.italic();}
+        auto underline() const -> bool {return qfont.underline();}
+        auto strikeOut() const -> bool {return qfont.strikeOut();}
+        auto setFamily(const QString &family) -> void {qfont.setFamily(family);}
+        auto setBold(bool bold) -> void {qfont.setBold(bold);}
+        auto setItalic(bool italic) -> void {qfont.setItalic(italic);}
+        auto setUnderline(bool underline) -> void {qfont.setUnderline(underline);}
+        auto setStrikeOut(bool strikeOut) -> void {qfont.setStrikeOut(strikeOut);}
         const QFont &font() const {return qfont;}
-        static constexpr int height() {return 20;}
-        int weight() const {return qfont.weight();}
+        static constexpr auto height() -> int {return 20;}
+        auto weight() const -> int {return qfont.weight();}
         QColor color = {Qt::white};
         double size = 0.03;
         Scale scale = Scale::Width;
@@ -34,8 +34,8 @@ struct SubtitleStyle {
     struct Spacing { double line = 0, paragraph = 0; };
     QTextOption::WrapMode wrapMode = QTextOption::WrapAtWordBoundaryOrAnywhere;
     Shadow shadow; Outline outline; Font font; Spacing spacing; BoundingBox bbox;
-    void save(Record &r, const QString &group) const;
-    void load(Record &r, const QString &group);
+    auto save(Record &r, const QString &group) const -> void;
+    auto load(Record &r, const QString &group) -> void;
 };
 
 #endif // SUBTITLESTYLE_H

@@ -3,7 +3,7 @@
 
 static const QString sep1("[::1::]"), sep2("[::2::]"), sep3("[::3::]");
 
-template<typename List, typename F>
+template<class List, class F>
 QString _Join(const List &list, F toString, const QString &sep) {
     QStringList l; l.reserve(list.size());
     for (auto &one : list)
@@ -11,7 +11,7 @@ QString _Join(const List &list, F toString, const QString &sep) {
     return l.join(sep);
 }
 
-template<typename T, typename F>
+template<class T, class F>
 QList<T> _Split(const QString &text, F fromString, const QString &sep, QString::SplitBehavior b = QString::KeepEmptyParts) {
     auto strs = text.split(sep, b);
     QList<T> list; list.reserve(strs.size());
@@ -21,7 +21,8 @@ QList<T> _Split(const QString &text, F fromString, const QString &sep, QString::
     return list;
 }
 
-QJsonObject SubtitleStateInfo::toJson() const {
+auto SubtitleStateInfo::toJson() const -> QJsonObject
+{
     QJsonArray mpv;
     for (auto &item : m_mpv)
         mpv.push_back(item.toJson());
@@ -35,7 +36,8 @@ QJsonObject SubtitleStateInfo::toJson() const {
     return _MakeJson({{"track", m_track}, {"mpv", mpv}, {"cmplayer", cmplayer}});
 }
 
-SubtitleStateInfo SubtitleStateInfo::fromJson(const QJsonObject &json) {
+auto SubtitleStateInfo::fromJson(const QJsonObject &json) -> SubtitleStateInfo
+{
     SubtitleStateInfo info; QJsonValue value;
     auto get = [&] (const char *key) { value = json.value(_L(key)); return !value.isUndefined(); };
 #define CHECK(a) { if (!get(a)) return SubtitleStateInfo(); }
@@ -69,7 +71,8 @@ SubtitleStateInfo SubtitleStateInfo::fromJson(const QJsonObject &json) {
     return info;
 }
 
-QString SubtitleStateInfo::toString() const {
+auto SubtitleStateInfo::toString() const -> QString
+{
     QStringList list;
     list.append(_N(m_track));
     list.append(_Join(m_mpv, [] (const SubtitleFileInfo &info) { return info.toString(); }, sep2));
@@ -85,7 +88,8 @@ QString SubtitleStateInfo::toString() const {
     return list.join(sep1);
 }
 
-SubtitleStateInfo SubtitleStateInfo::fromString(const QString &string) {
+auto SubtitleStateInfo::fromString(const QString &string) -> SubtitleStateInfo
+{
     if (string.isEmpty())
         return SubtitleStateInfo();
     auto list = string.split(sep1, QString::KeepEmptyParts);
@@ -111,11 +115,13 @@ SubtitleStateInfo SubtitleStateInfo::fromString(const QString &string) {
     return info;
 }
 
-void SubtitleStateInfo::append(const SubComp &c) {
+auto SubtitleStateInfo::append(const SubComp &c) -> void
+{
     m_cmplayer[c.fileInfo()].append({c.id(), c.selection()});
 }
 
-QList<SubComp> SubtitleStateInfo::load() const {
+auto SubtitleStateInfo::load() const -> QList<SubComp>
+{
     auto selected = [] (const QList<Comp> &list, int id) {
         for (auto &c : list) { if (c.id == id) return c.selected; }
         return false;

@@ -6,16 +6,25 @@
 class GeometryItem : public QQuickItem {
     Q_OBJECT
 public:
-    GeometryItem(QQuickItem *parent = nullptr): QQuickItem(parent) {}
-    void setGeometry(const QPointF &pos, const QSizeF &size) {setPosition(pos); setSize(size);}
-    void setGeometry(const QRectF &rect) {setPosition(rect.topLeft()); setSize(rect.size());}
-    QSizeF size() const { return {width(), height()}; }
-    QRectF geometry() const { return {position(), size()}; }
-    QRectF rect() const { return {0.0, 0.0, width(), height()}; }
+    GeometryItem(QQuickItem *parent = nullptr)
+        : QQuickItem(parent) { m_size = size(); }
+    auto setGeometry(const QPointF &pos, const QSizeF &size) -> void
+        {setPosition(pos); setSize(size);}
+    auto setGeometry(const QRectF &rect) -> void
+        {setPosition(rect.topLeft()); setSize(rect.size());}
+    auto size() const -> QSizeF { return {width(), height()}; }
+    auto geometry() const -> QRectF { return {position(), size()}; }
+    auto rect() const -> QRectF { return {0.0, 0.0, width(), height()}; }
+signals:
+    void sizeChanged(const QSizeF &size);
 protected:
-    void geometryChanged(const QRectF &new_, const QRectF &old) override {
+    auto geometryChanged(const QRectF &new_,
+                         const QRectF &old) -> void override {
         QQuickItem::geometryChanged(new_, old);
+        if (_Change(m_size, new_.size()))
+            emit sizeChanged(m_size);
     }
+    QSizeF m_size;
 };
 
 
@@ -35,17 +44,17 @@ protected:
 //    virtual QList<QByteArray> attributes() const = 0;
 //    virtual QByteArray vertexShaderSource() const = 0;
 //    virtual QByteArray fragmentShaderSource() const = 0;
-//    virtual void resolve() { }
-//    virtual void update() { }
+//    virtual auto resolve() -> void { }
+//    virtual auto update() -> void { }
 //protected:
-//    void initialize() {
+//    auto initialize() -> void {
 //        QSGMaterialShader::initialize();
 //        auto prog = program();
 //        m_loc_matrix = prog->uniformLocation("qt_Matrix");
 //        m_loc_opacity = prog->uniformLocation("qt_Opacity");
 //        resolve(program());
 //    }
-//    void updateState(const RenderState &state, QSGMaterial *new_, QSGMaterial *old) {
+//    auto updateState(const RenderState &state, QSGMaterial *new_, QSGMaterial *old) -> void {
 //        auto prog = program();
 //        if (state.isMatrixDirty())
 //            prog->setUniformValue(m_loc_matrix, state.combinedMatrix());
@@ -95,8 +104,8 @@ protected:
 //    const char *fragmentShader() const override { return m_fragCode.constData(); }
 //    const char *vertexShader() const override { return m_vertexCode.constData(); }
 //    const char *const *attributeNames() const override;
-//    virtual void link(QOpenGLShaderProgram *prog);
-//    virtual void bind(QOpenGLShaderProgram *prog);
+//    virtual auto link(QOpenGLShaderProgram *prog) -> void;
+//    virtual auto bind(QOpenGLShaderProgram *prog) -> void;
 //    const HighQualityTextureItem *item() const { return m_item; }
 //private:
 //    void updateState(const RenderState &state, QSGMaterial */*new_*/, QSGMaterial */*old*/) final override;

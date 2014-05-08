@@ -11,6 +11,7 @@
 #include "playlistview.hpp"
 #include "playlistmodel.hpp"
 #include "playengine.hpp"
+#include "audio/audionormalizeroption.hpp"
 #include "appstate.hpp"
 #include "historymodel.hpp"
 #include "video/videorendereritem.hpp"
@@ -32,6 +33,7 @@
 #include "dataevent.hpp"
 #include "quick/toplevelitem.hpp"
 #include "quick/appobject.hpp"
+#include "mainquickview.hpp"
 #include "log.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
@@ -39,39 +41,26 @@
 
 //DECLARE_LOG_CONTEXT(Main)
 
-void MainView::mouseDoubleClickEvent(QMouseEvent *event) {
-    m_main->resetMoving();
-    UtilObject::resetFilterDoubleClick();
-    QQuickView::mouseDoubleClickEvent(event);
-    if (!UtilObject::isDoubleClickFiltered())
-        m_main->onMouseDoubleClickEvent(event);
-}
-void MainView::keyPressEvent(QKeyEvent *event) {
-    event->setAccepted(false);
-    if (auto item = UtilObject::itemToAcceptKey())
-        sendEvent(item, event);
-    if (!event->isAccepted())
-        m_main->onKeyPressEvent(event);
-}
+template<class Enum>
+using EnumData = typename EnumInfo<Enum>::Data;
 
-void MainView::mousePressEvent(QMouseEvent *event) {
-    m_main->resetMoving();
-    m_main->topLevelItem()->resetMousePressEventFilterState();
-    event->setAccepted(false);
-    QQuickView::mousePressEvent(event);
-    if (!event->isAccepted() || m_main->topLevelItem()->filteredMousePressEvent())
-        m_main->onMousePressEvent(event);
-}
+template<class Enum>
+static inline auto enumData(Enum e) -> EnumData<Enum>
+    { return EnumInfo<Enum>::data(e); }
+
+template<class State, class... Args>
+using Signal = void(State::*)(Args...);
 
 extern void initialize_vdpau_interop(QOpenGLContext *context);
 extern void finalize_vdpau_interop(QOpenGLContext *context);
 
-template<typename Func, typename T>
+template<class Func, class T>
 class ValueCmd : public QUndoCommand {
 public:
-    ValueCmd(const T &to, const T &from, const Func &func): to(to), from(from), func(func) { }
-    void redo() { func(to); }
-    void undo() { func(from); }
+    ValueCmd(const T &to, const T &from, const Func &func)
+        : to(to), from(from), func(func) { }
+    auto redo() -> void final { func(to); }
+    auto undo() -> void final { func(from); }
 private:
     T to, from; Func  func;
 };
@@ -79,14 +68,15 @@ private:
 struct MainWindow::Data {
     struct EnumGroup {
         EnumGroup() {}
-        EnumGroup(const char *p, ActionGroup *g): property(p), group(g) {}
+        EnumGroup(const char *p, ActionGroup *g)
+            : property(p), group(g) { }
         const char *property = nullptr;
         ActionGroup *group = nullptr;
     };
 
     Data(MainWindow *p): p(p) {preferences.load();}
     QList<EnumGroup> enumGroups;
-    MainView *view = nullptr;
+    MainQuickView *view = nullptr;
     MainWindow *p = nullptr;
     bool visible = false, sotChanging = false, fullScreen = false;
     QQuickItem *player = nullptr;
@@ -96,12 +86,12 @@ struct MainWindow::Data {
     VideoRendererItem renderer;
     SubtitleRendererItem subtitle;
     QPoint prevPos;
-    Qt::WindowStates winState = Qt::WindowNoState, prevWinState = Qt::WindowNoState;
+    Qt::WindowStates winState = Qt::WindowNoState;
+    Qt::WindowStates prevWinState = Qt::WindowNoState;
     bool middleClicked = false, moving = false, changingSub = false;
     bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
     bool stateChanging = false, loading = false;
     QTimer loadingTimer, hider, initializer;
-    TopLevelItem topLevelItem;
     ABRepeater ab = {&engine, &subtitle};
     QMenu contextMenu;
     PrefDialog *prefDlg = nullptr;
@@ -120,7 +110,8 @@ struct MainWindow::Data {
     QDesktopWidget *desktop = nullptr;
     QSize virtualDesktopSize;
 
-    void syncState() {
+    auto syncState() -> void
+    {
         for (auto &eg : enumGroups) {
             Q_ASSERT(as.state.property(eg.property).isValid());
             auto data = eg.group->data();
@@ -128,12 +119,14 @@ struct MainWindow::Data {
                 as.state.setProperty(eg.property, data);
         }
     }
-    void syncWithState() {
+    auto syncWithState() -> void
+    {
         for (auto &eg : enumGroups)
             eg.group->setChecked(as.state.property(eg.property), true);
     }
 
-    void load(const Mrl &mrl, bool play = true) {
+    auto load(const Mrl &mrl, bool play = true) -> void
+    {
         StartInfo info;
         info.mrl = mrl;
         if (play) {
@@ -145,10 +138,11 @@ struct MainWindow::Data {
         engine.load(info);
     }
     QList<QAction*> unblockedActions;
-    void trigger(QAction *action) {
+    auto trigger(QAction *action) -> void
+    {
         if (!action)
             return;
-        if (topLevelItem.isVisible()) {
+        if (view->topLevelItem()->isVisible()) {
             if (unblockedActions.isEmpty()) {
                 unblockedActions += menu("window").actions();
                 qSort(unblockedActions);
@@ -160,38 +154,46 @@ struct MainWindow::Data {
         action->trigger();
     }
 
-    void updateSubtitleState() {
+    auto updateSubtitleState() -> void
+    {
         const auto &mrl = as.state.mrl;
         if (mrl.isLocalFile()) {
-            const auto &p = preferences;
+            const auto &pref = preferences;
             const QFileInfo file(mrl.toLocalFile());
-            auto autoselection = [this, &file, &p] (const QList<SubComp> &loaded) {
+            auto autoselection = [&] (const QList<SubComp> &loaded) {
                 QList<int> selected;
-                if (loaded.isEmpty() || !p.sub_enable_autoselect)
+                if (loaded.isEmpty() || !pref.sub_enable_autoselect)
                     return selected;
                 QSet<QString> langSet;
                 const QString base = file.completeBaseName();
                 for (int i=0; i<loaded.size(); ++i) {
                     bool select = false;
-                    if (p.sub_autoselect == SubtitleAutoselect::Matched) {
-                        select = QFileInfo(loaded[i].fileName()).completeBaseName() == base;
-                    } else if (p.sub_autoselect == SubtitleAutoselect::All) {
-                        select = true;
-                    } else if (p.sub_autoselect == SubtitleAutoselect::EachLanguage) {
-            //            const QString lang = loaded[i].m_comp.language().id();
-                        const QString lang = loaded[i].language();
+                    switch (pref.sub_autoselect) {
+                    case SubtitleAutoselect::Matched: {
+                        const QFileInfo info(loaded[i].fileName());
+                        select = info.completeBaseName() == base;
+                        break;
+                    } case SubtitleAutoselect::EachLanguage: {
+//            const QString lang = loaded[i].m_comp.language().id();
+                        const auto lang = loaded[i].language();
                         if ((select = (!langSet.contains(lang))))
                             langSet.insert(lang);
+                        break;
+                    }  case SubtitleAutoselect::All:
+                        select = true;
+                        break;
+                    default:
+                        break;
                     }
                     if (select)
                         selected.append(i);
                 }
-                if (p.sub_autoselect == SubtitleAutoselect::Matched
-                        && !selected.isEmpty() && !p.sub_ext.isEmpty()) {
+                if (pref.sub_autoselect == SubtitleAutoselect::Matched
+                        && !selected.isEmpty() && !pref.sub_ext.isEmpty()) {
                     for (int i=0; i<selected.size(); ++i) {
-                        const QString fileName = loaded[selected[i]].fileName();
-                        const QString suffix = QFileInfo(fileName).suffix().toLower();
-                        if (p.sub_ext == suffix) {
+                        const auto fileName = loaded[selected[i]].fileName();
+                        const auto suffix = QFileInfo(fileName).suffix();
+                        if (pref.sub_ext == suffix.toLower()) {
                             const int idx = selected[i];
                             selected.clear();
                             selected.append(idx);
@@ -201,24 +203,26 @@ struct MainWindow::Data {
                 }
                 return selected;
             };
-            auto autoload = [this, mrl, &autoselection, &p](bool autoselect) {
+            auto autoload = [&](bool autoselect) {
                 QList<SubComp> loaded;
-                if (!p.sub_enable_autoload)
+                if (!pref.sub_enable_autoload)
                     return loaded;
-                const QStringList filter = Info::subtitleNameFilter();
                 const QFileInfo fileInfo(mrl.toLocalFile());
-                const QFileInfoList all = fileInfo.dir().entryInfoList(filter, QDir::Files, QDir::Name);
-                const QString base = fileInfo.completeBaseName();
+                const auto filter = Info::subtitleNameFilter();
+                const auto dir = fileInfo.dir();
+                const auto all = dir.entryInfoList(filter, QDir::Files,
+                                                   QDir::Name);
+                const auto base = fileInfo.completeBaseName();
                 for (int i=0; i<all.size(); ++i) {
-                    if (p.sub_autoload != SubtitleAutoload::Folder) {
-                        if (p.sub_autoload == SubtitleAutoload::Matched) {
+                    if (pref.sub_autoload != SubtitleAutoload::Folder) {
+                        if (pref.sub_autoload == SubtitleAutoload::Matched) {
                             if (base != all[i].completeBaseName())
                                 continue;
                         } else if (!all[i].fileName().contains(base))
                             continue;
                     }
                     Subtitle sub;
-                    if (this->p->load(sub, all[i].absoluteFilePath(), p.sub_enc)) {
+                    if (p->load(sub, all[i].absoluteFilePath(), pref.sub_enc)) {
                         for (int i=0; i<sub.size(); ++i)
                             loaded.push_back(sub[i]);
                     }
@@ -232,35 +236,30 @@ struct MainWindow::Data {
             };
             subtitle.setComponents(autoload(true));
         } else
-            this->p->clearSubtitleFiles();
+            p->clearSubtitleFiles();
         syncSubtitleFileMenu();
     }
 
-    void setCursorVisible(bool visible) {
-        if (visible && view->cursor().shape() == Qt::BlankCursor) {
-            view->unsetCursor();
-            UtilObject::setCursorVisible(true);
-        } else if (!visible && view->cursor().shape() != Qt::BlankCursor) {
-            view->setCursor(Qt::BlankCursor);
-            UtilObject::setCursorVisible(false);
-        }
-    }
-
-    void cancelToHideCursor() {
+    auto cancelToHideCursor() -> void
+    {
         hider.stop();
-        setCursorVisible(true);
+        view->setCursorVisible(true);
     }
 
-    void readyToHideCursor() {
-        if (pref().hide_cursor && (p->isFullScreen() || !pref().hide_cursor_fs_only))
+    auto readyToHideCursor() -> void
+    {
+        if (pref().hide_cursor
+                && (p->isFullScreen() || !pref().hide_cursor_fs_only))
             hider.start(pref().hide_cursor_delay);
         else
             cancelToHideCursor();
     }
 
-    void initContextMenu() {
+    auto initContextMenu() -> void
+    {
         auto d = this;
-        auto addContextMenu = [d] (Menu &menu) {d->contextMenu.addMenu(menu.copied(&d->contextMenu));};
+        auto addContextMenu = [d] (Menu &menu)
+            { d->contextMenu.addMenu(menu.copied(&d->contextMenu)); };
         addContextMenu(d->menu("open"));
         d->contextMenu.addSeparator();
         addContextMenu(d->menu("play"));
@@ -277,7 +276,8 @@ struct MainWindow::Data {
     ////    qt_mac_set_dock_menu(&d->menu);
         QMenuBar *mb = cApp.globalMenuBar();
         qDeleteAll(mb->actions());
-        auto addMenuBar = [this, mb] (Menu &menu) {mb->addMenu(menu.copied(mb));};
+        auto addMenuBar = [this, mb] (Menu &menu)
+            {mb->addMenu(menu.copied(mb));};
         addMenuBar(d->menu("open"));
         addMenuBar(d->menu("play"));
         addMenuBar(d->menu("video"));
@@ -289,7 +289,8 @@ struct MainWindow::Data {
 #endif
     }
 
-    void openWith(const Pref::OpenMedia &mode, const QList<Mrl> &mrls) {
+    auto openWith(const Pref::OpenMedia &mode, const QList<Mrl> &mrls) -> void
+    {
         if (mrls.isEmpty())
             return;
         const auto mrl = mrls.first();
@@ -303,14 +304,18 @@ struct MainWindow::Data {
         };
         if (!checkAndPlay(mrl)) {
             Playlist playlist;
-            if (mode.playlist_behavior == PlaylistBehaviorWhenOpenMedia::AppendToPlaylist) {
+            switch (mode.playlist_behavior) {
+            case PlaylistBehaviorWhenOpenMedia::AppendToPlaylist:
                 d->playlist.append(mrls);
-            } else if (mode.playlist_behavior == PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist) {
+                break;
+            case PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist:
                 d->playlist.clear();
                 playlist.append(mrls);
-            } else if (mode.playlist_behavior == PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist) {
+                break;
+            case PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist:
                 d->playlist.clear();
                 playlist = p->generatePlaylist(mrl);
+                break;
             }
             d->playlist.merge(playlist);
             d->load(mrl, mode.start_playback);
@@ -321,7 +326,8 @@ struct MainWindow::Data {
             p->show();
     }
 
-    int lastCheckedSubtitleIndex() const {
+    auto lastCheckedSubtitleIndex() const -> int
+    {
         auto &list = menu("subtitle")("track");
         const auto internal = list.g("internal")->actions();
         const auto external = list.g("external")->actions();
@@ -335,10 +341,10 @@ struct MainWindow::Data {
         }
         return -1;
     }
-    void setCurrentSubtitleIndexToEngine() {
-        engine.setCurrentSubtitleIndex(lastCheckedSubtitleIndex());
-    }
-    void setSubtitleTracksToEngine() {
+    auto setCurrentSubtitleIndexToEngine() -> void
+        { engine.setCurrentSubtitleIndex(lastCheckedSubtitleIndex()); }
+    auto setSubtitleTracksToEngine() -> void
+    {
         auto &list = menu("subtitle")("track");
         const auto internal = list.g("internal")->actions();
         const auto external = list.g("external")->actions();
@@ -350,7 +356,8 @@ struct MainWindow::Data {
         engine.setSubtitleTracks(tracks);
     }
 
-    void syncSubtitleFileMenu() {
+    auto syncSubtitleFileMenu() -> void
+    {
         if (changingSub)
             return;
         changingSub = true;
@@ -375,37 +382,49 @@ struct MainWindow::Data {
         changingSub = false;
     }
 
-    void updateWindowSizeState() const {
+    auto updateWindowSizeState() const -> void
+    {
         if (!p->isFullScreen() && !p->isMinimized() && p->isVisible())
             AppState::get().win_size = p->size();
     }
-    QSize screenSize() const {
-        return desktop->isVirtualDesktop() ? virtualDesktopSize : desktop->availableGeometry(p).size();
+    auto screenSize() const -> QSize
+    {
+        if (desktop->isVirtualDesktop())
+            return virtualDesktopSize;
+        return desktop->availableGeometry(p).size();
     }
-    void updateWindowPosState() const {
+    auto updateWindowPosState() const -> void
+    {
         if (!p->isFullScreen() && !p->isMinimized() && p->isVisible()) {
             auto &as = AppState::get();
             const auto screen = screenSize();
-            as.win_pos.rx() = qBound(0.0, (double)p->x()/(double)screen.width(), 1.0);
-            as.win_pos.ry() = qBound(0.0, (double)p->y()/(double)screen.height(), 1.0);
+            as.win_pos.rx() = qBound(0.0, p->x()/(double)screen.width(), 1.0);
+            as.win_pos.ry() = qBound(0.0, p->y()/(double)screen.height(), 1.0);
         }
     }
-    template<typename List>
-    void updateListMenu(Menu &menu, const List &list, int current, const QString &group = "") {
+    template<class List>
+    auto updateListMenu(Menu &menu, const List &list,
+                        int current, const QString &group = "") -> void
+    {
         if (group.isEmpty())
             menu.setEnabledSync(!list.isEmpty());
         if (!list.isEmpty()) {
             menu.g(group)->clear();
-            for (typename List::const_iterator it = list.begin(); it != list.end(); ++it) {
-                auto act = menu.addActionToGroupWithoutKey(it->name(), true, group);
-                act->setData(it->id()); if (current == it->id()) act->setChecked(true);
+            for (auto it = list.begin(); it != list.end(); ++it) {
+                auto act = menu.addActionToGroupWithoutKey(it->name(),
+                                                           true, group);
+                act->setData(it->id());
+                if (current == it->id())
+                    act->setChecked(true);
             }
         } else if (!group.isEmpty()) // partial in menu
             menu.g(group)->clear();
         menu.syncActions();
     }
-    template<typename F>
-    void connectCurrentStreamActions(Menu *menu, F func, QString group = "") {
+    template<class F>
+    auto connectCurrentStreamActions(Menu *menu, F func,
+                                     QString group = "") -> void
+    {
         auto checkCurrentStreamAction = [this, func, menu, group] () {
             const auto current = (engine.*func)();
             for (auto action : menu->g(group)->actions()) {
@@ -415,16 +434,12 @@ struct MainWindow::Data {
                 }
             }
         };
-        MainWindow::connect(menu, &QMenu::aboutToShow, checkCurrentStreamAction);
+        connect(menu, &QMenu::aboutToShow, p, checkCurrentStreamAction);
         for (auto copy : menu->copies())
-            MainWindow::connect(copy, &QMenu::aboutToShow, checkCurrentStreamAction);
+            connect(copy, &QMenu::aboutToShow, p, checkCurrentStreamAction);
     }
-    template <typename T = QObject>
-    T* findItem(const QString &name = QString()) {
-        return player ? view->rootObject()->findChild<T*>(name) : nullptr;
-    }
-
-    void commitData() {
+    auto commitData() -> void
+    {
         static bool first = true;
         if (first) {
             recent.setLastPlaylist(playlist.list());
@@ -446,8 +461,9 @@ struct MainWindow::Data {
         }
     }
 
-    template<typename T, typename Func>
-    QUndoCommand *push(const T &to, const T &from, const Func &func) {
+    template<class T, class Func>
+    auto push(const T &to, const T &from, const Func &func) -> QUndoCommand*
+    {
         if (undo) {
             auto cmd = new ValueCmd<Func, T>(to, from, func);
             undo->push(cmd);
@@ -457,21 +473,26 @@ struct MainWindow::Data {
             return nullptr;
         }
     }
-    void showTimeLine() {
+    auto showTimeLine() -> void
+    {
         if (player)
             QMetaObject::invokeMethod(player, "showTimeLine");
     }
-    void showMessageBox(const QVariant &msg) {
+    auto showMessageBox(const QVariant &msg) -> void
+    {
         if (player)
             QMetaObject::invokeMethod(player, "showMessageBox", Q_ARG(QVariant, msg));
     }
-    void showOSD(const QVariant &msg) {
+    auto showOSD(const QVariant &msg) -> void
+    {
         if (player)
             QMetaObject::invokeMethod(player, "showOSD", Q_ARG(QVariant, msg));
     }
 
-    template<typename T, typename F, typename OnTriggered, typename State>
-    void connectEnumActions(State &state, Menu &menu, OnTriggered onTriggered, const char *asprop, void(State::*sig)(), F f) {
+    template<class T, class F, class Handler, class State>
+    auto connectEnumActions(State &state, Menu &menu, Handler handler,
+                            const char *asprop, Signal<State> sig, F f) -> void
+    {
         Q_ASSERT(state.property(asprop).isValid());
         const int size = EnumInfo<T>::size();
         auto cycle = _C(menu)[size > 2 ? "next" : "toggle"];
@@ -497,22 +518,26 @@ struct MainWindow::Data {
                     actions[i]->trigger();
             });
         }
-        connect(group, &QActionGroup::triggered, onTriggered);
-        connect(&state, sig, f);
+        connect(group, &QActionGroup::triggered, p, handler);
+        connect(&state, sig, p, f);
         group->trigger(state.property(asprop));
         emit (state.*sig)();
         if (std::is_same<State, MrlState>::value)
             enumGroups.append(EnumGroup{asprop, group});
     }
-    template<typename T, typename F, typename State>
-    void connectEnumActions(State &state, Menu &menu, const char *asprop, void(State::*sig)(), F f) {
+    template<class T, class F, class State>
+    auto connectEnumActions(State &state, Menu &menu, const char *asprop,
+                            Signal<State> sig, F f) -> void
+    {
         auto group = menu.g(_L(EnumInfo<T>::typeKey()));
-        connectEnumActions<T, F>(state, menu, [this, asprop, group, &state, &menu] (QAction *a) {
+        connectEnumActions<T, F>(state, menu, [=, &state, &menu] (QAction *a)
+        {
             auto action = static_cast<EnumAction<T>*>(a);
             auto t = action->enum_();
             auto current = state.property(asprop).template value<T>();
             if (current != t)
-                push<T>(t, current, [this, asprop, group, &state, &menu] (T t) {
+                push<T>(t, current, [=, &state, &menu] (T t)
+                {
                     if (auto action = group->find(t)) {
                         action->setChecked(true);
                         p->showMessage(menu.title(), action->text());
@@ -521,15 +546,17 @@ struct MainWindow::Data {
                 });
         }, asprop, sig, f);
     }
-    template<typename T, typename F>
-    void connectEnumActions(Menu &menu, const char *asprop, void(MrlState::*sig)(), F f) {
-        connectEnumActions<T, F, MrlState>(as.state, menu, asprop, sig, f);
-    }
+    template<class T, class F>
+    auto connectEnumActions(Menu &menu, const char *asprop,
+                            Signal<MrlState> sig, F f) -> void
+        { connectEnumActions<T, F, MrlState>(as.state, menu, asprop, sig, f); }
 
-    template<typename T, typename F, typename GetNew, typename State>
-    void connectEnumDataActions(State &state, Menu &menu, const char *asprop, GetNew getNew, void(State::*sig)(), F f) {
+    template<class T, class F, class GetNew, class State>
+    auto connectEnumDataActions(State &state, Menu &menu, const char *asprop,
+                                GetNew getNew, Signal<State> sig, F f) -> void
+    {
         using Data = typename EnumInfo<T>::Data;
-        connectEnumActions<T, F>(state, menu, [this, asprop, getNew, &state, &menu] (QAction *a) {
+        connectEnumActions<T, F>(state, menu, [=, &state, &menu] (QAction *a) {
             auto action = static_cast<EnumAction<T>*>(a);
             auto old = state.property(asprop).template value<Data>();
             auto new_ = getNew(action->data());
@@ -537,35 +564,47 @@ struct MainWindow::Data {
             if (step)
                 new_ = step->clamp(new_);
             if (old != new_)
-                push<Data>(new_, old, [this, asprop, &state, &menu, step] (const Data &data) {
+                push<Data>(new_, old, [=, &state, &menu] (const Data &data) {
                     state.setProperty(asprop, QVariant::fromValue<Data>(data));
                     if (step)
                         p->showMessage(menu.title(), step->format(data));
                 });
         }, asprop, sig, f);
     }
-    template<typename T, typename F, typename GetNew>
-    void connectEnumDataActions(Menu &menu, const char *asprop, GetNew getNew, void(MrlState::*sig)(), F f) {
-        connectEnumDataActions<T, F, GetNew, MrlState>(as.state, menu, asprop, getNew, sig, f);
+    template<class T, class F, class GetNew>
+    auto connectEnumDataActions(Menu &menu, const char *asprop, GetNew getNew,
+                                Signal<MrlState> sig, F f) -> void
+    {
+        connectEnumDataActions<T, F, GetNew, MrlState>(as.state, menu, asprop,
+                                                       getNew, sig, f);
     }
 
-    template<typename T, typename F, typename State>
-    void connectEnumMenu(State &state, Menu &parent, const char *asprop, void(State::*sig)(), F f) {
-        connectEnumActions<T, F>(state, parent(EnumInfo<T>::typeKey()), asprop, sig, f);
+    template<class T, class F, class State>
+    auto connectEnumMenu(State &state, Menu &parent, const char *asprop,
+                         Signal<State> sig, F f) -> void
+    {
+        connectEnumActions<T, F>(state, parent(EnumInfo<T>::typeKey()),
+                                 asprop, sig, f);
     }
 
-    template<typename T, typename F>
-    void connectEnumMenu(Menu &parent, const char *asprop, void(MrlState::*sig)(), F f) {
-        connectEnumActions<T, F>(as.state, parent(EnumInfo<T>::typeKey()), asprop, sig, f);
+    template<class T, class F>
+    auto connectEnumMenu(Menu &parent, const char *asprop,
+                         Signal<MrlState> sig, F f) -> void
+    {
+        connectEnumActions<T, F>(as.state, parent(EnumInfo<T>::typeKey()),
+                                 asprop, sig, f);
     }
-    template<typename F>
-    void connectStepActions(Menu &menu, const char *asprop, void(MrlState::*sig)(), F f) {
-        connectEnumDataActions<ChangeValue, F>(menu, asprop, [this, asprop] (int diff) {
+    template<class F>
+    auto connectStepActions(Menu &menu, const char *asprop,
+                            Signal<MrlState> sig, F f) -> void
+    {
+        connectEnumDataActions<ChangeValue, F>(menu, asprop, [=] (int diff) {
             return diff ? (as.state.property(asprop).toInt() + diff) : 0;
         }, sig, f);
     }
 
-    SubtitleStateInfo subtitleState() const {
+    auto subtitleState() const -> SubtitleStateInfo
+    {
         SubtitleStateInfo state;
         state.track() = engine.currentSubtitleStream();
         state.mpv() = engine.subtitleFiles();
@@ -574,7 +613,8 @@ struct MainWindow::Data {
             state.append(*c);
         return state;
     }
-    void setSubtitleState(const SubtitleStateInfo &state) {
+    auto setSubtitleState(const SubtitleStateInfo &state) -> void
+    {
         if (!state.isValid())
             return;
         for (auto &f : state.mpv())
@@ -585,9 +625,9 @@ struct MainWindow::Data {
         syncSubtitleFileMenu();
     }
 
-    void initWidget() {
-        view = new MainView(p);
-        UtilObject::setQmlEngine(view->engine());
+    auto initWidget() -> void
+    {
+        view = new MainQuickView(p);
         auto format = view->requestedFormat();
         if (OpenGLCompat::hasExtension(OpenGLCompat::Debug))
             format.setOption(QSurfaceFormat::DebugContext);
@@ -614,8 +654,10 @@ struct MainWindow::Data {
             OpenGLCompat::initialize(context);
             auto *logger = OpenGLCompat::logger();
             if (logger) {
-                connect(logger, &QOpenGLDebugLogger::messageLogged, p
-                    , [] (const QOpenGLDebugMessage & msg) { OpenGLCompat::debug(msg); }, Qt::DirectConnection);
+                connect(logger, &QOpenGLDebugLogger::messageLogged, p,
+                        [] (const QOpenGLDebugMessage & msg) {
+                    OpenGLCompat::debug(msg);
+                }, Qt::DirectConnection);
 #ifdef CMPLAYER_RELEASE
                 logger->startLogging(QOpenGLDebugLogger::AsynchronousLogging);
 #else
@@ -623,9 +665,11 @@ struct MainWindow::Data {
 #endif
             }
             initialize_vdpau_interop(context);
+            engine.initializeGL(view);
         }, Qt::DirectConnection);
         connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
             auto context = QOpenGLContext::currentContext();
+            engine.finalizeGL();
             finalize_vdpau_interop(context);
             OpenGLCompat::finalize(context);
         }, Qt::DirectConnection);
@@ -647,7 +691,8 @@ struct MainWindow::Data {
         reset();
     }
 
-    int resume(const Mrl &mrl, int *edition) {
+    auto resume(const Mrl &mrl, int *edition) -> int
+    {
         if (!pref().remember_stopped || mrl.isImage() || !mrl.isUnique())
             return 0;
         auto state = history.find(mrl.toUnique());
@@ -673,7 +718,8 @@ struct MainWindow::Data {
             preferences.save();
         return resume;
     }
-    int cache(const Mrl &mrl) {
+    auto cache(const Mrl &mrl) -> int
+    {
         if (mrl.isLocalFile()) {
             auto path = mrl.toLocalFile();
             if (_ContainsIf(pref().network_folders, [path] (const QString &folder) {
@@ -685,13 +731,16 @@ struct MainWindow::Data {
             return pref().cache_disc;
         return pref().cache_network;
     }
-    void initEngine() {
+    auto initEngine() -> void
+    {
         engine.setVideoRenderer(&renderer);
         connect(&engine, &PlayEngine::mrlChanged, p, &MainWindow::updateMrl);
-        connect(&engine, &PlayEngine::stateChanged, p, [this] (PlayEngine::State state) {
+        connect(&engine, &PlayEngine::stateChanged, p,
+                [this] (PlayEngine::State state) {
             stateChanging = true;
             showMessageBox(QString());
-            if ((loading = state & (PlayEngine::Loading | PlayEngine::Buffering)))
+            constexpr auto flags = PlayEngine::Loading | PlayEngine::Buffering;
+            if ((loading = state & flags))
                 loadingTimer.start();
             else
                 loadingTimer.stop();
@@ -706,46 +755,70 @@ struct MainWindow::Data {
             default:
                 menu("play")["pause"]->setText(tr("Play"));
             }
-            cApp.setScreensaverDisabled(pref().disable_screensaver && state == PlayEngine::Playing);
+            const auto disable = pref().disable_screensaver
+                                 && state == PlayEngine::Playing;
+            cApp.setScreensaverDisabled(disable);
             p->updateStaysOnTop();
             stateChanging = false;
         });
-        connect(&engine, &PlayEngine::tick, &subtitle, &SubtitleRendererItem::render);
-        connect(&engine, &PlayEngine::volumeChanged, p, [this] (int volume) { _Change(as.state.audio_volume, volume); });
-        connect(&engine, &PlayEngine::volumeNormalizerActivatedChanged, menu("audio")["normalizer"], &QAction::setChecked);
-        connect(&engine, &PlayEngine::tempoScaledChanged, menu("audio")["tempo-scaler"], &QAction::setChecked);
-        connect(&engine, &PlayEngine::mutedChanged, menu("audio")("volume")["mute"], &QAction::setChecked);
-        connect(&engine, &PlayEngine::fpsChanged, &subtitle, &SubtitleRendererItem::setFPS);
-        connect(&engine, &PlayEngine::editionsChanged, p, [this] (const EditionList &editions) {
-            updateListMenu(menu("play")("title"), editions, engine.currentEdition());
+        connect(&engine, &PlayEngine::tick,
+                &subtitle, &SubtitleRendererItem::render);
+        connect(&engine, &PlayEngine::volumeChanged,
+                p, [this] (int volume) {
+            _Change(as.state.audio_volume, volume);
         });
-        connect(&engine, &PlayEngine::audioStreamsChanged, p, [this] (const StreamList &streams) {
-            updateListMenu(menu("audio")("track"), streams, engine.currentAudioStream());
+        connect(&engine, &PlayEngine::volumeNormalizerActivatedChanged,
+                menu("audio")["normalizer"], &QAction::setChecked);
+        connect(&engine, &PlayEngine::tempoScaledChanged,
+                menu("audio")["tempo-scaler"], &QAction::setChecked);
+        connect(&engine, &PlayEngine::mutedChanged,
+                menu("audio")("volume")["mute"], &QAction::setChecked);
+        connect(&engine, &PlayEngine::fpsChanged,
+                &subtitle, &SubtitleRendererItem::setFPS);
+        connect(&engine, &PlayEngine::editionsChanged,
+                p, [this] (const EditionList &editions) {
+            const auto edition = engine.currentEdition();
+            updateListMenu(menu("play")("title"), editions, edition);
         });
-        connect(&engine, &PlayEngine::videoStreamsChanged, p, [this] (const StreamList &streams) {
-            updateListMenu(menu("video")("track"), streams, engine.currentVideoStream());
+        connect(&engine, &PlayEngine::audioStreamsChanged,
+                p, [this] (const StreamList &streams) {
+            const auto stream = engine.currentAudioStream();
+            updateListMenu(menu("audio")("track"), streams, stream);
         });
-        connect(&engine, &PlayEngine::subtitleStreamsChanged, p, [this] (const StreamList &streams) {
-            updateListMenu(menu("subtitle")("track"), streams, engine.currentSubtitleStream(), _L("internal"));
+        connect(&engine, &PlayEngine::videoStreamsChanged,
+                p, [this] (const StreamList &streams) {
+            const auto stream = engine.currentVideoStream();
+            updateListMenu(menu("video")("track"), streams, stream);
         });
-        connect(&engine, &PlayEngine::chaptersChanged, p, [this] (const ChapterList &chapters) {
-            updateListMenu(menu("play")("chapter"), chapters, engine.currentChapter());
+        connect(&engine, &PlayEngine::subtitleStreamsChanged,
+                p, [this] (const StreamList &streams) {
+            auto &menu = this->menu("subtitle")("track");
+            const auto stream = engine.currentSubtitleStream();
+            updateListMenu(menu, streams, stream, _L("internal"));
         });
-        connect(&engine, &PlayEngine::currentAudioStreamChanged, p, [this] (int stream) {
+        connect(&engine, &PlayEngine::chaptersChanged,
+                p, [this] (const ChapterList &chapters) {
+            const auto chapter = engine.currentChapter();
+            updateListMenu(menu("play")("chapter"), chapters, chapter);
+        });
+        connect(&engine, &PlayEngine::currentAudioStreamChanged,
+                p, [this] (int stream) {
             auto action = menu("audio")("track").g()->find(stream);
             if (action && !action->isChecked()) {
                 action->setChecked(true);
                 menu("audio")("track").syncActions();
             }
         });
-        connect(&engine, &PlayEngine::currentVideoStreamChanged, p, [this] (int stream) {
+        connect(&engine, &PlayEngine::currentVideoStreamChanged,
+                p, [this] (int stream) {
             auto action = menu("video")("track").g()->find(stream);
             if (action && !action->isChecked()) {
                 action->setChecked(true);
                 menu("video")("track").syncActions();
             }
         });
-        connect(&engine, &PlayEngine::currentSubtitleStreamChanged, p, [this] (int stream) {
+        connect(&engine, &PlayEngine::currentSubtitleStreamChanged,
+                p, [this] (int stream) {
             auto actions = menu("subtitle")("track").g("internal")->actions();
             for (auto action : actions)
                 action->setChecked(action->data().toInt() == stream);
@@ -774,7 +847,8 @@ struct MainWindow::Data {
             history.update(&as.state, true);
             as.state.mrl = mrl;
         });
-        connect(&engine, &PlayEngine::finished, p, [this] (const FinishInfo &info) {
+        connect(&engine, &PlayEngine::finished,
+                p, [this] (const FinishInfo &info) {
             as.state.mrl = info.mrl.toUnique();
             as.state.device = info.mrl.device();
             as.state.last_played_date_time = QDateTime::currentDateTime();
@@ -787,7 +861,8 @@ struct MainWindow::Data {
             history.update(&as.state, false);
             as.state.mrl = info.mrl;
         });
-        connect(&engine, &PlayEngine::videoFormatChanged, p, [this] (const VideoFormat &format) {
+        connect(&engine, &PlayEngine::videoFormatChanged,
+                p, [this] (const VideoFormat &format) {
             if (pref().fit_to_video && !format.displaySize().isEmpty())
                 setVideoSize(format.displaySize());
         });
@@ -795,46 +870,58 @@ struct MainWindow::Data {
             const auto mrl = playlist.nextMrl(); if (!mrl.isEmpty()) load(mrl);
         });
     }
-    void initItems() {
-        connect(&recent, &RecentInfo::openListChanged, p, &MainWindow::updateRecentActions);
-        connect(&hider, &QTimer::timeout, p, [this] () { setCursorVisible(false); });
-        connect(&history, &HistoryModel::playRequested, p, [this] (const Mrl &mrl) { p->openMrl(mrl); });
-        connect(&playlist, &PlaylistModel::playRequested, p, [this] (int row) { p->openMrl(playlist.at(row)); });
+    auto initItems() -> void
+    {
+        connect(&recent, &RecentInfo::openListChanged,
+                p, &MainWindow::updateRecentActions);
+        connect(&hider, &QTimer::timeout,
+                p, [this] () { view->setCursorVisible(false); });
+        connect(&history, &HistoryModel::playRequested,
+                p, [this] (const Mrl &mrl) { p->openMrl(mrl); });
+        connect(&playlist, &PlaylistModel::playRequested,
+                p, [this] (int row) { p->openMrl(playlist.at(row)); });
         connect(&playlist, &PlaylistModel::finished, p, [this] () {
             if (menu("tool")["auto-exit"]->isChecked()) p->exit();
             if (menu("tool")["auto-shutdown"]->isChecked()) cApp.shutdown();
         });
-        connect(&subtitle, &SubtitleRendererItem::modelsChanged, subtitleView, &SubtitleView::setModels);
+        connect(&subtitle, &SubtitleRendererItem::modelsChanged,
+                subtitleView, &SubtitleView::setModels);
 
         renderer.setOverlay(&subtitle);
         auto showSize = [this] {
-            p->showMessage(_N(qRound(renderer.width())) % _U("\303\227") % _N(qRound(renderer.height())), &pref().show_osd_on_resized);
+            const auto num = [] (qreal n) { return _N(qRound(n)); };
+            const auto w = num(renderer.width()), h = num(renderer.height());
+            p->showMessage(w % _U("\303\227") % h, &pref().show_osd_on_resized);
         };
-        connect(&renderer, &VideoRendererItem::widthChanged, showSize);
-        connect(&renderer, &VideoRendererItem::heightChanged, showSize);
+        connect(&renderer, &VideoRendererItem::sizeChanged, p, showSize);
     }
-    void initTimers() {
+    auto initTimers() -> void
+    {
         hider.setSingleShot(true);
 
         loadingTimer.setInterval(500);
         loadingTimer.setSingleShot(true);
         connect(&loadingTimer, &QTimer::timeout, p, [this] () {
-            if (loading) showMessageBox(tr("Loading ...\nPlease wait for a while."));
+            if (loading)
+                showMessageBox(tr("Loading ...\nPlease wait for a while."));
         });
 
         initializer.setSingleShot(true);
-        connect(&initializer, &QTimer::timeout, p, [this] () { p->applyPref(); cApp.runCommands(); });
+        connect(&initializer, &QTimer::timeout,
+                p, [this] () { p->applyPref(); cApp.runCommands(); });
         initializer.start(1);
     }
 
-    template<typename T, typename F, typename GetNew>
-    void connectPropertyDiff(ActionGroup *g, const char *asprop, GetNew getNew, void(MrlState::*sig)(), F f) {
+    template<class T, class F, class GetNew>
+    auto connectPropertyDiff(ActionGroup *g, const char *asprop, GetNew getNew,
+                             Signal<MrlState> sig, F f) -> void
+    {
         Q_ASSERT(as.state.property(asprop).isValid());
-        connect(g, &ActionGroup::triggered, p, [this, getNew, asprop] (QAction *a) {
+        connect(g, &ActionGroup::triggered, p, [=] (QAction *a) {
             const auto old = as.state.property(asprop).value<T>();
             const auto new_ = getNew(a, old);
             if (old != new_) {
-                push(new_, old, [this, asprop] (const T &t) {
+                push(new_, old, [=] (const T &t) {
                     as.state.setProperty(asprop, QVariant::fromValue<T>(t));
                 });
             }
@@ -842,18 +929,25 @@ struct MainWindow::Data {
         connect(&as.state, sig, f);
         emit (as.state.*sig)();
     }
-    template<typename T, typename F>
-    void connectPropertyDiff(ActionGroup *g, const char *asprop, T min, T max, void(MrlState::*sig)(), F f) {
-        connectPropertyDiff<T, F>(g, asprop, [min, max] (QAction *a, const T &old) { return qBound<T>(min, a->data().value<T>() + old, max); }, sig, f);
+    template<class T, class F>
+    auto connectPropertyDiff(ActionGroup *g, const char *asprop, T min, T max,
+                             Signal<MrlState> sig, F f) -> void
+    {
+        connectPropertyDiff<T, F>(g, asprop, [=] (QAction *a, const T &old) {
+            return qBound<T>(min, a->data().value<T>() + old, max);
+        }, sig, f);
     }
-    template<typename F>
-    void connectPropertyCheckable(QAction *action, const char *asprop, void(MrlState::*sig)(), F f) {
-        Q_ASSERT(as.state.property(asprop).isValid() && as.state.property(asprop).type() == QVariant::Bool);
+    template<class F>
+    auto connectPropertyCheckable(QAction *action, const char *asprop,
+                                  Signal<MrlState> sig, F f) -> void
+    {
+        Q_ASSERT(as.state.property(asprop).isValid()
+                 && as.state.property(asprop).type() == QVariant::Bool);
         Q_ASSERT(action->isCheckable());
-        connect(action, &QAction::triggered, p, [action, this, asprop] (bool new_) {
+        connect(action, &QAction::triggered, p, [=] (bool new_) {
             const bool old = as.state.property(asprop).toBool();
             if (new_ != old) {
-                push(new_, old, [action, asprop, this](bool checked) {
+                push(new_, old, [=](bool checked) {
                     as.state.setProperty(asprop, checked);
                     action->setChecked(checked);
                     p->showMessage(action->text(), checked);
@@ -864,7 +958,8 @@ struct MainWindow::Data {
         emit (as.state.*sig)();
     }
 
-    void setVideoSize(const QSize &video) {
+    auto setVideoSize(const QSize &video) -> void
+    {
         if (p->isFullScreen() || p->isMaximized())
             return;
         // patched by Handrake
@@ -895,11 +990,13 @@ struct MainWindow::Data {
 void qt_mac_set_dock_menu(QMenu *menu);
 #endif
 
-MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data(this)) {
+MainWindow::MainWindow(QWidget *parent)
+    : QWidget(parent, Qt::Window)
+    , d(new Data(this))
+{
     AppObject::setEngine(&d->engine);
     AppObject::setHistory(&d->history);
     AppObject::setPlaylist(&d->playlist);
-    AppObject::setTopLevelItem(&d->topLevelItem);
     AppObject::setDownloader(&d->downloader);
     d->playlist.setDownloader(&d->downloader);
 
@@ -976,7 +1073,8 @@ MainWindow::MainWindow(QWidget *parent): QWidget(parent, Qt::Window), d(new Data
     }
     if (TrayIcon::isAvailable()) {
         d->tray = new TrayIcon(cApp.defaultIcon(), this);
-        connect(d->tray, &TrayIcon::activated, this, [this] (TrayIcon::ActivationReason reason) {
+        connect(d->tray, &TrayIcon::activated,
+                this, [this] (TrayIcon::ActivationReason reason) {
             if (reason == TrayIcon::Trigger)
                 setVisible(!isVisible());
             else if (reason == TrayIcon::Context)
@@ -998,13 +1096,14 @@ MainWindow::~MainWindow() {
     delete d;
 }
 
-void MainWindow::connectMenus() {
+auto MainWindow::connectMenus() -> void
+{
     Menu &open = d->menu("open");
     connect(open["file"], &QAction::triggered, this, [this] () {
         auto &as = AppState::get();
-        const QString filter = Info::mediaExtFilter();
-        const QString dir = QFileInfo(as.open_last_file).absolutePath();
-        const QString file = _GetOpenFileName(this, tr("Open File"), dir, filter);
+        const auto filter = Info::mediaExtFilter();
+        const auto dir = QFileInfo(as.open_last_file).absolutePath();
+        const auto file = _GetOpenFileName(this, tr("Open File"), dir, filter);
         if (!file.isEmpty())
             openMrl(Mrl(file));
     });
@@ -1048,32 +1147,62 @@ void MainWindow::connectMenus() {
         if (openDisc(tr("Select Blu-ray device"), d->as.bluray_device, false))
             openMrl(Mrl::fromDisc("bdnav", d->as.bluray_device, -1, true));
     });
-    connect(open("recent").g(), &ActionGroup::triggered, this, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
-    connect(open("recent")["clear"], &QAction::triggered, &d->recent, &RecentInfo::clear);
+    connect(open("recent").g(), &ActionGroup::triggered,
+            this, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
+    connect(open("recent")["clear"], &QAction::triggered,
+            &d->recent, &RecentInfo::clear);
 
     Menu &play = d->menu("play");
-    connect(play["stop"], &QAction::triggered, this, [this] () {d->engine.stop();});
-    d->connectStepActions(play("speed"), "play_speed", &MrlState::playSpeedChanged, [this]() {
+    connect(play["stop"], &QAction::triggered,
+            this, [this] () {d->engine.stop();});
+    d->connectStepActions(play("speed"), "play_speed",
+                          &MrlState::playSpeedChanged, [this]() {
         d->engine.setSpeed(1e-2*d->as.state.play_speed);
     });
-    connect(play["pause"], &QAction::triggered, this, &MainWindow::togglePlayPause);
-    connect(play("repeat").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
+    connect(play["pause"], &QAction::triggered,
+            this, &MainWindow::togglePlayPause);
+    connect(play("repeat").g(), &ActionGroup::triggered,
+            this, [this] (QAction *a) {
         const int key = a->data().toInt();
-        auto msg = [this] (const QString &ex) {showMessage(tr("A-B Repeat"), ex);};
-        if (key == 'r') {
-            if (d->engine.isStopped()) return;
-            if (!d->ab.hasA()) msg(tr("Set A to %1").arg(_Chopped(_MSecToString(d->ab.setAToCurrentTime(), "h:mm:ss.zzz"), 2)));
-            else if (!d->ab.hasB()) {
+        auto msg = [this] (const QString &ex)
+            { showMessage(tr("A-B Repeat"), ex); };
+        auto time = [] (int t)
+            { return _Chopped(_MSecToString(t, "h:mm:ss.zzz"), 2); };
+        switch (key) {
+        case 'r':
+            if (d->engine.isStopped())
+                break;
+            if (!d->ab.hasA()) {
+                msg(tr("Set A to %1").arg(time(d->ab.setAToCurrentTime())));
+            } else if (!d->ab.hasB()) {
                 const int at = d->ab.setBToCurrentTime();
-                if ((at - d->ab.a()) < 100) {d->ab.setB(-1); msg(tr("Range is too short!"));}
-                else {d->ab.start(); msg(tr("Set B to %1. Start to repeat!").arg(_Chopped(_MSecToString(at, "h:mm:ss.zzz"), 2)));}
+                if ((at - d->ab.a()) < 100) {
+                    d->ab.setB(-1);
+                    msg(tr("Range is too short!"));
+                } else {
+                    d->ab.start();
+                    msg(tr("Set B to %1. Start to repeat!").arg(time(at)));
+                }
             }
-        } else if (key == 'q') {d->ab.stop(); d->ab.setA(-1); d->ab.setB(-1); msg(tr("Quit repeating"));}
-        else if (key == 's') {d->ab.setAToSubtitleTime(); d->ab.setBToSubtitleTime(); d->ab.start(); msg(tr("Repeat current subtitle"));}
+            break;
+        case 's':
+            d->ab.setAToSubtitleTime();
+            d->ab.setBToSubtitleTime();
+            d->ab.start(); msg(tr("Repeat current subtitle"));
+            break;
+        case 'q':
+            d->ab.stop();
+            d->ab.setA(-1);
+            d->ab.setB(-1);
+            msg(tr("Quit repeating"));
+        }
     });
-    connect(play["prev"], &QAction::triggered, &d->playlist, &PlaylistModel::playPrevious);
-    connect(play["next"], &QAction::triggered, &d->playlist, &PlaylistModel::playNext);
-    connect(play("seek").g("relative"), &ActionGroup::triggered, this, [this] (QAction *a) {
+    connect(play["prev"], &QAction::triggered,
+            &d->playlist, &PlaylistModel::playPrevious);
+    connect(play["next"], &QAction::triggered,
+            &d->playlist, &PlaylistModel::playNext);
+    connect(play("seek").g("relative"), &ActionGroup::triggered,
+            this, [this] (QAction *a) {
         const int diff = a->data().toInt();
         if (diff && !d->engine.isStopped() && d->engine.isSeekable()) {
             d->engine.relativeSeek(diff);
@@ -1081,20 +1210,33 @@ void MainWindow::connectMenus() {
             d->showTimeLine();
         }
     });
-    connect(play("seek").g("frame"), &ActionGroup::triggered, this, [this] (QAction *a) {
+    connect(play("seek").g("frame"), &ActionGroup::triggered,
+            this, [this] (QAction *a) {
         d->engine.stepFrame(a->data().toInt());
     });
-    connect(play["disc-menu"], &QAction::triggered, this, [this] () { d->engine.setCurrentEdition(PlayEngine::DVDMenu); });
-    connect(play("seek").g("subtitle"), &ActionGroup::triggered, this, [this] (QAction *a) {
+    connect(play["disc-menu"], &QAction::triggered, this, [this] () {
+        d->engine.setCurrentEdition(PlayEngine::DVDMenu);
+    });
+    connect(play("seek").g("subtitle"), &ActionGroup::triggered,
+            this, [this] (QAction *a) {
         const int key = a->data().toInt();
-        const int time = (key < 0 ? d->subtitle.previous() : (key > 0 ? d->subtitle.next() : d->subtitle.current()));
-        if (time >= 0) d->engine.seek(time-100);
+        const int time = key < 0 ? d->subtitle.previous()
+                       : key > 0 ? d->subtitle.next()
+                                 : d->subtitle.current();
+        if (time >= 0)
+            d->engine.seek(time-100);
     });
-    connect(play("title").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
-        a->setChecked(true); d->engine.setCurrentEdition(a->data().toInt()); showMessage(tr("Current Title"), a->text());
+    connect(play("title").g(), &ActionGroup::triggered,
+            this, [this] (QAction *a) {
+        a->setChecked(true);
+        d->engine.setCurrentEdition(a->data().toInt());
+        showMessage(tr("Current Title"), a->text());
     });
-    connect(play("chapter").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
-        a->setChecked(true); d->engine.setCurrentChapter(a->data().toInt()); showMessage(tr("Current Chapter"), a->text());
+    connect(play("chapter").g(), &ActionGroup::triggered, this,
+            [this] (QAction *a) {
+        a->setChecked(true);
+        d->engine.setCurrentChapter(a->data().toInt());
+        showMessage(tr("Current Chapter"), a->text());
     });
     auto seekChapter = [this] (int offset) {
         if (!d->engine.chapters().isEmpty()) {
@@ -1103,89 +1245,143 @@ void MainWindow::connectMenus() {
                 d->engine.setCurrentChapter(target);
         }
     };
-    connect(play("chapter")["prev"], &QAction::triggered, this, [seekChapter] () { seekChapter(-1); });
-    connect(play("chapter")["next"], &QAction::triggered, this, [seekChapter] () { seekChapter(+1); });
+    connect(play("chapter")["prev"], &QAction::triggered,
+            this, [seekChapter] () { seekChapter(-1); });
+    connect(play("chapter")["next"], &QAction::triggered, this,
+            [seekChapter] () { seekChapter(+1); });
 
     Menu &video = d->menu("video");
-    connect(video("track").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
-        a->setChecked(true); d->engine.setCurrentVideoStream(a->data().toInt()); showMessage(tr("Current Video Track"), a->text());
+    connect(video("track").g(), &ActionGroup::triggered,
+            this, [this] (QAction *a) {
+        a->setChecked(true);
+        d->engine.setCurrentVideoStream(a->data().toInt());
+        showMessage(tr("Current Video Track"), a->text());
     });
-    d->connectEnumActions<VideoRatio>(video("aspect"), "video_aspect_ratio", &MrlState::videoAspectRatioChanged, [this] () {
-        d->renderer.setAspectRatio(VideoRatioInfo::data(d->as.state.video_aspect_ratio));
+    d->connectEnumActions<VideoRatio>
+            (video("aspect"), "video_aspect_ratio",
+             &MrlState::videoAspectRatioChanged, [this] () {
+        d->renderer.setAspectRatio(enumData(d->as.state.video_aspect_ratio));
     });
-    d->connectEnumActions<VideoRatio>(video("crop"), "video_crop_ratio", &MrlState::videoCropRatioChanged, [this] () {
-        d->renderer.setCropRatio(VideoRatioInfo::data(d->as.state.video_crop_ratio));
+    d->connectEnumActions<VideoRatio>
+            (video("crop"), "video_crop_ratio",
+             &MrlState::videoCropRatioChanged, [this] () {
+        d->renderer.setCropRatio(enumData(d->as.state.video_crop_ratio));
     });
     connect(video["snapshot"], &QAction::triggered, this, [this] () {
         static SnapshotDialog *dlg = new SnapshotDialog(this);
-        dlg->setVideoRenderer(&d->renderer); dlg->setSubtitleRenderer(&d->subtitle); dlg->take();
-        if (!dlg->isVisible()) {dlg->adjustSize(); dlg->show();}
+        dlg->setVideoRenderer(&d->renderer);
+        dlg->setSubtitleRenderer(&d->subtitle);
+        dlg->take();
+        if (!dlg->isVisible()) {
+            dlg->adjustSize();
+            dlg->show();
+        }
     });
-    auto setVideoAlignment = [this] () { d->renderer.setAlignment(VerticalAlignmentInfo::data(d->as.state.video_vertical_alignment) | HorizontalAlignmentInfo::data(d->as.state.video_horizontal_alignment)); };
-    d->connectEnumActions<VerticalAlignment>(video("align"), "video_vertical_alignment", &MrlState::videoVerticalAlignmentChanged, setVideoAlignment);
-    d->connectEnumActions<HorizontalAlignment>(video("align"), "video_horizontal_alignment", &MrlState::videoHorizontalAlignmentChanged, setVideoAlignment);
-    d->connectEnumDataActions<MoveToward>(video("move")
-        , "video_offset", [this] (const QPoint &diff) { return diff.isNull() ? diff : d->as.state.video_offset + diff; }
-        , &MrlState::videoOffsetChanged, [this] () { d->renderer.setOffset(d->as.state.video_offset); });
-    d->connectEnumMenu<DeintMode>(video, "video_deinterlacing", &MrlState::videoDeinterlacingChanged, [this] () {
+    auto setVideoAlignment = [this] () {
+        const auto v = enumData(d->as.state.video_vertical_alignment);
+        const auto h = enumData(d->as.state.video_horizontal_alignment);
+        d->renderer.setAlignment(v | h);
+    };
+    d->connectEnumActions<VerticalAlignment>
+            (video("align"), "video_vertical_alignment",
+             &MrlState::videoVerticalAlignmentChanged, setVideoAlignment);
+    d->connectEnumActions<HorizontalAlignment>
+            (video("align"), "video_horizontal_alignment",
+             &MrlState::videoHorizontalAlignmentChanged, setVideoAlignment);
+    d->connectEnumDataActions<MoveToward>
+            (video("move"), "video_offset",
+             [this] (const QPoint &diff) {
+        return diff.isNull() ? diff : d->as.state.video_offset + diff;
+    }, &MrlState::videoOffsetChanged, [this] () {
+        d->renderer.setOffset(d->as.state.video_offset);
+    });
+    d->connectEnumMenu<DeintMode>
+            (video, "video_deinterlacing",
+             &MrlState::videoDeinterlacingChanged, [this] () {
         d->engine.setDeintMode(d->as.state.video_deinterlacing);
     });
-    d->connectEnumActions<InterpolatorType>(video("interpolator"), "video_interpolator", &MrlState::videoInterpolatorChanged, [this] () {
+    d->connectEnumActions<InterpolatorType>
+            (video("interpolator"), "video_interpolator",
+             &MrlState::videoInterpolatorChanged, [this] () {
         d->renderer.setInterpolator(d->as.state.video_interpolator);
     });
-    d->connectEnumActions<InterpolatorType>(video("chroma-upscaler"), "video_chroma_upscaler", &MrlState::videoChromaUpscalerChanged, [this] () {
-        d->renderer.setChromaUpscaler(d->as.state.video_chroma_upscaler);
+    d->connectEnumActions<InterpolatorType>
+            (video("chroma-upscaler"), "video_chroma_upscaler",
+             &MrlState::videoChromaUpscalerChanged, [this] () {
+        d->engine.setVideoChromaUpscaler(d->as.state.video_chroma_upscaler);
     });
-    d->connectEnumMenu<Dithering>(video, "video_dithering", &MrlState::videoDitheringChanged, [this] () {
+    d->connectEnumMenu<Dithering>
+            (video, "video_dithering",
+             &MrlState::videoDitheringChanged, [this] () {
         d->renderer.setDithering(d->as.state.video_dithering);
     });
-    d->connectEnumMenu<ColorRange>(video, "video_range", &MrlState::videoRangeChanged, [this] () {
-        d->renderer.setRange(d->as.state.video_range);
+    d->connectEnumMenu<ColorRange>
+            (video, "video_range", &MrlState::videoRangeChanged, [this] () {
+        d->engine.setVideoColorRange(d->as.state.video_range);
     });
 
     connect(&video("filter"), &Menu::triggered, this, [this] () {
-        VideoRendererItem::Effects effects = 0;
+        using Effects = VideoRendererItem::Effects;
+        using Effect = VideoRendererItem::Effect;
+        Effects effects = 0;
         for (auto act : d->menu("video")("filter").actions()) {
             if (act->isChecked())
-                effects |= static_cast<VideoRendererItem::Effect>(act->data().toInt());
+                effects |= static_cast<Effect>(act->data().toInt());
         }
         if (d->renderer.effects() != effects)
-            d->push(effects, d->renderer.effects(), [this] (VideoRendererItem::Effects effects) {
+            d->push(effects, d->renderer.effects(), [this] (Effects effects) {
                 d->renderer.setEffects(effects);
                 for (auto action : d->menu("video")("filter").actions())
                     action->setChecked(action->data().toInt() & effects);
             });
     });
-    d->connectEnumDataActions<AdjustColor>(video("color"), "video_color"
-        , [this] (const VideoColor &diff) { return diff.isZero() ? diff : d->as.state.video_color + diff; }, &MrlState::videoColorChanged
-        , [this] () {
-            showMessage(tr("Adjust Video Color"), d->as.state.video_color.getText(d->as.state.video_color & d->renderer.color()));
-            d->renderer.setColor(d->as.state.video_color);
+    d->connectEnumDataActions<AdjustColor>
+            (video("color"), "video_color", [this] (const VideoColor &diff) {
+        return diff.isZero() ? diff : d->as.state.video_color + diff;
+    }, &MrlState::videoColorChanged, [this] () {
+        const auto prop = d->as.state.video_color & d->engine.videoEqualizer();
+        const auto text = d->as.state.video_color.getText(prop);
+        showMessage(tr("Adjust Video Color"), text);
+        d->engine.setVideoEqualizer(d->as.state.video_color);
     });
 
     Menu &audio = d->menu("audio");
-    connect(audio("track").g(), &ActionGroup::triggered, this, [this] (QAction *a) {
-        a->setChecked(true); d->engine.setCurrentAudioStream(a->data().toInt()); showMessage(tr("Current Audio Track"), a->text());
+    connect(audio("track").g(), &ActionGroup::triggered,
+            this, [this] (QAction *a) {
+        a->setChecked(true);
+        d->engine.setCurrentAudioStream(a->data().toInt());
+        showMessage(tr("Current Audio Track"), a->text());
     });
-    d->connectStepActions(audio("volume"), "audio_volume", &MrlState::audioVolumeChanged, [this] () {
-        auto v = d->as.state.audio_volume; d->engine.setVolume(v);
+    d->connectStepActions(audio("volume"), "audio_volume",
+                          &MrlState::audioVolumeChanged, [this] () {
+        d->engine.setVolume(d->as.state.audio_volume);
     });
-    d->connectPropertyCheckable(audio("volume")["mute"], "audio_muted", &MrlState::audioMutedChanged, [this] () {
+    d->connectPropertyCheckable(audio("volume")["mute"], "audio_muted",
+                                &MrlState::audioMutedChanged, [this] () {
         d->engine.setMuted(d->as.state.audio_muted);
     });
-    d->connectStepActions(audio("sync"), "audio_sync", &MrlState::audioSyncChanged, [this] () {
-        auto v = d->as.state.audio_sync; d->engine.setAudioSync(v);
+    d->connectStepActions(audio("sync"), "audio_sync",
+                          &MrlState::audioSyncChanged, [this] () {
+        d->engine.setAudioSync(d->as.state.audio_sync);
     });
-    d->connectStepActions(audio("amp"), "audio_amplifier", &MrlState::audioAmpChanged, [this] () {
-        auto v = d->as.state.audio_amplifier; d->engine.setAmp(v*1e-2);
+    d->connectStepActions(audio("amp"), "audio_amplifier",
+                          &MrlState::audioAmpChanged, [this] () {
+        d->engine.setAmp(d->as.state.audio_amplifier*1e-2);
     });
-    d->connectEnumMenu<ChannelLayout>(audio, "audio_channel_layout", &MrlState::audioChannelLayoutChanged, [this] () {
+    d->connectEnumMenu<ChannelLayout>
+            (audio, "audio_channel_layout",
+             &MrlState::audioChannelLayoutChanged, [this] () {
         d->engine.setChannelLayout(d->as.state.audio_channel_layout);
     });
-    d->connectPropertyCheckable(audio["normalizer"], "audio_volume_normalizer", &MrlState::audioVolumeNormalizerChanged, [this] () {
-        d->engine.setVolumeNormalizerActivated(d->as.state.audio_volume_normalizer);
+    d->connectPropertyCheckable
+            (audio["normalizer"], "audio_volume_normalizer",
+             &MrlState::audioVolumeNormalizerChanged, [this] () {
+        const auto activate = d->as.state.audio_volume_normalizer;
+        d->engine.setVolumeNormalizerActivated(activate);
     });
-    d->connectPropertyCheckable(audio["tempo-scaler"], "audio_tempo_scaler", &MrlState::audioTempoScalerChanged, [this] () {
+    d->connectPropertyCheckable
+            (audio["tempo-scaler"], "audio_tempo_scaler",
+             &MrlState::audioTempoScalerChanged, [this] () {
         d->engine.setTempoScalerActivated(d->as.state.audio_tempo_scaler);
     });
     auto  selectNext = [this] (const QList<QAction*> &actions) {
@@ -1197,7 +1393,8 @@ void MainWindow::connectMenus() {
             (*it)->trigger();
         }
     };
-    connect(audio("track")["next"], &QAction::triggered, this, [this, selectNext] () {
+    connect(audio("track")["next"], &QAction::triggered,
+            this, [this, selectNext] () {
         selectNext(d->menu("audio")("track").g()->actions());
     });
 
@@ -1226,12 +1423,16 @@ void MainWindow::connectMenus() {
     });
     connect(sub("track")["all"], &QAction::triggered, this, [this] () {
         d->subtitle.select(-1);
-        for (auto action : d->menu("subtitle")("track").g("external")->actions())
+        const auto acts = d->menu("subtitle")("track").g("external")->actions();
+        for (auto action : acts)
             action->setChecked(true);
-        showMessage(tr("Select All Subtitles"), tr("%1 Subtitle(s)").arg(d->subtitle.componentsCount()));
+        const int count = d->subtitle.componentsCount();
+        const auto text = tr("%1 Subtitle(s)").arg(count);
+        showMessage(tr("Select All Subtitles"), text);
         d->setCurrentSubtitleIndexToEngine();
     });
-    connect(sub("track")["hide"], &QAction::triggered, this, [this] (bool hide) {
+    connect(sub("track")["hide"], &QAction::triggered,
+            this, [this] (bool hide) {
         if (hide != d->subtitle.isHidden()) {
             d->push(hide, d->subtitle.isHidden(), [this] (bool hide) {
                 d->subtitle.setHidden(hide);
@@ -1245,9 +1446,13 @@ void MainWindow::connectMenus() {
         }
     });
     connect(sub("track")["open"], &QAction::triggered, this, [this] () {
-        const auto dir = d->engine.mrl().isLocalFile() ? QFileInfo(d->engine.mrl().toLocalFile()).absolutePath() : _L("");
+        QString dir;
+        if (d->engine.mrl().isLocalFile())
+            dir = QFileInfo(d->engine.mrl().toLocalFile()).absolutePath();
         QString enc = d->pref().sub_enc;
-        const auto files = EncodingFileDialog::getOpenFileNames(this, tr("Open Subtitle"), dir, Info::subtitleExtFilter(), &enc);
+        const auto files = EncodingFileDialog::getOpenFileNames
+                                    (this, tr("Open Subtitle"), dir,
+                                     Info::subtitleExtFilter(), &enc);
         if (!files.isEmpty())
             appendSubFiles(files, true, enc);
     });
@@ -1260,8 +1465,10 @@ void MainWindow::connectMenus() {
         clearSubtitleFiles();
         d->setSubtitleState(state);
     });
-    connect(sub("track")["clear"], &QAction::triggered, this, &MainWindow::clearSubtitleFiles);
-    connect(sub("track").g("external"), &ActionGroup::triggered, this, [this] (QAction *a) {
+    connect(sub("track")["clear"], &QAction::triggered,
+            this, &MainWindow::clearSubtitleFiles);
+    connect(sub("track").g("external"), &ActionGroup::triggered,
+            this, [this] (QAction *a) {
         if (!d->changingSub) {
             if (a->isChecked())
                 d->subtitle.select(a->data().toInt());
@@ -1271,7 +1478,8 @@ void MainWindow::connectMenus() {
         showMessage(tr("Selected Subtitle"), a->text());
         d->setCurrentSubtitleIndexToEngine();
     });
-    connect(sub("track").g("internal"), &ActionGroup::triggered, this, [this] (QAction *a) {
+    connect(sub("track").g("internal"), &ActionGroup::triggered,
+            this, [this] (QAction *a) {
         const bool checked = a->isChecked();
         auto actions = d->menu("subtitle")("track").g("internal")->actions();
         for (auto action : actions)
@@ -1284,17 +1492,27 @@ void MainWindow::connectMenus() {
             d->engine.setCurrentSubtitleStream(-1);
         d->setCurrentSubtitleIndexToEngine();
     });
-    connect(&sub("track"), &Menu::actionsSynchronized, this, [this] () { d->setSubtitleTracksToEngine(); d->setCurrentSubtitleIndexToEngine(); });
-    d->connectEnumMenu<SubtitleDisplay>(sub, "sub_display", &MrlState::subDisplayChanged, [this] () {
-        d->renderer.setOverlayOnLetterbox(d->as.state.sub_display == SubtitleDisplay::OnLetterbox);
+    connect(&sub("track"), &Menu::actionsSynchronized, this, [this] () {
+        d->setSubtitleTracksToEngine();
+        d->setCurrentSubtitleIndexToEngine();
     });
-    d->connectEnumActions<VerticalAlignment>(sub("align"), "sub_alignment", &MrlState::subAlignmentChanged, [this] () {
-        d->subtitle.setTopAligned(d->as.state.sub_alignment == VerticalAlignment::Top);
+    d->connectEnumMenu<SubtitleDisplay>
+            (sub, "sub_display", &MrlState::subDisplayChanged, [this] () {
+        const auto on = d->as.state.sub_display == SubtitleDisplay::OnLetterbox;
+        d->renderer.setOverlayOnLetterbox(on);
     });
-    d->connectStepActions(sub("position"), "sub_position", &MrlState::subPositionChanged, [this] () {
+    d->connectEnumActions<VerticalAlignment>
+            (sub("align"), "sub_alignment",
+             &MrlState::subAlignmentChanged, [this] () {
+        const auto top = d->as.state.sub_alignment == VerticalAlignment::Top;
+        d->subtitle.setTopAligned(top);
+    });
+    d->connectStepActions(sub("position"), "sub_position",
+                          &MrlState::subPositionChanged, [this] () {
         d->subtitle.setPos(d->as.state.sub_position*1e-2);
     });
-    d->connectStepActions(sub("sync"), "sub_sync", &MrlState::subSyncChanged, [this] () {
+    d->connectStepActions(sub("sync"), "sub_sync",
+                          &MrlState::subSyncChanged, [this] () {
         d->subtitle.setDelay(d->as.state.sub_sync);
         d->engine.setSubtitleDelay(d->as.state.sub_sync);
     });
@@ -1302,29 +1520,26 @@ void MainWindow::connectMenus() {
     Menu &tool = d->menu("tool");
     auto toggleTool = [this] (const char *name, bool &visible) {
         visible = !visible;
-        if (auto item = d->findItem<QObject>(name))
+        if (auto item = d->view->findItem<QObject>(name))
             item->setProperty("show", visible);
     };
-    auto selectedIndex = [this] (const char *name) {
-        QObject *item = nullptr;
-        return (item = d->findItem<QObject>(name)) ? item->property("selectedIndex").toInt() : -1;
-    };
-    auto selectIndex = [this] (const char *name, int idx) {
-        if (auto item = d->findItem<QObject>(name))
-            item->setProperty("selectedIndex", idx);
-    };
     auto &playlist = tool("playlist");
-    connect(playlist["toggle"], &QAction::triggered, &d->playlist, &PlaylistModel::toggle);
+    connect(playlist["toggle"], &QAction::triggered,
+            &d->playlist, &PlaylistModel::toggle);
     connect(playlist["open"], &QAction::triggered, this, [this] () {
         QString enc;
-        const QString file = EncodingFileDialog::getOpenFileName(this, tr("Open File"), QString(), Info::playlistExtFilter(), &enc);
+        const auto filter = Info::playlistExtFilter();
+        const auto file = EncodingFileDialog::getOpenFileName
+                (this, tr("Open File"), QString(), filter, &enc);
         if (!file.isEmpty())
             d->playlist.open(file, enc);
     });
     connect(playlist["save"], &QAction::triggered, this, [this] () {
         const auto &list = d->playlist.list();
         if (!list.isEmpty()) {
-            auto file = _GetSaveFileName(this, tr("Save File"), QString(), Info::playlistExtFilter());
+            const auto filter = Info::playlistExtFilter();
+            const auto title = tr("Save File");
+            auto file = _GetSaveFileName(this, title, QString(), filter);
             if (!file.isEmpty()) {
                 if (QFileInfo(file).suffix().isEmpty())
                     file += ".pls";
@@ -1332,10 +1547,12 @@ void MainWindow::connectMenus() {
             }
         }
     });
-    connect(playlist["clear"], &QAction::triggered, this, [this] () { d->playlist.clear(); });
+    connect(playlist["clear"], &QAction::triggered,
+            this, [this] () { d->playlist.clear(); });
     connect(playlist["append-file"], &QAction::triggered, this, [this] () {
         const auto filter = Info::mediaExtFilter();
-        auto files = _GetOpenFileNames(this, tr("Open File"), QString(), filter);
+        const auto title = tr("Open File");
+        auto files = _GetOpenFileNames(this, title, QString(), filter);
         Playlist list;
         for (int i=0; i<files.size(); ++i)
             list << Mrl(files[i]);
@@ -1353,31 +1570,41 @@ void MainWindow::connectMenus() {
                 d->playlist.append(mrl);
         }
     });
-    connect(playlist["remove"], &QAction::triggered, this, [this, selectedIndex] () {
-        d->playlist.remove(selectedIndex("playlist"));
+    connect(playlist["remove"], &QAction::triggered, this, [=] () {
+        d->playlist.remove(d->playlist.selected());
     });
-    connect(playlist["move-up"], &QAction::triggered, this, [this, selectedIndex, selectIndex] () {
-        const auto idx = selectedIndex("playlist");
+    connect(playlist["move-up"], &QAction::triggered, this, [=] () {
+        const auto idx = d->playlist.selected();
         if (d->playlist.swap(idx, idx-1))
-            selectIndex("playlist", idx-1);
+            d->playlist.select(idx-1);
     });
-    connect(playlist["move-down"], &QAction::triggered, this, [this, selectedIndex, selectIndex] () {
-        const auto idx = selectedIndex("playlist");
+    connect(playlist["move-down"], &QAction::triggered, this, [=] () {
+        const auto idx = d->playlist.selected();
         if (d->playlist.swap(idx, idx+1))
-            selectIndex("playlist", idx+1);
+            d->playlist.select(idx+1);
     });
 
     auto &history = tool("history");
-    connect(history["toggle"], &QAction::triggered, &d->history, &HistoryModel::toggle);
-    connect(history["clear"], &QAction::triggered, this, [this] () { d->history.clear(); });
+    connect(history["toggle"], &QAction::triggered,
+            &d->history, &HistoryModel::toggle);
+    connect(history["clear"], &QAction::triggered,
+            this, [this] () { d->history.clear(); });
 
-    connect(tool["playinfo"], &QAction::triggered, this, [toggleTool] () {toggleTool("playinfo", AppState::get().playinfo_visible);});
-    connect(tool["subtitle"], &QAction::triggered, this, [this] () {d->subtitleView->setVisible(!d->subtitleView->isVisible());});
+    connect(tool["playinfo"], &QAction::triggered, this, [toggleTool] () {
+        toggleTool("playinfo", AppState::get().playinfo_visible);
+    });
+    connect(tool["subtitle"], &QAction::triggered, this, [this] () {
+        d->subtitleView->setVisible(!d->subtitleView->isVisible());
+    });
     connect(tool["pref"], &QAction::triggered, this, [this] () {
         if (!d->prefDlg) {
             d->prefDlg = new PrefDialog(this);
-            connect(d->prefDlg, &PrefDialog::applyRequested, this, [this] {d->prefDlg->get(d->preferences); applyPref();});
-            connect(d->prefDlg, &PrefDialog::resetRequested, this, [this] {d->prefDlg->set(d->pref());});
+            connect(d->prefDlg, &PrefDialog::applyRequested, this, [this] {
+                d->prefDlg->get(d->preferences); applyPref();
+            });
+            connect(d->prefDlg, &PrefDialog::resetRequested, this, [this] {
+                d->prefDlg->set(d->pref());
+            });
         }
         d->prefDlg->set(d->pref());
         d->prefDlg->show();
@@ -1385,50 +1612,67 @@ void MainWindow::connectMenus() {
     connect(tool["find-subtitle"], &QAction::triggered, this, [this] () {
         if (!d->subFindDlg) {
             d->subFindDlg = new SubtitleFindDialog(this);
-            connect(d->subFindDlg, &SubtitleFindDialog::loadRequested, this, [this] (const QString &fileName) {
-                appendSubFiles(QStringList() << fileName, true, d->pref().sub_enc);
+            connect(d->subFindDlg, &SubtitleFindDialog::loadRequested,
+                    this, [this] (const QString &fileName) {
+                appendSubFiles(QStringList(fileName), true, d->pref().sub_enc);
                 showMessage(tr("Downloaded"), QFileInfo(fileName).fileName());
             });
         }
         d->subFindDlg->find(d->engine.mrl());
         d->subFindDlg->show();
     });
-    connect(tool["reload-skin"], &QAction::triggered, this, &MainWindow::reloadSkin);
+    connect(tool["reload-skin"], &QAction::triggered,
+            this, &MainWindow::reloadSkin);
     connect(tool["auto-exit"], &QAction::triggered, this, [this] (bool on) {
         if (on != AppState::get().auto_exit)
             d->push(on, AppState::get().auto_exit, [this] (bool on) {
                 AppState::get().auto_exit = on;
-                showMessage(on ? tr("Exit CMPlayer when the playlist has finished.") : tr("Auto-exit is canceled."));
+                showMessage(on ? tr("Exit CMPlayer when "
+                                    "the playlist has finished.")
+                               : tr("Auto-exit is canceled."));
                 d->menu("tool")["auto-exit"]->setChecked(on);
             });
     });
     connect(tool["auto-shutdown"], &QAction::toggled, this, [this] (bool on) {
         if (on) {
-            if (MBox::warn(this, tr("Auto-shutdown")
-                    , tr("The system will shut down when the play list has finished.")
-                    , {BBox::Ok, BBox::Cancel}) == BBox::Cancel) {
+            if (MBox::warn(this, tr("Auto-shutdown"),
+                           tr("The system will shut down "
+                              "when the play list has finished."),
+                           {BBox::Ok, BBox::Cancel}) == BBox::Cancel) {
                 d->menu("tool")["auto-shutdown"]->setChecked(false);
             } else
-                showMessage(tr("The system will shut down when the play list has finished."));
+                showMessage(tr("The system will shut down "
+                               "when the play list has finished."));
         } else
             showMessage(tr("Auto-shutdown is canceled."));
     });
 
-    Menu &win = d->menu("window");        Menu &help = d->menu("help");
-    d->connectEnumMenu<StaysOnTop>(d->as, win, "win_stays_on_top", &AppState::winStaysOnTopChanged, [this] () { updateStaysOnTop(); });
-    connect(win.g("size"), &ActionGroup::triggered, this, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
-    connect(win["minimize"], &QAction::triggered, this, &MainWindow::showMinimized);
-    connect(win["maximize"], &QAction::triggered, this, &MainWindow::showMaximized);
-    connect(win["close"], &QAction::triggered, this, [this] () { d->menu.hide(); close(); });
+    Menu &win = d->menu("window");
+    d->connectEnumMenu<StaysOnTop>
+            (d->as, win, "win_stays_on_top", &AppState::winStaysOnTopChanged,
+             [this] () { updateStaysOnTop(); });
+    connect(win.g("size"), &ActionGroup::triggered,
+            this, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
+    connect(win["minimize"], &QAction::triggered,
+            this, &MainWindow::showMinimized);
+    connect(win["maximize"], &QAction::triggered,
+            this, &MainWindow::showMaximized);
+    connect(win["close"], &QAction::triggered,
+            this, [this] () { d->menu.hide(); close(); });
 
-    connect(help["about"], &QAction::triggered, this, [this] () {AboutDialog dlg(this); dlg.exec();});
+    Menu &help = d->menu("help");
+    connect(help["about"], &QAction::triggered,
+            this, [this] () {AboutDialog dlg(this); dlg.exec();});
     connect(d->menu["exit"], &QAction::triggered, this, &MainWindow::exit);
 
-    d->connectCurrentStreamActions(&d->menu("play")("title"), &PlayEngine::currentEdition);
-    d->connectCurrentStreamActions(&d->menu("play")("chapter"), &PlayEngine::currentChapter);
+    d->connectCurrentStreamActions(&d->menu("play")("title"),
+                                   &PlayEngine::currentEdition);
+    d->connectCurrentStreamActions(&d->menu("play")("chapter"),
+                                   &PlayEngine::currentChapter);
 }
 
-Playlist MainWindow::generatePlaylist(const Mrl &mrl) const {
+auto MainWindow::generatePlaylist(const Mrl &mrl) const -> Playlist
+{
     if (!mrl.isLocalFile() || !d->pref().enable_generate_playist)
         return Playlist(mrl);
     const auto mode = d->pref().generate_playlist;
@@ -1470,22 +1714,28 @@ Playlist MainWindow::generatePlaylist(const Mrl &mrl) const {
     return list;
 }
 
-void MainWindow::openFromFileManager(const Mrl &mrl) {
+auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
+{
     if (mrl.isPlaylist())
         d->playlist.open(mrl);
-    else
-        d->openWith(d->pref().open_media_from_file_manager, QList<Mrl>() << mrl);
+    else {
+        const auto mode = d->pref().open_media_from_file_manager;
+        d->openWith(mode, QList<Mrl>() << mrl);
+    }
 }
 
-PlayEngine *MainWindow::engine() const {
+auto MainWindow::engine() const -> PlayEngine*
+{
     return &d->engine;
 }
 
-PlaylistModel *MainWindow::playlist() const {
+auto MainWindow::playlist() const -> PlaylistModel*
+{
     return &d->playlist;
 }
 
-void MainWindow::exit() {
+auto MainWindow::exit() -> void
+{
     static bool done = false;
     if (!done) {
         cApp.setScreensaverDisabled(false);
@@ -1496,10 +1746,12 @@ void MainWindow::exit() {
     }
 }
 
-void MainWindow::play() {
+auto MainWindow::play() -> void
+{
     if (d->stateChanging)
         return;
-    if (d->pref().pause_to_play_next_image && d->pref().image_duration == 0 && d->engine.mrl().isImage())
+    if (d->pref().pause_to_play_next_image
+            && d->pref().image_duration == 0 && d->engine.mrl().isImage())
         d->menu("play")["next"]->trigger();
     else {
         const auto state = d->engine.state();
@@ -1517,10 +1769,12 @@ void MainWindow::play() {
     }
 }
 
-void MainWindow::togglePlayPause() {
+auto MainWindow::togglePlayPause() -> void
+{
     if (d->stateChanging)
         return;
-    if (d->pref().pause_to_play_next_image && d->pref().image_duration == 0 && d->engine.mrl().isImage())
+    if (d->pref().pause_to_play_next_image
+            && d->pref().image_duration == 0 && d->engine.mrl().isImage())
         d->menu("play")["next"]->trigger();
     else {
         const auto state = d->engine.state();
@@ -1536,7 +1790,8 @@ void MainWindow::togglePlayPause() {
     }
 }
 
-void MainWindow::updateRecentActions(const QList<Mrl> &list) {
+auto MainWindow::updateRecentActions(const QList<Mrl> &list) -> void
+{
     Menu &recent = d->menu("open")("recent");
     ActionGroup *group = recent.g();
     const int diff = group->actions().size() - list.size();
@@ -1564,11 +1819,13 @@ void MainWindow::updateRecentActions(const QList<Mrl> &list) {
     recent.syncActions();
 }
 
-void MainWindow::openMrl(const Mrl &mrl) {
+auto MainWindow::openMrl(const Mrl &mrl) -> void
+{
     openMrl(mrl, QString());
 }
 
-void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
+auto MainWindow::openMrl(const Mrl &mrl, const QString &enc) -> void
+{
     if (mrl == d->engine.mrl()) {
         if (!d->engine.startInfo().isValid())
             d->load(mrl);
@@ -1585,11 +1842,8 @@ void MainWindow::openMrl(const Mrl &mrl, const QString &enc) {
     }
 }
 
-TopLevelItem *MainWindow::topLevelItem() const {
-    return &d->topLevelItem;
-}
-
-void MainWindow::showMessage(const QString &message, const bool *force) {
+auto MainWindow::showMessage(const QString &message, const bool *force) -> void
+{
     if (force) {
         if (!*force)
             return;
@@ -1599,7 +1853,8 @@ void MainWindow::showMessage(const QString &message, const bool *force) {
         d->showOSD(message);
 }
 
-void MainWindow::checkWindowState() {
+auto MainWindow::checkWindowState() -> void
+{
     const auto state = windowState();
     d->updateWindowSizeState();
     setWindowFilePath(d->filePath);
@@ -1625,7 +1880,8 @@ void MainWindow::checkWindowState() {
     UtilObject::setFullScreen(full);
 }
 
-void MainWindow::setFullScreen(bool full) {
+auto MainWindow::setFullScreen(bool full) -> void
+{
     d->dontPause = true;
     if (full != d->fullScreen) {
         d->fullScreen = full;
@@ -1643,7 +1899,8 @@ void MainWindow::setFullScreen(bool full) {
                     setWindowFlags(flags | Qt::FramelessWindowHint);
                     SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
                     show();
-                    setGeometry(QRect(QPoint(0, 0), desktop->screenGeometry(this).size()));
+                    setGeometry(QRect(QPoint(0, 0),
+                                      desktop->screenGeometry(this).size()));
                 }
             } else {
                 setWindowFlags(flags);
@@ -1655,14 +1912,22 @@ void MainWindow::setFullScreen(bool full) {
             updateStaysOnTop();
         } else
 #endif
-            setWindowState(full ? Qt::WindowFullScreen : (d->prevWinState & ~(Qt::WindowMinimized | Qt::WindowFullScreen)));
+        {
+            constexpr auto minfull = Qt::WindowMinimized | Qt::WindowFullScreen;
+            setWindowState(full ? Qt::WindowFullScreen
+                                : (d->prevWinState & ~minfull));
+        }
     }
     d->dontPause = false;
 }
 
-bool MainWindow::isFullScreen() const {return d->fullScreen || QWidget::isFullScreen();}
+auto MainWindow::isFullScreen() const -> bool
+{
+    return d->fullScreen || QWidget::isFullScreen();
+}
 
-void MainWindow::setVideoSize(double rate) {
+auto MainWindow::setVideoSize(double rate) -> void
+{
     if (rate < 0) {
         setFullScreen(!isFullScreen());
     } else {
@@ -1677,14 +1942,16 @@ void MainWindow::setVideoSize(double rate) {
     }
 }
 
-void MainWindow::resetMoving() {
+auto MainWindow::resetMoving() -> void
+{
     if (d->moving) {
         d->moving = false;
         d->prevPos = QPoint();
     }
 }
 
-void MainWindow::onMouseMoveEvent(QMouseEvent *event) {
+auto MainWindow::onMouseMoveEvent(QMouseEvent *event) -> void
+{
     QWidget::mouseMoveEvent(event);
     d->cancelToHideCursor();
     const bool full = isFullScreen();
@@ -1701,7 +1968,8 @@ void MainWindow::onMouseMoveEvent(QMouseEvent *event) {
     d->engine.sendMouseMove(d->renderer.mapToVideo(event->pos()));
 }
 
-void MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) {
+auto MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) -> void
+{
     QWidget::mouseDoubleClickEvent(event);
     if (event->buttons() & Qt::LeftButton) {
         const auto &info = d->pref().double_click_map[event->modifiers()];
@@ -1717,7 +1985,8 @@ void MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) {
     }
 }
 
-void MainWindow::onMouseReleaseEvent(QMouseEvent *event) {
+auto MainWindow::onMouseReleaseEvent(QMouseEvent *event) -> void
+{
     QWidget::mouseReleaseEvent(event);
     const auto rect = geometry();
     if (d->middleClicked && event->button() == Qt::MiddleButton
@@ -1728,7 +1997,8 @@ void MainWindow::onMouseReleaseEvent(QMouseEvent *event) {
     }
 }
 
-void MainWindow::onMousePressEvent(QMouseEvent *event) {
+auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
+{
     QWidget::mousePressEvent(event);
     d->middleClicked = false;
     bool showContextMenu = false;
@@ -1755,7 +2025,8 @@ void MainWindow::onMousePressEvent(QMouseEvent *event) {
     d->engine.sendMouseClick(d->renderer.mapToVideo(event->pos()));
 }
 
-void MainWindow::onWheelEvent(QWheelEvent *event) {
+auto MainWindow::onWheelEvent(QWheelEvent *event) -> void
+{
     QWidget::wheelEvent(event);
     const auto delta = event->delta();
     if (delta) {
@@ -1768,12 +2039,14 @@ void MainWindow::onWheelEvent(QWheelEvent *event) {
     }
 }
 
-void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+auto MainWindow::dragEnterEvent(QDragEnterEvent *event) -> void
+{
     if (event->mimeData()->hasUrls())
         event->acceptProposedAction();
 }
 
-void MainWindow::dropEvent(QDropEvent *event) {
+auto MainWindow::dropEvent(QDropEvent *event) -> void
+{
     const auto urls = event->mimeData()->urls();
     if (!event->mimeData()->hasUrls() || urls.isEmpty())
         return;
@@ -1798,14 +2071,10 @@ void MainWindow::dropEvent(QDropEvent *event) {
         appendSubFiles(subList, true, d->pref().sub_enc);
 }
 
-void MainWindow::reloadSkin() {
+auto MainWindow::reloadSkin() -> void
+{
     d->player = nullptr;
-    d->view->engine()->clearComponentCache();
-
-    d->view->rootContext()->setContextProperty("Util", &UtilObject::get());
-    Skin::apply(d->view, d->pref().skin_name);
-    if (d->view->status() == QQuickView::Error)
-        d->view->setSource(QUrl("qrc:/emptyskin.qml"));
+    d->view->setSkin(d->pref().skin_name);
     auto root = d->view->rootObject();
     if (!root)
         return;
@@ -1814,17 +2083,17 @@ void MainWindow::reloadSkin() {
     if (!d->player)
         d->player = root->findChild<QQuickItem*>("player");
     if (d->player) {
-        if (auto item = d->findItem("playinfo"))
+        if (auto item = d->view->findItem("playinfo"))
             item->setProperty("show", AppState::get().playinfo_visible);
-        if (auto item = d->findItem("logo")) {
+        if (auto item = d->view->findItem("logo")) {
             item->setProperty("show", d->pref().show_logo);
             item->setProperty("color", d->pref().bg_color);
         }
     }
-    d->topLevelItem.setParentItem(d->view->contentItem());
 }
 
-void MainWindow::applyPref() {
+auto MainWindow::applyPref() -> void
+{
     int time = -1, title = -1;
     switch (d->engine.state()) {
     case PlayEngine::Playing:
@@ -1842,11 +2111,13 @@ void MainWindow::applyPref() {
     const auto backend = p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None;
     const auto codecs = p.enable_hwaccel ? p.hwaccel_codecs : QList<int>();
     d->engine.setHwAcc(backend, codecs);
-    d->engine.setVolumeNormalizerOption(p.normalizer_length,
-                                        p.normalizer_target,
-                                        p.normalizer_silence,
-                                        p.normalizer_min,
-                                        p.normalizer_max);
+    AudioNormalizerOption normalizer;
+    normalizer.bufferLengthInSeconds = p.normalizer_length;
+    normalizer.targetLevel = p.normalizer_target;
+    normalizer.minimumGain = p.normalizer_min;
+    normalizer.maximumGain = p.normalizer_max;
+    normalizer.silenceLevel = p.normalizer_silence;
+    d->engine.setVolumeNormalizerOption(normalizer);
     d->engine.setImageDuration(p.image_duration);
     d->engine.setChannelLayoutMap(p.channel_manipulation);
     d->engine.setSubtitleStyle(p.sub_style);
@@ -1874,8 +2145,14 @@ void MainWindow::applyPref() {
     d->engine.setAudioDriver(p.audio_driver);
     d->engine.setClippingMethod(p.clipping_method);
     d->engine.setMinimumCache(p.cache_min_playback, p.cache_min_seeking);
-    d->renderer.setKernel(p.blur_kern_c, p.blur_kern_n, p.blur_kern_d,
-                          p.sharpen_kern_c, p.sharpen_kern_n, p.sharpen_kern_d);
+    Kernel3x3 blur, sharpen;
+    blur.setCenter(p.blur_kern_c);
+    blur.setNeighbor(p.blur_kern_n);
+    blur.setDiagonal(p.blur_kern_d);
+    sharpen.setCenter(p.sharpen_kern_c);
+    sharpen.setNeighbor(p.sharpen_kern_n);
+    sharpen.setDiagonal(p.sharpen_kern_d);
+    d->renderer.setKernel(blur, sharpen);
     SubtitleParser::setMsPerCharactor(p.ms_per_char);
     d->subtitle.setPriority(p.sub_priority);
     d->subtitle.setStyle(p.sub_style);
@@ -1902,7 +2179,7 @@ void MainWindow::applyPref() {
     cApp.setMprisActivated(d->preferences.use_mpris2);
 }
 
-template<typename Slot>
+template<class Slot>
 void connectCopies(Menu &menu, const Slot &slot) {
     QObject::connect(&menu, &Menu::aboutToShow, slot);
     for (QMenu *copy : menu.copies()) {
@@ -1910,13 +2187,15 @@ void connectCopies(Menu &menu, const Slot &slot) {
     }
 }
 
-void MainWindow::resizeEvent(QResizeEvent *event) {
+auto MainWindow::resizeEvent(QResizeEvent *event) -> void
+{
     QWidget::resizeEvent(event);
     if (!d->fullScreen)
         d->updateWindowSizeState();
 }
 
-void MainWindow::onKeyPressEvent(QKeyEvent *event) {
+auto MainWindow::onKeyPressEvent(QKeyEvent *event) -> void
+{
     QWidget::keyPressEvent(event);
     constexpr int modMask = Qt::SHIFT | Qt::CTRL | Qt::ALT | Qt::META;
     const QKeySequence shortcut(event->key() + (event->modifiers() & modMask));
@@ -1925,7 +2204,8 @@ void MainWindow::onKeyPressEvent(QKeyEvent *event) {
 }
 
 
-void MainWindow::doVisibleAction(bool visible) {
+auto MainWindow::doVisibleAction(bool visible) -> void
+{
     d->visible = visible;
     if (d->visible) {
         if (d->pausedByHiding && d->engine.isPaused()) {
@@ -1939,33 +2219,39 @@ void MainWindow::doVisibleAction(bool visible) {
     } else {
         if (!d->pref().pause_minimized || d->dontPause)
             return;
-        if (!d->engine.isPlaying() || (d->pref().pause_video_only && !d->engine.hasVideo()))
+        if (!d->engine.isPlaying()
+                || (d->pref().pause_video_only && !d->engine.hasVideo()))
             return;
         d->pausedByHiding = true;
         d->engine.pause();
     }
 }
 
-void MainWindow::showEvent(QShowEvent *event) {
+auto MainWindow::showEvent(QShowEvent *event) -> void
+{
     QWidget::showEvent(event);
     doVisibleAction(true);
 }
 
-void MainWindow::hideEvent(QHideEvent *event) {
+auto MainWindow::hideEvent(QHideEvent *event) -> void
+{
     QWidget::hideEvent(event);
     doVisibleAction(false);
 }
 
-void MainWindow::changeEvent(QEvent *event) {
+auto MainWindow::changeEvent(QEvent *event) -> void
+{
     QWidget::changeEvent(event);
     if (event->type() == QEvent::WindowStateChange)
         checkWindowState();
 }
 
-void MainWindow::closeEvent(QCloseEvent *event) {
+auto MainWindow::closeEvent(QCloseEvent *event) -> void
+{
     QWidget::closeEvent(event);
 #ifndef Q_OS_MAC
-    if (d->tray && d->pref().enable_system_tray && d->pref().hide_rather_close) {
+    if (d->tray && d->pref().enable_system_tray
+            && d->pref().hide_rather_close) {
         hide();
         auto &as = AppState::get();
         if (as.ask_system_tray) {
@@ -1992,7 +2278,8 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 #endif
 }
 
-void MainWindow::updateStaysOnTop() {
+auto MainWindow::updateStaysOnTop() -> void
+{
     if (windowState() & Qt::WindowMinimized)
         return;
     d->sotChanging = true;
@@ -2010,7 +2297,8 @@ void MainWindow::updateStaysOnTop() {
     d->sotChanging = false;
 }
 
-void MainWindow::updateTitle() {
+auto MainWindow::updateTitle() -> void
+{
     const auto mrl = d->engine.mrl();
     setWindowFilePath(QString());
     QString fileName;
@@ -2027,7 +2315,8 @@ void MainWindow::updateTitle() {
     cApp.setWindowTitle(this, fileName);
 }
 
-void MainWindow::updateMrl(const Mrl &mrl) {
+auto MainWindow::updateMrl(const Mrl &mrl) -> void
+{
     updateTitle();
     const auto disc = mrl.isDisc();
     d->playlist.setLoaded(mrl);
@@ -2036,7 +2325,8 @@ void MainWindow::updateMrl(const Mrl &mrl) {
     menu->setVisible(disc);
 }
 
-void MainWindow::clearSubtitleFiles() {
+auto MainWindow::clearSubtitleFiles() -> void
+{
     d->subtitle.unload();
     qDeleteAll(d->menu("subtitle")("track").g("external")->actions());
     for (auto action : d->menu("subtitle")("track").g("internal")->actions()) {
@@ -2046,14 +2336,20 @@ void MainWindow::clearSubtitleFiles() {
     }
 }
 
-bool MainWindow::load(Subtitle &sub, const QString &fileName, const QString &encoding) {
-    if (sub.load(fileName, encoding, d->pref().sub_enc_autodetection ? d->pref().sub_enc_accuracy*0.01 : -1.0))
+auto MainWindow::load(Subtitle &sub, const QString &fileName,
+                      const QString &encoding) -> bool
+{
+    const auto autodet = d->pref().sub_enc_autodetection;
+    const auto accuracy = autodet ? d->pref().sub_enc_accuracy*0.01 : -1.0;
+    if (sub.load(fileName, encoding, accuracy))
         return true;
     d->engine.addSubtitleStream(fileName, encoding);
     return false;
 }
 
-void MainWindow::appendSubFiles(const QStringList &files, bool checked, const QString &enc) {
+auto MainWindow::appendSubFiles(const QStringList &files,
+                                bool checked, const QString &enc) -> void
+{
     if (!files.isEmpty()) {
         Subtitle sub;
         for (auto file : files) {
@@ -2064,7 +2360,8 @@ void MainWindow::appendSubFiles(const QStringList &files, bool checked, const QS
     }
 }
 
-void MainWindow::moveEvent(QMoveEvent *event) {
+auto MainWindow::moveEvent(QMoveEvent *event) -> void
+{
     QWidget::moveEvent(event);
     if (!d->fullScreen)
         d->updateWindowPosState();

@@ -170,7 +170,8 @@ SubtitleFindDialog::~SubtitleFindDialog() {
     delete d;
 }
 
-void SubtitleFindDialog::find(const Mrl &mrl) {
+auto SubtitleFindDialog::find(const Mrl &mrl) -> void
+{
     d->ui.file->setText(mrl.toLocalFile());
     if (!d->finder->isAvailable()) {
         d->pending = mrl;

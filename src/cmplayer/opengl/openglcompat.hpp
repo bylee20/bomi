@@ -6,6 +6,7 @@
 #include "openglmisc.hpp"
 
 class OpenGLCompat {
+    using TransferInfo = OpenGLTextureTransferInfo;
 public:
     enum Extension {
         TextureRG         = 1 << 0,
@@ -19,55 +20,39 @@ public:
         SgiSwapControl    = 1 << 8,
         MesaSwapControl   = 1 << 9
     };
-    static void initialize(QOpenGLContext *ctx);
-    static void finalize(QOpenGLContext *ctx);
-    static OpenGLTextureTransferInfo textureTransferInfo(OGL::TransferFormat format, int bytesPerComponent = 1);
-    static QByteArray rg(const char *rg) { return  hasExtension(TextureRG) ? QByteArray(rg) : QByteArray(rg).replace('g', 'a'); }
-    static int maximumTextureSize() { return m_maxTexSize; }
-    static bool hasExtension(Extension ext) { return m_extensions & ext; }
-    static const OpenGLCompat &get() { return c; }
-    static QOpenGLFunctions *functions() {
-        auto ctx = QOpenGLContext::currentContext();
-        return ctx ? ctx->functions() : nullptr;
-    }
     ~OpenGLCompat();
-    static void logError(const char *at) {
-        const auto e = glGetError();
-        if (e != GL_NO_ERROR)
-            qWarning("OpenGL error: %s(0x%x) at %s", OpenGLCompat::errorString(e), e, at);
-    }
-    static void check();
-    static const char *errorString(GLenum error);
-    static QOpenGLDebugLogger *logger();
-    static OGL::TextureFormat framebufferObjectTextureFormat();
-    static void debug(const QOpenGLDebugMessage &message);
-    static void setSwapInterval(int frames);
+    static auto initialize(QOpenGLContext *ctx) -> void;
+    static auto finalize(QOpenGLContext *ctx) -> void;
+    static auto transferInfo(OGL::TransferFormat format,
+                             int bytesPerComponent = 1) -> TransferInfo;
+    static auto rg(const char *rg) -> QByteArray;
+    static auto maximumTextureSize() -> int { return s_maxTexSize; }
+    static auto hasExtension(Extension ext) -> bool
+        { return s_extensions & ext; }
+    static auto logError(const char *at) -> int;
+    static auto check() -> void;
+    static auto errorString(GLenum error) -> const char*;
+    static auto logger() -> QOpenGLDebugLogger*;
+    static auto framebufferObjectTextureFormat() -> OGL::TextureFormat;
+    static auto debug(const QOpenGLDebugMessage &message) -> void;
 private:
     OpenGLCompat();
-    static OpenGLCompat c;
+    static int s_maxTexSize, s_extensions;
+    static OpenGLCompat s;
     struct Data;
     Data *d;
-    static int m_maxTexSize;
-    static int m_extensions;
 };
 
-#ifdef CMPLAYER_RELEASE
-#define LOG_GL_ERROR
-#define LOG_GL_ERROR_Q
-#else
-#define LOG_GL_ERROR {\
-    auto e = glGetError(); \
-        if (e != GL_NO_ERROR) \
-            qWarning("OpenGL error: %s(0x%x) at %s line %d in %s", \
-                OpenGLCompat::errorString(e), e, __FILE__, __LINE__, __PRETTY_FUNCTION__);\
-    }
+inline auto OpenGLCompat::rg(const char *rg) -> QByteArray
+{
+    if (hasExtension(TextureRG))
+        return QByteArray(rg);
+    return QByteArray(rg).replace('g', 'a');
+}
 
-#define LOG_GL_ERROR_Q {\
-    auto e = glGetError(); \
-        if (e != GL_NO_ERROR) \
-            qWarning("OpenGL error: %s(0x%x) at %s line %d in %s::%s", \
-                OpenGLCompat::errorString(e), e, __FILE__, __LINE__, metaObject()->className(), __func__);\
-    }
-#endif
+static inline auto _GLFunc() -> QOpenGLFunctions* {
+    auto ctx = QOpenGLContext::currentContext();
+    return ctx ? ctx->functions() : nullptr;
+}
 
 #endif // OPENGLCOMPAT_HPP

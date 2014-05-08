@@ -9,16 +9,16 @@ class TopLevelItem : public SimpleVertexItem {
 public:
     TopLevelItem(QQuickItem *parent = nullptr);
     ~TopLevelItem();
-    bool filteredMousePressEvent() const;
-    void resetMousePressEventFilterState();
+    auto filteredMousePressEvent() const -> bool;
+    auto resetMousePressEventFilterState() -> void;
+    auto updateVertexOnGeometryChanged() const -> bool override { return true; }
+    auto vertexCount() const -> int override { return 4; }
     Q_INVOKABLE void check();
-    bool updateVertexOnGeometryChanged() const override { return true; }
-    int vertexCount() const override { return 4; }
 private:
-    void updateVertex(Vertex *vertex) override;
-    GLenum drawingMode() const override final { return GL_TRIANGLE_STRIP; }
-    void itemChange(ItemChange change, const ItemChangeData &data);
-    void mousePressEvent(QMouseEvent *event) override;
+    auto updateVertex(Vertex *vertex) -> void override;
+    auto drawingMode() const -> GLenum final { return GL_TRIANGLE_STRIP; }
+    auto itemChange(ItemChange change, const ItemChangeData &data) -> void;
+    auto mousePressEvent(QMouseEvent *event) -> void override;
     struct Data;
     Data *d;
 };

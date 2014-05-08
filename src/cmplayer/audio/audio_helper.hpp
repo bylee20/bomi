@@ -11,217 +11,339 @@ extern "C" {
 #include <audio/audio.h>
 }
 
+#define SCONST static constexpr
+#define SCIA static constexpr inline auto
+#define CIA constexpr inline auto
+
 template<int fmt_in>
 struct AudioFormatTrait {
-    static constexpr bool IsInt = (fmt_in & AF_FORMAT_POINT_MASK) == AF_FORMAT_I;
-    static constexpr bool IsSigned = (fmt_in & AF_FORMAT_SIGN_MASK) == AF_FORMAT_SI;
-    static constexpr int Bits = (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_8BIT ? 8 :
-                                (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_16BIT ? 16 :
-                                (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_24BIT ? 24 :
-                                (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_32BIT ? 32 :
-                                (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_64BIT ? 64 : 0;
-    static constexpr int Bytes = Bits/8;
-    static constexpr bool IsPlanar = fmt_in & AF_FORMAT_PLANAR;
-    using SampleType = typename std::conditional<IsInt, typename tmp::integer<Bits, IsSigned>::type, typename tmp::floating_point<Bits>::type>::type;
-    static constexpr ClippingMethod AutoClipping = IsInt ? ClippingMethod::Hard : ClippingMethod::Soft;
+    SCONST bool IsInt = (fmt_in & AF_FORMAT_POINT_MASK) == AF_FORMAT_I;
+    SCONST bool IsSigned = (fmt_in & AF_FORMAT_SIGN_MASK) == AF_FORMAT_SI;
+    SCONST int Bits = (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_8BIT ? 8 :
+                      (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_16BIT ? 16 :
+                      (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_24BIT ? 24 :
+                      (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_32BIT ? 32 :
+                      (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_64BIT ? 64 :0;
+    SCONST int Bytes = Bits/8;
+    SCONST bool IsPlanar = fmt_in & AF_FORMAT_PLANAR;
+    SCONST ClippingMethod AutoClipping = IsInt ? ClippingMethod::Hard
+                                               : ClippingMethod::Soft;
+    using SampleType = tmp::conditional_t<IsInt, tmp::integer_t<Bits, IsSigned>,
+                                                 tmp::floating_point_t<Bits>>;
+};
+
+template<class S>
+struct AudioFormatMpv;
+template<>
+struct AudioFormatMpv<qint8> {
+    SCONST int interleaving = AF_FORMAT_S8;
+    SCONST int planar = AF_FORMAT_S8;
+};
+template<>
+struct AudioFormatMpv<qint16> {
+    SCONST int interleaving = AF_FORMAT_S16;
+    SCONST int planar = AF_FORMAT_S16P;
+};
+template<>
+struct AudioFormatMpv<qint32> {
+    SCONST int interleaving = AF_FORMAT_S32;
+    SCONST int planar = AF_FORMAT_S32P;
+};
+//template<>
+//struct AudioFormatMpv<qint64> {
+//    SCONST int interleaving = AF_FORMAT_S64;
+//    SCONST int planar = AF_FORMAT_S64P;
+//};
+template<>
+struct AudioFormatMpv<float> {
+    SCONST int interleaving = AF_FORMAT_FLOAT;
+    SCONST int planar = AF_FORMAT_FLOATP;
+};
+template<>
+struct AudioFormatMpv<double> {
+    SCONST int interleaving = AF_FORMAT_DOUBLE;
+    SCONST int planar = AF_FORMAT_DOUBLEP;
 };
 
 template<class SampleType>
 struct AudioSampleHelper {
     using S = SampleType;
-    template<class T = S, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-    static constexpr inline S max() { return _Max<S>(); }
-    template<class T = S, typename std::enable_if<!std::is_integral<T>::value, int>::type = 0>
-    static constexpr inline S max() { return 1.0; }
 
-    template<class T = S, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-    static constexpr inline double toLevel(T t) { return (double)qAbs(t)/max(); }
-    template<class T = S, typename std::enable_if<!std::is_integral<T>::value, int>::type = 0>
-    static constexpr inline double toLevel(T t) { return (double)qAbs(t); }
+    template<class T = S, tmp::enable_if_t<tmp::is_integral<T>()> = 0>
+    SCIA max() -> S { return _Max<S>(); }
+    template<class T = S, tmp::enable_if_t<!tmp::is_integral<T>()> = 0>
+    SCIA max() -> S { return 1.0; }
 
-    static constexpr inline S hardclip(S p) { return qBound<S>(-max(), p, max()); }
-    template<class T = S, typename std::enable_if<!std::is_integral<T>::value, int>::type = 0>
-    static constexpr inline T softclip(T p) { return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : std::sin(p)); }
-    template<class T = S, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-    static constexpr inline T softclip(T p) { return max()*softclip<float>((float)p/max()); }
+    template<class T = S, tmp::enable_if_t<tmp::is_integral<T>()> = 0>
+    SCIA toLevel(T t) -> double { return (double)qAbs(t)/max(); }
+    template<class T = S, tmp::enable_if_t<!tmp::is_integral<T>()> = 0>
+    SCIA toLevel(T t) -> double { return (double)qAbs(t); }
 
-    template<ClippingMethod method, typename T> struct Clip { };
-    template<typename T> struct Clip<ClippingMethod::Hard, T> {
-        static constexpr inline T apply (T p) { return hardclip(p); }
-        constexpr inline T operator() (T p) const { return apply(p); }
+    SCIA hardclip(S p) -> S { return qBound<S>(-max(), p, max()); }
+    template<class T = S, tmp::enable_if_t<!tmp::is_integral<T>()> = 0>
+    SCIA softclip(T p) -> T
+    { return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : std::sin(p)); }
+    template<class T = S, tmp::enable_if_t<tmp::is_integral<T>()> = 0>
+    SCIA softclip(T p) -> T { return max()*softclip<float>((float)p/max()); }
+
+    template<ClippingMethod method, class T> struct Clip { };
+    template<class T>
+    struct Clip<ClippingMethod::Hard, T> {
+        SCIA apply (T p) -> T { return hardclip(p); }
+         CIA operator() (T p) const -> T { return apply(p); }
     };
-    template<typename T> struct Clip<ClippingMethod::Soft, T> {
-        static constexpr inline T apply (T p) { return softclip(p); }
-        constexpr inline T operator() (T p) const { return apply(p); }
+    template<class T>
+    struct Clip<ClippingMethod::Soft, T> {
+        SCIA apply (T p) -> T { return softclip(p); }
+         CIA operator() (T p) const -> T { return apply(p); }
     };
     template<ClippingMethod method>
-    static constexpr inline S clip(S p) { return Clip<method, S>::apply(p); }
+    SCIA clip(S p) -> S { return Clip<method, S>::apply(p); }
 
-    template<int s, class T = S, typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
-    static constexpr inline T rshift(const T &t) { return t >> s; }
-    template<int s, class T = S, typename std::enable_if<!std::is_integral<T>::value, int>::type = 0>
-    static constexpr inline T rshift(const T &t) { return t; }
+    template<int s, class T = S, tmp::enable_if_t<tmp::is_integral<T>()> = 0>
+    SCIA rshift(const T &t) -> T { return t >> s; }
+    template<int s, class T = S, tmp::enable_if_t<!tmp::is_integral<T>()> = 0>
+    SCIA rshift(const T &t) -> T { return t; }
 
-    template<class T, class U, bool same = std::is_same<U, T>::value> struct Conv { };
-    template<class T> struct Conv<T, T, true> {
-        static constexpr inline T apply(T p) { static_assert(std::is_same<T, T>::value, "false"); return p; }
-    };
-    template<class T, class U> struct Conv<T, U, false> { static constexpr inline T apply(U p) { return (float)p*max<T>()/max<U>(); } };
+    template<class T, class U, bool same = std::is_same<U, T>::value>
+    struct Conv { };
     template<class T>
-    static constexpr inline T conv(S s) { return Conv<T, S>::apply(s); }
+    struct Conv<T, T, true> {
+        SCIA apply(T p) -> T
+        { static_assert(std::is_same<T, T>::value, "false"); return p; }
+    };
+    template<class T, class U>
+    struct Conv<T, U, false> {
+        SCIA apply(U p) -> T { return (float)p*max<T>()/max<U>(); }
+    };
+    template<class T>
+    SCIA conv(S s) -> T { return Conv<T, S>::apply(s); }
 };
 
-template<int fmt, bool planar = !!(fmt & AF_FORMAT_PLANAR)> struct to_interleaving;
-template<int fmt> struct to_interleaving<fmt, false> { static constexpr int value = fmt; };
-template<> struct to_interleaving<AF_FORMAT_S16P, true> { static constexpr int value = AF_FORMAT_S16; };
-template<> struct to_interleaving<AF_FORMAT_S32P, true> { static constexpr int value = AF_FORMAT_S32; };
-template<> struct to_interleaving<AF_FORMAT_FLOATP, true> { static constexpr int value = AF_FORMAT_FLOAT; };
-template<> struct to_interleaving<AF_FORMAT_DOUBLEP, true> { static constexpr int value = AF_FORMAT_DOUBLE; };
+template<int fmt, bool planar = !!(fmt & AF_FORMAT_PLANAR)>
+struct to_interleaving;
+template<int fmt>
+struct to_interleaving<fmt, false> { SCONST int value = fmt; };
+template<>
+struct to_interleaving<AF_FORMAT_S16P, true> {
+    SCONST int value = AF_FORMAT_S16;
+};
+template<>
+struct to_interleaving<AF_FORMAT_S32P, true> {
+    SCONST int value = AF_FORMAT_S32;
+};
+template<>
+struct to_interleaving<AF_FORMAT_FLOATP, true> {
+    SCONST int value = AF_FORMAT_FLOAT;
+};
+template<>
+struct to_interleaving<AF_FORMAT_DOUBLEP, true> {
+    SCONST int value = AF_FORMAT_DOUBLE;
+};
 
+/******************************************************************************/
 
 template<class S, bool IsPlanar> class AudioDataBuffer;
 template<class S, bool IsPlanar> class AudioDataRange;
 
-template<typename T>
+template<class T>
 struct AudioDataInfo { int frames = 0, nch = 0; QVector<T*> planes; };
 
-template<typename T, bool planar> class AudioDataBufferIterator;
+template<class T, bool planar>
+class AudioDataBufferIterator;
 
-template<typename T>
+template<class T>
 class AudioDataBufferIterator<T, true> {
     using Data = const AudioDataInfo<typename std::remove_const<T>::type>;
 public:
     using value_type = T;
     AudioDataBufferIterator() {}
-    bool operator == (const AudioDataBufferIterator &rhs) const { return m_sample == rhs.m_sample; }
-    bool operator != (const AudioDataBufferIterator &rhs) const { return m_sample != rhs.m_sample; }
-    T& operator*() { return *m_sample; }
-    T operator*() const { return *m_sample; }
-    AudioDataBufferIterator &operator ++ () {
-        ++m_sample; if (++m_frame == d->frames) { m_sample = d->planes[++m_ch]; m_frame = 0; } return *this;
+    auto operator == (const AudioDataBufferIterator &rhs) const -> bool
+        { return m_sample == rhs.m_sample; }
+    auto operator != (const AudioDataBufferIterator &rhs) const -> bool
+        { return m_sample != rhs.m_sample; }
+    auto operator*() -> T& { return *m_sample; }
+    auto operator*() const -> T { return *m_sample; }
+    auto operator ++ (int) const -> AudioDataBufferIterator
+        { AudioDataBufferIterator it(*this); return ++it; }
+    auto operator ++ () -> AudioDataBufferIterator&
+    {
+        ++m_sample;
+        if (++m_frame == d->frames) {
+            m_sample = d->planes[++m_ch];
+            m_frame = 0;
+        }
+        return *this;
     }
-    AudioDataBufferIterator operator ++ (int) const { AudioDataBufferIterator it(*this); return ++it; }
 private:
-    static T *get(Data *d, int frame, int ch) { return d->planes[ch] + frame; }
     AudioDataBufferIterator(Data *d, int frame, int ch)
-    : d(d), m_ch(ch), m_frame(frame), m_sample(get(d, frame, ch)) {}
-    Data *d = nullptr; int m_ch = 0, m_frame = 0; T *m_sample = nullptr;
-    template<class S, bool IsPlanar> friend class AudioDataBuffer;
-    template<class S, bool IsPlanar> friend class AudioDataRange;
-};
-
-template<typename T>
-class AudioDataBufferIterator<T, false> {
-    using Data = const AudioDataInfo<typename std::remove_const<T>::type>;
-public:
-    using value_type = T;
-    AudioDataBufferIterator() {}
-    bool operator == (const AudioDataBufferIterator &rhs) const { return m_sample == rhs.m_sample; }
-    bool operator != (const AudioDataBufferIterator &rhs) const { return m_sample != rhs.m_sample; }
-    T& operator*() { return *m_sample; }
-    T operator*() const { return *m_sample; }
-    AudioDataBufferIterator &operator ++ () { ++m_sample; return *this; }
-    AudioDataBufferIterator operator ++ (int) const { AudioDataBufferIterator it(*this); return ++it; }
-private:
-    static T *get(Data *d, int frame, int ch) { return d->planes[0] + frame*d->nch + ch; }
-    AudioDataBufferIterator(Data *d, int frame, int ch): m_sample(get(d, frame, ch)) {}
+        : d(d), m_ch(ch), m_frame(frame), m_sample(get(d, frame, ch)) { }
+    static auto get(Data *d, int frame, int ch) -> T*
+        { return d->planes[ch] + frame; }
+    Data *d = nullptr;
+    int m_ch = 0, m_frame = 0;
     T *m_sample = nullptr;
     template<class S, bool IsPlanar> friend class AudioDataBuffer;
     template<class S, bool IsPlanar> friend class AudioDataRange;
 };
 
-template<typename T, bool planar> class AudioChannelsOneFrame;
+template<class T>
+class AudioDataBufferIterator<T, false> {
+    using Data = const AudioDataInfo<typename std::remove_const<T>::type>;
+public:
+    using value_type = T;
+    AudioDataBufferIterator() {}
+    auto operator == (const AudioDataBufferIterator &rhs) const -> bool
+        { return m_sample == rhs.m_sample; }
+    auto operator != (const AudioDataBufferIterator &rhs) const -> bool
+        { return m_sample != rhs.m_sample; }
+    auto operator*() -> T& { return *m_sample; }
+    auto operator*() const -> T { return *m_sample; }
+    auto operator ++ () -> AudioDataBufferIterator&
+        { ++m_sample; return *this; }
+    auto operator ++ (int) const -> AudioDataBufferIterator
+        { AudioDataBufferIterator it(*this); return ++it; }
+private:
+    AudioDataBufferIterator(Data *d, int frame, int ch)
+        : m_sample(get(d, frame, ch)) { }
+    static auto get(Data *d, int frame, int ch) -> T*
+        { return d->planes[0] + frame*d->nch + ch; }
+    T *m_sample = nullptr;
+    template<class S, bool IsPlanar> friend class AudioDataBuffer;
+    template<class S, bool IsPlanar> friend class AudioDataRange;
+};
 
-template<typename T>
+/******************************************************************************/
+
+template<class T, bool planar>
+class AudioChannelsOneFrame;
+
+template<class T>
 class AudioChannelsOneFrame<T, true> {
     using Data = const AudioDataInfo<typename std::remove_const<T>::type>;
     Data *d = nullptr; int m_frame = 0;
 public:
-    AudioChannelsOneFrame(Data *info, int frame): d(info), m_frame(frame) {}
-    int size() const { return d->nch; }
-    int frame() const { return m_frame; }
-    T &operator [] (int ch) { return *get(ch); }
-    T operator [] (int ch) const { return *get(ch); }
-    T *get(int ch = 0) const { return d->planes[ch] + m_frame; }
     struct iterator {
         using value_type = T;
         iterator() {}
-        bool operator == (const iterator &rhs) const { return m_sample == rhs.m_sample; }
-        bool operator != (const iterator &rhs) const { return m_sample != rhs.m_sample; }
-        T& operator*() { return *m_sample; }
-        T operator*() const { return *m_sample; }
-        iterator &operator ++ () { m_sample = d->planes[++m_ch] + m_frame; return *this; }
-        iterator operator ++ (int) const { iterator it(*this); return ++it; }
-        int channel() const { return m_ch; }
+        auto operator == (const iterator &rhs) const -> bool
+            { return m_sample == rhs.m_sample; }
+        auto operator != (const iterator &rhs) const -> bool
+            { return m_sample != rhs.m_sample; }
+        auto operator*() -> T& { return *m_sample; }
+        auto operator*() const -> T { return *m_sample; }
+        auto operator ++ () -> iterator&
+            { m_sample = d->planes[++m_ch] + m_frame; return *this; }
+        auto operator ++ (int) const -> iterator
+            { iterator it(*this); return ++it; }
+        auto channel() const -> int { return m_ch; }
     private:
         iterator(const AudioChannelsOneFrame *p, int ch)
-        : d(p->d), m_frame(p->m_frame), m_ch(ch), m_sample(p->get(ch)) {}
-        Data *d = nullptr; int m_frame = 0, m_ch = 0; T *m_sample = nullptr;
+            : d(p->d), m_frame(p->m_frame), m_ch(ch), m_sample(p->get(ch)) { }
+        Data *d = nullptr;
+        int m_frame = 0, m_ch = 0;
+        T *m_sample = nullptr;
         friend class AudioChannelsOneFrame;
     };
-    iterator begin() const { return iterator(this, 0); }
-    iterator end() const { return iterator(this, d->nch); }
+
+    AudioChannelsOneFrame(Data *info, int frame)
+        : d(info), m_frame(frame) { }
+    auto size() const -> int { return d->nch; }
+    auto frame() const -> int { return m_frame; }
+    auto operator [] (int ch) -> T& { return *get(ch); }
+    auto operator [] (int ch) const -> T { return *get(ch); }
+    auto get(int ch = 0) const -> T* { return d->planes[ch] + m_frame; }
+    auto begin() const -> iterator { return iterator(this, 0); }
+    auto end() const -> iterator { return iterator(this, d->nch); }
 };
 
-template<typename T>
+template<class T>
 class AudioChannelsOneFrame<T, false> {
     using Data = const AudioDataInfo<typename std::remove_const<T>::type>;
     Data *d = nullptr; int m_frame = 0;
 public:
-    AudioChannelsOneFrame(Data *info, int frame): d(info), m_frame(frame) {}
-    int size() const { return d->nch; }
-    int frame() const { return m_frame; }
-    T &operator [] (int ch) { return *get(ch); }
-    T operator [] (int ch) const { return *get(ch); }
-    T *get(int ch = 0) const { return d->planes[0] + m_frame*d->nch + ch; }
     struct iterator {
         using value_type = T;
         iterator() {}
-        bool operator == (const iterator &rhs) const { return m_sample == rhs.m_sample; }
-        bool operator != (const iterator &rhs) const { return m_sample != rhs.m_sample; }
-        T& operator*() { return *m_sample; }
-        T operator*() const { return *m_sample; }
-        iterator &operator ++ () { ++m_sample; ++m_ch; return *this; }
-        iterator operator ++ (int) const { iterator it(*this); return ++it; }
-        int channel() const { return m_ch; }
+        auto operator == (const iterator &rhs) const -> bool
+            { return m_sample == rhs.m_sample; }
+        auto operator != (const iterator &rhs) const -> bool
+            { return m_sample != rhs.m_sample; }
+        auto operator * () -> T& { return *m_sample; }
+        auto operator*() const -> T { return *m_sample; }
+        auto operator ++ () -> iterator& { ++m_sample; ++m_ch; return *this; }
+        auto operator ++ (int) const -> iterator
+            { iterator it(*this); return ++it; }
+        auto channel() const -> int { return m_ch; }
     private:
-        iterator(const AudioChannelsOneFrame *p, int ch): m_sample(p->get(ch)), m_ch(ch) {}
+        iterator(const AudioChannelsOneFrame *p, int ch)
+            : m_sample(p->get(ch)), m_ch(ch) { }
         T *m_sample = nullptr; int m_ch = 0;
         friend class AudioChannelsOneFrame;
     };
-    iterator begin() const { return iterator(this, 0); }
-    iterator end() const { return iterator(this, d->nch); }
+
+    AudioChannelsOneFrame(Data *info, int frame)
+        : d(info), m_frame(frame) { }
+    auto size() const -> int { return d->nch; }
+    auto frame() const -> int { return m_frame; }
+    auto operator [] (int ch) -> T& { return *get(ch); }
+    auto operator [] (int ch) const -> T { return *get(ch); }
+    auto get(int ch = 0) const -> T*
+        { return d->planes[0] + m_frame*d->nch + ch; }
+    auto begin() const -> iterator { return iterator(this, 0); }
+    auto end() const -> iterator { return iterator(this, d->nch); }
 };
 
+/******************************************************************************/
+
 namespace detail {
-template<class S, bool planar_out, bool planar_in> struct Increment {
+
+template<class S, bool planar_out, bool planar_in>
+struct Increment {
     Increment(int = 0) {}
-    template<class... Args>    void operator() (S *&output, const Args*&... inputs) const { ++output; tmp::pass(++inputs...); }
+    template<class... Args>
+    auto operator() (S *&output, const Args*&... inputs) const -> void
+        { ++output; tmp::pass(++inputs...); }
 };
-template<class S> struct Increment<S, false, true> {
+
+template<class S>
+struct Increment<S, false, true> {
     Increment(int nch): nch(nch) {} int nch = 0;
-    template<class... Args> void operator() (S *&output, const Args*&... inputs) const { output += nch; tmp::pass(++inputs...); }
+    template<class... Args>
+    auto operator() (S *&output, const Args*&... inputs) const -> void
+        { output += nch; tmp::pass(++inputs...); }
 };
-template<class S> struct Increment<S, true, false> {
+
+template<class S>
+struct Increment<S, true, false> {
     Increment(int nch): nch(nch) {} int nch = 0;
-    template<class... Args> void operator() (S *&output, const Args*&... inputs) const { ++output; tmp::pass(inputs += nch...); }
+    template<class... Args>
+    auto operator() (S *&output, const Args*&... inputs) const -> void
+        { ++output; tmp::pass(inputs += nch...); }
 };
 
 template<class F, class... Args, int... I>
-static inline void call(F &&func, const std::tuple<Args...> &tuple, tmp::index_list<I...>) {
+SIA call(F &&func, const std::tuple<Args...> &tuple,
+                        tmp::index_list<I...>) -> void {
     func(*std::get<I>(tuple)...);
 }
+
 template<class... Args, int... I>
-static inline auto extract(int ch, const std::tuple<Args...> &args, tmp::index_list<I...>)
-        -> decltype(std::make_tuple(std::get<I>(args).get(std::get<I+1>(args), ch)...)) {
+SIA extract(int ch, const std::tuple<Args...> &args,
+                           tmp::index_list<I...>)
+-> decltype(std::make_tuple(std::get<I>(args).get(std::get<I+1>(args), ch)...))
+{
     return std::make_tuple(std::get<I>(args).get(std::get<I+1>(args), ch)...);
 }
-template<class F, class S, bool planar_out, class S1, bool planar_in, class... Args>
-static inline void run(const F &func, AudioDataBuffer<S, planar_out> &output, int begin, int frames, const AudioDataBuffer<S1, planar_in> &in0, const Args&... inputs) {
+
+template<class F, class S, bool pout, class S1, bool pin, class... Args>
+SIA run(const F &func, AudioDataBuffer<S, pout> &output, int begin, int frames,
+        const AudioDataBuffer<S1, pin> &in0, const Args&... inputs) -> void
+{
     const auto tuple = std::tie(output, begin, in0, inputs...);
     const auto index_for_extraction = tmp::make_tuple_index<2>(tuple);
     const int nch = in0.channels();
-    const detail::Increment<S, planar_out, planar_in> inc{nch};
+    const detail::Increment<S, pout, pin> inc{nch};
     for (int ch=0; ch<nch; ++ch) {
         auto pointers = extract(ch, tuple, index_for_extraction);
         const auto index = tmp::make_tuple_index(pointers);
@@ -229,25 +351,35 @@ static inline void run(const F &func, AudioDataBuffer<S, planar_out> &output, in
             call(func, pointers, index);
     }
 }
+
 template<class F, class S, class S1, class... Args>
-static inline void run(const F &func, AudioDataBuffer<S, false> &output, int begin, int frames, const AudioDataBuffer<S1, false> &in0, const Args&... inputs) {
-    auto pointers = extract(0, std::tie(output, begin, in0, inputs...), tmp::make_tuple_index<3+sizeof...(Args), 2>());
+SIA run(const F &func, AudioDataBuffer<S, false> &output, int begin, int frames,
+        const AudioDataBuffer<S1, false> &in0, const Args&... inputs) -> void
+{
+    auto pointers = extract(0, std::tie(output, begin, in0, inputs...),
+                            tmp::make_tuple_index<3+sizeof...(Args), 2>());
     const auto for_call = tmp::make_tuple_index(pointers);
     const int samples = frames*output.channels();
     const detail::Increment<S, false, false> inc;
     for (int i=0; i<samples; ++i, tmp::call_with_tuple(inc, pointers, for_call))
         call(func, pointers, for_call);
 }
+
 template<class F, class S>
-static inline void run(const F &func, AudioDataBuffer<S, true> &output, int begin, int frames) {
+SIA run(const F &func, AudioDataBuffer<S, true> &output,
+        int begin, int frames) -> void
+{
     for (int ch=0; ch<output.channels(); ++ch) {
         auto p2 = output.get(begin, ch);
         for (int i=0; i<frames; ++i)
             func(*p2++);
     }
 }
+
 template<class F, class S>
-static inline void run(const F &func, AudioDataBuffer<S, false> &output, int begin, int frames) {
+SIA run(const F &func, AudioDataBuffer<S, false> &output,
+        int begin, int frames) -> void
+{
     auto p2 = output.get(begin);
     const int samples = frames*output.channels();
     for (int i=0; i<samples; ++i)
@@ -257,100 +389,169 @@ static inline void run(const F &func, AudioDataBuffer<S, false> &output, int beg
 }
 
 template<class F, class S, bool planar_out, class... Args>
-static inline void _AudioManipulate(const F &func, AudioDataBuffer<S, planar_out> &output, int begin, int frames, const Args &... args) {
-    detail::run(func, output, begin, frames, args...);
-}
+SIA _AudioManipulate(const F &func, AudioDataBuffer<S, planar_out> &output,
+                     int begin, int frames, const Args &... args) -> void
+    { detail::run(func, output, begin, frames, args...); }
 template<class F, class S, bool planar, class... Args>
-static inline void _AudioManipulate(const F &func, const AudioDataBuffer<S, planar> &output, int begin, int frames, const Args&... inputs) {
-    detail::run(func, const_cast<AudioDataBuffer<S, planar>&>(output), begin, frames, inputs...);
+SIA _AudioManipulate(const F &func, const AudioDataBuffer<S, planar> &output,
+                     int begin, int frames, const Args&... inputs) -> void
+{
+    detail::run(func, const_cast<AudioDataBuffer<S, planar>&>(output),
+                begin, frames, inputs...);
 }
+
+/******************************************************************************/
 
 template<class S, bool IsPlanar>
 class AudioDataBuffer {
-    template<typename F>
-    void setup(const F &f) {
-        if (IsPlanar) { d.planes.resize(d.nch+1); for (int i=0; i<d.nch; ++i) {d.planes[i] = f(i);} }
-        else { d.planes.resize(1); d.planes[0] = f(0); }
-    }
+    template<class F>
+    auto setup(const F &f) -> void;
     typedef AudioDataBufferIterator<S, IsPlanar> iterator;
     typedef AudioDataBufferIterator<const S, IsPlanar> const_iterator;
 public:
-    static constexpr bool isPlanar() { return IsPlanar; }
+    SCONST auto isPlanar() -> bool { return IsPlanar; }
     AudioDataBuffer(int nch = 0) { d.nch = nch; }
     AudioDataBuffer(const mp_audio *data) { setData(data); }
-    AudioDataBuffer(const AudioDataFormat &format, int frames) {
-        d.nch = format.channels.num; expand(frames, 1);
-    }
-    AudioDataBuffer(const AudioDataFormat &format, int frames, S *s) {
-        d.nch = format.channels.num; m_capacity = d.frames = frames;
-        setup([&] (int i) { return s + frames*i; });
-    }
-    S *get(int frame = 0, int ch = 0) { return iterator::get(&d, frame, ch); }
-    const S *get(int frame = 0, int ch = 0) const { return const_iterator::get(&d, frame, ch); }
-    int samples() const { return d.frames*d.nch; }
-    bool expand(int frames, double over = 1.2) {
-        if (m_allocated && frames <= m_capacity)
-            return false;
-        m_allocated = true;
-        d.frames = frames;
-        m_capacity = frames*over + 0.5;
-        m_data.resize(m_capacity*d.nch);
-        setup([&] (int i) { return m_data.data() + m_capacity*i; });
-        return true;
-    }
-    void adjust(int frames) { Q_ASSERT(frames <= m_capacity); d.frames = frames; }
-    int channels() const { return d.nch; }
-    int frames() const { return d.frames; }
-    int capacity() const { return m_capacity; }
-    void setData(const mp_audio *data) {
-        d.nch = data->nch; m_capacity = d.frames = data->samples;
-        setup([&] (int i) { return (S*)data->planes[i]; });
-        m_data.clear();
-    }
-    void setData(int frames, int nch) {
-        d.frames = frames;
-        if (!m_allocated || nch != d.nch || frames > m_capacity) {
-            m_allocated = true;
-            d.nch = nch;
-            _Expand(m_data, frames*nch);
-            m_capacity = m_data.size()/nch;
-            setup([&] (int i) { return m_data.data() + m_capacity*i; });
-        }
-    }
-
-    bool isEmpty() const { return d.nch <= 0 || d.frames <= 0; }
-    AudioChannelsOneFrame<S, IsPlanar> channels(int frame) { return AudioChannelsOneFrame<S, IsPlanar>(&d, frame); }
-    AudioChannelsOneFrame<const S, IsPlanar> channels(int frame) const { return AudioChannelsOneFrame<const S, IsPlanar>(&d, frame); }
-    void fill(S s) { _AudioManipulate([&] (S &out) { out = s; }, *this, 0, d.frames); }
-    void fill(int frame, S s) { _AudioManipulate([&] (S &out) { out = s; }, *this, frame, 1); }
+    AudioDataBuffer(const AudioDataFormat &format, int frames)
+        { d.nch = format.channels.num; expand(frames, 1); }
+    AudioDataBuffer(const AudioDataFormat &format, int frames, S *s);
+    auto get(int frame = 0, int ch = 0) -> S*
+        { return iterator::get(&d, frame, ch); }
+    auto get(int frame = 0, int ch = 0) const -> const S*
+        { return const_iterator::get(&d, frame, ch); }
+    auto samples() const -> int { return d.frames*d.nch; }
+    auto expand(int frames, double over = 1.2) -> bool;
+    auto adjust(int frames) -> void
+        { Q_ASSERT(frames <= m_capacity); d.frames = frames; }
+    auto channels() const -> int { return d.nch; }
+    auto frames() const -> int { return d.frames; }
+    auto capacity() const -> int { return m_capacity; }
+    auto setData(const mp_audio *data) -> void;
+    auto setData(int frames, int nch) -> void;
+    auto isEmpty() const -> bool { return d.nch <= 0 || d.frames <= 0; }
+    auto channels(int frame) -> AudioChannelsOneFrame<S, IsPlanar>
+        { return AudioChannelsOneFrame<S, IsPlanar>(&d, frame); }
+    auto channels(int frame) const -> AudioChannelsOneFrame<const S, IsPlanar>
+        { return AudioChannelsOneFrame<const S, IsPlanar>(&d, frame); }
+    auto fill(S s) -> void
+        { _AudioManipulate([&] (S &out) { out = s; }, *this, 0, d.frames); }
+    auto fill(int frame, S s) -> void
+        { _AudioManipulate([&] (S &out) { out = s; }, *this, frame, 1); }
     template<bool planar>
-    typename std::enable_if<IsPlanar && planar>::type
-    copy(int to, const AudioDataBuffer<S, planar> &from, int begin, int count) {
-        for (int i=0; i<d.nch; ++i)
-            memcpy(get(to), from.get(begin), count*sizeof(S));
-    }
+    auto copy(int to, const AudioDataBuffer<S, planar> &from, int begin,
+              int count) -> tmp::enable_if_t<IsPlanar && planar, void>;
     template<bool planar>
-    typename std::enable_if<!IsPlanar && !planar>::type
-    copy(int to, const AudioDataBuffer<S, planar> &from, int begin, int count) {
-        memcpy(get(to), from.get(begin), count*d.nch*sizeof(S));
-    }
+    auto copy(int to, const AudioDataBuffer<S, planar> &from, int begin,
+              int count) -> tmp::enable_if_t<!IsPlanar && !planar, void>;
     template<bool planar>
-    typename std::enable_if<IsPlanar != planar>::type
-    copy(int to, const AudioDataBuffer<S, planar> &from, int begin, int count) {
-        _AudioManipulate([] (S &out, S in) { out = in; }, *this, to, count, from, begin);
-    }
-    void move(int to, const AudioDataBuffer<S, IsPlanar> &from, int begin, int count) {
-        if (IsPlanar) {
-            for (int i=0; i<d.nch; ++i)
-                memmove(get(to), from.get(begin), count*sizeof(S));
-        } else
-            memmove(get(to), from.get(begin), count*d.nch*sizeof(S));
-    }
+    auto copy(int to, const AudioDataBuffer<S, planar> &from, int begin,
+              int count) -> tmp::enable_if_t<IsPlanar != planar, void>;
+    auto move(int to, const AudioDataBuffer<S, IsPlanar> &from, int begin,
+              int count) -> void;
 private:
     bool m_allocated = false;
     QVector<S> m_data;
     AudioDataInfo<S> d;
     int m_capacity = 0;
 };
+
+template<class S, bool IsPlanar>
+template<class F>
+inline auto AudioDataBuffer<S, IsPlanar>::setup(const F &f) -> void
+{
+    if (IsPlanar) {
+        d.planes.resize(d.nch+1);
+        for (int i=0; i<d.nch; ++i)
+            d.planes[i] = f(i);
+    } else {
+        d.planes.resize(1);
+        d.planes[0] = f(0);
+    }
+}
+
+template<class S, bool IsPlanar>
+AudioDataBuffer<S, IsPlanar>::AudioDataBuffer(const AudioDataFormat &format,
+                                              int frames, S *s)
+{
+    d.nch = format.channels.num; m_capacity = d.frames = frames;
+    setup([&] (int i) { return s + frames*i; });
+}
+
+template<class S, bool IsPlanar>
+auto AudioDataBuffer<S, IsPlanar>::expand(int frames, double over) -> bool
+{
+    if (m_allocated && frames <= m_capacity)
+        return false;
+    m_allocated = true;
+    d.frames = frames;
+    m_capacity = frames*over + 0.5;
+    m_data.resize(m_capacity*d.nch);
+    setup([&] (int i) { return m_data.data() + m_capacity*i; });
+    return true;
+}
+
+template<class S, bool IsPlanar>
+auto AudioDataBuffer<S, IsPlanar>::setData(const mp_audio *data) -> void
+{
+    d.nch = data->nch;
+    m_capacity = d.frames = data->samples;
+    setup([&] (int i) { return (S*)data->planes[i]; });
+    m_data.clear();
+}
+template<class S, bool IsPlanar>
+auto AudioDataBuffer<S, IsPlanar>::setData(int frames, int nch) -> void
+{
+    d.frames = frames;
+    if (!m_allocated || nch != d.nch || frames > m_capacity) {
+        m_allocated = true;
+        d.nch = nch;
+        _Expand(m_data, frames*nch);
+        m_capacity = m_data.size()/nch;
+        setup([&] (int i) { return m_data.data() + m_capacity*i; });
+    }
+}
+
+template<class S, bool IsPlanar>
+template<bool planar>
+auto AudioDataBuffer<S, IsPlanar>::copy(int to,
+                                        const AudioDataBuffer<S, planar> &from,
+                                        int begin, int count)
+-> tmp::enable_if_t<IsPlanar && planar, void>
+{
+    for (int i=0; i<d.nch; ++i)
+        memcpy(get(to), from.get(begin), count*sizeof(S));
+}
+
+template<class S, bool IsPlanar>
+template<bool planar>
+auto AudioDataBuffer<S, IsPlanar>::copy(int to,
+                                        const AudioDataBuffer<S, planar> &from,
+                                        int begin, int count)
+-> tmp::enable_if_t<!IsPlanar && !planar, void>
+{
+    memcpy(get(to), from.get(begin), count*d.nch*sizeof(S));
+}
+
+template<class S, bool IsPlanar>
+template<bool planar>
+auto AudioDataBuffer<S, IsPlanar>::copy(int to,
+                                        const AudioDataBuffer<S, planar> &from,
+                                        int begin, int count)
+-> tmp::enable_if_t<IsPlanar != planar, void>
+{
+    _AudioManipulate([] (S &out, S in) { out = in; },
+                     *this, to, count, from, begin);
+}
+
+template<class S, bool p>
+auto AudioDataBuffer<S, p>::move(int to, const AudioDataBuffer<S, p> &from,
+                                 int begin, int count) -> void
+{
+    if (p) {
+        for (int i=0; i<d.nch; ++i)
+            memmove(get(to), from.get(begin), count*sizeof(S));
+    } else
+        memmove(get(to), from.get(begin), count*d.nch*sizeof(S));
+}
 
 #endif // AUDIO_HELPER_HPP

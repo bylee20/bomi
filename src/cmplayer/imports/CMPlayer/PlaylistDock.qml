@@ -51,6 +51,12 @@ Item {
             return max+30
         }
 
+        Connections {
+            target:playlist;
+            onSelectedChanged: table.selectedIndex = playlist.selected
+        }
+        onSelectedIndexChanged: playlist.selected = table.selectedIndex
+
         onCountChanged: column.width = contentWidth()
         columns: Cp.ItemColumn { title: "Name"; role: "name"; width: 200; id: column}
 

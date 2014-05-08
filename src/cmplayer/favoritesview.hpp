@@ -13,26 +13,26 @@
 //public:
 //    FavoritesView(PlayEngine *player, QWidget *parent = 0);
 //    ~FavoritesView();
-//    void save() const;
-//    void load();
+//    auto save() const -> void;
+//    auto load() -> void;
 ////signals:
-////    void openRequested(const Core::Mrl &mrl);
+////    auto openRequested(const Core::Mrl &mrl) -> void;
 //private slots:
-//    void addNew();
-//    void addFolder();
-//    void addCurrent();
-//    void erase();
-//    void showContext(const QPoint &pos);
-//    void slotDblClick(QTreeWidgetItem *item);
-//    void modify(Item *item = 0);
+//    auto addNew() -> void;
+//    auto addFolder() -> void;
+//    auto addCurrent() -> void;
+//    auto erase() -> void;
+//    auto showContext(const QPoint &pos) -> void;
+//    auto slotDblClick(QTreeWidgetItem *item) -> void;
+//    auto modify(Item *item = 0) -> void;
 //private:
-//    void save(QTreeWidgetItem *item, QSettings *set) const;
-//    void load(QTreeWidgetItem *parent, QSettings *set);
+//    auto save(QTreeWidgetItem *item, QSettings *set) const -> void;
+//    auto load(QTreeWidgetItem *parent, QSettings *set) -> void;
 //    class ItemDialog;
 //    class Item;
 //    class FolderItem;
 //    class MrlItem;
-//    void addItem(Item *item, bool topLevel);
+//    auto addItem(Item *item, bool topLevel) -> void;
 //    struct Data;
 //    Data *d;
 //};

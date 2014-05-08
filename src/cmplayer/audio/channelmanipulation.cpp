@@ -24,7 +24,14 @@ ChannelName ChNames[] = {
 
 static constexpr int ChNamesSize = sizeof(ChNames)/sizeof(ChNames[0]);
 
-bool ChannelManipulation::isIdentity() const {
+auto _ChmapFromLayout(mp_chmap *chmap, ChannelLayout layout) -> bool
+{
+    const auto data = ChannelLayoutInfo::data(layout);
+    return mp_chmap_from_str(chmap, bstr0(data.constData()));
+}
+
+auto ChannelManipulation::isIdentity() const -> bool
+{
     for (int i=0; i<m_mix.size(); ++i) {
         const auto speaker_out = (mp_speaker_id)i;
         auto &sources = this->sources(speaker_out);
@@ -34,21 +41,24 @@ bool ChannelManipulation::isIdentity() const {
     return true;
 }
 
-QString ChannelManipulation::toString() const {
+auto ChannelManipulation::toString() const -> QString
+{
     QStringList list;
     for (int i=0; i<(int)m_mix.size(); ++i) {
         auto speaker = (mp_speaker_id)i;
-        if (MP_SPEAKER_ID_FL <= speaker && speaker <= MP_SPEAKER_ID_SR && !m_mix[i].isEmpty()) {
+        if (_InRange(MP_SPEAKER_ID_FL, speaker, MP_SPEAKER_ID_SR)
+                && !m_mix[i].isEmpty()) {
             QStringList srcs;
             for (auto &src : m_mix[i])
-                srcs << _L(ChNames[src].abbr);
-            list << _L(ChNames[speaker].abbr) % '!' % srcs.join('/');
+                srcs.push_back(_L(ChNames[src].abbr));
+            list.push_back(_L(ChNames[speaker].abbr) % '!' % srcs.join('/'));
         }
     }
     return list.join(',');
 }
 
-ChannelManipulation ChannelManipulation::fromString(const QString &text) {
+auto ChannelManipulation::fromString(const QString &text) -> ChannelManipulation
+{
     ChannelManipulation man;
     auto list = text.split(',');
     auto nameToId = [] (const QString &name) {
@@ -79,9 +89,11 @@ ChannelManipulation ChannelManipulation::fromString(const QString &text) {
     return man;
 }
 
-static inline mp_speaker_id to_mp_speaker_id(SpeakerId speaker) { return SpeakerIdInfo::data(speaker); }
+static inline auto to_mp_speaker_id(SpeakerId speaker) -> mp_speaker_id
+    { return SpeakerIdInfo::data(speaker); }
 
-static QVector<SpeakerId> speakersInLayout(ChannelLayout layout) {
+static auto speakersInLayout(ChannelLayout layout) -> QVector<SpeakerId>
+{
     QVector<SpeakerId> list;
 #define CHECK(a) {if (SpeakerId::a & (int)layout) {list << SpeakerId::a;}}
     CHECK(FrontLeft);
@@ -99,7 +111,8 @@ static QVector<SpeakerId> speakersInLayout(ChannelLayout layout) {
     return list;
 }
 
-ChannelLayoutMap ChannelLayoutMap::default_() {
+auto ChannelLayoutMap::default_() -> ChannelLayoutMap
+{
     ChannelLayoutMap map;
     auto &items = ChannelLayoutInfo::items();
     auto _mp = [] (SpeakerId speaker) { return to_mp_speaker_id(speaker); };
@@ -113,7 +126,7 @@ ChannelLayoutMap ChannelLayoutMap::default_() {
             for (auto srcSpeaker : srcSpeakers) {
                 const auto mps = to_mp_speaker_id(srcSpeaker);
                 if (srcSpeaker & (int)dstLayout) {
-                    mix[mps] << mps;
+                    mix[mps].push_back(mps);
                     continue;
                 }
                 if (dstLayout == ChannelLayout::Mono) {
@@ -121,45 +134,49 @@ ChannelLayoutMap ChannelLayoutMap::default_() {
                     continue;
                 }
 
-                auto testAndSet = [&mix, _mp, mps, dstLayout] (SpeakerId id) {
+                auto testAndSet = [&] (SpeakerId id) {
                     if (dstLayout & (int)id) {
-                        mix[_mp(id)] << mps;
+                        mix[_mp(id)].push_back(mps);
                         return true;
                     } else
                         return false;
                 };
-                auto testAndSet2 = [dstLayout, &mix, _mp, mps] (SpeakerId left, SpeakerId right) {
+                auto testAndSet2 = [&] (SpeakerId left, SpeakerId right) {
                     if (dstLayout & (left | right)) {
-                        mix[_mp(left)] << mps;
-                        mix[_mp(right)] << mps;
+                        mix[_mp(left)].push_back(mps);
+                        mix[_mp(right)].push_back(mps);
                         return true;
                     } else
                         return false;
                 };
-                auto setLeft = [&mix, mps] () { mix[MP_SPEAKER_ID_FL] << mps; };
-                auto setRight = [&mix, mps] () { mix[MP_SPEAKER_ID_FR] << mps; };
-                auto setBoth = [&setLeft, &setRight] { setLeft(); setRight(); };
+                auto setLeft = [&] () { mix[MP_SPEAKER_ID_FL].push_back(mps); };
+                auto setRight = [&] () { mix[MP_SPEAKER_ID_FR].append(mps); };
+                auto setBoth = [&] { setLeft(); setRight(); };
                 switch (srcSpeaker) {
                 case SpeakerId::FrontLeft:
                 case SpeakerId::FrontRight:
                     Q_ASSERT(false);
                     break;
                 case SpeakerId::LowFrequency:
-                    if (!testAndSet(SpeakerId::FrontCenter) || !testAndSet(SpeakerId::FrontLeftCenter))
+                    if (!testAndSet(SpeakerId::FrontCenter)
+                            || !testAndSet(SpeakerId::FrontLeftCenter))
                         setLeft();
                     break;
                 case SpeakerId::FrontCenter:
-                    if (!testAndSet2(SpeakerId::FrontLeftCenter, SpeakerId::FrontRightCenter))
+                    if (!testAndSet2(SpeakerId::FrontLeftCenter,
+                                     SpeakerId::FrontRightCenter))
                         setBoth();
                     break;
                 case SpeakerId::BackLeft:
-                    if (testAndSet(SpeakerId::BackCenter) || testAndSet(SpeakerId::SideLeft))
+                    if (testAndSet(SpeakerId::BackCenter)
+                            || testAndSet(SpeakerId::SideLeft))
                         break;
                 case SpeakerId::FrontLeftCenter:
                     setLeft();
                     break;
                 case SpeakerId::BackRight:
-                    if (testAndSet(SpeakerId::BackCenter) || testAndSet(SpeakerId::SideRight))
+                    if (testAndSet(SpeakerId::BackCenter)
+                            || testAndSet(SpeakerId::SideRight))
                         break;
                 case SpeakerId::FrontRightCenter:
                     setRight();
@@ -173,8 +190,10 @@ ChannelLayoutMap ChannelLayoutMap::default_() {
                         setLeft();
                     break;
                 case SpeakerId::BackCenter:
-                    if (!testAndSet2(SpeakerId::BackLeft, SpeakerId::BackRight)
-                            && !testAndSet2(SpeakerId::SideLeft, SpeakerId::SideRight))
+                    if (!testAndSet2(SpeakerId::BackLeft,
+                                     SpeakerId::BackRight)
+                            && !testAndSet2(SpeakerId::SideLeft,
+                                            SpeakerId::SideRight))
                         setBoth();
                     break;
                 }
@@ -184,7 +203,8 @@ ChannelLayoutMap ChannelLayoutMap::default_() {
     return map;
 }
 
-ChannelLayout ChannelLayoutMap::toLayout(const mp_chmap &chmap) {
+auto ChannelLayoutMap::toLayout(const mp_chmap &chmap) -> ChannelLayout
+{
     auto &items = SpeakerIdInfo::items();
     int layout = 0;
     for (int i=0; i<chmap.num; ++i) {
@@ -196,8 +216,8 @@ ChannelLayout ChannelLayoutMap::toLayout(const mp_chmap &chmap) {
             }
         }
         if (id < 0) {
-            char *str = nullptr;
-            _Error("Cannot convert mp_chmap(%%) to ChannelLayout", str = mp_chmap_to_str(&chmap));
+            char *str = mp_chmap_to_str(&chmap);
+            _Error("Cannot convert mp_chmap(%%) to ChannelLayout", str);
             talloc_free(str);
             return ChannelLayoutInfo::default_();
         }
@@ -206,19 +226,21 @@ ChannelLayout ChannelLayoutMap::toLayout(const mp_chmap &chmap) {
     return ChannelLayoutInfo::from(layout);
 }
 
-QString ChannelLayoutMap::toString() const {
+auto ChannelLayoutMap::toString() const -> QString
+{
     QStringList list;
     for (auto sit = m_map.begin(); sit != m_map.end(); ++sit) {
         auto srcName = ChannelLayoutInfo::name(sit.key());
         for (auto dit = sit->begin(); dit != sit->end(); ++dit) {
             auto dstName = ChannelLayoutInfo::name(dit.key());
-            list << srcName % ":" % dstName % ":" % dit->toString();
+            list.push_back(srcName % ":" % dstName % ":" % dit->toString());
         }
     }
     return list.join('#');
 }
 
-ChannelLayoutMap ChannelLayoutMap::fromString(const QString &text) {
+auto ChannelLayoutMap::fromString(const QString &text) -> ChannelLayoutMap
+{
     auto list = text.split('#', QString::SkipEmptyParts);
     ChannelLayoutMap map;
     for (auto &one : list) {
@@ -306,11 +328,12 @@ struct ChannelManipulationWidget::Data {
         ChannelLayout output = this->output->currentValue();
         ChannelLayout  input = this-> input->currentValue();
         auto makeHeader = [] (ChannelLayout layout, mp_chmap &chmap) {
-            mp_chmap_from_str(&chmap, bstr0(ChannelLayoutInfo::data(layout).constData()));
+            _ChmapFromLayout(&chmap, layout);
             QStringList header;
             for (int i=0; i<chmap.num; ++i) {
                 const int speaker = chmap.speaker[i];
-                Q_ASSERT(MP_SPEAKER_ID_FL <= speaker && speaker <= MP_SPEAKER_ID_SR);
+                Q_ASSERT(_InRange<int>(MP_SPEAKER_ID_FL,
+                                       speaker, MP_SPEAKER_ID_SR));
                 header.append(QString::fromLatin1(ChNames[speaker].abbr));
             }
             return header;
@@ -323,9 +346,11 @@ struct ChannelManipulationWidget::Data {
         table->setColumnCount(header.size());
         table->setHorizontalHeaderLabels(header);
 
-        table->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-        table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-        table->verticalHeader()->setDefaultAlignment(Qt::AlignRight);
+        auto hv = table->horizontalHeader();
+        hv->setSectionResizeMode(QHeaderView::ResizeToContents);
+        hv = table->verticalHeader();
+        hv->setSectionResizeMode(QHeaderView::ResizeToContents);
+        hv->setDefaultAlignment(Qt::AlignRight);
 
         mp_chmap_reorder_norm(&dest);
         mp_chmap_reorder_norm(&src);
@@ -340,10 +365,11 @@ struct ChannelManipulationWidget::Data {
                 }
                 auto &sources = man.sources((mp_speaker_id)dest.speaker[i]);
                 item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
-                item->setCheckState(sources.contains((mp_speaker_id)src.speaker[j]) ? Qt::Checked : Qt::Unchecked);
+                const auto speaker = static_cast<mp_speaker_id>(src.speaker[j]);
+                const auto has = sources.contains(speaker);
+                item->setCheckState(has ? Qt::Checked : Qt::Unchecked);
             }
         }
-
         currentInput = input;
         currentOutput = output;
     }
@@ -352,7 +378,7 @@ struct ChannelManipulationWidget::Data {
             return;
         mp_chmap src, dst;
         auto getChMap = [] (mp_chmap &chmap, ChannelLayout layout) {
-            mp_chmap_from_str(&chmap, bstr0(ChannelLayoutInfo::data(layout).constData()));
+            _ChmapFromLayout(&chmap, layout);
             mp_chmap_reorder_norm(&chmap);
         };
         getChMap(src, currentInput);
@@ -393,11 +419,13 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
     auto grid = new QGridLayout;
     vbox->addLayout(grid);
     hbox = new QHBoxLayout;
-    hbox->addSpacerItem(new QSpacerItem(50, 0, QSizePolicy::Fixed, QSizePolicy::Fixed));
+    auto si = new QSpacerItem(50, 0, QSizePolicy::Fixed, QSizePolicy::Fixed);
+    hbox->addSpacerItem(si);
     hbox->addWidget(new QLabel(tr("Inputs")));
     grid->addLayout(hbox, 0, 1);
     auto vbox2 = new QVBoxLayout;
-    vbox2->addSpacerItem(new QSpacerItem(0, 50, QSizePolicy::Fixed, QSizePolicy::Fixed));
+    si = new QSpacerItem(0, 50, QSizePolicy::Fixed, QSizePolicy::Fixed);
+    vbox2->addSpacerItem(si);
     vbox2->addWidget(new VerticalLabel(tr("Outputs")));
     grid->addLayout(vbox2, 1, 0);
     grid->addWidget(d->table, 1, 1);
@@ -409,9 +437,9 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
         ex += _L(ChNames[i].abbr) % _L(": ") % _L(ChNames[i].desc);
     }
     grid->addWidget(new QLabel(ex), 0, 2, 2, 1);
-    auto onComboChanged = [this] (const QVariant &) { d->fillMap(); d->makeTable(); };
-    connect(d->output, &DataComboBox::currentDataChanged, onComboChanged);
-    connect(d-> input, &DataComboBox::currentDataChanged, onComboChanged);
+    auto onComboChanged = [this] () { d->fillMap(); d->makeTable(); };
+    connect(d->output, &DataComboBox::currentDataChanged, this, onComboChanged);
+    connect(d-> input, &DataComboBox::currentDataChanged, this, onComboChanged);
 
     Record r("channel_layouts");
     ChannelLayout src = ChannelLayout::_2_0;
@@ -428,17 +456,21 @@ ChannelManipulationWidget::~ChannelManipulationWidget() {
     delete d;
 }
 
-void ChannelManipulationWidget::setCurrentLayouts(ChannelLayout src, ChannelLayout dst) {
+auto ChannelManipulationWidget::setCurrentLayouts(ChannelLayout src,
+                                                  ChannelLayout dst) -> void
+{
     d->output->setCurrentValue(dst);
     d-> input->setCurrentValue(src);
 }
 
-void ChannelManipulationWidget::setMap(const ChannelLayoutMap &map) {
+auto ChannelManipulationWidget::setMap(const ChannelLayoutMap &map) -> void
+{
     d->map = map;
     d->makeTable();
 }
 
-ChannelLayoutMap ChannelManipulationWidget::map() const {
+auto ChannelManipulationWidget::map() const -> ChannelLayoutMap
+{
     d->fillMap();
     return d->map;
 }

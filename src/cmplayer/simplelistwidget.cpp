@@ -32,7 +32,8 @@ SimpleListWidgetBase::SimpleListWidgetBase(QWidget *parent)
     setChangingOrderEnabled(false);
 }
 
-void SimpleListWidgetBase::setAddingAndErasingEnabled(bool enabled) {
+auto SimpleListWidgetBase::setAddingAndErasingEnabled(bool enabled) -> void
+{
     m_addable = enabled;
     m_add->setEnabled(m_addable);
     m_erase->setEnabled(m_addable);
@@ -40,7 +41,8 @@ void SimpleListWidgetBase::setAddingAndErasingEnabled(bool enabled) {
     m_erase->setVisible(m_addable);
 }
 
-void SimpleListWidgetBase::setChangingOrderEnabled(bool enabled) {
+auto SimpleListWidgetBase::setChangingOrderEnabled(bool enabled) -> void
+{
     m_movable = enabled;
     m_up->setEnabled(m_movable);
     m_down->setEnabled(m_movable);

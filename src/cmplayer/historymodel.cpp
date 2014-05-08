@@ -173,15 +173,18 @@ HistoryModel::~HistoryModel() {
     delete d;
 }
 
-int HistoryModel::rowCount(const QModelIndex &index) const {
+auto HistoryModel::rowCount(const QModelIndex &index) const -> int
+{
     return index.isValid() ? 0 : d->rows;
 }
 
-int HistoryModel::columnCount(const QModelIndex &index) const {
+auto HistoryModel::columnCount(const QModelIndex &index) const -> int
+{
     return index.isValid() ? 0 : 3;
 }
 
-void HistoryModel::getAppState(MrlState *appState) {
+auto HistoryModel::getAppState(MrlState *appState) -> void
+{
     d->finder.exec(QString::fromLatin1("SELECT %1 FROM %2 LIMIT 1")
                    .arg(_MrlFieldColumnListString(d->fields)).arg(d->appTable));
     if (!d->finder.next()) {
@@ -191,13 +194,15 @@ void HistoryModel::getAppState(MrlState *appState) {
     _FillMrlStateFromRecord(appState, d->fields, d->finder.record());
 }
 
-void HistoryModel::setAppState(const MrlState *state) {
+auto HistoryModel::setAppState(const MrlState *state) -> void
+{
     d->db.transaction();
     d->insertToApp(state);
     d->db.commit();
 }
 
-bool HistoryModel::getState(MrlState *state) const {
+auto HistoryModel::getState(MrlState *state) const -> bool
+{
     if (!state->mrl.isUnique())
         return false;
     if (d->cached.mrl != state->mrl)
@@ -207,7 +212,8 @@ bool HistoryModel::getState(MrlState *state) const {
     return true;
 }
 
-const MrlState *HistoryModel::find(const Mrl &mrl) const {
+auto HistoryModel::find(const Mrl &mrl) const -> const MrlState*
+{
     if (!mrl.isUnique())
         return nullptr;
     if (d->cached.mrl == mrl)
@@ -218,12 +224,14 @@ const MrlState *HistoryModel::find(const Mrl &mrl) const {
     return &d->cached;
 }
 
-void HistoryModel::play(int row) {
+auto HistoryModel::play(int row) -> void
+{
     if (0 <= row && row < d->rows && d->loader.seek(row))
         emit playRequested(d->getMrl());
 }
 
-QVariant HistoryModel::data(const QModelIndex &index, int role) const {
+auto HistoryModel::data(const QModelIndex &index, int role) const -> QVariant
+{
     if (d->reload) {
         d->load();
         d->reload = false;
@@ -254,7 +262,8 @@ QVariant HistoryModel::data(const QModelIndex &index, int role) const {
     }
 }
 
-QHash<int, QByteArray> HistoryModel::roleNames() const {
+auto HistoryModel::roleNames() const -> QHash<int, QByteArray>
+{
     QHash<int, QByteArray> hash;
     hash[NameRole] = "name";
     hash[LatestPlayRole] = "latestplay";
@@ -262,12 +271,14 @@ QHash<int, QByteArray> HistoryModel::roleNames() const {
     return hash;
 }
 
-QSqlError HistoryModel::error() const {
+auto HistoryModel::error() const -> QSqlError
+{
     return d->error;
 }
 
 
-void HistoryModel::update(const MrlState *state, bool reload) {
+auto HistoryModel::update(const MrlState *state, bool reload) -> void
+{
     if (!d->rememberImage && state->mrl.isImage())
         return;
     if (!state->mrl.isUnique())
@@ -280,11 +291,13 @@ void HistoryModel::update(const MrlState *state, bool reload) {
         d->load();
 }
 
-void HistoryModel::setRememberImage(bool on) {
+auto HistoryModel::setRememberImage(bool on) -> void
+{
     d->rememberImage = on;
 }
 
-void HistoryModel::setPropertiesToRestore(const QList<QMetaProperty> &properties) {
+auto HistoryModel::setPropertiesToRestore(const QList<QMetaProperty> &properties) -> void
+{
     d->restores.clear();
     d->restores.reserve(properties.size());
     for (auto &f : d->fields) {
@@ -293,18 +306,21 @@ void HistoryModel::setPropertiesToRestore(const QList<QMetaProperty> &properties
     }
 }
 
-void HistoryModel::clear() {
+auto HistoryModel::clear() -> void
+{
     d->db.transaction();
     d->loader.exec("DELETE FROM " % d->stateTable);
     d->db.commit();
     d->load();
 }
 
-bool HistoryModel::isVisible() const {
+auto HistoryModel::isVisible() const -> bool
+{
     return d->visible;
 }
 
-void HistoryModel::setVisible(bool visible) {
+auto HistoryModel::setVisible(bool visible) -> void
+{
     if (_Change(d->visible, visible))
         emit visibleChanged(d->visible);
 }

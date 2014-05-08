@@ -2,7 +2,8 @@
 
 int SubtitleParser::msPerChar = -1;
 
-bool SubtitleParser::save(const Subtitle &sub, const QString &fileName, const QString &enc) {
+auto SubtitleParser::save(const Subtitle &sub, const QString &fileName, const QString &enc) -> bool
+{
     QString content;
     if (!_save(content, sub))
         return false;
@@ -18,7 +19,8 @@ bool SubtitleParser::save(const Subtitle &sub, const QString &fileName, const QS
     return true;
 }
 
-Subtitle SubtitleParser::parse(const QString &fileName, const QString &enc) {
+auto SubtitleParser::parse(const QString &fileName, const QString &enc) -> Subtitle
+{
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly) || file.size() > (1 << 20))
         return Subtitle();
@@ -45,7 +47,8 @@ Subtitle SubtitleParser::parse(const QString &fileName, const QString &enc) {
     return Subtitle();
 }
 
-QStringRef SubtitleParser::processLine(int &idx, const QString &contents) {
+auto SubtitleParser::processLine(int &idx, const QString &contents) -> QStringRef
+{
     int from = idx;
     idx = contents.indexOf(QLatin1Char('\n'), from);
     if (idx < 0)
@@ -58,19 +61,22 @@ QStringRef SubtitleParser::processLine(int &idx, const QString &contents) {
     }
 }
 
-int SubtitleParser::predictEndTime(int start, const QString &text) {
+auto SubtitleParser::predictEndTime(int start, const QString &text) -> int
+{
     if (msPerChar > 0)
         return start + text.size()*msPerChar;
     return -1;
 }
 
-int SubtitleParser::predictEndTime(const SubComp::const_iterator &it) {
+auto SubtitleParser::predictEndTime(const SubComp::const_iterator &it) -> int
+{
     if (msPerChar > 0)
         return it.value().totalLength()*msPerChar + it.key();
     return -1;
 }
 
-QString SubtitleParser::encodeEntity(const QStringRef &str) {
+auto SubtitleParser::encodeEntity(const QStringRef &str) -> QString
+{
     QString ret;
     for (int i=0; i<str.size(); ++i) {
         ushort c = str.at(i).unicode();
@@ -95,7 +101,8 @@ QString SubtitleParser::encodeEntity(const QStringRef &str) {
     return ret;
 }
 
-QStringRef SubtitleParser::getLine() const {
+auto SubtitleParser::getLine() const -> QStringRef
+{
     int from = m_pos;
     int end = -1;
     while (m_pos < m_all.size()) {

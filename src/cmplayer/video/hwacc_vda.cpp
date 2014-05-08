@@ -2,7 +2,6 @@
 
 #ifdef Q_OS_MAC
 #include "hwacc_helper.hpp"
-#include "videoframe.hpp"
 #include "openglcompat.hpp"
 #include "log.hpp"
 #include <OpenGL/CGLIOSurface.h>
@@ -40,7 +39,8 @@ HwAccVda::~HwAccVda() {
     delete d;
 }
 
-mp_image *HwAccVda::getImage(mp_image *mpi) {
+auto HwAccVda::getImage(mp_image *mpi) -> mp_image*
+{
     auto buffer = (CVPixelBufferRef)mpi->planes[3];
     auto release = [] (void *arg) {
         CVPixelBufferRef buffer = (CVPixelBufferRef)arg;
@@ -53,21 +53,25 @@ mp_image *HwAccVda::getImage(mp_image *mpi) {
     return img;
 }
 
-bool HwAccVda::isOk() const {
+auto HwAccVda::isOk() const -> bool
+{
     return d->ok;
 }
 
-mp_image *HwAccVda::getSurface() {
+auto HwAccVda::getSurface() -> mp_image*
+{
     auto mpi = null_mp_image(IMGFMT_VDA, size().width(), size().height(), nullptr, nullptr);
     mpi->planes[0] = (uchar*)(void*)(uintptr_t)1;
     return mpi;
 }
 
-void *HwAccVda::context() const {
+auto HwAccVda::context() const -> void*
+{
     return &d->context;
 }
 
-void HwAccVda::freeContext() {
+auto HwAccVda::freeContext() -> void
+{
     if (d->context.decoder) {
         ff_vda_destroy_decoder(&d->context);
         d->context.decoder = nullptr;
@@ -184,7 +188,8 @@ static int _ff_vda_create_decoder(struct vda_context *vda_ctx, uint8_t *extradat
     return status;
 }
 
-bool HwAccVda::fillContext(AVCodecContext *avctx) {
+auto HwAccVda::fillContext(AVCodecContext *avctx) -> bool
+{
     freeContext();
     d->ok = false;
     d->context.width = avctx->width;
@@ -209,7 +214,8 @@ VdaMixer::VdaMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &fo
     m_direct = ::directRendering(format.type());
 }
 
-bool VdaMixer::upload(const VideoFrame &frame, bool /*deint*/) {
+auto VdaMixer::upload(const VideoFrame &frame, bool /*deint*/) -> bool
+{
     Q_ASSERT(frame.format().imgfmt() == IMGFMT_VDA);
     CGLError error = kCGLNoError;
     for (auto &texture : m_textures) {
@@ -226,7 +232,8 @@ bool VdaMixer::upload(const VideoFrame &frame, bool /*deint*/) {
     return true;
 }
 
-void VdaMixer::adjust(VideoFormatData *data, const mp_image *mpi) {
+auto VdaMixer::adjust(VideoFormatData *data, const mp_image *mpi) -> void
+{
     Q_ASSERT(data->imgfmt == IMGFMT_VDA);
     auto buffer = (CVPixelBufferRef)mpi->planes[3];
     switch (CVPixelBufferGetPixelFormatType(buffer)) {

@@ -6,22 +6,26 @@ extern "C" {
 #include <audio/chmap.h>
 }
 
-enum class ChannelLayout;
-enum class SpeakerId;
+enum class ChannelLayout;               enum class SpeakerId;
 
 class ChannelManipulation {
 public:
     ChannelManipulation(): m_mix(MP_SPEAKER_ID_COUNT) {}
     using SourceArray = QVector<mp_speaker_id>;
-    const SourceArray &sources(mp_speaker_id out) const { return m_mix[out]; }
-    QString toString() const;
-    static ChannelManipulation fromString(const QString &text);
-    bool hasSources(mp_speaker_id dest) const { return !m_mix[dest].isEmpty(); }
-    bool isIdentity() const;
+    auto sources(int speaker_out) const -> const SourceArray&
+        { return m_mix[speaker_out]; }
+    auto hasSources(mp_speaker_id dest) const -> bool
+        { return !m_mix[dest].isEmpty(); }
+    auto toString() const -> QString;
+    auto isIdentity() const -> bool;
+    static auto fromString(const QString &text) -> ChannelManipulation;
 private:
-    void set(mp_speaker_id dest, const SourceArray &src) { m_mix[dest] = src; }
-    void set(mp_speaker_id dest, mp_speaker_id src) { m_mix[dest].resize(1); m_mix[dest][0] = src; }
-    void add(mp_speaker_id dest, mp_speaker_id src) { m_mix[dest].append(src); }
+    auto set(mp_speaker_id dest, const SourceArray &src) -> void
+        { m_mix[dest] = src; }
+    auto set(mp_speaker_id dest, mp_speaker_id src) -> void
+        { m_mix[dest].resize(1); m_mix[dest][0] = src; }
+    auto add(mp_speaker_id dest, mp_speaker_id src) -> void
+        { m_mix[dest].append(src); }
     friend class ChannelLayoutMap;
     friend class ChannelManipulationWidget;
     QVector<SourceArray> m_mix;
@@ -29,19 +33,20 @@ private:
 
 class ChannelLayoutMap {
 public:
-    ChannelManipulation operator () (ChannelLayout src, ChannelLayout dest) const {
-        return m_map[src][dest];
-    }
-    ChannelManipulation operator () (const mp_chmap &src, const mp_chmap &dest) const {
-        return m_map[toLayout(src)][toLayout(dest)];
-    }
-    QString toString() const;
-    static ChannelLayoutMap fromString(const QString &text);
-    static ChannelLayoutMap default_();
-    bool isEmpty() const { return m_map.isEmpty(); }
-    static ChannelLayout toLayout(const mp_chmap &chmap);
+    auto operator () (ChannelLayout src,
+                      ChannelLayout dest) const -> ChannelManipulation
+        { return m_map[src][dest]; }
+    auto operator () (const mp_chmap &src,
+                      const mp_chmap &dest) const -> ChannelManipulation
+        { return m_map[toLayout(src)][toLayout(dest)]; }
+    auto toString() const -> QString;
+    auto isEmpty() const -> bool { return m_map.isEmpty(); }
+    static auto toLayout(const mp_chmap &chmap) -> ChannelLayout;
+    static auto fromString(const QString &text) -> ChannelLayoutMap;
+    static auto default_() -> ChannelLayoutMap;
 private:
-    ChannelManipulation &get(ChannelLayout src, ChannelLayout dest) { return m_map[src][dest]; }
+    auto get(ChannelLayout src, ChannelLayout dest) -> ChannelManipulation&
+        { return m_map[src][dest]; }
     QMap<ChannelLayout, QMap<ChannelLayout, ChannelManipulation>> m_map;
     friend class ChannelManipulationWidget;
 };
@@ -51,12 +56,14 @@ class ChannelManipulationWidget : public QWidget {
 public:
     ChannelManipulationWidget(QWidget *parent = nullptr);
     ~ChannelManipulationWidget();
-    void setMap(const ChannelLayoutMap &map);
-    ChannelLayoutMap map() const;
-    void setCurrentLayouts(ChannelLayout src, ChannelLayout dst);
+    auto setMap(const ChannelLayoutMap &map) -> void;
+    auto map() const -> ChannelLayoutMap;
+    auto setCurrentLayouts(ChannelLayout src, ChannelLayout dst) -> void;
 private:
     struct Data;
     Data *d;
 };
+
+auto _ChmapFromLayout(mp_chmap *chmap, ChannelLayout layout) -> bool;
 
 #endif // CHANNELMANIPULATION_HPP

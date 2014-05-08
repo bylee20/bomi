@@ -10,8 +10,8 @@ class SimpleVertexItem : public VertexDrawItem<OGL::PositionVertex> {
 public:
     SimpleVertexItem(QQuickItem *parent = nullptr);
     ~SimpleVertexItem();
-    QColor color() const { return m_color; }
-    void setColor(const QColor &color);
+    auto color() const -> QColor { return m_color; }
+    auto setColor(const QColor &color) -> void;
 signals:
     void colorChanged();
 private:

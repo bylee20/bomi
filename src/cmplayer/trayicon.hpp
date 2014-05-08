@@ -13,16 +13,19 @@ public:
     };
     TrayIcon(const QIcon &icon, QObject *parent = nullptr);
     ~TrayIcon();
-    static bool isAvailable();
-    void setVisible(bool visible);
-    static bool isUnity() { return (qgetenv("XDG_CURRENT_DESKTOP").toLower() == "unity"); }
+    auto setVisible(bool visible) -> void;
+    static auto isAvailable() -> bool;
+    static auto isUnity() -> bool;
 signals:
     void activated(ActivationReason reason);
 private:
-    static void onQuit(void *menu, void *arg);
-    static void onShow(void *menu, void *arg);
+    static auto onQuit(void *menu, void *arg) -> void;
+    static auto onShow(void *menu, void *arg) -> void;
     struct Data;
     Data *d;
 };
+
+inline auto TrayIcon::isUnity() -> bool
+{ return (qgetenv("XDG_CURRENT_DESKTOP").toLower() == "unity"); }
 
 #endif // TRAYICON_HPP

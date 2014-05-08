@@ -1,5 +1,5 @@
 TEMPLATE = app
-CONFIG += link_pkgconfig debug_and_release precompile_header c++11
+CONFIG += link_pkgconfig debug_and_release precompile_header c++11 object_parallel_to_source
 macx:CONFIG -= app_bundle
 
 QT = core gui network quick widgets sql xml
@@ -143,7 +143,12 @@ HEADERS += \
     mrlstate_old.hpp \
     log.hpp \
     mpv_helper.hpp \
-	udf25.hpp
+	udf25.hpp \
+    audio/audionormalizeroption.hpp \
+    video/videoimagepool.hpp \
+    opengl/opengloffscreencontext.hpp \
+    video/videoframebufferobject.hpp \
+    mainquickview.hpp
 
 SOURCES += \
 	audio/audiocontroller.cpp \
@@ -242,7 +247,12 @@ SOURCES += \
     mrlstate_old.cpp \
     log.cpp \
     mpv_helper.cpp \
-	udf25.cpp
+	udf25.cpp \
+    audio/audionormalizeroption.cpp \
+    video/videoimagepool.cpp \
+    opengl/opengloffscreencontext.cpp \
+    video/videoframebufferobject.cpp \
+    mainquickview.cpp
 
 
 TRANSLATIONS += translations/cmplayer_ko.ts \

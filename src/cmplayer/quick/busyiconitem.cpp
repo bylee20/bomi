@@ -65,17 +65,20 @@ BusyIconItem::~BusyIconItem() {
     delete d;
 }
 
-void BusyIconItem::itemChange(ItemChange change, const ItemChangeData &data) {
+auto BusyIconItem::itemChange(ItemChange change, const ItemChangeData &data) -> void
+{
     QQuickItem::itemChange(change, data);
     if (change == ItemVisibleHasChanged)
         d->updateAnimation();
 }
 
-bool BusyIconItem::isRunning() const {
+auto BusyIconItem::isRunning() const -> bool
+{
     return d->running;
 }
 
-void BusyIconItem::setRunning(bool running) {
+auto BusyIconItem::setRunning(bool running) -> void
+{
     if (_Change(d->running, running)) {
         d->reset();
         d->updateAnimation();
@@ -84,19 +87,23 @@ void BusyIconItem::setRunning(bool running) {
     }
 }
 
-QColor BusyIconItem::darkColor() const {
+auto BusyIconItem::darkColor() const -> QColor
+{
     return d->rings[Dark].color;
 }
 
-QColor BusyIconItem::lightColor() const {
+auto BusyIconItem::lightColor() const -> QColor
+{
     return d->rings[Light].color;
 }
 
-qreal BusyIconItem::thickness() const {
+auto BusyIconItem::thickness() const -> qreal
+{
     return d->thickness;
 }
 
-void BusyIconItem::setDarkColor(const QColor &color) {
+auto BusyIconItem::setDarkColor(const QColor &color) -> void
+{
     if (_Change(d->rings[Dark].color, color)) {
         d->reset();
         emit darkColorChanged();
@@ -104,7 +111,8 @@ void BusyIconItem::setDarkColor(const QColor &color) {
     }
 }
 
-void BusyIconItem::setLightColor(const QColor &color) {
+auto BusyIconItem::setLightColor(const QColor &color) -> void
+{
     if (_Change(d->rings[Light].color, color)) {
         d->reset();
         emit lightColorChanged();
@@ -112,7 +120,8 @@ void BusyIconItem::setLightColor(const QColor &color) {
     }
 }
 
-void BusyIconItem::setThickness(qreal thickness) {
+auto BusyIconItem::setThickness(qreal thickness) -> void
+{
     if (_Change(d->thickness, thickness)) {
         d->redraw = true;
         emit thicknessChanged();
@@ -121,26 +130,30 @@ void BusyIconItem::setThickness(qreal thickness) {
     }
 }
 
-void BusyIconItem::geometryChanged(const QRectF &new_, const QRectF &old) {
+auto BusyIconItem::geometryChanged(const QRectF &new_, const QRectF &old) -> void
+{
     QQuickItem::geometryChanged(new_, old);
     polish();
     update();
 }
 
-void BusyIconItem::initializeGL() {
+auto BusyIconItem::initializeGL() -> void
+{
     SimpleTextureItem::initializeGL();
     OpenGLTexture2D texture;
     texture.create();
-    texture.setAttributes(0, 0, OpenGLCompat::textureTransferInfo(OGL::BGRA));
+    texture.setAttributes(0, 0, OpenGLCompat::transferInfo(OGL::BGRA));
     setTexture(texture);
 }
 
-void BusyIconItem::finalizeGL() {
+auto BusyIconItem::finalizeGL() -> void
+{
     SimpleTextureItem::finalizeGL();
     texture().destroy();
 }
 
-void BusyIconItem::updateTexture(OpenGLTexture2D *texture) {
+auto BusyIconItem::updateTexture(OpenGLTexture2D *texture) -> void
+{
     if (d->upload) {
         const int len = d->textureSize.height();
         OpenGLTextureBinder<OGL::Target2D> binder(texture);
@@ -152,7 +165,8 @@ void BusyIconItem::updateTexture(OpenGLTexture2D *texture) {
     }
 }
 
-void BusyIconItem::updatePolish() {
+auto BusyIconItem::updatePolish() -> void
+{
     if (_Change(d->radius, qMin(width(), height())*0.5) || d->redraw) {
         const int len = d->radius + 1.5;
         d->textureSize.rwidth() = len * 4 + 5;

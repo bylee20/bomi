@@ -68,11 +68,13 @@ XmlRpcClient::~XmlRpcClient() {
     delete d;
 }
 
-void XmlRpcClient::setUrl(const QUrl &url) {
+auto XmlRpcClient::setUrl(const QUrl &url) -> void
+{
     d->request.setUrl(url);
 }
 
-QNetworkReply *XmlRpcClient::postCall(const QString &method, const QList<QVariant> &args) {
+auto XmlRpcClient::postCall(const QString &method, const QList<QVariant> &args) -> QNetworkReply*
+{
     QDomDocument doc;
     doc.appendChild(doc.createProcessingInstruction("xml", R"(version="1.0" encoding="UTF-8")"));
 
@@ -130,7 +132,8 @@ QVariant parseValue(const QDomElement &elem) {
     return QVariant();
 }
 
-QVariantList XmlRpcClient::parseResponse(const QByteArray &reply, bool compressed) {
+auto XmlRpcClient::parseResponse(const QByteArray &reply, bool compressed) -> QVariantList
+{
     QDomDocument doc;
     if (compressed)
         doc.setContent(_Uncompress(reply));
@@ -156,15 +159,18 @@ QVariantList XmlRpcClient::parseResponse(const QByteArray &reply, bool compresse
     return params;
 }
 
-QString XmlRpcClient::lastCall() const {
+auto XmlRpcClient::lastCall() const -> QString
+{
     return d->lastCall;
 }
 
-void XmlRpcClient::setCompressed(bool compressed) {
+auto XmlRpcClient::setCompressed(bool compressed) -> void
+{
     if (_Change(d->compressed, compressed))
         d->request.setRawHeader("Accept-Encoding", d->compressed ? "gzip" : "");
 }
 
-bool XmlRpcClient::isCompressed() const {
+auto XmlRpcClient::isCompressed() const -> bool
+{
     return d->compressed;
 }

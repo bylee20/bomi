@@ -1,6 +1,6 @@
 #include "hwacc.hpp"
 #include "videoformat.hpp"
-#include "videooutput.hpp"
+//#include "videooutput.hpp"
 #include "hwacc_vaapi.hpp"
 #include "hwacc_vdpau.hpp"
 #include "hwacc_vda.hpp"
@@ -11,7 +11,8 @@ extern "C" {
 #include <common/av_common.h>
 }
 
-QList<HwAcc::Type> HwAcc::availableBackends() {
+auto HwAcc::availableBackends() -> QList<HwAcc::Type>
+{
     QList<Type> list;
 #ifdef Q_OS_MAC
     list.append(Vda);
@@ -25,7 +26,8 @@ QList<HwAcc::Type> HwAcc::availableBackends() {
     return list;
 }
 
-HwAcc::Type HwAcc::backend(const QString &name) {
+auto HwAcc::backend(const QString &name) -> HwAcc::Type
+{
     if (name == "vaapi")
         return VaApiGLX;
     if (name == "vdpau")
@@ -36,7 +38,8 @@ HwAcc::Type HwAcc::backend(const QString &name) {
     return None;
 }
 
-QString HwAcc::backendName(Type type) {
+auto HwAcc::backendName(Type type) -> QString
+{
     switch (type) {
     case Vda:
         return "vda";
@@ -49,7 +52,8 @@ QString HwAcc::backendName(Type type) {
     }
 }
 
-QString HwAcc::backendDescription(Type type) {
+auto HwAcc::backendDescription(Type type) -> QString
+{
     switch (type) {
     case Vda:
         return QString("VDA(Video Decode Acceleration");
@@ -62,7 +66,8 @@ QString HwAcc::backendDescription(Type type) {
     }
 }
 
-bool HwAcc::supports(Type backend, AVCodecID codec) {
+auto HwAcc::supports(Type backend, AVCodecID codec) -> bool
+{
     switch (backend) {
     case Vda:
         return codec == AV_CODEC_ID_H264;
@@ -77,7 +82,8 @@ bool HwAcc::supports(Type backend, AVCodecID codec) {
     }
 }
 
-bool HwAcc::supports(DeintMethod method) {
+auto HwAcc::supports(DeintMethod method) -> bool
+{
 #ifdef Q_OS_MAC
     Q_UNUSED(method);
     return false;
@@ -92,32 +98,36 @@ bool HwAcc::supports(DeintMethod method) {
 #endif
 }
 
-QList<DeintMethod> HwAcc::fullDeintList() {
+auto HwAcc::fullDeintList() -> QList<DeintMethod>
+{
     static auto list = QList<DeintMethod>() << DeintMethod::Bob;
     return list;
 }
 
-void HwAcc::initialize() {
+auto HwAcc::initialize() -> void
+{
 #ifdef Q_OS_LINUX
     Vdpau::initialize();
     VaApi::initialize();
 #endif
 }
 
-void HwAcc::finalize() {
+auto HwAcc::finalize() -> void
+{
 #ifdef Q_OS_LINUX
     Vdpau::finalize();
     VaApi::finalize();
 #endif
 }
 
-HwAccMixer *HwAcc::createMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format) {
-    switch (format.imgfmt()) {
+auto HwAcc::createMixer(mp_imgfmt imgfmt, const QSize &size) -> HwAccMixer*
+{
+    switch (imgfmt) {
 #ifdef Q_OS_LINUX
     case IMGFMT_VDPAU:
-        return new VdpauMixer(textures, format);
+        return new VdpauMixer(size);
     case IMGFMT_VAAPI:
-        return new VaApiMixer(textures, format);
+        return new VaApiMixer(size);
 #endif
 #ifdef Q_OS_MAC
     case IMGFMT_VDA:
@@ -128,42 +138,24 @@ HwAccMixer *HwAcc::createMixer(const QList<OpenGLTexture2D> &textures, const Vid
     }
 }
 
-bool HwAcc::adjust(VideoFormatData *data, const mp_image *mpi) {
-    switch (data->imgfmt) {
-#ifdef Q_OS_LINUX
-    case IMGFMT_VAAPI:
-        VaApiMixer::adjust(data, mpi);
-        return true;
-    case IMGFMT_VDPAU:
-        VdpauMixer::adjust(data, mpi);
-        return true;
-#endif
-#ifdef Q_OS_MAC
-    case IMGFMT_VDA:
-        VdaMixer::adjust(data, mpi);
-        return true;
-#endif
-    default:
-        return false;
-    }
-}
-
 struct CodecInfo {
-    CodecInfo(AVCodecID id = AV_CODEC_ID_NONE, const char *name = "unknown")
-    : id(id), name(name) {}
+    CodecInfo(AVCodecID id = AV_CODEC_ID_NONE,
+              const char *name = "unknown")
+        : id(id), name(name) {}
     AVCodecID id; const char *name;
 };
 
 static const CodecInfo codecs[] = {
-    {AV_CODEC_ID_MPEG1VIDEO,    "mpeg1video"},
-    {AV_CODEC_ID_MPEG2VIDEO,    "mpeg2video"},
-    {AV_CODEC_ID_MPEG4,            "mpeg4"},
-    {AV_CODEC_ID_WMV3,            "wmv3"},
-    {AV_CODEC_ID_VC1,            "vc1"},
-    {AV_CODEC_ID_H264,            "h264"}
+    {AV_CODEC_ID_MPEG1VIDEO, "mpeg1video"},
+    {AV_CODEC_ID_MPEG2VIDEO, "mpeg2video"},
+    {AV_CODEC_ID_MPEG4,      "mpeg4"},
+    {AV_CODEC_ID_WMV3,       "wmv3"},
+    {AV_CODEC_ID_VC1,        "vc1"},
+    {AV_CODEC_ID_H264,       "h264"}
 };
 
-const char *HwAcc::codecName(int id) {
+auto HwAcc::codecName(int id) -> const char*
+{
     for (auto &info : codecs) {
         if (info.id == id)
             return info.name;
@@ -171,7 +163,8 @@ const char *HwAcc::codecName(int id) {
     return "unknow";
 }
 
-AVCodecID HwAcc::codecId(const char *name) {
+auto HwAcc::codecId(const char *name) -> AVCodecID
+{
     if (!name)
         return AV_CODEC_ID_NONE;
     for (auto &info : codecs) {
@@ -181,7 +174,8 @@ AVCodecID HwAcc::codecId(const char *name) {
     return AV_CODEC_ID_NONE;
 }
 
-QList<AVCodecID> HwAcc::fullCodecList() {
+auto HwAcc::fullCodecList() -> QList<AVCodecID>
+{
     static QList<AVCodecID> list;
     if (list.isEmpty()) {
         for (auto &info : codecs)
@@ -204,15 +198,18 @@ HwAcc::~HwAcc() {
     delete d;
 }
 
-VideoOutput *HwAcc::vo(lavc_ctx *ctx) {
+auto HwAcc::vo(lavc_ctx *ctx) -> VideoOutput*
+{
     return static_cast<VideoOutput*>((void*)(ctx->hwdec_info->vdpau_ctx));
 }
 
-int HwAcc::imgfmt() const {
+auto HwAcc::imgfmt() const -> int
+{
     return d->imgfmt;
 }
 
-int HwAcc::init(lavc_ctx *ctx) {
+auto HwAcc::init(lavc_ctx *ctx) -> int
+{
     auto format = ctx->hwdec->image_format;
     if (!format)
         return -1;
@@ -232,19 +229,21 @@ int HwAcc::init(lavc_ctx *ctx) {
         return -1;
     }
     acc->d->imgfmt = format;
-    vo(ctx)->setHwAcc(acc);
+//    vo(ctx)->setHwAcc(acc);
     ctx->hwdec_priv = acc;
     ctx->avctx->hwaccel_context = acc->context();
     return 0;
 }
 
-void HwAcc::uninit(lavc_ctx *ctx) {
-    if (ctx->hwdec_info && ctx->hwdec_info->vdpau_ctx)
-        vo(ctx)->setHwAcc(nullptr);
+auto HwAcc::uninit(lavc_ctx *ctx) -> void
+{
+//    if (ctx->hwdec_info && ctx->hwdec_info->vdpau_ctx)
+//        vo(ctx)->setHwAcc(nullptr);
     delete static_cast<HwAcc*>(ctx->hwdec_priv);
 }
 
-mp_image *HwAcc::allocateImage(struct lavc_ctx *ctx, int imgfmt, int width, int height) {
+auto HwAcc::allocateImage(struct lavc_ctx *ctx, int imgfmt, int width, int height) -> mp_image*
+{
     auto acc = static_cast<HwAcc*>(ctx->hwdec_priv);
     if (imgfmt != acc->d->imgfmt || !acc->isOk())
         return nullptr;
@@ -256,7 +255,8 @@ mp_image *HwAcc::allocateImage(struct lavc_ctx *ctx, int imgfmt, int width, int 
     return acc->getSurface();
 }
 
-int HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder) {
+auto HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder) -> int
+{
     if (!info || !info->vdpau_ctx)
         return HWDEC_ERR_NO_CTX;
     auto conv = [](hwdec_type mptype) {

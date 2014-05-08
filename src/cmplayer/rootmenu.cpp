@@ -46,7 +46,7 @@ void addStepActions(Menu &menu, int def, bool reset = true) {
     addStepActions(menu, def, -1.0, reset);
 }
 
-template<typename T>
+template<class T>
 void addEnumActions(Menu &menu, std::initializer_list<T> list, bool checkable = false) {
     static_assert(!std::is_same<T, ChangeValue>::value, "oops!");
     const QString g = _L(EnumInfo<T>::typeKey());
@@ -58,7 +58,7 @@ void addEnumActions(Menu &menu, std::initializer_list<T> list, bool checkable = 
     }
 }
 
-template<typename T>
+template<class T>
 void addEnumActions(Menu &menu, bool checkable = false) {
     static_assert(!std::is_same<T, ChangeValue>::value, "oops!");
     const QString g = _L(EnumInfo<T>::typeKey());
@@ -69,7 +69,7 @@ void addEnumActions(Menu &menu, bool checkable = false) {
     }
 }
 
-template<typename T>
+template<class T>
 void addEnumActionsCheckable(Menu &menu, std::initializer_list<T> list, bool cycle, bool exclusive = true) {
     if (cycle) {
         const int size = list.size();
@@ -82,7 +82,7 @@ void addEnumActionsCheckable(Menu &menu, std::initializer_list<T> list, bool cyc
         menu.addActionToGroup(_NewEnumAction(t), EnumInfo<T>::key(t), g)->setCheckable(true);
 }
 
-template<typename T>
+template<class T>
 void addEnumActionsCheckable(Menu &menu, bool cycle, bool exclusive = true) {
     if (cycle) {
         const int size = EnumInfo<T>::size();
@@ -95,12 +95,12 @@ void addEnumActionsCheckable(Menu &menu, bool cycle, bool exclusive = true) {
         menu.addActionToGroup(_NewEnumAction(item.value), item.key, g)->setCheckable(true);
 }
 
-template<typename T>
+template<class T>
 void addEnumMenuCheckable(Menu &parent, bool cycle, bool exclusive = true) {
     addEnumActionsCheckable<T>(*parent.addMenu(EnumInfo<T>::typeKey()), cycle, exclusive);
 }
 
-template<typename T>
+template<class T>
 void updateEnumActions(Menu &menu) {
     auto actions = menu.g(_L(EnumInfo<T>::typeKey()))->actions();
     if (actions.size() > 2) {
@@ -125,7 +125,7 @@ void updateStepActions(Menu &menu, const QString &text, int step) {
     }
 }
 
-template<typename T>
+template<class T>
 void updateEnumMenu(Menu &parent) {
     updateEnumActions<T>(parent(EnumInfo<T>::typeKey(), EnumInfo<T>::typeDescription()));
 }
@@ -323,7 +323,8 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     fillId(this, "");
 }
 
-bool RootMenu::execute(const QString &longId, const QString &argument) {
+auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
+{
     ArgAction aa = RootMenu::instance().m_actions.value(longId);
     if (aa.action) {
         if (aa.action->menu())
@@ -340,7 +341,8 @@ bool RootMenu::execute(const QString &longId, const QString &argument) {
     }
 }
 
-void RootMenu::setShortcuts(const Shortcuts &shortcuts) {
+auto RootMenu::setShortcuts(const Shortcuts &shortcuts) -> void
+{
     for (auto it = shortcuts.cbegin(); it != shortcuts.cend(); ++it) {
         auto id = it.key();
         if (id.startsWith("menu/"))
@@ -356,7 +358,8 @@ void RootMenu::setShortcuts(const Shortcuts &shortcuts) {
 #endif
 }
 
-void RootMenu::fillId(Menu *menu, const QString &id) {
+auto RootMenu::fillId(Menu *menu, const QString &id) -> void
+{
     const auto ids = menu->ids();
     for (auto it = ids.cbegin(); it != ids.cend(); ++it) {
         const QString key = id % it.key();
@@ -366,7 +369,8 @@ void RootMenu::fillId(Menu *menu, const QString &id) {
     }
 }
 
-QHash<QString, QList<QKeySequence> > RootMenu::shortcuts() const {
+auto RootMenu::shortcuts() const -> QHash<QString, QList<QKeySequence> >
+{
     QHash<QString, QList<QKeySequence> > keys;
     for (auto it = m_actions.cbegin(); it != m_actions.cend(); ++it) {
         auto shortcuts = it.value().action->shortcuts();
@@ -376,7 +380,8 @@ QHash<QString, QList<QKeySequence> > RootMenu::shortcuts() const {
     return keys;
 }
 
-void RootMenu::update(const Pref &p) {
+auto RootMenu::update(const Pref &p) -> void
+{
     auto &root = *this;
 
     auto &open = root("open", tr("Open"));
@@ -537,7 +542,8 @@ void RootMenu::update(const Pref &p) {
     setShortcuts(p.shortcuts);
 }
 
-void RootMenu::fillKeyMap(Menu *menu) {
+auto RootMenu::fillKeyMap(Menu *menu) -> void
+{
     for (auto action : menu->actions()) {
         if (action->menu())
             fillKeyMap(static_cast<Menu*>(action->menu()));

@@ -12,7 +12,7 @@ struct JsonKeyValue {
     QString key; QJsonValue value;
 };
 
-static inline QJsonObject _MakeJson(std::initializer_list<JsonKeyValue> &&list) {
+static inline auto _MakeJson(std::initializer_list<JsonKeyValue> &&list) -> QJsonObject {
     QJsonObject json;
     for (auto &item : list)
         json.insert(item.key, item.value);
@@ -24,15 +24,15 @@ struct SubtitleFileInfo {
     SubtitleFileInfo(const QString &path, const QString &encoding): path(path), encoding(encoding) {}
     bool operator == (const SubtitleFileInfo &rhs) const { return path == rhs.path && encoding == rhs.encoding; }
     bool operator < (const SubtitleFileInfo &rhs) const { return path < rhs.path; }
-    QString toString() const { return path % _L('#') % encoding; }
-    static SubtitleFileInfo fromString(const QString &text) {
+    auto toString() const -> QString { return path % _L('#') % encoding; }
+    static auto fromString(const QString &text) -> SubtitleFileInfo {
         const int index = text.lastIndexOf(_L('#'));
         if (index < 0)
             return SubtitleFileInfo();
         return SubtitleFileInfo(text.mid(0, index), text.mid(index+1));
     }
-    QJsonObject toJson() const { return _MakeJson({{"path", path}, {"encoding", encoding}}); }
-    static SubtitleFileInfo fromJson(const QJsonObject &json) {
+    auto toJson() const -> QJsonObject { return _MakeJson({{"path", path}, {"encoding", encoding}}); }
+    static auto fromJson(const QJsonObject &json) -> SubtitleFileInfo {
         auto path = json.value("path");
         auto encoding = json.value("encoding");
         if (path.isUndefined() || encoding.isUndefined())
@@ -54,23 +54,23 @@ struct SubtitleStateInfo {
         return m_track == rhs.m_track && m_mpv == rhs.m_mpv && m_cmplayer == rhs.m_cmplayer;
     }
     bool operator != (const SubtitleStateInfo &rhs) const { return !operator == (rhs); }
-    QString toString() const;
-    QJsonObject toJson() const;
-    static SubtitleStateInfo fromJson(const QJsonObject &json);
-    static SubtitleStateInfo fromJson(const QString &str) {
+    auto toString() const -> QString;
+    auto toJson() const -> QJsonObject;
+    static auto fromJson(const QJsonObject &json) -> SubtitleStateInfo;
+    static auto fromJson(const QString &str) -> SubtitleStateInfo {
         QJsonParseError error;
         auto json = QJsonDocument::fromJson(str.toUtf8(), &error).object();
         if (error.error != QJsonParseError::NoError)
             return SubtitleStateInfo();
         return fromJson(json);
     }
-    static SubtitleStateInfo fromString(const QString &str);
-    void append(const SubComp &comp);
-    bool isValid() const { return m_track != InvalidTrack; }
+    static auto fromString(const QString &str) -> SubtitleStateInfo;
+    auto append(const SubComp &comp) -> void;
+    auto isValid() const -> bool { return m_track != InvalidTrack; }
     const QMap<SubtitleFileInfo, QList<Comp>> &cmplayer() const { return m_cmplayer; }
     const QList<SubtitleFileInfo> &mpv() const { return m_mpv; }
     QList<SubtitleFileInfo> &mpv() { return m_mpv; }
-    int track() const { return m_track; }
+    auto track() const -> int { return m_track; }
     int &track() { return m_track; }
     QList<SubComp> load() const;
 private:

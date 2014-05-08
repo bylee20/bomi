@@ -10,19 +10,19 @@ using AttrInfo = QSGGeometry::AttributeSet;
 
 struct ColorAttr {
     uchar r, g, b, a;
-    void set(const QColor &color) {
+    auto set(const QColor &color) -> void {
         r = color.red();
         g = color.green();
         b = color.blue();
         a = color.alpha();
     }
-    void set(quint32 color) {
+    auto set(quint32 color) -> void {
         *reinterpret_cast<quint32*>(this) = color;
     }
-    void set(uchar _r, uchar _g, uchar _b, uchar _a) {
+    auto set(uchar _r, uchar _g, uchar _b, uchar _a) -> void {
         r = _r; g = _g; b = _b; a = _a;
     }
-    static inline AttrData data(int index) {
+    static inline auto data(int index) -> AttrData {
         return AttrData::create(index, 4, GL_UNSIGNED_BYTE, false);
     }
 };
@@ -37,13 +37,13 @@ template<class T> using VecIt = typename QVector<T>::iterator;
 
 struct CoordAttr {
     float x, y;
-    static inline AttrData data(int index, bool isPos = false) {
+    static inline auto data(int index, bool isPos = false) -> AttrData {
         return AttrData::create(index, 2, GL_FLOAT, isPos);
     }
-    void set(const QPointF &p) { x = p.x(); y = p.y(); }
-    void set(float x, float y) { this->x = x; this->y = y; }
+    auto set(const QPointF &p) -> void { x = p.x(); y = p.y(); }
+    auto set(float x, float y) -> void { this->x = x; this->y = y; }
 
-    template<typename T>
+    template<class T>
     static inline VecIt<T> fillTriangleStrip(VecIt<T> it, CoordAttr T::*attr,
                                                 const QPointF &tl,
                                                 const QPointF &br) {
@@ -54,7 +54,7 @@ struct CoordAttr {
         return it;
     }
 
-    template<typename T>
+    template<class T>
     static inline VecIt<T> fillTriangles(VecIt<T> it, CoordAttr T::*attr,
                                             const QPointF &tl,
                                             const QPointF &br) {
@@ -66,7 +66,7 @@ struct CoordAttr {
         (it->*attr).set(br.x(), tl.y()); ++it;
         return it;
     }
-    template<typename T>
+    template<class T>
     static inline VecIt<T> fillTriangleStrip(VecIt<T> it, CoordAttr T::*attr1,
                                                 const QPointF &tl1,
                                                 const QPointF &br1,
@@ -83,7 +83,7 @@ struct CoordAttr {
         (it->*attr2).set(br2.x(), br2.y()); ++it;
         return it;
     }
-    template<typename T, typename F>
+    template<class T, class F>
     static inline VecIt<T> fillTriangles(VecIt<T> it, CoordAttr T::*attr1,
                                          const QPointF &tl1,
                                          const QPointF &br1,
@@ -104,7 +104,7 @@ struct CoordAttr {
         (it->*attr2).set(br2.x(), tl2.y()); f(it); ++it;
         return it;
     }
-    template<typename T>
+    template<class T>
     static inline VecIt<T> fillTriangles(VecIt<T> it, CoordAttr T::*attr1,
                                          const QPointF &tl1,
                                          const QPointF &br1,

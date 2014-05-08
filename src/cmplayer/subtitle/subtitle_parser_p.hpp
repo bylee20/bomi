@@ -10,20 +10,20 @@ struct RichTextBlock;
 
 class SamiParser : public SubtitleParser {
 public:
-    void _parse(Subtitle &sub);
-    bool isParsable() const;
+    auto _parse(Subtitle &sub) -> void;
+    auto isParsable() const -> bool;
 };
 
 class SubRipParser : public SubtitleParser {
 public:
-    void _parse(Subtitle &sub);
-    bool isParsable() const;
+    auto _parse(Subtitle &sub) -> void;
+    auto isParsable() const -> bool;
 };
 
 class LineParser : public SubtitleParser {
 public:
     LineParser(const QString expr): rxLine(expr) {}
-    bool isParsable() const {
+    auto isParsable() const -> bool {
         if (skipSeparators())
             return false;
         const int pos = this->pos();
@@ -39,13 +39,13 @@ protected:
 class TMPlayerParser : public LineParser {
 public:
     TMPlayerParser(): LineParser(_L("^\\s*(\\d?\\d)\\s*:\\s*(\\d\\d)\\s*:\\s*(\\d\\d)\\s*:\\s*(.*)$")) {}
-    void _parse(Subtitle &sub);
+    auto _parse(Subtitle &sub) -> void;
 };
 
 class MicroDVDParser : public LineParser {
 public:
     MicroDVDParser(): LineParser(_L("^\\{(\\d+)\\}\\{(\\d+)\\}(.*)$")) {}
-    void _parse(Subtitle &sub);
+    auto _parse(Subtitle &sub) -> void;
 };
 
 #endif // SUBTITLE_PARSER_P_HPP

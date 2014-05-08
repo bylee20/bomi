@@ -1,7 +1,8 @@
 #include "subtitle_parser_p.hpp"
 #include "global.hpp"
 
-bool SamiParser::isParsable() const {
+auto SamiParser::isParsable() const -> bool
+{
     if (_Same(file().suffix(), "smi") || _Same(file().suffix(), "sami"))
         return true;
     if (skipSeparators())
@@ -11,7 +12,8 @@ bool SamiParser::isParsable() const {
     return false;
 }
 
-void SamiParser::_parse(Subtitle &sub) {
+auto SamiParser::_parse(Subtitle &sub) -> void
+{
     const QString &text = this->all();
     sub.clear();
     int pos = 0;
@@ -66,13 +68,15 @@ void SamiParser::_parse(Subtitle &sub) {
 
 
 
-bool SubRipParser::isParsable() const {
+auto SubRipParser::isParsable() const -> bool
+{
     if (_Same(file().suffix(), "srt"))
         return true;
     return false;
 }
 
-void SubRipParser::_parse(Subtitle &sub) {
+auto SubRipParser::_parse(Subtitle &sub) -> void
+{
     QRegularExpression rxNum(R"(^\s*(\d+)\s*$)");
     QRegularExpression rxTime(R"(^\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*$)");
     QRegularExpression rxBlank(R"(^\s*$)");
@@ -132,7 +136,8 @@ void SubRipParser::_parse(Subtitle &sub) {
     }
 }
 
-void  TMPlayerParser::_parse(Subtitle &sub) {
+auto TMPlayerParser::_parse(Subtitle &sub) -> void
+{
     sub.clear();
     auto &comp = append(sub);
     int predictedEnd = -1;
@@ -151,7 +156,8 @@ void  TMPlayerParser::_parse(Subtitle &sub) {
     }
 }
 
-void MicroDVDParser::_parse(Subtitle &sub) {
+auto MicroDVDParser::_parse(Subtitle &sub) -> void
+{
     QString line;
     int begin = -1;
     while (!atEnd() && begin == -1) {

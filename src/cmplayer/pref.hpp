@@ -37,7 +37,7 @@ public:
         Info &operator[](Modifier m) {return m_map[m];}
         const Info operator[](Modifier m) const {return m_map[m];}
         const Info operator[](int id) const {return m_map[EnumInfo<Modifier>::from(id, Modifier::None)];}
-        void save(Record &r, const QString &group) const {
+        auto save(Record &r, const QString &group) const -> void {
             r.beginGroup(group);
             const auto &items = EnumInfo<Modifier>::items();
             for (auto &item : items) {
@@ -49,7 +49,7 @@ public:
             }
             r.endGroup();
         }
-        void load(Record &r, const QString &group) {
+        auto load(Record &r, const QString &group) -> void {
             r.beginGroup(group);
             const auto &items = EnumInfo<Modifier>::items();
             for (auto &item : items) {
@@ -70,13 +70,13 @@ public:
         : start_playback(sp), playlist_behavior(pb) {}
         bool start_playback = true;
         PlaylistBehaviorWhenOpenMedia playlist_behavior = PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist;
-        void save(Record &r, const QString &group) const {
+        auto save(Record &r, const QString &group) const -> void {
             r.beginGroup(group);
             r.write(start_playback, "start_playback");
             r.write(playlist_behavior, "playlist_behavior");
             r.endGroup();
         }
-        void load(Record &r, const QString &group) {
+        auto load(Record &r, const QString &group) -> void {
             r.beginGroup(group);
             r.read(start_playback, "start_playback");
             r.read(playlist_behavior, "playlist_behavior");
@@ -105,7 +105,8 @@ public:
     int blur_kern_c = 1, blur_kern_n = 2, blur_kern_d = 1;
     int sharpen_kern_c = 5, sharpen_kern_n = -1, sharpen_kern_d = 0;
     int remap_luma_min = 16, remap_luma_max = 235;
-    ChannelLayoutMap channel_manipulation = ChannelLayoutMap::default_();
+    ChannelLayoutMap channel_manipulation
+        = ChannelLayoutMap::default_();
 
     bool sub_enable_autoload = true, sub_enable_autoselect = true, sub_enc_autodetection = true;
     SubtitleAutoload sub_autoload = SubtitleAutoload::Contain;
@@ -149,37 +150,37 @@ public:
     int cache_min_playback = 20, cache_min_seeking = 50;
     QStringList network_folders;
 
-    static Shortcuts preset(KeyMapPreset id);
+    static auto preset(KeyMapPreset id) -> Shortcuts;
 
-    void save() const;
-    void load();
+    auto save() const -> void;
+    auto load() -> void;
 private:
 //    static Pref &get();
     static QList<QMetaProperty> defaultRestoreProperties();
-    static QString defaultSkinName();
-    static QString defaultSubtitleEncoding();
-    static int defaultSubtitleEncodingDetectionAccuracy();
+    static auto defaultSkinName() -> QString;
+    static auto defaultSubtitleEncoding() -> QString;
+    static auto defaultSubtitleEncodingDetectionAccuracy() -> int;
     static QList<int> defaultHwAccCodecs();
 
     static QList<DeintMethod> defaultHwAccDeints();
-    static Shortcuts defaultShortcuts();
-    static KeyModifierMap defaultDoubleClick() {
+    static auto defaultShortcuts() -> Shortcuts;
+    static auto defaultDoubleClick() -> KeyModifierMap {
         KeyModifierMap map;
         map[KeyModifier::None] = { true, "window/full" };
         return map;
     }
-    static KeyModifierMap defaultMiddleClick() {
+    static auto defaultMiddleClick() -> KeyModifierMap {
         KeyModifierMap map;
         map[KeyModifier::None] = { true, "play/pause" };
         return map;
     }
-    static KeyModifierMap defaultWheelUpAction() {
+    static auto defaultWheelUpAction() -> KeyModifierMap {
         KeyModifierMap map;
         map[KeyModifier::None] = { true, "audio/volume/increase" };
         map[KeyModifier::Ctrl] = { true, "audio/amp/increase" };
         return map;
     }
-    static KeyModifierMap defaultWheelDownAction() {
+    static auto defaultWheelDownAction() -> KeyModifierMap {
         KeyModifierMap map;
         map[KeyModifier::None] = { true, "audio/volume/decrease" };
         map[KeyModifier::Ctrl] = { true, "audio/amp/decrease" };

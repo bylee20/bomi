@@ -31,11 +31,11 @@ public:
     bool ask_system_tray = true;
 
     QString dvd_device, bluray_device;
-    void save() const;
+    auto save() const -> void;
     static AppState &get() {
         static AppState obj; return obj;
     }
-    void setOpen(const Mrl &mrl);
+    auto setOpen(const Mrl &mrl) -> void;
 signals:
     void winStaysOnTopChanged();
 private:
@@ -151,7 +151,7 @@ signals:
     void subAlignmentChanged();
     void dvdMenuChanged();
 private:
-    void save() const;
+    auto save() const -> void;
 };
 
 #endif // APPSTATE_HPP

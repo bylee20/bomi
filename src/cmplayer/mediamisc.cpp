@@ -10,11 +10,13 @@ ChapterInfoObject::ChapterInfoObject(const PlayEngine *engine, QObject *parent)
     connect(engine, &PlayEngine::currentChapterChanged, this, &ChapterInfoObject::setCurrent);
 }
 
-int ChapterInfoObject::time(int i) const {
+auto ChapterInfoObject::time(int i) const -> int
+{
     return m_engine->chapters().value(i).time();
 }
 
-QString ChapterInfoObject::name(int i) const {
+auto ChapterInfoObject::name(int i) const -> QString
+{
     return m_engine->chapters().value(i).name();
 }
 

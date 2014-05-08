@@ -7,6 +7,7 @@
 class OpenGLDrawItem : public GeometryItem {
     Q_OBJECT
 public:
+    using AttrSet = QSGGeometry::AttributeSet;
     struct ColorVertex { QPointF vertex; QColor color; };
     enum UpdateHint {
         UpdateGeometry = 1,
@@ -15,73 +16,109 @@ public:
     };
     OpenGLDrawItem(QQuickItem *parent = nullptr);
     ~OpenGLDrawItem();
-    virtual void rerender() { reserve(UpdateAll); }
-    double devicePixelRatio() const { return m_win ? m_win->devicePixelRatio() : 1.0; }
-    QByteArray logAt(const char *func) const { return QByteArray(metaObject()->className()) + "::" + func; }
-    void polishAndUpdate() { polish(); update(); }
-    static QOpenGLFunctions *func() { return context()->functions(); }
-protected slots:
-    bool isInitialized() const { return m_init; }
-    virtual void initializeGL() { }
-    virtual void finalizeGL() { }
+    auto devicePixelRatio() const -> double;
+    auto logAt(const char *func) const -> QByteArray;
+    auto polishAndUpdate() -> void { polish(); update(); }
+    virtual auto rerender() -> void { reserve(UpdateAll); }
+    static auto func() -> QOpenGLFunctions* { return context()->functions(); }
+    static auto context() -> QOpenGLContext*;
 protected:
-    virtual GLenum drawingMode() const { return GL_TRIANGLE_STRIP; }
-    virtual const QSGGeometry::AttributeSet &attributeSet() const {
-        return QSGGeometry::defaultAttributes_TexturedPoint2D();
-    }
-    virtual int vertexCount() const { return 0; }
-    virtual QSGGeometry *createGeometry() const = 0;
-    virtual QSGMaterial *createMaterial() const = 0;
-    virtual QSGGeometry *updateGeometry(QSGGeometry *geometry) = 0;
-    virtual QSGMaterial *updateMaterial(QSGMaterial *material) = 0;
-    virtual void afterUpdate() { }
-    static QOpenGLContext *context() { return QOpenGLContext::currentContext(); }
-    void reserve(UpdateHint hint, bool update = true)
-    { m_updates |= hint; if (update) this->update(); }
-    bool isReserved(UpdateHint update) const { return m_updates & update; }
+    auto isInitialized() const -> bool { return m_init; }
+    auto reserve(UpdateHint hint, bool update = true) -> void;
+    auto isReserved(UpdateHint update) const -> bool;
+    virtual auto initializeGL() -> void { }
+    virtual auto finalizeGL() -> void { }
+    virtual auto drawingMode() const -> GLenum { return GL_TRIANGLE_STRIP; }
+    virtual auto attributeSet() const -> const AttrSet&;
+    virtual auto vertexCount() const -> int { return 0; }
+    virtual auto createGeometry() const -> QSGGeometry* = 0;
+    virtual auto createMaterial() const -> QSGMaterial* = 0;
+    virtual auto updateGeometry(QSGGeometry *geometry) -> QSGGeometry* = 0;
+    virtual auto updateMaterial(QSGMaterial *material) -> QSGMaterial* = 0;
+    virtual auto afterUpdate() -> void { }
 private:
-    void tryInitGL() { if (!m_init && context()) { initializeGL(); m_init = true; } }
-    QSGNode *updatePaintNode(QSGNode *old, UpdatePaintNodeData *data) final override;
+    auto tryInitGL() -> void;
+    auto updatePaintNode(QSGNode *old, UpdatePaintNodeData *) -> QSGNode* final;
     QQuickWindow *m_win = nullptr;
     bool m_init = false;
     QSGGeometryNode *m_node = nullptr;
     int m_updates = 0;
 };
 
+inline auto OpenGLDrawItem::devicePixelRatio() const -> double
+{ return m_win ? m_win->devicePixelRatio() : 1.0; }
+
+inline auto OpenGLDrawItem::logAt(const char *func) const -> QByteArray
+{ return QByteArray(metaObject()->className()) + "::" + func; }
+
+inline auto OpenGLDrawItem::attributeSet() const -> const AttrSet&
+{ return QSGGeometry::defaultAttributes_TexturedPoint2D(); }
+
+inline auto OpenGLDrawItem::context() -> QOpenGLContext*
+{ return QOpenGLContext::currentContext(); }
+
+inline auto OpenGLDrawItem::reserve(UpdateHint hint, bool update) -> void
+{ m_updates |= hint; if (update) this->update(); }
+
+inline auto OpenGLDrawItem::isReserved(UpdateHint update) const -> bool
+{ return m_updates & update; }
+
+inline auto OpenGLDrawItem::tryInitGL() -> void
+{ if (!m_init && context()) { initializeGL(); m_init = true; } }
+
+/******************************************************************************/
+
 template <class T>
 class VertexDrawItem : public OpenGLDrawItem {
 public:
     using OpenGLDrawItem::OpenGLDrawItem;
     using Vertex = T;
-    QVector<Vertex> &vertices() { return m_vertices; }
+    auto vertices() -> QVector<Vertex>& { return m_vertices; }
     const QVector<Vertex> &vertices() const { return m_vertices; }
-    void geometryChanged(const QRectF &new_, const QRectF &old) {
-        OpenGLDrawItem::geometryChanged(new_, old);
-        if (updateVertexOnGeometryChanged())
-            reserve(UpdateGeometry);
-    }
-    virtual bool updateVertexOnGeometryChanged() const { return false; }
+    auto geometryChanged(const QRectF &new_, const QRectF &old) -> void;
+    virtual auto updateVertexOnGeometryChanged() const -> bool { return false; }
 private:
-    virtual void initializeVertex(Vertex *vertex) const { Q_UNUSED(vertex); }
-    virtual void updateVertex(Vertex *vertex) {
-        memcpy(vertex, m_vertices.data(), sizeof(Vertex)*vertexCount());
-    }
-    const QSGGeometry::AttributeSet &attributeSet() const final {
-        return T::info();
-    }
-    QSGGeometry *createGeometry() const final {
-        auto geometry = new QSGGeometry(attributeSet(), vertexCount());
-        initializeVertex(static_cast<T*>(geometry->vertexData()));
-        return geometry;
-    }
-    QSGGeometry *updateGeometry(QSGGeometry *geometry) final {
-        geometry->allocate(vertexCount());
-        updateVertex(static_cast<T*>(geometry->vertexData()));
-        return geometry;
-    }
-
+    virtual auto initializeVertex(Vertex *vertex) const -> void;
+    virtual auto updateVertex(Vertex *vertex) -> void;
+    auto attributeSet() const -> const AttrSet& final { return T::info(); }
+    auto createGeometry() const -> QSGGeometry* final;
+    auto updateGeometry(QSGGeometry *geometry) -> QSGGeometry* final;
     QVector<Vertex> m_vertices;
 };
+
+template<class T>
+auto VertexDrawItem<T>::geometryChanged(const QRectF &new_,
+                                               const QRectF &old) -> void
+{
+    OpenGLDrawItem::geometryChanged(new_, old);
+    if (updateVertexOnGeometryChanged())
+        reserve(UpdateGeometry);
+}
+
+template<class T>
+auto VertexDrawItem<T>::initializeVertex(Vertex *) const -> void { }
+
+template<class T>
+auto VertexDrawItem<T>::updateVertex(Vertex *vertex) -> void
+{ memcpy(vertex, m_vertices.data(), sizeof(Vertex)*vertexCount()); }
+
+template<class T>
+auto VertexDrawItem<T>::createGeometry() const -> QSGGeometry*
+{
+    auto geometry = new QSGGeometry(attributeSet(), vertexCount());
+    initializeVertex(static_cast<T*>(geometry->vertexData()));
+    return geometry;
+}
+
+template<class T>
+auto VertexDrawItem<T>::updateGeometry(QSGGeometry *geometry) -> QSGGeometry*
+{
+    geometry->allocate(vertexCount());
+    updateVertex(static_cast<T*>(geometry->vertexData()));
+    return geometry;
+}
+
+/******************************************************************************/
 
 template<class T>
 class ShaderRenderItem : public VertexDrawItem<T> {
@@ -96,31 +133,25 @@ public:
         virtual ~ShaderIface() = default;
         QByteArray fragmentShader, vertexShader;
         QList<QByteArray> attributes;
-        static const char *matrixName() { return "qt_Matrix"; }
-        static const char *opacityName() { return "qt_Opacity"; }
+        static auto matrixName() -> const char* { return "qt_Matrix"; }
+        static auto opacityName() -> const char* { return "qt_Opacity"; }
     private:
-        virtual void resolve(QOpenGLShaderProgram *prog) = 0;
-        virtual void update(QOpenGLShaderProgram *prog, const ShaderData *data) = 0;
+        virtual auto resolve(QOpenGLShaderProgram *prog) -> void = 0;
+        virtual auto update(QOpenGLShaderProgram *prog,
+                            const ShaderData *data) -> void = 0;
         friend class ShaderRenderItem;
     };
-    virtual bool isOpaque() const { return false; }
+    virtual auto isOpaque() const -> bool { return false; }
 private:
-    virtual QSGMaterialType *type() const = 0;
-    virtual ShaderIface *createShader() const = 0;
-    virtual ShaderData *createData() const = 0;
-    virtual void updateData(ShaderData *data) = 0;
+    virtual auto type() const -> Type* = 0;
+    virtual auto createShader() const -> ShaderIface* = 0;
+    virtual auto createData() const -> ShaderData* = 0;
+    virtual auto updateData(ShaderData *data) -> void = 0;
 private:
     struct Material : public QSGMaterial {
-        Material(const ShaderRenderItem *item)
-            : m_item(item)
-        {
-            setFlag(Blending, !item->isOpaque());
-            m_data = m_item->createData();
-        }
+        Material(const ShaderRenderItem *item);
         QSGMaterialType *type() const final { return m_item->type(); }
-        QSGMaterialShader *createShader() const final {
-            return new Shader(m_item->createShader());
-        }
+        QSGMaterialShader *createShader() const final;
         ShaderData *data() { return m_data; }
         const ShaderData *data() const { return m_data; }
     private:
@@ -130,46 +161,88 @@ private:
     struct Shader : public QSGMaterialShader {
         ShaderIface *m_iface = nullptr;
         QVector<const char*> m_attributes;
-        Shader(ShaderIface *iface): m_iface(iface) {
-            m_attributes.resize(m_iface->attributes.size()+1);
-            for (int i=0; i<m_iface->attributes.size(); ++i)
-                m_attributes[i] = m_iface->attributes[i].constData();
-            m_attributes.last() = nullptr;
-        }
+        Shader(ShaderIface *iface);
         ~Shader() { delete m_iface; }
-        const char *vertexShader() const final {
-            return m_iface->vertexShader.constData();
-        }
-        const char *fragmentShader() const final {
-            return m_iface->fragmentShader.constData();
-        }
-        const char *const *attributeNames() const final {
-            return m_attributes.data();
-        }
-        void initialize() final {
-            auto prog = program();
-            loc_matrix = prog->uniformLocation(m_iface->matrixName());
-            loc_opacity = prog->uniformLocation(m_iface->opacityName());
-            m_iface->resolve(prog);
-        }
-        void updateState(const RenderState &state, QSGMaterial *new_, QSGMaterial *) {
-            auto prog = program();
-            if (state.isMatrixDirty())
-                prog->setUniformValue(loc_matrix, state.combinedMatrix());
-            if (state.isOpacityDirty())
-                prog->setUniformValue(loc_opacity, state.opacity());
-            auto m = static_cast<Material*>(new_);
-            m_iface->update(prog, m->data());
-        }
+        auto vertexShader() const -> const char* final;
+        auto fragmentShader() const -> const char* final;
+        auto attributeNames() const -> const char *const* final;
+        auto initialize() -> void final;
+        auto updateState(const RenderState &state,
+                         QSGMaterial *new_, QSGMaterial *) -> void final;
     private:
         int loc_matrix = -1, loc_opacity = -1;
     };
-    QSGMaterial *createMaterial() const final { return new Material(this); }
-    QSGMaterial *updateMaterial(QSGMaterial *material) final {
-        auto m = static_cast<Material*>(material);
-        updateData(m->data());
-        return m;
-    }
+    auto createMaterial() const -> QSGMaterial* final;
+    auto updateMaterial(QSGMaterial *material) -> QSGMaterial* final;
 };
+
+template<class T>
+ShaderRenderItem<T>::Material::Material(const ShaderRenderItem *item)
+    : m_item(item)
+{
+    setFlag(Blending, !item->isOpaque());
+    m_data = m_item->createData();
+}
+
+template<class T>
+auto ShaderRenderItem<T>::Material::createShader() const -> QSGMaterialShader*
+{ return new Shader(m_item->createShader()); }
+
+template<class T>
+ShaderRenderItem<T>::Shader::Shader(ShaderIface *iface)
+    : m_iface(iface)
+{
+    m_attributes.resize(m_iface->attributes.size()+1);
+    for (int i=0; i<m_iface->attributes.size(); ++i)
+        m_attributes[i] = m_iface->attributes[i].constData();
+    m_attributes.last() = nullptr;
+}
+
+template<class T>
+auto ShaderRenderItem<T>::Shader::vertexShader() const -> const char*
+{ return m_iface->vertexShader.constData(); }
+
+template<class T>
+auto ShaderRenderItem<T>::Shader::fragmentShader() const -> const char*
+{ return m_iface->fragmentShader.constData(); }
+
+template<class T>
+auto ShaderRenderItem<T>::Shader::attributeNames() const -> const char *const*
+{ return m_attributes.data(); }
+
+template<class T>
+auto ShaderRenderItem<T>::Shader::initialize() -> void
+{
+    auto prog = program();
+    loc_matrix = prog->uniformLocation(m_iface->matrixName());
+    loc_opacity = prog->uniformLocation(m_iface->opacityName());
+    m_iface->resolve(prog);
+}
+
+template<class T>
+auto ShaderRenderItem<T>::Shader::updateState(const RenderState &state,
+                                              QSGMaterial *new_,
+                                              QSGMaterial *) -> void
+{
+    auto prog = program();
+    if (state.isMatrixDirty())
+        prog->setUniformValue(loc_matrix, state.combinedMatrix());
+    if (state.isOpacityDirty())
+        prog->setUniformValue(loc_opacity, state.opacity());
+    auto m = static_cast<Material*>(new_);
+    m_iface->update(prog, m->data());
+}
+
+template<class T>
+auto ShaderRenderItem<T>::createMaterial() const -> QSGMaterial*
+{ return new Material(this); }
+
+template<class T>
+auto ShaderRenderItem<T>::updateMaterial(QSGMaterial *material) -> QSGMaterial*
+{
+    auto m = static_cast<Material*>(material);
+    updateData(m->data());
+    return m;
+}
 
 #endif // OPENGLDRAWITEM_HPP

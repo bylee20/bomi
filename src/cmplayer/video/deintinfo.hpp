@@ -13,8 +13,8 @@ public:
         return method == rhs.method && doubler == rhs.doubler && device == rhs.device;
     }
     bool operator != (const DeintOption &rhs) const { return !operator == (rhs); }
-    QString toString() const;
-    static DeintOption fromString(const QString &string);
+    auto toString() const -> QString;
+    static auto fromString(const QString &string) -> DeintOption;
 // variables
     DeintMethod method = DeintMethod::None;
     DeintDevice device = DeintDevice::CPU;
@@ -24,16 +24,16 @@ public:
 class DeintCaps {
 public:
     static QList<DeintCaps> list();
-    DeintMethod method() const { return m_method; }
-    bool hwdec() const { return supports(DecoderDevice::GPU); }
-    bool swdec() const { return supports(DecoderDevice::CPU); }
-    bool doubler() const { return m_doubler; }
-    bool supports(DeintDevice dev) const { return m_device & dev; }
-    bool supports(DecoderDevice dev) const { return m_decoder & dev; }
-    bool isAvailable() const { return m_method != DeintMethod::None && m_device != 0 && m_decoder != 0; }
-    QString toString() const;
-    static DeintCaps fromString(const QString &text);
-    static DeintCaps default_(DecoderDevice dec);
+    auto method() const -> DeintMethod { return m_method; }
+    auto hwdec() const -> bool { return supports(DecoderDevice::GPU); }
+    auto swdec() const -> bool { return supports(DecoderDevice::CPU); }
+    auto doubler() const -> bool { return m_doubler; }
+    auto supports(DeintDevice dev) const -> bool { return m_device & dev; }
+    auto supports(DecoderDevice dev) const -> bool { return m_decoder & dev; }
+    auto isAvailable() const -> bool { return m_method != DeintMethod::None && m_device != 0 && m_decoder != 0; }
+    auto toString() const -> QString;
+    static auto fromString(const QString &text) -> DeintCaps;
+    static auto default_(DecoderDevice dec) -> DeintCaps;
 private:
     friend class DeintWidget;
     DeintMethod m_method = DeintMethod::None;
@@ -48,9 +48,9 @@ class DeintWidget : public QWidget {
 public:
     DeintWidget(DecoderDevice decoder, QWidget *parent = nullptr);
     ~DeintWidget();
-    void set(const DeintCaps &caps);
-    DeintCaps get() const;
-    static QString informations();
+    auto set(const DeintCaps &caps) -> void;
+    auto get() const -> DeintCaps;
+    static auto informations() -> QString;
 private:
     static constexpr auto GPU = DeintDevice::GPU;
     static constexpr auto CPU = DeintDevice::CPU;

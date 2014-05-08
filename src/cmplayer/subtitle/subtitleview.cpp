@@ -6,24 +6,33 @@
 
 class SubtitleView::CompView : public QWidget {
 public:
-    CompView(QWidget *parent = 0): QWidget(parent) {
-        m_view = new SubCompView(this);
-        m_name = new QLabel(this);
-
-        QVBoxLayout *vbox = new QVBoxLayout(this);
-        vbox->addWidget(m_name);
-        vbox->addWidget(m_view);
-    }
-    void setModel(SubCompModel *model) {
-        if (model)
-            m_name->setText(model->name());
-        m_view->setModel(model);
-    }
-    SubCompView *view() const {return m_view;}
+    CompView(QWidget *parent = nullptr);
+    auto setModel(SubCompModel *model) -> void;
+    auto view() const -> SubCompView* {return m_view;}
 private:
     SubCompView *m_view;
     QLabel *m_name;
 };
+
+SubtitleView::CompView::CompView(QWidget *parent)
+    : QWidget(parent)
+{
+    m_view = new SubCompView(this);
+    m_name = new QLabel(this);
+
+    QVBoxLayout *vbox = new QVBoxLayout(this);
+    vbox->addWidget(m_name);
+    vbox->addWidget(m_view);
+}
+
+auto SubtitleView::CompView::setModel(SubCompModel *model) -> void
+{
+    if (model)
+        m_name->setText(model->name());
+    m_view->setModel(model);
+}
+
+/******************************************************************************/
 
 struct SubtitleView::Data {
     QVector<SubCompModel*> models;
@@ -34,7 +43,9 @@ struct SubtitleView::Data {
 };
 
 SubtitleView::SubtitleView(QWidget *parent)
-: QDialog(parent), d(new Data) {
+    : QDialog(parent)
+    , d(new Data)
+{
     QScrollArea *area = new QScrollArea(this);
     d->splitter = new QSplitter(Qt::Horizontal, area);
     d->timeVisible = new QCheckBox(tr("Show start/end time"), this);
@@ -53,17 +64,21 @@ SubtitleView::SubtitleView(QWidget *parent)
     setAutoScrollEnabled(d->autoScroll->isChecked());
     setTimeVisible(d->timeVisible->isChecked());
 
-    connect(d->timeVisible, SIGNAL(toggled(bool)), this, SLOT(setTimeVisible(bool)));
-    connect(d->autoScroll, SIGNAL(toggled(bool)), this, SLOT(setAutoScrollEnabled(bool)));
+    connect(d->timeVisible, &QCheckBox::toggled,
+            this, &SubtitleView::setTimeVisible);
+    connect(d->autoScroll, &QCheckBox::toggled,
+            this, &SubtitleView::setAutoScrollEnabled);
 
     cApp.setWindowTitle(this, tr("Subtitle View"));
 }
 
-SubtitleView::~SubtitleView() {
+SubtitleView::~SubtitleView()
+{
     delete d;
 }
 
-void SubtitleView::updateModels() {
+auto SubtitleView::updateModels() -> void
+{
     if (d->models.isEmpty()) {
         d->splitter->setVisible(false);
         for (int i=0; i<d->comp.size(); ++i)
@@ -86,7 +101,8 @@ void SubtitleView::updateModels() {
     d->needToUpdate = false;
 }
 
-void SubtitleView::setModels(const QVector<SubCompModel*> &models) {
+auto SubtitleView::setModels(const QVector<SubCompModel*> &models) -> void
+{
     d->models = models;
     if (isVisible())
         updateModels();
@@ -94,17 +110,20 @@ void SubtitleView::setModels(const QVector<SubCompModel*> &models) {
         d->needToUpdate = true;
 }
 
-void SubtitleView::setTimeVisible(bool visible) {
+auto SubtitleView::setTimeVisible(bool visible) -> void
+{
     for (int i=0; i<d->comp.size(); ++i)
         d->comp[i]->view()->setTimeVisible(visible);
 }
 
-void SubtitleView::setAutoScrollEnabled(bool enabled) {
+auto SubtitleView::setAutoScrollEnabled(bool enabled) -> void
+{
     for (int i=0; i<d->comp.size(); ++i)
         d->comp[i]->view()->setAutoScrollEnabled(enabled);
 }
 
-void SubtitleView::showEvent(QShowEvent *event) {
+auto SubtitleView::showEvent(QShowEvent *event) -> void
+{
     QDialog::showEvent(event);
     if (d->needToUpdate)
         updateModels();

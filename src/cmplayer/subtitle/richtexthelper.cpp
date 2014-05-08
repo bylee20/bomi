@@ -3,7 +3,8 @@
 
 DECLARE_LOG_CONTEXT(RichText)
 
-QString RichTextHelper::replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s) {
+auto RichTextHelper::replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s) -> QString
+{
     QString text;
     int start = 0;
     const int len = strlen(from.latin1());
@@ -21,12 +22,14 @@ QString RichTextHelper::replace(const QStringRef &str, const QLatin1String &from
     return text;
 }
 
-int RichTextHelper::pixelSizeToPointSize(double pt) {
+auto RichTextHelper::pixelSizeToPointSize(double pt) -> int
+{
     const double dpi = QApplication::desktop()->logicalDpiY();
     return pt*dpi/72.0 + 0.5;
 }
 
-int RichTextHelper::toFontPixelSize(const QStringRef &size) {
+auto RichTextHelper::toFontPixelSize(const QStringRef &size) -> int
+{
     int px = 0, i = 0;
     while (i<size.size()) {
         const ushort c = size.at(i).unicode();
@@ -44,7 +47,8 @@ int RichTextHelper::toFontPixelSize(const QStringRef &size) {
     return px;
 }
 
-RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
+auto RichTextHelper::parseTag(const QStringRef &text, int &pos) -> RichTextHelper::Tag
+{
     auto at = [&text] (int idx) {return text.at(idx).unicode();};
     if (at(pos) != '<')
         return Tag();
@@ -131,7 +135,8 @@ RichTextHelper::Tag RichTextHelper::parseTag(const QStringRef &text, int &pos) {
     return Tag();
 }
 
-QChar RichTextHelper::entityCharacter(const QStringRef &entity) {
+auto RichTextHelper::entityCharacter(const QStringRef &entity) -> QChar
+{
     Q_UNUSED(entity);
 #define RETURN(ent, c) {if (_Same(entity, ent)) return QChar(c);}
     RETURN("nbsp", ' ');
@@ -142,14 +147,16 @@ QChar RichTextHelper::entityCharacter(const QStringRef &entity) {
     return QChar();
 }
 
-int RichTextHelper::indexOf(const QStringRef &ref, QRegExp &rx, int from) {
+auto RichTextHelper::indexOf(const QStringRef &ref, QRegExp &rx, int from) -> int
+{
     const int pos = ref.position();
     const int idx = ref.string()->indexOf(rx, from + pos) - pos;
     return 0 <= idx && idx < ref.length() ? idx : -1;
 }
 
 
-int RichTextHelper::innerText(const char *open, const char *close, const QStringRef &text, QStringRef &block, int &pos, Tag &tag) {
+auto RichTextHelper::innerText(const char *open, const char *close, const QStringRef &text, QStringRef &block, int &pos, Tag &tag) -> int
+{
     while (pos < text.size()) {
         const QChar c = text.at(pos);
         if (c.unicode() == '<') {

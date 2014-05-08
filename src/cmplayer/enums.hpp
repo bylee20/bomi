@@ -9,18 +9,18 @@ extern "C" {
 #include <audio/chmap.h>
 }
 
-template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
+template<class T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 
 typedef QString (*EnumVariantToSqlFunc)(const QVariant &var);
 typedef QVariant (*EnumVariantFromSqlFunc)(const QVariant &var, const QVariant &def);
 
-template<typename T>
+template<class T>
 QString _EnumVariantToSql(const QVariant &var) {
     Q_ASSERT(var.userType() == qMetaTypeId<T>());
     return QLatin1Char('\'') % EnumInfo<T>::name(var.value<T>()) % QLatin1Char('\'');
 }
 
-template<typename T>
+template<class T>
 QVariant _EnumVariantFromSql(const QVariant &name, const QVariant &def) {
     const auto enum_ = EnumInfo<T>::from(name.toString(), def.value<T>());
     return QVariant::fromValue<T>(enum_);
@@ -41,26 +41,26 @@ enum class SpeakerId : int {
     SideRight = (int)(1 << 10)
 };
 
-inline bool operator == (SpeakerId e, int i) { return (int)e == i; }
-inline bool operator != (SpeakerId e, int i) { return (int)e != i; }
-inline bool operator == (int i, SpeakerId e) { return (int)e == i; }
-inline bool operator != (int i, SpeakerId e) { return (int)e != i; }
-inline int operator & (SpeakerId e, int i) { return (int)e & i; }
-inline int operator & (int i, SpeakerId e) { return (int)e & i; }
-inline int &operator &= (int &i, SpeakerId e) { return i &= (int)e; }
-inline int operator ~ (SpeakerId e) { return ~(int)e; }
-inline int operator | (SpeakerId e, int i) { return (int)e | i; }
-inline int operator | (int i, SpeakerId e) { return (int)e | i; }
-constexpr inline int operator | (SpeakerId e1, SpeakerId e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, SpeakerId e) { return i |= (int)e; }
-inline bool operator > (SpeakerId e, int i) { return (int)e > i; }
-inline bool operator < (SpeakerId e, int i) { return (int)e < i; }
-inline bool operator >= (SpeakerId e, int i) { return (int)e >= i; }
-inline bool operator <= (SpeakerId e, int i) { return (int)e <= i; }
-inline bool operator > (int i, SpeakerId e) { return i > (int)e; }
-inline bool operator < (int i, SpeakerId e) { return i < (int)e; }
-inline bool operator >= (int i, SpeakerId e) { return i >= (int)e; }
-inline bool operator <= (int i, SpeakerId e) { return i <= (int)e; }
+inline auto operator == (SpeakerId e, int i) -> bool { return (int)e == i; }
+inline auto operator != (SpeakerId e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, SpeakerId e) -> bool { return (int)e == i; }
+inline auto operator != (int i, SpeakerId e) -> bool { return (int)e != i; }
+inline auto operator & (SpeakerId e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, SpeakerId e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, SpeakerId e) -> int& { return i &= (int)e; }
+inline auto operator ~ (SpeakerId e) -> int { return ~(int)e; }
+inline auto operator | (SpeakerId e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, SpeakerId e) -> int { return (int)e | i; }
+constexpr inline auto operator | (SpeakerId e1, SpeakerId e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, SpeakerId e) -> int& { return i |= (int)e; }
+inline auto operator > (SpeakerId e, int i) -> bool { return (int)e > i; }
+inline auto operator < (SpeakerId e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (SpeakerId e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (SpeakerId e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, SpeakerId e) -> bool { return i > (int)e; }
+inline auto operator < (int i, SpeakerId e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, SpeakerId e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, SpeakerId e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(SpeakerId)
 
@@ -70,19 +70,37 @@ class EnumInfo<SpeakerId> {
 public:
     typedef SpeakerId type;
     using Data =  mp_speaker_id;
-    struct Item { Enum value; QString name, key; mp_speaker_id data; };
-    static constexpr int size() { return 11; }
-    static constexpr const char *typeName() { return "SpeakerId"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
+    struct Item {
+        Enum value;
+        QString name, key;
+        mp_speaker_id data;
+    };
+    using ItemList = std::array<Item, 11>;
+    static constexpr auto size() -> int
+    { return 11; }
+    static constexpr auto typeName() -> const char*
+    { return "SpeakerId"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [e] (const Item &info)
+                               { return info.value == e; });
+        return it != info.cend() ? &(*it) : nullptr;
     }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static mp_speaker_id data(Enum e) { auto i = item(e); return i ? i->data : mp_speaker_id(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> mp_speaker_id
+    { auto i = item(e); return i ? i->data : mp_speaker_id(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::FrontLeft: return qApp->translate("EnumInfo", "");
         case Enum::FrontRight: return qApp->translate("EnumInfo", "");
@@ -96,24 +114,36 @@ public:
         case Enum::SideLeft: return qApp->translate("EnumInfo", "");
         case Enum::SideRight: return qApp->translate("EnumInfo", "");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 11> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const mp_speaker_id &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const mp_speaker_id &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return SpeakerId::FrontLeft; }
+    static constexpr auto default_() -> Enum
+    { return SpeakerId::FrontLeft; }
 private:
-    static const std::array<Item, 11> info;
+    static const ItemList info;
 };
 
 using SpeakerIdInfo = EnumInfo<SpeakerId>;
@@ -147,26 +177,26 @@ enum class ChannelLayout : int {
     _7_1_Side = (int)((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::FrontCenter|(int)SpeakerId::FrontLeftCenter|(int)SpeakerId::FrontRightCenter|(int)SpeakerId::SideLeft|(int)SpeakerId::SideRight|(int)SpeakerId::LowFrequency)
 };
 
-inline bool operator == (ChannelLayout e, int i) { return (int)e == i; }
-inline bool operator != (ChannelLayout e, int i) { return (int)e != i; }
-inline bool operator == (int i, ChannelLayout e) { return (int)e == i; }
-inline bool operator != (int i, ChannelLayout e) { return (int)e != i; }
-inline int operator & (ChannelLayout e, int i) { return (int)e & i; }
-inline int operator & (int i, ChannelLayout e) { return (int)e & i; }
-inline int &operator &= (int &i, ChannelLayout e) { return i &= (int)e; }
-inline int operator ~ (ChannelLayout e) { return ~(int)e; }
-inline int operator | (ChannelLayout e, int i) { return (int)e | i; }
-inline int operator | (int i, ChannelLayout e) { return (int)e | i; }
-constexpr inline int operator | (ChannelLayout e1, ChannelLayout e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, ChannelLayout e) { return i |= (int)e; }
-inline bool operator > (ChannelLayout e, int i) { return (int)e > i; }
-inline bool operator < (ChannelLayout e, int i) { return (int)e < i; }
-inline bool operator >= (ChannelLayout e, int i) { return (int)e >= i; }
-inline bool operator <= (ChannelLayout e, int i) { return (int)e <= i; }
-inline bool operator > (int i, ChannelLayout e) { return i > (int)e; }
-inline bool operator < (int i, ChannelLayout e) { return i < (int)e; }
-inline bool operator >= (int i, ChannelLayout e) { return i >= (int)e; }
-inline bool operator <= (int i, ChannelLayout e) { return i <= (int)e; }
+inline auto operator == (ChannelLayout e, int i) -> bool { return (int)e == i; }
+inline auto operator != (ChannelLayout e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, ChannelLayout e) -> bool { return (int)e == i; }
+inline auto operator != (int i, ChannelLayout e) -> bool { return (int)e != i; }
+inline auto operator & (ChannelLayout e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, ChannelLayout e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, ChannelLayout e) -> int& { return i &= (int)e; }
+inline auto operator ~ (ChannelLayout e) -> int { return ~(int)e; }
+inline auto operator | (ChannelLayout e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, ChannelLayout e) -> int { return (int)e | i; }
+constexpr inline auto operator | (ChannelLayout e1, ChannelLayout e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, ChannelLayout e) -> int& { return i |= (int)e; }
+inline auto operator > (ChannelLayout e, int i) -> bool { return (int)e > i; }
+inline auto operator < (ChannelLayout e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (ChannelLayout e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (ChannelLayout e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, ChannelLayout e) -> bool { return i > (int)e; }
+inline auto operator < (int i, ChannelLayout e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, ChannelLayout e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, ChannelLayout e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(ChannelLayout)
 
@@ -176,19 +206,37 @@ class EnumInfo<ChannelLayout> {
 public:
     typedef ChannelLayout type;
     using Data =  QByteArray;
-    struct Item { Enum value; QString name, key; QByteArray data; };
-    static constexpr int size() { return 26; }
-    static constexpr const char *typeName() { return "ChannelLayout"; }
-    static constexpr const char *typeKey() { return "channel"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Channel Layout"); }
-    static const Item *item(Enum e) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
+    struct Item {
+        Enum value;
+        QString name, key;
+        QByteArray data;
+    };
+    using ItemList = std::array<Item, 26>;
+    static constexpr auto size() -> int
+    { return 26; }
+    static constexpr auto typeName() -> const char*
+    { return "ChannelLayout"; }
+    static constexpr auto typeKey() -> const char*
+    { return "channel"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", "Channel Layout"); }
+    static auto item(Enum e) -> const Item*
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [e] (const Item &info)
+                               { return info.value == e; });
+        return it != info.cend() ? &(*it) : nullptr;
     }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QByteArray data(Enum e) { auto i = item(e); return i ? i->data : QByteArray(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QByteArray
+    { auto i = item(e); return i ? i->data : QByteArray(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Mono: return qApp->translate("EnumInfo", "Mono");
         case Enum::_2_0: return qApp->translate("EnumInfo", "Stereo");
@@ -217,24 +265,36 @@ public:
         case Enum::_7_1_Wide: return qApp->translate("EnumInfo", "7.1ch(Wide)");
         case Enum::_7_1_Side: return qApp->translate("EnumInfo", "7.1ch(Side)");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 26> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QByteArray &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QByteArray &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return ChannelLayout::_2_0; }
+    static constexpr auto default_() -> Enum
+    { return ChannelLayout::_2_0; }
 private:
-    static const std::array<Item, 26> info;
+    static const ItemList info;
 };
 
 using ChannelLayoutInfo = EnumInfo<ChannelLayout>;
@@ -247,26 +307,26 @@ enum class ColorRange : int {
     Extended = (int)4
 };
 
-inline bool operator == (ColorRange e, int i) { return (int)e == i; }
-inline bool operator != (ColorRange e, int i) { return (int)e != i; }
-inline bool operator == (int i, ColorRange e) { return (int)e == i; }
-inline bool operator != (int i, ColorRange e) { return (int)e != i; }
-inline int operator & (ColorRange e, int i) { return (int)e & i; }
-inline int operator & (int i, ColorRange e) { return (int)e & i; }
-inline int &operator &= (int &i, ColorRange e) { return i &= (int)e; }
-inline int operator ~ (ColorRange e) { return ~(int)e; }
-inline int operator | (ColorRange e, int i) { return (int)e | i; }
-inline int operator | (int i, ColorRange e) { return (int)e | i; }
-constexpr inline int operator | (ColorRange e1, ColorRange e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, ColorRange e) { return i |= (int)e; }
-inline bool operator > (ColorRange e, int i) { return (int)e > i; }
-inline bool operator < (ColorRange e, int i) { return (int)e < i; }
-inline bool operator >= (ColorRange e, int i) { return (int)e >= i; }
-inline bool operator <= (ColorRange e, int i) { return (int)e <= i; }
-inline bool operator > (int i, ColorRange e) { return i > (int)e; }
-inline bool operator < (int i, ColorRange e) { return i < (int)e; }
-inline bool operator >= (int i, ColorRange e) { return i >= (int)e; }
-inline bool operator <= (int i, ColorRange e) { return i <= (int)e; }
+inline auto operator == (ColorRange e, int i) -> bool { return (int)e == i; }
+inline auto operator != (ColorRange e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, ColorRange e) -> bool { return (int)e == i; }
+inline auto operator != (int i, ColorRange e) -> bool { return (int)e != i; }
+inline auto operator & (ColorRange e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, ColorRange e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, ColorRange e) -> int& { return i &= (int)e; }
+inline auto operator ~ (ColorRange e) -> int { return ~(int)e; }
+inline auto operator | (ColorRange e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, ColorRange e) -> int { return (int)e | i; }
+constexpr inline auto operator | (ColorRange e1, ColorRange e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, ColorRange e) -> int& { return i |= (int)e; }
+inline auto operator > (ColorRange e, int i) -> bool { return (int)e > i; }
+inline auto operator < (ColorRange e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (ColorRange e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (ColorRange e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, ColorRange e) -> bool { return i > (int)e; }
+inline auto operator < (int i, ColorRange e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, ColorRange e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, ColorRange e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(ColorRange)
 
@@ -276,19 +336,32 @@ class EnumInfo<ColorRange> {
 public:
     typedef ColorRange type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 5; }
-    static constexpr const char *typeName() { return "ColorRange"; }
-    static constexpr const char *typeKey() { return "range"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Color Range"); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 5>;
+    static constexpr auto size() -> int
+    { return 5; }
+    static constexpr auto typeName() -> const char*
+    { return "ColorRange"; }
+    static constexpr auto typeKey() -> const char*
+    { return "range"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", "Color Range"); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Auto: return qApp->translate("EnumInfo", "Auto");
         case Enum::Limited: return qApp->translate("EnumInfo", "Limited Range");
@@ -296,24 +369,36 @@ public:
         case Enum::Remap: return qApp->translate("EnumInfo", "Remap Range");
         case Enum::Extended: return qApp->translate("EnumInfo", "Extended Range");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 5> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return ColorRange::Auto; }
+    static constexpr auto default_() -> Enum
+    { return ColorRange::Auto; }
 private:
-    static const std::array<Item, 5> info;
+    static const ItemList info;
 };
 
 using ColorRangeInfo = EnumInfo<ColorRange>;
@@ -330,26 +415,26 @@ enum class AdjustColor : int {
     HueDec = (int)8
 };
 
-inline bool operator == (AdjustColor e, int i) { return (int)e == i; }
-inline bool operator != (AdjustColor e, int i) { return (int)e != i; }
-inline bool operator == (int i, AdjustColor e) { return (int)e == i; }
-inline bool operator != (int i, AdjustColor e) { return (int)e != i; }
-inline int operator & (AdjustColor e, int i) { return (int)e & i; }
-inline int operator & (int i, AdjustColor e) { return (int)e & i; }
-inline int &operator &= (int &i, AdjustColor e) { return i &= (int)e; }
-inline int operator ~ (AdjustColor e) { return ~(int)e; }
-inline int operator | (AdjustColor e, int i) { return (int)e | i; }
-inline int operator | (int i, AdjustColor e) { return (int)e | i; }
-constexpr inline int operator | (AdjustColor e1, AdjustColor e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, AdjustColor e) { return i |= (int)e; }
-inline bool operator > (AdjustColor e, int i) { return (int)e > i; }
-inline bool operator < (AdjustColor e, int i) { return (int)e < i; }
-inline bool operator >= (AdjustColor e, int i) { return (int)e >= i; }
-inline bool operator <= (AdjustColor e, int i) { return (int)e <= i; }
-inline bool operator > (int i, AdjustColor e) { return i > (int)e; }
-inline bool operator < (int i, AdjustColor e) { return i < (int)e; }
-inline bool operator >= (int i, AdjustColor e) { return i >= (int)e; }
-inline bool operator <= (int i, AdjustColor e) { return i <= (int)e; }
+inline auto operator == (AdjustColor e, int i) -> bool { return (int)e == i; }
+inline auto operator != (AdjustColor e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, AdjustColor e) -> bool { return (int)e == i; }
+inline auto operator != (int i, AdjustColor e) -> bool { return (int)e != i; }
+inline auto operator & (AdjustColor e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, AdjustColor e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, AdjustColor e) -> int& { return i &= (int)e; }
+inline auto operator ~ (AdjustColor e) -> int { return ~(int)e; }
+inline auto operator | (AdjustColor e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, AdjustColor e) -> int { return (int)e | i; }
+constexpr inline auto operator | (AdjustColor e1, AdjustColor e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, AdjustColor e) -> int& { return i |= (int)e; }
+inline auto operator > (AdjustColor e, int i) -> bool { return (int)e > i; }
+inline auto operator < (AdjustColor e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (AdjustColor e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (AdjustColor e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, AdjustColor e) -> bool { return i > (int)e; }
+inline auto operator < (int i, AdjustColor e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, AdjustColor e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, AdjustColor e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(AdjustColor)
 
@@ -359,19 +444,32 @@ class EnumInfo<AdjustColor> {
 public:
     typedef AdjustColor type;
     using Data =  VideoColor;
-    struct Item { Enum value; QString name, key; VideoColor data; };
-    static constexpr int size() { return 9; }
-    static constexpr const char *typeName() { return "AdjustColor"; }
-    static constexpr const char *typeKey() { return "color"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static VideoColor data(Enum e) { auto i = item(e); return i ? i->data : VideoColor(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        VideoColor data;
+    };
+    using ItemList = std::array<Item, 9>;
+    static constexpr auto size() -> int
+    { return 9; }
+    static constexpr auto typeName() -> const char*
+    { return "AdjustColor"; }
+    static constexpr auto typeKey() -> const char*
+    { return "color"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> VideoColor
+    { auto i = item(e); return i ? i->data : VideoColor(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Reset: return qApp->translate("EnumInfo", "");
         case Enum::BrightnessInc: return qApp->translate("EnumInfo", "");
@@ -383,24 +481,36 @@ public:
         case Enum::HueInc: return qApp->translate("EnumInfo", "");
         case Enum::HueDec: return qApp->translate("EnumInfo", "");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 9> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const VideoColor &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const VideoColor &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return AdjustColor::Reset; }
+    static constexpr auto default_() -> Enum
+    { return AdjustColor::Reset; }
 private:
-    static const std::array<Item, 9> info;
+    static const ItemList info;
 };
 
 using AdjustColorInfo = EnumInfo<AdjustColor>;
@@ -410,26 +520,26 @@ enum class SubtitleDisplay : int {
     InVideo = (int)1
 };
 
-inline bool operator == (SubtitleDisplay e, int i) { return (int)e == i; }
-inline bool operator != (SubtitleDisplay e, int i) { return (int)e != i; }
-inline bool operator == (int i, SubtitleDisplay e) { return (int)e == i; }
-inline bool operator != (int i, SubtitleDisplay e) { return (int)e != i; }
-inline int operator & (SubtitleDisplay e, int i) { return (int)e & i; }
-inline int operator & (int i, SubtitleDisplay e) { return (int)e & i; }
-inline int &operator &= (int &i, SubtitleDisplay e) { return i &= (int)e; }
-inline int operator ~ (SubtitleDisplay e) { return ~(int)e; }
-inline int operator | (SubtitleDisplay e, int i) { return (int)e | i; }
-inline int operator | (int i, SubtitleDisplay e) { return (int)e | i; }
-constexpr inline int operator | (SubtitleDisplay e1, SubtitleDisplay e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, SubtitleDisplay e) { return i |= (int)e; }
-inline bool operator > (SubtitleDisplay e, int i) { return (int)e > i; }
-inline bool operator < (SubtitleDisplay e, int i) { return (int)e < i; }
-inline bool operator >= (SubtitleDisplay e, int i) { return (int)e >= i; }
-inline bool operator <= (SubtitleDisplay e, int i) { return (int)e <= i; }
-inline bool operator > (int i, SubtitleDisplay e) { return i > (int)e; }
-inline bool operator < (int i, SubtitleDisplay e) { return i < (int)e; }
-inline bool operator >= (int i, SubtitleDisplay e) { return i >= (int)e; }
-inline bool operator <= (int i, SubtitleDisplay e) { return i <= (int)e; }
+inline auto operator == (SubtitleDisplay e, int i) -> bool { return (int)e == i; }
+inline auto operator != (SubtitleDisplay e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, SubtitleDisplay e) -> bool { return (int)e == i; }
+inline auto operator != (int i, SubtitleDisplay e) -> bool { return (int)e != i; }
+inline auto operator & (SubtitleDisplay e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, SubtitleDisplay e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, SubtitleDisplay e) -> int& { return i &= (int)e; }
+inline auto operator ~ (SubtitleDisplay e) -> int { return ~(int)e; }
+inline auto operator | (SubtitleDisplay e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, SubtitleDisplay e) -> int { return (int)e | i; }
+constexpr inline auto operator | (SubtitleDisplay e1, SubtitleDisplay e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, SubtitleDisplay e) -> int& { return i |= (int)e; }
+inline auto operator > (SubtitleDisplay e, int i) -> bool { return (int)e > i; }
+inline auto operator < (SubtitleDisplay e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (SubtitleDisplay e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (SubtitleDisplay e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, SubtitleDisplay e) -> bool { return i > (int)e; }
+inline auto operator < (int i, SubtitleDisplay e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, SubtitleDisplay e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, SubtitleDisplay e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(SubtitleDisplay)
 
@@ -439,41 +549,66 @@ class EnumInfo<SubtitleDisplay> {
 public:
     typedef SubtitleDisplay type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 2; }
-    static constexpr const char *typeName() { return "SubtitleDisplay"; }
-    static constexpr const char *typeKey() { return "display"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Subtitle Display"); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 2>;
+    static constexpr auto size() -> int
+    { return 2; }
+    static constexpr auto typeName() -> const char*
+    { return "SubtitleDisplay"; }
+    static constexpr auto typeKey() -> const char*
+    { return "display"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", "Subtitle Display"); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::OnLetterbox: return qApp->translate("EnumInfo", "Display on Letterbox");
         case Enum::InVideo: return qApp->translate("EnumInfo", "Display in Video");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 2> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return SubtitleDisplay::OnLetterbox; }
+    static constexpr auto default_() -> Enum
+    { return SubtitleDisplay::OnLetterbox; }
 private:
-    static const std::array<Item, 2> info;
+    static const ItemList info;
 };
 
 using SubtitleDisplayInfo = EnumInfo<SubtitleDisplay>;
@@ -488,26 +623,26 @@ enum class VideoRatio : int {
     _2_35__1 = (int)6
 };
 
-inline bool operator == (VideoRatio e, int i) { return (int)e == i; }
-inline bool operator != (VideoRatio e, int i) { return (int)e != i; }
-inline bool operator == (int i, VideoRatio e) { return (int)e == i; }
-inline bool operator != (int i, VideoRatio e) { return (int)e != i; }
-inline int operator & (VideoRatio e, int i) { return (int)e & i; }
-inline int operator & (int i, VideoRatio e) { return (int)e & i; }
-inline int &operator &= (int &i, VideoRatio e) { return i &= (int)e; }
-inline int operator ~ (VideoRatio e) { return ~(int)e; }
-inline int operator | (VideoRatio e, int i) { return (int)e | i; }
-inline int operator | (int i, VideoRatio e) { return (int)e | i; }
-constexpr inline int operator | (VideoRatio e1, VideoRatio e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, VideoRatio e) { return i |= (int)e; }
-inline bool operator > (VideoRatio e, int i) { return (int)e > i; }
-inline bool operator < (VideoRatio e, int i) { return (int)e < i; }
-inline bool operator >= (VideoRatio e, int i) { return (int)e >= i; }
-inline bool operator <= (VideoRatio e, int i) { return (int)e <= i; }
-inline bool operator > (int i, VideoRatio e) { return i > (int)e; }
-inline bool operator < (int i, VideoRatio e) { return i < (int)e; }
-inline bool operator >= (int i, VideoRatio e) { return i >= (int)e; }
-inline bool operator <= (int i, VideoRatio e) { return i <= (int)e; }
+inline auto operator == (VideoRatio e, int i) -> bool { return (int)e == i; }
+inline auto operator != (VideoRatio e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, VideoRatio e) -> bool { return (int)e == i; }
+inline auto operator != (int i, VideoRatio e) -> bool { return (int)e != i; }
+inline auto operator & (VideoRatio e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, VideoRatio e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, VideoRatio e) -> int& { return i &= (int)e; }
+inline auto operator ~ (VideoRatio e) -> int { return ~(int)e; }
+inline auto operator | (VideoRatio e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, VideoRatio e) -> int { return (int)e | i; }
+constexpr inline auto operator | (VideoRatio e1, VideoRatio e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, VideoRatio e) -> int& { return i |= (int)e; }
+inline auto operator > (VideoRatio e, int i) -> bool { return (int)e > i; }
+inline auto operator < (VideoRatio e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (VideoRatio e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (VideoRatio e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, VideoRatio e) -> bool { return i > (int)e; }
+inline auto operator < (int i, VideoRatio e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, VideoRatio e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, VideoRatio e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(VideoRatio)
 
@@ -517,19 +652,32 @@ class EnumInfo<VideoRatio> {
 public:
     typedef VideoRatio type;
     using Data =  qreal;
-    struct Item { Enum value; QString name, key; qreal data; };
-    static constexpr int size() { return 7; }
-    static constexpr const char *typeName() { return "VideoRatio"; }
-    static constexpr const char *typeKey() { return "size"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Size"); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static qreal data(Enum e) { auto i = item(e); return i ? i->data : qreal(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        qreal data;
+    };
+    using ItemList = std::array<Item, 7>;
+    static constexpr auto size() -> int
+    { return 7; }
+    static constexpr auto typeName() -> const char*
+    { return "VideoRatio"; }
+    static constexpr auto typeKey() -> const char*
+    { return "size"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", "Size"); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> qreal
+    { auto i = item(e); return i ? i->data : qreal(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Source: return qApp->translate("EnumInfo", "Same as Source");
         case Enum::Window: return qApp->translate("EnumInfo", "Same as Window");
@@ -539,24 +687,36 @@ public:
         case Enum::_1_85__1: return qApp->translate("EnumInfo", "1.85:1 (Wide Vision)");
         case Enum::_2_35__1: return qApp->translate("EnumInfo", "2.35:1 (CinemaScope)");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 7> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const qreal &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const qreal &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return VideoRatio::Source; }
+    static constexpr auto default_() -> Enum
+    { return VideoRatio::Source; }
 private:
-    static const std::array<Item, 7> info;
+    static const ItemList info;
 };
 
 using VideoRatioInfo = EnumInfo<VideoRatio>;
@@ -567,26 +727,26 @@ enum class Dithering : int {
     Ordered = (int)2
 };
 
-inline bool operator == (Dithering e, int i) { return (int)e == i; }
-inline bool operator != (Dithering e, int i) { return (int)e != i; }
-inline bool operator == (int i, Dithering e) { return (int)e == i; }
-inline bool operator != (int i, Dithering e) { return (int)e != i; }
-inline int operator & (Dithering e, int i) { return (int)e & i; }
-inline int operator & (int i, Dithering e) { return (int)e & i; }
-inline int &operator &= (int &i, Dithering e) { return i &= (int)e; }
-inline int operator ~ (Dithering e) { return ~(int)e; }
-inline int operator | (Dithering e, int i) { return (int)e | i; }
-inline int operator | (int i, Dithering e) { return (int)e | i; }
-constexpr inline int operator | (Dithering e1, Dithering e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, Dithering e) { return i |= (int)e; }
-inline bool operator > (Dithering e, int i) { return (int)e > i; }
-inline bool operator < (Dithering e, int i) { return (int)e < i; }
-inline bool operator >= (Dithering e, int i) { return (int)e >= i; }
-inline bool operator <= (Dithering e, int i) { return (int)e <= i; }
-inline bool operator > (int i, Dithering e) { return i > (int)e; }
-inline bool operator < (int i, Dithering e) { return i < (int)e; }
-inline bool operator >= (int i, Dithering e) { return i >= (int)e; }
-inline bool operator <= (int i, Dithering e) { return i <= (int)e; }
+inline auto operator == (Dithering e, int i) -> bool { return (int)e == i; }
+inline auto operator != (Dithering e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, Dithering e) -> bool { return (int)e == i; }
+inline auto operator != (int i, Dithering e) -> bool { return (int)e != i; }
+inline auto operator & (Dithering e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, Dithering e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, Dithering e) -> int& { return i &= (int)e; }
+inline auto operator ~ (Dithering e) -> int { return ~(int)e; }
+inline auto operator | (Dithering e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, Dithering e) -> int { return (int)e | i; }
+constexpr inline auto operator | (Dithering e1, Dithering e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, Dithering e) -> int& { return i |= (int)e; }
+inline auto operator > (Dithering e, int i) -> bool { return (int)e > i; }
+inline auto operator < (Dithering e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (Dithering e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (Dithering e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, Dithering e) -> bool { return i > (int)e; }
+inline auto operator < (int i, Dithering e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, Dithering e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, Dithering e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(Dithering)
 
@@ -596,42 +756,67 @@ class EnumInfo<Dithering> {
 public:
     typedef Dithering type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "Dithering"; }
-    static constexpr const char *typeKey() { return "dithering"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Dithering"); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "Dithering"; }
+    static constexpr auto typeKey() -> const char*
+    { return "dithering"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", "Dithering"); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::None: return qApp->translate("EnumInfo", "Off");
         case Enum::Fruit: return qApp->translate("EnumInfo", "Random Dithering");
         case Enum::Ordered: return qApp->translate("EnumInfo", "Ordered Dithering");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return Dithering::Fruit; }
+    static constexpr auto default_() -> Enum
+    { return Dithering::Fruit; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using DitheringInfo = EnumInfo<Dithering>;
@@ -642,26 +827,26 @@ enum class DecoderDevice : int {
     GPU = (int)2
 };
 
-inline bool operator == (DecoderDevice e, int i) { return (int)e == i; }
-inline bool operator != (DecoderDevice e, int i) { return (int)e != i; }
-inline bool operator == (int i, DecoderDevice e) { return (int)e == i; }
-inline bool operator != (int i, DecoderDevice e) { return (int)e != i; }
-inline int operator & (DecoderDevice e, int i) { return (int)e & i; }
-inline int operator & (int i, DecoderDevice e) { return (int)e & i; }
-inline int &operator &= (int &i, DecoderDevice e) { return i &= (int)e; }
-inline int operator ~ (DecoderDevice e) { return ~(int)e; }
-inline int operator | (DecoderDevice e, int i) { return (int)e | i; }
-inline int operator | (int i, DecoderDevice e) { return (int)e | i; }
-constexpr inline int operator | (DecoderDevice e1, DecoderDevice e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, DecoderDevice e) { return i |= (int)e; }
-inline bool operator > (DecoderDevice e, int i) { return (int)e > i; }
-inline bool operator < (DecoderDevice e, int i) { return (int)e < i; }
-inline bool operator >= (DecoderDevice e, int i) { return (int)e >= i; }
-inline bool operator <= (DecoderDevice e, int i) { return (int)e <= i; }
-inline bool operator > (int i, DecoderDevice e) { return i > (int)e; }
-inline bool operator < (int i, DecoderDevice e) { return i < (int)e; }
-inline bool operator >= (int i, DecoderDevice e) { return i >= (int)e; }
-inline bool operator <= (int i, DecoderDevice e) { return i <= (int)e; }
+inline auto operator == (DecoderDevice e, int i) -> bool { return (int)e == i; }
+inline auto operator != (DecoderDevice e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, DecoderDevice e) -> bool { return (int)e == i; }
+inline auto operator != (int i, DecoderDevice e) -> bool { return (int)e != i; }
+inline auto operator & (DecoderDevice e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, DecoderDevice e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, DecoderDevice e) -> int& { return i &= (int)e; }
+inline auto operator ~ (DecoderDevice e) -> int { return ~(int)e; }
+inline auto operator | (DecoderDevice e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, DecoderDevice e) -> int { return (int)e | i; }
+constexpr inline auto operator | (DecoderDevice e1, DecoderDevice e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, DecoderDevice e) -> int& { return i |= (int)e; }
+inline auto operator > (DecoderDevice e, int i) -> bool { return (int)e > i; }
+inline auto operator < (DecoderDevice e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (DecoderDevice e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (DecoderDevice e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, DecoderDevice e) -> bool { return i > (int)e; }
+inline auto operator < (int i, DecoderDevice e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, DecoderDevice e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, DecoderDevice e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(DecoderDevice)
 
@@ -671,42 +856,72 @@ class EnumInfo<DecoderDevice> {
 public:
     typedef DecoderDevice type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "DecoderDevice"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "DecoderDevice"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [e] (const Item &info)
+                               { return info.value == e; });
+        return it != info.cend() ? &(*it) : nullptr;
     }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::None: return qApp->translate("EnumInfo", "");
         case Enum::CPU: return qApp->translate("EnumInfo", "");
         case Enum::GPU: return qApp->translate("EnumInfo", "");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return DecoderDevice::None; }
+    static constexpr auto default_() -> Enum
+    { return DecoderDevice::None; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using DecoderDeviceInfo = EnumInfo<DecoderDevice>;
@@ -716,26 +931,26 @@ enum class DeintMode : int {
     Auto = (int)1
 };
 
-inline bool operator == (DeintMode e, int i) { return (int)e == i; }
-inline bool operator != (DeintMode e, int i) { return (int)e != i; }
-inline bool operator == (int i, DeintMode e) { return (int)e == i; }
-inline bool operator != (int i, DeintMode e) { return (int)e != i; }
-inline int operator & (DeintMode e, int i) { return (int)e & i; }
-inline int operator & (int i, DeintMode e) { return (int)e & i; }
-inline int &operator &= (int &i, DeintMode e) { return i &= (int)e; }
-inline int operator ~ (DeintMode e) { return ~(int)e; }
-inline int operator | (DeintMode e, int i) { return (int)e | i; }
-inline int operator | (int i, DeintMode e) { return (int)e | i; }
-constexpr inline int operator | (DeintMode e1, DeintMode e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, DeintMode e) { return i |= (int)e; }
-inline bool operator > (DeintMode e, int i) { return (int)e > i; }
-inline bool operator < (DeintMode e, int i) { return (int)e < i; }
-inline bool operator >= (DeintMode e, int i) { return (int)e >= i; }
-inline bool operator <= (DeintMode e, int i) { return (int)e <= i; }
-inline bool operator > (int i, DeintMode e) { return i > (int)e; }
-inline bool operator < (int i, DeintMode e) { return i < (int)e; }
-inline bool operator >= (int i, DeintMode e) { return i >= (int)e; }
-inline bool operator <= (int i, DeintMode e) { return i <= (int)e; }
+inline auto operator == (DeintMode e, int i) -> bool { return (int)e == i; }
+inline auto operator != (DeintMode e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, DeintMode e) -> bool { return (int)e == i; }
+inline auto operator != (int i, DeintMode e) -> bool { return (int)e != i; }
+inline auto operator & (DeintMode e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, DeintMode e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, DeintMode e) -> int& { return i &= (int)e; }
+inline auto operator ~ (DeintMode e) -> int { return ~(int)e; }
+inline auto operator | (DeintMode e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, DeintMode e) -> int { return (int)e | i; }
+constexpr inline auto operator | (DeintMode e1, DeintMode e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, DeintMode e) -> int& { return i |= (int)e; }
+inline auto operator > (DeintMode e, int i) -> bool { return (int)e > i; }
+inline auto operator < (DeintMode e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (DeintMode e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (DeintMode e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, DeintMode e) -> bool { return i > (int)e; }
+inline auto operator < (int i, DeintMode e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, DeintMode e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, DeintMode e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(DeintMode)
 
@@ -745,41 +960,66 @@ class EnumInfo<DeintMode> {
 public:
     typedef DeintMode type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 2; }
-    static constexpr const char *typeName() { return "DeintMode"; }
-    static constexpr const char *typeKey() { return "deinterlacing"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Deinterlacing"); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 2>;
+    static constexpr auto size() -> int
+    { return 2; }
+    static constexpr auto typeName() -> const char*
+    { return "DeintMode"; }
+    static constexpr auto typeKey() -> const char*
+    { return "deinterlacing"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", "Deinterlacing"); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::None: return qApp->translate("EnumInfo", "Off");
         case Enum::Auto: return qApp->translate("EnumInfo", "Auto");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 2> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return DeintMode::Auto; }
+    static constexpr auto default_() -> Enum
+    { return DeintMode::Auto; }
 private:
-    static const std::array<Item, 2> info;
+    static const ItemList info;
 };
 
 using DeintModeInfo = EnumInfo<DeintMode>;
@@ -791,26 +1031,26 @@ enum class DeintDevice : int {
     OpenGL = (int)4
 };
 
-inline bool operator == (DeintDevice e, int i) { return (int)e == i; }
-inline bool operator != (DeintDevice e, int i) { return (int)e != i; }
-inline bool operator == (int i, DeintDevice e) { return (int)e == i; }
-inline bool operator != (int i, DeintDevice e) { return (int)e != i; }
-inline int operator & (DeintDevice e, int i) { return (int)e & i; }
-inline int operator & (int i, DeintDevice e) { return (int)e & i; }
-inline int &operator &= (int &i, DeintDevice e) { return i &= (int)e; }
-inline int operator ~ (DeintDevice e) { return ~(int)e; }
-inline int operator | (DeintDevice e, int i) { return (int)e | i; }
-inline int operator | (int i, DeintDevice e) { return (int)e | i; }
-constexpr inline int operator | (DeintDevice e1, DeintDevice e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, DeintDevice e) { return i |= (int)e; }
-inline bool operator > (DeintDevice e, int i) { return (int)e > i; }
-inline bool operator < (DeintDevice e, int i) { return (int)e < i; }
-inline bool operator >= (DeintDevice e, int i) { return (int)e >= i; }
-inline bool operator <= (DeintDevice e, int i) { return (int)e <= i; }
-inline bool operator > (int i, DeintDevice e) { return i > (int)e; }
-inline bool operator < (int i, DeintDevice e) { return i < (int)e; }
-inline bool operator >= (int i, DeintDevice e) { return i >= (int)e; }
-inline bool operator <= (int i, DeintDevice e) { return i <= (int)e; }
+inline auto operator == (DeintDevice e, int i) -> bool { return (int)e == i; }
+inline auto operator != (DeintDevice e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, DeintDevice e) -> bool { return (int)e == i; }
+inline auto operator != (int i, DeintDevice e) -> bool { return (int)e != i; }
+inline auto operator & (DeintDevice e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, DeintDevice e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, DeintDevice e) -> int& { return i &= (int)e; }
+inline auto operator ~ (DeintDevice e) -> int { return ~(int)e; }
+inline auto operator | (DeintDevice e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, DeintDevice e) -> int { return (int)e | i; }
+constexpr inline auto operator | (DeintDevice e1, DeintDevice e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, DeintDevice e) -> int& { return i |= (int)e; }
+inline auto operator > (DeintDevice e, int i) -> bool { return (int)e > i; }
+inline auto operator < (DeintDevice e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (DeintDevice e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (DeintDevice e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, DeintDevice e) -> bool { return i > (int)e; }
+inline auto operator < (int i, DeintDevice e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, DeintDevice e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, DeintDevice e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(DeintDevice)
 
@@ -820,43 +1060,73 @@ class EnumInfo<DeintDevice> {
 public:
     typedef DeintDevice type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 4; }
-    static constexpr const char *typeName() { return "DeintDevice"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 4>;
+    static constexpr auto size() -> int
+    { return 4; }
+    static constexpr auto typeName() -> const char*
+    { return "DeintDevice"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [e] (const Item &info)
+                               { return info.value == e; });
+        return it != info.cend() ? &(*it) : nullptr;
     }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::None: return qApp->translate("EnumInfo", "");
         case Enum::CPU: return qApp->translate("EnumInfo", "");
         case Enum::GPU: return qApp->translate("EnumInfo", "");
         case Enum::OpenGL: return qApp->translate("EnumInfo", "");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 4> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return DeintDevice::None; }
+    static constexpr auto default_() -> Enum
+    { return DeintDevice::None; }
 private:
-    static const std::array<Item, 4> info;
+    static const ItemList info;
 };
 
 using DeintDeviceInfo = EnumInfo<DeintDevice>;
@@ -872,26 +1142,26 @@ enum class DeintMethod : int {
     MotionAdaptive = (int)7
 };
 
-inline bool operator == (DeintMethod e, int i) { return (int)e == i; }
-inline bool operator != (DeintMethod e, int i) { return (int)e != i; }
-inline bool operator == (int i, DeintMethod e) { return (int)e == i; }
-inline bool operator != (int i, DeintMethod e) { return (int)e != i; }
-inline int operator & (DeintMethod e, int i) { return (int)e & i; }
-inline int operator & (int i, DeintMethod e) { return (int)e & i; }
-inline int &operator &= (int &i, DeintMethod e) { return i &= (int)e; }
-inline int operator ~ (DeintMethod e) { return ~(int)e; }
-inline int operator | (DeintMethod e, int i) { return (int)e | i; }
-inline int operator | (int i, DeintMethod e) { return (int)e | i; }
-constexpr inline int operator | (DeintMethod e1, DeintMethod e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, DeintMethod e) { return i |= (int)e; }
-inline bool operator > (DeintMethod e, int i) { return (int)e > i; }
-inline bool operator < (DeintMethod e, int i) { return (int)e < i; }
-inline bool operator >= (DeintMethod e, int i) { return (int)e >= i; }
-inline bool operator <= (DeintMethod e, int i) { return (int)e <= i; }
-inline bool operator > (int i, DeintMethod e) { return i > (int)e; }
-inline bool operator < (int i, DeintMethod e) { return i < (int)e; }
-inline bool operator >= (int i, DeintMethod e) { return i >= (int)e; }
-inline bool operator <= (int i, DeintMethod e) { return i <= (int)e; }
+inline auto operator == (DeintMethod e, int i) -> bool { return (int)e == i; }
+inline auto operator != (DeintMethod e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, DeintMethod e) -> bool { return (int)e == i; }
+inline auto operator != (int i, DeintMethod e) -> bool { return (int)e != i; }
+inline auto operator & (DeintMethod e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, DeintMethod e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, DeintMethod e) -> int& { return i &= (int)e; }
+inline auto operator ~ (DeintMethod e) -> int { return ~(int)e; }
+inline auto operator | (DeintMethod e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, DeintMethod e) -> int { return (int)e | i; }
+constexpr inline auto operator | (DeintMethod e1, DeintMethod e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, DeintMethod e) -> int& { return i |= (int)e; }
+inline auto operator > (DeintMethod e, int i) -> bool { return (int)e > i; }
+inline auto operator < (DeintMethod e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (DeintMethod e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (DeintMethod e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, DeintMethod e) -> bool { return i > (int)e; }
+inline auto operator < (int i, DeintMethod e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, DeintMethod e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, DeintMethod e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(DeintMethod)
 
@@ -901,19 +1171,32 @@ class EnumInfo<DeintMethod> {
 public:
     typedef DeintMethod type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 8; }
-    static constexpr const char *typeName() { return "DeintMethod"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 8>;
+    static constexpr auto size() -> int
+    { return 8; }
+    static constexpr auto typeName() -> const char*
+    { return "DeintMethod"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::None: return qApp->translate("EnumInfo", "");
         case Enum::Bob: return qApp->translate("EnumInfo", "");
@@ -924,24 +1207,36 @@ public:
         case Enum::Yadif: return qApp->translate("EnumInfo", "");
         case Enum::MotionAdaptive: return qApp->translate("EnumInfo", "");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 8> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return DeintMethod::None; }
+    static constexpr auto default_() -> Enum
+    { return DeintMethod::None; }
 private:
-    static const std::array<Item, 8> info;
+    static const ItemList info;
 };
 
 using DeintMethodInfo = EnumInfo<DeintMethod>;
@@ -960,26 +1255,26 @@ enum class InterpolatorType : int {
     Lanczos4 = (int)10
 };
 
-inline bool operator == (InterpolatorType e, int i) { return (int)e == i; }
-inline bool operator != (InterpolatorType e, int i) { return (int)e != i; }
-inline bool operator == (int i, InterpolatorType e) { return (int)e == i; }
-inline bool operator != (int i, InterpolatorType e) { return (int)e != i; }
-inline int operator & (InterpolatorType e, int i) { return (int)e & i; }
-inline int operator & (int i, InterpolatorType e) { return (int)e & i; }
-inline int &operator &= (int &i, InterpolatorType e) { return i &= (int)e; }
-inline int operator ~ (InterpolatorType e) { return ~(int)e; }
-inline int operator | (InterpolatorType e, int i) { return (int)e | i; }
-inline int operator | (int i, InterpolatorType e) { return (int)e | i; }
-constexpr inline int operator | (InterpolatorType e1, InterpolatorType e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, InterpolatorType e) { return i |= (int)e; }
-inline bool operator > (InterpolatorType e, int i) { return (int)e > i; }
-inline bool operator < (InterpolatorType e, int i) { return (int)e < i; }
-inline bool operator >= (InterpolatorType e, int i) { return (int)e >= i; }
-inline bool operator <= (InterpolatorType e, int i) { return (int)e <= i; }
-inline bool operator > (int i, InterpolatorType e) { return i > (int)e; }
-inline bool operator < (int i, InterpolatorType e) { return i < (int)e; }
-inline bool operator >= (int i, InterpolatorType e) { return i >= (int)e; }
-inline bool operator <= (int i, InterpolatorType e) { return i <= (int)e; }
+inline auto operator == (InterpolatorType e, int i) -> bool { return (int)e == i; }
+inline auto operator != (InterpolatorType e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, InterpolatorType e) -> bool { return (int)e == i; }
+inline auto operator != (int i, InterpolatorType e) -> bool { return (int)e != i; }
+inline auto operator & (InterpolatorType e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, InterpolatorType e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, InterpolatorType e) -> int& { return i &= (int)e; }
+inline auto operator ~ (InterpolatorType e) -> int { return ~(int)e; }
+inline auto operator | (InterpolatorType e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, InterpolatorType e) -> int { return (int)e | i; }
+constexpr inline auto operator | (InterpolatorType e1, InterpolatorType e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, InterpolatorType e) -> int& { return i |= (int)e; }
+inline auto operator > (InterpolatorType e, int i) -> bool { return (int)e > i; }
+inline auto operator < (InterpolatorType e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (InterpolatorType e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (InterpolatorType e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, InterpolatorType e) -> bool { return i > (int)e; }
+inline auto operator < (int i, InterpolatorType e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, InterpolatorType e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, InterpolatorType e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(InterpolatorType)
 
@@ -989,19 +1284,32 @@ class EnumInfo<InterpolatorType> {
 public:
     typedef InterpolatorType type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 11; }
-    static constexpr const char *typeName() { return "InterpolatorType"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 11>;
+    static constexpr auto size() -> int
+    { return 11; }
+    static constexpr auto typeName() -> const char*
+    { return "InterpolatorType"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Bilinear: return qApp->translate("EnumInfo", "Bilinear");
         case Enum::BicubicBS: return qApp->translate("EnumInfo", "B-Spline");
@@ -1015,24 +1323,36 @@ public:
         case Enum::Lanczos3: return qApp->translate("EnumInfo", "3-Lobed Lanczos");
         case Enum::Lanczos4: return qApp->translate("EnumInfo", "4-Lobed Lanczos");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 11> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return InterpolatorType::Bilinear; }
+    static constexpr auto default_() -> Enum
+    { return InterpolatorType::Bilinear; }
 private:
-    static const std::array<Item, 11> info;
+    static const ItemList info;
 };
 
 using InterpolatorTypeInfo = EnumInfo<InterpolatorType>;
@@ -1048,26 +1368,26 @@ enum class AudioDriver : int {
     OpenAL = (int)7
 };
 
-inline bool operator == (AudioDriver e, int i) { return (int)e == i; }
-inline bool operator != (AudioDriver e, int i) { return (int)e != i; }
-inline bool operator == (int i, AudioDriver e) { return (int)e == i; }
-inline bool operator != (int i, AudioDriver e) { return (int)e != i; }
-inline int operator & (AudioDriver e, int i) { return (int)e & i; }
-inline int operator & (int i, AudioDriver e) { return (int)e & i; }
-inline int &operator &= (int &i, AudioDriver e) { return i &= (int)e; }
-inline int operator ~ (AudioDriver e) { return ~(int)e; }
-inline int operator | (AudioDriver e, int i) { return (int)e | i; }
-inline int operator | (int i, AudioDriver e) { return (int)e | i; }
-constexpr inline int operator | (AudioDriver e1, AudioDriver e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, AudioDriver e) { return i |= (int)e; }
-inline bool operator > (AudioDriver e, int i) { return (int)e > i; }
-inline bool operator < (AudioDriver e, int i) { return (int)e < i; }
-inline bool operator >= (AudioDriver e, int i) { return (int)e >= i; }
-inline bool operator <= (AudioDriver e, int i) { return (int)e <= i; }
-inline bool operator > (int i, AudioDriver e) { return i > (int)e; }
-inline bool operator < (int i, AudioDriver e) { return i < (int)e; }
-inline bool operator >= (int i, AudioDriver e) { return i >= (int)e; }
-inline bool operator <= (int i, AudioDriver e) { return i <= (int)e; }
+inline auto operator == (AudioDriver e, int i) -> bool { return (int)e == i; }
+inline auto operator != (AudioDriver e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, AudioDriver e) -> bool { return (int)e == i; }
+inline auto operator != (int i, AudioDriver e) -> bool { return (int)e != i; }
+inline auto operator & (AudioDriver e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, AudioDriver e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, AudioDriver e) -> int& { return i &= (int)e; }
+inline auto operator ~ (AudioDriver e) -> int { return ~(int)e; }
+inline auto operator | (AudioDriver e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, AudioDriver e) -> int { return (int)e | i; }
+constexpr inline auto operator | (AudioDriver e1, AudioDriver e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, AudioDriver e) -> int& { return i |= (int)e; }
+inline auto operator > (AudioDriver e, int i) -> bool { return (int)e > i; }
+inline auto operator < (AudioDriver e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (AudioDriver e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (AudioDriver e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, AudioDriver e) -> bool { return i > (int)e; }
+inline auto operator < (int i, AudioDriver e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, AudioDriver e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, AudioDriver e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(AudioDriver)
 
@@ -1077,19 +1397,32 @@ class EnumInfo<AudioDriver> {
 public:
     typedef AudioDriver type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 8; }
-    static constexpr const char *typeName() { return "AudioDriver"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 8>;
+    static constexpr auto size() -> int
+    { return 8; }
+    static constexpr auto typeName() -> const char*
+    { return "AudioDriver"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Auto: return qApp->translate("EnumInfo", "");
         case Enum::CoreAudio: return qApp->translate("EnumInfo", "");
@@ -1100,24 +1433,36 @@ public:
         case Enum::PortAudio: return qApp->translate("EnumInfo", "");
         case Enum::OpenAL: return qApp->translate("EnumInfo", "");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 8> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return AudioDriver::Auto; }
+    static constexpr auto default_() -> Enum
+    { return AudioDriver::Auto; }
 private:
-    static const std::array<Item, 8> info;
+    static const ItemList info;
 };
 
 using AudioDriverInfo = EnumInfo<AudioDriver>;
@@ -1128,26 +1473,26 @@ enum class ClippingMethod : int {
     Hard = (int)2
 };
 
-inline bool operator == (ClippingMethod e, int i) { return (int)e == i; }
-inline bool operator != (ClippingMethod e, int i) { return (int)e != i; }
-inline bool operator == (int i, ClippingMethod e) { return (int)e == i; }
-inline bool operator != (int i, ClippingMethod e) { return (int)e != i; }
-inline int operator & (ClippingMethod e, int i) { return (int)e & i; }
-inline int operator & (int i, ClippingMethod e) { return (int)e & i; }
-inline int &operator &= (int &i, ClippingMethod e) { return i &= (int)e; }
-inline int operator ~ (ClippingMethod e) { return ~(int)e; }
-inline int operator | (ClippingMethod e, int i) { return (int)e | i; }
-inline int operator | (int i, ClippingMethod e) { return (int)e | i; }
-constexpr inline int operator | (ClippingMethod e1, ClippingMethod e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, ClippingMethod e) { return i |= (int)e; }
-inline bool operator > (ClippingMethod e, int i) { return (int)e > i; }
-inline bool operator < (ClippingMethod e, int i) { return (int)e < i; }
-inline bool operator >= (ClippingMethod e, int i) { return (int)e >= i; }
-inline bool operator <= (ClippingMethod e, int i) { return (int)e <= i; }
-inline bool operator > (int i, ClippingMethod e) { return i > (int)e; }
-inline bool operator < (int i, ClippingMethod e) { return i < (int)e; }
-inline bool operator >= (int i, ClippingMethod e) { return i >= (int)e; }
-inline bool operator <= (int i, ClippingMethod e) { return i <= (int)e; }
+inline auto operator == (ClippingMethod e, int i) -> bool { return (int)e == i; }
+inline auto operator != (ClippingMethod e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, ClippingMethod e) -> bool { return (int)e == i; }
+inline auto operator != (int i, ClippingMethod e) -> bool { return (int)e != i; }
+inline auto operator & (ClippingMethod e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, ClippingMethod e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, ClippingMethod e) -> int& { return i &= (int)e; }
+inline auto operator ~ (ClippingMethod e) -> int { return ~(int)e; }
+inline auto operator | (ClippingMethod e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, ClippingMethod e) -> int { return (int)e | i; }
+constexpr inline auto operator | (ClippingMethod e1, ClippingMethod e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, ClippingMethod e) -> int& { return i |= (int)e; }
+inline auto operator > (ClippingMethod e, int i) -> bool { return (int)e > i; }
+inline auto operator < (ClippingMethod e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (ClippingMethod e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (ClippingMethod e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, ClippingMethod e) -> bool { return i > (int)e; }
+inline auto operator < (int i, ClippingMethod e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, ClippingMethod e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, ClippingMethod e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(ClippingMethod)
 
@@ -1157,42 +1502,67 @@ class EnumInfo<ClippingMethod> {
 public:
     typedef ClippingMethod type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "ClippingMethod"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "ClippingMethod"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Auto: return qApp->translate("EnumInfo", "Auto-clipping");
         case Enum::Soft: return qApp->translate("EnumInfo", "Soft-clipping");
         case Enum::Hard: return qApp->translate("EnumInfo", "Hard-clipping");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return ClippingMethod::Auto; }
+    static constexpr auto default_() -> Enum
+    { return ClippingMethod::Auto; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using ClippingMethodInfo = EnumInfo<ClippingMethod>;
@@ -1203,26 +1573,26 @@ enum class StaysOnTop : int {
     Always = (int)2
 };
 
-inline bool operator == (StaysOnTop e, int i) { return (int)e == i; }
-inline bool operator != (StaysOnTop e, int i) { return (int)e != i; }
-inline bool operator == (int i, StaysOnTop e) { return (int)e == i; }
-inline bool operator != (int i, StaysOnTop e) { return (int)e != i; }
-inline int operator & (StaysOnTop e, int i) { return (int)e & i; }
-inline int operator & (int i, StaysOnTop e) { return (int)e & i; }
-inline int &operator &= (int &i, StaysOnTop e) { return i &= (int)e; }
-inline int operator ~ (StaysOnTop e) { return ~(int)e; }
-inline int operator | (StaysOnTop e, int i) { return (int)e | i; }
-inline int operator | (int i, StaysOnTop e) { return (int)e | i; }
-constexpr inline int operator | (StaysOnTop e1, StaysOnTop e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, StaysOnTop e) { return i |= (int)e; }
-inline bool operator > (StaysOnTop e, int i) { return (int)e > i; }
-inline bool operator < (StaysOnTop e, int i) { return (int)e < i; }
-inline bool operator >= (StaysOnTop e, int i) { return (int)e >= i; }
-inline bool operator <= (StaysOnTop e, int i) { return (int)e <= i; }
-inline bool operator > (int i, StaysOnTop e) { return i > (int)e; }
-inline bool operator < (int i, StaysOnTop e) { return i < (int)e; }
-inline bool operator >= (int i, StaysOnTop e) { return i >= (int)e; }
-inline bool operator <= (int i, StaysOnTop e) { return i <= (int)e; }
+inline auto operator == (StaysOnTop e, int i) -> bool { return (int)e == i; }
+inline auto operator != (StaysOnTop e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, StaysOnTop e) -> bool { return (int)e == i; }
+inline auto operator != (int i, StaysOnTop e) -> bool { return (int)e != i; }
+inline auto operator & (StaysOnTop e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, StaysOnTop e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, StaysOnTop e) -> int& { return i &= (int)e; }
+inline auto operator ~ (StaysOnTop e) -> int { return ~(int)e; }
+inline auto operator | (StaysOnTop e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, StaysOnTop e) -> int { return (int)e | i; }
+constexpr inline auto operator | (StaysOnTop e1, StaysOnTop e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, StaysOnTop e) -> int& { return i |= (int)e; }
+inline auto operator > (StaysOnTop e, int i) -> bool { return (int)e > i; }
+inline auto operator < (StaysOnTop e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (StaysOnTop e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (StaysOnTop e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, StaysOnTop e) -> bool { return i > (int)e; }
+inline auto operator < (int i, StaysOnTop e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, StaysOnTop e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, StaysOnTop e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(StaysOnTop)
 
@@ -1232,42 +1602,67 @@ class EnumInfo<StaysOnTop> {
 public:
     typedef StaysOnTop type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "StaysOnTop"; }
-    static constexpr const char *typeKey() { return "stays-on-top"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", "Stays on Top"); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "StaysOnTop"; }
+    static constexpr auto typeKey() -> const char*
+    { return "stays-on-top"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", "Stays on Top"); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::None: return qApp->translate("EnumInfo", "Off");
         case Enum::Playing: return qApp->translate("EnumInfo", "Playing");
         case Enum::Always: return qApp->translate("EnumInfo", "Always");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return StaysOnTop::Playing; }
+    static constexpr auto default_() -> Enum
+    { return StaysOnTop::Playing; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using StaysOnTopInfo = EnumInfo<StaysOnTop>;
@@ -1278,26 +1673,26 @@ enum class SeekingStep : int {
     Step3 = (int)2
 };
 
-inline bool operator == (SeekingStep e, int i) { return (int)e == i; }
-inline bool operator != (SeekingStep e, int i) { return (int)e != i; }
-inline bool operator == (int i, SeekingStep e) { return (int)e == i; }
-inline bool operator != (int i, SeekingStep e) { return (int)e != i; }
-inline int operator & (SeekingStep e, int i) { return (int)e & i; }
-inline int operator & (int i, SeekingStep e) { return (int)e & i; }
-inline int &operator &= (int &i, SeekingStep e) { return i &= (int)e; }
-inline int operator ~ (SeekingStep e) { return ~(int)e; }
-inline int operator | (SeekingStep e, int i) { return (int)e | i; }
-inline int operator | (int i, SeekingStep e) { return (int)e | i; }
-constexpr inline int operator | (SeekingStep e1, SeekingStep e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, SeekingStep e) { return i |= (int)e; }
-inline bool operator > (SeekingStep e, int i) { return (int)e > i; }
-inline bool operator < (SeekingStep e, int i) { return (int)e < i; }
-inline bool operator >= (SeekingStep e, int i) { return (int)e >= i; }
-inline bool operator <= (SeekingStep e, int i) { return (int)e <= i; }
-inline bool operator > (int i, SeekingStep e) { return i > (int)e; }
-inline bool operator < (int i, SeekingStep e) { return i < (int)e; }
-inline bool operator >= (int i, SeekingStep e) { return i >= (int)e; }
-inline bool operator <= (int i, SeekingStep e) { return i <= (int)e; }
+inline auto operator == (SeekingStep e, int i) -> bool { return (int)e == i; }
+inline auto operator != (SeekingStep e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, SeekingStep e) -> bool { return (int)e == i; }
+inline auto operator != (int i, SeekingStep e) -> bool { return (int)e != i; }
+inline auto operator & (SeekingStep e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, SeekingStep e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, SeekingStep e) -> int& { return i &= (int)e; }
+inline auto operator ~ (SeekingStep e) -> int { return ~(int)e; }
+inline auto operator | (SeekingStep e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, SeekingStep e) -> int { return (int)e | i; }
+constexpr inline auto operator | (SeekingStep e1, SeekingStep e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, SeekingStep e) -> int& { return i |= (int)e; }
+inline auto operator > (SeekingStep e, int i) -> bool { return (int)e > i; }
+inline auto operator < (SeekingStep e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (SeekingStep e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (SeekingStep e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, SeekingStep e) -> bool { return i > (int)e; }
+inline auto operator < (int i, SeekingStep e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, SeekingStep e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, SeekingStep e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(SeekingStep)
 
@@ -1307,42 +1702,67 @@ class EnumInfo<SeekingStep> {
 public:
     typedef SeekingStep type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "SeekingStep"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "SeekingStep"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Step1: return qApp->translate("EnumInfo", "");
         case Enum::Step2: return qApp->translate("EnumInfo", "");
         case Enum::Step3: return qApp->translate("EnumInfo", "");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return SeekingStep::Step1; }
+    static constexpr auto default_() -> Enum
+    { return SeekingStep::Step1; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using SeekingStepInfo = EnumInfo<SeekingStep>;
@@ -1352,26 +1772,26 @@ enum class GeneratePlaylist : int {
     Folder = (int)1
 };
 
-inline bool operator == (GeneratePlaylist e, int i) { return (int)e == i; }
-inline bool operator != (GeneratePlaylist e, int i) { return (int)e != i; }
-inline bool operator == (int i, GeneratePlaylist e) { return (int)e == i; }
-inline bool operator != (int i, GeneratePlaylist e) { return (int)e != i; }
-inline int operator & (GeneratePlaylist e, int i) { return (int)e & i; }
-inline int operator & (int i, GeneratePlaylist e) { return (int)e & i; }
-inline int &operator &= (int &i, GeneratePlaylist e) { return i &= (int)e; }
-inline int operator ~ (GeneratePlaylist e) { return ~(int)e; }
-inline int operator | (GeneratePlaylist e, int i) { return (int)e | i; }
-inline int operator | (int i, GeneratePlaylist e) { return (int)e | i; }
-constexpr inline int operator | (GeneratePlaylist e1, GeneratePlaylist e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, GeneratePlaylist e) { return i |= (int)e; }
-inline bool operator > (GeneratePlaylist e, int i) { return (int)e > i; }
-inline bool operator < (GeneratePlaylist e, int i) { return (int)e < i; }
-inline bool operator >= (GeneratePlaylist e, int i) { return (int)e >= i; }
-inline bool operator <= (GeneratePlaylist e, int i) { return (int)e <= i; }
-inline bool operator > (int i, GeneratePlaylist e) { return i > (int)e; }
-inline bool operator < (int i, GeneratePlaylist e) { return i < (int)e; }
-inline bool operator >= (int i, GeneratePlaylist e) { return i >= (int)e; }
-inline bool operator <= (int i, GeneratePlaylist e) { return i <= (int)e; }
+inline auto operator == (GeneratePlaylist e, int i) -> bool { return (int)e == i; }
+inline auto operator != (GeneratePlaylist e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, GeneratePlaylist e) -> bool { return (int)e == i; }
+inline auto operator != (int i, GeneratePlaylist e) -> bool { return (int)e != i; }
+inline auto operator & (GeneratePlaylist e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, GeneratePlaylist e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, GeneratePlaylist e) -> int& { return i &= (int)e; }
+inline auto operator ~ (GeneratePlaylist e) -> int { return ~(int)e; }
+inline auto operator | (GeneratePlaylist e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, GeneratePlaylist e) -> int { return (int)e | i; }
+constexpr inline auto operator | (GeneratePlaylist e1, GeneratePlaylist e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, GeneratePlaylist e) -> int& { return i |= (int)e; }
+inline auto operator > (GeneratePlaylist e, int i) -> bool { return (int)e > i; }
+inline auto operator < (GeneratePlaylist e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (GeneratePlaylist e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (GeneratePlaylist e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, GeneratePlaylist e) -> bool { return i > (int)e; }
+inline auto operator < (int i, GeneratePlaylist e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, GeneratePlaylist e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, GeneratePlaylist e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(GeneratePlaylist)
 
@@ -1381,41 +1801,66 @@ class EnumInfo<GeneratePlaylist> {
 public:
     typedef GeneratePlaylist type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 2; }
-    static constexpr const char *typeName() { return "GeneratePlaylist"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 2>;
+    static constexpr auto size() -> int
+    { return 2; }
+    static constexpr auto typeName() -> const char*
+    { return "GeneratePlaylist"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Similar: return qApp->translate("EnumInfo", "Add files which have similar names");
         case Enum::Folder: return qApp->translate("EnumInfo", "Add all files in the same folder");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 2> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return GeneratePlaylist::Similar; }
+    static constexpr auto default_() -> Enum
+    { return GeneratePlaylist::Similar; }
 private:
-    static const std::array<Item, 2> info;
+    static const ItemList info;
 };
 
 using GeneratePlaylistInfo = EnumInfo<GeneratePlaylist>;
@@ -1426,26 +1871,26 @@ enum class PlaylistBehaviorWhenOpenMedia : int {
     ClearAndGenerateNewPlaylist = (int)2
 };
 
-inline bool operator == (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e == i; }
-inline bool operator != (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e != i; }
-inline bool operator == (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e == i; }
-inline bool operator != (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e != i; }
-inline int operator & (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e & i; }
-inline int operator & (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e & i; }
-inline int &operator &= (int &i, PlaylistBehaviorWhenOpenMedia e) { return i &= (int)e; }
-inline int operator ~ (PlaylistBehaviorWhenOpenMedia e) { return ~(int)e; }
-inline int operator | (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e | i; }
-inline int operator | (int i, PlaylistBehaviorWhenOpenMedia e) { return (int)e | i; }
-constexpr inline int operator | (PlaylistBehaviorWhenOpenMedia e1, PlaylistBehaviorWhenOpenMedia e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, PlaylistBehaviorWhenOpenMedia e) { return i |= (int)e; }
-inline bool operator > (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e > i; }
-inline bool operator < (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e < i; }
-inline bool operator >= (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e >= i; }
-inline bool operator <= (PlaylistBehaviorWhenOpenMedia e, int i) { return (int)e <= i; }
-inline bool operator > (int i, PlaylistBehaviorWhenOpenMedia e) { return i > (int)e; }
-inline bool operator < (int i, PlaylistBehaviorWhenOpenMedia e) { return i < (int)e; }
-inline bool operator >= (int i, PlaylistBehaviorWhenOpenMedia e) { return i >= (int)e; }
-inline bool operator <= (int i, PlaylistBehaviorWhenOpenMedia e) { return i <= (int)e; }
+inline auto operator == (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e == i; }
+inline auto operator != (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return (int)e == i; }
+inline auto operator != (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return (int)e != i; }
+inline auto operator & (PlaylistBehaviorWhenOpenMedia e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, PlaylistBehaviorWhenOpenMedia e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, PlaylistBehaviorWhenOpenMedia e) -> int& { return i &= (int)e; }
+inline auto operator ~ (PlaylistBehaviorWhenOpenMedia e) -> int { return ~(int)e; }
+inline auto operator | (PlaylistBehaviorWhenOpenMedia e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, PlaylistBehaviorWhenOpenMedia e) -> int { return (int)e | i; }
+constexpr inline auto operator | (PlaylistBehaviorWhenOpenMedia e1, PlaylistBehaviorWhenOpenMedia e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, PlaylistBehaviorWhenOpenMedia e) -> int& { return i |= (int)e; }
+inline auto operator > (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e > i; }
+inline auto operator < (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return i > (int)e; }
+inline auto operator < (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(PlaylistBehaviorWhenOpenMedia)
 
@@ -1455,42 +1900,67 @@ class EnumInfo<PlaylistBehaviorWhenOpenMedia> {
 public:
     typedef PlaylistBehaviorWhenOpenMedia type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "PlaylistBehaviorWhenOpenMedia"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "PlaylistBehaviorWhenOpenMedia"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::AppendToPlaylist: return qApp->translate("EnumInfo", "Append the open media to the playlist");
         case Enum::ClearAndAppendToPlaylist: return qApp->translate("EnumInfo", "Clear the playlist and append the open media to the playlist");
         case Enum::ClearAndGenerateNewPlaylist: return qApp->translate("EnumInfo", "Clear the playlist and generate new playlist");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return PlaylistBehaviorWhenOpenMedia::AppendToPlaylist; }
+    static constexpr auto default_() -> Enum
+    { return PlaylistBehaviorWhenOpenMedia::AppendToPlaylist; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using PlaylistBehaviorWhenOpenMediaInfo = EnumInfo<PlaylistBehaviorWhenOpenMedia>;
@@ -1501,26 +1971,26 @@ enum class SubtitleAutoload : int {
     Folder = (int)2
 };
 
-inline bool operator == (SubtitleAutoload e, int i) { return (int)e == i; }
-inline bool operator != (SubtitleAutoload e, int i) { return (int)e != i; }
-inline bool operator == (int i, SubtitleAutoload e) { return (int)e == i; }
-inline bool operator != (int i, SubtitleAutoload e) { return (int)e != i; }
-inline int operator & (SubtitleAutoload e, int i) { return (int)e & i; }
-inline int operator & (int i, SubtitleAutoload e) { return (int)e & i; }
-inline int &operator &= (int &i, SubtitleAutoload e) { return i &= (int)e; }
-inline int operator ~ (SubtitleAutoload e) { return ~(int)e; }
-inline int operator | (SubtitleAutoload e, int i) { return (int)e | i; }
-inline int operator | (int i, SubtitleAutoload e) { return (int)e | i; }
-constexpr inline int operator | (SubtitleAutoload e1, SubtitleAutoload e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, SubtitleAutoload e) { return i |= (int)e; }
-inline bool operator > (SubtitleAutoload e, int i) { return (int)e > i; }
-inline bool operator < (SubtitleAutoload e, int i) { return (int)e < i; }
-inline bool operator >= (SubtitleAutoload e, int i) { return (int)e >= i; }
-inline bool operator <= (SubtitleAutoload e, int i) { return (int)e <= i; }
-inline bool operator > (int i, SubtitleAutoload e) { return i > (int)e; }
-inline bool operator < (int i, SubtitleAutoload e) { return i < (int)e; }
-inline bool operator >= (int i, SubtitleAutoload e) { return i >= (int)e; }
-inline bool operator <= (int i, SubtitleAutoload e) { return i <= (int)e; }
+inline auto operator == (SubtitleAutoload e, int i) -> bool { return (int)e == i; }
+inline auto operator != (SubtitleAutoload e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, SubtitleAutoload e) -> bool { return (int)e == i; }
+inline auto operator != (int i, SubtitleAutoload e) -> bool { return (int)e != i; }
+inline auto operator & (SubtitleAutoload e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, SubtitleAutoload e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, SubtitleAutoload e) -> int& { return i &= (int)e; }
+inline auto operator ~ (SubtitleAutoload e) -> int { return ~(int)e; }
+inline auto operator | (SubtitleAutoload e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, SubtitleAutoload e) -> int { return (int)e | i; }
+constexpr inline auto operator | (SubtitleAutoload e1, SubtitleAutoload e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, SubtitleAutoload e) -> int& { return i |= (int)e; }
+inline auto operator > (SubtitleAutoload e, int i) -> bool { return (int)e > i; }
+inline auto operator < (SubtitleAutoload e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (SubtitleAutoload e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (SubtitleAutoload e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, SubtitleAutoload e) -> bool { return i > (int)e; }
+inline auto operator < (int i, SubtitleAutoload e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, SubtitleAutoload e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, SubtitleAutoload e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(SubtitleAutoload)
 
@@ -1530,42 +2000,67 @@ class EnumInfo<SubtitleAutoload> {
 public:
     typedef SubtitleAutoload type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "SubtitleAutoload"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "SubtitleAutoload"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Matched: return qApp->translate("EnumInfo", "Subtitles which have the same name as that of playing file");
         case Enum::Contain: return qApp->translate("EnumInfo", "Subtitles whose names contain the name of playing file");
         case Enum::Folder: return qApp->translate("EnumInfo", "All subtitles in the folder where the playing file is located");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return SubtitleAutoload::Matched; }
+    static constexpr auto default_() -> Enum
+    { return SubtitleAutoload::Matched; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using SubtitleAutoloadInfo = EnumInfo<SubtitleAutoload>;
@@ -1577,26 +2072,26 @@ enum class SubtitleAutoselect : int {
     EachLanguage = (int)3
 };
 
-inline bool operator == (SubtitleAutoselect e, int i) { return (int)e == i; }
-inline bool operator != (SubtitleAutoselect e, int i) { return (int)e != i; }
-inline bool operator == (int i, SubtitleAutoselect e) { return (int)e == i; }
-inline bool operator != (int i, SubtitleAutoselect e) { return (int)e != i; }
-inline int operator & (SubtitleAutoselect e, int i) { return (int)e & i; }
-inline int operator & (int i, SubtitleAutoselect e) { return (int)e & i; }
-inline int &operator &= (int &i, SubtitleAutoselect e) { return i &= (int)e; }
-inline int operator ~ (SubtitleAutoselect e) { return ~(int)e; }
-inline int operator | (SubtitleAutoselect e, int i) { return (int)e | i; }
-inline int operator | (int i, SubtitleAutoselect e) { return (int)e | i; }
-constexpr inline int operator | (SubtitleAutoselect e1, SubtitleAutoselect e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, SubtitleAutoselect e) { return i |= (int)e; }
-inline bool operator > (SubtitleAutoselect e, int i) { return (int)e > i; }
-inline bool operator < (SubtitleAutoselect e, int i) { return (int)e < i; }
-inline bool operator >= (SubtitleAutoselect e, int i) { return (int)e >= i; }
-inline bool operator <= (SubtitleAutoselect e, int i) { return (int)e <= i; }
-inline bool operator > (int i, SubtitleAutoselect e) { return i > (int)e; }
-inline bool operator < (int i, SubtitleAutoselect e) { return i < (int)e; }
-inline bool operator >= (int i, SubtitleAutoselect e) { return i >= (int)e; }
-inline bool operator <= (int i, SubtitleAutoselect e) { return i <= (int)e; }
+inline auto operator == (SubtitleAutoselect e, int i) -> bool { return (int)e == i; }
+inline auto operator != (SubtitleAutoselect e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, SubtitleAutoselect e) -> bool { return (int)e == i; }
+inline auto operator != (int i, SubtitleAutoselect e) -> bool { return (int)e != i; }
+inline auto operator & (SubtitleAutoselect e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, SubtitleAutoselect e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, SubtitleAutoselect e) -> int& { return i &= (int)e; }
+inline auto operator ~ (SubtitleAutoselect e) -> int { return ~(int)e; }
+inline auto operator | (SubtitleAutoselect e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, SubtitleAutoselect e) -> int { return (int)e | i; }
+constexpr inline auto operator | (SubtitleAutoselect e1, SubtitleAutoselect e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, SubtitleAutoselect e) -> int& { return i |= (int)e; }
+inline auto operator > (SubtitleAutoselect e, int i) -> bool { return (int)e > i; }
+inline auto operator < (SubtitleAutoselect e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (SubtitleAutoselect e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (SubtitleAutoselect e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, SubtitleAutoselect e) -> bool { return i > (int)e; }
+inline auto operator < (int i, SubtitleAutoselect e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, SubtitleAutoselect e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, SubtitleAutoselect e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(SubtitleAutoselect)
 
@@ -1606,43 +2101,68 @@ class EnumInfo<SubtitleAutoselect> {
 public:
     typedef SubtitleAutoselect type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 4; }
-    static constexpr const char *typeName() { return "SubtitleAutoselect"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 4>;
+    static constexpr auto size() -> int
+    { return 4; }
+    static constexpr auto typeName() -> const char*
+    { return "SubtitleAutoselect"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Matched: return qApp->translate("EnumInfo", "Subtitle which has the same name as that of playing file");
         case Enum::First: return qApp->translate("EnumInfo", "First subtitle from loaded ones");
         case Enum::All: return qApp->translate("EnumInfo", "All loaded subtitles");
         case Enum::EachLanguage: return qApp->translate("EnumInfo", "Each language subtitle");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 4> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return SubtitleAutoselect::Matched; }
+    static constexpr auto default_() -> Enum
+    { return SubtitleAutoselect::Matched; }
 private:
-    static const std::array<Item, 4> info;
+    static const ItemList info;
 };
 
 using SubtitleAutoselectInfo = EnumInfo<SubtitleAutoselect>;
@@ -1653,26 +2173,26 @@ enum class OsdScalePolicy : int {
     Diagonal = (int)2
 };
 
-inline bool operator == (OsdScalePolicy e, int i) { return (int)e == i; }
-inline bool operator != (OsdScalePolicy e, int i) { return (int)e != i; }
-inline bool operator == (int i, OsdScalePolicy e) { return (int)e == i; }
-inline bool operator != (int i, OsdScalePolicy e) { return (int)e != i; }
-inline int operator & (OsdScalePolicy e, int i) { return (int)e & i; }
-inline int operator & (int i, OsdScalePolicy e) { return (int)e & i; }
-inline int &operator &= (int &i, OsdScalePolicy e) { return i &= (int)e; }
-inline int operator ~ (OsdScalePolicy e) { return ~(int)e; }
-inline int operator | (OsdScalePolicy e, int i) { return (int)e | i; }
-inline int operator | (int i, OsdScalePolicy e) { return (int)e | i; }
-constexpr inline int operator | (OsdScalePolicy e1, OsdScalePolicy e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, OsdScalePolicy e) { return i |= (int)e; }
-inline bool operator > (OsdScalePolicy e, int i) { return (int)e > i; }
-inline bool operator < (OsdScalePolicy e, int i) { return (int)e < i; }
-inline bool operator >= (OsdScalePolicy e, int i) { return (int)e >= i; }
-inline bool operator <= (OsdScalePolicy e, int i) { return (int)e <= i; }
-inline bool operator > (int i, OsdScalePolicy e) { return i > (int)e; }
-inline bool operator < (int i, OsdScalePolicy e) { return i < (int)e; }
-inline bool operator >= (int i, OsdScalePolicy e) { return i >= (int)e; }
-inline bool operator <= (int i, OsdScalePolicy e) { return i <= (int)e; }
+inline auto operator == (OsdScalePolicy e, int i) -> bool { return (int)e == i; }
+inline auto operator != (OsdScalePolicy e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, OsdScalePolicy e) -> bool { return (int)e == i; }
+inline auto operator != (int i, OsdScalePolicy e) -> bool { return (int)e != i; }
+inline auto operator & (OsdScalePolicy e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, OsdScalePolicy e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, OsdScalePolicy e) -> int& { return i &= (int)e; }
+inline auto operator ~ (OsdScalePolicy e) -> int { return ~(int)e; }
+inline auto operator | (OsdScalePolicy e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, OsdScalePolicy e) -> int { return (int)e | i; }
+constexpr inline auto operator | (OsdScalePolicy e1, OsdScalePolicy e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, OsdScalePolicy e) -> int& { return i |= (int)e; }
+inline auto operator > (OsdScalePolicy e, int i) -> bool { return (int)e > i; }
+inline auto operator < (OsdScalePolicy e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (OsdScalePolicy e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (OsdScalePolicy e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, OsdScalePolicy e) -> bool { return i > (int)e; }
+inline auto operator < (int i, OsdScalePolicy e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, OsdScalePolicy e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, OsdScalePolicy e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(OsdScalePolicy)
 
@@ -1682,42 +2202,67 @@ class EnumInfo<OsdScalePolicy> {
 public:
     typedef OsdScalePolicy type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "OsdScalePolicy"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "OsdScalePolicy"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Width: return qApp->translate("EnumInfo", "Fit to width of video");
         case Enum::Height: return qApp->translate("EnumInfo", "Fit to height of video");
         case Enum::Diagonal: return qApp->translate("EnumInfo", "Fit to diagonal of video");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return OsdScalePolicy::Width; }
+    static constexpr auto default_() -> Enum
+    { return OsdScalePolicy::Width; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using OsdScalePolicyInfo = EnumInfo<OsdScalePolicy>;
@@ -1729,26 +2274,26 @@ enum class KeyModifier : int {
     Alt = (int)Qt::AltModifier
 };
 
-inline bool operator == (KeyModifier e, int i) { return (int)e == i; }
-inline bool operator != (KeyModifier e, int i) { return (int)e != i; }
-inline bool operator == (int i, KeyModifier e) { return (int)e == i; }
-inline bool operator != (int i, KeyModifier e) { return (int)e != i; }
-inline int operator & (KeyModifier e, int i) { return (int)e & i; }
-inline int operator & (int i, KeyModifier e) { return (int)e & i; }
-inline int &operator &= (int &i, KeyModifier e) { return i &= (int)e; }
-inline int operator ~ (KeyModifier e) { return ~(int)e; }
-inline int operator | (KeyModifier e, int i) { return (int)e | i; }
-inline int operator | (int i, KeyModifier e) { return (int)e | i; }
-constexpr inline int operator | (KeyModifier e1, KeyModifier e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, KeyModifier e) { return i |= (int)e; }
-inline bool operator > (KeyModifier e, int i) { return (int)e > i; }
-inline bool operator < (KeyModifier e, int i) { return (int)e < i; }
-inline bool operator >= (KeyModifier e, int i) { return (int)e >= i; }
-inline bool operator <= (KeyModifier e, int i) { return (int)e <= i; }
-inline bool operator > (int i, KeyModifier e) { return i > (int)e; }
-inline bool operator < (int i, KeyModifier e) { return i < (int)e; }
-inline bool operator >= (int i, KeyModifier e) { return i >= (int)e; }
-inline bool operator <= (int i, KeyModifier e) { return i <= (int)e; }
+inline auto operator == (KeyModifier e, int i) -> bool { return (int)e == i; }
+inline auto operator != (KeyModifier e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, KeyModifier e) -> bool { return (int)e == i; }
+inline auto operator != (int i, KeyModifier e) -> bool { return (int)e != i; }
+inline auto operator & (KeyModifier e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, KeyModifier e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, KeyModifier e) -> int& { return i &= (int)e; }
+inline auto operator ~ (KeyModifier e) -> int { return ~(int)e; }
+inline auto operator | (KeyModifier e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, KeyModifier e) -> int { return (int)e | i; }
+constexpr inline auto operator | (KeyModifier e1, KeyModifier e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, KeyModifier e) -> int& { return i |= (int)e; }
+inline auto operator > (KeyModifier e, int i) -> bool { return (int)e > i; }
+inline auto operator < (KeyModifier e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (KeyModifier e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (KeyModifier e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, KeyModifier e) -> bool { return i > (int)e; }
+inline auto operator < (int i, KeyModifier e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, KeyModifier e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, KeyModifier e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(KeyModifier)
 
@@ -1758,43 +2303,73 @@ class EnumInfo<KeyModifier> {
 public:
     typedef KeyModifier type;
     using Data =  QVariant;
-    struct Item { Enum value; QString name, key; QVariant data; };
-    static constexpr int size() { return 4; }
-    static constexpr const char *typeName() { return "KeyModifier"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [e](const Item &info) { return info.value == e; }); return it != info.cend() ? &(*it) : nullptr;
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 4>;
+    static constexpr auto size() -> int
+    { return 4; }
+    static constexpr auto typeName() -> const char*
+    { return "KeyModifier"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [e] (const Item &info)
+                               { return info.value == e; });
+        return it != info.cend() ? &(*it) : nullptr;
     }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QVariant data(Enum e) { auto i = item(e); return i ? i->data : QVariant(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::None: return qApp->translate("EnumInfo", "");
         case Enum::Ctrl: return qApp->translate("EnumInfo", "");
         case Enum::Shift: return qApp->translate("EnumInfo", "");
         case Enum::Alt: return qApp->translate("EnumInfo", "");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 4> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QVariant &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return KeyModifier::None; }
+    static constexpr auto default_() -> Enum
+    { return KeyModifier::None; }
 private:
-    static const std::array<Item, 4> info;
+    static const ItemList info;
 };
 
 using KeyModifierInfo = EnumInfo<KeyModifier>;
@@ -1805,26 +2380,26 @@ enum class VerticalAlignment : int {
     Bottom = (int)2
 };
 
-inline bool operator == (VerticalAlignment e, int i) { return (int)e == i; }
-inline bool operator != (VerticalAlignment e, int i) { return (int)e != i; }
-inline bool operator == (int i, VerticalAlignment e) { return (int)e == i; }
-inline bool operator != (int i, VerticalAlignment e) { return (int)e != i; }
-inline int operator & (VerticalAlignment e, int i) { return (int)e & i; }
-inline int operator & (int i, VerticalAlignment e) { return (int)e & i; }
-inline int &operator &= (int &i, VerticalAlignment e) { return i &= (int)e; }
-inline int operator ~ (VerticalAlignment e) { return ~(int)e; }
-inline int operator | (VerticalAlignment e, int i) { return (int)e | i; }
-inline int operator | (int i, VerticalAlignment e) { return (int)e | i; }
-constexpr inline int operator | (VerticalAlignment e1, VerticalAlignment e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, VerticalAlignment e) { return i |= (int)e; }
-inline bool operator > (VerticalAlignment e, int i) { return (int)e > i; }
-inline bool operator < (VerticalAlignment e, int i) { return (int)e < i; }
-inline bool operator >= (VerticalAlignment e, int i) { return (int)e >= i; }
-inline bool operator <= (VerticalAlignment e, int i) { return (int)e <= i; }
-inline bool operator > (int i, VerticalAlignment e) { return i > (int)e; }
-inline bool operator < (int i, VerticalAlignment e) { return i < (int)e; }
-inline bool operator >= (int i, VerticalAlignment e) { return i >= (int)e; }
-inline bool operator <= (int i, VerticalAlignment e) { return i <= (int)e; }
+inline auto operator == (VerticalAlignment e, int i) -> bool { return (int)e == i; }
+inline auto operator != (VerticalAlignment e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, VerticalAlignment e) -> bool { return (int)e == i; }
+inline auto operator != (int i, VerticalAlignment e) -> bool { return (int)e != i; }
+inline auto operator & (VerticalAlignment e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, VerticalAlignment e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, VerticalAlignment e) -> int& { return i &= (int)e; }
+inline auto operator ~ (VerticalAlignment e) -> int { return ~(int)e; }
+inline auto operator | (VerticalAlignment e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, VerticalAlignment e) -> int { return (int)e | i; }
+constexpr inline auto operator | (VerticalAlignment e1, VerticalAlignment e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, VerticalAlignment e) -> int& { return i |= (int)e; }
+inline auto operator > (VerticalAlignment e, int i) -> bool { return (int)e > i; }
+inline auto operator < (VerticalAlignment e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (VerticalAlignment e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (VerticalAlignment e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, VerticalAlignment e) -> bool { return i > (int)e; }
+inline auto operator < (int i, VerticalAlignment e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, VerticalAlignment e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, VerticalAlignment e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(VerticalAlignment)
 
@@ -1834,42 +2409,67 @@ class EnumInfo<VerticalAlignment> {
 public:
     typedef VerticalAlignment type;
     using Data =  Qt::Alignment;
-    struct Item { Enum value; QString name, key; Qt::Alignment data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "VerticalAlignment"; }
-    static constexpr const char *typeKey() { return "vertical-alignment"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static Qt::Alignment data(Enum e) { auto i = item(e); return i ? i->data : Qt::Alignment(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        Qt::Alignment data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "VerticalAlignment"; }
+    static constexpr auto typeKey() -> const char*
+    { return "vertical-alignment"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> Qt::Alignment
+    { auto i = item(e); return i ? i->data : Qt::Alignment(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Top: return qApp->translate("EnumInfo", "Top");
         case Enum::Center: return qApp->translate("EnumInfo", "Vertical Center");
         case Enum::Bottom: return qApp->translate("EnumInfo", "Bottom");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const Qt::Alignment &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const Qt::Alignment &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return VerticalAlignment::Center; }
+    static constexpr auto default_() -> Enum
+    { return VerticalAlignment::Center; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using VerticalAlignmentInfo = EnumInfo<VerticalAlignment>;
@@ -1880,26 +2480,26 @@ enum class HorizontalAlignment : int {
     Right = (int)2
 };
 
-inline bool operator == (HorizontalAlignment e, int i) { return (int)e == i; }
-inline bool operator != (HorizontalAlignment e, int i) { return (int)e != i; }
-inline bool operator == (int i, HorizontalAlignment e) { return (int)e == i; }
-inline bool operator != (int i, HorizontalAlignment e) { return (int)e != i; }
-inline int operator & (HorizontalAlignment e, int i) { return (int)e & i; }
-inline int operator & (int i, HorizontalAlignment e) { return (int)e & i; }
-inline int &operator &= (int &i, HorizontalAlignment e) { return i &= (int)e; }
-inline int operator ~ (HorizontalAlignment e) { return ~(int)e; }
-inline int operator | (HorizontalAlignment e, int i) { return (int)e | i; }
-inline int operator | (int i, HorizontalAlignment e) { return (int)e | i; }
-constexpr inline int operator | (HorizontalAlignment e1, HorizontalAlignment e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, HorizontalAlignment e) { return i |= (int)e; }
-inline bool operator > (HorizontalAlignment e, int i) { return (int)e > i; }
-inline bool operator < (HorizontalAlignment e, int i) { return (int)e < i; }
-inline bool operator >= (HorizontalAlignment e, int i) { return (int)e >= i; }
-inline bool operator <= (HorizontalAlignment e, int i) { return (int)e <= i; }
-inline bool operator > (int i, HorizontalAlignment e) { return i > (int)e; }
-inline bool operator < (int i, HorizontalAlignment e) { return i < (int)e; }
-inline bool operator >= (int i, HorizontalAlignment e) { return i >= (int)e; }
-inline bool operator <= (int i, HorizontalAlignment e) { return i <= (int)e; }
+inline auto operator == (HorizontalAlignment e, int i) -> bool { return (int)e == i; }
+inline auto operator != (HorizontalAlignment e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, HorizontalAlignment e) -> bool { return (int)e == i; }
+inline auto operator != (int i, HorizontalAlignment e) -> bool { return (int)e != i; }
+inline auto operator & (HorizontalAlignment e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, HorizontalAlignment e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, HorizontalAlignment e) -> int& { return i &= (int)e; }
+inline auto operator ~ (HorizontalAlignment e) -> int { return ~(int)e; }
+inline auto operator | (HorizontalAlignment e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, HorizontalAlignment e) -> int { return (int)e | i; }
+constexpr inline auto operator | (HorizontalAlignment e1, HorizontalAlignment e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, HorizontalAlignment e) -> int& { return i |= (int)e; }
+inline auto operator > (HorizontalAlignment e, int i) -> bool { return (int)e > i; }
+inline auto operator < (HorizontalAlignment e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (HorizontalAlignment e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (HorizontalAlignment e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, HorizontalAlignment e) -> bool { return i > (int)e; }
+inline auto operator < (int i, HorizontalAlignment e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, HorizontalAlignment e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, HorizontalAlignment e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(HorizontalAlignment)
 
@@ -1909,42 +2509,67 @@ class EnumInfo<HorizontalAlignment> {
 public:
     typedef HorizontalAlignment type;
     using Data =  Qt::Alignment;
-    struct Item { Enum value; QString name, key; Qt::Alignment data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "HorizontalAlignment"; }
-    static constexpr const char *typeKey() { return "horizontal-alignment"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static Qt::Alignment data(Enum e) { auto i = item(e); return i ? i->data : Qt::Alignment(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        Qt::Alignment data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "HorizontalAlignment"; }
+    static constexpr auto typeKey() -> const char*
+    { return "horizontal-alignment"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> Qt::Alignment
+    { auto i = item(e); return i ? i->data : Qt::Alignment(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Left: return qApp->translate("EnumInfo", "Left");
         case Enum::Center: return qApp->translate("EnumInfo", "Horizontal Center");
         case Enum::Right: return qApp->translate("EnumInfo", "Right");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const Qt::Alignment &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const Qt::Alignment &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return HorizontalAlignment::Center; }
+    static constexpr auto default_() -> Enum
+    { return HorizontalAlignment::Center; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using HorizontalAlignmentInfo = EnumInfo<HorizontalAlignment>;
@@ -1957,26 +2582,26 @@ enum class MoveToward : int {
     Rightward = (int)4
 };
 
-inline bool operator == (MoveToward e, int i) { return (int)e == i; }
-inline bool operator != (MoveToward e, int i) { return (int)e != i; }
-inline bool operator == (int i, MoveToward e) { return (int)e == i; }
-inline bool operator != (int i, MoveToward e) { return (int)e != i; }
-inline int operator & (MoveToward e, int i) { return (int)e & i; }
-inline int operator & (int i, MoveToward e) { return (int)e & i; }
-inline int &operator &= (int &i, MoveToward e) { return i &= (int)e; }
-inline int operator ~ (MoveToward e) { return ~(int)e; }
-inline int operator | (MoveToward e, int i) { return (int)e | i; }
-inline int operator | (int i, MoveToward e) { return (int)e | i; }
-constexpr inline int operator | (MoveToward e1, MoveToward e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, MoveToward e) { return i |= (int)e; }
-inline bool operator > (MoveToward e, int i) { return (int)e > i; }
-inline bool operator < (MoveToward e, int i) { return (int)e < i; }
-inline bool operator >= (MoveToward e, int i) { return (int)e >= i; }
-inline bool operator <= (MoveToward e, int i) { return (int)e <= i; }
-inline bool operator > (int i, MoveToward e) { return i > (int)e; }
-inline bool operator < (int i, MoveToward e) { return i < (int)e; }
-inline bool operator >= (int i, MoveToward e) { return i >= (int)e; }
-inline bool operator <= (int i, MoveToward e) { return i <= (int)e; }
+inline auto operator == (MoveToward e, int i) -> bool { return (int)e == i; }
+inline auto operator != (MoveToward e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, MoveToward e) -> bool { return (int)e == i; }
+inline auto operator != (int i, MoveToward e) -> bool { return (int)e != i; }
+inline auto operator & (MoveToward e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, MoveToward e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, MoveToward e) -> int& { return i &= (int)e; }
+inline auto operator ~ (MoveToward e) -> int { return ~(int)e; }
+inline auto operator | (MoveToward e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, MoveToward e) -> int { return (int)e | i; }
+constexpr inline auto operator | (MoveToward e1, MoveToward e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, MoveToward e) -> int& { return i |= (int)e; }
+inline auto operator > (MoveToward e, int i) -> bool { return (int)e > i; }
+inline auto operator < (MoveToward e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (MoveToward e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (MoveToward e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, MoveToward e) -> bool { return i > (int)e; }
+inline auto operator < (int i, MoveToward e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, MoveToward e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, MoveToward e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(MoveToward)
 
@@ -1986,19 +2611,32 @@ class EnumInfo<MoveToward> {
 public:
     typedef MoveToward type;
     using Data =  QPoint;
-    struct Item { Enum value; QString name, key; QPoint data; };
-    static constexpr int size() { return 5; }
-    static constexpr const char *typeName() { return "MoveToward"; }
-    static constexpr const char *typeKey() { return "move"; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static QPoint data(Enum e) { auto i = item(e); return i ? i->data : QPoint(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        QPoint data;
+    };
+    using ItemList = std::array<Item, 5>;
+    static constexpr auto size() -> int
+    { return 5; }
+    static constexpr auto typeName() -> const char*
+    { return "MoveToward"; }
+    static constexpr auto typeKey() -> const char*
+    { return "move"; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QPoint
+    { auto i = item(e); return i ? i->data : QPoint(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Reset: return qApp->translate("EnumInfo", "Reset");
         case Enum::Upward: return qApp->translate("EnumInfo", "Upward");
@@ -2006,24 +2644,36 @@ public:
         case Enum::Leftward: return qApp->translate("EnumInfo", "Leftward");
         case Enum::Rightward: return qApp->translate("EnumInfo", "Rightward");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 5> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const QPoint &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const QPoint &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return MoveToward::Reset; }
+    static constexpr auto default_() -> Enum
+    { return MoveToward::Reset; }
 private:
-    static const std::array<Item, 5> info;
+    static const ItemList info;
 };
 
 using MoveTowardInfo = EnumInfo<MoveToward>;
@@ -2034,26 +2684,26 @@ enum class ChangeValue : int {
     Decrease = (int)2
 };
 
-inline bool operator == (ChangeValue e, int i) { return (int)e == i; }
-inline bool operator != (ChangeValue e, int i) { return (int)e != i; }
-inline bool operator == (int i, ChangeValue e) { return (int)e == i; }
-inline bool operator != (int i, ChangeValue e) { return (int)e != i; }
-inline int operator & (ChangeValue e, int i) { return (int)e & i; }
-inline int operator & (int i, ChangeValue e) { return (int)e & i; }
-inline int &operator &= (int &i, ChangeValue e) { return i &= (int)e; }
-inline int operator ~ (ChangeValue e) { return ~(int)e; }
-inline int operator | (ChangeValue e, int i) { return (int)e | i; }
-inline int operator | (int i, ChangeValue e) { return (int)e | i; }
-constexpr inline int operator | (ChangeValue e1, ChangeValue e2) { return (int)e1 | (int)e2; }
-inline int &operator |= (int &i, ChangeValue e) { return i |= (int)e; }
-inline bool operator > (ChangeValue e, int i) { return (int)e > i; }
-inline bool operator < (ChangeValue e, int i) { return (int)e < i; }
-inline bool operator >= (ChangeValue e, int i) { return (int)e >= i; }
-inline bool operator <= (ChangeValue e, int i) { return (int)e <= i; }
-inline bool operator > (int i, ChangeValue e) { return i > (int)e; }
-inline bool operator < (int i, ChangeValue e) { return i < (int)e; }
-inline bool operator >= (int i, ChangeValue e) { return i >= (int)e; }
-inline bool operator <= (int i, ChangeValue e) { return i <= (int)e; }
+inline auto operator == (ChangeValue e, int i) -> bool { return (int)e == i; }
+inline auto operator != (ChangeValue e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, ChangeValue e) -> bool { return (int)e == i; }
+inline auto operator != (int i, ChangeValue e) -> bool { return (int)e != i; }
+inline auto operator & (ChangeValue e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, ChangeValue e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, ChangeValue e) -> int& { return i &= (int)e; }
+inline auto operator ~ (ChangeValue e) -> int { return ~(int)e; }
+inline auto operator | (ChangeValue e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, ChangeValue e) -> int { return (int)e | i; }
+constexpr inline auto operator | (ChangeValue e1, ChangeValue e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, ChangeValue e) -> int& { return i |= (int)e; }
+inline auto operator > (ChangeValue e, int i) -> bool { return (int)e > i; }
+inline auto operator < (ChangeValue e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (ChangeValue e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (ChangeValue e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, ChangeValue e) -> bool { return i > (int)e; }
+inline auto operator < (int i, ChangeValue e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, ChangeValue e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, ChangeValue e) -> bool { return i <= (int)e; }
 
 Q_DECLARE_METATYPE(ChangeValue)
 
@@ -2063,42 +2713,67 @@ class EnumInfo<ChangeValue> {
 public:
     typedef ChangeValue type;
     using Data =  int;
-    struct Item { Enum value; QString name, key; int data; };
-    static constexpr int size() { return 3; }
-    static constexpr const char *typeName() { return "ChangeValue"; }
-    static constexpr const char *typeKey() { return ""; }
-    static QString typeDescription() { return qApp->translate("EnumInfo", ""); }
-    static const Item *item(Enum e) {
-        return 0 <= e && e < size() ? &info[(int)e] : nullptr;
-    }
-    static QString name(Enum e) { auto i = item(e); return i ? i->name : QString(); }
-    static QString key(Enum e) { auto i = item(e); return i ? i->key : QString(); }
-    static int data(Enum e) { auto i = item(e); return i ? i->data : int(); }
-    static QString description(int e) { return description((Enum)e); }
-    static QString description(Enum e) {
+    struct Item {
+        Enum value;
+        QString name, key;
+        int data;
+    };
+    using ItemList = std::array<Item, 3>;
+    static constexpr auto size() -> int
+    { return 3; }
+    static constexpr auto typeName() -> const char*
+    { return "ChangeValue"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> int
+    { auto i = item(e); return i ? i->data : int(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
         switch (e) {
         case Enum::Reset: return qApp->translate("EnumInfo", "Reset");
         case Enum::Increase: return qApp->translate("EnumInfo", "Increase %1");
         case Enum::Decrease: return qApp->translate("EnumInfo", "Decrease %1");
         default: return "";
-        };
+        }
     }
-    static constexpr const std::array<Item, 3> &items() { return info; }
-    static Enum from(int id, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [id] (const Item &item) { return item.value == id; });
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
         return it != info.cend() ? it->value : def;
     }
-    static Enum from(const QString &name, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&name] (const Item &item) { return !name.compare(item.name); });
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
     }
-    static Enum fromData(const int &data, Enum def = default_()) {
-        auto it = std::find_if(info.cbegin(), info.cend(), [&data] (const Item &item) { return item.data == data; });
+    static auto fromData(const int &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
         return it != info.cend() ? it->value : def;
     }
-    static constexpr Enum default_() { return ChangeValue::Reset; }
+    static constexpr auto default_() -> Enum
+    { return ChangeValue::Reset; }
 private:
-    static const std::array<Item, 3> info;
+    static const ItemList info;
 };
 
 using ChangeValueInfo = EnumInfo<ChangeValue>;

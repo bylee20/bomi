@@ -10,40 +10,72 @@
 #include "mrlstate.hpp"
 #include <type_traits>
 
-template <typename T> static inline T fromVariant(const QVariant &data) {return data.value<T>();}
-template <typename T> static inline QVariant toVariant(const T &t) {return QVariant::fromValue(t);}
+namespace detail {
+
+template <class T>
+SIA fromVariant(const QVariant &data) -> T {return data.value<T>();}
+template <class T>
+SIA toVariant(const T &t) -> QVariant {return QVariant::fromValue(t);}
 #define DEC_WITH_STRING(T) \
-template<> inline T        fromVariant(const QVariant &data) { return T::fromString(data.toString()); }\
-template<> inline QVariant toVariant(const T &t) { return t.toString(); }
+template<> \
+inline auto fromVariant(const QVariant &data) -> T \
+    { return T::fromString(data.toString()); } \
+template<> \
+inline auto toVariant(const T &t) -> QVariant { return t.toString(); }
 DEC_WITH_STRING(DeintOption)
 DEC_WITH_STRING(DeintCaps)
 DEC_WITH_STRING(QKeySequence)
 DEC_WITH_STRING(ChannelLayoutMap)
 #undef DEC_WITH_STRING
 
-template<class T> struct is_list : std::false_type {};
-template<class T> struct is_list<QList<T>> : std::true_type {};
+template<class T>
+struct is_list : std::false_type {};
+template<class T>
+struct is_list<QList<T>> : std::true_type {};
 
-template <typename T, bool enum_ = std::is_enum<T>::value> struct RecordIoOne {};
-template <typename T>
+template <class T, bool enum_ = std::is_enum<T>::value>
+struct RecordIoOne {};
+
+template <class T>
 struct RecordIoOne<T, false> {
     static_assert(!is_list<T>::value, "assert!");
-    static void read(QSettings &r, T &value, const QString &key) {value = fromVariant<T>(r.value(key, toVariant<T>(value)));}
-    static void write(QSettings &r, const T &value, const QString &key) {r.setValue(key, toVariant<T>(value));}
-    static T default_() { return T(); }
+    static auto read(QSettings &r, T &value, const QString &key) -> void
+        { value = fromVariant<T>(r.value(key, toVariant<T>(value))); }
+    static auto write(QSettings &r, const T &value, const QString &key) -> void
+        { r.setValue(key, toVariant<T>(value)); }
+    static auto default_() -> T { return T(); }
 };
 
-template <typename T>
+template <class T>
 struct RecordIoOne<T, true> {
-    static void read(QSettings &r, T &value, const QString &key) {value = EnumInfo<T>::from(r.value(key, EnumInfo<T>::name(value)).toString(), value);}
-    static void write(QSettings &r, const T &value, const QString &key) {r.setValue(key, EnumInfo<T>::name(value));}
-    static T default_() { return EnumInfo<T>::items()[0].value; }
+    static auto read(QSettings &r, T &v, const QString &key) -> void
+        { v = EnumInfo<T>::from(r.value(key, EnumInfo<T>::name(v)).toString(), v); }
+    static auto write(QSettings &r, const T &value, const QString &key) -> void
+        { r.setValue(key, EnumInfo<T>::name(value)); }
+    static auto default_() -> T { return EnumInfo<T>::items()[0].value; }
 };
 
-template <typename T>
+template <>
+struct RecordIoOne<VideoColor, false> {
+    static auto write(QSettings &r, const VideoColor &v,
+                      const QString &key) -> void {
+        VideoColor::for_type([&] (VideoColor::Type type) {
+            r.setValue(key % _L('_') % VideoColor::name(type), v.get(type));
+        });
+    }
+    static auto read(QSettings &r, VideoColor &v,
+                     const QString &k) -> void {
+        VideoColor::for_type([&] (VideoColor::Type type) {
+            v.set(type, r.value(k % _L('_') % VideoColor::name(type)).toInt());
+        });
+    }
+};
+
+template <class T>
 struct RecordIoList {
     using One = RecordIoOne<T>;
-    static void read(QSettings &r, QList<T> &values, const QString &key) {
+    static auto read(QSettings &r, QList<T> &values, const QString &key) -> void
+    {
         if (!r.value(key % _L("_exists"), false).toBool())
             return;
         const int size = r.beginReadArray(key);
@@ -55,7 +87,9 @@ struct RecordIoList {
         }
         r.endArray();
     }
-    static void write(QSettings &r, const QList<T> &values, const QString &key) {
+    static auto write(QSettings &r, const QList<T> &values,
+                      const QString &key) -> void
+    {
         r.setValue(key % _L("_exists"), true);
         r.beginWriteArray(key, values.size());
         for (int i=0; i<values.size(); ++i) {
@@ -66,31 +100,7 @@ struct RecordIoList {
     }
 };
 
-template <>
-struct RecordIoOne<VideoColor, false> {
-    static void write(QSettings &r, const VideoColor &value, const QString &key) {
-        r.setValue(key % _L("_brightness"), value.brightness());
-        r.setValue(key % _L("_contrast"), value.contrast());
-        r.setValue(key % _L("_saturation"), value.saturation());
-        r.setValue(key % _L("_hue"), value.hue());
-    }
-    static void read(QSettings &r, VideoColor &value, const QString &key) {
-        value.setBrightness(r.value(key % _L("_brightness"), value.brightness()).toDouble());
-        value.setContrast(r.value(key % _L("_contrast"), value.contrast()).toDouble());
-        value.setSaturation(r.value(key % _L("_saturation"), value.saturation()).toDouble());
-        value.setHue(r.value(key % _L("_hue"), value.hue()).toDouble());
-    }
-};
-
-extern template struct RecordIoOne<int>;
-extern template struct RecordIoOne<bool>;
-extern template struct RecordIoOne<double>;
-extern template struct RecordIoOne<float>;
-extern template struct RecordIoOne<QString>;
-extern template struct RecordIoOne<QStringList>;
-extern template struct RecordIoOne<QVariant>;
-extern template struct RecordIoOne<QLocale>;
-extern template struct RecordIoOne<QKeySequence>;
+}
 
 class Record : public QSettings {
 public:
@@ -103,23 +113,30 @@ public:
         if (!m_root.isEmpty()) endGroup();
         setValue("version", Info::versionNumber());
     }
-    int version() const { return m_version; }
-    template <typename T> void write(const T &value, const QString &key) {
-        RecordIoOne<T>::write(*this, value, key);
-    }
-    template <typename T> void read(T &value, const QString &key) {
-        RecordIoOne<T>::read(*this, value, key);
-    }
-    template <typename T> void write(const QList<T> &value, const QString &key) {
-        RecordIoList<T>::write(*this, value, key);
-    }
-    template <typename T> void read(QList<T> &value, const QString &key) {
-        RecordIoList<T>::read(*this, value, key);
-    }
-    template <typename T> void write(const T &value, const char *key) { write<T>(value, _L(key)); }
-    template <typename T> void write(const QList<T> &value, const char *key) { write<T>(value, _L(key)); }
-    template <typename T> void read(T &value, const char *key) { read<T>(value, _L(key)); }
-    template <typename T> void read(QList<T> &value, const char *key) { read<T>(value, _L(key)); }
+    auto version() const -> int { return m_version; }
+    template <class T>
+    auto write(const T &value, const QString &key) -> void
+        { detail::RecordIoOne<T>::write(*this, value, key); }
+    template <class T>
+    auto read(T &value, const QString &key) -> void
+        { detail::RecordIoOne<T>::read(*this, value, key); }
+    template <class T> auto write(const QList<T> &value,
+                                  const QString &key) -> void
+        { detail::RecordIoList<T>::write(*this, value, key); }
+    template <class T>
+    auto read(QList<T> &value, const QString &key) -> void
+        { detail::RecordIoList<T>::read(*this, value, key); }
+    template <class T>
+    auto write(const T &value, const char *key) -> void
+        { write<T>(value, _L(key)); }
+    template <class T>
+    auto write(const QList<T> &value, const char *key) -> void
+        { write<T>(value, _L(key)); }
+    template <class T>
+    auto read(T &value, const char *key) -> void { read<T>(value, _L(key)); }
+    template <class T>
+    auto read(QList<T> &value, const char *key) -> void
+        { read<T>(value, _L(key)); }
 private:
     const QString m_root = {};
     int m_version = 0;

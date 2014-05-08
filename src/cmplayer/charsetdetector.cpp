@@ -17,11 +17,13 @@ CharsetDetector::~CharsetDetector() {
     delete d;
 }
 
-bool CharsetDetector::isDetected() const {
+auto CharsetDetector::isDetected() const -> bool
+{
     return d->detected;
 }
 
-QString CharsetDetector::encoding() const {
+auto CharsetDetector::encoding() const -> QString
+{
     if (d->detected) {
         const QString enc(d->obj->encoding);
         if (enc.compare("EUC-KR", Qt::CaseInsensitive) == 0)
@@ -31,19 +33,22 @@ QString CharsetDetector::encoding() const {
     return QString();
 }
 
-double CharsetDetector::confidence() const {
+auto CharsetDetector::confidence() const -> double
+{
     return d->detected ? d->obj->confidence : 0.0;
 }
 
 
-QString CharsetDetector::detect(const QByteArray &data, double confidence) {
+auto CharsetDetector::detect(const QByteArray &data, double confidence) -> QString
+{
     CharsetDetector chardet(data);
     if (chardet.isDetected() && chardet.confidence() > confidence)
         return chardet.encoding();
     return QString();
 }
 
-QString CharsetDetector::detect(const QString &fileName, double confidence, int size) {
+auto CharsetDetector::detect(const QString &fileName, double confidence, int size) -> QString
+{
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly))
         return QString();

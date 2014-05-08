@@ -8,7 +8,7 @@ template<class T, class List> class SimpleListModel;
 class SimpleListModelBase : public QAbstractListModel {
     Q_OBJECT
 public:
-    inline int columns() const { return m_columns; }
+    inline auto columns() const -> int { return m_columns; }
     auto specialRow() const -> int { return m_special; }
     auto specialFont() const -> QFont { return m_specialFont; }
 signals:

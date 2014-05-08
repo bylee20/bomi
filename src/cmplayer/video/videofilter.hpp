@@ -2,12 +2,10 @@
 #define VIDEOFILTER_H
 
 #include "stdafx.hpp"
-#include "videoframe.hpp"
 
-struct vf_instance;
-struct mp_image_params;
-struct vf_info;
-class HwAcc;
+struct vf_instance;                     struct mp_image_params;
+struct vf_info;                         struct mp_image;
+class HwAcc;                            class OpenGLOffscreenContext;
 enum class DeintMethod;
 
 class VideoFilter : public QObject {
@@ -17,9 +15,11 @@ public:
     VideoFilter(const VideoFilter &) = delete;
     VideoFilter &operator = (const VideoFilter &) = delete;
     ~VideoFilter();
-    void setHwAcc(HwAcc *acc);
+    auto setHwAcc(HwAcc *acc) -> void;
+    auto initializeGL(OpenGLOffscreenContext *ctx) -> void;
+    auto finalizeGL() -> void;
 signals:
-    void deintModeChanged(DeintMethod method);
+    void deintMethodChanged(DeintMethod method);
 private:
     static auto open(vf_instance *vf) -> int;
     static auto uninit(vf_instance *vf) -> void;

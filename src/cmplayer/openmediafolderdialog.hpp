@@ -10,18 +10,14 @@ class OpenMediaFolderDialog : public QDialog {
 public:
     OpenMediaFolderDialog(QWidget *parent = nullptr);
     ~OpenMediaFolderDialog();
-    Playlist playlist() const;
-public slots:
-    void setFolder(const QString &folder);
-    int exec();
-signals:
-
-private slots:
-    void updateList();
-    void checkList(bool checked);
-    void getFolder();
-    void updateOpenButton();
+    auto playlist() const -> Playlist;
+    auto setFolder(const QString &folder) -> void;
+    auto exec() -> int;
 private:
+    auto updateList() -> void;
+    auto checkList(bool checked) -> void;
+    auto getFolder() -> void;
+    auto updateOpenButton() -> void;
     struct Data;
     Data *d;
 };

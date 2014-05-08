@@ -8,13 +8,13 @@ public:
     HwAccVda(AVCodecID codec);
     ~HwAccVda();
     virtual mp_image *getImage(mp_image *mpi) override;
-    virtual Type type() const override {return Vda;}
-    virtual bool isOk() const override;
+    virtual auto type() const -> Type override {return Vda;}
+    virtual auto isOk() const -> bool override;
     virtual mp_image *getSurface() override;
-    virtual bool isAvailable(AVCodecID codec) const { return codec == AV_CODEC_ID_H264; }
+    virtual auto isAvailable(AVCodecID codec) const -> bool { return codec == AV_CODEC_ID_H264; }
     virtual void *context() const override;
-    bool fillContext(AVCodecContext *avctx) override;
-    void freeContext();
+    auto fillContext(AVCodecContext *avctx) -> bool override;
+    auto freeContext() -> void;
 private:
     struct Data;
     Data *d;
@@ -22,10 +22,9 @@ private:
 
 class VdaMixer : public HwAccMixer {
 public:
-    VdaMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format);
-    bool upload(const VideoFrame &frame, bool deint) override;
-    static void adjust(VideoFormatData *data, const mp_image *mpi);
-    bool directRendering() const override { return m_direct; }
+    VdaMixer(const QSize &size);
+    auto upload(const mp_image *mpi, bool deint) -> bool override;
+    auto directRendering() const -> bool override { return m_direct; }
 private:
     const QList<OpenGLTexture2D> &m_textures;
     bool m_direct = false;

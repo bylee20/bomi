@@ -3,95 +3,95 @@
 
 #include "enums.hpp"
 #include "channelmanipulation.hpp"
+#include "audionormalizeroption.hpp"
 extern "C" {
 #include <audio/audio.h>
 }
 
 struct AudioDataFormat {
-    AudioDataFormat() {}
+    AudioDataFormat() { }
     AudioDataFormat(const mp_audio &mpv)
-    : fps(mpv.rate), type(mpv.format), channels(mpv.channels) {
+        : fps(mpv.rate), type(mpv.format), channels(mpv.channels) { }
+    auto operator == (const AudioDataFormat &rhs) const -> bool
+    {
+        return type == rhs.type && mp_chmap_equals(&channels, &rhs.channels)
+             && fps == rhs.fps;
     }
-    bool operator == (const AudioDataFormat &rhs) const {
-        return type == rhs.type && mp_chmap_equals(&channels, &rhs.channels) && fps == rhs.fps;
-    }
-    bool operator != (const AudioDataFormat &rhs) const { return !operator == (rhs); }
+    auto operator != (const AudioDataFormat &rhs) const -> bool
+        { return !operator == (rhs); }
     int fps = 0, type = 0;
     mp_chmap channels;
 };
 
-struct AudioNormalizerOption {
-    bool operator == (const AudioNormalizerOption &rhs) const {
-        return silenceLevel == rhs.silenceLevel && targetLevel == rhs.targetLevel
-            && minimumGain == rhs.minimumGain && maximumGain == rhs.maximumGain
-            && bufferLengthInSeconds == rhs.bufferLengthInSeconds;
+namespace detail {
+template<int fmt> class AudioMixerPre;
+template<int fmt> class AudioMixerPost;
+struct LevelInfo {
+    LevelInfo(int frames = 0)
+        : frames(frames) { }
+    int frames = 0; double level = 0.0;
+    static auto average(const QLinkedList<LevelInfo> &history,
+                        const LevelInfo &add) -> LevelInfo
+    {
+        LevelInfo total;
+        for (const auto &one : history) {
+            total.level += one.level*one.frames;
+            total.frames += one.frames;
+        }
+        total.level += add.level*add.frames;
+        total.frames += add.frames;
+        total.level /= total.frames;
+        return total;
     }
-    bool operator != (const AudioNormalizerOption &rhs) const { return !operator==(rhs); }
-    double gain(double level) {
-        return (level > silenceLevel) ? qBound(minimumGain, targetLevel / level, maximumGain) : -1.0;
-    }
-    double silenceLevel = 0.0001, minimumGain = 0.1, maximumGain = 10.0, targetLevel = 0.07, bufferLengthInSeconds = 5.0;
 };
+}
 
 class AudioMixer {
 public:
-    static AudioMixer *create(const AudioDataFormat &in, const AudioDataFormat &out, ClippingMethod clip);
-    virtual ~AudioMixer() {}
-    float gain() const { return m_gain; }
-    bool configure(const AudioDataFormat &in, const AudioDataFormat &out, ClippingMethod clip) {
-        if (m_in.type != in.type || m_out.type != out.type || !checkClippingMethod(clip))
-            return false;
-        m_in = in; m_out = out;
-        for (int i=0; i<out.channels.num; ++i)
-            m_ch_index_dst[out.channels.speaker[i]] = i;
-        for (int i=0; i<in.channels.num; ++i)
-            m_ch_index_src[in.channels.speaker[i]] = i;
-        m_ch_man = m_map(in.channels, out.channels);
-        m_mix = !m_ch_man.isIdentity();
-        m_updateChmap = !mp_chmap_equals(&in.channels, &out.channels);
-        m_updateFormat = in.type != out.type;
-        m_history.clear();
-        m_historyIt = m_history.end();
-        configured();
-        return true;
-    }
-    double multiplier() const { return ((double)m_out.channels.num/m_in.channels.num)/m_scale; }
-    double delay() const { return m_delay; }
-    void setNormalizer(bool on, const AudioNormalizerOption &option) {
-        m_normalizer = on;
-        m_normalizerOption = option;
-        m_gain = 1.0;
-        m_history.clear();
-        m_historyIt = m_history.end();
-    }
-    void setAmp(float level) { m_amp = level; }
-    void setChannelLayoutMap(const ChannelLayoutMap &map) {
-        m_map = map;
-        m_ch_man = map(m_in.channels, m_out.channels);
-    }
+    static AudioMixer *create(const AudioDataFormat &in,
+                              const AudioDataFormat &out);
+    virtual ~AudioMixer() = default;
+    auto gain() const -> float { return d.gain; }
+    auto configure(const AudioDataFormat &in,
+                   const AudioDataFormat &out) -> bool;
+    auto multiplier() const -> double;
+    auto delay() const -> double { return d.delay; }
+    auto setNormalizer(bool on, const AudioNormalizerOption &option) -> void;
+    auto setAmp(float level) -> void { d.amp = level; }
+    auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void
+        { d.map = map; d.ch_man = map(d.in.channels, d.out.channels); }
+    auto setClippingMethod(ClippingMethod method) -> void;
     virtual void apply(const mp_audio *in) = 0;
     virtual void setScaler(bool on, double scale) = 0;
     virtual void setOutput(mp_audio *output) = 0;
 protected:
-    virtual bool checkClippingMethod(ClippingMethod method) const = 0;
     virtual void configured() = 0;
-    AudioMixer(const AudioDataFormat &in, const AudioDataFormat &out, ClippingMethod clip)
-    : m_in(in), m_out(out), m_clip(clip) {  }
-
-    AudioDataFormat m_in, m_out;
-    struct LevelInfo { LevelInfo(int frames = 0): frames(frames) {} int frames = 0; double level = 0.0; };
-    double m_delay = 0.0, m_scale = 1.0;
-    float m_gain = 1.0, m_amp = 1.0;
-    ClippingMethod m_clip;
-    QLinkedList<LevelInfo> m_history;
-    bool m_scaleChanged = false, m_mix = true;
-    bool m_normalizer = false, m_updateChmap = false, m_updateFormat = false;
-    typename QLinkedList<LevelInfo>::iterator m_historyIt;
-    AudioNormalizerOption m_normalizerOption;
-    std::array<int, MP_SPEAKER_ID_COUNT> m_ch_index_src, m_ch_index_dst;
-    ChannelManipulation m_ch_man;
-    ChannelLayoutMap m_map;
-    mp_audio *m_output = nullptr;
+    AudioMixer(const AudioDataFormat &in, const AudioDataFormat &out)
+        { d.in = in; d.out = out; }
+    auto resetNormalizer() -> void
+        { d.gain = 1.0; d.history.clear(); d.historyIt = d.history.end(); }
+    struct Data {
+        AudioDataFormat in, out;
+        double delay = 0.0, scale = 1.0;
+        float gain = 1.0, amp = 1.0;
+        ClippingMethod clip = ClippingMethod::Auto;
+        ClippingMethod realClip = ClippingMethod::Hard;
+        bool scaleChanged = false, mix = true;
+        bool normalizer = false, updateChmap = false, updateFormat = false;
+        AudioNormalizerOption normalizerOption;
+        std::array<int, MP_SPEAKER_ID_COUNT> ch_index_src, ch_index_dst;
+        ChannelManipulation ch_man;
+        ChannelLayoutMap map;
+        mp_audio *output = nullptr;
+        QLinkedList<detail::LevelInfo> history;
+        typename QLinkedList<detail::LevelInfo>::iterator historyIt;
+    };
+    Data d;
+    template<int fmt> friend class detail::AudioMixerPre;
+    template<int fmt> friend class detail::AudioMixerPost;
 };
+
+inline auto AudioMixer::multiplier() const -> double
+{ return (static_cast<double>(d.out.channels.num)/d.in.channels.num)/d.scale; }
 
 #endif // AUDIOMIXER_HPP

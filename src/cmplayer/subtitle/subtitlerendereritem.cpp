@@ -118,16 +118,19 @@ SubtitleRendererItem::~SubtitleRendererItem() {
     delete d;
 }
 
-bool SubtitleRendererItem::isTopAligned() const {
+auto SubtitleRendererItem::isTopAligned() const -> bool
+{
     return d->top;
 }
 
-void SubtitleRendererItem::render(int ms) {
+auto SubtitleRendererItem::render(int ms) -> void
+{
     d->msec = ms;
     d->render(SubCompSelection::Tick);
 }
 
-void SubtitleRendererItem::rerender() {
+auto SubtitleRendererItem::rerender() -> void
+{
     d->render(SubCompSelection::Rerender);
 }
 
@@ -136,19 +139,22 @@ auto SubtitleRendererItem::createShader() const -> ShaderIface*
     return new SubtitleShader;
 }
 
-void SubtitleRendererItem::initializeGL() {
+auto SubtitleRendererItem::initializeGL() -> void
+{
     SimpleTextureItem::initializeGL();
     texture().create();
     d->bbox.create();
 }
 
-void SubtitleRendererItem::finalizeGL() {
+auto SubtitleRendererItem::finalizeGL() -> void
+{
     SimpleTextureItem::finalizeGL();
     d->bbox.destroy();
     texture().destroy();
 }
 
-const RichTextDocument &SubtitleRendererItem::text() const {
+auto SubtitleRendererItem::text() const -> const RichTextDocument&
+{
     if (d->textChanged) {
         d->text.clear();
         d->selection.forImages([this] (const SubCompImage &image) {
@@ -159,12 +165,14 @@ const RichTextDocument &SubtitleRendererItem::text() const {
     return d->text;
 }
 
-void SubtitleRendererItem::setPriority(const QStringList &priority) {
+auto SubtitleRendererItem::setPriority(const QStringList &priority) -> void
+{
     for (int i=0; i< priority.size(); ++i)
         d->langMap[priority[i]] = priority.size()-i;
 }
 
-void SubtitleRendererItem::setStyle(const SubtitleStyle &style) {
+auto SubtitleRendererItem::setStyle(const SubtitleStyle &style) -> void
+{
     d->drawer.setStyle(style);
     d->updateDrawer();
 }
@@ -177,7 +185,8 @@ static inline QRectF operator / (const QRectF &rect, double p) {
     return {rect.topLeft()/p, rect.size()/p};
 }
 
-QImage SubtitleRendererItem::draw(const QRectF &rect, QRectF *put) const {
+auto SubtitleRendererItem::draw(const QRectF &rect, QRectF *put) const -> QImage
+{
     QImage sub; int gap = 0;
     auto boxes = d->drawer.draw(sub, gap, text(), rect, 1.0);
     if (sub.isNull())
@@ -208,22 +217,26 @@ QImage SubtitleRendererItem::draw(const QRectF &rect, QRectF *put) const {
     return sub;
 }
 
-double SubtitleRendererItem::pos() const {
+auto SubtitleRendererItem::pos() const -> double
+{
     return d->pos;
 }
 
-int SubtitleRendererItem::componentsCount() const {
+auto SubtitleRendererItem::componentsCount() const -> int
+{
     return d->loaded.count();
 }
 
-QList<const SubComp *> SubtitleRendererItem::components() const {
+auto SubtitleRendererItem::components() const -> QList<const SubComp *>
+{
     QList<const SubComp*> list; list.reserve(d->loaded.size());
     for (auto loaded : d->loaded)
         list << loaded;
     return list;
 }
 
-void SubtitleRendererItem::setTopAligned(bool top) {
+auto SubtitleRendererItem::setTopAligned(bool top) -> void
+{
     if (_Change(d->top, top)) {
         const auto alignment = Qt::AlignHCenter | (d->top ? Qt::AlignTop : Qt::AlignBottom);
         if (d->drawer.alignment() != alignment) {
@@ -234,11 +247,13 @@ void SubtitleRendererItem::setTopAligned(bool top) {
     }
 }
 
-const SubtitleStyle &SubtitleRendererItem::style() const {
+auto SubtitleRendererItem::style() const -> const SubtitleStyle&
+{
     return d->drawer.style();
 }
 
-void SubtitleRendererItem::unload() {
+auto SubtitleRendererItem::unload() -> void
+{
     d->selection.clear();
     qDeleteAll(d->loaded);
     d->loaded.clear();
@@ -248,7 +263,7 @@ void SubtitleRendererItem::unload() {
     emit modelsChanged(models());
 }
 
-void SubtitleRendererItem::updateVertex(Vertex *vertex)
+auto SubtitleRendererItem::updateVertex(Vertex *vertex) -> void
 {
     const auto dpr = devicePixelRatio();
     const QRectF r(d->drawer. pos(d->imageSize/dpr, rect()), d->imageSize/dpr);
@@ -264,13 +279,15 @@ auto SubtitleRendererItem::createData() const -> ShaderData*
     return data;
 }
 
-void SubtitleRendererItem::updateData(ShaderData *sd) {
+auto SubtitleRendererItem::updateData(ShaderData *sd) -> void
+{
     auto data = static_cast<SubtitleShaderData*>(sd);
     updateTexture(&texture());
     data->bboxColor = d->drawer.style().bbox.color;
 }
 
-void SubtitleRendererItem::updateTexture(OpenGLTexture2D *texture) {
+auto SubtitleRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
+{
     d->imageSize = {0, 0};
     d->selection.forImages([this] (const SubCompImage &image) {
         if (d->imageSize.width() < image.width())
@@ -305,48 +322,57 @@ void SubtitleRendererItem::updateTexture(OpenGLTexture2D *texture) {
     }
 }
 
-void SubtitleRendererItem::afterUpdate()
+auto SubtitleRendererItem::afterUpdate() -> void
 {
     d->updateVisible();
 }
 
-bool SubtitleRendererItem::isHidden() const {
+auto SubtitleRendererItem::isHidden() const -> bool
+{
     return d->hidden;
 }
 
-void SubtitleRendererItem::geometryChanged(const QRectF &new_, const QRectF &old) {
+auto SubtitleRendererItem::geometryChanged(const QRectF &new_, const QRectF &old) -> void
+{
     d->selection.setArea(rect(), devicePixelRatio());
     SimpleTextureItem::geometryChanged(new_, old);
 }
 
-int SubtitleRendererItem::delay() const {
+auto SubtitleRendererItem::delay() const -> int
+{
     return d->delay;
 }
 
-void SubtitleRendererItem::setDelay(int delay) {
+auto SubtitleRendererItem::setDelay(int delay) -> void
+{
     if (_Change(d->delay, delay))
         rerender();
 }
 
-void SubtitleRendererItem::setPos(double pos) {
+auto SubtitleRendererItem::setPos(double pos) -> void
+{
     if (_ChangeF(d->pos, qBound(0.0, pos, 1.0)))
         d->setMargin({{0.0, d->top ? d->pos : 0}, {0.0, d->top ? 0.0 : 1.0 - d->pos}});
 }
 
-void SubtitleRendererItem::setHidden(bool hidden) {
+auto SubtitleRendererItem::setHidden(bool hidden) -> void
+{
     if (_Change(d->hidden, hidden))
         d->updateVisible();
 }
 
-void SubtitleRendererItem::setFPS(double fps) {
+auto SubtitleRendererItem::setFPS(double fps) -> void
+{
     d->selection.setFPS(fps);
 }
 
-double SubtitleRendererItem::fps() const {
+auto SubtitleRendererItem::fps() const -> double
+{
     return d->fps();
 }
 
-void SubtitleRendererItem::deselect(int idx) {
+auto SubtitleRendererItem::deselect(int idx) -> void
+{
     if (idx < 0)
         d->selection.clear();
     else if (_InRange(0, idx, d->loaded.size()-1) && d->loaded[idx]->selection())
@@ -357,7 +383,8 @@ void SubtitleRendererItem::deselect(int idx) {
         d->applySelection();
 }
 
-void SubtitleRendererItem::select(int idx) {
+auto SubtitleRendererItem::select(int idx) -> void
+{
     bool sort = false;
     if (idx < 0) {
         for (auto comp : d->loaded) {
@@ -373,7 +400,8 @@ void SubtitleRendererItem::select(int idx) {
     }
 }
 
-bool SubtitleRendererItem::load(const Subtitle &subtitle, bool select) {
+auto SubtitleRendererItem::load(const Subtitle &subtitle, bool select) -> bool
+{
     if (subtitle.isEmpty())
         return false;
     const int idx = d->loaded.size();
@@ -391,7 +419,8 @@ bool SubtitleRendererItem::load(const Subtitle &subtitle, bool select) {
     return true;
 }
 
-int SubtitleRendererItem::start(int time) const {
+auto SubtitleRendererItem::start(int time) const -> int
+{
     int ret = -1;
     d->selection.forComponents([this, time, &ret] (const SubComp &comp) {
         const auto it = comp.start(time - d->delay, d->fps());
@@ -401,7 +430,8 @@ int SubtitleRendererItem::start(int time) const {
     return ret;
 }
 
-int SubtitleRendererItem::finish(int time) const {
+auto SubtitleRendererItem::finish(int time) const -> int
+{
     int ret = -1;
     d->selection.forComponents([this, time, &ret] (const SubComp &comp) {
         const auto it = comp.finish(time - d->delay, d->fps());
@@ -424,7 +454,8 @@ static bool updateIfEarlier(SubComp::ConstIt it, int &time) {
         return false;
 }
 
-int SubtitleRendererItem::current() const {
+auto SubtitleRendererItem::current() const -> int
+{
     int time = -1;
     d->selection.forImages([this, &time] (const SubCompImage &imageture) {
         if (imageture.isValid())
@@ -433,7 +464,8 @@ int SubtitleRendererItem::current() const {
     return time;
 }
 
-int SubtitleRendererItem::previous() const {
+auto SubtitleRendererItem::previous() const -> int
+{
     int time = -1;
     d->selection.forImages([this, &time] (const SubCompImage &imageture) {
         if (imageture.isValid()) {
@@ -447,7 +479,8 @@ int SubtitleRendererItem::previous() const {
     return time;
 }
 
-int SubtitleRendererItem::next() const {
+auto SubtitleRendererItem::next() const -> int
+{
     int time = -1;
     d->selection.forImages([this, &time] (const SubCompImage &imageture) {
         if (imageture.isValid()) {
@@ -461,7 +494,8 @@ int SubtitleRendererItem::next() const {
     return time;
 }
 
-void SubtitleRendererItem::setComponents(const QList<SubComp> &components) {
+auto SubtitleRendererItem::setComponents(const QList<SubComp> &components) -> void
+{
     unload();
     d->loaded.reserve(components.size());
     for (const auto &comp : components)
@@ -474,11 +508,13 @@ void SubtitleRendererItem::setComponents(const QList<SubComp> &components) {
     d->applySelection();
 }
 
-QVector<SubCompModel*> SubtitleRendererItem::models() const {
+auto SubtitleRendererItem::models() const -> QVector<SubCompModel*>
+{
     return d->selection.models();
 }
 
-void SubtitleRendererItem::customEvent(QEvent *event) {
+auto SubtitleRendererItem::customEvent(QEvent *event) -> void
+{
     if (event->type() == SubCompSelection::ImagePrepared) {
         if (d->selection.update(_GetData<SubCompImage>(event)))
             d->textChanged = true;

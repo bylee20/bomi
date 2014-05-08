@@ -18,7 +18,8 @@ Playlist::Playlist(const Mrl &mrl, const QString &enc) {
 Playlist::Playlist(const QList<Mrl> &rhs)
 : QList<Mrl>(rhs) {}
 
-bool Playlist::save(const QString &filePath, Type type) const {
+auto Playlist::save(const QString &filePath, Type type) const -> bool
+{
     QFile file(filePath);
     if (!file.open(QFile::WriteOnly | QFile::Truncate))
         return false;
@@ -37,7 +38,8 @@ bool Playlist::save(const QString &filePath, Type type) const {
     }
 }
 
-Playlist &Playlist::loadAll(const QDir &dir) {
+auto Playlist::loadAll(const QDir &dir) -> Playlist&
+{
     clear();
     const QStringList filter = Info::mediaNameFilter();
     const QStringList files = dir.entryList(filter, QDir::Files, QDir::Name);
@@ -46,7 +48,8 @@ Playlist &Playlist::loadAll(const QDir &dir) {
     return *this;
 }
 
-bool Playlist::load(QTextStream &in, QString enc, Type type) {
+auto Playlist::load(QTextStream &in, QString enc, Type type) -> bool
+{
     clear();
     if (type == M3U8)
         enc = "UTF-8";
@@ -63,12 +66,14 @@ bool Playlist::load(QTextStream &in, QString enc, Type type) {
     }
 }
 
-bool Playlist::load(QByteArray *data, const QString &enc, Type type) {
+auto Playlist::load(QByteArray *data, const QString &enc, Type type) -> bool
+{
     QTextStream in(data);
     return load(in, enc, type);
 }
 
-bool Playlist::load(const QString &filePath, const QString &enc, Type type) {
+auto Playlist::load(const QString &filePath, const QString &enc, Type type) -> bool
+{
     QFile file(filePath);
     if (!file.open(QFile::ReadOnly))
         return false;
@@ -78,13 +83,15 @@ bool Playlist::load(const QString &filePath, const QString &enc, Type type) {
     return load(in, enc, type);
 }
 
-bool Playlist::load(const Mrl &mrl, const QString &enc, Type type) {
+auto Playlist::load(const Mrl &mrl, const QString &enc, Type type) -> bool
+{
     if (mrl.isLocalFile())
         return load(mrl.toLocalFile(), enc, type);
     return false;
 }
 
-Playlist::Type Playlist::guessType(const QString &fileName) {
+auto Playlist::guessType(const QString &fileName) -> Playlist::Type
+{
     const QString suffix = QFileInfo(fileName).suffix().toLower();
     if (suffix == "pls")
         return PLS;
@@ -96,7 +103,8 @@ Playlist::Type Playlist::guessType(const QString &fileName) {
         return Unknown;
 }
 
-bool Playlist::savePLS(QTextStream &out) const {
+auto Playlist::savePLS(QTextStream &out) const -> bool
+{
     const int count = size();
     out << "[playlist]" << endl << "NumberOfEntries=" << count << endl << endl;
     for (int i=0; i<count; ++i)
@@ -106,7 +114,8 @@ bool Playlist::savePLS(QTextStream &out) const {
     return true;
 }
 
-bool Playlist::saveM3U(QTextStream &out) const {
+auto Playlist::saveM3U(QTextStream &out) const -> bool
+{
     const int count = size();
     out << "#EXTM3U\n";
     for (int i=0; i<count; ++i) {
@@ -117,7 +126,8 @@ bool Playlist::saveM3U(QTextStream &out) const {
 }
 
 
-bool Playlist::loadPLS(QTextStream &in) {
+auto Playlist::loadPLS(QTextStream &in) -> bool
+{
     const qint64 pos = in.pos();
     in.seek(0);
     while (!in.atEnd()) {
@@ -132,7 +142,8 @@ bool Playlist::loadPLS(QTextStream &in) {
     return true;
 }
 
-bool Playlist::loadM3U(QTextStream &in) {
+auto Playlist::loadM3U(QTextStream &in) -> bool
+{
     const qint64 pos = in.pos();
     in.seek(0);
     auto getNextLocation = [&in] () -> QString {
@@ -165,7 +176,8 @@ bool Playlist::loadM3U(QTextStream &in) {
     return true;
 }
 
-void Playlist::save(const QString &name, QSettings *set) const {
+auto Playlist::save(const QString &name, QSettings *set) const -> void
+{
     set->beginWriteArray(name, size());
     for (int i=0; i<size(); ++i) {
         set->setArrayIndex(i);
@@ -175,7 +187,8 @@ void Playlist::save(const QString &name, QSettings *set) const {
     set->endArray();
 }
 
-void Playlist::load(const QString &name, QSettings *set) {
+auto Playlist::load(const QString &name, QSettings *set) -> void
+{
     clear();
     const int size = set->beginReadArray(name);
     for (int i=0; i<size; ++i) {

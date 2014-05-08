@@ -34,7 +34,8 @@ OpenMediaFolderDialog::~OpenMediaFolderDialog() {
     delete d;
 }
 
-void OpenMediaFolderDialog::updateOpenButton() {
+auto OpenMediaFolderDialog::updateOpenButton() -> void
+{
     if (!d->generating) {
         d->ui.dbb->button(QDialogButtonBox::Open)->setEnabled(false);
         for (int i=0; i<d->ui.list->count(); ++i) {
@@ -46,14 +47,16 @@ void OpenMediaFolderDialog::updateOpenButton() {
     }
 }
 
-void OpenMediaFolderDialog::setFolder(const QString &folder) {
+auto OpenMediaFolderDialog::setFolder(const QString &folder) -> void
+{
     if (d->ui.folder->text() != folder) {
         d->ui.folder->setText(folder);
         updateList();
     }
 }
 
-void OpenMediaFolderDialog::checkList(bool checked) {
+auto OpenMediaFolderDialog::checkList(bool checked) -> void
+{
     QCheckBox *box = qobject_cast<QCheckBox*>(sender());
     for (int i=0; i<d->ui.list->count(); ++i) {
         auto item = d->ui.list->item(i);
@@ -70,7 +73,8 @@ void OpenMediaFolderDialog::checkList(bool checked) {
     AppState::get().open_folder_types = types;
 }
 
-void OpenMediaFolderDialog::updateList() {
+auto OpenMediaFolderDialog::updateList() -> void
+{
     const auto folder = d->ui.folder->text();
     if (!folder.isEmpty()) {
         d->ui.list->clear();
@@ -98,7 +102,8 @@ void OpenMediaFolderDialog::updateList() {
     }
 }
 
-Playlist OpenMediaFolderDialog::playlist() const {
+auto OpenMediaFolderDialog::playlist() const -> Playlist
+{
     Playlist list;
     for (int i=0; i<d->ui.list->count(); ++i) {
         const auto item = d->ui.list->item(i);
@@ -108,7 +113,8 @@ Playlist OpenMediaFolderDialog::playlist() const {
     return list;
 }
 
-void OpenMediaFolderDialog::getFolder() {
+auto OpenMediaFolderDialog::getFolder() -> void
+{
     auto &as = AppState::get();
     const QString dir = QFileInfo(as.open_last_folder).absolutePath();
     const QString folder = QFileDialog::getExistingDirectory(this, tr("Open Folder"),  dir);
@@ -118,7 +124,8 @@ void OpenMediaFolderDialog::getFolder() {
     }
 }
 
-int OpenMediaFolderDialog::exec() {
+auto OpenMediaFolderDialog::exec() -> int
+{
     getFolder();
     if (d->ui.folder->text().isEmpty())
         return Rejected;

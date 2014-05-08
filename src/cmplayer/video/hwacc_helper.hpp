@@ -3,6 +3,7 @@
 
 #include "stdafx.hpp"
 #include "log.hpp"
+#include "videoimagepool.hpp"
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <video/img_format.h>
@@ -10,21 +11,24 @@ extern "C" {
 }
 
 mp_image *null_mp_image(void *arg = nullptr, void(*free)(void*) = nullptr);
-mp_image *null_mp_image(uint imgfmt, int width, int height, void *arg = nullptr, void(*free)(void*) = nullptr);
+mp_image *null_mp_image(uint imgfmt, int width, int height,
+                        void *arg = nullptr, void(*free)(void*) = nullptr);
 
 #ifdef Q_OS_LINUX
 
 template<mp_imgfmt imgfmt> struct HwAccX11Trait {
-    static_assert(imgfmt == IMGFMT_VAAPI || imgfmt == IMGFMT_VDPAU, "wrong format");
+    static_assert(imgfmt == IMGFMT_VAAPI
+                  || imgfmt == IMGFMT_VDPAU, "wrong format");
     using Profile = char*;
     using Status = char*;
     using SurfaceID = char*;
     static constexpr SurfaceID invalid = (SurfaceID)0;
     static constexpr Status success = (Status)0;
     static constexpr const char *name = "";
-    static void destroySurface(SurfaceID id);
-    static bool createSurfaces(int w, int h, int f, QVector<SurfaceID> &ids);
-    static const char *error(Status) { return ""; }
+    static auto destroySurface(SurfaceID id) -> void;
+    static auto createSurfaces(int w, int h, int f,
+                               QVector<SurfaceID> &ids) -> bool;
+    static auto error(Status) -> const char* { return ""; }
 };
 
 template<mp_imgfmt imgfmt>
@@ -33,16 +37,20 @@ struct HwAccX11StatusChecker {
     using Status = typename Trait::Status;
     static const char *getLogContext() { return Trait::name; }
     virtual ~HwAccX11StatusChecker() {}
-    bool isSuccess(Status status) { m_status = status; return isSuccess(); }
-    bool isSuccess() const { return m_status == Trait::success; }
-    Status status() const { return m_status; }
-    bool check(Status status, const QString &onError = QString()) {
+    auto isSuccess(Status status) -> bool
+        { m_status = status; return isSuccess(); }
+    auto isSuccess() const -> bool { return m_status == Trait::success; }
+    auto status() const -> Status { return m_status; }
+    auto check(Status status, const QString &onError = QString()) -> bool
+    {
         if (isSuccess(status))
             return true;
-        _Error("Error: %%(0x%%) %%", Trait::error(status), QString::number(m_status, 16), onError);
+        _Error("Error: %%(0x%%) %%", Trait::error(status),
+               QString::number(m_status, 16), onError);
         return false;
     }
-    bool check(Status status, const char *onError = "") { return check(status, _L(onError)); }
+    auto check(Status status, const char *onError = "") -> bool
+        { return check(status, _L(onError)); }
 private:
     Status m_status = Trait::success;
 };
@@ -51,8 +59,10 @@ template<mp_imgfmt imgfmt>
 struct HwAccX11Codec {
     using Trait = HwAccX11Trait<imgfmt>;
     using Profile = typename Trait::Profile;
-    HwAccX11Codec() {}
-    HwAccX11Codec(const QVector<Profile> &available, const QVector<Profile> &p, const QVector<int> &av, int surfaces, AVCodecID id) {
+    HwAccX11Codec() { }
+    HwAccX11Codec(const QVector<Profile> &available, const QVector<Profile> &p,
+                  const QVector<int> &av, int surfaces, AVCodecID id)
+    {
         Q_ASSERT(p.size() == av.size());
         for (int i=0; i<p.size(); ++i) {
             if (available.contains(p[i])) {
@@ -65,7 +75,7 @@ struct HwAccX11Codec {
             this->id = id;
         }
     }
-    Profile profile(int av) const {
+    auto profile(int av) const -> Profile {
         const int idx = avProfiles.indexOf(av);
         return profiles[idx < 0 || av == FF_PROFILE_UNKNOWN ? 0 : idx];
     }
@@ -81,37 +91,31 @@ template<mp_imgfmt imgfmt>
 class HwAccX11Surface {
 public:
     using Trait = HwAccX11Trait<imgfmt>;
-    using Pool = HwAccX11SurfacePool<imgfmt>;
     using SurfaceID = typename Trait::SurfaceID;
-    SurfaceID id() const { return m_id; }
-    int format() const { return m_format; }
-    Pool *pool() const { return m_pool; }
-    virtual ~HwAccX11Surface() {
-        Q_ASSERT(!m_ref);
-        if (m_id != Trait::invalid)
-            Trait::destroySurface(m_id);
-    }
-private:
+    auto id() const -> SurfaceID { return m_id; }
+    auto format() const -> int { return m_format; }
+    virtual ~HwAccX11Surface()
+        { if (m_id != Trait::invalid) Trait::destroySurface(m_id); }
     HwAccX11Surface() = default;
+private:
     friend class HwAccX11SurfacePool<imgfmt>;
     SurfaceID m_id = Trait::invalid;
-    bool m_ref = false, m_orphan = false;
-    quint64 m_order = 0;
     int m_format = 0;
-    Pool *m_pool = nullptr;
 };
 
 template<mp_imgfmt imgfmt>
-class HwAccX11SurfacePool {
+class HwAccX11SurfacePool : public VideoImagePool<HwAccX11Surface<imgfmt>> {
 public:
     static const char *getLogContext() { return Trait::name; }
     using Trait = HwAccX11Trait<imgfmt>;
     using Surface = HwAccX11Surface<imgfmt>;
     using SurfaceID = typename Trait::SurfaceID;
+    using Cache = VideoImageCache<Surface>;
     HwAccX11SurfacePool() = default;
-    virtual ~HwAccX11SurfacePool() { clear(); }
-    bool create(int size, int width, int height, uint format) {
-        if (m_width == width && m_height == height && m_format == format && m_surfaces.size() == size)
+    auto create(int size, int width, int height, uint format) -> bool
+    {
+        if (m_width == width && m_height == height
+                && m_format == format && this->count() == size)
             return true;
         clear();
         m_width = width; m_height = height;
@@ -121,81 +125,45 @@ public:
             m_ids.clear();
             return false;
         }
-        m_surfaces.resize(size);
-        for (int i=0; i<size; ++i) {
-            auto surface = new Surface;
-            surface->m_id = m_ids[i];
-            surface->m_format = format;
-            surface->m_pool = this;
-            m_surfaces[i] = surface;
-        }
+        int i = 0;
+        this->reserve(size, [&] (Surface &surface) {
+            surface.m_id = m_ids[i++];
+            surface.m_format = format;
+        });
         return true;
     }
-    static Surface *getSurface(mp_image *mpi) {
-        return mpi->imgfmt == imgfmt ? (Surface*)(quintptr)mpi->planes[1] : nullptr;
-    }
-    mp_image *getMpImage() {
-        auto surface = getSurface();
-        if (!surface)
-            return nullptr;
+    auto getMpImage() -> mp_image*
+    {
+        auto cache = this->getUnusedCache();
+        if (cache.isNull()) {
+            _Warn("No usable SurfaceID. Decoding could fail");
+            cache = this->recycle();
+        }
         auto release = [](void *arg) {
-            m_mutex.lock();
-            auto surface = static_cast<Surface*>(arg);
-            surface->m_ref = false;
-            if (surface->m_orphan)
-                delete surface;
-            m_mutex.unlock();
+            delete static_cast<Cache*>(arg);
         };
-        auto mpi = null_mp_image(IMGFMT_VAAPI, m_width, m_height, surface, release);
-        mpi->planes[1] = (uchar*)(quintptr)surface;
-        mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)surface->id();
+        auto p = new Cache(std::move(cache));
+        auto mpi = null_mp_image(IMGFMT_VAAPI, m_width, m_height, p, release);
+        mpi->planes[1] = (uchar*)(quintptr)p;
+        mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)p->image().id();
         return mpi;
     }
-    void clear() {
-        m_mutex.lock();
-        for (auto surface : m_surfaces) {
-            if (surface->m_ref)
-                surface->m_orphan = true;
-            else
-                delete surface;
-        }
-        m_surfaces.clear();
-        m_ids.clear();
-        m_mutex.unlock();
+    auto clear() -> void { this->reserve(0); m_ids.clear(); }
+    auto ids() const -> QVector<SurfaceID> {return m_ids;}
+    auto format() const -> uint {return m_format;}
+    auto width() const -> int { return m_width; }
+    auto height() const -> int { return m_height; }
+    static auto getSurface(mp_image *mpi) -> Surface *
+    {
+        return mpi->imgfmt == imgfmt ? (Surface*)(quintptr)mpi->planes[1]
+                                     : nullptr;
     }
-    QVector<SurfaceID> ids() const {return m_ids;}
-    uint format() const {return m_format;}
-    int width() const { return m_width; }
-    int height() const { return m_height; }
 private:
-    static QMutex m_mutex;
-    Surface *getSurface() {
-        Surface *best = nullptr, *oldest = nullptr;
-        for (Surface *s : m_surfaces) {
-            if (!oldest || s->m_order < oldest->m_order)
-                oldest = s;
-            if (s->m_ref)
-                continue;
-            if (!best || best->m_order > s->m_order)
-                best = s;
-        }
-        if (!best) {
-            static const QByteArray warn("No usable SurfaceID. Decoding could fail");
-            _Warn(warn);
-            best = oldest;
-        }
-        best->m_ref = true;
-        best->m_order = ++m_order;
-        return best;
-    }
     QVector<SurfaceID> m_ids;
-    QVector<Surface*> m_surfaces;
     uint m_format = 0;
     int m_width = 0, m_height = 0;
     quint64 m_order = 0LL;
 };
-
-template<mp_imgfmt imgfmt> QMutex HwAccX11SurfacePool<imgfmt>::m_mutex;
 
 #endif
 

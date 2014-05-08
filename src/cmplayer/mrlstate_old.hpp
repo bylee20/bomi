@@ -77,7 +77,7 @@ public:
     SubtitleStateInfo sub_track;
 
     static const int Version = 1;
-    void fillCurrentVersion(MrlState *state) const {
+    auto fillCurrentVersion(MrlState *state) const -> void {
         state->mrl = mrl;
         state->last_played_date_time = last_played_date_time;
         state->resume_position = resume_position;
@@ -139,18 +139,21 @@ signals:
 };
 
 struct MrlFieldV1 {
-    QString type() const { return m_type; }
-    QString toSql(const QVariant &var) const { return m_toSql(var); }
-    QVariant fromSql(const QVariant &var) const { return m_fromSql(var, m_property.userType()); }
-    const QMetaProperty &property() const { return m_property; }
-    static QList<MrlFieldV1> list();
-    QVariant default_() const { return QVariant(); }
+    auto type() const -> QString { return m_type; }
+    auto toSql(const QVariant &var) const -> QString { return m_toSql(var); }
+    auto fromSql(const QVariant &var) const -> QVariant;
+    auto property() const -> const QMetaProperty& { return m_property; }
+    auto default_() const -> QVariant { return QVariant(); }
+    static auto list() -> QList<MrlFieldV1>;
 private:
-    static QVariant pass(const QVariant &var, int) { return var; }
+    static auto pass(const QVariant &var, int) -> QVariant { return var; }
     QString m_type;
     QMetaProperty m_property;
     QString (*m_toSql)(const QVariant&);
     QVariant (*m_fromSql)(const QVariant&, int) = pass;
 };
+
+inline auto MrlFieldV1::fromSql(const QVariant &var) const -> QVariant
+{ return m_fromSql(var, m_property.userType()); }
 
 #endif // MRLSTATE_OLD_H

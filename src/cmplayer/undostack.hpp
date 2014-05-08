@@ -7,49 +7,27 @@
 class UndoStack : public QObject {
     Q_OBJECT
 public:
-    template<typename Func, typename T>
+    template<class Func, class T>
     class Command : public QUndoCommand {
     public:
-        Command(const T &to, const T &from, const Func &func): to(to), from(from), func(func) { }
-        void redo() { func(to); }
-        void undo() { func(from); }
+        Command(const T &to, const T &from, const Func &func)
+            : to(to), from(from), func(func) { }
+        auto redo() -> void { func(to); }
+        auto undo() -> void { func(from); }
     private:
         T to, from; Func  func;
     };
-    UndoStack() {
-        QObject::connect(&m_stack, &QUndoStack::canUndoChanged, this, &UndoStack::canUndoChanged);
-        QObject::connect(&m_stack, &QUndoStack::canRedoChanged, this, &UndoStack::canRedoChanged);
-    }
-    template<typename T, typename Func>
-    QUndoCommand *push(const T &to, const T &from, const Func &func) {
-        if (m_enabled) {
-            auto cmd = new Command<Func, T>(to, from, func);
-            m_stack.push(cmd);
-            return cmd;
-        } else {
-            func(to);
-            return nullptr;
-        }
-    }
-    template<typename Func>
-    void connect(ActionGroup *g, Func func) {
-        QObject::connect(g, &ActionGroup::triggered, [this, g, func] (QAction *a) {
-            push(a, m_currentActions[g], [this, func, g] (QAction *a) {
-                if (a) {
-                    func(a);
-                    a->setChecked(true);
-                }
-                m_currentActions[g] = a;
-            });
-        });
-    }
-    void registerActionGroup(ActionGroup *g) { m_currentActions[g] = g->checkedAction(); }
-    bool canUndo() const { return m_stack.canUndo(); }
-    bool canRedo() const { return m_stack.canRedo(); }
-    void setEnabled(bool enabled) { m_enabled = enabled; }
-public slots:
-    void undo() { m_stack.undo(); }
-    void redo() { m_stack.redo(); }
+    UndoStack();
+    template<class T, class Func>
+    auto push(const T &to, const T &from, const Func &func) -> QUndoCommand *;
+    template<class Func>
+    auto connect(ActionGroup *g, Func func) -> void;
+    auto registerActionGroup(ActionGroup *g) -> void;
+    auto canUndo() const -> bool { return m_stack.canUndo(); }
+    auto canRedo() const -> bool { return m_stack.canRedo(); }
+    auto setEnabled(bool enabled) -> void { m_enabled = enabled; }
+    auto undo() -> void { m_stack.undo(); }
+    auto redo() -> void { m_stack.redo(); }
 signals:
     void canUndoChanged(bool can);
     void canRedoChanged(bool can);
@@ -58,5 +36,36 @@ private:
     QMap<ActionGroup*, QAction*> m_currentActions;
     bool m_enabled = false;
 };
+
+template<class T, class Func>
+inline auto UndoStack::push(const T &to, const T &from,
+                     const Func &func) -> QUndoCommand*
+{
+    if (m_enabled) {
+        auto cmd = new Command<Func, T>(to, from, func);
+        m_stack.push(cmd);
+        return cmd;
+    } else {
+        func(to);
+        return nullptr;
+    }
+}
+
+template<class Func>
+inline auto UndoStack::connect(ActionGroup *g, Func func) -> void
+{
+    QObject::connect(g, &ActionGroup::triggered, [this, g, func] (QAction *a) {
+        push(a, m_currentActions[g], [this, func, g] (QAction *a) {
+            if (a) {
+                func(a);
+                a->setChecked(true);
+            }
+            m_currentActions[g] = a;
+        });
+    });
+}
+
+inline auto UndoStack::registerActionGroup(ActionGroup *group) -> void
+{ m_currentActions[group] = group->checkedAction(); }
 
 #endif // UNDOSTACK_HPP

@@ -154,14 +154,16 @@ SubCompSelection::SubCompSelection(QObject *renderer): d(new Data) { d->renderer
 
 SubCompSelection::~SubCompSelection() { delete d; }
 
-QVector<SubCompModel*> SubCompSelection::models() const {
+auto SubCompSelection::models() const -> QVector<SubCompModel*>
+{
     QVector<SubCompModel*> models;
     for (auto &item : items)
         models.push_back(item.model);
     return models;
 }
 
-void SubCompSelection::remove(const SubComp *comp) {
+auto SubCompSelection::remove(const SubComp *comp) -> void
+{
     auto it = find(comp);
     if (it != items.end()) {
         it->release();
@@ -171,12 +173,14 @@ void SubCompSelection::remove(const SubComp *comp) {
 
 const SubtitleDrawer &SubCompSelection::drawer() const { return d->drawer; }
 
-void SubCompSelection::setDrawer(const SubtitleDrawer &drawer) {
+auto SubCompSelection::setDrawer(const SubtitleDrawer &drawer) -> void
+{
     d->drawer = drawer;
     forThreads([this] (Thread *t) { t->setDrawer(d->drawer); });
 }
 
-void SubCompSelection::clear() {
+auto SubCompSelection::clear() -> void
+{
     for (auto &item : items)
         item.thread->finish();
     wait.wakeAll();
@@ -186,21 +190,24 @@ void SubCompSelection::clear() {
     items.clear();
 }
 
-void SubCompSelection::setArea(const QRectF &rect, double dpr) {
+auto SubCompSelection::setArea(const QRectF &rect, double dpr) -> void
+{
     if (d->rect == rect && d->dpr == dpr)
         return;
     d->rect = rect; d->dpr = dpr;
     forThreads([this] (Thread *thread) { thread->setArea(d->rect, d->dpr); });
 }
 
-bool SubCompSelection::isEmpty() const {
+auto SubCompSelection::isEmpty() const -> bool
+{
     for (const auto &item : items)
         if (item.comp->hasWords())
             return false;
     return true;
 }
 
-bool SubCompSelection::prepend(const SubComp *comp) {
+auto SubCompSelection::prepend(const SubComp *comp) -> bool
+{
     if (contains(comp) || !comp)
         return false;
     const_cast<SubComp*>(comp)->selection() = true;
@@ -218,12 +225,14 @@ bool SubCompSelection::prepend(const SubComp *comp) {
 
 double SubCompSelection::fps() const { return d->fps; }
 
-void SubCompSelection::setFPS(double fps) {
+auto SubCompSelection::setFPS(double fps) -> void
+{
     if (_Change(d->fps, fps))
         forThreads([this, fps] (Thread *t) { t->setFPS(fps); });
 }
 
-bool SubCompSelection::update(const SubCompImage &image) {
+auto SubCompSelection::update(const SubCompImage &image) -> bool
+{
     auto item = this->item(image);
     if (!item)
         return false;
@@ -232,7 +241,8 @@ bool SubCompSelection::update(const SubCompImage &image) {
     return true;
 }
 
-void SubCompSelection::setMargin(double top, double bottom, double right, double left) {
+auto SubCompSelection::setMargin(double top, double bottom, double right, double left) -> void
+{
     Margin margin;
     margin.top = top;     margin.bottom = bottom;
     margin.right = right; margin.left = left;

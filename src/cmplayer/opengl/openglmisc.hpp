@@ -32,7 +32,7 @@ enum Binding {
     BindingRectangle = GL_TEXTURE_BINDING_RECTANGLE,
 };
 
-static inline Binding bindingTarget(Target target) {
+static inline auto bindingTarget(Target target) -> Binding {
     switch (target) {
     case Target1D: return Binding1D;
     case Target2D: return Binding2D;
@@ -136,7 +136,12 @@ enum WrapDirection {
 
 struct TransferInfo {
     TransferInfo() {}
-    TransferInfo(TransferFormat format, TransferType type): format(format), type(type) {}
+    TransferInfo(TransferFormat format, TransferType type)
+        : format(format), type(type) { }
+    auto operator == (const TransferInfo &rhs) const -> bool
+        { return format == rhs.format && type == rhs.type; }
+    auto operator != (const TransferInfo &rhs) const -> bool
+        { return !operator == (rhs); }
     TransferFormat format = OGL::BGRA;
     TransferType type = OGL::UInt32_8_8_8_8_Rev;
 };
@@ -145,9 +150,14 @@ struct TransferInfo {
 
 struct OpenGLTextureTransferInfo {
     OpenGLTextureTransferInfo() {}
-    OpenGLTextureTransferInfo(OGL::TextureFormat texture, OGL::TransferFormat transferFormat, OGL::TransferType transferType)
-    : texture(texture), transfer(transferFormat, transferType) {}
-    virtual ~OpenGLTextureTransferInfo() {}
+    OpenGLTextureTransferInfo(OGL::TextureFormat texture,
+                              OGL::TransferFormat transferFormat,
+                              OGL::TransferType transferType)
+        : texture(texture), transfer(transferFormat, transferType) { }
+    auto operator == (const OpenGLTextureTransferInfo &rhs) const -> bool
+        { return texture == rhs.texture && transfer == rhs.transfer; }
+    auto operator != (const OpenGLTextureTransferInfo &rhs) const -> bool
+        { return !operator == (rhs); }
     OGL::TextureFormat texture = OGL::RGBA8_UNorm;
     OGL::TransferInfo transfer;
 };
@@ -155,22 +165,25 @@ struct OpenGLTextureTransferInfo {
 class OpenGLTextureBase {
 public:
     virtual ~OpenGLTextureBase() {}
-    GLuint id() const { return m_id; }
-    OGL::Target target() const { return m_target; }
-    void create(OGL::Filter filter, OGL::WrapMode wrap = OGL::ClampToEdge);
-    void create(OGL::WrapMode wrap, OGL::Filter filter = OGL::Linear) { create(filter, wrap); }
-    void create() { create(OGL::Linear, OGL::ClampToEdge); }
-    void destroy() { glDeleteTextures(1, &m_id); }
-    void bind() const { glBindTexture(m_target, m_id); }
-    void bind(QOpenGLShaderProgram *prog, int location, int index) const {
+    auto id() const -> GLuint { return m_id; }
+    auto target() const -> OGL::Target { return m_target; }
+    auto create(OGL::Filter f, OGL::WrapMode wrap = OGL::ClampToEdge) -> void;
+    auto create(OGL::WrapMode wrap, OGL::Filter filter = OGL::Linear) -> void
+    { create(filter, wrap); }
+    auto create() -> void { create(OGL::Linear, OGL::ClampToEdge); }
+    auto destroy() -> void { glDeleteTextures(1, &m_id); }
+    auto bind() const -> void { glBindTexture(m_target, m_id); }
+    auto bind(QOpenGLShaderProgram *prog, int location, int index) const -> void
+    {
         prog->setUniformValue(location, index);
         glActiveTexture(GL_TEXTURE0 + index);
         bind();
     }
-    void setFilter(OGL::Filter filter);
-    void setWrapMode(OGL::WrapMode wrap);
-    bool isValid() const { return m_id != GL_NONE; }
-    OGL::TextureFormat format() const { return m_info.texture; }
+    auto setFilter(OGL::Filter filter) -> void;
+    auto setWrapMode(OGL::WrapMode wrap) -> void;
+    auto isValid() const -> bool { return m_id != GL_NONE; }
+    const OpenGLTextureTransferInfo &info() const { return m_info; }
+    auto format() const -> OGL::TextureFormat { return m_info.texture; }
     const OGL::TransferInfo &transfer() const { return m_info.transfer; }
 protected:
     OpenGLTextureBase(OGL::Target target): m_target(target) {}
@@ -187,16 +200,18 @@ class OpenGLTextureBinder {
     using Texture = typename trait::texture_type;
 public:
     inline OpenGLTextureBinder() { glGetIntegerv(binding(), &m_restore); }
-    inline OpenGLTextureBinder(Texture *texture): OpenGLTextureBinder() { bind(texture); }
+    inline OpenGLTextureBinder(Texture *texture)
+        : OpenGLTextureBinder() { bind(texture); }
     inline ~OpenGLTextureBinder() { glBindTexture(_target, m_restore); }
-    static inline constexpr OGL::Target target() { return _target; }
-    static inline constexpr OGL::Binding binding() { return trait::binding; }
-    inline void bind(Texture *texture) {
+    constexpr SIA target() -> OGL::Target { return _target; }
+    constexpr SIA binding() -> OGL::Binding { return trait::binding; }
+    inline auto bind(Texture *texture) -> void
+    {
         Q_ASSERT(texture->target() == _target);
         m_texture = texture; m_texture->bind();
     }
-    inline Texture &operator*() const { return *m_texture; }
-    inline Texture *operator->() const { return m_texture; }
+    inline auto operator*() const -> Texture& { return *m_texture; }
+    inline auto operator->() const -> Texture* { return m_texture; }
 private:
     GLint m_restore = GL_NONE;
     Texture *m_texture = nullptr;
@@ -207,9 +222,9 @@ public:
     inline OpenGLTextureBaseBinder(OGL::Target target, OGL::Binding binding)
         : m_target(target), m_binding(binding) { glGetIntegerv(binding, &m_restore); }
     inline ~OpenGLTextureBaseBinder() { glBindTexture(m_target, m_restore); }
-    inline OGL::Target target() { return m_target; }
-    inline OGL::Binding binding() { return m_binding; }
-    inline void bind(OpenGLTextureBase *texture) {
+    inline auto target() -> OGL::Target { return m_target; }
+    inline auto binding() -> OGL::Binding { return m_binding; }
+    inline auto bind(OpenGLTextureBase *texture) -> void {
         Q_ASSERT(texture->target() == m_target);
         m_texture = texture; m_texture->bind();
     }
@@ -225,13 +240,13 @@ private:
 class OpenGLTexture1D : public OpenGLTextureBase {
 public:
     OpenGLTexture1D(): OpenGLTextureBase(OGL::Target1D) {}
-    int width() const { return m_width; }
-    void initialize(int width, const OpenGLTextureTransferInfo &info, const void *data = nullptr) {
+    auto width() const -> int { return m_width; }
+    auto initialize(int width, const OpenGLTextureTransferInfo &info, const void *data = nullptr) -> void {
         m_info = info; m_width = width;
         if (!isEmpty())
             glTexImage1D(target(), 0, m_info.texture, m_width, 0, m_info.transfer.format, m_info.transfer.type, data);
     }
-    bool isEmpty() const { return !isValid() || m_width <= 0; }
+    auto isEmpty() const -> bool { return !isValid() || m_width <= 0; }
 private:
     int m_width = 0;
 };
@@ -240,36 +255,36 @@ class OpenGLTexture2D : public OpenGLTextureBase {
     friend class OpenGLFramebufferObject;
 public:
     OpenGLTexture2D(OGL::Target target = OGL::Target2D): OpenGLTextureBase(target) {}
-    bool isRectangle() const { return target() == OGL::TargetRectangle; }
-    int width() const { return m_width; }
-    int height() const { return m_height; }
-    QSize size() const { return {m_width, m_height}; }
-    void initialize(const QSize &size, const OpenGLTextureTransferInfo &info, const void *data = nullptr) { initialize(size.width(), size.height(), info, data); }
-    void initialize(int width, int height, OGL::TransferFormat transfer, const void *data = nullptr);
-    void initialize(int width, int height, const OpenGLTextureTransferInfo &info, const void *data = nullptr) {
+    auto isRectangle() const -> bool { return target() == OGL::TargetRectangle; }
+    auto width() const -> int { return m_width; }
+    auto height() const -> int { return m_height; }
+    auto size() const -> QSize { return {m_width, m_height}; }
+    auto initialize(const QSize &size, const OpenGLTextureTransferInfo &info, const void *data = nullptr) -> void { initialize(size.width(), size.height(), info, data); }
+    auto initialize(int width, int height, OGL::TransferFormat transfer, const void *data = nullptr) -> void;
+    auto initialize(int width, int height, const OpenGLTextureTransferInfo &info, const void *data = nullptr) -> void {
         m_info = info; initialize(width, height, data);
     }
-    void initialize(const QSize &size, const void *data = nullptr) { initialize(size.width(), size.height(), data); }
-    void initialize(int width, int height, const void *data = nullptr) {
+    auto initialize(const QSize &size, const void *data = nullptr) -> void { initialize(size.width(), size.height(), data); }
+    auto initialize(int width, int height, const void *data = nullptr) -> void {
         m_width = width; m_height = height; initialize(data);
     }
-    void setAttributes(int width, int height, const OpenGLTextureTransferInfo &info) {
+    auto setAttributes(int width, int height, const OpenGLTextureTransferInfo &info) -> void {
         m_width = width; m_height = height; m_info = info;
     }
-    void initialize(const void *data = nullptr) {
+    auto initialize(const void *data = nullptr) -> void {
         if (!isEmpty())
             glTexImage2D(target(), 0, m_info.texture, m_width, m_height, 0, m_info.transfer.format, m_info.transfer.type, data);
     }
-    bool isEmpty() const { return !isValid() || m_width <= 0 || m_height <= 0; }
-    void upload(int x, int y, int width, int height, const void *data) {
+    auto isEmpty() const -> bool { return !isValid() || m_width <= 0 || m_height <= 0; }
+    auto upload(int x, int y, int width, int height, const void *data) -> void {
         glTexSubImage2D(target(), 0, x, y, width, height, m_info.transfer.format, m_info.transfer.type, data);
     }
-    void upload(const QRect &rect, const void *data) { upload(rect.x(), rect.y(), rect.width(), rect.height(), data); }
-    void upload(int width, int height, const void *data) { upload(0, 0, width, height, data); }
-    void upload(const void *data) { upload(0, 0, m_width, m_height, data); }
-    QImage toImage() const;
+    auto upload(const QRect &rect, const void *data) -> void { upload(rect.x(), rect.y(), rect.width(), rect.height(), data); }
+    auto upload(int width, int height, const void *data) -> void { upload(0, 0, width, height, data); }
+    auto upload(const void *data) -> void { upload(0, 0, m_width, m_height, data); }
+    auto toImage() const -> QImage;
     int &plane() { return m_plane; }
-    int plane() const { return m_plane; }
+    auto plane() const -> int { return m_plane; }
     const QPointF &correction() const { return m_correction; }
     QPointF &correction() { return m_correction; }
 private:
@@ -292,18 +307,18 @@ public:
             OpenGLTextureBinder<OGL::Target2D>(&m_texture)->setFilter(OGL::Linear);
     }
     const OpenGLTexture2D &texture() const { return m_texture; }
-    void getCoords(double &x1, double &y1, double &x2, double &y2) {
+    auto getCoords(double &x1, double &y1, double &x2, double &y2) -> void {
         if (m_texture.target() == OGL::TargetRectangle) {
             x1 = y1 = 0; x2 = m_texture.width(); y2 = m_texture.height();
         } else { x1 = y1 = 0; x2 = y2 = 1; }
     }
-    QImage toImage() const;
+    auto toImage() const -> QImage;
 private:
     OpenGLTexture2D m_texture;
 };
 
 #define ENUM_CASE(e) case e: return QByteArray::fromRawData(#e, sizeof(e)-1)
-static inline QByteArray _ToLog(OGL::TransferType type) {
+static inline auto _ToLog(OGL::TransferType type) -> QByteArray {
     switch (type) {
     ENUM_CASE(OGL::UInt8);
     ENUM_CASE(OGL::UInt16);
@@ -322,7 +337,7 @@ static inline QByteArray _ToLog(OGL::TransferType type) {
     return QByteArray("OGL::InvalidTransferType");
 }
 
-static inline QByteArray _ToLog(OGL::TextureFormat format) {
+static inline auto _ToLog(OGL::TextureFormat format) -> QByteArray {
     switch (format) {
     ENUM_CASE(OGL::R8_UNorm);
     ENUM_CASE(OGL::RG8_UNorm);
@@ -350,7 +365,7 @@ static inline QByteArray _ToLog(OGL::TextureFormat format) {
     return QByteArray("OGL::InvalidTextureFormat");
 }
 
-static inline QByteArray _ToLog(OGL::TransferFormat format) {
+static inline auto _ToLog(OGL::TransferFormat format) -> QByteArray {
     switch (format) {
     ENUM_CASE(OGL::Red);
     ENUM_CASE(OGL::RG);

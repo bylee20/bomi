@@ -3,69 +3,69 @@
 
 #include "stdafx.hpp"
 
-static inline QByteArray _ToLog(char n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(qint8 n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(qint16 n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(qint32 n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(qint64 n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(quint8 n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(quint16 n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(quint32 n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(quint64 n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(float n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(double n) { return QByteArray::number(n); }
-static inline QByteArray _ToLog(const QString &str) { return str.toLocal8Bit(); }
-static inline QByteArray _ToLog(const QStringRef &str) { return str.toLocal8Bit(); }
-static inline QByteArray _ToLog(const char *str) { return QByteArray(str); }
-static inline QByteArray _ToLog(const QByteArray &str) { return str; }
-static inline QByteArray _ToLog(bool b) { return b ? "true" : "false"; }
+static inline auto _ToLog(char n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(qint8 n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(qint16 n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(qint32 n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(qint64 n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(quint8 n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(quint16 n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(quint32 n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(quint64 n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(float n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(double n) -> QByteArray { return QByteArray::number(n); }
+static inline auto _ToLog(const QString &str) -> QByteArray { return str.toLocal8Bit(); }
+static inline auto _ToLog(const QStringRef &str) -> QByteArray { return str.toLocal8Bit(); }
+static inline auto _ToLog(const char *str) -> QByteArray { return QByteArray(str); }
+static inline auto _ToLog(const QByteArray &str) -> QByteArray { return str; }
+static inline auto _ToLog(bool b) -> QByteArray { return b ? "true" : "false"; }
 
 class Log {
 public:
     enum Level { Fatal, Error, Warn, Info, Debug, Trace };
-    static inline Level maximumLevel() { return m_maxLevel; }
-    static inline void setMaximumLevel(Level level) { m_maxLevel = level; }
-    template<typename F>
-    static void write(const char *context, Level level, const F &getLogText) {
+    static inline auto maximumLevel() -> Level { return m_maxLevel; }
+    static inline auto setMaximumLevel(Level level) -> void { m_maxLevel = level; }
+    template<class F>
+    static auto write(const char *context, Level level, const F &getLogText) -> void {
         if (level <= m_maxLevel)
             print(context, level, getLogText());
     }
     template<class... Args>
-    static inline void write(const char *context, Level level, const QByteArray &format, const Args &... args) {
+    static inline auto write(const char *context, Level level, const QByteArray &format, const Args &... args) -> void {
         if (level <= m_maxLevel)
             print(context, level, Helper(format, args...).log());
     }
     template<class... Args>
-    static inline void write(Level level, const QByteArray &format, const Args &... args) {
+    static inline auto write(Level level, const QByteArray &format, const Args &... args) -> void {
         if (level <= m_maxLevel)
             print(level, Helper(format, args...).log());
     }
-    template<typename... Args>
-    static inline QByteArray parse(const QByteArray &format, const Args &... args) { return Helper(format, args...).log(); }
-    static inline QStringList options() { return m_options; }
-    static inline void setMaximumLevel(const QString &option) {
+    template<class... Args>
+    static inline auto parse(const QByteArray &format, const Args &... args) -> QByteArray { return Helper(format, args...).log(); }
+    static inline auto options() -> QStringList { return m_options; }
+    static inline auto setMaximumLevel(const QString &option) -> void {
         const int index = m_options.indexOf(option);
         setMaximumLevel(index < 0 ? Info : (Level)index);
     }
 private:
-    static inline void print(const char *context, Level level, const QByteArray &log) {
+    static inline auto print(const char *context, Level level, const QByteArray &log) -> void {
         qDebug("[%s] %s", context, log.constData());
         if (level == Fatal)
             exit(1);
     }
-    static inline void print(Level level, const QByteArray &log) {
+    static inline auto print(Level level, const QByteArray &log) -> void {
         qDebug("%s", log.constData());
         if (level == Fatal)
             exit(1);
     }
     struct Helper {
-        template<typename... Args>
+        template<class... Args>
         inline Helper(const QByteArray &format, const Args &... args): m_format(format) { write(args...); }
-        QByteArray log() const { return m_log; }
+        auto log() const -> QByteArray { return m_log; }
     private:
-        inline void write() { m_log.append(m_format.data() + m_pos, m_format.size()-m_pos); }
+        inline auto write() -> void { m_log.append(m_format.data() + m_pos, m_format.size()-m_pos); }
         template<class T, class... Args>
-        inline void write(const T &t, const Args &... args) {
+        inline auto write(const T &t, const Args &... args) -> void {
             for (; m_pos<m_format.size(); ++m_pos) {
                 const char c = m_format.at(m_pos);
                 if (c == '%' && m_pos+1 < m_format.size() && m_format.at(m_pos+1) == '%') {

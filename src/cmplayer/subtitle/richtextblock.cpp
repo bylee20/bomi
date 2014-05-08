@@ -1,7 +1,8 @@
 #include "richtextblock.hpp"
 
 
-QStringRef RichTextBlockParser::get(const char *open, const char *close, Tag *tag) {
+auto RichTextBlockParser::get(const char *open, const char *close, Tag *tag) -> QStringRef
+{
     Tag _tag;
     if (!tag)
         tag = &_tag;
@@ -12,7 +13,8 @@ QStringRef RichTextBlockParser::get(const char *open, const char *close, Tag *ta
     return ret;
 }
 
-QList<RichTextBlock> RichTextBlockParser::paragraph(Tag *tag) {
+auto RichTextBlockParser::paragraph(Tag *tag) -> QList<RichTextBlock>
+{
     if (m_pos >= m_text.size())
         return QList<RichTextBlock>();
     QStringRef paragraph = trim(get("p", "/?sync|/?p|/body|/sami", tag));
@@ -21,7 +23,8 @@ QList<RichTextBlock> RichTextBlockParser::paragraph(Tag *tag) {
     return QList<RichTextBlock>();
 }
 
-QList<RichTextBlock> RichTextBlockParser::parse(const QStringRef &text, const RichTextBlock::Style &style) {
+auto RichTextBlockParser::parse(const QStringRef &text, const RichTextBlock::Style &style) -> QList<RichTextBlock>
+{
     QList<RichTextBlock> ret;
 
     auto add_format = [&ret] (const RichTextBlock::Style &style) {

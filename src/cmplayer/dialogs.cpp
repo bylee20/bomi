@@ -8,7 +8,38 @@
 #include "info.hpp"
 #include "appstate.hpp"
 
-QString BBox::buttonText(Button button, Layout layout) {
+BBox::BBox(QWidget *parent)
+    : QDialogButtonBox(parent)
+{
+    m_layout = buttonLayout(this);
+}
+
+auto BBox::setStandardButtons(StandardButtons buttons) -> void
+{
+    uint flags = buttons;
+    for (int i=0; i<32 && flags; ++i) {
+        const Button button = Button(1 << i);
+        if (flags & button) {
+            addButton(button);
+            flags &= ~button;
+        }
+    }
+}
+
+auto BBox::addButton(StandardButton button) -> void
+{
+    const auto text = buttonText(button, m_layout);
+    QDialogButtonBox::addButton(button)->setText(text);
+}
+
+auto BBox::buttonLayout(QWidget *w) -> Layout {
+    const auto style = w->style();
+    const auto layout = style->styleHint(QStyle::SH_DialogButtonLayout, 0, w);
+    return static_cast<Layout>(layout);
+}
+
+auto BBox::buttonText(Button button, Layout layout) -> QString
+{
     const auto gnome = (layout == GnomeLayout);
     const auto skin = (layout == SkinLayout);
     switch (button) {
@@ -59,7 +90,8 @@ QString BBox::buttonText(Button button, Layout layout) {
     return QString();
 }
 
-BBox *BBox::make(QDialog *dlg) {
+auto BBox::make(QDialog *dlg) -> BBox*
+{
     auto bbox = new BBox(dlg);
     bbox->setOrientation(Qt::Horizontal);
     bbox->addButton(Ok);
@@ -69,7 +101,34 @@ BBox *BBox::make(QDialog *dlg) {
     return bbox;
 }
 
-/*******************************************************************************************/
+/******************************************************************************/
+
+MBox::MBox(QWidget *parent)
+    : QObject(parent)
+{
+    m_mbox = new QMessageBox(parent);
+    m_layout = BBox::buttonLayout(m_mbox);
+}
+
+MBox::MBox(QWidget *parent, Icon icon, const QString &title,
+           const QString &text, std::initializer_list<Button> &&buttons,
+           Button def)
+    : MBox(parent)
+{
+    addButtons(std::forward<std::initializer_list<Button>>(buttons));
+    setTitle(title);
+    setText(text);
+    setDefaultButton(def);
+    setIcon(icon);
+}
+
+auto MBox::addButtons(std::initializer_list<Button> &&buttons) -> void
+{
+    for (auto b : buttons)
+        addButton(b);
+}
+
+/******************************************************************************/
 
 struct GetShortcutDialog::Data {
     QLineEdit *edit = nullptr;
@@ -121,29 +180,34 @@ GetShortcutDialog::~GetShortcutDialog() {
     delete d;
 }
 
-void GetShortcutDialog::erase() {
+auto GetShortcutDialog::erase() -> void
+{
     d->curIdx = 0;
     for (int i=0; i<MaxKeyCount; ++i)
         d->codes[i] = 0;
     d->edit->clear();
 }
 
-QKeySequence GetShortcutDialog::shortcut() const {
+auto GetShortcutDialog::shortcut() const -> QKeySequence
+{
     return QKeySequence(d->codes[0]);
 }
 
-void GetShortcutDialog::setShortcut(const QKeySequence &shortcut) {
+auto GetShortcutDialog::setShortcut(const QKeySequence &shortcut) -> void
+{
     for (int i=0; i<MaxKeyCount; ++i)
         d->codes[i] = shortcut[i];
     d->edit->setText(shortcut.toString(QKeySequence::NativeText));
 }
 
-void GetShortcutDialog::setGetting(bool on) {
+auto GetShortcutDialog::setGetting(bool on) -> void
+{
     if (on)
         erase();
 }
 
-bool GetShortcutDialog::eventFilter(QObject *obj, QEvent *event) {
+auto GetShortcutDialog::eventFilter(QObject *obj, QEvent *event) -> bool
+{
     if (obj == d->edit && d->begin->isChecked() && event->type() == QEvent::KeyPress) {
         getShortcut(static_cast<QKeyEvent *>(event));
         return true;
@@ -151,13 +215,15 @@ bool GetShortcutDialog::eventFilter(QObject *obj, QEvent *event) {
         return QDialog::eventFilter(obj, event);
 }
 
-void GetShortcutDialog::keyPressEvent(QKeyEvent *event) {
+auto GetShortcutDialog::keyPressEvent(QKeyEvent *event) -> void
+{
     QDialog::keyPressEvent(event);
     if (d->begin->isChecked())
         getShortcut(event);
 }
 
-void GetShortcutDialog::getShortcut(QKeyEvent *event) {
+auto GetShortcutDialog::getShortcut(QKeyEvent *event) -> void
+{
     if (0 <= d->curIdx && d->curIdx < MaxKeyCount) {
         d->codes[d->curIdx] = event->key();
         int modifiers = 0;
@@ -174,7 +240,8 @@ void GetShortcutDialog::getShortcut(QKeyEvent *event) {
     }
 }
 
-void GetShortcutDialog::keyReleaseEvent(QKeyEvent *event) {
+auto GetShortcutDialog::keyReleaseEvent(QKeyEvent *event) -> void
+{
     QDialog::keyReleaseEvent(event);
     if (d->begin->isChecked() && d->codes[d->curIdx]) {
         d->edit->setText(shortcut().toString(QKeySequence::NativeText));
@@ -197,11 +264,13 @@ EncodingFileDialog::EncodingFileDialog(QWidget *parent, const QString &caption
         setEncoding(encoding);
 }
 
-void EncodingFileDialog::setEncoding(const QString &encoding) {
+auto EncodingFileDialog::setEncoding(const QString &encoding) -> void
+{
     combo->setEncoding(encoding);
 }
 
-QString EncodingFileDialog::encoding() const {
+auto EncodingFileDialog::encoding() const -> QString
+{
     return combo->encoding();
 }
 
@@ -266,12 +335,14 @@ GetUrlDialog::~GetUrlDialog() {
     delete d;
 }
 
-void GetUrlDialog::_accept() {
+auto GetUrlDialog::_accept() -> void
+{
 
 
 }
 
-void GetUrlDialog::accept() {
+auto GetUrlDialog::accept() -> void
+{
     auto &as = AppState::get();
     const auto url = d->url->currentText().trimmed();
     const int idx = as.open_url_list.indexOf(url);
@@ -282,19 +353,23 @@ void GetUrlDialog::accept() {
     QDialog::accept();
 }
 
-QUrl GetUrlDialog::url() const {
+auto GetUrlDialog::url() const -> QUrl
+{
     return QUrl(d->url->currentText().trimmed());
 }
 
-bool GetUrlDialog::isPlaylist() const {
+auto GetUrlDialog::isPlaylist() const -> bool
+{
     return Info::playlistExt().contains(QFileInfo(url().path()).suffix(), Qt::CaseInsensitive);
 }
 
-Playlist GetUrlDialog::playlist() const {
+auto GetUrlDialog::playlist() const -> Playlist
+{
     return d->playlist;
 }
 
-QString GetUrlDialog::encoding() const {
+auto GetUrlDialog::encoding() const -> QString
+{
     return d->enc->encoding();
 }
 
@@ -342,7 +417,8 @@ AboutDialog::~AboutDialog() {
     delete d;
 }
 
-void AboutDialog::showFullLicense() {
+auto AboutDialog::showFullLicense() -> void
+{
     QDialog dlg(this);
     auto text = new QTextBrowser(&dlg);
     auto close = new QPushButton(tr("Close"), &dlg);
@@ -395,16 +471,19 @@ OpenDiscDialog::~OpenDiscDialog() {
     delete d;
 }
 
-void OpenDiscDialog::setIsoEnabled(bool on) {
+auto OpenDiscDialog::setIsoEnabled(bool on) -> void
+{
     d->ui.iso->setVisible(on);
 }
 
-void OpenDiscDialog::setDeviceList(const QStringList &devices) {
+auto OpenDiscDialog::setDeviceList(const QStringList &devices) -> void
+{
     d->ui.device->clear();
     d->ui.device->addItems(devices);
 }
 
-void OpenDiscDialog::checkDevice(const QString &device) {
+auto OpenDiscDialog::checkDevice(const QString &device) -> void
+{
     const QFileInfo info(device);
     const bool exists = info.exists();
     d->ok->setEnabled(exists);
@@ -412,10 +491,12 @@ void OpenDiscDialog::checkDevice(const QString &device) {
         : _L("<font color='red'>") % tr("Selected device doesn't exists.") % _L("</font>"));
 }
 
-QString OpenDiscDialog::device() const {
+auto OpenDiscDialog::device() const -> QString
+{
     return d->ui.device->currentText();
 }
 
-void OpenDiscDialog::setDevice(const QString &device) {
+auto OpenDiscDialog::setDevice(const QString &device) -> void
+{
     d->ui.device->setCurrentText(device);
 }

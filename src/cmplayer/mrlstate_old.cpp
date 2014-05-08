@@ -2,7 +2,8 @@
 
 using namespace MrlStateHelpers;
 
-QList<MrlFieldV1> MrlFieldV1::list() {
+auto MrlFieldV1::list() -> QList<MrlFieldV1>
+{
     static QList<MrlFieldV1> fields;
     if (fields.isEmpty()) {
         auto &metaObject = MrlStateV1::staticMetaObject;

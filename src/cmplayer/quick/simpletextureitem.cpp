@@ -49,17 +49,20 @@ SimpleTextureItem::SimpleTextureItem(QQuickItem *parent)
 
 }
 
-SimpleTextureItem::ShaderIface *SimpleTextureItem::createShader() const {
+auto SimpleTextureItem::createShader() const -> SimpleTextureItem::ShaderIface*
+{
     return new SimpleTextureShader;
 }
 
-SimpleTextureItem::ShaderData *SimpleTextureItem::createData() const {
+auto SimpleTextureItem::createData() const -> SimpleTextureItem::ShaderData*
+{
     auto data = new SimpleTextureData;
     data->texture = &m_texture;
     return data;
 }
 
-void SimpleTextureItem::updateData(ShaderData *data) {
+auto SimpleTextureItem::updateData(ShaderData *data) -> void
+{
     Q_ASSERT(static_cast<SimpleTextureData*>(data)->texture == &m_texture);
     updateTexture(&m_texture);
 }

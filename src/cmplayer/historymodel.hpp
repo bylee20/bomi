@@ -11,23 +11,24 @@ public:
     enum Role {NameRole = Qt::UserRole + 1, LatestPlayRole, LocationRole};
     HistoryModel(QObject *parent = nullptr);
     ~HistoryModel();
-    int rowCount(const QModelIndex &parent = QModelIndex()) const;
-    int columnCount(const QModelIndex &parent = QModelIndex()) const;
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-    QSqlError error() const;
-    QHash<int, QByteArray> roleNames() const;
-    const MrlState *find(const Mrl &mrl) const;
-    bool getState(MrlState *state) const;
-    void update(const MrlState *state, bool reload);
+    auto rowCount(const QModelIndex &parent = QModelIndex()) const -> int;
+    auto columnCount(const QModelIndex &parent = QModelIndex()) const -> int;
+    auto data(const QModelIndex &index,
+              int role = Qt::DisplayRole) const -> QVariant;
+    auto error() const -> QSqlError;
+    auto roleNames() const -> QHash<int, QByteArray>;
+    auto find(const Mrl &mrl) const -> const MrlState*;
+    auto getState(MrlState *state) const -> bool;
+    auto update(const MrlState *state, bool reload) -> void;
+    auto setRememberImage(bool on) -> void;
+    auto setPropertiesToRestore(const QList<QMetaProperty> &properties) -> void;
+    auto getAppState(MrlState *appState) -> void;
+    auto setAppState(const MrlState *appState) -> void;
+    auto clear() -> void;
+    auto isVisible() const -> bool;
+    auto setVisible(bool visible) -> void;
+    auto toggle() -> void { setVisible(!isVisible()); }
     Q_INVOKABLE void play(int row);
-    void setRememberImage(bool on);
-    void setPropertiesToRestore(const QList<QMetaProperty> &properties);
-    void getAppState(MrlState *appState);
-    void setAppState(const MrlState *appState);
-    void clear();
-    bool isVisible() const;
-    void setVisible(bool visible);
-    void toggle() { setVisible(!isVisible()); }
 signals:
     void playRequested(const Mrl &mrl);
     void changeVisibilityRequested(bool visible);

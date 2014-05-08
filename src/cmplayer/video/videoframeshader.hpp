@@ -6,7 +6,6 @@
 #include "videocolor.hpp"
 #include "videorendereritem.hpp"
 #include "deintinfo.hpp"
-#include "videoframe.hpp"
 #include "opengl/openglcompat.hpp"
 #include "opengl/interpolator.hpp"
 #include "opengl/openglvertex.hpp"
@@ -23,40 +22,44 @@ public:
     VideoFrameShader(const VideoFrameShader &) = delete;
     VideoFrameShader &operator = (const VideoFrameShader &) = delete;
     ~VideoFrameShader();
-    void render(const Kernel3x3 &k3x3);
-    GLenum target() const { return m_target; }
-    void setDeintMethod(DeintMethod method);
-    void setEffects(int effects);
-    void setColor(const VideoColor &color);
-    void setRange(ColorRange range);
-    bool upload(VideoFrame &frame);
-    void getCoords(double &x1, double &y1, double &x2, double &y2)
-    { m_texRect.getCoords(&x1, &y1, &x2, &y2); }
-    void setChromaInterpolator(InterpolatorType type);
+    auto render(const Kernel3x3 &k3x3) -> void;
+    auto target() const -> GLenum { return m_target; }
+    auto setDeintMethod(DeintMethod method) -> void;
+    auto setEffects(int effects) -> void;
+    auto setColor(const VideoColor &color) -> void;
+    auto setRange(ColorRange range) -> void;
+    auto setChromaUpscaler(InterpolatorType type) -> void;
     bool isDirectlyRenderable() const
     { return m_direct && m_defaultColor && !(m_effects & ShaderEffects); }
     const OpenGLTexture2D &renderTarget() const { return m_textures[0]; }
-    void reupload();
+    auto upload(const mp_image *mpi) -> void;
+    auto setFormat(const VideoFormat &format) -> void;
+    auto setFlipped(bool flipped) -> void;
 private:
-    void upload();
-    void release();
-    void updateColorMatrix();
-    bool hasKernelEffects() const { return KernelEffects & m_effects; }
-    void fillInfo();
-    void updateTexCoords();
+    auto release() -> void;
+    auto updateColorMatrix() -> void;
+    auto hasKernelEffects() const -> bool { return KernelEffects & m_effects; }
+    auto fillInfo(const mp_image *mpi) -> void;
+    auto updateTexCoords() -> void;
 private:
     struct ShaderInfo {
         QOpenGLShaderProgram program;
+        QOpenGLShader vertexShader{QOpenGLShader::Vertex};
+        QOpenGLShader fragmentShader{QOpenGLShader::Fragment};
         bool rebuild = true, kernel = false;
         const Interpolator *interpolator
             = Interpolator::get(InterpolatorType::Bilinear);
     };
-    void updateShader();
-    VideoFrame m_frame;
+    auto updateShader(int deint) -> void;
+    bool m_refill = false;
+    QVector<QSize> m_bytes;
+    mp_imgfmt m_imgfmtOut = IMGFMT_NONE;
+    mp_csp m_cspOut = MP_CSP_BT_709;
+    QSize m_alignedSize;
     ShaderInfo m_shaders[3];
     QOpenGLShaderProgram *m_prog = nullptr;
     VideoColor m_color;
-    mp_csp m_csp;
+    mp_image_params m_params;
     ColorRange m_range = ColorRange::Auto;
     OGL::Target m_target = OGL::Target2D;
     OGL::Binding m_binding = OGL::Binding2D;
@@ -67,7 +70,7 @@ private:
     QList<OpenGLTexture2D> m_textures;
     QByteArray m_texel;
     bool m_dma = false, m_check = true, m_direct = false, m_defaultColor = true;
-    QRectF m_texRect;
+    bool m_top = false, m_flipped = false;
     QPointF m_chroma = {0.0, 0.0};
     OpenGLTexture1D m_lutInt[2];
     HwAccMixer *m_mixer = nullptr;

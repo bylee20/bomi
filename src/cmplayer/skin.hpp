@@ -6,15 +6,10 @@
 class Skin {
 public:
     ~Skin() {}
-    static QStringList dirs() {return data()->dirs;}
-    static QStringList names(bool reload = false);
-    static QFileInfo source(const QString &name) {
-        auto it = data()->skins.find(name);
-        if (it != data()->skins.end())
-            return it.value();
-        return QFileInfo();
-    }
-    static void apply(QQuickView *view, const QString &name);
+    static auto dirs() -> QStringList {return data()->dirs;}
+    static auto names(bool reload = false) -> QStringList;
+    static auto source(const QString &name) -> QFileInfo;
+    static auto apply(QQuickView *view, const QString &name) -> void;
 protected:
     Skin() {}
 private:

@@ -2,15 +2,13 @@
 #define VIDEOOUTPUT_HPP
 
 #include "stdafx.hpp"
-#include "videoformat.hpp"
 
-// CAUTION: NEVER CALL THIS CLASS FROM Qt's GUI
-
-struct vo_driver;
-class VideoFormat;            class PlayEngine;
-struct mp_image;            class DeintOption;
-class VideoRendererItem;    class HwAcc;
-enum class DeintMethod;
+struct vo_driver;                       struct mp_image;
+struct mp_image_params;
+class VideoFormat;                      class PlayEngine;
+class DeintOption;                      class VideoRendererItem;
+class OpenGLOffscreenContext;           class OpenGLFramebufferObject;
+enum class ColorRange;
 
 class VideoOutput : public QObject {
     Q_OBJECT
@@ -18,17 +16,21 @@ public:
     VideoOutput(PlayEngine *engine);
     ~VideoOutput() override;
     auto prepare(void *avctx) -> void;
-    auto release() -> void;
     auto format() const -> const VideoFormat&;
     auto setRenderer(VideoRendererItem *renderer) -> void;
-    auto output(const QImage &image) -> void;
-    auto setHwAcc(HwAcc *acc) -> void;
-    static auto queryFormat(struct vo *vo, quint32 format) -> int;
+    auto initializeGL(OpenGLOffscreenContext *gl) -> void;
+    auto finalizeGL() -> void;
+    auto setColorRange(ColorRange range) -> void;
+    auto reset() -> void;
+    auto avgfps() const -> double;
+    auto drawnFrames() const -> quint64;
+    auto droppedFrames() const -> int;
 signals:
-    void formatChanged(VideoFormat format);
+    void droppedFramesChanged(int frames);
+    void formatChanged(const VideoFormat &format);
+    void avgfpsChanged(double avgfps);
 private:
     static auto preinit(struct vo *vo) -> int;
-    static auto uninit(struct vo */*vo*/) -> void {}
     static auto reconfig(struct vo *out, mp_image_params *p, int flags) -> int;
     static auto control(struct vo *vo, quint32 request, void *data) -> int;
     static auto drawOsd(struct vo *vo, struct osd_state *osd) -> void;

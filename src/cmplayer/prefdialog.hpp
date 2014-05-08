@@ -17,8 +17,8 @@ signals:
     void applyRequested();
     void resetRequested();
 private:
-    void changeEvent(QEvent *event);
-    void showEvent(QShowEvent *event);
+    auto changeEvent(QEvent *event) -> void;
+    auto showEvent(QShowEvent *event) -> void;
     class MenuTreeItem;
     class Delegate;
     struct Data;

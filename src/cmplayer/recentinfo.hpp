@@ -12,19 +12,18 @@ class RecentInfo : public QObject {
 public:
     RecentInfo();
     ~RecentInfo();
-    QList<Mrl> openList() const;
-    void stack(const Mrl &mrl);
-    void setLastPlaylist(const Playlist &list);
-    void setLastMrl(const Mrl &mrl);
-    Mrl lastMrl() const;
-    Playlist lastPlaylist() const;
-public slots:
-    void clear();
+    auto openList() const -> QList<Mrl>;
+    auto stack(const Mrl &mrl) -> void;
+    auto setLastPlaylist(const Playlist &list) -> void;
+    auto setLastMrl(const Mrl &mrl) -> void;
+    auto lastMrl() const -> Mrl;
+    auto lastPlaylist() const -> Playlist;
+    auto clear() -> void;
 signals:
     void openListChanged(const QList<Mrl> &list);
 private:
-    void save() const;
-    void load();
+    auto save() const -> void;
+    auto load() -> void;
     struct Data;
     Data *d;
 };

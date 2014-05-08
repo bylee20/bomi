@@ -12,7 +12,7 @@ public:
         ExtList(const QStringList &other): QStringList(other) {}
         ExtList(const ExtList &other): QStringList(other) {}
         QString toFilter(const QString &name = QString()) const;
-        QStringList toNameFilter() const;
+        auto toNameFilter() const -> QStringList;
     };
     ~Info();
     static const QString &privatePath() {return self.m_privPath;}
@@ -28,18 +28,18 @@ public:
     static QString audioExtFilter(const QString &name = tr("Audio Files")) {return self.m_audioExt.toFilter(name);}
     static QString subtitleExtFilter(const QString &name = tr("Subtitle Files")) {return self.m_subExt.toFilter(name);}
     static QString playlistExtFilter(const QString &name = tr("Playlist Files")) {return self.m_plExt.toFilter(name);}
-    static QStringList videoNameFilter() {return self.m_videoExt.toNameFilter();}
-    static QStringList audioNameFilter() {return self.m_audioExt.toNameFilter();}
-    static QStringList subtitleNameFilter() {return self.m_subExt.toNameFilter();}
-    static QStringList playlistNameFilter() {return self.m_plExt.toNameFilter();}
-    static constexpr int versionNumber() { return 0x00814; }
+    static auto videoNameFilter() -> QStringList {return self.m_videoExt.toNameFilter();}
+    static auto audioNameFilter() -> QStringList {return self.m_audioExt.toNameFilter();}
+    static auto subtitleNameFilter() -> QStringList {return self.m_subExt.toNameFilter();}
+    static auto playlistNameFilter() -> QStringList {return self.m_plExt.toNameFilter();}
+    static constexpr auto versionNumber() -> int { return 0x00814; }
     static constexpr const char *version() {return "0.8.14";}
     static constexpr const char *name() {return "CMPlayer";}
-    static QString mediaExtFilter() {
+    static auto mediaExtFilter() -> QString {
         return videoExtFilter() % _L(";;") % audioExtFilter() % _L(";;")
             % readableImageExtFilter() % ";;" % tr("All Files") % _L(' ') % _L("(*.*)");
     }
-    static QStringList mediaNameFilter() {return videoNameFilter() + audioNameFilter() + readableImageExt().toNameFilter();}
+    static auto mediaNameFilter() -> QStringList {return videoNameFilter() + audioNameFilter() + readableImageExt().toNameFilter();}
     static const char *pluginPath();
 private:
     Info();

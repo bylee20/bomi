@@ -60,7 +60,8 @@ OpenSubtitlesFinder::~OpenSubtitlesFinder() {
     delete d;
 }
 
-bool OpenSubtitlesFinder::find(const Mrl &mrl) {
+auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
+{
     if (d->state != Available)
         return false;
     auto fileName = mrl.toLocalFile();
@@ -121,6 +122,7 @@ bool OpenSubtitlesFinder::find(const Mrl &mrl) {
     return true;
 }
 
-OpenSubtitlesFinder::State OpenSubtitlesFinder::state() const {
+auto OpenSubtitlesFinder::state() const -> OpenSubtitlesFinder::State
+{
     return d->state;
 }

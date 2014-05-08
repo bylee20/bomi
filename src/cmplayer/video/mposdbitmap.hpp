@@ -18,10 +18,10 @@ public:
         const QRect &display() const { return m_display; }
         const QSize &size() const { return m_size; }
         const QPoint &map() const { return m_map; }
-        quint32 color() const { return m_color; }
-        int strideAsPixel() const { return m_strideAsPixel; }
-        int width() const { return size().width(); }
-        int height() const { return size().height(); }
+        auto color() const -> quint32 { return m_color; }
+        auto strideAsPixel() const -> int { return m_strideAsPixel; }
+        auto width() const -> int { return size().width(); }
+        auto height() const -> int { return size().height(); }
     private:
         friend class MpOsdBitmap;
         QRect m_display = {0, 0, 0, 0};
@@ -30,18 +30,18 @@ public:
         quint32 m_color = 0;
         int m_stride = 0, m_offset = 0, m_strideAsPixel = 0;
     };
-    bool needToCopy(const sub_bitmaps *imgs) const;
-    bool copy(const sub_bitmaps *imgs, const QSize &renderSize);
-    template<typename T = uchar>
+    auto needToCopy(const sub_bitmaps *imgs) const -> bool;
+    auto copy(const sub_bitmaps *imgs, const QSize &renderSize) -> bool;
+    template<class T = uchar>
     T *data(int i) { return (T*)(m_data.data() + m_parts[i].m_offset); }
-    template<typename T = uchar>
+    template<class T = uchar>
     const T *data(int i) const { return (const T*)(m_data.data() + m_parts[i].m_offset); }
-    int count() const { return m_size; }
+    auto count() const -> int { return m_size; }
     const PartInfo &part(int i) const { return m_parts[i]; }
-    Format format() const { return m_format; }
+    auto format() const -> Format { return m_format; }
     const QSize &renderSize() const { return m_renderSize; }
     const QSize &sheet() const { return m_sheet; }
-    void drawOn(QImage &frame) const;
+    auto drawOn(QImage &frame) const -> void;
 private:
     QByteArray m_data;
     int m_size = 0, m_id = -1, m_pos = -1;

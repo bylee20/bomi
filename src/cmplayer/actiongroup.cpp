@@ -3,7 +3,7 @@
 ActionGroup::ActionGroup(QObject *parent)
     : QActionGroup(parent) { }
 
-QAction *ActionGroup::firstCheckedAction() const
+auto ActionGroup::firstCheckedAction() const -> QAction*
 {
     for (auto action : actions()) {
         if (action->isChecked())
@@ -31,13 +31,13 @@ QAction *ActionGroup::find(const QVariant &data) const
     return nullptr;
 }
 
-void ActionGroup::setChecked(const QVariant &data, bool checked)
+auto ActionGroup::setChecked(const QVariant &data, bool checked) -> void
 {
     if (auto action = find(data))
         action->setChecked(checked);
 }
 
-void ActionGroup::trigger(double data)
+auto ActionGroup::trigger(double data) -> void
 {
     for (auto action : actions()) {
         if (qFuzzyCompare(action->data().toDouble(), data)) {
@@ -47,7 +47,7 @@ void ActionGroup::trigger(double data)
     }
 }
 
-void ActionGroup::trigger(const QVariant &data)
+auto ActionGroup::trigger(const QVariant &data) -> void
 {
     if (auto action = find(data))
         action->trigger();
@@ -59,7 +59,7 @@ QVariant ActionGroup::data() const
     return action ? action->data() : QVariant();
 }
 
-void ActionGroup::clear()
+auto ActionGroup::clear() -> void
 {
     const auto actions = this->actions();
     for (auto action : actions) {

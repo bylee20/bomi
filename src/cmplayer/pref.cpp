@@ -3,7 +3,7 @@
 #include "video/hwacc.hpp"
 #include "info.hpp"
 
-template<typename T>
+template<class T>
 static QStringList toStringList(const QList<T> &list) {
     QStringList ret;
     ret.reserve(list.size());
@@ -12,7 +12,7 @@ static QStringList toStringList(const QList<T> &list) {
     return ret;
 }
 
-template<typename T>
+template<class T>
 static QList<T> fromStringList(const QStringList &list) {
     QList<T> ret;
     ret.reserve(list.size());
@@ -21,7 +21,8 @@ static QList<T> fromStringList(const QStringList &list) {
     return ret;
 }
 
-QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
+auto Pref::defaultShortcuts() -> QHash<QString, QList<QKeySequence> >
+{
     QHash<QString, QList<QKeySequence> > keys;
 
     keys[_L("open/file")] << Qt::CTRL + Qt::Key_F;
@@ -113,7 +114,8 @@ QHash<QString, QList<QKeySequence> > Pref::defaultShortcuts() {
     return keys;
 }
 
-Shortcuts Pref::preset(KeyMapPreset id) {
+auto Pref::preset(KeyMapPreset id) -> Shortcuts
+{
     Shortcuts keys;
     if (id == KeyMapPreset::Movist) {
         keys[_L("open/file")] << Qt::CTRL + Qt::Key_O;
@@ -157,7 +159,8 @@ Shortcuts Pref::preset(KeyMapPreset id) {
 
 #define PREF_GROUP _L("preference")
 
-void Pref::save() const {
+auto Pref::save() const -> void
+{
     Record r(PREF_GROUP);
 #define WRITE(a) r.write(a, #a)
     WRITE(fit_to_video);
@@ -272,7 +275,8 @@ void Pref::save() const {
     r.setValue("version", Info::versionNumber());
 }
 
-void Pref::load() {
+auto Pref::load() -> void
+{
     Record r(PREF_GROUP);
 #define READ(a) r.read(a, #a)
     READ(fit_to_video);
@@ -402,7 +406,8 @@ void Pref::load() {
 #include "video/hwacc_vaapi.hpp"
 #endif
 
-QList<DeintMethod> Pref::defaultHwAccDeints() {
+auto Pref::defaultHwAccDeints() -> QList<DeintMethod>
+{
     QList<DeintMethod> deints;
     for (auto deint : HwAcc::fullDeintList()) {
         if (HwAcc::supports(deint))
@@ -411,7 +416,8 @@ QList<DeintMethod> Pref::defaultHwAccDeints() {
     return deints;
 }
 
-QList<int> Pref::defaultHwAccCodecs() {
+auto Pref::defaultHwAccCodecs() -> QList<int>
+{
     QList<int> codecs;
     for (auto codec : HwAcc::fullCodecList())
         codecs.push_back(codec);
@@ -420,15 +426,18 @@ QList<int> Pref::defaultHwAccCodecs() {
 
 #undef PREF_GROUP
 
-QString Pref::defaultSubtitleEncoding() {
+auto Pref::defaultSubtitleEncoding() -> QString
+{
     return Translator::defaultEncoding();
 }
 
-QString Pref::defaultSkinName() {
+auto Pref::defaultSkinName() -> QString
+{
     return "GaN";
 }
 
-QList<QMetaProperty> Pref::defaultRestoreProperties() {
+auto Pref::defaultRestoreProperties() -> QList<QMetaProperty>
+{
     QList<QMetaProperty> list;
     auto &mo = MrlState::staticMetaObject;
     const int count = mo.propertyCount();
@@ -440,7 +449,8 @@ QList<QMetaProperty> Pref::defaultRestoreProperties() {
     return list;
 }
 
-int Pref::defaultSubtitleEncodingDetectionAccuracy() {
+auto Pref::defaultSubtitleEncodingDetectionAccuracy() -> int
+{
     const QString value = tr("70",
         "This is default value for accuracy to enfoce auto-detected subtitle encoding in preferences. "
         "Higher value means that auto-detection will be applied only if the result is more reliable.");

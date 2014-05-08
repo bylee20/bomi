@@ -85,11 +85,13 @@ ButtonBoxItem::~ButtonBoxItem() {
     delete d;
 }
 
-QQuickItem *ButtonBoxItem::clickedButton() const {
+auto ButtonBoxItem::clickedButton() const -> QQuickItem*
+{
     return d->clicked;
 }
 
-void ButtonBoxItem::emitClicked() {
+auto ButtonBoxItem::emitClicked() -> void
+{
     auto clicked = qobject_cast<QQuickItem*>(sender());
     auto idx = d->items.indexOf(clicked);
     emit this->clicked(idx < 0 ? -1 : d->buttons.value(idx));
@@ -97,56 +99,66 @@ void ButtonBoxItem::emitClicked() {
         emit clickedButtonChanged();
 }
 
-QList<int> ButtonBoxItem::buttons() const {
+auto ButtonBoxItem::buttons() const -> QList<int>
+{
     return d->buttons;
 }
 
-QQmlComponent *ButtonBoxItem::source() const {
+auto ButtonBoxItem::source() const -> QQmlComponent*
+{
     return d->source;
 }
 
-void ButtonBoxItem::setSource(QQmlComponent *source) {
+auto ButtonBoxItem::setSource(QQmlComponent *source) -> void
+{
     if (_Change(d->source, source)) {
         d->clear();
         emit sourceChanged();
     }
 }
 
-void ButtonBoxItem::setButtons(QList<int> buttons) {
+auto ButtonBoxItem::setButtons(QList<int> buttons) -> void
+{
     if (_Change(d->buttons, buttons)) {
         d->clear();
         emit buttonsChanged();
     }
 }
 
-void ButtonBoxItem::geometryChanged(const QRectF &new_, const QRectF &old) {
+auto ButtonBoxItem::geometryChanged(const QRectF &new_, const QRectF &old) -> void
+{
     QQuickItem::geometryChanged(new_, old);
     polish();
 }
 
-qreal ButtonBoxItem::buttonWidth() const {
+auto ButtonBoxItem::buttonWidth() const -> qreal
+{
     return d->bwidth;
 }
 
-qreal ButtonBoxItem::gap() const {
+auto ButtonBoxItem::gap() const -> qreal
+{
     return d->gap;
 }
 
-void ButtonBoxItem::setGap(qreal g) {
+auto ButtonBoxItem::setGap(qreal g) -> void
+{
     if (_Change(d->gap, g)) {
         polish();
         emit gapChanged();
     }
 }
 
-void ButtonBoxItem::setButtonWidth(qreal w) {
+auto ButtonBoxItem::setButtonWidth(qreal w) -> void
+{
     if (_Change(d->bwidth, w)) {
         polish();
         emit buttonWidthChanged();
     }
 }
 
-void ButtonBoxItem::updatePolish() {
+auto ButtonBoxItem::updatePolish() -> void
+{
     if (d->buttons.isEmpty())
         return;
     if (d->create) {

@@ -4,6 +4,9 @@
 #include "hwacc.hpp"
 #include "deintinfo.hpp"
 #include "softwaredeinterlacer.hpp"
+#include "opengl/openglmisc.hpp"
+#include "videoframeshader.hpp"
+#include "opengl/opengloffscreencontext.hpp"
 extern "C" {
 #include <video/filter/vf.h>
 extern vf_info vf_info_noformat;
@@ -37,6 +40,7 @@ auto create_vf_info() -> vf_info
     info.open = VideoFilter::open;
     info.options = options;
     info.priv_size = sizeof(cmplayer_vf_priv);
+
     return info;
 }
 
@@ -50,6 +54,7 @@ struct VideoFilter::Data {
     mp_image_params params;
     HwAcc *acc = nullptr;
     bool deint = false, hwacc = false;
+    OpenGLOffscreenContext *gl = nullptr;
     auto updateDeint() -> void
     {
         DeintOption opt;
@@ -57,7 +62,7 @@ struct VideoFilter::Data {
             opt = hwacc ? deint_hwdec : deint_swdec;
         deinterlacer.setOption(opt);
     //    d->vaapi.setDeintOption(opt);
-        emit p->deintModeChanged(opt.method);
+        emit p->deintMethodChanged(opt.method);
     }
 };
 
@@ -70,6 +75,16 @@ VideoFilter::VideoFilter()
 VideoFilter::~VideoFilter()
 {
     delete d;
+}
+
+auto VideoFilter::initializeGL(OpenGLOffscreenContext *ctx) -> void
+{
+    d->gl = ctx;
+}
+
+auto VideoFilter::finalizeGL() -> void
+{
+    d->gl = nullptr;
 }
 
 auto VideoFilter::open(vf_instance *vf) -> int
@@ -103,7 +118,7 @@ auto VideoFilter::reconfig(vf_instance *vf,
     return 0;
 }
 
-void VideoFilter::setHwAcc(HwAcc *acc)
+auto VideoFilter::setHwAcc(HwAcc *acc) -> void
 {
     d->acc = acc;
 }
@@ -143,11 +158,11 @@ auto VideoFilter::uninit(vf_instance *vf) -> void {
     d->deinterlacer.clear();
 }
 
-auto queryVideoFormat(quint32 format) -> int;
+auto query_video_format(quint32 format) -> int;
 
 auto VideoFilter::queryFormat(vf_instance *vf, uint fmt) -> int
 {
-    if (queryVideoFormat(fmt))
+    if (query_video_format(fmt))
         return vf_next_query_format(vf, fmt);
     return false;
 }
