@@ -26,8 +26,10 @@ public:
     auto openMrl(const Mrl &mrl) -> void;
     auto openMrl(const Mrl &mrl, const QString &enc) -> void;
     auto exit() -> void;
+    auto isSceneGraphInitialized() const -> bool;
 signals:
     void fullscreenChanged(bool fs);
+    void sceneGraphInitialized();
 private:
     auto applyPref() -> void;
     auto updateMrl(const Mrl &mrl) -> void;

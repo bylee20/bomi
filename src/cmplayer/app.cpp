@@ -32,6 +32,7 @@ struct App::Data {
     App *p = nullptr;
     bool gldebug = false;
     QStringList styleNames;
+    Mrl pended;
 #ifdef Q_OS_MAC
     QMenuBar *mb = new QMenuBar;
 #else
@@ -49,6 +50,13 @@ struct App::Data {
     QCommandLineParser cmdParser, msgParser;
     QMap<LineCmd, QCommandLineOption> options;
     LocalConnection connection = {"net.xylosper.CMPlayer", nullptr};
+    auto open(const Mrl &mrl) -> void
+    {
+        if (!main || !main->isSceneGraphInitialized())
+            pended = mrl;
+        else
+            main->openFromFileManager(mrl);
+    }
     void addOption(LineCmd cmd, const char *name, const QString desc, const char *valueName = "", const QString &def = QString()) {
         addOption(cmd, QStringList() << _L(name), desc, valueName, def);
     }
@@ -76,7 +84,7 @@ struct App::Data {
             if (!parser->positionalArguments().isEmpty())
                 mrl = Mrl(parser->positionalArguments().first());
             if (!mrl.isEmpty())
-                main->openFromFileManager(mrl);
+                open(mrl);
             const auto args = values(LineCmd::Action);
             if (!args.isEmpty())
                 RootMenu::execute(args[0], args.value(1));
@@ -178,6 +186,12 @@ auto App::setMainWindow(MainWindow *mw) -> void
 #ifndef Q_OS_MAC
     d->main->setWindowIcon(defaultIcon());
 #endif
+    connect(d->main, &MainWindow::sceneGraphInitialized, this, [this] () {
+        if (!d->pended.isEmpty()) {
+            d->main->openFromFileManager(d->pended);
+            d->pended = Mrl();
+        }
+    }, Qt::QueuedConnection);
 }
 
 auto App::setWindowTitle(QWidget *widget, const QString &title) -> void
@@ -248,8 +262,8 @@ auto App::event(QEvent *event) -> bool
 {
     switch ((int)event->type()) {
     case QEvent::FileOpen: {
-        if (d->main)
-            d->main->openFromFileManager(Mrl(static_cast<QFileOpenEvent*>(event)->url().toString()));
+        const auto ev = static_cast<QFileOpenEvent*>(event);
+        d->open(Mrl(ev->url().toString()));
         event->accept();
         return true;
     } case ReopenEvent:

@@ -88,7 +88,7 @@ struct MainWindow::Data {
     Qt::WindowStates prevWinState = Qt::WindowNoState;
     bool middleClicked = false, moving = false, changingSub = false;
     bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
-    bool stateChanging = false, loading = false;
+    bool stateChanging = false, loading = false, sgInit = false;
     QTimer loadingTimer, hider, initializer;
     ABRepeater ab = {&engine, &subtitle};
     QMenu contextMenu;
@@ -664,8 +664,11 @@ struct MainWindow::Data {
             }
             initialize_vdpau_interop(context);
             engine.initializeGL(view);
+            sgInit = true;
+            emit p->sceneGraphInitialized();
         }, Qt::DirectConnection);
         connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
+            sgInit = false;
             auto context = QOpenGLContext::currentContext();
             engine.finalizeGL();
             finalize_vdpau_interop(context);
@@ -1838,6 +1841,11 @@ auto MainWindow::openMrl(const Mrl &mrl, const QString &enc) -> void
                 d->recent.stack(mrl);
         }
     }
+}
+
+auto MainWindow::isSceneGraphInitialized() const -> bool
+{
+    return d->sgInit;
 }
 
 auto MainWindow::showMessage(const QString &message, const bool *force) -> void
