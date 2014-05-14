@@ -3,6 +3,8 @@
 
 #include "stdafx.hpp"
 
+class MainWindow;
+
 enum MemoryUnit {
     ByteUnit = 1,
     Kilobyte = 1024,
@@ -53,14 +55,14 @@ public:
     static auto systemTime() -> quint64 { return _SystemTime(); }
     static auto processTime() -> quint64; // usec
     static auto monospace() -> QString;
-    static auto isFullScreen() -> bool {return get().m_fullScreen;}
-    static auto setFullScreen(bool fs) -> void;
+    static auto isFullScreen() -> bool;
     static auto tr() -> QString {return QString();}
     static auto itemToAcceptKey() -> QQuickItem*;
     static auto setItemPressed(QQuickItem *item) -> void;
     static auto get() -> UtilObject& { if (!object) create(); return *object; }
     static auto setQmlEngine(QQmlEngine *engine) -> void;
     static auto qmlEngine() -> QQmlEngine* { return get().m_engine; }
+    static auto setMainWindow(MainWindow *mw) -> void;
 signals:
     void trChanged();
     void mouseReleased(const QPointF &scenePos);
@@ -72,8 +74,9 @@ private:
     static auto create() -> void;
     QSet<QQuickItem*> m_itemsToAcceptKey;
     QLinkedList<QQuickItem*> m_keyItems;
-    bool m_fullScreen, m_cursor, m_filterDoubleClick;
+    bool m_cursor, m_filterDoubleClick;
     QQmlEngine *m_engine = nullptr;
+    MainWindow *m_main = nullptr;
     static UtilObject *object;
 };
 
@@ -112,13 +115,6 @@ inline auto UtilObject::setCursor(QQuickItem *item,
 
 inline auto UtilObject::unsetCursor(QQuickItem *item) -> void
 { if (item) item->unsetCursor(); }
-
-inline auto UtilObject::setFullScreen(bool fs) -> void
-{
-    auto &self = get();
-    if (_Change(self.m_fullScreen, fs))
-        emit self.fullScreenChanged(self.m_fullScreen);
-}
 
 inline auto UtilObject::itemToAcceptKey() -> QQuickItem*
 { return get().m_keyItems.isEmpty() ? nullptr : get().m_keyItems.front(); }

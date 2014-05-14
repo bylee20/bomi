@@ -19,6 +19,7 @@ MainQuickView::MainQuickView(MainWindow *main)
     main->installEventFilter(this);
     m_top = new TopLevelItem;
     AppObject::setTopLevelItem(m_top);
+    UtilObject::setMainWindow(d->main);
     UtilObject::setQmlEngine(engine());
     connect(this, &QQuickView::statusChanged, this, [this] (Status status) {
        if (status == Ready)

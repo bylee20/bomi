@@ -1,4 +1,5 @@
 #include "globalqmlobject.hpp"
+#include "mainwindow.hpp"
 #include "rootmenu.hpp"
 #include <unistd.h>
 
@@ -11,13 +12,26 @@ auto UtilObject::create() -> void
 }
 
 UtilObject::UtilObject(QObject *parent)
-: QObject(parent) {
-}
+    : QObject(parent) { }
 
 UtilObject::~UtilObject() {
 }
 
-auto UtilObject::textWidth(const QString &text, int size, const QString &family) -> double
+auto UtilObject::setMainWindow(MainWindow *mw) -> void
+{
+    auto &self = get();
+    self.m_main = mw;
+    connect(mw, &MainWindow::fullscreenChanged,
+            &self, &UtilObject::fullScreenChanged);
+}
+
+auto UtilObject::isFullScreen() -> bool
+{
+    return get().m_main->isFullScreen();
+}
+
+auto UtilObject::textWidth(const QString &text, int size,
+                           const QString &family) -> double
 {
     QFont font(family);
     font.setPixelSize(size);

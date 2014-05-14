@@ -26,6 +26,8 @@ public:
     auto openMrl(const Mrl &mrl) -> void;
     auto openMrl(const Mrl &mrl, const QString &enc) -> void;
     auto exit() -> void;
+signals:
+    void fullscreenChanged(bool fs);
 private:
     auto applyPref() -> void;
     auto updateMrl(const Mrl &mrl) -> void;

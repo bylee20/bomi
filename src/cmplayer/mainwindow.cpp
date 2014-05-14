@@ -8,33 +8,31 @@
 #include "subtitlefinddialog.hpp"
 #include "pref.hpp"
 #include "abrepeater.hpp"
-#include "playlistview.hpp"
 #include "playlistmodel.hpp"
 #include "playengine.hpp"
-#include "audio/audionormalizeroption.hpp"
 #include "appstate.hpp"
 #include "historymodel.hpp"
-#include "video/videorendereritem.hpp"
-#include "subtitle/subtitlerendereritem.hpp"
 #include "info.hpp"
 #include "prefdialog.hpp"
 #include "app.hpp"
-#include "globalqmlobject.hpp"
-#include "subtitle/subtitleview.hpp"
-#include <functional>
+//#include "globalqmlobject.hpp"
 #include "playlistmodel.hpp"
 #include "translator.hpp"
 #include "trayicon.hpp"
 #include "playlist.hpp"
-#include "subtitle/subtitle_parser.hpp"
-#include "subtitle/subtitlemodel.hpp"
-#include "opengl/openglcompat.hpp"
-#include "video/videoformat.hpp"
 #include "dataevent.hpp"
 #include "quick/toplevelitem.hpp"
 #include "quick/appobject.hpp"
 #include "mainquickview.hpp"
 #include "log.hpp"
+#include "video/videorendereritem.hpp"
+#include "video/videoformat.hpp"
+#include "opengl/openglcompat.hpp"
+#include "subtitle/subtitleview.hpp"
+#include "subtitle/subtitlerendereritem.hpp"
+#include "subtitle/subtitle_parser.hpp"
+#include "subtitle/subtitlemodel.hpp"
+#include "audio/audionormalizeroption.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 #endif
@@ -1518,11 +1516,6 @@ auto MainWindow::connectMenus() -> void
     });
 
     Menu &tool = d->menu("tool");
-    auto toggleTool = [this] (const char *name, bool &visible) {
-        visible = !visible;
-        if (auto item = d->view->findItem<QObject>(name))
-            item->setProperty("show", visible);
-    };
     auto &playlist = tool("playlist");
     connect(playlist["toggle"], &QAction::triggered,
             &d->playlist, &PlaylistModel::toggle);
@@ -1590,7 +1583,12 @@ auto MainWindow::connectMenus() -> void
     connect(history["clear"], &QAction::triggered,
             this, [this] () { d->history.clear(); });
 
-    connect(tool["playinfo"], &QAction::triggered, this, [toggleTool] () {
+    connect(tool["playinfo"], &QAction::triggered, this, [=] () {
+        auto toggleTool = [this] (const char *name, bool &visible) {
+            visible = !visible;
+            if (auto item = d->view->findItem<QObject>(name))
+                item->setProperty("show", visible);
+        };
         toggleTool("playinfo", AppState::get().playinfo_visible);
     });
     connect(tool["subtitle"], &QAction::triggered, this, [this] () {
@@ -1855,29 +1853,7 @@ auto MainWindow::showMessage(const QString &message, const bool *force) -> void
 
 auto MainWindow::checkWindowState() -> void
 {
-    const auto state = windowState();
-    d->updateWindowSizeState();
-    setWindowFilePath(d->filePath);
-    if (state != d->winState) {
-        d->prevWinState = d->winState;
-        d->winState = state;
-    }
-    d->dontPause = true;
-    d->moving = false;
-    d->prevPos = QPoint();
-    const auto full = isFullScreen();
-    if (full) {
-        cApp.setAlwaysOnTop(this, false);
-        setVisible(true);
-    } else {
-        updateStaysOnTop();
-        setVisible(true);
-    }
-    d->readyToHideCursor();
-    d->dontPause = false;
-    if (!d->stateChanging)
-        doVisibleAction(state != Qt::WindowMinimized);
-    UtilObject::setFullScreen(full);
+
 }
 
 auto MainWindow::setFullScreen(bool full) -> void
@@ -1917,6 +1893,7 @@ auto MainWindow::setFullScreen(bool full) -> void
             setWindowState(full ? Qt::WindowFullScreen
                                 : (d->prevWinState & ~minfull));
         }
+        emit fullscreenChanged(d->fullScreen);
     }
     d->dontPause = false;
 }
@@ -2239,11 +2216,31 @@ auto MainWindow::hideEvent(QHideEvent *event) -> void
     doVisibleAction(false);
 }
 
-auto MainWindow::changeEvent(QEvent *event) -> void
+auto MainWindow::changeEvent(QEvent *ev) -> void
 {
-    QWidget::changeEvent(event);
-    if (event->type() == QEvent::WindowStateChange)
-        checkWindowState();
+    QWidget::changeEvent(ev);
+    if (ev->type() == QEvent::WindowStateChange) {
+        auto event = static_cast<QWindowStateChangeEvent*>(ev);
+        d->prevWinState = event->oldState();
+        d->winState = windowState();
+        d->updateWindowSizeState();
+        setWindowFilePath(d->filePath);
+        d->dontPause = true;
+        d->moving = false;
+        d->prevPos = QPoint();
+        const auto full = isFullScreen();
+        if (full) {
+            cApp.setAlwaysOnTop(this, false);
+            setVisible(true);
+        } else {
+            updateStaysOnTop();
+            setVisible(true);
+        }
+        d->readyToHideCursor();
+        d->dontPause = false;
+        if (!d->stateChanging)
+            doVisibleAction(d->winState != Qt::WindowMinimized);
+    }
 }
 
 auto MainWindow::closeEvent(QCloseEvent *event) -> void
