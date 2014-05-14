@@ -7,7 +7,7 @@ class RichTextHelper {
 public:
     virtual ~RichTextHelper() {}
 
-    static inline auto toInt(const QStringRef &text) -> int {
+    static auto toInt(const QStringRef &text) -> int {
         int ret = 0;
         for (int i=0; i<text.size(); ++i) {
             const ushort c = text.at(i).unicode();
@@ -19,7 +19,7 @@ public:
         return ret;
     }
 
-    static inline auto toColor(const QStringRef &text) -> QColor {
+    static auto toColor(const QStringRef &text) -> QColor {
         if (!text.startsWith('#')) {
             int i=0;
             for (; i<text.size() && _IsHexNumber(text.at(i).unicode()); ++i) ;
@@ -29,13 +29,19 @@ public:
         return QColor(text.toString());
     }
 
-    static inline auto isRightBracket(ushort c) -> bool {return c == '>';}
-    static inline auto isSeparator(ushort c) -> bool {return c == ' ' || c == '\t' || c == '\r' || c== '\n';}
-    static inline auto isWhitespace(ushort c) -> bool {return c == ' ' || c == '\t';}
-    static inline auto isNewLine(ushort c) -> bool {return c == '\r' || c == '\n';}
+    static auto isRightBracket(ushort c) -> bool {return c == '>';}
+    static auto isSeparator(ushort c) -> bool {return c == ' ' || c == '\t' || c == '\r' || c== '\n';}
+    static auto isWhitespace(ushort c) -> bool {return c == ' ' || c == '\t';}
+    static auto isNewLine(ushort c) -> bool {return c == '\r' || c == '\n';}
     static auto replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s = Qt::CaseInsensitive) -> QString;
     static auto indexOf(const QStringRef &ref, QRegExp &rx, int from = 0) -> int;
-    static inline auto trim(const QStringRef &text) -> QStringRef {
+    static auto indexOf(const QStringRef &ref,
+                        QRegularExpression &rx, int from = 0) -> int;
+    static auto match(QRegularExpression &rx, const QStringRef &ref,
+                      int from = 0) -> QRegularExpressionMatch
+        { return rx.match(*ref.string(), from + ref.position()); }
+    static auto trim(const QStringRef &text) -> QStringRef
+    {
         if (text.isEmpty()) return QStringRef();
         int start = 0, end = text.size();
         while (start < end && isSeparator(text.at(start).unicode())) ++start;
@@ -43,11 +49,11 @@ public:
         return start < end ? _MidRef(text, start, end-start) : QStringRef();
     }
 
-    static inline auto skipSeparator(int &pos, const QStringRef &text) -> bool {
+    static auto skipSeparator(int &pos, const QStringRef &text) -> bool {
         for (; pos < text.size() && isSeparator(text.at(pos).unicode()); ++pos) ;
         return pos >= text.size(); // true for end
     }
-    static inline auto skipSeparator(int &pos, const QString &text) -> bool {return skipSeparator(pos, text.midRef(0));}
+    static auto skipSeparator(int &pos, const QString &text) -> bool {return skipSeparator(pos, text.midRef(0));}
 
     static auto entityCharacter(const QStringRef &entity) -> QChar;
     static auto toFontPixelSize(const QStringRef &size) -> int;

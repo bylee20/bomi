@@ -154,6 +154,13 @@ auto RichTextHelper::indexOf(const QStringRef &ref, QRegExp &rx, int from) -> in
     return 0 <= idx && idx < ref.length() ? idx : -1;
 }
 
+auto RichTextHelper::indexOf(const QStringRef &ref, QRegularExpression &rx,
+                             int from) -> int
+{
+    const int pos = ref.position();
+    const int idx = ref.string()->indexOf(rx, from + pos) - pos;
+    return 0 <= idx && idx < ref.length() ? idx : -1;
+}
 
 auto RichTextHelper::innerText(const char *open, const char *close, const QStringRef &text, QStringRef &block, int &pos, Tag &tag) -> int
 {

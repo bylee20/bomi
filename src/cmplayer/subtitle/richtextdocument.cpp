@@ -200,7 +200,7 @@ auto RichTextDocument::updateLayoutInfo() -> void
             layout->rubies.resize(m_blocks[i].rubies.size());
             for (int j=0; j<layout->rubies.size(); ++j) {
                 layout->rubies[j] = new QTextLayout;
-                layout->rubies[j]->setText(m_blocks[i].rubies[j].rt);
+                layout->rubies[j]->setText(m_blocks[i].rubies[j].rt_block.text);
                 layout->rubies[j]->setTextOption(rubyOption);
             }
 
@@ -211,27 +211,34 @@ auto RichTextDocument::updateLayoutInfo() -> void
             layout->block.setTextOption(m_option);
     }
     if (!m_formatChanged && m_pxChanged) {
-        for (int i=0; i<m_blocks.size(); ++i) {
-            const auto &block = m_blocks[i];
-            auto layout = m_layouts[i];
-            auto ranges = layout->block.additionalFormats();
+        auto adjustFormats = [this] (QTextLayout *layout, const RichTextBlock &block, float r) {
+            auto ranges = layout->additionalFormats();
             for (int j=0; j<ranges.size(); ++j) {
                 if (!block.formats[j].style.contains(QTextFormat::FontPixelSize)) {
-                    ranges[j].format.setProperty(QTextFormat::FontPixelSize, m_format.property(QTextFormat::FontPixelSize));
+                    const int px = qRound(m_format.intProperty(QTextFormat::FontPixelSize)*r);
+                    ranges[j].format.setProperty(QTextFormat::FontPixelSize, px);
                     ranges[j].format.setProperty(QTextFormat::TextOutline, m_format.property(QTextFormat::TextOutline));
                 }
             }
-            layout->block.setAdditionalFormats(ranges);
+            layout->setAdditionalFormats(ranges);
+        };
 
-            int idx = 0;
-            for (auto ruby : layout->rubies) {
-                auto ranges = ruby->additionalFormats();
-                if (!block.rubies[idx++].rb_style.contains(RichTextBlock::FontPixelSize)) {
-                    const int px = m_format.intProperty(QTextFormat::FontPixelSize)*0.45 + 0.5;
-                    ranges.last().format.setProperty(QTextFormat::FontPixelSize, px);
-                    ranges.last().format.setProperty(QTextFormat::TextOutline, m_format.property(QTextFormat::TextOutline));
-                }
-                ruby->setAdditionalFormats(ranges);
+        for (int i=0; i<m_blocks.size(); ++i) {
+            const auto &block = m_blocks[i];
+            auto layout = m_layouts[i];
+            adjustFormats(&layout->block, block, 1);
+            for (int j = 0; j < block.rubies.size(); ++j) {
+                adjustFormats(layout->rubies[j], block.rubies[j].rt_block, 0.45);
+//                auto &ruby = block.rubies[i];
+//                auto &formats = ruby.rt_block.formats;
+//                auto ranges = ruby->additionalFormats();
+//                for (int k = 0; i<ruby.rt_block.formats.size())
+//                if (!block.rubies[idx++].rb_style.contains(RichTextBlock::FontPixelSize)) {
+//                    const int px = m_format.intProperty(QTextFormat::FontPixelSize)*0.45 + 0.5;
+//                    ranges.last().format.setProperty(QTextFormat::FontPixelSize, px);
+//                    ranges.last().format.setProperty(QTextFormat::TextOutline, m_format.property(QTextFormat::TextOutline));
+//                }
+//                ruby->setAdditionalFormats(ranges);
             }
         }
     } else if (m_formatChanged) {
@@ -240,9 +247,7 @@ auto RichTextDocument::updateLayoutInfo() -> void
             for (auto it = style.begin(); it != style.end(); ++it)
                 format.setProperty(it.key(), it.value());
         };
-        for (int i=0; i<m_blocks.size(); ++i) {
-            const auto &block = m_blocks[i];
-            auto &layout = m_layouts[i];
+        auto setFormats = [mergeFormat] (QTextLayout *layout, const RichTextBlock &block, bool ruby) {
             QList<QTextLayout::FormatRange> ranges;
             for (auto &format : block.formats) {
                 ranges.push_back(QTextLayout::FormatRange());
@@ -250,22 +255,20 @@ auto RichTextDocument::updateLayoutInfo() -> void
                 range.start = format.begin;
                 range.length = format.end - format.begin;
                 mergeFormat(range.format, format.style);
+                if (ruby) {
+                    const int px = ranges.last().format.intProperty(QTextFormat::FontPixelSize)*0.45 + 0.5;
+                    ranges.last().format.setProperty(QTextFormat::FontPixelSize, px);
+                }
             }
-            layout->block.setAdditionalFormats(ranges);
+            layout->setAdditionalFormats(ranges);
+        };
 
-            Q_ASSERT(block.rubies.size() == layout->rubies.size());
-
-            int idx = 0;
-            for (const auto &ruby : block.rubies) {
-                QList<QTextLayout::FormatRange> ranges;
-                ranges << QTextLayout::FormatRange();
-                ranges.last().start = 0;
-                ranges.last().length = ruby.rt.size();
-                mergeFormat(ranges.last().format, ruby.rb_style);
-                const int px = ranges.last().format.intProperty(QTextFormat::FontPixelSize)*0.45 + 0.5;
-                ranges.last().format.setProperty(QTextFormat::FontPixelSize, px);
-                layout->rubies[idx++]->setAdditionalFormats(ranges);
-            }
+        for (int i=0; i<m_blocks.size(); ++i) {
+            const auto &block = m_blocks[i];
+            auto &layout = m_layouts[i];
+            setFormats(&layout->block, block, false);
+            for (int j = 0; j < block.rubies.size(); ++j)
+                setFormats(layout->rubies[j], block.rubies[j].rt_block, true);
         }
     }
     m_blockChanged = m_formatChanged = m_pxChanged = m_optionChanged = false;
