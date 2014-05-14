@@ -114,24 +114,6 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                 }
                 if (_Same(tag.name, "/ruby")) {
                     if (ruby) {
-//                        const int idx = indexOf(text, rx, pos);
-//                        if (idx < 0)
-//                            continue;
-//                        add_format(ret.last().formats.last().style);
-//                        ret.last().rubies.push_back(RichTextBlock::Ruby());
-//                        RichTextBlock::Ruby &ruby = ret.last().rubies.last();
-//                        RichTextBlock::Format &rb_format = ret.last().formats.last();
-//                        rb_format.mergeStyle(tag.style());
-
-//                        ruby.rb_begin = rb_format.begin = ret.last().text.size();
-//                        add_text(rx.cap(2).midRef(0, -1));
-//                        ruby.rb_end = rb_format.end = ret.last().text.size();
-//                        ruby.rb_style = rb_format.style;
-//                        ruby.rt = rx.cap(4);
-
-//                        add_format(ret.last().formats[ret.last().formats.size()-2].style);
-
-//                        pos = idx + rx.matchedLength();
                         if (ruby->rb_end < 0)
                             ruby->rb_end = ret.last().text.size();
                     }
@@ -151,35 +133,9 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                     const auto match = regex.match(text.toString(), pos);
                     Q_ASSERT(match.hasMatch());
                     ruby->rt_block = parse(match.capturedRef(1), ret.last().formats.last().style).value(0);
-                    qDebug() << ruby->rt_block.text;
                     if (ruby->rb_end < 0)
                         ruby->rb_end = ret.last().text.size();
                     pos = match.capturedEnd();
-//                    qDebug() <<match.captured(1);
-//                    match.
-//                    if (!match.hasMatch())
-//                        continue;
-
-//                    QRegExp rx("(.*)(<\\s*rb\\s*>)?([^<]*)(<\\s*/rb\\s*>)?<\\s*rt\\s*>([^<]*)(<\\s*/rt\\s*>)?(<\\s*/ruby\\s*>|$)");
-//                    const int idx = indexOf(text, rx, pos);
-//                    if (idx < 0)
-//                        continue;
-//                    add_format(ret.last().formats.last().style);
-//                    ret.last().rubies.push_back(RichTextBlock::Ruby());
-//                    RichTextBlock::Ruby &ruby = ret.last().rubies.last();
-//                    RichTextBlock::Format &rb_format = ret.last().formats.last();
-//                    rb_format.mergeStyle(tag.style());
-
-//                    ruby.rb_begin = rb_format.begin = ret.last().text.size();
-//                    add_text(rx.cap(2).midRef(0, -1));
-//                    ruby.rb_end = rb_format.end = ret.last().text.size();
-//                    ruby.rb_style = rb_format.style;
-//                    ruby.rt = rx.cap(4);
-
-//                    add_format(ret.last().formats[ret.last().formats.size()-2].style);
-
-//                    pos = idx + rx.matchedLength();
-//                    pos =
                 } else {
                     if (_Same(tag.name, "ruby")) {
                         ret.last().rubies.push_back(RichTextBlock::Ruby());
@@ -191,37 +147,6 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                     add_format(ret.last().formats.last().style);
                     ret.last().formats.last().mergeStyle(tag.style());
                 }
-
-
-//                    if (_Same(tag.name, "ruby")) {//((<\s*rt\s*>(.*)(<\s*/rt\s*>)?)?)(.*)
-////                        QRegularExpression outer(R"((.*)<\s*rt\s*>(.*)(<\s*/ruby\s*>|<\s*/p\s*>|$))", QRegularExpression::CaseInsensitiveOption | QRegularExpression::InvertedGreedinessOption);
-
-//                        QRegExp rx("(<\\s*rb\\s*>)?([^<]*)(<\\s*/rb\\s*>)?<\\s*rt\\s*>([^<]*)(<\\s*/rt\\s*>)?(<\\s*/ruby\\s*>|$)");
-//                        const int idx = indexOf(text, rx, pos);
-//                        if (idx < 0)
-//                            continue;
-//                        add_format(ret.last().formats.last().style);
-//                        ret.last().rubies.push_back(RichTextBlock::Ruby());
-//                        RichTextBlock::Ruby &ruby = ret.last().rubies.last();
-//                        RichTextBlock::Format &rb_format = ret.last().formats.last();
-//                        rb_format.mergeStyle(tag.style());
-
-//                        ruby.rb_begin = rb_format.begin = ret.last().text.size();
-//                        add_text(rx.cap(2).midRef(0, -1));
-//                        ruby.rb_end = rb_format.end = ret.last().text.size();
-//                        ruby.rb_style = rb_format.style;
-//                        ruby.rt = rx.cap(4);
-
-//                        add_format(ret.last().formats[ret.last().formats.size()-2].style);
-
-//                        pos = idx + rx.matchedLength();
-//                    } else {
-//                        fmtStack.push_front(ret.last().formats.last().style);
-//                        tagStack.push_front(tag.name);
-//                        add_format(ret.last().formats.last().style);
-//                        ret.last().formats.last().mergeStyle(tag.style());
-//                    }
-//                }
             }
         }
     }

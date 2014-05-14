@@ -6,16 +6,18 @@ extern "C" {
 
 auto MpOsdBitmap::needToCopy(const sub_bitmaps *imgs) const -> bool
 {
-    return m_id != imgs->bitmap_id || m_pos != imgs->bitmap_pos_id;
+    return m_count != imgs->num_parts
+           || m_id != imgs->bitmap_id || m_pos != imgs->bitmap_pos_id;
 }
 
 auto MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) -> bool
 {
-    if (imgs->num_parts <= 0 || !needToCopy(imgs))
+    if (!needToCopy(imgs))
         return false;
+    m_count = imgs->num_parts;
     m_renderSize = renderSize;
-    if (m_size < imgs->num_parts)
-        _Expand(m_parts, m_size = imgs->num_parts);
+    if (m_parts.size() < imgs->num_parts)
+        _Expand(m_parts, imgs->num_parts);
 
 //                                       none      ass  rgba    indexed
     static const int corrections[] = { 0,        1,   1,      4 };

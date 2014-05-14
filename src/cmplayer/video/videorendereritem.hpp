@@ -5,14 +5,16 @@
 #include "skin.hpp"
 #include "quick/highqualitytextureitem.hpp"
 
-class VideoColor;                       class MpOsdItem;
+class VideoColor;                       class Kernel3x3;
 enum class DeintMethod;                 enum class ColorRange;
-class Kernel3x3;
-template<class T> class VideoImageCache;class VideoFramebufferObject;
+
+template<class T> class VideoImageCache;
+class VideoFramebufferObject;           class MpOsdBitmap;
 
 class VideoRendererItem : public HighQualityTextureItem {
     Q_OBJECT
     using Cache = VideoImageCache<VideoFramebufferObject>;
+    using OsdCache = VideoImageCache<MpOsdBitmap>;
 public:
     enum Effect {
         NoEffect         = 0,
@@ -37,15 +39,15 @@ public:
     auto alignment() const -> int;
     auto effects() const -> Effects;
     auto sizeHint() const -> QSize;
-    auto osd() const -> QQuickItem*;
     auto setAspectRatio(double ratio) -> void;
     auto setOverlay(GeometryItem *overlay) -> void;
     auto overlay() const -> QQuickItem*;
     auto present(const Cache &cache) -> void;
+    auto present(const Cache &cache, const OsdCache &osd) -> void;
     auto hasFrame() const -> bool;
     auto requestFrameImage() const -> void;
     auto frameRect(const QRectF &area) const -> QRectF;
-    void setKernel(const Kernel3x3 &blur, const Kernel3x3 &sharpen);
+    auto setKernel(const Kernel3x3 &blur, const Kernel3x3 &sharpen) -> void;
     auto setOverlayOnLetterbox(bool letterbox) -> void;
     auto overlayInLetterbox() const -> bool;
     auto mapToVideo(const QPointF &pos) -> QPointF;
@@ -56,6 +58,7 @@ public:
     auto setOffset(const QPoint &offset) -> void;
     auto setCropRatio(double ratio) -> void;
     auto kernel() const -> const Kernel3x3&;
+    auto osdSize() const -> QSize;
 signals:
     void transferred();
     void frameImageObtained(QImage image) const;
@@ -64,6 +67,7 @@ signals:
     void screenRectChanged(const QRectF &rect);
     void frameRectChanged(const QRectF &rect);
     void kernelChanged(const Kernel3x3 &kernel);
+    void osdSizeChanged(const QSize &size);
 private:
     auto afterUpdate() -> void;
     auto initializeGL() -> void override;
@@ -71,7 +75,6 @@ private:
     auto customEvent(QEvent *event) -> void override;
     auto updateVertex(Vertex *vertex) -> void override;
     auto updateTexture(OpenGLTexture2D *texture) -> void override;
-    MpOsdItem *mpOsd() const;
     struct Data;
     Data *d;
     QPoint m_mouse;

@@ -3,14 +3,15 @@
 #include "mposdbitmap.hpp"
 #include "dataevent.hpp"
 #include "opengl/openglcompat.hpp"
+#include <deque>
 
 enum Attr {AttrPosition, AttrTexCoord, AttrColor};
 
 struct MpOsdItem::Data {
     MpOsdItem *p = nullptr;
-    MpOsdBitmap osd;
+    Cache cache;
+    std::deque<Cache> queue;
     QSize imageSize = {0, 0}, atlasSize = {0, 0};
-    bool show = false;
     MpOsdBitmap::Format format = MpOsdBitmap::Ass;
     GLenum srcFactor = GL_SRC_ALPHA;
     int loc_atlas = 0, loc_matrix = 0;
@@ -88,17 +89,10 @@ struct MpOsdItem::Data {
         }
     }
 
-    void draw(OpenGLFramebufferObject *fbo, const MpOsdBitmap &osd) {
+    void draw(OpenGLFramebufferObject *fbo) {
         if (!fbo->isValid())
             return;
-        build(osd.format());
-        if (!shader->isLinked())
-            return;
-        glActiveTexture(GL_TEXTURE0);
-        OpenGLTextureBinder<OGL::Target2D> binder(&atlas);
-        initializeAtlas(osd);
 
-        Q_ASSERT(fbo->size() == osd.renderSize());
         vMatrix.setToIdentity();
         vMatrix.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
 
@@ -106,6 +100,19 @@ struct MpOsdItem::Data {
         glViewport(0, 0, fbo->width(), fbo->height());
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        if (!cache)
+            return;
+
+        const MpOsdBitmap &osd = *cache;
+        Q_ASSERT(fbo->size() == osd.renderSize());
+        glActiveTexture(GL_TEXTURE0);
+        OpenGLTextureBinder<OGL::Target2D> binder(&atlas);
+
+        initializeAtlas(osd);
+        build(osd.format());
+        if (!shader->isLinked())
+            return;
 
         using Vertex = OGL::TextureColorVertex;
         const int num = osd.count();
@@ -181,65 +188,40 @@ auto MpOsdItem::finalizeGL() -> void
     d->vbo.destroy();
 }
 
-auto MpOsdItem::drawOn(sub_bitmaps *imgs) -> void
+auto MpOsdItem::draw(const Cache &cache) -> void
 {
-    d->show = true;
-    if (!d->osd.needToCopy(imgs))
-        return;
-    MpOsdBitmap osd;
-    if (osd.copy(imgs, d->imageSize))
-        _PostEvent(this, EnqueueFrame, osd);
+    if (cache)
+        d->queue.push_back(cache);
+    setVisible(true);
+    forceRepaint();
 }
 
 auto MpOsdItem::drawOn(QImage &frame) -> void
 {
-    if (isVisible())
-        d->osd.drawOn(frame);
-}
-
-auto MpOsdItem::present(bool redraw) -> void
-{
-    if (redraw)
-        return;
-    if (d->show) {
-        _PostEvent(this, Show);
-        d->show = false;
-    } else
-        _PostEvent(this, Hide);
-}
-
-auto MpOsdItem::customEvent(QEvent *event) -> void
-{
-    QQuickItem::customEvent(event);
-    switch ((int)event->type()) {
-    case Show:
-        setVisible(true);
-        update();
-        break;
-    case Hide:
-        setVisible(false);
-        break;
-    case EnqueueFrame:
-        setVisible(true);
-        _GetAllData(event, d->osd);
-        forceRepaint();
-        break;
-    default:
-        break;
-    }
+    if (d->cache)
+        d->cache->drawOn(frame);
 }
 
 auto MpOsdItem::imageSize() const -> QSize
 {
-    return d->osd.renderSize();
+    if (d->queue.empty())
+        return d->cache ? d->cache->renderSize() : QSize();
+    return d->queue.front()->renderSize();
 }
 
 auto MpOsdItem::paint(OpenGLFramebufferObject *fbo) -> void
 {
-    d->draw(fbo, d->osd);
+    if (!d->queue.empty()) {
+        d->cache.swap(d->queue.front());
+        d->queue.pop_front();
+    }
+    if (d->cache)
+        d->draw(fbo);
 }
 
-auto MpOsdItem::setImageSize(const QSize &size) -> void
+auto MpOsdItem::afterUpdate() -> void
 {
-    d->imageSize = size;
+    SimpleFboItem::afterUpdate();
+    if (!d->queue.empty())
+        reserve(UpdateMaterial);
 }

@@ -30,21 +30,27 @@ public:
         quint32 m_color = 0;
         int m_stride = 0, m_offset = 0, m_strideAsPixel = 0;
     };
+    auto operator == (const MpOsdBitmap &rhs) const -> bool
+        { return m_count == rhs.m_count && m_id ==rhs.m_id && m_pos == rhs.m_pos; }
+    auto operator != (const MpOsdBitmap &rhs) const -> bool
+        { return !operator == (rhs); }
     auto needToCopy(const sub_bitmaps *imgs) const -> bool;
     auto copy(const sub_bitmaps *imgs, const QSize &renderSize) -> bool;
     template<class T = uchar>
-    T *data(int i) { return (T*)(m_data.data() + m_parts[i].m_offset); }
+    auto data(int i) -> T*
+        { return reinterpret_cast<T*>(m_data.data() + m_parts[i].m_offset); }
     template<class T = uchar>
-    const T *data(int i) const { return (const T*)(m_data.data() + m_parts[i].m_offset); }
-    auto count() const -> int { return m_size; }
-    const PartInfo &part(int i) const { return m_parts[i]; }
+    auto data(int i) const -> const T*
+        { return reinterpret_cast<const T*>(m_data.data() + m_parts[i].m_offset); }
+    auto count() const -> int { return m_count; }
+    auto part(int i) const -> const PartInfo& { return m_parts[i]; }
     auto format() const -> Format { return m_format; }
-    const QSize &renderSize() const { return m_renderSize; }
-    const QSize &sheet() const { return m_sheet; }
+    auto renderSize() const -> const QSize& { return m_renderSize; }
+    auto sheet() const -> const QSize& { return m_sheet; }
     auto drawOn(QImage &frame) const -> void;
 private:
     QByteArray m_data;
-    int m_size = 0, m_id = -1, m_pos = -1;
+    int m_count = 0, m_id = -1, m_pos = -1;
     QVector<PartInfo> m_parts;
     Format m_format = RgbaPA;
     QSize m_sheet = {0, 0}, m_maximumSize = {0, 0}, m_renderSize = {0, 0};

@@ -4,7 +4,7 @@
 #include "playengine.hpp"
 #include "deintinfo.hpp"
 #include "videoframeshader.hpp"
-#include "mposditem.hpp"
+#include "mposdbitmap.hpp"
 #include "mpv_helper.hpp"
 #include "videoframebufferobject.hpp"
 #include "log.hpp"
@@ -27,17 +27,36 @@ enum DirtyFlag {
     DirtyEffects = 1 << 0,
     DirtyKernel  = 1 << 1,
     DirtyRange   = 1 << 2,
-    DirtyChroma  = 1 << 3
+    DirtyChroma  = 1 << 3,
+    DirtySize    = 1 << 4
+};
+
+using MpOsdBitmapCache = VideoImageCache<MpOsdBitmap>;
+
+class MpOsdBitmapPool : public VideoImagePool<MpOsdBitmap> {
+    using Cache = MpOsdBitmapCache;
+public:
+    auto get(const sub_bitmaps *imgs, const QSize &size) -> Cache
+    {
+        Cache cache = this->getCache(3);
+        if (!cache)
+            return cache;
+        auto &data = const_cast<MpOsdBitmap&>(*cache);
+        data.copy(imgs, size);
+        return cache;
+    }
+    auto clear() -> void { reserve(0); }
 };
 
 class VideoFramebufferObjectPool
         : public VideoImagePool<VideoFramebufferObject> {
     using Cache = VideoFramebufferObjectCache;
 public:
-    VideoFramebufferObjectCache get(const VideoFormat &format, double pts) {
+    auto get(const VideoFormat &format, double pts) -> Cache
+    {
         if (format.isEmpty())
             return Cache();
-        Cache cache = count() < 3 ? this->getCache() : this->getUnusedCache();
+        Cache cache = this->getCache(3);
         if (cache.isNull())
             return cache;
         auto &data = const_cast<VideoFramebufferObject&>(cache.image());
@@ -108,7 +127,9 @@ struct VideoOutput::Data {
     int strides[4] = {0, 0, 0, 0};
 
     mp_osd_res osd;
-    QSize size, newSize;
+    MpOsdBitmapCache bitmap;
+    MpOsdBitmapPool bitmapPool;
+    bool bitmapChanged = false, hasOsd = false;
 
     PlayEngine *engine = nullptr;
     QAtomicInt dirty = 0;
@@ -122,6 +143,8 @@ struct VideoOutput::Data {
     {
         memset(&osd, 0, sizeof(osd));
         cache = VideoFramebufferObjectCache();
+        bitmap = MpOsdBitmapCache();
+        bitmapPool.clear();
         mp_image_unrefp(&mpi);
     }
     auto draw() -> void
@@ -179,8 +202,7 @@ auto VideoOutput::setRenderer(VideoRendererItem *renderer) -> void
 {
     if (!_Change(d->renderer, renderer) || !d->renderer)
         return;
-    connect(d->renderer->mpOsd(), &MpOsdItem::targetSizeChanged,
-            this, [this] (const QSize &size) { d->newSize = size; });
+    d->marker(d->renderer, &VideoRendererItem::osdSizeChanged, DirtySize);
     d->marker(d->renderer, &VideoRendererItem::effectsChanged, DirtyEffects);
     d->marker(d->renderer, &VideoRendererItem::kernelChanged, DirtyKernel);
     d->dirty.store(0xffffffff);
@@ -269,13 +291,42 @@ auto VideoOutput::drawImage(struct vo *vo, mp_image *mpi) -> void
         emit v->droppedFramesChanged(++d->dropped);
 }
 
+auto VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) -> void
+{
+    static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
+    static auto cb = [] (void *vo, struct sub_bitmaps *imgs) {
+        auto v = static_cast<VideoOutput*>(vo); auto d = v->d;
+        if (!d->bitmap || d->bitmap->needToCopy(imgs)) {
+            d->bitmap = d->bitmapPool.get(imgs, { d->osd.w, d->osd.h });
+            d->bitmapChanged = true;
+        }
+        d->hasOsd = true;
+    };
+    auto v = priv(vo); auto d = v->d;
+    if (auto r = d->renderer) {
+        const auto dpr = r->devicePixelRatio();
+        auto size = r->osdSize();
+        d->osd.w = size.width();
+        d->osd.h = size.height();
+        d->osd.w *= dpr;
+        d->osd.h *= dpr;
+        d->osd.display_par = 1.0;
+        osd_draw(osd, d->osd, osd->vo_pts, 0, format, cb, v);
+    }
+}
+
 auto VideoOutput::flipPage(struct vo *vo) -> void
 {
     auto v = priv(vo); Data *d = v->d;
     if (!d->mpi || d->format.isEmpty() || !d->renderer)
         return;
-    d->renderer->present(d->cache);
+    if (d->hasOsd)
+        d->renderer->present(d->cache, d->bitmapChanged ? d->bitmap
+                                                        : MpOsdBitmapCache());
+    else
+        d->renderer->present(d->cache);
     d->cache = VideoFramebufferObjectCache();
+    d->hasOsd = d->bitmapChanged = false;
     ++d->drawn;
     constexpr int interval = 4;
     constexpr int max = 20, min = 5;
@@ -339,34 +390,11 @@ auto VideoOutput::control(struct vo *vo, uint32_t req, void *data) -> int
             if (_Change(d->mouse, d->engine->mousePosition()))
                 vo_mouse_movement(vo, d->mouse.x(), d->mouse.y());
         }
-        if (_Change(d->size, d->newSize))
-            vo->want_redraw = true;
         if (d->dirty.load())
             vo->want_redraw = true;
         return true;
     default:
         return VO_NOTIMPL;
-    }
-}
-
-auto VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) -> void
-{
-    static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
-    static auto cb = [] (void *pctx, struct sub_bitmaps *imgs) {
-        static_cast<MpOsdItem*>(pctx)->drawOn(imgs);
-    };
-    auto d = priv(vo)->d;
-    if (auto r = d->renderer) {
-        const auto dpr = r->devicePixelRatio();
-        auto item = r->mpOsd();
-        auto size = item->targetSize();
-        d->osd.w = size.width();
-        d->osd.h = size.height();
-        d->osd.w *= dpr;
-        d->osd.h *= dpr;
-        d->osd.display_par = 1.0;
-        item->setImageSize({d->osd.w, d->osd.h});
-        osd_draw(osd, d->osd, osd->vo_pts, 0, format, cb, item);
     }
 }
 

@@ -4,26 +4,24 @@
 #include "stdafx.hpp"
 #include "quick/simplefboitem.hpp"
 #include "opengl/openglmisc.hpp"
+#include "videoimagepool.hpp"
 
-enum EventType {EnqueueFrame = QEvent::User + 1, Show, Hide, NewFrame };
-
-struct sub_bitmaps;
+class MpOsdBitmap;
 
 class MpOsdItem : public SimpleFboItem {
     Q_OBJECT
+    using Cache = VideoImageCache<MpOsdBitmap>;
 public:
     MpOsdItem(QQuickItem *parent = nullptr);
     ~MpOsdItem();
-    auto drawOn(sub_bitmaps *imgs) -> void;
-    auto present(bool redraw) -> void;
     auto drawOn(QImage &frame) -> void;
-    auto setImageSize(const QSize &size) -> void;
     auto imageSize() const -> QSize override;
+    auto draw(const Cache &cache) -> void;
 private:
+    auto afterUpdate() -> void;
     auto paint(OpenGLFramebufferObject *fbo) -> void override;
     auto initializeGL() -> void override;
     auto finalizeGL() -> void override;
-    auto customEvent(QEvent *event) -> void override;
     struct Data;
     Data *d;
 };

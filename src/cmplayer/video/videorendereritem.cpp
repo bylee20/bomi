@@ -1,11 +1,14 @@
 #include "videorendereritem.hpp"
 #include "mposditem.hpp"
+#include "mposdbitmap.hpp"
 #include "global.hpp"
 #include "letterboxitem.hpp"
 #include "dataevent.hpp"
 #include "videoframebufferobject.hpp"
 #include "videocolor.hpp"
 #include <deque>
+
+enum EventType {NewFrame = QEvent::User + 1, NewFrameWithOsd };
 
 struct VideoRendererItem::Data {
     Data(VideoRendererItem *p): p(p) {}
@@ -107,6 +110,8 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::AllButtons);
     setFlag(ItemAcceptsDrops, true);
+    connect(d->mposd, &MpOsdItem::targetSizeChanged,
+            this, &VideoRendererItem::osdSizeChanged);
 }
 
 VideoRendererItem::~VideoRendererItem() {
@@ -145,10 +150,20 @@ auto VideoRendererItem::customEvent(QEvent *event) -> void
 {
     switch (static_cast<int>(event->type())) {
     case NewFrame: {
-        auto cache = _GetData<Cache>(event);
+        const auto cache = _GetData<Cache>(event);
         if (!cache.isNull())
             d->queue.push_back(cache);
         reserve(UpdateMaterial);
+        d->mposd->setVisible(false);
+        break;
+    } case NewFrameWithOsd: {
+        Cache cache; OsdCache osd;
+        std::tie(cache, osd) = _GetData<Cache, OsdCache>(event);
+        if (!cache.isNull())
+            d->queue.push_back(cache);
+        reserve(UpdateMaterial);
+        d->mposd->draw(osd);
+        d->mposd->setVisible(true);
         break;
     } default:
         break;
@@ -181,8 +196,16 @@ auto VideoRendererItem::present(const Cache &cache)
     if (!isInitialized())
         return;
     _PostEvent(Qt::HighEventPriority, this, NewFrame, cache);
-    d->mposd->present(false);
 }
+
+auto VideoRendererItem::present(const Cache &cache, const OsdCache &osd)
+-> void
+{
+    if (!isInitialized())
+        return;
+    _PostEvent(Qt::HighEventPriority, this, NewFrameWithOsd, cache, osd);
+}
+
 
 auto VideoRendererItem::screenRect() const -> QRectF
 {
@@ -282,9 +305,9 @@ auto VideoRendererItem::sizeHint() const -> QSize
     return crop.toSize();
 }
 
-auto VideoRendererItem::mpOsd() const -> MpOsdItem*
+auto VideoRendererItem::osdSize() const -> QSize
 {
-    return d->mposd;
+    return d->mposd->targetSize();
 }
 
 auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
@@ -311,10 +334,6 @@ auto VideoRendererItem::updateVertex(Vertex *vertex) -> void
 {
     QRectF letter;
     if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter))) {
-//        if (d->vtx.size() != d->mposd->size()) {
-//            if (forceUpdateOsd)
-//                mposd->forceUpdateTargetSize();
-//        }
         d->mposd->setGeometry(d->vtx);
         emit frameRectChanged(d->vtx);
     }
@@ -345,11 +364,6 @@ auto VideoRendererItem::afterUpdate() -> void
 {
     if (!d->queue.empty())
         reserve(UpdateMaterial);
-}
-
-auto VideoRendererItem::osd() const -> QQuickItem*
-{
-    return d->mposd;
 }
 
 auto VideoRendererItem::setKernel(const Kernel3x3 &blur,

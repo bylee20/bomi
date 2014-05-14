@@ -14,11 +14,10 @@ public:
     VideoImageCache(const VideoImageCache &rhs)
         : VideoImageCache(rhs.d) { }
     VideoImageCache(VideoImageCache &&rhs) { std::swap(d, rhs.d); }
-    ~VideoImageCache()
-        { if (d && !d->ref.deref() && d->orphan.load()) delete d; }
-    operator bool() { return !isNull(); }
+    ~VideoImageCache() { deref(); }
+    operator bool() const { return !isNull(); }
     auto operator = (const VideoImageCache &rhs) -> VideoImageCache&
-        { qAtomicAssign(d, rhs.d); return *this; }
+        { if (d != rhs.d) { rhs.ref(); deref(); d = rhs.d; } return *this; }
     auto operator * () const -> const Image& { return d->image; }
     auto operator -> () const -> const Image* { return &d->image; }
     auto operator = (VideoImageCache &&rhs) -> VideoImageCache&
@@ -28,7 +27,13 @@ public:
     auto swap(VideoImageCache &other) -> void { std::swap(d, other.d); }
 private:
     VideoImageCache(Data *data)
-        : d(data) { if (d) d->ref.ref(); }
+        : d(data) { ref(); }
+    auto deref() const -> void
+    {
+        if (d && !d->ref.deref() && d->orphan.load())
+            delete d;
+    }
+    auto ref() const -> void { if (d) d->ref.ref(); }
     struct Data { QAtomicInt ref, orphan; Image image; };
     Data *d = nullptr;
     friend class VideoImagePool<Image>;
@@ -47,7 +52,7 @@ protected:
     auto reserve(int count) -> void;
     auto recycle() -> Cache;
     auto getUnusedCache() -> Cache;
-    auto getCache() -> Cache;
+    auto getCache(int max = -1) -> Cache;
 private:
     auto free(Data *d) -> void;
     QLinkedList<Data*> m_pool;
@@ -97,10 +102,10 @@ inline auto VideoImagePool<Image>::getUnusedCache() -> Cache
 }
 
 template<class Image>
-inline auto VideoImagePool<Image>::getCache() -> Cache
+inline auto VideoImagePool<Image>::getCache(int max) -> Cache
 {
     auto cache = getUnusedCache();
-    if (!cache.isNull())
+    if (!cache.isNull() || (max > 0 && m_pool.size() >= max))
         return cache;
     auto data = new Data;
     m_pool.push_back(data);
