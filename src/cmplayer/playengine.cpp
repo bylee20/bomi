@@ -248,7 +248,7 @@ struct PlayEngine::Data {
     Thread thread{p};
     AudioController *audio = nullptr;
     QTimer imageTicker;
-    bool quit = false, timing = false, muted = false, tick = false;
+    bool quit = false, timing = false, muted = false;
     int volume = 100;
     double amp = 1.0, speed = 1.0, avsync = 0;
     int cacheForPlayback = 20, cacheForSeeking = 50;
@@ -1075,31 +1075,12 @@ auto PlayEngine::customEvent(QEvent *event) -> void
         _GetAllData(event, d->position, d->avsync);
         emit tick(d->position);
         emit rateChanged();
-        d->tick = false;
-        auto findChapterIn = [&] (int begin, int end) {
-            end = qMin(end, d->chapterFakeList.size());
-            begin = qMax(0, begin);
-            for (int i=begin; i<end-1; ++i) {
-                if (_InRange(d->chapterFakeList[i].time(), d->position,
-                             d->chapterFakeList[i+1].time()-1))
-                    return d->chapterFakeList[i].id();
-            }
-            return -2;
-        };
-        int chapter = -2;
-        if (d->chapterFakeList.isEmpty())
-            chapter = -2;
-        else if (d->chapter < -1)
-            chapter = findChapterIn(0, d->chapterFakeList.size());
-        else {
-            chapter = findChapterIn(d->chapter+1, d->chapterFakeList.size());
-            if (chapter == -2)
-                chapter = findChapterIn(0, d->chapter+1);
-        }
-        if (_Change(d->chapter, chapter))
+        break;
+    } case UpdateCurrentChapter:
+        if (_Change(d->chapter, _GetData<int>(event)))
             emit currentChapterChanged(d->chapter);
         break;
-    } case UpdateAudioInfo: {
+    case UpdateAudioInfo: {
         delete d->audioInfo;
         d->audioInfo = _GetData<AvInfoObject*>(event);
         emit audioChanged();
@@ -1383,7 +1364,10 @@ auto PlayEngine::exec() -> void
             d->disc = d->timing = false;
             _PostEvent(this, EndPlayback, mrl, reason(event->data));
             break;
-        } case MPV_EVENT_TRACKS_CHANGED: {
+        } case MPV_EVENT_CHAPTER_CHANGE:
+            _PostEvent(this, UpdateCurrentChapter, d->getmpv<int>("chapter"));
+            break;
+        case MPV_EVENT_TRACKS_CHANGED: {
             QVector<StreamList> streams(3);
             auto list = d->getmpv<QVariant>("track-list").toList();
             for (auto &var : list) {

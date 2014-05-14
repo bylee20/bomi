@@ -15,7 +15,7 @@
 enum EventType {
     UserType = QEvent::User, UpdateTimeRange, UpdateTrackList, StateChange, PreparePlayback,
     UpdateChapterList, Tick, EndPlayback, StartPlayback,
-    UpdateCache, UpdateCurrentStream,
+    UpdateCache, UpdateCurrentStream, UpdateCurrentChapter,
     UpdateVideoInfo, UpdateAudioInfo, NotifySeek, UpdateMetaData
 };
 
