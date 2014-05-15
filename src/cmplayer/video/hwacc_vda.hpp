@@ -13,7 +13,7 @@ public:
     virtual mp_image *getSurface() override;
     virtual auto isAvailable(AVCodecID codec) const -> bool { return codec == AV_CODEC_ID_H264; }
     virtual void *context() const override;
-    auto fillContext(AVCodecContext *avctx) -> bool override;
+    auto fillContext(AVCodecContext *avctx, int w, int h) -> bool override;
     auto freeContext() -> void;
 private:
     struct Data;

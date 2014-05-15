@@ -41,7 +41,7 @@ struct HwAccX11StatusChecker {
         { m_status = status; return isSuccess(); }
     auto isSuccess() const -> bool { return m_status == Trait::success; }
     auto status() const -> Status { return m_status; }
-    auto check(Status status, const QString &onError = QString()) -> bool
+    auto check(Status status, const QString &onError) -> bool
     {
         if (isSuccess(status))
             return true;

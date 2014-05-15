@@ -172,7 +172,7 @@ public:
     virtual mp_image *getImage(mp_image *mpi);
 private:
     auto freeContext() -> void;
-    auto fillContext(AVCodecContext *avctx) -> bool override;
+    auto fillContext(AVCodecContext *avctx, int w, int h) -> bool override;
 
 private:
     struct Data;

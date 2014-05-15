@@ -170,7 +170,7 @@ auto HwAccVdpau::freeContext() -> void
     }
 }
 
-auto HwAccVdpau::fillContext(AVCodecContext *avctx) -> bool
+auto HwAccVdpau::fillContext(AVCodecContext *avctx, int w, int h) -> bool
 {
     if (!isSuccess())
         return false;
@@ -179,23 +179,23 @@ auto HwAccVdpau::fillContext(AVCodecContext *avctx) -> bool
     if (!codec)
         return false;
     const auto profile = codec->profile(avctx->profile);
-    if (profile.width < avctx->width || profile.height < avctx->height || profile.level < avctx->level)
+    if (profile.width < w || profile.height < h || profile.level < avctx->level)
         return false;
     VdpBool supports = false; uint mwidth = 0, mheight = 0;
     constexpr VdpChromaType chroma = VDP_CHROMA_TYPE_420;
-    if (!isSuccess(Vdpau::videoSurfaceQueryCapabilities(chroma, &supports, &mwidth, &mheight)))
+    if (!check(Vdpau::videoSurfaceQueryCapabilities(chroma, &supports, &mwidth, &mheight)))
         return false;
-    if (!supports || (int)mwidth < avctx->width || (int)mheight < avctx->height)
+    if (!supports || (int)mwidth < w || (int)mheight < h)
         return false;
-    const int width = (avctx->width + 1) & ~1;
-    const int height = (avctx->height + 3) & ~3;
-    if (!isSuccess(Vdpau::decoderCreate(profile.id, width, height, codec->surfaces, &d->context.decoder))) {
+    const int width = (w + 1) & ~1;
+    const int height = (h + 3) & ~3;
+    if (!check(Vdpau::decoderCreate(profile.id, width, height, codec->surfaces, &d->context.decoder))) {
         d->context.decoder = VDP_INVALID_HANDLE;
         return false;
     }
     if (!d->pool.create(codec->surfaces, width, height, chroma))
         return false;
-    d->avSize = QSize(avctx->width, avctx->height);
+    d->avSize = QSize(w, h);
     d->context.render = Vdpau::decoderRender;
     return true;
 }

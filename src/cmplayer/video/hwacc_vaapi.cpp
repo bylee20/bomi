@@ -287,7 +287,7 @@ auto HwAccVaApi::freeContext() -> void
     d->context.context_id = VA_INVALID_ID;
 }
 
-auto HwAccVaApi::fillContext(AVCodecContext *avctx) -> bool
+auto HwAccVaApi::fillContext(AVCodecContext *avctx, int w, int h) -> bool
 {
     if (status() != VA_STATUS_SUCCESS)
         return false;
@@ -307,7 +307,6 @@ auto HwAccVaApi::fillContext(AVCodecContext *avctx) -> bool
         return isSuccess(VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT);
     if(!isSuccess(vaCreateConfig(d->context.display, d->profile, VAEntrypointVLD, &attr, 1, &d->context.config_id)))
         return false;
-    const int w = avctx->width, h = avctx->height;
     auto tryRtFormat = [rts, this, codec, w, h] (uint rt) { return (rts & rt) && d->pool.create(codec->surfaces, w, h, rt); };
     if (!tryRtFormat(VA_RT_FORMAT_YUV420) && !tryRtFormat(VA_RT_FORMAT_YUV422))
         return false;
