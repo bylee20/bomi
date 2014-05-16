@@ -162,18 +162,20 @@ auto Vdpau::isAvailable() -> bool
 
 auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
 {
-    if (!d.init || d.initialize)
+    if (!d.init)
         return;
-    d.gl = ctx;
-    proc("glVDPAUInitNV",                  d.initialize);
-    proc("glVDPAUFiniNV",                  d.finalize);
-    proc("glVDPAURegisterOutputSurfaceNV", d.registerOutputSurface);
-    proc("glVDPAUIsSurfaceNV",             d.isSurface);
-    proc("glVDPAUUnregisterSurfaceNV",     d.unregisterSurface);
-    proc("glVDPAUGetSurfaceivNV",          d.getSurfaceiv);
-    proc("glVDPAUSurfaceAccessNV",         d.surfaceAccess);
-    proc("glVDPAUMapSurfacesNV",           d.mapSurfaces);
-    proc("glVDPAUUnmapSurfacesNV",         d.unmapSurfaces);
+    if (!d.gl) {
+        d.gl = ctx;
+        proc("glVDPAUInitNV",                  d.initialize);
+        proc("glVDPAUFiniNV",                  d.finalize);
+        proc("glVDPAURegisterOutputSurfaceNV", d.registerOutputSurface);
+        proc("glVDPAUIsSurfaceNV",             d.isSurface);
+        proc("glVDPAUUnregisterSurfaceNV",     d.unregisterSurface);
+        proc("glVDPAUGetSurfaceivNV",          d.getSurfaceiv);
+        proc("glVDPAUSurfaceAccessNV",         d.surfaceAccess);
+        proc("glVDPAUMapSurfacesNV",           d.mapSurfaces);
+        proc("glVDPAUUnmapSurfacesNV",         d.unmapSurfaces);
+    }
     d.initialize(TO_INTEROP(d.device), TO_INTEROP(d.proc));
 }
 
@@ -181,7 +183,7 @@ auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
 
 auto Vdpau::finalizeInterop(QOpenGLContext *ctx) -> void
 {
-    if (d.initialize) {
+    if (d.finalize) {
         Q_ASSERT(ctx == d.gl);
         d.finalize();
     }
