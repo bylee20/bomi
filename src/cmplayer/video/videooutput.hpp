@@ -4,7 +4,7 @@
 #include "stdafx.hpp"
 
 struct vo_driver;                       struct mp_image;
-struct mp_image_params;
+struct mp_image_params;                 struct vo;
 class VideoFormat;                      class PlayEngine;
 class DeintOption;                      class VideoRendererItem;
 class OpenGLOffscreenContext;           class OpenGLFramebufferObject;
@@ -30,12 +30,13 @@ signals:
     void formatChanged(const VideoFormat &format);
     void avgfpsChanged(double avgfps);
 private:
-    static auto preinit(struct vo *vo) -> int;
-    static auto reconfig(struct vo *out, mp_image_params *p, int flags) -> int;
-    static auto control(struct vo *vo, quint32 request, void *data) -> int;
-    static auto drawOsd(struct vo *vo, struct osd_state *osd) -> void;
-    static auto flipPage(struct vo *vo) -> void;
-    static auto drawImage(struct vo *vo, mp_image *mpi) -> void;
+    static auto preinit(vo *out) -> int;
+    static auto uninit(vo *out) -> void;
+    static auto reconfig(vo *out, mp_image_params *p, int flags) -> int;
+    static auto control(vo *out, quint32 request, void *data) -> int;
+    static auto drawOsd(vo *out, struct osd_state *osd) -> void;
+    static auto flipPage(vo *out) -> void;
+    static auto drawImage(vo *out, mp_image *mpi) -> void;
     struct Data;
     Data *d;
     friend auto create_driver() -> vo_driver;

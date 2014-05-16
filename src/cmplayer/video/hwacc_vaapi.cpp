@@ -370,9 +370,9 @@ auto VaApiMixer::upload(const mp_image *mpi, bool deint) -> bool
     const auto id = (VASurfaceID)(quintptr)mpi->planes[3];
     int flags = specs[mpi->params.colorspace];
     if (deint) {
-        if (mpi->flags & MP_IMGFIELD_TOP)
+        if (mpi->fields & MP_IMGFIELD_TOP)
             flags |= VA_TOP_FIELD;
-        else if (mpi->flags & MP_IMGFIELD_BOTTOM)
+        else if (mpi->fields & MP_IMGFIELD_BOTTOM)
             flags |= VA_BOTTOM_FIELD;
     }
     if (!check(vaCopySurfaceGLX(VaApi::glx(), m_glSurface, id,  flags), "Cannot copy OpenGL surface."))

@@ -268,7 +268,7 @@ auto VideoFrameShader::upload(const mp_image *mpi) -> void
         updateColorMatrix();
         m_refill = false;
     }
-    const bool additional = mpi->flags & MP_IMGFIELD_ADDITIONAL;
+    const bool additional = mpi->fields & MP_IMGFIELD_ADDITIONAL;
     if (!additional) {
         auto getCategory = [&] () {
             if (!(mpi->flags & (MP_IMGFIELD_TOP | MP_IMGFIELD_BOTTOM)))

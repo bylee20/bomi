@@ -22,6 +22,8 @@ extern "C" {
 static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
 
 auto query_video_format(quint32 format) -> int;
+extern auto initialize_vdpau_interop(QOpenGLContext *context) -> void;
+extern auto finalize_vdpau_interop(QOpenGLContext *context) -> void;
 
 enum DirtyFlag {
     DirtyEffects = 1 << 0,
@@ -74,9 +76,9 @@ struct cmplayer_vo_priv {
     char *address, *hwdec_deint;
 };
 
-static auto priv(struct vo *vo) -> VideoOutput*
+static auto priv(vo *out) -> VideoOutput*
 {
-    return static_cast<cmplayer_vo_priv*>(vo->priv)->vo;
+    return static_cast<cmplayer_vo_priv*>(out->priv)->vo;
 }
 
 DECLARE_LOG_CONTEXT(Video)
@@ -99,7 +101,7 @@ auto create_driver() -> vo_driver
     driver.flip_page    = VideoOutput::flipPage;
     driver.query_format = [] (vo*, quint32 f) { return query_video_format(f); };
     driver.draw_image   = VideoOutput::drawImage;
-    driver.uninit       = [] (vo*) { };
+    driver.uninit       = VideoOutput::uninit;
     driver.options      = options;
     driver.priv_size    = sizeof(cmplayer_vo_priv);
     return driver;
@@ -115,7 +117,7 @@ struct FrameTime {
 
 struct VideoOutput::Data {
     VideoOutput *p = nullptr;
-    struct vo *vo = nullptr;
+    vo *out = nullptr;
     mp_image *mpi = nullptr;
     VideoFormat format;
     mp_image_params params;
@@ -212,33 +214,43 @@ auto VideoOutput::initializeGL(OpenGLOffscreenContext *gl) -> void
 {
     Q_ASSERT(QOpenGLContext::currentContext());
     d->gl = gl;
-    if (!d->shader)
-        d->shader = new VideoFrameShader;
-    if (!d->pool)
-        d->pool =new VideoFramebufferObjectPool;
 }
 
 auto VideoOutput::finalizeGL() -> void
 {
     Q_ASSERT(QOpenGLContext::currentContext());
-    d->cache = VideoFramebufferObjectCache();
-    _Delete(d->shader);
-    _Delete(d->pool);
     d->gl = nullptr;
 }
 
-auto VideoOutput::preinit(struct vo *vo) -> int
+auto VideoOutput::preinit(vo *out) -> int
 {
-    auto priv = static_cast<cmplayer_vo_priv*>(vo->priv);
+    auto priv = static_cast<cmplayer_vo_priv*>(out->priv);
     priv->vo = address_cast<VideoOutput*>(priv->address);
-    auto d = priv->vo->d;
-    d->vo = vo;
+    Data *d = priv->vo->d;
+    d->out = out;
+    Q_ASSERT(d->gl);
+    d->gl->makeCurrent();
+    initialize_vdpau_interop(d->gl->context());
+    d->shader = new VideoFrameShader;
     if (priv->hwdec_deint) {
         const auto option = DeintOption::fromString(priv->hwdec_deint);
         d->shader->setDeintMethod(option.method);
     }
+    d->pool =new VideoFramebufferObjectPool;
+    d->gl->doneCurrent();
     d->dirty.store(0xffffffff);
     return 0;
+}
+
+auto VideoOutput::uninit(vo *out) -> void
+{
+    auto v = priv(out); Data *d = v->d;
+    d->gl->makeCurrent();
+    d->reset();
+    _Delete(d->shader);
+    _Delete(d->pool);
+    finalize_vdpau_interop(d->gl->context());
+    d->gl->doneCurrent();
 }
 
 
@@ -279,9 +291,9 @@ auto VideoOutput::avgfps() const -> double
     return d->avgfps;
 }
 
-auto VideoOutput::drawImage(struct vo *vo, mp_image *mpi) -> void
+auto VideoOutput::drawImage(vo *out, mp_image *mpi) -> void
 {
-    auto v = priv(vo); Data *d = v->d;
+    auto v = priv(out); Data *d = v->d;
     mp_image_setrefp(&d->mpi, mpi);
     if (!d->mpi)
         return;
@@ -291,7 +303,7 @@ auto VideoOutput::drawImage(struct vo *vo, mp_image *mpi) -> void
         emit v->droppedFramesChanged(++d->dropped);
 }
 
-auto VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) -> void
+auto VideoOutput::drawOsd(vo *out, struct osd_state *osd) -> void
 {
     static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
     static auto cb = [] (void *vo, struct sub_bitmaps *imgs) {
@@ -302,7 +314,7 @@ auto VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) -> void
         }
         d->hasOsd = true;
     };
-    auto v = priv(vo); auto d = v->d;
+    auto v = priv(out); auto d = v->d;
     if (auto r = d->renderer) {
         const auto dpr = r->devicePixelRatio();
         auto size = r->osdSize();
@@ -315,9 +327,9 @@ auto VideoOutput::drawOsd(struct vo *vo, struct osd_state *osd) -> void
     }
 }
 
-auto VideoOutput::flipPage(struct vo *vo) -> void
+auto VideoOutput::flipPage(vo *out) -> void
 {
-    auto v = priv(vo); Data *d = v->d;
+    auto v = priv(out); Data *d = v->d;
     if (!d->mpi || d->format.isEmpty() || !d->renderer)
         return;
     if (d->hasOsd)
@@ -344,9 +356,9 @@ auto VideoOutput::flipPage(struct vo *vo) -> void
         d->avgfps = 0.0;
 }
 
-auto VideoOutput::control(struct vo *vo, uint32_t req, void *data) -> int
+auto VideoOutput::control(vo *out, uint32_t req, void *data) -> int
 {
-    auto v = priv(vo); Data *d = v->d;
+    auto v = priv(out); Data *d = v->d;
     switch (req) {
     case VOCTRL_REDRAW_FRAME: {
         d->draw();
@@ -375,7 +387,7 @@ auto VideoOutput::control(struct vo *vo, uint32_t req, void *data) -> int
         if (d->color.get(type) != args->value) {
             d->color.set(type, args->value);
             d->shader->setColor(d->color);
-            vo->want_redraw = true;
+            out->want_redraw = true;
         }
         return true;
     } case VOCTRL_RESUME:
@@ -386,12 +398,12 @@ auto VideoOutput::control(struct vo *vo, uint32_t req, void *data) -> int
         return true;
     case VOCTRL_CHECK_EVENTS:
         if (d->renderer) {
-            Q_ASSERT(vo->opts->enable_mouse_movements);
+            Q_ASSERT(out->opts->enable_mouse_movements);
             if (_Change(d->mouse, d->engine->mousePosition()))
-                vo_mouse_movement(vo, d->mouse.x(), d->mouse.y());
+                vo_mouse_movement(out, d->mouse.x(), d->mouse.y());
         }
         if (d->dirty.load())
-            vo->want_redraw = true;
+            out->want_redraw = true;
         return true;
     default:
         return VO_NOTIMPL;

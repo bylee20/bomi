@@ -111,14 +111,14 @@ public:
     static auto mapSurfaces(GLsizei numSurfaces, const GLvdpauSurfaceNV *surfaces) -> void { d.mapSurfaces(numSurfaces, surfaces); }
     static auto unmapSurfaces(GLsizei numSurface, const GLvdpauSurfaceNV *surfaces) -> void { d.unmapSurfaces(numSurface, surfaces); }
     static auto isInitialized() -> bool { return d.init; }
-    static auto isAvailable() -> bool { return d.ok; }
+    static auto isAvailable() -> bool;
 private:
     template<class T, class = typename std::enable_if<!std::is_pointer<T>::value>::type>
     static const void *TO_INTEROP(T handle) { return (const void*)(quintptr)(handle); }
     struct Data : public VdpauStatusChecker {
         VdpDevice device = 0;
         VdpGetProcAddress *proc = nullptr;
-        bool init = false, ok = false;
+        bool init = false;
         VdpGetErrorString *getErrorString = nullptr;
         VdpGetInformationString *getInformationString = nullptr;
         VdpDeviceDestroy *deviceDestroy = nullptr;

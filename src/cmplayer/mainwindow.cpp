@@ -49,9 +49,6 @@ static inline auto enumData(Enum e) -> EnumData<Enum>
 template<class State, class... Args>
 using Signal = void(State::*)(Args...);
 
-extern void initialize_vdpau_interop(QOpenGLContext *context);
-extern void finalize_vdpau_interop(QOpenGLContext *context);
-
 template<class Func, class T>
 class ValueCmd : public QUndoCommand {
 public:
@@ -662,7 +659,6 @@ struct MainWindow::Data {
                 logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
 #endif
             }
-            initialize_vdpau_interop(context);
             engine.initializeGL(view);
             sgInit = true;
             emit p->sceneGraphInitialized();
@@ -671,7 +667,6 @@ struct MainWindow::Data {
             sgInit = false;
             auto context = QOpenGLContext::currentContext();
             engine.finalizeGL();
-            finalize_vdpau_interop(context);
             OpenGLCompat::finalize(context);
         }, Qt::DirectConnection);
         desktop = cApp.desktop();

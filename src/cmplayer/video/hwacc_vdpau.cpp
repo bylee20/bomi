@@ -82,7 +82,7 @@ auto Vdpau::initialize() -> void
         supports.id = codec;
         supports.profiles.push_back(p);
         supports.avProfiles.push_back(avProfile);
-        supports.surfaces = surfaces + 2;
+        supports.surfaces = qMin(surfaces + 2, 16);
     };
 
     push(VDP_DECODER_PROFILE_MPEG1, FF_PROFILE_UNKNOWN, AV_CODEC_ID_MPEG1VIDEO, 2);
@@ -112,6 +112,11 @@ auto Vdpau::finalize() -> void
     }
 }
 
+auto Vdpau::isAvailable() -> bool
+{
+    return d.init && OpenGLCompat::hasExtension(OpenGLCompat::NvVdpauInterop);
+}
+
 auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
 {
     if (!d.init || d.initialize)
@@ -127,7 +132,6 @@ auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
     proc("glVDPAUMapSurfacesNV", d.mapSurfaces);
     proc("glVDPAUUnmapSurfacesNV", d.unmapSurfaces);
     d.initialize(TO_INTEROP(d.device), TO_INTEROP(d.proc));
-    d.ok = true;
 }
 
 
@@ -147,7 +151,6 @@ struct VdpauVideoSurface {
 
 struct HwAccVdpau::Data {
     AVVDPAUContext context;
-    QSize avSize = {0, 0};
     VdpauSurfacePool pool;
 };
 
@@ -155,6 +158,7 @@ HwAccVdpau::HwAccVdpau(AVCodecID cid)
 : HwAcc(cid), d(new Data) {
     memset(&d->context, 0, sizeof(d->context));
     d->context.decoder = VDP_INVALID_HANDLE;
+    d->context.render = Vdpau::decoderRender;
 }
 
 HwAccVdpau::~HwAccVdpau() {
@@ -195,8 +199,6 @@ auto HwAccVdpau::fillContext(AVCodecContext *avctx, int w, int h) -> bool
     }
     if (!d->pool.create(codec->surfaces, width, height, chroma))
         return false;
-    d->avSize = QSize(w, h);
-    d->context.render = Vdpau::decoderRender;
     return true;
 }
 
@@ -268,9 +270,9 @@ auto VdpauMixer::upload(const mp_image *mpi, bool deint) -> bool
 {
     auto structure = VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME;
     if (deint) {
-        if (mpi->flags & MP_IMGFIELD_TOP)
+        if (mpi->fields & MP_IMGFIELD_TOP)
             structure = VDP_VIDEO_MIXER_PICTURE_STRUCTURE_TOP_FIELD;
-        else if (mpi->flags & MP_IMGFIELD_BOTTOM)
+        else if (mpi->fields & MP_IMGFIELD_BOTTOM)
             structure = VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD;
     }
     const auto id = (VdpVideoSurface)(quintptr)(mpi->planes[3]);
