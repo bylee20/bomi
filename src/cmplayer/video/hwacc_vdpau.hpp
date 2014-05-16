@@ -7,6 +7,7 @@
 
 #include "hwacc.hpp"
 #include "hwacc_helper.hpp"
+#include "tmp.hpp"
 extern "C" {
 #include <libavcodec/vdpau.h>
 }
@@ -15,8 +16,10 @@ extern "C" {
 auto initialize_vdpau_interop(QOpenGLContext *ctx) -> void;
 auto finalize_vdpau_interop(QOpenGLContext *ctx) -> void;
 
+static constexpr auto VDP_DECODER_PROFILE_NONE = (VdpDecoderProfile)-1;
+
 struct VdpauProfile {
-    VdpDecoderProfile id = (VdpDecoderProfile)-1;
+    VdpDecoderProfile id = VDP_DECODER_PROFILE_NONE;
     int level = 0, blocks = 0, width = 0, height = 0; // maximum infos
 };
 
@@ -26,11 +29,12 @@ template<> struct HwAccX11Trait<IMGFMT_VDPAU> {
     using Status = VdpStatus;
     static constexpr Status success = VDP_STATUS_OK;
     static constexpr const char *name = "VDPAU";
-    static const char *error(Status status);
     using SurfaceID = VdpVideoSurface;
     static constexpr SurfaceID invalid = VDP_INVALID_HANDLE;
+    static auto error(Status status) -> const char*;
     static auto destroySurface(SurfaceID id) -> void;
-    static auto createSurfaces(int w, int h, int f, QVector<SurfaceID> &ids) -> bool;
+    static auto createSurfaces(int w, int h, int format,
+                               QVector<SurfaceID> &ids) -> bool;
 };
 
 using VdpauCodec = HwAccX11Codec<IMGFMT_VDPAU>;
@@ -54,67 +58,100 @@ public:
     static auto initializeInterop(QOpenGLContext *ctx) -> void;
     static auto finalizeInterop(QOpenGLContext *ctx) -> void;
 
-    static char const *getErrorString(VdpStatus status) {return d.getErrorString(status);}
-    static auto getInformationString(char const **information_string) -> VdpStatus {return d.getInformationString(information_string);}
+    static auto getErrorString(VdpStatus status) -> char const*
+        {return d.getErrorString(status);}
+    static auto getInformationString(char const **info) -> VdpStatus
+        {return d.getInformationString(info);}
     static auto deviceDestroy() -> VdpStatus {return d.deviceDestroy(d.device);}
-    static auto videoSurfaceQueryCapabilities(VdpChromaType type, VdpBool *supported, uint32_t *max_width, uint32_t *max_height) -> VdpStatus {
-        return d.videoSurfaceQueryCapabilities(d.device, type, supported, max_width, max_height);
+    static auto videoSurfaceQueryCaps(VdpChromaType type, VdpBool *ok,
+                                      quint32 *maxw, quint32 *maxh) -> VdpStatus
+        { return d.videoSurfaceQueryCaps(d.device, type, ok, maxw, maxh); }
+    static auto videoSurfaceCreate(VdpChromaType type, quint32 w, quint32 h,
+                                   VdpVideoSurface *surface) -> VdpStatus
+        { return d.videoSurfaceCreate(d.device, type, w, h, surface); }
+    static auto videoSurfaceDestroy(VdpVideoSurface surface) -> VdpStatus
+        {return d.videoSurfaceDestroy(surface);}
+    static auto decoderQueryCaps(VdpDecoderProfile profile, VdpBool *supported,
+                                 quint32 *max_level, quint32 *max_blocks,
+                                 quint32 *maxw, quint32 *maxh) -> VdpStatus
+    {
+        return d.decoderQueryCaps(d.device, profile, supported,
+                                  max_level, max_blocks, maxw, maxh);
     }
-    static auto videoSurfaceCreate(VdpChromaType type, uint32_t width, uint32_t height, VdpVideoSurface *surface) -> VdpStatus {
-        return d.videoSurfaceCreate(d.device, type, width, height, surface);
+    static auto decoderCreate(VdpDecoderProfile profile, quint32 w, quint32 h,
+                              quint32 refs, VdpDecoder *decoder) -> VdpStatus
+        { return d.decoderCreate(d.device, profile, w, h, refs, decoder); }
+    static auto decoderRender(VdpDecoder decoder, VdpVideoSurface target,
+                              const VdpPictureInfo *picture, quint32 count,
+                              const VdpBitstreamBuffer *buffers) -> VdpStatus
+        { return d.decoderRender(decoder, target, picture, count, buffers); }
+    static auto decoderDestroy(VdpDecoder decoder) -> VdpStatus
+        {return d.decoderDestroy(decoder);}
+    static auto videoMixerCreate(quint32 feature_count,
+                                 const VdpVideoMixerFeature *features,
+                                 quint32 parameter_count,
+                                 const VdpVideoMixerParameter *parameters,
+                                 const void *const *parameter_values,
+                                 VdpVideoMixer *mixer) -> VdpStatus
+    {
+        return d.videoMixerCreate(d.device, feature_count, features,
+                                  parameter_count, parameters, parameter_values,
+                                  mixer);
     }
-    static auto videoSurfaceDestroy(VdpVideoSurface surface) -> VdpStatus {return d.videoSurfaceDestroy(surface);}
-    static auto videoSurfaceGetBitsYCbCr(VdpVideoSurface surface, VdpYCbCrFormat format, void *const *data, uint32_t const *pitches) -> VdpStatus {
-        return d.videoSurfaceGetBitsYCbCr(surface, format, data, pitches);
+    static auto videoMixerDestroy(VdpVideoMixer mixer) -> VdpStatus
+        { return d.videoMixerDestroy(mixer); }
+    static auto videoMixerRender
+        (VdpVideoMixer mixer, VdpOutputSurface bg, const VdpRect *bg_src_rect,
+         VdpVideoMixerPictureStructure curt_pic_struct,
+         quint32 s_past_count, const VdpVideoSurface *s_past,
+         VdpVideoSurface s_current,
+         quint32 s_future_count, const VdpVideoSurface *s_future,
+         const VdpRect *source_rect,
+         VdpOutputSurface dest_surface, const VdpRect *dest_rect,
+         const VdpRect *dest_video_rect,
+         quint32 layer_count, const VdpLayer *layers) -> VdpStatus
+    {
+        return d.videoMixerRender(mixer, bg, bg_src_rect, curt_pic_struct,
+                                  s_past_count, s_past, s_current,
+                                  s_future_count, s_future, source_rect,
+                                  dest_surface, dest_rect, dest_video_rect,
+                                  layer_count, layers);
     }
-    static auto decoderQueryCapabilities(VdpDecoderProfile profile, VdpBool *supported, uint32_t *max_level, uint32_t *max_macroblocks, uint32_t *max_width, uint32_t *max_height) -> VdpStatus {
-        return d.decoderQueryCapabilities(d.device, profile, supported, max_level, max_macroblocks, max_width, max_height);
+    static auto outputSurfaceCreate(VdpRGBAFormat rgba, quint32 w, quint32 h,
+                                    VdpOutputSurface * surface) -> VdpStatus
+        { return d.outputSurfaceCreate(d.device, rgba, w, h, surface); }
+    static auto outputSurfaceDestroy(VdpOutputSurface surface) -> VdpStatus
+        { return d.outputSurfaceDestroy(surface); }
+    static auto registerOutputSurface(VdpOutputSurface surface, GLenum target,
+                                      GLsizei numTexturesNames,
+                                      const GLuint *textureNames)
+    -> GLvdpauSurfaceNV
+    {
+        return d.registerOutputSurface(TO_INTEROP(surface), target,
+                                       numTexturesNames, textureNames);
     }
-    static auto decoderCreate(VdpDecoderProfile profile, uint32_t width, uint32_t height, uint32_t max_references, VdpDecoder *decoder) -> VdpStatus {
-        return d.decoderCreate(d.device, profile, width, height, max_references, decoder);
-    }
-    static auto decoderRender(VdpDecoder decoder, VdpVideoSurface target, VdpPictureInfo const *picture_info, uint32_t count, VdpBitstreamBuffer const *buffers) -> VdpStatus {
-        return d.decoderRender(decoder, target, picture_info, count, buffers);
-    }
-    static auto decoderDestroy(VdpDecoder decoder) -> VdpStatus {return d.decoderDestroy(decoder);}
-    static VdpStatus videoMixerCreate(uint32_t feature_count, const VdpVideoMixerFeature *features
-        , uint32_t parameter_count, const VdpVideoMixerParameter *parameters, const void *const *parameter_values, VdpVideoMixer *mixer) {
-        return d.videoMixerCreate(d.device, feature_count, features, parameter_count, parameters, parameter_values, mixer);
-    }
-    static auto videoMixerDestroy(VdpVideoMixer mixer) -> VdpStatus { return d.videoMixerDestroy(mixer); }
-    static VdpStatus videoMixerRender(VdpVideoMixer mixer, VdpOutputSurface background_surface, const VdpRect *background_source_rect
-        , VdpVideoMixerPictureStructure current_picture_structure, uint32_t video_surface_past_count, const VdpVideoSurface *video_surface_past
-        , VdpVideoSurface video_surface_current,uint32_t video_surface_future_count, const VdpVideoSurface *video_surface_future
-        , const VdpRect *video_source_rect, VdpOutputSurface destination_surface
-        , const VdpRect *destination_rect, const VdpRect *destination_video_rect, uint32_t layer_count, const VdpLayer *layers) {
-        return d.videoMixerRender(mixer, background_surface, background_source_rect
-                                  , current_picture_structure, video_surface_past_count, video_surface_past
-                                  , video_surface_current, video_surface_future_count, video_surface_future
-                                  , video_source_rect, destination_surface
-                                  , destination_rect, destination_video_rect, layer_count, layers);
-    }
-
-    static auto outputSurfaceCreate(VdpRGBAFormat rgba_format, uint32_t width, uint32_t height, VdpOutputSurface * surface) -> VdpStatus {
-        return d.outputSurfaceCreate(d.device, rgba_format, width, height, surface);
-    }
-    static auto outputSurfaceDestroy(VdpOutputSurface surface) -> VdpStatus { return d.outputSurfaceDestroy(surface); }
-
-    static auto registerOutputSurface(VdpOutputSurface surface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) -> GLvdpauSurfaceNV {
-        return d.registerOutputSurface(TO_INTEROP(surface), target, numTextureNames, textureNames);
-    }
-    static auto isSurface(GLvdpauSurfaceNV surface) -> GLboolean { return d.isSurface(surface); }
-    static auto unregisterSurface(GLvdpauSurfaceNV surface) -> void { d.unregisterSurface(surface); }
-    static auto getSurfaceiv(GLvdpauSurfaceNV surface, GLenum pname, GLsizei bufSize, GLsizei *length, int *values) -> void {
-        d.getSurfaceiv(surface, pname, bufSize, length, values);
-    }
-    static auto surfaceAccess(GLvdpauSurfaceNV surface, GLenum access) -> void { d.surfaceAccess(surface, access); }
-    static auto mapSurfaces(GLsizei numSurfaces, const GLvdpauSurfaceNV *surfaces) -> void { d.mapSurfaces(numSurfaces, surfaces); }
-    static auto unmapSurfaces(GLsizei numSurface, const GLvdpauSurfaceNV *surfaces) -> void { d.unmapSurfaces(numSurface, surfaces); }
+    static auto isSurface(GLvdpauSurfaceNV surface) -> GLboolean
+        { return d.isSurface(surface); }
+    static auto unregisterSurface(GLvdpauSurfaceNV surface) -> void
+        { d.unregisterSurface(surface); }
+    static auto getSurfaceiv(GLvdpauSurfaceNV surface, GLenum pname,
+                             GLsizei bufSize, GLsizei *length,
+                             int *values) -> void
+        { d.getSurfaceiv(surface, pname, bufSize, length, values); }
+    static auto surfaceAccess(GLvdpauSurfaceNV surface, GLenum access) -> void
+        { d.surfaceAccess(surface, access); }
+    static auto mapSurfaces(GLsizei numSurfaces,
+                            const GLvdpauSurfaceNV *surfaces) -> void
+        { d.mapSurfaces(numSurfaces, surfaces); }
+    static auto unmapSurfaces(GLsizei numSurface,
+                              const GLvdpauSurfaceNV *surfaces) -> void
+        { d.unmapSurfaces(numSurface, surfaces); }
     static auto isInitialized() -> bool { return d.init; }
     static auto isAvailable() -> bool;
 private:
-    template<class T, class = typename std::enable_if<!std::is_pointer<T>::value>::type>
-    static const void *TO_INTEROP(T handle) { return (const void*)(quintptr)(handle); }
+    template<class T, class = tmp::enable_if_t<!std::is_pointer<T>::value>>
+    static auto TO_INTEROP(T handle) -> const void *
+        { return (const void*)(quintptr)(handle); }
     struct Data : public VdpauStatusChecker {
         VdpDevice device = 0;
         VdpGetProcAddress *proc = nullptr;
@@ -122,11 +159,11 @@ private:
         VdpGetErrorString *getErrorString = nullptr;
         VdpGetInformationString *getInformationString = nullptr;
         VdpDeviceDestroy *deviceDestroy = nullptr;
-        VdpVideoSurfaceQueryCapabilities *videoSurfaceQueryCapabilities = nullptr;
+        VdpVideoSurfaceQueryCapabilities *videoSurfaceQueryCaps = nullptr;
         VdpVideoSurfaceCreate *videoSurfaceCreate = nullptr;
         VdpVideoSurfaceDestroy *videoSurfaceDestroy = nullptr;
         VdpVideoSurfaceGetBitsYCbCr *videoSurfaceGetBitsYCbCr = nullptr;
-        VdpDecoderQueryCapabilities *decoderQueryCapabilities = nullptr;
+        VdpDecoderQueryCapabilities *decoderQueryCaps = nullptr;
         VdpDecoderCreate *decoderCreate = nullptr;
         VdpDecoderRender *decoderRender = nullptr;
         VdpDecoderDestroy *decoderDestroy = nullptr;
@@ -136,14 +173,16 @@ private:
         VdpOutputSurfaceCreate *outputSurfaceCreate = nullptr;
         VdpOutputSurfaceDestroy *outputSurfaceDestroy = nullptr;
 
-        GLvdpauSurfaceNV (*registerOutputSurface) (const GLvoid *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames) = nullptr;
-        GLboolean (*isSurface) (GLvdpauSurfaceNV surface) = nullptr;
-        void (*unregisterSurface) (GLvdpauSurfaceNV surface) = nullptr;
-        void (*getSurfaceiv) (GLvdpauSurfaceNV surface, GLenum pname, GLsizei bufSize, GLsizei *length, int *values) = nullptr;
-        void (*surfaceAccess) (GLvdpauSurfaceNV surface, GLenum access) = nullptr;
-        void (*mapSurfaces) (GLsizei numSurfaces, const GLvdpauSurfaceNV *surfaces) = nullptr;
-        void (*unmapSurfaces) (GLsizei numSurface, const GLvdpauSurfaceNV *surfaces) = nullptr;
-        void (*initialize) (const GLvoid *vdpDevice, const GLvoid *getProcAddress) = nullptr;
+        GLvdpauSurfaceNV(*registerOutputSurface)(const GLvoid*, GLenum, GLsizei,
+                                                 const GLuint*) = nullptr;
+        GLboolean (*isSurface) (GLvdpauSurfaceNV) = nullptr;
+        void (*unregisterSurface) (GLvdpauSurfaceNV) = nullptr;
+        void (*getSurfaceiv) (GLvdpauSurfaceNV, GLenum, GLsizei, GLsizei*,
+                              int*) = nullptr;
+        void (*surfaceAccess) (GLvdpauSurfaceNV, GLenum) = nullptr;
+        void (*mapSurfaces) (GLsizei, const GLvdpauSurfaceNV *) = nullptr;
+        void (*unmapSurfaces) (GLsizei, const GLvdpauSurfaceNV *) = nullptr;
+        void (*initialize) (const GLvoid *, const GLvoid *) = nullptr;
         void (*finalize) (void) = nullptr;
 
         QOpenGLContext *gl = nullptr;
@@ -158,22 +197,25 @@ private:
         return d.status();
     }
     template<class T>
-    static auto proc(const QByteArray &name, T &func) -> bool { return (func = reinterpret_cast<T>(d.gl->getProcAddress(name))) != nullptr; }
+    static auto proc(const QByteArray &name, T &func) -> bool
+    {
+        func = reinterpret_cast<T>(d.gl->getProcAddress(name));
+        return func != nullptr;
+    }
 };
 
 class HwAccVdpau : public HwAcc, public VdpauStatusChecker {
 public:
     HwAccVdpau(AVCodecID cid);
     ~HwAccVdpau();
-    virtual auto isOk() const -> bool override { return isSuccess(); }
-    virtual void *context() const override;
-    virtual mp_image *getSurface() override;
-    virtual auto type() const -> Type override {return VdpauX11;}
-    virtual mp_image *getImage(mp_image *mpi);
+    virtual auto isOk() const -> bool final { return isSuccess(); }
+    virtual auto context() const -> void* final;
+    virtual auto getSurface() -> mp_image* final;
+    virtual auto type() const -> Type final {return VdpauX11;}
+    virtual auto getImage(mp_image *mpi) -> mp_image*;
 private:
     auto freeContext() -> void;
-    auto fillContext(AVCodecContext *avctx, int w, int h) -> bool override;
-
+    auto fillContext(AVCodecContext *avctx, int w, int h) -> bool final;
 private:
     struct Data;
     Data *d;

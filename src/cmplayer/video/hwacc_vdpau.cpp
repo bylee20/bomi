@@ -25,21 +25,26 @@ extern "C" {
 
 #define TO_INTEROP(a) (void*)(quintptr)(a)
 
-const char *HwAccX11Trait<IMGFMT_VDPAU>::error(Status status) {
+auto HwAccX11Trait<IMGFMT_VDPAU>::error(Status status) -> const char*
+{
     if (Vdpau::isAvailable())
         return Vdpau::getErrorString(status);
     return status == success ? "SUCCESS" : "ERROR";
 }
 
-void HwAccX11Trait<IMGFMT_VDPAU>::destroySurface(SurfaceID id) {
+auto HwAccX11Trait<IMGFMT_VDPAU>::destroySurface(SurfaceID id) -> void
+{
     if (id != invalid)
         Vdpau::videoSurfaceDestroy(id);
 }
 
-bool HwAccX11Trait<IMGFMT_VDPAU>::createSurfaces(int w, int h, int f, QVector<SurfaceID> &ids) {
+auto HwAccX11Trait<IMGFMT_VDPAU>::createSurfaces(int w, int h, int format,
+                                                 QVector<SurfaceID> &ids)-> bool
+{
     VdpauStatusChecker checker;
     for (int i=0; i<ids.size(); ++i) {
-        if (!checker.isSuccess(Vdpau::videoSurfaceCreate(f, w, h, &ids[i])))
+        if (!checker.isSuccess(Vdpau::videoSurfaceCreate(format,
+                                                         w, h, &ids[i])))
             return false;
         if (ids[i] == invalid)
             return false;
@@ -53,53 +58,91 @@ auto Vdpau::initialize() -> void
 {
     if (d.init || !OpenGLCompat::hasExtension(OpenGLCompat::NvVdpauInterop))
         return;
-    if (!d.check(vdp_device_create_x11(QX11Info::display(), QX11Info::appScreen(), &d.device, &d.proc), "Cannot intialize VDPAU device"))
+    if (!d.check(vdp_device_create_x11(QX11Info::display(),
+                                       QX11Info::appScreen(),
+                                       &d.device, &d.proc),
+                 "Cannot intialize VDPAU device"))
         return;
-    proc(VDP_FUNC_ID_GET_ERROR_STRING, d.getErrorString);
-    proc(VDP_FUNC_ID_GET_INFORMATION_STRING, d.getInformationString);
-    proc(VDP_FUNC_ID_DEVICE_DESTROY, d.deviceDestroy);
-    proc(VDP_FUNC_ID_VIDEO_SURFACE_QUERY_CAPABILITIES, d.videoSurfaceQueryCapabilities);
-    proc(VDP_FUNC_ID_VIDEO_SURFACE_CREATE, d.videoSurfaceCreate);
-    proc(VDP_FUNC_ID_VIDEO_SURFACE_DESTROY, d.videoSurfaceDestroy);
-    proc(VDP_FUNC_ID_VIDEO_SURFACE_GET_BITS_Y_CB_CR, d.videoSurfaceGetBitsYCbCr);
-    proc(VDP_FUNC_ID_DECODER_CREATE, d.decoderCreate);
-    proc(VDP_FUNC_ID_DECODER_DESTROY, d.decoderDestroy);
-    proc(VDP_FUNC_ID_DECODER_RENDER, d.decoderRender);
-    proc(VDP_FUNC_ID_DECODER_QUERY_CAPABILITIES, d.decoderQueryCapabilities);
-    proc(VDP_FUNC_ID_VIDEO_MIXER_CREATE, d.videoMixerCreate);
-    proc(VDP_FUNC_ID_VIDEO_MIXER_DESTROY, d.videoMixerDestroy);
-    proc(VDP_FUNC_ID_VIDEO_MIXER_RENDER, d.videoMixerRender);
-    proc(VDP_FUNC_ID_OUTPUT_SURFACE_CREATE, d.outputSurfaceCreate);
-    proc(VDP_FUNC_ID_OUTPUT_SURFACE_DESTROY, d.outputSurfaceDestroy);
+#define PROC(id, f) proc(VDP_FUNC_ID_##id, f)
+    PROC(GET_ERROR_STRING,                 d.getErrorString);
+    PROC(GET_INFORMATION_STRING,           d.getInformationString);
+    PROC(DEVICE_DESTROY,                   d.deviceDestroy);
+    PROC(VIDEO_SURFACE_QUERY_CAPABILITIES, d.videoSurfaceQueryCaps);
+    PROC(VIDEO_SURFACE_CREATE,             d.videoSurfaceCreate);
+    PROC(VIDEO_SURFACE_DESTROY,            d.videoSurfaceDestroy);
+    PROC(VIDEO_SURFACE_GET_BITS_Y_CB_CR,   d.videoSurfaceGetBitsYCbCr);
+    PROC(DECODER_CREATE,                   d.decoderCreate);
+    PROC(DECODER_DESTROY,                  d.decoderDestroy);
+    PROC(DECODER_RENDER,                   d.decoderRender);
+    PROC(DECODER_QUERY_CAPABILITIES,       d.decoderQueryCaps);
+    PROC(VIDEO_MIXER_CREATE,               d.videoMixerCreate);
+    PROC(VIDEO_MIXER_DESTROY,              d.videoMixerDestroy);
+    PROC(VIDEO_MIXER_RENDER,               d.videoMixerRender);
+    PROC(OUTPUT_SURFACE_CREATE,            d.outputSurfaceCreate);
+    PROC(OUTPUT_SURFACE_DESTROY,           d.outputSurfaceDestroy);
+#undef PROC
     if (!d.check(d.status(), "Cannot get VDPAU functions."))
         return;
-    auto push = [] (VdpDecoderProfile profile, int avProfile, AVCodecID codec, int surfaces) {
-        VdpBool supported = false; quint32 level = 0, blocks = 0, width = 0, height = 0;
-        if (d.decoderQueryCapabilities(d.device, profile, &supported, &level, &blocks, &width, &height) != VDP_STATUS_OK || !supported)
-            return;
-        VdpauProfile p; p.id = profile; p.level = level; p.blocks = blocks; p.width = width; p.height = height;
-        auto &supports = d.supports[codec];
-        supports.id = codec;
-        supports.profiles.push_back(p);
-        supports.avProfiles.push_back(avProfile);
-        supports.surfaces = qMin(surfaces + 2, 16);
+    auto get = [] (VdpDecoderProfile id) -> VdpauProfile
+    {
+        VdpBool supported = false;
+        quint32 lv = 0, blocks = 0, w = 0, h = 0;
+        VdpauProfile profile;
+        if (d.decoderQueryCaps(d.device, id, &supported, &lv, &blocks,
+                                       &w, &h) == VDP_STATUS_OK && supported) {
+            profile.id = id; profile.level = lv; profile.blocks = blocks;
+            profile.width = w; profile.height = h;
+        }
+        return profile;
     };
 
-    push(VDP_DECODER_PROFILE_MPEG1, FF_PROFILE_UNKNOWN, AV_CODEC_ID_MPEG1VIDEO, 2);
-    push(VDP_DECODER_PROFILE_MPEG2_MAIN, FF_PROFILE_MPEG2_MAIN, AV_CODEC_ID_MPEG2VIDEO, 2);
-    push(VDP_DECODER_PROFILE_MPEG2_SIMPLE, FF_PROFILE_MPEG2_SIMPLE, AV_CODEC_ID_MPEG2VIDEO, 2);
-    push(VDP_DECODER_PROFILE_H264_HIGH, FF_PROFILE_H264_HIGH, AV_CODEC_ID_H264, 16);
-    push(VDP_DECODER_PROFILE_H264_BASELINE, FF_PROFILE_H264_BASELINE, AV_CODEC_ID_H264, 16);
-    push(VDP_DECODER_PROFILE_H264_BASELINE, FF_PROFILE_H264_CONSTRAINED_BASELINE, AV_CODEC_ID_H264, 16);
-    push(VDP_DECODER_PROFILE_H264_MAIN, FF_PROFILE_H264_MAIN, AV_CODEC_ID_H264, 16);
-    push(VDP_DECODER_PROFILE_VC1_ADVANCED, FF_PROFILE_VC1_ADVANCED, AV_CODEC_ID_VC1, 2);
-    push(VDP_DECODER_PROFILE_VC1_SIMPLE, FF_PROFILE_VC1_SIMPLE, AV_CODEC_ID_VC1, 2);
-    push(VDP_DECODER_PROFILE_VC1_MAIN, FF_PROFILE_VC1_MAIN, AV_CODEC_ID_VC1, 2);
-    push(VDP_DECODER_PROFILE_VC1_MAIN, FF_PROFILE_VC1_MAIN, AV_CODEC_ID_WMV3, 2);
-    push(VDP_DECODER_PROFILE_VC1_SIMPLE, FF_PROFILE_VC1_SIMPLE, AV_CODEC_ID_WMV3, 2);
-    push(VDP_DECODER_PROFILE_VC1_ADVANCED, FF_PROFILE_VC1_ADVANCED, AV_CODEC_ID_WMV3, 2);
-    push(VDP_DECODER_PROFILE_MPEG4_PART2_ASP, FF_PROFILE_MPEG4_ADVANCED_SIMPLE, AV_CODEC_ID_MPEG4, 2);
-    push(VDP_DECODER_PROFILE_MPEG4_PART2_SP, FF_PROFILE_MPEG4_SIMPLE, AV_CODEC_ID_MPEG4, 2);
+    auto push = [] (const QVector<VdpauCodec::ProfilePair> &pairs,
+                    AVCodecID codec, int surfaces)
+    {
+        for (auto &pair : pairs) {
+            if (pair.hw.id == VDP_DECODER_PROFILE_NONE)
+                continue;
+            auto &supports = d.supports[codec];
+            supports.id = codec;
+            supports.profiles.push_back(pair);
+            supports.surfaces = qMin(surfaces + 2, 16);
+        }
+    };
+#define PAIR(vdp, ff) { get(VDP_DECODER_PROFILE_##vdp), FF_PROFILE_##ff }
+    const QVector<VdpauCodec::ProfilePair> mpeg1s = {
+        PAIR(MPEG1, UNKNOWN)
+    };
+    const QVector<VdpauCodec::ProfilePair> mpeg2s = {
+        PAIR(MPEG2_MAIN,   MPEG2_MAIN),
+        PAIR(MPEG2_SIMPLE, MPEG2_SIMPLE)
+    };
+    const QVector<VdpauCodec::ProfilePair> h264s = {
+        PAIR(H264_HIGH,     H264_HIGH),
+        PAIR(H264_BASELINE, H264_BASELINE),
+        PAIR(H264_BASELINE, H264_CONSTRAINED_BASELINE),
+        PAIR(H264_MAIN,     H264_MAIN)
+    };
+    const QVector<VdpauCodec::ProfilePair> vc1s = {
+        PAIR(VC1_ADVANCED, VC1_ADVANCED),
+        PAIR(VC1_SIMPLE,   VC1_SIMPLE),
+        PAIR(VC1_MAIN,     VC1_MAIN)
+    };
+    const QVector<VdpauCodec::ProfilePair> wmv3s = {
+        PAIR(VC1_MAIN,     VC1_MAIN),
+        PAIR(VC1_SIMPLE,   VC1_SIMPLE),
+        PAIR(VC1_ADVANCED, VC1_ADVANCED)
+    };
+    const QVector<VdpauCodec::ProfilePair> mpeg4s = {
+        PAIR(MPEG4_PART2_ASP, MPEG4_ADVANCED_SIMPLE),
+        PAIR(MPEG4_PART2_SP,  MPEG4_SIMPLE)
+    };
+#undef PAIR
+    push(mpeg1s, AV_CODEC_ID_MPEG1VIDEO, 2);
+    push(mpeg2s, AV_CODEC_ID_MPEG2VIDEO, 2);
+    push(h264s, AV_CODEC_ID_H264, 16);
+    push(vc1s, AV_CODEC_ID_VC1, 2);
+    push(wmv3s, AV_CODEC_ID_WMV3, 2);
+    push(mpeg4s, AV_CODEC_ID_MPEG4, 2);
     _Debug("VDPAU device is initialized.");
     d.init = true;
 }
@@ -122,15 +165,15 @@ auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
     if (!d.init || d.initialize)
         return;
     d.gl = ctx;
-    proc("glVDPAUInitNV", d.initialize);
-    proc("glVDPAUFiniNV", d.finalize);
+    proc("glVDPAUInitNV",                  d.initialize);
+    proc("glVDPAUFiniNV",                  d.finalize);
     proc("glVDPAURegisterOutputSurfaceNV", d.registerOutputSurface);
-    proc("glVDPAUIsSurfaceNV", d.isSurface);
-    proc("glVDPAUUnregisterSurfaceNV", d.unregisterSurface);
-    proc("glVDPAUGetSurfaceivNV", d.getSurfaceiv);
-    proc("glVDPAUSurfaceAccessNV", d.surfaceAccess);
-    proc("glVDPAUMapSurfacesNV", d.mapSurfaces);
-    proc("glVDPAUUnmapSurfacesNV", d.unmapSurfaces);
+    proc("glVDPAUIsSurfaceNV",             d.isSurface);
+    proc("glVDPAUUnregisterSurfaceNV",     d.unregisterSurface);
+    proc("glVDPAUGetSurfaceivNV",          d.getSurfaceiv);
+    proc("glVDPAUSurfaceAccessNV",         d.surfaceAccess);
+    proc("glVDPAUMapSurfacesNV",           d.mapSurfaces);
+    proc("glVDPAUUnmapSurfacesNV",         d.unmapSurfaces);
     d.initialize(TO_INTEROP(d.device), TO_INTEROP(d.proc));
 }
 
@@ -185,15 +228,16 @@ auto HwAccVdpau::fillContext(AVCodecContext *avctx, int w, int h) -> bool
     const auto profile = codec->profile(avctx->profile);
     if (profile.width < w || profile.height < h || profile.level < avctx->level)
         return false;
-    VdpBool supports = false; uint mwidth = 0, mheight = 0;
+    VdpBool supports = false; uint mw = 0, mh = 0;
     constexpr VdpChromaType chroma = VDP_CHROMA_TYPE_420;
-    if (!check(Vdpau::videoSurfaceQueryCapabilities(chroma, &supports, &mwidth, &mheight)))
+    if (!check(Vdpau::videoSurfaceQueryCaps(chroma, &supports, &mw, &mh)))
         return false;
-    if (!supports || (int)mwidth < w || (int)mheight < h)
+    if (!supports || (int)mw < w || (int)mh < h)
         return false;
     const int width = (w + 1) & ~1;
     const int height = (h + 3) & ~3;
-    if (!check(Vdpau::decoderCreate(profile.id, width, height, codec->surfaces, &d->context.decoder))) {
+    if (!check(Vdpau::decoderCreate(profile.id, width, height,
+                                    codec->surfaces, &d->context.decoder))) {
         d->context.decoder = VDP_INVALID_HANDLE;
         return false;
     }
@@ -217,7 +261,7 @@ auto HwAccVdpau::getImage(mp_image *mpi) -> mp_image*
     return mpi;
 }
 
-/******************************************************************/
+/******************************************************************************/
 
 VdpauMixer::VdpauMixer(const QSize &size)
 : HwAccMixer(size) {
@@ -242,7 +286,7 @@ auto VdpauMixer::create(const QList<OpenGLTexture2D> &textures) -> bool
     static const QVector<VdpVideoMixerParameter> params = {
         VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH,
         VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_HEIGHT,
-        VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE,
+        VDP_VIDEO_MIXER_PARAMETER_CHROMA_TYPE
     };
     const quint32 width = this->width(), height = this->height();
     const QVector<const void *> values = { &width, &height, &m_chroma };
@@ -276,8 +320,11 @@ auto VdpauMixer::upload(const mp_image *mpi, bool deint) -> bool
             structure = VDP_VIDEO_MIXER_PICTURE_STRUCTURE_BOTTOM_FIELD;
     }
     const auto id = (VdpVideoSurface)(quintptr)(mpi->planes[3]);
-    return check(Vdpau::videoMixerRender(m_mixer, VDP_INVALID_HANDLE, nullptr, structure, 0, nullptr, id, 0, nullptr
-        , nullptr, m_surface, nullptr, nullptr, 0, nullptr), "Cannot render video surface.");
+    return check(Vdpau::videoMixerRender(m_mixer, VDP_INVALID_HANDLE, nullptr,
+                                         structure, 0, nullptr, id, 0, nullptr,
+                                         nullptr, m_surface, nullptr, nullptr,
+                                         0, nullptr),
+                 "Cannot render video surface.");
 }
 
 auto VdpauMixer::getAligned(const mp_image */*mpi*/,

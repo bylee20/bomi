@@ -59,30 +59,34 @@ template<mp_imgfmt imgfmt>
 struct HwAccX11Codec {
     using Trait = HwAccX11Trait<imgfmt>;
     using Profile = typename Trait::Profile;
+    struct ProfilePair {
+        ProfilePair() = default;
+        ProfilePair(const Profile &hw, int ff): hw(hw), ff(ff) { }
+        Profile hw; int ff = FF_PROFILE_UNKNOWN;
+    };
     HwAccX11Codec() { }
-    HwAccX11Codec(const QVector<Profile> &available, const QVector<Profile> &p,
-                  const QVector<int> &av, int surfaces, AVCodecID id)
+    HwAccX11Codec(const QVector<Profile> &available,
+                  const QVector<ProfilePair> &pairs, int surfaces, AVCodecID id)
     {
-        Q_ASSERT(p.size() == av.size());
-        for (int i=0; i<p.size(); ++i) {
-            if (available.contains(p[i])) {
-                profiles.push_back(p[i]);
-                avProfiles.push_back(av[i]);
-            }
+        for (auto &pair : pairs) {
+            if (available.contains(pair.hw))
+                profiles.push_back(pair);
         }
         if (!profiles.isEmpty()) {
             this->surfaces = surfaces;
             this->id = id;
         }
     }
-    auto profile(int av) const -> Profile {
-        const int idx = avProfiles.indexOf(av);
-        return profiles[idx < 0 || av == FF_PROFILE_UNKNOWN ? 0 : idx];
+    auto profile(int ff) const -> Profile {
+        for (auto &pair : profiles) {
+            if (pair.ff == ff)
+                return pair.hw;
+        }
+        return profiles.front().hw;
     }
     AVCodecID id = AV_CODEC_ID_NONE;
     int surfaces = 0, level = 0;
-    QVector<Profile> profiles;
-    QVector<int> avProfiles;
+    QVector<ProfilePair> profiles;
 };
 
 template<mp_imgfmt imgfmt> class HwAccX11SurfacePool;

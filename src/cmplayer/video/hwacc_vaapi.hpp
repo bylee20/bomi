@@ -28,7 +28,8 @@ template<> struct HwAccX11Trait<IMGFMT_VAAPI> {
     using SurfaceID = VASurfaceID;
     static constexpr SurfaceID invalid = VA_INVALID_SURFACE;
     static auto destroySurface(SurfaceID id) -> void;
-    static auto createSurfaces(int width, int height, int format, QVector<SurfaceID> &ids) -> bool;
+    static auto createSurfaces(int w, int h, int format,
+                               QVector<SurfaceID> &ids) -> bool;
 };
 
 using VaApiStatusChecker = HwAccX11StatusChecker<IMGFMT_VAAPI>;
@@ -72,7 +73,8 @@ struct VaApiFilterInfo : public VaApiStatusChecker {
     }
     const QVector<int> &algorithms() const { return m_algorithms; }
     static auto description(VAProcFilterType type, int algorithm) -> QString;
-    auto supports(int algorithm) const -> bool { return m_algorithms.contains(algorithm); }
+    auto supports(int algorithm) const -> bool
+        { return m_algorithms.contains(algorithm); }
 private:
     QVector<int> m_algorithms;
     VAProcFilterType m_type = VAProcFilterNone;
@@ -81,13 +83,16 @@ private:
 #endif
 
 struct VaApi : public VaApiStatusChecker {
-    static const VaApiCodec *codec(AVCodecID id) { return find(id, get().m_supported); }
+    static auto codec(AVCodecID id) -> const VaApiCodec*
+        { return find(id, get().m_supported); }
     static auto glx() -> VADisplay {return m_display;}
 #ifdef USE_VAVPP
     static auto toVAType(DeintMethod method) -> VAProcDeinterlacingType;
-    static const VaApiFilterInfo *filter(VAProcFilterType type) { return find(type, get().m_filters); }
-    static QList<VaApiFilterInfo> filters() { return get().m_filters.values(); }
-    static QList<int> algorithms(VAProcFilterType type);
+    static auto filter(VAProcFilterType type) -> const VaApiFilterInfo*
+        { return find(type, get().m_filters); }
+    static auto filters() -> QList<VaApiFilterInfo>
+        { return get().m_filters.values(); }
+    static auto algorithms(VAProcFilterType type) -> QList<int>;
 #endif
     static auto surfaceFormat() -> int {return get().m_surfaceFormat;}
     static auto toVAType(int mp_fields, bool first) -> int;
@@ -96,13 +101,11 @@ struct VaApi : public VaApiStatusChecker {
     static auto isAvailable() -> bool { return ok; }
 private:
     auto setSurfaceFormat(int format) -> void { m_surfaceFormat = format; }
-    auto hasEntryPoint(VAEntrypoint point, VAProfile profile = VAProfileNone) -> bool {
-        auto entries = find(profile, m_entries); return entries && entries->contains(point);
-    }
+    auto hasEntryPoint(VAEntrypoint point,
+                       VAProfile profile = VAProfileNone) -> bool;
     template<class Map>
-    static const typename Map::mapped_type *find(typename Map::key_type key, const Map &map) {
-        const auto it = map.find(key); return (it != map.end()) ? &(*it) : nullptr;
-    }
+    static auto find(typename Map::key_type key,
+                     const Map &map) -> const typename Map::mapped_type*;
     auto initCodecs() -> void;
 #ifdef USE_VAVPP
     auto initFilters() -> void;
@@ -119,17 +122,30 @@ private:
     friend class HwAccVaApi;
 };
 
+inline auto VaApi::hasEntryPoint(VAEntrypoint point, VAProfile profile) -> bool
+{
+    auto entries = find(profile, m_entries);
+    return entries && entries->contains(point);
+}
+
+template<class Map>
+inline auto VaApi::find(typename Map::key_type key,
+                        const Map &map) -> const typename Map::mapped_type*
+{
+    const auto it = map.find(key);
+    return (it != map.end()) ? &(*it) : nullptr;
+}
+
 class VaApiMixer : public HwAccMixer, public VaApiStatusChecker{
 public:
     ~VaApiMixer();
     auto create(const QList<OpenGLTexture2D> &textures) -> bool final;
-    auto upload(const mp_image *mpi, bool deint) -> bool override;
-    auto directRendering() const -> bool override { return true; }
+    auto upload(const mp_image *mpi, bool deint) -> bool final;
+    auto directRendering() const -> bool final { return true; }
     auto getAligned(const mp_image *mpi,
                     QVector<QSize> *bytes) -> mp_imgfmt final;
 private:
     VaApiMixer(const QSize &size);
-
     void *m_glSurface = nullptr;
     friend class HwAcc;
 };

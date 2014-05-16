@@ -15,13 +15,17 @@ bool VaApi::ok = false;
 VADisplay VaApi::m_display = nullptr;
 VaApi &VaApi::get() {static VaApi info; return info;}
 
-void HwAccX11Trait<IMGFMT_VAAPI>::destroySurface(SurfaceID id) {
+auto HwAccX11Trait<IMGFMT_VAAPI>::destroySurface(SurfaceID id) -> void
+{
    vaDestroySurfaces(VaApi::glx(), &id, 1);
 }
 
-bool HwAccX11Trait<IMGFMT_VAAPI>::createSurfaces(int width, int height,
-                                                 int format, QVector<SurfaceID> &ids) {
-    return VaApiStatusChecker().isSuccess(vaCreateSurfaces(VaApi::glx(), width, height, format, ids.size(), ids.data()));
+auto HwAccX11Trait<IMGFMT_VAAPI>::createSurfaces(int w, int h, int format,
+                                                 QVector<SurfaceID> &ids)-> bool
+{
+    VaApiStatusChecker c;
+    return c.isSuccess(vaCreateSurfaces(VaApi::glx(), w, h, format,
+                                        ids.size(), ids.data()));
 }
 
 #ifdef USE_VAVPP
@@ -37,7 +41,8 @@ auto VaApi::toVAType(DeintMethod method) -> VAProcDeinterlacingType
     }
 }
 
-auto VaApiFilterInfo::description(VAProcFilterType type, int algorithm) -> QString
+auto VaApiFilterInfo::description(VAProcFilterType type,
+                                  int algorithm) -> QString
 {
     switch (type) {
     case VAProcFilterNoiseReduction:
@@ -81,7 +86,8 @@ auto VaApi::algorithms(VAProcFilterType type) -> QList<int>
     return ret;
 }
 
-VaApiFilterInfo::VaApiFilterInfo(VAContextID context, VAProcFilterType type) {
+VaApiFilterInfo::VaApiFilterInfo(VAContextID context, VAProcFilterType type)
+{
     m_type = type;
     uint size = 0;
     auto dpy = VaApi::glx();
@@ -126,21 +132,25 @@ VaApi::VaApi() {
     init = true;
     auto xdpy = QX11Info::display();
     VADisplay display = m_display = vaGetDisplayGLX(xdpy);
-    if (!check(display ? VA_STATUS_SUCCESS : VA_STATUS_ERROR_UNIMPLEMENTED, "Cannot create VADisplay."))
+    if (!check(display ? VA_STATUS_SUCCESS : VA_STATUS_ERROR_UNIMPLEMENTED,
+               "Cannot create VADisplay."))
         return;
     int major, minor;
-    if (!check(vaInitialize(m_display, &major, &minor), "Cannot initialize VA-API."))
+    if (!check(vaInitialize(m_display, &major, &minor),
+               "Cannot initialize VA-API."))
         return;
     auto size = vaMaxNumProfiles(display);
     m_profiles.resize(size);
-    if (!check(vaQueryConfigProfiles(display, m_profiles.data(), &size), "No available profiles."))
+    if (!check(vaQueryConfigProfiles(display, m_profiles.data(), &size),
+               "No available profiles."))
         return;
     m_profiles.resize(size);
 
     for (auto profile : m_profiles) {
         int size = vaMaxNumEntrypoints(display);
         QVector<VAEntrypoint> entries(size);
-        if (!isSuccess(vaQueryConfigEntrypoints(display, profile, entries.data(), &size)))
+        if (!isSuccess(vaQueryConfigEntrypoints(display, profile,
+                                                entries.data(), &size)))
             continue;
         entries.resize(size);
         m_entries.insert(profile, entries);
@@ -174,37 +184,50 @@ auto VaApi::finalize() -> void
 
 auto VaApi::initCodecs() -> void
 {
-    auto supports = [this](const QVector<VAProfile> &va_all, const QVector<int> &av_all, int surfaces, AVCodecID id) {
-        QVector<VAProfile> va; QVector<int> av;
-        for (int i=0; i<va_all.size(); ++i) {
-            if (hasEntryPoint(VAEntrypointVLD, va_all[i])) {
-                va.push_back(va_all[i]);
-                av.push_back(av_all[i]);
-            }
+    auto supports = [this](const QVector<VaApiCodec::ProfilePair> &pairs,
+                           int surfaces, AVCodecID id)
+    {
+        QVector<VaApiCodec::ProfilePair> list;
+        for (auto &pair : pairs) {
+            if (hasEntryPoint(VAEntrypointVLD, pair.hw))
+                list.push_back(pair);
         }
-        if (!va.isEmpty())
-            m_supported.insert(id, VaApiCodec(m_profiles, va, av, surfaces + 2, id));
+        if (!list.isEmpty())
+            m_supported[id] = VaApiCodec(m_profiles, list, surfaces + 2, id);
     };
-#define NUM_VIDEO_SURFACES_MPEG2  3 /* 1 decode frame, up to  2 references */
-#define NUM_VIDEO_SURFACES_MPEG4  3 /* 1 decode frame, up to  2 references */
-#define NUM_VIDEO_SURFACES_H264  21 /* 1 decode frame, up to 20 references */
-#define NUM_VIDEO_SURFACES_VC1    3 /* 1 decode frame, up to  2 references */
-    const QVector<VAProfile> vampeg2s = {VAProfileMPEG2Main, VAProfileMPEG2Simple};
-    const QVector<int> avmpeg2s = {FF_PROFILE_MPEG2_MAIN, FF_PROFILE_MPEG2_SIMPLE};
-    const QVector<VAProfile> vampeg4s = {VAProfileMPEG4Main, VAProfileMPEG4AdvancedSimple, VAProfileMPEG4Simple};
-    const QVector<int> avmpeg4s = {FF_PROFILE_MPEG4_MAIN, FF_PROFILE_MPEG4_ADVANCED_SIMPLE, FF_PROFILE_MPEG4_SIMPLE};
-    const QVector<VAProfile> vah264s = {VAProfileH264High, VAProfileH264Main, VAProfileH264Baseline, VAProfileH264ConstrainedBaseline};
-    const QVector<int> avh264s = {FF_PROFILE_H264_HIGH, FF_PROFILE_H264_MAIN, FF_PROFILE_H264_BASELINE, FF_PROFILE_H264_CONSTRAINED_BASELINE};
-    const QVector<VAProfile> vawmv3s = {VAProfileVC1Main, VAProfileVC1Simple, VAProfileVC1Advanced};
-    const QVector<int> avwmv3s = {FF_PROFILE_VC1_MAIN, FF_PROFILE_VC1_SIMPLE, FF_PROFILE_VC1_ADVANCED};
-    const QVector<VAProfile> vavc1s = {VAProfileVC1Advanced, VAProfileVC1Main, VAProfileVC1Simple};
-    const QVector<int> avvc1s = {FF_PROFILE_VC1_ADVANCED, FF_PROFILE_VC1_MAIN, FF_PROFILE_VC1_SIMPLE};
-    supports(vampeg2s, avmpeg2s, NUM_VIDEO_SURFACES_MPEG2, AV_CODEC_ID_MPEG1VIDEO);
-    supports(vampeg2s, avmpeg2s, NUM_VIDEO_SURFACES_MPEG2, AV_CODEC_ID_MPEG2VIDEO);
-    supports(vampeg4s, avmpeg4s, NUM_VIDEO_SURFACES_MPEG4, AV_CODEC_ID_MPEG4);
-    supports(vawmv3s, avwmv3s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_WMV3);
-    supports(vavc1s, avvc1s, NUM_VIDEO_SURFACES_VC1, AV_CODEC_ID_VC1);
-    supports(vah264s, avh264s, NUM_VIDEO_SURFACES_H264, AV_CODEC_ID_H264);
+#define PAIR(va, ff) { VAProfile##va,   FF_PROFILE_##ff }
+    const QVector<VaApiCodec::ProfilePair> mpeg2s = {
+        PAIR(MPEG2Main,   MPEG2_MAIN),
+        PAIR(MPEG2Simple, MPEG2_SIMPLE)
+    };
+    const QVector<VaApiCodec::ProfilePair> mpeg4s = {
+        PAIR(MPEG4Main,           MPEG4_MAIN),
+        PAIR(MPEG4AdvancedSimple, MPEG4_ADVANCED_SIMPLE),
+        PAIR(MPEG4Simple,         MPEG4_SIMPLE)
+    };
+    const QVector<VaApiCodec::ProfilePair> h264s = {
+        PAIR(H264High,                H264_HIGH),
+        PAIR(H264Main,                H264_MAIN),
+        PAIR(H264Baseline,            H264_BASELINE),
+        PAIR(H264ConstrainedBaseline, H264_CONSTRAINED_BASELINE)
+    };
+    const QVector<VaApiCodec::ProfilePair> wmv3s = {
+        PAIR(VC1Main,     VC1_MAIN),
+        PAIR(VC1Simple,   VC1_SIMPLE),
+        PAIR(VC1Advanced, VC1_ADVANCED)
+    };
+    const QVector<VaApiCodec::ProfilePair> vc1s = {
+        PAIR(VC1Advanced, VC1_ADVANCED),
+        PAIR(VC1Main,     VC1_MAIN),
+        PAIR(VC1Simple,   VC1_SIMPLE)
+    };
+#undef PAIR
+    supports(mpeg2s, 3, AV_CODEC_ID_MPEG1VIDEO);
+    supports(mpeg2s, 3, AV_CODEC_ID_MPEG2VIDEO);
+    supports(mpeg4s, 3, AV_CODEC_ID_MPEG4);
+    supports(wmv3s,  3, AV_CODEC_ID_WMV3);
+    supports(vc1s,   3, AV_CODEC_ID_VC1);
+    supports(h264s, 16, AV_CODEC_ID_H264);
 }
 
 #ifdef USE_VAVPP
@@ -216,7 +239,8 @@ auto VaApi::initFilters() -> void
     VAConfigID config = VA_INVALID_ID;
     VAContextID context = VA_INVALID_ID;
     do {
-        if (!isSuccess(vaCreateConfig(display, VAProfileNone, VAEntrypointVideoProc, nullptr, 0, &config)))
+        if (!isSuccess(vaCreateConfig(display, VAProfileNone,
+                                      VAEntrypointVideoProc, nullptr, 0, &config)))
             break;
         if (!isSuccess(vaCreateContext(display, config, 0, 0, 0, nullptr, 0, &context)))
             break;
@@ -244,16 +268,18 @@ auto VaApi::toVAType(int mp_fields, bool first) -> int
     return field[(!(mp_fields & MP_IMGFIELD_TOP_FIRST)) ^ (int)first];
 }
 
-/***************************************************************************************************/
+/******************************************************************************/
 
 struct HwAccVaApi::Data {
-    vaapi_context context = {nullptr, VA_INVALID_ID, VA_INVALID_ID, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    vaapi_context context;
     VAProfile profile = VAProfileNone;
     VaApiSurfacePool pool;
 };
 
 HwAccVaApi::HwAccVaApi(AVCodecID cid)
 : HwAcc(cid), d(new Data) {
+    memset(&d->context, 0, sizeof(d->context));
+    d->context.config_id = d->context.context_id = VA_INVALID_ID;
 }
 
 HwAccVaApi::~HwAccVaApi() {
@@ -300,19 +326,25 @@ auto HwAccVaApi::fillContext(AVCodecContext *avctx, int w, int h) -> bool
         return false;
     d->profile = codec->profile(avctx->profile);
     VAConfigAttrib attr = { VAConfigAttribRTFormat, 0 };
-    if(!isSuccess(vaGetConfigAttributes(d->context.display, d->profile, VAEntrypointVLD, &attr, 1)))
+    if(!isSuccess(vaGetConfigAttributes(d->context.display,
+                                        d->profile, VAEntrypointVLD, &attr, 1)))
         return false;
     const uint rts =  attr.value & (VA_RT_FORMAT_YUV420 | VA_RT_FORMAT_YUV422);
     if(!rts)
         return isSuccess(VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT);
-    if(!isSuccess(vaCreateConfig(d->context.display, d->profile, VAEntrypointVLD, &attr, 1, &d->context.config_id)))
+    if(!isSuccess(vaCreateConfig(d->context.display, d->profile,
+                                 VAEntrypointVLD, &attr, 1,
+                                 &d->context.config_id)))
         return false;
-    auto tryRtFormat = [rts, this, codec, w, h] (uint rt) { return (rts & rt) && d->pool.create(codec->surfaces, w, h, rt); };
+    auto tryRtFormat = [rts, this, codec, w, h] (uint rt)
+        { return (rts & rt) && d->pool.create(codec->surfaces, w, h, rt); };
     if (!tryRtFormat(VA_RT_FORMAT_YUV420) && !tryRtFormat(VA_RT_FORMAT_YUV422))
         return false;
     VaApi::get().setSurfaceFormat(d->pool.format());
     auto ids = d->pool.ids();
-    if (!isSuccess(vaCreateContext(d->context.display, d->context.config_id, w, h, VA_PROGRESSIVE, ids.data(), ids.size(), &d->context.context_id)))
+    if (!isSuccess(vaCreateContext(d->context.display, d->context.config_id,
+                                   w, h, VA_PROGRESSIVE, ids.data(), ids.size(),
+                                   &d->context.context_id)))
         return false;
     return true;
 }
@@ -322,7 +354,7 @@ auto HwAccVaApi::getImage(mp_image *mpi) -> mp_image*
     return mpi;
 }
 
-/****************************************************************************************/
+/******************************************************************************/
 
 VaApiMixer::VaApiMixer(const QSize &size)
     : HwAccMixer(size)
@@ -375,7 +407,8 @@ auto VaApiMixer::upload(const mp_image *mpi, bool deint) -> bool
         else if (mpi->fields & MP_IMGFIELD_BOTTOM)
             flags |= VA_BOTTOM_FIELD;
     }
-    if (!check(vaCopySurfaceGLX(VaApi::glx(), m_glSurface, id,  flags), "Cannot copy OpenGL surface."))
+    if (!check(vaCopySurfaceGLX(VaApi::glx(), m_glSurface, id,  flags),
+               "Cannot copy OpenGL surface."))
         return false;
     if (!check(vaSyncSurface(VaApi::glx(), id), "Cannot sync video surface."))
         return false;
