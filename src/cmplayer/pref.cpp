@@ -375,31 +375,31 @@ auto Pref::defaultOsdTheme() -> OsdTheme
     return theme;
 }
 
-auto Pref::defaultDoubleClick() -> KeyModifierMap
+auto Pref::defaultDoubleClick() -> KeyModifierActionMap
 {
-    KeyModifierMap map;
+    KeyModifierActionMap map;
     map[KeyModifier::None] = { true, "window/full" };
     return map;
 }
 
-auto Pref::defaultMiddleClick() -> KeyModifierMap
+auto Pref::defaultMiddleClick() -> KeyModifierActionMap
 {
-    KeyModifierMap map;
+    KeyModifierActionMap map;
     map[KeyModifier::None] = { true, "play/pause" };
     return map;
 }
 
-auto Pref::defaultWheelUpAction() -> KeyModifierMap
+auto Pref::defaultWheelUpAction() -> KeyModifierActionMap
 {
-    KeyModifierMap map;
+    KeyModifierActionMap map;
     map[KeyModifier::None] = { true, "audio/volume/increase" };
     map[KeyModifier::Ctrl] = { true, "audio/amp/increase" };
     return map;
 }
 
-auto Pref::defaultWheelDownAction() -> KeyModifierMap
+auto Pref::defaultWheelDownAction() -> KeyModifierActionMap
 {
-    KeyModifierMap map;
+    KeyModifierActionMap map;
     map[KeyModifier::None] = { true, "audio/volume/decrease" };
     map[KeyModifier::Ctrl] = { true, "audio/amp/decrease" };
     return map;

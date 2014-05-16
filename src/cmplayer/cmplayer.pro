@@ -150,7 +150,9 @@ HEADERS += \
     video/videoframebufferobject.hpp \
     mainquickview.hpp \
 	quick/osdtheme.hpp \
-    quick/themeobject.hpp
+    quick/themeobject.hpp \
+    misc/mouseactiongroupbox.hpp \
+    misc/keymodifieractionmap.hpp
 
 SOURCES += \
 	audio/audiocontroller.cpp \
@@ -256,7 +258,9 @@ SOURCES += \
     video/videoframebufferobject.cpp \
     mainquickview.cpp \
 	quick/osdtheme.cpp \
-    quick/themeobject.cpp
+    quick/themeobject.cpp \
+    misc/mouseactiongroupbox.cpp \
+    misc/keymodifieractionmap.cpp
 
 
 TRANSLATIONS += translations/cmplayer_ko.ts \

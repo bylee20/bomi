@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>15</number>
+        <number>16</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -3133,12 +3133,55 @@ e.g.: English, Korean</string>
         </layout>
        </widget>
        <widget class="QWidget" name="ui_mouse">
-        <layout class="QVBoxLayout" name="verticalLayout_25">
-         <property name="topMargin">
-          <number>0</number>
-         </property>
+        <layout class="QVBoxLayout" name="verticalLayout_41">
          <item>
-          <layout class="QVBoxLayout" name="ui_mouse_layout"/>
+          <widget class="QTabWidget" name="tabWidget">
+           <property name="currentIndex">
+            <number>1</number>
+           </property>
+           <widget class="QWidget" name="tab">
+            <attribute name="title">
+             <string>Button Click</string>
+            </attribute>
+            <layout class="QVBoxLayout" name="verticalLayout_40">
+             <item>
+              <widget class="MouseActionGroupBox" name="mouse_double_click">
+               <property name="title">
+                <string>Double Click</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="MouseActionGroupBox" name="mouse_middle_click">
+               <property name="title">
+                <string>Middle Click</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="tab_2">
+            <attribute name="title">
+             <string>Wheel Scroll</string>
+            </attribute>
+            <layout class="QVBoxLayout" name="verticalLayout_25">
+             <item>
+              <widget class="MouseActionGroupBox" name="mouse_scroll_up">
+               <property name="title">
+                <string>Scroll Up</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="MouseActionGroupBox" name="mouse_scroll_down">
+               <property name="title">
+                <string>Scroll Down</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
          <item>
           <widget class="QCheckBox" name="ui_mouse_invert_wheel">
@@ -3148,7 +3191,7 @@ e.g.: English, Korean</string>
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer_13">
+          <spacer name="verticalSpacer_2">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
@@ -3626,6 +3669,12 @@ e.g.: English, Korean</string>
    <class>TextThemeStyleComboBox</class>
    <extends>QComboBox</extends>
    <header>widgets.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>MouseActionGroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>misc/mouseactiongroupbox.hpp</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>

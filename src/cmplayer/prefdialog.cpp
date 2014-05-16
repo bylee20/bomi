@@ -18,6 +18,8 @@
 
 #include "simplelistmodel.hpp"
 
+using MouseAction = MouseActionGroupBox::Action;
+
 class MrlStatePropertyListModel : public SimpleListModel<MrlStateProperty> {
 public:
     MrlStatePropertyListModel() { setCheckable(0, true); }
@@ -58,67 +60,6 @@ private:
     EnumComboBox<PlaylistBehaviorWhenOpenMedia> *playlist;
 };
 
-struct ActionInfo { QString name, id; };
-
-class MouseActionGroupBox : public QGroupBox {
-public:
-    typedef ::KeyModifier Modifier;
-    typedef Pref::KeyModifierMap ActionMap;
-    MouseActionGroupBox(const QList<ActionInfo> &list,
-                        QVBoxLayout *form, QWidget *parent = 0)
-        : QGroupBox(parent)
-        , form(form)
-    {
-        mods << Modifier::None << Modifier::Ctrl
-             << Modifier::Shift << Modifier::Alt;
-        QGridLayout *grid = new QGridLayout(this);
-        grid->setMargin(0);
-        for (int i=0; i<mods.size(); ++i) {
-            auto combo = new QComboBox(this);
-            for (auto &info : list)
-                combo->addItem(info.name, info.id);
-            QCheckBox *check = new QCheckBox(this);
-            combos.append(combo);
-            checks.append(check);
-            if (mods[i] != Modifier::None) {
-                const auto key = QKeySequence((int)mods[i]);
-                check->setText(key.toString(QKeySequence::NativeText));
-            }
-            grid->addWidget(check, i, 0, 1, 1);
-            grid->addWidget(combo, i, 1, 1, 1);
-            combo->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-            combo->setEnabled(check->isChecked());
-            connect(check, &QCheckBox::toggled, combo, &QWidget::setEnabled);
-        }
-        form->addWidget(this);
-    }
-    auto setValues(const ActionMap &map) -> void {
-        for (int i=0; i<mods.size(); ++i) {
-            const auto info = map[mods[i]];
-            const int idx = combos[i]->findData(info.id);
-            if (idx != -1) {
-                combos[i]->setCurrentIndex(idx);
-                checks[i]->setChecked(info.enabled);
-            }
-        }
-    }
-    auto values() const -> ActionMap {
-        ActionMap map;
-        for (int i=0; i<mods.size(); ++i) {
-            auto &info = map[mods[i]];
-            info.enabled = checks[i]->isChecked();
-            info.id = combos[i]->currentData().toString();
-        }
-        return map;
-    }
-    auto retranslate(const QString &name) -> void { setTitle(name); }
-private:
-    QList<QComboBox*> combos;
-    QList<Modifier> mods;
-    QList<QCheckBox*> checks;
-    QVBoxLayout *form;
-};
-
 class PrefDialog::MenuTreeItem : public QTreeWidgetItem {
 public:
     enum Column {
@@ -146,8 +87,7 @@ public:
         return shortcuts;
     }
     auto id() const -> QString{ return m_id; }
-    static auto makeRoot(QTreeWidget *parent,
-                         QList<ActionInfo> &info) -> QList<MenuTreeItem*> {
+    static auto makeRoot(QTreeWidget *parent, QList<MouseAction> &info) -> QList<MenuTreeItem*> {
         RootMenu &root = RootMenu::instance();
         QList<MenuTreeItem*> items;
         auto item = create(&root, items, "", info);
@@ -158,7 +98,7 @@ public:
 private:
     static auto create(Menu *menu, QList<MenuTreeItem*> &items,
                        const QString &prefix,
-                       QList<ActionInfo> &list) -> MenuTreeItem*
+                       QList<MouseAction> &list) -> MenuTreeItem*
     {
         RootMenu &root = RootMenu::instance();
         QList<QAction*> actions = menu->actions();
@@ -178,10 +118,7 @@ private:
                     child->setText(Id, child->m_id = id);
                     items.push_back(child);
                     children.push_back(child);
-                    ActionInfo info;
-                    info.id = id;
-                    info.name = prefix % action->text();
-                    list.append(info);
+                    list.append({ prefix % action->text(), id });
                 }
             }
         }
@@ -269,9 +206,8 @@ private:
 
 struct PrefDialog::Data {
     Ui::PrefDialog ui;
-    QList<ActionInfo> actionInfo;
+    QList<MouseActionGroupBox::Action> actionInfo;
     QButtonGroup *shortcuts;
-    MouseActionGroupBox *dbl, *mdl, *up, *down;
     QMap<int, QCheckBox*> hwdec;
     QMap<DeintMethod, QCheckBox*> hwdeint;
     PrefOpenMediaGroup *open_media_from_file_manager;
@@ -298,10 +234,6 @@ struct PrefDialog::Data {
     }
     auto retranslate() -> void
     {
-        dbl->retranslate(tr("Double Click"));
-        mdl->retranslate(tr("Middle Click"));
-        up->retranslate(tr("Scroll Up"));
-        down->retranslate(tr("Scroll Down"));
         ui.sub_ext->setItemText(0, tr("All"));
         properties.setList(MrlState::restorableProperties());
     }
@@ -450,10 +382,10 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->actionItems = MenuTreeItem::makeRoot(d->ui.shortcut_tree, d->actionInfo);
     d->ui.shortcut_tree->header()->resizeSection(0, 200);
 
-    d->dbl  = new MouseActionGroupBox(d->actionInfo, d->ui.ui_mouse_layout);
-    d->mdl  = new MouseActionGroupBox(d->actionInfo, d->ui.ui_mouse_layout);
-    d->up   = new MouseActionGroupBox(d->actionInfo, d->ui.ui_mouse_layout);
-    d->down = new MouseActionGroupBox(d->actionInfo, d->ui.ui_mouse_layout);
+    d->ui.mouse_double_click->set(d->actionInfo);
+    d->ui.mouse_middle_click->set(d->actionInfo);
+    d->ui.mouse_scroll_up->set(d->actionInfo);
+    d->ui.mouse_scroll_down->set(d->actionInfo);
 
     QList<AudioDriver> audioDrivers;
     audioDrivers << AudioDriver::Auto;
@@ -591,8 +523,6 @@ PrefDialog::~PrefDialog() {
     delete d;
 }
 
-
-
 template<class T>
 static void setHw(QGroupBox *group, bool enabled,
                   QMap<T, QCheckBox*> &map, const QList<T> &keys) {
@@ -713,10 +643,10 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.enable_system_tray->setChecked(p.enable_system_tray);
     d->ui.hide_rather_close->setChecked(p.hide_rather_close);
 
-    d->dbl->setValues(p.double_click_map);
-    d->mdl->setValues(p.middle_click_map);
-    d->up->setValues(p.scroll_up_map);
-    d->down->setValues(p.scroll_down_map);
+    d->ui.mouse_double_click->setValues(p.double_click_map);
+    d->ui.mouse_middle_click->setValues(p.middle_click_map);
+    d->ui.mouse_scroll_up->setValues(p.scroll_up_map);
+    d->ui.mouse_scroll_down->setValues(p.scroll_down_map);
     d->ui.ui_mouse_invert_wheel->setChecked(p.invert_wheel);
 
     d->ui.seek_step1->setValue(p.seek_step1/1000);
@@ -849,10 +779,10 @@ auto PrefDialog::get(Pref &p) -> void
     p.enable_system_tray = d->ui.enable_system_tray->isChecked();
     p.hide_rather_close = d->ui.hide_rather_close->isChecked();
 
-    p.double_click_map = d->dbl->values();
-    p.middle_click_map = d->mdl->values();
-    p.scroll_up_map = d->up->values();
-    p.scroll_down_map = d->down->values();
+    p.double_click_map = d->ui.mouse_double_click->values();
+    p.middle_click_map = d->ui.mouse_middle_click->values();
+    p.scroll_up_map    = d->ui.mouse_scroll_up->values();
+    p.scroll_down_map  = d->ui.mouse_scroll_down->values();
     p.invert_wheel = d->ui.ui_mouse_invert_wheel->isChecked();
 
     p.seek_step1 = d->ui.seek_step1->value()*1000;
