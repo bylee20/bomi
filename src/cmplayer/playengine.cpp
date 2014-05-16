@@ -1041,14 +1041,17 @@ auto PlayEngine::customEvent(QEvent *event) -> void
         auto state = Stopped;
         switch (reason) {
         case EndOfFile:
+            _Info("Playback reached end-of-file");
             emit requestNextStartInfo();
             if (d->nextInfo.isValid())
                 state = Loading;
             remain = 0;
             break;
         case EndQuit: case EndRequest:
+            _Info("Playback has been terminated by request");
             break;
         default:
+            _Info("Playback has been terminated by error(s)");
             state = Error;
         }
         updateState(state);
