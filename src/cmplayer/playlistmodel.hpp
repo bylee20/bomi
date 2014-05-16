@@ -3,7 +3,7 @@
 
 #include "stdafx.hpp"
 #include "playlist.hpp"
-#include "simplelistmodel.hpp"
+#include "misc/simplelistmodel.hpp"
 
 class Downloader;
 

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>300</height>
+    <height>203</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -29,7 +29,7 @@
         <string notr="true"/>
        </property>
        <property name="icon">
-        <iconset>
+        <iconset resource="../rsclist.qrc">
          <normaloff>:/img/document-open-folder.png</normaloff>:/img/document-open-folder.png</iconset>
        </property>
       </widget>
@@ -80,10 +80,12 @@
   <customwidget>
    <class>BBox</class>
    <extends>QDialogButtonBox</extends>
-   <header>dialogs.hpp</header>
+   <header>dialog/bbox.hpp</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../rsclist.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>dbb</sender>

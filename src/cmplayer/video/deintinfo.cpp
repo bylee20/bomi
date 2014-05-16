@@ -1,7 +1,7 @@
 #include "deintinfo.hpp"
-#include "widgets.hpp"
 #include "record.hpp"
 #include "hwacc.hpp"
+#include "widget/datacombobox.hpp"
 
 auto DeintCaps::list() -> QList<DeintCaps>
 {

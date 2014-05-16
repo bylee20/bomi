@@ -31,6 +31,8 @@ private:
     QVector<SourceArray> m_mix;
 };
 
+struct ChannelName {const char *abbr; const char *desc;};
+
 class ChannelLayoutMap {
 public:
     auto operator () (ChannelLayout src,
@@ -44,24 +46,12 @@ public:
     static auto toLayout(const mp_chmap &chmap) -> ChannelLayout;
     static auto fromString(const QString &text) -> ChannelLayoutMap;
     static auto default_() -> ChannelLayoutMap;
+    static auto channelNames() -> const QVector<ChannelName>&;
 private:
     auto get(ChannelLayout src, ChannelLayout dest) -> ChannelManipulation&
         { return m_map[src][dest]; }
     QMap<ChannelLayout, QMap<ChannelLayout, ChannelManipulation>> m_map;
     friend class ChannelManipulationWidget;
-};
-
-class ChannelManipulationWidget : public QWidget {
-    Q_OBJECT
-public:
-    ChannelManipulationWidget(QWidget *parent = nullptr);
-    ~ChannelManipulationWidget();
-    auto setMap(const ChannelLayoutMap &map) -> void;
-    auto map() const -> ChannelLayoutMap;
-    auto setCurrentLayouts(ChannelLayout src, ChannelLayout dst) -> void;
-private:
-    struct Data;
-    Data *d;
 };
 
 auto _ChmapFromLayout(mp_chmap *chmap, ChannelLayout layout) -> bool;

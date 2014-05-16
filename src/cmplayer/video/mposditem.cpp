@@ -1,7 +1,7 @@
 #include "mposditem.hpp"
 #include "opengl/openglvertex.hpp"
 #include "mposdbitmap.hpp"
-#include "dataevent.hpp"
+#include "misc/dataevent.hpp"
 #include "opengl/openglcompat.hpp"
 #include <deque>
 

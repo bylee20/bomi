@@ -1,5 +1,5 @@
 #include "subtitlerendereritem.hpp"
-#include "dataevent.hpp"
+#include "misc/dataevent.hpp"
 #include "subtitlerenderingthread.hpp"
 #include "opengl/openglcompat.hpp"
 

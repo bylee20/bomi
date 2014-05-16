@@ -32,8 +32,8 @@ macx {
     QT += dbus x11extras
     TARGET = cmplayer
     LIBS += -ldl
-    HEADERS += app_x11.hpp mpris.hpp
-    SOURCES += app_x11.cpp mpris.cpp
+	HEADERS += app_x11.hpp misc/mpris.hpp
+	SOURCES += app_x11.cpp misc/mpris.cpp
 }
 
 QML_IMPORT_PATH += imports
@@ -107,27 +107,22 @@ HEADERS += \
     abrepeater.hpp \
     playlist.hpp \
     playlistmodel.hpp \
-    playlistview.hpp \
     recentinfo.hpp \
-    simplelistwidget.hpp \
     appstate.hpp \
-    dialogs.hpp \
     favoritesview.hpp \
-    downloader.hpp \
+	misc/downloader.hpp \
     enums.hpp \
-    snapshotdialog.hpp \
-    widgets.hpp \
-    qtcolorpicker.hpp \
+	dialog/snapshotdialog.hpp \
     record.hpp \
     actiongroup.hpp \
     rootmenu.hpp \
     app.hpp \
 	globalqmlobject.hpp \
-    prefdialog.hpp \
+	dialog/prefdialog.hpp \
     stdafx.hpp \
     skin.hpp \
-    dataevent.hpp \
-	openmediafolderdialog.hpp \
+	misc/dataevent.hpp \
+	dialog/openmediafolderdialog.hpp \
 	tmp.hpp \
 	undostack.hpp \
 	quick/geometryitem.hpp \
@@ -136,23 +131,40 @@ HEADERS += \
 	trayicon.hpp \
     mrlstate.hpp \
     historymodel.hpp \
-    xmlrpcclient.hpp \
-    opensubtitlesfinder.hpp \
-	subtitlefinddialog.hpp \
-    simplelistmodel.hpp \
+	misc/xmlrpcclient.hpp \
+	subtitle/opensubtitlesfinder.hpp \
+	dialog/subtitlefinddialog.hpp \
+	misc/simplelistmodel.hpp \
     mrlstate_old.hpp \
     log.hpp \
     mpv_helper.hpp \
-	udf25.hpp \
+	misc/udf25.hpp \
     audio/audionormalizeroption.hpp \
     video/videoimagepool.hpp \
     opengl/opengloffscreencontext.hpp \
+	widget/simplelistwidget.hpp \
+	widget/qtcolorpicker.hpp \
     video/videoframebufferobject.hpp \
     mainquickview.hpp \
 	quick/osdtheme.hpp \
     quick/themeobject.hpp \
-    misc/mouseactiongroupbox.hpp \
-    misc/keymodifieractionmap.hpp
+	widget/mouseactiongroupbox.hpp \
+    misc/keymodifieractionmap.hpp \
+    dialog/bbox.hpp \
+    dialog/mbox.hpp \
+    dialog/shortcutdialog.hpp \
+    dialog/encodingfiledialog.hpp \
+    widget/encodingcombobox.hpp \
+    widget/colorselectwidget.hpp \
+    dialog/urldialog.hpp \
+    widget/enumcombobox.hpp \
+    widget/channelmanipulationwidget.hpp \
+    widget/datacombobox.hpp \
+    widget/verticallabel.hpp \
+    widget/localecombobox.hpp \
+    widget/fontoptionwidget.hpp \
+    dialog/aboutdialog.hpp \
+    dialog/opendiscdialog.hpp
 
 SOURCES += \
 	audio/audiocontroller.cpp \
@@ -215,43 +227,40 @@ SOURCES += \
     translator.cpp \
     pref.cpp \
     info.cpp \
-    charsetdetector.cpp \
+	misc/charsetdetector.cpp \
     abrepeater.cpp \
     playlist.cpp \
     playlistmodel.cpp \
-    playlistview.cpp \
     recentinfo.cpp \
-    simplelistwidget.cpp \
+	widget/simplelistwidget.cpp \
     appstate.cpp \
-    dialogs.cpp \
     favoritesview.cpp \
-    downloader.cpp \
+	misc/downloader.cpp \
     enums.cpp \
-    snapshotdialog.cpp \
-    widgets.cpp \
-    qtcolorpicker.cpp \
+	dialog/snapshotdialog.cpp \
+	widget/qtcolorpicker.cpp \
     record.cpp \
     actiongroup.cpp \
     rootmenu.cpp \
     app.cpp \
-    prefdialog.cpp \
+	dialog/prefdialog.cpp \
     playengine.cpp \
     globalqmlobject.cpp \
     skin.cpp \
-    openmediafolderdialog.cpp \
+	dialog/openmediafolderdialog.cpp \
     undostack.cpp \
     mediamisc.cpp \
     trayicon.cpp \
     mrlstate.cpp \
     historymodel.cpp \
-    xmlrpcclient.cpp \
-    opensubtitlesfinder.cpp \
-    subtitlefinddialog.cpp \
-    simplelistmodel.cpp \
+	misc/xmlrpcclient.cpp \
+	subtitle/opensubtitlesfinder.cpp \
+	dialog/subtitlefinddialog.cpp \
+	misc/simplelistmodel.cpp \
     mrlstate_old.cpp \
     log.cpp \
     mpv_helper.cpp \
-	udf25.cpp \
+	misc/udf25.cpp \
     audio/audionormalizeroption.cpp \
     video/videoimagepool.cpp \
     opengl/opengloffscreencontext.cpp \
@@ -259,8 +268,23 @@ SOURCES += \
     mainquickview.cpp \
 	quick/osdtheme.cpp \
     quick/themeobject.cpp \
-    misc/mouseactiongroupbox.cpp \
-    misc/keymodifieractionmap.cpp
+	widget/mouseactiongroupbox.cpp \
+    misc/keymodifieractionmap.cpp \
+    dialog/bbox.cpp \
+    dialog/mbox.cpp \
+    dialog/shortcutdialog.cpp \
+    dialog/encodingfiledialog.cpp \
+    widget/encodingcombobox.cpp \
+    widget/colorselectwidget.cpp \
+    dialog/urldialog.cpp \
+    widget/enumcombobox.cpp \
+    widget/channelmanipulationwidget.cpp \
+    widget/datacombobox.cpp \
+    widget/verticallabel.cpp \
+    widget/localecombobox.cpp \
+    widget/fontoptionwidget.cpp \
+    dialog/aboutdialog.cpp \
+    dialog/opendiscdialog.cpp
 
 
 TRANSLATIONS += translations/cmplayer_ko.ts \

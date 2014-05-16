@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>390</width>
+    <width>295</width>
     <height>74</height>
    </rect>
   </property>
@@ -48,7 +48,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset>
+        <iconset resource="../rsclist.qrc">
          <normaloff>:/img/document-open-folder.png</normaloff>:/img/document-open-folder.png</iconset>
        </property>
       </widget>
@@ -62,7 +62,7 @@
         <string/>
        </property>
        <property name="icon">
-        <iconset>
+        <iconset resource="../rsclist.qrc">
          <normaloff>:/img/media-optical.png</normaloff>:/img/media-optical.png</iconset>
        </property>
       </widget>
@@ -102,10 +102,12 @@
   <customwidget>
    <class>BBox</class>
    <extends>QDialogButtonBox</extends>
-   <header>dialogs.hpp</header>
+   <header>dialog/bbox.hpp</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../rsclist.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

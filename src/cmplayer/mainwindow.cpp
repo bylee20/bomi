@@ -1,54 +1,47 @@
-#include "stdafx.hpp"
-#include "downloader.hpp"
-#include "openmediafolderdialog.hpp"
-#include "snapshotdialog.hpp"
-#include "mainwindow.hpp"
-#include "rootmenu.hpp"
-#include "recentinfo.hpp"
-#include "subtitlefinddialog.hpp"
-#include "pref.hpp"
-#include "abrepeater.hpp"
-#include "playlistmodel.hpp"
-#include "playengine.hpp"
-#include "appstate.hpp"
-#include "historymodel.hpp"
-#include "info.hpp"
-#include "prefdialog.hpp"
 #include "app.hpp"
-//#include "globalqmlobject.hpp"
-#include "playlistmodel.hpp"
-#include "translator.hpp"
+#include "log.hpp"
+#include "info.hpp"
+#include "pref.hpp"
+#include "stdafx.hpp"
+#include "appstate.hpp"
 #include "trayicon.hpp"
 #include "playlist.hpp"
-#include "dataevent.hpp"
+#include "rootmenu.hpp"
+#include "mainwindow.hpp"
+#include "recentinfo.hpp"
+#include "abrepeater.hpp"
+#include "playengine.hpp"
+#include "translator.hpp"
+#include "historymodel.hpp"
+#include "playlistmodel.hpp"
 #include "mainquickview.hpp"
-#include "log.hpp"
+#include "playlistmodel.hpp"
+#include "misc/downloader.hpp"
+#include "dialog/mbox.hpp"
+#include "dialog/urldialog.hpp"
+#include "dialog/prefdialog.hpp"
+#include "dialog/aboutdialog.hpp"
+#include "dialog/opendiscdialog.hpp"
+#include "dialog/snapshotdialog.hpp"
+#include "dialog/subtitlefinddialog.hpp"
+#include "dialog/encodingfiledialog.hpp"
+#include "dialog/openmediafolderdialog.hpp"
+#include "quick/appobject.hpp"
 #include "quick/themeobject.hpp"
 #include "quick/toplevelitem.hpp"
-#include "quick/appobject.hpp"
-#include "video/videorendereritem.hpp"
-#include "video/videoformat.hpp"
 #include "opengl/openglcompat.hpp"
-#include "subtitle/subtitleview.hpp"
-#include "subtitle/subtitlerendereritem.hpp"
-#include "subtitle/subtitle_parser.hpp"
-#include "subtitle/subtitlemodel.hpp"
+#include "video/videoformat.hpp"
+#include "video/videorendereritem.hpp"
 #include "audio/audionormalizeroption.hpp"
+#include "subtitle/subtitleview.hpp"
+#include "subtitle/subtitlemodel.hpp"
+#include "subtitle/subtitle_parser.hpp"
+#include "subtitle/subtitlerendereritem.hpp"
 #ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 #endif
 
 //DECLARE_LOG_CONTEXT(Main)
-
-template<class Enum>
-using EnumData = typename EnumInfo<Enum>::Data;
-
-template<class Enum>
-static inline auto enumData(Enum e) -> EnumData<Enum>
-    { return EnumInfo<Enum>::data(e); }
-
-template<class State, class... Args>
-using Signal = void(State::*)(Args...);
 
 template<class Func, class T>
 class ValueCmd : public QUndoCommand {
@@ -1117,7 +1110,7 @@ auto MainWindow::connectMenus() -> void
         }
     });
     connect(open["url"], &QAction::triggered, this, [this] () {
-        GetUrlDialog dlg(this);
+        UrlDialog dlg(this);
         if (dlg.exec()) {
             if (dlg.isPlaylist())
                 d->playlist.open(dlg.url(), dlg.encoding());
@@ -1258,12 +1251,12 @@ auto MainWindow::connectMenus() -> void
     d->connectEnumActions<VideoRatio>
             (video("aspect"), "video_aspect_ratio",
              &MrlState::videoAspectRatioChanged, [this] () {
-        d->renderer.setAspectRatio(enumData(d->as.state.video_aspect_ratio));
+        d->renderer.setAspectRatio(_GetEnumData(d->as.state.video_aspect_ratio));
     });
     d->connectEnumActions<VideoRatio>
             (video("crop"), "video_crop_ratio",
              &MrlState::videoCropRatioChanged, [this] () {
-        d->renderer.setCropRatio(enumData(d->as.state.video_crop_ratio));
+        d->renderer.setCropRatio(_GetEnumData(d->as.state.video_crop_ratio));
     });
     connect(video["snapshot"], &QAction::triggered, this, [this] () {
         static SnapshotDialog *dlg = new SnapshotDialog(this);
@@ -1276,8 +1269,8 @@ auto MainWindow::connectMenus() -> void
         }
     });
     auto setVideoAlignment = [this] () {
-        const auto v = enumData(d->as.state.video_vertical_alignment);
-        const auto h = enumData(d->as.state.video_horizontal_alignment);
+        const auto v = _GetEnumData(d->as.state.video_vertical_alignment);
+        const auto h = _GetEnumData(d->as.state.video_horizontal_alignment);
         d->renderer.setAlignment(v | h);
     };
     d->connectEnumActions<VerticalAlignment>
@@ -1552,7 +1545,7 @@ auto MainWindow::connectMenus() -> void
         d->playlist.append(list);
     });
     connect(playlist["append-url"], &QAction::triggered, this, [this] () {
-        GetUrlDialog dlg(this);
+        UrlDialog dlg(this);
         if (dlg.exec()) {
             const Mrl mrl = dlg.url().toString();
             if (mrl.isPlaylist()) {

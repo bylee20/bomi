@@ -1,13 +1,13 @@
 #include "subtitlefinddialog.hpp"
-#include "dialogs.hpp"
-#include "global.hpp"
-#include "info.hpp"
-#include "appstate.hpp"
-#include "opensubtitlesfinder.hpp"
 #include "mrl.hpp"
+#include "mbox.hpp"
+#include "info.hpp"
+#include "global.hpp"
+#include "appstate.hpp"
+#include "misc/downloader.hpp"
+#include "misc/simplelistmodel.hpp"
+#include "subtitle/opensubtitlesfinder.hpp"
 #include "ui_subtitlefinddialog.h"
-#include "downloader.hpp"
-#include "simplelistmodel.hpp"
 
 static constexpr int UrlRole = Qt::UserRole + 1;
 static constexpr int FileNameRole = UrlRole + 1;
@@ -15,7 +15,8 @@ static constexpr int FileNameRole = UrlRole + 1;
 class SubtitleLinkModel : public SimpleListModel<SubtitleLink> {
 public:
     enum Column { Language, FileName, Date, ColumnCount };
-    SubtitleLinkModel(QObject *parent = nullptr): SimpleListModel(ColumnCount, parent) { }
+    SubtitleLinkModel(QObject *parent = nullptr)
+        : SimpleListModel(ColumnCount, parent) { }
     auto header(int column) const -> QString {
         switch (column) {
         case Language: return qApp->translate("SubtitleLinkModel", "Language");
@@ -112,22 +113,28 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         d->updateState();
     });
     connect(d->ui.open, &QPushButton::clicked, [this] () {
-        auto file = _GetOpenFileName(this, tr("Open"), AppState::get().open_last_folder, Info::videoExt().toFilter());
+        auto file = _GetOpenFileName(this, tr("Open"),
+                                     AppState::get().open_last_folder,
+                                     Info::videoExt().toFilter());
         if (!file.isEmpty())
             find(QUrl::fromLocalFile(file));
     });
-    connect(d->ui.language, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [this] (int index) {
-        d->proxy.setFilterFixedString(index > 0 ? d->ui.language->itemText(index) : "");
+    Signal<QComboBox, int> changed = &QComboBox::currentIndexChanged;
+    connect(d->ui.language, changed, [this] (int index) {
+        const QString text = index > 0 ? d->ui.language->itemText(index) : "";
+        d->proxy.setFilterFixedString(text);
     });
     connect(d->ui.get, &QPushButton::clicked, [this] () {
         const auto index = d->ui.view->currentIndex();
         if (!index.isValid())
             return;
-        auto file = QFileInfo(d->ui.file->text()).dir().absoluteFilePath(index.data(FileNameRole).toString());
+        const auto dir = QFileInfo(d->ui.file->text()).dir();
+        auto file = dir.absoluteFilePath(index.data(FileNameRole).toString());
         const QFileInfo info(file);
         if (info.exists()) {
-            MBox mbox(this, MBox::Icon::Question, tr("Find Subtitle")
-                , tr("A file with the same name already exists. Do you want overwrite it?"));
+            MBox mbox(this, MBox::Icon::Question, tr("Find Subtitle"),
+                      tr("A file with the same name already exists. "
+                         "Do you want overwrite it?"));
             mbox.addButton(tr("Overwrite"), BBox::AcceptRole);
             mbox.addButton(tr("Save as..."), BBox::ActionRole);
             mbox.addButton(BBox::Cancel);
@@ -135,7 +142,9 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
             switch (mbox.clickedRole()) {
             case BBox::ActionRole: {
                 const QString suffix = _L('.') % info.suffix();
-                file = _GetSaveFileName(this, tr("Save As..."), file, tr("Subtitle Files") % _L(" (*") % suffix % _L(')'));
+                const QString filter = tr("Subtitle Files")
+                                       % _L(" (*") % suffix % _L(')');
+                file = _GetSaveFileName(this, tr("Save As..."), file, filter);
                 if (file.isEmpty())
                     return;
                 if (!file.endsWith(suffix))
@@ -147,11 +156,14 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
                 return;
             }
         }
-        if (d->downloader.start(d->ui.view->currentIndex().data(UrlRole).toUrl()))
+        const auto url = d->ui.view->currentIndex().data(UrlRole).toUrl();
+        if (d->downloader.start(url))
             d->downloads[d->downloader.url()] = file;
     });
-    connect(d->finder, &OpenSubtitlesFinder::stateChanged, [this] () { d->updateState(); });
-    connect(d->finder, &OpenSubtitlesFinder::found, [this] (const QList<SubtitleLink> &links) {
+    connect(d->finder, &OpenSubtitlesFinder::stateChanged,
+            [this] () { d->updateState(); });
+    connect(d->finder, &OpenSubtitlesFinder::found,
+            [this] (const QList<SubtitleLink> &links) {
         d->model.setList(links);
         std::set<QString> set;
         for (auto &it : links)
@@ -175,8 +187,10 @@ auto SubtitleFindDialog::find(const Mrl &mrl) -> void
     d->ui.file->setText(mrl.toLocalFile());
     if (!d->finder->isAvailable()) {
         d->pending = mrl;
-    } else {
-        if (!d->finder->find(mrl))
-            QMessageBox::warning(this, tr("Find Subtitle"), tr("Cannot find subtitles for %1.").arg(mrl.displayName()));
+    } else if (!d->finder->find(mrl)) {
+        const auto name = mrl.displayName();
+        MBox::warn(this, tr("Find Subtitle"),
+                   tr("Cannot find subtitles for %1.").arg(name),
+                   { BBox::Ok });
     }
 }

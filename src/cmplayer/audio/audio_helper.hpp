@@ -406,8 +406,8 @@ template<class S, bool IsPlanar>
 class AudioDataBuffer {
     template<class F>
     auto setup(const F &f) -> void;
-    typedef AudioDataBufferIterator<S, IsPlanar> iterator;
-    typedef AudioDataBufferIterator<const S, IsPlanar> const_iterator;
+    using iterator = AudioDataBufferIterator<S, IsPlanar>;
+    using const_iterator = AudioDataBufferIterator<const S, IsPlanar>;
 public:
     SCONST auto isPlanar() -> bool { return IsPlanar; }
     AudioDataBuffer(int nch = 0) { d.nch = nch; }

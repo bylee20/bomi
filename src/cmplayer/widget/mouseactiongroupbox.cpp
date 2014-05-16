@@ -1,6 +1,6 @@
 #include "mouseactiongroupbox.hpp"
 #include "enums.hpp"
-#include "keymodifieractionmap.hpp"
+#include "misc/keymodifieractionmap.hpp"
 
 struct MouseActionGroupBox::Data {
     QList<QComboBox*> combos;

@@ -11,7 +11,7 @@
 #include "app_mac.hpp"
 #elif defined(Q_OS_LINUX)
 #include "app_x11.hpp"
-#include "mpris.hpp"
+#include "misc/mpris.hpp"
 #endif
 
 #define APP_GROUP _L("application")

@@ -8,7 +8,7 @@ extern "C" {
 
 class VideoFormat {
 public:
-    typedef mp_imgfmt Type;
+    using Type = mp_imgfmt;
     VideoFormat(const mp_image_params &params, const mp_imgfmt_desc &desc)
         : d(new Data(params, desc)) { }
     VideoFormat(): d(new Data) { }

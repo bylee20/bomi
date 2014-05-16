@@ -269,8 +269,8 @@ auto HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder
         switch (mptype) {
         case HWDEC_VAAPI: return HwAcc::VaApiGLX;
         case HWDEC_VDPAU: return HwAcc::VdpauX11;
-        case HWDEC_VDA: return HwAcc::Vda;
-        default: return HwAcc::None;
+        case HWDEC_VDA:   return HwAcc::Vda;
+        default:          return HwAcc::None;
         }
     };
     if (supports(conv(hwdec->type), (AVCodecID)mp_codec_to_av_codec_id(decoder)))

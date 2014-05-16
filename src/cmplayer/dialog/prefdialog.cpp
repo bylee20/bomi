@@ -1,22 +1,21 @@
 #include "prefdialog.hpp"
-#include "trayicon.hpp"
-#include "video/deintinfo.hpp"
-#include "dialogs.hpp"
-#include "ui_prefdialog.h"
-#include "info.hpp"
 #include "app.hpp"
-#include "pref.hpp"
-#include "rootmenu.hpp"
+#include "info.hpp"
 #include "skin.hpp"
+#include "pref.hpp"
+#include "trayicon.hpp"
+#include "rootmenu.hpp"
+#include "shortcutdialog.hpp"
+#include "misc/simplelistmodel.hpp"
 #include "video/hwacc.hpp"
-#include <array>
+#include "video/deintinfo.hpp"
 #include "video/hwacc_vaapi.hpp"
+#include "ui_prefdialog.h"
+#include <array>
 
 #ifdef None
 #undef None
 #endif
-
-#include "simplelistmodel.hpp"
 
 using MouseAction = MouseActionGroupBox::Action;
 
@@ -86,7 +85,7 @@ public:
         }
         return shortcuts;
     }
-    auto id() const -> QString{ return m_id; }
+    auto id() const -> QString { return m_id; }
     static auto makeRoot(QTreeWidget *parent, QList<MouseAction> &info) -> QList<MenuTreeItem*> {
         RootMenu &root = RootMenu::instance();
         QList<MenuTreeItem*> items;
@@ -248,7 +247,7 @@ PrefDialog::PrefDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->ui.setupUi(this);
     d->ui.tree->setItemDelegate(new Delegate(d->ui.tree));
-    d->ui.tree->setIconSize(QSize(22, 22));
+    d->ui.tree->setIconSize(QSize(16, 16));
 
     connect(d->ui.tree, &QTreeWidget::itemSelectionChanged, [this] () {
         auto items = d->ui.tree->selectedItems();
@@ -283,19 +282,19 @@ PrefDialog::PrefDialog(QWidget *parent)
     };
 
     auto general = addCategory(tr("General"));
+    addPage(tr("Application"), d->ui.gen_behaviours,
+            ":/img/cmplayer-32.png", general);
     addPage(tr("Open"), d->ui.open_media,
             ":/img/document-open-32.png", general)->setSelected(true);
     addPage(tr("Playback"), d->ui.playback,
             ":/img/media-playback-start-32.png", general);
-    addPage(tr("Behaviour"), d->ui.gen_behaviours,
-            ":/img/preferences-system-session-services.png", general);
-    addPage(tr("Look"), d->ui.gen_appearance,
-            ":/img/preferences-desktop-theme-32.png", general);
     addPage(tr("Cache"), d->ui.cache,
             ":/img/preferences-web-browser-cache.png", general);
 
     auto appear = addCategory(tr("Appearance"));
     addPage(tr("OSD"), d->ui.osd, ":/img/view-multiple-objects.png", appear);
+    addPage(tr("Skin & Style"), d->ui.skin_style,
+            ":/img/preferences-desktop-theme-32.png", appear);
 
     auto video = addCategory(tr("Video"));
     addPage(tr("Hardware acceleration"), d->ui.video_hwacc,
@@ -440,7 +439,7 @@ PrefDialog::PrefDialog(QWidget *parent)
         auto treeItem = d->ui.shortcut_tree->currentItem();
         auto item = static_cast<MenuTreeItem*>(treeItem);
         if (item && !item->isMenu()) {
-            GetShortcutDialog dlg(item->shortcut(idx), this);
+            ShortcutDialog dlg(item->shortcut(idx), this);
             if (dlg.exec())
                 item->setShortcut(idx, dlg.shortcut());
         }
@@ -476,12 +475,21 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     connect(d->ui.dbb, &BBox::clicked, [this] (QAbstractButton *button) {
         switch (d->ui.dbb->standardButton(button)) {
-        case BBox::Ok:        hide();
-        case BBox::Apply:    emit applyRequested();        break;
-        case BBox::Cancel:    hide();
-        case BBox::Reset:    emit resetRequested();        break;
-        case BBox::RestoreDefaults:    set(Pref());        break;
-        default:                                        break;
+        case BBox::Ok:
+            hide();
+        case BBox::Apply:
+            emit applyRequested();
+            break;
+        case BBox::Cancel:
+            hide();
+        case BBox::Reset:
+            emit resetRequested();
+            break;
+        case BBox::RestoreDefaults:
+            set(Pref());
+            break;
+        default:
+            break;
         }
     });
 

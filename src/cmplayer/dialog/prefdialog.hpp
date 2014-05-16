@@ -3,7 +3,6 @@
 
 #include "stdafx.hpp"
 
-class QTreeWidgetItem;        class QAbstractButton;
 class Pref;
 
 class PrefDialog : public QDialog {

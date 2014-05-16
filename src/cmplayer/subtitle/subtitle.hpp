@@ -85,7 +85,7 @@ private:
     int m_id = -1;
 };
 
-typedef QMapIterator<int, SubCapt> SubtitleComponentIterator;
+using SubtitleComponentIterator = QMapIterator<int, SubCapt>;
 
 class Subtitle {
 public:

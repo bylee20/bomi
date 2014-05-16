@@ -1,0 +1,166 @@
+#include "channelmanipulationwidget.hpp"
+#include "enumcombobox.hpp"
+#include "verticallabel.hpp"
+#include "record.hpp"
+#include "audio/channelmanipulation.hpp"
+
+struct ChannelManipulationWidget::Data {
+    ChannelComboBox *output, *input;
+    QTableWidget *table;
+    ChannelLayoutMap map = ChannelLayoutMap::default_();
+
+    ChannelLayout currentInput = ChannelLayout::Mono;
+    ChannelLayout currentOutput = ChannelLayout::Mono;
+
+    void makeTable() {
+        mp_chmap src, dest;
+        ChannelLayout output = this->output->currentValue();
+        ChannelLayout  input = this-> input->currentValue();
+        auto makeHeader = [] (ChannelLayout layout, mp_chmap &chmap) {
+            _ChmapFromLayout(&chmap, layout);
+            QStringList header;
+            for (int i=0; i<chmap.num; ++i) {
+                const int speaker = chmap.speaker[i];
+                Q_ASSERT(_InRange<int>(MP_SPEAKER_ID_FL,
+                                       speaker, MP_SPEAKER_ID_SR));
+                auto abbr = ChannelLayoutMap::channelNames()[speaker].abbr;
+                header.push_back(_L(abbr));
+            }
+            return header;
+        };
+        auto header = makeHeader(output, dest);
+        table->setRowCount(header.size());
+        table->setVerticalHeaderLabels(header);
+
+        header = makeHeader(input, src);
+        table->setColumnCount(header.size());
+        table->setHorizontalHeaderLabels(header);
+
+        auto hv = table->horizontalHeader();
+        hv->setSectionResizeMode(QHeaderView::ResizeToContents);
+        hv = table->verticalHeader();
+        hv->setSectionResizeMode(QHeaderView::ResizeToContents);
+        hv->setDefaultAlignment(Qt::AlignRight);
+
+        mp_chmap_reorder_norm(&dest);
+        mp_chmap_reorder_norm(&src);
+
+        for (int i=0; i<table->rowCount(); ++i) {
+            for (int j=0; j<table->columnCount(); ++j) {
+                auto item = table->item(i, j);
+                auto &man = map.get(input, output);
+                if (!item) {
+                    item = new QTableWidgetItem;
+                    table->setItem(i, j, item);
+                }
+                auto &sources = man.sources((mp_speaker_id)dest.speaker[i]);
+                item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+                const auto speaker = static_cast<mp_speaker_id>(src.speaker[j]);
+                const auto has = sources.contains(speaker);
+                item->setCheckState(has ? Qt::Checked : Qt::Unchecked);
+            }
+        }
+        currentInput = input;
+        currentOutput = output;
+    }
+    void fillMap() {
+        if (!table->rowCount() || !table->columnCount())
+            return;
+        mp_chmap src, dst;
+        auto getChMap = [] (mp_chmap &chmap, ChannelLayout layout) {
+            _ChmapFromLayout(&chmap, layout);
+            mp_chmap_reorder_norm(&chmap);
+        };
+        getChMap(src, currentInput);
+        getChMap(dst, currentOutput);
+        auto &man = map.get(currentInput, currentOutput);
+        for (int i=0; i<table->rowCount(); ++i) {
+            ChannelManipulation::SourceArray sources;
+            for (int j=0; j<table->columnCount(); ++j) {
+                auto item = table->item(i, j);
+                if (!item)
+                    continue;
+                if (item->checkState() == Qt::Checked)
+                    sources.append((mp_speaker_id)src.speaker[j]);
+            }
+            man.set((mp_speaker_id)dst.speaker[i], sources);
+        }
+    }
+};
+
+ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
+: QWidget(parent), d(new Data) {
+    d->output = new ChannelComboBox;
+    d->input = new ChannelComboBox;
+    d->table = new QTableWidget;
+    d->table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    auto vbox = new QVBoxLayout;
+    setLayout(vbox);
+
+    auto hbox = new QHBoxLayout;
+    hbox->addWidget(new QLabel(tr("Layout:")));
+    hbox->addWidget(d->input);
+    hbox->addWidget(new QLabel(_U("→")));
+    hbox->addWidget(d->output);
+    hbox->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
+    vbox->addLayout(hbox);
+
+    auto grid = new QGridLayout;
+    vbox->addLayout(grid);
+    hbox = new QHBoxLayout;
+    auto si = new QSpacerItem(50, 0, QSizePolicy::Fixed, QSizePolicy::Fixed);
+    hbox->addSpacerItem(si);
+    hbox->addWidget(new QLabel(tr("Inputs")));
+    grid->addLayout(hbox, 0, 1);
+    auto vbox2 = new QVBoxLayout;
+    si = new QSpacerItem(0, 50, QSizePolicy::Fixed, QSizePolicy::Fixed);
+    vbox2->addSpacerItem(si);
+    vbox2->addWidget(new VerticalLabel(tr("Outputs")));
+    grid->addLayout(vbox2, 1, 0);
+    grid->addWidget(d->table, 1, 1);
+
+    QString ex;
+    for (auto &name : ChannelLayoutMap::channelNames()) {
+        if (!ex.isEmpty())
+            ex += _L('\n');
+        ex += _L(name.abbr) % _L(": ") % _L(name.desc);
+    }
+    grid->addWidget(new QLabel(ex), 0, 2, 2, 1);
+    auto onComboChanged = [this] () { d->fillMap(); d->makeTable(); };
+    connect(d->output, &DataComboBox::currentDataChanged, this, onComboChanged);
+    connect(d-> input, &DataComboBox::currentDataChanged, this, onComboChanged);
+
+    Record r("channel_layouts");
+    ChannelLayout src = ChannelLayout::_2_0;
+    ChannelLayout dst = ChannelLayout::_2_0;
+    r.read(dst, "output");
+    r.read(src, "input");
+    setCurrentLayouts(src, dst);
+}
+
+ChannelManipulationWidget::~ChannelManipulationWidget() {
+    Record r("channel_layouts");
+    r.write(d->output->currentValue(), "output");
+    r.write(d->input->currentValue(), "input");
+    delete d;
+}
+
+auto ChannelManipulationWidget::setCurrentLayouts(ChannelLayout src,
+                                                  ChannelLayout dst) -> void
+{
+    d->output->setCurrentValue(dst);
+    d-> input->setCurrentValue(src);
+}
+
+auto ChannelManipulationWidget::setMap(const ChannelLayoutMap &map) -> void
+{
+    d->map = map;
+    d->makeTable();
+}
+
+auto ChannelManipulationWidget::map() const -> ChannelLayoutMap
+{
+    d->fillMap();
+    return d->map;
+}

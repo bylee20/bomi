@@ -14,8 +14,8 @@ struct Range {
     auto difference() const -> T {return max - min;}
     T min = 0, max = 0;
 };
-typedef Range<double> RangeF;
-typedef Range<int> RangeI;
+using RangeF = Range<double>;
+using RangeI = Range<int>;
 
 enum StreamType {UnknownStream = 0, VideoStream, AudioStream, SubPicStream};
 enum MediaMetaData {LanguageCode};

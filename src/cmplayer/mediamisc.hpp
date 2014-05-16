@@ -123,7 +123,7 @@ private:
     bool m_selected = false, m_default = false, m_albumart = false;
 };
 
-typedef QMap<int, Stream> StreamList;
+using StreamList = QMap<int, Stream>;
 
 struct Chapter {
     auto time() const -> int { return m_time; }
@@ -137,7 +137,7 @@ private:
     int m_id = -2, m_time = 0;
 };
 
-typedef QVector<Chapter> ChapterList;
+using ChapterList = QVector<Chapter>;
 
 struct Edition {
     auto name() const -> QString { return m_name; }
@@ -152,7 +152,7 @@ private:
     bool m_selected = false;
 };
 
-typedef QVector<Edition> EditionList;
+using EditionList = QVector<Edition>;
 
 class TrackInfoObject : public QObject {
     Q_OBJECT

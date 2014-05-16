@@ -271,7 +271,7 @@ auto VideoFrameShader::upload(const mp_image *mpi) -> void
     const bool additional = mpi->fields & MP_IMGFIELD_ADDITIONAL;
     if (!additional) {
         auto getCategory = [&] () {
-            if (!(mpi->flags & (MP_IMGFIELD_TOP | MP_IMGFIELD_BOTTOM)))
+            if (!(mpi->fields & (MP_IMGFIELD_TOP | MP_IMGFIELD_BOTTOM)))
                 return 0;
             if (m_params.imgfmt != IMGFMT_VAAPI)
                 return 0;
@@ -287,7 +287,7 @@ auto VideoFrameShader::upload(const mp_image *mpi) -> void
     }
     if (m_textures.isEmpty())
         return;
-    m_top = mpi->flags & MP_IMGFIELD_TOP;
+    m_top = mpi->fields & MP_IMGFIELD_TOP;
     OpenGLTextureBaseBinder binder(m_target, m_binding);
     if (m_mixer) {
 #ifndef Q_OS_MAC

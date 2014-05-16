@@ -2,9 +2,8 @@
 #define SUBTITLEVIEW_HPP
 
 #include "stdafx.hpp"
-#include "dialogs.hpp"
 
-class PlayEngine;        class Subtitle;
+class PlayEngine;                       class Subtitle;
 class SubCompModel;
 
 class SubtitleView : public QDialog {

@@ -301,7 +301,6 @@ struct PlayEngine::Data {
     {
         OptionList vo(':');
         vo.add("null:address", video);
-        vo.add("hwdec_deint", deint_hwdec.toString().toLatin1());
         return vo.get();
     }
 
@@ -435,7 +434,6 @@ struct PlayEngine::Data {
         opts.add("audio-channels", ChannelLayoutInfo::data(layout), true);
         opts.add("af", af(), true);
         opts.add("vf", vf(), true);
-        opts.add("vo", vo(), true);
         opts.add("brightness", videoEq.brightness());
         opts.add("contrast", videoEq.contrast());
         opts.add("hue", videoEq.hue());
@@ -519,6 +517,8 @@ PlayEngine::PlayEngine()
     d->setOption("ao", "null,");
     d->setOption("ad-lavc-downmix", "no");
     d->setOption("title", "\"\"");
+    d->setOption("vo", d->vo().constData());
+    d->setOption("fixed-vo", "yes");
 
     mpv_set_wakeup_callback(d->handle, [] (void *arg) {
         if (!static_cast<Data*>(arg)->videoThread)
@@ -783,7 +783,7 @@ auto PlayEngine::setChannelLayout(ChannelLayout layout) -> void
         reload();
 }
 
-typedef QPair<AudioDriver, const char*> AudioDriverName;
+using AudioDriverName = QPair<AudioDriver, const char*>;
 const std::array<AudioDriverName, AudioDriverInfo::size()-1> audioDriverNames =
 {{
     {AudioDriver::ALSA, "alsa"},
@@ -1698,6 +1698,17 @@ auto PlayEngine::setDeintOptions(const DeintOption &swdec,
 {
     d->deint_swdec = swdec;
     d->deint_hwdec = hwdec;
+    emit deintOptionsChanged();
+}
+
+auto PlayEngine::deintOptionForSwDec() const -> DeintOption
+{
+    return d->deint_swdec;
+}
+
+auto PlayEngine::deintOptionForHwDec() const -> DeintOption
+{
+    return d->deint_hwdec;
 }
 
 auto PlayEngine::setDeintMode(DeintMode mode) -> void

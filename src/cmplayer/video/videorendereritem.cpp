@@ -3,9 +3,9 @@
 #include "mposdbitmap.hpp"
 #include "global.hpp"
 #include "letterboxitem.hpp"
-#include "dataevent.hpp"
 #include "videoframebufferobject.hpp"
 #include "videocolor.hpp"
+#include "misc/dataevent.hpp"
 #include <deque>
 
 enum EventType {NewFrame = QEvent::User + 1, NewFrameWithOsd };

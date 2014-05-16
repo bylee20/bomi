@@ -1,14 +1,11 @@
 #include "channelmanipulation.hpp"
 #include "log.hpp"
 #include "enums.hpp"
-#include "widgets.hpp"
 #include "record.hpp"
 
 DECLARE_LOG_CONTEXT(Audio)
 
-struct ChannelName {const char *abbr; const char *desc;};
-
-ChannelName ChNames[] = {
+static const QVector<ChannelName> ChNames = {
     { "FL", "Front Left" },
     { "FR", "Front Right" },
     { "FC", "Front Center" },
@@ -22,7 +19,7 @@ ChannelName ChNames[] = {
     { "SR", "Side Right" }
 };
 
-static constexpr int ChNamesSize = sizeof(ChNames)/sizeof(ChNames[0]);
+static const int ChNamesSize = ChNames.size();
 
 auto _ChmapFromLayout(mp_chmap *chmap, ChannelLayout layout) -> bool
 {
@@ -255,222 +252,10 @@ auto ChannelLayoutMap::fromString(const QString &text) -> ChannelLayoutMap
     return map;
 }
 
+auto ChannelLayoutMap::channelNames() -> const QVector<ChannelName>&
+{
+    return ChNames;
+}
+
 /*****************************************************/
 
-class VerticalLabel : public QFrame {
-public:
-    VerticalLabel(QWidget *parent = nullptr): QFrame(parent) { }
-    VerticalLabel(const QString &text, QWidget *parent = nullptr)
-    : QFrame(parent) { setText(text); }
-    void setText(const QString &text) { if (_Change(m_text, text)) recalc(); }
-    QString text() const { return m_text; }
-    QSize sizeHint() const override { return minimumSizeHint(); }
-    QSize minimumSizeHint() const override { return m_size.transposed(); }
-protected:
-    void changeEvent(QEvent *event) override {
-        if (event->type() == QEvent::FontChange)
-            recalc();
-    }
-    void paintEvent(QPaintEvent *event) override {
-        QFrame::paintEvent(event);
-        QPainter painter(this);
-        painter.translate((width())*0.5, (height())*0.5);
-        painter.rotate(-90);
-        QPoint p;
-        auto m_alignment = Qt::AlignVCenter | Qt::AlignRight;
-        switch (m_alignment & Qt::AlignVertical_Mask) {
-        case Qt::AlignTop:
-            p.ry() = -width()*0.5;
-            break;
-        case Qt::AlignBottom:
-            p.ry() = width()*0.5 - m_size.height();
-            break;
-        default:
-            p.ry() = m_size.height()*0.5;
-            break;
-        }
-        switch (m_alignment & Qt::AlignHorizontal_Mask) {
-        case Qt::AlignLeft:
-            p.rx() = -height()*0.5;
-            break;
-        case Qt::AlignRight:
-            p.rx() = height()*0.5 - m_size.width();
-            break;
-        default:
-            p.rx() = -m_size.width()*0.5;
-            break;
-        }
-
-        painter.drawText(p, m_text);
-    }
-    void recalc() {
-        m_size = fontMetrics().boundingRect(m_text).size();
-        updateGeometry();
-        update();
-    }
-private:
-    QString m_text;
-    QSize m_size;
-};
-
-using ChannelComboBox = EnumComboBox<ChannelLayout>;
-
-struct ChannelManipulationWidget::Data {
-    ChannelComboBox *output, *input;
-    QTableWidget *table;
-    ChannelLayoutMap map = ChannelLayoutMap::default_();
-
-    ChannelLayout currentInput = ChannelLayout::Mono;
-    ChannelLayout currentOutput = ChannelLayout::Mono;
-
-    void makeTable() {
-        mp_chmap src, dest;
-        ChannelLayout output = this->output->currentValue();
-        ChannelLayout  input = this-> input->currentValue();
-        auto makeHeader = [] (ChannelLayout layout, mp_chmap &chmap) {
-            _ChmapFromLayout(&chmap, layout);
-            QStringList header;
-            for (int i=0; i<chmap.num; ++i) {
-                const int speaker = chmap.speaker[i];
-                Q_ASSERT(_InRange<int>(MP_SPEAKER_ID_FL,
-                                       speaker, MP_SPEAKER_ID_SR));
-                header.append(QString::fromLatin1(ChNames[speaker].abbr));
-            }
-            return header;
-        };
-        auto header = makeHeader(output, dest);
-        table->setRowCount(header.size());
-        table->setVerticalHeaderLabels(header);
-
-        header = makeHeader(input, src);
-        table->setColumnCount(header.size());
-        table->setHorizontalHeaderLabels(header);
-
-        auto hv = table->horizontalHeader();
-        hv->setSectionResizeMode(QHeaderView::ResizeToContents);
-        hv = table->verticalHeader();
-        hv->setSectionResizeMode(QHeaderView::ResizeToContents);
-        hv->setDefaultAlignment(Qt::AlignRight);
-
-        mp_chmap_reorder_norm(&dest);
-        mp_chmap_reorder_norm(&src);
-
-        for (int i=0; i<table->rowCount(); ++i) {
-            for (int j=0; j<table->columnCount(); ++j) {
-                auto item = table->item(i, j);
-                auto &man = map.get(input, output);
-                if (!item) {
-                    item = new QTableWidgetItem;
-                    table->setItem(i, j, item);
-                }
-                auto &sources = man.sources((mp_speaker_id)dest.speaker[i]);
-                item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
-                const auto speaker = static_cast<mp_speaker_id>(src.speaker[j]);
-                const auto has = sources.contains(speaker);
-                item->setCheckState(has ? Qt::Checked : Qt::Unchecked);
-            }
-        }
-        currentInput = input;
-        currentOutput = output;
-    }
-    void fillMap() {
-        if (!table->rowCount() || !table->columnCount())
-            return;
-        mp_chmap src, dst;
-        auto getChMap = [] (mp_chmap &chmap, ChannelLayout layout) {
-            _ChmapFromLayout(&chmap, layout);
-            mp_chmap_reorder_norm(&chmap);
-        };
-        getChMap(src, currentInput);
-        getChMap(dst, currentOutput);
-        auto &man = map.get(currentInput, currentOutput);
-        for (int i=0; i<table->rowCount(); ++i) {
-            ChannelManipulation::SourceArray sources;
-            for (int j=0; j<table->columnCount(); ++j) {
-                auto item = table->item(i, j);
-                if (!item)
-                    continue;
-                if (item->checkState() == Qt::Checked)
-                    sources.append((mp_speaker_id)src.speaker[j]);
-            }
-            man.set((mp_speaker_id)dst.speaker[i], sources);
-        }
-    }
-};
-
-ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
-: QWidget(parent), d(new Data) {
-    d->output = new ChannelComboBox;
-    d->input = new ChannelComboBox;
-    d->table = new QTableWidget;
-    d->table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    auto vbox = new QVBoxLayout;
-    setLayout(vbox);
-
-    auto hbox = new QHBoxLayout;
-    hbox->addWidget(new QLabel(tr("Layout:")));
-    hbox->addWidget(d->input);
-    hbox->addWidget(new QLabel(_U("→")));
-    hbox->addWidget(d->output);
-    hbox->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
-    vbox->addLayout(hbox);
-
-    auto grid = new QGridLayout;
-    vbox->addLayout(grid);
-    hbox = new QHBoxLayout;
-    auto si = new QSpacerItem(50, 0, QSizePolicy::Fixed, QSizePolicy::Fixed);
-    hbox->addSpacerItem(si);
-    hbox->addWidget(new QLabel(tr("Inputs")));
-    grid->addLayout(hbox, 0, 1);
-    auto vbox2 = new QVBoxLayout;
-    si = new QSpacerItem(0, 50, QSizePolicy::Fixed, QSizePolicy::Fixed);
-    vbox2->addSpacerItem(si);
-    vbox2->addWidget(new VerticalLabel(tr("Outputs")));
-    grid->addLayout(vbox2, 1, 0);
-    grid->addWidget(d->table, 1, 1);
-
-    QString ex;
-    for (uint i=0; i<sizeof(ChNames)/sizeof(ChNames[0]); ++i) {
-        if (i > 0)
-            ex += _L('\n');
-        ex += _L(ChNames[i].abbr) % _L(": ") % _L(ChNames[i].desc);
-    }
-    grid->addWidget(new QLabel(ex), 0, 2, 2, 1);
-    auto onComboChanged = [this] () { d->fillMap(); d->makeTable(); };
-    connect(d->output, &DataComboBox::currentDataChanged, this, onComboChanged);
-    connect(d-> input, &DataComboBox::currentDataChanged, this, onComboChanged);
-
-    Record r("channel_layouts");
-    ChannelLayout src = ChannelLayout::_2_0;
-    ChannelLayout dst = ChannelLayout::_2_0;
-    r.read(dst, "output");
-    r.read(src, "input");
-    setCurrentLayouts(src, dst);
-}
-
-ChannelManipulationWidget::~ChannelManipulationWidget() {
-    Record r("channel_layouts");
-    r.write(d->output->currentValue(), "output");
-    r.write(d->input->currentValue(), "input");
-    delete d;
-}
-
-auto ChannelManipulationWidget::setCurrentLayouts(ChannelLayout src,
-                                                  ChannelLayout dst) -> void
-{
-    d->output->setCurrentValue(dst);
-    d-> input->setCurrentValue(src);
-}
-
-auto ChannelManipulationWidget::setMap(const ChannelLayoutMap &map) -> void
-{
-    d->map = map;
-    d->makeTable();
-}
-
-auto ChannelManipulationWidget::map() const -> ChannelLayoutMap
-{
-    d->fillMap();
-    return d->map;
-}

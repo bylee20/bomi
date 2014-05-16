@@ -3,7 +3,7 @@
 
 #include "menu.hpp"
 
-typedef QHash<QString, QList<QKeySequence> > Shortcuts;
+using Shortcuts = QHash<QString, QList<QKeySequence> >;
 
 class Pref;
 

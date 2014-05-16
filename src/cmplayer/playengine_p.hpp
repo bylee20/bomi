@@ -8,7 +8,7 @@
 #include "audio/audiocontroller.hpp"
 #include "playlistmodel.hpp"
 #include "video/deintinfo.hpp"
-#include "dataevent.hpp"
+#include "misc/dataevent.hpp"
 #include "playengine.hpp"
 #include <array>
 

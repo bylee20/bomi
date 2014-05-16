@@ -1,6 +1,6 @@
 #include "mrl.hpp"
 #include "info.hpp"
-#include "udf25.hpp"
+#include "misc/udf25.hpp"
 
 Mrl::Mrl(const QUrl &url) {
     if (url.isLocalFile())

@@ -3,7 +3,7 @@
 
 #include "stdafx.hpp"
 
-typedef QList<QLocale> LocaleList;
+using LocaleList = QList<QLocale>;
 
 class Translator : public QObject {
     Q_OBJECT

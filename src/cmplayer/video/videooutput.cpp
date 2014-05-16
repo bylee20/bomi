@@ -30,7 +30,8 @@ enum DirtyFlag {
     DirtyKernel  = 1 << 1,
     DirtyRange   = 1 << 2,
     DirtyChroma  = 1 << 3,
-    DirtySize    = 1 << 4
+    DirtySize    = 1 << 4,
+    DirtyDeint   = 1 << 5
 };
 
 using MpOsdBitmapCache = VideoImageCache<MpOsdBitmap>;
@@ -73,7 +74,7 @@ public:
 
 struct cmplayer_vo_priv {
     VideoOutput *vo;
-    char *address, *hwdec_deint;
+    char *address;
 };
 
 static auto priv(vo *out) -> VideoOutput*
@@ -88,7 +89,6 @@ auto create_driver() -> vo_driver
 #define MPV_OPTION_BASE cmplayer_vo_priv
     static m_option options[] = {
         MPV_OPTION(address),
-        MPV_OPTION(hwdec_deint),
         mpv::null_option
     };
     static vo_driver driver;
@@ -162,6 +162,12 @@ struct VideoOutput::Data {
                 shader->setRange(engine->videoColorRange());
             if (dirty & DirtyChroma)
                 shader->setChromaUpscaler(engine->videoChromaUpscaler());
+            if (dirty & DirtyDeint) {
+                auto method = engine->deintOptionForSwDec().method;
+                if (IMGFMT_IS_HWACCEL(params.imgfmt))
+                    method = engine->deintOptionForHwDec().method;
+                shader->setDeintMethod(method);
+            }
         }
         cache = pool->get(format, mpi->pts);
         if (!cache.isNull()) {
@@ -194,6 +200,7 @@ VideoOutput::VideoOutput(PlayEngine *engine)
     d->engine = engine;
     d->marker(d->engine, &PlayEngine::videoColorRangeChanged, DirtyRange);
     d->marker(d->engine, &PlayEngine::videoChromaUpscalerChanged, DirtyChroma);
+    d->marker(d->engine, &PlayEngine::deintOptionsChanged, DirtyDeint);
 }
 
 VideoOutput::~VideoOutput()
@@ -235,10 +242,6 @@ auto VideoOutput::preinit(vo *out) -> int
     d->gl->makeCurrent();
     initialize_vdpau_interop(d->gl->context());
     d->shader = new VideoFrameShader;
-    if (priv->hwdec_deint) {
-        const auto option = DeintOption::fromString(priv->hwdec_deint);
-        d->shader->setDeintMethod(option.method);
-    }
     d->pool =new VideoFramebufferObjectPool;
     d->gl->doneCurrent();
     d->dirty.store(0xffffffff);

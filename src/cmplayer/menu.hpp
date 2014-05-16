@@ -12,9 +12,9 @@ class Menu : public QMenu {
     Q_OBJECT
 public:
     static constexpr int IdRole = Qt::UserRole + 1;
-    typedef QHash<QString, Menu*> MenuHash;
-    typedef QHash<QString, QAction*> ActionHash;
-    typedef QHash<QString, ActionGroup*> GroupHash;
+    using MenuHash = QHash<QString, Menu*>;
+    using ActionHash = QHash<QString, QAction*>;
+    using GroupHash = QHash<QString, ActionGroup*>;
 
     auto operator() (const char *key) const -> Menu &;
     auto operator() (const char *key, const QString &title) const -> Menu&;

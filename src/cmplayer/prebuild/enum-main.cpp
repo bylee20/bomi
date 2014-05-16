@@ -279,6 +279,13 @@ QVariant _EnumVariantFromSql(const QVariant &name, const QVariant &def) {
     return QVariant::fromValue<T>(enum_);
 }
 
+template<class Enum>
+using EnumData = typename EnumInfo<Enum>::Data;
+
+template<class Enum>
+static inline auto _GetEnumData(Enum e) -> EnumData<Enum>
+    { return EnumInfo<Enum>::data(e); }
+
 )";
 
     const string convtmpl = "    if (varType == qMetaTypeId<__ENUM_NAME>()) {\n        toSql = _EnumVariantToSql<__ENUM_NAME>;\n        fromSql = _EnumVariantFromSql<__ENUM_NAME>;\n    } else";

@@ -26,6 +26,9 @@
 #include <QtMacExtras>
 #endif
 
+template<class State, class... Args>
+using Signal = void(State::*)(Args...);
+
 namespace Pch {
 #define SIA static inline auto
 SIA _L(const char *str) -> QLatin1String

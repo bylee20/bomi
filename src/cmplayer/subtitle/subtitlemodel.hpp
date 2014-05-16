@@ -3,7 +3,7 @@
 
 #include "stdafx.hpp"
 #include "subtitle.hpp"
-#include "simplelistmodel.hpp"
+#include "misc/simplelistmodel.hpp"
 
 class SubCompModelData {
     SubCompModelData(): m_end(-1) {}

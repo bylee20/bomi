@@ -1,5 +1,5 @@
 #include "subtitlerenderingthread.hpp"
-#include "dataevent.hpp"
+#include "misc/dataevent.hpp"
 
 template<>
 inline bool qMapLessThanKey(const SubCompItMapIt &lhs, const SubCompItMapIt &rhs) {

@@ -5,19 +5,19 @@
 
 template<VAProcFilterType type>
 struct FilterInfo {
-    typedef VAProcFilterParameterBuffer ParamType;
+    using ParamType = VAProcFilterParameterBuffer;
     constexpr static const int ParamNum = 1;
 };
 
 template<>
 struct FilterInfo<VAProcFilterDeinterlacing> {
-    typedef VAProcFilterParameterBufferDeinterlacing ParamType;
+    using ParamType = VAProcFilterParameterBufferDeinterlacing;
     constexpr static const int ParamNum = 1;
 };
 
 template<>
 struct FilterInfo<VAProcFilterColorBalance> {
-    typedef VAProcFilterParameterBufferColorBalance ParamType;
+    using ParamType = VAProcFilterParameterBufferColorBalance;
     constexpr static const int ParamNum = 4;
 };
 

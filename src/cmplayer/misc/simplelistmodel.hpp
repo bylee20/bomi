@@ -39,7 +39,7 @@ private:
 template<class T, class List = QList<T>>
 class SimpleListModel : public SimpleListModelBase {
 public:
-    typedef SimpleListModel<T, List> Super;
+    using Super = SimpleListModel<T, List>;
     SimpleListModel(QObject *parent = nullptr)
         : SimpleListModelBase(1, parent) { }
     SimpleListModel(int columns, QObject *parent = nullptr)

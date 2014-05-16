@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>599</width>
-    <height>373</height>
+    <width>501</width>
+    <height>352</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -53,7 +53,7 @@
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap>:/img/cmplayer-logo.png</pixmap>
+            <pixmap resource="../rsclist.qrc">:/img/cmplayer-logo.png</pixmap>
            </property>
            <property name="scaledContents">
             <bool>true</bool>
@@ -287,7 +287,7 @@ Project page: %3</string>
   <customwidget>
    <class>BBox</class>
    <extends>QDialogButtonBox</extends>
-   <header>dialogs.hpp</header>
+   <header>dialog/bbox.hpp</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -296,7 +296,9 @@ Project page: %3</string>
   <tabstop>view_gpl</tabstop>
   <tabstop>view_mpl</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../rsclist.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

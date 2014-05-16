@@ -138,6 +138,8 @@ public:
     auto isSubtitleStreamsVisible() const -> bool;
     auto setDeintOptions(const DeintOption &swdec,
                          const DeintOption &hwdec) -> void;
+    auto deintOptionForSwDec() const -> DeintOption;
+    auto deintOptionForHwDec() const -> DeintOption;
     auto setDeintMode(DeintMode mode) -> void;
     auto deintMode() const -> DeintMode;
     auto setAudioDriver(AudioDriver driver) -> void;
@@ -227,6 +229,7 @@ signals:
     void metaDataChanged();
     void videoColorRangeChanged(ColorRange range);
     void videoChromaUpscalerChanged(InterpolatorType type);
+    void deintOptionsChanged();
 private:
     auto updateState(State state) -> void;
     auto exec() -> void;

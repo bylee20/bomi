@@ -14,7 +14,7 @@
 
 class QLocale;
 
-typedef QHash<QString, QList<QKeySequence>> Shortcuts;
+using Shortcuts = QHash<QString, QList<QKeySequence>>;
 
 enum class KeyMapPreset {CMPlayer, Movist};
 

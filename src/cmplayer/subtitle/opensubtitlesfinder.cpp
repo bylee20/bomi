@@ -1,6 +1,6 @@
 #include "opensubtitlesfinder.hpp"
 #include "translator.hpp"
-#include "xmlrpcclient.hpp"
+#include "misc/xmlrpcclient.hpp"
 #include "mrl.hpp"
 
 static inline QVariantList _Args() { return QVariantList(); }

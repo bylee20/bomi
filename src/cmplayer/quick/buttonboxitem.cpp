@@ -1,5 +1,5 @@
 #include "buttonboxitem.hpp"
-#include "dialogs.hpp"
+#include "dialog/bbox.hpp"
 
 auto reg_button_box_item() -> void {
     qmlRegisterType<ButtonBoxItem>("CMPlayer", 1, 0, "ButtonBox");

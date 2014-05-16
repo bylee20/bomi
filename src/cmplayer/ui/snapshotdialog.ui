@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>798</width>
-    <height>82</height>
+    <width>619</width>
+    <height>59</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -130,7 +130,7 @@
   <customwidget>
    <class>ImageViewer</class>
    <extends>QFrame</extends>
-   <header>snapshotdialog.hpp</header>
+   <header>dialog/snapshotdialog.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -1,5 +1,5 @@
 #include "playlistmodel.hpp"
-#include "downloader.hpp"
+#include "misc/downloader.hpp"
 
 auto reg_playlist_model() -> void {
     qmlRegisterType<PlaylistModel>();
