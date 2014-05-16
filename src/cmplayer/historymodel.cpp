@@ -4,7 +4,7 @@
 
 DECLARE_LOG_CONTEXT(History)
 
-void reg_history_model() {
+auto reg_history_model() -> void {
     qmlRegisterType<HistoryModel>();
 }
 

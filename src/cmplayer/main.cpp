@@ -11,14 +11,15 @@
 
 DECLARE_LOG_CONTEXT(Main)
 
-void reg_top_level_item();
-void reg_button_box_item();
-void reg_busy_icon_item();
-void reg_downloader();
-void reg_history_model();
-void reg_playlist_model();
-void reg_app_object();
-void reg_settings_object();
+auto reg_top_level_item() -> void;
+auto reg_button_box_item() -> void;
+auto reg_busy_icon_item() -> void;
+auto reg_downloader() -> void;
+auto reg_history_model() -> void;
+auto reg_playlist_model() -> void;
+auto reg_app_object() -> void;
+auto reg_settings_object() -> void;
+auto reg_theme_object() -> void;
 
 int main(int argc, char **argv) {
     qputenv("PX_MODULE_PATH", "/this-is-dummy-path-to-disable-libproxy");
@@ -29,6 +30,7 @@ int main(int argc, char **argv) {
 #endif
     QApplication::setAttribute(Qt::AA_X11InitThreads);
 
+    reg_theme_object();
     reg_downloader();
     reg_history_model();
     reg_playlist_model();

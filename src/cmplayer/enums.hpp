@@ -9,23 +9,125 @@ extern "C" {
 #include <audio/chmap.h>
 }
 
-template<class T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
+template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 
 typedef QString (*EnumVariantToSqlFunc)(const QVariant &var);
 typedef QVariant (*EnumVariantFromSqlFunc)(const QVariant &var, const QVariant &def);
 
-template<class T>
+template<typename T>
 QString _EnumVariantToSql(const QVariant &var) {
     Q_ASSERT(var.userType() == qMetaTypeId<T>());
     return QLatin1Char('\'') % EnumInfo<T>::name(var.value<T>()) % QLatin1Char('\'');
 }
 
-template<class T>
+template<typename T>
 QVariant _EnumVariantFromSql(const QVariant &name, const QVariant &def) {
     const auto enum_ = EnumInfo<T>::from(name.toString(), def.value<T>());
     return QVariant::fromValue<T>(enum_);
 }
 
+
+enum class TextThemeStyle : int {
+    Normal = (int)0,
+    Outline = (int)1,
+    Raised = (int)2,
+    Sunken = (int)3
+};
+
+inline auto operator == (TextThemeStyle e, int i) -> bool { return (int)e == i; }
+inline auto operator != (TextThemeStyle e, int i) -> bool { return (int)e != i; }
+inline auto operator == (int i, TextThemeStyle e) -> bool { return (int)e == i; }
+inline auto operator != (int i, TextThemeStyle e) -> bool { return (int)e != i; }
+inline auto operator & (TextThemeStyle e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, TextThemeStyle e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, TextThemeStyle e) -> int& { return i &= (int)e; }
+inline auto operator ~ (TextThemeStyle e) -> int { return ~(int)e; }
+inline auto operator | (TextThemeStyle e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, TextThemeStyle e) -> int { return (int)e | i; }
+constexpr inline auto operator | (TextThemeStyle e1, TextThemeStyle e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, TextThemeStyle e) -> int& { return i |= (int)e; }
+inline auto operator > (TextThemeStyle e, int i) -> bool { return (int)e > i; }
+inline auto operator < (TextThemeStyle e, int i) -> bool { return (int)e < i; }
+inline auto operator >= (TextThemeStyle e, int i) -> bool { return (int)e >= i; }
+inline auto operator <= (TextThemeStyle e, int i) -> bool { return (int)e <= i; }
+inline auto operator > (int i, TextThemeStyle e) -> bool { return i > (int)e; }
+inline auto operator < (int i, TextThemeStyle e) -> bool { return i < (int)e; }
+inline auto operator >= (int i, TextThemeStyle e) -> bool { return i >= (int)e; }
+inline auto operator <= (int i, TextThemeStyle e) -> bool { return i <= (int)e; }
+
+Q_DECLARE_METATYPE(TextThemeStyle)
+
+template<>
+class EnumInfo<TextThemeStyle> {
+    typedef TextThemeStyle Enum;
+public:
+    typedef TextThemeStyle type;
+    using Data =  QVariant;
+    struct Item {
+        Enum value;
+        QString name, key;
+        QVariant data;
+    };
+    using ItemList = std::array<Item, 4>;
+    static constexpr auto size() -> int
+    { return 4; }
+    static constexpr auto typeName() -> const char*
+    { return "TextThemeStyle"; }
+    static constexpr auto typeKey() -> const char*
+    { return ""; }
+    static auto typeDescription() -> QString
+    { return qApp->translate("EnumInfo", ""); }
+    static auto item(Enum e) -> const Item*
+    { return 0 <= e && e < size() ? &info[(int)e] : nullptr; }
+    static auto name(Enum e) -> QString
+    { auto i = item(e); return i ? i->name : QString(); }
+    static auto key(Enum e) -> QString
+    { auto i = item(e); return i ? i->key : QString(); }
+    static auto data(Enum e) -> QVariant
+    { auto i = item(e); return i ? i->data : QVariant(); }
+    static auto description(int e) -> QString
+    { return description((Enum)e); }
+    static auto description(Enum e) -> QString
+    {
+        switch (e) {
+        case Enum::Normal: return qApp->translate("EnumInfo", "Normal");
+        case Enum::Outline: return qApp->translate("EnumInfo", "Outline");
+        case Enum::Raised: return qApp->translate("EnumInfo", "Raised");
+        case Enum::Sunken: return qApp->translate("EnumInfo", "Sunken");
+        default: return "";
+        }
+    }
+    static constexpr auto items() -> const ItemList&
+    { return info; }
+    static auto from(int id, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [id] (const Item &item)
+                               { return item.value == id; });
+        return it != info.cend() ? it->value : def;
+    }
+    static auto from(const QString &name, Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
+        return it != info.cend() ? it->value : def;
+    }
+    static auto fromData(const QVariant &data,
+                         Enum def = default_()) -> Enum
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&data] (const Item &item)
+                               { return item.data == data; });
+        return it != info.cend() ? it->value : def;
+    }
+    static constexpr auto default_() -> Enum
+    { return TextThemeStyle::Normal; }
+private:
+    static const ItemList info;
+};
+
+using TextThemeStyleInfo = EnumInfo<TextThemeStyle>;
 
 enum class SpeakerId : int {
     FrontLeft = (int)(1 << 0),
@@ -85,7 +187,7 @@ public:
     static auto typeDescription() -> QString
     { return qApp->translate("EnumInfo", ""); }
     static auto item(Enum e) -> const Item*
-    {
+    { 
         auto it = std::find_if(info.cbegin(), info.cend(),
                                [e] (const Item &info)
                                { return info.value == e; });
@@ -221,7 +323,7 @@ public:
     static auto typeDescription() -> QString
     { return qApp->translate("EnumInfo", "Channel Layout"); }
     static auto item(Enum e) -> const Item*
-    {
+    { 
         auto it = std::find_if(info.cbegin(), info.cend(),
                                [e] (const Item &info)
                                { return info.value == e; });
@@ -871,7 +973,7 @@ public:
     static auto typeDescription() -> QString
     { return qApp->translate("EnumInfo", ""); }
     static auto item(Enum e) -> const Item*
-    {
+    { 
         auto it = std::find_if(info.cbegin(), info.cend(),
                                [e] (const Item &info)
                                { return info.value == e; });
@@ -1075,7 +1177,7 @@ public:
     static auto typeDescription() -> QString
     { return qApp->translate("EnumInfo", ""); }
     static auto item(Enum e) -> const Item*
-    {
+    { 
         auto it = std::find_if(info.cbegin(), info.cend(),
                                [e] (const Item &info)
                                { return info.value == e; });
@@ -2318,7 +2420,7 @@ public:
     static auto typeDescription() -> QString
     { return qApp->translate("EnumInfo", ""); }
     static auto item(Enum e) -> const Item*
-    {
+    { 
         auto it = std::find_if(info.cbegin(), info.cend(),
                                [e] (const Item &info)
                                { return info.value == e; });
@@ -2778,7 +2880,8 @@ private:
 
 using ChangeValueInfo = EnumInfo<ChangeValue>;
 static inline bool _IsEnumTypeId(int userType) {
-    return userType == qMetaTypeId<SpeakerId>()
+    return userType == qMetaTypeId<TextThemeStyle>()
+        || userType == qMetaTypeId<SpeakerId>()
         || userType == qMetaTypeId<ChannelLayout>()
         || userType == qMetaTypeId<ColorRange>()
         || userType == qMetaTypeId<AdjustColor>()
@@ -2808,7 +2911,10 @@ static inline bool _IsEnumTypeId(int userType) {
 }
 
 static inline bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVariantFromSqlFunc &fromSql) {
-    if (varType == qMetaTypeId<SpeakerId>()) {
+    if (varType == qMetaTypeId<TextThemeStyle>()) {
+        toSql = _EnumVariantToSql<TextThemeStyle>;
+        fromSql = _EnumVariantFromSql<TextThemeStyle>;
+    } else    if (varType == qMetaTypeId<SpeakerId>()) {
         toSql = _EnumVariantToSql<SpeakerId>;
         fromSql = _EnumVariantFromSql<SpeakerId>;
     } else    if (varType == qMetaTypeId<ChannelLayout>()) {

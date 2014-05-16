@@ -1,6 +1,6 @@
 #include "settingsobject.hpp"
 
-void reg_settings_object() {
+auto reg_settings_object() -> void {
     qmlRegisterSingletonType<SettingsObject>("CMPlayer", 1, 0, "Settings", _QmlSingleton<SettingsObject>);
 }
 

@@ -159,109 +159,103 @@ auto Pref::preset(KeyMapPreset id) -> Shortcuts
 
 #define PREF_GROUP _L("preference")
 
+#define DO(FUNC1, FUNC2) { \
+    FUNC1(fit_to_video); \
+    FUNC1(remember_stopped); \
+    FUNC1(ask_record_found); \
+    FUNC1(pause_minimized); \
+    FUNC1(pause_video_only); \
+    FUNC1(hide_cursor); \
+    FUNC1(hide_cursor_fs_only); \
+    FUNC1(hide_cursor_delay); \
+    FUNC1(enable_system_tray); \
+    FUNC1(hide_rather_close); \
+    FUNC1(restore_properties); \
+    FUNC1(invert_wheel); \
+    FUNC1(disable_screensaver); \
+    FUNC1(sub_enc); \
+    FUNC1(sub_priority); \
+    FUNC1(sub_enc_autodetection); \
+    FUNC1(sub_enc_accuracy); \
+    FUNC1(ms_per_char); \
+    FUNC1(seek_step1); \
+    FUNC1(seek_step2); \
+    FUNC1(seek_step3); \
+    FUNC1(speed_step); \
+    FUNC1(volume_step); \
+    FUNC1(amp_step); \
+    FUNC1(sub_pos_step); \
+    FUNC1(volume_step); \
+    FUNC1(sub_sync_step); \
+    FUNC1(brightness_step); \
+    FUNC1(saturation_step); \
+    FUNC1(contrast_step); \
+    FUNC1(hue_step); \
+    FUNC1(sub_ext); \
+    FUNC1(blur_kern_c); \
+    FUNC1(blur_kern_n); \
+    FUNC1(blur_kern_d); \
+    FUNC1(sharpen_kern_c); \
+    FUNC1(sharpen_kern_n); \
+    FUNC1(sharpen_kern_d); \
+    FUNC1(remap_luma_min); \
+    FUNC1(remap_luma_max); \
+    FUNC1(channel_manipulation); \
+    FUNC1(enable_generate_playist); \
+    FUNC1(sub_enable_autoload); \
+    FUNC1(sub_enable_autoselect); \
+    FUNC1(generate_playlist); \
+    FUNC1(sub_autoload); \
+    FUNC1(sub_autoselect); \
+    FUNC1(enable_hwaccel); \
+    FUNC1(skin_name); \
+    FUNC1(hwaccel_codecs); \
+    FUNC1(hwdeints); \
+    FUNC1(normalizer_silence); \
+    FUNC1(normalizer_target); \
+    FUNC1(normalizer_min); \
+    FUNC1(normalizer_max); \
+    FUNC1(lion_style_fullscreen); \
+    FUNC1(show_logo); \
+    FUNC1(bg_color); \
+    FUNC1(deint_hwdec); \
+    FUNC1(deint_swdec); \
+    FUNC1(audio_driver); \
+    FUNC1(clipping_method); \
+    FUNC1(cache_local); \
+    FUNC1(cache_disc); \
+    FUNC1(cache_network); \
+    FUNC1(cache_min_playback); \
+    FUNC1(cache_min_seeking); \
+    FUNC1(network_folders); \
+    FUNC1(use_mpris2); \
+    FUNC1(show_osd_on_action); \
+    FUNC1(show_osd_on_resized); \
+    FUNC1(use_heartbeat); \
+    FUNC1(heartbeat_command); \
+    FUNC1(heartbeat_interval); \
+    \
+    FUNC2(open_media_from_file_manager); \
+    FUNC2(open_media_by_drag_and_drop); \
+    FUNC2(sub_style); \
+    FUNC2(double_click_map); \
+    FUNC2(middle_click_map); \
+    FUNC2(scroll_up_map); \
+    FUNC2(scroll_down_map); \
+    FUNC2(osd_theme); }
+
 auto Pref::save() const -> void
 {
     Record r(PREF_GROUP);
-#define WRITE(a) r.write(a, #a)
-    WRITE(fit_to_video);
-    WRITE(remember_stopped);
-    WRITE(ask_record_found);
-    WRITE(pause_minimized);
-    WRITE(pause_video_only);
-    WRITE(hide_cursor);
-    WRITE(hide_cursor_fs_only);
-    WRITE(hide_cursor_delay);
-    WRITE(enable_system_tray);
-    WRITE(hide_rather_close);
-
     QList<QByteArray> restore_properties;
     restore_properties.reserve(this->restore_properties.size());
     for (auto &property : this->restore_properties)
         restore_properties.append(property.name());
-    WRITE(restore_properties);
+#define WRITE1(a) r.write(a, #a)
+#define WRITE2(a) a.save(r, #a)
+    DO(WRITE1, WRITE2);
 
-    WRITE(invert_wheel);
-    WRITE(disable_screensaver);
-    WRITE(sub_enc);
-    WRITE(sub_priority);
-    WRITE(sub_enc_autodetection);
-    WRITE(sub_enc_accuracy);
-    WRITE(ms_per_char);
-    WRITE(seek_step1);
-    WRITE(seek_step2);
-    WRITE(seek_step3);
-    WRITE(speed_step);
-    WRITE(volume_step);
-    WRITE(amp_step);
-    WRITE(sub_pos_step);
-    WRITE(volume_step);
-    WRITE(sub_sync_step);
-    WRITE(brightness_step);
-    WRITE(saturation_step);
-    WRITE(contrast_step);
-    WRITE(hue_step);
-    WRITE(sub_ext);
-    WRITE(blur_kern_c);
-    WRITE(blur_kern_n);
-    WRITE(blur_kern_d);
-    WRITE(sharpen_kern_c);
-    WRITE(sharpen_kern_n);
-    WRITE(sharpen_kern_d);
-    WRITE(remap_luma_min);
-    WRITE(remap_luma_max);
-    WRITE(channel_manipulation);
-
-    WRITE(enable_generate_playist);
-    WRITE(sub_enable_autoload);
-    WRITE(sub_enable_autoselect);
-    WRITE(generate_playlist);
-    WRITE(sub_autoload);
-    WRITE(sub_autoselect);
-
-    WRITE(enable_hwaccel);
-    WRITE(skin_name);
-    WRITE(hwaccel_codecs);
-    WRITE(hwdeints);
     r.write(HwAcc::backendName(hwaccel_backend), "hwaccel_backend");
-    WRITE(normalizer_silence);
-    WRITE(normalizer_target);
-    WRITE(normalizer_min);
-    WRITE(normalizer_max);
-
-    WRITE(lion_style_fullscreen);
-
-    WRITE(show_logo);
-    WRITE(bg_color);
-
-    WRITE(deint_hwdec);
-    WRITE(deint_swdec);
-
-    WRITE(audio_driver);
-    WRITE(clipping_method);
-
-    WRITE(cache_local);
-    WRITE(cache_disc);
-    WRITE(cache_network);
-    WRITE(cache_min_playback);
-    WRITE(cache_min_seeking);
-    WRITE(network_folders);
-    WRITE(use_mpris2);
-    WRITE(show_osd_on_action);
-    WRITE(show_osd_on_resized);
-    WRITE(use_heartbeat);
-    WRITE(heartbeat_command);
-    WRITE(heartbeat_interval);
-#undef WRITE
-
-#define WRITE2(a) a.save(r, #a);
-    WRITE2(open_media_from_file_manager);
-    WRITE2(open_media_by_drag_and_drop);
-    WRITE2(sub_style);
-    WRITE2(double_click_map);
-    WRITE2(middle_click_map);
-    WRITE2(scroll_up_map);
-    WRITE2(scroll_down_map);
-#undef WRITE2
 
     r.beginWriteArray("shortcuts", shortcuts.size());
     auto it = shortcuts.cbegin();
@@ -278,27 +272,15 @@ auto Pref::save() const -> void
 auto Pref::load() -> void
 {
     Record r(PREF_GROUP);
-#define READ(a) r.read(a, #a)
-    READ(fit_to_video);
-    READ(remember_stopped);
-    READ(ask_record_found);
-    READ(pause_minimized);
-    READ(pause_video_only);
-    READ(hide_cursor);
-    READ(hide_cursor_fs_only);
-    READ(hide_cursor_delay);
-    READ(blur_kern_c);
-    READ(blur_kern_n);
-    READ(blur_kern_d);
-    READ(sharpen_kern_c);
-    READ(sharpen_kern_n);
-    READ(sharpen_kern_d);
-    READ(remap_luma_min);
-    READ(remap_luma_max);
-    READ(channel_manipulation);
-
     QList<QByteArray> restore_properties;
-    READ(restore_properties);
+#define READ1(a) r.read(a, #a)
+#define READ2(a) a.load(r, #a)
+    DO(READ1, READ2);
+
+    QString backend;
+    r.read(backend, "hwaccel_backend");
+    hwaccel_backend = HwAcc::backend(backend);
+
     this->restore_properties.clear();
     this->restore_properties.reserve(restore_properties.size());
     for (auto &name : _C(restore_properties)) {
@@ -307,84 +289,6 @@ auto Pref::load() -> void
         if (idx != -1)
             this->restore_properties.append(mo.property(idx));
     }
-
-    READ(invert_wheel);
-    READ(enable_system_tray);
-    READ(hide_rather_close);
-    READ(disable_screensaver);
-    READ(sub_enc);
-    READ(sub_enc_autodetection);
-    READ(sub_enc_accuracy);
-    READ(ms_per_char);
-    READ(sub_priority);
-    READ(seek_step1);
-    READ(seek_step2);
-    READ(seek_step3);
-    READ(speed_step);
-    READ(volume_step);
-    READ(amp_step);
-    READ(sub_pos_step);
-    READ(sub_sync_step);
-    READ(brightness_step);
-    READ(saturation_step);
-    READ(contrast_step);
-    READ(hue_step);
-    READ(sub_ext);
-
-    READ(skin_name);
-    READ(enable_hwaccel);
-    READ(hwaccel_codecs);
-    READ(hwdeints);
-    QString backend;
-    r.read(backend, "hwaccel_backend");
-    hwaccel_backend = HwAcc::backend(backend);
-
-    READ(enable_generate_playist);
-    READ(sub_enable_autoload);
-    READ(sub_enable_autoselect);
-    READ(generate_playlist);
-    READ(sub_autoload);
-    READ(sub_autoselect);
-
-    READ(normalizer_silence);
-    READ(normalizer_target);
-    READ(normalizer_min);
-    READ(normalizer_max);
-
-    READ(lion_style_fullscreen);
-
-    READ(show_logo);
-    READ(bg_color);
-
-    READ(deint_hwdec);
-    READ(deint_swdec);
-
-    READ(audio_driver);
-    READ(clipping_method);
-
-    READ(cache_local);
-    READ(cache_disc);
-    READ(cache_network);
-    READ(cache_min_playback);
-    READ(cache_min_seeking);
-    READ(network_folders);
-    READ(use_mpris2);
-    READ(show_osd_on_action);
-    READ(show_osd_on_resized);
-    READ(use_heartbeat);
-    READ(heartbeat_command);
-    READ(heartbeat_interval);
-#undef READ
-
-#define READ2(a) a.load(r, #a)
-    READ2(open_media_from_file_manager);
-    READ2(open_media_by_drag_and_drop);
-    READ2(sub_style);
-    READ2(double_click_map);
-    READ2(middle_click_map);
-    READ2(scroll_up_map);
-    READ2(scroll_down_map);
-#undef READ2
 
     const auto size = r.beginReadArray("shortcuts");
     if (size > 0) {
@@ -457,4 +361,46 @@ auto Pref::defaultSubtitleEncodingDetectionAccuracy() -> int
     bool ok = false;
     const int accuracy = value.toInt(&ok);
     return ok ? qBound(0, accuracy, 100) : 70;
+}
+
+auto Pref::defaultOsdTheme() -> OsdTheme
+{
+    OsdTheme theme;
+    theme.underline = theme.strikeout = theme.italic = theme.bold = false;
+    theme.font = qApp->font().family();
+    theme.scale = 0.03;
+    theme.style = TextThemeStyle::Outline;
+    theme.color = Qt::white;
+    theme.styleColor = Qt::black;
+    return theme;
+}
+
+auto Pref::defaultDoubleClick() -> KeyModifierMap
+{
+    KeyModifierMap map;
+    map[KeyModifier::None] = { true, "window/full" };
+    return map;
+}
+
+auto Pref::defaultMiddleClick() -> KeyModifierMap
+{
+    KeyModifierMap map;
+    map[KeyModifier::None] = { true, "play/pause" };
+    return map;
+}
+
+auto Pref::defaultWheelUpAction() -> KeyModifierMap
+{
+    KeyModifierMap map;
+    map[KeyModifier::None] = { true, "audio/volume/increase" };
+    map[KeyModifier::Ctrl] = { true, "audio/amp/increase" };
+    return map;
+}
+
+auto Pref::defaultWheelDownAction() -> KeyModifierMap
+{
+    KeyModifierMap map;
+    map[KeyModifier::None] = { true, "audio/volume/decrease" };
+    map[KeyModifier::Ctrl] = { true, "audio/amp/decrease" };
+    return map;
 }

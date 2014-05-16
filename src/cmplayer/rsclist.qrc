@@ -43,5 +43,6 @@
         <file>translations/cmplayer_sr.qm</file>
         <file>translations/cmplayer_es.qm</file>
         <file>img/media-optical.png</file>
+        <file>img/view-multiple-objects.png</file>
     </qresource>
 </RCC>

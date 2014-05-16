@@ -361,8 +361,9 @@ PrefDialog::PrefDialog(QWidget *parent)
             ":/img/preferences-desktop-theme-32.png", general);
     addPage(tr("Cache"), d->ui.cache,
             ":/img/preferences-web-browser-cache.png", general);
-//    addPage(tr("Advanced"), d->ui.advanced,
-//    ":/img/applications-education-miscellaneous-32.png", general);
+
+    auto appear = addCategory(tr("Appearance"));
+    addPage(tr("OSD"), d->ui.osd, ":/img/view-multiple-objects.png", appear);
 
     auto video = addCategory(tr("Video"));
     addPage(tr("Hardware acceleration"), d->ui.video_hwacc,
@@ -644,6 +645,15 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.heartbeat_command->setText(p.heartbeat_command);
     d->ui.heartbeat_interval->setValue(p.heartbeat_interval);
 
+    d->ui.osd_font->setCurrentFont(QFont(p.osd_theme.font));
+    d->ui.osd_color->setColor(p.osd_theme.color, true);
+    d->ui.osd_font_option->set(p.osd_theme.bold, p.osd_theme.italic,
+                               p.osd_theme.underline, p.osd_theme.strikeout);
+    d->ui.osd_scale->setValue(p.osd_theme.scale*100.0);
+    d->ui.osd_style_color->setColor(p.osd_theme.styleColor, true);
+    d->ui.osd_style->setCurrentValue(p.osd_theme.style);
+    d->ui.show_osd_timeline->setChecked(p.show_osd_timeline);
+
     const auto data = d->ui.hwacc_backend->findData(p.hwaccel_backend);
     d->ui.hwacc_backend->setCurrentIndex(data);
     setHw(d->ui.enable_hwdec, p.enable_hwaccel, d->hwdec, p.hwaccel_codecs);
@@ -770,6 +780,17 @@ auto PrefDialog::get(Pref &p) -> void
     p.use_heartbeat = d->ui.use_heartbeat->isChecked();
     p.heartbeat_command = d->ui.heartbeat_command->text();
     p.heartbeat_interval = d->ui.heartbeat_interval->value();
+
+    p.osd_theme.font = d->ui.osd_font->currentFont().family();
+    p.osd_theme.color = d->ui.osd_color->color();
+    p.osd_theme.underline = d->ui.osd_font_option->underline();
+    p.osd_theme.italic = d->ui.osd_font_option->italic();
+    p.osd_theme.bold = d->ui.osd_font_option->bold();
+    p.osd_theme.strikeout = d->ui.osd_font_option->strikeOut();
+    p.osd_theme.scale = d->ui.osd_scale->value()*1e-2;
+    p.osd_theme.style = d->ui.osd_style->currentValue();
+    p.osd_theme.styleColor = d->ui.osd_style_color->color();
+    p.show_osd_timeline = d->ui.show_osd_timeline->isChecked();
 
     p.hwaccel_backend = HwAcc::Type(d->ui.hwacc_backend->currentData().toInt());
     getHw(p.enable_hwaccel, d->ui.enable_hwdec, p.hwaccel_codecs, d->hwdec);

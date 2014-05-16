@@ -1,4 +1,11 @@
 #include "enums.hpp"
+const std::array<TextThemeStyleInfo::Item, 4> TextThemeStyleInfo::info{{
+    {TextThemeStyle::Normal, "Normal", "", (int)0},
+    {TextThemeStyle::Outline, "Outline", "", (int)1},
+    {TextThemeStyle::Raised, "Raised", "", (int)2},
+    {TextThemeStyle::Sunken, "Sunken", "", (int)3}
+}};
+
 const std::array<SpeakerIdInfo::Item, 11> SpeakerIdInfo::info{{
     {SpeakerId::FrontLeft, "FrontLeft", "", MP_SPEAKER_ID_FL},
     {SpeakerId::FrontRight, "FrontRight", "", MP_SPEAKER_ID_FR},

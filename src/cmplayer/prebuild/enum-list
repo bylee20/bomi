@@ -1,5 +1,11 @@
 #(+|-)(*)name([[key]])([=value=])([-desc-])([:data:])
 
++TextThemeStyle
+-Normal[-Normal-]
+-Outline[-Outline-]
+-Raised[-Raised-]
+-Sunken[-Sunken-]
+
 +SpeakerId[:mp_speaker_id:]
 -FrontLeft[=(1 << 0)=][:MP_SPEAKER_ID_FL:]
 -FrontRight[=(1 << 1)=][:MP_SPEAKER_ID_FR:]

@@ -9,6 +9,7 @@
 #include "subtitle/subtitlestyle.hpp"
 #include "mrlstate.hpp"
 #include "video/hwacc.hpp"
+#include "quick/osdtheme.hpp"
 
 class QLocale;
 
@@ -96,11 +97,14 @@ public:
     bool hide_cursor = true, disable_screensaver = true, lion_style_fullscreen = false;
     bool hide_cursor_fs_only = false;
     int hide_cursor_delay = 3000, image_duration = 0;
-    bool show_osd_on_action = true, show_osd_on_resized = true;
     bool show_logo = true; QColor bg_color = Qt::black;
     bool use_heartbeat = false;
     QString heartbeat_command;
     int heartbeat_interval = 60;
+
+    bool show_osd_on_action = true, show_osd_on_resized = true;
+    bool show_osd_timeline = true;
+    OsdTheme osd_theme = defaultOsdTheme();
 
     int blur_kern_c = 1, blur_kern_n = 2, blur_kern_d = 1;
     int sharpen_kern_c = 5, sharpen_kern_n = -1, sharpen_kern_d = 0;
@@ -155,37 +159,18 @@ public:
     auto save() const -> void;
     auto load() -> void;
 private:
-//    static Pref &get();
-    static QList<QMetaProperty> defaultRestoreProperties();
+    static auto defaultRestoreProperties() -> QList<QMetaProperty>;
+    static auto defaultOsdTheme() -> OsdTheme;
     static auto defaultSkinName() -> QString;
     static auto defaultSubtitleEncoding() -> QString;
     static auto defaultSubtitleEncodingDetectionAccuracy() -> int;
-    static QList<int> defaultHwAccCodecs();
-
-    static QList<DeintMethod> defaultHwAccDeints();
+    static auto defaultHwAccCodecs() -> QList<int>;
+    static auto defaultHwAccDeints() -> QList<DeintMethod>;
     static auto defaultShortcuts() -> Shortcuts;
-    static auto defaultDoubleClick() -> KeyModifierMap {
-        KeyModifierMap map;
-        map[KeyModifier::None] = { true, "window/full" };
-        return map;
-    }
-    static auto defaultMiddleClick() -> KeyModifierMap {
-        KeyModifierMap map;
-        map[KeyModifier::None] = { true, "play/pause" };
-        return map;
-    }
-    static auto defaultWheelUpAction() -> KeyModifierMap {
-        KeyModifierMap map;
-        map[KeyModifier::None] = { true, "audio/volume/increase" };
-        map[KeyModifier::Ctrl] = { true, "audio/amp/increase" };
-        return map;
-    }
-    static auto defaultWheelDownAction() -> KeyModifierMap {
-        KeyModifierMap map;
-        map[KeyModifier::None] = { true, "audio/volume/decrease" };
-        map[KeyModifier::Ctrl] = { true, "audio/amp/decrease" };
-        return map;
-    }
+    static auto defaultDoubleClick() -> KeyModifierMap;
+    static auto defaultMiddleClick() -> KeyModifierMap;
+    static auto defaultWheelUpAction() -> KeyModifierMap;
+    static auto defaultWheelDownAction() -> KeyModifierMap;
 };
 
 #endif // PREF_HPP

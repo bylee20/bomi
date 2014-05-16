@@ -148,7 +148,9 @@ HEADERS += \
     video/videoimagepool.hpp \
     opengl/opengloffscreencontext.hpp \
     video/videoframebufferobject.hpp \
-    mainquickview.hpp
+    mainquickview.hpp \
+	quick/osdtheme.hpp \
+    quick/themeobject.hpp
 
 SOURCES += \
 	audio/audiocontroller.cpp \
@@ -252,7 +254,9 @@ SOURCES += \
     video/videoimagepool.cpp \
     opengl/opengloffscreencontext.cpp \
     video/videoframebufferobject.cpp \
-    mainquickview.cpp
+    mainquickview.cpp \
+	quick/osdtheme.cpp \
+    quick/themeobject.cpp
 
 
 TRANSLATIONS += translations/cmplayer_ko.ts \

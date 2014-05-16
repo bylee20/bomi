@@ -140,5 +140,6 @@ typedef EnumComboBox<SubtitleAutoselect> SubtitleAutoselectComboBox;
 typedef EnumComboBox<OsdScalePolicy> OsdScalePolicyComboBox;
 typedef EnumComboBox<ClippingMethod> ClippingMethodComboBox;
 typedef EnumComboBox<InterpolatorType> InterpolatorTypeComboBox;
+typedef EnumComboBox<TextThemeStyle> TextThemeStyleComboBox;
 
 #endif // WIDGETS_HPP

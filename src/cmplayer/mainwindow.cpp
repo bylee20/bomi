@@ -21,10 +21,11 @@
 #include "trayicon.hpp"
 #include "playlist.hpp"
 #include "dataevent.hpp"
-#include "quick/toplevelitem.hpp"
-#include "quick/appobject.hpp"
 #include "mainquickview.hpp"
 #include "log.hpp"
+#include "quick/themeobject.hpp"
+#include "quick/toplevelitem.hpp"
+#include "quick/appobject.hpp"
 #include "video/videorendereritem.hpp"
 #include "video/videoformat.hpp"
 #include "opengl/openglcompat.hpp"
@@ -104,7 +105,7 @@ struct MainWindow::Data {
     QAction *subtrackSep = nullptr;
     QDesktopWidget *desktop = nullptr;
     QSize virtualDesktopSize;
-
+    ThemeObject theme;
     auto syncState() -> void
     {
         for (auto &eg : enumGroups) {
@@ -470,7 +471,7 @@ struct MainWindow::Data {
     }
     auto showTimeLine() -> void
     {
-        if (player)
+        if (player && pref().show_osd_timeline)
             QMetaObject::invokeMethod(player, "showTimeLine");
     }
     auto showMessageBox(const QVariant &msg) -> void
@@ -994,6 +995,7 @@ MainWindow::MainWindow(QWidget *parent)
     AppObject::setHistory(&d->history);
     AppObject::setPlaylist(&d->playlist);
     AppObject::setDownloader(&d->downloader);
+    AppObject::setTheme(&d->theme);
     d->playlist.setDownloader(&d->downloader);
 
     d->engine.run();
@@ -2142,6 +2144,7 @@ auto MainWindow::applyPref() -> void
     cApp.setHeartbeat(p.use_heartbeat ? p.heartbeat_command : QString(),
                       p.heartbeat_interval);
 
+    d->theme.setOsd(p.osd_theme);
     reloadSkin();
 
     if (time >= 0) {
