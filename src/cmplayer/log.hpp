@@ -3,57 +3,66 @@
 
 #include "stdafx.hpp"
 
-static inline auto _ToLog(char n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(qint8 n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(qint16 n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(qint32 n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(qint64 n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(quint8 n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(quint16 n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(quint32 n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(quint64 n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(float n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(double n) -> QByteArray { return QByteArray::number(n); }
-static inline auto _ToLog(const QString &str) -> QByteArray { return str.toLocal8Bit(); }
-static inline auto _ToLog(const QStringRef &str) -> QByteArray { return str.toLocal8Bit(); }
-static inline auto _ToLog(const char *str) -> QByteArray { return QByteArray(str); }
-static inline auto _ToLog(const QByteArray &str) -> QByteArray { return str; }
-static inline auto _ToLog(bool b) -> QByteArray { return b ? "true" : "false"; }
+SIA _ToLog(char n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(qint8 n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(qint16 n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(qint32 n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(qint64 n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(quint8 n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(quint16 n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(quint32 n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(quint64 n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(float n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(double n) -> QByteArray { return QByteArray::number(n); }
+SIA _ToLog(const QString &str) -> QByteArray { return str.toLocal8Bit(); }
+SIA _ToLog(const QStringRef &str) -> QByteArray { return str.toLocal8Bit(); }
+SIA _ToLog(const char *str) -> QByteArray { return QByteArray(str); }
+SIA _ToLog(const QByteArray &str) -> QByteArray { return str; }
+SIA _ToLog(bool b) -> QByteArray { return b ? "true" : "false"; }
+SIA _ToLog(const void *ptr) -> QByteArray
+    { return "0x" + QByteArray::number(reinterpret_cast<quintptr>(ptr), 16); }
+SIA _ToLog(const QObject *qt) -> QByteArray
+{
+    if (!qt) return "QObject(0x0)";
+    return QByteArray(qt->metaObject()->className()) + "(0x"
+           + QByteArray::number(reinterpret_cast<quintptr>(qt)) + ")";
+}
 
 class Log {
 public:
     enum Level { Fatal, Error, Warn, Info, Debug, Trace };
-    static inline auto maximumLevel() -> Level { return m_maxLevel; }
-    static inline auto setMaximumLevel(Level level) -> void { m_maxLevel = level; }
+    static auto maximumLevel() -> Level { return m_maxLevel; }
+    static auto  setMaximumLevel(Level level) -> void { m_maxLevel = level; }
     template<class F>
-    static auto write(const char *context, Level level, const F &getLogText) -> void {
+    static auto write(const char *context, Level level, const F &getLogText) -> void
+    {
         if (level <= m_maxLevel)
             print(context, level, getLogText());
     }
     template<class... Args>
-    static inline auto write(const char *context, Level level, const QByteArray &format, const Args &... args) -> void {
+    static auto write(const char *context, Level level, const QByteArray &format, const Args &... args) -> void {
         if (level <= m_maxLevel)
             print(context, level, Helper(format, args...).log());
     }
     template<class... Args>
-    static inline auto write(Level level, const QByteArray &format, const Args &... args) -> void {
+    static auto write(Level level, const QByteArray &format, const Args &... args) -> void {
         if (level <= m_maxLevel)
             print(level, Helper(format, args...).log());
     }
     template<class... Args>
-    static inline auto parse(const QByteArray &format, const Args &... args) -> QByteArray { return Helper(format, args...).log(); }
-    static inline auto options() -> QStringList { return m_options; }
-    static inline auto setMaximumLevel(const QString &option) -> void {
+    static auto parse(const QByteArray &format, const Args &... args) -> QByteArray { return Helper(format, args...).log(); }
+    static auto options() -> QStringList { return m_options; }
+    static auto setMaximumLevel(const QString &option) -> void {
         const int index = m_options.indexOf(option);
         setMaximumLevel(index < 0 ? Info : (Level)index);
     }
 private:
-    static inline auto print(const char *context, Level level, const QByteArray &log) -> void {
+    static auto print(const char *context, Level level, const QByteArray &log) -> void {
         qDebug("[%s] %s", context, log.constData());
         if (level == Fatal)
             exit(1);
     }
-    static inline auto print(Level level, const QByteArray &log) -> void {
+    static auto print(Level level, const QByteArray &log) -> void {
         qDebug("%s", log.constData());
         if (level == Fatal)
             exit(1);

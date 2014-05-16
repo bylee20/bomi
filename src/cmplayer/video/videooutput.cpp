@@ -171,6 +171,7 @@ struct VideoOutput::Data {
             cache->release();
         }
         gl->doneCurrent();
+        _Trace("VideoOutput::draw()");
     }
     template<class T, class... Args>
     auto marker(T *t, void(T::*sig)(Args...), DirtyFlag flag) -> void
@@ -214,12 +215,14 @@ auto VideoOutput::initializeGL(OpenGLOffscreenContext *gl) -> void
 {
     Q_ASSERT(QOpenGLContext::currentContext());
     d->gl = gl;
+    _Debug("Initialize OpenGL context");
 }
 
 auto VideoOutput::finalizeGL() -> void
 {
     Q_ASSERT(QOpenGLContext::currentContext());
     d->gl = nullptr;
+    _Debug("Finalize OpenGL context");
 }
 
 auto VideoOutput::preinit(vo *out) -> int
@@ -239,6 +242,7 @@ auto VideoOutput::preinit(vo *out) -> int
     d->pool =new VideoFramebufferObjectPool;
     d->gl->doneCurrent();
     d->dirty.store(0xffffffff);
+    _Debug("Initialize VideoOutput");
     return 0;
 }
 
@@ -251,6 +255,7 @@ auto VideoOutput::uninit(vo *out) -> void
     _Delete(d->pool);
     finalize_vdpau_interop(d->gl->context());
     d->gl->doneCurrent();
+    _Debug("Uninitialize VideoOutput");
 }
 
 
@@ -272,6 +277,8 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
         d->gl->doneCurrent();
         emit v->formatChanged(d->format);
     }
+    _Debug("Configure VideoOutput with %%(%%x%%) format",
+           mp_imgfmt_to_name(params->imgfmt), params->w, params->h);
     return 0;
 }
 
@@ -293,6 +300,7 @@ auto VideoOutput::avgfps() const -> double
 
 auto VideoOutput::drawImage(vo *out, mp_image *mpi) -> void
 {
+    _Trace("VideoOutput::drawImage() with mpi=%%", mpi);
     auto v = priv(out); Data *d = v->d;
     mp_image_setrefp(&d->mpi, mpi);
     if (!d->mpi)
@@ -329,6 +337,7 @@ auto VideoOutput::drawOsd(vo *out, struct osd_state *osd) -> void
 
 auto VideoOutput::flipPage(vo *out) -> void
 {
+    _Trace("VideoOutput::flipPage()");
     auto v = priv(out); Data *d = v->d;
     if (!d->mpi || d->format.isEmpty() || !d->renderer)
         return;
@@ -337,6 +346,7 @@ auto VideoOutput::flipPage(vo *out) -> void
                                                         : MpOsdBitmapCache());
     else
         d->renderer->present(d->cache);
+    _Trace("Video image has been transferred to renderer");
     d->cache = VideoFramebufferObjectCache();
     d->hasOsd = d->bitmapChanged = false;
     ++d->drawn;
