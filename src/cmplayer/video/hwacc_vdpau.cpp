@@ -176,7 +176,9 @@ auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
         proc("glVDPAUMapSurfacesNV",           d.mapSurfaces);
         proc("glVDPAUUnmapSurfacesNV",         d.unmapSurfaces);
     }
+    OpenGLCompat::logError("before glVDPAUInitNV()");
     d.initialize(TO_INTEROP(d.device), TO_INTEROP(d.proc));
+    OpenGLCompat::logError("after glVDPAUInitNV()");
 }
 
 
