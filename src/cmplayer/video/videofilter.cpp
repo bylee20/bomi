@@ -125,6 +125,8 @@ auto VideoFilter::setHwAcc(HwAcc *acc) -> void
 
 auto VideoFilter::filter(vf_instance *vf, mp_image *mpi) -> int
 {
+    if (!mpi)
+        return 0;
     auto v = priv(vf); auto d = v->d;
     auto img = mpi;
     if (d->acc && d->acc->imgfmt() == mpi->imgfmt)

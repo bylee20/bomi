@@ -2,6 +2,7 @@
 #include "ffmpegfilters.hpp"
 #include "deintinfo.hpp"
 #include "videoframe.hpp"
+#include <deque>
 extern "C" {
 #include <common/common.h>
 #include <video/mp_image.h>
@@ -17,7 +18,7 @@ struct SoftwareDeinterlacer::Data {
     Type type = Pass;
     mutable int i_pts = 0;
     double pts = MP_NOPTS_VALUE, prev = MP_NOPTS_VALUE;
-    QLinkedList<mp_image*> pops;
+    std::deque<mp_image*> queue;
 
     auto topField(const mp_image *in) const -> mp_image*
     {
@@ -77,8 +78,9 @@ SoftwareDeinterlacer::~SoftwareDeinterlacer()
 
 auto SoftwareDeinterlacer::push(mp_image *mpi) -> void
 {
+    Q_ASSERT(mpi);
     d->setNewPts(mpi->pts);
-    const int size = d->pops.size();
+    const int size = d->queue.size();
     if (mpi->fields & MP_IMGFIELD_INTERLACED) {
         switch (d->type) {
         case Mark: {
@@ -86,13 +88,13 @@ auto SoftwareDeinterlacer::push(mp_image *mpi) -> void
             const bool first = mpi->fields & MP_IMGFIELD_TOP_FIRST;
             mpi->fields |= fields[first];
             mpi->pts = d->nextPts();
-            d->pops.push_back(mpi);
+            d->queue.push_back(mpi);
             if (d->deint.doubler) {
                 auto img = mp_image_new_ref(mpi);
                 img->fields &= ~(MP_IMGFIELD_BOTTOM | MP_IMGFIELD_TOP);
                 img->fields |= fields[!first] | MP_IMGFIELD_ADDITIONAL;
                 img->pts = d->nextPts();
-                d->pops.push_back(img);
+                d->queue.push_back(img);
             }
             break;
         } case Graph: {
@@ -102,7 +104,7 @@ auto SoftwareDeinterlacer::push(mp_image *mpi) -> void
             while (auto out = d->graph.pull()) {
                 out->fields &= ~MP_IMGFIELD_INTERLACED;
                 out->pts = d->nextPts();
-                d->pops.push_back(out);
+                d->queue.push_back(out);
             }
             talloc_free(mpi);
             break;
@@ -124,13 +126,17 @@ auto SoftwareDeinterlacer::push(mp_image *mpi) -> void
             break;
         }
     }
-    if (size == d->pops.size())
-        d->pops.push_back(mpi);
+    if (size == static_cast<int>(d->queue.size()))
+        d->queue.push_back(mpi);
 }
 
 auto SoftwareDeinterlacer::pop() -> mp_image*
 {
-    return d->pops.isEmpty() ? nullptr : d->pops.takeFirst();
+    if (d->queue.empty())
+        return nullptr;
+    auto ret = d->queue.front();
+    d->queue.pop_front();
+    return ret;
 }
 
 auto SoftwareDeinterlacer::setOption(const DeintOption &deint) -> void
@@ -171,12 +177,12 @@ auto SoftwareDeinterlacer::setOption(const DeintOption &deint) -> void
 
 auto SoftwareDeinterlacer::peekNext() -> const mp_image* const
 {
-    return d->pops.isEmpty() ? nullptr : d->pops.front();
+    return d->queue.empty() ? nullptr : d->queue.front();
 }
 
 auto SoftwareDeinterlacer::clear() -> void
 {
-    for (auto mpi : d->pops)
+    for (auto mpi : d->queue)
         talloc_free(mpi);
-    d->pops.clear();
+    d->queue.clear();
 }
