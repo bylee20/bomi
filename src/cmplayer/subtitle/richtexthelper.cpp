@@ -3,7 +3,9 @@
 
 DECLARE_LOG_CONTEXT(RichText)
 
-auto RichTextHelper::replace(const QStringRef &str, const QLatin1String &from, const QLatin1String &to, Qt::CaseSensitivity s) -> QString
+auto RichTextHelper::replace(const QStringRef &str, const QLatin1String &from,
+                             const QLatin1String &to,
+                             Qt::CaseSensitivity s) -> QString
 {
     QString text;
     int start = 0;
@@ -47,7 +49,8 @@ auto RichTextHelper::toFontPixelSize(const QStringRef &size) -> int
     return px;
 }
 
-auto RichTextHelper::parseTag(const QStringRef &text, int &pos) -> RichTextHelper::Tag
+auto RichTextHelper::parseTag(const QStringRef &text,
+                              int &pos) -> RichTextHelper::Tag
 {
     auto at = [&text] (int idx) {return text.at(idx).unicode();};
     if (at(pos) != '<')
@@ -74,7 +77,7 @@ auto RichTextHelper::parseTag(const QStringRef &text, int &pos) -> RichTextHelpe
         ++pos;
     tag.name = _MidRef(text, start, pos - start);
     if (tag.name.startsWith('/')) {
-        while (at(pos) != '>' && pos < text.size())
+        while (pos < text.size() && at(pos) != '>')
             ++pos;
         if (pos >= text.size())
             return Tag();
@@ -147,7 +150,8 @@ auto RichTextHelper::entityCharacter(const QStringRef &entity) -> QChar
     return QChar();
 }
 
-auto RichTextHelper::indexOf(const QStringRef &ref, QRegExp &rx, int from) -> int
+auto RichTextHelper::indexOf(const QStringRef &ref, QRegExp &rx,
+                             int from) -> int
 {
     const int pos = ref.position();
     const int idx = ref.string()->indexOf(rx, from + pos) - pos;
@@ -162,7 +166,9 @@ auto RichTextHelper::indexOf(const QStringRef &ref, QRegularExpression &rx,
     return 0 <= idx && idx < ref.length() ? idx : -1;
 }
 
-auto RichTextHelper::innerText(const char *open, const char *close, const QStringRef &text, QStringRef &block, int &pos, Tag &tag) -> int
+auto RichTextHelper::innerText(const char *open, const char *close,
+                               const QStringRef &text, QStringRef &block,
+                               int &pos, Tag &tag) -> int
 {
     while (pos < text.size()) {
         const QChar c = text.at(pos);
@@ -176,7 +182,8 @@ auto RichTextHelper::innerText(const char *open, const char *close, const QStrin
     if (pos >= text.size() || tag.name.isEmpty())
         return 0;
     int ret = 1;
-    QRegExp rx(_L("<[\\s\\n\\r]*(") % _L(close) % _L(")(>|[^0-9a-zA-Z>]+[^>]*>)"));
+    QRegExp rx(_L("<[\\s\\n\\r]*(") % _L(close)
+               % _L(")(>|[^0-9a-zA-Z>]+[^>]*>)"));
     rx.setCaseSensitivity(Qt::CaseInsensitive);
     int start = pos;
     int end = indexOf(text, rx, start);
@@ -208,9 +215,11 @@ QMap<int, QVariant> RichTextHelper::Tag::style() const {
     else if (_Same(name, "s") || _Same(name, "strike"))
         style[QTextFormat::FontStrikeOut] = true;
     else if (_Same(name, "sup"))
-        style[QTextFormat::TextVerticalAlignment] = QTextCharFormat::AlignSuperScript;
+        style[QTextFormat::TextVerticalAlignment]
+                = QTextCharFormat::AlignSuperScript;
     else if (_Same(name, "sub"))
-        style[QTextFormat::TextVerticalAlignment] = QTextCharFormat::AlignSubScript;
+        style[QTextFormat::TextVerticalAlignment]
+                = QTextCharFormat::AlignSubScript;
     else if (_Same(name, "font")) {
         for (int i=0; i<attr.size(); ++i) {
             if (_Same(attr[i].name, "color")) {
@@ -218,11 +227,14 @@ QMap<int, QVariant> RichTextHelper::Tag::style() const {
                 if (color.isValid())
                     style[QTextFormat::ForegroundBrush] = QBrush(color);
                 else
-                    _Debug("%% is not a valid name for color", trim(attr[i].value));
+                    _Debug("%% is not a valid name for color",
+                           trim(attr[i].value));
             } else if (_Same(attr[i].name, "face"))
-                style[QTextFormat::FontFamily] = trim(attr[i].value).toString();
+                style[QTextFormat::FontFamily]
+                        = trim(attr[i].value).toString();
             else if (_Same(attr[i].name, "size"))
-                style[QTextFormat::FontPixelSize] = toFontPixelSize(trim(attr[i].value));
+                style[QTextFormat::FontPixelSize]
+                        = toFontPixelSize(trim(attr[i].value));
         }
     }
     return style;
