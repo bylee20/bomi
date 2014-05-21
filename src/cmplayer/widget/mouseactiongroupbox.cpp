@@ -1,5 +1,4 @@
 #include "mouseactiongroupbox.hpp"
-#include "enums.hpp"
 #include "misc/keymodifieractionmap.hpp"
 
 struct MouseActionGroupBox::Data {

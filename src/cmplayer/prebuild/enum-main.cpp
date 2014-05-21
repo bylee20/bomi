@@ -11,7 +11,7 @@ using namespace std;
 struct EnumType {
     struct Item {string key, name, value, desc, data;};
     EnumType() {continuous = true;}
-    string key, name, desc, data;
+    string key, name, desc, data, head;
     bool continuous;
     vector<Item> items;
     int default_ = 0;
@@ -82,9 +82,9 @@ static vector<EnumType> readEnums() {
     };
 
     vector<EnumType> type;
-    string line;
-    while (getline(in, line)) {
-        line = trim(line);
+    string read;
+    while (getline(in, read)) {
+        string line = trim(read);
         if (line.empty())
             continue;
         bool isType = false;
@@ -92,7 +92,10 @@ static vector<EnumType> readEnums() {
             isType = true;
         else if (line[0] == '-')
             isType = false;
-        else
+        else if (line[0] == '!') {
+            type.back().head += read.substr(1) + '\n';
+            continue;
+        } else
             continue;
         line = line.substr(1);
         const auto def = line.front() == '*';
@@ -145,208 +148,109 @@ static string &replace(string &str, const string &substr, const string &overwrit
     return str;
 }
 
-static const string hppTmp = R"(
-enum class __ENUM_NAME : int {
-__ENUM_VALUES
-};
+static string readAll(const string &fileName) {
+    std::stringstream buffer;
+    fstream file;
+    file.open(fileName, ios::in);
+    if (!file.is_open())
+        return string();
+    buffer << file.rdbuf();
+    return buffer.str();
+}
 
-inline auto operator == (__ENUM_NAME e, int i) -> bool { return (int)e == i; }
-inline auto operator != (__ENUM_NAME e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, __ENUM_NAME e) -> bool { return (int)e == i; }
-inline auto operator != (int i, __ENUM_NAME e) -> bool { return (int)e != i; }
-inline auto operator & (__ENUM_NAME e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, __ENUM_NAME e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, __ENUM_NAME e) -> int& { return i &= (int)e; }
-inline auto operator ~ (__ENUM_NAME e) -> int { return ~(int)e; }
-inline auto operator | (__ENUM_NAME e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, __ENUM_NAME e) -> int { return (int)e | i; }
-constexpr inline auto operator | (__ENUM_NAME e1, __ENUM_NAME e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, __ENUM_NAME e) -> int& { return i |= (int)e; }
-inline auto operator > (__ENUM_NAME e, int i) -> bool { return (int)e > i; }
-inline auto operator < (__ENUM_NAME e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (__ENUM_NAME e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (__ENUM_NAME e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, __ENUM_NAME e) -> bool { return i > (int)e; }
-inline auto operator < (int i, __ENUM_NAME e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, __ENUM_NAME e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, __ENUM_NAME e) -> bool { return i <= (int)e; }
+bool overwrite(const string &fileName, const string &contents) {
+    if (readAll(fileName) == contents)
+        return false;
+    fstream file;
+    file.open(fileName, ios::out);
+    file << contents;
+    cout << "Write to " << fileName << endl;
+    cout << contents;
+    return true;
+}
 
-Q_DECLARE_METATYPE(__ENUM_NAME)
+static string toLower(const string &str) {
+    string ret; ret.reserve(str.size());
+    for (unsigned int i=0; i<str.size(); ++i)
+        ret.push_back(tolower(str[i]));
+    return ret;
+}
 
-template<>
-class EnumInfo<__ENUM_NAME> {
-    typedef __ENUM_NAME Enum;
-public:
-    typedef __ENUM_NAME type;
-    using Data =  __ENUM_DATA_TYPE;
-    struct Item {
-        Enum value;
-        QString name, key;
-        __ENUM_DATA_TYPE data;
-    };
-    using ItemList = std::array<Item, __ENUM_COUNT>;
-    static constexpr auto size() -> int
-    { return __ENUM_COUNT; }
-    static constexpr auto typeName() -> const char*
-    { return "__ENUM_NAME"; }
-    static constexpr auto typeKey() -> const char*
-    { return "__ENUM_KEY"; }
-    static auto typeDescription() -> QString
-    { return qApp->translate("EnumInfo", "__ENUM_DESC"); }
-    static auto item(Enum e) -> const Item*
-    { __ENUM_FUNC_ITEM }
-    static auto name(Enum e) -> QString
-    { auto i = item(e); return i ? i->name : QString(); }
-    static auto key(Enum e) -> QString
-    { auto i = item(e); return i ? i->key : QString(); }
-    static auto data(Enum e) -> __ENUM_DATA_TYPE
-    { auto i = item(e); return i ? i->data : __ENUM_DATA_TYPE(); }
-    static auto description(int e) -> QString
-    { return description((Enum)e); }
-    static auto description(Enum e) -> QString
-    {
-        switch (e) {
-__ENUM_FUNC_DESC_CASES
+static string toUpper(const string &str) {
+    string ret; ret.reserve(str.size());
+    for (unsigned int i=0; i<str.size(); ++i)
+        ret.push_back(toupper(str[i]));
+    return ret;
+}
+
+static void write(const EnumType &type) {
+    string hpp = readAll("enum_type.hpp");
+    string cpp = readAll("enum_type.cpp");;
+    string uppers = toUpper(type.name), lowers = toLower(type.name);
+    replace(hpp, "__ENUM_NAME", type.name);
+    replace(hpp, "__ENUM_KEY", type.key);
+    replace(hpp, "__ENUM_DESC", type.desc);
+    replace(hpp, "__ENUM_DEFAULT", type.items[type.default_].name);
+    replace(hpp, "__ENUM_DATA_TYPE", type.data);
+    replace(hpp, "__ENUM_HEADER_CONTENTS", type.head);
+    replace(hpp, "__ENUM_UPPERS", uppers);
+    replace(hpp, "__ENUM_LOWERS", lowers);
+    
+    string value, infos, cases;
+    for (const EnumType::Item &item : type.items) {
+        value += "    " + item.name + " = (int)" + item.value;
+        infos += "    {" + type.name + "::" + item.name + ", " + '"' + item.name + "\", \"" + item.key + "\", " + item.data + "}";
+        cases += "        case Enum::" + item.name + ": return qApp->translate(\"EnumInfo\", \"" + item.desc + "\");\n";
+        if (&item != &type.items.back()) {
+            value += ",\n";
+            infos += ",\n";
         }
     }
-    static constexpr auto items() -> const ItemList&
-    { return info; }
-    static auto from(int id, Enum def = default_()) -> Enum
-    {
-        auto it = std::find_if(info.cbegin(), info.cend(),
-                               [id] (const Item &item)
-                               { return item.value == id; });
-        return it != info.cend() ? it->value : def;
-    }
-    static auto from(const QString &name, Enum def = default_()) -> Enum
-    {
-        auto it = std::find_if(info.cbegin(), info.cend(),
-                               [&name] (const Item &item)
-                               { return !name.compare(item.name); });
-        return it != info.cend() ? it->value : def;
-    }
-    static auto fromData(const __ENUM_DATA_TYPE &data,
-                         Enum def = default_()) -> Enum
-    {
-        auto it = std::find_if(info.cbegin(), info.cend(),
-                               [&data] (const Item &item)
-                               { return item.data == data; });
-        return it != info.cend() ? it->value : def;
-    }
-    static constexpr auto default_() -> Enum
-    { return __ENUM_NAME::__ENUM_DEFAULT; }
-private:
-    static const ItemList info;
-};
+    cases += "        default: return \"\";";
+    replace(hpp, "__ENUM_VALUES", value);
+    replace(hpp, "__ENUM_COUNT", toString(type.items.size()));
+    replace(hpp, "__ENUM_FUNC_DESC_CASES", cases);
+    if (type.continuous)
+        replace(hpp, "__ENUM_FUNC_ITEM", R"(return 0 <= e && e < size() ? &info[(int)e] : nullptr;)");
+    else
+        replace(hpp, "__ENUM_FUNC_ITEM", R"(
+    auto it = std::find_if(info.cbegin(), info.cend(),
+                            [e] (const Item &info)
+                            { return info.value == e; });
+    return it != info.cend() ? &(*it) : nullptr;
+)");
 
-using __ENUM_NAMEInfo = EnumInfo<__ENUM_NAME>;
-)";
-
-static const string cppTmp = R"(
-const std::array<__ENUM_NAMEInfo::Item, __ENUM_COUNT> __ENUM_NAMEInfo::info{{
-__ENUM_INFOS
-}};
-)";
+    replace(cpp, "__ENUM_NAME", type.name);
+    replace(cpp, "__ENUM_COUNT", toString(type.items.size()));
+    replace(cpp, "__ENUM_INFOS", infos);
+    replace(cpp, "__ENUM_LOWERS", lowers);
+    overwrite("../enum/" + lowers + ".hpp", hpp);
+    overwrite("../enum/" + lowers + ".cpp", cpp);
+}
 
 static void generate() {
     cout << "Generate enum files" << endl;
     const auto enums = readEnums();
-    string hpp = R"(
-#ifndef ENUMS_HPP
-#define ENUMS_HPP
-
-#include <QCoreApplication>
-#include <array>
-#include "video/videocolor.hpp"
-extern "C" {
-#include <audio/chmap.h>
-}
-
-template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
-
-typedef QString (*EnumVariantToSqlFunc)(const QVariant &var);
-typedef QVariant (*EnumVariantFromSqlFunc)(const QVariant &var, const QVariant &def);
-
-template<typename T>
-QString _EnumVariantToSql(const QVariant &var) {
-    Q_ASSERT(var.userType() == qMetaTypeId<T>());
-    return QLatin1Char('\'') % EnumInfo<T>::name(var.value<T>()) % QLatin1Char('\'');
-}
-
-template<typename T>
-QVariant _EnumVariantFromSql(const QVariant &name, const QVariant &def) {
-    const auto enum_ = EnumInfo<T>::from(name.toString(), def.value<T>());
-    return QVariant::fromValue<T>(enum_);
-}
-
-template<class Enum>
-using EnumData = typename EnumInfo<Enum>::Data;
-
-template<class Enum>
-static inline auto _GetEnumData(Enum e) -> EnumData<Enum>
-    { return EnumInfo<Enum>::data(e); }
-
-)";
+    string hpp = readAll("enums.hpp");
+    overwrite("../enum/enums.hpp", hpp);
 
     const string convtmpl = "    if (varType == qMetaTypeId<__ENUM_NAME>()) {\n        toSql = _EnumVariantToSql<__ENUM_NAME>;\n        fromSql = _EnumVariantFromSql<__ENUM_NAME>;\n    } else";
-    string enumConv = "static inline bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVariantFromSqlFunc &fromSql) {\n";
-    string isEnum = "static inline bool _IsEnumTypeId(int userType) {\n    return ";
-    string cpp = "#include \"enums.hpp\"";
+    string enumConv = "bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVariantFromSqlFunc &fromSql) {\n";
+    string isEnum = "bool _IsEnumTypeId(int userType) {\n    return ";
+    string cpp = "#include \"enums.hpp\"\n" ;
+    string headers;
     for (const EnumType &type : enums) {
-        string htmpl = hppTmp;
-        string ctmpl = cppTmp;
-        replace(htmpl, "__ENUM_NAME", type.name);
-        replace(htmpl, "__ENUM_KEY", type.key);
-        replace(htmpl, "__ENUM_DESC", type.desc);
-        replace(htmpl, "__ENUM_DEFAULT", type.items[type.default_].name);
-        replace(htmpl, "__ENUM_DATA_TYPE", type.data);
-        string value, infos, cases;
-        for (const EnumType::Item &item : type.items) {
-            value += "    " + item.name + " = (int)" + item.value;
-            infos += "    {" + type.name + "::" + item.name + ", " + '"' + item.name + "\", \"" + item.key + "\", " + item.data + "}";
-            cases += "        case Enum::" + item.name + ": return qApp->translate(\"EnumInfo\", \"" + item.desc + "\");\n";
-            if (&item != &type.items.back()) {
-                value += ",\n";
-                infos += ",\n";
-            }
-        }
-        cases += "        default: return \"\";";
-        replace(htmpl, "__ENUM_VALUES", value);
-        replace(htmpl, "__ENUM_COUNT", toString(type.items.size()));
-        replace(htmpl, "__ENUM_FUNC_DESC_CASES", cases);
-        if (type.continuous)
-            replace(htmpl, "__ENUM_FUNC_ITEM", R"(return 0 <= e && e < size() ? &info[(int)e] : nullptr;)");
-        else
-            replace(htmpl, "__ENUM_FUNC_ITEM", R"(
-        auto it = std::find_if(info.cbegin(), info.cend(),
-                               [e] (const Item &info)
-                               { return info.value == e; });
-        return it != info.cend() ? &(*it) : nullptr;
-   )");
-
-        replace(ctmpl, "__ENUM_NAME", type.name);
-        replace(ctmpl, "__ENUM_COUNT", toString(type.items.size()));
-        replace(ctmpl, "__ENUM_INFOS", infos);
-
-        hpp += htmpl;
-        cpp += ctmpl;
-
+        write(type);
         string conv = convtmpl;
         enumConv += replace(conv, "__ENUM_NAME", type.name);
         isEnum += "userType == qMetaTypeId<" + type.name + ">()\n        || ";
+        cpp += "#include \"" + toLower(type.name) + ".hpp\"\n";
     }
     isEnum += "false;\n}\n\n";
     enumConv += "\n        return false;\n    return true;\n}";
-    hpp += isEnum;
-    hpp += enumConv;
-    hpp += "\n#endif\n";
-    fstream s_hpp, s_cpp;
-    s_hpp.open("../enums.hpp", ios::out);
-    s_cpp.open("../enums.cpp", ios::out);
-    s_hpp << hpp;
-    s_cpp << cpp;
-
-    cout << hpp;
+    cpp += isEnum;
+    cpp += enumConv;
+    overwrite("../enum/enums.cpp", cpp);
 }
 
 int main() {

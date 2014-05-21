@@ -2,7 +2,7 @@
 #define KEYMODIFIERACTIONMAP_HPP
 
 #include "stdafx.hpp"
-#include "enums.hpp"
+#include "enum/keymodifier.hpp"
 
 class Record;
 

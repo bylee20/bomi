@@ -21,9 +21,9 @@ static QList<T> fromStringList(const QStringList &list) {
     return ret;
 }
 
-auto Pref::defaultShortcuts() -> QHash<QString, QList<QKeySequence> >
+auto Pref::defaultShortcuts() -> Shortcuts
 {
-    QHash<QString, QList<QKeySequence> > keys;
+    Shortcuts keys;
 
     keys[_L("open/file")] << Qt::CTRL + Qt::Key_F;
     keys[_L("open/folder")] << Qt::CTRL + Qt::Key_G;

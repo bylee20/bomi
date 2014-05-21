@@ -3,6 +3,8 @@
 
 #include "simpletextureitem.hpp"
 
+class OpenGLFramebufferObject;
+
 class SimpleFboItem : public SimpleTextureItem {
     Q_OBJECT
 public:
@@ -15,7 +17,7 @@ signals:
     void targetSizeChanged(const QSize &size);
 protected:
     auto forceRepaint() -> void { reserve(UpdateMaterial); }
-    auto finalizeGL() -> void { SimpleTextureItem::finalizeGL(); _Delete(m_fbo); }
+    auto finalizeGL() -> void;
     auto geometryChanged(const QRectF &new_, const QRectF &old) -> void override;
     virtual void paint(OpenGLFramebufferObject *fbo) = 0;
 private:

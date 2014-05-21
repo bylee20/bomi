@@ -247,7 +247,12 @@ SIA _SystemTime() -> quint64
 
 template<class T>
 SIA _Expand(T &t, int size, double extra = 1.2) -> bool
-{ if (t.size() < size) {t.resize(size*extra); return true;} return false; }
+{
+    if (uint(size) < uint(t.size()))
+        return false;
+    t.resize(size*extra);
+    return true;
+}
 
 }
 

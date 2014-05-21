@@ -111,7 +111,6 @@ HEADERS += \
     appstate.hpp \
     favoritesview.hpp \
 	misc/downloader.hpp \
-    enums.hpp \
 	dialog/snapshotdialog.hpp \
     record.hpp \
     actiongroup.hpp \
@@ -164,7 +163,43 @@ HEADERS += \
     widget/localecombobox.hpp \
     widget/fontoptionwidget.hpp \
     dialog/aboutdialog.hpp \
-    dialog/opendiscdialog.hpp
+    dialog/opendiscdialog.hpp \
+    video/deintcaps.hpp \
+    enum/adjustcolor.hpp \
+    enum/audiodriver.hpp \
+    enum/changevalue.hpp \
+    enum/channellayout.hpp \
+    enum/clippingmethod.hpp \
+    enum/colorrange.hpp \
+    enum/decoderdevice.hpp \
+    enum/deintdevice.hpp \
+    enum/deintmethod.hpp \
+    enum/deintmode.hpp \
+    enum/dithering.hpp \
+    enum/enums.hpp \
+    enum/generateplaylist.hpp \
+    enum/horizontalalignment.hpp \
+    enum/interpolatortype.hpp \
+    enum/keymodifier.hpp \
+    enum/movetoward.hpp \
+    enum/osdscalepolicy.hpp \
+    enum/playlistbehaviorwhenopenmedia.hpp \
+    enum/seekingstep.hpp \
+    enum/speakerid.hpp \
+    enum/staysontop.hpp \
+    enum/subtitleautoload.hpp \
+    enum/subtitleautoselect.hpp \
+    enum/subtitledisplay.hpp \
+    enum/textthemestyle.hpp \
+    enum/verticalalignment.hpp \
+    enum/videoratio.hpp \
+    opengl/opengltexturebase.hpp \
+    opengl/openglframebufferobject.hpp \
+    opengl/opengltexture2d.hpp \
+    opengl/opengltexture1d.hpp \
+    opengl/opengltexturebinder.hpp \
+    misc/enumaction.hpp \
+    misc/stepaction.hpp
 
 SOURCES += \
 	audio/audiocontroller.cpp \
@@ -236,7 +271,6 @@ SOURCES += \
     appstate.cpp \
     favoritesview.cpp \
 	misc/downloader.cpp \
-    enums.cpp \
 	dialog/snapshotdialog.cpp \
 	widget/qtcolorpicker.cpp \
     record.cpp \
@@ -284,7 +318,43 @@ SOURCES += \
     widget/localecombobox.cpp \
     widget/fontoptionwidget.cpp \
     dialog/aboutdialog.cpp \
-    dialog/opendiscdialog.cpp
+    dialog/opendiscdialog.cpp \
+    video/deintcaps.cpp \
+    enum/adjustcolor.cpp \
+    enum/audiodriver.cpp \
+    enum/changevalue.cpp \
+    enum/channellayout.cpp \
+    enum/clippingmethod.cpp \
+    enum/colorrange.cpp \
+    enum/decoderdevice.cpp \
+    enum/deintdevice.cpp \
+    enum/deintmethod.cpp \
+    enum/deintmode.cpp \
+    enum/dithering.cpp \
+    enum/enums.cpp \
+    enum/generateplaylist.cpp \
+    enum/horizontalalignment.cpp \
+    enum/interpolatortype.cpp \
+    enum/keymodifier.cpp \
+    enum/movetoward.cpp \
+    enum/osdscalepolicy.cpp \
+    enum/playlistbehaviorwhenopenmedia.cpp \
+    enum/seekingstep.cpp \
+    enum/speakerid.cpp \
+    enum/staysontop.cpp \
+    enum/subtitleautoload.cpp \
+    enum/subtitleautoselect.cpp \
+    enum/subtitledisplay.cpp \
+    enum/textthemestyle.cpp \
+    enum/verticalalignment.cpp \
+    enum/videoratio.cpp \
+    opengl/opengltexturebase.cpp \
+    opengl/openglframebufferobject.cpp \
+    opengl/opengltexture2d.cpp \
+    opengl/opengltexture1d.cpp \
+    opengl/opengltexturebinder.cpp \
+    misc/enumaction.cpp \
+    misc/stepaction.cpp
 
 
 TRANSLATIONS += translations/cmplayer_ko.ts \

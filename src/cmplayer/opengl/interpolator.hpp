@@ -1,8 +1,9 @@
 #ifndef INTERPOLATOR_HPP
 #define INTERPOLATOR_HPP
 
-#include "openglcompat.hpp"
-#include "enums.hpp"
+#include "openglmisc.hpp"
+
+enum class InterpolatorType;
 
 class Interpolator {
 public:
@@ -16,7 +17,6 @@ public:
         CategoryMax
     };
     using Type = InterpolatorType;
-    using Info = InterpolatorTypeInfo;
     ~Interpolator();
     auto type() const -> Type;
     auto category() const -> Category;

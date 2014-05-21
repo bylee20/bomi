@@ -3,7 +3,7 @@
 
 #include "menu.hpp"
 
-using Shortcuts = QHash<QString, QList<QKeySequence> >;
+using Shortcuts = QHash<QString, QList<QKeySequence>>;
 
 class Pref;
 
@@ -44,12 +44,6 @@ private:
         }
         plus->setData(value);
         minus->setData(-value);
-    }
-
-    inline static void setVideoPropStep(Menu &menu, const QString &key
-            , VideoColor::Type prop, const QString &text, int step) {
-        setActionAttr(menu[key + "+"], QVariantList() << prop << step, text, step);
-        setActionAttr(menu[key + "-"], QVariantList() << prop << -step, text, -step);
     }
     auto fillId(Menu *menu, const QString &parent) -> void;
     auto fillKeyMap(Menu *menu) -> void;

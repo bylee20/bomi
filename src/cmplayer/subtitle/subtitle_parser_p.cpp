@@ -123,7 +123,6 @@ auto SubRipParser::_parse(Subtitle &sub) -> void
 
     sub.clear();
     auto &comp = append(sub);
-    QLinkedList<SubComp> caps;
     for (;;) {
         const auto num = getNumber();
         if (num < 0)

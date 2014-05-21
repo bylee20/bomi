@@ -1,5 +1,5 @@
 #include "videocolor.hpp"
-#include "enums.hpp"
+#include "enum/colorrange.hpp"
 #include <QVector3D>
 #include <QtMath>
 

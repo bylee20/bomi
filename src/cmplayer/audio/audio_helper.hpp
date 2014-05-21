@@ -147,7 +147,7 @@ template<class S, bool IsPlanar> class AudioDataBuffer;
 template<class S, bool IsPlanar> class AudioDataRange;
 
 template<class T>
-struct AudioDataInfo { int frames = 0, nch = 0; QVector<T*> planes; };
+struct AudioDataInfo { int frames = 0, nch = 0; std::vector<T*> planes; };
 
 template<class T, bool planar>
 class AudioDataBufferIterator;
@@ -450,7 +450,7 @@ public:
               int count) -> void;
 private:
     bool m_allocated = false;
-    QVector<S> m_data;
+    std::vector<S> m_data;
     AudioDataInfo<S> d;
     int m_capacity = 0;
 };

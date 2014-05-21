@@ -23,9 +23,9 @@ class MrlStatePropertyListModel : public SimpleListModel<MrlStateProperty> {
 public:
     MrlStatePropertyListModel() { setCheckable(0, true); }
     auto flags(int row, int column) const -> Qt::ItemFlags
-    { return Super::flags(row, column) | Qt::ItemIsUserCheckable; }
+        { return Super::flags(row, column) | Qt::ItemIsUserCheckable; }
     auto displayData(int row, int /*column*/) const -> QVariant
-    { return at(row).info(); }
+        { return at(row).info(); }
 };
 
 // from clementine's preferences dialog
@@ -53,7 +53,9 @@ public:
         playlist->setCurrentValue(open.playlist_behavior);
     }
     auto value() const -> Pref::OpenMedia
-    { return Pref::OpenMedia(start->isChecked(), playlist->currentValue()); }
+    {
+        return Pref::OpenMedia(start->isChecked(), playlist->currentValue());
+    }
 private:
     QCheckBox *start;
     EnumComboBox<PlaylistBehaviorWhenOpenMedia> *playlist;
@@ -67,17 +69,20 @@ public:
     auto isMenu() const -> bool { return m_action->menu() != 0; }
     auto isSeparator() const -> bool { return m_action->isSeparator(); }
     auto shortcut(int i) const -> QKeySequence {return m_shortcuts[i];}
-    auto setShortcut(int idx, const QKeySequence &shortcut) -> void {
+    auto setShortcut(int idx, const QKeySequence &shortcut) -> void
+    {
         m_shortcuts[idx] = shortcut;
         setText(idx + Shortcut1, shortcut.toString(QKeySequence::NativeText));
     }
-    auto setShortcuts(const QList<QKeySequence> &keys) -> void {
+    auto setShortcuts(const QList<QKeySequence> &keys) -> void
+    {
         for (int i = 0; i<(int)m_shortcuts.size(); ++i) {
             m_shortcuts[i] = (i < keys.size()) ? keys[i] : QKeySequence();
             setText(i+1, m_shortcuts[i].toString(QKeySequence::NativeText));
         }
     }
-    auto shortcuts() const -> QList<QKeySequence> {
+    auto shortcuts() const -> QList<QKeySequence>
+    {
         QList<QKeySequence> shortcuts;
         for (auto key : m_shortcuts) {
             if (!key.isEmpty())
@@ -86,7 +91,9 @@ public:
         return shortcuts;
     }
     auto id() const -> QString { return m_id; }
-    static auto makeRoot(QTreeWidget *parent, QList<MouseAction> &info) -> QList<MenuTreeItem*> {
+    static auto makeRoot(QTreeWidget *parent,
+                         QList<MouseAction> &info) -> QList<MenuTreeItem*>
+    {
         RootMenu &root = RootMenu::instance();
         QList<MenuTreeItem*> items;
         auto item = create(&root, items, "", info);
@@ -386,7 +393,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.mouse_scroll_up->set(d->actionInfo);
     d->ui.mouse_scroll_down->set(d->actionInfo);
 
-    QList<AudioDriver> audioDrivers;
+    QVector<AudioDriver> audioDrivers;
     audioDrivers << AudioDriver::Auto;
 #ifdef Q_OS_LINUX
     audioDrivers << AudioDriver::ALSA << AudioDriver::OSS;

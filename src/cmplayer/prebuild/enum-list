@@ -1,4 +1,5 @@
 #(+|-)(*)name([[key]])([=value=])([-desc-])([:data:])
+#!header contents
 
 +TextThemeStyle
 -Normal[-Normal-]
@@ -7,6 +8,9 @@
 -Sunken[-Sunken-]
 
 +SpeakerId[:mp_speaker_id:]
+!extern "C" {
+!#include <audio/chmap.h>
+!}
 -FrontLeft[=(1 << 0)=][:MP_SPEAKER_ID_FL:]
 -FrontRight[=(1 << 1)=][:MP_SPEAKER_ID_FR:]
 -FrontCenter[=(1 << 2)=][:MP_SPEAKER_ID_FC:]
@@ -20,6 +24,7 @@
 -SideRight[=(1 << 10)=][:MP_SPEAKER_ID_SR:]
 
 +ChannelLayout[[channel]][:QByteArray:][-Channel Layout-]
+!#include "speakerid.hpp"
 -Mono[=((int)SpeakerId::FrontCenter)=][[1.0]][:"mono":][-Mono-]
 -*_2_0[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight)=][[2.0]][:"stereo":][-Stereo-]
 -_2_1[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::LowFrequency)=][[2.1]][:"2.1":][-2.1ch-]
@@ -55,6 +60,7 @@
 -Extended[[luma]][-Extended Range-]
 
 +AdjustColor[[color]][:VideoColor:]
+!#include "video/videocolor.hpp"
 -Reset[[reset]][:{0, 0, 0, 0}:]
 -BrightnessInc[[brightness+]][:{1, 0, 0, 0}:]
 -BrightnessDec[[brightness-]][:{-1, 0, 0, 0}:]

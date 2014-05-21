@@ -1,5 +1,6 @@
 #include "busyiconitem.hpp"
 #include "opengl/openglcompat.hpp"
+#include "opengl/opengltexturebinder.hpp"
 
 auto reg_busy_icon_item() -> void {
     qmlRegisterType<BusyIconItem>("CMPlayer", 1, 0, "BusyIcon");

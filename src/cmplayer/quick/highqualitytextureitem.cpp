@@ -1,8 +1,11 @@
 #include "highqualitytextureitem.hpp"
-#include "enums.hpp"
 #include "global.hpp"
 #include "opengl/openglcompat.hpp"
 #include "opengl/interpolator.hpp"
+#include "opengl/opengltexture1d.hpp"
+#include "opengl/opengltexturebinder.hpp"
+#include "enum/interpolatortype.hpp"
+#include "enum/dithering.hpp"
 extern "C" {
 #include <video/out/dither.h>
 }

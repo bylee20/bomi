@@ -2,10 +2,10 @@
 #define APPSTATE_HPP
 
 #include "stdafx.hpp"
-#include "enums.hpp"
 #include "video/videocolor.hpp"
 #include "mrl.hpp"
 #include "mrlstate.hpp"
+#include "enum/staysontop.hpp"
 
 class AppState : public QObject {
     Q_OBJECT

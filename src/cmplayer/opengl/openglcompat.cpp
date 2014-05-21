@@ -5,6 +5,7 @@
 #ifdef Q_OS_LINUX
 #include <GL/glx.h>
 #endif
+#include "openglframebufferobject.hpp"
 
 DECLARE_LOG_CONTEXT(OpenGL)
 

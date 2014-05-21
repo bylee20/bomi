@@ -2,7 +2,9 @@
 #define DEINTINFO_HPP
 
 #include "stdafx.hpp"
-#include "enums.hpp"
+#include "enum/deintmethod.hpp"
+#include "enum/deintdevice.hpp"
+#include "enum/decoderdevice.hpp"
 
 class DeintOption {
 public:

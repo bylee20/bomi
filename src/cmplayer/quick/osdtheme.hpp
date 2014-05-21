@@ -2,7 +2,7 @@
 #define OSDSTYLE_HPP
 
 #include "stdafx.hpp"
-#include "enums.hpp"
+#include "enum/textthemestyle.hpp"
 
 class Record;
 

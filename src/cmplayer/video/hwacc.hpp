@@ -10,11 +10,11 @@ extern "C" {
 #undef bswap_32
 #include <video/decode/lavc.h>
 }
-#include "enums.hpp"
 
 struct lavc_ctx;                        struct mp_image;
 struct vd_lavc_hwdec;                   struct mp_hwdec_info;
 class VideoOutput;                      class OpenGLTexture2D;
+enum class DeintMethod;
 
 class HwAccMixer {
 public:

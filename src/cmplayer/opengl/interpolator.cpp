@@ -1,4 +1,7 @@
 #include "interpolator.hpp"
+#include "enum/interpolatortype.hpp"
+#include "opengl/opengltexture1d.hpp"
+#include "opengl/opengltexturebinder.hpp"
 
 static constexpr int IntSamples = 256;
 static constexpr int IntLutSize = IntSamples*4;

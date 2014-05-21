@@ -45,8 +45,8 @@ auto RichTextBlockParser::parse(const QStringRef &text,
         add_format(style);
     };
 
-    QLinkedList<RichTextBlock::Style> fmtStack;
-    QLinkedList<QStringRef> tagStack;
+    std::list<RichTextBlock::Style> fmtStack;
+    std::list<QStringRef> tagStack;
     add_block(true, style);
 
     int pos = 0;

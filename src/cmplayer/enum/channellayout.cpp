@@ -1,0 +1,30 @@
+#include "channellayout.hpp"
+
+const std::array<ChannelLayoutInfo::Item, 26> ChannelLayoutInfo::info{{
+    {ChannelLayout::Mono, "Mono", "1.0", "mono"},
+    {ChannelLayout::_2_0, "_2_0", "2.0", "stereo"},
+    {ChannelLayout::_2_1, "_2_1", "2.1", "2.1"},
+    {ChannelLayout::_3_0, "_3_0", "3.0", "3.0"},
+    {ChannelLayout::_3_0_Back, "_3_0_Back", "3.0(back)", "3.0(back)"},
+    {ChannelLayout::_3_1, "_3_1", "3.1", "3.1"},
+    {ChannelLayout::_4_0, "_4_0", "4.0", "quad"},
+    {ChannelLayout::_4_0_Side, "_4_0_Side", "4.0(side)", "quad(side)"},
+    {ChannelLayout::_4_0_Diamond, "_4_0_Diamond", "4.0(diamond)", "4.0"},
+    {ChannelLayout::_4_1, "_4_1", "4.1", "4.1(alsa)"},
+    {ChannelLayout::_4_1_Diamond, "_4_1_Diamond", "4.1(diamond)", "4.1"},
+    {ChannelLayout::_5_0, "_5_0", "5.0", "5.0(alsa)"},
+    {ChannelLayout::_5_0_Side, "_5_0_Side", "5.0(side)", "5.0(side)"},
+    {ChannelLayout::_5_1, "_5_1", "5.1", "5.1(alsa)"},
+    {ChannelLayout::_5_1_Side, "_5_1_Side", "5.1(side)", "5.1(side)"},
+    {ChannelLayout::_6_0, "_6_0", "6.0", "6.0"},
+    {ChannelLayout::_6_0_Front, "_6_0_Front", "6.0(front)", "6.0(front)"},
+    {ChannelLayout::_6_0_Hex, "_6_0_Hex", "6.0(hexagonal)", "hexagonal"},
+    {ChannelLayout::_6_1, "_6_1", "6.1", "6.1"},
+    {ChannelLayout::_6_1_Hex, "_6_1_Hex", "6.1(back)", "6.1(back)"},
+    {ChannelLayout::_6_1_Front, "_6_1_Front", "6.1(front)", "6.1(front)"},
+    {ChannelLayout::_7_0, "_7_0", "7.0", "7.0"},
+    {ChannelLayout::_7_0_Front, "_7_0_Front", "7.0(front)", "7.0(front)"},
+    {ChannelLayout::_7_1, "_7_1", "7.1", "7.1(alsa)"},
+    {ChannelLayout::_7_1_Wide, "_7_1_Wide", "7.1(wide)", "7.1(wide)"},
+    {ChannelLayout::_7_1_Side, "_7_1_Side", "7.1(side)", "7.1(wide-side)"}
+}};

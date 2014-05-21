@@ -2,7 +2,6 @@
 #define OPENGLCOMPAT_HPP
 
 #include "stdafx.hpp"
-#include "enums.hpp"
 #include "openglmisc.hpp"
 
 class OpenGLCompat {

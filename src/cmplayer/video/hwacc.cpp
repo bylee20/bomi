@@ -1,9 +1,9 @@
 #include "hwacc.hpp"
 #include "videoformat.hpp"
-//#include "videooutput.hpp"
 #include "hwacc_vaapi.hpp"
 #include "hwacc_vdpau.hpp"
 #include "hwacc_vda.hpp"
+#include "enum/deintmethod.hpp"
 extern "C" {
 #undef bswap_16
 #undef bswap_32
@@ -229,7 +229,6 @@ auto HwAcc::init(lavc_ctx *ctx) -> int
         return -1;
     }
     acc->d->imgfmt = format;
-//    vo(ctx)->setHwAcc(acc);
     ctx->hwdec_priv = acc;
     ctx->avctx->hwaccel_context = acc->context();
     return 0;
@@ -237,9 +236,8 @@ auto HwAcc::init(lavc_ctx *ctx) -> int
 
 auto HwAcc::uninit(lavc_ctx *ctx) -> void
 {
-//    if (ctx->hwdec_info && ctx->hwdec_info->vdpau_ctx)
-//        vo(ctx)->setHwAcc(nullptr);
     delete static_cast<HwAcc*>(ctx->hwdec_priv);
+    ctx->hwdec_priv = nullptr;
 }
 
 auto HwAcc::initDecoder(lavc_ctx *ctx, int imgfmt, int w, int h) -> int
@@ -253,15 +251,16 @@ auto HwAcc::initDecoder(lavc_ctx *ctx, int imgfmt, int w, int h) -> int
     return 0;
 }
 
-auto HwAcc::allocateImage(struct lavc_ctx *ctx, int imgfmt, int width, int height) -> mp_image*
+auto HwAcc::allocateImage(lavc_ctx *ctx, int imgfmt, int w, int h) -> mp_image*
 {
     auto acc = static_cast<HwAcc*>(ctx->hwdec_priv);
-    if (imgfmt != acc->d->imgfmt || !acc->isOk() || acc->m_size != QSize(width, height))
+    if (imgfmt != acc->d->imgfmt || !acc->isOk() || acc->m_size != QSize(w, h))
         return nullptr;
     return acc->getSurface();
 }
 
-auto HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder) -> int
+auto HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info,
+                  const char *decoder) -> int
 {
     if (!info || !info->vdpau_ctx)
         return HWDEC_ERR_NO_CTX;
@@ -273,7 +272,8 @@ auto HwAcc::probe(vd_lavc_hwdec *hwdec, mp_hwdec_info *info, const char *decoder
         default:          return HwAcc::None;
         }
     };
-    if (supports(conv(hwdec->type), (AVCodecID)mp_codec_to_av_codec_id(decoder)))
+    const auto codec = static_cast<AVCodecID>(mp_codec_to_av_codec_id(decoder));
+    if (supports(conv(hwdec->type), codec))
         return 0;
     return HWDEC_ERR_NO_CODEC;
 }
@@ -294,4 +294,4 @@ auto create_lavc_hwdec(hwdec_type type, mp_imgfmt imgfmt) -> vd_lavc_hwdec
 
 vd_lavc_hwdec mp_vd_lavc_vaapi = create_lavc_hwdec(HWDEC_VAAPI, IMGFMT_VAAPI);
 vd_lavc_hwdec mp_vd_lavc_vdpau = create_lavc_hwdec(HWDEC_VDPAU, IMGFMT_VDPAU);
-vd_lavc_hwdec mp_vd_lavc_vda = create_lavc_hwdec(HWDEC_VDA, IMGFMT_VDA);
+vd_lavc_hwdec mp_vd_lavc_vda   = create_lavc_hwdec(HWDEC_VDA,   IMGFMT_VDA);

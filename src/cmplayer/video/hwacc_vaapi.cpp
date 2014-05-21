@@ -1,5 +1,5 @@
 #include "hwacc_vaapi.hpp"
-#include "opengl/openglmisc.hpp"
+#include "opengl/opengltexture2d.hpp"
 
 #ifdef Q_OS_LINUX
 

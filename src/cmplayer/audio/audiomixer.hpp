@@ -1,9 +1,9 @@
 #ifndef AUDIOMIXER_HPP
 #define AUDIOMIXER_HPP
 
-#include "enums.hpp"
 #include "channelmanipulation.hpp"
 #include "audionormalizeroption.hpp"
+#include "enum/clippingmethod.hpp"
 extern "C" {
 #include <audio/audio.h>
 }
@@ -30,7 +30,7 @@ struct LevelInfo {
     LevelInfo(int frames = 0)
         : frames(frames) { }
     int frames = 0; double level = 0.0;
-    static auto average(const QLinkedList<LevelInfo> &history,
+    static auto average(const std::vector<LevelInfo> &history,
                         const LevelInfo &add) -> LevelInfo
     {
         LevelInfo total;
@@ -83,8 +83,8 @@ protected:
         ChannelManipulation ch_man;
         ChannelLayoutMap map;
         mp_audio *output = nullptr;
-        QLinkedList<detail::LevelInfo> history;
-        typename QLinkedList<detail::LevelInfo>::iterator historyIt;
+        std::vector<detail::LevelInfo> history;
+        typename std::vector<detail::LevelInfo>::iterator historyIt;
     };
     Data d;
     template<int fmt> friend class detail::AudioMixerPre;

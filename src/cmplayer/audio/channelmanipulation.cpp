@@ -1,6 +1,5 @@
 #include "channelmanipulation.hpp"
 #include "log.hpp"
-#include "enums.hpp"
 #include "record.hpp"
 
 DECLARE_LOG_CONTEXT(Audio)

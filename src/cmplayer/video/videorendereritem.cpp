@@ -6,6 +6,7 @@
 #include "videoframebufferobject.hpp"
 #include "videocolor.hpp"
 #include "misc/dataevent.hpp"
+#include "opengl/opengltexturebinder.hpp"
 #include <deque>
 
 enum EventType {NewFrame = QEvent::User + 1, NewFrameWithOsd };

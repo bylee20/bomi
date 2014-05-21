@@ -2,8 +2,18 @@
 #define MRLSTATE_HPP
 
 #include "stdafx.hpp"
-#include "enums.hpp"
 #include "mrl.hpp"
+#include "enum/clippingmethod.hpp"
+#include "enum/interpolatortype.hpp"
+#include "enum/videoratio.hpp"
+#include "enum/verticalalignment.hpp"
+#include "enum/horizontalalignment.hpp"
+#include "enum/colorrange.hpp"
+#include "enum/deintmode.hpp"
+#include "enum/dithering.hpp"
+#include "enum/channellayout.hpp"
+#include "enum/subtitledisplay.hpp"
+#include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
 #include <tuple>
 

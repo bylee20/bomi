@@ -2,7 +2,14 @@
 #include "videoframe.hpp"
 #include "hwacc.hpp"
 #include "log.hpp"
+#include "opengl/opengltexturebinder.hpp"
+#include "enum/interpolatortype.hpp"
 #include <tuple>
+
+VideoFrameShader::ShaderInfo::ShaderInfo()
+{
+    interpolator = Interpolator::get(InterpolatorType::Bilinear);
+}
 
 using Vertex = OGL::TextureVertex;
 

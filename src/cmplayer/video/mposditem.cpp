@@ -1,8 +1,10 @@
 #include "mposditem.hpp"
-#include "opengl/openglvertex.hpp"
 #include "mposdbitmap.hpp"
 #include "misc/dataevent.hpp"
+#include "opengl/openglvertex.hpp"
 #include "opengl/openglcompat.hpp"
+#include "opengl/opengltexturebinder.hpp"
+#include "opengl/openglframebufferobject.hpp"
 #include <deque>
 
 enum Attr {AttrPosition, AttrTexCoord, AttrColor};

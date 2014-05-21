@@ -6,13 +6,18 @@
 #include "opengl/opengloffscreencontext.hpp"
 #include "video/videoformat.hpp"
 #include "video/videorendereritem.hpp"
-#include "subtitle/submisc.hpp"
-#include "subtitle/subtitlestyle.hpp"
 #include "video/videofilter.hpp"
 #include "video/videocolor.hpp"
+#include "subtitle/submisc.hpp"
+#include "subtitle/subtitlestyle.hpp"
+#include "enum/interpolatortype.hpp"
+#include "enum/colorrange.hpp"
+#include "enum/channellayout.hpp"
+#include "enum/deintmode.hpp"
+#include "enum/audiodriver.hpp"
+#include <libmpv/client.h>
 
 DECLARE_LOG_CONTEXT(Engine)
-#include <libmpv/client.h>
 
 enum EndReason {
     EndFailed = -1,

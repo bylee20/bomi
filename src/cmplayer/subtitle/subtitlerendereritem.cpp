@@ -2,6 +2,7 @@
 #include "misc/dataevent.hpp"
 #include "subtitlerenderingthread.hpp"
 #include "opengl/openglcompat.hpp"
+#include "opengl/opengltexturebinder.hpp"
 
 struct SubtitleShaderData : public SubtitleRendererItem::ShaderData {
     const OpenGLTexture2D *texture, *bbox;

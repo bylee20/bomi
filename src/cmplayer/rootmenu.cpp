@@ -1,10 +1,13 @@
 #include "rootmenu.hpp"
-#include "enums.hpp"
 #include "pref.hpp"
 #include "record.hpp"
 #include "log.hpp"
 #include "video/videocolor.hpp"
 #include "video/videorendereritem.hpp"
+#include "misc/stepaction.hpp"
+#include "enum/movetoward.hpp"
+#include "enum/adjustcolor.hpp"
+#include "enum/staysontop.hpp"
 
 DECLARE_LOG_CONTEXT(Menu)
 

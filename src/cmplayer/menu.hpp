@@ -4,7 +4,6 @@
 #include "stdafx.hpp"
 #include "global.hpp"
 #include "actiongroup.hpp"
-#include "enums.hpp"
 
 class Record;
 

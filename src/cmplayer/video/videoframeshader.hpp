@@ -9,6 +9,8 @@
 #include "opengl/openglcompat.hpp"
 #include "opengl/interpolator.hpp"
 #include "opengl/openglvertex.hpp"
+#include "opengl/opengltexture1d.hpp"
+#include "enum/colorrange.hpp"
 
 class HwAccMixer;
 
@@ -43,12 +45,12 @@ private:
     auto updateTexCoords() -> void;
 private:
     struct ShaderInfo {
+        ShaderInfo();
         QOpenGLShaderProgram program;
         QOpenGLShader vertexShader{QOpenGLShader::Vertex};
         QOpenGLShader fragmentShader{QOpenGLShader::Fragment};
         bool rebuild = true, kernel = false;
-        const Interpolator *interpolator
-            = Interpolator::get(InterpolatorType::Bilinear);
+        const Interpolator *interpolator = nullptr;
     };
     auto updateShader(int deint) -> void;
     bool m_refill = false;

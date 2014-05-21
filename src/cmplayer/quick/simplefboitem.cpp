@@ -1,4 +1,5 @@
 #include "simplefboitem.hpp"
+#include "opengl/openglframebufferobject.hpp"
 
 SimpleFboItem::SimpleFboItem(QQuickItem *parent)
 : SimpleTextureItem(parent) {
@@ -9,6 +10,11 @@ SimpleFboItem::SimpleFboItem(QQuickItem *parent)
         }
     });
     m_sizeChecker.setInterval(300);
+}
+
+auto SimpleFboItem::finalizeGL() -> void
+{
+    SimpleTextureItem::finalizeGL(); _Delete(m_fbo);
 }
 
 auto SimpleFboItem::updateVertex(Vertex *vertex) -> void

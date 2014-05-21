@@ -2,7 +2,7 @@
 #define SIMPLETEXTUREITEM_HPP
 
 #include "opengldrawitem.hpp"
-#include "opengl/openglmisc.hpp"
+#include "opengl/opengltexture2d.hpp"
 #include "opengl/openglvertex.hpp"
 
 class SimpleTextureItem : public ShaderRenderItem<OGL::TextureVertex> {

@@ -1,6 +1,7 @@
 #include "audiocontroller.hpp"
 #include "audiomixer.hpp"
 #include "mpv_helper.hpp"
+#include "enum/channellayout.hpp"
 extern "C" {
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>

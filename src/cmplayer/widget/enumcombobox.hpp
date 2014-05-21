@@ -2,7 +2,14 @@
 #define ENUMCOMBOBOX_HPP
 
 #include "datacombobox.hpp"
-#include "enums.hpp"
+#include "enum/generateplaylist.hpp"
+#include "enum/subtitleautoload.hpp"
+#include "enum/subtitleautoselect.hpp"
+#include "enum/osdscalepolicy.hpp"
+#include "enum/clippingmethod.hpp"
+#include "enum/interpolatortype.hpp"
+#include "enum/textthemestyle.hpp"
+#include "enum/channellayout.hpp"
 
 template<class Enum>
 class EnumComboBox : public DataComboBox {
