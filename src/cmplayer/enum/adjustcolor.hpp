@@ -2,6 +2,7 @@
 #define ADJUSTCOLOR_HPP
 
 #include "enums.hpp"
+#define ADJUSTCOLOR_IS_FLAG 0
 #include "video/videocolor.hpp"
 
 enum class AdjustColor : int {
@@ -16,18 +17,12 @@ enum class AdjustColor : int {
     HueDec = (int)8
 };
 
+Q_DECLARE_METATYPE(AdjustColor)
+
 inline auto operator == (AdjustColor e, int i) -> bool { return (int)e == i; }
 inline auto operator != (AdjustColor e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, AdjustColor e) -> bool { return (int)e == i; }
 inline auto operator != (int i, AdjustColor e) -> bool { return (int)e != i; }
-inline auto operator & (AdjustColor e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, AdjustColor e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, AdjustColor e) -> int& { return i &= (int)e; }
-inline auto operator ~ (AdjustColor e) -> int { return ~(int)e; }
-inline auto operator | (AdjustColor e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, AdjustColor e) -> int { return (int)e | i; }
-constexpr inline auto operator | (AdjustColor e1, AdjustColor e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, AdjustColor e) -> int& { return i |= (int)e; }
 inline auto operator > (AdjustColor e, int i) -> bool { return (int)e > i; }
 inline auto operator < (AdjustColor e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (AdjustColor e, int i) -> bool { return (int)e >= i; }
@@ -36,8 +31,20 @@ inline auto operator > (int i, AdjustColor e) -> bool { return i > (int)e; }
 inline auto operator < (int i, AdjustColor e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, AdjustColor e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, AdjustColor e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(AdjustColor)
+#if ADJUSTCOLOR_IS_FLAG
+Q_DECLARE_FLAGS(, AdjustColor)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (AdjustColor e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, AdjustColor e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, AdjustColor e) -> int& { return i &= (int)e; }
+inline auto operator ~ (AdjustColor e) -> int { return ~(int)e; }
+inline auto operator | (AdjustColor e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, AdjustColor e) -> int { return (int)e | i; }
+constexpr inline auto operator | (AdjustColor e1, AdjustColor e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, AdjustColor e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<AdjustColor> {

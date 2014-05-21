@@ -2,6 +2,7 @@
 #define SUBTITLEAUTOSELECT_HPP
 
 #include "enums.hpp"
+#define SUBTITLEAUTOSELECT_IS_FLAG 0
 
 enum class SubtitleAutoselect : int {
     Matched = (int)0,
@@ -10,18 +11,12 @@ enum class SubtitleAutoselect : int {
     EachLanguage = (int)3
 };
 
+Q_DECLARE_METATYPE(SubtitleAutoselect)
+
 inline auto operator == (SubtitleAutoselect e, int i) -> bool { return (int)e == i; }
 inline auto operator != (SubtitleAutoselect e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, SubtitleAutoselect e) -> bool { return (int)e == i; }
 inline auto operator != (int i, SubtitleAutoselect e) -> bool { return (int)e != i; }
-inline auto operator & (SubtitleAutoselect e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, SubtitleAutoselect e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, SubtitleAutoselect e) -> int& { return i &= (int)e; }
-inline auto operator ~ (SubtitleAutoselect e) -> int { return ~(int)e; }
-inline auto operator | (SubtitleAutoselect e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, SubtitleAutoselect e) -> int { return (int)e | i; }
-constexpr inline auto operator | (SubtitleAutoselect e1, SubtitleAutoselect e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, SubtitleAutoselect e) -> int& { return i |= (int)e; }
 inline auto operator > (SubtitleAutoselect e, int i) -> bool { return (int)e > i; }
 inline auto operator < (SubtitleAutoselect e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (SubtitleAutoselect e, int i) -> bool { return (int)e >= i; }
@@ -30,8 +25,20 @@ inline auto operator > (int i, SubtitleAutoselect e) -> bool { return i > (int)e
 inline auto operator < (int i, SubtitleAutoselect e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, SubtitleAutoselect e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, SubtitleAutoselect e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(SubtitleAutoselect)
+#if SUBTITLEAUTOSELECT_IS_FLAG
+Q_DECLARE_FLAGS(, SubtitleAutoselect)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (SubtitleAutoselect e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, SubtitleAutoselect e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, SubtitleAutoselect e) -> int& { return i &= (int)e; }
+inline auto operator ~ (SubtitleAutoselect e) -> int { return ~(int)e; }
+inline auto operator | (SubtitleAutoselect e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, SubtitleAutoselect e) -> int { return (int)e | i; }
+constexpr inline auto operator | (SubtitleAutoselect e1, SubtitleAutoselect e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, SubtitleAutoselect e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<SubtitleAutoselect> {

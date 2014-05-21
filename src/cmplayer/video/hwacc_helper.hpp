@@ -2,7 +2,7 @@
 #define HWACC_HELPER_HPP
 
 #include "stdafx.hpp"
-#include "log.hpp"
+#include "misc/log.hpp"
 #include "videoimagepool.hpp"
 extern "C" {
 #include <libavcodec/avcodec.h>

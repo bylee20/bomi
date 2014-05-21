@@ -25,15 +25,15 @@ macx {
     LIBS += -liconv -framework Cocoa -framework QuartzCore -framework IOKit \
 	-framework IOSurface -framework Carbon -framework AudioUnit -framework CoreAudio \
 	-framework VideoDecodeAcceleration -framework AudioToolBox
-    HEADERS += app_mac.hpp
-    OBJECTIVE_SOURCES += app_mac.mm
+	HEADERS += player/app_mac.hpp
+	OBJECTIVE_SOURCES += player/app_mac.mm
     INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
 } else:unix {
     QT += dbus x11extras
     TARGET = cmplayer
     LIBS += -ldl
-	HEADERS += app_x11.hpp misc/mpris.hpp
-	SOURCES += app_x11.cpp misc/mpris.cpp
+	HEADERS += player/app_x11.hpp player/mpris.hpp
+	SOURCES += player/app_x11.cpp player/mpris.cpp
 }
 
 QML_IMPORT_PATH += imports
@@ -43,10 +43,12 @@ DEFINES += _LARGEFILE_SOURCE "_FILE_OFFSET_BITS=64" _LARGEFILE64_SOURCE
 RESOURCES += rsclist.qrc
 
 HEADERS += \
+	stdafx.hpp \
 	audio/audiocontroller.hpp \
 	audio/channelmanipulation.hpp \
 	audio/audiomixer.hpp \
 	audio/audio_helper.hpp \
+	audio/audionormalizeroption.hpp \
 	video/videoframe.hpp \
 	video/videooutput.hpp \
 	video/videoformat.hpp \
@@ -55,7 +57,7 @@ HEADERS += \
 	video/hwacc_vdpau.hpp \
 	video/hwacc_vda.hpp \
 	video/videofilter.hpp \
-	video/deintinfo.hpp \
+	video/deintoption.hpp \
 	video/letterboxitem.hpp \
 	video/ffmpegfilters.hpp \
 	video/softwaredeinterlacer.hpp \
@@ -67,6 +69,10 @@ HEADERS += \
 	video/videorendereritem.hpp \
 	video/mposditem.hpp \
 	video/mposdbitmap.hpp \
+	video/deintcaps.hpp \
+	video/videoimagepool.hpp \
+	video/videoframebufferobject.hpp \
+	video/kernel3x3.hpp \
 	subtitle/subtitle.hpp \
 	subtitle/subtitle_parser.hpp \
 	subtitle/subtitleview.hpp \
@@ -80,6 +86,7 @@ HEADERS += \
 	subtitle/subtitledrawer.hpp \
 	subtitle/subtitlerenderingthread.hpp \
 	subtitle/submisc.hpp \
+	subtitle/opensubtitlesfinder.hpp \
 	quick/highqualitytextureitem.hpp \
 	quick/busyiconitem.hpp \
 	quick/toplevelitem.hpp \
@@ -91,121 +98,119 @@ HEADERS += \
 	quick/simpletextureitem.hpp \
 	quick/simplevertexitem.hpp \
 	quick/simplefboitem.hpp \
+	quick/geometryitem.hpp \
+	quick/osdtheme.hpp \
+	quick/themeobject.hpp \
+	quick/globalqmlobject.hpp \
 	opengl/openglcompat.hpp \
 	opengl/interpolator.hpp \
 	opengl/openglmisc.hpp \
 	opengl/openglvertex.hpp \
-	playengine.hpp \
-    mainwindow.hpp \
-    mrl.hpp \
-    global.hpp \
-    menu.hpp \
-    translator.hpp \
-    pref.hpp \
-	info.hpp \
-    charsetdetector.hpp \
-    abrepeater.hpp \
-    playlist.hpp \
-    playlistmodel.hpp \
-    recentinfo.hpp \
-    appstate.hpp \
-    favoritesview.hpp \
-	misc/downloader.hpp \
+	opengl/opengltexturebase.hpp \
+	opengl/openglframebufferobject.hpp \
+	opengl/opengltexture2d.hpp \
+	opengl/opengltexture1d.hpp \
+	opengl/opengltexturebinder.hpp \
+	opengl/opengloffscreencontext.hpp \
 	dialog/snapshotdialog.hpp \
-    record.hpp \
-    actiongroup.hpp \
-    rootmenu.hpp \
-    app.hpp \
-	globalqmlobject.hpp \
-	dialog/prefdialog.hpp \
-    stdafx.hpp \
-    skin.hpp \
-	misc/dataevent.hpp \
 	dialog/openmediafolderdialog.hpp \
-	tmp.hpp \
-	undostack.hpp \
-	quick/geometryitem.hpp \
-    playengine_p.hpp \
-    mediamisc.hpp \
-	trayicon.hpp \
-    mrlstate.hpp \
-    historymodel.hpp \
-	misc/xmlrpcclient.hpp \
-	subtitle/opensubtitlesfinder.hpp \
+	dialog/prefdialog.hpp \
 	dialog/subtitlefinddialog.hpp \
-	misc/simplelistmodel.hpp \
-    mrlstate_old.hpp \
-    log.hpp \
-    mpv_helper.hpp \
-	misc/udf25.hpp \
-    audio/audionormalizeroption.hpp \
-    video/videoimagepool.hpp \
-    opengl/opengloffscreencontext.hpp \
+	dialog/bbox.hpp \
+	dialog/mbox.hpp \
+	dialog/shortcutdialog.hpp \
+	dialog/encodingfiledialog.hpp \
+	dialog/urldialog.hpp \
+	dialog/aboutdialog.hpp \
+	dialog/opendiscdialog.hpp \
 	widget/simplelistwidget.hpp \
 	widget/qtcolorpicker.hpp \
-    video/videoframebufferobject.hpp \
-    mainquickview.hpp \
-	quick/osdtheme.hpp \
-    quick/themeobject.hpp \
 	widget/mouseactiongroupbox.hpp \
-    misc/keymodifieractionmap.hpp \
-    dialog/bbox.hpp \
-    dialog/mbox.hpp \
-    dialog/shortcutdialog.hpp \
-    dialog/encodingfiledialog.hpp \
-    widget/encodingcombobox.hpp \
-    widget/colorselectwidget.hpp \
-    dialog/urldialog.hpp \
-    widget/enumcombobox.hpp \
-    widget/channelmanipulationwidget.hpp \
-    widget/datacombobox.hpp \
-    widget/verticallabel.hpp \
-    widget/localecombobox.hpp \
-    widget/fontoptionwidget.hpp \
-    dialog/aboutdialog.hpp \
-    dialog/opendiscdialog.hpp \
-    video/deintcaps.hpp \
-    enum/adjustcolor.hpp \
-    enum/audiodriver.hpp \
-    enum/changevalue.hpp \
-    enum/channellayout.hpp \
-    enum/clippingmethod.hpp \
-    enum/colorrange.hpp \
-    enum/decoderdevice.hpp \
-    enum/deintdevice.hpp \
-    enum/deintmethod.hpp \
-    enum/deintmode.hpp \
-    enum/dithering.hpp \
-    enum/enums.hpp \
-    enum/generateplaylist.hpp \
-    enum/horizontalalignment.hpp \
-    enum/interpolatortype.hpp \
-    enum/keymodifier.hpp \
-    enum/movetoward.hpp \
-    enum/osdscalepolicy.hpp \
-    enum/playlistbehaviorwhenopenmedia.hpp \
-    enum/seekingstep.hpp \
-    enum/speakerid.hpp \
-    enum/staysontop.hpp \
-    enum/subtitleautoload.hpp \
-    enum/subtitleautoselect.hpp \
-    enum/subtitledisplay.hpp \
-    enum/textthemestyle.hpp \
-    enum/verticalalignment.hpp \
-    enum/videoratio.hpp \
-    opengl/opengltexturebase.hpp \
-    opengl/openglframebufferobject.hpp \
-    opengl/opengltexture2d.hpp \
-    opengl/opengltexture1d.hpp \
-    opengl/opengltexturebinder.hpp \
-    misc/enumaction.hpp \
-    misc/stepaction.hpp
+	widget/encodingcombobox.hpp \
+	widget/colorselectwidget.hpp \
+	widget/enumcombobox.hpp \
+	widget/channelmanipulationwidget.hpp \
+	widget/datacombobox.hpp \
+	widget/verticallabel.hpp \
+	widget/localecombobox.hpp \
+	widget/fontoptionwidget.hpp \
+	widget/menu.hpp \
+	widget/deintwidget.hpp \
+	enum/adjustcolor.hpp \
+	enum/audiodriver.hpp \
+	enum/changevalue.hpp \
+	enum/channellayout.hpp \
+	enum/clippingmethod.hpp \
+	enum/colorrange.hpp \
+	enum/decoderdevice.hpp \
+	enum/deintdevice.hpp \
+	enum/deintmethod.hpp \
+	enum/deintmode.hpp \
+	enum/dithering.hpp \
+	enum/enums.hpp \
+	enum/generateplaylist.hpp \
+	enum/horizontalalignment.hpp \
+	enum/interpolatortype.hpp \
+	enum/keymodifier.hpp \
+	enum/movetoward.hpp \
+	enum/osdscalepolicy.hpp \
+	enum/playlistbehaviorwhenopenmedia.hpp \
+	enum/seekingstep.hpp \
+	enum/speakerid.hpp \
+	enum/staysontop.hpp \
+	enum/subtitleautoload.hpp \
+	enum/subtitleautoselect.hpp \
+	enum/subtitledisplay.hpp \
+	enum/textthemestyle.hpp \
+	enum/verticalalignment.hpp \
+	enum/videoratio.hpp \
+	enum/videoeffect.hpp \
+	misc/charsetdetector.hpp \
+	misc/downloader.hpp \
+	misc/actiongroup.hpp \
+	misc/dataevent.hpp \
+	misc/xmlrpcclient.hpp \
+	misc/simplelistmodel.hpp \
+	misc/log.hpp \
+	misc/udf25.hpp \
+	misc/keymodifieractionmap.hpp \
+	misc/enumaction.hpp \
+	misc/stepaction.hpp \
+	misc/record.hpp \
+	misc/tmp.hpp \
+	misc/undostack.hpp \
+	misc/trayicon.hpp \
+	player/app.hpp \
+	player/mrl.hpp \
+	player/pref.hpp \
+	player/info.hpp \
+	player/skin.hpp \
+	player/appstate.hpp \
+	player/playlist.hpp \
+	player/rootmenu.hpp \
+	player/mrlstate.hpp \
+	player/mediamisc.hpp \
+	player/playengine.hpp \
+	player/mainwindow.hpp \
+	player/translator.hpp \
+	player/abrepeater.hpp \
+	player/recentinfo.hpp \
+	player/mpv_helper.hpp \
+	player/playengine_p.hpp \
+	player/mrlstate_old.hpp \
+	player/historymodel.hpp \
+	player/playlistmodel.hpp \
+	player/mainquickview.hpp
 
 SOURCES += \
+	stdafx.cpp \
 	audio/audiocontroller.cpp \
 	audio/channelmanipulation.cpp \
 	audio/audiomixer.cpp \
 	audio/audio_helper.cpp \
+	audio/audionormalizeroption.cpp \
+	video/videoimagepool.cpp \
+	video/videoframebufferobject.cpp \
 	video/videoframe.cpp \
 	video/videooutput.cpp \
 	video/videorendereritem.cpp \
@@ -215,7 +220,7 @@ SOURCES += \
 	video/hwacc_vdpau.cpp \
 	video/hwacc_vda.cpp \
 	video/videofilter.cpp \
-	video/deintinfo.cpp \
+	video/deintoption.cpp \
 	video/letterboxitem.cpp \
 	video/videoframeshader.cpp \
 	video/ffmpegfilters.cpp \
@@ -225,6 +230,8 @@ SOURCES += \
 	video/hwacc_helper.cpp \
 	video/mposditem.cpp \
 	video/mposdbitmap.cpp \
+	video/deintcaps.cpp \
+	video/kernel3x3.cpp \
 	subtitle/subtitle.cpp \
 	subtitle/subtitle_parser.cpp \
 	subtitle/subtitleview.cpp \
@@ -238,6 +245,7 @@ SOURCES += \
 	subtitle/subtitledrawer.cpp \
 	subtitle/subtitlerenderingthread.cpp \
 	subtitle/submisc.cpp \
+	subtitle/opensubtitlesfinder.cpp \
 	quick/highqualitytextureitem.cpp \
 	quick/geometryitem.cpp \
 	quick/busyiconitem.cpp \
@@ -250,112 +258,106 @@ SOURCES += \
 	quick/simpletextureitem.cpp \
 	quick/simplevertexitem.cpp \
 	quick/simplefboitem.cpp \
+	quick/osdtheme.cpp \
+	quick/themeobject.cpp \
+	quick/globalqmlobject.cpp \
 	opengl/openglcompat.cpp \
 	opengl/interpolator.cpp \
 	opengl/openglmisc.cpp \
 	opengl/openglvertex.cpp \
-	main.cpp \
-    mainwindow.cpp \
-    mrl.cpp \
-    global.cpp \
-    menu.cpp \
-    translator.cpp \
-    pref.cpp \
-    info.cpp \
-	misc/charsetdetector.cpp \
-    abrepeater.cpp \
-    playlist.cpp \
-    playlistmodel.cpp \
-    recentinfo.cpp \
-	widget/simplelistwidget.cpp \
-    appstate.cpp \
-    favoritesview.cpp \
-	misc/downloader.cpp \
+	opengl/opengltexturebase.cpp \
+	opengl/openglframebufferobject.cpp \
+	opengl/opengltexture2d.cpp \
+	opengl/opengltexture1d.cpp \
+	opengl/opengltexturebinder.cpp \
+	opengl/opengloffscreencontext.cpp \
 	dialog/snapshotdialog.cpp \
-	widget/qtcolorpicker.cpp \
-    record.cpp \
-    actiongroup.cpp \
-    rootmenu.cpp \
-    app.cpp \
 	dialog/prefdialog.cpp \
-    playengine.cpp \
-    globalqmlobject.cpp \
-    skin.cpp \
+	dialog/bbox.cpp \
+	dialog/mbox.cpp \
+	dialog/shortcutdialog.cpp \
+	dialog/encodingfiledialog.cpp \
 	dialog/openmediafolderdialog.cpp \
-    undostack.cpp \
-    mediamisc.cpp \
-    trayicon.cpp \
-    mrlstate.cpp \
-    historymodel.cpp \
-	misc/xmlrpcclient.cpp \
-	subtitle/opensubtitlesfinder.cpp \
 	dialog/subtitlefinddialog.cpp \
-	misc/simplelistmodel.cpp \
-    mrlstate_old.cpp \
-    log.cpp \
-    mpv_helper.cpp \
-	misc/udf25.cpp \
-    audio/audionormalizeroption.cpp \
-    video/videoimagepool.cpp \
-    opengl/opengloffscreencontext.cpp \
-    video/videoframebufferobject.cpp \
-    mainquickview.cpp \
-	quick/osdtheme.cpp \
-    quick/themeobject.cpp \
+	dialog/aboutdialog.cpp \
+	dialog/opendiscdialog.cpp \
+	dialog/urldialog.cpp \
+	widget/simplelistwidget.cpp \
+	widget/qtcolorpicker.cpp \
 	widget/mouseactiongroupbox.cpp \
-    misc/keymodifieractionmap.cpp \
-    dialog/bbox.cpp \
-    dialog/mbox.cpp \
-    dialog/shortcutdialog.cpp \
-    dialog/encodingfiledialog.cpp \
-    widget/encodingcombobox.cpp \
-    widget/colorselectwidget.cpp \
-    dialog/urldialog.cpp \
-    widget/enumcombobox.cpp \
-    widget/channelmanipulationwidget.cpp \
-    widget/datacombobox.cpp \
-    widget/verticallabel.cpp \
-    widget/localecombobox.cpp \
-    widget/fontoptionwidget.cpp \
-    dialog/aboutdialog.cpp \
-    dialog/opendiscdialog.cpp \
-    video/deintcaps.cpp \
-    enum/adjustcolor.cpp \
-    enum/audiodriver.cpp \
-    enum/changevalue.cpp \
-    enum/channellayout.cpp \
-    enum/clippingmethod.cpp \
-    enum/colorrange.cpp \
-    enum/decoderdevice.cpp \
-    enum/deintdevice.cpp \
-    enum/deintmethod.cpp \
-    enum/deintmode.cpp \
-    enum/dithering.cpp \
-    enum/enums.cpp \
-    enum/generateplaylist.cpp \
-    enum/horizontalalignment.cpp \
-    enum/interpolatortype.cpp \
-    enum/keymodifier.cpp \
-    enum/movetoward.cpp \
-    enum/osdscalepolicy.cpp \
-    enum/playlistbehaviorwhenopenmedia.cpp \
-    enum/seekingstep.cpp \
-    enum/speakerid.cpp \
-    enum/staysontop.cpp \
-    enum/subtitleautoload.cpp \
-    enum/subtitleautoselect.cpp \
-    enum/subtitledisplay.cpp \
-    enum/textthemestyle.cpp \
-    enum/verticalalignment.cpp \
-    enum/videoratio.cpp \
-    opengl/opengltexturebase.cpp \
-    opengl/openglframebufferobject.cpp \
-    opengl/opengltexture2d.cpp \
-    opengl/opengltexture1d.cpp \
-    opengl/opengltexturebinder.cpp \
-    misc/enumaction.cpp \
-    misc/stepaction.cpp
-
+	widget/encodingcombobox.cpp \
+	widget/colorselectwidget.cpp \
+	widget/enumcombobox.cpp \
+	widget/channelmanipulationwidget.cpp \
+	widget/datacombobox.cpp \
+	widget/verticallabel.cpp \
+	widget/localecombobox.cpp \
+	widget/fontoptionwidget.cpp \
+	widget/menu.cpp \
+	widget/deintwidget.cpp \
+	enum/adjustcolor.cpp \
+	enum/audiodriver.cpp \
+	enum/changevalue.cpp \
+	enum/channellayout.cpp \
+	enum/clippingmethod.cpp \
+	enum/colorrange.cpp \
+	enum/decoderdevice.cpp \
+	enum/deintdevice.cpp \
+	enum/deintmethod.cpp \
+	enum/deintmode.cpp \
+	enum/dithering.cpp \
+	enum/enums.cpp \
+	enum/generateplaylist.cpp \
+	enum/horizontalalignment.cpp \
+	enum/interpolatortype.cpp \
+	enum/keymodifier.cpp \
+	enum/movetoward.cpp \
+	enum/osdscalepolicy.cpp \
+	enum/playlistbehaviorwhenopenmedia.cpp \
+	enum/seekingstep.cpp \
+	enum/speakerid.cpp \
+	enum/staysontop.cpp \
+	enum/subtitleautoload.cpp \
+	enum/subtitleautoselect.cpp \
+	enum/subtitledisplay.cpp \
+	enum/textthemestyle.cpp \
+	enum/verticalalignment.cpp \
+	enum/videoratio.cpp \
+	enum/videoeffect.cpp \
+	misc/enumaction.cpp \
+	misc/charsetdetector.cpp \
+	misc/downloader.cpp \
+	misc/actiongroup.cpp \
+	misc/xmlrpcclient.cpp \
+	misc/log.cpp \
+	misc/simplelistmodel.cpp \
+	misc/udf25.cpp \
+	misc/keymodifieractionmap.cpp \
+	misc/stepaction.cpp \
+	misc/record.cpp \
+	misc/undostack.cpp \
+	misc/trayicon.cpp \
+	player/main.cpp \
+	player/mainwindow.cpp \
+	player/mrl.cpp \
+	player/translator.cpp \
+	player/pref.cpp \
+	player/info.cpp \
+	player/abrepeater.cpp \
+	player/playlist.cpp \
+	player/playlistmodel.cpp \
+	player/recentinfo.cpp \
+	player/appstate.cpp \
+	player/rootmenu.cpp \
+	player/app.cpp \
+	player/playengine.cpp \
+	player/skin.cpp \
+	player/mediamisc.cpp \
+	player/mrlstate.cpp \
+	player/historymodel.cpp \
+	player/mrlstate_old.cpp \
+	player/mpv_helper.cpp \
+	player/mainquickview.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

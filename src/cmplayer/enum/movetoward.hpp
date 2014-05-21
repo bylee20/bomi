@@ -2,6 +2,7 @@
 #define MOVETOWARD_HPP
 
 #include "enums.hpp"
+#define MOVETOWARD_IS_FLAG 0
 
 enum class MoveToward : int {
     Reset = (int)0,
@@ -11,18 +12,12 @@ enum class MoveToward : int {
     Rightward = (int)4
 };
 
+Q_DECLARE_METATYPE(MoveToward)
+
 inline auto operator == (MoveToward e, int i) -> bool { return (int)e == i; }
 inline auto operator != (MoveToward e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, MoveToward e) -> bool { return (int)e == i; }
 inline auto operator != (int i, MoveToward e) -> bool { return (int)e != i; }
-inline auto operator & (MoveToward e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, MoveToward e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, MoveToward e) -> int& { return i &= (int)e; }
-inline auto operator ~ (MoveToward e) -> int { return ~(int)e; }
-inline auto operator | (MoveToward e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, MoveToward e) -> int { return (int)e | i; }
-constexpr inline auto operator | (MoveToward e1, MoveToward e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, MoveToward e) -> int& { return i |= (int)e; }
 inline auto operator > (MoveToward e, int i) -> bool { return (int)e > i; }
 inline auto operator < (MoveToward e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (MoveToward e, int i) -> bool { return (int)e >= i; }
@@ -31,8 +26,20 @@ inline auto operator > (int i, MoveToward e) -> bool { return i > (int)e; }
 inline auto operator < (int i, MoveToward e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, MoveToward e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, MoveToward e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(MoveToward)
+#if MOVETOWARD_IS_FLAG
+Q_DECLARE_FLAGS(, MoveToward)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (MoveToward e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, MoveToward e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, MoveToward e) -> int& { return i &= (int)e; }
+inline auto operator ~ (MoveToward e) -> int { return ~(int)e; }
+inline auto operator | (MoveToward e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, MoveToward e) -> int { return (int)e | i; }
+constexpr inline auto operator | (MoveToward e1, MoveToward e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, MoveToward e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<MoveToward> {

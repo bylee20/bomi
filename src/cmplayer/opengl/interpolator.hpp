@@ -1,8 +1,7 @@
 #ifndef INTERPOLATOR_HPP
 #define INTERPOLATOR_HPP
 
-#include "openglmisc.hpp"
-
+class OpenGLTexture1D;
 enum class InterpolatorType;
 
 class Interpolator {

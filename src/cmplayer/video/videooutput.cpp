@@ -1,13 +1,13 @@
 #include "videooutput.hpp"
-#include "opengl/opengloffscreencontext.hpp"
+#include "deintoption.hpp"
 #include "videorendereritem.hpp"
-#include "playengine.hpp"
-#include "deintinfo.hpp"
 #include "videoframeshader.hpp"
 #include "mposdbitmap.hpp"
-#include "mpv_helper.hpp"
 #include "videoframebufferobject.hpp"
-#include "log.hpp"
+#include "opengl/opengloffscreencontext.hpp"
+#include "player/playengine.hpp"
+#include "player/mpv_helper.hpp"
+#include "misc/log.hpp"
 #include <deque>
 extern "C" {
 #include <sub/sd.h>

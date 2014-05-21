@@ -32,8 +32,8 @@ private:
     auto drawingMode() const -> GLenum { return GL_TRIANGLES; }
     auto updatePolish() -> void override;
     void updateTexture(OpenGLTexture2D *texture) final;
-    auto geometryChanged(const QRectF &new_, const QRectF &old) -> void override;
-    auto itemChange(ItemChange change, const ItemChangeData &data) -> void override;
+    auto geometryChanged(const QRectF &new_, const QRectF &o) -> void override;
+    auto itemChange(ItemChange change, const ItemChangeData &) -> void override;
     struct Data;
     Data *d;
 };

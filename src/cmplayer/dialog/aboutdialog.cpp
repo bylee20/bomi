@@ -1,5 +1,5 @@
 #include "aboutdialog.hpp"
-#include "info.hpp"
+#include "player/info.hpp"
 #include "ui_aboutdialog.h"
 
 struct AboutDialog::Data {

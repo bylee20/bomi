@@ -2,6 +2,7 @@
 #define VERTICALALIGNMENT_HPP
 
 #include "enums.hpp"
+#define VERTICALALIGNMENT_IS_FLAG 0
 
 enum class VerticalAlignment : int {
     Top = (int)0,
@@ -9,18 +10,12 @@ enum class VerticalAlignment : int {
     Bottom = (int)2
 };
 
+Q_DECLARE_METATYPE(VerticalAlignment)
+
 inline auto operator == (VerticalAlignment e, int i) -> bool { return (int)e == i; }
 inline auto operator != (VerticalAlignment e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, VerticalAlignment e) -> bool { return (int)e == i; }
 inline auto operator != (int i, VerticalAlignment e) -> bool { return (int)e != i; }
-inline auto operator & (VerticalAlignment e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, VerticalAlignment e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, VerticalAlignment e) -> int& { return i &= (int)e; }
-inline auto operator ~ (VerticalAlignment e) -> int { return ~(int)e; }
-inline auto operator | (VerticalAlignment e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, VerticalAlignment e) -> int { return (int)e | i; }
-constexpr inline auto operator | (VerticalAlignment e1, VerticalAlignment e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, VerticalAlignment e) -> int& { return i |= (int)e; }
 inline auto operator > (VerticalAlignment e, int i) -> bool { return (int)e > i; }
 inline auto operator < (VerticalAlignment e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (VerticalAlignment e, int i) -> bool { return (int)e >= i; }
@@ -29,8 +24,20 @@ inline auto operator > (int i, VerticalAlignment e) -> bool { return i > (int)e;
 inline auto operator < (int i, VerticalAlignment e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, VerticalAlignment e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, VerticalAlignment e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(VerticalAlignment)
+#if VERTICALALIGNMENT_IS_FLAG
+Q_DECLARE_FLAGS(, VerticalAlignment)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (VerticalAlignment e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, VerticalAlignment e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, VerticalAlignment e) -> int& { return i &= (int)e; }
+inline auto operator ~ (VerticalAlignment e) -> int { return ~(int)e; }
+inline auto operator | (VerticalAlignment e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, VerticalAlignment e) -> int { return (int)e | i; }
+constexpr inline auto operator | (VerticalAlignment e1, VerticalAlignment e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, VerticalAlignment e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<VerticalAlignment> {

@@ -40,9 +40,12 @@ SIA _L(char c) -> QLatin1Char
 SIA _U(const char *utf8, int len = -1) -> QString
 { return QString::fromUtf8(utf8, len); }
 
-SIA _N(int n, int base = 10, int width = 0,
+SIA _N(int n, int base, int width,
                       const QChar &c = _L(' ')) -> QString
 { return QString("%1").arg(n, width, base, c); }
+
+SIA _N(int n, int base = 10) -> QString
+{ return QString::number(n, base); }
 
 SIA _N(quint32 n, int base = 10) -> QString
 { return QString::number(n, base); }
@@ -253,6 +256,14 @@ SIA _Expand(T &t, int size, double extra = 1.2) -> bool
     t.resize(size*extra);
     return true;
 }
+
+auto _Uncompress(const QByteArray &data) -> QByteArray;
+
+static inline auto _SignN(int value, bool sign) -> QString
+    { return sign ? _NS(value) : _N(value); }
+
+static inline auto _SignN(double value, bool sign, int n = 1) -> QString
+    { return sign ? _NS(value, n) : _N(value, n); }
 
 }
 

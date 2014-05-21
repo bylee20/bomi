@@ -1,7 +1,6 @@
 #include "snapshotdialog.hpp"
 #include "ui_snapshotdialog.h"
-#include "global.hpp"
-#include "info.hpp"
+#include "player/info.hpp"
 #include "subtitle/subtitlerendereritem.hpp"
 #include "video/videorendereritem.hpp"
 

@@ -1,11 +1,11 @@
 ﻿#include "openglcompat.hpp"
-#include "app.hpp"
+#include "openglframebufferobject.hpp"
+#include "misc/log.hpp"
+#include "player/app.hpp"
 #include <cmath>
-#include "log.hpp"
 #ifdef Q_OS_LINUX
 #include <GL/glx.h>
 #endif
-#include "openglframebufferobject.hpp"
 
 DECLARE_LOG_CONTEXT(OpenGL)
 

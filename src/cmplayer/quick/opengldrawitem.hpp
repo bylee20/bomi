@@ -2,7 +2,6 @@
 #define OPENGLDRAWITEM_HPP
 
 #include "geometryitem.hpp"
-#include "opengl/openglmisc.hpp"
 
 class OpenGLDrawItem : public GeometryItem {
     Q_OBJECT

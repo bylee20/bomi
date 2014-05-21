@@ -1,5 +1,6 @@
-#(+|-)(*)name([[key]])([=value=])([-desc-])([:data:])
+#(+|-)(*)name([[key]])([=value=])([-desc-])([:data:])([~Flags~])
 #!header contents
+#$footer contents
 
 +TextThemeStyle
 -Normal[-Normal-]
@@ -214,3 +215,16 @@
 -Reset[[reset]][-Reset-][:0:]
 -Increase[[increase]][-Increase %1-][:1:]
 -Decrease[[decrease]][-Decrease %1-][:-1:]
+
++VideoEffect[~VideoEffects~]
+-None[=0=]
+-FlipV[=(1 << 0)=]
+-FlipH[=(1 << 1)=]
+-Gray[=(1 << 2)=]
+-Invert[=(1 << 3)=]
+-Blur[=(1 << 4)=]
+-Sharpen[=(1 << 5)=]
+-Disable[=(1 << 8)=]
+$static constexpr VideoEffects KernelEffects = VideoEffect::Blur | VideoEffect::Sharpen;
+$static constexpr VideoEffects ColorEffects  = VideoEffect::Gray | VideoEffect::Invert;
+$static constexpr VideoEffects ShaderEffects = KernelEffects | ColorEffects;

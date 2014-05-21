@@ -2,24 +2,19 @@
 #define DEINTMODE_HPP
 
 #include "enums.hpp"
+#define DEINTMODE_IS_FLAG 0
 
 enum class DeintMode : int {
     None = (int)0,
     Auto = (int)1
 };
 
+Q_DECLARE_METATYPE(DeintMode)
+
 inline auto operator == (DeintMode e, int i) -> bool { return (int)e == i; }
 inline auto operator != (DeintMode e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, DeintMode e) -> bool { return (int)e == i; }
 inline auto operator != (int i, DeintMode e) -> bool { return (int)e != i; }
-inline auto operator & (DeintMode e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, DeintMode e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, DeintMode e) -> int& { return i &= (int)e; }
-inline auto operator ~ (DeintMode e) -> int { return ~(int)e; }
-inline auto operator | (DeintMode e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, DeintMode e) -> int { return (int)e | i; }
-constexpr inline auto operator | (DeintMode e1, DeintMode e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, DeintMode e) -> int& { return i |= (int)e; }
 inline auto operator > (DeintMode e, int i) -> bool { return (int)e > i; }
 inline auto operator < (DeintMode e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (DeintMode e, int i) -> bool { return (int)e >= i; }
@@ -28,8 +23,20 @@ inline auto operator > (int i, DeintMode e) -> bool { return i > (int)e; }
 inline auto operator < (int i, DeintMode e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, DeintMode e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, DeintMode e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(DeintMode)
+#if DEINTMODE_IS_FLAG
+Q_DECLARE_FLAGS(, DeintMode)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (DeintMode e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, DeintMode e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, DeintMode e) -> int& { return i &= (int)e; }
+inline auto operator ~ (DeintMode e) -> int { return ~(int)e; }
+inline auto operator | (DeintMode e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, DeintMode e) -> int { return (int)e | i; }
+constexpr inline auto operator | (DeintMode e1, DeintMode e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, DeintMode e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<DeintMode> {

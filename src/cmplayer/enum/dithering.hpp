@@ -2,6 +2,7 @@
 #define DITHERING_HPP
 
 #include "enums.hpp"
+#define DITHERING_IS_FLAG 0
 
 enum class Dithering : int {
     None = (int)0,
@@ -9,18 +10,12 @@ enum class Dithering : int {
     Ordered = (int)2
 };
 
+Q_DECLARE_METATYPE(Dithering)
+
 inline auto operator == (Dithering e, int i) -> bool { return (int)e == i; }
 inline auto operator != (Dithering e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, Dithering e) -> bool { return (int)e == i; }
 inline auto operator != (int i, Dithering e) -> bool { return (int)e != i; }
-inline auto operator & (Dithering e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, Dithering e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, Dithering e) -> int& { return i &= (int)e; }
-inline auto operator ~ (Dithering e) -> int { return ~(int)e; }
-inline auto operator | (Dithering e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, Dithering e) -> int { return (int)e | i; }
-constexpr inline auto operator | (Dithering e1, Dithering e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, Dithering e) -> int& { return i |= (int)e; }
 inline auto operator > (Dithering e, int i) -> bool { return (int)e > i; }
 inline auto operator < (Dithering e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (Dithering e, int i) -> bool { return (int)e >= i; }
@@ -29,8 +24,20 @@ inline auto operator > (int i, Dithering e) -> bool { return i > (int)e; }
 inline auto operator < (int i, Dithering e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, Dithering e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, Dithering e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(Dithering)
+#if DITHERING_IS_FLAG
+Q_DECLARE_FLAGS(, Dithering)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (Dithering e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, Dithering e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, Dithering e) -> int& { return i &= (int)e; }
+inline auto operator ~ (Dithering e) -> int { return ~(int)e; }
+inline auto operator | (Dithering e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, Dithering e) -> int { return (int)e | i; }
+constexpr inline auto operator | (Dithering e1, Dithering e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, Dithering e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<Dithering> {

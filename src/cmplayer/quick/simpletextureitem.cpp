@@ -1,4 +1,5 @@
 #include "simpletextureitem.hpp"
+#include "opengl/opengltexture2d.hpp"
 
 struct SimpleTextureData : public SimpleTextureItem::ShaderData {
     const OpenGLTexture2D *texture = nullptr;
@@ -46,7 +47,12 @@ private:
 SimpleTextureItem::SimpleTextureItem(QQuickItem *parent)
     : ShaderRenderItem<OGL::TextureVertex>(parent)
 {
+    m_texture = new OpenGLTexture2D;
+}
 
+SimpleTextureItem::~SimpleTextureItem()
+{
+    delete m_texture;
 }
 
 auto SimpleTextureItem::createShader() const -> SimpleTextureItem::ShaderIface*
@@ -57,12 +63,18 @@ auto SimpleTextureItem::createShader() const -> SimpleTextureItem::ShaderIface*
 auto SimpleTextureItem::createData() const -> SimpleTextureItem::ShaderData*
 {
     auto data = new SimpleTextureData;
-    data->texture = &m_texture;
+    data->texture = m_texture;
     return data;
 }
 
 auto SimpleTextureItem::updateData(ShaderData *data) -> void
 {
-    Q_ASSERT(static_cast<SimpleTextureData*>(data)->texture == &m_texture);
-    updateTexture(&m_texture);
+    Q_ASSERT(static_cast<SimpleTextureData*>(data)->texture == m_texture);
+    updateTexture(m_texture);
+}
+
+auto SimpleTextureItem::setTexture(const OpenGLTexture2D &texture) -> void
+{
+    *m_texture = texture;
+    reserve(UpdateMaterial);
 }

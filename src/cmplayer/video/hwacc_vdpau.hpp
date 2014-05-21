@@ -7,11 +7,11 @@
 
 #include "hwacc.hpp"
 #include "hwacc_helper.hpp"
-#include "tmp.hpp"
+#include "misc/tmp.hpp"
+#include "misc/log.hpp"
 extern "C" {
 #include <libavcodec/vdpau.h>
 }
-#include "log.hpp"
 
 auto initialize_vdpau_interop(QOpenGLContext *ctx) -> void;
 auto finalize_vdpau_interop(QOpenGLContext *ctx) -> void;

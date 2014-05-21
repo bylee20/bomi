@@ -2,6 +2,7 @@
 #define COLORRANGE_HPP
 
 #include "enums.hpp"
+#define COLORRANGE_IS_FLAG 0
 
 enum class ColorRange : int {
     Auto = (int)0,
@@ -11,18 +12,12 @@ enum class ColorRange : int {
     Extended = (int)4
 };
 
+Q_DECLARE_METATYPE(ColorRange)
+
 inline auto operator == (ColorRange e, int i) -> bool { return (int)e == i; }
 inline auto operator != (ColorRange e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, ColorRange e) -> bool { return (int)e == i; }
 inline auto operator != (int i, ColorRange e) -> bool { return (int)e != i; }
-inline auto operator & (ColorRange e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, ColorRange e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, ColorRange e) -> int& { return i &= (int)e; }
-inline auto operator ~ (ColorRange e) -> int { return ~(int)e; }
-inline auto operator | (ColorRange e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, ColorRange e) -> int { return (int)e | i; }
-constexpr inline auto operator | (ColorRange e1, ColorRange e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, ColorRange e) -> int& { return i |= (int)e; }
 inline auto operator > (ColorRange e, int i) -> bool { return (int)e > i; }
 inline auto operator < (ColorRange e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (ColorRange e, int i) -> bool { return (int)e >= i; }
@@ -31,8 +26,20 @@ inline auto operator > (int i, ColorRange e) -> bool { return i > (int)e; }
 inline auto operator < (int i, ColorRange e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, ColorRange e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, ColorRange e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(ColorRange)
+#if COLORRANGE_IS_FLAG
+Q_DECLARE_FLAGS(, ColorRange)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (ColorRange e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, ColorRange e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, ColorRange e) -> int& { return i &= (int)e; }
+inline auto operator ~ (ColorRange e) -> int { return ~(int)e; }
+inline auto operator | (ColorRange e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, ColorRange e) -> int { return (int)e | i; }
+constexpr inline auto operator | (ColorRange e1, ColorRange e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, ColorRange e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<ColorRange> {

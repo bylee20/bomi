@@ -2,6 +2,7 @@
 #define INTERPOLATORTYPE_HPP
 
 #include "enums.hpp"
+#define INTERPOLATORTYPE_IS_FLAG 0
 
 enum class InterpolatorType : int {
     Bilinear = (int)0,
@@ -17,18 +18,12 @@ enum class InterpolatorType : int {
     Lanczos4 = (int)10
 };
 
+Q_DECLARE_METATYPE(InterpolatorType)
+
 inline auto operator == (InterpolatorType e, int i) -> bool { return (int)e == i; }
 inline auto operator != (InterpolatorType e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, InterpolatorType e) -> bool { return (int)e == i; }
 inline auto operator != (int i, InterpolatorType e) -> bool { return (int)e != i; }
-inline auto operator & (InterpolatorType e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, InterpolatorType e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, InterpolatorType e) -> int& { return i &= (int)e; }
-inline auto operator ~ (InterpolatorType e) -> int { return ~(int)e; }
-inline auto operator | (InterpolatorType e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, InterpolatorType e) -> int { return (int)e | i; }
-constexpr inline auto operator | (InterpolatorType e1, InterpolatorType e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, InterpolatorType e) -> int& { return i |= (int)e; }
 inline auto operator > (InterpolatorType e, int i) -> bool { return (int)e > i; }
 inline auto operator < (InterpolatorType e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (InterpolatorType e, int i) -> bool { return (int)e >= i; }
@@ -37,8 +32,20 @@ inline auto operator > (int i, InterpolatorType e) -> bool { return i > (int)e; 
 inline auto operator < (int i, InterpolatorType e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, InterpolatorType e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, InterpolatorType e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(InterpolatorType)
+#if INTERPOLATORTYPE_IS_FLAG
+Q_DECLARE_FLAGS(, InterpolatorType)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (InterpolatorType e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, InterpolatorType e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, InterpolatorType e) -> int& { return i &= (int)e; }
+inline auto operator ~ (InterpolatorType e) -> int { return ~(int)e; }
+inline auto operator | (InterpolatorType e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, InterpolatorType e) -> int { return (int)e | i; }
+constexpr inline auto operator | (InterpolatorType e1, InterpolatorType e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, InterpolatorType e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<InterpolatorType> {

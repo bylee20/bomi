@@ -1,11 +1,10 @@
 #include "videofilter.hpp"
-#include "mpv_helper.hpp"
-#include "log.hpp"
 #include "hwacc.hpp"
-#include "deintinfo.hpp"
 #include "softwaredeinterlacer.hpp"
+#include "deintoption.hpp"
+#include "misc/log.hpp"
+#include "player/mpv_helper.hpp"
 #include "opengl/openglmisc.hpp"
-#include "videoframeshader.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 extern "C" {
 #include <video/filter/vf.h>

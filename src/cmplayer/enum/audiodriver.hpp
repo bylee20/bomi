@@ -2,6 +2,7 @@
 #define AUDIODRIVER_HPP
 
 #include "enums.hpp"
+#define AUDIODRIVER_IS_FLAG 0
 
 enum class AudioDriver : int {
     Auto = (int)0,
@@ -14,18 +15,12 @@ enum class AudioDriver : int {
     OpenAL = (int)7
 };
 
+Q_DECLARE_METATYPE(AudioDriver)
+
 inline auto operator == (AudioDriver e, int i) -> bool { return (int)e == i; }
 inline auto operator != (AudioDriver e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, AudioDriver e) -> bool { return (int)e == i; }
 inline auto operator != (int i, AudioDriver e) -> bool { return (int)e != i; }
-inline auto operator & (AudioDriver e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, AudioDriver e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, AudioDriver e) -> int& { return i &= (int)e; }
-inline auto operator ~ (AudioDriver e) -> int { return ~(int)e; }
-inline auto operator | (AudioDriver e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, AudioDriver e) -> int { return (int)e | i; }
-constexpr inline auto operator | (AudioDriver e1, AudioDriver e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, AudioDriver e) -> int& { return i |= (int)e; }
 inline auto operator > (AudioDriver e, int i) -> bool { return (int)e > i; }
 inline auto operator < (AudioDriver e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (AudioDriver e, int i) -> bool { return (int)e >= i; }
@@ -34,8 +29,20 @@ inline auto operator > (int i, AudioDriver e) -> bool { return i > (int)e; }
 inline auto operator < (int i, AudioDriver e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, AudioDriver e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, AudioDriver e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(AudioDriver)
+#if AUDIODRIVER_IS_FLAG
+Q_DECLARE_FLAGS(, AudioDriver)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (AudioDriver e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, AudioDriver e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, AudioDriver e) -> int& { return i &= (int)e; }
+inline auto operator ~ (AudioDriver e) -> int { return ~(int)e; }
+inline auto operator | (AudioDriver e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, AudioDriver e) -> int { return (int)e | i; }
+constexpr inline auto operator | (AudioDriver e1, AudioDriver e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, AudioDriver e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<AudioDriver> {

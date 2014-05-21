@@ -1,14 +1,14 @@
 #include "audiocontroller.hpp"
 #include "audiomixer.hpp"
-#include "mpv_helper.hpp"
+#include "player/mpv_helper.hpp"
 #include "enum/channellayout.hpp"
+#include "misc/log.hpp"
 extern "C" {
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
 #include <audio/filter/af.h>
 #include <audio/fmt-conversion.h>
 }
-#include "log.hpp"
 
 DECLARE_LOG_CONTEXT(Audio)
 

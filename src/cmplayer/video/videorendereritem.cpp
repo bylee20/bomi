@@ -1,12 +1,13 @@
 #include "videorendereritem.hpp"
 #include "mposditem.hpp"
 #include "mposdbitmap.hpp"
-#include "global.hpp"
 #include "letterboxitem.hpp"
 #include "videoframebufferobject.hpp"
 #include "videocolor.hpp"
+#include "kernel3x3.hpp"
 #include "misc/dataevent.hpp"
 #include "opengl/opengltexturebinder.hpp"
+#include "enum/videoeffect.hpp"
 #include <deque>
 
 enum EventType {NewFrame = QEvent::User + 1, NewFrameWithOsd };
@@ -21,11 +22,11 @@ struct VideoRendererItem::Data {
     QPoint offset = {0, 0};
     double crop = -1.0, aspect = -1.0, dar = 0.0;
     int alignment = Qt::AlignCenter;
+    VideoEffects effects = 0;
     LetterboxItem *letterbox = nullptr;
     MpOsdItem *mposd = nullptr;
     GeometryItem *overlay = nullptr;
     Kernel3x3 blur, sharpen, kernel;
-    Effects effects = 0;
     OpenGLTexture2D black;
     QSize displaySize{1, 1};
     static auto isSameRatio(double r1, double r2) -> bool
@@ -52,9 +53,9 @@ struct VideoRendererItem::Data {
     auto makeKernel() const -> Kernel3x3
     {
         Kernel3x3 kernel;
-        if (effects & Blur)
+        if (effects & VideoEffect::Blur)
             kernel += blur;
-        if (effects & Sharpen)
+        if (effects & VideoEffect::Sharpen)
             kernel += sharpen;
         kernel.normalize();
         return kernel;
@@ -248,14 +249,14 @@ auto VideoRendererItem::offset() const -> QPoint
     return d->offset;
 }
 
-auto VideoRendererItem::effects() const -> VideoRendererItem::Effects
+auto VideoRendererItem::effects() const -> VideoEffects
 {
     return d->effects;
 }
 
-auto VideoRendererItem::setEffects(Effects effects) -> void
+auto VideoRendererItem::setEffects(VideoEffects effects) -> void
 {
-    if ((effects^d->effects) & (FlipHorizontally | FlipVertically))
+    if ((effects^d->effects) & (VideoEffect::FlipH | VideoEffect::FlipV))
         reserve(UpdateGeometry);
     if (_Change(d->effects, effects)) {
         d->fillKernel();
@@ -351,10 +352,10 @@ auto VideoRendererItem::updateVertex(Vertex *vertex) -> void
         right = texture.width();
         bottom = texture.height();
     }
-    if (!(d->effects & Disable)) {
-        if (d->effects & FlipVertically)
+    if (!(d->effects & VideoEffect::Disable)) {
+        if (d->effects & VideoEffect::FlipV)
             std::swap(top, bottom);
-        if (d->effects & FlipHorizontally)
+        if (d->effects & VideoEffect::FlipH)
             std::swap(left, right);
     }
     Vertex::fillAsTriangleStrip(vertex, d->vtx.topLeft(), d->vtx.bottomRight(),

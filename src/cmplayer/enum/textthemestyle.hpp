@@ -2,6 +2,7 @@
 #define TEXTTHEMESTYLE_HPP
 
 #include "enums.hpp"
+#define TEXTTHEMESTYLE_IS_FLAG 0
 
 enum class TextThemeStyle : int {
     Normal = (int)0,
@@ -10,18 +11,12 @@ enum class TextThemeStyle : int {
     Sunken = (int)3
 };
 
+Q_DECLARE_METATYPE(TextThemeStyle)
+
 inline auto operator == (TextThemeStyle e, int i) -> bool { return (int)e == i; }
 inline auto operator != (TextThemeStyle e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, TextThemeStyle e) -> bool { return (int)e == i; }
 inline auto operator != (int i, TextThemeStyle e) -> bool { return (int)e != i; }
-inline auto operator & (TextThemeStyle e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, TextThemeStyle e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, TextThemeStyle e) -> int& { return i &= (int)e; }
-inline auto operator ~ (TextThemeStyle e) -> int { return ~(int)e; }
-inline auto operator | (TextThemeStyle e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, TextThemeStyle e) -> int { return (int)e | i; }
-constexpr inline auto operator | (TextThemeStyle e1, TextThemeStyle e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, TextThemeStyle e) -> int& { return i |= (int)e; }
 inline auto operator > (TextThemeStyle e, int i) -> bool { return (int)e > i; }
 inline auto operator < (TextThemeStyle e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (TextThemeStyle e, int i) -> bool { return (int)e >= i; }
@@ -30,8 +25,20 @@ inline auto operator > (int i, TextThemeStyle e) -> bool { return i > (int)e; }
 inline auto operator < (int i, TextThemeStyle e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, TextThemeStyle e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, TextThemeStyle e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(TextThemeStyle)
+#if TEXTTHEMESTYLE_IS_FLAG
+Q_DECLARE_FLAGS(, TextThemeStyle)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (TextThemeStyle e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, TextThemeStyle e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, TextThemeStyle e) -> int& { return i &= (int)e; }
+inline auto operator ~ (TextThemeStyle e) -> int { return ~(int)e; }
+inline auto operator | (TextThemeStyle e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, TextThemeStyle e) -> int { return (int)e | i; }
+constexpr inline auto operator | (TextThemeStyle e1, TextThemeStyle e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, TextThemeStyle e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<TextThemeStyle> {

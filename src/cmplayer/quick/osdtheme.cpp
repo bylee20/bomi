@@ -1,5 +1,5 @@
 #include "osdtheme.hpp"
-#include "record.hpp"
+#include "misc/record.hpp"
 
 #define DO(func) {\
     func(font); \

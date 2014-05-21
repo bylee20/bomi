@@ -1,11 +1,11 @@
 #include "highqualitytextureitem.hpp"
-#include "global.hpp"
 #include "opengl/openglcompat.hpp"
 #include "opengl/interpolator.hpp"
 #include "opengl/opengltexture1d.hpp"
+#include "opengl/opengltexture2d.hpp"
 #include "opengl/opengltexturebinder.hpp"
-#include "enum/interpolatortype.hpp"
 #include "enum/dithering.hpp"
+#include "enum/interpolatortype.hpp"
 extern "C" {
 #include <video/out/dither.h>
 }
@@ -98,10 +98,9 @@ struct HighQualityTextureShader : public HighQualityTextureItem::ShaderIface {
     Interpolator::Category m_category = Interpolator::None;
     bool m_dithering = false, m_rectangle = false;
 
-    int loc_tex = -1, loc_vMatrix = -1, loc_dxy = -1;
-    int loc_lut_int[2] = {-1, -1};
-    int loc_tex_size = -1;
-    int loc_dithering = -1, loc_dithering_quantization = -1, loc_dithering_center = -1, loc_dithering_size = -1;
+    int loc_tex = -1, loc_vMatrix = -1, loc_dxy = -1, loc_lut_int[2] = {-1, -1};
+    int loc_tex_size = -1, loc_dithering = -1, loc_dithering_quantization = -1;
+    int loc_dithering_center = -1, loc_dithering_size = -1;
 
     void resolve(QOpenGLShaderProgram *prog) final {
         loc_tex = prog->uniformLocation("tex");
@@ -115,7 +114,8 @@ struct HighQualityTextureShader : public HighQualityTextureItem::ShaderIface {
         }
         if (m_dithering) {
             loc_dithering = prog->uniformLocation("dithering");
-            loc_dithering_quantization = prog->uniformLocation("dithering_quantization");
+            loc_dithering_quantization
+                    = prog->uniformLocation("dithering_quantization");
             loc_dithering_center = prog->uniformLocation("dithering_center");
             loc_dithering_size = prog->uniformLocation("dithering_size");
             Q_ASSERT(loc_dithering != -1);
@@ -149,8 +149,9 @@ struct HighQualityTextureShader : public HighQualityTextureItem::ShaderIface {
             auto &dithering = *d->lutDither;
             Q_ASSERT(dithering.width() == dithering.height());
             const int size = dithering.width();
-            prog->setUniformValue(loc_dithering_quantization, float(1 << d->depth) - 1.f);
-            prog->setUniformValue(loc_dithering_center, 0.5f / size*size);
+            const auto q = static_cast<float>(1 << d->depth) - 1.f;
+            prog->setUniformValue(loc_dithering_quantization, q);
+            prog->setUniformValue(loc_dithering_center, 0.5f / size * size);
             prog->setUniformValue(loc_dithering_size, QSize(size, size));
             bind(d->lutDither, loc_dithering);
         }
@@ -161,7 +162,7 @@ struct HighQualityTextureShader : public HighQualityTextureItem::ShaderIface {
 static QSGMaterialType types[Interpolator::CategoryMax][2][2];
 
 struct HighQualityTextureItem::Data {
-    const Interpolator *interpolator = Interpolator::get(InterpolatorType::Bilinear);
+    const Interpolator *interpolator = nullptr;
     OpenGLTexture1D lutInt[2];
     OpenGLTexture2D lutDither;
     Dithering dithering = Dithering::None;
@@ -172,7 +173,7 @@ HighQualityTextureItem::HighQualityTextureItem(QQuickItem *parent)
     : SimpleTextureItem(parent)
     , d(new Data)
 {
-
+    d->interpolator = Interpolator::get(InterpolatorType::Bilinear);
 }
 
 HighQualityTextureItem::~HighQualityTextureItem()
@@ -268,9 +269,9 @@ static void makeDitheringTexture(OpenGLTexture2D &texture, Dithering type) {
             mp_make_fruit_dither_matrix(fruit.data(), sizeb);
         }
         const bool rg = OpenGLCompat::hasExtension(OpenGLCompat::TextureRG);
-        info.texture = rg ? OGL::R16_UNorm : OGL::Luminance16_UNorm;
+        info.texture         = rg ? OGL::R16_UNorm : OGL::Luminance16_UNorm;
         info.transfer.format = rg ? OGL::Red : OGL::Luminance;
-        info.transfer.type = OGL::Float32;
+        info.transfer.type   = OGL::Float32;
         data = fruit.data();
     } else {
         size = 8;

@@ -1,5 +1,5 @@
 #include "richtexthelper.hpp"
-#include "log.hpp"
+#include "misc/log.hpp"
 
 DECLARE_LOG_CONTEXT(RichText)
 

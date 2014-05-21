@@ -2,6 +2,7 @@
 #define CHANNELLAYOUT_HPP
 
 #include "enums.hpp"
+#define CHANNELLAYOUT_IS_FLAG 0
 #include "speakerid.hpp"
 
 enum class ChannelLayout : int {
@@ -33,18 +34,12 @@ enum class ChannelLayout : int {
     _7_1_Side = (int)((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::FrontCenter|(int)SpeakerId::FrontLeftCenter|(int)SpeakerId::FrontRightCenter|(int)SpeakerId::SideLeft|(int)SpeakerId::SideRight|(int)SpeakerId::LowFrequency)
 };
 
+Q_DECLARE_METATYPE(ChannelLayout)
+
 inline auto operator == (ChannelLayout e, int i) -> bool { return (int)e == i; }
 inline auto operator != (ChannelLayout e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, ChannelLayout e) -> bool { return (int)e == i; }
 inline auto operator != (int i, ChannelLayout e) -> bool { return (int)e != i; }
-inline auto operator & (ChannelLayout e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, ChannelLayout e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, ChannelLayout e) -> int& { return i &= (int)e; }
-inline auto operator ~ (ChannelLayout e) -> int { return ~(int)e; }
-inline auto operator | (ChannelLayout e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, ChannelLayout e) -> int { return (int)e | i; }
-constexpr inline auto operator | (ChannelLayout e1, ChannelLayout e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, ChannelLayout e) -> int& { return i |= (int)e; }
 inline auto operator > (ChannelLayout e, int i) -> bool { return (int)e > i; }
 inline auto operator < (ChannelLayout e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (ChannelLayout e, int i) -> bool { return (int)e >= i; }
@@ -53,8 +48,20 @@ inline auto operator > (int i, ChannelLayout e) -> bool { return i > (int)e; }
 inline auto operator < (int i, ChannelLayout e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, ChannelLayout e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, ChannelLayout e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(ChannelLayout)
+#if CHANNELLAYOUT_IS_FLAG
+Q_DECLARE_FLAGS(, ChannelLayout)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (ChannelLayout e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, ChannelLayout e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, ChannelLayout e) -> int& { return i &= (int)e; }
+inline auto operator ~ (ChannelLayout e) -> int { return ~(int)e; }
+inline auto operator | (ChannelLayout e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, ChannelLayout e) -> int { return (int)e | i; }
+constexpr inline auto operator | (ChannelLayout e1, ChannelLayout e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, ChannelLayout e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<ChannelLayout> {

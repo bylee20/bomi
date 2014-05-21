@@ -1,8 +1,7 @@
 #include "subtitleview.hpp"
 #include "subtitlemodel.hpp"
-#include "playengine.hpp"
 #include "subtitle.hpp"
-#include "app.hpp"
+#include "player/app.hpp"
 
 class SubtitleView::CompView : public QWidget {
 public:

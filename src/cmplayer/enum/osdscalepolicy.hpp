@@ -2,6 +2,7 @@
 #define OSDSCALEPOLICY_HPP
 
 #include "enums.hpp"
+#define OSDSCALEPOLICY_IS_FLAG 0
 
 enum class OsdScalePolicy : int {
     Width = (int)0,
@@ -9,18 +10,12 @@ enum class OsdScalePolicy : int {
     Diagonal = (int)2
 };
 
+Q_DECLARE_METATYPE(OsdScalePolicy)
+
 inline auto operator == (OsdScalePolicy e, int i) -> bool { return (int)e == i; }
 inline auto operator != (OsdScalePolicy e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, OsdScalePolicy e) -> bool { return (int)e == i; }
 inline auto operator != (int i, OsdScalePolicy e) -> bool { return (int)e != i; }
-inline auto operator & (OsdScalePolicy e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, OsdScalePolicy e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, OsdScalePolicy e) -> int& { return i &= (int)e; }
-inline auto operator ~ (OsdScalePolicy e) -> int { return ~(int)e; }
-inline auto operator | (OsdScalePolicy e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, OsdScalePolicy e) -> int { return (int)e | i; }
-constexpr inline auto operator | (OsdScalePolicy e1, OsdScalePolicy e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, OsdScalePolicy e) -> int& { return i |= (int)e; }
 inline auto operator > (OsdScalePolicy e, int i) -> bool { return (int)e > i; }
 inline auto operator < (OsdScalePolicy e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (OsdScalePolicy e, int i) -> bool { return (int)e >= i; }
@@ -29,8 +24,20 @@ inline auto operator > (int i, OsdScalePolicy e) -> bool { return i > (int)e; }
 inline auto operator < (int i, OsdScalePolicy e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, OsdScalePolicy e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, OsdScalePolicy e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(OsdScalePolicy)
+#if OSDSCALEPOLICY_IS_FLAG
+Q_DECLARE_FLAGS(, OsdScalePolicy)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (OsdScalePolicy e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, OsdScalePolicy e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, OsdScalePolicy e) -> int& { return i &= (int)e; }
+inline auto operator ~ (OsdScalePolicy e) -> int { return ~(int)e; }
+inline auto operator | (OsdScalePolicy e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, OsdScalePolicy e) -> int { return (int)e | i; }
+constexpr inline auto operator | (OsdScalePolicy e1, OsdScalePolicy e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, OsdScalePolicy e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<OsdScalePolicy> {

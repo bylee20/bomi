@@ -3,7 +3,7 @@
 #ifdef Q_OS_MAC
 #include "hwacc_helper.hpp"
 #include "openglcompat.hpp"
-#include "log.hpp"
+#include "misc/log.hpp"
 #include <OpenGL/CGLIOSurface.h>
 #include <OpenGL/OpenGL.h>
 #include <CoreVideo/CVPixelBuffer.h>

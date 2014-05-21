@@ -1,8 +1,8 @@
 #include "openmediafolderdialog.hpp"
 #include "ui_openmediafolderdialog.h"
-#include "playlist.hpp"
-#include "appstate.hpp"
-#include "info.hpp"
+#include "player/playlist.hpp"
+#include "player/appstate.hpp"
+#include "player/info.hpp"
 
 enum ListRole {
     Type = Qt::UserRole + 1, Path

@@ -8,18 +8,19 @@
 #undef None
 #endif
 
-template<typename T> class EnumInfo { static constexpr int size() { return 0; } double dummy; };
+template<class T>
+class EnumInfo { static constexpr int size() { return 0; } double dummy; };
 
-typedef QString (*EnumVariantToSqlFunc)(const QVariant &var);
-typedef QVariant (*EnumVariantFromSqlFunc)(const QVariant &var, const QVariant &def);
+using EnumVariantToSqlFunc   = QString (*)(const QVariant &var);
+using EnumVariantFromSqlFunc = QVariant(*)(const QVariant &var, const QVariant &def);
 
-template<typename T>
+template<class T>
 QString _EnumVariantToSql(const QVariant &var) {
     Q_ASSERT(var.userType() == qMetaTypeId<T>());
     return QLatin1Char('\'') % EnumInfo<T>::name(var.value<T>()) % QLatin1Char('\'');
 }
 
-template<typename T>
+template<class T>
 QVariant _EnumVariantFromSql(const QVariant &name, const QVariant &def) {
     const auto enum_ = EnumInfo<T>::from(name.toString(), def.value<T>());
     return QVariant::fromValue<T>(enum_);

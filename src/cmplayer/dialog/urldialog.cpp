@@ -1,8 +1,8 @@
 #include "urldialog.hpp"
 #include "bbox.hpp"
-#include "playlist.hpp"
-#include "appstate.hpp"
-#include "info.hpp"
+#include "player/playlist.hpp"
+#include "player/appstate.hpp"
+#include "player/info.hpp"
 #include "widget/encodingcombobox.hpp"
 
 struct UrlDialog::Data {

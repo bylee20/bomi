@@ -1,7 +1,8 @@
 #include "subtitlerendereritem.hpp"
-#include "misc/dataevent.hpp"
 #include "subtitlerenderingthread.hpp"
+#include "misc/dataevent.hpp"
 #include "opengl/openglcompat.hpp"
+#include "opengl/opengltexture2d.hpp"
 #include "opengl/opengltexturebinder.hpp"
 
 struct SubtitleShaderData : public SubtitleRendererItem::ShaderData {

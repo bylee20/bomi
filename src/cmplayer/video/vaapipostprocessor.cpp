@@ -1,5 +1,4 @@
 #include "vaapipostprocessor.hpp"
-#include "deintinfo.hpp"
 
 #ifdef USE_VAVPP
 

@@ -2,11 +2,12 @@
 #define VIDEORENDERERITEM_HPP
 
 #include "stdafx.hpp"
-#include "skin.hpp"
 #include "quick/highqualitytextureitem.hpp"
 
 class VideoColor;                       class Kernel3x3;
 enum class DeintMethod;                 enum class ColorRange;
+enum class VideoEffect;
+using VideoEffects = QFlags<VideoEffect>;
 
 template<class T> class VideoImageCache;
 class VideoFramebufferObject;           class MpOsdBitmap;
@@ -16,20 +17,6 @@ class VideoRendererItem : public HighQualityTextureItem {
     using Cache = VideoImageCache<VideoFramebufferObject>;
     using OsdCache = VideoImageCache<MpOsdBitmap>;
 public:
-    enum Effect {
-        NoEffect         = 0,
-        FlipVertically   = 1 << 0,
-        FlipHorizontally = 1 << 1,
-        Grayscale        = 1 << 2,
-        InvertColor      = 1 << 3,
-        Blur             = 1 << 4,
-        Sharpen          = 1 << 5,
-        Disable          = 1 << 8
-    };
-    Q_DECLARE_FLAGS(Effects, Effect)
-    static const int KernelEffects = Blur | Sharpen;
-    static const int ColorEffects = Grayscale | InvertColor;
-    static const int ShaderEffects = KernelEffects | ColorEffects;
     VideoRendererItem(QQuickItem *parent = 0);
     ~VideoRendererItem();
     auto screenRect() const -> QRectF;
@@ -37,7 +24,7 @@ public:
     auto aspectRatio() const -> double;
     auto cropRatio() const -> double;
     auto alignment() const -> int;
-    auto effects() const -> Effects;
+    auto effects() const -> VideoEffects;
     auto sizeHint() const -> QSize;
     auto setAspectRatio(double ratio) -> void;
     auto setOverlay(GeometryItem *overlay) -> void;
@@ -54,7 +41,7 @@ public:
     auto updateVertexOnGeometryChanged() const -> bool override { return true; }
     auto isOpaque() const -> bool override { return true; }
     auto setAlignment(int alignment) -> void;
-    auto setEffects(Effects effect) -> void;
+    auto setEffects(VideoEffects effects) -> void;
     auto setOffset(const QPoint &offset) -> void;
     auto setCropRatio(double ratio) -> void;
     auto kernel() const -> const Kernel3x3&;
@@ -62,7 +49,7 @@ public:
 signals:
     void transferred();
     void frameImageObtained(QImage image) const;
-    void effectsChanged(Effects effects);
+    void effectsChanged(VideoEffects effects);
     void offsetChanged(const QPoint &pos);
     void screenRectChanged(const QRectF &rect);
     void frameRectChanged(const QRectF &rect);

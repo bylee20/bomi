@@ -2,6 +2,7 @@
 #define SEEKINGSTEP_HPP
 
 #include "enums.hpp"
+#define SEEKINGSTEP_IS_FLAG 0
 
 enum class SeekingStep : int {
     Step1 = (int)0,
@@ -9,18 +10,12 @@ enum class SeekingStep : int {
     Step3 = (int)2
 };
 
+Q_DECLARE_METATYPE(SeekingStep)
+
 inline auto operator == (SeekingStep e, int i) -> bool { return (int)e == i; }
 inline auto operator != (SeekingStep e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, SeekingStep e) -> bool { return (int)e == i; }
 inline auto operator != (int i, SeekingStep e) -> bool { return (int)e != i; }
-inline auto operator & (SeekingStep e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, SeekingStep e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, SeekingStep e) -> int& { return i &= (int)e; }
-inline auto operator ~ (SeekingStep e) -> int { return ~(int)e; }
-inline auto operator | (SeekingStep e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, SeekingStep e) -> int { return (int)e | i; }
-constexpr inline auto operator | (SeekingStep e1, SeekingStep e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, SeekingStep e) -> int& { return i |= (int)e; }
 inline auto operator > (SeekingStep e, int i) -> bool { return (int)e > i; }
 inline auto operator < (SeekingStep e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (SeekingStep e, int i) -> bool { return (int)e >= i; }
@@ -29,8 +24,20 @@ inline auto operator > (int i, SeekingStep e) -> bool { return i > (int)e; }
 inline auto operator < (int i, SeekingStep e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, SeekingStep e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, SeekingStep e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(SeekingStep)
+#if SEEKINGSTEP_IS_FLAG
+Q_DECLARE_FLAGS(, SeekingStep)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (SeekingStep e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, SeekingStep e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, SeekingStep e) -> int& { return i &= (int)e; }
+inline auto operator ~ (SeekingStep e) -> int { return ~(int)e; }
+inline auto operator | (SeekingStep e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, SeekingStep e) -> int { return (int)e | i; }
+constexpr inline auto operator | (SeekingStep e1, SeekingStep e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, SeekingStep e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<SeekingStep> {

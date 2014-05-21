@@ -4,10 +4,7 @@
 #include "stdafx.hpp"
 #include "simpletextureitem.hpp"
 
-class TextureRendererShader;
-
-enum class InterpolatorType;
-enum class Dithering;
+enum class InterpolatorType;            enum class Dithering;
 
 class HighQualityTextureItem : public SimpleTextureItem {
     Q_OBJECT

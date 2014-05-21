@@ -1,7 +1,9 @@
 #include "videoframeshader.hpp"
 #include "videoframe.hpp"
 #include "hwacc.hpp"
-#include "log.hpp"
+#include "kernel3x3.hpp"
+#include "misc/log.hpp"
+#include "opengl/opengltexture2d.hpp"
 #include "opengl/opengltexturebinder.hpp"
 #include "enum/interpolatortype.hpp"
 #include <tuple>
@@ -104,7 +106,7 @@ auto VideoFrameShader::setChromaUpscaler(InterpolatorType type) -> void
 auto VideoFrameShader::updateColorMatrix() -> void
 {
     auto color = m_color;
-    if (m_effects & VideoRendererItem::Grayscale)
+    if (m_effects & VideoEffect::Gray)
         color.setSaturation(-100);
     auto range = m_range;
     const bool pc = m_params.colorlevels == MP_CSP_LEVELS_PC;
@@ -121,14 +123,14 @@ auto VideoFrameShader::updateColorMatrix() -> void
         break;
     }
     color.matrix(m_mul_mat, m_add_vec, m_cspOut, range);
-    if (m_effects & VideoRendererItem::InvertColor) {
+    if (m_effects & VideoEffect::Invert) {
         m_mul_mat *= -1;
         m_add_vec = QVector3D(1, 1, 1) - m_add_vec;
     }
     m_defaultColor = m_color.isZero();
 }
 
-auto VideoFrameShader::setEffects(int effects) -> void
+auto VideoFrameShader::setEffects(VideoEffects effects) -> void
 {
     if (m_effects == effects)
         return;

@@ -145,26 +145,8 @@ struct TransferInfo {
     TransferFormat format = OGL::BGRA;
     TransferType type = OGL::UInt32_8_8_8_8_Rev;
 };
+
 }
-
-
-struct OpenGLTextureTransferInfo {
-    OpenGLTextureTransferInfo() {}
-    OpenGLTextureTransferInfo(OGL::TextureFormat texture,
-                              OGL::TransferFormat transferFormat,
-                              OGL::TransferType transferType)
-        : texture(texture), transfer(transferFormat, transferType) { }
-    auto operator == (const OpenGLTextureTransferInfo &rhs) const -> bool
-        { return texture == rhs.texture && transfer == rhs.transfer; }
-    auto operator != (const OpenGLTextureTransferInfo &rhs) const -> bool
-        { return !operator == (rhs); }
-    OGL::TextureFormat texture = OGL::RGBA8_UNorm;
-    OGL::TransferInfo transfer;
-};
-
-
-
-
 
 #define ENUM_CASE(e) case e: return QByteArray::fromRawData(#e, sizeof(e)-1)
 static inline auto _ToLog(OGL::TransferType type) -> QByteArray {

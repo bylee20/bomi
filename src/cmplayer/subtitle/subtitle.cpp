@@ -1,6 +1,5 @@
 #include "subtitle.hpp"
 #include "subtitle_parser.hpp"
-#include "global.hpp"
 #include "misc/charsetdetector.hpp"
 
 auto SubComp::name() const -> QString

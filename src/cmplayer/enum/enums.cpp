@@ -26,6 +26,7 @@
 #include "horizontalalignment.hpp"
 #include "movetoward.hpp"
 #include "changevalue.hpp"
+#include "videoeffect.hpp"
 bool _IsEnumTypeId(int userType) {
     return userType == qMetaTypeId<TextThemeStyle>()
         || userType == qMetaTypeId<SpeakerId>()
@@ -54,6 +55,7 @@ bool _IsEnumTypeId(int userType) {
         || userType == qMetaTypeId<HorizontalAlignment>()
         || userType == qMetaTypeId<MoveToward>()
         || userType == qMetaTypeId<ChangeValue>()
+        || userType == qMetaTypeId<VideoEffect>()
         || false;
 }
 
@@ -139,6 +141,9 @@ bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVaria
     } else    if (varType == qMetaTypeId<ChangeValue>()) {
         toSql = _EnumVariantToSql<ChangeValue>;
         fromSql = _EnumVariantFromSql<ChangeValue>;
+    } else    if (varType == qMetaTypeId<VideoEffect>()) {
+        toSql = _EnumVariantToSql<VideoEffect>;
+        fromSql = _EnumVariantFromSql<VideoEffect>;
     } else
         return false;
     return true;

@@ -4,6 +4,8 @@
 #include "stdafx.hpp"
 #include "openglmisc.hpp"
 
+class OpenGLTextureTransferInfo;
+
 class OpenGLCompat {
     using TransferInfo = OpenGLTextureTransferInfo;
 public:

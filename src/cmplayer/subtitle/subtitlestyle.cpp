@@ -1,5 +1,5 @@
 #include "subtitlestyle.hpp"
-#include "record.hpp"
+#include "misc/record.hpp"
 
 auto SubtitleStyle::save(Record &r, const QString &group) const -> void
 {

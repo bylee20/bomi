@@ -2,6 +2,7 @@
 #define KEYMODIFIER_HPP
 
 #include "enums.hpp"
+#define KEYMODIFIER_IS_FLAG 0
 
 enum class KeyModifier : int {
     None = (int)Qt::NoModifier,
@@ -10,18 +11,12 @@ enum class KeyModifier : int {
     Alt = (int)Qt::AltModifier
 };
 
+Q_DECLARE_METATYPE(KeyModifier)
+
 inline auto operator == (KeyModifier e, int i) -> bool { return (int)e == i; }
 inline auto operator != (KeyModifier e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, KeyModifier e) -> bool { return (int)e == i; }
 inline auto operator != (int i, KeyModifier e) -> bool { return (int)e != i; }
-inline auto operator & (KeyModifier e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, KeyModifier e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, KeyModifier e) -> int& { return i &= (int)e; }
-inline auto operator ~ (KeyModifier e) -> int { return ~(int)e; }
-inline auto operator | (KeyModifier e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, KeyModifier e) -> int { return (int)e | i; }
-constexpr inline auto operator | (KeyModifier e1, KeyModifier e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, KeyModifier e) -> int& { return i |= (int)e; }
 inline auto operator > (KeyModifier e, int i) -> bool { return (int)e > i; }
 inline auto operator < (KeyModifier e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (KeyModifier e, int i) -> bool { return (int)e >= i; }
@@ -30,8 +25,20 @@ inline auto operator > (int i, KeyModifier e) -> bool { return i > (int)e; }
 inline auto operator < (int i, KeyModifier e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, KeyModifier e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, KeyModifier e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(KeyModifier)
+#if KEYMODIFIER_IS_FLAG
+Q_DECLARE_FLAGS(, KeyModifier)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (KeyModifier e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, KeyModifier e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, KeyModifier e) -> int& { return i &= (int)e; }
+inline auto operator ~ (KeyModifier e) -> int { return ~(int)e; }
+inline auto operator | (KeyModifier e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, KeyModifier e) -> int { return (int)e | i; }
+constexpr inline auto operator | (KeyModifier e1, KeyModifier e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, KeyModifier e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<KeyModifier> {

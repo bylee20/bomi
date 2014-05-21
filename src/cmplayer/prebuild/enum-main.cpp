@@ -11,7 +11,7 @@ using namespace std;
 struct EnumType {
     struct Item {string key, name, value, desc, data;};
     EnumType() {continuous = true;}
-    string key, name, desc, data, head;
+    string key, name, desc, data, head, foot, flags;
     bool continuous;
     vector<Item> items;
     int default_ = 0;
@@ -95,6 +95,11 @@ static vector<EnumType> readEnums() {
         else if (line[0] == '!') {
             type.back().head += read.substr(1) + '\n';
             continue;
+        } else if (line[0] == '$') {
+            if (type.back().foot.empty())
+                type.back().foot += '\n';
+            type.back().foot += read.substr(1) + '\n';
+            continue;
         } else
             continue;
         line = line.substr(1);
@@ -105,7 +110,8 @@ static vector<EnumType> readEnums() {
         const auto value = substr(line, "[=", "=]");
         const auto desc = substr(line, "[-", "-]");
         const auto data = substr(line, "[:", ":]");
-        const auto idx = {line.find("[["), line.find("[="), line.find("[-"), line.find("[:")};
+        const auto flags = substr(line, "[~", "~]");
+        const auto idx = {line.find("[["), line.find("[="), line.find("[-"), line.find("[:"), line.find("[~")};
         const auto name = line.substr(0, *std::min_element(std::begin(idx), std::end(idx)));
         if (isType) {
             type.push_back(EnumType());
@@ -114,6 +120,7 @@ static vector<EnumType> readEnums() {
             one.key = key;
             one.desc = desc;
             one.data = data.empty() ? "QVariant" : data;
+            one.flags = flags;
         } else {
             auto &items = type.back().items;
             items.push_back(EnumType::Item());
@@ -193,8 +200,11 @@ static void write(const EnumType &type) {
     replace(hpp, "__ENUM_DEFAULT", type.items[type.default_].name);
     replace(hpp, "__ENUM_DATA_TYPE", type.data);
     replace(hpp, "__ENUM_HEADER_CONTENTS", type.head);
+    replace(hpp, "__ENUM_FOOTER_CONTENTS", type.foot);
     replace(hpp, "__ENUM_UPPERS", uppers);
     replace(hpp, "__ENUM_LOWERS", lowers);
+    replace(hpp, "__ENUM_IS_FLAG", type.flags.empty() ? "0" : "1");
+    replace(hpp, "__ENUM_FLAGS_NAME", type.flags);
     
     string value, infos, cases;
     for (const EnumType::Item &item : type.items) {

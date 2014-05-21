@@ -1,5 +1,4 @@
 #include "subtitlemodel.hpp"
-#include "global.hpp"
 
 struct SubCompModel::Data {
     bool visible;

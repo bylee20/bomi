@@ -1,5 +1,4 @@
 #include "subtitle_parser_p.hpp"
-#include "global.hpp"
 
 auto SamiParser::isParsable() const -> bool
 {

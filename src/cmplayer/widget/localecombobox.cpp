@@ -1,5 +1,5 @@
 #include "localecombobox.hpp"
-#include "translator.hpp"
+#include "player/translator.hpp"
 
 struct LocaleComboBox::Item {
     bool operator == (const Item &rhs) const { return locale == rhs.locale; }

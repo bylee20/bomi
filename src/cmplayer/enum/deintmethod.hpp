@@ -2,6 +2,7 @@
 #define DEINTMETHOD_HPP
 
 #include "enums.hpp"
+#define DEINTMETHOD_IS_FLAG 0
 
 enum class DeintMethod : int {
     None = (int)0,
@@ -14,18 +15,12 @@ enum class DeintMethod : int {
     MotionAdaptive = (int)7
 };
 
+Q_DECLARE_METATYPE(DeintMethod)
+
 inline auto operator == (DeintMethod e, int i) -> bool { return (int)e == i; }
 inline auto operator != (DeintMethod e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, DeintMethod e) -> bool { return (int)e == i; }
 inline auto operator != (int i, DeintMethod e) -> bool { return (int)e != i; }
-inline auto operator & (DeintMethod e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, DeintMethod e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, DeintMethod e) -> int& { return i &= (int)e; }
-inline auto operator ~ (DeintMethod e) -> int { return ~(int)e; }
-inline auto operator | (DeintMethod e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, DeintMethod e) -> int { return (int)e | i; }
-constexpr inline auto operator | (DeintMethod e1, DeintMethod e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, DeintMethod e) -> int& { return i |= (int)e; }
 inline auto operator > (DeintMethod e, int i) -> bool { return (int)e > i; }
 inline auto operator < (DeintMethod e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (DeintMethod e, int i) -> bool { return (int)e >= i; }
@@ -34,8 +29,20 @@ inline auto operator > (int i, DeintMethod e) -> bool { return i > (int)e; }
 inline auto operator < (int i, DeintMethod e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, DeintMethod e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, DeintMethod e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(DeintMethod)
+#if DEINTMETHOD_IS_FLAG
+Q_DECLARE_FLAGS(, DeintMethod)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (DeintMethod e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, DeintMethod e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, DeintMethod e) -> int& { return i &= (int)e; }
+inline auto operator ~ (DeintMethod e) -> int { return ~(int)e; }
+inline auto operator | (DeintMethod e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, DeintMethod e) -> int { return (int)e | i; }
+constexpr inline auto operator | (DeintMethod e1, DeintMethod e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, DeintMethod e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<DeintMethod> {

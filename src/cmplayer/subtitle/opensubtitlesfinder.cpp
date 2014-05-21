@@ -1,9 +1,9 @@
 #include "opensubtitlesfinder.hpp"
-#include "translator.hpp"
+#include "player/mrl.hpp"
+#include "player/translator.hpp"
 #include "misc/xmlrpcclient.hpp"
-#include "mrl.hpp"
 
-static inline QVariantList _Args() { return QVariantList(); }
+static inline auto _Args() -> QVariantList { return QVariantList(); }
 
 struct OpenSubtitlesFinder::Data {
     State state = Unavailable;

@@ -2,6 +2,7 @@
 #define CHANGEVALUE_HPP
 
 #include "enums.hpp"
+#define CHANGEVALUE_IS_FLAG 0
 
 enum class ChangeValue : int {
     Reset = (int)0,
@@ -9,18 +10,12 @@ enum class ChangeValue : int {
     Decrease = (int)2
 };
 
+Q_DECLARE_METATYPE(ChangeValue)
+
 inline auto operator == (ChangeValue e, int i) -> bool { return (int)e == i; }
 inline auto operator != (ChangeValue e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, ChangeValue e) -> bool { return (int)e == i; }
 inline auto operator != (int i, ChangeValue e) -> bool { return (int)e != i; }
-inline auto operator & (ChangeValue e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, ChangeValue e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, ChangeValue e) -> int& { return i &= (int)e; }
-inline auto operator ~ (ChangeValue e) -> int { return ~(int)e; }
-inline auto operator | (ChangeValue e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, ChangeValue e) -> int { return (int)e | i; }
-constexpr inline auto operator | (ChangeValue e1, ChangeValue e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, ChangeValue e) -> int& { return i |= (int)e; }
 inline auto operator > (ChangeValue e, int i) -> bool { return (int)e > i; }
 inline auto operator < (ChangeValue e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (ChangeValue e, int i) -> bool { return (int)e >= i; }
@@ -29,8 +24,20 @@ inline auto operator > (int i, ChangeValue e) -> bool { return i > (int)e; }
 inline auto operator < (int i, ChangeValue e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, ChangeValue e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, ChangeValue e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(ChangeValue)
+#if CHANGEVALUE_IS_FLAG
+Q_DECLARE_FLAGS(, ChangeValue)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (ChangeValue e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, ChangeValue e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, ChangeValue e) -> int& { return i &= (int)e; }
+inline auto operator ~ (ChangeValue e) -> int { return ~(int)e; }
+inline auto operator | (ChangeValue e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, ChangeValue e) -> int { return (int)e | i; }
+constexpr inline auto operator | (ChangeValue e1, ChangeValue e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, ChangeValue e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<ChangeValue> {

@@ -2,9 +2,9 @@
 #define AUDIO_HELPER_HPP
 
 #include "stdafx.hpp"
-#include "tmp.hpp"
-#include <tuple>
 #include "audiomixer.hpp"
+#include "misc/tmp.hpp"
+#include <tuple>
 #include <cmath>
 extern "C" {
 #include <audio/format.h>

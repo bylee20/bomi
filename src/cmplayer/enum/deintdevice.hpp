@@ -2,6 +2,7 @@
 #define DEINTDEVICE_HPP
 
 #include "enums.hpp"
+#define DEINTDEVICE_IS_FLAG 0
 
 enum class DeintDevice : int {
     None = (int)0,
@@ -10,18 +11,12 @@ enum class DeintDevice : int {
     OpenGL = (int)4
 };
 
+Q_DECLARE_METATYPE(DeintDevice)
+
 inline auto operator == (DeintDevice e, int i) -> bool { return (int)e == i; }
 inline auto operator != (DeintDevice e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, DeintDevice e) -> bool { return (int)e == i; }
 inline auto operator != (int i, DeintDevice e) -> bool { return (int)e != i; }
-inline auto operator & (DeintDevice e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, DeintDevice e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, DeintDevice e) -> int& { return i &= (int)e; }
-inline auto operator ~ (DeintDevice e) -> int { return ~(int)e; }
-inline auto operator | (DeintDevice e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, DeintDevice e) -> int { return (int)e | i; }
-constexpr inline auto operator | (DeintDevice e1, DeintDevice e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, DeintDevice e) -> int& { return i |= (int)e; }
 inline auto operator > (DeintDevice e, int i) -> bool { return (int)e > i; }
 inline auto operator < (DeintDevice e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (DeintDevice e, int i) -> bool { return (int)e >= i; }
@@ -30,8 +25,20 @@ inline auto operator > (int i, DeintDevice e) -> bool { return i > (int)e; }
 inline auto operator < (int i, DeintDevice e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, DeintDevice e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, DeintDevice e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(DeintDevice)
+#if DEINTDEVICE_IS_FLAG
+Q_DECLARE_FLAGS(, DeintDevice)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (DeintDevice e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, DeintDevice e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, DeintDevice e) -> int& { return i &= (int)e; }
+inline auto operator ~ (DeintDevice e) -> int { return ~(int)e; }
+inline auto operator | (DeintDevice e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, DeintDevice e) -> int { return (int)e | i; }
+constexpr inline auto operator | (DeintDevice e1, DeintDevice e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, DeintDevice e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<DeintDevice> {

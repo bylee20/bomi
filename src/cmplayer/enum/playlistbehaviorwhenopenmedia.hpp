@@ -2,6 +2,7 @@
 #define PLAYLISTBEHAVIORWHENOPENMEDIA_HPP
 
 #include "enums.hpp"
+#define PLAYLISTBEHAVIORWHENOPENMEDIA_IS_FLAG 0
 
 enum class PlaylistBehaviorWhenOpenMedia : int {
     AppendToPlaylist = (int)0,
@@ -9,18 +10,12 @@ enum class PlaylistBehaviorWhenOpenMedia : int {
     ClearAndGenerateNewPlaylist = (int)2
 };
 
+Q_DECLARE_METATYPE(PlaylistBehaviorWhenOpenMedia)
+
 inline auto operator == (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e == i; }
 inline auto operator != (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e != i; }
 inline auto operator == (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return (int)e == i; }
 inline auto operator != (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return (int)e != i; }
-inline auto operator & (PlaylistBehaviorWhenOpenMedia e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, PlaylistBehaviorWhenOpenMedia e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, PlaylistBehaviorWhenOpenMedia e) -> int& { return i &= (int)e; }
-inline auto operator ~ (PlaylistBehaviorWhenOpenMedia e) -> int { return ~(int)e; }
-inline auto operator | (PlaylistBehaviorWhenOpenMedia e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, PlaylistBehaviorWhenOpenMedia e) -> int { return (int)e | i; }
-constexpr inline auto operator | (PlaylistBehaviorWhenOpenMedia e1, PlaylistBehaviorWhenOpenMedia e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, PlaylistBehaviorWhenOpenMedia e) -> int& { return i |= (int)e; }
 inline auto operator > (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e > i; }
 inline auto operator < (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e < i; }
 inline auto operator >= (PlaylistBehaviorWhenOpenMedia e, int i) -> bool { return (int)e >= i; }
@@ -29,8 +24,20 @@ inline auto operator > (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return
 inline auto operator < (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return i < (int)e; }
 inline auto operator >= (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return i >= (int)e; }
 inline auto operator <= (int i, PlaylistBehaviorWhenOpenMedia e) -> bool { return i <= (int)e; }
-
-Q_DECLARE_METATYPE(PlaylistBehaviorWhenOpenMedia)
+#if PLAYLISTBEHAVIORWHENOPENMEDIA_IS_FLAG
+Q_DECLARE_FLAGS(, PlaylistBehaviorWhenOpenMedia)
+Q_DECLARE_OPERATORS_FOR_FLAGS()
+Q_DECLARE_METATYPE()
+#else
+inline auto operator & (PlaylistBehaviorWhenOpenMedia e, int i) -> int { return (int)e & i; }
+inline auto operator & (int i, PlaylistBehaviorWhenOpenMedia e) -> int { return (int)e & i; }
+inline auto operator &= (int &i, PlaylistBehaviorWhenOpenMedia e) -> int& { return i &= (int)e; }
+inline auto operator ~ (PlaylistBehaviorWhenOpenMedia e) -> int { return ~(int)e; }
+inline auto operator | (PlaylistBehaviorWhenOpenMedia e, int i) -> int { return (int)e | i; }
+inline auto operator | (int i, PlaylistBehaviorWhenOpenMedia e) -> int { return (int)e | i; }
+constexpr inline auto operator | (PlaylistBehaviorWhenOpenMedia e1, PlaylistBehaviorWhenOpenMedia e2) -> int { return (int)e1 | (int)e2; }
+inline auto operator |= (int &i, PlaylistBehaviorWhenOpenMedia e) -> int& { return i |= (int)e; }
+#endif
 
 template<>
 class EnumInfo<PlaylistBehaviorWhenOpenMedia> {
