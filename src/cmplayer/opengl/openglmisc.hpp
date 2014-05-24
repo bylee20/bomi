@@ -19,6 +19,7 @@ class OpenGLTexture2D;
 class OpenGLTexture3D;
 
 namespace OGL {
+
 enum Target {
     Target1D        = GL_TEXTURE_1D,
     Target2D        = GL_TEXTURE_2D,
@@ -42,7 +43,8 @@ static inline auto bindingTarget(Target target) -> Binding {
     }
 }
 
-template<Target target> struct target_trait { using texture_type = OpenGLTextureBase; };
+template<Target target>
+struct target_trait { using texture_type = OpenGLTextureBase; };
 template<> struct target_trait<Target1D> {
     static constexpr Target target = Target1D;
     static constexpr Binding binding = Binding1D;
@@ -116,6 +118,7 @@ enum TransferFormat {
     OneComponent,
     TwoComponents
 };
+
 enum Filter {
     Nearest = GL_NEAREST,
     Linear  = GL_LINEAR,
@@ -145,6 +148,45 @@ struct TransferInfo {
     TransferFormat format = OGL::BGRA;
     TransferType type = OGL::UInt32_8_8_8_8_Rev;
 };
+
+enum Extension {
+    TextureRG         = 1 << 0,
+    TextureFloat      = 1 << 1,
+    Debug             = 1 << 2,
+    NvVdpauInterop    = 1 << 3,
+    FramebufferObject = 1 << 4,
+    AppleYCbCr422     = 1 << 5,
+    MesaYCbCrTexture  = 1 << 6,
+    ExtSwapControl    = 1 << 7,
+    SgiSwapControl    = 1 << 8,
+    MesaSwapControl   = 1 << 9
+};
+
+auto initialize(QOpenGLContext *ctx, bool debug) -> void;
+
+auto finalize(QOpenGLContext *ctx) -> void;
+
+auto errorString(GLenum error) -> const char*;
+
+auto logError(const char *at) -> int;
+
+auto hasExtension(Extension ext) -> bool;
+
+auto maximumTextureSize() -> int;
+
+static inline auto rg(const char *rg) -> QByteArray
+{
+    if (hasExtension(TextureRG))
+        return QByteArray(rg);
+    return QByteArray(rg).replace('g', 'a');
+}
+
+static inline auto func() -> QOpenGLFunctions* {
+    auto ctx = QOpenGLContext::currentContext();
+    return ctx ? ctx->functions() : nullptr;
+}
+
+auto availableFrambebufferFormats() -> QVector<TextureFormat>;
 
 }
 

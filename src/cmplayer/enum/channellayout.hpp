@@ -36,31 +36,34 @@ enum class ChannelLayout : int {
 
 Q_DECLARE_METATYPE(ChannelLayout)
 
-inline auto operator == (ChannelLayout e, int i) -> bool { return (int)e == i; }
-inline auto operator != (ChannelLayout e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, ChannelLayout e) -> bool { return (int)e == i; }
-inline auto operator != (int i, ChannelLayout e) -> bool { return (int)e != i; }
-inline auto operator > (ChannelLayout e, int i) -> bool { return (int)e > i; }
-inline auto operator < (ChannelLayout e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (ChannelLayout e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (ChannelLayout e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, ChannelLayout e) -> bool { return i > (int)e; }
-inline auto operator < (int i, ChannelLayout e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, ChannelLayout e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, ChannelLayout e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (ChannelLayout e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (ChannelLayout e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, ChannelLayout e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, ChannelLayout e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (ChannelLayout e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (ChannelLayout e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (ChannelLayout e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (ChannelLayout e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, ChannelLayout e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, ChannelLayout e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, ChannelLayout e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, ChannelLayout e) -> bool { return i <= (int)e; }
 #if CHANNELLAYOUT_IS_FLAG
-Q_DECLARE_FLAGS(, ChannelLayout)
-Q_DECLARE_OPERATORS_FOR_FLAGS()
+#include "enumflags.hpp"
+using  = EnumFlags<ChannelLayout>;
+constexpr inline auto operator | (ChannelLayout e1, ChannelLayout e2) -> 
+{
+    return (::IntType(e1) | ::IntType(e2));
+}
+constexpr inline auto operator ~ (ChannelLayout e) -> EnumNot<ChannelLayout>
+{
+    return EnumNot<ChannelLayout>(e);
+}
+constexpr inline auto operator & (ChannelLayout lhs,  rhs) -> EnumAnd<ChannelLayout>
+{
+    return rhs & lhs;
+}
 Q_DECLARE_METATYPE()
-#else
-inline auto operator & (ChannelLayout e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, ChannelLayout e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, ChannelLayout e) -> int& { return i &= (int)e; }
-inline auto operator ~ (ChannelLayout e) -> int { return ~(int)e; }
-inline auto operator | (ChannelLayout e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, ChannelLayout e) -> int { return (int)e | i; }
-constexpr inline auto operator | (ChannelLayout e1, ChannelLayout e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, ChannelLayout e) -> int& { return i |= (int)e; }
 #endif
 
 template<>
@@ -161,5 +164,17 @@ private:
 };
 
 using ChannelLayoutInfo = EnumInfo<ChannelLayout>;
+
+#include "enumflags.hpp"
+constexpr inline auto operator & (SpeakerId lhs, ChannelLayout rhs) -> EnumAnd<SpeakerId>
+{ return SpeakerId((int)lhs & (int)rhs); }
+constexpr inline auto operator & (ChannelLayout rhs, SpeakerId lhs) -> EnumAnd<SpeakerId>
+{ return SpeakerId((int)lhs & (int)rhs); }
+constexpr inline auto operator & (EnumFlags<SpeakerId> lhs, ChannelLayout rhs) -> EnumFlags<SpeakerId>
+{ return lhs & EnumFlags<SpeakerId>((SpeakerId)rhs); }
+constexpr inline auto operator & (ChannelLayout lhs, EnumFlags<SpeakerId> rhs) -> EnumFlags<SpeakerId>
+{ return rhs & EnumFlags<SpeakerId>((SpeakerId)lhs); }
+constexpr inline auto operator | (SpeakerId lhs, SpeakerId rhs) -> EnumFlags<SpeakerId>
+{ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 
 #endif

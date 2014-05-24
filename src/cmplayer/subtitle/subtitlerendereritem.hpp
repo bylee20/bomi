@@ -1,7 +1,6 @@
 #ifndef SUBTITLERENDERERITEM_HPP
 #define SUBTITLERENDERERITEM_HPP
 
-#include "stdafx.hpp"
 #include "quick/simpletextureitem.hpp"
 
 class SubComp;                         class Subtitle;

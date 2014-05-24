@@ -1,7 +1,6 @@
 #ifndef HWACC_VAAPI_HPP
 #define HWACC_VAAPI_HPP
 
-#include "stdafx.hpp"
 #include "hwacc.hpp"
 #include "hwacc_helper.hpp"
 

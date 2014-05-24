@@ -33,6 +33,9 @@ public:
     auto isOpenGLDebugLoggerRequested() const -> bool;
     auto setMprisActivated(bool activated) -> void;
     auto sendMessage(const QString &message, int timeout = 5000) -> bool;
+    static constexpr auto versionNumber() -> int { return 0x00814; }
+    static constexpr auto version() -> const char* { return "0.8.14"; }
+    static constexpr auto name() -> const char* { return "CMPlayer"; }
     static auto defaultIcon() -> QIcon;
 signals:
     void messageReceived(const QString &message);

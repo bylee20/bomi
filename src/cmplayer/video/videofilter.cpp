@@ -4,7 +4,6 @@
 #include "deintoption.hpp"
 #include "misc/log.hpp"
 #include "player/mpv_helper.hpp"
-#include "opengl/openglmisc.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 extern "C" {
 #include <video/filter/vf.h>

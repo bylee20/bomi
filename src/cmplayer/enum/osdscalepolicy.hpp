@@ -12,31 +12,34 @@ enum class OsdScalePolicy : int {
 
 Q_DECLARE_METATYPE(OsdScalePolicy)
 
-inline auto operator == (OsdScalePolicy e, int i) -> bool { return (int)e == i; }
-inline auto operator != (OsdScalePolicy e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, OsdScalePolicy e) -> bool { return (int)e == i; }
-inline auto operator != (int i, OsdScalePolicy e) -> bool { return (int)e != i; }
-inline auto operator > (OsdScalePolicy e, int i) -> bool { return (int)e > i; }
-inline auto operator < (OsdScalePolicy e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (OsdScalePolicy e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (OsdScalePolicy e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, OsdScalePolicy e) -> bool { return i > (int)e; }
-inline auto operator < (int i, OsdScalePolicy e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, OsdScalePolicy e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, OsdScalePolicy e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (OsdScalePolicy e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (OsdScalePolicy e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, OsdScalePolicy e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, OsdScalePolicy e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (OsdScalePolicy e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (OsdScalePolicy e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (OsdScalePolicy e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (OsdScalePolicy e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, OsdScalePolicy e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, OsdScalePolicy e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, OsdScalePolicy e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, OsdScalePolicy e) -> bool { return i <= (int)e; }
 #if OSDSCALEPOLICY_IS_FLAG
-Q_DECLARE_FLAGS(, OsdScalePolicy)
-Q_DECLARE_OPERATORS_FOR_FLAGS()
+#include "enumflags.hpp"
+using  = EnumFlags<OsdScalePolicy>;
+constexpr inline auto operator | (OsdScalePolicy e1, OsdScalePolicy e2) -> 
+{
+    return (::IntType(e1) | ::IntType(e2));
+}
+constexpr inline auto operator ~ (OsdScalePolicy e) -> EnumNot<OsdScalePolicy>
+{
+    return EnumNot<OsdScalePolicy>(e);
+}
+constexpr inline auto operator & (OsdScalePolicy lhs,  rhs) -> EnumAnd<OsdScalePolicy>
+{
+    return rhs & lhs;
+}
 Q_DECLARE_METATYPE()
-#else
-inline auto operator & (OsdScalePolicy e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, OsdScalePolicy e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, OsdScalePolicy e) -> int& { return i &= (int)e; }
-inline auto operator ~ (OsdScalePolicy e) -> int { return ~(int)e; }
-inline auto operator | (OsdScalePolicy e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, OsdScalePolicy e) -> int { return (int)e | i; }
-constexpr inline auto operator | (OsdScalePolicy e1, OsdScalePolicy e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, OsdScalePolicy e) -> int& { return i |= (int)e; }
 #endif
 
 template<>

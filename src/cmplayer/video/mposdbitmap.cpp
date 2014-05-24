@@ -1,8 +1,9 @@
 #include "mposdbitmap.hpp"
-#include "opengl/openglcompat.hpp"
 extern "C" {
 #include <sub/osd.h>
 }
+
+namespace OGL { auto maximumTextureSize() -> int; }
 
 auto MpOsdBitmap::needToCopy(const sub_bitmaps *imgs) const -> bool
 {
@@ -23,7 +24,7 @@ auto MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) -> bool
     static const int corrections[] = { 0,        1,   1,      4 };
     static const Format fmts[]     = { NoFormat, Ass, RgbaPA, Rgba };
     static const int  shifts[]     = { 0,        0,   2,      2 };
-    static const int max = OpenGLCompat::maximumTextureSize();
+    static const int max = OGL::maximumTextureSize();
 
     const int c_stride = corrections[imgs->format];
     const int shift = shifts[imgs->format];

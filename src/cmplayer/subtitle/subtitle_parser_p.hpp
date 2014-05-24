@@ -1,9 +1,7 @@
 #ifndef SUBTITLE_PARSER_P_HPP
 #define SUBTITLE_PARSER_P_HPP
 
-#include "stdafx.hpp"
 #include "subtitle_parser.hpp"
-#include "richtexthelper.hpp"
 
 class TagFormat;
 struct RichTextBlock;

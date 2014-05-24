@@ -1,12 +1,12 @@
 #include "videoframeshader.hpp"
-#include "videoframe.hpp"
 #include "hwacc.hpp"
 #include "kernel3x3.hpp"
 #include "misc/log.hpp"
+#include "opengl/openglvertex.hpp"
+#include "opengl/interpolator.hpp"
 #include "opengl/opengltexture2d.hpp"
 #include "opengl/opengltexturebinder.hpp"
 #include "enum/interpolatortype.hpp"
-#include <tuple>
 
 VideoFrameShader::ShaderInfo::ShaderInfo()
 {
@@ -106,7 +106,7 @@ auto VideoFrameShader::setChromaUpscaler(InterpolatorType type) -> void
 auto VideoFrameShader::updateColorMatrix() -> void
 {
     auto color = m_color;
-    if (m_effects & VideoEffect::Gray)
+    if (m_effects.contains(VideoEffect::Gray))
         color.setSaturation(-100);
     auto range = m_range;
     const bool pc = m_params.colorlevels == MP_CSP_LEVELS_PC;
@@ -123,7 +123,7 @@ auto VideoFrameShader::updateColorMatrix() -> void
         break;
     }
     color.matrix(m_mul_mat, m_add_vec, m_cspOut, range);
-    if (m_effects & VideoEffect::Invert) {
+    if (m_effects.contains(VideoEffect::Invert)) {
         m_mul_mat *= -1;
         m_add_vec = QVector3D(1, 1, 1) - m_add_vec;
     }
@@ -251,9 +251,9 @@ const vec2 tex_size = vec2(texWidth, texHeight);
     }
 }
 
-auto VideoFrameShader::setFormat(const VideoFormat &format) -> void
+auto VideoFrameShader::setFormat(const mp_image_params &params) -> void
 {
-    m_params = format.params();
+    m_params = params;
     m_imgfmtOut = m_params.imgfmt;
     m_refill = true;
 }
@@ -430,7 +430,7 @@ auto VideoFrameShader::fillInfo(const mp_image *mpi) -> void
         else if (fmt == OGL::TwoComponents)
             components = 2;
         addCustom(plane, bytes[plane].width()/components, bytes[plane].height(),
-                  OpenGLCompat::transferInfo(fmt));
+                  OpenGLTextureTransferInfo::get(fmt));
     };
 
     auto getBits = [] (mp_imgfmt imgfmt) {
@@ -483,7 +483,7 @@ vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2) {
 }
         )";
         m_texel.replace("??", QByteArray::number((1 << (bits-8))-1));
-        m_texel.replace("!!", OpenGLCompat::rg(little ? "gr" : "rg"));
+        m_texel.replace("!!", OGL::rg(little ? "gr" : "rg"));
         add(0, OGL::TwoComponents);
         add(1, OGL::TwoComponents);
         add(2, OGL::TwoComponents);
@@ -496,11 +496,11 @@ vec3 texel(const in vec4 tex0, const in vec4 tex1) {
 }
         )";
         const auto rg = m_imgfmtOut == IMGFMT_NV12 ? "rg" : "gr";
-        m_texel.replace("!!", OpenGLCompat::rg(rg));
+        m_texel.replace("!!", OGL::rg(rg));
         add(0, OGL::OneComponent); add(1, OGL::TwoComponents); cc(1, 0.5);
         break;
     } case IMGFMT_YUYV: case IMGFMT_UYVY:
-        if (OpenGLCompat::hasExtension(OpenGLCompat::AppleYCbCr422)) {
+        if (OGL::hasExtension(OGL::AppleYCbCr422)) {
             _Debug("Use GL_APPLE_ycbcr_422.");
             OpenGLTextureTransferInfo info;
             info.texture = OGL::RGB8_UNorm;
@@ -510,7 +510,7 @@ vec3 texel(const in vec4 tex0, const in vec4 tex1) {
                 info.transfer.type = OGL::UInt16_8_8_Rev_Apple;
             addCustom(0, m_params.w, m_params.h, info);
             m_cspOut = MP_CSP_RGB;
-        } else if (OpenGLCompat::hasExtension(OpenGLCompat::MesaYCbCrTexture)) {
+        } else if (OGL::hasExtension(OGL::MesaYCbCrTexture)) {
             _Debug("Use GL_MESA_ycbcr_texture.");
             m_texel = R"(
 vec3 texel(const in int coord) { return texture0(coord).g!!; }
@@ -529,7 +529,7 @@ vec3 texel(const in int coord) { return texture0(coord).g!!; }
                     return vec3(tex0.?, tex1.!!);
                 }
             )";
-            m_texel.replace("?", OpenGLCompat::rg(IMGFMT_YUYV ? "r" : "g"));
+            m_texel.replace("?", OGL::rg(IMGFMT_YUYV ? "r" : "g"));
             m_texel.replace("!!", m_imgfmtOut == IMGFMT_YUYV ? "ga" : "br");
             add(0, OGL::TwoComponents); add(0, OGL::BGRA);
             if (m_target == OGL::TargetRectangle)

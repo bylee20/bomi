@@ -2,7 +2,8 @@
 #include "misc/dataevent.hpp"
 
 template<>
-inline bool qMapLessThanKey(const SubCompItMapIt &lhs, const SubCompItMapIt &rhs) {
+inline bool qMapLessThanKey(const SubCompItMapIt &lhs,
+                            const SubCompItMapIt &rhs) {
     return lhs.key() < rhs.key();
 }
 
@@ -21,7 +22,8 @@ struct SubCompSelection::Thread::Data {
     SubCompSelection *selection = nullptr;
 
     SubComp::ConstIt iterator(int time) const { return comp->start(time, fps); }
-    QMap<SubCompItMapIt, SubCompImage>::iterator newPicture(SubCompItMapIt it) {
+    auto newPicture(SubCompItMapIt it) -> decltype(pool.begin())
+    {
         auto pic = pool.insert(it, SubCompImage(comp, *it, item));
         drawer.draw(*pic, rect, dpr);
         return pic;
@@ -29,7 +31,8 @@ struct SubCompSelection::Thread::Data {
     void update() {
         if (quit)
             return;
-        auto post = [this] (const SubCompImage &pic) { _PostEvent(receiver, ImagePrepared, pic); };
+        auto post = [this] (const SubCompImage &pic)
+            { _PostEvent(receiver, ImagePrepared, pic); };
         if (it != its.end()) {
             auto cache = pool.find(it);
             if (cache == pool.end())
@@ -80,8 +83,12 @@ struct SubCompSelection::Thread::Data {
     }
 };
 
-SubCompSelection::Thread::Thread(QMutex *mutex, QWaitCondition *wait, Item *item, SubCompSelection *selection, QObject *renderer)
-: QThread(), d(new Data) {
+SubCompSelection::Thread::Thread(QMutex *mutex, QWaitCondition *wait,
+                                 Item *item, SubCompSelection *selection,
+                                 QObject *renderer)
+    : QThread()
+    , d(new Data)
+{
     d->item = item;
     d->comp = item->comp;
     d->receiver = renderer;
@@ -90,24 +97,28 @@ SubCompSelection::Thread::Thread(QMutex *mutex, QWaitCondition *wait, Item *item
     d->selection = selection;
 }
 
-SubCompSelection::Thread::~Thread() {
+SubCompSelection::Thread::~Thread()
+{
     finish();
     delete d;
 }
 
-void SubCompSelection::Thread::setFPS(double fps) {
+auto SubCompSelection::Thread::setFPS(double fps) -> void
+{
     this->fps = fps; flags |= Rebuild;
     d->item->model->setFps(fps);
 }
 
-void SubCompSelection::Thread::finish() {
+auto SubCompSelection::Thread::finish() -> void
+{
     d->quit = true;
     d->wait->wakeAll();
     if (!wait(5000))
         terminate();
 }
 
-void SubCompSelection::Thread::run() {
+auto SubCompSelection::Thread::run() -> void
+{
     static constexpr int NewOption = NewDrawer | NewArea;
     static constexpr int ForceUpdate = Rerender | Rebuild | NewOption;
     int flags = 0;
@@ -143,16 +154,27 @@ void SubCompSelection::Thread::run() {
     }
 }
 
-/************************************************************************/
+/******************************************************************************/
 
 struct SubCompSelection::Data {
-    QMutex mutex; QWaitCondition wait; QObject *renderer = nullptr;
-    SubtitleDrawer drawer; QRectF rect; double dpr = 1.0, fps = 30.0;
+    QMutex mutex;
+    QWaitCondition wait;
+    QObject *renderer = nullptr;
+    SubtitleDrawer drawer;
+    QRectF rect;
+    double dpr = 1.0, fps = 30.0;
 };
 
-SubCompSelection::SubCompSelection(QObject *renderer): d(new Data) { d->renderer = renderer; }
+SubCompSelection::SubCompSelection(QObject *renderer)
+    : d(new Data)
+{
+    d->renderer = renderer;
+}
 
-SubCompSelection::~SubCompSelection() { delete d; }
+SubCompSelection::~SubCompSelection()
+{
+    delete d;
+}
 
 auto SubCompSelection::models() const -> QVector<SubCompModel*>
 {
@@ -171,7 +193,10 @@ auto SubCompSelection::remove(const SubComp *comp) -> void
     }
 }
 
-const SubtitleDrawer &SubCompSelection::drawer() const { return d->drawer; }
+auto SubCompSelection::drawer() const -> const SubtitleDrawer&
+{
+    return d->drawer;
+}
 
 auto SubCompSelection::setDrawer(const SubtitleDrawer &drawer) -> void
 {
@@ -223,7 +248,10 @@ auto SubCompSelection::prepend(const SubComp *comp) -> bool
     return true;
 }
 
-double SubCompSelection::fps() const { return d->fps; }
+auto SubCompSelection::fps() const -> double
+{
+    return d->fps;
+}
 
 auto SubCompSelection::setFPS(double fps) -> void
 {
@@ -241,7 +269,8 @@ auto SubCompSelection::update(const SubCompImage &image) -> bool
     return true;
 }
 
-auto SubCompSelection::setMargin(double top, double bottom, double right, double left) -> void
+auto SubCompSelection::setMargin(double top, double bottom,
+                                 double right, double left) -> void
 {
     Margin margin;
     margin.top = top;     margin.bottom = bottom;

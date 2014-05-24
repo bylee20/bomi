@@ -2,11 +2,18 @@
 #include "playengine.hpp"
 #include "playlistmodel.hpp"
 #include "mainwindow.hpp"
-#include "app.hpp"
-#include "mediamisc.hpp"
-#include "quick/globalqmlobject.hpp"
 
 namespace mpris {
+
+auto getMainWindow() -> MainWindow*
+{
+    auto tops = qApp->topLevelWidgets();
+    for (auto w : tops) {
+        if (auto mw = qobject_cast<MainWindow*>(w))
+            return mw;
+    }
+    return nullptr;
+}
 
 RootObject::RootObject(QObject *parent)
     : QObject(parent)
@@ -15,7 +22,7 @@ RootObject::RootObject(QObject *parent)
     auto bus = QDBusConnection::sessionBus();
     auto ok = bus.registerService(m_name);
     if (!ok) {
-        m_name = m_name % ".instance" % QString::number(cApp.applicationPid());
+        m_name = m_name % ".instance" % QString::number(qApp->applicationPid());
         ok = bus.registerService(m_name);
     }
     if (!ok)
@@ -68,10 +75,9 @@ struct MediaPlayer2::Data {
 
 MediaPlayer2::MediaPlayer2(QObject *parent)
 : QDBusAbstractAdaptor(parent), d(new Data) {
-    d->mw = cApp.mainWindow();
+    d->mw = getMainWindow();
     Q_ASSERT(d->mw);
-    auto util = &UtilObject::get();
-    connect(util, &UtilObject::fullScreenChanged, [this] (bool fs) {
+    connect(d->mw, &MainWindow::fullscreenChanged, [this] (bool fs) {
         sendPropertiesChanged(this, "Fullscreen", fs);
     });
 }
@@ -178,7 +184,7 @@ Player::Player(QObject *parent)
     : QDBusAbstractAdaptor(parent)
     , d(new Data)
 {
-    d->mw = cApp.mainWindow();
+    d->mw = getMainWindow();
     d->engine = d->mw->engine();
     d->playlist = d->mw->playlist();
 

@@ -1,8 +1,6 @@
 #include "subtitlefinddialog.hpp"
 #include "mbox.hpp"
 #include "player/mrl.hpp"
-#include "player/info.hpp"
-#include "player/appstate.hpp"
 #include "misc/downloader.hpp"
 #include "misc/simplelistmodel.hpp"
 #include "subtitle/opensubtitlesfinder.hpp"
@@ -112,9 +110,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         d->updateState();
     });
     connect(d->ui.open, &QPushButton::clicked, [this] () {
-        auto file = _GetOpenFileName(this, tr("Open"),
-                                     AppState::get().open_last_folder,
-                                     Info::videoExt().toFilter());
+        auto file = _GetOpenFileName(this, tr("Open"), VideoExt);
         if (!file.isEmpty())
             find(QUrl::fromLocalFile(file));
     });
@@ -143,7 +139,8 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
                 const QString suffix = _L('.') % info.suffix();
                 const QString filter = tr("Subtitle Files")
                                        % _L(" (*") % suffix % _L(')');
-                file = _GetSaveFileName(this, tr("Save As..."), file, filter);
+                file = QFileDialog::getSaveFileName(this, tr("Save As..."),
+                                                    file, filter);
                 if (file.isEmpty())
                     return;
                 if (!file.endsWith(suffix))

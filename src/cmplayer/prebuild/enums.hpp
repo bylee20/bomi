@@ -30,8 +30,15 @@ template<class Enum>
 using EnumData = typename EnumInfo<Enum>::Data;
 
 template<class Enum>
-static inline auto _GetEnumData(Enum e) -> EnumData<Enum>
+static inline auto _EnumData(Enum e) -> EnumData<Enum>
     { return EnumInfo<Enum>::data(e); }
+
+template<class T>
+static inline auto _EnumName(T t) -> QString { return EnumInfo<T>::name(t); }
+template<class T>
+static inline auto _EnumFrom(const QString &name,
+                             T def = EnumInfo<T>::default_()) -> T
+    { return EnumInfo<T>::from(name, def); }
 
 bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVariantFromSqlFunc &fromSql);
 bool _IsEnumTypeId(int userType);

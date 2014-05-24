@@ -16,7 +16,7 @@ public:
     RootMenu();
     RootMenu(const RootMenu &) = delete;
     ~RootMenu() {obj = nullptr;}
-    auto update(const Pref &p) -> void;
+    auto retranslate() -> void;
     auto longId(QAction *action) const -> QString {return m_ids.value(action);}
     auto action(const QString &longId) const -> QAction*
         { return m_actions.value(longId).action; }

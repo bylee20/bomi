@@ -2,73 +2,100 @@
 #define RECORD_HPP
 
 #include "stdafx.hpp"
-#include "player/info.hpp"
-#include "player/mrlstate.hpp"
-#include "video/deintcaps.hpp"
-#include "video/videocolor.hpp"
-#include "video/deintoption.hpp"
-#include "audio/channelmanipulation.hpp"
-#include <type_traits>
+
+template<class T> class EnumInfo;
 
 namespace detail {
 
-template <class T>
-SIA fromVariant(const QVariant &data) -> T {return data.value<T>();}
-template <class T>
-SIA toVariant(const T &t) -> QVariant {return QVariant::fromValue(t);}
-#define DEC_WITH_STRING(T) \
-template<> \
-inline auto fromVariant(const QVariant &data) -> T \
-    { return T::fromString(data.toString()); } \
-template<> \
-inline auto toVariant(const T &t) -> QVariant { return t.toString(); }
-DEC_WITH_STRING(DeintOption)
-DEC_WITH_STRING(DeintCaps)
-DEC_WITH_STRING(QKeySequence)
-DEC_WITH_STRING(ChannelLayoutMap)
-#undef DEC_WITH_STRING
+template<class T>
+class convertible_string {
+    template<class S>
+    static auto to(S* p) -> decltype(p->toString(), std::true_type());
+    template<class>
+    static auto to(...) -> std::false_type;
+    template<class S>
+    static auto from(S* p) -> decltype(S::fromString(QString()), std::true_type());
+    template<class>
+    static auto from(...) -> std::false_type;
+public:
+    static constexpr bool value = decltype(to<T>(0))::value
+                                  && decltype(from<T>(0))::value;
+};
+
+template<class T>
+class convertible_json {
+    template<class S>
+    static auto to(S* p) -> decltype(p->toJson(), std::true_type());
+    template<class>
+    static auto to(...) -> std::false_type;
+    template<class S>
+    static auto from(S* p) -> decltype(S::fromJson(QJsonObject()), std::true_type());
+    template<class>
+    static auto from(...) -> std::false_type;
+public:
+    static constexpr bool value = decltype(to<T>(0))::value
+                                  && decltype(from<T>(0))::value;
+};
+
+enum DataType { Variant, String, Json };
+
+template<class T>
+static constexpr auto data_type() -> DataType
+{
+    return (std::is_class<T>::value && convertible_string<T>::value) ? String
+         : (std::is_class<T>::value && convertible_json<T>::value)   ? Json
+                                                                     : Variant;
+}
 
 template<class T>
 struct is_list : std::false_type {};
 template<class T>
 struct is_list<QList<T>> : std::true_type {};
 
-template <class T, bool enum_ = std::is_enum<T>::value>
+template <class T, bool enum_ = std::is_enum_class<T>::value,
+                   DataType dataType = data_type<T>()>
 struct RecordIoOne {};
 
 template <class T>
-struct RecordIoOne<T, false> {
+struct RecordIoOne<T, false, Variant> {
     static_assert(!is_list<T>::value, "assert!");
     static auto read(QSettings &r, T &value, const QString &key) -> void
-        { value = fromVariant<T>(r.value(key, toVariant<T>(value))); }
+        { value = r.value(key, QVariant::fromValue<T>(value)).template value<T>(); }
     static auto write(QSettings &r, const T &value, const QString &key) -> void
-        { r.setValue(key, toVariant<T>(value)); }
+        { r.setValue(key, QVariant::fromValue<T>(value)); }
     static auto default_() -> T { return T(); }
 };
 
 template <class T>
-struct RecordIoOne<T, true> {
+struct RecordIoOne<T, true, Variant> {
     static auto read(QSettings &r, T &v, const QString &key) -> void
-        { v = EnumInfo<T>::from(r.value(key, EnumInfo<T>::name(v)).toString(), v); }
+        { v = _EnumFrom(r.value(key, _EnumName(v)).toString(), v); }
     static auto write(QSettings &r, const T &value, const QString &key) -> void
-        { r.setValue(key, EnumInfo<T>::name(value)); }
+        { r.setValue(key, _EnumName(value)); }
     static auto default_() -> T { return EnumInfo<T>::items()[0].value; }
 };
 
-template <>
-struct RecordIoOne<VideoColor, false> {
-    static auto write(QSettings &r, const VideoColor &v,
-                      const QString &key) -> void {
-        VideoColor::for_type([&] (VideoColor::Type type) {
-            r.setValue(key % _L('_') % VideoColor::name(type), v.get(type));
-        });
+template <class T>
+struct RecordIoOne<T, false, String> {
+    static_assert(!is_list<T>::value, "assert!");
+    static auto read(QSettings &r, T &value, const QString &key) -> void
+        { value = T::fromString(r.value(key, value.toString()).toString()); }
+    static auto write(QSettings &r, const T &value, const QString &key) -> void
+        { r.setValue(key, value.toString()); }
+    static auto default_() -> T { return T(); }
+};
+
+template <class T>
+struct RecordIoOne<T, false, Json> {
+    static_assert(!is_list<T>::value, "assert!");
+    static auto read(QSettings &r, T &value, const QString &key) -> void
+    {
+        const auto doc = r.value(key, _JsonToString(value.toJson())).toString();
+        value = T::fromJson(_JsonFromString(doc));
     }
-    static auto read(QSettings &r, VideoColor &v,
-                     const QString &k) -> void {
-        VideoColor::for_type([&] (VideoColor::Type type) {
-            v.set(type, r.value(k % _L('_') % VideoColor::name(type)).toInt());
-        });
-    }
+    static auto write(QSettings &r, const T &value, const QString &key) -> void
+        { r.setValue(key, _JsonToString(value.toJson())); }
+    static auto default_() -> T { return T(); }
 };
 
 template <class T>
@@ -109,9 +136,13 @@ public:
         m_version = value("version", 0).toInt();
         if (!m_root.isEmpty()) beginGroup(root);
     }
+    Record(const QString &root, int version)
+        : m_root(root), m_version(version) {
+        setValue("version", m_version);
+        if (!m_root.isEmpty()) beginGroup(root);
+    }
     ~Record() {
         if (!m_root.isEmpty()) endGroup();
-        setValue("version", Info::versionNumber());
     }
     auto version() const -> int { return m_version; }
     template <class T>
@@ -141,6 +172,10 @@ private:
     const QString m_root = {};
     int m_version = 0;
 };
+
+
+#define RECORD_READ(a) { RECORD_VAR.read(a, #a); }
+#define RECORD_WRITE(a) { RECORD_VAR.write(a, #a); }
 
 
 #endif // RECORD_HPP

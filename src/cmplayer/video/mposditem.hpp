@@ -1,11 +1,9 @@
 #ifndef MPOSDITEM_HPP
 #define MPOSDITEM_HPP
 
-#include "stdafx.hpp"
 #include "quick/simplefboitem.hpp"
-#include "opengl/openglmisc.hpp"
-#include "videoimagepool.hpp"
 
+template<class T> class VideoImageCache;
 class MpOsdBitmap;
 
 class MpOsdItem : public SimpleFboItem {

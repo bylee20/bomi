@@ -12,8 +12,8 @@ public:
     auto hwdec() const -> bool { return supports(DecoderDevice::GPU); }
     auto swdec() const -> bool { return supports(DecoderDevice::CPU); }
     auto doubler() const -> bool { return m_doubler; }
-    auto supports(DeintDevice dev) const -> bool { return m_device & dev; }
-    auto supports(DecoderDevice dev) const -> bool { return m_decoder & dev; }
+    auto supports(DeintDevice dev) const -> bool { return m_devices.contains(dev); }
+    auto supports(DecoderDevice dev) const -> bool { return m_decoders.contains(dev); }
     auto isAvailable() const -> bool;
     auto toString() const -> QString;
     static auto fromString(const QString &text) -> DeintCaps;
@@ -22,13 +22,14 @@ public:
 private:
     friend class DeintWidget;
     DeintMethod m_method = DeintMethod::None;
-    int m_decoder = 0, m_device = 0;
+    DecoderDevices m_decoders = 0;
+    DeintDevices m_devices = 0;
     bool m_doubler = false;
 };
 
 inline auto DeintCaps::isAvailable() const -> bool
 {
-    return m_method != DeintMethod::None && m_device != 0 && m_decoder != 0;
+    return m_method != DeintMethod::None && m_devices != 0 && m_decoders != 0;
 }
 
 #endif // DEINTCAPS_HPP

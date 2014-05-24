@@ -1,8 +1,6 @@
 #ifndef SUBTITLERENDERINGTHREAD_HPP
 #define SUBTITLERENDERINGTHREAD_HPP
 
-#include "stdafx.hpp"
-#include "subtitle.hpp"
 #include "subtitledrawer.hpp"
 #include "subtitlemodel.hpp"
 

@@ -11,8 +11,9 @@ public:
     OpenMediaFolderDialog(QWidget *parent = nullptr);
     ~OpenMediaFolderDialog();
     auto playlist() const -> Playlist;
-    auto setFolder(const QString &folder) -> void;
-    auto exec() -> int;
+    auto exec() -> int final;
+    auto setCheckedTypes(const QString &types) -> void;
+    auto checkedTypes() const -> QString;
 private:
     auto updateList() -> void;
     auto checkList(bool checked) -> void;

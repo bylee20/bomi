@@ -1,8 +1,6 @@
 #include "openmediafolderdialog.hpp"
 #include "ui_openmediafolderdialog.h"
 #include "player/playlist.hpp"
-#include "player/appstate.hpp"
-#include "player/info.hpp"
 
 enum ListRole {
     Type = Qt::UserRole + 1, Path
@@ -17,21 +15,41 @@ struct OpenMediaFolderDialog::Data {
 OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent) :
 QDialog(parent), d(new Data) {
     d->ui.setupUi(this);
-    const auto types = AppState::get().open_folder_types;
-    d->ui.videos->setChecked(types.contains('v'));
-    d->ui.images->setChecked(types.contains('i'));
-    d->ui.audios->setChecked(types.contains('a'));
-    connect(d->ui.get, &QAbstractButton::clicked, this, &OpenMediaFolderDialog::getFolder);
-    connect(d->ui.videos, &QAbstractButton::toggled, this, &OpenMediaFolderDialog::checkList);
-    connect(d->ui.audios, &QAbstractButton::toggled, this, &OpenMediaFolderDialog::checkList);
-    connect(d->ui.images, &QAbstractButton::toggled, this, &OpenMediaFolderDialog::checkList);
-    connect(d->ui.list, &QListWidget::itemChanged, this, &OpenMediaFolderDialog::updateOpenButton);
+    connect(d->ui.get, &QAbstractButton::clicked,
+            this, &OpenMediaFolderDialog::getFolder);
+    connect(d->ui.videos, &QAbstractButton::toggled,
+            this, &OpenMediaFolderDialog::checkList);
+    connect(d->ui.audios, &QAbstractButton::toggled,
+            this, &OpenMediaFolderDialog::checkList);
+    connect(d->ui.images, &QAbstractButton::toggled,
+            this, &OpenMediaFolderDialog::checkList);
+    connect(d->ui.list, &QListWidget::itemChanged,
+            this, &OpenMediaFolderDialog::updateOpenButton);
     d->ui.dbb->button(QDialogButtonBox::Open)->setEnabled(false);
     adjustSize();
 }
 
 OpenMediaFolderDialog::~OpenMediaFolderDialog() {
     delete d;
+}
+
+auto OpenMediaFolderDialog::setCheckedTypes(const QString &types) -> void
+{
+    d->ui.videos->setChecked(types.contains('v'));
+    d->ui.images->setChecked(types.contains('i'));
+    d->ui.audios->setChecked(types.contains('a'));
+}
+
+auto OpenMediaFolderDialog::checkedTypes() const -> QString
+{
+    QString types;
+    if (d->ui.videos->isChecked())
+        types.append('v');
+    if (d->ui.audios->isChecked())
+        types.append('a');
+    if (d->ui.images->isChecked())
+        types.append('i');
+    return types;
 }
 
 auto OpenMediaFolderDialog::updateOpenButton() -> void
@@ -47,14 +65,6 @@ auto OpenMediaFolderDialog::updateOpenButton() -> void
     }
 }
 
-auto OpenMediaFolderDialog::setFolder(const QString &folder) -> void
-{
-    if (d->ui.folder->text() != folder) {
-        d->ui.folder->setText(folder);
-        updateList();
-    }
-}
-
 auto OpenMediaFolderDialog::checkList(bool checked) -> void
 {
     QCheckBox *box = qobject_cast<QCheckBox*>(sender());
@@ -63,14 +73,6 @@ auto OpenMediaFolderDialog::checkList(bool checked) -> void
         if (item->data(Type).value<QCheckBox*>() == box)
             item->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
     }
-    QString types;
-    if (d->ui.videos->isChecked())
-        types.append('v');
-    if (d->ui.audios->isChecked())
-        types.append('a');
-    if (d->ui.images->isChecked())
-        types.append('i');
-    AppState::get().open_folder_types = types;
 }
 
 auto OpenMediaFolderDialog::updateList() -> void
@@ -79,18 +81,18 @@ auto OpenMediaFolderDialog::updateList() -> void
     if (!folder.isEmpty()) {
         d->ui.list->clear();
         QDir dir(folder);
-        static const auto filters = Info::mediaNameFilter();
-        const QFileInfoList files = dir.entryInfoList(filters, QDir::Files, QDir::Name);
+        static const auto filters = _ToNameFilter(MediaExt);
+        const auto files = dir.entryInfoList(filters, QDir::Files, QDir::Name);
         for (int i=0; i<files.size(); ++i) {
             auto item = new QListWidgetItem(files[i].fileName(), d->ui.list);
             QCheckBox *box = nullptr;
             item->setCheckState(Qt::Unchecked);
             const QString suffix = files[i].suffix();
-            if (Info::videoExt().contains(suffix, Qt::CaseInsensitive))
+            if (_IsSuffixOf(VideoExt, suffix))
                 box = d->ui.videos;
-            else if (Info::videoExt().contains(suffix, Qt::CaseInsensitive))
+            else if (_IsSuffixOf(AudioExt, suffix))
                 box = d->ui.audios;
-            else if (Info::readableImageExt().contains(suffix, Qt::CaseInsensitive))
+            else if (_IsSuffixOf(ImageExt, suffix))
                 box = d->ui.images;
             Q_ASSERT(box);
             item->setIcon(d->icons.icon(files[i]));
@@ -115,12 +117,12 @@ auto OpenMediaFolderDialog::playlist() const -> Playlist
 
 auto OpenMediaFolderDialog::getFolder() -> void
 {
-    auto &as = AppState::get();
-    const QString dir = QFileInfo(as.open_last_folder).absolutePath();
-    const QString folder = QFileDialog::getExistingDirectory(this, tr("Open Folder"),  dir);
+    const auto folder = _GetOpenDir(this, tr("Open Folder"));
     if (!folder.isEmpty()) {
-        as.open_last_folder = folder;
-        setFolder(folder);
+        if (d->ui.folder->text() != folder) {
+            d->ui.folder->setText(folder);
+            updateList();
+        }
     }
 }
 

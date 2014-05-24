@@ -1,6 +1,7 @@
 #include "videooutput.hpp"
 #include "deintoption.hpp"
 #include "videorendereritem.hpp"
+#include "videoformat.hpp"
 #include "videoframeshader.hpp"
 #include "mposdbitmap.hpp"
 #include "videoframebufferobject.hpp"
@@ -10,13 +11,10 @@
 #include "misc/log.hpp"
 #include <deque>
 extern "C" {
-#include <sub/sd.h>
 #include <sub/osd_state.h>
-#include <player/core.h>
 #include <video/hwdec.h>
 #include <video/out/vo.h>
 #include <video/vfcap.h>
-#include <options/m_option.h>
 }
 
 static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
@@ -54,7 +52,14 @@ public:
 class VideoFramebufferObjectPool
         : public VideoImagePool<VideoFramebufferObject> {
     using Cache = VideoFramebufferObjectCache;
+    OGL::TextureFormat m_fboFormat = OGL::RGBA8_UNorm;
 public:
+    VideoFramebufferObjectPool()
+    {
+        auto formats = OGL::availableFrambebufferFormats();
+        if (formats.contains(OGL::RGBA16_UNorm))
+            m_fboFormat = OGL::RGBA16_UNorm;
+    }
     auto get(const VideoFormat &format, double pts) -> Cache
     {
         if (format.isEmpty())
@@ -66,8 +71,7 @@ public:
         data.m_displaySize = format.displaySize();
         data.m_pts = pts;
         if (!data.m_fbo || data.m_fbo->size() != format.size())
-            _Renew(data.m_fbo, format.size(),
-                   OpenGLCompat::framebufferObjectTextureFormat());
+            _Renew(data.m_fbo, format.size(), m_fboFormat);
         return cache;
     }
 };
@@ -276,7 +280,7 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
     const auto desc = mp_imgfmt_get_desc(d->params.imgfmt);
     if (_Change(d->format, VideoFormat(d->params, desc))) {
         d->gl->makeCurrent();
-        d->shader->setFormat(d->format);
+        d->shader->setFormat(d->params);
         d->gl->doneCurrent();
         emit v->formatChanged(d->format);
     }

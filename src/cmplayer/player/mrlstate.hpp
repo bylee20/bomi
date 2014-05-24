@@ -16,7 +16,6 @@
 #include "enum/videoeffect.hpp"
 #include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
-#include <tuple>
 
 class MrlStateProperty;
 static inline bool operator == (const QMetaProperty &lhs, const QMetaProperty &rhs) {
@@ -108,7 +107,7 @@ signals:
     void videoDeinterlacingChanged();
     void videoChromaUpscalerChanged();
     void videoDitheringChanged();
-    void videoColorChanged();
+    void videoColorChanged(const VideoColor &color);
     void videoOffsetChanged();
     void videoVerticalAlignmentChanged();
     void videoHorizontalAlignmentChanged();

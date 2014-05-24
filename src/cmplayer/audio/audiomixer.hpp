@@ -2,6 +2,7 @@
 #define AUDIOMIXER_HPP
 
 #include "channelmanipulation.hpp"
+#include "channellayoutmap.hpp"
 #include "audionormalizeroption.hpp"
 #include "enum/clippingmethod.hpp"
 extern "C" {

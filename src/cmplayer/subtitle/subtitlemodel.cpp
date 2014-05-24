@@ -94,7 +94,7 @@ auto SubCompModel::setCurrentCaption(const SubCapt *caption) -> void
     }
 }
 
-/**********************************************************************/
+/******************************************************************************/
 
 struct SubCompView::Data {
     SubCompModel *model;

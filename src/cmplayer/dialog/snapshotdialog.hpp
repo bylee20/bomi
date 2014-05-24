@@ -10,13 +10,13 @@ class SnapshotDialog : public QDialog {
 public:
     SnapshotDialog(QWidget *parent = 0);
     ~SnapshotDialog();
-    auto setVideoRenderer(const VideoRendererItem *video) -> void;
-    auto setSubtitleRenderer(const SubtitleRendererItem *subtitle) -> void;
     auto take() -> void;
+    auto setImage(const QImage &video, const QImage &subtitle,
+                  const QRectF &subRect) -> void;
+    auto clear() -> void;
+signals:
+    void request();
 private:
-    auto updateSnapshot(bool sub) -> void;
-    auto updateSubtitleImage() -> void;
-    auto redraw() -> void;
     struct Data;
     Data *d;
 };

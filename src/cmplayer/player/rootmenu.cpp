@@ -1,74 +1,32 @@
 #include "rootmenu.hpp"
-#include "pref.hpp"
 #include "video/videocolor.hpp"
-#include "video/videorendereritem.hpp"
 #include "misc/log.hpp"
-#include "misc/record.hpp"
-#include "misc/stepaction.hpp"
+#include "misc/stepactionpair.hpp"
+#include "enum/deintmode.hpp"
+#include "enum/dithering.hpp"
 #include "enum/movetoward.hpp"
 #include "enum/staysontop.hpp"
-#include "enum/adjustcolor.hpp"
+#include "enum/videoratio.hpp"
+#include "enum/colorrange.hpp"
+#include "enum/videoeffect.hpp"
+#include "enum/channellayout.hpp"
+#include "enum/subtitledisplay.hpp"
+#include "enum/interpolatortype.hpp"
+#include "enum/verticalalignment.hpp"
+#include "enum/horizontalalignment.hpp"
 
 DECLARE_LOG_CONTEXT(Menu)
 
-template<class N>
-SIA setActionAttr(QAction *act, const QVariant &data
-        , const QString &text, N textValue, bool sign = true) -> void
+auto root_menu_execute(const QString &longId, const QString &argument) -> bool
 {
-    act->setData(data);
-    act->setText(text.arg(sign ? _NS(textValue) : _N(textValue)));
-}
-
-static auto addStepActions(Menu &menu, int min, int def, int max,
-                           qreal textRate, bool reset = true) -> void
-{
-    const QString g = _L(ChangeValueInfo::typeKey());
-    for (auto &item : ChangeValueInfo::items()) {
-        const bool isReset = item.key == _L("reset");
-        if (isReset && !reset)
-            continue;
-        auto action = new StepAction(item.value);
-        action->setRange(min, def, max);
-        action->setTextRate(textRate);
-        menu.addActionToGroup(action, item.key, g);
-        if (isReset)
-            menu.addSeparator();
-    }
-}
-
-static inline auto addStepActions(Menu &menu, int min, int def, int max,
-                                  bool reset = true) -> void
-{
-    addStepActions(menu, min, def, max, -1.0, reset);
-}
-
-static inline auto addStepActions(Menu &menu, int def, qreal textRate,
-                                  bool reset = true) -> void
-{
-    const QString g = _L(ChangeValueInfo::typeKey());
-    for (auto &item : ChangeValueInfo::items()) {
-        const bool isReset = item.key == _L("reset");
-        if (isReset && !reset)
-            continue;
-        auto action = new StepAction(item.value);
-        action->setRange(_Min<int>(), def, _Max<int>());
-        action->setTextRate(textRate);
-        menu.addActionToGroup(action, item.key, g);
-        if (isReset)
-            menu.addSeparator();
-    }
-}
-
-static inline auto addStepActions(Menu &m, int def, bool reset = true) -> void
-{
-    addStepActions(m, def, -1.0, reset);
+    return RootMenu::execute(longId, argument);
 }
 
 template<class T>
 auto addEnumAction(Menu &menu, T t, const char *key, bool checkable = false,
                    const char *group = "") -> EnumAction<T>*
 {
-    static_assert(std::is_enum<T>::value, "wrong type");
+    static_assert(std::is_enum_class<T>::value, "wrong type");
     auto action = _NewEnumAction<T>(t);
     action->setCheckable(checkable);
     menu.addActionToGroup(action, key, group);
@@ -167,14 +125,6 @@ auto updateEnumActions(Menu &menu) -> void
     }
 }
 
-auto updateStepActions(Menu &menu, const QString &text, int step) -> void
-{
-    for (auto a : menu.g(_L(EnumInfo<ChangeValue>::typeKey()))->actions()) {
-        auto action = static_cast<StepAction*>(a);
-        action->updateStep(text, step);
-    }
-}
-
 template<class T>
 auto updateEnumMenu(Menu &parent) -> void
 {
@@ -183,6 +133,36 @@ auto updateEnumMenu(Menu &parent) -> void
 }
 
 RootMenu *RootMenu::obj = nullptr;
+
+static auto addStepPair(Menu &menu, const QString &inc, const QString &dec,
+                        const QString &pair, int min, int def, int max,
+                        const QString &g = _L("")) -> StepActionPair*
+{
+    auto p = menu.addStepActionPair(inc, dec, pair, g);
+    p->setRange(min, def, max); return p;
+}
+
+static auto addStepPair(Menu &menu, const QString &inc,
+                        const QString &dec, const QString &pair,
+                        const QString &g = _L("")) -> StepActionPair*
+{ return addStepPair(menu, inc, dec, pair, _Min<int>(), 0, _Max<int>(), g); }
+
+static auto addStepPair(Menu &menu, int min, int def, int max,
+                        const QString &g = _L("")) -> StepActionPair*
+{ return addStepPair(menu, "increase", "decrease", "", min, def, max, g); }
+
+static auto addStepReset(Menu &menu, int min, int def, int max,
+                         const QString &g = _L("")) -> StepActionPair*
+{
+    auto reset = new StepAction(ChangeValue::Reset);
+    menu.addActionToGroup(reset, _L("reset"), g);
+    menu.addSeparator();
+    return addStepPair(menu, min, def, max, g);
+}
+
+static auto addStepReset(Menu &menu, const QString &g = _L("")) -> StepActionPair*
+{ return addStepReset(menu, _Min<int>(), 0, _Max<int>(), g); }
+
 
 RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     Q_ASSERT(obj == nullptr);
@@ -198,8 +178,8 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     open.addAction(_L("bluray"));
     open.addSeparator();
     auto &recent = *open.addMenu(_L("recent"));
-        recent.addSeparator();
-        recent.addAction(_L("clear"));
+    recent.addSeparator();
+    recent.addAction(_L("clear"));
 
     auto &play = *addMenu(_L("play"));
     play.addAction(_L("pause"));
@@ -208,27 +188,29 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     play.addAction(_L("prev"));
     play.addAction(_L("next"));
     play.addSeparator();
-    addStepActions(*play.addMenu("speed"), 10, 100, 1000);
+    ::addStepReset(*play.addMenu("speed"), 10, 100, 1000);
     auto &repeat = *play.addMenu(_L("repeat"));
-        repeat.addActionToGroup(_L("range"), false)->setData(int('r'));
-        repeat.addActionToGroup(_L("subtitle"), false)->setData(int('s'));
-        repeat.addActionToGroup(_L("quit"), false)->setData(int('q'));
+    repeat.addActionToGroup(_L("range"), false)->setData(int('r'));
+    repeat.addActionToGroup(_L("subtitle"), false)->setData(int('s'));
+    repeat.addActionToGroup(_L("quit"), false)->setData(int('q'));
     play.addSeparator();
     play.addAction(_L("disc-menu"));
     auto &seek = *play.addMenu(_L("seek"));
-        seek.addActionToGroup(_L("forward1"), false, _L("relative"));
-        seek.addActionToGroup(_L("forward2"), false, _L("relative"));
-        seek.addActionToGroup(_L("forward3"), false, _L("relative"));
-        seek.addActionToGroup(_L("backward1"), false, _L("relative"));
-        seek.addActionToGroup(_L("backward2"), false, _L("relative"));
-        seek.addActionToGroup(_L("backward3"), false, _L("relative"));
-        seek.addSeparator();
-        seek.addActionToGroup(_L("prev-frame"), false, _L("frame"))->setData(-1);
-        seek.addActionToGroup(_L("next-frame"), false, _L("frame"))->setData(1);
-        seek.addSeparator();
-        seek.addActionToGroup(_L("prev-subtitle"), false, _L("subtitle"))->setData(-1);
-        seek.addActionToGroup(_L("current-subtitle"), false, _L("subtitle"))->setData(0);
-        seek.addActionToGroup(_L("next-subtitle"), false, _L("subtitle"))->setData(1);
+    const QString forward("forward%1"), backward("backward%1");
+    const QString seekStep("seek%1");
+    for (int i = 1; i <= 3; ++i) {
+        auto pair = addStepPair(seek, forward.arg(i), backward.arg(i),
+                                seekStep.arg(i), _L("relative"));
+        pair->increase()->setTextRate(0.001);
+        pair->decrease()->setTextRate(-0.001);
+    }
+    seek.addSeparator();
+    seek.addActionToGroup(_L("prev-frame"), false, _L("frame"))->setData(-1);
+    seek.addActionToGroup(_L("next-frame"), false, _L("frame"))->setData(1);
+    seek.addSeparator();
+    seek.addActionToGroup(_L("prev-subtitle"), false, _L("subtitle"))->setData(-1);
+    seek.addActionToGroup(_L("current-subtitle"), false, _L("subtitle"))->setData(0);
+    seek.addActionToGroup(_L("next-subtitle"), false, _L("subtitle"))->setData(1);
     play.addMenu(_L("title"))->setEnabled(false);
     auto &chapter = *play.addMenu(_L("chapter"));
     chapter.setEnabled(false);
@@ -239,23 +221,24 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
 
     auto &subtitle = *addMenu(_L("subtitle"));
     auto &spu = *subtitle.addMenu(_L("track"));
-        spu.addGroup("internal")->setExclusive(false);
-        spu.addGroup("external")->setExclusive(false);
-        spu.addAction(_L("open"));
-        spu.addAction(_L("auto-load"));
-        spu.addAction(_L("reload"));
-        spu.addAction(_L("clear"));
-        spu.addSeparator();
-        spu.addAction(_L("next"));
-        spu.addAction(_L("all"));
-        spu.addAction(_L("hide"), true);
-        spu.addSeparator();
+    spu.addGroup("internal")->setExclusive(false);
+    spu.addGroup("external")->setExclusive(false);
+    spu.addAction(_L("open"));
+    spu.addAction(_L("auto-load"));
+    spu.addAction(_L("reload"));
+    spu.addAction(_L("clear"));
+    spu.addSeparator();
+    spu.addAction(_L("next"));
+    spu.addAction(_L("all"));
+    spu.addAction(_L("hide"), true);
+    spu.addSeparator();
     subtitle.addSeparator();
     addEnumMenuCheckable<SubtitleDisplay>(subtitle, true);
-    addEnumActionsCheckable(*subtitle.addMenu("align"), {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
+    addEnumActionsCheckable(*subtitle.addMenu("align"),
+        {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
     subtitle.addSeparator();
-    addStepActions(*subtitle.addMenu("position"), 0, 100, 100);
-    addStepActions(*subtitle.addMenu("sync"), 0, 1e-3);
+    addStepReset(*subtitle.addMenu("position"), 0, 100, 100);
+    addStepReset(*subtitle.addMenu("sync"))->setTextRate(1e-3);
 
     auto &video = *addMenu(_L("video"));
     video.addMenu(_L("track"))->setEnabled(false);
@@ -291,7 +274,13 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     effect.addSeparator();
     addEnumAction(effect, VideoEffect::Disable, "disable", true);
 
-    addEnumActions<AdjustColor>(*video.addMenu("color"));
+    auto &color = *video.addMenu("color");
+    color.addActionToGroup(_L("reset"));
+    color.addSeparator();
+    VideoColor::for_type([&] (VideoColor::Type type) {
+        const auto str = VideoColor::name(type);
+        addStepPair(color, str % _L("+"), str % _L("-"), str, -100, 0, 100, str);
+    });
 
     auto &audio = *addMenu(_L("audio"));
     auto &track = *audio.addMenu(_L("track"));
@@ -299,14 +288,13 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     track.g()->setExclusive(true);
     track.addAction(_L("next"));
     track.addSeparator();
-    addStepActions(*audio.addMenu("sync"), 0, 1e-3);
+    addStepReset(*audio.addMenu("sync"))->setTextRate(1e-3);
     audio.addSeparator();
     auto &volume = *audio.addMenu("volume");
     volume.addAction(_L("mute"), true);
     volume.addSeparator();
-    addStepActions(volume, 0, 100, 100, false);
-    auto &amp = *audio.addMenu("amp");
-    addStepActions(amp, 10, 100, 1000);
+    ::addStepPair(volume, 0, 100, 100);
+    addStepReset(*audio.addMenu("amp"), 10, 100, 1000);
     addEnumMenuCheckable<ChannelLayout>(audio, true);
     audio.addSeparator();
 
@@ -319,24 +307,24 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     tool.addAction(_L("undo"))->setShortcut(Qt::CTRL + Qt::Key_Z);
     tool.addAction(_L("redo"))->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
     tool.addSeparator();
-        auto &playlist = *tool.addMenu(_L("playlist"));
-        playlist.addAction(_L("toggle"))->setShortcut(Qt::Key_L);
-        playlist.addSeparator();
-        playlist.addAction(_L("open"));
-        playlist.addAction(_L("save"));
-        playlist.addAction(_L("clear"));
-        playlist.addSeparator();
-        playlist.addAction(_L("append-file"));
-        playlist.addAction(_L("append-url"));
-        playlist.addAction(_L("remove"));
-        playlist.addSeparator();
-        playlist.addAction(_L("move-up"));
-        playlist.addAction(_L("move-down"));
+    auto &playlist = *tool.addMenu(_L("playlist"));
+    playlist.addAction(_L("toggle"))->setShortcut(Qt::Key_L);
+    playlist.addSeparator();
+    playlist.addAction(_L("open"));
+    playlist.addAction(_L("save"));
+    playlist.addAction(_L("clear"));
+    playlist.addSeparator();
+    playlist.addAction(_L("append-file"));
+    playlist.addAction(_L("append-url"));
+    playlist.addAction(_L("remove"));
+    playlist.addSeparator();
+    playlist.addAction(_L("move-up"));
+    playlist.addAction(_L("move-down"));
 
     tool.addAction(_L("favorites"))->setVisible(false);
-        auto &history = *tool.addMenu(_L("history"));
-        history.addAction(_L("toggle"))->setShortcut(Qt::Key_C);
-        history.addAction(_L("clear"));
+    auto &history = *tool.addMenu(_L("history"));
+    history.addAction(_L("toggle"))->setShortcut(Qt::Key_C);
+    history.addAction(_L("clear"));
 
     tool.addAction(_L("subtitle"))->setShortcut(Qt::Key_V);
     tool.addAction(_L("find-subtitle"));
@@ -432,7 +420,7 @@ auto RootMenu::shortcuts() const -> Shortcuts
     return keys;
 }
 
-auto RootMenu::update(const Pref &p) -> void
+auto RootMenu::retranslate() -> void
 {
     auto &root = *this;
 
@@ -454,8 +442,13 @@ auto RootMenu::update(const Pref &p) -> void
     play.a("next", tr("Play Next"));
     play.a("disc-menu", tr("Disc Menu"));
 
-    auto &speed = play("speed", tr("Playback Speed"));
-    updateStepActions(speed, "%1%", p.speed_step);
+    auto translateStepMenu = [] (Menu &menu, const QString &format) -> void
+    {
+        const auto g = menu.g(_L(EnumInfo<ChangeValue>::typeKey()));
+        StepAction::setFormat(g->actions(), format);
+    };
+
+    translateStepMenu(play("speed", tr("Playback Speed")), "%1%");
 
     auto &repeat = play("repeat", tr("A-B Repeat"));
     repeat.a("range", tr("Set Range to Current Time"));
@@ -463,14 +456,12 @@ auto RootMenu::update(const Pref &p) -> void
     repeat.a("quit", tr("Quit"));
 
     auto &seek = play("seek", tr("Seek"));
-    const auto forward = tr("Forward %1sec");
-    setActionAttr(seek["forward1"], p.seek_step1, forward, p.seek_step1*0.001, false);
-    setActionAttr(seek["forward2"], p.seek_step2, forward, p.seek_step2*0.001, false);
-    setActionAttr(seek["forward3"], p.seek_step3, forward, p.seek_step3*0.001, false);
-    const auto backward = tr("Backward %1sec");
-    setActionAttr(seek["backward1"], -p.seek_step1, backward, p.seek_step1*0.001, false);
-    setActionAttr(seek["backward2"], -p.seek_step2, backward, p.seek_step2*0.001, false);
-    setActionAttr(seek["backward3"], -p.seek_step3, backward, p.seek_step3*0.001, false);
+    auto translateSeekAction = [&] (const char *prefix, const QString &format) {
+        for (int i=1; i<=3; ++i)
+            static_cast<StepAction*>(seek[_L(prefix)%_N(i)])->setFormat(format);
+    };
+    translateSeekAction("forward",  tr("Forward %1sec"));
+    translateSeekAction("backward", tr("Backward %1sec"));
 
     seek.a("prev-frame", tr("Previous Frame"));
     seek.a("next-frame", tr("Next Frame"));
@@ -497,8 +488,8 @@ auto RootMenu::update(const Pref &p) -> void
 
     updateEnumMenu<SubtitleDisplay>(sub);
     updateEnumActions<VerticalAlignment>(sub("align", tr("Subtitle Alignment")));
-    updateStepActions(sub("position", tr("Subtitle Position")), "%1%", p.sub_pos_step);
-    updateStepActions(sub("sync", tr("Subtitle Sync")), tr("%1sec"), p.sub_sync_step);
+    translateStepMenu(sub("position", tr("Subtitle Position")), "%1%");
+    translateStepMenu(sub("sync", tr("Subtitle Sync")), tr("%1sec"));
 
     auto &video = root("video", tr("Video"));
     video("track", tr("Video Track"));
@@ -517,8 +508,7 @@ auto RootMenu::update(const Pref &p) -> void
     updateEnumMenu<Dithering>(video);
     updateEnumMenu<DeintMode>(video);
 
-    auto &effect = video("filter");
-    effect.setTitle(tr("Filter"));
+    auto &effect = video("filter", tr("Filter"));
     effect.a("flip-v", tr("Flip Vertically"));
     effect.a("flip-h", tr("Flip Horizontally"));
     effect.a("blur", tr("Blur"));
@@ -527,24 +517,22 @@ auto RootMenu::update(const Pref &p) -> void
     effect.a("invert", tr("Invert Color"));
     effect.a("disable", tr("Disable Filters"));
 
-    auto updateVideoColorAdjust = [&video] (Menu &color, int step) {
-        auto actions = color.g(AdjustColorInfo::typeKey())->actions();
-        for (int i=0; i<actions.size(); ++i) {
-            const auto action = static_cast<EnumAction<AdjustColor>*>(actions[i]);
-            const auto color = action->data() * step;
-            action->setText(color.getText(color & VideoColor()));
-        }
-    };
-    updateVideoColorAdjust(video("color", tr("Adjust Color")), p.brightness_step);
+    auto &color = video("color", tr("Adjust Color"));
+    color.a("reset", VideoColor::formatText(VideoColor::TypeMax));
+    VideoColor::for_type([&] (VideoColor::Type type) {
+        const auto prefix = VideoColor::name(type);
+        const auto format = VideoColor::formatText(type);
+        StepAction::setFormat(color.g(prefix)->actions(), format);
+    });
 
     video.a("snapshot", tr("Take Snapshot"));
 
     auto &audio = root("audio", tr("Audio"));
     audio("track", tr("Audio Track")).a("next", tr("Select Next"));
-    updateStepActions(audio("sync", tr("Audio Sync")), tr("%1sec"), p.audio_sync_step);
+    translateStepMenu(audio("sync", tr("Audio Sync")), tr("%1sec"));
     audio("volume").a("mute", tr("Mute"));
-    updateStepActions(audio("volume", tr("Volume")), "%1%", p.volume_step);
-    updateStepActions(audio("amp", tr("Amp")), "%1%", p.amp_step);
+    translateStepMenu(audio("volume", tr("Volume")), "%1%");
+    translateStepMenu(audio("amp", tr("Amp")), "%1%");
     updateEnumMenu<ChannelLayout>(audio);
     audio.a("normalizer", tr("Volume Normalizer"));
     audio.a("tempo-scaler", tr("Tempo Scaler"));
@@ -553,22 +541,22 @@ auto RootMenu::update(const Pref &p) -> void
     tool.a("undo", tr("Undo"));
     tool.a("redo", tr("Redo"));
     tool.setTitle(tr("Tools"));
-        auto &playlist = tool("playlist");
-        playlist.setTitle(tr("Playlist"));
-        playlist.a("toggle", tr("Show/Hide"));
-        playlist.a("open", tr("Open"));
-        playlist.a("save", tr("Save"));
-        playlist.a("clear", tr("Clear"));
-        playlist.a("append-file", tr("Append File"));
-        playlist.a("append-url", tr("Append URL"));
-        playlist.a("remove", tr("Remove"));
-        playlist.a("move-up", tr("Move Up"));
-        playlist.a("move-down", tr("Move Down"));
+    auto &playlist = tool("playlist");
+    playlist.setTitle(tr("Playlist"));
+    playlist.a("toggle", tr("Show/Hide"));
+    playlist.a("open", tr("Open"));
+    playlist.a("save", tr("Save"));
+    playlist.a("clear", tr("Clear"));
+    playlist.a("append-file", tr("Append File"));
+    playlist.a("append-url", tr("Append URL"));
+    playlist.a("remove", tr("Remove"));
+    playlist.a("move-up", tr("Move Up"));
+    playlist.a("move-down", tr("Move Down"));
     tool.a("favorites", tr("Favorites"));
-        auto &history = tool("history");
-        history.setTitle(tr("History"));
-        history.a("toggle", tr("Show/Hide"));
-        history.a("clear", tr("Clear"));
+    auto &history = tool("history");
+    history.setTitle(tr("History"));
+    history.a("toggle", tr("Show/Hide"));
+    history.a("clear", tr("Clear"));
 
     tool.a("find-subtitle", tr("Find Subtitle"));
     tool.a("subtitle", tr("Subtitle View"));
@@ -590,8 +578,6 @@ auto RootMenu::update(const Pref &p) -> void
     help.setTitle(tr("Help"));
     help.a("about", tr("About %1").arg("CMPlayer"));
     root.a("exit", tr("Exit"));
-
-    setShortcuts(p.shortcuts);
 }
 
 auto RootMenu::fillKeyMap(Menu *menu) -> void

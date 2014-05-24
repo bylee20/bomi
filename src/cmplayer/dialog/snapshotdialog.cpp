@@ -1,36 +1,56 @@
 #include "snapshotdialog.hpp"
 #include "ui_snapshotdialog.h"
-#include "player/info.hpp"
-#include "subtitle/subtitlerendereritem.hpp"
-#include "video/videorendereritem.hpp"
 
 struct SnapshotDialog::Data {
+    SnapshotDialog *p = nullptr;
     Ui::SnapshotDialog ui;
-    const VideoRendererItem *video = nullptr;
-    const SubtitleRendererItem *subtitle = nullptr;
-    QImage image, sub;
+    QImage video, sub;
     QRectF subRect;
-    bool hasSubtitle = false;
+    auto updateSnapshot(bool showSub) -> void
+    {
+        if (video.isNull())
+            ui.viewer->setText(tr("Failed in getting a snapshot!"));
+        else {
+            auto pixmap = QPixmap::fromImage(video);
+            if (showSub && !sub.isNull()) {
+                QPainter painter(&pixmap);
+                painter.drawImage(subRect, sub);
+            }
+            ui.viewer->setImage(pixmap);
+        }
+        ui.save->setEnabled(!video.isNull());
+        if (!p->isVisible()) {
+            if (!video.isNull())
+                p->resize(video.size() + QSize(40, 60));
+            p->show();
+        }
+    }
 };
 
 SnapshotDialog::SnapshotDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
+    d->p = this;
     d->ui.setupUi(this);
-    connect(d->ui.zoomIn, &QAbstractButton::clicked, this, [this] () { d->ui.viewer->scale(1.25); });
-    connect(d->ui.zoomOut, &QAbstractButton::clicked, this, [this] () { d->ui.viewer->scale(0.8); });
-    connect(d->ui.original, &QAbstractButton::clicked, this, [this] () { d->ui.viewer->scale(1.0); });
+    connect(d->ui.zoomIn, &QAbstractButton::clicked,
+            this, [this] () { d->ui.viewer->scale(1.25); });
+    connect(d->ui.zoomOut, &QAbstractButton::clicked,
+            this, [this] () { d->ui.viewer->scale(0.8); });
+    connect(d->ui.original, &QAbstractButton::clicked,
+            this, [this] () { d->ui.viewer->scale(1.0); });
     connect(d->ui.take, &QAbstractButton::clicked, this, &SnapshotDialog::take);
-    connect(d->ui.subtitle, &QAbstractButton::toggled, this, &SnapshotDialog::updateSnapshot);
-    connect(d->ui.clip, &QAbstractButton::clicked, this, [this] () { qApp->clipboard()->setPixmap(d->ui.viewer->image()); });
+    connect(d->ui.subtitle, &QAbstractButton::toggled,
+            this, [this] (bool sub) { d->updateSnapshot(sub); });
+    connect(d->ui.clip, &QAbstractButton::clicked, this,
+            [this] () { qApp->clipboard()->setPixmap(d->ui.viewer->image()); });
     connect(d->ui.save, &QAbstractButton::clicked, this, [this] () {
-        const auto ext = Info::writableImageExt();
-        const QString fileName = _L("cmplayer-snapshot-") % QDateTime::currentDateTime().toString("yyyy-MM-dd-hh-mm-ss") % _L(".png");
-        QString file = _GetSaveFileName(this, tr("Save File"), fileName, Info::writableImageExtFilter());
-        if (!file.isEmpty()) {
-            if (!ext.contains(QFileInfo(file).suffix()))
-                file += ".png";
+        const auto time = QDateTime::currentDateTime();
+        const QString fileName = _L("cmplayer-snapshot-")
+                                 % time.toString("yyyy-MM-dd-hh-mm-ss")
+                                 % _L(".png");
+        const auto file = _GetSaveFileName(this, tr("Save File"),
+                                           fileName, ImageExt);
+        if (!file.isEmpty())
             d->ui.viewer->image().save(file);
-        }
     });
 }
 
@@ -38,63 +58,35 @@ SnapshotDialog::~SnapshotDialog() {
     delete d;
 }
 
-auto SnapshotDialog::setVideoRenderer(const VideoRendererItem *video) -> void
+auto SnapshotDialog::setImage(const QImage &video, const QImage &sub,
+                              const QRectF &subRect) -> void
 {
-    if (d->video)
-        disconnect(d->video, 0, this, 0);
-    if ((d->video = video))
-        connect(d->video, &VideoRendererItem::frameImageObtained, this, [this] (QImage image) {
-            const QImage frame = image;
-            if (frame.size() == d->video->sizeHint())
-                d->image = frame;
-            else {
-                d->image = QImage(d->video->sizeHint(), QImage::Format_ARGB32_Premultiplied);
-                QPainter painter(&d->image);
-                painter.setRenderHint(QPainter::SmoothPixmapTransform);
-                painter.drawImage(d->video->frameRect(d->image.rect()), frame);
-            }
-            updateSubtitleImage();
-            updateSnapshot(d->ui.subtitle->isChecked());
-            d->ui.take->setEnabled(true);
-        }, Qt::QueuedConnection);
-}
-
-auto SnapshotDialog::updateSubtitleImage() -> void
-{
-    d->hasSubtitle = false;
-    if (d->subtitle) {
-        d->sub = d->subtitle->draw(d->image.rect(), &d->subRect);
-        d->hasSubtitle = !d->sub.isNull();
+    if (video.isNull())
+        clear();
+    else {
+        d->video = video;
+        d->sub = sub;
+        d->subRect = subRect;
+        d->updateSnapshot(d->ui.subtitle->isChecked());
+        d->ui.take->setEnabled(true);
     }
 }
 
-auto SnapshotDialog::setSubtitleRenderer(const SubtitleRendererItem *subtitle) -> void
+auto SnapshotDialog::clear() -> void
 {
-    d->subtitle = subtitle;
-}
-
-auto SnapshotDialog::updateSnapshot(bool sub) -> void
-{
-    if (!d->video || d->image.isNull()) {
-        d->ui.viewer->setText(tr("Failed in getting a snapshot!"));
-    } else {
-        QPixmap pixmap = QPixmap::fromImage(d->image);
-        if (sub && d->hasSubtitle) {
-            QPainter painter(&pixmap);
-            painter.drawImage(d->subRect, d->sub);
-        }
-        d->ui.viewer->setImage(pixmap);
-    }
-    d->ui.save->setEnabled(!d->image.isNull());
+    d->video = d->sub = QImage();
+    d->subRect = QRectF();
+    d->ui.take->setEnabled(true);
+    d->updateSnapshot(false);
 }
 
 auto SnapshotDialog::take() -> void
 {
-    if (!d->video || !d->video->hasFrame())
-        return;
     d->ui.take->setEnabled(false);
-    d->video->requestFrameImage();
+    emit request();
 }
+
+/******************************************************************************/
 
 struct ImageViewer::Data {
     QLabel *label;

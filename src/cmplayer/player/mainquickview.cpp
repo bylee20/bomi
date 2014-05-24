@@ -151,3 +151,8 @@ auto MainQuickView::event(QEvent *event) -> bool
         return false;
     return true;
 }
+
+auto MainQuickView::topLevelItem() const -> QQuickItem*
+{
+    return m_top;
+}

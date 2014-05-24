@@ -1,7 +1,6 @@
 #ifndef RICHTEXTBLOCK_HPP
 #define RICHTEXTBLOCK_HPP
 
-#include "stdafx.hpp"
 #include "richtexthelper.hpp"
 
 struct RichTextBlock {

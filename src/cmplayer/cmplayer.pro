@@ -16,6 +16,8 @@ contains( DEFINES, CMPLAYER_RELEASE ) {
     macx:CONFIG += app_bundle
 } else:CONFIG -= release
 
+QMAKE_CXXFLAGS += -Wno-non-template-friend
+
 macx {
     QT += macextras
     CONFIG += sdk
@@ -102,7 +104,6 @@ HEADERS += \
 	quick/osdtheme.hpp \
 	quick/themeobject.hpp \
 	quick/globalqmlobject.hpp \
-	opengl/openglcompat.hpp \
 	opengl/interpolator.hpp \
 	opengl/openglmisc.hpp \
 	opengl/openglvertex.hpp \
@@ -136,7 +137,6 @@ HEADERS += \
 	widget/fontoptionwidget.hpp \
 	widget/menu.hpp \
 	widget/deintwidget.hpp \
-	enum/adjustcolor.hpp \
 	enum/audiodriver.hpp \
 	enum/changevalue.hpp \
 	enum/channellayout.hpp \
@@ -154,7 +154,6 @@ HEADERS += \
 	enum/keymodifier.hpp \
 	enum/movetoward.hpp \
 	enum/osdscalepolicy.hpp \
-	enum/playlistbehaviorwhenopenmedia.hpp \
 	enum/seekingstep.hpp \
 	enum/speakerid.hpp \
 	enum/staysontop.hpp \
@@ -183,7 +182,6 @@ HEADERS += \
 	player/app.hpp \
 	player/mrl.hpp \
 	player/pref.hpp \
-	player/info.hpp \
 	player/skin.hpp \
 	player/appstate.hpp \
 	player/playlist.hpp \
@@ -200,7 +198,15 @@ HEADERS += \
 	player/mrlstate_old.hpp \
 	player/historymodel.hpp \
 	player/playlistmodel.hpp \
-	player/mainquickview.hpp
+	player/mainquickview.hpp \
+    audio/channellayoutmap.hpp \
+    player/openmediainfo.hpp \
+    enum/openmediabehavior.hpp \
+    misc/json.hpp \
+    misc/stepactionpair.hpp \
+    opengl/opengltexturetransferinfo.hpp \
+    opengl/opengllogger.hpp \
+    enum/enumflags.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -261,7 +267,6 @@ SOURCES += \
 	quick/osdtheme.cpp \
 	quick/themeobject.cpp \
 	quick/globalqmlobject.cpp \
-	opengl/openglcompat.cpp \
 	opengl/interpolator.cpp \
 	opengl/openglmisc.cpp \
 	opengl/openglvertex.cpp \
@@ -295,7 +300,6 @@ SOURCES += \
 	widget/fontoptionwidget.cpp \
 	widget/menu.cpp \
 	widget/deintwidget.cpp \
-	enum/adjustcolor.cpp \
 	enum/audiodriver.cpp \
 	enum/changevalue.cpp \
 	enum/channellayout.cpp \
@@ -313,7 +317,6 @@ SOURCES += \
 	enum/keymodifier.cpp \
 	enum/movetoward.cpp \
 	enum/osdscalepolicy.cpp \
-	enum/playlistbehaviorwhenopenmedia.cpp \
 	enum/seekingstep.cpp \
 	enum/speakerid.cpp \
 	enum/staysontop.cpp \
@@ -342,7 +345,6 @@ SOURCES += \
 	player/mrl.cpp \
 	player/translator.cpp \
 	player/pref.cpp \
-	player/info.cpp \
 	player/abrepeater.cpp \
 	player/playlist.cpp \
 	player/playlistmodel.cpp \
@@ -357,7 +359,14 @@ SOURCES += \
 	player/historymodel.cpp \
 	player/mrlstate_old.cpp \
 	player/mpv_helper.cpp \
-	player/mainquickview.cpp
+	player/mainquickview.cpp \
+    audio/channellayoutmap.cpp \
+    player/openmediainfo.cpp \
+    enum/openmediabehavior.cpp \
+    misc/json.cpp \
+    misc/stepactionpair.cpp \
+    opengl/opengltexturetransferinfo.cpp \
+    opengl/opengllogger.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

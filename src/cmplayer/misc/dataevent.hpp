@@ -2,7 +2,6 @@
 #define DATAEVENT_HPP
 
 #include "stdafx.hpp"
-#include <tuple>
 
 template<class... Args>
 class DataEvent : public QEvent {

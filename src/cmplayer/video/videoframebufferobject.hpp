@@ -2,8 +2,10 @@
 #define VIDEOFRAMEBUFFEROBJECT_HPP
 
 #include "videoimagepool.hpp"
-#include "videoformat.hpp"
 #include "opengl/openglframebufferobject.hpp"
+extern "C" {
+#include <common/common.h>
+}
 
 class VideoFramebufferObject {
 public:

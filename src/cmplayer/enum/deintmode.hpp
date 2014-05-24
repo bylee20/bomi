@@ -11,31 +11,34 @@ enum class DeintMode : int {
 
 Q_DECLARE_METATYPE(DeintMode)
 
-inline auto operator == (DeintMode e, int i) -> bool { return (int)e == i; }
-inline auto operator != (DeintMode e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, DeintMode e) -> bool { return (int)e == i; }
-inline auto operator != (int i, DeintMode e) -> bool { return (int)e != i; }
-inline auto operator > (DeintMode e, int i) -> bool { return (int)e > i; }
-inline auto operator < (DeintMode e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (DeintMode e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (DeintMode e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, DeintMode e) -> bool { return i > (int)e; }
-inline auto operator < (int i, DeintMode e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, DeintMode e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, DeintMode e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (DeintMode e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (DeintMode e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, DeintMode e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, DeintMode e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (DeintMode e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (DeintMode e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (DeintMode e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (DeintMode e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, DeintMode e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, DeintMode e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, DeintMode e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, DeintMode e) -> bool { return i <= (int)e; }
 #if DEINTMODE_IS_FLAG
-Q_DECLARE_FLAGS(, DeintMode)
-Q_DECLARE_OPERATORS_FOR_FLAGS()
+#include "enumflags.hpp"
+using  = EnumFlags<DeintMode>;
+constexpr inline auto operator | (DeintMode e1, DeintMode e2) -> 
+{
+    return (::IntType(e1) | ::IntType(e2));
+}
+constexpr inline auto operator ~ (DeintMode e) -> EnumNot<DeintMode>
+{
+    return EnumNot<DeintMode>(e);
+}
+constexpr inline auto operator & (DeintMode lhs,  rhs) -> EnumAnd<DeintMode>
+{
+    return rhs & lhs;
+}
 Q_DECLARE_METATYPE()
-#else
-inline auto operator & (DeintMode e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, DeintMode e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, DeintMode e) -> int& { return i &= (int)e; }
-inline auto operator ~ (DeintMode e) -> int { return ~(int)e; }
-inline auto operator | (DeintMode e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, DeintMode e) -> int { return (int)e | i; }
-constexpr inline auto operator | (DeintMode e1, DeintMode e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, DeintMode e) -> int& { return i |= (int)e; }
 #endif
 
 template<>

@@ -1,8 +1,8 @@
 #include "mposditem.hpp"
 #include "mposdbitmap.hpp"
+#include "videoimagepool.hpp"
 #include "misc/dataevent.hpp"
 #include "opengl/openglvertex.hpp"
-#include "opengl/openglcompat.hpp"
 #include "opengl/opengltexturebinder.hpp"
 #include "opengl/openglframebufferobject.hpp"
 #include <deque>
@@ -31,7 +31,7 @@ struct MpOsdItem::Data {
         atlasSize = {};
         const auto tformat = format & MpOsdBitmap::Rgba ? OGL::BGRA
                                                         : OGL::OneComponent;
-        transfer = OpenGLCompat::transferInfo(tformat);
+        transfer = OpenGLTextureTransferInfo::get(tformat);
 
         QByteArray frag;
         if (format == MpOsdBitmap::Ass) {
@@ -81,7 +81,7 @@ struct MpOsdItem::Data {
     }
 
     void initializeAtlas(const MpOsdBitmap &osd) {
-        static const int max = OpenGLCompat::maximumTextureSize();
+        static const int max = OGL::maximumTextureSize();
         if (osd.sheet().width() > atlasSize.width() || osd.sheet().height() > atlasSize.height()) {
             if (osd.sheet().width() > atlasSize.width())
                 atlasSize.rwidth() = qMin<int>(_Aligned<4>(osd.sheet().width()*1.5), max);

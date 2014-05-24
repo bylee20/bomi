@@ -21,9 +21,7 @@ public:
     StaysOnTop win_stays_on_top = StaysOnTop::Playing;
 
     // misc
-    QString open_last_folder;
     QString open_folder_types = _L("vi");
-    QString open_last_file;
     QString open_url_enc;
     QStringList open_url_list;
     bool ask_system_tray = true;
@@ -33,7 +31,6 @@ public:
     static AppState &get() {
         static AppState obj; return obj;
     }
-    auto setOpen(const Mrl &mrl) -> void;
 signals:
     void winStaysOnTopChanged();
 private:

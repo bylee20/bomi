@@ -1,17 +1,13 @@
 #include "prefdialog.hpp"
 #include "shortcutdialog.hpp"
 #include "player/app.hpp"
-#include "player/info.hpp"
 #include "player/skin.hpp"
 #include "player/pref.hpp"
 #include "player/rootmenu.hpp"
+#include "player/mrlstate.hpp"
 #include "widget/deintwidget.hpp"
-#include "misc/trayicon.hpp"
 #include "misc/simplelistmodel.hpp"
-#include "video/hwacc.hpp"
-#include "video/hwacc_vaapi.hpp"
 #include "ui_prefdialog.h"
-#include <array>
 
 #ifdef None
 #undef None
@@ -41,24 +37,24 @@ public:
     {
         auto layout = new QVBoxLayout(this);
         start = new QCheckBox(tr("Start the playback"), this);
-        playlist = new EnumComboBox<PlaylistBehaviorWhenOpenMedia>(this);
+        playlist = new EnumComboBox<OpenMediaBehavior>(this);
         layout->addWidget(start);
         layout->addWidget(playlist);
         auto vbox = static_cast<QVBoxLayout*>(parent->layout());
         vbox->insertWidget(vbox->count()-1, this);
     }
-    auto setValue(const Pref::OpenMedia &open) -> void
+    auto setValue(const OpenMediaInfo &open) -> void
     {
         start->setChecked(open.start_playback);
-        playlist->setCurrentValue(open.playlist_behavior);
+        playlist->setCurrentValue(open.behavior);
     }
-    auto value() const -> Pref::OpenMedia
+    auto value() const -> OpenMediaInfo
     {
-        return Pref::OpenMedia(start->isChecked(), playlist->currentValue());
+        return OpenMediaInfo(start->isChecked(), playlist->currentValue());
     }
 private:
     QCheckBox *start;
-    EnumComboBox<PlaylistBehaviorWhenOpenMedia> *playlist;
+    EnumComboBox<OpenMediaBehavior> *playlist;
 };
 
 class PrefDialog::MenuTreeItem : public QTreeWidgetItem {
@@ -376,7 +372,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.deint_desc->setText(DeintWidget::informations());
 
     d->ui.sub_ext->addItem(QString(), QString());
-    d->ui.sub_ext->addItemTextData(Info::subtitleExt());
+    d->ui.sub_ext->addItemTextData(_ExtList(SubtitleExt));
     d->ui.window_style->addItemTextData(cApp.availableStyleNames());
 
     d->shortcuts = new QButtonGroup(this);
@@ -515,8 +511,9 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     d->retranslate();
     d->ui.restore_properties->setModel(&d->properties);
-    if (!TrayIcon::isAvailable())
-        d->ui.system_tray_group->hide();
+#ifdef Q_OS_MAC
+    d->ui.system_tray_group->hide();
+#endif
 #ifndef Q_OS_LINUX
     d->ui.use_mpris2->hide();
 #endif

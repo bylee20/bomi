@@ -15,16 +15,16 @@ auto DeintCaps::list() -> QList<DeintCaps>
         auto &cap = caps[(int)method];
         cap.m_method = method;
         if (cpu) {
-            cap.m_device |= DeintDevice::CPU;
-            cap.m_decoder |= DecoderDevice::CPU;
+            cap.m_devices |= DeintDevice::CPU;
+            cap.m_decoders |= DecoderDevice::CPU;
         }
         if (gl) {
-            cap.m_device |= DeintDevice::OpenGL;
-            cap.m_decoder |= (DecoderDevice::CPU | DecoderDevice::GPU);
+            cap.m_devices |= DeintDevice::OpenGL;
+            cap.m_decoders |= (DecoderDevice::CPU | DecoderDevice::GPU);
         }
         if (HwAcc::supports(method)) {
-            cap.m_device |= DeintDevice::GPU;
-            cap.m_decoder |= DecoderDevice::GPU;
+            cap.m_devices |= DeintDevice::GPU;
+            cap.m_decoders |= DecoderDevice::GPU;
         }
         cap.m_doubler = doubler;
         return caps[(int)method];
@@ -43,11 +43,12 @@ auto DeintCaps::list() -> QList<DeintCaps>
 auto DeintCaps::default_(DecoderDevice dec) -> DeintCaps
 {
     auto ref = list()[(int)DeintMethod::Bob];
-    Q_ASSERT(ref.m_decoder & dec);
+    Q_ASSERT(ref.m_decoders.contains(dec));
     DeintCaps caps;
     caps.m_doubler = ref.m_doubler;
-    caps.m_decoder = (int)dec;
-    caps.m_device = (int)((dec == DecoderDevice::CPU) ? DeintDevice::CPU : DeintDevice::GPU);
+    caps.m_decoders = dec;
+    caps.m_devices = dec == DecoderDevice::CPU ? DeintDevice::CPU
+                                               : DeintDevice::GPU;
     return caps;
 }
 
@@ -55,12 +56,12 @@ auto DeintCaps::toString() const -> QString
 {
     QString text = DeintMethodInfo::name(m_method) % _L('|');
     for (auto dec : DecoderDeviceInfo::items()) {
-        if (dec.value & m_decoder)
+        if (m_decoders.contains(dec.value))
             text += dec.name % _L(':');
     }
     text += "|";
     for (auto dev : DeintDeviceInfo::items()) {
-        if (dev.value & m_device)
+        if (m_devices.contains(dev.value))
             text += dev.name % _L(':');
     }
     text += "|" % _N(m_doubler);
@@ -75,9 +76,9 @@ auto DeintCaps::fromString(const QString &text) -> DeintCaps
     DeintCaps caps;
     caps.m_method = DeintMethodInfo::from(tokens[0]);
     for (auto dec : tokens[1].split(':', QString::SkipEmptyParts))
-        caps.m_decoder |= DecoderDeviceInfo::from(dec);
+        caps.m_decoders |= DecoderDeviceInfo::from(dec);
     for (auto dev : tokens[2].split(':', QString::SkipEmptyParts))
-        caps.m_device |= DeintDeviceInfo::from(dev);
+        caps.m_devices |= DeintDeviceInfo::from(dev);
     caps.m_doubler = tokens[3].toInt();
     return caps;
 }

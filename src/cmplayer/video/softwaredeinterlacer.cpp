@@ -1,10 +1,8 @@
 #include "softwaredeinterlacer.hpp"
-#include "videoframe.hpp"
 #include "deintoption.hpp"
 #include "ffmpegfilters.hpp"
 #include <deque>
 extern "C" {
-#include <common/common.h>
 #include <video/mp_image.h>
 }
 

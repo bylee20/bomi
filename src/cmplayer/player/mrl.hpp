@@ -3,8 +3,6 @@
 
 #include "stdafx.hpp"
 
-class Record;
-
 class Mrl {
 public:
     Mrl() {}

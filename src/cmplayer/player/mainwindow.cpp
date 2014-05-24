@@ -1,26 +1,18 @@
-#include "app.hpp"
-#include "info.hpp"
-#include "pref.hpp"
-#include "stdafx.hpp"
-#include "appstate.hpp"
-#include "playlist.hpp"
-#include "rootmenu.hpp"
 #include "mainwindow.hpp"
+#include "app.hpp"
+#include "pref.hpp"
+#include "appstate.hpp"
+#include "rootmenu.hpp"
 #include "recentinfo.hpp"
 #include "abrepeater.hpp"
 #include "playengine.hpp"
-#include "translator.hpp"
 #include "historymodel.hpp"
 #include "playlistmodel.hpp"
 #include "mainquickview.hpp"
-#include "playlistmodel.hpp"
-#include "misc/log.hpp"
 #include "misc/trayicon.hpp"
 #include "misc/downloader.hpp"
-#include "misc/enumaction.hpp"
-#include "misc/stepaction.hpp"
+#include "misc/stepactionpair.hpp"
 #include "enum/movetoward.hpp"
-#include "enum/adjustcolor.hpp"
 #include "dialog/mbox.hpp"
 #include "dialog/urldialog.hpp"
 #include "dialog/prefdialog.hpp"
@@ -32,9 +24,9 @@
 #include "dialog/openmediafolderdialog.hpp"
 #include "quick/appobject.hpp"
 #include "quick/themeobject.hpp"
-#include "quick/toplevelitem.hpp"
-#include "opengl/openglcompat.hpp"
+#include "opengl/opengllogger.hpp"
 #include "video/kernel3x3.hpp"
+#include "video/deintoption.hpp"
 #include "video/videoformat.hpp"
 #include "video/videorendereritem.hpp"
 #include "audio/audionormalizeroption.hpp"
@@ -90,6 +82,8 @@ struct MainWindow::Data {
     QMenu contextMenu;
     PrefDialog *prefDlg = nullptr;
     SubtitleFindDialog *subFindDlg = nullptr;
+    SnapshotDialog *snapshot = nullptr;
+    OpenGLLogger glLogger{"SG"};
     QStringList loadedSubtitleFiles;
     SubtitleView *subtitleView = nullptr;
     PlaylistModel playlist;
@@ -147,90 +141,90 @@ struct MainWindow::Data {
         }
         action->trigger();
     }
-
     auto updateSubtitleState() -> void
     {
         const auto &mrl = as.state.mrl;
-        if (mrl.isLocalFile()) {
-            const auto &pref = preferences;
-            const QFileInfo file(mrl.toLocalFile());
-            auto autoselection = [&] (const QList<SubComp> &loaded) {
-                QList<int> selected;
-                if (loaded.isEmpty() || !pref.sub_enable_autoselect)
-                    return selected;
-                QSet<QString> langSet;
-                const QString base = file.completeBaseName();
-                for (int i=0; i<loaded.size(); ++i) {
-                    bool select = false;
-                    switch (pref.sub_autoselect) {
-                    case SubtitleAutoselect::Matched: {
-                        const QFileInfo info(loaded[i].fileName());
-                        select = info.completeBaseName() == base;
-                        break;
-                    } case SubtitleAutoselect::EachLanguage: {
-//            const QString lang = loaded[i].m_comp.language().id();
-                        const auto lang = loaded[i].language();
-                        if ((select = (!langSet.contains(lang))))
-                            langSet.insert(lang);
-                        break;
-                    }  case SubtitleAutoselect::All:
-                        select = true;
-                        break;
-                    default:
-                        break;
-                    }
-                    if (select)
-                        selected.append(i);
-                }
-                if (pref.sub_autoselect == SubtitleAutoselect::Matched
-                        && !selected.isEmpty() && !pref.sub_ext.isEmpty()) {
-                    for (int i=0; i<selected.size(); ++i) {
-                        const auto fileName = loaded[selected[i]].fileName();
-                        const auto suffix = QFileInfo(fileName).suffix();
-                        if (pref.sub_ext == suffix.toLower()) {
-                            const int idx = selected[i];
-                            selected.clear();
-                            selected.append(idx);
-                            break;
-                        }
-                    }
-                }
-                return selected;
-            };
-            auto autoload = [&](bool autoselect) {
-                QList<SubComp> loaded;
-                if (!pref.sub_enable_autoload)
-                    return loaded;
-                const QFileInfo fileInfo(mrl.toLocalFile());
-                const auto filter = Info::subtitleNameFilter();
-                const auto dir = fileInfo.dir();
-                const auto all = dir.entryInfoList(filter, QDir::Files,
-                                                   QDir::Name);
-                const auto base = fileInfo.completeBaseName();
-                for (int i=0; i<all.size(); ++i) {
-                    if (pref.sub_autoload != SubtitleAutoload::Folder) {
-                        if (pref.sub_autoload == SubtitleAutoload::Matched) {
-                            if (base != all[i].completeBaseName())
-                                continue;
-                        } else if (!all[i].fileName().contains(base))
-                            continue;
-                    }
-                    Subtitle sub;
-                    if (p->load(sub, all[i].absoluteFilePath(), pref.sub_enc)) {
-                        for (int i=0; i<sub.size(); ++i)
-                            loaded.push_back(sub[i]);
-                    }
-                }
-                if (autoselect) {
-                    const QList<int> selected = autoselection(loaded);
-                    for (int i=0; i<selected.size(); ++i)
-                        loaded[selected[i]].selection() = true;
-                }
-                return loaded;
-            };
-            subtitle.setComponents(autoload(true));
-        } else
+        if (!mrl.isLocalFile()) {
             p->clearSubtitleFiles();
+            syncSubtitleFileMenu();
+            return;
+        }
+        const auto &pref = preferences;
+        const QFileInfo file(mrl.toLocalFile());
+        auto autoselection = [&] (const QList<SubComp> &loaded) {
+            QList<int> selected;
+            if (loaded.isEmpty() || !pref.sub_enable_autoselect)
+                return selected;
+            QSet<QString> langSet;
+            const QString base = file.completeBaseName();
+            for (int i=0; i<loaded.size(); ++i) {
+                bool select = false;
+                switch (pref.sub_autoselect) {
+                case SubtitleAutoselect::Matched: {
+                    const QFileInfo info(loaded[i].fileName());
+                    select = info.completeBaseName() == base;
+                    break;
+                } case SubtitleAutoselect::EachLanguage: {
+//            const QString lang = loaded[i].m_comp.language().id();
+                    const auto lang = loaded[i].language();
+                    if ((select = (!langSet.contains(lang))))
+                        langSet.insert(lang);
+                    break;
+                }  case SubtitleAutoselect::All:
+                    select = true;
+                    break;
+                default:
+                    break;
+                }
+                if (select)
+                    selected.append(i);
+            }
+            if (pref.sub_autoselect == SubtitleAutoselect::Matched
+                    && !selected.isEmpty() && !pref.sub_ext.isEmpty()) {
+                for (int i=0; i<selected.size(); ++i) {
+                    const auto fileName = loaded[selected[i]].fileName();
+                    const auto suffix = QFileInfo(fileName).suffix();
+                    if (pref.sub_ext == suffix.toLower()) {
+                        const int idx = selected[i];
+                        selected.clear();
+                        selected.append(idx);
+                        break;
+                    }
+                }
+            }
+            return selected;
+        };
+        auto autoload = [&](bool autoselect) {
+            QList<SubComp> loaded;
+            if (!pref.sub_enable_autoload)
+                return loaded;
+            const QFileInfo fileInfo(mrl.toLocalFile());
+            static const auto filter = _ToNameFilter(SubtitleExt);
+            const auto dir = fileInfo.dir();
+            const auto all = dir.entryInfoList(filter, QDir::Files, QDir::Name);
+            const auto base = fileInfo.completeBaseName();
+            for (int i=0; i<all.size(); ++i) {
+                if (pref.sub_autoload != SubtitleAutoload::Folder) {
+                    if (pref.sub_autoload == SubtitleAutoload::Matched) {
+                        if (base != all[i].completeBaseName())
+                            continue;
+                    } else if (!all[i].fileName().contains(base))
+                        continue;
+                }
+                Subtitle sub;
+                if (p->load(sub, all[i].absoluteFilePath(), pref.sub_enc)) {
+                    for (int i=0; i<sub.size(); ++i)
+                        loaded.push_back(sub[i]);
+                }
+            }
+            if (autoselect) {
+                const QList<int> selected = autoselection(loaded);
+                for (int i=0; i<selected.size(); ++i)
+                    loaded[selected[i]].selection() = true;
+            }
+            return loaded;
+        };
+        subtitle.setComponents(autoload(true));
         syncSubtitleFileMenu();
     }
 
@@ -283,7 +277,7 @@ struct MainWindow::Data {
 #endif
     }
 
-    auto openWith(const Pref::OpenMedia &mode, const QList<Mrl> &mrls) -> void
+    auto openWith(const OpenMediaInfo &mode, const QList<Mrl> &mrls) -> void
     {
         if (mrls.isEmpty())
             return;
@@ -298,15 +292,15 @@ struct MainWindow::Data {
         };
         if (!checkAndPlay(mrl)) {
             Playlist playlist;
-            switch (mode.playlist_behavior) {
-            case PlaylistBehaviorWhenOpenMedia::AppendToPlaylist:
+            switch (mode.behavior) {
+            case OpenMediaBehavior::Append:
                 d->playlist.append(mrls);
                 break;
-            case PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist:
+            case OpenMediaBehavior::ClearAndAppend:
                 d->playlist.clear();
                 playlist.append(mrls);
                 break;
-            case PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist:
+            case OpenMediaBehavior::NewPlaylist:
                 d->playlist.clear();
                 playlist = p->generatePlaylist(mrl);
                 break;
@@ -597,6 +591,12 @@ struct MainWindow::Data {
         }, sig, f);
     }
 
+    auto setOpen(const Mrl &mrl) -> void
+    {
+        if (mrl.isLocalFile())
+            _SetLastOpenFolder(mrl.toLocalFile());
+    }
+
     auto subtitleState() const -> SubtitleStateInfo
     {
         SubtitleStateInfo state;
@@ -623,7 +623,7 @@ struct MainWindow::Data {
     {
         view = new MainQuickView(p);
         auto format = view->requestedFormat();
-        if (OpenGLCompat::hasExtension(OpenGLCompat::Debug))
+        if (OpenGLLogger::isAvailable())
             format.setOption(QSurfaceFormat::DebugContext);
         view->setFormat(format);
         view->setPersistentOpenGLContext(true);
@@ -645,19 +645,8 @@ struct MainWindow::Data {
 
         connect(view, &QQuickView::sceneGraphInitialized, p, [this] () {
             auto context = view->openglContext();
-            OpenGLCompat::initialize(context);
-            auto *logger = OpenGLCompat::logger();
-            if (logger) {
-                connect(logger, &QOpenGLDebugLogger::messageLogged, p,
-                        [] (const QOpenGLDebugMessage & msg) {
-                    OpenGLCompat::debug(msg);
-                }, Qt::DirectConnection);
-#ifdef CMPLAYER_RELEASE
-                logger->startLogging(QOpenGLDebugLogger::AsynchronousLogging);
-#else
-                logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
-#endif
-            }
+            if (cApp.isOpenGLDebugLoggerRequested())
+                glLogger.initialize(context);
             engine.initializeGL(view);
             sgInit = true;
             emit p->sceneGraphInitialized();
@@ -666,7 +655,7 @@ struct MainWindow::Data {
             sgInit = false;
             auto context = QOpenGLContext::currentContext();
             engine.finalizeGL();
-            OpenGLCompat::finalize(context);
+            glLogger.finalize(context);
         }, Qt::DirectConnection);
         desktop = cApp.desktop();
         auto reset = [this] () {
@@ -822,7 +811,7 @@ struct MainWindow::Data {
         });
 
         connect(&engine, &PlayEngine::started, p, [this] (Mrl mrl) {
-            as.setOpen(mrl);
+            setOpen(mrl);
             as.state.mrl = mrl.toUnique();
             auto &state = as.state;
             state.sub_track = SubtitleStateInfo();
@@ -1020,10 +1009,11 @@ MainWindow::MainWindow(QWidget *parent)
         resize(as.win_size);
     }
 
-    d->renderer.setEffects((VideoEffects)as.state.video_effects);
-    for (int i=0; i<16; ++i) {
-        if ((as.state.video_effects >> i) & 1)
-            d->menu("video")("filter").g()->setChecked(1 << i, true);
+    d->renderer.setEffects(as.state.video_effects);
+    auto effectGroup = d->menu("video")("filter").g();
+    for (auto &item : VideoEffectInfo::items()) {
+        if (as.state.video_effects & item.value)
+            effectGroup->setChecked(QVariant::fromValue(item.value), true);
     }
     d->menu("tool")["auto-exit"]->setChecked(as.auto_exit);
 
@@ -1032,7 +1022,7 @@ MainWindow::MainWindow(QWidget *parent)
     d->playlist.setList(d->recent.lastPlaylist());
     if (!d->recent.lastMrl().isEmpty()) {
         d->load(d->recent.lastMrl(), false);
-        as.setOpen(d->recent.lastMrl());
+        d->setOpen(d->recent.lastMrl());
     }
     updateRecentActions(d->recent.openList());
 
@@ -1053,7 +1043,7 @@ MainWindow::MainWindow(QWidget *parent)
     d->menu("tool")["undo"]->setEnabled(d->undo->canUndo());
     d->menu("tool")["redo"]->setEnabled(d->undo->canRedo());
 
-    if (!OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat)) {
+    if (!VideoRendererItem::supportsHighQualityRendering()) {
         auto &video = d->menu("video");
         auto key = _L(DitheringInfo::typeKey());
         video(key).g(key)->find(Dithering::Fruit)->setDisabled(true);
@@ -1096,15 +1086,13 @@ auto MainWindow::connectMenus() -> void
 {
     Menu &open = d->menu("open");
     connect(open["file"], &QAction::triggered, this, [this] () {
-        auto &as = AppState::get();
-        const auto filter = Info::mediaExtFilter();
-        const auto dir = QFileInfo(as.open_last_file).absolutePath();
-        const auto file = _GetOpenFileName(this, tr("Open File"), dir, filter);
+        const auto file = _GetOpenFileName(this, tr("Open File"), MediaExt);
         if (!file.isEmpty())
             openMrl(Mrl(file));
     });
     connect(open["folder"], &QAction::triggered, this, [this] () {
         OpenMediaFolderDialog dlg(this);
+        dlg.setCheckedTypes(d->as.open_folder_types);
         if (dlg.exec()) {
             const auto list = dlg.playlist();
             if (!list.isEmpty()) {
@@ -1112,6 +1100,7 @@ auto MainWindow::connectMenus() -> void
                 d->load(list.first());
                 d->recent.stack(list.first());
             }
+            d->as.open_folder_types = dlg.checkedTypes();
         }
     });
     connect(open["url"], &QAction::triggered, this, [this] () {
@@ -1199,7 +1188,7 @@ auto MainWindow::connectMenus() -> void
             &d->playlist, &PlaylistModel::playNext);
     connect(play("seek").g("relative"), &ActionGroup::triggered,
             this, [this] (QAction *a) {
-        const int diff = a->data().toInt();
+        const int diff = static_cast<StepAction*>(a)->data();
         if (diff && !d->engine.isStopped() && d->engine.isSeekable()) {
             d->engine.relativeSeek(diff);
             showMessage(tr("Seeking"), diff/1000, tr("sec"), true);
@@ -1256,26 +1245,35 @@ auto MainWindow::connectMenus() -> void
     d->connectEnumActions<VideoRatio>
             (video("aspect"), "video_aspect_ratio",
              &MrlState::videoAspectRatioChanged, [this] () {
-        d->renderer.setAspectRatio(_GetEnumData(d->as.state.video_aspect_ratio));
+        d->renderer.setAspectRatio(_EnumData(d->as.state.video_aspect_ratio));
     });
     d->connectEnumActions<VideoRatio>
             (video("crop"), "video_crop_ratio",
              &MrlState::videoCropRatioChanged, [this] () {
-        d->renderer.setCropRatio(_GetEnumData(d->as.state.video_crop_ratio));
+        d->renderer.setCropRatio(_EnumData(d->as.state.video_crop_ratio));
     });
     connect(video["snapshot"], &QAction::triggered, this, [this] () {
-        static SnapshotDialog *dlg = new SnapshotDialog(this);
-        dlg->setVideoRenderer(&d->renderer);
-        dlg->setSubtitleRenderer(&d->subtitle);
-        dlg->take();
-        if (!dlg->isVisible()) {
-            dlg->adjustSize();
-            dlg->show();
+        if (!d->snapshot) {
+            d->snapshot = new SnapshotDialog(this);
+            connect(d->snapshot, &SnapshotDialog::request, this, [=] () {
+                if (!d->renderer.hasFrame())
+                    d->snapshot->clear();
+                else
+                    d->renderer.requestFrameImage();
+            });
         }
+        d->snapshot->take();
     });
+    connect(&d->renderer, &VideoRendererItem::frameImageObtained,
+            this, [this] (QImage image) {
+        Q_ASSERT(d->snapshot);
+        QRectF subRect;
+        auto sub = d->subtitle.draw(image.rect(), &subRect);
+        d->snapshot->setImage(image, sub, subRect);
+    }, Qt::QueuedConnection);
     auto setVideoAlignment = [this] () {
-        const auto v = _GetEnumData(d->as.state.video_vertical_alignment);
-        const auto h = _GetEnumData(d->as.state.video_horizontal_alignment);
+        const auto v = _EnumData(d->as.state.video_vertical_alignment);
+        const auto h = _EnumData(d->as.state.video_horizontal_alignment);
         d->renderer.setAlignment(v | h);
     };
     d->connectEnumActions<VerticalAlignment>
@@ -1326,19 +1324,30 @@ auto MainWindow::connectMenus() -> void
             d->push(effects, d->renderer.effects(),
                     [this] (VideoEffects effects) {
                 d->renderer.setEffects(effects);
-                for (auto action : d->menu("video")("filter").actions())
-                    action->setChecked(action->data().toInt() & effects);
+                d->as.state.video_effects = effects;
+                for (auto a : d->menu("video")("filter").actions())
+                    a->setChecked(a->data().value<VideoEffect>() & effects);
             });
     });
-    d->connectEnumDataActions<AdjustColor>
-            (video("color"), "video_color", [this] (const VideoColor &diff) {
-        return diff.isZero() ? diff : d->as.state.video_color + diff;
-    }, &MrlState::videoColorChanged, [this] () {
-        const auto prop = d->as.state.video_color & d->engine.videoEqualizer();
-        const auto text = d->as.state.video_color.getText(prop);
-        showMessage(tr("Adjust Video Color"), text);
-        d->engine.setVideoEqualizer(d->as.state.video_color);
+    VideoColor::for_type([=, &video] (VideoColor::Type type) {
+        const auto name = VideoColor::name(type);
+        connect(video("color").g(name), &ActionGroup::triggered, this,
+                [=] (QAction *a) {
+            const int diff = static_cast<StepAction*>(a)->data();
+            auto color = d->as.state.video_color;
+            color.add(type, diff);
+            const auto text = color.formatText(type).arg(color.get(type));
+            showMessage(tr("Adjust Video Color"), text);
+            d->as.state.setProperty("video_color", QVariant::fromValue(color));
+        });
     });
+    connect(video("color")["reset"], &QAction::triggered, this, [this] () {
+        showMessage(tr("Reset Video Color"));
+        const auto var = QVariant::fromValue(VideoColor());
+        d->as.state.setProperty("video_color", var);
+    });
+    connect(&d->as.state, &MrlState::videoColorChanged,
+            &d->engine, &PlayEngine::setVideoEqualizer);
 
     Menu &audio = d->menu("audio");
     connect(audio("track").g(), &ActionGroup::triggered,
@@ -1447,7 +1456,7 @@ auto MainWindow::connectMenus() -> void
         QString enc = d->pref().sub_enc;
         const auto files = EncodingFileDialog::getOpenFileNames
                                     (this, tr("Open Subtitle"), dir,
-                                     Info::subtitleExtFilter(), &enc);
+                                     _ToFilter(SubtitleExt), &enc);
         if (!files.isEmpty())
             appendSubFiles(files, true, enc);
     });
@@ -1518,7 +1527,7 @@ auto MainWindow::connectMenus() -> void
             &d->playlist, &PlaylistModel::toggle);
     connect(playlist["open"], &QAction::triggered, this, [this] () {
         QString enc;
-        const auto filter = Info::playlistExtFilter();
+        const auto filter = _ToFilter(PlaylistExt);
         const auto file = EncodingFileDialog::getOpenFileName
                 (this, tr("Open File"), QString(), filter, &enc);
         if (!file.isEmpty())
@@ -1527,25 +1536,19 @@ auto MainWindow::connectMenus() -> void
     connect(playlist["save"], &QAction::triggered, this, [this] () {
         const auto &list = d->playlist.list();
         if (!list.isEmpty()) {
-            const auto filter = Info::playlistExtFilter();
-            const auto title = tr("Save File");
-            auto file = _GetSaveFileName(this, title, QString(), filter);
-            if (!file.isEmpty()) {
-                if (QFileInfo(file).suffix().isEmpty())
-                    file += ".pls";
+            auto file = _GetSaveFileName(this, tr("Save File"),
+                                         QString(), PlaylistExt);
+            if (!file.isEmpty())
                 list.save(file);
-            }
         }
     });
     connect(playlist["clear"], &QAction::triggered,
             this, [this] () { d->playlist.clear(); });
     connect(playlist["append-file"], &QAction::triggered, this, [this] () {
-        const auto filter = Info::mediaExtFilter();
-        const auto title = tr("Open File");
-        auto files = _GetOpenFileNames(this, title, QString(), filter);
+        const auto files = _GetOpenFileNames(this, tr("Open File"), MediaExt);
         Playlist list;
         for (int i=0; i<files.size(); ++i)
-            list << Mrl(files[i]);
+            list.push_back(Mrl(files[i]));
         d->playlist.append(list);
     });
     connect(playlist["append-url"], &QAction::triggered, this, [this] () {
@@ -1675,7 +1678,7 @@ auto MainWindow::generatePlaylist(const Mrl &mrl) const -> Playlist
     const QDir dir = file.dir();
     if (mode == GeneratePlaylist::Folder)
         return Playlist().loadAll(dir);
-    const auto filter = Info::mediaNameFilter();
+    const auto filter = _ToNameFilter(MediaExt);
     const auto files = dir.entryInfoList(filter, QDir::Files, QDir::Name);
     const auto fileName = file.fileName();
     Playlist list;
@@ -2032,17 +2035,15 @@ auto MainWindow::dropEvent(QDropEvent *event) -> void
     Playlist playlist;
     QStringList subList;
     for (int i=0; i<urls.size(); ++i) {
-        const QString suffix = QFileInfo(urls[i].path()).suffix().toLower();
-        if (Info::playlistExt().contains(suffix)) {
+        const auto suffix = QFileInfo(urls[i].path()).suffix().toLower();
+        if (_IsSuffixOf(PlaylistExt, suffix)) {
             Playlist list;
             list.load(urls[i]);
             playlist += list;
-        } else if (Info::subtitleExt().contains(suffix)) {
+        } else if (_IsSuffixOf(SubtitleExt, suffix))
             subList << urls[i].toLocalFile();
-        } else if (Info::videoExt().contains(suffix)
-                || Info::audioExt().contains(suffix)) {
+        else if (_IsSuffixOf(VideoExt, suffix) || _IsSuffixOf(AudioExt, suffix))
             playlist.append(urls[i]);
-        }
     }
     if (!playlist.isEmpty()) {
         d->openWith(d->pref().open_media_by_drag_and_drop, playlist);
@@ -2135,9 +2136,25 @@ auto MainWindow::applyPref() -> void
     SubtitleParser::setMsPerCharactor(p.ms_per_char);
     d->subtitle.setPriority(p.sub_priority);
     d->subtitle.setStyle(p.sub_style);
-    d->menu.update(p);
+
+    d->menu.retranslate();
+    d->menu.setShortcuts(p.shortcuts);
+    d->menu("play")("speed").s()->setStep(p.speed_step);
+    d->menu("play")("seek").s("seek1")->setStep(p.seek_step1);
+    d->menu("play")("seek").s("seek2")->setStep(p.seek_step2);
+    d->menu("play")("seek").s("seek3")->setStep(p.seek_step3);
+    d->menu("subtitle")("position").s()->setStep(p.sub_pos_step);
+    d->menu("subtitle")("sync").s()->setStep(p.sub_sync_step);
+    d->menu("video")("color").s("brightness")->setStep(p.brightness_step);
+    d->menu("video")("color").s("contrast")->setStep(p.contrast_step);
+    d->menu("video")("color").s("saturation")->setStep(p.saturation_step);
+    d->menu("video")("color").s("hue")->setStep(p.hue_step);
+    d->menu("audio")("sync").s()->setStep(p.audio_sync_step);
+    d->menu("audio")("volume").s()->setStep(p.volume_step);
+    d->menu("audio")("amp").s()->setStep(p.amp_step);
     d->menu.syncTitle();
     d->menu.resetKeyMap();
+
     cApp.setHeartbeat(p.use_heartbeat ? p.heartbeat_command : QString(),
                       p.heartbeat_interval);
 

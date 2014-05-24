@@ -1,7 +1,6 @@
 #ifndef HIGHQUALITYTEXTUREITEM_HPP
 #define HIGHQUALITYTEXTUREITEM_HPP
 
-#include "stdafx.hpp"
 #include "simpletextureitem.hpp"
 
 enum class InterpolatorType;            enum class Dithering;
@@ -15,7 +14,8 @@ public:
     auto setInterpolator(InterpolatorType type) -> void;
     auto setDithering(Dithering dithering) -> void;
     auto dithering() const -> Dithering;
-    Type *type() const override;
+    auto type() const -> Type* override;
+    static auto supportsHighQualityRendering() -> bool;
 protected:
     auto initializeGL() -> void override;
     auto finalizeGL() -> void override;

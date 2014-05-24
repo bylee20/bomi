@@ -2,6 +2,7 @@
 #include "enumcombobox.hpp"
 #include "verticallabel.hpp"
 #include "misc/record.hpp"
+#include "audio/channellayoutmap.hpp"
 #include "audio/channelmanipulation.hpp"
 
 struct ChannelManipulationWidget::Data {

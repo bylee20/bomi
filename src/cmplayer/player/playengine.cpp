@@ -1,9 +1,12 @@
 #include "playengine.hpp"
 #include "playengine_p.hpp"
-#include "translator.hpp"
 #include "misc/log.hpp"
 #include "misc/tmp.hpp"
+#include "misc/dataevent.hpp"
+#include "audio/audiocontroller.hpp"
 #include "opengl/opengloffscreencontext.hpp"
+#include "video/videooutput.hpp"
+#include "video/hwacc.hpp"
 #include "video/deintoption.hpp"
 #include "video/videoformat.hpp"
 #include "video/videorendereritem.hpp"
@@ -19,6 +22,8 @@
 #include <libmpv/client.h>
 
 DECLARE_LOG_CONTEXT(Engine)
+
+auto translator_display_language(const QString &iso) -> QString;
 
 enum EndReason {
     EndFailed = -1,
@@ -1397,7 +1402,7 @@ auto PlayEngine::exec() -> void
                 stream.m_lang = map["lang"].toString();
                 if (_InRange(2, stream.m_lang.size(), 3)
                         && _IsAlphabet(stream.m_lang))
-                    stream.m_lang = Translator::displayLanguage(stream.m_lang);
+                    stream.m_lang = translator_display_language(stream.m_lang);
                 stream.m_title = map["title"].toString();
                 stream.m_fileName = map["external-filename"].toString();
                 if (!stream.m_fileName.isEmpty())

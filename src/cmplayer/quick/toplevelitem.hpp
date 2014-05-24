@@ -1,7 +1,6 @@
 #ifndef TOPLEVELITEM_HPP
 #define TOPLEVELITEM_HPP
 
-#include "stdafx.hpp"
 #include "simplevertexitem.hpp"
 
 class TopLevelItem : public SimpleVertexItem {

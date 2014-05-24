@@ -1,5 +1,4 @@
 #include "hwacc_vdpau.hpp"
-#include "opengl/openglcompat.hpp"
 #include "opengl/opengltexture2d.hpp"
 
 void initialize_vdpau_interop(QOpenGLContext *ctx) {
@@ -57,7 +56,7 @@ Vdpau::Data Vdpau::d;
 
 auto Vdpau::initialize() -> void
 {
-    if (d.init || !OpenGLCompat::hasExtension(OpenGLCompat::NvVdpauInterop))
+    if (d.init || !OGL::hasExtension(OGL::NvVdpauInterop))
         return;
     if (!d.check(vdp_device_create_x11(QX11Info::display(),
                                        QX11Info::appScreen(),
@@ -158,7 +157,7 @@ auto Vdpau::finalize() -> void
 
 auto Vdpau::isAvailable() -> bool
 {
-    return d.init && OpenGLCompat::hasExtension(OpenGLCompat::NvVdpauInterop);
+    return d.init && OGL::hasExtension(OGL::NvVdpauInterop);
 }
 
 auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
@@ -177,9 +176,9 @@ auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
         proc("glVDPAUMapSurfacesNV",           d.mapSurfaces);
         proc("glVDPAUUnmapSurfacesNV",         d.unmapSurfaces);
     }
-    OpenGLCompat::logError("before glVDPAUInitNV()");
+    OGL::logError("before glVDPAUInitNV()");
     d.initialize(TO_INTEROP(d.device), TO_INTEROP(d.proc));
-    OpenGLCompat::logError("after glVDPAUInitNV()");
+    OGL::logError("after glVDPAUInitNV()");
 }
 
 

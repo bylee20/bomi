@@ -1,11 +1,10 @@
 #include "opengltexture2d.hpp"
-#include "openglcompat.hpp"
 #include "opengltexturebinder.hpp"
 
 auto OpenGLTexture2D::initialize(int w, int h, OGL::TransferFormat transfer,
                                  const void *data) -> void
 {
-    initialize(w, h, OpenGLCompat::transferInfo(transfer), data);
+    initialize(w, h, OpenGLTextureTransferInfo::get(transfer), data);
 }
 
 auto OpenGLTexture2D::toImage() const -> QImage

@@ -16,6 +16,7 @@
 #include <type_traits>
 #include <array>
 #include <iterator>
+#include <tuple>
 #endif
 
 #ifdef Q_OS_LINUX
@@ -175,17 +176,42 @@ SIA _Ratio(const QSize &s) -> double { return _Ratio(s.width(), s.height()); }
 
 SIA _Ratio(const QSizeF &s) -> double { return _Ratio(s.width(), s.height()); }
 
-SIA _GetOpenFileNames(QWidget *p, const QString &t,
-                      const QString &dir, const QString &f) -> QStringList
-{ return QFileDialog::getOpenFileNames(p, t, dir, f, 0); }
+enum ExtType {
+    AllExt       = 0,
+    AudioExt    = 1 << 0,
+    VideoExt    = 1 << 1,
+    SubtitleExt = 1 << 2,
+    ImageExt    = 1 << 3,
+    DiscExt     = 1 << 4,
+    PlaylistExt = 1 << 5,
 
-SIA _GetOpenFileName(QWidget *p, const QString &t,
-                     const QString &dir, const QString &f) -> QString
-{ return QFileDialog::getOpenFileName(p, t, dir, f, 0); }
+    MediaExt    = AudioExt | VideoExt | ImageExt
+};
 
-SIA _GetSaveFileName(QWidget *p, const QString &t,
-                     const QString &dir, const QString &f) -> QString
-{ return QFileDialog::getSaveFileName(p, t, dir, f, 0); }
+Q_DECLARE_FLAGS(ExtTypes, ExtType)
+Q_DECLARE_OPERATORS_FOR_FLAGS(ExtTypes)
+
+auto _ToNameFilter(ExtTypes exts) -> QStringList;
+auto _ToFilter(ExtTypes exts) -> QString;
+auto _IsSuffixOf(ExtType ext, const QString &suffix) -> bool;
+auto _ExtList(ExtType ext) -> QStringList;
+
+auto _GetOpenFileNames(QWidget *parent, const QString &title, ExtTypes exts,
+                       const QString &key = QString()) -> QStringList;
+
+auto _GetOpenFileName(QWidget *parent, const QString &title, ExtTypes exts,
+                      const QString &key = QString()) -> QString;
+
+auto _GetSaveFileName(QWidget *parent, const QString &title,
+                      const QString &fileName, ExtTypes exts,
+                      const QString &key = QString()) -> QString;
+
+auto _GetOpenDir(QWidget *parent, const QString &title,
+                 const QString &key = QString()) -> QString;
+
+auto _SetLastOpenFolder(const QString &path, const QString &k = QString()) -> void;
+
+auto _LastOpenFolder(const QString &key = QString()) -> QString;
 
 template<class T>
 SIA _QmlSingleton(QQmlEngine *, QJSEngine *) -> QObject* { return new T; }
@@ -243,6 +269,22 @@ template<class List, class T>
 SIA _Contains(const List &list, const T &t) -> bool
 { return std::find(std::begin(list), std::end(list), t) != std::end(list); }
 
+template<class List, class F>
+SIA _Transform(List &list, F f) -> List&
+{
+    for (auto &item : list)
+        f(item);
+    return list;
+}
+
+template<class List, class F>
+SIA _Transformed(const List &list, F f) -> List
+{
+    List ret = list;
+    _Transform<List, F>(ret, f);
+    return ret;
+}
+
 #endif
 
 SIA _SystemTime() -> quint64
@@ -259,15 +301,33 @@ SIA _Expand(T &t, int size, double extra = 1.2) -> bool
 
 auto _Uncompress(const QByteArray &data) -> QByteArray;
 
-static inline auto _SignN(int value, bool sign) -> QString
+SIA _SignN(int value, bool sign) -> QString
     { return sign ? _NS(value) : _N(value); }
 
-static inline auto _SignN(double value, bool sign, int n = 1) -> QString
+SIA _SignN(double value, bool sign, int n = 1) -> QString
     { return sign ? _NS(value, n) : _N(value, n); }
+
+SIA _JsonToString(const QJsonObject &json,
+                   QJsonDocument::JsonFormat format = QJsonDocument::Compact)
+-> QString { return QString::fromUtf8(QJsonDocument(json).toJson(format)); }
+
+SIA _JsonFromString(const QString &str) -> QJsonObject
+    { return QJsonDocument::fromJson(str.toUtf8()).object(); }
 
 }
 
 using namespace Pch;
+
+namespace std {
+
+template<class T>
+using is_enum_class = std::integral_constant<
+    bool,
+    std::is_enum<T>::value && !std::is_convertible<T, int>::value
+>;
+
+}
+
 #endif
 
 #endif // STDAFX_HPP

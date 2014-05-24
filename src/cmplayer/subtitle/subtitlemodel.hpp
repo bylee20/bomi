@@ -1,7 +1,6 @@
 #ifndef SubCompModel_HPP
 #define SubCompModel_HPP
 
-#include "stdafx.hpp"
 #include "subtitle.hpp"
 #include "misc/simplelistmodel.hpp"
 

@@ -1,9 +1,6 @@
 #include "app.hpp"
 #include "mrl.hpp"
-#include "rootmenu.hpp"
-#include "playengine.hpp"
 #include "mainwindow.hpp"
-#include "translator.hpp"
 #include "misc/log.hpp"
 #include "misc/record.hpp"
 
@@ -17,6 +14,19 @@
 #define APP_GROUP _L("application")
 
 DECLARE_LOG_CONTEXT(App)
+
+namespace Pch {
+auto open_folders() -> QMap<QString, QString>;
+auto set_open_folders(const QMap<QString, QString> &folders) -> void;
+}
+
+auto root_menu_execute(const QString &longId, const QString &argument) -> bool;
+auto translator_load(const QLocale &locale) -> bool;
+
+auto set_window_title(QWidget *w, const QString &title) -> void
+{
+    cApp.setWindowTitle(w, title);
+}
 
 enum class LineCmd {
     Wake,
@@ -87,7 +97,7 @@ struct App::Data {
                 open(mrl);
             const auto args = values(LineCmd::Action);
             if (!args.isEmpty())
-                RootMenu::execute(args[0], args.value(1));
+                root_menu_execute(args[0], args.value(1));
         }
         if (isSet(LineCmd::Debug)) {
             if (Log::maximumLevel() < Log::Debug)
@@ -108,14 +118,16 @@ struct App::Data {
 
 App::App(int &argc, char **argv)
 : QApplication(argc, argv), d(new Data(this)) {
+    Record r(APP_GROUP);
+
 #ifdef Q_OS_LINUX
     setlocale(LC_NUMERIC,"C");
 #endif
     setOrganizationName("xylosper");
     setOrganizationDomain("xylosper.net");
-    setApplicationName(Info::name());
-    setApplicationVersion(Info::version());
-    setLocale(Record(APP_GROUP).value("locale", QLocale::system()).toLocale());
+    setApplicationName(name());
+    setApplicationVersion(version());
+    setLocale(r.value("locale", QLocale::system()).toLocale());
 
     d->addOption(LineCmd::Open, "open", tr("Open given %1 for file path or URL."), "mrl");
     d->addOption(LineCmd::Wake, QStringList() << "wake", tr("Bring the application window in front."));
@@ -152,8 +164,7 @@ App::App(int &argc, char **argv)
         }
         return names;
     };
-    auto makeStyle = [this]() {
-        Record r(APP_GROUP);
+    auto makeStyle = [&]() {
         auto name = r.value("style", styleName()).toString();
         if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
             return;
@@ -166,10 +177,21 @@ App::App(int &argc, char **argv)
     connect(&d->connection, &LocalConnection::messageReceived, [this] (const QString &message) {
         d->msgParser.parse(message.split("[:sep:]")); d->execute(&d->msgParser);
     });
+    const auto map = r.value("open_folders").toMap();
+    QMap<QString, QString> folders;
+    for (auto it = map.begin(); it != map.end(); ++it)
+        folders.insert(it.key(), it->toString());
+    set_open_folders(folders);
 }
 
 App::~App() {
     setMprisActivated(false);
+    Record r(APP_GROUP);
+    const auto folders = Pch::open_folders();
+    QMap<QString, QVariant> map;
+    for (auto it = folders.begin(); it != folders.end(); ++it)
+        map.insert(it.key(), *it);
+    r.setValue("open_folders", map);
     delete d->main;
     delete d->mb;
     delete d;
@@ -299,7 +321,7 @@ auto App::sendMessage(const QString &message, int timeout) -> bool
 
 auto App::setLocale(const QLocale &locale) -> void
 {
-    if (Translator::load(locale)) {
+    if (translator_load(locale)) {
         Record r(APP_GROUP);
         r.write(d->locale = locale, "locale");
     }

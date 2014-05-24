@@ -2,17 +2,19 @@
 #define PREF_HPP
 
 #include "stdafx.hpp"
-#include "mrlstate.hpp"
+#include "openmediainfo.hpp"
 #include "quick/osdtheme.hpp"
 #include "video/hwacc.hpp"
-#include "misc/record.hpp"
+#include "video/deintcaps.hpp"
 #include "misc/keymodifieractionmap.hpp"
 #include "subtitle/subtitlestyle.hpp"
-#include "enum/playlistbehaviorwhenopenmedia.hpp"
+#include "audio/channellayoutmap.hpp"
 #include "enum/generateplaylist.hpp"
 #include "enum/subtitleautoload.hpp"
 #include "enum/subtitleautoselect.hpp"
 #include "enum/audiodriver.hpp"
+#include "enum/clippingmethod.hpp"
+#include "enum/verticalalignment.hpp"
 
 class QLocale;
 
@@ -23,28 +25,8 @@ enum class KeyMapPreset {CMPlayer, Movist};
 class Pref {
     Q_DECLARE_TR_FUNCTIONS(Pref)
 public:
-//    static const Pref &instance() {return get();}
-    struct OpenMedia {
-        OpenMedia(bool sp, const PlaylistBehaviorWhenOpenMedia &pb)
-        : start_playback(sp), playlist_behavior(pb) {}
-        bool start_playback = true;
-        PlaylistBehaviorWhenOpenMedia playlist_behavior = PlaylistBehaviorWhenOpenMedia::ClearAndGenerateNewPlaylist;
-        auto save(Record &r, const QString &group) const -> void {
-            r.beginGroup(group);
-            r.write(start_playback, "start_playback");
-            r.write(playlist_behavior, "playlist_behavior");
-            r.endGroup();
-        }
-        auto load(Record &r, const QString &group) -> void {
-            r.beginGroup(group);
-            r.read(start_playback, "start_playback");
-            r.read(playlist_behavior, "playlist_behavior");
-            r.endGroup();
-        }
-    };
-
-    OpenMedia open_media_from_file_manager = {true, PlaylistBehaviorWhenOpenMedia::ClearAndAppendToPlaylist};
-    OpenMedia open_media_by_drag_and_drop = {true, PlaylistBehaviorWhenOpenMedia::AppendToPlaylist};
+    OpenMediaInfo open_media_from_file_manager{ true, OpenMediaBehavior::NewPlaylist };
+    OpenMediaInfo open_media_by_drag_and_drop{ true, OpenMediaBehavior::Append };
 
     bool fit_to_video = false, use_mpris2 = true;
     bool pause_minimized = true, pause_video_only = true, pause_to_play_next_image = true;

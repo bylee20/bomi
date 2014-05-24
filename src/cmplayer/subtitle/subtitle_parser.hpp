@@ -1,7 +1,6 @@
 #ifndef SUBTITLE_PARSER_HPP
 #define SUBTITLE_PARSER_HPP
 
-#include "stdafx.hpp"
 #include "subtitle.hpp"
 
 class SubtitleParser : public RichTextHelper {

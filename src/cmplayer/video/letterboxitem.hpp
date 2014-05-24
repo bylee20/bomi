@@ -1,7 +1,6 @@
 #ifndef LETTERBOXITEM_HPP
 #define LETTERBOXITEM_HPP
 
-#include "stdafx.hpp"
 #include "quick/simplevertexitem.hpp"
 
 class LetterboxItem : public SimpleVertexItem {

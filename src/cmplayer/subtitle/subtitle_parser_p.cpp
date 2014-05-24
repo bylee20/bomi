@@ -34,7 +34,7 @@ auto SamiParser::_parse(Subtitle &sub) -> void
     auto &comps = components(sub);
     while (!parser.atEnd()) {
         Tag tag;
-        const QStringRef block_sync = parser.get("sync", "/?sync|/body|/sami", &tag);
+        const auto block_sync = parser.get("sync", "/?sync|/body|/sami", &tag);
         if (tag.name.isEmpty())
             break;
         const int sync = toInt(tag.value("start"));
@@ -77,7 +77,8 @@ auto SubRipParser::isParsable() const -> bool
 auto SubRipParser::_parse(Subtitle &sub) -> void
 {
     QRegularExpression rxNum(R"(^\s*(\d+)\s*$)");
-    QRegularExpression rxTime(R"(^\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*$)");
+    QRegularExpression rxTime(R"(^\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"
+                              R"(-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*$)");
     QRegularExpression rxBlank(R"(^\s*$)");
     auto getNumber = [&rxNum, this] () {
         for (;;) {
@@ -166,7 +167,8 @@ auto MicroDVDParser::_parse(Subtitle &sub) -> void
         return;
     bool ok = false;
     const double fps = rxLine.cap(3).toDouble(&ok);
-    auto getKey = [ok, fps] (int frame) {return ok ? qRound((frame/fps)*1000.0) : frame;};
+    auto getKey = [ok, fps] (int frame)
+        {return ok ? qRound((frame/fps)*1000.0) : frame;};
     if (ok) {
         append(sub, SubComp::Time);
     } else {
@@ -184,11 +186,11 @@ auto MicroDVDParser::_parse(Subtitle &sub) -> void
         const int end = getKey(rxLine.cap(2).toInt());
         QString text = rxLine.cap(3);
         QString parsed1, parsed2;
-        auto addTag0 = [&parsed1, &parsed2, this] (const QString &name) {
+        auto addTag0 = [&] (const QString &name) {
             parsed1 += _L('<') % name % _L('>');
             parsed2 += _L("</") % name % _L('>');
         };
-        auto addTag1 = [&parsed1, &parsed2, this] (const QString &name, const QString &attr) {
+        auto addTag1 = [&] (const QString &name, const QString &attr) {
             parsed1 += _L('<') % name % _L(' ') % attr % _L('>');
             parsed2 += _L("</") % name % _L('>');
         };
@@ -208,7 +210,8 @@ auto MicroDVDParser::_parse(Subtitle &sub) -> void
                     addTag0("b");
             } else if (_Same(name, "c")) {
                 if (rxColor.indexIn(value) != -1)
-                    addTag1(_L("font"), _L("color=\"#") % rxColor.cap(3) % rxColor.cap(2) % rxColor.cap(1) %_L("\""));
+                    addTag1(_L("font"), _L("color=\"#") % rxColor.cap(3)
+                            % rxColor.cap(2) % rxColor.cap(1) %_L("\""));
             }
             idx = rxAttr.pos() + rxAttr.matchedLength();
         }
@@ -217,7 +220,9 @@ auto MicroDVDParser::_parse(Subtitle &sub) -> void
                 addTag0("i");
                 ++idx;
             }
-            text = _L("<p>") % parsed1 % replace(text.midRef(idx), _L("|"), _L("<br>")) % parsed2 % _L("</p>");
+            text = _L("<p>") % parsed1 % replace(text.midRef(idx),
+                                                 _L("|"), _L("<br>"))
+                    % parsed2 % _L("</p>");
         } else
             text = _L("<p>") % parsed1 % parsed2 % _L("</p>");
         append(comp, text, start, end);

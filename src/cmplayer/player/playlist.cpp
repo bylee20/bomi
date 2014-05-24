@@ -1,5 +1,4 @@
 #include "playlist.hpp"
-#include "info.hpp"
 
 Playlist::Playlist()
 : QList<Mrl>() {}
@@ -41,8 +40,8 @@ auto Playlist::save(const QString &filePath, Type type) const -> bool
 auto Playlist::loadAll(const QDir &dir) -> Playlist&
 {
     clear();
-    const QStringList filter = Info::mediaNameFilter();
-    const QStringList files = dir.entryList(filter, QDir::Files, QDir::Name);
+    static const auto filter = _ToNameFilter(MediaExt);
+    const auto files = dir.entryList(filter, QDir::Files, QDir::Name);
     for (int i=0; i<files.size(); ++i)
         push_back(dir.absoluteFilePath(files[i]));
     return *this;

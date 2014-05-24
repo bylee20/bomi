@@ -1,5 +1,4 @@
 #include "mrl.hpp"
-#include "info.hpp"
 #include "misc/udf25.hpp"
 
 Mrl::Mrl(const QUrl &url) {
@@ -17,7 +16,8 @@ Mrl::Mrl(const QString &location, const QString &name) {
         m_loc = _L("file://") % QFileInfo(location).absoluteFilePath();
     else if (location.startsWith("file://", Qt::CaseInsensitive))
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
-    else if (location.startsWith("dvdnav://", Qt::CaseInsensitive) || location.startsWith("bdnav://", Qt::CaseInsensitive))
+    else if (location.startsWith("dvdnav://", Qt::CaseInsensitive)
+             || location.startsWith("bdnav://", Qt::CaseInsensitive))
         m_loc = location;
     else
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
@@ -26,7 +26,7 @@ Mrl::Mrl(const QString &location, const QString &name) {
 
 auto Mrl::isPlaylist() const -> bool
 {
-    return Info::playlistExt().contains(suffix(), Qt::CaseInsensitive);
+    return _IsSuffixOf(PlaylistExt, suffix());
 }
 
 auto Mrl::fileName() const -> QString
@@ -66,7 +66,10 @@ auto Mrl::displayName() const -> QString
     return disc % _L(" (") % dev % _L(')');
 }
 
-bool Mrl::isImage() const { return Info::readableImageExt().contains(suffix(), Qt::CaseInsensitive); }
+auto Mrl::isImage() const -> bool
+{
+    return _IsSuffixOf(ImageExt, suffix());
+}
 
 auto Mrl::isEmpty() const -> bool
 {

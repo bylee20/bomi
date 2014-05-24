@@ -4,7 +4,8 @@
 static const QString sep1("[::1::]"), sep2("[::2::]"), sep3("[::3::]");
 
 template<class List, class F>
-QString _Join(const List &list, F toString, const QString &sep) {
+auto _Join(const List &list, F toString, const QString &sep) -> QString
+{
     QStringList l; l.reserve(list.size());
     for (auto &one : list)
         l.append(toString(one));
@@ -12,7 +13,9 @@ QString _Join(const List &list, F toString, const QString &sep) {
 }
 
 template<class T, class F>
-QList<T> _Split(const QString &text, F fromString, const QString &sep, QString::SplitBehavior b = QString::KeepEmptyParts) {
+auto _Split(const QString &text, F fromString, const QString &sep,
+                QString::SplitBehavior b = QString::KeepEmptyParts) -> QList<T>
+{
     auto strs = text.split(sep, b);
     QList<T> list; list.reserve(strs.size());
     for (int i=0; i<strs.size(); ++i) {
@@ -39,7 +42,8 @@ auto SubtitleStateInfo::toJson() const -> QJsonObject
 auto SubtitleStateInfo::fromJson(const QJsonObject &json) -> SubtitleStateInfo
 {
     SubtitleStateInfo info; QJsonValue value;
-    auto get = [&] (const char *key) { value = json.value(_L(key)); return !value.isUndefined(); };
+    auto get = [&] (const char *key)
+        { value = json.value(_L(key)); return !value.isUndefined(); };
 #define CHECK(a) { if (!get(a)) return SubtitleStateInfo(); }
     CHECK("track");
     info.m_track = value.toInt(InvalidTrack);
@@ -75,7 +79,9 @@ auto SubtitleStateInfo::toString() const -> QString
 {
     QStringList list;
     list.append(_N(m_track));
-    list.append(_Join(m_mpv, [] (const SubtitleFileInfo &info) { return info.toString(); }, sep2));
+    list.append(_Join(m_mpv, [] (const SubtitleFileInfo &info) {
+        return info.toString();
+    }, sep2));
     for (auto it = m_cmplayer.begin(); it != m_cmplayer.end(); ++it) {
         QStringList item;
         item.append(it.key().toString());
@@ -97,8 +103,10 @@ auto SubtitleStateInfo::fromString(const QString &string) -> SubtitleStateInfo
         return SubtitleStateInfo();
     SubtitleStateInfo info;
     info.m_track = list[0].toInt();
-    auto str2sfi = [] (const QString &s) { return SubtitleFileInfo::fromString(s); };
-    info.m_mpv = _Split<SubtitleFileInfo>(list[1], str2sfi, sep2, QString::SkipEmptyParts);
+    auto str2sfi = [] (const QString &s)
+        { return SubtitleFileInfo::fromString(s); };
+    info.m_mpv = _Split<SubtitleFileInfo>(list[1], str2sfi, sep2,
+                                          QString::SkipEmptyParts);
     for (int i=2; i<list.size(); ++i) {
         auto item = list[i].split(sep2, QString::KeepEmptyParts);
         if (item.size() % 2 != 1)

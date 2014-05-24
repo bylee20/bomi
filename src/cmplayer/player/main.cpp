@@ -1,11 +1,7 @@
 #include "app.hpp"
-#include "translator.hpp"
-#include "mrl.hpp"
 #include "mainwindow.hpp"
 #include "playengine.hpp"
-#include "video/videoformat.hpp"
 #include "video/hwacc.hpp"
-#include "opengl/openglcompat.hpp"
 #include "misc/log.hpp"
 
 DECLARE_LOG_CONTEXT(Main)
@@ -19,6 +15,8 @@ auto reg_playlist_model() -> void;
 auto reg_app_object() -> void;
 auto reg_settings_object() -> void;
 auto reg_theme_object() -> void;
+
+namespace OGL { auto check() -> void; }
 
 int main(int argc, char **argv) {
     qputenv("PX_MODULE_PATH", "/this-is-dummy-path-to-disable-libproxy");
@@ -45,7 +43,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    OpenGLCompat::check();
+    OGL::check();
     HwAcc::initialize();
     MainWindow *mw = new MainWindow;
     _Debug("Show MainWindow.");

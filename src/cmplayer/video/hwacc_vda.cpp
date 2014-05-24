@@ -205,7 +205,7 @@ auto HwAccVda::fillContext(AVCodecContext *avctx) -> bool
 /*****************************************************************************/
 
 static inline bool directRendering(mp_imgfmt type) {
-    return OpenGLCompat::hasExtension(OpenGLCompat::AppleYCbCr422) && (type == IMGFMT_YUYV || type == IMGFMT_UYVY);
+    return OGL::hasExtension(OGL::AppleYCbCr422) && (type == IMGFMT_YUYV || type == IMGFMT_UYVY);
 }
 
 VdaMixer::VdaMixer(const QList<OpenGLTexture2D> &textures, const VideoFormat &format)

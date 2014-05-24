@@ -2,7 +2,8 @@
 
 int SubtitleParser::msPerChar = -1;
 
-auto SubtitleParser::save(const Subtitle &sub, const QString &fileName, const QString &enc) -> bool
+auto SubtitleParser::save(const Subtitle &sub, const QString &fileName,
+                          const QString &enc) -> bool
 {
     QString content;
     if (!_save(content, sub))
@@ -19,7 +20,8 @@ auto SubtitleParser::save(const Subtitle &sub, const QString &fileName, const QS
     return true;
 }
 
-auto SubtitleParser::parse(const QString &fileName, const QString &enc) -> Subtitle
+auto SubtitleParser::parse(const QString &fileName,
+                           const QString &enc) -> Subtitle
 {
     QFile file(fileName);
     if (!file.open(QFile::ReadOnly) || file.size() > (1 << 20))
@@ -42,22 +44,23 @@ auto SubtitleParser::parse(const QString &fileName, const QString &enc) -> Subti
         return parsable;
     };
 
-    if (tryIt(new SamiParser) || tryIt(new SubRipParser) || tryIt(new MicroDVDParser) || tryIt(new TMPlayerParser))
+    if (tryIt(new SamiParser) || tryIt(new SubRipParser)
+            || tryIt(new MicroDVDParser) || tryIt(new TMPlayerParser))
         return sub;
     return Subtitle();
 }
 
-auto SubtitleParser::processLine(int &idx, const QString &contents) -> QStringRef
+auto SubtitleParser::processLine(int &idx, const QString &texts) -> QStringRef
 {
     int from = idx;
-    idx = contents.indexOf(QLatin1Char('\n'), from);
+    idx = texts.indexOf(QLatin1Char('\n'), from);
     if (idx < 0)
-        idx = contents.indexOf(QLatin1Char('\r'), from);
+        idx = texts.indexOf(QLatin1Char('\r'), from);
     if (idx < 0) {
-        idx = contents.size();
-        return contents.midRef(from);
+        idx = texts.size();
+        return texts.midRef(from);
     } else {
-        return contents.midRef(from, (idx++) - from);
+        return texts.midRef(from, (idx++) - from);
     }
 }
 

@@ -2,7 +2,7 @@
 #define DECODERDEVICE_HPP
 
 #include "enums.hpp"
-#define DECODERDEVICE_IS_FLAG 0
+#define DECODERDEVICE_IS_FLAG 1
 
 enum class DecoderDevice : int {
     None = (int)0,
@@ -12,31 +12,34 @@ enum class DecoderDevice : int {
 
 Q_DECLARE_METATYPE(DecoderDevice)
 
-inline auto operator == (DecoderDevice e, int i) -> bool { return (int)e == i; }
-inline auto operator != (DecoderDevice e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, DecoderDevice e) -> bool { return (int)e == i; }
-inline auto operator != (int i, DecoderDevice e) -> bool { return (int)e != i; }
-inline auto operator > (DecoderDevice e, int i) -> bool { return (int)e > i; }
-inline auto operator < (DecoderDevice e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (DecoderDevice e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (DecoderDevice e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, DecoderDevice e) -> bool { return i > (int)e; }
-inline auto operator < (int i, DecoderDevice e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, DecoderDevice e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, DecoderDevice e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (DecoderDevice e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (DecoderDevice e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, DecoderDevice e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, DecoderDevice e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (DecoderDevice e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (DecoderDevice e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (DecoderDevice e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (DecoderDevice e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, DecoderDevice e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, DecoderDevice e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, DecoderDevice e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, DecoderDevice e) -> bool { return i <= (int)e; }
 #if DECODERDEVICE_IS_FLAG
-Q_DECLARE_FLAGS(, DecoderDevice)
-Q_DECLARE_OPERATORS_FOR_FLAGS()
-Q_DECLARE_METATYPE()
-#else
-inline auto operator & (DecoderDevice e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, DecoderDevice e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, DecoderDevice e) -> int& { return i &= (int)e; }
-inline auto operator ~ (DecoderDevice e) -> int { return ~(int)e; }
-inline auto operator | (DecoderDevice e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, DecoderDevice e) -> int { return (int)e | i; }
-constexpr inline auto operator | (DecoderDevice e1, DecoderDevice e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, DecoderDevice e) -> int& { return i |= (int)e; }
+#include "enumflags.hpp"
+using DecoderDevices = EnumFlags<DecoderDevice>;
+constexpr inline auto operator | (DecoderDevice e1, DecoderDevice e2) -> DecoderDevices
+{
+    return DecoderDevices(DecoderDevices::IntType(e1) | DecoderDevices::IntType(e2));
+}
+constexpr inline auto operator ~ (DecoderDevice e) -> EnumNot<DecoderDevice>
+{
+    return EnumNot<DecoderDevice>(e);
+}
+constexpr inline auto operator & (DecoderDevice lhs, DecoderDevices rhs) -> EnumAnd<DecoderDevice>
+{
+    return rhs & lhs;
+}
+Q_DECLARE_METATYPE(DecoderDevices)
 #endif
 
 template<>

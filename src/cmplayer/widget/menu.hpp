@@ -4,7 +4,7 @@
 #include "stdafx.hpp"
 #include "misc/actiongroup.hpp"
 
-class Record;
+class StepActionPair;                   class StepAction;
 
 class Menu : public QMenu {
     Q_OBJECT
@@ -13,6 +13,7 @@ public:
     using MenuHash = QHash<QString, Menu*>;
     using ActionHash = QHash<QString, QAction*>;
     using GroupHash = QHash<QString, ActionGroup*>;
+    using StepActionPairHash = QHash<QString, StepActionPair*>;
 
     auto operator() (const char *key) const -> Menu &;
     auto operator() (const char *key, const QString &title) const -> Menu&;
@@ -55,6 +56,13 @@ public:
     auto syncTitle() -> void;
     auto syncActions() -> void;
     auto ids() const -> QHash<QString, QAction*> { return m_ids; }
+    auto s(const char *key = "") const -> StepActionPair* { return s(_L(key)); }
+    auto s(const QString &key) const -> StepActionPair* { return m_s[key]; }
+    auto addStepActionPair(const QString &inc, const QString &dec,
+                           const QString &pair,
+                           const QString &group = _L("")) -> StepActionPair*;
+    auto addStepActionPair(const QString &pair,
+                           const QString &group = _L("")) -> StepActionPair*;
 signals:
     void actionsSynchronized();
 protected:
@@ -63,6 +71,7 @@ private:
     GroupHash m_g;
     ActionHash m_a;
     MenuHash m_m;
+    StepActionPairHash m_s;
     QHash<QString, QAction*> m_ids;
     QList<QMenu*> m_copies;
     const QString m_id;
@@ -168,6 +177,12 @@ inline auto Menu::syncActions() -> void
     for (auto menu : m_copies)
         menu->addActions(actions());
     emit actionsSynchronized();
+}
+
+inline auto Menu::addStepActionPair(const QString &pair,
+                                    const QString &group) -> StepActionPair*
+{
+    return addStepActionPair(_L("increase"), _L("decrease"), pair, group);
 }
 
 #endif // MENU_HPP

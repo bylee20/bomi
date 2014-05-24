@@ -1,5 +1,4 @@
 #include "busyiconitem.hpp"
-#include "opengl/openglcompat.hpp"
 #include "opengl/opengltexture2d.hpp"
 #include "opengl/opengltexturebinder.hpp"
 
@@ -55,7 +54,8 @@ BusyIconItem::BusyIconItem(QQuickItem *parent)
     d->prog.setStartValue(0.0);
     d->prog.setEndValue(2.0*M_PI);
 
-    connect(&d->prog, &QVariantAnimation::valueChanged, [this] (const QVariant &var) {
+    connect(&d->prog, &QVariantAnimation::valueChanged,
+            [this] (const QVariant &var) {
         d->angle = var.toDouble();
         polish();
         update();
@@ -67,7 +67,8 @@ BusyIconItem::~BusyIconItem() {
     delete d;
 }
 
-auto BusyIconItem::itemChange(ItemChange change, const ItemChangeData &data) -> void
+auto BusyIconItem::itemChange(ItemChange change,
+                              const ItemChangeData &data) -> void
 {
     QQuickItem::itemChange(change, data);
     if (change == ItemVisibleHasChanged)
@@ -132,9 +133,9 @@ auto BusyIconItem::setThickness(qreal thickness) -> void
     }
 }
 
-auto BusyIconItem::geometryChanged(const QRectF &new_, const QRectF &old) -> void
+auto BusyIconItem::geometryChanged(const QRectF &n, const QRectF &o) -> void
 {
-    QQuickItem::geometryChanged(new_, old);
+    QQuickItem::geometryChanged(n, o);
     polish();
     update();
 }
@@ -144,7 +145,7 @@ auto BusyIconItem::initializeGL() -> void
     SimpleTextureItem::initializeGL();
     OpenGLTexture2D texture;
     texture.create();
-    texture.setAttributes(0, 0, OpenGLCompat::transferInfo(OGL::BGRA));
+    texture.setAttributes(0, 0, OpenGLTextureTransferInfo::get(OGL::BGRA));
     setTexture(texture);
 }
 

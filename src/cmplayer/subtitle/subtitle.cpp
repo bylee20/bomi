@@ -21,8 +21,12 @@ SubComp::SubComp() {
     m_capts[0].index = 0;
 }
 
-SubComp::SubComp(const QFileInfo &file, const QString &enc, int id, SyncType base)
-: m_file(file.fileName()), m_info(file.absoluteFilePath(), enc), m_base(base), m_id(id) {
+SubComp::SubComp(const QFileInfo &file, const QString &enc, int id, SyncType b)
+    : m_file(file.fileName())
+    , m_info(file.absoluteFilePath(), enc)
+    , m_base(b)
+    , m_id(id)
+{
     m_capts[0].index = 0;
 }
 
@@ -31,14 +35,14 @@ auto SubComp::united(const SubComp &other, double frameRate) const -> SubComp
     return SubComp(*this).unite(other, frameRate);
 }
 
-auto SubComp::start(int time, double frameRate) const -> SubComp::const_iterator
+auto SubComp::start(int time, double frameRate) const -> const_iterator
 {
     if (isEmpty() || time < 0)
         return end();
     return --finish(time, frameRate);
 }
 
-auto SubComp::finish(int time, double frameRate) const -> SubComp::const_iterator
+auto SubComp::finish(int time, double frameRate) const -> const_iterator
 {
     if (isEmpty() || time < 0)
         return end();
@@ -57,8 +61,10 @@ auto SubComp::unite(const SubComp &rhs, double fps) -> SubComp&
         return *this;
     else if (isEmpty())
         return *this = rhs;
-    auto convertKeyBase = [this] (int key, SyncType from, SyncType to, double frameRate) {
-        return  (from == to) ? key : ((to == Time) ? msec(key, frameRate) : frame(key, frameRate));
+    auto convertKeyBase = [this] (int key, SyncType from, SyncType to,
+                                  double frameRate) {
+        return  (from == to) ? key : ((to == Time) ? msec(key, frameRate)
+                                                   : frame(key, frameRate));
     };
 
     auto it1 = m_capts.begin();
@@ -115,11 +121,11 @@ auto Subtitle::caption(int time, double fps) const -> RichTextDocument
     return caption;
 }
 
-auto Subtitle::load(const QString &file, const QString &enc, double accuracy) -> bool
+auto Subtitle::load(const QString &file, const QString &enc, double acc) -> bool
 {
     QString encoding;
-    if (accuracy > 0.0)
-        encoding = CharsetDetector::detect(file, accuracy);
+    if (acc > 0.0)
+        encoding = CharsetDetector::detect(file, acc);
     if (encoding.isEmpty())
         encoding = enc;
     *this = parse(file, encoding);

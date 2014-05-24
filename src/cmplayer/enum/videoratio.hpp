@@ -16,31 +16,34 @@ enum class VideoRatio : int {
 
 Q_DECLARE_METATYPE(VideoRatio)
 
-inline auto operator == (VideoRatio e, int i) -> bool { return (int)e == i; }
-inline auto operator != (VideoRatio e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, VideoRatio e) -> bool { return (int)e == i; }
-inline auto operator != (int i, VideoRatio e) -> bool { return (int)e != i; }
-inline auto operator > (VideoRatio e, int i) -> bool { return (int)e > i; }
-inline auto operator < (VideoRatio e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (VideoRatio e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (VideoRatio e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, VideoRatio e) -> bool { return i > (int)e; }
-inline auto operator < (int i, VideoRatio e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, VideoRatio e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, VideoRatio e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (VideoRatio e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (VideoRatio e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, VideoRatio e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, VideoRatio e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (VideoRatio e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (VideoRatio e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (VideoRatio e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (VideoRatio e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, VideoRatio e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, VideoRatio e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, VideoRatio e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, VideoRatio e) -> bool { return i <= (int)e; }
 #if VIDEORATIO_IS_FLAG
-Q_DECLARE_FLAGS(, VideoRatio)
-Q_DECLARE_OPERATORS_FOR_FLAGS()
+#include "enumflags.hpp"
+using  = EnumFlags<VideoRatio>;
+constexpr inline auto operator | (VideoRatio e1, VideoRatio e2) -> 
+{
+    return (::IntType(e1) | ::IntType(e2));
+}
+constexpr inline auto operator ~ (VideoRatio e) -> EnumNot<VideoRatio>
+{
+    return EnumNot<VideoRatio>(e);
+}
+constexpr inline auto operator & (VideoRatio lhs,  rhs) -> EnumAnd<VideoRatio>
+{
+    return rhs & lhs;
+}
 Q_DECLARE_METATYPE()
-#else
-inline auto operator & (VideoRatio e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, VideoRatio e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, VideoRatio e) -> int& { return i &= (int)e; }
-inline auto operator ~ (VideoRatio e) -> int { return ~(int)e; }
-inline auto operator | (VideoRatio e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, VideoRatio e) -> int { return (int)e | i; }
-constexpr inline auto operator | (VideoRatio e1, VideoRatio e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, VideoRatio e) -> int& { return i |= (int)e; }
 #endif
 
 template<>

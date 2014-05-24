@@ -1,5 +1,4 @@
 #include "aboutdialog.hpp"
-#include "player/info.hpp"
 #include "ui_aboutdialog.h"
 
 struct AboutDialog::Data {
@@ -10,7 +9,7 @@ AboutDialog::AboutDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->ui.setupUi(this);
 #define UI_LABEL_ARG(label, arg) d->ui.label->setText(d->ui.label->text().arg)
-    UI_LABEL_ARG(version, arg(Info::version()));
+    UI_LABEL_ARG(version, arg(qApp->applicationVersion()));
     UI_LABEL_ARG(copyright, arg(QDate::currentDate().year()));
     UI_LABEL_ARG(contacts,
                  arg("<a href=\"http://xylosper.net\">"

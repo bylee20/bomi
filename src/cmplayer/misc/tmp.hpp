@@ -31,6 +31,10 @@ using floating_point_t = typename floating_point<bits>::type;
 
 template<class T>
 static inline constexpr bool is_integral() { return std::is_integral<T>::value; }
+template<class T>
+static inline constexpr bool is_arithmetic() { return std::is_arithmetic<T>::value; }
+template<class T, class S>
+static inline constexpr bool is_same() { return std::is_same<T, S>::value; }
 
 template<bool b, class T, class S>
 using conditional_t = typename std::conditional<b, T, S>::type;

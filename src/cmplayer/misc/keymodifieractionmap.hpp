@@ -17,6 +17,8 @@ struct KeyModifierActionMap {
     auto operator[](KeyModifier m) const -> const Action {return m_map[m];}
     auto operator[](int id) const -> const Action
         {return m_map[EnumInfo<KeyModifier>::from(id, KeyModifier::None)];}
+    auto toJson() const -> QJsonObject;
+    static auto fromJson(const QJsonObject &json) -> KeyModifierActionMap;
     auto save(Record &r, const QString &group) const -> void;
     auto load(Record &r, const QString &group) -> void;
 private:

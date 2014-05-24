@@ -43,7 +43,7 @@ DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
         d->combo->addItem(DeintMethodInfo::name(method), (int)method);
         if (!d->caps.contains(method))
             d->caps[method] = caps;
-        d->caps[method].m_decoder = (int)d->decoder;
+        d->caps[method].m_decoders = d->decoder;
     }
     d->doubler = new QCheckBox(tr("Double framerate"), this);
     d->gl = new QCheckBox(tr("Use OpenGL"), this);
@@ -71,11 +71,11 @@ DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
         d->doubler->setEnabled(def.doubler());
         d->doubler->setChecked(cap.doubler());
         d->updating = false;
-        cap.m_device = def.m_device;
+        cap.m_devices = def.m_devices;
         if (!d->gl->isChecked())
-            cap.m_device &= ~OpenGL;
+            cap.m_devices &= ~OpenGL;
         if (!d->gpu->isChecked())
-            cap.m_device &= ~GPU;
+            cap.m_devices &= ~GPU;
     };
     connect(d->combo, &DataComboBox::currentDataChanged,
             [update] (const QVariant &data) {
@@ -85,20 +85,12 @@ DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
         if (!d->updating) d->current().m_doubler = on;
     });
     connect(d->gl, &QCheckBox::toggled, [this] (bool on) {
-        if (!d->updating) {
-            if (on)
-                d->current().m_device |= OpenGL;
-            else
-                d->current().m_device &= ~OpenGL;
-        }
+        if (!d->updating)
+            d->current().m_devices.set(OpenGL, on);
     });
     connect(d->gpu, &QCheckBox::toggled, [this] (bool on) {
-        if (!d->updating) {
-            if (on)
-                d->current().m_device |= GPU;
-            else
-                d->current().m_device &= ~GPU;
-        }
+        if (!d->updating)
+            d->current().m_devices.set(GPU, on);
     });
     update(DeintMethod::Bob);
 }
@@ -107,14 +99,14 @@ DeintWidget::~DeintWidget() {
     Record r("deint_caps");
     QStringList tokens;
     for (auto it = d->caps.begin(); it != d->caps.end(); ++it)
-        tokens << it->toString();
+        tokens.push_back(it->toString());
     r.write(tokens, DecoderDeviceInfo::name(d->decoder));
     delete d;
 }
 
 auto DeintWidget::set(const DeintCaps &caps) -> void
 {
-    (d->caps[caps.method()] = caps).m_decoder = (int)d->decoder;
+    (d->caps[caps.method()] = caps).m_decoders = d->decoder;
     d->combo->setCurrentData((int)caps.method());
 }
 

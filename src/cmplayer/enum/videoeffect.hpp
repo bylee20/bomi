@@ -17,31 +17,34 @@ enum class VideoEffect : int {
 
 Q_DECLARE_METATYPE(VideoEffect)
 
-inline auto operator == (VideoEffect e, int i) -> bool { return (int)e == i; }
-inline auto operator != (VideoEffect e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, VideoEffect e) -> bool { return (int)e == i; }
-inline auto operator != (int i, VideoEffect e) -> bool { return (int)e != i; }
-inline auto operator > (VideoEffect e, int i) -> bool { return (int)e > i; }
-inline auto operator < (VideoEffect e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (VideoEffect e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (VideoEffect e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, VideoEffect e) -> bool { return i > (int)e; }
-inline auto operator < (int i, VideoEffect e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, VideoEffect e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, VideoEffect e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (VideoEffect e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (VideoEffect e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, VideoEffect e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, VideoEffect e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (VideoEffect e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (VideoEffect e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (VideoEffect e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (VideoEffect e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, VideoEffect e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, VideoEffect e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, VideoEffect e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, VideoEffect e) -> bool { return i <= (int)e; }
 #if VIDEOEFFECT_IS_FLAG
-Q_DECLARE_FLAGS(VideoEffects, VideoEffect)
-Q_DECLARE_OPERATORS_FOR_FLAGS(VideoEffects)
+#include "enumflags.hpp"
+using VideoEffects = EnumFlags<VideoEffect>;
+constexpr inline auto operator | (VideoEffect e1, VideoEffect e2) -> VideoEffects
+{
+    return VideoEffects(VideoEffects::IntType(e1) | VideoEffects::IntType(e2));
+}
+constexpr inline auto operator ~ (VideoEffect e) -> EnumNot<VideoEffect>
+{
+    return EnumNot<VideoEffect>(e);
+}
+constexpr inline auto operator & (VideoEffect lhs, VideoEffects rhs) -> EnumAnd<VideoEffect>
+{
+    return rhs & lhs;
+}
 Q_DECLARE_METATYPE(VideoEffects)
-#else
-inline auto operator & (VideoEffect e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, VideoEffect e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, VideoEffect e) -> int& { return i &= (int)e; }
-inline auto operator ~ (VideoEffect e) -> int { return ~(int)e; }
-inline auto operator | (VideoEffect e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, VideoEffect e) -> int { return (int)e | i; }
-constexpr inline auto operator | (VideoEffect e1, VideoEffect e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, VideoEffect e) -> int& { return i |= (int)e; }
 #endif
 
 template<>

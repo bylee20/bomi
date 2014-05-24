@@ -1,33 +1,17 @@
 #include "abrepeater.hpp"
 #include "playengine.hpp"
-#include "subtitle/subtitle.hpp"
 #include "subtitle/subtitlerendereritem.hpp"
 
 ABRepeater::ABRepeater(PlayEngine *engine, const SubtitleRendererItem *sub)
-: QObject(engine) {
+    : QObject(engine)
+{
     m_engine = engine;
     m_sub = sub;
 }
 
-ABRepeater::~ABRepeater() {
-    stop();
-}
-
-auto ABRepeater::onTick(int time) -> void
+ABRepeater::~ABRepeater()
 {
-    if (m_repeating && time > m_b) {
-        m_engine->seek(m_a);
-        if (m_times < 0)
-            emit repeated(-1);
-        else {
-            const int rest = m_times - (++m_nth);
-            emit repeated(rest);
-            if (rest <= 0) {
-                stop();
-                emit stopped();
-            }
-        }
-    }
+    stop();
 }
 
 auto ABRepeater::setAToCurrentTime() -> int
@@ -57,7 +41,21 @@ auto ABRepeater::start(int times) -> bool
     m_times = times;
     m_nth = 0;
     if ((m_repeating = (m_a >= 0 && m_b > m_a))) {
-        connect(m_engine, SIGNAL(tick(int)), this, SLOT(onTick(int)));
+        connect(m_engine, &PlayEngine::tick, this, [this] (int time) {
+            if (m_repeating && time > m_b) {
+                m_engine->seek(m_a);
+                if (m_times < 0)
+                    emit repeated(-1);
+                else {
+                    const int rest = m_times - (++m_nth);
+                    emit repeated(rest);
+                    if (rest <= 0) {
+                        stop();
+                        emit stopped();
+                    }
+                }
+            }
+        });
         emit started();
     }
     return m_repeating;

@@ -52,7 +52,18 @@
 -_7_1[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::FrontCenter|(int)SpeakerId::BackLeft|(int)SpeakerId::BackRight|(int)SpeakerId::SideLeft|(int)SpeakerId::SideRight|(int)SpeakerId::LowFrequency)=][[7.1]][:"7.1(alsa)":][-7.1ch-]
 -_7_1_Wide[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::FrontCenter|(int)SpeakerId::FrontLeftCenter|(int)SpeakerId::FrontRightCenter|(int)SpeakerId::BackLeft|(int)SpeakerId::BackRight|(int)SpeakerId::LowFrequency)=][[7.1(wide)]][:"7.1(wide)":][-7.1ch(Wide)-]
 -_7_1_Side[=((int)SpeakerId::FrontLeft|(int)SpeakerId::FrontRight|(int)SpeakerId::FrontCenter|(int)SpeakerId::FrontLeftCenter|(int)SpeakerId::FrontRightCenter|(int)SpeakerId::SideLeft|(int)SpeakerId::SideRight|(int)SpeakerId::LowFrequency)=][[7.1(side)]][:"7.1(wide-side)":][-7.1ch(Side)-]
- 
+$#include "enumflags.hpp"
+$constexpr inline auto operator & (SpeakerId lhs, ChannelLayout rhs) -> EnumAnd<SpeakerId>
+${ return SpeakerId((int)lhs & (int)rhs); }
+$constexpr inline auto operator & (ChannelLayout rhs, SpeakerId lhs) -> EnumAnd<SpeakerId>
+${ return SpeakerId((int)lhs & (int)rhs); }
+$constexpr inline auto operator & (EnumFlags<SpeakerId> lhs, ChannelLayout rhs) -> EnumFlags<SpeakerId>
+${ return lhs & EnumFlags<SpeakerId>((SpeakerId)rhs); }
+$constexpr inline auto operator & (ChannelLayout lhs, EnumFlags<SpeakerId> rhs) -> EnumFlags<SpeakerId>
+${ return rhs & EnumFlags<SpeakerId>((SpeakerId)lhs); }
+$constexpr inline auto operator | (SpeakerId lhs, SpeakerId rhs) -> EnumFlags<SpeakerId>
+${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
+
 +ColorRange[[range]][-Color Range-]
 -Auto[[auto]][-Auto-]
 -Limited[[limited]][-Limited Range-]
@@ -60,17 +71,17 @@
 -Remap[[remap]][-Remap Range-]
 -Extended[[luma]][-Extended Range-]
 
-+AdjustColor[[color]][:VideoColor:]
-!#include "video/videocolor.hpp"
--Reset[[reset]][:{0, 0, 0, 0}:]
--BrightnessInc[[brightness+]][:{1, 0, 0, 0}:]
--BrightnessDec[[brightness-]][:{-1, 0, 0, 0}:]
--ContrastInc[[contrast+]][:{0, 1, 0, 0}:]
--ContrastDec[[contrast-]][:{0, -1, 0, 0}:]
--SaturationInc[[saturation+]][:{0, 0, 1, 0}:]
--SaturationDec[[saturation-]][:{0, 0, -1, 0}:]
--HueInc[[hue+]][:{0, 0, 0, 1}:]
--HueDec[[hue-]][:{0, 0, 0, -1}:]
+#+AdjustColor[[color]][:VideoColor:]
+#!#include "video/videocolor.hpp"
+#-Reset[[reset]][:{0, 0, 0, 0}:]
+#-BrightnessInc[[brightness+]][:{1, 0, 0, 0}:]
+#-BrightnessDec[[brightness-]][:{-1, 0, 0, 0}:]
+#-ContrastInc[[contrast+]][:{0, 1, 0, 0}:]
+#-ContrastDec[[contrast-]][:{0, -1, 0, 0}:]
+#-SaturationInc[[saturation+]][:{0, 0, 1, 0}:]
+#-SaturationDec[[saturation-]][:{0, 0, -1, 0}:]
+#-HueInc[[hue+]][:{0, 0, 0, 1}:]
+#-HueDec[[hue-]][:{0, 0, 0, -1}:]
 
 +SubtitleDisplay[[display]][-Subtitle Display-]
 -OnLetterbox[[on-letterbox]][-Display on Letterbox-]
@@ -98,7 +109,7 @@
 -*Fruit[[random]][-Random Dithering-]
 -Ordered[[ordered]][-Ordered Dithering-]
 
-+DecoderDevice
++DecoderDevice[~DecoderDevices~]
 -None[=0=]
 -CPU[=1=]
 -GPU[=2=]
@@ -107,7 +118,7 @@
 -None[[off]][-Off-]
 -*Auto[[auto]][-Auto-]
 
-+DeintDevice
++DeintDevice[~DeintDevices~]
 -None[=0=]
 -CPU[=1=]
 -GPU[=2=]
@@ -166,10 +177,10 @@
 -Folder[-Add all files in the same folder-]
 #-None-Do not add any other files
 
-+PlaylistBehaviorWhenOpenMedia
--AppendToPlaylist[-Append the open media to the playlist-]
--ClearAndAppendToPlaylist[-Clear the playlist and append the open media to the playlist-]
--ClearAndGenerateNewPlaylist[-Clear the playlist and generate new playlist-]
++OpenMediaBehavior
+-Append[-Append the open media to the playlist-]
+-ClearAndAppend[-Clear the playlist and append the open media to the playlist-]
+-NewPlaylist[-Clear the playlist and generate new playlist-]
 
 +SubtitleAutoload
 -Matched[-Subtitles which have the same name as that of playing file-]

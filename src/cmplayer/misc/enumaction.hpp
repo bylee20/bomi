@@ -2,7 +2,9 @@
 #define ENUMACTION_HPP
 
 #include "stdafx.hpp"
-#include "enum/enums.hpp"
+
+template<class T>
+class EnumInfo;
 
 template<class T>
 class EnumAction : public QAction {

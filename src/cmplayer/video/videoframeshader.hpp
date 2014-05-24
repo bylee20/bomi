@@ -2,17 +2,18 @@
 #define VIDEOFRAMESHADER_HPP
 
 #include "stdafx.hpp"
-#include "videoformat.hpp"
 #include "videocolor.hpp"
-#include "opengl/openglcompat.hpp"
-#include "opengl/interpolator.hpp"
-#include "opengl/openglvertex.hpp"
 #include "opengl/opengltexture1d.hpp"
 #include "enum/colorrange.hpp"
 #include "enum/deintmethod.hpp"
 #include "enum/videoeffect.hpp"
+extern "C" {
+#include <video/mp_image.h>
+}
 
 class HwAccMixer;                       class Kernel3x3;
+class Interpolator;
+enum class InterpolatorType;
 
 class VideoFrameShader {
     enum Attr {AttrPosition, AttrTexCoord};
@@ -31,7 +32,7 @@ public:
     auto isDirectlyRenderable() const -> bool;
     const OpenGLTexture2D &renderTarget() const { return m_textures[0]; }
     auto upload(const mp_image *mpi) -> void;
-    auto setFormat(const VideoFormat &format) -> void;
+    auto setFormat(const mp_image_params &params) -> void;
     auto setFlipped(bool flipped) -> void;
 private:
     auto release() -> void;

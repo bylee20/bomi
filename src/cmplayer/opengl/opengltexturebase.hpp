@@ -2,20 +2,7 @@
 #define OPENGLTEXTUREBASE_HPP
 
 #include "openglmisc.hpp"
-
-struct OpenGLTextureTransferInfo {
-    OpenGLTextureTransferInfo() {}
-    OpenGLTextureTransferInfo(OGL::TextureFormat texture,
-                              OGL::TransferFormat transferFormat,
-                              OGL::TransferType transferType)
-        : texture(texture), transfer(transferFormat, transferType) { }
-    auto operator == (const OpenGLTextureTransferInfo &rhs) const -> bool
-        { return texture == rhs.texture && transfer == rhs.transfer; }
-    auto operator != (const OpenGLTextureTransferInfo &rhs) const -> bool
-        { return !operator == (rhs); }
-    OGL::TextureFormat texture = OGL::RGBA8_UNorm;
-    OGL::TransferInfo transfer;
-};
+#include "opengltexturetransferinfo.hpp"
 
 class OpenGLTextureBase {
 public:

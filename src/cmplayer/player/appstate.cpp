@@ -7,8 +7,6 @@ AppState::AppState() {
     READ(win_stays_on_top);
 
     READ(open_folder_types);
-    READ(open_last_folder);
-    READ(open_last_file);
     READ(open_url_list);
     READ(open_url_enc);
     READ(ask_system_tray);
@@ -33,8 +31,6 @@ auto AppState::save() const -> void
     WRITE(win_stays_on_top);
 
     WRITE(open_folder_types);
-    WRITE(open_last_folder);
-    WRITE(open_last_file);
     WRITE(ask_system_tray);
     WRITE(open_url_list);
     WRITE(open_url_enc);
@@ -157,13 +153,4 @@ auto AppStateOld::save() const -> void
     WRITE(dvd_menu);
     WRITE(dvd_device);
 #undef WRITE
-}
-
-auto AppState::setOpen(const Mrl &mrl) -> void
-{
-    if (mrl.isLocalFile()) {
-        QFileInfo file(mrl.toLocalFile());
-        open_last_file = file.absoluteFilePath();
-        open_last_folder = file.absolutePath();
-    }
 }

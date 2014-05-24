@@ -9,7 +9,6 @@ public:
     AboutDialog(QWidget *parent = 0);
     ~AboutDialog();
 private:
-    auto showFullLicense() -> void;
     struct Data;
     Data *d = nullptr;
 };

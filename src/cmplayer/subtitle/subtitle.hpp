@@ -1,7 +1,6 @@
 #ifndef SUBTITLE_HPP
 #define SUBTITLE_HPP
 
-#include "stdafx.hpp"
 #include "richtextdocument.hpp"
 #include "submisc.hpp"
 

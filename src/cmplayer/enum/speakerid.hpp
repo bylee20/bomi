@@ -23,31 +23,34 @@ enum class SpeakerId : int {
 
 Q_DECLARE_METATYPE(SpeakerId)
 
-inline auto operator == (SpeakerId e, int i) -> bool { return (int)e == i; }
-inline auto operator != (SpeakerId e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, SpeakerId e) -> bool { return (int)e == i; }
-inline auto operator != (int i, SpeakerId e) -> bool { return (int)e != i; }
-inline auto operator > (SpeakerId e, int i) -> bool { return (int)e > i; }
-inline auto operator < (SpeakerId e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (SpeakerId e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (SpeakerId e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, SpeakerId e) -> bool { return i > (int)e; }
-inline auto operator < (int i, SpeakerId e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, SpeakerId e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, SpeakerId e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (SpeakerId e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (SpeakerId e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, SpeakerId e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, SpeakerId e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (SpeakerId e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (SpeakerId e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (SpeakerId e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (SpeakerId e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, SpeakerId e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, SpeakerId e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, SpeakerId e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, SpeakerId e) -> bool { return i <= (int)e; }
 #if SPEAKERID_IS_FLAG
-Q_DECLARE_FLAGS(, SpeakerId)
-Q_DECLARE_OPERATORS_FOR_FLAGS()
+#include "enumflags.hpp"
+using  = EnumFlags<SpeakerId>;
+constexpr inline auto operator | (SpeakerId e1, SpeakerId e2) -> 
+{
+    return (::IntType(e1) | ::IntType(e2));
+}
+constexpr inline auto operator ~ (SpeakerId e) -> EnumNot<SpeakerId>
+{
+    return EnumNot<SpeakerId>(e);
+}
+constexpr inline auto operator & (SpeakerId lhs,  rhs) -> EnumAnd<SpeakerId>
+{
+    return rhs & lhs;
+}
 Q_DECLARE_METATYPE()
-#else
-inline auto operator & (SpeakerId e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, SpeakerId e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, SpeakerId e) -> int& { return i &= (int)e; }
-inline auto operator ~ (SpeakerId e) -> int { return ~(int)e; }
-inline auto operator | (SpeakerId e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, SpeakerId e) -> int { return (int)e | i; }
-constexpr inline auto operator | (SpeakerId e1, SpeakerId e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, SpeakerId e) -> int& { return i |= (int)e; }
 #endif
 
 template<>

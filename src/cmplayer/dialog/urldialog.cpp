@@ -2,7 +2,6 @@
 #include "bbox.hpp"
 #include "player/playlist.hpp"
 #include "player/appstate.hpp"
-#include "player/info.hpp"
 #include "widget/encodingcombobox.hpp"
 
 struct UrlDialog::Data {
@@ -63,7 +62,7 @@ auto UrlDialog::url() const -> QUrl
 
 auto UrlDialog::isPlaylist() const -> bool
 {
-    return Info::playlistExt().contains(QFileInfo(url().path()).suffix(), Qt::CaseInsensitive);
+    return _IsSuffixOf(PlaylistExt, QFileInfo(url().path()).suffix());
 }
 
 auto UrlDialog::playlist() const -> Playlist

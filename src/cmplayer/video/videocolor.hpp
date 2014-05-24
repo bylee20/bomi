@@ -32,6 +32,7 @@ public:
     auto contrast() const -> int { return m[Contrast]; }
     auto hue() const -> int { return m[Hue]; }
     auto set(Type p, int val) -> void { m[p] = clip(val); }
+    auto add(Type p, int diff) -> void { m[p] = clip(m[p] + diff); }
     auto setBrightness(int v) -> void { m[Brightness] = clip(v); }
     auto setSaturation(int v) -> void { m[Saturation] = clip(v); }
     auto setContrast(int v) -> void { m[Contrast] = clip(v); }
@@ -42,10 +43,13 @@ public:
                 ColorRange range, float s = 1.0/255.0) const -> void;
     auto getText(Type type) const -> QString;
     auto packed() const -> qint64;
+    auto toString() const -> QString;
+    static auto fromString(const QString &str) -> VideoColor;
     static auto fromPacked(qint64 packed) -> VideoColor;
     static auto getType(const char *name) -> Type;
     static auto name(Type type) -> const char*
         { return type < TypeMax ? s_names[type] : ""; }
+    static auto formatText(Type type) -> QString;
     template<class F>
     static auto for_type(F func) -> void;
 private:

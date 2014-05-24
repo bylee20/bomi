@@ -1,7 +1,6 @@
 #ifndef BUSYICONITEM_HPP
 #define BUSYICONITEM_HPP
 
-#include "stdafx.hpp"
 #include "quick/simpletextureitem.hpp"
 
 class BusyIconItem: public SimpleTextureItem {

@@ -40,7 +40,8 @@ auto RichTextBlockParser::parse(const QStringRef &text,
         ret.last().formats.last().style = style;
     };
 
-    auto add_block = [&ret, &add_format] (bool paragraph, const RichTextBlock::Style &style) {
+    auto add_block = [&ret, &add_format] (bool paragraph,
+                                          const RichTextBlock::Style &style) {
         ret.append(RichTextBlock(paragraph));
         add_format(style);
     };
@@ -71,7 +72,8 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                     if (idx < 0)
                         ret.last().text.append(c);
                     else {
-                        ret.last().text.append(entityCharacter(_MidRef(text, pos, idx - pos)));
+                        const auto ref = _MidRef(text, pos, idx - pos);
+                        ret.last().text.append(entityCharacter(ref));
                         pos = idx + 1;
                     }
                 } else {
@@ -105,7 +107,8 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                 auto fmtIt = fmtStack.begin();
                 auto tagIt = tagStack.begin();
                 for (; tagIt != tagStack.end(); ++tagIt, ++fmtIt) {
-                    if (tagIt->compare(_MidRef(tag.name, 1), Qt::CaseInsensitive) == 0) {
+                    if (tagIt->compare(_MidRef(tag.name, 1),
+                                       Qt::CaseInsensitive) == 0) {
                         add_format(*fmtIt);
                         fmtStack.erase(fmtIt);
                         tagStack.erase(tagIt);
@@ -120,8 +123,12 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                     ruby = nullptr;
                 }
             } else { // new format
+                using RegEx = QRegularExpression;
+                constexpr auto options = RegEx::InvertedGreedinessOption
+                                       | RegEx::CaseInsensitiveOption;
                 if (_Same(tag.name, "rp")) {
-                    QRegularExpression regex(R"((.*)(<\s*/rp\s*>|<\s*rt\s*>|<\s*/ruby\s*>|$))", QRegularExpression::InvertedGreedinessOption | QRegularExpression::CaseInsensitiveOption);
+                    RegEx regex(R"((.*)(<\s*/rp\s*>|<\s*rt\s*>|<\s*/ruby\s*>|$))",
+                                options);
                     const auto match = regex.match(text.toString(), pos);
                     pos = match.capturedEnd();
                     if (ruby && ruby->rb_end < 0)
@@ -129,10 +136,11 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                 } else if (_Same(tag.name, "rt")) {
                     if (!ruby)
                         continue;
-                    QRegularExpression regex(R"((.*)(<\s*/rt\s*>|<\s*/ruby\s*>|$))", QRegularExpression::InvertedGreedinessOption | QRegularExpression::CaseInsensitiveOption);
+                    RegEx regex(R"((.*)(<\s*/rt\s*>|<\s*/ruby\s*>|$))", options);
                     const auto match = regex.match(text.toString(), pos);
                     Q_ASSERT(match.hasMatch());
-                    ruby->rt_block = parse(match.capturedRef(1), ret.last().formats.last().style).value(0);
+                    const auto &st = ret.last().formats.last().style;
+                    ruby->rt_block = parse(match.capturedRef(1), st).value(0);
                     if (ruby->rb_end < 0)
                         ruby->rb_end = ret.last().text.size();
                     pos = match.capturedEnd();

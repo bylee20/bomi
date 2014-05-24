@@ -1,7 +1,8 @@
 #include "subtitleview.hpp"
 #include "subtitlemodel.hpp"
 #include "subtitle.hpp"
-#include "player/app.hpp"
+
+auto set_window_title(QWidget *w, const QString &title) -> void;
 
 class SubtitleView::CompView : public QWidget {
 public:
@@ -68,7 +69,7 @@ SubtitleView::SubtitleView(QWidget *parent)
     connect(d->autoScroll, &QCheckBox::toggled,
             this, &SubtitleView::setAutoScrollEnabled);
 
-    cApp.setWindowTitle(this, tr("Subtitle View"));
+    set_window_title(this, tr("Subtitle View"));
 }
 
 SubtitleView::~SubtitleView()

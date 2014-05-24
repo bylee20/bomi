@@ -23,15 +23,12 @@
  *  Jorgen Lundman and team boxee did the necessary modifications to support udf 2.5
  *
  */
+#include "udf25.hpp"
+#include "misc/log.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include "misc/log.hpp"
 #include <fstream>
-//#include "system.h"
-//#include "utils/log.h"
-#include "udf25.hpp"
-//#include "File.h"
 
 DECLARE_LOG_CONTEXT(UDF)
 

@@ -1,7 +1,6 @@
 #ifndef SUBTITLEDRAWER_HPP
 #define SUBTITLEDRAWER_HPP
 
-#include "richtextdocument.hpp"
 #include "subtitlestyle.hpp"
 #include "subtitle.hpp"
 

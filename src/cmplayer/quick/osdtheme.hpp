@@ -15,7 +15,11 @@ struct OsdTheme {
     QColor color = Qt::white, styleColor = Qt::black;
     auto save(Record &r, const QString &group) const -> void;
     auto load(Record &r, const QString &group) -> void;
+    auto toJson() const -> QJsonObject;
+    static auto fromJson(const QJsonObject &json) -> OsdTheme;
 };
+
+/******************************************************************************/
 
 class OsdThemeObject : public QObject {
     Q_OBJECT

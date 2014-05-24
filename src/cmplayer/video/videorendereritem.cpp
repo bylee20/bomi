@@ -7,7 +7,6 @@
 #include "kernel3x3.hpp"
 #include "misc/dataevent.hpp"
 #include "opengl/opengltexturebinder.hpp"
-#include "enum/videoeffect.hpp"
 #include <deque>
 
 enum EventType {NewFrame = QEvent::User + 1, NewFrameWithOsd };
@@ -53,9 +52,9 @@ struct VideoRendererItem::Data {
     auto makeKernel() const -> Kernel3x3
     {
         Kernel3x3 kernel;
-        if (effects & VideoEffect::Blur)
+        if (effects.contains(VideoEffect::Blur))
             kernel += blur;
-        if (effects & VideoEffect::Sharpen)
+        if (effects.contains(VideoEffect::Sharpen))
             kernel += sharpen;
         kernel.normalize();
         return kernel;
@@ -318,6 +317,15 @@ auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
         auto image = texture->toImage();
         if (!image.isNull())
             d->mposd->drawOn(image);
+        const auto size = sizeHint();
+        if (image.size() != size) {
+            QImage tmp(size, QImage::Format_ARGB32_Premultiplied);
+            QPainter painter(&tmp);
+            painter.setRenderHint(QPainter::SmoothPixmapTransform);
+            painter.drawImage(d->frameRect(tmp.rect()), image);
+            painter.end();
+            image.swap(tmp);
+        }
         emit frameImageObtained(image);
         d->take = false;
     }
@@ -352,10 +360,10 @@ auto VideoRendererItem::updateVertex(Vertex *vertex) -> void
         right = texture.width();
         bottom = texture.height();
     }
-    if (!(d->effects & VideoEffect::Disable)) {
-        if (d->effects & VideoEffect::FlipV)
+    if (!d->effects.contains(VideoEffect::Disable)) {
+        if (d->effects.contains(VideoEffect::FlipV))
             std::swap(top, bottom);
-        if (d->effects & VideoEffect::FlipH)
+        if (d->effects.contains(VideoEffect::FlipH))
             std::swap(left, right);
     }
     Vertex::fillAsTriangleStrip(vertex, d->vtx.topLeft(), d->vtx.bottomRight(),

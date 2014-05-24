@@ -1,5 +1,4 @@
 #include "historymodel.hpp"
-#include "appstate.hpp"
 #include "misc/log.hpp"
 
 DECLARE_LOG_CONTEXT(History)

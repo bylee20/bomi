@@ -1,7 +1,9 @@
 #include "pref.hpp"
-#include "translator.hpp"
+#include "mrlstate.hpp"
 #include "video/hwacc.hpp"
-#include "info.hpp"
+#include "misc/record.hpp"
+
+auto translator_default_encoding() -> QString;
 
 template<class T>
 static QStringList toStringList(const QList<T> &list) {
@@ -234,19 +236,27 @@ auto Pref::preset(KeyMapPreset id) -> Shortcuts
     FUNC1(use_heartbeat); \
     FUNC1(heartbeat_command); \
     FUNC1(heartbeat_interval); \
-    \
-    FUNC2(open_media_from_file_manager); \
-    FUNC2(open_media_by_drag_and_drop); \
-    FUNC2(sub_style); \
-    FUNC2(double_click_map); \
-    FUNC2(middle_click_map); \
-    FUNC2(scroll_up_map); \
-    FUNC2(scroll_down_map); \
-    FUNC2(osd_theme); }
+    FUNC1(open_media_from_file_manager); \
+    FUNC1(open_media_by_drag_and_drop); \
+    FUNC2(osd_theme); \
+    if (r.version() < 0x00815) {\
+        FUNC2(sub_style); \
+        FUNC2(double_click_map); \
+        FUNC2(middle_click_map); \
+        FUNC2(scroll_up_map); \
+        FUNC2(scroll_down_map); \
+    } else { \
+        FUNC1(sub_style); \
+        FUNC1(double_click_map); \
+        FUNC1(middle_click_map); \
+        FUNC1(scroll_up_map); \
+        FUNC1(scroll_down_map); \
+    } \
+}
 
 auto Pref::save() const -> void
 {
-    Record r(PREF_GROUP);
+    Record r(PREF_GROUP, 0x00815);
     QList<QByteArray> restore_properties;
     restore_properties.reserve(this->restore_properties.size());
     for (auto &property : this->restore_properties)
@@ -265,8 +275,6 @@ auto Pref::save() const -> void
         r.setValue("keys", toStringList(it.value()));
     }
     r.endArray();
-
-    r.setValue("version", Info::versionNumber());
 }
 
 auto Pref::load() -> void
@@ -332,7 +340,7 @@ auto Pref::defaultHwAccCodecs() -> QList<int>
 
 auto Pref::defaultSubtitleEncoding() -> QString
 {
-    return Translator::defaultEncoding();
+    return translator_default_encoding();
 }
 
 auto Pref::defaultSkinName() -> QString

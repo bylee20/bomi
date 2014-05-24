@@ -1,14 +1,7 @@
 #ifndef PLAYENGINE_P_HPP
 #define PLAYENGINE_P_HPP
 
-#include "info.hpp"
 #include "playengine.hpp"
-#include "video/videoframe.hpp"
-#include "video/videooutput.hpp"
-#include "video/hwacc.hpp"
-#include "audio/audiocontroller.hpp"
-#include "misc/dataevent.hpp"
-#include <array>
 
 enum EventType {
     UserType = QEvent::User, UpdateTimeRange, UpdateTrackList, StateChange, PreparePlayback,

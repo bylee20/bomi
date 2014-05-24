@@ -12,31 +12,34 @@ enum class StaysOnTop : int {
 
 Q_DECLARE_METATYPE(StaysOnTop)
 
-inline auto operator == (StaysOnTop e, int i) -> bool { return (int)e == i; }
-inline auto operator != (StaysOnTop e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, StaysOnTop e) -> bool { return (int)e == i; }
-inline auto operator != (int i, StaysOnTop e) -> bool { return (int)e != i; }
-inline auto operator > (StaysOnTop e, int i) -> bool { return (int)e > i; }
-inline auto operator < (StaysOnTop e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (StaysOnTop e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (StaysOnTop e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, StaysOnTop e) -> bool { return i > (int)e; }
-inline auto operator < (int i, StaysOnTop e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, StaysOnTop e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, StaysOnTop e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (StaysOnTop e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (StaysOnTop e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, StaysOnTop e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, StaysOnTop e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (StaysOnTop e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (StaysOnTop e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (StaysOnTop e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (StaysOnTop e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, StaysOnTop e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, StaysOnTop e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, StaysOnTop e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, StaysOnTop e) -> bool { return i <= (int)e; }
 #if STAYSONTOP_IS_FLAG
-Q_DECLARE_FLAGS(, StaysOnTop)
-Q_DECLARE_OPERATORS_FOR_FLAGS()
+#include "enumflags.hpp"
+using  = EnumFlags<StaysOnTop>;
+constexpr inline auto operator | (StaysOnTop e1, StaysOnTop e2) -> 
+{
+    return (::IntType(e1) | ::IntType(e2));
+}
+constexpr inline auto operator ~ (StaysOnTop e) -> EnumNot<StaysOnTop>
+{
+    return EnumNot<StaysOnTop>(e);
+}
+constexpr inline auto operator & (StaysOnTop lhs,  rhs) -> EnumAnd<StaysOnTop>
+{
+    return rhs & lhs;
+}
 Q_DECLARE_METATYPE()
-#else
-inline auto operator & (StaysOnTop e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, StaysOnTop e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, StaysOnTop e) -> int& { return i &= (int)e; }
-inline auto operator ~ (StaysOnTop e) -> int { return ~(int)e; }
-inline auto operator | (StaysOnTop e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, StaysOnTop e) -> int { return (int)e | i; }
-constexpr inline auto operator | (StaysOnTop e1, StaysOnTop e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, StaysOnTop e) -> int& { return i |= (int)e; }
 #endif
 
 template<>

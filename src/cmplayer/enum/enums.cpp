@@ -3,7 +3,6 @@
 #include "speakerid.hpp"
 #include "channellayout.hpp"
 #include "colorrange.hpp"
-#include "adjustcolor.hpp"
 #include "subtitledisplay.hpp"
 #include "videoratio.hpp"
 #include "dithering.hpp"
@@ -17,7 +16,7 @@
 #include "staysontop.hpp"
 #include "seekingstep.hpp"
 #include "generateplaylist.hpp"
-#include "playlistbehaviorwhenopenmedia.hpp"
+#include "openmediabehavior.hpp"
 #include "subtitleautoload.hpp"
 #include "subtitleautoselect.hpp"
 #include "osdscalepolicy.hpp"
@@ -32,7 +31,6 @@ bool _IsEnumTypeId(int userType) {
         || userType == qMetaTypeId<SpeakerId>()
         || userType == qMetaTypeId<ChannelLayout>()
         || userType == qMetaTypeId<ColorRange>()
-        || userType == qMetaTypeId<AdjustColor>()
         || userType == qMetaTypeId<SubtitleDisplay>()
         || userType == qMetaTypeId<VideoRatio>()
         || userType == qMetaTypeId<Dithering>()
@@ -46,7 +44,7 @@ bool _IsEnumTypeId(int userType) {
         || userType == qMetaTypeId<StaysOnTop>()
         || userType == qMetaTypeId<SeekingStep>()
         || userType == qMetaTypeId<GeneratePlaylist>()
-        || userType == qMetaTypeId<PlaylistBehaviorWhenOpenMedia>()
+        || userType == qMetaTypeId<OpenMediaBehavior>()
         || userType == qMetaTypeId<SubtitleAutoload>()
         || userType == qMetaTypeId<SubtitleAutoselect>()
         || userType == qMetaTypeId<OsdScalePolicy>()
@@ -72,9 +70,6 @@ bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVaria
     } else    if (varType == qMetaTypeId<ColorRange>()) {
         toSql = _EnumVariantToSql<ColorRange>;
         fromSql = _EnumVariantFromSql<ColorRange>;
-    } else    if (varType == qMetaTypeId<AdjustColor>()) {
-        toSql = _EnumVariantToSql<AdjustColor>;
-        fromSql = _EnumVariantFromSql<AdjustColor>;
     } else    if (varType == qMetaTypeId<SubtitleDisplay>()) {
         toSql = _EnumVariantToSql<SubtitleDisplay>;
         fromSql = _EnumVariantFromSql<SubtitleDisplay>;
@@ -114,9 +109,9 @@ bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVaria
     } else    if (varType == qMetaTypeId<GeneratePlaylist>()) {
         toSql = _EnumVariantToSql<GeneratePlaylist>;
         fromSql = _EnumVariantFromSql<GeneratePlaylist>;
-    } else    if (varType == qMetaTypeId<PlaylistBehaviorWhenOpenMedia>()) {
-        toSql = _EnumVariantToSql<PlaylistBehaviorWhenOpenMedia>;
-        fromSql = _EnumVariantFromSql<PlaylistBehaviorWhenOpenMedia>;
+    } else    if (varType == qMetaTypeId<OpenMediaBehavior>()) {
+        toSql = _EnumVariantToSql<OpenMediaBehavior>;
+        fromSql = _EnumVariantFromSql<OpenMediaBehavior>;
     } else    if (varType == qMetaTypeId<SubtitleAutoload>()) {
         toSql = _EnumVariantToSql<SubtitleAutoload>;
         fromSql = _EnumVariantFromSql<SubtitleAutoload>;

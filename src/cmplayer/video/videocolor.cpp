@@ -1,7 +1,5 @@
 #include "videocolor.hpp"
 #include "enum/colorrange.hpp"
-#include <QVector3D>
-#include <QtMath>
 
 static auto makeNameArray() -> VideoColor::Array<const char*>
 {
@@ -159,19 +157,51 @@ auto VideoColor::fromPacked(qint64 packed) -> VideoColor
 #undef UNPACK
 }
 
-auto VideoColor::getText(Type type) const -> QString
+auto VideoColor::formatText(Type type) -> QString
 {
-    const auto value = 0 <= type && type < TypeMax ? _NS(m[type]) : QString();
     switch (type) {
     case Brightness:
-        return tr("Brightness %1%").arg(value);
+        return tr("Brightness %1%");
     case Saturation:
-        return tr("Saturation %1%").arg(value);
+        return tr("Saturation %1%");
     case Contrast:
-        return tr("Contrast %1%").arg(value);
+        return tr("Contrast %1%");
     case Hue:
-        return tr("Hue %1%").arg(value);
+        return tr("Hue %1%");
     default:
         return tr("Reset");
     }
+}
+
+auto VideoColor::getText(Type type) const -> QString
+{
+    const auto value = 0 <= type && type < TypeMax ? _NS(m[type]) : QString();
+    const auto format = formatText(type);
+    return value.isEmpty() ? format : format.arg(value);
+}
+
+auto VideoColor::toString() const -> QString
+{
+    QStringList strs;
+    VideoColor::for_type([&] (VideoColor::Type type) {
+        strs.append(name(type) % _L('=') % _N(get(type)));
+    });
+    return strs.join('|');
+}
+
+auto VideoColor::fromString(const QString &str) -> VideoColor
+{
+    const auto strs = str.split('|');
+    QRegularExpression regex(R"((\w+)=(\d+))");
+    VideoColor color;
+    for (auto &one : strs) {
+        auto match = regex.match(one);
+        if (!match.hasMatch())
+            return VideoColor();
+        auto type = getType(match.captured(1).toLatin1());
+        if (type == TypeMax)
+            return VideoColor();
+        color.set(type, match.captured(2).toInt());
+    }
+    return color;
 }

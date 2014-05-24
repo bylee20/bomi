@@ -18,10 +18,10 @@ SubCompImage::SubCompImage(const SubComp *comp)
 
 /******************************************************************************/
 
-auto SubtitleDrawer::pos(const QSizeF &image, const QRectF &area) const -> QPointF
+auto SubtitleDrawer::pos(const QSizeF &img, const QRectF &area) const -> QPointF
 {
     QPointF pos(0.0, 0.0);
-    const auto ih = image.height(), ah = area.height();
+    const auto ih = img.height(), ah = area.height();
     if (m_alignment & Qt::AlignBottom)
         pos.ry() = qMax(0.0, ah*(1.0 - m_margin.bottom) - ih);
     else if (m_alignment & Qt::AlignVCenter)
@@ -31,7 +31,7 @@ auto SubtitleDrawer::pos(const QSizeF &image, const QRectF &area) const -> QPoin
         if (pos.y() + ih > ah)
             pos.ry() = ah - ih;
     }
-    const auto iw = image.width(), aw = area.width();
+    const auto iw = img.width(), aw = area.width();
     if (m_alignment & Qt::AlignHCenter)
         pos.rx() = (aw - iw)*0.5;
     else if (m_alignment & Qt::AlignRight)
@@ -47,13 +47,15 @@ auto SubtitleDrawer::setStyle(const SubtitleStyle &style) -> void
     m_style = style;
     updateStyle(m_front, style);
     updateStyle(m_back, style);
-    if (style.outline.enabled)
-        m_back.setTextOutline(style.outline.color, style.font.height()*style.outline.width*2.0);
-    else
+    if (style.outline.enabled) {
+        const auto size = style.font.height()*style.outline.width*2.0;
+        m_back.setTextOutline(style.outline.color, size);
+    } else
         m_back.setTextOutline(Qt::NoPen);
 }
 
-auto SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text, const QRectF &area, double dpr) -> QVector<QRectF>
+auto SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text,
+                          const QRectF &area, double dpr) -> QVector<QRectF>
 {
     QVector<QRectF> bboxes;
     gap = 0;
@@ -61,12 +63,21 @@ auto SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text,
         return bboxes;
     const double scale = this->scale(area)*dpr;
     const double fscale = m_style.font.height()*scale;
-    auto make = [this, text, scale, area, dpr] (RichTextDocument &doc, const RichTextDocument &from) {
-        doc = from; doc += text; doc.updateLayoutInfo(); doc.doLayout(area.width()/(scale/dpr));
+    auto make = [=] (RichTextDocument &doc, const RichTextDocument &from) {
+        doc = from;
+        doc += text;
+        doc.updateLayoutInfo();
+        doc.doLayout(area.width()/(scale/dpr));
     };
-    RichTextDocument front, back; make(front, m_front); make(back, m_back);
-    QPoint thick = m_style.bbox.enabled ? (fscale*m_style.bbox.padding).toPoint() : QPoint(0, 0);
-    QPoint soffset = m_style.shadow.enabled ? (fscale*m_style.shadow.offset).toPoint() : QPoint(0, 0);
+    RichTextDocument front, back;
+    make(front, m_front);
+    make(back, m_back);
+    QPoint thick(0, 0);
+    if (m_style.bbox.enabled)
+        thick = (fscale*m_style.bbox.padding).toPoint();
+    QPoint soffset(0, 0);
+    if (m_style.shadow.enabled)
+        soffset = (fscale*m_style.shadow.offset).toPoint();
     QPoint offset(0, 0);
     const int blur = m_style.shadow.blur ? qRound(fscale*0.01) : 0;
     const auto nsize = front.naturalSize()*scale;
@@ -86,7 +97,8 @@ auto SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text,
     offset += thick;
     image = QImage(imageSize, QImage::Format_ARGB32_Premultiplied);
     if (!image.isNull()) {
-        QPointF origin(-(area.width()*dpr - nsize.width())*0.5 + offset.x(), offset.y());
+        const auto x = -(area.width() * dpr - nsize.width()) * 0.5 + offset.x();
+        QPointF origin(x, offset.y());
         image.setDevicePixelRatio(dpr);
         image.fill(0x0);
         QPainter painter(&image);
@@ -109,7 +121,7 @@ auto SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text,
                     memset(dest, 0, bg.bytesPerLine());
                     dest += bg.bytesPerLine();
                 } else {
-                    auto src = image.bits() + image.bytesPerLine()*ys;
+                    auto src = image.bits() + image.bytesPerLine() * ys;
                     for (int x=0; x<bg.width(); ++x) {
                         const int xs = x-soffset.x();
                         if (xs < 0) {
@@ -138,8 +150,9 @@ auto SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text,
             bboxes = front.boundingBoxes();
             if (!bboxes.isEmpty()) {
                 for (auto &bbox : bboxes) {
-                    bbox.setTopLeft(bbox.topLeft()*scale + origin - thick);
-                    bbox.setBottomRight(bbox.bottomRight()*scale + origin + thick);
+                    bbox.setTopLeft(bbox.topLeft() * scale + origin - thick);
+                    bbox.setBottomRight(bbox.bottomRight() * scale
+                                        + origin + thick);
                 }
                 gap = image.height() - bboxes.last().bottom() + 1;
                 gap += thick.y()*2;

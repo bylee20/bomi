@@ -13,31 +13,34 @@ enum class TextThemeStyle : int {
 
 Q_DECLARE_METATYPE(TextThemeStyle)
 
-inline auto operator == (TextThemeStyle e, int i) -> bool { return (int)e == i; }
-inline auto operator != (TextThemeStyle e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, TextThemeStyle e) -> bool { return (int)e == i; }
-inline auto operator != (int i, TextThemeStyle e) -> bool { return (int)e != i; }
-inline auto operator > (TextThemeStyle e, int i) -> bool { return (int)e > i; }
-inline auto operator < (TextThemeStyle e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (TextThemeStyle e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (TextThemeStyle e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, TextThemeStyle e) -> bool { return i > (int)e; }
-inline auto operator < (int i, TextThemeStyle e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, TextThemeStyle e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, TextThemeStyle e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (TextThemeStyle e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (TextThemeStyle e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, TextThemeStyle e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, TextThemeStyle e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (TextThemeStyle e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (TextThemeStyle e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (TextThemeStyle e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (TextThemeStyle e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, TextThemeStyle e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, TextThemeStyle e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, TextThemeStyle e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, TextThemeStyle e) -> bool { return i <= (int)e; }
 #if TEXTTHEMESTYLE_IS_FLAG
-Q_DECLARE_FLAGS(, TextThemeStyle)
-Q_DECLARE_OPERATORS_FOR_FLAGS()
+#include "enumflags.hpp"
+using  = EnumFlags<TextThemeStyle>;
+constexpr inline auto operator | (TextThemeStyle e1, TextThemeStyle e2) -> 
+{
+    return (::IntType(e1) | ::IntType(e2));
+}
+constexpr inline auto operator ~ (TextThemeStyle e) -> EnumNot<TextThemeStyle>
+{
+    return EnumNot<TextThemeStyle>(e);
+}
+constexpr inline auto operator & (TextThemeStyle lhs,  rhs) -> EnumAnd<TextThemeStyle>
+{
+    return rhs & lhs;
+}
 Q_DECLARE_METATYPE()
-#else
-inline auto operator & (TextThemeStyle e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, TextThemeStyle e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, TextThemeStyle e) -> int& { return i &= (int)e; }
-inline auto operator ~ (TextThemeStyle e) -> int { return ~(int)e; }
-inline auto operator | (TextThemeStyle e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, TextThemeStyle e) -> int { return (int)e | i; }
-constexpr inline auto operator | (TextThemeStyle e1, TextThemeStyle e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, TextThemeStyle e) -> int& { return i |= (int)e; }
 #endif
 
 template<>

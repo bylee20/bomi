@@ -3,7 +3,7 @@
 
 #include "stdafx.hpp"
 
-class CharsetDetector{
+class CharsetDetector {
 public:
     CharsetDetector(const QByteArray &data);
     ~CharsetDetector();

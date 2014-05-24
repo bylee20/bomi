@@ -1,8 +1,23 @@
 #include "translator.hpp"
-#include <unicode/locid.h>
 #include "misc/log.hpp"
+#include <unicode/locid.h>
 
 DECLARE_LOG_CONTEXT(Translator)
+
+auto translator_load(const QLocale &locale) -> bool
+{
+    return Translator::load(locale);
+}
+
+auto translator_display_language(const QString &iso) -> QString
+{
+    return Translator::displayLanguage(iso);
+}
+
+auto translator_default_encoding() -> QString
+{
+    return Translator::defaultEncoding();
+}
 
 struct Iso639_2 { QString b, t; };
 

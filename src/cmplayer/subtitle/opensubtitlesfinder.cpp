@@ -1,9 +1,9 @@
 #include "opensubtitlesfinder.hpp"
 #include "player/mrl.hpp"
-#include "player/translator.hpp"
 #include "misc/xmlrpcclient.hpp"
 
 static inline auto _Args() -> QVariantList { return QVariantList(); }
+auto translator_display_language(const QString &iso) -> QString;
 
 struct OpenSubtitlesFinder::Data {
     State state = Unavailable;
@@ -113,7 +113,7 @@ auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
                 if (iso.isEmpty())
                     link.language = map[_L("LanguageName")].toString();
                 else
-                    link.language = Translator::displayLanguage(iso);
+                    link.language = translator_display_language(iso);
                 links.append(link);
             }
             emit found(links);

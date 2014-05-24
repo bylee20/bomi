@@ -3,8 +3,7 @@
 
 #include "stdafx.hpp"
 
-class PlayEngine;                       class Subtitle;
-class SubtitleRendererItem;
+class PlayEngine;                       class SubtitleRendererItem;
 
 class ABRepeater : public QObject {
     Q_OBJECT
@@ -32,9 +31,6 @@ signals:
     void stopped();
     void started();
 private:
-    auto onTick(int time) -> void;
-    ABRepeater(const ABRepeater&) = delete;
-    ABRepeater &operator = (const ABRepeater&) = delete;
     PlayEngine *m_engine = nullptr;
     const SubtitleRendererItem *m_sub = nullptr;
     int m_a = -1, m_b = -1;

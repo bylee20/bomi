@@ -1,5 +1,4 @@
 #include "highqualitytextureitem.hpp"
-#include "opengl/openglcompat.hpp"
 #include "opengl/interpolator.hpp"
 #include "opengl/opengltexture1d.hpp"
 #include "opengl/opengltexture2d.hpp"
@@ -181,6 +180,11 @@ HighQualityTextureItem::~HighQualityTextureItem()
     delete d;
 }
 
+auto HighQualityTextureItem::supportsHighQualityRendering() -> bool
+{
+    return OGL::hasExtension(OGL::TextureFloat);
+}
+
 auto HighQualityTextureItem::interpolator() const -> InterpolatorType
 {
     return d->interpolator->type();
@@ -188,8 +192,7 @@ auto HighQualityTextureItem::interpolator() const -> InterpolatorType
 
 auto HighQualityTextureItem::setInterpolator(InterpolatorType type) -> void
 {
-    if (type != InterpolatorType::Bilinear
-            && !OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat))
+    if (type != InterpolatorType::Bilinear && !supportsHighQualityRendering())
         type = InterpolatorType::Bilinear;
     if (d->interpolator->type() != type) {
         d->interpolator = Interpolator::get(type);
@@ -199,8 +202,7 @@ auto HighQualityTextureItem::setInterpolator(InterpolatorType type) -> void
 
 auto HighQualityTextureItem::setDithering(Dithering dithering) -> void
 {
-    if (dithering == Dithering::Fruit
-            && !OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat))
+    if (dithering == Dithering::Fruit && !supportsHighQualityRendering())
         dithering = Dithering::None;
     if (_Change(d->dithering, dithering))
         rerender();
@@ -261,14 +263,14 @@ static void makeDitheringTexture(OpenGLTexture2D &texture, Dithering type) {
     QByteArray buffer;
     OpenGLTextureTransferInfo info;
     if (type == Dithering::Fruit) {
-        Q_ASSERT(OpenGLCompat::hasExtension(OpenGLCompat::TextureFloat));
+        Q_ASSERT(OGL::hasExtension(OGL::TextureFloat));
         size = 1 << 6;
         static QVector<GLfloat> fruit;
         if (fruit.size() != size*size) {
             fruit.resize(size*size);
             mp_make_fruit_dither_matrix(fruit.data(), sizeb);
         }
-        const bool rg = OpenGLCompat::hasExtension(OpenGLCompat::TextureRG);
+        const bool rg = OGL::hasExtension(OGL::TextureRG);
         info.texture         = rg ? OGL::R16_UNorm : OGL::Luminance16_UNorm;
         info.transfer.format = rg ? OGL::Red : OGL::Luminance;
         info.transfer.type   = OGL::Float32;
@@ -277,7 +279,7 @@ static void makeDitheringTexture(OpenGLTexture2D &texture, Dithering type) {
         size = 8;
         buffer.resize(size*size);
         mp_make_ordered_dither_matrix((uchar*)buffer.data(), size);
-        info = OpenGLCompat::transferInfo(OGL::OneComponent);
+        info = OpenGLTextureTransferInfo::get(OGL::OneComponent);
         data = buffer.data();
     }
     OpenGLTextureBinder<OGL::Target2D> binder(&texture);

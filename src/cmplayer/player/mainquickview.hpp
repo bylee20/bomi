@@ -13,7 +13,7 @@ public:
     template <class T = QObject>
     auto findItem(const QString &name = QString()) -> T*
         { return rootObject()->findChild<T*>(name); }
-    auto topLevelItem() const -> TopLevelItem* { return m_top; }
+    auto topLevelItem() const -> QQuickItem*;
     auto setCursorVisible(bool visible) -> void;
     auto setSkin(const QString &name) -> bool;
 private:

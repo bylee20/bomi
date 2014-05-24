@@ -10,31 +10,34 @@ __ENUM_VALUES
 
 Q_DECLARE_METATYPE(__ENUM_NAME)
 
-inline auto operator == (__ENUM_NAME e, int i) -> bool { return (int)e == i; }
-inline auto operator != (__ENUM_NAME e, int i) -> bool { return (int)e != i; }
-inline auto operator == (int i, __ENUM_NAME e) -> bool { return (int)e == i; }
-inline auto operator != (int i, __ENUM_NAME e) -> bool { return (int)e != i; }
-inline auto operator > (__ENUM_NAME e, int i) -> bool { return (int)e > i; }
-inline auto operator < (__ENUM_NAME e, int i) -> bool { return (int)e < i; }
-inline auto operator >= (__ENUM_NAME e, int i) -> bool { return (int)e >= i; }
-inline auto operator <= (__ENUM_NAME e, int i) -> bool { return (int)e <= i; }
-inline auto operator > (int i, __ENUM_NAME e) -> bool { return i > (int)e; }
-inline auto operator < (int i, __ENUM_NAME e) -> bool { return i < (int)e; }
-inline auto operator >= (int i, __ENUM_NAME e) -> bool { return i >= (int)e; }
-inline auto operator <= (int i, __ENUM_NAME e) -> bool { return i <= (int)e; }
+constexpr inline auto operator == (__ENUM_NAME e, int i) -> bool { return (int)e == i; }
+constexpr inline auto operator != (__ENUM_NAME e, int i) -> bool { return (int)e != i; }
+constexpr inline auto operator == (int i, __ENUM_NAME e) -> bool { return (int)e == i; }
+constexpr inline auto operator != (int i, __ENUM_NAME e) -> bool { return (int)e != i; }
+constexpr inline auto operator > (__ENUM_NAME e, int i) -> bool { return (int)e > i; }
+constexpr inline auto operator < (__ENUM_NAME e, int i) -> bool { return (int)e < i; }
+constexpr inline auto operator >= (__ENUM_NAME e, int i) -> bool { return (int)e >= i; }
+constexpr inline auto operator <= (__ENUM_NAME e, int i) -> bool { return (int)e <= i; }
+constexpr inline auto operator > (int i, __ENUM_NAME e) -> bool { return i > (int)e; }
+constexpr inline auto operator < (int i, __ENUM_NAME e) -> bool { return i < (int)e; }
+constexpr inline auto operator >= (int i, __ENUM_NAME e) -> bool { return i >= (int)e; }
+constexpr inline auto operator <= (int i, __ENUM_NAME e) -> bool { return i <= (int)e; }
 #if __ENUM_UPPERS_IS_FLAG
-Q_DECLARE_FLAGS(__ENUM_FLAGS_NAME, __ENUM_NAME)
-Q_DECLARE_OPERATORS_FOR_FLAGS(__ENUM_FLAGS_NAME)
+#include "enumflags.hpp"
+using __ENUM_FLAGS_NAME = EnumFlags<__ENUM_NAME>;
+constexpr inline auto operator | (__ENUM_NAME e1, __ENUM_NAME e2) -> __ENUM_FLAGS_NAME
+{
+    return __ENUM_FLAGS_NAME(__ENUM_FLAGS_NAME::IntType(e1) | __ENUM_FLAGS_NAME::IntType(e2));
+}
+constexpr inline auto operator ~ (__ENUM_NAME e) -> EnumNot<__ENUM_NAME>
+{
+    return EnumNot<__ENUM_NAME>(e);
+}
+constexpr inline auto operator & (__ENUM_NAME lhs, __ENUM_FLAGS_NAME rhs) -> EnumAnd<__ENUM_NAME>
+{
+    return rhs & lhs;
+}
 Q_DECLARE_METATYPE(__ENUM_FLAGS_NAME)
-#else
-inline auto operator & (__ENUM_NAME e, int i) -> int { return (int)e & i; }
-inline auto operator & (int i, __ENUM_NAME e) -> int { return (int)e & i; }
-inline auto operator &= (int &i, __ENUM_NAME e) -> int& { return i &= (int)e; }
-inline auto operator ~ (__ENUM_NAME e) -> int { return ~(int)e; }
-inline auto operator | (__ENUM_NAME e, int i) -> int { return (int)e | i; }
-inline auto operator | (int i, __ENUM_NAME e) -> int { return (int)e | i; }
-constexpr inline auto operator | (__ENUM_NAME e1, __ENUM_NAME e2) -> int { return (int)e1 | (int)e2; }
-inline auto operator |= (int &i, __ENUM_NAME e) -> int& { return i |= (int)e; }
 #endif
 
 template<>

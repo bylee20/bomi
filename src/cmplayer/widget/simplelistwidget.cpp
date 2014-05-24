@@ -20,14 +20,6 @@ SimpleListWidgetBase::SimpleListWidgetBase(QWidget *parent)
     vbox->setMargin(0);
     hbox->setMargin(0);
 
-//    connect(m_tree, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*))
-//            , this, SLOT(slotCurrentItemChanged(QListWidgetItem*)));
-//    connect(m_add, SIGNAL(clicked()), this, SLOT(slotAdd()));
-//    connect(m_erase, SIGNAL(clicked()), this, SLOT(slotErase()));
-//    connect(m_up, SIGNAL(clicked()), this, SLOT(slotUp()));
-//    connect(m_down, SIGNAL(clicked()), this, SLOT(slotDown()));
-
-//    slotCurrentItemChanged(0);
     setAddingAndErasingEnabled(false);
     setChangingOrderEnabled(false);
 }
@@ -61,8 +53,8 @@ auto StringListWidget::getNewItem(QString *item) -> bool
     hbox->addWidget(edit);
     hbox->addWidget(ok);
     hbox->addWidget(cancel);
-    connect(ok, SIGNAL(clicked()), &dlg, SLOT(accept()));
-    connect(cancel, SIGNAL(clicked()), &dlg, SLOT(reject()));
+    connect(ok, &QPushButton::clicked, &dlg, &QDialog::accept);
+    connect(cancel, &QPushButton::clicked, &dlg, &QDialog::reject);
     if (!dlg.exec())
         return false;
     *item = edit->text();

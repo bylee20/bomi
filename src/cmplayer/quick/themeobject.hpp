@@ -3,8 +3,7 @@
 
 #include "stdafx.hpp"
 
-struct OsdTheme;
-class OsdThemeObject;
+struct OsdTheme;                        class OsdThemeObject;
 
 class ThemeObject : public QObject {
     Q_OBJECT

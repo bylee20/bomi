@@ -1,13 +1,11 @@
 #ifndef VIDEORENDERERITEM_HPP
 #define VIDEORENDERERITEM_HPP
 
-#include "stdafx.hpp"
 #include "quick/highqualitytextureitem.hpp"
+#include "enum/videoeffect.hpp"
 
 class VideoColor;                       class Kernel3x3;
 enum class DeintMethod;                 enum class ColorRange;
-enum class VideoEffect;
-using VideoEffects = QFlags<VideoEffect>;
 
 template<class T> class VideoImageCache;
 class VideoFramebufferObject;           class MpOsdBitmap;
