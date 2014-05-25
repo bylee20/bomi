@@ -20,12 +20,19 @@ public:
     }
 
     static auto toColor(const QStringRef &text) -> QColor {
-        if (!text.startsWith('#')) {
-            int i=0;
-            for (; i<text.size() && _IsHexNumber(text.at(i).unicode()); ++i) ;
-            if (i == text.size())
-                return QColor(_L("#") % text);
+        if (text.isEmpty())
+            return QColor();
+        int pos = 0;
+        for (; pos < text.size(); ++pos) {
+            if (text.at(pos).unicode() != '#')
+                break;
         }
+        if (pos > 0)
+            return QColor(_L('#') % text.mid(pos));
+        int i=0;
+        for (; i<text.size() && _IsHexNumber(text.at(i).unicode()); ++i) ;
+        if (i == text.size())
+            return QColor(_L("#") % text);
         return QColor(text.toString());
     }
 
