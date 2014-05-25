@@ -130,9 +130,9 @@ auto SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text,
                             *dest++ = 0;
                             *dest++ = 0;
                         } else {
-                            *dest++ = sr*sa*src[3] >> 16;
-                            *dest++ = sg*sa*src[3] >> 16;
                             *dest++ = sb*sa*src[3] >> 16;
+                            *dest++ = sg*sa*src[3] >> 16;
+                            *dest++ = sr*sa*src[3] >> 16;
                             *dest++ = sa*   src[3] >> 8;
                             src += 4;
                         }
@@ -140,7 +140,7 @@ auto SubtitleDrawer::draw(QImage &image, int &gap, const RichTextDocument &text,
                 }
             }
             if (blur)
-                m_blur.applyTo(bg, Qt::black, blur);
+                m_blur.applyTo(bg, m_style.shadow.color, blur);
             painter.begin(&bg);
             painter.drawImage(QPoint(0, 0), image);
             painter.end();
