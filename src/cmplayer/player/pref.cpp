@@ -1,7 +1,44 @@
 #include "pref.hpp"
+#include "misc/log.hpp"
 #include "mrlstate.hpp"
 #include "video/hwacc.hpp"
 #include "misc/record.hpp"
+#include "misc/json.hpp"
+#include "misc/jsonstorage.hpp"
+
+DECLARE_LOG_CONTEXT(Pref)
+
+template<>
+struct JsonIO<QMetaProperty> {
+    auto toJson(const QMetaProperty &prop) const -> QJsonValue
+    { return _L(prop.name()); }
+    auto fromJson(QMetaProperty &prop, const QJsonValue &json) const -> bool
+    {
+        const auto &mo = MrlState::staticMetaObject;
+        const int idx = mo.indexOfProperty(json.toString().toLatin1());
+        if (idx < 0)
+            return false;
+        prop = mo.property(idx);
+        return true;
+    }
+    SCA qt_type = QJsonValue::String;
+};
+
+template<>
+struct JsonIO<HwAcc::Type> {
+    auto toJson(HwAcc::Type type) const -> QJsonValue
+    { return HwAcc::backendName(type); }
+    auto fromJson(HwAcc::Type &type, const QJsonValue &json) const -> bool
+    {
+        const auto t = HwAcc::backend(json.toString());
+        if (t != HwAcc::None)
+            type = t;
+        return t != HwAcc::None;
+    }
+    SCA qt_type = QJsonValue::String;
+};
+
+#define PREF_FILE_PATH QString(_WritablePath() % _L("/pref.json"))
 
 auto translator_default_encoding() -> QString;
 
@@ -159,6 +196,95 @@ auto Pref::preset(KeyMapPreset id) -> Shortcuts
     return keys;
 }
 
+#define JSON_CLASS Pref
+static const auto jio = JIO(
+    JE(fit_to_video),
+    JE(remember_stopped),
+    JE(ask_record_found),
+    JE(pause_minimized),
+    JE(pause_video_only),
+    JE(hide_cursor),
+    JE(hide_cursor_fs_only),
+    JE(hide_cursor_delay),
+    JE(enable_system_tray),
+    JE(hide_rather_close),
+    JE(restore_properties),
+    JE(invert_wheel),
+    JE(disable_screensaver),
+    JE(sub_enc),
+    JE(sub_priority),
+    JE(sub_enc_autodetection),
+    JE(sub_enc_accuracy),
+    JE(ms_per_char),
+    JE(seek_step1),
+    JE(seek_step2),
+    JE(seek_step3),
+    JE(speed_step),
+    JE(volume_step),
+    JE(amp_step),
+    JE(sub_pos_step),
+    JE(volume_step),
+    JE(sub_sync_step),
+    JE(brightness_step),
+    JE(saturation_step),
+    JE(contrast_step),
+    JE(hue_step),
+    JE(sub_ext),
+    JE(blur_kern_c),
+    JE(blur_kern_n),
+    JE(blur_kern_d),
+    JE(sharpen_kern_c),
+    JE(sharpen_kern_n),
+    JE(sharpen_kern_d),
+    JE(remap_luma_min),
+    JE(remap_luma_max),
+    JE(channel_manipulation),
+    JE(enable_generate_playist),
+    JE(sub_enable_autoload),
+    JE(sub_enable_autoselect),
+    JE(generate_playlist),
+    JE(sub_autoload),
+    JE(sub_autoselect),
+    JE(enable_hwaccel),
+    JE(hwaccel_backend),
+    JE(skin_name),
+    JE(hwaccel_codecs),
+    JE(hwdeints),
+    JE(normalizer_silence),
+    JE(normalizer_target),
+    JE(normalizer_min),
+    JE(normalizer_max),
+    JE(lion_style_fullscreen),
+    JE(show_logo),
+    JE(bg_color),
+    JE(deint_hwdec),
+    JE(deint_swdec),
+    JE(audio_driver),
+    JE(clipping_method),
+    JE(cache_local),
+    JE(cache_disc),
+    JE(cache_network),
+    JE(cache_min_playback),
+    JE(cache_min_seeking),
+    JE(network_folders),
+    JE(use_mpris2),
+    JE(show_osd_on_action),
+    JE(show_osd_on_resized),
+    JE(show_osd_timeline),
+    JE(use_heartbeat),
+    JE(heartbeat_command),
+    JE(heartbeat_interval),
+    JE(open_media_from_file_manager),
+    JE(open_media_by_drag_and_drop),
+    JE(osd_theme),
+    JE(sub_style),
+    JE(double_click_map),
+    JE(middle_click_map),
+    JE(scroll_up_map),
+    JE(scroll_down_map),
+    JE(shortcuts)
+);
+
 #define PREF_GROUP _L("preference")
 
 #define DO(FUNC1, FUNC2) { \
@@ -233,51 +359,27 @@ auto Pref::preset(KeyMapPreset id) -> Shortcuts
     FUNC1(use_mpris2); \
     FUNC1(show_osd_on_action); \
     FUNC1(show_osd_on_resized); \
+    FUNC1(show_osd_timeline); \
     FUNC1(use_heartbeat); \
     FUNC1(heartbeat_command); \
     FUNC1(heartbeat_interval); \
     FUNC1(open_media_from_file_manager); \
     FUNC1(open_media_by_drag_and_drop); \
-    FUNC2(osd_theme); \
-    if (r.version() < 0x00815) {\
-        FUNC2(sub_style); \
-        FUNC2(double_click_map); \
-        FUNC2(middle_click_map); \
-        FUNC2(scroll_up_map); \
-        FUNC2(scroll_down_map); \
-    } else { \
-        FUNC1(sub_style); \
-        FUNC1(double_click_map); \
-        FUNC1(middle_click_map); \
-        FUNC1(scroll_up_map); \
-        FUNC1(scroll_down_map); \
-    } \
+    FUNC1(osd_theme); \
+    FUNC2(sub_style); \
+    FUNC2(double_click_map); \
+    FUNC2(middle_click_map); \
+    FUNC2(scroll_up_map); \
+    FUNC2(scroll_down_map); \
 }
 
 auto Pref::save() const -> void
 {
-    Record r(PREF_GROUP, 0x00815);
-    QList<QByteArray> restore_properties;
-    restore_properties.reserve(this->restore_properties.size());
-    for (auto &property : this->restore_properties)
-        restore_properties.append(property.name());
-#define WRITE1(a) r.write(a, #a)
-#define WRITE2(a) a.save(r, #a)
-    DO(WRITE1, WRITE2);
-
-    r.write(HwAcc::backendName(hwaccel_backend), "hwaccel_backend");
-
-    r.beginWriteArray("shortcuts", shortcuts.size());
-    auto it = shortcuts.cbegin();
-    for (int i=0; it != shortcuts.cend(); ++it, ++i) {
-        r.setArrayIndex(i);
-        r.setValue("id", it.key());
-        r.setValue("keys", toStringList(it.value()));
-    }
-    r.endArray();
+    JsonStorage storage(PREF_FILE_PATH);
+    storage.write(jio.toJson(*this));
 }
 
-auto Pref::load() -> void
+auto Pref::loadFromRecord() -> void
 {
     Record r(PREF_GROUP);
     QList<QByteArray> restore_properties;
@@ -314,13 +416,26 @@ auto Pref::load() -> void
     r.endArray();
 }
 
+auto Pref::load() -> void
+{
+    JsonStorage storage(PREF_FILE_PATH);
+    const auto json = storage.read();
+    if (storage.hasError()) {
+        if (storage.error() == JsonStorage::NoFile)
+            loadFromRecord();
+        return;
+    }
+    if (!jio.fromJson(*this, json))
+        _Error("Error: Cannot convert JSON object to preferences");
+}
+
 #ifdef Q_OS_LINUX
 #include "video/hwacc_vaapi.hpp"
 #endif
 
-auto Pref::defaultHwAccDeints() -> QList<DeintMethod>
+auto Pref::defaultHwAccDeints() -> QVector<DeintMethod>
 {
-    QList<DeintMethod> deints;
+    QVector<DeintMethod> deints;
     for (auto deint : HwAcc::fullDeintList()) {
         if (HwAcc::supports(deint))
             deints << deint;
@@ -328,9 +443,9 @@ auto Pref::defaultHwAccDeints() -> QList<DeintMethod>
     return deints;
 }
 
-auto Pref::defaultHwAccCodecs() -> QList<int>
+auto Pref::defaultHwAccCodecs() -> QVector<int>
 {
-    QList<int> codecs;
+    QVector<int> codecs;
     for (auto codec : HwAcc::fullCodecList())
         codecs.push_back(codec);
     return codecs;
@@ -348,9 +463,9 @@ auto Pref::defaultSkinName() -> QString
     return "GaN";
 }
 
-auto Pref::defaultRestoreProperties() -> QList<QMetaProperty>
+auto Pref::defaultRestoreProperties() -> QVector<QMetaProperty>
 {
-    QList<QMetaProperty> list;
+    QVector<QMetaProperty> list;
     auto &mo = MrlState::staticMetaObject;
     const int count = mo.propertyCount();
     for (int i=mo.propertyOffset(); i<count; ++i) {

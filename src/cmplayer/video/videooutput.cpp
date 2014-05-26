@@ -9,7 +9,6 @@
 #include "player/playengine.hpp"
 #include "player/mpv_helper.hpp"
 #include "misc/log.hpp"
-#include <deque>
 extern "C" {
 #include <sub/osd_state.h>
 #include <video/hwdec.h>

@@ -33,17 +33,11 @@ constexpr inline auto operator <= (int i, VideoEffect e) -> bool { return i <= (
 #include "enumflags.hpp"
 using VideoEffects = EnumFlags<VideoEffect>;
 constexpr inline auto operator | (VideoEffect e1, VideoEffect e2) -> VideoEffects
-{
-    return VideoEffects(VideoEffects::IntType(e1) | VideoEffects::IntType(e2));
-}
+{ return VideoEffects(VideoEffects::IntType(e1) | VideoEffects::IntType(e2)); }
 constexpr inline auto operator ~ (VideoEffect e) -> EnumNot<VideoEffect>
-{
-    return EnumNot<VideoEffect>(e);
-}
+{ return EnumNot<VideoEffect>(e); }
 constexpr inline auto operator & (VideoEffect lhs, VideoEffects rhs) -> EnumAnd<VideoEffect>
-{
-    return rhs & lhs;
-}
+{ return rhs & lhs; }
 Q_DECLARE_METATYPE(VideoEffects)
 #endif
 
@@ -111,6 +105,16 @@ public:
                                [&name] (const Item &item)
                                { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
+    }
+    static auto fromName(Enum &val, const QString &name) -> bool
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
+        if (it == info.cend())
+            return false;
+        val = it->value;
+        return true;
     }
     static auto fromData(const QVariant &data,
                          Enum def = default_()) -> Enum

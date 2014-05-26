@@ -28,17 +28,11 @@ constexpr inline auto operator <= (int i, DecoderDevice e) -> bool { return i <=
 #include "enumflags.hpp"
 using DecoderDevices = EnumFlags<DecoderDevice>;
 constexpr inline auto operator | (DecoderDevice e1, DecoderDevice e2) -> DecoderDevices
-{
-    return DecoderDevices(DecoderDevices::IntType(e1) | DecoderDevices::IntType(e2));
-}
+{ return DecoderDevices(DecoderDevices::IntType(e1) | DecoderDevices::IntType(e2)); }
 constexpr inline auto operator ~ (DecoderDevice e) -> EnumNot<DecoderDevice>
-{
-    return EnumNot<DecoderDevice>(e);
-}
+{ return EnumNot<DecoderDevice>(e); }
 constexpr inline auto operator & (DecoderDevice lhs, DecoderDevices rhs) -> EnumAnd<DecoderDevice>
-{
-    return rhs & lhs;
-}
+{ return rhs & lhs; }
 Q_DECLARE_METATYPE(DecoderDevices)
 #endif
 
@@ -101,6 +95,16 @@ public:
                                [&name] (const Item &item)
                                { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
+    }
+    static auto fromName(Enum &val, const QString &name) -> bool
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
+        if (it == info.cend())
+            return false;
+        val = it->value;
+        return true;
     }
     static auto fromData(const QVariant &data,
                          Enum def = default_()) -> Enum

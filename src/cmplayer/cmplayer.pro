@@ -51,7 +51,6 @@ HEADERS += \
 	audio/audiomixer.hpp \
 	audio/audio_helper.hpp \
 	audio/audionormalizeroption.hpp \
-	video/videoframe.hpp \
 	video/videooutput.hpp \
 	video/videoformat.hpp \
 	video/hwacc.hpp \
@@ -206,7 +205,9 @@ HEADERS += \
     misc/stepactionpair.hpp \
     opengl/opengltexturetransferinfo.hpp \
     opengl/opengllogger.hpp \
-    enum/enumflags.hpp
+    enum/enumflags.hpp \
+    misc/is_convertible.hpp \
+    misc/jsonstorage.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -217,7 +218,6 @@ SOURCES += \
 	audio/audionormalizeroption.cpp \
 	video/videoimagepool.cpp \
 	video/videoframebufferobject.cpp \
-	video/videoframe.cpp \
 	video/videooutput.cpp \
 	video/videorendereritem.cpp \
 	video/hwacc.cpp \
@@ -366,7 +366,8 @@ SOURCES += \
     misc/json.cpp \
     misc/stepactionpair.cpp \
     opengl/opengltexturetransferinfo.cpp \
-    opengl/opengllogger.cpp
+    opengl/opengllogger.cpp \
+    misc/jsonstorage.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

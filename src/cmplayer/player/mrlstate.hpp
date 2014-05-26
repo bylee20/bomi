@@ -219,15 +219,14 @@ static inline auto _ToSql(qint16 integer) -> QString { return QString::number(in
 static inline auto _ToSql(qint32 integer) -> QString { return QString::number(integer); }
 static inline auto _ToSql(qint64 integer) -> QString { return QString::number(integer); }
 
-static inline auto _ToSql(const QPoint &p) -> QString {
-    return _L('\'') % QString::number(p.x()) % "," % QString::number(p.y()) % _L('\'');
+static inline auto _ToSql(const QPoint &p) -> QString
+{
+    return _L('\'') % QString::number(p.x()) % ","
+                    % QString::number(p.y()) % _L('\'');
 }
-static inline auto _ToSql(const QJsonObject &json) -> QString {
-    return _ToSql(QString::fromUtf8(QJsonDocument(json).toJson(QJsonDocument::Compact)));
-}
-//static inline auto _JsonFromSql(const QString &str, const QJsonObject &def) -> QJsonObject {
 
-//}
+static inline auto _ToSql(const QJsonObject &json) -> QString
+{ return _ToSql(_JsonToString(json)); }
 
 static inline auto _PointFromSql(const QString &str, const QPoint &def) -> QPoint {
     auto index = str.indexOf(',');
@@ -288,22 +287,6 @@ T *_MakeMrlStateFromQuery(const QList<F> &fields, const QSqlQuery &query) {
     _FillMrlStateFromRecord(state, fields, query);
     return state;
 }
-
-//auto _InsertState(QSqlQuery &query, const MrlState *state, const QString &table, int version, prefix) -> bool {
-
-//    return query.exec(q.arg(values));
-//}
-
-//auto insert(const MrlState *state) -> bool {
-//    if (state->mrl == cached.mrl)
-//        cached.mrl = Mrl();
-//    QString values = toSql(state->mrl.toString()) % _L(", ")
-//                    % toSql(state->mrl.displayName()) % _L(", ");
-//    for (auto &f : fields)
-//        values += f.toSql(f.property().read(state)) % _L(", ");
-//    values.chop(2);
-//    return finder.exec(insertTemplate.arg(values));
-//}
 
 }
 

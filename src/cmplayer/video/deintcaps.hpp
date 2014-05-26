@@ -6,6 +6,8 @@
 #include "enum/deintdevice.hpp"
 #include "enum/decoderdevice.hpp"
 
+template<class T> class JsonIO;
+
 class DeintCaps {
 public:
     auto method() const -> DeintMethod { return m_method; }
@@ -19,12 +21,15 @@ public:
     static auto fromString(const QString &text) -> DeintCaps;
     static auto default_(DecoderDevice dec) -> DeintCaps;
     static auto list() -> QList<DeintCaps>;
+    auto toJson() const -> QJsonObject;
+    auto setFromJson(const QJsonObject &json) -> bool;
 private:
     friend class DeintWidget;
     DeintMethod m_method = DeintMethod::None;
     DecoderDevices m_decoders = 0;
     DeintDevices m_devices = 0;
     bool m_doubler = false;
+    friend class JsonIO<DeintCaps>;
 };
 
 inline auto DeintCaps::isAvailable() const -> bool

@@ -1,5 +1,47 @@
 #include "deintcaps.hpp"
 #include "hwacc.hpp"
+#include "misc/json.hpp"
+
+#define JSON_IO_DEINT_CAPS _JIO<DeintCaps>(\
+    _JE("method", &DeintCaps::m_method),\
+    _JE("decoders", &DeintCaps::m_decoders),\
+    _JE("devices", &DeintCaps::m_devices),\
+    _JE("doubler", &DeintCaps::m_doubler)\
+)
+
+template<>
+struct JsonIO<DeintCaps> {
+    static auto io() -> const decltype(JSON_IO_DEINT_CAPS)*
+    { static const auto io = JSON_IO_DEINT_CAPS; return &io; }
+};
+
+static const auto jio = JsonIO<DeintCaps>::io();
+
+auto DeintCaps::toJson() const -> QJsonObject
+{
+    return jio->toJson(*this);
+}
+
+auto DeintCaps::setFromJson(const QJsonObject &json) -> bool
+{
+    return jio->fromJson(*this, json);
+}
+
+//decltype(DeintCaps::m_method) a;
+
+
+
+//auto DeintCaps::jio() -> const void*
+//{
+//    static const auto io = JSON_IO_DEINT_CAPS;
+//    return &io;
+//}
+
+//auto json_io(const DeintCaps*) -> const decltype(JSON_IO_DEINT_CAPS)*
+//{
+
+//}
+
 
 auto DeintCaps::list() -> QList<DeintCaps>
 {

@@ -26,7 +26,7 @@ template<class T>
 auto addEnumAction(Menu &menu, T t, const char *key, bool checkable = false,
                    const char *group = "") -> EnumAction<T>*
 {
-    static_assert(std::is_enum_class<T>::value, "wrong type");
+    static_assert(tmp::is_enum_class<T>(), "wrong type");
     auto action = _NewEnumAction<T>(t);
     action->setCheckable(checkable);
     menu.addActionToGroup(action, key, group);
@@ -37,7 +37,7 @@ template<class T>
 auto addEnumActions(Menu &menu, std::initializer_list<T> list,
                     bool checkable = false) -> void
 {
-    static_assert(!std::is_same<T, ChangeValue>::value, "oops!");
+    static_assert(!tmp::is_same<T, ChangeValue>(), "oops!");
     const QString g = _L(EnumInfo<T>::typeKey());
     for (const auto &item : list) {
         const auto key = EnumInfo<T>::key(item);
@@ -51,7 +51,7 @@ auto addEnumActions(Menu &menu, std::initializer_list<T> list,
 template<class T>
 auto addEnumActions(Menu &menu, bool checkable = false) -> void
 {
-    static_assert(!std::is_same<T, ChangeValue>::value, "oops!");
+    static_assert(!tmp::is_same<T, ChangeValue>(), "oops!");
     const QString g = _L(EnumInfo<T>::typeKey());
     for (auto &item : EnumInfo<T>::items()) {
         auto act = _NewEnumAction(item.value);

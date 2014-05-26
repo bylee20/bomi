@@ -9,6 +9,8 @@ class AppState : public QObject {
     Q_OBJECT
     Q_PROPERTY(StaysOnTop win_stays_on_top MEMBER win_stays_on_top NOTIFY winStaysOnTopChanged)
 public:
+    AppState();
+
     QPointF win_pos;
     QSize win_size;
     MrlState state;
@@ -21,20 +23,14 @@ public:
     StaysOnTop win_stays_on_top = StaysOnTop::Playing;
 
     // misc
-    QString open_folder_types = _L("vi");
-    QString open_url_enc;
-    QStringList open_url_list;
     bool ask_system_tray = true;
 
     QString dvd_device, bluray_device;
     auto save() const -> void;
-    static AppState &get() {
-        static AppState obj; return obj;
-    }
 signals:
     void winStaysOnTopChanged();
 private:
-    AppState();
+    auto loadFromRecord() -> void;
 };
 
 class AppStateOld : public QObject {

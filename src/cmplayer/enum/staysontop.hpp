@@ -28,17 +28,11 @@ constexpr inline auto operator <= (int i, StaysOnTop e) -> bool { return i <= (i
 #include "enumflags.hpp"
 using  = EnumFlags<StaysOnTop>;
 constexpr inline auto operator | (StaysOnTop e1, StaysOnTop e2) -> 
-{
-    return (::IntType(e1) | ::IntType(e2));
-}
+{ return (::IntType(e1) | ::IntType(e2)); }
 constexpr inline auto operator ~ (StaysOnTop e) -> EnumNot<StaysOnTop>
-{
-    return EnumNot<StaysOnTop>(e);
-}
+{ return EnumNot<StaysOnTop>(e); }
 constexpr inline auto operator & (StaysOnTop lhs,  rhs) -> EnumAnd<StaysOnTop>
-{
-    return rhs & lhs;
-}
+{ return rhs & lhs; }
 Q_DECLARE_METATYPE()
 #endif
 
@@ -96,6 +90,16 @@ public:
                                [&name] (const Item &item)
                                { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
+    }
+    static auto fromName(Enum &val, const QString &name) -> bool
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
+        if (it == info.cend())
+            return false;
+        val = it->value;
+        return true;
     }
     static auto fromData(const QVariant &data,
                          Enum def = default_()) -> Enum

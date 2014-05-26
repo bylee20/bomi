@@ -8,7 +8,7 @@ class Playlist;
 class UrlDialog : public QDialog {
     Q_OBJECT
 public:
-    UrlDialog(QWidget *parent = 0);
+    UrlDialog(QWidget *parent = 0, const QString &key = QString());
     ~UrlDialog();
     auto setUrl(const QUrl &url) -> void;
     auto url() const -> QUrl;

@@ -1,8 +1,33 @@
 #include "channelmanipulation.hpp"
 #include "channellayoutmap.hpp"
 #include "misc/log.hpp"
+#include "misc/json.hpp"
 
 DECLARE_LOG_CONTEXT(Audio)
+
+static auto nameToId(const QString &name) -> mp_speaker_id {
+    const int size = ChannelLayoutMap::channelNames().size();
+    for (int i=0; i<size; ++i) {
+        if (name == _L(ChannelLayoutMap::channelNames()[i].abbr))
+            return (mp_speaker_id)i;
+    }
+    return MP_SPEAKER_ID_COUNT;
+}
+
+template<>
+struct JsonIO<mp_speaker_id> {
+    SCA qt_type = QJsonValue::String;
+    auto toJson(mp_speaker_id id) const noexcept -> QJsonValue
+    { return _L(ChannelLayoutMap::channelNames()[id].abbr); }
+    auto fromJson(mp_speaker_id &id, const QJsonValue &json) const -> bool
+    {
+        const auto speaker = nameToId(json.toString());
+        if (speaker == MP_SPEAKER_ID_COUNT)
+            return false;
+        id = speaker;
+        return true;
+    }
+};
 
 auto ChannelManipulation::isIdentity() const -> bool
 {
@@ -12,6 +37,21 @@ auto ChannelManipulation::isIdentity() const -> bool
         if (sources.size() != 1 || sources.first() == speaker_out)
             return false;
     }
+    return true;
+}
+
+auto ChannelManipulation::toJson() const -> QJsonArray
+{
+    auto obj = json_io(&m_mix)->toJson(m_mix);
+    return obj;
+}
+
+auto ChannelManipulation::setFromJson(const QJsonArray &json) -> bool
+{
+    ChannelManipulation man;
+    if (!json_io(&m_mix)->fromJson(man.m_mix, json))
+        return false;
+    m_mix = man.m_mix;
     return true;
 }
 
@@ -36,14 +76,6 @@ auto ChannelManipulation::fromString(const QString &text) -> ChannelManipulation
 {
     ChannelManipulation man;
     auto list = text.split(',');
-    auto nameToId = [] (const QString &name) {
-        const int size = ChannelLayoutMap::channelNames().size();
-        for (int i=0; i<size; ++i) {
-            if (name == _L(ChannelLayoutMap::channelNames()[i].abbr))
-                return (mp_speaker_id)i;
-        }
-        return MP_SPEAKER_ID_COUNT;
-    };
 
     for (auto &one : list) {
         auto map = one.split('!', QString::SkipEmptyParts);

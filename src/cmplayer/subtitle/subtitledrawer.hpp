@@ -54,10 +54,9 @@ public:
         }
 
         uchar *bits = mask.bits();
-        const double coef = color.alphaF();
-        const double r = color.redF()*coef;
-        const double g = color.greenF()*coef;
-        const double b = color.blueF()*coef;
+        const double r = color.redF();
+        const double g = color.greenF();
+        const double b = color.blueF();
         const uchar *c_it = a;
         for (int x=0; x<w; ++x, ++c_it){
             int sum = 0;
@@ -71,7 +70,7 @@ public:
                     *p++ = a*b;
                     *p++ = a*g;
                     *p++ = a*r;
-                    *p++ = a*coef;
+                    *p++ = a;
                 } else {
                     p += 4;
                 }

@@ -39,17 +39,11 @@ constexpr inline auto operator <= (int i, SpeakerId e) -> bool { return i <= (in
 #include "enumflags.hpp"
 using  = EnumFlags<SpeakerId>;
 constexpr inline auto operator | (SpeakerId e1, SpeakerId e2) -> 
-{
-    return (::IntType(e1) | ::IntType(e2));
-}
+{ return (::IntType(e1) | ::IntType(e2)); }
 constexpr inline auto operator ~ (SpeakerId e) -> EnumNot<SpeakerId>
-{
-    return EnumNot<SpeakerId>(e);
-}
+{ return EnumNot<SpeakerId>(e); }
 constexpr inline auto operator & (SpeakerId lhs,  rhs) -> EnumAnd<SpeakerId>
-{
-    return rhs & lhs;
-}
+{ return rhs & lhs; }
 Q_DECLARE_METATYPE()
 #endif
 
@@ -120,6 +114,16 @@ public:
                                [&name] (const Item &item)
                                { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
+    }
+    static auto fromName(Enum &val, const QString &name) -> bool
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
+        if (it == info.cend())
+            return false;
+        val = it->value;
+        return true;
     }
     static auto fromData(const mp_speaker_id &data,
                          Enum def = default_()) -> Enum

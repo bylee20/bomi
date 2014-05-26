@@ -1,7 +1,6 @@
 ﻿#include "opengllogger.hpp"
 #include "openglmisc.hpp"
 #include "misc/log.hpp"
-#include <cmath>
 #ifdef Q_OS_LINUX
 #include <GL/glx.h>
 #endif

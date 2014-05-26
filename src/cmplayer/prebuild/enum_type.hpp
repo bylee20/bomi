@@ -26,17 +26,11 @@ constexpr inline auto operator <= (int i, __ENUM_NAME e) -> bool { return i <= (
 #include "enumflags.hpp"
 using __ENUM_FLAGS_NAME = EnumFlags<__ENUM_NAME>;
 constexpr inline auto operator | (__ENUM_NAME e1, __ENUM_NAME e2) -> __ENUM_FLAGS_NAME
-{
-    return __ENUM_FLAGS_NAME(__ENUM_FLAGS_NAME::IntType(e1) | __ENUM_FLAGS_NAME::IntType(e2));
-}
+{ return __ENUM_FLAGS_NAME(__ENUM_FLAGS_NAME::IntType(e1) | __ENUM_FLAGS_NAME::IntType(e2)); }
 constexpr inline auto operator ~ (__ENUM_NAME e) -> EnumNot<__ENUM_NAME>
-{
-    return EnumNot<__ENUM_NAME>(e);
-}
+{ return EnumNot<__ENUM_NAME>(e); }
 constexpr inline auto operator & (__ENUM_NAME lhs, __ENUM_FLAGS_NAME rhs) -> EnumAnd<__ENUM_NAME>
-{
-    return rhs & lhs;
-}
+{ return rhs & lhs; }
 Q_DECLARE_METATYPE(__ENUM_FLAGS_NAME)
 #endif
 
@@ -91,6 +85,16 @@ __ENUM_FUNC_DESC_CASES
                                [&name] (const Item &item)
                                { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
+    }
+    static auto fromName(Enum &val, const QString &name) -> bool
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
+        if (it == info.cend())
+            return false;
+        val = it->value;
+        return true;
     }
     static auto fromData(const __ENUM_DATA_TYPE &data,
                          Enum def = default_()) -> Enum

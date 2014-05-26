@@ -1,17 +1,8 @@
 #include "openmediainfo.hpp"
+#include "misc/json.hpp"
 
-auto OpenMediaInfo::toJson() const -> QJsonObject
-{
-    QJsonObject json;
-    json["start_playback"] = start_playback;
-    json["behavior"] = _EnumName(behavior);
-    return json;
-}
+#define JSON_CLASS OpenMediaInfo
 
-auto OpenMediaInfo::fromJson(const QJsonObject &json) -> OpenMediaInfo
-{
-    OpenMediaInfo info;
-    info.start_playback = json.value("start_playback").toBool(info.start_playback);
-    info.behavior = _EnumFrom(json.value("behavior").toString(), info.behavior);
-    return info;
-}
+static const auto jio = JIO(JE(start_playback), JE(behavior));
+
+JSON_DECLARE_FROM_TO_FUNCTIONS

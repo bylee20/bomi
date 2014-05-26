@@ -34,7 +34,7 @@ enum EndReason {
     EndUnknown
 };
 
-template<class T, bool number = std::is_arithmetic<T>::value>
+template<class T, bool number = tmp::is_arithmetic<T>()>
 struct mpv_format_trait { };
 
 template<>
@@ -52,7 +52,7 @@ struct mpv_format_trait<T, true> {
     static constexpr bool IsInt = tmp::is_integral<T>();
     static constexpr bool use_free = false;
     using mpv_type = tmp::conditional_t<IsInt, qint64, double>;
-    static_assert(!std::is_same<T, bool>::value, "wrong type");
+    static_assert(!tmp::is_same<T, bool>(), "wrong type");
     static constexpr mpv_format format = IsInt ? MPV_FORMAT_INT64
                                                : MPV_FORMAT_DOUBLE;
     static constexpr auto cast(mpv_type from) -> T { return from; }
@@ -268,7 +268,7 @@ struct PlayEngine::Data {
     VideoOutput *video = nullptr;
     VideoFilter *filter = nullptr;
     QByteArray hwaccCodecs;
-    QList<SubtitleFileInfo> subtitleFiles;
+    QVector<SubtitleFileInfo> subtitleFiles;
     ChannelLayout layout = ChannelLayoutInfo::default_();
     int duration = 0, audioSync = 0, begin = 0, position = 0;
     int subDelay = 0, chapter = -2;
@@ -832,7 +832,7 @@ auto PlayEngine::volumeNormalizer() const -> double
     auto gain = d->audio->gain(); return gain < 0 ? 1.0 : gain;
 }
 
-auto PlayEngine::setHwAcc(int backend, const QList<int> &codecs) -> void
+auto PlayEngine::setHwAcc(int backend, const QVector<int> &codecs) -> void
 {
     for (auto id : codecs) {
         if (const char *name = HwAcc::codecName(id)) {
@@ -1777,7 +1777,7 @@ auto PlayEngine::sendMouseMove(const QPointF &pos) -> void
     }
 }
 
-auto PlayEngine::subtitleFiles() const -> QList<SubtitleFileInfo>
+auto PlayEngine::subtitleFiles() const -> QVector<SubtitleFileInfo>
 {
     return d->subtitleFiles;
 }

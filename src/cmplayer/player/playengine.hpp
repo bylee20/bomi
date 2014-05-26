@@ -86,7 +86,7 @@ public:
     auto duration() const -> int;
     auto mrl() const -> Mrl;
     auto isSeekable() const -> bool;
-    auto setHwAcc(int backend, const QList<int> &codecs) -> void;
+    auto setHwAcc(int backend, const QVector<int> &codecs) -> void;
     auto isRunning() const -> bool { return m_state & Running; }
     auto isPlaying() const -> bool {return m_state & Playing;}
     auto isPaused() const -> bool {return m_state & Paused;}
@@ -166,7 +166,7 @@ public:
     auto sendMouseClick(const QPointF &pos) -> void;
     auto sendMouseMove(const QPointF &pos) -> void;
     auto mousePosition() const -> const QPoint& { return m_mouse; }
-    auto subtitleFiles() const -> QList<SubtitleFileInfo>;
+    auto subtitleFiles() const -> QVector<SubtitleFileInfo>;
     auto setSubtitleDelay(int ms) -> void;
     auto setNextStartInfo(const StartInfo &startInfo) -> void;
     auto shutdown() -> void;

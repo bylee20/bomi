@@ -122,18 +122,10 @@ HistoryModel::HistoryModel(QObject *parent)
 : QAbstractTableModel(parent), d(new Data) {
     d->p = this;
     d->db = QSqlDatabase::addDatabase("QSQLITE", "history-model");
-    auto open = [this] () {
-        auto path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-        if (!QDir().mkpath(path))
-            return false;
-        path += "/history.db";
-        d->db.setDatabaseName(path);
-        if (!d->db.open())
-            return false;
-        return true;
-    };
-    if (!open()) {
-        _Error("Error: %%. Couldn't create database.", d->db.lastError().text());
+    d->db.setDatabaseName(_WritablePath() % "/history.db");
+    if (!d->db.open()) {
+        _Error("Error: %%. Couldn't create database.",
+               d->db.lastError().text());
         return;
     }
 
@@ -295,7 +287,7 @@ auto HistoryModel::setRememberImage(bool on) -> void
     d->rememberImage = on;
 }
 
-auto HistoryModel::setPropertiesToRestore(const QList<QMetaProperty> &properties) -> void
+auto HistoryModel::setPropertiesToRestore(const QVector<QMetaProperty> &properties) -> void
 {
     d->restores.clear();
     d->restores.reserve(properties.size());

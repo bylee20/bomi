@@ -3,6 +3,37 @@
 
 DECLARE_LOG_CONTEXT(RichText)
 
+auto RichTextHelper::toInt(const QStringRef &text) -> int
+{
+    int ret = 0;
+    for (int i=0; i<text.size(); ++i) {
+        const ushort c = text.at(i).unicode();
+        if (Q_LIKELY('0' <= c && c <= '9'))
+            ret = ret*10 + (c-'0');
+        else
+            break;
+    }
+    return ret;
+}
+
+auto RichTextHelper::toColor(const QStringRef &text) -> QColor
+{
+    if (text.isEmpty())
+        return QColor();
+    int pos = 0;
+    for (; pos < text.size(); ++pos) {
+        if (text.at(pos).unicode() != '#')
+            break;
+    }
+    if (pos > 0)
+        return QColor(_L('#') % text.mid(pos));
+    int i=0;
+    for (; i<text.size() && _IsHexNumber(text.at(i).unicode()); ++i) ;
+    if (i == text.size())
+        return QColor(_L("#") % text);
+    return QColor(text.toString());
+}
+
 auto RichTextHelper::replace(const QStringRef &str, const QLatin1String &from,
                              const QLatin1String &to,
                              Qt::CaseSensitivity s) -> QString
@@ -196,8 +227,6 @@ auto RichTextHelper::innerText(const char *open, const char *close,
             const QStringRef closer = cap.midRef(1, -1);
             if (_Same(closer, open))
                 pos += rx.matchedLength();
-//            if (_Same(closer, "body") || _Same(closer, "sami"))
-//                ret = -1;
         }
     }
     block = _MidRef(text, start, end - start);

@@ -11,7 +11,7 @@ using UnderType = typename std::underlying_type<T>::type;
 
 template<class T>
 class EnumNot {
-    static_assert(std::is_enum_class<T>::value, "wrong enum type." );
+    static_assert(tmp::is_enum_class<T>(), "wrong enum type." );
     friend class EnumFlags<T>;
     friend constexpr auto operator ~ (T rhs) -> EnumNot<T>;
     constexpr EnumNot(T flag) noexcept : m(~(UnderType<T>)flag) { }
@@ -20,7 +20,7 @@ class EnumNot {
 
 template<class T>
 class EnumAnd {
-    static_assert(std::is_enum_class<T>::value, "wrong enum type." );
+    static_assert(tmp::is_enum_class<T>(), "wrong enum type." );
 public:
     constexpr EnumAnd(T t) noexcept : m(t) { }
     constexpr operator bool() const noexcept { return (UnderType<T>)m; }
@@ -32,7 +32,7 @@ private:
 
 template<class T>
 class EnumFlags {
-    static_assert(std::is_enum_class<T>::value, "wrong enum type." );
+    static_assert(tmp::is_enum_class<T>(), "wrong enum type." );
     using IntType = UnderType<T>;
     using Flags = EnumFlags<T>;
     constexpr explicit EnumFlags(IntType m) noexcept : m(m) { }
@@ -82,6 +82,23 @@ public:
     auto set(T t) noexcept -> void { m |= (IntType)t; }
     auto set(T t, bool on) noexcept -> void { on ? set(t) : unset(t); }
     auto unset(T t) noexcept -> void { m &= ~(IntType)t; }
+    auto toJson() const -> QJsonArray
+    {
+        QJsonArray json;
+        for (auto &item : EnumInfo<T>::items()) {
+            if (contains(item.value))
+                json.push_back(item.name);
+        }
+        return json;
+    }
+    auto setFromJson(const QJsonArray &json) -> bool
+    {
+        IntType m = 0;
+        for (auto it : json)
+            m |= (IntType)EnumInfo<T>::from(it.toString(), (T)0);
+        this->m = m;
+        return true;
+    }
 private:
     IntType m = 0;
 };

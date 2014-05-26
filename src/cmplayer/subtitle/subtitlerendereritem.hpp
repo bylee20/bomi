@@ -22,8 +22,8 @@ public:
     auto pos() const -> double;
     auto isTopAligned() const -> bool;
     auto models() const -> QVector<SubCompModel*>;
-    auto components() const -> QList<const SubComp *>;
-    auto setComponents(const QList<SubComp> &components) -> void;
+    auto components() const -> QVector<const SubComp *>;
+    auto setComponents(const QVector<SubComp> &components) -> void;
     auto componentsCount() const -> int;
     auto setPriority(const QStringList &priority) -> void;
     auto setPos(double pos) -> void;

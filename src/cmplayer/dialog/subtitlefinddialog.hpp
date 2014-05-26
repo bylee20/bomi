@@ -1,7 +1,7 @@
 #ifndef SUBTITLEFINDDIALOG_HPP
 #define SUBTITLEFINDDIALOG_HPP
 
-#include <QDialog>
+#include "stdafx.hpp"
 
 class Mrl;
 

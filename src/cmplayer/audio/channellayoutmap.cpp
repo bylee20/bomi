@@ -194,3 +194,15 @@ auto ChannelLayoutMap::channelNames() -> const QVector<ChannelName>&
 {
     return ChNames;
 }
+
+#include "misc/json.hpp"
+
+auto ChannelLayoutMap::toJson() const -> QJsonObject
+{
+    return json_io(&m_map)->toJson(m_map);
+}
+
+auto ChannelLayoutMap::setFromJson(const QJsonObject &json) -> bool
+{
+    return json_io(&m_map)->fromJson(m_map, json);
+}

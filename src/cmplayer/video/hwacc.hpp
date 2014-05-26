@@ -2,7 +2,6 @@
 #define HWACC_HPP
 
 #include "stdafx.hpp"
-#include <array>
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <video/img_format.h>

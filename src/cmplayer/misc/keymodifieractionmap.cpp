@@ -1,5 +1,13 @@
 #include "keymodifieractionmap.hpp"
 #include "record.hpp"
+#include "json.hpp"
+
+#define JSON_CLASS KeyModifierActionMap::Action
+static const auto actionIO = JIO(JE(enabled), JE(id));
+#undef JSON_CLASS
+
+static inline auto json_io(const KeyModifierActionMap::Action*)
+-> decltype(&actionIO) { return &actionIO; }
 
 KeyModifierActionMap::KeyModifierActionMap()
 {
@@ -10,29 +18,12 @@ KeyModifierActionMap::KeyModifierActionMap()
 
 auto KeyModifierActionMap::toJson() const -> QJsonObject
 {
-    QJsonObject json;
-    const auto &items = EnumInfo<KeyModifier>::items();
-    for (auto &item : items) {
-        const auto &info = m_map[item.value];
-        QJsonObject obj;
-        obj["enabled"] = info.enabled;
-        obj["id"] = info.id;
-        json[item.name] = obj;
-    }
-    return json;
+    return json_io(&m_map)->toJson(m_map);
 }
 
-auto KeyModifierActionMap::fromJson(const QJsonObject &json)
--> KeyModifierActionMap {
-    const auto &items = EnumInfo<KeyModifier>::items();
-    KeyModifierActionMap map;
-    for (auto &item : items) {
-        auto &info = map.m_map[item.value];
-        auto obj = json[item.name].toObject();
-        info.enabled = obj.value("enabled").toBool(info.enabled);
-        info.id = obj.value("id").toString(info.id);
-    }
-    return map;
+auto KeyModifierActionMap::setFromJson(const QJsonObject &json) -> bool
+{
+    return json_io(&m_map)->fromJson(m_map, json);
 }
 
 auto KeyModifierActionMap::save(Record &r, const QString &group) const -> void

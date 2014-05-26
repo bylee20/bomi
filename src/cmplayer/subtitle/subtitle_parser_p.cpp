@@ -59,10 +59,6 @@ auto SamiParser::_parse(Subtitle &sub) -> void
             (*comp)[sync] += it.value();
         }
     }
-
-//    for (SubtitleComponent &comp : comps) {
-//        if (comp.size() < 3)
-//    }
 }
 
 

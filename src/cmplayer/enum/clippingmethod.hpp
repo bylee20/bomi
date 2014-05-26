@@ -28,17 +28,11 @@ constexpr inline auto operator <= (int i, ClippingMethod e) -> bool { return i <
 #include "enumflags.hpp"
 using  = EnumFlags<ClippingMethod>;
 constexpr inline auto operator | (ClippingMethod e1, ClippingMethod e2) -> 
-{
-    return (::IntType(e1) | ::IntType(e2));
-}
+{ return (::IntType(e1) | ::IntType(e2)); }
 constexpr inline auto operator ~ (ClippingMethod e) -> EnumNot<ClippingMethod>
-{
-    return EnumNot<ClippingMethod>(e);
-}
+{ return EnumNot<ClippingMethod>(e); }
 constexpr inline auto operator & (ClippingMethod lhs,  rhs) -> EnumAnd<ClippingMethod>
-{
-    return rhs & lhs;
-}
+{ return rhs & lhs; }
 Q_DECLARE_METATYPE()
 #endif
 
@@ -96,6 +90,16 @@ public:
                                [&name] (const Item &item)
                                { return !name.compare(item.name); });
         return it != info.cend() ? it->value : def;
+    }
+    static auto fromName(Enum &val, const QString &name) -> bool
+    {
+        auto it = std::find_if(info.cbegin(), info.cend(),
+                               [&name] (const Item &item)
+                               { return !name.compare(item.name); });
+        if (it == info.cend())
+            return false;
+        val = it->value;
+        return true;
     }
     static auto fromData(const QVariant &data,
                          Enum def = default_()) -> Enum

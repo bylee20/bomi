@@ -21,7 +21,7 @@ public:
     auto getState(MrlState *state) const -> bool;
     auto update(const MrlState *state, bool reload) -> void;
     auto setRememberImage(bool on) -> void;
-    auto setPropertiesToRestore(const QList<QMetaProperty> &properties) -> void;
+    auto setPropertiesToRestore(const QVector<QMetaProperty> &properties) -> void;
     auto getAppState(MrlState *appState) -> void;
     auto setAppState(const MrlState *appState) -> void;
     auto clear() -> void;

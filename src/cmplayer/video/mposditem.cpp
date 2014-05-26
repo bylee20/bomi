@@ -5,7 +5,6 @@
 #include "opengl/openglvertex.hpp"
 #include "opengl/opengltexturebinder.hpp"
 #include "opengl/openglframebufferobject.hpp"
-#include <deque>
 
 enum Attr {AttrPosition, AttrTexCoord, AttrColor};
 

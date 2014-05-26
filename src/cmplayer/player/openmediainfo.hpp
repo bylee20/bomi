@@ -12,7 +12,7 @@ struct OpenMediaInfo {
     bool start_playback = true;
     OpenMediaBehavior behavior = OpenMediaBehavior::NewPlaylist;
     auto toJson() const -> QJsonObject;
-    static auto fromJson(const QJsonObject &str) -> OpenMediaInfo;
+    auto setFromJson(const QJsonObject &str) -> bool;
 };
 
 #endif // OPENMEDIAINFO_HPP

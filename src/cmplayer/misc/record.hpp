@@ -29,7 +29,7 @@ class convertible_json {
     template<class>
     static auto to(...) -> std::false_type;
     template<class S>
-    static auto from(S* p) -> decltype(S::fromJson(QJsonObject()), std::true_type());
+    static auto from(S* p) -> decltype(p->setFromJson(QJsonObject()), std::true_type());
     template<class>
     static auto from(...) -> std::false_type;
 public:
@@ -52,7 +52,7 @@ struct is_list : std::false_type {};
 template<class T>
 struct is_list<QList<T>> : std::true_type {};
 
-template <class T, bool enum_ = std::is_enum_class<T>::value,
+template <class T, bool enum_ = tmp::is_enum_class<T>(),
                    DataType dataType = data_type<T>()>
 struct RecordIoOne {};
 
@@ -91,7 +91,7 @@ struct RecordIoOne<T, false, Json> {
     static auto read(QSettings &r, T &value, const QString &key) -> void
     {
         const auto doc = r.value(key, _JsonToString(value.toJson())).toString();
-        value = T::fromJson(_JsonFromString(doc));
+        value.setFromJson(_JsonFromString(doc));
     }
     static auto write(QSettings &r, const T &value, const QString &key) -> void
         { r.setValue(key, _JsonToString(value.toJson())); }

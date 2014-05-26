@@ -7,7 +7,6 @@
 #include "kernel3x3.hpp"
 #include "misc/dataevent.hpp"
 #include "opengl/opengltexturebinder.hpp"
-#include <deque>
 
 enum EventType {NewFrame = QEvent::User + 1, NewFrameWithOsd };
 

@@ -18,9 +18,12 @@ struct KeyModifierActionMap {
     auto operator[](int id) const -> const Action
         {return m_map[EnumInfo<KeyModifier>::from(id, KeyModifier::None)];}
     auto toJson() const -> QJsonObject;
-    static auto fromJson(const QJsonObject &json) -> KeyModifierActionMap;
+    auto setFromJson(const QJsonObject &json) -> bool;
     auto save(Record &r, const QString &group) const -> void;
     auto load(Record &r, const QString &group) -> void;
+
+    static auto data() -> QMap<KeyModifier, Action> KeyModifierActionMap::*
+        { return &KeyModifierActionMap::m_map; }
 private:
     QMap<KeyModifier, Action> m_map;
 };

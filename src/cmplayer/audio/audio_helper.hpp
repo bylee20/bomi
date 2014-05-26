@@ -4,8 +4,6 @@
 #include "stdafx.hpp"
 #include "audiomixer.hpp"
 #include "misc/tmp.hpp"
-#include <tuple>
-#include <cmath>
 extern "C" {
 #include <audio/format.h>
 #include <audio/audio.h>
@@ -105,12 +103,11 @@ struct AudioSampleHelper {
     template<int s, class T = S, tmp::enable_if_t<!tmp::is_integral<T>()> = 0>
     SCIA rshift(const T &t) -> T { return t; }
 
-    template<class T, class U, bool same = std::is_same<U, T>::value>
+    template<class T, class U, bool same = tmp::is_same<U, T>()>
     struct Conv { };
     template<class T>
     struct Conv<T, T, true> {
-        SCIA apply(T p) -> T
-        { static_assert(std::is_same<T, T>::value, "false"); return p; }
+        SCIA apply(T p) -> T { return p; }
     };
     template<class T, class U>
     struct Conv<T, U, false> {

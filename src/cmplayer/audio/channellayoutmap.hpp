@@ -20,6 +20,8 @@ public:
     static auto fromString(const QString &text) -> ChannelLayoutMap;
     static auto default_() -> ChannelLayoutMap;
     static auto channelNames() -> const QVector<ChannelName>&;
+    auto toJson() const -> QJsonObject;
+    auto setFromJson(const QJsonObject &json) -> bool;
 private:
     auto get(ChannelLayout src, ChannelLayout dest) -> ChannelManipulation&
         { return m_map[src][dest]; }

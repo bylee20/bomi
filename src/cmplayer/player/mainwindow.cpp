@@ -66,8 +66,9 @@ struct MainWindow::Data {
     MainWindow *p = nullptr;
     bool visible = false, sotChanging = false, fullScreen = false;
     QQuickItem *player = nullptr;
-    RootMenu menu;    RecentInfo recent;
-    AppState &as = AppState::get();
+    RootMenu menu;
+    RecentInfo recent;
+    AppState as;
     PlayEngine engine;
     VideoRendererItem renderer;
     SubtitleRendererItem subtitle;
@@ -89,7 +90,6 @@ struct MainWindow::Data {
     PlaylistModel playlist;
     QUndoStack *undo = nullptr;
     Downloader downloader;
-//    FavoritesView *favorite;
     TrayIcon *tray = nullptr;
     QString filePath;
     Pref preferences;
@@ -151,8 +151,8 @@ struct MainWindow::Data {
         }
         const auto &pref = preferences;
         const QFileInfo file(mrl.toLocalFile());
-        auto autoselection = [&] (const QList<SubComp> &loaded) {
-            QList<int> selected;
+        auto autoselection = [&] (const QVector<SubComp> &loaded) {
+            QVector<int> selected;
             if (loaded.isEmpty() || !pref.sub_enable_autoselect)
                 return selected;
             QSet<QString> langSet;
@@ -195,7 +195,7 @@ struct MainWindow::Data {
             return selected;
         };
         auto autoload = [&](bool autoselect) {
-            QList<SubComp> loaded;
+            QVector<SubComp> loaded;
             if (!pref.sub_enable_autoload)
                 return loaded;
             const QFileInfo fileInfo(mrl.toLocalFile());
@@ -218,7 +218,7 @@ struct MainWindow::Data {
                 }
             }
             if (autoselect) {
-                const QList<int> selected = autoselection(loaded);
+                const QVector<int> selected = autoselection(loaded);
                 for (int i=0; i<selected.size(); ++i)
                     loaded[selected[i]].selection() = true;
             }
@@ -370,10 +370,10 @@ struct MainWindow::Data {
         changingSub = false;
     }
 
-    auto updateWindowSizeState() const -> void
+    auto updateWindowSizeState() -> void
     {
         if (!p->isFullScreen() && !p->isMinimized() && p->isVisible())
-            AppState::get().win_size = p->size();
+            as.win_size = p->size();
     }
     auto screenSize() const -> QSize
     {
@@ -381,10 +381,9 @@ struct MainWindow::Data {
             return virtualDesktopSize;
         return desktop->availableGeometry(p).size();
     }
-    auto updateWindowPosState() const -> void
+    auto updateWindowPosState() -> void
     {
         if (!p->isFullScreen() && !p->isMinimized() && p->isVisible()) {
-            auto &as = AppState::get();
             const auto screen = screenSize();
             as.win_pos.rx() = qBound(0.0, p->x()/(double)screen.width(), 1.0);
             as.win_pos.ry() = qBound(0.0, p->y()/(double)screen.height(), 1.0);
@@ -433,7 +432,6 @@ struct MainWindow::Data {
             recent.setLastPlaylist(playlist.list());
             recent.setLastMrl(engine.mrl());
             engine.shutdown();
-            auto &as = AppState::get();
             if (!p->isFullScreen())
                 updateWindowPosState();
             as.state.video_effects = renderer.effects();
@@ -510,7 +508,7 @@ struct MainWindow::Data {
         connect(&state, sig, p, f);
         group->trigger(state.property(asprop));
         emit (state.*sig)();
-        if (std::is_same<State, MrlState>::value)
+        if (tmp::is_same<State, MrlState>())
             enumGroups.append(EnumGroup{asprop, group});
     }
     template<class T, class F, class State>
@@ -996,26 +994,27 @@ MainWindow::MainWindow(QWidget *parent)
 
     connectMenus();
 
-    auto &as = AppState::get();
-    d->history.getAppState(&as.state);
+    d->history.getAppState(&d->as.state);
     d->syncWithState();
 
-    d->playlist.setVisible(as.playlist_visible);
-    d->history.setVisible(as.history_visible);
+    d->playlist.setVisible(d->as.playlist_visible);
+    d->history.setVisible(d->as.history_visible);
 
-    if (as.win_size.isValid()) {
+    if (d->as.win_size.isValid()) {
         auto screen = d->screenSize();
-        move(screen.width()*as.win_pos.x(), screen.height()*as.win_pos.y());
-        resize(as.win_size);
+        const auto x = screen.width() * d->as.win_pos.x();
+        const auto y = screen.height() * d->as.win_pos.y();
+        move(x, y);
+        resize(d->as.win_size);
     }
 
-    d->renderer.setEffects(as.state.video_effects);
+    d->renderer.setEffects(d->as.state.video_effects);
     auto effectGroup = d->menu("video")("filter").g();
     for (auto &item : VideoEffectInfo::items()) {
-        if (as.state.video_effects & item.value)
+        if (d->as.state.video_effects & item.value)
             effectGroup->setChecked(QVariant::fromValue(item.value), true);
     }
-    d->menu("tool")["auto-exit"]->setChecked(as.auto_exit);
+    d->menu("tool")["auto-exit"]->setChecked(d->as.auto_exit);
 
     d->dontShowMsg = false;
 
@@ -1092,7 +1091,6 @@ auto MainWindow::connectMenus() -> void
     });
     connect(open["folder"], &QAction::triggered, this, [this] () {
         OpenMediaFolderDialog dlg(this);
-        dlg.setCheckedTypes(d->as.open_folder_types);
         if (dlg.exec()) {
             const auto list = dlg.playlist();
             if (!list.isEmpty()) {
@@ -1100,7 +1098,6 @@ auto MainWindow::connectMenus() -> void
                 d->load(list.first());
                 d->recent.stack(list.first());
             }
-            d->as.open_folder_types = dlg.checkedTypes();
         }
     });
     connect(open["url"], &QAction::triggered, this, [this] () {
@@ -1589,7 +1586,7 @@ auto MainWindow::connectMenus() -> void
             if (auto item = d->view->findItem<QObject>(name))
                 item->setProperty("show", visible);
         };
-        toggleTool("playinfo", AppState::get().playinfo_visible);
+        toggleTool("playinfo", d->as.playinfo_visible);
     });
     connect(tool["subtitle"], &QAction::triggered, this, [this] () {
         d->subtitleView->setVisible(!d->subtitleView->isVisible());
@@ -1622,9 +1619,9 @@ auto MainWindow::connectMenus() -> void
     connect(tool["reload-skin"], &QAction::triggered,
             this, &MainWindow::reloadSkin);
     connect(tool["auto-exit"], &QAction::triggered, this, [this] (bool on) {
-        if (on != AppState::get().auto_exit)
-            d->push(on, AppState::get().auto_exit, [this] (bool on) {
-                AppState::get().auto_exit = on;
+        if (on != d->as.auto_exit)
+            d->push(on, d->as.auto_exit, [this] (bool on) {
+                d->as.auto_exit = on;
                 showMessage(on ? tr("Exit CMPlayer when "
                                     "the playlist has finished.")
                                : tr("Auto-exit is canceled."));
@@ -2064,7 +2061,7 @@ auto MainWindow::reloadSkin() -> void
         d->player = root->findChild<QQuickItem*>("player");
     if (d->player) {
         if (auto item = d->view->findItem("playinfo"))
-            item->setProperty("show", AppState::get().playinfo_visible);
+            item->setProperty("show", d->as.playinfo_visible);
         if (auto item = d->view->findItem("logo")) {
             item->setProperty("show", d->pref().show_logo);
             item->setProperty("color", d->pref().bg_color);
@@ -2089,7 +2086,7 @@ auto MainWindow::applyPref() -> void
     d->history.setRememberImage(p.remember_image);
     d->history.setPropertiesToRestore(p.restore_properties);
     const auto backend = p.enable_hwaccel ? p.hwaccel_backend : HwAcc::None;
-    const auto codecs = p.enable_hwaccel ? p.hwaccel_codecs : QList<int>();
+    const auto codecs = p.enable_hwaccel ? p.hwaccel_codecs : QVector<int>();
     d->engine.setHwAcc(backend, codecs);
     AudioNormalizerOption normalizer;
     normalizer.bufferLengthInSeconds = p.normalizer_length;
@@ -2270,8 +2267,7 @@ auto MainWindow::closeEvent(QCloseEvent *event) -> void
     if (d->tray && d->pref().enable_system_tray
             && d->pref().hide_rather_close) {
         hide();
-        auto &as = AppState::get();
-        if (as.ask_system_tray) {
+        if (d->as.ask_system_tray) {
             MBox mbox(this);
             mbox.setIcon(MBox::Icon::Information);
             mbox.setTitle(tr("System Tray Icon"));
@@ -2283,7 +2279,7 @@ auto MainWindow::closeEvent(QCloseEvent *event) -> void
             mbox.addButton(BBox::Ok);
             mbox.checkBox()->setText(tr("Do not display this message again"));
             mbox.exec();
-            as.ask_system_tray = !mbox.checkBox()->isChecked();
+            d->as.ask_system_tray = !mbox.checkBox()->isChecked();
         }
         event->ignore();
     } else {

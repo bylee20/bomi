@@ -1,7 +1,6 @@
 #include "urldialog.hpp"
 #include "bbox.hpp"
 #include "player/playlist.hpp"
-#include "player/appstate.hpp"
 #include "widget/encodingcombobox.hpp"
 
 struct UrlDialog::Data {
@@ -11,20 +10,29 @@ struct UrlDialog::Data {
     QCompleter *c;
     BBox *bbox;
     Playlist playlist;
+    QString key;
 };
+#define GROUP "UrlDialog_"
 
-UrlDialog::UrlDialog(QWidget *parent)
+UrlDialog::UrlDialog(QWidget *parent, const QString &key)
 : QDialog(parent), d(new Data) {
     d->p = this;
-    const auto &as = AppState::get();
-    d->c = new QCompleter(as.open_url_list, this);
+
+    d->key = key;
+    QSettings settings;
+    settings.beginGroup(GROUP % d->key);
+    auto urls = settings.value("open_url_list").toStringList();
+    auto enc  = settings.value("open_url_enc").toString();
+    settings.endGroup();
+
+    d->c = new QCompleter(urls, this);
     d->url = new QComboBox(this);
     d->url->setEditable(true);
-    d->url->addItems(as.open_url_list);
+    d->url->addItems(urls);
     d->url->setCompleter(d->c);
     d->url->setMaximumWidth(500);
     d->enc = new EncodingComboBox(this);
-    d->enc->setEncoding(as.open_url_enc);
+    d->enc->setEncoding(enc);
     d->bbox = BBox::make(this);
 
     auto form = new QFormLayout;
@@ -45,13 +53,20 @@ UrlDialog::~UrlDialog() {
 
 auto UrlDialog::accept() -> void
 {
-    auto &as = AppState::get();
     const auto url = d->url->currentText().trimmed();
-    const int idx = as.open_url_list.indexOf(url);
-    if (idx >= 0)
-        as.open_url_list.takeAt(idx);
-    as.open_url_list.prepend(url);
-    as.open_url_enc = d->enc->encoding();
+    QStringList urls;
+    urls.reserve(1 + d->url->count());
+    urls.append(url);
+    for (int i = 0; i < d->url->count(); ++i) {
+        const auto item = d->url->itemText(i);
+        if (item != url)
+            urls.append(item);
+    }
+    QSettings settings;
+    settings.beginGroup(GROUP % d->key);
+    settings.setValue("open_url_list", urls);
+    settings.setValue("open_url_enc", d->enc->encoding());
+    settings.endGroup();
     QDialog::accept();
 }
 

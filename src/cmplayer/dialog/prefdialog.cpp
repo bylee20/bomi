@@ -537,7 +537,7 @@ PrefDialog::~PrefDialog() {
 
 template<class T>
 static void setHw(QGroupBox *group, bool enabled,
-                  QMap<T, QCheckBox*> &map, const QList<T> &keys) {
+                  QMap<T, QCheckBox*> &map, const QVector<T> &keys) {
     group->setChecked(enabled);
     for (auto key : keys) {
         if (auto ch = map.value(key))
@@ -547,7 +547,7 @@ static void setHw(QGroupBox *group, bool enabled,
 
 template<class T>
 static void getHw(bool &enabled, QGroupBox *group,
-                  QList<T> &keys, const QMap<T, QCheckBox*> &map) {
+                  QVector<T> &keys, const QMap<T, QCheckBox*> &map) {
     enabled = group->isChecked();
     keys.clear();
     for (auto it = map.begin(); it != map.end(); ++it) {

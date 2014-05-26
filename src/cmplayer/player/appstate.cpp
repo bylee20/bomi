@@ -1,14 +1,49 @@
 #include "appstate.hpp"
 #include "misc/record.hpp"
+#include "misc/log.hpp"
+#include "misc/json.hpp"
+#include "misc/jsonstorage.hpp"
+
+static_assert(tmp::is_enum_class<StaysOnTop>(), "!!!");
+
+static_assert(detail::jsonValueType<StaysOnTop>() == detail::JsonValueType::Enum, "!!!");
+
+DECLARE_LOG_CONTEXT(App)
+
+#define JSON_CLASS AppState
+static const auto jio = JIO(
+    JE(win_pos),
+    JE(win_size),
+    JE(auto_exit),
+    JE(playlist_visible),
+    JE(history_visible),
+    JE(playinfo_visible),
+    JE(win_stays_on_top),
+    JE(ask_system_tray),
+    JE(dvd_device),
+    JE(bluray_device)
+);
+
+#define APP_STATE_FILE QString(_WritablePath() % "/appstate.json")
 
 AppState::AppState() {
+    JsonStorage storage(APP_STATE_FILE);
+    const auto json = storage.read();
+    if (storage.hasError()) {
+        if (storage.error() == JsonStorage::NoFile)
+            loadFromRecord();
+        return;
+    }
+    if (!jio.fromJson(*this, json))
+        _Error("Cannot convert JSON object to AppState");
+}
+
+auto AppState::loadFromRecord() -> void
+{
     Record r("app-state");
 #define READ(a) r.read(a, #a)
     READ(win_stays_on_top);
 
-    READ(open_folder_types);
-    READ(open_url_list);
-    READ(open_url_enc);
     READ(ask_system_tray);
 
     READ(auto_exit);
@@ -26,26 +61,8 @@ AppState::AppState() {
 
 auto AppState::save() const -> void
 {
-    Record r("app-state");
-#define WRITE(a) r.write(a, #a);
-    WRITE(win_stays_on_top);
-
-    WRITE(open_folder_types);
-    WRITE(ask_system_tray);
-    WRITE(open_url_list);
-    WRITE(open_url_enc);
-
-    WRITE(auto_exit);
-
-    WRITE(win_pos);
-    WRITE(win_size);
-
-    WRITE(playlist_visible);
-    WRITE(history_visible);
-    WRITE(playinfo_visible);
-    WRITE(dvd_device);
-    WRITE(bluray_device);
-#undef WRITE
+    JsonStorage storage(APP_STATE_FILE);
+    storage.write(jio.toJson(*this));
 }
 
 AppStateOld::AppStateOld() {

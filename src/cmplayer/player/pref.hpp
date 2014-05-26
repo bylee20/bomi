@@ -32,7 +32,7 @@ public:
     bool pause_minimized = true, pause_video_only = true, pause_to_play_next_image = true;
     bool remember_stopped = true, ask_record_found = true, remember_image = false;
     bool enable_generate_playist = true;
-    QList<QMetaProperty> restore_properties = defaultRestoreProperties();
+    QVector<QMetaProperty> restore_properties = defaultRestoreProperties();
     GeneratePlaylist generate_playlist = GeneratePlaylist::Folder;
     bool hide_cursor = true, disable_screensaver = true, lion_style_fullscreen = false;
     bool hide_cursor_fs_only = false;
@@ -75,8 +75,8 @@ public:
 #ifdef Q_OS_MAC
     HwAcc::Type hwaccel_backend = HwAcc::Vda;
 #endif
-    QList<int> hwaccel_codecs = defaultHwAccCodecs();
-    QList<DeintMethod> hwdeints = defaultHwAccDeints();
+    QVector<int> hwaccel_codecs = defaultHwAccCodecs();
+    QVector<DeintMethod> hwdeints = defaultHwAccDeints();
     DeintCaps deint_hwdec = DeintCaps::default_(DecoderDevice::GPU);
     DeintCaps deint_swdec = DeintCaps::default_(DecoderDevice::CPU);
 
@@ -99,13 +99,15 @@ public:
     auto save() const -> void;
     auto load() -> void;
 private:
-    static auto defaultRestoreProperties() -> QList<QMetaProperty>;
+    auto loadFromRecord() -> void;
+
+    static auto defaultRestoreProperties() -> QVector<QMetaProperty>;
     static auto defaultOsdTheme() -> OsdTheme;
     static auto defaultSkinName() -> QString;
     static auto defaultSubtitleEncoding() -> QString;
     static auto defaultSubtitleEncodingDetectionAccuracy() -> int;
-    static auto defaultHwAccCodecs() -> QList<int>;
-    static auto defaultHwAccDeints() -> QList<DeintMethod>;
+    static auto defaultHwAccCodecs() -> QVector<int>;
+    static auto defaultHwAccDeints() -> QVector<DeintMethod>;
     static auto defaultShortcuts() -> Shortcuts;
     static auto defaultDoubleClick() -> KeyModifierActionMap;
     static auto defaultMiddleClick() -> KeyModifierActionMap;

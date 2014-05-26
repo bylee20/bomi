@@ -228,11 +228,12 @@ auto SubtitleRendererItem::componentsCount() const -> int
     return d->loaded.count();
 }
 
-auto SubtitleRendererItem::components() const -> QList<const SubComp *>
+auto SubtitleRendererItem::components() const -> QVector<const SubComp *>
 {
-    QList<const SubComp*> list; list.reserve(d->loaded.size());
+    QVector<const SubComp*> list;
+    list.reserve(d->loaded.size());
     for (auto loaded : d->loaded)
-        list << loaded;
+        list.push_back(loaded);
     return list;
 }
 
@@ -495,7 +496,7 @@ auto SubtitleRendererItem::next() const -> int
     return time;
 }
 
-auto SubtitleRendererItem::setComponents(const QList<SubComp> &components) -> void
+auto SubtitleRendererItem::setComponents(const QVector<SubComp> &components) -> void
 {
     unload();
     d->loaded.reserve(components.size());

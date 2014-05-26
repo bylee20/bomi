@@ -19,6 +19,8 @@ public:
     auto toString() const -> QString;
     auto isIdentity() const -> bool;
     static auto fromString(const QString &text) -> ChannelManipulation;
+    auto toJson() const -> QJsonArray;
+    auto setFromJson(const QJsonArray &json) -> bool;
 private:
     auto set(mp_speaker_id dest, const SourceArray &src) -> void
         { m_mix[dest] = src; }

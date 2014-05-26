@@ -16,7 +16,7 @@ struct OsdTheme {
     auto save(Record &r, const QString &group) const -> void;
     auto load(Record &r, const QString &group) -> void;
     auto toJson() const -> QJsonObject;
-    static auto fromJson(const QJsonObject &json) -> OsdTheme;
+    auto setFromJson(const QJsonObject &json) -> bool;
 };
 
 /******************************************************************************/

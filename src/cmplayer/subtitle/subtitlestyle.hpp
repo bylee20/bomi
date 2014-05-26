@@ -31,7 +31,7 @@ struct SubtitleStyle {
         Scale scale = Scale::Width;
         QFont qfont;
     };
-    struct BoundingBox {
+    struct BBox {
         bool enabled = false;
         QColor color = {0, 0, 0, 127};
         QPointF padding = {0.3, 0.1};
@@ -54,11 +54,11 @@ struct SubtitleStyle {
     Outline outline;
     Font font;
     Spacing spacing;
-    BoundingBox bbox;
+    BBox bbox;
     auto save(Record &r, const QString &group) const -> void;
     auto load(Record &r, const QString &group) -> void;
     auto toJson() const -> QJsonObject;
-    static auto fromJson(const QJsonObject &json) -> SubtitleStyle;
+    auto setFromJson(const QJsonObject &json) -> bool;
 };
 
 #endif // SUBTITLESTYLE_H

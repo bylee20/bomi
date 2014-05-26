@@ -1,5 +1,29 @@
 #include "submisc.hpp"
 #include "subtitle.hpp"
+#include "misc/json.hpp"
+
+#define JSON_CLASS SubtitleFileInfo
+static const auto fileIO = JIO( JE(path), JE(encoding) );
+#undef JSON_CLASS
+
+#define JSON_CLASS SubtitleStateInfo::Comp
+static const auto compIO = JIO( JE(id), JE(selected) );
+#undef JSON_CLASS
+
+auto json_io(SubtitleFileInfo*) -> decltype(&fileIO) { return &fileIO; }
+auto json_io(SubtitleStateInfo::Comp*) -> decltype(&compIO) { return &compIO; }
+
+auto SubtitleFileInfo::toJson() const -> QJsonObject
+{
+    return fileIO.toJson(*this);
+}
+
+auto SubtitleFileInfo::fromJson(const QJsonObject &json) -> SubtitleFileInfo
+{
+    SubtitleFileInfo info;
+    fileIO.fromJson(info, json);
+    return info;
+}
 
 static const QString sep1("[::1::]"), sep2("[::2::]"), sep3("[::3::]");
 
@@ -14,65 +38,41 @@ auto _Join(const List &list, F toString, const QString &sep) -> QString
 
 template<class T, class F>
 auto _Split(const QString &text, F fromString, const QString &sep,
-                QString::SplitBehavior b = QString::KeepEmptyParts) -> QList<T>
+                QString::SplitBehavior b = QString::KeepEmptyParts) -> QVector<T>
 {
     auto strs = text.split(sep, b);
-    QList<T> list; list.reserve(strs.size());
-    for (int i=0; i<strs.size(); ++i) {
+    QVector<T> list; list.reserve(strs.size());
+    for (int i=0; i<strs.size(); ++i)
         list.append(fromString(strs[i]));
-    }
     return list;
 }
 
+template<>
+inline auto json_key_from(const SubtitleFileInfo &file) -> QString
+{ return _JsonToString(file.toJson()); }
+template<>
+inline auto json_key_to(const QString &key) -> SubtitleFileInfo
+{ return SubtitleFileInfo::fromJson(_JsonFromString(key)); }
+
+#define JSON_CLASS SubtitleStateInfo
+static const auto stateIO = JIO(
+    JE(track),
+    JE(mpv),
+    JE(cmplayer, &SubtitleStateInfo::setCMPlayer)
+);
+#undef JSON_CLASS
+
 auto SubtitleStateInfo::toJson() const -> QJsonObject
 {
-    QJsonArray mpv;
-    for (auto &item : m_mpv)
-        mpv.push_back(item.toJson());
-    QJsonArray cmplayer;
-    for (auto it = m_cmplayer.begin(); it != m_cmplayer.end(); ++it) {
-        QJsonArray list;
-        for (auto &comp : *it)
-            list.push_back(_MakeJson({{"id", comp.id}, {"selected", comp.selected}}));
-        cmplayer.push_back(_MakeJson({{"file", it.key().toJson()}, {"list", list}}));
-    }
-    return _MakeJson({{"track", m_track}, {"mpv", mpv}, {"cmplayer", cmplayer}});
+    return stateIO.toJson(*this);
 }
 
 auto SubtitleStateInfo::fromJson(const QJsonObject &json) -> SubtitleStateInfo
 {
-    SubtitleStateInfo info; QJsonValue value;
-    auto get = [&] (const char *key)
-        { value = json.value(_L(key)); return !value.isUndefined(); };
-#define CHECK(a) { if (!get(a)) return SubtitleStateInfo(); }
-    CHECK("track");
-    info.m_track = value.toInt(InvalidTrack);
-    CHECK("mpv");
-    auto array = value.toArray();
-    for (auto item : array)
-        info.m_mpv.push_back(SubtitleFileInfo::fromJson(item.toObject()));
-    CHECK("cmplayer");
-    array = value.toArray();
-    for (auto item : array) {
-        auto cmp = item.toObject();
-        auto file = SubtitleFileInfo::fromJson(cmp.value("file").toObject());
-        auto list = cmp.value("list").toArray();
-        if (file.path.isEmpty())
-            return SubtitleStateInfo();
-        if (list.isEmpty())
-            continue;
-        auto &comps = info.m_cmplayer[file];
-        for (auto comp : list) {
-            const auto obj = comp.toObject();
-            const auto id = obj.value("id");
-            const auto se = obj.value("selected");
-            if (id.isUndefined() || se.isUndefined())
-                return SubtitleStateInfo();
-            comps.push_back({id.toInt(), se.toBool()});
-        }
-    }
-#undef CHECK
-    return info;
+    SubtitleStateInfo info;
+    if (stateIO.fromJson(info, json))
+        return info;
+    return SubtitleStateInfo();
 }
 
 auto SubtitleStateInfo::toString() const -> QString
@@ -128,13 +128,14 @@ auto SubtitleStateInfo::append(const SubComp &c) -> void
     m_cmplayer[c.fileInfo()].append({c.id(), c.selection()});
 }
 
-auto SubtitleStateInfo::load() const -> QList<SubComp>
+auto SubtitleStateInfo::load() const -> QVector<SubComp>
 {
-    auto selected = [] (const QList<Comp> &list, int id) {
+    auto selected = [] (const QVector<Comp> &list, int id) {
         for (auto &c : list) { if (c.id == id) return c.selected; }
         return false;
     };
-    QList<SubComp> loaded;         Subtitle sub;
+    QVector<SubComp> loaded;
+    Subtitle sub;
     for (auto it = m_cmplayer.begin(); it != m_cmplayer.end(); ++it) {
         if (!sub.load(it.key().path, it.key().encoding, -1))
             continue;

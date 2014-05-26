@@ -2,236 +2,423 @@
 #define JSON_HPP
 
 #include "stdafx.hpp"
+#include "is_convertible.hpp"
 
 template<class T>
 class EnumInfo;
 
-class JsonObject;
+template<class T>
+struct JsonIO;
 
-class JsonValue {
-public:
-    enum Type {
-        Null =  QJsonValue::Null,
-        Bool = QJsonValue::Bool,
-        Double = QJsonValue::Double,
-        String = QJsonValue::String,
-        Array = QJsonValue::Array,
-        Object = QJsonValue::Object,
-        Undefined = QJsonValue::Undefined
-    };
+struct JsonQStringType { SCA qt_type = QJsonValue::String; };
 
-    JsonValue() = default;
-    JsonValue(const QJsonValue &json): m(json) { }
-    JsonValue(bool b): m(b) { }
-    JsonValue(double n): m(n) { }
-    JsonValue(int n): m(n) { }
-    JsonValue(qint64 n): m(n) { }
-    JsonValue(const QString &s): m(s) { }
-    JsonValue(QLatin1String s): m(s) { }
-    JsonValue(const QColor &c): m(c.name(QColor::HexArgb)) { }
-    JsonValue(const QFont &f): m(f.toString()) { }
-    JsonValue(const QPointF &p)
-    { QJsonObject json; json["x"] = p.x(); json["y"] = p.y(); m = json; }
-    JsonValue(const QPoint &p)
-    { QJsonObject json; json["x"] = p.x(); json["y"] = p.y(); m = json; }
-    JsonValue(const QJsonArray &a): m(a) { }
-    JsonValue(const QJsonObject &o): m(o) { }
-    JsonValue(const JsonObject &o);
-    template<class T, typename std::enable_if<std::is_enum_class<T>::value, int>::type = 0>
-    JsonValue(T t): m(_EnumName<T>(t)) { }
+namespace detail {
 
-    auto type() const -> Type { return (Type)m.type(); }
-    auto isNull() const -> bool { return type() == Null; }
-    auto isBool() const -> bool { return type() == Bool; }
-    auto isDouble() const -> bool { return type() == Double; }
-    auto isString() const -> bool { return type() == String; }
-    auto isArray() const -> bool { return type() == Array; }
-    auto isObject() const -> bool { return type() == Object; }
-    auto isUndefined() const -> bool { return type() == Undefined; }
+enum class JsonValueType { Integer, Double, Enum, Convertible, None };
 
-    auto toBool(bool def = false) const -> bool { return m.toBool(def); }
-    auto toInt(int def = 0) const -> int { return m.toInt(def); }
-    auto toDouble(double def = 0.0) const -> double { return m.toDouble(def); }
-    auto toString(const QString &def = QString()) const -> QString
-        { return m.toString(def); }
-    auto toPoint(const QPoint &def = QPoint()) const -> QPoint
+template<class T>
+SCIA jsonValueType() -> JsonValueType
+{
+    return tmp::is_enum_class<T>() ? JsonValueType::Enum
+         : tmp::is_integral<T>() ? JsonValueType::Integer
+         : tmp::is_floating_point<T>() ? JsonValueType::Double
+         : tmp::is_convertible_to_json<T>() ? JsonValueType::Convertible
+                                            : JsonValueType::None;
+}
+
+template<class T, detail::JsonValueType type = detail::jsonValueType<T>()>
+struct JsonValueIO;
+
+template<class T>
+struct JsonValueIO<T, detail::JsonValueType::Integer>  {
+    static_assert(!tmp::is_enum<T>() && !tmp::is_enum_class<T>(), "!!!");
+    auto toJson(T t) const -> QJsonValue { return (double)t; }
+    auto fromJson(T &val, const QJsonValue &json) const -> bool
     {
-        const auto json = m.toObject();
-        return QPoint(json.value("x").toInt(def.x()),
-                      json.value("y").toInt(def.y()));
+        if (!json.isDouble())
+            return false;
+        val = std::llround(json.toDouble(val));
+        return true;
     }
-    auto toPointF(const QPointF &def = QPointF()) const -> QPointF
-    {
-        const auto json = m.toObject();
-        return QPointF(json.value("x").toDouble(def.x()),
-                       json.value("y").toDouble(def.y()));
-    }
-    auto toColor(const QColor &def = QColor()) const -> QColor
-        { return QColor(m.toString(def.name(QColor::HexArgb))); }
-    auto toFont(const QFont &def = QFont()) const -> QFont
-        { QFont font; return font.fromString(m.toString()) ? font : def; }
-    template<class T, typename std::enable_if<std::is_enum_class<T>::value, int>::type = 0>
-    auto toEnum(const T &def = EnumInfo<T>::default_()) -> T
-        { return _EnumFrom(m.toString(), def); }
-    auto toArray() const -> QJsonArray { return m.toArray(); }
-    auto toArray(const QJsonArray &def) const -> QJsonArray
-        { return m.toArray(def); }
-    auto toObject() const -> JsonObject;
-    auto toObject(const JsonObject &def) const -> JsonObject;
-
-    auto operator==(const JsonValue &rhs) const -> bool { return m == rhs.m; }
-    auto operator!=(const JsonValue &rhs) const -> bool { return m != rhs.m; }
-    auto qt() const -> const QJsonValue& { return m; }
-private:
-    QJsonValue m;
+    SCA qt_type = QJsonValue::Double;
 };
 
-class JsonValueRef
-{
-public:
-    JsonValueRef(const QJsonValueRef &ref): m(ref) { }
-    JsonValueRef(QJsonArray *array, int idx): m(array, idx) { }
-    JsonValueRef(QJsonObject *object, int idx): m(object, idx) { }
+template<class T>
+struct JsonValueIO<T, detail::JsonValueType::Double> {
+    auto toJson(T t) const -> QJsonValue { return (double)t; }
+    auto fromJson(T &val, const QJsonValue &json) const -> bool
+    {
+        if (!json.isDouble())
+            return false;
+        val = json.toDouble(val);
+        return true;
+    }
+    SCA qt_type = QJsonValue::Double;
+};
 
-    operator JsonValue() const { return toValue(); }
-    auto operator = (const JsonValue &val) -> JsonValueRef&
-        { m = val.qt(); return *this; }
-    auto operator = (const JsonValueRef &val) -> JsonValueRef&
-        { m = val.m; return *this; }
-    auto type() const -> JsonValue::Type
-        { return (JsonValue::Type)m.type(); }
-    auto isNull() const -> bool { return type() == JsonValue::Null; }
-    auto isBool() const -> bool { return type() == JsonValue::Bool; }
-    auto isDouble() const -> bool { return type() == JsonValue::Double; }
-    auto isString() const -> bool { return type() == JsonValue::String; }
-    auto isArray() const -> bool { return type() == JsonValue::Array; }
-    auto isObject() const -> bool { return type() == JsonValue::Object; }
-    auto isUndefined() const -> bool { return type() == JsonValue::Undefined; }
+template<class T>
+struct JsonValueIO<T, detail::JsonValueType::Convertible> {
+    template<class S>
+    using JsonType = typename tmp::convert_json<S>::JsonType;
+    template<class S>
+    SCIA is_array() -> bool { return tmp::is_same<QJsonArray, JsonType<S>>(); }
+    auto toJson(const T &t) const -> JsonType<T> { return t.toJson(); }
+    template<class S = T>
+    auto fromJson(S &val, const QJsonValue &json) const -> tmp::enable_if_t<!is_array<S>(), bool>
+    { return json.isObject() ? fromJson(val, json.toObject()) : false; }
+    template<class S = T>
+    auto fromJson(S &val, const QJsonValue &json) const -> tmp::enable_if_t<is_array<S>(), bool>
+    { return json.isArray() ? fromJson(val, json.toArray()) : false; }
+    auto fromJson(T &val, const JsonType<T> &json) const -> bool
+    { return val.setFromJson(json); }
+    SCA qt_type = is_array<T>() ? QJsonValue::Array : QJsonValue::Object;
+};
 
-    auto toBool() const -> bool { return toValue().toBool(); }
-    auto toInt() const -> int { return toValue().toInt(); }
-    auto toDouble() const -> double { return toValue().toDouble(); }
-    auto toString() const -> QString { return toValue().toString(); }
-    auto toArray() const -> QJsonArray { return m.toArray(); }
-    auto toObject() const -> QJsonObject { return m.toObject(); }
+template<class T>
+struct JsonValueIO<T, detail::JsonValueType::Enum> : JsonQStringType {
+    auto toJson(T t) const -> QJsonValue { return EnumInfo<T>::name(t); }
+    auto fromJson(T &val, const QJsonValue &json) const -> bool
+    { return EnumInfo<T>::fromName(val, json.toString()); }
+};
 
-    auto operator==(const JsonValue &rhs) const -> bool { return toValue() == rhs; }
-    auto operator!=(const JsonValue &rhs) const -> bool { return toValue() != rhs; }
-private:
-    auto toValue() const -> JsonValue { return QJsonValue(m); }
-    QJsonValueRef m;
+template<>
+struct JsonValueIO<bool> {
+    auto toJson(bool val) const -> QJsonValue { return val; }
+    auto fromJson(bool &val, const QJsonValue &json) const -> bool
+    {
+        if (!json.isBool())
+            return false;
+        val = json.toBool(val);
+        return true;
+    }
+    SCA qt_type = QJsonValue::Bool;
+};
+
+template<class T>
+struct IOType {
+    using U = tmp::remove_all_t<T>;
+    template<class S>
+    static auto checkIO(S *) -> decltype(::JsonIO<S>::io(), std::true_type());
+    template<class>
+    static auto checkIO(...) -> std::false_type;
+    SCA primitive = detail::jsonValueType<U>() != detail::JsonValueType::None;
+    SCA inner_io = decltype(checkIO<T>(0))::value;
+};
+
+template<class T, bool is_primitive = IOType<T>::primitive, bool inner_io = IOType<T>::inner_io>
+class JsonIOSelector;
+
+template<class T>
+struct JsonIOSelector<T, true, false> {
+    using U = tmp::remove_all_t<T>;
+    static auto select(const T*) -> const JsonValueIO<U>* { static const JsonValueIO<U> io; return &io; }
+};
+
+template<class T>
+struct JsonIOSelector<T, false, true> {
+    using U = tmp::remove_all_t<T>;
+    static auto select(const T*) -> decltype(::JsonIO<U>::io()) { return ::JsonIO<U>::io(); }
+};
+
+template<class T>
+struct JsonIOSelector<T, false, false> {
+    using U = tmp::remove_all_t<T>;
+    static auto select(const T*) -> const JsonIO<U>* { static const JsonIO<U> io; return &io; }
+};
+
+}
+
+template<class T>
+auto json_io(const T*) -> decltype(detail::JsonIOSelector<T>::select((T*)0))
+{ return detail::JsonIOSelector<T>::select((T*)0); }
+
+template<class T, class D>
+struct JsonMemberEntry {
+    JsonMemberEntry() = default;
+    JsonMemberEntry(const QString &key, D T::*data): key(key), data(data) { }
+    QString key; D T::*data = nullptr;
+};
+
+template<class T, class D>
+struct JsonReferenceEntry {
+    JsonReferenceEntry() = default;
+    JsonReferenceEntry(const QString &key, D&(T::*ref)()): key(key), ref(ref) { }
+    QString key; D&(T::*ref)() = nullptr;
+};
+
+template<class T, class Get, class Set>
+struct JsonPropertyEntry {
+    JsonPropertyEntry() = default;
+    JsonPropertyEntry(const QString &key, Get get, Set set)
+        : key(key), get(get), set(set) { }
+    QString key; Get get; Set set;
 };
 
 namespace detail {
 
-template<class T, bool integral = std::is_integral<T>::value, bool floating = std::is_floating_point<T>::value, bool is_enum = std::is_enum_class<T>::value>
-struct json_type;
+template<class T>
+struct WriteToJsonObject {
+    WriteToJsonObject(const T *t): from(t) { }
+    template<class D>
+    auto operator () (const JsonMemberEntry<T, D> &entry) const -> void
+    { m_json.insert(entry.key, json_io((D*)0)->toJson(from->*entry.data)); }
+    template<class D>
+    auto operator () (const JsonReferenceEntry<T, D> &entry) const -> void
+    { m_json.insert(entry.key, json_io((D*)0)->toJson((const_cast<T*>(from)->*entry.ref)())); }
+    template<class Getter, class Setter>
+    auto operator () (const JsonPropertyEntry<T, Getter, Setter> &entry) const -> void
+    { auto d = (from->*entry.get)(); m_json.insert(entry.key, json_io(&d)->toJson(d)); }
+    const QJsonObject &json() const { return m_json; }
+private:
+    const T *from = nullptr;
+    mutable QJsonObject m_json;
+};
 
-#define SCA static constexpr auto
-template<>
-struct json_type<bool> {
-    SCA to_func = &JsonValue::toBool;
-};
 template<class T>
-struct json_type<T, true, false, false> {
-    SCA to_func = &JsonValue::toInt;
+struct ReadFromJsonObject {
+    ReadFromJsonObject(T *t, const QJsonObject &json): json(json), to(t) { }
+    template<class D>
+    auto operator () (const JsonMemberEntry<T, D> &entry) const -> void
+    {
+        const auto it = json.constFind(entry.key);
+        if (it != json.constEnd() && !json_io((D*)0)->fromJson(to->*entry.data, *it))
+            m_ok = false;
+    }
+    template<class D>
+    auto operator () (const JsonReferenceEntry<T, D> &entry) const -> void
+    {
+        const auto it = json.constFind(entry.key);
+        if (it != json.constEnd() && !json_io((D*)0)->fromJson((to->*entry.ref)(), *it))
+            m_ok = false;
+    }
+    template<class Getter, class Setter>
+    auto operator () (const JsonPropertyEntry<T, Getter, Setter> &entry) const -> void
+    {
+        const auto it = json.constFind(entry.key);
+        if (it != json.constEnd()) {
+            auto d = tmp::remove_all_t<decltype((to->*entry.get)())>();
+            if (!json_io(&d)->fromJson(d, *it))
+                m_ok = false;
+            else
+                (to->*entry.set)(d);
+        }
+    }
+    bool isOk() const { return m_ok; }
+private:
+    QJsonObject json;
+    T *to = nullptr;
+    mutable bool m_ok = true;
 };
-template<class T>
-struct json_type<T, false, true, false> {
-    SCA to_func = &JsonValue::toDouble;
-};
-template<>
-struct json_type<qint64> : json_type<double> { };
-template<>
-struct json_type<quint64> : json_type<double> { };
-template<>
-struct json_type<QString> {
-    SCA to_func = &JsonValue::toString;
-};
-template<>
-struct json_type<QPoint> {
-    SCA to_func = &JsonValue::toPoint;
-};
-template<>
-struct json_type<QPointF> {
-    SCA to_func = &JsonValue::toPointF;
-};
-template<>
-struct json_type<QFont> {
-    SCA to_func = &JsonValue::toFont;
-};
-template<>
-struct json_type<QColor> {
-    SCA to_func = &JsonValue::toColor;
-};
-template<class T>
-struct json_type<T, false, false, true> {
-    SCA to_func = &JsonValue::toEnum<T>;
-};
-#undef SCA
 }
 
-class JsonObject {
+template<class T, class... Entry>
+class JsonObjectIO {
+    SCA Num = sizeof...(Entry);
 public:
-    using const_iterator = QJsonObject::const_iterator;
-    using iterator = QJsonObject::iterator;
-    using mapped_type = QJsonValue;
-    using key_type = QString;
-    using size_type = int;
-
-    JsonObject() = default;
-    JsonObject(const QJsonObject &json): m(json) { }
-
-    auto operator==(const JsonObject &rhs) const -> bool { return m == rhs.m; }
-    auto operator!=(const JsonObject &rhs) const -> bool { return m != rhs.m; }
-    static auto fromVariantMap(const QVariantMap &map) -> JsonObject
-    {
-        JsonObject json;
-        json.m = QJsonObject::fromVariantMap(map);
-        return json;
+    JsonObjectIO(Entry&&... entry) {
+        m_entries = std::make_tuple(entry...);
     }
-    auto toVariantMap() const -> QVariantMap { return m.toVariantMap(); }
-    auto keys() const -> QStringList { return m.keys(); }
-    auto size() const -> int { return m.size(); }
-    auto isEmpty() const -> bool { return m.isEmpty(); }
-    auto empty() const -> bool { return m.isEmpty(); }
-
-    auto value(const QString &key) const -> JsonValue { return m.value(key); }
-    auto operator[] (const QString &key) const -> JsonValue { return m.value(key); }
-    auto operator[] (const QString &key) -> JsonValueRef { return m[key]; }
-    auto value(const char *key) const -> JsonValue { return m.value(_L(key)); }
-    auto operator[] (const char *key) const -> JsonValue { return m.value(_L(key)); }
-    auto operator[] (const char *key) -> JsonValueRef { return m[_L(key)]; }
-
-    auto remove(const QString &key) -> void { m.remove(key); }
-    auto take(const QString &key) -> JsonValue { return m.take(key); }
-    auto contains(const QString &key) const -> bool { return m.contains(key); }
-    auto find(const QString &key) -> iterator { return m.find(key); }
-    auto find(const QString &key) const -> const_iterator { return m.constFind(key); }
-    auto cfind(const QString &key) const -> const_iterator { return m.constFind(key); }
-    auto insert(const QString &key, const JsonValue &value) -> iterator { return m.insert(key, value.qt()); }
-
-    // STL style
-    auto begin() -> iterator { return m.begin(); }
-    auto begin() const -> const_iterator { return m.begin(); }
-    auto cbegin() const -> const_iterator { return m.constBegin(); }
-    auto end() -> iterator { return m.end(); }
-    auto end() const -> const_iterator { return m.end(); }
-    auto cend() const -> const_iterator { return m.constEnd(); }
-    auto erase(iterator it) -> iterator { return m.erase(it); }
-
-    auto qt() const -> const QJsonObject& { return m; }
-    template<class T>
-    auto get(const char *key, T &value) const -> void
-    { value = (this->value(key).*detail::json_type<T>::to_func)(value); }
+    auto toJson(const T &from) const -> QJsonObject
+    {
+        detail::WriteToJsonObject<T> write(&from);
+        tmp::static_for<0, Num>(m_entries, write);
+        return write.json();
+    }
+    auto fromJson(T &to, const QJsonValue &json) const -> bool
+    { return json.isObject() ? fromJson(to, json.toObject()) : false; }
+    auto fromJson(T &to, const QJsonObject &json) const -> bool
+    {
+        detail::ReadFromJsonObject<T> read(&to, json);
+        tmp::static_for<0, Num>(m_entries, read);
+        return read.isOk();
+    }
+    SCA qt_type = QJsonValue::Object;
 private:
-    QJsonObject m;
+    std::tuple<Entry...> m_entries;
 };
 
-inline JsonValue::JsonValue(const JsonObject &o): m(o.qt()) { }
+template<class T, class Container = QList<T>>
+struct JsonArrayIO {
+    auto toJson(const Container &from) const -> QJsonArray
+    {
+        QJsonArray json;
+        for (auto it = from.begin(); it != from.end(); ++it)
+            json.push_back(json_io((T*)nullptr)->toJson(*it));
+        return json;
+    }
+    auto fromJson(Container &to, const QJsonValue &json) const -> bool
+    { return json.isArray() ? fromJson(to, json.toArray()) : false; }
+    auto fromJson(Container &to, const QJsonArray &json) const -> bool
+    {
+        const auto io = json_io((T*)nullptr);
+        Container array;
+        for (auto it = json.begin(); it != json.end(); ++it) {
+            if (io->qt_type != (*it).type())
+                return false;
+            array.push_back(T());
+            io->fromJson(array.back(), *it);
+        }
+        to = array;
+        return true;
+    }
+    SCA qt_type = QJsonValue::Array;
+};
 
-inline auto JsonValue::toObject() const -> JsonObject { return m.toObject(); }
-inline auto JsonValue::toObject(const JsonObject &def) const -> JsonObject
-    { return m.toObject(def.qt()); }
+namespace detail {
+template<class T,
+         bool use_str = tmp::is_convertible_to_string<T>(),
+         bool use_json = tmp::is_convertible_to_json<T>()>
+struct Jsonkey;
+
+template<class T, bool use_json>
+struct Jsonkey<T, true, use_json>  {
+    SIA from(const T &t) -> QString { return tmp::convert_string<T>::from(t); }
+    SIA to(const QString &json) -> T { return tmp::convert_string<T>::to(json); }
+};
+template<class T>
+struct Jsonkey<T, false, true>  {
+    SIA from(const T &t) -> QString { return _JsonToString(tmp::convert_json<T>::from(t)); }
+    SIA to(const QString &json) -> T { return tmp::convert_json<T>::to(_JsonFromString(json)); }
+};
+}
+
+template<class T>
+SIA json_key_from(const T &t) -> QString { return detail::Jsonkey<T>::from(t); }
+template<class T>
+SIA json_key_to(const QString &json) -> T { return detail::Jsonkey<T>::to(json); }
+
+template<class Key, class T, class Container = QMap<Key, T>>
+struct JsonMapIO {
+    auto toJson(const Container &from) const -> QJsonObject
+    {
+        QJsonObject json;
+        for (auto it = from.begin(); it != from.end(); ++it)
+            json.insert(json_key_from(it.key()), json_io((T*)0)->toJson(*it));
+        return json;
+    }
+    auto fromJson(Container &to, const QJsonValue &json) const -> bool
+    { return json.isObject() ? fromJson(to, json.toObject()) : false; }
+    auto fromJson(Container &to, const QJsonObject &json) const -> bool
+    {
+        const auto io = json_io((T*)0);
+        Container map;
+        for (auto it = json.begin(); it != json.end(); ++it) {
+            if ((*it).type() != io->qt_type)
+                return false;
+            auto &data = map[json_key_to<Key>(it.key())];
+            io->fromJson(data, *it);
+        }
+        to = map;
+        return true;
+    }
+    SCA qt_type = QJsonValue::Object;
+};
+
+template<class T, class D>
+SCIA _JE(const char *key, D T::*data) -> JsonMemberEntry<T, D>
+    { return JsonMemberEntry<T, D>(_L(key), data); }
+
+template<class T, class D>
+SCIA _JE(const char *key, D&(T::*ref)()) -> JsonReferenceEntry<T, D>
+    { return JsonReferenceEntry<T, D>(_L(key), ref); }
+
+template<class T, class D, class Set>
+SCIA _JE(const char *key, D(T::*get)()const, Set set) -> JsonPropertyEntry<T, decltype(get), Set>
+    { return JsonPropertyEntry<T, decltype(get), Set>(_L(key), get, set); }
+
+template<class T, class... Entry>
+SCIA _JIO(Entry&&... entry) -> JsonObjectIO<T, Entry...>
+    { return JsonObjectIO<T, Entry...>(std::forward<Entry>(entry)...); }
+
+//#define JSON_CLASS ClassName
+#define JE(a, ...) _JE(#a, &JSON_CLASS::a, ##__VA_ARGS__)
+#define JIO(...) _JIO<JSON_CLASS>(__VA_ARGS__)
+#define JSON_DECLARE_FROM_TO_FUNCTIONS \
+auto JSON_CLASS::setFromJson(const QJsonObject &json) -> bool { return jio.fromJson(*this, json); } \
+auto JSON_CLASS::toJson() const -> QJsonObject { return jio.toJson(*this); }
+
+#define JSON_IO_POINT(c) _JIO<c>(_JE<c>("x", &c::rx), _JE<c>("y", &c::ry))
+auto json_io(const QPoint*) -> const decltype(JSON_IO_POINT(QPoint))*;
+auto json_io(const QPointF*) -> const decltype(JSON_IO_POINT(QPointF))*;
+
+#define JSON_IO_SIZE(c) _JIO<c>(_JE<c>("width", &c::rwidth), _JE<c>("height", &c::rheight))
+auto json_io(const QSize*) -> const decltype(JSON_IO_SIZE(QSize))*;
+auto json_io(const QSizeF*) -> const decltype(JSON_IO_SIZE(QSizeF))*;
+
+#define JSON_DECLARE_MAP_IO(C) \
+template<class Key, class T> \
+auto json_io(const C<Key, T>*) -> const JsonMapIO<Key, T, C<Key, T>>* \
+{ static const JsonMapIO<Key, T, C<Key, T>> io; return &io; }
+JSON_DECLARE_MAP_IO(QMap)
+JSON_DECLARE_MAP_IO(QHash)
+JSON_DECLARE_MAP_IO(std::map)
+
+#define JSON_DECLARE_ARRAY_IO(C) \
+template<class T> \
+auto json_io(const C<T>*) -> const JsonArrayIO<T, C<T>>* \
+{ static const JsonArrayIO<T, C<T>> io; return &io; }
+JSON_DECLARE_ARRAY_IO(QList)
+JSON_DECLARE_ARRAY_IO(QVector)
+JSON_DECLARE_ARRAY_IO(QLinkedList)
+JSON_DECLARE_ARRAY_IO(std::vector)
+JSON_DECLARE_ARRAY_IO(std::list)
+JSON_DECLARE_ARRAY_IO(std::deque)
+auto json_io(const QStringList*) -> const JsonArrayIO<QString, QStringList>*;
+
+template<>
+struct JsonIO<QString> : JsonQStringType {
+    auto toJson(const QString &val) const -> QJsonValue { return val; }
+    auto fromJson(QString &val, const QJsonValue &json) const -> bool
+    {
+        if (!json.isString())
+            return false;
+        val = json.toString(val);
+        return true;
+    }
+};
+
+template<>
+struct JsonIO<QByteArray> : JsonQStringType {
+    auto toJson(const QByteArray &val) const -> QJsonValue { return QString::fromUtf8(val); }
+    auto fromJson(QByteArray &val, const QJsonValue &json) const -> bool
+    {
+        if (!json.isString())
+            return false;
+        val = json.toString().toUtf8();
+        return true;
+    }
+};
+
+template<>
+struct JsonIO<QColor> : JsonQStringType {
+    auto toJson(const QColor &t) const -> QJsonValue {return t.name(QColor::HexArgb);}
+    auto fromJson(QColor &val, const QJsonValue &json) const -> bool
+    {
+        const QColor color(json.toString());
+        if (!color.isValid())
+            return false;
+        val = color;
+        return true;
+    }
+};
+
+template<>
+struct JsonIO<QFont> : JsonQStringType {
+    auto toJson(const QFont &t) const -> QJsonValue { return t.toString(); }
+    auto fromJson(QFont &val, const QJsonValue &json) const -> bool
+    { return val.fromString(json.toString()); }
+};
+
+template<>
+struct JsonIO<QKeySequence> : JsonQStringType {
+    auto toJson(const QKeySequence &t) const -> QJsonValue { return t.toString(); }
+    auto fromJson(QKeySequence &val, const QJsonValue &json) const -> bool
+    {
+        if (!json.isString())
+            return false;
+        val = QKeySequence::fromString(json.toString());
+        return true;
+    }
+};
 
 #endif // JSON_HPP

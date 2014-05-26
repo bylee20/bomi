@@ -2,8 +2,6 @@
 #define TMP_HPP
 
 #include "stdafx.hpp"
-#include <type_traits>
-#include <cstdint>
 
 namespace tmp { // simple template meta progamming
 
@@ -28,41 +26,6 @@ template <> struct floating_point<64> { using type = double; };
 
 template<int bits>
 using floating_point_t = typename floating_point<bits>::type;
-
-template<class T>
-static inline constexpr bool is_integral() { return std::is_integral<T>::value; }
-template<class T>
-static inline constexpr bool is_arithmetic() { return std::is_arithmetic<T>::value; }
-template<class T, class S>
-static inline constexpr bool is_same() { return std::is_same<T, S>::value; }
-
-template<bool b, class T, class S>
-using conditional_t = typename std::conditional<b, T, S>::type;
-
-template<bool b, class T = int>
-using enable_if_t = typename std::enable_if<b, T>::type;
-
-template<class... Args> static inline auto pass(const Args &...) -> void { }
-
-template<int idx, int size, bool go = idx < size>
-struct static_for { };
-
-template<int idx, int size>
-struct static_for<idx, size, true> {
-    template<class... Args, class F>
-    static inline auto run(const std::tuple<Args...> &tuple, const F &func) -> void {
-        func(std::get<idx>(tuple));
-        static_for<idx+1, size>::run(tuple, func);
-    }
-};
-
-template<int idx, int size>
-struct static_for<idx, size, false> {
-    template<class T, class F>
-    static inline auto run(const T &, const F &) -> void { }
-    template<class T, class F>
-    static inline auto run(T &&, const F &) -> void { }
-};
 
 template<int... S>
 struct index_list {

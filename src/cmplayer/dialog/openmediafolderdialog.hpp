@@ -8,17 +8,12 @@ class Playlist;
 class OpenMediaFolderDialog : public QDialog {
     Q_OBJECT
 public:
-    OpenMediaFolderDialog(QWidget *parent = nullptr);
+    OpenMediaFolderDialog(QWidget *parent = nullptr,
+                          const QString &key = QString());
     ~OpenMediaFolderDialog();
     auto playlist() const -> Playlist;
     auto exec() -> int final;
-    auto setCheckedTypes(const QString &types) -> void;
-    auto checkedTypes() const -> QString;
 private:
-    auto updateList() -> void;
-    auto checkList(bool checked) -> void;
-    auto getFolder() -> void;
-    auto updateOpenButton() -> void;
     struct Data;
     Data *d;
 };
