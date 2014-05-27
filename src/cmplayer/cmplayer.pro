@@ -207,7 +207,8 @@ HEADERS += \
     opengl/opengllogger.hpp \
     enum/enumflags.hpp \
     misc/is_convertible.hpp \
-    misc/jsonstorage.hpp
+    misc/jsonstorage.hpp \
+    player/mrlstatesqlfield.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -367,7 +368,8 @@ SOURCES += \
     misc/stepactionpair.cpp \
     opengl/opengltexturetransferinfo.cpp \
     opengl/opengllogger.cpp \
-    misc/jsonstorage.cpp
+    misc/jsonstorage.cpp \
+    player/mrlstatesqlfield.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

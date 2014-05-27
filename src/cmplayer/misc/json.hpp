@@ -129,8 +129,11 @@ struct JsonIOSelector<T, false, false> {
 }
 
 template<class T>
-auto json_io(const T*) -> decltype(detail::JsonIOSelector<T>::select((T*)0))
+SIA json_io(const T*) -> decltype(detail::JsonIOSelector<T>::select((T*)0))
 { return detail::JsonIOSelector<T>::select((T*)0); }
+
+template<class T>
+SIA json_io() -> decltype(json_io((T*)0)) { return json_io((T*)0); }
 
 template<class T, class D>
 struct JsonMemberEntry {
@@ -161,10 +164,10 @@ struct WriteToJsonObject {
     WriteToJsonObject(const T *t): from(t) { }
     template<class D>
     auto operator () (const JsonMemberEntry<T, D> &entry) const -> void
-    { m_json.insert(entry.key, json_io((D*)0)->toJson(from->*entry.data)); }
+    { m_json.insert(entry.key, json_io<D>()->toJson(from->*entry.data)); }
     template<class D>
     auto operator () (const JsonReferenceEntry<T, D> &entry) const -> void
-    { m_json.insert(entry.key, json_io((D*)0)->toJson((const_cast<T*>(from)->*entry.ref)())); }
+    { m_json.insert(entry.key, json_io<D>()->toJson((const_cast<T*>(from)->*entry.ref)())); }
     template<class Getter, class Setter>
     auto operator () (const JsonPropertyEntry<T, Getter, Setter> &entry) const -> void
     { auto d = (from->*entry.get)(); m_json.insert(entry.key, json_io(&d)->toJson(d)); }
@@ -181,14 +184,14 @@ struct ReadFromJsonObject {
     auto operator () (const JsonMemberEntry<T, D> &entry) const -> void
     {
         const auto it = json.constFind(entry.key);
-        if (it != json.constEnd() && !json_io((D*)0)->fromJson(to->*entry.data, *it))
+        if (it != json.constEnd() && !json_io<D>()->fromJson(to->*entry.data, *it))
             m_ok = false;
     }
     template<class D>
     auto operator () (const JsonReferenceEntry<T, D> &entry) const -> void
     {
         const auto it = json.constFind(entry.key);
-        if (it != json.constEnd() && !json_io((D*)0)->fromJson((to->*entry.ref)(), *it))
+        if (it != json.constEnd() && !json_io<D>()->fromJson((to->*entry.ref)(), *it))
             m_ok = false;
     }
     template<class Getter, class Setter>
@@ -293,14 +296,14 @@ struct JsonMapIO {
     {
         QJsonObject json;
         for (auto it = from.begin(); it != from.end(); ++it)
-            json.insert(json_key_from(it.key()), json_io((T*)0)->toJson(*it));
+            json.insert(json_key_from(it.key()), json_io<T>()->toJson(*it));
         return json;
     }
     auto fromJson(Container &to, const QJsonValue &json) const -> bool
     { return json.isObject() ? fromJson(to, json.toObject()) : false; }
     auto fromJson(Container &to, const QJsonObject &json) const -> bool
     {
-        const auto io = json_io((T*)0);
+        const auto io = json_io<T>();
         Container map;
         for (auto it = json.begin(); it != json.end(); ++it) {
             if ((*it).type() != io->qt_type)

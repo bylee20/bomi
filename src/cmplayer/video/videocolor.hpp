@@ -44,6 +44,8 @@ public:
     auto getText(Type type) const -> QString;
     auto packed() const -> qint64;
     auto toString() const -> QString;
+    auto toJson() const -> QJsonObject;
+    auto setFromJson(const QJsonObject &json) -> bool;
     static auto fromString(const QString &str) -> VideoColor;
     static auto fromPacked(qint64 packed) -> VideoColor;
     static auto getType(const char *name) -> Type;

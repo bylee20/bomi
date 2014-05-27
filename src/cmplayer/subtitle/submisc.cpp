@@ -54,25 +54,27 @@ template<>
 inline auto json_key_to(const QString &key) -> SubtitleFileInfo
 { return SubtitleFileInfo::fromJson(_JsonFromString(key)); }
 
-#define JSON_CLASS SubtitleStateInfo
-static const auto stateIO = JIO(
-    JE(track),
-    JE(mpv),
-    JE(cmplayer, &SubtitleStateInfo::setCMPlayer)
-);
-#undef JSON_CLASS
-
 auto SubtitleStateInfo::toJson() const -> QJsonObject
 {
-    return stateIO.toJson(*this);
+    QJsonObject json;
+    json.insert("valid", m_valid);
+    json.insert("track", m_track);
+    json.insert("mpv", json_io(&m_mpv)->toJson(m_mpv));
+    json.insert("cmplayer", json_io(&m_cmplayer)->toJson(m_cmplayer));
+    return json;
+}
+
+auto SubtitleStateInfo::setFromJson(const QJsonObject &json) -> bool
+{
+    m_valid = json["valid"].toBool(false);
+    m_track = json["track"].toInt();
+    return json_io(&m_mpv)->fromJson(m_mpv, json["mpv"])
+         & json_io(&m_cmplayer)->fromJson(m_cmplayer, json["cmplayer"]);
 }
 
 auto SubtitleStateInfo::fromJson(const QJsonObject &json) -> SubtitleStateInfo
 {
-    SubtitleStateInfo info;
-    if (stateIO.fromJson(info, json))
-        return info;
-    return SubtitleStateInfo();
+    SubtitleStateInfo info; info.setFromJson(json); return info;
 }
 
 auto SubtitleStateInfo::toString() const -> QString

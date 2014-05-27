@@ -22,8 +22,9 @@ struct SubtitleFileInfo {
     QString path, encoding;
 };
 
+template<class T> class JsonIO;
+
 struct SubtitleStateInfo {
-    static const int InvalidTrack = -100;
     struct Comp {
         Comp() {}
         Comp(int id, bool selected): id(id), selected(selected) {}
@@ -36,6 +37,7 @@ struct SubtitleStateInfo {
     bool operator != (const SubtitleStateInfo &rhs) const { return !operator == (rhs); }
     auto toString() const -> QString;
     auto toJson() const -> QJsonObject;
+    auto setFromJson(const QJsonObject &json) -> bool;
     static auto fromJson(const QJsonObject &json) -> SubtitleStateInfo;
     static auto fromJson(const QString &str) -> SubtitleStateInfo {
         QJsonParseError error;
@@ -46,18 +48,20 @@ struct SubtitleStateInfo {
     }
     static auto fromString(const QString &str) -> SubtitleStateInfo;
     auto append(const SubComp &comp) -> void;
-    auto isValid() const -> bool { return m_track != InvalidTrack; }
-    const QMap<SubtitleFileInfo, QVector<Comp>> &cmplayer() const { return m_cmplayer; }
-    void setCMPlayer(const QMap<SubtitleFileInfo, QVector<Comp>> &map) { m_cmplayer = map; }
-    const QVector<SubtitleFileInfo> &mpv() const { return m_mpv; }
-    QVector<SubtitleFileInfo> &mpv() { return m_mpv; }
-    auto track() const -> int { return m_track; }
-    int &track() { return m_track; }
-    QVector<SubComp> load() const;
+    auto cmplayer() const -> const QMap<SubtitleFileInfo, QVector<Comp>>&
+        { return m_cmplayer; }
+    auto mpv() const -> const QVector<SubtitleFileInfo>& { return m_mpv; }
+    auto mpv() -> QVector<SubtitleFileInfo>& { return m_mpv; }
+    auto setTrack(int track) -> void { m_track = track; m_valid = true; }
+    auto getTrack() const -> int { return m_track; }
+    auto load() const -> QVector<SubComp>;
+    auto isValid() const -> bool { return m_valid; }
 private:
-    int m_track = InvalidTrack;
+    bool m_valid = false;
+    int m_track = 0;
     QVector<SubtitleFileInfo> m_mpv;
     QMap<SubtitleFileInfo, QVector<Comp>> m_cmplayer;
+    friend class JsonIO<SubtitleStateInfo>;
 };
 
 Q_DECLARE_METATYPE(SubtitleStateInfo)

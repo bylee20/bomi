@@ -439,8 +439,6 @@ struct MainWindow::Data {
             as.history_visible = history.isVisible();
             as.save();
             syncState();
-            history.setAppState(&as.state);
-
             engine.waitUntilTerminated();
             cApp.processEvents();
             first = false;
@@ -598,7 +596,7 @@ struct MainWindow::Data {
     auto subtitleState() const -> SubtitleStateInfo
     {
         SubtitleStateInfo state;
-        state.track() = engine.currentSubtitleStream();
+        state.setTrack(engine.currentSubtitleStream());
         state.mpv() = engine.subtitleFiles();
         const auto parsed = subtitle.components();
         for (auto c : parsed)
@@ -613,7 +611,7 @@ struct MainWindow::Data {
             engine.addSubtitleStream(f.path, f.encoding);
         auto loaded = state.load();
         subtitle.setComponents(loaded);
-        engine.setCurrentSubtitleStream(state.track());
+        engine.setCurrentSubtitleStream(state.getTrack());
         syncSubtitleFileMenu();
     }
 
@@ -838,7 +836,7 @@ struct MainWindow::Data {
             as.state.edition = engine.currentEdition();
             as.state.audio_track = info.streamIds[Stream::Audio];
             as.state.sub_track = subtitleState();
-            as.state.sub_track.track() = info.streamIds[Stream::Subtitle];
+            as.state.sub_track.setTrack(info.streamIds[Stream::Subtitle]);
             syncState();
             history.update(&as.state, false);
             as.state.mrl = info.mrl;
@@ -994,7 +992,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     connectMenus();
 
-    d->history.getAppState(&d->as.state);
     d->syncWithState();
 
     d->playlist.setVisible(d->as.playlist_visible);

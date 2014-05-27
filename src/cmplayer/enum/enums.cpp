@@ -143,3 +143,91 @@ bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVaria
         return false;
     return true;
 }
+auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
+{
+    EnumNameVariantConverter conv;
+    if (metaType == qMetaTypeId<TextThemeStyle>()) {
+        conv.variantToName = _EnumVariantToEnumName<TextThemeStyle>;
+        conv.nameToVariant = _EnumNameToEnumVariant<TextThemeStyle>;
+    } else    if (metaType == qMetaTypeId<SpeakerId>()) {
+        conv.variantToName = _EnumVariantToEnumName<SpeakerId>;
+        conv.nameToVariant = _EnumNameToEnumVariant<SpeakerId>;
+    } else    if (metaType == qMetaTypeId<ChannelLayout>()) {
+        conv.variantToName = _EnumVariantToEnumName<ChannelLayout>;
+        conv.nameToVariant = _EnumNameToEnumVariant<ChannelLayout>;
+    } else    if (metaType == qMetaTypeId<ColorRange>()) {
+        conv.variantToName = _EnumVariantToEnumName<ColorRange>;
+        conv.nameToVariant = _EnumNameToEnumVariant<ColorRange>;
+    } else    if (metaType == qMetaTypeId<SubtitleDisplay>()) {
+        conv.variantToName = _EnumVariantToEnumName<SubtitleDisplay>;
+        conv.nameToVariant = _EnumNameToEnumVariant<SubtitleDisplay>;
+    } else    if (metaType == qMetaTypeId<VideoRatio>()) {
+        conv.variantToName = _EnumVariantToEnumName<VideoRatio>;
+        conv.nameToVariant = _EnumNameToEnumVariant<VideoRatio>;
+    } else    if (metaType == qMetaTypeId<Dithering>()) {
+        conv.variantToName = _EnumVariantToEnumName<Dithering>;
+        conv.nameToVariant = _EnumNameToEnumVariant<Dithering>;
+    } else    if (metaType == qMetaTypeId<DecoderDevice>()) {
+        conv.variantToName = _EnumVariantToEnumName<DecoderDevice>;
+        conv.nameToVariant = _EnumNameToEnumVariant<DecoderDevice>;
+    } else    if (metaType == qMetaTypeId<DeintMode>()) {
+        conv.variantToName = _EnumVariantToEnumName<DeintMode>;
+        conv.nameToVariant = _EnumNameToEnumVariant<DeintMode>;
+    } else    if (metaType == qMetaTypeId<DeintDevice>()) {
+        conv.variantToName = _EnumVariantToEnumName<DeintDevice>;
+        conv.nameToVariant = _EnumNameToEnumVariant<DeintDevice>;
+    } else    if (metaType == qMetaTypeId<DeintMethod>()) {
+        conv.variantToName = _EnumVariantToEnumName<DeintMethod>;
+        conv.nameToVariant = _EnumNameToEnumVariant<DeintMethod>;
+    } else    if (metaType == qMetaTypeId<InterpolatorType>()) {
+        conv.variantToName = _EnumVariantToEnumName<InterpolatorType>;
+        conv.nameToVariant = _EnumNameToEnumVariant<InterpolatorType>;
+    } else    if (metaType == qMetaTypeId<AudioDriver>()) {
+        conv.variantToName = _EnumVariantToEnumName<AudioDriver>;
+        conv.nameToVariant = _EnumNameToEnumVariant<AudioDriver>;
+    } else    if (metaType == qMetaTypeId<ClippingMethod>()) {
+        conv.variantToName = _EnumVariantToEnumName<ClippingMethod>;
+        conv.nameToVariant = _EnumNameToEnumVariant<ClippingMethod>;
+    } else    if (metaType == qMetaTypeId<StaysOnTop>()) {
+        conv.variantToName = _EnumVariantToEnumName<StaysOnTop>;
+        conv.nameToVariant = _EnumNameToEnumVariant<StaysOnTop>;
+    } else    if (metaType == qMetaTypeId<SeekingStep>()) {
+        conv.variantToName = _EnumVariantToEnumName<SeekingStep>;
+        conv.nameToVariant = _EnumNameToEnumVariant<SeekingStep>;
+    } else    if (metaType == qMetaTypeId<GeneratePlaylist>()) {
+        conv.variantToName = _EnumVariantToEnumName<GeneratePlaylist>;
+        conv.nameToVariant = _EnumNameToEnumVariant<GeneratePlaylist>;
+    } else    if (metaType == qMetaTypeId<OpenMediaBehavior>()) {
+        conv.variantToName = _EnumVariantToEnumName<OpenMediaBehavior>;
+        conv.nameToVariant = _EnumNameToEnumVariant<OpenMediaBehavior>;
+    } else    if (metaType == qMetaTypeId<SubtitleAutoload>()) {
+        conv.variantToName = _EnumVariantToEnumName<SubtitleAutoload>;
+        conv.nameToVariant = _EnumNameToEnumVariant<SubtitleAutoload>;
+    } else    if (metaType == qMetaTypeId<SubtitleAutoselect>()) {
+        conv.variantToName = _EnumVariantToEnumName<SubtitleAutoselect>;
+        conv.nameToVariant = _EnumNameToEnumVariant<SubtitleAutoselect>;
+    } else    if (metaType == qMetaTypeId<OsdScalePolicy>()) {
+        conv.variantToName = _EnumVariantToEnumName<OsdScalePolicy>;
+        conv.nameToVariant = _EnumNameToEnumVariant<OsdScalePolicy>;
+    } else    if (metaType == qMetaTypeId<KeyModifier>()) {
+        conv.variantToName = _EnumVariantToEnumName<KeyModifier>;
+        conv.nameToVariant = _EnumNameToEnumVariant<KeyModifier>;
+    } else    if (metaType == qMetaTypeId<VerticalAlignment>()) {
+        conv.variantToName = _EnumVariantToEnumName<VerticalAlignment>;
+        conv.nameToVariant = _EnumNameToEnumVariant<VerticalAlignment>;
+    } else    if (metaType == qMetaTypeId<HorizontalAlignment>()) {
+        conv.variantToName = _EnumVariantToEnumName<HorizontalAlignment>;
+        conv.nameToVariant = _EnumNameToEnumVariant<HorizontalAlignment>;
+    } else    if (metaType == qMetaTypeId<MoveToward>()) {
+        conv.variantToName = _EnumVariantToEnumName<MoveToward>;
+        conv.nameToVariant = _EnumNameToEnumVariant<MoveToward>;
+    } else    if (metaType == qMetaTypeId<ChangeValue>()) {
+        conv.variantToName = _EnumVariantToEnumName<ChangeValue>;
+        conv.nameToVariant = _EnumNameToEnumVariant<ChangeValue>;
+    } else    if (metaType == qMetaTypeId<VideoEffect>()) {
+        conv.variantToName = _EnumVariantToEnumName<VideoEffect>;
+        conv.nameToVariant = _EnumNameToEnumVariant<VideoEffect>;
+    } else
+        return EnumNameVariantConverter();
+    return conv;
+}

@@ -1,17 +1,86 @@
 #include "mrlstate.hpp"
-#include "appstate.hpp"
 #include "mrlstate_old.hpp"
+#include "misc/json.hpp"
 
-using namespace MrlStateHelpers;
+template<>
+struct JsonIO<Mrl> : JsonQStringType {
+    static auto toJson(const Mrl &mrl) -> QJsonValue { return mrl.toString(); }
+    static auto fromJson(Mrl &mrl, const QJsonValue &json) -> bool
+    {
+        if (!json.isString())
+            return false;
+        mrl = Mrl::fromString(json.toString());
+        return true;
+    }
+};
 
-auto MrlState::restorableProperties() -> QList<MrlStateProperty>
+template<>
+struct JsonIO<QDateTime> {
+    static auto toJson(const QDateTime &dt) -> QJsonValue
+        { return (double)dt.toMSecsSinceEpoch(); }
+    static auto fromJson(QDateTime &dt, const QJsonValue &json) -> bool
+    {
+        if (!json.isDouble())
+            return false;
+        dt.setMSecsSinceEpoch(std::llround(json.toDouble()));
+        return true;
+    }
+    SCA qt_type = QJsonValue::Double;
+};
+
+#define JSON_CLASS MrlState
+static const auto jio = JIO(
+    JE(mrl),
+    JE(device),
+    JE(last_played_date_time),
+    JE(resume_position),
+    JE(play_speed),
+    JE(edition),
+    JE(video_aspect_ratio),
+    JE(video_crop_ratio),
+    JE(video_deinterlacing),
+    JE(video_interpolator),
+    JE(video_chroma_upscaler),
+    JE(video_dithering),
+    JE(video_offset),
+    JE(video_vertical_alignment),
+    JE(video_horizontal_alignment),
+    JE(video_color),
+    JE(video_range),
+    JE(video_effects),
+    JE(audio_amplifier),
+    JE(audio_volume),
+    JE(audio_sync),
+    JE(audio_muted),
+    JE(audio_volume_normalizer),
+    JE(audio_tempo_scaler),
+    JE(audio_channel_layout),
+    JE(audio_track),
+    JE(sub_position),
+    JE(sub_sync),
+    JE(sub_display),
+    JE(sub_alignment),
+    JE(sub_track)
+);
+
+auto MrlState::toJson() const -> QJsonObject
 {
-    QList<MrlStateProperty> properties;
+    return jio.toJson(*this);
+}
+
+auto MrlState::setFromJson(const QJsonObject &json) -> bool
+{
+    return jio.fromJson(*this, json);
+}
+
+auto MrlState::restorableProperties() -> QVector<PropertyInfo>
+{
+    QVector<PropertyInfo> properties;
     properties.reserve(staticMetaObject.propertyCount());
     auto add = [&properties] (const char *name, const QString &info) {
         const int index = staticMetaObject.indexOfProperty(name);
         Q_ASSERT(index != -1);
-        properties.append(MrlStateProperty{staticMetaObject.property(index), info});
+        properties.push_back(PropertyInfo{staticMetaObject.property(index), info});
     };
 #define ADD(n, i) add(#n, i)
     ADD(play_speed, qApp->translate("MrlState", "Playback Speed"));
@@ -46,133 +115,42 @@ auto MrlState::restorableProperties() -> QList<MrlStateProperty>
     return properties;
 }
 
-template<class T> static inline bool _Is(int type) { return qMetaTypeId<T>() == type; }
-
-auto MrlField::list() -> QList<MrlField>
+template<class F>
+static auto _MrlFieldColumnListString(const QList<F> &list) -> QString
 {
-    static QList<MrlField> fields;
-    if (fields.isEmpty()) {
-        MrlState default_;
-        auto &metaObject = MrlState::staticMetaObject;
-        const int count = metaObject.propertyCount();
-        const int offset = metaObject.propertyOffset();
-        Q_ASSERT(offset == 1);
-        fields.reserve(count - offset);
-        for (int i=offset; i<count; ++i) {
-            MrlField field;
-            field.m_property = metaObject.property(i);
-            field.m_type = "INTEGER";
-            field.m_default = field.m_property.read(&default_);
-            switch (field.m_property.type()) {
-            case QVariant::Int:
-                field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toInt()); };
-                break;
-            case QVariant::LongLong:
-                field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toLongLong()); };
-                break;
-            case QVariant::Bool:
-                field.m_toSql = [] (const QVariant &var) { return _ToSql((int)var.toBool()); };
-                break;
-            case QVariant::Point:
-                field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toPoint()); };
-                field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
-                    return _PointFromSql(var.toString(), def.toPoint());
-                };
-                break;
-            case QVariant::DateTime:
-                field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toDateTime()); };
-                field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
-                    return var.isNull() ? def : _DateTimeFromSql(var.toLongLong());
-                };
-                break;
-            case QVariant::String:
-                field.m_type = "TEXT";
-                field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toString()); };
-                break;
-            default: {
-                Q_ASSERT(field.m_property.type() == QVariant::UserType);
-                const auto type = field.m_property.userType();
-                if (_GetEnumFunctionsForSql(type, field.m_toSql, field.m_fromSql)) {
-                    field.m_type = "TEXT";
-                } else if (_Is<VideoColor>(type)) {
-                    field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<VideoColor>().packed()); };
-                    field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
-                        return var.isNull() ? def : QVariant::fromValue(VideoColor::fromPacked(var.toLongLong()));
-                    };
-                } else if (_Is<SubtitleStateInfo>(type)) {
-                    field.m_type = "TEXT";
-                    field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<SubtitleStateInfo>().toJson()); };
-                    field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
-                        return var.isNull() ? def : QVariant::fromValue(SubtitleStateInfo::fromJson(var.toString()));
-                    };
-                } else if (_Is<Mrl>(type)) {
-                    field.m_type = "TEXT PRIMARY KEY NOT NULL";
-                    field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<Mrl>().toString()); };
-                    field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
-                        return var.isNull() ? def : QVariant::fromValue(Mrl::fromString(var.toString()));
-                    };
-                } else
-                    Q_ASSERT_X(false, "HistoryDatabaseModel::HistoryDatabaseModel()", "wrong type!");
-
-            }}
-            fields.append(field);
-        }
-    }
-    return fields;
+    QString columns;
+    for (auto &f : list)
+        columns += f.property().name() % _L(", ");
+    columns.chop(2);
+    return columns;
 }
 
+template<class T = MrlState, class F>
+auto _FillMrlStateFromRecord(T *state, const QList<F> &fields,
+                             const QSqlRecord &record) -> void {
+    for (int i=0; i<fields.size(); ++i) {
+        const auto &f = fields[i];
+        const QMetaProperty p = f.property();
+        Q_ASSERT(p.name() == record.fieldName(i));
+        p.write(state, f.fromSql(record.value(i)));
+    }
+}
 
-namespace MrlStateHelpers {
-
-std::tuple<MrlState*, QList<MrlState*>> _ImportMrlStatesFromPreviousVersion(int version, QSqlDatabase db) {
-    std::tuple<MrlState*, QList<MrlState*>> tuple;
-    MrlState *&app = std::get<0>(tuple);
-    app = new MrlState;
-    QList<MrlState*> &states = std::get<1>(tuple);
+auto _ImportMrlStates(int version, QSqlDatabase db)
+-> QVector<MrlState*>
+{
+    QVector<MrlState*> states;
     if (version < 1) {
-        AppStateOld as;
         QSettings set;
         set.beginGroup("history");
         const int size = set.beginReadArray("list");
         states.reserve(size);
-        auto fill = [&as] (MrlState *state) {
-            state->play_speed = as.playback_speed;
-
-            state->video_aspect_ratio = as.video_aspect_ratio;
-            state->video_crop_ratio = as.video_crop_ratio;
-            state->video_deinterlacing = as.video_deinterlacing;
-            state->video_interpolator = as.video_interpolator;
-            state->video_chroma_upscaler = as.video_chroma_upscaler;
-            state->video_dithering = as.video_dithering;
-            state->video_offset = as.video_offset;
-            state->video_vertical_alignment = as.video_vertical_alignment;
-            state->video_horizontal_alignment = as.video_horizontal_alignment;
-            state->video_color = as.video_color;
-            state->video_range = as.video_range;
-            state->video_effects = as.video_effects;
-
-            state->audio_amplifier = as.audio_amplifier;
-            state->audio_volume = as.audio_volume;
-            state->audio_sync = as.audio_sync;
-            state->audio_muted = as.audio_muted;
-            state->audio_volume_normalizer = as.audio_volume_normalizer;
-            state->audio_tempo_scaler = as.audio_tempo_scaler;
-            state->audio_channel_layout = as.audio_channel_layout;
-
-            state->sub_position = as.sub_position;
-            state->sub_sync = as.sub_sync;
-            state->sub_display = as.sub_display;
-            state->sub_alignment = as.sub_alignment;
-            return state;
-        };
-        fill(app);
         for (int i=0; i<size; ++i) {
             set.setArrayIndex(i);
             const Mrl mrl = set.value("mrl", QString()).toString();
             if (mrl.isEmpty())
                 continue;
             auto state = new MrlState;
-            fill(state);
             state->mrl = mrl;
             state->last_played_date_time = set.value("date", QDateTime()).toDateTime();
             state->resume_position = set.value("stopped-position", 0).toInt();
@@ -183,19 +161,8 @@ std::tuple<MrlState*, QList<MrlState*>> _ImportMrlStatesFromPreviousVersion(int 
         db.transaction();
         const auto fields = MrlFieldV1::list();
         const auto columns = _MrlFieldColumnListString(fields);
-        query.exec(QString("SELECT %1 FROM app LIMIT 1").arg(columns));
-        app = new MrlState;
         MrlStateV1 prev;
-        if (query.next()) {
-            _FillMrlStateFromRecord<MrlStateV1>(&prev, fields, query.record());
-            prev.fillCurrentVersion(app);
-        }
         query.exec(QString("SELECT %1, (SELECT COUNT(*) FROM state) as total FROM state").arg(columns));
-        if (!query.next())
-            return tuple;
-        const int rows = query.value("total").toInt();
-        query.seek(-1);
-        states.reserve(rows);
         while (query.next()) {
             _FillMrlStateFromRecord(&prev, fields, query.record());
             auto state = new MrlState;
@@ -203,8 +170,20 @@ std::tuple<MrlState*, QList<MrlState*>> _ImportMrlStatesFromPreviousVersion(int 
             states.append(state);
         }
         db.rollback();
+    } else if (version < 3) {
+        const auto fields = MrlFieldV2::list();
+        const QString stateTable = _L("state") % _N(2);
+        const QString select = QString::fromLatin1("SELECT %1 FROM %2")
+                               .arg(_MrlFieldColumnListString(fields));
+        QSqlQuery query(db);
+        db.transaction();
+        query.exec(select.arg(stateTable));
+        while (query.next()) {
+            auto state = new MrlState;
+            _FillMrlStateFromRecord(state, fields, query.record());
+            states.push_back(state);
+        }
+        db.rollback();
     }
-    return tuple;
-}
-
+    return states;
 }

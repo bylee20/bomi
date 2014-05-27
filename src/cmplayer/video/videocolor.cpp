@@ -1,5 +1,6 @@
 #include "videocolor.hpp"
 #include "enum/colorrange.hpp"
+#include "misc/json.hpp"
 
 static auto makeNameArray() -> VideoColor::Array<const char*>
 {
@@ -204,4 +205,24 @@ auto VideoColor::fromString(const QString &str) -> VideoColor
         color.set(type, match.captured(2).toInt());
     }
     return color;
+}
+
+auto VideoColor::toJson() const -> QJsonObject
+{
+    QJsonObject json;
+    for_type([&] (Type type) { json.insert(name(type), get(type)); });
+    return json;
+}
+
+auto VideoColor::setFromJson(const QJsonObject &json) -> bool
+{
+    bool ok = true;
+    for_type([&] (Type type) {
+        const auto it = json.find(name(type));
+        if (it == json.end())
+            ok = false;
+        else
+            set(type, (*it).toInt());
+    });
+    return ok;
 }

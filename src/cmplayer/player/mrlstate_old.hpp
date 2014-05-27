@@ -156,4 +156,20 @@ private:
 inline auto MrlFieldV1::fromSql(const QVariant &var) const -> QVariant
 { return m_fromSql(var, m_property.userType()); }
 
+struct MrlFieldV2 {
+    auto type() const -> QString { return m_sqlType; }
+    auto toSql(const QVariant &var) const -> QString { return m_toSql(var); }
+    auto fromSql(const QVariant &var) const -> QVariant { return m_fromSql(var, m_defaultValue); }
+    const QMetaProperty &property() const { return m_property; }
+    const QVariant &default_() const { return m_defaultValue; }
+    static QList<MrlFieldV2> list();
+private:
+    static auto pass(const QVariant &var, const QVariant &def) -> QVariant { return var.isNull() ? def : var; }
+    QMetaProperty m_property;
+    QString m_sqlType;
+    QVariant m_defaultValue;
+    QString (*m_toSql)(const QVariant&);
+    QVariant (*m_fromSql)(const QVariant&, const QVariant&) = pass;
+};
+
 #endif // MRLSTATE_OLD_H

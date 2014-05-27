@@ -15,13 +15,15 @@
 
 using MouseAction = MouseActionGroupBox::Action;
 
-class MrlStatePropertyListModel : public SimpleListModel<MrlStateProperty> {
+class MrlStatePropertyListModel
+        : public SimpleListModel<MrlState::PropertyInfo,
+                                 QVector<MrlState::PropertyInfo>> {
 public:
     MrlStatePropertyListModel() { setCheckable(0, true); }
     auto flags(int row, int column) const -> Qt::ItemFlags
         { return Super::flags(row, column) | Qt::ItemIsUserCheckable; }
     auto displayData(int row, int /*column*/) const -> QVariant
-        { return at(row).info(); }
+        { return at(row).description; }
 };
 
 // from clementine's preferences dialog
@@ -689,7 +691,7 @@ auto PrefDialog::set(const Pref &p) -> void
 
     QVector<bool> restores(d->properties.size(), false);
     for (int i=0; i<d->properties.size(); ++i) {
-        const auto property = d->properties.at(i).property();
+        const auto property = d->properties.at(i).property;
         restores[i] = p.restore_properties.contains(property);
     }
     d->properties.setChecked(0, restores);
@@ -835,7 +837,7 @@ auto PrefDialog::get(Pref &p) -> void
     p.restore_properties.clear();
     for (int i=0; i<restores.size(); ++i) {
         if (restores[i])
-            p.restore_properties.append(d->properties.at(i).property());
+            p.restore_properties.append(d->properties.at(i).property);
     }
 }
 
