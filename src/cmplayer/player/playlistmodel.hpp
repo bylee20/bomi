@@ -1,7 +1,6 @@
 #ifndef PLAYLISTMODEL_HPP
 #define PLAYLISTMODEL_HPP
 
-#include "stdafx.hpp"
 #include "playlist.hpp"
 #include "misc/simplelistmodel.hpp"
 

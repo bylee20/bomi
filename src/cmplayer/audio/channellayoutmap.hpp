@@ -1,7 +1,6 @@
 #ifndef CHANNELLAYOUTMAP_HPP
 #define CHANNELLAYOUTMAP_HPP
 
-#include "stdafx.hpp"
 #include "channelmanipulation.hpp"
 
 struct ChannelName {const char *abbr; const char *desc;};

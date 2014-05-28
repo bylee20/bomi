@@ -1,8 +1,6 @@
 #ifndef APPOBJECT_HPP
 #define APPOBJECT_HPP
 
-#include "stdafx.hpp"
-
 class PlayEngine;                       class HistoryModel;
 class PlaylistModel;                    class TopLevelItem;
 class Downloader;                       class ThemeObject;

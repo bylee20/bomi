@@ -172,7 +172,7 @@ auto SoftwareDeinterlacer::setOption(const DeintOption &deint) -> void
     }
 }
 
-auto SoftwareDeinterlacer::peekNext() -> const mp_image* const
+auto SoftwareDeinterlacer::peekNext() const -> const mp_image*
 {
     return d->queue.empty() ? nullptr : d->queue.front();
 }

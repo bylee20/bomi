@@ -1,8 +1,6 @@
 #ifndef DEINTWIDGET_HPP
 #define DEINTWIDGET_HPP
 
-#include "stdafx.hpp"
-
 class DeintCaps;
 enum class DecoderDevice;
 

@@ -1,8 +1,6 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
-#include "stdafx.hpp"
-
 class Mrl;                              class PrefDialog;
 class MainQuickView;                    class Playlist;
 class Subtitle;                         class PlaylistModel;

@@ -1,8 +1,6 @@
 #ifndef URLDIALOG_HPP
 #define URLDIALOG_HPP
 
-#include "stdafx.hpp"
-
 class Playlist;
 
 class UrlDialog : public QDialog {

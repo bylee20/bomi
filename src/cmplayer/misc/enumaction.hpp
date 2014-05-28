@@ -1,8 +1,6 @@
 #ifndef ENUMACTION_HPP
 #define ENUMACTION_HPP
 
-#include "stdafx.hpp"
-
 template<class T>
 class EnumInfo;
 
@@ -31,7 +29,7 @@ inline EnumAction<T>::EnumAction(T t, QObject *parent)
 }
 
 template<class T>
-static inline auto _NewEnumAction(T t) -> EnumAction<T>*
+SIA _NewEnumAction(T t) -> EnumAction<T>*
 {
     return new EnumAction<T>(t);
 }

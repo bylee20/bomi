@@ -16,7 +16,7 @@ extern "C" {
 #include <video/vfcap.h>
 }
 
-static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
+//static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
 
 auto query_video_format(quint32 format) -> int;
 extern auto initialize_vdpau_interop(QOpenGLContext *context) -> void;

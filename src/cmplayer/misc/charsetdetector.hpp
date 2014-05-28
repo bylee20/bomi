@@ -1,8 +1,6 @@
 #ifndef CHARSETDETECTOR_HPP
 #define CHARSETDETECTOR_HPP
 
-#include "stdafx.hpp"
-
 class CharsetDetector {
 public:
     CharsetDetector(const QByteArray &data);

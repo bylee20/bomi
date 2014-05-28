@@ -1,8 +1,6 @@
 #ifndef OPENDISCDIALOG_HPP
 #define OPENDISCDIALOG_HPP
 
-#include "stdafx.hpp"
-
 class OpenDiscDialog : public QDialog {
     Q_OBJECT
 public:

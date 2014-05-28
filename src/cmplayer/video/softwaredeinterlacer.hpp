@@ -1,8 +1,6 @@
 #ifndef SOFTWAREDEINTERLACER_HPP
 #define SOFTWAREDEINTERLACER_HPP
 
-#include "stdafx.hpp"
-
 class DeintOption;        struct mp_image;
 
 static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
@@ -18,7 +16,7 @@ public:
     auto push(mp_image *mpi) -> void;
     auto pop() -> mp_image*;
     auto clear() -> void;
-    auto peekNext() -> const mp_image* const;
+    auto peekNext() const-> const mp_image*;
 private:
     struct Data;
     Data *d;

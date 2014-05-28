@@ -1,7 +1,6 @@
 #ifndef OSDSTYLE_HPP
 #define OSDSTYLE_HPP
 
-#include "stdafx.hpp"
 #include "enum/textthemestyle.hpp"
 
 class Record;

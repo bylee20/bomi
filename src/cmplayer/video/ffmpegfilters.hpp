@@ -1,7 +1,6 @@
 #ifndef FFMPEGFILTERS_HPP
 #define FFMPEGFILTERS_HPP
 
-#include "stdafx.hpp"
 extern "C" {
 #include <video/mp_image_pool.h>
 #include <video/img_format.h>

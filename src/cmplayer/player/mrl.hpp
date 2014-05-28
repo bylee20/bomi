@@ -1,8 +1,6 @@
 #ifndef MRL_HPP
 #define MRL_HPP
 
-#include "stdafx.hpp"
-
 class Mrl {
 public:
     Mrl() {}

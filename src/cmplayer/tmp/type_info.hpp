@@ -1,14 +1,6 @@
 #ifndef TYPE_INFO_HPP
 #define TYPE_INFO_HPP
 
-#include <type_traits>
-
-#ifndef SCIA
-#define SCIA static constexpr inline auto
-#define SIA static inline auto
-#define SCA static constexpr auto
-#endif
-
 namespace tmp {
 
 template<class T>

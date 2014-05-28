@@ -1,8 +1,6 @@
 #ifndef MOUSEACTIONGROUPBOX_HPP
 #define MOUSEACTIONGROUPBOX_HPP
 
-#include "stdafx.hpp"
-
 struct KeyModifierActionMap;
 
 class MouseActionGroupBox : public QGroupBox {

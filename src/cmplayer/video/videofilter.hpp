@@ -1,8 +1,6 @@
 #ifndef VIDEOFILTER_H
 #define VIDEOFILTER_H
 
-#include "stdafx.hpp"
-
 struct vf_instance;                     struct mp_image_params;
 struct vf_info;                         struct mp_image;
 class HwAcc;                            class OpenGLOffscreenContext;

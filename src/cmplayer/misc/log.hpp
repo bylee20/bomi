@@ -1,8 +1,6 @@
 #ifndef LOG_HPP
 #define LOG_HPP
 
-#include "stdafx.hpp"
-
 SIA _ToLog(char n) -> QByteArray { return QByteArray::number(n); }
 SIA _ToLog(qint8 n) -> QByteArray { return QByteArray::number(n); }
 SIA _ToLog(qint16 n) -> QByteArray { return QByteArray::number(n); }

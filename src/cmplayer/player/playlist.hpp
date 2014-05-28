@@ -1,7 +1,6 @@
 #ifndef PLAYLIST_HPP
 #define PLAYLIST_HPP
 
-#include "stdafx.hpp"
 #include "mrl.hpp"
 
 class QFile;        class QDir;

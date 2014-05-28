@@ -1,12 +1,6 @@
 #ifndef STATIC_FOR_HPP
 #define STATIC_FOR_HPP
 
-#ifndef SCIA
-#define SCIA static constexpr inline auto
-#define SIA static inline auto
-#define SCA static constexpr auto
-#endif
-
 namespace tmp {
 
 namespace detail {
@@ -26,9 +20,9 @@ struct static_for<idx, size, true> {
 template<int idx, int size>
 struct static_for<idx, size, false> {
     template<class T, class F>
-    static inline auto run(const T &, const F &) -> void { }
+    SIA run(const T &, const F &) -> void { }
     template<class T, class F>
-    static inline auto run(T &&, const F &) -> void { }
+    SIA run(T &&, const F &) -> void { }
 };
 
 template<int idx, int size, bool go = idx < size>
@@ -48,9 +42,9 @@ struct static_for_breakable<idx, size, true> {
 template<int idx, int size>
 struct static_for_breakable<idx, size, false> {
     template<class T, class F>
-    static inline auto run(const T &, const F &) -> bool { return true; }
+    SIA run(const T &, const F &) -> bool { return true; }
     template<class T, class F>
-    static inline auto run(T &&, const F &) -> bool { return true; }
+    SIA run(T &&, const F &) -> bool { return true; }
 };
 }
 

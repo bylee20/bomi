@@ -1,8 +1,6 @@
 #ifndef MPOSDBITMAP_HPP
 #define MPOSDBITMAP_HPP
 
-#include "stdafx.hpp"
-
 struct sub_bitmaps;
 
 class MpOsdBitmap {

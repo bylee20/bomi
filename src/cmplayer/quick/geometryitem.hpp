@@ -1,8 +1,6 @@
 #ifndef GEOMETRYITEM_HPP
 #define GEOMETRYITEM_HPP
 
-#include "stdafx.hpp"
-
 class GeometryItem : public QQuickItem {
     Q_OBJECT
 public:

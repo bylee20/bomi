@@ -1,8 +1,6 @@
 #ifndef TRAYICON_HPP
 #define TRAYICON_HPP
 
-#include "stdafx.hpp"
-
 class TrayIcon : public QObject {
     Q_OBJECT
 public:

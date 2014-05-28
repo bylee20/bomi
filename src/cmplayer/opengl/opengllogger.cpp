@@ -33,7 +33,7 @@ OpenGLLogger::~OpenGLLogger()
     delete d;
 }
 
-static inline auto _ToLog(QOpenGLDebugMessage::Source source) -> QByteArray
+SIA _ToLog(QOpenGLDebugMessage::Source source) -> QByteArray
 {
     switch (source) {
 #define SWITCH_SOURCE(s) case QOpenGLDebugMessage::s##Source: return #s;
@@ -46,7 +46,7 @@ static inline auto _ToLog(QOpenGLDebugMessage::Source source) -> QByteArray
     return QByteArray::number(source, 16);
 }
 
-static inline auto _ToLog(QOpenGLDebugMessage::Type type) -> QByteArray
+SIA _ToLog(QOpenGLDebugMessage::Type type) -> QByteArray
 {
     switch (type) {
 #define SWITCH_TYPE(t) case QOpenGLDebugMessage::t##Type: return #t;
@@ -61,7 +61,7 @@ static inline auto _ToLog(QOpenGLDebugMessage::Type type) -> QByteArray
     return QByteArray::number(type, 16);
 }
 
-static inline auto _ToLog(QOpenGLDebugMessage::Severity severity) -> QByteArray
+SIA _ToLog(QOpenGLDebugMessage::Severity severity) -> QByteArray
 {
     switch (severity) {
 #define SWITCH_SEVERITY(s) case QOpenGLDebugMessage::s##Severity: return #s;

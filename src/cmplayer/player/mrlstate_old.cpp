@@ -20,12 +20,12 @@ enum ShiftHelper {
     S_Year = S_Month + B_Month
 };
 
-static inline auto _ToSql(const QString &text) -> QString {
+SIA _ToSql(const QString &text) -> QString {
     return _L('\'') % QString(text).replace(_L('\''), _L("''")) % _L('\'');
 }
 
 
-static inline auto _ToSql(const QDateTime &dt) -> QString {
+SIA _ToSql(const QDateTime &dt) -> QString {
     const auto date = dt.date();
     const auto time = dt.time();
 #define CV(v, s) (qint64(v) << S_##s)
@@ -41,7 +41,7 @@ static inline auto _ToSql(const QDateTime &dt) -> QString {
 #undef CV
 }
 
-static inline auto _DateTimeFromSql(qint64 dt) -> QString {
+SIA _DateTimeFromSql(qint64 dt) -> QString {
 #define XT(s) ((dt >> S_##s) & ((1 << B_##s)-1))
     const QString q("%1");
     auto pad = [&q] (int v, int n) -> QString { return q.arg(v, n, 10, _L('0')); };
@@ -50,21 +50,19 @@ static inline auto _DateTimeFromSql(qint64 dt) -> QString {
 #undef XT
 }
 
-static inline auto _ToSql(qint8 integer) -> QString { return QString::number(integer); }
-static inline auto _ToSql(qint16 integer) -> QString { return QString::number(integer); }
-static inline auto _ToSql(qint32 integer) -> QString { return QString::number(integer); }
-static inline auto _ToSql(qint64 integer) -> QString { return QString::number(integer); }
+SIA _ToSql(qint32 integer) -> QString { return QString::number(integer); }
+SIA _ToSql(qint64 integer) -> QString { return QString::number(integer); }
 
-static inline auto _ToSql(const QPoint &p) -> QString
+SIA _ToSql(const QPoint &p) -> QString
 {
     return _L('\'') % QString::number(p.x()) % ","
                     % QString::number(p.y()) % _L('\'');
 }
 
-static inline auto _ToSql(const QJsonObject &json) -> QString
+SIA _ToSql(const QJsonObject &json) -> QString
 { return _ToSql(_JsonToString(json)); }
 
-static inline auto _PointFromSql(const QString &str, const QPoint &def) -> QPoint {
+SIA _PointFromSql(const QString &str, const QPoint &def) -> QPoint {
     auto index = str.indexOf(',');
     if (index < 0)
         return def;

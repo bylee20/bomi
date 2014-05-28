@@ -1,8 +1,6 @@
 #ifndef ENCODINGFILEDIALOG_HPP
 #define ENCODINGFILEDIALOG_HPP
 
-#include "stdafx.hpp"
-
 class EncodingComboBox;
 
 class EncodingFileDialog : public QFileDialog {

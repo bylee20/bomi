@@ -1,8 +1,6 @@
 #ifndef KERNEL3X3_HPP
 #define KERNEL3X3_HPP
 
-#include "stdafx.hpp"
-
 class Kernel3x3 {
 public:
     Kernel3x3() { mat(0, 0) = mat(2, 2) = 0.f; }

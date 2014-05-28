@@ -31,7 +31,7 @@ struct Translator::Data {
     QHash<QString, QString> b2t;
 };
 
-static inline auto qHash(const QLocale &key) -> uint
+SIA qHash(const QLocale &key) -> uint
 {
     return qHash(key.name());
 }

@@ -1,8 +1,6 @@
 #ifndef PREFDIALOG_HPP
 #define PREFDIALOG_HPP
 
-#include "stdafx.hpp"
-
 class Pref;
 
 class PrefDialog : public QDialog {

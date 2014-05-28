@@ -1,8 +1,6 @@
 #ifndef DOWNLOADER_HPP
 #define DOWNLOADER_HPP
 
-#include "stdafx.hpp"
-
 class Downloader: public QObject {
     Q_OBJECT
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)

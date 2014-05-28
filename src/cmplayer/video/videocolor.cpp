@@ -88,7 +88,7 @@ static ColumnVector3 make3x1(float v1, float v2, float v3) {
     return vec;
 }
 
-static inline auto make3x1(float v1, float v23) -> ColumnVector3
+SIA make3x1(float v1, float v23) -> ColumnVector3
     { return make3x1(v1, v23, v23); }
 
 auto VideoColor::matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace,

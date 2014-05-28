@@ -1,8 +1,6 @@
 #ifndef AUDIOCONTROLLER_HPP
 #define AUDIOCONTROLLER_HPP
 
-#include "stdafx.hpp"
-
 struct af_instance;                     struct mp_audio;
 struct af_cfg;                          struct af_info;
 struct mp_chmap;                        struct AudioNormalizerOption;

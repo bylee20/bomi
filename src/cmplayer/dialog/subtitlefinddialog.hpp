@@ -1,8 +1,6 @@
 #ifndef SUBTITLEFINDDIALOG_HPP
 #define SUBTITLEFINDDIALOG_HPP
 
-#include "stdafx.hpp"
-
 class Mrl;
 
 class SubtitleFindDialog : public QDialog {

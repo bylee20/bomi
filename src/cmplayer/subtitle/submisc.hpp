@@ -1,8 +1,6 @@
 #ifndef SUBMISC_HPP
 #define SUBMISC_HPP
 
-#include "stdafx.hpp"
-
 class SubComp;
 
 struct SubtitleFileInfo {

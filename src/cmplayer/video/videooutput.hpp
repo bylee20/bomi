@@ -1,8 +1,6 @@
 #ifndef VIDEOOUTPUT_HPP
 #define VIDEOOUTPUT_HPP
 
-#include "stdafx.hpp"
-
 struct vo_driver;                       struct mp_image;
 struct mp_image_params;                 struct vo;
 class VideoFormat;                      class PlayEngine;

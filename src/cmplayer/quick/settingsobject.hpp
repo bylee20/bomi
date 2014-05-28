@@ -1,8 +1,6 @@
 #ifndef SETTINGSOBJECT_HPP
 #define SETTINGSOBJECT_HPP
 
-#include "stdafx.hpp"
-
 class SettingsObject : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString name READ name)

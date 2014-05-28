@@ -1,8 +1,6 @@
 #ifndef FONTOPTIONWIDGET_HPP
 #define FONTOPTIONWIDGET_HPP
 
-#include "stdafx.hpp"
-
 class FontOptionWidget : public QWidget {
     Q_OBJECT
 public:

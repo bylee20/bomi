@@ -1,7 +1,6 @@
 #ifndef PLAYENGINE_HPP
 #define PLAYENGINE_HPP
 
-#include "stdafx.hpp"
 #include "mrl.hpp"
 #include "mediamisc.hpp"
 

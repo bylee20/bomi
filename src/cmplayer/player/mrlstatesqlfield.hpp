@@ -1,7 +1,6 @@
 #ifndef MRLSTATESQLFIELD_HPP
 #define MRLSTATESQLFIELD_HPP
 
-#include "stdafx.hpp"
 #include <functional>
 
 struct MrlStateSqlField;

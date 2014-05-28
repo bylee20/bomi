@@ -1,7 +1,6 @@
 #ifndef VIDEOFORMAT_HPP
 #define VIDEOFORMAT_HPP
 
-#include "stdafx.hpp"
 extern "C" {
 #include <video/mp_image.h>
 }

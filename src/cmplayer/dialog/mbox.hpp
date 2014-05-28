@@ -1,7 +1,6 @@
 #ifndef MBOX_HPP
 #define MBOX_HPP
 
-#include "stdafx.hpp"
 #include "bbox.hpp"
 
 class MBox : public QObject {

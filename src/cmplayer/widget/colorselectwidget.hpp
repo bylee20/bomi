@@ -1,8 +1,6 @@
 #ifndef COLORSELECTWIDGET_HPP
 #define COLORSELECTWIDGET_HPP
 
-#include "stdafx.hpp"
-
 class ColorSelectWidget : public QWidget {
     Q_OBJECT
 public:

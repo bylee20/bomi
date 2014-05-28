@@ -10,13 +10,13 @@ enum EventType {
     UpdateVideoInfo, UpdateAudioInfo, NotifySeek, UpdateMetaData
 };
 
-static inline auto qbytearray_from(const QByteArray &t) -> QByteArray { return t; }
-static inline auto qbytearray_from(const bool &t) -> QByteArray { return QByteArray::number((int)t); }
-static inline auto qbytearray_from(const int &t) -> QByteArray { return QByteArray::number(t); }
-static inline auto qbytearray_from(const float &t) -> QByteArray { return QByteArray::number(t); }
-static inline auto qbytearray_from(const double &t) -> QByteArray { return QByteArray::number(t); }
-static inline auto qbytearray_from(const QString &t) -> QByteArray { return t.toLocal8Bit(); }
-static inline auto qbytearray_from(const char *str) -> QByteArray { return QByteArray(str); }
+SIA qbytearray_from(const QByteArray &t) -> QByteArray { return t; }
+SIA qbytearray_from(const bool &t) -> QByteArray { return QByteArray::number((int)t); }
+SIA qbytearray_from(const int &t) -> QByteArray { return QByteArray::number(t); }
+SIA qbytearray_from(const float &t) -> QByteArray { return QByteArray::number(t); }
+SIA qbytearray_from(const double &t) -> QByteArray { return QByteArray::number(t); }
+SIA qbytearray_from(const QString &t) -> QByteArray { return t.toLocal8Bit(); }
+SIA qbytearray_from(const char *str) -> QByteArray { return QByteArray(str); }
 
 extern auto initialize_vdpau() -> void;
 extern auto finalize_vdpau() -> void;

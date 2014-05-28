@@ -1,8 +1,6 @@
 #ifndef ENCODINGCOMBOBOX_HPP
 #define ENCODINGCOMBOBOX_HPP
 
-#include "stdafx.hpp"
-
 class EncodingComboBox : public QComboBox {
     Q_OBJECT
 public:

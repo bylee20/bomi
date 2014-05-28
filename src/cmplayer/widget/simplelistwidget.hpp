@@ -1,7 +1,6 @@
 #ifndef SIMPLELISTWIDGET_HPP
 #define SIMPLELISTWIDGET_HPP
 
-#include "stdafx.hpp"
 #include "misc/simplelistmodel.hpp"
 
 class QListWidgetItem;

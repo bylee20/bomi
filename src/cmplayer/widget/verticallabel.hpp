@@ -1,8 +1,6 @@
 #ifndef VERTICALLABEL_HPP
 #define VERTICALLABEL_HPP
 
-#include "stdafx.hpp"
-
 class VerticalLabel : public QFrame {
 public:
     VerticalLabel(QWidget *parent = nullptr): QFrame(parent) { }

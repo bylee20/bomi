@@ -1,7 +1,6 @@
 #ifndef IS_CONVERTIBLE_HPP
 #define IS_CONVERTIBLE_HPP
 
-#include "stdafx.hpp"
 #include "tmp/type_test.hpp"
 
 template<class T>

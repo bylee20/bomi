@@ -2,15 +2,12 @@
 #include "hwacc.hpp"
 #include "softwaredeinterlacer.hpp"
 #include "deintoption.hpp"
-#include "misc/log.hpp"
 #include "player/mpv_helper.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 extern "C" {
 #include <video/filter/vf.h>
 extern vf_info vf_info_noformat;
 }
-
-DECLARE_LOG_CONTEXT(Video)
 
 struct cmplayer_vf_priv {
     VideoFilter *vf;

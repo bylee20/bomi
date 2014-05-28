@@ -1,8 +1,6 @@
 #ifndef BBOX_HPP
 #define BBOX_HPP
 
-#include "stdafx.hpp"
-
 class BBox : public QDialogButtonBox {
     Q_OBJECT
 public:

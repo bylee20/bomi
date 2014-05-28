@@ -1,7 +1,6 @@
 #ifndef MRLSTATE_HPP
 #define MRLSTATE_HPP
 
-#include "stdafx.hpp"
 #include "mrl.hpp"
 #include "enum/clippingmethod.hpp"
 #include "enum/interpolatortype.hpp"

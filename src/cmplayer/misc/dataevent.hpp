@@ -1,8 +1,6 @@
 #ifndef DATAEVENT_HPP
 #define DATAEVENT_HPP
 
-#include "stdafx.hpp"
-
 template<class... Args>
 class DataEvent : public QEvent {
 public:
@@ -21,25 +19,25 @@ private:
 };
 
 template<class... Args>
-static inline auto _PostEvent(QObject *obj, int type,
+SIA _PostEvent(QObject *obj, int type,
                               const Args&... args) -> void {
     qApp->postEvent(obj, new DataEvent<Args...>(type, args...));
 }
 
 template<class... Args>
-static inline auto _PostEvent(Qt::EventPriority priority,QObject *obj, int type,
+SIA _PostEvent(Qt::EventPriority priority,QObject *obj, int type,
                               const Args&... args) -> void {
     qApp->postEvent(obj, new DataEvent<Args...>(type, args...), priority);
 }
 
 template<class... Args>
-static inline auto _SendEvent(QObject *obj, int type,
+SIA _SendEvent(QObject *obj, int type,
                               const Args&... args) -> void {
     DataEvent<Args...> event(type, args...); qApp->sendEvent(obj, &event);
 }
 
 template<class... Args>
-static inline auto _GetAllData(QEvent *event, Args&... args) -> void {
+SIA _GetAllData(QEvent *event, Args&... args) -> void {
     static_cast<DataEvent<Args...>*>(event)->get(args...);
 }
 

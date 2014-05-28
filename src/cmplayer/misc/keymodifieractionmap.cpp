@@ -6,7 +6,7 @@
 static const auto actionIO = JIO(JE(enabled), JE(id));
 #undef JSON_CLASS
 
-static inline auto json_io(const KeyModifierActionMap::Action*)
+SIA json_io(const KeyModifierActionMap::Action*)
 -> decltype(&actionIO) { return &actionIO; }
 
 KeyModifierActionMap::KeyModifierActionMap()

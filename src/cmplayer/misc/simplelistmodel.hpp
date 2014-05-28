@@ -1,8 +1,6 @@
 #ifndef SIMPLELISTMODEL_HPP
 #define SIMPLELISTMODEL_HPP
 
-#include "stdafx.hpp"
-
 template<class T, class List> class SimpleListModel;
 
 class SimpleListModelBase : public QAbstractListModel {

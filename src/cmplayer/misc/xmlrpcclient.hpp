@@ -1,8 +1,6 @@
 #ifndef XMLRPCCLIENT_HPP
 #define XMLRPCCLIENT_HPP
 
-#include "stdafx.hpp"
-
 class XmlRpcClient : public QObject {
     Q_OBJECT
 public:

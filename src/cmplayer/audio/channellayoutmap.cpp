@@ -24,7 +24,7 @@ static const QVector<ChannelName> ChNames = {
     { "SR", "Side Right" }
 };
 
-static inline auto to_mp_speaker_id(SpeakerId speaker) -> mp_speaker_id
+SIA to_mp_speaker_id(SpeakerId speaker) -> mp_speaker_id
     { return SpeakerIdInfo::data(speaker); }
 
 static auto speakersInLayout(ChannelLayout layout) -> QVector<SpeakerId>

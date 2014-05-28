@@ -1,8 +1,6 @@
 #ifndef MPRIS_HPP
 #define MPRIS_HPP
 
-#include "stdafx.hpp"
-
 namespace mpris {
 
 class MediaPlayer2 : public QDBusAbstractAdaptor {

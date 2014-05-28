@@ -1,7 +1,6 @@
 #ifndef MENU_HPP
 #define MENU_HPP
 
-#include "stdafx.hpp"
 #include "misc/actiongroup.hpp"
 
 class StepActionPair;                   class StepAction;

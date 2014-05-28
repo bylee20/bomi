@@ -1,8 +1,6 @@
 #ifndef GLOBALQMLOBJECT_HPP
 #define GLOBALQMLOBJECT_HPP
 
-#include "stdafx.hpp"
-
 class MainWindow;
 
 enum MemoryUnit {

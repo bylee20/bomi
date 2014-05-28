@@ -2,7 +2,7 @@
 #include "player/mrl.hpp"
 #include "misc/xmlrpcclient.hpp"
 
-static inline auto _Args() -> QVariantList { return QVariantList(); }
+SIA _Args() -> QVariantList { return QVariantList(); }
 auto translator_display_language(const QString &iso) -> QString;
 
 struct OpenSubtitlesFinder::Data {

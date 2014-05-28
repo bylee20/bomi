@@ -1,8 +1,6 @@
 #ifndef JSONSTORAGE_HPP
 #define JSONSTORAGE_HPP
 
-#include "stdafx.hpp"
-
 class JsonStorage {
 public:
     enum Error { NoError, NoFile, OpenError, ParseError };

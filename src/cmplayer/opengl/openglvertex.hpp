@@ -1,8 +1,6 @@
 #ifndef OPENGLVERTEX_HPP
 #define OPENGLVERTEX_HPP
 
-#include "stdafx.hpp"
-
 namespace OGL {
 
 using AttrData = QSGGeometry::Attribute;
@@ -22,7 +20,7 @@ struct ColorAttr {
     auto set(uchar _r, uchar _g, uchar _b, uchar _a) -> void {
         r = _r; g = _g; b = _b; a = _a;
     }
-    static inline auto data(int index) -> AttrData {
+    SIA data(int index) -> AttrData {
         return AttrData::create(index, 4, GL_UNSIGNED_BYTE, false);
     }
 };
@@ -37,7 +35,7 @@ template<class T> using VecIt = typename QVector<T>::iterator;
 
 struct CoordAttr {
     float x, y;
-    static inline auto data(int index, bool isPos = false) -> AttrData {
+    SIA data(int index, bool isPos = false) -> AttrData {
         return AttrData::create(index, 2, GL_FLOAT, isPos);
     }
     auto set(const QPointF &p) -> void { x = p.x(); y = p.y(); }

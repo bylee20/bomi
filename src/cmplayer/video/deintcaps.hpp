@@ -1,7 +1,6 @@
 #ifndef DEINTCAPS_HPP
 #define DEINTCAPS_HPP
 
-#include "stdafx.hpp"
 #include "enum/deintmethod.hpp"
 #include "enum/deintdevice.hpp"
 #include "enum/decoderdevice.hpp"

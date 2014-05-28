@@ -1,8 +1,6 @@
 #ifndef THEMEOBJECT_HPP
 #define THEMEOBJECT_HPP
 
-#include "stdafx.hpp"
-
 struct OsdTheme;                        class OsdThemeObject;
 
 class ThemeObject : public QObject {

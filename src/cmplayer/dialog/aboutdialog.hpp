@@ -1,8 +1,6 @@
 #ifndef ABOUTDIALOG_HPP
 #define ABOUTDIALOG_HPP
 
-#include "stdafx.hpp"
-
 class AboutDialog : public QDialog {
     Q_OBJECT
 public:

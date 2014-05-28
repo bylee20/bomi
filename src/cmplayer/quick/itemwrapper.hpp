@@ -1,8 +1,6 @@
 #ifndef ITEMWRAPPER_HPP
 #define ITEMWRAPPER_HPP
 
-#include "stdafx.hpp"
-
 class QtItem : public QObject {
     Q_OBJECT
 public:

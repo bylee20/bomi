@@ -1,7 +1,6 @@
 #ifndef SUBTITLESTYLE_H
 #define SUBTITLESTYLE_H
 
-#include "stdafx.hpp"
 #include "enum/osdscalepolicy.hpp"
 
 class Record;

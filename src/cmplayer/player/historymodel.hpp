@@ -1,7 +1,6 @@
 #ifndef HISTORYMODEL_HPP
 #define HISTORYMODEL_HPP
 
-#include "stdafx.hpp"
 #include "mrlstate.hpp"
 
 class HistoryModel: public QAbstractTableModel {

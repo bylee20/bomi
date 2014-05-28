@@ -1,8 +1,6 @@
 #ifndef SNAPSHOTDIALOG_H
 #define SNAPSHOTDIALOG_H
 
-#include "stdafx.hpp"
-
 class VideoRendererItem;        class SubtitleRendererItem;
 
 class SnapshotDialog : public QDialog {

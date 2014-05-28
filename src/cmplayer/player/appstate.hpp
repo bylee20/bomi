@@ -1,7 +1,6 @@
 #ifndef APPSTATE_HPP
 #define APPSTATE_HPP
 
-#include "stdafx.hpp"
 #include "mrlstate.hpp"
 #include "enum/staysontop.hpp"
 

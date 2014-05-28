@@ -1,9 +1,6 @@
 #include "channelmanipulation.hpp"
 #include "channellayoutmap.hpp"
-#include "misc/log.hpp"
 #include "misc/json.hpp"
-
-DECLARE_LOG_CONTEXT(Audio)
 
 static auto nameToId(const QString &name) -> mp_speaker_id {
     const int size = ChannelLayoutMap::channelNames().size();

@@ -1,7 +1,6 @@
 #ifndef MRLSTATE_OLD_H
 #define MRLSTATE_OLD_H
 
-#include "stdafx.hpp"
 #include "mrlstate.hpp"
 
 class MrlStateProperty;

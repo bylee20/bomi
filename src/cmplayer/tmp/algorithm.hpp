@@ -1,14 +1,6 @@
 #ifndef ALGORITHM_HPP
 #define ALGORITHM_HPP
 
-#include <algorithm>
-
-#ifndef SCIA
-#define SCIA static constexpr inline auto
-#define SIA static inline auto
-#define SCA static constexpr auto
-#endif
-
 namespace tmp {
 
 template<class Container, class Test>

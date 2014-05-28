@@ -47,8 +47,6 @@
 **
 ****************************************************************************/
 
-#include "stdafx.hpp"
-
 class QGridLayout;
 class QEventLoop;
 

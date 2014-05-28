@@ -1,8 +1,6 @@
 #ifndef LOCALECOMBOBOX_HPP
 #define LOCALECOMBOBOX_HPP
 
-#include "stdafx.hpp"
-
 class LocaleComboBox : public QComboBox {
     Q_OBJECT
 public:

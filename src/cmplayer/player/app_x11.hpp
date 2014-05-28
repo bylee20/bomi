@@ -1,8 +1,6 @@
 #ifndef APP_X11_HPP
 #define APP_X11_HPP
 
-#include "stdafx.hpp"
-
 class AppX11 : public QObject {
     Q_OBJECT
 public:

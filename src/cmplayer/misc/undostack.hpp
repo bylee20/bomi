@@ -1,8 +1,6 @@
 #ifndef UNDOSTACK_HPP
 #define UNDOSTACK_HPP
 
-#include "stdafx.hpp"
-
 class UndoStack : public QObject {
     Q_OBJECT
 public:

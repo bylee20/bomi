@@ -1,7 +1,6 @@
 #ifndef VIDEOFRAMESHADER_HPP
 #define VIDEOFRAMESHADER_HPP
 
-#include "stdafx.hpp"
 #include "videocolor.hpp"
 #include "opengl/opengltexture1d.hpp"
 #include "enum/colorrange.hpp"
@@ -69,7 +68,7 @@ private:
     DeintMethod m_deint = DeintMethod::None;
     QList<OpenGLTexture2D> m_textures;
     QByteArray m_texel;
-    bool m_dma = false, m_check = true, m_direct = false, m_defaultColor = true;
+    bool m_dma = false, m_direct = false, m_defaultColor = true;
     bool m_top = false, m_flipped = false;
     QPointF m_chroma = {0.0, 0.0};
     OpenGLTexture1D m_lutInt[2];

@@ -1,7 +1,6 @@
 #ifndef HWACC_HPP
 #define HWACC_HPP
 
-#include "stdafx.hpp"
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <video/img_format.h>

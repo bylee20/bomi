@@ -178,14 +178,6 @@ auto SubtitleRendererItem::setStyle(const SubtitleStyle &style) -> void
     d->updateDrawer();
 }
 
-static inline QRectF operator * (const QRectF &rect, double p) {
-    return {rect.topLeft()*p, rect.size()*p};
-}
-
-static inline QRectF operator / (const QRectF &rect, double p) {
-    return {rect.topLeft()/p, rect.size()/p};
-}
-
 auto SubtitleRendererItem::draw(const QRectF &rect, QRectF *put) const -> QImage
 {
     QImage sub; int gap = 0;

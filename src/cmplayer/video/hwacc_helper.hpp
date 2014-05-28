@@ -1,7 +1,6 @@
 #ifndef HWACC_HELPER_HPP
 #define HWACC_HELPER_HPP
 
-#include "stdafx.hpp"
 #include "misc/log.hpp"
 #include "videoimagepool.hpp"
 extern "C" {

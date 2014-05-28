@@ -1,8 +1,6 @@
 #ifndef CHANNELMANIPULATIONWIDGET_HPP
 #define CHANNELMANIPULATIONWIDGET_HPP
 
-#include "stdafx.hpp"
-
 class ChannelLayoutMap;
 enum class ChannelLayout;
 

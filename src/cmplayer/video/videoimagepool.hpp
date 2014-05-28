@@ -1,8 +1,6 @@
 #ifndef VIDEOIMAGEPOOL_HPP
 #define VIDEOIMAGEPOOL_HPP
 
-#include "stdafx.hpp"
-
 template<class Image>
 class VideoImagePool;
 

@@ -1,7 +1,6 @@
 #ifndef AUDIO_HELPER_HPP
 #define AUDIO_HELPER_HPP
 
-#include "stdafx.hpp"
 #include "audiomixer.hpp"
 #include "misc/tmp.hpp"
 #include "tmp/type_test.hpp"
@@ -11,22 +10,18 @@ extern "C" {
 #include <audio/audio.h>
 }
 
-#define SCONST static constexpr
-#define SCIA static constexpr inline auto
-#define CIA constexpr inline auto
-
 template<int fmt_in>
 struct AudioFormatTrait {
-    SCONST bool IsInt = (fmt_in & AF_FORMAT_POINT_MASK) == AF_FORMAT_I;
-    SCONST bool IsSigned = (fmt_in & AF_FORMAT_SIGN_MASK) == AF_FORMAT_SI;
-    SCONST int Bits = (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_8BIT ? 8 :
+    SCA IsInt = (fmt_in & AF_FORMAT_POINT_MASK) == AF_FORMAT_I;
+    SCA IsSigned = (fmt_in & AF_FORMAT_SIGN_MASK) == AF_FORMAT_SI;
+    SCA Bits = (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_8BIT ? 8 :
                       (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_16BIT ? 16 :
                       (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_24BIT ? 24 :
                       (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_32BIT ? 32 :
                       (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_64BIT ? 64 :0;
-    SCONST int Bytes = Bits/8;
-    SCONST bool IsPlanar = fmt_in & AF_FORMAT_PLANAR;
-    SCONST ClippingMethod AutoClipping = IsInt ? ClippingMethod::Hard
+    SCA Bytes = Bits/8;
+    SCA IsPlanar = !!(fmt_in & AF_FORMAT_PLANAR);
+    SCA AutoClipping = IsInt ? ClippingMethod::Hard
                                                : ClippingMethod::Soft;
     using SampleType = tmp::conditional_t<IsInt, tmp::integer_t<Bits, IsSigned>,
                                                  tmp::floating_point_t<Bits>>;
@@ -36,33 +31,33 @@ template<class S>
 struct AudioFormatMpv;
 template<>
 struct AudioFormatMpv<qint8> {
-    SCONST int interleaving = AF_FORMAT_S8;
-    SCONST int planar = AF_FORMAT_S8;
+    static constexpr int interleaving = AF_FORMAT_S8;
+    static constexpr int planar = AF_FORMAT_S8;
 };
 template<>
 struct AudioFormatMpv<qint16> {
-    SCONST int interleaving = AF_FORMAT_S16;
-    SCONST int planar = AF_FORMAT_S16P;
+    static constexpr int interleaving = AF_FORMAT_S16;
+    static constexpr int planar = AF_FORMAT_S16P;
 };
 template<>
 struct AudioFormatMpv<qint32> {
-    SCONST int interleaving = AF_FORMAT_S32;
-    SCONST int planar = AF_FORMAT_S32P;
+    static constexpr int interleaving = AF_FORMAT_S32;
+    static constexpr int planar = AF_FORMAT_S32P;
 };
 //template<>
 //struct AudioFormatMpv<qint64> {
-//    SCONST int interleaving = AF_FORMAT_S64;
-//    SCONST int planar = AF_FORMAT_S64P;
+//    static constexpr int interleaving = AF_FORMAT_S64;
+//    static constexpr int planar = AF_FORMAT_S64P;
 //};
 template<>
 struct AudioFormatMpv<float> {
-    SCONST int interleaving = AF_FORMAT_FLOAT;
-    SCONST int planar = AF_FORMAT_FLOATP;
+    static constexpr int interleaving = AF_FORMAT_FLOAT;
+    static constexpr int planar = AF_FORMAT_FLOATP;
 };
 template<>
 struct AudioFormatMpv<double> {
-    SCONST int interleaving = AF_FORMAT_DOUBLE;
-    SCONST int planar = AF_FORMAT_DOUBLEP;
+    static constexpr int interleaving = AF_FORMAT_DOUBLE;
+    static constexpr int planar = AF_FORMAT_DOUBLEP;
 };
 
 
@@ -138,22 +133,22 @@ struct AudioSampleHelper<ST, false> {
 template<int fmt, bool planar = !!(fmt & AF_FORMAT_PLANAR)>
 struct to_interleaving;
 template<int fmt>
-struct to_interleaving<fmt, false> { SCONST int value = fmt; };
+struct to_interleaving<fmt, false> { static constexpr int value = fmt; };
 template<>
 struct to_interleaving<AF_FORMAT_S16P, true> {
-    SCONST int value = AF_FORMAT_S16;
+    static constexpr int value = AF_FORMAT_S16;
 };
 template<>
 struct to_interleaving<AF_FORMAT_S32P, true> {
-    SCONST int value = AF_FORMAT_S32;
+    static constexpr int value = AF_FORMAT_S32;
 };
 template<>
 struct to_interleaving<AF_FORMAT_FLOATP, true> {
-    SCONST int value = AF_FORMAT_FLOAT;
+    static constexpr int value = AF_FORMAT_FLOAT;
 };
 template<>
 struct to_interleaving<AF_FORMAT_DOUBLEP, true> {
-    SCONST int value = AF_FORMAT_DOUBLE;
+    static constexpr int value = AF_FORMAT_DOUBLE;
 };
 
 /******************************************************************************/
@@ -312,7 +307,7 @@ public:
 /******************************************************************************/
 
 namespace tmp {
-template<class... Args> static inline auto pass(const Args &...) -> void { }
+template<class... Args> SIA pass(const Args &...) -> void { }
 }
 
 namespace detail {
@@ -428,7 +423,7 @@ class AudioDataBuffer {
     using iterator = AudioDataBufferIterator<S, IsPlanar>;
     using const_iterator = AudioDataBufferIterator<const S, IsPlanar>;
 public:
-    SCONST auto isPlanar() -> bool { return IsPlanar; }
+    static constexpr auto isPlanar() -> bool { return IsPlanar; }
     AudioDataBuffer(int nch = 0) { d.nch = nch; }
     AudioDataBuffer(const mp_audio *data) { setData(data); }
     AudioDataBuffer(const AudioDataFormat &format, int frames)

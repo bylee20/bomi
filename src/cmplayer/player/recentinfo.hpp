@@ -1,8 +1,6 @@
 #ifndef RECENTINFO_HPP
 #define RECENTINFO_HPP
 
-#include "stdafx.hpp"
-
 class Playlist;                         class Mrl;
 
 class RecentInfo : public QObject {

@@ -1,8 +1,6 @@
 #ifndef ABREPEATER_HPP
 #define ABREPEATER_HPP
 
-#include "stdafx.hpp"
-
 class PlayEngine;                       class SubtitleRendererItem;
 
 class ABRepeater : public QObject {

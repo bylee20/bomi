@@ -30,13 +30,13 @@ template<class Enum>
 using EnumData = typename EnumInfo<Enum>::Data;
 
 template<class Enum>
-static inline auto _EnumData(Enum e) -> EnumData<Enum>
+SIA _EnumData(Enum e) -> EnumData<Enum>
     { return EnumInfo<Enum>::data(e); }
 
 template<class T>
-static inline auto _EnumName(T t) -> QString { return EnumInfo<T>::name(t); }
+SIA _EnumName(T t) -> QString { return EnumInfo<T>::name(t); }
 template<class T>
-static inline auto _EnumFrom(const QString &name,
+SIA _EnumFrom(const QString &name,
                              T def = EnumInfo<T>::default_()) -> T
     { return EnumInfo<T>::from(name, def); }
 

@@ -1,8 +1,6 @@
 #ifndef OPENGLOFFSCREENCONTEXT_HPP
 #define OPENGLOFFSCREENCONTEXT_HPP
 
-#include "stdafx.hpp"
-
 class OpenGLOffscreenContext {
 public:
     OpenGLOffscreenContext();

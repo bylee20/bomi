@@ -1,8 +1,6 @@
 #ifndef SHORTCUTDIALOG_HPP
 #define SHORTCUTDIALOG_HPP
 
-#include "stdafx.hpp"
-
 class ShortcutDialog : public QDialog {
     Q_OBJECT
 public:

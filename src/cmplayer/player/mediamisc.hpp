@@ -1,7 +1,6 @@
 #ifndef MEDIAMISC_HPP
 #define MEDIAMISC_HPP
 
-#include "stdafx.hpp"
 #include "mrl.hpp"
 
 class PlayEngine;

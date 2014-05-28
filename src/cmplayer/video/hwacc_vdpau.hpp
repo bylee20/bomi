@@ -1,8 +1,6 @@
 #ifndef HWACC_VDPAU_HPP
 #define HWACC_VDPAU_HPP
 
-#include "stdafx.hpp"
-
 #ifdef Q_OS_LINUX
 
 #include "hwacc.hpp"

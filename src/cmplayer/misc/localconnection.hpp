@@ -1,8 +1,6 @@
 #ifndef LOCALCONNECTION_HPP
 #define LOCALCONNECTION_HPP
 
-#include "stdafx.hpp"
-
 class LocalConnection : public QObject {
     Q_OBJECT
 public:

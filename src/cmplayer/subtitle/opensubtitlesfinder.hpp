@@ -1,8 +1,6 @@
 #ifndef OPENSUBTITLESFINDER_HPP
 #define OPENSUBTITLESFINDER_HPP
 
-#include "stdafx.hpp"
-
 class Mrl;
 
 struct SubtitleLink {

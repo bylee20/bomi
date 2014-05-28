@@ -209,7 +209,7 @@ namespace detail {
 template<int fmt>
 class AudioMixerPre {
     using S = typename AudioFormatTrait<fmt>::SampleType;
-    SCONST bool planar = AudioFormatTrait<fmt>::IsPlanar;
+    SCA planar = AudioFormatTrait<fmt>::IsPlanar;
     AudioMixer::Data *d = nullptr;
 public:
     AudioMixerPre(AudioMixer *mixer): d(&mixer->d) { }
@@ -300,7 +300,7 @@ static auto LambertW1(const double z) -> double {
     return 0.0;
 }
 
-static inline auto alpha(double t, int N) -> double {
+SIA alpha(double t, int N) -> double {
     const double a = (N - t)/(1.0 - t);
     const double v = -exp(-1.0/a)/a;
     return -a*LambertW1(v) - 1.0;

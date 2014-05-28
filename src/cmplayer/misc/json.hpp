@@ -1,7 +1,6 @@
 #ifndef JSON_HPP
 #define JSON_HPP
 
-#include "stdafx.hpp"
 #include "tmp/type_info.hpp"
 #include "tmp/static_for.hpp"
 #include "is_convertible.hpp"

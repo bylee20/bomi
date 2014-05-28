@@ -1,8 +1,6 @@
 #ifndef MAINQUICKVIEW_HPP
 #define MAINQUICKVIEW_HPP
 
-#include "stdafx.hpp"
-
 class MainWindow;                       class TopLevelItem;
 
 class MainQuickView : public QQuickView {

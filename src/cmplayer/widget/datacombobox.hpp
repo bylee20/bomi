@@ -1,8 +1,6 @@
 #ifndef DATACOMBOBOX_HPP
 #define DATACOMBOBOX_HPP
 
-#include "stdafx.hpp"
-
 class DataComboBox : public QComboBox {
     Q_OBJECT
 protected:

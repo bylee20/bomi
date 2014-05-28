@@ -1,8 +1,6 @@
 #ifndef OPENGLMISC_HPP
 #define OPENGLMISC_HPP
 
-#include "stdafx.hpp"
-
 #ifdef PixelFormat
 #undef PixelFormat
 #endif
@@ -33,7 +31,7 @@ enum Binding {
     BindingRectangle = GL_TEXTURE_BINDING_RECTANGLE,
 };
 
-static inline auto bindingTarget(Target target) -> Binding {
+SIA bindingTarget(Target target) -> Binding {
     switch (target) {
     case Target1D: return Binding1D;
     case Target2D: return Binding2D;
@@ -174,14 +172,14 @@ auto hasExtension(Extension ext) -> bool;
 
 auto maximumTextureSize() -> int;
 
-static inline auto rg(const char *rg) -> QByteArray
+SIA rg(const char *rg) -> QByteArray
 {
     if (hasExtension(TextureRG))
         return QByteArray(rg);
     return QByteArray(rg).replace('g', 'a');
 }
 
-static inline auto func() -> QOpenGLFunctions* {
+SIA func() -> QOpenGLFunctions* {
     auto ctx = QOpenGLContext::currentContext();
     return ctx ? ctx->functions() : nullptr;
 }
@@ -191,7 +189,7 @@ auto availableFrambebufferFormats() -> QVector<TextureFormat>;
 }
 
 #define ENUM_CASE(e) case e: return QByteArray::fromRawData(#e, sizeof(e)-1)
-static inline auto _ToLog(OGL::TransferType type) -> QByteArray {
+SIA _ToLog(OGL::TransferType type) -> QByteArray {
     switch (type) {
     ENUM_CASE(OGL::UInt8);
     ENUM_CASE(OGL::UInt16);
@@ -210,7 +208,7 @@ static inline auto _ToLog(OGL::TransferType type) -> QByteArray {
     return QByteArray("OGL::InvalidTransferType");
 }
 
-static inline auto _ToLog(OGL::TextureFormat format) -> QByteArray {
+SIA _ToLog(OGL::TextureFormat format) -> QByteArray {
     switch (format) {
     ENUM_CASE(OGL::R8_UNorm);
     ENUM_CASE(OGL::RG8_UNorm);
@@ -238,7 +236,7 @@ static inline auto _ToLog(OGL::TextureFormat format) -> QByteArray {
     return QByteArray("OGL::InvalidTextureFormat");
 }
 
-static inline auto _ToLog(OGL::TransferFormat format) -> QByteArray {
+SIA _ToLog(OGL::TransferFormat format) -> QByteArray {
     switch (format) {
     ENUM_CASE(OGL::Red);
     ENUM_CASE(OGL::RG);

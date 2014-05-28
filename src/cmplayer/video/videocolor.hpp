@@ -1,7 +1,6 @@
 #ifndef COLORPROPERTY_HPP
 #define COLORPROPERTY_HPP
 
-#include "stdafx.hpp"
 extern "C" {
 #include <video/csputils.h>
 }

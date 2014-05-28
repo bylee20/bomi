@@ -26,7 +26,6 @@
  *
  */
 
-#include "stdafx.hpp"
 #include <fstream>
 
 namespace udf {

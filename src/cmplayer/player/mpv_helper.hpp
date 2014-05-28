@@ -18,7 +18,7 @@ inline const m_option_type_t *get_option_type<int>()
 
 static m_option null_option;
 
-static inline auto make_option(const char *name, int offset,
+SIA make_option(const char *name, int offset,
                                const m_option_type_t *type) -> m_option
 {
     m_option opt = null_option;

@@ -1,7 +1,6 @@
 #ifndef APP_HPP
 #define APP_HPP
 
-#include "stdafx.hpp"
 #include "tmp/type_test.hpp"
 
 class QUrl;                             class Mrl;

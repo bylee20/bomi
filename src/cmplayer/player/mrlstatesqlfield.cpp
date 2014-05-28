@@ -6,7 +6,7 @@
 #include "subtitle/submisc.hpp"
 
 template<class T>
-static inline auto _Is(int type) -> bool { return qMetaTypeId<T>() == type; }
+SIA _Is(int type) -> bool { return qMetaTypeId<T>() == type; }
 
 template<class T>
 static auto _ValueToSqlDataUsingJson(const QVariant &value) -> QVariant

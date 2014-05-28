@@ -1,8 +1,6 @@
 #ifndef OPENMEDIAFOLDERDIALOG_HPP
 #define OPENMEDIAFOLDERDIALOG_HPP
 
-#include "stdafx.hpp"
-
 class Playlist;
 
 class OpenMediaFolderDialog : public QDialog {

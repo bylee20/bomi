@@ -19,6 +19,7 @@
 #include <cmath>
 #include <cstdint>
 #include <deque>
+#include <algorithm>
 
 #ifdef Q_OS_LINUX
     #include <QX11Info>
@@ -34,6 +35,7 @@ using Signal = void(State::*)(Args...);
 #define SIA static inline auto
 #define SCA static constexpr auto
 #define SCIA static constexpr inline auto
+#define CIA constexpr inline auto
 
 namespace Pch {
 SIA _L(const char *str) -> QLatin1String

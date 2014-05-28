@@ -1,8 +1,6 @@
 #ifndef ENUMFLAGS_HPP
 #define ENUMFLAGS_HPP
 
-#include "stdafx.hpp"
-
 template<class T>
 class EnumFlags;
 

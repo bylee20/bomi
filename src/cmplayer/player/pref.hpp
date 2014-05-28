@@ -1,7 +1,6 @@
 #ifndef PREF_HPP
 #define PREF_HPP
 
-#include "stdafx.hpp"
 #include "openmediainfo.hpp"
 #include "quick/osdtheme.hpp"
 #include "video/hwacc.hpp"

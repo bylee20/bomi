@@ -1,8 +1,6 @@
 #ifndef OPENGLLOGGER_HPP
 #define OPENGLLOGGER_HPP
 
-#include "stdafx.hpp"
-
 class OpenGLLogger : public QObject {
     Q_OBJECT
 public:

@@ -1,8 +1,6 @@
 #ifndef SKIN_HPP
 #define SKIN_HPP
 
-#include "stdafx.hpp"
-
 class Skin {
 public:
     ~Skin() {}

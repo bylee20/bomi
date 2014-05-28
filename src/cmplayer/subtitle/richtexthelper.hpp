@@ -1,8 +1,6 @@
 #ifndef RICHTEXTHELPER_HPP
 #define RICHTEXTHELPER_HPP
 
-#include "stdafx.hpp"
-
 class RichTextHelper {
 public:
     virtual ~RichTextHelper() {}

@@ -1,8 +1,6 @@
 #ifndef TRANSLATOR_HPP
 #define TRANSLATOR_HPP
 
-#include "stdafx.hpp"
-
 using LocaleList = QList<QLocale>;
 
 class Translator : public QObject {
