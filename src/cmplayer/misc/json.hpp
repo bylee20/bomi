@@ -225,7 +225,7 @@ public:
     auto toJson(const T &from) const -> QJsonObject
     {
         detail::WriteToJsonObject<T> write(&from);
-        tmp::static_for<0, Num>(m_entries, write);
+        tmp::static_for_each<0, Num>(m_entries, write);
         return write.json();
     }
     auto fromJson(T &to, const QJsonValue &json) const -> bool
@@ -233,7 +233,7 @@ public:
     auto fromJson(T &to, const QJsonObject &json) const -> bool
     {
         detail::ReadFromJsonObject<T> read(&to, json);
-        tmp::static_for<0, Num>(m_entries, read);
+        tmp::static_for_each<0, Num>(m_entries, read);
         return read.isOk();
     }
     SCA qt_type = QJsonValue::Object;
