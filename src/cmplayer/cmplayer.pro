@@ -16,8 +16,9 @@ contains( DEFINES, CMPLAYER_RELEASE ) {
     macx:CONFIG += app_bundle
 } else:CONFIG -= release
 
+!contains(QMAKE_CXX, clang++) {
 QMAKE_CXXFLAGS += -Wno-non-template-friend
-
+}
 macx {
     QT += macextras
     CONFIG += sdk
@@ -208,7 +209,13 @@ HEADERS += \
     enum/enumflags.hpp \
     misc/is_convertible.hpp \
     misc/jsonstorage.hpp \
-    player/mrlstatesqlfield.hpp
+    player/mrlstatesqlfield.hpp \
+    tmp/algorithm.hpp \
+    tmp/arithmetic_type.hpp \
+    tmp/static_for.hpp \
+    tmp/type_info.hpp \
+    tmp/type_test.hpp \
+    misc/localconnection.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -369,7 +376,8 @@ SOURCES += \
     opengl/opengltexturetransferinfo.cpp \
     opengl/opengllogger.cpp \
     misc/jsonstorage.cpp \
-    player/mrlstatesqlfield.cpp
+    player/mrlstatesqlfield.cpp \
+    misc/localconnection.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

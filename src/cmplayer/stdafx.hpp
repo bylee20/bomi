@@ -200,22 +200,22 @@ auto _ToFilter(ExtTypes exts) -> QString;
 auto _IsSuffixOf(ExtType ext, const QString &suffix) -> bool;
 auto _ExtList(ExtType ext) -> QStringList;
 
-auto _GetOpenFileNames(QWidget *parent, const QString &title, ExtTypes exts,
+auto _GetOpenFiles(QWidget *parent, const QString &title, ExtTypes exts,
                        const QString &key = QString()) -> QStringList;
 
-auto _GetOpenFileName(QWidget *parent, const QString &title, ExtTypes exts,
+auto _GetOpenFile(QWidget *parent, const QString &title, ExtTypes exts,
                       const QString &key = QString()) -> QString;
 
-auto _GetSaveFileName(QWidget *parent, const QString &title,
+auto _GetSaveFile(QWidget *parent, const QString &title,
                       const QString &fileName, ExtTypes exts,
                       const QString &key = QString()) -> QString;
 
 auto _GetOpenDir(QWidget *parent, const QString &title,
                  const QString &key = QString()) -> QString;
 
-auto _SetLastOpenFolder(const QString &path, const QString &k = QString()) -> void;
+auto _SetLastOpenPath(const QString &path, const QString &k = QString()) -> void;
 
-auto _LastOpenFolder(const QString &key = QString()) -> QString;
+auto _LastOpenPath(const QString &key = QString()) -> QString;
 
 template<class T>
 SIA _QmlSingleton(QQmlEngine *, QJSEngine *) -> QObject* { return new T; }
@@ -323,120 +323,14 @@ SIA _WritablePath(QStandardPaths::StandardLocation loc
     return path;
 }
 
+SIA _JsonToInt(const QJsonValue &val) -> qlonglong
+{ return std::llround(val.toDouble()); }
+template<class T>
+SIA _JsonFromInt(T t) -> QJsonValue { return static_cast<double>(t); }
+
 }
 
 using namespace Pch;
-
-namespace tmp {
-
-template<class T>
-SCIA is_integral() -> bool { return std::is_integral<T>::value; }
-
-template<class T>
-SCIA is_floating_point() -> bool { return std::is_floating_point<T>::value; }
-
-template<class T>
-SCIA is_arithmetic() -> bool { return std::is_arithmetic<T>::value; }
-
-template<class T, class S>
-SCIA is_same() -> bool { return std::is_same<T, S>::value; }
-
-template<class T, class S, class... Args>
-SCIA are_same() -> bool { return is_same<T, S>() && are_same<T, Args...>(); }
-template<class T, class S>
-SCIA are_same() -> bool { return is_same<T, S>(); }
-
-template<class T, class S, class... Args>
-SCIA is_one_of() -> bool { return is_same<T, S>() ? true : is_one_of<T, Args...>(); }
-template<class T>
-SCIA is_one_of() -> bool { return false; }
-
-template<class T>
-SCIA is_enum() -> bool { return std::is_enum<T>::value; }
-
-template<class T>
-SCIA is_enum_class() -> bool
-{ return is_enum<T>() && !std::is_convertible<T, int>::value; }
-
-template<bool b, class T, class S>
-using conditional_t = typename std::conditional<b, T, S>::type;
-
-template<bool b, class T = int>
-using enable_if_t = typename std::enable_if<b, T>::type;
-
-template<class T, class U = int>
-using enable_if_enum_class_t = enable_if_t<tmp::is_enum_class<T>(), U>;
-
-template<class T, class S, class U = int>
-using enable_if_same_t = enable_if_t<tmp::is_same<T, S>(), U>;
-
-template<class T>
-using remove_const_t = typename std::remove_const<T>::type;
-
-template<class T>
-using remove_reference_t = typename std::remove_reference<T>::type;
-
-template<class T>
-using remove_all_t = remove_const_t<remove_reference_t<T>>;
-
-template<class... Args> static inline auto pass(const Args &...) -> void { }
-
-namespace detail {
-template<int idx, int size, bool go = idx < size>
-struct static_for { };
-
-template<int idx, int size>
-struct static_for<idx, size, true> {
-    template<class... Args, class F>
-    SIA run(const std::tuple<Args...> &tuple, const F &func) -> void
-    {
-        func(std::get<idx>(tuple));
-        static_for<idx+1, size>::run(tuple, func);
-    }
-};
-
-template<int idx, int size>
-struct static_for<idx, size, false> {
-    template<class T, class F>
-    static inline auto run(const T &, const F &) -> void { }
-    template<class T, class F>
-    static inline auto run(T &&, const F &) -> void { }
-};
-}
-
-template<int idx, int size, class... Args, class F>
-SIA static_for(const std::tuple<Args...> &tuple, const F &func) -> void
-{ detail::static_for<idx, size>::run(tuple, func); }
-
-namespace detail {
-template<int idx, int size, bool go = idx < size>
-struct static_for_breakable { };
-
-template<int idx, int size>
-struct static_for_breakable<idx, size, true> {
-    template<class... Args, class F>
-    SIA run(const std::tuple<Args...> &tuple, const F &func) -> bool
-    {
-        if (!func(std::get<idx>(tuple)))
-            return false;
-        return static_for_breakable<idx+1, size>::run(tuple, func);
-    }
-};
-
-template<int idx, int size>
-struct static_for_breakable<idx, size, false> {
-    template<class T, class F>
-    static inline auto run(const T &, const F &) -> bool { return true; }
-    template<class T, class F>
-    static inline auto run(T &&, const F &) -> bool { return true; }
-};
-}
-
-template<int idx, int size, class... Args, class F>
-SIA static_for_breakable(const std::tuple<Args...> &tuple, const F &func) -> bool
-{ return detail::static_for_breakable<idx, size>::run(tuple, func); }
-
-}
 
 #endif
 

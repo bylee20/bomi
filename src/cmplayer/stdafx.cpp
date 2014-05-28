@@ -1,4 +1,4 @@
-#include "stdafx.hpp"
+
 #include <zlib.h>
 
 namespace Pch {
@@ -124,7 +124,7 @@ auto _ToFilter(ExtTypes exts) -> QString
     return filter.join(";;");
 }
 
-auto _SetLastOpenFolder(const QString &path, const QString &key) -> void
+auto _SetLastOpenPath(const QString &path, const QString &key) -> void
 {
     auto &folder = lastFolders[key];
     if (path.isEmpty())
@@ -133,12 +133,12 @@ auto _SetLastOpenFolder(const QString &path, const QString &key) -> void
         folder = QFileInfo(path).absolutePath();
 }
 
-auto _LastOpenFolder(const QString &key) -> QString
+auto _LastOpenPath(const QString &key) -> QString
 {
     return lastFolders.value(key);
 }
 
-auto _GetOpenFileNames(QWidget *parent, const QString &title, ExtTypes exts,
+auto _GetOpenFiles(QWidget *parent, const QString &title, ExtTypes exts,
                        const QString &key) -> QStringList
 {
     auto &folder = lastFolders[key];
@@ -150,7 +150,7 @@ auto _GetOpenFileNames(QWidget *parent, const QString &title, ExtTypes exts,
     return list;
 }
 
-auto _GetOpenFileName(QWidget *parent, const QString &title, ExtTypes exts,
+auto _GetOpenFile(QWidget *parent, const QString &title, ExtTypes exts,
                       const QString &key) -> QString
 {
     auto &folder = lastFolders[key];
@@ -162,7 +162,7 @@ auto _GetOpenFileName(QWidget *parent, const QString &title, ExtTypes exts,
     return file;
 }
 
-auto _GetSaveFileName(QWidget *parent, const QString &title,
+auto _GetSaveFile(QWidget *parent, const QString &title,
                       const QString &fileName, ExtTypes exts,
                       const QString &key) -> QString
 {
@@ -191,22 +191,6 @@ auto _GetOpenDir(QWidget *parent, const QString &title,
         folder = QDir(dir).absolutePath();
     return dir;
 }
-
-//auto _GetOpenFileName(QWidget *parent, const QString &title,
-//                     const QString &dir, const QString &f) -> QString
-//{ return QFileDialog::getOpenFileName(p, t, dir, f, 0); }
-
-//auto _GetSaveFileName(QWidget *p, const QString &t,
-//                     const QString &dir, const QString &f) -> QString
-//{ return QFileDialog::getSaveFileName(p, t, dir, f, 0); }
-
-//SIA _GetOpenFileName(QWidget *p, const QString &t,
-//                     const QString &dir, const QString &f) -> QString
-//{ return QFileDialog::getOpenFileName(p, t, dir, f, 0); }
-
-//SIA _GetSaveFileName(QWidget *p, const QString &t,
-//                     const QString &dir, const QString &f) -> QString
-//{ return QFileDialog::getSaveFileName(p, t, dir, f, 0); }
 
 QByteArray _Uncompress(const QByteArray &data) {
     if (data.size() <= 4)

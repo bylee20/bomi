@@ -1,31 +1,11 @@
 #ifndef TMP_HPP
 #define TMP_HPP
 
-#include "stdafx.hpp"
-
 namespace tmp { // simple template meta progamming
 
 template <int N> constexpr auto log2() -> int { static_assert(N != 0, "wrong argument for log2"); return log2<N/2>() + 1; }
 template <> constexpr int log2<1>() { return 0; }
 template <class T> constexpr auto log2bitsof() -> int { return log2<sizeof(T)*8>(); }
-
-template <int bits, bool sign> struct integer { /*using type = char;*/ };
-template <> struct integer<16, true>  { using type = std::int16_t ; };
-template <> struct integer<32, true>  { using type = std::int32_t ; };
-template <> struct integer<64, true>  { using type = std::int64_t ; };
-template <> struct integer<16, false> { using type = std::uint16_t; };
-template <> struct integer<32, false> { using type = std::uint32_t; };
-template <> struct integer<64, false> { using type = std::uint64_t; };
-
-template<int bits, bool sign>
-using integer_t = typename integer<bits, sign>::type;
-
-template <int bits> struct floating_point { using type = char; };
-template <> struct floating_point<32> { using type = float ; };
-template <> struct floating_point<64> { using type = double; };
-
-template<int bits>
-using floating_point_t = typename floating_point<bits>::type;
 
 template<int... S>
 struct index_list {

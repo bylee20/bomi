@@ -4,6 +4,8 @@
 #include "stdafx.hpp"
 #include "audiomixer.hpp"
 #include "misc/tmp.hpp"
+#include "tmp/type_test.hpp"
+#include "tmp/arithmetic_type.hpp"
 extern "C" {
 #include <audio/format.h>
 #include <audio/audio.h>
@@ -63,58 +65,74 @@ struct AudioFormatMpv<double> {
     SCONST int planar = AF_FORMAT_DOUBLEP;
 };
 
-template<class SampleType>
-struct AudioSampleHelper {
-    using S = SampleType;
 
-    template<class T = S, tmp::enable_if_t<tmp::is_integral<T>()> = 0>
+template<class S, bool integer = tmp::is_integral<S>()>
+struct AudioSampleHelper;
+
+namespace detail {
+
+template<class T>
+SCIA audio_max() -> T { return AudioSampleHelper<T>::max(); }
+
+template<class T>
+SCIA softclip(T p) -> tmp::enable_if_t<tmp::is_floating_point<T>(), T>
+{ return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : std::sin(p)); }
+
+template<ClippingMethod method, class T, bool integer = std::is_integral<T>::value>
+struct Clip;
+template<class T, bool integer>
+struct Clip<ClippingMethod::Hard, T, integer> {
+    SCIA apply (T p) -> T
+    { return qBound<T>(-audio_max<T>(), p, audio_max<T>()); }
+};
+template<class T>
+struct Clip<ClippingMethod::Soft, T, true> {
+    SCIA apply (T p) -> T
+    { return audio_max<T>()*detail::softclip((float)p/audio_max<T>()); }
+};
+template<class T>
+struct Clip<ClippingMethod::Soft, T, false> {
+    SCIA apply (T p) -> T { return detail::softclip<T>(p); }
+};
+
+template<class T, class U, bool same = tmp::is_same<U, T>()>
+struct Conv;
+template<class T>
+struct Conv<T, T, true> {
+    SCIA apply(T p) -> T { return p; }
+};
+template<class T, class U>
+struct Conv<T, U, false> {
+    SCIA apply(U p) -> T
+    { return (float)p*AudioSampleHelper<T>::max()/AudioSampleHelper<U>::max(); }
+};
+
+template<ClippingMethod method, class S>
+SCIA clip(S p) -> S { return detail::Clip<method, S>::apply(p); }
+template<class S, class T>
+SCIA conv(S s) -> T { return detail::Conv<T, S>::apply(s); }
+
+template<class S, class D, ClippingMethod method>
+SCIA clip_conv(S s) -> D { return conv<S, D>(clip<method, S>(s)); }
+
+}
+
+template<class ST>
+struct AudioSampleHelper<ST, true> {
+    using S = ST;
     SCIA max() -> S { return _Max<S>(); }
-    template<class T = S, tmp::enable_if_t<!tmp::is_integral<T>()> = 0>
+    SCIA toLevel(S t) -> double { return (double)qAbs(t)/max(); }
+    template<int s>
+    SCIA rshift(const S &t) -> S { return t >> s; }
+};
+
+template<class ST>
+struct AudioSampleHelper<ST, false> {
+    using S = ST;
     SCIA max() -> S { return 1.0; }
-
-    template<class T = S, tmp::enable_if_t<tmp::is_integral<T>()> = 0>
-    SCIA toLevel(T t) -> double { return (double)qAbs(t)/max(); }
-    template<class T = S, tmp::enable_if_t<!tmp::is_integral<T>()> = 0>
-    SCIA toLevel(T t) -> double { return (double)qAbs(t); }
-
-    SCIA hardclip(S p) -> S { return qBound<S>(-max(), p, max()); }
-    template<class T = S, tmp::enable_if_t<!tmp::is_integral<T>()> = 0>
-    SCIA softclip(T p) -> T
-    { return (p >= M_PI*0.5) ? 1.0 : ((p <= -M_PI*0.5) ? -1.0 : std::sin(p)); }
-    template<class T = S, tmp::enable_if_t<tmp::is_integral<T>()> = 0>
-    SCIA softclip(T p) -> T { return max()*softclip<float>((float)p/max()); }
-
-    template<ClippingMethod method, class T> struct Clip { };
-    template<class T>
-    struct Clip<ClippingMethod::Hard, T> {
-        SCIA apply (T p) -> T { return hardclip(p); }
-         CIA operator() (T p) const -> T { return apply(p); }
-    };
-    template<class T>
-    struct Clip<ClippingMethod::Soft, T> {
-        SCIA apply (T p) -> T { return softclip(p); }
-         CIA operator() (T p) const -> T { return apply(p); }
-    };
-    template<ClippingMethod method>
-    SCIA clip(S p) -> S { return Clip<method, S>::apply(p); }
-
-    template<int s, class T = S, tmp::enable_if_t<tmp::is_integral<T>()> = 0>
-    SCIA rshift(const T &t) -> T { return t >> s; }
-    template<int s, class T = S, tmp::enable_if_t<!tmp::is_integral<T>()> = 0>
-    SCIA rshift(const T &t) -> T { return t; }
-
-    template<class T, class U, bool same = tmp::is_same<U, T>()>
-    struct Conv { };
-    template<class T>
-    struct Conv<T, T, true> {
-        SCIA apply(T p) -> T { return p; }
-    };
-    template<class T, class U>
-    struct Conv<T, U, false> {
-        SCIA apply(U p) -> T { return (float)p*max<T>()/max<U>(); }
-    };
-    template<class T>
-    SCIA conv(S s) -> T { return Conv<T, S>::apply(s); }
+    SCIA toLevel(S t) -> double { return (double)qAbs(t); }
+    template<int>
+    SCIA rshift(const S &t) -> S { return t; }
 };
 
 template<int fmt, bool planar = !!(fmt & AF_FORMAT_PLANAR)>
@@ -292,6 +310,10 @@ public:
 };
 
 /******************************************************************************/
+
+namespace tmp {
+template<class... Args> static inline auto pass(const Args &...) -> void { }
+}
 
 namespace detail {
 

@@ -2,6 +2,8 @@
 #define JSON_HPP
 
 #include "stdafx.hpp"
+#include "tmp/type_info.hpp"
+#include "tmp/static_for.hpp"
 #include "is_convertible.hpp"
 
 template<class T>
@@ -106,12 +108,12 @@ struct IOType {
 };
 
 template<class T, bool is_primitive = IOType<T>::primitive, bool inner_io = IOType<T>::inner_io>
-class JsonIOSelector;
+struct JsonIOSelector;
 
 template<class T>
 struct JsonIOSelector<T, true, false> {
     using U = tmp::remove_all_t<T>;
-    static auto select(const T*) -> const JsonValueIO<U>* { static const JsonValueIO<U> io; return &io; }
+    static auto select(const T*) -> const JsonValueIO<U>* { static const JsonValueIO<U> io{}; return &io; }
 };
 
 template<class T>
@@ -123,7 +125,7 @@ struct JsonIOSelector<T, false, true> {
 template<class T>
 struct JsonIOSelector<T, false, false> {
     using U = tmp::remove_all_t<T>;
-    static auto select(const T*) -> const JsonIO<U>* { static const JsonIO<U> io; return &io; }
+    static auto select(const T*) -> const JsonIO<U>* { static const JsonIO<U> io{}; return &io; }
 };
 
 }
@@ -351,7 +353,7 @@ auto json_io(const QSizeF*) -> const decltype(JSON_IO_SIZE(QSizeF))*;
 #define JSON_DECLARE_MAP_IO(C) \
 template<class Key, class T> \
 auto json_io(const C<Key, T>*) -> const JsonMapIO<Key, T, C<Key, T>>* \
-{ static const JsonMapIO<Key, T, C<Key, T>> io; return &io; }
+{ static const JsonMapIO<Key, T, C<Key, T>> io{}; return &io; }
 JSON_DECLARE_MAP_IO(QMap)
 JSON_DECLARE_MAP_IO(QHash)
 JSON_DECLARE_MAP_IO(std::map)
@@ -359,7 +361,7 @@ JSON_DECLARE_MAP_IO(std::map)
 #define JSON_DECLARE_ARRAY_IO(C) \
 template<class T> \
 auto json_io(const C<T>*) -> const JsonArrayIO<T, C<T>>* \
-{ static const JsonArrayIO<T, C<T>> io; return &io; }
+{ static const JsonArrayIO<T, C<T>> io{}; return &io; }
 JSON_DECLARE_ARRAY_IO(QList)
 JSON_DECLARE_ARRAY_IO(QVector)
 JSON_DECLARE_ARRAY_IO(QLinkedList)
@@ -423,5 +425,13 @@ struct JsonIO<QKeySequence> : JsonQStringType {
         return true;
     }
 };
+
+template<class T>
+auto _ToJson(const T &t) -> decltype(json_io<T>()->toJson(t))
+{ return json_io<T>()->toJson(t); }
+
+template<class T>
+auto _FromJson(const QJsonValue &json) -> T
+{ T t; json_io<T>()->fromJson(t, json); return t; }
 
 #endif // JSON_HPP

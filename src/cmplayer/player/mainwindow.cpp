@@ -590,7 +590,7 @@ struct MainWindow::Data {
     auto setOpen(const Mrl &mrl) -> void
     {
         if (mrl.isLocalFile())
-            _SetLastOpenFolder(mrl.toLocalFile());
+            _SetLastOpenPath(mrl.toLocalFile());
     }
 
     auto subtitleState() const -> SubtitleStateInfo
@@ -1082,7 +1082,7 @@ auto MainWindow::connectMenus() -> void
 {
     Menu &open = d->menu("open");
     connect(open["file"], &QAction::triggered, this, [this] () {
-        const auto file = _GetOpenFileName(this, tr("Open File"), MediaExt);
+        const auto file = _GetOpenFile(this, tr("Open File"), MediaExt);
         if (!file.isEmpty())
             openMrl(Mrl(file));
     });
@@ -1530,7 +1530,7 @@ auto MainWindow::connectMenus() -> void
     connect(playlist["save"], &QAction::triggered, this, [this] () {
         const auto &list = d->playlist.list();
         if (!list.isEmpty()) {
-            auto file = _GetSaveFileName(this, tr("Save File"),
+            auto file = _GetSaveFile(this, tr("Save File"),
                                          QString(), PlaylistExt);
             if (!file.isEmpty())
                 list.save(file);
@@ -1539,7 +1539,7 @@ auto MainWindow::connectMenus() -> void
     connect(playlist["clear"], &QAction::triggered,
             this, [this] () { d->playlist.clear(); });
     connect(playlist["append-file"], &QAction::triggered, this, [this] () {
-        const auto files = _GetOpenFileNames(this, tr("Open File"), MediaExt);
+        const auto files = _GetOpenFiles(this, tr("Open File"), MediaExt);
         Playlist list;
         for (int i=0; i<files.size(); ++i)
             list.push_back(Mrl(files[i]));

@@ -22,7 +22,7 @@ struct SubtitleFileInfo {
     QString path, encoding;
 };
 
-template<class T> class JsonIO;
+template<class T> struct JsonIO;
 
 struct SubtitleStateInfo {
     struct Comp {
@@ -61,7 +61,7 @@ private:
     int m_track = 0;
     QVector<SubtitleFileInfo> m_mpv;
     QMap<SubtitleFileInfo, QVector<Comp>> m_cmplayer;
-    friend class JsonIO<SubtitleStateInfo>;
+    friend struct JsonIO<SubtitleStateInfo>;
 };
 
 Q_DECLARE_METATYPE(SubtitleStateInfo)

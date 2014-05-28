@@ -3,7 +3,8 @@
 
 #include "stdafx.hpp"
 
-struct Kernel3x3 {
+class Kernel3x3 {
+public:
     Kernel3x3() { mat(0, 0) = mat(2, 2) = 0.f; }
     auto operator = (const Kernel3x3 &rhs) -> Kernel3x3&
         { mat = rhs.mat; return *this; }

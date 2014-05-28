@@ -47,7 +47,7 @@ SnapshotDialog::SnapshotDialog(QWidget *parent)
         const QString fileName = _L("cmplayer-snapshot-")
                                  % time.toString("yyyy-MM-dd-hh-mm-ss")
                                  % _L(".png");
-        const auto file = _GetSaveFileName(this, tr("Save File"),
+        const auto file = _GetSaveFile(this, tr("Save File"),
                                            fileName, ImageExt);
         if (!file.isEmpty())
             d->ui.viewer->image().save(file);

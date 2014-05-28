@@ -3,6 +3,7 @@
 #include "playengine.hpp"
 #include "video/hwacc.hpp"
 #include "misc/log.hpp"
+#include "misc/json.hpp"
 
 DECLARE_LOG_CONTEXT(Main)
 
@@ -38,7 +39,8 @@ int main(int argc, char **argv) {
     reg_settings_object();
     PlayEngine::registerObjects();
     App app(argc, argv);
-    if (app.isUnique() && app.sendMessage(app.arguments().join("[:sep:]"))) {
+    if (app.isUnique()
+            && app.sendMessage(App::CommandLine, _ToJson(app.arguments()))) {
         _Info("Another instance of CMPlayer is already running. Exit this...");
         return 0;
     }

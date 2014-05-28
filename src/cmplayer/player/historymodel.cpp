@@ -18,7 +18,7 @@ struct HistoryModel::Data {
     QSqlError error;
     MrlStateSqlFieldList fields, restores;
     MrlState cached;
-    const MrlState default_;
+    const MrlState default_{};
     const QString table = _L("state") % _N(currentVersion);
     bool rememberImage = false, reload = true, visible = false;
     int idx_mrl, idx_last, idx_device, rows = 0;

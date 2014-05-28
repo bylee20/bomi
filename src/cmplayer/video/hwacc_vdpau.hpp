@@ -149,7 +149,7 @@ public:
     static auto isInitialized() -> bool { return d.init; }
     static auto isAvailable() -> bool;
 private:
-    template<class T, class = tmp::enable_if_t<!std::is_pointer<T>::value>>
+    template<class T, class = typename std::enable_if<!std::is_pointer<T>::value>::type>
     static auto TO_INTEROP(T handle) -> const void *
         { return (const void*)(quintptr)(handle); }
     struct Data : public VdpauStatusChecker {

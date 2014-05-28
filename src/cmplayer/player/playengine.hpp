@@ -8,7 +8,7 @@
 class VideoRendererItem;                class VideoFormat;
 class DeintOption;                      class ChannelLayoutMap;
 class AudioFormat;
-class MetaData;                         class SubtitleStyle;
+class MetaData;                         struct SubtitleStyle;
 struct AudioNormalizerOption;           struct SubtitleFileInfo;
 enum class AudioDriver;                 enum class ClippingMethod;
 enum class DeintMethod;                 enum class DeintMode;

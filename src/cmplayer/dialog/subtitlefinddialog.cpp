@@ -110,7 +110,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
         d->updateState();
     });
     connect(d->ui.open, &QPushButton::clicked, [this] () {
-        auto file = _GetOpenFileName(this, tr("Open"), VideoExt);
+        auto file = _GetOpenFile(this, tr("Open"), VideoExt);
         if (!file.isEmpty())
             find(QUrl::fromLocalFile(file));
     });

@@ -2,6 +2,7 @@
 #define RECORD_HPP
 
 #include "stdafx.hpp"
+#include "tmp/type_test.hpp"
 
 template<class T> class EnumInfo;
 

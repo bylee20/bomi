@@ -19,7 +19,7 @@ OpenDiscDialog::OpenDiscDialog(QWidget *parent)
             d->ui.device->setCurrentText(dir);
     });
     connect(d->ui.iso, &QPushButton::clicked, this, [this] () {
-        auto iso = _GetOpenFileName(this, tr("Open ISO file"), DiscExt);
+        auto iso = _GetOpenFile(this, tr("Open ISO file"), DiscExt);
         if (!iso.isEmpty())
             d->ui.device->setCurrentText(iso);
     });

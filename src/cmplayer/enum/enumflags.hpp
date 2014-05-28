@@ -11,7 +11,6 @@ using UnderType = typename std::underlying_type<T>::type;
 
 template<class T>
 class EnumNot {
-    static_assert(tmp::is_enum_class<T>(), "wrong enum type." );
     friend class EnumFlags<T>;
     friend constexpr auto operator ~ (T rhs) -> EnumNot<T>;
     constexpr EnumNot(T flag) noexcept : m(~(UnderType<T>)flag) { }
@@ -20,7 +19,6 @@ class EnumNot {
 
 template<class T>
 class EnumAnd {
-    static_assert(tmp::is_enum_class<T>(), "wrong enum type." );
 public:
     constexpr EnumAnd(T t) noexcept : m(t) { }
     constexpr operator bool() const noexcept { return (UnderType<T>)m; }
@@ -32,7 +30,6 @@ private:
 
 template<class T>
 class EnumFlags {
-    static_assert(tmp::is_enum_class<T>(), "wrong enum type." );
     using IntType = UnderType<T>;
     using Flags = EnumFlags<T>;
     constexpr explicit EnumFlags(IntType m) noexcept : m(m) { }
@@ -54,7 +51,7 @@ public:
     constexpr auto operator | (T rhs) const noexcept -> Flags
         { return Flags(m | (IntType)rhs); }
 
-    constexpr auto operator &= (Flags rhs) noexcept -> Flags&
+    auto operator &= (Flags rhs) noexcept -> Flags&
         { m &= rhs.m; return *this; }
     auto operator &= (EnumNot<T> rhs) noexcept -> Flags&
         { m &= rhs.m; return *this; }

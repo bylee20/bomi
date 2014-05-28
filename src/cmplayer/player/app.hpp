@@ -2,6 +2,7 @@
 #define APP_HPP
 
 #include "stdafx.hpp"
+#include "tmp/type_test.hpp"
 
 class QUrl;                             class Mrl;
 class MainWindow;                       class QMenuBar;
@@ -9,6 +10,9 @@ class MainWindow;                       class QMenuBar;
 class App : public QApplication {
     Q_OBJECT
 public:
+    enum MessageType {
+        CommandLine = 1
+    };
     App(int &argc, char **argv);
     ~App();
     auto setWindowTitle(QWidget *w, const QString &title) -> void;
@@ -32,14 +36,16 @@ public:
     auto runCommands() -> void;
     auto isOpenGLDebugLoggerRequested() const -> bool;
     auto setMprisActivated(bool activated) -> void;
-    auto sendMessage(const QString &message, int timeout = 5000) -> bool;
+    template<class T>
+    auto sendMessage(MessageType type, const T &t, int timeout = 5000)
+    -> tmp::enable_if_t<tmp::is_one_of<T, QJsonObject, QJsonArray, QJsonValue>(), bool>;
     static constexpr auto versionNumber() -> int { return 0x00814; }
     static constexpr auto version() -> const char* { return "0.8.14"; }
     static constexpr auto name() -> const char* { return "CMPlayer"; }
     static auto defaultIcon() -> QIcon;
-signals:
-    void messageReceived(const QString &message);
 private:
+    auto sendMessage(const QByteArray &message, int timeout = 5000) -> bool;
+    auto handleMessage(const QByteArray &message) -> void;
     static constexpr int ReopenEvent = QEvent::User + 1;
     auto event(QEvent *event) -> bool;
     struct Data;
@@ -48,18 +54,14 @@ private:
 
 #define cApp (*static_cast<App*>(qApp))
 
-class LocalConnection : public QObject {
-    Q_OBJECT
-public:
-    LocalConnection(const QString &id, QObject *parent = 0);
-    ~LocalConnection();
-    auto runServer() -> bool;
-    auto sendMessage(const QString &message, int timeout) -> bool;
-signals:
-    void messageReceived(const QString &message);
-private:
-    struct Data;
-    Data *d;
-};
+template<class T>
+auto App::sendMessage(MessageType type, const T &t, int timeout)
+-> tmp::enable_if_t<tmp::is_one_of<T, QJsonObject, QJsonArray, QJsonValue>(), bool>
+{
+    QJsonObject json;
+    json["type"] = _JsonFromInt(type);
+    json["contents"] = t;
+    return sendMessage(QJsonDocument(json).toJson(), timeout);
+}
 
 #endif // APPLICATION_HPP

@@ -1,8 +1,10 @@
 #include "app.hpp"
 #include "mrl.hpp"
 #include "mainwindow.hpp"
+#include "misc/localconnection.hpp"
 #include "misc/log.hpp"
 #include "misc/record.hpp"
+#include "misc/json.hpp"
 
 #if defined(Q_OS_MAC)
 #include "app_mac.hpp"
@@ -45,16 +47,16 @@ struct App::Data {
     Mrl pended;
 #ifdef Q_OS_MAC
     QMenuBar *mb = new QMenuBar;
-#else
-    QMenuBar *mb = nullptr;
-#endif
-    MainWindow *main = nullptr;
-#if defined(Q_OS_MAC)
     AppMac helper;
-#elif defined(Q_OS_LINUX)
+#else
+#if defined(Q_OS_LINUX)
     AppX11 helper;
     mpris::RootObject *mpris = nullptr;
 #endif
+    QMenuBar *mb = nullptr;
+#endif
+    MainWindow *main = nullptr;
+
     QLocale locale = QLocale::system();
     QCommandLineOption dummy{"__dummy__"};
     QCommandLineParser cmdParser, msgParser;
@@ -174,9 +176,8 @@ App::App(int &argc, char **argv)
     };
     d->styleNames = makeStyleNameList();
     makeStyle();
-    connect(&d->connection, &LocalConnection::messageReceived, [this] (const QString &message) {
-        d->msgParser.parse(message.split("[:sep:]")); d->execute(&d->msgParser);
-    });
+    connect(&d->connection, &LocalConnection::messageReceived,
+             this, &App::handleMessage);
     const auto map = r.value("open_folders").toMap();
     QMap<QString, QString> folders;
     for (auto it = map.begin(); it != map.end(); ++it)
@@ -195,6 +196,25 @@ App::~App() {
     delete d->main;
     delete d->mb;
     delete d;
+}
+
+auto App::handleMessage(const QByteArray &message) -> void
+{
+    QJsonParseError error;
+    const auto msg = QJsonDocument::fromJson(message, &error).object();
+    Q_ASSERT(!error.error);
+
+    const auto type = _JsonToInt(msg["type"]);
+    const auto contents = msg["contents"];
+    switch (type) {
+    case CommandLine:
+        d->msgParser.parse(_FromJson<QStringList>(contents));
+        d->execute(&d->msgParser);
+        break;
+    default:
+        _Error("Unknown message: %%", message);
+        break;
+    }
 }
 
 auto App::isOpenGLDebugLoggerRequested() const -> bool
@@ -314,7 +334,7 @@ auto App::runCommands() -> void
     d->execute(&d->cmdParser);
 }
 
-auto App::sendMessage(const QString &message, int timeout) -> bool
+auto App::sendMessage(const QByteArray &message, int timeout) -> bool
 {
     return d->connection.sendMessage(message, timeout);
 }
@@ -370,108 +390,4 @@ auto App::isUnique() const -> bool
 auto App::shutdown() -> bool
 {
     return d->helper.shutdown();
-}
-
-/**************************************************************************************/
-
-#if defined(Q_OS_WIN)
-#include <QtCore/QLibrary>
-#include <QtCore/qt_windows.h>
-typedef BOOL(WINAPI*PProcessIdToSessionId)(DWORD,DWORD*);
-static PProcessIdToSessionId pProcessIdToSessionId = 0;
-#endif
-#if defined(Q_OS_UNIX)
-#include <unistd.h>
-#endif
-
-static int getUid() {
-#if defined(Q_OS_WIN)
-    if (!pProcessIdToSessionId) {
-        QLibrary lib("kernel32");
-        pProcessIdToSessionId = (PProcessIdToSessionId)lib.resolve("ProcessIdToSessionId");
-    }
-    if (pProcessIdToSessionId) {
-        DWORD sessionId = 0;
-        pProcessIdToSessionId(GetCurrentProcessId(), &sessionId);
-        return sessionId;
-    }
-#else
-    return ::getuid();
-#endif
-}
-
-struct LocalConnection::Data {
-    QString id, socket;
-    QLocalServer server;
-    QLockFile *lock = nullptr;
-};
-
-constexpr static const char* ack = "ack";
-
-LocalConnection::LocalConnection(const QString &id, QObject* parent)
-: QObject(parent), d(new Data) {
-    d->id = id;
-    d->socket = id % '-' % QString::number(getUid(), 16);
-    d->lock = new QLockFile(QDir::temp().path() % '/' % d->socket % "-lock");
-    d->lock->setStaleLockTime(0);
-}
-
-LocalConnection::~LocalConnection() {
-    delete d->lock;
-    delete d;
-}
-
-auto LocalConnection::runServer() -> bool
-{
-    if (d->lock->isLocked())
-        return true;
-    if (!d->lock->tryLock() && !(d->lock->removeStaleLockFile() && d->lock->tryLock()))
-        return false;
-    if (!d->server.listen(d->socket)) {
-        QFile::remove(QDir::temp().path() % '/' % d->socket);
-        if (!d->server.listen(d->socket))
-            return false;
-    }
-    connect(&d->server, &QLocalServer::newConnection, [this]() {
-        QScopedPointer<QLocalSocket> socket(d->server.nextPendingConnection());
-        if (socket) {
-            while (socket->bytesAvailable() < (int)sizeof(quint32))
-                socket->waitForReadyRead();
-            QDataStream in(socket.data());
-            QByteArray msg; quint32 left;
-            in >> left;
-            msg.resize(left);
-            char *buffer = msg.data();
-            do {
-                const int read = in.readRawData(buffer, left);
-                if (read < 0)
-                    return;
-                left -= read;
-                buffer += read;
-            } while (left > 0 && socket->waitForReadyRead(5000));
-            QString message(QString::fromUtf8(msg));
-            socket->write(ack, qstrlen(ack));
-            socket->waitForBytesWritten(1000);
-            socket->close();
-            emit messageReceived(message); //### (might take a long time to return)
-        }
-    });
-    return true;
-}
-
-auto LocalConnection::sendMessage(const QString &message, int timeout) -> bool
-{
-    if (runServer())
-        return false;
-    QLocalSocket socket;
-    socket.connectToServer(d->socket);
-    if (!socket.waitForConnected(timeout))
-        return false;
-    const auto msg = message.toUtf8();
-    QDataStream out(&socket);
-    out.writeBytes(msg.constData(), msg.size());
-    bool res = socket.waitForBytesWritten(timeout);
-    res &= socket.waitForReadyRead(timeout);   // wait for ack
-    res &= (socket.read(qstrlen(ack)) == ack);
-    return res;
 }

@@ -135,7 +135,7 @@ private:
     virtual auto fillQueue(int frames_offset) -> int = 0;
     template<int s, class T>
     CIA rshift(const T &t) const -> T
-    { return Helper::template rshift<s, T>(t); }
+    { return AudioSampleHelper<T>::template rshift<s>(t); }
     auto calculate_correlations() -> void
     {
         _AudioManipulate([&] (CorrType &c, TableType w, S o)
@@ -340,9 +340,9 @@ public:
             return;
         const double gain = d->gain*d->amp;
         using Helper = AudioSampleHelper<S>;
-        auto trans = d->realClip == ClippingMethod::Soft ?
-                    clipConv<S, ClippingMethod::Soft> :
-                    clipConv<S, ClippingMethod::Hard>;
+        auto trans = d->realClip == ClippingMethod::Soft
+                ? detail::clip_conv<S, D, ClippingMethod::Soft>
+                : detail::clip_conv<S, D, ClippingMethod::Hard>;
         if (d->amp < 1e-8)
             m_dst.fill(0);
         else if (!d->mix) {
@@ -378,12 +378,6 @@ public:
     auto setOutput(mp_audio *output) -> void
     { d->output = output; m_dst.setData(output); }
 private:
-    template<class S, ClippingMethod method>
-    static inline auto clipConv(S s) -> D
-    {
-        const auto clipped = AudioSampleHelper<S>::template clip<method>(s);
-        return AudioSampleHelper<S>::template conv<D>(clipped);
-    }
     AudioMixer::Data *d = nullptr;
     mutable AudioDataBuffer<D, AudioFormatTrait<fmt_dst>::IsPlanar> m_dst;
 };

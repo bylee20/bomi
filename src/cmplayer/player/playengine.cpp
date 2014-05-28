@@ -20,6 +20,7 @@
 #include "enum/deintmode.hpp"
 #include "enum/audiodriver.hpp"
 #include <libmpv/client.h>
+#include "tmp/type_test.hpp"
 
 DECLARE_LOG_CONTEXT(Engine)
 

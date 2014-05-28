@@ -6,7 +6,7 @@
 #include "enum/deintdevice.hpp"
 #include "enum/decoderdevice.hpp"
 
-template<class T> class JsonIO;
+template<class T> struct JsonIO;
 
 class DeintCaps {
 public:
@@ -29,7 +29,7 @@ private:
     DecoderDevices m_decoders = 0;
     DeintDevices m_devices = 0;
     bool m_doubler = false;
-    friend class JsonIO<DeintCaps>;
+    friend struct JsonIO<DeintCaps>;
 };
 
 inline auto DeintCaps::isAvailable() const -> bool
