@@ -8,7 +8,7 @@
 #include "misc/dataevent.hpp"
 #include "opengl/opengltexturebinder.hpp"
 
-enum EventType {NewFrame = QEvent::User + 1, NewFrameWithOsd };
+enum EventType {NewFrame = QEvent::User + 1, NewFrameWithOsd, NewFrameImage };
 
 struct VideoRendererItem::Data {
     Data(VideoRendererItem *p): p(p) {}
@@ -35,7 +35,9 @@ struct VideoRendererItem::Data {
             return aspect;
         if (aspect == 0.0)
             return itemAspectRatio();
-        return p->hasFrame() ? _Ratio(displaySize) : 1.0;
+        if (!p->hasFrame())
+            return 1.0;
+        return displaySize.width()/(double)displaySize.height();
     }
     auto targetCropRatio(double fallback) const -> double
     {
@@ -164,6 +166,10 @@ auto VideoRendererItem::customEvent(QEvent *event) -> void
         reserve(UpdateMaterial);
         d->mposd->draw(osd);
         d->mposd->setVisible(true);
+        break;
+    } case NewFrameImage: {
+        const auto image = _GetData<QImage>(event);
+        emit frameImageObtained(image);
         break;
     } default:
         break;
@@ -325,7 +331,8 @@ auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
             painter.end();
             image.swap(tmp);
         }
-        emit frameImageObtained(image);
+        image.detach();
+        _PostEvent(this, NewFrameImage, image);
         d->take = false;
     }
     if (d->queue.empty())

@@ -1,4 +1,5 @@
 #include "mposdbitmap.hpp"
+#include "tmp/static_op.hpp"
 extern "C" {
 #include <sub/osd.h>
 }
@@ -45,7 +46,7 @@ auto MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) -> bool
             const quint32 color = img.libass.color;
             part.m_color = (color & 0xffffff00) | (0xff - (color & 0xff));
         }
-        part.m_stride = _Aligned<4>(img.stride*c_stride);
+        part.m_stride = tmp::aligned<4>(img.stride*c_stride);
         part.m_strideAsPixel = (part.m_stride >> shift);
         part.m_offset = offset;
         offset += part.m_stride*part.height();

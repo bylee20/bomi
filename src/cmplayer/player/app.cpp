@@ -157,7 +157,7 @@ App::App(int &argc, char **argv)
         auto names = QStyleFactory::keys();
         const auto defaultName = style()->objectName();
         for (auto it = ++names.begin(); it != names.end(); ++it) {
-            if (defaultName.compare(*it, Qt::CaseInsensitive) == 0) {
+            if (defaultName.compare(*it, QCI) == 0) {
                 const auto name = *it;
                 names.erase(it);
                 names.prepend(name);
@@ -168,9 +168,9 @@ App::App(int &argc, char **argv)
     };
     auto makeStyle = [&]() {
         auto name = r.value("style", styleName()).toString();
-        if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
+        if (style()->objectName().compare(name, QCI) == 0)
             return;
-        if (!d->styleNames.contains(name, Qt::CaseInsensitive))
+        if (!d->styleNames.contains(name, QCI))
             return;
         setStyle(QStyleFactory::create(name));
     };
@@ -359,9 +359,9 @@ auto App::availableStyleNames() const -> QStringList
 
 auto App::setStyleName(const QString &name) -> void
 {
-    if (!d->styleNames.contains(name, Qt::CaseInsensitive))
+    if (!d->styleNames.contains(name, QCI))
         return;
-    if (style()->objectName().compare(name, Qt::CaseInsensitive) == 0)
+    if (style()->objectName().compare(name, QCI) == 0)
         return;
     setStyle(QStyleFactory::create(name));
     Record r(APP_GROUP);

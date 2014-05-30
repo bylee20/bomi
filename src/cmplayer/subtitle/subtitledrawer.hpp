@@ -170,6 +170,12 @@ inline auto SubtitleDrawer::draw(SubCompImage &pic, const QRectF &area,
     return !pic.isNull();
 }
 
+SIA _Diagonal(double w, double h) -> double
+{ return sqrt(w * w + h * h); }
+
+SIA _Diagonal(const QSizeF &size) -> double
+{ return _Diagonal(size.width(), size.height()); }
+
 inline auto SubtitleDrawer::scale(const QRectF &area) const -> double
 {
     const auto policy = m_style.font.scale;

@@ -16,8 +16,6 @@ signals:
 private:
     auto changeEvent(QEvent *event) -> void;
     auto showEvent(QShowEvent *event) -> void;
-    class MenuTreeItem;
-    class Delegate;
     struct Data;
     Data *d;
 };

@@ -1,4 +1,4 @@
 CONFIG += @config@
-LIBS += @libs@
+LIBS += @libs@ @rootdir@/build/lib/libmpv.a
 QMAKE_CXXFLAGS += @cflags@
 DEFINES += @defines@

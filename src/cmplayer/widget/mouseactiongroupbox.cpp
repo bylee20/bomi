@@ -28,7 +28,7 @@ auto MouseActionGroupBox::set(const QList<Action> &list) -> void
     for (int i=0; i<d->mods.size(); ++i) {
         auto combo = new QComboBox(this);
         for (auto &info : list)
-            combo->addItem(info.name, info.id);
+            combo->addItem(info.first, info.second);
         QCheckBox *check = new QCheckBox(this);
         d->combos.append(combo);
         d->checks.append(check);

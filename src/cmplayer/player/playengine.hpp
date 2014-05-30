@@ -182,7 +182,6 @@ public:
     Q_INVOKABLE double bitrate(double fps) const;
     Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;
-    static auto registerObjects() -> void;
 signals:
     void fpsChanged(double fps);
     void seeked(int time);

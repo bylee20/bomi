@@ -4,7 +4,7 @@
 #include "appstate.hpp"
 #include "rootmenu.hpp"
 #include "recentinfo.hpp"
-#include "abrepeater.hpp"
+#include "abrepeatchecker.hpp"
 #include "playengine.hpp"
 #include "historymodel.hpp"
 #include "playlistmodel.hpp"
@@ -79,7 +79,7 @@ struct MainWindow::Data {
     bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
     bool stateChanging = false, loading = false, sgInit = false;
     QTimer loadingTimer, hider, initializer;
-    ABRepeater ab = {&engine, &subtitle};
+    ABRepeatChecker ab;
     QMenu contextMenu;
     PrefDialog *prefDlg = nullptr;
     SubtitleFindDialog *subFindDlg = nullptr;
@@ -686,7 +686,9 @@ struct MainWindow::Data {
         QString time = _MSecToString(state->resume_position, "h:mm:ss");
         if (state->edition >= 0)
             time += _L('[') % tr("Title %1").arg(state->edition) % _L(']');
-        mbox.setInformativeText(tr("Played Date: %1\nStopped Position: %2").arg(state->last_played_date_time.toString(Qt::ISODate)).arg(time));
+        const auto date = state->last_played_date_time.toString(Qt::ISODate);
+        mbox.setInformativeText(tr("Played Date: %1\nStopped Position: %2")
+                                .arg(date).arg(time));
         mbox.checkBox()->setText(tr("Don't ask again"));
         mbox.addButtons({BBox::Yes, BBox::No});
         int resume = 0;
@@ -702,10 +704,10 @@ struct MainWindow::Data {
     {
         if (mrl.isLocalFile()) {
             auto path = mrl.toLocalFile();
-            if (_ContainsIf(pref().network_folders, [path] (const QString &folder) {
-                return path.startsWith(folder);
-            }))
-                return pref().cache_network;
+            for (auto &folder : pref().network_folders) {
+                if (path.startsWith(folder))
+                    return pref().cache_network;
+            }
             return pref().cache_local;
         } if (mrl.isDisc())
             return pref().cache_disc;
@@ -741,8 +743,12 @@ struct MainWindow::Data {
             p->updateStaysOnTop();
             stateChanging = false;
         });
-        connect(&engine, &PlayEngine::tick,
-                &subtitle, &SubtitleRendererItem::render);
+        connect(&engine, &PlayEngine::tick, p, [this] (int time) {
+            if (ab.check(time))
+                engine.seek(ab.a());
+            else
+                subtitle.render(time);
+        });
         connect(&engine, &PlayEngine::volumeChanged,
                 p, [this] (int volume) {
             _Change(as.state.audio_volume, volume);
@@ -1145,16 +1151,20 @@ auto MainWindow::connectMenus() -> void
         const int key = a->data().toInt();
         auto msg = [this] (const QString &ex)
             { showMessage(tr("A-B Repeat"), ex); };
-        auto time = [] (int t)
-            { return _Chopped(_MSecToString(t, "h:mm:ss.zzz"), 2); };
+        auto time = [] (int t) {
+            const auto time = QTime::fromMSecsSinceStartOfDay(t);
+            auto str = time.toString("h:mm:ss.zzz");
+            str.chop(2); return str;
+        };
         switch (key) {
-        case 'r':
+        case 'r': {
             if (d->engine.isStopped())
                 break;
+            const auto t = d->engine.time();
             if (!d->ab.hasA()) {
-                msg(tr("Set A to %1").arg(time(d->ab.setAToCurrentTime())));
+                msg(tr("Set A to %1").arg(time(d->ab.setA(t))));
             } else if (!d->ab.hasB()) {
-                const int at = d->ab.setBToCurrentTime();
+                const int at = d->ab.setB(t);
                 if ((at - d->ab.a()) < 100) {
                     d->ab.setB(-1);
                     msg(tr("Range is too short!"));
@@ -1164,12 +1174,14 @@ auto MainWindow::connectMenus() -> void
                 }
             }
             break;
-        case 's':
-            d->ab.setAToSubtitleTime();
-            d->ab.setBToSubtitleTime();
-            d->ab.start(); msg(tr("Repeat current subtitle"));
+        } case 's': {
+            const auto time = d->engine.time();
+            d->ab.setA(d->subtitle.start(time));
+            d->ab.setB(d->subtitle.finish(time));
+            d->ab.start();
+            msg(tr("Repeat current subtitle"));
             break;
-        case 'q':
+        } case 'q':
             d->ab.stop();
             d->ab.setA(-1);
             d->ab.setB(-1);
@@ -1259,12 +1271,12 @@ auto MainWindow::connectMenus() -> void
         d->snapshot->take();
     });
     connect(&d->renderer, &VideoRendererItem::frameImageObtained,
-            this, [this] (QImage image) {
+            this, [this] (const QImage &image) {
         Q_ASSERT(d->snapshot);
         QRectF subRect;
         auto sub = d->subtitle.draw(image.rect(), &subRect);
         d->snapshot->setImage(image, sub, subRect);
-    }, Qt::QueuedConnection);
+    });
     auto setVideoAlignment = [this] () {
         const auto v = _EnumData(d->as.state.video_vertical_alignment);
         const auto h = _EnumData(d->as.state.video_horizontal_alignment);
@@ -1912,8 +1924,9 @@ auto MainWindow::setVideoSize(double rate) -> void
         if (isMaximized())
             showNormal();
         const QSizeF video = d->renderer.sizeHint();
+        auto area = [] (const QSizeF &s) { return s.width()*s.height(); };
         if (rate == 0.0)
-            rate = _Area(d->screenSize())*0.15/_Area(video);
+            rate = area(d->screenSize())*0.15/area(video);
         d->setVideoSize((video*qSqrt(rate)).toSize());
     }
 }
@@ -2376,6 +2389,12 @@ auto MainWindow::moveEvent(QMoveEvent *event) -> void
     if (!d->fullScreen)
         d->updateWindowPosState();
 }
+
+SIA _SignN(int value, bool sign) -> QString
+    { return sign ? _NS(value) : _N(value); }
+
+SIA _SignN(double value, bool sign, int n = 1) -> QString
+    { return sign ? _NS(value, n) : _N(value, n); }
 
 void MainWindow::showMessage(const QString &cmd, int value,
                              const QString &unit, bool sign)

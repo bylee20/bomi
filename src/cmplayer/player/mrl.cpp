@@ -14,10 +14,10 @@ Mrl::Mrl(const QString &location, const QString &name) {
     const int idx = location.indexOf("://");
     if (idx < 0)
         m_loc = _L("file://") % QFileInfo(location).absoluteFilePath();
-    else if (location.startsWith("file://", Qt::CaseInsensitive))
+    else if (location.startsWith("file://", QCI))
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
-    else if (location.startsWith("dvdnav://", Qt::CaseInsensitive)
-             || location.startsWith("bdnav://", Qt::CaseInsensitive))
+    else if (location.startsWith("dvdnav://", QCI)
+             || location.startsWith("bdnav://", QCI))
         m_loc = location;
     else
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
@@ -81,13 +81,13 @@ static const QStringList discSchemes = QStringList() << _L("dvdnav") << _L("bdna
 
 auto Mrl::isDisc() const -> bool
 {
-    return discSchemes.contains(scheme(), Qt::CaseInsensitive);
+    return discSchemes.contains(scheme(), QCI);
 }
 
 auto Mrl::device() const -> QString
 {
     const auto scheme = this->scheme();
-    if (!discSchemes.contains(scheme, Qt::CaseInsensitive))
+    if (!discSchemes.contains(scheme, QCI))
         return QString();
     auto path = m_loc.midRef(scheme.size() + 3);
     const int idx = path.indexOf(_L('/'));

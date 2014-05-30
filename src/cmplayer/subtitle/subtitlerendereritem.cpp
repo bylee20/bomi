@@ -343,9 +343,19 @@ auto SubtitleRendererItem::setDelay(int delay) -> void
         rerender();
 }
 
+template<class T, class F = std::equal_to<T>>
+auto _Change2(T &the, const T &one, F equal = std::equal_to<T>()) -> bool
+{ if (!equal(the, one)) {the = one; return true;} return false; }
+
+template<class U, class T>
+auto _Change2(T &the, const T &one, bool(*equal)(U,U)) -> bool
+{
+    return _Change2(the, one, [equal] (const T &t1, const T &t2) { return equal(t1, t2); });
+}
+
 auto SubtitleRendererItem::setPos(double pos) -> void
 {
-    if (_ChangeF(d->pos, qBound(0.0, pos, 1.0)))
+    if (_Change2<double>(d->pos, qBound(0.0, pos, 1.0), qFuzzyCompare))
         d->setMargin({{0.0, d->top ? d->pos : 0}, {0.0, d->top ? 0.0 : 1.0 - d->pos}});
 }
 

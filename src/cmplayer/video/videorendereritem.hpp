@@ -46,7 +46,7 @@ public:
     auto osdSize() const -> QSize;
 signals:
     void transferred();
-    void frameImageObtained(QImage image) const;
+    void frameImageObtained(const QImage &image) const;
     void effectsChanged(VideoEffects effects);
     void offsetChanged(const QPoint &pos);
     void screenRectChanged(const QRectF &rect);

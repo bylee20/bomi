@@ -72,7 +72,7 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                     if (idx < 0)
                         ret.last().text.append(c);
                     else {
-                        const auto ref = _MidRef(text, pos, idx - pos);
+                        const auto ref = text.mid(pos, idx - pos);
                         ret.last().text.append(entityCharacter(ref));
                         pos = idx + 1;
                     }
@@ -89,13 +89,13 @@ auto RichTextBlockParser::parse(const QStringRef &text,
     while (pos <text.size()) {
         const int idx = text.indexOf('<', pos);
         if (idx < 0) {
-            add_text(_MidRef(text, pos, -1));
+            add_text(text.mid(pos, -1));
             break;
         } else {
-            add_text(_MidRef(text, pos, idx - pos));
+            add_text(text.mid(pos, idx - pos));
             pos = idx;
         }
-        Tag tag = parseTag(_MidRef(text, 0, -1), pos);
+        Tag tag = parseTag(text.mid(0, -1), pos);
         if (tag.name.isEmpty())
             continue;
         ret.last().formats.last().end = ret.last().text.size();
@@ -107,8 +107,7 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                 auto fmtIt = fmtStack.begin();
                 auto tagIt = tagStack.begin();
                 for (; tagIt != tagStack.end(); ++tagIt, ++fmtIt) {
-                    if (tagIt->compare(_MidRef(tag.name, 1),
-                                       Qt::CaseInsensitive) == 0) {
+                    if (tagIt->compare(tag.name.mid(1), QCI) == 0) {
                         add_format(*fmtIt);
                         fmtStack.erase(fmtIt);
                         tagStack.erase(tagIt);

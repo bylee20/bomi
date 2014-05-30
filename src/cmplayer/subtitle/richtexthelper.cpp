@@ -16,6 +16,15 @@ auto RichTextHelper::toInt(const QStringRef &text) -> int
     return ret;
 }
 
+SIA _IsNumber(ushort c) -> bool
+{return _InRange<ushort>('0', c, '9');}
+
+SIA _IsHexNumber(ushort c) -> bool
+{
+    return _IsNumber(c) || _InRange<ushort>('a', c, 'f')
+                        || _InRange<ushort>('A', c, 'F');
+}
+
 auto RichTextHelper::toColor(const QStringRef &text) -> QColor
 {
     if (text.isEmpty())
@@ -44,10 +53,10 @@ auto RichTextHelper::replace(const QStringRef &str, const QLatin1String &from,
     for (;;) {
         const int pos = str.indexOf(from, start, s);
         if (pos < 0) {
-            text += _MidRef(str, start);
+            text += str.mid(start);
             break;
         } else {
-            text += _MidRef(str, start, pos - start);
+            text += str.mid(start, pos - start);
             text += to;
             start = pos + len;
         }
@@ -74,8 +83,8 @@ auto RichTextHelper::toFontPixelSize(const QStringRef &size) -> int
     }
     if (i >= size.size())
         return px;
-    const QStringRef unit = _MidRef(size, i);
-    if (unit.size() == 2 && unit.compare("pt", Qt::CaseInsensitive) == 0)
+    const QStringRef unit = size.mid(i);
+    if (unit.size() == 2 && unit.compare("pt", QCI) == 0)
         px = pixelSizeToPointSize(px);
     return px;
 }
@@ -97,7 +106,7 @@ auto RichTextHelper::parseTag(const QStringRef &text,
             pos = text.size();
             return Tag();
         }
-        tag.name = _MidRef(text, pos, 3);
+        tag.name = text.mid(pos, 3);
         pos = text.indexOf('>', pos);
         if (pos < 0)
             pos = text.size();
@@ -106,7 +115,7 @@ auto RichTextHelper::parseTag(const QStringRef &text,
     int start = pos;
     while (pos < text.size() && !isSeparator(at(pos)) && at(pos) != '>')
         ++pos;
-    tag.name = _MidRef(text, start, pos - start);
+    tag.name = text.mid(start, pos - start);
     if (tag.name.startsWith('/')) {
         while (pos < text.size() && at(pos) != '>')
             ++pos;
@@ -134,7 +143,7 @@ auto RichTextHelper::parseTag(const QStringRef &text,
             ++pos;
         }
         Tag::Attr attr;
-        attr.name = _MidRef(text, start, pos - start);
+        attr.name = text.mid(start, pos - start);
         if (skipSeparator(pos, text))
             return Tag();
         if (at(pos) == '=') {
@@ -154,7 +163,7 @@ auto RichTextHelper::parseTag(const QStringRef &text,
                 const ushort c = at(pos);
                 const bool q_end = (q && c == q && at(pos-1) != '\\');
                 if (q_end || (!q && (isSeparator(c) || c == '>'))) {
-                    attr.value = _MidRef(text, start, pos - start);
+                    attr.value = text.mid(start, pos - start);
                     tag.attr.push_back(attr);
                     if (q_end)
                         ++pos;
@@ -215,7 +224,7 @@ auto RichTextHelper::innerText(const char *open, const char *close,
     int ret = 1;
     QRegExp rx(_L("<[\\s\\n\\r]*(") % _L(close)
                % _L(")(>|[^0-9a-zA-Z>]+[^>]*>)"));
-    rx.setCaseSensitivity(Qt::CaseInsensitive);
+    rx.setCaseSensitivity(QCI);
     int start = pos;
     int end = indexOf(text, rx, start);
     if (end < 0) {
@@ -229,7 +238,7 @@ auto RichTextHelper::innerText(const char *open, const char *close,
                 pos += rx.matchedLength();
         }
     }
-    block = _MidRef(text, start, end - start);
+    block = text.mid(start, end - start);
     return ret;
 }
 

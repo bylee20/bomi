@@ -1,5 +1,6 @@
 TEMPLATE = app
-CONFIG += link_pkgconfig debug_and_release precompile_header c++11 object_parallel_to_source
+CONFIG += link_pkgconfig debug_and_release precompile_header \
+	c++11 object_parallel_to_source
 macx:CONFIG -= app_bundle
 
 QT = core gui network quick widgets sql xml
@@ -8,7 +9,7 @@ precompile_header:!isEmpty(PRECOMPILED_HEADER): DEFINES += USING_PCH
 DESTDIR = ../../build
 LIB_DIR = $${DESTDIR}/lib
 INCLUDEPATH += ../mpv ../mpv/build
-LIBS += -L$${LIB_DIR} ../../build/lib/libmpv.a -lbz2 -lz
+LIBS += -L$${LIB_DIR} -lbz2 -lz
 
 include(configure.pro)
 contains( DEFINES, CMPLAYER_RELEASE ) {
@@ -19,6 +20,9 @@ contains( DEFINES, CMPLAYER_RELEASE ) {
 !contains(QMAKE_CXX, clang++) {
 QMAKE_CXXFLAGS += -Wno-non-template-friend
 }
+
+!isEmpty(USE_CCACHE): QMAKE_CXX = ccache $${QMAKE_CXX}
+
 macx {
     QT += macextras
     CONFIG += sdk
@@ -26,8 +30,9 @@ macx {
     ICON = ../../icons/cmplayer.icns
     TARGET = CMPlayer
     LIBS += -liconv -framework Cocoa -framework QuartzCore -framework IOKit \
-	-framework IOSurface -framework Carbon -framework AudioUnit -framework CoreAudio \
-	-framework VideoDecodeAcceleration -framework AudioToolBox
+		-framework IOSurface -framework Carbon -framework AudioUnit \
+		-framework CoreAudio -framework VideoDecodeAcceleration \
+		-framework AudioToolBox
 	HEADERS += player/app_mac.hpp
 	OBJECTIVE_SOURCES += player/app_mac.mm
     INCLUDEPATH += ../ffmpeg ../ffmpeg/libavcodec
@@ -191,7 +196,6 @@ HEADERS += \
 	player/playengine.hpp \
 	player/mainwindow.hpp \
 	player/translator.hpp \
-	player/abrepeater.hpp \
 	player/recentinfo.hpp \
 	player/mpv_helper.hpp \
 	player/playengine_p.hpp \
@@ -215,7 +219,11 @@ HEADERS += \
     tmp/static_for.hpp \
     tmp/type_info.hpp \
     tmp/type_test.hpp \
-    misc/localconnection.hpp
+    misc/localconnection.hpp \
+    player/abrepeatchecker.hpp \
+    widget/openmediabehaviorgroupbox.hpp \
+    tmp/static_op.hpp \
+    dialog/prefdialog_p.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -353,7 +361,6 @@ SOURCES += \
 	player/mrl.cpp \
 	player/translator.cpp \
 	player/pref.cpp \
-	player/abrepeater.cpp \
 	player/playlist.cpp \
 	player/playlistmodel.cpp \
 	player/recentinfo.cpp \
@@ -377,7 +384,10 @@ SOURCES += \
     opengl/opengllogger.cpp \
     misc/jsonstorage.cpp \
     player/mrlstatesqlfield.cpp \
-    misc/localconnection.cpp
+    misc/localconnection.cpp \
+    player/abrepeatchecker.cpp \
+    widget/openmediabehaviorgroupbox.cpp \
+    dialog/prefdialog_p.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

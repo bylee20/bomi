@@ -1,12 +1,16 @@
 #include "subtitle_parser_p.hpp"
 
+SCIA _TimeToMSec(int h, int m, int s, int ms = 0) -> qint64
+{ return ((h * 60 + m) * 60 + s) * 1000 + ms; }
+
+
 auto SamiParser::isParsable() const -> bool
 {
     if (_Same(file().suffix(), "smi") || _Same(file().suffix(), "sami"))
         return true;
     if (skipSeparators())
         return false;
-    if (all().startsWith("<sami", Qt::CaseInsensitive))
+    if (all().startsWith("<sami", QCI))
         return true;
     return false;
 }
@@ -196,13 +200,13 @@ auto MicroDVDParser::_parse(Subtitle &sub) -> void
             const auto name = rxAttr.cap(1);
             const auto value = rxAttr.cap(2);
             if (_Same(name, "y")) {
-                if (value.contains(_L('i'), Qt::CaseInsensitive))
+                if (value.contains(_L('i'), QCI))
                     addTag0("i");
-                if (value.contains(_L('u'), Qt::CaseInsensitive))
+                if (value.contains(_L('u'), QCI))
                     addTag0("u");
-                if (value.contains(_L('s'), Qt::CaseInsensitive))
+                if (value.contains(_L('s'), QCI))
                     addTag0("s");
-                if (value.contains(_L('b'), Qt::CaseInsensitive))
+                if (value.contains(_L('b'), QCI))
                     addTag0("b");
             } else if (_Same(name, "c")) {
                 if (rxColor.indexIn(value) != -1)

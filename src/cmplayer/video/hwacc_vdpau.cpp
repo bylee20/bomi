@@ -1,5 +1,6 @@
 #include "hwacc_vdpau.hpp"
 #include "opengl/opengltexture2d.hpp"
+#include "tmp/static_op.hpp"
 
 void initialize_vdpau_interop(QOpenGLContext *ctx) {
 #ifdef Q_OS_LINUX
@@ -238,8 +239,8 @@ auto HwAccVdpau::fillContext(AVCodecContext *avctx, int w, int h) -> bool
         return false;
     if (!supports || (int)mw < w || (int)mh < h)
         return false;
-    const int width = (w + 1) & ~1;
-    const int height = (h + 3) & ~3;
+    const int width = tmp::aligned<2>(w);
+    const int height = tmp::aligned<4>(w);
     if (!check(Vdpau::decoderCreate(profile.id, width, height,
                                     codec->surfaces, &d->context.decoder))) {
         d->context.decoder = VDP_INVALID_HANDLE;
@@ -334,8 +335,8 @@ auto VdpauMixer::upload(const mp_image *mpi, bool deint) -> bool
 auto VdpauMixer::getAligned(const mp_image */*mpi*/,
                             QVector<QSize> *bytes) -> mp_imgfmt
 {
-    const int width = (this->width() + 1) & ~1;
-    const int height = (this->height() + 3) & ~3;
+    const int width = tmp::aligned<2>(this->width() + 1);
+    const int height = tmp::aligned<4>(this->height() + 3);
     bytes->resize(1);
     (*bytes)[0] = QSize(width*4, height);
     return IMGFMT_BGRA;

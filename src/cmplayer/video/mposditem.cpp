@@ -2,6 +2,7 @@
 #include "mposdbitmap.hpp"
 #include "videoimagepool.hpp"
 #include "misc/dataevent.hpp"
+#include "tmp/static_op.hpp"
 #include "opengl/openglvertex.hpp"
 #include "opengl/opengltexturebinder.hpp"
 #include "opengl/openglframebufferobject.hpp"
@@ -80,12 +81,13 @@ struct MpOsdItem::Data {
     }
 
     void initializeAtlas(const MpOsdBitmap &osd) {
+        using tmp::aligned;
         static const int max = OGL::maximumTextureSize();
         if (osd.sheet().width() > atlasSize.width() || osd.sheet().height() > atlasSize.height()) {
             if (osd.sheet().width() > atlasSize.width())
-                atlasSize.rwidth() = qMin<int>(_Aligned<4>(osd.sheet().width()*1.5), max);
+                atlasSize.rwidth() = qMin<int>(aligned<4>(osd.sheet().width()*1.5), max);
             if (osd.sheet().height() > atlasSize.height())
-                atlasSize.rheight() = qMin<int>(_Aligned<4>(osd.sheet().height()*1.5), max);
+                atlasSize.rheight() = qMin<int>(aligned<4>(osd.sheet().height()*1.5), max);
             atlas.initialize(atlasSize, transfer);
         }
     }

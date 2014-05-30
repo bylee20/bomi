@@ -1,10 +1,11 @@
 #include "playengine.hpp"
 #include "playengine_p.hpp"
+#include "mpv_helper.hpp"
+#include "tmp/type_test.hpp"
 #include "misc/log.hpp"
 #include "misc/tmp.hpp"
 #include "misc/dataevent.hpp"
 #include "audio/audiocontroller.hpp"
-#include "opengl/opengloffscreencontext.hpp"
 #include "video/videooutput.hpp"
 #include "video/hwacc.hpp"
 #include "video/deintoption.hpp"
@@ -14,17 +15,35 @@
 #include "video/videocolor.hpp"
 #include "subtitle/submisc.hpp"
 #include "subtitle/subtitlestyle.hpp"
-#include "enum/interpolatortype.hpp"
-#include "enum/colorrange.hpp"
-#include "enum/channellayout.hpp"
 #include "enum/deintmode.hpp"
+#include "enum/colorrange.hpp"
 #include "enum/audiodriver.hpp"
+#include "enum/channellayout.hpp"
+#include "enum/interpolatortype.hpp"
+#include "opengl/opengloffscreencontext.hpp"
 #include <libmpv/client.h>
-#include "tmp/type_test.hpp"
 
 DECLARE_LOG_CONTEXT(Engine)
 
 auto translator_display_language(const QString &iso) -> QString;
+
+auto reg_play_engine() -> void
+{
+    qRegisterMetaType<PlayEngine::State>("State");
+    qRegisterMetaType<Mrl>("Mrl");
+    qRegisterMetaType<VideoFormat>("VideoFormat");
+    qRegisterMetaType<QVector<int>>("QVector<int>");
+    qRegisterMetaType<StreamList>("StreamList");
+    qRegisterMetaType<AudioFormat>("AudioFormat");
+    qmlRegisterType<ChapterInfoObject>();
+    qmlRegisterType<AudioTrackInfoObject>();
+    qmlRegisterType<SubtitleTrackInfoObject>();
+    qmlRegisterType<AvInfoObject>();
+    qmlRegisterType<AvIoFormat>();
+    qmlRegisterType<MediaInfoObject>();
+    qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
+}
+
 
 enum EndReason {
     EndFailed = -1,
@@ -140,7 +159,7 @@ public:
             m_data.append('"');
     }
     auto add(const char *key, void *value) -> void
-        { add(key, QByteArray::number((quint64)(quintptr)value)); }
+        { add(key, address_cast<QByteArray>(value)); }
     auto add(const char *key, double value) -> void
         { add(key, QByteArray::number(value)); }
     auto add(const char *key, int value) -> void
@@ -742,6 +761,17 @@ auto PlayEngine::speed() const -> double
     return d->speed;
 }
 
+SIA _ChangeZ(double &the, double one) -> bool
+{
+    if (qFuzzyCompare(one, 1.0))
+        one = 1.0;
+    if (!qFuzzyCompare(the, one)) {
+        the = one;
+        return true;
+    }
+    return false;
+}
+
 auto PlayEngine::setSpeed(double speed) -> void
 {
     if (_ChangeZ(d->speed, speed)) {
@@ -810,9 +840,10 @@ const std::array<AudioDriverName, AudioDriverInfo::size()-1> audioDriverNames =
 auto PlayEngine::setAudioDriver(AudioDriver driver) -> void
 {
     if (_Change(d->audioDriver, driver)) {
-        auto it = _FindIf(audioDriverNames,
-                          [driver] (const AudioDriverName &one)
-                              { return one.first == driver; });
+        auto it = std::find_if(
+            audioDriverNames.begin(), audioDriverNames.end(),
+            [driver] (const AudioDriverName &one) {return one.first == driver;}
+        );
         d->ao = it != audioDriverNames.end() ? it->second : "";
     }
 }
@@ -835,13 +866,10 @@ auto PlayEngine::volumeNormalizer() const -> double
 
 auto PlayEngine::setHwAcc(int backend, const QVector<int> &codecs) -> void
 {
-    for (auto id : codecs) {
-        if (const char *name = HwAcc::codecName(id)) {
-            d->hwaccCodecs.append(name);
-            d->hwaccCodecs.append(',');
-        }
-    }
-    d->hwaccCodecs.chop(1);
+    d->hwaccCodecs = _ToStringList(codecs, [] (int id) {
+        const char *name = HwAcc::codecName(id);
+        return name ? QString(name) : QString();
+    }).join(',').toLatin1();
     d->hwaccBackend = HwAcc::Type(backend);
 }
 
@@ -1222,6 +1250,18 @@ auto PlayEngine::setMuted(bool muted) -> void
         d->setmpv_async("mute", d->muted);
         emit mutedChanged(d->muted);
     }
+}
+
+SIA _IsAlphabet(ushort c) -> bool
+{return _InRange<ushort>('a', c, 'z') || _InRange<ushort>('A', c, 'Z');}
+
+SIA _IsAlphabet(const QString &text) -> bool
+{
+    for (auto &c : text) {
+        if (!_IsAlphabet(c.unicode()))
+            return false;
+    }
+    return true;
 }
 
 auto PlayEngine::exec() -> void
@@ -1652,23 +1692,6 @@ auto PlayEngine::bitrate(double fps) const -> double
 auto PlayEngine::videoFormat() const -> VideoFormat
 {
     return d->videoFormat;
-}
-
-auto PlayEngine::registerObjects() -> void
-{
-    qRegisterMetaType<PlayEngine::State>("State");
-    qRegisterMetaType<Mrl>("Mrl");
-    qRegisterMetaType<VideoFormat>("VideoFormat");
-    qRegisterMetaType<QVector<int>>("QVector<int>");
-    qRegisterMetaType<StreamList>("StreamList");
-    qRegisterMetaType<AudioFormat>("AudioFormat");
-    qmlRegisterType<ChapterInfoObject>();
-    qmlRegisterType<AudioTrackInfoObject>();
-    qmlRegisterType<SubtitleTrackInfoObject>();
-    qmlRegisterType<AvInfoObject>();
-    qmlRegisterType<AvIoFormat>();
-    qmlRegisterType<MediaInfoObject>();
-    qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
 }
 
 auto PlayEngine::setVolumeNormalizerActivated(bool on) -> void

@@ -67,7 +67,7 @@ auto VideoFrameShader::updateTexCoords() -> void
 
     QPointF p1 = {0.0, 0.0}, p2 = {1.0, 1.0};
     if (m_target == OGL::Target2D)
-        p2.rx() = _Ratio(m_params.w, m_textures.first().width());
+        p2.rx() = m_params.w/(double)m_textures.first().width();
     else
         p2 = QPointF(m_params.w, m_params.h);
     if (m_flipped)

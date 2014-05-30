@@ -82,7 +82,7 @@ inline auto UtilObject::msecToString(int ms) -> QString
 { return secToString(qRound((double)ms*1e-3)); }
 
 inline auto UtilObject::secToString(int s) -> QString
-{return Pch::_NullTime.addSecs(s).toString(_L("h:mm:ss"));}
+{ return _MSecToTime(s*1000).toString(_L("h:mm:ss")); }
 
 inline auto UtilObject::bound(double min, double v, double max) const -> double
 {return qBound(min, v, max);}
@@ -122,7 +122,7 @@ inline auto UtilObject::setQmlEngine(QQmlEngine *engine) -> void
 
 inline auto UtilObject::removeKeyItem(QQuickItem *item) -> bool
 {
-    auto it = _Find(m_keyItems.begin(), m_keyItems.end(), item);
+    auto it = std::find(m_keyItems.begin(), m_keyItems.end(), item);
     if (it == m_keyItems.end())
         return false;
     m_keyItems.erase(it);

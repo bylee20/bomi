@@ -3,10 +3,6 @@
 
 namespace tmp { // simple template meta progamming
 
-template <int N> constexpr auto log2() -> int { static_assert(N != 0, "wrong argument for log2"); return log2<N/2>() + 1; }
-template <> constexpr int log2<1>() { return 0; }
-template <class T> constexpr auto log2bitsof() -> int { return log2<sizeof(T)*8>(); }
-
 template<int... S>
 struct index_list {
     template<int n>

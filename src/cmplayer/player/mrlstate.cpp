@@ -86,31 +86,37 @@ auto MrlState::restorableProperties() -> QVector<PropertyInfo>
     ADD(play_speed, qApp->translate("MrlState", "Playback Speed"));
 
     ADD(video_interpolator, qApp->translate("MrlState", "Video Interpolator"));
-    ADD(video_chroma_upscaler,  qApp->translate("MrlState", "Video Chroma Upscaler"));
-    ADD(video_aspect_ratio,  qApp->translate("MrlState", "Video Aspect Ratio"));
-    ADD(video_crop_ratio,  qApp->translate("MrlState", "Video Crop Ratio"));
-    ADD(video_deinterlacing,  qApp->translate("MrlState", "Video Deinterlacing"));
-    ADD(video_dithering,  qApp->translate("MrlState", "Video Dithering"));
-    ADD(video_offset,  qApp->translate("MrlState", "Video Screen Position"));
-    ADD(video_vertical_alignment,  qApp->translate("MrlState", "Video Vertical Alignment"));
-    ADD(video_horizontal_alignment,  qApp->translate("MrlState", "Video Horizontal Alignment"));
-    ADD(video_color,  qApp->translate("MrlState", "Video Color Adjustment"));
-    ADD(video_range,  qApp->translate("MrlState", "Video Color Range"));
+    ADD(video_chroma_upscaler,
+        qApp->translate("MrlState", "Video Chroma Upscaler"));
+    ADD(video_aspect_ratio, qApp->translate("MrlState", "Video Aspect Ratio"));
+    ADD(video_crop_ratio, qApp->translate("MrlState", "Video Crop Ratio"));
+    ADD(video_deinterlacing,
+        qApp->translate("MrlState", "Video Deinterlacing"));
+    ADD(video_dithering, qApp->translate("MrlState", "Video Dithering"));
+    ADD(video_offset, qApp->translate("MrlState", "Video Screen Position"));
+    ADD(video_vertical_alignment,
+        qApp->translate("MrlState", "Video Vertical Alignment"));
+    ADD(video_horizontal_alignment,
+        qApp->translate("MrlState", "Video Horizontal Alignment"));
+    ADD(video_color, qApp->translate("MrlState", "Video Color Adjustment"));
+    ADD(video_range, qApp->translate("MrlState", "Video Color Range"));
 
-    ADD(audio_volume,  qApp->translate("MrlState", "Audio Volume"));
-    ADD(audio_amplifier,  qApp->translate("MrlState", "Audio Amp"));
-    ADD(audio_sync,  qApp->translate("MrlState", "Audio Sync"));
-    ADD(audio_track,  qApp->translate("MrlState", "Audio Track"));
-    ADD(audio_muted,  qApp->translate("MrlState", "Audio Mute"));
-    ADD(audio_volume_normalizer,  qApp->translate("MrlState", "Audio Volume Normalizer"));
-    ADD(audio_tempo_scaler,  qApp->translate("MrlState", "Audio Tempo Scaler"));
-    ADD(audio_channel_layout,  qApp->translate("MrlState", "Audio Channel Layout"));
+    ADD(audio_volume, qApp->translate("MrlState", "Audio Volume"));
+    ADD(audio_amplifier, qApp->translate("MrlState", "Audio Amp"));
+    ADD(audio_sync, qApp->translate("MrlState", "Audio Sync"));
+    ADD(audio_track, qApp->translate("MrlState", "Audio Track"));
+    ADD(audio_muted, qApp->translate("MrlState", "Audio Mute"));
+    ADD(audio_volume_normalizer,
+        qApp->translate("MrlState", "Audio Volume Normalizer"));
+    ADD(audio_tempo_scaler, qApp->translate("MrlState", "Audio Tempo Scaler"));
+    ADD(audio_channel_layout,
+        qApp->translate("MrlState", "Audio Channel Layout"));
 
-    ADD(sub_track,  qApp->translate("MrlState", "Subtitle Track"));
-    ADD(sub_alignment,  qApp->translate("MrlState", "Subtitle Alignment"));
-    ADD(sub_display,  qApp->translate("MrlState", "Subtitle Display"));
-    ADD(sub_position,  qApp->translate("MrlState", "Subtitle Position"));
-    ADD(sub_sync,  qApp->translate("MrlState", "Subtitle Sync"));
+    ADD(sub_track, qApp->translate("MrlState", "Subtitle Track"));
+    ADD(sub_alignment, qApp->translate("MrlState", "Subtitle Alignment"));
+    ADD(sub_display, qApp->translate("MrlState", "Subtitle Display"));
+    ADD(sub_position, qApp->translate("MrlState", "Subtitle Position"));
+    ADD(sub_sync, qApp->translate("MrlState", "Subtitle Sync"));
 
     return properties;
 }
@@ -152,8 +158,10 @@ auto _ImportMrlStates(int version, QSqlDatabase db)
                 continue;
             auto state = new MrlState;
             state->mrl = mrl;
-            state->last_played_date_time = set.value("date", QDateTime()).toDateTime();
-            state->resume_position = set.value("stopped-position", 0).toInt();
+            state->last_played_date_time
+                    = set.value("date", QDateTime()).toDateTime();
+            state->resume_position
+                    = set.value("stopped-position", 0).toInt();
             states.append(state);
         }
     } else if (version < 2) {
@@ -162,7 +170,8 @@ auto _ImportMrlStates(int version, QSqlDatabase db)
         const auto fields = MrlFieldV1::list();
         const auto columns = _MrlFieldColumnListString(fields);
         MrlStateV1 prev;
-        query.exec(QString("SELECT %1, (SELECT COUNT(*) FROM state) as total FROM state").arg(columns));
+        query.exec(QString("SELECT %1, (SELECT COUNT(*) FROM state) as total "
+                           "FROM state").arg(columns));
         while (query.next()) {
             _FillMrlStateFromRecord(&prev, fields, query.record());
             auto state = new MrlState;

@@ -1,6 +1,5 @@
 #include "app.hpp"
 #include "mainwindow.hpp"
-#include "playengine.hpp"
 #include "video/hwacc.hpp"
 #include "misc/log.hpp"
 #include "misc/json.hpp"
@@ -16,13 +15,16 @@ auto reg_playlist_model() -> void;
 auto reg_app_object() -> void;
 auto reg_settings_object() -> void;
 auto reg_theme_object() -> void;
+auto reg_play_engine() -> void;
 
 namespace OGL { auto check() -> void; }
 
 int main(int argc, char **argv) {
     qputenv("PX_MODULE_PATH", "/this-is-dummy-path-to-disable-libproxy");
 #ifdef Q_OS_LINUX
-    auto gtk_disable_setlocale = (void(*)(void))QLibrary::resolve(_L("gtk-x11-2.0"), 0, "gtk_disable_setlocale");
+    auto gtk_disable_setlocale
+            = (void(*)(void))QLibrary::resolve(_L("gtk-x11-2.0"),
+                                               0, "gtk_disable_setlocale");
     if (gtk_disable_setlocale)
         gtk_disable_setlocale();
 #endif
@@ -37,7 +39,8 @@ int main(int argc, char **argv) {
     reg_busy_icon_item();
     reg_app_object();
     reg_settings_object();
-    PlayEngine::registerObjects();
+    reg_play_engine();
+
     App app(argc, argv);
     if (app.isUnique()
             && app.sendMessage(App::CommandLine, _ToJson(app.arguments()))) {

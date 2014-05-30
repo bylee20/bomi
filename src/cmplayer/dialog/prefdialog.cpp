@@ -1,9 +1,9 @@
 #include "prefdialog.hpp"
+#include "prefdialog_p.hpp"
 #include "shortcutdialog.hpp"
 #include "player/app.hpp"
 #include "player/skin.hpp"
 #include "player/pref.hpp"
-#include "player/rootmenu.hpp"
 #include "player/mrlstate.hpp"
 #include "widget/deintwidget.hpp"
 #include "misc/simplelistmodel.hpp"
@@ -26,198 +26,16 @@ public:
         { return at(row).description; }
 };
 
-// from clementine's preferences dialog
-
-static const int CategoryRole = Qt::UserRole + 1;
-static const int WidgetRole = Qt::UserRole + CategoryRole;
-
-class PrefOpenMediaGroup : public QGroupBox {
-    Q_DECLARE_TR_FUNCTIONS(PrefOpenMediaGroup)
-public:
-    PrefOpenMediaGroup(const QString &title, QWidget *parent)
-        : QGroupBox(title, parent)
-    {
-        auto layout = new QVBoxLayout(this);
-        start = new QCheckBox(tr("Start the playback"), this);
-        playlist = new EnumComboBox<OpenMediaBehavior>(this);
-        layout->addWidget(start);
-        layout->addWidget(playlist);
-        auto vbox = static_cast<QVBoxLayout*>(parent->layout());
-        vbox->insertWidget(vbox->count()-1, this);
-    }
-    auto setValue(const OpenMediaInfo &open) -> void
-    {
-        start->setChecked(open.start_playback);
-        playlist->setCurrentValue(open.behavior);
-    }
-    auto value() const -> OpenMediaInfo
-    {
-        return OpenMediaInfo(start->isChecked(), playlist->currentValue());
-    }
-private:
-    QCheckBox *start;
-    EnumComboBox<OpenMediaBehavior> *playlist;
-};
-
-class PrefDialog::MenuTreeItem : public QTreeWidgetItem {
-public:
-    enum Column {
-        Discription = 0, Shortcut1, Shortcut2, Shortcut3, Shortcut4, Id
-    };
-    auto isMenu() const -> bool { return m_action->menu() != 0; }
-    auto isSeparator() const -> bool { return m_action->isSeparator(); }
-    auto shortcut(int i) const -> QKeySequence {return m_shortcuts[i];}
-    auto setShortcut(int idx, const QKeySequence &shortcut) -> void
-    {
-        m_shortcuts[idx] = shortcut;
-        setText(idx + Shortcut1, shortcut.toString(QKeySequence::NativeText));
-    }
-    auto setShortcuts(const QList<QKeySequence> &keys) -> void
-    {
-        for (int i = 0; i<(int)m_shortcuts.size(); ++i) {
-            m_shortcuts[i] = (i < keys.size()) ? keys[i] : QKeySequence();
-            setText(i+1, m_shortcuts[i].toString(QKeySequence::NativeText));
-        }
-    }
-    auto shortcuts() const -> QList<QKeySequence>
-    {
-        QList<QKeySequence> shortcuts;
-        for (auto key : m_shortcuts) {
-            if (!key.isEmpty())
-                shortcuts << key;
-        }
-        return shortcuts;
-    }
-    auto id() const -> QString { return m_id; }
-    static auto makeRoot(QTreeWidget *parent,
-                         QList<MouseAction> &info) -> QList<MenuTreeItem*>
-    {
-        RootMenu &root = RootMenu::instance();
-        QList<MenuTreeItem*> items;
-        auto item = create(&root, items, "", info);
-        parent->addTopLevelItems(item->takeChildren());
-        delete item;
-        return items;
-    }
-private:
-    static auto create(Menu *menu, QList<MenuTreeItem*> &items,
-                       const QString &prefix,
-                       QList<MouseAction> &list) -> MenuTreeItem*
-    {
-        RootMenu &root = RootMenu::instance();
-        QList<QAction*> actions = menu->actions();
-        QList<QTreeWidgetItem*> children;
-        for (int i=0; i<actions.size(); ++i) {
-            const auto action = actions[i];
-            const auto id = root.longId(action);
-            if (!id.isEmpty()) {
-                if (action->menu()) {
-                    auto menu = qobject_cast<Menu*>(action->menu());
-                    Q_ASSERT(menu);
-                    const QString subprefix = prefix % menu->title()  % " > ";
-                    if (auto child = create(menu, items, subprefix, list))
-                        children.push_back(child);
-                } else {
-                    auto child = new MenuTreeItem(action, 0);
-                    child->setText(Id, child->m_id = id);
-                    items.push_back(child);
-                    children.push_back(child);
-                    list.append({ prefix % action->text(), id });
-                }
-            }
-        }
-        if (children.isEmpty())
-            return 0;
-        MenuTreeItem *item = new MenuTreeItem(menu, 0);
-        item->addChildren(children);
-        return item;
-    }
-    MenuTreeItem(Menu *menu, MenuTreeItem *parent)
-        : QTreeWidgetItem(parent)
-        , m_action(menu->menuAction())
-    {
-        setText(Discription, menu->title());
-    }
-    MenuTreeItem(QAction *action, MenuTreeItem *parent)
-        : QTreeWidgetItem(parent)
-        , m_action(action)
-    {
-        Q_ASSERT(action->menu() == 0);
-        setText(Discription, m_action->text());
-    }
-    QAction *m_action; QString m_id;
-    std::array<QKeySequence, 4> m_shortcuts;
-};
-
-
-class PrefDialog::Delegate : public QStyledItemDelegate {
-public:
-    Delegate(QObject* parent): QStyledItemDelegate(parent) { }
-    auto sizeHint(const QStyleOptionViewItem& option,
-                  const QModelIndex& index) const -> QSize {
-        QSize size = QStyledItemDelegate::sizeHint(option, index);
-        if (index.data(CategoryRole).toBool())
-            size.rheight() *= 2;
-        return size;
-    }
-    auto paint(QPainter *p, const QStyleOptionViewItem &o,
-               const QModelIndex &idx) const -> void {
-        if (idx.data(CategoryRole).toBool())
-            drawHeader(p, o.rect, o.font, o.palette, idx.data().toString());
-        else
-            QStyledItemDelegate::paint(p, o, idx);
-    }
-private:
-    static constexpr int kBarThickness = 2;
-    static constexpr int kBarMarginTop = 3;
-    static auto drawHeader(QPainter *painter, const QRect &rect,
-                           const QFont &font, const QPalette &palette,
-                           const QString &text) -> void {
-      painter->save();
-
-      // Bold font
-      QFont bold_font(font);
-      bold_font.setBold(true);
-      QFontMetrics metrics(bold_font);
-
-      QRect text_rect(rect);
-      text_rect.setHeight(metrics.height());
-      const auto by = (rect.height() - text_rect.height()
-                       - kBarThickness - kBarMarginTop) / 2;
-      text_rect.moveTop(rect.top() + by);
-      text_rect.setLeft(text_rect.left() + 3);
-
-      // Draw text
-      painter->setFont(bold_font);
-      painter->drawText(text_rect, text);
-
-      // Draw a line underneath
-      const QPoint start(rect.left(), text_rect.bottom() + kBarMarginTop);
-      const QPoint end(rect.right(), start.y());
-
-      painter->setRenderHint(QPainter::Antialiasing, true);
-      const auto color = palette.color(QPalette::Disabled, QPalette::Text);
-      painter->setPen(QPen(color, kBarThickness, Qt::SolidLine, Qt::RoundCap));
-      painter->setOpacity(0.5);
-      painter->drawLine(start, end);
-
-      painter->restore();
-    }
-};
-
-
 /******************************************************************************/
 
 struct PrefDialog::Data {
     Ui::PrefDialog ui;
-    QList<MouseActionGroupBox::Action> actionInfo;
+    QList<MouseAction> actionInfo;
     QButtonGroup *shortcuts;
     QMap<int, QCheckBox*> hwdec;
     QMap<DeintMethod, QCheckBox*> hwdeint;
-    PrefOpenMediaGroup *open_media_from_file_manager;
-    PrefOpenMediaGroup *open_media_by_drag_and_drop;
     QStringList imports;
-    QList<MenuTreeItem*> actionItems;
+    QList<PrefMenuTreeItem*> actionItems;
     DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
     MrlStatePropertyListModel properties;
     auto updateCodecCheckBox() -> void
@@ -251,7 +69,7 @@ struct PrefDialog::Data {
 PrefDialog::PrefDialog(QWidget *parent)
 : QDialog(parent), d(new Data) {
     d->ui.setupUi(this);
-    d->ui.tree->setItemDelegate(new Delegate(d->ui.tree));
+    d->ui.tree->setItemDelegate(new PrefDelegate(d->ui.tree));
     d->ui.tree->setIconSize(QSize(16, 16));
 
     connect(d->ui.tree, &QTreeWidget::itemSelectionChanged, [this] () {
@@ -331,11 +149,6 @@ PrefDialog::PrefDialog(QWidget *parent)
     addPage(tr("Control step"), d->ui.ui_step,
             ":/img/run-build-32.png", ui);
 
-    _New(d->open_media_from_file_manager,
-         tr("Open from file manager"), d->ui.open_media);
-    _New(d->open_media_by_drag_and_drop,
-         tr("Open by drag-and-drop"), d->ui.open_media);
-
     auto vbox = new QVBoxLayout;
     vbox->setMargin(0);
 
@@ -383,7 +196,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->shortcuts->addButton(d->ui.shortcut3, 2);
     d->shortcuts->addButton(d->ui.shortcut4, 3);
 
-    d->actionItems = MenuTreeItem::makeRoot(d->ui.shortcut_tree, d->actionInfo);
+    d->actionItems = PrefMenuTreeItem::makeRoot(d->ui.shortcut_tree, d->actionInfo);
     d->ui.shortcut_tree->header()->resizeSection(0, 200);
 
     d->ui.mouse_double_click->set(d->actionInfo);
@@ -442,7 +255,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     void(QButtonGroup::*buttonClicked)(int) = &QButtonGroup::buttonClicked;
     connect(d->shortcuts, buttonClicked, [this] (int idx) {
         auto treeItem = d->ui.shortcut_tree->currentItem();
-        auto item = static_cast<MenuTreeItem*>(treeItem);
+        auto item = static_cast<PrefMenuTreeItem*>(treeItem);
         if (item && !item->isMenu()) {
             ShortcutDialog dlg(item->shortcut(idx), this);
             if (dlg.exec())
@@ -451,7 +264,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     });
     connect(d->ui.shortcut_tree, &QTreeWidget::currentItemChanged,
             [this] (QTreeWidgetItem *it) {
-        MenuTreeItem *item = static_cast<MenuTreeItem*>(it);
+        auto item = static_cast<PrefMenuTreeItem*>(it);
         const QList<QAbstractButton*> buttons = d->shortcuts->buttons();
         for (int i=0; i<buttons.size(); ++i)
             buttons[i]->setEnabled(item && !item->isMenu());
@@ -560,8 +373,8 @@ static void getHw(bool &enabled, QGroupBox *group,
 
 auto PrefDialog::set(const Pref &p) -> void
 {
-    d->open_media_from_file_manager->setValue(p.open_media_from_file_manager);
-    d->open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
+    d->ui.open_media_from_file_manager->setValue(p.open_media_from_file_manager);
+    d->ui.open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
 
     d->ui.use_mpris2->setChecked(p.use_mpris2);
     d->ui.fit_to_video->setChecked(p.fit_to_video);
@@ -699,8 +512,8 @@ auto PrefDialog::set(const Pref &p) -> void
 
 auto PrefDialog::get(Pref &p) -> void
 {
-    p.open_media_from_file_manager = d->open_media_from_file_manager->value();
-    p.open_media_by_drag_and_drop = d->open_media_by_drag_and_drop->value();
+    p.open_media_from_file_manager = d->ui.open_media_from_file_manager->value();
+    p.open_media_by_drag_and_drop = d->ui.open_media_by_drag_and_drop->value();
 
     p.use_mpris2 = d->ui.use_mpris2->isChecked();
     p.fit_to_video = d->ui.fit_to_video->isChecked();

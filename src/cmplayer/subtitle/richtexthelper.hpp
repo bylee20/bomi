@@ -5,6 +5,12 @@ class RichTextHelper {
 public:
     virtual ~RichTextHelper() {}
 
+    SIA _Same(const QString &str, const char *latin1) -> bool
+    { return !str.compare(_L(latin1), QCI); }
+
+    SIA _Same(const QStringRef &str, const char *latin1) -> bool
+    { return !str.compare(_L(latin1), QCI); }
+
     static auto toInt(const QStringRef &text) -> int;
     static auto toColor(const QStringRef &text) -> QColor;
     static auto isRightBracket(ushort c) -> bool {return c == '>';}
@@ -14,7 +20,7 @@ public:
     static auto isNewLine(ushort c) -> bool { return c == '\r' || c == '\n'; }
     static auto replace(const QStringRef &str, const QLatin1String &from,
                         const QLatin1String &to,
-                        Qt::CaseSensitivity s = Qt::CaseInsensitive) -> QString;
+                        Qt::CaseSensitivity s = QCI) -> QString;
     static auto indexOf(const QStringRef &ref, QRegExp &rx, int from=0) -> int;
     static auto indexOf(const QStringRef &ref,
                         QRegularExpression &rx, int from = 0) -> int;
@@ -27,7 +33,7 @@ public:
         int start = 0, end = text.size();
         while (start < end && isSeparator(text.at(start).unicode())) ++start;
         while (end > start && isSeparator(text.at(end-1).unicode())) --end;
-        return start < end ? _MidRef(text, start, end-start) : QStringRef();
+        return start < end ? text.mid(start, end-start) : QStringRef();
     }
     static auto skipSeparator(int &pos, const QStringRef &text) -> bool
     {

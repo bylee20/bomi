@@ -9,7 +9,7 @@ template<class T>
 class EnumInfo;
 
 template<class T>
-struct JsonIO;
+struct JsonIO { };
 
 struct JsonQStringType { SCA qt_type = QJsonValue::String; };
 

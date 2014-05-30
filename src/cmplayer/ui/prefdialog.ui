@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -109,6 +109,20 @@
              </widget>
             </item>
            </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="OpenMediaBehaviorGroupBox" name="open_media_from_file_manager">
+           <property name="title">
+            <string>Open from file manager</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="OpenMediaBehaviorGroupBox" name="open_media_by_drag_and_drop">
+           <property name="title">
+            <string>Open by drag-and-drop</string>
+           </property>
           </widget>
          </item>
          <item>
@@ -3674,6 +3688,12 @@ e.g.: English, Korean</string>
    <header>widget/mouseactiongroupbox.hpp</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>OpenMediaBehaviorGroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>widget/openmediabehaviorgroupbox.hpp</header>
+   <container>1</container>
+  </customwidget>
  </customwidgets>
  <resources>
   <include location="../rsclist.qrc"/>
@@ -3686,12 +3706,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>531</x>
-     <y>344</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>455</x>
-     <y>374</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3702,12 +3722,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>531</x>
-     <y>344</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>382</x>
-     <y>374</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3734,12 +3754,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>531</x>
-     <y>96</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>531</x>
-     <y>122</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3750,12 +3770,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>531</x>
-     <y>189</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>531</x>
-     <y>215</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3766,12 +3786,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>531</x>
-     <y>96</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>531</x>
-     <y>124</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3782,12 +3802,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>531</x>
-     <y>191</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>531</x>
-     <y>219</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3798,12 +3818,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>531</x>
-     <y>191</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>396</x>
-     <y>248</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3814,12 +3834,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>531</x>
-     <y>128</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>531</x>
-     <y>116</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3830,12 +3850,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>522</x>
-     <y>362</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>541</x>
-     <y>393</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3846,12 +3866,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>662</x>
-     <y>278</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>662</x>
-     <y>303</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3862,12 +3882,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>438</x>
-     <y>181</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>483</x>
-     <y>175</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>
@@ -3878,12 +3898,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>313</x>
-     <y>173</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
     <hint type="destinationlabel">
-     <x>325</x>
-     <y>202</y>
+     <x>315</x>
+     <y>68</y>
     </hint>
    </hints>
   </connection>

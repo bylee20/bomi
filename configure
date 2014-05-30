@@ -422,7 +422,9 @@ parse_file() {
         done
 }
 
-parse_file "src/cmplayer/configure.pro" defines config libs cflags
+rootdir=`pwd`
+
+parse_file "src/cmplayer/configure.pro" defines config libs cflags rootdir
 parse_file "Makefile" os qmake PKG_CONFIG_PATH prefix bindir datadir icondir appdir actiondir \
         skindir importdir parallel qtsdk macdeployqt
 parse_file "build-mpv" mpv_args parallel os njobs PKG_CONFIG_PATH

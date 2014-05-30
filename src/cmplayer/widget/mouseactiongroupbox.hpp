@@ -6,16 +6,15 @@ struct KeyModifierActionMap;
 class MouseActionGroupBox : public QGroupBox {
     Q_OBJECT
 public:
-    struct Action { QString name, id; };
+    using Action = QPair<QString, QString>;
     MouseActionGroupBox(QWidget *parent = nullptr);
     ~MouseActionGroupBox();
-    auto set(const QList<Action> &list) -> void;
+    auto set(const QList<QPair<QString, QString>> &list) -> void;
     auto setValues(const KeyModifierActionMap &map) -> void;
     auto values() const -> KeyModifierActionMap;
 private:
     struct Data;
     Data *d;
 };
-
 
 #endif // MOUSEACTIONGROUPBOX_HPP

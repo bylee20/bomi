@@ -14,4 +14,3 @@ auto json_io(const QSizeF*) -> const decltype(JSON_IO_SIZE(QSizeF))*
 
 auto json_io(const QStringList*) -> const JsonArrayIO<QString, QStringList>*
 { static const JsonArrayIO<QString, QStringList> io{}; return &io; }
-
