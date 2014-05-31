@@ -106,7 +106,8 @@ auto Vdpau::initialize() -> void
             auto &supports = d.supports[codec];
             supports.id = codec;
             supports.profiles.push_back(pair);
-            supports.surfaces = qMin(surfaces + 2, 16);
+            Q_ASSERT(surfaces <= 16);
+            supports.surfaces = surfaces;
         }
     };
 #define PAIR(vdp, ff) { get(VDP_DECODER_PROFILE_##vdp), FF_PROFILE_##ff }
@@ -240,13 +241,13 @@ auto HwAccVdpau::fillContext(AVCodecContext *avctx, int w, int h) -> bool
     if (!supports || (int)mw < w || (int)mh < h)
         return false;
     const int width = tmp::aligned<2>(w);
-    const int height = tmp::aligned<4>(w);
+    const int height = tmp::aligned<4>(h);
     if (!check(Vdpau::decoderCreate(profile.id, width, height,
                                     codec->surfaces, &d->context.decoder))) {
         d->context.decoder = VDP_INVALID_HANDLE;
         return false;
     }
-    if (!d->pool.create(codec->surfaces, width, height, chroma))
+    if (!d->pool.create(codec->surfaces + 2, width, height, chroma))
         return false;
     return true;
 }
