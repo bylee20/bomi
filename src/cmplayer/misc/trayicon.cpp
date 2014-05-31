@@ -105,7 +105,7 @@ static bool tryUnity() {
     if (!init) {
         init = true;
         _Debug("DE is Unity. Fallback to AppIndicator instead of QSytemTrayIcon.");
-        QLibrary gtk(_L("gtk-x11-2.0"), 0), ai(_L("libappindicator"), 1);
+        QLibrary gtk(u"gtk-x11-2.0"_q, 0), ai(u"libappindicator"_q, 1);
         if (!gtk.load() || !ai.load())
             return false;
         auto lib = &gtk;

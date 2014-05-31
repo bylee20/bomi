@@ -136,9 +136,9 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
             mbox.exec();
             switch (mbox.clickedRole()) {
             case BBox::ActionRole: {
-                const QString suffix = _L('.') % info.suffix();
+                const QString suffix = '.' % info.suffix();
                 const QString filter = tr("Subtitle Files")
-                                       % _L(" (*") % suffix % _L(')');
+                                       % " (*"_a % suffix % ')';
                 file = QFileDialog::getSaveFileName(this, tr("Save As..."),
                                                     file, filter);
                 if (file.isEmpty())

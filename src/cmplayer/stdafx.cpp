@@ -101,11 +101,11 @@ auto _ToFilter(ExtTypes exts) -> QString
             return QString();
         QString filter;
         if (!name.isEmpty())
-            filter += name % _L(' ');
-        filter += _L('(');
+            filter += name % ' ';
+        filter += '('_q;
         for (auto &ext : exts)
-            filter += _L("*.") % ext % _L(' ');
-        filter[filter.size() - 1] = _L(')');
+            filter += "*."_a % ext % ' ';
+        filter[filter.size() - 1] = ')'_q;
         return filter;
     };
     QStringList filter;
@@ -177,7 +177,7 @@ auto _GetSaveFile(QWidget *parent, const QString &title,
     if (file.isEmpty())
         return QString();
     if (!file.endsWith(filter))
-        file += _L('.') % filter;
+        file += '.' % filter;
     folder = QFileInfo(file).absolutePath();
     return file;
 }

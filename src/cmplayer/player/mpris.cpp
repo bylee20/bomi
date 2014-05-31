@@ -18,7 +18,7 @@ auto getMainWindow() -> MainWindow*
 RootObject::RootObject(QObject *parent)
     : QObject(parent)
 {
-    m_name = _L("org.mpris.MediaPlayer2.CMPlayer");
+    m_name = u"org.mpris.MediaPlayer2.CMPlayer"_q;
     auto bus = QDBusConnection::sessionBus();
     auto ok = bus.registerService(m_name);
     if (!ok) {
@@ -48,7 +48,7 @@ static auto dbusTrackId(const Mrl &mrl) -> QString
 {
     using Hash = QCryptographicHash;
     const auto hash = Hash::hash(mrl.toString().toLocal8Bit(), Hash::Md5);
-    return _L("/net/xylosper/CMPlayer/track_") + hash.toHex();
+    return u"/net/xylosper/CMPlayer/track_"_q + hash.toHex();
 }
 
 static auto sendPropertiesChanged(const QDBusAbstractAdaptor *adaptor,
@@ -153,12 +153,12 @@ struct Player::Data {
     {
         switch (state) {
         case PlayEngine::Playing:
-            return _L("Playing");
+            return u"Playing"_q;
         case PlayEngine::Paused:
         case PlayEngine::Buffering:
-            return _L("Paused");
+            return u"Paused"_q;
         default:
-            return _L("Stopped");
+            return u"Stopped"_q;
         }
     }
     auto toDBus(const MetaData &md) const -> QVariantMap
@@ -233,7 +233,7 @@ auto Player::playbackStatus() const -> QString
 
 auto Player::loopStatus() const -> QString
 {
-    return _L("None");
+    return u"None"_q;
 }
 
 auto Player::setLoopStatus(const QString &/*status*/) -> void

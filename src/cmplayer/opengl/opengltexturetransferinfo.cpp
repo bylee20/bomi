@@ -40,6 +40,6 @@ auto OpenGLTextureTransferInfo::get(OGL::TransferFormat format,
             }
         }
     }
-    Q_ASSERT(bpc == 1 || bpc == 2);
+    Q_ASSERT(_IsOneOf(bpc, 1, 2));
     return _C(formats[bpc-1])[format];
 }

@@ -126,7 +126,7 @@ static auto _MrlFieldColumnListString(const QList<F> &list) -> QString
 {
     QString columns;
     for (auto &f : list)
-        columns += f.property().name() % _L(", ");
+        columns += f.property().name() % ", "_a;
     columns.chop(2);
     return columns;
 }
@@ -181,7 +181,7 @@ auto _ImportMrlStates(int version, QSqlDatabase db)
         db.rollback();
     } else if (version < 3) {
         const auto fields = MrlFieldV2::list();
-        const QString stateTable = _L("state") % _N(2);
+        const QString stateTable = "state"_a % _N(2);
         const QString select = QString::fromLatin1("SELECT %1 FROM %2")
                                .arg(_MrlFieldColumnListString(fields));
         QSqlQuery query(db);

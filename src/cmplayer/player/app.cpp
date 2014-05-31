@@ -13,7 +13,7 @@
 #include "mpris.hpp"
 #endif
 
-#define APP_GROUP _L("application")
+#define APP_GROUP "application"_a
 
 DECLARE_LOG_CONTEXT(App)
 
@@ -74,8 +74,8 @@ struct App::Data {
     }
     void addOption(LineCmd cmd, const QStringList &names, const QString desc, const char *valueName = "", const QString &def = QString()) {
         const QLatin1String vname = _L(valueName);
-        if (desc.contains(_L("%1")))
-            options.insert(cmd, QCommandLineOption(names, desc.arg(_L('<') % vname % _L('>')), vname, def));
+        if (desc.contains("%1"_a))
+            options.insert(cmd, QCommandLineOption(names, desc.arg('<' % vname % '>'), vname, def));
         else
             options.insert(cmd, QCommandLineOption(names, desc, vname, def));
     }

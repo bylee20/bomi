@@ -97,7 +97,7 @@ private:
 };
 
 #define DECLARE_LOG_CONTEXT(ctx) static inline const char *getLogContext() { return (#ctx); }
-#define _WRITE_LOG(lv, fmt, ...) Log::write(getLogContext(), Log::lv , [&]() { return Log::parse(fmt, ##__VA_ARGS__); })
+#define _WRITE_LOG(lv, fmt, ...) Log::write(getLogContext(), Log::lv , [&]() { return Log::parse(fmt##_b, ##__VA_ARGS__); })
 #define _Fatal(fmt, ...) _WRITE_LOG(Fatal, fmt, ##__VA_ARGS__)
 #define _Error(fmt, ...) _WRITE_LOG(Error, fmt, ##__VA_ARGS__)
 #define _Warn(fmt, ...) _WRITE_LOG(Warn, fmt, ##__VA_ARGS__)

@@ -41,11 +41,12 @@ auto getLocales(const QString &path, const QString &filter,
 {
     const QDir dir(path);
     const QStringList files = dir.entryList(QStringList(filter));
-    QRegExp rx("^cmplayer_" + regExp + "$");
+    QRegEx rx("^cmplayer_" + regExp + "$");
     QSet<QLocale> set;
     for (auto &file : files) {
-        if (rx.indexIn(file) != -1)
-            set.insert(QLocale(rx.cap(1)));
+        const auto match = rx.match(file);
+        if (match.hasMatch())
+            set.insert(QLocale(match.captured(1)));
     }
     return set;
 }
@@ -60,31 +61,31 @@ Translator::Translator()
     if (!d->path.isEmpty())
         d->locales += getLocales(d->path, "*.qm", "(.*).qm");
 
-    d->b2t[_L("cze")] = _L("ces");
-    d->b2t[_L("baq")] = _L("eus");
-    d->b2t[_L("fre")] = _L("fra");
-    d->b2t[_L("ger")] = _L("deu");
-    d->b2t[_L("gre")] = _L("ell");
-    d->b2t[_L("arm")] = _L("hye");
-    d->b2t[_L("ice")] = _L("isl");
-    d->b2t[_L("geo")] = _L("kat");
-    d->b2t[_L("mac")] = _L("mkd");
-    d->b2t[_L("mao")] = _L("mri");
-    d->b2t[_L("may")] = _L("msa");
-    d->b2t[_L("bur")] = _L("mya");
-    d->b2t[_L("dut")] = _L("nld");
-    d->b2t[_L("per")] = _L("fas");
-    d->b2t[_L("rum")] = _L("ron");
-    d->b2t[_L("slo")] = _L("slk");
-    d->b2t[_L("alb")] = _L("sqi");
-    d->b2t[_L("tib")] = _L("bod");
-    d->b2t[_L("wel")] = _L("cym");
-    d->b2t[_L("chi")] = _L("zho");
+    d->b2t[u"cze"_q] = u"ces"_q;
+    d->b2t[u"baq"_q] = u"eus"_q;
+    d->b2t[u"fre"_q] = u"fra"_q;
+    d->b2t[u"ger"_q] = u"deu"_q;
+    d->b2t[u"gre"_q] = u"ell"_q;
+    d->b2t[u"arm"_q] = u"hye"_q;
+    d->b2t[u"ice"_q] = u"isl"_q;
+    d->b2t[u"geo"_q] = u"kat"_q;
+    d->b2t[u"mac"_q] = u"mkd"_q;
+    d->b2t[u"mao"_q] = u"mri"_q;
+    d->b2t[u"may"_q] = u"msa"_q;
+    d->b2t[u"bur"_q] = u"mya"_q;
+    d->b2t[u"dut"_q] = u"nld"_q;
+    d->b2t[u"per"_q] = u"fas"_q;
+    d->b2t[u"rum"_q] = u"ron"_q;
+    d->b2t[u"slo"_q] = u"slk"_q;
+    d->b2t[u"alb"_q] = u"sqi"_q;
+    d->b2t[u"tib"_q] = u"bod"_q;
+    d->b2t[u"wel"_q] = u"cym"_q;
+    d->b2t[u"chi"_q] = u"zho"_q;
 
     // custom code for opensubtitles
-    d->b2t[_L("scc")] = _L("srp");
-    d->b2t[_L("pob")] = _L("por");
-    d->b2t[_L("pb")] = _L("pt");
+    d->b2t[u"scc"_q] = u"srp"_q;
+    d->b2t[u"pob"_q] = u"por"_q;
+    d->b2t[u"pb"_q] = u"pt"_q;
 }
 
 Translator::~Translator() {
@@ -117,7 +118,7 @@ auto Translator::load(const QLocale &locale) -> bool
     d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def));
     if (d->succ) {
         auto path = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
-        const QString qm = _L("qt_") % l.name();
+        const QString qm = "qt_"_a % l.name();
         if (path.isEmpty() || !d->qt.load(qm, path))
             _Error("Cannot find translations for Qt, %% in %%", qm, path);
         QLocale::setDefault(l);
@@ -129,7 +130,7 @@ auto Translator::defaultEncoding() -> QString
 {
     auto enc = tr("UTF-8",
                   "Specify most popular encoding here in target localization.");
-    return enc.isEmpty() ? _L("UTF-8") : enc;
+    return enc.isEmpty() ? u"UTF-8"_q : enc;
 }
 
 auto Translator::displayLanguage(const QString &_iso) -> QString

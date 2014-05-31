@@ -46,19 +46,19 @@ auto VaApiFilterInfo::description(VAProcFilterType type,
 {
     switch (type) {
     case VAProcFilterNoiseReduction:
-        return _L("Noise reduction filter");
+        return u"Noise reduction filter"_q;
     case VAProcFilterSharpening:
-        return _L("Sharpening filter");
+        return u"Sharpening filter"_q;
     case VAProcFilterDeinterlacing:
         switch (algorithm) {
         case VAProcDeinterlacingBob:
-            return _L("Bob deinterlacer");
+            return u"Bob deinterlacer"_q;
         case VAProcDeinterlacingWeave:
-            return _L("Weave deinterlacer");
+            return u"Weave deinterlacer"_q;
         case VAProcDeinterlacingMotionAdaptive:
-            return _L("Motion adaptive deinterlacer");
+            return u"Motion adaptive deinterlacer"_q;
         case VAProcDeinterlacingMotionCompensated:
-            return _L("Motion compensation deinterlacer");
+            return u"Motion compensation deinterlacer"_q;
         default:
             break;
         }

@@ -4,7 +4,7 @@
 DECLARE_LOG_CONTEXT(XML-RPC)
 
 static QDomNode toValueNode(QDomDocument &doc, const QVariant &var) {
-    auto value = doc.createElement(_L("value"));
+    auto value = doc.createElement(u"value"_q);
     QDomElement elem;
     auto el = [&doc] (const char *tag) { return doc.createElement(_L(tag)); };
     auto tn = [&doc] (const QString &text) { return doc.createTextNode(text); };
@@ -27,14 +27,14 @@ static QDomNode toValueNode(QDomDocument &doc, const QVariant &var) {
         break;
     case QVariant::List: {
         const auto list = var.toList();
-        elem = doc.createElement(_L("array"));
-        auto data = elem.appendChild(doc.createElement(_L("data")));
+        elem = doc.createElement(u"array"_q);
+        auto data = elem.appendChild(doc.createElement(u"data"_q));
         for (auto &it : list)
             data.appendChild(toValueNode(doc, it));
         break;
     } case QVariant::Map: {
         const auto map = var.toMap();
-        elem = doc.createElement(_L("struct"));
+        elem = doc.createElement(u"struct"_q);
         for (auto it = map.begin(); it != map.end(); ++it) {
             auto member = elem.appendChild(el("member"));
             member.appendChild(te("name", it.key()));
@@ -87,7 +87,7 @@ auto XmlRpcClient::postCall(const QString &method, const QList<QVariant> &args) 
     if (!args.isEmpty()) {
         auto params = doc.createElement("params");
         for (int i=0; i<args.size(); ++i) {
-            params.appendChild(doc.createElement(_L("param"))).appendChild(toValueNode(doc, args[i]));
+            params.appendChild(doc.createElement(u"param"_q)).appendChild(toValueNode(doc, args[i]));
         }
         call.appendChild(params);
     }
@@ -96,34 +96,34 @@ auto XmlRpcClient::postCall(const QString &method, const QList<QVariant> &args) 
 }
 
 QVariant parseValue(const QDomElement &elem) {
-    Q_ASSERT(elem.tagName() == _L("value"));
+    Q_ASSERT(elem.tagName() == "value"_a);
     auto type = elem.firstChildElement();
     if (type.isNull())
         return elem.text();
     auto tag = type.tagName();
-    if (tag == _L("string")) {
+    if (tag == "string"_a) {
         return type.text();
-    } else if (tag == _L("double")) {
+    } else if (tag == "double"_a) {
         return type.text().toDouble();
-    } else if (tag == _L("boolean")) {
+    } else if (tag == "boolean"_a) {
         return !!type.text().toInt();
-    } else if (tag == _L("array")) {
+    } else if (tag == "array"_a) {
         QVariantList list;
-        auto data = type.firstChildElement(_L("data"));
-        auto value = data.firstChildElement(_L("value"));
+        auto data = type.firstChildElement(u"data"_q);
+        auto value = data.firstChildElement(u"value"_q);
         while (!value.isNull()) {
             list.append(parseValue(value));
-            value = value.nextSiblingElement(_L("value"));
+            value = value.nextSiblingElement(u"value"_q);
         }
         return list;
-    } else if (tag == _L("struct")) {
+    } else if (tag == "struct"_a) {
         QMap<QString, QVariant> map;
-        auto member = type.firstChildElement(_L("member"));
+        auto member = type.firstChildElement(u"member"_q);
         while (!member.isNull()) {
-            auto name = member.firstChildElement(_L("name")).text();
-            auto value = parseValue(member.firstChildElement(_L("value")));
+            auto name = member.firstChildElement(u"name"_q).text();
+            auto value = parseValue(member.firstChildElement(u"value"_q));
             map[name] = value;
-            member = member.nextSiblingElement(_L("member"));
+            member = member.nextSiblingElement(u"member"_q);
         }
         return map;
     } else
@@ -138,18 +138,18 @@ auto XmlRpcClient::parseResponse(const QByteArray &reply, bool compressed) -> QV
         doc.setContent(_Uncompress(reply));
     else
         doc.setContent(reply);
-    auto elem = doc.firstChildElement(_L("methodResponse"));
+    auto elem = doc.firstChildElement(u"methodResponse"_q);
     if (elem.isNull())
         return QVariantList();
-    elem = elem.firstChildElement(_L("params"));
+    elem = elem.firstChildElement(u"params"_q);
     if (elem.isNull()) {
         // fault
         return QVariantList();
     }
     QVariantList params;
-    auto param = elem.firstChildElement(_L("param"));
+    auto param = elem.firstChildElement(u"param"_q);
     while (!param.isNull()) {
-        auto value = param.firstChildElement(_L("value"));
+        auto value = param.firstChildElement(u"value"_q);
         if (value.isNull())
             return QVariantList();
         params.append(parseValue(value));

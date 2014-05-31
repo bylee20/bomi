@@ -35,21 +35,20 @@ auto RichTextHelper::toColor(const QStringRef &text) -> QColor
             break;
     }
     if (pos > 0)
-        return QColor(_L('#') % text.mid(pos));
+        return QColor('#' % text.mid(pos));
     int i=0;
     for (; i<text.size() && _IsHexNumber(text.at(i).unicode()); ++i) ;
     if (i == text.size())
-        return QColor(_L("#") % text);
+        return QColor(u"#"_q % text);
     return QColor(text.toString());
 }
 
-auto RichTextHelper::replace(const QStringRef &str, const QLatin1String &from,
-                             const QLatin1String &to,
-                             Qt::CaseSensitivity s) -> QString
+auto RichTextHelper::replace(const QStringRef &str, const QString &from,
+                             const QString &to, Qt::CaseSensitivity s) -> QString
 {
     QString text;
     int start = 0;
-    const int len = strlen(from.latin1());
+    const int len = from.size();
     for (;;) {
         const int pos = str.indexOf(from, start, s);
         if (pos < 0) {
@@ -101,7 +100,7 @@ auto RichTextHelper::parseTag(const QStringRef &text,
     if (skipSeparator(pos, text))
         return Tag();
     if (at(pos) == '!') { // skip comment
-        pos = text.indexOf(_L("!--"), pos);
+        pos = text.indexOf("!--"_a, pos);
         if (pos < 0) {
             pos = text.size();
             return Tag();
@@ -138,7 +137,7 @@ auto RichTextHelper::parseTag(const QStringRef &text,
         start = pos;
         while (pos < text.size()) {
             const ushort c = at(pos);
-            if (isSeparator(c) || c == '=' || c == '>')
+            if (isSeparator(c) || _IsOneOf(c, '=', '>'))
                 break;
             ++pos;
         }
@@ -198,7 +197,7 @@ auto RichTextHelper::indexOf(const QStringRef &ref, QRegExp &rx,
     return 0 <= idx && idx < ref.length() ? idx : -1;
 }
 
-auto RichTextHelper::indexOf(const QStringRef &ref, QRegularExpression &rx,
+auto RichTextHelper::indexOf(const QStringRef &ref, QRegEx &rx,
                              int from) -> int
 {
     const int pos = ref.position();
@@ -222,8 +221,8 @@ auto RichTextHelper::innerText(const char *open, const char *close,
     if (pos >= text.size() || tag.name.isEmpty())
         return 0;
     int ret = 1;
-    QRegExp rx(_L("<[\\s\\n\\r]*(") % _L(close)
-               % _L(")(>|[^0-9a-zA-Z>]+[^>]*>)"));
+    QRegExp rx("<[\\s\\n\\r]*("_a % _L(close)
+               % ")(>|[^0-9a-zA-Z>]+[^>]*>)"_a);
     rx.setCaseSensitivity(QCI);
     int start = pos;
     int end = indexOf(text, rx, start);

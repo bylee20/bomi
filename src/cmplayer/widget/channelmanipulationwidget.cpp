@@ -102,7 +102,7 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
     auto hbox = new QHBoxLayout;
     hbox->addWidget(new QLabel(tr("Layout:")));
     hbox->addWidget(d->input);
-    hbox->addWidget(new QLabel(_U("→")));
+    hbox->addWidget(new QLabel(u'→'_q));
     hbox->addWidget(d->output);
     hbox->addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
     vbox->addLayout(hbox);
@@ -124,8 +124,8 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
     QString ex;
     for (auto &name : ChannelLayoutMap::channelNames()) {
         if (!ex.isEmpty())
-            ex += _L('\n');
-        ex += _L(name.abbr) % _L(": ") % _L(name.desc);
+            ex += '\n';
+        ex += _L(name.abbr) % ": "_a % _L(name.desc);
     }
     grid->addWidget(new QLabel(ex), 0, 2, 2, 1);
     auto onComboChanged = [this] () { d->fillMap(); d->makeTable(); };

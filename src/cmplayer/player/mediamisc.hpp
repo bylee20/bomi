@@ -175,7 +175,7 @@ signals:
     void countChanged();
 private:
     static auto toString(int i) -> QString
-    { return i < 1 ? _L("-") : QString::number(i); }
+    { return i < 1 ? u"-"_q : QString::number(i); }
     int m_current = -2;
     int m_count = 0;
 };

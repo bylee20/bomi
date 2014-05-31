@@ -50,7 +50,7 @@ struct PrefDialog::Data {
             if (supported)
                 box->setText(desc);
             else
-                box->setText(desc % _L(" (") % tr("Not supported") % _L(')'));
+                box->setText(desc % ' ' % tr("Not supported") % ')');
             box->setEnabled(supported);
         }
     }

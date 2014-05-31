@@ -21,7 +21,7 @@ enum ShiftHelper {
 };
 
 SIA _ToSql(const QString &text) -> QString {
-    return _L('\'') % QString(text).replace(_L('\''), _L("''")) % _L('\'');
+    return '\'' % QString(text).replace('\'', "''"_a) % '\'';
 }
 
 
@@ -44,9 +44,9 @@ SIA _ToSql(const QDateTime &dt) -> QString {
 SIA _DateTimeFromSql(qint64 dt) -> QString {
 #define XT(s) ((dt >> S_##s) & ((1 << B_##s)-1))
     const QString q("%1");
-    auto pad = [&q] (int v, int n) -> QString { return q.arg(v, n, 10, _L('0')); };
-    return pad(XT(Year), 4) % _L('/') % pad(XT(Month), 2) % _L('/') % pad(XT(Day), 2) % _L(' ')
-            % pad(XT(Hour), 2) % _L(':') % pad(XT(Min), 2) % _L(':') % pad(XT(Sec), 2);
+    auto pad = [&q] (int v, int n) -> QString { return q.arg(v, n, 10, '0'_q); };
+    return pad(XT(Year), 4) % '/' % pad(XT(Month), 2) % '/' % pad(XT(Day), 2) % ' '
+            % pad(XT(Hour), 2) % ':' % pad(XT(Min), 2) % ':' % pad(XT(Sec), 2);
 #undef XT
 }
 
@@ -55,8 +55,7 @@ SIA _ToSql(qint64 integer) -> QString { return QString::number(integer); }
 
 SIA _ToSql(const QPoint &p) -> QString
 {
-    return _L('\'') % QString::number(p.x()) % ","
-                    % QString::number(p.y()) % _L('\'');
+    return '\'' % QString::number(p.x()) % ',' % QString::number(p.y()) % '\'';
 }
 
 SIA _ToSql(const QJsonObject &json) -> QString

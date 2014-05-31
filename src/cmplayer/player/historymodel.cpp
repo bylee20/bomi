@@ -49,7 +49,7 @@ struct HistoryModel::Data {
     MrlStateSqlFieldList fields, restores;
     MrlState cached;
     const MrlState default_{};
-    const QString table = _L("state") % _N(currentVersion);
+    const QString table = "state"_a % _N(currentVersion);
     bool rememberImage = false, reload = true, visible = false;
     int idx_mrl, idx_last, idx_device, rows = 0;
     auto check(const QSqlQuery &query) -> bool
@@ -97,7 +97,7 @@ struct HistoryModel::Data {
         Transactor t(&db);
         finder.exec(QString::fromLatin1("DROP TABLE IF EXISTS %1").arg(table));
         QString columns = _ToStringList(fields, [] (const MrlStateSqlField &f) {
-            return f.property().name() % _L(' ') % f.type();
+            return _L(f.property().name()) % ' ' % f.type();
         }).join(", ");
 
         finder.exec(QString::fromLatin1("CREATE TABLE %1 (%2)").arg(table).arg(columns));

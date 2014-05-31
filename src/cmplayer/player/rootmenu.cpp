@@ -23,8 +23,8 @@ auto root_menu_execute(const QString &longId, const QString &argument) -> bool
 }
 
 template<class T>
-auto addEnumAction(Menu &menu, T t, const char *key, bool checkable = false,
-                   const char *group = "") -> EnumAction<T>*
+auto addEnumAction(Menu &menu, T t, const QString &key, bool checkable = false,
+                   const QString &group = "") -> EnumAction<T>*
 {
     auto action = _NewEnumAction<T>(t);
     action->setCheckable(checkable);
@@ -42,7 +42,7 @@ auto addEnumActions(Menu &menu, std::initializer_list<T> list,
         const auto key = EnumInfo<T>::key(item);
         auto action = menu.addActionToGroup(_NewEnumAction(item), key, g);
         action->setCheckable(checkable);
-        if (key == _L("reset"))
+        if (key == u"reset"_q)
             menu.addSeparator();
     }
 }
@@ -56,7 +56,7 @@ auto addEnumActions(Menu &menu, bool checkable = false) -> void
         auto act = _NewEnumAction(item.value);
         auto action = menu.addActionToGroup(act, item.key, g);
         action->setCheckable(checkable);
-        if (item.key == _L("reset"))
+        if (item.key == u"reset"_q)
             menu.addSeparator();
     }
 }
@@ -85,7 +85,7 @@ auto addEnumActionsCheckable(Menu &menu, bool cycle,
 {
     if (cycle) {
         const int size = EnumInfo<T>::size();
-        menu.addAction(size > 2 ? "next" : "toggle");
+        menu.addAction(size > 2 ? u"next"_q : u"toggle"_q);
         menu.addSeparator();
     }
     const QString g = _L(EnumInfo<T>::typeKey());
@@ -110,11 +110,11 @@ auto updateEnumActions(Menu &menu) -> void
 {
     auto actions = menu.g(_L(EnumInfo<T>::typeKey()))->actions();
     if (actions.size() > 2) {
-        auto next = _C(menu).a("next");
+        auto next = _C(menu).a(u"next"_q);
         if (next)
             next->setText(qApp->translate("RootMenu", "Select Next"));
     } else {
-        auto toggle = _C(menu).a("toggle");
+        auto toggle = _C(menu).a(u"toggle"_q);
         if (toggle)
             toggle->setText(qApp->translate("RootMenu", "Toggle"));
     }
@@ -135,7 +135,7 @@ RootMenu *RootMenu::obj = nullptr;
 
 static auto addStepPair(Menu &menu, const QString &inc, const QString &dec,
                         const QString &pair, int min, int def, int max,
-                        const QString &g = _L("")) -> StepActionPair*
+                        const QString &g = QString()) -> StepActionPair*
 {
     auto p = menu.addStepActionPair(inc, dec, pair, g);
     p->setRange(min, def, max); return p;
@@ -143,124 +143,125 @@ static auto addStepPair(Menu &menu, const QString &inc, const QString &dec,
 
 static auto addStepPair(Menu &menu, const QString &inc,
                         const QString &dec, const QString &pair,
-                        const QString &g = _L("")) -> StepActionPair*
+                        const QString &g = QString()) -> StepActionPair*
 { return addStepPair(menu, inc, dec, pair, _Min<int>(), 0, _Max<int>(), g); }
 
 static auto addStepPair(Menu &menu, int min, int def, int max,
-                        const QString &g = _L("")) -> StepActionPair*
-{ return addStepPair(menu, "increase", "decrease", "", min, def, max, g); }
+                        const QString &g = QString()) -> StepActionPair*
+{ return addStepPair(menu, u"increase"_q, u"decrease"_q, "", min, def, max, g); }
 
 static auto addStepReset(Menu &menu, int min, int def, int max,
-                         const QString &g = _L("")) -> StepActionPair*
+                         const QString &g = u""_q) -> StepActionPair*
 {
     auto reset = new StepAction(ChangeValue::Reset);
-    menu.addActionToGroup(reset, _L("reset"), g);
+    menu.addActionToGroup(reset, u"reset"_q, g);
     menu.addSeparator();
     return addStepPair(menu, min, def, max, g);
 }
 
-static auto addStepReset(Menu &menu, const QString &g = _L("")) -> StepActionPair*
+static auto addStepReset(Menu &menu,
+                         const QString &g = QString()) -> StepActionPair*
 { return addStepReset(menu, _Min<int>(), 0, _Max<int>(), g); }
 
 
-RootMenu::RootMenu(): Menu(_L("menu"), 0) {
+RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
     Q_ASSERT(obj == nullptr);
     obj = this;
 
-    setTitle("Root Menu");
+    setTitle(u"Root Menu"_q);
 
-    auto &open = *addMenu(_L("open"));
-    open.addAction(_L("file"));
-    open.addAction(_L("folder"));
-    open.addAction(_L("url"));
-    open.addAction(_L("dvd"));
-    open.addAction(_L("bluray"));
+    auto &open = *addMenu(u"open"_q);
+    open.addAction(u"file"_q);
+    open.addAction(u"folder"_q);
+    open.addAction(u"url"_q);
+    open.addAction(u"dvd"_q);
+    open.addAction(u"bluray"_q);
     open.addSeparator();
-    auto &recent = *open.addMenu(_L("recent"));
+    auto &recent = *open.addMenu(u"recent"_q);
     recent.addSeparator();
-    recent.addAction(_L("clear"));
+    recent.addAction(u"clear"_q);
 
-    auto &play = *addMenu(_L("play"));
-    play.addAction(_L("pause"));
-    play.addAction(_L("stop"));
+    auto &play = *addMenu(u"play"_q);
+    play.addAction(u"pause"_q);
+    play.addAction(u"stop"_q);
     play.addSeparator();
-    play.addAction(_L("prev"));
-    play.addAction(_L("next"));
+    play.addAction(u"prev"_q);
+    play.addAction(u"next"_q);
     play.addSeparator();
-    ::addStepReset(*play.addMenu("speed"), 10, 100, 1000);
-    auto &repeat = *play.addMenu(_L("repeat"));
-    repeat.addActionToGroup(_L("range"), false)->setData(int('r'));
-    repeat.addActionToGroup(_L("subtitle"), false)->setData(int('s'));
-    repeat.addActionToGroup(_L("quit"), false)->setData(int('q'));
+    ::addStepReset(*play.addMenu(u"speed"_q), 10, 100, 1000);
+    auto &repeat = *play.addMenu(u"repeat"_q);
+    repeat.addActionToGroup(u"range"_q, false)->setData(int('r'));
+    repeat.addActionToGroup(u"subtitle"_q, false)->setData(int('s'));
+    repeat.addActionToGroup(u"quit"_q, false)->setData(int('q'));
     play.addSeparator();
-    play.addAction(_L("disc-menu"));
-    auto &seek = *play.addMenu(_L("seek"));
-    const QString forward("forward%1"), backward("backward%1");
-    const QString seekStep("seek%1");
+    play.addAction(u"disc-menu"_q);
+    auto &seek = *play.addMenu(u"seek"_q);
+    const QString forward(u"forward%1"_q), backward(u"backward%1"_q);
+    const QString seekStep(u"seek%1"_q);
     for (int i = 1; i <= 3; ++i) {
         auto pair = addStepPair(seek, forward.arg(i), backward.arg(i),
-                                seekStep.arg(i), _L("relative"));
+                                seekStep.arg(i), u"relative"_q);
         pair->increase()->setTextRate(0.001);
         pair->decrease()->setTextRate(-0.001);
     }
     seek.addSeparator();
-    seek.addActionToGroup(_L("prev-frame"), false, _L("frame"))->setData(-1);
-    seek.addActionToGroup(_L("next-frame"), false, _L("frame"))->setData(1);
+    seek.addActionToGroup(u"prev-frame"_q, false, u"frame"_q)->setData(-1);
+    seek.addActionToGroup(u"next-frame"_q, false, u"frame"_q)->setData(1);
     seek.addSeparator();
-    seek.addActionToGroup(_L("prev-subtitle"), false, _L("subtitle"))->setData(-1);
-    seek.addActionToGroup(_L("current-subtitle"), false, _L("subtitle"))->setData(0);
-    seek.addActionToGroup(_L("next-subtitle"), false, _L("subtitle"))->setData(1);
-    play.addMenu(_L("title"))->setEnabled(false);
-    auto &chapter = *play.addMenu(_L("chapter"));
+    seek.addActionToGroup(u"prev-subtitle"_q, false, u"subtitle"_q)->setData(-1);
+    seek.addActionToGroup(u"current-subtitle"_q, false, u"subtitle"_q)->setData(0);
+    seek.addActionToGroup(u"next-subtitle"_q, false, u"subtitle"_q)->setData(1);
+    play.addMenu(u"title"_q)->setEnabled(false);
+    auto &chapter = *play.addMenu(u"chapter"_q);
     chapter.setEnabled(false);
     chapter.g()->setExclusive(true);
-    chapter.addAction(_L("prev"));
-    chapter.addAction(_L("next"));
+    chapter.addAction(u"prev"_q);
+    chapter.addAction(u"next"_q);
     chapter.addSeparator();
 
-    auto &subtitle = *addMenu(_L("subtitle"));
-    auto &spu = *subtitle.addMenu(_L("track"));
-    spu.addGroup("internal")->setExclusive(false);
-    spu.addGroup("external")->setExclusive(false);
-    spu.addAction(_L("open"));
-    spu.addAction(_L("auto-load"));
-    spu.addAction(_L("reload"));
-    spu.addAction(_L("clear"));
+    auto &subtitle = *addMenu(u"subtitle"_q);
+    auto &spu = *subtitle.addMenu(u"track"_q);
+    spu.addGroup(u"internal"_q)->setExclusive(false);
+    spu.addGroup(u"external"_q)->setExclusive(false);
+    spu.addAction(u"open"_q);
+    spu.addAction(u"auto-load"_q);
+    spu.addAction(u"reload"_q);
+    spu.addAction(u"clear"_q);
     spu.addSeparator();
-    spu.addAction(_L("next"));
-    spu.addAction(_L("all"));
-    spu.addAction(_L("hide"), true);
+    spu.addAction(u"next"_q);
+    spu.addAction(u"all"_q);
+    spu.addAction(u"hide"_q, true);
     spu.addSeparator();
     subtitle.addSeparator();
     addEnumMenuCheckable<SubtitleDisplay>(subtitle, true);
-    addEnumActionsCheckable(*subtitle.addMenu("align"),
+    addEnumActionsCheckable(*subtitle.addMenu(u"align"_q),
         {VerticalAlignment::Top, VerticalAlignment::Bottom}, true);
     subtitle.addSeparator();
-    addStepReset(*subtitle.addMenu("position"), 0, 100, 100);
-    addStepReset(*subtitle.addMenu("sync"))->setTextRate(1e-3);
+    addStepReset(*subtitle.addMenu(u"position"_q), 0, 100, 100);
+    addStepReset(*subtitle.addMenu(u"sync"_q))->setTextRate(1e-3);
 
-    auto &video = *addMenu(_L("video"));
-    video.addMenu(_L("track"))->setEnabled(false);
+    auto &video = *addMenu(u"video"_q);
+    video.addMenu(u"track"_q)->setEnabled(false);
     video.addSeparator();
-    video.addAction(_L("snapshot"));
+    video.addAction(u"snapshot"_q);
     video.addSeparator();
-    addEnumActionsCheckable<VideoRatio>(*video.addMenu(_L("aspect")), true);
-    addEnumActionsCheckable<VideoRatio>(*video.addMenu(_L("crop")), true);
-    auto &align = *video.addMenu(_L("align"));
+    addEnumActionsCheckable<VideoRatio>(*video.addMenu(u"aspect"_q), true);
+    addEnumActionsCheckable<VideoRatio>(*video.addMenu(u"crop"_q), true);
+    auto &align = *video.addMenu(u"align"_q);
     addEnumActionsCheckable<VerticalAlignment>(align, false);
     align.addSeparator();
     addEnumActionsCheckable<HorizontalAlignment>(align, false);
-    auto &move = *video.addMenu(_L("move"));
+    auto &move = *video.addMenu(u"move"_q);
     addEnumActions<MoveToward>(move);
     video.addSeparator();
 
     addEnumMenuCheckable<ColorRange>(video, true);
-    addEnumActionsCheckable<InterpolatorType>(*video.addMenu("chroma-upscaler"), true);
-    addEnumActionsCheckable<InterpolatorType>(*video.addMenu("interpolator"), true);
+    addEnumActionsCheckable<InterpolatorType>(*video.addMenu(u"chroma-upscaler"_q), true);
+    addEnumActionsCheckable<InterpolatorType>(*video.addMenu(u"interpolator"_q), true);
     addEnumMenuCheckable<Dithering>(video, true);
     addEnumMenuCheckable<DeintMode>(video, true);
 
-    auto &effect = *video.addMenu(_L("filter"));
+    auto &effect = *video.addMenu(u"filter"_q);
     effect.g()->setExclusive(false);
     addEnumAction(effect, VideoEffect::FlipV, "flip-v", true);
     addEnumAction(effect, VideoEffect::FlipH, "flip-h", true);
@@ -273,91 +274,91 @@ RootMenu::RootMenu(): Menu(_L("menu"), 0) {
     effect.addSeparator();
     addEnumAction(effect, VideoEffect::Disable, "disable", true);
 
-    auto &color = *video.addMenu("color");
-    color.addActionToGroup(_L("reset"));
+    auto &color = *video.addMenu(u"color"_q);
+    color.addActionToGroup(u"reset"_q);
     color.addSeparator();
     VideoColor::for_type([&] (VideoColor::Type type) {
         const auto str = VideoColor::name(type);
-        addStepPair(color, str % _L("+"), str % _L("-"), str, -100, 0, 100, str);
+        addStepPair(color, str % '+', str % '-', str, -100, 0, 100, str);
     });
 
-    auto &audio = *addMenu(_L("audio"));
-    auto &track = *audio.addMenu(_L("track"));
+    auto &audio = *addMenu(u"audio"_q);
+    auto &track = *audio.addMenu(u"track"_q);
     track.setEnabled(false);
     track.g()->setExclusive(true);
-    track.addAction(_L("next"));
+    track.addAction(u"next"_q);
     track.addSeparator();
-    addStepReset(*audio.addMenu("sync"))->setTextRate(1e-3);
+    addStepReset(*audio.addMenu(u"sync"_q))->setTextRate(1e-3);
     audio.addSeparator();
-    auto &volume = *audio.addMenu("volume");
-    volume.addAction(_L("mute"), true);
+    auto &volume = *audio.addMenu(u"volume"_q);
+    volume.addAction(u"mute"_q, true);
     volume.addSeparator();
     ::addStepPair(volume, 0, 100, 100);
-    addStepReset(*audio.addMenu("amp"), 10, 100, 1000);
+    addStepReset(*audio.addMenu(u"amp"_q), 10, 100, 1000);
     addEnumMenuCheckable<ChannelLayout>(audio, true);
     audio.addSeparator();
 
     audio.addSeparator();
-    audio.addAction(_L("normalizer"), true)->setShortcut(Qt::Key_N);
-    audio.addAction(_L("tempo-scaler"), true)->setShortcut(Qt::Key_Z);
+    audio.addAction(u"normalizer"_q, true)->setShortcut(Qt::Key_N);
+    audio.addAction(u"tempo-scaler"_q, true)->setShortcut(Qt::Key_Z);
 
 
-    auto &tool = *addMenu(_L("tool"));
-    tool.addAction(_L("undo"))->setShortcut(Qt::CTRL + Qt::Key_Z);
-    tool.addAction(_L("redo"))->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
+    auto &tool = *addMenu(u"tool"_q);
+    tool.addAction(u"undo"_q)->setShortcut(Qt::CTRL + Qt::Key_Z);
+    tool.addAction(u"redo"_q)->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
     tool.addSeparator();
-    auto &playlist = *tool.addMenu(_L("playlist"));
-    playlist.addAction(_L("toggle"))->setShortcut(Qt::Key_L);
+    auto &playlist = *tool.addMenu(u"playlist"_q);
+    playlist.addAction(u"toggle"_q)->setShortcut(Qt::Key_L);
     playlist.addSeparator();
-    playlist.addAction(_L("open"));
-    playlist.addAction(_L("save"));
-    playlist.addAction(_L("clear"));
+    playlist.addAction(u"open"_q);
+    playlist.addAction(u"save"_q);
+    playlist.addAction(u"clear"_q);
     playlist.addSeparator();
-    playlist.addAction(_L("append-file"));
-    playlist.addAction(_L("append-url"));
-    playlist.addAction(_L("remove"));
+    playlist.addAction(u"append-file"_q);
+    playlist.addAction(u"append-url"_q);
+    playlist.addAction(u"remove"_q);
     playlist.addSeparator();
-    playlist.addAction(_L("move-up"));
-    playlist.addAction(_L("move-down"));
+    playlist.addAction(u"move-up"_q);
+    playlist.addAction(u"move-down"_q);
 
-    tool.addAction(_L("favorites"))->setVisible(false);
-    auto &history = *tool.addMenu(_L("history"));
-    history.addAction(_L("toggle"))->setShortcut(Qt::Key_C);
-    history.addAction(_L("clear"));
+    tool.addAction(u"favorites"_q)->setVisible(false);
+    auto &history = *tool.addMenu(u"history"_q);
+    history.addAction(u"toggle"_q)->setShortcut(Qt::Key_C);
+    history.addAction(u"clear"_q);
 
-    tool.addAction(_L("subtitle"))->setShortcut(Qt::Key_V);
-    tool.addAction(_L("find-subtitle"));
-    tool.addAction(_L("playinfo"));
+    tool.addAction(u"subtitle"_q)->setShortcut(Qt::Key_V);
+    tool.addAction(u"find-subtitle"_q);
+    tool.addAction(u"playinfo"_q);
     tool.addSeparator();
-    tool.addAction(_L("pref"))->setMenuRole(QAction::PreferencesRole);
-    tool.addAction(_L("reload-skin"));
+    tool.addAction(u"pref"_q)->setMenuRole(QAction::PreferencesRole);
+    tool.addAction(u"reload-skin"_q);
     tool.addSeparator();
-    tool.addAction(_L("auto-exit"), true);
-    tool.addAction(_L("auto-shutdown"), true);
+    tool.addAction(u"auto-exit"_q, true);
+    tool.addAction(u"auto-shutdown"_q, true);
 
-    auto &window = *addMenu(_L("window"));
+    auto &window = *addMenu(u"window"_q);
     addEnumMenuCheckable<StaysOnTop>(window, true);
     window.addSeparator();
-    window.addActionToGroup(_L("proper"), false, _L("size"))->setData(0.0);
-    window.addActionToGroup(_L("100%"), false, _L("size"))->setData(1.0);
-    window.addActionToGroup(_L("200%"), false, _L("size"))->setData(2.0);
-    window.addActionToGroup(_L("300%"), false, _L("size"))->setData(3.0);
-    window.addActionToGroup(_L("400%"), false, _L("size"))->setData(4.0);
-    window.addActionToGroup(_L("full"), false, _L("size"))->setData(-1.0);
+    window.addActionToGroup(u"proper"_q, false, u"size"_q)->setData(0.0);
+    window.addActionToGroup(u"100%"_q, false, u"size"_q)->setData(1.0);
+    window.addActionToGroup(u"200%"_q, false, u"size"_q)->setData(2.0);
+    window.addActionToGroup(u"300%"_q, false, u"size"_q)->setData(3.0);
+    window.addActionToGroup(u"400%"_q, false, u"size"_q)->setData(4.0);
+    window.addActionToGroup(u"full"_q, false, u"size"_q)->setData(-1.0);
     window.addSeparator();
-    window.addAction(_L("minimize"));
-    window.addAction(_L("maximize"));
-    window.addAction(_L("close"));
+    window.addAction(u"minimize"_q);
+    window.addAction(u"maximize"_q);
+    window.addAction(u"close"_q);
 
-    auto &help = *addMenu(_L("help"));
-    help.addAction(_L("about"))->setMenuRole(QAction::AboutRole);
+    auto &help = *addMenu(u"help"_q);
+    help.addAction(u"about"_q)->setMenuRole(QAction::AboutRole);
 
-    addAction(_L("exit"))->setMenuRole(QAction::QuitRole);
+    addAction(u"exit"_q)->setMenuRole(QAction::QuitRole);
 
-    play("title").setEnabled(false);
-    play("chapter").setEnabled(false);
-    video("track").setEnabled(false);
-    audio("track").setEnabled(false);
+    play(u"title"_q).setEnabled(false);
+    play(u"chapter"_q).setEnabled(false);
+    video(u"track"_q).setEnabled(false);
+    audio(u"track"_q).setEnabled(false);
 
     fillId(this, "");
 }
@@ -384,7 +385,7 @@ auto RootMenu::setShortcuts(const Shortcuts &shortcuts) -> void
 {
     for (auto it = shortcuts.cbegin(); it != shortcuts.cend(); ++it) {
         auto id = it.key();
-        if (id.startsWith("menu/"))
+        if (id.startsWith(u"menu/"_q))
             id = id.mid(5);
         auto found = m_actions.constFind(id);
         if (found != m_actions.cend())
@@ -393,7 +394,7 @@ auto RootMenu::setShortcuts(const Shortcuts &shortcuts) -> void
             _Warn("Cannot set shortcuts for '%%'", id);
     }
 #ifdef Q_OS_MAC
-    a(_L("exit"))->setShortcut(QKeySequence());
+    a(u"exit"_q)->setShortcut(QKeySequence());
 #endif
 }
 
@@ -423,23 +424,23 @@ auto RootMenu::retranslate() -> void
 {
     auto &root = *this;
 
-    auto &open = root("open", tr("Open"));
-    open.a("file", tr("Open File"));
-    open.a("folder", tr("Open Folder"));
-    open.a("url", tr("Load URL"));
-    open.a("dvd", tr("Open DVD"));
-    open.a("bluray", tr("Open Blu-ray"));
+    auto &open = root(u"open"_q, tr("Open"));
+    open.a(u"file"_q, tr("Open File"));
+    open.a(u"folder"_q, tr("Open Folder"));
+    open.a(u"url"_q, tr("Load URL"));
+    open.a(u"dvd"_q, tr("Open DVD"));
+    open.a(u"bluray"_q, tr("Open Blu-ray"));
 
-    auto &recent = open("recent");
+    auto &recent = open(u"recent"_q);
     recent.setTitle(tr("Recently Opened"));
-    recent.a("clear", tr("Clear"));
+    recent.a(u"clear"_q, tr("Clear"));
 
-    auto &play = root("play", tr("Play"));
-    play.a("pause", tr("Play"));
-    play.a("stop", tr("Stop"));
-    play.a("prev", tr("Play Previous"));
-    play.a("next", tr("Play Next"));
-    play.a("disc-menu", tr("Disc Menu"));
+    auto &play = root(u"play"_q, tr("Play"));
+    play.a(u"pause"_q, tr("Play"));
+    play.a(u"stop"_q, tr("Stop"));
+    play.a(u"prev"_q, tr("Play Previous"));
+    play.a(u"next"_q, tr("Play Next"));
+    play.a(u"disc-menu"_q, tr("Disc Menu"));
 
     auto translateStepMenu = [] (Menu &menu, const QString &format) -> void
     {
@@ -447,136 +448,136 @@ auto RootMenu::retranslate() -> void
         StepAction::setFormat(g->actions(), format);
     };
 
-    translateStepMenu(play("speed", tr("Playback Speed")), "%1%");
+    translateStepMenu(play(u"speed"_q, tr("Playback Speed")), "%1%");
 
-    auto &repeat = play("repeat", tr("A-B Repeat"));
-    repeat.a("range", tr("Set Range to Current Time"));
-    repeat.a("subtitle", tr("Repeat Current Subtitle"));
-    repeat.a("quit", tr("Quit"));
+    auto &repeat = play(u"repeat"_q, tr("A-B Repeat"));
+    repeat.a(u"range"_q, tr("Set Range to Current Time"));
+    repeat.a(u"subtitle"_q, tr("Repeat Current Subtitle"));
+    repeat.a(u"quit"_q, tr("Quit"));
 
-    auto &seek = play("seek", tr("Seek"));
-    auto translateSeekAction = [&] (const char *prefix, const QString &format) {
+    auto &seek = play(u"seek"_q, tr("Seek"));
+    auto translateSeekAction = [&] (const QString &prefix, const QString &format) {
         for (int i=1; i<=3; ++i)
-            static_cast<StepAction*>(seek[_L(prefix)%_N(i)])->setFormat(format);
+            static_cast<StepAction*>(seek[prefix % _N(i)])->setFormat(format);
     };
-    translateSeekAction("forward",  tr("Forward %1sec"));
-    translateSeekAction("backward", tr("Backward %1sec"));
+    translateSeekAction(u"forward"_q,  tr("Forward %1sec"));
+    translateSeekAction(u"backward"_q, tr("Backward %1sec"));
 
-    seek.a("prev-frame", tr("Previous Frame"));
-    seek.a("next-frame", tr("Next Frame"));
+    seek.a(u"prev-frame"_q, tr("Previous Frame"));
+    seek.a(u"next-frame"_q, tr("Next Frame"));
 
-    seek.a("prev-subtitle", tr("To Previous Subtitle"));
-    seek.a("current-subtitle", tr("To Beginning of Current Subtitle"));
-    seek.a("next-subtitle", tr("To Next Subtitle"));
+    seek.a(u"prev-subtitle"_q, tr("To Previous Subtitle"));
+    seek.a(u"current-subtitle"_q, tr("To Beginning of Current Subtitle"));
+    seek.a(u"next-subtitle"_q, tr("To Next Subtitle"));
 
-    play("title", tr("Title"));
-    auto &chapter = play("chapter", tr("Chapter"));
-    chapter.a("prev", tr("Previous Chapter"));
-    chapter.a("next", tr("Next Chapter"));
+    play(u"title"_q, tr("Title"));
+    auto &chapter = play(u"chapter"_q, tr("Chapter"));
+    chapter.a(u"prev"_q, tr("Previous Chapter"));
+    chapter.a(u"next"_q, tr("Next Chapter"));
 
-    auto &sub = root("subtitle", tr("Subtitle"));
+    auto &sub = root(u"subtitle"_q, tr("Subtitle"));
 
-    auto &spu = sub("track", tr("Subtitle Track"));
-    spu.a("open", tr("Open File(s)"));
-    spu.a("auto-load", tr("Auto-load File(s)"));
-    spu.a("reload", tr("Reload File(s)"));
-    spu.a("clear", tr("Clear File(s)"));
-    spu.a("next", tr("Select Next"));
-    spu.a("all", tr("Select All"));
-    spu.a("hide", tr("Hide"));
+    auto &spu = sub(u"track"_q, tr("Subtitle Track"));
+    spu.a(u"open"_q, tr("Open File(s)"));
+    spu.a(u"auto-load"_q, tr("Auto-load File(s)"));
+    spu.a(u"reload"_q, tr("Reload File(s)"));
+    spu.a(u"clear"_q, tr("Clear File(s)"));
+    spu.a(u"next"_q, tr("Select Next"));
+    spu.a(u"all"_q, tr("Select All"));
+    spu.a(u"hide"_q, tr("Hide"));
 
     updateEnumMenu<SubtitleDisplay>(sub);
-    updateEnumActions<VerticalAlignment>(sub("align", tr("Subtitle Alignment")));
-    translateStepMenu(sub("position", tr("Subtitle Position")), "%1%");
-    translateStepMenu(sub("sync", tr("Subtitle Sync")), tr("%1sec"));
+    updateEnumActions<VerticalAlignment>(sub(u"align"_q, tr("Subtitle Alignment")));
+    translateStepMenu(sub(u"position"_q, tr("Subtitle Position")), "%1%");
+    translateStepMenu(sub(u"sync"_q, tr("Subtitle Sync")), tr("%1sec"));
 
-    auto &video = root("video", tr("Video"));
-    video("track", tr("Video Track"));
+    auto &video = root(u"video"_q, tr("Video"));
+    video(u"track"_q, tr("Video Track"));
 
-    updateEnumActions<VideoRatio>(video("aspect", tr("Aspect Ratio")));
-    updateEnumActions<VideoRatio>(video("crop", tr("Crop")));
+    updateEnumActions<VideoRatio>(video(u"aspect"_q, tr("Aspect Ratio")));
+    updateEnumActions<VideoRatio>(video(u"crop"_q, tr("Crop")));
 
-    auto &align = video("align", tr("Screen Alignment"));
+    auto &align = video(u"align"_q, tr("Screen Alignment"));
     updateEnumActions<VerticalAlignment>(align);
     updateEnumActions<HorizontalAlignment>(align);
-    updateEnumActions<MoveToward>(video("move", tr("Screen Position")));
+    updateEnumActions<MoveToward>(video(u"move"_q, tr("Screen Position")));
 
     updateEnumMenu<ColorRange>(video);
-    updateEnumActions<InterpolatorType>(video("chroma-upscaler", tr("Chroma Upscaler")));
-    updateEnumActions<InterpolatorType>(video("interpolator", tr("Interpolator")));
+    updateEnumActions<InterpolatorType>(video(u"chroma-upscaler"_q, tr("Chroma Upscaler")));
+    updateEnumActions<InterpolatorType>(video(u"interpolator"_q, tr("Interpolator")));
     updateEnumMenu<Dithering>(video);
     updateEnumMenu<DeintMode>(video);
 
-    auto &effect = video("filter", tr("Filter"));
-    effect.a("flip-v", tr("Flip Vertically"));
-    effect.a("flip-h", tr("Flip Horizontally"));
-    effect.a("blur", tr("Blur"));
-    effect.a("sharpen", tr("Sharpen"));
-    effect.a("gray", tr("Grayscale"));
-    effect.a("invert", tr("Invert Color"));
-    effect.a("disable", tr("Disable Filters"));
+    auto &effect = video(u"filter"_q, tr("Filter"));
+    effect.a(u"flip-v"_q, tr("Flip Vertically"));
+    effect.a(u"flip-h"_q, tr("Flip Horizontally"));
+    effect.a(u"blur"_q, tr("Blur"));
+    effect.a(u"sharpen"_q, tr("Sharpen"));
+    effect.a(u"gray"_q, tr("Grayscale"));
+    effect.a(u"invert"_q, tr("Invert Color"));
+    effect.a(u"disable"_q, tr("Disable Filters"));
 
-    auto &color = video("color", tr("Adjust Color"));
-    color.a("reset", VideoColor::formatText(VideoColor::TypeMax));
+    auto &color = video(u"color"_q, tr("Adjust Color"));
+    color.a(u"reset"_q, VideoColor::formatText(VideoColor::TypeMax));
     VideoColor::for_type([&] (VideoColor::Type type) {
         const auto prefix = VideoColor::name(type);
         const auto format = VideoColor::formatText(type);
         StepAction::setFormat(color.g(prefix)->actions(), format);
     });
 
-    video.a("snapshot", tr("Take Snapshot"));
+    video.a(u"snapshot"_q, tr("Take Snapshot"));
 
-    auto &audio = root("audio", tr("Audio"));
-    audio("track", tr("Audio Track")).a("next", tr("Select Next"));
-    translateStepMenu(audio("sync", tr("Audio Sync")), tr("%1sec"));
-    audio("volume").a("mute", tr("Mute"));
-    translateStepMenu(audio("volume", tr("Volume")), "%1%");
-    translateStepMenu(audio("amp", tr("Amp")), "%1%");
+    auto &audio = root(u"audio"_q, tr("Audio"));
+    audio(u"track"_q, tr("Audio Track")).a(u"next"_q, tr("Select Next"));
+    translateStepMenu(audio(u"sync"_q, tr("Audio Sync")), tr("%1sec"));
+    audio(u"volume"_q).a(u"mute"_q, tr("Mute"));
+    translateStepMenu(audio(u"volume"_q, tr("Volume")), "%1%");
+    translateStepMenu(audio(u"amp"_q, tr("Amp")), "%1%");
     updateEnumMenu<ChannelLayout>(audio);
-    audio.a("normalizer", tr("Volume Normalizer"));
-    audio.a("tempo-scaler", tr("Tempo Scaler"));
+    audio.a(u"normalizer"_q, tr("Volume Normalizer"));
+    audio.a(u"tempo-scaler"_q, tr("Tempo Scaler"));
 
-    auto &tool = root("tool");
-    tool.a("undo", tr("Undo"));
-    tool.a("redo", tr("Redo"));
+    auto &tool = root(u"tool"_q);
+    tool.a(u"undo"_q, tr("Undo"));
+    tool.a(u"redo"_q, tr("Redo"));
     tool.setTitle(tr("Tools"));
-    auto &playlist = tool("playlist");
+    auto &playlist = tool(u"playlist"_q);
     playlist.setTitle(tr("Playlist"));
-    playlist.a("toggle", tr("Show/Hide"));
-    playlist.a("open", tr("Open"));
-    playlist.a("save", tr("Save"));
-    playlist.a("clear", tr("Clear"));
-    playlist.a("append-file", tr("Append File"));
-    playlist.a("append-url", tr("Append URL"));
-    playlist.a("remove", tr("Remove"));
-    playlist.a("move-up", tr("Move Up"));
-    playlist.a("move-down", tr("Move Down"));
-    tool.a("favorites", tr("Favorites"));
-    auto &history = tool("history");
+    playlist.a(u"toggle"_q, tr("Show/Hide"));
+    playlist.a(u"open"_q, tr("Open"));
+    playlist.a(u"save"_q, tr("Save"));
+    playlist.a(u"clear"_q, tr("Clear"));
+    playlist.a(u"append-file"_q, tr("Append File"));
+    playlist.a(u"append-url"_q, tr("Append URL"));
+    playlist.a(u"remove"_q, tr("Remove"));
+    playlist.a(u"move-up"_q, tr("Move Up"));
+    playlist.a(u"move-down"_q, tr("Move Down"));
+    tool.a(u"favorites"_q, tr("Favorites"));
+    auto &history = tool(u"history"_q);
     history.setTitle(tr("History"));
-    history.a("toggle", tr("Show/Hide"));
-    history.a("clear", tr("Clear"));
+    history.a(u"toggle"_q, tr("Show/Hide"));
+    history.a(u"clear"_q, tr("Clear"));
 
-    tool.a("find-subtitle", tr("Find Subtitle"));
-    tool.a("subtitle", tr("Subtitle View"));
-    tool.a("pref", tr("Preferences"));
-    tool.a("reload-skin", tr("Reload Skin"));
-    tool.a("playinfo", tr("Playback Information"));
-    tool.a("auto-exit", tr("Auto-exit"));
-    tool.a("auto-shutdown", tr("Auto-shutdown"));
+    tool.a(u"find-subtitle"_q, tr("Find Subtitle"));
+    tool.a(u"subtitle"_q, tr("Subtitle View"));
+    tool.a(u"pref"_q, tr("Preferences"));
+    tool.a(u"reload-skin"_q, tr("Reload Skin"));
+    tool.a(u"playinfo"_q, tr("Playback Information"));
+    tool.a(u"auto-exit"_q, tr("Auto-exit"));
+    tool.a(u"auto-shutdown"_q, tr("Auto-shutdown"));
 
-    auto &window = root("window", tr("Window"));
+    auto &window = root(u"window"_q, tr("Window"));
     updateEnumMenu<StaysOnTop>(window);
-    window.a("proper", tr("Proper Size"));
-    window.a("full", tr("Fullscreen"));
-    window.a("minimize", tr("Minimize"));
-    window.a("maximize", tr("Maximize"));
-    window.a("close", tr("Close"));
+    window.a(u"proper"_q, tr("Proper Size"));
+    window.a(u"full"_q, tr("Fullscreen"));
+    window.a(u"minimize"_q, tr("Minimize"));
+    window.a(u"maximize"_q, tr("Maximize"));
+    window.a(u"close"_q, tr("Close"));
 
-    auto &help = root("help");
+    auto &help = root(u"help"_q);
     help.setTitle(tr("Help"));
-    help.a("about", tr("About %1").arg("CMPlayer"));
-    root.a("exit", tr("Exit"));
+    help.a(u"about"_q, tr("About %1").arg(u"CMPlayer"_q));
+    root.a(u"exit"_q, tr("Exit"));
 }
 
 auto RootMenu::fillKeyMap(Menu *menu) -> void

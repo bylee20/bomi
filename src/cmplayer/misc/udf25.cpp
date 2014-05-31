@@ -1200,7 +1200,7 @@ Dir::Dir(udf25 *udf, const QString &path): m_udf(udf), m_path(path) {
         auto file = read();
         if (file.isEmpty())
             break;
-        if (file == _L(".") || file == _L("..") || dir.entry.d_type == DVD_DT_DIR)
+        if (_IsOneOf(file, "."_a, ".."_a) || dir.entry.d_type == DVD_DT_DIR)
             continue;
         m_files.append(file);
     }
@@ -1214,7 +1214,7 @@ auto Dir::files(bool withPath) const -> QStringList
         return m_files;
     QStringList files; files.reserve(m_files.size());
     for (auto &file : m_files)
-        files.append(m_path % _L('/') % file);
+        files.append(m_path % '/' % file);
     return files;
 }
 

@@ -103,7 +103,7 @@ struct RecordIoList {
     using One = RecordIoOne<T>;
     static auto read(QSettings &r, QList<T> &values, const QString &key) -> void
     {
-        if (!r.value(key % _L("_exists"), false).toBool())
+        if (!r.value(key % "_exists"_a, false).toBool())
             return;
         const int size = r.beginReadArray(key);
         values.clear();    values.reserve(size);
@@ -117,7 +117,7 @@ struct RecordIoList {
     static auto write(QSettings &r, const QList<T> &values,
                       const QString &key) -> void
     {
-        r.setValue(key % _L("_exists"), true);
+        r.setValue(key % "_exists"_a, true);
         r.beginWriteArray(key, values.size());
         for (int i=0; i<values.size(); ++i) {
             r.setArrayIndex(i);

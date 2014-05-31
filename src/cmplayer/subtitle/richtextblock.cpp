@@ -58,13 +58,13 @@ auto RichTextBlockParser::parse(const QStringRef &text,
         while (pos < text.size()) {
             const QChar c = text.at(pos);
             if (isSeparator(c.unicode())) {
-                seps += _L(' ');
+                seps += ' ';
                 if (skipSeparator(pos, text))
                     break;
             } else {
                 if (!seps.isEmpty()) {
                     if (!ret.last().text.isEmpty())
-                        ret.last().text.append(_L(' '));
+                        ret.last().text.append(' ');
                     seps.clear();
                 }
                 if (c.unicode() == '&') {
@@ -122,7 +122,7 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                     ruby = nullptr;
                 }
             } else { // new format
-                using RegEx = QRegularExpression;
+                using RegEx = QRegEx;
                 constexpr auto options = RegEx::InvertedGreedinessOption
                                        | RegEx::CaseInsensitiveOption;
                 if (_Same(tag.name, "rp")) {

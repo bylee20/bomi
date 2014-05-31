@@ -111,16 +111,14 @@ auto MrlStateSqlFieldList::prepareInsert(const QString &table) -> QString
     insert.clear();
     if (m_fields.isEmpty())
         return QString();
-    QString phs, columns;
-    phs.reserve(m_fields.size()*2);
-    phs.push_back(_L('?'));
-    columns.push_back(m_fields.front().property().name());
-    for (int i=1; i<m_fields.size(); ++i) {
-        phs.push_back(QStringLiteral(",?"));
-        columns.push_back(_L(',') % m_fields[i].property().name());
-    }
-    insert = QStringLiteral("INSERT OR REPLACE INTO %1 (%2) VALUES (%3)")
-                    .arg(table).arg(columns).arg(phs);
+    const auto phs = _ToStringList(m_fields, [&] (const MrlStateSqlField &) {
+        return QString('?');
+    }).join(',');
+    const auto cols = _ToStringList(m_fields, [&] (const MrlStateSqlField &f) {
+        return QString::fromLatin1(f.property().name());
+    }).join(',');
+    insert = u"INSERT OR REPLACE INTO %1 (%2) VALUES (%3)"_q
+            .arg(table).arg(cols).arg(phs);
     return insert;
 }
 
@@ -141,11 +139,11 @@ auto MrlStateSqlFieldList::prepareSelect(const QString &table,
     if (m_fields.isEmpty() || !where.isValid())
         return QString();
     m_where = where;
-    QString columns;
-    columns.push_back(m_fields.front().property().name());
-    for (int i=1; i<m_fields.size(); ++i)
-        columns.push_back(_L(',') % m_fields[i].property().name());
-    select = QStringLiteral("SELECT %1 FROM %2 WHERE %3 = ?")
+    const auto columns = _ToStringList(m_fields,
+                                       [&] (const MrlStateSqlField &field) {
+        return QString::fromLatin1(field.property().name());
+    }).join(',');
+    select = u"SELECT %1 FROM %2 WHERE %3 = ?"_q
             .arg(columns).arg(table).arg(m_where.property().name());
     return select;
 }

@@ -26,8 +26,8 @@ auto CharsetDetector::encoding() const -> QString
 {
     if (d->detected) {
         const QString enc(d->obj->encoding);
-        if (enc.compare("EUC-KR", QCI) == 0)
-            return QString("CP949");
+        if (enc.compare("EUC-KR"_a, QCI) == 0)
+            return u"CP949"_q;
         return enc;
     }
     return QString();

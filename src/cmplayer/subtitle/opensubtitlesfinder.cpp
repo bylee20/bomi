@@ -32,9 +32,9 @@ struct OpenSubtitlesFinder::Data {
         client.call("LogIn", args, [this] (const QVariantList &results) {
             if (!results.isEmpty()) {
                 const auto map = results[0].toMap();
-                token = map[_L("token")].toString();
+                token = map[u"token"_q].toString();
                 if (token.isEmpty())
-                    setError(map[_L("status")].toString());
+                    setError(map[u"status"_q].toString());
                 else
                     setState(Available);
             } else
@@ -85,33 +85,33 @@ auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
     quint64 h = bytes + sum(0) + sum(bytes-len);
     auto hash = QString::number(h, 16);
     if (hash.size() < 16)
-        hash = _N(0, 10, 16-hash.size(), _L('0')) + hash;
+        hash = _N(0, 10, 16-hash.size(), '0') + hash;
 
     QVariantMap map;
-    map[_L("sublanguageid")] = _L("all");
-    map[_L("moviehash")] = hash;
-    map[_L("moviebytesize")] = bytes;
+    map[u"sublanguageid"_q] = u"all"_q;
+    map[u"moviehash"_q] = hash;
+    map[u"moviebytesize"_q] = bytes;
     const auto args = _Args() << d->token << QVariant(QVariantList() << map);
     d->client.call("SearchSubtitles", args, [this] (const QVariantList &results) {
         d->setState(Available);
         if (results.isEmpty() || results.first().type() != QVariant::Map) {
             emit found(QList<SubtitleLink>());
         } else {
-            const auto list = results.first().toMap()[_L("data")].toList();
+            const auto list = results.first().toMap()[u"data"_q].toList();
             QList<SubtitleLink> links;
             for (auto &it : list) {
                 if (it.type() != QVariant::Map)
                     continue;
                 auto const map = it.toMap();
                 SubtitleLink link;
-                link.fileName = map[_L("SubFileName")].toString();
-                link.date = map[_L("SubAddDate")].toString();
-                link.url = map[_L("SubDownloadLink")].toString();
-                auto iso = map[_L("SubLanguageID")].toString();
+                link.fileName = map[u"SubFileName"_q].toString();
+                link.date = map[u"SubAddDate"_q].toString();
+                link.url = map[u"SubDownloadLink"_q].toString();
+                auto iso = map[u"SubLanguageID"_q].toString();
                 if (iso.isEmpty())
-                    iso = map[_L("ISO639")].toString();
+                    iso = map[u"ISO639"_q].toString();
                 if (iso.isEmpty())
-                    link.language = map[_L("LanguageName")].toString();
+                    link.language = map[u"LanguageName"_q].toString();
                 else
                     link.language = translator_display_language(iso);
                 links.append(link);

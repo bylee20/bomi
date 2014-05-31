@@ -96,15 +96,15 @@ auto DeintCaps::default_(DecoderDevice dec) -> DeintCaps
 
 auto DeintCaps::toString() const -> QString
 {
-    QString text = DeintMethodInfo::name(m_method) % _L('|');
+    QString text = DeintMethodInfo::name(m_method) % '|';
     for (auto dec : DecoderDeviceInfo::items()) {
         if (m_decoders.contains(dec.value))
-            text += dec.name % _L(':');
+            text += dec.name % ':';
     }
     text += "|";
     for (auto dev : DeintDeviceInfo::items()) {
         if (m_devices.contains(dev.value))
-            text += dev.name % _L(':');
+            text += dev.name % ':';
     }
     text += "|" % _N(m_doubler);
     return text;

@@ -13,11 +13,11 @@ AboutDialog::AboutDialog(QWidget *parent)
     UI_LABEL_ARG(copyright, arg(QDate::currentDate().year()));
     UI_LABEL_ARG(contacts,
                  arg("<a href=\"http://xylosper.net\">"
-                     "http://xylosper.net</a><br>").
+                     "http://xylosper.net</a><br>"_a).
                  arg("<a href=\"mailto:darklin20@gmail.com\">"
-                     "darklin20@gmail.com</a><br>").
+                     "darklin20@gmail.com</a><br>"_a).
                  arg("<a href=\"http://cmplayer.github.com\">"
-                     "http://cmplayer.github.com</a>"));
+                     "http://cmplayer.github.com</a>"_a));
 #undef UI_LABEL_ARG
     d->ui.license->setText(
         "This program is free software; "
@@ -39,7 +39,7 @@ AboutDialog::AboutDialog(QWidget *parent)
 
         "Exception:<br>"
         "libchardet made by JoungKyun.Kim is "
-        "distributed under Mozilla Public License(MPL)."
+        "distributed under Mozilla Public License(MPL)."_a
     );
 
     auto show = [this] ()
@@ -56,8 +56,8 @@ AboutDialog::AboutDialog(QWidget *parent)
         vbox->addLayout(hbox);
         connect(close, &QPushButton::clicked, &dlg, &QDialog::accept);
 
-        const QString fileName(sender() == d->ui.view_mpl ? ":/mpl.html"
-                                                          : ":/gpl.html");
+        const QString fileName(sender() == d->ui.view_mpl ? ":/mpl.html"_a
+                                                          : ":/gpl.html"_a);
         QFile file(fileName);
         file.open(QFile::ReadOnly | QFile::Text);
         text->setHtml(QString::fromLatin1(file.readAll()));

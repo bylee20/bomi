@@ -118,7 +118,7 @@ OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key
     d->key = key;
     QSettings settings;
     settings.beginGroup(GROUP % d->key);
-    d->setCheckedTypes(settings.value("checked_types", _L("vi")).toString());
+    d->setCheckedTypes(settings.value("checked_types", u"vi"_q).toString());
     settings.endGroup();
 }
 

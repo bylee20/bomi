@@ -36,13 +36,13 @@ protected:
 
 class TMPlayerParser : public LineParser {
 public:
-    TMPlayerParser(): LineParser(_L("^\\s*(\\d?\\d)\\s*:\\s*(\\d\\d)\\s*:\\s*(\\d\\d)\\s*:\\s*(.*)$")) {}
+    TMPlayerParser(): LineParser(u"^\\s*(\\d?\\d)\\s*:\\s*(\\d\\d)\\s*:\\s*(\\d\\d)\\s*:\\s*(.*)$"_q) {}
     auto _parse(Subtitle &sub) -> void;
 };
 
 class MicroDVDParser : public LineParser {
 public:
-    MicroDVDParser(): LineParser(_L("^\\{(\\d+)\\}\\{(\\d+)\\}(.*)$")) {}
+    MicroDVDParser(): LineParser(u"^\\{(\\d+)\\}\\{(\\d+)\\}(.*)$"_q) {}
     auto _parse(Subtitle &sub) -> void;
 };
 

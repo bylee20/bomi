@@ -486,13 +486,13 @@ struct PlayEngine::Data {
         if (mrl.isLocalFile())
             category = tr("File");
         else if (mrl.isDvd())
-            category = _L("DVD");
+            category = u"DVD"_q;
         else if (mrl.isBluray())
             category = tr("Blu-ray");
         else
-            category = _L("URL");
+            category = u"URL"_q;
         const QString display = name.isEmpty() ? mrl.displayName() : name;
-        mediaInfo.setName(category % _L(": ") % display);
+        mediaInfo.setName(category % ": "_a % display);
     }
 };
 
@@ -559,7 +559,7 @@ PlayEngine::PlayEngine()
     auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
         const auto opts = QString::fromLocal8Bit(overrides);
-        const auto args = opts.split(QRegularExpression(R"([\s\t]+)"),
+        const auto args = opts.split(QRegEx(R"([\s\t]+)"),
                                      QString::SkipEmptyParts);
         for (int i=0; i<args.size(); ++i) {
             if (!args[i].startsWith("--")) {
@@ -1138,7 +1138,7 @@ auto PlayEngine::customEvent(QEvent *event) -> void
             if (!HwAcc::supports(d->hwaccBackend, codec))
                 return HardwareAcceleration::Unavailable;
             static QVector<QString> types = {
-                _L("vaapi"), _L("vdpau"), _L("vda")
+                u"vaapi"_q, u"vdpau"_q, u"vda"_q
             };
             if (types.contains(output->m_type))
                 return HardwareAcceleration::Activated;
@@ -1279,15 +1279,15 @@ auto PlayEngine::exec() -> void
         for (int i=0; i+1<list.size(); i+=2) {
             const auto key = list[i].toString();
             const auto value = list[i+1].toString();
-            if (key == _L("title"))
+            if (key == "title"_a)
                 metaData.m_title = value;
-            else if (key == _L("artist"))
+            else if (key == "artist"_a)
                 metaData.m_artist = value;
-            else if (key == _L("album"))
+            else if (key == "album"_a)
                 metaData.m_album = value;
-            else if (key == _L("genre"))
+            else if (key == "genre"_a)
                 metaData.m_genre = value;
-            else if (key == _L("date"))
+            else if (key == "date"_a)
                 metaData.m_date = value;
         }
         metaData.m_mrl = mrl;
@@ -1314,7 +1314,7 @@ auto PlayEngine::exec() -> void
                     chapter.m_name = map["title"].toString();
                     if (chapter.m_name.isEmpty())
                         chapter.m_name = _MSecToString(chapter.m_time,
-                                                       _L("hh:mm:ss.zzz"));
+                                                       u"hh:mm:ss.zzz"_q);
                 }
                 _PostEvent(this, UpdateChapterList, chapters);
                 _PostEvent(this, UpdateMetaData, metaData());

@@ -40,19 +40,32 @@ using Signal = void(State::*)(Args...);
 SCA QCS = Qt::CaseSensitive;
 SCA QCI = Qt::CaseInsensitive;
 
+using QRegEx = QRegularExpression;
+using QRegExMatch = QRegularExpressionMatch;
+using QRegExMatchIterator = QRegularExpressionMatchIterator;
+
 namespace Pch {
+
+SIA operator"" _q(const char16_t *str, size_t len) -> QString
+{ return QString::fromRawData(reinterpret_cast<const QChar*>(str), len); }
+
+SIA operator"" _a(const char *str, size_t len) -> QLatin1String
+{ return QLatin1String(str, len); }
+
+SIA operator""_b(const char *str, size_t len) -> QByteArray
+{ return QByteArray::fromRawData(str, len); }
+
+SIA operator"" _8(const char *str, size_t len) -> QString
+{ return QString::fromUtf8(str, len); }
+
+SCIA operator"" _q(char16_t c) -> QChar { return QChar((ushort)c); }
+SCIA operator"" _q(char c) -> QChar { return QChar(c); }
+
 SIA _L(const char *str) -> QLatin1String
 { return QLatin1String(str); }
 
-SIA _L(char c) -> QLatin1Char
-{ return QLatin1Char(c); }
-
-SIA _U(const char *utf8, int len = -1) -> QString
-{ return QString::fromUtf8(utf8, len); }
-
-SIA _N(int n, int base, int width,
-                      const QChar &c = _L(' ')) -> QString
-{ return QString("%1").arg(n, width, base, c); }
+SIA _N(int n, int base, int width, const QChar &c = ' '_q) -> QString
+{ return u"%1"_q.arg(n, width, base, c); }
 
 SIA _N(int n, int base = 10) -> QString
 { return QString::number(n, base); }
@@ -76,8 +89,7 @@ SIA _ToStringList(const Container &c, Conv f) -> QStringList
 
 // number with sign
 template<class N>
-SIA _SignSymbol(N n) -> QString
-{ return n < 0 ? _L("-") : (n > 0 ? _L("+") : _U("±")); }
+SIA _SignSymbol(N n) -> QChar { return n < 0 ? '-'_q : n > 0 ? '+'_q : u'±'_q; }
 
 SIA _NS(int n) -> QString
 { return _SignSymbol(n) % _N(qAbs(n)); }
@@ -89,6 +101,13 @@ template<class T>
 SIA _InRange(const T &min, const T &val, const T &max) -> bool
 { return min <= val && val <= max; }
 
+template<class T, class S>
+SCIA _IsOneOf(const T &t, const S &s) -> bool { return t == s; }
+
+template<class T, class S, class U, class... Args>
+SCIA _IsOneOf(const T &t, const S &s, const U &u, const Args&... args) -> bool
+{ return t == s || _IsOneOf(t, u, args...); }
+
 template <class T>
 SIA _Change(T &the, const T &one) -> bool
 { if (the != one) {the = one; return true;} return false; }
@@ -98,7 +117,7 @@ SIA _C(T& t) -> const T& { return t; }
 
 SIA _MSecToTime(int ms) -> QTime { return QTime::fromMSecsSinceStartOfDay(ms); }
 
-SIA _MSecToString(int ms, const QString &fmt = _L("hh:mm:ss")) -> QString
+SIA _MSecToString(int ms, const QString &fmt = u"hh:mm:ss"_q) -> QString
 { return _MSecToTime(ms).toString(fmt); }
 
 enum ExtType {

@@ -8,9 +8,9 @@ struct SubtitleFileInfo {
     SubtitleFileInfo(const QString &path, const QString &encoding): path(path), encoding(encoding) {}
     bool operator == (const SubtitleFileInfo &rhs) const { return path == rhs.path && encoding == rhs.encoding; }
     bool operator < (const SubtitleFileInfo &rhs) const { return path < rhs.path; }
-    auto toString() const -> QString { return path % _L('#') % encoding; }
+    auto toString() const -> QString { return path % '#' % encoding; }
     static auto fromString(const QString &text) -> SubtitleFileInfo {
-        const int index = text.lastIndexOf(_L('#'));
+        const int index = text.lastIndexOf('#');
         if (index < 0)
             return SubtitleFileInfo();
         return SubtitleFileInfo(text.mid(0, index), text.mid(index+1));

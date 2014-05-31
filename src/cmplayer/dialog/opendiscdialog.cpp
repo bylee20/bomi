@@ -46,7 +46,7 @@ auto OpenDiscDialog::checkDevice(const QString &device) -> void
     const bool exists = info.exists();
     d->ok->setEnabled(exists);
     d->ui.available->setText(exists ? tr("Selected device is available.")
-        : _L("<font color='red'>") % tr("Selected device doesn't exists.") % _L("</font>"));
+        : "<font color='red'>"_a % tr("Selected device doesn't exists.") % "</font>"_a);
 }
 
 auto OpenDiscDialog::device() const -> QString

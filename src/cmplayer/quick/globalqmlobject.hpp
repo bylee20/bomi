@@ -82,7 +82,7 @@ inline auto UtilObject::msecToString(int ms) -> QString
 { return secToString(qRound((double)ms*1e-3)); }
 
 inline auto UtilObject::secToString(int s) -> QString
-{ return _MSecToTime(s*1000).toString(_L("h:mm:ss")); }
+{ return _MSecToTime(s*1000).toString(u"h:mm:ss"_q); }
 
 inline auto UtilObject::bound(double min, double v, double max) const -> double
 {return qBound(min, v, max);}

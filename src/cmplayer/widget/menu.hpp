@@ -14,36 +14,21 @@ public:
     using GroupHash = QHash<QString, ActionGroup*>;
     using StepActionPairHash = QHash<QString, StepActionPair*>;
 
-    auto operator() (const char *key) const -> Menu &;
-    auto operator() (const char *key, const QString &title) const -> Menu&;
-    auto operator[] (const char *key) const -> QAction*;
-    auto g(const char *key) const -> ActionGroup* { return g(_L(key)); }
-    auto a(const char *key) const -> QAction* { return a(_L(key)); }
-    auto m(const char *key) const -> Menu* { return m(_L(key)); }
-    auto addMenu(const char *key) -> Menu* { return addMenu(_L(key)); }
-    auto addActionToGroup(const char *key, bool checkable = false,
-                          const char *group = "") -> QAction*;
-    auto addActionToGroup(QAction *action, const char *key,
-                          const char *group = "") -> QAction*;
-    auto addAction(const char *key, bool checkable = false) -> QAction*;
-    auto addGroup(const char *key) -> ActionGroup* { return addGroup(_L(key)); }
-    auto a(const char *key, const QString &text) const -> QAction*;
-
     auto operator() (const QString &key) const -> Menu& { return *m(key); }
     auto operator() (const QString &key, const QString &title) const -> Menu&;
     auto operator[] (const QString &key) const -> QAction* { return a(key); }
-    auto g(const QString &key = _L("")) const -> ActionGroup*;
+    auto g(const QString &key = QString()) const -> ActionGroup*;
     auto a(const QString &key) const -> QAction* { return m_a[key]; }
     auto m(const QString &key) const -> Menu* { return m_m[key]; }
     auto addMenu(const QString &key) -> Menu*;
     auto addActionToGroup(QAction *action, const QString &key,
-                          const QString &group = _L("")) -> QAction*;
+                          const QString &group = u""_q) -> QAction*;
     auto addActionToGroup(const QString &key, bool checkable = false,
-                          const QString &group = _L("")) -> QAction*;
+                          const QString &group = u""_q) -> QAction*;
     auto addAction(QAction *action, const QString &key) -> QAction*;
     auto addAction(const QString &key, bool checkable = false) -> QAction*;
     auto addActionToGroupWithoutKey(const QString &name, bool checkable = false,
-                                    const QString &group = _L("")) -> QAction*;
+                                    const QString &group = u""_q) -> QAction*;
     auto addGroup(const QString &key) -> ActionGroup*;
     auto a(const QString &key, const QString &text) const -> QAction*;
     auto id(QAction *a) const -> QString { return m_a.key(a, QString()); }
@@ -55,13 +40,12 @@ public:
     auto syncTitle() -> void;
     auto syncActions() -> void;
     auto ids() const -> QHash<QString, QAction*> { return m_ids; }
-    auto s(const char *key = "") const -> StepActionPair* { return s(_L(key)); }
-    auto s(const QString &key) const -> StepActionPair* { return m_s[key]; }
+    auto s(const QString &key = QString()) const -> StepActionPair*;
     auto addStepActionPair(const QString &inc, const QString &dec,
                            const QString &pair,
-                           const QString &group = _L("")) -> StepActionPair*;
+                           const QString &group = QString()) -> StepActionPair*;
     auto addStepActionPair(const QString &pair,
-                           const QString &group = _L("")) -> StepActionPair*;
+                           const QString &group = QString()) -> StepActionPair*;
 signals:
     void actionsSynchronized();
 protected:
@@ -76,30 +60,6 @@ private:
     const QString m_id;
     friend class MenuBar;
 };
-
-inline auto Menu::operator() (const char *key) const -> Menu &
-{ return operator ()(_L(key)); }
-
-inline auto Menu::operator() (const char *key,
-                              const QString &title) const -> Menu&
-{ return operator ()(_L(key), title); }
-
-inline auto Menu::operator[] (const char *key) const -> QAction*
-{return operator[] (_L(key));}
-
-inline auto Menu::addActionToGroup(const char *key, bool checkable,
-                                   const char *group) -> QAction*
-{ return addActionToGroup(_L(key), checkable, _L(group)); }
-
-inline auto Menu::addActionToGroup(QAction *action, const char *key,
-                                   const char *group) -> QAction*
-{ return addActionToGroup(action, _L(key), _L(group)); }
-
-inline auto Menu::addAction(const char *key, bool checkable) -> QAction*
-{ return addAction(_L(key), checkable); }
-
-inline auto Menu::a(const char *key, const QString &text) const -> QAction*
-{ return a(_L(key), text); }
 
 inline auto Menu::operator() (const QString &key,
                               const QString &title) const -> Menu&
@@ -178,10 +138,15 @@ inline auto Menu::syncActions() -> void
     emit actionsSynchronized();
 }
 
+inline auto Menu::s(const QString &key) const -> StepActionPair*
+{
+    return m_s[key];
+}
+
 inline auto Menu::addStepActionPair(const QString &pair,
                                     const QString &group) -> StepActionPair*
 {
-    return addStepActionPair(_L("increase"), _L("decrease"), pair, group);
+    return addStepActionPair(u"increase"_q, u"decrease"_q, pair, group);
 }
 
 #endif // MENU_HPP

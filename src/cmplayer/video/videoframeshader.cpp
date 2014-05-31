@@ -167,8 +167,8 @@ auto VideoFrameShader::updateShader(int deint) -> void
                   + sizeNum(m_textures.first().height()) + ";\n";
         auto declareVec2 = [] (const QString &name,
                                const QPointF &p) -> QString {
-            return _L("const vec2 ") % name % _L(" = vec2(")
-                   % _N(p.x(), 6) % _L(", ") % _N(p.y(), 6) % _L(");\n");
+            return "const vec2 "_a % name % " = vec2("_a
+                   % _N(p.x(), 6) % ", "_a % _N(p.y(), 6) % ");\n"_a;
         };
         auto cc2string = [declareVec2, this] (int i) -> QString {
             QPointF cc = {1.0, 1.0};

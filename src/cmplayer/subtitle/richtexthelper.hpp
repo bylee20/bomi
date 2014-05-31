@@ -15,17 +15,14 @@ public:
     static auto toColor(const QStringRef &text) -> QColor;
     static auto isRightBracket(ushort c) -> bool {return c == '>';}
     static auto isSeparator(ushort c) -> bool
-        { return c == ' ' || c == '\t' || c == '\r' || c== '\n'; }
-    static auto isWhitespace(ushort c) -> bool { return c == ' ' || c == '\t'; }
-    static auto isNewLine(ushort c) -> bool { return c == '\r' || c == '\n'; }
-    static auto replace(const QStringRef &str, const QLatin1String &from,
-                        const QLatin1String &to,
-                        Qt::CaseSensitivity s = QCI) -> QString;
+        { return _IsOneOf(c, ' ', '\t', '\r', '\n'); }
+    static auto isWhitespace(ushort c) -> bool { return _IsOneOf(c, ' ', '\t'); }
+    static auto isNewLine(ushort c) -> bool { return _IsOneOf(c, '\r', '\n'); }
+    static auto replace(const QStringRef &str, const QString &from,
+                        const QString &to, Qt::CaseSensitivity s = QCI) -> QString;
     static auto indexOf(const QStringRef &ref, QRegExp &rx, int from=0) -> int;
-    static auto indexOf(const QStringRef &ref,
-                        QRegularExpression &rx, int from = 0) -> int;
-    static auto match(QRegularExpression &rx, const QStringRef &ref,
-                      int from = 0) -> QRegularExpressionMatch
+    static auto indexOf(const QStringRef &ref, QRegEx &rx, int from = 0) -> int;
+    static auto match(QRegEx &rx, const QStringRef &ref, int from = 0) -> QRegExMatch
         { return rx.match(*ref.string(), from + ref.position()); }
     static auto trim(const QStringRef &text) -> QStringRef
     {

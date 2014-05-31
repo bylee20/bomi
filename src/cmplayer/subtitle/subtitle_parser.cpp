@@ -85,16 +85,16 @@ auto SubtitleParser::encodeEntity(const QStringRef &str) -> QString
         ushort c = str.at(i).unicode();
         switch (c) {
         case ' ':
-            ret += _L("&nbsp;");
+            ret += u"&nbsp;"_q;
             break;
         case '<':
-            ret += _L("&lt;");
+            ret += u"&lt;"_q;
             break;
         case '>':
-            ret += _L("&gt;");
+            ret += u"&gt;"_q;
             break;
         case '|':
-            ret += _L("<br>");
+            ret += u"<br>"_q;
             break;
         default:
             ret += str.at(i);

@@ -7,8 +7,8 @@ Skin::Data::Data() {
 #ifdef CMPLAYER_SKINS_PATH
     append(QString::fromLocal8Bit(CMPLAYER_SKINS_PATH), dirs);
 #endif
-    append(QDir::homePath() % _L("/.cmplayer/skins"), dirs);
-    append(qApp->applicationDirPath().toLocal8Bit() % _L("/skins"), dirs);
+    append(QDir::homePath() % "/.cmplayer/skins"_a, dirs);
+    append(qApp->applicationDirPath().toLocal8Bit() % "/skins"_a, dirs);
     auto path = qgetenv("CMPLAYER_SKINS_PATH");
     if (!path.isEmpty())
         append(QString::fromLocal8Bit(path.data(), path.size()), dirs);
@@ -16,8 +16,8 @@ Skin::Data::Data() {
 #ifdef CMPLAYER_IMPORTS_PATH
     append(QString::fromLocal8Bit(CMPLAYER_IMPORTS_PATH), qmls);
 #endif
-    append(QDir::homePath() % _L("/.cmplayer/imports"), qmls);
-    append(qApp->applicationDirPath().toLocal8Bit() % _L("/imports"), qmls);
+    append(QDir::homePath() % "/.cmplayer/imports"_a, qmls);
+    append(qApp->applicationDirPath().toLocal8Bit() % "/imports"_a, qmls);
     path = qgetenv("CMPLAYER_IMPORTS_PATH");
     if (!path.isEmpty())
         append(QString::fromLocal8Bit(path.data(), path.size()), qmls);

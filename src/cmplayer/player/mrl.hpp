@@ -11,11 +11,11 @@ public:
     bool operator < (const Mrl &rhs) const {return m_loc < rhs.m_loc;}
     auto location() const -> QString { auto loc = toLocalFile(); return loc.isEmpty() ? m_loc : loc; }
     auto toString() const -> QString { return m_loc; }
-    auto isLocalFile() const -> bool {return m_loc.startsWith(_L("file://"), QCI);}
-    auto isDvd() const -> bool {return m_loc.startsWith(_L("dvdnav://"), QCI);}
-    auto isBluray() const -> bool { return m_loc.startsWith(_L("bdnav://"), QCI); }
+    auto isLocalFile() const -> bool {return m_loc.startsWith("file://"_a, QCI);}
+    auto isDvd() const -> bool {return m_loc.startsWith("dvdnav://"_a, QCI);}
+    auto isBluray() const -> bool { return m_loc.startsWith("bdnav://"_a, QCI); }
     auto isDisc() const -> bool;
-    auto scheme() const -> QString {return m_loc.left(m_loc.indexOf(_L("://")));}
+    auto scheme() const -> QString {return m_loc.left(m_loc.indexOf("://"_a));}
     auto toLocalFile() const -> QString {return isLocalFile() ? m_loc.right(m_loc.size() - 7) : QString();}
     auto fileName() const -> QString;
     auto isPlaylist() const -> bool;

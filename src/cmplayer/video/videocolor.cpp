@@ -2,17 +2,17 @@
 #include "enum/colorrange.hpp"
 #include "misc/json.hpp"
 
-static auto makeNameArray() -> VideoColor::Array<const char*>
+static auto makeNameArray() -> VideoColor::Array<QString>
 {
-    VideoColor::Array<const char*> names;
-    names[VideoColor::Brightness] = "brightness";
-    names[VideoColor::Contrast]   = "contrast";
-    names[VideoColor::Saturation] = "saturation";
-    names[VideoColor::Hue]        = "hue";
+    VideoColor::Array<QString> names;
+    names[VideoColor::Brightness] = u"brightness"_q;
+    names[VideoColor::Contrast]   = u"contrast"_q;
+    names[VideoColor::Saturation] = u"saturation"_q;
+    names[VideoColor::Hue]        = u"hue"_q;
     return names;
 }
 
-VideoColor::Array<const char*> VideoColor::s_names = makeNameArray();
+VideoColor::Array<QString> VideoColor::s_names = makeNameArray();
 
 struct YCbCrRange {
     auto operator *= (float rhs) -> YCbCrRange&
@@ -185,7 +185,7 @@ auto VideoColor::toString() const -> QString
 {
     QStringList strs;
     VideoColor::for_type([&] (VideoColor::Type type) {
-        strs.append(name(type) % _L('=') % _N(get(type)));
+        strs.append(name(type) % '=' % _N(get(type)));
     });
     return strs.join('|');
 }
@@ -193,13 +193,13 @@ auto VideoColor::toString() const -> QString
 auto VideoColor::fromString(const QString &str) -> VideoColor
 {
     const auto strs = str.split('|');
-    QRegularExpression regex(R"((\w+)=(\d+))");
+    QRegEx regex(R"((\w+)=(\d+))");
     VideoColor color;
     for (auto &one : strs) {
         auto match = regex.match(one);
         if (!match.hasMatch())
             return VideoColor();
-        auto type = getType(match.captured(1).toLatin1());
+        auto type = getType(match.captured(1));
         if (type == TypeMax)
             return VideoColor();
         color.set(type, match.captured(2).toInt());

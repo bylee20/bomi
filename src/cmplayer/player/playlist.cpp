@@ -154,7 +154,7 @@ auto Playlist::loadM3U(QTextStream &in) -> bool
         return QString();
     };
 
-    QRegularExpression rxExtInf(R"(#EXTINF\s*:\s*(?<num>(-|)\d+)\s*\,\s*(?<name>.*)\s*$)");
+    QRegEx rxExtInf(R"(#EXTINF\s*:\s*(?<num>(-|)\d+)\s*\,\s*(?<name>.*)\s*$)");
     while (!in.atEnd()) {
         const QString line = in.readLine().trimmed();
         if (line.isEmpty())
@@ -163,7 +163,7 @@ auto Playlist::loadM3U(QTextStream &in) -> bool
         if (line.startsWith('#')) {
             auto matched = rxExtInf.match(line);
             if (matched.hasMatch()) {
-                name = matched.captured(_L("name"));
+                name = matched.captured(u"name"_q);
                 location = getNextLocation();
             }
         } else

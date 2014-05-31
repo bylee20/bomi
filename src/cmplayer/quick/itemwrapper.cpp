@@ -18,12 +18,12 @@ QtItem::QtItem(const QByteArray &source, QQuickItem *parent)
     m_margins.resize(6);
     for (int i=0; i<6; ++i) {
         const auto name = anchorName(static_cast<AnchorLine>(i));
-        const QString prefix = _L("anchors.") % name;
+        const QString prefix = "anchors."_a % name;
         m_anchors[i] = QQmlProperty(m_item, prefix);
         if (i < 4)
-            m_margins[i] = QQmlProperty(m_item, prefix % _L("Margin"));
+            m_margins[i] = QQmlProperty(m_item, prefix % "Margin"_a);
         else
-            m_margins[i] = QQmlProperty(m_item, prefix % _L("Offset"));
+            m_margins[i] = QQmlProperty(m_item, prefix % "Offset"_a);
     }
 }
 

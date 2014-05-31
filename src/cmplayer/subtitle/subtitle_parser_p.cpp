@@ -76,10 +76,10 @@ auto SubRipParser::isParsable() const -> bool
 
 auto SubRipParser::_parse(Subtitle &sub) -> void
 {
-    QRegularExpression rxNum(R"(^\s*(\d+)\s*$)");
-    QRegularExpression rxTime(R"(^\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"
+    QRegEx rxNum(R"(^\s*(\d+)\s*$)");
+    QRegEx rxTime(R"(^\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"
                               R"(-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*$)");
-    QRegularExpression rxBlank(R"(^\s*$)");
+    QRegEx rxBlank(R"(^\s*$)");
     auto getNumber = [&rxNum, this] () {
         for (;;) {
             const auto ref = getLine();
@@ -150,7 +150,7 @@ auto TMPlayerParser::_parse(Subtitle &sub) -> void
             comp[predictedEnd];
         QString text = rxLine.cap(4);
         predictedEnd = predictEndTime(time, text);
-        text = _L("<p>") % encodeEntity(trim(text.midRef(0))) % _L("</p>");
+        text = "<p>"_a % encodeEntity(trim(text.midRef(0))) % "</p>"_a;
         append(comp, text, time);
     }
 }
@@ -187,12 +187,12 @@ auto MicroDVDParser::_parse(Subtitle &sub) -> void
         QString text = rxLine.cap(3);
         QString parsed1, parsed2;
         auto addTag0 = [&] (const QString &name) {
-            parsed1 += _L('<') % name % _L('>');
-            parsed2 += _L("</") % name % _L('>');
+            parsed1 += '<' % name % '>';
+            parsed2 += "</"_a % name % '>';
         };
         auto addTag1 = [&] (const QString &name, const QString &attr) {
-            parsed1 += _L('<') % name % _L(' ') % attr % _L('>');
-            parsed2 += _L("</") % name % _L('>');
+            parsed1 += '<' % name % ' ' % attr % '>';
+            parsed2 += "</"_a % name % '>';
         };
         int idx = 0;
         QRegExp rxColor("\\$([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})");
@@ -200,31 +200,30 @@ auto MicroDVDParser::_parse(Subtitle &sub) -> void
             const auto name = rxAttr.cap(1);
             const auto value = rxAttr.cap(2);
             if (_Same(name, "y")) {
-                if (value.contains(_L('i'), QCI))
+                if (value.contains('i', QCI))
                     addTag0("i");
-                if (value.contains(_L('u'), QCI))
+                if (value.contains('u', QCI))
                     addTag0("u");
-                if (value.contains(_L('s'), QCI))
+                if (value.contains('s', QCI))
                     addTag0("s");
-                if (value.contains(_L('b'), QCI))
+                if (value.contains('b', QCI))
                     addTag0("b");
             } else if (_Same(name, "c")) {
                 if (rxColor.indexIn(value) != -1)
-                    addTag1(_L("font"), _L("color=\"#") % rxColor.cap(3)
+                    addTag1(u"font"_q, _L("color=\"#") % rxColor.cap(3)
                             % rxColor.cap(2) % rxColor.cap(1) %_L("\""));
             }
             idx = rxAttr.pos() + rxAttr.matchedLength();
         }
         if (idx < text.size()) {
-            if (text[idx] == _L('/')) {
+            if (text[idx] == '/') {
                 addTag0("i");
                 ++idx;
             }
-            text = _L("<p>") % parsed1 % replace(text.midRef(idx),
-                                                 _L("|"), _L("<br>"))
-                    % parsed2 % _L("</p>");
+            text = "<p>"_a % parsed1 % replace(text.midRef(idx), u"|"_q, u"<br>"_q)
+                    % parsed2 % "</p>"_a;
         } else
-            text = _L("<p>") % parsed1 % parsed2 % _L("</p>");
+            text = "<p>"_a % parsed1 % parsed2 % "</p>"_a;
         append(comp, text, start, end);
     }
 }

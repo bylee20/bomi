@@ -4,7 +4,7 @@
 
 auto SubComp::name() const -> QString
 {
-    return m_klass.isEmpty() ? m_file : m_file % _L("(") % m_klass % _L(")");
+    return m_klass.isEmpty() ? m_file : m_file % "("_a % m_klass % ")"_a;
 }
 
 auto Subtitle::component(double frameRate) const -> SubComp

@@ -170,12 +170,12 @@ auto AppX11::setAlwaysOnTop(QWidget *widget, bool onTop) -> void
 
 auto AppX11::devices() const -> QStringList
 {
-    static const QStringList filter = QStringList() << _L("sr*")
-        << _L("sg*") << _L("scd*") << _L("dvd*") << _L("cd*");
+    static const QStringList filter = QStringList() << u"sr*"_q
+        << u"sg*"_q << u"scd*"_q << u"dvd*"_q << u"cd*"_q;
     QDir dir("/dev");
     QStringList devices;
     for (auto &dev : dir.entryList(filter, QDir::System))
-        devices.append(_L("/dev/") % dev);
+        devices.append(u"/dev/"_q % dev);
     return devices;
 }
 
@@ -206,8 +206,8 @@ auto AppX11::shutdown() -> bool
     auto check = [&] (const char *fmt, const char *fb) -> bool {
         if (response.type() != QDBusMessage::ErrorMessage)
             return true;
-        _Debug(fmt, response.errorName(), response.errorMessage());
-        _Debug(fb);
+        Log::write(Log::Debug, fmt, response.errorName(), response.errorMessage());
+        Log::write(Log::Debug, fb);
         return false;
     };
     if (check("KDE session manager does not work: [%%] %%",

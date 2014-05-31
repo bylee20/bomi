@@ -48,14 +48,15 @@ public:
     static auto fromString(const QString &str) -> VideoColor;
     static auto fromPacked(qint64 packed) -> VideoColor;
     static auto getType(const char *name) -> Type;
-    static auto name(Type type) -> const char*
+    static auto getType(const QString &name) -> Type;
+    static auto name(Type type) -> QString
         { return type < TypeMax ? s_names[type] : ""; }
     static auto formatText(Type type) -> QString;
     template<class F>
     static auto for_type(F func) -> void;
 private:
     static auto clip(int v) -> int { return qBound(-100, v, 100); }
-    static Array<const char*> s_names;
+    static Array<QString> s_names;
     Array<int> m{{0, 0, 0, 0}};
 
 };
@@ -90,11 +91,14 @@ inline auto VideoColor::for_type(F f) -> void
 
 inline auto VideoColor::getType(const char *name) -> Type
 {
-    for (int i = 0; i < TypeMax; ++i) {
-        if (!strcmp(name, s_names[i]))
-            return static_cast<Type>(i);
-    }
-    return TypeMax;
+    return getType(QString::fromLatin1(name));
+}
+
+
+inline auto VideoColor::getType(const QString &name) -> Type
+{
+    const auto it = std::find(s_names.begin(), s_names.end(), name);
+    return it != s_names.end() ? Type(it - s_names.begin()) : TypeMax;
 }
 
 #endif // COLORPROPERTY_HPP

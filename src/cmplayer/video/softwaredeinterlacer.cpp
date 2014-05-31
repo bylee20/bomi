@@ -162,7 +162,7 @@ auto SoftwareDeinterlacer::setOption(const DeintOption &deint) -> void
             d->option = "md";
             break;
         case DeintMethod::Yadif:
-            d->option = _L("yadif") + (d->deint.doubler ? "=mode=1" : "");
+            d->option = "yadif"_a + (d->deint.doubler ? "=mode=1" : "");
             d->type = Graph;
             break;
         default:
