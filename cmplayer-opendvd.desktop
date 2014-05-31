@@ -7,5 +7,6 @@ Actions=open;
 Name=Open Video DVD with CMPlayer
 Name[pl]=Otwórz Video DVD z CMPlayer
 Name[es]=Abrir DVD de vídeo con CMPlayer
+Name[de]=Öffne Video-DVD mit CMPlayer
 Exec=cmplayer --wake dvd://%d
 Icon=cmplayer
