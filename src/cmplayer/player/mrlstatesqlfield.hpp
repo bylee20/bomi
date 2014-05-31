@@ -42,6 +42,7 @@ public:
     auto end() const -> const_iterator { return m_fields.end(); }
     auto end() -> iterator { return m_fields.end(); }
     auto size() const -> int { return m_fields.size(); }
+    auto isEmpty() const -> bool { return m_fields.isEmpty(); }
     auto clear() -> void;
     auto reserve(int size) -> void { m_fields.reserve(size); }
     auto push_back(const QMetaProperty &property, const QVariant &def) -> void
@@ -61,6 +62,7 @@ public:
     auto isSelectPrepared() const -> bool { return isPrepared(Select); }
     auto isPrepared(QueryType type) const -> bool
         { return !m_queries[type].isEmpty(); }
+    auto query(QueryType type) -> QString const { return m_queries[type]; }
 private:
     QVector<QString> m_queries = QVector<QString>(MaxType);
     QVector<Field> m_fields;

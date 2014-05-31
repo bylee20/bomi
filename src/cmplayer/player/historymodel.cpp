@@ -187,6 +187,8 @@ auto HistoryModel::getState(MrlState *state) const -> bool
 {
     if (!state->mrl.isUnique())
         return false;
+    if (d->restores.isEmpty())
+        return true;
     Q_ASSERT(d->restores.isSelectPrepared());
     if (d->cached.mrl != state->mrl)
         return d->restores.select(d->finder, state);
