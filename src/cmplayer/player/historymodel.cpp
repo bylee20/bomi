@@ -92,10 +92,6 @@ struct HistoryModel::Data {
         rowCache = RowCache();
         return true;
     }
-    template<class Conv, class Container>
-    auto _ToStringList(const Container &c, Conv f) -> QStringList
-    { QStringList list; for (auto &t : c) list.push_back(f(t)); return list; }
-
     auto import(const QVector<MrlState*> &states) -> void
     {
         Transactor t(&db);
