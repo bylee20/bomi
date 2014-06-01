@@ -188,7 +188,7 @@ auto availableFrambebufferFormats() -> QVector<TextureFormat>;
 
 }
 
-#define ENUM_CASE(e) case e: return QByteArray::fromRawData(#e, sizeof(e)-1)
+#define ENUM_CASE(e) case e: return #e##_b
 SIA _ToLog(OGL::TransferType type) -> QByteArray {
     switch (type) {
     ENUM_CASE(OGL::UInt8);

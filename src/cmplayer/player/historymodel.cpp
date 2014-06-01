@@ -95,12 +95,12 @@ struct HistoryModel::Data {
     auto import(const QVector<MrlState*> &states) -> void
     {
         Transactor t(&db);
-        finder.exec(QString::fromLatin1("DROP TABLE IF EXISTS %1").arg(table));
+        finder.exec(u"DROP TABLE IF EXISTS %1"_q.arg(table));
         QString columns = _ToStringList(fields, [] (const MrlStateSqlField &f) {
             return QString(_L(f.property().name()) % ' ' % f.type());
         }).join(", ");
 
-        finder.exec(QString::fromLatin1("CREATE TABLE %1 (%2)").arg(table).arg(columns));
+        finder.exec(u"CREATE TABLE %1 (%2)"_q.arg(table).arg(columns));
         for (auto state : states) {
             insert(state);
             delete state;

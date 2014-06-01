@@ -27,7 +27,7 @@ auto JsonStorage::setError(Error error) noexcept -> void
     m_error = error;
     switch (m_error) {
     case NoFile:
-        _Error("Error: '%%' file doesn't exist", m_fileName);
+        _Warn("Warning: '%%' file doesn't exist", m_fileName);
         break;
     case OpenError:
         _Error("Error: Cannot open '%%' file", m_fileName);

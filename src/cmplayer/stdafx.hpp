@@ -46,20 +46,20 @@ using QRegExMatchIterator = QRegularExpressionMatchIterator;
 
 namespace Pch {
 
-SIA operator"" _q(const char16_t *str, size_t len) -> QString
+SIA operator "" _q(const char16_t *str, size_t len) -> QString
 { return QString::fromRawData(reinterpret_cast<const QChar*>(str), len); }
 
-SIA operator"" _a(const char *str, size_t len) -> QLatin1String
+SIA operator "" _a(const char *str, size_t len) -> QLatin1String
 { return QLatin1String(str, len); }
 
-SIA operator""_b(const char *str, size_t len) -> QByteArray
+SIA operator ""_b(const char *str, size_t len) -> QByteArray
 { return QByteArray::fromRawData(str, len); }
 
-SIA operator"" _8(const char *str, size_t len) -> QString
+SIA operator "" _8(const char *str, size_t len) -> QString
 { return QString::fromUtf8(str, len); }
 
-SCIA operator"" _q(char16_t c) -> QChar { return QChar((ushort)c); }
-SCIA operator"" _q(char c) -> QChar { return QChar(c); }
+SCIA operator "" _q(char16_t c) -> QChar { return QChar((ushort)c); }
+SCIA operator "" _q(char c) -> QChar { return QChar(c); }
 
 SIA _L(const char *str) -> QLatin1String
 { return QLatin1String(str); }
