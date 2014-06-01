@@ -13,14 +13,14 @@ public:
     {
         if (m_doing)
             return true;
-        return m_doing = check(m_db->transaction(), "transaction()");
+        return m_doing = check(m_db->transaction(), "transaction()"_b);
     }
     auto done() -> void
     {
         if (!m_doing)
             return;
-        if (!m_commit || !check(m_db->commit(), "commit()"))
-            check(m_db->rollback(), "rollback()");
+        if (!m_commit || !check(m_db->commit(), "commit()"_b))
+            check(m_db->rollback(), "rollback()"_b);
         m_doing = false;
     }
 private:
@@ -252,9 +252,9 @@ auto HistoryModel::data(const QModelIndex &index, int role) const -> QVariant
 auto HistoryModel::roleNames() const -> QHash<int, QByteArray>
 {
     QHash<int, QByteArray> hash;
-    hash[NameRole] = "name";
-    hash[LatestPlayRole] = "latestplay";
-    hash[LocationRole] = "location";
+    hash[NameRole] = "name"_b;
+    hash[LatestPlayRole] = "latestplay"_b;
+    hash[LocationRole] = "location"_b;
     return hash;
 }
 
@@ -297,7 +297,7 @@ auto HistoryModel::setPropertiesToRestore(const QVector<QMetaProperty> &properti
 auto HistoryModel::clear() -> void
 {
     Transactor t(&d->db);
-    d->loader.exec("DELETE FROM " % d->table);
+    d->loader.exec("DELETE FROM "_a % d->table);
     t.done();
     d->load();
 }
