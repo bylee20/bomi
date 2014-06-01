@@ -1458,22 +1458,22 @@ Right click: %2</source>
     <message>
         <location filename="../enum/textthemestyle.hpp" line="73"/>
         <source>Normal</source>
-        <translation type="unfinished"></translation>
+        <translation>보통</translation>
     </message>
     <message>
         <location filename="../enum/textthemestyle.hpp" line="74"/>
         <source>Outline</source>
-        <translation type="unfinished">테두리</translation>
+        <translation>테두리</translation>
     </message>
     <message>
         <location filename="../enum/textthemestyle.hpp" line="75"/>
         <source>Raised</source>
-        <translation type="unfinished"></translation>
+        <translation>바깥 그림자</translation>
     </message>
     <message>
         <location filename="../enum/textthemestyle.hpp" line="76"/>
         <source>Sunken</source>
-        <translation type="unfinished"></translation>
+        <translation>안쪽 그림자</translation>
     </message>
 </context>
 <context>
@@ -1831,7 +1831,7 @@ Right click: %2</source>
     <message>
         <location filename="../stdafx.cpp" line="121"/>
         <source>ISO Image Files</source>
-        <translation type="unfinished">ISO 이미지 파일</translation>
+        <translation>ISO 이미지 파일</translation>
     </message>
     <message>
         <location filename="../stdafx.cpp" line="123"/>
@@ -2201,7 +2201,7 @@ Please wait for a while.</source>
     <message>
         <location filename="../player/mainwindow.cpp" line="1351"/>
         <source>Reset Video Color</source>
-        <translation type="unfinished"></translation>
+        <translation>비디오 색상 초기화</translation>
     </message>
     <message>
         <location filename="../player/mainwindow.cpp" line="1622"/>
@@ -3063,7 +3063,7 @@ Please wait for a while.</source>
     <message>
         <location filename="../widget/openmediabehaviorgroupbox.cpp" line="14"/>
         <source>Start the playback</source>
-        <translation type="unfinished">재생을 시작하기</translation>
+        <translation>재생을 시작하기</translation>
     </message>
 </context>
 <context>
@@ -3557,7 +3557,7 @@ RAM 사용량: %3MB(%5GB 중 %4%)
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="86"/>
         <source>Audio/Video Sync: %1%2ms</source>
-        <translation type="unfinished">오디오/비디오 싱크: %6밀리초 {1%2m?}</translation>
+        <translation>오디오/비디오 싱크: %1%2밀리초</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="93"/>
@@ -4631,12 +4631,12 @@ RAM 사용량: %3MB(%5GB 중 %4%)
     <message>
         <location filename="../ui/prefdialog.ui" line="2642"/>
         <source>Mouse cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>마우스 커서</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2650"/>
         <source>Hide mouse cursor after timeout:</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 시간이 경과하면 마우스 커서 숨기기:</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3072"/>
@@ -5074,17 +5074,17 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/prefdialog.ui" line="2730"/>
         <source>Screensaver</source>
-        <translation type="unfinished"></translation>
+        <translation>화면 보호기</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2746"/>
         <source>Use external command</source>
-        <translation type="unfinished"></translation>
+        <translation>외부 명령어 사용</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2790"/>
         <source>Interval</source>
-        <translation type="unfinished"></translation>
+        <translation>간격</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2826"/>
@@ -5099,27 +5099,27 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/prefdialog.ui" line="2929"/>
         <source>% of height</source>
-        <translation type="unfinished"></translation>
+        <translation>%(화면 높이 기준)</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2960"/>
         <source>Style</source>
-        <translation type="unfinished">스타일</translation>
+        <translation>스타일</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3000"/>
         <source>Display</source>
-        <translation type="unfinished">표시</translation>
+        <translation>표시</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3020"/>
         <source>Show OSD timeline when seeking</source>
-        <translation type="unfinished"></translation>
+        <translation>탐색시 OSD 타임라인을 표시</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3156"/>
         <source>Button Click</source>
-        <translation type="unfinished"></translation>
+        <translation>버튼 클릭</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3201"/>
@@ -5252,7 +5252,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="108"/>
         <source>Application</source>
-        <translation type="unfinished">어플리케이션</translation>
+        <translation>어플리케이션</translation>
     </message>
     <message>
         <source>Advanced</source>
@@ -5329,12 +5329,12 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="118"/>
         <source>OSD</source>
-        <translation type="unfinished"></translation>
+        <translation>OSD</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="119"/>
         <source>Skin &amp; Style</source>
-        <translation type="unfinished"></translation>
+        <translation>스킨 &amp; 스타일</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="122"/>
@@ -7167,7 +7167,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../player/rootmenu.cpp" line="481"/>
         <source>Auto-load File(s)</source>
-        <translation type="unfinished"></translation>
+        <translation>파일 자동 불러오기</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="482"/>
@@ -7546,12 +7546,12 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../dialog/shortcutdialog.cpp" line="44"/>
         <source>Get Shortcut</source>
-        <translation type="unfinished">단축기 입력</translation>
+        <translation>단축기 입력</translation>
     </message>
     <message>
         <location filename="../dialog/shortcutdialog.cpp" line="45"/>
         <source>Erase</source>
-        <translation type="unfinished">지우기</translation>
+        <translation>지우기</translation>
     </message>
 </context>
 <context>
@@ -7609,22 +7609,22 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="7"/>
         <source>Add</source>
-        <translation type="unfinished">추가</translation>
+        <translation>추가</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="8"/>
         <source>Erase</source>
-        <translation type="unfinished">지우기</translation>
+        <translation>삭제</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="9"/>
         <source>Move Up</source>
-        <translation type="unfinished"></translation>
+        <translation>위로 이동</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="10"/>
         <source>Move Down</source>
-        <translation type="unfinished"></translation>
+        <translation>아래로 이동</translation>
     </message>
 </context>
 <context>
@@ -7747,17 +7747,17 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="48"/>
         <source>Add</source>
-        <translation type="unfinished">추가</translation>
+        <translation>추가</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="50"/>
         <source>&amp;Ok</source>
-        <translation type="unfinished">확인(&amp;O)</translation>
+        <translation>확인(&amp;O)</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="51"/>
         <source>&amp;Cancel</source>
-        <translation type="unfinished">취소(&amp;C)</translation>
+        <translation>취소(&amp;C)</translation>
     </message>
 </context>
 <context>
@@ -8022,7 +8022,7 @@ e.g.: English, Korean</source>
         <location filename="../player/translator.cpp" line="130"/>
         <source>UTF-8</source>
         <comment>Specify most popular encoding here in target localization.</comment>
-        <translation>EUC-KR</translation>
+        <translation>CP949</translation>
     </message>
 </context>
 <context>
@@ -8043,17 +8043,17 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../dialog/urldialog.cpp" line="39"/>
         <source>URL</source>
-        <translation type="unfinished">URL</translation>
+        <translation>URL</translation>
     </message>
     <message>
         <location filename="../dialog/urldialog.cpp" line="40"/>
         <source>Encoding for Playlist</source>
-        <translation type="unfinished">재생목록 인코딩</translation>
+        <translation>재생목록 인코딩</translation>
     </message>
     <message>
         <location filename="../dialog/urldialog.cpp" line="46"/>
         <source>Open URL</source>
-        <translation type="unfinished">URL 열기</translation>
+        <translation>URL 열기</translation>
     </message>
 </context>
 <context>
