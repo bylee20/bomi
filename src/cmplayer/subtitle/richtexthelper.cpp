@@ -189,16 +189,14 @@ auto RichTextHelper::entityCharacter(const QStringRef &entity) -> QChar
     return QChar();
 }
 
-auto RichTextHelper::indexOf(const QStringRef &ref, QRegExp &rx,
-                             int from) -> int
+auto RichTextHelper::indexOf(const QStringRef &ref, QRegExp &rx, int from) -> int
 {
     const int pos = ref.position();
     const int idx = ref.string()->indexOf(rx, from + pos) - pos;
     return 0 <= idx && idx < ref.length() ? idx : -1;
 }
 
-auto RichTextHelper::indexOf(const QStringRef &ref, QRegEx &rx,
-                             int from) -> int
+auto RichTextHelper::indexOf(const QStringRef &ref, QRegEx &rx, int from) -> int
 {
     const int pos = ref.position();
     const int idx = ref.string()->indexOf(rx, from + pos) - pos;
@@ -221,8 +219,7 @@ auto RichTextHelper::innerText(const char *open, const char *close,
     if (pos >= text.size() || tag.name.isEmpty())
         return 0;
     int ret = 1;
-    QRegExp rx("<[\\s\\n\\r]*("_a % _L(close)
-               % ")(>|[^0-9a-zA-Z>]+[^>]*>)"_a);
+    QRegExp rx("<[\\s\\n\\r]*("_a % _L(close) % ")(>|[^0-9a-zA-Z>]+[^>]*>)"_a);
     rx.setCaseSensitivity(QCI);
     int start = pos;
     int end = indexOf(text, rx, start);
@@ -241,7 +238,8 @@ auto RichTextHelper::innerText(const char *open, const char *close,
     return ret;
 }
 
-QMap<int, QVariant> RichTextHelper::Tag::style() const {
+auto RichTextHelper::Tag::style() const -> QMap<int, QVariant>
+{
     QMap<int, QVariant> style;
     if (_Same(name, "b"))
         style[QTextFormat::FontWeight] = QFont::Bold;
