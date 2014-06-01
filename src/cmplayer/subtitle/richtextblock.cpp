@@ -5,7 +5,7 @@ RichTextBlockParser::RichTextBlockParser(const QStringRef &text)
     , m_pos(0)
     , m_good(1) { }
 
-auto RichTextBlockParser::get(const char *open, const char *close,
+auto RichTextBlockParser::get(const QString &open, const QString &close,
                               Tag *tag) -> QStringRef
 {
     Tag _tag;

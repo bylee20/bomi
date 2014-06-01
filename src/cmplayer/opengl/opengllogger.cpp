@@ -97,7 +97,7 @@ auto OpenGLLogger::initialize(QOpenGLContext *ctx) -> bool
     }
     d->logger = new QOpenGLDebugLogger;
     if (!d->logger->initialize()) {
-        OGL::logError("OpenGLCompat::initialize()");
+        OGL::logError("OpenGLCompat::initialize()"_b);
         _Delete(d->logger);
         return false;
     }

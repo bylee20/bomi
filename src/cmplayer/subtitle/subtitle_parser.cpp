@@ -2,24 +2,6 @@
 
 int SubtitleParser::msPerChar = -1;
 
-auto SubtitleParser::save(const Subtitle &sub, const QString &fileName,
-                          const QString &enc) -> bool
-{
-    QString content;
-    if (!_save(content, sub))
-        return false;
-    QFile file(fileName);
-    if (!file.open(QFile::WriteOnly | QFile::Truncate))
-        return false;
-    QTextCodec *codec = QTextCodec::codecForName(enc.toLocal8Bit());
-    if (!codec)
-        return false;
-    if (file.write(codec->fromUnicode(content)) < 0)
-        return false;
-    file.close();
-    return true;
-}
-
 auto SubtitleParser::parse(const QString &fileName,
                            const QString &enc) -> Subtitle
 {

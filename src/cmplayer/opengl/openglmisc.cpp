@@ -61,7 +61,7 @@ auto check() -> void
     exts += QSet<QByteArray>::fromList(QByteArray(glx).split(' '));
 #endif
     QStringList extensions;
-    auto checkExtension = [&] (const char *name, Extension ext,
+    auto checkExtension = [&] (const QByteArray &name, Extension ext,
                                int major = -1, int minor = 0) {
         if ((major > 0 && current >= versionNumber(major, minor))
                 || exts.contains(name)) {
@@ -70,18 +70,18 @@ auto check() -> void
         }
     };
 
-    checkExtension("GL_ARB_texture_rg", TextureRG, 3);
-    checkExtension("GL_ARB_texture_float", TextureFloat, 3);
-    checkExtension("GL_KHR_debug", Debug);
-    checkExtension("GL_NV_vdpau_interop", NvVdpauInterop);
-    checkExtension("GL_APPLE_ycbcr_422", AppleYCbCr422);
-    checkExtension("GL_MESA_ycbcr_texture", MesaYCbCrTexture);
-    checkExtension("GLX_EXT_swap_control", ExtSwapControl);
-    checkExtension("GLX_SGI_swap_control", SgiSwapControl);
-    checkExtension("GLX_MESA_swap_control", MesaSwapControl);
+    checkExtension("GL_ARB_texture_rg"_b, TextureRG, 3);
+    checkExtension("GL_ARB_texture_float"_b, TextureFloat, 3);
+    checkExtension("GL_KHR_debug"_b, Debug);
+    checkExtension("GL_NV_vdpau_interop"_b, NvVdpauInterop);
+    checkExtension("GL_APPLE_ycbcr_422"_b, AppleYCbCr422);
+    checkExtension("GL_MESA_ycbcr_texture"_b, MesaYCbCrTexture);
+    checkExtension("GLX_EXT_swap_control"_b, ExtSwapControl);
+    checkExtension("GLX_SGI_swap_control"_b, SgiSwapControl);
+    checkExtension("GLX_MESA_swap_control"_b, MesaSwapControl);
 
     if (QOpenGLFramebufferObject::hasOpenGLFramebufferObjects()) {
-        extensions.append("GL_ARB_framebuffer_object");
+        extensions.push_back("GL_ARB_framebuffer_object"_b);
         d.extensions |= FramebufferObject;
     }
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &d.maxTexSize);
@@ -126,7 +126,7 @@ auto errorString(GLenum error) -> const char*
     return strings.value(error, "");
 }
 
-auto logError(const char *at) -> int
+auto logError(const QByteArray &at) -> int
 {
     int num = 0;
     auto error = GL_NO_ERROR;

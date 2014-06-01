@@ -180,16 +180,16 @@ auto RichTextHelper::parseTag(const QStringRef &text,
 auto RichTextHelper::entityCharacter(const QStringRef &entity) -> QChar
 {
     Q_UNUSED(entity);
-#define RETURN(ent, c) {if (_Same(entity, ent)) return QChar(c);}
-    RETURN("nbsp", ' ');
-    RETURN("amp", '&');
-    RETURN("lt", '<');
-    RETURN("gt", '>');
+#define RETURN(ent, c) {if (!entity.compare(ent, QCI)) return QChar(c);}
+    RETURN("nbsp"_a, ' ');
+    RETURN("amp"_a, '&');
+    RETURN("lt"_a, '<');
+    RETURN("gt"_a, '>');
 #undef RETURN
     return QChar();
 }
 
-auto RichTextHelper::innerText(const char *open, const char *close,
+auto RichTextHelper::innerText(const QString &open, const QString &close,
                                const QStringRef &text, QStringRef &block,
                                int &pos, Tag &tag) -> int
 {
@@ -197,7 +197,7 @@ auto RichTextHelper::innerText(const char *open, const char *close,
         const QChar c = text.at(pos);
         if (c.unicode() == '<') {
             tag = parseTag(text, pos);
-            if (_Same(tag.name, open))
+            if (!tag.name.compare(open, QCI))
                 break;
         } else
             ++pos;
@@ -205,7 +205,7 @@ auto RichTextHelper::innerText(const char *open, const char *close,
     if (pos >= text.size() || tag.name.isEmpty())
         return 0;
     int ret = 1;
-    QRegEx rx(R"(<[\s\n\r]*()"_a % _L(close) % ")(>|[^0-9a-zA-Z>]+[^>]*>)"_a,
+    QRegEx rx(R"(<[\s\n\r]*()"_a % close % ")(>|[^0-9a-zA-Z>]+[^>]*>)"_a,
               QRegEx::CaseInsensitiveOption);
     int start = pos;
     const auto match = rx.match(text.toString(), start);
@@ -216,8 +216,7 @@ auto RichTextHelper::innerText(const char *open, const char *close,
         pos = end;
         const auto cap = match.capturedRef(1);
         if (Q_UNLIKELY(cap.startsWith('/'))) {
-            const auto closer = cap.mid(1, -1);
-            if (_Same(closer, open))
+            if (!cap.mid(1).compare(open, QCI))
                 pos += match.capturedLength();
         }
     }

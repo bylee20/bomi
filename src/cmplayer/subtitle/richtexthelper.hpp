@@ -67,14 +67,14 @@ public:
     };
     static auto parseTag(const QStringRef &text, int &pos) -> Tag;
     static auto parseTag(const QString &text, int &pos) -> Tag
-        {return parseTag(text.midRef(0, -1), pos);}
-    static auto innerText(const char *open, const char *close,
+        { return parseTag(text.midRef(0, -1), pos); }
+    static auto innerText(const QString &open, const QString &close,
                           const QStringRef &text, QStringRef &block,
                           int &pos, Tag &tag) -> int;
-    static auto innerText(const char *open, const char *close,
+    static auto innerText(const QString &open, const QString &close,
                           const QString &text, QStringRef &block,
                           int &pos, Tag &tag) -> int
-        { return innerText(open, close, text.midRef(0, -1), block, pos, tag); }
+        { return innerText(open, close, text.midRef(0), block, pos, tag); }
 };
 
 #endif // RICHTEXTHELPER_HPP

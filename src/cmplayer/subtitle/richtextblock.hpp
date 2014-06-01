@@ -49,7 +49,7 @@ class RichTextBlockParser : public RichTextHelper {
 public:
     RichTextBlockParser(const QStringRef &text);
     auto atEnd() const -> bool {return m_pos >= m_text.size();}
-    auto get(const char *open, const char *close,
+    auto get(const QString &open, const QString &close,
              Tag *tag = nullptr) -> QStringRef;
     auto paragraph(Tag *tag = nullptr) -> QList<RichTextBlock>;
 protected:

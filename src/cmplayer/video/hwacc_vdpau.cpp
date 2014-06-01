@@ -168,19 +168,19 @@ auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
         return;
     if (!d.gl) {
         d.gl = ctx;
-        proc("glVDPAUInitNV",                  d.initialize);
-        proc("glVDPAUFiniNV",                  d.finalize);
-        proc("glVDPAURegisterOutputSurfaceNV", d.registerOutputSurface);
-        proc("glVDPAUIsSurfaceNV",             d.isSurface);
-        proc("glVDPAUUnregisterSurfaceNV",     d.unregisterSurface);
-        proc("glVDPAUGetSurfaceivNV",          d.getSurfaceiv);
-        proc("glVDPAUSurfaceAccessNV",         d.surfaceAccess);
-        proc("glVDPAUMapSurfacesNV",           d.mapSurfaces);
-        proc("glVDPAUUnmapSurfacesNV",         d.unmapSurfaces);
+        proc("glVDPAUInitNV"_b,                  d.initialize);
+        proc("glVDPAUFiniNV"_b,                  d.finalize);
+        proc("glVDPAURegisterOutputSurfaceNV"_b, d.registerOutputSurface);
+        proc("glVDPAUIsSurfaceNV"_b,             d.isSurface);
+        proc("glVDPAUUnregisterSurfaceNV"_b,     d.unregisterSurface);
+        proc("glVDPAUGetSurfaceivNV"_b,          d.getSurfaceiv);
+        proc("glVDPAUSurfaceAccessNV"_b,         d.surfaceAccess);
+        proc("glVDPAUMapSurfacesNV"_b,           d.mapSurfaces);
+        proc("glVDPAUUnmapSurfacesNV"_b,         d.unmapSurfaces);
     }
-    OGL::logError("before glVDPAUInitNV()");
+    OGL::logError("before glVDPAUInitNV()"_b);
     d.initialize(TO_INTEROP(d.device), TO_INTEROP(d.proc));
-    OGL::logError("after glVDPAUInitNV()");
+    OGL::logError("after glVDPAUInitNV()"_b);
 }
 
 

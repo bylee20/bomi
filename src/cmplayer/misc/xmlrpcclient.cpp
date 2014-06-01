@@ -6,24 +6,25 @@ DECLARE_LOG_CONTEXT(XML-RPC)
 static QDomNode toValueNode(QDomDocument &doc, const QVariant &var) {
     auto value = doc.createElement(u"value"_q);
     QDomElement elem;
-    auto el = [&doc] (const char *tag) { return doc.createElement(_L(tag)); };
+    auto el = [&doc] (const QString &tag) { return doc.createElement(tag); };
     auto tn = [&doc] (const QString &text) { return doc.createTextNode(text); };
-    auto te = [el, tn] (const char *tag, const QString &text) { auto e = el(tag); e.appendChild(tn(text)); return e; };
+    auto te = [el, tn] (const QString &tag, const QString &text)
+        { auto e = el(tag); e.appendChild(tn(text)); return e; };
     switch (var.type()) {
     case QVariant::String:
-        elem = te("string", var.toString());
+        elem = te(u"string"_q, var.toString());
         break;
     case QVariant::Double:
-        elem = te("double", var.toString());
+        elem = te(u"double"_q, var.toString());
         break;
     case QVariant::Int:
     case QVariant::UInt:
     case QVariant::LongLong:
     case QVariant::ULongLong:
-        elem = te("int", var.toString());
+        elem = te(u"int"_q, var.toString());
         break;
     case QVariant::Bool:
-        elem = te("boolean", QString::number(var.toInt()));
+        elem = te(u"boolean"_q, QString::number(var.toInt()));
         break;
     case QVariant::List: {
         const auto list = var.toList();
@@ -36,14 +37,14 @@ static QDomNode toValueNode(QDomDocument &doc, const QVariant &var) {
         const auto map = var.toMap();
         elem = doc.createElement(u"struct"_q);
         for (auto it = map.begin(); it != map.end(); ++it) {
-            auto member = elem.appendChild(el("member"));
-            member.appendChild(te("name", it.key()));
+            auto member = elem.appendChild(el(u"member"_q));
+            member.appendChild(te(u"name"_q, it.key()));
             member.appendChild(toValueNode(doc, *it));
         }
         break;
     } default:
         _Error("%% was not handle. Convert it to string...", var.typeName());
-        elem = te("string", var.toString());
+        elem = te(u"string"_q, var.toString());
         break;
     }
     value.appendChild(elem);

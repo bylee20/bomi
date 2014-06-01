@@ -319,26 +319,28 @@ struct JsonMapIO {
 };
 
 template<class T, class D>
-SCIA _JE(const char *key, D T::*data) -> JsonMemberEntry<T, D>
-    { return JsonMemberEntry<T, D>(_L(key), data); }
+SCIA _JE(const QString &key, D T::*data) -> JsonMemberEntry<T, D>
+    { return JsonMemberEntry<T, D>(key, data); }
 
 template<class T, class D>
-SCIA _JE(const char *key, D&(T::*ref)()) -> JsonReferenceEntry<T, D>
-    { return JsonReferenceEntry<T, D>(_L(key), ref); }
+SCIA _JE(const QString &key, D&(T::*ref)()) -> JsonReferenceEntry<T, D>
+    { return JsonReferenceEntry<T, D>(key, ref); }
 
 template<class T, class D, class Set>
-SCIA _JE(const char *key, D(T::*get)()const, Set set) -> JsonPropertyEntry<T, decltype(get), Set>
-    { return JsonPropertyEntry<T, decltype(get), Set>(_L(key), get, set); }
+SCIA _JE(const QString &key, D(T::*get)()const, Set set)
+-> JsonPropertyEntry<T, decltype(get), Set>
+    { return JsonPropertyEntry<T, decltype(get), Set>(key, get, set); }
 
 template<class T, class... Entry>
 SCIA _JIO(Entry&&... entry) -> JsonObjectIO<T, Entry...>
     { return JsonObjectIO<T, Entry...>(std::forward<Entry>(entry)...); }
 
 //#define JSON_CLASS ClassName
-#define JE(a, ...) _JE(#a, &JSON_CLASS::a, ##__VA_ARGS__)
+#define JE(a, ...) _JE(u###a##_q, &JSON_CLASS::a, ##__VA_ARGS__)
 #define JIO(...) _JIO<JSON_CLASS>(__VA_ARGS__)
 #define JSON_DECLARE_FROM_TO_FUNCTIONS \
-auto JSON_CLASS::setFromJson(const QJsonObject &json) -> bool { return jio.fromJson(*this, json); } \
+auto JSON_CLASS::setFromJson(const QJsonObject &json) -> bool \
+    { return jio.fromJson(*this, json); } \
 auto JSON_CLASS::toJson() const -> QJsonObject { return jio.toJson(*this); }
 
 #define JSON_IO_POINT(c) _JIO<c>(_JE<c>("x", &c::rx), _JE<c>("y", &c::ry))

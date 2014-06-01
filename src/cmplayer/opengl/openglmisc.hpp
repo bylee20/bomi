@@ -166,7 +166,7 @@ auto finalize(QOpenGLContext *ctx) -> void;
 
 auto errorString(GLenum error) -> const char*;
 
-auto logError(const char *at) -> int;
+auto logError(const QByteArray &at) -> int;
 
 auto hasExtension(Extension ext) -> bool;
 

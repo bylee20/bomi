@@ -38,7 +38,8 @@ auto SamiParser::_parse(Subtitle &sub) -> void
     auto &comps = components(sub);
     while (!parser.atEnd()) {
         Tag tag;
-        const auto block_sync = parser.get("sync", "/?sync|/body|/sami", &tag);
+        const auto block_sync = parser.get(u"sync"_q, u"/?sync|/body|/sami"_q,
+                                           &tag);
         if (tag.name.isEmpty())
             break;
         const int sync = toInt(tag.value("start"));
