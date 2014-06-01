@@ -189,20 +189,6 @@ auto RichTextHelper::entityCharacter(const QStringRef &entity) -> QChar
     return QChar();
 }
 
-auto RichTextHelper::indexOf(const QStringRef &ref, QRegExp &rx, int from) -> int
-{
-    const int pos = ref.position();
-    const int idx = ref.string()->indexOf(rx, from + pos) - pos;
-    return 0 <= idx && idx < ref.length() ? idx : -1;
-}
-
-auto RichTextHelper::indexOf(const QStringRef &ref, QRegEx &rx, int from) -> int
-{
-    const int pos = ref.position();
-    const int idx = ref.string()->indexOf(rx, from + pos) - pos;
-    return 0 <= idx && idx < ref.length() ? idx : -1;
-}
-
 auto RichTextHelper::innerText(const char *open, const char *close,
                                const QStringRef &text, QStringRef &block,
                                int &pos, Tag &tag) -> int
@@ -219,19 +205,20 @@ auto RichTextHelper::innerText(const char *open, const char *close,
     if (pos >= text.size() || tag.name.isEmpty())
         return 0;
     int ret = 1;
-    QRegExp rx("<[\\s\\n\\r]*("_a % _L(close) % ")(>|[^0-9a-zA-Z>]+[^>]*>)"_a);
-    rx.setCaseSensitivity(QCI);
+    QRegEx rx(R"(<[\s\n\r]*()"_a % _L(close) % ")(>|[^0-9a-zA-Z>]+[^>]*>)"_a,
+              QRegEx::CaseInsensitiveOption);
     int start = pos;
-    int end = indexOf(text, rx, start);
+    const auto match = rx.match(text.toString(), start);
+    int end = match.capturedStart();
     if (end < 0) {
         end = pos = text.size();
     } else {
         pos = end;
-        const QString cap = rx.cap(1);
+        const auto cap = match.capturedRef(1);
         if (Q_UNLIKELY(cap.startsWith('/'))) {
-            const QStringRef closer = cap.midRef(1, -1);
+            const auto closer = cap.mid(1, -1);
             if (_Same(closer, open))
-                pos += rx.matchedLength();
+                pos += match.capturedLength();
         }
     }
     block = text.mid(start, end - start);

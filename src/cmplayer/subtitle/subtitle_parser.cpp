@@ -71,6 +71,13 @@ auto SubtitleParser::predictEndTime(int start, const QString &text) -> int
     return -1;
 }
 
+auto SubtitleParser::predictEndTime(int start, const QStringRef &text) -> int
+{
+    if (msPerChar > 0)
+        return start + text.size()*msPerChar;
+    return -1;
+}
+
 auto SubtitleParser::predictEndTime(const SubComp::const_iterator &it) -> int
 {
     if (msPerChar > 0)

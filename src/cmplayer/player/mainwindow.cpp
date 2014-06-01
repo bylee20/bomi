@@ -1691,24 +1691,26 @@ auto MainWindow::generatePlaylist(const Mrl &mrl) const -> Playlist
     bool prefix = false, suffix = false;
     auto it = files.cbegin();
     for(; it != files.cend(); ++it) {
-        static QRegExp rxs(u"(\\D*)\\d+(.*)"_q);
-        static QRegExp rxt(u"(\\D*)\\d+(.*)"_q);
-        if (rxs.indexIn(fileName) == -1)
+        static QRegEx rxs(uR"((\D*)\d+(.*))"_q);
+        const auto ms = rxs.match(fileName);
+        if (!ms.hasMatch())
             continue;
-        if (rxt.indexIn(it->fileName()) == -1)
+        static QRegEx rxt(uR"((\D*)\d+(.*))"_q);
+        const auto mt = rxt.match(it->fileName());
+        if (!mt.hasMatch())
             continue;
         if (!prefix && !suffix) {
-            if (rxs.cap(1) == rxt.cap(1))
+            if (ms.capturedRef(1) == mt.capturedRef(1))
                 prefix = true;
-            else if (rxs.cap(2) == rxt.cap(2))
+            else if (ms.capturedRef(2) == mt.capturedRef(2))
                 suffix = true;
             else
                 continue;
         } else if (prefix) {
-            if (rxs.cap(1) != rxt.cap(1))
+            if (ms.capturedRef(1) != mt.capturedRef(1))
                 continue;
         } else if (suffix) {
-            if (rxs.cap(2) != rxt.cap(2))
+            if (ms.capturedRef(2) != mt.capturedRef(2))
                 continue;
         }
         list.append(it->absoluteFilePath());

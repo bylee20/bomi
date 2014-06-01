@@ -2,43 +2,43 @@
 
 EncodingComboBox::EncodingComboBox(QWidget *parent)
 : QComboBox(parent) {
-    enc = QStringList() << "UTF-8" << "Unicode"
-            << tr("Western European Languages") + " (CP1252)"
-            << tr("Western European Languages With Euro") + " (ISO-8859-15)"
-            << tr("Slavic/Central European Languages") + " (ISO-8859-2)"
-            << tr("Slavic/Central European Windows") + " (CP1250)"
-            << tr("Esperanto, Galician, Maltese, Turkish") + " (ISO-8859-3)"
-            << tr("Old Baltic Charset") + " (ISO-8859-4)"
-            << tr("Cyrillic") + " (ISO-8859-5)"
-            << tr("Cyrillic Windows") + " (CP1251)"
-            << tr("Arabic") + " (ISO-8859-6)"
-            << tr("Modern Greek") + " (ISO-8859-7)"
-            << tr("Turkish") + " (ISO-8859-9)"
-            << tr("Baltic") + " (ISO-8859-13)"
-            << tr("Celtic") + " (ISO-8859-14)"
-            << tr("Hebrew Charset") + " (ISO-8859-8)"
-            << tr("Russian") + " (KOI8-R)"
-            << tr("Ukrainian, Belarusian") + " (KOI8-U/RU)"
-            << tr("Simplified Chinese Charset") + " (CP936)"
-            << tr("Traditional Chinese Charset") + " (BIG5)"
-            << tr("Japanese Charset") + " (SHIFT-JIS)"
-            << tr("Korean Charset") + " (CP949)"
-            << tr("Thai Charset") + " (CP874)";
-    addItems(enc);
+    auto add = [this] (const QString &desc, const QString &enc)
+        { this->addItem(desc % " ("_a % enc % ')', enc); };
+    add(u"UTF-8"_q, u"UTF-8"_q);
+    add(u"Unicode"_q, u"Unicode"_q);
+    add(u"Western European Languages"_q, u"CP1252"_q);
+    add(u"Western European Languages With Euro"_q, u"ISO-8859-15"_q);
+    add(u"Slavic/Central European Languages"_q, u"ISO-8859-2"_q);
+    add(u"Slavic/Central European Windows"_q, u"CP1250"_q);
+    add(u"Esperanto, Galician, Maltese, Turkish"_q, u"ISO-8859-3"_q);
+    add(u"Old Baltic Charset"_q, u"ISO-8859-4"_q);
+    add(u"Cyrillic"_q, u"ISO-8859-5"_q);
+    add(u"Cyrillic Windows"_q, u"CP1251"_q);
+    add(u"Arabic"_q, u"ISO-8859-6"_q);
+    add(u"Modern Greek"_q, u"ISO-8859-7"_q);
+    add(u"Turkish"_q, u"ISO-8859-9"_q);
+    add(u"Baltic"_q, u"ISO-8859-13"_q);
+    add(u"Celtic"_q, u"ISO-8859-14"_q);
+    add(u"Hebrew Charset"_q, u"ISO-8859-8"_q);
+    add(u"Russian"_q, u"KOI8-R"_q);
+    add(u"Ukrainian, Belarusian"_q, u"KOI8-U/RU"_q);
+    add(u"Simplified Chinese Charset"_q, u"CP936"_q);
+    add(u"Traditional Chinese Charset"_q, u"BIG5"_q);
+    add(u"Japanese Charset"_q, u"SHIFT-JIS"_q);
+    add(u"Korean Charset"_q, u"CP949"_q);
+    add(u"Thai Charset"_q, u"CP874"_q);;
     setEditable(true);
 }
 
 auto EncodingComboBox::encoding() const -> QString
 {
-    QString enc = currentText().trimmed();
-    QRegExp rxEnc(".* \\((.*)\\)");
-    return (rxEnc.indexIn(enc) == -1) ? enc : rxEnc.cap(1);
+    const auto idx = currentIndex();
+    return idx < 0 ? currentText() : itemData(idx).toString();
 }
 
 auto EncodingComboBox::setEncoding(const QString &encoding) -> void
 {
-    static const QRegExp rxEncoding(".* \\(" + encoding.toUpper() + "\\)");
-    const int idx = enc.indexOf(rxEncoding);
+    auto idx = findData(encoding.toUpper());
     if (idx != -1)
         setCurrentIndex(idx);
     else

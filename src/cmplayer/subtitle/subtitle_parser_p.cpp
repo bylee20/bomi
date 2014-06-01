@@ -6,7 +6,7 @@ SCIA _TimeToMSec(int h, int m, int s, int ms = 0) -> qint64
 
 auto SamiParser::isParsable() const -> bool
 {
-    if (_Same(file().suffix(), "smi") || _Same(file().suffix(), "sami"))
+    if (_IsOneOf(file().suffix().toLower(), "smi", "sami"))
         return true;
     if (skipSeparators())
         return false;
@@ -135,56 +135,65 @@ auto SubRipParser::_parse(Subtitle &sub) -> void
     }
 }
 
+/******************************************************************************/
+
+auto LineParser::isParsable() const -> bool
+{
+    if (skipSeparators())
+        return false;
+    const int pos = this->pos();
+    auto match = this->match(trim(getLine()).toString());
+    if (!match.hasMatch())
+        return false;
+    seekTo(pos);
+    return true;
+}
+
 auto TMPlayerParser::_parse(Subtitle &sub) -> void
 {
     sub.clear();
     auto &comp = append(sub);
     int predictedEnd = -1;
-    auto toInt = [this] (int nth) {return rxLine.cap(nth).toInt();};
     while (!atEnd()) {
-        auto line = getLine().toString();
-        if (line.indexOf(rxLine) == -1)
+        auto m = match(getLine().toString());
+        if (!m.hasMatch())
             continue;
+        auto toInt = [&] (int nth) { return m.capturedRef(nth).toInt(); };
         const int time = _TimeToMSec(toInt(1), toInt(2), toInt(3));
         if (predictedEnd > 0 && time > predictedEnd)
             comp[predictedEnd];
-        QString text = rxLine.cap(4);
+        auto text = m.capturedRef(4);
         predictedEnd = predictEndTime(time, text);
-        text = "<p>"_a % encodeEntity(trim(text.midRef(0))) % "</p>"_a;
-        append(comp, text, time);
+        append(comp, "<p>"_a % encodeEntity(trim(text)) % "</p>"_a, time);
     }
 }
 
 auto MicroDVDParser::_parse(Subtitle &sub) -> void
 {
-    QString line;
-    int begin = -1;
-    while (!atEnd() && begin == -1) {
-        line = trim(getLine()).toString();
-        begin = rxLine.indexIn(line);
+    QRegExMatch m;
+    while (!atEnd()) {
+        m = match(trim(getLine()).toString());
+        if (m.hasMatch())
+            break;
     }
-    if (begin == -1)
+    if (!m.hasMatch())
         return;
     bool ok = false;
-    const double fps = rxLine.cap(3).toDouble(&ok);
+    const double fps = m.capturedRef(3).toDouble(&ok);
     auto getKey = [ok, fps] (int frame)
-        {return ok ? qRound((frame/fps)*1000.0) : frame;};
-    if (ok) {
-        append(sub, SubComp::Time);
-    } else {
-        seekTo(0);
-        append(sub, SubComp::Frame);
-    }
+        { return ok ? qRound((frame/fps)*1000.0) : frame; };
+    seekTo(0);
+    append(sub, ok ? SubComp::Time : SubComp::Frame);
 
-    QRegExp rxAttr("\\{([^\\}]+):([^\\}]+)\\}");
-    SubComp &comp = components(sub).first();
+    QRegEx rxAttr(uR"(\{([^\}]+):([^\}]+)\})"_q);
+    SubComp &comp = components(sub).front();
     while (!atEnd()) {
-        line = trim(getLine()).toString();
-        if (rxLine.indexIn(line) == -1)
+        m = match(trim(getLine()).toString());
+        if (!m.hasMatch())
             continue;
-        const int start = getKey(rxLine.cap(1).toInt());
-        const int end = getKey(rxLine.cap(2).toInt());
-        QString text = rxLine.cap(3);
+        const int start = getKey(m.capturedRef(1).toInt());
+        const int end = getKey(m.capturedRef(2).toInt());
+        const auto text = m.captured(3);
         QString parsed1, parsed2;
         auto addTag0 = [&] (const QString &name) {
             parsed1 += '<' % name % '>';
@@ -195,35 +204,40 @@ auto MicroDVDParser::_parse(Subtitle &sub) -> void
             parsed2 += "</"_a % name % '>';
         };
         int idx = 0;
-        QRegExp rxColor("\\$([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})");
-        while (text.indexOf(rxAttr, idx) != -1) {
-            const auto name = rxAttr.cap(1);
-            const auto value = rxAttr.cap(2);
+        QRegEx rxColor("\\$([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})");
+        QRegExMatch am;
+        while ((am = rxAttr.match(text, idx)).hasMatch()) {
+            const auto name = am.capturedRef(1);
+            const auto value = am.capturedRef(2);
             if (_Same(name, "y")) {
                 if (value.contains('i', QCI))
-                    addTag0("i");
+                    addTag0(u"i"_q);
                 if (value.contains('u', QCI))
-                    addTag0("u");
+                    addTag0(u"u"_q);
                 if (value.contains('s', QCI))
-                    addTag0("s");
+                    addTag0(u"s"_q);
                 if (value.contains('b', QCI))
-                    addTag0("b");
+                    addTag0(u"b"_q);
             } else if (_Same(name, "c")) {
-                if (rxColor.indexIn(value) != -1)
-                    addTag1(u"font"_q, _L("color=\"#") % rxColor.cap(3)
-                            % rxColor.cap(2) % rxColor.cap(1) %_L("\""));
+                auto cm = rxColor.match(value.toString());
+                if (cm.hasMatch())
+                    addTag1(u"font"_q,
+                            "color=\"#"_a % cm.capturedRef(3)
+                            % cm.capturedRef(2) % cm.capturedRef(1) % '"');
             }
-            idx = rxAttr.pos() + rxAttr.matchedLength();
+            idx = am.capturedEnd();
         }
+        QString caption;
         if (idx < text.size()) {
             if (text[idx] == '/') {
                 addTag0("i");
                 ++idx;
             }
-            text = "<p>"_a % parsed1 % replace(text.midRef(idx), u"|"_q, u"<br>"_q)
-                    % parsed2 % "</p>"_a;
+            caption = "<p>"_a % parsed1
+                      % replace(text.midRef(idx), u"|"_q, u"<br>"_q)
+                      % parsed2 % "</p>"_a;
         } else
-            text = "<p>"_a % parsed1 % parsed2 % "</p>"_a;
-        append(comp, text, start, end);
+            caption = "<p>"_a % parsed1 % parsed2 % "</p>"_a;
+        append(comp, caption, start, end);
     }
 }

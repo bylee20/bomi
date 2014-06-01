@@ -20,10 +20,6 @@ public:
     static auto isNewLine(ushort c) -> bool { return _IsOneOf(c, '\r', '\n'); }
     static auto replace(const QStringRef &str, const QString &from,
                         const QString &to, Qt::CaseSensitivity s = QCI) -> QString;
-    static auto indexOf(const QStringRef &ref, QRegExp &rx, int from=0) -> int;
-    static auto indexOf(const QStringRef &ref, QRegEx &rx, int from = 0) -> int;
-    static auto match(QRegEx &rx, const QStringRef &ref, int from = 0) -> QRegExMatch
-        { return rx.match(*ref.string(), from + ref.position()); }
     static auto trim(const QStringRef &text) -> QStringRef
     {
         if (text.isEmpty()) return QStringRef();

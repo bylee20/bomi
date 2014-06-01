@@ -133,9 +133,10 @@ auto Playlist::loadPLS(QTextStream &in) -> bool
         const QString line = in.readLine();
         if (line.isEmpty())
             continue;
-        static QRegExp rxFile("^File\\d+=(.+)$");
-        if (rxFile.indexIn(line) != -1)
-            append(Mrl(rxFile.cap(1)));
+        static QRegEx rxFile(R"(^File\d+=(.+)$)");
+        const auto match = rxFile.match(line);
+        if (match.hasMatch())
+            append(Mrl(match.captured(1)));
     }
     in.seek(pos);
     return true;

@@ -22,6 +22,7 @@ protected:
     auto seekTo(int pos) const -> void {m_pos = pos;}
     static auto predictEndTime(const SubComp::const_iterator &it) -> int;
     static auto predictEndTime(int start, const QString &text) -> int;
+    static auto predictEndTime(int start, const QStringRef &text) -> int;
     static auto encodeEntity(const QStringRef &str) -> QString;
     static auto processLine(int &idx, const QString &contents) -> QStringRef;
     static QList<SubComp> &components(Subtitle &sub) {return sub.m_comp;}
