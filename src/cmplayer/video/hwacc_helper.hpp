@@ -88,8 +88,6 @@ struct HwAccX11Codec {
     QVector<ProfilePair> profiles;
 };
 
-template<mp_imgfmt imgfmt> class HwAccX11SurfacePool;
-
 template<mp_imgfmt imgfmt>
 class HwAccX11Surface {
 public:
@@ -101,7 +99,8 @@ public:
         { if (m_id != Trait::invalid) Trait::destroySurface(m_id); }
     HwAccX11Surface() = default;
 private:
-    friend class HwAccX11SurfacePool<imgfmt>;
+    friend class VaApiSurfacePool;
+    friend class VdpauSurfacePool;
     SurfaceID m_id = Trait::invalid;
     int m_format = 0;
 };
@@ -109,63 +108,32 @@ private:
 template<mp_imgfmt imgfmt>
 class HwAccX11SurfacePool : public VideoImagePool<HwAccX11Surface<imgfmt>> {
 public:
-    static const char *getLogContext() { return Trait::name; }
     using Trait = HwAccX11Trait<imgfmt>;
     using Surface = HwAccX11Surface<imgfmt>;
     using SurfaceID = typename Trait::SurfaceID;
     using Cache = VideoImageCache<Surface>;
     HwAccX11SurfacePool() = default;
-    auto create(int size, int width, int height, uint format) -> bool
+    auto format() const -> uint {return m_format;}
+    auto width() const -> int { return m_width; }
+    auto height() const -> int { return m_height; }
+    static auto getSurface(mp_image *mpi) -> Surface *
+    { return mpi->imgfmt == imgfmt ? (Surface*)(quintptr)mpi->planes[1] : nullptr; }
+protected:
+    auto reset(int w, int h, uint f) -> void
+    { this->reserve(0); m_width = w; m_height = h; m_format = f; }
+    auto wrap(Cache *p) -> mp_image*
     {
-        if (m_width == width && m_height == height
-                && m_format == format && this->count() == size)
-            return true;
-        clear();
-        m_width = width; m_height = height;
-        m_format = format; m_ids.resize(size);
-        if (!Trait::createSurfaces(m_width, m_height, m_format, m_ids)) {
-            _Error("Cannot create hwacc surfaces. Decoding will fail.");
-            m_ids.clear();
-            return false;
-        }
-        int i = 0;
-        this->reserve(size, [&] (Surface &surface) {
-            surface.m_id = m_ids[i++];
-            surface.m_format = format;
-        });
-        return true;
-    }
-    auto getMpImage() -> mp_image*
-    {
-        auto cache = this->getUnusedCache();
-        if (cache.isNull()) {
-            _Warn("No usable SurfaceID. Decoding could fail");
-            cache = this->recycle();
-        }
-        auto release = [](void *arg) {
-            delete static_cast<Cache*>(arg);
-        };
-        auto p = new Cache(std::move(cache));
+        auto release = [](void *arg) { delete static_cast<Cache*>(arg); };
         auto mpi = null_mp_image(IMGFMT_VAAPI, m_width, m_height, p, release);
         mpi->planes[1] = (uchar*)(quintptr)p;
         mpi->planes[0] = mpi->planes[3] = (uchar*)(quintptr)p->image().id();
         return mpi;
     }
-    auto clear() -> void { this->reserve(0); m_ids.clear(); }
-    auto ids() const -> QVector<SurfaceID> {return m_ids;}
-    auto format() const -> uint {return m_format;}
-    auto width() const -> int { return m_width; }
-    auto height() const -> int { return m_height; }
-    static auto getSurface(mp_image *mpi) -> Surface *
-    {
-        return mpi->imgfmt == imgfmt ? (Surface*)(quintptr)mpi->planes[1]
-                                     : nullptr;
-    }
+    auto compat(int w, int h, uint format) const -> bool
+        { return w == m_width && h == m_height && m_format == format; }
 private:
-    QVector<SurfaceID> m_ids;
     uint m_format = 0;
     int m_width = 0, m_height = 0;
-    quint64 m_order = 0LL;
 };
 
 #endif

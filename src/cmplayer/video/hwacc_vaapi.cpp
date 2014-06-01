@@ -20,13 +20,43 @@ auto HwAccX11Trait<IMGFMT_VAAPI>::destroySurface(SurfaceID id) -> void
    vaDestroySurfaces(VaApi::glx(), &id, 1);
 }
 
-auto HwAccX11Trait<IMGFMT_VAAPI>::createSurfaces(int w, int h, int format,
-                                                 QVector<SurfaceID> &ids)-> bool
-{
-    VaApiStatusChecker c;
-    return c.isSuccess(vaCreateSurfaces(VaApi::glx(), w, h, format,
-                                        ids.size(), ids.data()));
-}
+class VaApiSurfacePool : public HwAccX11SurfacePool<IMGFMT_VAAPI>
+                       , public VaApiStatusChecker {
+public:
+    VaApiSurfacePool() = default;
+    auto create(int size, int w, int h, uint format) -> bool
+    {
+        if (compat(w, h, format) && this->count() == size)
+            return true;
+        reset(w, h, format);
+        m_ids.resize(size);
+        if (!isSuccess(vaCreateSurfaces(VaApi::glx(), w, h, format,
+                                        m_ids.size(), m_ids.data()))) {
+            _Error("Cannot create hwacc surfaces. Decoding will fail.");
+            m_ids.clear();
+            return false;
+        }
+        int i = 0;
+        this->reserve(size, [&] (VaApiSurface &surface) {
+            surface.m_id = m_ids[i++];
+            surface.m_format = format;
+        });
+        return true;
+    }
+    auto getMpImage() -> mp_image*
+    {
+        auto cache = this->getUnusedCache();
+        if (cache.isNull()) {
+            _Warn("No usable SurfaceID. Decoding could fail");
+            cache = this->recycle();
+        }
+        return wrap(new Cache(std::move(cache)));
+    }
+    auto ids() const -> const QVector<VASurfaceID> &{return m_ids;}
+private:
+    QVector<VASurfaceID> m_ids;
+};
+
 
 #ifdef USE_VAVPP
 auto VaApi::toVAType(DeintMethod method) -> VAProcDeinterlacingType
@@ -340,7 +370,6 @@ auto HwAccVaApi::fillContext(AVCodecContext *avctx, int w, int h) -> bool
         { return (rts & rt) && d->pool.create(codec->surfaces, w, h, rt); };
     if (!tryRtFormat(VA_RT_FORMAT_YUV420) && !tryRtFormat(VA_RT_FORMAT_YUV422))
         return false;
-    VaApi::get().setSurfaceFormat(d->pool.format());
     auto ids = d->pool.ids();
     if (!isSuccess(vaCreateContext(d->context.display, d->context.config_id,
                                    w, h, VA_PROGRESSIVE, ids.data(), ids.size(),

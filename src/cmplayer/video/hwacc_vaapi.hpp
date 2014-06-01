@@ -27,14 +27,11 @@ template<> struct HwAccX11Trait<IMGFMT_VAAPI> {
     using SurfaceID = VASurfaceID;
     static constexpr SurfaceID invalid = VA_INVALID_SURFACE;
     static auto destroySurface(SurfaceID id) -> void;
-    static auto createSurfaces(int w, int h, int format,
-                               QVector<SurfaceID> &ids) -> bool;
 };
 
 using VaApiStatusChecker = HwAccX11StatusChecker<IMGFMT_VAAPI>;
 using VaApiCodec = HwAccX11Codec<IMGFMT_VAAPI> ;
 using VaApiSurface = HwAccX11Surface<IMGFMT_VAAPI>;
-using VaApiSurfacePool = HwAccX11SurfacePool<IMGFMT_VAAPI>;
 
 class HwAccVaApi : public HwAcc, public VaApiStatusChecker {
 public:
@@ -93,13 +90,11 @@ struct VaApi : public VaApiStatusChecker {
         { return get().m_filters.values(); }
     static auto algorithms(VAProcFilterType type) -> QList<int>;
 #endif
-    static auto surfaceFormat() -> int {return get().m_surfaceFormat;}
     static auto toVAType(int mp_fields, bool first) -> int;
     static auto finalize() -> void;
     static auto initialize() -> void;
     static auto isAvailable() -> bool { return ok; }
 private:
-    auto setSurfaceFormat(int format) -> void { m_surfaceFormat = format; }
     auto hasEntryPoint(VAEntrypoint point,
                        VAProfile profile = VAProfileNone) -> bool;
     template<class Map>
@@ -115,7 +110,6 @@ private:
     QVector<VAProfile> m_profiles;
     QMap<AVCodecID, VaApiCodec> m_supported;
     QMap<VAProfile, QVector<VAEntrypoint>> m_entries;
-    int m_surfaceFormat = 0;
     static VADisplay m_display;
     static bool init, ok;
     friend class HwAccVaApi;

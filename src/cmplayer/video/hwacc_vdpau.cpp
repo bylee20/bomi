@@ -39,19 +39,38 @@ auto HwAccX11Trait<IMGFMT_VDPAU>::destroySurface(SurfaceID id) -> void
         Vdpau::videoSurfaceDestroy(id);
 }
 
-auto HwAccX11Trait<IMGFMT_VDPAU>::createSurfaces(int w, int h, int format,
-                                                 QVector<SurfaceID> &ids)-> bool
-{
-    VdpauStatusChecker checker;
-    for (int i=0; i<ids.size(); ++i) {
-        if (!checker.isSuccess(Vdpau::videoSurfaceCreate(format,
-                                                         w, h, &ids[i])))
-            return false;
-        if (ids[i] == invalid)
-            return false;
+class VdpauSurfacePool : public HwAccX11SurfacePool<IMGFMT_VDPAU>
+                       , public VdpauStatusChecker {
+    using Cache = VideoImageCache<VdpauSurface>;
+    DECLARE_LOG_CONTEXT(VDPAU)
+public:
+    VdpauSurfacePool() = default;
+    auto create(int w, int h, uint format) -> bool
+    {
+        if (compat(w, h, format))
+            return true;
+        reset(w, h, format);
+        return true;
     }
-    return true;
-}
+    auto getMpImage() -> mp_image*
+    {
+        auto cache = this->getCache(50);
+        if (cache.isNull()) {
+            _Warn("No usable SurfaceID. Decoding could fail");
+            cache = this->recycle();
+        } else if (cache->m_id == VDP_INVALID_HANDLE) {
+            auto &surface = const_cast<VdpauSurface&>(*cache);
+            if (!check(Vdpau::videoSurfaceCreate(format(), width(), height(),
+                                                 &surface.m_id),
+                       "Cannot create VDPAU surface")) {
+                surface.m_id = VDP_INVALID_HANDLE;
+                return nullptr;
+            }
+            surface.m_format = format();
+        }
+        return wrap(new Cache(std::move(cache)));
+    }
+};
 
 Vdpau::Data Vdpau::d;
 
@@ -247,7 +266,7 @@ auto HwAccVdpau::fillContext(AVCodecContext *avctx, int w, int h) -> bool
         d->context.decoder = VDP_INVALID_HANDLE;
         return false;
     }
-    if (!d->pool.create(codec->surfaces + 2, width, height, chroma))
+    if (!d->pool.create(width, height, chroma))
         return false;
     return true;
 }

@@ -31,14 +31,11 @@ template<> struct HwAccX11Trait<IMGFMT_VDPAU> {
     static constexpr SurfaceID invalid = VDP_INVALID_HANDLE;
     static auto error(Status status) -> const char*;
     static auto destroySurface(SurfaceID id) -> void;
-    static auto createSurfaces(int w, int h, int format,
-                               QVector<SurfaceID> &ids) -> bool;
 };
 
 using VdpauCodec = HwAccX11Codec<IMGFMT_VDPAU>;
 using VdpauStatusChecker = HwAccX11StatusChecker<IMGFMT_VDPAU>;
 using VdpauSurface = HwAccX11Surface<IMGFMT_VDPAU>;
-using VdpauSurfacePool = HwAccX11SurfacePool<IMGFMT_VDPAU>;
 
 class Vdpau {
     DECLARE_LOG_CONTEXT(VDPAU)
