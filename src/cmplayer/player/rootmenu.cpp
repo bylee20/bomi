@@ -67,7 +67,7 @@ auto addEnumActionsCheckable(Menu &menu, std::initializer_list<T> list,
 {
     if (cycle) {
         const int size = list.size();
-        menu.addAction(size > 2 ? "next" : "toggle");
+        menu.addAction(size > 2 ? u"next"_q : u"toggle"_q);
         menu.addSeparator();
     }
     const QString g = _L(EnumInfo<T>::typeKey());
@@ -154,6 +154,7 @@ static auto addStepReset(Menu &menu, int min, int def, int max,
                          const QString &g = u""_q) -> StepActionPair*
 {
     auto reset = new StepAction(ChangeValue::Reset);
+    reset->setRange(min, def, max);
     menu.addActionToGroup(reset, u"reset"_q, g);
     menu.addSeparator();
     return addStepPair(menu, min, def, max, g);
@@ -188,7 +189,7 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
     play.addAction(u"prev"_q);
     play.addAction(u"next"_q);
     play.addSeparator();
-    ::addStepReset(*play.addMenu(u"speed"_q), 10, 100, 1000);
+    addStepReset(*play.addMenu(u"speed"_q), 10, 100, 1000);
     auto &repeat = *play.addMenu(u"repeat"_q);
     repeat.addActionToGroup(u"range"_q, false)->setData(int('r'));
     repeat.addActionToGroup(u"subtitle"_q, false)->setData(int('s'));
