@@ -97,7 +97,7 @@ struct HistoryModel::Data {
         Transactor t(&db);
         finder.exec(QString::fromLatin1("DROP TABLE IF EXISTS %1").arg(table));
         QString columns = _ToStringList(fields, [] (const MrlStateSqlField &f) {
-            return _L(f.property().name()) % ' ' % f.type();
+            return QString(_L(f.property().name()) % ' ' % f.type());
         }).join(", ");
 
         finder.exec(QString::fromLatin1("CREATE TABLE %1 (%2)").arg(table).arg(columns));
