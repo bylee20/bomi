@@ -223,7 +223,8 @@ HEADERS += \
     player/abrepeatchecker.hpp \
     widget/openmediabehaviorgroupbox.hpp \
     tmp/static_op.hpp \
-    dialog/prefdialog_p.hpp
+    dialog/prefdialog_p.hpp \
+    opengl/openglbenchmarker.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -387,7 +388,8 @@ SOURCES += \
     misc/localconnection.cpp \
     player/abrepeatchecker.cpp \
     widget/openmediabehaviorgroupbox.cpp \
-    dialog/prefdialog_p.cpp
+    dialog/prefdialog_p.cpp \
+    opengl/openglbenchmarker.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

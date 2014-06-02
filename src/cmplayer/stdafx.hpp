@@ -173,7 +173,7 @@ template<class T, typename... Args>
 SIA _Renew(T *&t, Args... args) -> T* {delete t; return (t = new T(args...)); }
 
 template<class T>
-SIA _Delete(T *&t) -> void {delete t; t = nullptr; }
+SIA _Delete(T *&t) -> void { if (t) { delete t; t = nullptr; } }
 
 SIA _SystemTime() -> quint64
 { struct timeval t; gettimeofday(&t, 0); return t.tv_sec*1000000u + t.tv_usec; }

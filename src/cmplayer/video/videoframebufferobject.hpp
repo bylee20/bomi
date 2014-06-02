@@ -11,6 +11,7 @@ class VideoFramebufferObject {
 public:
     ~VideoFramebufferObject()
         { Q_ASSERT(QOpenGLContext::currentContext()); delete m_fbo; }
+    auto fbo() const -> OpenGLFramebufferObject* { return m_fbo; }
     auto bind() const -> bool { return m_fbo->bind(); }
     auto release() const -> bool { return m_fbo->release(); }
     auto size() const -> QSize { return m_fbo->size(); }

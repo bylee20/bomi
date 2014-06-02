@@ -16,6 +16,8 @@ extern "C" {
 #include <video/vfcap.h>
 }
 
+DECLARE_LOG_CONTEXT(Video)
+
 //static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
 
 auto query_video_format(quint32 format) -> int;
@@ -84,8 +86,6 @@ static auto priv(vo *out) -> VideoOutput*
 {
     return static_cast<cmplayer_vo_priv*>(out->priv)->vo;
 }
-
-DECLARE_LOG_CONTEXT(Video)
 
 auto create_driver() -> vo_driver
 {

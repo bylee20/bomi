@@ -41,10 +41,7 @@ auto HwAccX11Trait<IMGFMT_VDPAU>::destroySurface(SurfaceID id) -> void
 
 class VdpauSurfacePool : public HwAccX11SurfacePool<IMGFMT_VDPAU>
                        , public VdpauStatusChecker {
-    using Cache = VideoImageCache<VdpauSurface>;
-    DECLARE_LOG_CONTEXT(VDPAU)
 public:
-    VdpauSurfacePool() = default;
     auto create(int w, int h, uint format) -> bool
     {
         if (compat(w, h, format))

@@ -254,7 +254,6 @@ const vec2 tex_size = vec2(texWidth, texHeight);
 auto VideoFrameShader::setFormat(const mp_image_params &params) -> void
 {
     m_params = params;
-    m_imgfmtOut = m_params.imgfmt;
     m_refill = true;
 }
 
@@ -376,14 +375,24 @@ auto VideoFrameShader::fillInfo(const mp_image *mpi) -> void
         m_bytes[i].rheight() = mpi->h >> mpi->fmt.ys[i];
     }
     auto bytes = m_bytes;
-
-    m_mixer = HwAcc::createMixer(m_params.imgfmt, {m_params.w, m_params.h});
-    if (m_mixer)
-        m_imgfmtOut = m_mixer->getAligned(mpi, &bytes);
-
+    m_imgfmtOut = m_params.imgfmt;
+    m_cspOut = m_params.colorspace;
     m_shaders[0].rebuild = m_shaders[1].rebuild = true;
 
-    m_cspOut = m_params.colorspace;
+    m_mixer = HwAcc::createMixer(m_params.imgfmt, {m_params.w, m_params.h});
+    if (m_mixer) {
+        m_imgfmtOut = m_mixer->getAligned(mpi, &bytes);
+        m_direct = m_mixer->directRendering();
+        if (m_direct)
+            m_cspOut = MP_CSP_RGB;
+    }
+    switch (m_imgfmtOut) {
+    case IMGFMT_BGRA: case IMGFMT_BGR0:
+    case IMGFMT_RGBA: case IMGFMT_RGB0:
+        m_direct = true; break;
+    default: break;
+    }
+
     std::tie(m_target, m_binding) = !m_dma && m_params.imgfmt != IMGFMT_VDA
         ? std::forward_as_tuple(OGL::Target2D, OGL::Binding2D)
         : std::forward_as_tuple(OGL::TargetRectangle, OGL::BindingRectangle);
@@ -538,11 +547,9 @@ vec3 texel(const in int coord) { return texture0(coord).g!!; }
         break;
     case IMGFMT_BGRA: case IMGFMT_BGR0:
         add(0, OGL::BGRA);
-        m_direct = true;
         break;
     case IMGFMT_RGBA: case IMGFMT_RGB0:
         add(0, OGL::RGBA);
-        m_direct = true;
         break;
     case IMGFMT_ABGR: case IMGFMT_0BGR:
         add(0, OGL::BGRA);
@@ -555,11 +562,6 @@ vec3 texel(const in int coord) { return texture0(coord).g!!; }
     default:
         break;
     }
-
-    if (m_mixer) {
+    if (m_mixer)
         m_mixer->create(m_textures);
-        m_direct = m_mixer->directRendering();
-        if (m_direct)
-            m_cspOut = MP_CSP_RGB;
-    }
 }

@@ -192,7 +192,7 @@ auto VideoRendererItem::requestFrameImage() const -> void
         emit frameImageObtained(QImage());
     else {
         d->take = true;
-        const_cast<VideoRendererItem*>(this)->update();
+        const_cast<VideoRendererItem*>(this)->reserve(UpdateMaterial, true);
     }
 }
 

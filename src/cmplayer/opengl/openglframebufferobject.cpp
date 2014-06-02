@@ -1,32 +1,84 @@
 #include "openglframebufferobject.hpp"
 #include "opengltexturebinder.hpp"
+#include "misc/log.hpp"
+
+DECLARE_LOG_CONTEXT(OpenGL)
+
+auto makeTexture(const QSize &size, OGL::TextureFormat internal) -> OpenGLTexture2D
+{
+    OpenGLTextureTransferInfo info;
+    info.texture = internal;
+    info.transfer.format = OGL::BGRA;
+    info.transfer.type = OGL::UInt8;
+
+    OpenGLTexture2D texture;
+    texture.create();
+    OpenGLTextureBinder<OGL::Target2D> binder(&texture);
+    texture.initialize(size, info);
+    return texture;
+}
 
 OpenGLFramebufferObject::OpenGLFramebufferObject(const QSize &size,
                                                  OGL::TextureFormat internal)
-    : QOpenGLFramebufferObject(size, NoAttachment, OGL::Target2D, internal)
+    : OpenGLFramebufferObject(makeTexture(size, internal), true) { }
+
+OpenGLFramebufferObject::OpenGLFramebufferObject(const OpenGLTexture2D &texture,
+                                                 bool autodelete)
+    : m_autodelete(autodelete), m_texture(texture)
 {
-    m_texture.m_id = QOpenGLFramebufferObject::texture();
-    m_texture.m_width = size.width();
-    m_texture.m_height = size.height();
-    m_texture.m_info.texture = internal;
-    m_texture.m_info.transfer.format = OGL::RGBA;
-    m_texture.m_info.transfer.type = OGL::UInt8;
-    if (isValid())
-        OpenGLTextureBinder<OGL::Target2D>(&m_texture)->setFilter(OGL::Linear);
+    if (m_texture.isValid() && !m_texture.isEmpty()) {
+        auto f = func();
+        f->glGenFramebuffers(1, &m_id);
+        f->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
+        f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                                  m_texture.target(), m_texture.id(), 0);
+        m_complete = check();
+        QOpenGLFramebufferObject::bindDefault();
+    }
 }
 
-auto OpenGLFramebufferObject::toImage() const -> QImage
+OpenGLFramebufferObject::~OpenGLFramebufferObject()
 {
-    if (!m_texture.isValid())
-        return QImage();
-    const bool wasBound = isBound();
-    if (!wasBound)
-        const_cast<OpenGLFramebufferObject*>(this)->bind();
-    Q_ASSERT(QOpenGLContext::currentContext() != nullptr);
-    QImage image(size(), QImage::Format_ARGB32);
-    glReadPixels(0, 0, width(), height(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-                 image.bits());
-    if (!wasBound)
-        const_cast<OpenGLFramebufferObject*>(this)->release();
-    return image;
+    auto f = func();
+    if (m_id != GL_NONE)
+        f->glDeleteFramebuffers(1, &m_id);
+    if (m_autodelete)
+        m_texture.destroy();
+}
+
+auto OpenGLFramebufferObject::check() const -> bool
+{
+    const auto status = func()->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    switch (status) {
+    case GL_FRAMEBUFFER_COMPLETE:
+        return true;
+    case GL_FRAMEBUFFER_UNDEFINED:
+        _Error("FBO Error: GL_FRAMEBUFFER_UNDEFINED");
+        break;
+    case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+        _Error("FBO Error: GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+        break;
+    case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+        _Error("FBO Error: GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+        break;
+    case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+        _Error("FBO Error: GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER");
+        break;
+    case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+        _Error("FBO Error: GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER");
+        break;
+    case GL_FRAMEBUFFER_UNSUPPORTED:
+        _Error("FBO Error: GL_FRAMEBUFFER_UNSUPPORTED");
+        break;
+    case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+        _Error("FBO Error: GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE");
+        break;
+    case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+        _Error("FBO Error: GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS");
+        break;
+    default:
+        _Error("FBO Error: unknown error code (0x%%)", _N(status, 16));
+        break;
+    }
+    return false;
 }
