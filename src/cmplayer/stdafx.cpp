@@ -57,6 +57,24 @@ auto _ExtList(ExtType ext) -> QStringList
     }
 }
 
+auto _ExtList(ExtTypes exts) -> QStringList
+{
+    QStringList list;
+    if (exts & VideoExt)
+        list.append(videoExts);
+    if (exts & AudioExt)
+        list.append(audioExts);
+    if (exts & SubtitleExt)
+        list.append(subExts);
+    if (exts & ImageExt)
+        list.append(imageExts);
+    if (exts & PlaylistExt)
+        list.append(plExts);
+    if (exts & DiscExt)
+        list.append(discExts);
+    return list;
+}
+
 auto _IsSuffixOf(ExtType ext, const QString &suffix) -> bool
 {
     static constexpr auto cs = Qt::CaseInsensitive;
@@ -167,17 +185,21 @@ auto _GetSaveFile(QWidget *parent, const QString &title,
                       const QString &key) -> QString
 {
     auto &folder = lastFolders[key];
-    QString path = folder, filter;
+    QString path = folder;
     if (folder.isEmpty())
         path = fileName;
     else
         path = folder % '/' % fileName;
-    auto file = QFileDialog::getSaveFileName(parent, title, path,
-                                                   _ToFilter(exts), &filter);
+    QFileDialog dlg(parent, title, path, _ToFilter(exts));
+    dlg.setAcceptMode(QFileDialog::AcceptSave);
+    dlg.setFileMode(QFileDialog::AnyFile);
+    dlg.setConfirmOverwrite(true);
+    dlg.setDefaultSuffix(_ExtList(exts).front());
+    if (!dlg.exec())
+        return QString();
+    const auto file = dlg.selectedFiles().value(0);
     if (file.isEmpty())
         return QString();
-    if (!file.endsWith(filter))
-        file += '.' % filter;
     folder = QFileInfo(file).absolutePath();
     return file;
 }
