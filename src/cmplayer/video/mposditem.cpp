@@ -136,7 +136,8 @@ struct MpOsdItem::Data {
             const auto &pos = part.display();
             const QRectF tex(tp, ts);
             vertex = OGL::CoordAttr::fillTriangles(vertex,
-                        &Vertex::position, pos.topLeft(), pos.bottomRight(),
+                        &Vertex::position, pos.topLeft(),
+                                           pos.bottomRight() + QPointF(1, 1),
                         &Vertex::texCoord, tex.topLeft(), tex.bottomRight(),
                         [&](Vertex *const it) { it->color.set(part.color()); });
         }
