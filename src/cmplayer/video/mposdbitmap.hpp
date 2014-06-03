@@ -8,9 +8,9 @@ public:
     enum Format {
         NoFormat = 0,
         PaMask   = 0x01, /*Premultipled Alpha*/
-        Ass      = 0x10 | PaMask,
+        Ass      = 0x10,
         Rgba     = 0x20,
-        RgbaPA   = 0x20 | PaMask
+        RgbaPA   = Rgba | PaMask
     };
     struct PartInfo {
         const QRect &display() const { return m_display; }

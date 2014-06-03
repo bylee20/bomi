@@ -99,13 +99,18 @@ auto MpOsdBitmap::drawOn(QImage &frame) const -> void
 {
     QPainter painter(&frame);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-    painter.scale((double)frame.width()/(double)m_renderSize.width(), (double)frame.height()/(double)m_renderSize.height());
-    auto fmt = m_format & PaMask ? QImage::Format_ARGB32_Premultiplied : QImage::Format_ARGB32;
+    painter.scale(frame.width() /(double)m_renderSize.width(),
+                  frame.height()/(double)m_renderSize.height());
+    auto fmt = QImage::Format_ARGB32;
+    if (m_format == Ass || (m_format & PaMask))
+        fmt = QImage::Format_ARGB32_Premultiplied;
     if (m_format & Rgba) {
         for (int i=0; i<m_parts.size(); ++i) {
             auto &part = m_parts[i];
-            const QImage image(data(i), part.strideAsPixel(), part.height(), fmt);
-            painter.drawImage(part.display(), image, QRect(0, 0, part.width(), part.height()));
+            const QImage image(data(i), part.strideAsPixel(),
+                               part.height(), fmt);
+            painter.drawImage(part.display(), image,
+                              QRect(0, 0, part.width(), part.height()));
         }
     } else {
         Q_ASSERT(m_format == Ass);
@@ -116,14 +121,15 @@ auto MpOsdBitmap::drawOn(QImage &frame) const -> void
                 auto dest = reinterpret_cast<QRgb*>(image.scanLine(y));
                 auto src = data(i) + y*part.m_stride;
                 for (int x=0; x<part.width(); ++x) {
-                    const int a = (part.color() & 0xff)*static_cast<int>(*src++)/255;
+                    const int a = (part.color() & 0xff) * int(*src++)/255;
                     const int r = part.color() >> 24 & 0xff;
                     const int g = part.color() >> 16 & 0xff;
                     const int b = part.color() >> 8  & 0xff;
                     *dest++ = qRgba(r*a/255, g*a/255, b*a/255, a);
                 }
             }
-            painter.drawImage(part.display(), image, QRect(0, 0, part.width(), part.height()));
+            painter.drawImage(part.display(), image,
+                              QRect(0, 0, part.width(), part.height()));
         }
     }
 }

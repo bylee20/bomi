@@ -165,7 +165,6 @@ auto VideoRendererItem::customEvent(QEvent *event) -> void
             d->queue.push_back(cache);
         reserve(UpdateMaterial);
         d->mposd->draw(osd);
-        d->mposd->setVisible(true);
         break;
     } case NewFrameImage: {
         const auto image = _GetData<QImage>(event);

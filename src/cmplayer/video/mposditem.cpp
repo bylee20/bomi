@@ -40,8 +40,8 @@ struct MpOsdItem::Data {
                 varying vec4 c;
                 varying vec2 texCoord;
                 void main() {
-                    vec2 co = vec2(c.a*texture2D(atlas, texCoord).r, 0.0);
-                    gl_FragColor = c*co.xxxy + co.yyyx;
+                    gl_FragColor = vec4(c.rgb,
+                                        c.a*texture2D(atlas, texCoord).r);
                 }
             )";
         } else {
@@ -153,7 +153,8 @@ struct MpOsdItem::Data {
         shader->setUniformValue(loc_matrix, vMatrix);
 
         glEnable(GL_BLEND);
-        glBlendFunc(srcFactor, GL_ONE_MINUS_SRC_ALPHA);
+        OGL::func()->glBlendFuncSeparate(srcFactor, GL_ONE_MINUS_SRC_ALPHA,
+                                         GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         glDrawArrays(GL_TRIANGLES, 0, 6*num);
         glDisable(GL_BLEND);
 
