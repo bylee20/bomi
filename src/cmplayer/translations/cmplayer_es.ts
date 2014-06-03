@@ -2386,7 +2386,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="3156"/>
         <source>Button Click</source>
-        <translation>Clink de botón</translation>
+        <translation>Click del botón</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3201"/>
