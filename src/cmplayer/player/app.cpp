@@ -69,20 +69,29 @@ struct App::Data {
         else
             main->openFromFileManager(mrl);
     }
-    void addOption(LineCmd cmd, const char *name, const QString desc, const char *valueName = "", const QString &def = QString()) {
-        addOption(cmd, QStringList() << _L(name), desc, valueName, def);
+    auto addOption(LineCmd cmd, const QString &name, const QString &desc,
+                   const QString &valName = QString(),
+                   const QString &def = QString()) -> void
+    { addOption(cmd, QStringList(name), desc, valName, def); }
+    auto addOption(LineCmd cmd, const QStringList &names, const QString &desc,
+                   const QString &valName = QString(),
+                   const QString &def = QString()) -> void
+    {
+        if (desc.contains("%1"_a)) {
+            const QCommandLineOption opt(names, desc.arg('<' % valName % '>'),
+                                         valName, def);
+            options.insert(cmd, opt);
+        } else
+            options.insert(cmd, QCommandLineOption(names, desc, valName, def));
     }
-    void addOption(LineCmd cmd, const QStringList &names, const QString desc, const char *valueName = "", const QString &def = QString()) {
-        const QLatin1String vname = _L(valueName);
-        if (desc.contains("%1"_a))
-            options.insert(cmd, QCommandLineOption(names, desc.arg('<' % vname % '>'), vname, def));
-        else
-            options.insert(cmd, QCommandLineOption(names, desc, vname, def));
-    }
-    void execute(const QCommandLineParser *parser) {
-        auto isSet = [parser, this] (LineCmd cmd) { return parser->isSet(options.value(cmd, dummy)); };
-        auto value = [parser, this] (LineCmd cmd) { return parser->value(options.value(cmd, dummy)); };
-        auto values = [parser, this] (LineCmd cmd) { return parser->values(options.value(cmd, dummy)); };
+    auto execute(const QCommandLineParser *parser) -> void
+    {
+        auto isSet = [parser, this] (LineCmd cmd)
+            { return parser->isSet(options.value(cmd, dummy)); };
+        auto value = [parser, this] (LineCmd cmd)
+            { return parser->value(options.value(cmd, dummy)); };
+        auto values = [parser, this] (LineCmd cmd)
+            { return parser->values(options.value(cmd, dummy)); };
         if (isSet(LineCmd::LogLevel))
             Log::setMaximumLevel(value(LineCmd::LogLevel));
         if (isSet(LineCmd::OpenGLDebug) || qgetenv("CMPLAYER_GL_DEBUG").toInt())
@@ -108,12 +117,15 @@ struct App::Data {
             qputenv("CMPLAYER_MPV_VERBOSE", "v");
         }
     }
-    QCommandLineParser *getCommandParser(QCommandLineParser *parser) const {
+    auto getCommandParser(QCommandLineParser *parser) const
+    -> QCommandLineParser*
+    {
         for (auto it = options.begin(); it != options.end(); ++it)
             parser->addOption(*it);
         parser->addHelpOption();
         parser->addVersionOption();
-        parser->addPositionalArgument("mrl", tr("The file path or URL to open."), "mrl");
+        const auto desc = tr("The file path or URL to open.");
+        parser->addPositionalArgument("mrl", desc, "mrl");
         return parser;
     }
 };
@@ -131,22 +143,29 @@ App::App(int &argc, char **argv)
     setApplicationVersion(version());
     setLocale(r.value("locale", QLocale::system()).toLocale());
 
-    d->addOption(LineCmd::Open, "open", tr("Open given %1 for file path or URL."), "mrl");
-    d->addOption(LineCmd::Wake, QStringList() << "wake", tr("Bring the application window in front."));
-    d->addOption(LineCmd::Action, "action", tr("Exectute %1 action or open %1 menu."), "id");
-    d->addOption(LineCmd::LogLevel, "log-level", tr("Maximum verbosity for log. %1 should be one of nexts:")
-                 % "\n    " % Log::options().join(", "), "lv");
-    d->addOption(LineCmd::OpenGLDebug, "opengl-debug", tr("Turn on OpenGL debug logger."));
-    d->addOption(LineCmd::Debug, "debug", tr("Turn on options for debugging."));
+    d->addOption(LineCmd::Open, u"open"_q,
+                 tr("Open given %1 for file path or URL."), u"mrl"_q);
+    d->addOption(LineCmd::Wake, u"wake"_q,
+                 tr("Bring the application window in front."));
+    d->addOption(LineCmd::Action, u"action"_q,
+                 tr("Exectute %1 action or open %1 menu."), u"id"_q);
+    d->addOption(LineCmd::LogLevel, u"log-level"_q,
+                 tr("Maximum verbosity for log. %1 should be one of nexts:")
+                 % "\n    "_a % Log::options().join(", "), u"lv"_q);
+    d->addOption(LineCmd::OpenGLDebug, u"opengl-debug"_q,
+                 tr("Turn on OpenGL debug logger."));
+    d->addOption(LineCmd::Debug, u"debug"_q,
+                 tr("Turn on options for debugging."));
     d->getCommandParser(&d->cmdParser)->process(arguments());
     d->getCommandParser(&d->msgParser);
     d->execute(&d->cmdParser);
 
 #if defined(Q_OS_MAC) && defined(CMPLAYER_RELEASE)
-    static const QByteArray path = QApplication::applicationDirPath().toLocal8Bit();
-    _Debug("Set $LIBQUVI_SCRIPTSDIR=\"%%\"", QApplication::applicationDirPath());
+    static const auto path = QApplication::applicationDirPath().toLocal8Bit();
+    _Debug("Set $LIBQUVI_SCRIPTSDIR=\"%%\"", path);
     if (setenv("LIBQUVI_SCRIPTSDIR", path.data(), 1) < 0)
-        _Error("Cannot set $LIBQUVI_SCRIPTSDIR. Some streaming functions won't work.");
+        _Error("Cannot set $LIBQUVI_SCRIPTSDIR. "
+               "Some streaming functions won't work.");
 #endif
 
     setQuitOnLastWindowClosed(false);
@@ -238,8 +257,10 @@ auto App::setMainWindow(MainWindow *mw) -> void
 
 auto App::setWindowTitle(QWidget *widget, const QString &title) -> void
 {
-//    _Trace("Set window title of %% to '%%'.", widget->metaObject()->className(), title);
-    const QString text = title % (title.isEmpty() ? "" : " - ") % applicationName();
+    _Trace("Set window title of %% to '%%'.",
+           widget->metaObject()->className(), title);
+    const QString text = title % (title.isEmpty() ? "" : " - ")
+                         % applicationName();
     widget->setWindowTitle(text);
 #ifdef Q_OS_LINUX
     d->helper.setWmName(widget, text);
