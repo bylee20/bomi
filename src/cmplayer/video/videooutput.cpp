@@ -133,8 +133,9 @@ struct VideoOutput::Data {
 
     mp_osd_res osd;
     MpOsdBitmapCache bitmap;
+    MpOsdBitmap::Id bitmapId;
     MpOsdBitmapPool bitmapPool;
-    bool bitmapChanged = false, hasOsd = false;
+    bool hasOsd = false;
 
     PlayEngine *engine = nullptr;
     QAtomicInt dirty = 0;
@@ -150,6 +151,7 @@ struct VideoOutput::Data {
         cache = VideoFramebufferObjectCache();
         bitmap = MpOsdBitmapCache();
         bitmapPool.clear();
+        bitmapId = MpOsdBitmap::Id();
         mp_image_unrefp(&mpi);
     }
     auto draw() -> void
@@ -322,10 +324,8 @@ auto VideoOutput::drawOsd(vo *out, struct osd_state *osd) -> void
     static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
     static auto cb = [] (void *vo, struct sub_bitmaps *imgs) {
         auto v = static_cast<VideoOutput*>(vo); auto d = v->d;
-        if (!d->bitmap || d->bitmap->needToCopy(imgs)) {
+        if (d->cache && _Change(d->bitmapId, { imgs }))
             d->bitmap = d->bitmapPool.get(imgs, { d->osd.w, d->osd.h });
-            d->bitmapChanged = true;
-        }
         d->hasOsd = true;
     };
     auto v = priv(out); auto d = v->d;
@@ -347,14 +347,14 @@ auto VideoOutput::flipPage(vo *out) -> void
     auto v = priv(out); Data *d = v->d;
     if (!d->mpi || d->format.isEmpty() || !d->renderer)
         return;
-    if (d->hasOsd)
-        d->renderer->present(d->cache, d->bitmapChanged ? d->bitmap
-                                                        : MpOsdBitmapCache());
-    else
-        d->renderer->present(d->cache);
+    if (d->hasOsd) {
+        d->renderer->present(d->cache, d->bitmap, true);
+    } else
+        d->renderer->present(d->cache, MpOsdBitmapCache(), false);
     _Trace("Video image has been transferred to renderer");
     d->cache = VideoFramebufferObjectCache();
-    d->hasOsd = d->bitmapChanged = false;
+    d->bitmap = MpOsdBitmapCache();
+    d->hasOsd = false;
     ++d->drawn;
     constexpr int interval = 4;
     constexpr int max = 20, min = 5;

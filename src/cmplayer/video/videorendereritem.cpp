@@ -8,13 +8,21 @@
 #include "misc/dataevent.hpp"
 #include "opengl/opengltexturebinder.hpp"
 
-enum EventType {NewFrame = QEvent::User + 1, NewFrameWithOsd, NewFrameImage };
+enum EventType {NewFrame = QEvent::User + 1, NewFrameImage };
+
+struct VideoCache {
+    VideoRendererItem::Cache frame;
+    VideoRendererItem::OsdCache osd;
+    bool hasOsd = false;
+};
 
 struct VideoRendererItem::Data {
     Data(VideoRendererItem *p): p(p) {}
     VideoRendererItem *p = nullptr;
-    std::deque<Cache> queue;
-    Cache cache;
+    QTimer sizeChecker; QSize prevSize, osdSize;
+    std::deque<VideoCache> queue;
+    MpOsdItem mposd;
+    VideoCache cache;
     bool take = false, overlayInLetterbox = true, rectangle = false;
     QRectF vtx;
     QPoint offset = {0, 0};
@@ -22,7 +30,6 @@ struct VideoRendererItem::Data {
     int alignment = Qt::AlignCenter;
     VideoEffects effects = 0;
     LetterboxItem *letterbox = nullptr;
-    MpOsdItem *mposd = nullptr;
     GeometryItem *overlay = nullptr;
     Kernel3x3 blur, sharpen, kernel;
     OpenGLTexture2D black;
@@ -104,7 +111,6 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
     : HighQualityTextureItem(parent)
     , d(new Data(this))
 {
-    d->mposd = new MpOsdItem(this);
     d->letterbox = new LetterboxItem(this);
     const QQmlProperty property(d->letterbox, "anchors.centerIn");
     property.write(QVariant::fromValue(this));
@@ -112,8 +118,13 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::AllButtons);
     setFlag(ItemAcceptsDrops, true);
-    connect(d->mposd, &MpOsdItem::targetSizeChanged,
-            this, &VideoRendererItem::osdSizeChanged);
+    connect(&d->sizeChecker, &QTimer::timeout, [this] () {
+        if (!_Change(d->prevSize, QSizeF(width(), height()).toSize())) {
+            d->sizeChecker.stop();
+            emit osdSizeChanged(d->osdSize = d->prevSize);
+        }
+    });
+    d->sizeChecker.setInterval(300);
 }
 
 VideoRendererItem::~VideoRendererItem() {
@@ -138,33 +149,27 @@ auto VideoRendererItem::initializeGL() -> void
     OpenGLTextureBinder<OGL::Target2D> binder(&d->black);
     const quint32 p = 0x0;
     d->black.initialize(1, 1, OGL::BGRA, &p);
+    d->mposd.initialize();
 }
 
 auto VideoRendererItem::finalizeGL() -> void
 {
     HighQualityTextureItem::finalizeGL();
-    d->cache = Cache();
+    d->cache = VideoCache();
     d->queue.clear();
     d->black.destroy();
+    d->mposd.finalize();
 }
 
 auto VideoRendererItem::customEvent(QEvent *event) -> void
 {
     switch (static_cast<int>(event->type())) {
     case NewFrame: {
-        const auto cache = _GetData<Cache>(event);
-        if (!cache.isNull())
+        VideoCache cache;
+        _GetAllData(event, cache.frame, cache.osd, cache.hasOsd);
+        if (!cache.frame.isNull())
             d->queue.push_back(cache);
         reserve(UpdateMaterial);
-        d->mposd->setVisible(false);
-        break;
-    } case NewFrameWithOsd: {
-        Cache cache; OsdCache osd;
-        std::tie(cache, osd) = _GetData<Cache, OsdCache>(event);
-        if (!cache.isNull())
-            d->queue.push_back(cache);
-        reserve(UpdateMaterial);
-        d->mposd->draw(osd);
         break;
     } case NewFrameImage: {
         const auto image = _GetData<QImage>(event);
@@ -182,7 +187,7 @@ auto VideoRendererItem::overlay() const -> QQuickItem*
 
 auto VideoRendererItem::hasFrame() const -> bool
 {
-    return !d->cache.isNull() && !d->cache->size().isEmpty();
+    return !d->cache.frame.isNull() && !d->cache.frame->size().isEmpty();
 }
 
 auto VideoRendererItem::requestFrameImage() const -> void
@@ -195,20 +200,13 @@ auto VideoRendererItem::requestFrameImage() const -> void
     }
 }
 
-auto VideoRendererItem::present(const Cache &cache)
+auto VideoRendererItem::present(const Cache &cache, const OsdCache &osd,
+                                bool hasOsd)
 -> void
 {
     if (!isInitialized())
         return;
-    _PostEvent(Qt::HighEventPriority, this, NewFrame, cache);
-}
-
-auto VideoRendererItem::present(const Cache &cache, const OsdCache &osd)
--> void
-{
-    if (!isInitialized())
-        return;
-    _PostEvent(Qt::HighEventPriority, this, NewFrameWithOsd, cache, osd);
+    _PostEvent(Qt::HighEventPriority, this, NewFrame, cache, osd, hasOsd);
 }
 
 
@@ -312,15 +310,15 @@ auto VideoRendererItem::sizeHint() const -> QSize
 
 auto VideoRendererItem::osdSize() const -> QSize
 {
-    return d->mposd->targetSize();
+    return d->osdSize;
 }
 
 auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
 {
     if (d->take) {
         auto image = texture->toImage();
-        if (!image.isNull())
-            d->mposd->drawOn(image);
+        if (!image.isNull() && d->cache.osd)
+            d->cache.osd->drawOn(image);
         const auto size = sizeHint();
         if (image.size() != size) {
             QImage tmp(size, QImage::Format_ARGB32_Premultiplied);
@@ -336,22 +334,34 @@ auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
     }
     if (d->queue.empty())
         return;
-    d->cache.swap(d->queue.front());
+    auto &front = d->queue.front();
+    d->cache.frame.swap(front.frame);
+    Q_ASSERT(!d->cache.frame.isNull());
+    *texture = d->cache.frame->texture();
+
+    if (front.osd || d->cache.hasOsd != front.hasOsd) {
+        d->cache.hasOsd = front.hasOsd;
+        if (front.osd) {
+            Q_ASSERT(d->cache.hasOsd);
+            d->cache.osd.swap(front.osd);
+            d->mposd.draw(d->cache.osd);
+        } else if (!d->cache.hasOsd)
+            d->mposd.draw({});
+        setOverlayTexture(d->mposd.isVisible() ? d->mposd.texture()
+                                               : transparentTexture());
+    }
     d->queue.pop_front();
-    Q_ASSERT(!d->cache.isNull());
-    *texture = d->cache->texture();
+
     if (_Change(d->rectangle, texture->target() == OGL::TargetRectangle)
-            |_Change(d->displaySize, d->cache->displaySize()))
+            |_Change(d->displaySize, d->cache.frame->displaySize()))
         reserve(UpdateGeometry, false);
 }
 
 auto VideoRendererItem::updateVertex(Vertex *vertex) -> void
 {
     QRectF letter;
-    if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter))) {
-        d->mposd->setGeometry(d->vtx);
+    if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter)))
         emit frameRectChanged(d->vtx);
-    }
     if (d->letterbox->set(rect(), letter))
         emit screenRectChanged(d->letterbox->screen());
     if (d->overlay) {
@@ -396,10 +406,17 @@ auto VideoRendererItem::kernel() const -> const Kernel3x3&
 
 auto VideoRendererItem::mapToVideo(const QPointF &pos) -> QPointF
 {
-    auto hratio = d->mposd->targetSize().width()/d->vtx.width();
-    auto vratio = d->mposd->targetSize().height()/d->vtx.height();
+    auto hratio = d->osdSize.width()/d->vtx.width();
+    auto vratio = d->osdSize.height()/d->vtx.height();
     auto p = pos - d->vtx.topLeft();
     p.rx() *= hratio;
     p.ry() *= vratio;
     return p;
+}
+
+auto VideoRendererItem::geometryChanged(const QRectF &new_,
+                                        const QRectF &old) -> void
+{
+    HighQualityTextureItem::geometryChanged(new_, old);
+    d->sizeChecker.start();
 }

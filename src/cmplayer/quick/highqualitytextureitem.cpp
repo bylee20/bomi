@@ -11,6 +11,7 @@ extern "C" {
 
 struct HighQualityTextureData : public HighQualityTextureItem::ShaderData {
     const OpenGLTexture2D *texture = nullptr;
+    const OpenGLTexture2D *overlay = nullptr;
     const OpenGLTexture2D *lutDither = nullptr;
     const OpenGLTexture1D *lutInt[2] = { nullptr, nullptr };
     int depth = 8;
@@ -27,6 +28,7 @@ struct HighQualityTextureShader : public HighQualityTextureItem::ShaderIface {
     {
         static const auto common = R"(
             varying vec2 texCoord;
+            varying vec2 overlayCoord;
             #define DEC_UNIFORM_DXY
             #if USE_RECTANGLE
             varying vec2 normalizedTexCoord;
@@ -39,8 +41,25 @@ struct HighQualityTextureShader : public HighQualityTextureItem::ShaderIface {
             #endif
         )"_b;
 
+        static const auto vtxCode = R"(
+            uniform mat4 qt_Matrix;
+            uniform vec2 overlay_factor;
+            attribute vec4 aPosition;
+            attribute vec2 aTexCoord;
+            void main() {
+                setLutIntCoord(aTexCoord);
+                texCoord = aTexCoord;
+                overlayCoord = aTexCoord*overlay_factor;
+            #if (USE_RECTANGLE && USE_DITHERING)
+                normalizedTexCoord = aTexCoord/tex_size;
+            #endif
+                gl_Position = qt_Matrix * aPosition;
+            }
+        )"_b;
+
         static const auto fragCode = R"(
             uniform sampler2Dg tex;
+            uniform sampler2D overlay;
             #if USE_DITHERING
             uniform sampler2D dithering;
             uniform float dith_quant;
@@ -54,24 +73,12 @@ struct HighQualityTextureShader : public HighQualityTextureItem::ShaderIface {
             #endif
             void main() {
                 vec4 color = interpolated(tex, texCoord);
+                vec4 over = texture2D(overlay, overlayCoord);
+                float r = 1.0 - over.a;
             #if USE_DITHERING
                 color = ditheringed(color);
             #endif
-                gl_FragColor = color;
-            }
-        )"_b;
-
-        static const auto vtxCode = R"(
-            uniform mat4 qt_Matrix;
-            attribute vec4 aPosition;
-            attribute vec2 aTexCoord;
-            void main() {
-                setLutIntCoord(aTexCoord);
-                texCoord = aTexCoord;
-            #if (USE_RECTANGLE && USE_DITHERING)
-                normalizedTexCoord = aTexCoord/tex_size;
-            #endif
-                gl_Position = qt_Matrix * aPosition;
+                gl_FragColor = color*r + over;
             }
         )"_b;
 
@@ -99,6 +106,8 @@ struct HighQualityTextureShader : public HighQualityTextureItem::ShaderIface {
 
     void resolve(QOpenGLShaderProgram *prog) final {
         loc_tex = prog->uniformLocation("tex");
+        loc_overlay = prog->uniformLocation("overlay");
+        loc_overlay_factor = prog->uniformLocation("overlay_factor");
         if (m_lutIntCount > 0) {
             loc_dxy = prog->uniformLocation("dxy");
             loc_tex_size = prog->uniformLocation("tex_size");
@@ -130,13 +139,17 @@ struct HighQualityTextureShader : public HighQualityTextureItem::ShaderIface {
             { tex->bind(prog, loc, textureIndex++); };
 
         const float w = d->texture->width(), h = d->texture->height();
-        QVector2D dxy(1.0, 1.0);
+        QVector2D dxy(1.0, 1.0), overlay_factor(1.0, 1.0);
         if (!m_rectangle)
             dxy = { 1.0f/w, 1.0f/h };
+        else
+            overlay_factor = { 1.0f/w, 1.0f/h };
         prog->setUniformValue(loc_dxy, dxy);
         prog->setUniformValue(loc_tex_size, QVector2D(w, h));
+        prog->setUniformValue(loc_overlay_factor, overlay_factor);
 
         bind(d->texture, loc_tex);
+        bind(d->overlay, loc_overlay);
         for (int i=0; i<m_lutIntCount; ++i)
             bind(d->lutInt[i], loc_lut_int[i]);
         if (m_dithering) {
@@ -158,6 +171,7 @@ private:
     int loc_tex = -1, loc_dxy = -1, loc_lut_int[2] = {-1, -1};
     int loc_tex_size = -1, loc_dithering = -1, loc_dith_quant = -1;
     int loc_dith_center = -1, loc_dith_size = -1;
+    int loc_overlay = -1, loc_overlay_factor = -1;
 };
 
 static QSGMaterialType types[Interpolator::CategoryMax][2][2];
@@ -166,6 +180,7 @@ struct HighQualityTextureItem::Data {
     const Interpolator *interpolator = nullptr;
     OpenGLTexture1D lutInt[2];
     OpenGLTexture2D lutDither;
+    OpenGLTexture2D overlay, transparent;
     Dithering dithering = Dithering::None;
     int depth = 8;
 };
@@ -215,6 +230,10 @@ auto HighQualityTextureItem::dithering() const -> Dithering
     return d->dithering;
 }
 
+auto HighQualityTextureItem::transparentTexture() const -> const OpenGLTexture2D&
+{
+    return d->transparent;
+}
 
 auto HighQualityTextureItem::initializeGL() -> void
 {
@@ -222,6 +241,12 @@ auto HighQualityTextureItem::initializeGL() -> void
     d->lutInt[0].create();
     d->lutInt[1].create();
     d->lutDither.create(OGL::Nearest, OGL::Repeat);
+    d->transparent.create(OGL::Nearest, OGL::ClampToEdge);
+    const quint32 transparent = 0x0;
+    OpenGLTextureBinder<OGL::Target2D> binder(&d->transparent);
+    d->transparent.initialize(1, 1, OpenGLTextureTransferInfo::get(OGL::BGRA),
+                              &transparent);
+    d->overlay = d->transparent;
 }
 
 auto HighQualityTextureItem::finalizeGL() -> void
@@ -230,6 +255,7 @@ auto HighQualityTextureItem::finalizeGL() -> void
     d->lutInt[0].destroy();
     d->lutInt[1].destroy();
     d->lutDither.destroy();
+    d->transparent.destroy();
 }
 
 auto HighQualityTextureItem::type() const -> Type* {
@@ -249,6 +275,7 @@ auto HighQualityTextureItem::createData() const -> ShaderData*
 {
     auto data = new HighQualityTextureData;
     data->texture = &texture();
+    data->overlay = &d->overlay;
     data->lutInt[0] = &d->lutInt[0];
     data->lutInt[1] = &d->lutInt[1];
     data->lutDither = &d->lutDither;
@@ -299,4 +326,9 @@ auto HighQualityTextureItem::updateData(ShaderData *sd) -> void
     }
     if (_Change(data->dithering, d->dithering))
         makeDitheringTexture(d->lutDither, d->dithering);
+}
+
+auto HighQualityTextureItem::setOverlayTexture(const OpenGLTexture2D &o) -> void
+{
+    d->overlay = o;
 }

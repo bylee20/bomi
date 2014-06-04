@@ -59,7 +59,15 @@ SIA operator "" _8(const char *str, size_t len) -> QString
 { return QString::fromUtf8(str, len); }
 
 SCIA operator "" _q(char16_t c) -> QChar { return QChar((ushort)c); }
+
 SCIA operator "" _q(char c) -> QChar { return QChar(c); }
+
+template<class... Args>
+using T = std::tuple<Args...>;
+
+template<class... Args>
+SCIA _T(const Args&... args) -> T<Args...>
+{ return std::tuple<Args...>(args...); }
 
 SIA _L(const char *str) -> QLatin1String
 { return QLatin1String(str); }

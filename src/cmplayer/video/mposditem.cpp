@@ -11,23 +11,22 @@ enum Attr {AttrPosition, AttrTexCoord, AttrColor};
 
 struct MpOsdItem::Data {
     MpOsdItem *p = nullptr;
-    Cache cache;
-    std::deque<Cache> queue;
-    QSize imageSize = {0, 0}, atlasSize = {0, 0};
+    QSize atlasSize = {0, 0};
     MpOsdBitmap::Format format = MpOsdBitmap::Ass;
-    GLenum srcFactor = GL_SRC_ALPHA;
     int loc_atlas = 0, loc_matrix = 0;
     QOpenGLShaderProgram *shader = nullptr;
+    OpenGLFramebufferObject *fbo = nullptr;
     OpenGLTexture2D atlas;
     OpenGLTextureTransferInfo transfer;
     QMatrix4x4 vMatrix;
     QOpenGLBuffer vbo{QOpenGLBuffer::VertexBuffer};
     int prevVboSize = 0;
-    void build(MpOsdBitmap::Format inFormat) {
+    bool visible = false;
+    auto build(MpOsdBitmap::Format inFormat) -> void
+    {
         if (!_Change(format, inFormat) && shader)
             return;
         _Renew(shader);
-        srcFactor = (format & MpOsdBitmap::PaMask) ? GL_ONE : GL_SRC_ALPHA;
         atlasSize = {};
         const auto tformat = format & MpOsdBitmap::Rgba ? OGL::BGRA
                                                         : OGL::OneComponent;
@@ -40,8 +39,8 @@ struct MpOsdItem::Data {
                 varying vec4 c;
                 varying vec2 texCoord;
                 void main() {
-                    gl_FragColor = vec4(c.rgb,
-                                        c.a*texture2D(atlas, texCoord).r);
+                    float a = c.a*texture2D(atlas, texCoord).r;
+                    gl_FragColor = vec4(c.rgb*a, a);
                 }
             )";
         } else {
@@ -80,21 +79,22 @@ struct MpOsdItem::Data {
         shader->release();
     }
 
-    void initializeAtlas(const MpOsdBitmap &osd) {
+    auto initializeAtlas(const MpOsdBitmap &osd) -> void
+    {
         using tmp::aligned;
         static const int max = OGL::maximumTextureSize();
         if (osd.sheet().width() > atlasSize.width() || osd.sheet().height() > atlasSize.height()) {
             if (osd.sheet().width() > atlasSize.width())
-                atlasSize.rwidth() = qMin<int>(aligned<4>(osd.sheet().width()*1.5), max);
+                atlasSize.rwidth() = qMin(aligned<4>(osd.sheet().width()*1.5), max);
             if (osd.sheet().height() > atlasSize.height())
-                atlasSize.rheight() = qMin<int>(aligned<4>(osd.sheet().height()*1.5), max);
+                atlasSize.rheight() = qMin(aligned<4>(osd.sheet().height()*1.5), max);
             atlas.initialize(atlasSize, transfer);
         }
     }
 
-    void draw(OpenGLFramebufferObject *fbo) {
-        if (!fbo->isValid())
-            return;
+    auto draw(OpenGLFramebufferObject *fbo, const Cache &cache) -> void
+    {
+        Q_ASSERT(fbo->isValid());
 
         vMatrix.setToIdentity();
         vMatrix.ortho(0, fbo->width(), 0, fbo->height(), -1, 1);
@@ -104,9 +104,6 @@ struct MpOsdItem::Data {
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        if (!cache)
-            return;
-
         const MpOsdBitmap &osd = *cache;
         Q_ASSERT(fbo->size() == osd.renderSize());
         glActiveTexture(GL_TEXTURE0);
@@ -114,8 +111,7 @@ struct MpOsdItem::Data {
 
         initializeAtlas(osd);
         build(osd.format());
-        if (!shader->isLinked())
-            return;
+        Q_ASSERT(shader->isLinked());
 
         using Vertex = OGL::TextureColorVertex;
         const int num = osd.count();
@@ -154,8 +150,7 @@ struct MpOsdItem::Data {
         shader->setUniformValue(loc_matrix, vMatrix);
 
         glEnable(GL_BLEND);
-        OGL::func()->glBlendFuncSeparate(srcFactor, GL_ONE_MINUS_SRC_ALPHA,
-                                         GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
         glDrawArrays(GL_TRIANGLES, 0, 6*num);
         glDisable(GL_BLEND);
 
@@ -168,8 +163,9 @@ struct MpOsdItem::Data {
     }
 };
 
-MpOsdItem::MpOsdItem(QQuickItem *parent)
-: SimpleFboItem(parent), d(new Data) {
+MpOsdItem::MpOsdItem()
+    : d(new Data)
+{
     d->p = this;
 }
 
@@ -177,56 +173,37 @@ MpOsdItem::~MpOsdItem() {
     delete d;
 }
 
-auto MpOsdItem::initializeGL() -> void
+auto MpOsdItem::initialize() -> void
 {
-    SimpleFboItem::initializeGL();
     d->atlas.create(OGL::Linear, OGL::ClampToEdge);
     d->vbo.create();
     d->vbo.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 }
 
-auto MpOsdItem::finalizeGL() -> void
+auto MpOsdItem::finalize() -> void
 {
-    SimpleFboItem::finalizeGL();
     d->atlas.destroy();
     _Delete(d->shader);
     d->vbo.destroy();
 }
 
-auto MpOsdItem::draw(const Cache &cache) -> void
+auto MpOsdItem::texture() const -> const OpenGLTexture2D&
 {
-    if (cache)
-        d->queue.push_back(cache);
-    setVisible(true);
-    forceRepaint();
+    Q_ASSERT(d->fbo);
+    return d->fbo->texture();
 }
 
-auto MpOsdItem::drawOn(QImage &frame) -> void
+auto MpOsdItem::draw(const Cache &cache) -> bool
 {
-    if (d->cache)
-        d->cache->drawOn(frame);
+    if (!cache || cache->renderSize().isEmpty())
+        return d->visible = false;
+    if (!d->fbo || d->fbo->size() != cache->renderSize())
+        _Renew(d->fbo, cache->renderSize(), OGL::RGBA8_UNorm);
+    d->draw(d->fbo, cache);
+    return d->visible = true;
 }
 
-auto MpOsdItem::imageSize() const -> QSize
+auto MpOsdItem::isVisible() const noexcept -> bool
 {
-    if (d->queue.empty())
-        return d->cache ? d->cache->renderSize() : QSize();
-    return d->queue.front()->renderSize();
-}
-
-auto MpOsdItem::paint(OpenGLFramebufferObject *fbo) -> void
-{
-    if (!d->queue.empty()) {
-        d->cache.swap(d->queue.front());
-        d->queue.pop_front();
-    }
-    if (d->cache)
-        d->draw(fbo);
-}
-
-auto MpOsdItem::afterUpdate() -> void
-{
-    SimpleFboItem::afterUpdate();
-    if (!d->queue.empty())
-        reserve(UpdateMaterial);
+    return d->visible;
 }

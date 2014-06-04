@@ -1,25 +1,20 @@
 #ifndef MPOSDITEM_HPP
 #define MPOSDITEM_HPP
 
-#include "quick/simplefboitem.hpp"
-
 template<class T> class VideoImageCache;
-class MpOsdBitmap;
+class MpOsdBitmap;                      class OpenGLTexture2D;
 
-class MpOsdItem : public SimpleFboItem {
-    Q_OBJECT
+class MpOsdItem {
     using Cache = VideoImageCache<MpOsdBitmap>;
 public:
-    MpOsdItem(QQuickItem *parent = nullptr);
+    MpOsdItem();
     ~MpOsdItem();
-    auto drawOn(QImage &frame) -> void;
-    auto imageSize() const -> QSize override;
-    auto draw(const Cache &cache) -> void;
+    auto draw(const Cache &cache) -> bool;
+    auto texture() const -> const OpenGLTexture2D&;
+    auto initialize() -> void;
+    auto finalize() -> void;
+    auto isVisible() const noexcept -> bool;
 private:
-    auto afterUpdate() -> void;
-    auto paint(OpenGLFramebufferObject *fbo) -> void override;
-    auto initializeGL() -> void override;
-    auto finalizeGL() -> void override;
     struct Data;
     Data *d;
 };

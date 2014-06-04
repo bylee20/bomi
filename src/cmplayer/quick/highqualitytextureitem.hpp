@@ -15,6 +15,8 @@ public:
     auto setDithering(Dithering dithering) -> void;
     auto dithering() const -> Dithering;
     auto type() const -> Type* override;
+    auto setOverlayTexture(const OpenGLTexture2D &overlay) -> void;
+    auto transparentTexture() const -> const OpenGLTexture2D&;
     static auto supportsHighQualityRendering() -> bool;
 protected:
     auto initializeGL() -> void override;

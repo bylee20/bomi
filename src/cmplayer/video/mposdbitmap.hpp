@@ -5,12 +5,19 @@ struct sub_bitmaps;
 
 class MpOsdBitmap {
 public:
+    struct Id {
+        Id() noexcept { }
+        Id(const sub_bitmaps *bitmaps) noexcept;
+        auto operator == (const Id &rhs) const noexcept -> bool
+            { return image == rhs.image && pos == rhs.pos; }
+        auto operator != (const Id &rhs) const noexcept -> bool
+            { return !operator == (rhs); }
+        int image = -1, pos = -1;
+    };
     enum Format {
         NoFormat = 0,
-        PaMask   = 0x01, /*Premultipled Alpha*/
         Ass      = 0x10,
-        Rgba     = 0x20,
-        RgbaPA   = Rgba | PaMask
+        Rgba     = 0x20, /*Premultipled Alpha*/
     };
     struct PartInfo {
         const QRect &display() const { return m_display; }
@@ -29,10 +36,9 @@ public:
         int m_stride = 0, m_offset = 0, m_strideAsPixel = 0;
     };
     auto operator == (const MpOsdBitmap &rhs) const -> bool
-        { return m_count == rhs.m_count && m_id ==rhs.m_id && m_pos == rhs.m_pos; }
+        { return m_id == rhs.m_id; }
     auto operator != (const MpOsdBitmap &rhs) const -> bool
         { return !operator == (rhs); }
-    auto needToCopy(const sub_bitmaps *imgs) const -> bool;
     auto copy(const sub_bitmaps *imgs, const QSize &renderSize) -> bool;
     template<class T = uchar>
     auto data(int i) -> T*
@@ -46,11 +52,13 @@ public:
     auto renderSize() const -> const QSize& { return m_renderSize; }
     auto sheet() const -> const QSize& { return m_sheet; }
     auto drawOn(QImage &frame) const -> void;
+    auto id() const noexcept -> const Id& { return m_id; }
 private:
+    Id m_id;
     QByteArray m_data;
-    int m_count = 0, m_id = -1, m_pos = -1;
+    int m_count = 0;
     QVector<PartInfo> m_parts;
-    Format m_format = RgbaPA;
+    Format m_format = Rgba;
     QSize m_sheet = {0, 0}, m_maximumSize = {0, 0}, m_renderSize = {0, 0};
 };
 

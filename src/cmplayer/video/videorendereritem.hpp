@@ -12,9 +12,9 @@ class VideoFramebufferObject;           class MpOsdBitmap;
 
 class VideoRendererItem : public HighQualityTextureItem {
     Q_OBJECT
+public:
     using Cache = VideoImageCache<VideoFramebufferObject>;
     using OsdCache = VideoImageCache<MpOsdBitmap>;
-public:
     VideoRendererItem(QQuickItem *parent = 0);
     ~VideoRendererItem();
     auto screenRect() const -> QRectF;
@@ -27,8 +27,7 @@ public:
     auto setAspectRatio(double ratio) -> void;
     auto setOverlay(GeometryItem *overlay) -> void;
     auto overlay() const -> QQuickItem*;
-    auto present(const Cache &cache) -> void;
-    auto present(const Cache &cache, const OsdCache &osd) -> void;
+    auto present(const Cache &cache, const OsdCache &osd, bool hasOsd) -> void;
     auto hasFrame() const -> bool;
     auto requestFrameImage() const -> void;
     auto frameRect(const QRectF &area) const -> QRectF;
@@ -60,6 +59,7 @@ private:
     auto customEvent(QEvent *event) -> void override;
     auto updateVertex(Vertex *vertex) -> void override;
     auto updateTexture(OpenGLTexture2D *texture) -> void override;
+    auto geometryChanged(const QRectF &new_, const QRectF &old) -> void final;
     struct Data;
     Data *d;
     QPoint m_mouse;
