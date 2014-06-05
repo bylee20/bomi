@@ -138,6 +138,8 @@ public:
         virtual auto resolve(QOpenGLShaderProgram *prog) -> void = 0;
         virtual auto update(QOpenGLShaderProgram *prog,
                             const ShaderData *data) -> void = 0;
+        virtual auto beforeUpdate() -> void { }
+        virtual auto afterUpdate() -> void { }
         friend class ShaderRenderItem;
     };
     virtual auto isOpaque() const -> bool { return false; }
@@ -166,8 +168,10 @@ private:
         auto fragmentShader() const -> const char* final;
         auto attributeNames() const -> const char *const* final;
         auto initialize() -> void final;
+        auto activate() -> void final { m_iface->beforeUpdate(); }
         auto updateState(const RenderState &state,
                          QSGMaterial *new_, QSGMaterial *) -> void final;
+        auto deactivate() -> void final { m_iface->afterUpdate(); }
     private:
         int loc_matrix = -1, loc_opacity = -1;
     };

@@ -91,7 +91,7 @@ auto PlaylistModel::setDownloader(Downloader *downloader) -> void
         auto data = m_downloader->takeData();
         const auto type = Playlist::guessType(m_downloader->url().path());
         Playlist list;
-        if (list.load(&data, m_enc, type)) {
+        if (list.load(m_downloader->url(), &data, m_enc, type)) {
             setList(list);
             setVisible(true);
         }

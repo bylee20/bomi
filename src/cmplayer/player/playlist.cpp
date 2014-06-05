@@ -47,7 +47,8 @@ auto Playlist::loadAll(const QDir &dir) -> Playlist&
     return *this;
 }
 
-auto Playlist::load(QTextStream &in, QString enc, Type type) -> bool
+auto Playlist::load(QTextStream &in, QString enc, Type type,
+                    const QUrl &url) -> bool
 {
     clear();
     if (type == M3U8)
@@ -56,19 +57,20 @@ auto Playlist::load(QTextStream &in, QString enc, Type type) -> bool
         in.setCodec(QTextCodec::codecForName(enc.toLocal8Bit()));
     switch (type) {
     case PLS:
-        return loadPLS(in);
+        return loadPLS(in, url);
     case M3U:
     case M3U8:
-        return loadM3U(in);
+        return loadM3U(in, url);
     default:
         return false;
     }
 }
 
-auto Playlist::load(QByteArray *data, const QString &enc, Type type) -> bool
+auto Playlist::load(const QUrl &url, QByteArray *data,
+                    const QString &enc, Type type) -> bool
 {
     QTextStream in(data);
-    return load(in, enc, type);
+    return load(in, enc, type, url);
 }
 
 auto Playlist::load(const QString &filePath, const QString &enc, Type type) -> bool
@@ -125,7 +127,7 @@ auto Playlist::saveM3U(QTextStream &out) const -> bool
 }
 
 
-auto Playlist::loadPLS(QTextStream &in) -> bool
+auto Playlist::loadPLS(QTextStream &in, const QUrl &url) -> bool
 {
     const qint64 pos = in.pos();
     in.seek(0);
@@ -136,13 +138,13 @@ auto Playlist::loadPLS(QTextStream &in) -> bool
         static QRegEx rxFile(R"(^File\d+=(.+)$)");
         const auto match = rxFile.match(line);
         if (match.hasMatch())
-            append(Mrl(match.captured(1)));
+            push_back(Mrl(resolve(match.captured(1), url)));
     }
     in.seek(pos);
     return true;
 }
 
-auto Playlist::loadM3U(QTextStream &in) -> bool
+auto Playlist::loadM3U(QTextStream &in, const QUrl &url) -> bool
 {
     const qint64 pos = in.pos();
     in.seek(0);
@@ -170,10 +172,24 @@ auto Playlist::loadM3U(QTextStream &in) -> bool
         } else
             location = line;
         if (!location.isEmpty())
-            append(Mrl(location, name));
+            push_back(Mrl(resolve(location, url), name));
     }
     in.seek(pos);
     return true;
+}
+
+auto Playlist::resolve(const QString &location, const QUrl &url) -> QString
+{
+    if (url.isEmpty() || location.indexOf("://"_a) > 0)
+        return location;
+    const QFileInfo info(location);
+    if (info.isAbsolute())
+        return location;
+    const auto str = url.toString();
+    const auto idx = str.lastIndexOf('/');
+    if (idx < 0)
+        return location;
+    return str.left(idx + 1) % location;
 }
 
 auto Playlist::save(const QString &name, QSettings *set) const -> void
