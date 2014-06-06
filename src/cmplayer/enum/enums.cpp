@@ -3,6 +3,7 @@
 #include "speakerid.hpp"
 #include "channellayout.hpp"
 #include "colorrange.hpp"
+#include "colorspace.hpp"
 #include "subtitledisplay.hpp"
 #include "videoratio.hpp"
 #include "dithering.hpp"
@@ -31,6 +32,7 @@ bool _IsEnumTypeId(int userType) {
         || userType == qMetaTypeId<SpeakerId>()
         || userType == qMetaTypeId<ChannelLayout>()
         || userType == qMetaTypeId<ColorRange>()
+        || userType == qMetaTypeId<ColorSpace>()
         || userType == qMetaTypeId<SubtitleDisplay>()
         || userType == qMetaTypeId<VideoRatio>()
         || userType == qMetaTypeId<Dithering>()
@@ -70,6 +72,9 @@ bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVaria
     } else    if (varType == qMetaTypeId<ColorRange>()) {
         toSql = _EnumVariantToSql<ColorRange>;
         fromSql = _EnumVariantFromSql<ColorRange>;
+    } else    if (varType == qMetaTypeId<ColorSpace>()) {
+        toSql = _EnumVariantToSql<ColorSpace>;
+        fromSql = _EnumVariantFromSql<ColorSpace>;
     } else    if (varType == qMetaTypeId<SubtitleDisplay>()) {
         toSql = _EnumVariantToSql<SubtitleDisplay>;
         fromSql = _EnumVariantFromSql<SubtitleDisplay>;
@@ -158,6 +163,9 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<ColorRange>()) {
         conv.variantToName = _EnumVariantToEnumName<ColorRange>;
         conv.nameToVariant = _EnumNameToEnumVariant<ColorRange>;
+    } else    if (metaType == qMetaTypeId<ColorSpace>()) {
+        conv.variantToName = _EnumVariantToEnumName<ColorSpace>;
+        conv.nameToVariant = _EnumNameToEnumVariant<ColorSpace>;
     } else    if (metaType == qMetaTypeId<SubtitleDisplay>()) {
         conv.variantToName = _EnumVariantToEnumName<SubtitleDisplay>;
         conv.nameToVariant = _EnumNameToEnumVariant<SubtitleDisplay>;

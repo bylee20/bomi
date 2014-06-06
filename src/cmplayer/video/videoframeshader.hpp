@@ -4,6 +4,7 @@
 #include "videocolor.hpp"
 #include "opengl/opengltexture1d.hpp"
 #include "enum/colorrange.hpp"
+#include "enum/colorspace.hpp"
 #include "enum/deintmethod.hpp"
 #include "enum/videoeffect.hpp"
 extern "C" {
@@ -25,8 +26,8 @@ public:
     auto target() const -> GLenum { return m_target; }
     auto setDeintMethod(DeintMethod method) -> void;
     auto setEffects(VideoEffects effects) -> void;
-    auto setColor(const VideoColor &color) -> void;
-    auto setRange(ColorRange range) -> void;
+    auto setColor(const VideoColor &color,
+                  ColorSpace space, ColorRange range) -> void;
     auto setChromaUpscaler(InterpolatorType type) -> void;
     auto isDirectlyRenderable() const -> bool;
     const OpenGLTexture2D &renderTarget() const { return m_textures[0]; }
@@ -58,6 +59,7 @@ private:
     QOpenGLShaderProgram *m_prog = nullptr;
     VideoColor m_color;
     mp_image_params m_params;
+    ColorSpace m_space = ColorSpace::Auto;
     ColorRange m_range = ColorRange::Auto;
     OGL::Target m_target = OGL::Target2D;
     OGL::Binding m_binding = OGL::Binding2D;

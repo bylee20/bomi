@@ -8,6 +8,7 @@
 #include "enum/verticalalignment.hpp"
 #include "enum/horizontalalignment.hpp"
 #include "enum/colorrange.hpp"
+#include "enum/colorspace.hpp"
 #include "enum/deintmode.hpp"
 #include "enum/dithering.hpp"
 #include "enum/channellayout.hpp"
@@ -40,6 +41,7 @@ class MrlStateV2 : public QObject {
     Q_PROPERTY(HorizontalAlignment video_horizontal_alignment MEMBER video_horizontal_alignment NOTIFY videoHorizontalAlignmentChanged)
     Q_PROPERTY(VideoColor video_color MEMBER video_color NOTIFY videoColorChanged)
     Q_PROPERTY(ColorRange video_range MEMBER video_range NOTIFY videoRangeChanged)
+    Q_PROPERTY(ColorSpace video_space MEMBER video_space NOTIFY videoSpaceChanged)
 
     Q_PROPERTY(int audio_volume MEMBER audio_volume NOTIFY audioVolumeChanged)
     Q_PROPERTY(int audio_amplifier MEMBER audio_amplifier NOTIFY audioAmpChanged)
@@ -77,6 +79,7 @@ public:
     HorizontalAlignment video_horizontal_alignment = HorizontalAlignment::Center;
     VideoColor video_color = {0, 0, 0, 0};
     ColorRange video_range = ColorRange::Auto;
+    ColorSpace video_space = ColorSpace::Auto;
     VideoEffects video_effects = 0;
 
 // audio state
@@ -116,6 +119,7 @@ signals:
     void videoVerticalAlignmentChanged();
     void videoHorizontalAlignmentChanged();
     void videoRangeChanged();
+    void videoSpaceChanged();
 
     void audioVolumeChanged();
     void audioAmpChanged();

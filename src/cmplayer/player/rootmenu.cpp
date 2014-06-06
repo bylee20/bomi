@@ -8,6 +8,7 @@
 #include "enum/staysontop.hpp"
 #include "enum/videoratio.hpp"
 #include "enum/colorrange.hpp"
+#include "enum/colorspace.hpp"
 #include "enum/videoeffect.hpp"
 #include "enum/channellayout.hpp"
 #include "enum/subtitledisplay.hpp"
@@ -256,6 +257,7 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
     addEnumActions<MoveToward>(move);
     video.addSeparator();
 
+    addEnumMenuCheckable<ColorSpace>(video, true);
     addEnumMenuCheckable<ColorRange>(video, true);
     addEnumActionsCheckable<InterpolatorType>(*video.addMenu(u"chroma-upscaler"_q), true);
     addEnumActionsCheckable<InterpolatorType>(*video.addMenu(u"interpolator"_q), true);
@@ -503,6 +505,7 @@ auto RootMenu::retranslate() -> void
     updateEnumActions<HorizontalAlignment>(align);
     updateEnumActions<MoveToward>(video(u"move"_q, tr("Screen Position")));
 
+    updateEnumMenu<ColorSpace>(video);
     updateEnumMenu<ColorRange>(video);
     updateEnumActions<InterpolatorType>(video(u"chroma-upscaler"_q, tr("Chroma Upscaler")));
     updateEnumActions<InterpolatorType>(video(u"interpolator"_q, tr("Interpolator")));

@@ -30,7 +30,7 @@ extern auto finalize_vdpau_interop(QOpenGLContext *context) -> void;
 enum DirtyFlag {
     DirtyEffects = 1 << 0,
     DirtyKernel  = 1 << 1,
-    DirtyRange   = 1 << 2,
+    DirtyColor   = 1 << 2,
     DirtyChroma  = 1 << 3,
     DirtySize    = 1 << 4,
     DirtyDeint   = 1 << 5
@@ -64,18 +64,17 @@ public:
         if (formats.contains(OGL::RGBA16_UNorm))
             m_fboFormat = OGL::RGBA16_UNorm;
     }
-    auto get(const VideoFormat &format, double pts) -> Cache
+    auto get(const QSize &size, const QSize &display) -> Cache
     {
-        if (format.isEmpty())
+        if (size.isEmpty() || display.isEmpty())
             return Cache();
         Cache cache = this->getCache(3);
         if (cache.isNull())
             return cache;
         auto &data = const_cast<VideoFramebufferObject&>(cache.image());
-        data.m_displaySize = format.displaySize();
-        data.m_pts = pts;
-        if (!data.m_fbo || data.m_fbo->size() != format.size())
-            _Renew(data.m_fbo, format.size(), m_fboFormat);
+        data.m_displaySize = display;
+        if (!data.m_fbo || data.m_fbo->size() != size)
+            _Renew(data.m_fbo, size, m_fboFormat);
         return cache;
     }
 };
@@ -150,6 +149,7 @@ struct VideoOutput::Data {
     quint64 drawn = 0, dropped = 0;
     std::deque<FrameTime> timings;
     double avgfps = 0.0;
+    bool reconfigured = false;
 
     auto reset() -> void
     {
@@ -169,8 +169,8 @@ struct VideoOutput::Data {
         if (dirty) {
             if (dirty & DirtyEffects)
                 shader->setEffects(renderer->effects());
-            if (dirty & DirtyRange)
-                shader->setRange(engine->videoColorRange());
+            if (dirty & DirtyColor)
+                shader->setColor(color, engine->videoColorSpace(), engine->videoColorRange());
             if (dirty & DirtyChroma)
                 shader->setChromaUpscaler(engine->videoChromaUpscaler());
             if (dirty & DirtyDeint) {
@@ -180,7 +180,7 @@ struct VideoOutput::Data {
                 shader->setDeintMethod(method);
             }
         }
-        cache = pool->get(format, mpi->pts);
+        cache = pool->get(format.size(), format.displaySize());
         if (!cache.isNull()) {
             shader->upload(mpi);
 //            bench.begin();
@@ -211,7 +211,8 @@ VideoOutput::VideoOutput(PlayEngine *engine)
     d->p = this;
     d->reset();
     d->engine = engine;
-    d->marker(d->engine, &PlayEngine::videoColorRangeChanged, DirtyRange);
+    d->marker(d->engine, &PlayEngine::videoColorRangeChanged, DirtyColor);
+    d->marker(d->engine, &PlayEngine::videoColorSpaceChanged, DirtyColor);
     d->marker(d->engine, &PlayEngine::videoChromaUpscalerChanged, DirtyChroma);
     d->marker(d->engine, &PlayEngine::deintOptionsChanged, DirtyDeint);
 }
@@ -291,6 +292,12 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
     auto v = priv(out); Data *d = v->d;
     d->reset();
     d->shader->setFlipped(flags & VOFLAG_FLIPPING);
+    bool rerenderable = false;
+    if (!mp_image_params_equals(&d->params, params)) {
+        if (d->params.imgfmt == params->imgfmt
+                && d->params.w == params->w && d->params.h == params->h)
+            rerenderable = true;
+    }
     d->params = *params;
     const auto desc = mp_imgfmt_get_desc(d->params.imgfmt);
     if (_Change(d->format, VideoFormat(d->params, desc))) {
@@ -301,6 +308,10 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
     }
     _Debug("Configure VideoOutput with %%(%%x%%) format",
            mp_imgfmt_to_name(params->imgfmt), params->w, params->h);
+    d->reconfigured = true;
+    if (rerenderable) {
+        d->draw();
+    }
     return 0;
 }
 
@@ -416,7 +427,7 @@ auto VideoOutput::control(vo *out, uint32_t req, void *data) -> int
             return VO_NOTIMPL;
         if (d->color.get(type) != args->value) {
             d->color.set(type, args->value);
-            d->shader->setColor(d->color);
+            d->dirty.store(d->dirty.load() | DirtyColor);
             out->want_redraw = true;
         }
         return true;
@@ -432,8 +443,12 @@ auto VideoOutput::control(vo *out, uint32_t req, void *data) -> int
             if (_Change(d->mouse, d->engine->mousePosition()))
                 vo_mouse_movement(out, d->mouse.x(), d->mouse.y());
         }
-        if (d->dirty.load())
+        if (d->dirty.load() || d->reconfigured)
             out->want_redraw = true;
+        d->reconfigured = false;
+        return true;
+    case VOCTRL_GET_COLORSPACE:
+        *static_cast<mp_image_params*>(data) = d->params;
         return true;
     default:
         return VO_NOTIMPL;

@@ -13,6 +13,7 @@ enum class AudioDriver;                 enum class ClippingMethod;
 enum class DeintMethod;                 enum class DeintMode;
 enum class ChannelLayout;               class VideoColor;
 enum class ColorRange;                  enum class InterpolatorType;
+enum class ColorSpace;
 
 struct StartInfo {
     StartInfo() {}
@@ -74,7 +75,9 @@ public:
     auto videoEqualizer() const -> const VideoColor&;
     auto setVideoEqualizer(const VideoColor &prop) -> void;
     auto setVideoColorRange(ColorRange range) -> void;
+    auto setVideoColorSpace(ColorSpace space) -> void;
     auto videoColorRange() const -> ColorRange;
+    auto videoColorSpace() const -> ColorSpace;
     auto setVideoChromaUpscaler(InterpolatorType tpe) -> void;
     auto videoChromaUpscaler() const -> InterpolatorType;
 
@@ -224,6 +227,7 @@ signals:
     void requestNextStartInfo();
     void metaDataChanged();
     void videoColorRangeChanged(ColorRange range);
+    void videoColorSpaceChanged(ColorSpace space);
     void videoChromaUpscalerChanged(InterpolatorType type);
     void deintOptionsChanged();
 private:

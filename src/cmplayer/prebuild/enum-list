@@ -71,6 +71,16 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -Remap[[remap]][-Remap Range-]
 -Extended[[luma]][-Extended Range-]
 
++ColorSpace[[space]][-Color Space-][:mp_csp:]
+!extern "C" {
+!#include <video/csputils.h>
+!}
+-Auto[[auto]][-Auto-][:MP_CSP_AUTO:]
+-BT601[[bt.601]][-BT.601(SD)-][:MP_CSP_BT_601:]
+-BT709[[bt.709]][-BT.709(HD)-][:MP_CSP_BT_709:]
+-SMPTE240M[[smpte]][-SMPTE-240M-][:MP_CSP_SMPTE_240M:]
+-YCgCo[[ycgco]][-YCgCo-][:MP_CSP_YCGCO:]
+
 #+AdjustColor[[color]][:VideoColor:]
 #!#include "video/videocolor.hpp"
 #-Reset[[reset]][:{0, 0, 0, 0}:]

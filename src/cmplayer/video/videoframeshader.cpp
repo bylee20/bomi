@@ -81,14 +81,11 @@ auto VideoFrameShader::updateTexCoords() -> void
     m_vbo.release();
 }
 
-auto VideoFrameShader::setColor(const VideoColor &color) -> void
+auto VideoFrameShader::setColor(const VideoColor &color,
+                                ColorSpace space, ColorRange range) -> void
 {
     m_color = color;
-    updateColorMatrix();
-}
-
-auto VideoFrameShader::setRange(ColorRange range) -> void
-{
+    m_space = space;
     m_range = range;
     updateColorMatrix();
 }
@@ -122,11 +119,15 @@ auto VideoFrameShader::updateColorMatrix() -> void
     default:
         break;
     }
-    m_mul_mat = color.matrix(m_cspOut, range);
-//    if (m_effects.contains(VideoEffect::Invert)) {
-//        m_mul_mat *= -1;
-//        m_add_vec = QVector3D(1, 1, 1) - m_add_vec;
-//    }
+    auto csp = m_cspOut;
+    if (csp != MP_CSP_RGB && m_space != ColorSpace::Auto)
+        csp = _EnumData(m_space);
+    m_mul_mat = color.matrix(csp, range);
+    if (m_effects.contains(VideoEffect::Invert))
+        m_mul_mat = QMatrix4x4(-1,  0,  0, 1,
+                                0, -1,  0, 1,
+                                0,  0, -1, 1,
+                                0,  0,  0, 1)*m_mul_mat;
     m_defaultColor = m_color.isZero();
 }
 

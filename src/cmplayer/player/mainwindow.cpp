@@ -1315,8 +1315,12 @@ auto MainWindow::connectMenus() -> void
              &MrlState::videoDitheringChanged, [this] () {
         d->renderer.setDithering(d->as.state.video_dithering);
     });
-    d->connectEnumMenu<ColorRange>
-            (video, "video_range", &MrlState::videoRangeChanged, [this] () {
+    d->connectEnumMenu<ColorSpace>(video, "video_space",
+                                   &MrlState::videoSpaceChanged, [this] () {
+        d->engine.setVideoColorSpace(d->as.state.video_space);
+    });
+    d->connectEnumMenu<ColorRange>(video, "video_range",
+                                   &MrlState::videoRangeChanged, [this] () {
         d->engine.setVideoColorRange(d->as.state.video_range);
     });
 

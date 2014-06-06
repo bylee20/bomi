@@ -224,7 +224,8 @@ HEADERS += \
     widget/openmediabehaviorgroupbox.hpp \
     tmp/static_op.hpp \
     dialog/prefdialog_p.hpp \
-    opengl/openglbenchmarker.hpp
+    opengl/openglbenchmarker.hpp \
+    enum/colorspace.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -389,7 +390,8 @@ SOURCES += \
     player/abrepeatchecker.cpp \
     widget/openmediabehaviorgroupbox.cpp \
     dialog/prefdialog_p.cpp \
-    opengl/openglbenchmarker.cpp
+    opengl/openglbenchmarker.cpp \
+    enum/colorspace.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

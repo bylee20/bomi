@@ -16,6 +16,7 @@
 #include "subtitle/submisc.hpp"
 #include "subtitle/subtitlestyle.hpp"
 #include "enum/deintmode.hpp"
+#include "enum/colorspace.hpp"
 #include "enum/colorrange.hpp"
 #include "enum/audiodriver.hpp"
 #include "enum/channellayout.hpp"
@@ -88,6 +89,17 @@ struct mpv_format_trait<QString> {
     static auto userdata(mpv_type v) -> QByteArray { return v; }
     static auto cast(const char *from) -> QString
         { return QString::fromLocal8Bit(from); }
+    static auto free(mpv_type &data) -> void { mpv_free((void*)data); }
+};
+
+template<>
+struct mpv_format_trait<QByteArray> {
+    using mpv_type = const char*;
+    static constexpr mpv_format format = MPV_FORMAT_STRING;
+    static constexpr bool use_free = true;
+    static auto userdata(mpv_type v) -> QByteArray { return v; }
+    static auto cast(const char *from) -> QByteArray
+        { return QByteArray(from); }
     static auto free(mpv_type &data) -> void { mpv_free((void*)data); }
 };
 
@@ -238,6 +250,7 @@ struct PlayEngine::Data {
 
     VideoColor videoEq;
     ColorRange videoColorRange = ColorRange::Auto;
+    ColorSpace videoColorSpace = ColorSpace::Auto;
 
     double fps = 1.0;
     bool hasImage = false, tempoScaler = false, seekable = false;
@@ -1643,6 +1656,17 @@ auto PlayEngine::setVideoColorRange(ColorRange range) -> void
 {
     if (_Change(d->videoColorRange, range))
         emit videoColorRangeChanged(range);
+}
+
+auto PlayEngine::videoColorSpace() const -> ColorSpace
+{
+    return d->videoColorSpace;
+}
+
+auto PlayEngine::setVideoColorSpace(ColorSpace space) -> void
+{
+    if (_Change(d->videoColorSpace, space))
+        emit videoColorSpaceChanged(space);
 }
 
 auto PlayEngine::videoColorRange() const -> ColorRange
