@@ -1,8 +1,10 @@
 #ifndef OPENGLBENCHMARKER_HPP
 #define OPENGLBENCHMARKER_HPP
 
-class OpenGLBenchmark {
+class OpenGLBenchmarker {
 public:
+    OpenGLBenchmarker() = default;
+    OpenGLBenchmarker(bool init) { if (init) create(); }
     void create() {
         m_timer.create();
         m_ns = 0;

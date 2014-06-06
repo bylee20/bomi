@@ -38,8 +38,7 @@ public:
     auto setHue(int v) -> void { m[Hue] = clip(v); }
     auto isZero() const -> bool
         { return !m[Brightness] && !m[Saturation] && !m[Contrast] && !m[Hue]; }
-    auto matrix(QMatrix3x3 &mul, QVector3D &add, mp_csp colorspace,
-                ColorRange range, float s = 1.0/255.0) const -> void;
+    auto matrix(mp_csp csp, ColorRange range) const -> QMatrix4x4;
     auto getText(Type type) const -> QString;
     auto packed() const -> qint64;
     auto toString() const -> QString;
@@ -55,6 +54,8 @@ public:
     template<class F>
     static auto for_type(F func) -> void;
 private:
+    auto matBSHC() const -> QMatrix4x4;
+    auto matYCbCrToRgb(mp_csp c, ColorRange r) const -> QMatrix4x4;
     static auto clip(int v) -> int { return qBound(-100, v, 100); }
     static Array<QString> s_names;
     Array<int> m{{0, 0, 0, 0}};

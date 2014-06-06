@@ -3,7 +3,7 @@
 
 DECLARE_LOG_CONTEXT(OpenGL)
 
-void OpenGLBenchmark::end()
+void OpenGLBenchmarker::end()
 {
     m_timer.end();
     m_ns += m_timer.waitForResult();

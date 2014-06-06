@@ -72,14 +72,10 @@ vec3 filtered(const in vec2 coord) {
 #endif
 }
 
-uniform mat3 mul_mat;
-uniform vec3 add_vec;
+uniform mat4 mul_mat;
 void main() {
-    const vec2 one = vec2(1.0, 0.0);
-    vec3 tex = filtered(texCoord);
-    tex = mul_mat*tex + add_vec;
-    tex = clamp(tex, 0.0, 1.0);
-    gl_FragColor = tex.rgbr*one.xxxy + one.yyyx;
+    vec4 tex = vec4(filtered(texCoord), 1.0);
+    gl_FragColor = mul_mat*tex;
 }
 #endif
 // FRAGMENT

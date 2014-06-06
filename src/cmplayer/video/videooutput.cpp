@@ -6,6 +6,7 @@
 #include "mposdbitmap.hpp"
 #include "videoframebufferobject.hpp"
 #include "opengl/opengloffscreencontext.hpp"
+#include "opengl/openglbenchmarker.hpp"
 #include "player/playengine.hpp"
 #include "player/mpv_helper.hpp"
 #include "misc/log.hpp"
@@ -17,6 +18,8 @@ extern "C" {
 }
 
 DECLARE_LOG_CONTEXT(Video)
+
+#define DO_BENCHMARK 0
 
 //static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
 
@@ -136,6 +139,9 @@ struct VideoOutput::Data {
     MpOsdBitmap::Id bitmapId;
     MpOsdBitmapPool bitmapPool;
     bool hasOsd = false;
+#if DO_BENCHMARK
+    OpenGLBenchmarker bench;
+#endif
 
     PlayEngine *engine = nullptr;
     QAtomicInt dirty = 0;
@@ -177,9 +183,11 @@ struct VideoOutput::Data {
         cache = pool->get(format, mpi->pts);
         if (!cache.isNull()) {
             shader->upload(mpi);
+//            bench.begin();
             cache->bind();
             shader->render(renderer->kernel());
             cache->release();
+//            bench.end();
         }
         gl->doneCurrent();
         _Trace("VideoOutput::draw()");
@@ -248,6 +256,9 @@ auto VideoOutput::preinit(vo *out) -> int
     initialize_vdpau_interop(d->gl->context());
     d->shader = new VideoFrameShader;
     d->pool =new VideoFramebufferObjectPool;
+#if DO_BENCHMARK
+    d->bench.create();
+#endif
     d->gl->doneCurrent();
     d->dirty.store(0xffffffff);
     _Debug("Initialize VideoOutput");
@@ -262,6 +273,9 @@ auto VideoOutput::uninit(vo *out) -> void
     _Delete(d->shader);
     _Delete(d->pool);
     finalize_vdpau_interop(d->gl->context());
+#if DO_BENCHMARK
+    d->bench.destroy();
+#endif
     d->gl->doneCurrent();
     _Debug("Uninitialize VideoOutput");
 }

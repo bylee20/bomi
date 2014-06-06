@@ -61,8 +61,7 @@ private:
     ColorRange m_range = ColorRange::Auto;
     OGL::Target m_target = OGL::Target2D;
     OGL::Binding m_binding = OGL::Binding2D;
-    QMatrix3x3 m_mul_mat;
-    QVector3D m_sub_vec, m_add_vec;
+    QMatrix4x4 m_mul_mat;
     int m_lutCount = 0;
     VideoEffects m_effects = 0;
     DeintMethod m_deint = DeintMethod::None;
@@ -75,7 +74,7 @@ private:
     HwAccMixer *m_mixer = nullptr;
     QOpenGLBuffer m_vbo;
     int loc_kern_d, loc_kern_c, loc_kern_n, loc_top_field;
-    int loc_add_vec, loc_mul_mat, loc_vMatrix;
+    int loc_mul_mat, loc_vMatrix;
     int loc_tex[3] = {-1, -1, -1}, loc_cc[3] = {-1, -1, -1};
     int loc_lut_int[2] = {-1, -1};
 };

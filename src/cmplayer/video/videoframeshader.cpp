@@ -122,11 +122,11 @@ auto VideoFrameShader::updateColorMatrix() -> void
     default:
         break;
     }
-    color.matrix(m_mul_mat, m_add_vec, m_cspOut, range);
-    if (m_effects.contains(VideoEffect::Invert)) {
-        m_mul_mat *= -1;
-        m_add_vec = QVector3D(1, 1, 1) - m_add_vec;
-    }
+    m_mul_mat = color.matrix(m_cspOut, range);
+//    if (m_effects.contains(VideoEffect::Invert)) {
+//        m_mul_mat *= -1;
+//        m_add_vec = QVector3D(1, 1, 1) - m_add_vec;
+//    }
     m_defaultColor = m_color.isZero();
 }
 
@@ -236,7 +236,6 @@ const vec2 tex_size = vec2(texWidth, texHeight);
         loc_tex[2] = m_prog->uniformLocation("tex2");
         loc_top_field = m_prog->uniformLocation("top_field");
         loc_mul_mat = m_prog->uniformLocation("mul_mat");
-        loc_add_vec = m_prog->uniformLocation("add_vec");
         loc_cc[0] = m_prog->uniformLocation("cc0");
         loc_cc[1] = m_prog->uniformLocation("cc1");
         loc_cc[2] = m_prog->uniformLocation("cc2");
@@ -331,7 +330,6 @@ auto VideoFrameShader::render(const Kernel3x3 &k3x3) -> void
 
     m_prog->bind();
     m_prog->setUniformValue(loc_top_field, (float)m_top);
-    m_prog->setUniformValue(loc_add_vec, m_add_vec);
     m_prog->setUniformValue(loc_mul_mat, m_mul_mat);
     if (hasKernelEffects()) {
         m_prog->setUniformValue(loc_kern_c, k3x3.center());
