@@ -290,7 +290,7 @@ struct PlayEngine::Data {
     Thread thread{p};
     AudioController *audio = nullptr;
     QTimer imageTicker;
-    bool quit = false, timing = false, muted = false;
+    bool quit = false, timing = false, muted = false, initialized = false;
     int volume = 100;
     double amp = 1.0, speed = 1.0, avsync = 0;
     int cacheForPlayback = 20, cacheForSeeking = 50;
@@ -563,8 +563,9 @@ PlayEngine::PlayEngine()
     d->setOption("fixed-vo", "yes");
 
     mpv_set_wakeup_callback(d->handle, [] (void *arg) {
-        if (!static_cast<Data*>(arg)->videoThread)
-            static_cast<Data*>(arg)->videoThread = QThread::currentThread();
+        auto d = static_cast<Data*>(arg);
+        if (d->initialized && !d->videoThread)
+            d->videoThread = QThread::currentThread();
     }, d);
 
     auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
@@ -593,6 +594,7 @@ PlayEngine::PlayEngine()
     }
     d->fatal(mpv_initialize(d->handle), "Couldn't initialize mpv.");
     _Debug("Initialized");
+    d->initialized = true;
 }
 
 PlayEngine::~PlayEngine()
@@ -604,6 +606,7 @@ PlayEngine::~PlayEngine()
     delete d->audio;
     delete d->video;
     delete d->filter;
+    d->initialized = false;
     mpv_destroy(d->handle);
     delete d;
     _Debug("Finalized");
@@ -611,13 +614,14 @@ PlayEngine::~PlayEngine()
 
 auto PlayEngine::initializeGL(QQuickWindow *window) -> void
 {
+    Q_ASSERT(d->videoThread);
+    _Info("Initialize video OpenGL context for %%", d->videoThread);
     auto ctx = window->openglContext();
     ctx->doneCurrent();
     d->videoContext = new OpenGLOffscreenContext;
     d->videoContext->setShareContext(ctx);
     d->videoContext->setFormat(ctx->format());
-    if (d->videoThread)
-        d->videoContext->setThread(d->videoThread);
+    d->videoContext->setThread(d->videoThread);
     d->videoContext->create();
     ctx->makeCurrent(window);
     d->filter->initializeGL(d->videoContext);
@@ -1282,7 +1286,7 @@ auto PlayEngine::exec() -> void
     int position = 0, cache = -1, duration = 0;
     bool first = false, loaded = false;
     Mrl mrl;
-    QByteArray leftmsg;
+    QMap<QByteArray, QByteArray> leftmsg;
 
     auto metaData = [&] () {
         auto list = d->getmpv<QVariant>("metadata").toList();
@@ -1374,17 +1378,19 @@ auto PlayEngine::exec() -> void
             break;
         } case MPV_EVENT_LOG_MESSAGE: {
             auto message = static_cast<mpv_event_log_message*>(event->data);
-            leftmsg += message->text;
+            const QByteArray prefix(message->prefix);
+            auto &left = leftmsg[prefix];
+            left.append(message->text);
             int from = 0;
             for (;;) {
-                auto to = leftmsg.indexOf('\n', from);
+                auto to = left.indexOf('\n', from);
                 if (to < 0)
                     break;
                 Log::write(Log::Info, "[mpv/%%] %%", message->prefix,
-                           leftmsg.mid(from, to-from));
+                           left.mid(from, to-from));
                 from = to + 1;
             }
-            leftmsg = leftmsg.mid(from);
+            left = left.mid(from);
             break;
         } case MPV_EVENT_IDLE:
             break;

@@ -16,14 +16,14 @@ SIA _ToLog(const QString &str) -> QByteArray { return str.toLocal8Bit(); }
 SIA _ToLog(const QStringRef &str) -> QByteArray { return str.toLocal8Bit(); }
 SIA _ToLog(const char *str) -> QByteArray { return QByteArray(str); }
 SIA _ToLog(const QByteArray &str) -> QByteArray { return str; }
-SIA _ToLog(bool b) -> QByteArray { return b ? "true" : "false"; }
+SIA _ToLog(bool b) -> QByteArray { return b ? "true"_b : "false"_b; }
 SIA _ToLog(const void *ptr) -> QByteArray
     { return "0x" + QByteArray::number(reinterpret_cast<quintptr>(ptr), 16); }
 SIA _ToLog(const QObject *qt) -> QByteArray
 {
-    if (!qt) return "QObject(0x0)";
-    return QByteArray(qt->metaObject()->className()) + "(0x"
-           + QByteArray::number(reinterpret_cast<quintptr>(qt)) + ")";
+    if (!qt) return "QObject(0x0)"_b;
+    return QByteArray(qt->metaObject()->className())
+           + '(' + _ToLog(static_cast<const void*>(qt)) + ')';
 }
 
 class Log {
@@ -32,50 +32,62 @@ public:
     static auto maximumLevel() -> Level { return m_maxLevel; }
     static auto  setMaximumLevel(Level level) -> void { m_maxLevel = level; }
     template<class F>
-    static auto write(const char *context, Level level, const F &getLogText) -> void
+    static auto write(const char *ctx, Level level, const F &getLogText) -> void
     {
         if (level <= m_maxLevel)
-            print(context, level, getLogText());
+            print(ctx, level, getLogText());
     }
     template<class... Args>
-    static auto write(const char *context, Level level, const QByteArray &format, const Args &... args) -> void {
+    static auto write(const char *ctx, Level level, const QByteArray &format,
+                      const Args &... args) -> void
+    {
         if (level <= m_maxLevel)
-            print(context, level, Helper(format, args...).log());
+            print(ctx, level, Helper(format, args...).log());
     }
     template<class... Args>
-    static auto write(Level level, const QByteArray &format, const Args &... args) -> void {
+    static auto write(Level level, const QByteArray &format,
+                      const Args &... args) -> void
+    {
         if (level <= m_maxLevel)
             print(level, Helper(format, args...).log());
     }
     template<class... Args>
-    static auto parse(const QByteArray &format, const Args &... args) -> QByteArray { return Helper(format, args...).log(); }
+    static auto parse(const QByteArray &fmt, const Args &... args) -> QByteArray
+        { return Helper(fmt, args...).log(); }
     static auto options() -> QStringList { return m_options; }
-    static auto setMaximumLevel(const QString &option) -> void {
+    static auto setMaximumLevel(const QString &option) -> void
+    {
         const int index = m_options.indexOf(option);
         setMaximumLevel(index < 0 ? Info : (Level)index);
     }
 private:
-    static auto print(const char *context, Level level, const QByteArray &log) -> void {
-        qDebug("[%s] %s", context, log.constData());
-        if (level == Fatal)
+    static auto print(const char *ctx, Level lv, const QByteArray &log) -> void
+    {
+        qDebug("[%s] %s", ctx, log.constData());
+        if (lv == Fatal)
             exit(1);
     }
-    static auto print(Level level, const QByteArray &log) -> void {
+    static auto print(Level level, const QByteArray &log) -> void
+    {
         qDebug("%s", log.constData());
         if (level == Fatal)
             exit(1);
     }
     struct Helper {
         template<class... Args>
-        inline Helper(const QByteArray &format, const Args &... args): m_format(format) { write(args...); }
+        inline Helper(const QByteArray &format, const Args &... args)
+            : m_format(format) { write(args...); }
         auto log() const -> QByteArray { return m_log; }
     private:
-        inline auto write() -> void { m_log.append(m_format.data() + m_pos, m_format.size()-m_pos); }
+        inline auto write() -> void
+            { m_log.append(m_format.data() + m_pos, m_format.size()-m_pos); }
         template<class T, class... Args>
-        inline auto write(const T &t, const Args &... args) -> void {
+        auto write(const T &t, const Args &... args) -> void
+        {
             for (; m_pos<m_format.size(); ++m_pos) {
                 const char c = m_format.at(m_pos);
-                if (c == '%' && m_pos+1 < m_format.size() && m_format.at(m_pos+1) == '%') {
+                if (c == '%' && m_pos + 1 < m_format.size()
+                        && m_format.at(m_pos+1) == '%') {
                     m_log += _ToLog(t);
                     m_pos += 2;
                     break;
@@ -96,8 +108,11 @@ private:
     static const QStringList m_options;
 };
 
-#define DECLARE_LOG_CONTEXT(ctx) static inline const char *getLogContext() { return (#ctx); }
-#define _WRITE_LOG(lv, fmt, ...) Log::write(getLogContext(), Log::lv , [&]() { return Log::parse(fmt##_b, ##__VA_ARGS__); })
+#define DECLARE_LOG_CONTEXT(ctx) \
+    static inline const char *getLogContext() { return (#ctx); }
+#define _WRITE_LOG(lv, fmt, ...) \
+    Log::write(getLogContext(), Log::lv , \
+               [&]() { return Log::parse(fmt##_b, ##__VA_ARGS__); })
 #define _Fatal(fmt, ...) _WRITE_LOG(Fatal, fmt, ##__VA_ARGS__)
 #define _Error(fmt, ...) _WRITE_LOG(Error, fmt, ##__VA_ARGS__)
 #define _Warn(fmt, ...) _WRITE_LOG(Warn, fmt, ##__VA_ARGS__)

@@ -3,7 +3,7 @@
 args="--prefix=../../build --disable-client-api-examples --disable-manpage-build --enable-libmpv-shared --disable-pdf-build \
   --disable-vf-dlopen-filters --disable-macosx-bundle \
   --enable-iconv --disable-terminfo --disable-termcap --disable-termios --disable-shm --disable-libguess --disable-libsmbclient \
-  --disable-encoding --disable-joystick --disable-lirc --disable-vcd --disable-libbluray --enable-dvdread --enable-dvdnav \
+  --disable-encoding --disable-joystick --disable-lirc --disable-libbluray --enable-dvdread --enable-dvdnav \
   --disable-enca --enable-mpg123 --disable-ladspa --disable-libbs2b --disable-lcms2 --enable-libswresample --disable-libavfilter \
   --disable-libavdevice --disable-libpostproc --disable-libavresample --disable-vapoursynth \
   --disable-sdl2 --disable-sdl1 --disable-rsound --disable-sndio --disable-openal --disable-dsound --disable-wasapi \

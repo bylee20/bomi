@@ -201,14 +201,12 @@ auto VideoRendererItem::requestFrameImage() const -> void
 }
 
 auto VideoRendererItem::present(const Cache &cache, const OsdCache &osd,
-                                bool hasOsd)
--> void
+                                bool hasOsd) -> void
 {
     if (!isInitialized())
         return;
     _PostEvent(Qt::HighEventPriority, this, NewFrame, cache, osd, hasOsd);
 }
-
 
 auto VideoRendererItem::screenRect() const -> QRectF
 {
@@ -346,7 +344,7 @@ auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
             d->cache.osd.swap(front.osd);
             d->mposd.draw(d->cache.osd);
         } else if (!d->cache.hasOsd)
-            d->mposd.draw({});
+            d->mposd.draw(d->cache.osd = { });
         setOverlayTexture(d->mposd.isVisible() ? d->mposd.texture()
                                                : transparentTexture());
     }
