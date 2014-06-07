@@ -984,27 +984,27 @@ Click derecho: %2</translation>
     <message>
         <location filename="../enum/colorspace.hpp" line="63"/>
         <source>Color Space</source>
-        <translation type="unfinished"></translation>
+        <translation>Espacio de color</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="78"/>
         <source>BT.601(SD)</source>
-        <translation type="unfinished"></translation>
+        <translation>BT.601(SD)</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="79"/>
         <source>BT.709(HD)</source>
-        <translation type="unfinished"></translation>
+        <translation>BT.709(HD)</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="80"/>
         <source>SMPTE-240M</source>
-        <translation type="unfinished"></translation>
+        <translation>SMPTE-240M</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="81"/>
         <source>YCgCo</source>
-        <translation type="unfinished"></translation>
+        <translation>YCgCo</translation>
     </message>
 </context>
 <context>
@@ -1461,7 +1461,7 @@ Parado en la posición: %2
     <message>
         <location filename="../player/mrlstate.cpp" line="102"/>
         <source>Video Color Space</source>
-        <translation type="unfinished"></translation>
+        <translation>Espacio de color del vídeo</translation>
     </message>
     <message>
         <location filename="../player/mrlstate.cpp" line="106"/>
