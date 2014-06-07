@@ -11,7 +11,6 @@ public:
     auto setUrl(const QUrl &url) -> void;
     auto url() const -> QUrl;
     auto isPlaylist() const -> bool;
-    auto playlist() const -> Playlist;
     auto encoding() const -> QString;
 private:
     auto accept() -> void final;

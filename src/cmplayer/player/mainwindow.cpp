@@ -98,6 +98,7 @@ struct MainWindow::Data {
     QDesktopWidget *desktop = nullptr;
     QSize virtualDesktopSize;
     ThemeObject theme;
+    QList<QAction*> unblockedActions;
     auto syncState() -> void
     {
         for (auto &eg : enumGroups) {
@@ -125,7 +126,6 @@ struct MainWindow::Data {
         }
         engine.load(info);
     }
-    QList<QAction*> unblockedActions;
     auto trigger(QAction *action) -> void
     {
         if (!action)
@@ -1109,7 +1109,7 @@ auto MainWindow::connectMenus() -> void
             if (dlg.isPlaylist())
                 d->playlist.open(dlg.url(), dlg.encoding());
             else
-                openMrl(dlg.url().toString(), dlg.encoding());
+                openMrl(dlg.url().toString());
         }
     });
     auto openDisc = [this] (const QString &title, QString &device, bool dvd) {
@@ -1565,7 +1565,7 @@ auto MainWindow::connectMenus() -> void
         UrlDialog dlg(this);
         if (dlg.exec()) {
             const Mrl mrl = dlg.url().toString();
-            if (mrl.isPlaylist()) {
+            if (dlg.isPlaylist()) {
                 Playlist list;
                 list.load(mrl, dlg.encoding());
                 d->playlist.append(list);
@@ -1726,8 +1726,8 @@ auto MainWindow::generatePlaylist(const Mrl &mrl) const -> Playlist
 
 auto MainWindow::openFromFileManager(const Mrl &mrl) -> void
 {
-    if (mrl.isPlaylist())
-        d->playlist.open(mrl);
+    if (mrl.isLocalFile() && _IsSuffixOf(PlaylistExt, mrl.suffix()))
+        d->playlist.open(mrl, QString());
     else {
         const auto mode = d->pref().open_media_from_file_manager;
         d->openWith(mode, QList<Mrl>() << mrl);
@@ -1831,24 +1831,15 @@ auto MainWindow::updateRecentActions(const QList<Mrl> &list) -> void
 
 auto MainWindow::openMrl(const Mrl &mrl) -> void
 {
-    openMrl(mrl, QString());
-}
-
-auto MainWindow::openMrl(const Mrl &mrl, const QString &enc) -> void
-{
     if (mrl == d->engine.mrl()) {
         if (!d->engine.startInfo().isValid())
             d->load(mrl);
     } else {
-        if (mrl.isPlaylist()) {
-            d->playlist.open(mrl, enc);
-        } else {
-            if (d->playlist.rowOf(mrl) < 0)
-                d->playlist.setList(generatePlaylist(mrl));
-            d->load(mrl);
-            if (!mrl.isDvd())
-                d->recent.stack(mrl);
-        }
+        if (d->playlist.rowOf(mrl) < 0)
+            d->playlist.setList(generatePlaylist(mrl));
+        d->load(mrl);
+        if (!mrl.isDvd())
+            d->recent.stack(mrl);
     }
 }
 

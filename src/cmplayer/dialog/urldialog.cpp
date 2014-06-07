@@ -9,7 +9,7 @@ struct UrlDialog::Data {
     EncodingComboBox *enc;
     QCompleter *c;
     BBox *bbox;
-    Playlist playlist;
+    QCheckBox *playlist = nullptr;
     QString key;
 };
 #define GROUP "UrlDialog_"
@@ -34,14 +34,19 @@ UrlDialog::UrlDialog(QWidget *parent, const QString &key)
     d->enc = new EncodingComboBox(this);
     d->enc->setEncoding(enc);
     d->bbox = BBox::make(this);
-
+    d->playlist = new QCheckBox(tr("Handle as playlist"), this);
     auto form = new QFormLayout;
     form->addRow(tr("URL"), d->url);
-    form->addRow(tr("Encoding for Playlist"), d->enc);
+    form->addRow(tr("Encoding"), d->enc);
+
+    auto hbox = new QHBoxLayout;
+    hbox->addWidget(d->playlist);
+    hbox->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding));
+    hbox->addWidget(d->bbox);
 
     auto vbox = new QVBoxLayout(this);
     vbox->addLayout(form);
-    vbox->addWidget(d->bbox);
+    vbox->addLayout(hbox);
 
     setWindowTitle(tr("Open URL"));
     setMaximumWidth(700);
@@ -77,12 +82,8 @@ auto UrlDialog::url() const -> QUrl
 
 auto UrlDialog::isPlaylist() const -> bool
 {
-    return _IsSuffixOf(PlaylistExt, QFileInfo(url().path()).suffix());
-}
-
-auto UrlDialog::playlist() const -> Playlist
-{
-    return d->playlist;
+    return d->playlist->isChecked()
+           && _IsSuffixOf(PlaylistExt, QFileInfo(url().path()).suffix());
 }
 
 auto UrlDialog::encoding() const -> QString

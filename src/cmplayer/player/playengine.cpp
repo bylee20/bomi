@@ -687,6 +687,7 @@ auto PlayEngine::mediaName() const -> QString
 
 auto PlayEngine::cache() const -> qreal
 {
+    qDebug() << d->cache;
     return d->cache/100.0;
 }
 
@@ -1283,7 +1284,7 @@ auto PlayEngine::exec() -> void
 {
     _Debug("Start playloop thread");
     d->quit = false;
-    int position = 0, cache = -1, duration = 0;
+    int position = 0, cache = -2, duration = 0;
     bool first = false, loaded = false;
     Mrl mrl;
     QMap<QByteArray, QByteArray> leftmsg;
@@ -1360,8 +1361,8 @@ auto PlayEngine::exec() -> void
             if (!d->timing)
                 break;
             checkTime();
-            if (position > 0 && cache >= 0) {
-                qint64 newCache = -1;
+            if (position > 0 && cache >= -1) {
+                qint64 newCache = -2;
                 const auto res = mpv_get_property(d->handle, "cache",
                                                   MPV_FORMAT_INT64, &newCache);
                 switch (res) {
@@ -1397,7 +1398,7 @@ auto PlayEngine::exec() -> void
         case MPV_EVENT_START_FILE:
             loaded = false;
             position = -1;
-            cache = 0;
+            cache = -1;
             mrl = d->startInfo.mrl;
             _PostEvent(this, StateChange, Loading);
             _PostEvent(this, PreparePlayback);
@@ -1434,6 +1435,7 @@ auto PlayEngine::exec() -> void
             break;
         } case MPV_EVENT_END_FILE: {
             d->disc = d->timing = false;
+            d->cache = -2;
             _PostEvent(this, EndPlayback, mrl, reason(event->data));
             break;
         } case MPV_EVENT_CHAPTER_CHANGE:

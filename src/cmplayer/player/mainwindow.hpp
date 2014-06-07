@@ -21,14 +21,14 @@ public:
     auto play() -> void;
     auto engine() const -> PlayEngine*;
     auto playlist() const -> PlaylistModel*;
-    auto openMrl(const Mrl &mrl) -> void;
-    auto openMrl(const Mrl &mrl, const QString &enc) -> void;
     auto exit() -> void;
     auto isSceneGraphInitialized() const -> bool;
 signals:
     void fullscreenChanged(bool fs);
     void sceneGraphInitialized();
 private:
+    auto openMrl(const Mrl &mrl) -> void;
+
     auto applyPref() -> void;
     auto updateMrl(const Mrl &mrl) -> void;
     auto setVideoSize(double rate) -> void;

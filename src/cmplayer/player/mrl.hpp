@@ -19,7 +19,7 @@ public:
     auto scheme() const -> QString {return m_loc.left(m_loc.indexOf("://"_a));}
     auto toLocalFile() const -> QString {return isLocalFile() ? m_loc.right(m_loc.size() - 7) : QString();}
     auto fileName() const -> QString;
-    auto isPlaylist() const -> bool;
+//    auto isPlaylist() const -> bool;
     auto displayName() const -> QString;
     auto isEmpty() const -> bool;
     auto suffix() const -> QString;
@@ -40,6 +40,7 @@ public:
     static auto fromUniqueId(const QString &id,
                              const QString &device = QString()) -> Mrl;
 private:
+    auto path() const -> QString;
     QString m_loc = {};
     QString m_name;
     QByteArray m_hash;

@@ -24,23 +24,22 @@ Mrl::Mrl(const QString &location, const QString &name) {
     m_name = name;
 }
 
-auto Mrl::isPlaylist() const -> bool
+auto Mrl::path() const -> QString
 {
-    return _IsSuffixOf(PlaylistExt, suffix());
+    return isLocalFile() ? m_loc : QUrl(m_loc).path();
 }
 
 auto Mrl::fileName() const -> QString
 {
-    const int idx = m_loc.lastIndexOf('/');
-    return m_loc.mid(idx + 1);
+    const auto path = this->path();
+    return path.mid(path.lastIndexOf('/') + 1);
 }
 
 auto Mrl::suffix() const -> QString
 {
-    const int idx = m_loc.lastIndexOf('.');
-    if (idx != -1)
-        return m_loc.mid(idx + 1);
-    return QString();
+    const auto path = this->path();
+    const int idx = path.lastIndexOf('.');
+    return idx != -1 ? path.mid(idx + 1) : QString();
 }
 
 auto Mrl::displayName() const -> QString
@@ -53,7 +52,7 @@ auto Mrl::displayName() const -> QString
     else if (isBluray())
         disc = qApp->translate("Mrl", "Blu-ray");
     if (disc.isEmpty())
-        return location();
+        return path();
     auto dev = device();
     if (dev.isEmpty())
         return disc;

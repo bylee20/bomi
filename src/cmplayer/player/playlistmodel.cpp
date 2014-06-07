@@ -98,10 +98,8 @@ auto PlaylistModel::setDownloader(Downloader *downloader) -> void
     });
 }
 
-auto PlaylistModel::open(const Mrl &mrl, const QString &enc) -> bool
+auto PlaylistModel::open(const Mrl &mrl, const QString &enc) -> void
 {
-    if (!mrl.isPlaylist())
-        return false;
     if (mrl.isLocalFile()) {
         setList({mrl, enc});
         setVisible(true);
@@ -111,5 +109,4 @@ auto PlaylistModel::open(const Mrl &mrl, const QString &enc) -> bool
         m_enc = enc;
         m_downloader->start(mrl.toString());
     }
-    return true;
 }

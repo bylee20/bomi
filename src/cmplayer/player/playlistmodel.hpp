@@ -19,8 +19,7 @@ public:
     PlaylistModel(QObject *parent = 0);
     ~PlaylistModel();
     auto roleData(int row, int column, int role) const -> QVariant final;
-    bool open(const Mrl &mrl, const QString &enc = QString());
-    bool open(const QByteArray &data, const QString &enc = QString());
+    auto open(const Mrl &mrl, const QString &enc) -> void;
     auto loaded() const -> int { return specialRow(); }
     auto next() const -> int {return loaded()+1;}
     auto previous() const -> int {return loaded()-1;}
