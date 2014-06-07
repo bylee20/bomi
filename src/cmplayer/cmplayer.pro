@@ -225,7 +225,8 @@ HEADERS += \
     tmp/static_op.hpp \
     dialog/prefdialog_p.hpp \
     opengl/openglbenchmarker.hpp \
-    enum/colorspace.hpp
+    enum/colorspace.hpp \
+    player/mainwindow_p.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -391,7 +392,9 @@ SOURCES += \
     widget/openmediabehaviorgroupbox.cpp \
     dialog/prefdialog_p.cpp \
     opengl/openglbenchmarker.cpp \
-    enum/colorspace.cpp
+    enum/colorspace.cpp \
+    player/mainwindow_p.cpp \
+    player/mainwindow_m.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
