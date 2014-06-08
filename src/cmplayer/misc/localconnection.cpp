@@ -38,8 +38,8 @@ constexpr static const char* ack = "ack";
 LocalConnection::LocalConnection(const QString &id, QObject* parent)
 : QObject(parent), d(new Data) {
     d->id = id;
-    d->socket = id % '-' % QString::number(getUid(), 16);
-    d->lock = new QLockFile(QDir::temp().path() % '/' % d->socket % "-lock");
+    d->socket = id % '-'_q % QString::number(getUid(), 16);
+    d->lock = new QLockFile(QDir::temp().path() % '/'_q % d->socket % u"-lock"_q);
     d->lock->setStaleLockTime(0);
 }
 
@@ -55,7 +55,7 @@ auto LocalConnection::runServer() -> bool
     if (!d->lock->tryLock() && !(d->lock->removeStaleLockFile() && d->lock->tryLock()))
         return false;
     if (!d->server.listen(d->socket)) {
-        QFile::remove(QDir::temp().path() % '/' % d->socket);
+        QFile::remove(QDir::temp().path() % '/'_q % d->socket);
         if (!d->server.listen(d->socket))
             return false;
     }

@@ -25,7 +25,7 @@ static const auto jio = JIO(
     JE(state)
 );
 
-#define APP_STATE_FILE QString(_WritablePath() % "/appstate.json")
+#define APP_STATE_FILE QString(_WritablePath() % "/appstate.json"_a)
 
 AppState::AppState() {
     JsonStorage storage(APP_STATE_FILE);
@@ -41,7 +41,7 @@ AppState::AppState() {
 
 auto AppState::loadFromRecord() -> void
 {
-    Record r("app-state");
+    Record r(u"app-state"_q);
 #define READ(a) r.read(a, #a)
     READ(win_stays_on_top);
 

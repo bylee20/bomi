@@ -72,7 +72,7 @@ public:
         case Enum::Left: return qApp->translate("EnumInfo", "Left");
         case Enum::Center: return qApp->translate("EnumInfo", "Horizontal Center");
         case Enum::Right: return qApp->translate("EnumInfo", "Right");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

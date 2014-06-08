@@ -72,7 +72,7 @@ public:
         case Enum::Append: return qApp->translate("EnumInfo", "Append the open media to the playlist");
         case Enum::ClearAndAppend: return qApp->translate("EnumInfo", "Clear the playlist and append the open media to the playlist");
         case Enum::NewPlaylist: return qApp->translate("EnumInfo", "Clear the playlist and generate new playlist");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

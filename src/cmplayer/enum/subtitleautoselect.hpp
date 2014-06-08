@@ -74,7 +74,7 @@ public:
         case Enum::First: return qApp->translate("EnumInfo", "First subtitle from loaded ones");
         case Enum::All: return qApp->translate("EnumInfo", "All loaded subtitles");
         case Enum::EachLanguage: return qApp->translate("EnumInfo", "Each language subtitle");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

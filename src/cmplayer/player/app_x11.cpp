@@ -93,13 +93,13 @@ auto AppX11::setScreensaverDisabled(bool disabled) -> void
     if (!heartbeat && !d->iface && !d->xss) {
         _Debug("Initialize screensaver functions.");
         _Debug("Try to connect 'org.gnome.SessionManager'.");
-        _New(d->iface, "org.gnome.SessionManager",
-             "/org/gnome/SessionManager", "org.gnome.SessionManager");
+        _New(d->iface, u"org.gnome.SessionManager"_q,
+             u"/org/gnome/SessionManager"_q, u"org.gnome.SessionManager"_q);
         if (!(d->gnome = d->iface->isValid())) {
             _Debug("Failed to connect 'org.gnome.SessionManager'. "
                    "Fallback to 'org.freedesktop.ScreenSaver'.");
-            _Renew(d->iface, "org.freedesktop.ScreenSaver",
-                   "/ScreenSaver", "org.freedesktop.ScreenSaver");
+            _Renew(d->iface, u"org.freedesktop.ScreenSaver"_q,
+                   u"/ScreenSaver"_q, u"org.freedesktop.ScreenSaver"_q);
             if (!d->iface->isValid()) {
                 _Debug("Failed to connect 'org.freedesktop.ScreenSaver'. "
                        "Fallback to XResetScreenSaver().");
@@ -117,11 +117,11 @@ auto AppX11::setScreensaverDisabled(bool disabled) -> void
         } else {
             if (d->iface) {
                 if (d->gnome)
-                    d->reply = d->iface->call("Inhibit", "CMPlayer", 0u,
-                                              "Running player", 4u | 8u);
+                    d->reply = d->iface->call(u"Inhibit"_q, u"CMPlayer"_q, 0u,
+                                              u"Running player"_q, 4u | 8u);
                 else
-                    d->reply = d->iface->call("Inhibit", "CMPlayer",
-                                              "Running player");
+                    d->reply = d->iface->call(u"Inhibit"_q, u"CMPlayer"_q,
+                                              u"Running player"_q);
                 if (!d->reply.isValid()) {
                     _Error("DBus '%%' error: %%", d->iface->interface(),
                            d->reply.error().message());
@@ -138,7 +138,8 @@ auto AppX11::setScreensaverDisabled(bool disabled) -> void
             }
         }
     } else if (d->iface) {
-        auto response = d->iface->call(d->gnome ? "Uninhibit" : "UnInhibit",
+        auto response = d->iface->call(d->gnome ? u"Uninhibit"_q
+                                                : u"UnInhibit"_q,
                                        d->reply.value());
         if (response.type() == QDBusMessage::ErrorMessage)
             _Error("DBus '%%' error: [%%] %%", d->iface->interface(),
@@ -172,7 +173,7 @@ auto AppX11::devices() const -> QStringList
 {
     static const QStringList filter = QStringList() << u"sr*"_q
         << u"sg*"_q << u"scd*"_q << u"dvd*"_q << u"cd*"_q;
-    QDir dir("/dev");
+    QDir dir(u"/dev"_q);
     QStringList devices;
     for (auto &dev : dir.entryList(filter, QDir::System))
         devices.append(u"/dev/"_q % dev);
@@ -200,9 +201,9 @@ auto AppX11::shutdown() -> bool
     using Iface = QDBusInterface;
     auto bus = QDBusConnection::sessionBus();
     _Debug("Try KDE session manger to shutdown.");
-    Iface kde("org.kde.ksmserver", "/KSMServer",
-              "org.kde.KSMServerInterface", bus);
-    auto response = kde.call("logout", 0, 2, 2);
+    Iface kde(u"org.kde.ksmserver"_q, u"/KSMServer"_q,
+              u"org.kde.KSMServerInterface"_q, bus);
+    auto response = kde.call(u"logout"_q, 0, 2, 2);
     auto check = [&] (const char *fmt, const char *fb) -> bool {
         if (response.type() != QDBusMessage::ErrorMessage)
             return true;
@@ -213,28 +214,29 @@ auto AppX11::shutdown() -> bool
     if (check("KDE session manager does not work: [%%] %%",
               "Fallback to Gnome session manager."))
         return true;
-    Iface gnome("org.gnome.SessionManager", "/org/gnome/SessionManager",
-                "org.gnome.SessionManager", bus);
-    response = gnome.call("RequestShutdown");
+    Iface gnome(u"org.gnome.SessionManager"_q,
+                u"/org/gnome/SessionManager"_q,
+                u"org.gnome.SessionManager"_q, bus);
+    response = gnome.call(u"RequestShutdown"_q);
     if (check("Gnome session manager does not work: [%%] %%",
               "Fallback to gnome-power-cmd.sh."))
         return true;
-    if (QProcess::startDetached("gnome-power-cmd.sh shutdown")
-            || QProcess::startDetached("gnome-power-cmd shutdown"))
+    if (QProcess::startDetached(u"gnome-power-cmd.sh shutdown"_q)
+            || QProcess::startDetached(u"gnome-power-cmd shutdown"_q))
         return true;
     bus = QDBusConnection::systemBus();
     _Debug("gnome-power-cmd.sh does not work.");
     _Debug("Fallback to HAL.");
-    Iface hal("org.freedesktop.Hal", "/org/freedesktop/Hal/devices/computer",
-              "org.freedesktop.Hal.Device.SystemPowerManagement", bus);
-    response = hal.call("Shutdown");
-    if (check("HAL does not work: [%%] %%",
-              "Fallback to ConsoleKit."))
+    Iface hal(u"org.freedesktop.Hal"_q,
+              u"/org/freedesktop/Hal/devices/computer"_q,
+              u"org.freedesktop.Hal.Device.SystemPowerManagement"_q, bus);
+    response = hal.call(u"Shutdown"_q);
+    if (check("HAL does not work: [%%] %%", "Fallback to ConsoleKit."))
         return true;
-    Iface consoleKit("org.freedesktop.ConsoleKit",
-                     "/org/freedesktop/ConsoleKit/Manager",
-                     "org.freedesktop.ConsoleKit.Manager", bus);
-    response = consoleKit.call("Stop");
+    Iface consoleKit(u"org.freedesktop.ConsoleKit"_q,
+                     u"/org/freedesktop/ConsoleKit/Manager"_q,
+                     u"org.freedesktop.ConsoleKit.Manager"_q, bus);
+    response = consoleKit.call(u"Stop"_q);
     if (check("ConsoleKit does not work: [%%] %%",
               "Sorry, there's no way to shutdown."))
         return true;

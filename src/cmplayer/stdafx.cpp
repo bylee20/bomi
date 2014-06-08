@@ -4,33 +4,36 @@
 namespace Pch {
 
 static const QStringList videoExts = QStringList()
-        << "3gp" << "3iv"
-        << "asf" << "avi"
-        << "bdm" << "bdmv"
-        << "clpi" << "cpk" << "cpi"
-        << "dat" << "divx" << "dv"
-        << "flac" << "fli" << "flv"
-        << "h264"
-        << "i263"
-        << "m2t" << "m2ts" << "m4v" << "mkv" << "mov" << "mp2"
-        << "mp4" << "mpeg" << "mpg" << "mpg2" << "mpg4" << "mpl"
-        << "mpls" << "mts"
-        << "nsv" << "nut" << "nuv"
-        << "ogg" <<"ogm"
-        << "qt"
-        << "rm" << "rmvb"
-        << "trp" << "tp" << "ts"
-        << "vcd" << "vfw" << "vob"
-        << "wmv";
+        << u"3gp"_q << u"3iv"_q
+        << u"asf"_q << u"avi"_q
+        << u"bdm"_q << u"bdmv"_q
+        << u"clpi"_q << u"cpk"_q << u"cpi"_q
+        << u"dat"_q << u"divx"_q << u"dv"_q
+        << u"flac"_q << u"fli"_q << u"flv"_q
+        << u"h264"_q
+        << u"i263"_q
+        << u"m2t"_q << u"m2ts"_q << u"m4v"_q << u"mkv"_q << u"mov"_q
+        << u"mp2"_q << u"mp4"_q << u"mpeg"_q << u"mpg"_q << u"mpg2"_q
+        << u"mpg4"_q << u"mpl"_q << u"mpls"_q << u"mts"_q
+        << u"nsv"_q << u"nut"_q << u"nuv"_q
+        << u"ogg"_q << u"ogm"_q
+        << u"qt"_q
+        << u"rm"_q << u"rmvb"_q
+        << u"trp"_q << u"tp"_q << u"ts"_q
+        << u"vcd"_q << u"vfw"_q << u"vob"_q
+        << u"wmv"_q;
 static const QStringList audioExts = QStringList()
-        << "aac" << "ac3" << "aiff" << "m4a" << "mka" << "mp3"
-        << "ogg" << "pcm" << "vaw" << "wav" << "waw" << "wma";
+        << u"aac"_q << u"ac3"_q << u"aiff"_q
+        << u"m4a"_q << u"mka"_q << u"mp3"_q
+        << u"ogg"_q << u"pcm"_q << u"vaw"_q
+        << u"wav"_q << u"waw"_q << u"wma"_q;
 static const QStringList subExts = QStringList()
-        << "ass" << "smi" << "srt" << "ssa" << "sub" << "txt";
-static const QStringList plExts = QStringList() << "pls" << "m3u" << "m3u8";
-static const QStringList discExts = QStringList() << "iso";
+        << u"ass"_q << u"smi"_q << u"srt"_q << u"ssa"_q << u"sub"_q << u"txt"_q;
+static const QStringList plExts = QStringList()
+        << u"pls"_q << u"m3u"_q << u"m3u8"_q;
+static const QStringList discExts = QStringList() << u"iso"_q;
 static const QStringList imageExts = QStringList()
-        << "png" << "jpg" << "jpeg" << "gif";
+        << u"png"_q << u"jpg"_q << u"jpeg"_q << u"gif"_q;
 
 static QMap<QString, QString> lastFolders;
 auto open_folders() -> QMap<QString, QString> { return lastFolders; }
@@ -90,7 +93,7 @@ auto _ToNameFilter(ExtTypes exts) -> QStringList
         QStringList filter;
         filter.reserve(exts.size());
         for (auto &ext : exts)
-            filter.push_back("*." + ext);
+            filter.push_back("*."_a % ext);
         return filter;
     };
     QStringList filter;
@@ -119,10 +122,10 @@ auto _ToFilter(ExtTypes exts) -> QString
             return QString();
         QString filter;
         if (!name.isEmpty())
-            filter += name % ' ';
+            filter += name % ' '_q;
         filter += '('_q;
         for (auto &ext : exts)
-            filter += "*."_a % ext % ' ';
+            filter += "*."_a % ext % ' '_q;
         filter[filter.size() - 1] = ')'_q;
         return filter;
     };
@@ -139,7 +142,7 @@ auto _ToFilter(ExtTypes exts) -> QString
         filter += conv(discExts, qApp->translate("Info", "ISO Image Files"));
     if (exts & PlaylistExt)
         filter += conv(discExts, qApp->translate("Info", "Playlist Files"));
-    return filter.join(";;");
+    return filter.join(u";;"_q);
 }
 
 auto _SetLastOpenPath(const QString &path, const QString &key) -> void
@@ -189,7 +192,7 @@ auto _GetSaveFile(QWidget *parent, const QString &title,
     if (folder.isEmpty())
         path = fileName;
     else
-        path = folder % '/' % fileName;
+        path = folder % '/'_q % fileName;
     QFileDialog dlg(parent, title, path, _ToFilter(exts));
     dlg.setAcceptMode(QFileDialog::AcceptSave);
     dlg.setFileMode(QFileDialog::AnyFile);

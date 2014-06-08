@@ -60,7 +60,7 @@ SIA operator "" _8(const char *str, size_t len) -> QString
 
 SCIA operator "" _q(char16_t c) -> QChar { return QChar((ushort)c); }
 
-SCIA operator "" _q(char c) -> QChar { return QChar(c); }
+SCIA operator "" _q(char c) -> QChar { return ushort(uchar(c)); }
 
 template<class... Args>
 using T = std::tuple<Args...>;
@@ -89,7 +89,7 @@ SIA _N(double n, int dec = 1) -> QString
 
 SIA _N(double n, int dec, int width,
                       const QChar &c = QChar(QChar::Nbsp)) -> QString
-{ return QString("%1").arg(n, width, 'f', dec, c); }
+{ return u"%1"_q.arg(n, width, 'f', dec, c); }
 
 template<class Conv, class Container>
 SIA _ToStringList(const Container &c, Conv f) -> QStringList

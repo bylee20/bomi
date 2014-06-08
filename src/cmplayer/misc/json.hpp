@@ -343,11 +343,11 @@ auto JSON_CLASS::setFromJson(const QJsonObject &json) -> bool \
     { return jio.fromJson(*this, json); } \
 auto JSON_CLASS::toJson() const -> QJsonObject { return jio.toJson(*this); }
 
-#define JSON_IO_POINT(c) _JIO<c>(_JE<c>("x", &c::rx), _JE<c>("y", &c::ry))
+#define JSON_IO_POINT(c) _JIO<c>(_JE<c>(u"x"_q, &c::rx), _JE<c>(u"y"_q, &c::ry))
 auto json_io(const QPoint*) -> const decltype(JSON_IO_POINT(QPoint))*;
 auto json_io(const QPointF*) -> const decltype(JSON_IO_POINT(QPointF))*;
 
-#define JSON_IO_SIZE(c) _JIO<c>(_JE<c>("width", &c::rwidth), _JE<c>("height", &c::rheight))
+#define JSON_IO_SIZE(c) _JIO<c>(_JE<c>(u"width"_q, &c::rwidth), _JE<c>(u"height"_q, &c::rheight))
 auto json_io(const QSize*) -> const decltype(JSON_IO_SIZE(QSize))*;
 auto json_io(const QSizeF*) -> const decltype(JSON_IO_SIZE(QSizeF))*;
 

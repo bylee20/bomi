@@ -82,7 +82,7 @@ public:
         case Enum::JACK: return qApp->translate("EnumInfo", "");
         case Enum::PortAudio: return qApp->translate("EnumInfo", "");
         case Enum::OpenAL: return qApp->translate("EnumInfo", "");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

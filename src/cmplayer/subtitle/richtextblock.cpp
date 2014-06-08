@@ -22,7 +22,7 @@ auto RichTextBlockParser::paragraph(Tag *tag) -> QList<RichTextBlock>
 {
     if (m_pos >= m_text.size())
         return QList<RichTextBlock>();
-    QStringRef paragraph = trim(get("p", "/?sync|/?p|/body|/sami", tag));
+    QStringRef paragraph = trim(get(u"p"_q, u"/?sync|/?p|/body|/sami"_q, tag));
     if (m_good)
         return parse(paragraph, tag ? tag->style() : RichTextBlock::Style());
     return QList<RichTextBlock>();
@@ -58,17 +58,17 @@ auto RichTextBlockParser::parse(const QStringRef &text,
         while (pos < text.size()) {
             const QChar c = text.at(pos);
             if (isSeparator(c.unicode())) {
-                seps += ' ';
+                seps += ' '_q;
                 if (skipSeparator(pos, text))
                     break;
             } else {
                 if (!seps.isEmpty()) {
                     if (!ret.last().text.isEmpty())
-                        ret.last().text.append(' ');
+                        ret.last().text.append(' '_q);
                     seps.clear();
                 }
                 if (c.unicode() == '&') {
-                    const int idx = text.indexOf(';', ++pos);
+                    const int idx = text.indexOf(';'_q, ++pos);
                     if (idx < 0)
                         ret.last().text.append(c);
                     else {
@@ -87,7 +87,7 @@ auto RichTextBlockParser::parse(const QStringRef &text,
     RichTextBlock::Ruby *ruby = nullptr;
 
     while (pos <text.size()) {
-        const int idx = text.indexOf('<', pos);
+        const int idx = text.indexOf('<'_q, pos);
         if (idx < 0) {
             add_text(text.mid(pos, -1));
             break;
@@ -103,7 +103,7 @@ auto RichTextBlockParser::parse(const QStringRef &text,
         if (_Same(tag.name, "br") || _Same(tag.name, "/br")) { // new block
             add_block(false, ret.last().formats.last().style);
         } else {
-            if (tag.name.startsWith('/')) { // restore format
+            if (tag.name.startsWith('/'_q)) { // restore format
                 auto fmtIt = fmtStack.begin();
                 auto tagIt = tagStack.begin();
                 for (; tagIt != tagStack.end(); ++tagIt, ++fmtIt) {
@@ -122,12 +122,11 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                     ruby = nullptr;
                 }
             } else { // new format
-                using RegEx = QRegEx;
-                constexpr auto options = RegEx::InvertedGreedinessOption
-                                       | RegEx::CaseInsensitiveOption;
+                constexpr auto options = QRegEx::InvertedGreedinessOption
+                                       | QRegEx::CaseInsensitiveOption;
                 if (_Same(tag.name, "rp")) {
-                    RegEx regex(R"((.*)(<\s*/rp\s*>|<\s*rt\s*>|<\s*/ruby\s*>|$))",
-                                options);
+                    QRegEx regex(uR"((.*)(<\s*/rp\s*>|<\s*rt\s*>)"
+                                 uR"(|<\s*/ruby\s*>|$))"_q, options);
                     const auto match = regex.match(text.toString(), pos);
                     pos = match.capturedEnd();
                     if (ruby && ruby->rb_end < 0)
@@ -135,7 +134,8 @@ auto RichTextBlockParser::parse(const QStringRef &text,
                 } else if (_Same(tag.name, "rt")) {
                     if (!ruby)
                         continue;
-                    RegEx regex(R"((.*)(<\s*/rt\s*>|<\s*/ruby\s*>|$))", options);
+                    QRegEx regex(uR"((.*)(<\s*/rt\s*>|<\s*/ruby\s*>)"
+                                 uR"(|$))"_q, options);
                     const auto match = regex.match(text.toString(), pos);
                     Q_ASSERT(match.hasMatch());
                     const auto &st = ret.last().formats.last().style;

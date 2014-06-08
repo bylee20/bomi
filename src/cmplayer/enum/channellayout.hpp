@@ -124,7 +124,7 @@ public:
         case Enum::_7_1: return qApp->translate("EnumInfo", "7.1ch");
         case Enum::_7_1_Wide: return qApp->translate("EnumInfo", "7.1ch(Wide)");
         case Enum::_7_1_Side: return qApp->translate("EnumInfo", "7.1ch(Side)");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

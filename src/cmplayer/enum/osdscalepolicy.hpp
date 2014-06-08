@@ -72,7 +72,7 @@ public:
         case Enum::Width: return qApp->translate("EnumInfo", "Fit to width of video");
         case Enum::Height: return qApp->translate("EnumInfo", "Fit to height of video");
         case Enum::Diagonal: return qApp->translate("EnumInfo", "Fit to diagonal of video");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

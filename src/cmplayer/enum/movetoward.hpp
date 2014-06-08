@@ -76,7 +76,7 @@ public:
         case Enum::Downward: return qApp->translate("EnumInfo", "Downward");
         case Enum::Leftward: return qApp->translate("EnumInfo", "Leftward");
         case Enum::Rightward: return qApp->translate("EnumInfo", "Rightward");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

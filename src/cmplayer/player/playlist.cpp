@@ -52,7 +52,7 @@ auto Playlist::load(QTextStream &in, QString enc, Type type,
 {
     clear();
     if (type == M3U8)
-        enc = "UTF-8";
+        enc = u"UTF-8"_q;
     if (!enc.isEmpty())
         in.setCodec(QTextCodec::codecForName(enc.toLocal8Bit()));
     switch (type) {
@@ -93,12 +93,12 @@ auto Playlist::load(const Mrl &mrl, const QString &enc, Type type) -> bool
 
 auto Playlist::guessType(const QString &fileName) -> Playlist::Type
 {
-    const QString suffix = QFileInfo(fileName).suffix().toLower();
-    if (suffix == "pls")
+    const auto suffix = QFileInfo(fileName).suffix().toLower();
+    if (suffix == "pls"_a)
         return PLS;
-    else if (suffix == "m3u")
+    else if (suffix == "m3u"_a)
         return M3U;
-    else if (suffix == "m3u8")
+    else if (suffix == "m3u8"_a)
         return M3U8;
     else
         return Unknown;
@@ -135,7 +135,7 @@ auto Playlist::loadPLS(QTextStream &in, const QUrl &url) -> bool
         const QString line = in.readLine();
         if (line.isEmpty())
             continue;
-        static QRegEx rxFile(R"(^File\d+=(.+)$)");
+        static QRegEx rxFile(uR"(^File\d+=(.+)$)"_q);
         const auto match = rxFile.match(line);
         if (match.hasMatch())
             push_back(Mrl(resolve(match.captured(1), url)));
@@ -151,19 +151,19 @@ auto Playlist::loadM3U(QTextStream &in, const QUrl &url) -> bool
     auto getNextLocation = [&in] () -> QString {
         while (!in.atEnd()) {
             const QString line = in.readLine().trimmed();
-            if (!line.isEmpty() && !line.startsWith("#"))
+            if (!line.isEmpty() && !line.startsWith('#'_q))
                 return line;
         }
         return QString();
     };
 
-    QRegEx rxExtInf(R"(#EXTINF\s*:\s*(?<num>(-|)\d+)\s*\,\s*(?<name>.*)\s*$)");
+    QRegEx rxExtInf(uR"(#EXTINF\s*:\s*(?<num>(-|)\d+)\s*\,\s*(?<name>.*)\s*$)"_q);
     while (!in.atEnd()) {
         const QString line = in.readLine().trimmed();
         if (line.isEmpty())
             continue;
         QString name, location;
-        if (line.startsWith('#')) {
+        if (line.startsWith('#'_q)) {
             auto matched = rxExtInf.match(line);
             if (matched.hasMatch()) {
                 name = matched.captured(u"name"_q);
@@ -186,7 +186,7 @@ auto Playlist::resolve(const QString &location, const QUrl &url) -> QString
     if (info.isAbsolute())
         return location;
     const auto str = url.toString();
-    const auto idx = str.lastIndexOf('/');
+    const auto idx = str.lastIndexOf('/'_q);
     if (idx < 0)
         return location;
     return str.left(idx + 1) % location;
@@ -197,8 +197,8 @@ auto Playlist::save(const QString &name, QSettings *set) const -> void
     set->beginWriteArray(name, size());
     for (int i=0; i<size(); ++i) {
         set->setArrayIndex(i);
-        set->setValue("mrl", at(i).toString());
-        set->setValue("name", at(i).name());
+        set->setValue(u"mrl"_q, at(i).toString());
+        set->setValue(u"name"_q, at(i).name());
     }
     set->endArray();
 }
@@ -209,7 +209,8 @@ auto Playlist::load(const QString &name, QSettings *set) -> void
     const int size = set->beginReadArray(name);
     for (int i=0; i<size; ++i) {
         set->setArrayIndex(i);
-        const Mrl mrl(set->value("mrl").toString(), set->value("name").toString());
+        const Mrl mrl(set->value(u"mrl"_q).toString(),
+                      set->value(u"name"_q).toString());
         if (!mrl.isEmpty())
             push_back(mrl);
     }

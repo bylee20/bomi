@@ -136,7 +136,7 @@ auto AudioController::reinitialize(mp_audio *in) -> int
         format.m_bits = audio->bps*8;
         const auto layout = ChannelLayoutMap::toLayout(audio->channels);
         format.m_channels = ChannelLayoutInfo::description(layout);
-        format.m_type = af_fmt_to_str(audio->format);
+        format.m_type = _L(af_fmt_to_str(audio->format));
         return format;
     };
     d->input = makeFormat(in);

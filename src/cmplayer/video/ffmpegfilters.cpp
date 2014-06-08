@@ -72,15 +72,13 @@ auto FFmpegFilterGraph::linkGraph(AVFilterInOut *&in,
     if (avfilter_graph_create_filter(&m_sink, avsink, "sink",
                                      nullptr, nullptr, m_graph) < 0)
         return false;
-    tmp = "pix_fmts=";
+    tmp = u"pix_fmts="_q;
     for (int imgfmt = IMGFMT_START; imgfmt < IMGFMT_END; ++imgfmt) {
         if (!IMGFMT_IS_HWACCEL(imgfmt)
                 && query_video_format(imgfmt)) {
             const char *name = av_get_pix_fmt_name(imgfmt2pixfmt(imgfmt));
-            if (name) {
-                tmp += name;
-                tmp += '|';
-            }
+            if (name)
+                tmp += _L(name) % '|'_q;
         }
     }
     tmp.chop(1);

@@ -35,7 +35,7 @@ auto RichTextHelper::toColor(const QStringRef &text) -> QColor
             break;
     }
     if (pos > 0)
-        return QColor('#' % text.mid(pos));
+        return QColor('#'_q % text.mid(pos));
     int i=0;
     for (; i<text.size() && _IsHexNumber(text.at(i).unicode()); ++i) ;
     if (i == text.size())
@@ -83,7 +83,7 @@ auto RichTextHelper::toFontPixelSize(const QStringRef &size) -> int
     if (i >= size.size())
         return px;
     const QStringRef unit = size.mid(i);
-    if (unit.size() == 2 && unit.compare("pt", QCI) == 0)
+    if (unit.size() == 2 && unit.compare("pt"_a, QCI) == 0)
         px = pixelSizeToPointSize(px);
     return px;
 }
@@ -106,7 +106,7 @@ auto RichTextHelper::parseTag(const QStringRef &text,
             return Tag();
         }
         tag.name = text.mid(pos, 3);
-        pos = text.indexOf('>', pos);
+        pos = text.indexOf('>'_q, pos);
         if (pos < 0)
             pos = text.size();
         return tag;
@@ -115,7 +115,7 @@ auto RichTextHelper::parseTag(const QStringRef &text,
     while (pos < text.size() && !isSeparator(at(pos)) && at(pos) != '>')
         ++pos;
     tag.name = text.mid(start, pos - start);
-    if (tag.name.startsWith('/')) {
+    if (tag.name.startsWith('/'_q)) {
         while (pos < text.size() && at(pos) != '>')
             ++pos;
         if (pos >= text.size())
@@ -180,11 +180,11 @@ auto RichTextHelper::parseTag(const QStringRef &text,
 auto RichTextHelper::entityCharacter(const QStringRef &entity) -> QChar
 {
     Q_UNUSED(entity);
-#define RETURN(ent, c) {if (!entity.compare(ent, QCI)) return QChar(c);}
-    RETURN("nbsp"_a, ' ');
-    RETURN("amp"_a, '&');
-    RETURN("lt"_a, '<');
-    RETURN("gt"_a, '>');
+#define RETURN(ent, c) {if (!entity.compare(ent##_a, QCI)) return c##_q;}
+    RETURN("nbsp", ' ');
+    RETURN("amp", '&');
+    RETURN("lt", '<');
+    RETURN("gt", '>');
 #undef RETURN
     return QChar();
 }
@@ -215,7 +215,7 @@ auto RichTextHelper::innerText(const QString &open, const QString &close,
     } else {
         pos = end;
         const auto cap = match.capturedRef(1);
-        if (Q_UNLIKELY(cap.startsWith('/'))) {
+        if (Q_UNLIKELY(cap.startsWith('/'_q))) {
             if (!cap.mid(1).compare(open, QCI))
                 pos += match.capturedLength();
         }

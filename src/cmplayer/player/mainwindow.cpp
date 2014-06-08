@@ -49,7 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
         if (d->as.state.video_effects & item.value)
             effectGroup->setChecked(QVariant::fromValue(item.value), true);
     }
-    d->menu(u"tool"_q)["auto-exit"]->setChecked(d->as.auto_exit);
+    d->menu(u"tool"_q)[u"auto-exit"_q]->setChecked(d->as.auto_exit);
 
     d->dontShowMsg = false;
 
@@ -68,14 +68,14 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     d->undo = new QUndoStack(this);
-    auto undo = d->menu(u"tool"_q)["undo"];
-    auto redo = d->menu(u"tool"_q)["redo"];
+    auto undo = d->menu(u"tool"_q)[u"undo"_q];
+    auto redo = d->menu(u"tool"_q)[u"redo"_q];
     connect(d->undo, &QUndoStack::canUndoChanged, undo, &QAction::setEnabled);
     connect(d->undo, &QUndoStack::canRedoChanged, redo, &QAction::setEnabled);
     connect(undo, &QAction::triggered, d->undo, &QUndoStack::undo);
     connect(redo, &QAction::triggered, d->undo, &QUndoStack::redo);
-    d->menu(u"tool"_q)["undo"]->setEnabled(d->undo->canUndo());
-    d->menu(u"tool"_q)["redo"]->setEnabled(d->undo->canRedo());
+    d->menu(u"tool"_q)[u"undo"_q]->setEnabled(d->undo->canUndo());
+    d->menu(u"tool"_q)[u"redo"_q]->setEnabled(d->undo->canRedo());
 
     if (!VideoRendererItem::supportsHighQualityRendering()) {
         auto &video = d->menu(u"video"_q);
@@ -154,7 +154,7 @@ auto MainWindow::play() -> void
         return;
     if (d->pref().pause_to_play_next_image
             && d->pref().image_duration == 0 && d->engine.mrl().isImage())
-        d->menu(u"play"_q)["next"]->trigger();
+        d->menu(u"play"_q)[u"next"_q]->trigger();
     else {
         const auto state = d->engine.state();
         switch (state) {
@@ -177,7 +177,7 @@ auto MainWindow::togglePlayPause() -> void
         return;
     if (d->pref().pause_to_play_next_image
             && d->pref().image_duration == 0 && d->engine.mrl().isImage())
-        d->menu(u"play"_q)["next"]->trigger();
+        d->menu(u"play"_q)[u"next"_q]->trigger();
     else {
         const auto state = d->engine.state();
         switch (state) {
@@ -279,7 +279,7 @@ auto MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) -> void
             return;
         const auto action = d->menu.action(info.id);
 #ifdef Q_OS_MAC
-        if (action == d->menu(u"window"_q)["full"])
+        if (action == d->menu(u"window"_q)[u"full"_q])
             QTimer::singleShot(300, action, SLOT(trigger()));
         else
 #endif

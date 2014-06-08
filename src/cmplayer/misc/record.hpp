@@ -110,7 +110,7 @@ struct RecordIoList {
         T t = One::default_(); for (int i = 0; i<size; ++i) {values.append(t);}
         for (int i=0; i<size; ++i) {
             r.setArrayIndex(i);
-            One::read(r, values[i], "data");
+            One::read(r, values[i], u"data"_q);
         }
         r.endArray();
     }
@@ -121,7 +121,7 @@ struct RecordIoList {
         r.beginWriteArray(key, values.size());
         for (int i=0; i<values.size(); ++i) {
             r.setArrayIndex(i);
-            One::write(r, values[i], "data");
+            One::write(r, values[i], u"data"_q);
         }
         r.endArray();
     }
@@ -133,12 +133,12 @@ class Record : public QSettings {
 public:
 //    Record() {}
     Record(const QString &root): m_root(root) {
-        m_version = value("version", 0).toInt();
+        m_version = value(u"version"_q, 0).toInt();
         if (!m_root.isEmpty()) beginGroup(root);
     }
     Record(const QString &root, int version)
         : m_root(root), m_version(version) {
-        setValue("version", m_version);
+        setValue(u"version"_q, m_version);
         if (!m_root.isEmpty()) beginGroup(root);
     }
     ~Record() {

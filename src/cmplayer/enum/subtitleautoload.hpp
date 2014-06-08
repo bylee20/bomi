@@ -72,7 +72,7 @@ public:
         case Enum::Matched: return qApp->translate("EnumInfo", "Subtitles which have the same name as that of playing file");
         case Enum::Contain: return qApp->translate("EnumInfo", "Subtitles whose names contain the name of playing file");
         case Enum::Folder: return qApp->translate("EnumInfo", "All subtitles in the folder where the playing file is located");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

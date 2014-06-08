@@ -70,7 +70,7 @@ public:
         switch (e) {
         case Enum::OnLetterbox: return qApp->translate("EnumInfo", "Display on Letterbox");
         case Enum::InVideo: return qApp->translate("EnumInfo", "Display in Video");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

@@ -80,7 +80,7 @@ public:
         case Enum::_16__9: return qApp->translate("EnumInfo", "16:9 (HDTV)");
         case Enum::_1_85__1: return qApp->translate("EnumInfo", "1.85:1 (Wide Vision)");
         case Enum::_2_35__1: return qApp->translate("EnumInfo", "2.35:1 (CinemaScope)");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

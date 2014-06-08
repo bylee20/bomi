@@ -46,11 +46,11 @@ struct PrefDialog::Data {
         for (const auto codec : codecs) {
             auto box = hwdec[codec];
             const auto supported = HwAcc::supports(type, codec);
-            const QString desc = avcodec_descriptor_get(codec)->long_name;
+            const QString desc(_L(avcodec_descriptor_get(codec)->long_name));
             if (supported)
                 box->setText(desc);
             else
-                box->setText(desc % ' ' % tr("Not supported") % ')');
+                box->setText(desc % ' '_q % tr("Not supported") % ')'_q);
             box->setEnabled(supported);
         }
     }
@@ -79,7 +79,7 @@ PrefDialog::PrefDialog(QWidget *parent)
         auto item = items.first();
         if (item->data(0, CategoryRole).toBool())
             return;
-        const QString text = item->parent()->text(0) % " > " % item->text(0);
+        const QString text = item->parent()->text(0) % " > "_a % item->text(0);
         const auto widget = item->data(0, WidgetRole).value<QWidget*>();
         d->ui.page_name->setText(text);
         d->ui.stack->setCurrentWidget(widget);
@@ -106,48 +106,49 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     auto general = addCategory(tr("General"));
     addPage(tr("Application"), d->ui.gen_behaviours,
-            ":/img/cmplayer-32.png", general);
+            u":/img/cmplayer-32.png"_q, general);
     addPage(tr("Open"), d->ui.open_media,
-            ":/img/document-open-32.png", general)->setSelected(true);
+            u":/img/document-open-32.png"_q, general)->setSelected(true);
     addPage(tr("Playback"), d->ui.playback,
-            ":/img/media-playback-start-32.png", general);
+            u":/img/media-playback-start-32.png"_q, general);
     addPage(tr("Cache"), d->ui.cache,
-            ":/img/preferences-web-browser-cache.png", general);
+            u":/img/preferences-web-browser-cache.png"_q, general);
 
     auto appear = addCategory(tr("Appearance"));
-    addPage(tr("OSD"), d->ui.osd, ":/img/view-multiple-objects.png", appear);
+    addPage(tr("OSD"), d->ui.osd,
+            u":/img/view-multiple-objects.png"_q, appear);
     addPage(tr("Skin & Style"), d->ui.skin_style,
-            ":/img/preferences-desktop-theme-32.png", appear);
+            u":/img/preferences-desktop-theme-32.png"_q, appear);
 
     auto video = addCategory(tr("Video"));
     addPage(tr("Hardware acceleration"), d->ui.video_hwacc,
-            ":/img/apps-hardware-icon.png", video);
+            u":/img/apps-hardware-icon.png"_q, video);
     addPage(tr("Deinterlace"), d->ui.video_deint,
-            ":/img/format-line-spacing-double.png", video);
+            u":/img/format-line-spacing-double.png"_q, video);
     addPage(tr("Video filter"), d->ui.video_filter,
-            ":/img/draw-brush.png", video);
+            u":/img/draw-brush.png"_q, video);
 
     auto audio = addCategory(tr("Audio"));
     addPage(tr("Sound"), d->ui.audio_sound,
-            ":/img/audio-volume-high.png", audio);
+            u":/img/audio-volume-high.png"_q, audio);
     addPage(tr("Audio filter"), d->ui.audio_filter,
-            ":/img/applications-multimedia.png", audio);
+            u":/img/applications-multimedia.png"_q, audio);
 
     auto subtitle = addCategory(tr("Subtitle"));
     addPage(tr("Load"), d->ui.sub_load,
-            ":/img/application-x-subrip-32.png", subtitle);
+            u":/img/application-x-subrip-32.png"_q, subtitle);
     addPage(tr("Appearance"), d->ui.sub_appearance,
-            ":/img/format-text-color-32.png", subtitle);
+            u":/img/format-text-color-32.png"_q, subtitle);
     addPage(tr("Priority"), d->ui.sub_unified,
-            ":/img/view-sort-descending-32.png", subtitle);
+            u":/img/view-sort-descending-32.png"_q, subtitle);
 
     auto ui = addCategory(tr("User interface"));
     addPage(tr("Keyboard shortcuts"), d->ui.ui_shortcut,
-            ":/img/preferences-desktop-keyboard-32.png", ui);
+            u":/img/preferences-desktop-keyboard-32.png"_q, ui);
     addPage(tr("Mouse actions"), d->ui.ui_mouse,
-            ":/img/input-mouse-32.png", ui);
+            u":/img/input-mouse-32.png"_q, ui);
     addPage(tr("Control step"), d->ui.ui_step,
-            ":/img/run-build-32.png", ui);
+            u":/img/run-build-32.png"_q, ui);
 
     auto vbox = new QVBoxLayout;
     vbox->setMargin(0);

@@ -76,7 +76,7 @@ public:
         case Enum::Full: return qApp->translate("EnumInfo", "Full Range");
         case Enum::Remap: return qApp->translate("EnumInfo", "Remap Range");
         case Enum::Extended: return qApp->translate("EnumInfo", "Extended Range");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

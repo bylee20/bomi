@@ -79,7 +79,7 @@ public:
         case Enum::CPU: return qApp->translate("EnumInfo", "");
         case Enum::GPU: return qApp->translate("EnumInfo", "");
         case Enum::OpenGL: return qApp->translate("EnumInfo", "");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

@@ -55,8 +55,8 @@ auto MainWindow::Data::initContextMenu() -> void
     addContextMenu(menu(u"tool"_q));
     addContextMenu(menu(u"window"_q));
     contextMenu.addSeparator();
-    contextMenu.addAction(menu(u"help"_q)["about"]);
-    contextMenu.addAction(menu["exit"]);
+    contextMenu.addAction(menu(u"help"_q)[u"about"_q]);
+    contextMenu.addAction(menu[u"exit"_q]);
 #ifdef Q_OS_MAC
 ////    qt_mac_set_dock_menu(&menu);
     QMenuBar *mb = cApp.globalMenuBar();
@@ -150,10 +150,10 @@ auto MainWindow::Data::initEngine() -> void
         case PlayEngine::Loading:
         case PlayEngine::Buffering:
         case PlayEngine::Playing:
-            menu(u"play"_q)["pause"]->setText(tr("Pause"));
+            menu(u"play"_q)[u"pause"_q]->setText(tr("Pause"));
             break;
         default:
-            menu(u"play"_q)["pause"]->setText(tr("Play"));
+            menu(u"play"_q)[u"pause"_q]->setText(tr("Play"));
         }
         const auto disable = pref().disable_screensaver
                              && state == PlayEngine::Playing;
@@ -172,11 +172,11 @@ auto MainWindow::Data::initEngine() -> void
         _Change(as.state.audio_volume, volume);
     });
     connect(&engine, &PlayEngine::volumeNormalizerActivatedChanged,
-            menu(u"audio"_q)["normalizer"], &QAction::setChecked);
+            menu(u"audio"_q)[u"normalizer"_q], &QAction::setChecked);
     connect(&engine, &PlayEngine::tempoScaledChanged,
-            menu(u"audio"_q)["tempo-scaler"], &QAction::setChecked);
+            menu(u"audio"_q)[u"tempo-scaler"_q], &QAction::setChecked);
     connect(&engine, &PlayEngine::mutedChanged,
-            menu(u"audio"_q)(u"volume"_q)["mute"], &QAction::setChecked);
+            menu(u"audio"_q)(u"volume"_q)[u"mute"_q], &QAction::setChecked);
     connect(&engine, &PlayEngine::fpsChanged,
             &subtitle, &SubtitleRendererItem::setFPS);
     connect(&engine, &PlayEngine::editionsChanged,
@@ -286,8 +286,8 @@ auto MainWindow::Data::initItems() -> void
     connect(&playlist, &PlaylistModel::playRequested,
             p, [this] (int row) { openMrl(playlist.at(row)); });
     connect(&playlist, &PlaylistModel::finished, p, [this] () {
-        if (menu(u"tool"_q)["auto-exit"]->isChecked()) p->exit();
-        if (menu(u"tool"_q)["auto-shutdown"]->isChecked()) cApp.shutdown();
+        if (menu(u"tool"_q)[u"auto-exit"_q]->isChecked()) p->exit();
+        if (menu(u"tool"_q)[u"auto-shutdown"_q]->isChecked()) cApp.shutdown();
     });
     connect(&subtitle, &SubtitleRendererItem::modelsChanged,
             subtitleView, &SubtitleView::setModels);
@@ -330,9 +330,9 @@ auto MainWindow::Data::resume(const Mrl &mrl, int *edition) -> int
         return state->resume_position;
     MBox mbox(p, MBox::Icon::Question, tr("Resume Playback"));
     mbox.setText(tr("Do you want to resume the playback at the last played position?"));
-    QString time = _MSecToString(state->resume_position, "h:mm:ss");
+    QString time = _MSecToString(state->resume_position, u"h:mm:ss"_q);
     if (state->edition >= 0)
-        time += '[' % tr("Title %1").arg(state->edition) % ']';
+        time += '['_q % tr("Title %1").arg(state->edition) % ']'_q;
     const auto date = state->last_played_date_time.toString(Qt::ISODate);
     mbox.setInformativeText(tr("Played Date: %1\nStopped Position: %2")
                             .arg(date).arg(time));
@@ -972,7 +972,7 @@ auto MainWindow::Data::reloadSkin() -> void
     auto root = view->rootObject();
     if (!root)
         return;
-    if (root->objectName() == "player")
+    if (root->objectName() == "player"_a)
         player = qobject_cast<QQuickItem*>(root);
     if (!player)
         player = root->findChild<QQuickItem*>(u"player"_q);
@@ -1020,7 +1020,7 @@ auto MainWindow::Data::updateMrl(const Mrl &mrl) -> void
     updateTitle();
     const auto disc = mrl.isDisc();
     playlist.setLoaded(mrl);
-    auto action = menu(u"play"_q)["disc-menu"];
+    auto action = menu(u"play"_q)[u"disc-menu"_q];
     action->setEnabled(disc);
     action->setVisible(disc);
 }

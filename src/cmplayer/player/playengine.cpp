@@ -1,30 +1,6 @@
 #include "playengine.hpp"
 #include "playengine_p.hpp"
-#include "mpv_helper.hpp"
-#include "tmp/type_test.hpp"
-#include "misc/log.hpp"
-#include "misc/tmp.hpp"
-#include "misc/dataevent.hpp"
-#include "audio/audiocontroller.hpp"
-#include "video/videooutput.hpp"
-#include "video/hwacc.hpp"
-#include "video/deintoption.hpp"
-#include "video/videoformat.hpp"
-#include "video/videorendereritem.hpp"
-#include "video/videofilter.hpp"
-#include "video/videocolor.hpp"
-#include "subtitle/submisc.hpp"
-#include "subtitle/subtitlestyle.hpp"
-#include "enum/deintmode.hpp"
-#include "enum/colorspace.hpp"
-#include "enum/colorrange.hpp"
-#include "enum/audiodriver.hpp"
-#include "enum/channellayout.hpp"
-#include "enum/interpolatortype.hpp"
-#include "opengl/opengloffscreencontext.hpp"
-#include <libmpv/client.h>
 
-DECLARE_LOG_CONTEXT(Engine)
 
 auto translator_display_language(const QString &iso) -> QString;
 
@@ -45,467 +21,6 @@ auto reg_play_engine() -> void
     qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
 }
 
-
-enum EndReason {
-    EndFailed = -1,
-    EndOfFile,
-    EndRestart,
-    EndRequest,
-    EndQuit,
-    EndUnknown
-};
-
-template<class T, bool number = tmp::is_arithmetic<T>()>
-struct mpv_format_trait { };
-
-template<>
-struct mpv_format_trait<bool> {
-    using mpv_type = int;
-    static constexpr mpv_format format = MPV_FORMAT_FLAG;
-    static constexpr bool use_free = false;
-    static constexpr auto cast(mpv_type from) -> bool { return from; }
-    static auto userdata(bool v) -> QByteArray { return QByteArray::number(v); }
-    static auto free(mpv_type&) -> void { }
-};
-
-template<class T>
-struct mpv_format_trait<T, true> {
-    static constexpr bool IsInt = tmp::is_integral<T>();
-    static constexpr bool use_free = false;
-    using mpv_type = tmp::conditional_t<IsInt, qint64, double>;
-    static_assert(!tmp::is_same<T, bool>(), "wrong type");
-    static constexpr mpv_format format = IsInt ? MPV_FORMAT_INT64
-                                               : MPV_FORMAT_DOUBLE;
-    static constexpr auto cast(mpv_type from) -> T { return from; }
-    static auto userdata(T v) -> QByteArray { return QByteArray::number(v); }
-    static auto free(mpv_type&) -> void { }
-};
-
-template<>
-struct mpv_format_trait<QString> {
-    using mpv_type = const char*;
-    static constexpr mpv_format format = MPV_FORMAT_STRING;
-    static constexpr bool use_free = true;
-    static auto userdata(mpv_type v) -> QByteArray { return v; }
-    static auto cast(const char *from) -> QString
-        { return QString::fromLocal8Bit(from); }
-    static auto free(mpv_type &data) -> void { mpv_free((void*)data); }
-};
-
-template<>
-struct mpv_format_trait<QByteArray> {
-    using mpv_type = const char*;
-    static constexpr mpv_format format = MPV_FORMAT_STRING;
-    static constexpr bool use_free = true;
-    static auto userdata(mpv_type v) -> QByteArray { return v; }
-    static auto cast(const char *from) -> QByteArray
-        { return QByteArray(from); }
-    static auto free(mpv_type &data) -> void { mpv_free((void*)data); }
-};
-
-template<>
-struct mpv_format_trait<const char *> {
-    using mpv_type = const char*;
-    static constexpr mpv_format format = MPV_FORMAT_STRING;
-    static constexpr bool use_free = true;
-    static auto userdata(mpv_type v) -> QByteArray { return v; }
-    static auto cast(const char *from) -> const char* { return from; }
-    static auto free(mpv_type &data) -> void { mpv_free((void*)data); }
-};
-
-template<>
-struct mpv_format_trait<QVariant> {
-    using mpv_type = mpv_node;
-    static constexpr mpv_format format = MPV_FORMAT_NODE;
-    static constexpr bool use_free = true;
-    static auto userdata(mpv_type) -> QByteArray { return "mpv-node"; }
-    static auto cast(mpv_type v) -> QVariant { return parse(v); }
-    static auto free(mpv_type &node) -> void { mpv_free_node_contents(&node); }
-private:
-    static QVariant parse(const mpv_node &node) {
-        switch (node.format) {
-        case MPV_FORMAT_DOUBLE:
-            return node.u.double_;
-        case MPV_FORMAT_FLAG:
-            return !!node.u.flag;
-        case MPV_FORMAT_INT64:
-            return QVariant::fromValue<int>(node.u.int64);
-        case MPV_FORMAT_STRING:
-            return QString::fromLocal8Bit(node.u.string);
-        case MPV_FORMAT_NODE_ARRAY: {
-            auto array = node.u.list;
-            QVariantList list; list.reserve(array->num);
-            for (int i=0; i<array->num; ++i)
-                list.append(parse(array->values[i]));
-            return list;
-        } case MPV_FORMAT_NODE_MAP: {
-            auto list = node.u.list; QVariantMap map;
-            for (int i=0; i<list->num; ++i) {
-                auto data = parse(list->values[i]);
-                map.insert(QString::fromLocal8Bit(list->keys[i]), data);
-            }
-            return map;
-        } default:
-            return QVariant();
-        }
-    }
-};
-
-class OptionList {
-public:
-    OptionList(char join = ',')
-        : m_join(join) { }
-    auto add(const QByteArray &key, const QByteArray &value,
-             bool quote = false) -> void
-    {
-        if (!m_data.isEmpty())
-            m_data.append(m_join);
-        m_data.append(key);
-        m_data.append('=');
-        if (quote)
-            m_data.append('"');
-        m_data.append(value);
-        if (quote)
-            m_data.append('"');
-    }
-    auto add(const QByteArray &key, void *value) -> void
-        { add(key, address_cast<QByteArray>(value)); }
-    auto add(const QByteArray &key, double value) -> void
-        { add(key, QByteArray::number(value)); }
-    auto add(const QByteArray &key, int value) -> void
-        { add(key, QByteArray::number(value)); }
-    auto add(const QByteArray &key, bool value) -> void
-        { add(key, value ? "yes"_b : "no"_b); }
-    auto get() const -> const QByteArray& { return m_data; }
-    auto data() const -> const char* { return m_data.data(); }
-private:
-    QByteArray m_data;
-    char m_join;
-};
-
-template<class T>
-using mpv_type = typename mpv_format_trait<T>::mpv_type;
-
-struct PlayEngine::Data {
-    template <class T>
-    auto setmpv_async(const char *name, const T &value) -> void
-    {
-        if (handle) {
-            mpv_type<T> data = value;
-            auto userdata = new QByteArray(name);
-            *userdata += "=" + mpv_format_trait<T>::userdata(value);
-            check(mpv_set_property_async(handle, (quint64)(void*)userdata, name,
-                                         mpv_format_trait<T>::format, &data),
-                  "Error on %%", *userdata);
-        }
-    }
-
-    template <class T>
-    auto setmpv(const char *name, const T &value) -> void
-    {
-        if (handle) {
-            mpv_type<T> data = value;
-            check(mpv_set_property(handle, name, mpv_format_trait<T>::format,
-                                   &data),
-                  "Error on %%=%%", name, value);
-        }
-    }
-
-    template<class T>
-    auto getmpv(const char *name, const T &def = T()) -> T
-    {
-        using trait = mpv_format_trait<T>;
-        mpv_type<T> data;
-        if (!handle || !check(mpv_get_property(handle, name,
-                                               trait::format, &data),
-                              "Couldn't get property '%%'.", name))
-            return def;
-        if (!trait::use_free)
-            return trait::cast(data);
-        T t = trait::cast(data);
-        trait::free(data);
-        return t;
-    }
-
-    auto refresh() -> void
-    {
-        tellmpv("frame_step");
-        tellmpv("frame_back_step");
-    }
-
-    Data(PlayEngine *engine)
-        : p(engine) { }
-    PlayEngine *p = nullptr;
-
-    ImagePlayback image;
-    InterpolatorType videoChromaUpscaler = InterpolatorType::Bilinear;
-
-    MediaInfoObject mediaInfo;
-    AvInfoObject *videoInfo = new AvInfoObject, *audioInfo = new AvInfoObject;
-    HardwareAcceleration hwacc = HardwareAcceleration::Unavailable;
-    MetaData metaData;
-    QThread *videoThread = nullptr; // video decoding thread
-    OpenGLOffscreenContext *videoContext = nullptr;
-    QString mediaName;
-
-    VideoColor videoEq;
-    ColorRange videoColorRange = ColorRange::Auto;
-    ColorSpace videoColorSpace = ColorSpace::Auto;
-
-    double fps = 1.0;
-    bool hasImage = false, tempoScaler = false, seekable = false;
-    bool subStreamsVisible = true, startPaused = false, disc = false;
-
-    static auto error(int err) -> const char* { return mpv_error_string(err); }
-
-    auto isSuccess(int error) -> bool { return error == MPV_ERROR_SUCCESS; }
-
-    template<class... Args>
-    auto check(int err, const char *msg, const Args &... args) -> bool
-    {
-        if (isSuccess(err))
-            return true;
-        const auto lv = err == MPV_ERROR_PROPERTY_UNAVAILABLE ? Log::Debug
-                                                              : Log::Error;
-        if (lv <= Log::maximumLevel())
-            Log::write(getLogContext(), lv, "Error %%: %%", error(err),
-                       Log::parse(msg, args...));
-        return false;
-    }
-
-    template<class... Args>
-    auto fatal(int err, const char *msg, const Args &... args) -> void
-    {
-        if (!isSuccess(err))
-            Log::write(getLogContext(), Log::Fatal, "Error %%: %%", error(err),
-                       Log::parse(msg, args...));
-    }
-
-    auto setOption(const char *name, const char *data) -> void
-    {
-        const auto err = mpv_set_option_string(handle, name, data);
-        fatal(err, "Couldn't set option %%=%%.", name, data);
-    }
-
-    Thread thread{p};
-    AudioController *audio = nullptr;
-    QTimer imageTicker;
-    bool quit = false, timing = false, muted = false, initialized = false;
-    int volume = 100;
-    double amp = 1.0, speed = 1.0, avsync = 0;
-    int cacheForPlayback = 20, cacheForSeeking = 50;
-    int cache = -1.0, initSeek = -1;
-    mpv_handle *handle = nullptr;
-    VideoOutput *video = nullptr;
-    VideoFilter *filter = nullptr;
-    QByteArray hwaccCodecs;
-    QVector<SubtitleFileInfo> subtitleFiles;
-    ChannelLayout layout = ChannelLayoutInfo::default_();
-    int duration = 0, audioSync = 0, begin = 0, position = 0;
-    int subDelay = 0, chapter = -2;
-    QVector<int> streamIds = {0, 0, 0}, lastStreamIds = streamIds;
-    QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
-    AudioTrackInfoObject *audioTrackInfo = nullptr;
-    SubtitleStyle subStyle;
-    VideoRendererItem *renderer = nullptr;
-    ChapterList chapters, chapterFakeList;
-    EditionList editions;
-    int edition = -1;
-    ChapterInfoObject *chapterInfo = nullptr;
-    HwAcc::Type hwaccBackend = HwAcc::None;
-    VideoFormat videoFormat;
-    DeintOption deint_swdec, deint_hwdec;
-    DeintMode deint = DeintMode::Auto;
-    QByteArray ao = "";
-    AudioDriver audioDriver = AudioDriver::Auto;
-
-    StartInfo startInfo, nextInfo;
-
-    SubtitleTrackInfoObject subtitleTrackInfo;
-
-    auto af() const -> QByteArray
-    {
-        OptionList af(':');
-        af.add("dummy:address"_b, audio);
-        af.add("use_scaler"_b, (int)tempoScaler);
-        af.add("layout"_b, (int)layout);
-        return af.get();
-    }
-    auto vf() const -> QByteArray
-    {
-        OptionList vf(':');
-        vf.add("noformat:address"_b, filter);
-        vf.add("swdec_deint"_b, deint_swdec.toString().toLatin1());
-        vf.add("hwdec_deint"_b, deint_hwdec.toString().toLatin1());
-        return vf.get();
-    }
-    auto vo() const -> QByteArray
-    {
-        OptionList vo(':');
-        vo.add("null:address"_b, video);
-        return vo.get();
-    }
-
-    auto mpVolume() const -> double { return volume*amp/10.0; }
-    auto tellmpv(const QByteArray &cmd) -> void
-    {
-        if (handle)
-            check(mpv_command_string(handle, cmd.constData()),
-                  "Cannaot execute: %%", cmd);
-    }
-    auto tellmpv_async(const QByteArray &cmd,
-                       std::initializer_list<QByteArray> &&list) -> void
-    {
-        QVector<const char*> args(list.size()+2, nullptr);
-        auto it = args.begin();
-        *it++ = cmd.constData();
-        for (auto &one : list)
-            *it++ = one.constData();
-        if (handle)
-            check(mpv_command_async(handle, 0, args.data()),
-                  "Cannot execute: %%", cmd);
-    }
-    auto tellmpv(const QByteArray &cmd,
-                 std::initializer_list<QByteArray> &&list) -> void
-    {
-        QVector<const char*> args(list.size()+2, nullptr);
-        auto it = args.begin();
-        *it++ = cmd.constData();
-        for (auto &one : list)
-            *it++ = one.constData();
-        if (handle)
-            check(mpv_command(handle, args.data()), "Cannot execute: %%", cmd);
-    }
-    template<class... Args>
-    auto tellmpv(const QByteArray &cmd, const Args &... args) -> void
-        { tellmpv(cmd, {qbytearray_from(args)...}); }
-    template<class... Args>
-    auto tellmpv_async(const QByteArray &cmd, const Args &... args) -> void
-        { tellmpv_async(cmd, {qbytearray_from(args)...}); }
-
-    auto updateMrl() -> void
-    {
-        hasImage = startInfo.mrl.isImage();
-        updateMediaName();
-        emit p->mrlChanged(startInfo.mrl);
-    }
-
-    auto loadfile(const Mrl &mrl, int resume, int cache, int edition) -> void
-    {
-        QString file = mrl.isLocalFile() ? mrl.toLocalFile() : mrl.toString();
-        if (file.isEmpty())
-            return;
-        timing = false;
-        OptionList opts;
-        opts.add("ao"_b, ao.isEmpty() ? R"("")"_b : ao);
-        if (hwaccCodecs.isEmpty() || hwaccBackend == HwAcc::None)
-            opts.add("hwdec"_b, "no"_b);
-        else {
-            opts.add("hwdec"_b, HwAcc::backendName(hwaccBackend).toLatin1());
-            opts.add("hwdec-codecs"_b, hwaccCodecs, true);
-        }
-
-        if (mrl.isDisc()) {
-            file = mrl.titleMrl(edition >= 0 ? edition : -1).toString();
-            initSeek = resume;
-        } else {
-            if (edition >= 0)
-                opts.add("edition"_b, edition);
-            if (resume > 0)
-                opts.add("start"_b, resume/1000.0);
-            initSeek = -1;
-        }
-        opts.add("deinterlace"_b, deint != DeintMode::None);
-        opts.add("volume"_b, mpVolume());
-        opts.add("mute"_b, muted);
-        opts.add("audio-delay"_b, audioSync/1000.0);
-        opts.add("sub-delay"_b, subDelay/1000.0);
-
-        const auto &font = subStyle.font;
-        opts.add("sub-text-color"_b, font.color.name(QColor::HexArgb).toLatin1());
-        QStringList fontStyles;
-        if (font.bold())
-            fontStyles.append("Bold");
-        if (font.italic())
-            fontStyles.append("Italic");
-        QString family = font.family();
-        if (!fontStyles.isEmpty())
-            family += ":style=" + fontStyles.join(' ');
-        double factor = font.size;
-        if (font.scale == OsdScalePolicy::Width)
-            factor *= 1280;
-        else if (font.scale == OsdScalePolicy::Diagonal)
-            factor *= sqrt(1280*1280 + 720*720);
-        else
-            factor *= 720.0;
-        opts.add("sub-text-font"_b, family.toLatin1(), true);
-        opts.add("sub-text-font-size"_b, factor);
-        const auto &outline = subStyle.outline;
-        const auto scaled = [factor] (double v)
-            { return qBound(0., v*factor, 10.); };
-        const auto color = [] (const QColor &color)
-            { return color.name(QColor::HexArgb).toLatin1(); };
-        if (outline.enabled) {
-            opts.add("sub-text-border-size"_b, scaled(outline.width));
-            opts.add("sub-text-border-color"_b, color(outline.color));
-        } else
-            opts.add("sub-text-border-size"_b, 0.0);
-        const auto &bbox = subStyle.bbox;
-        if (bbox.enabled)
-            opts.add("sub-text-back-color"_b, color(bbox.color));
-        auto norm = [] (const QPointF &p)
-            { return sqrt(p.x()*p.x() + p.y()*p.y()); };
-        const auto &shadow = subStyle.shadow;
-        if (shadow.enabled) {
-            opts.add("sub-text-shadow-color"_b, color(shadow.color));
-            opts.add("sub-text-shadow-offset"_b, scaled(norm(shadow.offset)));
-        } else
-            opts.add("sub-text-shadow-offset"_b, 0.0);
-
-        if (cache > 0) {
-            opts.add("cache"_b, cache);
-            QByteArray value = "no"_b;
-            if (cacheForPlayback > 0)
-                value.setNum(qMax<int>(1, cacheForPlayback*0.01));
-            opts.add("cache-pause"_b, value);
-            opts.add("cache-min"_b, cacheForPlayback);
-            opts.add("cache-seek-min"_b, cacheForSeeking);
-        } else
-            opts.add("cache"_b, "no"_b);
-        opts.add("pause"_b, p->isPaused() || hasImage);
-        opts.add("audio-channels"_b, ChannelLayoutInfo::data(layout), true);
-        opts.add("af"_b, af(), true);
-        opts.add("vf"_b, vf(), true);
-        opts.add("brightness"_b, videoEq.brightness());
-        opts.add("contrast"_b, videoEq.contrast());
-        opts.add("hue"_b, videoEq.hue());
-        opts.add("saturation"_b, videoEq.saturation());
-        _Debug("Load: %% (%%)", file, opts.get());
-        tellmpv("loadfile"_b, file.toLocal8Bit(), "replace"_b, opts.get());
-    }
-    auto loadfile(int resume) -> void
-    {
-        if (startInfo.isValid())
-            loadfile(startInfo.mrl, resume, startInfo.cache, startInfo.edition);
-    }
-    auto loadfile() -> void { loadfile(startInfo.resume); }
-    auto updateMediaName(const QString &name = QString()) -> void
-    {
-        mediaName = name;
-        QString category;
-        auto mrl = p->mrl();
-        if (mrl.isLocalFile())
-            category = tr("File");
-        else if (mrl.isDvd())
-            category = u"DVD"_q;
-        else if (mrl.isBluray())
-            category = tr("Blu-ray");
-        else
-            category = u"URL"_q;
-        const QString display = name.isEmpty() ? mrl.displayName() : name;
-        mediaInfo.setName(category % ": "_a % display);
-    }
-};
 
 PlayEngine::PlayEngine()
 : d(new Data(this)) {
@@ -571,15 +86,15 @@ PlayEngine::PlayEngine()
     auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
         const auto opts = QString::fromLocal8Bit(overrides);
-        const auto args = opts.split(QRegEx(R"([\s\t]+)"),
+        const auto args = opts.split(QRegEx(uR"([\s\t]+)"_q),
                                      QString::SkipEmptyParts);
         for (int i=0; i<args.size(); ++i) {
-            if (!args[i].startsWith("--")) {
+            if (!args[i].startsWith("--"_a)) {
                 _Error("Cannot parse option %%.", args[i]);
                 continue;
             }
             const auto arg = args[i].midRef(2);
-            const int index = arg.indexOf('=');
+            const int index = arg.indexOf('='_q);
             if (index < 0) {
                 if (arg.startsWith("no-"_a))
                     d->setOption(arg.mid(3).toLatin1(), "no");
@@ -687,7 +202,6 @@ auto PlayEngine::mediaName() const -> QString
 
 auto PlayEngine::cache() const -> qreal
 {
-    qDebug() << d->cache;
     return d->cache/100.0;
 }
 
@@ -884,8 +398,8 @@ auto PlayEngine::setHwAcc(int backend, const QVector<int> &codecs) -> void
 {
     d->hwaccCodecs = _ToStringList(codecs, [] (int id) {
         const char *name = HwAcc::codecName(id);
-        return name ? QString(name) : QString();
-    }).join(',').toLatin1();
+        return name ? QString::fromLatin1(name) : QString();
+    }).join(','_q).toLatin1();
     d->hwaccBackend = HwAcc::Type(backend);
 }
 
@@ -1326,8 +840,8 @@ auto PlayEngine::exec() -> void
                     const auto map = array[i].toMap();
                     auto &chapter = chapters[i];
                     chapter.m_id = i;
-                    chapter.m_time = time(map["time"].toDouble());
-                    chapter.m_name = map["title"].toString();
+                    chapter.m_time = time(map[u"time"_q].toDouble());
+                    chapter.m_name = map[u"title"_q].toString();
                     if (chapter.m_name.isEmpty())
                         chapter.m_name = _MSecToString(chapter.m_time,
                                                        u"hh:mm:ss.zzz"_q);
@@ -1447,7 +961,7 @@ auto PlayEngine::exec() -> void
             for (auto &var : list) {
                 auto map = var.toMap();
                 auto type = Stream::Unknown;
-                switch (map["type"].toString().at(0).unicode()) {
+                switch (map[u"type"_q].toString().at(0).unicode()) {
                 case 'v': type = Stream::Video; break;
                 case 'a': type = Stream::Audio; break;
                 case 's': type = Stream::Subtitle; break;
@@ -1455,19 +969,19 @@ auto PlayEngine::exec() -> void
                 }
                 Stream stream;
                 stream.m_type = type;
-                stream.m_albumart = map["albumart"].toBool();
-                stream.m_codec = map["codec"].toString();
-                stream.m_default = map["default"].toBool();
-                stream.m_id = map["id"].toInt();
-                stream.m_lang = map["lang"].toString();
+                stream.m_albumart = map[u"albumart"_q].toBool();
+                stream.m_codec = map[u"codec"_q].toString();
+                stream.m_default = map[u"default"_q].toBool();
+                stream.m_id = map[u"id"_q].toInt();
+                stream.m_lang = map[u"lang"_q].toString();
                 if (_InRange(2, stream.m_lang.size(), 3)
                         && _IsAlphabet(stream.m_lang))
                     stream.m_lang = translator_display_language(stream.m_lang);
-                stream.m_title = map["title"].toString();
-                stream.m_fileName = map["external-filename"].toString();
+                stream.m_title = map[u"title"_q].toString();
+                stream.m_fileName = map[u"external-filename"_q].toString();
                 if (!stream.m_fileName.isEmpty())
                     stream.m_title = QFileInfo(stream.m_fileName).fileName();
-                stream.m_selected = map["selected"].toBool();
+                stream.m_selected = map[u"selected"_q].toBool();
                 streams[stream.m_type].insert(stream.m_id, stream);
             }
             _PostEvent(this, UpdateTrackList, streams);
@@ -1525,13 +1039,13 @@ auto PlayEngine::exec() -> void
             auto vin = d->getmpv<QVariant>("video-params").toMap();
             auto vout = d->getmpv<QVariant>("video-out-params").toMap();
             video->m_input->m_bitrate = d->getmpv<int>("video-bitrate")*8;
-            video->m_input->m_type = vin["pixelformat"].toString();
-            video->m_input->m_size.rwidth() = vin["w"].toInt();
-            video->m_input->m_size.rheight() = vin["h"].toInt();
+            video->m_input->m_type = vin[u"pixelformat"_q].toString();
+            video->m_input->m_size.rwidth() = vin[u"w"_q].toInt();
+            video->m_input->m_size.rheight() = vin[u"h"_q].toInt();
             video->m_input->m_fps = d->getmpv<double>("fps");
-            video->m_output->m_type = vout["pixelformat"].toString();
-            video->m_output->m_size.rwidth() = vout["dw"].toInt();
-            video->m_output->m_size.rheight() = vout["dh"].toInt();
+            video->m_output->m_type = vout[u"pixelformat"_q].toString();
+            video->m_output->m_size.rwidth() = vout[u"dw"_q].toInt();
+            video->m_output->m_size.rheight() = vout[u"dh"_q].toInt();
             video->m_output->m_fps = d->getmpv<double>("fps");
             video->m_codecDescription = d->getmpv<QString>("video-codec");
             video->m_codec = d->getmpv<QString>("video-format");
@@ -1735,7 +1249,7 @@ auto PlayEngine::setVolumeNormalizerActivated(bool on) -> void
 auto PlayEngine::setTempoScalerActivated(bool on) -> void
 {
     if (_Change(d->tempoScaler, on)) {
-        d->tellmpv("af", "set", d->af());
+        d->tellmpv("af", "set"_b, d->af());
         emit tempoScaledChanged(on);
     }
 }

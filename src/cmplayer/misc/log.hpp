@@ -25,6 +25,14 @@ SIA _ToLog(const QObject *qt) -> QByteArray
     return QByteArray(qt->metaObject()->className())
            + '(' + _ToLog(static_cast<const void*>(qt)) + ')';
 }
+SIA _ToLog(const QSize &s) -> QByteArray
+{ return _ToLog(s.width()) + 'x' + _ToLog(s.height()); }
+SIA _ToLog(const QSizeF &s) -> QByteArray
+{ return _ToLog(s.width()) + 'x' + _ToLog(s.height()); }
+SIA _ToLog(const QPoint &p) -> QByteArray
+{ return '(' + _ToLog(p.x()) + ", "_b + _ToLog(p.y()) + ')'; }
+SIA _ToLog(const QPointF &p) -> QByteArray
+{ return '(' + _ToLog(p.x()) + ", "_b + _ToLog(p.y()) + ')'; }
 
 class Log {
 public:

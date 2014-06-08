@@ -63,25 +63,25 @@ auto ChannelManipulation::toString() const -> QString
             for (auto &src : m_mix[i])
                 srcs.push_back(_L(ChannelLayoutMap::channelNames()[src].abbr));
             list.push_back(_L(ChannelLayoutMap::channelNames()[speaker].abbr)
-                           % '!' % srcs.join('/'));
+                           % '!'_q % srcs.join('/'_q));
         }
     }
-    return list.join(',');
+    return list.join(','_q);
 }
 
 auto ChannelManipulation::fromString(const QString &text) -> ChannelManipulation
 {
     ChannelManipulation man;
-    auto list = text.split(',');
+    auto list = text.split(','_q);
 
     for (auto &one : list) {
-        auto map = one.split('!', QString::SkipEmptyParts);
+        auto map = one.split('!'_q, QString::SkipEmptyParts);
         if (map.size() != 2)
             continue;
         auto dest = nameToId(map[0]);
         if (dest == MP_SPEAKER_ID_COUNT)
             continue;
-        auto srcs = map[1].split('/', QString::SkipEmptyParts);
+        auto srcs = map[1].split('/'_q, QString::SkipEmptyParts);
         SourceArray sources;
         for (int i=0; i<srcs.size(); ++i) {
             auto src = nameToId(srcs[i]);

@@ -89,9 +89,9 @@ auto VideoFilter::open(vf_instance *vf) -> int
     priv->vf->d->vf = vf;
     auto d = priv->vf->d;
     if (priv->swdec_deint)
-        d->deint_swdec = DeintOption::fromString(priv->swdec_deint);
+        d->deint_swdec = DeintOption::fromString(_L(priv->swdec_deint));
     if (priv->hwdec_deint)
-        d->deint_hwdec = DeintOption::fromString(priv->hwdec_deint);
+        d->deint_hwdec = DeintOption::fromString(_L(priv->hwdec_deint));
     d->updateDeint();
     memset(&d->params, 0, sizeof(d->params));
     vf->reconfig = reconfig;

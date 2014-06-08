@@ -7,6 +7,9 @@
 #include "kernel3x3.hpp"
 #include "misc/dataevent.hpp"
 #include "opengl/opengltexturebinder.hpp"
+#include "misc/log.hpp"
+
+DECLARE_LOG_CONTEXT(Video)
 
 enum EventType {NewFrame = QEvent::User + 1, NewFrameImage };
 
@@ -112,7 +115,7 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
     , d(new Data(this))
 {
     d->letterbox = new LetterboxItem(this);
-    const QQmlProperty property(d->letterbox, "anchors.centerIn");
+    const QQmlProperty property(d->letterbox, u"anchors.centerIn"_q);
     property.write(QVariant::fromValue(this));
     setZ(-1);
     setAcceptHoverEvents(true);
@@ -167,8 +170,11 @@ auto VideoRendererItem::customEvent(QEvent *event) -> void
     case NewFrame: {
         VideoCache cache;
         _GetAllData(event, cache.frame, cache.osd, cache.hasOsd);
-        if (!cache.frame.isNull())
+        if (!cache.frame.isNull()) {
+            _Trace("Queue new video frame %%", cache.frame->size());
             d->queue.push_back(cache);
+        } else
+            _Trace("Hurry up to empty queue");
         reserve(UpdateMaterial);
         break;
     } case NewFrameImage: {
@@ -203,8 +209,10 @@ auto VideoRendererItem::requestFrameImage() const -> void
 auto VideoRendererItem::present(const Cache &cache, const OsdCache &osd,
                                 bool hasOsd) -> void
 {
-    if (!isInitialized())
+    if (!isInitialized()) {
+        _Trace("VideoRendererItem is not initialized yet");
         return;
+    }
     _PostEvent(Qt::HighEventPriority, this, NewFrame, cache, osd, hasOsd);
 }
 
@@ -330,12 +338,15 @@ auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
         _PostEvent(this, NewFrameImage, image);
         d->take = false;
     }
-    if (d->queue.empty())
+    if (d->queue.empty()) {
+        _Trace("Videe frame queue is empty");
         return;
+    }
     auto &front = d->queue.front();
     d->cache.frame.swap(front.frame);
     Q_ASSERT(!d->cache.frame.isNull());
     *texture = d->cache.frame->texture();
+    _Trace("Render next frame(%%)", texture->size());
 
     if (front.osd || d->cache.hasOsd != front.hasOsd) {
         d->cache.hasOsd = front.hasOsd;

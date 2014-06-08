@@ -70,7 +70,7 @@ public:
         switch (e) {
         case Enum::None: return qApp->translate("EnumInfo", "Off");
         case Enum::Auto: return qApp->translate("EnumInfo", "Auto");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

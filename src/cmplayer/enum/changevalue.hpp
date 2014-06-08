@@ -72,7 +72,7 @@ public:
         case Enum::Reset: return qApp->translate("EnumInfo", "Reset");
         case Enum::Increase: return qApp->translate("EnumInfo", "Increase %1");
         case Enum::Decrease: return qApp->translate("EnumInfo", "Decrease %1");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

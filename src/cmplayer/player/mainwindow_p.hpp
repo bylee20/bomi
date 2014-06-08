@@ -48,7 +48,7 @@ class TrayIcon;
 struct MainWindow::Data {
     Data(MainWindow *p);
     template<class T>
-    SCIA typeKey() -> const char* { return EnumInfo<T>::typeKey(); }
+    SCIA typeKey() -> QString { return _L(EnumInfo<T>::typeKey()); }
 
     MainWindow *p = nullptr;
 
@@ -108,7 +108,7 @@ struct MainWindow::Data {
     auto showMessage(const QString &cmd, double value, const QString &unit,
                      bool sign = false) -> void;
     auto showMessage(const QString &cmd, const QString &desc) -> void
-        { showMessage(cmd + ": " + desc); }
+        { showMessage(cmd % u": "_q % desc); }
     auto showMessage(const QString &cmd, bool value) -> void
         { showMessage(cmd, value ? tr("On") : tr("Off")); }
     auto doVisibleAction(bool visible) -> void;
@@ -148,9 +148,9 @@ struct MainWindow::Data {
 
     template<class List>
     auto updateListMenu(Menu &menu, const List &list,
-                        int current, const QString &group = "") -> void;
+                        int current, const QString &group = QString()) -> void;
     template<class F>
-    auto plugCurrentStreamActions(Menu *menu, F f, QString g = "") -> void;
+    auto plugCurrentStreamActions(Menu *menu, F f, QString g = QString()) -> void;
     template<class T, class Func>
     auto push(const T &to, const T &from, const Func &func) -> QUndoCommand*;
     auto showTimeLine() -> void;

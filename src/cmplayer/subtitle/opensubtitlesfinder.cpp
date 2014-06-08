@@ -19,7 +19,7 @@ struct OpenSubtitlesFinder::Data {
     }
     void logout() {
         if (!token.isEmpty()) {
-            client.call("LogOut", QVariantList() << token);
+            client.call(u"LogOut"_q, QVariantList() << token);
             token.clear();
         }
         setState(Unavailable);
@@ -28,8 +28,9 @@ struct OpenSubtitlesFinder::Data {
         if (state == Connecting)
             return;
         setState(Connecting);
-        const auto args = _Args() << "" << "" << "" << "CMPlayerXmlRpcClient v0.1";
-        client.call("LogIn", args, [this] (const QVariantList &results) {
+        const auto args = _Args() << u""_q << u""_q << u""_q
+                                  << u"CMPlayerXmlRpcClient v0.1"_q;
+        client.call(u"LogIn"_q, args, [this] (const QVariantList &results) {
             if (!results.isEmpty()) {
                 const auto map = results[0].toMap();
                 token = map[u"token"_q].toString();
@@ -50,7 +51,7 @@ struct OpenSubtitlesFinder::Data {
 OpenSubtitlesFinder::OpenSubtitlesFinder(QObject *parent)
 : QObject(parent), d(new Data) {
     d->p = this;
-    d->client.setUrl(QUrl("http://api.opensubtitles.org/xml-rpc"));
+    d->client.setUrl(QUrl(u"http://api.opensubtitles.org/xml-rpc"_q));
     d->client.setCompressed(true);
     d->login();
 }
@@ -85,14 +86,15 @@ auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
     quint64 h = bytes + sum(0) + sum(bytes-len);
     auto hash = QString::number(h, 16);
     if (hash.size() < 16)
-        hash = _N(0, 10, 16-hash.size(), '0') + hash;
+        hash = _N(0, 10, 16-hash.size(), '0'_q) + hash;
 
     QVariantMap map;
     map[u"sublanguageid"_q] = u"all"_q;
     map[u"moviehash"_q] = hash;
     map[u"moviebytesize"_q] = bytes;
     const auto args = _Args() << d->token << QVariant(QVariantList() << map);
-    d->client.call("SearchSubtitles", args, [this] (const QVariantList &results) {
+    d->client.call(u"SearchSubtitles"_q, args,
+                   [this] (const QVariantList &results) {
         d->setState(Available);
         if (results.isEmpty() || results.first().type() != QVariant::Map) {
             emit found(QList<SubtitleLink>());

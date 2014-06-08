@@ -209,14 +209,14 @@ static void write(const EnumType &type) {
     string value, infos, cases;
     for (const EnumType::Item &item : type.items) {
         value += "    " + item.name + " = (int)" + item.value;
-        infos += "    {" + type.name + "::" + item.name + ", " + '"' + item.name + "\", \"" + item.key + "\", " + item.data + "}";
+        infos += "    {" + type.name + "::" + item.name + ", " + "u\"" + item.name + "\"_q, u\"" + item.key + "\"_q, " + item.data + "}";
         cases += "        case Enum::" + item.name + ": return qApp->translate(\"EnumInfo\", \"" + item.desc + "\");\n";
         if (&item != &type.items.back()) {
             value += ",\n";
             infos += ",\n";
         }
     }
-    cases += "        default: return \"\";";
+    cases += "        default: return QString();";
     replace(hpp, "__ENUM_VALUES", value);
     replace(hpp, "__ENUM_COUNT", toString(type.items.size()));
     replace(hpp, "__ENUM_FUNC_DESC_CASES", cases);

@@ -51,8 +51,8 @@ auto MainWindow::Data::plugEnumActions(Menu &menu, State &state,
 {
     Q_ASSERT(state.property(asprop).isValid());
     const int size = EnumInfo<T>::size();
-    auto cycle = _C(menu)[size > 2 ? "next" : "toggle"];
-    auto group = menu.g(_L(typeKey<T>()));
+    auto cycle = _C(menu)[size > 2 ? u"next"_q : u"toggle"_q];
+    auto group = menu.g(typeKey<T>());
     if (cycle) {
         connect(cycle, &QAction::triggered, p, [this, group] () {
             auto actions = group->actions();
@@ -86,7 +86,7 @@ template<class T, class F, class S>
 auto MainWindow::Data::plugEnumActions(Menu &menu, S &s, const char *asprop,
                                        Signal<S> sig, F f) -> void
 {
-    auto group = menu.g(_L(typeKey<T>()));
+    auto group = menu.g(typeKey<T>());
     auto ps = &s; auto pm = &menu;
     auto push = [=] (T t) {
         if (auto action = group->find(t)) {
@@ -186,12 +186,12 @@ auto MainWindow::Data::plugPropertyCheckable(QAction *a, const char *asprop,
 auto MainWindow::Data::connectMenus() -> void
 {
     Menu &open = menu(u"open"_q);
-    connect(open["file"], &QAction::triggered, p, [this] () {
+    connect(open[u"file"_q], &QAction::triggered, p, [this] () {
         const auto file = _GetOpenFile(p, tr("Open File"), MediaExt);
         if (!file.isEmpty())
             openMrl(Mrl(file));
     });
-    connect(open["folder"], &QAction::triggered, p, [this] () {
+    connect(open[u"folder"_q], &QAction::triggered, p, [this] () {
         OpenMediaFolderDialog dlg(p);
         if (dlg.exec()) {
             const auto list = dlg.playlist();
@@ -202,7 +202,7 @@ auto MainWindow::Data::connectMenus() -> void
             }
         }
     });
-    connect(open["url"], &QAction::triggered, p, [this] () {
+    connect(open[u"url"_q], &QAction::triggered, p, [this] () {
         UrlDialog dlg(p);
         if (dlg.exec()) {
             if (dlg.isPlaylist())
@@ -223,27 +223,27 @@ auto MainWindow::Data::connectMenus() -> void
         return dlg.result() && !device.isEmpty();
     };
 
-    connect(open["dvd"], &QAction::triggered, p, [openDisc, this] () {
+    connect(open[u"dvd"_q], &QAction::triggered, p, [openDisc, this] () {
         if (openDisc(tr("Select DVD device"), as.dvd_device, true))
-            openMrl(Mrl::fromDisc("dvdnav", as.dvd_device, -1, true));
+            openMrl(Mrl::fromDisc(u"dvdnav"_q, as.dvd_device, -1, true));
     });
-    connect(open["bluray"], &QAction::triggered, p, [openDisc, this] () {
+    connect(open[u"bluray"_q], &QAction::triggered, p, [openDisc, this] () {
         if (openDisc(tr("Select Blu-ray device"), as.bluray_device, false))
-            openMrl(Mrl::fromDisc("bdnav", as.bluray_device, -1, true));
+            openMrl(Mrl::fromDisc(u"bdnav"_q, as.bluray_device, -1, true));
     });
     connect(open(u"recent"_q).g(), &ActionGroup::triggered,
             p, [this] (QAction *a) {openMrl(Mrl(a->data().toString()));});
-    connect(open(u"recent"_q)["clear"], &QAction::triggered,
+    connect(open(u"recent"_q)[u"clear"_q], &QAction::triggered,
             &recent, &RecentInfo::clear);
 
     Menu &play = menu(u"play"_q);
-    connect(play["stop"], &QAction::triggered,
+    connect(play[u"stop"_q], &QAction::triggered,
             p, [this] () {engine.stop();});
     plugStepActions(play(u"speed"_q), "play_speed",
                           &MrlState::playSpeedChanged, [this]() {
         engine.setSpeed(1e-2*as.state.play_speed);
     });
-    connect(play["pause"], &QAction::triggered, p, &MainWindow::togglePlayPause);
+    connect(play[u"pause"_q], &QAction::triggered, p, &MainWindow::togglePlayPause);
     connect(play(u"repeat"_q).g(), &ActionGroup::triggered,
             p, [this] (QAction *a) {
         const int key = a->data().toInt();
@@ -285,9 +285,9 @@ auto MainWindow::Data::connectMenus() -> void
             msg(tr("Quit repeating"));
         }
     });
-    connect(play["prev"], &QAction::triggered,
+    connect(play[u"prev"_q], &QAction::triggered,
             &playlist, &PlaylistModel::playPrevious);
-    connect(play["next"], &QAction::triggered,
+    connect(play[u"next"_q], &QAction::triggered,
             &playlist, &PlaylistModel::playNext);
     connect(play(u"seek"_q).g(u"relative"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {
@@ -302,7 +302,7 @@ auto MainWindow::Data::connectMenus() -> void
             p, [this] (QAction *a) {
         engine.stepFrame(a->data().toInt());
     });
-    connect(play["disc-menu"], &QAction::triggered, p, [this] () {
+    connect(play[u"disc-menu"_q], &QAction::triggered, p, [this] () {
         engine.setCurrentEdition(PlayEngine::DVDMenu);
     });
     connect(play(u"seek"_q).g(u"subtitle"_q), &ActionGroup::triggered,
@@ -333,9 +333,9 @@ auto MainWindow::Data::connectMenus() -> void
                 engine.setCurrentChapter(target);
         }
     };
-    connect(play(u"chapter"_q)["prev"], &QAction::triggered,
+    connect(play(u"chapter"_q)[u"prev"_q], &QAction::triggered,
             p, [seekChapter] () { seekChapter(-1); });
-    connect(play(u"chapter"_q)["next"], &QAction::triggered, p,
+    connect(play(u"chapter"_q)[u"next"_q], &QAction::triggered, p,
             [seekChapter] () { seekChapter(+1); });
 
     Menu &video = menu(u"video"_q);
@@ -351,7 +351,7 @@ auto MainWindow::Data::connectMenus() -> void
     plugEnumActions<VideoRatio>(video(u"crop"_q), "video_crop_ratio",
                                 &MrlState::videoCropRatioChanged, [this] ()
         { renderer.setCropRatio(_EnumData(as.state.video_crop_ratio)); });
-    connect(video["snapshot"], &QAction::triggered, p, [this] () {
+    connect(video[u"snapshot"_q], &QAction::triggered, p, [this] () {
         if (!snapshot) {
             snapshot = new SnapshotDialog(p);
             connect(snapshot, &SnapshotDialog::request, p, [=] () {
@@ -444,7 +444,7 @@ auto MainWindow::Data::connectMenus() -> void
             as.state.setProperty("video_color", QVariant::fromValue(color));
         });
     });
-    connect(video(u"color"_q)["reset"], &QAction::triggered, p, [this] () {
+    connect(video(u"color"_q)[u"reset"_q], &QAction::triggered, p, [this] () {
         showMessage(tr("Reset Video Color"));
         const auto var = QVariant::fromValue(VideoColor());
         as.state.setProperty("video_color", var);
@@ -463,7 +463,7 @@ auto MainWindow::Data::connectMenus() -> void
                           &MrlState::audioVolumeChanged, [this] () {
         engine.setVolume(as.state.audio_volume);
     });
-    plugPropertyCheckable(audio(u"volume"_q)["mute"], "audio_muted",
+    plugPropertyCheckable(audio(u"volume"_q)[u"mute"_q], "audio_muted",
                                 &MrlState::audioMutedChanged, [this] () {
         engine.setMuted(as.state.audio_muted);
     });
@@ -481,13 +481,13 @@ auto MainWindow::Data::connectMenus() -> void
         engine.setChannelLayout(as.state.audio_channel_layout);
     });
     plugPropertyCheckable
-            (audio["normalizer"], "audio_volume_normalizer",
+            (audio[u"normalizer"_q], "audio_volume_normalizer",
              &MrlState::audioVolumeNormalizerChanged, [this] () {
         const auto activate = as.state.audio_volume_normalizer;
         engine.setVolumeNormalizerActivated(activate);
     });
     plugPropertyCheckable
-            (audio["tempo-scaler"], "audio_tempo_scaler",
+            (audio[u"tempo-scaler"_q], "audio_tempo_scaler",
              &MrlState::audioTempoScalerChanged, [this] () {
         engine.setTempoScalerActivated(as.state.audio_tempo_scaler);
     });
@@ -500,13 +500,13 @@ auto MainWindow::Data::connectMenus() -> void
             (*it)->trigger();
         }
     };
-    connect(audio(u"track"_q)["next"], &QAction::triggered, p, [=] ()
+    connect(audio(u"track"_q)[u"next"_q], &QAction::triggered, p, [=] ()
         { selectNext(menu(u"audio"_q)(u"track"_q).g()->actions()); });
 
     Menu &sub = menu(u"subtitle"_q);
     auto &strack = sub(u"track"_q);
     subtrackSep = strack.addSeparator();
-    connect(strack["next"], &QAction::triggered, p, [this, &strack] () {
+    connect(strack[u"next"_q], &QAction::triggered, p, [this, &strack] () {
         int checked = -1;
         auto list = strack.g(u"external"_q)->actions();
         list += strack.g(u"internal"_q)->actions();
@@ -527,7 +527,7 @@ auto MainWindow::Data::connectMenus() -> void
         if (!strack.g(u"internal"_q)->checkedAction())
             engine.setCurrentSubtitleStream(-2);
     });
-    connect(strack["all"], &QAction::triggered, p, [=, &strack] () {
+    connect(strack[u"all"_q], &QAction::triggered, p, [=, &strack] () {
         subtitle.select(-1);
         const auto acts = strack.g(u"external"_q)->actions();
         for (auto action : acts)
@@ -537,7 +537,7 @@ auto MainWindow::Data::connectMenus() -> void
         showMessage(tr("Select All Subtitles"), text);
         setCurrentSubtitleIndexToEngine();
     });
-    connect(strack["hide"], &QAction::triggered,
+    connect(strack[u"hide"_q], &QAction::triggered,
             p, [this, &strack] (bool hide) {
         if (hide != subtitle.isHidden()) {
             push(hide, subtitle.isHidden(), [this, &strack] (bool hide) {
@@ -547,11 +547,11 @@ auto MainWindow::Data::connectMenus() -> void
                     showMessage(tr("Hide Subtitles"));
                 else
                     showMessage(tr("Show Subtitles"));
-                strack["hide"]->setChecked(hide);
+                strack[u"hide"_q]->setChecked(hide);
             });
         }
     });
-    connect(strack["open"], &QAction::triggered, p, [this] () {
+    connect(strack[u"open"_q], &QAction::triggered, p, [this] () {
         QString dir;
         if (engine.mrl().isLocalFile())
             dir = QFileInfo(engine.mrl().toLocalFile()).absolutePath();
@@ -562,16 +562,16 @@ auto MainWindow::Data::connectMenus() -> void
         if (!files.isEmpty())
             appendSubFiles(files, true, enc);
     });
-    connect(strack["auto-load"], &QAction::triggered, p, [this] () {
+    connect(strack[u"auto-load"_q], &QAction::triggered, p, [this] () {
         clearSubtitleFiles();
         updateSubtitleState();
     });
-    connect(strack["reload"], &QAction::triggered, p, [this] () {
+    connect(strack[u"reload"_q], &QAction::triggered, p, [this] () {
         auto state = subtitleState();
         clearSubtitleFiles();
         setSubtitleState(state);
     });
-    connect(strack["clear"], &QAction::triggered,
+    connect(strack[u"clear"_q], &QAction::triggered,
             p, [=] () { clearSubtitleFiles(); });
     connect(strack.g(u"external"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {
@@ -625,8 +625,8 @@ auto MainWindow::Data::connectMenus() -> void
 
     Menu &tool = menu(u"tool"_q);
     auto &pl = tool(u"playlist"_q);
-    connect(pl["toggle"], &QAction::triggered, &playlist, &PlaylistModel::toggle);
-    connect(pl["open"], &QAction::triggered, p, [this] () {
+    connect(pl[u"toggle"_q], &QAction::triggered, &playlist, &PlaylistModel::toggle);
+    connect(pl[u"open"_q], &QAction::triggered, p, [this] () {
         QString enc;
         const auto filter = _ToFilter(PlaylistExt);
         const auto file = EncodingFileDialog::getOpenFileName
@@ -634,7 +634,7 @@ auto MainWindow::Data::connectMenus() -> void
         if (!file.isEmpty())
             playlist.open(file, enc);
     });
-    connect(pl["save"], &QAction::triggered, p, [this] () {
+    connect(pl[u"save"_q], &QAction::triggered, p, [this] () {
         const auto &list = playlist.list();
         if (!list.isEmpty()) {
             auto file = _GetSaveFile(p, tr("Save File"),
@@ -643,15 +643,15 @@ auto MainWindow::Data::connectMenus() -> void
                 list.save(file);
         }
     });
-    connect(pl["clear"], &QAction::triggered, p, [=] () { playlist.clear(); });
-    connect(pl["append-file"], &QAction::triggered, p, [this] () {
+    connect(pl[u"clear"_q], &QAction::triggered, p, [=] () { playlist.clear(); });
+    connect(pl[u"append-file"_q], &QAction::triggered, p, [this] () {
         const auto files = _GetOpenFiles(p, tr("Open File"), MediaExt);
         Playlist list;
         for (int i=0; i<files.size(); ++i)
             list.push_back(Mrl(files[i]));
         playlist.append(list);
     });
-    connect(pl["append-url"], &QAction::triggered, p, [this] () {
+    connect(pl[u"append-url"_q], &QAction::triggered, p, [this] () {
         UrlDialog dlg(p);
         if (dlg.exec()) {
             const Mrl mrl = dlg.url().toString();
@@ -663,35 +663,35 @@ auto MainWindow::Data::connectMenus() -> void
                 playlist.append(mrl);
         }
     });
-    connect(pl["remove"], &QAction::triggered, p,
+    connect(pl[u"remove"_q], &QAction::triggered, p,
             [=] () { playlist.remove(playlist.selected()); });
-    connect(pl["move-up"], &QAction::triggered, p, [=] () {
+    connect(pl[u"move-up"_q], &QAction::triggered, p, [=] () {
         const auto idx = playlist.selected();
         if (playlist.swap(idx, idx-1))
             playlist.select(idx-1);
     });
-    connect(pl["move-down"], &QAction::triggered, p, [=] () {
+    connect(pl[u"move-down"_q], &QAction::triggered, p, [=] () {
         const auto idx = playlist.selected();
         if (playlist.swap(idx, idx+1))
             playlist.select(idx+1);
     });
 
     auto &hm = tool(u"history"_q);
-    connect(hm["toggle"], &QAction::triggered, &history, &HistoryModel::toggle);
-    connect(hm["clear"], &QAction::triggered, p, [=] () { history.clear(); });
+    connect(hm[u"toggle"_q], &QAction::triggered, &history, &HistoryModel::toggle);
+    connect(hm[u"clear"_q], &QAction::triggered, p, [=] () { history.clear(); });
 
-    connect(tool["playinfo"], &QAction::triggered, p, [=] () {
+    connect(tool[u"playinfo"_q], &QAction::triggered, p, [=] () {
         auto toggleTool = [this] (const char *name, bool &visible) {
             visible = !visible;
-            if (auto item = view->findItem<QObject>(name))
+            if (auto item = view->findItem<QObject>(_L(name)))
                 item->setProperty("show", visible);
         };
         toggleTool("playinfo", as.playinfo_visible);
     });
-    connect(tool["subtitle"], &QAction::triggered, p, [this] () {
+    connect(tool[u"subtitle"_q], &QAction::triggered, p, [this] () {
         subtitleView->setVisible(!subtitleView->isVisible());
     });
-    connect(tool["pref"], &QAction::triggered, p, [this] () {
+    connect(tool[u"pref"_q], &QAction::triggered, p, [this] () {
         if (!prefDlg) {
             prefDlg = new PrefDialog(p);
             connect(prefDlg, &PrefDialog::applyRequested, p, [this] {
@@ -704,7 +704,7 @@ auto MainWindow::Data::connectMenus() -> void
         prefDlg->set(pref());
         prefDlg->show();
     });
-    connect(tool["find-subtitle"], &QAction::triggered, p, [this] () {
+    connect(tool[u"find-subtitle"_q], &QAction::triggered, p, [this] () {
         if (!subFindDlg) {
             subFindDlg = new SubtitleFindDialog(p);
             connect(subFindDlg, &SubtitleFindDialog::loadRequested,
@@ -716,25 +716,25 @@ auto MainWindow::Data::connectMenus() -> void
         subFindDlg->find(engine.mrl());
         subFindDlg->show();
     });
-    connect(tool["reload-skin"], &QAction::triggered,
+    connect(tool[u"reload-skin"_q], &QAction::triggered,
             p, [=] () { reloadSkin(); });
-    connect(tool["auto-exit"], &QAction::triggered, p, [this] (bool on) {
+    connect(tool[u"auto-exit"_q], &QAction::triggered, p, [this] (bool on) {
         if (on != as.auto_exit)
             push(on, as.auto_exit, [this] (bool on) {
                 as.auto_exit = on;
                 showMessage(on ? tr("Exit CMPlayer when "
                                     "the playlist has finished.")
                                : tr("Auto-exit is canceled."));
-                menu(u"tool"_q)["auto-exit"]->setChecked(on);
+                menu(u"tool"_q)[u"auto-exit"_q]->setChecked(on);
             });
     });
-    connect(tool["auto-shutdown"], &QAction::toggled, p, [this] (bool on) {
+    connect(tool[u"auto-shutdown"_q], &QAction::toggled, p, [this] (bool on) {
         if (on) {
             if (MBox::warn(p, tr("Auto-shutdown"),
                            tr("The system will shut down "
                               "when the play list has finished."),
                            {BBox::Ok, BBox::Cancel}) == BBox::Cancel) {
-                menu(u"tool"_q)["auto-shutdown"]->setChecked(false);
+                menu(u"tool"_q)[u"auto-shutdown"_q]->setChecked(false);
             } else
                 showMessage(tr("The system will shut down "
                                "when the play list has finished."));
@@ -748,15 +748,15 @@ auto MainWindow::Data::connectMenus() -> void
              [this] () { updateStaysOnTop(); });
     connect(win.g(u"size"_q), &ActionGroup::triggered,
             p, [this] (QAction *a) {setVideoSize(a->data().toDouble());});
-    connect(win["minimize"], &QAction::triggered, p, &MainWindow::showMinimized);
-    connect(win["maximize"], &QAction::triggered, p, &MainWindow::showMaximized);
-    connect(win["close"], &QAction::triggered, p,
+    connect(win[u"minimize"_q], &QAction::triggered, p, &MainWindow::showMinimized);
+    connect(win[u"maximize"_q], &QAction::triggered, p, &MainWindow::showMaximized);
+    connect(win[u"close"_q], &QAction::triggered, p,
             [=] () { menu.hide(); p->close(); });
 
     Menu &help = menu(u"help"_q);
-    connect(help["about"], &QAction::triggered,
+    connect(help[u"about"_q], &QAction::triggered,
             p, [=] () { AboutDialog dlg(p); dlg.exec(); });
-    connect(menu["exit"], &QAction::triggered, p, &MainWindow::exit);
+    connect(menu[u"exit"_q], &QAction::triggered, p, &MainWindow::exit);
 
     plugStreamActions(&menu(u"play"_q)(u"title"_q), &PlayEngine::currentEdition);
     plugStreamActions(&menu(u"play"_q)(u"chapter"_q), &PlayEngine::currentChapter);

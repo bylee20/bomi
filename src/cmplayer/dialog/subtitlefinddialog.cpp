@@ -115,8 +115,8 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
             find(QUrl::fromLocalFile(file));
     });
     Signal<QComboBox, int> changed = &QComboBox::currentIndexChanged;
-    connect(d->ui.language, changed, [this] (int index) {
-        const QString text = index > 0 ? d->ui.language->itemText(index) : "";
+    connect(d->ui.language, changed, [this] (int i) {
+        const auto text = i > 0 ? d->ui.language->itemText(i) : QString();
         d->proxy.setFilterFixedString(text);
     });
     connect(d->ui.get, &QPushButton::clicked, [this] () {
@@ -136,9 +136,9 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
             mbox.exec();
             switch (mbox.clickedRole()) {
             case BBox::ActionRole: {
-                const QString suffix = '.' % info.suffix();
+                const QString suffix = '.'_q % info.suffix();
                 const QString filter = tr("Subtitle Files")
-                                       % " (*"_a % suffix % ')';
+                                       % " (*"_a % suffix % ')'_q;
                 file = QFileDialog::getSaveFileName(this, tr("Save As..."),
                                                     file, filter);
                 if (file.isEmpty())

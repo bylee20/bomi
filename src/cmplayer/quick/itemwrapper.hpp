@@ -42,7 +42,7 @@ protected:
     auto qmlProperty(const char *name) const -> QQmlProperty
     { return QQmlProperty(m_item, _L(name)); }
 private:
-    static auto anchorName(AnchorLine line) -> const char*;
+    static auto anchorName(AnchorLine line) -> QString;
     QQuickItem *m_item = nullptr;
     QVector<QQmlProperty> m_anchors, m_margins;
 };
@@ -91,16 +91,16 @@ inline auto QtItem::setOffsets(qreal offset) -> void
     setOffset(HorizontalCenter, offset);
 }
 
-inline auto QtItem::anchorName(AnchorLine line) -> const char*
+inline auto QtItem::anchorName(AnchorLine line) -> QString
 {
-    static const QVector<const char *> names = [] () {
-        QVector<const char*> names(6);
-        names[Top] = "top";
-        names[Left] = "left";
-        names[Bottom] = "bottom";
-        names[Right] = "right";
-        names[VerticalCenter] = "verticalCenter";
-        names[HorizontalCenter] = "horizontalCenter";
+    static const QVector<QString> names = [] () {
+        QVector<QString> names(6);
+        names[Top] = u"top"_q;
+        names[Left] = u"left"_q;
+        names[Bottom] = u"bottom"_q;
+        names[Right] = u"right"_q;
+        names[VerticalCenter] = u"verticalCenter"_q;
+        names[HorizontalCenter] = u"horizontalCenter"_q;
         return names;
     }();
     return names[line];

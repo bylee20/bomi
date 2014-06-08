@@ -151,10 +151,10 @@ private:
 private:
     struct Material : public QSGMaterial {
         Material(const ShaderRenderItem *item);
-        QSGMaterialType *type() const final { return m_item->type(); }
-        QSGMaterialShader *createShader() const final;
-        ShaderData *data() { return m_data; }
-        const ShaderData *data() const { return m_data; }
+        auto type() const -> QSGMaterialType* final { return m_item->type(); }
+        auto createShader() const -> QSGMaterialShader* final;
+        auto data() -> ShaderData* { return m_data; }
+        auto data() const -> const ShaderData* { return m_data; }
     private:
         const ShaderRenderItem *m_item = nullptr;
         ShaderData *m_data = nullptr;

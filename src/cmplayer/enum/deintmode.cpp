@@ -1,6 +1,6 @@
 #include "deintmode.hpp"
 
 const std::array<DeintModeInfo::Item, 2> DeintModeInfo::info{{
-    {DeintMode::None, "None", "off", (int)0},
-    {DeintMode::Auto, "Auto", "auto", (int)1}
+    {DeintMode::None, u"None"_q, u"off"_q, (int)0},
+    {DeintMode::Auto, u"Auto"_q, u"auto"_q, (int)1}
 }};

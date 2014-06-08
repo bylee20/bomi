@@ -80,7 +80,7 @@ struct HistoryModel::Data {
         p->beginResetModel();
         rows = 0;
         if (loader.next()) {
-            rows = loader.value("total").toInt();
+            rows = loader.value(u"total"_q).toInt();
             idx_mrl = 0;
             idx_last = 1;
             idx_device = 2;
@@ -97,8 +97,8 @@ struct HistoryModel::Data {
         Transactor t(&db);
         finder.exec(u"DROP TABLE IF EXISTS %1"_q.arg(table));
         QString columns = _ToStringList(fields, [] (const MrlStateSqlField &f) {
-            return QString(_L(f.property().name()) % ' ' % f.type());
-        }).join(", ");
+            return QString(_L(f.property().name()) % ' '_q % f.type());
+        }).join(u", "_q);
 
         finder.exec(u"CREATE TABLE %1 (%2)"_q.arg(table).arg(columns));
         for (auto state : states) {
@@ -128,10 +128,10 @@ HistoryModel::HistoryModel(QObject *parent)
         d->fields.push_back(property, def);
     }
     d->fields.prepareInsert(d->table);
-    d->fields.prepareSelect(d->table, d->fields.field("mrl"));
+    d->fields.prepareSelect(d->table, d->fields.field(u"mrl"_q));
 
-    d->db = QSqlDatabase::addDatabase("QSQLITE", "history-model");
-    d->db.setDatabaseName(_WritablePath() % "/history.db");
+    d->db = QSqlDatabase::addDatabase(u"QSQLITE"_q, u"history-model"_q);
+    d->db.setDatabaseName(_WritablePath() % "/history.db"_a);
     if (!d->db.open()) {
         _Error("Error: %%. Couldn't create database.",
                d->db.lastError().text());
@@ -141,14 +141,14 @@ HistoryModel::HistoryModel(QObject *parent)
     d->loader = QSqlQuery(d->db);
     d->finder = QSqlQuery(d->db);
 
-    d->finder.exec("PRAGMA journal_mode = WAL");
-    d->finder.exec("PRAGMA user_version");
+    d->finder.exec(u"PRAGMA journal_mode = WAL"_q);
+    d->finder.exec(u"PRAGMA user_version"_q);
     int version = 0;
     if (d->finder.next())
         version = d->finder.value(0).toLongLong();
     if (version < currentVersion) {
         d->import(_ImportMrlStates(version, d->db));
-        d->finder.exec("PRAGMA user_version = " % _N(currentVersion));
+        d->finder.exec("PRAGMA user_version = "_a % _N(currentVersion));
     } else {
         auto record = d->db.record(d->table);
         QList<MrlStateSqlField> lacks;
@@ -159,8 +159,8 @@ HistoryModel::HistoryModel(QObject *parent)
         if (!lacks.isEmpty()) {
             Transactor t(&d->db);
             for (auto &field : lacks) {
-                const QString query = QString("ALTER TABLE %3 ADD COLUMN %1 %2")
-                        .arg(field.property().name()).arg(field.type());
+                const auto query = u"ALTER TABLE %3 ADD COLUMN %1 %2"_q
+                        .arg(_L(field.property().name())).arg(field.type());
                 d->finder.exec(query.arg(d->table));
                 d->check(d->finder);
             }
@@ -290,7 +290,7 @@ auto HistoryModel::setPropertiesToRestore(const QVector<QMetaProperty> &properti
         if (properties.contains(f.property()))
             d->restores.push_back(f);
     }
-    d->restores.prepareSelect(d->table, d->fields.field("mrl"));
+    d->restores.prepareSelect(d->table, d->fields.field(u"mrl"_q));
     d->restores.prepareInsert(d->table);
 }
 

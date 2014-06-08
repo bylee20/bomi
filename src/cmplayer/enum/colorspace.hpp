@@ -79,7 +79,7 @@ public:
         case Enum::BT709: return qApp->translate("EnumInfo", "BT.709(HD)");
         case Enum::SMPTE240M: return qApp->translate("EnumInfo", "SMPTE-240M");
         case Enum::YCgCo: return qApp->translate("EnumInfo", "YCgCo");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

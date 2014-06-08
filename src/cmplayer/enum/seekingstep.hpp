@@ -72,7 +72,7 @@ public:
         case Enum::Step1: return qApp->translate("EnumInfo", "");
         case Enum::Step2: return qApp->translate("EnumInfo", "");
         case Enum::Step3: return qApp->translate("EnumInfo", "");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

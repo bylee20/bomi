@@ -72,7 +72,7 @@ public:
         case Enum::Top: return qApp->translate("EnumInfo", "Top");
         case Enum::Center: return qApp->translate("EnumInfo", "Vertical Center");
         case Enum::Bottom: return qApp->translate("EnumInfo", "Bottom");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

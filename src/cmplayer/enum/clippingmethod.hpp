@@ -72,7 +72,7 @@ public:
         case Enum::Auto: return qApp->translate("EnumInfo", "Auto-clipping");
         case Enum::Soft: return qApp->translate("EnumInfo", "Soft-clipping");
         case Enum::Hard: return qApp->translate("EnumInfo", "Hard-clipping");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

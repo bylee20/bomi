@@ -60,8 +60,8 @@ struct XmlRpcClient::Data {
 
 XmlRpcClient::XmlRpcClient(QObject *parent)
 : QObject(parent), d(new Data) {
-    d->request.setHeader(QNetworkRequest::UserAgentHeader, "CMPlayerXmlRpcClient/0.1");
-    d->request.setHeader(QNetworkRequest::ContentTypeHeader, "text/xml");
+    d->request.setHeader(QNetworkRequest::UserAgentHeader, u"CMPlayerXmlRpcClient/0.1"_q);
+    d->request.setHeader(QNetworkRequest::ContentTypeHeader, u"text/xml"_q);
 }
 
 XmlRpcClient::~XmlRpcClient() {
@@ -76,17 +76,19 @@ auto XmlRpcClient::setUrl(const QUrl &url) -> void
 auto XmlRpcClient::postCall(const QString &method, const QList<QVariant> &args) -> QNetworkReply*
 {
     QDomDocument doc;
-    doc.appendChild(doc.createProcessingInstruction("xml", R"(version="1.0" encoding="UTF-8")"));
+    doc.appendChild(doc.createProcessingInstruction(
+                        u"xml"_q, uR"(version="1.0" encoding="UTF-8")"_q
+                    ));
 
-    auto call = doc.createElement("methodCall");
+    auto call = doc.createElement(u"methodCall"_q);
     doc.appendChild(call);
 
-    auto name = doc.createElement("methodName");
+    auto name = doc.createElement(u"methodName"_q);
     name.appendChild(doc.createTextNode(method));
     call.appendChild(name);
 
     if (!args.isEmpty()) {
-        auto params = doc.createElement("params");
+        auto params = doc.createElement(u"params"_q);
         for (int i=0; i<args.size(); ++i) {
             params.appendChild(doc.createElement(u"param"_q)).appendChild(toValueNode(doc, args[i]));
         }

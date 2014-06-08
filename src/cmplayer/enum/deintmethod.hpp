@@ -82,7 +82,7 @@ public:
         case Enum::LinearBlend: return qApp->translate("EnumInfo", "");
         case Enum::Yadif: return qApp->translate("EnumInfo", "");
         case Enum::MotionAdaptive: return qApp->translate("EnumInfo", "");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

@@ -11,13 +11,13 @@ Mrl::Mrl(const QUrl &url) {
 Mrl::Mrl(const QString &location, const QString &name) {
     if (location.isEmpty())
         return;
-    const int idx = location.indexOf("://");
+    const int idx = location.indexOf("://"_a);
     if (idx < 0)
         m_loc = "file://"_a % QFileInfo(location).absoluteFilePath();
-    else if (location.startsWith("file://", QCI))
+    else if (location.startsWith("file://"_a, QCI))
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
-    else if (location.startsWith("dvdnav://", QCI)
-             || location.startsWith("bdnav://", QCI))
+    else if (location.startsWith("dvdnav://"_a, QCI)
+             || location.startsWith("bdnav://"_a, QCI))
         m_loc = location;
     else
         m_loc = QUrl::fromPercentEncoding(location.toUtf8());
@@ -32,13 +32,13 @@ auto Mrl::path() const -> QString
 auto Mrl::fileName() const -> QString
 {
     const auto path = this->path();
-    return path.mid(path.lastIndexOf('/') + 1);
+    return path.mid(path.lastIndexOf('/'_q) + 1);
 }
 
 auto Mrl::suffix() const -> QString
 {
     const auto path = this->path();
-    const int idx = path.lastIndexOf('.');
+    const int idx = path.lastIndexOf('.'_q);
     return idx != -1 ? path.mid(idx + 1) : QString();
 }
 
@@ -57,12 +57,12 @@ auto Mrl::displayName() const -> QString
     if (dev.isEmpty())
         return disc;
     if (!dev.startsWith("/dev/"_a)) {
-        QRegEx regex("/([^/]+)/*$");
+        QRegEx regex(u"/([^/]+)/*$"_q);
         auto match = regex.match(dev);
         if (match.hasMatch())
             dev = match.captured(1);
     }
-    return disc % " ("_a % dev % ')';
+    return disc % " ("_a % dev % ')'_q;
 }
 
 auto Mrl::isImage() const -> bool
@@ -72,11 +72,12 @@ auto Mrl::isImage() const -> bool
 
 auto Mrl::isEmpty() const -> bool
 {
-    const int idx = m_loc.indexOf("://");
+    const int idx = m_loc.indexOf("://"_a);
     return (idx < 0) || !(idx+3 < m_loc.size());
 }
 
-static const QStringList discSchemes = QStringList() << u"dvdnav"_q << u"bdnav"_q;
+static const QStringList discSchemes = QStringList()
+        << u"dvdnav"_q << u"bdnav"_q;
 
 auto Mrl::isDisc() const -> bool
 {
@@ -89,20 +90,21 @@ auto Mrl::device() const -> QString
     if (!discSchemes.contains(scheme, QCI))
         return QString();
     auto path = m_loc.midRef(scheme.size() + 3);
-    const int idx = path.indexOf('/');
+    const int idx = path.indexOf('/'_q);
     if (idx < 0)
         return QString();
     return path.mid(idx+1).toString();
 }
 
-auto Mrl::fromDisc(const QString &scheme, const QString &device, int title, bool hash) -> Mrl
+auto Mrl::fromDisc(const QString &scheme, const QString &device,
+                   int title, bool hash) -> Mrl
 {
     QString loc = scheme % "://"_a;
     if (title < 0)
         loc += u"menu"_q;
     else if (title >= 0)
         loc += QString::number(title);
-    Mrl mrl(loc % '/' % device);
+    Mrl mrl(loc % '/'_q % device);
     if (hash)
         mrl.updateHash();
     return mrl;
@@ -152,8 +154,8 @@ static QByteArray dvdHash(const QString &device) {
 
 static QByteArray blurayHash(const QString &device) {
     static constexpr int block = 2048;
-    QStringList files = QStringList() << u"/BDMV/index.bdmv"_q
-        << u"/BDMV/MovieObject.bdmv"_q;
+    QStringList files = QStringList()
+            << u"/BDMV/index.bdmv"_q << u"/BDMV/MovieObject.bdmv"_q;
     QByteArray data;
     if (QFileInfo(device).isDir()) {
         auto dir = [&] (const QString &path) {
@@ -161,11 +163,11 @@ static QByteArray blurayHash(const QString &device) {
             auto list = dir.entryList(QDir::Files | QDir::NoDotAndDotDot);
             const int count = qMin(5, list.size());
             for (int i=0; i<count; ++i)
-                files.append(path % '/' % list[i]);
+                files.append(path % '/'_q % list[i]);
         };
-        dir("/BDMV/PLAYLIST");
-        dir("/BDMV/CLIPINF");
-        dir("/BDMV/STREAM");
+        dir(u"/BDMV/PLAYLIST"_q);
+        dir(u"/BDMV/CLIPINF"_q);
+        dir(u"/BDMV/STREAM"_q);
         qSort(files);
         for (auto &fileName : files) {
             QFile file(device % fileName);
@@ -183,9 +185,9 @@ static QByteArray blurayHash(const QString &device) {
             for (int i=0; i<count; ++i)
                 files.append(list[i]);
         };
-        dir("/BDMV/PLAYLIST");
-        dir("/BDMV/CLIPINF");
-        dir("/BDMV/STREAM");
+        dir(u"/BDMV/PLAYLIST"_q);
+        dir(u"/BDMV/CLIPINF"_q);
+        dir(u"/BDMV/STREAM"_q);
         qSort(files);
         for (auto &fileName : files) {
             ::udf::File file(&fs, fileName);
@@ -233,6 +235,6 @@ auto Mrl::fromUniqueId(const QString &id, const QString &device) -> Mrl
     mrl.m_hash = mrl.device().toLatin1();
     mrl.m_loc = mrl.scheme() % "://"_a;
     if (!device.isEmpty())
-        mrl.m_loc += '/' % device;
+        mrl.m_loc += '/'_q % device;
     return mrl;
 }

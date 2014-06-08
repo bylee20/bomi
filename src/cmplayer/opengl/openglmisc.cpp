@@ -65,7 +65,7 @@ auto check() -> void
                                int major = -1, int minor = 0) {
         if ((major > 0 && current >= versionNumber(major, minor))
                 || exts.contains(name)) {
-            extensions.append(name);
+            extensions.append(QString::fromLatin1(name));
             d.extensions |= ext;
         }
     };
@@ -81,7 +81,7 @@ auto check() -> void
     checkExtension("GLX_MESA_swap_control"_b, MesaSwapControl);
 
     if (QOpenGLFramebufferObject::hasOpenGLFramebufferObjects()) {
-        extensions.push_back("GL_ARB_framebuffer_object"_b);
+        extensions.push_back(u"GL_ARB_framebuffer_object"_q);
         d.extensions |= FramebufferObject;
     }
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &d.maxTexSize);
@@ -104,7 +104,7 @@ auto check() -> void
     if (d.fboFormats.isEmpty())
         _Fatal("No available FBO texture format.\n"
                "One of GL_BGRA8 and GL_BGRA16 must be supported at least.");
-    _Info("Available extensions: %%", extensions.join(", "));
+    _Info("Available extensions: %%", extensions.join(u", "_q));
 }
 
 auto errorString(GLenum error) -> const char*

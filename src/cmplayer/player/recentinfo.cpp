@@ -42,20 +42,20 @@ auto RecentInfo::clear() -> void
 auto RecentInfo::save() const -> void
 {
     QSettings set;
-    set.beginGroup("recent-info");
-    d->openList.save("recent-open-list", &set);
-    d->lastList.save("last-playlist", &set);
-    set.setValue("last-mrl", d->lastMrl.location());
+    set.beginGroup(u"recent-info"_q);
+    d->openList.save(u"recent-open-list"_q, &set);
+    d->lastList.save(u"last-playlist"_q, &set);
+    set.setValue(u"last-mrl"_q, d->lastMrl.location());
     set.endGroup();
 }
 
 auto RecentInfo::load() -> void
 {
     QSettings set;
-    set.beginGroup("recent-info");
-    d->openList.load("recent-open-list", &set);
-    d->lastList.load("last-playlist", &set);
-    d->lastMrl = set.value("last-mrl", QString()).toString();
+    set.beginGroup(u"recent-info"_q);
+    d->openList.load(u"recent-open-list"_q, &set);
+    d->lastList.load(u"last-playlist"_q, &set);
+    d->lastMrl = set.value(u"last-mrl"_q, QString()).toString();
     set.endGroup();
 }
 

@@ -70,7 +70,7 @@ public:
         switch (e) {
         case Enum::Similar: return qApp->translate("EnumInfo", "Add files which have similar names");
         case Enum::Folder: return qApp->translate("EnumInfo", "Add all files in the same folder");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

@@ -46,7 +46,8 @@ macx {
 
 QML_IMPORT_PATH += imports
 
-DEFINES += _LARGEFILE_SOURCE "_FILE_OFFSET_BITS=64" _LARGEFILE64_SOURCE
+DEFINES += _LARGEFILE_SOURCE "_FILE_OFFSET_BITS=64" _LARGEFILE64_SOURCE \
+	QT_NO_CAST_FROM_ASCII
 
 RESOURCES += rsclist.qrc
 
@@ -226,7 +227,8 @@ HEADERS += \
     dialog/prefdialog_p.hpp \
     opengl/openglbenchmarker.hpp \
     enum/colorspace.hpp \
-    player/mainwindow_p.hpp
+    player/mainwindow_p.hpp \
+    player/imageplayback.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -394,7 +396,9 @@ SOURCES += \
     opengl/openglbenchmarker.cpp \
     enum/colorspace.cpp \
     player/mainwindow_p.cpp \
-    player/mainwindow_m.cpp
+    player/mainwindow_m.cpp \
+    player/playengine_p.cpp \
+    player/imageplayback.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

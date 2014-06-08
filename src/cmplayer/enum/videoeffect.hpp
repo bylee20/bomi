@@ -87,7 +87,7 @@ public:
         case Enum::Blur: return qApp->translate("EnumInfo", "");
         case Enum::Sharpen: return qApp->translate("EnumInfo", "");
         case Enum::Disable: return qApp->translate("EnumInfo", "");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

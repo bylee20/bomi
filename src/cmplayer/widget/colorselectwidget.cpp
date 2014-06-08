@@ -15,7 +15,7 @@ ColorSelectWidget::ColorSelectWidget(QWidget *parent)
     d->hasAlpha = false;
     d->alpha = new QDoubleSpinBox(this);
     d->alpha->setRange(0.0, 100.0);
-    d->alpha->setSuffix("%");
+    d->alpha->setSuffix(u"%"_q);
     d->alpha->setDecimals(1);
     d->alpha->setAccelerated(true);
     d->alphaLabel = new QLabel(tr("Transparency"));

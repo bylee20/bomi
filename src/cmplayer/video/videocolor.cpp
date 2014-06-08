@@ -216,15 +216,15 @@ auto VideoColor::toString() const -> QString
 {
     QStringList strs;
     VideoColor::for_type([&] (VideoColor::Type type) {
-        strs.append(name(type) % '=' % _N(get(type)));
+        strs.append(name(type) % '='_q % _N(get(type)));
     });
-    return strs.join('|');
+    return strs.join('|'_q);
 }
 
 auto VideoColor::fromString(const QString &str) -> VideoColor
 {
-    const auto strs = str.split('|');
-    QRegEx regex(R"((\w+)=(\d+))");
+    const auto strs = str.split('|'_q);
+    QRegEx regex(uR"((\w+)=(\d+))"_q);
     VideoColor color;
     for (auto &one : strs) {
         auto match = regex.match(one);

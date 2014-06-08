@@ -24,7 +24,7 @@ DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
 {
     d->decoder = decoder;
     d->hwdec = decoder == DecoderDevice::GPU;
-    Record r("deint_caps");
+    Record r(u"deint_caps"_q);
     const auto name = DecoderDeviceInfo::name(decoder);
     const auto tokens = r.value(name).toStringList();
     for (const auto &token : tokens) {
@@ -96,7 +96,7 @@ DeintWidget::DeintWidget(DecoderDevice decoder, QWidget *parent)
 }
 
 DeintWidget::~DeintWidget() {
-    Record r("deint_caps");
+    Record r(u"deint_caps"_q);
     QStringList tokens;
     for (auto it = d->caps.begin(); it != d->caps.end(); ++it)
         tokens.push_back(it->toString());
@@ -118,30 +118,30 @@ auto DeintWidget::get() const -> DeintCaps
 auto DeintWidget::informations() -> QString
 {
     auto methodText = [] (DeintMethod method, const QString &desc) -> QString
-        { return DeintMethodInfo::name(method) % ": " % desc; };
+        { return DeintMethodInfo::name(method) % ": "_a % desc; };
     QString text =
-        '\n' % tr("Methods") % "\n\n" %
+        '\n'_q % tr("Methods") % "\n\n"_a %
         methodText(DeintMethod::Bob,
-                   tr("Display each line twice.")) % '\n' %
+                   tr("Display each line twice.")) % '\n'_q %
         methodText(DeintMethod::LinearBob,
-                   tr("Bob with linear interpolation.")) % '\n' %
+                   tr("Bob with linear interpolation.")) % '\n'_q %
         methodText(DeintMethod::CubicBob,
-                   tr("Bob with cubic interpolation.")) % '\n' %
+                   tr("Bob with cubic interpolation.")) % '\n'_q %
         methodText(DeintMethod::LinearBlend,
-                   tr("Blend linearly each line with (1 2 1) filter.")) % '\n' %
+                   tr("Blend linearly each line with (1 2 1) filter."))%'\n'_q %
         methodText(DeintMethod::Median,
-                   tr("Apply median filter to every second line.")) % '\n' %
+                   tr("Apply median filter to every second line.")) % '\n'_q %
         methodText(DeintMethod::Yadif,
                    tr("Use complicated temporal and spatial interpolation."))
-                   % "\n\n" %
-        tr("Double framerate") % "\n\n" %
+                   % "\n\n"_a %
+        tr("Double framerate") % "\n\n"_a %
         tr("This option makes the framerate doubled. "
            "You can get smoother and fluid motions "
-           "but it requires more CPU or GPU usage.") % "\n\n" %
-        tr("Use OpenGL") % "\n\n" %
+           "but it requires more CPU or GPU usage.") % "\n\n"_a %
+        tr("Use OpenGL") % "\n\n"_a %
         tr("In most case, deinterlacing with OpenGL can be performed faster "
-           "unless your graphics driver has poor support of OpenGL.") % "\n\n" %
-        tr("Use hardware acceleration if available") % "\n\n" %
+           "unless your graphics driver has poor support of OpenGL.") % "\n\n"_a %
+        tr("Use hardware acceleration if available") % "\n\n"_a %
         tr("Some methods can be accelerated with GPU "
            "by turning on this option if your hardware supports VA-API well.")
     ;

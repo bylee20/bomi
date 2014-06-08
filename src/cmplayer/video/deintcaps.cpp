@@ -3,10 +3,10 @@
 #include "misc/json.hpp"
 
 #define JSON_IO_DEINT_CAPS _JIO<DeintCaps>(\
-    _JE("method", &DeintCaps::m_method),\
-    _JE("decoders", &DeintCaps::m_decoders),\
-    _JE("devices", &DeintCaps::m_devices),\
-    _JE("doubler", &DeintCaps::m_doubler)\
+    _JE(u"method"_q, &DeintCaps::m_method),\
+    _JE(u"decoders"_q, &DeintCaps::m_decoders),\
+    _JE(u"devices"_q, &DeintCaps::m_devices),\
+    _JE(u"doubler"_q, &DeintCaps::m_doubler)\
 )
 
 template<>
@@ -96,30 +96,30 @@ auto DeintCaps::default_(DecoderDevice dec) -> DeintCaps
 
 auto DeintCaps::toString() const -> QString
 {
-    QString text = DeintMethodInfo::name(m_method) % '|';
+    QString text = DeintMethodInfo::name(m_method) % '|'_q;
     for (auto dec : DecoderDeviceInfo::items()) {
         if (m_decoders.contains(dec.value))
-            text += dec.name % ':';
+            text += dec.name % ':'_q;
     }
-    text += "|";
+    text += '|'_q;
     for (auto dev : DeintDeviceInfo::items()) {
         if (m_devices.contains(dev.value))
-            text += dev.name % ':';
+            text += dev.name % ':'_q;
     }
-    text += "|" % _N(m_doubler);
+    text += '|'_q % _N(m_doubler);
     return text;
 }
 
 auto DeintCaps::fromString(const QString &text) -> DeintCaps
 {
-    auto tokens = text.split('|', QString::SkipEmptyParts);
+    auto tokens = text.split('|'_q, QString::SkipEmptyParts);
     if (tokens.size() != 4)
         return DeintCaps();
     DeintCaps caps;
     caps.m_method = DeintMethodInfo::from(tokens[0]);
-    for (auto dec : tokens[1].split(':', QString::SkipEmptyParts))
+    for (auto dec : tokens[1].split(':'_q, QString::SkipEmptyParts))
         caps.m_decoders |= DecoderDeviceInfo::from(dec);
-    for (auto dev : tokens[2].split(':', QString::SkipEmptyParts))
+    for (auto dev : tokens[2].split(':'_q, QString::SkipEmptyParts))
         caps.m_devices |= DeintDeviceInfo::from(dev);
     caps.m_doubler = tokens[3].toInt();
     return caps;

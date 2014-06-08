@@ -45,7 +45,7 @@ auto PrefMenuTreeItem::makeRoot(QTreeWidget *parent, QList<MouseAction> &info)
 {
     RootMenu &root = RootMenu::instance();
     QList<PrefMenuTreeItem*> items;
-    auto item = create(&root, items, "", info);
+    auto item = create(&root, items, QString(), info);
     parent->addTopLevelItems(item->takeChildren());
     delete item;
     return items;
@@ -65,7 +65,7 @@ auto PrefMenuTreeItem::create(Menu *menu, QList<PrefMenuTreeItem*> &items,
             if (action->menu()) {
                 auto menu = qobject_cast<Menu*>(action->menu());
                 Q_ASSERT(menu);
-                const QString subprefix = prefix % menu->title()  % " > ";
+                const QString subprefix = prefix % menu->title()  % u" > "_q;
                 if (auto child = create(menu, items, subprefix, list))
                     children.push_back(child);
             } else {

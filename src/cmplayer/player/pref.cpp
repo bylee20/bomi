@@ -384,7 +384,7 @@ auto Pref::loadFromRecord() -> void
     Record r(PREF_GROUP);
     QList<QByteArray> restore_properties;
 #define READ1(a) r.read(a, #a)
-#define READ2(a) a.load(r, #a)
+#define READ2(a) a.load(r, u###a##_q)
     DO(READ1, READ2);
 
     QString backend;
@@ -400,14 +400,14 @@ auto Pref::loadFromRecord() -> void
             this->restore_properties.append(mo.property(idx));
     }
 
-    const auto size = r.beginReadArray("shortcuts");
+    const auto size = r.beginReadArray(u"shortcuts"_q);
     if (size > 0) {
         shortcuts.clear();
         for (int i=0; i<size; ++i) {
             r.setArrayIndex(i);
-            const auto id = r.value("id").toString();
+            const auto id = r.value(u"id"_q).toString();
             if (!id.isEmpty()) {
-                const auto keys = fromStringList<QKeySequence>(r.value("keys").toStringList());
+                const auto keys = fromStringList<QKeySequence>(r.value(u"keys"_q).toStringList());
                 if (!keys.isEmpty())
                     shortcuts[id] = keys;
             }
@@ -460,7 +460,7 @@ auto Pref::defaultSubtitleEncoding() -> QString
 
 auto Pref::defaultSkinName() -> QString
 {
-    return "GaN";
+    return u"GaN"_q;
 }
 
 auto Pref::defaultRestoreProperties() -> QVector<QMetaProperty>
@@ -501,29 +501,29 @@ auto Pref::defaultOsdTheme() -> OsdTheme
 auto Pref::defaultDoubleClick() -> KeyModifierActionMap
 {
     KeyModifierActionMap map;
-    map[KeyModifier::None] = { true, "window/full" };
+    map[KeyModifier::None] = { true, u"window/full"_q };
     return map;
 }
 
 auto Pref::defaultMiddleClick() -> KeyModifierActionMap
 {
     KeyModifierActionMap map;
-    map[KeyModifier::None] = { true, "play/pause" };
+    map[KeyModifier::None] = { true, u"play/pause"_q };
     return map;
 }
 
 auto Pref::defaultWheelUpAction() -> KeyModifierActionMap
 {
     KeyModifierActionMap map;
-    map[KeyModifier::None] = { true, "audio/volume/increase" };
-    map[KeyModifier::Ctrl] = { true, "audio/amp/increase" };
+    map[KeyModifier::None] = { true, u"audio/volume/increase"_q };
+    map[KeyModifier::Ctrl] = { true, u"audio/amp/increase"_q };
     return map;
 }
 
 auto Pref::defaultWheelDownAction() -> KeyModifierActionMap
 {
     KeyModifierActionMap map;
-    map[KeyModifier::None] = { true, "audio/volume/decrease" };
-    map[KeyModifier::Ctrl] = { true, "audio/amp/decrease" };
+    map[KeyModifier::None] = { true, u"audio/volume/decrease"_q };
+    map[KeyModifier::Ctrl] = { true, u"audio/amp/decrease"_q };
     return map;
 }

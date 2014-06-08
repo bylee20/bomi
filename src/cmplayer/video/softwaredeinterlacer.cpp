@@ -150,19 +150,19 @@ auto SoftwareDeinterlacer::setOption(const DeintOption &deint) -> void
         d->type = PP;
         switch (d->deint.method) {
         case DeintMethod::LinearBob:
-            d->option = "li";
+            d->option = u"li"_q;
             break;
         case DeintMethod::LinearBlend:
-            d->option = "lb";
+            d->option = u"lb"_q;
             break;
         case DeintMethod::CubicBob:
-            d->option = "ci";
+            d->option = u"ci"_q;
             break;
         case DeintMethod::Median:
-            d->option = "md";
+            d->option = u"md"_q;
             break;
         case DeintMethod::Yadif:
-            d->option = "yadif"_a + (d->deint.doubler ? "=mode=1" : "");
+            d->option = "yadif"_a % (d->deint.doubler ? "=mode=1"_a : ""_a);
             d->type = Graph;
             break;
         default:

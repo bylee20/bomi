@@ -121,7 +121,7 @@ auto UtilObject::processTime() -> quint64
 
 #ifdef Q_OS_LINUX
 #include <fcntl.h>
-QString UtilObject::monospace() { return "monospace"; }
+QString UtilObject::monospace() { return u"monospace"_q; }
 static int getField(const char *fileName, const char *fieldName, char *buffer, int size = BUFSIZ) {
     const auto fd = open(fileName, O_RDONLY);
     if (fd < 0)
@@ -156,12 +156,13 @@ auto UtilObject::cores() -> int
 {
     static int count = -1;
     if (count < 0) {
-        QFile file("/proc/cpuinfo");
+        QFile file(u"/proc/cpuinfo"_q);
         count = 0;
         if (!file.open(QFile::ReadOnly | QFile::Text))
             count = 1;
         else {
-            char buffer[BUFSIZ];    const char proc[] = "processor";
+            char buffer[BUFSIZ];
+            const char proc[] = "processor";
             while (file.readLine(buffer, BUFSIZ) != -1) {
                 buffer[sizeof(proc)-1] = '\0';
                 if (!strcmp(buffer, proc))

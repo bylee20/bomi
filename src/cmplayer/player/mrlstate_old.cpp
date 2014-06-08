@@ -21,7 +21,7 @@ enum ShiftHelper {
 };
 
 SIA _ToSql(const QString &text) -> QString {
-    return '\'' % QString(text).replace('\'', "''"_a) % '\'';
+    return '\''_q % QString(text).replace('\''_q, "''"_a) % '\''_q;
 }
 
 
@@ -43,10 +43,9 @@ SIA _ToSql(const QDateTime &dt) -> QString {
 
 SIA _DateTimeFromSql(qint64 dt) -> QString {
 #define XT(s) ((dt >> S_##s) & ((1 << B_##s)-1))
-    const QString q("%1");
-    auto pad = [&q] (int v, int n) -> QString { return q.arg(v, n, 10, '0'_q); };
-    return pad(XT(Year), 4) % '/' % pad(XT(Month), 2) % '/' % pad(XT(Day), 2) % ' '
-            % pad(XT(Hour), 2) % ':' % pad(XT(Min), 2) % ':' % pad(XT(Sec), 2);
+    auto pad = [] (int v, int n) -> QString { return u"%1"_q.arg(v, n, 10, '0'_q); };
+    return pad(XT(Year), 4) % '/'_q % pad(XT(Month), 2) % '/'_q % pad(XT(Day), 2) % ' '_q
+            % pad(XT(Hour), 2) % ':'_q % pad(XT(Min), 2) % ':'_q % pad(XT(Sec), 2);
 #undef XT
 }
 
@@ -55,14 +54,14 @@ SIA _ToSql(qint64 integer) -> QString { return QString::number(integer); }
 
 SIA _ToSql(const QPoint &p) -> QString
 {
-    return '\'' % QString::number(p.x()) % ',' % QString::number(p.y()) % '\'';
+    return '\''_q % QString::number(p.x()) % ','_q % QString::number(p.y()) % '\''_q;
 }
 
 SIA _ToSql(const QJsonObject &json) -> QString
 { return _ToSql(_JsonToString(json)); }
 
 SIA _PointFromSql(const QString &str, const QPoint &def) -> QPoint {
-    auto index = str.indexOf(',');
+    auto index = str.indexOf(','_q);
     if (index < 0)
         return def;
     bool ok1 = false, ok2 = false;
@@ -81,7 +80,7 @@ auto MrlFieldV1::list() -> QList<MrlFieldV1>
         for (int i=offset; i<count; ++i) {
             MrlFieldV1 field;
             field.m_property = metaObject.property(i);
-            field.m_type = "INTEGER";
+            field.m_type = u"INTEGER"_q;
             switch (field.m_property.type()) {
             case QVariant::Int:
                 field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toInt()); };
@@ -101,7 +100,7 @@ auto MrlFieldV1::list() -> QList<MrlFieldV1>
                 field.m_fromSql = [] (const QVariant &var, int) -> QVariant { return _DateTimeFromSql(var.toLongLong()); };
                 break;
             case QVariant::String:
-                field.m_type = "TEXT";
+                field.m_type = u"TEXT"_q;
                 field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toString()); };
                 break;
             default: {
@@ -129,11 +128,11 @@ auto MrlFieldV1::list() -> QList<MrlFieldV1>
 #undef UNPACK
                     };
                 } else if (type == qMetaTypeId<SubtitleStateInfo>()) {
-                    field.m_type = "TEXT";
+                    field.m_type = u"TEXT"_q;
                     field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<SubtitleStateInfo>().toString()); };
                     field.m_fromSql = [] (const QVariant &var, int) -> QVariant { return QVariant::fromValue(SubtitleStateInfo::fromString(var.toString())); };
                 } else if (type == qMetaTypeId<Mrl>()) {
-                    field.m_type = "TEXT UNIQUE";
+                    field.m_type = u"TEXT UNIQUE"_q;
                     field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<Mrl>().toString()); };
                     field.m_fromSql = [] (const QVariant &var, int) -> QVariant { return QVariant::fromValue(Mrl::fromString(var.toString())); };
                 } else
@@ -162,7 +161,7 @@ auto MrlFieldV2::list() -> QList<MrlFieldV2>
     for (int i=offset; i<count; ++i) {
         MrlFieldV2 field;
         field.m_property = metaObject.property(i);
-        field.m_sqlType = "INTEGER";
+        field.m_sqlType = u"INTEGER"_q;
         field.m_defaultValue = field.m_property.read(&default_);
         switch (field.m_property.type()) {
         case QVariant::Int:
@@ -187,27 +186,27 @@ auto MrlFieldV2::list() -> QList<MrlFieldV2>
             };
             break;
         case QVariant::String:
-            field.m_sqlType = "TEXT";
+            field.m_sqlType = u"TEXT"_q;
             field.m_toSql = [] (const QVariant &var) { return _ToSql(var.toString()); };
             break;
         default: {
             Q_ASSERT(field.m_property.type() == QVariant::UserType);
             const auto type = field.m_property.userType();
             if (_GetEnumFunctionsForSql(type, field.m_toSql, field.m_fromSql)) {
-                field.m_sqlType = "TEXT";
+                field.m_sqlType = u"TEXT"_q;
             } else if (_Is<VideoColor>(type)) {
                 field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<VideoColor>().packed()); };
                 field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
                     return var.isNull() ? def : QVariant::fromValue(VideoColor::fromPacked(var.toLongLong()));
                 };
             } else if (_Is<SubtitleStateInfo>(type)) {
-                field.m_sqlType = "TEXT";
+                field.m_sqlType = u"TEXT"_q;
                 field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<SubtitleStateInfo>().toJson()); };
                 field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
                     return var.isNull() ? def : QVariant::fromValue(SubtitleStateInfo::fromJson(var.toString()));
                 };
             } else if (_Is<Mrl>(type)) {
-                field.m_sqlType = "TEXT PRIMARY KEY NOT NULL";
+                field.m_sqlType = u"TEXT PRIMARY KEY NOT NULL"_q;
                 field.m_toSql = [] (const QVariant &var) { return _ToSql(var.value<Mrl>().toString()); };
                 field.m_fromSql = [] (const QVariant &var, const QVariant &def) -> QVariant {
                     return var.isNull() ? def : QVariant::fromValue(Mrl::fromString(var.toString()));

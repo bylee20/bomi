@@ -128,7 +128,7 @@ static auto _MrlFieldColumnListString(const QList<F> &list) -> QString
 {
     QString columns;
     for (auto &f : list)
-        columns += f.property().name() % ", "_a;
+        columns += _L(f.property().name()) % ", "_a;
     columns.chop(2);
     return columns;
 }
@@ -139,7 +139,7 @@ auto _FillMrlStateFromRecord(T *state, const QList<F> &fields,
     for (int i=0; i<fields.size(); ++i) {
         const auto &f = fields[i];
         const QMetaProperty p = f.property();
-        Q_ASSERT(p.name() == record.fieldName(i));
+        Q_ASSERT(_L(p.name()) == record.fieldName(i));
         p.write(state, f.fromSql(record.value(i)));
     }
 }
@@ -150,20 +150,20 @@ auto _ImportMrlStates(int version, QSqlDatabase db)
     QVector<MrlState*> states;
     if (version < 1) {
         QSettings set;
-        set.beginGroup("history");
-        const int size = set.beginReadArray("list");
+        set.beginGroup(u"history"_q);
+        const int size = set.beginReadArray(u"list"_q);
         states.reserve(size);
         for (int i=0; i<size; ++i) {
             set.setArrayIndex(i);
-            const Mrl mrl = set.value("mrl", QString()).toString();
+            const Mrl mrl = set.value(u"mrl"_q, QString()).toString();
             if (mrl.isEmpty())
                 continue;
             auto state = new MrlState;
             state->mrl = mrl;
             state->last_played_date_time
-                    = set.value("date", QDateTime()).toDateTime();
+                    = set.value(u"date"_q, QDateTime()).toDateTime();
             state->resume_position
-                    = set.value("stopped-position", 0).toInt();
+                    = set.value(u"stopped-position"_q, 0).toInt();
             states.append(state);
         }
     } else if (version < 2) {
@@ -172,8 +172,8 @@ auto _ImportMrlStates(int version, QSqlDatabase db)
         const auto fields = MrlFieldV1::list();
         const auto columns = _MrlFieldColumnListString(fields);
         MrlStateV1 prev;
-        query.exec(QString("SELECT %1, (SELECT COUNT(*) FROM state) as total "
-                           "FROM state").arg(columns));
+        query.exec(u"SELECT %1, (SELECT COUNT(*) FROM state) as total "
+                   u"FROM state"_q.arg(columns));
         while (query.next()) {
             _FillMrlStateFromRecord(&prev, fields, query.record());
             auto state = new MrlState;

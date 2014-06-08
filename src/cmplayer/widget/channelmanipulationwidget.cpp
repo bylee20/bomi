@@ -124,7 +124,7 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
     QString ex;
     for (auto &name : ChannelLayoutMap::channelNames()) {
         if (!ex.isEmpty())
-            ex += '\n';
+            ex += '\n'_q;
         ex += _L(name.abbr) % ": "_a % _L(name.desc);
     }
     grid->addWidget(new QLabel(ex), 0, 2, 2, 1);
@@ -132,7 +132,7 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
     connect(d->output, &DataComboBox::currentDataChanged, this, onComboChanged);
     connect(d-> input, &DataComboBox::currentDataChanged, this, onComboChanged);
 
-    Record r("channel_layouts");
+    Record r(u"channel_layouts"_q);
     ChannelLayout src = ChannelLayout::_2_0;
     ChannelLayout dst = ChannelLayout::_2_0;
     r.read(dst, "output");
@@ -141,7 +141,7 @@ ChannelManipulationWidget::ChannelManipulationWidget(QWidget *parent)
 }
 
 ChannelManipulationWidget::~ChannelManipulationWidget() {
-    Record r("channel_layouts");
+    Record r(u"channel_layouts"_q);
     r.write(d->output->currentValue(), "output");
     r.write(d->input->currentValue(), "input");
     delete d;

@@ -36,11 +36,11 @@ MainQuickView::~MainQuickView()
 auto MainQuickView::setSkin(const QString &name) -> bool
 {
     engine()->clearComponentCache();
-    rootContext()->setContextProperty("Util", &UtilObject::get());
+    rootContext()->setContextProperty(u"Util"_q, &UtilObject::get());
     Skin::apply(this, name);
     if (status() != QQuickView::Error)
         return true;
-    setSource(QUrl("qrc:/emptyskin.qml"));
+    setSource(QUrl(u"qrc:/emptyskin.qml"_q));
     return false;
 }
 

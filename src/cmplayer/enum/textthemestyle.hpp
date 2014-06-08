@@ -74,7 +74,7 @@ public:
         case Enum::Outline: return qApp->translate("EnumInfo", "Outline");
         case Enum::Raised: return qApp->translate("EnumInfo", "Raised");
         case Enum::Sunken: return qApp->translate("EnumInfo", "Sunken");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

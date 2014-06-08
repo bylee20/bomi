@@ -58,10 +58,10 @@ struct App::Data {
     MainWindow *main = nullptr;
 
     QLocale locale = QLocale::system();
-    QCommandLineOption dummy{"__dummy__"};
+    QCommandLineOption dummy{u"__dummy__"_q};
     QCommandLineParser cmdParser, msgParser;
     QMap<LineCmd, QCommandLineOption> options;
-    LocalConnection connection = {"net.xylosper.CMPlayer", nullptr};
+    LocalConnection connection = {u"net.xylosper.CMPlayer"_q, nullptr};
     auto open(const Mrl &mrl) -> void
     {
         if (!main || !main->isSceneGraphInitialized())
@@ -78,7 +78,7 @@ struct App::Data {
                    const QString &def = QString()) -> void
     {
         if (desc.contains("%1"_a)) {
-            const QCommandLineOption opt(names, desc.arg('<' % valName % '>'),
+            const QCommandLineOption opt(names, desc.arg('<'_q % valName % '>'_q),
                                          valName, def);
             options.insert(cmd, opt);
         } else
@@ -125,7 +125,7 @@ struct App::Data {
         parser->addHelpOption();
         parser->addVersionOption();
         const auto desc = tr("The file path or URL to open.");
-        parser->addPositionalArgument("mrl", desc, "mrl");
+        parser->addPositionalArgument(u"mrl"_q, desc, u"mrl"_q);
         return parser;
     }
 };
@@ -137,11 +137,11 @@ App::App(int &argc, char **argv)
 #ifdef Q_OS_LINUX
     setlocale(LC_NUMERIC,"C");
 #endif
-    setOrganizationName("xylosper");
-    setOrganizationDomain("xylosper.net");
-    setApplicationName(name());
-    setApplicationVersion(version());
-    setLocale(r.value("locale", QLocale::system()).toLocale());
+    setOrganizationName(u"xylosper"_q);
+    setOrganizationDomain(u"xylosper.net"_q);
+    setApplicationName(_L(name()));
+    setApplicationVersion(_L(version()));
+    setLocale(r.value(u"locale"_q, QLocale::system()).toLocale());
 
     d->addOption(LineCmd::Open, u"open"_q,
                  tr("Open given %1 for file path or URL."), u"mrl"_q);
@@ -151,7 +151,7 @@ App::App(int &argc, char **argv)
                  tr("Exectute %1 action or open %1 menu."), u"id"_q);
     d->addOption(LineCmd::LogLevel, u"log-level"_q,
                  tr("Maximum verbosity for log. %1 should be one of nexts:")
-                 % "\n    "_a % Log::options().join(", "), u"lv"_q);
+                 % "\n    "_a % Log::options().join(u", "_q), u"lv"_q);
     d->addOption(LineCmd::OpenGLDebug, u"opengl-debug"_q,
                  tr("Turn on OpenGL debug logger."));
     d->addOption(LineCmd::Debug, u"debug"_q,
@@ -186,7 +186,7 @@ App::App(int &argc, char **argv)
         return names;
     };
     auto makeStyle = [&]() {
-        auto name = r.value("style", styleName()).toString();
+        auto name = r.value(u"style"_q, styleName()).toString();
         if (style()->objectName().compare(name, QCI) == 0)
             return;
         if (!d->styleNames.contains(name, QCI))
@@ -197,7 +197,7 @@ App::App(int &argc, char **argv)
     makeStyle();
     connect(&d->connection, &LocalConnection::messageReceived,
              this, &App::handleMessage);
-    const auto map = r.value("open_folders").toMap();
+    const auto map = r.value(u"open_folders"_q).toMap();
     QMap<QString, QString> folders;
     for (auto it = map.begin(); it != map.end(); ++it)
         folders.insert(it.key(), it->toString());
@@ -211,7 +211,7 @@ App::~App() {
     QMap<QString, QVariant> map;
     for (auto it = folders.begin(); it != folders.end(); ++it)
         map.insert(it.key(), *it);
-    r.setValue("open_folders", map);
+    r.setValue(u"open_folders"_q, map);
     delete d->main;
     delete d->mb;
     delete d;
@@ -223,8 +223,8 @@ auto App::handleMessage(const QByteArray &message) -> void
     const auto msg = QJsonDocument::fromJson(message, &error).object();
     Q_ASSERT(!error.error);
 
-    const auto type = _JsonToInt(msg["type"]);
-    const auto contents = msg["contents"];
+    const auto type = _JsonToInt(msg[u"type"_q]);
+    const auto contents = msg[u"contents"_q];
     switch (type) {
     case CommandLine:
         d->msgParser.parse(_FromJson<QStringList>(contents));
@@ -259,7 +259,7 @@ auto App::setWindowTitle(QWidget *widget, const QString &title) -> void
 {
     _Trace("Set window title of %% to '%%'.",
            widget->metaObject()->className(), title);
-    const QString text = title % (title.isEmpty() ? "" : " - ")
+    const QString text = title % (title.isEmpty() ? u""_q : u" - "_q)
                          % applicationName();
     widget->setWindowTitle(text);
 #ifdef Q_OS_LINUX
@@ -289,15 +289,15 @@ auto App::defaultIcon() -> QIcon
     static QIcon icon;
     static bool init = false;
     if (!init) {
-        icon.addFile(":/img/cmplayer16.png", QSize(16, 16));
-        icon.addFile(":/img/cmplayer22.png", QSize(22, 22));
-        icon.addFile(":/img/cmplayer24.png", QSize(24, 24));
-        icon.addFile(":/img/cmplayer32.png", QSize(32, 32));
-        icon.addFile(":/img/cmplayer48.png", QSize(48, 48));
-        icon.addFile(":/img/cmplayer64.png", QSize(64, 64));
-        icon.addFile(":/img/cmplayer128.png", QSize(128, 128));
-        icon.addFile(":/img/cmplayer256.png", QSize(256, 256));
-        icon.addFile(":/img/cmplayer-logo.png", QSize(512, 512));
+        icon.addFile(u":/img/cmplayer16.png"_q, QSize(16, 16));
+        icon.addFile(u":/img/cmplayer22.png"_q, QSize(22, 22));
+        icon.addFile(u":/img/cmplayer24.png"_q, QSize(24, 24));
+        icon.addFile(u":/img/cmplayer32.png"_q, QSize(32, 32));
+        icon.addFile(u":/img/cmplayer48.png"_q, QSize(48, 48));
+        icon.addFile(u":/img/cmplayer64.png"_q, QSize(64, 64));
+        icon.addFile(u":/img/cmplayer128.png"_q, QSize(128, 128));
+        icon.addFile(u":/img/cmplayer256.png"_q, QSize(256, 256));
+        icon.addFile(u":/img/cmplayer-logo.png"_q, QSize(512, 512));
         init = true;
     }
     return icon;
@@ -403,7 +403,7 @@ auto App::styleName() const -> QString
 auto App::isUnique() const -> bool
 {
     Record r(APP_GROUP);
-    return r.value("unique", true).toBool();
+    return r.value(u"unique"_q, true).toBool();
 }
 
 #undef APP_GROUP

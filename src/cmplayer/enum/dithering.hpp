@@ -72,7 +72,7 @@ public:
         case Enum::None: return qApp->translate("EnumInfo", "Off");
         case Enum::Fruit: return qApp->translate("EnumInfo", "Random Dithering");
         case Enum::Ordered: return qApp->translate("EnumInfo", "Ordered Dithering");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

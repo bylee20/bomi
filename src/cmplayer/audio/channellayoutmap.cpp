@@ -168,18 +168,18 @@ auto ChannelLayoutMap::toString() const -> QString
         auto srcName = ChannelLayoutInfo::name(sit.key());
         for (auto dit = sit->begin(); dit != sit->end(); ++dit) {
             auto dstName = ChannelLayoutInfo::name(dit.key());
-            list.push_back(srcName % ":" % dstName % ":" % dit->toString());
+            list.push_back(srcName % ':'_q % dstName % ':'_q % dit->toString());
         }
     }
-    return list.join('#');
+    return list.join('#'_q);
 }
 
 auto ChannelLayoutMap::fromString(const QString &text) -> ChannelLayoutMap
 {
-    auto list = text.split('#', QString::SkipEmptyParts);
+    auto list = text.split('#'_q, QString::SkipEmptyParts);
     ChannelLayoutMap map;
     for (auto &one : list) {
-        auto parts = one.split(':', QString::SkipEmptyParts);
+        auto parts = one.split(':'_q, QString::SkipEmptyParts);
         if (parts.size() != 3)
             continue;
         auto src = ChannelLayoutInfo::from(parts[0]);

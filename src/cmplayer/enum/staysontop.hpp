@@ -72,7 +72,7 @@ public:
         case Enum::None: return qApp->translate("EnumInfo", "Off");
         case Enum::Playing: return qApp->translate("EnumInfo", "Playing");
         case Enum::Always: return qApp->translate("EnumInfo", "Always");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

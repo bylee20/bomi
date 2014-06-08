@@ -96,7 +96,7 @@ struct Stream {
     {
         QString name = m_title;
         if (!m_lang.isEmpty())
-            name += name.isEmpty() ? m_lang : " (" % m_lang % ")";
+            name += name.isEmpty() ? m_lang : " ("_a % m_lang % ")"_a;
         return name;
     }
     auto id() const -> int {return m_id;}

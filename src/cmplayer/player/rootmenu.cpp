@@ -25,7 +25,7 @@ auto root_menu_execute(const QString &longId, const QString &argument) -> bool
 
 template<class T>
 auto addEnumAction(Menu &menu, T t, const QString &key, bool checkable = false,
-                   const QString &group = "") -> EnumAction<T>*
+                   const QString &group = QString()) -> EnumAction<T>*
 {
     auto action = _NewEnumAction<T>(t);
     action->setCheckable(checkable);
@@ -102,7 +102,7 @@ template<class T>
 auto addEnumMenuCheckable(Menu &parent, bool cycle,
                           bool exclusive = true) -> void
 {
-    auto menu = parent.addMenu(EnumInfo<T>::typeKey());
+    auto menu = parent.addMenu(_L(EnumInfo<T>::typeKey()));
     addEnumActionsCheckable<T>(*menu, cycle, exclusive);
 }
 
@@ -129,7 +129,7 @@ template<class T>
 auto updateEnumMenu(Menu &parent) -> void
 {
     const auto desc = EnumInfo<T>::typeDescription();
-    updateEnumActions<T>(parent(EnumInfo<T>::typeKey(), desc));
+    updateEnumActions<T>(parent(_L(EnumInfo<T>::typeKey()), desc));
 }
 
 RootMenu *RootMenu::obj = nullptr;
@@ -149,7 +149,7 @@ static auto addStepPair(Menu &menu, const QString &inc,
 
 static auto addStepPair(Menu &menu, int min, int def, int max,
                         const QString &g = QString()) -> StepActionPair*
-{ return addStepPair(menu, u"increase"_q, u"decrease"_q, "", min, def, max, g); }
+{ return addStepPair(menu, u"increase"_q, u"decrease"_q, QString(), min, def, max, g); }
 
 static auto addStepReset(Menu &menu, int min, int def, int max,
                          const QString &g = u""_q) -> StepActionPair*
@@ -266,23 +266,23 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
 
     auto &effect = *video.addMenu(u"filter"_q);
     effect.g()->setExclusive(false);
-    addEnumAction(effect, VideoEffect::FlipV, "flip-v", true);
-    addEnumAction(effect, VideoEffect::FlipH, "flip-h", true);
+    addEnumAction(effect, VideoEffect::FlipV, u"flip-v"_q, true);
+    addEnumAction(effect, VideoEffect::FlipH, u"flip-h"_q, true);
     effect.addSeparator();
-    addEnumAction(effect, VideoEffect::Blur, "blur", true);
-    addEnumAction(effect, VideoEffect::Sharpen, "sharpen", true);
+    addEnumAction(effect, VideoEffect::Blur, u"blur"_q, true);
+    addEnumAction(effect, VideoEffect::Sharpen, u"sharpen"_q, true);
     effect.addSeparator();
-    addEnumAction(effect, VideoEffect::Gray, "gray", true);
-    addEnumAction(effect, VideoEffect::Invert, "invert", true);
+    addEnumAction(effect, VideoEffect::Gray, u"gray"_q, true);
+    addEnumAction(effect, VideoEffect::Invert, u"invert"_q, true);
     effect.addSeparator();
-    addEnumAction(effect, VideoEffect::Disable, "disable", true);
+    addEnumAction(effect, VideoEffect::Disable, u"disable"_q, true);
 
     auto &color = *video.addMenu(u"color"_q);
     color.addActionToGroup(u"reset"_q);
     color.addSeparator();
     VideoColor::for_type([&] (VideoColor::Type type) {
         const auto str = VideoColor::name(type);
-        addStepPair(color, str % '+', str % '-', str, -100, 0, 100, str);
+        addStepPair(color, str % '+'_q, str % '-'_q, str, -100, 0, 100, str);
     });
 
     auto &audio = *addMenu(u"audio"_q);
@@ -363,7 +363,7 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
     video(u"track"_q).setEnabled(false);
     audio(u"track"_q).setEnabled(false);
 
-    fillId(this, "");
+    fillId(this, QString());
 }
 
 auto RootMenu::execute(const QString &longId, const QString &argument) -> bool
@@ -408,7 +408,7 @@ auto RootMenu::fillId(Menu *menu, const QString &id) -> void
         const QString key = id % it.key();
         m_ids[m_actions[key].action = it.value()] = key;
         if (auto menu = qobject_cast<Menu*>(it.value()->menu()))
-            fillId(menu, key % "/");
+            fillId(menu, key % '/'_q);
     }
 }
 
@@ -451,7 +451,7 @@ auto RootMenu::retranslate() -> void
         StepAction::setFormat(g->actions(), format);
     };
 
-    translateStepMenu(play(u"speed"_q, tr("Playback Speed")), "%1%");
+    translateStepMenu(play(u"speed"_q, tr("Playback Speed")), u"%1%"_q);
 
     auto &repeat = play(u"repeat"_q, tr("A-B Repeat"));
     repeat.a(u"range"_q, tr("Set Range to Current Time"));
@@ -491,7 +491,7 @@ auto RootMenu::retranslate() -> void
 
     updateEnumMenu<SubtitleDisplay>(sub);
     updateEnumActions<VerticalAlignment>(sub(u"align"_q, tr("Subtitle Alignment")));
-    translateStepMenu(sub(u"position"_q, tr("Subtitle Position")), "%1%");
+    translateStepMenu(sub(u"position"_q, tr("Subtitle Position")), u"%1%"_q);
     translateStepMenu(sub(u"sync"_q, tr("Subtitle Sync")), tr("%1sec"));
 
     auto &video = root(u"video"_q, tr("Video"));
@@ -535,8 +535,8 @@ auto RootMenu::retranslate() -> void
     audio(u"track"_q, tr("Audio Track")).a(u"next"_q, tr("Select Next"));
     translateStepMenu(audio(u"sync"_q, tr("Audio Sync")), tr("%1sec"));
     audio(u"volume"_q).a(u"mute"_q, tr("Mute"));
-    translateStepMenu(audio(u"volume"_q, tr("Volume")), "%1%");
-    translateStepMenu(audio(u"amp"_q, tr("Amp")), "%1%");
+    translateStepMenu(audio(u"volume"_q, tr("Volume")), u"%1%"_q);
+    translateStepMenu(audio(u"amp"_q, tr("Amp")), u"%1%"_q);
     updateEnumMenu<ChannelLayout>(audio);
     audio.a(u"normalizer"_q, tr("Volume Normalizer"));
     audio.a(u"tempo-scaler"_q, tr("Tempo Scaler"));

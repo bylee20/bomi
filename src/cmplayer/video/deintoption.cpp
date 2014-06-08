@@ -2,13 +2,13 @@
 
 auto DeintOption::toString() const -> QString
 {
-    return DeintMethodInfo::name(method) % "|"
-           % _N(doubler) % "|" % DeintDeviceInfo::name(device);
+    return DeintMethodInfo::name(method) % '|'_q
+           % _N(doubler) % '|'_q % DeintDeviceInfo::name(device);
 }
 
 auto DeintOption::fromString(const QString &string) -> DeintOption
 {
-    QStringList tokens = string.split("|", QString::SkipEmptyParts);
+    QStringList tokens = string.split('|'_q, QString::SkipEmptyParts);
     if (tokens.size() != 3)
         return DeintOption();
     DeintOption opt;

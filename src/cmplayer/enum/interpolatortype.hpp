@@ -88,7 +88,7 @@ public:
         case Enum::Lanczos2: return qApp->translate("EnumInfo", "2-Lobed Lanczos");
         case Enum::Lanczos3: return qApp->translate("EnumInfo", "3-Lobed Lanczos");
         case Enum::Lanczos4: return qApp->translate("EnumInfo", "4-Lobed Lanczos");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

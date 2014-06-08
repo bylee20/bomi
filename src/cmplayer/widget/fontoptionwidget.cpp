@@ -6,7 +6,7 @@ struct FontOptionWidget::Data {
     auto make(const QString &toolTip, const char *icon) -> QToolButton*
     {
         QToolButton *button = new QToolButton(p);
-        button->setIcon(QIcon(icon));
+        button->setIcon(QIcon(_L(icon)));
         button->setToolTip(toolTip);
         button->setCheckable(true);
         return button;

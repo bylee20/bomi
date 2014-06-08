@@ -28,11 +28,11 @@ auto HwAcc::availableBackends() -> QList<HwAcc::Type>
 
 auto HwAcc::backend(const QString &name) -> HwAcc::Type
 {
-    if (name == "vaapi")
+    if (name == "vaapi"_a)
         return VaApiGLX;
-    if (name == "vdpau")
+    if (name == "vdpau"_a)
         return VdpauX11;
-    if (name == "vda")
+    if (name == "vda"_a)
         return Vda;
 #undef None
     return None;
@@ -42,11 +42,11 @@ auto HwAcc::backendName(Type type) -> QString
 {
     switch (type) {
     case Vda:
-        return "vda";
+        return u"vda"_q;
     case VaApiGLX:
-        return "vaapi";
+        return u"vaapi"_q;
     case VdpauX11:
-        return "vdpau";
+        return u"vdpau"_q;
     default:
         return QString();
     }
@@ -56,11 +56,11 @@ auto HwAcc::backendDescription(Type type) -> QString
 {
     switch (type) {
     case Vda:
-        return QString("VDA(Video Decode Acceleration");
+        return u"VDA(Video Decode Acceleration"_q;
     case VaApiGLX:
-        return QString("VA-API(Video Acceleration API)");
+        return u"VA-API(Video Acceleration API)"_q;
     case VdpauX11:
-        return QString("VDPAU(Video Decode and Presentation API for Unix)");
+        return u"VDPAU(Video Decode and Presentation API for Unix)"_q;
     default:
         return QString();
     }

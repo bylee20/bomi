@@ -3,7 +3,7 @@
 EncodingComboBox::EncodingComboBox(QWidget *parent)
 : QComboBox(parent) {
     auto add = [this] (const QString &desc, const QString &enc)
-        { this->addItem(desc % " ("_a % enc % ')', enc); };
+        { this->addItem(desc % " ("_a % enc % ')'_q, enc); };
     add(u"UTF-8"_q, u"UTF-8"_q);
     add(u"Unicode"_q, u"Unicode"_q);
     add(u"Western European Languages"_q, u"CP1252"_q);

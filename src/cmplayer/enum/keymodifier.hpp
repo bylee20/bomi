@@ -79,7 +79,7 @@ public:
         case Enum::Ctrl: return qApp->translate("EnumInfo", "");
         case Enum::Shift: return qApp->translate("EnumInfo", "");
         case Enum::Alt: return qApp->translate("EnumInfo", "");
-        default: return "";
+        default: return QString();
         }
     }
     static constexpr auto items() -> const ItemList&

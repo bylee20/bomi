@@ -24,7 +24,7 @@ static auto _SqlDataToValueUsingJson(const QVariant &sqlData) -> QVariant
 MrlStateSqlField::MrlStateSqlField(const QMetaProperty &property,
                                    const QVariant &def) noexcept
     : m_property(property)
-    , m_sqlType("INTEGER")
+    , m_sqlType(u"INTEGER"_q)
     , m_defaultValue(def)
 {
     static const auto passthrough = [] (const QVariant &var) { return var; };
@@ -34,10 +34,10 @@ MrlStateSqlField::MrlStateSqlField(const QMetaProperty &property,
     case QMetaType::LongLong:    case QMetaType::ULongLong:
         break;
     case QMetaType::Double:
-        m_sqlType = "REAL";
+        m_sqlType = u"REAL"_q;
         break;
     case QMetaType::QString:
-        m_sqlType = "TEXT";
+        m_sqlType = u"TEXT"_q;
         break;
     case QMetaType::Bool:
         m_v2d = [] (const QVariant &value)
@@ -63,7 +63,7 @@ MrlStateSqlField::MrlStateSqlField(const QMetaProperty &property,
         const auto type = m_property.userType();
         const auto enumConv = _EnumNameVariantConverter(type);
         if (!enumConv.isNull()) {
-            m_sqlType = "TEXT";
+            m_sqlType = u"TEXT"_q;
             const auto n2v = enumConv.nameToVariant;
             const auto v2n = enumConv.variantToName;
             m_v2d = [v2n] (const QVariant &value)
@@ -74,14 +74,14 @@ MrlStateSqlField::MrlStateSqlField(const QMetaProperty &property,
         }
 #define JSON_CASE(T) \
         if (_Is<T>(type)) { \
-            m_sqlType = "TEXT"; \
+            m_sqlType = u"TEXT"_q; \
             m_v2d = _ValueToSqlDataUsingJson<T>; \
             m_d2v = _SqlDataToValueUsingJson<T>; \
             break;\
         }
         JSON_CASE(VideoColor);        JSON_CASE(SubtitleStateInfo);
         if (_Is<Mrl>(type)) {
-            m_sqlType = "TEXT PRIMARY KEY NOT NULL";
+            m_sqlType = u"TEXT PRIMARY KEY NOT NULL"_q;
             m_v2d = [] (const QVariant &value)
                 { return QVariant(value.value<Mrl>().toString()); };
             m_d2v = [] (const QVariant &sqlData) {
@@ -112,11 +112,11 @@ auto MrlStateSqlFieldList::prepareInsert(const QString &table) -> QString
     if (m_fields.isEmpty())
         return QString();
     const auto phs = _ToStringList(m_fields, [&] (const MrlStateSqlField &) {
-        return QString('?');
-    }).join(',');
+        return QString('?'_q);
+    }).join(','_q);
     const auto cols = _ToStringList(m_fields, [&] (const MrlStateSqlField &f) {
         return QString::fromLatin1(f.property().name());
-    }).join(',');
+    }).join(','_q);
     insert = u"INSERT OR REPLACE INTO %1 (%2) VALUES (%3)"_q
             .arg(table).arg(cols).arg(phs);
     return insert;
@@ -142,9 +142,9 @@ auto MrlStateSqlFieldList::prepareSelect(const QString &table,
     const auto columns = _ToStringList(m_fields,
                                        [&] (const MrlStateSqlField &field) {
         return QString::fromLatin1(field.property().name());
-    }).join(',');
+    }).join(','_q);
     select = u"SELECT %1 FROM %2 WHERE %3 = ?"_q
-            .arg(columns).arg(table).arg(m_where.property().name());
+            .arg(columns).arg(table).arg(_L(m_where.property().name()));
     return select;
 }
 
@@ -161,7 +161,7 @@ auto MrlStateSqlFieldList::select(QSqlQuery &query, QObject *object,
         return false;
     const auto record = query.record();
     for (int i = 0; i < m_fields.size(); ++i) {
-        Q_ASSERT(m_fields[i].property().name() == record.fieldName(i));
+        Q_ASSERT(_L(m_fields[i].property().name()) == record.fieldName(i));
         m_fields[i].exportTo(object, record.value(i));
     }
     return true;

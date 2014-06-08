@@ -5,7 +5,7 @@ Menu::Menu(const QString &id, QWidget *parent)
     : QMenu(parent)
     , m_id(id)
 {
-    addGroup("");
+    addGroup(QString());
 }
 
 auto Menu::copied(QWidget *parent) -> QMenu*

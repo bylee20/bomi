@@ -41,7 +41,7 @@ auto getLocales(const QString &path, const QString &filter,
 {
     const QDir dir(path);
     const QStringList files = dir.entryList(QStringList(filter));
-    QRegEx rx("^cmplayer_" + regExp + "$");
+    QRegEx rx(u"^cmplayer_"_q % regExp % '$'_q);
     QSet<QLocale> set;
     for (auto &file : files) {
         const auto match = rx.match(file);
@@ -53,13 +53,13 @@ auto getLocales(const QString &path, const QString &filter,
 
 Translator::Translator()
 : d(new Data) {
-    d->def = ":/translations";
+    d->def = u":/translations"_q;
     qApp->installTranslator(&d->trans);
     qApp->installTranslator(&d->qt);
-    d->locales += getLocales(d->def, "*.qm", "(.*).qm");
+    d->locales += getLocales(d->def, u"*.qm"_q, u"(.*).qm"_q);
     d->path = QString::fromLocal8Bit(qgetenv("CMPLAYER_TRANSLATION_PATH"));
     if (!d->path.isEmpty())
-        d->locales += getLocales(d->path, "*.qm", "(.*).qm");
+        d->locales += getLocales(d->path, u"*.qm"_q, u"(.*).qm"_q);
 
     d->b2t[u"cze"_q] = u"ces"_q;
     d->b2t[u"baq"_q] = u"eus"_q;
@@ -85,7 +85,7 @@ Translator::Translator()
     // custom code for opensubtitles
     d->b2t[u"scc"_q] = u"srp"_q;
     d->b2t[u"pob"_q] = u"por"_q;
-    d->b2t[u"pb"_q] = u"pt"_q;
+    d->b2t[u"pb"_q]  = u"pt"_q;
 }
 
 Translator::~Translator() {
@@ -108,7 +108,7 @@ auto Translator::load(const QLocale &locale) -> bool
     QLocale l = locale;
     if (locale.language() == QLocale::C)
         l = QLocale::system();
-    const QString file = "cmplayer_" + l.name();
+    const QString file = "cmplayer_"_a % l.name();
     Translator::Data *d = get().d;
     if (file == d->file)
         return d->succ;

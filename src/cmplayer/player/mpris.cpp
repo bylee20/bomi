@@ -22,7 +22,8 @@ RootObject::RootObject(QObject *parent)
     auto bus = QDBusConnection::sessionBus();
     auto ok = bus.registerService(m_name);
     if (!ok) {
-        m_name = m_name % ".instance" % QString::number(qApp->applicationPid());
+        m_name = m_name % ".instance"_a
+                 % QString::number(qApp->applicationPid());
         ok = bus.registerService(m_name);
     }
     if (!ok)
@@ -30,7 +31,7 @@ RootObject::RootObject(QObject *parent)
     else {
         m_mp2 = new MediaPlayer2(this);
         m_player = new Player(this);
-        bus.registerObject("/org/mpris/MediaPlayer2", this,
+        bus.registerObject(u"/org/mpris/MediaPlayer2"_q, this,
                            QDBusConnection::ExportAdaptors);
     }
 }
@@ -39,8 +40,9 @@ RootObject::~RootObject()
 {
     if (m_name.isEmpty())
         return;
-    QDBusConnection::sessionBus().unregisterObject("/org/mpris/MediaPlayer2");
-    QDBusConnection::sessionBus().unregisterService(m_name);
+    auto bus = QDBusConnection::sessionBus();
+    bus.unregisterObject(u"/org/mpris/MediaPlayer2"_q);
+    bus.unregisterService(m_name);
 }
 
 
@@ -48,16 +50,16 @@ static auto dbusTrackId(const Mrl &mrl) -> QString
 {
     using Hash = QCryptographicHash;
     const auto hash = Hash::hash(mrl.toString().toLocal8Bit(), Hash::Md5);
-    return u"/net/xylosper/CMPlayer/track_"_q + hash.toHex();
+    return "/net/xylosper/CMPlayer/track_"_a % _L(hash.toHex().constData());
 }
 
 static auto sendPropertiesChanged(const QDBusAbstractAdaptor *adaptor,
                                   const QVariantMap &properties) -> void
 {
     const auto iface = _L(adaptor->metaObject()->classInfo(0).value());
-    auto sig = QDBusMessage::createSignal("/org/mpris/MediaPlayer2",
-                                          "org.freedesktop.DBus.Properties",
-                                          "PropertiesChanged" );
+    auto sig = QDBusMessage::createSignal(u"/org/mpris/MediaPlayer2"_q,
+                                          u"org.freedesktop.DBus.Properties"_q,
+                                          u"PropertiesChanged"_q);
     sig << iface << properties << QStringList();
     QDBusConnection::sessionBus().send(sig);
 }
@@ -66,7 +68,8 @@ SIA sendPropertiesChanged(const QDBusAbstractAdaptor *adaptor,
                           const char *property, const QVariant &value) -> void
 {
     QVariantMap props;
-    props.insert(property, value); sendPropertiesChanged(adaptor, props);
+    props.insert(_L(property), value);
+    sendPropertiesChanged(adaptor, props);
 }
 
 struct MediaPlayer2::Data {
@@ -108,36 +111,42 @@ auto MediaPlayer2::Quit() -> void
 
 auto MediaPlayer2::supportedUriSchemes() const -> QStringList
 {
-    return QStringList() << "file" << "http" << "https" << "ftp"
-                         << "mms" << "rtmp" << "rtsp" << "sftp";
+    return QStringList() << u"file"_q << u"http"_q << u"https"_q << u"ftp"_q
+                         << u"mms"_q << u"rtmp"_q << u"rtsp"_q << u"sftp"_q;
 }
 
 auto MediaPlayer2::supportedMimeTypes() const -> QStringList
 {
-    return QStringList() << "application/ogg" << "application/x-ogg"
-                         << "application/sdp" << "application/smil"
-                         << "application/x-smil" << "application/streamingmedia"
-                         << "application/x-streamingmedia"
-                         << "application/vnd.rn-realmedia"
-                         << "application/vnd.rn-realmedia-vbr"
-                         << "audio/aac" << "audio/x-aac" << "audio/m4a"
-                         << "audio/x-m4a" << "audio/mp1" << "audio/x-mp1"
-                         << "audio/mp2" << "audio/x-mp2" << "audio/mp3"
-                         << "audio/x-mp3" << "audio/mpeg" << "audio/x-mpeg"
-                         << "audio/mpegurl" << "audio/x-mpegurl" << "audio/mpg"
-                         << "audio/x-mpg" << "audio/rn-mpeg" << "audio/scpls"
-                         << "audio/x-scpls" << "audio/vnd.rn-realaudio"
-                         << "audio/wav" << "audio/x-pn-windows-pcm"
-                         << "audio/x-realaudio" << "audio/x-pn-realaudio"
-                         << "audio/x-ms-wma" << "audio/x-pls" << "audio/x-wav"
-                         << "video/mpeg" << "video/x-mpeg" << "video/x-mpeg2"
-                         << "video/mp4" << "video/msvideo" << "video/x-msvideo"
-                         << "video/quicktime" << "video/vnd.rn-realvideo"
-                         << "video/x-ms-afs" << "video/x-ms-asf"
-                         << "video/x-ms-wmv" << "video/x-ms-wmx"
-                         << "video/x-ms-wvxvideo" << "video/x-avi"
-                         << "video/x-fli" << "video/x-flv" << "video/x-theora"
-                         << "video/x-matroska" << "video/mp2t";
+    return QStringList() << u"application/ogg"_q << u"application/x-ogg"_q
+                         << u"application/sdp"_q << u"application/smil"_q
+                         << u"application/x-smil"_q
+                         << u"application/streamingmedia"_q
+                         << u"application/x-streamingmedia"_q
+                         << u"application/vnd.rn-realmedia"_q
+                         << u"application/vnd.rn-realmedia-vbr"_q
+                         << u"audio/aac"_q << u"audio/x-aac"_q
+                         << u"audio/m4a"_q << u"audio/x-m4a"_q
+                         << u"audio/mp1"_q << u"audio/x-mp1"_q
+                         << u"audio/mp2"_q << u"audio/x-mp2"_q
+                         << u"audio/mp3"_q << u"audio/x-mp3"_q
+                         << u"audio/mpeg"_q << u"audio/x-mpeg"_q
+                         << u"audio/mpegurl"_q << u"audio/x-mpegurl"_q
+                         << u"audio/mpg"_q << u"audio/x-mpg"_q
+                         << u"audio/rn-mpeg"_q << u"audio/scpls"_q
+                         << u"audio/x-scpls"_q << u"audio/vnd.rn-realaudio"_q
+                         << u"audio/wav"_q << u"audio/x-pn-windows-pcm"_q
+                         << u"audio/x-realaudio"_q << u"audio/x-pn-realaudio"_q
+                         << u"audio/x-ms-wma"_q << u"audio/x-pls"_q
+                         << u"audio/x-wav"_q << u"video/mpeg"_q
+                         << u"video/x-mpeg"_q << u"video/x-mpeg2"_q
+                         << u"video/mp4"_q << u"video/msvideo"_q
+                         << u"video/x-msvideo"_q << u"video/quicktime"_q
+                         << u"video/vnd.rn-realvideo"_q << u"video/x-ms-afs"_q
+                         << u"video/x-ms-asf"_q << u"video/x-ms-wmv"_q
+                         << u"video/x-ms-wmx"_q << u"video/x-ms-wvxvideo"_q
+                         << u"video/x-avi"_q << u"video/x-fli"_q
+                         << u"video/x-flv"_q << u"video/x-theora"_q
+                         << u"video/x-matroska"_q << u"video/mp2t"_q;
 }
 
 /******************************************************************************/
@@ -165,17 +174,17 @@ struct Player::Data {
     {
         QVariantMap map;
         const QDBusObjectPath path(dbusTrackId(md.mrl()));
-        map["mpris:trackid"] = QVariant::fromValue(path);
-        map["mpris:length"] = 1000LL*(qint64)md.duration();
-        map["xesam:url"] = md.mrl().toString();
-        map["xesam:title"] = md.title().isEmpty() ? engine->mediaInfo()->name()
-                                                  : md.title();
+        map[u"mpris:trackid"_q] = QVariant::fromValue(path);
+        map[u"mpris:length"_q] = 1000LL*(qint64)md.duration();
+        map[u"xesam:url"_q] = md.mrl().toString();
+        map[u"xesam:title"_q] = md.title().isEmpty()
+                ? engine->mediaInfo()->name() : md.title();
         if (!md.album().isEmpty())
-            map["xesam:album"] = md.album();
+            map[u"xesam:album"_q] = md.album();
         if (!md.artist().isEmpty())
-            map["xesam:artist"] = QStringList(md.artist());
+            map[u"xesam:artist"_q] = QStringList(md.artist());
         if (!md.genre().isEmpty())
-            map["xesam:genre"] = QStringList(md.genre());
+            map[u"xesam:genre"_q] = QStringList(md.genre());
         return map;
     }
 };
@@ -199,8 +208,8 @@ Player::Player(QObject *parent)
             [this] (PlayEngine::State state) {
         d->playbackStatus = d->toDBus(d->engine->state());
         QVariantMap map;
-        map["PlaybackStatus"] = d->playbackStatus;
-        map["CanPause"] = map["CanPlay"] = state != PlayEngine::Error;
+        map[u"PlaybackStatus"_q] = d->playbackStatus;
+        map[u"CanPause"_q] = map[u"CanPlay"_q] = state != PlayEngine::Error;
         sendPropertiesChanged(this, map);
     });
     connect(d->engine, &PlayEngine::speedChanged, this, [this] (double speed) {
@@ -208,8 +217,8 @@ Player::Player(QObject *parent)
     });
     auto checkNextPrevious = [this] () {
         QVariantMap map;
-        map["CanGoNext"] = d->playlist->hasNext();
-        map["CanGoPrevious"] = d->playlist->hasPrevious();
+        map[u"CanGoNext"_q] = d->playlist->hasNext();
+        map[u"CanGoPrevious"_q] = d->playlist->hasPrevious();
         sendPropertiesChanged(this, map);
     };
     connect(d->playlist, &PlaylistModel::loadedChanged,

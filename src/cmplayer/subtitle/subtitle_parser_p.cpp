@@ -6,11 +6,11 @@ SCIA _TimeToMSec(int h, int m, int s, int ms = 0) -> qint64
 
 auto SamiParser::isParsable() const -> bool
 {
-    if (_IsOneOf(file().suffix().toLower(), "smi", "sami"))
+    if (_IsOneOf(file().suffix().toLower(), "smi"_a, "sami"_a))
         return true;
     if (skipSeparators())
         return false;
-    if (all().startsWith("<sami", QCI))
+    if (all().startsWith("<sami"_a, QCI))
         return true;
     return false;
 }
@@ -77,10 +77,10 @@ auto SubRipParser::isParsable() const -> bool
 
 auto SubRipParser::_parse(Subtitle &sub) -> void
 {
-    QRegEx rxNum(R"(^\s*(\d+)\s*$)");
-    QRegEx rxTime(R"(^\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"
-                              R"(-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*$)");
-    QRegEx rxBlank(R"(^\s*$)");
+    QRegEx rxNum(uR"(^\s*(\d+)\s*$)"_q);
+    QRegEx rxTime(uR"(^\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*)"
+                  uR"(-->\s*(\d\d):(\d\d):(\d\d),(\d\d\d)\s*$)"_q);
+    QRegEx rxBlank(uR"(^\s*$)"_q);
     auto getNumber = [&rxNum, this] () {
         for (;;) {
             const auto ref = getLine();
@@ -116,10 +116,10 @@ auto SubRipParser::_parse(Subtitle &sub) -> void
             if (matched.hasMatch())
                 break;
             if (!ret.isEmpty())
-                ret += "<br>";
+                ret += "<br>"_a;
             ret += line;
         }
-        return QString("<p>" % ret % "</p>");
+        return QString("<p>"_a % ret % "</p>"_a);
     };
 
     sub.clear();
@@ -197,41 +197,41 @@ auto MicroDVDParser::_parse(Subtitle &sub) -> void
         const auto text = m.captured(3);
         QString parsed1, parsed2;
         auto addTag0 = [&] (const QString &name) {
-            parsed1 += '<' % name % '>';
-            parsed2 += "</"_a % name % '>';
+            parsed1 += '<'_q % name % '>'_q;
+            parsed2 += "</"_a % name % '>'_q;
         };
         auto addTag1 = [&] (const QString &name, const QString &attr) {
-            parsed1 += '<' % name % ' ' % attr % '>';
-            parsed2 += "</"_a % name % '>';
+            parsed1 += '<'_q % name % ' '_q % attr % '>'_q;
+            parsed2 += "</"_a % name % '>'_q;
         };
         int idx = 0;
-        QRegEx rxColor("\\$([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})");
+        QRegEx rxColor(u"\\$([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})"_q);
         QRegExMatch am;
         while ((am = rxAttr.match(text, idx)).hasMatch()) {
             const auto name = am.capturedRef(1);
             const auto value = am.capturedRef(2);
             if (_Same(name, "y")) {
-                if (value.contains('i', QCI))
+                if (value.contains('i'_q, QCI))
                     addTag0(u"i"_q);
-                if (value.contains('u', QCI))
+                if (value.contains('u'_q, QCI))
                     addTag0(u"u"_q);
-                if (value.contains('s', QCI))
+                if (value.contains('s'_q, QCI))
                     addTag0(u"s"_q);
-                if (value.contains('b', QCI))
+                if (value.contains('b'_q, QCI))
                     addTag0(u"b"_q);
             } else if (_Same(name, "c")) {
                 auto cm = rxColor.match(value.toString());
                 if (cm.hasMatch())
                     addTag1(u"font"_q,
                             "color=\"#"_a % cm.capturedRef(3)
-                            % cm.capturedRef(2) % cm.capturedRef(1) % '"');
+                            % cm.capturedRef(2) % cm.capturedRef(1) % '"'_q);
             }
             idx = am.capturedEnd();
         }
         QString caption;
         if (idx < text.size()) {
-            if (text[idx] == '/') {
-                addTag0("i");
+            if (text[idx] == '/'_q) {
+                addTag0(u"i"_q);
                 ++idx;
             }
             caption = "<p>"_a % parsed1

@@ -1179,7 +1179,7 @@ auto File::seek(int64_t offset, int whence) -> int64_t
 }
 
 Dir::Dir(udf25 *udf, const QString &path): m_udf(udf), m_path(path) {
-    File file(udf, path.toLocal8Bit());
+    File file(udf, path);
     if (!file.isOpen())
       return;
     udf_dir_t dir; memset(&dir, 0, sizeof(dir));
@@ -1214,7 +1214,7 @@ auto Dir::files(bool withPath) const -> QStringList
         return m_files;
     QStringList files; files.reserve(m_files.size());
     for (auto &file : m_files)
-        files.append(m_path % '/' % file);
+        files.append(m_path % '/'_q % file);
     return files;
 }
 

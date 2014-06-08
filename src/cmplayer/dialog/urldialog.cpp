@@ -12,7 +12,7 @@ struct UrlDialog::Data {
     QCheckBox *playlist = nullptr;
     QString key;
 };
-#define GROUP "UrlDialog_"
+#define GROUP "UrlDialog_"_a
 
 UrlDialog::UrlDialog(QWidget *parent, const QString &key)
 : QDialog(parent), d(new Data) {
@@ -21,8 +21,8 @@ UrlDialog::UrlDialog(QWidget *parent, const QString &key)
     d->key = key;
     QSettings settings;
     settings.beginGroup(GROUP % d->key);
-    auto urls = settings.value("open_url_list").toStringList();
-    auto enc  = settings.value("open_url_enc").toString();
+    auto urls = settings.value(u"open_url_list"_q).toStringList();
+    auto enc  = settings.value(u"open_url_enc"_q).toString();
     settings.endGroup();
 
     d->c = new QCompleter(urls, this);
@@ -69,8 +69,8 @@ auto UrlDialog::accept() -> void
     }
     QSettings settings;
     settings.beginGroup(GROUP % d->key);
-    settings.setValue("open_url_list", urls);
-    settings.setValue("open_url_enc", d->enc->encoding());
+    settings.setValue(u"open_url_list"_q, urls);
+    settings.setValue(u"open_url_enc"_q, d->enc->encoding());
     settings.endGroup();
     QDialog::accept();
 }

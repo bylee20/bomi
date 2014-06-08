@@ -1,12 +1,12 @@
 #include "videoeffect.hpp"
 
 const std::array<VideoEffectInfo::Item, 8> VideoEffectInfo::info{{
-    {VideoEffect::None, "None", "", (int)0},
-    {VideoEffect::FlipV, "FlipV", "", (int)(1 << 0)},
-    {VideoEffect::FlipH, "FlipH", "", (int)(1 << 1)},
-    {VideoEffect::Gray, "Gray", "", (int)(1 << 2)},
-    {VideoEffect::Invert, "Invert", "", (int)(1 << 3)},
-    {VideoEffect::Blur, "Blur", "", (int)(1 << 4)},
-    {VideoEffect::Sharpen, "Sharpen", "", (int)(1 << 5)},
-    {VideoEffect::Disable, "Disable", "", (int)(1 << 8)}
+    {VideoEffect::None, u"None"_q, u""_q, (int)0},
+    {VideoEffect::FlipV, u"FlipV"_q, u""_q, (int)(1 << 0)},
+    {VideoEffect::FlipH, u"FlipH"_q, u""_q, (int)(1 << 1)},
+    {VideoEffect::Gray, u"Gray"_q, u""_q, (int)(1 << 2)},
+    {VideoEffect::Invert, u"Invert"_q, u""_q, (int)(1 << 3)},
+    {VideoEffect::Blur, u"Blur"_q, u""_q, (int)(1 << 4)},
+    {VideoEffect::Sharpen, u"Sharpen"_q, u""_q, (int)(1 << 5)},
+    {VideoEffect::Disable, u"Disable"_q, u""_q, (int)(1 << 8)}
 }};

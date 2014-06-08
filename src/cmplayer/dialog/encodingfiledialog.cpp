@@ -7,7 +7,7 @@ EncodingFileDialog::EncodingFileDialog(QWidget *parent, const QString &caption
     auto grid = qobject_cast<QGridLayout*>(layout());
     if (grid) {
         const int row = grid->rowCount();
-        grid->addWidget(new QLabel(tr("Encoding") % ':', this), row, 0, 1, 1);
+        grid->addWidget(new QLabel(tr("Encoding") % ':'_q, this), row, 0, 1, 1);
         grid->addWidget(combo, row, 1, 1, grid->columnCount()-1);
     }
     if (!encoding.isEmpty())

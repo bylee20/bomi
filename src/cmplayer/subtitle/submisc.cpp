@@ -25,7 +25,7 @@ auto SubtitleFileInfo::fromJson(const QJsonObject &json) -> SubtitleFileInfo
     return info;
 }
 
-static const QString sep1("[::1::]"), sep2("[::2::]"), sep3("[::3::]");
+static const QString sep1(u"[::1::]"_q), sep2(u"[::2::]"_q), sep3(u"[::3::]"_q);
 
 template<class List, class F>
 auto _Join(const List &list, F toString, const QString &sep) -> QString
@@ -57,19 +57,19 @@ inline auto json_key_to(const QString &key) -> SubtitleFileInfo
 auto SubtitleStateInfo::toJson() const -> QJsonObject
 {
     QJsonObject json;
-    json.insert("valid", m_valid);
-    json.insert("track", m_track);
-    json.insert("mpv", json_io(&m_mpv)->toJson(m_mpv));
-    json.insert("cmplayer", json_io(&m_cmplayer)->toJson(m_cmplayer));
+    json.insert(u"valid"_q, m_valid);
+    json.insert(u"track"_q, m_track);
+    json.insert(u"mpv"_q, json_io(&m_mpv)->toJson(m_mpv));
+    json.insert(u"cmplayer"_q, json_io(&m_cmplayer)->toJson(m_cmplayer));
     return json;
 }
 
 auto SubtitleStateInfo::setFromJson(const QJsonObject &json) -> bool
 {
-    m_valid = json["valid"].toBool(false);
-    m_track = json["track"].toInt();
-    return json_io(&m_mpv)->fromJson(m_mpv, json["mpv"])
-         & json_io(&m_cmplayer)->fromJson(m_cmplayer, json["cmplayer"]);
+    m_valid = json[u"valid"_q].toBool(false);
+    m_track = json[u"track"_q].toInt();
+    return json_io(&m_mpv)->fromJson(m_mpv, json[u"mpv"_q])
+         & json_io(&m_cmplayer)->fromJson(m_cmplayer, json[u"cmplayer"_q]);
 }
 
 auto SubtitleStateInfo::fromJson(const QJsonObject &json) -> SubtitleStateInfo

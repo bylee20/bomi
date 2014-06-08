@@ -175,19 +175,19 @@ auto VideoFrameShader::updateShader(int deint) -> void
             QPointF cc = {1.0, 1.0};
             if (i < m_textures.size())
                 cc = m_textures[i].correction();
-            return declareVec2("cc" + _N(i), cc);
+            return declareVec2("cc"_a % _N(i), cc);
         };
         header += cc2string(1).toLatin1();
         header += cc2string(2).toLatin1();
         const auto chromaLeft = m_params.chroma_location == MP_CHROMA_LEFT;
         const qreal chroma_x = chromaLeft ? -0.5 : 0.0;
-        header += declareVec2("chroma_location", {chroma_x, 0.0});
+        header += declareVec2(u"chroma_location"_q, {chroma_x, 0.0});
         if (m_target != OGL::Target2D)
-            header += "#define USE_RECTANGLE\n";
+            header += "#define USE_RECTANGLE\n"_b;
         if (hasKernelEffects())
-            header += "#define USE_KERNEL3x3\n";
+            header += "#define USE_KERNEL3x3\n"_b;
 
-        header += "#define USE_DEINT " + QByteArray::number(deint) + "\n";
+        header += "#define USE_DEINT "_b + QByteArray::number(deint) + '\n';
         header += R"(
 #ifdef USE_RECTANGLE
 const vec4 dxdy = vec4(1.0, 1.0, -1.0, 0.0);
@@ -202,7 +202,7 @@ const vec2 chroma_offset = chroma_location*dxdy.xy;
 #endif
 const vec2 dxy = dxdy.xy;
 const vec2 tex_size = vec2(texWidth, texHeight);
-)";
+)"_b;
         auto interpolator = m_cspOut != MP_CSP_RGB ? shader.interpolator
             : Interpolator::get(InterpolatorType::Bilinear);
         m_lutCount = interpolator->textures();
@@ -211,12 +211,12 @@ const vec2 tex_size = vec2(texWidth, texHeight);
         interpolator->allocate(&m_lutInt[0], &m_lutInt[1]);
         auto common = interpolator->shader() + shaderTemplate;
         auto fragCode = header;
-        fragCode += "#define FRAGMENT\n";
+        fragCode += "#define FRAGMENT\n"_b;
         fragCode += common;
         fragCode += m_texel;
 
         auto vertexCode = header;
-        vertexCode += "#define VERTEX\n";
+        vertexCode += "#define VERTEX\n"_b;
         vertexCode += common;
 
         shader.fragmentShader.compileSourceCode(fragCode);

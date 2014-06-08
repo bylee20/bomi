@@ -49,7 +49,7 @@ public:
     static auto getType(const char *name) -> Type;
     static auto getType(const QString &name) -> Type;
     static auto name(Type type) -> QString
-        { return type < TypeMax ? s_names[type] : ""; }
+        { return type < TypeMax ? s_names[type] : QString(); }
     static auto formatText(Type type) -> QString;
     template<class F>
     static auto for_type(F func) -> void;

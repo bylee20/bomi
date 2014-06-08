@@ -15,20 +15,20 @@ struct OpenMediaFolderDialog::Data {
 
     auto setCheckedTypes(const QString &types) -> void
     {
-        ui.videos->setChecked(types.contains('v'));
-        ui.images->setChecked(types.contains('i'));
-        ui.audios->setChecked(types.contains('a'));
+        ui.videos->setChecked(types.contains('v'_q));
+        ui.images->setChecked(types.contains('i'_q));
+        ui.audios->setChecked(types.contains('a'_q));
     }
 
     auto checkedTypes() const -> QString
     {
         QString types;
         if (ui.videos->isChecked())
-            types.append('v');
+            types.append('v'_q);
         if (ui.audios->isChecked())
-            types.append('a');
+            types.append('a'_q);
         if (ui.images->isChecked())
-            types.append('i');
+            types.append('i'_q);
         return types;
     }
 
@@ -94,7 +94,7 @@ struct OpenMediaFolderDialog::Data {
     }
 };
 
-#define GROUP "OpenMediaFolderDialog_"
+#define GROUP "OpenMediaFolderDialog_"_a
 
 OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key)
     : QDialog(parent)
@@ -118,7 +118,7 @@ OpenMediaFolderDialog::OpenMediaFolderDialog(QWidget *parent, const QString &key
     d->key = key;
     QSettings settings;
     settings.beginGroup(GROUP % d->key);
-    d->setCheckedTypes(settings.value("checked_types", u"vi"_q).toString());
+    d->setCheckedTypes(settings.value(u"checked_types"_q, u"vi"_q).toString());
     settings.endGroup();
 }
 
@@ -145,7 +145,7 @@ auto OpenMediaFolderDialog::exec() -> int
         return Rejected;
     QSettings settings;
     settings.beginGroup(GROUP % d->key);
-    settings.setValue("checked_types", d->checkedTypes());
+    settings.setValue(u"checked_types"_q, d->checkedTypes());
     settings.endGroup();
     return QDialog::exec();
 

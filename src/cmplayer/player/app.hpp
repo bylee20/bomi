@@ -58,8 +58,8 @@ auto App::sendMessage(MessageType type, const T &t, int timeout)
 -> tmp::enable_if_t<tmp::is_one_of<T, QJsonObject, QJsonArray, QJsonValue>(), bool>
 {
     QJsonObject json;
-    json["type"] = _JsonFromInt(type);
-    json["contents"] = t;
+    json[u"type"_q] = _JsonFromInt(type);
+    json[u"contents"_q] = t;
     return sendMessage(QJsonDocument(json).toJson(), timeout);
 }
 
