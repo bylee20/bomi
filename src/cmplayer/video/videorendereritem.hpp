@@ -59,7 +59,6 @@ private:
     auto customEvent(QEvent *event) -> void override;
     auto updateVertex(Vertex *vertex) -> void override;
     auto updateTexture(OpenGLTexture2D *texture) -> void override;
-    auto geometryChanged(const QRectF &new_, const QRectF &old) -> void final;
     struct Data;
     Data *d;
     QPoint m_mouse;

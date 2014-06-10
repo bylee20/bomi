@@ -109,8 +109,8 @@ struct MpOsdItem::Data {
         glActiveTexture(GL_TEXTURE0);
         OpenGLTextureBinder<OGL::Target2D> binder(&atlas);
 
-        initializeAtlas(osd);
         build(osd.format());
+        initializeAtlas(osd);
         Q_ASSERT(shader->isLinked());
 
         using Vertex = OGL::TextureColorVertex;
@@ -193,7 +193,7 @@ auto MpOsdItem::texture() const -> const OpenGLTexture2D&
     return d->fbo->texture();
 }
 
-auto MpOsdItem::draw(const Cache &cache) -> bool
+auto MpOsdItem:: draw(const Cache &cache) -> bool
 {
     if (!cache || cache->renderSize().isEmpty())
         return d->visible = false;

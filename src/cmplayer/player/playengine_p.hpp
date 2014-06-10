@@ -24,7 +24,6 @@
 #include "enum/audiodriver.hpp"
 #include "enum/channellayout.hpp"
 #include "enum/interpolatortype.hpp"
-#include "imageplayback.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 #include <libmpv/client.h>
 
@@ -139,55 +138,22 @@ private:
     }
 };
 
-class OptionList {
-public:
-    OptionList(char join = ',')
-        : m_join(join) { }
-    auto add(const QByteArray &key, const QByteArray &value,
-             bool quote = false) -> void
-    {
-        if (!m_data.isEmpty())
-            m_data.append(m_join);
-        m_data.append(key);
-        m_data.append('=');
-        if (quote)
-            m_data.append('"');
-        m_data.append(value);
-        if (quote)
-            m_data.append('"');
-    }
-    auto add(const QByteArray &key, void *value) -> void
-        { add(key, address_cast<QByteArray>(value)); }
-    auto add(const QByteArray &key, double value) -> void
-        { add(key, QByteArray::number(value)); }
-    auto add(const QByteArray &key, int value) -> void
-        { add(key, QByteArray::number(value)); }
-    auto add(const QByteArray &key, bool value) -> void
-        { add(key, value ? "yes"_b : "no"_b); }
-    auto get() const -> const QByteArray& { return m_data; }
-    auto data() const -> const char* { return m_data.data(); }
-private:
-    QByteArray m_data;
-    char m_join;
-};
-
 template<class T>
 using mpv_type = typename mpv_format_trait<T>::mpv_type;
 
 struct PlayEngine::Data {
-    Data(PlayEngine *engine)
-        : p(engine) { }
+    Data(PlayEngine *engine);
     PlayEngine *p = nullptr;
-
-    ImagePlayback image;
-    InterpolatorType videoChromaUpscaler = InterpolatorType::Bilinear;
-
-    MediaInfoObject mediaInfo;
+    Thread thread{p};
     AvInfoObject *videoInfo = new AvInfoObject, *audioInfo = new AvInfoObject;
-    HardwareAcceleration hwacc = HardwareAcceleration::Unavailable;
-    MetaData metaData;
+    ChapterInfoObject *chapterInfo = nullptr;
     QThread *videoThread = nullptr; // video decoding thread
     OpenGLOffscreenContext *videoContext = nullptr;
+
+    InterpolatorType videoChromaUpscaler = InterpolatorType::Bilinear;
+    MediaInfoObject mediaInfo;
+    HardwareAcceleration hwacc = HardwareAcceleration::Unavailable;
+    MetaData metaData;
     QString mediaName;
 
     VideoColor videoEq;
@@ -198,10 +164,7 @@ struct PlayEngine::Data {
     bool hasImage = false, tempoScaler = false, seekable = false;
     bool subStreamsVisible = true, startPaused = false, disc = false;
 
-
-    Thread thread{p};
     AudioController *audio = nullptr;
-    QTimer imageTicker;
     bool quit = false, timing = false, muted = false, initialized = false;
     int volume = 100;
     double amp = 1.0, speed = 1.0, avsync = 0;
@@ -214,7 +177,7 @@ struct PlayEngine::Data {
     QVector<SubtitleFileInfo> subtitleFiles;
     ChannelLayout layout = ChannelLayoutInfo::default_();
     int duration = 0, audioSync = 0, begin = 0, position = 0;
-    int subDelay = 0, chapter = -2;
+    int subDelay = 0, chapter = -2, edition = -1;
     QVector<int> streamIds = {0, 0, 0}, lastStreamIds = streamIds;
     QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
     AudioTrackInfoObject *audioTrackInfo = nullptr;
@@ -222,8 +185,7 @@ struct PlayEngine::Data {
     VideoRendererItem *renderer = nullptr;
     ChapterList chapters, chapterFakeList;
     EditionList editions;
-    int edition = -1;
-    ChapterInfoObject *chapterInfo = nullptr;
+
     HwAcc::Type hwaccBackend = HwAcc::None;
     VideoFormat videoFormat;
     DeintOption deint_swdec, deint_hwdec;
@@ -238,6 +200,9 @@ struct PlayEngine::Data {
     auto af() const -> QByteArray;
     auto vf() const -> QByteArray;
     auto vo() const -> QByteArray;
+
+    auto postState(State state) -> void { _PostEvent(p, StateChange, state); }
+    auto exec() -> void;
 
     auto mpVolume() const -> double { return volume*amp/10.0; }
     template<class T>
@@ -265,77 +230,82 @@ struct PlayEngine::Data {
     auto loadfile() -> void { loadfile(startInfo.resume); }
     auto updateMediaName(const QString &name = QString()) -> void;
     template <class T>
-    auto setmpv_async(const char *name, const T &value) -> void
-    {
-        if (handle) {
-            mpv_type<T> data = value;
-            auto userdata = new QByteArray(name);
-            *userdata += "=" + mpv_format_trait<T>::userdata(value);
-            check(mpv_set_property_async(handle, (quint64)(void*)userdata, name,
-                                         mpv_format_trait<T>::format, &data),
-                  "Error on %%", *userdata);
-        }
-    }
-
+    auto setmpv_async(const char *name, const T &value) -> void;
     template <class T>
-    auto setmpv(const char *name, const T &value) -> void
-    {
-        if (handle) {
-            mpv_type<T> data = value;
-            check(mpv_set_property(handle, name, mpv_format_trait<T>::format,
-                                   &data),
-                  "Error on %%=%%", name, value);
-        }
-    }
-
+    auto setmpv(const char *name, const T &value) -> void;
     template<class T>
-    auto getmpv(const char *name, const T &def = T()) -> T
-    {
-        using trait = mpv_format_trait<T>;
-        mpv_type<T> data;
-        if (!handle || !check(mpv_get_property(handle, name,
-                                               trait::format, &data),
-                              "Couldn't get property '%%'.", name))
-            return def;
-        if (!trait::use_free)
-            return trait::cast(data);
-        T t = trait::cast(data);
-        trait::free(data);
-        return t;
-    }
-
+    auto getmpv(const char *name, const T &def = T()) -> T;
     auto refresh() -> void {tellmpv("frame_step"); tellmpv("frame_back_step");}
     static auto error(int err) -> const char* { return mpv_error_string(err); }
     auto isSuccess(int error) -> bool { return error == MPV_ERROR_SUCCESS; }
 
     template<class... Args>
-    auto check(int err, const char *msg, const Args &... args) -> bool
-    {
-        if (isSuccess(err))
-            return true;
-        const auto lv = err == MPV_ERROR_PROPERTY_UNAVAILABLE ? Log::Debug
-                                                              : Log::Error;
-        if (lv <= Log::maximumLevel())
-            Log::write(getLogContext(), lv, "Error %%: %%", error(err),
-                       Log::parse(msg, args...));
-        return false;
-    }
-
+    auto check(int err, const char *msg, const Args &... args) -> bool;
     template<class... Args>
-    auto fatal(int err, const char *msg, const Args &... args) -> void
-    {
-        if (!isSuccess(err))
-            Log::write(getLogContext(), Log::Fatal, "Error %%: %%", error(err),
-                       Log::parse(msg, args...));
-    }
-
-    auto setOption(const char *name, const char *data) -> void
-    {
-        const auto err = mpv_set_option_string(handle, name, data);
-        fatal(err, "Couldn't set option %%=%%.", name, data);
-    }
-
+    auto fatal(int err, const char *msg, const Args &... args) -> void;
 };
 
+template <class T>
+auto PlayEngine::Data::setmpv_async(const char *name, const T &value) -> void
+{
+    if (handle) {
+        mpv_type<T> data = value;
+        auto userdata = new QByteArray(name);
+        *userdata += "=" + mpv_format_trait<T>::userdata(value);
+        check(mpv_set_property_async(handle, (quint64)(void*)userdata, name,
+                                     mpv_format_trait<T>::format, &data),
+              "Error on %%", *userdata);
+    }
+}
+
+template <class T>
+auto PlayEngine::Data::setmpv(const char *name, const T &value) -> void
+{
+    if (handle) {
+        mpv_type<T> data = value;
+        check(mpv_set_property(handle, name, mpv_format_trait<T>::format,
+                               &data),
+              "Error on %%=%%", name, value);
+    }
+}
+
+template<class T>
+auto PlayEngine::Data::getmpv(const char *name, const T &def) -> T
+{
+    using trait = mpv_format_trait<T>;
+    mpv_type<T> data;
+    if (!handle || !check(mpv_get_property(handle, name,
+                                           trait::format, &data),
+                          "Couldn't get property '%%'.", name))
+        return def;
+    if (!trait::use_free)
+        return trait::cast(data);
+    T t = trait::cast(data);
+    trait::free(data);
+    return t;
+}
+
+template<class... Args>
+auto PlayEngine::Data::check(int err, const char *msg,
+                             const Args &... args) -> bool
+{
+    if (isSuccess(err))
+        return true;
+    const auto lv = err == MPV_ERROR_PROPERTY_UNAVAILABLE ? Log::Debug
+                                                          : Log::Error;
+    if (lv <= Log::maximumLevel())
+        Log::write(getLogContext(), lv, "Error %%: %%", error(err),
+                   Log::parse(msg, args...));
+    return false;
+}
+
+template<class... Args>
+auto PlayEngine::Data::fatal(int err, const char *msg,
+                             const Args &... args) -> void
+{
+    if (!isSuccess(err))
+        Log::write(getLogContext(), Log::Fatal, "Error %%: %%", error(err),
+                   Log::parse(msg, args...));
+}
 
 #endif // PLAYENGINE_P_HPP

@@ -85,7 +85,16 @@ auto OpenGLLogger::finalize(QOpenGLContext */*ctx*/) -> void
     _Delete(d->logger);
 }
 
-auto OpenGLLogger::initialize(QOpenGLContext *ctx) -> bool
+auto OpenGLLogger::print(const QOpenGLDebugMessage &message) -> void
+{
+    if (message.type() == QOpenGLDebugMessage::ErrorType)
+        d->error("Error: %%", message.message().trimmed());
+    else
+        d->debug("Logger: %% (%%/%%/%%)", message.message().trimmed(),
+                 message.source(), message.severity(), message.type());
+}
+
+auto OpenGLLogger::initialize(QOpenGLContext *ctx, bool autolog) -> bool
 {
     if (!ctx->format().testOption(QSurfaceFormat::DebugContext)) {
         d->error("OpenGL debug logger was not requested.");
@@ -102,14 +111,9 @@ auto OpenGLLogger::initialize(QOpenGLContext *ctx) -> bool
         return false;
     }
     d->debug("OpenGL debug logger is running.");
-    connect(d->logger, &QOpenGLDebugLogger::messageLogged, this,
-            [this] (const QOpenGLDebugMessage &message) {
-        if (message.type() == QOpenGLDebugMessage::ErrorType)
-            d->error("Error: %%", message.message().trimmed());
-        else
-            d->debug("Logger: %% (%%/%%/%%)", message.message().trimmed(),
-                     message.source(), message.severity(), message.type());
-    }, Qt::DirectConnection);
+    if (autolog)
+        connect(d->logger, &QOpenGLDebugLogger::messageLogged,
+                this, &OpenGLLogger::print, Qt::DirectConnection);
 #ifdef CMPLAYER_RELEASE
     d->logger->startLogging(QOpenGLDebugLogger::AsynchronousLogging);
 #else

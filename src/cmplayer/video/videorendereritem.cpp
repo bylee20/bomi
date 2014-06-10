@@ -27,6 +27,7 @@ struct VideoRendererItem::Data {
     MpOsdItem mposd;
     VideoCache cache;
     bool take = false, overlayInLetterbox = true, rectangle = false;
+    bool forceToUpdateOsd = false;
     QRectF vtx;
     QPoint offset = {0, 0};
     double crop = -1.0, aspect = -1.0, dar = 0.0;
@@ -108,6 +109,14 @@ struct VideoRendererItem::Data {
             *letterbox = {xy, letter};
         return rect;
     }
+
+    auto updateOsdSize() -> void
+    {
+        if (!_Change(prevSize, vtx.size().toSize())) {
+            sizeChecker.stop();
+            emit p->osdSizeChanged(osdSize = prevSize);
+        }
+    }
 };
 
 VideoRendererItem::VideoRendererItem(QQuickItem *parent)
@@ -121,12 +130,7 @@ VideoRendererItem::VideoRendererItem(QQuickItem *parent)
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::AllButtons);
     setFlag(ItemAcceptsDrops, true);
-    connect(&d->sizeChecker, &QTimer::timeout, [this] () {
-        if (!_Change(d->prevSize, QSizeF(width(), height()).toSize())) {
-            d->sizeChecker.stop();
-            emit osdSizeChanged(d->osdSize = d->prevSize);
-        }
-    });
+    connect(&d->sizeChecker, &QTimer::timeout, [=] () { d->updateOsdSize(); });
     d->sizeChecker.setInterval(300);
 }
 
@@ -362,15 +366,22 @@ auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
     d->queue.pop_front();
 
     if (_Change(d->rectangle, texture->target() == OGL::TargetRectangle)
-            |_Change(d->displaySize, d->cache.frame->displaySize()))
+            | _Change(d->displaySize, d->cache.frame->displaySize())) {
+        d->forceToUpdateOsd = true;
         reserve(UpdateGeometry, false);
+    }
 }
 
 auto VideoRendererItem::updateVertex(Vertex *vertex) -> void
 {
     QRectF letter;
-    if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter)))
+    if (_Change(d->vtx, d->frameRect(geometry(), d->offset, &letter))) {
         emit frameRectChanged(d->vtx);
+        if (d->forceToUpdateOsd)
+            d->updateOsdSize();
+        else
+            d->sizeChecker.start();
+    }
     if (d->letterbox->set(rect(), letter))
         emit screenRectChanged(d->letterbox->screen());
     if (d->overlay) {
@@ -421,11 +432,4 @@ auto VideoRendererItem::mapToVideo(const QPointF &pos) -> QPointF
     p.rx() *= hratio;
     p.ry() *= vratio;
     return p;
-}
-
-auto VideoRendererItem::geometryChanged(const QRectF &new_,
-                                        const QRectF &old) -> void
-{
-    HighQualityTextureItem::geometryChanged(new_, old);
-    d->sizeChecker.start();
 }

@@ -1,26 +1,7 @@
 #include "playengine.hpp"
 #include "playengine_p.hpp"
 
-
 auto translator_display_language(const QString &iso) -> QString;
-
-auto reg_play_engine() -> void
-{
-    qRegisterMetaType<PlayEngine::State>("State");
-    qRegisterMetaType<Mrl>("Mrl");
-    qRegisterMetaType<VideoFormat>("VideoFormat");
-    qRegisterMetaType<QVector<int>>("QVector<int>");
-    qRegisterMetaType<StreamList>("StreamList");
-    qRegisterMetaType<AudioFormat>("AudioFormat");
-    qmlRegisterType<ChapterInfoObject>();
-    qmlRegisterType<AudioTrackInfoObject>();
-    qmlRegisterType<SubtitleTrackInfoObject>();
-    qmlRegisterType<AvInfoObject>();
-    qmlRegisterType<AvIoFormat>();
-    qmlRegisterType<MediaInfoObject>();
-    qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
-}
-
 
 PlayEngine::PlayEngine()
 : d(new Data(this)) {
@@ -31,29 +12,10 @@ PlayEngine::PlayEngine()
 
     d->chapterInfo = new ChapterInfoObject(this, this);
     d->audioTrackInfo = new AudioTrackInfoObject(this, this);
-    d->imageTicker.setInterval(20);
     d->updateMediaName();
 
     _Debug("Make registrations and connections");
 
-    connect(&d->imageTicker, &QTimer::timeout, [this] () {
-        bool begin = false, duration = false, pos = false;
-        if (d->hasImage) {
-            pos = _Change(d->position, d->image.pos());
-            begin = _Change(d->duration, d->image.duration());
-            duration = _Change(d->begin, 0);
-        }
-        if (pos)
-            emit tick(d->position);
-        if (begin)
-            emit beginChanged(d->begin);
-        if (duration)
-            emit durationChanged(d->duration);
-        if (begin || duration)
-            emit endChanged(end());
-        if (pos || begin || duration)
-            emit rateChanged();
-    });
     connect(d->video, &VideoOutput::formatChanged,
             this, &PlayEngine::updateVideoFormat);
     connect(d->video, &VideoOutput::droppedFramesChanged,
@@ -63,19 +25,24 @@ PlayEngine::PlayEngine()
     auto verbose = qgetenv("CMPLAYER_MPV_VERBOSE").toLower();
     if (!verbose.isEmpty())
         mpv_request_log_messages(d->handle, verbose.constData());
-    d->setOption("fs", "no");
-    d->setOption("input-cursor", "yes");
-    d->setOption("softvol", "yes");
-    d->setOption("softvol-max", "1000.0");
-    d->setOption("sub-auto", "no");
-    d->setOption("osd-level", "0");
-    d->setOption("quiet", "yes");
-    d->setOption("input-terminal", "no");
-    d->setOption("ao", "null,");
-    d->setOption("ad-lavc-downmix", "no");
-    d->setOption("title", "\"\"");
-    d->setOption("vo", d->vo().constData());
-    d->setOption("fixed-vo", "yes");
+
+    auto setOption = [this] (const char *name, const char *data) {
+        const auto err = mpv_set_option_string(d->handle, name, data);
+        d->fatal(err, "Couldn't set option %%=%%.", name, data);
+    };
+    setOption("fs", "no");
+    setOption("input-cursor", "yes");
+    setOption("softvol", "yes");
+    setOption("softvol-max", "1000.0");
+    setOption("sub-auto", "no");
+    setOption("osd-level", "0");
+    setOption("quiet", "yes");
+    setOption("input-terminal", "no");
+    setOption("ao", "null,");
+    setOption("ad-lavc-downmix", "no");
+    setOption("title", "\"\"");
+    setOption("vo", d->vo().constData());
+    setOption("fixed-vo", "yes");
 
     mpv_set_wakeup_callback(d->handle, [] (void *arg) {
         auto d = static_cast<Data*>(arg);
@@ -97,13 +64,13 @@ PlayEngine::PlayEngine()
             const int index = arg.indexOf('='_q);
             if (index < 0) {
                 if (arg.startsWith("no-"_a))
-                    d->setOption(arg.mid(3).toLatin1(), "no");
+                    setOption(arg.mid(3).toLatin1(), "no");
                 else
-                    d->setOption(arg.toLatin1(), "yes");
+                    setOption(arg.toLatin1(), "yes");
             } else {
                 const auto key = arg.left(index).toLatin1();
                 const auto value = arg.mid(index+1).toLatin1();
-                d->setOption(key, value);
+                setOption(key, value);
             }
         }
     }
@@ -215,11 +182,6 @@ auto PlayEngine::end() const -> int
     return d->begin + d->duration;
 }
 
-auto PlayEngine::setImageDuration(int duration) -> void
-{
-    d->image.setDuration(duration);
-}
-
 auto PlayEngine::duration() const -> int
 {
     return d->duration;
@@ -318,19 +280,16 @@ auto PlayEngine::setSubtitleStyle(const SubtitleStyle &style) -> void
 auto PlayEngine::seek(int pos) -> void
 {
     d->chapter = -1;
-    if (d->hasImage)
-        d->image.seek(pos, false);
-    else
+    if (!d->hasImage)
         d->tellmpv("seek", (double)pos/1000.0, 2);
 }
 
 auto PlayEngine::relativeSeek(int pos) -> void
 {
-    if (d->hasImage)
-        d->image.seek(pos, true);
-    else
+    if (!d->hasImage) {
         d->tellmpv("seek", (double)pos/1000.0, 0);
-    emit sought();
+        emit sought();
+    }
 }
 
 auto PlayEngine::setClippingMethod(ClippingMethod method) -> void
@@ -488,13 +447,6 @@ auto PlayEngine::updateState(State state) -> void
     const bool wasRunning = isRunning();
     if (_Change(m_state, state)) {
         emit stateChanged(m_state);
-        if (m_state & (Playing | Paused)) {
-            if (d->hasImage)
-                d->imageTicker.start();
-        } else {
-            if (d->hasImage)
-                d->imageTicker.stop();
-        }
         if (wasRunning != isRunning())
             emit runningChanged();
     }
@@ -720,11 +672,6 @@ auto PlayEngine::videoInfo() const -> AvInfoObject*
     return d->videoInfo;
 }
 
-auto PlayEngine::setState(PlayEngine::State state) -> void
-{
-    _PostEvent(this, StateChange, state);
-}
-
 auto PlayEngine::setCurrentChapter(int id) -> void
 {
     d->setmpv_async("chapter", id);
@@ -914,7 +861,7 @@ auto PlayEngine::exec() -> void
             position = -1;
             cache = -1;
             mrl = d->startInfo.mrl;
-            _PostEvent(this, StateChange, Loading);
+            d->postState(Loading);
             _PostEvent(this, PreparePlayback);
             break;
         case MPV_EVENT_FILE_LOADED: {
@@ -997,8 +944,7 @@ auto PlayEngine::exec() -> void
         case MPV_EVENT_UNPAUSE: {
             const auto paused = d->getmpv<bool>("core-idle");
             const auto byCache = d->getmpv<bool>("paused-for-cache");
-            const auto state = byCache ? Buffering : paused ? Paused : Playing;
-            _PostEvent(this, StateChange, state);
+            d->postState(byCache ? Buffering : paused ? Paused : Playing);
             break;
         } case MPV_EVENT_SET_PROPERTY_REPLY:
             if (!d->isSuccess(event->error)) {
@@ -1112,7 +1058,7 @@ auto PlayEngine::currentChapter() const -> int
 auto PlayEngine::pause() -> void
 {
     if (d->hasImage)
-        setState(PlayEngine::Paused);
+        d->postState(PlayEngine::Paused);
     else
         d->setmpv("pause", true);
 }
@@ -1120,7 +1066,7 @@ auto PlayEngine::pause() -> void
 auto PlayEngine::unpause() -> void
 {
     if (d->hasImage)
-        setState(PlayEngine::Playing);
+        d->postState(PlayEngine::Playing);
     else
         d->setmpv("pause", false);
 }

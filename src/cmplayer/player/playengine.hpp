@@ -6,14 +6,13 @@
 
 class VideoRendererItem;                class VideoFormat;
 class DeintOption;                      class ChannelLayoutMap;
-class AudioFormat;
+class AudioFormat;                      class VideoColor;
 class MetaData;                         struct SubtitleStyle;
 struct AudioNormalizerOption;           struct SubtitleFileInfo;
 enum class AudioDriver;                 enum class ClippingMethod;
 enum class DeintMethod;                 enum class DeintMode;
-enum class ChannelLayout;               class VideoColor;
-enum class ColorRange;                  enum class InterpolatorType;
-enum class ColorSpace;
+enum class ChannelLayout;               enum class InterpolatorType;
+enum class ColorRange;                  enum class ColorSpace;
 
 struct StartInfo {
     StartInfo() {}
@@ -84,7 +83,6 @@ public:
     auto time() const -> int;
     auto begin() const -> int;
     auto end() const -> int;
-    auto setImageDuration(int duration) -> void;
     auto duration() const -> int;
     auto mrl() const -> Mrl;
     auto isSeekable() const -> bool;
@@ -233,7 +231,6 @@ signals:
 private:
     auto updateState(State state) -> void;
     auto exec() -> void;
-    auto setState(PlayEngine::State state) -> void;
     auto customEvent(QEvent *event) -> void;
     auto updateVideoFormat(VideoFormat format) -> void;
     class Thread; struct Data; Data *d;

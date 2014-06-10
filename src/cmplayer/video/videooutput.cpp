@@ -7,6 +7,7 @@
 #include "videoframebufferobject.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 #include "opengl/openglbenchmarker.hpp"
+#include "opengl/opengllogger.hpp"
 #include "player/playengine.hpp"
 #include "player/mpv_helper.hpp"
 #include "misc/log.hpp"
@@ -138,6 +139,7 @@ struct VideoOutput::Data {
     MpOsdBitmap::Id bitmapId;
     MpOsdBitmapPool bitmapPool;
     bool hasOsd = false;
+    OpenGLLogger logger{"Video"};
 #if DO_BENCHMARK
     OpenGLBenchmarker bench;
 #endif
@@ -189,6 +191,7 @@ struct VideoOutput::Data {
             cache->release();
 //            bench.end();
         }
+        glFinish();
         gl->doneCurrent();
         _Trace("VideoOutput::draw()");
     }
@@ -254,6 +257,7 @@ auto VideoOutput::preinit(vo *out) -> int
     d->out = out;
     Q_ASSERT(d->gl);
     d->gl->makeCurrent();
+    d->logger.initialize(d->gl->context());
     initialize_vdpau_interop(d->gl->context());
     d->shader = new VideoFrameShader;
     d->pool =new VideoFramebufferObjectPool;
@@ -277,6 +281,7 @@ auto VideoOutput::uninit(vo *out) -> void
 #if DO_BENCHMARK
     d->bench.destroy();
 #endif
+    d->logger.finalize(d->gl->context());
     d->gl->doneCurrent();
     _Debug("Uninitialize VideoOutput");
 }
@@ -344,7 +349,7 @@ auto VideoOutput::drawImage(vo *out, mp_image *mpi) -> void
         emit v->droppedFramesChanged(++d->dropped);
 }
 
-auto VideoOutput::drawOsd(vo *out, struct osd_state *osd) -> void
+auto VideoOutput::drawOsd(vo *out, osd_state *osd) -> void
 {
     static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
     static auto cb = [] (void *vo, struct sub_bitmaps *imgs) {

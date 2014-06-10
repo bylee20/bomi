@@ -1,5 +1,57 @@
 #include "playengine_p.hpp"
 
+auto reg_play_engine() -> void
+{
+    qRegisterMetaType<PlayEngine::State>("State");
+    qRegisterMetaType<Mrl>("Mrl");
+    qRegisterMetaType<VideoFormat>("VideoFormat");
+    qRegisterMetaType<QVector<int>>("QVector<int>");
+    qRegisterMetaType<StreamList>("StreamList");
+    qRegisterMetaType<AudioFormat>("AudioFormat");
+    qmlRegisterType<ChapterInfoObject>();
+    qmlRegisterType<AudioTrackInfoObject>();
+    qmlRegisterType<SubtitleTrackInfoObject>();
+    qmlRegisterType<AvInfoObject>();
+    qmlRegisterType<AvIoFormat>();
+    qmlRegisterType<MediaInfoObject>();
+    qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
+}
+
+class OptionList {
+public:
+    OptionList(char join = ',')
+        : m_join(join) { }
+    auto add(const QByteArray &key, const QByteArray &value,
+             bool quote = false) -> void
+    {
+        if (!m_data.isEmpty())
+            m_data.append(m_join);
+        m_data.append(key);
+        m_data.append('=');
+        if (quote)
+            m_data.append('"');
+        m_data.append(value);
+        if (quote)
+            m_data.append('"');
+    }
+    auto add(const QByteArray &key, void *value) -> void
+        { add(key, address_cast<QByteArray>(value)); }
+    auto add(const QByteArray &key, double value) -> void
+        { add(key, QByteArray::number(value)); }
+    auto add(const QByteArray &key, int value) -> void
+        { add(key, QByteArray::number(value)); }
+    auto add(const QByteArray &key, bool value) -> void
+        { add(key, value ? "yes"_b : "no"_b); }
+    auto get() const -> const QByteArray& { return m_data; }
+    auto data() const -> const char* { return m_data.data(); }
+private:
+    QByteArray m_data;
+    char m_join;
+};
+
+PlayEngine::Data::Data(PlayEngine *engine)
+    : p(engine) { }
+
 auto PlayEngine::Data::af() const -> QByteArray
 {
     OptionList af(':');
@@ -16,6 +68,7 @@ auto PlayEngine::Data::vf() const -> QByteArray
     vf.add("hwdec_deint"_b, deint_hwdec.toString().toLatin1());
     return vf.get();
 }
+
 auto PlayEngine::Data::vo() const -> QByteArray
 {
     OptionList vo(':');
@@ -180,4 +233,3 @@ auto PlayEngine::Data::updateMediaName(const QString &name) -> void
     const QString display = name.isEmpty() ? mrl.displayName() : name;
     mediaInfo.setName(category % ": "_a % display);
 }
-

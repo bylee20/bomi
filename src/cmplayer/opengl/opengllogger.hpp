@@ -6,8 +6,9 @@ class OpenGLLogger : public QObject {
 public:
     OpenGLLogger(const QByteArray &category, QObject *parent = nullptr);
     ~OpenGLLogger();
-    auto initialize(QOpenGLContext *ctx) -> bool;
+    auto initialize(QOpenGLContext *ctx, bool autolog = true) -> bool;
     auto finalize(QOpenGLContext *ctx) -> void;
+    auto print(const QOpenGLDebugMessage &message) -> void;
     static auto isAvailable() -> bool;
 private:
     struct Data;

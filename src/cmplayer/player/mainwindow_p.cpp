@@ -827,7 +827,6 @@ auto MainWindow::Data::applyPref() -> void
     normalizer.maximumGain = p.normalizer_max;
     normalizer.silenceLevel = p.normalizer_silence;
     engine.setVolumeNormalizerOption(normalizer);
-    engine.setImageDuration(p.image_duration);
     engine.setChannelLayoutMap(p.channel_manipulation);
     engine.setSubtitleStyle(p.sub_style);
     auto conv = [&p] (const DeintCaps &caps) {
