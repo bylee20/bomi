@@ -116,6 +116,7 @@ struct VideoRendererItem::Data {
             sizeChecker.stop();
             emit p->osdSizeChanged(osdSize = prevSize);
         }
+        forceToUpdateOsd = false;
     }
 };
 
