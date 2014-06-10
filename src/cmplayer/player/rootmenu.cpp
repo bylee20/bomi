@@ -245,7 +245,10 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
     auto &video = *addMenu(u"video"_q);
     video.addMenu(u"track"_q)->setEnabled(false);
     video.addSeparator();
-    video.addAction(u"snapshot"_q);
+    auto &snap = *video.addMenu(u"snapshot"_q);
+    snap.addAction(u"quick"_q);
+    snap.addAction(u"quick-nosub"_q);
+    snap.addAction(u"tool"_q);
     video.addSeparator();
     addEnumActionsCheckable<VideoRatio>(*video.addMenu(u"aspect"_q), true);
     addEnumActionsCheckable<VideoRatio>(*video.addMenu(u"crop"_q), true);
@@ -496,6 +499,10 @@ auto RootMenu::retranslate() -> void
 
     auto &video = root(u"video"_q, tr("Video"));
     video(u"track"_q, tr("Video Track"));
+    auto &snap = video(u"snapshot"_q, tr("Take Snapshot"));
+    snap.a(u"quick"_q, tr("Quick Snapshot"));
+    snap.a(u"quick-nosub"_q, tr("Quick Snapshot(No Subtitles)"));
+    snap.a(u"tool"_q, tr("Snapshot Tool"));
 
     updateEnumActions<VideoRatio>(video(u"aspect"_q, tr("Aspect Ratio")));
     updateEnumActions<VideoRatio>(video(u"crop"_q, tr("Crop")));
@@ -528,8 +535,6 @@ auto RootMenu::retranslate() -> void
         const auto format = VideoColor::formatText(type);
         StepAction::setFormat(color.g(prefix)->actions(), format);
     });
-
-    video.a(u"snapshot"_q, tr("Take Snapshot"));
 
     auto &audio = root(u"audio"_q, tr("Audio"));
     audio(u"track"_q, tr("Audio Track")).a(u"next"_q, tr("Select Next"));

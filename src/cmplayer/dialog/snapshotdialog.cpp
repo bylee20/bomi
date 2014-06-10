@@ -4,7 +4,7 @@
 struct SnapshotDialog::Data {
     SnapshotDialog *p = nullptr;
     Ui::SnapshotDialog ui;
-    QImage video, sub;
+    QImage video, osd, sub;
     QRectF subRect;
     auto updateSnapshot(bool showSub) -> void
     {
@@ -12,9 +12,12 @@ struct SnapshotDialog::Data {
             ui.viewer->setText(tr("Failed in getting a snapshot!"));
         else {
             auto pixmap = QPixmap::fromImage(video);
-            if (showSub && !sub.isNull()) {
+            if (showSub) {
                 QPainter painter(&pixmap);
-                painter.drawImage(subRect, sub);
+                if (!osd.isNull())
+                    painter.drawImage(video.rect(), osd);
+                if (!sub.isNull())
+                    painter.drawImage(subRect, sub);
             }
             ui.viewer->setImage(pixmap);
         }
@@ -45,8 +48,7 @@ SnapshotDialog::SnapshotDialog(QWidget *parent)
     connect(d->ui.save, &QAbstractButton::clicked, this, [this] () {
         const auto time = QDateTime::currentDateTime();
         const QString fileName = "cmplayer-snapshot-"_a
-                                 % time.toString(u"yyyy-MM-dd-hh-mm-ss"_q)
-                                 % ".png"_a;
+                % time.toString(u"yyyy-MM-dd-hh:mm:ss.zzz"_q) % ".png"_a;
         const auto file = _GetSaveFile(this, tr("Save File"),
                                            fileName, ImageExt);
         if (!file.isEmpty())
@@ -58,13 +60,14 @@ SnapshotDialog::~SnapshotDialog() {
     delete d;
 }
 
-auto SnapshotDialog::setImage(const QImage &video, const QImage &sub,
-                              const QRectF &subRect) -> void
+auto SnapshotDialog::setImage(const QImage &video, const QImage &osd,
+                              const QImage &sub, const QRectF &subRect) -> void
 {
     if (video.isNull())
         clear();
     else {
         d->video = video;
+        d->osd = osd;
         d->sub = sub;
         d->subRect = subRect;
         d->updateSnapshot(d->ui.subtitle->isChecked());
@@ -74,7 +77,7 @@ auto SnapshotDialog::setImage(const QImage &video, const QImage &sub,
 
 auto SnapshotDialog::clear() -> void
 {
-    d->video = d->sub = QImage();
+    d->video = d->osd = d->sub = QImage();
     d->subRect = QRectF();
     d->ui.take->setEnabled(true);
     d->updateSnapshot(false);

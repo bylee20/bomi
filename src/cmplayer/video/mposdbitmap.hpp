@@ -52,6 +52,7 @@ public:
     auto renderSize() const -> const QSize& { return m_renderSize; }
     auto sheet() const -> const QSize& { return m_sheet; }
     auto drawOn(QImage &frame) const -> void;
+    auto toImage() const -> QImage;
     auto id() const noexcept -> const Id& { return m_id; }
 private:
     Id m_id;

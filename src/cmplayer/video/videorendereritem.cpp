@@ -183,8 +183,9 @@ auto VideoRendererItem::customEvent(QEvent *event) -> void
         reserve(UpdateMaterial);
         break;
     } case NewFrameImage: {
-        const auto image = _GetData<QImage>(event);
-        emit frameImageObtained(image);
+        QImage image, osd;
+        _GetAllData(event, image, osd);
+        emit frameImageObtained(image, osd);
         break;
     } default:
         break;
@@ -204,7 +205,7 @@ auto VideoRendererItem::hasFrame() const -> bool
 auto VideoRendererItem::requestFrameImage() const -> void
 {
     if (!hasFrame())
-        emit frameImageObtained(QImage());
+        emit frameImageObtained(QImage(), QImage());
     else {
         d->take = true;
         const_cast<VideoRendererItem*>(this)->reserve(UpdateMaterial, true);
@@ -328,19 +329,17 @@ auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
 {
     if (d->take) {
         auto image = texture->toImage();
+        QImage osd;
         if (!image.isNull() && d->cache.osd)
-            d->cache.osd->drawOn(image);
-        const auto size = sizeHint();
-        if (image.size() != size) {
-            QImage tmp(size, QImage::Format_ARGB32_Premultiplied);
-            QPainter painter(&tmp);
-            painter.setRenderHint(QPainter::SmoothPixmapTransform);
-            painter.drawImage(d->frameRect(tmp.rect()), image);
-            painter.end();
-            image.swap(tmp);
-        }
-        image.detach();
-        _PostEvent(this, NewFrameImage, image);
+            osd = d->cache.osd->toImage();
+        auto scale = [] (QImage &image, const QSize &size) {
+            if (!image.isNull() && image.size() != size)
+                image = image.scaled(size, Qt::IgnoreAspectRatio,
+                                     Qt::SmoothTransformation);
+        };
+        scale(image, sizeHint());
+        scale(osd, image.size());
+        _PostEvent(this, NewFrameImage, image, osd);
         d->take = false;
     }
     if (d->queue.empty()) {

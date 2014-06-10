@@ -113,6 +113,8 @@ PrefDialog::PrefDialog(QWidget *parent)
             u":/img/media-playback-start-32.png"_q, general);
     addPage(tr("Cache"), d->ui.cache,
             u":/img/preferences-web-browser-cache.png"_q, general);
+    addPage(tr("Miscellaneous"), d->ui.misc,
+            u":/img/applications-education-miscellaneous-32.png"_q, general);
 
     auto appear = addCategory(tr("Appearance"));
     addPage(tr("OSD"), d->ui.osd,
@@ -177,6 +179,14 @@ PrefDialog::PrefDialog(QWidget *parent)
     const auto CheckBoxToggled = &QCheckBox::toggled;
     connect(d->ui.use_heartbeat, CheckBoxToggled, this, checkHearbeat);
     connect(d->ui.disable_screensaver, CheckBoxToggled, this, checkHearbeat);
+
+    connect(d->ui.quick_snapshot_folder_browse, &QPushButton::clicked,
+            this, [this] () {
+        _SetLastOpenPath(d->ui.quick_snapshot_folder->text() % '/'_q, u"snapshot"_q);
+        auto dir = _GetOpenDir(this, tr("Browse for Folder"), u"snapshot"_q);
+        if (!dir.isEmpty())
+            d->ui.quick_snapshot_folder->setText(dir);
+    });
 
     vbox = new QVBoxLayout;
     vbox->setMargin(0);
@@ -377,6 +387,7 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.open_media_from_file_manager->setValue(p.open_media_from_file_manager);
     d->ui.open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
 
+    d->ui.quick_snapshot_folder->setText(p.quick_snapshot_folder);
     d->ui.use_mpris2->setChecked(p.use_mpris2);
     d->ui.fit_to_video->setChecked(p.fit_to_video);
     d->ui.show_osd_on_action->setChecked(p.show_osd_on_action);
@@ -392,7 +403,6 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.hide_delay->setValue(p.hide_cursor_delay/1000);
     d->ui.disable_screensaver->setChecked(p.disable_screensaver);
     d->ui.remember_image->setChecked(p.remember_image);
-    d->ui.image_duration->setValue(p.image_duration/1000);
     d->ui.lion_style_fullscreen->setChecked(p.lion_style_fullscreen);
     if (p.show_logo)
         d->ui.show_logo->setChecked(true);
@@ -516,6 +526,7 @@ auto PrefDialog::get(Pref &p) -> void
     p.open_media_from_file_manager = d->ui.open_media_from_file_manager->value();
     p.open_media_by_drag_and_drop = d->ui.open_media_by_drag_and_drop->value();
 
+    p.quick_snapshot_folder = d->ui.quick_snapshot_folder->text();
     p.use_mpris2 = d->ui.use_mpris2->isChecked();
     p.fit_to_video = d->ui.fit_to_video->isChecked();
     p.show_osd_on_action = d->ui.show_osd_on_action->isChecked();
@@ -531,7 +542,6 @@ auto PrefDialog::get(Pref &p) -> void
     p.hide_cursor_delay = d->ui.hide_delay->value()*1000;
     p.disable_screensaver = d->ui.disable_screensaver->isChecked();
     p.remember_image = d->ui.remember_image->isChecked();
-    p.image_duration = qRound(d->ui.image_duration->value()*1000.0);
     p.lion_style_fullscreen = d->ui.lion_style_fullscreen->isChecked();
     p.show_logo = d->ui.show_logo->isChecked();
     p.bg_color = d->ui.bg_color->color();

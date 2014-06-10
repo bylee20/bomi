@@ -213,7 +213,7 @@ auto _GetOpenDir(QWidget *parent, const QString &title,
     auto &folder = lastFolders[key];
     const auto dir = QFileDialog::getExistingDirectory(parent, title, folder);
     if (!dir.isEmpty())
-        folder = QDir(dir).absolutePath();
+        folder = QDir(dir).absolutePath() % '/'_q;
     return dir;
 }
 

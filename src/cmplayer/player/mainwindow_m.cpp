@@ -351,24 +351,59 @@ auto MainWindow::Data::connectMenus() -> void
     plugEnumActions<VideoRatio>(video(u"crop"_q), "video_crop_ratio",
                                 &MrlState::videoCropRatioChanged, [this] ()
         { renderer.setCropRatio(_EnumData(as.state.video_crop_ratio)); });
-    connect(video[u"snapshot"_q], &QAction::triggered, p, [this] () {
-        if (!snapshot) {
-            snapshot = new SnapshotDialog(p);
-            connect(snapshot, &SnapshotDialog::request, p, [=] () {
-                if (!renderer.hasFrame())
-                    snapshot->clear();
-                else
-                    renderer.requestFrameImage();
-            });
-        }
-        snapshot->take();
-    });
+    auto &snap = video(u"snapshot"_q);
+    auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {
+        connect(snap[actionName], &QAction::triggered, p, [this, mode] () {
+            snapshotMode = mode;
+            renderer.requestFrameImage();
+        });
+    };
+    connectSnapshot(u"quick"_q, QuickSnapshot);
+    connectSnapshot(u"quick-nosub"_q, QuickSnapshotNoSub);
+    connectSnapshot(u"tool"_q, SnapshotTool);
     connect(&renderer, &VideoRendererItem::frameImageObtained,
-            p, [this] (const QImage &image) {
-        Q_ASSERT(snapshot);
+            p, [this] (const QImage &video, const QImage &osd) {
         QRectF subRect;
-        auto sub = subtitle.draw(image.rect(), &subRect);
-        snapshot->setImage(image, sub, subRect);
+        auto sub = subtitle.draw(video.rect(), &subRect);
+        switch (snapshotMode) {
+        case SnapshotTool:
+            if (!snapshot) {
+                snapshot = new SnapshotDialog(p);
+                connect(snapshot, &SnapshotDialog::request, p, [=] () {
+                    if (renderer.hasFrame()) {
+                        snapshotMode = SnapshotTool;
+                        renderer.requestFrameImage();
+                    } else
+                        snapshot->clear();
+                });
+            }
+            snapshot->setImage(video, osd, sub, subRect);
+            break;
+        case QuickSnapshot:
+        case QuickSnapshotNoSub: {
+            if (video.isNull())
+                break;
+            QImage image = video;
+            if (snapshotMode == QuickSnapshot) {
+                QPainter painter(&image);
+                if (!osd.isNull())
+                    painter.drawImage(video.rect(), osd);
+                if (!sub.isNull())
+                    painter.drawImage(subRect, sub);
+                painter.end();
+            }
+            const auto time = QDateTime::currentDateTime();
+            const QString fileName = "cmplayer-snapshot-"_a
+                    % time.toString(u"yyyy-MM-dd-hh:mm:ss.zzz"_q) % ".png"_a;
+            if (image.save(pref().quick_snapshot_folder % '/'_q % fileName))
+                showMessage(tr("Snapshot saved"), fileName);
+            else
+                showMessage(tr("Failed to save a snapshot"));
+            break;
+        } default:
+            break;
+        }
+
     });
     auto setVideoAlignment = [this] () {
         const auto v = _EnumData(as.state.video_vertical_alignment);

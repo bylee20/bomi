@@ -39,6 +39,10 @@ struct EnumGroup {
     ActionGroup *group = nullptr;
 };
 
+enum SnapshotMode {
+    NoSnapshot, QuickSnapshot, QuickSnapshotNoSub, SnapshotTool
+};
+
 using MSig = Signal<MrlState>;
 
 class SubtitleFindDialog;               class SnapshotDialog;
@@ -51,7 +55,7 @@ struct MainWindow::Data {
     SCIA typeKey() -> QString { return _L(EnumInfo<T>::typeKey()); }
 
     MainWindow *p = nullptr;
-
+    SnapshotMode snapshotMode = NoSnapshot;
     QList<EnumGroup> enumGroups;
     MainQuickView *view = nullptr;
     bool visible = false, sotChanging = false, fullScreen = false;

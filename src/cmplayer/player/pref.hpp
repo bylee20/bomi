@@ -35,10 +35,10 @@ public:
     GeneratePlaylist generate_playlist = GeneratePlaylist::Folder;
     bool hide_cursor = true, disable_screensaver = true, lion_style_fullscreen = false;
     bool hide_cursor_fs_only = false;
-    int hide_cursor_delay = 3000, image_duration = 0;
+    int hide_cursor_delay = 3000;
     bool show_logo = true; QColor bg_color = Qt::black;
     bool use_heartbeat = false;
-    QString heartbeat_command;
+    QString heartbeat_command, quick_snapshot_folder = QDir::homePath();
     int heartbeat_interval = 60;
 
     bool show_osd_on_action = true, show_osd_on_resized = true;

@@ -99,7 +99,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"subtitle/sync/reset"_q] << Qt::Key_Q;
     keys[u"subtitle/sync/decrease"_q] << Qt::Key_A;
 
-    keys[u"video/snapshot"_q] << Qt::CTRL + Qt::Key_S;
+    keys[u"video/snapshot/quick"_q] << Qt::CTRL + Qt::Key_S;
     keys[u"video/move/reset"_q] << Qt::SHIFT + Qt::Key_X;
     keys[u"video/move/up"_q] << Qt::SHIFT + Qt::Key_W;
     keys[u"video/move/down"_q] << Qt::SHIFT + Qt::Key_S;
@@ -282,7 +282,8 @@ static const auto jio = JIO(
     JE(middle_click_map),
     JE(scroll_up_map),
     JE(scroll_down_map),
-    JE(shortcuts)
+    JE(shortcuts),
+    JE(quick_snapshot_folder)
 );
 
 #define PREF_GROUP u"preference"_q

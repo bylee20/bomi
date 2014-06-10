@@ -105,6 +105,43 @@ auto MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) -> bool
     return true;
 }
 
+auto MpOsdBitmap::toImage() const -> QImage
+{
+    auto fmt = QImage::Format_ARGB32_Premultiplied;
+    QImage frame(m_renderSize, fmt);
+    frame.fill(0x0);
+    QPainter painter(&frame);
+    if (m_format & Rgba) {
+        for (int i=0; i<m_parts.size(); ++i) {
+            auto &part = m_parts[i];
+            const QImage image(data(i), part.strideAsPixel(),
+                               part.height(), fmt);
+            painter.drawImage(part.display(), image,
+                              QRect(0, 0, part.width(), part.height()));
+        }
+    } else {
+        Q_ASSERT(m_format == Ass);
+        for (int i=0; i<m_parts.size(); ++i) {
+            auto &part = m_parts[i];
+            QImage image(part.size(), fmt);
+            for (int y=0; y<part.height(); ++y) {
+                auto dest = reinterpret_cast<QRgb*>(image.scanLine(y));
+                auto src = data(i) + y*part.m_stride;
+                for (int x=0; x<part.width(); ++x) {
+                    const quint32 a = (part.color() & 0xff) * int(*src++)/255;
+                    const quint32 r = part.color() >> 24 & 0xff;
+                    const quint32 g = part.color() >> 16 & 0xff;
+                    const quint32 b = part.color() >> 8  & 0xff;
+                    *dest++ = qRgba(r*a/255, g*a/255, b*a/255, a);
+                }
+            }
+            painter.drawImage(part.display(), image,
+                              QRect(0, 0, part.width(), part.height()));
+        }
+    }
+    return frame;
+}
+
 auto MpOsdBitmap::drawOn(QImage &frame) const -> void
 {
     QPainter painter(&frame);

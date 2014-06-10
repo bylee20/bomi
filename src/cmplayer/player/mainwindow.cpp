@@ -152,8 +152,7 @@ auto MainWindow::play() -> void
 {
     if (d->stateChanging)
         return;
-    if (d->pref().pause_to_play_next_image
-            && d->pref().image_duration == 0 && d->engine.mrl().isImage())
+    if (d->pref().pause_to_play_next_image && d->engine.mrl().isImage())
         d->menu(u"play"_q)[u"next"_q]->trigger();
     else {
         const auto state = d->engine.state();
@@ -175,8 +174,7 @@ auto MainWindow::togglePlayPause() -> void
 {
     if (d->stateChanging)
         return;
-    if (d->pref().pause_to_play_next_image
-            && d->pref().image_duration == 0 && d->engine.mrl().isImage())
+    if (d->pref().pause_to_play_next_image && d->engine.mrl().isImage())
         d->menu(u"play"_q)[u"next"_q]->trigger();
     else {
         const auto state = d->engine.state();
