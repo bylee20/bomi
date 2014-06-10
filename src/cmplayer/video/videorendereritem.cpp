@@ -176,10 +176,11 @@ auto VideoRendererItem::customEvent(QEvent *event) -> void
         VideoCache cache;
         _GetAllData(event, cache.frame, cache.osd, cache.hasOsd);
         if (!cache.frame.isNull()) {
-            _Trace("Queue new video frame %%", cache.frame->size());
+            _Trace("VideoRendererItem::customEvent(): queue new frame(%%)",
+                   cache.frame->size());
             d->queue.push_back(cache);
         } else
-            _Trace("Hurry up to empty queue");
+            _Trace("VideoRendererItem::customEvent(): hurry up to empty queue");
         reserve(UpdateMaterial);
         break;
     } case NewFrameImage: {
@@ -215,11 +216,12 @@ auto VideoRendererItem::requestFrameImage() const -> void
 auto VideoRendererItem::present(const Cache &cache, const OsdCache &osd,
                                 bool hasOsd) -> void
 {
-    if (!isInitialized()) {
-        _Trace("VideoRendererItem is not initialized yet");
-        return;
+    if (!isInitialized())
+        _Trace("VideoRendererItem::present(): not initialized");
+    else {
+        _Trace("VideoRendererItem::present(): post new frame");
+        _PostEvent(Qt::HighEventPriority, this, NewFrame, cache, osd, hasOsd);
     }
-    _PostEvent(Qt::HighEventPriority, this, NewFrame, cache, osd, hasOsd);
 }
 
 auto VideoRendererItem::screenRect() const -> QRectF
@@ -328,13 +330,14 @@ auto VideoRendererItem::osdSize() const -> QSize
 auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
 {
     if (d->queue.empty()) {
-        _Trace("Videe frame queue is empty");
+        _Trace("VideoRendererItem::updateTexture(): no queued frame");
     } else {
         auto &front = d->queue.front();
         d->cache.frame.swap(front.frame);
         Q_ASSERT(!d->cache.frame.isNull());
         *texture = d->cache.frame->texture();
-        _Trace("Render next frame(%%)", texture->size());
+        _Trace("VideoRendererItem::updateTexture(): render queued frame(%%)",
+               texture->size());
 
         if (front.osd || d->cache.hasOsd != front.hasOsd) {
             d->cache.hasOsd = front.hasOsd;

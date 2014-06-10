@@ -373,15 +373,18 @@ auto VideoOutput::drawOsd(vo *out, osd_state *osd) -> void
 
 auto VideoOutput::flipPage(vo *out) -> void
 {
-    _Trace("VideoOutput::flipPage()");
     auto v = priv(out); Data *d = v->d;
-    if (!d->mpi || d->format.isEmpty() || !d->renderer)
+    if (!d->mpi || d->format.isEmpty() || !d->renderer) {
+        _Trace("VideoOutput::flipPage(): no frame to flip");
         return;
+    }
     if (d->hasOsd) {
         d->renderer->present(d->cache, d->bitmap, true);
-    } else
+        _Trace("VideoOutput::flipPage(): frame has been flipped with OSD");
+    } else {
         d->renderer->present(d->cache, MpOsdBitmapCache(), false);
-    _Trace("Video image has been transferred to renderer");
+        _Trace("VideoOutput::flipPage(): frame has been flipped");
+    }
     d->cache = VideoFramebufferObjectCache();
     d->bitmap = MpOsdBitmapCache();
     d->hasOsd = false;

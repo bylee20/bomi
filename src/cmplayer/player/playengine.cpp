@@ -89,7 +89,7 @@ PlayEngine::~PlayEngine()
     delete d->video;
     delete d->filter;
     d->initialized = false;
-    mpv_destroy(d->handle);
+    mpv_terminate_destroy(d->handle);
     delete d;
     _Debug("Finalized");
 }
