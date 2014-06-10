@@ -327,6 +327,35 @@ auto VideoRendererItem::osdSize() const -> QSize
 
 auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
 {
+    if (d->queue.empty()) {
+        _Trace("Videe frame queue is empty");
+    } else {
+        auto &front = d->queue.front();
+        d->cache.frame.swap(front.frame);
+        Q_ASSERT(!d->cache.frame.isNull());
+        *texture = d->cache.frame->texture();
+        _Trace("Render next frame(%%)", texture->size());
+
+        if (front.osd || d->cache.hasOsd != front.hasOsd) {
+            d->cache.hasOsd = front.hasOsd;
+            if (front.osd) {
+                Q_ASSERT(d->cache.hasOsd);
+                d->cache.osd.swap(front.osd);
+                d->mposd.draw(d->cache.osd);
+            } else if (!d->cache.hasOsd)
+                d->mposd.draw(d->cache.osd = { });
+            setOverlayTexture(d->mposd.isVisible() ? d->mposd.texture()
+                                                   : transparentTexture());
+        }
+        d->queue.pop_front();
+
+        if (_Change(d->rectangle, texture->target() == OGL::TargetRectangle)
+                | _Change(d->displaySize, d->cache.frame->displaySize())) {
+            d->forceToUpdateOsd = true;
+            reserve(UpdateGeometry, false);
+        }
+    }
+
     if (d->take) {
         auto image = texture->toImage();
         QImage osd;
@@ -341,34 +370,6 @@ auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
         scale(osd, image.size());
         _PostEvent(this, NewFrameImage, image, osd);
         d->take = false;
-    }
-    if (d->queue.empty()) {
-        _Trace("Videe frame queue is empty");
-        return;
-    }
-    auto &front = d->queue.front();
-    d->cache.frame.swap(front.frame);
-    Q_ASSERT(!d->cache.frame.isNull());
-    *texture = d->cache.frame->texture();
-    _Trace("Render next frame(%%)", texture->size());
-
-    if (front.osd || d->cache.hasOsd != front.hasOsd) {
-        d->cache.hasOsd = front.hasOsd;
-        if (front.osd) {
-            Q_ASSERT(d->cache.hasOsd);
-            d->cache.osd.swap(front.osd);
-            d->mposd.draw(d->cache.osd);
-        } else if (!d->cache.hasOsd)
-            d->mposd.draw(d->cache.osd = { });
-        setOverlayTexture(d->mposd.isVisible() ? d->mposd.texture()
-                                               : transparentTexture());
-    }
-    d->queue.pop_front();
-
-    if (_Change(d->rectangle, texture->target() == OGL::TargetRectangle)
-            | _Change(d->displaySize, d->cache.frame->displaySize())) {
-        d->forceToUpdateOsd = true;
-        reserve(UpdateGeometry, false);
     }
 }
 

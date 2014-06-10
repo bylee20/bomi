@@ -394,8 +394,12 @@ auto MainWindow::Data::connectMenus() -> void
             }
             const auto time = QDateTime::currentDateTime();
             const QString fileName = "cmplayer-snapshot-"_a
-                    % time.toString(u"yyyy-MM-dd-hh:mm:ss.zzz"_q) % ".png"_a;
-            if (image.save(pref().quick_snapshot_folder % '/'_q % fileName))
+                    % time.toString(u"yyyy-MM-dd-hh-mm-ss-zzz"_q) % ".png"_a;
+            QString folder = pref().quick_snapshot_folder;
+            if (pref().save_quick_snapshot_current
+                    && engine.mrl().isLocalFile())
+                folder = QFileInfo(engine.mrl().toLocalFile()).absolutePath();
+            if (image.save(folder % '/'_q % fileName))
                 showMessage(tr("Snapshot saved"), fileName);
             else
                 showMessage(tr("Failed to save a snapshot"));

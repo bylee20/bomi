@@ -209,16 +209,16 @@
            <property name="title">
             <string>Quick Snapshot</string>
            </property>
-           <layout class="QFormLayout" name="formLayout_21">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_23">
-              <property name="text">
-               <string>Folder</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
+           <layout class="QVBoxLayout" name="verticalLayout_42">
+            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_16">
+              <item>
+               <widget class="QRadioButton" name="save_quick_snapshot_folder">
+                <property name="text">
+                 <string>Save in</string>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QLineEdit" name="quick_snapshot_folder">
                 <property name="readOnly">
@@ -234,6 +234,13 @@
                </widget>
               </item>
              </layout>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="save_quick_snapshot_current">
+              <property name="text">
+               <string>Save in the same folder where current playing video exists</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </widget>

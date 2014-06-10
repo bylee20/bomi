@@ -31,7 +31,7 @@ public:
 struct PrefDialog::Data {
     Ui::PrefDialog ui;
     QList<MouseAction> actionInfo;
-    QButtonGroup *shortcuts;
+    QButtonGroup *shortcuts, *saveQuickSnapshot;
     QMap<int, QCheckBox*> hwdec;
     QMap<DeintMethod, QCheckBox*> hwdeint;
     QStringList imports;
@@ -187,6 +187,11 @@ PrefDialog::PrefDialog(QWidget *parent)
         if (!dir.isEmpty())
             d->ui.quick_snapshot_folder->setText(dir);
     });
+
+    d->saveQuickSnapshot = new QButtonGroup(this);
+    d->saveQuickSnapshot->setExclusive(true);
+    d->saveQuickSnapshot->addButton(d->ui.save_quick_snapshot_folder, 0);
+    d->saveQuickSnapshot->addButton(d->ui.save_quick_snapshot_current, 1);
 
     vbox = new QVBoxLayout;
     vbox->setMargin(0);
@@ -387,6 +392,7 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.open_media_from_file_manager->setValue(p.open_media_from_file_manager);
     d->ui.open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
 
+    d->saveQuickSnapshot->button(p.save_quick_snapshot_current)->setChecked(true);
     d->ui.quick_snapshot_folder->setText(p.quick_snapshot_folder);
     d->ui.use_mpris2->setChecked(p.use_mpris2);
     d->ui.fit_to_video->setChecked(p.fit_to_video);
@@ -526,6 +532,7 @@ auto PrefDialog::get(Pref &p) -> void
     p.open_media_from_file_manager = d->ui.open_media_from_file_manager->value();
     p.open_media_by_drag_and_drop = d->ui.open_media_by_drag_and_drop->value();
 
+    p.save_quick_snapshot_current = d->saveQuickSnapshot->checkedId();
     p.quick_snapshot_folder = d->ui.quick_snapshot_folder->text();
     p.use_mpris2 = d->ui.use_mpris2->isChecked();
     p.fit_to_video = d->ui.fit_to_video->isChecked();

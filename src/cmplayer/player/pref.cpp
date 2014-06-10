@@ -283,7 +283,8 @@ static const auto jio = JIO(
     JE(scroll_up_map),
     JE(scroll_down_map),
     JE(shortcuts),
-    JE(quick_snapshot_folder)
+    JE(quick_snapshot_folder),
+    JE(save_quick_snapshot_current)
 );
 
 #define PREF_GROUP u"preference"_q
