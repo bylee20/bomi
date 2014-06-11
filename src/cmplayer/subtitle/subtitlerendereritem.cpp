@@ -379,7 +379,7 @@ auto SubtitleRendererItem::deselect(int idx) -> void
 {
     if (idx < 0)
         d->selection.clear();
-    else if (_InRange(0, idx, d->loaded.size()-1) && d->loaded[idx]->selection())
+    else if (_InRange0(idx, d->loaded.size()) && d->loaded[idx]->selection())
         d->selection.remove(d->loaded[idx]);
     else
         return;
@@ -395,7 +395,7 @@ auto SubtitleRendererItem::select(int idx) -> void
             if (d->selection.prepend(comp))
                 sort = true;
         }
-    } else if (_InRange(0, idx, d->loaded.size()-1) && !d->loaded[idx]->selection())
+    } else if (_InRange0(idx, d->loaded.size()) && !d->loaded[idx]->selection())
         sort = d->selection.prepend(d->loaded[idx]);
     if (sort) {
         d->sort();

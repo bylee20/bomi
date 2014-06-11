@@ -18,7 +18,7 @@ struct ShortcutDialog::Data {
     }
     auto getShortcut(QKeyEvent *event) -> void
     {
-        if (_InRange(0, curIdx, MaxKeyCount-1)) {
+        if (_InRange0(curIdx, MaxKeyCount)) {
             codes[curIdx] = event->key();
             int modifiers = 0;
             if (event->modifiers() & Qt::CTRL)

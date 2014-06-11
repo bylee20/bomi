@@ -57,9 +57,9 @@ public:
     auto isValid(const QModelIndex &index) const -> bool
     { return isValidRow(index.row()) && isValidColumn(index.column()); }
     auto isValidRow(int row) const -> bool
-    { return _InRange(0, row, m_list.size()-1); }
+    { return _InRange0(row, m_list.size()); }
     auto isValidColumn(int column) const -> bool
-    { return _InRange(0, column, m_columns-1); }
+    { return _InRange0(column, m_columns); }
 
     auto setList(const List &list) -> void;
     auto append(const T &t) -> void { append(List() << t); }

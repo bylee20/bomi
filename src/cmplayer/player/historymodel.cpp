@@ -212,7 +212,7 @@ auto HistoryModel::find(const Mrl &mrl) const -> const MrlState*
 
 auto HistoryModel::play(int row) -> void
 {
-    if (_InRange(0, row, d->rows - 1) && d->loader.seek(row))
+    if (_InRange0(row, d->rows) && d->loader.seek(row))
         emit playRequested(d->getMrl());
 }
 

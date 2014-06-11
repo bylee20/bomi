@@ -106,8 +106,12 @@ SIA _NS(double n, int dec = 1) -> QString
 { return _SignSymbol(n) % _N(qAbs(n), dec); }
 
 template<class T>
-SIA _InRange(const T &min, const T &val, const T &max) -> bool
+SCIA _InRange(const T &min, const T &val, const T &max) -> bool
 { return min <= val && val <= max; }
+
+template<class T>
+SCIA _InRange0(const T &val, const T &end) -> bool
+{ return T(0) <= val && val < end; }
 
 template<class T, class S>
 SCIA _IsOneOf(const T &t, const S &s) -> bool { return t == s; }
