@@ -114,6 +114,8 @@ auto OpenGLLogger::initialize(QOpenGLContext *ctx, bool autolog) -> bool
     if (autolog)
         connect(d->logger, &QOpenGLDebugLogger::messageLogged,
                 this, &OpenGLLogger::print, Qt::DirectConnection);
+    connect(d->logger, &QOpenGLDebugLogger::messageLogged,
+            this, &OpenGLLogger::logged, Qt::DirectConnection);
 #ifdef CMPLAYER_RELEASE
     d->logger->startLogging(QOpenGLDebugLogger::AsynchronousLogging);
 #else

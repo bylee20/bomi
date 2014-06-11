@@ -52,7 +52,7 @@ class TrayIcon;
 struct MainWindow::Data {
     Data(MainWindow *p);
     template<class T>
-    SCIA typeKey() -> QString { return _L(EnumInfo<T>::typeKey()); }
+    SIA typeKey() -> QString { return _L(EnumInfo<T>::typeKey()); }
 
     MainWindow *p = nullptr;
     SnapshotMode snapshotMode = NoSnapshot;

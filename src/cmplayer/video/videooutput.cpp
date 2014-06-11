@@ -151,7 +151,6 @@ struct VideoOutput::Data {
     quint64 drawn = 0, dropped = 0;
     std::deque<FrameTime> timings;
     double avgfps = 0.0;
-    bool reconfigured = false;
 
     auto reset() -> void
     {
@@ -218,6 +217,10 @@ VideoOutput::VideoOutput(PlayEngine *engine)
     d->marker(d->engine, &PlayEngine::videoColorSpaceChanged, DirtyColor);
     d->marker(d->engine, &PlayEngine::videoChromaUpscalerChanged, DirtyChroma);
     d->marker(d->engine, &PlayEngine::deintOptionsChanged, DirtyDeint);
+    connect(&d->logger, &OpenGLLogger::logged,
+            [this] (const QOpenGLDebugMessage &msg) {
+        d->logger.print(msg);
+    });
 }
 
 VideoOutput::~VideoOutput()
@@ -257,7 +260,7 @@ auto VideoOutput::preinit(vo *out) -> int
     d->out = out;
     Q_ASSERT(d->gl);
     d->gl->makeCurrent();
-    d->logger.initialize(d->gl->context());
+    d->logger.initialize(d->gl->context(), false);
     initialize_vdpau_interop(d->gl->context());
     d->shader = new VideoFrameShader;
     d->pool =new VideoFramebufferObjectPool;
@@ -313,10 +316,8 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
     }
     _Debug("Configure VideoOutput with %%(%%x%%) format",
            mp_imgfmt_to_name(params->imgfmt), params->w, params->h);
-    d->reconfigured = true;
-    if (rerenderable) {
+    if (rerenderable)
         d->draw();
-    }
     return 0;
 }
 
@@ -451,9 +452,8 @@ auto VideoOutput::control(vo *out, uint32_t req, void *data) -> int
             if (_Change(d->mouse, d->engine->mousePosition()))
                 vo_mouse_movement(out, d->mouse.x(), d->mouse.y());
         }
-        if (d->dirty.load() || d->reconfigured)
+        if (d->dirty.load())
             out->want_redraw = true;
-        d->reconfigured = false;
         return true;
     case VOCTRL_GET_COLORSPACE:
         *static_cast<mp_image_params*>(data) = d->params;

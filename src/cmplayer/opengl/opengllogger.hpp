@@ -10,6 +10,8 @@ public:
     auto finalize(QOpenGLContext *ctx) -> void;
     auto print(const QOpenGLDebugMessage &message) -> void;
     static auto isAvailable() -> bool;
+signals:
+    void logged(const QOpenGLDebugMessage &message);
 private:
     struct Data;
     Data *d;
