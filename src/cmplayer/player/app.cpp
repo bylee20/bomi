@@ -132,8 +132,6 @@ struct App::Data {
 
 App::App(int &argc, char **argv)
 : QApplication(argc, argv), d(new Data(this)) {
-    Record r(APP_GROUP);
-
 #ifdef Q_OS_LINUX
     setlocale(LC_NUMERIC,"C");
 #endif
@@ -141,7 +139,10 @@ App::App(int &argc, char **argv)
     setOrganizationDomain(u"xylosper.net"_q);
     setApplicationName(_L(name()));
     setApplicationVersion(_L(version()));
-    setLocale(r.value(u"locale"_q, QLocale::system()).toLocale());
+
+    Record r(APP_GROUP);
+    r.read(d->locale, u"locale"_q);
+    setLocale(d->locale);
 
     d->addOption(LineCmd::Open, u"open"_q,
                  tr("Open given %1 for file path or URL."), u"mrl"_q);
@@ -364,7 +365,7 @@ auto App::setLocale(const QLocale &locale) -> void
 {
     if (translator_load(locale)) {
         Record r(APP_GROUP);
-        r.write(d->locale = locale, "locale");
+        r.write(d->locale = locale, u"locale"_q);
     }
 }
 
