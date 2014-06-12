@@ -58,16 +58,14 @@ public:
 class VideoTexturePool
         : public VideoImagePool<VideoTexture> {
     using Cache = VideoTextureCache;
-    OGL::TextureFormat m_fboFormat = OGL::RGBA8_UNorm;
     OpenGLTextureTransferInfo m_info;
     OGL::Target m_target = OGL::Target2D;
 public:
     VideoTexturePool(OGL::Target target): m_target(target)
     {
-        m_info = m_info.get(OGL::BGRA, 1);
-//        auto formats = OGL::availableFrambebufferFormats();
-//        if (formats.contains(OGL::RGBA16_UNorm))
-//            m_fboFormat = OGL::RGBA16_UNorm;
+        m_info.transfer.format = OGL::BGRA;
+        m_info.transfer.type = OGL::UInt32_8_8_8_8_Rev;
+        m_info.texture = OGL::RGBA8_UNorm;
     }
     auto get(const QSize &size, const QSize &display) -> Cache
     {
@@ -498,7 +496,7 @@ auto VideoOutput::control(vo *out, uint32_t req, void *data) -> int
 auto query_video_format(quint32 format) -> int
 {
     switch (format) {
-    case IMGFMT_VDPAU: case IMGFMT_VDA: case IMGFMT_VAAPI:
+    case IMGFMT_VDPAU:     case IMGFMT_VDA:       case IMGFMT_VAAPI:
     case IMGFMT_420P:      case IMGFMT_444P:
     case IMGFMT_420P16_LE: case IMGFMT_420P16_BE:
     case IMGFMT_420P14_LE: case IMGFMT_420P14_BE:
