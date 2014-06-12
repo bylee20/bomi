@@ -9,7 +9,8 @@
 static constexpr int UrlRole = Qt::UserRole + 1;
 static constexpr int FileNameRole = UrlRole + 1;
 
-class SubtitleLinkModel : public SimpleListModel<SubtitleLink> {
+class SubtitleLinkModel
+        : public SimpleListModel<SubtitleLink, QVector<SubtitleLink>> {
 public:
     enum Column { Language, FileName, Date, ColumnCount };
     SubtitleLinkModel(QObject *parent = nullptr)
@@ -159,7 +160,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
     connect(d->finder, &OpenSubtitlesFinder::stateChanged,
             [this] () { d->updateState(); });
     connect(d->finder, &OpenSubtitlesFinder::found,
-            [this] (const QList<SubtitleLink> &links) {
+            [this] (const QVector<SubtitleLink> &links) {
         d->model.setList(links);
         std::set<QString> set;
         for (auto &it : links)

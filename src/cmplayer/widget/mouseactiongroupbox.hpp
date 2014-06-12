@@ -9,7 +9,7 @@ public:
     using Action = QPair<QString, QString>;
     MouseActionGroupBox(QWidget *parent = nullptr);
     ~MouseActionGroupBox();
-    auto set(const QList<QPair<QString, QString>> &list) -> void;
+    auto set(const QVector<Action> &list) -> void;
     auto setValues(const KeyModifierActionMap &map) -> void;
     auto values() const -> KeyModifierActionMap;
 private:

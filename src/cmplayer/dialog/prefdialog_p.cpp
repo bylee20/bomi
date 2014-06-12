@@ -40,23 +40,24 @@ auto PrefMenuTreeItem::shortcuts() const -> QList<QKeySequence>
     return shortcuts;
 }
 
-auto PrefMenuTreeItem::makeRoot(QTreeWidget *parent, QList<MouseAction> &info)
--> QList<PrefMenuTreeItem*>
+auto PrefMenuTreeItem::makeRoot(QTreeWidget *parent)
+-> T<QVector<PrefMenuTreeItem*>, QVector<MouseAction>>
 {
     RootMenu &root = RootMenu::instance();
-    QList<PrefMenuTreeItem*> items;
+    QVector<PrefMenuTreeItem*> items;
+    QVector<MouseAction> info;
     auto item = create(&root, items, QString(), info);
     parent->addTopLevelItems(item->takeChildren());
     delete item;
-    return items;
+    return _T(items, info);
 }
 
-auto PrefMenuTreeItem::create(Menu *menu, QList<PrefMenuTreeItem*> &items,
-                              const QString &prefix, QList<MouseAction> &list)
+auto PrefMenuTreeItem::create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
+                              const QString &prefix, QVector<MouseAction> &list)
 -> PrefMenuTreeItem*
 {
     RootMenu &root = RootMenu::instance();
-    QList<QAction*> actions = menu->actions();
+    const auto actions = menu->actions();
     QList<QTreeWidgetItem*> children;
     for (int i=0; i<actions.size(); ++i) {
         const auto action = actions[i];

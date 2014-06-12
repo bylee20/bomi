@@ -2,9 +2,9 @@
 #include "misc/keymodifieractionmap.hpp"
 
 struct MouseActionGroupBox::Data {
-    QList<QComboBox*> combos;
-    QList<KeyModifier> mods;
-    QList<QCheckBox*> checks;
+    QVector<QComboBox*> combos;
+    QVector<KeyModifier> mods;
+    QVector<QCheckBox*> checks;
 };
 
 MouseActionGroupBox::MouseActionGroupBox(QWidget *parent)
@@ -19,7 +19,7 @@ MouseActionGroupBox::~MouseActionGroupBox()
     delete d;
 }
 
-auto MouseActionGroupBox::set(const QList<Action> &list) -> void
+auto MouseActionGroupBox::set(const QVector<Action> &list) -> void
 {
     d->mods << KeyModifier::None << KeyModifier::Ctrl
             << KeyModifier::Shift << KeyModifier::Alt;

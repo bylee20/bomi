@@ -97,10 +97,10 @@ auto OpenSubtitlesFinder::find(const Mrl &mrl) -> bool
                    [this] (const QVariantList &results) {
         d->setState(Available);
         if (results.isEmpty() || results.first().type() != QVariant::Map) {
-            emit found(QList<SubtitleLink>());
+            emit found(QVector<SubtitleLink>());
         } else {
             const auto list = results.first().toMap()[u"data"_q].toList();
-            QList<SubtitleLink> links;
+            QVector<SubtitleLink> links;
             for (auto &it : list) {
                 if (it.type() != QVariant::Map)
                     continue;

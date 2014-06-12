@@ -131,7 +131,7 @@ public:
         static QOpenGLFunctions *func() { return VertexDrawItem<T>::func(); }
         virtual ~ShaderIface() = default;
         QByteArray fragmentShader, vertexShader;
-        QList<QByteArray> attributes;
+        QVector<QByteArray> attributes;
         static auto matrixName() -> const char* { return "qt_Matrix"; }
         static auto opacityName() -> const char* { return "qt_Opacity"; }
     private:

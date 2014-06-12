@@ -122,8 +122,8 @@ struct PositionVertex {
         static const AttrInfo info = { 1, sizeof(PositionVertex), &data };
         return info;
     }
-    static QList<QByteArray> names() {
-        return QList<QByteArray>() << "aPosition";
+    static QVector<QByteArray> names() {
+        return QVector<QByteArray>() << "aPosition";
     }
     static inline VecIt<Type> fillAsTriangleStrip(VecIt<Type> it,
                                                   const QPointF &tl,
@@ -148,8 +148,8 @@ struct TextureVertex {
         static const AttrInfo info = { 2, sizeof(TextureVertex), data };
         return info;
     }
-    static QList<QByteArray> names() {
-        return QList<QByteArray>() << "aPosition" << "aTexCoord";
+    static QVector<QByteArray> names() {
+        return QVector<QByteArray>() << "aPosition" << "aTexCoord";
     }
     static inline VecIt<Type> fillAsTriangleStrip(VecIt<Type> it,
                                                   const QPointF &tl,
@@ -180,8 +180,8 @@ struct ColorVertex {
         static const AttrInfo info = { 2, sizeof(ColorVertex), data };
         return info;
     }
-    static QList<QByteArray> names() {
-        return QList<QByteArray>() << "aPosition" << "aColor";
+    static QVector<QByteArray> names() {
+        return QVector<QByteArray>() << "aPosition" << "aColor";
     }
 };
 
@@ -197,8 +197,8 @@ struct TextureColorVertex {
         static const AttrInfo info = { 3, sizeof(TextureColorVertex), data };
         return info;
     }
-    static QList<QByteArray> names() {
-        return QList<QByteArray>() << "aPosition" << "aTexCoord" << "aColor";
+    static QVector<QByteArray> names() {
+        return QVector<QByteArray>() << "aPosition" << "aTexCoord" << "aColor";
     }
 };
 

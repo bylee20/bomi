@@ -987,7 +987,7 @@ auto MainWindow::Data::updateRecentActions(const QList<Mrl> &list) -> void
     ActionGroup *group = recent.g();
     const int diff = group->actions().size() - list.size();
     if (diff < 0) {
-        QList<QAction*> acts = recent.actions();
+        const auto acts = recent.actions();
         QAction *sprt = acts[acts.size()-2];
         Q_ASSERT(sprt->isSeparator());
         for (int i=0; i<-diff; ++i) {
@@ -996,11 +996,11 @@ auto MainWindow::Data::updateRecentActions(const QList<Mrl> &list) -> void
             recent.g()->addAction(action);
         }
     } else if (diff > 0) {
-        QList<QAction*> acts = recent.g()->actions();
+        auto acts = recent.g()->actions();
         for (int i=0; i<diff; ++i)
             delete acts.takeLast();
     }
-    QList<QAction*> acts = group->actions();
+    const auto acts = group->actions();
     for (int i=0; i<list.size(); ++i) {
         QAction *act = acts[i];
         act->setData(list[i].location());

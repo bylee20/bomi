@@ -34,10 +34,10 @@ private:
     QFont m_specialFont;
 };
 
-template<class T, class List = QList<T>>
+template<class T, class Container = QList<T>>
 class SimpleListModel : public SimpleListModelBase {
 public:
-    using Super = SimpleListModel<T, List>;
+    using Super = SimpleListModel<T, Container>;
     SimpleListModel(QObject *parent = nullptr)
         : SimpleListModelBase(1, parent) { }
     SimpleListModel(int columns, QObject *parent = nullptr)
@@ -48,7 +48,7 @@ public:
     auto value(int row) const -> T { return m_list.value(row); }
     auto size() const -> int { return m_list.size(); }
     auto isEmpty() const -> bool { return m_list.isEmpty(); }
-    auto list() const -> const List& { return m_list; }
+    auto list() const -> const Container& { return m_list; }
     auto setChecked(int row, int column, bool checked) -> bool;
     auto setChecked(int column, const QVector<bool> &checked) -> bool;
     auto setCheckable(int column, bool checkable) -> void;
@@ -61,10 +61,10 @@ public:
     auto isValidColumn(int column) const -> bool
     { return _InRange0(column, m_columns); }
 
-    auto setList(const List &list) -> void;
-    auto append(const T &t) -> void { append(List() << t); }
-    auto append(const List &list) -> void;
-    auto merge(const List &list) -> void;
+    auto setList(const Container &list) -> void;
+    auto append(const T &t) -> void { append(Container() << t); }
+    auto append(const Container &list) -> void;
+    auto merge(const Container &list) -> void;
     auto remove(int row) -> bool;
     auto remove(const QModelIndexList &indexes) -> int;
     auto rowOf(const T &t) const -> int {return m_list.indexOf(t);}
@@ -75,7 +75,7 @@ protected:
     virtual auto displayData(int row, int column) const -> QVariant;
     virtual auto roleData(int row, int column, int role) const -> QVariant;
     virtual auto fontData(int row, int column) const -> QFont;
-    auto getList() -> List& { return m_list; }
+    auto getList() -> Container& { return m_list; }
     auto get(int r) -> T& { return m_list[r]; }
 private:
     auto rowCount(const QModelIndex &parent = QModelIndex()) const -> int final
@@ -86,7 +86,7 @@ private:
     Qt::ItemFlags flags(const QModelIndex &idx) const final
     { return isValid(idx) ? flags(idx.row(), idx.column()) : Qt::NoItemFlags; }
 private:
-    List m_list;
+    Container m_list;
     QHash<int, QVector<bool>> m_checked;
 };
 

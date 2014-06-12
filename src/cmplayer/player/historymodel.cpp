@@ -151,7 +151,7 @@ HistoryModel::HistoryModel(QObject *parent)
         d->finder.exec("PRAGMA user_version = "_a % _N(currentVersion));
     } else {
         auto record = d->db.record(d->table);
-        QList<MrlStateSqlField> lacks;
+        QVector<MrlStateSqlField> lacks;
         for (const auto &field : d->fields) {
             if (!record.contains(_L(field.property().name())))
                 lacks.append(field);

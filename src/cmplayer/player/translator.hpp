@@ -1,7 +1,7 @@
 #ifndef TRANSLATOR_HPP
 #define TRANSLATOR_HPP
 
-using LocaleList = QList<QLocale>;
+using LocaleList = QVector<QLocale>;
 
 class Translator : public QObject {
     Q_OBJECT

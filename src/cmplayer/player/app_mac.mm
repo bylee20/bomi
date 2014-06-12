@@ -156,7 +156,7 @@ QStringList AppMac::devices() const {
 	if (kernRet != KERN_SUCCESS)
 		return QStringList();
 	io_object_t device = 0;
-	QList<QString> devices;
+    QStringList devices;
 	while ((device = IOIteratorNext(it))) {
 		CFStringRef name = reinterpret_cast<CFStringRef>(
 				IORegistryEntryCreateCFProperty(device

@@ -100,7 +100,10 @@ auto Translator::get() -> Translator&
 
 auto Translator::availableLocales() -> LocaleList
 {
-    return get().d->locales.toList();
+    LocaleList list;
+    for (auto &locale : get().d->locales)
+        list.push_back(locale);
+    return list;
 }
 
 auto Translator::load(const QLocale &locale) -> bool

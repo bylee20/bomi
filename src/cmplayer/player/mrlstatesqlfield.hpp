@@ -6,7 +6,6 @@
 struct MrlStateSqlField;
 
 struct MrlStateSqlField {
-    using List = QList<MrlStateSqlField>;
     MrlStateSqlField() noexcept { }
     MrlStateSqlField(const QMetaProperty &property,
                      const QVariant &def = QVariant()) noexcept;

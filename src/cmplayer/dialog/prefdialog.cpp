@@ -30,12 +30,12 @@ public:
 
 struct PrefDialog::Data {
     Ui::PrefDialog ui;
-    QList<MouseAction> actionInfo;
+    QVector<MouseAction> actionInfo;
+    QVector<PrefMenuTreeItem*> actionItems;
     QButtonGroup *shortcuts, *saveQuickSnapshot;
     QMap<int, QCheckBox*> hwdec;
     QMap<DeintMethod, QCheckBox*> hwdeint;
     QStringList imports;
-    QList<PrefMenuTreeItem*> actionItems;
     DeintWidget *deint_swdec = nullptr, *deint_hwdec = nullptr;
     MrlStatePropertyListModel properties;
     auto updateCodecCheckBox() -> void
@@ -212,7 +212,8 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->shortcuts->addButton(d->ui.shortcut3, 2);
     d->shortcuts->addButton(d->ui.shortcut4, 3);
 
-    d->actionItems = PrefMenuTreeItem::makeRoot(d->ui.shortcut_tree, d->actionInfo);
+    _R(d->actionItems, d->actionInfo)
+            = PrefMenuTreeItem::makeRoot(d->ui.shortcut_tree);
     d->ui.shortcut_tree->header()->resizeSection(0, 200);
 
     d->ui.mouse_double_click->set(d->actionInfo);
@@ -281,9 +282,9 @@ PrefDialog::PrefDialog(QWidget *parent)
     connect(d->ui.shortcut_tree, &QTreeWidget::currentItemChanged,
             [this] (QTreeWidgetItem *it) {
         auto item = static_cast<PrefMenuTreeItem*>(it);
-        const QList<QAbstractButton*> buttons = d->shortcuts->buttons();
-        for (int i=0; i<buttons.size(); ++i)
-            buttons[i]->setEnabled(item && !item->isMenu());
+        const auto buttons = d->shortcuts->buttons();
+        for (auto b : buttons)
+            b->setEnabled(item && !item->isMenu());
     });
 
     auto onBlurKernelChanged = [this] () {

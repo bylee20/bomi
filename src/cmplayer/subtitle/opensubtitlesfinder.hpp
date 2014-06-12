@@ -22,7 +22,7 @@ public:
     auto error() const -> QString;
 signals:
     void stateChanged();
-    void found(const QList<SubtitleLink> &links);
+    void found(const QVector<SubtitleLink> &links);
 private:
     struct Data;
     Data *d;

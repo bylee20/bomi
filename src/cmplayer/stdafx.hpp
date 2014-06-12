@@ -69,6 +69,8 @@ template<class... Args>
 SCIA _T(const Args&... args) -> T<Args...>
 { return std::tuple<Args...>(args...); }
 
+#define _R std::tie
+
 SIA _L(const char *str) -> QLatin1String
 { return QLatin1String(str); }
 

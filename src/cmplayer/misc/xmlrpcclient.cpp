@@ -59,12 +59,17 @@ struct XmlRpcClient::Data {
 };
 
 XmlRpcClient::XmlRpcClient(QObject *parent)
-: QObject(parent), d(new Data) {
-    d->request.setHeader(QNetworkRequest::UserAgentHeader, u"CMPlayerXmlRpcClient/0.1"_q);
-    d->request.setHeader(QNetworkRequest::ContentTypeHeader, u"text/xml"_q);
+    : QObject(parent)
+    , d(new Data)
+{
+    d->request.setHeader(QNetworkRequest::UserAgentHeader,
+                         u"CMPlayerXmlRpcClient/0.1"_q);
+    d->request.setHeader(QNetworkRequest::ContentTypeHeader,
+                         u"text/xml"_q);
 }
 
-XmlRpcClient::~XmlRpcClient() {
+XmlRpcClient::~XmlRpcClient()
+{
     delete d;
 }
 
@@ -73,7 +78,8 @@ auto XmlRpcClient::setUrl(const QUrl &url) -> void
     d->request.setUrl(url);
 }
 
-auto XmlRpcClient::postCall(const QString &method, const QList<QVariant> &args) -> QNetworkReply*
+auto XmlRpcClient::postCall(const QString &method,
+                            const QVariantList &args) -> QNetworkReply*
 {
     QDomDocument doc;
     doc.appendChild(doc.createProcessingInstruction(
@@ -89,9 +95,9 @@ auto XmlRpcClient::postCall(const QString &method, const QList<QVariant> &args) 
 
     if (!args.isEmpty()) {
         auto params = doc.createElement(u"params"_q);
-        for (int i=0; i<args.size(); ++i) {
-            params.appendChild(doc.createElement(u"param"_q)).appendChild(toValueNode(doc, args[i]));
-        }
+        for (int i=0; i<args.size(); ++i)
+            params.appendChild(doc.createElement(u"param"_q))
+                  .appendChild(toValueNode(doc, args[i]));
         call.appendChild(params);
     }
     d->lastCall = doc.toString();
@@ -134,7 +140,8 @@ QVariant parseValue(const QDomElement &elem) {
     return QVariant();
 }
 
-auto XmlRpcClient::parseResponse(const QByteArray &reply, bool compressed) -> QVariantList
+auto XmlRpcClient::parseResponse(const QByteArray &reply,
+                                 bool compressed) -> QVariantList
 {
     QDomDocument doc;
     if (compressed)

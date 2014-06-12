@@ -420,7 +420,7 @@ auto VideoOutput::flipPage(vo *out) -> void
     d->bitmap = MpOsdBitmapCache();
     d->hasOsd = false;
     ++d->drawn;
-    constexpr int interval = 20;
+    constexpr int interval = 4;
     constexpr int max = 20, min = 5;
     const int size = d->timings.size();
     if (size == max && d->drawn & (interval - 1))

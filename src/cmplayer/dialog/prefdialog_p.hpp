@@ -19,12 +19,12 @@ public:
     auto setShortcuts(const QList<QKeySequence> &keys) -> void;
     auto shortcuts() const -> QList<QKeySequence>;
     auto id() const -> QString { return m_id; }
-    static auto makeRoot(QTreeWidget *parent,
-                         QList<MouseAction> &info) -> QList<PrefMenuTreeItem*>;
+    static auto makeRoot(QTreeWidget *parent)
+        -> T<QVector<PrefMenuTreeItem*>, QVector<MouseAction>>;
 private:
-    static auto create(Menu *menu, QList<PrefMenuTreeItem*> &items,
+    static auto create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
                        const QString &prefix,
-                       QList<MouseAction> &list) -> PrefMenuTreeItem*;
+                       QVector<MouseAction> &list) -> PrefMenuTreeItem*;
     PrefMenuTreeItem(Menu *menu, PrefMenuTreeItem *parent);
     PrefMenuTreeItem(QAction *action, PrefMenuTreeItem *parent);
     QAction *m_action; QString m_id;
