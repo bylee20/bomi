@@ -115,7 +115,7 @@ struct VideoRendererItem::Data {
 
     auto updateOsdSize() -> void
     {
-        if (!_Change(prevSize, vtx.size().toSize())) {
+        if (forceToUpdateOsd | !_Change(prevSize, vtx.size().toSize())) {
             sizeChecker.stop();
             emit p->osdSizeChanged(osdSize = prevSize);
         }

@@ -38,7 +38,8 @@ OpenGLFramebufferObject::OpenGLFramebufferObject(const OpenGLTexture2D &texture,
     m_textures.resize(1);
     m_textures[0] = texture;
     if (texture.isValid() && !texture.isEmpty()) {
-        m_complete = bind() && attach(texture, 0);
+        bind();
+        m_complete = attach(texture, 0);
         release();
     }
 }

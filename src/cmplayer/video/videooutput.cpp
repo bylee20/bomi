@@ -216,7 +216,7 @@ struct VideoOutput::Data {
                 fbo->release();
             }
         }
-        glFlush();
+        glFinish();
         gl->doneCurrent();
         _Trace("VideoOutput::draw()");
     }
