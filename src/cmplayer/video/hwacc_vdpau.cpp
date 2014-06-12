@@ -24,8 +24,6 @@ extern "C" {
 #include <vdpau/vdpau.h>
 }
 
-#define TO_INTEROP(a) (void*)(quintptr)(a)
-
 auto HwAccX11Trait<IMGFMT_VDPAU>::error(Status status) -> const char*
 {
     if (Vdpau::isAvailable())
@@ -178,35 +176,43 @@ auto Vdpau::isAvailable() -> bool
     return d.init && OGL::hasExtension(OGL::NvVdpauInterop);
 }
 
+QHash<QOpenGLContext*, Vdpau::Interop> s_interops;
+
 auto Vdpau::initializeInterop(QOpenGLContext *ctx) -> void
 {
     if (!d.init)
         return;
-    if (!d.gl) {
+    if (!s_interops.contains(ctx)) {
+        auto &d = s_interops[ctx];
         d.gl = ctx;
-        proc("glVDPAUInitNV"_b,                  d.initialize);
-        proc("glVDPAUFiniNV"_b,                  d.finalize);
-        proc("glVDPAURegisterOutputSurfaceNV"_b, d.registerOutputSurface);
-        proc("glVDPAUIsSurfaceNV"_b,             d.isSurface);
-        proc("glVDPAUUnregisterSurfaceNV"_b,     d.unregisterSurface);
-        proc("glVDPAUGetSurfaceivNV"_b,          d.getSurfaceiv);
-        proc("glVDPAUSurfaceAccessNV"_b,         d.surfaceAccess);
-        proc("glVDPAUMapSurfacesNV"_b,           d.mapSurfaces);
-        proc("glVDPAUUnmapSurfacesNV"_b,         d.unmapSurfaces);
+        d.proc("glVDPAUInitNV"_b,                  d.initialize);
+        d.proc("glVDPAUFiniNV"_b,                  d.finalize);
+        d.proc("glVDPAURegisterOutputSurfaceNV"_b, d._registerOutputSurface);
+        d.proc("glVDPAUIsSurfaceNV"_b,             d.isSurface);
+        d.proc("glVDPAUUnregisterSurfaceNV"_b,     d.unregisterSurface);
+        d.proc("glVDPAUGetSurfaceivNV"_b,          d.getSurfaceiv);
+        d.proc("glVDPAUSurfaceAccessNV"_b,         d.surfaceAccess);
+        d.proc("glVDPAUMapSurfacesNV"_b,           d.mapSurfaces);
+        d.proc("glVDPAUUnmapSurfacesNV"_b,         d.unmapSurfaces);
+        OGL::logError("before glVDPAUInitNV()"_b);
+        d.initialize(TO_INTEROP(Vdpau::d.device), TO_INTEROP(Vdpau::d.proc));
+        OGL::logError("after glVDPAUInitNV()"_b);
     }
-    OGL::logError("before glVDPAUInitNV()"_b);
-    d.initialize(TO_INTEROP(d.device), TO_INTEROP(d.proc));
-    OGL::logError("after glVDPAUInitNV()"_b);
 }
-
-
 
 auto Vdpau::finalizeInterop(QOpenGLContext *ctx) -> void
 {
-    if (d.finalize) {
-        Q_ASSERT(ctx == d.gl);
-        d.finalize();
+    auto it = s_interops.find(ctx);
+    if (it != s_interops.end()) {
+        Q_ASSERT(it->gl == ctx);
+        it->finalize();
     }
+}
+
+auto Vdpau::interop() -> const Interop*
+{
+    auto it = s_interops.find(QOpenGLContext::currentContext());
+    return it != s_interops.end() ? &(*it) : nullptr;
 }
 
 struct VdpauVideoSurface {
@@ -256,14 +262,12 @@ auto HwAccVdpau::fillContext(AVCodecContext *avctx, int w, int h) -> bool
         return false;
     if (!supports || (int)mw < w || (int)mh < h)
         return false;
-    const int width = tmp::aligned<2>(w);
-    const int height = tmp::aligned<4>(h);
-    if (!check(Vdpau::decoderCreate(profile.id, width, height,
-                                    codec->surfaces, &d->context.decoder))) {
+    if (!check(Vdpau::decoderCreate(profile.id, w, h, codec->surfaces,
+                                    &d->context.decoder))) {
         d->context.decoder = VDP_INVALID_HANDLE;
         return false;
     }
-    if (!d->pool.create(width, height, chroma))
+    if (!d->pool.create(w, h, chroma))
         return false;
     return true;
 }
@@ -290,20 +294,32 @@ VdpauMixer::VdpauMixer(const QSize &size)
 
 }
 
-VdpauMixer::~VdpauMixer() {
-    if (m_glSurface) {
-        Vdpau::unmapSurfaces(1, &m_glSurface);
-        Vdpau::unregisterSurface(m_glSurface);
-    }
-    if (m_surface != VDP_INVALID_HANDLE)
-        Vdpau::outputSurfaceDestroy(m_surface);
-    if (m_mixer != VDP_INVALID_HANDLE)
-        Vdpau::videoMixerDestroy(m_mixer);
+VdpauMixer::~VdpauMixer()
+{
+    release();
 }
 
-auto VdpauMixer::create(const QList<OpenGLTexture2D> &textures) -> bool
+auto VdpauMixer::release() -> void
 {
-    auto &texture = textures[0];
+    auto interop = Vdpau::interop();
+    if (m_glSurface) {
+        interop->unmapSurfaces(1, &m_glSurface);
+        interop->unregisterSurface(m_glSurface);
+        m_glSurface = GL_NONE;
+    }
+    if (m_surface != VDP_INVALID_HANDLE) {
+        Vdpau::outputSurfaceDestroy(m_surface);
+        m_surface = VDP_INVALID_HANDLE;
+    }
+    if (m_mixer != VDP_INVALID_HANDLE) {
+        Vdpau::videoMixerDestroy(m_mixer);
+        m_mixer = VDP_INVALID_HANDLE;
+    }
+}
+
+auto VdpauMixer::create(const OpenGLTexture2D &texture) -> bool
+{
+    auto interop = Vdpau::interop();
     texture.bind();
     static const QVector<VdpVideoMixerParameter> params = {
         VDP_VIDEO_MIXER_PARAMETER_VIDEO_SURFACE_WIDTH,
@@ -321,19 +337,24 @@ auto VdpauMixer::create(const QList<OpenGLTexture2D> &textures) -> bool
                "Cannot create output surface."))
         return false;
     const auto id = texture.id();
-    m_glSurface = Vdpau::registerOutputSurface(m_surface,
-                                               texture.target(), 1, &id);
+    m_glSurface = interop->registerOutputSurface(m_surface, texture.target(), 1, &id);
     if (m_glSurface == GL_NONE
             && !check(VDP_STATUS_ERROR, "Cannot register output surface."))
         return false;
-    Vdpau::surfaceAccess(m_glSurface, GL_READ_ONLY);
-    Vdpau::mapSurfaces(1, &m_glSurface);
+    interop->surfaceAccess(m_glSurface, GL_READ_ONLY);
+    interop->mapSurfaces(1, &m_glSurface);
     _Debug("VDPAU Mixer initialized.");
     return true;
 }
 
-auto VdpauMixer::upload(const mp_image *mpi, bool deint) -> bool
+auto VdpauMixer::upload(OpenGLTexture2D &texture,
+                        const mp_image *mpi, bool deint) -> bool
 {
+    if (m_id != texture.id()) {
+        release();
+        if (!create(texture))
+            return false;
+    }
     auto structure = VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME;
     if (deint) {
         if (mpi->fields & MP_IMGFIELD_TOP)
@@ -347,16 +368,6 @@ auto VdpauMixer::upload(const mp_image *mpi, bool deint) -> bool
                                          nullptr, m_surface, nullptr, nullptr,
                                          0, nullptr),
                  "Cannot render video surface.");
-}
-
-auto VdpauMixer::getAligned(const mp_image */*mpi*/,
-                            QVector<QSize> *bytes) -> mp_imgfmt
-{
-    const int width = tmp::aligned<2>(this->width() + 1);
-    const int height = tmp::aligned<4>(this->height() + 3);
-    bytes->resize(1);
-    (*bytes)[0] = QSize(width*4, height);
-    return IMGFMT_BGRA;
 }
 
 #endif

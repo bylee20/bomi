@@ -23,11 +23,11 @@ private:
 class VdaMixer : public HwAccMixer {
 public:
     VdaMixer(const QSize &size);
-    auto upload(const mp_image *mpi, bool deint) -> bool override;
-    auto directRendering() const -> bool override { return m_direct; }
+    auto upload(OpenGLTexture2D &texture,
+                const mp_image *mpi, bool deint) -> bool override;
 private:
-    const QList<OpenGLTexture2D> &m_textures;
-    bool m_direct = false;
+    auto create(const QVector<OpenGLTexture2D> &textures) -> bool;
+    QVector<OpenGLTexture2D> m_textures;
 };
 
 #endif // HWACC_VDA_HPP

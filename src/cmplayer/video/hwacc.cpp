@@ -131,10 +131,27 @@ auto HwAcc::createMixer(mp_imgfmt imgfmt, const QSize &size) -> HwAccMixer*
 #endif
 #ifdef Q_OS_MAC
     case IMGFMT_VDA:
-        return new VdaMixer(textures, format);
+		return new VdaMixer(size);
 #endif
     default:
         return nullptr;
+    }
+}
+
+auto HwAcc::renderType(mp_imgfmt hwtype) -> mp_imgfmt
+{
+    switch (hwtype) {
+#ifdef Q_OS_LINUX
+    case IMGFMT_VDPAU:
+    case IMGFMT_VAAPI:
+        return IMGFMT_RGBA;
+#endif
+#ifdef Q_OS_MAC
+    case IMGFMT_VDA:
+        return IMGFMT_UYVY;
+#endif
+    default:
+        return IMGFMT_NONE;
     }
 }
 

@@ -89,7 +89,7 @@ auto UtilObject::action(const QString &key) -> QObject*
 #include <mach/mach_host.h>
 #include <mach/task.h>
 #include <libproc.h>
-QString UtilObject::monospace() { return "monaco"; }
+QString UtilObject::monospace() { return u"monaco"_q; }
 template<class T>
 static T getSysctl(int name, const T def) {
     T ret; int names[] = {CTL_HW, name}; size_t len = sizeof(def);

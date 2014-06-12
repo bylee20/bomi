@@ -8,6 +8,7 @@
 
 #ifdef Q_OS_MAC
 void qt_mac_set_dock_menu(QMenu *menu);
+#include <Carbon/Carbon.h>
 #endif
 
 MainWindow::MainWindow(QWidget *parent)
@@ -222,9 +223,9 @@ auto MainWindow::setFullScreen(bool full) -> void
                 setGeometry(geometry);
                 SetSystemUIMode(kUIModeNormal, 0);
             }
-            checkWindowState();
-            updateTitle();
-            updateStaysOnTop();
+            d->checkWindowState(d->winState);
+            d->updateTitle();
+            d->updateStaysOnTop();
         } else
 #endif
         {
@@ -402,25 +403,7 @@ auto MainWindow::changeEvent(QEvent *ev) -> void
     QWidget::changeEvent(ev);
     if (ev->type() == QEvent::WindowStateChange) {
         auto event = static_cast<QWindowStateChangeEvent*>(ev);
-        d->prevWinState = event->oldState();
-        d->winState = windowState();
-        d->updateWindowSizeState();
-        setWindowFilePath(d->filePath);
-        d->dontPause = true;
-        d->moving = false;
-        d->prevPos = QPoint();
-        const auto full = isFullScreen();
-        if (full) {
-            cApp.setAlwaysOnTop(this, false);
-            setVisible(true);
-        } else {
-            d->updateStaysOnTop();
-            setVisible(true);
-        }
-        d->readyToHideCursor();
-        d->dontPause = false;
-        if (!d->stateChanging)
-            d->doVisibleAction(d->winState != Qt::WindowMinimized);
+        d->checkWindowState(event->oldState());
     }
 }
 

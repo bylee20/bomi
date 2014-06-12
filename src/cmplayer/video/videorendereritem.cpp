@@ -2,7 +2,7 @@
 #include "mposditem.hpp"
 #include "mposdbitmap.hpp"
 #include "letterboxitem.hpp"
-#include "videoframebufferobject.hpp"
+#include "videotexture.hpp"
 #include "videocolor.hpp"
 #include "kernel3x3.hpp"
 #include "misc/dataevent.hpp"
@@ -18,6 +18,9 @@ struct VideoCache {
     VideoRendererItem::OsdCache osd;
     bool hasOsd = false;
 };
+
+auto initialize_vdpau_interop(QOpenGLContext *ctx) -> void;
+auto finalize_vdpau_interop(QOpenGLContext *ctx) -> void;
 
 struct VideoRendererItem::Data {
     Data(VideoRendererItem *p): p(p) {}
@@ -153,6 +156,7 @@ auto VideoRendererItem::overlayInLetterbox() const -> bool
 auto VideoRendererItem::initializeGL() -> void
 {
     HighQualityTextureItem::initializeGL();
+    initialize_vdpau_interop(QOpenGLContext::currentContext());
     d->black.create(OGL::Repeat);
     OpenGLTextureBinder<OGL::Target2D> binder(&d->black);
     const quint32 p = 0x0;
@@ -167,6 +171,7 @@ auto VideoRendererItem::finalizeGL() -> void
     d->queue.clear();
     d->black.destroy();
     d->mposd.finalize();
+    finalize_vdpau_interop(QOpenGLContext::currentContext());
 }
 
 auto VideoRendererItem::customEvent(QEvent *event) -> void
@@ -335,7 +340,7 @@ auto VideoRendererItem::updateTexture(OpenGLTexture2D *texture) -> void
         auto &front = d->queue.front();
         d->cache.frame.swap(front.frame);
         Q_ASSERT(!d->cache.frame.isNull());
-        *texture = d->cache.frame->texture();
+        *texture = *d->cache.frame;
         _Trace("VideoRendererItem::updateTexture(): render queued frame(%%)",
                texture->size());
 

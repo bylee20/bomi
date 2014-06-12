@@ -46,8 +46,10 @@ PlayEngine::PlayEngine()
 
     mpv_set_wakeup_callback(d->handle, [] (void *arg) {
         auto d = static_cast<Data*>(arg);
-        if (d->initialized && !d->videoThread)
+        if (d->initialized && !d->videoThread) {
             d->videoThread = QThread::currentThread();
+            emit d->p->needToMoveVideoThread();
+        }
     }, d);
 
     auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
@@ -74,6 +76,9 @@ PlayEngine::PlayEngine()
             }
         }
     }
+    d->videoContext = new OpenGLOffscreenContext;
+    connect(this, &PlayEngine::needToMoveVideoThread,
+            this, &PlayEngine::moveVideoThread, Qt::QueuedConnection);
     d->fatal(mpv_initialize(d->handle), "Couldn't initialize mpv.");
     _Debug("Initialized");
     d->initialized = true;
@@ -81,6 +86,7 @@ PlayEngine::PlayEngine()
 
 PlayEngine::~PlayEngine()
 {
+    _Delete(d->videoContext);
     delete d->videoInfo;
     delete d->audioInfo;
     delete d->chapterInfo;
@@ -94,18 +100,31 @@ PlayEngine::~PlayEngine()
     _Debug("Finalized");
 }
 
+auto PlayEngine::initializeOffscreenContext() -> void
+{
+
+}
+
+auto PlayEngine::moveVideoThread() -> void
+{
+    if (d->videoThread && d->sgInit) {
+        d->videoContext->createSurface();
+        d->videoContext->setThread(d->videoThread);
+    }
+}
+
 auto PlayEngine::initializeGL(QQuickWindow *window) -> void
 {
     Q_ASSERT(d->videoThread);
     _Info("Initialize video OpenGL context for %%", d->videoThread);
     auto ctx = window->openglContext();
     ctx->doneCurrent();
-    d->videoContext = new OpenGLOffscreenContext;
     d->videoContext->setShareContext(ctx);
     d->videoContext->setFormat(ctx->format());
-    d->videoContext->setThread(d->videoThread);
-    d->videoContext->create();
+    d->videoContext->createContext();
     ctx->makeCurrent(window);
+    d->sgInit = true;
+    emit needToMoveVideoThread();
     d->filter->initializeGL(d->videoContext);
     d->video->initializeGL(d->videoContext);
 }
@@ -114,7 +133,6 @@ auto PlayEngine::finalizeGL() -> void
 {
     d->video->finalizeGL();
     d->filter->finalizeGL();
-    _Delete(d->videoContext);
 }
 
 auto PlayEngine::metaData() const -> const MetaData&

@@ -4,7 +4,7 @@
 namespace tmp {
 
 template<class Container, class Test>
-SIA find_if(const Container &list, Test test) -> typename Container::const_iterator
+SIA find_if(const Container &c, Test test) -> typename Container::const_iterator
 { return std::find_if(std::begin(c), std::end(c), test); }
 
 template<class Container, class Test>
@@ -31,7 +31,7 @@ SIA transform(Container &c, F f) -> Container&
 
 template<class Container, class F>
 SIA transformed(const Container &c, F f) -> Container
-{ Container ret = c; return transform<List, F>(ret, f); }
+{ Container ret = c; return transform<Container, F>(ret, f); }
 
 }
 

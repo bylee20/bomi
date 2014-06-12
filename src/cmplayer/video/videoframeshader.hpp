@@ -7,6 +7,7 @@
 #include "enum/colorspace.hpp"
 #include "enum/deintmethod.hpp"
 #include "enum/videoeffect.hpp"
+#include "videotexture.hpp"
 extern "C" {
 #include <video/mp_image.h>
 }
@@ -23,17 +24,21 @@ public:
     VideoFrameShader &operator = (const VideoFrameShader &) = delete;
     ~VideoFrameShader();
     auto render(const Kernel3x3 &k3x3) -> void;
-    auto target() const -> GLenum { return m_target; }
+    auto target() const -> OGL::Target { return m_target; }
     auto setDeintMethod(DeintMethod method) -> void;
     auto setEffects(VideoEffects effects) -> void;
     auto setColor(const VideoColor &color,
                   ColorSpace space, ColorRange range) -> void;
     auto setChromaUpscaler(InterpolatorType type) -> void;
     auto isDirectlyRenderable() const -> bool;
-    const OpenGLTexture2D &renderTarget() const { return m_textures[0]; }
     auto upload(const mp_image *mpi) -> void;
+    auto upload(const mp_image *mpi, VideoTexture &texture) -> void;
+    auto prepare(const mp_image *mpi) -> void;
     auto setFormat(const mp_image_params &params) -> void;
     auto setFlipped(bool flipped) -> void;
+    auto directlyRenderableTexture() -> const VideoTexture&
+        { return *m_textures.front(); }
+    auto useDMA() const -> bool { return m_dma && m_params.imgfmt != IMGFMT_VDA; }
 private:
     auto release() -> void;
     auto updateColorMatrix() -> void;
@@ -52,6 +57,8 @@ private:
     auto updateShader(int deint) -> void;
     bool m_refill = false;
     QVector<QSize> m_bytes;
+    QVector<VideoTexture*> m_textures;
+    QVector<OpenGLTextureTransferInfo> m_transferInfos;
     mp_imgfmt m_imgfmtOut = IMGFMT_NONE;
     mp_csp m_cspOut = MP_CSP_BT_709;
     QSize m_alignedSize;
@@ -67,13 +74,12 @@ private:
     int m_lutCount = 0;
     VideoEffects m_effects = 0;
     DeintMethod m_deint = DeintMethod::None;
-    QList<OpenGLTexture2D> m_textures;
     QByteArray m_texel;
     bool m_dma = false, m_direct = false, m_defaultColor = true;
-    bool m_top = false, m_flipped = false;
+    bool m_top = false, m_flipped = false, m_additional = false;
+    bool m_hwdec = false;
     QPointF m_chroma = {0.0, 0.0};
     OpenGLTexture1D m_lutInt[2];
-    HwAccMixer *m_mixer = nullptr;
     QOpenGLBuffer m_vbo;
     int loc_kern_d, loc_kern_c, loc_kern_n, loc_top_field;
     int loc_mul_mat, loc_vMatrix;

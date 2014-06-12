@@ -149,6 +149,7 @@ struct MainWindow::Data {
     auto updateWindowSizeState() -> void;
     auto screenSize() const -> QSize;
     auto updateWindowPosState() -> void;
+    auto checkWindowState(Qt::WindowStates prev) -> void;
 
     template<class List>
     auto updateListMenu(Menu &menu, const List &list,

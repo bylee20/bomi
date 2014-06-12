@@ -11,10 +11,6 @@
 #include "subtitle/subtitle_parser.hpp"
 #include "dialog/mbox.hpp"
 
-#ifdef Q_OS_MAC
-#include <Carbon/Carbon.h>
-#endif
-
 MainWindow::Data::Data(MainWindow *p)
     : p(p)
 {
@@ -1063,4 +1059,27 @@ auto MainWindow::Data::doVisibleAction(bool visible) -> void
         pausedByHiding = true;
         engine.pause();
     }
+}
+
+auto MainWindow::Data::checkWindowState(Qt::WindowStates prev) -> void
+{
+    prevWinState = prev;
+    winState = p->windowState();
+    updateWindowSizeState();
+    p->setWindowFilePath(filePath);
+    dontPause = true;
+    moving = false;
+    prevPos = QPoint();
+    const auto full = p->isFullScreen();
+    if (full) {
+        cApp.setAlwaysOnTop(p, false);
+        p->setVisible(true);
+    } else {
+        updateStaysOnTop();
+        p->setVisible(true);
+    }
+    readyToHideCursor();
+    dontPause = false;
+    if (!stateChanging)
+        doVisibleAction(winState != Qt::WindowMinimized);
 }

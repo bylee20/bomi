@@ -40,6 +40,34 @@ using VdpauSurface = HwAccX11Surface<IMGFMT_VDPAU>;
 class Vdpau {
     DECLARE_LOG_CONTEXT(VDPAU)
 public:
+    struct Interop {
+        GLvdpauSurfaceNV registerOutputSurface(
+            VdpOutputSurface surface, GLenum target,
+            GLsizei num, const GLuint *tex
+        ) const
+        { return _registerOutputSurface(TO_INTEROP(surface), target, num, tex); }
+        GLboolean (*isSurface) (GLvdpauSurfaceNV) = nullptr;
+        void (*unregisterSurface) (GLvdpauSurfaceNV) = nullptr;
+        void (*getSurfaceiv) (GLvdpauSurfaceNV, GLenum, GLsizei, GLsizei*,
+                              int*) = nullptr;
+        void (*surfaceAccess) (GLvdpauSurfaceNV, GLenum) = nullptr;
+        void (*mapSurfaces) (GLsizei, const GLvdpauSurfaceNV *) = nullptr;
+        void (*unmapSurfaces) (GLsizei, const GLvdpauSurfaceNV *) = nullptr;
+        void (*initialize) (const GLvoid *, const GLvoid *) = nullptr;
+        void (*finalize) (void) = nullptr;
+    private:
+        GLvdpauSurfaceNV(*_registerOutputSurface)(const GLvoid*, GLenum, GLsizei,
+                                                  const GLuint*) = nullptr;
+        friend class Vdpau;
+        template<class T>
+        auto proc(const QByteArray &name, T &func) -> bool
+        {
+            func = reinterpret_cast<T>(gl->getProcAddress(name));
+            return func != nullptr;
+        }
+        QOpenGLContext *gl = nullptr;
+    };
+
     Vdpau() {}
     static auto codec(AVCodecID id) -> const VdpauCodec*
     {
@@ -117,34 +145,12 @@ public:
         { return d.outputSurfaceCreate(d.device, rgba, w, h, surface); }
     static auto outputSurfaceDestroy(VdpOutputSurface surface) -> VdpStatus
         { return d.outputSurfaceDestroy(surface); }
-    static auto registerOutputSurface(VdpOutputSurface surface, GLenum target,
-                                      GLsizei numTexturesNames,
-                                      const GLuint *textureNames)
-    -> GLvdpauSurfaceNV
-    {
-        return d.registerOutputSurface(TO_INTEROP(surface), target,
-                                       numTexturesNames, textureNames);
-    }
-    static auto isSurface(GLvdpauSurfaceNV surface) -> GLboolean
-        { return d.isSurface(surface); }
-    static auto unregisterSurface(GLvdpauSurfaceNV surface) -> void
-        { d.unregisterSurface(surface); }
-    static auto getSurfaceiv(GLvdpauSurfaceNV surface, GLenum pname,
-                             GLsizei bufSize, GLsizei *length,
-                             int *values) -> void
-        { d.getSurfaceiv(surface, pname, bufSize, length, values); }
-    static auto surfaceAccess(GLvdpauSurfaceNV surface, GLenum access) -> void
-        { d.surfaceAccess(surface, access); }
-    static auto mapSurfaces(GLsizei numSurfaces,
-                            const GLvdpauSurfaceNV *surfaces) -> void
-        { d.mapSurfaces(numSurfaces, surfaces); }
-    static auto unmapSurfaces(GLsizei numSurface,
-                              const GLvdpauSurfaceNV *surfaces) -> void
-        { d.unmapSurfaces(numSurface, surfaces); }
     static auto isInitialized() -> bool { return d.init; }
     static auto isAvailable() -> bool;
+
+    static auto interop() -> const Interop*;
 private:
-    template<class T, class = typename std::enable_if<!std::is_pointer<T>::value>::type>
+    template<class T>
     static auto TO_INTEROP(T handle) -> const void *
         { return (const void*)(quintptr)(handle); }
     struct Data : public VdpauStatusChecker {
@@ -167,20 +173,6 @@ private:
         VdpVideoMixerRender *videoMixerRender = nullptr;
         VdpOutputSurfaceCreate *outputSurfaceCreate = nullptr;
         VdpOutputSurfaceDestroy *outputSurfaceDestroy = nullptr;
-
-        GLvdpauSurfaceNV(*registerOutputSurface)(const GLvoid*, GLenum, GLsizei,
-                                                 const GLuint*) = nullptr;
-        GLboolean (*isSurface) (GLvdpauSurfaceNV) = nullptr;
-        void (*unregisterSurface) (GLvdpauSurfaceNV) = nullptr;
-        void (*getSurfaceiv) (GLvdpauSurfaceNV, GLenum, GLsizei, GLsizei*,
-                              int*) = nullptr;
-        void (*surfaceAccess) (GLvdpauSurfaceNV, GLenum) = nullptr;
-        void (*mapSurfaces) (GLsizei, const GLvdpauSurfaceNV *) = nullptr;
-        void (*unmapSurfaces) (GLsizei, const GLvdpauSurfaceNV *) = nullptr;
-        void (*initialize) (const GLvoid *, const GLvoid *) = nullptr;
-        void (*finalize) (void) = nullptr;
-
-        QOpenGLContext *gl = nullptr;
         QMap<AVCodecID, VdpauCodec> supports;
     };
     static Data d;
@@ -190,12 +182,6 @@ private:
             return d.status();
         d.isSuccess(d.proc(d.device, id, &reinterpret_cast<void*&>(func)));
         return d.status();
-    }
-    template<class T>
-    static auto proc(const QByteArray &name, T &func) -> bool
-    {
-        func = reinterpret_cast<T>(d.gl->getProcAddress(name));
-        return func != nullptr;
     }
 };
 
@@ -219,17 +205,17 @@ private:
 class VdpauMixer : public HwAccMixer, public VdpauStatusChecker {
 public:
     ~VdpauMixer();
-    auto create(const QList<OpenGLTexture2D> &textures) -> bool final;
-    auto upload(const mp_image *mpi, bool deint) -> bool final;
-    auto directRendering() const -> bool final { return true; }
-    auto getAligned(const mp_image *mpi,
-                    QVector<QSize> *bytes) -> mp_imgfmt final;
+    auto upload(OpenGLTexture2D &textire,
+                const mp_image *mpi, bool deint) -> bool final;
 private:
+    auto release() -> void;
+    auto create(const OpenGLTexture2D &texture) -> bool;
     VdpauMixer(const QSize &size);
     VdpVideoMixer m_mixer = VDP_INVALID_HANDLE;
     VdpChromaType m_chroma = VDP_CHROMA_TYPE_420;
     VdpOutputSurface m_surface = VDP_INVALID_HANDLE;
     GLvdpauSurfaceNV m_glSurface = GL_NONE;
+    GLuint m_id = GL_NONE;
     friend class HwAcc;
 };
 

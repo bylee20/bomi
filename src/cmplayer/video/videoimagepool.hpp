@@ -32,7 +32,11 @@ private:
             delete d;
     }
     auto ref() const -> void { if (d) d->ref.ref(); }
-    struct Data { QAtomicInt ref, orphan; Image image; };
+    struct Data {
+        template<class... Args>
+        Data(const Args&... args): image(args...) { }
+        QAtomicInt ref, orphan; Image image;
+    };
     Data *d = nullptr;
     friend class VideoImagePool<Image>;
 };
@@ -50,7 +54,8 @@ protected:
     auto reserve(int count) -> void;
     auto recycle() -> Cache;
     auto getUnusedCache() -> Cache;
-    auto getCache(int max = -1) -> Cache;
+    template<class... Args>
+    auto getCache(int max, const Args&... args) -> Cache;
 private:
     auto free(Data *d) -> void;
     QLinkedList<Data*> m_pool;
@@ -100,12 +105,13 @@ inline auto VideoImagePool<Image>::getUnusedCache() -> Cache
 }
 
 template<class Image>
-inline auto VideoImagePool<Image>::getCache(int max) -> Cache
+template<class... Args>
+inline auto VideoImagePool<Image>::getCache(int max, const Args&... args) -> Cache
 {
     auto cache = getUnusedCache();
     if (!cache.isNull() || (max > 0 && m_pool.size() >= max))
         return cache;
-    auto data = new Data;
+    auto data = new Data(args...);
     m_pool.push_back(data);
     return Cache(data);
 }

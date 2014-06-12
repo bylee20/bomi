@@ -1,5 +1,6 @@
 #include "hwacc_vaapi.hpp"
 #include "opengl/opengltexture2d.hpp"
+#include "tmp/static_op.hpp"
 
 #ifdef Q_OS_LINUX
 
@@ -391,32 +392,31 @@ VaApiMixer::VaApiMixer(const QSize &size)
 
 }
 
-VaApiMixer::~VaApiMixer() {
-    if (m_glSurface)
+VaApiMixer::~VaApiMixer()
+{
+    release();
+}
+
+auto VaApiMixer::release() -> void
+{
+    if (m_glSurface) {
         vaDestroySurfaceGLX(VaApi::glx(), m_glSurface);
+        m_glSurface = nullptr;
+    }
 }
 
-auto VaApiMixer::create(const QList<OpenGLTexture2D> &textures) -> bool
+auto VaApiMixer::upload(OpenGLTexture2D &texture,
+                        const mp_image *mpi, bool deint) -> bool
 {
-    Q_ASSERT(textures.size() == 1);
-    const auto &texture = textures.first();
-    texture.bind();
-    return check(vaCreateSurfaceGLX(VaApi::glx(), texture.target(),
-                                    texture.id(), &m_glSurface),
-                 "Cannot create OpenGL surface.");
-}
-
-auto VaApiMixer::getAligned(const mp_image */*mpi*/,
-                            QVector<QSize> *bytes) -> mp_imgfmt
-{
-    bytes->resize(1);
-    const int stride = FFALIGN((width() * 32 + 7) / 8, 16);
-    (*bytes)[0] = QSize(stride, height());
-    return IMGFMT_BGRA;
-}
-
-auto VaApiMixer::upload(const mp_image *mpi, bool deint) -> bool
-{
+    if (m_id != texture.id()) {
+        release();
+        texture.bind();
+        if (!check(vaCreateSurfaceGLX(VaApi::glx(), texture.target(),
+                                      texture.id(), &m_glSurface),
+                   "Cannot create OpenGL surface."))
+            return false;
+        m_id = texture.id();
+    }
     if (!m_glSurface)
         return false;
     static const int specs[MP_CSP_COUNT] = {

@@ -1,7 +1,7 @@
 #ifndef STDAFX_HPP
 #define STDAFX_HPP
 
-#if defined(__cplusplus) && !defined(__OBJC)
+#if defined(__cplusplus) && !defined(__OBJC__)
 
 #include <QtCore>
 #include <QtGui>

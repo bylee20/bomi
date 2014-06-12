@@ -35,13 +35,11 @@ public:
     auto upload(int width, int height, const void *data) -> void { upload(0, 0, width, height, data); }
     auto upload(const void *data) -> void { upload(0, 0, m_width, m_height, data); }
     auto toImage() const -> QImage;
-    int &plane() { return m_plane; }
-    auto plane() const -> int { return m_plane; }
     const QPointF &correction() const { return m_correction; }
     QPointF &correction() { return m_correction; }
 private:
     friend class VideoFrameShader;
-    int m_width = 0, m_height = 0, m_plane = 0;
+    int m_width = 0, m_height = 0;
     QPointF m_correction = {1.0, 1.0};
 };
 

@@ -28,6 +28,8 @@ private:
 
 class OpenGLTextureBaseBinder {
 public:
+    inline OpenGLTextureBaseBinder(OGL::Target target)
+        : OpenGLTextureBaseBinder(target, OGL::bindingTarget(target)) { }
     inline OpenGLTextureBaseBinder(OGL::Target target, OGL::Binding binding)
         : m_target(target), m_binding(binding)
         { glGetIntegerv(binding, &m_restore); }

@@ -21,8 +21,12 @@ auto OpenGLOffscreenContext::setThread(QThread *thread) -> void
     m_gl.moveToThread(thread);
 }
 
-auto OpenGLOffscreenContext::create() -> bool
+auto OpenGLOffscreenContext::createContext() -> bool
+{
+    return m_gl.create();
+}
+
+auto OpenGLOffscreenContext::createSurface() -> void
 {
     m_surface.create();
-    return m_gl.create();
 }

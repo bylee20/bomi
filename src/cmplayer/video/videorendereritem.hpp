@@ -8,12 +8,12 @@ class VideoColor;                       class Kernel3x3;
 enum class DeintMethod;                 enum class ColorRange;
 
 template<class T> class VideoImageCache;
-class VideoFramebufferObject;           class MpOsdBitmap;
+class VideoTexture;           class MpOsdBitmap;
 
 class VideoRendererItem : public HighQualityTextureItem {
     Q_OBJECT
 public:
-    using Cache = VideoImageCache<VideoFramebufferObject>;
+    using Cache = VideoImageCache<VideoTexture>;
     using OsdCache = VideoImageCache<MpOsdBitmap>;
     VideoRendererItem(QQuickItem *parent = 0);
     ~VideoRendererItem();

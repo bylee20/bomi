@@ -132,14 +132,13 @@ inline auto VaApi::find(typename Map::key_type key,
 class VaApiMixer : public HwAccMixer, public VaApiStatusChecker{
 public:
     ~VaApiMixer();
-    auto create(const QList<OpenGLTexture2D> &textures) -> bool final;
-    auto upload(const mp_image *mpi, bool deint) -> bool final;
-    auto directRendering() const -> bool final { return true; }
-    auto getAligned(const mp_image *mpi,
-                    QVector<QSize> *bytes) -> mp_imgfmt final;
+    auto upload(OpenGLTexture2D &texture,
+                const mp_image *mpi, bool deint) -> bool final;
 private:
+    auto release() -> void;
     VaApiMixer(const QSize &size);
     void *m_glSurface = nullptr;
+    GLuint m_id = GL_NONE;
     friend class HwAcc;
 };
 

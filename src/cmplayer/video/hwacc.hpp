@@ -12,17 +12,15 @@ extern "C" {
 struct lavc_ctx;                        struct mp_image;
 struct vd_lavc_hwdec;                   struct mp_hwdec_info;
 class VideoOutput;                      class OpenGLTexture2D;
+class VideoTexture;
 enum class DeintMethod;
 
 class HwAccMixer {
 public:
     HwAccMixer(const QSize &size): m_size(size) { }
     virtual ~HwAccMixer() {}
-    virtual auto getAligned(const mp_image *mpi,
-                            QVector<QSize> *bytes) -> mp_imgfmt = 0;
-    virtual auto create(const QList<OpenGLTexture2D> &textures) -> bool = 0;
-    virtual auto directRendering() const -> bool = 0;
-    virtual auto upload(const mp_image *mpi, bool deint) -> bool = 0;
+    virtual auto upload(OpenGLTexture2D &texture,
+                        const mp_image *mpi, bool deint) -> bool = 0;
     auto size() const -> const QSize& { return m_size; }
     auto width() const -> int { return m_size.width(); }
     auto height() const -> int { return m_size.height(); }
@@ -46,6 +44,7 @@ public:
     static auto backendName(Type type) -> QString;
     static auto codecName(int id) -> const char*;
     static auto codecId(const char *name) -> AVCodecID;
+    static auto renderType(mp_imgfmt hwtype) -> mp_imgfmt;
     static auto createMixer(mp_imgfmt imgfmt, const QSize &size) -> HwAccMixer*;
     auto imgfmt() const -> int;
     virtual auto getImage(mp_image *mpi) -> mp_image* = 0;

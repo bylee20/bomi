@@ -79,7 +79,6 @@ HEADERS += \
 	video/mposdbitmap.hpp \
 	video/deintcaps.hpp \
 	video/videoimagepool.hpp \
-	video/videoframebufferobject.hpp \
 	video/kernel3x3.hpp \
 	subtitle/subtitle.hpp \
 	subtitle/subtitle_parser.hpp \
@@ -227,7 +226,8 @@ HEADERS += \
     dialog/prefdialog_p.hpp \
     opengl/openglbenchmarker.hpp \
     enum/colorspace.hpp \
-    player/mainwindow_p.hpp
+    player/mainwindow_p.hpp \
+    video/videotexture.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -237,7 +237,6 @@ SOURCES += \
 	audio/audio_helper.cpp \
 	audio/audionormalizeroption.cpp \
 	video/videoimagepool.cpp \
-	video/videoframebufferobject.cpp \
 	video/videooutput.cpp \
 	video/videorendereritem.cpp \
 	video/hwacc.cpp \
@@ -396,7 +395,8 @@ SOURCES += \
     enum/colorspace.cpp \
     player/mainwindow_p.cpp \
     player/mainwindow_m.cpp \
-    player/playengine_p.cpp
+    player/playengine_p.cpp \
+    video/videotexture.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -451,3 +451,5 @@ OTHER_FILES += \
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}
 }
+
+OBJECTIVE_SOURCES +=

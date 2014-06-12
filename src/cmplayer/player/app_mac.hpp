@@ -22,6 +22,8 @@
  *
  */
 
+#include <QObject>
+
 #ifdef Q_OS_MAC
 
 class AppMac: public QObject {

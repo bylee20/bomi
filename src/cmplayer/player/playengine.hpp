@@ -180,6 +180,8 @@ public:
     auto pause() -> void;
     auto unpause() -> void;
     auto relativeSeek(int pos) -> void;
+    auto isOffscreenInitialized() const -> bool { return m_offscreenInit; }
+    auto initializeOffscreenContext() -> void;
     Q_INVOKABLE double bitrate(double fps) const;
     Q_INVOKABLE void seek(int pos);
     static auto stateText(State state) -> QString;
@@ -228,7 +230,9 @@ signals:
     void videoColorSpaceChanged(ColorSpace space);
     void videoChromaUpscalerChanged(InterpolatorType type);
     void deintOptionsChanged();
+    void needToMoveVideoThread();
 private:
+    auto moveVideoThread() -> void;
     auto updateState(State state) -> void;
     auto exec() -> void;
     auto customEvent(QEvent *event) -> void;
@@ -236,6 +240,7 @@ private:
     class Thread; struct Data; Data *d;
     PlayEngine::State m_state = PlayEngine::Stopped;
     QPoint m_mouse;
+    bool m_offscreenInit = false;
 };
 
 #endif // PLAYENGINE_HPP

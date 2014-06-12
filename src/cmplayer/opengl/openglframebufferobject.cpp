@@ -19,21 +19,27 @@ auto makeTexture(const QSize &size, OGL::TextureFormat internal) -> OpenGLTextur
 }
 
 OpenGLFramebufferObject::OpenGLFramebufferObject(const QSize &size,
+                                                 OGL::Target target)
+    : m_size(size)
+    , m_target(target)
+{
+    func()->glGenFramebuffers(1, &m_id);
+}
+
+OpenGLFramebufferObject::OpenGLFramebufferObject(const QSize &size,
                                                  OGL::TextureFormat internal)
     : OpenGLFramebufferObject(makeTexture(size, internal), true) { }
 
 OpenGLFramebufferObject::OpenGLFramebufferObject(const OpenGLTexture2D &texture,
                                                  bool autodelete)
-    : m_autodelete(autodelete), m_texture(texture)
+    : OpenGLFramebufferObject(texture.size(), texture.target())
 {
-    if (m_texture.isValid() && !m_texture.isEmpty()) {
-        auto f = func();
-        f->glGenFramebuffers(1, &m_id);
-        f->glBindFramebuffer(GL_FRAMEBUFFER, m_id);
-        f->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                                  m_texture.target(), m_texture.id(), 0);
-        m_complete = check();
-        QOpenGLFramebufferObject::bindDefault();
+    m_autodelete = autodelete;
+    m_textures.resize(1);
+    m_textures[0] = texture;
+    if (texture.isValid() && !texture.isEmpty()) {
+        m_complete = bind() && attach(texture, 0);
+        release();
     }
 }
 
@@ -42,8 +48,18 @@ OpenGLFramebufferObject::~OpenGLFramebufferObject()
     auto f = func();
     if (m_id != GL_NONE)
         f->glDeleteFramebuffers(1, &m_id);
-    if (m_autodelete)
-        m_texture.destroy();
+    if (m_autodelete) {
+        for (auto &tex : m_textures)
+            tex.destroy();
+    }
+}
+
+auto OpenGLFramebufferObject::attach(const OpenGLTexture2D &texture, int idx) -> bool
+{
+    Q_ASSERT(texture.size() == m_size && texture.target() == m_target);
+    func()->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + idx,
+                                   texture.target(), texture.id(), 0);
+    return check();
 }
 
 auto OpenGLFramebufferObject::check() const -> bool

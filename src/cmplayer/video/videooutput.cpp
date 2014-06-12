@@ -4,10 +4,11 @@
 #include "videoformat.hpp"
 #include "videoframeshader.hpp"
 #include "mposdbitmap.hpp"
-#include "videoframebufferobject.hpp"
+#include "videotexture.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 #include "opengl/openglbenchmarker.hpp"
 #include "opengl/opengllogger.hpp"
+#include "opengl/opengltexturebinder.hpp"
 #include "player/playengine.hpp"
 #include "player/mpv_helper.hpp"
 #include "misc/log.hpp"
@@ -54,28 +55,45 @@ public:
     auto clear() -> void { reserve(0); }
 };
 
-class VideoFramebufferObjectPool
-        : public VideoImagePool<VideoFramebufferObject> {
-    using Cache = VideoFramebufferObjectCache;
+class VideoTexturePool
+        : public VideoImagePool<VideoTexture> {
+    using Cache = VideoTextureCache;
     OGL::TextureFormat m_fboFormat = OGL::RGBA8_UNorm;
+    OpenGLTextureTransferInfo m_info;
+    OGL::Target m_target = OGL::Target2D;
 public:
-    VideoFramebufferObjectPool()
+    VideoTexturePool(OGL::Target target): m_target(target)
     {
-        auto formats = OGL::availableFrambebufferFormats();
-        if (formats.contains(OGL::RGBA16_UNorm))
-            m_fboFormat = OGL::RGBA16_UNorm;
+        m_info = m_info.get(OGL::BGRA, 1);
+//        auto formats = OGL::availableFrambebufferFormats();
+//        if (formats.contains(OGL::RGBA16_UNorm))
+//            m_fboFormat = OGL::RGBA16_UNorm;
     }
     auto get(const QSize &size, const QSize &display) -> Cache
     {
+        return get(IMGFMT_BGRA, size, display, m_info, false);
+    }
+    auto get(const VideoTexture &ref, const QSize &display, bool dma) -> Cache
+    {
+        return get(ref.imgfmt(), ref.size(), display, ref.info(), dma);
+    }
+private:
+    auto get(mp_imgfmt imgfmt, const QSize &size, const QSize &display,
+             const OpenGLTextureTransferInfo &info, bool dma) -> Cache
+    {
         if (size.isEmpty() || display.isEmpty())
             return Cache();
-        Cache cache = this->getCache(3);
+        Cache cache = this->getCache(4, m_target);
         if (cache.isNull())
             return cache;
-        auto &data = const_cast<VideoFramebufferObject&>(cache.image());
-        data.m_displaySize = display;
-        if (!data.m_fbo || data.m_fbo->size() != size)
-            _Renew(data.m_fbo, size, m_fboFormat);
+        auto &tex = const_cast<VideoTexture&>(cache.image());
+        tex.m_displaySize = display;
+        if (tex.info() != info || tex.size() != size
+                || tex.m_dma != dma || tex.imgfmt() != imgfmt) {
+            OpenGLTextureBaseBinder b(tex.target());
+            b.bind(&tex);
+            tex.initialize(imgfmt, size, info, dma);
+        }
         return cache;
     }
 };
@@ -129,9 +147,10 @@ struct VideoOutput::Data {
     mp_image_params params;
     VideoRendererItem *renderer = nullptr;
     OpenGLOffscreenContext *gl = nullptr;
+    OpenGLFramebufferObject *fbo = nullptr;
     VideoFrameShader *shader = nullptr;
-    VideoFramebufferObjectPool *pool = nullptr;
-    VideoFramebufferObjectCache cache;
+    VideoTexturePool *pool = nullptr;
+    VideoTextureCache cache;
     int strides[4] = {0, 0, 0, 0};
 
     mp_osd_res osd;
@@ -155,7 +174,7 @@ struct VideoOutput::Data {
     auto reset() -> void
     {
         memset(&osd, 0, sizeof(osd));
-        cache = VideoFramebufferObjectCache();
+        cache = VideoTextureCache();
         bitmap = MpOsdBitmapCache();
         bitmapPool.clear();
         bitmapId = MpOsdBitmap::Id();
@@ -165,6 +184,7 @@ struct VideoOutput::Data {
     {
         if (!mpi)
             return;
+        Q_ASSERT(fbo);
         gl->makeCurrent();
         const int dirty = this->dirty.fetchAndStoreRelaxed(0);
         if (dirty) {
@@ -181,16 +201,24 @@ struct VideoOutput::Data {
                 shader->setDeintMethod(method);
             }
         }
-        cache = pool->get(format.size(), format.displaySize());
-        if (!cache.isNull()) {
-            shader->upload(mpi);
-//            bench.begin();
-            cache->bind();
-            shader->render(renderer->kernel());
-            cache->release();
-//            bench.end();
+        shader->prepare(mpi);
+        if (shader->isDirectlyRenderable()) {
+            cache = pool->get(shader->directlyRenderableTexture(),
+                              format.displaySize(), shader->useDMA());
+            if (cache)
+                shader->upload(mpi, const_cast<VideoTexture&>(*cache));
+        } else {
+            cache = pool->get(format.size(), format.displaySize());
+            if (cache) {
+                Q_ASSERT(fbo->size() == cache->size());
+                shader->upload(mpi);
+                fbo->bind();
+                fbo->attach(*cache);
+                shader->render(renderer->kernel());
+                fbo->release();
+            }
         }
-        glFinish();
+        glFlush();
         gl->doneCurrent();
         _Trace("VideoOutput::draw()");
     }
@@ -263,7 +291,7 @@ auto VideoOutput::preinit(vo *out) -> int
     d->logger.initialize(d->gl->context(), false);
     initialize_vdpau_interop(d->gl->context());
     d->shader = new VideoFrameShader;
-    d->pool =new VideoFramebufferObjectPool;
+    d->pool =new VideoTexturePool(d->shader->target());
 #if DO_BENCHMARK
     d->bench.create();
 #endif
@@ -278,6 +306,7 @@ auto VideoOutput::uninit(vo *out) -> void
     auto v = priv(out); Data *d = v->d;
     d->gl->makeCurrent();
     d->reset();
+    _Delete(d->fbo);
     _Delete(d->shader);
     _Delete(d->pool);
     finalize_vdpau_interop(d->gl->context());
@@ -311,6 +340,9 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
     if (_Change(d->format, VideoFormat(d->params, desc))) {
         d->gl->makeCurrent();
         d->shader->setFormat(d->params);
+        if (!d->fbo || d->fbo->size() != d->format.size()
+                    || d->fbo->target() != d->shader->target())
+            _Renew(d->fbo, d->format.size(), d->shader->target());
         d->gl->doneCurrent();
         emit v->formatChanged(d->format);
     }
@@ -386,11 +418,11 @@ auto VideoOutput::flipPage(vo *out) -> void
         d->renderer->present(d->cache, MpOsdBitmapCache(), false);
         _Trace("VideoOutput::flipPage(): frame has been flipped");
     }
-    d->cache = VideoFramebufferObjectCache();
+    d->cache = VideoTextureCache();
     d->bitmap = MpOsdBitmapCache();
     d->hasOsd = false;
     ++d->drawn;
-    constexpr int interval = 4;
+    constexpr int interval = 20;
     constexpr int max = 20, min = 5;
     const int size = d->timings.size();
     if (size == max && d->drawn & (interval - 1))
