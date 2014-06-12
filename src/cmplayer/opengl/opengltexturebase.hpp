@@ -13,7 +13,7 @@ public:
     auto create(OGL::WrapMode wrap, OGL::Filter filter = OGL::Linear) -> void
     { create(filter, wrap); }
     auto create() -> void { create(OGL::Linear, OGL::ClampToEdge); }
-    auto destroy() -> void { glDeleteTextures(1, &m_id); }
+    auto destroy() -> void { glDeleteTextures(1, &m_id); m_id = GL_NONE; }
     auto bind() const -> void { glBindTexture(m_target, m_id); }
     auto bind(QOpenGLShaderProgram *prog, int location, int index) const -> void
     {

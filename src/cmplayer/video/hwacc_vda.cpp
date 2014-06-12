@@ -91,64 +91,29 @@ auto HwAccVda::fillContext(AVCodecContext *avctx, int w, int h) -> bool
 VdaMixer::VdaMixer(const QSize &size)
     : HwAccMixer(size) { }
 
-auto VdaMixer::upload(const mp_image *mpi, bool /*deint*/) -> bool
+VdaMixer::~VdaMixer()
 {
-    Q_ASSERT(mpi->imgfmt == IMGFMT_VDA);
-    CGLError error = kCGLNoError;
-    for (auto &texture : m_textures) {
-        const auto cgl = CGLGetCurrentContext();
-        const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)mpi->planes[3]);
-        texture.bind();
-        const auto w = IOSurfaceGetWidthOfPlane(surface, texture.plane());
-        const auto h = IOSurfaceGetHeightOfPlane(surface, texture.plane());
-        if (_Change(error, CGLTexImageIOSurface2D(cgl, texture.target(), texture.format(), w, h, texture.transfer().format, texture.transfer().type, surface, texture.plane()))) {
-            _Error("CGLError: %%(0x%%)", CGLErrorString(error), _N(error, 16));
-            return false;
-        }
-    }
-    return true;
+    CVPixelBufferRelease(m_buf);
 }
 
-auto VdaMixer::upload(const mp_image *mpi, bool /*deint*/, VideoTexture &texture) -> bool
+auto VdaMixer::upload(OpenGLTexture2D &texture,
+                      const mp_image *mpi, bool /*deint*/) -> bool
 {
-    Q_ASSERT(mpi->imgfmt == IMGFMT_VDA);
-    CGLError error = kCGLNoError;
     const auto cgl = CGLGetCurrentContext();
-    const auto surface = CVPixelBufferGetIOSurface((CVPixelBufferRef)mpi->planes[3]);
-    texture.bind();
+    Q_ASSERT(mpi->imgfmt == IMGFMT_VDA);
+    CVPixelBufferRelease(m_buf);
+    m_buf = (CVPixelBufferRef)mpi->planes[3];
+    CVPixelBufferRetain(m_buf);
+    const auto surface = CVPixelBufferGetIOSurface(m_buf);
     const auto w = IOSurfaceGetWidthOfPlane(surface, 0);
     const auto h = IOSurfaceGetHeightOfPlane(surface, 0);
-    if (_Change(error, CGLTexImageIOSurface2D(cgl, texture.target(), texture.format(), w, h, texture.transfer().format, texture.transfer().type, surface, 0))) {
-        _Error("CGLError: %%(0x%%)", CGLErrorString(error), _N(error, 16));
+    auto err = CGLTexImageIOSurface2D(cgl, texture.target(), texture.format(),
+                                      w, h, texture.transfer().format,
+                                      texture.transfer().type, surface, 0);
+    if (err != kCGLNoError) {
+        _Error("CGLError: %%(0x%%)", CGLErrorString(err), _N(err, 16));
         return false;
     }
-    return true;
-}
-
-auto VdaMixer::getAligned(const mp_image *mpi,
-                          QVector<QSize> *bytes) -> mp_imgfmt
-{
-    mp_imgfmt output = IMGFMT_NONE;
-    auto buffer = (CVPixelBufferRef)mpi->planes[3];
-    Q_ASSERT(mpi->imgfmt == IMGFMT_VDA);
-    switch (CVPixelBufferGetPixelFormatType(buffer)) {
-    case kCVPixelFormatType_422YpCbCr8:
-        output = IMGFMT_UYVY;
-        break;
-    default:
-        _Error("Not supported format.");
-        return IMGFMT_NONE;
-    }
-    Q_ASSERT(output == IMGFMT_UYVY);
-    bytes->resize(1);
-    (*bytes)[0].rwidth() = CVPixelBufferGetBytesPerRow(buffer);
-    (*bytes)[0].rheight() = CVPixelBufferGetHeight(buffer);
-    return output;
-}
-
-auto VdaMixer::create(const QVector<OpenGLTexture2D> &textures) -> bool
-{
-    m_textures = textures;
     return true;
 }
 

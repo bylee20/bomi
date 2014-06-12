@@ -35,11 +35,10 @@ OpenGLFramebufferObject::OpenGLFramebufferObject(const OpenGLTexture2D &texture,
     : OpenGLFramebufferObject(texture.size(), texture.target())
 {
     m_autodelete = autodelete;
-    m_textures.resize(1);
-    m_textures[0] = texture;
+    m_texture = texture;
     if (texture.isValid() && !texture.isEmpty()) {
         bind();
-        m_complete = attach(texture, 0);
+        attach(texture);
         release();
     }
 }
@@ -50,20 +49,21 @@ OpenGLFramebufferObject::~OpenGLFramebufferObject()
     if (m_id != GL_NONE)
         f->glDeleteFramebuffers(1, &m_id);
     if (m_autodelete) {
-        for (auto &tex : m_textures)
-            tex.destroy();
+        m_texture.destroy();
     }
 }
 
-auto OpenGLFramebufferObject::attach(const OpenGLTexture2D &texture, int idx) -> bool
+auto OpenGLFramebufferObject::attach(const OpenGLTexture2D &texture) -> bool
 {
+    Q_ASSERT(texture.isValid() && !texture.isEmpty());
     Q_ASSERT(texture.size() == m_size && texture.target() == m_target);
-    func()->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + idx,
+    func()->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                    texture.target(), texture.id(), 0);
-    return check();
+    m_texture = texture;
+    return m_complete = checkStatus();
 }
 
-auto OpenGLFramebufferObject::check() const -> bool
+auto OpenGLFramebufferObject::checkStatus() const -> bool
 {
     const auto status = func()->glCheckFramebufferStatus(GL_FRAMEBUFFER);
     switch (status) {

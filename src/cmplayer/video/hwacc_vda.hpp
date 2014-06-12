@@ -3,6 +3,10 @@
 
 #include "hwacc.hpp"
 
+#ifdef Q_OS_MAC
+
+#include <CoreVideo/CVPixelBuffer.h>
+
 class HwAccVda : public HwAcc {
 public:
     HwAccVda(AVCodecID codec);
@@ -23,11 +27,13 @@ private:
 class VdaMixer : public HwAccMixer {
 public:
     VdaMixer(const QSize &size);
+    ~VdaMixer();
     auto upload(OpenGLTexture2D &texture,
-                const mp_image *mpi, bool deint) -> bool override;
+                const mp_image *mpi, bool deint) -> bool final;
 private:
-    auto create(const QVector<OpenGLTexture2D> &textures) -> bool;
-    QVector<OpenGLTexture2D> m_textures;
+    CVPixelBufferRef m_buf = 0;
 };
+
+#endif
 
 #endif // HWACC_VDA_HPP

@@ -27,6 +27,13 @@ auto VideoTexture::initialize(mp_imgfmt imgfmt, const QSize &size,
                               const OpenGLTextureTransferInfo &info,
                               bool dma, int plane) -> void
 {
+    delete m_mixer;
+    if (!isEmpty()) {
+        glBindTexture(target(), 0);
+        destroy();
+        create();
+        glBindTexture(target(), id());
+    }
     m_plane = plane;
     m_dma = dma;
     m_imgfmt = imgfmt;
@@ -38,6 +45,5 @@ auto VideoTexture::initialize(mp_imgfmt imgfmt, const QSize &size,
         else
             OpenGLTexture2D::initialize();
     }
-    delete m_mixer;
     m_mixer = HwAcc::createMixer(m_imgfmt, size);
 }

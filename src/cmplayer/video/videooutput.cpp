@@ -210,6 +210,7 @@ struct VideoOutput::Data {
             if (cache) {
                 Q_ASSERT(fbo->size() == cache->size());
                 shader->upload(mpi);
+                glBindTexture(cache->target(), GL_NONE);
                 fbo->bind();
                 fbo->attach(*cache);
                 shader->render(renderer->kernel());
@@ -338,8 +339,7 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
     if (_Change(d->format, VideoFormat(d->params, desc))) {
         d->gl->makeCurrent();
         d->shader->setFormat(d->params);
-        if (!d->fbo || d->fbo->size() != d->format.size()
-                    || d->fbo->target() != d->shader->target())
+        if (!d->fbo || d->fbo->size() != d->format.size())
             _Renew(d->fbo, d->format.size(), d->shader->target());
         d->gl->doneCurrent();
         emit v->formatChanged(d->format);

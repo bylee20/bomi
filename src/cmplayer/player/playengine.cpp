@@ -107,16 +107,16 @@ auto PlayEngine::initializeOffscreenContext() -> void
 
 auto PlayEngine::moveVideoThread() -> void
 {
-    if (d->videoThread && d->sgInit) {
+    if (d->videoThread && d->sgInit && !d->glInit) {
+        _Info("Initialize video OpenGL context for %%", d->videoThread);
         d->videoContext->createSurface();
         d->videoContext->setThread(d->videoThread);
+        d->glInit = true;
     }
 }
 
 auto PlayEngine::initializeGL(QQuickWindow *window) -> void
 {
-    Q_ASSERT(d->videoThread);
-    _Info("Initialize video OpenGL context for %%", d->videoThread);
     auto ctx = window->openglContext();
     ctx->doneCurrent();
     d->videoContext->setShareContext(ctx);
