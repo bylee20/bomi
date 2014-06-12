@@ -100,6 +100,7 @@ auto Pref::defaultShortcuts() -> Shortcuts
     keys[u"subtitle/sync/decrease"_q] << Qt::Key_A;
 
     keys[u"video/snapshot/quick"_q] << Qt::CTRL + Qt::Key_S;
+    keys[u"video/snapshot/tool"_q] << Qt::CTRL + Qt::SHIFT + Qt::Key_S;
     keys[u"video/move/reset"_q] << Qt::SHIFT + Qt::Key_X;
     keys[u"video/move/up"_q] << Qt::SHIFT + Qt::Key_W;
     keys[u"video/move/down"_q] << Qt::SHIFT + Qt::Key_S;

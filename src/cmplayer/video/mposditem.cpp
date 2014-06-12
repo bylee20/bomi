@@ -160,7 +160,7 @@ struct MpOsdItem::Data {
         shader->release();
         vbo.release();
         fbo->release();
-        glFinish();
+        glFlush();
     }
 };
 
