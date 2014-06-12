@@ -31,12 +31,7 @@ auto set_window_title(QWidget *w, const QString &title) -> void
 }
 
 enum class LineCmd {
-    Wake,
-    Open,
-    Action,
-    LogLevel,
-    OpenGLDebug,
-    Debug
+    Wake, Open, Action, LogLevel, OpenGLDebug, Debug
 };
 
 struct App::Data {
@@ -173,7 +168,16 @@ App::App(int &argc, char **argv)
 #ifndef Q_OS_MAC
     setWindowIcon(defaultIcon());
 #endif
-    auto makeStyleNameList = [this] () {
+
+    auto makeStyle = [&]() {
+        auto name = r.value(u"style"_q, styleName()).toString();
+        if (style()->objectName().compare(name, QCI) == 0)
+            return;
+        if (!d->styleNames.contains(name, QCI))
+            return;
+        setStyle(QStyleFactory::create(name));
+    };
+    d->styleNames = [this] () {
         auto names = QStyleFactory::keys();
         const auto defaultName = style()->objectName();
         for (auto it = ++names.begin(); it != names.end(); ++it) {
@@ -185,16 +189,7 @@ App::App(int &argc, char **argv)
             }
         }
         return names;
-    };
-    auto makeStyle = [&]() {
-        auto name = r.value(u"style"_q, styleName()).toString();
-        if (style()->objectName().compare(name, QCI) == 0)
-            return;
-        if (!d->styleNames.contains(name, QCI))
-            return;
-        setStyle(QStyleFactory::create(name));
-    };
-    d->styleNames = makeStyleNameList();
+    }();
     makeStyle();
     connect(&d->connection, &LocalConnection::messageReceived,
              this, &App::handleMessage);

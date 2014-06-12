@@ -106,9 +106,9 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     auto general = addCategory(tr("General"));
     addPage(tr("Application"), d->ui.gen_behaviours,
-            u":/img/cmplayer-32.png"_q, general);
+            u":/img/cmplayer-32.png"_q, general)->setSelected(true);
     addPage(tr("Open"), d->ui.open_media,
-            u":/img/document-open-32.png"_q, general)->setSelected(true);
+            u":/img/document-open-32.png"_q, general);
     addPage(tr("Playback"), d->ui.playback,
             u":/img/media-playback-start-32.png"_q, general);
     addPage(tr("Cache"), d->ui.cache,

@@ -255,6 +255,7 @@ auto VideoFrameShader::setFormat(const mp_image_params &params) -> void
     m_params = params;
     m_hwdec = IMGFMT_IS_HWACCEL(m_params.imgfmt);
     m_imgfmtOut = HwAcc::renderType(m_params.imgfmt);
+    m_direct = false;
     if (m_imgfmtOut != IMGFMT_NONE) {
         m_direct = true;
         m_cspOut = MP_CSP_RGB;

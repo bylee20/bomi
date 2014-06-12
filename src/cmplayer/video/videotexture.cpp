@@ -8,7 +8,6 @@ VideoTexture::~VideoTexture()
     destroy();
 }
 
-
 auto VideoTexture::upload(const mp_image *mpi, bool deint) -> void
 {
     static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
@@ -23,7 +22,6 @@ auto VideoTexture::upload(const mp_image *mpi, bool deint) -> void
             OpenGLTexture2D::upload(mpi->planes[m_plane]);
     }
 }
-
 
 auto VideoTexture::initialize(mp_imgfmt imgfmt, const QSize &size,
                               const OpenGLTextureTransferInfo &info,
