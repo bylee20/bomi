@@ -2,7 +2,7 @@
 # Contributor: willemw <willemw12@gmail.com>
 
 pkgname=cmplayer
-pkgver=0.8.13
+pkgver=0.8.14
 pkgrel=1
 pkgdesc="Powerful and easy-to-use multimedia player"
 arch=('i686' 'x86_64')
@@ -17,7 +17,7 @@ makedepends=('mesa' 'gcc' 'pkg-config' 'python')
 optdepends=('libaacs: AACS decryption for Blu-ray support'
             'libbdplus: BD+ decryption for Blu-ray support')
 source=(https://github.com/xylosper/cmplayer/releases/download/v$pkgver/cmplayer-$pkgver-source.tar.gz)
-md5sums=('d2fa8b29e5d3c69f87e03c64b5de807b')
+md5sums=('550e70e1543f471452db21ce2d86a9a9')
 options=(debug !strip)
 
 build() {
