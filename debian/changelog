@@ -1,3 +1,43 @@
+cmplayer (0.8.14-1~trusty1) trusty; urgency=low
+
+  * New: quick snapshot
+  * New: support YCgCo color space
+  * New: OSD appearance is customizable
+  * New: disable screensaver using external command
+  * New: can map every action to mouse behaviours
+  * New: reload subtitle files
+  * New: menu navigation support for Blu-ray disc
+  * New: 'Show OSD timeline when seeking' option
+  * New: 'Color Space' menu in Video
+  * New: 'Faenza-Zukitwo' skin written by varlesh
+  * New: 'Auto-load File(s)' menu to (re)auto-load subtitle files
+  * Fix: wrong cache value
+  * Fix: don't parse remote playlist by default
+  * Fix: crash on too many logs
+  * Fix: relative urls in playlist weren't handled properly
+  * Fix: slightly dislocated internal/ASS subtitles
+  * Fix: wrong color blending for ASS subtitles
+  * Fix: freezing for a while on update history (#81)
+  * Fix: a hack for wrong named color for subtitle
+  * Fix: wrong shadow color
+  * Fix: better sync for .ass subtitle (#69)
+  * Fix: support for stylish tags in ruby tag
+  * Fix: 'Show OSD messages ...' options was not preserved
+  * Fix: short of available hwdec surfaces for VDPAU
+  * Fix: internal subtitle selection wasn't restored
+  * Fix: internal subtitle selection wasn't restored
+  * Fix: 'Next subtitle' didn't work
+  * Fix: frame-based subtitle didn't work
+  * Fix: filename which contains % didn't work (#73)
+  * Fix: clipping on downmixing audio
+  * Fix: rerendering subtitle didn't work
+  * Fix: open remote playlist from command line
+  * Fix: wrong behavour of m3u playlist parser
+  * Fix: apply subtitle style to internal subtitles
+  * Fix: reduce redundant copy of internal subtitle data
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Fri, 13 Jun 2014 12:12:00 +0900
+
 cmplayer (0.8.13-1~trusty1) trusty; urgency=low
 
   * New: Blu-ray support
