@@ -210,14 +210,24 @@ SIA _JsonToString(const QJsonObject &json,
 SIA _JsonFromString(const QString &str) -> QJsonObject
     { return QJsonDocument::fromJson(str.toUtf8()).object(); }
 
-SIA _WritablePath(QStandardPaths::StandardLocation loc
-                       = QStandardPaths::DataLocation) -> QString
-{
-    auto path = QStandardPaths::writableLocation(loc);
-    if (!QDir().mkpath(path))
-        return QString();
-    return path;
-}
+enum class Location {
+    Desktop     = QStandardPaths::DesktopLocation,
+    Documents   = QStandardPaths::DocumentsLocation,
+    Fonts       = QStandardPaths::FontsLocation,
+    Applications= QStandardPaths::ApplicationsLocation,
+    Music       = QStandardPaths::MusicLocation,
+    Movies      = QStandardPaths::MoviesLocation,
+    Pictures    = QStandardPaths::PicturesLocation,
+    Temp        = QStandardPaths::TempLocation,
+    Home        = QStandardPaths::HomeLocation,
+    Data        = QStandardPaths::DataLocation,
+    Cache       = QStandardPaths::CacheLocation,
+    Runtime     = QStandardPaths::RuntimeLocation,
+    Config      = QStandardPaths::ConfigLocation,
+    Download    = QStandardPaths::DownloadLocation
+};
+
+auto _WritablePath(Location loc = Location::Data) -> QString;
 
 SIA _JsonToInt(const QJsonValue &val) -> qlonglong
 { return std::llround(val.toDouble()); }

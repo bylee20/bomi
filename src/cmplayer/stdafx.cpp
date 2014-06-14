@@ -217,6 +217,18 @@ auto _GetOpenDir(QWidget *parent, const QString &title,
     return dir;
 }
 
+auto _WritablePath(Location loc) -> QString
+{
+    const auto std = static_cast<QStandardPaths::StandardLocation>(loc);
+    auto path = QStandardPaths::writableLocation(std);
+    if (loc == Location::Config)
+        path += '/'_q % qApp->organizationName()
+              % '/'_q % qApp->applicationName();
+    if (!QDir().mkpath(path))
+        return QString();
+    return path;
+}
+
 QByteArray _Uncompress(const QByteArray &data) {
     if (data.size() <= 4)
         return QByteArray();

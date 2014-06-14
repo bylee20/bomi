@@ -38,7 +38,7 @@ struct JsonIO<HwAcc::Type> {
     SCA qt_type = QJsonValue::String;
 };
 
-#define PREF_FILE_PATH QString(_WritablePath() % "/pref.json"_a)
+#define PREF_FILE_PATH QString(_WritablePath(Location::Config) % "/pref.json"_a)
 
 auto translator_default_encoding() -> QString;
 
@@ -422,11 +422,17 @@ auto Pref::loadFromRecord() -> void
 auto Pref::load() -> void
 {
     JsonStorage storage(PREF_FILE_PATH);
-    const auto json = storage.read();
+    auto json = storage.read();
     if (storage.hasError()) {
-        if (storage.error() == JsonStorage::NoFile)
-            loadFromRecord();
-        return;
+        if (storage.error() != JsonStorage::NoFile)
+            return;
+        storage = JsonStorage(_WritablePath(Location::Data) % "/pref.json"_a);
+        json = storage.read();
+        if (storage.hasError()) {
+            if (storage.error() == JsonStorage::NoFile)
+                loadFromRecord();
+            return;
+        }
     }
     if (!jio.fromJson(*this, json))
         _Error("Error: Cannot convert JSON object to preferences");
