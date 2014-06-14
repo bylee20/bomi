@@ -206,6 +206,7 @@ auto Vdpau::finalizeInterop(QOpenGLContext *ctx) -> void
     if (it != s_interops.end()) {
         Q_ASSERT(it->gl == ctx);
         it->finalize();
+        s_interops.erase(it);
     }
 }
 
