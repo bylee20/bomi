@@ -1,5 +1,6 @@
 #include "prefdialog_p.hpp"
 #include "player/rootmenu.hpp"
+#include "tmp/algorithm.hpp"
 
 PrefMenuTreeItem::PrefMenuTreeItem(Menu *menu, PrefMenuTreeItem *parent)
     : QTreeWidgetItem(parent)
@@ -30,12 +31,17 @@ auto PrefMenuTreeItem::setShortcuts(const QList<QKeySequence> &keys) -> void
     }
 }
 
+auto PrefMenuTreeItem::hasShortcut(const QKeySequence &key) -> bool
+{
+    return !key.isEmpty() && tmp::contains(m_shortcuts, key);
+}
+
 auto PrefMenuTreeItem::shortcuts() const -> QList<QKeySequence>
 {
     QList<QKeySequence> shortcuts;
-    for (auto key : m_shortcuts) {
+    for (auto &key : m_shortcuts) {
         if (!key.isEmpty())
-            shortcuts << key;
+            shortcuts.push_back(key);
     }
     return shortcuts;
 }
@@ -71,10 +77,11 @@ auto PrefMenuTreeItem::create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
                     children.push_back(child);
             } else {
                 auto child = new PrefMenuTreeItem(action, 0);
+                child->m_desc = prefix % action->text();
                 child->setText(Id, child->m_id = id);
                 items.push_back(child);
                 children.push_back(child);
-                list.append({ prefix % action->text(), id });
+                list.append({ child->m_desc, id });
             }
         }
     }

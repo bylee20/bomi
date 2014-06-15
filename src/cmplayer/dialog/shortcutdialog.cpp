@@ -1,37 +1,50 @@
 #include "shortcutdialog.hpp"
 #include "bbox.hpp"
 
-static constexpr int MaxKeyCount = 1;
-
 struct ShortcutDialog::Data {
     QLineEdit *edit = nullptr;
     BBox *bbox;
     QPushButton *begin = nullptr;
-    int curIdx = 0;
-    int codes[MaxKeyCount];
+
+    QTimer updater;
+
+    QKeySequence input;
+    QString id;
+    QueryFunc query;
+
+
+    auto setOk(bool ok) -> void { bbox->button(BBox::Ok)->setEnabled(ok); }
     auto erase() -> void
     {
-        curIdx = 0;
-        for (int i=0; i<MaxKeyCount; ++i)
-            codes[i] = 0;
+        input = QKeySequence();
         edit->clear();
+        setOk(true);
     }
     auto getShortcut(QKeyEvent *event) -> void
     {
-        if (_InRange0(curIdx, MaxKeyCount)) {
-            codes[curIdx] = event->key();
-            int modifiers = 0;
-            if (event->modifiers() & Qt::CTRL)
-                modifiers |= Qt::CTRL;
-            if (event->modifiers() & Qt::SHIFT)
-                modifiers |= Qt::SHIFT;
-            if (event->modifiers() & Qt::ALT)
-                modifiers |= Qt::ALT;
-            if (event->modifiers() & Qt::META)
-                modifiers |= Qt::META;
-            if (modifiers)
-                codes[curIdx] += modifiers;
+        if (!begin->isChecked())
+            return;
+        switch (event->key()) {
+        case Qt::Key_Shift:
+        case Qt::Key_Control:
+        case Qt::Key_Meta:
+        case Qt::Key_Alt:
+        case Qt::Key_AltGr:
+            return;
         }
+        int code = event->key();
+        int modifiers = 0;
+        if (event->modifiers() & Qt::CTRL)
+            modifiers |= Qt::CTRL;
+        if (event->modifiers() & Qt::SHIFT)
+            modifiers |= Qt::SHIFT;
+        if (event->modifiers() & Qt::ALT)
+            modifiers |= Qt::ALT;
+        if (event->modifiers() & Qt::META)
+            modifiers |= Qt::META;
+        if (modifiers)
+            code += modifiers;
+        input = QKeySequence(code);
     }
 };
 
@@ -71,22 +84,27 @@ ShortcutDialog::~ShortcutDialog() {
     delete d;
 }
 
+auto ShortcutDialog::setQueryFunction(const QueryFunc &func,
+                                      const QString &id) -> void
+{
+    d->id = id;
+    d->query = func;
+}
+
 auto ShortcutDialog::shortcut() const -> QKeySequence
 {
-    return QKeySequence(d->codes[0]);
+    return d->input;
 }
 
 auto ShortcutDialog::setShortcut(const QKeySequence &shortcut) -> void
 {
-    for (int i=0; i<MaxKeyCount; ++i)
-        d->codes[i] = shortcut[i];
-    d->edit->setText(shortcut.toString(QKeySequence::NativeText));
+    d->input = shortcut;
+    d->edit->setText(d->input.toString(QKeySequence::NativeText));
 }
 
 auto ShortcutDialog::eventFilter(QObject *obj, QEvent *event) -> bool
 {
-    if (obj == d->edit && d->begin->isChecked()
-            && event->type() == QEvent::KeyPress) {
+    if (obj == d->edit && event->type() == QEvent::KeyPress) {
         d->getShortcut(static_cast<QKeyEvent *>(event));
         return true;
     } else
@@ -96,15 +114,24 @@ auto ShortcutDialog::eventFilter(QObject *obj, QEvent *event) -> bool
 auto ShortcutDialog::keyPressEvent(QKeyEvent *event) -> void
 {
     QDialog::keyPressEvent(event);
-    if (d->begin->isChecked())
-        d->getShortcut(event);
+    d->getShortcut(event);
 }
 
 auto ShortcutDialog::keyReleaseEvent(QKeyEvent *event) -> void
 {
     QDialog::keyReleaseEvent(event);
-    if (d->begin->isChecked() && d->codes[d->curIdx]) {
-        d->edit->setText(shortcut().toString(QKeySequence::NativeText));
-        ++d->curIdx;
+    if (d->begin->isChecked() && !d->input.isEmpty()) {
+        const auto desc = d->query ? d->query(d->id, d->input) : QString();
+        const auto key = d->input.toString(QKeySequence::NativeText);
+        d->setOk(desc.isEmpty());
+        if (desc.isEmpty()) {
+            d->edit->setStyleSheet(u"color: black"_q);
+            d->edit->setText(key);
+        } else {
+            d->edit->setText(tr("'%1' is already bound to '%2'")
+                             .arg(key).arg(desc));
+            d->edit->setStyleSheet(u"color: red"_q);
+            d->input = QKeySequence();
+        }
     }
 }

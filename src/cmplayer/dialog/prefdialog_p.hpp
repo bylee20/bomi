@@ -18,7 +18,9 @@ public:
     auto setShortcut(int idx, const QKeySequence &key) -> void;
     auto setShortcuts(const QList<QKeySequence> &keys) -> void;
     auto shortcuts() const -> QList<QKeySequence>;
+    auto hasShortcut(const QKeySequence &key) -> bool;
     auto id() const -> QString { return m_id; }
+    auto description() const -> QString { return m_desc; }
     static auto makeRoot(QTreeWidget *parent)
         -> T<QVector<PrefMenuTreeItem*>, QVector<MouseAction>>;
 private:
@@ -27,7 +29,7 @@ private:
                        QVector<MouseAction> &list) -> PrefMenuTreeItem*;
     PrefMenuTreeItem(Menu *menu, PrefMenuTreeItem *parent);
     PrefMenuTreeItem(QAction *action, PrefMenuTreeItem *parent);
-    QAction *m_action; QString m_id;
+    QAction *m_action; QString m_id, m_desc;
     std::array<QKeySequence, 4> m_shortcuts;
 };
 

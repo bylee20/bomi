@@ -32,7 +32,7 @@ struct PrefDialog::Data {
     Ui::PrefDialog ui;
     QVector<MouseAction> actionInfo;
     QVector<PrefMenuTreeItem*> actionItems;
-    QButtonGroup *shortcuts, *saveQuickSnapshot;
+    QButtonGroup *shortcutGroup, *saveQuickSnapshot;
     QMap<int, QCheckBox*> hwdec;
     QMap<DeintMethod, QCheckBox*> hwdeint;
     QStringList imports;
@@ -63,6 +63,16 @@ struct PrefDialog::Data {
     {
         for (auto item : actionItems)
             item->setShortcuts(shortcuts[item->id()]);
+    }
+    auto shortcuts() -> Shortcuts
+    {
+        Shortcuts shortcuts;
+        for (auto item : actionItems) {
+            const auto keys = item->shortcuts();
+            if (!keys.isEmpty())
+                shortcuts[item->id()] = keys;
+        }
+        return shortcuts;
     }
 };
 
@@ -206,11 +216,11 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.sub_ext->addItemTextData(_ExtList(SubtitleExt));
     d->ui.window_style->addItemTextData(cApp.availableStyleNames());
 
-    d->shortcuts = new QButtonGroup(this);
-    d->shortcuts->addButton(d->ui.shortcut1, 0);
-    d->shortcuts->addButton(d->ui.shortcut2, 1);
-    d->shortcuts->addButton(d->ui.shortcut3, 2);
-    d->shortcuts->addButton(d->ui.shortcut4, 3);
+    d->shortcutGroup = new QButtonGroup(this);
+    d->shortcutGroup->addButton(d->ui.shortcut1, 0);
+    d->shortcutGroup->addButton(d->ui.shortcut2, 1);
+    d->shortcutGroup->addButton(d->ui.shortcut3, 2);
+    d->shortcutGroup->addButton(d->ui.shortcut4, 3);
 
     _R(d->actionItems, d->actionInfo)
             = PrefMenuTreeItem::makeRoot(d->ui.shortcut_tree);
@@ -270,11 +280,23 @@ PrefDialog::PrefDialog(QWidget *parent)
     connect(d->ui.sub_autoselect, currentDataChanged, checkSubAutoselect);
     connect(d->ui.sub_autoload, currentDataChanged, checkSubAutoselect);
     void(QButtonGroup::*buttonClicked)(int) = &QButtonGroup::buttonClicked;
-    connect(d->shortcuts, buttonClicked, [this] (int idx) {
+    connect(d->shortcutGroup, buttonClicked, [this] (int idx) {
         auto treeItem = d->ui.shortcut_tree->currentItem();
         auto item = static_cast<PrefMenuTreeItem*>(treeItem);
         if (item && !item->isMenu()) {
             ShortcutDialog dlg(item->shortcut(idx), this);
+            dlg.setQueryFunction([=] (const QString &id,
+                                      const QKeySequence &key)
+            {
+                for (auto item : d->actionItems) {
+                    if (item->hasShortcut(key)) {
+                        if (item->id() == id)
+                            return QString();
+                        return item->description();
+                    }
+                }
+                return QString();
+            }, item->id());
             if (dlg.exec())
                 item->setShortcut(idx, dlg.shortcut());
         }
@@ -282,7 +304,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     connect(d->ui.shortcut_tree, &QTreeWidget::currentItemChanged,
             [this] (QTreeWidgetItem *it) {
         auto item = static_cast<PrefMenuTreeItem*>(it);
-        const auto buttons = d->shortcuts->buttons();
+        const auto buttons = d->shortcutGroup->buttons();
         for (auto b : buttons)
             b->setEnabled(item && !item->isMenu());
     });
@@ -658,12 +680,7 @@ auto PrefDialog::get(Pref &p) -> void
     p.cache_min_seeking = d->ui.cache_min_seeking->value();
     p.network_folders = d->ui.network_folders->list();
 
-    p.shortcuts.clear();
-    for (auto item : d->actionItems) {
-        const auto keys = item->shortcuts();
-        if (!keys.isEmpty())
-            p.shortcuts[item->id()] = keys;
-    }
+    p.shortcuts = d->shortcuts();
 
     auto restores = d->properties.checkedList(0);
     p.restore_properties.clear();
