@@ -355,6 +355,7 @@ auto VdpauMixer::upload(OpenGLTexture2D &texture,
         release();
         if (!create(texture))
             return false;
+        m_id = texture.id();
     }
     auto structure = VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME;
     if (deint) {
