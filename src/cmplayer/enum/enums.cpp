@@ -27,6 +27,7 @@
 #include "movetoward.hpp"
 #include "changevalue.hpp"
 #include "videoeffect.hpp"
+#include "quicksnapshotsave.hpp"
 bool _IsEnumTypeId(int userType) {
     return userType == qMetaTypeId<TextThemeStyle>()
         || userType == qMetaTypeId<SpeakerId>()
@@ -56,6 +57,7 @@ bool _IsEnumTypeId(int userType) {
         || userType == qMetaTypeId<MoveToward>()
         || userType == qMetaTypeId<ChangeValue>()
         || userType == qMetaTypeId<VideoEffect>()
+        || userType == qMetaTypeId<QuickSnapshotSave>()
         || false;
 }
 
@@ -144,6 +146,9 @@ bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVaria
     } else    if (varType == qMetaTypeId<VideoEffect>()) {
         toSql = _EnumVariantToSql<VideoEffect>;
         fromSql = _EnumVariantFromSql<VideoEffect>;
+    } else    if (varType == qMetaTypeId<QuickSnapshotSave>()) {
+        toSql = _EnumVariantToSql<QuickSnapshotSave>;
+        fromSql = _EnumVariantFromSql<QuickSnapshotSave>;
     } else
         return false;
     return true;
@@ -235,6 +240,9 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<VideoEffect>()) {
         conv.variantToName = _EnumVariantToEnumName<VideoEffect>;
         conv.nameToVariant = _EnumNameToEnumVariant<VideoEffect>;
+    } else    if (metaType == qMetaTypeId<QuickSnapshotSave>()) {
+        conv.variantToName = _EnumVariantToEnumName<QuickSnapshotSave>;
+        conv.nameToVariant = _EnumNameToEnumVariant<QuickSnapshotSave>;
     } else
         return EnumNameVariantConverter();
     return conv;

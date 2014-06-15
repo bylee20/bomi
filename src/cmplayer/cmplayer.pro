@@ -227,7 +227,8 @@ HEADERS += \
     opengl/openglbenchmarker.hpp \
     enum/colorspace.hpp \
     player/mainwindow_p.hpp \
-    video/videotexture.hpp
+    video/videotexture.hpp \
+    enum/quicksnapshotsave.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -396,7 +397,8 @@ SOURCES += \
     player/mainwindow_p.cpp \
     player/mainwindow_m.cpp \
     player/playengine_p.cpp \
-    video/videotexture.cpp
+    video/videotexture.cpp \
+    enum/quicksnapshotsave.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

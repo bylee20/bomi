@@ -135,13 +135,14 @@ SIA _MSecToString(int ms, const QString &fmt = u"hh:mm:ss"_q) -> QString
 { return _MSecToTime(ms).toString(fmt); }
 
 enum ExtType {
-    AllExt       = 0,
+    AllExt      = 0,
     AudioExt    = 1 << 0,
     VideoExt    = 1 << 1,
     SubtitleExt = 1 << 2,
     ImageExt    = 1 << 3,
     DiscExt     = 1 << 4,
     PlaylistExt = 1 << 5,
+    WritableImageExt = 1 << 6,
 
     MediaExt    = AudioExt | VideoExt | ImageExt
 };

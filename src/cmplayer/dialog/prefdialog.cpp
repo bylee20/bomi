@@ -200,8 +200,13 @@ PrefDialog::PrefDialog(QWidget *parent)
 
     d->saveQuickSnapshot = new QButtonGroup(this);
     d->saveQuickSnapshot->setExclusive(true);
-    d->saveQuickSnapshot->addButton(d->ui.save_quick_snapshot_folder, 0);
-    d->saveQuickSnapshot->addButton(d->ui.save_quick_snapshot_current, 1);
+    d->saveQuickSnapshot->addButton(d->ui.save_quick_snapshot_folder,
+                                    (int)QuickSnapshotSave::Fixed);
+    d->saveQuickSnapshot->addButton(d->ui.save_quick_snapshot_current,
+                                    (int)QuickSnapshotSave::Current);
+    d->saveQuickSnapshot->addButton(d->ui.save_quick_snapshot_ask
+                                    , (int)QuickSnapshotSave::Ask);
+    d->ui.quick_snapshot_format->addItems(_ExtList(WritableImageExt));
 
     vbox = new QVBoxLayout;
     vbox->setMargin(0);
@@ -415,8 +420,11 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.open_media_from_file_manager->setValue(p.open_media_from_file_manager);
     d->ui.open_media_by_drag_and_drop->setValue(p.open_media_by_drag_and_drop);
 
-    d->saveQuickSnapshot->button(p.save_quick_snapshot_current)->setChecked(true);
+    d->saveQuickSnapshot->button((int)p.quick_snapshot_save)->setChecked(true);
     d->ui.quick_snapshot_folder->setText(p.quick_snapshot_folder);
+    d->ui.quick_snapshot_format->setCurrentText(p.quick_snapshot_format);
+    d->ui.quick_snapshot_quality->setValue(p.quick_snapshot_quality);
+
     d->ui.use_mpris2->setChecked(p.use_mpris2);
     d->ui.fit_to_video->setChecked(p.fit_to_video);
     d->ui.show_osd_on_action->setChecked(p.show_osd_on_action);
@@ -555,8 +563,11 @@ auto PrefDialog::get(Pref &p) -> void
     p.open_media_from_file_manager = d->ui.open_media_from_file_manager->value();
     p.open_media_by_drag_and_drop = d->ui.open_media_by_drag_and_drop->value();
 
-    p.save_quick_snapshot_current = d->saveQuickSnapshot->checkedId();
+    p.quick_snapshot_save = (QuickSnapshotSave)d->saveQuickSnapshot->checkedId();
     p.quick_snapshot_folder = d->ui.quick_snapshot_folder->text();
+    p.quick_snapshot_format = d->ui.quick_snapshot_format->currentText();
+    p.quick_snapshot_quality = d->ui.quick_snapshot_quality->value();
+
     p.use_mpris2 = d->ui.use_mpris2->isChecked();
     p.fit_to_video = d->ui.fit_to_video->isChecked();
     p.show_osd_on_action = d->ui.show_osd_on_action->isChecked();

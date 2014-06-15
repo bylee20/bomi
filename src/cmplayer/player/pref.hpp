@@ -14,6 +14,7 @@
 #include "enum/audiodriver.hpp"
 #include "enum/clippingmethod.hpp"
 #include "enum/verticalalignment.hpp"
+#include "enum/quicksnapshotsave.hpp"
 
 class QLocale;
 
@@ -27,7 +28,12 @@ public:
     OpenMediaInfo open_media_from_file_manager{ true, OpenMediaBehavior::NewPlaylist };
     OpenMediaInfo open_media_by_drag_and_drop{ true, OpenMediaBehavior::Append };
 
-    bool fit_to_video = false, use_mpris2 = true, save_quick_snapshot_current = false;
+    QString quick_snapshot_format = u"png"_q;
+    QString quick_snapshot_folder = QDir::homePath();
+    int quick_snapshot_quality = -1;
+    QuickSnapshotSave quick_snapshot_save = QuickSnapshotSave::Fixed;
+
+    bool fit_to_video = false, use_mpris2 = true;
     bool pause_minimized = true, pause_video_only = true, pause_to_play_next_image = true;
     bool remember_stopped = true, ask_record_found = true, remember_image = false;
     bool enable_generate_playist = true;
@@ -38,7 +44,7 @@ public:
     int hide_cursor_delay = 3000;
     bool show_logo = true; QColor bg_color = Qt::black;
     bool use_heartbeat = false;
-    QString heartbeat_command, quick_snapshot_folder = QDir::homePath();
+    QString heartbeat_command;
     int heartbeat_interval = 60;
 
     bool show_osd_on_action = true, show_osd_on_resized = true;

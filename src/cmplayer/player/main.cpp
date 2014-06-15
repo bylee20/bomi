@@ -17,6 +17,10 @@ auto reg_settings_object() -> void;
 auto reg_theme_object() -> void;
 auto reg_play_engine() -> void;
 
+namespace Pch {
+extern QStringList writableImageExts;
+}
+
 namespace OGL { auto check() -> void; }
 
 int main(int argc, char **argv) {
@@ -42,6 +46,9 @@ int main(int argc, char **argv) {
     reg_play_engine();
 
     App app(argc, argv);
+    for (auto fmt : QImageWriter::supportedImageFormats())
+        writableImageExts.push_back(QString::fromLatin1(fmt));
+
     if (app.isUnique()
             && app.sendMessage(App::CommandLine, _ToJson(app.arguments()))) {
         _Info("Another instance of CMPlayer is already running. Exit this...");

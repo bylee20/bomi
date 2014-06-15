@@ -249,3 +249,8 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 $static constexpr VideoEffects KernelEffects = VideoEffect::Blur | VideoEffect::Sharpen;
 $static constexpr VideoEffects ColorEffects  = VideoEffect::Gray | VideoEffect::Invert;
 $static constexpr VideoEffects ShaderEffects = KernelEffects | ColorEffects;
+
++QuickSnapshotSave
+-Fixed
+-Current
+-Ask

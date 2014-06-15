@@ -33,7 +33,10 @@ static const QStringList plExts = QStringList()
         << u"pls"_q << u"m3u"_q << u"m3u8"_q;
 static const QStringList discExts = QStringList() << u"iso"_q;
 static const QStringList imageExts = QStringList()
-        << u"png"_q << u"jpg"_q << u"jpeg"_q << u"gif"_q;
+        << u"bmp"_q << u"gif"_q << u"jpeg"_q
+        << u"jpg"_q << u"png"_q << u"tif"_q << u"tiff"_q;
+
+QStringList writableImageExts;
 
 static QMap<QString, QString> lastFolders;
 auto open_folders() -> QMap<QString, QString> { return lastFolders; }
@@ -51,6 +54,8 @@ auto _ExtList(ExtType ext) -> QStringList
         return subExts;
     case ImageExt:
         return imageExts;
+    case WritableImageExt:
+        return writableImageExts;
     case PlaylistExt:
         return plExts;
     case DiscExt:
@@ -71,6 +76,8 @@ auto _ExtList(ExtTypes exts) -> QStringList
         list.append(subExts);
     if (exts & ImageExt)
         list.append(imageExts);
+    if (exts & WritableImageExt)
+        list.append(writableImageExts);
     if (exts & PlaylistExt)
         list.append(plExts);
     if (exts & DiscExt)
@@ -105,6 +112,8 @@ auto _ToNameFilter(ExtTypes exts) -> QStringList
         filter += conv(subExts);
     if (exts & ImageExt)
         filter += conv(imageExts);
+    if (exts & WritableImageExt)
+        filter += conv(writableImageExts);
     if (exts & DiscExt)
         filter += conv(discExts);
     if (exts & PlaylistExt)
@@ -138,6 +147,8 @@ auto _ToFilter(ExtTypes exts) -> QString
         filter += conv(subExts, qApp->translate("Info", "Subtitle Files"));
     if (exts & ImageExt)
         filter += conv(imageExts, qApp->translate("Info", "Images"));
+    if (exts & WritableImageExt)
+        filter += conv(writableImageExts, qApp->translate("Info", "Images"));
     if (exts & DiscExt)
         filter += conv(discExts, qApp->translate("Info", "ISO Image Files"));
     if (exts & PlaylistExt)
