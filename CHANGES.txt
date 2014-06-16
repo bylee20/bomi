@@ -1,3 +1,11 @@
+0.8.15
+
+  * New: format/quality/ask options for quick snapshot(#99)
+  * Fix: too many initialization of VDPAU mixer
+  * Fix: broken image with VDPAU on transition of videos
+  * Fix: notify confliction of shortcuts in preferences(#100)
+  * Fix: save preferences under ~/.config
+
 0.8.14
 
   * New: quick snapshot
