@@ -364,7 +364,7 @@ auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
         emit v->formatChanged(d->format);
     }
     _Debug("Configure VideoOutput with %%(%%x%%) format",
-           mp_imgfmt_to_name(params->imgfmt), params->w, params->h);
+           VideoFormat::name(params->imgfmt), params->w, params->h);
     if (rerenderable)
         d->draw();
     return 0;

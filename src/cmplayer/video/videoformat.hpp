@@ -24,12 +24,12 @@ public:
         { return QSize(d->params.d_w, d->params.d_h); }
     auto bitrate(double fps) const -> double
         { return fps*d->params.w*d->params.h*d->bpp;}
-    auto name() const -> QString
-        { return QString::fromLatin1(mp_imgfmt_to_name(d->params.imgfmt)); }
+    auto name() const -> QByteArray { return name(d->params.imgfmt); }
     auto colorspace() const -> mp_csp { return d->params.colorspace; }
     auto range() const -> mp_csp_levels { return d->params.colorlevels; }
     auto chroma() const -> mp_chroma_location
         { return d->params.chroma_location; }
+    static auto name(Type type) -> QByteArray;
 private:
     struct Data : public QSharedData {
         Data() { }
@@ -57,6 +57,12 @@ inline auto VideoFormat::isEmpty() const -> bool
 {
     return d->params.w <= 0 || d->params.h <= 0
            || d->params.imgfmt == IMGFMT_NONE;
+}
+
+inline auto VideoFormat::name(Type type)  -> QByteArray
+{
+    char buf[16] = { 0 };
+    return mp_imgfmt_to_name_buf(buf, sizeof(buf), type);
 }
 
 #endif // VIDEOFORMAT_HPP
