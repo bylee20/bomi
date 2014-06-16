@@ -36,12 +36,11 @@ inline const m_option_type_t *get_option_type<int>()
 static m_option null_option;
 
 SIA make_option(const char *name, int offset,
-                               const m_option_type_t *type) -> m_option
+                const m_option_type_t *type) -> m_option
 {
     m_option opt = null_option;
     opt.name = name;
     opt.offset = offset;
-    opt.is_new_option = 1;
     opt.type = type;
     return opt;
 }

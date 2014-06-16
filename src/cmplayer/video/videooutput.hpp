@@ -32,7 +32,6 @@ private:
     static auto uninit(vo *out) -> void;
     static auto reconfig(vo *out, mp_image_params *p, int flags) -> int;
     static auto control(vo *out, quint32 request, void *data) -> int;
-    static auto drawOsd(vo *out, struct osd_state *osd) -> void;
     static auto flipPage(vo *out) -> void;
     static auto drawImage(vo *out, mp_image *mpi) -> void;
     struct Data;

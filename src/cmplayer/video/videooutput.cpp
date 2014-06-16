@@ -119,7 +119,6 @@ auto create_driver() -> vo_driver
     driver.preinit      = VideoOutput::preinit;
     driver.reconfig     = VideoOutput::reconfig;
     driver.control      = VideoOutput::control;
-    driver.draw_osd     = VideoOutput::drawOsd;
     driver.flip_page    = VideoOutput::flipPage;
     driver.query_format = [] (vo*, quint32 f) { return query_video_format(f); };
     driver.draw_image   = VideoOutput::drawImage;
@@ -189,7 +188,8 @@ struct VideoOutput::Data {
             if (dirty & DirtyEffects)
                 shader->setEffects(renderer->effects());
             if (dirty & DirtyColor)
-                shader->setColor(color, engine->videoColorSpace(), engine->videoColorRange());
+                shader->setColor(color, engine->videoColorSpace(),
+                                 engine->videoColorRange());
             if (dirty & DirtyChroma)
                 shader->setChromaUpscaler(engine->videoChromaUpscaler());
             if (dirty & DirtyDeint) {
@@ -219,6 +219,25 @@ struct VideoOutput::Data {
         }
         glFlush();
         gl->doneCurrent();
+
+        static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
+        static auto cb = [] (void *data, struct sub_bitmaps *imgs) {
+            auto d = static_cast<Data*>(data);
+            if (d->cache && _Change(d->bitmapId, { imgs }))
+                d->bitmap = d->bitmapPool.get(imgs, { d->osd.w, d->osd.h });
+            d->hasOsd = true;
+        };
+        if (renderer) {
+            const auto dpr = renderer->devicePixelRatio();
+            auto size = renderer->osdSize();
+            osd.w = size.width();
+            osd.h = size.height();
+            osd.w *= dpr;
+            osd.h *= dpr;
+            osd.display_par = 1.0;
+            osd_draw(out->osd, osd, mpi->pts, 0, format, cb, this);
+        }
+
         _Trace("VideoOutput::draw()");
     }
     template<class T, class... Args>
@@ -378,28 +397,6 @@ auto VideoOutput::drawImage(vo *out, mp_image *mpi) -> void
     d->draw();
     if (!d->format.isEmpty() && !d->cache)
         emit v->droppedFramesChanged(++d->dropped);
-}
-
-auto VideoOutput::drawOsd(vo *out, osd_state *osd) -> void
-{
-    static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
-    static auto cb = [] (void *vo, struct sub_bitmaps *imgs) {
-        auto v = static_cast<VideoOutput*>(vo); auto d = v->d;
-        if (d->cache && _Change(d->bitmapId, { imgs }))
-            d->bitmap = d->bitmapPool.get(imgs, { d->osd.w, d->osd.h });
-        d->hasOsd = true;
-    };
-    auto v = priv(out); auto d = v->d;
-    if (auto r = d->renderer) {
-        const auto dpr = r->devicePixelRatio();
-        auto size = r->osdSize();
-        d->osd.w = size.width();
-        d->osd.h = size.height();
-        d->osd.w *= dpr;
-        d->osd.h *= dpr;
-        d->osd.display_par = 1.0;
-        osd_draw(osd, d->osd, osd->vo_pts, 0, format, cb, v);
-    }
 }
 
 auto VideoOutput::flipPage(vo *out) -> void
