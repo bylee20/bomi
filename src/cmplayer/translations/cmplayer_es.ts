@@ -1254,12 +1254,12 @@ Parado en la posición: %2
     <message>
         <location filename="../player/mainwindow_m.cpp" line="403"/>
         <source>Snapshot saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Captura guardada</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="405"/>
         <source>Failed to save a snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>Fallo al guardar captura</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="487"/>
@@ -2021,22 +2021,22 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="210"/>
         <source>Quick Snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>Captura rápida</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="218"/>
         <source>Save in</source>
-        <translation type="unfinished"></translation>
+        <translation>Guardar en</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="232"/>
         <source>Browse...</source>
-        <translation type="unfinished"></translation>
+        <translation>Explorar...</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="241"/>
         <source>Save in the same folder where current playing video exists</source>
-        <translation type="unfinished"></translation>
+        <translation>Guardar en el mismo directorio donde se encuentra el vídeo reproducido</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="401"/>
@@ -2540,7 +2540,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="116"/>
         <source>Miscellaneous</source>
-        <translation type="unfinished"></translation>
+        <translation>Miscelanea</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="119"/>
@@ -2654,7 +2654,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="186"/>
         <source>Browse for Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Examinar carpeta</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="333"/>
@@ -3204,17 +3204,17 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="503"/>
         <source>Quick Snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>Captura Rápida</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="504"/>
         <source>Quick Snapshot(No Subtitles)</source>
-        <translation type="unfinished"></translation>
+        <translation>Captura Rápida (sin subtítulos)</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="505"/>
         <source>Snapshot Tool</source>
-        <translation type="unfinished"></translation>
+        <translation>Herramienta de captura</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="539"/>
@@ -3668,7 +3668,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../dialog/urldialog.cpp" line="37"/>
         <source>Handle as playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Manejar como lista de reproducción</translation>
     </message>
     <message>
         <location filename="../dialog/urldialog.cpp" line="39"/>
@@ -3678,7 +3678,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../dialog/urldialog.cpp" line="40"/>
         <source>Encoding</source>
-        <translation type="unfinished">Codificación</translation>
+        <translation>Codificación</translation>
     </message>
     <message>
         <source>Encoding for Playlist</source>
