@@ -1,3 +1,13 @@
+cmplayer (0.8.15-1~trusty1) trusty; urgency=low
+
+  * New: format/quality/ask options for quick snapshot(#99)
+  * Fix: too many initialization of VDPAU mixer
+  * Fix: broken image with VDPAU on transition of videos
+  * Fix: notify confliction of shortcuts in preferences(#100)
+  * Fix: save preferences under ~/.config
+
+ -- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Mon, 16 Jun 2014 15:30:00 +0900
+
 cmplayer (0.8.14-1~trusty1) trusty; urgency=low
 
   * New: quick snapshot
