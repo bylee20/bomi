@@ -2028,17 +2028,17 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="218"/>
         <source>Format</source>
-        <translation type="unfinished"></translation>
+        <translation>Formato</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="228"/>
         <source>Quality</source>
-        <translation type="unfinished"></translation>
+        <translation>Calidad</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="235"/>
         <source>Default</source>
-        <translation type="unfinished"></translation>
+        <translation>Por defecto</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="275"/>
@@ -2059,7 +2059,7 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="305"/>
         <source>Ask where to save snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>Preguntar donde guardar la captura</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="465"/>
@@ -2129,12 +2129,12 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="703"/>
         <source>Search Path</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruta de busqueda</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="713"/>
         <source>Add</source>
-        <translation type="unfinished">Añadir</translation>
+        <translation>Añadir</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="735"/>
@@ -2424,22 +2424,22 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="818"/>
         <source>Auto-detect encoding when accuracy is above</source>
-        <translation type="unfinished"></translation>
+        <translation>Auto detectar la codiicación cuando la precision está por encima del</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="862"/>
         <source>Display Time</source>
-        <translation type="unfinished"></translation>
+        <translation>Tiempo de visualización</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="868"/>
         <source>Calculate display time when not specified</source>
-        <translation type="unfinished"></translation>
+        <translation>Calcular el tiempo de visualización cuando no ha sido especificado</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="881"/>
         <source>msec/character</source>
-        <translation type="unfinished"></translation>
+        <translation>mseg/personaje</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2778"/>
@@ -3421,7 +3421,7 @@ Por ejemplo: English, Korean</translation>
     <message>
         <location filename="../dialog/shortcutdialog.cpp" line="131"/>
         <source>&apos;%1&apos; is already bound to &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>&apos;%1&apos; ya está ligado a &apos;%2&apos;</translation>
     </message>
 </context>
 <context>
