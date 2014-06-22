@@ -2054,12 +2054,12 @@ Parado en la posición: %2
     <message>
         <location filename="../ui/prefdialog.ui" line="298"/>
         <source>Save in the same folder where current playing video exists</source>
-        <translation>Guardar en el mismo directorio donde se encuentra el vídeo reproducido</translation>
+        <translation>Guardar en el mismo directorio dónde se encuentra el vídeo reproducido</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="305"/>
         <source>Ask where to save snapshot</source>
-        <translation>Preguntar donde guardar la captura</translation>
+        <translation>Preguntar dónde guardar la captura</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="465"/>
