@@ -241,6 +241,7 @@ static const auto jio = JIO(
     JE(remap_luma_max),
     JE(channel_manipulation),
     JE(enable_generate_playist),
+    JE(sub_search_paths),
     JE(sub_enable_autoload),
     JE(sub_enable_autoselect),
     JE(generate_playlist),

@@ -57,6 +57,7 @@ public:
     ChannelLayoutMap channel_manipulation
         = ChannelLayoutMap::default_();
 
+    QStringList sub_search_paths;
     bool sub_enable_autoload = true, sub_enable_autoselect = true, sub_enc_autodetection = true;
     SubtitleAutoload sub_autoload = SubtitleAutoload::Contain;
     SubtitleAutoselect sub_autoselect = SubtitleAutoselect::Matched;

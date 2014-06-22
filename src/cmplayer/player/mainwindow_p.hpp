@@ -136,6 +136,10 @@ struct MainWindow::Data {
     auto reloadSkin() -> void;
     auto trigger(QAction *action) -> void;
     auto updateSubtitleState() -> void;
+    auto tryToAutoselect(const QVector<SubComp> &loaded,
+                         const Mrl &mrl) -> QVector<int>;
+    auto tryToAutoload(const Mrl &mrl,
+                       const QString &path = QString()) -> QVector<SubComp>;
     auto cancelToHideCursor() -> void
         { hider.stop(); view->setCursorVisible(true); }
     auto readyToHideCursor() -> void;

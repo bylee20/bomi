@@ -358,90 +358,98 @@ auto MainWindow::Data::cache(const Mrl &mrl) -> int
     return pref().cache_network;
 }
 
+auto MainWindow::Data::tryToAutoselect(const QVector<SubComp> &loaded,
+                                       const Mrl &mrl) -> QVector<int>
+{
+    QVector<int> selected;
+    const auto &p = pref();
+    if (loaded.isEmpty() || !p.sub_enable_autoselect)
+        return selected;
+    QSet<QString> langSet;
+    const QFileInfo file(mrl.toLocalFile());
+    const QString base = file.completeBaseName();
+    for (int i=0; i<loaded.size(); ++i) {
+        bool select = false;
+        switch (p.sub_autoselect) {
+        case SubtitleAutoselect::Matched: {
+            const QFileInfo info(loaded[i].fileName());
+            select = info.completeBaseName() == base;
+            break;
+        } case SubtitleAutoselect::EachLanguage: {
+//            const QString lang = loaded[i].m_comp.language().id();
+            const auto lang = loaded[i].language();
+            if ((select = (!langSet.contains(lang))))
+                langSet.insert(lang);
+            break;
+        }  case SubtitleAutoselect::All:
+            select = true;
+            break;
+        default:
+            break;
+        }
+        if (select)
+            selected.append(i);
+    }
+    if (p.sub_autoselect == SubtitleAutoselect::Matched
+            && !selected.isEmpty() && !p.sub_ext.isEmpty()) {
+        for (int i=0; i<selected.size(); ++i) {
+            const auto fileName = loaded[selected[i]].fileName();
+            const auto suffix = QFileInfo(fileName).suffix();
+            if (p.sub_ext == suffix.toLower()) {
+                const int idx = selected[i];
+                selected.clear();
+                selected.append(idx);
+                break;
+            }
+        }
+    }
+    return selected;
+}
+
+auto MainWindow::Data::tryToAutoload(const Mrl &mrl,
+                                     const QString &path) -> QVector<SubComp>
+{
+    QVector<SubComp> loaded;
+    const auto &p = pref();
+    if (!p.sub_enable_autoload)
+        return loaded;
+    const QFileInfo fileInfo(mrl.toLocalFile());
+    auto dir = fileInfo.dir();
+    if (!path.isEmpty() && !dir.cd(path))
+        return loaded;
+    static const auto filter = _ToNameFilter(SubtitleExt);
+    const auto all = dir.entryInfoList(filter, QDir::Files, QDir::Name);
+    const auto base = fileInfo.completeBaseName();
+    for (int i=0; i<all.size(); ++i) {
+        if (p.sub_autoload != SubtitleAutoload::Folder) {
+            if (p.sub_autoload == SubtitleAutoload::Matched) {
+                if (base != all[i].completeBaseName())
+                    continue;
+            } else if (!all[i].fileName().contains(base))
+                continue;
+        }
+        Subtitle sub;
+        if (load(sub, all[i].absoluteFilePath(), p.sub_enc)) {
+            for (int i=0; i<sub.size(); ++i)
+                loaded.push_back(sub[i]);
+        }
+    }
+    return loaded;
+}
+
 auto MainWindow::Data::updateSubtitleState() -> void
 {
     const auto &mrl = as.state.mrl;
-    if (!mrl.isLocalFile()) {
+    if (mrl.isLocalFile()) {
+        auto loaded = tryToAutoload(mrl);
+        for (auto &path : pref().sub_search_paths)
+            loaded += tryToAutoload(mrl, path);
+        const auto selected = tryToAutoselect(loaded, mrl);
+        for (int i=0; i<selected.size(); ++i)
+            loaded[selected[i]].selection() = true;
+        subtitle.setComponents(loaded);
+    } else
         clearSubtitleFiles();
-        syncSubtitleFileMenu();
-        return;
-    }
-    const auto &pref = preferences;
-    const QFileInfo file(mrl.toLocalFile());
-    auto autoselection = [&] (const QVector<SubComp> &loaded) {
-        QVector<int> selected;
-        if (loaded.isEmpty() || !pref.sub_enable_autoselect)
-            return selected;
-        QSet<QString> langSet;
-        const QString base = file.completeBaseName();
-        for (int i=0; i<loaded.size(); ++i) {
-            bool select = false;
-            switch (pref.sub_autoselect) {
-            case SubtitleAutoselect::Matched: {
-                const QFileInfo info(loaded[i].fileName());
-                select = info.completeBaseName() == base;
-                break;
-            } case SubtitleAutoselect::EachLanguage: {
-//            const QString lang = loaded[i].m_comp.language().id();
-                const auto lang = loaded[i].language();
-                if ((select = (!langSet.contains(lang))))
-                    langSet.insert(lang);
-                break;
-            }  case SubtitleAutoselect::All:
-                select = true;
-                break;
-            default:
-                break;
-            }
-            if (select)
-                selected.append(i);
-        }
-        if (pref.sub_autoselect == SubtitleAutoselect::Matched
-                && !selected.isEmpty() && !pref.sub_ext.isEmpty()) {
-            for (int i=0; i<selected.size(); ++i) {
-                const auto fileName = loaded[selected[i]].fileName();
-                const auto suffix = QFileInfo(fileName).suffix();
-                if (pref.sub_ext == suffix.toLower()) {
-                    const int idx = selected[i];
-                    selected.clear();
-                    selected.append(idx);
-                    break;
-                }
-            }
-        }
-        return selected;
-    };
-    auto autoload = [&](bool autoselect) {
-        QVector<SubComp> loaded;
-        if (!pref.sub_enable_autoload)
-            return loaded;
-        const QFileInfo fileInfo(mrl.toLocalFile());
-        static const auto filter = _ToNameFilter(SubtitleExt);
-        const auto dir = fileInfo.dir();
-        const auto all = dir.entryInfoList(filter, QDir::Files, QDir::Name);
-        const auto base = fileInfo.completeBaseName();
-        for (int i=0; i<all.size(); ++i) {
-            if (pref.sub_autoload != SubtitleAutoload::Folder) {
-                if (pref.sub_autoload == SubtitleAutoload::Matched) {
-                    if (base != all[i].completeBaseName())
-                        continue;
-                } else if (!all[i].fileName().contains(base))
-                    continue;
-            }
-            Subtitle sub;
-            if (load(sub, all[i].absoluteFilePath(), pref.sub_enc)) {
-                for (int i=0; i<sub.size(); ++i)
-                    loaded.push_back(sub[i]);
-            }
-        }
-        if (autoselect) {
-            const QVector<int> selected = autoselection(loaded);
-            for (int i=0; i<selected.size(); ++i)
-                loaded[selected[i]].selection() = true;
-        }
-        return loaded;
-    };
-    subtitle.setComponents(autoload(true));
     syncSubtitleFileMenu();
 }
 

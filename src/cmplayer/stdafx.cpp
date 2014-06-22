@@ -223,9 +223,11 @@ auto _GetOpenDir(QWidget *parent, const QString &title,
 {
     auto &folder = lastFolders[key];
     const auto dir = QFileDialog::getExistingDirectory(parent, title, folder);
-    if (!dir.isEmpty())
-        folder = QDir(dir).absolutePath() % '/'_q;
-    return dir;
+    if (dir.isEmpty())
+        return dir;
+    const auto ret = QDir(dir).absolutePath();
+    folder = ret % '/'_q;
+    return ret;
 }
 
 auto _WritablePath(Location loc) -> QString

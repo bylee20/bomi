@@ -273,7 +273,7 @@ auto SimpleListModel<T, List>::swap(int r1, int r2) -> bool
 class StringListModel : public SimpleListModel<QString, QStringList> {
     Q_OBJECT
 public:
-    StringListModel(QObject *parent): Super(parent) { }
+    StringListModel(QObject *parent = nullptr): Super(parent) { }
 private:
     auto displayData(int row, int) const -> QVariant { return at(row); }
 };

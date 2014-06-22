@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>695</width>
-    <height>610</height>
+    <width>708</width>
+    <height>575</height>
    </rect>
   </property>
   <property name="styleSheet">
@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>1</number>
+        <number>6</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -688,6 +688,44 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="Line" name="line_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_30">
+              <item>
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Search Path</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="sub_search_path_edit"/>
+              </item>
+              <item>
+               <widget class="QPushButton" name="sub_search_path_add">
+                <property name="text">
+                 <string>Add</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="sub_search_path_browse">
+                <property name="text">
+                 <string>Browse...</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QListView" name="sub_search_paths"/>
+            </item>
            </layout>
           </widget>
          </item>
@@ -705,36 +743,33 @@
              </widget>
             </item>
             <item>
-             <widget class="SubtitleAutoselectComboBox" name="sub_autoselect">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="toolTip">
-               <string>Select next subtitles in automatically loaded subtitles.</string>
-              </property>
-              <property name="sizeAdjustPolicy">
-               <enum>QComboBox::AdjustToContents</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_4">
+              <item>
+               <widget class="SubtitleAutoselectComboBox" name="sub_autoselect">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>Select next subtitles in automatically loaded subtitles.</string>
+                </property>
+                <property name="sizeAdjustPolicy">
+                 <enum>QComboBox::AdjustToContents</enum>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QLabel" name="sub_ext_label">
                 <property name="enabled">
                  <bool>false</bool>
                 </property>
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
                 <property name="text">
                  <string>Extension</string>
-                </property>
-                <property name="indent">
-                 <number>20</number>
                 </property>
                </widget>
               </item>
@@ -750,19 +785,6 @@
                  </sizepolicy>
                 </property>
                </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_9">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
               </item>
              </layout>
             </item>
@@ -789,24 +811,11 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="sub_enc_autodetection">
-              <property name="text">
-               <string>Enable encoding auto-detection</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <layout class="QHBoxLayout" name="horizontalLayout_5">
               <item>
-               <widget class="QLabel" name="label_4">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
+               <widget class="QCheckBox" name="sub_enc_autodetection">
                 <property name="text">
-                 <string>Accuracy to enforce</string>
-                </property>
-                <property name="indent">
-                 <number>20</number>
+                 <string>Auto-detect encoding when accuracy is above</string>
                 </property>
                </widget>
               </item>
@@ -850,83 +859,56 @@
          <item>
           <widget class="QGroupBox" name="groupBox_13">
            <property name="title">
-            <string>Default display time</string>
+            <string>Display Time</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_14">
+           <layout class="QHBoxLayout" name="horizontalLayout_11">
             <item>
              <widget class="QLabel" name="aLabel_6">
               <property name="text">
-               <string>Caculate the end time of a subtitle when the time is not specified</string>
+               <string>Calculate display time when not specified</string>
               </property>
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_11">
-              <item>
-               <widget class="QLabel" name="label_25">
-                <property name="text">
-                 <string>Display time per one character</string>
-                </property>
-                <property name="indent">
-                 <number>20</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="ms_per_char">
-                <property name="toolTip">
-                 <string>When display time is not specifid in subtitle, caculate interval wih this value.</string>
-                </property>
-                <property name="accelerated">
-                 <bool>true</bool>
-                </property>
-                <property name="suffix">
-                 <string>msec</string>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>99999</number>
-                </property>
-                <property name="singleStep">
-                 <number>100</number>
-                </property>
-                <property name="value">
-                 <number>500</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_12">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
+             <widget class="QSpinBox" name="ms_per_char">
+              <property name="toolTip">
+               <string>When display time is not specifid in subtitle, caculate interval wih this value.</string>
+              </property>
+              <property name="accelerated">
+               <bool>true</bool>
+              </property>
+              <property name="suffix">
+               <string>msec/character</string>
+              </property>
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>99999</number>
+              </property>
+              <property name="singleStep">
+               <number>100</number>
+              </property>
+              <property name="value">
+               <number>500</number>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_12">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>5</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </widget>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_3">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>59</height>
-            </size>
-           </property>
-          </spacer>
          </item>
         </layout>
        </widget>
@@ -3772,28 +3754,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
+     <x>502</x>
+     <y>344</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>sub_enc_autodetection</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>label_4</receiver>
-   <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>455</x>
+     <y>374</y>
     </hint>
    </hints>
   </connection>
@@ -3804,12 +3770,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>522</x>
-     <y>96</y>
+     <x>294</x>
+     <y>76</y>
     </hint>
     <hint type="destinationlabel">
-     <x>522</x>
-     <y>124</y>
+     <x>294</x>
+     <y>67</y>
     </hint>
    </hints>
   </connection>
@@ -3820,12 +3786,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
+     <x>552</x>
+     <y>96</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>552</x>
+     <y>122</y>
     </hint>
    </hints>
   </connection>
@@ -3836,12 +3802,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
+     <x>552</x>
+     <y>189</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>552</x>
+     <y>215</y>
     </hint>
    </hints>
   </connection>
@@ -3852,12 +3818,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
+     <x>552</x>
+     <y>96</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>552</x>
+     <y>124</y>
     </hint>
    </hints>
   </connection>
@@ -3868,12 +3834,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
+     <x>552</x>
+     <y>191</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>309</x>
+     <y>248</y>
     </hint>
    </hints>
   </connection>
@@ -3884,12 +3850,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
+     <x>552</x>
+     <y>191</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>474</x>
+     <y>248</y>
     </hint>
    </hints>
   </connection>
@@ -3900,12 +3866,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
+     <x>306</x>
+     <y>53</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>294</x>
+     <y>82</y>
     </hint>
    </hints>
   </connection>
@@ -3916,12 +3882,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
+     <x>294</x>
+     <y>82</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>294</x>
+     <y>75</y>
     </hint>
    </hints>
   </connection>
@@ -3932,12 +3898,12 @@ e.g.: English, Korean</string>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>315</x>
-     <y>68</y>
+     <x>294</x>
+     <y>79</y>
     </hint>
     <hint type="destinationlabel">
-     <x>315</x>
-     <y>68</y>
+     <x>294</x>
+     <y>70</y>
     </hint>
    </hints>
   </connection>
