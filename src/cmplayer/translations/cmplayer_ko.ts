@@ -5090,17 +5090,17 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/prefdialog.ui" line="218"/>
         <source>Format</source>
-        <translation type="unfinished"></translation>
+        <translation>형식</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="228"/>
         <source>Quality</source>
-        <translation type="unfinished"></translation>
+        <translation>화질</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="235"/>
         <source>Default</source>
-        <translation type="unfinished">기본</translation>
+        <translation>기본</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="275"/>
@@ -5121,37 +5121,37 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../ui/prefdialog.ui" line="305"/>
         <source>Ask where to save snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>어디에 저장할지 물어보기</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="703"/>
         <source>Search Path</source>
-        <translation type="unfinished"></translation>
+        <translation>탐색 경로</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="713"/>
         <source>Add</source>
-        <translation type="unfinished">추가</translation>
+        <translation>추가</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="818"/>
         <source>Auto-detect encoding when accuracy is above</source>
-        <translation type="unfinished"></translation>
+        <translation>정확도가 다음 이상일 때 인코딩 자동 탐지를 사용</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="862"/>
         <source>Display Time</source>
-        <translation type="unfinished">표시 시간</translation>
+        <translation>표시 시간</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="868"/>
         <source>Calculate display time when not specified</source>
-        <translation type="unfinished"></translation>
+        <translation>표시 시간이 안 들어 있을 때 계산하기</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="881"/>
         <source>msec/character</source>
-        <translation type="unfinished">밀리초/글자</translation>
+        <translation>밀리초/글자</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2778"/>
@@ -7664,7 +7664,7 @@ e.g.: English, Korean</source>
     <message>
         <location filename="../dialog/shortcutdialog.cpp" line="131"/>
         <source>&apos;%1&apos; is already bound to &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>&apos;%1&apos; 단축키는 이미 &apos;%2&apos;에서 사용중입니다</translation>
     </message>
 </context>
 <context>
