@@ -240,10 +240,13 @@ auto AudioController::control(af_instance *af, int cmd, void *arg) -> int
 
 auto AudioController::filter(af_instance *af, mp_audio *data, int flags) -> int
 {
-    if (data->samples <= 0 && flags & AF_FILTER_FLAG_EOF)
-        return -1;
-
     auto ac = priv(af); auto d = ac->d;
+    if (data->samples <= 0 && flags & AF_FILTER_FLAG_EOF) {
+        d->af->data->samples = 0;
+        *data = *d->af->data;
+        return 0;
+    }
+
     d->af->delay = 0.0;
 
     Q_ASSERT(d->mixer != nullptr);
@@ -281,7 +284,6 @@ auto AudioController::filter(af_instance *af, mp_audio *data, int flags) -> int
     d->mixer->apply(in);
     *data = *d->af->data;
     af->delay += d->mixer->delay();
-
     return 0;
 }
 
