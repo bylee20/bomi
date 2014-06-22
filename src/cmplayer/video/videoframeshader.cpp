@@ -292,7 +292,7 @@ auto VideoFrameShader::setFormat(const mp_image_params &params) -> void
         default:               return false;
         }
     }();
-    m_texel = "vec3 texel(const in vec4 tex0) { return tex0.rgb; }";
+    m_texel = "vec4 texel(const in vec4 tex0) { return tex0.rgba; }";
     switch (m_imgfmtOut) {
     case IMGFMT_444P:
     case IMGFMT_420P:
@@ -300,9 +300,9 @@ auto VideoFrameShader::setFormat(const mp_image_params &params) -> void
         add(OGL::OneComponent);
         add(OGL::OneComponent);
         m_texel = R"(
-            vec3 texel(const in vec4 tex0, const in vec4 tex1,
+            vec4 texel(const in vec4 tex0, const in vec4 tex1,
                        const in vec4 tex2)
-            { return vec3(tex0.r, tex1.r, tex2.r); }
+            { return vec4(tex0.r, tex1.r, tex2.ra); }
         )";
         break;
     case IMGFMT_420P16_BE: case IMGFMT_420P16_LE:
@@ -316,9 +316,9 @@ auto VideoFrameShader::setFormat(const mp_image_params &params) -> void
                 const vec2 c = vec2(256.0, 1.0)/(256.0*??.0/255.0 + 1.0);
                 return dot(tex.!!, c);
             }
-            vec3 texel(const in vec4 tex0, const in vec4 tex1,
+            vec4 texel(const in vec4 tex0, const in vec4 tex1,
                        const in vec4 tex2)
-            { return vec3(convBits(tex0), convBits(tex1), convBits(tex2)); }
+            { return vec4(convBits(tex0), convBits(tex1), convBits(tex2), 1.0); }
         )";
         m_texel.replace("??", QByteArray::number((1 << (bits-8))-1));
         m_texel.replace("!!", OGL::rg(little ? "gr" : "rg"));
@@ -328,9 +328,9 @@ auto VideoFrameShader::setFormat(const mp_image_params &params) -> void
         break;
     case IMGFMT_NV12: case IMGFMT_NV21: {
         m_texel = R"(
-vec3 texel(const in vec4 tex0, const in vec4 tex1) {
-    return vec3(tex0.r, tex1.!!);
-}
+            vec4 texel(const in vec4 tex0, const in vec4 tex1) {
+                return vec4(tex0.r, tex1.!!a);
+            }
         )";
         const auto rg = m_imgfmtOut == IMGFMT_NV12 ? "rg" : "gr";
         m_texel.replace("!!", OGL::rg(rg));
@@ -351,7 +351,7 @@ vec3 texel(const in vec4 tex0, const in vec4 tex1) {
         } else if (OGL::hasExtension(OGL::MesaYCbCrTexture)) {
             _Debug("Use GL_MESA_ycbcr_texture.");
             m_texel = R"(
-vec3 texel(const in int coord) { return texture0(coord).g!!; }
+                vec4 texel(const in int coord) { return texture0(coord).g!!a; }
             )";
             m_texel.replace("!!", m_imgfmtOut == IMGFMT_YUYV ? "br" : "rb");
             OpenGLTextureTransferInfo info;
@@ -363,8 +363,8 @@ vec3 texel(const in int coord) { return texture0(coord).g!!; }
             m_transferInfos.push_back(info);
         } else {
             m_texel = R"(
-                vec3 texel(const in vec4 tex0, const in vec4 tex1) {
-                    return vec3(tex0.?, tex1.!!);
+                vec4 texel(const in vec4 tex0, const in vec4 tex1) {
+                    return vec4(tex0.?, tex1.!!a);
                 }
             )";
             m_texel.replace("?", OGL::rg(IMGFMT_YUYV ? "r" : "g"));
@@ -380,11 +380,11 @@ vec3 texel(const in int coord) { return texture0(coord).g!!; }
         break;
     case IMGFMT_ABGR: case IMGFMT_0BGR:
         add(OGL::BGRA);
-        m_texel.replace(".rgb", ".arg");
+        m_texel.replace(".rgba", ".argb");
         break;
     case IMGFMT_ARGB: case IMGFMT_0RGB:
         add(OGL::BGRA);
-        m_texel.replace(".rgb", ".gra");
+        m_texel.replace(".rgba", ".grab");
         break;
     default:
         break;

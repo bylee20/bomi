@@ -20,13 +20,13 @@ uniform sampler2Dg tex0, tex1, tex2;
 #endif
 
 #if (TEX_COUNT == 1)
-vec3 texel(const in vec4 tex0);
+vec4 texel(const in vec4 tex0);
 #define TEXEL(i) texel(TEXTURE_0(i))
 #elif (TEX_COUNT == 2)
-vec3 texel(const in vec4 tex0, const in vec4 tex1);
+vec4 texel(const in vec4 tex0, const in vec4 tex1);
 #define TEXEL(i) texel(TEXTURE_0(i), TEXTURE_1(i))
 #elif (TEX_COUNT == 3)
-vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2);
+vec4 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2);
 #define TEXEL(i) texel(TEXTURE_0(i), TEXTURE_1(i), TEXTURE_2(i))
 #endif
 
@@ -45,7 +45,7 @@ vec3 texel(const in vec4 tex0, const in vec4 tex1, const in vec4 tex2);
 #if USE_DEINT
 uniform float top_field;
 #endif
-vec3 deint(const in vec2 coord) {
+vec4 deint(const in vec2 coord) {
 #if USE_DEINT
     float offset = (top_field+0.5)*dxdy.y + mod(coord.y, 2.0*dxdy.y);
 #if USE_DEINT == 1
@@ -61,9 +61,9 @@ vec3 deint(const in vec2 coord) {
 #ifdef USE_KERNEL3x3
 uniform float kern_c, kern_n, kern_d;
 #endif
-vec3 filtered(const in vec2 coord) {
+vec4 filtered(const in vec2 coord) {
 #ifdef USE_KERNEL3x3
-    vec3 c = deint(MC(coord))*kern_c;
+    vec4 c = deint(MC(coord))*kern_c;
     c += (deint(TC(coord))+deint(BC(coord))+deint(ML(coord))+deint(MR(coord)))*kern_n;
     c += (deint(TL(coord))+deint(TR(coord))+deint(BL(coord))+deint(BR(coord)))*kern_d;
     return c;
@@ -74,7 +74,8 @@ vec3 filtered(const in vec2 coord) {
 
 uniform mat4 mul_mat;
 void main() {
-    vec4 tex = vec4(filtered(texCoord), 1.0);
+    vec4 tex = filtered(texCoord);
+    tex.a = 1.0;
     gl_FragColor = mul_mat*tex;
 }
 #endif
