@@ -407,8 +407,7 @@ TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_it.ts \
     translations/cmplayer_cs.ts \
     translations/cmplayer_sr.ts \
-	translations/cmplayer_es.ts \
-	translations/cmplayer_fi.ts
+	translations/cmplayer_es.ts
 
 FORMS += \
     ui/aboutdialog.ui \
