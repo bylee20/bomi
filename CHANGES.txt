@@ -1,3 +1,9 @@
+0.8.16
+
+  * New: additional subtitle search path
+  * Fix: don't handle empty audio samples as error
+  * Fix: empty skin for fallback on error of loading skin didn't work
+
 0.8.15
 
   * New: format/quality/ask options for quick snapshot(#99)

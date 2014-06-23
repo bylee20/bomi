@@ -19,4 +19,3 @@ Depends: ${shlibs:Depends}, qtdeclarative5-qtquick2-plugin
  , libqt5sql5-sqlite
 Description: CMPlayer - a multimedia player
  CMPlayer is a multimedia player.
-

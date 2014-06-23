@@ -1,3 +1,11 @@
+cmplayer (0.8.16-1~trusty1) trusty; urgency=low
+
+  * New: additional subtitle search path
+  * Fix: don't handle empty audio samples as error
+  * Fix: empty skin for fallback on error of loading skin didn't work
+
+-- Byoung-young Lee (xylosper) <darklin20@gmail.com>  Mon, 23 Jun 2014 10:53:00 +0900
+
 cmplayer (0.8.15-1~trusty1) trusty; urgency=low
 
   * New: format/quality/ask options for quick snapshot(#99)
