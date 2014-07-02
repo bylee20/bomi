@@ -52,7 +52,7 @@ SIA operator "" _q(const char16_t *str, size_t len) -> QString
 SIA operator "" _a(const char *str, size_t len) -> QLatin1String
 { return QLatin1String(str, len); }
 
-SIA operator ""_b(const char *str, size_t len) -> QByteArray
+SIA operator "" _b(const char *str, size_t len) -> QByteArray
 { return QByteArray::fromRawData(str, len); }
 
 SIA operator "" _8(const char *str, size_t len) -> QString
