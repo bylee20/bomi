@@ -61,37 +61,37 @@ Sito progetto: %3</translation>
     <message>
         <location filename="../player/app.cpp" line="122"/>
         <source>The file path or URL to open.</source>
-        <translation type="unfinished"></translation>
+        <translation>Il percorso del file o l&apos;indirizzo da aprire.</translation>
     </message>
     <message>
         <location filename="../player/app.cpp" line="143"/>
         <source>Open given %1 for file path or URL.</source>
-        <translation type="unfinished"></translation>
+        <translation>Apri %1 dato per percorso file o indirizzo.</translation>
     </message>
     <message>
         <location filename="../player/app.cpp" line="145"/>
         <source>Bring the application window in front.</source>
-        <translation type="unfinished"></translation>
+        <translation>Porta la finestra del programma in primo piano.</translation>
     </message>
     <message>
         <location filename="../player/app.cpp" line="147"/>
         <source>Exectute %1 action or open %1 menu.</source>
-        <translation type="unfinished"></translation>
+        <translation>Esegui azione %1 o apri menu %1.</translation>
     </message>
     <message>
         <location filename="../player/app.cpp" line="149"/>
         <source>Maximum verbosity for log. %1 should be one of nexts:</source>
-        <translation type="unfinished"></translation>
+        <translation>Verbosità massima per il registro. %1 dovrebbe essere uno dei successivi:</translation>
     </message>
     <message>
         <location filename="../player/app.cpp" line="152"/>
         <source>Turn on OpenGL debug logger.</source>
-        <translation type="unfinished"></translation>
+        <translation>Attiva registro errori OpenGL.</translation>
     </message>
     <message>
         <location filename="../player/app.cpp" line="154"/>
         <source>Turn on options for debugging.</source>
-        <translation type="unfinished"></translation>
+        <translation>Attiva opzioni per rilevamento errori.</translation>
     </message>
 </context>
 <context>
@@ -114,142 +114,142 @@ Sito progetto: %3</translation>
     <message>
         <location filename="../dialog/bbox.cpp" line="41"/>
         <source>&amp;OK</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="41"/>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="43"/>
         <source>&amp;Save</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Salva</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="43"/>
         <source>Save</source>
-        <translation type="unfinished">Salva</translation>
+        <translation>Salva</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="45"/>
         <source>Open</source>
-        <translation type="unfinished">Apri</translation>
+        <translation>Apri</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="47"/>
         <source>&amp;Cancel</source>
-        <translation type="unfinished">&amp;Annulla</translation>
+        <translation>&amp;Annulla</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="47"/>
         <source>Cancel</source>
-        <translation type="unfinished">Annulla</translation>
+        <translation>Annulla</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="49"/>
         <source>&amp;Close</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;Chiudi</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="49"/>
         <source>Close</source>
-        <translation type="unfinished">Chiudi</translation>
+        <translation>Chiudi</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="51"/>
         <source>Apply</source>
-        <translation type="unfinished">Applica</translation>
+        <translation>Applica</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="53"/>
         <source>Reset</source>
-        <translation type="unfinished">Azzera</translation>
+        <translation>Azzera</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="55"/>
         <source>Help</source>
-        <translation type="unfinished">Aiuto</translation>
+        <translation>Aiuto</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="58"/>
         <source>Don&apos;t Save</source>
-        <translation type="unfinished"></translation>
+        <translation>Non Salvare</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="60"/>
         <source>Close without Saving</source>
-        <translation type="unfinished"></translation>
+        <translation>Chiudi senza Salvare</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="61"/>
         <source>Discard</source>
-        <translation type="unfinished"></translation>
+        <translation>Abbandona</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="63"/>
         <source>&amp;Yes</source>
-        <translation type="unfinished"></translation>
+        <translation>S&amp;i</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="63"/>
         <source>Yes</source>
-        <translation type="unfinished"></translation>
+        <translation>Si</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="65"/>
         <source>Yes to &amp;All</source>
-        <translation type="unfinished"></translation>
+        <translation>Si a &amp;Tutti</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="65"/>
         <source>Yes to All</source>
-        <translation type="unfinished"></translation>
+        <translation>Si a Tutti</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="67"/>
         <source>&amp;No</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;No</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="67"/>
         <source>No</source>
-        <translation type="unfinished"></translation>
+        <translation>No</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="69"/>
         <source>N&amp;o to All</source>
-        <translation type="unfinished"></translation>
+        <translation>No &amp;a Tutti</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="69"/>
         <source>No to All</source>
-        <translation type="unfinished"></translation>
+        <translation>No a Tutti</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="71"/>
         <source>Save All</source>
-        <translation type="unfinished"></translation>
+        <translation>Salva Tutto</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="73"/>
         <source>Abort</source>
-        <translation type="unfinished"></translation>
+        <translation>Interrompi</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="75"/>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation>Riprova</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="77"/>
         <source>Ignore</source>
-        <translation type="unfinished"></translation>
+        <translation>Ignora</translation>
     </message>
     <message>
         <location filename="../dialog/bbox.cpp" line="79"/>
         <source>Restore Defaults</source>
-        <translation type="unfinished">Ripristina Predefiniti</translation>
+        <translation>Ripristina Predefiniti</translation>
     </message>
 </context>
 <context>
@@ -460,7 +460,7 @@ Clic destro: %2</translation>
     <message>
         <location filename="../dialog/encodingfiledialog.cpp" line="10"/>
         <source>Encoding</source>
-        <translation type="unfinished">Codifica</translation>
+        <translation>Codifica</translation>
     </message>
 </context>
 <context>
@@ -1007,47 +1007,47 @@ Clic destro: %2</translation>
     <message>
         <location filename="../enum/textthemestyle.hpp" line="73"/>
         <source>Normal</source>
-        <translation type="unfinished"></translation>
+        <translation>Normale</translation>
     </message>
     <message>
         <location filename="../enum/textthemestyle.hpp" line="74"/>
         <source>Outline</source>
-        <translation type="unfinished">Contorno</translation>
+        <translation>Contorno</translation>
     </message>
     <message>
         <location filename="../enum/textthemestyle.hpp" line="75"/>
         <source>Raised</source>
-        <translation type="unfinished"></translation>
+        <translation>Sospeso</translation>
     </message>
     <message>
         <location filename="../enum/textthemestyle.hpp" line="76"/>
         <source>Sunken</source>
-        <translation type="unfinished"></translation>
+        <translation>Cavo</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="63"/>
         <source>Color Space</source>
-        <translation type="unfinished"></translation>
+        <translation>Spazio Colore</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="78"/>
         <source>BT.601(SD)</source>
-        <translation type="unfinished"></translation>
+        <translation>BT.601(SD)</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="79"/>
         <source>BT.709(HD)</source>
-        <translation type="unfinished"></translation>
+        <translation>BT.709(HD)</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="80"/>
         <source>SMPTE-240M</source>
-        <translation type="unfinished"></translation>
+        <translation>SMPTE-240M</translation>
     </message>
     <message>
         <location filename="../enum/colorspace.hpp" line="81"/>
         <source>YCgCo</source>
-        <translation type="unfinished"></translation>
+        <translation>YCgCo</translation>
     </message>
 </context>
 <context>
@@ -1162,7 +1162,7 @@ Clic destro: %2</translation>
     <message>
         <location filename="../stdafx.cpp" line="153"/>
         <source>ISO Image Files</source>
-        <translation type="unfinished"></translation>
+        <translation>File Immagine ISO</translation>
     </message>
     <message>
         <location filename="../stdafx.cpp" line="155"/>
@@ -1198,7 +1198,7 @@ Clic destro: %2</translation>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="321"/>
         <source>Current Title</source>
-        <translation type="unfinished"></translation>
+        <translation>Titolo Corrente</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="495"/>
@@ -1226,18 +1226,19 @@ Clic destro: %2</translation>
     <message>
         <location filename="../player/mainwindow_p.cpp" line="328"/>
         <source>Do you want to resume the playback at the last played position?</source>
-        <translation type="unfinished"></translation>
+        <translation>Desideri riprendere la riproduzione dall&apos;ultima posizione?</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_p.cpp" line="331"/>
         <source>Title %1</source>
-        <translation type="unfinished">Titolo %1</translation>
+        <translation>Titolo %1</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_p.cpp" line="333"/>
         <source>Played Date: %1
 Stopped Position: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Data Riproduzione: %1
+Ultima Posizione: %2</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_p.cpp" line="144"/>
@@ -1256,12 +1257,12 @@ Attendi per favore.</translation>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="227"/>
         <source>Select DVD device</source>
-        <translation type="unfinished"></translation>
+        <translation>Seleziona periferica DVD</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="231"/>
         <source>Select Blu-ray device</source>
-        <translation type="unfinished"></translation>
+        <translation>Seleziona periferica Blu-ray</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="297"/>
@@ -1271,32 +1272,32 @@ Attendi per favore.</translation>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="416"/>
         <source>Snapshot saved</source>
-        <translation type="unfinished"></translation>
+        <translation>Istantanea salvata</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="418"/>
         <source>Failed to save a snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>Istantanea non salvata</translation>
     </message>
     <message>
         <location filename="../player/mainwindow_m.cpp" line="500"/>
         <source>Reset Video Color</source>
-        <translation type="unfinished"></translation>
+        <translation>Azzera Colore Video</translation>
     </message>
     <message>
         <location filename="../player/mainwindow.cpp" line="420"/>
         <source>System Tray Icon</source>
-        <translation type="unfinished"></translation>
+        <translation>Icona nella Barra di Sistema</translation>
     </message>
     <message>
         <location filename="../player/mainwindow.cpp" line="421"/>
         <source>CMPlayer will be running in the system tray when the window closed.</source>
-        <translation type="unfinished"></translation>
+        <translation>CMPlayer verrà minimizzato nella barra di sistema alla chiusura della finestra.</translation>
     </message>
     <message>
         <location filename="../player/mainwindow.cpp" line="424"/>
         <source>You can change this behavior in the preferences. If you want to exit CMPlayer, please use &apos;Exit&apos; menu.</source>
-        <translation type="unfinished"></translation>
+        <translation>Puoi cambiare questo comportamento nelle Preferenze. Per uscire, usa la voce di menu &apos;Esci&apos;.</translation>
     </message>
     <message>
         <source>Aspect Ratio</source>
@@ -1548,12 +1549,12 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../player/mrl.cpp" line="51"/>
         <source>DVD</source>
-        <translation type="unfinished"></translation>
+        <translation>DVD</translation>
     </message>
     <message>
         <location filename="../player/mrl.cpp" line="53"/>
         <source>Blu-ray</source>
-        <translation type="unfinished"></translation>
+        <translation>Blu-ray</translation>
     </message>
 </context>
 <context>
@@ -1621,7 +1622,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../player/mrlstate.cpp" line="102"/>
         <source>Video Color Space</source>
-        <translation type="unfinished"></translation>
+        <translation>Spazio Colori Video</translation>
     </message>
     <message>
         <location filename="../player/mrlstate.cpp" line="106"/>
@@ -1713,33 +1714,33 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../ui/opendvddialog.ui" line="19"/>
         <source>Device:</source>
-        <translation type="unfinished">Periferica:</translation>
+        <translation>Periferica:</translation>
     </message>
     <message>
         <location filename="../ui/opendvddialog.ui" line="45"/>
         <source>Open device/folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Apri periferica/cartella</translation>
     </message>
     <message>
         <location filename="../ui/opendvddialog.ui" line="59"/>
         <location filename="../dialog/opendiscdialog.cpp" line="22"/>
         <source>Open ISO file</source>
-        <translation type="unfinished"></translation>
+        <translation>Apri file ISO</translation>
     </message>
     <message>
         <location filename="../dialog/opendiscdialog.cpp" line="17"/>
         <source>Open device or folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Apri periferica o cartella</translation>
     </message>
     <message>
         <location filename="../dialog/opendiscdialog.cpp" line="48"/>
         <source>Selected device is available.</source>
-        <translation type="unfinished">La periferica selezionata è disponibile.</translation>
+        <translation>La periferica selezionata è disponibile.</translation>
     </message>
     <message>
         <location filename="../dialog/opendiscdialog.cpp" line="49"/>
         <source>Selected device doesn&apos;t exists.</source>
-        <translation type="unfinished">La periferica selezionata non esiste.</translation>
+        <translation>La periferica selezionata non esiste.</translation>
     </message>
 </context>
 <context>
@@ -1758,7 +1759,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../widget/openmediabehaviorgroupbox.cpp" line="14"/>
         <source>Start the playback</source>
-        <translation type="unfinished">Avvia la riproduzione</translation>
+        <translation>Avvia la riproduzione</translation>
     </message>
 </context>
 <context>
@@ -1819,7 +1820,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../player/playengine_p.cpp" line="230"/>
         <source>Blu-ray</source>
-        <translation type="unfinished"></translation>
+        <translation>Blu-ray</translation>
     </message>
     <message>
         <location filename="../player/playengine.cpp" line="652"/>
@@ -1863,7 +1864,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../player/playengine.cpp" line="1286"/>
         <source>Buffering</source>
-        <translation type="unfinished"></translation>
+        <translation>Caricamento</translation>
     </message>
     <message>
         <location filename="../player/playengine.cpp" line="1288"/>
@@ -1929,7 +1930,7 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="86"/>
         <source>Audio/Video Sync: %1%2ms</source>
-        <translation type="unfinished">Sincronizzazione Audio/Video: %6ms {1%2m?}</translation>
+        <translation>Sincronizzazione Audio/Video: %1%2ms</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/PlayInfoView.qml" line="93"/>
@@ -1990,12 +1991,12 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../imports/CMPlayer/Player.qml" line="69"/>
         <source>Download</source>
-        <translation type="unfinished"></translation>
+        <translation>Trasferimento</translation>
     </message>
     <message>
         <location filename="../imports/CMPlayer/Player.qml" line="119"/>
         <source>Connecting...</source>
-        <translation type="unfinished">In Connessione...</translation>
+        <translation>In Connessione...</translation>
     </message>
 </context>
 <context>
@@ -2130,12 +2131,12 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="148"/>
         <source>Mouse cursor</source>
-        <translation type="unfinished"></translation>
+        <translation>Cursore mouse</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="156"/>
         <source>Hide mouse cursor after timeout:</source>
-        <translation type="unfinished"></translation>
+        <translation>Nascondi cursore mouse dopo tempo d&apos;attesa:</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2867"/>
@@ -2498,12 +2499,12 @@ Fermato alla Posizione: %2</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="564"/>
         <source>Optical disc</source>
-        <translation type="unfinished"></translation>
+        <translation>Disco ottico</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="1889"/>
         <source>Backend</source>
-        <translation type="unfinished"></translation>
+        <translation>Backend</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2185"/>
@@ -2595,88 +2596,88 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="210"/>
         <source>Quick Snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>Istantanea Rapida</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="218"/>
         <source>Format</source>
-        <translation type="unfinished"></translation>
+        <translation>Formato</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="228"/>
         <source>Quality</source>
-        <translation type="unfinished"></translation>
+        <translation>Qualità</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="235"/>
         <source>Default</source>
-        <translation type="unfinished">Predefinito</translation>
+        <translation>Predefinito</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="275"/>
         <source>Save in</source>
-        <translation type="unfinished"></translation>
+        <translation>Salva in</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="289"/>
         <location filename="../ui/prefdialog.ui" line="720"/>
         <source>Browse...</source>
-        <translation type="unfinished"></translation>
+        <translation>Sfoglia...</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="298"/>
         <source>Save in the same folder where current playing video exists</source>
-        <translation type="unfinished"></translation>
+        <translation>Salva nella stessa cartella del video in riproduzione</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="305"/>
         <source>Ask where to save snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>Chiedi dove salvare istantanea</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="703"/>
         <source>Search Path</source>
-        <translation type="unfinished"></translation>
+        <translation>Percorso di Ricerca</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="713"/>
         <source>Add</source>
-        <translation type="unfinished">Aggiungi</translation>
+        <translation>Aggiungi</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="818"/>
         <source>Auto-detect encoding when accuracy is above</source>
-        <translation type="unfinished"></translation>
+        <translation>Rileva automaticamente codifica quando la precisione è superiore al</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="862"/>
         <source>Display Time</source>
-        <translation type="unfinished"></translation>
+        <translation>Tempo di Visualizzazione</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="868"/>
         <source>Calculate display time when not specified</source>
-        <translation type="unfinished"></translation>
+        <translation>Calcola tempo di visualizzazione quando non specificato</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="881"/>
         <source>msec/character</source>
-        <translation type="unfinished"></translation>
+        <translation>ms/carattere</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2778"/>
         <source>Screensaver</source>
-        <translation type="unfinished"></translation>
+        <translation>Salvaschermo</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2794"/>
         <source>Use external command</source>
-        <translation type="unfinished"></translation>
+        <translation>Usa programma esterno</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2838"/>
         <source>Interval</source>
-        <translation type="unfinished"></translation>
+        <translation>Intervallo</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2874"/>
@@ -2686,32 +2687,32 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="2888"/>
         <source>Use D-Bus interface for MPRISv2</source>
-        <translation type="unfinished"></translation>
+        <translation>Usa interfaccia D-Bus per MPRISv2</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="2977"/>
         <source>% of height</source>
-        <translation type="unfinished"></translation>
+        <translation>% di altezza</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3008"/>
         <source>Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Stile</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3048"/>
         <source>Display</source>
-        <translation type="unfinished"></translation>
+        <translation>Visualizzazione</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3068"/>
         <source>Show OSD timeline when seeking</source>
-        <translation type="unfinished"></translation>
+        <translation>Mostra avanzamento OSD durante ricerca</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3204"/>
         <source>Button Click</source>
-        <translation type="unfinished"></translation>
+        <translation>Clic Pulsante</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3249"/>
@@ -2799,7 +2800,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="119"/>
         <source>Application</source>
-        <translation type="unfinished"></translation>
+        <translation>Programma</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="121"/>
@@ -2857,17 +2858,17 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="127"/>
         <source>Miscellaneous</source>
-        <translation type="unfinished"></translation>
+        <translation>Varie</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="131"/>
         <source>OSD</source>
-        <translation type="unfinished"></translation>
+        <translation>On Screen Display</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="133"/>
         <source>Skin &amp; Style</source>
-        <translation type="unfinished"></translation>
+        <translation>Aspetto e Stile</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="136"/>
@@ -2912,12 +2913,12 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../ui/prefdialog.ui" line="3231"/>
         <source>Scroll Up</source>
-        <translation type="unfinished"></translation>
+        <translation>Scorri in Alto</translation>
     </message>
     <message>
         <location filename="../ui/prefdialog.ui" line="3238"/>
         <source>Scroll Down</source>
-        <translation type="unfinished"></translation>
+        <translation>Scorri in Basso</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="54"/>
@@ -2928,7 +2929,7 @@ esempio: Inglese, Coreano</translation>
         <location filename="../dialog/prefdialog.cpp" line="197"/>
         <location filename="../dialog/prefdialog.cpp" line="383"/>
         <source>Browse for Folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Sfoglia per Cartella</translation>
     </message>
     <message>
         <location filename="../dialog/prefdialog.cpp" line="361"/>
@@ -3162,7 +3163,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="438"/>
         <source>Open Blu-ray</source>
-        <translation type="unfinished"></translation>
+        <translation>Apri Blu-ray</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="442"/>
@@ -3243,12 +3244,12 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="472"/>
         <source>Previous Frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Fotogramma Precedente</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="473"/>
         <source>Next Frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Fotogramma Successivo</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="475"/>
@@ -3440,7 +3441,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="449"/>
         <source>Disc Menu</source>
-        <translation type="unfinished"></translation>
+        <translation>Menu Disco</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="481"/>
@@ -3455,12 +3456,12 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="488"/>
         <source>Auto-load File(s)</source>
-        <translation type="unfinished"></translation>
+        <translation>Carica automaticamente File</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="489"/>
         <source>Reload File(s)</source>
-        <translation type="unfinished"></translation>
+        <translation>Ricarica File</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="496"/>
@@ -3486,17 +3487,17 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../player/rootmenu.cpp" line="503"/>
         <source>Quick Snapshot</source>
-        <translation type="unfinished"></translation>
+        <translation>Istantanea Rapida</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="504"/>
         <source>Quick Snapshot(No Subtitles)</source>
-        <translation type="unfinished"></translation>
+        <translation>Istantanea Rapida(No Sottotitoli)</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="505"/>
         <source>Snapshot Tool</source>
-        <translation type="unfinished"></translation>
+        <translation>Strumento Istantanea</translation>
     </message>
     <message>
         <location filename="../player/rootmenu.cpp" line="517"/>
@@ -3813,17 +3814,17 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../dialog/shortcutdialog.cpp" line="57"/>
         <source>Get Shortcut</source>
-        <translation type="unfinished">Ottieni Scorciatoia</translation>
+        <translation>Ottieni Scorciatoia</translation>
     </message>
     <message>
         <location filename="../dialog/shortcutdialog.cpp" line="58"/>
         <source>Erase</source>
-        <translation type="unfinished"></translation>
+        <translation>Cancella</translation>
     </message>
     <message>
         <location filename="../dialog/shortcutdialog.cpp" line="131"/>
         <source>&apos;%1&apos; is already bound to &apos;%2&apos;</source>
-        <translation type="unfinished"></translation>
+        <translation>&apos;%1&apos; è già legato a &apos;%2&apos;</translation>
     </message>
 </context>
 <context>
@@ -3858,22 +3859,22 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="7"/>
         <source>Add</source>
-        <translation type="unfinished">Aggiungi</translation>
+        <translation>Aggiungi</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="8"/>
         <source>Erase</source>
-        <translation type="unfinished"></translation>
+        <translation>Cancella</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="9"/>
         <source>Move Up</source>
-        <translation type="unfinished"></translation>
+        <translation>Sposta Su</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="10"/>
         <source>Move Down</source>
-        <translation type="unfinished">Sposta Giù</translation>
+        <translation>Sposta Giù</translation>
     </message>
 </context>
 <context>
@@ -3949,17 +3950,17 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="48"/>
         <source>Add</source>
-        <translation type="unfinished">Aggiungi</translation>
+        <translation>Aggiungi</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="50"/>
         <source>&amp;Ok</source>
-        <translation type="unfinished">&amp;Ok</translation>
+        <translation>&amp;Ok</translation>
     </message>
     <message>
         <location filename="../widget/simplelistwidget.cpp" line="51"/>
         <source>&amp;Cancel</source>
-        <translation type="unfinished">&amp;Annulla</translation>
+        <translation>&amp;Annulla</translation>
     </message>
 </context>
 <context>
@@ -4127,17 +4128,17 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../dialog/urldialog.cpp" line="37"/>
         <source>Handle as playlist</source>
-        <translation type="unfinished"></translation>
+        <translation>Gestisci come lista di riproduzione</translation>
     </message>
     <message>
         <location filename="../dialog/urldialog.cpp" line="39"/>
         <source>URL</source>
-        <translation type="unfinished">Indirizzo (URL)</translation>
+        <translation>Indirizzo</translation>
     </message>
     <message>
         <location filename="../dialog/urldialog.cpp" line="40"/>
         <source>Encoding</source>
-        <translation type="unfinished">Codifica</translation>
+        <translation>Codifica</translation>
     </message>
     <message>
         <source>Encoding for Playlist</source>
@@ -4146,7 +4147,7 @@ esempio: Inglese, Coreano</translation>
     <message>
         <location filename="../dialog/urldialog.cpp" line="51"/>
         <source>Open URL</source>
-        <translation type="unfinished"></translation>
+        <translation>Apri Indirizzo</translation>
     </message>
 </context>
 <context>
