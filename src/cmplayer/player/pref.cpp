@@ -256,6 +256,7 @@ static const auto jio = JIO(
     JE(normalizer_target),
     JE(normalizer_min),
     JE(normalizer_max),
+    JE(normalizer_length),
     JE(lion_style_fullscreen),
     JE(show_logo),
     JE(bg_color),
@@ -349,6 +350,7 @@ static const auto jio = JIO(
     FUNC1(normalizer_target); \
     FUNC1(normalizer_min); \
     FUNC1(normalizer_max); \
+    FUNC1(normalizer_length); \
     FUNC1(lion_style_fullscreen); \
     FUNC1(show_logo); \
     FUNC1(bg_color); \
