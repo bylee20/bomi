@@ -4,6 +4,8 @@
 class OpenGLOffscreenContext {
 public:
     OpenGLOffscreenContext();
+    auto setContextName(const QString &name) -> void;
+    auto contextName() const -> QString;
     auto setShareContext(QOpenGLContext *context) -> void;
     auto setThread(QThread *thread) -> void;
     auto setFormat(const QSurfaceFormat &format) -> void;

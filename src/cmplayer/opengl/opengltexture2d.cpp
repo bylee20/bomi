@@ -9,6 +9,8 @@ auto OpenGLTexture2D::initialize(int w, int h, OGL::TransferFormat transfer,
 
 auto OpenGLTexture2D::toImage() const -> QImage
 {
+    if (!QOpenGLContext::currentContext())
+        return QImage();
     if (isEmpty() || id() == GL_NONE)
         return QImage();
     auto self = const_cast<OpenGLTexture2D*>(this);
@@ -18,4 +20,11 @@ auto OpenGLTexture2D::toImage() const -> QImage
     glGetTexImage(target(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
                   image.bits());
     return image;
+}
+
+static QAtomicInt counter;
+
+auto OpenGLTexture2D::save(const QString &fileName) const -> bool
+{
+    return toImage().save(fileName.arg(counter.fetchAndAddOrdered(1)));
 }

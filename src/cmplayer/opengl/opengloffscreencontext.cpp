@@ -30,3 +30,13 @@ auto OpenGLOffscreenContext::createSurface() -> void
 {
     m_surface.create();
 }
+
+auto OpenGLOffscreenContext::setContextName(const QString &name) -> void
+{
+    m_gl.setObjectName(name);
+}
+
+auto OpenGLOffscreenContext::contextName() const -> QString
+{
+    return m_gl.objectName();
+}

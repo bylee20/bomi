@@ -37,6 +37,7 @@ public:
     auto toImage() const -> QImage;
     const QPointF &correction() const { return m_correction; }
     QPointF &correction() { return m_correction; }
+    auto save(const QString &fileName) const -> bool;
 private:
     friend class VideoFrameShader;
     int m_width = 0, m_height = 0;

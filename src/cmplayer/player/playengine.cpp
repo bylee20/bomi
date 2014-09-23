@@ -127,6 +127,7 @@ auto PlayEngine::initializeGL(QQuickWindow *window) -> void
     emit needToMoveVideoThread();
     d->filter->initializeGL(d->videoContext);
     d->video->initializeGL(d->videoContext);
+    d->videoContext->setContextName("OffscreenOpenGL"_a);
 }
 
 auto PlayEngine::finalizeGL() -> void

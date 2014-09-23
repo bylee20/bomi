@@ -168,6 +168,7 @@ auto Vdpau::finalize() -> void
     if (d.init) {
         deviceDestroy();
         d.init = false;
+        _Debug("VDPAU device is finalized.");
     }
 }
 
@@ -303,6 +304,7 @@ VdpauMixer::~VdpauMixer()
 auto VdpauMixer::release() -> void
 {
     auto interop = Vdpau::interop();
+    Q_ASSERT(interop);
     if (m_glSurface) {
         interop->unmapSurfaces(1, &m_glSurface);
         interop->unregisterSurface(m_glSurface);
