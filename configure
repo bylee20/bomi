@@ -145,6 +145,7 @@ setup_build() {
 prefix=/usr/local
 bindir=
 datadir=
+compdir=
 icondir=
 appdir=
 actiondir=
@@ -155,6 +156,7 @@ install_opts="""
 --prefix=PREFIX|prefix directory for installation|$prefix
 --bindir=BINDIR|directory for executables|PREFIX/bin
 --datadir=DATADIR|directory for architecture-indepentent files|PREFIX/share
+--compdir=COMPDIR|directory for bash completion files|DATADIR/bash-completion/completions
 --icondir=ICONDIR|directory for application icons|DATADIR/icons/hicolor
 --appdir=APPDIR|directory for application launchers|DATADIR/applications
 --actiondir=ACTIONDIR|directory for action launchers|DATADIR/apps/solid/actions
@@ -166,6 +168,7 @@ setup_dirs() {
         if [ -z "$prefix"    ]; then exit; fi
         if [ -z "$bindir"    ]; then    bindir=$prefix/bin;                 fi
         if [ -z "$datadir"   ]; then   datadir=$prefix/share;               fi
+        if [ -z "$compdir"   ]; then   compdir=$datadir/bash-completion/completions; fi
         if [ -z "$icondir"   ]; then   icondir=$datadir/icons/hicolor;      fi
         if [ -z "$appdir"    ]; then    appdir=$datadir/applications;       fi
         if [ -z "$actiondir" ]; then actiondir=$datadir/apps/solid/actions; fi
