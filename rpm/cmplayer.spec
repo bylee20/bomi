@@ -90,7 +90,7 @@ CMPlayer is a Qt-based multimedia player utilizing the MPV video back-end.
  --enable-portaudio \ 
  --enable-pulseaudio \
  --enable-cdda \
- --libdir=%{_libdir}
+ --mandir=%{_mandir}
 make %{?_smp_mflags}
 
 %install
