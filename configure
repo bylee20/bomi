@@ -145,6 +145,8 @@ setup_build() {
 prefix=/usr/local
 bindir=
 datadir=
+compdir=
+mandir=
 icondir=
 appdir=
 actiondir=
@@ -155,6 +157,8 @@ install_opts="""
 --prefix=PREFIX|prefix directory for installation|$prefix
 --bindir=BINDIR|directory for executables|PREFIX/bin
 --datadir=DATADIR|directory for architecture-indepentent files|PREFIX/share
+--compdir=COMPDIR|directory for bash completion files|DATADIR/bash-completion/completions
+--mandir=MANDIR|directory for man pages|DATADIR/man
 --icondir=ICONDIR|directory for application icons|DATADIR/icons/hicolor
 --appdir=APPDIR|directory for application launchers|DATADIR/applications
 --actiondir=ACTIONDIR|directory for action launchers|DATADIR/apps/solid/actions
@@ -166,6 +170,8 @@ setup_dirs() {
         if [ -z "$prefix"    ]; then exit; fi
         if [ -z "$bindir"    ]; then    bindir=$prefix/bin;                 fi
         if [ -z "$datadir"   ]; then   datadir=$prefix/share;               fi
+        if [ -z "$compdir"   ]; then   compdir=$datadir/bash-completion/completions; fi
+        if [ -z "$mandir"    ]; then   mandir=$datadir/man;                 fi
         if [ -z "$icondir"   ]; then   icondir=$datadir/icons/hicolor;      fi
         if [ -z "$appdir"    ]; then    appdir=$datadir/applications;       fi
         if [ -z "$actiondir" ]; then actiondir=$datadir/apps/solid/actions; fi
@@ -425,7 +431,7 @@ parse_file() {
 rootdir=`pwd`
 
 parse_file "src/cmplayer/configure.pro" defines config libs cflags rootdir
-parse_file "Makefile" os qmake PKG_CONFIG_PATH prefix bindir datadir icondir appdir actiondir \
+parse_file "Makefile" os qmake PKG_CONFIG_PATH prefix bindir datadir compdir mandir icondir appdir actiondir \
         skindir importdir parallel qtsdk macdeployqt
 parse_file "build-mpv" mpv_args parallel os njobs PKG_CONFIG_PATH
 chmod +x build-mpv

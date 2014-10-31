@@ -20,54 +20,54 @@
 # Note that OpenSUSE users will need to have the Packman Essentials and Multimedia repositories enabled
 # see http://en.opensuse.org/Additional_package_repositories#Packman for more details.
 
-Name:		cmplayer
-Summary:	A multimedia player
-License:	GPLv2
-Group:		Applications/Multimedia
-Version:	0.8.13
-Release:	1%{?dist}
-Url:		http://cmplayer.github.io/
-Source:		https://github.com/xylosper/%{name}/releases/download/v%{version}/%{name}-%{version}-source.tar.gz
+Name:       cmplayer
+Summary:    A multimedia player
+License:    GPLv2
+Group:      Applications/Multimedia
+Version:    0.8.16
+Release:    1%{?dist}
+Url:        http://cmplayer.github.io/
+Source0:    https://github.com/xylosper/%{name}/releases/download/v%{version}/%{name}-%{version}-source.tar.gz
 
 # Distro-specific dependencies
 %if 0%{?fedora}
-BuildRequires:	ffmpeg-devel
-BuildRequires:	bzip2-devel
-BuildRequires:	jack-audio-connection-kit-devel
-BuildRequires:	libvdpau-devel
-BuildRequires:	pulseaudio-libs-devel
-BuildRequires:	qt5-qtbase-devel >= 5.1.1
-BuildRequires:	qt5-qtdeclarative-devel
-BuildRequires:	qt5-qtquickcontrols
-BuildRequires:	qt5-qtx11extras-devel
+BuildRequires:  ffmpeg-devel
+BuildRequires:  bzip2-devel
+BuildRequires:  jack-audio-connection-kit-devel
+BuildRequires:  libvdpau-devel
+BuildRequires:  pulseaudio-libs-devel
+BuildRequires:  qt5-qtbase-devel >= 5.1.1
+BuildRequires:  qt5-qtdeclarative-devel
+BuildRequires:  qt5-qtquickcontrols
+BuildRequires:  qt5-qtx11extras-devel
 %endif
 
 %if 0%{?suse_version}
-BuildRequires:	libbz2-devel
-BuildRequires:	libffmpeg-devel
-BuildRequires:	libjack-devel
-BuildRequires:	libpulse-devel
-BuildRequires:	libqt5-qtbase-devel >= 5.1.1
-BuildRequires:	libQt5Declarative-devel
-BuildRequires:	libQt5Quick-devel
-BuildRequires:	libQt5X11Extras-devel
+BuildRequires:  libbz2-devel
+BuildRequires:  libffmpeg-devel
+BuildRequires:  libjack-devel
+BuildRequires:  libpulse-devel
+BuildRequires:  libqt5-qtbase-devel >= 5.1.1
+BuildRequires:  libQt5Declarative-devel
+BuildRequires:  libQt5Quick-devel
+BuildRequires:  libQt5X11Extras-devel
 %endif
 
-BuildRequires:	gcc-c++ >= 4.8
-BuildRequires:	glib2-devel
-BuildRequires:	libass-devel
-BuildRequires:	libbluray-devel
-BuildRequires:	libcdio-paranoia-devel
-#BuildRequires: libchardet-devel
-BuildRequires:	libdvdnav-devel
-BuildRequires:	libdvdread-devel
-BuildRequires:	libmpg123-devel
-BuildRequires:	libquvi-devel
-BuildRequires:	libva-devel
-BuildRequires:	portaudio-devel
-BuildRequires:	python
-BuildRequires:	xcb-util-devel
-BuildRequires:	xcb-util-wm-devel
+BuildRequires:  gcc-c++ >= 4.8
+BuildRequires:  glib2-devel
+BuildRequires:  libass-devel
+BuildRequires:  libbluray-devel
+BuildRequires:  libcdio-paranoia-devel
+BuildRequires:  libchardet-devel
+BuildRequires:  libdvdnav-devel
+BuildRequires:  libdvdread-devel
+BuildRequires:  libmpg123-devel
+BuildRequires:  libquvi-devel
+BuildRequires:  libva-devel
+BuildRequires:  portaudio-devel
+BuildRequires:  python
+BuildRequires:  xcb-util-devel
+BuildRequires:  xcb-util-wm-devel
 # rpm's automatic dependency handling misses qt5-qtquickcontrols
 %if 0%{?fedora}
 Requires: qt5-qtquickcontrols
@@ -85,7 +85,12 @@ CMPlayer is a Qt-based multimedia player utilizing the MPV video back-end.
 # Build libchardet statically.
 ./download-libchardet
 ./build-libchardet
-./configure --prefix=/usr --enable-jack --enable-portaudio --enable-pulseaudio --enable-cdda
+./configure --prefix=/usr \
+ --enable-jack \ 
+ --enable-portaudio \ 
+ --enable-pulseaudio \
+ --enable-cdda \
+ --mandir=%{_mandir}
 make %{?_smp_mflags}
 
 %install
@@ -109,7 +114,13 @@ xdg-icon-resource forceupdate --theme hicolor &> /dev/null
 %doc COPYING.txt CHANGES.txt GPL.txt ICON-AUTHORS.txt ICON-COPYING.txt MPL.txt README.md
 
 %changelog
-* Fri Mar 21 2014 Ben Reedy <thebenj88@gmail.com> - 0.8.13-1
+* Tue Sep 30 2014 Ben R <thebenj88@gmail.com> - 0.8.16-1
+- Upstream release
+
+* Fri Jun 13 2014 Ben R <thebenj88@gmail.com> - 0.8.14-1
+- Upstream release
+
+* Fri Mar 21 2014 Ben R <thebenj88@gmail.com> - 0.8.13-1
 - Upstream release
 - Added libbluray-devel build dependency
 

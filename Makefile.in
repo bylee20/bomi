@@ -8,6 +8,8 @@ prefix := @prefix@
 qmake := @qmake@ DEFINES+=CMPLAYER_RELEASE
 bin_dir := @bindir@
 DATADIR := @datadir@
+comp_dir := @compdir@
+man_dir := @mandir@
 icon_dir := @icondir@
 app_dir := @appdir@
 action_dir := @actiondir@
@@ -75,12 +77,15 @@ clean:
 	-rm -rf build/cmplayer*
 	-rm -rf build/skins
 	-rm -rf build/imports
+	-rm -f cmplayer.1.gz
 
 install: cmplayer
 ifeq ($(os),linux)
 	-install -d $(DEST_DIR)$(bin_dir)
 	-install -d $(DEST_DIR)$(app_dir)
 	-install -d $(DEST_DIR)$(action_dir)
+	-install -d $(DEST_DIR)$(comp_dir)
+	-install -d $(DEST_DIR)$(man_dir)/man1
 	-install -d $(DEST_DIR)$(icon_dir)/16x16/apps
 	-install -d $(DEST_DIR)$(icon_dir)/22x22/apps
 	-install -d $(DEST_DIR)$(icon_dir)/24x24/apps
@@ -95,6 +100,9 @@ ifeq ($(os),linux)
 	$(install_exe) build/$(cmplayer_exec) $(DEST_DIR)$(bin_dir)
 	$(install_file) cmplayer.desktop $(DEST_DIR)$(app_dir)
 	$(install_file) cmplayer-opendvd.desktop $(DEST_DIR)$(action_dir)
+	$(install_file) cmplayer.completion $(DEST_DIR)$(comp_dir)/cmplayer
+	gzip cmplayer.1 > cmplayer.1.gz
+	$(install_file) cmplayer.1.gz $(DEST_DIR)$(man_dir)/man1/cmplayer.1.gz
 	$(install_file) icons/cmplayer16.png $(DEST_DIR)$(icon_dir)/16x16/apps/cmplayer.png
 	$(install_file) icons/cmplayer22.png $(DEST_DIR)$(icon_dir)/22x22/apps/cmplayer.png
 	$(install_file) icons/cmplayer24.png $(DEST_DIR)$(icon_dir)/24x24/apps/cmplayer.png
