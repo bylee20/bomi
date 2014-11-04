@@ -196,10 +196,6 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
     opts.add("audio-channels"_b, ChannelLayoutInfo::data(layout), true);
     opts.add("af"_b, af(), true);
     opts.add("vf"_b, vf(), true);
-    opts.add("brightness"_b, videoEq.brightness());
-    opts.add("contrast"_b, videoEq.contrast());
-    opts.add("hue"_b, videoEq.hue());
-    opts.add("saturation"_b, videoEq.saturation());
     _Debug("Load: %% (%%)", file, opts.get());
     tellmpv("loadfile"_b, file.toLocal8Bit(), "replace"_b, opts.get());
 }

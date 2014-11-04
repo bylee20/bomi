@@ -15,20 +15,18 @@ auto null_mp_image(uint imgfmt, int w, int h, void *arg = nullptr,
 
 auto query_video_format(quint32 format) -> int;
 
-auto FFmpegFilterGraph::push(mp_image *in) -> bool
+auto FFmpegFilterGraph::push(const MpImage &in) -> bool
 {
     Q_ASSERT(m_imgfmt == in->imgfmt && m_size == QSize(in->w, in->h));
     if (!m_graph)
         return false;
     auto src = m_src->outputs[0];
     auto frame = av_frame_alloc();
-    mp_image_copy_fields_to_av_frame(frame, in);
-    int flags = 0;
-    if (!mp_image_is_writeable(in))
-        flags |= AV_BUFFER_FLAG_READONLY;
-    auto freeMpImage = [](void *in, uint8_t*) { talloc_free(in); };
+    mp_image_copy_fields_to_av_frame(frame, const_cast<mp_image*>(in.data()));
+    int flags = AV_BUFFER_FLAG_READONLY;
+    auto freeMpImage = [](void *in, uint8_t*) { delete static_cast<MpImage*>(in); };
     for (int n = 0; n < in->num_planes; ++n) {
-        mp_image *plane = mp_image_new_ref(in);
+        auto plane = new MpImage(in);
         const size_t size = in->stride[n] * in->h;
         frame->buf[n] = av_buffer_create(in->planes[n], size,
                                          freeMpImage, plane, flags);
@@ -43,17 +41,20 @@ auto FFmpegFilterGraph::push(mp_image *in) -> bool
     return ok;
 }
 
-auto FFmpegFilterGraph::pull() -> mp_image*
+auto FFmpegFilterGraph::pull() -> MpImage
 {
+    if (!m_graph)
+        return MpImage();
     auto frame = av_frame_alloc();
-    if (av_buffersink_get_frame(m_sink, frame) < 0) {
+    const auto err = av_buffersink_get_frame(m_sink, frame);
+    if (err < 0) {
         av_frame_free(&frame);
-        return nullptr;
+        return MpImage();
     }
     auto freeAvFrame = [](void *frame) { av_frame_free((AVFrame**)&frame); };
     auto mpi = null_mp_image(frame, freeAvFrame);
     mp_image_copy_fields_from_av_frame(mpi, frame);
-    return mpi;
+    return MpImage::wrap(mpi);
 }
 
 auto FFmpegFilterGraph::linkGraph(AVFilterInOut *&in,
@@ -135,8 +136,7 @@ auto FFmpegFilterGraph::release() -> void
 
 /******************************************************************************/
 
-auto FFmpegPostProc::process(mp_image *di,
-                             const mp_image *si) const -> bool
+auto FFmpegPostProc::process(MpImage &di, const MpImage&si) const -> bool
 {
     if (!m_context)
         return false;
@@ -186,7 +186,7 @@ auto FFmpegPostProc::initialize(const QString &option, const QSize &size,
     return m_context;
 }
 
-auto FFmpegPostProc::newImage(const mp_image *mpi) const -> mp_image*
+auto FFmpegPostProc::newImage(const MpImage &mpi) const -> MpImage
 {
     auto tmp = mp_image_pool_get(m_pool, mpi->imgfmt, mpi->stride[0], mpi->h);
     auto img = mp_image_new_ref(tmp);
@@ -197,8 +197,8 @@ auto FFmpegPostProc::newImage(const mp_image *mpi) const -> mp_image*
     img->stride[1] = mpi->stride[1];
     img->stride[2] = mpi->stride[2];
     img->stride[3] = mpi->stride[3];
-    mp_image_copy_attributes(img, (mp_image*)mpi);
-    return img;
+    mp_image_copy_attributes(img, (mp_image*)mpi.data());
+    return MpImage::wrap(img);
 }
 
 auto FFmpegPostProc::release() -> void

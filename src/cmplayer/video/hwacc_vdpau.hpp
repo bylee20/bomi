@@ -193,7 +193,7 @@ public:
     virtual auto context() const -> void* final;
     virtual auto getSurface() -> mp_image* final;
     virtual auto type() const -> Type final {return VdpauX11;}
-    virtual auto getImage(mp_image *mpi) -> mp_image*;
+    virtual auto getImage(const MpImage &mpi) -> MpImage;
 private:
     auto freeContext() -> void;
     auto fillContext(AVCodecContext *avctx, int w, int h) -> bool final;
@@ -206,7 +206,7 @@ class VdpauMixer : public HwAccMixer, public VdpauStatusChecker {
 public:
     ~VdpauMixer();
     auto upload(OpenGLTexture2D &textire,
-                const mp_image *mpi, bool deint) -> bool final;
+                const MpImage &mpi, bool deint) -> bool final;
 private:
     auto release() -> void;
     auto create(const OpenGLTexture2D &texture) -> bool;

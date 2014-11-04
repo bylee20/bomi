@@ -1,6 +1,7 @@
 #include "hwacc_vaapi.hpp"
 #include "opengl/opengltexture2d.hpp"
 #include "tmp/static_op.hpp"
+#include "mpimage.hpp"
 
 #ifdef Q_OS_LINUX
 
@@ -379,7 +380,7 @@ auto HwAccVaApi::fillContext(AVCodecContext *avctx, int w, int h) -> bool
     return true;
 }
 
-auto HwAccVaApi::getImage(mp_image *mpi) -> mp_image*
+auto HwAccVaApi::getImage(const MpImage &mpi) -> MpImage
 {
     return mpi;
 }
@@ -406,7 +407,7 @@ auto VaApiMixer::release() -> void
 }
 
 auto VaApiMixer::upload(OpenGLTexture2D &texture,
-                        const mp_image *mpi, bool deint) -> bool
+                        const MpImage &mpi, bool deint) -> bool
 {
     if (m_id != texture.id()) {
         release();

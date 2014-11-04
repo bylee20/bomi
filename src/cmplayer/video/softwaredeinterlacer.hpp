@@ -1,7 +1,7 @@
 #ifndef SOFTWAREDEINTERLACER_HPP
 #define SOFTWAREDEINTERLACER_HPP
 
-class DeintOption;        struct mp_image;
+class DeintOption;        class MpImage;
 
 static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
 
@@ -13,10 +13,9 @@ public:
     SoftwareDeinterlacer(const SoftwareDeinterlacer &other) = delete;
     SoftwareDeinterlacer &operator = (const SoftwareDeinterlacer &rhs) = delete;
     auto setOption(const DeintOption &deint) -> void;
-    auto push(mp_image *mpi) -> void;
-    auto pop() -> mp_image*;
+    auto push(MpImage &&mpi) -> void;
+    auto pop() -> MpImage;
     auto clear() -> void;
-    auto peekNext() const-> const mp_image*;
 private:
     struct Data;
     Data *d;

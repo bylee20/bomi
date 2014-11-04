@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
         resize(d->as.win_size);
     }
 
-    d->renderer.setEffects(d->as.state.video_effects);
+    d->vr.setEffects(d->as.state.video_effects);
     auto effectGroup = d->menu(u"video"_q)(u"filter"_q).g();
     for (auto &item : VideoEffectInfo::items()) {
         if (d->as.state.video_effects & item.value)
@@ -78,7 +78,7 @@ MainWindow::MainWindow(QWidget *parent)
     d->menu(u"tool"_q)[u"undo"_q]->setEnabled(d->undo->canUndo());
     d->menu(u"tool"_q)[u"redo"_q]->setEnabled(d->undo->canRedo());
 
-    if (!VideoRendererItem::supportsHighQualityRendering()) {
+    if (!VideoRenderer::supportsHighQualityRendering()) {
         auto &video = d->menu(u"video"_q);
         auto key = _L(DitheringInfo::typeKey());
         video(key).g(key)->find(Dithering::Fruit)->setDisabled(true);
@@ -143,7 +143,7 @@ auto MainWindow::exit() -> void
     if (!done) {
         cApp.setScreensaverDisabled(false);
         d->commitData();
-        d->renderer.setOverlay(nullptr);
+        d->vr.setOverlay(nullptr);
         cApp.quit();
         done = true;
     }
@@ -266,7 +266,7 @@ auto MainWindow::onMouseMoveEvent(QMouseEvent *event) -> void
         }
     }
     d->readyToHideCursor();
-    d->engine.sendMouseMove(d->renderer.mapToVideo(event->pos()));
+    d->engine.sendMouseMove(d->vr.mapToVideo(event->pos()));
 }
 
 auto MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) -> void
@@ -323,7 +323,7 @@ auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
         d->contextMenu.exec(QCursor::pos());
     else
         d->contextMenu.hide();
-    d->engine.sendMouseClick(d->renderer.mapToVideo(event->pos()));
+    d->engine.sendMouseClick(d->vr.mapToVideo(event->pos()));
 }
 
 auto MainWindow::onWheelEvent(QWheelEvent *event) -> void

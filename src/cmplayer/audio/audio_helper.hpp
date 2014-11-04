@@ -12,7 +12,7 @@ extern "C" {
 
 template<int fmt_in>
 struct AudioFormatTrait {
-    SCA IsInt = (fmt_in & AF_FORMAT_POINT_MASK) == AF_FORMAT_I;
+    SCA IsInt = (fmt_in & AF_FORMAT_TYPE_MASK) == AF_FORMAT_I;
     SCA IsSigned = (fmt_in & AF_FORMAT_SIGN_MASK) == AF_FORMAT_SI;
     SCA Bits = (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_8BIT ? 8 :
                       (fmt_in & AF_FORMAT_BITS_MASK) == AF_FORMAT_16BIT ? 16 :

@@ -98,14 +98,12 @@ auto MainWindow::Data::initWidget() -> void
         auto context = view->openglContext();
         if (cApp.isOpenGLDebugLoggerRequested())
             glLogger.initialize(context);
-        engine.initializeGL(view);
         sgInit = true;
         emit p->sceneGraphInitialized();
     }, Qt::DirectConnection);
     connect(view, &QQuickView::sceneGraphInvalidated, p, [this] () {
         sgInit = false;
         auto context = QOpenGLContext::currentContext();
-        engine.finalizeGL();
         glLogger.finalize(context);
     }, Qt::DirectConnection);
     desktop = cApp.desktop();
@@ -128,7 +126,7 @@ auto MainWindow::Data::initWidget() -> void
 
 auto MainWindow::Data::initEngine() -> void
 {
-    engine.setVideoRenderer(&renderer);
+    engine.setVideoRenderer(&vr);
     connect(&engine, &PlayEngine::mrlChanged,
             p, [=] (const Mrl &mrl) { updateMrl(mrl); });
     connect(&engine, &PlayEngine::stateChanged, p,
@@ -288,13 +286,13 @@ auto MainWindow::Data::initItems() -> void
     connect(&subtitle, &SubtitleRendererItem::modelsChanged,
             subtitleView, &SubtitleView::setModels);
 
-    renderer.setOverlay(&subtitle);
+    vr.setOverlay(&subtitle);
     auto showSize = [this] {
         const auto num = [] (qreal n) { return _N(qRound(n)); };
-        const auto w = num(renderer.width()), h = num(renderer.height());
+        const auto w = num(vr.width()), h = num(vr.height());
         showMessage(w % u'×'_q % h, &pref().show_osd_on_resized);
     };
-    connect(&renderer, &VideoRendererItem::sizeChanged, p, showSize);
+    connect(&vr, &VideoRenderer::sizeChanged, p, showSize);
 }
 
 auto MainWindow::Data::initTimers() -> void
@@ -496,7 +494,7 @@ auto MainWindow::Data::setVideoSize(const QSize &video) -> void
         return;
     // patched by Handrake
     const QSizeF screen = screenSize();
-    const QSize size = (p->size() - renderer.size().toSize() + video);
+    const QSize size = (p->size() - vr.size().toSize() + video);
     if (size != p->size()) {
         p->resize(size);
         int dx = 0;
@@ -644,7 +642,7 @@ auto MainWindow::Data::commitData() -> void
         engine.shutdown();
         if (!p->isFullScreen())
             updateWindowPosState();
-        as.state.video_effects = renderer.effects();
+        as.state.video_effects = vr.effects();
         as.playlist_visible = playlist.isVisible();
         as.history_visible = history.isVisible();
         as.save();
@@ -864,7 +862,7 @@ auto MainWindow::Data::applyPref() -> void
     sharpen.setCenter(p.sharpen_kern_c);
     sharpen.setNeighbor(p.sharpen_kern_n);
     sharpen.setDiagonal(p.sharpen_kern_d);
-    renderer.setKernel(blur, sharpen);
+    vr.setKernel(blur, sharpen);
     SubtitleParser::setMsPerCharactor(p.ms_per_char);
     subtitle.setPriority(p.sub_priority);
     subtitle.setStyle(p.sub_style);
@@ -936,7 +934,7 @@ auto MainWindow::Data::setVideoSize(double rate) -> void
             p->setFullScreen(false);
         if (p->isMaximized())
             p->showNormal();
-        const QSizeF video = renderer.sizeHint();
+        const QSizeF video = vr.sizeHint();
         auto area = [] (const QSizeF &s) { return s.width()*s.height(); };
         if (rate == 0.0)
             rate = area(screenSize())*0.15/area(video);

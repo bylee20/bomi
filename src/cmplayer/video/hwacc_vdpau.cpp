@@ -1,6 +1,7 @@
 #include "hwacc_vdpau.hpp"
 #include "opengl/opengltexture2d.hpp"
 #include "tmp/static_op.hpp"
+#include "mpimage.hpp"
 
 void initialize_vdpau_interop(QOpenGLContext *ctx) {
 #ifdef Q_OS_LINUX
@@ -284,7 +285,7 @@ auto HwAccVdpau::context() const -> void*
     return &d->context;
 }
 
-auto HwAccVdpau::getImage(mp_image *mpi) -> mp_image*
+auto HwAccVdpau::getImage(const MpImage &mpi) -> MpImage
 {
     return mpi;
 }
@@ -351,7 +352,7 @@ auto VdpauMixer::create(const OpenGLTexture2D &texture) -> bool
 }
 
 auto VdpauMixer::upload(OpenGLTexture2D &texture,
-                        const mp_image *mpi, bool deint) -> bool
+                        const MpImage &mpi, bool deint) -> bool
 {
     if (m_id != texture.id()) {
         release();

@@ -25,7 +25,8 @@ private:
                          mp_image_params *in, mp_image_params *out) -> int;
     static auto control(vf_instance *vf, int request, void *data) -> int;
     static auto queryFormat(vf_instance *vf, uint fmt) -> int;
-    static auto filter(vf_instance *vf, mp_image *mpi)-> int;
+    static auto filterIn(vf_instance *vf, mp_image *mpi)-> int;
+    static auto filterOut(vf_instance *vf) -> int;
     struct Data;
     Data *d;
     friend auto create_vf_info() -> vf_info;

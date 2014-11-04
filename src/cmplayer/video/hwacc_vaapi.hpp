@@ -41,7 +41,7 @@ public:
     virtual auto context() const -> void* override;
     virtual auto getSurface() -> mp_image* override;
     virtual auto type() const -> Type override {return VaApiGLX;}
-    virtual auto getImage(mp_image *mpi) -> mp_image*;
+    virtual auto getImage(const MpImage &mpi) -> MpImage;
 private:
     auto freeContext() -> void;
     auto fillContext(AVCodecContext *avctx, int w, int h) -> bool override;
@@ -133,7 +133,7 @@ class VaApiMixer : public HwAccMixer, public VaApiStatusChecker{
 public:
     ~VaApiMixer();
     auto upload(OpenGLTexture2D &texture,
-                const mp_image *mpi, bool deint) -> bool final;
+                const MpImage &mpi, bool deint) -> bool final;
 private:
     auto release() -> void;
     VaApiMixer(const QSize &size);

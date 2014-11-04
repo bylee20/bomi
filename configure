@@ -182,7 +182,6 @@ setup_dirs() {
 jack=disable
 portaudio=disable
 pulseaudio=disable
-quvi4=disable
 cdda=disable
 
 mf() { # make_feature
@@ -199,7 +198,6 @@ feature_opts="""
 $(mf jack "enable JACK support")
 $(mf portaudio "enable PortAudio support" "portaudio-2.0")
 $(mf pulseaudio "enable PulseAudio support" "libpulse")
-$(mf quvi4 "enable libquvi4 instead of libquvi9" "libquvi")
 $(mf cdda "enable CDDA support" "libcdio_paranoia libcdio libcdio_cdda")
 """
 
@@ -212,13 +210,6 @@ setup_features() {
         add_mpv $portaudio portaudio
         add_mpv $pulseaudio pulse
         add_mpv $cdda cdda
-        if [ $quvi4 = enable ]; then
-                add_mpv enable libquvi4
-                add_mpv disable libquvi9
-        else
-                add_mpv enable libquvi9
-                add_mpv disable libquvi4
-        fi
 }
 
 options="""
@@ -354,7 +345,6 @@ if has_arg "developer"; then
         elif [ "$os" = "osx" ]; then
         		qtsdk=/usr/local/opt/qt5
         		macdeployqt=macdeployqt
-        		quvi4=enable
         		qmake=qmake
         		export PKG_CONFIG_PATH="/usr/local/opt/icu4c/lib/pkgconfig:/usr/local/opt/libass-ct/lib/pkgconfig:${PKG_CONFIG_PATH}"
         fi
@@ -374,9 +364,6 @@ if [ $os = "linux" ]; then
         check_pkg_or_exit "vdpau"
         check_pkg_or_exit xcb "xcb" "xcb-icccm" "x11"
         check_pkg_or_exit "alsa"
-fi
-if ! [ "$quvi4" = "enable" ] ; then
-        check_pkg_or_exit "libquvi-0.9"
 fi
 
 add_defines() {

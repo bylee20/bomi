@@ -64,7 +64,7 @@ struct MainWindow::Data {
     RecentInfo recent;
     AppState as;
     PlayEngine engine;
-    VideoRendererItem renderer;
+    VideoRenderer vr;
     SubtitleRendererItem subtitle;
     QPoint prevPos;
     Qt::WindowStates winState = Qt::WindowNoState;

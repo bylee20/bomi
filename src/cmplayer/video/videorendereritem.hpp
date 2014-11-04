@@ -6,17 +6,19 @@
 
 class VideoColor;                       class Kernel3x3;
 enum class DeintMethod;                 enum class ColorRange;
+enum class ColorSpace;                  class DeintOption;
 
 template<class T> class VideoImageCache;
-class VideoTexture;           class MpOsdBitmap;
+class VideoTexture;                     class MpOsdBitmap;
+class VideoData;                        class VideoFormat;
 
-class VideoRendererItem : public HighQualityTextureItem {
+class VideoRenderer : public HighQualityTextureItem {
     Q_OBJECT
 public:
     using Cache = VideoImageCache<VideoTexture>;
     using OsdCache = VideoImageCache<MpOsdBitmap>;
-    VideoRendererItem(QQuickItem *parent = 0);
-    ~VideoRendererItem();
+    VideoRenderer(QQuickItem *parent = 0);
+    ~VideoRenderer();
     auto screenRect() const -> QRectF;
     auto offset() const -> QPoint;
     auto aspectRatio() const -> double;
@@ -24,16 +26,20 @@ public:
     auto alignment() const -> int;
     auto effects() const -> VideoEffects;
     auto sizeHint() const -> QSize;
+    auto deintOptionForSwdec() const -> DeintOption;
+    auto deintOptionForHwdec() const -> DeintOption;
     auto setAspectRatio(double ratio) -> void;
+    auto setDeintOptions(DeintOption swdec, DeintOption hwdec) -> void;
     auto setOverlay(GeometryItem *overlay) -> void;
     auto overlay() const -> QQuickItem*;
-    auto present(const Cache &cache, const OsdCache &osd, bool hasOsd) -> void;
+    auto present(const VideoData &data) -> void;
+    auto prepare(const VideoFormat &format) -> void;
     auto hasFrame() const -> bool;
     auto requestFrameImage() const -> void;
     auto frameRect(const QRectF &area) const -> QRectF;
     auto setKernel(const Kernel3x3 &blur, const Kernel3x3 &sharpen) -> void;
     auto setOverlayOnLetterbox(bool letterbox) -> void;
-    auto overlayInLetterbox() const -> bool;
+    auto overlayOnLetterbox() const -> bool;
     auto mapToVideo(const QPointF &pos) -> QPointF;
     auto updateVertexOnGeometryChanged() const -> bool override { return true; }
     auto isOpaque() const -> bool override { return true; }
@@ -43,6 +49,19 @@ public:
     auto setCropRatio(double ratio) -> void;
     auto kernel() const -> const Kernel3x3&;
     auto osdSize() const -> QSize;
+
+    auto equalizer() const -> const VideoColor&;
+    auto setEqualizer(const VideoColor &prop) -> void;
+    auto setColorRange(ColorRange range) -> void;
+    auto setColorSpace(ColorSpace space) -> void;
+    auto colorRange() const -> ColorRange;
+    auto colorSpace() const -> ColorSpace;
+    auto setChromaUpscaler(InterpolatorType tpe) -> void;
+    auto chromaUpscaler() const -> InterpolatorType;
+
+    auto droppedFrames() const -> int;
+    auto avgfps() const -> double;
+    auto resetTimings() -> void;
 signals:
     void transferred();
     void frameImageObtained(const QImage &video, const QImage &osd) const;
@@ -52,17 +71,26 @@ signals:
     void frameRectChanged(const QRectF &rect);
     void kernelChanged(const Kernel3x3 &kernel);
     void osdSizeChanged(const QSize &size);
+
+    void colorRangeChanged(ColorRange range);
+    void colorSpaceChanged(ColorSpace space);
+    void chromaUpscalerChanged(InterpolatorType type);
+    void equalizerChanged(const VideoColor &eq);
+    void overlayOnLetterboxChanged(bool on);
+    void alignmentChanged(int alignment);
+    void formatChanged(const VideoFormat &format);
+    void droppedFramesChanged(int dropped);
+    void deintMethodChanged(DeintMethod method);
 private:
     auto afterUpdate() -> void;
     auto initializeGL() -> void override;
     auto finalizeGL() -> void override;
     auto customEvent(QEvent *event) -> void override;
+    auto updatePolish() -> void override;
     auto updateVertex(Vertex *vertex) -> void override;
     auto updateTexture(OpenGLTexture2D *texture) -> void override;
     struct Data;
     Data *d;
-    QPoint m_mouse;
-    friend class VideoOutput;
 };
 
 #endif // VIDEORENDERERITEM_HPP

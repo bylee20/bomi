@@ -347,21 +347,21 @@ auto MainWindow::Data::connectMenus() -> void
     });
     plugEnumActions<VideoRatio>(video(u"aspect"_q), "video_aspect_ratio",
                                 &MrlState::videoAspectRatioChanged, [this] ()
-        { renderer.setAspectRatio(_EnumData(as.state.video_aspect_ratio)); });
+        { vr.setAspectRatio(_EnumData(as.state.video_aspect_ratio)); });
     plugEnumActions<VideoRatio>(video(u"crop"_q), "video_crop_ratio",
                                 &MrlState::videoCropRatioChanged, [this] ()
-        { renderer.setCropRatio(_EnumData(as.state.video_crop_ratio)); });
+        { vr.setCropRatio(_EnumData(as.state.video_crop_ratio)); });
     auto &snap = video(u"snapshot"_q);
     auto connectSnapshot = [&] (const QString &actionName, SnapshotMode mode) {
         connect(snap[actionName], &QAction::triggered, p, [this, mode] () {
             snapshotMode = mode;
-            renderer.requestFrameImage();
+            vr.requestFrameImage();
         });
     };
     connectSnapshot(u"quick"_q, QuickSnapshot);
     connectSnapshot(u"quick-nosub"_q, QuickSnapshotNoSub);
     connectSnapshot(u"tool"_q, SnapshotTool);
-    connect(&renderer, &VideoRendererItem::frameImageObtained,
+    connect(&vr, &VideoRenderer::frameImageObtained,
             p, [this] (const QImage &video, const QImage &osd) {
         QRectF subRect;
         auto sub = subtitle.draw(video.rect(), &subRect);
@@ -370,9 +370,9 @@ auto MainWindow::Data::connectMenus() -> void
             if (!snapshot) {
                 snapshot = new SnapshotDialog(p);
                 connect(snapshot, &SnapshotDialog::request, p, [=] () {
-                    if (renderer.hasFrame()) {
+                    if (vr.hasFrame()) {
                         snapshotMode = SnapshotTool;
-                        renderer.requestFrameImage();
+                        vr.requestFrameImage();
                     } else
                         snapshot->clear();
                 });
@@ -425,7 +425,7 @@ auto MainWindow::Data::connectMenus() -> void
     auto setVideoAlignment = [this] () {
         const auto v = _EnumData(as.state.video_vertical_alignment);
         const auto h = _EnumData(as.state.video_horizontal_alignment);
-        renderer.setAlignment(v | h);
+        vr.setAlignment(v | h);
     };
     plugEnumActions<VerticalAlignment>
             (video(u"align"_q), "video_vertical_alignment",
@@ -438,7 +438,7 @@ auto MainWindow::Data::connectMenus() -> void
              [this] (const QPoint &diff) {
         return diff.isNull() ? diff : as.state.video_offset + diff;
     }, &MrlState::videoOffsetChanged, [this] () {
-        renderer.setOffset(as.state.video_offset);
+        vr.setOffset(as.state.video_offset);
     });
     plugEnumMenu<DeintMode>
             (video, "video_deinterlacing",
@@ -448,25 +448,25 @@ auto MainWindow::Data::connectMenus() -> void
     plugEnumActions<InterpolatorType>
             (video(u"interpolator"_q), "video_interpolator",
              &MrlState::videoInterpolatorChanged, [this] () {
-        renderer.setInterpolator(as.state.video_interpolator);
+        vr.setInterpolator(as.state.video_interpolator);
     });
     plugEnumActions<InterpolatorType>
             (video(u"chroma-upscaler"_q), "video_chroma_upscaler",
              &MrlState::videoChromaUpscalerChanged, [this] () {
-        engine.setVideoChromaUpscaler(as.state.video_chroma_upscaler);
+        vr.setChromaUpscaler(as.state.video_chroma_upscaler);
     });
     plugEnumMenu<Dithering>
             (video, "video_dithering",
              &MrlState::videoDitheringChanged, [this] () {
-        renderer.setDithering(as.state.video_dithering);
+        vr.setDithering(as.state.video_dithering);
     });
     plugEnumMenu<ColorSpace>(video, "video_space",
                                    &MrlState::videoSpaceChanged, [this] () {
-        engine.setVideoColorSpace(as.state.video_space);
+        vr.setColorSpace(as.state.video_space);
     });
     plugEnumMenu<ColorRange>(video, "video_range",
                                    &MrlState::videoRangeChanged, [this] () {
-        engine.setVideoColorRange(as.state.video_range);
+        vr.setColorRange(as.state.video_range);
     });
 
     connect(&video(u"filter"_q), &Menu::triggered, p, [this] () {
@@ -475,10 +475,10 @@ auto MainWindow::Data::connectMenus() -> void
             if (act->isChecked())
                 effects |= act->data().value<VideoEffect>();
         }
-        if (renderer.effects() != effects)
-            push(effects, renderer.effects(),
+        if (vr.effects() != effects)
+            push(effects, vr.effects(),
                     [this] (VideoEffects effects) {
-                renderer.setEffects(effects);
+                vr.setEffects(effects);
                 as.state.video_effects = effects;
                 for (auto a : menu(u"video"_q)(u"filter"_q).actions())
                     a->setChecked(a->data().value<VideoEffect>() & effects);
@@ -502,7 +502,7 @@ auto MainWindow::Data::connectMenus() -> void
         as.state.setProperty("video_color", var);
     });
     connect(&as.state, &MrlState::videoColorChanged,
-            &engine, &PlayEngine::setVideoEqualizer);
+            &vr, &VideoRenderer::setEqualizer);
 
     Menu &audio = menu(u"audio"_q);
     connect(audio(u"track"_q).g(), &ActionGroup::triggered,
@@ -657,7 +657,7 @@ auto MainWindow::Data::connectMenus() -> void
     plugEnumMenu<SubtitleDisplay>
             (sub, "sub_display", &MrlState::subDisplayChanged, [this] () {
         const auto on = as.state.sub_display == SubtitleDisplay::OnLetterbox;
-        renderer.setOverlayOnLetterbox(on);
+        vr.setOverlayOnLetterbox(on);
     });
     plugEnumActions<VerticalAlignment>
             (sub(u"align"_q), "sub_alignment",

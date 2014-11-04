@@ -5,6 +5,7 @@
 #include "videoframeshader.hpp"
 #include "mposdbitmap.hpp"
 #include "videotexture.hpp"
+#include "videodata.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 #include "opengl/openglbenchmarker.hpp"
 #include "opengl/opengllogger.hpp"
@@ -17,6 +18,7 @@ extern "C" {
 #include <video/hwdec.h>
 #include <video/out/vo.h>
 #include <video/vfcap.h>
+#include <input/input.h>
 }
 
 DECLARE_LOG_CONTEXT(Video)
@@ -29,23 +31,14 @@ auto query_video_format(quint32 format) -> int;
 extern auto initialize_vdpau_interop(QOpenGLContext *context) -> void;
 extern auto finalize_vdpau_interop(QOpenGLContext *context) -> void;
 
-enum DirtyFlag {
-    DirtyEffects = 1 << 0,
-    DirtyKernel  = 1 << 1,
-    DirtyColor   = 1 << 2,
-    DirtyChroma  = 1 << 3,
-    DirtySize    = 1 << 4,
-    DirtyDeint   = 1 << 5
-};
-
-using MpOsdBitmapCache = VideoImageCache<MpOsdBitmap>;
+using VideoOsdCache = VideoImageCache<MpOsdBitmap>;
 
 class MpOsdBitmapPool : public VideoImagePool<MpOsdBitmap> {
-    using Cache = MpOsdBitmapCache;
+    using Cache = VideoOsdCache;
 public:
     auto get(const sub_bitmaps *imgs, const QSize &size) -> Cache
     {
-        Cache cache = this->getCache(3);
+        Cache cache = this->getCache(5);
         if (!cache)
             return cache;
         auto &data = const_cast<MpOsdBitmap&>(*cache);
@@ -53,47 +46,6 @@ public:
         return cache;
     }
     auto clear() -> void { reserve(0); }
-};
-
-class VideoTexturePool
-        : public VideoImagePool<VideoTexture> {
-    using Cache = VideoTextureCache;
-    OpenGLTextureTransferInfo m_info;
-    OGL::Target m_target = OGL::Target2D;
-public:
-    VideoTexturePool(OGL::Target target): m_target(target)
-    {
-        m_info.transfer.format = OGL::BGRA;
-        m_info.transfer.type = OGL::UInt32_8_8_8_8_Rev;
-        m_info.texture = OGL::RGBA8_UNorm;
-    }
-    auto get(const QSize &size, const QSize &display) -> Cache
-    {
-        return get(IMGFMT_BGRA, size, display, m_info, false);
-    }
-    auto get(const VideoTexture &ref, const QSize &display, bool dma) -> Cache
-    {
-        return get(ref.imgfmt(), ref.size(), display, ref.info(), dma);
-    }
-private:
-    auto get(mp_imgfmt imgfmt, const QSize &size, const QSize &display,
-             const OpenGLTextureTransferInfo &info, bool dma) -> Cache
-    {
-        if (size.isEmpty() || display.isEmpty())
-            return Cache();
-        Cache cache = this->getCache(4, m_target);
-        if (cache.isNull())
-            return cache;
-        auto &tex = const_cast<VideoTexture&>(cache.image());
-        tex.m_displaySize = display;
-        if (tex.info() != info || tex.size() != size
-                || tex.m_dma != dma || tex.imgfmt() != imgfmt) {
-            OpenGLTextureBaseBinder b(tex.target());
-            b.bind(&tex);
-            tex.initialize(imgfmt, size, info, dma);
-        }
-        return cache;
-    }
 };
 
 struct cmplayer_vo_priv {
@@ -130,127 +82,31 @@ auto create_driver() -> vo_driver
 
 vo_driver video_out_null = create_driver();
 
-struct FrameTime {
-    FrameTime(quint64 frames, quint64 time)
-        : frames(frames), time(time) { }
-    quint64 frames = 0, time = 0;
-};
-
 struct VideoOutput::Data {
     VideoOutput *p = nullptr;
     vo *out = nullptr;
-    mp_image *mpi = nullptr;
     VideoFormat format;
     mp_image_params params;
-    VideoRendererItem *renderer = nullptr;
-    OpenGLOffscreenContext *gl = nullptr;
-    OpenGLFramebufferObject *fbo = nullptr;
-    VideoFrameShader *shader = nullptr;
-    VideoTexturePool *pool = nullptr;
-    VideoTextureCache cache;
-    int strides[4] = {0, 0, 0, 0};
+    VideoRenderer *renderer = nullptr;
 
+    VideoData data;
     mp_osd_res osd;
-    MpOsdBitmapCache bitmap;
     MpOsdBitmap::Id bitmapId;
     MpOsdBitmapPool bitmapPool;
     bool hasOsd = false;
-    OpenGLLogger logger{"Video"};
-#if DO_BENCHMARK
-    OpenGLBenchmarker bench;
-#endif
 
     PlayEngine *engine = nullptr;
-    QAtomicInt dirty = 0;
-    VideoColor color;
     QPoint mouse{-1, -1};
-    quint64 drawn = 0, dropped = 0;
-    std::deque<FrameTime> timings;
-    double avgfps = 0.0;
+
 
     auto reset() -> void
     {
         memset(&osd, 0, sizeof(osd));
-        cache = VideoTextureCache();
-        bitmap = MpOsdBitmapCache();
         bitmapPool.clear();
         bitmapId = MpOsdBitmap::Id();
-        mp_image_unrefp(&mpi);
+        data.release();
     }
-    auto draw() -> void
-    {
-        if (!mpi)
-            return;
-        Q_ASSERT(fbo);
-        gl->makeCurrent();
-        const int dirty = this->dirty.fetchAndStoreRelaxed(0);
-        if (dirty) {
-            if (dirty & DirtyEffects)
-                shader->setEffects(renderer->effects());
-            if (dirty & DirtyColor)
-                shader->setColor(color, engine->videoColorSpace(),
-                                 engine->videoColorRange());
-            if (dirty & DirtyChroma)
-                shader->setChromaUpscaler(engine->videoChromaUpscaler());
-            if (dirty & DirtyDeint) {
-                auto method = engine->deintOptionForSwDec().method;
-                if (IMGFMT_IS_HWACCEL(params.imgfmt))
-                    method = engine->deintOptionForHwDec().method;
-                shader->setDeintMethod(method);
-            }
-        }
-        shader->prepare(mpi);
-        if (shader->isDirectlyRenderable()) {
-            cache = pool->get(shader->directlyRenderableTexture(),
-                              format.displaySize(), shader->useDMA());
-            if (cache)
-                shader->upload(mpi, const_cast<VideoTexture&>(*cache));
-        } else {
-            cache = pool->get(format.size(), format.displaySize());
-            if (cache) {
-                Q_ASSERT(fbo->size() == cache->size());
-                shader->upload(mpi);
-                glBindTexture(cache->target(), GL_NONE);
-                fbo->bind();
-                fbo->attach(*cache);
-                shader->render(renderer->kernel());
-                fbo->release();
-            }
-        }
-        glFlush();
-        gl->doneCurrent();
 
-        static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
-        static auto cb = [] (void *data, struct sub_bitmaps *imgs) {
-            auto d = static_cast<Data*>(data);
-            if (d->cache && _Change(d->bitmapId, { imgs }))
-                d->bitmap = d->bitmapPool.get(imgs, { d->osd.w, d->osd.h });
-            d->hasOsd = true;
-        };
-        if (renderer) {
-            const auto dpr = renderer->devicePixelRatio();
-            auto size = renderer->osdSize();
-            osd.w = size.width();
-            osd.h = size.height();
-            osd.w *= dpr;
-            osd.h *= dpr;
-            osd.display_par = 1.0;
-            osd_draw(out->osd, osd, mpi->pts, 0, format, cb, this);
-        }
-
-        _Trace("VideoOutput::draw()");
-    }
-    template<class T, class... Args>
-    auto marker(T *t, void(T::*sig)(Args...), DirtyFlag flag) -> void
-    {
-        connect(t, sig, p, [=] () { dirty.store(dirty.load() | flag); },
-                Qt::DirectConnection);
-    }
-    void clearTimings() {
-        timings.clear();
-        drawn = 0;
-        avgfps = 0;
-    }
 };
 
 VideoOutput::VideoOutput(PlayEngine *engine)
@@ -259,14 +115,7 @@ VideoOutput::VideoOutput(PlayEngine *engine)
     d->p = this;
     d->reset();
     d->engine = engine;
-    d->marker(d->engine, &PlayEngine::videoColorRangeChanged, DirtyColor);
-    d->marker(d->engine, &PlayEngine::videoColorSpaceChanged, DirtyColor);
-    d->marker(d->engine, &PlayEngine::videoChromaUpscalerChanged, DirtyChroma);
-    d->marker(d->engine, &PlayEngine::deintOptionsChanged, DirtyDeint);
-    connect(&d->logger, &OpenGLLogger::logged,
-            [this] (const QOpenGLDebugMessage &msg) {
-        d->logger.print(msg);
-    });
+//    d->marker(d->engine, &PlayEngine::deintOptionsChanged, DirtyDeint);
 }
 
 VideoOutput::~VideoOutput()
@@ -274,28 +123,11 @@ VideoOutput::~VideoOutput()
     delete d;
 }
 
-auto VideoOutput::setRenderer(VideoRendererItem *renderer) -> void
+auto VideoOutput::setRenderer(VideoRenderer *renderer) -> void
 {
     if (!_Change(d->renderer, renderer) || !d->renderer)
         return;
-    d->marker(d->renderer, &VideoRendererItem::osdSizeChanged, DirtySize);
-    d->marker(d->renderer, &VideoRendererItem::effectsChanged, DirtyEffects);
-    d->marker(d->renderer, &VideoRendererItem::kernelChanged, DirtyKernel);
-    d->dirty.store(0xffffffff);
-}
-
-auto VideoOutput::initializeGL(OpenGLOffscreenContext *gl) -> void
-{
-    Q_ASSERT(QOpenGLContext::currentContext());
-    d->gl = gl;
-    _Debug("Initialize OpenGL context");
-}
-
-auto VideoOutput::finalizeGL() -> void
-{
-    Q_ASSERT(QOpenGLContext::currentContext());
-    d->gl = nullptr;
-    _Debug("Finalize OpenGL context");
+    d->renderer->prepare(d->format);
 }
 
 auto VideoOutput::preinit(vo *out) -> int
@@ -304,17 +136,7 @@ auto VideoOutput::preinit(vo *out) -> int
     priv->vo = address_cast<VideoOutput*>(priv->address);
     Data *d = priv->vo->d;
     d->out = out;
-    Q_ASSERT(d->gl);
-    d->gl->makeCurrent();
-    d->logger.initialize(d->gl->context(), false);
-    initialize_vdpau_interop(d->gl->context());
-    d->shader = new VideoFrameShader;
-    d->pool =new VideoTexturePool(d->shader->target());
-#if DO_BENCHMARK
-    d->bench.create();
-#endif
-    d->gl->doneCurrent();
-    d->dirty.store(0xffffffff);
+//    initialize_vdpau_interop(d->gl->context());
     _Debug("Initialize VideoOutput");
     return 0;
 }
@@ -322,17 +144,8 @@ auto VideoOutput::preinit(vo *out) -> int
 auto VideoOutput::uninit(vo *out) -> void
 {
     auto v = priv(out); Data *d = v->d;
-    d->gl->makeCurrent();
     d->reset();
-    _Delete(d->fbo);
-    _Delete(d->shader);
-    _Delete(d->pool);
-    finalize_vdpau_interop(d->gl->context());
-#if DO_BENCHMARK
-    d->bench.destroy();
-#endif
-    d->logger.finalize(d->gl->context());
-    d->gl->doneCurrent();
+//    finalize_vdpau_interop(d->gl->context());
     _Debug("Uninitialize VideoOutput");
 }
 
@@ -344,93 +157,66 @@ auto VideoOutput::format() const -> const VideoFormat&
 
 auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
 {
+    qDebug() << "reconfig";
     auto v = priv(out); Data *d = v->d;
     d->reset();
-    d->shader->setFlipped(flags & VOFLAG_FLIPPING);
-    bool rerenderable = false;
-    if (!mp_image_params_equals(&d->params, params)) {
-        if (d->params.imgfmt == params->imgfmt
-                && d->params.w == params->w && d->params.h == params->h)
-            rerenderable = true;
-    }
     d->params = *params;
     const auto desc = mp_imgfmt_get_desc(d->params.imgfmt);
-    if (_Change(d->format, VideoFormat(d->params, desc))) {
-        d->gl->makeCurrent();
-        d->shader->setFormat(d->params);
-        if (!d->fbo || d->fbo->size() != d->format.size())
-            _Renew(d->fbo, d->format.size(), d->shader->target());
-        d->gl->doneCurrent();
+    const auto inverted = flags & VOFLAG_FLIPPING;
+    if (_Change(d->format, VideoFormat(d->params, desc, inverted))) {
+        if (d->renderer)
+            d->renderer->prepare(d->format);
         emit v->formatChanged(d->format);
     }
     _Debug("Configure VideoOutput with %%(%%x%%) format",
            VideoFormat::name(params->imgfmt), params->w, params->h);
-    if (rerenderable)
-        d->draw();
     return 0;
-}
-
-auto VideoOutput::droppedFrames() const -> int
-{
-    return d->dropped;
-}
-
-auto VideoOutput::reset() -> void
-{
-    if (_Change(d->dropped, 0ull))
-        emit droppedFramesChanged(d->dropped);
-}
-
-auto VideoOutput::avgfps() const -> double
-{
-    return d->avgfps;
 }
 
 auto VideoOutput::drawImage(vo *out, mp_image *mpi) -> void
 {
     _Trace("VideoOutput::drawImage() with mpi=%%", mpi);
     auto v = priv(out); Data *d = v->d;
-    mp_image_setrefp(&d->mpi, mpi);
-    if (!d->mpi)
+    Q_ASSERT(mp_image_params_equal(&d->params, &mpi->params));
+    auto tmp = MpImage::wrap(mpi);
+    d->data.setImage(tmp);
+    if (!d->data.hasImage())
         return;
-    Q_ASSERT(mp_image_params_equals(&d->params, &mpi->params));
-    d->draw();
-    if (!d->format.isEmpty() && !d->cache)
-        emit v->droppedFramesChanged(++d->dropped);
+    static const bool format[SUBBITMAP_COUNT] = {0, 1, 1, 1};
+    static auto cb = [] (void *data, struct sub_bitmaps *imgs) {
+        auto d = static_cast<Data*>(data);
+        if (_Change(d->bitmapId, { imgs }))
+            d->data.setOsd(d->bitmapPool.get(imgs, { d->osd.w, d->osd.h }));
+        d->hasOsd = true;
+    };
+    if (d->renderer) {
+        const auto dpr = d->renderer->devicePixelRatio();
+        auto size = d->renderer->osdSize();
+        d->osd.w = size.width();
+        d->osd.h = size.height();
+        d->osd.w *= dpr;
+        d->osd.h *= dpr;
+        d->osd.display_par = 1.0;
+        osd_draw(out->osd, d->osd, d->data.image()->pts, 0, format, cb, d);
+    }
+    _Trace("VideoOutput::drawImage()");
 }
 
 auto VideoOutput::flipPage(vo *out) -> void
 {
     auto v = priv(out); Data *d = v->d;
-    if (!d->mpi || d->format.isEmpty() || !d->renderer) {
+    if (!d->data.hasImage() || d->format.isEmpty() || !d->renderer) {
         _Trace("VideoOutput::flipPage(): no frame to flip");
         return;
     }
-    if (d->hasOsd) {
-        d->renderer->present(d->cache, d->bitmap, true);
-        _Trace("VideoOutput::flipPage(): frame has been flipped with OSD");
-    } else {
-        d->renderer->present(d->cache, MpOsdBitmapCache(), false);
-        _Trace("VideoOutput::flipPage(): frame has been flipped");
-    }
-    d->cache = VideoTextureCache();
-    d->bitmap = MpOsdBitmapCache();
+    _Trace("VideoOutput::flipPage(): frame has osd: %%", d->hasOsd);
+    if (!d->hasOsd)
+        d->data.setOsd(VideoOsdCache());
+    Q_ASSERT(!d->format.isEmpty());
+    d->renderer->present(d->data);
     d->hasOsd = false;
-    ++d->drawn;
-    constexpr int interval = 4;
-    constexpr int max = 20, min = 5;
-    const int size = d->timings.size();
-    if (size == max && d->drawn & (interval - 1))
-        return;
-    d->timings.emplace_back(d->drawn, _SystemTime());
-    if (size > min) {
-        if (size > max)
-            d->timings.pop_front();
-        const auto df = d->timings.back().frames - d->timings.front().frames;
-        const auto dt = d->timings.back().time - d->timings.front().time;
-        d->avgfps = df/(dt*1e-6);
-    } else
-        d->avgfps = 0.0;
+//    d->data.setImage(MpImage{});
+//    d->data.pass(nullptr);
 }
 
 auto VideoOutput::control(vo *out, uint32_t req, void *data) -> int
@@ -438,7 +224,7 @@ auto VideoOutput::control(vo *out, uint32_t req, void *data) -> int
     auto v = priv(out); Data *d = v->d;
     switch (req) {
     case VOCTRL_REDRAW_FRAME: {
-        d->draw();
+//        d->draw();
         return true;
     } case VOCTRL_GET_HWDEC_INFO: {
         const auto info = static_cast<mp_hwdec_info*>(data);
@@ -447,40 +233,18 @@ auto VideoOutput::control(vo *out, uint32_t req, void *data) -> int
     } case VOCTRL_RESET:
         d->reset();
         return true;
-    case VOCTRL_WINDOW_TO_OSD_COORDS:
-        return true;
-    case VOCTRL_GET_EQUALIZER: {
-        auto args = static_cast<voctrl_get_equalizer_args*>(data);
-        const auto type = VideoColor::getType(args->name);
-        if (type == VideoColor::TypeMax)
-            return VO_NOTIMPL;
-        *(args->valueptr) = d->color.get(type);
-        return true;
-    } case VOCTRL_SET_EQUALIZER: {
-        auto args = static_cast<voctrl_set_equalizer_args*>(data);
-        const auto type = VideoColor::getType(args->name);
-        if (type == VideoColor::TypeMax)
-            return VO_NOTIMPL;
-        if (d->color.get(type) != args->value) {
-            d->color.set(type, args->value);
-            d->dirty.store(d->dirty.load() | DirtyColor);
-            out->want_redraw = true;
-        }
-        return true;
-    } case VOCTRL_RESUME:
-        d->clearTimings();
+    case VOCTRL_RESUME:
         return true;
     case VOCTRL_PAUSE:
-        d->clearTimings();
         return true;
     case VOCTRL_CHECK_EVENTS:
         if (d->renderer) {
-            Q_ASSERT(out->opts->enable_mouse_movements);
+//            Q_ASSERT(out->input_ctxopts->enable_mouse_movements);
             if (_Change(d->mouse, d->engine->mousePosition()))
-                vo_mouse_movement(out, d->mouse.x(), d->mouse.y());
+                mp_input_set_mouse_pos(out->input_ctx, d->mouse.x(), d->mouse.y());
         }
-        if (d->dirty.load())
-            out->want_redraw = true;
+//        if (d->dirty.load())
+//            out->want_redraw = true;
         return true;
     case VOCTRL_GET_COLORSPACE:
         *static_cast<mp_image_params*>(data) = d->params;

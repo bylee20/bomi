@@ -4,7 +4,7 @@
 struct vo_driver;                       struct mp_image;
 struct mp_image_params;                 struct vo;
 class VideoFormat;                      class PlayEngine;
-class DeintOption;                      class VideoRendererItem;
+class DeintOption;                      class VideoRenderer;
 class OpenGLOffscreenContext;           class OpenGLFramebufferObject;
 enum class ColorRange;
 
@@ -15,10 +15,7 @@ public:
     ~VideoOutput() override;
     auto prepare(void *avctx) -> void;
     auto format() const -> const VideoFormat&;
-    auto setRenderer(VideoRendererItem *renderer) -> void;
-    auto initializeGL(OpenGLOffscreenContext *gl) -> void;
-    auto finalizeGL() -> void;
-    auto setColorRange(ColorRange range) -> void;
+    auto setRenderer(VideoRenderer *renderer) -> void;
     auto reset() -> void;
     auto avgfps() const -> double;
     auto drawnFrames() const -> quint64;
@@ -27,6 +24,8 @@ signals:
     void droppedFramesChanged(int frames);
     void formatChanged(const VideoFormat &format);
     void avgfpsChanged(double avgfps);
+    void initialized();
+    void finalized();
 private:
     static auto preinit(vo *out) -> int;
     static auto uninit(vo *out) -> void;

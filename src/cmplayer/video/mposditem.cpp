@@ -13,6 +13,7 @@ struct MpOsdItem::Data {
     MpOsdItem *p = nullptr;
     QSize atlasSize = {0, 0};
     MpOsdBitmap::Format format = MpOsdBitmap::Ass;
+    MpOsdBitmap::Id id;
     int loc_atlas = 0, loc_matrix = 0;
     QOpenGLShaderProgram *shader = nullptr;
     OpenGLFramebufferObject *fbo = nullptr;
@@ -198,9 +199,12 @@ auto MpOsdItem:: draw(const Cache &cache) -> bool
 {
     if (!cache || cache->renderSize().isEmpty())
         return d->visible = false;
+    if (d->id == cache->id())
+        return d->visible = true;
     if (!d->fbo || d->fbo->size() != cache->renderSize())
         _Renew(d->fbo, cache->renderSize(), OGL::RGBA8_UNorm);
     d->draw(d->fbo, cache);
+    d->id = cache->id();
     return d->visible = true;
 }
 

@@ -147,18 +147,11 @@ struct PlayEngine::Data {
     Thread thread{p};
     AvInfoObject *videoInfo = new AvInfoObject, *audioInfo = new AvInfoObject;
     ChapterInfoObject *chapterInfo = nullptr;
-    QThread *videoThread = nullptr; // video decoding thread
-    OpenGLOffscreenContext *videoContext = nullptr;
 
-    InterpolatorType videoChromaUpscaler = InterpolatorType::Bilinear;
     MediaInfoObject mediaInfo;
     HardwareAcceleration hwacc = HardwareAcceleration::Unavailable;
     MetaData metaData;
     QString mediaName;
-
-    VideoColor videoEq;
-    ColorRange videoColorRange = ColorRange::Auto;
-    ColorSpace videoColorSpace = ColorSpace::Auto;
 
     double fps = 1.0;
     bool hasImage = false, tempoScaler = false, seekable = false;
@@ -183,7 +176,7 @@ struct PlayEngine::Data {
     QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
     AudioTrackInfoObject *audioTrackInfo = nullptr;
     SubtitleStyle subStyle;
-    VideoRendererItem *renderer = nullptr;
+    VideoRenderer *renderer = nullptr;
     ChapterList chapters, chapterFakeList;
     EditionList editions;
 

@@ -54,12 +54,6 @@ auto VideoFrameShader::release() -> void
     m_textures.clear();
 }
 
-auto VideoFrameShader::setFlipped(bool flipped) -> void
-{
-    if (_Change(m_flipped, flipped))
-        updateTexCoords();
-}
-
 auto VideoFrameShader::updateTexCoords() -> void
 {
     Q_ASSERT(!m_textures.isEmpty());
@@ -69,7 +63,7 @@ auto VideoFrameShader::updateTexCoords() -> void
         p2.rx() = m_params.w/(double)m_textures.front()->width();
     else
         p2 = QPointF(m_params.w, m_params.h);
-    if (m_flipped)
+    if (m_inverted)
         std::swap(p1.ry(), p2.ry());
 
     m_vbo.bind();
@@ -250,9 +244,11 @@ const vec2 tex_size = vec2(texWidth, texHeight);
     }
 }
 
-auto VideoFrameShader::setFormat(const mp_image_params &params) -> void
+auto VideoFrameShader::setFormat(const mp_image_params &params,
+                                 bool inverted) -> void
 {
     m_params = params;
+    m_inverted = inverted;
     m_hwdec = IMGFMT_IS_HWACCEL(m_params.imgfmt);
     m_imgfmtOut = HwAcc::renderType(m_params.imgfmt);
     m_direct = false;
@@ -393,9 +389,9 @@ auto VideoFrameShader::setFormat(const mp_image_params &params) -> void
     m_refill = true;
 }
 
-auto VideoFrameShader::prepare(const mp_image *mpi) -> void
+auto VideoFrameShader::prepare(const MpImage &mpi) -> void
 {
-    if (!mpi)
+    if (mpi.isNull())
         return;
     if (!m_refill) {
         for (int i = 0; i < mpi->fmt.num_planes; ++i) {
@@ -432,9 +428,9 @@ auto VideoFrameShader::prepare(const mp_image *mpi) -> void
     m_top = mpi->fields & MP_IMGFIELD_TOP;
 }
 
-auto VideoFrameShader::upload(const mp_image *mpi, VideoTexture &texture) -> void
+auto VideoFrameShader::upload(const MpImage &mpi, VideoTexture &texture) -> void
 {
-    if (!mpi || texture.isEmpty())
+    if (mpi.isNull() || texture.isEmpty())
         return;
     OpenGLTextureBaseBinder binder(m_target, m_binding);
     if (m_hwdec || !m_additional) {
@@ -443,9 +439,9 @@ auto VideoFrameShader::upload(const mp_image *mpi, VideoTexture &texture) -> voi
     }
 }
 
-auto VideoFrameShader::upload(const mp_image *mpi) -> void
+auto VideoFrameShader::upload(const MpImage &mpi) -> void
 {
-    if (!mpi || m_textures.isEmpty())
+    if (mpi.isNull() || m_textures.isEmpty())
         return;
     OpenGLTextureBaseBinder binder(m_target, m_binding);
     if (m_hwdec || !m_additional) {
@@ -500,7 +496,7 @@ auto VideoFrameShader::render(const Kernel3x3 &k3x3) -> void
     m_vbo.release();
 }
 
-auto VideoFrameShader::fillInfo(const mp_image *mpi) -> void
+auto VideoFrameShader::fillInfo(const MpImage &mpi) -> void
 {
     release();
 

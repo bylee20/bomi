@@ -44,14 +44,6 @@ PlayEngine::PlayEngine()
     setOption("vo", d->vo().constData());
     setOption("fixed-vo", "yes");
 
-    mpv_set_wakeup_callback(d->handle, [] (void *arg) {
-        auto d = static_cast<Data*>(arg);
-        if (d->initialized && !d->videoThread) {
-            d->videoThread = QThread::currentThread();
-            emit d->p->needToMoveVideoThread();
-        }
-    }, d);
-
     auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
         const auto opts = QString::fromLocal8Bit(overrides);
@@ -76,9 +68,6 @@ PlayEngine::PlayEngine()
             }
         }
     }
-    d->videoContext = new OpenGLOffscreenContext;
-    connect(this, &PlayEngine::needToMoveVideoThread,
-            this, &PlayEngine::moveVideoThread, Qt::QueuedConnection);
     d->fatal(mpv_initialize(d->handle), "Couldn't initialize mpv.");
     _Debug("Initialized");
     d->initialized = true;
@@ -86,7 +75,6 @@ PlayEngine::PlayEngine()
 
 PlayEngine::~PlayEngine()
 {
-    _Delete(d->videoContext);
     delete d->videoInfo;
     delete d->audioInfo;
     delete d->chapterInfo;
@@ -98,42 +86,6 @@ PlayEngine::~PlayEngine()
     mpv_terminate_destroy(d->handle);
     delete d;
     _Debug("Finalized");
-}
-
-auto PlayEngine::initializeOffscreenContext() -> void
-{
-
-}
-
-auto PlayEngine::moveVideoThread() -> void
-{
-    if (d->videoThread && d->sgInit && !d->glInit) {
-        _Info("Initialize video OpenGL context for %%", d->videoThread);
-        d->videoContext->createSurface();
-        d->videoContext->setThread(d->videoThread);
-        d->glInit = true;
-    }
-}
-
-auto PlayEngine::initializeGL(QQuickWindow *window) -> void
-{
-    auto ctx = window->openglContext();
-    ctx->doneCurrent();
-    d->videoContext->setShareContext(ctx);
-    d->videoContext->setFormat(ctx->format());
-    d->videoContext->createContext();
-    ctx->makeCurrent(window);
-    d->sgInit = true;
-    emit needToMoveVideoThread();
-    d->filter->initializeGL(d->videoContext);
-    d->video->initializeGL(d->videoContext);
-    d->videoContext->setContextName("OffscreenOpenGL"_a);
-}
-
-auto PlayEngine::finalizeGL() -> void
-{
-    d->video->finalizeGL();
-    d->filter->finalizeGL();
 }
 
 auto PlayEngine::metaData() const -> const MetaData&
@@ -226,7 +178,7 @@ auto PlayEngine::subtitleStreams() const -> const StreamList&
     return d->streams[Stream::Subtitle];
 }
 
-auto PlayEngine::videoRenderer() const -> VideoRendererItem*
+auto PlayEngine::videoRenderer() const -> VideoRenderer*
 {
     return d->renderer;
 }
@@ -442,7 +394,7 @@ auto PlayEngine::removeSubtitleStream(int id) -> void
 
 auto PlayEngine::avgfps() const -> double
 {
-    return d->video->avgfps();
+    return d->renderer->avgfps();
 }
 
 auto PlayEngine::avgsync() const -> double
@@ -555,7 +507,7 @@ auto PlayEngine::customEvent(QEvent *event) -> void
         d->subtitleFiles.clear();
         break;
     } case StartPlayback: {
-        d->video->reset();
+        d->renderer->resetTimings();
         QString name; bool seekable = false;
         _GetAllData(event, name, seekable, d->editions);
         if (_Change(d->seekable, seekable))
@@ -1128,54 +1080,7 @@ auto PlayEngine::fps() const -> double
     return d->fps;
 }
 
-auto PlayEngine::videoChromaUpscaler() const -> InterpolatorType
-{
-    return d->videoChromaUpscaler;
-}
-
-auto PlayEngine::setVideoChromaUpscaler(InterpolatorType type) -> void
-{
-    if (_Change(d->videoChromaUpscaler, type))
-        emit videoChromaUpscalerChanged(type);
-}
-
-auto PlayEngine::setVideoColorRange(ColorRange range) -> void
-{
-    if (_Change(d->videoColorRange, range))
-        emit videoColorRangeChanged(range);
-}
-
-auto PlayEngine::videoColorSpace() const -> ColorSpace
-{
-    return d->videoColorSpace;
-}
-
-auto PlayEngine::setVideoColorSpace(ColorSpace space) -> void
-{
-    if (_Change(d->videoColorSpace, space))
-        emit videoColorSpaceChanged(space);
-}
-
-auto PlayEngine::videoColorRange() const -> ColorRange
-{
-    return d->videoColorRange;
-}
-
-auto PlayEngine::setVideoEqualizer(const VideoColor &prop) -> void
-{
-    d->videoEq = prop;
-    d->setmpv_async("brightness", prop.brightness());
-    d->setmpv_async("contrast", prop.contrast());
-    d->setmpv_async("hue", prop.hue());
-    d->setmpv_async("saturation", prop.saturation());
-}
-
-auto PlayEngine::videoEqualizer() const -> const VideoColor&
-{
-    return d->videoEq;
-}
-
-auto PlayEngine::setVideoRenderer(VideoRendererItem *renderer) -> void
+auto PlayEngine::setVideoRenderer(VideoRenderer *renderer) -> void
 {
     if (d->renderer != renderer) {
         if (d->renderer) {
@@ -1190,7 +1095,7 @@ auto PlayEngine::setVideoRenderer(VideoRendererItem *renderer) -> void
 
 auto PlayEngine::droppedFrames() const -> int
 {
-    return d->video->droppedFrames();
+    return d->renderer->droppedFrames();
 }
 
 auto PlayEngine::bitrate(double fps) const -> double
@@ -1246,6 +1151,7 @@ auto PlayEngine::setDeintOptions(const DeintOption &swdec,
     d->deint_swdec = swdec;
     d->deint_hwdec = hwdec;
     emit deintOptionsChanged();
+    d->renderer->setDeintOptions(swdec, hwdec);
 }
 
 auto PlayEngine::deintOptionForSwDec() const -> DeintOption

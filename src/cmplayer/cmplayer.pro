@@ -228,7 +228,9 @@ HEADERS += \
     enum/colorspace.hpp \
     player/mainwindow_p.hpp \
     video/videotexture.hpp \
-    enum/quicksnapshotsave.hpp
+    enum/quicksnapshotsave.hpp \
+    video/videodata.hpp \
+    video/mpimage.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -398,7 +400,9 @@ SOURCES += \
     player/mainwindow_m.cpp \
     player/playengine_p.cpp \
     video/videotexture.cpp \
-    enum/quicksnapshotsave.cpp
+    enum/quicksnapshotsave.cpp \
+    video/videodata.cpp \
+    video/mpimage.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

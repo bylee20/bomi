@@ -9,10 +9,10 @@ extern "C" {
 #include <video/decode/lavc.h>
 }
 
-struct lavc_ctx;                        struct mp_image;
+struct lavc_ctx;
 struct vd_lavc_hwdec;                   struct mp_hwdec_info;
 class VideoOutput;                      class OpenGLTexture2D;
-class VideoTexture;
+class VideoTexture;                     class MpImage;
 enum class DeintMethod;
 
 class HwAccMixer {
@@ -20,7 +20,7 @@ public:
     HwAccMixer(const QSize &size): m_size(size) { }
     virtual ~HwAccMixer() {}
     virtual auto upload(OpenGLTexture2D &texture,
-                        const mp_image *mpi, bool deint) -> bool = 0;
+                        const MpImage &mpi, bool deint) -> bool = 0;
     auto size() const -> const QSize& { return m_size; }
     auto width() const -> int { return m_size.width(); }
     auto height() const -> int { return m_size.height(); }
@@ -47,7 +47,7 @@ public:
     static auto renderType(mp_imgfmt hwtype) -> mp_imgfmt;
     static auto createMixer(mp_imgfmt imgfmt, const QSize &size) -> HwAccMixer*;
     auto imgfmt() const -> int;
-    virtual auto getImage(mp_image *mpi) -> mp_image* = 0;
+    virtual auto getImage(const MpImage &mpi) -> MpImage = 0;
     virtual auto type() const -> Type = 0;
 protected:
     HwAcc(AVCodecID codec);

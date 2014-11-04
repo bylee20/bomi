@@ -1,5 +1,6 @@
 #include "videofilter.hpp"
 #include "hwacc.hpp"
+#include "mpimage.hpp"
 #include "softwaredeinterlacer.hpp"
 #include "deintoption.hpp"
 #include "player/mpv_helper.hpp"
@@ -95,7 +96,8 @@ auto VideoFilter::open(vf_instance *vf) -> int
     d->updateDeint();
     memset(&d->params, 0, sizeof(d->params));
     vf->reconfig = reconfig;
-    vf->filter_ext = filter;
+    vf->filter_ext = filterIn;
+    vf->filter_out = filterOut;
     vf->query_format = queryFormat;
     vf->uninit = uninit;
     vf->control = control;
@@ -118,19 +120,25 @@ auto VideoFilter::setHwAcc(HwAcc *acc) -> void
     d->acc = acc;
 }
 
-auto VideoFilter::filter(vf_instance *vf, mp_image *mpi) -> int
+mp_image *tt = nullptr;
+
+auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
 {
-    if (!mpi)
+    if (!_mpi)
         return 0;
     auto v = priv(vf); auto d = v->d;
-    auto img = mpi;
+    auto mpi = MpImage::wrap(_mpi);
     if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
-        img = d->acc->getImage(mpi);
-    d->deinterlacer.push(img);
-    if (img != mpi)
-        talloc_free(img);
-    while (auto img = d->deinterlacer.pop())
-        vf_add_output_frame(vf, img);
+        mpi = d->acc->getImage(mpi);
+    d->deinterlacer.push(std::move(mpi));
+    return 0;
+}
+
+auto VideoFilter::filterOut(vf_instance *vf) -> int
+{
+    auto v = priv(vf); auto d = v->d;
+//    if (auto mpi = d->deinterlacer.pop().take())
+        vf_add_output_frame(vf, d->deinterlacer.pop().take());
     return 0;
 }
 

@@ -4,7 +4,7 @@
 #include "mrl.hpp"
 #include "mediamisc.hpp"
 
-class VideoRendererItem;                class VideoFormat;
+class VideoRenderer;                class VideoFormat;
 class DeintOption;                      class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
 class MetaData;                         struct SubtitleStyle;
@@ -69,16 +69,6 @@ public:
     enum DVDCmd { DVDMenu = -1 };
     PlayEngine();
     ~PlayEngine();
-    auto initializeGL(QQuickWindow *window) -> void;
-    auto finalizeGL() -> void;
-    auto videoEqualizer() const -> const VideoColor&;
-    auto setVideoEqualizer(const VideoColor &prop) -> void;
-    auto setVideoColorRange(ColorRange range) -> void;
-    auto setVideoColorSpace(ColorSpace space) -> void;
-    auto videoColorRange() const -> ColorRange;
-    auto videoColorSpace() const -> ColorSpace;
-    auto setVideoChromaUpscaler(InterpolatorType tpe) -> void;
-    auto videoChromaUpscaler() const -> InterpolatorType;
 
     auto time() const -> int;
     auto begin() const -> int;
@@ -112,7 +102,7 @@ public:
     auto isVolumeNormalizerActivated() const -> bool;
     auto isTempoScaled() const -> bool;
     auto fps() const -> double;
-    auto videoRenderer() const -> VideoRendererItem*;
+    auto videoRenderer() const -> VideoRenderer*;
     auto videoFormat() const -> VideoFormat;
     auto videoStreams() const -> const StreamList&;
     auto setCurrentVideoStream(int id) -> void;
@@ -174,7 +164,7 @@ public:
     auto setVolume(int volume) -> void;
     auto setAmp(double amp) -> void;
     auto setMuted(bool muted) -> void;
-    auto setVideoRenderer(VideoRendererItem *renderer) -> void;
+    auto setVideoRenderer(VideoRenderer *renderer) -> void;
     auto stop() -> void;
     auto reload() -> void;
     auto pause() -> void;
@@ -226,13 +216,9 @@ signals:
     void subtitleTrackInfoChanged();
     void requestNextStartInfo();
     void metaDataChanged();
-    void videoColorRangeChanged(ColorRange range);
-    void videoColorSpaceChanged(ColorSpace space);
-    void videoChromaUpscalerChanged(InterpolatorType type);
+
     void deintOptionsChanged();
-    void needToMoveVideoThread();
 private:
-    auto moveVideoThread() -> void;
     auto updateState(State state) -> void;
     auto exec() -> void;
     auto customEvent(QEvent *event) -> void;

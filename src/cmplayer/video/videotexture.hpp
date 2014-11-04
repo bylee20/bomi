@@ -3,9 +3,7 @@
 
 #include "videoimagepool.hpp"
 #include "opengl/openglframebufferobject.hpp"
-extern "C" {
-#include <video/mp_image.h>
-}
+#include "mpimage.hpp"
 
 class HwAccMixer;
 
@@ -19,8 +17,8 @@ public:
     }
     ~VideoTexture();
     auto displaySize() const -> QSize { return m_displaySize; }
-    auto directRender(const mp_image *mpi, bool deint) const -> bool;
-    auto upload(const mp_image *mpi, bool deint) -> void;
+    auto directRender(const MpImage &mpi, bool deint) const -> bool;
+    auto upload(const MpImage &mpi, bool deint) -> void;
     auto initialize(mp_imgfmt imgfmt, const QSize &size,
                     const OpenGLTextureTransferInfo &info,
                     bool dma, int plane = 0) -> void;

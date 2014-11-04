@@ -12,6 +12,7 @@ public:
             { return image == rhs.image && pos == rhs.pos; }
         auto operator != (const Id &rhs) const noexcept -> bool
             { return !operator == (rhs); }
+        auto isSame(const sub_bitmaps *bitmaps) const -> bool;
         int image = -1, pos = -1;
     };
     enum Format {

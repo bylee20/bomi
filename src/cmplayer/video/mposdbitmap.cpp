@@ -10,6 +10,11 @@ MpOsdBitmap::Id::Id(const sub_bitmaps *bitmaps) noexcept
     : image(bitmaps->bitmap_id)
     , pos(bitmaps->bitmap_pos_id) { }
 
+auto MpOsdBitmap::Id::isSame(const sub_bitmaps *bitmaps) const -> bool
+{
+    return image == bitmaps->bitmap_id && pos == bitmaps->bitmap_pos_id;
+}
+
 auto MpOsdBitmap::copy(const sub_bitmaps *imgs, const QSize &renderSize) -> bool
 {
     if (m_id == Id(imgs))

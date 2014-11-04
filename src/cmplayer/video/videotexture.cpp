@@ -8,7 +8,7 @@ VideoTexture::~VideoTexture()
     destroy();
 }
 
-auto VideoTexture::upload(const mp_image *mpi, bool deint) -> void
+auto VideoTexture::upload(const MpImage &mpi, bool deint) -> void
 {
     static constexpr int MP_IMGFIELD_ADDITIONAL = 0x100000;
     if (m_mixer) {

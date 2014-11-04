@@ -8,9 +8,7 @@
 #include "enum/deintmethod.hpp"
 #include "enum/videoeffect.hpp"
 #include "videotexture.hpp"
-extern "C" {
-#include <video/mp_image.h>
-}
+#include "mpimage.hpp"
 
 class HwAccMixer;                       class Kernel3x3;
 class Interpolator;
@@ -31,11 +29,10 @@ public:
                   ColorSpace space, ColorRange range) -> void;
     auto setChromaUpscaler(InterpolatorType type) -> void;
     auto isDirectlyRenderable() const -> bool;
-    auto upload(const mp_image *mpi) -> void;
-    auto upload(const mp_image *mpi, VideoTexture &texture) -> void;
-    auto prepare(const mp_image *mpi) -> void;
-    auto setFormat(const mp_image_params &params) -> void;
-    auto setFlipped(bool flipped) -> void;
+    auto upload(const MpImage &mpi) -> void;
+    auto upload(const MpImage &mpi, VideoTexture &texture) -> void;
+    auto prepare(const MpImage &mpi) -> void;
+    auto setFormat(const mp_image_params &params, bool inverted) -> void;
     auto directlyRenderableTexture() -> const VideoTexture&
         { return *m_textures.front(); }
     auto useDMA() const -> bool { return m_dma && m_params.imgfmt != IMGFMT_VDA; }
@@ -43,7 +40,7 @@ private:
     auto release() -> void;
     auto updateColorMatrix() -> void;
     auto hasKernelEffects() const -> bool { return KernelEffects & m_effects; }
-    auto fillInfo(const mp_image *mpi) -> void;
+    auto fillInfo(const MpImage &mpi) -> void;
     auto updateTexCoords() -> void;
 private:
     struct ShaderInfo {
@@ -75,7 +72,7 @@ private:
     DeintMethod m_deint = DeintMethod::None;
     QByteArray m_texel;
     bool m_dma = false, m_direct = false, m_defaultColor = true;
-    bool m_top = false, m_flipped = false, m_additional = false;
+    bool m_top = false, m_inverted = false, m_additional = false;
     bool m_hwdec = false;
     QPointF m_chroma = {0.0, 0.0};
     OpenGLTexture1D m_lutInt[2];

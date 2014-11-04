@@ -8,11 +8,13 @@ extern "C" {
 class VideoFormat {
 public:
     using Type = mp_imgfmt;
-    VideoFormat(const mp_image_params &params, const mp_imgfmt_desc &desc)
-        : d(new Data(params, desc)) { }
+    VideoFormat(const mp_image_params &params, const mp_imgfmt_desc &desc,
+                bool inverted)
+        : d(new Data(params, desc, inverted)) { }
     VideoFormat(): d(new Data) { }
     auto operator == (const VideoFormat &rhs) const -> bool
-        { return isSame(d->params, rhs.d->params); }
+        { return isSame(d->params, rhs.d->params)
+                 && d->inverted == rhs.d->inverted; }
     auto operator != (const VideoFormat &rhs) const -> bool
         { return !operator == (rhs); }
     auto params() const -> const mp_image_params& { return d->params; }
@@ -29,16 +31,20 @@ public:
     auto range() const -> mp_csp_levels { return d->params.colorlevels; }
     auto chroma() const -> mp_chroma_location
         { return d->params.chroma_location; }
+    auto isInverted() const -> bool { return d->inverted; }
     static auto name(Type type) -> QByteArray;
 private:
     struct Data : public QSharedData {
         Data() { }
-        Data(const mp_image_params &params, const mp_imgfmt_desc &desc);
+        Data(const mp_image_params &params, const mp_imgfmt_desc &desc,
+             bool inverted);
         int bpp = 0;
-        mp_image_params params{
+        bool inverted = false;
+        mp_image_params params {
             IMGFMT_NONE, 0, 0, 0, 0, // w, h, d_w, d_h
             MP_CSP_BT_709,    MP_CSP_LEVELS_PC,
-            MP_CHROMA_CENTER, MP_CSP_LEVELS_PC, 0
+            MP_CSP_PRIM_BT_709, MP_CHROMA_CENTER, MP_CSP_LEVELS_PC, 0,
+            MP_STEREO3D_MONO, MP_STEREO3D_MONO
         };
     };
     static auto isSame(const mp_image_params &p1,

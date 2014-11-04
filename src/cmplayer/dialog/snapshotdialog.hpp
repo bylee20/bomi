@@ -1,7 +1,7 @@
 #ifndef SNAPSHOTDIALOG_H
 #define SNAPSHOTDIALOG_H
 
-class VideoRendererItem;        class SubtitleRendererItem;
+class VideoRenderer;        class SubtitleRendererItem;
 
 class SnapshotDialog : public QDialog {
     Q_OBJECT

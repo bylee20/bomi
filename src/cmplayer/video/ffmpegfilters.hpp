@@ -7,14 +7,16 @@ extern "C" {
 #include <libavfilter/avfiltergraph.h>
 #include <libpostproc/postprocess.h>
 }
+#include "mpimage.hpp"
 
 class FFmpegFilterGraph {
 public:
     ~FFmpegFilterGraph() { release(); }
-    auto push(mp_image *mpi) -> bool;
-    auto pull() -> mp_image*;
-    auto initialize(const QString &option, const QSize &size,
-                    mp_imgfmt imgfmt) -> bool;
+    auto push(const MpImage &mpi) -> bool;
+    auto pull() -> MpImage;
+    auto initialize(const QString &opt, const QSize &s, mp_imgfmt fmt) -> bool;
+    auto initialize(const QString &opt, const MpImage &mpi) -> bool
+        { return initialize(opt, {mpi->w, mpi->h}, mpi->imgfmt); }
 private:
     auto release() -> void;
     auto linkGraph(AVFilterInOut *&in, AVFilterInOut *&out) -> bool;
@@ -29,9 +31,11 @@ class FFmpegPostProc {
 public:
     FFmpegPostProc() { m_pool = mp_image_pool_new(10); }
     ~FFmpegPostProc() { release(); mp_image_pool_clear(m_pool); }
-    auto process(mp_image *dest, const mp_image *src) const -> bool;
-    auto initialize(const QString &option, const QSize &size, mp_imgfmt imgfmt) -> bool;
-    auto newImage(const mp_image *mpi) const -> mp_image*;
+    auto process(MpImage &dst, const MpImage &src) const -> bool;
+    auto initialize(const QString &opt, const QSize &s, mp_imgfmt fmt) -> bool;
+    auto initialize(const QString &opt, const MpImage &mpi) -> bool
+        { return initialize(opt, {mpi->w, mpi->h}, mpi->imgfmt); }
+    auto newImage(const MpImage &mpi) const -> MpImage;
 private:
     auto release() -> void;
     QString m_option;
