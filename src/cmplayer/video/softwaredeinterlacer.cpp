@@ -109,7 +109,6 @@ auto SoftwareDeinterlacer::pop() -> MpImage
             const bool topFirst = d->input->fields & MP_IMGFIELD_TOP_FIRST;
             ret = d->input;
             ret->pts = d->nextPts();
-            qDebug() << d->processed << ret->pts;
             if (d->processed == 0)
                 ret->fields |= fields[topFirst];
             else {
@@ -122,7 +121,6 @@ auto SoftwareDeinterlacer::pop() -> MpImage
             if (!ret.isNull()) {
                 ret->fields &= ~MP_IMGFIELD_INTERLACED;
                 ret->pts = d->nextPts();
-                qDebug() << d->processed << ret->pts;
             }
             break;
         } case PP: {
