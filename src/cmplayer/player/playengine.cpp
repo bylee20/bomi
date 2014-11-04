@@ -38,7 +38,6 @@ PlayEngine::PlayEngine()
     setOption("osd-level", "0");
     setOption("quiet", "yes");
     setOption("input-terminal", "no");
-    setOption("ao", "null,");
     setOption("ad-lavc-downmix", "no");
     setOption("title", "\"\"");
     setOption("vo", d->vo().constData());
@@ -285,27 +284,17 @@ auto PlayEngine::setChannelLayout(ChannelLayout layout) -> void
         reload();
 }
 
-using AudioDriverName = QPair<AudioDriver, const char*>;
-const std::array<AudioDriverName, AudioDriverInfo::size()-1> audioDriverNames =
-{{
-    {AudioDriver::ALSA, "alsa"},
-    {AudioDriver::OSS, "oss"},
-    {AudioDriver::PulseAudio, "pulse"},
-    {AudioDriver::CoreAudio, "coreaudio"},
-    {AudioDriver::PortAudio, "portaudio"},
-    {AudioDriver::JACK, "jack"},
-    {AudioDriver::OpenAL, "openal"}
-}};
-
-auto PlayEngine::setAudioDriver(AudioDriver driver) -> void
+auto PlayEngine::setAudioDevice(const QString &device) -> void
 {
-    if (_Change(d->audioDriver, driver)) {
-        auto it = std::find_if(
-            audioDriverNames.begin(), audioDriverNames.end(),
-            [driver] (const AudioDriverName &one) {return one.first == driver;}
-        );
-        d->ao = it != audioDriverNames.end() ? it->second : "";
-    }
+    d->audioDevice = device;
+//    d->ao = device.toLocal8Bit();
+//    if (_Change(d->audioDriver, driver)) {
+//        auto it = std::find_if(
+//            audioDriverNames.begin(), audioDriverNames.end(),
+//            [driver] (const AudioDriverName &one) {return one.first == driver;}
+//        );
+//        d->ao = it != audioDriverNames.end() ? it->second : "";
+//    }
 }
 
 auto PlayEngine::screen() const -> QQuickItem*
@@ -930,7 +919,7 @@ auto PlayEngine::exec() -> void
             break;
         } case MPV_EVENT_AUDIO_RECONFIG: {
             auto audio = new AvInfoObject;
-            audio->m_driver = AudioDriverInfo::name(d->audioDriver);
+            audio->m_device = d->audioDevice;
             audio->m_codec = d->getmpv<QString>("audio-format");
             audio->m_codecDescription = d->getmpv<QString>("audio-codec");
 
@@ -1219,4 +1208,16 @@ auto PlayEngine::sendMouseMove(const QPointF &pos) -> void
 auto PlayEngine::subtitleFiles() const -> QVector<SubtitleFileInfo>
 {
     return d->subtitleFiles;
+}
+
+auto PlayEngine::audioDeviceList() const -> QList<QPair<QString, QString>>
+{
+    const QVariantList list = d->getmpv<QVariant>("audio-device-list").toList();
+    QList<QPair<QString, QString>> devs;
+    devs.reserve(list.size());
+    for (auto &one : list) {
+        const auto map = one.toMap();
+        devs.append({map[u"name"_q].toString(), map[u"description"_q].toString()});
+    }
+    return devs;
 }

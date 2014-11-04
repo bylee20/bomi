@@ -262,7 +262,7 @@ static const auto jio = JIO(
     JE(bg_color),
     JE(deint_hwdec),
     JE(deint_swdec),
-    JE(audio_driver),
+    JE(audio_device),
     JE(clipping_method),
     JE(cache_local),
     JE(cache_disc),
@@ -356,7 +356,7 @@ static const auto jio = JIO(
     FUNC1(bg_color); \
     FUNC1(deint_hwdec); \
     FUNC1(deint_swdec); \
-    FUNC1(audio_driver); \
+    FUNC1(audio_device); \
     FUNC1(clipping_method); \
     FUNC1(cache_local); \
     FUNC1(cache_disc); \

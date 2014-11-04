@@ -93,7 +93,7 @@ public:
 
     Shortcuts shortcuts = defaultShortcuts();
 
-    AudioDriver audio_driver = AudioDriver::Auto;
+    QString audio_device = u"auto"_q;
     ClippingMethod clipping_method = ClippingMethod::Auto;
 
     int cache_local = 0, cache_network = 2048, cache_disc = 0;

@@ -184,8 +184,7 @@ struct PlayEngine::Data {
     VideoFormat videoFormat;
     DeintOption deint_swdec, deint_hwdec;
     DeintMode deint = DeintMode::Auto;
-    QByteArray ao = "";
-    AudioDriver audioDriver = AudioDriver::Auto;
+    QString audioDevice = u"auto"_q;
 
     StartInfo startInfo, nextInfo;
 

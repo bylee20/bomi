@@ -8,6 +8,7 @@ class PrefDialog : public QDialog {
 public:
     PrefDialog(QWidget *parent = 0);
     ~PrefDialog();
+    auto setAudioDeviceList(const QList<QPair<QString, QString>> &devices) -> void;
     auto set(const Pref &pref) -> void;
     auto get(Pref &p) -> void;
 signals:

@@ -9,7 +9,7 @@ class DeintOption;                      class ChannelLayoutMap;
 class AudioFormat;                      class VideoColor;
 class MetaData;                         struct SubtitleStyle;
 struct AudioNormalizerOption;           struct SubtitleFileInfo;
-enum class AudioDriver;                 enum class ClippingMethod;
+enum class ClippingMethod;
 enum class DeintMethod;                 enum class DeintMode;
 enum class ChannelLayout;               enum class InterpolatorType;
 enum class ColorRange;                  enum class ColorSpace;
@@ -130,7 +130,7 @@ public:
     auto deintOptionForHwDec() const -> DeintOption;
     auto setDeintMode(DeintMode mode) -> void;
     auto deintMode() const -> DeintMode;
-    auto setAudioDriver(AudioDriver driver) -> void;
+    auto setAudioDevice(const QString &device) -> void;
     auto setClippingMethod(ClippingMethod method) -> void;
     auto setMinimumCache(int playback, int seeking) -> void;
     auto run() -> void;
@@ -165,6 +165,7 @@ public:
     auto setAmp(double amp) -> void;
     auto setMuted(bool muted) -> void;
     auto setVideoRenderer(VideoRenderer *renderer) -> void;
+    auto audioDeviceList() const -> QList<QPair<QString, QString>>;
     auto stop() -> void;
     auto reload() -> void;
     auto pause() -> void;

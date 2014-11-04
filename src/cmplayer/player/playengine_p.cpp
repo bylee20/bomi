@@ -116,7 +116,7 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
         return;
     timing = false;
     OptionList opts;
-    opts.add("ao"_b, ao.isEmpty() ? R"("")"_b : ao);
+    opts.add("audio-device"_b, audioDevice.toLatin1(), true);
     if (hwaccCodecs.isEmpty() || hwaccBackend == HwAcc::None)
         opts.add("hwdec"_b, "no"_b);
     else {

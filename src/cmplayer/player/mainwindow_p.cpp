@@ -852,7 +852,7 @@ auto MainWindow::Data::applyPref() -> void
     const auto deint_swdec = conv(p.deint_swdec);
     const auto deint_hwdec = conv(p.deint_hwdec);
     engine.setDeintOptions(deint_swdec, deint_hwdec);
-    engine.setAudioDriver(p.audio_driver);
+    engine.setAudioDevice(p.audio_device);
     engine.setClippingMethod(p.clipping_method);
     engine.setMinimumCache(p.cache_min_playback, p.cache_min_seeking);
     Kernel3x3 blur, sharpen;

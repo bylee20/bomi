@@ -237,25 +237,11 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.mouse_scroll_up->set(d->actionInfo);
     d->ui.mouse_scroll_down->set(d->actionInfo);
 
-    QVector<AudioDriver> audioDrivers;
-    audioDrivers << AudioDriver::Auto;
-#ifdef Q_OS_LINUX
-    audioDrivers << AudioDriver::ALSA << AudioDriver::OSS;
-#endif
-#ifdef Q_OS_MAC
-    audioDrivers << AudioDriver::CoreAudio;
-#endif
-#if HAVE_PORTAUDIO
-    audioDrivers << AudioDriver::PortAudio;
-#endif
-#if HAVE_PULSEAUDIO
-    audioDrivers << AudioDriver::PulseAudio;
-#endif
-#if HAVE_JACK
-    audioDrivers << AudioDriver::JACK;
-#endif
-    for (auto driver : audioDrivers)
-        d->ui.audio_driver->addItem(AudioDriverInfo::name(driver), (int)driver);
+    connect(d->ui.audio_device,
+            static_cast<Signal<QComboBox, int>>(&QComboBox::currentIndexChanged),
+            [this] (int idx) {
+        d->ui.audio_device_desc->setText(d->ui.audio_device->itemData(idx).toString());
+    });
 
     d->ui.network_folders->setAddingAndErasingEnabled(true);
 
@@ -412,6 +398,17 @@ PrefDialog::~PrefDialog() {
     delete d;
 }
 
+auto PrefDialog::setAudioDeviceList(const QList<QPair<QString, QString>> &devices)
+-> void {
+    d->ui.audio_device->clear();
+    for (auto &dev : devices)
+        d->ui.audio_device->addItem(dev.first, dev.second);
+    if (!devices.isEmpty()) {
+        d->ui.audio_device->setCurrentIndex(0);
+        d->ui.audio_device_desc->setText(d->ui.audio_device->itemData(0).toString());
+    }
+}
+
 template<class T>
 static void setHw(QGroupBox *group, bool enabled,
                   QMap<T, QCheckBox*> &map, const QVector<T> &keys) {
@@ -557,7 +554,7 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.sub_sync_step->setValue(p.sub_sync_step*0.001);
     d->ui.audio_sync_step->setValue(p.audio_sync_step*0.001);
 
-    d->ui.audio_driver->setCurrentData((int)p.audio_driver);
+    d->ui.audio_device->setCurrentText(p.audio_device);
     d->ui.clipping_method->setCurrentValue(p.clipping_method);
 
     d->ui.cache_local->setValue(p.cache_local);
@@ -700,8 +697,7 @@ auto PrefDialog::get(Pref &p) -> void
 
     p.skin_name = d->ui.skin_name->currentText();
 
-    const auto data = d->ui.audio_driver->currentData().toInt();
-    p.audio_driver = AudioDriverInfo::from(data);
+    p.audio_device = d->ui.audio_device->currentText();
     p.clipping_method = d->ui.clipping_method->currentValue();
 
     p.cache_local = d->ui.cache_local->value();

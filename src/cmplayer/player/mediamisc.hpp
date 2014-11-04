@@ -60,20 +60,20 @@ class AvInfoObject : public QObject {
     Q_PROPERTY(QString codec READ codecDescription CONSTANT FINAL)
     Q_PROPERTY(AvIoFormat *input READ input CONSTANT FINAL)
     Q_PROPERTY(AvIoFormat *output READ output CONSTANT FINAL)
-    Q_PROPERTY(QString driver READ driver CONSTANT FINAL)
-    Q_PROPERTY(QString hwacc READ driver CONSTANT FINAL)
+    Q_PROPERTY(QString device READ device CONSTANT FINAL)
+    Q_PROPERTY(QString hwacc READ device CONSTANT FINAL)
 public:
     AvInfoObject(QObject *parent = nullptr);
     auto codecDescription() const -> QString {return m_codecDescription;}
     auto codec() const -> QString { return m_codec; }
     AvIoFormat *input() const {return m_input;}
     AvIoFormat *output() const {return m_output;}
-    auto driver() const -> QString { return m_driver; }
+    auto device() const -> QString { return m_device; }
 private:
     auto setHwAcc(int acc) -> void;
     AvIoFormat *m_input = new AvIoFormat(this);
     AvIoFormat *m_output = new AvIoFormat(this);
-    QString m_codecDescription, m_hwacc, &m_driver = m_hwacc, m_codec;
+    QString m_codecDescription, m_hwacc, &m_device = m_hwacc, m_codec;
     friend class PlayEngine;
 };
 

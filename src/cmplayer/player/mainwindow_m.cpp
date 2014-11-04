@@ -746,6 +746,7 @@ auto MainWindow::Data::connectMenus() -> void
     connect(tool[u"pref"_q], &QAction::triggered, p, [this] () {
         if (!prefDlg) {
             prefDlg = new PrefDialog(p);
+            prefDlg->setAudioDeviceList(engine.audioDeviceList());
             connect(prefDlg, &PrefDialog::applyRequested, p, [this] {
                 prefDlg->get(preferences); applyPref();
             });

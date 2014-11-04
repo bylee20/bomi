@@ -148,7 +148,7 @@ Item {
                     .arg(audio.output.channels)
                     .arg(box.number(audio.output.bits));
                 txt += '\n';
-                txt += qsTr("Output Driver: %1").arg(audio.driver);
+                txt += qsTr("Output Device: %1").arg(audio.device);
                 text = txt
             }
         }
