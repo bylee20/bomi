@@ -510,8 +510,8 @@ auto VideoFrameShader::fillInfo(const MpImage &mpi) -> void
 
     if (m_hwdec) {
         bytes.resize(1);
-        bytes.front().rwidth() = tmp::aligned<4>(m_params.w)*4;
-        bytes.front().rheight() = tmp::aligned<2>(m_params.h);
+        bytes.front().rwidth() = m_params.w * 4;
+        bytes.front().rheight() = m_params.h;
     }
 
     OpenGLTextureBaseBinder binder(m_target, m_binding);
