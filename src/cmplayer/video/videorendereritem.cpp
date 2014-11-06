@@ -471,8 +471,8 @@ auto VideoRenderer::equalizer() const -> const VideoColor&
 
 auto VideoRenderer::updatePolish() -> void
 {
+    HighQualityTextureItem::updatePolish();
     //    d->hasOsd = false;
-
 }
 
 auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
@@ -531,9 +531,6 @@ auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
 //            }
 //        }
 
-        _Trace("VideoRendererItem::updateTexture(): render queued frame(%%)",
-               texture->size());
-
         d->mposd.draw(d->data.osd());
         setOverlayTexture(d->mposd.isVisible() ? d->mposd.texture()
                                                : transparentTexture());
@@ -567,6 +564,9 @@ auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
             d->avgfps = df/(dt*1e-6);
         } else
             d->avgfps = 0.0;
+        _Trace("VideoRendererItem::updateTexture(): "
+               "render queued frame(%%), avgfps: %%",
+               texture->size(), d->avgfps);
     }
 
     if (d->take) {
