@@ -16,8 +16,8 @@ public:
     auto operator = (MpImage &&rhs) -> MpImage&
         { std::swap(m, rhs.m); return *this; }
     auto operator * () const -> const mp_image& { return *m; }
-    auto operator -> () const -> const mp_image* { return m; }
     auto operator * () -> mp_image& { return *m; }
+    auto operator -> () const -> const mp_image* { return m; }
     auto operator -> () -> mp_image* { return m; }
     auto isNull() const -> bool { return !m; }
     auto take() -> mp_image* { auto tmp = m; m = nullptr; return tmp; }
@@ -25,8 +25,8 @@ public:
     auto swap(MpImage &rhs) -> void { std::swap(m, rhs.m); }
     auto data() const -> const mp_image* { return m; }
     auto data() -> mp_image* { return m; }
-    static auto wrap(mp_image *mpi) -> MpImage { return MpImage(mpi); }
     static auto ref(mp_image *mpi) -> MpImage { return MpImage(makeRef(mpi)); }
+    static auto wrap(mp_image *mpi) -> MpImage { return MpImage(mpi); }
     static auto wrap(mp_image *mpi, bool ref) -> MpImage
         { return ref ? MpImage::ref(mpi) : wrap(mpi); }
 private:
