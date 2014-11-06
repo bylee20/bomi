@@ -254,3 +254,18 @@ $static constexpr VideoEffects ShaderEffects = KernelEffects | ColorEffects;
 -Fixed
 -Current
 -Ask
+
++MouseBehavior
+-DoubleClick[-Double click-][:-1:]
+-MiddleClick[-Middle button-][:Qt::MiddleButton:]
+-ScrollUp[-Scroll up: -][:-2:]
+-ScrollDown[-Scroll down-][:-3:]
+-Extra1Click[-Extra button 1-][:Qt::ExtraButton1:]
+-Extra2Click[-Extra button 2-][:Qt::ExtraButton2:]
+-Extra3Click[-Extra button 3-][:Qt::ExtraButton3:]
+-Extra4Click[-Extra button 4-][:Qt::ExtraButton4:]
+-Extra5Click[-Extra button 5-][:Qt::ExtraButton5:]
+-Extra6Click[-Extra button 6-][:Qt::ExtraButton6:]
+-Extra7Click[-Extra button 7-][:Qt::ExtraButton7:]
+-Extra8Click[-Extra button 8-][:Qt::ExtraButton8:]
+-Extra9Click[-Extra button 9-][:Qt::ExtraButton9:]

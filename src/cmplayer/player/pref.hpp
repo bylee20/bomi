@@ -15,11 +15,11 @@
 #include "enum/clippingmethod.hpp"
 #include "enum/verticalalignment.hpp"
 #include "enum/quicksnapshotsave.hpp"
+#include "enum/mousebehavior.hpp"
 
 class QLocale;
 
 using Shortcuts = QHash<QString, QList<QKeySequence>>;
-
 enum class KeyMapPreset {CMPlayer, Movist};
 
 class Pref {
@@ -66,10 +66,7 @@ public:
     SubtitleStyle sub_style;        QStringList sub_priority;
 
     bool enable_system_tray = true, hide_rather_close = true;
-    KeyModifierActionMap double_click_map = defaultDoubleClick();
-    KeyModifierActionMap middle_click_map = defaultMiddleClick();
-    KeyModifierActionMap scroll_up_map = defaultWheelUpAction();
-    KeyModifierActionMap scroll_down_map = defaultWheelDownAction();
+    MouseActionMap mouse_action_map = defaultMouseActionMap();
     bool invert_wheel = false;
     int seek_step1 = 5000, seek_step2 = 30000, seek_step3 = 60000, speed_step = 10;
     int brightness_step = 1, saturation_step = 1, contrast_step = 1, hue_step = 1;
@@ -115,10 +112,7 @@ private:
     static auto defaultHwAccCodecs() -> QVector<int>;
     static auto defaultHwAccDeints() -> QVector<DeintMethod>;
     static auto defaultShortcuts() -> Shortcuts;
-    static auto defaultDoubleClick() -> KeyModifierActionMap;
-    static auto defaultMiddleClick() -> KeyModifierActionMap;
-    static auto defaultWheelUpAction() -> KeyModifierActionMap;
-    static auto defaultWheelDownAction() -> KeyModifierActionMap;
+    static auto defaultMouseActionMap() -> MouseActionMap;
 };
 
 #endif // PREF_HPP

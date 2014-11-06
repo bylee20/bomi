@@ -3,28 +3,20 @@
 
 #include "enum/keymodifier.hpp"
 
-class Record;
+enum class MouseBehavior;               class Record;
 
 struct KeyModifierActionMap {
-    struct Action {
-        Action(): enabled(false) {}
-        Action(bool e, const QString &id): enabled(e), id(id) {}
-        bool enabled; QString id;
-    };
     KeyModifierActionMap();
-    auto operator[](KeyModifier m) -> Action& {return m_map[m];}
-    auto operator[](KeyModifier m) const -> const Action {return m_map[m];}
-    auto operator[](int id) const -> const Action
+    auto operator[](KeyModifier m) -> QString& {return m_map[m];}
+    auto operator[](KeyModifier m) const -> QString {return m_map[m];}
+    auto operator[](int id) const -> QString
         {return m_map[EnumInfo<KeyModifier>::from(id, KeyModifier::None)];}
     auto toJson() const -> QJsonObject;
     auto setFromJson(const QJsonObject &json) -> bool;
-    auto save(Record &r, const QString &group) const -> void;
-    auto load(Record &r, const QString &group) -> void;
-
-    static auto data() -> QMap<KeyModifier, Action> KeyModifierActionMap::*
-        { return &KeyModifierActionMap::m_map; }
 private:
-    QMap<KeyModifier, Action> m_map;
+    QMap<KeyModifier, QString> m_map;
 };
+
+using MouseActionMap = QMap<MouseBehavior, KeyModifierActionMap>;
 
 #endif // KEYMODIFIERACTIONMAP_HPP

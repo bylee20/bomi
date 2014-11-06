@@ -131,7 +131,6 @@ HEADERS += \
 	dialog/opendiscdialog.hpp \
 	widget/simplelistwidget.hpp \
 	widget/qtcolorpicker.hpp \
-	widget/mouseactiongroupbox.hpp \
 	widget/encodingcombobox.hpp \
 	widget/colorselectwidget.hpp \
 	widget/enumcombobox.hpp \
@@ -230,7 +229,8 @@ HEADERS += \
     video/videotexture.hpp \
     enum/quicksnapshotsave.hpp \
     video/videodata.hpp \
-    video/mpimage.hpp
+    video/mpimage.hpp \
+    enum/mousebehavior.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -311,7 +311,6 @@ SOURCES += \
 	dialog/urldialog.cpp \
 	widget/simplelistwidget.cpp \
 	widget/qtcolorpicker.cpp \
-	widget/mouseactiongroupbox.cpp \
 	widget/encodingcombobox.cpp \
 	widget/colorselectwidget.cpp \
 	widget/enumcombobox.cpp \
@@ -402,7 +401,8 @@ SOURCES += \
     video/videotexture.cpp \
     enum/quicksnapshotsave.cpp \
     video/videodata.cpp \
-    video/mpimage.cpp
+    video/mpimage.cpp \
+    enum/mousebehavior.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \

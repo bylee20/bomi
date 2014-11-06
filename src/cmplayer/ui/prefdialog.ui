@@ -72,7 +72,7 @@
      <item>
       <widget class="QStackedWidget" name="stack">
        <property name="currentIndex">
-        <number>4</number>
+        <number>18</number>
        </property>
        <widget class="QWidget" name="open_media">
         <layout class="QVBoxLayout" name="verticalLayout">
@@ -3212,53 +3212,7 @@ e.g.: English, Korean</string>
        <widget class="QWidget" name="ui_mouse">
         <layout class="QVBoxLayout" name="verticalLayout_41">
          <item>
-          <widget class="QTabWidget" name="tabWidget">
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <widget class="QWidget" name="tab">
-            <attribute name="title">
-             <string>Button Click</string>
-            </attribute>
-            <layout class="QVBoxLayout" name="verticalLayout_40">
-             <item>
-              <widget class="MouseActionGroupBox" name="mouse_double_click">
-               <property name="title">
-                <string>Double Click</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="MouseActionGroupBox" name="mouse_middle_click">
-               <property name="title">
-                <string>Middle Click</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-           <widget class="QWidget" name="tab_2">
-            <attribute name="title">
-             <string>Wheel Scroll</string>
-            </attribute>
-            <layout class="QVBoxLayout" name="verticalLayout_25">
-             <item>
-              <widget class="MouseActionGroupBox" name="mouse_scroll_up">
-               <property name="title">
-                <string>Scroll Up</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="MouseActionGroupBox" name="mouse_scroll_down">
-               <property name="title">
-                <string>Scroll Down</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </widget>
+          <widget class="PrefMouseActionTree" name="mouse_action_tree"/>
          </item>
          <item>
           <widget class="QCheckBox" name="ui_mouse_invert_wheel">
@@ -3748,16 +3702,15 @@ e.g.: English, Korean</string>
    <header>widget/enumcombobox.hpp</header>
   </customwidget>
   <customwidget>
-   <class>MouseActionGroupBox</class>
-   <extends>QGroupBox</extends>
-   <header>widget/mouseactiongroupbox.hpp</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>OpenMediaBehaviorGroupBox</class>
    <extends>QGroupBox</extends>
    <header>widget/openmediabehaviorgroupbox.hpp</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PrefMouseActionTree</class>
+   <extends>QTreeWidget</extends>
+   <header>dialog/prefdialog_p.hpp</header>
   </customwidget>
  </customwidgets>
  <resources>

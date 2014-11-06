@@ -28,6 +28,7 @@
 #include "changevalue.hpp"
 #include "videoeffect.hpp"
 #include "quicksnapshotsave.hpp"
+#include "mousebehavior.hpp"
 bool _IsEnumTypeId(int userType) {
     return userType == qMetaTypeId<TextThemeStyle>()
         || userType == qMetaTypeId<SpeakerId>()
@@ -58,6 +59,7 @@ bool _IsEnumTypeId(int userType) {
         || userType == qMetaTypeId<ChangeValue>()
         || userType == qMetaTypeId<VideoEffect>()
         || userType == qMetaTypeId<QuickSnapshotSave>()
+        || userType == qMetaTypeId<MouseBehavior>()
         || false;
 }
 
@@ -149,6 +151,9 @@ bool _GetEnumFunctionsForSql(int varType, EnumVariantToSqlFunc &toSql, EnumVaria
     } else    if (varType == qMetaTypeId<QuickSnapshotSave>()) {
         toSql = _EnumVariantToSql<QuickSnapshotSave>;
         fromSql = _EnumVariantFromSql<QuickSnapshotSave>;
+    } else    if (varType == qMetaTypeId<MouseBehavior>()) {
+        toSql = _EnumVariantToSql<MouseBehavior>;
+        fromSql = _EnumVariantFromSql<MouseBehavior>;
     } else
         return false;
     return true;
@@ -243,6 +248,9 @@ auto _EnumNameVariantConverter(int metaType) -> EnumNameVariantConverter
     } else    if (metaType == qMetaTypeId<QuickSnapshotSave>()) {
         conv.variantToName = _EnumVariantToEnumName<QuickSnapshotSave>;
         conv.nameToVariant = _EnumNameToEnumVariant<QuickSnapshotSave>;
+    } else    if (metaType == qMetaTypeId<MouseBehavior>()) {
+        conv.variantToName = _EnumVariantToEnumName<MouseBehavior>;
+        conv.nameToVariant = _EnumNameToEnumVariant<MouseBehavior>;
     } else
         return EnumNameVariantConverter();
     return conv;

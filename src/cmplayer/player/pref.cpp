@@ -281,10 +281,7 @@ static const auto jio = JIO(
     JE(open_media_by_drag_and_drop),
     JE(osd_theme),
     JE(sub_style),
-    JE(double_click_map),
-    JE(middle_click_map),
-    JE(scroll_up_map),
-    JE(scroll_down_map),
+    JE(mouse_action_map),
     JE(shortcuts),
     JE(quick_snapshot_folder),
     JE(quick_snapshot_save),
@@ -375,10 +372,6 @@ static const auto jio = JIO(
     FUNC1(open_media_by_drag_and_drop); \
     FUNC1(osd_theme); \
     FUNC2(sub_style); \
-    FUNC2(double_click_map); \
-    FUNC2(middle_click_map); \
-    FUNC2(scroll_up_map); \
-    FUNC2(scroll_down_map); \
 }
 
 auto Pref::save() const -> void
@@ -512,32 +505,16 @@ auto Pref::defaultOsdTheme() -> OsdTheme
     return theme;
 }
 
-auto Pref::defaultDoubleClick() -> KeyModifierActionMap
+auto Pref::defaultMouseActionMap() -> MouseActionMap
 {
-    KeyModifierActionMap map;
-    map[KeyModifier::None] = { true, u"window/full"_q };
-    return map;
-}
-
-auto Pref::defaultMiddleClick() -> KeyModifierActionMap
-{
-    KeyModifierActionMap map;
-    map[KeyModifier::None] = { true, u"play/pause"_q };
-    return map;
-}
-
-auto Pref::defaultWheelUpAction() -> KeyModifierActionMap
-{
-    KeyModifierActionMap map;
-    map[KeyModifier::None] = { true, u"audio/volume/increase"_q };
-    map[KeyModifier::Ctrl] = { true, u"audio/amp/increase"_q };
-    return map;
-}
-
-auto Pref::defaultWheelDownAction() -> KeyModifierActionMap
-{
-    KeyModifierActionMap map;
-    map[KeyModifier::None] = { true, u"audio/volume/decrease"_q };
-    map[KeyModifier::Ctrl] = { true, u"audio/amp/decrease"_q };
+    MouseActionMap map;
+    map[MouseBehavior::DoubleClick][KeyModifier::None] = u"window/full"_q;
+    map[MouseBehavior::MiddleClick][KeyModifier::None] = u"play/pause"_q;
+    map[MouseBehavior::ScrollUp][KeyModifier::None] = u"audio/volume/increase"_q;
+    map[MouseBehavior::ScrollUp][KeyModifier::Ctrl] = u"audio/amp/increase"_q;
+    map[MouseBehavior::ScrollDown][KeyModifier::None] = u"audio/volume/decrease"_q;
+    map[MouseBehavior::ScrollDown][KeyModifier::Ctrl] = u"audio/amp/decrease"_q;
+    map[MouseBehavior::Extra1Click][KeyModifier::None] = u"play/seek/backward1"_q;
+    map[MouseBehavior::Extra2Click][KeyModifier::None] = u"play/seek/forward1"_q;
     return map;
 }

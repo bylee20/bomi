@@ -1,13 +1,17 @@
 #ifndef PREFDIALOG_P_HPP
 #define PREFDIALOG_P_HPP
 
+#include "enum/mousebehavior.hpp"
+#include "misc/keymodifieractionmap.hpp"
+
 class Menu;
 
 static const int CategoryRole = Qt::UserRole + 1;
 static const int WidgetRole = Qt::UserRole + CategoryRole;
 
+struct ActionInfo { QString key, description; };
+
 class PrefMenuTreeItem : public QTreeWidgetItem {
-    using MouseAction = QPair<QString, QString>;
 public:
     enum Column {
         Discription = 0, Shortcut1, Shortcut2, Shortcut3, Shortcut4, Id
@@ -22,11 +26,11 @@ public:
     auto id() const -> QString { return m_id; }
     auto description() const -> QString { return m_desc; }
     static auto makeRoot(QTreeWidget *parent)
-        -> T<QVector<PrefMenuTreeItem*>, QVector<MouseAction>>;
+        -> T<QVector<PrefMenuTreeItem*>, QVector<ActionInfo>>;
 private:
     static auto create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
                        const QString &prefix,
-                       QVector<MouseAction> &list) -> PrefMenuTreeItem*;
+                       QVector<ActionInfo> &list) -> PrefMenuTreeItem*;
     PrefMenuTreeItem(Menu *menu, PrefMenuTreeItem *parent);
     PrefMenuTreeItem(QAction *action, PrefMenuTreeItem *parent);
     QAction *m_action; QString m_id, m_desc;
@@ -48,6 +52,15 @@ private:
     static auto drawHeader(QPainter *painter, const QRect &rect,
                            const QFont &font, const QPalette &palette,
                            const QString &text) -> void;
+};
+
+class PrefMouseActionTree : public QTreeWidget {
+    Q_OBJECT
+public:
+    PrefMouseActionTree(QWidget *parent = nullptr): QTreeWidget(parent) { }
+    auto setActionList(const QVector<ActionInfo> *actions) -> void;
+    auto set(const MouseActionMap &map) -> void;
+    auto get() const -> MouseActionMap;
 };
 
 #endif // PREFDIALOG_P_HPP

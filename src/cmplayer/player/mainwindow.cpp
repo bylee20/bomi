@@ -251,6 +251,8 @@ auto MainWindow::resetMoving() -> void
     }
 }
 
+using MsBh = MouseBehavior;
+
 auto MainWindow::onMouseMoveEvent(QMouseEvent *event) -> void
 {
     QWidget::mouseMoveEvent(event);
@@ -273,16 +275,15 @@ auto MainWindow::onMouseDoubleClickEvent(QMouseEvent *event) -> void
 {
     QWidget::mouseDoubleClickEvent(event);
     if (event->buttons() & Qt::LeftButton) {
-        const auto &info = d->pref().double_click_map[event->modifiers()];
-        if (!info.enabled)
+        const auto act = d->menu.action(d->actionId(MsBh::DoubleClick, event));
+        if (!act)
             return;
-        const auto action = d->menu.action(info.id);
 #ifdef Q_OS_MAC
         if (action == d->menu(u"window"_q)[u"full"_q])
             QTimer::singleShot(300, action, SLOT(trigger()));
         else
 #endif
-        d->trigger(action);
+        d->trigger(act);
     }
 }
 
@@ -290,18 +291,18 @@ auto MainWindow::onMouseReleaseEvent(QMouseEvent *event) -> void
 {
     QWidget::mouseReleaseEvent(event);
     const auto rect = geometry();
-    if (d->middleClicked && event->button() == Qt::MiddleButton
-            && rect.contains(event->localPos().toPoint()+rect.topLeft())) {
-        const auto &info = d->pref().middle_click_map[event->modifiers()];
-        if (info.enabled)
-            d->trigger(d->menu.action(info.id));
+    if (d->pressedButton == event->button()
+            && rect.contains(event->localPos().toPoint() + rect.topLeft())) {
+        const auto mb = MouseBehaviorInfo::fromData(d->pressedButton);
+        if (mb != MsBh::DoubleClick)
+            d->trigger(d->menu.action(d->actionId(mb, event)));
     }
 }
 
 auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
 {
     QWidget::mousePressEvent(event);
-    d->middleClicked = false;
+    d->pressedButton = Qt::NoButton;
     bool showContextMenu = false;
     switch (event->button()) {
     case Qt::LeftButton:
@@ -310,8 +311,12 @@ auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
         d->moving = true;
         d->prevPos = event->globalPos();
         break;
-    case Qt::MiddleButton:
-        d->middleClicked = true;
+    case Qt::MiddleButton:    case Qt::ExtraButton1:
+    case Qt::ExtraButton2:    case Qt::ExtraButton3:
+    case Qt::ExtraButton4:    case Qt::ExtraButton5:
+    case Qt::ExtraButton6:    case Qt::ExtraButton7:
+    case Qt::ExtraButton8:    case Qt::ExtraButton9:
+        d->pressedButton = event->button();
         break;
     case Qt::RightButton:
         showContextMenu = true;
@@ -326,17 +331,15 @@ auto MainWindow::onMousePressEvent(QMouseEvent *event) -> void
     d->engine.sendMouseClick(d->vr.mapToVideo(event->pos()));
 }
 
-auto MainWindow::onWheelEvent(QWheelEvent *event) -> void
+auto MainWindow::onWheelEvent(QWheelEvent *ev) -> void
 {
-    QWidget::wheelEvent(event);
-    const auto delta = event->delta();
+    QWidget::wheelEvent(ev);
+    const auto delta = ev->delta();
     if (delta) {
         const bool up = d->pref().invert_wheel ? delta < 0 : delta > 0;
-        const auto &info = up ? d->pref().scroll_up_map[event->modifiers()]
-                              : d->pref().scroll_down_map[event->modifiers()];
-        if (info.enabled)
-            d->trigger(d->menu.action(info.id));
-        event->accept();
+        const auto id = d->actionId(up ? MsBh::ScrollUp : MsBh::ScrollDown, ev);
+        d->trigger(d->menu.action(id));
+        ev->accept();
     }
 }
 

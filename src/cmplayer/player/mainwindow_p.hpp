@@ -69,7 +69,8 @@ struct MainWindow::Data {
     QPoint prevPos;
     Qt::WindowStates winState = Qt::WindowNoState;
     Qt::WindowStates prevWinState = Qt::WindowNoState;
-    bool middleClicked = false, moving = false, changingSub = false;
+    Qt::MouseButton pressedButton = Qt::NoButton;
+    bool moving = false, changingSub = false;
     bool pausedByHiding = false, dontShowMsg = true, dontPause = false;
     bool stateChanging = false, loading = false, sgInit = false;
     QTimer loadingTimer, hider, initializer;
@@ -95,6 +96,8 @@ struct MainWindow::Data {
     HistoryModel history;
 
     auto pref() const -> const Pref& {return preferences;}
+    auto actionId(MouseBehavior mb, QInputEvent *event) const -> QString
+        { return preferences.mouse_action_map[mb][event->modifiers()]; }
     auto setOpen(const Mrl &mrl) -> void
         { if (mrl.isLocalFile()) _SetLastOpenPath(mrl.toLocalFile()); }
     auto appendSubFiles(const QStringList &files, bool checked,

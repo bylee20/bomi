@@ -1,6 +1,7 @@
 #include "prefdialog_p.hpp"
 #include "player/rootmenu.hpp"
 #include "tmp/algorithm.hpp"
+#include "enum/mousebehavior.hpp"
 
 PrefMenuTreeItem::PrefMenuTreeItem(Menu *menu, PrefMenuTreeItem *parent)
     : QTreeWidgetItem(parent)
@@ -47,11 +48,11 @@ auto PrefMenuTreeItem::shortcuts() const -> QList<QKeySequence>
 }
 
 auto PrefMenuTreeItem::makeRoot(QTreeWidget *parent)
--> T<QVector<PrefMenuTreeItem*>, QVector<MouseAction>>
+-> T<QVector<PrefMenuTreeItem*>, QVector<ActionInfo>>
 {
     RootMenu &root = RootMenu::instance();
     QVector<PrefMenuTreeItem*> items;
-    QVector<MouseAction> info;
+    QVector<ActionInfo> info;
     auto item = create(&root, items, QString(), info);
     parent->addTopLevelItems(item->takeChildren());
     delete item;
@@ -59,7 +60,7 @@ auto PrefMenuTreeItem::makeRoot(QTreeWidget *parent)
 }
 
 auto PrefMenuTreeItem::create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
-                              const QString &prefix, QVector<MouseAction> &list)
+                              const QString &prefix, QVector<ActionInfo> &list)
 -> PrefMenuTreeItem*
 {
     RootMenu &root = RootMenu::instance();
@@ -81,7 +82,7 @@ auto PrefMenuTreeItem::create(Menu *menu, QVector<PrefMenuTreeItem*> &items,
                 child->setText(Id, child->m_id = id);
                 items.push_back(child);
                 children.push_back(child);
-                list.append({ child->m_desc, id });
+                list.append({ id, child->m_desc });
             }
         }
     }
@@ -143,4 +144,140 @@ auto PrefDelegate::drawHeader(QPainter *painter, const QRect &rect,
     painter->drawLine(start, end);
 
     painter->restore();
+}
+
+/******************************************************************************/
+
+static constexpr auto ModRole = Qt::UserRole + 1;
+static constexpr auto ActionIndexRole = Qt::UserRole + 2;
+
+class MouseActionDelegate : public QStyledItemDelegate {
+    const QVector<ActionInfo> *actions = nullptr;
+public:
+    MouseActionDelegate(const QVector<ActionInfo> *actions,
+                        PrefMouseActionTree *parent)
+        : QStyledItemDelegate(parent), actions(actions) { }
+    auto createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/,
+                          const QModelIndex &index) const -> QWidget*
+    {
+        if (!index.parent().isValid() || index.column() != 1)
+            return nullptr;
+        auto combo = new QComboBox(parent);
+        for (int i = 0; i < actions->size(); ++i)
+            combo->addItem(actions->at(i).description);
+        return combo;
+    }
+    auto setEditorData(QWidget *editor, const QModelIndex &index) const -> void
+    {
+        if (!editor)
+            return;
+        const int idx = index.model()->data(index, ActionIndexRole).toInt();
+        auto combox = static_cast<QComboBox*>(editor);
+        combox->setCurrentIndex(idx);
+    }
+    auto setModelData(QWidget *editor, QAbstractItemModel *model,
+                      const QModelIndex &index) const -> void
+    {
+        if (!editor)
+            return;
+        auto combo = static_cast<QComboBox*>(editor);
+        const auto idx = combo->currentIndex();
+        model->setData(index, idx, ActionIndexRole);
+        model->setData(index, actions->at(idx).description);
+    }
+    auto updateEditorGeometry(QWidget *w, const QStyleOptionViewItem &opt,
+                              const QModelIndex &/*index*/) const -> void
+    {
+        if (w)
+            w->setGeometry(opt.rect);
+    }
+};
+
+static const auto mods = QList<KeyModifier>() << KeyModifier::None
+                                              << KeyModifier::Ctrl
+                                              << KeyModifier::Shift
+                                              << KeyModifier::Alt;
+
+class MouseActionItem : public QTreeWidgetItem {
+
+public:
+    MouseActionItem(MouseBehavior mb, const QVector<ActionInfo> *actions,
+                    QTreeWidget *parent)
+        : QTreeWidgetItem(parent), m_mb(mb), m_actions(actions)
+    {
+        setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+        setText(0, MouseBehaviorInfo::description(mb));
+        for (auto mod : mods) {
+            auto sub = new QTreeWidgetItem;
+            sub->setData(0, ModRole, QVariant::fromValue(mod));
+            if (mod != KeyModifier::None) {
+                const QKeySequence key((int)mod);
+                sub->setText(0, key.toString(QKeySequence::NativeText));
+            } else
+                sub->setText(0, qApp->translate("PrefDialog", "No modifier"));
+            sub->setFlags(flags() | Qt::ItemIsEditable);
+            addChild(sub);
+        }
+    }
+    auto set(const KeyModifierActionMap &map) -> void
+    {
+        for (int i = 0; i < mods.size(); ++i) {
+            const auto id = map[mods[i]];
+            int idx = 0;
+            for (int j = 0; j < m_actions->size(); ++j) {
+                if (m_actions->at(j).key == id) {
+                    idx = j;
+                    break;
+                }
+            }
+            auto sub = child(i);
+            sub->setText(1, m_actions->at(idx).description);
+            sub->setData(1, ActionIndexRole, idx);
+        }
+    }
+    auto get() const -> KeyModifierActionMap
+    {
+        KeyModifierActionMap map;
+        for (int i = 0; i < mods.size(); ++i) {
+            const auto idx = child(i)->data(1, ActionIndexRole).toInt();
+            map[mods[i]] = m_actions->at(idx).key;
+        }
+        return map;
+    }
+private:
+    MouseBehavior m_mb = MouseBehavior::DoubleClick;
+    const QVector<ActionInfo> *m_actions = nullptr;
+};
+
+auto PrefMouseActionTree::setActionList(const QVector<ActionInfo> *acts) -> void
+{
+    clear();
+    setColumnCount(2);
+    setHeaderLabels(QStringList() << tr("Behavior") << tr("Menu"));
+    const auto all = MouseBehaviorInfo::items();
+    for (auto one : all)
+        addTopLevelItem(new MouseActionItem(one.value, acts, this));
+    setItemDelegate(new MouseActionDelegate(acts, this));
+    expandAll();
+    resizeColumnToContents(0);
+    auto setExp = [this] (MouseBehavior mb, const QString &exp)
+        { topLevelItem((int)mb)->setText(1, exp); };
+    setExp(MouseBehavior::Extra1Click,
+           qApp->translate("PrefDialog", "Typically denoted as 'Back' button"));
+    setExp(MouseBehavior::Extra2Click,
+           qApp->translate("PrefDialog", "Typically denoted as 'Forward' button"));
+}
+
+auto PrefMouseActionTree::set(const MouseActionMap &map) -> void
+{
+    for (int i = 0; i < topLevelItemCount(); ++i)
+        static_cast<MouseActionItem*>(topLevelItem(i))->set(map[(MouseBehavior)i]);
+}
+
+auto PrefMouseActionTree::get() const -> MouseActionMap
+{
+    MouseActionMap map;
+    for (int i = 0; i < topLevelItemCount(); ++i)
+        map[(MouseBehavior)i] = static_cast<MouseActionItem*>(topLevelItem(i))->get();
+    return map;
 }

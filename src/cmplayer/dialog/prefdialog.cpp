@@ -13,8 +13,6 @@
 #undef None
 #endif
 
-using MouseAction = MouseActionGroupBox::Action;
-
 class MrlStatePropertyListModel
         : public SimpleListModel<MrlState::PropertyInfo,
                                  QVector<MrlState::PropertyInfo>> {
@@ -30,7 +28,7 @@ public:
 
 struct PrefDialog::Data {
     Ui::PrefDialog ui;
-    QVector<MouseAction> actionInfo;
+    QVector<ActionInfo> actionInfo;
     QVector<PrefMenuTreeItem*> actionItems;
     QButtonGroup *shortcutGroup, *saveQuickSnapshot;
     QMap<int, QCheckBox*> hwdec;
@@ -177,9 +175,8 @@ PrefDialog::PrefDialog(QWidget *parent)
         vbox->addWidget(d->hwdec[codec] = new QCheckBox);
     d->ui.hwdec_list->setLayout(vbox);
 
-    void(QComboBox::*currentIdxChanged)(int) = &QComboBox::currentIndexChanged;
-    connect(d->ui.hwacc_backend, currentIdxChanged,
-            [this] () { d->updateCodecCheckBox(); });
+    void(QComboBox::*curIdxChanged)(int) = &QComboBox::currentIndexChanged;
+    connect(d->ui.hwacc_backend, curIdxChanged, [this] () { d->updateCodecCheckBox(); });
     d->updateCodecCheckBox();
 
     auto checkHearbeat = [this] () {
@@ -232,16 +229,11 @@ PrefDialog::PrefDialog(QWidget *parent)
             = PrefMenuTreeItem::makeRoot(d->ui.shortcut_tree);
     d->ui.shortcut_tree->header()->resizeSection(0, 200);
 
-    d->ui.mouse_double_click->set(d->actionInfo);
-    d->ui.mouse_middle_click->set(d->actionInfo);
-    d->ui.mouse_scroll_up->set(d->actionInfo);
-    d->ui.mouse_scroll_down->set(d->actionInfo);
+    d->actionInfo.prepend({QString(), tr("Unused")});
+    d->ui.mouse_action_tree->setActionList(&d->actionInfo);
 
-    connect(d->ui.audio_device,
-            static_cast<Signal<QComboBox, int>>(&QComboBox::currentIndexChanged),
-            [this] (int idx) {
-        d->ui.audio_device_desc->setText(d->ui.audio_device->itemData(idx).toString());
-    });
+    connect(d->ui.audio_device, curIdxChanged, [this] (int idx)
+        { d->ui.audio_device_desc->setText(d->ui.audio_device->itemData(idx).toString()); });
 
     d->ui.network_folders->setAddingAndErasingEnabled(true);
 
@@ -266,7 +258,7 @@ PrefDialog::PrefDialog(QWidget *parent)
     d->ui.skin_name->addItems(Skin::names(true));
     updateSkinPath(d->ui.skin_name->currentIndex());
 
-    connect(d->ui.skin_name, currentIdxChanged, this, updateSkinPath);
+    connect(d->ui.skin_name, curIdxChanged, this, updateSkinPath);
 
     auto currentDataChanged = &DataComboBox::currentDataChanged;
     connect(d->ui.sub_autoselect, currentDataChanged, checkSubAutoselect);
@@ -534,10 +526,7 @@ auto PrefDialog::set(const Pref &p) -> void
     d->ui.enable_system_tray->setChecked(p.enable_system_tray);
     d->ui.hide_rather_close->setChecked(p.hide_rather_close);
 
-    d->ui.mouse_double_click->setValues(p.double_click_map);
-    d->ui.mouse_middle_click->setValues(p.middle_click_map);
-    d->ui.mouse_scroll_up->setValues(p.scroll_up_map);
-    d->ui.mouse_scroll_down->setValues(p.scroll_down_map);
+    d->ui.mouse_action_tree->set(p.mouse_action_map);
     d->ui.ui_mouse_invert_wheel->setChecked(p.invert_wheel);
 
     d->ui.seek_step1->setValue(p.seek_step1/1000);
@@ -675,10 +664,7 @@ auto PrefDialog::get(Pref &p) -> void
     p.enable_system_tray = d->ui.enable_system_tray->isChecked();
     p.hide_rather_close = d->ui.hide_rather_close->isChecked();
 
-    p.double_click_map = d->ui.mouse_double_click->values();
-    p.middle_click_map = d->ui.mouse_middle_click->values();
-    p.scroll_up_map    = d->ui.mouse_scroll_up->values();
-    p.scroll_down_map  = d->ui.mouse_scroll_down->values();
+    p.mouse_action_map = d->ui.mouse_action_tree->get();
     p.invert_wheel = d->ui.ui_mouse_invert_wheel->isChecked();
 
     p.seek_step1 = d->ui.seek_step1->value()*1000;
