@@ -83,11 +83,11 @@ PlayEngine::~PlayEngine()
     delete d->audioInfo;
     delete d->chapterInfo;
     delete d->audioTrackInfo;
+    d->initialized = false;
+    mpv_terminate_destroy(d->handle);
     delete d->audio;
     delete d->video;
     delete d->filter;
-    d->initialized = false;
-    mpv_terminate_destroy(d->handle);
     delete d;
     _Debug("Finalized");
 }
