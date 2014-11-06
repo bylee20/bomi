@@ -110,7 +110,7 @@ auto Translator::load(const QLocale &locale) -> bool
 {
     QLocale l = locale;
     if (locale.language() == QLocale::C)
-        l = QLocale::system();
+        l = QLocale("en_US"_a);
     const QString file = "cmplayer_"_a % l.name();
     Translator::Data *d = get().d;
     if (file == d->file)
