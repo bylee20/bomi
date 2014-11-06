@@ -184,12 +184,12 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
 
     if (cache > 0) {
         opts.add("cache"_b, cache);
-        QByteArray value = "no"_b;
-        if (cacheForPlayback > 0)
-            value.setNum(qMax<int>(1, cacheForPlayback*0.01));
-        opts.add("cache-pause"_b, value);
-        opts.add("cache-min"_b, cacheForPlayback);
-        opts.add("cache-seek-min"_b, cacheForSeeking);
+//        QByteArray value = "no"_b;
+//        if (cacheForPlayback > 0)
+//            value.setNum(qMax<int>(1, cacheForPlayback*0.01));
+//        opts.add("cache-pause"_b, value);
+        opts.add("cache-initial"_b, int(cache*cacheForPlayback));
+        opts.add("cache-seek-min"_b, int(cache*cacheForSeeking));
     } else
         opts.add("cache"_b, "no"_b);
     opts.add("pause"_b, p->isPaused() || hasImage);
@@ -228,4 +228,16 @@ auto PlayEngine::Data::updateMediaName(const QString &name) -> void
         category = u"URL"_q;
     const QString display = name.isEmpty() ? mrl.displayName() : name;
     mediaInfo.setName(category % ": "_a % display);
+}
+
+auto PlayEngine::Data::dispatchPropertyChangeEvent(mpv_event *event) -> void
+{
+    switch (event->reply_userdata) {
+    case UpdateCacheUsed: {
+        post(event, t_cacheUsed);
+        break;
+    } case UpdateCacheSize:
+        post(event, t_cacheSize);
+        break;
+    }
 }

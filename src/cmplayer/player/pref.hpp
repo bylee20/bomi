@@ -96,8 +96,8 @@ public:
     QString audio_device = u"auto"_q;
     ClippingMethod clipping_method = ClippingMethod::Auto;
 
-    int cache_local = 0, cache_network = 2048, cache_disc = 0;
-    int cache_min_playback = 20, cache_min_seeking = 50;
+    int cache_local = 0, cache_network = 25000, cache_disc = 0;
+    int cache_min_playback = 0, cache_min_seeking = 2;
     QStringList network_folders;
 
     static auto preset(KeyMapPreset id) -> Shortcuts;

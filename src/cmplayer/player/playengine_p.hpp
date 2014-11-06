@@ -32,8 +32,9 @@ DECLARE_LOG_CONTEXT(Engine)
 enum EventType {
     UserType = QEvent::User, UpdateTimeRange, UpdateTrackList, StateChange,
     PreparePlayback, UpdateChapterList, Tick, EndPlayback, StartPlayback,
-    UpdateCache, UpdateCurrentStream, UpdateCurrentChapter,
-    UpdateVideoInfo, UpdateAudioInfo, NotifySeek, UpdateMetaData
+    UpdateCacheUsed, UpdateCurrentStream, UpdateCurrentChapter,
+    UpdateVideoInfo, UpdateAudioInfo, NotifySeek, UpdateMetaData,
+    UpdateCacheSize
 };
 
 enum EndReason {
@@ -162,8 +163,11 @@ struct PlayEngine::Data {
     bool quit = false, timing = false, muted = false, initialized = false;
     int volume = 100;
     double amp = 1.0, speed = 1.0, avsync = 0;
-    int cacheForPlayback = 20, cacheForSeeking = 50;
-    int cache = -1.0, initSeek = -1;
+    qreal cacheForPlayback = 0.02, cacheForSeeking = 0.05;
+    int cacheSize = 0, cacheUsed = 0, initSeek = -1;
+
+    int t_cacheSize = 0, t_cacheUsed = 0; // in thread
+
     mpv_handle *handle = nullptr;
     VideoOutput *video = nullptr;
     VideoFilter *filter = nullptr;
@@ -219,7 +223,9 @@ struct PlayEngine::Data {
     auto updateMrl() -> void;
     auto loadfile(int resume) -> void;
 
-    auto loadfile(const Mrl &mrl, int resume, int cache, int edition) -> void;
+    auto dispatchPropertyChangeEvent(mpv_event *event) -> void;
+
+    auto loadfile(const Mrl &mrl, int resume, int cachePercent, int edition) -> void;
     auto loadfile() -> void { loadfile(startInfo.resume); }
     auto updateMediaName(const QString &name = QString()) -> void;
     template <class T>
@@ -227,16 +233,31 @@ struct PlayEngine::Data {
     template <class T>
     auto setmpv(const char *name, const T &value) -> void;
     template<class T>
-    auto getmpv(const char *name, const T &def = T()) -> T;
+    auto getmpv(const char *name) -> T;
+    template<class T>
+    auto getmpv(const char *name, T &val) -> bool;
     auto refresh() -> void {tellmpv("frame_step"); tellmpv("frame_back_step");}
     static auto error(int err) -> const char* { return mpv_error_string(err); }
     auto isSuccess(int error) -> bool { return error == MPV_ERROR_SUCCESS; }
-
+    template<class T>
+    auto post(mpv_event *event, T &val, const T &fallback = T()) -> void;
     template<class... Args>
     auto check(int err, const char *msg, const Args &... args) -> bool;
     template<class... Args>
     auto fatal(int err, const char *msg, const Args &... args) -> void;
 };
+
+template<class T>
+auto PlayEngine::Data::post(mpv_event *event, T &val, const T &fb) -> void
+{
+    Q_ASSERT(event->event_id == MPV_EVENT_PROPERTY_CHANGE);
+    const auto ev = static_cast<mpv_event_property*>(event->data);
+    T newVal = val;
+    if (!getmpv<T>(ev->name, newVal))
+        newVal = fb;
+    if (_Change(val, newVal))
+        _PostEvent(p, event->reply_userdata, val);
+}
 
 template <class T>
 auto PlayEngine::Data::setmpv_async(const char *name, const T &value) -> void
@@ -263,19 +284,24 @@ auto PlayEngine::Data::setmpv(const char *name, const T &value) -> void
 }
 
 template<class T>
-auto PlayEngine::Data::getmpv(const char *name, const T &def) -> T
+auto PlayEngine::Data::getmpv(const char *name, T &def) -> bool
 {
     using trait = mpv_format_trait<T>;
     mpv_type<T> data;
     if (!handle || !check(mpv_get_property(handle, name,
                                            trait::format, &data),
                           "Couldn't get property '%%'.", name))
-        return def;
-    if (!trait::use_free)
-        return trait::cast(data);
-    T t = trait::cast(data);
-    trait::free(data);
-    return t;
+        return false;
+    def = trait::cast(data);
+    if (trait::use_free)
+        trait::free(data);
+    return true;
+}
+
+template<class T>
+auto PlayEngine::Data::getmpv(const char *name) -> T
+{
+    T t = T(); getmpv<T>(name, t); return t;
 }
 
 template<class... Args>

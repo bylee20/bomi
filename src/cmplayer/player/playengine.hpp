@@ -41,6 +41,8 @@ class PlayEngine : public QObject {
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
     Q_PROPERTY(int time READ time NOTIFY tick)
     Q_PROPERTY(int volume READ volume WRITE setVolume NOTIFY volumeChanged)
+    Q_PROPERTY(int cacheSize READ cacheSize NOTIFY cacheSizeChanged)
+    Q_PROPERTY(int cacheUsed READ cacheUsed NOTIFY cacheUsedChanged)
     Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
     Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
     Q_PROPERTY(double avgsync READ avgsync)
@@ -53,7 +55,6 @@ class PlayEngine : public QObject {
     Q_PROPERTY(HardwareAcceleration hardwareAccelaration READ hwAcc NOTIFY hwaccChanged)
     Q_PROPERTY(double rate READ rate NOTIFY rateChanged)
     Q_PROPERTY(QQuickItem *screen READ screen)
-    Q_PROPERTY(qreal cache READ cache NOTIFY cacheChanged)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
     Q_PROPERTY(ChapterInfoObject *chapter READ chapterInfo NOTIFY chaptersChanged)
@@ -132,7 +133,7 @@ public:
     auto deintMode() const -> DeintMode;
     auto setAudioDevice(const QString &device) -> void;
     auto setClippingMethod(ClippingMethod method) -> void;
-    auto setMinimumCache(int playback, int seeking) -> void;
+    auto setMinimumCache(qreal playback, qreal seeking) -> void;
     auto run() -> void;
     auto waitUntilTerminated() -> void;
     auto thread() const -> QThread*;
@@ -144,7 +145,8 @@ public:
     auto avgfps() const -> double;
     auto stateText() const -> QString { return stateText(m_state); }
     auto rate() const -> double { return (double)(time()-begin())/duration(); }
-    auto cache() const -> qreal;
+    auto cacheSize() const -> int;
+    auto cacheUsed() const -> int;
     auto droppedFrames() const -> int;
     auto setChannelLayoutMap(const ChannelLayoutMap &map) -> void;
     auto setChannelLayout(ChannelLayout layout) -> void;
@@ -207,7 +209,7 @@ signals:
     void runningChanged();
     void rateChanged();
     void hwaccChanged();
-    void cacheChanged();
+    void cacheUsedChanged();
     void hasVideoChanged();
     void droppedFramesChanged();
     void currentChapterChanged(int chapter);
@@ -219,6 +221,7 @@ signals:
     void metaDataChanged();
 
     void deintOptionsChanged();
+    void cacheSizeChanged();
 private:
     auto updateState(State state) -> void;
     auto exec() -> void;

@@ -26,6 +26,11 @@ PlayEngine::PlayEngine()
     if (!verbose.isEmpty())
         mpv_request_log_messages(d->handle, verbose.constData());
 
+    auto observe = [this] (int id, const char *name)
+        { mpv_observe_property(d->handle, id, name, MPV_FORMAT_NONE); };
+    observe(UpdateCacheUsed, "cache-used");
+    observe(UpdateCacheSize, "cache-size");
+
     auto setOption = [this] (const char *name, const char *data) {
         const auto err = mpv_set_option_string(d->handle, name, data);
         d->fatal(err, "Couldn't set option %%=%%.", name, data);
@@ -137,9 +142,14 @@ auto PlayEngine::mediaName() const -> QString
     return d->mediaName;
 }
 
-auto PlayEngine::cache() const -> qreal
+auto PlayEngine::cacheSize() const -> int
 {
-    return d->cache/100.0;
+    return d->cacheSize;
+}
+
+auto PlayEngine::cacheUsed() const -> int
+{
+    return d->cacheUsed;
 }
 
 auto PlayEngine::begin() const -> int
@@ -302,7 +312,7 @@ auto PlayEngine::screen() const -> QQuickItem*
     return d->renderer;
 }
 
-auto PlayEngine::setMinimumCache(int playback, int seeking) -> void
+auto PlayEngine::setMinimumCache(qreal playback, qreal seeking) -> void
 {
     d->cacheForPlayback = playback;
     d->cacheForSeeking = seeking;
@@ -441,9 +451,14 @@ auto PlayEngine::customEvent(QEvent *event) -> void
                 d->chapterFakeList.clear();
         }
         break;
-    } case UpdateCache:
-        d->cache = _GetData<int>(event);
-        emit cacheChanged();
+    }
+    case UpdateCacheUsed:
+        _GetAllData(event, d->cacheUsed);
+        emit cacheUsedChanged();
+        break;
+    case UpdateCacheSize:
+        _GetAllData(event, d->cacheSize);
+        emit cacheSizeChanged();
         break;
     case UpdateCurrentStream: {
         const auto ids = _GetData<QVector<int>>(event);
@@ -502,7 +517,6 @@ auto PlayEngine::customEvent(QEvent *event) -> void
         if (_Change(d->seekable, seekable))
             emit seekableChanged(d->seekable);
         emit audioChanged();
-        emit cacheChanged();
         int title = -1;
         for (auto &item : d->editions) {
             if (item.isSelected())
@@ -705,7 +719,7 @@ auto PlayEngine::exec() -> void
 {
     _Debug("Start playloop thread");
     d->quit = false;
-    int position = 0, cache = -2, duration = 0;
+    int position = 0, duration = 0;
     bool first = false, loaded = false;
     Mrl mrl;
     QMap<QByteArray, QByteArray> leftmsg;
@@ -782,21 +796,6 @@ auto PlayEngine::exec() -> void
             if (!d->timing)
                 break;
             checkTime();
-            if (position > 0 && cache >= -1) {
-                qint64 newCache = -2;
-                const auto res = mpv_get_property(d->handle, "cache",
-                                                  MPV_FORMAT_INT64, &newCache);
-                switch (res) {
-                case MPV_ERROR_SUCCESS:
-                    break;
-                default:
-                    newCache = -1;
-                    if (res != MPV_ERROR_PROPERTY_UNAVAILABLE)
-                        _Error("Error for cache: %%", mpv_error_string(res));
-                }
-                if (_Change(cache, (int)newCache))
-                    _PostEvent(this, UpdateCache, cache);
-            }
             break;
         } case MPV_EVENT_LOG_MESSAGE: {
             auto message = static_cast<mpv_event_log_message*>(event->data);
@@ -819,7 +818,6 @@ auto PlayEngine::exec() -> void
         case MPV_EVENT_START_FILE:
             loaded = false;
             position = -1;
-            cache = -1;
             mrl = d->startInfo.mrl;
             d->postState(Loading);
             _PostEvent(this, PreparePlayback);
@@ -841,7 +839,7 @@ auto PlayEngine::exec() -> void
                 title.m_name = tr("Title %1").arg(id+1);
                 return title;
             };
-            const int list = d->getmpv<int>(listprop, 0);
+            const int list = d->getmpv<int>(listprop);
             editions.resize(list);
             for (int i=0; i<list; ++i)
                 add(i);
@@ -851,15 +849,17 @@ auto PlayEngine::exec() -> void
                     editions[item].m_selected = true;
             }
             const auto name = d->getmpv<QString>("media-title");
-            const auto seekable = d->getmpv<bool>("seekable", false);
+            const auto seekable = d->getmpv<bool>("seekable");
             _PostEvent(this, StartPlayback, name, seekable, editions);
             break;
         } case MPV_EVENT_END_FILE: {
             d->disc = d->timing = false;
-            d->cache = -2;
             _PostEvent(this, EndPlayback, mrl, reason(event->data));
             break;
-        } case MPV_EVENT_CHAPTER_CHANGE:
+        } case MPV_EVENT_PROPERTY_CHANGE:
+            d->dispatchPropertyChangeEvent(event);
+            break;
+        case MPV_EVENT_CHAPTER_CHANGE:
             _PostEvent(this, UpdateCurrentChapter, d->getmpv<int>("chapter"));
             break;
         case MPV_EVENT_TRACKS_CHANGED: {

@@ -78,7 +78,12 @@ Item {
                 .arg(mem.toFixed(1)).arg((mem/Util.totalMemory*100.0).toFixed(1))
                 .arg((Util.totalMemory/1024.0).toFixed(2));
         }
-        PlayInfoText { text: qsTr("Cache: %1").arg(engine.cache < 0 ? qsTr("Unavailable") : (engine.cache*100.0).toFixed(0) + "%"); }
+        PlayInfoText {
+            readonly property int used: engine.cacheUsed
+            readonly property int size: engine.cacheSize
+            readonly property real percent: 100.0*used/size
+            text: qsTr("Cache: %1").arg(!size ? qsTr("Unavailable") : "%1kB/%2kB(%3%)".arg(used).arg(size).arg(percent.toFixed(1)))
+        }
         PlayInfoText { }
 
         PlayInfoText {

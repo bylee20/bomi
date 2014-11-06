@@ -854,7 +854,7 @@ auto MainWindow::Data::applyPref() -> void
     engine.setDeintOptions(deint_swdec, deint_hwdec);
     engine.setAudioDevice(p.audio_device);
     engine.setClippingMethod(p.clipping_method);
-    engine.setMinimumCache(p.cache_min_playback, p.cache_min_seeking);
+    engine.setMinimumCache(p.cache_min_playback/100., p.cache_min_seeking/100.);
     Kernel3x3 blur, sharpen;
     blur.setCenter(p.blur_kern_c);
     blur.setNeighbor(p.blur_kern_n);
