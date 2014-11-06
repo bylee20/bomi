@@ -326,6 +326,9 @@ RootMenu::RootMenu(): Menu(u"menu"_q, 0) {
     playlist.addSeparator();
     playlist.addAction(u"move-up"_q);
     playlist.addAction(u"move-down"_q);
+    playlist.addSeparator();
+    playlist.addAction(u"shuffle"_q, true);
+    playlist.addAction(u"repeat"_q, true);
 
     tool.addAction(u"favorites"_q)->setVisible(false);
     auto &history = *tool.addMenu(u"history"_q);
@@ -550,6 +553,7 @@ auto RootMenu::retranslate() -> void
     tool.a(u"undo"_q, tr("Undo"));
     tool.a(u"redo"_q, tr("Redo"));
     tool.setTitle(tr("Tools"));
+
     auto &playlist = tool(u"playlist"_q);
     playlist.setTitle(tr("Playlist"));
     playlist.a(u"toggle"_q, tr("Show/Hide"));
@@ -561,6 +565,9 @@ auto RootMenu::retranslate() -> void
     playlist.a(u"remove"_q, tr("Remove"));
     playlist.a(u"move-up"_q, tr("Move Up"));
     playlist.a(u"move-down"_q, tr("Move Down"));
+    playlist.a(u"shuffle"_q, tr("Shuffle"));
+    playlist.a(u"repeat"_q, tr("Repeat"));
+
     tool.a(u"favorites"_q, tr("Favorites"));
     auto &history = tool(u"history"_q);
     history.setTitle(tr("History"));

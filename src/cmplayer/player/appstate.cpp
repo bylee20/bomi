@@ -16,6 +16,8 @@ static const auto jio = JIO(
     JE(win_size),
     JE(auto_exit),
     JE(playlist_visible),
+    JE(playlist_shuffled),
+    JE(playlist_repeat),
     JE(history_visible),
     JE(playinfo_visible),
     JE(win_stays_on_top),

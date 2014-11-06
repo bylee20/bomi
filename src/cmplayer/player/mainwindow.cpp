@@ -34,7 +34,12 @@ MainWindow::MainWindow(QWidget *parent)
     d->syncWithState();
 
     d->playlist.setVisible(d->as.playlist_visible);
+    d->playlist.setRepeat(d->as.playlist_repeat);
+    d->playlist.setShuffled(d->as.playlist_shuffled);
     d->history.setVisible(d->as.history_visible);
+    auto &pl = d->menu(u"tool"_q)(u"playlist"_q);
+    pl[u"shuffle"_q]->setChecked(d->as.playlist_shuffled);
+    pl[u"repeat"_q]->setChecked(d->as.playlist_repeat);
 
     if (d->as.win_size.isValid()) {
         auto screen = d->screenSize();

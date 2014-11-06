@@ -1,5 +1,7 @@
 #include "playlistmodel.hpp"
 #include "misc/downloader.hpp"
+#include <random>
+#include <chrono>
 
 auto reg_playlist_model() -> void {
     qmlRegisterType<PlaylistModel>();
@@ -16,6 +18,74 @@ PlaylistModel::PlaylistModel(QObject *parent)
 }
 
 PlaylistModel::~PlaylistModel() {}
+
+auto PlaylistModel::next() const -> int
+{
+    if (isEmpty())
+        return -1;
+    if (!m_shuffled)
+        return (loaded() >= rows() - 1 && m_repeat) ? 0 : loaded() + 1;
+    if (m_shuffledIdx.size() != rows())
+        shuffle();
+    const int find = m_shuffledIdx.indexOf(loaded());
+    if (find == -1)
+        return m_shuffledIdx.first();
+    if (find < m_shuffledIdx.size() - 1)
+        return m_shuffledIdx[find + 1];
+    if (!m_repeat)
+        return -1;
+    shuffle();
+    return m_shuffledIdx.first();
+}
+
+auto PlaylistModel::previous() const -> int
+{
+    if (isEmpty())
+        return -1;
+    if (!m_shuffled)
+        return (loaded() <= 0 && m_repeat) ? rows() - 1 : loaded() - 1;
+    if (m_shuffledIdx.size() != rows())
+        shuffle();
+    const int find = m_shuffledIdx.indexOf(loaded());
+    if (find == -1)
+        return m_shuffledIdx.first();
+    if (find > 0)
+        return m_shuffledIdx[find - 1];
+    if (!m_repeat)
+        return -1;
+    shuffle();
+    return m_shuffledIdx.last();
+}
+
+auto PlaylistModel::shuffle() const -> void
+{
+    if (!m_shuffled) {
+        m_shuffledIdx.clear();
+        return;
+    }
+    m_shuffledIdx.resize(rows());
+    for (int i = 0; i < m_shuffledIdx.size(); ++i)
+        m_shuffledIdx[i] = i;
+    if (m_shuffledIdx.size() < 2 || !m_shuffled)
+        return;
+    using namespace std; using std::chrono::system_clock;
+    static const auto seed = system_clock::now().time_since_epoch().count();
+    std::shuffle(m_shuffledIdx.begin(), m_shuffledIdx.end(),
+                 default_random_engine(seed));
+}
+
+auto PlaylistModel::setShuffled(bool shuffled) -> void
+{
+    if (!_Change(m_shuffled, shuffled))
+        return;
+    emit shuffledChanged();
+}
+
+auto PlaylistModel::setRepeat(bool repeat) -> void
+{
+    if (_Change(m_repeat, repeat))
+        emit repeatChanged();
+}
 
 auto PlaylistModel::roleNames() const -> QHash<int, QByteArray>
 {

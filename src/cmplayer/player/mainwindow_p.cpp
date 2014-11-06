@@ -644,6 +644,8 @@ auto MainWindow::Data::commitData() -> void
             updateWindowPosState();
         as.state.video_effects = vr.effects();
         as.playlist_visible = playlist.isVisible();
+        as.playlist_shuffled = playlist.isShuffled();
+        as.playlist_repeat = playlist.repeat();
         as.history_visible = history.isVisible();
         as.save();
         syncState();

@@ -16,6 +16,8 @@ public:
     // tool state
     bool auto_exit = false;
     bool playlist_visible = false;
+    bool playlist_shuffled = false;
+    bool playlist_repeat = false;
     bool history_visible = false;
     bool playinfo_visible = false;
     // window state

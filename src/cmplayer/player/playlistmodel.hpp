@@ -21,16 +21,16 @@ public:
     auto roleData(int row, int column, int role) const -> QVariant final;
     auto open(const Mrl &mrl, const QString &enc) -> void;
     auto loaded() const -> int { return specialRow(); }
-    auto next() const -> int {return loaded()+1;}
-    auto previous() const -> int {return loaded()-1;}
-    auto nextMrl() const -> Mrl {return value(loaded() + 1);}
-    auto previousMrl() const -> Mrl {return value(loaded() - 1);}
-    auto hasNext() const -> bool {return isValidRow(next());}
-    auto hasPrevious() const -> bool {return isValidRow(previous());}
-    auto loadedMrl() const -> Mrl {return value(loaded());}
+    auto next() const -> int;
+    auto previous() const -> int;
+    auto nextMrl() const -> Mrl { return value(next()); }
+    auto previousMrl() const -> Mrl { return value(previous()); }
+    auto hasNext() const -> bool { return isValidRow(next()); }
+    auto hasPrevious() const -> bool { return isValidRow(previous()); }
+    auto loadedMrl() const -> Mrl { return value(loaded()); }
     auto setLoaded(const Mrl &mrl) -> void;
     auto roleNames() const -> QHash<int, QByteArray> override;
-    auto fillChar() const -> QChar {return m_fill;}
+    auto fillChar() const -> QChar { return m_fill; }
     auto setFillChar(QChar c) -> void;
     auto setVisible(bool visible) -> void;
     auto isVisible() const -> bool { return m_visible; }
@@ -41,6 +41,10 @@ public:
     auto playPrevious() -> void {play(previous());}
     auto select(int row) -> void;
     auto selected() const -> int { return m_selected; }
+    auto setShuffled(bool shuffled) -> void;
+    auto setRepeat(bool repeat) -> void;
+    auto isShuffled() const -> bool { return m_shuffled; }
+    auto repeat() const -> bool { return m_repeat; }
     Q_INVOKABLE void play(int row);
     Q_INVOKABLE QString name(int row) const {return value(row).displayName();}
     Q_INVOKABLE QString location(int row) const;
@@ -56,14 +60,19 @@ signals:
     void visibleChanged(bool visible);
     void countChanged();
     void selectedChanged();
+    void shuffledChanged();
+    void repeatChanged();
 private:
     friend class PlayEngine;
     auto setLoaded(int row) -> void;
+    auto shuffle() const -> void;
     QChar m_fill = QChar::Null;
     bool m_visible = false;
     int m_selected = -1;
     Downloader *m_downloader = nullptr;
     QString m_enc;
+    bool m_shuffled = false, m_repeat = false;
+    mutable QVector<int> m_shuffledIdx;
 };
 
 inline auto PlaylistModel::setFillChar(QChar c) -> void

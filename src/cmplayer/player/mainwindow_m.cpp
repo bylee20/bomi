@@ -727,6 +727,28 @@ auto MainWindow::Data::connectMenus() -> void
         if (playlist.swap(idx, idx+1))
             playlist.select(idx+1);
     });
+    auto action = pl[u"shuffle"_q];
+    connect(action, &QAction::triggered, p, [=] (bool new_) {
+        const bool old = playlist.isShuffled();
+        if (new_ != old) {
+            push(new_, old, [=] (bool checked) {
+                playlist.setShuffled(checked);
+                action->setChecked(checked);
+                showMessage(tr("Shuffle Playlist"), checked);
+            });
+        }
+    });
+    action = pl[u"repeat"_q];
+    connect(action, &QAction::triggered, p, [=] (bool new_) {
+        const bool old = playlist.repeat();
+        if (new_ != old) {
+            push(new_, old, [=] (bool checked) {
+                playlist.setRepeat(checked);
+                action->setChecked(checked);
+                showMessage(tr("Repeat Playlist"), checked);
+            });
+        }
+    });
 
     auto &hm = tool(u"history"_q);
     connect(hm[u"toggle"_q], &QAction::triggered, &history, &HistoryModel::toggle);
