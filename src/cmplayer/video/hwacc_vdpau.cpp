@@ -257,7 +257,7 @@ auto HwAccVdpau::fillContext(AVCodecContext *avctx, int w, int h) -> bool
     if (!codec)
         return false;
     const auto profile = codec->profile(avctx->profile);
-    if (profile.width < w || profile.height < h || profile.level < avctx->level)
+    if (profile.width < w || profile.height < h)
         return false;
     VdpBool supports = false; uint mw = 0, mh = 0;
     constexpr VdpChromaType chroma = VDP_CHROMA_TYPE_420;
