@@ -50,7 +50,6 @@ Item {
         repeat: true
         onTriggered: {
             __fps = engine.avgfps
-            __sync = engine.avgsync
             __volnorm = engine.volumeNormalizerActivated ? engine.volumeNormalizer*100.0 : -1.0;
         }
     }
@@ -87,8 +86,8 @@ Item {
         PlayInfoText { }
 
         PlayInfoText {
-            readonly property alias sync: wrapper.__sync
-            text: qsTr("Audio/Video Sync: %1%2ms").arg(sync < 0 ? "" : "+").arg(sync.toFixed(1));
+            readonly property int sync: engine.avSync
+            text: qsTr("Audio/Video Sync: %1%2ms").arg(sync < 0 ? "" : sync > 0 ? "+" : "±").arg(sync);
         }
         PlayInfoText {
             property alias fps: wrapper.__fps

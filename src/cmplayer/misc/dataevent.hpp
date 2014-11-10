@@ -10,9 +10,11 @@ public:
     static constexpr int size = sizeof...(Args);
     DataEvent(int type, const Args&... args)
         : QEvent(static_cast<Type>(type)), m_data(args...) { }
-    auto get(Args&... args) -> void { std::tie(args...) = m_data; }
+    auto take(Args&... args) -> void { std::tie(args...) = std::move(m_data); }
     template<int i>
     auto data() const -> const DataType<i>& { return std::get<i>(m_data); }
+    template<int i>
+    auto move() -> DataType<i>&& { return std::get<i>(std::move(m_data)); }
     auto tuple() const -> const Data& { return m_data; }
 private:
     Data m_data;
@@ -37,8 +39,8 @@ SIA _SendEvent(QObject *obj, int type,
 }
 
 template<class... Args>
-SIA _GetAllData(QEvent *event, Args&... args) -> void {
-    static_cast<DataEvent<Args...>*>(event)->get(args...);
+SIA _TakeData(QEvent *event, Args&... args) -> void {
+    static_cast<DataEvent<Args...>*>(event)->take(args...);
 }
 
 template<class T>
@@ -46,9 +48,9 @@ static inline const T &_GetData(QEvent *event) {
     return static_cast<DataEvent<T>*>(event)->template data<0>();
 }
 
-template<class T, class S, class... Args>
-static inline const std::tuple<T, S, Args...> &_GetData(QEvent *event) {
-    return static_cast<DataEvent<T, S, Args...>*>(event)->tuple();
+template<class T>
+static inline T &&_MoveData(QEvent *event) {
+    return static_cast<DataEvent<T>*>(event)->template move<0>();
 }
 
 using std::tie;

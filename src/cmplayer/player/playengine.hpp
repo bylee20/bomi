@@ -45,7 +45,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(int cacheUsed READ cacheUsed NOTIFY cacheUsedChanged)
     Q_PROPERTY(bool muted READ isMuted NOTIFY mutedChanged)
     Q_PROPERTY(double volumeNormalizer READ volumeNormalizer)
-    Q_PROPERTY(double avgsync READ avgsync)
+    Q_PROPERTY(int avSync READ avSync NOTIFY avSyncChanged)
     Q_PROPERTY(double avgfps READ avgfps)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(QString stateText READ stateText NOTIFY stateChanged)
@@ -53,7 +53,7 @@ class PlayEngine : public QObject {
     Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
     Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated NOTIFY volumeNormalizerActivatedChanged)
     Q_PROPERTY(HardwareAcceleration hardwareAccelaration READ hwAcc NOTIFY hwaccChanged)
-    Q_PROPERTY(double rate READ rate NOTIFY rateChanged)
+    Q_PROPERTY(double rate READ rate NOTIFY tick)
     Q_PROPERTY(QQuickItem *screen READ screen)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
@@ -141,7 +141,7 @@ public:
     auto mediaInfo() const -> MediaInfoObject*;
     auto audioInfo() const -> AvInfoObject*;
     auto videoInfo() const -> AvInfoObject*;
-    auto avgsync() const -> double;
+    auto avSync() const -> int;
     auto avgfps() const -> double;
     auto stateText() const -> QString { return stateText(m_state); }
     auto rate() const -> double { return (double)(time()-begin())/duration(); }
@@ -192,10 +192,11 @@ signals:
     void seekableChanged(bool seekable);
     void durationChanged(int duration);
     void beginChanged(int begin);
-    void endChanged(int end);
+    void endChanged();
     void volumeChanged(int volume);
     void preampChanged(double amp);
     void mutedChanged(bool muted);
+    void avSyncChanged(int avSync);
     void videoFormatChanged(const VideoFormat &format);
     void audioStreamsChanged(const StreamList &streams);
     void videoStreamsChanged(const StreamList &streams);
@@ -207,7 +208,6 @@ signals:
     void audioChanged();
     void videoChanged();
     void runningChanged();
-    void rateChanged();
     void hwaccChanged();
     void cacheUsedChanged();
     void hasVideoChanged();
@@ -228,6 +228,8 @@ private:
     auto customEvent(QEvent *event) -> void;
     auto updateVideoFormat(VideoFormat format) -> void;
     class Thread; struct Data; Data *d;
+    template<class T>
+    friend class SimpleObservation;
     PlayEngine::State m_state = PlayEngine::Stopped;
     QPoint m_mouse;
     bool m_offscreenInit = false;

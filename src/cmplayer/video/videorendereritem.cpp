@@ -251,18 +251,19 @@ auto VideoRenderer::customEvent(QEvent *event) -> void
     switch (static_cast<int>(event->type())) {
     case NewFrame: {
         VideoData data;
-        _GetAllData(event, data);
+        _TakeData(event, data);
         if (data.hasImage())
             d->queue.push_back(data);
         reserve(UpdateMaterial);
         break;
     } case NewFrameImage: {
         QImage image, osd;
-        _GetAllData(event, image, osd);
+        _TakeData(event, image, osd);
         emit frameImageObtained(image, osd);
         break;
     } case NewFormat: {
-        d->mark(d->format, _GetData<VideoFormat>(event), DirtyFormat,
+        VideoFormat format; _TakeData(event, format);
+        d->mark(d->format, format, DirtyFormat,
                 &VideoRenderer::formatChanged, UpdateAll);
         break;
     } default:

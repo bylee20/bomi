@@ -26,22 +26,67 @@
 #include "enum/interpolatortype.hpp"
 #include "opengl/opengloffscreencontext.hpp"
 #include <libmpv/client.h>
+#include <functional>
 
 DECLARE_LOG_CONTEXT(Engine)
 
 enum EventType {
-    UserType = QEvent::User, UpdateTimeRange, UpdateTrackList, StateChange,
-    PreparePlayback, UpdateChapterList, Tick, EndPlayback, StartPlayback,
-    UpdateCacheUsed, UpdateCurrentStream, UpdateCurrentChapter,
-    UpdateVideoInfo, UpdateAudioInfo, NotifySeek, UpdateMetaData,
-    UpdateCacheSize
+    UserType = QEvent::User, StateChange,
+    PreparePlayback,EndPlayback, StartPlayback, NotifySeek,
+    UpdateVideoInfo, UpdateAudioInfo,
+    EventTypeMax
+};
+
+enum UpdateEvent {
+    UpdateEventBegin = EventTypeMax, UpdateChapterList = UpdateEventBegin,
+    UpdateCacheSize, UpdateTimePos, UpdateTimeStart, UpdateTimeLength,
+    UpdateCacheUsed,UpdateAvSync, UpdateSeekable, UpdateCurrentChapter,
+    UpdateTrackList, UpdateCurrentVideoTrack, UpdateCurrentAudioTrack,
+    UpdateCurrentSubtitleTrack, UpdateMetaData, UpdateMediaTitle,
+    UpdateEventEnd
 };
 
 enum EndReason {
     EndFailed = -1, EndOfFile, EndRestart, EndRequest, EndQuit, EndUnknown
 };
 
+struct StreamTypeInfo {
+    Stream::Type type;
+    UpdateEvent event;
+    const char *mpvName;
+    void (PlayEngine::*notifyList)(const StreamList&);
+    void (PlayEngine::*notifyTrack)(int);
+};
 
+static const QVector<StreamTypeInfo> streamTypeInfo = [] () {
+    QVector<StreamTypeInfo> info(3);
+    info[Stream::Video] = {
+        Stream::Video, UpdateCurrentVideoTrack, "vid",
+        &PlayEngine::videoStreamsChanged,
+        &PlayEngine::currentVideoStreamChanged
+    };
+    info[Stream::Audio] = {
+        Stream::Audio, UpdateCurrentAudioTrack, "aid",
+        &PlayEngine::audioStreamsChanged,
+        &PlayEngine::currentAudioStreamChanged
+    };
+    info[Stream::Subtitle] = {
+        Stream::Subtitle, UpdateCurrentSubtitleTrack, "sid",
+        &PlayEngine::subtitleStreamsChanged,
+        &PlayEngine::currentSubtitleStreamChanged
+    };
+    return info;
+}();
+
+static const QVector<Stream::Type> streamTypes
+    = { Stream::Audio, Stream::Video, Stream::Subtitle };
+
+struct Observation {
+    UpdateEvent event;
+    const char *name = nullptr;
+    std::function<void(void)> post; // post from mpv to qt
+    std::function<void(QEvent*)> handle; // handle posted event
+};
 
 extern auto initialize_vdpau() -> void;
 extern auto finalize_vdpau() -> void;
@@ -142,10 +187,16 @@ private:
 template<class T>
 using mpv_type = typename mpv_format_trait<T>::mpv_type;
 
+SCIA s2ms(double s) -> int { return s*1000 + 0.5; }
+
 struct PlayEngine::Data {
     Data(PlayEngine *engine);
     PlayEngine *p = nullptr;
     Thread thread{p};
+    QTemporaryDir confDir;
+
+    QVector<Observation> observations;
+
     AvInfoObject *videoInfo = new AvInfoObject, *audioInfo = new AvInfoObject;
     ChapterInfoObject *chapterInfo = nullptr;
 
@@ -160,13 +211,13 @@ struct PlayEngine::Data {
     bool sgInit = false, glInit = false;
 
     AudioController *audio = nullptr;
-    bool quit = false, timing = false, muted = false, initialized = false;
+    bool quit = false, muted = false, initialized = false;
+    bool cacheEnabled = false;
     int volume = 100;
-    double amp = 1.0, speed = 1.0, avsync = 0;
+    double amp = 1.0, speed = 1.0;
+    int avSync = 0;
     qreal cacheForPlayback = 0.02, cacheForSeeking = 0.05;
     int cacheSize = 0, cacheUsed = 0, initSeek = -1;
-
-    int t_cacheSize = 0, t_cacheUsed = 0; // in thread
 
     mpv_handle *handle = nullptr;
     VideoOutput *video = nullptr;
@@ -176,12 +227,13 @@ struct PlayEngine::Data {
     ChannelLayout layout = ChannelLayoutInfo::default_();
     int duration = 0, audioSync = 0, begin = 0, position = 0;
     int subDelay = 0, chapter = -2, edition = -1;
-    QVector<int> streamIds = {0, 0, 0}, lastStreamIds = streamIds;
     QVector<StreamList> streams = {StreamList(), StreamList(), StreamList()};
+    Mrl mpvMrl;
+
     AudioTrackInfoObject *audioTrackInfo = nullptr;
     SubtitleStyle subStyle;
     VideoRenderer *renderer = nullptr;
-    ChapterList chapters, chapterFakeList;
+    ChapterList chapters;
     EditionList editions;
 
     HwAcc::Type hwaccBackend = HwAcc::None;
@@ -223,8 +275,6 @@ struct PlayEngine::Data {
     auto updateMrl() -> void;
     auto loadfile(int resume) -> void;
 
-    auto dispatchPropertyChangeEvent(mpv_event *event) -> void;
-
     auto loadfile(const Mrl &mrl, int resume, int cachePercent, int edition) -> void;
     auto loadfile() -> void { loadfile(startInfo.resume); }
     auto updateMediaName(const QString &name = QString()) -> void;
@@ -245,6 +295,97 @@ struct PlayEngine::Data {
     auto check(int err, const char *msg, const Args &... args) -> bool;
     template<class... Args>
     auto fatal(int err, const char *msg, const Args &... args) -> void;
+
+    auto observation(int event) -> const Observation&
+    {
+        Q_ASSERT(UpdateEventBegin <= event && event <= UpdateEventEnd);
+        Q_ASSERT(event == observations[event - UpdateEventBegin].event);
+        return observations[event - UpdateEventBegin];
+    }
+
+    template<class Get>
+    auto observe(UpdateEvent event, const char *name, Get get,
+                 std::function<void(QEvent*)> &&handle) -> void
+    {
+        auto &ob = observations[event - UpdateEventBegin];
+        Q_ASSERT(ob.name == nullptr);
+        ob.event = event;
+        ob.name = name;
+        ob.post = [=] () { _PostEvent(p, event, get()); };
+        ob.handle = handle;
+    }
+
+    template<class T, class Get, class Notify>
+    auto observe(UpdateEvent event, const char *name, T &t, Get get,
+                 Notify notify) -> void
+    {
+        observe<Get>(event, name, get, [=, &t] (QEvent *e)
+            { if (t != _GetData<T>(e)) { _TakeData(e, t); if (initialized) notify(); } });
+    }
+
+    template<class T, class Get>
+    auto observe(UpdateEvent event, const char *name, T &t, Get get,
+                 void(PlayEngine::*sig)()) -> void
+    {
+        observe<T, Get>(event, name, t, get, [=] () { emit (p->*sig)(); });
+    }
+
+    template<class T, class Get, class S>
+    auto observe(UpdateEvent event, const char *name, T &t, Get get,
+                 void(PlayEngine::*sig)(S)) -> void
+    {
+        observe<T, Get>(event, name, t, get, [=, &t] () { emit (p->*sig)(t); });
+    }
+
+    template<class T>
+    auto observe(UpdateEvent event, const char *name, T &t,
+                 void(PlayEngine::*sig)()) -> void
+    {
+        observe(event, name, t, [=, &t] ()
+            { T val = t; return getmpv<T>(name, val) ? val : T(); }, sig);
+    }
+
+    template<class T, class S>
+    auto observe(UpdateEvent event, const char *name, T &t,
+                 void(PlayEngine::*sig)(S)) -> void
+    {
+        observe(event, name, t, [=, &t] ()
+            { T val = t; return getmpv<T>(name, val) ? val : T(); }, sig);
+    }
+    auto observeTime(UpdateEvent event, const char *name, int &t,
+                     void(PlayEngine::*sig)(int)) -> void
+    {
+        observe<int>(event, name, t, [=, &t] { return s2ms(getmpv<double>(name)); }, sig);
+    }
+
+    auto observeTrack(Stream::Type type) -> void
+    {
+        const auto &info = streamTypeInfo[type];
+        observe(info.event, info.mpvName, [=, &info] () {
+            int track = 0; return getmpv<int>(info.mpvName, track) ? track : 1;
+        }, [=] (QEvent *event) { setCurrentTrack(type, _GetData<int>(event)); });
+    }
+    auto setCurrentTrack(Stream::Type type, int id) -> void
+    {
+        Q_ASSERT(type != Stream::Unknown);
+        if (id == currentTrack(type))
+            return;
+        for (auto &stream : streams[type])
+            stream.m_selected = stream.id() == id;
+        emit (p->*(streamTypeInfo[type].notifyTrack))(id);
+    }
+    auto currentTrack(Stream::Type type) -> int
+    {
+        Q_ASSERT(type != Stream::Unknown);
+        for (auto &stream : streams[type]) {
+            if (stream.m_selected)
+                return stream.id();
+        }
+        return 0;
+    }
+    auto observe() -> void;
+    auto dispatch(mpv_event *event) -> void;
+    auto process(QEvent *event) -> void;
 };
 
 template<class T>
