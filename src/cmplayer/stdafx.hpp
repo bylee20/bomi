@@ -150,6 +150,8 @@ enum ExtType {
 Q_DECLARE_FLAGS(ExtTypes, ExtType)
 Q_DECLARE_OPERATORS_FOR_FLAGS(ExtTypes)
 
+auto _ToAbsPath(const QString &fileName) -> QString;
+auto _ToAbsFilePath(const QString &fileName) -> QString;
 auto _ToNameFilter(ExtTypes exts) -> QStringList;
 auto _ToFilter(ExtTypes exts) -> QString;
 auto _IsSuffixOf(ExtType ext, const QString &suffix) -> bool;

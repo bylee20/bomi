@@ -146,7 +146,7 @@ SubtitleFindDialog::SubtitleFindDialog(QWidget *parent)
                     return;
                 if (!file.endsWith(suffix))
                     file += suffix;
-                file = QFileInfo(file).absoluteFilePath();
+                file = _ToAbsFilePath(file);
             } case BBox::AcceptRole:
                 break;
             default:

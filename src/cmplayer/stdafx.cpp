@@ -91,6 +91,20 @@ auto _IsSuffixOf(ExtType ext, const QString &suffix) -> bool
     return _ExtList(ext).contains(suffix, cs);
 }
 
+auto _ToAbsPath(const QString &fileName) -> QString
+{
+    if (fileName.isEmpty())
+        return QString();
+    return QFileInfo(fileName).absolutePath();
+}
+
+auto _ToAbsFilePath(const QString &fileName) -> QString
+{
+    if (fileName.isEmpty())
+        return QString();
+    return QFileInfo(fileName).absoluteFilePath();
+}
+
 auto _ToNameFilter(ExtTypes exts) -> QStringList
 {
     if (!exts)
@@ -178,7 +192,7 @@ auto _GetOpenFiles(QWidget *parent, const QString &title, ExtTypes exts,
                                                     _ToFilter(exts));
     if (list.isEmpty())
         return QStringList();
-    folder = QFileInfo(list.first()).absolutePath();
+    folder = _ToAbsPath(list.first());
     return list;
 }
 
@@ -190,7 +204,7 @@ auto _GetOpenFile(QWidget *parent, const QString &title, ExtTypes exts,
                                                    _ToFilter(exts));
     if (file.isEmpty())
         return QString();
-    folder = QFileInfo(file).absolutePath();
+    folder = _ToAbsPath(file);
     return file;
 }
 

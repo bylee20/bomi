@@ -400,7 +400,7 @@ auto MainWindow::Data::connectMenus() -> void
             switch (pref().quick_snapshot_save) {
             case QuickSnapshotSave::Current:
                 if (engine.mrl().isLocalFile()) {
-                    file = QFileInfo(engine.mrl().toLocalFile()).absolutePath()
+                    file = _ToAbsPath(engine.mrl().toLocalFile())
                            % '/'_q % fileName;
                     break;
                 }
@@ -606,7 +606,7 @@ auto MainWindow::Data::connectMenus() -> void
     connect(strack[u"open"_q], &QAction::triggered, p, [this] () {
         QString dir;
         if (engine.mrl().isLocalFile())
-            dir = QFileInfo(engine.mrl().toLocalFile()).absolutePath();
+            dir = _ToAbsPath(engine.mrl().toLocalFile());
         QString enc = pref().sub_enc;
         const auto files = EncodingFileDialog::getOpenFileNames
                                     (p, tr("Open Subtitle"), dir,
