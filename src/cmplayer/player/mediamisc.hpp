@@ -2,6 +2,8 @@
 #define MEDIAMISC_HPP
 
 #include "mrl.hpp"
+#include "enum/colorrange.hpp"
+#include "enum/colorspace.hpp"
 
 class PlayEngine;
 
@@ -38,214 +40,227 @@ struct CodecInfo {
     QString name, description;
 };
 
-struct AudioInfo {
-    struct Format {
-        auto operator == (const Format &rhs) const -> bool
-        {
-            return samplerate == rhs.samplerate && bits == rhs.bits
-                    && channels == rhs.channels && type == rhs.type
-                    && bitrate == rhs.bitrate;
-        }
-        auto operator != (const Format &rhs) const -> bool
-        { return !operator == (rhs); }
-        double samplerate = 0;
-        int bits = 0;
-        QString channels;
-        QString type;
-        int bitrate = 0;
-    };
-    Format input, output;
-    CodecInfo codec;
-    QString device;
-};
-
-class AudioInfoFormatObject : public QObject {
+class CodecInfoObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString type READ type CONSTANT FINAL)
-    Q_PROPERTY(int bitrate READ bitrate CONSTANT FINAL)
-    Q_PROPERTY(int bits READ bits CONSTANT FINAL)
-    Q_PROPERTY(double samplerate READ samplerate CONSTANT FINAL)
-    Q_PROPERTY(QString channels READ channels CONSTANT FINAL)
+    Q_PROPERTY(QString family READ family NOTIFY familyChanged)
+    Q_PROPERTY(QString type READ type NOTIFY typeChanged)
+    Q_PROPERTY(QString description READ description NOTIFY descriptionChanged)
 public:
-    AudioInfoFormatObject(AudioInfo::Format *m, QObject *parent = nullptr)
-        : QObject(parent), m(m) {}
-    auto samplerate() const -> double {return m->samplerate;}
-    auto bits() const -> int {return m->bits;}
-    auto channels() const -> QString {return m->channels;}
-    auto type() const -> QString {return m->type;}
-    auto bitrate() const -> int {return m->bitrate;}
-private:
-    AudioInfo::Format *m = nullptr;
-};
-
-class AudioInfoObject : public QObject {
-    Q_OBJECT
-    Q_PROPERTY(QString codec READ codecDescription NOTIFY codecChanged)
-    Q_PROPERTY(QString device READ device NOTIFY deviceChanged)
-    Q_PROPERTY(const AudioInfoFormatObject *input READ input NOTIFY inputChanged)
-    Q_PROPERTY(const AudioInfoFormatObject *output READ output NOTIFY outputChanged)
-public:
-    AudioInfoObject(QObject *parent = nullptr)
-        : QObject(parent)
-        , m_info()
-        , m_input(&m_info.input)
-        , m_output(&m_info.output)
-    { }
-    auto codecDescription() const -> QString
-        { return m_info.codec.description; }
-    auto codec() const -> const CodecInfo& { return m_info.codec; }
-    auto input() const -> const AudioInfoFormatObject* {return &m_input;}
-    auto output() const -> const AudioInfoFormatObject* {return &m_output;}
-    auto device() const -> QString { return m_info.device; }
-    auto set(const AudioInfo &info) -> void
-    {
-        if (_Change(m_info.device, info.device))
-            emit deviceChanged();
-        if (_Change(m_info.codec, info.codec))
-            emit codecChanged();
-        if (_Change(m_info.input, info.input))
-            emit inputChanged();
-        if (_Change(m_info.output, info.output))
-            emit outputChanged();
-    }
+    auto parse(const QString &info) -> void;
+    auto family() const -> QString { return m_family.toUpper(); }
+    auto type() const -> QString { return m_type; }
+    auto description() const -> QString { return m_desc; }
 signals:
-    void codecChanged();
-    void deviceChanged();
-    void inputChanged();
-    void outputChanged();
+    void familyChanged();
+    void typeChanged();
+    void descriptionChanged();
 private:
-    AudioInfo m_info;
-    AudioInfoFormatObject m_input, m_output;
+    QString m_family, m_type, m_desc;
 };
 
-struct VideoInfo {
-    struct Format {
-        auto operator == (const Format &rhs) -> bool
-        {
-            return size == rhs.size && fps == rhs.fps
-                    && bitrate == rhs.bitrate && type == rhs.type;
-        }
-        auto operator != (const Format &rhs) -> bool
-        { return !operator == (rhs); }
-        QSize size;
-        double fps = 24;
-        int bitrate = 0;
-        QString type;
-    };
-    Format input, output;
-    CodecInfo codec;
-    bool hwacc = false;
-};
-
-class VideoInfoFormatObject : public QObject {
+class AvCommonFormatObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QSize size READ size CONSTANT FINAL)
-    Q_PROPERTY(QString type READ type CONSTANT FINAL)
-    Q_PROPERTY(int bitrate READ bitrate CONSTANT FINAL)
-    Q_PROPERTY(double fps READ fps CONSTANT FINAL)
-public:
-    VideoInfoFormatObject(VideoInfo::Format *m, QObject *parent = nullptr)
-        : QObject(parent), m(m) { }
-    auto size() const -> QSize { return m->size; }
-    auto type() const -> QString { return m->type; }
-    auto bitrate() const -> int { return m->bitrate; }
-    auto fps() const -> double { return m->fps; }
-private:
-    friend class VideoInfoObject;
-    VideoInfo::Format *m = nullptr;
-};
-
-class VideoInfoObject : public QObject {
-    Q_OBJECT
-    Q_PROPERTY(QString codec READ codecDescription NOTIFY codecChanged)
-    Q_PROPERTY(const VideoInfoFormatObject *input READ input NOTIFY inputChanged)
-    Q_PROPERTY(const VideoInfoFormatObject *output READ output NOTIFY outputChanged)
-public:
-    VideoInfoObject(QObject *parent = nullptr)
-        : QObject(parent)
-        , m_info(), m_input(&m_info.input), m_output(&m_info.output){ }
-    auto codecDescription() const -> QString
-        { return m_info.codec.description; }
-    auto codec() const -> const CodecInfo& { return m_info.codec; }
-    auto input() const -> const VideoInfoFormatObject* {return &m_input;}
-    auto output() const -> const VideoInfoFormatObject* {return &m_output;}
-//    auto hwacc() const -> QString { return m_info.device; }
-    auto set(const VideoInfo &info) -> void
-    {
-        if (_Change(m_info.hwacc, info.hwacc))
-            emit hwaccChanged();
-        if (_Change(m_info.codec, info.codec))
-            emit codecChanged();
-        if (_Change(m_info.input, info.input))
-            emit inputChanged();
-        if (_Change(m_info.output, info.output))
-            emit outputChanged();
-    }
-signals:
-    void codecChanged();
-    void hwaccChanged();
-    void inputChanged();
-    void outputChanged();
-private:
-    auto setHwAcc(int acc) -> void;
-    VideoInfo m_info;
-    VideoInfoFormatObject m_input, m_output;
-};
-
-class AvIoFormat : public QObject {
-    Q_OBJECT
-    Q_PROPERTY(QSize size READ size CONSTANT FINAL)
-    Q_PROPERTY(QString type READ type CONSTANT FINAL)
+    Q_PROPERTY(QString type READ type NOTIFY typeChanged)
     Q_PROPERTY(int bitrate READ bitrate NOTIFY bitrateChanged)
-    Q_PROPERTY(double fps READ fps CONSTANT FINAL)
-    Q_PROPERTY(int bits READ bits CONSTANT FINAL)
-    Q_PROPERTY(double samplerate READ samplerate CONSTANT FINAL)
-    Q_PROPERTY(QString channels READ channels CONSTANT FINAL)
+    Q_PROPERTY(int depth READ depth NOTIFY depthChanged)
 public:
-    AvIoFormat(QObject *parent = nullptr): QObject(parent) {}
-    auto size() const -> QSize {return m_size;}
-    auto samplerate() const -> double {return m_samplerate;}
-    auto bits() const -> int {return m_bits;}
-    auto channels() const -> QString {return m_channels;}
-    auto type() const -> QString {return m_type;}
-    auto bitrate() const -> int {return m_bitrate;}
-    auto fps() const -> double {return m_fps;}
+    auto type() const -> QString { return m_type; }
+    auto bitrate() const -> int { return m_bitrate; }
+    auto setType(const QString &type) -> void
+        { if (_Change(m_type, type.toUpper())) emit typeChanged(); }
+    auto setBitrate(int bps) -> void
+        { if (_Change(m_bitrate, bps)) emit bitrateChanged(); }
+    auto depth() const -> int { return m_depth; }
+    auto setDepth(int depth) -> void
+        { if (_Change(m_depth, depth)) emit depthChanged(); }
 signals:
+    void typeChanged();
     void bitrateChanged();
+    void depthChanged();
 private:
-    auto setBps(int bitrate) -> void
-    { if (_Change(m_bitrate, bitrate)) emit bitrateChanged(); }
-    friend class AvInfoObject;
-    friend class PlayEngine;
-    QSize m_size;
     QString m_type;
-    int m_bitrate = 0;
-    double m_fps = 0.0;
-    double &m_samplerate = m_fps;
-    int &m_bits = m_size.rwidth();
+    int m_bitrate = 0, m_depth = 0;
+};
+
+class AudioFormat;
+
+class AudioFormatInfoObject : public AvCommonFormatObject {
+    Q_OBJECT
+    Q_PROPERTY(int samplerate READ samplerate NOTIFY samplerateChanged)
+    Q_PROPERTY(QString channels READ channels NOTIFY channelsChanged)
+public:
+    auto samplerate() const -> int { return m_srate; }
+    auto channels() const -> QString { return m_channels; }
+    auto setFormat(const AudioFormat &format) -> void;
+    auto setSampleRate(int s, bool bitrate) -> void
+    {
+        if (_Change(m_srate, s)) {
+            emit samplerateChanged();
+            if (bitrate)
+                setBitrate(m_srate * m_nch * depth());
+        }
+    }
+    auto setChannels(const QString &ch, int n) -> void
+        { if (_Change(m_channels, ch) | _Change(m_nch, n)) emit channelsChanged(); }
+signals:
+    void samplerateChanged();
+    void channelsChanged();
+private:
+    int m_srate = 0, m_nch = 0;
     QString m_channels;
 };
 
-class AvInfoObject : public QObject {
+class VideoHwAccInfoObject : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString codec READ codecDescription CONSTANT FINAL)
-    Q_PROPERTY(AvIoFormat *input READ input CONSTANT FINAL)
-    Q_PROPERTY(AvIoFormat *output READ output CONSTANT FINAL)
-    Q_PROPERTY(QString device READ device CONSTANT FINAL)
-    Q_PROPERTY(QString hwacc READ device CONSTANT FINAL)
+    Q_PROPERTY(int state READ state NOTIFY stateChanged)
+    Q_PROPERTY(QString driver READ driver NOTIFY driverChanged)
 public:
-    AvInfoObject(QObject *parent = nullptr);
-    auto codecDescription() const -> QString {return m_codecDescription;}
-    auto codec() const -> QString { return m_codec; }
-    AvIoFormat *input() const {return m_input;}
-    AvIoFormat *output() const {return m_output;}
-    auto device() const -> QString { return m_device; }
+    auto state() const -> int { return m_state; }
+    auto driver() const -> QString { return m_driver; }
+    auto setDriver(const QString &driver) -> void
+    { if (_Change(m_driver, driver.toUpper())) emit driverChanged(); }
+    auto setState(int state) -> void
+    { if (_Change(m_state, state)) emit stateChanged(); }
+signals:
+    void stateChanged();
+    void driverChanged();
 private:
-    auto setHwAcc(int acc) -> void;
-    AvIoFormat *m_input = new AvIoFormat(this);
-    AvIoFormat *m_output = new AvIoFormat(this);
-    QString m_codecDescription, m_hwacc, &m_device = m_hwacc, m_codec;
-    friend class PlayEngine;
+    int m_state = 0;
+    QString m_driver;
+};
+
+class VideoFormatInfoObject : public AvCommonFormatObject {
+    Q_OBJECT
+    Q_PROPERTY(qreal fps READ fps NOTIFY fpsChanged)
+    Q_PROPERTY(QString space READ spaceText NOTIFY spaceChanged)
+    Q_PROPERTY(QString range READ rangeText NOTIFY rangeChanged)
+    Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
+    Q_PROPERTY(int bpp READ bpp NOTIFY bppChanged)
+public:
+    auto bpp() const -> int { return m_bpp; }
+    auto fps() const -> qreal { return m_fps; }
+    auto space() const -> ColorSpace { return m_space; }
+    auto range() const -> ColorRange { return m_range; }
+    auto spaceText() const -> QString;
+    auto rangeText() const -> QString;
+    auto setSpace(ColorSpace space) -> void
+        { if (_Change(m_space, space)) emit spaceChanged(); }
+    auto setRange(ColorRange range) -> void
+        { if (_Change(m_range, range)) emit rangeChanged(); }
+    auto setImgFmt(int imgfmt) -> void;
+    auto size() const -> QSize { return m_size; }
+    auto width() const -> int { return m_size.width(); }
+    auto height() const -> int { return m_size.height(); }
+    auto setWidth(int w) -> void { setSize({w, height()}); }
+    auto setHeight(int h) -> void { setSize({width(), h}); }
+    auto setSize(const QSize &s) -> void
+        { if (_Change(m_size, s)) emit sizeChanged(); }
+    auto setBppSize(const QSize &s) -> void
+        { if (_Change(m_bppSize, s)) updateBitrate(); }
+public slots:
+    void setFps(double fps)
+        { if (_Change(m_fps, fps)) { emit fpsChanged(); updateBitrate(); } }
+signals:
+    void fpsChanged();
+    void spaceChanged();
+    void rangeChanged();
+    void bppChanged();
+    void sizeChanged();
+private:
+    auto updateBitrate() -> void
+        { setBitrate(m_bpp * width() * height() * m_fps); }
+    int m_bpp = 0; double m_fps = 0;
+    QSize m_bppSize, m_size;
+    ColorSpace m_space = ColorSpace::Auto;
+    ColorRange m_range = ColorRange::Auto;
+};
+
+class AvCommonInfoObject : public QObject {
+    Q_OBJECT
+    Q_PROPERTY(CodecInfoObject *codec READ codec CONSTANT FINAL)
+    Q_PROPERTY(int track READ track NOTIFY trackChanged)
+public:
+    auto codec() const -> const CodecInfoObject* { return &m_codec; }
+    auto codec() -> CodecInfoObject* { return &m_codec; }
+    auto track() const -> int {return m_track;}
+public slots:
+    void setTrack(int t) { if (_Change(m_track, t)) emit trackChanged(); }
+signals:
+    void trackChanged();
+private:
+    CodecInfoObject m_codec;
+    int m_track = 0;
+};
+
+class VideoInfoObject : public AvCommonInfoObject {
+    Q_OBJECT
+    Q_PROPERTY(VideoFormatInfoObject *input READ input CONSTANT FINAL)
+    Q_PROPERTY(VideoFormatInfoObject *output READ output CONSTANT FINAL)
+    Q_PROPERTY(VideoFormatInfoObject *renderer READ renderer CONSTANT FINAL)
+    Q_PROPERTY(VideoHwAccInfoObject *hwacc READ hwacc CONSTANT FINAL)
+    Q_PROPERTY(int deinterlacer READ deinterlacer NOTIFY deinterlacerChanged)
+    Q_PROPERTY(int droppedFrames READ droppedFrames NOTIFY droppedFramesChanged)
+    Q_PROPERTY(int delayedFrames READ delayedFrames NOTIFY delayedFramesChanged)
+public:
+    auto input() const -> const VideoFormatInfoObject* { return &m_input; }
+    auto renderer() const -> const VideoFormatInfoObject* { return &m_renderer; }
+    auto output() const -> const VideoFormatInfoObject* { return &m_output; }
+    auto input() -> VideoFormatInfoObject* { return &m_input; }
+    auto renderer() -> VideoFormatInfoObject* { return &m_renderer; }
+    auto output() -> VideoFormatInfoObject* { return &m_output; }
+    auto hwacc() -> VideoHwAccInfoObject* { return &m_hwacc; }
+    auto hwacc() const -> const VideoHwAccInfoObject* { return &m_hwacc; }
+    auto deinterlacer() const -> int { return m_deint; }
+    auto setDeinterlacer(int deint) -> void
+        { if (_Change(m_deint, deint)) emit deinterlacerChanged(); }
+    auto droppedFrames() const -> int { return m_dropped; }
+    auto delayedFrames() const -> int { return m_delayed; }
+public slots:
+    void setDroppedFrames(int f)
+        { if (_Change(m_dropped, f)) emit droppedFramesChanged(); }
+    void setDelayedFrames(int f)
+        { if (_Change(m_delayed, f)) emit delayedFramesChanged(); }
+signals:
+    void deinterlacerChanged();
+    void droppedFramesChanged();
+    void delayedFramesChanged();
+private:
+    VideoFormatInfoObject m_input, m_output, m_renderer;
+    VideoHwAccInfoObject m_hwacc;
+    int m_deint = 0, m_dropped = 0, m_delayed = 0;
+};
+
+class AudioInfoObject : public AvCommonInfoObject {
+    Q_OBJECT
+    Q_PROPERTY(AudioFormatInfoObject *input READ input CONSTANT FINAL)
+    Q_PROPERTY(AudioFormatInfoObject *output READ output CONSTANT FINAL)
+    Q_PROPERTY(AudioFormatInfoObject *renderer READ renderer CONSTANT FINAL)
+    Q_PROPERTY(double normalizer READ normalizer NOTIFY normalizerChanged)
+    Q_PROPERTY(QString driver READ driver NOTIFY driverChanged)
+    Q_PROPERTY(QString device READ device NOTIFY deviceChanged)
+public:
+    auto input() const -> const AudioFormatInfoObject* { return &m_input; }
+    auto output() const -> const AudioFormatInfoObject* { return &m_output; }
+    auto renderer() const -> const AudioFormatInfoObject* { return &m_renderer; }
+    auto input() -> AudioFormatInfoObject* { return &m_input; }
+    auto output() -> AudioFormatInfoObject* { return &m_output; }
+    auto renderer() -> AudioFormatInfoObject* { return &m_renderer; }
+    auto normalizer() const -> double { return m_gain; }
+    auto setNormalizer(double gain) -> void
+        { if (_Change(m_gain, gain)) emit normalizerChanged(); }
+    auto device() const -> QString;
+    auto driver() const -> QString { return m_driver.toUpper(); }
+public slots:
+    void setDriver(const QString &driver);
+    void setDevice(const QString &device);
+signals:
+    void normalizerChanged();
+    void driverChanged();
+    void deviceChanged();
+private:
+    AudioFormatInfoObject m_input, m_output, m_renderer;
+    double m_gain = -1.0;
+    QString m_driver, m_device;
 };
 
 class MediaInfoObject : public QObject {

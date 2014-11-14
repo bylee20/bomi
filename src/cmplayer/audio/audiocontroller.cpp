@@ -3,6 +3,7 @@
 #include "player/mpv_helper.hpp"
 #include "enum/channellayout.hpp"
 #include "misc/log.hpp"
+#include "misc/speedmeasure.hpp"
 extern "C" {
 #include <libswresample/swresample.h>
 #include <libavutil/opt.h>
@@ -57,17 +58,19 @@ struct AudioController::Data {
     AudioMixer *mixer = nullptr;
     SwrContext *swr = nullptr;
     int fmt_conv = AF_FORMAT_UNKNOWN, outrate = 0;
+    SpeedMeasure<quint64> measure{10, 30};
+    int srate = 0;
+    quint64 samples = 0, counter = 0;
     bool normalizerActivated = false, tempoScalerActivated = false;
     bool resample = false;
-    double scale = 1.0, amp = 1.0;
+    double scale = 1.0, amp = 1.0, gain = 1.0;
     mp_chmap chmap;
     mp_audio *resampled = nullptr;
     af_instance *af = nullptr;
-//    QByteArray data;
     AudioNormalizerOption normalizerOption;
     ClippingMethod clip = ClippingMethod::Auto;
     ChannelLayoutMap map = ChannelLayoutMap::default_();
-    ::ChannelLayout layout = ChannelLayoutInfo::default_();
+    ChannelLayout layout = ChannelLayoutInfo::default_();
     AudioFormat input, output;
 };
 
@@ -129,17 +132,26 @@ auto AudioController::reinitialize(mp_audio *in) -> int
 {
     if (!in)
         return AF_ERROR;
+    d->measure.reset();
+    d->counter = d->samples = 0;
+    if (_Change(d->srate, 0))
+        emit samplerateChanged(d->srate);
+    if (_Change(d->gain, 1.0))
+        emit samplerateChanged(d->gain);
+
     auto makeFormat = [] (const mp_audio *audio) {
         AudioFormat format;
-        format.m_samplerate = audio->rate/1000.0; // kHz
-        format.m_bitrate = audio->rate*audio->nch*audio->bps*8;
-        format.m_bits = audio->bps*8;
+        format.m_samplerate = audio->rate;
+        format.m_bitrate = audio->rate * audio->nch * audio->bps * 8;
+        format.m_bits = audio->bps * 8;
         const auto layout = ChannelLayoutMap::toLayout(audio->channels);
         format.m_channels = ChannelLayoutInfo::description(layout);
+        format.m_nch = audio->nch;
         format.m_type = _L(af_fmt_to_str(audio->format));
         return format;
     };
-    d->input = makeFormat(in);
+    if (_Change(d->input, makeFormat(in)))
+        emit inputFormatChanged();
     auto out = d->af->data;
     out->rate = in->rate;
     bool ret = true;
@@ -185,7 +197,8 @@ auto AudioController::reinitialize(mp_audio *in) -> int
         d->resampled->rate = out->rate;
         in = d->resampled;
     }
-    d->output = makeFormat(out);
+    if (_Change(d->output, makeFormat(out)))
+        emit outputFormatChanged();
     const AudioDataFormat fmt_in(*in), fmt_out(*out);
     if (!d->mixer || !d->mixer->configure(fmt_in, fmt_out)) {
         delete d->mixer;
@@ -284,7 +297,19 @@ auto AudioController::filter(af_instance *af, mp_audio *data, int flags) -> int
     d->mixer->apply(in);
     *data = *d->af->data;
     af->delay += d->mixer->delay();
+    d->measure.push(d->samples += data->samples);
+    if (!tmp::remainder<4>(++d->counter)) {
+        if (_Change(d->srate, qRound(d->measure.get())))
+            emit ac->samplerateChanged(d->srate);
+        if (_Change<double>(d->gain, d->normalizerActivated ? d->mixer->gain() : -1))
+            emit ac->gainChanged(d->gain);
+    }
     return 0;
+}
+
+auto AudioController::samplerate() const -> int
+{
+    return d->srate;
 }
 
 auto AudioController::inputFormat() const -> AudioFormat
@@ -305,7 +330,7 @@ auto AudioController::setNormalizerActivated(bool on) -> void
 
 auto AudioController::gain() const -> double
 {
-    return d->normalizerActivated && d->mixer ? d->mixer->gain() : 1.0;
+    return d->gain;
 }
 
 auto AudioController::isTempoScalerActivated() const -> bool

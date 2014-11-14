@@ -49,7 +49,7 @@ struct VideoFilter::Data {
     SoftwareDeinterlacer deinterlacer;
     mp_image_params params;
     HwAcc *acc = nullptr;
-    bool deint = false, hwacc = false;
+    bool deint = false, hwacc = false, inter_i = false, inter_o = false;
     OpenGLOffscreenContext *gl = nullptr;
     auto updateDeint() -> void
     {
@@ -104,6 +104,16 @@ auto VideoFilter::open(vf_instance *vf) -> int
     return true;
 }
 
+auto VideoFilter::isInputInterlaced() const -> bool
+{
+    return d->inter_i;
+}
+
+auto VideoFilter::isOutputInterlaced() const -> bool
+{
+    return d->inter_o;
+}
+
 auto VideoFilter::reconfig(vf_instance *vf,
                            mp_image_params *in, mp_image_params *out) -> int
 {
@@ -120,8 +130,6 @@ auto VideoFilter::setHwAcc(HwAcc *acc) -> void
     d->acc = acc;
 }
 
-mp_image *tt = nullptr;
-
 auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
 {
     if (!_mpi)
@@ -130,6 +138,8 @@ auto VideoFilter::filterIn(vf_instance *vf, mp_image *_mpi) -> int
     auto mpi = MpImage::wrap(_mpi);
     if (d->acc && d->acc->imgfmt() == mpi->imgfmt)
         mpi = d->acc->getImage(mpi);
+    if (_Change(d->inter_i, mpi.isInterlaced()))
+        emit v->inputInterlacedChanged();
     d->deinterlacer.push(std::move(mpi));
     return 0;
 }
@@ -138,7 +148,10 @@ auto VideoFilter::filterOut(vf_instance *vf) -> int
 {
     auto v = priv(vf); auto d = v->d;
 //    if (auto mpi = d->deinterlacer.pop().take())
-        vf_add_output_frame(vf, d->deinterlacer.pop().take());
+    auto mpi = std::move(d->deinterlacer.pop());
+    if (_Change(d->inter_o, d->deinterlacer.pass() ? mpi.isInterlaced() : false))
+        emit v->outputInterlacedChanged();
+    vf_add_output_frame(vf, mpi.take());
     return 0;
 }
 

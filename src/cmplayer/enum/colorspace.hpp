@@ -12,7 +12,8 @@ enum class ColorSpace : int {
     BT601 = (int)1,
     BT709 = (int)2,
     SMPTE240M = (int)3,
-    YCgCo = (int)4
+    YCgCo = (int)4,
+    RGB = (int)5
 };
 
 Q_DECLARE_METATYPE(ColorSpace)
@@ -52,9 +53,9 @@ public:
         QString name, key;
         mp_csp data;
     };
-    using ItemList = std::array<Item, 5>;
+    using ItemList = std::array<Item, 6>;
     static constexpr auto size() -> int
-    { return 5; }
+    { return 6; }
     static constexpr auto typeName() -> const char*
     { return "ColorSpace"; }
     static constexpr auto typeKey() -> const char*
@@ -79,6 +80,7 @@ public:
         case Enum::BT709: return qApp->translate("EnumInfo", "BT.709(HD)");
         case Enum::SMPTE240M: return qApp->translate("EnumInfo", "SMPTE-240M");
         case Enum::YCgCo: return qApp->translate("EnumInfo", "YCgCo");
+        case Enum::RGB: return qApp->translate("EnumInfo", "RGB");
         default: return QString();
         }
     }

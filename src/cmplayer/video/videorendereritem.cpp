@@ -12,6 +12,7 @@
 #include "misc/log.hpp"
 #include "videoframeshader.hpp"
 #include "enum/interpolatortype.hpp"
+#include "misc/speedmeasure.hpp"
 
 DECLARE_LOG_CONTEXT(Video)
 
@@ -65,18 +66,15 @@ struct VideoRenderer::Data {
     InterpolatorType chromaUpscaler = InterpolatorType::Bilinear;
     ColorRange range = ColorRange::Auto;
     ColorSpace space = ColorSpace::Auto;
+    ColorRange matrixRange = ColorRange::Auto;
+    ColorSpace matrixSpace = ColorSpace::Auto;
     DeintOption deint_swdec, deint_hwdec;
 
-    quint64 drawn = 0, dropped = 0;
-    std::deque<FrameTime> timings;
-    double avgfps = 0.0;
-    void clearTimings() {
-        timings.clear();
-        drawn = 0;
-        avgfps = 0;
-    }
+    quint64 drawn = 0, dropped = 0, delayed = 0;
+    SpeedMeasure<quint64> measure{5, 20};
+    double fps = 0.0;
 
-
+    auto clearTimings() -> void { measure.reset(); fps = drawn = 0; }
     template<class T, class Sig>
     auto mark(T &t, const T &prev, Dirty flag, Sig sig,
               UpdateHint hints = UpdateAll) -> bool
@@ -170,6 +168,33 @@ struct VideoRenderer::Data {
         }
         forceToUpdateOsd = false;
     }
+
+    auto updateColorMatrixInfo() -> void
+    {
+        auto range_o = range;
+        const bool pc = format.params().colorlevels == MP_CSP_LEVELS_PC;
+        switch (range_o) {
+        case ColorRange::Auto:
+            range_o = pc ? ColorRange::Full : ColorRange::Limited;
+            break;
+        case ColorRange::Remap:
+        case ColorRange::Extended:
+            if (pc)
+                range_o = ColorRange::Full;
+            break;
+        default:
+            break;
+        }
+        auto space_o = this->space;
+        if (space_o == ColorSpace::Auto)
+            space_o = ColorSpaceInfo::fromData(format.params().colorspace,
+                                               ColorSpace::BT709);
+        if (_Change(matrixRange, range_o) | _Change(matrixSpace, space_o)) {
+            dirty |= DirtyColorMatrix;
+            p->reserve(UpdateMaterial);
+            emit p->colorMatrixChanged();
+        }
+    }
 };
 
 VideoRenderer::VideoRenderer(QQuickItem *parent)
@@ -196,15 +221,20 @@ auto VideoRenderer::droppedFrames() const -> int
     return d->dropped;
 }
 
+auto VideoRenderer::delayedFrames() const -> int
+{
+    return d->delayed;
+}
+
 auto VideoRenderer::resetTimings() -> void
 {
     if (_Change(d->dropped, 0ull))
         emit droppedFramesChanged(d->dropped);
 }
 
-auto VideoRenderer::avgfps() const -> double
+auto VideoRenderer::fps() const -> double
 {
-    return d->avgfps;
+    return d->fps;
 }
 
 auto VideoRenderer::setOverlayOnLetterbox(bool letterbox) -> void
@@ -263,8 +293,9 @@ auto VideoRenderer::customEvent(QEvent *event) -> void
         break;
     } case NewFormat: {
         VideoFormat format; _TakeData(event, format);
-        d->mark(d->format, format, DirtyFormat,
-                &VideoRenderer::formatChanged, UpdateAll);
+        if (d->mark(d->format, format, DirtyFormat,
+                    &VideoRenderer::formatChanged, UpdateAll))
+            d->updateColorMatrixInfo();
         break;
     } default:
         break;
@@ -439,8 +470,8 @@ auto VideoRenderer::setChromaUpscaler(InterpolatorType type) -> void
 
 auto VideoRenderer::setColorRange(ColorRange range) -> void
 {
-    d->mark(d->range, range, DirtyColorMatrix,
-            &VideoRenderer::colorRangeChanged, UpdateMaterial);
+    if (_Change(d->range, range))
+        d->updateColorMatrixInfo();
 }
 
 auto VideoRenderer::colorSpace() const -> ColorSpace
@@ -450,13 +481,23 @@ auto VideoRenderer::colorSpace() const -> ColorSpace
 
 auto VideoRenderer::setColorSpace(ColorSpace space) -> void
 {
-    d->mark(d->space, space, DirtyColorMatrix,
-            &VideoRenderer::colorSpaceChanged, UpdateMaterial);
+    if (_Change(d->space, space))
+        d->updateColorMatrixInfo();
 }
 
 auto VideoRenderer::colorRange() const -> ColorRange
 {
     return d->range;
+}
+
+auto VideoRenderer::colorMatrixRange() const -> ColorRange
+{
+    return d->matrixRange;
+}
+
+auto VideoRenderer::colorMatrixSpace() const -> ColorSpace
+{
+    return d->matrixSpace;
 }
 
 auto VideoRenderer::setEqualizer(const VideoColor &prop) -> void
@@ -495,7 +536,7 @@ auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
                 if (d->dirty & DirtyEffects)
                     d->shader->setEffects(d->effects);
                 if (d->dirty & DirtyColorMatrix)
-                    d->shader->setColor(d->eq, d->space, d->range);
+                    d->shader->setColor(d->eq, d->matrixSpace, d->matrixRange);
                 if (d->dirty & DirtyChromaUpscaler)
                     d->shader->setChromaUpscaler(d->chromaUpscaler);
                 if (d->dirty & DirtyDeint) {
@@ -514,23 +555,6 @@ auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
             d->fbo->release();
             *texture = d->fbo->texture();
         }
-//        if (shader->isDirectlyRenderable()) {
-//            cache = pool->get(shader->directlyRenderableTexture(),
-//                              format.displaySize(), shader->useDMA());
-//            if (cache)
-//                shader->upload(mpi, const_cast<VideoTexture&>(*cache));
-//        } else {
-//            cache = pool->get(format.size(), format.displaySize());
-//            if (cache) {
-//                Q_ASSERT(fbo->size() == cache->size());
-//                shader->upload(mpi);
-//                glBindTexture(cache->target(), GL_NONE);
-//                fbo->bind();
-//                fbo->attach(*cache);
-//                shader->render(renderer->kernel());
-//                fbo->release();
-//            }
-//        }
 
         d->mposd.draw(d->data.osd());
         setOverlayTexture(d->mposd.isVisible() ? d->mposd.texture()
@@ -544,30 +568,23 @@ auto VideoRenderer::updateTexture(OpenGLTexture2D *texture) -> void
             } else
                 reserve(UpdateMaterial);
         }
+        if (_Change<quint64>(d->delayed, d->queue.size()))
+            emit delayedFramesChanged(d->delayed);
         if (_Change(d->rectangle, texture->target() == OGL::TargetRectangle)
                 | _Change(d->displaySize, d->format.displaySize())) {
             d->forceToUpdateOsd = true;
             reserve(UpdateGeometry, false);
         }
 
-        ++d->drawn;
+        d->measure.push(++d->drawn);
         constexpr int interval = 4;
-        constexpr int max = 20, min = 5;
-        const int size = d->timings.size();
-        if (size == max && d->drawn & (interval - 1))
-            return;
-        d->timings.emplace_back(d->drawn, _SystemTime());
-        if (size > min) {
-            if (size > max)
-                d->timings.pop_front();
-            const auto df = d->timings.back().frames - d->timings.front().frames;
-            const auto dt = d->timings.back().time - d->timings.front().time;
-            d->avgfps = df/(dt*1e-6);
-        } else
-            d->avgfps = 0.0;
+        if (!(d->drawn & (interval - 1))) {
+            if (_Change(d->fps, d->measure.get()))
+                emit fpsChanged(d->fps);
+        }
         _Trace("VideoRendererItem::updateTexture(): "
                "render queued frame(%%), avgfps: %%",
-               texture->size(), d->avgfps);
+               texture->size(), d->fps);
     }
 
     if (d->take) {

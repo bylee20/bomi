@@ -80,6 +80,7 @@ ${ return EnumFlags<SpeakerId>((int)lhs | (int)rhs); }
 -BT709[[bt.709]][-BT.709(HD)-][:MP_CSP_BT_709:]
 -SMPTE240M[[smpte]][-SMPTE-240M-][:MP_CSP_SMPTE_240M:]
 -YCgCo[[ycgco]][-YCgCo-][:MP_CSP_YCGCO:]
+-RGB[[rgb]][-RGB-][:MP_CSP_RGB:]
 
 #+AdjustColor[[color]][:VideoColor:]
 #!#include "video/videocolor.hpp"

@@ -22,15 +22,42 @@ PlayEngine::PlayEngine()
             this, &PlayEngine::droppedFramesChanged);
 
     d->handle = mpv_create();
-    auto verbose = qgetenv("CMPLAYER_MPV_VERBOSE").toLower();
-    if (!verbose.isEmpty())
-        mpv_request_log_messages(d->handle, verbose.constData());
+    auto verbose = qgetenv("CMPLAYER_MPV_VERBOSE").toLower().trimmed();
+    const QVector<QByteArray> lvs = {"no", "fatal", "error", "warn", "info",
+                                     "status", "v", "debug", "trace"};
+    if (lvs.indexOf(verbose) < lvs.indexOf("info"))
+        verbose = "info";
+    mpv_request_log_messages(d->handle, verbose.constData());
 
     d->observe();
 
     connect(this, &PlayEngine::beginChanged, this, &PlayEngine::endChanged);
     connect(this, &PlayEngine::durationChanged, this, &PlayEngine::endChanged);
-
+    connect(this, &PlayEngine::currentVideoStreamChanged,
+            &d->videoInfo, &VideoInfoObject::setTrack);
+    connect(this, &PlayEngine::currentAudioStreamChanged,
+            &d->audioInfo, &AudioInfoObject::setTrack);
+    auto checkDeint = [=] () {
+        auto act = Unavailable;
+        if (d->filter->isInputInterlaced())
+            act = d->filter->isOutputInterlaced() ? Deactivated : Activated;
+        d->videoInfo.setDeinterlacer(act);
+    };
+    connect(d->filter, &VideoFilter::inputInterlacedChanged,
+            this, checkDeint, Qt::QueuedConnection);
+    connect(d->filter, &VideoFilter::outputInterlacedChanged,
+            this, checkDeint, Qt::QueuedConnection);
+    connect(d->audio, &AudioController::inputFormatChanged, this, [=] () {
+        d->audioInfo.output()->setFormat(d->audio->inputFormat());
+    }, Qt::QueuedConnection);
+    connect(d->audio, &AudioController::outputFormatChanged, this, [=] () {
+        d->audioInfo.renderer()->setFormat(d->audio->outputFormat());
+    }, Qt::QueuedConnection);
+    connect(d->audio, &AudioController::samplerateChanged, this, [=] (int sr) {
+        d->audioInfo.renderer()->setSampleRate(sr, true);
+    }, Qt::QueuedConnection);
+    connect(d->audio, &AudioController::gainChanged,
+            &d->audioInfo, &AudioInfoObject::setNormalizer);
     auto setOption = [this] (const char *name, const char *data) {
         const auto err = mpv_set_option_string(d->handle, name, data);
         d->fatal(err, "Couldn't set option %%=%%.", name, data);
@@ -47,10 +74,6 @@ PlayEngine::PlayEngine()
     setOption("title", "\"\"");
     setOption("vo", d->vo().constData());
     setOption("fixed-vo", "yes");
-    setOption("save-position-on-quit", "yes");
-    setOption("resume-playback", "no");
-    setOption("config-dir", d->confDir.path().toLocal8Bit().constData());
-    setOption("config", "yes");
 
     auto overrides = qgetenv("CMPLAYER_MPV_OPTIONS").trimmed();
     if (!overrides.isEmpty()) {
@@ -85,8 +108,6 @@ PlayEngine::~PlayEngine()
 {
     d->initialized = false;
     mpv_terminate_destroy(d->handle);
-    delete d->videoInfo;
-    delete d->audioInfo;
     delete d->chapterInfo;
     delete d->audioTrackInfo;
     delete d->audio;
@@ -105,8 +126,8 @@ auto PlayEngine::updateVideoFormat(VideoFormat format) -> void
 {
     if (_Change(d->videoFormat, format))
         emit videoFormatChanged(d->videoFormat);
-    auto output = d->videoInfo->m_output;
-    output->setBps(d->videoFormat.bitrate(output->m_fps));
+//    auto output = d->videoInfo->m_output;
+//    output->setBps(d->videoFormat.bitrate(output->m_fps));
 }
 
 auto PlayEngine::subtitleTrackInfo() const -> SubtitleTrackInfoObject*
@@ -211,11 +232,6 @@ auto PlayEngine::audioStreams() const -> const StreamList&
     return d->streams[Stream::Audio];
 }
 
-auto PlayEngine::hwAcc() const -> PlayEngine::HardwareAcceleration
-{
-    return d->hwacc;
-}
-
 auto PlayEngine::run() -> void
 {
     d->thread.start();
@@ -294,8 +310,10 @@ auto PlayEngine::reload() -> void
 
 auto PlayEngine::setChannelLayout(ChannelLayout layout) -> void
 {
-    if (_Change(d->layout, layout) && d->position > 0)
-        reload();
+    if (_Change(d->layout, layout) && d->position > 0) {
+        d->setmpv("options/audio-channels", ChannelLayoutInfo::data(d->layout));
+        d->tellmpv("ao_reload");
+    }
 }
 
 auto PlayEngine::setAudioDevice(const QString &device) -> void
@@ -321,11 +339,11 @@ auto PlayEngine::volumeNormalizer() const -> double
 
 auto PlayEngine::setHwAcc(int backend, const QVector<int> &codecs) -> void
 {
-    d->hwaccCodecs = _ToStringList(codecs, [] (int id) {
+    d->hwCodecs = _ToStringList(codecs, [] (int id) {
         const char *name = HwAcc::codecName(id);
         return name ? QString::fromLatin1(name) : QString();
     }).join(','_q).toLatin1();
-    d->hwaccBackend = HwAcc::Type(backend);
+    d->hwBackend = static_cast<HwAcc::Type>(backend);
 }
 
 auto PlayEngine::isSubtitleStreamsVisible() const -> bool
@@ -390,7 +408,7 @@ auto PlayEngine::removeSubtitleStream(int id) -> void
 
 auto PlayEngine::avgfps() const -> double
 {
-    return d->renderer->avgfps();
+    return d->renderer->fps();
 }
 
 auto PlayEngine::avSync() const -> int
@@ -429,14 +447,14 @@ auto PlayEngine::mediaInfo() const -> MediaInfoObject*
     return &d->mediaInfo;
 }
 
-auto PlayEngine::audioInfo() const -> AvInfoObject*
+auto PlayEngine::audioInfo() const -> AudioInfoObject*
 {
-    return d->audioInfo;
+    return &d->audioInfo;
 }
 
-auto PlayEngine::videoInfo() const -> AvInfoObject*
+auto PlayEngine::videoInfo() const -> VideoInfoObject*
 {
-    return d->videoInfo;
+    return &d->videoInfo;
 }
 
 auto PlayEngine::setCurrentChapter(int id) -> void
@@ -606,9 +624,28 @@ auto PlayEngine::setVideoRenderer(VideoRenderer *renderer) -> void
             disconnect(d->renderer, nullptr, this, nullptr);
             disconnect(d->renderer, nullptr, d->filter, nullptr);
             disconnect(d->filter, nullptr, d->renderer, nullptr);
+            disconnect(this, nullptr, d->renderer, nullptr);
         }
         d->renderer = renderer;
         d->video->setRenderer(d->renderer);
+        connect(d->renderer, &VideoRenderer::fpsChanged,
+                d->videoInfo.renderer(), &VideoFormatInfoObject::setFps);
+        connect(d->renderer, &VideoRenderer::formatChanged,
+                [this] (const VideoFormat &format) {
+            auto renderer = d->videoInfo.renderer();
+            renderer->setImgFmt(format.params().imgfmt);
+            renderer->setBppSize(format.size());
+            renderer->setSize(format.displaySize());
+        });
+        connect(d->renderer, &VideoRenderer::colorMatrixChanged, [this] () {
+            const auto info = d->videoInfo.renderer();
+            info->setSpace(d->renderer->colorMatrixSpace());
+            info->setRange(d->renderer->colorMatrixRange());
+        });
+        connect(d->renderer, &VideoRenderer::droppedFramesChanged,
+                &d->videoInfo, &VideoInfoObject::setDroppedFrames);
+        connect(d->renderer, &VideoRenderer::delayedFramesChanged,
+                &d->videoInfo, &VideoInfoObject::setDelayedFrames);
     }
 }
 

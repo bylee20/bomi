@@ -157,7 +157,6 @@ auto VideoOutput::format() const -> const VideoFormat&
 
 auto VideoOutput::reconfig(vo *out, mp_image_params *params, int flags) -> int
 {
-    qDebug() << "reconfig";
     auto v = priv(out); Data *d = v->d;
     d->reset();
     d->params = *params;

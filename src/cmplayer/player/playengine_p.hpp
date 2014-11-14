@@ -33,18 +33,10 @@ DECLARE_LOG_CONTEXT(Engine)
 enum EventType {
     UserType = QEvent::User, StateChange,
     PreparePlayback,EndPlayback, StartPlayback, NotifySeek,
-    UpdateVideoInfo, UpdateAudioInfo,
     EventTypeMax
 };
 
-enum UpdateEvent {
-    UpdateEventBegin = EventTypeMax, UpdateChapterList = UpdateEventBegin,
-    UpdateCacheSize, UpdateTimePos, UpdateTimeStart, UpdateTimeLength,
-    UpdateCacheUsed,UpdateAvSync, UpdateSeekable, UpdateCurrentChapter,
-    UpdateTrackList, UpdateCurrentVideoTrack, UpdateCurrentAudioTrack,
-    UpdateCurrentSubtitleTrack, UpdateMetaData, UpdateMediaTitle,
-    UpdateEventEnd
-};
+static constexpr const int UpdateEventBegin = EventTypeMax;
 
 enum EndReason {
     EndFailed = -1, EndOfFile, EndRestart, EndRequest, EndQuit, EndUnknown
@@ -52,7 +44,6 @@ enum EndReason {
 
 struct StreamTypeInfo {
     Stream::Type type;
-    UpdateEvent event;
     const char *mpvName;
     void (PlayEngine::*notifyList)(const StreamList&);
     void (PlayEngine::*notifyTrack)(int);
@@ -61,17 +52,17 @@ struct StreamTypeInfo {
 static const QVector<StreamTypeInfo> streamTypeInfo = [] () {
     QVector<StreamTypeInfo> info(3);
     info[Stream::Video] = {
-        Stream::Video, UpdateCurrentVideoTrack, "vid",
+        Stream::Video, "vid",
         &PlayEngine::videoStreamsChanged,
         &PlayEngine::currentVideoStreamChanged
     };
     info[Stream::Audio] = {
-        Stream::Audio, UpdateCurrentAudioTrack, "aid",
+        Stream::Audio, "aid",
         &PlayEngine::audioStreamsChanged,
         &PlayEngine::currentAudioStreamChanged
     };
     info[Stream::Subtitle] = {
-        Stream::Subtitle, UpdateCurrentSubtitleTrack, "sid",
+        Stream::Subtitle, "sid",
         &PlayEngine::subtitleStreamsChanged,
         &PlayEngine::currentSubtitleStreamChanged
     };
@@ -82,7 +73,7 @@ static const QVector<Stream::Type> streamTypes
     = { Stream::Audio, Stream::Video, Stream::Subtitle };
 
 struct Observation {
-    UpdateEvent event;
+    int event;
     const char *name = nullptr;
     std::function<void(void)> post; // post from mpv to qt
     std::function<void(QEvent*)> handle; // handle posted event
@@ -197,11 +188,12 @@ struct PlayEngine::Data {
 
     QVector<Observation> observations;
 
-    AvInfoObject *videoInfo = new AvInfoObject, *audioInfo = new AvInfoObject;
+    VideoInfoObject videoInfo;
+    AudioInfoObject audioInfo;
     ChapterInfoObject *chapterInfo = nullptr;
 
     MediaInfoObject mediaInfo;
-    HardwareAcceleration hwacc = HardwareAcceleration::Unavailable;
+    ActivationState hwacc = Unavailable;
     MetaData metaData;
     QString mediaName;
 
@@ -218,11 +210,12 @@ struct PlayEngine::Data {
     int avSync = 0;
     qreal cacheForPlayback = 0.02, cacheForSeeking = 0.05;
     int cacheSize = 0, cacheUsed = 0, initSeek = -1;
+    int updateEventMax = UpdateEventBegin;
 
     mpv_handle *handle = nullptr;
     VideoOutput *video = nullptr;
     VideoFilter *filter = nullptr;
-    QByteArray hwaccCodecs;
+    QByteArray hwCodecs;
     QVector<SubtitleFileInfo> subtitleFiles;
     ChannelLayout layout = ChannelLayoutInfo::default_();
     int duration = 0, audioSync = 0, begin = 0, position = 0;
@@ -236,7 +229,7 @@ struct PlayEngine::Data {
     ChapterList chapters;
     EditionList editions;
 
-    HwAcc::Type hwaccBackend = HwAcc::None;
+    HwAcc::Type hwBackend = HwAcc::None;
     VideoFormat videoFormat;
     DeintOption deint_swdec, deint_hwdec;
     DeintMode deint = DeintMode::Auto;
@@ -298,70 +291,76 @@ struct PlayEngine::Data {
 
     auto observation(int event) -> const Observation&
     {
-        Q_ASSERT(UpdateEventBegin <= event && event <= UpdateEventEnd);
+        Q_ASSERT(UpdateEventBegin <= event && event < updateEventMax);
         Q_ASSERT(event == observations[event - UpdateEventBegin].event);
         return observations[event - UpdateEventBegin];
     }
-
+    auto newUpdateEvent() -> int { return updateEventMax++; }
     template<class Get>
-    auto observe(UpdateEvent event, const char *name, Get get,
-                 std::function<void(QEvent*)> &&handle) -> void
+    auto observe(const char *name, Get get,
+                 std::function<void(QEvent*)> &&handle) -> int
     {
-        auto &ob = observations[event - UpdateEventBegin];
-        Q_ASSERT(ob.name == nullptr);
+        const int event = newUpdateEvent();
+        Observation ob;
         ob.event = event;
         ob.name = name;
         ob.post = [=] () { _PostEvent(p, event, get()); };
         ob.handle = handle;
+        observations.append(ob);
+        Q_ASSERT(observations.size() == updateEventMax - UpdateEventBegin);
+        return event;
+    }
+    template<class T, class Set>
+    auto observeType(const char *name, Set set) -> int
+    {
+        return observe(name, [=] () { return getmpv<T>(name); },
+                       [=] (QEvent *e) { set(_MoveData<T>(e)); });
     }
 
     template<class T, class Get, class Notify>
-    auto observe(UpdateEvent event, const char *name, T &t, Get get,
-                 Notify notify) -> void
+    auto observe(const char *name, T &t, Get get, Notify notify) -> int
     {
-        observe<Get>(event, name, get, [=, &t] (QEvent *e)
-            { if (t != _GetData<T>(e)) { _TakeData(e, t); if (initialized) notify(); } });
+        return observe<Get>(name, get, [=, &t] (QEvent *e) {
+            if (t != _GetData<T>(e)) {
+                _TakeData(e, t);
+                if (initialized)
+                    notify();
+            }
+        });
     }
 
     template<class T, class Get>
-    auto observe(UpdateEvent event, const char *name, T &t, Get get,
-                 void(PlayEngine::*sig)()) -> void
-    {
-        observe<T, Get>(event, name, t, get, [=] () { emit (p->*sig)(); });
-    }
+    auto observe(const char *name, T &t, Get get, void(PlayEngine::*sig)()) -> int
+        { return observe<T, Get>(name, t, get, [=] () { emit (p->*sig)(); }); }
 
     template<class T, class Get, class S>
-    auto observe(UpdateEvent event, const char *name, T &t, Get get,
-                 void(PlayEngine::*sig)(S)) -> void
-    {
-        observe<T, Get>(event, name, t, get, [=, &t] () { emit (p->*sig)(t); });
-    }
+    auto observe(const char *name, T &t, Get get, void(PlayEngine::*sig)(S)) -> int
+        { return observe<T, Get>(name, t, get, [=, &t] () { emit (p->*sig)(t); }); }
 
     template<class T>
-    auto observe(UpdateEvent event, const char *name, T &t,
-                 void(PlayEngine::*sig)()) -> void
+    auto observe(const char *name, T &t, void(PlayEngine::*sig)()) -> int
     {
-        observe(event, name, t, [=, &t] ()
-            { T val = t; return getmpv<T>(name, val) ? val : T(); }, sig);
+        return observe(name, t, [=, &t] () {
+            T val = t; return getmpv<T>(name, val) ? val : T();
+        }, sig);
     }
 
     template<class T, class S>
-    auto observe(UpdateEvent event, const char *name, T &t,
-                 void(PlayEngine::*sig)(S)) -> void
+    auto observe(const char *name, T &t, void(PlayEngine::*sig)(S)) -> int
     {
-        observe(event, name, t, [=, &t] ()
-            { T val = t; return getmpv<T>(name, val) ? val : T(); }, sig);
+        return observe(name, t, [=, &t] () {
+            T val = t; return getmpv<T>(name, val) ? val : T();
+        }, sig);
     }
-    auto observeTime(UpdateEvent event, const char *name, int &t,
-                     void(PlayEngine::*sig)(int)) -> void
+    auto observeTime(const char *name, int &t, void(PlayEngine::*sig)(int)) -> int
     {
-        observe<int>(event, name, t, [=, &t] { return s2ms(getmpv<double>(name)); }, sig);
+        return observe<int>(name, t, [=, &t] { return s2ms(getmpv<double>(name)); }, sig);
     }
 
-    auto observeTrack(Stream::Type type) -> void
+    auto observeTrack(Stream::Type type) -> int
     {
         const auto &info = streamTypeInfo[type];
-        observe(info.event, info.mpvName, [=, &info] () {
+        return observe(info.mpvName, [=, &info] () {
             int track = 0; return getmpv<int>(info.mpvName, track) ? track : 1;
         }, [=] (QEvent *event) { setCurrentTrack(type, _GetData<int>(event)); });
     }
@@ -386,6 +385,7 @@ struct PlayEngine::Data {
     auto observe() -> void;
     auto dispatch(mpv_event *event) -> void;
     auto process(QEvent *event) -> void;
+    auto log(const QByteArray &prefix, const QByteArray &text) -> void;
 };
 
 template<class T>

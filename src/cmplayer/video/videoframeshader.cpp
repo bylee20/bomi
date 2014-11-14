@@ -77,6 +77,8 @@ auto VideoFrameShader::updateTexCoords() -> void
 auto VideoFrameShader::setColor(const VideoColor &color,
                                 ColorSpace space, ColorRange range) -> void
 {
+    Q_ASSERT(space != ColorSpace::Auto);
+    Q_ASSERT(range != ColorRange::Auto);
     m_color = color;
     m_space = space;
     m_range = range;
@@ -98,24 +100,7 @@ auto VideoFrameShader::updateColorMatrix() -> void
     auto color = m_color;
     if (m_effects.contains(VideoEffect::Gray))
         color.setSaturation(-100);
-    auto range = m_range;
-    const bool pc = m_params.colorlevels == MP_CSP_LEVELS_PC;
-    switch (range) {
-    case ColorRange::Auto:
-        range = pc ? ColorRange::Full : ColorRange::Limited;
-        break;
-    case ColorRange::Remap:
-    case ColorRange::Extended:
-        if (pc)
-            range = ColorRange::Full;
-        break;
-    default:
-        break;
-    }
-    auto csp = m_cspOut;
-    if (csp != MP_CSP_RGB && m_space != ColorSpace::Auto)
-        csp = _EnumData(m_space);
-    m_mul_mat = color.matrix(csp, range);
+    m_mul_mat = color.matrix(m_direct ? ColorSpace::RGB : m_space, m_range);
     if (m_effects.contains(VideoEffect::Invert))
         m_mul_mat = QMatrix4x4(-1,  0,  0, 1,
                                 0, -1,  0, 1,
@@ -196,7 +181,7 @@ const vec2 chroma_offset = chroma_location*dxdy.xy;
 const vec2 dxy = dxdy.xy;
 const vec2 tex_size = vec2(texWidth, texHeight);
 )"_b;
-        auto interpolator = m_cspOut != MP_CSP_RGB ? shader.interpolator
+        auto interpolator = m_space != ColorSpace::RGB ? shader.interpolator
             : Interpolator::get(InterpolatorType::Bilinear);
         m_lutCount = interpolator->textures();
         Q_ASSERT(0 <= m_lutCount && m_lutCount < 3);
@@ -254,10 +239,9 @@ auto VideoFrameShader::setFormat(const mp_image_params &params,
     m_direct = false;
     if (m_imgfmtOut != IMGFMT_NONE) {
         m_direct = true;
-        m_cspOut = MP_CSP_RGB;
+        m_space = ColorSpace::RGB;
     } else {
         m_imgfmtOut = m_params.imgfmt;
-        m_cspOut = m_params.colorspace;
         switch (m_imgfmtOut) {
         case IMGFMT_BGRA: case IMGFMT_BGR0:
         case IMGFMT_RGBA: case IMGFMT_RGB0:
@@ -342,7 +326,7 @@ auto VideoFrameShader::setFormat(const mp_image_params &params,
             if (m_imgfmtOut == IMGFMT_YUYV)
                 info.transfer.type = OGL::UInt16_8_8_Rev_Apple;
             m_transferInfos.push_back(info);
-            m_cspOut = MP_CSP_RGB;
+            m_space = ColorSpace::RGB;
             m_direct = true;
         } else if (OGL::hasExtension(OGL::MesaYCbCrTexture)) {
             _Debug("Use GL_MESA_ycbcr_texture.");

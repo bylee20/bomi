@@ -1,5 +1,44 @@
 #include "playengine_p.hpp"
 
+template<int N>
+auto findIndex(const QString &name, const char *const list[N]) -> int
+{
+    const auto data = name.toLatin1();
+    for (int i = 0; i < N; ++i) {
+        if (!qstrcmp(list[i], data.data()))
+            return i;
+    }
+    return N;
+}
+
+static auto toColorRange(const QString &mpvname) -> ColorRange
+{
+    switch (findIndex<MP_CSP_LEVELS_COUNT>(mpvname, mp_csp_levels_names)) {
+    case MP_CSP_LEVELS_TV:
+        return ColorRange::Limited;
+    case MP_CSP_LEVELS_PC:
+        return ColorRange::Full;
+    default:
+        return ColorRange::Auto;
+    }
+}
+
+static auto toColorSpace(const QString &mpvname) -> ColorSpace
+{
+    switch (findIndex<MP_CSP_COUNT>(mpvname, mp_csp_names)) {
+    case MP_CSP_BT_601:
+        return ColorSpace::BT601;
+    case MP_CSP_BT_709:
+        return ColorSpace::BT709;
+    case MP_CSP_SMPTE_240M:
+        return ColorSpace::SMPTE240M;
+    case MP_CSP_YCGCO:
+        return ColorSpace::YCgCo;
+    default:
+        return ColorSpace::Auto;
+    }
+}
+
 auto reg_play_engine() -> void
 {
     qRegisterMetaType<PlayEngine::State>("State");
@@ -11,8 +50,12 @@ auto reg_play_engine() -> void
     qmlRegisterType<ChapterInfoObject>();
     qmlRegisterType<AudioTrackInfoObject>();
     qmlRegisterType<SubtitleTrackInfoObject>();
-    qmlRegisterType<AvInfoObject>();
-    qmlRegisterType<AvIoFormat>();
+    qmlRegisterType<VideoInfoObject>();
+    qmlRegisterType<VideoFormatInfoObject>();
+    qmlRegisterType<VideoHwAccInfoObject>();
+    qmlRegisterType<AudioFormatInfoObject>();
+    qmlRegisterType<AudioInfoObject>();
+    qmlRegisterType<CodecInfoObject>();
     qmlRegisterType<MediaInfoObject>();
     qmlRegisterType<PlayEngine>("CMPlayer", 1, 0, "Engine");
 }
@@ -116,12 +159,12 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
 //    mpv_suspend(handle);
     OptionList opts;
     opts.add("audio-device"_b, audioDevice.toLatin1(), true);
-    if (hwaccCodecs.isEmpty() || hwaccBackend == HwAcc::None)
+    if (hwCodecs.isEmpty() || hwBackend == HwAcc::None)
         opts.add("hwdec"_b, "no"_b);
     else {
-        const auto name = HwAcc::backendName(hwaccBackend);
+        const auto name = HwAcc::backendName(hwBackend);
         opts.add("hwdec"_b, name.toLatin1());
-        opts.add("hwdec-codecs"_b, hwaccCodecs, true);
+        opts.add("hwdec-codecs"_b, hwCodecs, true);
     }
 
     if (mrl.isDisc()) {
@@ -189,6 +232,7 @@ auto PlayEngine::Data::loadfile(const Mrl &mrl, int resume, int cache,
         opts.add("cache"_b, "no"_b);
     opts.add("pause"_b, p->isPaused() || hasImage);
     opts.add("audio-channels"_b, ChannelLayoutInfo::data(layout), true);
+
     opts.add("af"_b, af(), true);
     opts.add("vf"_b, vf(), true);
     _Debug("Load: %% (%%)", file, opts.get());
@@ -241,20 +285,18 @@ SIA _IsAlphabet(const QString &text) -> bool
 
 auto PlayEngine::Data::observe() -> void
 {
-    observations.resize(UpdateEventEnd - UpdateEventBegin);
-
-    observe(UpdateCacheUsed, "cache-used", cacheUsed, [=] () {
+    observe("cache-used", cacheUsed, [=] () {
         return cacheEnabled ? getmpv<int>("cache-used") : 0;
     }, &PlayEngine::cacheUsedChanged);
-    observe(UpdateCacheSize, "cache-size", cacheSize, [=] () {
+    observe("cache-size", cacheSize, [=] () {
         return cacheEnabled ? getmpv<int>("cache-size") : 0;
     }, &PlayEngine::cacheSizeChanged);
-    observeTime(UpdateTimePos, "time-pos", position, &PlayEngine::tick);
-    observeTime(UpdateTimeStart, "time-start", begin, &PlayEngine::beginChanged);
-    observeTime(UpdateTimeLength, "length", duration, &PlayEngine::durationChanged);
-    observeTime(UpdateAvSync, "avsync", avSync, &PlayEngine::avSyncChanged);
-    observe(UpdateSeekable, "seekable", seekable, &PlayEngine::seekableChanged);
-    observe(UpdateChapterList, "chapter-list", chapters, [=] () {
+    observeTime("time-pos", position, &PlayEngine::tick);
+    observeTime("time-start", begin, &PlayEngine::beginChanged);
+    observeTime("length", duration, &PlayEngine::durationChanged);
+    observeTime("avsync", avSync, &PlayEngine::avSyncChanged);
+    observe("seekable", seekable, &PlayEngine::seekableChanged);
+    observe("chapter-list", chapters, [=] () {
         const auto array = getmpv<QVariant>("chapter-list").toList();
         ChapterList chapters; chapters.resize(array.size());
         for (int i=0; i<array.size(); ++i) {
@@ -271,9 +313,8 @@ auto PlayEngine::Data::observe() -> void
         chapterInfo->setCount(chapters.size());
         emit p->chaptersChanged(chapters);
     });
-    observe(UpdateCurrentChapter, "chapter", chapter,
-               &PlayEngine::currentChapterChanged);
-    observe(UpdateTrackList, "track-list", [=] () {
+    observe("chapter", chapter, &PlayEngine::currentChapterChanged);
+    observe("track-list", [=] () {
         QVector<StreamList> streams(3);
         auto list = getmpv<QVariant>("track-list").toList();
         for (auto &var : list) {
@@ -324,7 +365,7 @@ auto PlayEngine::Data::observe() -> void
     });
     for (auto type : streamTypes)
         observeTrack(type);
-    observe(UpdateMetaData, "metadata", metaData, [=] () {
+    observe("metadata", metaData, [=] () {
         const auto list = getmpv<QVariant>("metadata").toList();
         MetaData metaData;
         for (int i=0; i+1<list.size(); i+=2) {
@@ -345,9 +386,61 @@ auto PlayEngine::Data::observe() -> void
         metaData.m_duration = s2ms(getmpv<double>("length"));
         return metaData;
     }, &PlayEngine::metaDataChanged);
-    observe(UpdateMediaTitle, "media-title", [=] () {
-        return getmpv<QString>("media-title");
-    }, [=] (QEvent *event) { updateMediaName(_GetData<QString>(event)); });
+    observeType<QString>("media-title", [=] (QString &&t) { updateMediaName(t); });
+
+    observeType<QString>("video-codec", [=] (QString &&c) { videoInfo.codec()->parse(c); });
+    observeType<double>("fps", [=] (double fps) {
+        videoInfo.input()->setFps(fps);
+        videoInfo.output()->setFps(fps);
+    });
+    observeType<int>("width", [=] (int w) {
+        auto input = videoInfo.input();
+        input->setWidth(w);
+        input->setBppSize(input->size());
+    });
+    observeType<int>("height", [=] (int h) {
+        auto input = videoInfo.input();
+        input->setHeight(h);
+        input->setBppSize(input->size());
+    });
+    observeType<int>("video-bitrate", [=] (int bps) { videoInfo.input()->setBitrate(bps); });
+    observeType<QString>("video-format", [=] (QString &&f) { videoInfo.input()->setType(f); });
+    observeType<QVariant>("video-params", [=] (QVariant &&var) {
+        const auto params = var.toMap();
+        const auto type = params[u"pixelformat"_q].toString();
+        const auto w = params[u"w"_q].toInt(), h = params[u"h"_q].toInt();
+        auto output = videoInfo.output();
+        output->setImgFmt(mp_imgfmt_from_name(bstr0(type.toLatin1()), true));
+        output->setSize({w, h});
+        output->setBppSize({w, h});
+        output->setRange(toColorRange(params[u"colorlevels"_q].toString()));
+        output->setSpace(toColorSpace(params[u"colormatrix"_q].toString()));
+        auto hwState = [&] () {
+            if (hwBackend == HwAcc::None)
+                return Deactivated;
+            static QVector<QString> types = { u"vaapi"_q, u"vdpau"_q, u"vda"_q };
+            auto codec = HwAcc::codecId(videoInfo.codec()->type().toLatin1());
+            if (!HwAcc::supports(hwBackend, codec))
+                return Unavailable;
+            if (types.contains(type))
+                return Activated;
+            if (hwCodecs.contains(codec))
+                return Unavailable;
+            return Deactivated;
+        };
+        auto hwacc = videoInfo.hwacc();
+        hwacc->setState(hwState());
+        const auto hwdec = getmpv<QString>("hwdec");
+        hwacc->setDriver(hwdec == "no"_a ? QString() : hwdec);
+    });
+
+    observeType<QString>("audio-codec", [=] (QString &&c) { audioInfo.codec()->parse(c); });
+    observeType<QString>("audio-format", [=] (QString &&f) { audioInfo.input()->setType(f); });
+    observeType<int>("audio-bitrate", [=] (int bps) { audioInfo.input()->setBitrate(bps); });
+    observeType<int>("audio-samplerate", [=] (int s) { audioInfo.input()->setSampleRate(s, false); });
+    observeType<int>("audio-channels", [=] (int n)
+        { audioInfo.input()->setChannels(QString::number(n) % "ch"_a, n); });
+    observeType<QString>("audio-device", [=] (QString &&d) { audioInfo.setDevice(d); });
 
     for (const auto &ob : observations) {
         if (ob.name)
@@ -360,8 +453,6 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
     thread_local bool loaded = false;
 
     switch (event->event_id) {
-    case MPV_EVENT_NONE:
-        break;
     case MPV_EVENT_LOG_MESSAGE: {
         thread_local QMap<QByteArray, QByteArray> leftmsg;
         auto message = static_cast<mpv_event_log_message*>(event->data);
@@ -373,8 +464,7 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
             auto to = left.indexOf('\n', from);
             if (to < 0)
                 break;
-            Log::write(Log::Info, "[mpv/%%] %%", message->prefix,
-                       left.mid(from, to-from));
+            log(prefix, left.mid(from, to-from));
             from = to + 1;
         }
         left = left.mid(from);
@@ -445,47 +535,6 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
         break;
     case MPV_EVENT_GET_PROPERTY_REPLY: {
         break;
-    } case MPV_EVENT_AUDIO_RECONFIG: {
-        auto audio = new AvInfoObject;
-        audio->m_device = this->audioDevice;
-        audio->m_codec = getmpv<QString>("audio-format");
-        audio->m_codecDescription = getmpv<QString>("audio-codec");
-
-        const auto in = this->audio->inputFormat();
-        const auto out = this->audio->outputFormat();
-        audio->m_input->m_bitrate = getmpv<int>("audio-bitrate")*8;
-        audio->m_input->m_samplerate
-                = getmpv<int>("audio-samplerate")/1000.0;
-        audio->m_input->m_channels = in.channels();
-        audio->m_input->m_bits = in.bits();
-        audio->m_input->m_type = in.type();
-
-        audio->m_output->m_bitrate = out.bitrate();
-        audio->m_output->m_samplerate = out.samplerate();
-        audio->m_output->m_channels = out.channels();
-        audio->m_output->m_bits = out.bits();
-        audio->m_output->m_type = out.type();
-
-        _PostEvent(p, UpdateAudioInfo, audio);
-        break;
-    } case MPV_EVENT_VIDEO_RECONFIG: {
-        auto video = new AvInfoObject;
-        auto vin = getmpv<QVariant>("video-params").toMap();
-        auto vout = getmpv<QVariant>("video-out-params").toMap();
-        video->m_input->m_bitrate = getmpv<int>("video-bitrate")*8;
-        video->m_input->m_type = vin[u"pixelformat"_q].toString();
-        video->m_input->m_size.rwidth() = vin[u"w"_q].toInt();
-        video->m_input->m_size.rheight() = vin[u"h"_q].toInt();
-        video->m_input->m_fps = getmpv<double>("fps");
-        video->m_output->m_type = vout[u"pixelformat"_q].toString();
-        video->m_output->m_size.rwidth() = vout[u"dw"_q].toInt();
-        video->m_output->m_size.rheight() = vout[u"dh"_q].toInt();
-        video->m_output->m_fps = getmpv<double>("fps");
-        video->m_codecDescription = getmpv<QString>("video-codec");
-        video->m_codec = getmpv<QString>("video-format");
-        video->moveToThread(qApp->instance()->thread());
-        _PostEvent(p, UpdateVideoInfo, video);
-        break;
     } case MPV_EVENT_SHUTDOWN:
         quit = true;
         break;
@@ -495,13 +544,14 @@ auto PlayEngine::Data::dispatch(mpv_event *event) -> void
     default:
         break;
     }
+
 }
 
 auto PlayEngine::Data::process(QEvent *event) -> void
 {
     const int type = event->type();
-    if (UpdateEventBegin <= type && type < UpdateEventEnd) {
-        this->observation(event->type()).handle(event);
+    if (UpdateEventBegin <= type && type < updateEventMax) {
+        observation(event->type()).handle(event);
         return;
     }
     switch ((int)event->type()) {
@@ -514,7 +564,6 @@ auto PlayEngine::Data::process(QEvent *event) -> void
     } case StartPlayback: {
         this->renderer->resetTimings();
         _TakeData(event, this->editions);
-        emit p->audioChanged();
         int title = -1;
         for (auto &item : this->editions) {
             if (item.isSelected())
@@ -560,54 +609,23 @@ auto PlayEngine::Data::process(QEvent *event) -> void
         if (nextInfo.isValid())
             p->load(nextInfo);
         break;
-    }case UpdateAudioInfo: {
-        delete this->audioInfo;
-        this->audioInfo = _GetData<AvInfoObject*>(event);
-        emit p->audioChanged();
-        break;
-    } case UpdateVideoInfo: {
-        delete this->videoInfo;
-        this->videoInfo = _GetData<AvInfoObject*>(event);
-        auto output = this->videoInfo->m_output;
-        output->m_bitrate = this->videoFormat.bitrate(output->m_fps);
-        auto hwacc = [&] () {
-            auto codec = HwAcc::codecId(this->videoInfo->codec().toLatin1());
-            if (!HwAcc::supports(this->hwaccBackend, codec))
-                return HardwareAcceleration::Unavailable;
-            static QVector<QString> types = {
-                u"vaapi"_q, u"vdpau"_q, u"vda"_q
-            };
-            if (types.contains(output->m_type))
-                return HardwareAcceleration::Activated;
-            if (this->hwaccCodecs.contains(this->videoInfo->codec().toLatin1()))
-                return HardwareAcceleration::Unavailable;
-            return HardwareAcceleration::Deactivated;
-        };
-        auto hwtxt = [] (HardwareAcceleration hwacc) {
-            switch (hwacc) {
-            case HardwareAcceleration::Activated:
-                return tr("Activated");
-            case HardwareAcceleration::Deactivated:
-                return tr("Deactivated");
-            default:
-                return tr("Unavailable");
-            }
-        };
-        if (_Change(this->hwacc, hwacc()))
-            emit p->hwaccChanged();
-        this->videoInfo->m_hwacc = hwtxt(this->hwacc);
-        emit p->videoChanged();
-        if (_Change(this->fps, output->m_fps))
-            emit p->fpsChanged(this->fps);
-        break;
     } case NotifySeek:
         emit p->sought();
         break;
-    case UpdateMetaData: {
-        this->metaData = _GetData<MetaData>(event);
-        emit p->metaDataChanged();
+    default:
         break;
-    } default:
-        break;
+    }
+}
+
+auto PlayEngine::Data::log(const QByteArray &prefix,
+                           const QByteArray &text) -> void
+{
+    Log::write(Log::Info, "[mpv/%%] %%", prefix, text);
+    if (text.startsWith("AO: [")) {
+        constexpr int from = 5;
+        const int to = text.indexOf(']');
+        const auto driver = QString::fromLatin1(text.mid(from, to - from));
+        QMetaObject::invokeMethod(&audioInfo, "setDriver",
+                                  Qt::QueuedConnection, Q_ARG(QString, driver));
     }
 }

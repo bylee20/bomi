@@ -33,6 +33,7 @@ public:
         { return d->params.chroma_location; }
     auto isInverted() const -> bool { return d->inverted; }
     static auto name(Type type) -> QByteArray;
+    static auto bpp(const mp_imgfmt_desc &desc) -> int;
 private:
     struct Data : public QSharedData {
         Data() { }

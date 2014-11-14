@@ -72,6 +72,11 @@ SoftwareDeinterlacer::~SoftwareDeinterlacer()
     delete d;
 }
 
+auto SoftwareDeinterlacer::pass() const -> bool
+{
+    return d->pass || d->type == Pass;
+}
+
 auto SoftwareDeinterlacer::push(MpImage &&mpi) -> void
 {
     Q_ASSERT(!mpi.isNull());
@@ -139,6 +144,11 @@ auto SoftwareDeinterlacer::pop() -> MpImage
     if (++d->processed >= d->count)
         d->input.release();
     return ret;
+}
+
+auto SoftwareDeinterlacer::type() const -> Type
+{
+    return d->type;
 }
 
 auto SoftwareDeinterlacer::setOption(const DeintOption &deint) -> void

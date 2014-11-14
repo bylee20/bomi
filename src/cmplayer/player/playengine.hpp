@@ -32,10 +32,10 @@ struct FinishInfo {
 class PlayEngine : public QObject {
     Q_OBJECT
     Q_ENUMS(State)
-    Q_ENUMS(HardwareAcceleration)
+    Q_ENUMS(ActivationState)
     Q_PROPERTY(MediaInfoObject *media READ mediaInfo CONSTANT FINAL)
-    Q_PROPERTY(AvInfoObject *audio READ audioInfo NOTIFY audioChanged)
-    Q_PROPERTY(AvInfoObject *video READ videoInfo NOTIFY videoChanged)
+    Q_PROPERTY(AudioInfoObject *audio READ audioInfo CONSTANT FINAL)
+    Q_PROPERTY(VideoInfoObject *video READ videoInfo CONSTANT FINAL)
     Q_PROPERTY(int begin READ begin NOTIFY beginChanged)
     Q_PROPERTY(int end READ end NOTIFY endChanged)
     Q_PROPERTY(int duration READ duration NOTIFY durationChanged)
@@ -52,7 +52,6 @@ class PlayEngine : public QObject {
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
     Q_PROPERTY(double speed READ speed NOTIFY speedChanged)
     Q_PROPERTY(bool volumeNormalizerActivated READ isVolumeNormalizerActivated NOTIFY volumeNormalizerActivatedChanged)
-    Q_PROPERTY(HardwareAcceleration hardwareAccelaration READ hwAcc NOTIFY hwaccChanged)
     Q_PROPERTY(double rate READ rate NOTIFY tick)
     Q_PROPERTY(QQuickItem *screen READ screen)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
@@ -66,7 +65,7 @@ public:
         Loading = 16, Error = 32, Buffering = 64,
         Running = Playing | Loading | Buffering
     };
-    enum class HardwareAcceleration { Unavailable, Deactivated, Activated };
+    enum ActivationState { Unavailable, Deactivated, Activated };
     enum DVDCmd { DVDMenu = -1 };
     PlayEngine();
     ~PlayEngine();
@@ -112,7 +111,6 @@ public:
     auto audioSync() const -> int;
     auto metaData() const -> const MetaData&;
     auto mediaName() const -> QString;
-    auto hwAcc() const -> HardwareAcceleration;
     auto volume() const -> int;
     auto currentAudioStream() const -> int;
     auto isMuted() const -> bool;
@@ -139,8 +137,8 @@ public:
     auto thread() const -> QThread*;
     auto screen() const -> QQuickItem*;
     auto mediaInfo() const -> MediaInfoObject*;
-    auto audioInfo() const -> AvInfoObject*;
-    auto videoInfo() const -> AvInfoObject*;
+    auto audioInfo() const -> AudioInfoObject*;
+    auto videoInfo() const -> VideoInfoObject*;
     auto avSync() const -> int;
     auto avgfps() const -> double;
     auto stateText() const -> QString { return stateText(m_state); }
@@ -205,8 +203,6 @@ signals:
     void editionsChanged(const EditionList &editions);
     void dvdInfoChanged();
     void speedChanged(double speed);
-    void audioChanged();
-    void videoChanged();
     void runningChanged();
     void hwaccChanged();
     void cacheUsedChanged();

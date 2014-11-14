@@ -16,7 +16,11 @@ public:
     auto setHwAcc(HwAcc *acc) -> void;
     auto initializeGL(OpenGLOffscreenContext *ctx) -> void;
     auto finalizeGL() -> void;
+    auto isInputInterlaced() const -> bool;
+    auto isOutputInterlaced() const -> bool;
 signals:
+    void inputInterlacedChanged();
+    void outputInterlacedChanged();
     void deintMethodChanged(DeintMethod method);
 private:
     static auto open(vf_instance *vf) -> int;

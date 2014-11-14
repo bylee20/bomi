@@ -56,11 +56,14 @@ public:
     auto setColorSpace(ColorSpace space) -> void;
     auto colorRange() const -> ColorRange;
     auto colorSpace() const -> ColorSpace;
+    auto colorMatrixSpace() const -> ColorSpace;
+    auto colorMatrixRange() const -> ColorRange;
     auto setChromaUpscaler(InterpolatorType tpe) -> void;
     auto chromaUpscaler() const -> InterpolatorType;
 
     auto droppedFrames() const -> int;
-    auto avgfps() const -> double;
+    auto delayedFrames() const -> int;
+    auto fps() const -> double;
     auto resetTimings() -> void;
 signals:
     void transferred();
@@ -80,7 +83,10 @@ signals:
     void alignmentChanged(int alignment);
     void formatChanged(const VideoFormat &format);
     void droppedFramesChanged(int dropped);
+    void delayedFramesChanged(int delayed);
     void deintMethodChanged(DeintMethod method);
+    void fpsChanged(double fps);
+    void colorMatrixChanged();
 private:
     auto afterUpdate() -> void;
     auto initializeGL() -> void override;

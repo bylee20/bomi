@@ -25,6 +25,10 @@ public:
     auto swap(MpImage &rhs) -> void { std::swap(m, rhs.m); }
     auto data() const -> const mp_image* { return m; }
     auto data() -> mp_image* { return m; }
+    auto isInterlaced() const -> bool
+        { return m && (m->fields & MP_IMGFIELD_INTERLACED); }
+    auto unset(int fields) -> void { if (m) m->fields &= ~fields; }
+    auto set(int fields) -> void { if (m) m->fields |= fields; }
     static auto ref(mp_image *mpi) -> MpImage { return MpImage(makeRef(mpi)); }
     static auto wrap(mp_image *mpi) -> MpImage { return MpImage(mpi); }
     static auto wrap(mp_image *mpi, bool ref) -> MpImage

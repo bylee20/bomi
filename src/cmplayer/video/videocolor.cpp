@@ -1,11 +1,8 @@
 #include "videocolor.hpp"
 #include "enum/colorrange.hpp"
+#include "enum/colorspace.hpp"
 #include "misc/json.hpp"
 #include "misc/log.hpp"
-
-extern "C" {
-extern const char *const mp_csp_names[MP_CSP_COUNT];
-}
 
 DECLARE_LOG_CONTEXT(Video)
 
@@ -40,14 +37,14 @@ const YCbCrRange ranges[5] = {
 {  0.f/255.f, 255.f/255.f,  0.f/255.f, 255.f/255.f}  // Extended
 };
 
-const float specs[MP_CSP_COUNT][2] = {
-{0.0000, 0.0000}, // MP_CSP_AUTO,
-{0.1140, 0.2990}, // MP_CSP_BT_601,
-{0.0722, 0.2126}, // MP_CSP_BT_709,
-{0.0870, 0.2120}  // MP_CSP_SMPTE_240M,
+const float specs[6][2] = {
+{0.0000, 0.0000}, // Auto
+{0.1140, 0.2990}, // BT601
+{0.0722, 0.2126}, // BT709
+{0.0870, 0.2120}  // SMPTE240M
 };
 
-auto VideoColor::matYCbCrToRgb(mp_csp c, ColorRange r) const -> QMatrix4x4
+auto VideoColor::matYCbCrToRgb(ColorSpace c, ColorRange r) const -> QMatrix4x4
 {
     QMatrix4x4 scaler;
     if (_IsOneOf(r, ColorRange::Remap, ColorRange::Extended)) {
@@ -74,7 +71,7 @@ auto VideoColor::matYCbCrToRgb(mp_csp c, ColorRange r) const -> QMatrix4x4
         scaler(2, 2) = mul.z();
     }
 
-    const auto kb = specs[c][0], kr = specs[c][1];
+    const auto kb = specs[(int)c][0], kr = specs[(int)c][1];
     const auto &range = ranges[(int)r];
 
     const auto dy = 1.f/(range.y2-range.y1);
@@ -96,10 +93,10 @@ auto VideoColor::matYCbCrToRgb(mp_csp c, ColorRange r) const -> QMatrix4x4
     return coef*filter*baseSub*scaler;
 }
 
-SIA matRgbToYCbCr(mp_csp c = MP_CSP_BT_601,
+SIA matRgbToYCbCr(ColorSpace c = ColorSpace::BT601,
                   ColorRange r = ColorRange::Limited) -> QMatrix4x4
 {
-    const auto kb = specs[c][0], kr = specs[c][1];
+    const auto kb = specs[(int)c][0], kr = specs[(int)c][1];
     const auto &range = ranges[(int)r];
     const auto dy = (range.y2-range.y1);
     const auto dc = (range.c2-range.c1)/2.0f;
@@ -144,31 +141,31 @@ auto VideoColor::matBSHC() const -> QMatrix4x4
     return mat;
 }
 
-auto VideoColor::matrix(mp_csp csp, ColorRange cr) const -> QMatrix4x4
+auto VideoColor::matrix(ColorSpace csp, ColorRange cr) const -> QMatrix4x4
 {
     switch (csp) {
-    case MP_CSP_BT_601: case MP_CSP_BT_709: case MP_CSP_SMPTE_240M:
+    case ColorSpace::BT601: case ColorSpace::BT709: case ColorSpace::SMPTE240M:
         return matYCbCrToRgb(csp, cr);
-    case MP_CSP_RGB:    case MP_CSP_YCGCO:
+    case ColorSpace::RGB:    case ColorSpace::YCgCo:
         break;
     default:
-        _Warn("Color space %% is not supported", mp_csp_names[csp]);
+        _Warn("Color space %% is not supported", _EnumName(csp));
         return QMatrix4x4();
     }
 
     if (isZero()) {
         switch (csp) {
-        case MP_CSP_RGB:
+        case ColorSpace::RGB:
             return QMatrix4x4();
-        case MP_CSP_YCGCO:
+        case ColorSpace::YCgCo:
             return matYCgCoToRgb();
         default:
             break;
         }
     }
 
-    const auto rgbFromYCbCr = matYCbCrToRgb(MP_CSP_BT_601, ColorRange::Full);
-    auto toYCbCr = matRgbToYCbCr(MP_CSP_BT_601, ColorRange::Full);
+    const auto rgbFromYCbCr = matYCbCrToRgb(ColorSpace::BT601, ColorRange::Full);
+    auto toYCbCr = matRgbToYCbCr(ColorSpace::BT601, ColorRange::Full);
     if (csp == MP_CSP_YCGCO)
         toYCbCr = toYCbCr*matYCgCoToRgb();
     return rgbFromYCbCr*toYCbCr;

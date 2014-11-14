@@ -230,7 +230,8 @@ HEADERS += \
     enum/quicksnapshotsave.hpp \
     video/videodata.hpp \
     video/mpimage.hpp \
-    enum/mousebehavior.hpp
+    enum/mousebehavior.hpp \
+    misc/speedmeasure.hpp
 
 SOURCES += \
 	stdafx.cpp \
@@ -402,7 +403,8 @@ SOURCES += \
     enum/quicksnapshotsave.cpp \
     video/videodata.cpp \
     video/mpimage.cpp \
-    enum/mousebehavior.cpp
+    enum/mousebehavior.cpp \
+    misc/speedmeasure.cpp
 
 TRANSLATIONS += translations/cmplayer_ko.ts \
     translations/cmplayer_en.ts \
@@ -451,7 +453,9 @@ OTHER_FILES += \
     imports/CMPlayer/ScrollBar.qml \
     imports/CMPlayer/MessageBox.qml \
     imports/CMPlayer/ProgressBar.qml \
-    skins/Faenza-Zukitwo/cmplayer.qml
+    skins/Faenza-Zukitwo/cmplayer.qml \
+    imports/CMPlayer/PlayInfoVideoOutput.qml \
+    imports/CMPlayer/PlayInfoAudioOutput.qml
 
 evil_hack_to_fool_lupdate {
 SOURCES += $${OTHER_FILES}

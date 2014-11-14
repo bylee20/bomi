@@ -57,7 +57,7 @@ private:
     QVector<VideoTexture*> m_textures;
     QVector<OpenGLTextureTransferInfo> m_transferInfos;
     mp_imgfmt m_imgfmtOut = IMGFMT_NONE;
-    mp_csp m_cspOut = MP_CSP_BT_709;
+//    mp_csp m_cspOut = MP_CSP_BT_709;
     ShaderInfo m_shaders[3];
     QOpenGLShaderProgram *m_prog = nullptr;
     VideoColor m_color;
