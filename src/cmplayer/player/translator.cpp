@@ -118,12 +118,21 @@ auto Translator::load(const QLocale &locale) -> bool
     d->icu = icu::Locale::createFromName(l.name().toLatin1().data());
     d->langs.clear();
     d->file = file;
-    d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def));
-    if (d->succ) {
+    auto loadQt = [&] () {
         auto path = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
         const QString qm = "qt_"_a % l.name();
         if (path.isEmpty() || !d->qt.load(qm, path))
             _Error("Cannot find translations for Qt, %% in %%", qm, path);
+    };
+
+    if (l.language() == QLocale::English) {
+        d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def));
+        d->succ = true;
+    } else {
+        d->succ = (d->trans.load(file, d->path) || d->trans.load(file, d->def));
+    }
+    if (d->succ) {
+        loadQt();
         QLocale::setDefault(l);
     }
     return d->succ;
